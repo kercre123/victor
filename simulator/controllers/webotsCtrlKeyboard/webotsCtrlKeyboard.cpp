@@ -351,6 +351,7 @@ namespace Anki {
         printf("         lock progression unlock:  Shift+n\n");
         printf("    Respond 'no' to game request:  Alt+n\n");
         printf("             Flip selected block:  y\n");
+        printf("       Realign with block action:  _\n");
         printf("        Quit keyboard controller:  Shift+Alt+x\n");
         printf("                      Print help:  ?\n");
         printf("\n");
@@ -2206,6 +2207,17 @@ namespace Anki {
                   message.Set_FlipBlock(m);
                   SendMessage(message);
                 }
+                break;
+              }
+                
+              case (s32)'_':
+              {
+                ExternalInterface::RealignWithObject realignWithObject;
+                realignWithObject.objectID = -1;
+                realignWithObject.dist_mm = 0.0f;
+                ExternalInterface::MessageGameToEngine message;
+                message.Set_RealignWithObject(realignWithObject);
+                SendMessage(message);
                 break;
               }
             

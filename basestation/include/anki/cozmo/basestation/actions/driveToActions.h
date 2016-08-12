@@ -228,6 +228,11 @@ namespace Anki {
                                  const bool useManualSpeed,
                                  Radians maxTurnTowardsFaceAngle_rad,
                                  const bool sayName);
+      
+      IDriveToInteractWithObject(Robot& robot,
+                                 const ObjectID& objectID,
+                                 const f32 distance,
+                                 const bool useManualSpeed);
 
     public:
       virtual ~IDriveToInteractWithObject();
@@ -438,6 +443,12 @@ namespace Anki {
       
       virtual ~DriveToAndMountChargerAction() { }
       
+    };
+    
+    class DriveToRealignWithObjectAction : public CompoundActionSequential
+    {
+    public:
+      DriveToRealignWithObjectAction(Robot& robot, ObjectID objectID, float dist_mm);
     };
   }
 }

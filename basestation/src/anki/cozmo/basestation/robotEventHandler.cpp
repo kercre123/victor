@@ -37,12 +37,14 @@
 #include "anki/cozmo/basestation/pathPlanner.h"
 #include "anki/cozmo/basestation/latticePlanner.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/types/poseStructs.h"
+#include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
 
 namespace Anki {
 namespace Cozmo {
-
+  
 RobotEventHandler::RobotEventHandler(const CozmoContext* context)
 : _context(context)
 {
@@ -75,6 +77,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       MessageGameToEngineTag::PlayAnimationTrigger,
       MessageGameToEngineTag::PopAWheelie,
       MessageGameToEngineTag::ReadToolCode,
+      MessageGameToEngineTag::RealignWithObject,
       MessageGameToEngineTag::RollObject,
       MessageGameToEngineTag::SayText,
       MessageGameToEngineTag::SearchForObject,
@@ -440,6 +443,19 @@ IActionRunner* GetMountChargerActionHelper(Robot& robot, const ExternalInterface
     return chargerAction;
   }
 }
+  
+IActionRunner* GetRealignWithObjectActionHelper(Robot& robot, const ExternalInterface::RealignWithObject& msg)
+{
+  ObjectID selectedObjectID;
+  if(msg.objectID < 0) {
+    selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
+  } else {
+    selectedObjectID = msg.objectID;
+  }
+  
+  DriveToRealignWithObjectAction* driveToRealignWithObjectAction = new DriveToRealignWithObjectAction(robot, selectedObjectID, msg.dist_mm);
+  return driveToRealignWithObjectAction;
+}
 
 IActionRunner* GetTurnInPlaceActionHelper(Robot& robot, const ExternalInterface::TurnInPlace& msg)
 {
@@ -723,6 +739,9 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionUnionTag::readToolCode:
       return new ReadToolCodeAction(robot);
       
+    case RobotActionUnionTag::realignWithObject:
+      return GetRealignWithObjectActionHelper(robot, actionUnion.Get_realignWithObject());
+      
     case RobotActionUnionTag::sayText:
     {
       SayTextAction* sayTextAction = new SayTextAction(robot, actionUnion.Get_sayText().text, actionUnion.Get_sayText().style, true);
@@ -922,6 +941,12 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
     case ExternalInterface::MessageGameToEngineTag::ReadToolCode:
     {
       newAction = new ReadToolCodeAction(robotRef);
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::RealignWithObject:
+    {
+      numRetries = 1;
+      newAction = GetRealignWithObjectActionHelper(robotRef, event.GetData().Get_RealignWithObject());
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::SayText:

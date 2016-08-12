@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/speedChooser.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
 #include "driveToActions.h"
 
 namespace Anki {
@@ -960,6 +961,29 @@ namespace Anki {
       }
     }
     
+    IDriveToInteractWithObject::IDriveToInteractWithObject(Robot& robot,
+                                const ObjectID& objectID,
+                                const f32 distance,
+                                const bool useManualSpeed)
+    : CompoundActionSequential(robot)
+    , _objectID(objectID)
+    {
+      if(objectID == robot.GetCarryingObject())
+      {
+        PRINT_NAMED_WARNING("IDriveToInteractWithObject.Constructor",
+                            "Robot is currently carrying action object with ID=%d",
+                            objectID.GetValue());
+        return;
+      }
+      
+      _driveToObjectAction = new DriveToObjectAction(robot,
+                                                     objectID,
+                                                     distance,
+                                                     useManualSpeed);
+      
+      AddAction(_driveToObjectAction, true);
+    }
+    
     void IDriveToInteractWithObject::AddDockAction(IDockAction* dockAction, bool ignoreFailure)
     {
       dockAction->SetPreDockPoseDistOffset(_preDockPoseDistOffsetX_mm);
@@ -1346,5 +1370,39 @@ namespace Anki {
       SetProxyTag(action->GetTag());
       AddDockAction(action);
     }
+    
+    DriveToRealignWithObjectAction::DriveToRealignWithObjectAction(Robot& robot,
+                                    ObjectID objectID,
+                                    float dist_mm)
+    : CompoundActionSequential(robot)
+    {
+      const f32 minTrans = 20.0f;
+      const f32 moveBackDist = 35.0f;
+      const f32 waitTime = 3.0f;
+      
+
+      ObservableObject* observableObject = robot.GetBlockWorld().GetObjectByID(objectID);
+      
+      // if block's state is not known, find it.
+      Pose3d p;
+      observableObject->GetPose().GetWithRespectTo(robot.GetPose(), p);
+      if(!(observableObject->IsPoseStateKnown()) || (p.GetTranslation().y() < minTrans))
+      {
+        MoveHeadToAngleAction* moveHeadToAngleAction = new MoveHeadToAngleAction(robot, kIdealViewBlockHeadAngle);
+        AddAction(moveHeadToAngleAction);
+        DriveStraightAction* driveAction = new DriveStraightAction(robot, -moveBackDist, DEFAULT_PATH_MOTION_PROFILE.reverseSpeed_mmps, false);
+        AddAction(driveAction);
+        WaitAction* waitAction = new WaitAction(robot, waitTime);
+        AddAction(waitAction);
+      }
+      
+      // Drive towards found block and verify it.
+      DriveToAlignWithObjectAction* driveToAlignWithObjectAction = new DriveToAlignWithObjectAction(robot, objectID, dist_mm);
+      driveToAlignWithObjectAction->SetNumRetries(0);
+      AddAction(driveToAlignWithObjectAction);
+      SetNumRetries(0);
+    }
   }
 }
+
+

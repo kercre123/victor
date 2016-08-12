@@ -11,6 +11,7 @@
 */
 
 #include "vizControllerImpl.h"
+#include "anki/common/basestation/array2d_impl.h"
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/vision/basestation/image.h"
 #include "clad/vizInterface/messageViz.h"

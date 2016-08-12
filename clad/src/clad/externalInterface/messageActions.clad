@@ -190,6 +190,13 @@ message ReadToolCode {
 
 }
 
+// RealignWithObject
+// Realign with object when accidently moved by a small amount.
+message RealignWithObject {
+  int_32 objectID,
+  float_32 dist_mm    // the distance at which you want to stop after realignment
+}
+
 // RollObject
 message RollObject {
   int_32 objectID, // negative value means "currently selected object"
@@ -411,6 +418,7 @@ union RobotActionUnion {
   PlayAnimationTrigger      playAnimationTrigger,
   PopAWheelie               popAWheelie,
   ReadToolCode              readToolCode,
+  RealignWithObject         realignWithObject,
   RollObject                rollObject,
   SayText                   sayText,
   SearchSideToSide          searchSideToSide,
