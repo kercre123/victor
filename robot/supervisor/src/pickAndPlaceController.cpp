@@ -233,14 +233,13 @@ namespace Anki {
           }
           default:
           {
-            AnkiInfo( 14, "PAP", 119, "Reached default switch statement in PAP case", 0);
+            AnkiError( 285, "PAP.StartBackingOut.InvalidAction", 347, "%d", 1, action_);
           }
         }
         
         const f32 backoutTime_sec = backoutDist_mm / BACKOUT_SPEED_MMPS;
 
-        AnkiInfo( 14, "PAP", 492, "Last marker dist = %.1fmm. Starting %.1fmm backout (%.2fsec duration)", 3,
-              lastMarkerDist_, backoutDist_mm, backoutTime_sec);
+        AnkiInfo( 286, "PAP.StartBackingOut.Dist", 565, "Starting %.1fmm backout (%.2fsec duration)", 2, backoutDist_mm, backoutTime_sec);
 
         transitionTime_ = HAL::GetTimeStamp() + (backoutTime_sec*1e3f);
 
@@ -309,7 +308,7 @@ namespace Anki {
                 dockOffsetDistX_ = CHARGER_ALIGNED_MARKER_DISTANCE;
                 break;
               default:
-                AnkiError( 14, "PAP", 121, "Unknown PickAndPlaceAction %d", 1, action_);
+                AnkiError( 287, "PAP.SET_LIFT_PREDOCK.InvalidAction", 347, "%d", 1, action_);
                 mode_ = IDLE;
                 break;
             }
@@ -431,13 +430,8 @@ namespace Anki {
                 }
                 lastActionSucceeded_ = true;
               } else {
-                // Block is not being tracked.
-                // Probably not visible.
-                #if(DEBUG_PAP_CONTROLLER)
-                AnkiWarn( 14, "PAP", 128, "Could not track block's marker", 0);
-                #endif
-
-                AnkiDebug( 14, "PAP", 129, "Docking failed while picking/placing high or low. Backing out.", 0);
+                // Docking failed for some reason. Probably couldn't see block anymore.
+                AnkiDebug( 363, "PAP.DOCKING.DockingFailed", 305, "", 0);
 
                 // Send failed pickup or place message
                 switch(action_)
@@ -460,7 +454,7 @@ namespace Anki {
                     break;
                   } // PLACE
                   default:
-                    AnkiError( 14, "PAP", 130, "Reached default switch statement in DOCKING case.", 0);
+                    AnkiError( 289, "PAP.DOCKING.InvalidAction", 347, "%d", 1, action_);
                 } // switch(action_)
 
 
@@ -558,7 +552,7 @@ namespace Anki {
                 mode_ = POPPING_A_WHEELIE;
                 break;
               default:
-                AnkiError( 14, "PAP", 121, "Unknown PickAndPlaceAction %d", 1, action_);
+                AnkiError( 290, "PAP.SET_LIFT_POSTDOCK.InvalidAction", 347, "%d", 1, action_);
                 mode_ = IDLE;
                 break;
             }
@@ -637,7 +631,7 @@ namespace Anki {
                   break;
                 } // PLACE
                 default:
-                  AnkiError( 14, "PAP", 132, "Reached default switch statement in MOVING_LIFT_POSTDOCK case.", 0);
+                  AnkiError( 291, "PAP.MOVING_LIFT_POSTDOCK.InvalidAction", 347, "%d", 1, action_);
               } // switch(action_)
 
               // Switch to BACKOUT
@@ -752,7 +746,7 @@ namespace Anki {
             break;
           case BACKUP_ON_CHARGER:
             if (HAL::GetTimeStamp() > transitionTime_) {
-              AnkiEvent( 15, "BACKUP_ON_CHARGER", 140, "timeout", 0);
+              AnkiEvent( 292, "PAP.BACKUP_ON_CHARGER.Timeout", 305, "", 0);
               SteeringController::ExecuteDirectDrive(0, 0);
               SendChargerMountCompleteMessage(false);
               mode_ = IDLE;
@@ -765,13 +759,13 @@ namespace Anki {
                 tiltedOnChargerStartTime_ = HAL::GetTimeStamp();
               } else if (HAL::GetTimeStamp() - tiltedOnChargerStartTime_ > TILT_FAILURE_DURATION_MS) {
                 // Drive forward until no tilt or timeout
-                AnkiEvent( 15, "BACKUP_ON_CHARGER", 141, "tilted", 0);
+                AnkiEvent( 293, "PAP.BACKUP_ON_CHARGER.Tilted", 305, "", 0);
                 SteeringController::ExecuteDirectDrive(40, 40);
                 transitionTime_ = HAL::GetTimeStamp() + 2500;
                 mode_ = DRIVE_FORWARD;
               }
             } else if (HAL::BatteryIsOnCharger()) {
-              AnkiEvent( 15, "BACKUP_ON_CHARGER", 142, "success", 0);
+              AnkiEvent( 294, "PAP.BACKUP_ON_CHARGER.Success", 305, "", 0);
               SteeringController::ExecuteDirectDrive(0, 0);
               SendChargerMountCompleteMessage(true);
               lastActionSucceeded_ = true;
@@ -830,8 +824,7 @@ namespace Anki {
           }
           default:
             mode_ = IDLE;
-            AnkiError( 14, "PAP", 39, "Reached default case in DockingController "
-                  "mode switch statement.(1)", 0);
+            AnkiError( 295, "PAP.Update.InvalidAction", 347, "%d", 1, action_);
             break;
         }
 
@@ -874,7 +867,7 @@ namespace Anki {
                        const u8 numRetries)
       {
 #if(DEBUG_PAP_CONTROLLER)
-        AnkiDebug( 14, "PAP", 143, "DOCK TO BLOCK (action %d)", 1, action);
+        AnkiDebug( 296, "PAP.DockToBlock.Action", 347, "%d", 1, action);
 #endif
 
         action_ = action;
@@ -928,7 +921,7 @@ namespace Anki {
                                const u32 driveDuration_ms,
                                const f32 backupDist_mm)
       {
-        AnkiDebug( 198, "SetRollActionParams", 506, "liftHeight: %f, speed: %f, accel: %f, duration %d, backupDist %f", 5,
+        AnkiDebug( 297, "PAP.SetRollActionParams", 567, "liftHeight: %f, speed: %f, accel: %f, duration %d, backupDist %f", 5,
                   liftHeight_mm, driveSpeed_mmps, driveAccel_mmps2, driveDuration_ms, backupDist_mm);
         
         _rollLiftHeight_mm = liftHeight_mm;

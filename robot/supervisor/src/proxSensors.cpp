@@ -74,7 +74,7 @@ namespace Anki {
             // TODO (maybe): Check for cases where cliff detect should not stop motors
             // 1) Turning in place
             // 2) Driving over something (i.e. pitch is higher than some degrees).
-            AnkiEvent( 20, "Cliff", 157, "Stopping due to cliff: %d", 1, _stopOnCliff);
+            AnkiEvent( 339, "ProxSensors.UpdateCliff.StoppingDueToCliff", 347, "%d", 1, _stopOnCliff);
             
             if(_stopOnCliff)
             {
@@ -172,10 +172,12 @@ namespace Anki {
 
 
       void EnableCliffDetector(bool enable) {
+        AnkiEvent( 340, "ProxSensors.EnableCliffDetector", 347, "%d", 1, enable);        
         _enableCliffDetect = enable;
       }
       
       void EnableStopOnCliff(bool enable) {
+        AnkiEvent( 341, "ProxSensors.EnableStopOnCliff", 347, "%d", 1, enable);
         _stopOnCliff = enable;
       }
 

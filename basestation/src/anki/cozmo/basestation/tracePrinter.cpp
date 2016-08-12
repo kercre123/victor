@@ -11,7 +11,7 @@
 namespace Anki {
 namespace Cozmo {
 
-const std::string TracePrinter::UnknownTraceName   = "Unknown trace name";
+const std::string TracePrinter::UnknownTraceName   = "UnknownTraceName";
 const std::string TracePrinter::UnknownTraceFormat = "Unknown trace format [%d] with %d parameters";
 const std::string TracePrinter::RobotNamePrefix    = "RobotFirmware.";
 

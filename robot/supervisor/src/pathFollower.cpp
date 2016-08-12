@@ -163,13 +163,13 @@ namespace Anki
         for (u8 i=0; i<path_.GetNumSegments(); ++i) {
           res = path_[i].GetDistToSegment(x,y,angle,distToSegment,angError);
 #if(DEBUG_PATH_FOLLOWER)
-          AnkiDebug( 33, "PathFollower", 215, "PathDist: %f  (res=%d)", 2, distToSegment, res);
+          AnkiDebug( 342, "PathFollower.GetClosestSegment.PathDist", 586, "%f  (res=%d)", 2, distToSegment, res);
 #endif
           if (ABS(distToSegment) < distToClosestSegment && (res == Planning::IN_SEGMENT_RANGE || res == Planning::OOR_NEAR_START)) {
             closestSegId = i;
             distToClosestSegment = ABS(distToSegment);
 #if(DEBUG_PATH_FOLLOWER)
-            AnkiDebug( 33, "PathFollower", 216, " New closest seg: %d, distToSegment %f (res=%d)", 3, i, distToSegment, res);
+            AnkiDebug( 343, "PathFollower.GetClosestSegment", 587, " New closest seg: %d, distToSegment %f (res=%d)", 3, i, distToSegment, res);
 #endif
           }
         }
@@ -195,7 +195,7 @@ namespace Anki
           path_.PrintPath();
 #endif
 
-          AnkiConditionalErrorAndReturnValue(path_.CheckContinuity(CONTINUITY_TOL_MM2), false, 33, "PathFollower", 217, "Path is discontinuous", 0);
+          AnkiConditionalErrorAndReturnValue(path_.CheckContinuity(CONTINUITY_TOL_MM2), false, 344, "PathFollower.StartPathTraversal.PathIsDiscontinuous", 305, "", 0);
 
           // Set whether or not path is traversed according to speed in path parameters
           manualSpeedControl_ = manualSpeedControl;
@@ -242,13 +242,11 @@ namespace Anki
             }
           }
 
-#if(DEBUG_PATH_FOLLOWER)
-          AnkiDebug( 33, "PathFollower", 218, "*** PATH START SEGMENT %d: speed = %f, accel = %f, decel = %f", 4,
+          AnkiDebug( 345, "PathFollower.StartPathTraversal", 588, "Start segment %d, speed = %f, accel = %f, decel = %f", 4,
                 currPathSegment_,
                 path_[currPathSegment_].GetTargetSpeed(),
                 path_[currPathSegment_].GetAccel(),
                 path_[currPathSegment_].GetDecel());
-#endif
 
           //Robot::SetOperationMode(Robot::FOLLOW_PATH);
           SteeringController::SetPathFollowMode();
@@ -360,7 +358,7 @@ namespace Anki
           }
 #         if(DEBUG_PATH_FOLLOWER)
           else {
-            AnkiDebug( 33, "PathFollower", 446, "PATH-DECEL: currCmdSpeed %d mm/s, currSpeed %d mm/s)", 2,
+            AnkiDebug( 346, "PathFollower.ProcessPathSegment.Decel", 589, "currCmdSpeed %d mm/s, currSpeed %d mm/s)", 2,
                   (s32)SpeedController::GetUserCommandedCurrentVehicleSpeed(),
                   (s32)SpeedController::GetCurrentMeasuredVehicleSpeed());
           }
@@ -378,14 +376,14 @@ namespace Anki
 
 #if(DEBUG_PATH_FOLLOWER)
         Radians currOrientation = Localization::GetCurrPose_angle();
-        AnkiDebug( 33, "PathFollower", 220, "currPathSeg: %d, TURN  currAngle: %f, targetAngle: %f", 3,
+        AnkiDebug( 347, "PathFollower.ProcessPathSegmentPointTurn", 590, "currPathSeg: %d, TURN currAngle: %f, targetAngle: %f", 3,
                currPathSegment_, currOrientation.ToFloat(), currSeg->targetAngle);
 #endif
 
         // When the car is stopped, initiate point turn
         if (!pointTurnStarted_) {
 #if(DEBUG_PATH_FOLLOWER)
-          AnkiDebug( 33, "PathFollower", 221, "EXECUTE POINT TURN", 0);
+          AnkiDebug( 348, "PathFollower.ProcessPathSegmentPointTurn.ExecutePointTurn", 305, "", 0);
 #endif
           SteeringController::ExecutePointTurn(currSeg->targetAngle,
                                                path_[currPathSegment_].GetTargetSpeed(),
@@ -416,9 +414,7 @@ namespace Anki
         manualSpeedControl_ = false;
         manualPathSpeed_ = 0;
 
-#if(DEBUG_PATH_FOLLOWER)
-        AnkiDebug( 33, "PathFollower", 222, "*** PATH COMPLETE ***", 0);
-#endif
+        AnkiEvent( 349, "PathFollower.PathComplete", 305, "", 0);
       }
 
 
@@ -452,12 +448,12 @@ namespace Anki
             segRes = ProcessPathSegmentPointTurn(distToPath_mm_, radToPath_);
             break;
           default:
-            AnkiWarn( 33, "PathFollower", 297, "Segment %d has invalid type %d", 2, currPathSegment_, path_[currPathSegment_].GetType());
+            AnkiWarn( 350, "PathFollower.Update.InvalidSegmentType", 591, "Segment %d has invalid type %d", 2, currPathSegment_, path_[currPathSegment_].GetType());
             break;
         }
 
 #if(DEBUG_PATH_FOLLOWER)
-        AnkiInfo( 33, "PathFollower", 224, "%f mm, %f deg, segRes %d, segType %d, currSeg %d", 5, distToPath_mm_, RAD_TO_DEG(radToPath_), segRes, path_[currPathSegment_].GetType(), currPathSegment_);
+        AnkiDebug( 351, "PathFollower.Update.DistToPath", 592, "%f mm, %f deg, segRes %d, segType %d, currSeg %d", 5, distToPath_mm_, RAD_TO_DEG(radToPath_), segRes, path_[currPathSegment_].GetType(), currPathSegment_);
 #endif
 
         // Go to next path segment if no longer in range of the current one
@@ -478,7 +474,7 @@ namespace Anki
             SpeedController::SetUserCommandedDeceleration( path_[currPathSegment_].GetDecel() );
           }
 #if(DEBUG_PATH_FOLLOWER)
-          AnkiDebug( 33, "PathFollower", 225, "*** PATH SEGMENT %d: speed = %f, accel = %f, decel = %f", 4,
+          AnkiDebug( 352, "PathFollower.Update.SegmentSpeed", 593, "Segment %d, speed = %f, accel = %f, decel = %f", 4,
                 currPathSegment_,
                 path_[currPathSegment_].GetTargetSpeed(),
                 path_[currPathSegment_].GetAccel(),
@@ -505,7 +501,7 @@ namespace Anki
             currPathSegment_ = -1;
             realPathSegment_ = -1;
 #if(DEBUG_PATH_FOLLOWER)
-            AnkiWarn( 33, "PathFollower", 226, "PATH STARTING ERROR TOO LARGE (%f mm)", 1, distToPath_mm_);
+            AnkiWarn( 353, "PathFollower.Update.StartingErrorTooLarge", 594, "%f mm", 1, distToPath_mm_);
 #endif
             return RESULT_FAIL;
           }
@@ -558,7 +554,7 @@ namespace Anki
                                             dist_mm, acc_end_frac * duration_sec,
                                             MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_ACCEL_MMPS2,
                                             duration_sec, CONTROL_DT) ) {
-          AnkiWarn( 35, "PathFollower.DriveStraight.VPGFail", 228, "Fail", 0);
+          AnkiWarn( 354, "PathFollower.DriveStraight.VPGFail", 305, "", 0);
           return false;
         }
 
@@ -577,7 +573,7 @@ namespace Anki
         if (fabsf(endAccelDist) > LOOK_AHEAD_DIST_MM) {
           endAccelDist += LOOK_AHEAD_DIST_MM * signbit(endAccelDist);
         }
-        AnkiInfo( 33, "PathFollower", 229, "DRIVE STRAIGHT: total dist %f, startDist %f, endDist %f\n", 3, dist_mm, startAccelDist, endAccelDist);
+        AnkiInfo( 355, "PathFollower.DriveStraight.Params", 595, "total dist %f, startDist %f, endDist %f", 3, dist_mm, startAccelDist, endAccelDist);
 
         // Get intermediate poses: (1) after starting accel phase and (2) before ending accel phase
         f32 int_x1 = curr_x + startAccelDist * cosf(curr_angle.ToFloat());
@@ -594,8 +590,8 @@ namespace Anki
 
 
         // Create 3-segment path
-        AnkiInfo( 33, "PathFollower", 230, "DriveStraight accels: start %f, end %f, vel %f\n", 3, startAccel, endAccel, maxReachableVel);
-        AnkiInfo( 33, "PathFollower", 231, "DriveStraight path: (%f, %f) to (%f, %f) to (%f, %f) to (%f, %f)\n", 8, curr_x, curr_y, int_x1, int_y1, int_x2, int_y2, dest_x, dest_y);
+        AnkiDebug( 356, "PathFollower.DriveStraight.Accels", 596, "start %f, end %f, vel %f\n", 3, startAccel, endAccel, maxReachableVel);
+        AnkiDebug( 357, "PathFollower.DriveStraight.Points", 597, "(%f, %f) to (%f, %f) to (%f, %f) to (%f, %f)\n", 8, curr_x, curr_y, int_x1, int_y1, int_x2, int_y2, dest_x, dest_y);
         ClearPath();
         AppendPathSegment_Line(0, curr_x, curr_y, int_x1, int_y1, maxReachableVel, startAccel, startAccel);
         AppendPathSegment_Line(0, int_x1, int_y1, int_x2, int_y2, maxReachableVel, startAccel, startAccel);
@@ -628,7 +624,7 @@ namespace Anki
                                             sweep_rad, acc_end_frac * duration_sec,
                                             MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2,
                                             duration_sec, CONTROL_DT) ) {
-          AnkiWarn( 37, "PathFollower.DriveArc.VPGFail", 232, "Warn", 0);
+          AnkiWarn( 358, "PathFollower.DriveArc.VPGFail", 305, "", 0);
           return false;
         }
 
@@ -665,9 +661,9 @@ namespace Anki
         f32 endAccel = endAngAccel * absRadius;
 
 
-        AnkiInfo( 33, "PathFollower", 233, "DriveArc: curr_x,y  (%f, %f), center x,y (%f, %f), radius %f", 5, curr_x, curr_y, x_center, y_center, radius_mm);
-        AnkiInfo( 33, "PathFollower", 234, "DriveArc: start + sweep1 = ang1 (%f + %f = %f), end + sweep2 = ang2 ang2 (%f - %f = %f)", 6, startRad, startAccelSweep, int_ang1, startRad + sweep_rad, endAccelSweep, int_ang2);
-        AnkiInfo( 33, "PathFollower", 235, "DriveArc: targetSpeed %f, startAccel %f, endAccel %f", 3, targetSpeed, startAccel, endAccel);
+        AnkiDebug( 359, "PathFollower.DriveArc", 598, "curr_x,y  (%f, %f), center x,y (%f, %f), radius %f", 5, curr_x, curr_y, x_center, y_center, radius_mm);
+        AnkiDebug( 359, "PathFollower.DriveArc", 599, "start + sweep1 = ang1 (%f + %f = %f), end + sweep2 = ang2 ang2 (%f - %f = %f)", 6, startRad, startAccelSweep, int_ang1, startRad + sweep_rad, endAccelSweep, int_ang2);
+        AnkiDebug( 359, "PathFollower.DriveArc", 600, "targetSpeed %f, startAccel %f, endAccel %f", 3, targetSpeed, startAccel, endAccel);
 
         // Create 3-segment path
         ClearPath();
@@ -701,7 +697,8 @@ namespace Anki
                                             sweep_rad, acc_end_frac * duration_sec,
                                             MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2,
                                             duration_sec, CONTROL_DT)) {
-          AnkiWarn( 33, "PathFollower", 236, "DrivePointTurn vpg fail (sweep_rad: %f, acc_start_frac %f, acc_end_frac %f, duration_sec %f). Default to simple version", 4, sweep_rad, acc_start_frac, acc_end_frac, duration_sec);
+          AnkiWarn( 360, "PathFollower.DrivePointTurn.VPGFail", 601, "sweep_rad: %f, acc_start_frac %f, acc_end_frac %f, duration_sec %f", 4,
+                   sweep_rad, acc_start_frac, acc_end_frac, duration_sec);
           return false;
         }
 
@@ -718,8 +715,8 @@ namespace Anki
         f32 int_ang2 = dest_ang - endAccelSweep;
 
 
-        AnkiInfo( 33, "PathFollower", 237, "DrivePointTurn: start %f, int_ang1 %f, int_ang2 %f, dest %f", 4, curr_angle.ToFloat(), int_ang1, int_ang2, dest_ang);
-        AnkiInfo( 33, "PathFollower", 238, "DriveTurn: targetRotSpeed %f, startRotAccel %f, endRotAccel %f", 3, targetRotVel, startAngAccel, endAngAccel);
+        AnkiDebug( 361, "PathFollower.DrivePointTurn", 602, "start %f, int_ang1 %f, int_ang2 %f, dest %f", 4, curr_angle.ToFloat(), int_ang1, int_ang2, dest_ang);
+        AnkiDebug( 361, "PathFollower.DrivePointTurn", 603, "targetRotSpeed %f, startRotAccel %f, endRotAccel %f", 3, targetRotVel, startAngAccel, endAngAccel);
 
         // Create 3-segment path
         ClearPath();

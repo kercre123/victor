@@ -128,7 +128,7 @@ namespace Anki {
     //sets the steering controller constants
     void SetGains(f32 k1, f32 k2, f32 dockPathDistOffsetCap_mm, f32 dockPathAngularOffsetCap_rad)
     {
-      AnkiInfo( 11, "SteeringController", 424, "New gains: k1 %f, k2 %f, dist_cap %f mm, ang_cap %f rad", 4,
+      AnkiInfo( 239, "SteeringController.SetGains", 529, "New gains: k1 %f, k2 %f, dist_cap %f mm, ang_cap %f rad", 4,
             k1, k2, dockPathDistOffsetCap_mm, dockPathAngularOffsetCap_rad);
       K1_ = k1;
       K2_ = k2;
@@ -180,7 +180,7 @@ namespace Anki {
     void Manage()
     {
 #if(DEBUG_STEERING_CONTROLLER)
-      AnkiDebug( 11, "SteeringController", 104, "MODE: %d", 1, currSteerMode_);
+      AnkiDebug( 240, "SteeringController.Manage.Mode", 347, "%d", 1, currSteerMode_);
 #endif
       switch(currSteerMode_) {
 
@@ -359,7 +359,7 @@ namespace Anki {
       }
 
 #if(DEBUG_STEERING_CONTROLLER)
-      AnkiDebug( 11, "SteeringController", 106, " offsetError_mm: %f, headingError_rad: %f, curvature: %f, currSpeed: %d", 4, offsetError_mm, headingError_rad, curvature, currspeed);
+      AnkiDebug( 241, "SteeringController.RunLineFollowControllerNL.Errors", 530, "offsetError_mm: %f, headingError_rad: %f, curvature: %f, currSpeed: %d", 4, offsetError_mm, headingError_rad, curvature, currspeed);
 #endif
 
 
@@ -381,7 +381,7 @@ namespace Anki {
       s16 wright = (s16)CLIP(rightspeed,s16_MIN,s16_MAX);
 
 #if(DEBUG_STEERING_CONTROLLER)
-      AnkiDebug( 11, "SteeringController", 107, " STEERING: %d (L), %d (R)", 2, wleft, wright);
+      AnkiDebug( 242, "SteeringController.RunLineFollowControllerNL.Speeds", 531, "%d (L), %d (R)", 2, wleft, wright);
 #endif
 
       //Command the desired wheel speeds to the wheels
@@ -519,7 +519,7 @@ namespace Anki {
       // If not, make it at least that big.
       if (ABS(maxAngularVel_) < POINT_TURN_TERMINAL_VEL_RAD_PER_S) {
         maxAngularVel_ = POINT_TURN_TERMINAL_VEL_RAD_PER_S * (maxAngularVel_ > 0 ? 1 : -1);
-        AnkiWarn( 11, "SteeringController", 108, "(PointTurn.TooSlow): Speeding up commanded point turn of %f rad/s to %f rad/s", 2, maxAngularVel, maxAngularVel_);
+        AnkiWarn( 243, "SteeringController.ExecutePointTurn_Internal.PointTurnTooSlow", 532, "Speeding up commanded point turn of %f rad/s to %f rad/s", 2,  maxAngularVel, maxAngularVel_);
       }
 
 
@@ -530,7 +530,7 @@ namespace Anki {
       //AnkiDebug( 184, "PTURN", 485, "%d: %f   %f ", 3, HAL::GetTimeStamp(), angularVel, angularAccel);
       
       if (fabsf(angularVel) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC + 1e-6) {
-        AnkiWarn( 53, "SteeringController.ExecutePointTurn", 298, "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.", 2,
+        AnkiWarn( 244, "SteeringController.ExecutePointTurn_2.PointTurnTooFast", 533, "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.", 2,
               RAD_TO_DEG_F32(angularVel), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
         angularVel = copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, angularVel);
       }
@@ -558,7 +558,7 @@ namespace Anki {
     void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel, f32 angleTolerance, bool useShortestDir)
     {
       if (fabsf(maxAngularVel) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC + 1e-6) {
-        AnkiWarn( 53, "SteeringController.ExecutePointTurn", 298, "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.", 2,
+        AnkiWarn( 245, "SteeringController.ExecutePointTurn.PointTurnTooFast", 533, "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.", 2,
               RAD_TO_DEG_F32(maxAngularVel), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
         maxAngularVel = copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, maxAngularVel);
       }
@@ -577,9 +577,7 @@ namespace Anki {
 
       if (ABS(angularDistExpected_) < pointTurnAngTol_) {
         ExitPointTurn();
-#if(DEBUG_STEERING_CONTROLLER)
-        AnkiDebug( 12, "POINT TURN", 109, "Already at destination", 0);
-#endif
+        AnkiDebug( 246, "SteeringController.ExecutePointTurn.AlreadyAtDest", 305, "", 0);
         return;
       }
 
@@ -637,21 +635,21 @@ namespace Anki {
         f32 absAngularDistToTarget = ABS(angularDistToTarget);
         if (absAngularDistToTarget < pointTurnAngTol_) {
           if (inPositionStartTime_ == 0) {
-            AnkiDebug( 161, "ManagePointTurn.InRange", 443, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
+            AnkiDebug( 247, "SteeringController.ManagePointTurn.InRange", 534, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
             inPositionStartTime_ = HAL::GetTimeStamp();
           } else if (HAL::GetTimeStamp() - inPositionStartTime_ > IN_POSITION_THRESHOLD_MS || !WheelController::AreWheelsMoving()) {
 #           if(DEBUG_STEERING_CONTROLLER)
             f32 lWheelSpeed, rWheelSpeed, lDesSpeed, rDesSpeed;
             WheelController::GetFilteredWheelSpeeds(lWheelSpeed, rWheelSpeed);
             WheelController::GetDesiredWheelSpeeds(lDesSpeed, rDesSpeed);
-            AnkiDebug( 130, "ManagePointTurn.Stopping", 391, "currAngle %f, currDesired %f, currVel %f, distTraversed %f, distExpected %f,  wheelSpeeds %f %f, desSpeeds %f %f", 9,
+            AnkiDebug( 248, "SteeringController.ManagePointTurn.Stopping", 535, "currAngle %f, currDesired %f, currVel %f, distTraversed %f, distExpected %f,  wheelSpeeds %f %f, desSpeeds %f %f", 9,
                       currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), RAD_TO_DEG(currDesiredAngularVel), RAD_TO_DEG(angularDistTraversed_), RAD_TO_DEG(angularDistExpected_), 0,0,0,0);
 #           endif
             ExitPointTurn();
             return;
           }
         } else {
-          AnkiDebugPeriodic(100, 159, "ManagePointTurn.OOR", 443, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
+          AnkiDebugPeriodic(100, 249, "SteeringController.ManagePointTurn.OOR", 534, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
           inPositionStartTime_ = 0;
 
           
@@ -662,7 +660,7 @@ namespace Anki {
               pointTurnIntegralPowerMaxedStartTime_ = HAL::GetTimeStamp();
               pointTurnIntegralPowerMaxedStartAngle_ = currAngle;
             } else if (HAL::GetTimeStamp() - pointTurnIntegralPowerMaxedStartTime_ > POINT_TURN_STUCK_THRESHOLD_MS) {
-              AnkiInfo( 129, "ManagePointTurn.StoppingCuzStuck", 375, "currAngle %f, currDesired %f", 2, currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle));
+              AnkiInfo( 250, "SteeringController.ManagePointTurn.StoppingCuzStuck", 536, "currAngle %f, currDesired %f", 2, currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle));
               ExitPointTurn();
               return;
             }
@@ -704,12 +702,12 @@ namespace Anki {
           pointTurnAngleErrorSum_ = CLIP(pointTurnAngleErrorSum_ + angularSpeedError, -pointTurnSpeedMaxIntegralError_, pointTurnSpeedMaxIntegralError_);
         }
         
-        //AnkiDebug(131, "PointTurnSpeed", 377, "des %f deg/s, meas: %f deg/s, arcVel %d mm/s, errorSum %f", 4, RAD_TO_DEG(currDesiredAngularVel), RAD_TO_DEG(currAngularSpeed), arcVel, pointTurnAngleErrorSum_ );
+        //AnkiDebug( 131, "PointTurnSpeed", 377, "des %f deg/s, meas: %f deg/s, arcVel %d mm/s, errorSum %f", 4, RAD_TO_DEG(currDesiredAngularVel), RAD_TO_DEG(currAngularSpeed), arcVel, pointTurnAngleErrorSum_ );
       }
 
 
 #if(DEBUG_STEERING_CONTROLLER)
-      AnkiDebug( 12, "POINT TURN", 112, "angularDistToTarget: %f radians, arcVel: %d mm/s", 2, angularDistToTarget, arcVel);
+      AnkiDebug( 251, "SteeringController.ManagePointTurn.DistToTarget", 537, "angularDistToTarget: %f radians, arcVel: %d mm/s", 2,  angularDistToTarget, arcVel);
 #endif
 
       WheelController::SetDesiredWheelSpeeds(-arcVel, arcVel);
@@ -719,9 +717,7 @@ namespace Anki {
       if (!isPointTurnWithTarget_) {
         if (arcVel == 0 && maxAngularVel_ == 0) {
           ExitPointTurn();
-#if(DEBUG_STEERING_CONTROLLER)
-          AnkiDebug( 12, "POINT TURN", 113, "Stopping because 0 vel reached", 0);
-#endif
+          AnkiDebug( 252, "SteeringController.ManagePointTurn.StoppingBecause0Vel", 305, "", 0);
           return;
         }
       }

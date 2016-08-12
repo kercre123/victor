@@ -716,9 +716,16 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
         }
       }
 
-      PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.ReadOpFailed",
-                          "BaseTag: %s, Tag: 0x%x, write: %d, result: %s",
-                          baseTagStr, tag, payload.report.write, EnumToString(payload.report.result));
+      // If the entry doesn't exist, it shouldn't be a warning
+      if (payload.report.result == NVStorage::NVResult::NV_NOT_FOUND) {
+        PRINT_NAMED_INFO("NVStorageComponent.HandleNVOpResult.ReadEntryNotFound",
+                         "BaseTag: %s, Tag: 0x%x, write: %d, result: %s",
+                         baseTagStr, tag, payload.report.write, EnumToString(payload.report.result));
+      } else {
+        PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.ReadOpFailed",
+                            "BaseTag: %s, Tag: 0x%x, write: %d, result: %s",
+                            baseTagStr, tag, payload.report.write, EnumToString(payload.report.result));
+      }
     }
 
     

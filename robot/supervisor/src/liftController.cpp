@@ -192,7 +192,7 @@ namespace Anki {
 
       void StartCalibrationRoutine()
       {
-        AnkiEvent( 16, "LiftController", 144, "Starting calibration", 0);
+        AnkiEvent( 277, "LiftController.StartingCalibration", 305, "", 0);
         Enable();
         calState_ = LCS_LOWER_LIFT;
         isCalibrated_ = false;
@@ -251,7 +251,7 @@ namespace Anki {
             case LCS_SET_CURR_ANGLE:
               // Wait for motor to relax and then set angle
               if (HAL::GetTimeStamp() - lastLiftMovedTime_ms > LIFT_RELAX_TIME_MS) {
-                AnkiEvent( 16, "LiftController", 91, "Calibrated", 0);
+                AnkiEvent( 278, "LiftController.Calibrated", 305, "", 0);
                 ResetAnglePosition(LIFT_ANGLE_LOW_LIMIT);
                 calState_ = LCS_IDLE;
                 Messages::SendMotorCalibrationMsg(MOTOR_LIFT, false);
@@ -501,7 +501,7 @@ namespace Anki {
             enableAtTime_ms_ = HAL::GetTimeStamp() + REENABLE_TIMEOUT_MS;
             return RESULT_OK;
           } else if (HAL::GetTimeStamp() >= enableAtTime_ms_) {
-            AnkiInfo( 16, "LiftController", 151, "Lift auto-enabled", 0);
+            AnkiEvent( 279, "LiftController.AutoEnabled", 305, "", 0);
             Enable();
           } else {
             return RESULT_OK;
@@ -595,8 +595,8 @@ namespace Anki {
         Ki_ = ki;
         Kd_ = kd;
         MAX_ERROR_SUM = maxIntegralError;
-        AnkiInfo( 16, "LiftController", 153, "New lift gains: kp = %f, ki = %f, kd = %f, maxSum = %f", 4,
-              Kp_, Ki_, Kd_, MAX_ERROR_SUM);
+        AnkiInfo( 280, "LiftController.SetGains", 563, "New lift gains: kp = %f, ki = %f, kd = %f, maxSum = %f", 4,
+                 Kp_, Ki_, Kd_, MAX_ERROR_SUM);
       }
 
       void Stop()

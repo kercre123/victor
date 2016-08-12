@@ -77,7 +77,7 @@ namespace Anki {
 
     //sets the wheel PID controller constants
     void SetGains(const f32 kp, const f32 ki, const f32 maxIntegralError) {
-      AnkiInfo( 13, "WheelController", 114, "New gains: kp=%f, ki=%f, maxSum=%f", 3, kp, ki, maxIntegralError);
+      AnkiInfo( 326, "WheelController.SetGains", 580, "New gains: kp=%f, ki=%f, maxSum=%f", 3, kp, ki, maxIntegralError);
       Kp_ = kp;
       Ki_ = ki;
       MAX_ERROR_SUM_LEFT = maxIntegralError;

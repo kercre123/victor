@@ -437,7 +437,7 @@ namespace Anki {
             f32 manualSpeed = 0.5f * (msg.lwheel_speed_mmps + msg.rwheel_speed_mmps);
             PathFollower::SetManualPathSpeed(manualSpeed, 1000, 1000);
           } else {
-            AnkiInfo( 105, "Messages.Process_drive.Ignoring", 354, "Ignoring command because robot is currently following a path.", 0);
+            AnkiInfo( 338, "Messages.Process_drive.IgnoringBecauseAlreadyOnPath", 305, "", 0);
           }
           return;
         }
@@ -704,7 +704,6 @@ namespace Anki {
       
       void Process_enableStopOnCliff(const RobotInterface::EnableStopOnCliff& msg)
       {
-        AnkiInfo( 205, "EnableStopOnCliff", 512, "enabled %d", 1, msg.enable);
         ProxSensors::EnableStopOnCliff(msg.enable);
       }
 

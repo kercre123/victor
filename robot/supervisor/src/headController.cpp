@@ -115,7 +115,7 @@ namespace HeadController {
 
     void StartCalibrationRoutine()
     {
-      AnkiEvent( 7, "HeadController", 90, "Starting Head calibration", 0);
+      AnkiEvent( 281, "HeadController.StartingCalibration", 305, "", 0);
       Enable();
       potentialBurnoutStartTime_ms_ = 0;
       
@@ -183,7 +183,7 @@ namespace HeadController {
                 HAL::MotorSetPower(MOTOR_HEAD, power_);
 
 #ifdef          CALIB_WHILE_APPLYING_POWER
-                AnkiEvent( 7, "HeadController", 91, "Calibrated", 0);
+                AnkiEvent( 282, "HeadController.CalibratedWhileApplyingPower", 305, "", 0);
                 ResetLowAnglePosition();
                 calState_ = HCS_IDLE;
                 Messages::SendMotorCalibrationMsg(MOTOR_HEAD, false);
@@ -202,7 +202,7 @@ namespace HeadController {
           case HCS_SET_CURR_ANGLE:
             // Wait for motor to relax and then set angle
             if (HAL::GetTimeStamp() - lastHeadMovedTime_ms > HEAD_STOP_TIME) {
-              AnkiEvent( 7, "HeadController", 91, "Calibrated", 0);
+              AnkiEvent( 283, "HeadController.Calibrated", 305, "", 0);
               ResetLowAnglePosition();
               calState_ = HCS_IDLE;
               Messages::SendMotorCalibrationMsg(MOTOR_HEAD, false);
@@ -498,7 +498,7 @@ namespace HeadController {
       Ki_ = ki;
       Kd_ = kd;
       MAX_ERROR_SUM = maxIntegralError;
-      AnkiInfo( 7, "HeadController", 99, "New head gains: kp = %f, ki = %f, kd = %f, maxSum = %f", 4,
+      AnkiInfo( 284, "HeadController.SetGains", 564, "New head gains: kp = %f, ki = %f, kd = %f, maxSum = %f", 4,
             Kp_, Ki_, Kd_, MAX_ERROR_SUM);
     }
 

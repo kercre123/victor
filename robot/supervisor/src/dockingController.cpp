@@ -509,7 +509,7 @@ namespace Anki {
       {
         const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
 
-        AnkiConditionalErrorAndReturnValue(headCamInfo != NULL, RESULT_FAIL_INVALID_OBJECT, 4, "DockingController::Init()", 29, "NULL head cam info!\n", 0);
+        AnkiConditionalErrorAndReturnValue(headCamInfo != NULL, RESULT_FAIL_INVALID_OBJECT, 362, "DockingController.Init.NullHeadCamInfo", 305, "", 0);
 
         // Compute FOV from focal length (currently used for tracker prediciton)
         headCamFOV_ver_ = 2.f * atanf(static_cast<f32>(headCamInfo->nrows) /
@@ -545,7 +545,7 @@ namespace Anki {
             // so if action retries we are close to predock pose
             if(dockingMethod_ == HYBRID_DOCKING)
             {
-              AnkiDebug( 5, "DockingController", 475, "Backing up and stopping", 0);
+              AnkiDebug( 299, "DockingController.Update.BackingUpAndStopping", 305, "", 0);
               StopDocking(DOCK_FAILURE_RETRY);
             }
           }
@@ -581,7 +581,7 @@ namespace Anki {
           u32 currTime = HAL::GetMicroCounter();
           if (lastTime != 0) {
             u32 period = (currTime - lastTime)/1000;
-            AnkiDebug( 5, "DockingController", 30, "PERIOD: %d ms\n", 1, period);
+            AnkiDebug( 300, "DockingController.Update.TrackerPeriod", 568, "%d ms", 1, period);
           }
           lastTime = currTime;
 #endif
@@ -592,7 +592,7 @@ namespace Anki {
             if(dockingErrSignalMsg_.x_distErr > pointOfNoReturnDistMM_)
             {
 #if(DEBUG_DOCK_CONTROLLER)
-              AnkiDebug( 5, "DockingController", 427, "No longer past point of no return (%f > %d)", 2,
+              AnkiDebug( 301, "DockingController.Update.NoLongerPastPointOfNoReturn", 569, "(%f > %d)", 2,
                         dockingErrSignalMsg_.x_distErr, pointOfNoReturnDistMM_);
 #endif
               pastPointOfNoReturn_ = false;
@@ -601,7 +601,7 @@ namespace Anki {
 
 
 #if(DEBUG_DOCK_CONTROLLER)
-          AnkiDebug( 5, "DockingController", 32, "Received docking error signal: time=%d, x_distErr=%f, y_horErr=%f, z_height=%f, angleErr=%fdeg", 5,
+          AnkiDebug( 302, "DockingController.Update.ReceivedErrorSignal", 570, "time=%d, x_distErr=%f, y_horErr=%f, z_height=%f, angleErr=%fdeg", 5,
                 dockingErrSignalMsg_.timestamp,
                 dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr,
                 dockingErrSignalMsg_.z_height, RAD_TO_DEG_F32(dockingErrSignalMsg_.angleErr));
@@ -654,7 +654,7 @@ namespace Anki {
           // Marker has been outside field of view.
           // Check if it should be visible again.
           if (IsMarkerInFOV(lastMarkerPoseObservedInValidFOV_, MARKER_WIDTH)) {
-            AnkiDebug( 5, "DockingController", 33, "Marker should be INSIDE FOV\n", 0);
+            AnkiDebug( 303, "DockingController.Update.MarkerExpectedInsideFOV", 305, "", 0);
             // Fake the error signal received timestamp to reset the timeout
             lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
             markerOutOfFOV_ = false;
@@ -671,7 +671,7 @@ namespace Anki {
             if (PathFollower::IsTraversingPath() &&
                 !IsMarkerInFOV(lastMarkerPoseObservedInValidFOV_, MARKER_WIDTH - 5.f) &&
                 distToMarker > FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM) {
-              AnkiDebug( 5, "DockingController", 34, "Marker should be OUTSIDE FOV\n", 0);
+              AnkiDebug( 304, "DockingController.Update.MarkerExpectedOutsideFOV", 305, "", 0);
               markerOutOfFOV_ = true;
             }
           }
@@ -681,7 +681,7 @@ namespace Anki {
         // Check if we are beyond point of no return distance
         if (!pastPointOfNoReturn_ && (pointOfNoReturnDistMM_ != 0) && (distToMarker < pointOfNoReturnDistMM_)) {
 #if(DEBUG_DOCK_CONTROLLER)
-          AnkiDebug( 5, "DockingController", 35, "Point of no return (%f < %d) mode:%i", 3, distToMarker, pointOfNoReturnDistMM_, mode_);
+          AnkiDebug( 305, "DockingController.Update.PointOfNoReturn", 571, "(%f < %d) mode:%i", 3, distToMarker, pointOfNoReturnDistMM_, mode_);
 #endif
           pastPointOfNoReturn_ = true;
           mode_ = APPROACH_FOR_DOCK;
@@ -705,7 +705,7 @@ namespace Anki {
                 && !markerOutOfFOV_
               && (HAL::GetTimeStamp() - lastDockingErrorSignalRecvdTime_ > GIVEUP_DOCKING_TIMEOUT_MS)) {
               StopDocking(DOCK_FAILURE_TOO_LONG_WITHOUT_BLOCKPOSE);
-              AnkiDebug( 5, "DockingController", 36, "Too long without block pose (currTime %d, lastErrSignal %d). Giving up.", 2, HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
+              AnkiDebug( 306, "DockingController.LOOKING_FOR_BLOCK.TooLongWithoutErrorSignal", 572, "currTime %d, lastErrSignal %d, Giving up.", 2, HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
             }
             break;
           case APPROACH_FOR_DOCK:
@@ -721,7 +721,7 @@ namespace Anki {
               PathFollower::ClearPath();
               SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
               mode_ = LOOKING_FOR_BLOCK;
-              AnkiDebug( 5, "DockingController", 37, "Too long without block pose (currTime %d, lastErrSignal %d). Looking for block...\n", 2, HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
+              AnkiDebug( 307, "DockingController.APPROACH_FOR_DOCK.TooLongWithoutErrorSignal", 573, "currTime %d, lastErrSignal %d, Looking for block...", 2, HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
               break;
             }
             
@@ -776,7 +776,7 @@ namespace Anki {
                       ABS(dockingErrSignalMsg_.y_horErr) > LATERAL_DOCK_TOLERANCE_AT_DOCK_MM ||
                       ABS(dockingErrSignalMsg_.angleErr) > ERRMSG_NOT_IN_POSITION_ANGLE_TOL))
                   {
-                    AnkiDebug( 5, "DockingController", 44, "Finished path but error signal too great", 0);
+                    AnkiDebug( 308, "DockingController.Update.FinishedPathButErrorSignalTooLarge_1", 305, "", 0);
                     inPosition = false;
                     
                     // If we aren't in position but are relativly close then we want to do the Hanns maneuver
@@ -786,7 +786,7 @@ namespace Anki {
                         ABS(dockingErrSignalMsg_.y_horErr) <= ERRMSG_HM_LATERAL_DOCK_TOL_MM &&
                         ABS(dockingErrSignalMsg_.angleErr) <= ERRMSG_HM_ANGLE_TOL)
                     {
-                      AnkiDebug( 5, "DockingController", 40, "Able to do Hanns maneuver", 0);
+                      AnkiDebug( 309, "DockingController.Update.AbleToDoHannsManeuver_1", 305, "", 0);
   #if(!SIMULATOR)
                       doHannsManeuver = true;
   #endif
@@ -799,14 +799,14 @@ namespace Anki {
                            ABS(rel_horz_dist_block) > HORZ_DOCK_TOL_MM ||
                            ABS(rel_angle_to_block) > POSE_NOT_IN_POSITION_ANGLE_TOL))
                   {
-                    AnkiDebug( 5, "DockingController", 428, "Finished path but pose too great", 0);
+                    AnkiDebug( 310, "DockingController.Update.FinishedPathButErrorSignalTooLarge_2", 305, "", 0);
                     inPosition = false;
                     
                     if(rel_vert_dist_block < VERT_DOCK_TOL_MM+POSE_HM_DIST_TOL &&
                         ABS(rel_horz_dist_block) < POSE_HM_HORZ_TOL_MM &&
                         ABS(rel_angle_to_block) < POSE_HM_ANGLE_TOL)
                     {
-                      AnkiDebug( 5, "DockingController", 436, "Able to do Hanns maneuver", 0);
+                      AnkiDebug( 311, "DockingController.Update.AbleToDoHannsManeuver_2", 305, "", 0);
   #if(!SIMULATOR)
                       doHannsManeuver = true;
   #endif
@@ -831,7 +831,7 @@ namespace Anki {
                      !isAligning)
                   {
                     SendDockingStatusMessage(STATUS_DOING_HANNS_MANEUVER);
-                    AnkiDebug( 5, "DockingController", 425, "Executing Hanns maneuver", 0);
+                    AnkiDebug( 312, "DockingController.Update.ExecutingHannsManeuver", 305, "", 0);
                     
                     // Hanns Maneuver was accidentally tuned to work with specific gains so apply them
                     ApplyDockingSteeringGains();
@@ -885,13 +885,13 @@ namespace Anki {
                   else
                   {
                     SendDockingStatusMessage(STATUS_BACKING_UP);
-                    AnkiDebug( 5, "DockingController", 437, "Backing up", 0);
+                    AnkiDebug( 313, "DockingController.Update.BackingUp", 305, "", 0);
                     
                     // If we have failed too many times just give up
                     if(numDockingFails_++ >= maxDockRetries_)
                     {
                       StopDocking(DOCK_FAILURE_RETRY);
-                      AnkiDebug( 5, "DockingController", 438, "Num docking fails reached", 0);
+                      AnkiDebug( 314, "DockingController.Update.TooManyDockingFails", 574, "MaxRetries %d", 1, maxDockRetries_);
                       break;
                     }
                     
@@ -927,8 +927,8 @@ namespace Anki {
               // Otherwise we are in position and docking can succeed
               else if(inPosition && failureMode_ == NO_FAILURE)
               {
-                AnkiDebug( 5, "DockingController", 416, "vert:%f hort:%f rel_x:%f rel_y:%f t:%d", 5, rel_vert_dist_block, ABS(rel_horz_dist_block), dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr, (int)(HAL::GetTimeStamp()-dockingErrSignalMsg_.timestamp));
-                AnkiDebug( 5, "DockingController", 38, "*** DOCKING SUCCESS ***", 0);
+                AnkiDebug( 315, "DockingController.Update", 575, "vert:%f hort:%f rel_x:%f rel_y:%f t:%d", 5, rel_vert_dist_block, ABS(rel_horz_dist_block), dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr, (int)(HAL::GetTimeStamp()-dockingErrSignalMsg_.timestamp));
+                AnkiDebug( 316, "DockingController.Update.DockingSucces", 305, "", 0);
                 if(numDockingFails_ > 0)
                 {
                   StopDocking(DOCK_SUCCESS_RETRY);
@@ -943,8 +943,7 @@ namespace Anki {
           }
           default:
             mode_ = IDLE;
-            AnkiDebug( 5, "DockingController", 39, "Reached default case in DockingController "
-                  "mode switch statement.(1)", 0);
+            AnkiError( 317, "DockingController.Update.InvalidMode", 347, "%d", 1, mode_);
             break;
         }
 
@@ -962,7 +961,7 @@ namespace Anki {
       {
         // Check for readings that we do not expect to get
         if (rel_x < 0.f || ABS(rel_rad) > 0.75f*PIDIV2_F) {
-          AnkiWarn( 5, "DockingController", 429, "Ignoring out of range docking error signal (%f, %f, %f)", 3, rel_x, rel_y, rel_rad);
+          AnkiWarn( 318, "DockingController.SetRelDockPose.OORErrorSignal", 576, "x: %f, y: %f, rad: %f", 3, rel_x, rel_y, rel_rad);
           return;
         }
         
@@ -976,7 +975,7 @@ namespace Anki {
         if(dockingMethod_ != TRACKER_DOCKING || IGNORE_FAST_ROTATING_ERRSIG)
         {
           if (ABS(IMUFilter::GetRotationSpeed()) > 0.2f) {
-            AnkiDebug( 5, "DockingController", 430, "Ignoring error signal due to fast rotation", 0);
+            AnkiDebug( 319, "DockingController.SetRelDockPose.IgnoringErrorSignalDueToFastRotation", 305, "", 0);
             return;
           }
         }
@@ -1021,7 +1020,7 @@ namespace Anki {
         // rel_x is generally greater than dockOffsetDistX_
         if (rel_x <= dockOffsetDistX_+DOCK_OFFSET_DIST_X_OFFSET && ABS(rel_y) <= LATERAL_DOCK_TOLERANCE_AT_DOCK_MM) {
 #if(DEBUG_DOCK_CONTROLLER)
-          AnkiDebug( 5, "DockingController", 41, "DOCK POSE REACHED (dockOffsetDistX = %f)", 1, dockOffsetDistX_+DOCK_OFFSET_DIST_X_OFFSET);
+          AnkiDebug( 320, "DockingController.SetRelDockPose.DockPoseReached", 577, "dockOffsetDistX = %f", 1, dockOffsetDistX_+DOCK_OFFSET_DIST_X_OFFSET);
 #endif
           return;
         }
@@ -1039,7 +1038,7 @@ namespace Anki {
 #if(DEBUG_DOCK_CONTROLLER)
         Anki::Embedded::Pose2d currPose;
         Localization::GetCurrentMatPose(currPose.x(), currPose.y(), currPose.angle());
-        AnkiDebug( 5, "DockingController", 42, "HistPose %f %f %f (t=%d), currPose %f %f %f (t=%d)\n", 8,
+        AnkiDebug( 321, "DockingController.SetRelDockPose", 578, "HistPose %f %f %f (t=%d), currPose %f %f %f (t=%d)\n", 8,
                   histPose.x(), histPose.y(), histPose.angle().getDegrees(), t,
                   currPose.x(), currPose.y(), currPose.angle().getDegrees(), HAL::GetTimeStamp());
 #endif
@@ -1059,7 +1058,7 @@ namespace Anki {
              ABS(prev_blockPose_y_ - blockPose_y) > DELTA_BLOCKPOSE_Y_TOL_MM ||
              ABS(prev_blockPose_a_ - blockPose_a) > DELTA_BLOCKPOSE_A_TOL_RAD)
           {
-            AnkiDebug( 5, "DockingController", 471, "Acquire new signal %f %f %f", 3,
+            AnkiDebug( 322, "DockingController.SetRelDockPose.AcquireNewSignal", 579, "%f %f %f", 3,
                       prev_blockPose_x_ - blockPose_x,
                       prev_blockPose_y_ - blockPose_y,
                       prev_blockPose_a_ - blockPose_a);
@@ -1113,7 +1112,7 @@ namespace Anki {
           // Marker has been outside field of view,
           // but the latest error signal may indicate that it is back in.
           if (IsMarkerInFOV(blockPose_, MARKER_WIDTH)) {
-            AnkiDebug( 5, "DockingController", 43, "Marker signal is INSIDE FOV\n", 0);
+            AnkiDebug( 323, "DockingController.SetRelDockPose.MarkerInsideFOV", 305, "", 0);
             markerOutOfFOV_ = false;
           } else {
             //AnkiDebug( 5, "DockingController", 431, "Marker is expected to be out of FOV. Ignoring error signal\n", 0);
@@ -1179,7 +1178,7 @@ namespace Anki {
           PathFollower::ClearPath();
 
           if (++endRadiiIdx == NUM_END_RADII) {
-            AnkiDebug( 5, "DockingController", 439, "Could not find Dubins Path", 0);
+            AnkiDebug( 324, "DockingController.SetRelDockPose.DubinsPathFailed", 305, "", 0);
             followingBlockNormalPath_ = true;
             break;
           }
@@ -1370,7 +1369,7 @@ namespace Anki {
 
         // Debug
         if (!createdValidPath_) {
-          AnkiError( 5, "DockingController", 432, "DockingController: Failed to create path\n", 0);
+          AnkiError( 325, "DockingController.SetRelDockPose.FailedToCreatePath", 305, "", 0);
           PathFollower::PrintPath();
         }
 

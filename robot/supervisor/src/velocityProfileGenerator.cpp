@@ -267,7 +267,9 @@ namespace Anki {
     vel_max = fabsf(vel_max);
 
     // Check that the acceleration durations are valid given the total duration
-    AnkiConditionalWarnAndReturnValue((acc_start_duration + acc_end_duration <= duration), false, 31, "VPG", 204, "acc_start_duration + acc_end_duration exceeds total duration (%f + %f > %f)", 3, acc_start_duration, acc_end_duration, duration);
+    AnkiConditionalWarnAndReturnValue((acc_start_duration + acc_end_duration <= duration),
+                                      false, 232, "VPG.StartProfile_fixedDuration.AccDurationsExceedTotal", 522, "acc_start_duration + acc_end_duration exceeds total duration (%f + %f > %f)", 3,
+                                      acc_start_duration, acc_end_duration, duration);
 
     float ts = acc_start_duration;
     float te = acc_end_duration;
@@ -282,7 +284,8 @@ namespace Anki {
 
     // If accelerating to a vel_mid of 0 for the acc_start phase actually passes the end_pos,
     // then return false as this is probably not an intended profile.
-    AnkiConditionalWarnAndReturnValue(!(((dist > 0) == (distWhenVelMid0 > 0)) && (fabsf(distWhenVelMid0) > fabsf(dist))), false, 31, "VPG", 205, "end_pos reached during starting acc phase. Consider reducing acc_start duration or decreasing vel_start magnitude.", 0);
+    AnkiConditionalWarnAndReturnValue(!(((dist > 0) == (distWhenVelMid0 > 0)) && (fabsf(distWhenVelMid0) > fabsf(dist))),
+                                      false, 233, "VPG.StartProfile_fixedDuration.EndPosReachedDuringStartingAcc", 523, "end_pos reached during starting acc phase. Consider reducing acc_start duration or decreasing vel_start magnitude.", 0);
 
     float distWhenVelMidIsVelStart = vel_start * (duration - acc_end_duration) + 0.5f*(vel_start * acc_end_duration);
     bool isVelMidGTVelStart = (dist >= distWhenVelMidIsVelStart);
@@ -308,12 +311,12 @@ namespace Anki {
       float C = 0.5f*vs*vs*ts - vs*dist;
       float discr = B*B - 4*A*C;
 
-      AnkiConditionalWarnAndReturnValue((discr >=  0), false, 31, "VPG", 206, "discr < 0  (A = %f, B = %f, C = %f)", 3, A, B, C);
+      AnkiConditionalWarnAndReturnValue((discr >=  0), false, 234, "VPG.StartProfile_fixedDuration.NegativeDiscriminant", 524, "A = %f, B = %f, C = %f", 3, A, B, C);
 
       float sqrtDiscr = sqrtf(discr);
       vm = (-B + sqrtDiscr) / (2*A);
     
-      AnkiConditionalWarnAndReturnValue(vm <= 0, false, 31, "VPG", 207, "vm > 0  (A = %f, B = %f, C = %f)", 3, A, B, C);
+      AnkiConditionalWarnAndReturnValue(vm <= 0, false, 235, "VPG.StartProfile_fixedDuration.NegativeVm", 525, "vm > 0  (A = %f, B = %f, C = %f)", 3, A, B, C);
 
     } else {
       // Cases 1 and 2
@@ -322,14 +325,15 @@ namespace Anki {
 
 
     // Check if any velocity exceeds the max
-    AnkiConditionalWarnAndReturnValue(!((fabsf(vs) > vel_max) || (fabsf(vm) > vel_max)), false, 31, "VPG", 208, "vs = %f, vm = %f, vel_max = %f", 3, vs, vm, vel_max);
+    AnkiConditionalWarnAndReturnValue(!((fabsf(vs) > vel_max) || (fabsf(vm) > vel_max)), false, 236, "VPG.StartProfile_fixedDuration.VelExceedsMax", 526, "vs = %f, vm = %f, vel_max = %f", 3, vs, vm, vel_max);
 
     // Check if any acceleration exceeds the max allowed
     float acc_start = fabsf(vm-vs)/ts;
     float acc_end = fabsf(vm/te);
     if ((acc_start > acc_max) || (acc_end > acc_max))
     {
-      AnkiError( 31, "VPG", 209, "acc_start = %f, acc_end = %f, acc_max = %f", 3, acc_start, acc_end, acc_max);
+      AnkiWarn( 237, "VPG.StartProfile_fixedDuration.AccelMaxExceeded", 527, "acc_start = %f, acc_end = %f, acc_max = %f", 3,
+               acc_start, acc_end, acc_max);
       return false;
     }
 
@@ -445,7 +449,7 @@ namespace Anki {
 
 
 #if(DEBUG_VPG)
-    AnkiDebug( 32, "VPG::Step()", 214, "currVel %f, currPos %f, currDistToTarget %f, isDecel %d", 4, currVel_, currPos_, currDistToTarget, isDecel_);
+    AnkiDebug( 238, "VPG.Step", 528, "currVel %f, currPos %f, currDistToTarget %f, isDecel %d", 4, currVel_, currPos_, currDistToTarget, isDecel_);
 #endif
 
 
