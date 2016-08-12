@@ -1136,6 +1136,7 @@ namespace Anki {
                                                               objectID,
                                                               false,
                                                               0,
+                                                              0,
                                                               useManualSpeed);
       AddDockAction(action);
       SetProxyTag(action->GetTag());
@@ -1145,7 +1146,9 @@ namespace Anki {
     
     DriveToPlaceRelObjectAction::DriveToPlaceRelObjectAction(Robot& robot,
                                                              const ObjectID& objectID,
+                                                             const bool placingOnGround,
                                                              const f32 placementOffsetX_mm,
+                                                             const f32 placementOffsetY_mm,
                                                              const bool useApproachAngle,
                                                              const f32 approachAngle_rad,
                                                              const bool useManualSpeed,
@@ -1163,8 +1166,9 @@ namespace Anki {
     {
       PlaceRelObjectAction* action = new PlaceRelObjectAction(robot,
                                                               objectID,
-                                                              true,
+                                                              placingOnGround,
                                                               placementOffsetX_mm,
+                                                              placementOffsetY_mm,
                                                               useManualSpeed);
       AddDockAction(action);
       SetProxyTag(action->GetTag());

@@ -349,7 +349,9 @@ namespace Anki {
       // chooses preAction pose closest to approachAngle_rad if useApproachAngle == true.
       DriveToPlaceRelObjectAction(Robot& robot,
                                   const ObjectID& objectID,
+                                  const bool placingOnGround = true,
                                   const f32 placementOffsetX_mm = 0,
+                                  const f32 placementOffsetY_mm = 0,
                                   const bool useApproachAngle = false,
                                   const f32 approachAngle_rad = 0,
                                   const bool useManualSpeed = false,

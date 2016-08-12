@@ -395,6 +395,34 @@ namespace Vision {
       case PoseState::Unknown: return "Unknown";
     }
   }
+  
+  bool ObservableObject::IsRestingAtHeight(float height, float tolerence) const
+  {
+    if(IsPoseStateUnknown()){
+      return false;
+    }
+    
+    f32 blockHeight = 0;
+    const RotationMatrix3d Rmat = GetPose().GetWithRespectToOrigin().GetRotationMatrix();
+    AxisName axis = Rmat.GetRotatedParentAxis<'Z'>();
+    switch(axis){
+      case AxisName::X_POS:
+      case AxisName::X_NEG:
+        blockHeight = GetSize().x();
+        break;
+      case AxisName::Y_POS:
+      case AxisName::Y_NEG:
+        blockHeight = GetSize().y();
+        break;
+      case AxisName::Z_POS:
+      case AxisName::Z_NEG:
+        blockHeight = GetSize().z();
+        break;
+    }
+    
+    const Pose3d& pose = GetPose().GetWithRespectToOrigin();
+    return std::abs(height - (pose.GetTranslation().z() - blockHeight/2)) < tolerence;
+  }
 
   void ObservableObject::SetObservationTimes(const ObservableObject* otherObject)
   {

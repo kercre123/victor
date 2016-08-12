@@ -116,6 +116,16 @@
          "behaviorGroups" : [ "SparksPickUpCube" ]
         }
      },
+     {
+       "name" : "SparksBuildPyramid",
+       "requireSpark":"BuildPyramid",
+       "behaviorChooser" :
+       {
+         "type" : "simple",
+         // this are the behaviors that are allowed in this behavior chooser
+         "behaviorGroups" : [ "SparksBuildPyramid" ]
+       }
+     },
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // FreeplayHiking : goal to explore Cozmo's surroundings
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

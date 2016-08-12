@@ -1,0 +1,8 @@
+{
+  "behaviorType": "BuildPyramid",
+  "name": "sparksBuildPyramid",
+  "flatScore": 10.0,
+  "behaviorGroups": [
+    "SparksBuildPyramid"
+  ]
+}

@@ -365,7 +365,6 @@ namespace Anki {
   // stores result in outDistanceSQ if the return value is true, untouched if false
   bool ComputeDistanceSQBetween(const Pose3d& pose1, const Pose3d& pose2, f32& outDistanceSQ);
   
-  f32 ComputeEuclidianDistanceBetween(const Pose3d& pose1, const Pose3d& pose2);
   
   //
   // Inline accessors:

@@ -301,7 +301,12 @@ bool ReactionObjectData::ObjectOutsideIgnoreArea(const Robot& robot)
   
   const Pose3d& blockPose = object->GetPose();
   const Pose3d& robotPose = robot.GetPose();
-  f32 distance = ComputeEuclidianDistanceBetween(blockPose, robotPose);
+  f32 distance = 0;
+  bool distanceComputed = ComputeDistanceBetween(blockPose, robotPose, distance);
+  if(!distanceComputed){
+    return false;
+  }
+  
   return distance > kRadiusRobotTolerence;
 }
 

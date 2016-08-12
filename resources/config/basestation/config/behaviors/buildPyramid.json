@@ -1,0 +1,10 @@
+{
+  "behaviorType": "BuildPyramid",
+  "name": "buildPyramid",
+  "requiredUnlockId": "BuildPyramid",
+  "flatScore": 0.9,
+  "behaviorGroups": [
+    "FreePlayOne",
+    "ShowOff"
+  ]
+}

@@ -213,7 +213,9 @@ IActionRunner* GetPlaceRelActionHelper(Robot& robot, const ExternalInterface::Pl
   if(static_cast<bool>(msg.usePreDockPose)) {
     DriveToPlaceRelObjectAction* action = new DriveToPlaceRelObjectAction(robot,
                                                                           selectedObjectID,
+                                                                          true,
                                                                           msg.placementOffsetX_mm,
+                                                                          0,
                                                                           msg.useApproachAngle,
                                                                           msg.approachAngle_rad,
                                                                           msg.useManualSpeed);
@@ -227,6 +229,7 @@ IActionRunner* GetPlaceRelActionHelper(Robot& robot, const ExternalInterface::Pl
                                                             selectedObjectID,
                                                             true,
                                                             msg.placementOffsetX_mm,
+                                                            0,
                                                             msg.useManualSpeed);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;
@@ -259,6 +262,7 @@ IActionRunner* GetPlaceOnActionHelper(Robot& robot, const ExternalInterface::Pla
     PlaceRelObjectAction* action = new PlaceRelObjectAction(robot,
                                                             selectedObjectID,
                                                             false,
+                                                            0,
                                                             0,
                                                             msg.useManualSpeed);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check

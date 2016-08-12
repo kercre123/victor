@@ -249,6 +249,9 @@ namespace Anki {
 
       static const char* PoseStateToString(const PoseState& state);
       
+      //Check if the bottom of an object is resting at a certain height within a tolerence
+      bool IsRestingAtHeight(float height, float tolerence) const;
+      
     protected:
       
       // Canonical corners are properties of each derived class and define the

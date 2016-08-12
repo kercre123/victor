@@ -1104,6 +1104,7 @@ namespace Anki {
                                                ObjectID objectID,
                                                const bool placeOnGround,
                                                const f32 placementOffsetX_mm,
+                                               const f32 placementOffsetY_mm,
                                                const bool useManualSpeed)
     : IDockAction(robot,
                   objectID,
@@ -1111,7 +1112,7 @@ namespace Anki {
                   RobotActionType::PICK_AND_PLACE_INCOMPLETE,
                   useManualSpeed)
     {
-      SetPlacementOffset(placementOffsetX_mm, 0, 0);
+      SetPlacementOffset(placementOffsetX_mm, placementOffsetY_mm, 0);
       SetPlaceOnGround(placeOnGround);
       SetPostDockLiftMovingAnimation(placeOnGround ?
                                      AnimationTrigger::SoundOnlyLiftEffortPlaceLow :

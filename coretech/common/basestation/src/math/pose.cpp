@@ -587,17 +587,6 @@ namespace Anki {
     return ret;
   }
 
-  f32 ComputeEuclidianDistanceBetween(const Pose3d& pose1, const Pose3d& pose2)
-  {
-    Vec3f vecBetween{0.f,0.f,0.f};
-    const bool comparable = ComputeVectorBetween(pose1, pose2, vecBetween);
-    if ( !comparable ) {
-      PRINT_NAMED_ERROR("ComputeVectorBetween.NoCommonParent", "Could not get pose1 w.r.t. pose2.");
-    }
-    
-    return vecBetween.Length();
-  }
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool ComputeVectorBetween(const Pose3d& pose1, const Pose3d& pose2, Vec3f& outVector)
   {

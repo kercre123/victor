@@ -46,6 +46,7 @@ enum uint_8 BehaviorType {
   VisitInterestingEdge,
   RequestGameSimple,
   RollBlock,
+  BuildPyramid,
   StackBlocks,
   PutDownBlock,
   FactoryTest,

@@ -314,6 +314,7 @@ namespace Anki {
                            ObjectID objectID,
                            const bool placeOnGround = false,
                            const f32 placementOffsetX_mm = 0,
+                           const f32 placementOffsetY_mm = 0,
                            const bool useManualSpeed = false);
       virtual ~PlaceRelObjectAction()
       {

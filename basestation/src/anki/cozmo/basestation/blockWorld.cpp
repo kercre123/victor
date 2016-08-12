@@ -72,7 +72,7 @@
 namespace Anki {
 namespace Cozmo {
 
-const float kOnGroundStackTolerence = 3 * ON_GROUND_HEIGHT_TOL_MM;
+const float kOnGroundStackTolerence = ON_GROUND_HEIGHT_TOL_MM;
 const float kOnCubeStackHeightTolerence = 2 * STACKED_HEIGHT_TOL_MM;
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1466,7 +1466,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
                               return false;
                             }
                             
-                            if(blockPtr->GetPose().GetWithRespectToOrigin().GetTranslation().z() > kOnGroundStackTolerence){
+                            if(!blockPtr->IsRestingAtHeight(0, kOnGroundStackTolerence)){
                               return false;
                             }
 
@@ -1496,8 +1496,10 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
       
       //check to see which stack is closer to the robot
       if(currentHeight >= tallestHeight){
-        f32 oldDistance = ComputeEuclidianDistanceBetween(_robot->GetPose(), bottomPose);
-        f32 newDistance = ComputeEuclidianDistanceBetween(_robot->GetPose(), currentBlock->GetPose());
+        f32 oldDistance = 0;
+        f32 newDistance = 0;
+        ComputeDistanceBetween(_robot->GetPose(), bottomPose, oldDistance);
+        ComputeDistanceBetween(_robot->GetPose(), currentBlock->GetPose(), newDistance);
         
         if(currentHeight > tallestHeight
            || (bottomBlockID.IsSet()

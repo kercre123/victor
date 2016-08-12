@@ -25,6 +25,7 @@
 #include "../behaviors/exploration/behaviorVisitInterestingEdge.h"
 #include "anki/cozmo/basestation/behaviors/behaviorAcknowledgeFace.h"
 #include "anki/cozmo/basestation/behaviors/behaviorAcknowledgeObject.h"
+#include "anki/cozmo/basestation/behaviors/behaviorBuildPyramid.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDemoFearEdge.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDriveOffCharger.h"
@@ -55,7 +56,6 @@
 #include "anki/cozmo/basestation/behaviors/behaviorStackBlocks.h"
 #include "anki/cozmo/basestation/behaviors/behaviorUnityDriven.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
-
 
 namespace Anki {
 namespace Cozmo {
@@ -281,6 +281,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::KnockOverCubes:
     {
       newBehavior = new BehaviorKnockOverCubes(robot, config);
+      break;
+    }
+    case BehaviorType::BuildPyramid:
+    {
+      newBehavior = new BehaviorBuildPyramid(robot, config);
       break;
     }
     case BehaviorType::ReactToFrustration:
