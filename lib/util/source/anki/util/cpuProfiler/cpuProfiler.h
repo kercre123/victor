@@ -28,6 +28,8 @@
 
 #if ANKI_CPU_PROFILER_ENABLED
 
+  #define ANKI_CPU_PROFILER_WARN_ON_NO_PROFILER     0   // Enable to track down calls on untracked threads
+
   namespace Anki {
   namespace Util {
 
@@ -186,9 +188,11 @@
           // Don't warn before any ticks are running (e.g. on loading)
           if (CpuProfiler::GetInstance().GetThreadProfilerCount() > 0)
           {
+          #if ANKI_CPU_PROFILER_WARN_ON_NO_PROFILER
             PRINT_NAMED_WARNING("ScopedCpuTick.NoThreadProfiler",
                                 "No Thread Profiler for Thread '%s' sample '%s' - needs an ANKI_CPU_TICK",
                                 GetCurrentThreadName().c_str(), _sharedData.GetName());
+          #endif // ANKI_CPU_PROFILER_WARN_ON_NO_PROFILER
           }
         }
         _active = false;
