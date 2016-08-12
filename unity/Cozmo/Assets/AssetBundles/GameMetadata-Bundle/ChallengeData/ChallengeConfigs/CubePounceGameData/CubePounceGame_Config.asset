@@ -36,4 +36,4 @@ MonoBehaviour:
   CubeFacingAngleTolerance_deg: 8
   TurnSpeed_rps: 10
   TurnAcceleration_rps2: 100
-  FakeoutMovePenaltyEnabled: 1
+  FakeoutMovePenaltyEnabled: 0
