@@ -55,7 +55,6 @@
 #include "anki/cozmo/basestation/behaviors/behaviorReactToUnexpectedMovement.h"
 #include "anki/cozmo/basestation/behaviors/behaviorRollBlock.h"
 #include "anki/cozmo/basestation/behaviors/behaviorStackBlocks.h"
-#include "anki/cozmo/basestation/behaviors/behaviorUnityDriven.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
 
 namespace Anki {
@@ -122,11 +121,6 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::PlayAnim:
     {
       newBehavior = new BehaviorPlayAnim(robot, config);
-      break;
-    }
-    case BehaviorType::UnityDriven:
-    {
-      newBehavior = new BehaviorUnityDriven(robot, config);
       break;
     }
     case BehaviorType::PounceOnMotion:
