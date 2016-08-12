@@ -122,11 +122,34 @@ namespace DataPersistence {
 
     public TimelineEntryData StartNewSession() {
       TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today);
-      newSession.DailyGoals = DailyGoalManager.Instance.GenerateDailyGoals();
-      // Sort by priority, placing higher priority at the front of the list
-      newSession.DailyGoals.Sort((Cozmo.UI.DailyGoal x, Cozmo.UI.DailyGoal y) => {
-        return y.Priority.CompareTo(x.Priority);
-      });
+
+      bool needsNewGoals = true;
+      // Onboarding special case, keep repeating goals until completed.
+      if (Data.DefaultProfile.Sessions != null &&
+          Data.DefaultProfile.Sessions.Count > 0 &&
+          OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.DailyGoals)) {
+
+        // Copy the previous days goals and just put in new dates...
+        TimelineEntryData currSession = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault();
+        // this is mostly because people debug mess with their save a lot in onboarding.
+        // In the normal case this phase is completed with a DailyGoalCompleted event.
+        bool allGoalsComplete = currSession.DailyGoals.TrueForAll(x => x.GoalComplete);
+        if (allGoalsComplete) {
+          OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.DailyGoals);
+        }
+        else {
+          needsNewGoals = false;
+          newSession.DailyGoals.AddRange(currSession.DailyGoals);
+        }
+      }
+
+      if (needsNewGoals) {
+        newSession.DailyGoals = DailyGoalManager.Instance.GenerateDailyGoals();
+        // Sort by priority, placing higher priority at the front of the list
+        newSession.DailyGoals.Sort((Cozmo.UI.DailyGoal x, Cozmo.UI.DailyGoal y) => {
+          return y.Priority.CompareTo(x.Priority);
+        });
+      }
       DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Add(newSession);
       GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnNewDayStarted, CurrentStreak));
       DataPersistenceManager.Instance.Save();

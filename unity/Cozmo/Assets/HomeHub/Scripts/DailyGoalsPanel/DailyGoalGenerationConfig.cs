@@ -9,4 +9,6 @@ public class DailyGoalGenerationConfig : ScriptableObject {
   public string DailyGoalFileName;
   public int MaxGoals;
   public int MinGoals;
+
+  public string OnboardingGoalFileName;
 }

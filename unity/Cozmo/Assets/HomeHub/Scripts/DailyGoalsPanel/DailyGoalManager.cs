@@ -196,9 +196,10 @@ public class DailyGoalManager : MonoBehaviour {
     if (Directory.Exists(sDailyGoalDirectory)) {
       string[] _DailyGoalFiles = Directory.GetFiles(sDailyGoalDirectory);
       if (_DailyGoalFiles.Length > 0) {
+        string dailyGoalsFileName = GetDailyGoalFileName();
         bool didMatch = false;
         for (int i = 0; i < _DailyGoalFiles.Length; i++) {
-          if (_DailyGoalFiles[i] == Path.Combine(sDailyGoalDirectory, _DailyGoalGenConfig.DailyGoalFileName)) {
+          if (_DailyGoalFiles[i] == Path.Combine(sDailyGoalDirectory, dailyGoalsFileName)) {
             LoadDailyGoalData(_DailyGoalFiles[i]);
             didMatch = true;
             break;
@@ -216,6 +217,13 @@ public class DailyGoalManager : MonoBehaviour {
     else {
       DAS.Error(this, string.Format("No DailyGoal Data to load in {0}", sDailyGoalDirectory));
     }
+  }
+
+  private string GetDailyGoalFileName() {
+    if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.DailyGoals)) {
+      return _DailyGoalGenConfig.OnboardingGoalFileName;
+    }
+    return _DailyGoalGenConfig.DailyGoalFileName;
   }
 
   private void LoadDailyGoalData(string path) {

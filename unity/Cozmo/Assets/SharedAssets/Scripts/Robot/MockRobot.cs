@@ -674,7 +674,7 @@ public class MockRobot : IRobot {
   }
 
   public float BatteryVoltage {
-    get { return 0.73f; }
+    get { return 4.73f; }
   }
 
   private readonly Dictionary<int, LightCube> _LightCubes = new Dictionary<int, LightCube>();

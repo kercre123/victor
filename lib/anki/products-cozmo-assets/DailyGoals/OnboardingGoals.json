@@ -1,0 +1,66 @@
+{
+  "GenList": [
+    {
+      "TitleKey": "dailyGoal.title.UnlockAppQuickTapGame",
+      "RewardType": "experience",
+      "PointsRewarded": 10,
+      "Target": 1,
+      "Priority": 1,
+      "CladEvent": "OnUnlockableEarned",
+      "GenConditions": [],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.UnlockIDCondition, Assembly-CSharp",
+          "Unlocked": "QuickTapGame",
+          "Label": {
+            "text": "Unlock ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 3
+    },
+    {
+      "TitleKey": "dailyGoal.title.PlaySpeedTap.Level1",
+      "RewardType": "experience",
+      "PointsRewarded": 10,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnChallengeComplete",
+      "GenConditions": [],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
+          "PlayerWin": true,
+          "Label": {
+            "text": "Challenge Winner Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SpeedTapGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 2
+    },
+    {
+      "TitleKey": "dailyGoal.title.MeetNewFace",
+      "RewardType": "experience",
+      "PointsRewarded": 10,
+      "Target": 1,
+      "Priority": 2,
+      "CladEvent": "OnMeetNewPerson",
+      "GenConditions": [],
+      "ProgressConditions": [],
+      "Id": 1
+    }
+  ]
+}

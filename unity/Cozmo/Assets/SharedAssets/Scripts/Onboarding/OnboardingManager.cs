@@ -16,6 +16,7 @@ public class OnboardingManager : MonoBehaviour {
     Home,
     Loot,
     Upgrades,
+    DailyGoals,
     None
   };
 
@@ -49,6 +50,7 @@ public class OnboardingManager : MonoBehaviour {
     }
     else {
       Instance = this;
+      GameEventManager.Instance.OnGameEvent += HandleDailyGoalCompleted;
       Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("Fill Loot Energy", "Unity", GiveEnergy);
     }
   }
@@ -64,10 +66,10 @@ public class OnboardingManager : MonoBehaviour {
     }
     return profile.OnboardingStages[phase];
   }
-  private void SetCurrStageInPhase(int stage) {
-    if (_CurrPhase != OnboardingPhases.None) {
+  private void SetCurrStageInPhase(int stage, OnboardingPhases phase) {
+    if (phase != OnboardingPhases.None) {
       PlayerProfile profile = DataPersistenceManager.Instance.Data.DefaultProfile;
-      profile.OnboardingStages[_CurrPhase] = stage;
+      profile.OnboardingStages[phase] = stage;
     }
   }
 
@@ -79,6 +81,9 @@ public class OnboardingManager : MonoBehaviour {
       return _PhaseLootPrefabs.Count;
     case OnboardingPhases.Upgrades:
       return _PhaseUpgradesPrefabs.Count;
+    // Daily goals is a special case where it is just used to save state.
+    case OnboardingPhases.DailyGoals:
+      return 1;
     }
     return 0;
   }
@@ -116,6 +121,17 @@ public class OnboardingManager : MonoBehaviour {
     _CurrPhase = phase;
     SetSpecificStage(0);
   }
+  public void CompletePhase(OnboardingPhases phase) {
+    // If it's the current phase clean up UI.
+    // Otherwise just set the save file forward.
+    if (phase == _CurrPhase) {
+      SetSpecificStage(GetMaxStageInPhase(_CurrPhase));
+    }
+    else {
+      SetCurrStageInPhase(GetMaxStageInPhase(phase), phase);
+      DataPersistenceManager.Instance.Save();
+    }
+  }
 
   public void GoToNextStage() {
     SetSpecificStage(GetCurrStageInPhase(_CurrPhase) + 1);
@@ -132,7 +148,7 @@ public class OnboardingManager : MonoBehaviour {
       _DebugLayer = UIManager.CreateUIElement(_DebugLayerPrefab, DebugMenuManager.Instance.DebugOverlayCanvas.transform);
     }
 #endif
-    SetCurrStageInPhase(nextStage);
+    SetCurrStageInPhase(nextStage, _CurrPhase);
     if (nextStage >= 0 && nextStage < GetMaxStageInPhase(_CurrPhase)) {
       OnboardingBaseStage stagePrefab = GetCurrStagePrefab();
 
@@ -155,6 +171,19 @@ public class OnboardingManager : MonoBehaviour {
 
   public HomeView GetHomeView() {
     return _HomeView;
+  }
+
+  private void HandleDailyGoalCompleted(GameEventWrapper gameEvent) {
+    if (gameEvent.GameEventEnum == GameEvent.OnDailyGoalCompleted) {
+      // If all completed, complete the tutorial and get new goals the next day...
+      if (DataPersistenceManager.Instance.CurrentSession != null) {
+        List<Cozmo.UI.DailyGoal> goals = DataPersistenceManager.Instance.CurrentSession.DailyGoals;
+        bool allGoalsComplete = goals.TrueForAll(x => x.GoalComplete);
+        if (allGoalsComplete) {
+          CompletePhase(OnboardingPhases.DailyGoals);
+        }
+      }
+    }
   }
 
   #region DEBUG
