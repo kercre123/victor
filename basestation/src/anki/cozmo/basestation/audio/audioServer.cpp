@@ -107,8 +107,9 @@ void AudioServer::ProcessMessage( const PostAudioEvent& message, ConnectionIdTyp
   }
   
   if ( playingId == kInvalidAudioPlayingId ) {
-    PRINT_NAMED_ERROR( "AudioServer.ProcessMessage", "Unable to Play Event %s on GameObject %d",
-                       EnumToString( message.audioEvent ), message.gameObject );
+    PRINT_CH_DEBUG(AudioController::kAudioLogChannelName,
+                   "AudioServer.ProcessMessage", "Unable to Play Event %s on GameObject %d",
+                   EnumToString( message.audioEvent ), message.gameObject );
   }
 }
 
@@ -128,8 +129,9 @@ void AudioServer::ProcessMessage( const PostAudioGameState& message, ConnectionI
   // Perform Game State
   const bool success = _audioController->SetState( groupId, stateId );
   if ( !success ) {
-    PRINT_NAMED_ERROR( "AudioServer.ProcessMessage", "Unable to Set State %s : %s",
-                       EnumToString( message.stateGroup ), EnumToString( message.stateValue ) );
+    PRINT_CH_DEBUG(AudioController::kAudioLogChannelName,
+                   "AudioServer.ProcessMessage", "Unable to Set State %s : %s",
+                   EnumToString( message.stateGroup ), EnumToString( message.stateValue ) );
   }
 }
 
@@ -143,9 +145,10 @@ void AudioServer::ProcessMessage( const PostAudioSwitchState& message, Connectio
   // Perform Switch State
   const bool success = _audioController->SetSwitchState( groupId, stateId, objectId );
   if ( !success ) {
-    PRINT_NAMED_ERROR( "AudioServer.ProcessMessage", "Unable to Set Switch State %s : %s on GameObject %s",
-                       EnumToString( message.switchStateGroup ), EnumToString( message.switchStateValue ),
-                       EnumToString( message.gameObject ) );
+    PRINT_CH_DEBUG(AudioController::kAudioLogChannelName,
+                   "AudioServer.ProcessMessage", "Unable to Set Switch State %s : %s on GameObject %s",
+                   EnumToString( message.switchStateGroup ), EnumToString( message.switchStateValue ),
+                   EnumToString( message.gameObject ) );
   }
 }
 
@@ -189,11 +192,12 @@ void AudioServer::ProcessMessage( const PostAudioParameter& message, ConnectionI
   // Perform Parameter
   const bool success = _audioController->SetParameter( parameterId, value, objectId, duration, curve );
   if ( !success ) {
-    PRINT_NAMED_ERROR( "AudioServer.ProcessMessage",
-                       "Unable to Set Parameter %s to Value %f on GameObject %s with duration %d milliSeconds with \
-                       curve type %s",
-                       EnumToString( message.parameter ), message.parameterValue, EnumToString( message.gameObject ),
-                       message.timeInMilliSeconds, EnumToString( message.curve ) );
+    PRINT_CH_DEBUG(AudioController::kAudioLogChannelName,
+                   "AudioServer.ProcessMessage",
+                   "Unable to Set Parameter %s to Value %f on GameObject %s with duration %d milliSeconds with \
+                   curve type %s",
+                   EnumToString( message.parameter ), message.parameterValue, EnumToString( message.gameObject ),
+                   message.timeInMilliSeconds, EnumToString( message.curve ) );
   }
 }
 
@@ -232,8 +236,10 @@ void AudioServer::PerformCallback( ConnectionIdType connectionId,
                                    uint16_t callbackId,
                                    const AudioEngine::AudioCallbackInfo& callbackInfo )
 {
-  PRINT_NAMED_INFO( "AudioServer.PerformCallback", "Event Callback ClientId %d CalbackId: %d - %s",
-                    connectionId, callbackId, callbackInfo.GetDescription().c_str());
+  PRINT_CH_DEBUG(AudioController::kAudioLogChannelName,
+                 "AudioServer.PerformCallback",
+                 "Event Callback ClientId %d CalbackId: %d - %s",
+                 connectionId, callbackId, callbackInfo.GetDescription().c_str());
   
   const AudioClientConnection* connection = GetConnection( connectionId );
   if ( nullptr != connection ) {

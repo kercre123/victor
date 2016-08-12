@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -11,18 +11,19 @@ namespace Anki {
 
       public delegate void CallbackHandler(CallbackInfo callbackInfo);
 
-      public class AudioClient {
+      public class UnityAudioClient {
 
         public event CallbackHandler OnAudioCallback;
 
-        private static AudioClient _AudioClient = null;
+        private static String kAudioLogChannelName = "Audio";
+        private static UnityAudioClient _AudioClient = null;
         private RobotEngineManager _RobotEngineManager = null;
         private bool _IsInitialized = false;
 
-        public static AudioClient Instance {
+        public static UnityAudioClient Instance {
           get {
             if (_AudioClient == null) {
-              _AudioClient = new AudioClient();
+              _AudioClient = new UnityAudioClient();
             }
             _AudioClient.Initialize();
             return _AudioClient;
@@ -41,11 +42,11 @@ namespace Anki {
             _IsInitialized = true;
           }
           else {
-            DAS.Warn("AudioClient.Initialize", "Failed to Initialize!");
+            DAS.Warn("UnityAudioClient.Initialize", "Failed to Initialize!");
           }
         }
 
-        ~AudioClient() {
+        ~UnityAudioClient() {
           _RobotEngineManager.RemoveCallback<Anki.Cozmo.Audio.AudioCallback>(HandleCallback);
           _RobotEngineManager = null;
           _IsInitialized = false;
@@ -57,8 +58,9 @@ namespace Anki {
                                 GameObjectType gameObject,
                                 AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                 CallbackHandler handler = null) {
-          DAS.Debug("AudioController.PostAudioEvent", "Event: " + audioEvent.ToString() + "  GameObj: " +
-                    gameObject.ToString() + " CallbackFlag: " + callbackFlag);
+          DAS.Ch_Info(kAudioLogChannelName,
+                      "UnityAudioClient.PostAudioEvent",
+                      string.Format("Event: {0} Id: {1}", audioEvent, (uint)audioEvent));
           ushort playId = _GetPlayId();
 
           // Only register for callbacks if a flag is set.
@@ -79,7 +81,9 @@ namespace Anki {
 
         // Pass in game object type to stop audio events on that game object, use Invalid to stop all audio
         public void StopAllAudioEvents(Anki.Cozmo.Audio.GameObjectType gameObject = Anki.Cozmo.Audio.GameObjectType.Invalid) {
-          DAS.Debug("AudioController.StopAllAudioEvents", "GameObj: " + gameObject.ToString());
+          DAS.Ch_Info(kAudioLogChannelName,
+                      "UnityAudioClient.StopAllAudioEvents",
+                      string.Format("GameObj: {0}", gameObject));
           StopAllAudioEvents msg = new Anki.Cozmo.Audio.StopAllAudioEvents(gameObject);
           _RobotEngineManager.Message.StopAllAudioEvents = msg;
           _RobotEngineManager.SendMessage();
@@ -87,15 +91,18 @@ namespace Anki {
 
         public void PostGameState(GameState.StateGroupType gameStateGroup,
                                   GameState.GenericState gameState) {
-          DAS.Debug("AudioController.PostAudioGameState", "GameState: " + gameState.ToString());
+          DAS.Ch_Info(kAudioLogChannelName,
+                      "UnityAudioClient.PostAudioGameState",
+                      string.Format("GameStateGroup: {0} GameState: {1}", gameStateGroup, gameState));
           PostAudioGameState msg = new PostAudioGameState(gameStateGroup, gameState);
           _RobotEngineManager.Message.PostAudioGameState = msg;
           _RobotEngineManager.SendMessage();
         }
 
         public void PostSwitchState(SwitchState.SwitchGroupType switchStateGroup, SwitchState.GenericSwitch switchState, GameObjectType gameObject) {
-          DAS.Debug("AudioController.PostAudioSwitchState", "SwitchState: " + switchState.ToString() +
-                    " gameObj: " + gameObject.ToString());
+          DAS.Ch_Info(kAudioLogChannelName,
+                      "UnityAudioClient.PostAudioSwitchState",
+                      string.Format("SwitchStateGroup: {0} SwitchState: {1} GameObj: {2}", switchStateGroup, switchState, gameObject));
           PostAudioSwitchState msg = new PostAudioSwitchState(switchStateGroup, switchState, gameObject);
           _RobotEngineManager.Message.PostAudioSwitchState = msg;
           _RobotEngineManager.SendMessage();
@@ -106,8 +113,10 @@ namespace Anki {
                                   GameObjectType gameObject,
                                   int timeInMilliSeconds = 0,
                                   Anki.Cozmo.Audio.CurveType curve = CurveType.Linear) {
-          DAS.Debug("AudioController.PostAudioParameter", "Parameter: " + parameter.ToString() + " Value: " + parameterValue +
-                    " GameObj: " + gameObject.ToString() + " TimeInMilliSec: " + timeInMilliSeconds + " Curve: " + curve);
+          DAS.Ch_Info(kAudioLogChannelName,
+                      "UnityAudioClient.PostAudioParameter",
+                      string.Format("Parameter: {0} Id: {1}",
+                                    parameter, (uint)parameter));
           PostAudioParameter msg = new PostAudioParameter(parameter, parameterValue, gameObject, timeInMilliSeconds, curve);
           _RobotEngineManager.Message.PostAudioParameter = msg;
           _RobotEngineManager.SendMessage();
@@ -116,8 +125,10 @@ namespace Anki {
         public void PostMusicState(GameState.GenericState musicState,
                                    bool interrupt = false,
                                    uint minDurationInMilliSeconds = 0) {
-          DAS.Debug("AudioController.PostMusicState",
-                    "Music State: " + musicState + " Interrupt: " + interrupt + " MinDurationInMilliSeconds: " + minDurationInMilliSeconds);
+          DAS.Ch_Info(kAudioLogChannelName,
+                      "UnityAudioClient.PostAudioMusicState",
+                      string.Format("MusicState: {0} Id: {1}",
+                                    musicState, (uint)musicState));
           PostAudioMusicState msg = new PostAudioMusicState(musicState, interrupt, minDurationInMilliSeconds);
           _RobotEngineManager.Message.PostAudioMusicState = msg;
           _RobotEngineManager.SendMessage();
@@ -151,16 +162,20 @@ namespace Anki {
 
         private void AddCallbackHandler(ushort playId, AudioCallbackFlag flags, CallbackHandler handler) {
           _callbackDelegates.Add(playId, new CallbackBundle(flags, handler));
-          DAS.Debug("AudioClient.AddCallbackHandler", "Add Callback Bundle with PlayId " + playId.ToString() + " Flags " + flags.ToString());
+          DAS.Ch_Debug(kAudioLogChannelName,
+                       "UnityAudioClient.AddCallbackHandler",
+                       string.Format("Add Callback PlayId: {0} Flags: {1}", playId, flags));
         }
 
         public void UnregisterCallbackHandler(ushort playId) {
           bool success = _callbackDelegates.Remove(playId);
           if (success) {
-            DAS.Debug("AudioClient.UnregisterCallbackHandler", "Removed Callback Bundle with PlayId " + playId.ToString());
+            DAS.Ch_Debug(kAudioLogChannelName,
+                         "UnityAudioClient.UnregisterCallbackHandler",
+                         string.Format("Remove Callback PlayId: {0}", playId));
           }
           else {
-            DAS.Warn("AudioClient.UnregisterCallbackHandler", "Failed to Remove Callback Bundle with PlayId " + playId.ToString());
+            DAS.Warn("UnityAudioClient.UnregisterCallbackHandler", "Failed to Remove Callback Bundle with PlayId " + playId.ToString());
           }
         }
 
@@ -175,7 +190,6 @@ namespace Anki {
             }
             // Auto unregister Event
             // Unregister if callback handle if this is the completion or error callback
-            // FIXME: Waiting to hear back form WWise if Completeion callback is allways called after and error callback
             if (null == unregisterHandle) {
               if ((AudioCallbackFlag.EventComplete & callbackType) == AudioCallbackFlag.EventComplete ||
                   (AudioCallbackFlag.EventError & callbackType) == AudioCallbackFlag.EventError) {
@@ -190,7 +204,9 @@ namespace Anki {
 
         // Handle message types
         private void HandleCallback(AudioCallback message) {
-          DAS.Debug("AudioController.HandleCallback", "Received Audio Callback " + message.ToString());
+          DAS.Ch_Debug(kAudioLogChannelName,
+                       "UnityAudioClient.HandleCallback",
+                       string.Format("Received Callback message: {0}", message));
           CallbackInfo info = new CallbackInfo(message);
           if (null != OnAudioCallback) {
             OnAudioCallback(info);

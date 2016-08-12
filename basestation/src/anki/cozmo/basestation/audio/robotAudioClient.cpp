@@ -29,6 +29,8 @@ namespace Anki {
 namespace Cozmo {
 namespace Audio {
   
+const char* RobotAudioClient::kRobotAudioLogChannelName = AudioController::kAudioLogChannelName;
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioClient::RobotAudioClient( Robot* robot )
 : _robot( robot )
@@ -76,13 +78,15 @@ RobotAudioClient::RobotAudioClient( Robot* robot )
     }
 
     SetOutputSource( outputSource );
-
-    PRINT_NAMED_DEBUG("RobotAudioClient.RobotAudioClient.RobotAudioOutputSourceCallback", "outputSource: %hhu", msg.source);
+    PRINT_CH_DEBUG(kRobotAudioLogChannelName,
+                   "RobotAudioClient.RobotAudioClient.RobotAudioOutputSourceCallback",
+                   "outputSource: %hhu", msg.source);
   };
   
   IExternalInterface* gameToEngineInterface = context->GetExternalInterface();
   if ( gameToEngineInterface ) {
-    PRINT_NAMED_DEBUG("RobotAudioClient.RobotAudioClient", "gameToEngineInterface exists");
+    PRINT_CH_DEBUG(kRobotAudioLogChannelName,
+                   "RobotAudioClient.RobotAudioClient", "gameToEngineInterface exists");
 
     _signalHandles.push_back(
       gameToEngineInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume,
@@ -244,7 +248,8 @@ void RobotAudioClient::ClearCurrentAnimation()
     animationState = "Current Audio Animation '" + _currentAnimation->GetAnimationName() + "' State: " +
     _currentAnimation->GetStringForAnimationState( _currentAnimation->GetAnimationState() );
   }
-  PRINT_NAMED_INFO( "RobotAudioClient.ClearCurrentAnimation", "%s", animationState.c_str() );
+  PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                "RobotAudioClient.ClearCurrentAnimation", "%s", animationState.c_str());
   Util::SafeDelete(_currentAnimation);
 }
 

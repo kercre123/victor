@@ -146,15 +146,16 @@ RobotAudioAnimationOnRobot::AnimationState RobotAudioAnimationOnRobot::Update( T
       frameCount = _audioBuffer->GetFrontAudioBufferStream()->AudioFrameCount();
     }
     
-    PRINT_NAMED_INFO( "RobotAudioAnimationOnRobot.Update",
-                      "EXIT time_ms: %d State: %s - HasBufferStream: %d <- FrameCount: %zu | HasCurrentStream: %d \
-                      <- FrameCount: %zu",
-                      streamingTime_ms - startTime_ms,
-                      GetStringForAnimationState( GetAnimationState() ).c_str(),
-                      hasBuffer,
-                      frameCount,
-                      HasCurrentBufferStream(),
-                      HasCurrentBufferStream() ? _currentBufferStream->AudioFrameCount() : 0 );
+    PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                  "RobotAudioAnimationOnRobot.Update",
+                  "EXIT time_ms: %d State: %s - HasBufferStream: %d <- FrameCount: %zu | HasCurrentStream: %d \
+                  <- FrameCount: %zu",
+                  streamingTime_ms - startTime_ms,
+                  GetStringForAnimationState( GetAnimationState() ).c_str(),
+                  hasBuffer,
+                  frameCount,
+                  HasCurrentBufferStream(),
+                  HasCurrentBufferStream() ? _currentBufferStream->AudioFrameCount() : 0 );
   }
   
   return GetAnimationState();
@@ -247,9 +248,10 @@ void RobotAudioAnimationOnRobot::UpdateAudioFramesReady( TimeStamp_t startTime_m
       if ( streamRelevantTime_ms <= relevantTime_ms ) {
         // Start playing this stream
         if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
-          PRINT_NAMED_INFO( "RobotAudioAnimationOnRobot.UpdateAudioFramesReady",
-                            "Set Next Stream | SteamTime - StartTime_ms %d | AnimTime_ms %d",
-                            streamRelevantTime_ms, relevantTime_ms );
+          PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                        "RobotAudioAnimationOnRobot.UpdateAudioFramesReady",
+                        "Set Next Stream | SteamTime - StartTime_ms %d | AnimTime_ms %d",
+                        streamRelevantTime_ms, relevantTime_ms );
         }
         
         _currentBufferStream = nextStream;
@@ -286,9 +288,10 @@ void RobotAudioAnimationOnRobot::UpdateAudioFramesReady( TimeStamp_t startTime_m
           _currentBufferStream = nextStream;
           
           if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
-            PRINT_NAMED_INFO( "RobotAudioAnimationOnRobot.UpdateAudioFramesReady",
-                              "Set Next Stream | EventTime - StartTime_ms %d | AnimTime_ms %d",
-                              nextEvent->time_ms, relevantTime_ms );
+            PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                          "RobotAudioAnimationOnRobot.UpdateAudioFramesReady",
+                          "Set Next Stream | EventTime - StartTime_ms %d | AnimTime_ms %d",
+                          nextEvent->time_ms, relevantTime_ms );
           }
         }
         else {
@@ -355,14 +358,16 @@ void RobotAudioAnimationOnRobot::PopRobotAudioMessage( RobotInterface::EngineToR
     if ( hasBuffer ) {
       frameCount = _audioBuffer->GetFrontAudioBufferStream()->AudioFrameCount();
     }
-    PRINT_NAMED_INFO( "RobotAudioAnimationOnRobot.PopRobotAudioMessage",
-                      "EXIT PopMsg: %d - EXIT State: %s - HasBufferStream: %d <- FrameCount: %zu | HasCurrentStream: %d <- FrameCount: %zu",
-                      (out_RobotAudioMessagePtr != nullptr),
-                      GetStringForAnimationState( GetAnimationState() ).c_str(),
-                      hasBuffer,
-                      frameCount,
-                      HasCurrentBufferStream(),
-                      HasCurrentBufferStream() ? _currentBufferStream->AudioFrameCount() : 0 );
+    PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                  "RobotAudioAnimationOnRobot.PopRobotAudioMessage",
+                  "EXIT PopMsg: %d - EXIT State: %s - HasBufferStream: %d <- FrameCount: %zu | HasCurrentStream: \
+                  %d <- FrameCount: %zu",
+                  (out_RobotAudioMessagePtr != nullptr),
+                  GetStringForAnimationState( GetAnimationState() ).c_str(),
+                  hasBuffer,
+                  frameCount,
+                  HasCurrentBufferStream(),
+                  HasCurrentBufferStream() ? _currentBufferStream->AudioFrameCount() : 0 );
   }
 }
 
@@ -375,7 +380,8 @@ RobotAudioAnimationOnRobot::RobotAudioAnimationOnRobot()
 void RobotAudioAnimationOnRobot::PrepareAnimation()
 {
   if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
-    PRINT_NAMED_INFO("RobotAudioAnimationOnRobot.PrepareAnimation", "Animation %s", _animationName.c_str());
+    PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                  "RobotAudioAnimationOnRobot.PrepareAnimation", "Animation %s", _animationName.c_str());
   }
   
   // Check if buffer is ready

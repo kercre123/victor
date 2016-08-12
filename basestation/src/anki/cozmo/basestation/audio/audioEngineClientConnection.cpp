@@ -55,9 +55,10 @@ void AudioEngineClientConnection::PostCallback( const AudioCallback& callbackMes
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioEngineClientConnection::HandleEvents(const AnkiEvent<MessageAudioClient>& event)
 {
-  PRINT_NAMED_INFO("AudioEngineClientConnection.HandleGameEvents",
-                   "Handle game event of type %s !",
-                   MessageAudioClientTagToString(event.GetData().GetTag()) );
+  PRINT_CH_DEBUG(AudioClientConnection::kAudioLogChannel,
+                 "AudioEngineClientConnection.HandleGameEvents",
+                 "Handle game event of type %s !",
+                 MessageAudioClientTagToString(event.GetData().GetTag()));
   
   switch ( event.GetData().GetTag() ) {
       

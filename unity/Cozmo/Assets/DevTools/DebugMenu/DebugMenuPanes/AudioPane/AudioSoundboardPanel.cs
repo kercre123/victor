@@ -53,7 +53,7 @@ namespace Anki {
         [SerializeField]
         private Text _RTPCValueText;
 
-        private AudioClient _audioClient = AudioClient.Instance;
+        private UnityAudioClient _audioClient = UnityAudioClient.Instance;
         private string _LogString = "";
 
         // Use this for initialization

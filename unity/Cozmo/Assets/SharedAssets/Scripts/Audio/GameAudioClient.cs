@@ -105,44 +105,34 @@ namespace Anki {
         static public ushort PostAudioEvent(AudioEventParameter parameter,
                                             Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                             CallbackHandler handler = null) {
-          AudioClient client = AudioClient.Instance;
+          UnityAudioClient client = UnityAudioClient.Instance;
           return client.PostEvent(parameter.Event, parameter.GameObjectType, callbackFlag, handler);
         }
 
         static public ushort PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui audioEvent,
                                          Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                          CallbackHandler handler = null) {
-          AudioClient client = AudioClient.Instance;
+          UnityAudioClient client = UnityAudioClient.Instance;
           return client.PostEvent((GameEvent.GenericEvent)audioEvent, Anki.Cozmo.Audio.GameObjectType.UI, callbackFlag, handler);
         }
 
         static public ushort PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx audioEvent,
                                           Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                           CallbackHandler handler = null) {
-          AudioClient client = AudioClient.Instance;
+          UnityAudioClient client = UnityAudioClient.Instance;
           return client.PostEvent((GameEvent.GenericEvent)audioEvent, Anki.Cozmo.Audio.GameObjectType.SFX, callbackFlag, handler);
         }
 
         static public ushort PostAnnouncerVOEvent(Anki.Cozmo.Audio.GameEvent.GenericEvent audioEvent,
                                                   Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                                   CallbackHandler handler = null) {
-          AudioClient client = AudioClient.Instance;
+          UnityAudioClient client = UnityAudioClient.Instance;
           return client.PostEvent(audioEvent, Anki.Cozmo.Audio.GameObjectType.Aria, callbackFlag, handler);
         }
 
-        // Don't think we are going to allow playing cozmo vo from ui, currently they must be played form an animation
-        /*
-        static public ushort PostCozmoVOEvent(Anki.Cozmo.Audio.GameEvent.GenericEvent audioEvent,
-                                              Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
-                                              CallbackHandler handler = null) {
-          AudioClient client = AudioClient.Instance;
-          return client.PostEvent(audioEvent, Anki.Cozmo.Audio.GameObjectType.Default, callbackFlag, handler);
-        }
-        */
-
         // Remove callback handle from Audio Client
         static public void UnregisterCallbackHandler(ushort playId) {
-          AudioClient client = AudioClient.Instance;
+          UnityAudioClient client = UnityAudioClient.Instance;
           client.UnregisterCallbackHandler(playId);
         }
 
@@ -159,7 +149,7 @@ namespace Anki {
           }
           else {
             // User GameObjectType.Invalid to set global RTPC values
-            AudioClient client = AudioClient.Instance;
+            UnityAudioClient client = UnityAudioClient.Instance;
             client.PostParameter((GameParameter.ParameterType)parameter, volume, GameObjectType.Invalid, timeInMS, curve);
           }
 
@@ -235,8 +225,7 @@ namespace Anki {
         static public void SetMusicState(Anki.Cozmo.Audio.GameState.Music state,
                                          bool interrupt = false,
                                          uint minDurationInMilliSeconds = 0) {
-          DAS.Info("Audio.SetMusicState ", state.ToString());
-          AudioClient client = AudioClient.Instance;
+          UnityAudioClient client = UnityAudioClient.Instance;
           client.PostMusicState((GameState.GenericState)state, interrupt, minDurationInMilliSeconds);
         }
       }

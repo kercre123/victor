@@ -39,6 +39,8 @@ public:
   AudioClientConnection();
   virtual ~AudioClientConnection();
   
+  static const char* kAudioLogChannel;
+  
   void SetAudioServer( AudioServer* server ) { _server = server; }
   
   void SetConnectionId( uint8_t connectionId ) { _connectionId = connectionId; }

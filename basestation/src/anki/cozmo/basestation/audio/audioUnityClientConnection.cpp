@@ -39,9 +39,9 @@ AudioUnityClientConnection::AudioUnityClientConnection( IExternalInterface& exte
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioUnityClientConnection::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
-  PRINT_NAMED_DEBUG("AudioUnityClientCunnection.HandleGameEvents",
-                   "Handle game event of type %s !",
-                   ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()) );
+  PRINT_CH_DEBUG(AudioClientConnection::kAudioLogChannel,
+                 "AudioUnityClientCunnection.HandleGameEvents", "Handle game event of type %s !",
+                 ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()) );
   
   switch ( event.GetData().GetTag() ) {
 

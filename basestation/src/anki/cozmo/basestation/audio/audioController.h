@@ -54,6 +54,8 @@ public:
   AudioController( const CozmoContext* context );
   
   ~AudioController();
+  
+  static const char* kAudioLogChannelName;
 
   // Note: Transfer's callback context ownership to Audio Controller
   AudioEngine::AudioPlayingId PostAudioEvent( const std::string& eventName,
@@ -66,18 +68,18 @@ public:
 
   // Stops playing all sounds on the specified game object
   // + If AudioGameObject::Invalid is specified, then ALL audio will be stopped
-  void StopAllAudioEvents( AudioEngine::AudioGameObject gameObject = AudioEngine::kInvalidAudioGameObject );
+  void StopAllAudioEvents( AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject );
   
   bool SetState( AudioEngine::AudioStateGroupId stateGroupId,
                  AudioEngine::AudioStateId stateId ) const;
   
   bool SetSwitchState( AudioEngine::AudioSwitchGroupId switchGroupId,
                        AudioEngine::AudioSwitchStateId switchStateId,
-                       AudioEngine::AudioGameObject gameObject ) const;
+                       AudioEngine::AudioGameObject gameObjectId ) const;
   
   bool SetParameter( AudioEngine::AudioParameterId parameterId,
                      AudioEngine::AudioRTPCValue rtpcValue,
-                     AudioEngine::AudioGameObject gameObject,
+                     AudioEngine::AudioGameObject gameObjectId,
                      AudioEngine::AudioTimeMs valueChangeDuration = 0,
                      AudioEngine::AudioCurveType curve = AudioEngine::AudioCurveType::Linear ) const;
   
@@ -88,14 +90,14 @@ public:
                                   AudioEngine::AudioCurveType curve = AudioEngine::AudioCurveType::Linear ) const;
   
   // Create and store a Robot Audio Buffer with the corresponding GameObject and PluginId
-  RobotAudioBuffer* RegisterRobotAudioBuffer( AudioEngine::AudioGameObject gameObject,
+  RobotAudioBuffer* RegisterRobotAudioBuffer( AudioEngine::AudioGameObject gameObjectId,
                                               AudioEngine::AudioPluginId pluginId );
 
   void UnregisterRobotAudioBuffer( AudioEngine::AudioGameObject gameObject,
                                    AudioEngine::AudioPluginId pluginId );
   
   // Get Robot Audio Buffer
-  RobotAudioBuffer* GetRobotAudioBufferWithGameObject( AudioEngine::AudioGameObject gameObject ) const;
+  RobotAudioBuffer* GetRobotAudioBufferWithGameObject( AudioEngine::AudioGameObject gameObjectId ) const;
   RobotAudioBuffer* GetRobotAudioBufferWithPluginId( AudioEngine::AudioPluginId pluginId ) const;
   
   
@@ -108,9 +110,9 @@ public:
   
   // Game-Defined Auxiliary Sends
   using AuxSendList = std::vector<AudioEngine::AudioAuxBusValue>;
-  bool SetGameObjectAuxSendValues( AudioEngine::AudioGameObject gameObject, const AuxSendList& auxSendValues );
+  bool SetGameObjectAuxSendValues( AudioEngine::AudioGameObject gameObjectId, const AuxSendList& auxSendValues );
   
-  bool SetGameObjectOutputBusVolume( AudioEngine::AudioGameObject gameObject, AudioEngine::AudioReal32 controlVolume );
+  bool SetGameObjectOutputBusVolume( AudioEngine::AudioGameObject gameObjectId, AudioEngine::AudioReal32 controlVolume );
 
   
   // Expose PlugIn functionality

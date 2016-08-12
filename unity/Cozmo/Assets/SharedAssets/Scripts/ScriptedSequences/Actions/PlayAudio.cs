@@ -22,7 +22,7 @@ namespace ScriptedSequences.Actions {
       if (WaitToEnd) {
         // Play with Callback
         // TODO: Need to set the Game Object Type appropriately
-        AudioClient.Instance.PostEvent(EventType, GameObjectType, AudioCallbackFlag.EventComplete, (c) => {
+        UnityAudioClient.Instance.PostEvent(EventType, GameObjectType, AudioCallbackFlag.EventComplete, (c) => {
           if (c.CallbackType == AudioCallbackFlag.EventComplete || c.CallbackType == AudioCallbackFlag.EventError) {
             token.Succeed();
           }
@@ -34,13 +34,13 @@ namespace ScriptedSequences.Actions {
         });
         if (StopSoundOnEnd) {
           token.OnAbort += () => {
-            AudioClient.Instance.StopAllAudioEvents(GameObjectType);
+            UnityAudioClient.Instance.StopAllAudioEvents(GameObjectType);
           };
         }
       }
       else {
         // TODO: Need to set the Game Object Type appropriately
-        AudioClient.Instance.PostEvent(EventType, GameObjectType);
+        UnityAudioClient.Instance.PostEvent(EventType, GameObjectType);
         // Play without Callback
         token.Succeed();
       }

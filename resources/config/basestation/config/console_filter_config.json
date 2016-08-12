@@ -26,8 +26,8 @@
       { "channel": "UnlockComponent", "enabled": false },
       { "channel": "Actions",         "enabled": false },
       { "channel": "Behaviors",       "enabled": false },
-      { "channel": "AIWhiteboard",    "enabled": false },      
-      { "channel": "Audio_WwiseLog",  "enabled": false },
+      { "channel": "AIWhiteboard",    "enabled": false },
+      { "channel": "Audio",           "enabled": false },
       { "channel": "FaceRecognizer",  "enabled": false },
       { "channel": "UiComms",         "enabled": false },
       { "channel": "Mood",            "enabled": false }
@@ -47,8 +47,9 @@
   {
     "channels":
     [
-      { "channel": "Unnamed", "enabled": false }, // Unnamed is currently the default channel
-      { "channel": "Unity"  , "enabled": false }
+      { "channel": "Unnamed",         "enabled": false }, // Unnamed is currently the default channel
+      { "channel": "Unity"  ,         "enabled": false },
+      { "channel": "Audio",           "enabled": false }
     ],
     "levels":
     [
@@ -64,8 +65,9 @@
   {
     "channels":
     [
-      { "channel": "Unnamed", "enabled": false }, // Unnamed is currently the default channel
-      { "channel": "Unity"  , "enabled": false }
+      { "channel": "Unnamed",         "enabled": false }, // Unnamed is currently the default channel
+      { "channel": "Unity"  ,         "enabled": false },
+      { "channel": "Audio",           "enabled": false }
     ],
     "levels":
     [

@@ -55,6 +55,8 @@ namespace Cozmo {
 namespace Audio {
   
 using namespace AudioEngine;
+  
+const char* AudioController::kAudioLogChannelName = "Audio";
 
 // Resolve audio asset file path
 static bool ResolvePathToAudioFile( const std::string&, const char*, char*, const size_t );
@@ -236,6 +238,14 @@ AudioEngine::AudioPlayingId AudioController::PostAudioEvent( const std::string& 
     }
   }
 #endif
+  
+  PRINT_CH_INFO(kAudioLogChannelName,
+                "AudioController.PostAudioEvent",
+                "Event: '%s' GameObj: %u CallbackFlag: %d PlayId: %d Initalized: %c",
+                eventName.c_str(), static_cast<uint32_t>(gameObjectId),
+                (nullptr != callbackContext) ? 0 : callbackContext->GetCallbackFlags(),
+                playingId, _isInitialized ? 'Y' : 'N');
+  
   return playingId;
 }
 
@@ -274,17 +284,31 @@ AudioEngine::AudioPlayingId AudioController::PostAudioEvent( AudioEngine::AudioE
 #endif
   }
 #endif
+  
+  PRINT_CH_INFO(kAudioLogChannelName,
+                "AudioController.PostAudioEvent",
+                "EventId: %u GameObj: %u CallbackFlag: %d PlayId: %d Initalized: %c",
+                eventId, static_cast<uint32_t>(gameObjectId),
+                (nullptr != callbackContext) ? 0 : callbackContext->GetCallbackFlags(),
+                playingId, _isInitialized ? 'Y' : 'N');
+  
   return playingId;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioController::StopAllAudioEvents( AudioEngine::AudioGameObject gameObject )
+void AudioController::StopAllAudioEvents( AudioEngine::AudioGameObject gameObjectId )
 {
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
-    _audioEngine->StopAllAudioEvents( gameObject );
+    _audioEngine->StopAllAudioEvents( gameObjectId );
   }
 #endif
+  
+  PRINT_CH_INFO(kAudioLogChannelName,
+                "AudioController.StopAllAudioEvents",
+                "GameObj: %u Initalized: %c",
+                static_cast<uint32_t>(gameObjectId),
+                _isInitialized ? 'Y' : 'N');
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -297,36 +321,63 @@ bool AudioController::SetState( AudioEngine::AudioStateGroupId stateGroupId,
     success = _audioEngine->SetState( stateGroupId, stateId );
   }
 #endif
+  
+  PRINT_CH_INFO(kAudioLogChannelName,
+                "AudioController.SetState",
+                "StateGroupId: %u StateId: %u Success: %c Initalized: %c",
+                stateGroupId, stateId,
+                success ? 'Y' : 'N',
+                _isInitialized ? 'Y' : 'N');
+  
   return success;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AudioController::SetSwitchState( AudioEngine::AudioSwitchGroupId switchGroupId,
                                       AudioEngine::AudioSwitchStateId switchStateId,
-                                      AudioEngine::AudioGameObject gameObject ) const
+                                      AudioEngine::AudioGameObject gameObjectId ) const
 {
   bool success = false;
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
-    success = _audioEngine->SetSwitch( switchGroupId, switchStateId, gameObject );
+    success = _audioEngine->SetSwitch( switchGroupId, switchStateId, gameObjectId );
   }
 #endif
+  
+  PRINT_CH_INFO(kAudioLogChannelName,
+                "AudioController.SetSwitchState",
+                "SwitchGroupId: %u SwitchStateId: %u GameObj: %u Success: %c Initalized: %c",
+                switchGroupId, switchStateId,
+                static_cast<uint32_t>(gameObjectId),
+                success ? 'Y' : 'N',
+                _isInitialized ? 'Y' : 'N');
+  
   return success;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AudioController::SetParameter( AudioEngine::AudioParameterId parameterId,
                                     AudioEngine::AudioRTPCValue rtpcValue,
-                                    AudioEngine::AudioGameObject gameObject,
+                                    AudioEngine::AudioGameObject gameObjectId,
                                     AudioEngine::AudioTimeMs valueChangeDuration,
                                     AudioEngine::AudioCurveType curve ) const
 {
   bool success = false;
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
-    success = _audioEngine->SetRTPCValue( parameterId, rtpcValue, gameObject, valueChangeDuration, curve );
+    success = _audioEngine->SetRTPCValue( parameterId, rtpcValue, gameObjectId, valueChangeDuration, curve );
   }
 #endif
+  
+  PRINT_CH_INFO(kAudioLogChannelName,
+                "AudioController.SetParameter",
+                "ParameterId: %u Value: %f GameObj: %u Duration: %d Curve: %hhu Success: %c Initalized: %c",
+                parameterId, rtpcValue,
+                static_cast<uint32_t>(gameObjectId),
+                valueChangeDuration, curve,
+                success ? 'Y' : 'N',
+                _isInitialized ? 'Y' : 'N');
+  
   return success;
 }
 
@@ -343,23 +394,32 @@ bool AudioController::SetParameterWithPlayingId( AudioEngine::AudioParameterId p
     success = _audioEngine->SetRTPCValueWithPlayingId( parameterId, rtpcValue, playingId, valueChangeDuration, curve );
   }
 #endif
+  
+  PRINT_CH_INFO(kAudioLogChannelName,
+                "AudioController.SetParameterWithPlayingId",
+                "ParameterId: %u Falue: %f PlayingId: %u Duration: %d Curve: %hhu Success: %c Initalized: %c",
+                parameterId, rtpcValue, playingId,
+                valueChangeDuration, curve,
+                success ? 'Y' : 'N',
+                _isInitialized ? 'Y' : 'N');
+  
   return success;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RobotAudioBuffer* AudioController::RegisterRobotAudioBuffer( AudioEngine::AudioGameObject gameObject,
+RobotAudioBuffer* AudioController::RegisterRobotAudioBuffer( AudioEngine::AudioGameObject gameObjectId,
                                                              AudioEngine::AudioPluginId pluginId )
 {
   RobotAudioBuffer* buffer = new RobotAudioBuffer();
   const auto it = _robotAudioBufferIdMap.emplace( pluginId, buffer );
-  _gameObjectPluginIdMap.emplace( gameObject, pluginId );
+  _gameObjectPluginIdMap.emplace( gameObjectId, pluginId );
   
   if ( !it.second ) {
     // If buffer already exist
     delete buffer;
     PRINT_NAMED_ERROR( "AudioController.RegisterRobotAudioBuffer",
                        "Robot buffer already exist! PluginId: %d GameObject: %u",
-                       pluginId, static_cast<uint32_t>( gameObject ) );
+                       pluginId, static_cast<uint32_t>( gameObjectId ) );
   }
   
   return it.first->second;
@@ -391,9 +451,9 @@ void AudioController::UnregisterRobotAudioBuffer( AudioEngine::AudioGameObject g
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RobotAudioBuffer* AudioController::GetRobotAudioBufferWithGameObject( AudioEngine::AudioGameObject gameObject ) const
+RobotAudioBuffer* AudioController::GetRobotAudioBufferWithGameObject( AudioEngine::AudioGameObject gameObjectId ) const
 {
-  const auto it = _gameObjectPluginIdMap.find( gameObject );
+  const auto it = _gameObjectPluginIdMap.find( gameObjectId );
   if ( it != _gameObjectPluginIdMap.end() ) {
     return GetRobotAudioBufferWithPluginId( it->second );
   }
@@ -425,14 +485,14 @@ bool AudioController::RegisterGameObject( AudioEngine::AudioGameObject gameObjec
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AudioController::SetGameObjectAuxSendValues( AudioEngine::AudioGameObject gameObject,
+bool AudioController::SetGameObjectAuxSendValues( AudioEngine::AudioGameObject gameObjectId,
                                                   const AuxSendList& auxSendValues )
 {
   bool success = false;
   
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
-    success = _audioEngine->SetGameObjectAuxSendValues( gameObject, auxSendValues );
+    success = _audioEngine->SetGameObjectAuxSendValues( gameObjectId, auxSendValues );
   }
 #endif
   
@@ -440,14 +500,14 @@ bool AudioController::SetGameObjectAuxSendValues( AudioEngine::AudioGameObject g
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AudioController::SetGameObjectOutputBusVolume( AudioEngine::AudioGameObject gameObject,
+bool AudioController::SetGameObjectOutputBusVolume( AudioEngine::AudioGameObject gameObjectId,
                                                     AudioEngine::AudioReal32 controlVolume )
 {
   bool success = false;
   
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
-    success = _audioEngine->SetGameObjectOutputBusVolume( gameObject, controlVolume );
+    success = _audioEngine->SetGameObjectOutputBusVolume( gameObjectId, controlVolume );
   }
 #endif
   
@@ -477,7 +537,7 @@ void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
   // Setup Callbacks
   _hijackAudioPlugIn->SetCreatePlugInCallback( [this] ( const uint32_t plugInId )
   {
-    PRINT_NAMED_INFO( "AudioController.Initialize", "Create PlugIn Callback! PluginId: %d", plugInId );
+    PRINT_CH_INFO(kAudioLogChannelName, "AudioController.HijackAudioPlugin", "Create Plugin id: %d callback", plugInId);
     RobotAudioBuffer* buffer = GetRobotAudioBufferWithPluginId( plugInId );
     // Catch mistakes with wwise project
     ASSERT_NAMED( buffer != nullptr,
@@ -495,7 +555,7 @@ void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
   
   _hijackAudioPlugIn->SetDestroyPluginCallback( [this] ( const uint32_t plugInId )
   {
-    PRINT_NAMED_INFO( "AudioController.Initialize", "Destroy PlugIn Callback! PluginId: %d", plugInId );
+    PRINT_CH_INFO(kAudioLogChannelName, "AudioController.HijackAudioPlugin", "Destroy Plugin id: %d callback", plugInId);
     RobotAudioBuffer* buffer = GetRobotAudioBufferWithPluginId( plugInId );
     // Catch mistakes with wwise project
     ASSERT_NAMED( buffer != nullptr,
@@ -562,8 +622,10 @@ void AudioController::MoveCallbackContextToGarbageCollector( const AudioEngine::
 {
   ASSERT_NAMED( nullptr != callbackContext, "AudioController.MoveCallbackContextToGarbageCollector Callback Context is \
                 NULL");
-  PRINT_NAMED_INFO( "AudioController.MoveCallbackContextToGarbageCollector", "Add PlayId: %d Callback Context to \
-                    garbagecollector", callbackContext->GetPlayId() );
+  PRINT_CH_DEBUG(kAudioLogChannelName,
+                 "AudioController.MoveCallbackContextToGarbageCollector",
+                 "Add PlayId: %d Callback Context to garbagecollector",
+                 callbackContext->GetPlayId());
   // FIXME: Is there a better way of doing this?
   ClearGarbageCollector();
   
@@ -626,13 +688,16 @@ void AudioEngineLogCallback( uint32_t akErrorCode,
   logStream << "ErrorCode: " << akErrorCode << " Message: '" << ((nullptr != errorMessage) ? errorMessage : "")
   << "' LevelBitFlag: " << (uint32_t)errorLevel << " PlayingId: " << playingId << " GameObjId: " << gameObjectId;
   
-  PRINT_CH_INFO("Audio_WwiseLog",
-                "AudioController",
-                "%s", logStream.str().c_str());
+  if (((uint32_t)errorLevel & (uint32_t)ErrorLevel::Message) == (uint32_t)ErrorLevel::Message) {
+    PRINT_CH_INFO(AudioController::kAudioLogChannelName,
+                  "AudioEngineLog",
+                  "%s", logStream.str().c_str());
+  }
+  
   if (((uint32_t)errorLevel & (uint32_t)ErrorLevel::Error) == (uint32_t)ErrorLevel::Error) {
     PRINT_NAMED_ERROR("AudioController.WwiseLogError", "%s", logStream.str().c_str());
   }
-};
+}
 #endif
   
 
