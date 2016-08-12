@@ -53,7 +53,7 @@ public class Face : IVisibleInCamera { // TODO Implement IHaveCameraPosition
 
   public string ReticleLabelLocKey {
     get {
-      string key = LocalizationKeys.kDroneModeUnknownFaceReticleLabel;
+      string key = "";
       if (!string.IsNullOrEmpty(this.Name)) {
         key = LocalizationKeys.kLabelEmptyWithArg;
       }
