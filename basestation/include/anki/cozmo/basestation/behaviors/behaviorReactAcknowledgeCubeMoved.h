@@ -69,6 +69,7 @@ private:
   virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
   void HandleObjectMoved(const Robot& robot, const ObjectMoved& msg);
   void HandleObjectStopped(const Robot& robot, const ObjectStoppedMoving& msg);
+  void HandleObjectUpAxisChanged(const Robot& robot, const ObjectUpAxisChanged& msg);
   void HandleObservedObject(const Robot& robot, const ExternalInterface::RobotObservedObject& msg);
   Reaction_iter GetReactionaryIterator(ObjectID objectID);
 

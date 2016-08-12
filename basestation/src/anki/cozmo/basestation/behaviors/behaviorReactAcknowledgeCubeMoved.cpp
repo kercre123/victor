@@ -21,7 +21,7 @@
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
-const float kMinTimeMoving_ms = 1000;
+const float kMinTimeMoving_ms = 500;
 const float kDelayForUserPresentBlock_s = 1.0;
 const float kDelayToRecognizeBlock_s = 0.5;
 const float kRadiusRobotTolerence = 50;
@@ -75,6 +75,7 @@ BehaviorReactAcknowledgeCubeMoved::BehaviorReactAcknowledgeCubeMoved(Robot& robo
     EngineToGameTag::RobotObservedObject,
     EngineToGameTag::ObjectMoved,
     EngineToGameTag::ObjectStoppedMoving,
+    EngineToGameTag::ObjectUpAxisChanged
   }});
   
 }
@@ -100,7 +101,7 @@ bool BehaviorReactAcknowledgeCubeMoved::ShouldComputationallySwitch(const Robot&
                                         false);
     
     if(object.ObjectOutsideIgnoreArea(robot)
-       && (object.ObjectHasMovedLongEnough(robot))  //|| object.ObjectUpAxisHasChanged(robot))
+       && ((object.ObjectHasMovedLongEnough(robot)) || object.ObjectUpAxisHasChanged(robot))
        && !isVisible
     ){
       SET_STATE(PlayingSenseReaction);
@@ -186,6 +187,9 @@ void BehaviorReactAcknowledgeCubeMoved::AlwaysHandleInternal(const EngineToGameE
     case EngineToGameTag::RobotObservedObject:
       HandleObservedObject(robot, event.GetData().Get_RobotObservedObject());
       break;
+    case EngineToGameTag::ObjectUpAxisChanged:
+      HandleObjectUpAxisChanged(robot, event.GetData().Get_ObjectUpAxisChanged());
+      break;
     default:
       break;
   }
@@ -202,6 +206,13 @@ void BehaviorReactAcknowledgeCubeMoved::HandleObjectStopped(const Robot& robot, 
   auto iter = GetReactionaryIterator(msg.objectID);
   iter->ObjectStoppedMoving(robot);
 }
+  
+void BehaviorReactAcknowledgeCubeMoved::HandleObjectUpAxisChanged(const Robot& robot, const ObjectUpAxisChanged& msg)
+{
+  auto iter = GetReactionaryIterator(msg.objectID);
+  iter->ObjectUpAxisHasChanged(robot);
+}
+
   
 void BehaviorReactAcknowledgeCubeMoved::HandleObservedObject(const Robot& robot, const ExternalInterface::RobotObservedObject& msg)
 {
@@ -316,7 +327,6 @@ void ReactionObjectData::ObjectStartedMoving(const Robot& robot, const ObjectMov
 void ReactionObjectData::ObjectStoppedMoving(const Robot& robot)
 {
   _isObjectMoving = false;
-  _hasUpAxisChanged = false;
 }
   
 void ReactionObjectData::ObjectObserved(const Robot& robot)
