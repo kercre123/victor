@@ -41,6 +41,11 @@ namespace Anki
         }
         return cliffDetected;
       }
+      
+      u16 GetRawCliffData() 
+      {
+        return static_cast<u16>(g_dataToHead.cliffLevel);
+      }
     }
   }
 }

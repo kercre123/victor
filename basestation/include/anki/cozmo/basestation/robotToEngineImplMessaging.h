@@ -36,7 +36,6 @@ public:
   bool HasMismatchedCLAD() const { return _hasMismatchedEngineToRobotCLAD || _hasMismatchedRobotToEngineCLAD; }
   
   
-  
   void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId, Robot* const robot);
   void HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
@@ -78,6 +77,7 @@ private:
   RobotInterface::FWVersionInfo _factoryFirmwareVersion;
   bool _hasMismatchedEngineToRobotCLAD;
   bool _hasMismatchedRobotToEngineCLAD;
+
   
   ///////// Messaging ////////
   // These methods actually do the creation of messages and sending

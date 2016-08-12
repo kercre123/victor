@@ -71,7 +71,10 @@ namespace Anki {
       }
     }
     
-    RobotManager::~RobotManager() = default;
+    RobotManager::~RobotManager()
+    {
+      ASSERT_NAMED_EVENT(_robots.empty(), "robotmanager_robot_leak", "RobotManager::~RobotManager. Not all the robots have been destroyed. This is a memory leak");
+    }
     
     void RobotManager::Init(const Json::Value& config)
     {
@@ -141,7 +144,7 @@ namespace Anki {
         if (!handledDisconnect) {
           _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(withID, 0.0f)));
         }
-        
+
         delete(iter->second);
         iter = _robots.erase(iter);
         
@@ -156,6 +159,14 @@ namespace Anki {
       } else {
         PRINT_NAMED_WARNING("RobotManager.RemoveRobot", "Robot %d does not exist. Ignoring.\n", withID);
       }
+    }
+    
+    void RobotManager::RemoveRobots()
+    {
+      for (auto &kvp : _robots) {
+        delete(kvp.second);
+      }
+      _robots.clear();
     }
     
     std::vector<RobotID_t> const& RobotManager::GetRobotIDList() const

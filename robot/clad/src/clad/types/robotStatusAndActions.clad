@@ -83,6 +83,7 @@ structure RobotState
   float_32 batteryVoltage,
   uint_16 status, // RobotStatusFlag packs as a uint_16
   uint_16 lastPathID,
+  uint_16 cliffDataRaw,
   int_8   currPathSegment, // -1 if not traversing a path
   uint_8  numFreeSegmentSlots,
 }

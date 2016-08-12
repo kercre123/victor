@@ -248,7 +248,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   {
     _visionComponentPtr->Init(_context->GetDataLoader()->GetRobotVisionConfig());
   }
-  
+      
   // Read all neccessary data off the robot and back it up
   // Potentially duplicates some reads like FaceAlbumData
   _nvStorageComponent.GetRobotDataBackupManager().ReadAllBackupDataFromRobot();
@@ -558,6 +558,9 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // Get ID of last/current path that the robot executed
   SetLastRecvdPathID(msg.lastPathID);
       
+  // Raw cliff data
+  _cliffDataRaw = msg.cliffDataRaw;
+  
   // Update other state vars
   SetCurrPathSegment( msg.currPathSegment );
   SetNumFreeSegmentSlots(msg.numFreeSegmentSlots);

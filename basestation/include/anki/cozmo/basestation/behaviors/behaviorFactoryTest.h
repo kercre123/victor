@@ -27,6 +27,8 @@
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/cozmoObservableObject.h"
+#include "anki/cozmo/basestation/factory/factoryTestLogger.h"
+#include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
@@ -54,14 +56,16 @@ namespace Cozmo {
     
     virtual Result InitInternal(Robot& robot) override;
     virtual Status UpdateInternal(Robot& robot) override;
+    virtual void   StopInternal(Robot& robot) override;
+    virtual void   HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
+    
     void EndTest(Robot& robot, FactoryTestResultCode resCode);
     void PrintAndLightResult(Robot& robot, FactoryTestResultCode res);
-   
-    virtual void   StopInternal(Robot& robot) override;
-    
-    virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
 
+    void QueueWriteToRobot(Robot& robot, NVStorage::NVEntryTag tag, const u8* data, size_t size);
+    bool SendQueuedWrites(Robot& robot);
     
+
     // Handlers for signals coming from the engine
     Result HandleObservedObject(Robot& robot, const ExternalInterface::RobotObservedObject& msg);
     Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject& msg);
@@ -70,13 +74,13 @@ namespace Cozmo {
     Result HandleRobotStopped(Robot& robot, const ExternalInterface::RobotStopped &msg);
     Result HandleRobotPickedUp(Robot& robot, const ExternalInterface::RobotPickedUp &msg);
     Result HandleMotorCalibration(Robot& robot, const MotorCalibration &msg);
-    Result HandleObjectAvailable(Robot& robot, const ExternalInterface::ObjectAvailable &msg);
-    Result HandleObjectConnectionState(Robot& robot, const ObjectConnectionState &msg);
     Result HandleActionCompleted(Robot& robot, const ExternalInterface::RobotCompletedAction& msg);
     
     // Handlers for signals coming from robot
+    void HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& msg);
+    void HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& msg);
     void HandleFactoryTestParameter(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-    
+    void HandleBodyVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message);
 
     void SetCurrState(FactoryTestState s);
     void UpdateStateName();
@@ -93,6 +97,7 @@ namespace Cozmo {
     std::map<u32, ActionResultCallback> _actionCallbackMap;
     bool IsActing() const {return !_actionCallbackMap.empty(); }
     
+    void SendTestResultToGame(Robot& robot, FactoryTestResultCode resCode);
     
     std::vector<Signal::SmartHandle> _signalHandles;
     
@@ -102,6 +107,13 @@ namespace Cozmo {
     Result            _lastHandlerResult;
     PathMotionProfile _motionProfile;
     s32               _stationID;
+    
+    FactoryTestResultCode _prevResult;
+    bool                  _prevResultReceived;    
+    bool                  _hasBirthCertificate;
+    
+    bool                  _writeTestResult;
+    bool                  _eraseBirthCertificate;
  
     // Map of action tags that have been commanded to callback functions
     std::map<u32, std::string> _animActionTags;
@@ -110,20 +122,50 @@ namespace Cozmo {
     // ID of block to pickup
     ObjectID _blockObjectID;
     ObjectID _cliffObjectID;
-    ObjectID _chargerObjectID;
-    
     
     u32      _camCalibPoseIndex = 0;
     f32      _watchdogTriggerTime = -1.0;
     
     bool     _toolCodeImagesStored;
+
+    bool     _headCalibrated;
+    bool     _liftCalibrated;
+    
+    bool     _blockPickedUpReceived;
+    Radians  _robotAngleAtPickup;
+    Radians  _robotAngleAfterBackup;
     
     s32 _attemptCounter = 0;
     bool _calibrationReceived = false;
-    bool _chargerAvailable = false;
-    bool _chargerConnected = false;
     FactoryTestResultCode _testResult;
+    FactoryTestResultEntry _testResultEntry;
     std::vector<u32> _stateTransitionTimestamps;
+    
+    FactoryTestLogger _factoryTestLogger;
+    
+    struct WriteEntry {
+      WriteEntry(NVStorage::NVEntryTag tag,
+                 const u8* data, size_t size,
+                 NVStorageComponent::NVStorageWriteEraseCallback callback)
+      : _tag(tag)
+      , _callback(callback) {
+        _data.assign(data, data+size);
+      }
+      
+      NVStorage::NVEntryTag _tag;
+      std::vector<u8> _data;
+      NVStorageComponent::NVStorageWriteEraseCallback _callback;
+    };
+    std::list<WriteEntry> _queuedWrites;
+    FactoryTestResultCode _writeFailureCode;
+
+    static PoseData ConvertToPoseData(const Pose3d& p);
+    u8 _numPlacementAttempts;
+    
+    bool _activeObjectDiscovered = false;
+    bool _wrongBodyHWVersion;
+    
+    Pose3d _closestPredockPose;
     
   }; // class BehaviorFactoryTest
 

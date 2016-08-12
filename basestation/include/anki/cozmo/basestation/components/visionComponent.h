@@ -175,20 +175,17 @@ struct DockingErrorSignal;
     bool WillStoreNextImageForCameraCalibration() const { return _storeNextImageForCalibration;  }
     size_t  GetNumStoredCameraCalibrationImages() const;
     
-    // Writes all currently stored calibration images to the robot.
-    // Executes callback when all writes have completed.
-    // Also erases remaining calibration image slots on robot.
-    // We don't want to have a mix of images from different calibration runs.
-    using WriteImagesToRobotCallback = std::function<void(std::vector<NVStorage::NVResult>&)>;
-    Result WriteCalibrationImagesToRobot(WriteImagesToRobotCallback callback = {});
+    // Get jpeg compressed data of calibration images
+    // dotsFoundMask has bits set to 1 wherever the corresponding calibration image was found to contain a valid target
+    std::list<std::vector<u8> > GetCalibrationImageJpegData(u8* dotsFoundMask = nullptr);
     
-    // Write the specified calibration pose to the robot. 'whichPose' must be [0,numCalibrationimages].
-    Result WriteCalibrationPoseToRobot(size_t whichPose, NVStorageComponent::NVStorageWriteEraseCallback callback = {});
+    // Get the specified calibration pose to the robot. 'whichPose' must be [0,numCalibrationimages].
+    Result GetCalibrationPoseToRobot(size_t whichPose, Pose3d& p);
     
     // Tool code images
     Result ClearToolCodeImages();    
     size_t  GetNumStoredToolCodeImages() const;
-    Result WriteToolCodeImagesToRobot(WriteImagesToRobotCallback callback = {});
+    std::list<std::vector<u8> > GetToolCodeImageJpegData();
 
     // For factory test behavior use only: tell vision component to find the
     // four dots for the test target and compute camera pose. Result is
@@ -275,9 +272,6 @@ struct DockingErrorSignal;
 
     bool _storeNextImageForCalibration = false;
     Rectangle<s32> _calibTargetROI;
-    std::vector<NVStorage::NVResult> _writeCalibImagesToRobotResults;
-    
-    std::vector<NVStorage::NVResult> _writeToolCodeImagesToRobotResults;
     
     constexpr static f32 kDefaultBodySpeedThresh = DEG_TO_RAD(60);
     constexpr static f32 kDefaultHeadSpeedThresh = DEG_TO_RAD(10);

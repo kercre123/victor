@@ -2,24 +2,22 @@
 using System.Collections;
 using System.Collections.Generic;
 
-using Anki.Cozmo.ExternalInterface;
-
 #if FACTORY_TEST
+
+using Anki.Cozmo.ExternalInterface;
 
 public class FactoryIntroManager : MonoBehaviour {
 
-  [SerializeField]
-  private ConnectDialog _DevConnectDialog;
-  private GameObject _DevConnectDialogInstance;
+  public const int kRobotID = 1;
+  public const string kEngineIP = "127.0.0.1";
+  public const string kRobotSimIP = "127.0.0.1";
+  public const string kRobotIP = "172.31.1.1";
 
   [SerializeField]
   private UnityEngine.UI.Image _Background;
 
   [SerializeField]
   private UnityEngine.UI.Image _RestartOverlay;
-
-  [SerializeField]
-  private UnityEngine.UI.Button _LogsButton;
 
   [SerializeField]
   private UnityEngine.UI.Button _OptionsButton;
@@ -31,25 +29,17 @@ public class FactoryIntroManager : MonoBehaviour {
   private UnityEngine.UI.Button _StartButton;
 
   [SerializeField]
-  private UnityEngine.UI.Text _PingStatusText;
+  private UnityEngine.UI.Text _NetworkStatusText;
 
   [SerializeField]
-  private FactoryLogPanel _FactoryLogPanelPrefab;
-  private FactoryLogPanel _FactoryLogPanelInstance;
+  private UnityEngine.UI.Text _PingStatusText;
 
   [SerializeField]
   private FactoryOptionsPanel _FactoryOptionsPanelPrefab;
   private FactoryOptionsPanel _FactoryOptionsPanelInstance;
 
   [SerializeField]
-  private FactoryOTAPanel _FactoryOTAPanelPrefab;
-  private FactoryOTAPanel _FactoryOTAPanelInstance;
-
-  [SerializeField]
   private UnityEngine.UI.Text _StatusText;
-
-  [SerializeField]
-  private UnityEngine.UI.Text _StationNumberText;
 
   [SerializeField]
   private Canvas _Canvas;
@@ -57,40 +47,31 @@ public class FactoryIntroManager : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.Image _InProgressSpinner;
 
-  private string _LogFilter = "";
-  private int _StationNumber = 0;
-  private int _TestNumber = 0;
+  private PingStatus _PingStatusComponent;
   private bool _IsSim = false;
 
-  private List<string> _LogList = new List<string>();
-
   void Start() {
-    _RestartOverlay.gameObject.SetActive(false);
+    _PingStatusComponent = GetComponent<PingStatus>();
+
     DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled = true;
-    _LogFilter = PlayerPrefs.GetString("LogFilter");
+
     SetStatusText("Not Connected");
-    RobotEngineManager.Instance.RobotConnected += HandleConnected;
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnectedFromClient);
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FactoryTestResult>(FactoryResult);
+
+    RobotEngineManager.Instance.ConnectedToClient += HandleConnectedToClient;
+    RobotEngineManager.Instance.DisconnectedFromClient += HandleDisconnectedFromClient;
+    
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(HandleRobotConnected);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.FactoryTestResultEntry>(HandleFactoryResult);
+
     _RestartButton.gameObject.SetActive(false);
 
-    _RestartButton.onClick.AddListener(() => RestartTestApp());
-    _LogsButton.onClick.AddListener(HandleLogButtonClick);
+    _RestartButton.onClick.AddListener(HandleRestartButtonClick);
     _OptionsButton.onClick.AddListener(HandleOptionsButtonClick);
     _StartButton.onClick.AddListener(HandleStartButtonClick);
 
     _InProgressSpinner.gameObject.SetActive(false);
-  }
 
-  private void HandleStationNumberUpdate(int update) {
-    _StationNumber = update;
-    _StationNumberText.text = "Station Number: " + _StationNumber;
-    Debug.Log("TODO: Handle Station Number: " + _StationNumber);
-  }
-
-  private void HandleTestNumberUpdate(int update) {
-    _TestNumber = update;
-    Debug.Log("TODO: Test Start Number: " + _TestNumber);
+    RobotEngineManager.Instance.Connect(kEngineIP);
   }
 
   private void HandleSetSimType(bool isSim) {
@@ -98,17 +79,40 @@ public class FactoryIntroManager : MonoBehaviour {
   }
 
   private void HandleStartButtonClick() {
-    ShowDevConnectDialog();
     _StartButton.gameObject.SetActive(false);
+    _RestartButton.gameObject.SetActive(true);
     _InProgressSpinner.gameObject.SetActive(true);
+
+    SetStatusText("Connecting To Robot");
+    RobotEngineManager.Instance.ConnectToRobot(kRobotID, _IsSim ? kRobotSimIP : kRobotIP, _IsSim);
   }
 
-  private void HandleConnected(int robotID) {
-    HideDevConnectDialog();
-    SetStatusText("Factory App Connected To Robot");
+  private void HandleConnectedToClient(string connectionIdentifier) {
+    RobotEngineManager.Instance.StartEngine();
+
+  }
+
+  private void HandleRobotConnected(RobotConnectionResponse message) {
+    SetStatusText("Connected To Robot");
+
+    RobotEngineManager.Instance.SetDebugConsoleVar("BFT_EnableNVStorageWrites", PlayerPrefs.GetInt("EnableNStorageWritesToggle", 1).ToString());
+    RobotEngineManager.Instance.SetDebugConsoleVar("BFT_CheckPrevFixtureResults", PlayerPrefs.GetInt("CheckPreviousResult", 0).ToString());
+    RobotEngineManager.Instance.SetDebugConsoleVar("BFT_WipeNVStorage", PlayerPrefs.GetInt("WipeNVStorageAtStart", 0).ToString());
+    RobotEngineManager.Instance.SetDebugConsoleVar("BFT_SkipBlockPickup", PlayerPrefs.GetInt("SkipBlockPickup", 0).ToString());
+    RobotEngineManager.Instance.SetDebugConsoleVar("BFT_ConnectToRobotOnly", PlayerPrefs.GetInt("ConnectToRobotOnly", 0).ToString());
+    RobotEngineManager.Instance.SetDebugConsoleVar("BFT_DisconnectAtEnd", "1");
+
+    Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues();
+
+    // Send the volume message
+    bool soundEnabled = PlayerPrefs.GetInt("EnableRobotSound", 1) == 1;
+    RobotEngineManager.Instance.Message.SetRobotVolume = new SetRobotVolume();
+    RobotEngineManager.Instance.Message.SetRobotVolume.volume = soundEnabled ? 1.0f : 0;
+    RobotEngineManager.Instance.SendMessage();
 
     // runs the factory test.
     RobotEngineManager.Instance.CurrentRobot.WakeUp(true);
+    RobotEngineManager.Instance.CurrentRobot.EnableReactionaryBehaviors(false);
     RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
     RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.FactoryTest);
@@ -116,51 +120,31 @@ public class FactoryIntroManager : MonoBehaviour {
     _RestartButton.gameObject.SetActive(true);
   }
 
-  private void HandleLogButtonClick() {
-    if (_FactoryLogPanelInstance != null) {
-      GameObject.Destroy(_FactoryLogPanelInstance.gameObject);
-    }
-    if (_FactoryOptionsPanelInstance != null) {
-      GameObject.Destroy(_FactoryOptionsPanelInstance.gameObject);
-    }
-    _FactoryLogPanelInstance = GameObject.Instantiate(_FactoryLogPanelPrefab).GetComponent<FactoryLogPanel>();
-    _FactoryLogPanelInstance.transform.SetParent(_Canvas.transform, false);
-    _FactoryLogPanelInstance.LogFilter = _LogFilter;
-    _FactoryLogPanelInstance.UpdateLogText(_LogList);
-  }
-
   private void HandleOptionsButtonClick() {
-    if (_FactoryLogPanelInstance != null) {
-      GameObject.Destroy(_FactoryLogPanelInstance.gameObject);
-    }
     if (_FactoryOptionsPanelInstance != null) {
       GameObject.Destroy(_FactoryOptionsPanelInstance);
     }
     _FactoryOptionsPanelInstance = GameObject.Instantiate(_FactoryOptionsPanelPrefab).GetComponent<FactoryOptionsPanel>();
     _FactoryOptionsPanelInstance.transform.SetParent(_Canvas.transform, false);
-    _FactoryOptionsPanelInstance.OnSetStationNumber += HandleStationNumberUpdate;
-    _FactoryOptionsPanelInstance.OnSetTestNumber += HandleTestNumberUpdate;
     _FactoryOptionsPanelInstance.OnSetSim += HandleSetSimType;
-    _FactoryOptionsPanelInstance.OnOTAButton += HandleOTAButton;
-    _FactoryOptionsPanelInstance.OnConsoleLogFilter += HandleSetConsoleLogFilter;
-    _FactoryOptionsPanelInstance.Initialize(_IsSim, _LogFilter);
+    _FactoryOptionsPanelInstance.OnOTAStarted += HandleOTAStarted;
+    _FactoryOptionsPanelInstance.OnOTAFinished += HandleOTAFinished;
+
+    _FactoryOptionsPanelInstance.Initialize(_IsSim, _Canvas, _PingStatusComponent);
   }
 
-  private void HandleSetConsoleLogFilter(string input) {
-    _LogFilter = input;
+  private void HandleOTAStarted() {
+    RobotEngineManager.Instance.ConnectedToClient -= HandleConnectedToClient;
+    RobotEngineManager.Instance.DisconnectedFromClient -= HandleDisconnectedFromClient;
+
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(HandleRobotConnected);
   }
 
-  private void HandleOTAButton() {
-    ShowDevConnectDialog();
-    RobotEngineManager.Instance.RobotConnected -= HandleConnected;
-    RobotEngineManager.Instance.RobotConnected += HandleOTAConnected;
-    _FactoryOTAPanelInstance = GameObject.Instantiate(_FactoryOTAPanelPrefab).GetComponent<FactoryOTAPanel>();
-    _FactoryOTAPanelInstance.transform.SetParent(_Canvas.transform, false);
-  }
-
-  private void HandleOTAConnected(int robotID) {
-    _FactoryOTAPanelInstance.OnRestartButton += RestartTestApp;
-    RobotEngineManager.Instance.UpdateFirmware(0);
+  private void HandleOTAFinished() {
+    RobotEngineManager.Instance.ConnectedToClient += HandleConnectedToClient;
+    RobotEngineManager.Instance.DisconnectedFromClient += HandleDisconnectedFromClient;
+    
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(HandleRobotConnected);
   }
 
   private void SetStatusText(string txt) {
@@ -169,19 +153,14 @@ public class FactoryIntroManager : MonoBehaviour {
     }
   }
 
-  private void HandleNewSOSLog(string log_entry) {
-    while (_LogList.Count > 9000) {
-      _LogList.RemoveAt(0);
+  private void HandleDisconnectedFromClient(DisconnectionReason obj) {
+    // Don't override result code with disconnect text since the disconnect
+    // is expected when the test completes
+    DAS.Debug(this, "Disconnected: " + obj.ToString());
+    if (!_StatusText.text.Contains("Result Code:")) {
+      SetStatusText("Disconnected: " + obj.ToString());
+      TestFailed();
     }
-    _LogList.Add(log_entry);
-    if (_FactoryLogPanelInstance != null) {
-      _FactoryLogPanelInstance.UpdateLogText(_LogList);
-    }
-  }
-
-  private void HandleDisconnectedFromClient(object message) {
-    SetStatusText("Disconnected");
-    TestFailed();
   }
 
   private void TestFailed() {
@@ -191,26 +170,35 @@ public class FactoryIntroManager : MonoBehaviour {
     _Background.color = Color.red;
     _InProgressSpinner.gameObject.SetActive(false);
     _RestartButton.gameObject.SetActive(true);
+    _StartButton.gameObject.SetActive(false);
+
+    RobotEngineManager.Instance.DisconnectFromRobot(kRobotID);
   }
 
   private void TestPassed() {
     _Background.color = Color.green;
-    _InProgressSpinner.gameObject.SetActive(false);
     _RestartButton.gameObject.SetActive(true);
+    _InProgressSpinner.gameObject.SetActive(false);
+
+    RobotEngineManager.Instance.DisconnectFromRobot(kRobotID);
   }
 
-  private void RestartTestApp() {
+  private void HandleRestartButtonClick() {
+    _Background.color = Color.white;
     _RestartButton.gameObject.SetActive(false);
-    _RestartOverlay.gameObject.SetActive(true);
-    SOSLogManager.Instance.CleanUp();
-    CozmoBinding.Shutdown();
-    UnityEngine.SceneManagement.SceneManager.LoadScene("FactoryTest");
+    _StartButton.gameObject.SetActive(true);
+    _InProgressSpinner.gameObject.SetActive(false);
+
+    RobotEngineManager.Instance.DisconnectFromRobot(kRobotID);
+
+    if (!RobotEngineManager.Instance.IsConnectedToEngine) {
+      RobotEngineManager.Instance.Connect(kEngineIP);
+    } 
   }
 
-  private void FactoryResult(object message) {
-    Anki.Cozmo.ExternalInterface.FactoryTestResult result = (Anki.Cozmo.ExternalInterface.FactoryTestResult)message;
-    SetStatusText("Result Code: " + (int)result.resultEntry.result + " (" + result.resultEntry.result + ")");
-    if (result.resultEntry.result == Anki.Cozmo.FactoryTestResultCode.SUCCESS) {
+  private void HandleFactoryResult(Anki.Cozmo.FactoryTestResultEntry result) {
+    SetStatusText("Result Code: " + (int)result.result + " (" + result.result + ")");
+    if (result.result == Anki.Cozmo.FactoryTestResultCode.SUCCESS) {
       TestPassed();
     }
     else {
@@ -218,34 +206,21 @@ public class FactoryIntroManager : MonoBehaviour {
     }
   }
 
-  public void ShowDevConnectDialog() {
-    if (_DevConnectDialogInstance == null && _DevConnectDialog != null) {
-      _DevConnectDialogInstance = GameObject.Instantiate(_DevConnectDialog.gameObject);
-    }
-    _DevConnectDialogInstance.GetComponent<ConnectDialog>().Play(_IsSim);
-  }
-
-  private void HideDevConnectDialog() {
-    if (_DevConnectDialogInstance != null) {
-      Destroy(_DevConnectDialogInstance);
-    }
-  }
-
   void Update() {
-    if (GetComponent<PingStatus>().GetPingStatus() || _IsSim) {
+    _NetworkStatusText.text = _PingStatusComponent.GetNetworkStatus() ? "Network: Connected" : "Network: Disconnected";
+
+    if (_PingStatusComponent.GetPingStatus() || _IsSim) {
       _StartButton.transform.FindChild("Text").GetComponent<UnityEngine.UI.Text>().text = "START";
       _StartButton.image.color = Color.green;
       _StartButton.interactable = true;
-      _PingStatusText.text = "Ping Status: Connected";
+      _PingStatusText.text = "Ping: Success";
     }
     else {
       _StartButton.image.color = Color.gray;
       _StartButton.transform.FindChild("Text").GetComponent<UnityEngine.UI.Text>().text = "NO ROBOT CONNECTED";
       _StartButton.interactable = false;
-      _PingStatusText.text = "Ping Status: Not Connected";
+      _PingStatusText.text = "Ping: Fail";
     }
-
-
   }
 }
 

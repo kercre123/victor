@@ -324,13 +324,15 @@ namespace Anki {
       HandleNVStorageOpResult(msg);
     }
     
-    void UiGameController::HandleFactoryTestResultBase(ExternalInterface::FactoryTestResult const& msg)
-    {
-      PRINT_NAMED_INFO("HandleFactoryTestResult",
-                       "Test result: %s", EnumToString(msg.resultEntry.result));
 
-      HandleFactoryTestResult(msg);
+    void UiGameController::HandleFactoryTestResultEntryBase(FactoryTestResultEntry const& msg)
+    {
+      PRINT_NAMED_INFO("HandleFactoryTestResultEntry",
+                       "Test result: %s", EnumToString(msg.result));
+      
+      HandleFactoryTestResultEntry(msg);
     }
+
 
     void UiGameController::HandleEndOfMessageBase(ExternalInterface::EndOfMessage const& msg)
     {
@@ -510,9 +512,6 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGame::Tag::NVStorageOpResult:
             HandleNVStorageOpResultBase(message.Get_NVStorageOpResult());
             break;
-          case ExternalInterface::MessageEngineToGame::Tag::FactoryTestResult:
-            HandleFactoryTestResultBase(message.Get_FactoryTestResult());
-            break;
           case ExternalInterface::MessageEngineToGame::Tag::AnimationAborted:
             HandleAnimationAbortedBase(message.Get_AnimationAborted());
             break;
@@ -527,6 +526,9 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGameTag::RobotPickedUp:
             HandleRobotPickedUpBase(message.Get_RobotPickedUp());
+            break;
+          case ExternalInterface::MessageEngineToGame::Tag::FactoryTestResultEntry:
+            HandleFactoryTestResultEntryBase(message.Get_FactoryTestResultEntry());
             break;
           case ExternalInterface::MessageEngineToGameTag::LoadedKnownFace:
             HandleLoadedKnownFaceBase(message.Get_LoadedKnownFace());

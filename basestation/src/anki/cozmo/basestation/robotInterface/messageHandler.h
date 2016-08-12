@@ -71,6 +71,7 @@ public:
   void HandleMessage(const T& msg);
   
   Result AddRobotConnection(const ExternalInterface::ConnectToRobot& connectMsg);
+  Result RemoveRobotConnection(const uint32_t robotId);
   
   void Disconnect();
   

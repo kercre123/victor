@@ -24,9 +24,8 @@ namespace Vision {
   , _focalLength_y(1.f)
   , _center(0.f,0.f)
   , _skew(0.f)
-  , _distortionCoeffs(8,0)
   {
-
+    _distortionCoeffs.fill(0);
   }
   
   CameraCalibration::CameraCalibration(u16 nrows,    u16 ncols,
@@ -48,11 +47,10 @@ namespace Vision {
                                        const f32 fx,    const f32 fy,
                                        const f32 cenx,  const f32 ceny,
                                        const f32 skew,
-                                       const std::vector<float> &distCoeffs)
+                                       const DistortionCoeffs &distCoeffs)
   : CameraCalibration(nrows, ncols, fx, fy, cenx, ceny, skew)
   {
-    _distortionCoeffs.insert(_distortionCoeffs.end(),
-                             distCoeffs.begin(), distCoeffs.end());
+    _distortionCoeffs = distCoeffs;
   }
   
   CameraCalibration::CameraCalibration(const Json::Value &jsonNode)

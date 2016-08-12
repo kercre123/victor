@@ -49,6 +49,12 @@ message ConnectToRobot {
     uint_8 isSimulated
 }
 
+// TODO: This functionality is duplicated by StartIdleTimeout.
+//       Consolidate!
+message DisconnectFromRobot {
+    uint_8 robotID,
+}
+
 // ConnectToUiDevice
 message ConnectToUiDevice {
     UiConnectionType  connectionType,

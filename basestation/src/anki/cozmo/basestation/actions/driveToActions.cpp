@@ -881,14 +881,19 @@ namespace Anki {
           else if (_robot.GetLastSentPathID() == _robot.GetLastRecvdPathID()) {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.DoneNotInPlace",
                              "[%d] Robot is done traversing path, but is not in position (dist=%.1fmm). lastPathID=%d"
-                             " goal %d (%f, %f, %f, %fdeg)",
+                             " goal %d (%f, %f, %f, %fdeg), actual (%f, %f, %f, %fdeg)",
                              GetTag(),
                              Tdiff.Length(), _robot.GetLastRecvdPathID(),
                              (int) _selectedGoalIndex,
                              _goalPoses[_selectedGoalIndex].GetTranslation().x(),
                              _goalPoses[_selectedGoalIndex].GetTranslation().y(),
                              _goalPoses[_selectedGoalIndex].GetTranslation().z(),
-                             _goalPoses[_selectedGoalIndex].GetRotationAngle<'Z'>().getDegrees());
+                             _goalPoses[_selectedGoalIndex].GetRotationAngle<'Z'>().getDegrees(),
+                             _robot.GetPose().GetTranslation().x(),
+                             _robot.GetPose().GetTranslation().y(),
+                             _robot.GetPose().GetTranslation().z(),
+                             _robot.GetPose().GetRotationAngle<'Z'>().getDegrees());
+            
             result = ActionResult::FAILURE_RETRY;
           }
           else {

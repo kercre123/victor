@@ -67,6 +67,7 @@ class AnkiEvent;
 namespace ExternalInterface {
   class MessageGameToEngine;
   struct ConnectToRobot;
+  struct DisconnectFromRobot;
 }
 
 namespace SpeechRecognition {
@@ -110,6 +111,7 @@ public:
   std::vector<RobotID_t> const& GetRobotIDList() const;
   
   virtual Result ConnectToRobot(const ExternalInterface::ConnectToRobot& connectMsg);
+  virtual Result DisconnectFromRobot(const ExternalInterface::DisconnectFromRobot& disconnectMsg);
   
   void SetImageSendMode(RobotID_t robotID, ImageSendMode newMode);
   void SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, ImageResolution resolution);

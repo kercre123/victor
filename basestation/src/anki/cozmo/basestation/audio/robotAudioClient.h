@@ -45,6 +45,9 @@ public:
 
   // Default Constructor
   RobotAudioClient( Robot* robot );
+
+  // Destructor
+  ~RobotAudioClient();
   
   // The the audio buffer for the corresponding Game Object
   virtual RobotAudioBuffer* GetRobotAudiobuffer( GameObjectType gameObject );
@@ -114,6 +117,7 @@ private:
   
   // Create Audio Buffer for the corresponding Game Object
   RobotAudioBuffer* RegisterRobotAudioBuffer( GameObjectType gameObject, PluginId_t pluginId, Bus::BusType bus );
+  void UnregisterRobotAudioBuffer( GameObjectType gameObject, PluginId_t pluginId, Bus::BusType bus );
   
   // Keep current robot volume
   float _robotVolume = 0.0f;

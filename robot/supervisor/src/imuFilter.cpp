@@ -88,7 +88,7 @@ namespace Anki {
 
         u32 lastMotionDetectedTime_ms = 0;
         const u32 MOTION_DETECT_TIMEOUT_MS = 250;
-        const f32 GYRO_MOTION_THRESHOLD = DEG_TO_RAD_F32(3);  // Maximum expected drift from gyro
+        const f32 GYRO_MOTION_THRESHOLD = DEG_TO_RAD_F32(3.f);  // Maximum allowable drift from gyro post-calibration
 
 
         // Recorded buffer
@@ -451,8 +451,8 @@ namespace Anki {
       // Checks for accelerations
       bool CheckUnintendedAcceleration() {
         return (ABS(pdFiltAccX_aligned_) > 5000) ||
-               (ABS(pdFiltAccY_aligned_) > 3000) ||
-               (ABS(pdFiltAccZ_aligned_) > 11000);
+               (ABS(pdFiltAccY_aligned_) > 5000) ||
+               (ABS(pdFiltAccZ_aligned_) > 12000);
       }
 
 

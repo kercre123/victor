@@ -23,7 +23,7 @@ namespace Cozmo {
 class ArchiveUtil {
 public:
 // mostly static methods for creating archive files
-  static void CreateArchiveFromFiles(const std::string& outputPath,
+  static bool CreateArchiveFromFiles(const std::string& outputPath,
                                      const std::string& filenameBase,
                                      const std::vector<std::string>& filenames);
   

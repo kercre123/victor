@@ -360,7 +360,8 @@ message RobotCompletedFactoryDotTest {
     float_32 camPosePitch_rad,
     float_32 camPoseYaw_rad,
     float_32 dotCenX_pix[4],  // Centroids in "standard" order: upper left, lower left, upper right, lower right
-    float_32 dotCenY_pix[4],  //    " 
+    float_32 dotCenY_pix[4],  //    "
+    float_32 headAngle,
     bool     success = 0,
     bool     didComputePose = 0, // If false, camPose members will all be invalid
 }
@@ -558,14 +559,6 @@ message NVStorageOpResult {
   NVStorage::NVOperation op
 }
 
-
-///////////////////////////////////////////////////////////////////////////////
-// FactoryTest
-///////////////////////////////////////////////////////////////////////////////
-
-message FactoryTestResult {
-  FactoryTestResultEntry resultEntry
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Firmware

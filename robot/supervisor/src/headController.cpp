@@ -74,8 +74,7 @@ namespace HeadController {
       } HeadCalibState;
 
       HeadCalibState calState_ = HCS_IDLE;
-      const f32 HEAD_CALIB_POWER = BURNOUT_POWER_THRESH - 0.01;
-      const f32 HEAD_CAL_OFFSET = DEG_TO_RAD_F32(0);  // Dependent on HEAD_CALIB_POWER. Ideally 0.
+      const f32 HEAD_CALIB_POWER = 0.35;
       bool isCalibrated_ = true;
       u32 lastHeadMovedTime_ms = 0;
 
@@ -86,7 +85,7 @@ namespace HeadController {
 
       const u32 HEAD_STOP_TIME = 500;  // ms
 
-      bool enable_ = true;
+      bool enable_ = false;
 
     } // "private" members
 
@@ -118,7 +117,7 @@ namespace HeadController {
       AnkiEvent( 281, "HeadController.StartingCalibration", 305, "", 0);
       Enable();
       potentialBurnoutStartTime_ms_ = 0;
-      
+
 #ifdef SIMULATOR
       // Skipping actual calibration routine in sim due to weird lift behavior when attempting to move it when
       // it's at the joint limit.  The arm flies off the robot!
@@ -141,7 +140,7 @@ namespace HeadController {
 
     void ResetLowAnglePosition()
     {
-      currentAngle_ = MAX_HEAD_ANGLE + HEAD_CAL_OFFSET;
+      currentAngle_ = MIN_HEAD_ANGLE;
       HAL::MotorResetPosition(MOTOR_HEAD);
       prevHalPos_ = HAL::MotorGetPosition(MOTOR_HEAD);
       isCalibrated_ = true;
@@ -167,7 +166,7 @@ namespace HeadController {
             break;
 
           case HCS_LOWER_HEAD:
-            power_ = HEAD_CALIB_POWER;
+            power_ = -HEAD_CALIB_POWER;
             HAL::MotorSetPower(MOTOR_HEAD, power_);
             lastHeadMovedTime_ms = HAL::GetTimeStamp();
             calState_ = HCS_WAIT_FOR_STOP;

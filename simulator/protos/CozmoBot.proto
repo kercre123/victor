@@ -141,8 +141,8 @@ Supervisor {
 		      name "cliffSensor"
 		      type "infra-red"
 		      aperture 0.5
-		      lookupTable [0   255 0,
-		                   0.1   0 0]
+		      lookupTable [0   900 0,
+		                   0.2   0 0]
 		    }
 		  ]
 		}

@@ -35,6 +35,7 @@
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/util/transferQueue/transferQueueMgr.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
+#include "anki/cozmo/basestation/factory/factoryTestLogger.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -59,6 +60,7 @@
 #define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
 #define ENABLE_CE_RUN_TIME_DIAGNOSTICS 1
 
+#define MIN_NUM_FACTORY_TEST_LOGS_FOR_ARCHIVING 100
 
 namespace Anki {
 namespace Cozmo {
@@ -84,6 +86,7 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotImageSendMode, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ImageRequest, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToRobot, callback));
+  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::DisconnectFromRobot, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ReadAnimationFile, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::StartTestMode, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetEnableSOSLogging, callback));
@@ -249,10 +252,8 @@ Result CozmoEngine::ConnectToRobot(const ExternalInterface::ConnectToRobot& conn
   _context->GetRobotManager()->GetMsgHandler()->AddRobotConnection(connectMsg);
   
   // Another exception for hosts: have to tell the basestation to add the robot as well
-  AddRobot(connectMsg.robotID);
-  return RESULT_OK;
+  return AddRobot(connectMsg.robotID);
 }
-
 void CozmoEngine::HandleResetFirmware(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
   for (RobotID_t robotId : GetRobotIDList())
@@ -260,6 +261,18 @@ void CozmoEngine::HandleResetFirmware(const AnkiEvent<ExternalInterface::Message
     PRINT_NAMED_INFO("CozmoEngine.HandleResetFirmware", "Sending KillBodyCode to Robot %d", robotId);
     _context->GetRobotManager()->GetMsgHandler()->SendMessage(robotId, RobotInterface::EngineToRobot(KillBodyCode()));
   }
+}  
+
+Result CozmoEngine::DisconnectFromRobot(const ExternalInterface::DisconnectFromRobot& disconnectMsg)
+{
+  if( !CozmoEngine::HasRobotWithID(disconnectMsg.robotID)) {
+    PRINT_NAMED_INFO("CozmoEngine.DisconnectFromRobot.AlreadyDisconnected", "Robot %d already disconnected", disconnectMsg.robotID);
+    return RESULT_OK;
+  }
+  
+  _context->GetRobotManager()->GetMsgHandler()->Disconnect();
+  
+  return RESULT_OK;
 }
 
 Result CozmoEngine::Update(const float currTime_sec)
@@ -481,6 +494,17 @@ Result CozmoEngine::InitInternal()
   AudioUnityClientConnection *unityConnection = new AudioUnityClientConnection( *_context->GetExternalInterface() );
   _context->GetAudioServer()->RegisterClientConnection( unityConnection );
   
+  // Archive factory test logs
+  FactoryTestLogger factoryTestLogger;
+  u32 numLogs = factoryTestLogger.GetNumLogs(_context->GetDataPlatform());
+  if (numLogs >= MIN_NUM_FACTORY_TEST_LOGS_FOR_ARCHIVING) {
+    if (factoryTestLogger.ArchiveLogs(_context->GetDataPlatform())) {
+      PRINT_NAMED_INFO("CozmoEngine.InitInternal.ArchivedFactoryLogs", "%d logs archived", numLogs);
+    } else {
+      PRINT_NAMED_WARNING("CozmoEngine.InitInternal.ArchivedFactoryLogsFailed", "");
+    }
+  }
+  
   return RESULT_OK;
 }
   
@@ -505,8 +529,6 @@ void CozmoEngine::ReadCameraCalibration(Robot* robot)
                          payload.focalLength_x, payload.focalLength_y,
                          payload.center_x, payload.center_y);
         
-        const std::vector<f32> tempVector(payload.distCoeffs.begin(), payload.distCoeffs.end());
-        
         // Convert calibration message into a calibration object to pass to the robot
         Vision::CameraCalibration calib(payload.nrows,
                                         payload.ncols,
@@ -515,7 +537,7 @@ void CozmoEngine::ReadCameraCalibration(Robot* robot)
                                         payload.center_x,
                                         payload.center_y,
                                         payload.skew,
-                                        tempVector);
+                                        payload.distCoeffs);
         
         robot->GetVisionComponent().SetCameraCalibration(calib);
       }
@@ -619,6 +641,17 @@ void CozmoEngine::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
         PRINT_NAMED_INFO("CozmoEngine.HandleEvents", "Connected to robot %d!", msg.robotID);
       } else {
         PRINT_NAMED_ERROR("CozmoEngine.HandleEvents", "Failed to connect to robot %d!", msg.robotID);
+      }
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::DisconnectFromRobot:
+    {
+      const ExternalInterface::DisconnectFromRobot& msg = event.GetData().Get_DisconnectFromRobot();
+      const bool success = DisconnectFromRobot(msg);
+      if(success) {
+        PRINT_NAMED_INFO("CozmoEngine.HandleEvents", "Disconnected from robot %d!", msg.robotID);
+      } else {
+        PRINT_NAMED_ERROR("CozmoEngine.HandleEvents", "Failed to disconnect from robot %d!", msg.robotID);
       }
       break;
     }

@@ -40,16 +40,16 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   #endif
   _gameLogTransferTask->Init(_transferQueueMgr.get());
 }
-
+  
 
 CozmoContext::CozmoContext() : CozmoContext(nullptr, nullptr)
 {
-
+  
 }
 
 CozmoContext::~CozmoContext()
 {
-
+  _robotMgr->RemoveRobots();
 }
   
 } // namespace Cozmo

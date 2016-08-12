@@ -28,6 +28,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorBuildPyramid.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDemoFearEdge.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
+#include "anki/cozmo/basestation/behaviors/behaviorFactoryCentroidExtractor.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDriveOffCharger.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDrivePath.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
@@ -191,6 +192,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::FactoryTest:
     {
       newBehavior = new BehaviorFactoryTest(robot, config);
+      break;
+    }
+    case BehaviorType::FactoryCentroidExtractor:
+    {
+      newBehavior = new BehaviorFactoryCentroidExtractor(robot, config);
       break;
     }
     case BehaviorType::DemoFearEdge:

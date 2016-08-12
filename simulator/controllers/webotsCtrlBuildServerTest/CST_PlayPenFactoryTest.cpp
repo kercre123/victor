@@ -27,7 +27,7 @@ namespace Anki {
       const u32 TEST_TIMEOUT_SEC = 60;
       
       // Message handlers
-      virtual void HandleFactoryTestResult(const ExternalInterface::FactoryTestResult& msg) override;
+      virtual void HandleFactoryTestResultEntry(const FactoryTestResultEntry& msg) override;
     };
     
     // Register class with factory
@@ -39,6 +39,7 @@ namespace Anki {
     s32 CST_PlayPenFactoryTest::UpdateSimInternal()
     {
       if (!_testStarted) {
+        SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDebugConsoleVarMessage("BFT_PlaySound", "false")));
         SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::WakeUp(true)));
         SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
         SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ExecuteBehaviorByName("FactoryTest")));
@@ -59,10 +60,10 @@ namespace Anki {
     
     
     // ================ Message handler callbacks ==================
-    void CST_PlayPenFactoryTest::HandleFactoryTestResult(const ExternalInterface::FactoryTestResult& msg)
+    void CST_PlayPenFactoryTest::HandleFactoryTestResultEntry(const FactoryTestResultEntry& msg)
     {
-      if (msg.resultEntry.result != FactoryTestResultCode::SUCCESS) {
-        _result = static_cast<u8>(msg.resultEntry.result);
+      if (msg.result != FactoryTestResultCode::SUCCESS) {
+        _result = static_cast<u8>(msg.result);
       }
       _testResultReceived = true;
     }

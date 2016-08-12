@@ -90,6 +90,9 @@ public:
   // Create and store a Robot Audio Buffer with the corresponding GameObject and PluginId
   RobotAudioBuffer* RegisterRobotAudioBuffer( AudioEngine::AudioGameObject gameObject,
                                               AudioEngine::AudioPluginId pluginId );
+
+  void UnregisterRobotAudioBuffer( AudioEngine::AudioGameObject gameObject,
+                                   AudioEngine::AudioPluginId pluginId );
   
   // Get Robot Audio Buffer
   RobotAudioBuffer* GetRobotAudioBufferWithGameObject( AudioEngine::AudioGameObject gameObject ) const;

@@ -88,8 +88,8 @@ namespace Anki {
 #ifndef TARGET_K02
         ReliableTransport_Init();
         ReliableConnection_Init(&connection, NULL); // We only have one connection so dest pointer is superfluous
-
-
+        
+        
         // Store camera calibration in nvStorage
         const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
         if(headCamInfo == NULL) {
@@ -106,11 +106,11 @@ namespace Anki {
             headCamInfo->nrows,
             headCamInfo->ncols
           };
-
+          
           for(s32 iCoeff=0; iCoeff<NUM_RADIAL_DISTORTION_COEFFS; ++iCoeff) {
             headCalib.distCoeffs[iCoeff] = headCamInfo->distortionCoeffs[iCoeff];
           }
-
+          
           NVStorage::NVStorageWrite nvWrite;
           nvWrite.entry.tag = NVStorage::NVEntry_CameraCalib;
           nvWrite.entry.blob_length = headCalib.Size();
@@ -121,9 +121,9 @@ namespace Anki {
           nvWrite.writeNotErase = true;
           nvWrite.reportTo = NVStorage::RTIP;
           SimNVStorageSpace::Write(nvWrite);
-
+          
         }
-
+        
 #endif
         return RESULT_OK;
       }
@@ -202,7 +202,7 @@ namespace Anki {
 
         robotState_.pose_frame_id = Localization::GetPoseFrameId();
         robotState_.pose_origin_id = Localization::GetPoseOriginId();
-        
+
         Localization::GetCurrentMatPose(robotState_.pose.x, robotState_.pose.y, poseAngle);
         robotState_.pose.z = 0;
         robotState_.pose.angle = poseAngle.ToFloat();
@@ -217,6 +217,8 @@ namespace Anki {
         robotState_.rawAccelY = imuData.acc_y;
         robotState_.lastPathID = PathFollower::GetLastPathID();
 
+        robotState_.cliffDataRaw = HAL::GetRawCliffData();
+        
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
         robotState_.numFreeSegmentSlots = PathFollower::GetNumFreeSegmentSlots();
 
@@ -237,6 +239,7 @@ namespace Anki {
         robotState_.status |= HAL::BatteryIsCharging() ? IS_CHARGING : 0;
         robotState_.status |= HAL::IsCliffDetected() ? CLIFF_DETECTED : 0;
 #ifdef  SIMULATOR
+        robotState_.batteryVoltage = HAL::BatteryGetVoltage();
         if(isForcedDelocalizing_)
         {
           robotState_.status |= IS_PICKED_UP;
@@ -270,7 +273,7 @@ namespace Anki {
 
         // Set drive center offset
         Localization::SetDriveCenterOffset(msg.driveCenterOffset);
-
+        
         // Reset pose history and frameID to zero
         Localization::ResetPoseFrame();
 #ifndef TARGET_K02
@@ -421,13 +424,13 @@ namespace Anki {
         if (msg.calibrateHead) {
           HeadController::StartCalibrationRoutine();
         }
-
+        
         if (msg.calibrateLift) {
           LiftController::StartCalibrationRoutine();
         }
       }
-
-
+      
+      
       void Process_drive(const RobotInterface::DriveWheels& msg) {
         // Do not process external drive commands if following a test path
         if (PathFollower::IsTraversingPath()) {
@@ -628,7 +631,7 @@ namespace Anki {
       {
         Localization::SetMotionModelParams(msg.slipFactor);
       }
-
+      
       void Process_abortDocking(const AbortDocking& msg)
       {
         DockingController::StopDocking();
@@ -687,16 +690,16 @@ namespace Anki {
           HeadController::Disable();
           f32 p = CLIP(msg.headPower, -0.5f, 0.5f);
           HAL::MotorSetPower(MOTOR_HEAD, p);
-
+          
           LiftController::Disable();
           p = CLIP(msg.liftPower, -0.5f, 0.5f);
           HAL::MotorSetPower(MOTOR_LIFT, p);
-
+          
         } else {
-
+          
           HAL::MotorSetPower(MOTOR_HEAD, 0);
           HeadController::Enable();
-
+          
           HAL::MotorSetPower(MOTOR_LIFT, 0);
           LiftController::Enable();
         }
@@ -707,7 +710,7 @@ namespace Anki {
         ProxSensors::EnableStopOnCliff(msg.enable);
       }
 
-
+      
       // --------- Block control messages ----------
 
       void Process_flashObjectIDs(const  FlashObjectIDs& msg)
@@ -813,17 +816,17 @@ namespace Anki {
                           msg.tapTime, msg.tapNeg, msg.tapPos);
 #endif
       }
-
+      
       void Process_enableTestStateMessage(const RobotInterface::EnableTestStateMessage& msg)
       {
         sendTestStateMessages = msg.enable;
       }
-
+      
       void Process_enterRecoveryMode(const RobotInterface::OTA::EnterRecoveryMode& msg)
       {
         // Handled directly in spi to bypass main execution.
       }
-
+      
       void Process_wifiState(const WiFiState& state)
       {
 #ifndef SIMULATOR
@@ -876,7 +879,7 @@ namespace Anki {
 #ifdef SIMULATOR
       void Process_otaWrite(const Anki::Cozmo::RobotInterface::OTA::Write& msg)
       {
-
+        
       }
       /// Stub message handlers to satisfy simulator build
       void Process_writeNV(Anki::Cozmo::NVStorage::NVStorageWrite const& msg)
@@ -976,7 +979,7 @@ namespace Anki {
       {
         // Nothing to do here
       }
-
+      
       // These are stubbed out just to get things compiling
       void Process_robotIpInfo(const Anki::Cozmo::RobotInterface::AppConnectRobotIP& msg) {}
       void Process_wifiCfgResult(const Anki::Cozmo::RobotInterface::AppConnectConfigResult& msg) {}
@@ -1007,7 +1010,7 @@ namespace Anki {
           RobotInterface::SendMessage(tsm);
         }
 #endif
-
+        
         // Don't send robot state updates unless the init message was received
         if (!initReceived_) {
           return RESULT_FAIL;
@@ -1045,7 +1048,7 @@ namespace Anki {
         }
       }
 
-
+      
       Result SendMotorCalibrationMsg(MotorID motor, bool calibStarted)
       {
         MotorCalibration m;
@@ -1053,8 +1056,8 @@ namespace Anki {
         m.calibStarted = calibStarted;
         return RobotInterface::SendMessage(m) ? RESULT_OK : RESULT_FAIL;
       }
-
-
+      
+      
 #ifndef TARGET_K02
       int SendText(const char *format, ...)
       {
@@ -1156,6 +1159,10 @@ namespace Anki {
 
     namespace HAL {
 #ifdef TARGET_K02
+      f32 BatteryGetVoltage()
+      {
+        return Messages::robotState_.batteryVoltage;
+      }
       bool BatteryIsCharging()
       {
         return Messages::isCharging;

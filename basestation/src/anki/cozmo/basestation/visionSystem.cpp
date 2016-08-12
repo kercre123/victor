@@ -3383,10 +3383,11 @@ namespace Cozmo {
       } // if(DRAW_TOOL_CODE_DEBUG)
       
       if(dotLabel == -1) {
-        // TODO: Return failure instead?
         PRINT_NAMED_WARNING("VisionSystem.ReadToolCode.DotsNotFound",
                             "Failed to find valid dot");
-        return RESULT_OK;
+        
+        // Continuing to the next dot so that we atleast have images
+        continue;
       }
       
       ASSERT_NAMED(centroids.type() == CV_64F, "VisionSystem.ReadToolCode.CentroidTypeNotDouble");
@@ -3401,8 +3402,13 @@ namespace Cozmo {
 #     endif
     } // for each tool code dot iDot
     
-    ASSERT_NAMED(observedPoints.size() == 2,
-                 "VisionSystem.ReadToolCode.WrongNumDotsObserved");
+    if (observedPoints.size() < 2) {
+      PRINT_NAMED_WARNING("VisionSystem.ReadToolCode.WrongNumDotsObserved",
+                          "Dots found in %zu images", observedPoints.size());
+      
+      // TODO: Return failure instead?
+      return RESULT_OK;
+    }
     
     readToolCodeMessage.observedCalibDotLeft_x  = observedPoints[LEFT_DOT].x();
     readToolCodeMessage.observedCalibDotLeft_y  = observedPoints[LEFT_DOT].y();
@@ -3657,18 +3663,17 @@ namespace Cozmo {
     
 
     // Compute calibration
-    const s32 kNumDistCoeffs = 8;
     std::vector<cv::Vec3d> rvecs, tvecs;
     cv::Mat_<f64> cameraMatrix = cv::Mat_<f64>::eye(3, 3);
-    cv::Mat_<f64> distCoeffs   = cv::Mat_<f64>::zeros(1, kNumDistCoeffs);
+    cv::Mat_<f64> distCoeffs   = cv::Mat_<f64>::zeros(1, Vision::CameraCalibration::kNumDistCoeffs);
     
     const f64 rms = cv::calibrateCamera(objectPoints, imagePoints, imageSize, cameraMatrix, distCoeffs, rvecs, tvecs);
 
     // Copy distortion coefficients into a f32 vector to set CameraCalibration
     const f64* distCoeffs_data = distCoeffs[0];
-    std::vector<f32> distCoeffsVec(kNumDistCoeffs);
-    std::copy(distCoeffs_data, distCoeffs_data+kNumDistCoeffs, distCoeffsVec.begin());
-
+    std::array<f32,Vision::CameraCalibration::kNumDistCoeffs> distCoeffsVec;
+    std::copy(distCoeffs_data, distCoeffs_data+Vision::CameraCalibration::kNumDistCoeffs, distCoeffsVec.begin());
+    
     calibration = Vision::CameraCalibration(imageSize.height, imageSize.width,
                                             cameraMatrix(0,0), cameraMatrix(1,1),
                                             cameraMatrix(0,2), cameraMatrix(1,2),

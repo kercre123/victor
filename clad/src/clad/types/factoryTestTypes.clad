@@ -9,7 +9,9 @@ namespace Anki {
 namespace Cozmo {
 
 enum uint_8 FactoryTestState {
+  GetPrevTestResults,
   InitRobot,
+  WaitingForMotorCalibration,
   ChargerAndIMUCheck,       // Verify that robot is on charger and IMU is not drifting
   DriveToSlot,              // Drive forward until cliff event. Set robot's pose.
   GotoCalibrationPose,      // Drive to pose from which calibration images are to be taken
@@ -21,15 +23,20 @@ enum uint_8 FactoryTestState {
   StartPickup,
   PickingUpBlock,
   PlacingBlock,
-  DockToCharger,
-  BLE_TestControl,
+  BackAndForth,
+  WaitingForWritesToRobot,
+
+  // NB: IF YOU ADD STATES HERE YOU MAY NEED TO INCREASE THE SIZE OF
+  //     FactoryTestResultEntry.timestamps ARRAY TO BE AT LEAST
+  //     THE NUMBER OF STATES + 1. HOWEVER, THIS BREAKS BACKWARDS COMPATIBILITY!
+
 }
 
 enum uint_8 FactoryTestResultCode {
   UNKNOWN = 0,
   SUCCESS,
   MISMATCHED_CLAD,
-  INIT_LIFT_HEIGHT_FAILED,
+  INIT_LIFT_OR_HEAD_FAILED,
   CHARGER_UNDETECTED,
   CHARGER_UNAVAILABLE,
   CHARGER_UNCONNECTED,
@@ -44,8 +51,8 @@ enum uint_8 FactoryTestResultCode {
   CAMERA_CALIB_WRITE_FAILED,
   CALIB_IMAGES_WRITE_FAILED,
   CALIB_POSE_WRITE_FAILED,
-  CALIB_IMAGES_SEND_FAILED,
-  CALIB_POSE_SEND_FAILED, 
+  TOO_MANY_CALIB_IMAGES,
+  CALIB_POSE_GET_FAILED,
   READ_TOOL_CODE_FAILED,
   TOOL_CODE_POSITIONS_OOR,
   TOOL_CODE_WRITE_FAILED,
@@ -73,19 +80,62 @@ enum uint_8 FactoryTestResultCode {
   WIPED_ALL,
   ROBOT_FAILED_PREPLAYPEN_TESTS,
   ROBOT_NOT_TESTED,
-
+  MOTORS_UNCALIBRATED,
+  BIRTH_CERTIFICATE_WRITE_FAILED,
+  NVSTORAGE_WRITE_FAILED,
+  NVSTORAGE_SEND_FAILED,
+  TOO_MANY_TOOL_CODE_IMAGES,
+  CALIB_META_INFO_WRITE_FAILED,
+  IMU_INFO_WRITE_FAILED,
+  NO_ACTIVE_OBJECTS_DISCOVERED,
+  NO_PREPLAYPEN_CENTROIDS,
+  COMPUTE_CAM_POSE_FAILED,
+  CAM_POSE_OOR,
+  PLAY_SOUND_FAILED,
+  PREV_TEST_RESULTS_READ_FAILED,
+  WRONG_FIRMWARE_VERSION,
+  CLIFF_VALUE_TOO_HIGH,
+  CLIFF_VALUE_TOO_LOW,
+  BACKUP_NOT_STRAIGHT,
+  BATTERY_TOO_LOW,
+  NO_IMU_DATA,
+  BACK_AND_FORTH_NOT_STRAIGHT,
+  WRONG_BODY_HW_VERSION,
 
   // ==== New result codes should be added at the end ========
   // ==== Never delete codes, even if they are deprecated! ===
+  // ==== NB: Factory expects codes to be 0-99 so if you exceed 100 errors codes let them know! ===
 }
 
-structure FactoryTestResultEntry {
+message FactoryTestResultEntry {
   uint_64 utcTime,
   uint_32 engineSHA1,
-  uint_32 timestamps[16],
+  uint_32 timestamps[18],
   int_32 stationID,
   FactoryTestResultCode result,
 }
+
+structure CalibMetaInfo {
+  uint_8 dotsFoundMask    // bit mask for which calibration images had dots found
+}
+
+structure IMUInfo {
+  float_32 driftRate_degPerSec
+}
+
+structure CliffSensorValue {
+  uint_16 val
+}
+
+structure PoseData {
+  float_32 angleX_rad,
+  float_32 angleY_rad,
+  float_32 angleZ_rad,
+  float_32 transX_mm,
+  float_32 transY_mm,
+  float_32 transZ_mm,
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

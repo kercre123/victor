@@ -364,6 +364,31 @@ RobotAudioBuffer* AudioController::RegisterRobotAudioBuffer( AudioEngine::AudioG
   
   return it.first->second;
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioController::UnregisterRobotAudioBuffer( AudioEngine::AudioGameObject gameObject,
+                                                 	AudioEngine::AudioPluginId pluginId)
+{
+  const auto it = _robotAudioBufferIdMap.find( pluginId );
+  if (it != _robotAudioBufferIdMap.end()) {
+    delete it->second;
+    _robotAudioBufferIdMap.erase(it);
+  } else {
+    PRINT_NAMED_ERROR( "AudioController.UnregisterRobotAudioBuffer",
+                      "Robot buffer doesn't exist! PluginId: %d GameObject: %u",
+                      pluginId, static_cast<uint32_t>( gameObject ) );
+  }
+  
+  const auto it2 = _gameObjectPluginIdMap.find( gameObject );
+  if (it2 != _gameObjectPluginIdMap.end()) {
+    _gameObjectPluginIdMap.erase(it2);
+  } else {	
+    PRINT_NAMED_ERROR( "AudioController.UnregisterRobotAudioBuffer",
+                      "Robot buffer doesn't exist! PluginId: %d GameObject: %u",
+                      pluginId, static_cast<uint32_t>( gameObject ) );
+  }
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioBuffer* AudioController::GetRobotAudioBufferWithGameObject( AudioEngine::AudioGameObject gameObject ) const

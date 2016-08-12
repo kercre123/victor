@@ -28,6 +28,7 @@ simulator/controllers/webotsCtrlGameEngine/resources
 simulator/controllers/webotsCtrlGameEngine/temp
 #
 simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard
+simulator/controllers/webotsCtrlKeyboard/factory_test_logs
 simulator/controllers/webotsCtrlKeyboard/resources
 #
 simulator/controllers/webotsCtrlDevLog/webotsCtrlDevLog

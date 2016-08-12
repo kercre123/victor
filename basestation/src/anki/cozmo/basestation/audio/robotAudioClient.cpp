@@ -108,6 +108,25 @@ RobotAudioClient::RobotAudioClient( Robot* robot )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RobotAudioClient::~RobotAudioClient()
+{
+  // For Unit Test bale out if there is no robot or Audio Server
+  if (_robot == nullptr) {
+    return;
+  }
+  const CozmoContext* context = _robot->GetContext();
+  if (context == nullptr || context->GetAudioServer() == nullptr ) {
+    return;
+  }
+  
+  UnregisterRobotAudioBuffer( GameObjectType::CozmoAnimation, 1, Bus::BusType::Robot_Bus_1 );
+  
+  // TEMP: Setup other buses
+  UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_2, 2, Bus::BusType::Robot_Bus_2 );
+  UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_3, 3, Bus::BusType::Robot_Bus_3 );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioBuffer* RobotAudioClient::GetRobotAudiobuffer( GameObjectType gameObject )
 {
   ASSERT_NAMED( _audioController != nullptr, "RobotAudioClient.GetRobotAudiobuffer.AudioControllerNull" );
@@ -363,6 +382,27 @@ RobotAudioBuffer* RobotAudioClient::RegisterRobotAudioBuffer( GameObjectType gam
   return _audioController->RegisterRobotAudioBuffer( aGameObject, pluginId );
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioClient::UnregisterRobotAudioBuffer( GameObjectType gameObject,
+                                                             PluginId_t pluginId,
+                                                             Bus::BusType audioBus )
+{
+  ASSERT_NAMED( _audioController != nullptr, "RobotAudioClient.UnregisterRobotAudioBuffer.AudioControllerNull" );
+  
+  // Remove Configuration Struct
+  const auto it = _busConfigurationMap.find(gameObject);
+  if ( it != _busConfigurationMap.end() ) {
+    _busConfigurationMap.erase(it);
+  } else {
+    // Bus doesn't exist
+    PRINT_NAMED_ERROR("RobotAudioClient.UnregisterRobotAudioBuffer", "Buss configuration doesn't exist for GameObject: %d",
+                      static_cast<uint32_t>(gameObject));
+  }
+  
+  // Destroy buffer
+  AudioEngine::AudioGameObject aGameObject = static_cast<const AudioEngine::AudioGameObject>( gameObject );
+  _audioController->UnregisterRobotAudioBuffer( aGameObject, pluginId );
+}
 
 } // Audio
 } // Cozmo

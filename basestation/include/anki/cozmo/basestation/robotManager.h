@@ -76,6 +76,7 @@ public:
   // Add / remove robots
   void AddRobot(const RobotID_t withID);
   void RemoveRobot(const RobotID_t withID);
+  void RemoveRobots();
   
   // Call each Robot's Update() function
   void UpdateAllRobots();

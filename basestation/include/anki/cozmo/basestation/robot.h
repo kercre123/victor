@@ -461,6 +461,8 @@ public:
   bool IsCliffDetected() const { return _isCliffDetected; }
   bool IsCliffSensorOn() const { return _isCliffSensorOn; }
   
+    u16  GetCliffDataRaw() const { return _cliffDataRaw; }
+  
   // sets distance detected by forward proximity sensor
   void SetForwardSensorValue(u16 value_mm) { _forwardSensorValue_mm = value_mm; }
   u16 GetForwardSensorValue() const { return _forwardSensorValue_mm; }
@@ -905,6 +907,7 @@ protected:
   u8               _enabledAnimTracks     = (u8)AnimTrackFlag::ALL_TRACKS;
   bool             _isCliffDetected       = false;
   bool             _isCliffSensorOn       = false;
+    u16              _cliffDataRaw       = u16_MAX;
   u16              _forwardSensorValue_mm = 0;
   bool             _isOnChargerPlatform   = false;
   bool             _isCliffReactionDisabled = false;
@@ -960,7 +963,7 @@ protected:
   // A place to store reaction callback functions, indexed by the type of
   // vision marker that triggers them
   std::map<Vision::Marker::Code, std::list<ReactionCallback> > _reactionCallbacks;
-    
+  
   EncodedImage _encodedImage;
   double       _timeSinceLastImage_s = 0.0;
   double       _lastImageLatencyTime_s = 0.0;

@@ -116,7 +116,7 @@ namespace Anki {
 
 
         // Whether or not to command anything to motor
-        bool enable_ = true;
+        bool enable_ = false;
         
         // If disabled, lift motor is automatically re-enabled at this time if non-zero.
         u32 enableAtTime_ms_ = 0;

@@ -1234,6 +1234,7 @@ namespace Cozmo {
       msg.nrows = calib.GetNrows();
       msg.ncols = calib.GetNcols();
       msg.skew = calib.GetSkew();
+      msg.distCoeffs = calib.GetDistortionCoeffs();
       _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
     }
   
@@ -1491,16 +1492,14 @@ namespace Cozmo {
     return _visionSystem->GetNumStoredCalibrationImages();
   }
   
-  Result VisionComponent::WriteCalibrationPoseToRobot(size_t whichPose,
-                                                      NVStorageComponent::NVStorageWriteEraseCallback callback)
+  Result VisionComponent::GetCalibrationPoseToRobot(size_t whichPose, Pose3d& p)
   {
-    Result lastResult = RESULT_OK;
+    Result lastResult = RESULT_FAIL;
     
     auto & calibPoses = _visionSystem->GetCalibrationPoses();
     if(whichPose >= calibPoses.size()) {
       PRINT_NAMED_WARNING("VisionComponent.WriteCalibrationPoseToRobot.InvalidPoseIndex",
                           "Requested %zu, only %zu available", whichPose, calibPoses.size());
-      lastResult = RESULT_FAIL;
     } else {
       auto & calibImages = _visionSystem->GetCalibrationImages();
       ASSERT_NAMED_EVENT(calibImages.size() >= calibPoses.size(),
@@ -1508,61 +1507,27 @@ namespace Cozmo {
                          "Expecting at least %zu calibration images, got %zu",
                          calibPoses.size(), calibImages.size());
       
-      f32 poseData[6] = {0,0,0,0,0,0};
-      
       if(!calibImages[whichPose].dotsFound) {
         PRINT_NAMED_INFO("VisionComponent.WriteCalibrationPoseToRobot.PoseNotComputed",
                          "Dots not found in image %zu, no pose available",
                          whichPose);
       } else {
-        // Serialize the requested calibration pose
-        const Pose3d& calibPose = calibPoses[whichPose];
-        Radians angleX, angleY, angleZ;
-        calibPose.GetRotationMatrix().GetEulerAngles(angleX, angleY, angleZ);
-        poseData[0] = angleX.ToFloat();
-        poseData[1] = angleY.ToFloat();
-        poseData[2] = angleZ.ToFloat();
-        poseData[3] = calibPose.GetTranslation().x();
-        poseData[4] = calibPose.GetTranslation().y();
-        poseData[5] = calibPose.GetTranslation().z();
+        p = calibPoses[whichPose];
+        lastResult = RESULT_OK;
       }
-      
-      // Write to robot
-      const bool success = _robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CalibPose,
-                                                                (u8*)poseData, sizeof(poseData), callback);
-                                                        
-      lastResult = (success ? RESULT_OK : RESULT_FAIL);
     }
-    
     
     return lastResult;
   }
   
-  Result VisionComponent::WriteCalibrationImagesToRobot(WriteImagesToRobotCallback callback)
+  std::list<std::vector<u8> > VisionComponent::GetCalibrationImageJpegData(u8* dotsFoundMask)
   {
     const auto& calibImages = _visionSystem->GetCalibrationImages();
     
-    // Make sure there is no more than 5 images in the list
-    if (calibImages.size() > 6 || calibImages.size() < 4) {
-      PRINT_NAMED_INFO("VisionComponent.WriteCalibrationImagesToRobot.TooManyOrTooFewImages",
-                       "%zu images (Need 4 or 5)", _visionSystem->GetNumStoredCalibrationImages());
-      return RESULT_FAIL;
-    }
-
-    PRINT_NAMED_INFO("VisionComponent.WriteCalibrationImagesToRobot.StartingWrite",
-                     "%zu images", _visionSystem->GetNumStoredCalibrationImages());
-    _writeCalibImagesToRobotResults.clear();
-
-    static const NVStorage::NVEntryTag calibImageTags[6] = {NVStorage::NVEntryTag::NVEntry_CalibImage1,
-                                                            NVStorage::NVEntryTag::NVEntry_CalibImage2,
-                                                            NVStorage::NVEntryTag::NVEntry_CalibImage3,
-                                                            NVStorage::NVEntryTag::NVEntry_CalibImage4,
-                                                            NVStorage::NVEntryTag::NVEntry_CalibImage5,
-                                                            NVStorage::NVEntryTag::NVEntry_CalibImage6};
-    
-    // Write images to robot
+    // Jpeg compress images
     u32 imgIdx = 0;
     u8 usedMask = 0;
+    std::list<std::vector<u8> > rawJpegData;
     for (auto const& calibImage : calibImages)
     {
       const Vision::Image& img = calibImage.img;
@@ -1582,52 +1547,16 @@ namespace Cozmo {
       fclose(fp);
       */
       
-      // Write images to robot
-      PRINT_NAMED_DEBUG("VisionComponent.WriteCalibrationImagesToFile.RequestingWrite", "Image %d", imgIdx);
-      bool res = true;
-      if (imgIdx < calibImages.size() - 1) {
-        res = _robot.GetNVStorageComponent().Write(calibImageTags[imgIdx], &imgVec,
-                                                   [this](NVStorage::NVResult res) {
-                                                    _writeCalibImagesToRobotResults.push_back(res);
-                                                  });
-      } else {
-        res = _robot.GetNVStorageComponent().Write(calibImageTags[imgIdx], &imgVec,
-                                                   [this, callback](NVStorage::NVResult res) {
-                                                     _writeCalibImagesToRobotResults.push_back(res);
-                                               
-                                                     std::string resStr = "";
-                                                     for(auto r : _writeCalibImagesToRobotResults) {
-                                                       resStr += EnumToString(r) + std::string(", ");
-                                                     }
-                                                     PRINT_NAMED_DEBUG("VisionComponent.WriteCalibrationImagesToFile.Complete", "%s", resStr.c_str());
-                                               
-                                                     if (callback) {
-                                                       callback(_writeCalibImagesToRobotResults);
-                                                     }
-                                                   });
-      }
-      
-      if (!res) {
-        return RESULT_FAIL;
-      }
+      rawJpegData.emplace_back(std::move(imgVec));
       
       ++imgIdx;
     }
     
-    // Erase remaining calib image tags
-    for (u32 i = imgIdx; i < 5; ++i) {
-        PRINT_NAMED_DEBUG("VisionComponent.WriteCalibrationImagesToFile.RequestingErase", "Image %d", i);
-      _robot.GetNVStorageComponent().Erase(calibImageTags[i]);
+    if (dotsFoundMask) {
+      *dotsFoundMask = usedMask;
     }
     
-    // Write bit flag indicating in which images dots were found
-    // TODO: Add callback?
-    bool res = _robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CalibImagesUsed, &usedMask, 1);
-
-
-    return (res == true ? RESULT_OK : RESULT_FAIL);
-    
-    
+    return rawJpegData;
   }
   
   Result VisionComponent::ComputeCameraPoseVsIdeal(const Quad2f& obsQuad, Pose3d& pose) const
@@ -1767,6 +1696,7 @@ namespace Cozmo {
       }
     }
     
+    msg.headAngle = _robot.GetHeadAngle();
     msg.success = true;
     
     if(kDrawDebugDisplay)
@@ -1804,32 +1734,18 @@ namespace Cozmo {
     return _visionSystem->GetNumStoredToolCodeImages();
   }
   
-  Result VisionComponent::WriteToolCodeImagesToRobot(WriteImagesToRobotCallback callback)
+  std::list<std::vector<u8> > VisionComponent::GetToolCodeImageJpegData()
   {
     const auto& images = _visionSystem->GetToolCodeImages();
     
-    // Make sure there is no more than 2 images in the list
-    if (images.size() != 2) {
-      PRINT_NAMED_INFO("VisionComponent.WriteToolCodeImagesToRobot.TooManyOrTooFewImages",
-                       "%zu images (Need exactly 2 images)", _visionSystem->GetNumStoredToolCodeImages());
-      return RESULT_FAIL;
-    }
-    
-    PRINT_NAMED_INFO("VisionComponent.WriteToolCodeImagesToRobot.StartingWrite",
-                     "%zu images", _visionSystem->GetNumStoredToolCodeImages());
-    _writeToolCodeImagesToRobotResults.clear();
-    
-    
-    static const NVStorage::NVEntryTag toolCodeImageTags[2] = {NVStorage::NVEntryTag::NVEntry_ToolCodeImageLeft, NVStorage::NVEntryTag::NVEntry_ToolCodeImageRight};
-    
-    // Write images to robot
-    u32 imgIdx = 0;
+    // Do jpeg compression
+    std::list<std::vector<u8> > rawJpegData;
     for (auto const& img : images)
     {
       // Compress to jpeg
       std::vector<u8> imgVec;
       cv::imencode(".jpg", img.get_CvMat_(), imgVec, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 75}));
-      
+
       /*
        std::string imgFilename = "savedImg_" + std::to_string(imgIdx) + ".jpg";
        FILE* fp = fopen(imgFilename.c_str(), "w");
@@ -1837,40 +1753,10 @@ namespace Cozmo {
        fclose(fp);
        */
       
-      
-      // Write images to robot
-      PRINT_NAMED_DEBUG("VisionComponent.WriteToolCodeImagesToFile.RequestingWrite", "Image %d", imgIdx);
-      bool res = true;
-      if (imgIdx < images.size() - 1) {
-        res = _robot.GetNVStorageComponent().Write(toolCodeImageTags[imgIdx], &imgVec,
-                                                   [this](NVStorage::NVResult res) {
-                                                     _writeToolCodeImagesToRobotResults.push_back(res);
-                                                   });
-      } else {
-        res = _robot.GetNVStorageComponent().Write(toolCodeImageTags[imgIdx], &imgVec,
-                                                   [this, callback](NVStorage::NVResult res) {
-                                                     _writeToolCodeImagesToRobotResults.push_back(res);
-                                                     
-                                                     std::string resStr = "";
-                                                     for(auto r : _writeToolCodeImagesToRobotResults) {
-                                                       resStr += EnumToString(r) + std::string(", ");
-                                                     }
-                                                     PRINT_NAMED_DEBUG("VisionComponent.WriteToolCodeImagesToFile.Complete", "%s", resStr.c_str());
-                                                     
-                                                     if (callback) {
-                                                       callback(_writeToolCodeImagesToRobotResults);
-                                                     }
-                                                   });
-      }
-      
-      if (!res) {
-        return RESULT_FAIL;
-      }
-      
-      ++imgIdx;
+      rawJpegData.emplace_back(std::move(imgVec));
     }
     
-    return RESULT_OK;
+    return rawJpegData;
   }
   
   inline static size_t GetPaddedNumBytes(size_t numBytes)

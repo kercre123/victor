@@ -1,0 +1,9 @@
+{
+  "behaviorType": "FactoryCentroidExtractor",
+  "name": "FactoryCentroidExtractor",
+  "behaviorGroups": [
+     "ChangesPosition",
+     "ChangesOrientation",
+     "MovesLift"
+  ]
+}

@@ -21,7 +21,7 @@
 namespace Anki {
 namespace Cozmo {
 
-void ArchiveUtil::CreateArchiveFromFiles(const std::string& outputPath,
+bool ArchiveUtil::CreateArchiveFromFiles(const std::string& outputPath,
                                          const std::string& filenameBase,
                                          const std::vector<std::string>& filenames)
 {
@@ -37,7 +37,7 @@ void ArchiveUtil::CreateArchiveFromFiles(const std::string& outputPath,
   {
     PRINT_NAMED_ERROR("ArchiveUtil.CreateArchiveFromFiles", "Error %s setting up archive", GetArchiveErrorString(errorCode));
     archive_write_free(newArchive);
-    return;
+    return false;
   }
   
   errorCode = archive_write_set_format_pax_restricted(newArchive);
@@ -45,7 +45,7 @@ void ArchiveUtil::CreateArchiveFromFiles(const std::string& outputPath,
   {
     PRINT_NAMED_ERROR("ArchiveUtil.CreateArchiveFromFiles", "Error %s setting up archive", GetArchiveErrorString(errorCode));
     archive_write_free(newArchive);
-    return;
+    return false;
   }
   
   errorCode = archive_write_open_filename(newArchive, outputPath.c_str());
@@ -54,7 +54,7 @@ void ArchiveUtil::CreateArchiveFromFiles(const std::string& outputPath,
     PRINT_NAMED_ERROR("ArchiveUtil.CreateArchiveFromFiles", "Error %s opening file for archive", GetArchiveErrorString(errorCode));
     archive_write_close(newArchive);
     archive_write_free(newArchive);
-    return;
+    return false;
   }
   
   struct archive_entry* entry = archive_entry_new();
@@ -63,7 +63,7 @@ void ArchiveUtil::CreateArchiveFromFiles(const std::string& outputPath,
     PRINT_NAMED_ERROR("ArchiveUtil.CreateArchiveFromFiles", "Could not alloc new entry");
     archive_write_close(newArchive);
     archive_write_free(newArchive);
-    return;
+    return false;
   }
   
   char buff[8192];
@@ -86,7 +86,7 @@ void ArchiveUtil::CreateArchiveFromFiles(const std::string& outputPath,
       archive_entry_free(entry);
       archive_write_close(newArchive);
       archive_write_free(newArchive);
-      return;
+      return false;
     }
     
     std::ifstream file(filename, std::ios::binary);
@@ -102,6 +102,8 @@ void ArchiveUtil::CreateArchiveFromFiles(const std::string& outputPath,
   archive_entry_free(entry);
   archive_write_close(newArchive);
   archive_write_free(newArchive);
+  
+  return true;
 }
   
 std::string ArchiveUtil::RemoveFilenameBase(const std::string& filenameBase, const std::string& filename)

@@ -1,0 +1,16 @@
+{
+  "soundTestAnim": [
+    {
+      "audioName": [
+        "Dev_Robot_Tone_1K_1Sec_Play"
+      ],
+      "Name": "RobotAudioKeyFrame",
+      "volume": 1.0,
+      "durationTime_ms": 500,
+      "audioEventId": [
+        1083086921
+      ],
+      "triggerTime_ms": 0
+    }
+  ]
+}

@@ -114,6 +114,11 @@ namespace Anki {
       // Prox sensors
       webots::DistanceSensor *proxCenter_;
       webots::DistanceSensor *cliffSensor_;
+      
+      // NOTE: Need more testing to figure out what these should be
+      const u16 DROP_LEVEL = 400;
+      const u16 UNDROP_LEVEL = 600;  // hysteresis
+      bool cliffDetected_ = false;
 
       // Charge contact
       webots::Connector* chargeContact_;
@@ -542,7 +547,7 @@ namespace Anki {
     {
       // Does nothing in sim
     }
-
+    
     bool HAL::IMUReadData(HAL::IMU_DataStructure &IMUData)
     {
       const double* vals = gyro_->getValues();  // rad/s
@@ -1243,9 +1248,21 @@ namespace Anki {
     
     bool HAL::IsCliffDetected()
     {
-      return cliffSensor_->getValue() < 220;
+      u16 cliffLevel = static_cast<u16>(cliffSensor_->getValue());
+      
+      if (!cliffDetected_ && cliffLevel < DROP_LEVEL) {
+        cliffDetected_ = true;
+      } else if (cliffDetected_ && cliffLevel > UNDROP_LEVEL) {
+        cliffDetected_ = false;
+      }
+      return cliffDetected_;
     }
 
+    u16 HAL::GetRawCliffData()
+    {
+      return static_cast<u16>(cliffSensor_->getValue());
+    }
+    
     namespace HAL {
       int UARTGetFreeSpace()
       {
@@ -1258,10 +1275,9 @@ namespace Anki {
       }
     }
 
-    u8 HAL::BatteryGetVoltage10x()
+    f32 HAL::BatteryGetVoltage()
     {
-      // Return voltage*10 for now...
-      return 50;
+      return 5;
     }
 
     bool HAL::BatteryIsCharging()

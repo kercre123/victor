@@ -403,8 +403,8 @@ namespace Anki
       // BATTERY
       //
 
-      // Get the battery voltage x10
-      u8 BatteryGetVoltage10x();
+      // Get the battery voltage in volts
+      f32 BatteryGetVoltage();
 
       // Return whether or not the battery is charging
       bool BatteryIsCharging();
@@ -425,6 +425,8 @@ namespace Anki
       // Check cliff sensor status
       bool IsCliffDetected();
 
+      u16 GetRawCliffData();
+      
 // #pragma mark --- Face ---
       /////////////////////////////////////////////////////////////////////
       // Face

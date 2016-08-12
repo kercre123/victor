@@ -21,6 +21,7 @@
 #include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "anki/cozmo/basestation/encodedImage.h"
 #include "anki/cozmo/basestation/moodSystem/emotionTypesHelpers.h"
+#include "anki/cozmo/basestation/factory/factoryTestLogger.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/vision/basestation/image.h"
@@ -88,9 +89,8 @@ namespace Anki {
         std::string _drivingLoopAnim = "";
         std::string _drivingEndAnim = "";
 
-        // Manufacturing data save folder name
-        std::string _mfgDataSaveFolder = "";
-        std::string _mfgDataSaveFile = "nvStorageStuff.txt";
+        // For exporting formatted log of mfg test data from robot
+        FactoryTestLogger _factoryTestLogger;
         
       } // private namespace
     
@@ -344,7 +344,6 @@ namespace Anki {
         printf("    Toggle cliff sensor handling:  Alt+l\n");
         printf("                 Next Demo State:  j\n");
         printf("            Start Demo (hasEdge):  Shift+j\n");
-        printf("                Reset demo state:  Alt+j\n");
         printf("      Play 'animationToSendName':  Shift+6\n");
         printf("  Set idle to'idleAnimationName':  Shift+Alt+6\n");
         printf("     Update Viz origin alignment:  ` <backtick>\n");
@@ -1073,7 +1072,14 @@ namespace Anki {
                   // FactoryTest behavior has to start on a charger so we need to wake up the robot first
                   if(behaviorName == "FactoryTest")
                   {
+                    // Mute sound because annoying
+                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDebugConsoleVarMessage("BFT_PlaySound", "false")));
+                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDebugConsoleVarMessage("BFT_ConnectToRobotOnly", "false")));
+
+                    
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::WakeUp(true)));
+                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::EnableReactionaryBehaviors(false)));
+                    SendSetRobotVolume(1.f);
                   }
                   
                   SendMessage(ExternalInterface::MessageGameToEngine(
@@ -1801,13 +1807,6 @@ namespace Anki {
                 PRINT_NAMED_INFO("RetrievingAllMfgTestData", "...");
                 
                 // Get all Mfg test images and results
-                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults);
-                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_BirthCertificate);
-                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
-                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibPose);
-                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo);
-                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ObservedCubePose);
-                
                 if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage1);
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage2);
@@ -1819,18 +1818,17 @@ namespace Anki {
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeImageLeft);
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeImageRight);
                 }
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_IMUInfo);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibMetaInfo);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibPose);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ObservedCubePose);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_BirthCertificate);
                 
-                // Set mfg save folder and file
-                auto time_point = std::chrono::system_clock::now();
-                time_t nowTime = std::chrono::system_clock::to_time_t(time_point);
-                auto nowLocalTime = localtime(&nowTime);
-                char buf[80];
-                strftime(buf, sizeof(buf), "%F_%H-%M-%S/", nowLocalTime);
-                
-                _mfgDataSaveFolder = buf;
-                Util::FileUtils::CreateDirectory(_mfgDataSaveFolder);
-                _mfgDataSaveFile = _mfgDataSaveFolder + "mfgData.txt";
-                printf("MFG FILE: %s", _mfgDataSaveFile.c_str());
+                // Start log
+                _factoryTestLogger.StartLog("", true);
                 break;
               }
               case (s32)'*':
@@ -2355,11 +2353,6 @@ namespace Anki {
         // receipt of NVStorageOpResult message below.
       }
     
-      void AppendToFile(const std::string& filename, const std::string& data) {
-        auto contents = Util::FileUtils::ReadFile(_mfgDataSaveFile);
-        contents = contents + '\n' + data;
-        Util::FileUtils::WriteFile(_mfgDataSaveFile, contents);
-      }
     
       void WebotsKeyboardController::HandleNVStorageOpResult(const ExternalInterface::NVStorageOpResult &msg)
       {
@@ -2383,6 +2376,20 @@ namespace Anki {
           }
           
           switch(msg.tag) {
+            case NVStorage::NVEntryTag::NVEntry_IMUInfo:
+            {
+              IMUInfo info;
+              if (recvdData->size() != MakeWordAligned(info.Size())) {
+                PRINT_NAMED_INFO("HandleNVStorageOpResult.IMUInfo.UnexpectedSize",
+                                 "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
+                break;
+              }
+              info.Unpack(recvdData->data(), info.Size());
+              
+              _factoryTestLogger.Append(info);
+              
+              break;
+            }
             case NVStorage::NVEntryTag::NVEntry_CameraCalib:
             {
               CameraCalibration calib;
@@ -2393,17 +2400,22 @@ namespace Anki {
               }
               calib.Unpack(recvdData->data(), calib.Size());
               
-              char buf[256];
-              snprintf(buf, sizeof(buf),
-                       "[CameraCalibration]\nfx: %f\nfy: %f\ncx: %f\ncy: %f\nskew: %f\nnrows: %d\nncols: %d\n",
-                      calib.focalLength_x, calib.focalLength_y,
-                      calib.center_x, calib.center_y,
-                      calib.skew,
-                      calib.nrows, calib.ncols);
+              _factoryTestLogger.Append(calib);
               
-              PRINT_NAMED_INFO("HandleNVStorageOpResult.CamCalibration", "%s", buf);
-
-              AppendToFile(_mfgDataSaveFile, buf);
+              break;
+            }
+            case NVStorage::NVEntryTag::NVEntry_CalibMetaInfo:
+            {
+              CalibMetaInfo info;
+              if (recvdData->size() != MakeWordAligned(info.Size())) {
+                PRINT_NAMED_INFO("HandleNVStorageOpResult.CalibMetaInfo.UnexpectedSize",
+                                 "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
+                break;
+              }
+              info.Unpack(recvdData->data(), info.Size());
+              
+              _factoryTestLogger.Append(info);
+              
               break;
             }
             case NVStorage::NVEntryTag::NVEntry_ToolCodeInfo:
@@ -2416,76 +2428,37 @@ namespace Anki {
               }
               info.Unpack(recvdData->data(), info.Size());
               
-              char buf[256];
-              snprintf(buf, sizeof(buf),
-                       "[ToolCode]\nCode: %s\nExpected_L: %f, %f\nExpected_R: %f, %f\nObserved_L: %f, %f\nObserved_R: %f, %f\n",
-                       EnumToString(info.code),
-                       info.expectedCalibDotLeft_x, info.expectedCalibDotLeft_y,
-                       info.expectedCalibDotRight_x, info.expectedCalibDotRight_y,
-                       info.observedCalibDotLeft_x, info.observedCalibDotLeft_y,
-                       info.observedCalibDotRight_x, info.observedCalibDotRight_y);
+              _factoryTestLogger.Append(info);
               
-              PRINT_NAMED_INFO("HandleNVStorageOpResult.ToolCodeInfo","%s", buf);
-              
-              AppendToFile(_mfgDataSaveFile, buf);
               break;
             }
             case NVStorage::NVEntryTag::NVEntry_CalibPose:
             {
-              
-              // Pose data is stored like this. (See VisionSystem.cpp)
-              //const f32 poseData[6] = {
-              //  angleX.ToFloat(), angleY.ToFloat(), angleZ.ToFloat(),
-              //  calibPose.GetTranslation().x(),
-              //  calibPose.GetTranslation().y(),
-              //  calibPose.GetTranslation().z(),
-              //};
-              
-              const u32 sizeOfPoseData = 6 * sizeof(f32);
-              if (recvdData->size() != MakeWordAligned(sizeOfPoseData)) {
+              PoseData info;
+              if (recvdData->size() != MakeWordAligned(info.Size())) {
                 PRINT_NAMED_INFO("HandleNVStorageOpResult.CalibPose.UnexpectedSize",
-                                 "Expected %zu, got %zu", MakeWordAligned(sizeOfPoseData), recvdData->size());
+                                 "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
                 break;
               }
+              info.Unpack(recvdData->data(), info.Size());
+
+              _factoryTestLogger.AppendCalibPose(info);
               
-              char buf[128];
-              f32* poseData = (f32*)(recvdData->data());
-              snprintf(buf, sizeof(buf),
-                       "[CalibPose]\nRot: %f %f %f\nTrans: %f %f %f\n",
-                       poseData[0], poseData[1], poseData[2], poseData[3], poseData[4], poseData[5] );
-              
-              PRINT_NAMED_INFO("HandleNVStorageOpResult.CalibPose","%s", buf);
-              
-              AppendToFile(_mfgDataSaveFile, buf);
               break;
             }
             case NVStorage::NVEntryTag::NVEntry_ObservedCubePose:
             {
-              
-              // Pose data is stored like this. (See BehaviorFactoryTest.cpp)
-              //const f32 poseData[6] = {
-              //  angleX.ToFloat(), angleY.ToFloat(), angleZ.ToFloat(),
-              //  calibPose.GetTranslation().x(),
-              //  calibPose.GetTranslation().y(),
-              //  calibPose.GetTranslation().z(),
-              //};
-              
-              const u32 sizeOfPoseData = 6 * sizeof(f32);
-              if (recvdData->size() != MakeWordAligned(sizeOfPoseData)) {
+              PoseData info;
+              if (recvdData->size() != MakeWordAligned(info.Size())) {
                 PRINT_NAMED_INFO("HandleNVStorageOpResult.ObservedCubePose.UnexpectedSize",
-                                 "Expected %zu, got %zu", MakeWordAligned(sizeOfPoseData), recvdData->size());
+                                 "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
                 break;
               }
+              info.Unpack(recvdData->data(), info.Size());
               
-              char buf[128];
-              f32* poseData = (f32*)(recvdData->data());
-              snprintf(buf, sizeof(buf),
-                       "[ObservedCubePose]\nRot: %f %f %f\nTrans: %f %f %f\n",
-                       poseData[0], poseData[1], poseData[2], poseData[3], poseData[4], poseData[5] );
+              _factoryTestLogger.AppendObservedCubePose(info);
               
-              PRINT_NAMED_INFO("HandleNVStorageOpResult.ObservedCubePose","%s", buf);
               
-              AppendToFile(_mfgDataSaveFile, buf);
               break;
             }
             case NVStorage::NVEntryTag::NVEntry_PlaypenTestResults:
@@ -2497,23 +2470,9 @@ namespace Anki {
                 break;
               }
               result.Unpack(recvdData->data(), result.Size());
-              //time_t rawtime = static_cast<time_t>(result.utcTime);
               
-              char buf[512];
-              snprintf(buf, sizeof(buf),
-                       "[PlayPenTest]\nResult: %s\nTime: %llu\nSHA-1: %x\nStationID: %d\nTimestamps: %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
-                       EnumToString(result.result),
-                       //ctime(&rawtime),
-                       result.utcTime,
-                       result.engineSHA1, result.stationID,
-                       result.timestamps[0], result.timestamps[1], result.timestamps[2], result.timestamps[3],
-                       result.timestamps[4], result.timestamps[5], result.timestamps[6], result.timestamps[7],
-                       result.timestamps[8], result.timestamps[9], result.timestamps[10], result.timestamps[11],
-                       result.timestamps[12], result.timestamps[13], result.timestamps[14], result.timestamps[15] );
+              _factoryTestLogger.Append(result);
               
-              PRINT_NAMED_INFO("HandleNVStorageOpResult.PlaypenTestResults", "%s", buf);
-              
-              AppendToFile(_mfgDataSaveFile, buf);
               break;
             }
             case NVStorage::NVEntryTag::NVEntry_BirthCertificate:
@@ -2526,14 +2485,12 @@ namespace Anki {
               }
               result.Unpack(recvdData->data(), result.Size());
               
-              char buf[512];
-              snprintf(buf, sizeof(buf),
-                       "[BirthCertificate]\nYear: %u\nMonth: %u\nDay: %u\nHour: %d\nMin: %d\nSec: %d\n",
-                       result.year, result.month, result.day, result.hour, result.minute, result.second );
+              _factoryTestLogger.Append(result);
               
-              PRINT_NAMED_INFO("HandleNVStorageOpResult.BirthCertificate", "%s", buf);
+              if (_factoryTestLogger.IsOpen()) {
+                _factoryTestLogger.CloseLog();
+              }
               
-              AppendToFile(_mfgDataSaveFile, buf);
               break;
             }
             case NVStorage::NVEntryTag::NVEntry_CalibImage1:
@@ -2547,18 +2504,8 @@ namespace Anki {
             case NVStorage::NVEntryTag::NVEntry_MultiBlobJunk:
             {
               char outFile[128];
-              sprintf(outFile,  "%snvstorage_output_%s.jpg", _mfgDataSaveFolder.c_str(), EnumToString(msg.tag));
-              PRINT_NAMED_INFO("HandleNVStorageOpResult.Read.CalibImage",
-                               "Writing to %s, size: %zu",
-                               outFile, recvdData->size());
-              
-              FILE* fp = fopen(outFile, "wb");
-              if (fp) {
-                fwrite(recvdData->data(),1,recvdData->size(),fp);
-                fclose(fp);
-              } else {
-                printf("%s open failed\n", outFile);
-              }
+              sprintf(outFile,  "nvstorage_output_%s.jpg", EnumToString(msg.tag));
+              _factoryTestLogger.AddFile(outFile, *recvdData);
               
               break;
             }
