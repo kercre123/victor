@@ -36,6 +36,7 @@ public class ProfileCreationView : Cozmo.UI.BaseView {
   }
 
   private void Start() {
+    _NameField.Select();
     _NameField.ActivateInputField();
     _BirthDatePicker.date = System.DateTime.Now;
     ShowDOBEntry(false);

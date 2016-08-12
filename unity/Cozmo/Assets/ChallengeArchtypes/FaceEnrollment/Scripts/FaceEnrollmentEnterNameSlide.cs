@@ -45,6 +45,7 @@ public class FaceEnrollmentEnterNameSlide : MonoBehaviour {
   }
 
   public void RegisterInputFocus() {
+    _NameInputField.Select();
     _NameInputField.ActivateInputField();
     _NameInputField.onValueChanged.AddListener(HandleInputFieldChange);
   }
