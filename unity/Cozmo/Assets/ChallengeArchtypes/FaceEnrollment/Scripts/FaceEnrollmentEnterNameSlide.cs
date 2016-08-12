@@ -23,10 +23,15 @@ public class FaceEnrollmentEnterNameSlide : MonoBehaviour {
     _NameInputField.onValidateInput += ValidateNameField;
   }
 
+  private void Start() {
+    if (string.IsNullOrEmpty(_NameInputField.text) == false) {
+      _SubmitName.Interactable = true;
+      _NameInputPlaceholder.enabled = false;
+    }
+  }
+
   public void SetNameInputField(string existing) {
     _NameInputField.text = existing;
-    _SubmitName.Interactable = true;
-    _NameInputPlaceholder.enabled = false;
   }
 
   private char ValidateNameField(string input, int charIndex, char charToValidate) {
