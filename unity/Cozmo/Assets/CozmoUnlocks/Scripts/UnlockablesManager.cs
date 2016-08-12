@@ -15,6 +15,7 @@ public class UnlockablesManager : MonoBehaviour {
     }
     else {
       Instance = this;
+      InitializeUnlockablesState();
     }
   }
 
@@ -42,12 +43,6 @@ public class UnlockablesManager : MonoBehaviour {
     _NewUnlocks.Clear();
   }
 
-  private void Start() {
-    InitializeUnlockablesState();
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleOnUnlockRequestSuccess);
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.UnlockStatus>(HandleUnlockStatus);
-  }
-
   private void OnDestroy() {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleOnUnlockRequestSuccess);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.UnlockStatus>(HandleUnlockStatus);
@@ -69,13 +64,17 @@ public class UnlockablesManager : MonoBehaviour {
 
   // Should only be called before connecting to robot, robot will overwrite these
   public void InitializeUnlockablesState() {
-    // TODO: Replace this placeholder with using backup data instead of setting everything to false.
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
       if (_UnlockablesState.ContainsKey(_UnlockableInfoList.UnlockableInfoData[i].Id.Value) == false) {
         _UnlockablesState.Add(_UnlockableInfoList.UnlockableInfoData[i].Id.Value, false);
       }
     }
+    RobotEngineManager.Instance.SendRequestUnlockDataFromBackup();
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleOnUnlockRequestSuccess);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.UnlockStatus>(HandleUnlockStatus);
   }
+
+
 
   public List<UnlockableInfo> GetUnlockedGames() {
     List<UnlockableInfo> unlocked = new List<UnlockableInfo>();
@@ -183,16 +182,20 @@ public class UnlockablesManager : MonoBehaviour {
   }
 
   private void HandleUnlockStatus(Anki.Cozmo.ExternalInterface.UnlockStatus message) {
-
-    if(message.fromBackup) {
+    // Only update from backup if we aren't connected to a real cozmo.
+    if ((message.fromBackup) && (RobotEngineManager.Instance.CurrentRobot != null)) {
+      DAS.Info("UnlockablesManager.HandleUnlockStatus", "Backup Data Ignored, Already have Real Robot Data");
       return;
+    }
+    if (message.fromBackup) {
+      DAS.Info("UnlockablesManager.HandleUnlockStatus", "Backup Data Accepted, No Robot Connected");
     }
 
     Dictionary<Anki.Cozmo.UnlockId, bool> loadedUnlockables = new Dictionary<UnlockId, bool>();
     for (int i = 0; i < (int)Anki.Cozmo.UnlockId.Count; ++i) {
       loadedUnlockables.Add((UnlockId)i, false);
     }
-	
+
     for (int i = 0; i < message.unlocks.Length; ++i) {
       loadedUnlockables[message.unlocks[i]] = true;
     }

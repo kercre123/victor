@@ -94,7 +94,6 @@ public class CheckInFlow : MonoBehaviour {
     // Do Check in Rewards if we need a new session
     if (DataPersistence.DataPersistenceManager.Instance.IsNewSessionNeeded) {
       _EnvelopeContainer.SetActive(true);
-      DataPersistence.DataPersistenceManager.Instance.StartNewSession();
     }
     else {
       // Cut ahead to ConnectView otherwise
@@ -188,6 +187,8 @@ public class CheckInFlow : MonoBehaviour {
     PrepareStreakTimeline(rewardSequence);
     rewardSequence.Play();
     // DOMove/Rotate them randomly to fan out rewards above the timeline
+    // Start the new session as late as possible to allow for unlockIDs to load
+    DataPersistence.DataPersistenceManager.Instance.StartNewSession();
     _DailyGoalPanel.SetActive(true);
     _TimelineReviewContainer.SetActive(true);
   }

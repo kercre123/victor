@@ -7,6 +7,7 @@ namespace SpeedTap {
 
     public override void Enter() {
       base.Enter();
+      ContextManager.Instance.AppHoldStart(anticipation: true);
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
 
       // Show wide slide
@@ -21,8 +22,10 @@ namespace SpeedTap {
     }
 
     private void HandleBannerAnimationEnd() {
+      ContextManager.Instance.AppHoldEnd();
       _SpeedTapGame.SharedMinigameView.HideGameStateSlide();
       _SpeedTapGame.ResetScore();
+      ContextManager.Instance.ShowForeground();
       _StateMachine.SetNextState(new SpeedTapHandCubesOff());
     }
 

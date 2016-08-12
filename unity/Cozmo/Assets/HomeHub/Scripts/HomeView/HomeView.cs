@@ -530,6 +530,7 @@ namespace Cozmo.HomeHub {
         return;
       }
 
+      ContextManager.Instance.AppFlash(playChime: true);
       // Create alert view with Icon
       AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: true);
       // Hook up callbacks

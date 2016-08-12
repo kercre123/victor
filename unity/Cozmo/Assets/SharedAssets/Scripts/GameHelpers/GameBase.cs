@@ -203,6 +203,8 @@ public abstract class GameBase : MonoBehaviour {
     newView.ShowWideSlideWithText(LocalizationKeys.kMinigameLabelCozmoPrep, null);
     newView.ShowShelf();
     newView.ShowSpinnerWidget();
+    ContextManager.Instance.OnAppHoldStart += HandleAppHoldStart;
+    ContextManager.Instance.OnAppHoldEnd += HandleAppHoldEnd;
   }
 
   private void PrepRobotForGame() {
@@ -297,6 +299,17 @@ public abstract class GameBase : MonoBehaviour {
 
   private void UpdateStateMachine() {
     _StateMachine.UpdateStateMachine();
+  }
+
+  // Use these if we need special cube behavior on app hold or whatever for specific minigames
+  protected virtual void HandleAppHoldStart() {
+    DAS.Info("GameBase.HandleAppHoldStart", "StartAppHold");
+
+  }
+
+  protected virtual void HandleAppHoldEnd() {
+    DAS.Info("GameBase.HandleAppHoldEnd", "EndAppHold");
+
   }
 
   public void PauseStateMachine(State.PauseReason reason, BehaviorType reactionaryBehavior) {
@@ -546,6 +559,12 @@ public abstract class GameBase : MonoBehaviour {
 
   public void CleanUp() {
     _SharedMinigameViewInstance.ViewCloseAnimationFinished -= CleanUp;
+    ContextManager.Instance.OnAppHoldStart -= HandleAppHoldStart;
+    ContextManager.Instance.OnAppHoldEnd -= HandleAppHoldEnd;
+
+    if (ContextManager.Instance.ManagerBusy) {
+      ContextManager.Instance.OnAppHoldEnd();
+    }
     if (CurrentRobot != null) {
       CurrentRobot.ResetRobotState(EndGameRobotReset);
     }
@@ -667,6 +686,7 @@ public abstract class GameBase : MonoBehaviour {
   // if there are none, close the view.
   private void HandleChallengeResultAdvance() {
     _AutoAdvanceTimestamp = -1;
+    ContextManager.Instance.AppFlash(playChime: true);
     if (RewardedActionManager.Instance.RewardPending || RewardedActionManager.Instance.NewDifficultyPending) {
       SharedMinigameView.HidePlayerScoreboard();
       SharedMinigameView.HideCozmoScoreboard();

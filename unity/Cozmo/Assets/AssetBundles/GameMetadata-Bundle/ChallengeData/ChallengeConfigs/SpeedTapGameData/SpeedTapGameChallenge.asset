@@ -22,7 +22,7 @@ MonoBehaviour:
   _ChallengeIcon: {fileID: 21300000, guid: e227610e9173641e688fc8d5b8714c49, type: 3}
   _UnlockId:
     _EnumValueAsString: QuickTapGame
-    _EnumValue: 15
+    _EnumValue: 18
   _Music:
     _Music: 1317044071
   MinigameConfig: {fileID: 11400000, guid: 0094ba7b384ea408dae405fb7e1b021d, type: 2}

@@ -14,6 +14,31 @@ namespace Cozmo {
         get { return _sInstance; }
       }
 
+      #region Context Transitions
+      [SerializeField]
+      private Color _ContextFlashColor = Color.green;
+      public Color ContextFlashColor { get { return _ContextFlashColor; } }
+
+      [SerializeField]
+      private Color _ContextDimColor = new Color(0.0f, 0.0f, 0.0f, 0.4f);
+      public Color ContextDimColor { get { return _ContextDimColor; } }
+
+      [SerializeField]
+      private float _ContextDimAlpha = 0.4f;
+      public float ContextDimAlpha { get { return _ContextDimAlpha; } }
+
+      [SerializeField]
+      private float _ContextFlashAlpha = 0.7f;
+      public float ContextFlashAlpha { get { return _ContextFlashAlpha; } }
+
+      [SerializeField]
+      private float _ContextFlashDuration = 0.2f;
+      public float ContextFlashDuration { get { return _ContextFlashDuration; } }
+
+      #endregion
+
+      #region UI Transitions
+
       [SerializeField]
       private float _CascadeDelay_sec = 0.1f;
       public float CascadeDelay { get { return _CascadeDelay_sec; } }
@@ -113,5 +138,6 @@ namespace Cozmo {
           duration).SetEase(easing);
       }
     }
+    #endregion
   }
 }

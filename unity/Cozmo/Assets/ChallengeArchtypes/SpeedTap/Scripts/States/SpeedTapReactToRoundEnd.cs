@@ -48,6 +48,8 @@ namespace SpeedTap {
       _SpeedTapGame.SharedMinigameView.ShelfWidget.PlayBannerAnimation(bannerText, HandleBannerAnimationDone,
         roundEndSlideScript.BannerAnimationDurationSeconds);
 
+      ContextManager.Instance.AppFlash(playChime: true);
+      ContextManager.Instance.HideForeground();
       // Play cozmo animation
       PlayReactToRoundAnimationAndSendEvent();
     }

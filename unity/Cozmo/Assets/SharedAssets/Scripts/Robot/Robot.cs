@@ -445,21 +445,34 @@ public class Robot : IRobot {
     return bounds.Contains(WorldToCozmo(lightCube.WorldPosition));
   }
 
+
+
   public void ResetRobotState(Action onComplete) {
     DriveWheels(0.0f, 0.0f);
     TrackToObject(null);
     CancelAllCallbacks();
-    SetEnableFreeplayBehaviorChooser(false);
-    SetIdleAnimation(AnimationTrigger.Count);
-    Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = { };
-    float[] paramValues = { };
-    SetLiveIdleAnimationParameters(paramNames, paramValues, true);
+    RobotStartIdle();
     foreach (KeyValuePair<int, LightCube> kvp in LightCubes) {
       kvp.Value.SetLEDs(Color.black);
     }
     SetBackpackLEDs(Color.black.ToUInt());
 
     TryResetHeadAndLift(onComplete);
+  }
+
+  public void RobotStartIdle() {
+    SetEnableFreeplayBehaviorChooser(false);
+    SetIdleAnimation(AnimationTrigger.Count);
+    Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = { };
+    float[] paramValues = { };
+    SetLiveIdleAnimationParameters(paramNames, paramValues, true);
+    TurnTowardsLastFacePose(Mathf.PI);
+  }
+
+  public void RobotResumeFromIdle(bool freePlay) {
+    SetEnableFreeplayBehaviorChooser(freePlay);
+    // TODO: any additional functionality that we want for Cozmo resuming from a
+    // Cozmo Hold Context Switch
   }
 
   public void TryResetHeadAndLift(Action onComplete) {

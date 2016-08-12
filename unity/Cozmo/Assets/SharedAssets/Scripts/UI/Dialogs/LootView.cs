@@ -211,7 +211,8 @@ namespace Cozmo {
         Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_EmotionChipWindowOpenSoundEvent);
         _TronPool = new SimpleObjectPool<TronLight>(CreateTronLight, ResetTronLight, 0);
         _ActiveDooberTransforms = new List<Transform>();
-
+        ContextManager.Instance.AppFlash(playChime: true);
+        ContextManager.Instance.CozmoHoldFreeplayStart();
         Color transparentColor = new Color(_LootGlow.color.r, _LootGlow.color.g, _LootGlow.color.b, 0);
         _LootGlow.color = transparentColor;
 
@@ -399,6 +400,7 @@ namespace Cozmo {
         dooberSequence.Play();
 
         ChestRewardManager.Instance.PendingChestRewards.Clear();
+        ContextManager.Instance.CozmoHoldFreeplayEnd();
       }
 
       private void UnleashTheDoobersForOnboarding() {

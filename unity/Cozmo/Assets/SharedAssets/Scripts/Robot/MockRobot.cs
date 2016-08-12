@@ -56,6 +56,14 @@ public class MockRobot : IRobot {
     // Do Something?
   }
 
+
+  public void RobotStartIdle() {
+  }
+
+  public void RobotResumeFromIdle(bool freePlay) {
+  }
+
+
   public void TryResetHeadAndLift(System.Action onComplete) {
     HeadAngle = 0f;
     LiftHeight = 0f;
@@ -847,7 +855,7 @@ public class MockRobot : IRobot {
 
   public void EnableDroneMode(bool enable) {
   }
-		
+
   public void RestoreRobotFromBackup(uint backupToRestoreFrom) {
   }
 

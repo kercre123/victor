@@ -174,9 +174,11 @@ namespace FaceEnrollment {
 
       if (!success) {
         // TODO: Retry or notify failure or something?
+        // Currently only does app flash.
+        ContextManager.Instance.AppFlash(playChime: true);
       }
       else {
-        
+
         GameEventManager.Instance.FireGameEvent(Anki.Cozmo.GameEvent.OnMeetNewPerson);
         if (CurrentRobot.EnrolledFaces.ContainsKey(_FaceIDToEnroll)) {
           DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Re-enrolled existing face: " + _NameForFace);
@@ -198,7 +200,7 @@ namespace FaceEnrollment {
 
     private void EditOrEnrollFaceComplete(bool success) {
       if (success) {
-        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Win_Shared);
+        ContextManager.Instance.AppFlash(playChime: true);
       }
       SharedMinigameView.ShowQuitButton();
       ShowFaceListSlide(SharedMinigameView);

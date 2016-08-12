@@ -120,6 +120,11 @@ public interface IRobot : IDisposable {
 
   void ResetRobotState(Action onComplete);
 
+
+  void RobotStartIdle();
+
+  void RobotResumeFromIdle(bool freePlay);
+
   void TryResetHeadAndLift(Action onComplete);
 
   void ClearData(bool initializing = false);

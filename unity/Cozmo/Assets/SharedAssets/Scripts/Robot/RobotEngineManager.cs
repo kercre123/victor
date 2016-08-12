@@ -87,6 +87,7 @@ public class RobotEngineManager : MonoBehaviour {
   private Anki.Cozmo.ExternalInterface.DenyGameStart _DenyGameStartMessage = new Anki.Cozmo.ExternalInterface.DenyGameStart();
   private Anki.Cozmo.ExternalInterface.ResetFirmware _ResetFirmwareMessage = new Anki.Cozmo.ExternalInterface.ResetFirmware();
   private Anki.Cozmo.ExternalInterface.RequestDeviceData _RequestDeviceDataMessage = new Anki.Cozmo.ExternalInterface.RequestDeviceData();
+  private Anki.Cozmo.ExternalInterface.RequestUnlockDataFromBackup _RequestUnlockDataFromBackupMessage = new Anki.Cozmo.ExternalInterface.RequestUnlockDataFromBackup();
 
   private void OnEnable() {
     DAS.Event("RobotEngineManager.OnEnable", string.Empty);
@@ -370,6 +371,11 @@ public class RobotEngineManager : MonoBehaviour {
 
   public void SendRequestDeviceData() {
     Message.RequestDeviceData = _RequestDeviceDataMessage;
+    SendMessage();
+  }
+
+  public void SendRequestUnlockDataFromBackup() {
+    Message.RequestUnlockDataFromBackup = _RequestUnlockDataFromBackupMessage;
     SendMessage();
   }
 
