@@ -90,6 +90,7 @@ public class ShowCozmoVideo : MonoBehaviour {
       DAS.Error("ShowCozmoVideo.HandleReplayButton", "Attempting to replay empty video string");
     }
     else {
+      _ReplayButton.gameObject.SetActive(false);
       PlayVideo(_Filename);
     }
   }
