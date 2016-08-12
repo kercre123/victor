@@ -143,5 +143,8 @@
   },
   "connectivity.replaceCozmoOnCharger": {
     "translation": "Remove and replace Cozmo on his charger"
+  },
+  "wifi.getHelp": {
+    "translation": "Get Help"
   }
 }

@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 public class SwipePageIndicator : MonoBehaviour {
 
+  public System.Action OnNextButton;
+  public System.Action OnBackButton;
+
   [SerializeField]
   private UnityEngine.UI.Image _PageIndicatorPrefab;
 
@@ -15,7 +18,27 @@ public class SwipePageIndicator : MonoBehaviour {
   [SerializeField]
   private Sprite _InactiveSprite;
 
+  [SerializeField]
+  private Cozmo.UI.CozmoButton _NextButton;
+
+  [SerializeField]
+  private Cozmo.UI.CozmoButton _BackButton;
+
   private List<UnityEngine.UI.Image> _PageIndicators = new List<UnityEngine.UI.Image>();
+
+  private void Awake() {
+    _NextButton.Initialize(() => {
+      if (OnNextButton != null) {
+        OnNextButton();
+      }
+    }, "next_button", "swipe_page_indicator");
+
+    _BackButton.Initialize(() => {
+      if (OnBackButton != null) {
+        OnBackButton();
+      }
+    }, "back_button", "swipe_page_indicator");
+  }
 
   public void SetPageCount(int pageCount) {
     for (int i = 0; i < _PageIndicators.Count; ++i) {
@@ -36,6 +59,18 @@ public class SwipePageIndicator : MonoBehaviour {
       DAS.Error("SwipePageIndicator.SetCurrentPage", "index out of range");
       return;
     }
+
+    _BackButton.Interactable = true;
+    _NextButton.Interactable = true;
+
+    if (currentPage == 0) {
+      _BackButton.Interactable = false;
+    }
+
+    if (currentPage == _PageIndicators.Count - 1) {
+      _NextButton.Interactable = false;
+    }
+
     for (int i = 0; i < _PageIndicators.Count; ++i) {
       _PageIndicators[i].overrideSprite = _InactiveSprite;
     }

@@ -12,9 +12,7 @@ public struct TouchInfo {
   public float _Time;
 }
 
-public class SwipeSlides : MonoBehaviour, IPointerDownHandler, IPointerUpHandler {
-
-  private float _ThresholdSpeed;
+public class SwipeSlides : MonoBehaviour {
 
   [SerializeField]
   private GameObject[] _SlidePrefabs;
@@ -27,7 +25,8 @@ public class SwipeSlides : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
   private SwipePageIndicator _PageIndicatorPrefab;
   private SwipePageIndicator _PageIndicatorInstance;
 
-  private Dictionary<int, TouchInfo> _StartTouchInfo = new Dictionary<int, TouchInfo>();
+  //private float _ThresholdSpeed;
+  //private Dictionary<int, TouchInfo> _StartTouchInfo = new Dictionary<int, TouchInfo>();
 
   private int _CurrentIndex = 0;
   private bool _Transitioning = false;
@@ -35,7 +34,7 @@ public class SwipeSlides : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
   private void Start() {
 
-    _ThresholdSpeed = GetComponent<RectTransform>().rect.width * 0.5f;
+    //_ThresholdSpeed = GetComponent<RectTransform>().rect.width * 0.5f;
 
     for (int i = 0; i < _SlidePrefabs.Length; ++i) {
       GameObject slideInstance = GameObject.Instantiate(_SlidePrefabs[i]);
@@ -49,33 +48,8 @@ public class SwipeSlides : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     _PageIndicatorInstance.transform.SetParent(transform, false);
     _PageIndicatorInstance.SetPageCount(_SlidePrefabs.Length);
     _PageIndicatorInstance.SetCurrentPage(_CurrentIndex);
-  }
-
-  public void OnPointerDown(PointerEventData eventData) {
-    _StartTouchInfo[eventData.pointerId] = new TouchInfo(eventData.position, Time.time);
-  }
-
-  public void OnPointerUp(PointerEventData eventData) {
-    float horizontalSpeed = ComputeHorizontalSpeed(eventData);
-    if (Mathf.Abs(horizontalSpeed) > _ThresholdSpeed) {
-      if (horizontalSpeed > 0.0f) {
-        TransitionLeft();
-      }
-      else {
-        TransitionRight();
-      }
-    }
-  }
-
-  private float ComputeHorizontalSpeed(PointerEventData eventData) {
-    TouchInfo startTouch;
-    if (_StartTouchInfo.TryGetValue(eventData.pointerId, out startTouch)) {
-      return (eventData.position.x - startTouch._Position.x) / (Time.time - startTouch._Time);
-    }
-    else {
-      DAS.Warn("SwipeSlides.ComputeVelocity", "No start touch found.");
-      return 0f;
-    }
+    _PageIndicatorInstance.OnNextButton += TransitionRight;
+    _PageIndicatorInstance.OnBackButton += TransitionLeft;
   }
 
   public void GoToIndex(int index) {
@@ -117,5 +91,33 @@ public class SwipeSlides : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     }
     _SlideInstances.Clear();
   }
+
+  // NOTE: needs class to inherit from IPointerDownhandler etc.
+  /*public void OnPointerDown(PointerEventData eventData) {
+    _StartTouchInfo[eventData.pointerId] = new TouchInfo(eventData.position, Time.time);
+  }
+
+  public void OnPointerUp(PointerEventData eventData) {
+    float horizontalSpeed = ComputeHorizontalSpeed(eventData);
+    if (Mathf.Abs(horizontalSpeed) > _ThresholdSpeed) {
+      if (horizontalSpeed > 0.0f) {
+        TransitionLeft();
+      }
+      else {
+        TransitionRight();
+      }
+    }
+  }
+
+  private float ComputeHorizontalSpeed(PointerEventData eventData) {
+    TouchInfo startTouch;
+    if (_StartTouchInfo.TryGetValue(eventData.pointerId, out startTouch)) {
+      return (eventData.position.x - startTouch._Position.x) / (Time.time - startTouch._Time);
+    }
+    else {
+      DAS.Warn("SwipeSlides.ComputeVelocity", "No start touch found.");
+      return 0f;
+    }
+  }*/
 
 }
