@@ -52,9 +52,9 @@ For example, :class:`cozmo.robot.Cozmo` creates a :class:`cozmo.world.World`
 object and sets itself as a parent and the World as the child; both receive
 events sent to the other.
 
-The World class creates individual :class:`cozmo.objects.BaseObject` objects
+The World class creates individual :class:`cozmo.objects.ObservableObject` objects
 as they are discovered and makes itself a parent, so as to receive all events
-sent to the child.  However, it does not make those BaseObject objects children
+sent to the child.  However, it does not make those ObservableObject objects children
 for the sake of message dispatch as they only need to receive a small subset
 of messages the World object receives.
 '''

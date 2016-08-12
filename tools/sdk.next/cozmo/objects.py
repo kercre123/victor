@@ -1,5 +1,5 @@
 __all__ = ['EvtObjectTapped', 'EvtObjectObserved', 'EvtObjectConnectChanged',
-    'BaseObject', 'LightCube']
+    'ObservableObject', 'LightCube', 'CustomObject', 'FixedCustomObject']
 
 
 import asyncio
@@ -36,11 +36,12 @@ class EvtObjectConnectChanged(event.Event):
 
 
 
-class BaseObject(event.Dispatcher):
+class ObservableObject(event.Dispatcher):
     '''The base type for objects in Cozmo's world.'''
 
     #: (bool) Whether this type of object can be picked up by Cozmo
     pickupable = False
+    place_objects_on_this = False
 
     def __init__(self, conn, world, object_id=None, **kw):
         super().__init__(**kw)
@@ -79,6 +80,7 @@ class BaseObject(event.Dispatcher):
 
     @object_id.setter
     def object_id(self, value):
+        '''Only lets you set the object id once, as it is static in the engine.'''
         if self._object_id is not None:
             raise ValueError("Cannot change object id once set (from %s to %s)" % (self._object_id, value))
         logger.debug("Updated object_id for %s from %s to %s", self.__class__, self._object_id, value)
@@ -86,6 +88,7 @@ class BaseObject(event.Dispatcher):
 
     @property
     def pose(self):
+        '''The :class:`cozmo.util.Pose` of the object, where it is in the world.'''
         return self._pose
 
     #### Private Event Handlers ####
@@ -124,11 +127,12 @@ LightCube2Id = _clad_to_game_cozmo.ObjectType.Block_LIGHTCUBE2
 LightCube3Id = _clad_to_game_cozmo.ObjectType.Block_LIGHTCUBE3
 
 
-class LightCube(BaseObject):
+class LightCube(ObservableObject):
     '''A light cube object has four LEDs that Cozmo can actively manipulate and communicate with.'''
     #TODO investigate why the top marker orientation of a cube is a bit strange
 
     pickupable = True
+    place_objects_on_this = True
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
@@ -136,7 +140,7 @@ class LightCube(BaseObject):
         self.last_tapped_time = None
 
     def __repr__(self):
-        return '<%s object_id=%s>' % (self.__class__.__name__, self._object_id)
+        return '<%s object_id=%s pose=%s>' % (self.__class__.__name__, self._object_id, self.pose)
 
     #### Private Methods ####
 
@@ -188,7 +192,7 @@ class LightCube(BaseObject):
                 objectID=self.object_id, robotID=self._robot.robot_id)
         for i, light in enumerate( (light1, light2, light3, light4) ):
             if light is not None:
-                self._set_light(msg, i, light)
+                lights._set_light(msg, i, light)
 
         self.conn.send_msg(msg)
 
@@ -201,7 +205,7 @@ class LightCube(BaseObject):
         msg = _clad_to_engine_iface.SetAllActiveObjectLEDs(
                 objectID=self.object_id, robotID=self._robot.robot_id)
         for i in range(4):
-            self._set_light(msg, i, light)
+            lights._set_light(msg, i, light)
 
         self.conn.send_msg(msg)
 
@@ -211,7 +215,7 @@ class LightCube(BaseObject):
 
 
 
-class CustomObject(BaseObject):
+class CustomObject(ObservableObject):
     '''An object defined by the SDK. It is bound to a specific objectType i.e Custom_STAR5_Box.
 
     This defined object is given a size in the x,y and z axis. The dimensions of the markers on the
@@ -241,22 +245,27 @@ class CustomObject(BaseObject):
     #### Properties ####
     @property
     def x_size_mm(self):
+        '''Size of this object in its X axis.'''
         return self._x_size_mm
     
     @property
     def y_size_mm(self):
+        '''Size of this object in its Y axis.'''
         return self._y_size_mm
     
     @property
     def z_size_mm(self):
+        '''Size of this object in its Z axis.'''
         return self._z_size_mm
     
     @property
     def marker_width_mm(self):
+        '''Width of the marker on this object.'''
         return self._marker_width_mm
     
     @property
     def marker_height_mm(self):
+        '''Height of the marker on this object.'''
         return self._marker_height_mm
     
 
@@ -313,6 +322,7 @@ class FixedCustomObject():
 
     @object_id.setter
     def object_id(self, value):
+        '''Lets the object id only be assigned once as it is static in the engine.'''
         if self._object_id is not None:
             raise ValueError("Cannot change object id once set (from %s to %s)" % (self._object_id, value))
         logger.debug("Updated object_id for %s from %s to %s", self.__class__, self._object_id, value)
@@ -320,18 +330,22 @@ class FixedCustomObject():
 
     @property
     def pose(self):
+        '''The :class:`cozmo.util.Pose` of the object, where it is in the world.'''
         return self._pose
     
     @property
     def x_size_mm(self):
+        '''The length of the object in its X axis.'''
         return self._x_size_mm
     
     @property
     def y_size_mm(self):
+        '''The length of the object in its Y axis.'''
         return self._y_size_mm
     
     @property
     def z_size_mm(self):
+        '''The length of the object in its Z axis.'''
         return self._z_size_mm
     
 

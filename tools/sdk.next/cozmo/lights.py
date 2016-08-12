@@ -134,9 +134,21 @@ class Light:
         flasher.off_color=off_color
         return flasher
 
+def _set_light(msg, idx, light):
+    # For use with clad light messages specifically. 
+    if not isinstance(light, Light):
+        raise TypeError("Expected a lights.Light")
+    msg.onColor[idx] = light.on_color.int_color
+    msg.offColor[idx] = light.off_color.int_color
+    msg.onPeriod_ms[idx] = light.on_period_ms
+    msg.offPeriod_ms[idx] = light.off_period_ms
+    msg.transitionOnPeriod_ms[idx] = light.transition_on_period_ms
+    msg.transitionOffPeriod_ms[idx] = light.transition_off_period_ms   
 
-green_light = Light(on_color=green)
-red_light = Light(on_color=red)
-blue_light = Light(on_color=blue)
-white_light = Light(on_color=white)
-off_light = Light(on_color=off)
+#There is a glitch so it will always flash unless on_color==off_color 
+#ticket is COZMO-3319
+green_light = Light(on_color=green, off_color=green)
+red_light = Light(on_color=red, off_color=red)
+blue_light = Light(on_color=blue, off_color=blue)
+white_light = Light(on_color=white, off_color=white)
+off_light = Light(on_color=off, off_color=off)

@@ -1,9 +1,11 @@
 __all__ = ['World']
 
+import asyncio
 
 from . import logger
 
 from . import event
+from . import faces
 from . import objects
 
 from . import _clad
@@ -14,6 +16,7 @@ class World(event.Dispatcher):
     '''Represents the state of the world, as known to a Cozmo robot.'''
 
     #: Factory to generate LightCube objects.
+    face_factory = faces.Face
     light_cube_factory = objects.LightCube
     custom_object_factory = objects.CustomObject
 
@@ -24,6 +27,7 @@ class World(event.Dispatcher):
         self.light_cubes = {}
         self.custom_objects = {}
         self._objects = {}
+        self._faces = {}
         self._active_behavior = None
         self._active_action = None
         self._init_light_cubes()
@@ -53,8 +57,7 @@ class World(event.Dispatcher):
             logger.debug('Allocated object_id=%d to light cube %s', msg.objectID, cube)
             return cube
 
-        elif (msg.objectFamily == _clad_to_game_cozmo.ObjectFamily.CustomObject and 
-              msg.objectType != _clad_to_game_cozmo.ObjectType.Custom_Fixed):
+        elif (msg.objectFamily == _clad_to_game_cozmo.ObjectFamily.CustomObject):
             # obj is the base object type for this custom object. We make instances of this for every
             # unique object_id we see of this custom object type.
             obj = self.custom_objects.get(msg.objectType)
@@ -71,25 +74,44 @@ class World(event.Dispatcher):
             logger.debug('Allocated object_id=%s to CustomObject %s', msg.objectID, custom_object)
             return custom_object
 
+    def _allocate_face_from_msg(self, msg):
+        face = self.face_factory(self.conn, self, self.robot, dispatch_parent=self)
+        face.face_id = msg.faceID
+        self._faces[face.face_id] = face
+        logger.debug('Allocated face_id=%s to face=%s', face.face_id, face)
+        return face
+
     #### Properties ####
 
     @property
     def active_behavior(self):
+        '''A bool of whether or not Cozmo is currently executing a behavior.'''
         return self._active_behavior
 
     @property
     def active_action(self):
+        '''A bool of whether or not Cozmo is currently executing an action.'''
         return self._active_action
 
 
     #### Private Event Handlers ####
 
     def _recv_msg_robot_observed_object(self, evt, *, msg):
+        #The engine still sends observed messages for fixed custom objects, this is a bug
+        if evt.msg.objectType == _clad_to_game_cozmo.ObjectType.Custom_Fixed:
+            return
         obj = self._objects.get(msg.objectID)
         if not obj:
             obj = self._allocate_object_from_msg(msg)
         if obj:
             obj.dispatch_event(evt)
+
+    def _recv_msg_robot_observed_face(self, evt, *, msg):
+        face = self._faces.get(msg.faceID)
+        if not face:
+            face = self._allocate_face_from_msg(msg)
+        if face:
+            face.dispatch_event(evt)
 
     def _recv_msg_object_tapped(self, evt, *, msg):
         obj = self._objects.get(msg.objectID)
@@ -131,6 +153,58 @@ class World(event.Dispatcher):
                 obj=lambda obj: isinstance(obj, objects.LightCube))
         evt = await self.wait_for(filter, timeout=timeout)
         return evt.obj
+
+    async def wait_for_observed_face(self, timeout=None):
+        '''Waits for a face to be observed by the robot.
+
+        Args:
+            timeout (float): Number of seconds to wait for a face to be observed, or None for indefinite
+        Returns:
+            The :class:`cozmo.faces.Face` object that was observed.
+        '''
+        filter = event.Filter(faces.EvtFaceObserved)
+        evt = await self.wait_for(filter, timeout=timeout)
+        return evt.face
+
+    # TODO make this so it does not compound timeout time.
+    async def wait_until_observe_num_objects(self, num, object_type=None, timeout=None):
+        '''Waits for a certain number of objects to be seen.
+
+        If obj_type is provided, will wait to observe specific object types.
+        The timeout is for the time in between each object. So theoretically if num=3,
+        and timeout=10, the max timeout would be ~30 seconds. TODO fix this.
+
+        Args: 
+            num (float): The number of unique objects to wait for.
+            object_type (class:`cozmo.objects.ObservableObject`): If provided this will filter observed objects.
+            timeout (float): Time waited in between each object seen.
+        Returns:
+            A list of length <= num in order of the unique objects class:`cozmo.objects.ObservableObject` 
+            observed during this wait.
+        '''
+        #Filter by object type if provided
+        if object_type:
+            if not issubclass(object_type, objects.ObservableObject):
+                raise TypeError("Expected object_type to be ObservableObject")
+            filter = event.Filter(objects.EvtObjectObserved,
+                    obj=lambda obj: isinstance(obj, object_type))
+        else:
+            filter = event.Filter(objects.EvtObjectObserved)
+        num_seen = 0
+        objs_seen = []
+        #Wait until we see a certain number of unique objects
+        while num_seen < num:
+            #Instead of crashing, if we ever end up not seeing enough objects, just return what we have.
+            try:
+                evt = await self.wait_for(filter, timeout=timeout)
+            except asyncio.TimeoutError:
+                return objs_seen
+            if evt.obj not in objs_seen:
+                objs_seen.append(evt.obj)
+                num_seen += 1
+        return objs_seen
+
+
 
 
     #### Commands ####

@@ -1877,11 +1877,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     // Create an instance of the custom object
     auto customObject = std::make_shared<CustomObject>(ObjectType::Custom_Fixed, xSize_mm, ySize_mm, zSize_mm);
     
-    // Raise origin of object above ground.
-    // NOTE: Assuming detected obstacle is at ground level no matter what angle the head is at.
-    Pose3d raiseObject(0, Z_AXIS_3D(), Vec3f(0,0,0.5f*customObject->GetSize().z()));
-    Pose3d obsPose = p * raiseObject;
-    customObject->SetPose(obsPose);
+    customObject->SetPose(p);
     customObject->SetPoseParent(_robot->GetPose().GetParent());
     
     // HACK: to make it think it was observed enough times so as not to get immediately deleted.
@@ -1980,8 +1976,17 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
                             object->GetID().GetValue());
       } else if(object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT
                 && !object->IsPoseStateUnknown()) {
-        const f32 objectHeight = object->GetPose().GetWithRespectToOrigin().GetTranslation().z();
-        if( (objectHeight >= minHeight) && (objectHeight <= maxHeight) )
+        
+        const Point3f rotatedSize( object->GetPose().GetRotation() * object->GetSize() );
+        const f32 objectCenter = object->GetPose().GetWithRespectToOrigin().GetTranslation().z();
+        
+        const f32 objectTop = objectCenter + (0.5f * rotatedSize.z());
+        const f32 objectBottom = objectCenter - (0.5f * rotatedSize.z());
+        
+        const bool bothAbove = (objectTop >= maxHeight) && (objectBottom >= maxHeight);
+        const bool bothBelow = (objectTop <= minHeight) && (objectBottom <= minHeight);
+        
+        if( !bothAbove && !bothBelow )
         {
           rectangles.emplace_back(object->GetBoundingQuadXY(padding), object->GetID());
           return true;

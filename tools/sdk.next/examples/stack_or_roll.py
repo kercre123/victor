@@ -1,0 +1,32 @@
+import asyncio
+import cozmo
+
+'''This script shows off simple decision making.
+It tells cozmo to look around, and then wait until he sees a certain amount of objects.
+Based on how many object he sees before he times out, he will do different actions.
+0-> be angry
+1-> roll block (the block must not be face up)
+2-> stack blocks (the blocks must all be face up)
+'''
+
+def run(coz_conn):
+    coz = coz_conn.wait_for_robot()
+
+    lookaround = coz.start_behavior(cozmo.behavior.BehaviorTypes.LookAround)
+
+    cubes = coz.world.wait_until_observe_num_objects(num=2, object_type=cozmo.objects.LightCube, timeout=10)
+
+    print(cubes)
+    
+    lookaround.stop()
+
+    if len(cubes) == 0:
+        coz.play_anim_trigger(cozmo.anim.Triggers.MajorFail).wait_for_completed()
+    elif len(cubes) == 1:
+        coz.run_timed_behavior(cozmo.behavior.BehaviorTypes.RollBlock, active_time=60)
+    else:
+        coz.run_timed_behavior(cozmo.behavior.BehaviorTypes.StackBlocks, active_time=60)
+
+if __name__ == '__main__':
+    cozmo.setup_basic_logging()
+    cozmo.connect(run)

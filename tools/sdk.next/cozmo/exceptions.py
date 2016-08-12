@@ -17,5 +17,9 @@ class ActionError(CozmoSDKException):
 class NotPickupable(ActionError):
     '''Raised if an attempt is made to pickup or place an object that can't be picked up by Cozmo'''
 
+class CannotPlaceObjectsOnThis(ActionError):
+    '''Raised if an attempt is made to place an object on top of an invalid object'''
+
 class RobotBusy(ActionError):
     '''Raised if an attempt is made to perform an action while another action is still running.'''
+

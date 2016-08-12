@@ -165,6 +165,7 @@ class Pose:
 
     @origin_id.setter
     def origin_id(self, value):
+        '''Lets this be changed later in case it was not originally defined.'''
         if not isinstance(value, int):
             raise TypeError("The type of origin_id must be int")
         self._origin_id = value
