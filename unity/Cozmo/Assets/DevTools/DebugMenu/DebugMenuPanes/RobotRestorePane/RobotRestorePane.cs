@@ -30,14 +30,12 @@ public class RobotRestorePane : MonoBehaviour {
     option.text = "0";
     options.Add(option);
 
-    int i = 0;
-    while (message.robotsWithBackupData[i] != 0) {
+    foreach (uint i in message.robotsWithBackupData) {
       option = new UnityEngine.UI.Dropdown.OptionData();
-      option.text = message.robotsWithBackupData[i].ToString();
+      option.text = i.ToString();
       options.Add(option);
-      ++i;
     }
-	
+
     _BackupDropdown.AddOptions(options);
   }
 
