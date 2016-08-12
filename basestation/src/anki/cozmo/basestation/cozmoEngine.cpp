@@ -459,7 +459,7 @@ void CozmoEngine::SetEngineState(EngineState newState)
   
   _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::UpdateEngineState>(oldState, newState);
   
-  PRINT_NAMED_EVENT("app.engine.state","%s => %s", EngineStateToString(oldState), EngineStateToString(newState));
+  Anki::Util::sEventF("app.engine.state", {{DDATA,EngineStateToString(newState)}}, "%s", EngineStateToString(oldState));
 }
 
 void CozmoEngine::ReadAnimationsFromDisk()
