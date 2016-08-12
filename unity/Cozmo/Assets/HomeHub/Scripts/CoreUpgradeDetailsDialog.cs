@@ -27,6 +27,9 @@ public class CoreUpgradeDetailsDialog : BaseView {
   private GameObject _AvailablePromptContainer;
 
   [SerializeField]
+  private GameObject _AffordableHighlightContainer;
+
+  [SerializeField]
   private AnkiTextLabel _AvailablePromptLabel;
 
   [SerializeField]
@@ -100,6 +103,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
     _UnlockUpgradeButtonContainer.gameObject.SetActive(false);
     _RequestTrickButtonContainer.gameObject.SetActive(false);
     _AvailablePromptContainer.SetActive(false);
+    _AffordableHighlightContainer.gameObject.SetActive(false);
     // QA testing jumps around during stages. As a failsafe just give the amount needed since they can't exist.
     Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
 
@@ -139,6 +143,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
       _FragmentInventoryContainer.gameObject.SetActive(true);
       _SparksInventoryContainer.gameObject.SetActive(false);
       _AvailablePromptContainer.SetActive(true);
+      _AffordableHighlightContainer.gameObject.SetActive(true);
       _AvailablePromptLabel.gameObject.SetActive(playerInventory.CanRemoveItemAmount(unlockInfo.UpgradeCostItemId, unlockInfo.UpgradeCostAmountNeeded));
       _AvailablePromptLabel.text = Localization.Get(LocalizationKeys.kUnlockableAvailable);
       ItemData itemData = ItemDataConfig.GetData(unlockInfo.UpgradeCostItemId);
@@ -326,6 +331,13 @@ public class CoreUpgradeDetailsDialog : BaseView {
       UnlockablesManager.Instance.OnSparkStarted.Invoke(_UnlockInfo.Id.Value);
     }
     Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+    TimelineEntryData sess = DataPersistenceManager.Instance.CurrentSession;
+    if (sess.SparkCount.ContainsKey(_UnlockInfo.Id.Value)) {
+      sess.SparkCount[_UnlockInfo.Id.Value]++;
+    }
+    else {
+      sess.SparkCount.Add(_UnlockInfo.Id.Value, 1);
+    }
     // Inventory valid was already checked when the button was initialized.
     playerInventory.RemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
     UpdateInventoryLabel(_UnlockInfo.RequestTrickCostItemId, _SparksInventoryLabel);

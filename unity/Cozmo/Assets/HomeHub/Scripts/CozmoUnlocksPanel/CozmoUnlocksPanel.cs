@@ -8,7 +8,8 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   public enum CozmoUnlockState {
     Unlocked,
     Unlockable,
-    Locked
+    Locked,
+    NeverAvailable
   }
 
   public enum CozmoUnlockPosition {
@@ -61,6 +62,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     List<UnlockableInfo> unlockedUnlockData = UnlockablesManager.Instance.GetUnlocked(true);
     List<UnlockableInfo> unlockableUnlockData = UnlockablesManager.Instance.GetAvailableAndLockedExplicit();
     List<UnlockableInfo> lockedUnlockData = UnlockablesManager.Instance.GetUnavailableExplicit();
+    List<UnlockableInfo> comingSoonUnlockData = UnlockablesManager.Instance.GetNeverAvailableExplicit();
 
     // Sort within themselves on "SortOrder" since locked doesn't show anything, no need to sort.
     unlockedUnlockData.Sort();
@@ -99,6 +101,17 @@ public class CozmoUnlocksPanel : MonoBehaviour {
         numTilesMade++;
       }
     }
+
+    for (int i = 0; i < comingSoonUnlockData.Count; ++i) {
+      if (comingSoonUnlockData[i].UnlockableType == UnlockableType.Action) {
+        tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
+        unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
+        unlockableTile.Initialize(comingSoonUnlockData[i], CozmoUnlockState.NeverAvailable, viewControllerName);
+        _LockedTiles.Add(unlockableTile);
+        numTilesMade++;
+      }
+    }
+
   }
 
   private void ClearTiles() {

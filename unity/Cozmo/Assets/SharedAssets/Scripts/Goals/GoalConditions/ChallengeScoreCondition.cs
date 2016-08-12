@@ -37,6 +37,9 @@ namespace Anki {
           if (toCheck >= TargetScore) {
             isMet = !LessThan;
           }
+          else {
+            isMet = LessThan;
+          }
         }
         return isMet;
       }

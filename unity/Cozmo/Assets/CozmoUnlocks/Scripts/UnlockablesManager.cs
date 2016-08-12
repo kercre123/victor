@@ -90,8 +90,9 @@ public class UnlockablesManager : MonoBehaviour {
   public List<UnlockableInfo> GetUnlocked(bool getExplicitOnly) {
     List<UnlockableInfo> unlocked = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
+      bool neverAvailable = _UnlockableInfoList.UnlockableInfoData[i].NeverAvailable;
       if (_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id.Value]) {
-        if ((!getExplicitOnly) || (getExplicitOnly && _UnlockableInfoList.UnlockableInfoData[i].ExplicitUnlock)) {
+        if (!neverAvailable && ((!getExplicitOnly) || (getExplicitOnly && _UnlockableInfoList.UnlockableInfoData[i].ExplicitUnlock))) {
           unlocked.Add(_UnlockableInfoList.UnlockableInfoData[i]);
         }
       }
@@ -120,12 +121,23 @@ public class UnlockablesManager : MonoBehaviour {
       bool neverAvailable = _UnlockableInfoList.UnlockableInfoData[i].NeverAvailable;
       bool locked = !_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id.Value];
       bool isAvailable = IsUnlockableAvailable(_UnlockableInfoList.UnlockableInfoData[i].Id.Value);
-      if (neverAvailable
-          || (locked && !isAvailable && _UnlockableInfoList.UnlockableInfoData[i].ExplicitUnlock)) {
+      if (!neverAvailable && locked && !isAvailable && _UnlockableInfoList.UnlockableInfoData[i].ExplicitUnlock) {
         unavailable.Add(_UnlockableInfoList.UnlockableInfoData[i]);
       }
     }
     return unavailable;
+  }
+
+  public List<UnlockableInfo> GetNeverAvailableExplicit() {
+    List<UnlockableInfo> comingSoon = new List<UnlockableInfo>();
+    for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
+      bool neverAvailable = _UnlockableInfoList.UnlockableInfoData[i].NeverAvailable;
+      if (neverAvailable && _UnlockableInfoList.UnlockableInfoData[i].ExplicitUnlock) {
+        comingSoon.Add(_UnlockableInfoList.UnlockableInfoData[i]);
+      }
+    }
+    return comingSoon;
+
   }
 
   public UnlockableInfo GetUnlockableInfo(Anki.Cozmo.UnlockId id) {

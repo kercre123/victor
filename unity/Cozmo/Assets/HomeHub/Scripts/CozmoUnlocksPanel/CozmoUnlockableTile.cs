@@ -19,6 +19,9 @@ public class CozmoUnlockableTile : MonoBehaviour {
   public GameObject _UnlockedBackgroundContainer;
 
   [SerializeField]
+  public GameObject _ComingSoonContainer;
+
+  [SerializeField]
   public Image _UnlockedIconSprite;
 
   [SerializeField]
@@ -42,6 +45,7 @@ public class CozmoUnlockableTile : MonoBehaviour {
     _LockedBackgroundContainer.SetActive(unlockState == CozmoUnlocksPanel.CozmoUnlockState.Locked);
     _AvailableBackgroundContainer.SetActive(unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlockable);
     _UnlockedBackgroundContainer.SetActive(unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlocked);
+    _ComingSoonContainer.gameObject.SetActive(false);
 
     Cozmo.Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
 
@@ -54,11 +58,21 @@ public class CozmoUnlockableTile : MonoBehaviour {
       bool affordable = playerInventory.CanRemoveItemAmount(unlockableData.UpgradeCostItemId, unlockableData.UpgradeCostAmountNeeded);
       _AffordableIndicator.gameObject.SetActive(affordable);
       _LockedBackgroundContainer.gameObject.SetActive(!affordable);
-      _UnlockedIconSprite.color = new Color(_UnlockedIconSprite.color.r, _UnlockedIconSprite.color.g, _UnlockedIconSprite.color.b, kLockedAlpha);
+      if (affordable) {
+        _UnlockedIconSprite.color = new Color(_UnlockedIconSprite.color.r, _UnlockedIconSprite.color.g, _UnlockedIconSprite.color.b, 1.0f);
+      }
+      else {
+        _UnlockedIconSprite.color = new Color(_UnlockedIconSprite.color.r, _UnlockedIconSprite.color.g, _UnlockedIconSprite.color.b, kLockedAlpha);
+      }
       break;
     case CozmoUnlocksPanel.CozmoUnlockState.Unlocked:
       _AffordableIndicator.gameObject.SetActive(false);
       _UnlockedIconSprite.color = new Color(_UnlockedIconSprite.color.r, _UnlockedIconSprite.color.g, _UnlockedIconSprite.color.b, 1.0f);
+      break;
+    case CozmoUnlocksPanel.CozmoUnlockState.NeverAvailable:
+      _AffordableIndicator.gameObject.SetActive(false);
+      _UnlockedIconSprite.color = new Color(_UnlockedIconSprite.color.r, _UnlockedIconSprite.color.g, _UnlockedIconSprite.color.b, kLockedAlpha);
+      _ComingSoonContainer.gameObject.SetActive(true);
       break;
     }
 
