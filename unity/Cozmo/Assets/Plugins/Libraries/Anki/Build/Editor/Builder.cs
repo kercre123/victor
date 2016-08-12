@@ -193,9 +193,7 @@ namespace Anki {
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/RewardedActions",
                                                    assetFolder + "/assets/RewardedActions");
 
-
-        //FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/config", assetFolder + "/config");
-	FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/config/basestation/firmware", "Assets/StreamingAssets/cozmo_resources/config");
+	FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/config", assetFolder + "/config");
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../generated/resources/pocketsphinx", assetFolder + "/pocketsphinx");
 
         // Delete compressed animation files that we don't need
