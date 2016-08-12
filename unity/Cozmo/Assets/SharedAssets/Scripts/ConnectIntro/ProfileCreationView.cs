@@ -29,13 +29,14 @@ public class ProfileCreationView : Cozmo.UI.BaseView {
     _NameField.onValidateInput += ValidateNameField;
     _NameField.onValueChanged.AddListener(HandleNameFieldChange);
     _NameField.keyboardType = TouchScreenKeyboardType.Default;
-    _NameField.ActivateInputField();
+
     _NameField.shouldHideMobileInput = true;
     _BirthDatePicker.maxYear = System.DateTime.Today.Year + 1;
     _NameDoneButton.Interactable = false;
   }
 
   private void Start() {
+    _NameField.ActivateInputField();
     _BirthDatePicker.date = System.DateTime.Now;
     ShowDOBEntry(false);
   }
