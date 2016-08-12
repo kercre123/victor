@@ -22,9 +22,6 @@ public class CozmoUnlockableTile : MonoBehaviour {
   public Image _UnlockedIconSprite;
 
   [SerializeField]
-  public Image _ActionIndicator;
-
-  [SerializeField]
   public GameObject _AffordableIndicator;
 
   [SerializeField]
@@ -60,7 +57,6 @@ public class CozmoUnlockableTile : MonoBehaviour {
       _UnlockedIconSprite.color = new Color(_UnlockedIconSprite.color.r, _UnlockedIconSprite.color.g, _UnlockedIconSprite.color.b, kLockedAlpha);
       break;
     case CozmoUnlocksPanel.CozmoUnlockState.Unlocked:
-      _ActionIndicator.gameObject.SetActive(unlockableData.UnlockableType == UnlockableType.Action);
       _AffordableIndicator.gameObject.SetActive(false);
       _UnlockedIconSprite.color = new Color(_UnlockedIconSprite.color.r, _UnlockedIconSprite.color.g, _UnlockedIconSprite.color.b, 1.0f);
       break;

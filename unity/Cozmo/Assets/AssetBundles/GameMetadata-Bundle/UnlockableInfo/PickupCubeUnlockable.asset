@@ -26,7 +26,9 @@ MonoBehaviour:
   RequestTrickCostItemId: treat
   RequestTrickCostAmountNeeded: 2
   CoreUpgradeTintColorName: upgradePurple
-  CoreUpgradeIcon: {fileID: 21300000, guid: f28815dae66704e729160fe1d7e1e61f, type: 3}
+  CoreUpgradeIcon: {fileID: 21300000, guid: cd0087eab4066422c8568b78092dea00, type: 3}
+  CoreUpgradeOverlayIcon: {fileID: 21300000, guid: 8d9d491aef08b4227a6f50f632e5bd1d,
+    type: 3}
   CubesRequired: 1
   SortOrder: 90
   _TimeSparkedSec: 60

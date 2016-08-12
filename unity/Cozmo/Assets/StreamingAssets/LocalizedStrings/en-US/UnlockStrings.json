@@ -21,6 +21,9 @@
   "unlockable.Unlock": {
     "translation": "Unlock"
   },
+  "unlockable.Available": {
+    "translation": "Available:"
+  },
   "unlockable.ViewPreReq": {
     "translation": "View Upgrade"
   },
@@ -28,7 +31,7 @@
     "translation": "You need to unlock {0} first!"
   },
   "unlockable.BitsRequired.Description": {
-    "translation": "{0} {1} required"
+    "translation": "Use {0} {1} to Unlock"
   },
   "unlockable.CubePounce.Title": {
     "translation": "Keepaway"
@@ -125,5 +128,8 @@
   },
   "sparks.PressAndHold": {
     "translation": "Press and hold to ask Cozmo to do this."
+  },
+  "sparks.Spark": {
+    "translation": "Feed Sparks"
   }
 }

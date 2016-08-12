@@ -17,7 +17,7 @@ MonoBehaviour:
   UnlockableType: 0
   Prerequisites:
   - _EnumValueAsString: MeetCozmoGame
-    _EnumValue: 13
+    _EnumValue: 16
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
   NeverAvailable: 0
@@ -29,5 +29,8 @@ MonoBehaviour:
   RequestTrickCostAmountNeeded: 2
   CoreUpgradeTintColorName: upgradePurple
   CoreUpgradeIcon: {fileID: 21300000, guid: e227610e9173641e688fc8d5b8714c49, type: 3}
+  CoreUpgradeOverlayIcon: {fileID: 21300000, guid: e227610e9173641e688fc8d5b8714c49,
+    type: 3}
   CubesRequired: 2
+  SortOrder: 100
   _TimeSparkedSec: 60

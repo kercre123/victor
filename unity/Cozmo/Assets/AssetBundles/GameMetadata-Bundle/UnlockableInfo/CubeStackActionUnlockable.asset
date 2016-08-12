@@ -13,11 +13,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: StackTwoCubes
-    _EnumValue: 7
+    _EnumValue: 10
   UnlockableType: 1
   Prerequisites:
   - _EnumValueAsString: PickupCube
-    _EnumValue: 5
+    _EnumValue: 6
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
   NeverAvailable: 0
@@ -28,6 +28,9 @@ MonoBehaviour:
   RequestTrickCostItemId: treat
   RequestTrickCostAmountNeeded: 2
   CoreUpgradeTintColorName: upgradeGreen
-  CoreUpgradeIcon: {fileID: 21300000, guid: f28815dae66704e729160fe1d7e1e61f, type: 3}
+  CoreUpgradeIcon: {fileID: 21300000, guid: 80b564749b2134b8a98b0186459b5719, type: 3}
+  CoreUpgradeOverlayIcon: {fileID: 21300000, guid: e1530e756ef384f82a0e0a2a8b2c3e59,
+    type: 3}
   CubesRequired: 2
+  SortOrder: 100
   _TimeSparkedSec: 60

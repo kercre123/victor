@@ -24,6 +24,19 @@ public class CoreUpgradeDetailsDialog : BaseView {
   private AnkiTextLabel _UnlockableDescriptionLabel;
 
   [SerializeField]
+  private GameObject _AvailablePromptContainer;
+
+  [SerializeField]
+  private AnkiTextLabel _AvailablePromptLabel;
+
+  [SerializeField]
+  private AnkiTextLabel _AvailablePromptCost;
+
+  [SerializeField]
+  private Text _ButtonCounter;
+
+
+  [SerializeField]
   private Image _UnlockableIcon;
 
   [SerializeField]
@@ -37,6 +50,8 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
   [SerializeField]
   private AnkiTextLabel _FragmentInventoryLabel;
+  [SerializeField]
+  private GameObject _FragmentInventoryContainer;
 
   [SerializeField]
   private GameObject _RequestTrickButtonContainer;
@@ -46,6 +61,8 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
   [SerializeField]
   private AnkiTextLabel _SparksInventoryLabel;
+  [SerializeField]
+  private GameObject _SparksInventoryContainer;
 
   [SerializeField]
   private float _UpgradeTween_sec = 0.6f;
@@ -82,14 +99,15 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
     _UnlockUpgradeButtonContainer.gameObject.SetActive(false);
     _RequestTrickButtonContainer.gameObject.SetActive(false);
+    _AvailablePromptContainer.SetActive(false);
+    // QA testing jumps around during stages. As a failsafe just give the amount needed since they can't exist.
+    Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
 
     // No quitting until they've finished onboarding
     if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Upgrades)) {
       if (_UnlockInfo.UnlockableType == UnlockableType.Action) {
         _OptionalCloseDialogButton.gameObject.SetActive(false);
       }
-      // QA testing jumps around during stages. As a failsafe just give the amount needed since they can't exist.
-      Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
       if (unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlockable) {
         if (!playerInventory.CanRemoveItemAmount(unlockInfo.UpgradeCostItemId, unlockInfo.UpgradeCostAmountNeeded)) {
           playerInventory.AddItemAmount(unlockInfo.UpgradeCostItemId, unlockInfo.UpgradeCostAmountNeeded);
@@ -106,8 +124,10 @@ public class CoreUpgradeDetailsDialog : BaseView {
       _UnlockableIcon.color = Color.white;
       if (unlockInfo.UnlockableType == UnlockableType.Action) {
         _RequestTrickButtonContainer.gameObject.SetActive(true);
+        _FragmentInventoryContainer.gameObject.SetActive(false);
+        _SparksInventoryContainer.gameObject.SetActive(true);
         SetupButton(_RequestTrickButton, null, "request_trick_button",
-          unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, _SparksInventoryLabel);
+                    unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, _SparksInventoryLabel, true);
         RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.SparkUnlockEnded>(HandleSparkUnlockEnded);
 
         _RequestTrickButton.onPress.AddListener(OnSparkPressed);
@@ -116,15 +136,24 @@ public class CoreUpgradeDetailsDialog : BaseView {
     }
     else if (unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlockable) {
       _UnlockUpgradeButtonContainer.gameObject.SetActive(true);
+      _FragmentInventoryContainer.gameObject.SetActive(true);
+      _SparksInventoryContainer.gameObject.SetActive(false);
+      _AvailablePromptContainer.SetActive(true);
+      _AvailablePromptLabel.gameObject.SetActive(playerInventory.CanRemoveItemAmount(unlockInfo.UpgradeCostItemId, unlockInfo.UpgradeCostAmountNeeded));
+      _AvailablePromptLabel.text = Localization.Get(LocalizationKeys.kUnlockableAvailable);
+      ItemData itemData = ItemDataConfig.GetData(unlockInfo.UpgradeCostItemId);
+      int cost = unlockInfo.UpgradeCostAmountNeeded;
+      string costName = Localization.Get(itemData.GetPluralName());
+      _AvailablePromptCost.text = Localization.GetWithArgs(LocalizationKeys.kUnlockableBitsRequiredDescription, new object[] { cost, costName });
       SetupButton(_UnlockUpgradeButton, OnUpgradeClicked, "request_upgrade_button",
-        unlockInfo.UpgradeCostItemId, unlockInfo.UpgradeCostAmountNeeded, _FragmentInventoryLabel);
+                  unlockInfo.UpgradeCostItemId, unlockInfo.UpgradeCostAmountNeeded, _FragmentInventoryLabel, false);
       _UnlockableIcon.color = Color.gray;
     }
 
     _UnlockableNameLabel.text = Localization.Get(unlockInfo.TitleKey);
     _UnlockableDescriptionLabel.text = Localization.Get(unlockInfo.DescriptionKey);
 
-    _UnlockableIcon.sprite = unlockInfo.CoreUpgradeIcon;
+    _UnlockableIcon.sprite = unlockInfo.CoreUpgradeOverlayIcon;
     _CubesRequiredLabel.text = Localization.GetWithArgs(LocalizationKeys.kCoreUpgradeDetailsDialogCubesNeeded,
       unlockInfo.CubesRequired,
       ItemDataConfig.GetCubeData().GetAmountName(unlockInfo.CubesRequired));
@@ -134,17 +163,21 @@ public class CoreUpgradeDetailsDialog : BaseView {
   }
 
   private void SetupButton(CozmoButton button, UnityEngine.Events.UnityAction buttonCallback,
-                           string dasButtonName, string costItemId, int costAmount, AnkiTextLabel inventoryLabel) {
+                           string dasButtonName, string costItemId, int costAmount, AnkiTextLabel inventoryLabel, bool spark) {
     button.Initialize(buttonCallback, dasButtonName, this.DASEventViewName);
 
     Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
     button.Interactable = playerInventory.CanRemoveItemAmount(costItemId, costAmount);
 
     ItemData itemData = ItemDataConfig.GetData(costItemId);
-    button.Text = Localization.GetWithArgs(LocalizationKeys.kLabelSimpleCount,
-      costAmount,
-      itemData.GetAmountName(costAmount));
-    inventoryLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelColonCount,
+    if (spark) {
+      button.Text = Localization.Get(LocalizationKeys.kSparksSpark);
+    }
+    else {
+      button.Text = Localization.Get(LocalizationKeys.kUnlockableUnlock);
+    }
+    _ButtonCounter.text = string.Format("{0}", costAmount);
+    inventoryLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelTotalCount,
       itemData.GetPluralName(),
       playerInventory.GetItemAmount(costItemId));
   }

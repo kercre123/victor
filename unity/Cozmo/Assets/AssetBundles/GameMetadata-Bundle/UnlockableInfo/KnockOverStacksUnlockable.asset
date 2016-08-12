@@ -13,11 +13,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: KnockOverThreeCubeStack
-    _EnumValue: 4
+    _EnumValue: 5
   UnlockableType: 1
   Prerequisites:
   - _EnumValueAsString: PounceOnMotionAction
-    _EnumValue: 9
+    _EnumValue: 12
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
   NeverAvailable: 0
@@ -28,6 +28,9 @@ MonoBehaviour:
   RequestTrickCostItemId: treat
   RequestTrickCostAmountNeeded: 2
   CoreUpgradeTintColorName: upgradePurple
-  CoreUpgradeIcon: {fileID: 21300000, guid: f28815dae66704e729160fe1d7e1e61f, type: 3}
+  CoreUpgradeIcon: {fileID: 21300000, guid: a0b8d9ff6dce44bfd8f462d7f814504e, type: 3}
+  CoreUpgradeOverlayIcon: {fileID: 21300000, guid: d06dda776cd77466a87509f56df730a2,
+    type: 3}
   CubesRequired: 3
+  SortOrder: 100
   _TimeSparkedSec: 60

@@ -78,6 +78,9 @@
   "label.colonCount": {
     "translation": "{0}: {1}"
   },
+  "label.totalCount": {
+    "translation": "Total {0}: {1}"
+  },
   "label.dayCount": {
     "translation": "Day {0}"
   },

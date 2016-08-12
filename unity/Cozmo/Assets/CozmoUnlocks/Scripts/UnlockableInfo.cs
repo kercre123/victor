@@ -41,6 +41,7 @@ public class UnlockableInfo : ScriptableObject, IComparable {
   public string CoreUpgradeTintColorName;
 
   public Sprite CoreUpgradeIcon;
+  public Sprite CoreUpgradeOverlayIcon;
 
   public int CubesRequired = 1;
 

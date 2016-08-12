@@ -411,6 +411,7 @@ public static class LocalizationKeys {
   public const string kLabelXCount = "label.xCount";
   public const string kLabelSimpleCount = "label.simpleCount";
   public const string kLabelColonCount = "label.colonCount";
+  public const string kLabelTotalCount = "label.totalCount";
   public const string kLabelDayCount = "label.dayCount";
   public const string kDailySummaryTitle = "dailySummary.title";
   public const string kEndSessionTitle = "endSession.title";
@@ -458,6 +459,7 @@ public static class LocalizationKeys {
   #region UnlockStrings
 
   public const string kUnlockableUnlock = "unlockable.Unlock";
+  public const string kUnlockableAvailable = "unlockable.Available";
   public const string kUnlockableViewPreReq = "unlockable.ViewPreReq";
   public const string kUnlockablePreReqNeededDescription = "unlockable.PreReqNeeded.Description";
   public const string kUnlockableBitsRequiredDescription = "unlockable.BitsRequired.Description";
@@ -493,6 +495,7 @@ public static class LocalizationKeys {
   public const string kSkillsLevelUpTitle = "skills.LevelUp.Title";
   public const string kSparksSparked = "sparks.Sparked";
   public const string kSparksPressAndHold = "sparks.PressAndHold";
+  public const string kSparksSpark = "sparks.Spark";
 
   #endregion
 
