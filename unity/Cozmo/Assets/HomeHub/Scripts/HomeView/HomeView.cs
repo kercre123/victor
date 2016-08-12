@@ -478,6 +478,11 @@ namespace Cozmo.HomeHub {
     }
 
     private void UpdatePlayTabText() {
+      if (DataPersistenceManager.Instance.CurrentSession == null) {
+        _DailyGoalsCompletionText.text = "";
+        _DailyGaolsCompletionTextDown.text = "";
+        return;
+      }
       int totalGoals = DataPersistenceManager.Instance.CurrentSession.DailyGoals.Count;
       int goalsCompleted = 0;
       for (int i = 0; i < DataPersistenceManager.Instance.CurrentSession.DailyGoals.Count; ++i) {
