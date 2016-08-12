@@ -101,6 +101,12 @@ namespace FaceEnrollment {
 
     private void EnterNameForNewFace() {
       _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "enter_new_name", NewNameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
+
+      // if this the first name then we should pre-populate the name with the profile name.
+      if (CurrentRobot.EnrolledFaces.Count == 0) {
+        _EnterNameSlidePrefab.SetNameInputField(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName);
+      }
+
       SharedMinigameView.ShowBackButton(() => {
         SharedMinigameView.ShowQuitButton();
         ShowFaceListSlide(SharedMinigameView);
