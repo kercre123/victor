@@ -196,7 +196,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
       Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
       _RequestTrickButton.Interactable = playerInventory.CanRemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
     }
-    _SparksButtonDescriptionLabel.gameObject.SetActive(_RequestTrickButton.isActiveAndEnabled && _RequestTrickButton.Interactable);
+    _ButtonCounter.text = string.Format("{0}", _UnlockInfo.RequestTrickCostAmountNeeded);
   }
 
   private void OnUpgradeClicked() {
@@ -318,8 +318,11 @@ public class CoreUpgradeDetailsDialog : BaseView {
   }
 
   private void UpdateInventoryLabel(string itemId, AnkiTextLabel label) {
+    Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
     ItemData itemData = ItemDataConfig.GetData(itemId);
-    label.text = Localization.GetWithArgs(LocalizationKeys.kLabelColonCount, itemData.GetPluralName(), itemId);
+    label.text = Localization.GetWithArgs(LocalizationKeys.kLabelTotalCount,
+                                          itemData.GetPluralName(),
+                                          playerInventory.GetItemAmount(itemId));
   }
 
   private void HandleSparkUnlockEnded(object message) {
@@ -351,6 +354,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
     RobotEngineManager.Instance.CurrentRobot.SetFlashingBackpackLED(Anki.Cozmo.LEDId.LED_BACKPACK_MIDDLE, Color.blue);
     RobotEngineManager.Instance.CurrentRobot.SetFlashingBackpackLED(Anki.Cozmo.LEDId.LED_BACKPACK_BACK, Color.blue);
     UpdateState();
+    DataPersistenceManager.Instance.Save();
   }
   private void StopSparkUnlock() {
     if (RobotEngineManager.Instance.CurrentRobot.IsSparked) {

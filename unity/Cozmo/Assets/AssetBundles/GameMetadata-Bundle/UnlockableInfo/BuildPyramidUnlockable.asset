@@ -26,7 +26,25 @@ MonoBehaviour:
   UpgradeCostItemId: TestHexItem0
   UpgradeCostAmountNeeded: 2
   RequestTrickCostItemId: treat
-  RequestTrickCostAmountNeeded: 2
+  RequestTrickCostAmountCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 3.0636773
+      outSlope: 3.0636773
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 0.17171238
+      outSlope: 0.17171238
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 0
+  RequestTrickCostAmountNeededMin: 2
+  RequestTrickCostAmountNeededMaxTimes: 10
+  RequestTrickCostAmountNeededMax: 30
   CoreUpgradeTintColorName: upgradePurple
   CoreUpgradeIcon: {fileID: 21300000, guid: d619fcebb50d7402796b66d7aaf5b28f, type: 3}
   CoreUpgradeOverlayIcon: {fileID: 21300000, guid: 9971eb00f732c4741aa2817f8acfe166,

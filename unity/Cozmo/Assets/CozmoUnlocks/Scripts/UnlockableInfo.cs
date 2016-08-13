@@ -35,7 +35,35 @@ public class UnlockableInfo : ScriptableObject, IComparable {
 
   [Cozmo.ItemId]
   public string RequestTrickCostItemId;
-  public int RequestTrickCostAmountNeeded;
+  public AnimationCurve RequestTrickCostAmountCurve;
+  public int RequestTrickCostAmountNeededMin;
+  public int RequestTrickCostAmountNeededMaxTimes;
+  public int RequestTrickCostAmountNeededMax;
+  public int RequestTrickCostAmountNeeded {
+    get {
+      int cost = 0;
+      int count = 0;
+      // Failsafe to protect from divide by zero errors if values haven't been set yet
+      if (RequestTrickCostAmountNeededMin == 0) {
+        return 0;
+      }
+      if (DataPersistence.DataPersistenceManager.Instance.CurrentSession.SparkCount.TryGetValue(Id.Value, out count)) {
+        float prog = (float)count / (float)RequestTrickCostAmountNeededMaxTimes;
+        if (count > RequestTrickCostAmountNeededMax) {
+          return RequestTrickCostAmountNeededMax;
+        }
+        else {
+          return (int)Mathf.Lerp(RequestTrickCostAmountNeededMin, RequestTrickCostAmountNeededMax,
+                                 RequestTrickCostAmountCurve.Evaluate(prog));
+        }
+      }
+      else {
+        cost = RequestTrickCostAmountNeededMin;
+      }
+      return cost;
+    }
+
+  }
 
   [Cozmo.UI.CoreUpgradeTintName]
   public string CoreUpgradeTintColorName;
