@@ -104,7 +104,7 @@ namespace Cozmo {
   CST_MultiObjectLocalization::CST_MultiObjectLocalization()
   : _kidnappedPose1( 0, Z_AXIS_3D(), {100.f, -175.f, 0.f})
   , _kidnappedPose2( 0, Z_AXIS_3D(), {100.f,  175.f, 0.f})
-  , _kidnappedPose3( 0.47f, Z_AXIS_3D(),  {-52.f, -87.5f, 0.f})
+  , _kidnappedPose3( 0.47f, Z_AXIS_3D(),  {-56.74f, -90.0003f, 0.f})
   , _poseA_actual(0, Z_AXIS_3D(), {100.f,   0.f, 22.f}, &_fakeOrigin)
   , _poseB_actual(0, Z_AXIS_3D(), {100.f, -75.f, 22.f}, &_fakeOrigin)
   , _poseC_actual(0, Z_AXIS_3D(), {100.f,  75.f, 22.f}, &_fakeOrigin)
@@ -253,7 +253,7 @@ namespace Cozmo {
       case TestState::LocalizeToAll:
       {
         // Should be localized to B, because it is the closest
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(HasRelocalizedTo(_objectID_B), 300)
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(HasRelocalizedTo(_objectID_B), 3)
         {
           // We should know about A, B, and C now
           CST_ASSERT(CheckObjectPoses({0,1,2}, "LocalizeToAll"),

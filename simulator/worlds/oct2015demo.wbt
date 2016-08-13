@@ -45,24 +45,28 @@ LightCube {
   translation -0.0159113 0.173878 0.052
   rotation 0 0 1 0.23
   ID 1
+  filterLogs TRUE
 }
 LightCube {
   translation -0.154 0.014 0.022
   rotation 0 0 1 0.23
   ID 2
+  filterLogs TRUE
 }
 LightCube {
   translation 0.154 0.014 0.022
   rotation 0 0 1 0.23
+  filterLogs TRUE
 }
 BlockWorldComms {
-  filterLogs FALSE
+  filterLogs TRUE
 }
 DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
-  filterLogs FALSE
+  filterLogs TRUE
 }
 WebotsKeyboardController {
+  filterLogs TRUE
 }
 SolidBox {
   translation -0.0197776 0.177565 0.02
@@ -70,4 +74,5 @@ SolidBox {
   contactMaterial "soft_collision"
 }
 CozmoVizDisplay {
+  filterLogs TRUE
 }

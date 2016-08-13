@@ -30,7 +30,9 @@ public static class CozmoUtil {
   // (great without lift though)
   public const float kIdealBlockViewHeadValue = -0.7f;
   public const float kIdealBlockViewHeadValueWithoutLift = -0.9f;
-  public const float kIdealFaceViewHeadValue = 0.5f;
+
+  // It's hard to look too high for seeing/enrolling a face, so bias way up
+  public const float kIdealFaceViewHeadValue = 0.95f;
 
   /// <summary>
   /// Checks whether the edge of the observed object is at the desired distance to the input position, within specified tolerance 
@@ -42,7 +44,7 @@ public static class CozmoUtil {
     float desiredMaxSqr_mm = desiredMax_mm * desiredMax_mm;
     float desiredMin_mm = (updatedDesiredDist_mm - distanceTolerance_mm);
     float desiredMinSqr_mm = desiredMin_mm * desiredMin_mm;
-
+   
     Vector3 posDifference = obsObject.WorldPosition - basePosition;
     posDifference.z = 0.0f;
     float actualSqr_mm = posDifference.sqrMagnitude;

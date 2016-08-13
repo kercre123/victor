@@ -30,7 +30,8 @@
       { "channel": "Audio",           "enabled": false },
       { "channel": "FaceRecognizer",  "enabled": false },
       { "channel": "UiComms",         "enabled": false },
-      { "channel": "Mood",            "enabled": false }
+      { "channel": "Mood",            "enabled": false },
+      { "channel": "PoseConfirmer",   "enabled": false }
 
     ],
     "levels":

@@ -147,7 +147,6 @@ bool IBehaviorRequestGame::FilterBlocks( const Robot* robotPtr, const Observable
   // with dirty blocks. I think the best would be to prefer Known, but fall back to Dirty as well
 
   return upAxisOk &&
-    obj->IsExistenceConfirmed() &&
     obj->IsPoseStateKnown() && 
     obj->GetFamily() == ObjectFamily::LightCube;
 

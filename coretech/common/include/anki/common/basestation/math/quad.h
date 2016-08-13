@@ -159,7 +159,8 @@ namespace Anki {
   template<typename T>
   Quadrilateral<2,T> GetBoundingQuad(std::vector<Point<2,T> >& points);
 
-
+  template<QuadDimType N, typename T>
+  bool IsNearlyEqual(const Quadrilateral<N,T> &quad1, const Quadrilateral<N,T> &quad2, const T eps);
   
 } // namespace Anki
 

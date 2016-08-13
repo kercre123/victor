@@ -55,8 +55,8 @@ CozmoBot {
   name "CozmoBot_1"
 }
 BuildServerTestController {
-#  controllerArgs "CST_MultiObjectLocalization"
   controllerArgs "%COZMO_SIM_TEST%"
+#  controllerArgs "CST_MultiObjectLocalization"
 }
 CozmoVizDisplay {
 }

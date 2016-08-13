@@ -592,7 +592,15 @@ namespace Vision {
           .oldID = -recognitionData.GetTrackingID(),
           .newID = recognitionData.GetFaceID()
         };
-        updatedIDs.push_back(std::move(update));
+        
+        // Don't send this update if it turns out to contain the same info as
+        // the last one (even if for different reasons)
+        if(updatedIDs.empty() ||
+           (update.oldID != updatedIDs.back().oldID &&
+            update.newID != updatedIDs.back().newID))
+        {
+          updatedIDs.push_back(std::move(update));
+        }
       }
       
       face.SetScore(recognitionData.GetScore()); // could still be zero!

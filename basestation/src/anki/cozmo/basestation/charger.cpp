@@ -11,7 +11,9 @@
  **/
 #include "anki/cozmo/basestation/charger.h"
 
-#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/objectPoseConfirmer.h"
+#include "anki/cozmo/basestation/robot.h"
+
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 
@@ -96,20 +98,14 @@ namespace Anki {
       return pose;
     }
     
-    void Charger::SetPoseToRobot(const Pose3d& robotPose, BlockWorld& blockWorld)
+    void Charger::SetPoseRelativeToRobot(Robot& robot) // const Pose3d& robotPose, BlockWorld& blockWorld)
     {
-      const Pose3d prevPose = GetPose();
-      const PoseState prevPoseState = GetPoseState();
-    
-      Pose3d pose(-M_PI, Z_AXIS_3D(),
-                  Point3f{RobotToChargerDistWhenDocked, 0, 0},
-                  &robotPose,
-                  "Charger" + std::to_string(GetID().GetValue()) + "DockedPose");
+      Pose3d relPose(-M_PI, Z_AXIS_3D(),
+                     Point3f{RobotToChargerDistWhenDocked, 0, 0},
+                     &robot.GetPose(),
+                     "Charger" + std::to_string(GetID().GetValue()) + "DockedPose");
       
-      SetPose(pose.GetWithRespectToOrigin());
-      
-      // notify blockworld of the change to the pose, since it's an external change
-      blockWorld.OnObjectPoseChanged(GetID(), GetFamily(), prevPose, prevPoseState, GetPose(), GetPoseState());
+      robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(this, relPose, PoseState::Known);
     }
     
     

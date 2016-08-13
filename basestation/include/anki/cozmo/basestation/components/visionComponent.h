@@ -235,6 +235,9 @@ struct DockingErrorSignal;
     Result SaveFaceAlbumToFile(const std::string& path);
     Result LoadFaceAlbumFromFile(const std::string& path); // Broadcasts any loaded names and IDs
     
+    // This is for faking images being processed for unit tests
+    void FakeImageProcessed(TimeStamp_t t) { _lastProcessedImageTimeStamp_ms = t; }
+    
     // Templated message handler used internally by AnkiEventUtil
     template<typename T>
     void HandleMessage(const T& msg);

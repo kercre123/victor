@@ -128,8 +128,17 @@ void BehaviorAcknowledgeObject::LookUpForStackedCube(Robot& robot)
     FinishIteration(robot);
     return;
   }
-  else {
-
+  else if(obj->IsPoseStateUnknown())
+  {
+    // Can't do the ghost object stuff below if object is unknown pose state
+    PRINT_NAMED_WARNING("BehaviorAcknowledgeObject.StackedCube.TargetObjectInUnknownPose",
+                        "Target object %d has unknown pose state",
+                        _currTarget.GetValue());
+    FinishIteration(robot);
+    return;
+  }
+  else
+  {
     // set up ghost object to represent the one that could be on top of obj
     // pose is relative to obj, but higher
     Pose3d ghostPose = obj->GetPose().GetWithRespectToOrigin();
@@ -137,7 +146,8 @@ void BehaviorAcknowledgeObject::LookUpForStackedCube(Robot& robot)
         ghostPose.GetTranslation().x(),
         ghostPose.GetTranslation().y(),
         ghostPose.GetTranslation().z() + obj->GetSize().z()});
-    _ghostStackedObject->SetPose(ghostPose);
+    
+    robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(_ghostStackedObject.get(), ghostPose, obj);
 
     if( kVizPossibleStackCube ) {
       _ghostStackedObject->Visualize(NamedColors::WHITE);

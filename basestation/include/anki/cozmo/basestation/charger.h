@@ -28,7 +28,7 @@ namespace Anki {
   
   namespace Cozmo {
   
-  class BlockWorld;
+    class Robot;
     
     // Note that a ramp's origin (o) is the bottom right vertex of this diagram:
     //
@@ -59,7 +59,7 @@ namespace Anki {
       Pose3d GetDockedPose()  const;
       
       // set pose to robot's pose and notify blockworld once done
-      void SetPoseToRobot(const Pose3d& robotPose, BlockWorld& blockWorld);
+      void SetPoseRelativeToRobot(Robot& robot);
       
       
       //

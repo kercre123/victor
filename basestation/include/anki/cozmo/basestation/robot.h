@@ -116,6 +116,7 @@ class RobotToEngineImplMessaging;
 class ActionList;
 class BehaviorManager;
 class RobotIdleTimeoutComponent;
+class ObjectPoseConfirmer;
 
   
 namespace Audio {
@@ -250,6 +251,8 @@ public:
   Pose3d                 GetLiftPoseWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const;
   
   const PoseOriginList&  GetPoseOriginList() const { return _poseOriginList; }
+  
+  ObjectPoseConfirmer& GetObjectPoseConfirmer() { assert(_objectPoseConfirmerPtr); return *_objectPoseConfirmerPtr; }
   
   // These change the robot's internal (basestation) representation of its
   // head angle, and lift angle, but do NOT actually command the
@@ -818,6 +821,8 @@ protected:
   VisionComponent*      _visionComponentPtr;
   NVStorageComponent    _nvStorageComponent;
   TextToSpeechComponent _textToSpeechComponent;
+  
+  std::unique_ptr<ObjectPoseConfirmer>  _objectPoseConfirmerPtr;
 
   std::unique_ptr<LightsComponent>  _lightsComponent;
   

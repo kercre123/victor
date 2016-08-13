@@ -32,6 +32,7 @@
 #include "anki/cozmo/basestation/navMemoryMap/navMemoryMapFactory.h"
 #include "bridge.h"
 #include "flatMat.h"
+#include "objectPoseConfirmer.h"
 #include "platform.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/charger.h"
@@ -557,7 +558,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
   {    
     if(_robot->HasExternalInterface())
     {
-      if(observedObject->IsExistenceConfirmed() || markersVisible)
+      if(!observedObject->IsPoseStateUnknown() || markersVisible)
       {
         // Project the observed object into the robot's camera, using its new pose
         std::vector<Point2f> projectedCorners;
@@ -600,7 +601,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
                                         markersVisible,
                                         observedObject->IsActive());
         
-        if( observedObject->IsExistenceConfirmed()) {
+        if( !observedObject->IsPoseStateUnknown() ) {
           _robot->Broadcast(MessageEngineToGame(std::move(observation)));
         }
         else if( markersVisible ) {
@@ -715,22 +716,17 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
         {
           PRINT_NAMED_INFO("BlockWorld.UpdateObjectOrigins.ObjectOriginChanged",
                            "Updating object %d's origin from %s to %s. "
-                           "T_old=(%.1f,%.1f,%.1f), T_new=(%.1f,%.1f,%.1f), "
-                           "OldTimesObserved=%d, NewTimesObserved=%d",
+                           "T_old=(%.1f,%.1f,%.1f), T_new=(%.1f,%.1f,%.1f)",
                            oldObject->GetID().GetValue(),
                            oldOrigin->GetName().c_str(),
                            newOrigin->GetName().c_str(),
                            T_old.x(), T_old.y(), T_old.z(),
-                           T_new.x(), T_new.y(), T_new.z(),
-                           oldObject->GetNumTimesObserved(),
-                           newObject->GetNumTimesObserved());
+                           T_new.x(), T_new.y(), T_new.z());
         }
         
         // Use all of oldObject's time bookkeeping, then update the pose and pose state
-        // Note: SetPose will set pose state to known, but we want it to match oldObject's state
         newObject->SetObservationTimes(oldObject);
-        newObject->SetPose(newPose, oldObject->GetLastPoseUpdateDistance());
-        newObject->SetPoseState(oldObject->GetPoseState());
+        _robot->GetObjectPoseConfirmer().CopyWithNewPose(newObject, newPose, oldObject);
 
         if(addNewObject) {
           // Note: need to call SetPose first because that sets the origin which
@@ -1222,39 +1218,6 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
         
       } // if/else object is active
 
-      // As of now objSeen will be w.r.t. the robot's origin.  If we
-      // observed it to be on a mat in the current frame, however, make it relative to that mat.
-      std::vector<ObservableObject*> matsInCurrentFrame;
-      BlockWorldFilter matFilter;
-      matFilter.AddAllowedFamily(ObjectFamily::Mat);
-      matFilter.SetOriginMode(BlockWorldFilter::OriginMode::InRobotFrame);
-      FindMatchingObjects(matFilter, matsInCurrentFrame);
-      ObservableObject* parentMat = nullptr;
-      if(!matsInCurrentFrame.empty())
-      {
-        const f32 objectDiagonal = objSeen->GetSameDistanceTolerance().Length();
-        for(auto object : matsInCurrentFrame)
-        {
-          MatPiece* mat = dynamic_cast<MatPiece*>(object);
-          assert(mat != nullptr);
-          
-          // Don't make this mat the parent of any objects until it has been
-          // seen enough time
-          if(mat->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT) {
-            Pose3d newPoseWrtMat;
-            // TODO: Better height tolerance approach
-            if(mat->IsPoseOn(objSeen->GetPose(), objectDiagonal*.5f, objectDiagonal*.5f, newPoseWrtMat)) {
-              objSeen->SetPose(newPoseWrtMat);
-              parentMat = mat;
-            }
-          }
-        }
-      } // if(!matsInCurrentFrame.empty())
-      
-      // unless we match the observed object to an existing object, it was not in the memory map
-      Pose3d oldPoseInMemMap;
-      PoseState oldPoseStateInMemMap = PoseState::Unknown;
-
       // After the if/else below, this should point to either the new object we
       // create in the current frame, or to an existing matched object in the current
       // frame
@@ -1279,16 +1242,11 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
         // Add the object in the current coordinate frame, initially with Known pose
         AddNewObject(_existingObjects[_robot->GetWorldOrigin()][inFamily], objSeen);
         
-        if(_robot->GetMoveComponent().IsMoving() || distToObjSeen > MAX_LOCALIZATION_AND_ID_DISTANCE_MM) {
-          // If we're seeing this object from too far away or while moving,
-          // set it to have "dirty" pose, since we don't really trust it.
-          // We want to guarantee we'll see the object from close enough and
-          // while still before we use it for localization
-          objSeen->SetPoseState(PoseState::Dirty);
-        }
-        
         // Let "observedObject" used below refer to the new object
         observedObject = objSeen.get();
+        
+        _robot->GetObjectPoseConfirmer().AddVisualObservation(observedObject, observedObject->GetPose(),
+                                                              distToObjSeen, observedObject->GetLastObservedTime());
       }
       else
       {
@@ -1310,20 +1268,27 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
         // current frame
         observedObject = matchingObject;
         
-        // copy old variables to mimic those of the map as of now
-        oldPoseInMemMap = matchingObject->GetPose();
-        oldPoseStateInMemMap = matchingObject->GetPoseState();
+        // See if we might want to localize to the object matched in the current frame
+        const bool wantedToInsertObjectInCurrentFrame = potentialObjectsForLocalizingTo.Insert(objSeen, matchingObject, distToObjSeen);
         
-      } // if/else (currFrameMatchIter == matchingObjects.end())
-      
-      // Add all match pairs as potentials for localization. We will decide which
-      // object(s) to localize to from this list after we've processed all objects
-      // seen in this update.
+        if(wantedToInsertObjectInCurrentFrame)
+        {
+           // Add all other match pairs from other frames as potentials for localization.
+           // We will decide which object(s) to localize to from this list after we've
+           // processed all objects seen in this update.
       for(auto & match : matchingObjects)
       {
+             // Don't try to reinsert the object in the current frame (already did this above)
+             if(match.second != matchingObject)
+             {
         potentialObjectsForLocalizingTo.Insert(objSeen, match.second, distToObjSeen);
       }
+           }
+        }
       
+      } // if/else (currFrameMatchIter == matchingObjects.end())
+      
+
       /* This is pretty verbose...
        fprintf(stdout, "Merging observation of object type=%s, with ID=%d at (%.1f, %.1f, %.1f), timestamp=%d\n",
        objSeen->GetType().GetName().c_str(),
@@ -1377,18 +1342,6 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
       // Tell the world about the observed object. NOTE: it is guaranteed to be in the current frame.
       BroadcastObjectObservation(observedObject, true);
       
-      // new poses can be set during "potentialObjectsForLocalizingTo.Insert" (before) or
-      // during "potentialObjectsForLocalizingTo.LocalizeRobot()". We can't trust the poseState we currently
-      // have, since we don't know if this object is going to be used for localization. This is the
-      // best estimate we can do here
-      const bool isNewKnown = (!_robot->GetMoveComponent().IsMoving() && distToObjSeen <= MAX_LOCALIZATION_AND_ID_DISTANCE_MM);
-
-      // oldPoseInMemMap      : set before
-      // oldPoseStateInMemMap : set before
-      const Pose3d& newPoseInMemMap = observedObject->GetPose();
-      const PoseState newPoseStateInMemMap = isNewKnown ? PoseState::Known : PoseState::Dirty;
-      OnObjectPoseChanged(observedObject->GetID(), observedObject->GetFamily(), oldPoseInMemMap, oldPoseStateInMemMap, newPoseInMemMap, newPoseStateInMemMap );
-      
       _didObjectsChange = true;
       _currentObservedObjects.push_back(observedObject);
       
@@ -1411,11 +1364,11 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     ObservableObject* objectOnTop = FindObjectOnTopOf(*existingObjectOnBottom, STACKED_HEIGHT_TOL_MM);
     ObservableObject* newObjectOnBottom = objSeen;
     ObservableObject* oldObjectOnBottom = existingObjectOnBottom->CloneType();
-    oldObjectOnBottom->SetPose(existingObjectOnBottom->GetPose());
+    oldObjectOnBottom->InitPose(existingObjectOnBottom->GetPose(), existingObjectOnBottom->GetPoseState());
     
     // If the object was already updated this timestamp then don't bother doing this.
-    while(objectOnTop != nullptr && objectOnTop->GetLastObservedTime() != objSeen->GetLastObservedTime()) {
-      
+    while(objectOnTop != nullptr && objectOnTop->GetLastObservedTime() != objSeen->GetLastObservedTime())
+    {
       // Get difference in position between top object's pose and the previous pose of the observed bottom object.
       // Apply difference to the new observed pose to get the new top object pose.
       Pose3d topPose = objectOnTop->GetPose();
@@ -1428,11 +1381,15 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
       topPose.SetTranslation( newObjectOnBottom->GetPose().GetTranslation() + diff );
       Util::SafeDelete(oldObjectOnBottom);
       oldObjectOnBottom = objectOnTop->CloneType();
-      oldObjectOnBottom->SetPose(objectOnTop->GetPose());
-      objectOnTop->SetPose(topPose);
+      oldObjectOnBottom->InitPose(objectOnTop->GetPose(), objectOnTop->GetPoseState());
       
-      // COZMO-3384: we probably don't need to notify here, since the bottom quad will properly
-      // mark the memory map. This is the reason why we probably should not add top cubes to the memory map at all
+      Result result = _robot->GetObjectPoseConfirmer().AddObjectRelativeObservation(objectOnTop, topPose, existingObjectOnBottom);
+      if(RESULT_OK != result)
+      {
+        PRINT_NAMED_WARNING("BlockWorld.UpdateRotationOfObjectsStackedOn.AddRelativeObservationFailed",
+                            "Giving up on rest of stack");
+        break;
+      }
       
       // See if there's an object above this object
       newObjectOnBottom = objectOnTop;
@@ -1557,32 +1514,36 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
         {
           ObservableObject* object = objectIter->second.get();
          
+          bool objectDeleted = false;
+          
           // Look for blocks not seen atTimestamp, but skip objects
-          // - with unknown pose state
           // - that are currently being carried
+          // - that we are currently docking to
           // - whose pose origin does not match the robot's
           // - who are a charger (since those stay around)
-          if(object->GetPoseState() != PoseState::Unknown &&
-             object->GetLastObservedTime() < atTimestamp &&
+          if(object->GetLastObservedTime() < atTimestamp &&
              _robot->GetCarryingObject() != object->GetID() &&
+             _robot->GetDockObject() != object->GetID() &&
              &object->GetPose().FindOrigin() == _robot->GetWorldOrigin() &&
              object->GetFamily() != ObjectFamily::Charger)
           {
-            if(object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
-              // If this object has only been seen once and that was too long ago,
+            if(object->IsPoseStateUnknown())
+            {
+              // If this object is still unknown and was last seen too long ago,
               // just delete it, but only if this is a non-active object or radio
               // connection has not been established yet
               if (!object->IsActive() || object->GetActiveID() < 0) {
                 PRINT_NAMED_INFO("BlockWorld.CheckForUnobservedObjects",
-                                 "Deleting %s object %d that was only observed %d time(s).",
+                                 "Deleting %s object %d with unknown pose state.",
                                  ObjectTypeToString(object->GetType()),
-                                 object->GetID().GetValue(),
-                                 object->GetNumTimesObserved());
+                                 object->GetID().GetValue());
                 objectIter = DeleteObject(objectIter, objectsByType.first, objectFamily.first);
-              } else {
-                ++objectIter;
+                objectDeleted = true;
               }
-            } else if(object->IsActive() &&
+            }
+            else // pose state NOT unknown
+            {
+              if(object->IsActive() &&
                       ActiveIdentityState::WaitingForIdentity == object->GetIdentityState() &&
                       object->GetLastObservedTime() < atTimestamp - BLOCK_IDENTIFICATION_TIMEOUT_MS) {
 
@@ -1597,11 +1558,11 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
                                  object->GetID().GetValue(), BLOCK_IDENTIFICATION_TIMEOUT_MS);
                 
                 objectIter = DeleteObject(objectIter, objectsByType.first, objectFamily.first);
+                  objectDeleted = true;
               } else {
                 // Don't delete objects that are still in radio communication. Retrigger Identify?
                 //PRINT_NAMED_WARNING("BlockWorld.CheckForUnobservedObjects.RetryIdentify", "Re-attempt identify on object %d (%s)", object->GetID().GetValue(), EnumToString(object->GetType()));
                 //object->Identify();
-                ++objectIter;
               }
 
             } else {
@@ -1612,14 +1573,14 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
                 //AddToOcclusionMaps(object, robotMgr_); // TODO: Used to do this too, put it back?
                 unobservedObjects.emplace_back(objectFamily.first, objectsByType.first, objectIter->second.get());
               }
-              ++objectIter;
-              
             }
-          } else {
-            // Object _was_ observed or does not share an origin with the robot,
-            // so skip it for analyzing below whether we *should* have seen it
+            }
+          }
+          
+          if(!objectDeleted)
+          {
             ++objectIter;
-          } // if/else object was not observed
+          }
           
         } // for object IDs of this type
       } // for each object type
@@ -1644,9 +1605,6 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
                                                                     xBorderPad, yBorderPad,
                                                                     hasNothingBehind);
       
-      // NOTE: We expect a docking block to disappear from view!
-      const bool isNotDockingObject = (_robot->GetDockObject() != unobserved.object->GetID());
-      
       const bool isDirtyPoseState = (PoseState::Dirty == unobserved.object->GetPoseState());
       
       // If the object should _not_ be visible, but the reason was only that
@@ -1655,14 +1613,10 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
       // times it has gone unobserved while dirty.
       if(!shouldBeVisible && hasNothingBehind && isDirtyPoseState)
       {
-        unobserved.object->IncrementNumTimesUnobserved();
+        _robot->GetObjectPoseConfirmer().MarkObjectUnobserved(unobserved.object);
       }
       
-      // Once we haven't observed a dirty object enough times, clear it
-      const bool dirtyAndUnobservedTooManyTimes = (unobserved.object->GetNumTimesUnobserved() >
-                                                   MIN_TIMES_TO_NOT_OBSERVE_DIRTY_OBJECT);
-      
-      if(isNotDockingObject && (shouldBeVisible || dirtyAndUnobservedTooManyTimes))
+      if(shouldBeVisible || unobserved.object->IsPoseStateUnknown())
       {
         // Make sure there are no currently-observed, (just-)identified objects
         // with the same active ID present. (If there are, we'll reassign IDs
@@ -1680,15 +1634,18 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
         
         if(!matchingActiveIdFound) {
           // We "should" have seen the object! Clear it.
-          PRINT_NAMED_INFO("BlockWorld.CheckForUnobservedObjects.RemoveUnobservedObject",
-                           "Clearing object %d, which should have been seen, but wasn't. "
-                           "(shouldBeVisible:%d hasNothingBehind:%d isDirty:%d numTimesUnobserved:%d",
+          PRINT_NAMED_INFO("BlockWorld.CheckForUnobservedObjects.MarkingUnobservedObject",
+                           "Marking object %d unobserved, which should have been seen, but wasn't. "
+                           "(shouldBeVisible:%d hasNothingBehind:%d isDirty:%d",
                            unobserved.object->GetID().GetValue(),
-                           shouldBeVisible, hasNothingBehind, isDirtyPoseState,
-                           unobserved.object->GetNumTimesUnobserved());
+                           shouldBeVisible, hasNothingBehind, isDirtyPoseState);
           
-          ClearObject(unobserved.object);
+          Result markResult = _robot->GetObjectPoseConfirmer().MarkObjectUnobserved(unobserved.object);
+          if(RESULT_OK != markResult)
+          {
+            PRINT_NAMED_WARNING("BlockWorldCheckForUnobservedObjects.MarkObjectUnobservedFailed", "");
         }
+      }
       }
       else if(unobserved.family != ObjectFamily::Mat &&
               _robot->GetCarryingObjects().count(unobserved.object->GetID()) == 0)
@@ -1823,8 +1780,10 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     // NOTE: Assuming detected obstacle is at ground level no matter what angle the head is at.
     Pose3d raiseObject(0, Z_AXIS_3D(), Vec3f(0,0,0.5f*markerlessObject->GetSize().z()));
     Pose3d obsPose = p * raiseObject;
-    markerlessObject->SetPose(obsPose);
-    markerlessObject->SetPoseParent(_robot->GetPose().GetParent());
+    obsPose.SetParent(_robot->GetPose().GetParent());
+    
+    // Initialize with Known pose so it won't delete immediately because it isn't re-seen
+    markerlessObject->InitPose(obsPose, PoseState::Known);
     
     // Check if this prox obstacle already exists
     std::vector<ObservableObject*> existingObjects;
@@ -1856,12 +1815,6 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
       return RESULT_OK;
     }
 
-    // HACK: to make it think it was observed enough times so as not to get immediately deleted.
-    //       We'll do something better after we figure out how other non-cliff prox obstacles will work.
-    for (u8 i=0; i<MIN_TIMES_TO_OBSERVE_OBJECT; ++i) {
-      markerlessObject->SetLastObservedTime(lastTimestamp);
-    }
-
     AddNewObject(markerlessObject);
     _didObjectsChange = true;
     _currentObservedObjects.push_back(markerlessObject.get());
@@ -1871,23 +1824,20 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
 
   ObjectID BlockWorld::CreateFixedCustomObject(const Pose3d& p, const f32 xSize_mm, const f32 ySize_mm, const f32 zSize_mm)
   {
-    //TODO share common code with AddMarkerlessObject
-    TimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
-    
     // Create an instance of the custom object
     auto customObject = std::make_shared<CustomObject>(ObjectType::Custom_Fixed, xSize_mm, ySize_mm, zSize_mm);
     
-    customObject->SetPose(p);
-    customObject->SetPoseParent(_robot->GetPose().GetParent());
+    Pose3d obsPose(p);
+    obsPose.SetParent(_robot->GetPose().GetParent());
     
-    // HACK: to make it think it was observed enough times so as not to get immediately deleted.
-    //       We'll do something better after we figure out how other non-cliff prox obstacles will work.
-    for (u8 i=0; i<MIN_TIMES_TO_OBSERVE_OBJECT; ++i) {
-      customObject->SetLastObservedTime(lastTimestamp);
-    }
+    // Initialize with Known pose so it won't delete immediately because it isn't re-seen
+    customObject->InitPose(obsPose, PoseState::Known);
     
     AddNewObject(customObject);
     _didObjectsChange = true;
+    
+    // TODO: Remove these (custom fixed objects have no markers and can't be observed
+    // (this was just copy/pasted from MarkerlessObject)
     _currentObservedObjects.push_back(customObject.get());
     
     return customObject->GetID();
@@ -1968,30 +1918,26 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
                                             const BlockWorldFilter& filterIn) const
   {
     BlockWorldFilter filter(filterIn);
+    
+    // Note that we add this filter function, meaning we still rely on the
+    // default filter function which rules out objects with unknown pose state
     filter.AddFilterFcn([minHeight, maxHeight, padding, &rectangles](const ObservableObject* object)
     {
-      if(object == nullptr) {
-        PRINT_NAMED_WARNING("BlockWorld.GetObjectBoundingBoxesXY.NullObjectPointer",
-                            "ObjectID %d corresponds to NULL ObservableObject pointer.",
-                            object->GetID().GetValue());
-      } else if(object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT
-                && !object->IsPoseStateUnknown()) {
+      const Point3f rotatedSize( object->GetPose().GetRotation() * object->GetSize() );
+      const f32 objectCenter = object->GetPose().GetWithRespectToOrigin().GetTranslation().z();
         
-        const Point3f rotatedSize( object->GetPose().GetRotation() * object->GetSize() );
-        const f32 objectCenter = object->GetPose().GetWithRespectToOrigin().GetTranslation().z();
+      const f32 objectTop = objectCenter + (0.5f * rotatedSize.z());
+      const f32 objectBottom = objectCenter - (0.5f * rotatedSize.z());
         
-        const f32 objectTop = objectCenter + (0.5f * rotatedSize.z());
-        const f32 objectBottom = objectCenter - (0.5f * rotatedSize.z());
+      const bool bothAbove = (objectTop >= maxHeight) && (objectBottom >= maxHeight);
+      const bool bothBelow = (objectTop <= minHeight) && (objectBottom <= minHeight);
         
-        const bool bothAbove = (objectTop >= maxHeight) && (objectBottom >= maxHeight);
-        const bool bothBelow = (objectTop <= minHeight) && (objectBottom <= minHeight);
-        
-        if( !bothAbove && !bothBelow )
-        {
-          rectangles.emplace_back(object->GetBoundingQuadXY(padding), object->GetID());
-          return true;
-        }
+      if( !bothAbove && !bothBelow )
+      {
+        rectangles.emplace_back(object->GetBoundingQuadXY(padding), object->GetID());
+        return true;
       }
+      
       return false;
     });
     
@@ -2198,7 +2144,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
           assert(existingMatPiece != nullptr);
           AddNewObject(existingMatPieces, existingMatPiece);
           
-          existingMatPiece->SetPose( Pose3d() ); // Not really necessary, but ensures the ID makes it into the pose name, which is helpful for debugging
+          //existingMatPiece->SetPose( Pose3d() ); // Not really necessary, but ensures the ID makes it into the pose name, which is helpful for debugging
           assert(existingMatPiece->GetPose().GetParent() == nullptr);
           
         }
@@ -2222,7 +2168,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
             existingMatPiece.reset( dynamic_cast<MatPiece*>(matToLocalizeTo->CloneType()) );
             assert(existingMatPiece != nullptr);
             AddNewObject(existingMatPieces, existingMatPiece);
-            existingMatPiece->SetPose(poseWrtWorldOrigin); // Do after AddNewObject, once ID is set
+            existingMatPiece->InitPose(poseWrtWorldOrigin, PoseState::Unknown); // Do after AddNewObject, once ID is set
             
             PRINT_STREAM_INFO("BlockWorld.UpdateRobotPose.LocalizingToNewMat",
                        "Robot " << _robot->GetID() << " localizing to new "
@@ -2252,7 +2198,8 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
         existingMatPiece->UpdateMarkerObservationTimes(*matToLocalizeTo);
         existingMatPiece->GetObservedMarkers(observedMarkers, atTimestamp);
         
-        if(existingMatPiece->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT) {
+        if(!existingMatPiece->IsPoseStateUnknown())
+        {
           // Now localize to that mat
           //wasPoseUpdated = LocalizeRobotToMat(robot, matToLocalizeTo, existingMatPiece);
           if(_robot->LocalizeToMat(matToLocalizeTo, existingMatPiece.get()) == RESULT_OK) {
@@ -2299,7 +2246,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
             // as a new mat piece, relative to the world origin
             std::shared_ptr<ObservableObject> newMatPiece(matSeen->CloneType());
             AddNewObject(existingMatPieces, newMatPiece);
-            newMatPiece->SetPose(poseWrtOrigin); // do after AddNewObject, once ID is set
+            newMatPiece->InitPose(poseWrtOrigin, PoseState::Unknown); // do after AddNewObject, once ID is set
             
             // TODO: Make clone copy the observation times
             newMatPiece->SetLastObservedTime(matSeen->GetLastObservedTime());
@@ -2333,7 +2280,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
               // the robot's current world origin
               
               // TODO: better way of merging existing/observed object pose
-              overlappingObjects[0]->SetPose( poseWrtOrigin );
+              _robot->GetObjectPoseConfirmer().AddObjectRelativeObservation(overlappingObjects[0], poseWrtOrigin, matSeen);
               
             } else {
               /* PUNT - not sure this is workign, nor we want to bother with this for now...
@@ -2698,8 +2645,10 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     }
     
     std::shared_ptr<ObservableObject> newObject(newObjectPtr);
-    newObject->SetPoseParent(_robot->GetWorldOrigin());
-    newObject->SetPoseState(PoseState::Unknown);
+    Pose3d newObjectPose;
+    newObjectPose.SetParent(_robot->GetWorldOrigin());
+    newObject->InitPose(newObjectPose, PoseState::Unknown);
+    
     AddNewObject(newObject);
     PRINT_NAMED_INFO("BlockWorld.AddActiveObject.AddedNewObject",
                      "objectID %d, type %s, activeID %d, factoryID 0x%x",
@@ -2805,6 +2754,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
           "Family '%s' is not known in memory map", ObjectFamilyToString(family) );
       }
     }
+    
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3654,29 +3604,13 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
         _selectedObject.UnSet();
       }
 
-
-      // Setting pose to unknown makes the object no longer "existence confirmed", so save value now
-      bool wasExistenceConfirmed = object->IsExistenceConfirmed();
-      
-      object->SetPoseState(PoseState::Unknown);
-      
       ObservableObject* objectOnTop = FindObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
       if(objectOnTop != nullptr)
       {
         ClearObject(objectOnTop);
       }
       
-      // Notify any listeners that this object no longer has a valid Pose
-      // (Only notify for objects that were broadcast in the first place, meaning
-      //  they must have been seen the minimum number of times and not be in the
-      //  process of being identified)
-      if(wasExistenceConfirmed)
-      {
-        using namespace ExternalInterface;
-        _robot->Broadcast(MessageEngineToGame(RobotMarkedObjectPoseUnknown(
-          _robot->GetID(), object->GetID().GetValue()
-        )));
-      }
+      _robot->GetObjectPoseConfirmer().MarkObjectUnknown(object);
       
       // Flag that we removed an object
       _didObjectsChange = true;
@@ -4098,7 +4032,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
   {
     if(nullptr == object) {
       return false;
-    } else if(_canDeleteObjects || object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
+    } else if(_canDeleteObjects) {
       ClearObjectHelper(object);
       return true;
     } else {
@@ -4122,7 +4056,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
   {
     ObservableObject* object = objIter->second.get();
     
-    if(_canDeleteObjects || object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT)
+    if(_canDeleteObjects)
     {
       const Pose3d* origin = &objIter->second->GetPose().FindOrigin();
       
@@ -4203,7 +4137,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
             
             ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second.get());
             if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried() &&
-               object->IsExistenceConfirmed())
+               !object->IsPoseStateUnknown())
             {
               //PRINT_INFO("currID: %d", block.first);
               if (currSelectedObjectFound) {
@@ -4244,7 +4178,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
           for (auto const & objectsByID : objectsByType.second) {
             const ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second.get());
             if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried() &&
-              object->IsExistenceConfirmed())
+              !object->IsPoseStateUnknown())
             {
               firstObject = objectsByID.first;
               break;

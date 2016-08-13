@@ -43,7 +43,7 @@ public:
   // closer), or the currently-stored matchedObject's pose will be set to the
   // corresponding observedObject's pose before it is replaced by the closer
   // passed-in pair.
-  void Insert(const std::shared_ptr<ObservableObject>& observedObject,
+  bool Insert(const std::shared_ptr<ObservableObject>& observedObject,
               ObservableObject* matchedObject,
               f32 observedDistance);
   
@@ -62,10 +62,10 @@ private:
     std::shared_ptr<ObservableObject> observedObject;
     ObservableObject* matchedObject;
     f32 distance;
-    
-    // Set the matched object's pose to the observed pose
-    void UpdateMatchedObjectPose(bool isRobotMoving);
   };
+  
+  // Set the matched object's pose to the observed pose
+  void UpdateMatchedObjectPose(ObservedAndMatchedPair& pair, bool wasRobotMoving);
   
   std::map<const PoseOrigin*, ObservedAndMatchedPair> _pairMap;
   
@@ -73,7 +73,7 @@ private:
   // that it can localize to an object anyway
   const bool _kCanRobotLocalizeToObjects;
   
-  bool CouldUseObjectForLocalization(const ObservableObject* matchingObject, f32 distToObj);
+  bool CouldUseObjectForLocalization(const ObservableObject* matchingObject);
   
 }; // class PotentialObjectsForLocalizingTo
 

@@ -599,9 +599,24 @@ namespace Anki {
     
   } // Intersects()
   
+  template<QuadDimType N, typename T>
+  bool IsNearlyEqual(const Quadrilateral<N,T> &quad1, const Quadrilateral<N,T> &quad2, const T eps)
+  {
+    for(s32 iCorner=0; iCorner<4; ++iCorner)
+    {
+      Quad::CornerName whichCorner = (Quad::CornerName)iCorner;
+      if(!IsNearlyEqual(quad1[whichCorner], quad2[whichCorner], eps))
+      {
+        // Check fails as soon as one corner doesn't match
+        return false;
+      }
+    }
+    
+    return true;
+  }
   
   /*
-  template<QuadDimType N, typename T>
+   template<QuadDimType N, typename T>
   inline const std::vector<Point<N,T> >& Quadrilateral<N,T>::get_corners() const
   {
     return this->corners;

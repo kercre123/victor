@@ -80,7 +80,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   stateMsg.liftHeight = 0.0f;
   stateMsg.rawGyroZ = 0.0f;
   stateMsg.rawAccelY = 0.0f;
-  stateMsg.status = 0;
+  stateMsg.status = (u16)RobotStatusFlag::HEAD_IN_POS | (u16)RobotStatusFlag::LIFT_IN_POS;
   stateMsg.lastPathID = 0;
   stateMsg.currPathSegment = 0;
   stateMsg.numFreeSegmentSlots = 0;
@@ -127,11 +127,12 @@ TEST(BlockWorld, AddAndRemoveObject)
   const f32 ycen = camCalib.GetCenter_y();
   
   Quad2f corners;
-  corners[Quad::TopLeft]    = {xcen - halfWidth, ycen - halfHeight};
-  corners[Quad::BottomLeft] = {xcen - halfWidth, ycen + halfHeight};
-  corners[Quad::TopRight]   = {xcen + halfWidth, ycen - halfHeight};
-  corners[Quad::BottomRight]= {xcen + halfWidth, ycen + halfHeight};
-  Vision::ObservedMarker marker(0, testCode, corners, robot.GetVisionComponent().GetCamera());
+  const f32 markerHalfSize = std::min(halfHeight, halfWidth);
+  corners[Quad::TopLeft]    = {xcen - markerHalfSize, ycen - markerHalfSize};
+  corners[Quad::BottomLeft] = {xcen - markerHalfSize, ycen + markerHalfSize};
+  corners[Quad::TopRight]   = {xcen + markerHalfSize, ycen - markerHalfSize};
+  corners[Quad::BottomRight]= {xcen + markerHalfSize, ycen + markerHalfSize};
+  Vision::ObservedMarker marker(1, testCode, corners, robot.GetVisionComponent().GetCamera());
   
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
@@ -160,6 +161,96 @@ TEST(BlockWorld, AddAndRemoveObject)
   // Returned object should be dynamically-castable to its base class:
   Block* block = dynamic_cast<Block*>(object);
   ASSERT_NE(block, nullptr);
+  
+  // Object should start in Unknown pose state, until confirmed
+  ASSERT_EQ(PoseState::Unknown, object->GetPoseState());
+  
+  // After seeing three times, should be Known
+  const s32 kNumObservations = 3;
+  TimeStamp_t fakeTime = 1;
+  for(s32 i=0; i<kNumObservations; ++i, fakeTime+=10)
+  {
+    lastResult = robot.GetVisionComponent().QueueObservedMarker(marker);
+    ASSERT_EQ(lastResult, RESULT_OK);
+    
+    // Tick the robot, which will tick the BlockWorld, which will use the queued marker
+    lastResult = robot.Update(true);
+    ASSERT_EQ(lastResult, RESULT_OK);
+  }
+  
+  ASSERT_EQ(PoseState::Known, object->GetPoseState());
+  
+  // Projected corners of the marker should match the corners of the fake marker
+  // we queued above
+  std::vector<const Vision::KnownMarker*> observedMarkers;
+  object->GetObservedMarkers(observedMarkers, 1);
+  ASSERT_EQ(1, observedMarkers.size()); // Should only have seen one
+  
+  Pose3d markerPoseWrtCamera;
+  const bool poseResult = observedMarkers[0]->GetPose().GetWithRespectTo(robot.GetVisionComponent().GetCamera().GetPose(), markerPoseWrtCamera);
+  ASSERT_TRUE(poseResult);
+  
+  auto obsCorners3d = observedMarkers[0]->Get3dCorners(markerPoseWrtCamera);
+  Quad2f obsCorners;
+  robot.GetVisionComponent().GetCamera().Project3dPoints(obsCorners3d, obsCorners);
+  const bool cornersMatch = IsNearlyEqual(obsCorners, corners, .25f);
+  ASSERT_TRUE(cornersMatch);
+
+  // After NOT seeing the object three times, it should still be known
+  // because we don't yet have evidence that actually isn't there
+  for(s32 i=0; i<kNumObservations; ++i, fakeTime+=10)
+  {
+    robot.GetVisionComponent().FakeImageProcessed(fakeTime);
+    lastResult = robot.Update(true);
+    ASSERT_EQ(lastResult, RESULT_OK);
+  }
+  
+  ASSERT_EQ(PoseState::Known, object->GetPoseState());
+  
+  // Now fake an object moved message
+  object->SetIsMoving(true, 0);
+  object->SetPoseState(PoseState::Dirty);
+  
+  // Now after not seeing the object three times, it should be Unknown
+  // because it was dirty
+  for(s32 i=0; i<kNumObservations; ++i, fakeTime+=10)
+  {
+    robot.GetVisionComponent().FakeImageProcessed(fakeTime);
+    lastResult = robot.Update(true);
+    ASSERT_EQ(lastResult, RESULT_OK);
+  }
+  
+  ASSERT_EQ(PoseState::Unknown, object->GetPoseState());
+  
+  // See the object again, but from "far" away, which after a few ticks should make it
+  // Dirty again.
+  corners.Scale(0.15f);
+  Vision::ObservedMarker markerFar(1, testCode, corners, robot.GetVisionComponent().GetCamera());
+  
+  for(s32 i=0; i<kNumObservations; ++i, fakeTime+=10)
+  {
+    lastResult = robot.GetVisionComponent().QueueObservedMarker(markerFar);
+    ASSERT_EQ(lastResult, RESULT_OK);
+    
+    // Tick the robot, which will tick the BlockWorld, which will use the queued marker
+    lastResult = robot.Update(true);
+    ASSERT_EQ(lastResult, RESULT_OK);
+  }
+  
+  // Find the object again (because it may have been deleted while unknown since
+  // it had no active ID set)
+  {
+    const BlockWorld::ObjectsMapByID_t& objByID = blockWorld.GetExistingObjectsByType(testType);
+    ASSERT_EQ(objByID.size(), 1);
+    auto objByIdIter = objByID.begin();
+    ASSERT_NE(objByIdIter, objByID.end());
+    ASSERT_NE(objByIdIter->second, nullptr);
+    object = objByIdIter->second.get();
+    objID = object->GetID();
+  }
+  
+  ASSERT_NE(nullptr, object);
+  ASSERT_EQ(PoseState::Dirty, object->GetPoseState());
   
   // Now try deleting the object, and make sure we can't still get it using the old ID
   blockWorld.ClearObject(objID);
@@ -411,7 +502,6 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         
         // The ground truth block type should be known to the block world
         ASSERT_TRUE(libObject != NULL);
-        ObservableObject* groundTruthObject = libObject->CloneType();
         
         // Set its pose to what is listed in the json file
         Pose3d objectPose;
@@ -420,7 +510,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         
         // Make sure this ground truth object was seen and its estimated pose
         // matches the ground truth pose
-        auto observedObjects = robot.GetBlockWorld().GetExistingObjectsByType(groundTruthObject->GetType());
+        auto observedObjects = robot.GetBlockWorld().GetExistingObjectsByType(libObject->GetType());
         int matchesFound = 0;
         
         /*
@@ -444,7 +534,11 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         for(auto & observedObject : observedObjects)
         {
           objectPose.SetParent(&observedObject.second->GetPose().FindOrigin());
-          groundTruthObject->SetPose(objectPose);
+          
+          std::unique_ptr<ObservableObject> groundTruthObject(libObject->CloneType());
+          
+          groundTruthObject->InitPose(objectPose, PoseState::Unknown); // pose state here shouldn't really matter
+          
           
           if(groundTruthObject->IsSameAs(*observedObject.second))
           {
@@ -514,12 +608,10 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
                     //P_diff.GetRotationAngle().getDegrees(),
                     //objectPoseAngleThreshold.getDegrees());
           }
-            
+          
         } // for each observed object
         
         EXPECT_EQ(matchesFound, 1); // Exactly one observed object should match
-        
-        delete groundTruthObject;
         
       } // for each ground truth object
       

@@ -496,16 +496,17 @@ namespace Anki {
             SetApproachAngle(approachAngle_rad);
           }
           
-          // Temporarily move object to desired pose so we can get placement poses
-          // at that position
-          const Pose3d origObjectPose(object->GetPose());
-          object->SetPose(_placementPose);
+          // Create a temporary object of the same type at the desired pose so we
+          // can get placement poses at that position
+          ActionableObject* tempObject = dynamic_cast<ActionableObject*>(object->CloneType());
+          ASSERT_NAMED(tempObject != nullptr, "DriveToPlaceCarriedObjectAction.Init.DynamicCastFail");
+          
+          tempObject->InitPose(_placementPose, PoseState::Unknown);
           
           // Call parent class's init helper
-          result = InitHelper(object);
+          result = DriveToObjectAction::InitHelper(tempObject);
           
-          // Move the object back to where it was (being carried)
-          object->SetPose(origObjectPose);
+          Util::SafeDelete(tempObject);
           
         } // if/else object==nullptr
       } // if/else robot is carrying object

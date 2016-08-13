@@ -153,7 +153,7 @@ namespace Anki {
                                                             const u16     yBorderPad = 0) const;
       
       // Accessors:
-      ObjectID           GetID()     const;
+      const ObjectID&    GetID()     const;
       const Pose3d&      GetPose()   const;
       const ColorRGBA&   GetColor()  const;
       //virtual float GetMinDim() const = 0;
@@ -174,13 +174,6 @@ namespace Anki {
       
       void SetLastObservedTime(TimeStamp_t t);
       const TimeStamp_t GetLastObservedTime() const;
-      u32 GetNumTimesObserved() const;
-      
-      // For tracking how many times we expected to see this object but didn't.
-      // Counter will reset each time SetLastObservedTime is called (i.e. at the same
-      // time that num times _observed_ gets incremented).
-      u32 GetNumTimesUnobserved() const;
-      void IncrementNumTimesUnobserved();
       
       // Copy observation times from another object, keeping the max counts / latest times
       void SetObservationTimes(const ObservableObject* otherObject);
@@ -260,8 +253,6 @@ namespace Anki {
       
       ObjectID     _ID;
       TimeStamp_t  _lastObservedTime = 0;
-      u32          _numTimesObserved = 0;
-      u32          _numTimesUnobserved = 0;
       ColorRGBA    _color;
       PoseState    _poseState = PoseState::Unknown;
       
@@ -292,7 +283,7 @@ namespace Anki {
     // Inline accessors
     //
     
-    inline ObjectID ObservableObject::GetID() const {
+    inline const ObjectID& ObservableObject::GetID() const {
       return _ID;
     }
     
@@ -373,24 +364,10 @@ namespace Anki {
       return _lastObservedTime;
     }
     
-    inline u32 ObservableObject::GetNumTimesObserved() const {
-      return _numTimesObserved;
-    }
-
     inline void ObservableObject::SetLastObservedTime(TimeStamp_t t) {
       _lastObservedTime = t;
-      ++_numTimesObserved;
-      _numTimesUnobserved = 0;
     }
 
-    inline u32 ObservableObject::GetNumTimesUnobserved() const {
-      return _numTimesUnobserved;
-    }
-    
-    inline void ObservableObject::IncrementNumTimesUnobserved() {
-      ++_numTimesUnobserved;
-    }
-    
     inline void ObservableObject::GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers) const {
       GetObservedMarkers(observedMarkers, GetLastObservedTime());
     }

@@ -32,10 +32,6 @@ namespace Cozmo {
       return new ActiveCube(this->_type);
     }
     
-    // This overrides ObservableObject::SetPose to mark this object as localized
-    // anytime its pose is set
-    void SetPose(const Pose3d& newPose);
-    
     // Make whatever state has been set on the block relative to a given (x,y)
     //  location.
     // When byUpperLeftCorner=true, "relative" means that the pattern is rotated

@@ -457,7 +457,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
           Charger* charger = dynamic_cast<Charger*>(robot->GetBlockWorld().GetObjectByID(objID, ObjectFamily::Charger));
           if( charger )
           {
-            charger->SetPoseToRobot(robot->GetPose(), robot->GetBlockWorld());
+            charger->SetPoseRelativeToRobot(*robot);
           }
         }
       }
@@ -604,9 +604,8 @@ void RobotToEngineImplMessaging::HandleActiveObjectMoved(const AnkiEvent<RobotIn
       
       // Don't notify game about moving objects that are being carried, nor moving
       // NOTE: Game could receive multiple messages for the same object in different frames. Is that OK?
-      ActionableObject* actionObject = dynamic_cast<ActionableObject*>(object);
-      assert(actionObject != nullptr);
-      if(!actionObject->IsBeingCarried()) {
+      if(robot->GetCarryingObjects().count(object->GetID()) == 0)
+      {
         // Update the ID to be the blockworld ID before broadcasting
         payload.objectID = object->GetID();
         payload.robotID = robot->GetID();

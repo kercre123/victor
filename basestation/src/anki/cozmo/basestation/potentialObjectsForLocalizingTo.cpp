@@ -16,9 +16,12 @@
 
 #include "anki/cozmo/basestation/potentialObjectsForLocalizingTo.h"
 
+#include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoObservableObject.h"
+#include "anki/cozmo/basestation/objectPoseConfirmer.h"
 #include "anki/cozmo/basestation/robot.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/math/math.h"
 
 #define ENABLE_BLOCK_BASED_LOCALIZATION 1
@@ -29,6 +32,11 @@
 namespace Anki {
 namespace Cozmo {
   
+namespace {
+  CONSOLE_VAR_RANGED(f32, kMaxBodyRotationSpeed_degPerSec, "LocalizationToObjects", 0.1f,  0.f, 20.f);
+  CONSOLE_VAR_RANGED(f32, kMaxHeadRotationSpeed_degPerSec, "LocalizationToObjects", 0.1f,  0.f, 20.f);
+}
+  
 // Using a function vs. a macro here to make sure we continue to compile all the code
 // where this gets used below, even when the DEBUG flag is disabled.
 static void VERBOSE_DEBUG_PRINT(const char* eventName, const char* description, ...)
@@ -36,7 +44,7 @@ static void VERBOSE_DEBUG_PRINT(const char* eventName, const char* description, 
 # if BLOCK_BASED_LOCALIZATION_DEBUG
   va_list args;
   va_start(args, description);
-  PRINT_NAMED_DEBUG(eventName, description, args);
+  ::Anki::Util::sChanneledDebugV("Unnamed", eventName, {}, description, args);
   va_end(args);
 # endif
 }
@@ -56,41 +64,36 @@ PotentialObjectsForLocalizingTo::PotentialObjectsForLocalizingTo(Robot& robot)
                       _robot.HasMovedSinceBeingLocalized());
 }
   
-void PotentialObjectsForLocalizingTo::ObservedAndMatchedPair::UpdateMatchedObjectPose(bool isRobotMoving)
+  
+void PotentialObjectsForLocalizingTo::UpdateMatchedObjectPose(ObservedAndMatchedPair& pair, bool wasRobotMoving)
 {
   VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.UpdateMatchedObjectPose",
-                      "Updating %s %d pose from (%.1f,%.1f,%.1f) to (%.1f,%.1f,%.1f)",
-                      EnumToString(matchedObject->GetType()),
-                      matchedObject->GetID().GetValue(),
-                      matchedObject->GetPose().GetTranslation().x(),
-                      matchedObject->GetPose().GetTranslation().y(),
-                      matchedObject->GetPose().GetTranslation().z(),
-                      observedObject->GetPose().GetTranslation().x(),
-                      observedObject->GetPose().GetTranslation().y(),
-                      observedObject->GetPose().GetTranslation().z());
+                      "Updating %s %d pose from (%.1f,%.1f,%.1f) to (%.1f,%.1f,%.1f). WasRobotMoving:%d",
+                      EnumToString(pair.matchedObject->GetType()),
+                      pair.matchedObject->GetID().GetValue(),
+                      pair.matchedObject->GetPose().GetTranslation().x(),
+                      pair.matchedObject->GetPose().GetTranslation().y(),
+                      pair.matchedObject->GetPose().GetTranslation().z(),
+                      pair.observedObject->GetPose().GetTranslation().x(),
+                      pair.observedObject->GetPose().GetTranslation().y(),
+                      pair.observedObject->GetPose().GetTranslation().z(),
+                      wasRobotMoving);
   
-  if(isRobotMoving || Util::IsFltGT(distance, MAX_LOCALIZATION_AND_ID_DISTANCE_MM))
+  Result result = _robot.GetObjectPoseConfirmer().AddVisualObservation(pair.matchedObject,
+                                                                       pair.observedObject->GetPose(),
+                                                                       wasRobotMoving,
+                                                                       pair.distance);
+  
+  if(RESULT_OK != result)
   {
-    // If we're seeing this object from too far away or while moving...
-    
-    if(matchedObject->GetPoseState() != PoseState::Known) {
-      // ...and it was already not known (dirty or unknown), then update the pose
-      // and leave or upgrade it to dirty
-      matchedObject->SetPose( observedObject->GetPose(), distance, PoseState::Dirty);
-    }
-    
-    // ... and it was previously known, then don't update it with what is likely a
-    // _worse_ pose
-  }
-  else
-  {
-    // Seeing from close enough and while not moving: update the pose (and mark it Known)
-    matchedObject->SetPose( observedObject->GetPose(), distance );
+    PRINT_NAMED_WARNING("PotentialObjectsForLocalizingTo.UpdateMatchedObjectPose.AddVisualObservationFailed", "");
+    return;
   }
   
 }
+  
 
-void PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObject>& observedObject,
+bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObject>& observedObject,
                                              ObservableObject* matchedObject,
                                              f32 observedDistance)
 {
@@ -103,7 +106,7 @@ void PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
   const PoseOrigin* matchedOrigin = &newPair.matchedObject->GetPose().FindOrigin();
   
   // Don't bother if the matched object doesn't pass these up-front checks:
-  const bool couldUseForLocalization = CouldUseObjectForLocalization(matchedObject, observedDistance);
+  const bool couldUseForLocalization = CouldUseObjectForLocalization(matchedObject);
   if(!_kCanRobotLocalizeToObjects || !couldUseForLocalization)
   {
     VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.Insert.NotUsing",
@@ -116,18 +119,29 @@ void PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
     
     // Since we're not storing this pair, update pose if in the current frame
     if(matchedOrigin == _currentWorldOrigin) {
-      newPair.UpdateMatchedObjectPose(_robot.GetMoveComponent().IsMoving());
+      const bool wasRobotMoving = _robot.GetVisionComponent().WasMovingTooFast(observedObject->GetLastObservedTime(),
+                                                                               DEG_TO_RAD(kMaxBodyRotationSpeed_degPerSec),
+                                                                               DEG_TO_RAD(kMaxHeadRotationSpeed_degPerSec));
+      UpdateMatchedObjectPose(newPair, wasRobotMoving);
     }
-    return;
+    return false;
   }
+  
+  const bool wasRobotMoving = _robot.GetVisionComponent().WasMovingTooFast(observedObject->GetLastObservedTime(),
+                                                                           DEG_TO_RAD(kMaxBodyRotationSpeed_degPerSec),
+                                                                           DEG_TO_RAD(kMaxHeadRotationSpeed_degPerSec));
   
   // We'd like to use this pair for localization, but the robot is moving,
   // so we just drop it on the floor instead (without even updating the object)  :-(
   // The reasoning here is that we don't want to mess up potentially-localizable objects'
   // poses because we are moving
-  if (_robot.GetMoveComponent().IsMoving()) {
+  if (wasRobotMoving)
+  {
     VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.Insert.IsMoving", "");
-    return;
+    if(matchedOrigin == _currentWorldOrigin) {
+      UpdateMatchedObjectPose(newPair, wasRobotMoving);
+    }
+    return false;
   }
   
   auto iter = _pairMap.find(matchedOrigin);
@@ -160,7 +174,7 @@ void PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
                           newPair.distance);
       
       if(iter->first == _currentWorldOrigin) {
-        iter->second.UpdateMatchedObjectPose(_robot.GetMoveComponent().IsMoving());
+        UpdateMatchedObjectPose(iter->second, wasRobotMoving);
       }
       std::swap(iter->second, newPair);
     }
@@ -176,10 +190,15 @@ void PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
                           newPair.distance);
       
       if(matchedOrigin == _currentWorldOrigin) {
-        newPair.UpdateMatchedObjectPose(_robot.GetMoveComponent().IsMoving());
+        UpdateMatchedObjectPose(newPair, wasRobotMoving);
       }
     }
+    
   }
+  
+  // Wanted to insert this object (whether we ended up doing so or not)
+  return true;
+  
 } // Insert()
 
 Result PotentialObjectsForLocalizingTo::LocalizeRobot()
@@ -195,26 +214,41 @@ Result PotentialObjectsForLocalizingTo::LocalizeRobot()
                                       _pairMap.begin()->first != _currentWorldOrigin);
   
   auto currFrameIter = _pairMap.find(_currentWorldOrigin);
-  
+
   Result localizeResult = RESULT_OK;
   
   if(haveCrossFrameOptions)
   {
-//    // We will not be localizing to the object in the current frame (if there is one).
-//    // So make sure to merge it now and remove it from further consideration.
-//    if(currFrameIter != _pairMap.end()) {
-//      VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.LocalizeRobot.UpdateCurrFrame",
-//                          "Using cross-frame options, not current frame");
-//      currFrameIter->second.UpdateMatchedObjectPose(_robot.GetMoveComponent().IsMoving());
-//      _pairMap.erase(currFrameIter);
-//    }
+    ASSERT_NAMED(currFrameIter != _pairMap.end(),
+                 "PotentialObjectsForLocalizingTo.LocalizeRobot.MustHaveCurrFrameObjectWithCrossFrameOptions");
+    
+    bool useCurrentFramePair = true;
+    for(auto const& matchPair : _pairMap)
+    {
+      if(matchPair.first != _currentWorldOrigin &&
+         matchPair.second.matchedObject->GetID() == currFrameIter->second.matchedObject->GetID())
+      {
+        // We found another instance of the object in the current frame, but in a
+        // different frame. In this case, just use the one in the other frame
+        // for localization so that rejiggering this one will destroy the one in
+        // the current frame. And we can't control which happens first thanks to
+        // no guarantee on sort order for the multimap below.
+        useCurrentFramePair = false;
+      }
+    }
+    
+    if(!useCurrentFramePair)
+    {
+      _pairMap.erase(currFrameIter);
+    }
     
     // Loop over all cross-frame matches from farthest to closest and perform
     // localization with each, to rejigger all their frames into one.
     
-    std::map<f32, ObservedAndMatchedPair, std::greater<f32>> pairsToLocalizeToByDist;
-    for (auto & matchPair : _pairMap) {
-      pairsToLocalizeToByDist[matchPair.second.distance] = matchPair.second;
+    std::multimap<f32, ObservedAndMatchedPair, std::greater<f32>> pairsToLocalizeToByDist;
+    for (auto & matchPair : _pairMap)
+    {
+      pairsToLocalizeToByDist.insert(std::make_pair(matchPair.second.distance,  matchPair.second));
     }
     
     bool anyFailures = false;
@@ -222,7 +256,7 @@ Result PotentialObjectsForLocalizingTo::LocalizeRobot()
     {
       ObservableObject* observedObj = matchPair.second.observedObject.get();
       ObservableObject* matchedObj  = matchPair.second.matchedObject;
-      
+     
       VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.LocalizeRobot.UsingCrossFrame",
                           "Localizing using %s %d",
                           EnumToString(matchedObj->GetType()),
@@ -272,32 +306,27 @@ Result PotentialObjectsForLocalizingTo::LocalizeRobot()
 }
 
 // a.k.a. THE IF
-bool PotentialObjectsForLocalizingTo::CouldUseObjectForLocalization(const ObservableObject* matchingObject,
-                                                                    f32 distToObj)
+bool PotentialObjectsForLocalizingTo::CouldUseObjectForLocalization(const ObservableObject* matchingObject)
 {
   // Decide whether we will be updating the robot's pose relative to this
   // object or updating the object's pose w.r.t. the robot. We only localize
   // to the object if:
-  //  - the object is close enough,
   //  - if the object believes itself to be usable for localization (based on
-  //    pose state, pose flatness, etc)
+  //    pose state (which includes observation distance), pose flatness, etc)
   //  - the object is neither the object the robot is docking to or tracking to
   
-  const bool closeEnough = distToObj <= MAX_LOCALIZATION_AND_ID_DISTANCE_MM;
   const bool objectCanBeUsedForLocalization = matchingObject->CanBeUsedForLocalization();
   const bool isDockingObject = matchingObject->GetID() == _robot.GetDockObject();
   const bool isTrackToObject = matchingObject->GetID() == _robot.GetMoveComponent().GetTrackToObject();
   
-  const bool useThisObjectToLocalize = (closeEnough &&
-                                        objectCanBeUsedForLocalization &&
+  const bool useThisObjectToLocalize = (objectCanBeUsedForLocalization &&
                                         !isDockingObject &&
                                         !isTrackToObject);
   
   VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.CouldUseObjectForLocalization",
-                      "%s %d: closeEnough=%d(%.1fmm) objCanBeUsedForLoc=%d(%s) isDockObj=%d isTrackToObj=%d",
+                      "%s %d: objCanBeUsedForLoc=%d(%s) isDockObj=%d isTrackToObj=%d",
                       EnumToString(matchingObject->GetType()),
                       matchingObject->GetID().GetValue(),
-                      closeEnough, distToObj,
                       objectCanBeUsedForLocalization,
                       matchingObject->GetPoseState()==PoseState::Known ? "Known" : "Unknown/Dirty",
                       isDockingObject, isTrackToObject);

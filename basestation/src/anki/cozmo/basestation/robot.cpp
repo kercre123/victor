@@ -51,6 +51,7 @@
 #include "anki/cozmo/basestation/components/lightsComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
+#include "anki/cozmo/basestation/objectPoseConfirmer.h"
 #include "anki/cozmo/basestation/blocks/blockFilter.h"
 #include "anki/cozmo/basestation/components/blockTapFilterComponent.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
@@ -152,6 +153,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _visionComponentPtr( new VisionComponent(*this, VisionComponent::RunMode::Asynchronous, _context))
   , _nvStorageComponent(*this, _context)
   , _textToSpeechComponent(_context)
+  , _objectPoseConfirmerPtr(new ObjectPoseConfirmer(*this))
   , _lightsComponent( new LightsComponent( *this ) )
   , _neckPose(0.f,Y_AXIS_3D(),
               {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, &_pose, "RobotNeck")
@@ -270,7 +272,7 @@ Robot::~Robot()
   // destroy vision component first because its thread might be using things from Robot. This fixes a crash
   // caused by the vision thread using _poseHistory when it was destroyed here
   Util::SafeDelete(_visionComponentPtr);
-      
+  
   Util::SafeDelete(_poseHistory);
   Util::SafeDelete(_pdo);
   Util::SafeDelete(_longPathPlanner);
@@ -313,7 +315,7 @@ void Robot::SetOnCharger(bool onCharger)
       
   if( onCharger && nullptr != charger )
   {
-    charger->SetPoseToRobot(GetPose(), GetBlockWorld());
+    charger->SetPoseRelativeToRobot(*this);
   }
       
   _isOnCharger = onCharger;
@@ -471,6 +473,9 @@ void Robot::Delocalize(bool isCarryingObject)
       
   // notify behavior whiteboard
   _behaviorMgr->GetWhiteboard().OnRobotDelocalized();
+  
+  // clear the pose confirmer now that we've changed pose origins
+  GetObjectPoseConfirmer().Clear();
   
   // send message to game. At the moment I implement this so that Webots can update the render, but potentially
   // any system can listen to this
@@ -1729,7 +1734,15 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
                                ObservableObject* existingObject)
 {
   Result lastResult = RESULT_OK;
-      
+  
+  if(existingObject->GetID() != GetLocalizedTo())
+  {
+    PRINT_NAMED_DEBUG("Robot.LocalizeToObject",
+                      "Robot attempting to localize to %s object %d",
+                      EnumToString(existingObject->GetType()),
+                      existingObject->GetID().GetValue());
+  }
+  
   if(existingObject == nullptr) {
     PRINT_NAMED_ERROR("Robot.LocalizeToObject.ExistingObjectPieceNullPointer", "");
     return RESULT_FAIL;
@@ -2586,11 +2599,6 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
       
   objectPoseWrtLiftPose.SetTranslation({objectMarker->GetPose().GetTranslation().Length() +
         LIFT_FRONT_WRT_WRIST_JOINT, 0.f, -12.5f});
-      
-  // make part of the lift's pose chain so the object will now be relative to
-  // the lift and move with the robot
-  objectPoseWrtLiftPose.SetParent(&_liftPose);
-      
 
   // If we know there's an object on top of the object we are picking up,
   // mark it as being carried too
@@ -2616,14 +2624,14 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
         // Related to COZMO-3384: Consider whether top cubes (in a stack) should notify memory map
         // Notify blockworld of the change in pose for the object on top, but pretend the new pose is unknown since
         // we are not dropping the cube yet
-        const Pose3d& oldPoseTop = actionObjectOnTop->GetPose(); // do this before setting the new one (at least cache copy)
-        const PoseState oldPoseStateTop = actionObjectOnTop->GetPoseState();
-        const Pose3d& newPoseTop = onTopPoseWrtCarriedPose;
-        const PoseState newPoseStateTop = PoseState::Unknown;
-        GetBlockWorld().OnObjectPoseChanged(objectID, object->GetFamily(), oldPoseTop, oldPoseStateTop, newPoseTop, newPoseStateTop );
+        Result poseResult = GetObjectPoseConfirmer().AddObjectRelativeObservation(actionObjectOnTop, onTopPoseWrtCarriedPose, object);
+        if(RESULT_OK != poseResult)
+        {
+          PRINT_NAMED_WARNING("Robot.SetObjectAsAttachedToLift.AddObjectRelativeObservationFailed",
+                              "objectID:%d", object->GetID().GetValue());
+          return poseResult;
+        }
         
-        // now that we have notified, do set the new pose
-        actionObjectOnTop->SetPose(onTopPoseWrtCarriedPose);
         _carryingObjectOnTopID = actionObjectOnTop->GetID();
         actionObjectOnTop->SetBeingCarried(true);
       }
@@ -2635,17 +2643,14 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
   SetCarryingObject(objectID); // also marks the object as carried
   _carryingMarker   = objectMarker;
   
-  // Notify blockworld of the change in pose for the carrying object, but pretend the new pose is unknown since
-  // we are not dropping the cube yet
-  const Pose3d& oldPose = object->GetPose(); // this has to happen before we set it to the new (at least cache copy)
-  const PoseState oldPoseState = object->GetPoseState();
-  const Pose3d& newPose = objectPoseWrtLiftPose;
-  const PoseState newPoseState = PoseState::Unknown;
-  GetBlockWorld().OnObjectPoseChanged(objectID, object->GetFamily(), oldPose, oldPoseState, newPose, newPoseState );
-
   // Don't actually change the object's pose until we've checked for objects on top
-  object->SetPose(objectPoseWrtLiftPose);
-
+  Result poseResult = GetObjectPoseConfirmer().AddLiftRelativeObservation(object, objectPoseWrtLiftPose);
+  if(RESULT_OK != poseResult)
+  {
+    // TODO: warn
+    return poseResult;
+  }
+  
   return RESULT_OK;
       
 } // AttachObjectToLift()
@@ -2670,14 +2675,20 @@ Result Robot::SetCarriedObjectAsUnattached()
     return RESULT_FAIL;
   }
      
-  Pose3d placedPose;
-  if(object->GetPose().GetWithRespectTo(_pose.FindOrigin(), placedPose) == false) {
+  Pose3d placedPoseWrtRobot;
+  if(object->GetPose().GetWithRespectTo(_pose, placedPoseWrtRobot) == false) {
     PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.OriginMisMatch",
                       "Could not get carrying object's pose relative to robot's origin.");
     return RESULT_FAIL;
   }
-  object->SetPose(placedPose);
-      
+  
+  Result poseResult = GetObjectPoseConfirmer().AddRobotRelativeObservation(object, placedPoseWrtRobot, PoseState::Dirty);
+  if(RESULT_OK != poseResult)
+  {
+    // TODO: warn/error
+    return poseResult;
+  }
+    
   PRINT_NAMED_INFO("Robot.SetCarriedObjectAsUnattached.ObjectPlaced",
                    "Robot %d successfully placed object %d at (%.2f, %.2f, %.2f).",
                    _ID, object->GetID().GetValue(),
@@ -2704,9 +2715,15 @@ Result Robot::SetCarriedObjectAsUnattached()
       PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.OriginMisMatch",
                         "Could not get carrying object's pose relative to robot's origin.");
       return RESULT_FAIL;
-          
     }
-    objectOnTop->SetPose(placedPoseOnTop);
+    
+    Result poseResult = GetObjectPoseConfirmer().AddObjectRelativeObservation(objectOnTop, placedPoseOnTop, object);
+    if(RESULT_OK != poseResult)
+    {
+      // TODO: warn / error
+      return poseResult;
+    }
+
     objectOnTop->SetBeingCarried(false);
     _carryingObjectOnTopID.UnSet();
     PRINT_NAMED_INFO("Robot.SetCarriedObjectAsUnattached", "Updated object %d on top of carried object.",

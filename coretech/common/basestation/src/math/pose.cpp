@@ -389,7 +389,7 @@ namespace Anki {
                                       Vec3f& Tdiff,
                                       Radians& angleDiff) const
   {
-    ASSERT_NAMED(distThreshold >= 0.f,
+    ASSERT_NAMED(distThreshold.AllGTE( 0.f ),
                  "Pose3d.IsSameAs_WithAmbiguity.NegativeDistThreshold");
     
     ASSERT_NAMED(angleThreshold.ToFloat() >= 0.f,

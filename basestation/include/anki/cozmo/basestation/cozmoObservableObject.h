@@ -15,11 +15,15 @@
 #ifndef __Anki_Cozmo_ObservableObject_H__
 #define __Anki_Cozmo_ObservableObject_H__
 
-#include "anki/vision/basestation/observableObject.h"
+#include "anki/cozmo/basestation/objectPoseConfirmer.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
+
+#include "anki/vision/basestation/observableObject.h"
+
 #include "clad/types/activeObjectTypes.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
+
 #include "util/helpers/noncopyable.h"
 
 namespace Anki {
@@ -49,6 +53,10 @@ namespace Cozmo {
     
     virtual ObservableObject* CloneType() const = 0;
     
+    // Can only be called once and only before SetPose is called. Will assert otherwise,
+    // since this indicates programmer error.
+    void InitPose(const Pose3d& pose, PoseState poseState);
+    
     ObjectFamily  GetFamily()  const { return _family; }
     ObjectType    GetType()    const { return _type; }
     
@@ -70,16 +78,9 @@ namespace Cozmo {
                   const Point3f& distThreshold,
                   const Radians& angleThreshold) const;
     
-    bool IsExistenceConfirmed() const;
-    
     void SetVizManager(VizManager* vizManager) { _vizManager = vizManager; }
     
-    void         SetActiveID(ActiveID activeID)         { assert(IsActive());
-                                                          _activeID = activeID;
-                                                          if (_activeID >= 0) {
-                                                            _identityState = ActiveIdentityState::Identified;
-                                                          }
-                                                        }
+    void         SetActiveID(ActiveID activeID) ;
     ActiveID     GetActiveID()                  const   { return _activeID; }
     virtual bool IsActive()                     const   { return false; }
     void         SetFactoryID(FactoryID factoryID)      { assert(IsActive()); _factoryID = factoryID; }
@@ -88,6 +89,12 @@ namespace Cozmo {
     
   protected:
     
+    // Make SetPose and SetPoseParent protected and friend ObjectPoseConfirmer so only it can
+    // update objects' poses
+    void SetPose(const Pose3d& newPose, f32 fromDistance, PoseState newPoseState);
+    using Vision::ObservableObject::SetPoseParent;
+    friend ObjectPoseConfirmer;
+    
     ActiveID _activeID = -1;
     FactoryID _factoryID = 0;
     
@@ -95,6 +102,8 @@ namespace Cozmo {
     ObjectType    _type   = ObjectType::Unknown;
     
     ActiveIdentityState _identityState = ActiveIdentityState::Unidentified;
+    
+    bool _poseHasBeenSet = false;
     
     VizManager* _vizManager = nullptr;
     
@@ -110,6 +119,25 @@ namespace Cozmo {
     }
   }
 
+  inline void ObservableObject::InitPose(const Pose3d& pose, PoseState poseState)
+  {
+    // This indicates programmer error: InitPose should only be called once on
+    // an object and never once SetPose has been called
+    ASSERT_NAMED_EVENT(!_poseHasBeenSet,
+                       "ObservableObject.InitPose.PoseAlreadySet",
+                       "%s Object %d",
+                       EnumToString(GetType()), GetID().GetValue());
+    
+    SetPose(pose, -1.f, poseState);
+    _poseHasBeenSet = true;
+  }
+  
+  inline void ObservableObject::SetPose(const Pose3d& newPose, f32 fromDistance, PoseState newPoseState)
+  {
+    Vision::ObservableObject::SetPose(newPose, fromDistance, newPoseState);
+    _poseHasBeenSet = true; // Make sure InitPose can't be called after this
+  }
+  
 #pragma mark -
 #pragma mark Inlined Implementations
   
@@ -143,11 +171,17 @@ namespace Cozmo {
                     Tdiff, angleDiff);
   }
   
-  inline bool ObservableObject::IsExistenceConfirmed() const {
-    return ( //(!IsActive() || ActiveIdentityState::Identified == GetIdentityState()) &&
-            GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT &&
-            !IsPoseStateUnknown());
+  inline void ObservableObject::SetActiveID(ActiveID activeID)
+  {
+    assert(IsActive());
+    
+    _activeID = activeID;
+    
+    if (_activeID >= 0) {
+      _identityState = ActiveIdentityState::Identified;
+    }
   }
+  
   
 } // namespace Cozmo
 } // namespace Anki

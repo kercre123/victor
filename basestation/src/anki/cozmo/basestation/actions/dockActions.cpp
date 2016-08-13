@@ -897,12 +897,15 @@ namespace Anki {
             // Put the object I thought I was carrying in the position of the
             // object I matched to it above, and then delete that object.
             // (This prevents a new object with different ID being created.)
-            if(carryObject->GetID() != objectInOriginalPose->GetID()) {
+            if(carryObject->GetID() != objectInOriginalPose->GetID())
+            {
               PRINT_NAMED_INFO("PickupObjectAction.Verify",
                                "Moving carried object to object seen in original pose "
                                "and deleting that object (ID=%d).",
                                objectInOriginalPose->GetID().GetValue());
-              carryObject->SetPose(objectInOriginalPose->GetPose());
+              
+              _robot.GetObjectPoseConfirmer().CopyWithNewPose(carryObject, objectInOriginalPose->GetPose(), objectInOriginalPose);
+              
               blockWorld.DeleteObject(objectInOriginalPose->GetID());
             }
             _robot.UnSetCarryingObjects();
