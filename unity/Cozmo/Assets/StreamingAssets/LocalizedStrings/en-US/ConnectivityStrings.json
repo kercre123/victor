@@ -68,5 +68,8 @@
   },
   "connectivity.cozmoLowBatteryDesc": {
     "translation": "Please place Cozmo on the charger."
+  },
+  "connectivity.keepCozmoOnCharger": {
+    "translation": "Please keep Cozmo on his charger during Setup."
   }
 }

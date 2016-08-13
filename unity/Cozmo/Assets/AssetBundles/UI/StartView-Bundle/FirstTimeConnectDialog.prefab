@@ -273,7 +273,7 @@ MonoBehaviour:
     type: 2}
   _SoundCheckViewPrefab: {fileID: 11420606, guid: 49f156cce4e3a43829a0de82daa45d0e,
     type: 2}
-  _PlaceCozmoOnChargerConnectViewPrefab: {fileID: 11415802, guid: ee0aabc9eebb14c539ef62710fbadebb,
+  _PlaceCozmoOnChargerViewPrefab: {fileID: 11411342, guid: ee0aabc9eebb14c539ef62710fbadebb,
     type: 2}
   _ProfileCreationViewPrefab: {fileID: 11497974, guid: d5a4eca7cb81e477e860e932642ff654,
     type: 2}

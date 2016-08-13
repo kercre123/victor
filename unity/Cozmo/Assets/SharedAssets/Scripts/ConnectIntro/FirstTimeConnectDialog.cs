@@ -24,8 +24,8 @@ public class FirstTimeConnectDialog : MonoBehaviour {
   private SoundCheckView _SoundCheckViewInstance;
 
   [SerializeField]
-  private SimpleConnectView _PlaceCozmoOnChargerConnectViewPrefab;
-  private SimpleConnectView _PlaceCozmoOnChargerConnectViewInstance;
+  private PlaceCozmoOnChargerView _PlaceCozmoOnChargerViewPrefab;
+  private PlaceCozmoOnChargerView _PlaceCozmoOnChargerViewInstance;
 
   [SerializeField]
   private ProfileCreationView _ProfileCreationViewPrefab;
@@ -48,8 +48,8 @@ public class FirstTimeConnectDialog : MonoBehaviour {
   }
 
   private void OnDestroy() {
-    if (_PlaceCozmoOnChargerConnectViewInstance != null) {
-      UIManager.CloseViewImmediately(_PlaceCozmoOnChargerConnectViewInstance);
+    if (_PlaceCozmoOnChargerViewInstance != null) {
+      UIManager.CloseViewImmediately(_PlaceCozmoOnChargerViewInstance);
     }
 
     if (_ConnectionFlowInstance != null) {
@@ -84,8 +84,8 @@ public class FirstTimeConnectDialog : MonoBehaviour {
   }
 
   private void ShowPlaceCozmoOnCharger() {
-    _PlaceCozmoOnChargerConnectViewInstance = UIManager.OpenView(_PlaceCozmoOnChargerConnectViewPrefab);
-    _PlaceCozmoOnChargerConnectViewInstance.OnConnectButton += HandleConnectButton;
+    _PlaceCozmoOnChargerViewInstance = UIManager.OpenView(_PlaceCozmoOnChargerViewPrefab);
+    _PlaceCozmoOnChargerViewInstance.OnConnectButton += HandleConnectButton;
   }
 
   private void HandleMockButton() {
@@ -96,8 +96,8 @@ public class FirstTimeConnectDialog : MonoBehaviour {
   }
 
   private void HandleConnectButton() {
-    _PlaceCozmoOnChargerConnectViewInstance.ViewClosed += StartConnectionFlow;
-    UIManager.CloseView(_PlaceCozmoOnChargerConnectViewInstance);
+    _PlaceCozmoOnChargerViewInstance.ViewClosed += StartConnectionFlow;
+    UIManager.CloseView(_PlaceCozmoOnChargerViewInstance);
   }
 
   private void StartConnectionFlow() {
