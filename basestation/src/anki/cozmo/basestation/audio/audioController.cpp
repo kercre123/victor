@@ -243,7 +243,7 @@ AudioEngine::AudioPlayingId AudioController::PostAudioEvent( const std::string& 
                 "AudioController.PostAudioEvent",
                 "Event: '%s' GameObj: %u CallbackFlag: %d PlayId: %d Initalized: %c",
                 eventName.c_str(), static_cast<uint32_t>(gameObjectId),
-                (nullptr != callbackContext) ? 0 : callbackContext->GetCallbackFlags(),
+                (nullptr != callbackContext) ? callbackContext->GetCallbackFlags() : 0,
                 playingId, _isInitialized ? 'Y' : 'N');
   
   return playingId;
@@ -289,7 +289,7 @@ AudioEngine::AudioPlayingId AudioController::PostAudioEvent( AudioEngine::AudioE
                 "AudioController.PostAudioEvent",
                 "EventId: %u GameObj: %u CallbackFlag: %d PlayId: %d Initalized: %c",
                 eventId, static_cast<uint32_t>(gameObjectId),
-                (nullptr != callbackContext) ? 0 : callbackContext->GetCallbackFlags(),
+                (nullptr != callbackContext) ? callbackContext->GetCallbackFlags() : 0,
                 playingId, _isInitialized ? 'Y' : 'N');
   
   return playingId;
