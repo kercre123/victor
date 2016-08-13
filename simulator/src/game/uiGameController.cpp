@@ -171,6 +171,12 @@ namespace Anki {
       //SendSetRobotImageSendMode(ISM_STREAM);
       _firstRobotPoseUpdate = true;
       HandleRobotConnected(msg);
+      
+      if (msg.result == RobotConnectionResult::Success) {
+        PRINT_NAMED_INFO("UiGameController.HandleRobotConnectedBase.ConnectSuccess", "");
+      } else {
+        PRINT_NAMED_WARNING("UiGameController.HandleRobotConnectedBase.ConnectFail", "* * * * * * %s * * * * * *", EnumToString(msg.result));
+      }
     }
     
     void UiGameController::HandleRobotCompletedActionBase(ExternalInterface::RobotCompletedAction const& msg)
