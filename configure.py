@@ -277,7 +277,7 @@ class GamePlatformConfiguration(object):
         self.android_prestrip_lib_dir = os.path.join(self.platform_build_dir, 'libs-prestrip')
 
 
-        self.symlink_keys = ['opencv', 'sphinx', 'HockeyApp']
+        self.symlink_keys = ['opencv', 'HockeyApp']
         # The keys defined in symlink must exist in the following dictionaries
         self.unity_symlink = {}
         self.unity_target = {}
@@ -333,8 +333,6 @@ class GamePlatformConfiguration(object):
             for sl in self.symlink_keys:
                 self.unity_symlink[sl] = os.path.join(self.unity_xcode_project_dir, sl)
             self.unity_target['opencv'] = os.path.join(CTE_ROOT, 'build', 'opencv-ios')
-            self.unity_target['sphinx'] = os.path.join(CTE_ROOT,
-                                                            'pocketsphinx/pocketsphinx/generated/ios/DerivedData/Release-iphoneos')
             self.unity_target['HockeyApp'] = os.path.join(GAME_ROOT, 'lib/HockeySDK-iOS')
 
             self.artifact_dir = os.path.join(self.platform_build_dir, 'app-{0}'.format(self.platform))

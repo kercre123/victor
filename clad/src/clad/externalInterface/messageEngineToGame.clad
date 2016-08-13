@@ -25,7 +25,6 @@
 #include "clad/types/poseStructs.clad"
 #include "clad/types/behaviorTypes.clad"
 #include "clad/externalInterface/messageShared.clad"
-#include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/audio/audioCallbackMessage.clad"
 #include "clad/types/engineErrorCodes.clad"

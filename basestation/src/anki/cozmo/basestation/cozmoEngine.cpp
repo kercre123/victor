@@ -47,12 +47,6 @@
 #include "util/transport/connectionStats.h"
 #include <cstdlib>
 
-#ifdef ANDROID
-#include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer_android.h"
-#else
-#include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer_ios_mac.h"
-#endif
-
 #if ANKI_DEV_CHEATS
 #include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
 #endif
@@ -67,7 +61,6 @@ namespace Cozmo {
 
 CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort* messagePipe)
   : _uiMsgHandler(new UiMessageHandler(1, messagePipe))
-  , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(_uiMsgHandler.get()))
   , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get()))
   , _deviceDataManager(new DeviceDataManager(_uiMsgHandler.get()))
   // TODO:(lc) Once the BLESystem state machine has been implemented, create it here
@@ -339,8 +332,6 @@ Result CozmoEngine::Update(const float currTime_sec)
       // robots in the world.
       _context->GetRobotManager()->UpdateAllRobots();
       
-      _keywordRecognizer->Update((uint32_t)(BaseStationTimer::getInstance()->GetTimeSinceLastTickInSeconds() * 1000.0f));
-      
       SendLatencyInfo();
 
       break;
@@ -482,11 +473,6 @@ void CozmoEngine::ReadAnimationsFromDisk()
   
 Result CozmoEngine::InitInternal()
 {
-  std::string hmmFolder = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "pocketsphinx/en-us");
-  std::string keywordFile = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "config/basestation/config/cozmoPhrases.txt");
-  std::string dictFile = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "pocketsphinx/cmudict-en-us.dict");
-  _keywordRecognizer->Init(hmmFolder, keywordFile, dictFile);
-  
   // Setup Audio Controller
   using namespace Audio;
   

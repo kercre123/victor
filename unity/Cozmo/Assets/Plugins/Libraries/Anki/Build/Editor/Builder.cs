@@ -192,9 +192,7 @@ namespace Anki {
                                                    assetFolder + "/assets/DailyGoals");
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets/RewardedActions",
                                                    assetFolder + "/assets/RewardedActions");
-
-	FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/config", assetFolder + "/config");
-        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../generated/resources/pocketsphinx", assetFolder + "/pocketsphinx");
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/config", assetFolder + "/config");
 
         // Delete compressed animation files that we don't need
         string[] tarFiles = Directory.GetFiles(assetFolder + "/assets/animations", "*.tar", SearchOption.AllDirectories);

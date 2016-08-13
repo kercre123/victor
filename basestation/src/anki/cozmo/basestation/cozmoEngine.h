@@ -70,10 +70,6 @@ namespace ExternalInterface {
   struct DisconnectFromRobot;
 }
 
-namespace SpeechRecognition {
-  class KeyWordRecognizer;
-}
-
 class CozmoEngine
 {
 public:
@@ -125,7 +121,6 @@ protected:
   bool                                                      _isInitialized = false;
   Json::Value                                               _config;
   std::unique_ptr<UiMessageHandler>                         _uiMsgHandler;
-  std::unique_ptr<SpeechRecognition::KeyWordRecognizer>     _keywordRecognizer;
   std::unique_ptr<CozmoContext>                             _context;
   std::unique_ptr<BLESystem>                                _bleSystem;
   std::unique_ptr<DeviceDataManager>                        _deviceDataManager;

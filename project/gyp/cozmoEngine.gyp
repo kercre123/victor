@@ -37,12 +37,6 @@
       'ANKICORETECH_EMBEDDED_USE_GTEST=1',
       'ANKICORETECH_EMBEDDED_USE_OPENCV=1',
     ],
-    
-    'sphinx_libs': [
-      'libpocketSphinx.a',
-      'libsphinxad.a',
-      'libsphinxBase.a',
-    ],
 
     'okao_lib_search_path': [
       '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a',
@@ -56,11 +50,6 @@
       'libeOkaoEx.a',
     ],
 
-    'pocketsphinx_includes':[
-      '<(coretech_external_path)/pocketsphinx/sphinxbase/include',
-      '<(coretech_external_path)/pocketsphinx/pocketsphinx/include',
-    ],
-
     'routing_http_server_libs': [
       'librouting_http_server.a',
     ],
@@ -71,25 +60,21 @@
 
     'cte_lib_search_path_mac_debug': [
       '<(coretech_external_path)/routing_http_server/generated/mac/DerivedData/Release', # NOTE WE USE RELEASE HERE INTENTIONALLY
-      '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/mac/DerivedData/Debug',
       '<(coretech_external_path)/libarchive/project/mac/DerivedData/Debug',
     ],
 
     'cte_lib_search_path_mac_release': [
       '<(coretech_external_path)/routing_http_server/generated/mac/DerivedData/Release', # NOTE WE USE RELEASE HERE INTENTIONALLY
-      '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/mac/DerivedData/Release',
       '<(coretech_external_path)/libarchive/project/mac/DerivedData/Release',
     ],
 
     'cte_lib_search_path_ios_debug': [
       '<(coretech_external_path)/routing_http_server/generated/ios/DerivedData/Release-iphoneos', # NOTE WE USE RELEASE HERE INTENTIONALLY
-      '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Debug-iphoneos',
       '<(coretech_external_path)/libarchive/project/mac/DerivedData/Debug-iphoneos',
     ],
 
     'cte_lib_search_path_ios_release': [
       '<(coretech_external_path)/routing_http_server/generated/ios/DerivedData/Release-iphoneos', # NOTE WE USE RELEASE HERE INTENTIONALLY
-      '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Release-iphoneos',
       '<(coretech_external_path)/libarchive/project/mac/DerivedData/Release-iphoneos',
     ],
 
@@ -689,7 +674,6 @@
               '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
               '$(SDKROOT)/System/Library/Frameworks/OpenAL.framework',
               '$(SDKROOT)/System/Library/Frameworks/CoreBluetooth.framework',
-              '<@(sphinx_libs)',
               '<@(flite_libs)',
               '<@(opencv_libs)',
               '<@(face_library_libs)',
@@ -982,17 +966,7 @@
                   '../../simulator/controllers/webotsCtrlGameEngine/resources/test',
                 ],
               },
-              {
-                'action_name': 'create_symlink_resources_pocketsphinx',
-                'inputs':[],
-                'outputs':[],
-                'action': [
-                  'ln', '-s', '-f', '-n',
-                  '<(coretech_external_path)/pocketsphinx/pocketsphinx/model/en-us',
-                  '../../simulator/controllers/webotsCtrlGameEngine/resources/pocketsphinx',
-                ],
-              },
-              
+
               # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
               # webotsCtrlRobot
               # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1255,18 +1229,8 @@
                 ],
               },
 
-              {
-                'action_name': 'create_symlink_resources_pocketsphinx',
-                'inputs':[],
-                'outputs':[],
-                'action': [
-                  'ln', '-s', '-f', '-n',
-                  '<(coretech_external_path)/pocketsphinx/pocketsphinx/model/en-us',
-                  '<(PRODUCT_DIR)/resources/pocketsphinx',
-                ],
-              },
 
-	            {
+	          {
                 'action_name': 'create_symlink_engineUnitTestfaceLibraryLibs',
                 'inputs':[],
                 'outputs':[],
@@ -1415,7 +1379,6 @@
         '../../generated/clad/engine',
         '../../coretech/generated/clad/vision',
         '<@(opencv_includes)',
-        '<@(pocketsphinx_includes)',
         '<@(flite_includes)',
         '<@(routing_http_server_include)',
         '../../cozmoAPI/include',

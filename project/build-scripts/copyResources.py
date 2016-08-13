@@ -61,8 +61,6 @@ class CopyResources(object):
                         action='store', default=None, help='where engine resources are located')
     parser.add_argument('--unityAssetsPath', dest='unityAssetsPath', required=True,
                         action='store', default=None, help='where unity assets are located')
-    parser.add_argument('--pocketSphinxPath', dest='pocketSphinxPath', required=True,
-                        action='store', default=None, help='where pocket sphinx resources are located')
     parser.add_argument('--soundBanksPath', dest='soundBanksPath', required=True,
                         action='store', default=None, help='where sound banks are located')
     parser.add_argument('--copyMethod', dest='copyMethod', action='store', default='rsync',
@@ -183,14 +181,6 @@ class CopyResources(object):
       self.log.error("error copying {0} to {1}".format (self.options.engineResourcesPath, engineResourcesPath))
       return False
 
-    # pocket sphinx
-    pocketSphinxPath = os.path.join(cozmoResourcesPath, 'pocketsphinx')
-    if os.path.isdir(pocketSphinxPath):
-      ankibuild.util.File.rm_rf(pocketSphinxPath)
-    if not ankibuild.util.File.cptree(self.options.pocketSphinxPath, pocketSphinxPath):
-      self.log.error("error copying {0} to {1}".format (self.options.pocketSphinxPath, pocketSphinxPath))
-      return False
-
     # sound banks
     soundBanksPlatform = ''
     if self.options.platform == 'ios':
@@ -255,14 +245,6 @@ class CopyResources(object):
     engineResourcesPath = os.path.join(cozmoResourcesPath, 'config')
     args = baseargs[:]
     args += [self.options.engineResourcesPath, engineResourcesPath]
-    ankibuild.util.File.execute(args)
-
-    # pocket sphinx
-    pocketSphinxPath = os.path.join(cozmoResourcesPath, 'pocketsphinx')
-    args = baseargs[:]
-    if not self.options.pocketSphinxPath.endswith('/'):
-      self.options.pocketSphinxPath = self.options.pocketSphinxPath + '/'
-    args += [self.options.pocketSphinxPath, pocketSphinxPath]
     ankibuild.util.File.execute(args)
 
     # sound banks

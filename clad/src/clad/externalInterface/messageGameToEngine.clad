@@ -8,8 +8,6 @@
 #include "clad/externalInterface/messageActions.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/messageToBehaviorManager.clad"
-#include "clad/externalInterface/keyWordRecognitionState.clad"
-
 #include "clad/types/actionTypes.clad"
 #include "clad/types/activeObjectTypes.clad"
 #include "clad/types/behaviorGroup.clad"

@@ -385,13 +385,6 @@ def main(scriptArgs):
     UtilLog.error("error creating generated/resources")
     return False
 
-  # symlink coretech external resources
-  if subprocess.call(['ln', '-s', '-f', '-n',
-    os.path.join(coretechExternalPath, 'pocketsphinx/pocketsphinx/model/en-us'),
-    os.path.join(projectRoot, 'generated/resources/pocketsphinx')]) != 0 :
-    UtilLog.error("error symlinking pocket sphinx resources")
-    return False
-
   # revisit for COZMO-1287 to handle multiple firmwares.  
   if subprocess.call(['ln', '-s', '-f', '-n',
     os.path.join(externalsPath, 'firmware/build'),
