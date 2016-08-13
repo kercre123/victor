@@ -58,7 +58,8 @@ namespace Anki
     // Copies to another Array2d
     void CopyTo(Array2d<T> &other) const;
 
-    // GetROI() will crop input rectangle to image bounds if needed
+    // GetROI() will crop input rectangle to image bounds if needed.
+    // NOTE: Returned array could be empty!
     template<typename T_rect>
     Array2d<T> GetROI(Rectangle<T_rect>& roiRect);
     

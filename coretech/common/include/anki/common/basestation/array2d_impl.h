@@ -85,7 +85,39 @@ namespace Anki
   const Array2d<T> Array2d<T>::GetROI(Rectangle<Trect>& roiRect) const
   {
     roiRect = roiRect.Intersect(Rectangle<Trect>(0,0,GetNumCols(),GetNumRows()));
-    return Array2d<T>(this->get_CvMat_()(roiRect.get_CvRect_()));
+    if((size_t)roiRect.Area() > 0)
+    {
+      try
+      {
+        return Array2d<T>(this->get_CvMat_()(roiRect.get_CvRect_()));
+      }
+      catch(...)
+      {
+        // Not sure why OpenCV would fail since we've already intersected the rectangle
+        // with image borders and checked for zero area by now, but just to avoid
+        // a total crash, catch and log it:
+        PRINT_NAMED_WARNING("Array2d.GetROI.OpenCVFail",
+                            "Returning empty ROI for rectangle: x:%f y%f width:%f height%f "
+                            "(Array is %dx%d)",
+                            (f32)roiRect.GetX(), (f32)roiRect.GetY(),
+                            (f32)roiRect.GetWidth(), (f32)roiRect.GetHeight(),
+                            GetNumCols(), GetNumRows());
+      }
+    }
+    else
+    {
+      // Empty ROI rectangle: return empty image
+      // (OpenCV call would crash in this case)
+      PRINT_NAMED_WARNING("Array2d.GetROI.EmptyRect",
+                          "Returning empty ROI for rectangle with zero area: "
+                          "x:%f y%f width:%f height%f (Array is %dx%d)",
+                          (f32)roiRect.GetX(), (f32)roiRect.GetY(),
+                          (f32)roiRect.GetWidth(), (f32)roiRect.GetHeight(),
+                          GetNumCols(), GetNumRows());
+    }
+    
+    // Return empty ROI array
+    return Array2d<T>();
   }
 
   template<typename T>

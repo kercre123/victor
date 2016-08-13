@@ -1511,13 +1511,15 @@ namespace Cozmo {
       ASSERT_NAMED(maskedImage.GetTimestamp() == grayImage.GetTimestamp(),
                    "VisionSystem.DetectFaces.BadImageTimestamp");
       
-      const cv::Rect_<f32> imgRect(0,0,grayImage.GetNumCols(),grayImage.GetNumRows());
-      
       for(auto & quad : markerQuads)
       {
-        Anki::Rectangle<f32> rect(quad);
-        cv::Mat roi = maskedImage.get_CvMat_()(rect.get_CvRect_() & imgRect);
-        roi.setTo(0);
+        Anki::Rectangle<s32> rect(quad); // Bounding box of this quad
+        Vision::Image roi = maskedImage.GetROI(rect);
+        
+        if(!roi.IsEmpty())
+        {
+          roi.FillWith(0);
+        }
       }
       
 #     if DEBUG_FACE_DETECTION
