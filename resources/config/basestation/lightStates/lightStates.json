@@ -62,6 +62,20 @@
         "offOffset"                : [0,0,0,0],
         "rotationPeriod_ms"        : 0
     },
+  
+    "sleep" : {
+        "onColors"                 : [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]],
+        "offColors"                : [[0, 0, 0, 1], [0, 0, 0, 1], [0, 0, 0, 1], [0, 0, 0, 1]],
+        "onPeriod_ms"              : [100,100,100,100],
+        "offPeriod_ms"             : [1000,1000,1000,1000],
+        "transitionOnPeriod_ms"    : [100,100,100,100],
+        "transitionOffPeriod_ms"   : [1000,1000,1000,1000],
+        "onOffset"                 : [0,0,0,0],
+        "offOffset"                : [0,0,0,0],
+        "rotationPeriod_ms"        : 0
+    },
+  
+    "sleepDuration_ms" : 2000,
 
     "fadePeriod_ms" : 200,
     "fadeTransitionTime_ms" : 1000

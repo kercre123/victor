@@ -680,6 +680,10 @@ message EnableLightStates {
   bool enable
 }
 
+message EnableCubeSleep {
+  bool enable
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////

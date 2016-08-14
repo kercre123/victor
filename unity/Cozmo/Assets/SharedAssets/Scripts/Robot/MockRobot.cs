@@ -871,6 +871,9 @@ public class MockRobot : IRobot {
   public void SendQueueCompoundAction(Anki.Cozmo.ExternalInterface.RobotActionUnion[] actions, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool isParallel = false) {
   }
 
+  public void EnableCubeSleep(bool enable) {
+  }
+
   public event LightCubeStateEventHandler OnLightCubeAdded;
   public event LightCubeStateEventHandler OnLightCubeRemoved;
 

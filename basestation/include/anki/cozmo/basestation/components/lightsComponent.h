@@ -86,6 +86,7 @@ private:
     
     CubeLightsState desiredState;
     CubeLightsState currState;
+    CubeLightsState prevState;
     TimeStamp_t     lastObservedTime_ms;
     TimeStamp_t     startCurrStateTime;
     // When we are fading between states this keeps track of what the starting and ending states are
@@ -116,10 +117,11 @@ private:
   
   std::list<Signal::SmartHandle> _eventHandles;
   
-  u32 _wakeupTime_ms = 0;
+  u32 _wakeupTime_ms    = 0;
   u32 _wakeupFadeOut_ms = 0;
-  u32 _fadePeriod_ms = 0;
-  u32 _fadeTime_ms = 0;
+  u32 _fadePeriod_ms    = 0;
+  u32 _fadeTime_ms      = 0;
+  u32 _sleepTime_ms     = 0;
   
 }; // class LightsComponent
 

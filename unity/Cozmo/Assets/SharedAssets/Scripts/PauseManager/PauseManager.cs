@@ -5,12 +5,12 @@ using System.Collections;
 namespace Cozmo {
   public class PauseManager : MonoBehaviour {
 
-    [Range(-1f,120f)]
+    [Range(-1f, 120f)]
     public float TimeTilFaceOff_s;
 
-    [Range(-1f,120f)]
+    [Range(-1f, 120f)]
     public float TimeTilDisconnect_s;
-    
+
     private static PauseManager _Instance;
     private bool _IsPaused = false;
     private AlertView _GoToSleepDialog = null;
@@ -49,8 +49,8 @@ namespace Cozmo {
     private void Start() {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.GoingToSleep>(HandleGoingToSleep);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnection);
-    } 
-   
+    }
+
     private void Update() {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (null != robot) {
@@ -123,6 +123,7 @@ namespace Cozmo {
 
         if (null != robot && null != hub) {
           hub.StartFreeplay(robot);
+          robot.EnableCubeSleep(false);
         }
       }
     }
@@ -131,7 +132,7 @@ namespace Cozmo {
       CloseBatteryDialog();
       CloseSleepDialog();
       _IsOnChargerToSleep = true;
-      Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside:false);
+      Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
       alertView.SetCloseButtonEnabled(false);
       alertView.TitleLocKey = LocalizationKeys.kConnectivityCozmoSleepTitle;
       alertView.DescriptionLocKey = LocalizationKeys.kConnectivityCozmoSleepDesc;

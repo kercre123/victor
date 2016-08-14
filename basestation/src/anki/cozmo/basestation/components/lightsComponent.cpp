@@ -35,6 +35,7 @@ LightsComponent::LightsComponent(Robot& robot)
     helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectMoved>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectConnectionState>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableLightStates>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableCubeSleep>();
   }
   
   if(robot.GetContextDataPlatform() != nullptr)
@@ -49,11 +50,13 @@ LightsComponent::LightsComponent(Robot& robot)
         AddLightStateValues(CubeLightsState::Connected,     json["connected"]);
         AddLightStateValues(CubeLightsState::Visible,       json["visible"]);
         AddLightStateValues(CubeLightsState::Interacting,   json["interacting"]);
+        AddLightStateValues(CubeLightsState::Sleep,         json["sleep"]);
         
         _wakeupTime_ms    = json["wakeUpDuration_ms"].asUInt();
         _wakeupFadeOut_ms = json["wakeUpFadeOutDuration_ms"].asUInt();
         _fadePeriod_ms    = json["fadePeriod_ms"].asUInt();
         _fadeTime_ms      = json["fadeTransitionTime_ms"].asUInt();
+        _sleepTime_ms     = json["sleepDuration_ms"].asUInt();
       }
     }
   }
@@ -138,6 +141,11 @@ void LightsComponent::Update()
       fadeFromTo.first = CubeLightsState::Invalid;
       fadeFromTo.second = CubeLightsState::Invalid;
     }
+    else if(currState == CubeLightsState::Sleep &&
+            timeDiff > _sleepTime_ms)
+    {
+      newState = CubeLightsState::Off;
+    }
     
     // If we're interacting with this object, put it in interacting state
     // but only if we are not already fading to an interacting state
@@ -145,6 +153,14 @@ void LightsComponent::Update()
        fadeFromTo.second != CubeLightsState::Interacting)
     {
       newState = CubeLightsState::Interacting;
+    }
+    // Otherwise if we are just finished interacting with the cube and we aren't carrying the cube
+    // go back to connected
+    else if(_interactionObjects.count((cubeInfoPair.first) == 0) &&
+            currState == CubeLightsState::Interacting &&
+            _robot.GetCarryingObject() != cubeInfoPair.first)
+    {
+      newState = CubeLightsState::Connected;
     }
     
     // Only fade if we did not just end a fade and we can fade from current state to the new state
@@ -188,12 +204,18 @@ bool LightsComponent::ShouldOverrideState(CubeLightsState currState, CubeLightsS
 bool LightsComponent::FadeBetween(CubeLightsState from, CubeLightsState to,
                                   std::pair<CubeLightsState, CubeLightsState>& fadeFromTo)
 {
+  if(from == to || from == CubeLightsState::Fade || to == CubeLightsState::Fade)
+  {
+    return false;
+  }
+  
   // These are all the state transitions that we should fade between really only works well
   // when fading from/to states that are solid colors
   if((from == CubeLightsState::Visible      && to == CubeLightsState::Interacting) ||
      (from == CubeLightsState::Interacting  && to == CubeLightsState::Visible) ||
      (from == CubeLightsState::Visible      && to == CubeLightsState::Connected) ||
-     (from == CubeLightsState::Interacting  && to == CubeLightsState::Connected))
+     (from == CubeLightsState::Interacting  && to == CubeLightsState::Connected) ||
+     (from == CubeLightsState::Off          && to != CubeLightsState::WakeUp))
   {
     fadeFromTo.first = from;
     fadeFromTo.second = to;
@@ -247,6 +269,13 @@ void LightsComponent::SetLights(ObjectID object, CubeLightsState state)
   
   _cubeInfo[object].startCurrStateTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();;
   
+  // Don't update prevState if our current state is sleep
+  if(_cubeInfo[object].currState != CubeLightsState::Sleep &&
+     _cubeInfo[object].currState != CubeLightsState::Off)
+  {
+    _cubeInfo[object].prevState = _cubeInfo[object].currState;
+  }
+  
   _cubeInfo[object].currState = state;
   
   PRINT_NAMED_INFO("LightsComponent.SetLights",
@@ -264,7 +293,6 @@ void LightsComponent::SetLights(ObjectID object, CubeLightsState state)
                          Point2f{0,0}, values.rotationPeriod_ms);
 }
 
-// TODO:(bn) handle disconnected? can't really change the lights in that case anyway....
 
 template<>
 void LightsComponent::HandleMessage(const ExternalInterface::RobotObservedObject& msg)
@@ -305,6 +333,36 @@ template<>
 void LightsComponent::HandleMessage(const ExternalInterface::EnableLightStates& msg)
 {
   SetEnableComponent(msg.enable);
+}
+
+template<>
+void LightsComponent::HandleMessage(const ExternalInterface::EnableCubeSleep& msg)
+{
+  if(msg.enable)
+  {
+    for(auto& pair : _cubeInfo)
+    {
+      pair.second.desiredState = CubeLightsState::Sleep;
+    }
+  }
+  else
+  {
+    // If coming out of sleep go back to previous states
+    for(auto& pair : _cubeInfo)
+    {
+      pair.second.desiredState = pair.second.prevState;
+      
+      // If returning to a previous state of interacting or fading just go back to visible
+      if(pair.second.desiredState == CubeLightsState::Interacting ||
+         pair.second.fadeFromTo.first != CubeLightsState::Invalid)
+      {
+        pair.second.desiredState = CubeLightsState::Visible;
+      }
+    }
+  }
+  // Make sure we are enabled
+  _enabled = true;
+  UpdateToDesiredLights();
 }
 
 LightsComponent::ObjectInfo::ObjectInfo()

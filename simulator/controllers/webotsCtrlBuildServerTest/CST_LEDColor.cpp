@@ -94,6 +94,13 @@ s32 CST_LEDColor::UpdateSimInternal()
     case TestState::Init:
     {
       CozmoSimTestController::MakeSynchronous();
+      
+      ExternalInterface::EnableLightStates m;
+      m.enable = false;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_EnableLightStates(m);
+      SendMessage(message);
+      
       SendMoveHeadToAngle(kHeadLookupAngle_rad, 100, 100);
 
       _testState = TestState::WaitForHeadUp;

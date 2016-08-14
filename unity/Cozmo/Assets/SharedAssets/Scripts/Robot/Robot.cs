@@ -452,10 +452,10 @@ public class Robot : IRobot {
     TrackToObject(null);
     CancelAllCallbacks();
     RobotStartIdle();
-    foreach (KeyValuePair<int, LightCube> kvp in LightCubes) {
-      kvp.Value.SetLEDs(Color.black);
-    }
+
+    EnableCubeSleep(true);
     SetBackpackLEDs(Color.black.ToUInt());
+    SetAllBackpackLEDs();
 
     TryResetHeadAndLift(onComplete);
   }
@@ -1814,6 +1814,11 @@ public class Robot : IRobot {
 
   public void NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag tag, ushort size, byte[] data, byte index, byte numTotalBlobs) {
     RobotEngineManager.Instance.Message.NVStorageWriteEntry = Singleton<NVStorageWriteEntry>.Instance.Initialize(tag, size, data, index, numTotalBlobs);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void EnableCubeSleep(bool enable) {
+    RobotEngineManager.Instance.Message.EnableCubeSleep = Singleton<EnableCubeSleep>.Instance.Initialize(enable);
     RobotEngineManager.Instance.SendMessage();
   }
 }
