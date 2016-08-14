@@ -53,6 +53,11 @@ def main(cli_args):
                       `["speedTapFakeOut1", "testSound"]`). Leave empty to run all available
                       animations.""")
 
+  parser.add_argument('--showGraphics',
+                      dest='show_graphics',
+                      action='store_true',
+                      help='display Webots window')
+
   (options, _) = parser.parse_known_args(cli_args)
 
   if not options.animationList:
@@ -87,15 +92,20 @@ def main(cli_args):
   with open(webotsTest.get_subpath("project/build-scripts/webots", GENERATED_CFG_NAME), 'w+') as generated_cfg_file:
     generated_cfg_file.write(generated_cfg_file_data)
 
-  # Run all the webots animation tests with the newly generated cfg file.
-  assert webotsTest.main([
+  webotsTest_arguments = [
     "--buildType", build_type,
     "--configFile", GENERATED_CFG_NAME,
     "--numRuns", str(options.numRuns),
     "--password", options.password,
     "--timeout", 30,
     "--numRetries", 0  # Don't retry any animations since the whole point of this is to catch intermittent aborts
-    ]) == 0 # assert webotsTest.main(...) == 0 failed
+  ]
+
+  if options.show_graphics:
+    webotsTest_arguments.append("--showGraphics")
+
+  # Run all the webots animation tests with the newly generated cfg file.
+  assert webotsTest.main(webotsTest_arguments) == 0
 
 def fetch_all_available_animations(password = "", build_type = "Debug"):
   """Fetch all the animations available to cozmo.
