@@ -78,12 +78,13 @@ namespace Cozmo.Minigame.CubePounce {
     }
 
     public LightCube GetCubeTarget() {
-      if (_CurrentTarget == null) {
-        if (this.CubeIdsForGame.Count > 0) {
-          _CurrentTarget = CurrentRobot.LightCubes[this.CubeIdsForGame[0]];
-        }
-      }
       return _CurrentTarget;
+    }
+
+    public void SelectCubeTarget() {
+      if (this.CubeIdsForGame.Count > 0) {
+        _CurrentTarget = CurrentRobot.LightCubes[this.CubeIdsForGame[0]];
+      }
     }
 
     public void ResetPounceChance() {
@@ -179,7 +180,7 @@ namespace Cozmo.Minigame.CubePounce {
     }
 
     private void HandleCubeMoved(int id, float accX, float accY, float aaZ) {
-      if (id == GetCubeTarget().ID) {
+      if (null != _CurrentTarget && id == _CurrentTarget.ID) {
         _CubeCurrentlyMoving = true;
 
         if (CurrentlyInFakeoutState && GameConfig.FakeoutMovePenaltyEnabled) {
@@ -201,7 +202,7 @@ namespace Cozmo.Minigame.CubePounce {
     }
 
     private void HandleCubeStopped(int id) {
-      if (id == GetCubeTarget().ID) {
+      if (null != _CurrentTarget && id == _CurrentTarget.ID) {
         _CubeCurrentlyMoving = false;
       }
     }

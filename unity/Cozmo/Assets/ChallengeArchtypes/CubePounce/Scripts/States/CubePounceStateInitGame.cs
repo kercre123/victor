@@ -12,6 +12,7 @@ namespace Cozmo.Minigame.CubePounce {
       _CubePounceGame.SharedMinigameView.HideMiddleBackground();
       _CubePounceGame.SharedMinigameView.HideContinueButton();
       _CubePounceGame.UpdateScoreboard();
+      _CubePounceGame.SelectCubeTarget();
 
       LightCube target = _CubePounceGame.GetCubeTarget();
       // If we don't have a cube ready for whatever reason, go back to the initial cube state
