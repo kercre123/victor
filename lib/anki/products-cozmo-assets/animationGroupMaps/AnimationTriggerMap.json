@@ -214,11 +214,11 @@
     },
     {
       "CladEvent": "FrustratedByFailure",
-      "AnimName": "ag_memorymatch_failgame_cozmo"
+      "AnimName": "ag_reacttoblock_frustrated"
     },
     {
       "CladEvent": "FrustratedByFailureMajor",
-      "AnimName": "ag_memorymatch_failgame_cozmo"
+      "AnimName": "ag_reacttoblock_frustrated"
     },
     {
       "CladEvent": "GoToSleepGetIn",
@@ -278,7 +278,7 @@
     },
     {
       "CladEvent": "KnockOverEyes",
-      "AnimName": "interactWithFaces_squint"
+      "AnimName": "ag_reacttoblock_focusedeyes"
     },
     {
       "CladEvent": "KnockOverGrabAttempt",
