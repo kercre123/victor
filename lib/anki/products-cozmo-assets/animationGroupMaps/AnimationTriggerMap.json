@@ -65,12 +65,12 @@
       "AnimName": "ag_keepaway_losegame"
     },
     {
-      "CladEvent": "CubePouncePounce_0",
+      "CladEvent": "CubePouncePounceNormal",
       "AnimName": "ag_keepaway_pounce"
     },
     {
-      "CladEvent": "CubePouncePounce_1",
-      "AnimName": "ag_keepaway_fastpounce"
+      "CladEvent": "CubePouncePounceClose",
+      "AnimName": "ag_keepaway_pounce_mousetrap"
     },
     {
       "CladEvent": "CubePounceWinHand",

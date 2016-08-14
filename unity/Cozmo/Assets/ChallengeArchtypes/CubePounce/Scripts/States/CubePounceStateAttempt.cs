@@ -22,10 +22,10 @@ namespace Cozmo.Minigame.CubePounce {
       _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoWaitForPounce);
 
       if (!_UseClosePounce) {
-        _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePouncePounce_0, HandlePounceEnd);
+        _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePouncePounceNormal, HandlePounceEnd);
       }
       else {
-        TriggerClosePounce();
+        _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePouncePounceClose, HandlePounceEnd);
       }
     }
 
@@ -48,25 +48,6 @@ namespace Cozmo.Minigame.CubePounce {
     private void HandlePounceEnd(bool success) {
       // If we got to the end of the post animation delay without triggering the angle diff, cozmo lost
       _StateMachine.SetNextState(new CubePounceStatePostPoint(cozmoWon: false));
-    }
-
-    private void TriggerClosePounce() {
-
-      RobotActionUnion[] actions = new RobotActionUnion[3];
-      actions[0] = new RobotActionUnion().Initialize(Singleton<DriveStraight>.Instance.Initialize(500, 15, false));
-      actions[1] = new RobotActionUnion().Initialize(new SetLiftHeight(
-        height_mm: CozmoUtil.kMinLiftHeightMM,
-        accel_rad_per_sec2: 10f,
-        max_speed_rad_per_sec: 20f,
-        duration_sec: 0f));
-
-      actions[2] = new RobotActionUnion().Initialize(new SetLiftHeight(
-        height_mm: CozmoUtil.kMaxLiftHeightMM,
-        accel_rad_per_sec2: 10f,
-        max_speed_rad_per_sec: 20f,
-        duration_sec: 0f));
-
-      _CurrentRobot.SendQueueCompoundAction(actions, HandlePounceEnd);
     }
   }
 }

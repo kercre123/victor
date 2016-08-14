@@ -43,13 +43,10 @@ namespace Cozmo.Minigame.CubePounce {
     }
 
     private void ReactToCubeInRange() {
-      // TODO:(lc) when all getins have lift ending high, enable this instead of setting lift height directly
-      //_CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetReady, HandleGetInAnimFinish);
+      _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetReady, HandleGetInAnimFinish);
 
       // TODO:(lc) when these idles are ready (have head angle and lift height set correctly) enable them
       //_CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.CubePounceIdleLiftUp);
-
-      _CurrentRobot.SetLiftHeight(1.0f, HandleGetInAnimFinish);
 
       _GetReadyAnimInProgress = true;
     }
