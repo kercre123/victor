@@ -141,14 +141,23 @@ namespace Cozmo {
 
         private bool DriveWheelsIfNeeded() {
           bool droveWheels = false;
-          if (ShouldPointTurn(_TargetDriveSpeed_mmps, _TargetTurnDirection)) {
-            _CurrentDriveSpeed_mmps = PointTurnRobotWheels(_TargetTurnDirection);
-            _CurrentTurnDirection = _TargetTurnDirection;
+          // Is the user telling us to point turn?
+          if (IsUserPointTurning(_TargetDriveSpeed_mmps, _TargetTurnDirection)) {
+            // Send a new message only if there is a change
+            if (!_TargetTurnDirection.IsNear(_CurrentTurnDirection, _kTurnDirectionChangeThreshold)) {
+              _CurrentDriveSpeed_mmps = PointTurnRobotWheels(_TargetTurnDirection);
+              _CurrentTurnDirection = _TargetTurnDirection;
+            }
             droveWheels = true;
           }
-          else if (ShouldDrive(_TargetDriveSpeed_mmps, _TargetTurnDirection)) {
-            _CurrentDriveSpeed_mmps = DriveRobotWheels(_TargetDriveSpeed_mmps, _TargetTurnDirection);
-            _CurrentTurnDirection = _TargetTurnDirection;
+          // Is the user telling us to drive?
+          else if (IsUserDriving(_TargetDriveSpeed_mmps, _TargetTurnDirection)) {
+            // Send a new message only if there is a change
+            if (!_TargetTurnDirection.IsNear(_CurrentTurnDirection, _kTurnDirectionChangeThreshold)
+                || !_TargetDriveSpeed_mmps.IsNear(_CurrentDriveSpeed_mmps, _kDriveSpeedChangeThreshold_mmps)) {
+              _CurrentDriveSpeed_mmps = DriveRobotWheels(_TargetDriveSpeed_mmps, _TargetTurnDirection);
+              _CurrentTurnDirection = _TargetTurnDirection;
+            }
             droveWheels = true;
           }
           else if (ShouldStopDriving(_TargetDriveSpeed_mmps, _CurrentDriveSpeed_mmps, _TargetTurnDirection)) {
@@ -165,22 +174,26 @@ namespace Cozmo {
 
         private bool DriveHeadIfNeeded() {
           bool droveHead = false;
-          if (ShouldDriveHead(_TargetDriveHeadSpeed_radps)) {
+          // Is the user telling us to drive the head?
+          if (IsUserDrivingHead(_TargetDriveHeadSpeed_radps)) {
+            // Send a new message only if there is a change
+            if (!_TargetDriveHeadSpeed_radps.IsNear(_CurrentDriveHeadSpeed_radps, _kHeadTiltChangeThreshold_radps)) {
+              _CurrentRobot.DriveHead(_TargetDriveHeadSpeed_radps);
+              _CurrentDriveHeadSpeed_radps = _TargetDriveHeadSpeed_radps;
+            }
             HeadDrivingDebugText = "\nPlayer driving head   timestamp=" + _StoppedDrivingHeadTimestamp;
-            _CurrentRobot.DriveHead(_TargetDriveHeadSpeed_radps);
-            _CurrentDriveHeadSpeed_radps = _TargetDriveHeadSpeed_radps;
-            droveHead = true;
             _StoppedDrivingHeadTimestamp = -1f;
+            droveHead = true;
           }
           else if (ShouldStopDriveHead(_TargetDriveHeadSpeed_radps)) {
-            _TargetDriveSpeed_mmps = 0f;
+            _TargetDriveHeadSpeed_radps = 0f;
             _CurrentDriveHeadSpeed_radps = 0f;
             _CurrentRobot.DriveHead(0f);
-            droveHead = true;
-            _StoppedDrivingHeadTimestamp = Time.time;
             _LockedHeadAngle_rad = _CurrentRobot.HeadAngle;
             _CurrentRobot.SetHeadAngle(_LockedHeadAngle_rad, useExactAngle: true);
+            _StoppedDrivingHeadTimestamp = Time.time;
             HeadDrivingDebugText = "\nPlayer stop driving head   timestamp=" + _StoppedDrivingHeadTimestamp;
+            droveHead = true;
           }
           else if (ShouldHoldHead()) {
             HeadDrivingDebugText = "\nCozmo holding head   timestamp=" + _StoppedDrivingHeadTimestamp;
@@ -201,16 +214,13 @@ namespace Cozmo {
           }
         }
 
-        private bool ShouldPointTurn(float targetDriveSpeed, float targetTurnDirection) {
+        private bool IsUserPointTurning(float targetDriveSpeed, float targetTurnDirection) {
           return targetDriveSpeed.IsNear(0f, _kDriveSpeedChangeThreshold_mmps)
-                                 && !targetTurnDirection.IsNear(0f, _kTurnDirectionChangeThreshold)
-                                 && !targetTurnDirection.IsNear(_CurrentTurnDirection, _kTurnDirectionChangeThreshold);
+                                 && !targetTurnDirection.IsNear(0f, _kTurnDirectionChangeThreshold);
         }
 
-        private bool ShouldDrive(float targetDriveSpeed, float targetTurnDirection) {
-          return !targetDriveSpeed.IsNear(0f, _kDriveSpeedChangeThreshold_mmps)
-                                  && (!targetDriveSpeed.IsNear(_CurrentDriveSpeed_mmps, _kDriveSpeedChangeThreshold_mmps)
-                                      || !targetTurnDirection.IsNear(_CurrentTurnDirection, _kTurnDirectionChangeThreshold));
+        private bool IsUserDriving(float targetDriveSpeed, float targetTurnDirection) {
+          return !targetDriveSpeed.IsNear(0f, _kDriveSpeedChangeThreshold_mmps);
         }
 
         private bool ShouldStopDriving(float targetDriveSpeed, float currentDriveSpeed, float targetTurnDirection) {
@@ -219,9 +229,8 @@ namespace Cozmo {
                                  && targetTurnDirection.IsNear(0f, _kTurnDirectionChangeThreshold);
         }
 
-        private bool ShouldDriveHead(float targetHeadSpeed) {
-          return !targetHeadSpeed.IsNear(_CurrentDriveHeadSpeed_radps, _kHeadTiltChangeThreshold_radps)
-                                 && !targetHeadSpeed.IsNear(0f, _kHeadTiltChangeThreshold_radps);
+        private bool IsUserDrivingHead(float targetHeadSpeed) {
+          return !targetHeadSpeed.IsNear(0f, _kHeadTiltChangeThreshold_radps);
         }
 
         private bool ShouldStopDriveHead(float targetHeadSpeed) {
