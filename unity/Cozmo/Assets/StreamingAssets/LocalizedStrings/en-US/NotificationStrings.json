@@ -19,16 +19,13 @@
     ]
   },
   "notification.local1": {
-    "translation": "Cozmo misses you!"
+    "translation": "New Daily Goals are available for Cozmo!"
   },
   "notification.local2": {
-    "translation": "Come back!"
+    "translation": "Cozmo misses you!  Check in soon or he will begin to lose energy."
   },
   "notification.local3": {
-    "translation": "How about a game of Quick Tap?"
-  },
-  "notification.local4": {
-    "translation": "◕︵◕"
+    "translation": "Cozmo wants to play!  How about a game of Quick Tap?"
   }
 
 }
