@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Cozmo remote control</title>
+    
+        <style>
+            html {
+                min-height: 100%;
+            }
+
+            body {
+                background-size: cover;
+                background-repeat: no-repeat;
+                background-position: 50% 50%;
+            }
+        </style>
+    </head>
+    <body>
+
+        <script>
+            var currentImage;
+
+            function send(payload) {
+                var xhr = new XMLHttpRequest();
+
+                xhr.open("POST", payload.type, true);
+                xhr.send(JSON.stringify(payload));
+            }
+
+            var img = new Image();
+            img.style.position = "fixed";
+
+            document.body.appendChild(img);
+
+            function read() {
+                var scale = Math.min(window.innerHeight / img.height, window.innerWidth / img.width);
+
+                var width = img.width * scale;
+                var height = img.height * scale;
+                var offX = Math.floor((window.innerWidth - width) / 2);
+                var offY = Math.floor((window.innerHeight - height) / 2);
+
+                console.log(width, height, offX, offY);
+
+                img.style.top = `${offY}px`;
+                img.style.left = `${offX}px`;
+                img.style.width = `${width}px`;
+                img.style.height = `${height}px`;
+
+                img.src = "/camera?" + (+new Date());
+            }
+
+            img.onload = read;
+            img.onerror = read;
+
+            var motors = { left: 0, right: 0 }
+            var lights = { type: 'lights', red: 0, green: 0, blue: 0 }
+
+            function calcSpeed(motors) {
+            var left = 0, right = 0;
+                if (motors.up) {
+                    left  += 100.0;
+                    right += 100.0;
+                }
+                if (motors.down) {
+                    left  -= 100.0;
+                    right -= 100.0;
+                }
+                if (motors.left) {
+                    left  -= 100.0;
+                    right += 100.0;
+                }
+                if (motors.right) {
+                    left  += 100.0;
+                    right -= 100.0;
+                }
+
+                send({ type: "motors", left, right, lift: motors.lift, head: motors.head });
+            }
+
+            document.addEventListener("keydown", function (e) {
+                var doMotor, doLight;
+                switch (e.keyCode) {
+                case 87: // W
+                    motors.lift = +1.0;
+                    doMotor = true;
+                    break ;
+                case 83: // S
+                    motors.lift = -1.0;
+                    doMotor = true;
+                    break ;
+                case 69: // E
+                    motors.head = +1.5;
+                    doMotor = true;
+                    break ;
+                case 68: // D
+                    motors.head = -1.5;
+                    doMotor = true;
+                    break ;
+                case 38: // up
+                    motors.up = true;
+                    doMotor = true;
+                    break ;
+                case 40: // down
+                    motors.down = true;
+                    doMotor = true;
+                    break ;
+                case 37: // left
+                    motors.left = true;
+                    doMotor = true;
+                    break ;
+                case 39: // right
+                    motors.right = true;
+                    doMotor = true;
+                    break ;
+                case 49:
+                    lights.red = 1;
+                    doLight = true;
+                    break ;
+                case 50:
+                    lights.green = 1;
+                    doLight = true;
+                    break ;
+                case 51:
+                    lights.blue = 1;
+                    doLight = true;
+                    break ;
+                }
+
+                if (doMotor) calcSpeed(motors);
+                if (doLight) send(lights);
+            });
+
+            document.addEventListener("keyup", function (e) {
+                var doMotor, doLight;
+                switch (e.keyCode) {
+                case 38: // up
+                    motors.up = false;
+                    doMotor = true;
+                    break ;
+                case 40: // down
+                    motors.down = false;
+                    doMotor = true;
+                    break ;
+                case 37: // left
+                    motors.left = false;
+                    doMotor = true;
+                    break ;
+                case 39: // right
+                    motors.right = false;
+                    doMotor = true;
+                    break ;
+                case 49:
+                    lights.red = 0;
+                    doLight = true;
+                    break ;
+                case 50:
+                    lights.green = 0;
+                    doLight = true;
+                    break ;
+                case 51:
+                    lights.blue = 0;
+                    doLight = true;
+                    break ;
+                }
+
+                if (doMotor) calcSpeed(motors);
+                if (doLight) send(lights);
+            });
+
+            read();
+        </script>
+    </body>
+</html>
