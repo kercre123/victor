@@ -242,8 +242,14 @@ namespace Cozmo {
 
         private float DriveRobotWheels(float driveSpeed_mmps, float turnDirection) {
           float driveRobotSpeed_mmps = 0f;
-          float arcRadius_mm = _kRadiusMax_mm;
-          if (driveSpeed_mmps > 0) {
+
+          // Don't turn when going backwards (or when not turning... obviously)
+          if (driveSpeed_mmps < 0 || turnDirection.IsNear(0f, _kTurnDirectionChangeThreshold)) {
+            driveRobotSpeed_mmps = driveSpeed_mmps;
+            _CurrentRobot.DriveWheels(driveSpeed_mmps, driveSpeed_mmps);
+          }
+          else {
+            float arcRadius_mm = _kRadiusMax_mm;
             // Drive slower while turning so that we're not spinning like crazy
             float absTurnFactor = Mathf.Abs(turnDirection);
             driveRobotSpeed_mmps = driveSpeed_mmps * (1 - (absTurnFactor * absTurnFactor * absTurnFactor)); // Cubic ease
@@ -254,15 +260,11 @@ namespace Cozmo {
             if (turnDirection > 0f) {
               arcRadius_mm *= -1;
             }
-          }
-          else {
-            // Don't turn when going backwards
-            driveRobotSpeed_mmps = driveSpeed_mmps;
+            _CurrentRobot.DriveArc(driveRobotSpeed_mmps, (int)arcRadius_mm);
           }
 
           // TODO remove debug text field
           TiltDrivingDebugText = "Drive Arc: \nspeed mmps = " + driveRobotSpeed_mmps + " \nradius mm = " + arcRadius_mm + "\ntilt = " + _TargetTurnDirection;
-          _CurrentRobot.DriveArc(driveRobotSpeed_mmps, (int)arcRadius_mm);
           return driveRobotSpeed_mmps;
         }
 
