@@ -242,6 +242,7 @@ namespace Cozmo {
 
         private float DriveRobotWheels(float driveSpeed_mmps, float turnDirection) {
           float driveRobotSpeed_mmps = 0f;
+          float arcRadius_mm = _kRadiusMax_mm;
 
           // Don't turn when going backwards (or when not turning... obviously)
           if (driveSpeed_mmps < 0 || turnDirection.IsNear(0f, _kTurnDirectionChangeThreshold)) {
@@ -249,10 +250,12 @@ namespace Cozmo {
             _CurrentRobot.DriveWheels(driveSpeed_mmps, driveSpeed_mmps);
           }
           else {
-            float arcRadius_mm = _kRadiusMax_mm;
+            // COZMO-3737: Drive speed should only be denoted by the slider & not tilt direction
+            driveRobotSpeed_mmps = driveSpeed_mmps;
+
             // Drive slower while turning so that we're not spinning like crazy
-            float absTurnFactor = Mathf.Abs(turnDirection);
-            driveRobotSpeed_mmps = driveSpeed_mmps * (1 - (absTurnFactor * absTurnFactor * absTurnFactor)); // Cubic ease
+            // float absTurnFactor = Mathf.Abs(turnDirection);
+            // driveRobotSpeed_mmps = driveSpeed_mmps * (1 - (absTurnFactor * absTurnFactor * absTurnFactor)); // Cubic ease
 
             // Turn more sharply with a greater tilt
             float turnFactor = (1 - Mathf.Abs(turnDirection));
