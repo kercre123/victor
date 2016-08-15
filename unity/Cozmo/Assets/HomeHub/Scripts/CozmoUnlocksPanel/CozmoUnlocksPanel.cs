@@ -67,6 +67,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     // Sort within themselves on "SortOrder" since locked doesn't show anything, no need to sort.
     unlockedUnlockData.Sort();
     unlockableUnlockData.Sort();
+	lockedUnlockData.Sort();
 
     GameObject tileInstance;
     CozmoUnlockableTile unlockableTile;

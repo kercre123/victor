@@ -32,5 +32,5 @@ MonoBehaviour:
   CoreUpgradeOverlayIcon: {fileID: 21300000, guid: b12267f4ea5db4008810a349fcc9116e,
     type: 3}
   CubesRequired: 0
-  SortOrder: 100
+  SortOrder: 400
   _TimeSparkedSec: 60
