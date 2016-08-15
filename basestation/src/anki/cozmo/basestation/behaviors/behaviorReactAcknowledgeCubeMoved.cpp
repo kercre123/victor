@@ -29,6 +29,9 @@ const float kRadiusRobotTolerence = 50;
 namespace Anki {
 namespace Cozmo {
 
+namespace {
+CONSOLE_VAR(bool, kEnableObjectMovedReact, "BehaviorReactAcknowledgeCubeMoved", false);
+}
 
 class ReactionObjectData{
 public:
@@ -82,7 +85,7 @@ BehaviorReactAcknowledgeCubeMoved::BehaviorReactAcknowledgeCubeMoved(Robot& robo
 
 bool BehaviorReactAcknowledgeCubeMoved::IsRunnableInternalReactionary(const Robot& robot) const
 {
-  return true;
+  return kEnableObjectMovedReact;
 }
   
 bool BehaviorReactAcknowledgeCubeMoved::ShouldComputationallySwitch(const Robot& robot)

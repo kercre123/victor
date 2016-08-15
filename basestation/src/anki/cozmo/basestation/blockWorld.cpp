@@ -3696,8 +3696,10 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     sameDistTol.x() *= 0.5f;  // An object should only be considered to be on top if it's midpoint is actually on top of the bottom object's top surface.
     sameDistTol.y() *= 0.5f;
     sameDistTol.z() = zTolerance;
-    sameDistTol = objectOnBottom.GetPose().GetRotation() * sameDistTol;
     sameDistTol.Abs();
+
+    Rotation3d rotateBacktoAxisAligned(objectOnBottom.GetPose().GetRotation());
+    rotateBacktoAxisAligned.Invert();
     
     // Find the point at the top middle of the object on bottom
     Point3f rotatedBtmSize(objectOnBottom.GetPose().GetRotation() * objectOnBottom.GetSize());
@@ -3706,25 +3708,27 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     
     BlockWorldFilter filter(filterIn);
     filter.AddIgnoreID(objectOnBottom.GetID());
-    filter.AddFilterFcn([&topOfObjectOnBottom, &sameDistTol](const ObservableObject* candidateObject)
-                        {
-                          // Find the point at bottom middle of the object we're checking to be on top
-                          Point3f rotatedTopSize(candidateObject->GetPose().GetRotation() * candidateObject->GetSize());
-                          Point3f bottomOfCandidateObject(candidateObject->GetPose().GetTranslation());
-                          bottomOfCandidateObject.z() -= 0.5f*std::abs(rotatedTopSize.z());
+    filter.AddFilterFcn(
+      [&topOfObjectOnBottom, &sameDistTol, &rotateBacktoAxisAligned](const ObservableObject* candidateObject)
+      {
+        // Find the point at bottom middle of the object we're checking to be on top
+        Point3f rotatedTopSize(candidateObject->GetPose().GetRotation() * candidateObject->GetSize());
+        Point3f bottomOfCandidateObject(candidateObject->GetPose().GetTranslation());
+        bottomOfCandidateObject.z() -= 0.5f*std::abs(rotatedTopSize.z());
                           
-                          // If the top of the bottom object and the bottom the candidate top object are
-                          // close enough together, return this as the object on top
-                          Point3f dist(topOfObjectOnBottom);
-                          dist -= bottomOfCandidateObject;
-                          dist.Abs();
-                          
-                          if(dist < sameDistTol) {
-                            return true;
-                          } else {
-                            return false;
-                          }
-                        });
+        // If the top of the bottom object and the bottom the candidate top object are
+        // close enough together, return this as the object on top
+        Point3f dist(topOfObjectOnBottom);
+        dist -= bottomOfCandidateObject;
+        dist = rotateBacktoAxisAligned * dist;
+        dist.Abs();
+
+        if(dist < sameDistTol) {
+          return true;
+        } else {
+          return false;
+        }
+      });
     
     return FindObjectHelper(filter, nullptr, true);
   }
