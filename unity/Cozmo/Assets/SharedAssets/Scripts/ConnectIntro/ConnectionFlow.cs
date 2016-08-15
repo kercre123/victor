@@ -7,7 +7,7 @@ public class ConnectionFlow : MonoBehaviour {
   public System.Action ConnectionFlowComplete;
   public System.Action ConnectionFlowQuit;
 
-  public const float kConnectionFlowDelay = 1.5f;
+  public const float kConnectionFlowDelay = 3.0f;
 
   [SerializeField]
   private ConnectionFlowBackground _ConnectionFlowBackgroundPrefab;
@@ -213,12 +213,13 @@ public class ConnectionFlow : MonoBehaviour {
     if (!success) {
       DAS.Warn("ConnectionFlow.FirmwareUpdated", "Firmware Update Failed");
       GameObject.Destroy(_UpdateFirmwareScreenInstance.gameObject);
-      ReplaceCozmoOnCharger();
+
     }
     else {
       DAS.Info("ConnectionFlow.FirmwareUpdated", "Firmware Update Successful");
-      // if it does succeed the robot should eventually disconnect, then HandleRobotDisconnect will take care of the flow
     }
+
+    ReplaceCozmoOnCharger();
 
   }
 
