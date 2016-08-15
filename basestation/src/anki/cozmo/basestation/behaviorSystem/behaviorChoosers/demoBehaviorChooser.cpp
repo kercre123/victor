@@ -47,7 +47,7 @@ static const char* kFearEdgeBehavior = "demo_fearEdge";
 static const char* kFlipDownFromBackBehavior = "ReactToRobotOnBack";
 // static const char* kSleepOnChargerBehavior = "ReactToOnCharger";
 static const char* kFindFacesBehavior = "demo_lookInPlaceForFaces";
-static const char* kKnockOverStackBehavior = "AdmireStack";
+//static const char* kKnockOverStackBehavior = "AdmireStack";
 static const char* kDemoGameRequestBehaviorName = "demo_RequestSpeedTap";
 
 static const float kTimeCubesMustBeUpright_s = 3.0f;
@@ -99,12 +99,12 @@ DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config
   //_admireStackBehavior = static_cast<BehaviorAdmireStack*>(
   //  _robot.GetBehaviorFactory().FindBehaviorByName(kKnockOverStackBehavior));
 
-  if( nullptr == _admireStackBehavior ) {
-    PRINT_NAMED_ERROR("DemoBehaviorChooser.NoAdmireStackBehavior",
-                      "couldn't find behavior '%s', demo won't work",
-                      kKnockOverStackBehavior);
-  }
-    
+//  if( nullptr == _admireStackBehavior ) {
+//    PRINT_NAMED_ERROR("DemoBehaviorChooser.NoAdmireStackBehavior",
+//                      "couldn't find behavior '%s', demo won't work",
+//                      kKnockOverStackBehavior);
+//  }
+  
   _name = "Demo[]";
 
   SetAllBehaviorsEnabled(false);
@@ -531,13 +531,13 @@ void DemoBehaviorChooser::ResetDemoRelatedState()
   // Clean up the flip down from back behavior
   resetBehaviorStartCount(kFlipDownFromBackBehavior);
   
-  // Clean up the knock blocks down behavior
-  ASSERT_NAMED(nullptr != _admireStackBehavior, "DemoBehaviorChooser.HandleStartDemoWithEdge.MissingAdmireStackBehavior");
-  if (nullptr != _admireStackBehavior)
-  {
-    //_admireStackBehavior->ResetDidKnockOverStack();
-    //_admireStackBehavior->ResetStartCount();
-  }
+//  // Clean up the knock blocks down behavior
+//  ASSERT_NAMED(nullptr != _admireStackBehavior, "DemoBehaviorChooser.HandleStartDemoWithEdge.MissingAdmireStackBehavior");
+//  if (nullptr != _admireStackBehavior)
+//  {
+//    //_admireStackBehavior->ResetDidKnockOverStack();
+//    //_admireStackBehavior->ResetStartCount();
+//  }
   
 }
 
