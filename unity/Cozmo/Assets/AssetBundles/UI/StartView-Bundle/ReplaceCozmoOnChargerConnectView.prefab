@@ -130,7 +130,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
   ModifiedValues: []
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../
+    FieldName: SimpleConnectView:_OptionalCloseDialogButton
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11447612
 MonoBehaviour:
@@ -148,7 +151,10 @@ MonoBehaviour:
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#label.connect"'
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../
+    FieldName: SimpleConnectView:_ConnectButton
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11462324
 MonoBehaviour:
