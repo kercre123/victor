@@ -83,7 +83,6 @@ enum int_32 AnimationTrigger
   HikingWakeUpOffCharger,       // when Cozmo wakes up directly into hiking. This may not be needed for final product
   IdleOnCharger,
   InteractWithFacesInitial,
-  InteractWithFacesSquint,
   InteractWithFacesWait,
   KnockOverEyes,
   KnockOverGrabAttempt,

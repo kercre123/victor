@@ -6,11 +6,11 @@
     },
     {
       "CladEvent": "AcknowledgeFaceNamed",
-      "AnimName": "ag_interactFaces_Enrolled"
+      "AnimName": "ag_freeplay_reacttoface_sayname"
     },
     {
       "CladEvent": "AcknowledgeFaceUnnamed",
-      "AnimName": "ag_interactFaces_Unenrolled"
+      "AnimName": "ag_freeplay_reacttoface_unidentified"
     },
     {
       "CladEvent": "AcknowledgeObject",
@@ -269,12 +269,8 @@
       "AnimName": "interactWithFaces_initial"
     },
     {
-      "CladEvent": "InteractWithFacesSquint",
-      "AnimName": "interactWithFaces_squint"
-    },
-    {
       "CladEvent": "InteractWithFacesWait",
-      "AnimName": "interactWithFaces_squint"
+      "AnimName": "ag_freeplay_reacttoface_wait"
     },
     {
       "CladEvent": "KnockOverEyes",
@@ -306,7 +302,7 @@
     },
     {
       "CladEvent": "OnLearnedPlayerName",
-      "AnimName": "ag_faceEnrollment_LearnedPlayerName"
+      "AnimName": "ag_freeplay_reacttoface_longname"
     },
     {
       "CladEvent": "OnSawNewNamedFace",

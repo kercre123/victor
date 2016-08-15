@@ -42,7 +42,7 @@
 namespace Anki {
 namespace Cozmo {
 
-  static AnimationTrigger kIdleAnimName = AnimationTrigger::InteractWithFacesSquint;
+  static AnimationTrigger kIdleAnimName = AnimationTrigger::InteractWithFacesWait;
   
   static void SetIdleAnimName(ConsoleFunctionContextRef context) {
     kIdleAnimName = AnimationTriggerFromString(ConsoleArg_Get_String(context, "name"));
