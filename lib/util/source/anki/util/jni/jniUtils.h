@@ -1,5 +1,5 @@
 #ifndef __Anki_Util_Jni_JniUtils_H__
-#define VALUEOBJECTS_JGLOBALOBJECTS_JNIUTILS_H
+#define __Anki_Util_Jni_JniUtils_H__
 
 #include "util/jni/includeJni.h"
 #include <map>
@@ -31,6 +31,7 @@ public:
                                                const char* name, const char* sig);
   static std::string getStringFromObjectMethod(JNIEnv* env, const jobject jobj,
                                                const jmethodID method);
+  static jobject getUnityActivity(JNIEnv* env);
 
   static std::unique_ptr<JNIEnvWrapper> getJNIEnvWrapper();
 

@@ -133,6 +133,27 @@ std::string JNIUtils::getStringFromObjectMethod(JNIEnv* env, const jobject jobj,
   return s;
 }
 
+jobject JNIUtils::getUnityActivity(JNIEnv* env)
+{
+  if (nullptr == env) {
+    return nullptr;
+  }
+
+  jclass unityPlayer = env->FindClass("com/unity3d/player/UnityPlayer");
+  if (nullptr == unityPlayer) {
+    return nullptr;
+  }
+  jfieldID activityField = env->GetStaticFieldID(unityPlayer, "currentActivity", "Landroid/app/Activity;");
+  if (nullptr == activityField) {
+    env->DeleteLocalRef(unityPlayer);
+    return nullptr;
+  }
+  jobject activity = env->GetStaticObjectField(unityPlayer, activityField);
+
+  env->DeleteLocalRef(unityPlayer);
+  return activity;
+}
+
 // JNIEnvWrapper implementation
 
 class JNIEnvWrapperImpl : public JNIEnvWrapper {

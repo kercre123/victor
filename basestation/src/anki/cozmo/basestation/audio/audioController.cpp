@@ -31,6 +31,9 @@
 #include <sstream>
 #include <unordered_map>
 
+#ifdef ANDROID
+#include "util/jni/jniUtils.h"
+#endif
 
 // Allow the build to include/exclude the audio libs
 //#define EXCLUDE_ANKI_AUDIO_LIBS 0
@@ -82,13 +85,16 @@ AudioController::AudioController( const CozmoContext* context )
     
     const Util::Data::DataPlatform* dataPlatfrom = context->GetDataPlatform();
     const std::string assetPath = dataPlatfrom->pathToResource(Util::Data::Scope::Resources, "sound/" );
-    const bool assetsExist = Util::FileUtils::DirectoryExists( assetPath );
-    
+
     // If assets don't exist don't init the Audio engine
+#ifndef ANDROID
+    const bool assetsExist = Util::FileUtils::DirectoryExists( assetPath );
+
     if ( !assetsExist ) {
       PRINT_NAMED_ERROR("AudioController.AudioController", "Audio Assets do NOT exists - Ignore if Unit Test");
       return;
     }
+#endif
     
     // Config Engine
     AudioEngine::SetupConfig config{};
@@ -100,31 +106,27 @@ AudioController::AudioController( const CozmoContext* context )
     
     // Add Assets Zips to list.
 
-#if defined(ANKI_PLATFORM_ANDROID)
+#ifdef ANDROID
     // Set andoid asset manager & path
-    
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// FIXME: This is an example of how OverDrive sets the android asset manager & asset manager base path - JMR
-//    JNI::Context* context = JNI::Context::GetInstance();
-//    config.assetManager =  (void *)  nullptr; // context->GetAssetManager();
-//    config.assetManagerBasePath = "rams/overdrive/basestation/sound";
-//    if (!obbPath.empty()) {
-//      for (auto const& it : soundZips) {
-//        pathsToSoundZipFiles.push_back(obbPath + "?assets/rams/overdrive/" + it);
-//      }
-//    }
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    
-    // FIXME: This is a temp solution until code above is working
-    // Note: We only have 1 file at the moment this will change when we brake up assets for RAMS
-    std::string zipAssets = assetPath + "AudioAssets.zip";
-    if (Util::FileUtils::FileExists(zipAssets)) {
-      config.pathToZipFiles.push_back(zipAssets);
+
+    // get APK location
+    std::string apkPath;
+    {
+      auto envWrapper = Util::JNIUtils::getJNIEnvWrapper();
+      JNIEnv* env = envWrapper->GetEnv();
+      JNI_CHECK(env);
+
+      jclass contextClass = env->FindClass("android/content/ContextWrapper");
+      jobject activity = Util::JNIUtils::getUnityActivity(env);
+      apkPath = Util::JNIUtils::getStringFromObjectMethod(env, contextClass, activity,
+        "getPackageCodePath", "()Ljava/lang/String;");
+
+      env->DeleteLocalRef(contextClass);
+      env->DeleteLocalRef(activity);
     }
-    else {
-      PRINT_NAMED_ERROR("AudioController.AudioController", "Audio Assets not found: '%s'", zipAssets.c_str());
-    }
-    
+
+    config.pathToZipFiles.push_back(apkPath + "?" + "assets/cozmo_resources/sound/AudioAssets.zip");
+
 #else
     // iOS & Mac Platfroms
     // Note: We only have 1 file at the moment this will change when we brake up assets for RAMS
@@ -136,7 +138,7 @@ AudioController::AudioController( const CozmoContext* context )
       PRINT_NAMED_ERROR("AudioController.AudioController", "Audio Assets not found: '%s'", zipAssets.c_str());
     }
 #endif
-    
+
     // Set Local
     config.audioLocal = AudioLocaleType::EnglishUS;
     // Engine Memory

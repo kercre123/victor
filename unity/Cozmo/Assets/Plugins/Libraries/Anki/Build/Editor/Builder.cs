@@ -26,6 +26,7 @@ namespace Anki {
 
       private static string[] _kDirectoryExclusions = {
         "AssetBundles",
+        "sound",
       };
 
       private const string _kSimulationMode = _kProjectName + "/Build/Asset Bundle Simulation Mode";
