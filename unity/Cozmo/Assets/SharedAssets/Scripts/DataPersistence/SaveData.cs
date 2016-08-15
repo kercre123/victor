@@ -7,7 +7,7 @@ namespace DataPersistence {
     public PlayerProfile DefaultProfile;
     public DebugProfile DebugPrefs;
 
-    public SaveData() { 
+    public SaveData() {
       DefaultProfile = new PlayerProfile();
       DebugPrefs = new DebugProfile();
     }
