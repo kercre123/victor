@@ -69,7 +69,7 @@ static const float kSafeDistSqFromObstacle_mm = SQUARE(100);
 
 void BehaviorRequestGameSimple::ConfigPerNumBlocks::LoadFromJson(const Json::Value& config)
 {
-  // Valid for some of these to be "AnimNone"
+  // Valid for some of these to be "Count"
   JsonTools::GetValueOptional(config,kInitialAnimationKey,initialAnimTrigger);
   JsonTools::GetValueOptional(config,kPreDriveAnimationKey,preDriveAnimTrigger);
   JsonTools::GetValueOptional(config,kRequestAnimNameKey,requestAnimTrigger);
@@ -484,7 +484,7 @@ void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
 {
   SendRequest(robot, _initialRequest);
   
-  if(_activeConfig->idleAnimTrigger != AnimationTrigger::AnimNone
+  if(_activeConfig->idleAnimTrigger != AnimationTrigger::Count
      && GetFaceID() != Vision::UnknownFaceID){
     // no callback here, behavior is over once this is done
     StartActing(new CompoundActionParallel(robot, {
@@ -493,7 +493,7 @@ void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
     }));
   }else if(GetFaceID() != Vision::UnknownFaceID){
     StartActing(new TrackFaceAction(robot, GetFaceID()));
-  }else if(_activeConfig->idleAnimTrigger != AnimationTrigger::AnimNone){
+  }else if(_activeConfig->idleAnimTrigger != AnimationTrigger::Count){
     StartActing(new TriggerAnimationAction(robot, _activeConfig->idleAnimTrigger, 0));
   }else{
     StartActing( new HangAction(robot) );

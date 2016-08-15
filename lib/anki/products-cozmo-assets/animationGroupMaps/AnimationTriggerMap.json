@@ -843,6 +843,10 @@
     {
       "CladEvent": "TurtleRoll",
       "AnimName": "ag_reacttocliff_turtleroll_01"
+    },
+    {
+      "CladEvent": "UnitTestAnim",
+      "AnimName": "ag_askForBlock"
     }
   ]
 }

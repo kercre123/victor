@@ -29,7 +29,7 @@ static const char* kTestBehaviorJson =
 "{"
 "   \"behaviorType\" : \"PlayAnim\","
 "   \"name\" : \"UnitTestPlayAnim\","
-"   \"animTrigger\" : \"AnimNone\","
+"   \"animTrigger\" : \"UnitTestAnim\","
 "   \"minTimeBetweenRuns\" : 5.0,"
 "   \"emotionScorers\" : ["
 "     {"

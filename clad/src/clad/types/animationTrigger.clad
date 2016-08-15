@@ -12,8 +12,6 @@ namespace Cozmo {
 // ideally this would be a uint16.
 enum int_32 AnimationTrigger
 {
-  AnimNone, // can't conflict with python keyword'
-
   // Animation triggers, sorted alphabetically
   AcknowledgeFaceInitPause,
   AcknowledgeFaceNamed,
@@ -228,7 +226,8 @@ enum int_32 AnimationTrigger
   Surprise,
   TestFacialPng,
   TurtleRoll,
-
+  UnitTestAnim,
+  // Count can specify "none" or "unspecified"
   Count, // Keep count at end.
 }
 

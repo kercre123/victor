@@ -32,7 +32,7 @@ const int driveBackSpeed = 50;
 namespace{
   RetryWrapperAction::RetryCallback retryCallback = [](const ExternalInterface::RobotCompletedAction& completion, const u8 retryCount, AnimationTrigger& animTrigger)
   {
-    animTrigger = AnimationTrigger::AnimNone;
+    animTrigger = AnimationTrigger::Count;
     return true;
   };
 }
