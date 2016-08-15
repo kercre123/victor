@@ -6,7 +6,7 @@ public class SimpleConnectView : Cozmo.UI.BaseView {
   public System.Action OnConnectButton;
 
   [SerializeField]
-  Cozmo.UI.CozmoButton _ConnectButton;
+  private Cozmo.UI.CozmoButton _ConnectButton;
 
   private void Awake() {
     _ConnectButton.Initialize(HandleConnectButton, "connect_button", "simple_connect_view");

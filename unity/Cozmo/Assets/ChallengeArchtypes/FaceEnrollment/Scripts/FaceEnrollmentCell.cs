@@ -10,13 +10,13 @@ public class FaceEnrollmentCell : MonoBehaviour {
   private int _FaceID;
 
   [SerializeField]
-  Anki.UI.AnkiTextLabel _NameLabel;
+  private Anki.UI.AnkiTextLabel _NameLabel;
 
   [SerializeField]
-  Cozmo.UI.CozmoButton _EditButton;
+  private Cozmo.UI.CozmoButton _EditButton;
 
   [SerializeField]
-  Cozmo.UI.CozmoButton _DeleteButton;
+  private Cozmo.UI.CozmoButton _DeleteButton;
 
   public void Initialize(int faceID, string faceName) {
     _FaceName = faceName;

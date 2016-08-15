@@ -18,6 +18,9 @@ public class ShowCozmoVideo : MonoBehaviour {
   [SerializeField]
   private Cozmo.UI.CozmoButton _ContinueButton;
 
+  [SerializeField]
+  private Cozmo.UI.CozmoButton _SkipButton;
+
   private string _Filename;
 
 #if UNITY_EDITOR
@@ -28,6 +31,7 @@ public class ShowCozmoVideo : MonoBehaviour {
   private void Awake() {
     _ContinueButton.Initialize(HandleContinueButton, "continue_button", "show_cozmo_video");
     _ReplayButton.Initialize(HandleReplayButton, "replay_button", "show_cozmo_video");
+    _SkipButton.Initialize(HandleContinueButton, "skip_button", "show_cozmo_video");
 #if !UNITY_EDITOR
     // Disable the background image until the video has been loaded
     _RawImage.enabled = false;
@@ -73,10 +77,11 @@ public class ShowCozmoVideo : MonoBehaviour {
   private void HandleVideoFinished() {
     _ReplayButton.gameObject.SetActive(true);
     _ContinueButton.gameObject.SetActive(true);
+    ShowSkipButton(false);
   }
 
-  public void ShowContinueButton(bool show) {
-    _ContinueButton.gameObject.SetActive(show);
+  public void ShowSkipButton(bool show) {
+    _SkipButton.gameObject.SetActive(show);
   }
 
   private void HandleContinueButton() {
@@ -91,6 +96,8 @@ public class ShowCozmoVideo : MonoBehaviour {
     }
     else {
       _ReplayButton.gameObject.SetActive(false);
+      _ContinueButton.gameObject.SetActive(false);
+      ShowSkipButton(true);
       PlayVideo(_Filename);
     }
   }

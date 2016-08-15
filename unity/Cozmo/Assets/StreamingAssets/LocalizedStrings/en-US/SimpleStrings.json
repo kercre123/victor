@@ -176,5 +176,8 @@
   },
   "label.to": {
     "translation": "To:"
+  },
+  "button.skip": {
+    "translation": "Skip"
   }
 }
