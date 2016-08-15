@@ -15,8 +15,6 @@ public class FaceEnrollmentEnterNameSlide : MonoBehaviour {
   [SerializeField]
   private Anki.UI.AnkiTextLabel _NameInputPlaceholder;
 
-  private const int kNameFieldCharacterLimit = 12;
-
   private void Awake() {
     _SubmitName.Initialize(HandleSubmitNameButton, "face_enrollment_name_enter_done", "face_enrollment_name_slide");
     _SubmitName.Interactable = false;
@@ -35,9 +33,6 @@ public class FaceEnrollmentEnterNameSlide : MonoBehaviour {
   }
 
   private char ValidateNameField(string input, int charIndex, char charToValidate) {
-    if (charIndex >= kNameFieldCharacterLimit) {
-      return '\0';
-    }
     if (charToValidate >= 'a' && charToValidate <= 'z' || charToValidate >= 'A' && charToValidate <= 'Z') {
       return charToValidate;
     }

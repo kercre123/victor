@@ -21,31 +21,30 @@ public class ProfileCreationView : Cozmo.UI.BaseView {
   [SerializeField]
   private Anki.UI.AnkiTextLabel _BirthdateLabel;
 
-  private const int kNameFieldCharacterLimit = 12;
-
   private void Awake() {
+    DAS.Debug("ProfileCreationView.Awake", "Enter Awake");
     _NameDoneButton.Initialize(HandleNameDoneButton, "name_done_button", this.DASEventViewName);
     _ContinueButton.Initialize(HandleBirthdateEntryDone, "continue_button", this.DASEventViewName);
     _NameField.onValidateInput += ValidateNameField;
-    _NameField.onValueChanged.AddListener(HandleNameFieldChange);
-    _NameField.keyboardType = TouchScreenKeyboardType.Default;
 
-    _NameField.shouldHideMobileInput = true;
     _BirthDatePicker.maxYear = System.DateTime.Today.Year + 1;
     _NameDoneButton.Interactable = false;
+
+    ViewOpenAnimationFinished += HandleViewOpenFinished;
   }
 
   private void Start() {
-    _NameField.Select();
-    _NameField.ActivateInputField();
     _BirthDatePicker.date = System.DateTime.Now;
     ShowDOBEntry(false);
   }
 
+  private void HandleViewOpenFinished() {
+    _NameField.Select();
+    _NameField.ActivateInputField();
+    _NameField.onValueChanged.AddListener(HandleNameFieldChange);
+  }
+
   private char ValidateNameField(string input, int charIndex, char charToValidate) {
-    if (charIndex >= kNameFieldCharacterLimit) {
-      return '\0';
-    }
     if (charToValidate >= 'a' && charToValidate <= 'z' || charToValidate >= 'A' && charToValidate <= 'Z') {
       return charToValidate;
     }
@@ -53,6 +52,7 @@ public class ProfileCreationView : Cozmo.UI.BaseView {
   }
 
   private void HandleNameFieldChange(string input) {
+    DAS.Debug("ProfileCreationView.HandleNameFieldChange", input);
     if (input.Length > 0) {
       _NameDoneButton.Interactable = true;
     }
@@ -64,7 +64,6 @@ public class ProfileCreationView : Cozmo.UI.BaseView {
   private void HandleNameDoneButton() {
     DAS.Debug("ProfileCreationView.HandleNameDoneButton", "name done button pressed");
     DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName = _NameField.text;
-    // TODO: Handle minimum name length.
     HideNameInput();
     ShowBirthdateEntry();
   }
