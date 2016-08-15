@@ -185,7 +185,7 @@ namespace Anki {
 
       public void Initialize(UnityAction clickCallback, string dasEventButtonName, string dasEventViewController) {
         if (clickCallback != null) {
-          onClick.AddListener(clickCallback);
+          onRelease.AddListener(clickCallback);
         }
         _DASEventButtonName = dasEventButtonName;
         _DASEventViewController = dasEventViewController;
