@@ -137,7 +137,7 @@ namespace Anki {
           filenames.ForEach(filename => {
             try {
               fileString.Append(filename);
-              FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite); 
+              FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
               fs.Position = 0;
               byte[] hash = md5.ComputeHash(fs);
               totalHashSize += hash.Length;
@@ -427,7 +427,7 @@ namespace Anki {
           Directory.CreateDirectory(outputPath);
         }
 
-        AssetBundleManifest manifest = BuildPipeline.BuildAssetBundles(outputPath, BuildAssetBundleOptions.UncompressedAssetBundle, buildTarget);
+        AssetBundleManifest manifest = BuildPipeline.BuildAssetBundles(outputPath, BuildAssetBundleOptions.ChunkBasedCompression, buildTarget);
         if (manifest == null) {
           return "Error building asset bundles. See the Unity log for more information";
         }
@@ -536,7 +536,7 @@ namespace Anki {
           // Only add the folder if it is not in the list of exclussions
           if (string.IsNullOrEmpty(Array.Find(_kDirectoryExclusions, (string exclusion) => {
             return d.Contains(exclusion);
-          }))) { 
+          }))) {
             // Add a line with just the folder first to create it at runtime
             all.Add(d.Substring(substringIndex));
 

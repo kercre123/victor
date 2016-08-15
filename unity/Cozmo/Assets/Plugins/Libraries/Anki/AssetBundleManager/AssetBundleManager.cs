@@ -66,7 +66,8 @@ namespace Anki {
       }
 
       public void AddActiveVariant(string variant) {
-        if (!_ActiveVariants.Exists((string s) => s == variant)) {
+        if (!_ActiveVariants.Exists((string s) => (s.Equals(variant)))) {
+          _ActiveVariants.Add(variant);
         }
         PrintActiveVariants();
       }
