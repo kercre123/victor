@@ -140,11 +140,9 @@ class CopyResources(object):
     ankibuild.util.File.rm_rf(os.path.join(assetsPath, '.svn'))
 
     # remove tar files
-    for root, dirs, files in os.walk(os.path.join(assetsPath, 'animations')):
-      for file in files:
-        if file.endswith(".tar"):
-          ankibuild.util.File.rm(os.path.join(root, file))
-    for root, dirs, files in os.walk(os.path.join(assetsPath, 'faceAnimations')):
+    animFiles = os.walk(os.path.join(assetsPath, 'animations'))
+    animFiles.extend(os.walk(os.path.join(assetsPath, 'faceAnimations')))
+    for root, dirs, files in animFiles:
       for file in files:
         if file.endswith(".tar"):
           ankibuild.util.File.rm(os.path.join(root, file))
