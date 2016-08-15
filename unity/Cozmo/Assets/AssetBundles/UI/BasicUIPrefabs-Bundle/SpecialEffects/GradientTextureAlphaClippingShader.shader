@@ -1,13 +1,23 @@
-﻿Shader "UI/Cozmo/GradientSimpleClippingShader"
+﻿Shader "UI/Cozmo/GradientTextureClippingShader"
 {
   Properties
   {
-    _Clipping ("DEV ONLY Clipping", Vector) = (0.5, 0.5, 0.5, 0.5)
-
-    _AtlasUV ("DEV ONLY UV", Vector) = (0.5, 0.5, 0.5, 0.5)
+    _ClippingSize ("Gradient Size", Vector) = (0.05, 0.05, 0.05, 0.05)
+	// These represent each side of the clipping rect in the order:
+	// right, top, left, bottom
+    _ClippingEnd ("DEV ONLY Clipping End", Vector) = (1.0, 0.1, 0.2, 0.3)
+	// offset if using an atlas
+    _AtlasUV ("Atlas UV", Vector) = (0, 0, 1.0, 1.0)
   }
   SubShader
   {
+    Tags
+    { 
+      "Queue"="Transparent" 
+      "IgnoreProjector"="True" 
+      "RenderType"="Transparent" 
+      "CanUseSpriteAtlas"="True"
+    }
     // No culling or depth
     Cull Off ZWrite Off ZTest Always
 
@@ -37,7 +47,8 @@
       };
 
       float4 _AtlasUV;
-      float4 _Clipping;
+      float4 _ClippingEnd;
+      float4 _ClippingSize;
       float4 _Color;
 
       v2f vert (appdata v)
@@ -47,16 +58,17 @@
         o.uv = v.uv;
 
         // translate atlas UV to sprite UV
-        float2 spriteUV = (o.uv.xy - _AtlasUV.xy) / ( _AtlasUV.zw);
+        float2 spriteUV = (v.uv.xy - _AtlasUV.xy) / ( _AtlasUV.zw);
 
         // precalculate denominator
-        float4 denominator = 2 / _Clipping;
+        float4 denominator = 2 / _ClippingSize;
+        float4 offset = _ClippingEnd / _ClippingSize;
 
         // make the top right of the gradient frame
-        float2 topRightAlpha = denominator.xy - spriteUV.xy * denominator.xy;
+        float2 topRightAlpha = denominator.xy - spriteUV.xy * denominator.xy - offset.xy;
 
         // make the bottom left of the gradient frame
-        float2 bottomLeftAlpha = spriteUV.xy * denominator.zw;
+        float2 bottomLeftAlpha = spriteUV.xy * denominator.zw - offset.zw;
 
         o.topRightAlpha = topRightAlpha;
         o.bottomLeftAlpha = bottomLeftAlpha;
