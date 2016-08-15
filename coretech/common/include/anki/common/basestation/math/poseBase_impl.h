@@ -92,7 +92,7 @@ namespace Anki {
   template<class PoseNd>
   void PoseBase<PoseNd>::SetParent(const PoseNd* otherPose)
   {
-    CORETECH_ASSERT(otherPose != this);
+    ASSERT_NAMED(otherPose != this, "PoseBase.SetParent.ParentCannotBeSelf");
     Dev_SwitchParent(_parentPtr, otherPose, this);
     _parentPtr = otherPose;
   }
@@ -107,7 +107,8 @@ namespace Anki {
     {  
       // The only way the current originPose's _parent is null is if it is an
       // origin, which means we should have already exited the while loop.
-      CORETECH_ASSERT(originPose->GetParent() != nullptr);
+      ASSERT_NAMED(originPose->GetParent() != nullptr,
+                   "PoseBase.FindOrigin.OriginHasNullParent");
       
       originPose = originPose->GetParent();
     }
@@ -178,7 +179,8 @@ namespace Anki {
   {
     if(&fromPose == &toPose) {
       // Asked for pose w.r.t. itself. Just return fromPose
-      PRINT_NAMED_WARNING("PoseBase.GetWithRespectTo.FromEqualsTo", "Pose w.r.t. itself requested.\n");
+      PRINT_NAMED_WARNING("PoseBase.GetWithRespectTo.FromEqualsTo",
+                          "Pose w.r.t. itself requested.");
       P_wrt_other = fromPose;
       P_wrt_other.SetParent(&toPose);
       return true;
@@ -230,7 +232,8 @@ namespace Anki {
     
     BOUNDED_WHILE(1000, depthDiff > 0)
     {
-      CORETECH_ASSERT(from->GetParent() != nullptr);
+      ASSERT_NAMED(from->GetParent() != nullptr,
+                   "PoseBase.GetWithRespectTo.FromParentIsNull");
       
       P_from.PreComposeWith( *(from->GetParent()) );
       from = from->GetParent();
@@ -251,7 +254,8 @@ namespace Anki {
     
     BOUNDED_WHILE(1000, depthDiff < 0)
     {
-      CORETECH_ASSERT(to->GetParent() != nullptr);
+      ASSERT_NAMED(to->GetParent() != nullptr,
+                   "PoseBase.GetWithRespectTo.ToParentIsNull");
       
       P_to.PreComposeWith( *(to->GetParent()) );
       to = to->GetParent();
@@ -272,16 +276,21 @@ namespace Anki {
       ++depthDiff;
     }
     
-    // Treedepths should now match:
-    CORETECH_ASSERT(depthDiff == 0);
-    CORETECH_ASSERT(GetTreeDepth(to) == GetTreeDepth(from));
+    if(ANKI_DEVELOPER_CODE)
+    {
+      // Sanity check: Treedepths should now match:
+      ASSERT_NAMED(depthDiff == 0, "PoseBase.GetWithRespectTo.NonZeroDepthDiff");
+      ASSERT_NAMED(GetTreeDepth(to) == GetTreeDepth(from),
+                   "PoseBase.GetWithRespectTo.TreeDepthMisMatch");
+    }
     
     // Now that we are pointing to the nodes of the same depth, keep moving up
     // until those nodes have the same _parent, totalling up the transformations
     // along the way
     BOUNDED_WHILE(1000, to->GetParent() != from->GetParent())
     {
-      CORETECH_ASSERT(from->GetParent() != nullptr && to->GetParent() != nullptr);
+      ASSERT_NAMED(from->GetParent() != nullptr && to->GetParent() != nullptr,
+                   "PoseBase.GetWithRespectTo.FromOrToParentIsNull");
       
       P_from.PreComposeWith( *(from->GetParent()) );
       P_to.PreComposeWith( *(to->GetParent()) );

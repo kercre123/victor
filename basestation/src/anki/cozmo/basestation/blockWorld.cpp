@@ -707,24 +707,24 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
           
           addNewObject = true;
         
-          PRINT_NAMED_INFO("BlockWorld.UpdateObjectOrigins.NoMatchingObjectInNewFrame",
-                           "Adding %s object with ID %d to new origin %s (%p)",
-                           EnumToString(newObject->GetType()),
-                           newObject->GetID().GetValue(),
-                           newOrigin->GetName().c_str(),
-                           newOrigin);
+          PRINT_CH_INFO("BlockWorld", "UpdateObjectOrigins.NoMatchingObjectInNewFrame",
+                        "Adding %s object with ID %d to new origin %s (%p)",
+                        EnumToString(newObject->GetType()),
+                        newObject->GetID().GetValue(),
+                        newOrigin->GetName().c_str(),
+                        newOrigin);
           
         }
         else
         {
-          PRINT_NAMED_INFO("BlockWorld.UpdateObjectOrigins.ObjectOriginChanged",
-                           "Updating object %d's origin from %s to %s. "
-                           "T_old=(%.1f,%.1f,%.1f), T_new=(%.1f,%.1f,%.1f)",
-                           oldObject->GetID().GetValue(),
-                           oldOrigin->GetName().c_str(),
-                           newOrigin->GetName().c_str(),
-                           T_old.x(), T_old.y(), T_old.z(),
-                           T_new.x(), T_new.y(), T_new.z());
+          PRINT_CH_INFO("BlockWorld", "UpdateObjectOrigins.ObjectOriginChanged",
+                        "Updating object %d's origin from %s to %s. "
+                        "T_old=(%.1f,%.1f,%.1f), T_new=(%.1f,%.1f,%.1f)",
+                        oldObject->GetID().GetValue(),
+                        oldOrigin->GetName().c_str(),
+                        newOrigin->GetName().c_str(),
+                        T_old.x(), T_old.y(), T_old.z(),
+                        T_new.x(), T_new.y(), T_new.z());
         }
         
         // Use all of oldObject's time bookkeeping, then update the pose and pose state
@@ -984,10 +984,10 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     {
       const bool isZombie = IsZombiePoseOrigin( iter->first );
       if ( isZombie ) {
-        PRINT_NAMED_DEBUG("BlockWorld.CreateLocalizedMemoryMap", "Deleted map (%p) because it was zombie", iter->first);
+        PRINT_CH_DEBUG("BlockWorld", "CreateLocalizedMemoryMap", "Deleted map (%p) because it was zombie", iter->first);
         iter = _navMemoryMaps.erase(iter);
       } else {
-        PRINT_NAMED_DEBUG("BlockWorld.CreateLocalizedMemoryMap", "Map (%p) is still good", iter->first);
+        PRINT_CH_DEBUG("BlockWorld", "CreateLocalizedMemoryMap", "Map (%p) is still good", iter->first);
         ++iter;
       }
     }
@@ -1086,15 +1086,15 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     
     existingFamily[object->GetType()][object->GetID()] = object;
     
-    PRINT_NAMED_INFO("BlockWorld.AddNewObject",
-                     "Adding new %s%s object and ID=%d at (%.1f, %.1f, %.1f), in frame %s.",
-                     object->IsActive() ? "active " : "",
-                     EnumToString(object->GetType()),
-                     object->GetID().GetValue(),
-                     object->GetPose().GetTranslation().x(),
-                     object->GetPose().GetTranslation().y(),
-                     object->GetPose().GetTranslation().z(),
-                     object->GetPose().FindOrigin().GetName().c_str());
+    PRINT_CH_INFO("BlockWorld", "AddNewObject",
+                  "Adding new %s%s object and ID=%d at (%.1f, %.1f, %.1f), in frame %s.",
+                  object->IsActive() ? "active " : "",
+                  EnumToString(object->GetType()),
+                  object->GetID().GetValue(),
+                  object->GetPose().GetTranslation().x(),
+                  object->GetPose().GetTranslation().y(),
+                  object->GetPose().GetTranslation().z(),
+                  object->GetPose().FindOrigin().GetName().c_str());
   }
   
  
@@ -1373,15 +1373,18 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     while(objectOnTop != nullptr && objectOnTop->GetLastObservedTime() != objSeen->GetLastObservedTime())
     {
       // Get difference in position between top object's pose and the previous pose of the observed bottom object.
-      // Apply difference to the new observed pose to get the new top object pose.
+      // Apply difference to the new observed bottom pose to get the new top object pose.
       Pose3d topPose = objectOnTop->GetPose();
-      Pose3d bottomPose = oldObjectOnBottom->GetPose();
-      Vec3f diff = topPose.GetTranslation() - bottomPose.GetTranslation();
+      if(false == topPose.GetWithRespectTo(oldObjectOnBottom->GetPose(), topPose))
+      {
+        PRINT_NAMED_WARNING("BlockWorld.UpdateRotationOfObjectsStackedOn.OriginMismatch", "");
+        break;
+      }
       
-      Radians zDiff = topPose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis() - bottomPose.GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis();
-      topPose.SetRotation(Rotation3d(RotationVector3d(zDiff, Z_AXIS_3D())) * newObjectOnBottom->GetPose().GetRotation());
+      // P_top_wrt_origin = P_newBtm_wrt_origin * P_top_wrt_oldBtm:
+      topPose.PreComposeWith(newObjectOnBottom->GetPose());
+      topPose.SetParent(objectOnTop->GetPose().GetParent());
       
-      topPose.SetTranslation( newObjectOnBottom->GetPose().GetTranslation() + diff );
       Util::SafeDelete(oldObjectOnBottom);
       oldObjectOnBottom = objectOnTop->CloneType();
       oldObjectOnBottom->InitPose(objectOnTop->GetPose(), objectOnTop->GetPoseState());
@@ -1536,10 +1539,10 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
               // just delete it, but only if this is a non-active object or radio
               // connection has not been established yet
               if (!object->IsActive() || object->GetActiveID() < 0) {
-                PRINT_NAMED_INFO("BlockWorld.CheckForUnobservedObjects",
-                                 "Deleting %s object %d with unknown pose state.",
-                                 ObjectTypeToString(object->GetType()),
-                                 object->GetID().GetValue());
+                PRINT_CH_INFO("BlockWorld", "CheckForUnobservedObjects",
+                              "Deleting %s object %d with unknown pose state.",
+                              ObjectTypeToString(object->GetType()),
+                              object->GetID().GetValue());
                 objectIter = DeleteObject(objectIter, objectsByType.first, objectFamily.first);
                 objectDeleted = true;
               }
@@ -1554,11 +1557,11 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
               // delete it if radio connection has not been established yet.
               // Otherwise, retry identification.
               if (object->GetActiveID() < 0) {
-                PRINT_NAMED_INFO("BlockWorld.CheckForUnobservedObjects.IdentifyTimedOut",
-                                 "Deleting unobserved %s active object %d that has "
-                                 "not completed identification in %dms",
-                                 EnumToString(object->GetType()),
-                                 object->GetID().GetValue(), BLOCK_IDENTIFICATION_TIMEOUT_MS);
+                PRINT_CH_INFO("BlockWorld", "CheckForUnobservedObjects.IdentifyTimedOut",
+                              "Deleting unobserved %s active object %d that has "
+                              "not completed identification in %dms",
+                              EnumToString(object->GetType()),
+                              object->GetID().GetValue(), BLOCK_IDENTIFICATION_TIMEOUT_MS);
                 
                 objectIter = DeleteObject(objectIter, objectsByType.first, objectFamily.first);
                   objectDeleted = true;
@@ -1637,11 +1640,11 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
         
         if(!matchingActiveIdFound) {
           // We "should" have seen the object! Clear it.
-          PRINT_NAMED_INFO("BlockWorld.CheckForUnobservedObjects.MarkingUnobservedObject",
-                           "Marking object %d unobserved, which should have been seen, but wasn't. "
-                           "(shouldBeVisible:%d hasNothingBehind:%d isDirty:%d",
-                           unobserved.object->GetID().GetValue(),
-                           shouldBeVisible, hasNothingBehind, isDirtyPoseState);
+          PRINT_CH_INFO("BlockWorld", "CheckForUnobservedObjects.MarkingUnobservedObject",
+                        "Marking object %d unobserved, which should have been seen, but wasn't. "
+                        "(shouldBeVisible:%d hasNothingBehind:%d isDirty:%d",
+                        unobserved.object->GetID().GetValue(),
+                        shouldBeVisible, hasNothingBehind, isDirtyPoseState);
           
           Result markResult = _robot->GetObjectPoseConfirmer().MarkObjectUnobserved(unobserved.object);
           if(RESULT_OK != markResult)
@@ -2001,11 +2004,11 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
         if(std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) &&                // There's any rotation to speak of
            !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(45)))  // That rotation's axis more than 45 degrees from vertical
         {
-          PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose",
-                           "Refusing to localize to %s mat with rotation %.1f degrees around (%.1f,%.1f,%.1f) axis.",
-                           ObjectTypeToString(mat->GetType()),
-                           rotAngle.getDegrees(),
-                           rotAxis.x(), rotAxis.y(), rotAxis.z());
+          PRINT_CH_INFO("BlockWorld", "UpdateRobotPose",
+                        "Refusing to localize to %s mat with rotation %.1f degrees around (%.1f,%.1f,%.1f) axis.",
+                        ObjectTypeToString(mat->GetType()),
+                        rotAngle.getDegrees(),
+                        rotAxis.x(), rotAxis.y(), rotAxis.z());
         }else if(mat->IsPoseOn(_robot->GetPose(), 0, 15.f)) { // TODO: get heightTol from robot
           if(onMat != nullptr) {
             PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.OnMultiplMats",
@@ -2232,11 +2235,11 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
           if(std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) &&                // There's any rotation to speak of
              !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(45)))  // That rotation's axis more than 45 degrees from vertical
           {
-            PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose",
-                             "Ignoring observation of %s mat with rotation %.1f degrees around (%.1f,%.1f,%.1f) axis.",
-                             ObjectTypeToString(matSeen->GetType()),
-                             rotAngle.getDegrees(),
-                             rotAxis.x(), rotAxis.y(), rotAxis.z());
+            PRINT_CH_INFO("BlockWorld", "UpdateRobotPose",
+                          "Ignoring observation of %s mat with rotation %.1f degrees around (%.1f,%.1f,%.1f) axis.",
+                          ObjectTypeToString(matSeen->GetType()),
+                          rotAngle.getDegrees(),
+                          rotAxis.x(), rotAxis.y(), rotAxis.z());
             continue;
           }
           
@@ -2255,13 +2258,13 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
             newMatPiece->SetLastObservedTime(matSeen->GetLastObservedTime());
             newMatPiece->UpdateMarkerObservationTimes(*matSeen);
             
-            PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose",
-                             "Adding new %s mat with ID=%d at (%.1f, %.1f, %.1f)",
-                             ObjectTypeToString(newMatPiece->GetType()),
-                             newMatPiece->GetID().GetValue(),
-                             newMatPiece->GetPose().GetTranslation().x(),
-                             newMatPiece->GetPose().GetTranslation().y(),
-                             newMatPiece->GetPose().GetTranslation().z());
+            PRINT_CH_INFO("BlockWorld", "UpdateRobotPose",
+                          "Adding new %s mat with ID=%d at (%.1f, %.1f, %.1f)",
+                          ObjectTypeToString(newMatPiece->GetType()),
+                          newMatPiece->GetID().GetValue(),
+                          newMatPiece->GetPose().GetTranslation().x(),
+                          newMatPiece->GetPose().GetTranslation().y(),
+                          newMatPiece->GetPose().GetTranslation().z());
             
             // Add observed mat markers to the occlusion map of the camera that saw
             // them, so we can use them to delete objects that should have been
@@ -2330,7 +2333,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
       // seen between that marker and the robot
       for(auto obsMarker : observedMarkers) {
         /*
-        PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.AddingMatMarkerOccluder",
+        PRINT_CH_INFO("BlockWorld", "UpdateRobotPose.AddingMatMarkerOccluder",
                          "Adding mat marker '%s' as an occluder for robot %d.",
                          Vision::MarkerTypeStrings[obsMarker->GetCode()],
                          robot->GetID());
@@ -2343,7 +2346,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
       // we may have seen things while de-localized whose locations can now be
       // snapped into place.
       if(!wasLocalized && robot->IsLocalized()) {
-        PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.RobotRelocalized",
+        PRINT_CH_INFO("BlockWorld", "UpdateRobotPose.RobotRelocalized",
                          "Robot %d just localized after being de-localized.", robot->GetID());
         DrawAllObjects();
       }
@@ -2567,7 +2570,9 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     
     if (activeID < 0)
     {
-      PRINT_NAMED_INFO("BlockWorld.AddActiveObject","Adding object with negative ActiveID %d FactoryID %d", activeID, factoryID);
+      PRINT_CH_INFO("BlockWorld", "AddActiveObject",
+                    "Adding object with negative ActiveID %d FactoryID %d",
+                    activeID, factoryID);
     }
     
     // Is there an active object with the same activeID that already exists?
@@ -2582,9 +2587,9 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
         if (sameTypeObject->GetActiveID() < 0) {
           sameTypeObject->SetActiveID(activeID);
           sameTypeObject->SetFactoryID(factoryID);
-          PRINT_NAMED_INFO("BlockWorld.AddActiveObject.FoundMatchingObjectWithNoActiveID",
-                           "objectID %d, activeID %d, type %s",
-                           sameTypeObject->GetID().GetValue(), sameTypeObject->GetActiveID(), objTypeStr);
+          PRINT_CH_INFO("BlockWorld", "AddActiveObject.FoundMatchingObjectWithNoActiveID",
+                        "objectID %d, activeID %d, type %s",
+                        sameTypeObject->GetID().GetValue(), sameTypeObject->GetActiveID(), objTypeStr);
           return sameTypeObject->GetID();
         } else {
           // If found an existing object of the same type but not same factoryID then ignore it
@@ -2596,9 +2601,9 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
                                 sameTypeObject->GetID().GetValue(), sameTypeObject->GetActiveID(), sameTypeObject->GetFactoryID(), objTypeStr);
             return ObjectID();
           } else {
-            PRINT_NAMED_INFO("BlockWorld.AddActiveObject.FoundIdenticalObjectOnDifferentSlot",
-                             "Updating activeID of block with factoryID 0x%x from %d to %d",
-                             sameTypeObject->GetFactoryID(), sameTypeObject->GetActiveID(), activeID);
+            PRINT_CH_INFO("BlockWorld", "AddActiveObject.FoundIdenticalObjectOnDifferentSlot",
+                          "Updating activeID of block with factoryID 0x%x from %d to %d",
+                          sameTypeObject->GetFactoryID(), sameTypeObject->GetActiveID(), activeID);
             sameTypeObject->SetActiveID(activeID);
             return sameTypeObject->GetID();
           }
@@ -2607,9 +2612,9 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     } else {
       // A match was found but does it have the same factory ID?
       if(matchingObject->GetFactoryID() == factoryID) {
-        PRINT_NAMED_INFO("BlockWorld.AddActiveObject.FoundMatchingActiveObject",
-                         "objectID %d, activeID %d, type %s, factoryID 0x%x",
-                         matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), objTypeStr, matchingObject->GetFactoryID());
+        PRINT_CH_INFO("BlockWorld", "AddActiveObject.FoundMatchingActiveObject",
+                      "objectID %d, activeID %d, type %s, factoryID 0x%x",
+                      matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), objTypeStr, matchingObject->GetFactoryID());
         return matchingObject->GetID();
       } else if (matchingObject->GetFactoryID() == 0) {
         // Existing object was only previously observed, never connected, so its factoryID is 0
@@ -2653,9 +2658,9 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     newObject->InitPose(newObjectPose, PoseState::Unknown);
     
     AddNewObject(newObject);
-    PRINT_NAMED_INFO("BlockWorld.AddActiveObject.AddedNewObject",
-                     "objectID %d, type %s, activeID %d, factoryID 0x%x",
-                     newObject->GetID().GetValue(), objTypeStr, newObject->GetActiveID(), newObject->GetFactoryID());
+    PRINT_CH_INFO("BlockWorld", "AddActiveObject.AddedNewObject",
+                  "objectID %d, type %s, activeID %d, factoryID 0x%x",
+                  newObject->GetID().GetValue(), objTypeStr, newObject->GetActiveID(), newObject->GetFactoryID());
     
     if(objToCopyId != nullptr)
     {
@@ -2675,9 +2680,8 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     const ObservableObject* object = GetObjectByID(objectID, family);
     if ( nullptr == object )
     {
-      PRINT_CH_INFO("BlockWorld",
-        "BlockWorld.OnObjectPoseChanged.NotAnObject",
-        "Could not find object ID '%d' in BlockWorld", objectID.GetValue() );
+      PRINT_CH_INFO("BlockWorld", "OnObjectPoseChanged.NotAnObject",
+                    "Could not find object ID '%d' in BlockWorld", objectID.GetValue() );
       return;
     }
 
@@ -2710,9 +2714,9 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
 //            objectID.GetValue());
         }
       } else {
-        PRINT_CH_INFO("BlockWorld",
-          "BlockWorld.OnObjectPoseChanged.NonMapFamilyForRemoval",
-          "Family '%s' does not have a removal type in memory map", ObjectFamilyToString(family) );
+        PRINT_CH_INFO("BlockWorld", "OnObjectPoseChanged.NonMapFamilyForRemoval",
+                      "Family '%s' does not have a removal type in memory map",
+                      ObjectFamilyToString(family) );
       }
     }
     
@@ -2752,9 +2756,8 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
             objectID.GetValue());
         }
       } else {
-        PRINT_CH_INFO("BlockWorld",
-          "BlockWorld.OnObjectPoseChanged.NonMapFamilyForAddition",
-          "Family '%s' is not known in memory map", ObjectFamilyToString(family) );
+        PRINT_CH_INFO("BlockWorld", "OnObjectPoseChanged.NonMapFamilyForAddition",
+                      "Family '%s' is not known in memory map", ObjectFamilyToString(family) );
       }
     }
     
@@ -2903,9 +2906,8 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     // for the edges we just received is from before delocalizing, so we should discard it.
     Pose3d observedPose;
     if ( !p->GetPose().GetWithRespectTo( *_robot->GetWorldOrigin(), observedPose) ) {
-      PRINT_CH_INFO("BlockWorld",
-        "BlockWorld.AddVisionOverheadEdges.NotInThisWorld",
-        "Received timestamp %d, but could not translate that timestamp into current origin.", frameInfo.timestamp);
+      PRINT_CH_INFO("BlockWorld", "AddVisionOverheadEdges.NotInThisWorld",
+                    "Received timestamp %d, but could not translate that timestamp into current origin.", frameInfo.timestamp);
       return RESULT_OK;
     }
     
@@ -3238,9 +3240,9 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
           }
           
           if(marker2isInsideMarker1) {
-            PRINT_NAMED_INFO("BlockWorld.Update",
-                             "Removing %s marker completely contained within %s marker.\n",
-                             marker2.GetCodeName(), marker1.GetCodeName());
+            PRINT_CH_INFO("BlockWorld", "Update",
+                          "Removing %s marker completely contained within %s marker.\n",
+                          marker2.GetCodeName(), marker1.GetCodeName());
             // Note: erase does increment of iterator for us
             markerIter2 = currentObsMarkers.erase(markerIter2);
           } else {
@@ -3372,9 +3374,9 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
       numUnusedMarkers += currentObsMarkers.size();
       
       for(auto & unusedMarker : currentObsMarkers) {
-        PRINT_NAMED_INFO("BlockWorld.Update.UnusedMarker",
-                         "An observed %s marker went unused.",
-                         unusedMarker.second.GetCodeName());
+        PRINT_CH_INFO("BlockWorld", "Update.UnusedMarker",
+                      "An observed %s marker went unused.",
+                      unusedMarker.second.GetCodeName());
       }
       
       // Delete any objects that should have been observed but weren't,
@@ -3390,7 +3392,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
       CheckForUnobservedObjects(_robot->GetLastImageTimeStamp());
     }
     
-    //PRINT_NAMED_INFO("BlockWorld.Update.NumBlocksObserved", "Saw %d blocks", numBlocksObserved);
+    //PRINT_CH_INFO("BlockWorld", "Update.NumBlocksObserved", "Saw %d blocks", numBlocksObserved);
     
     auto originIter = _existingObjects.find(_robot->GetWorldOrigin());
     
@@ -3474,9 +3476,9 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
                   
                   if( inSamePlane && bboxIntersects )
                   {
-                    PRINT_NAMED_INFO("BlockWorld.Update",
-                                     "Marking object %d as 'dirty', because it intersects robot %d's bounding quad.",
-                                     object->GetID().GetValue(), _robot->GetID());
+                    PRINT_CH_INFO("BlockWorld", "Update",
+                                  "Marking object %d as 'dirty', because it intersects robot %d's bounding quad.",
+                                  object->GetID().GetValue(), _robot->GetID());
                     
                     // Mark object and everything on top of it as "dirty". Next time we look
                     // for it and don't see it, we will fully clear it and mark it as "unknown"
@@ -3585,11 +3587,11 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
       // Check to see if this object is the one the robot is localized to.
       // If so, the robot needs to be marked as localized to nothing.
       if(_robot->GetLocalizedTo() == object->GetID()) {
-        PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.LocalizeRobotToNothing",
-                         "Setting robot %d as localized to no object, because it "
-                         "is currently localized to %s object with ID=%d, which is "
-                         "about to be cleared.",
-                         _robot->GetID(), ObjectTypeToString(object->GetType()), object->GetID().GetValue());
+        PRINT_CH_INFO("BlockWorld", "ClearObjectHelper.LocalizeRobotToNothing",
+                      "Setting robot %d as localized to no object, because it "
+                      "is currently localized to %s object with ID=%d, which is "
+                      "about to be cleared.",
+                      _robot->GetID(), ObjectTypeToString(object->GetType()), object->GetID().GetValue());
         _robot->SetLocalizedTo(nullptr);
       }
       
@@ -3598,19 +3600,19 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
       
       // Check to see if this object is the one the robot is carrying.
       if(_robot->GetCarryingObject() == object->GetID()) {
-        PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingCarriedObject",
-                         "Clearing %s object %d which robot %d thinks it is carrying.",
-                         ObjectTypeToString(object->GetType()),
-                         object->GetID().GetValue(),
-                         _robot->GetID());
+        PRINT_CH_INFO("BlockWorld", "ClearObjectHelper.ClearingCarriedObject",
+                      "Clearing %s object %d which robot %d thinks it is carrying.",
+                      ObjectTypeToString(object->GetType()),
+                      object->GetID().GetValue(),
+                      _robot->GetID());
         _robot->UnSetCarryingObjects();
       }
       
       if(_selectedObject == object->GetID()) {
-        PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingSelectedObject",
-                         "Clearing %s object %d which is currently selected.",
-                         ObjectTypeToString(object->GetType()),
-                         object->GetID().GetValue());
+        PRINT_CH_INFO("BlockWorld", "ClearObjectHelper.ClearingSelectedObject",
+                      "Clearing %s object %d which is currently selected.",
+                      ObjectTypeToString(object->GetType()),
+                      object->GetID().GetValue());
         _selectedObject.UnSet();
       }
 

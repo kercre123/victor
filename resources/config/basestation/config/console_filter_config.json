@@ -31,7 +31,8 @@
       { "channel": "FaceRecognizer",  "enabled": false },
       { "channel": "UiComms",         "enabled": false },
       { "channel": "Mood",            "enabled": false },
-      { "channel": "PoseConfirmer",   "enabled": false }
+      { "channel": "PoseConfirmer",   "enabled": false },
+      { "channel": "BlockWorld",      "enabled": false }
 
     ],
     "levels":
