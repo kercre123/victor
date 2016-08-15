@@ -3,246 +3,75 @@
 Python command line interface for Robot over the network
 """
 
-import sys, os, time, json, threading
+import sys, os, json
 sys.path.insert(0, os.path.join("tools"))
 
-from flask import Flask
-import asyncio, websockets
+from flask import Flask, make_response, send_from_directory, request
 
-import robotInterface, fota, animationStreamer, minipegReceiver
+import robotInterface, minipegReceiver
 
-client = """<html>
-    <head>
-        <title>Cozmo remote control</title>
-    </head>
-    <body style='background-size: contain; background-color: green; background-position: center center; background-repeat: no-repeat;'>
-        <script>
-      var ws = new WebSocket("ws://127.0.0.1:8765/");
-      var motors = { left: 0, right: 0 }
-      var lights = { type: 'lights', red: 0, green: 0, blue: 0 }
+def Remote():
+    global LastCameraImage
 
-      function calcSpeed(motors) {
-        var left = 0, right = 0;
-        if (motors.up) {
-          left  += 100.0;
-          right += 100.0;
-          }
-          if (motors.down) {
-          left  -= 100.0;
-          right -= 100.0;
-        }
-          if (motors.left) {
-          left  -= 100.0;
-          right += 100.0;
-        }
-          if (motors.right) {
-          left  += 100.0;
-          right -= 100.0;
-        }
+    LastCameraImage = b''
 
-        return { type: "motors", left, right, lift: motors.lift, head: motors.head }
-      }
+    app = Flask(__name__)
 
-      document.addEventListener("keydown", function (e) {
-        var doMotor, doLight;
-        switch (e.keyCode) {
-            case 87: // W
-                motors.lift = +1.0;
-                doMotor = true;
-                break ;
-            case 83: // S
-                motors.lift = -1.0;
-                doMotor = true;
-                break ;
-            case 69: // E
-                motors.head = +1.5;
-                doMotor = true;
-                break ;
-            case 68: // D
-                motors.head = -1.5;
-                doMotor = true;
-                break ;
-            case 38: // up
-                motors.up = true;
-                doMotor = true;
-                break ;
-            case 40: // down
-                motors.down = true;
-                doMotor = true;
-                break ;
-            case 37: // left
-                motors.left = true;
-                doMotor = true;
-                break ;
-            case 39: // right
-                motors.right = true;
-                doMotor = true;
-                break ;
+    @app.route('/motors', methods=['POST'])
+    def motors():
+        message = json.loads(request.data.decode("utf-8"))
 
-            case 49:
-                lights.red = 1;
-                doLight = true;
-                break ;
-            case 50:
-                lights.green = 1;
-                doLight = true;
-                break ;
-            case 51:
-                lights.blue = 1;
-                doLight = true;
-                break ;
-        }
+        robotInterface.Send(robotInterface.RI.EngineToRobot(drive=robotInterface.RI.DriveWheels(message['left'], message['right'])))
 
-        if (doMotor) ws.send(JSON.stringify(calcSpeed(motors)));
-        if (doLight) ws.send(JSON.stringify(lights));
-      });
+        if 'lift' in message:
+            robotInterface.Send(robotInterface.RI.EngineToRobot(moveLift=robotInterface.RI.MoveLift(message['lift'])))
+        if 'head' in message:
+            robotInterface.Send(robotInterface.RI.EngineToRobot(moveHead=robotInterface.RI.MoveHead(message['head'])))
 
-      document.addEventListener("keyup", function (e) {
-        var doMotor, doLight;
-        switch (e.keyCode) {
-            case 38: // up
-                motors.up = false;
-                doMotor = true;
-                break ;
-            case 40: // down
-                motors.down = false;
-                doMotor = true;
-                break ;
-            case 37: // left
-                motors.left = false;
-                doMotor = true;
-                break ;
-            case 39: // right
-                motors.right = false;
-                doMotor = true;
-                break ;
-            case 49:
-                lights.red = 0;
-                doLight = true;
-                break ;
-            case 50:
-                lights.green = 0;
-                doLight = true;
-                break ;
-            case 51:
-                lights.blue = 0;
-                doLight = true;
-                break ;
-        }
+        return "ok."
 
-        if (doMotor) ws.send(JSON.stringify(calcSpeed(motors)));
-        if (doLight) ws.send(JSON.stringify(lights));
-      });
+    @app.route('/lights', methods=['POST'])
+    def lights():
+        message = json.loads(request.data.decode("utf-8"))
+        lights = robotInterface.RI.BackpackLightsMiddle()
 
-      ws.onmessage = function (event) {
-                if (event.data instanceof Blob) {
-                    // assume binary data is an image
-                    var reader  = new FileReader();
+        color = (int(message['red']   * 0x1F) << 10) + (int(message['green'] * 0x1F) << 5) + (int(message['blue']  * 0x1F) << 0)        
 
-                    reader.addEventListener("load", function () {
-                        document.body.style.backgroundImage = `url("${reader.result}")`;
-                    }, false);
+        for light in lights.lights:
+            light.onColor = light.offColor = color
 
-                    reader.readAsDataURL(event.data);
-                } else {
-                    var message = JSON.parse(event.data);
+        robotInterface.Send(robotInterface.RI.EngineToRobot(setBackpackLightsMiddle=lights))
 
-                    // TODO: HANDLE ANYTHING THAT IS A STRING HERE
-                }
-      };
-        </script>
-    </body>
-</html>
-"""
+        return "ok."
 
-class WebServer(threading.Thread):
-    def run(self):
-        app = Flask(__name__)
+    @app.route('/camera')
+    def camera():
+        global LastCameraImage
+        response = make_response(LastCameraImage)
+        response.headers['Content-Type'] = 'image/jpeg'
+        response.headers['Content-Disposition'] = 'attachment; filename=camera.jpg'
+        return response
 
-        @app.route('/')
-        def static_page():
-            return client
+    @app.route('/static/<path:path>')
+    def send_js(path):
+        return send_from_directory('static', path)
 
-        app.run()
+    @app.route('/')
+    def static_page():
+        return send_from_directory('static', "index.html")
 
-class Remote:
-    def __init__(self):
-        self.upgrader = None
-        self.animStreamer = None
-        self.image = None
+    def receiveImage(img, size):
+        global LastCameraImage
+        LastCameraImage = img
 
-        robotInterface.Init(False)
+    
+    robotInterface.Init(False)
+    imageReceiver = minipegReceiver.MinipegReceiver(receiveImage)
 
-        self.imageReceiver = minipegReceiver.MinipegReceiver(self.receiveImage)
-        self.run()
-
-    def receiveImage(self, img, size):
-        self.image = img
-
-    async def producer(self):
-        while not self.image:
-            asyncio.sleep(0.01)
-        image, self.image = self.image, None
-
-        return image
-
-    async def consumer(self, message):
-        message = json.loads(message)
-
-        if message['type'] == 'motors':
-            robotInterface.Send(robotInterface.RI.EngineToRobot(drive=robotInterface.RI.DriveWheels(message['left'], message['right'])))
-
-            if 'lift' in message:
-                robotInterface.Send(robotInterface.RI.EngineToRobot(moveLift=robotInterface.RI.MoveLift(message['lift'])))
-            if 'head' in message:
-                robotInterface.Send(robotInterface.RI.EngineToRobot(moveHead=robotInterface.RI.MoveHead(message['head'])))
-        elif message['type'] == 'lights':
-            lights = robotInterface.RI.BackpackLightsMiddle()
-
-            for light in lights.lights:
-                color = (int(message['red']   * 0x1F) << 10) + (int(message['green'] * 0x1F) << 5) + (int(message['blue']  * 0x1F) << 0)
-
-                light.onColor = light.offColor = color
-
-            print (lights)
-            robotInterface.Send(robotInterface.RI.EngineToRobot(setBackpackLightsMiddle=lights))
-
-    async def socket_loop(self, websocket, path):
-        while True:
-            listener_task = asyncio.ensure_future(websocket.recv())
-            producer_task = asyncio.ensure_future(self.producer())
-
-            done, pending = await asyncio.wait(
-                [listener_task, producer_task],
-                return_when=asyncio.FIRST_COMPLETED)
-
-            if listener_task in done:
-                message = listener_task.result()
-                await self.consumer(message)
-            else:
-                listener_task.cancel()
-
-            if producer_task in done:
-                message = producer_task.result()
-                await websocket.send(message)
-            else:
-                producer_task.cancel()
-
-    def flask(self):
-        thread = threading.Thread()
-
-    def run(self):
-        robotInterface.Connect()
-        webserver = WebServer()
-        webserver.start()
-
-        start_server = websockets.serve(self.socket_loop, 'localhost', 8765)
-
-        asyncio.get_event_loop().run_until_complete(start_server)
-        asyncio.get_event_loop().run_forever()
-
-        robotInterface.Send(robotInterface.RI.EngineToRobot(stop=robotInterface.RI.StopAllMotors()))
-        robotInterface.Die()
+    robotInterface.Connect()
+    app.run()
+    robotInterface.Send(robotInterface.RI.EngineToRobot(stop=robotInterface.RI.StopAllMotors()))
+    robotInterface.Die()
 
 if __name__ == '__main__':
     Remote()
