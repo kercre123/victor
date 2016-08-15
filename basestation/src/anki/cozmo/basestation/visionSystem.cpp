@@ -1621,13 +1621,19 @@ namespace Cozmo {
     } else {
       ASSERT_NAMED(xPercentile >= 0.f && xPercentile <= 1.f, "VisionSystem.GetCentroid.xPercentileOOR");
       ASSERT_NAMED(yPercentile >= 0.f && yPercentile <= 1.f, "VisionSystem.GetCentroid.yPercentileOOR");
-      const size_t area = xValues.size();
-      auto xcen = xValues.begin() + std::round(xPercentile * (f32)area);
-      auto ycen = yValues.begin() + std::round(yPercentile * (f32)area);
+      const size_t area = xValues.size(); // NOTE: area > 0 if we get here
+      auto xcen = xValues.begin() + std::round(xPercentile * (f32)(area-1));
+      auto ycen = yValues.begin() + std::round(yPercentile * (f32)(area-1));
       std::nth_element(xValues.begin(), xcen, xValues.end());
       std::nth_element(yValues.begin(), ycen, yValues.end());
       centroid.x() = *xcen;
       centroid.y() = *ycen;
+      ASSERT_NAMED_EVENT(centroid.x() >= 0.f && centroid.x() < motionImg.GetNumCols(),
+                         "VisionSystem.GetCentroid.xCenOOR",
+                         "xcen=%f, not in [0,%d)", centroid.x(), motionImg.GetNumCols());
+      ASSERT_NAMED_EVENT(centroid.y() >= 0.f && centroid.y() < motionImg.GetNumRows(),
+                         "VisionSystem.GetCentroid.yCenOOR",
+                         "ycen=%f, not in [0,%d)", centroid.y(), motionImg.GetNumRows());
       return area;
     }
 #   endif // USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID
@@ -1822,9 +1828,17 @@ namespace Cozmo {
             groundPlaneCentroid.x() = temp.x() * divisor;
             groundPlaneCentroid.y() = temp.y() * divisor;
 
-            if(!Quad2f(_poseData.groundPlaneROI.GetGroundQuad()).Contains(groundPlaneCentroid)) {
-              PRINT_NAMED_WARNING("VisionSystem.DetectMotion.BadGroundPlaneCentroid",
-                                  "Centroid=(%.2f,%.2f)", centroid.x(), centroid.y());
+            // This is just a sanity check that the centroid is reasonable
+            if(ANKI_DEVELOPER_CODE)
+            {
+              // Scale ground quad slightly to account for numerical inaccuracy.
+              // Centroid just needs to be very nearly inside the ground quad.
+              Quad2f testQuad(_poseData.groundPlaneROI.GetGroundQuad());
+              testQuad.Scale(1.01f); // Allow for 1% error
+              if(!testQuad.Contains(groundPlaneCentroid)) {
+                PRINT_NAMED_WARNING("VisionSystem.DetectMotion.BadGroundPlaneCentroid",
+                                    "Centroid=(%.2f,%.2f)", centroid.x(), centroid.y());
+              }
             }
           }
         }

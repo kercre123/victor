@@ -109,9 +109,14 @@ namespace Anki {
       {
         if(_startedPlaying && this->_animTag == event.GetData().Get_animEnded().tag) {
           if( _numLoopsRemaining == 0 ) {
-            PRINT_NAMED_ERROR("PlayAnimation.EndAnimationHandler.TooManyLoops",
-                              "0 loops remaining, but animation tag %d ended another",
-                              this->_animTag);
+            // If numLoopsRemaining == 0 before decrementing, it means it _started_
+            // equal to zero, which means we were asked to loop this animation forever,
+            // presumably to be cancelled by some other action at some point, or
+            // until we timeout. This is valid, according to the constructor, but
+            // log this situation, to help catch accidental infinite loop usage.
+            PRINT_NAMED_INFO("PlayAnimation.EndAnimationHandler.LoopingForever",
+                             "Animation tag %d finished a loop, continuing until timeout or cancel",
+                             this->_animTag);
           }
           else {
             _numLoopsRemaining--;
@@ -121,8 +126,7 @@ namespace Anki {
             }
             else {
               PRINT_NAMED_DEBUG("PlayAnimation.FinishedLoop", "Animation tag %d finished a loop, %d left",
-                                this->_animTag,
-                                _numLoopsRemaining);
+                                this->_animTag, _numLoopsRemaining);
             }
           }
         }

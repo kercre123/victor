@@ -470,6 +470,9 @@ void Robot::Delocalize(bool isCarryingObject)
       
   // create a new memory map for this origin
   _blockWorld.CreateLocalizedMemoryMap(_worldOrigin);
+  
+  // deselect blockworld's selected object, if it has one
+  _blockWorld.DeselectCurrentObject();
       
   // notify behavior whiteboard
   _behaviorMgr->GetWhiteboard().OnRobotDelocalized();
@@ -890,12 +893,18 @@ void Robot::SetPhysicalRobot(bool isPhysical)
   #endif // !(ANKI_IOS_BUILD || ANDROID)
 }
 
-Vision::Camera Robot::GetHistoricalCamera(TimeStamp_t t_request) const
+Result Robot::GetHistoricalCamera(TimeStamp_t t_request, Vision::Camera& camera) const
 {
   RobotPoseStamp p;
   TimeStamp_t t;
-  _poseHistory->GetRawPoseAt(t_request, t, p);
-  return GetHistoricalCamera(p, t);
+  Result result = _poseHistory->GetRawPoseAt(t_request, t, p);
+  if(RESULT_OK != result)
+  {
+    return result;
+  }
+  
+  camera = GetHistoricalCamera(p, t);
+  return RESULT_OK;
 }
     
 Pose3d Robot::GetHistoricalCameraPose(const RobotPoseStamp& histPoseStamp, TimeStamp_t t) const

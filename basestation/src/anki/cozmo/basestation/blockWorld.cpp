@@ -10,9 +10,12 @@
  *
  **/
 
-// TODO: this include is shared b/w BS and Robot.  Move up a level.
-#include "anki/cozmo/shared/cozmoConfig.h"
+
+// Putting engine config include first so we get anki/common/types.h instead of anki/types.h
+// TODO: Fix this types.h include mess (COZMO-3752)
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
+
 #include "anki/common/shared/utilities_shared.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
@@ -2883,6 +2886,13 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     RobotPoseStamp* p = nullptr;
     HistPoseKey poseKey;
     const Result poseRet = _robot->GetPoseHistory()->ComputeAndInsertPoseAt(frameInfo.timestamp, t, &p, &poseKey, true);
+    if(RESULT_FAIL_ORIGIN_MISMATCH == poseRet)
+    {
+      // "Failing" because of an origin mismatch is OK, so don't freak out, but don't
+      // go any further either.
+      return RESULT_OK;
+    }
+    
     const bool poseIsGood = ( RESULT_OK == poseRet ) && (p != nullptr);
     if ( !poseIsGood ) {
       PRINT_NAMED_ERROR("BlockWorld.AddVisionOverheadEdges.PoseNotGood", "Pose not good for timestamp %d", frameInfo.timestamp);
@@ -4288,9 +4298,9 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     {
       const ActionableObject* selectedObject = dynamic_cast<const ActionableObject*>(GetObjectByID(GetSelectedObject()));
       if(selectedObject == nullptr) {
-        PRINT_NAMED_ERROR("BlockWorld.DrawAllObjects.NullSelectedObject",
-                          "Selected object ID = %d, but it came back null.",
-                          GetSelectedObject().GetValue());
+        PRINT_NAMED_WARNING("BlockWorld.DrawAllObjects.NullSelectedObject",
+                            "Selected object ID = %d, but it came back null.",
+                            GetSelectedObject().GetValue());
       } else {
         if(selectedObject->IsSelected() == false) {
           PRINT_NAMED_WARNING("BlockWorld.DrawAllObjects.SelectionMisMatch",

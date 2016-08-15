@@ -226,7 +226,7 @@ public:
   VisionComponent&         GetVisionComponent() { assert(_visionComponentPtr); return *_visionComponentPtr; }
   const VisionComponent&   GetVisionComponent() const { assert(_visionComponentPtr); return *_visionComponentPtr; }
   Vision::Camera           GetHistoricalCamera(const RobotPoseStamp& p, TimeStamp_t t) const;
-  Vision::Camera           GetHistoricalCamera(TimeStamp_t t_request) const;
+  Result                   GetHistoricalCamera(TimeStamp_t t_request, Vision::Camera& camera) const;
   Pose3d                   GetHistoricalCameraPose(const RobotPoseStamp& histPoseStamp, TimeStamp_t t) const;
   
   // Set the calibrated rotation of the camera

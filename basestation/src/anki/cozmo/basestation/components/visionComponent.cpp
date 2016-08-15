@@ -288,7 +288,7 @@ namespace Cozmo {
                                       postOffsetAngle_rad);
     } else {
       PRINT_NAMED_ERROR("VisionComponent.SetMarkerToTrack.NullVisionSystem",
-                        "Cannot set vision marker to track before vision system is instantiated.\n");
+                        "Cannot set vision marker to track before vision system is instantiated.");
     }
   }
   
@@ -362,8 +362,10 @@ namespace Cozmo {
                             encodedImage.GetTimeStamp(), _lastReceivedImageTimeStamp_ms);
         
         // This should be recoverable (it could happen if we receive a bunch of garbage image data)
-        // so reset the lastReceived timestamp so we can set it fresh next time we get an image
+        // so reset the lastReceived and lastProcessd timestamps so we can set them fresh next time
+        // we get an image
         _lastReceivedImageTimeStamp_ms = 0;
+        _lastProcessedImageTimeStamp_ms = 0;
         return RESULT_FAIL;
       }
       _framePeriod_ms = encodedImage.GetTimeStamp() - _lastReceivedImageTimeStamp_ms;
@@ -395,9 +397,18 @@ namespace Cozmo {
         lastResult = _robot.GetPoseHistory()->GetRawPoseAt(_robot.GetPoseHistory()->GetNewestTimeStamp(), imagePoseStampTimeStamp, imagePoseStamp, false);
       }
 
-      if(lastResult != RESULT_OK) {
+      if(lastResult == RESULT_FAIL_ORIGIN_MISMATCH)
+      {
+        // Don't print a warning for this case: we expect not to get pose history
+        // data successfully
+        PRINT_NAMED_INFO("VisionComponent.SetNextImage.OriginMismatch",
+                         "Could not get pose data for t=%u due to origin mismatch. Returning OK", encodedImage.GetTimeStamp());
+        return RESULT_OK;
+      }
+      else if(lastResult != RESULT_OK)
+      {
         PRINT_NAMED_WARNING("VisionComponent.SetNextImage.PoseHistoryFail",
-                          "Unable to get computed pose at image timestamp of %d. (rawPoses: have %zu from %d:%d) (visionPoses: have %zu from %d:%d)\n",
+                          "Unable to get computed pose at image timestamp of %d. (rawPoses: have %zu from %d:%d) (visionPoses: have %zu from %d:%d)",
                           encodedImage.GetTimeStamp(),
                           _robot.GetPoseHistory()->GetNumRawPoses(),
                           _robot.GetPoseHistory()->GetOldestTimeStamp(),
@@ -728,7 +739,14 @@ namespace Cozmo {
 
     lastResult = _robot.GetPoseHistory()->ComputeAndInsertPoseAt(markerOrig.GetTimeStamp(), t, &p, &poseKey, true);
 
-    if(lastResult != RESULT_OK) {
+    if(RESULT_FAIL_ORIGIN_MISMATCH == lastResult)
+    {
+      // Not finding pose information due to an origin mismatch is a normal thing
+      // if we just delocalized, so just report everything's cool
+      return RESULT_OK;
+    }
+    else if(RESULT_OK != lastResult)
+    {
       PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker.HistoricalPoseNotFound",
                           "Time: %u, hist: %u to %u",
                           markerOrig.GetTimeStamp(),
@@ -784,9 +802,8 @@ namespace Cozmo {
      */
     
     // Visualize the marker in 3D
-    // TODO: disable this block when not debugging / visualizing
-    if(true){
-      
+    if(ANKI_DEVELOPER_CODE)
+    {
       // Note that this incurs extra computation to compute the 3D pose of
       // each observed marker so that we can draw in the 3D world, but this is
       // purely for debug / visualization
@@ -811,13 +828,13 @@ namespace Cozmo {
                                                                    markerPose);
           if(poseResult != RESULT_OK) {
             PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker",
-                                "Could not estimate pose of block marker. Not visualizing.\n");
+                                "Could not estimate pose of block marker. Not visualizing.");
           } else {
             if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
               _robot.GetContext()->GetVizManager()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
             } else {
               PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
-                                  "Cannot visualize a Block marker whose pose origin is not the camera's origin that saw it.\n");
+                                  "Cannot visualize a Block marker whose pose origin is not the camera's origin that saw it.");
             }
           }
         }
@@ -836,13 +853,13 @@ namespace Cozmo {
                                                                    markerPose);
           if(poseResult != RESULT_OK) {
             PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker",
-                                "Could not estimate pose of mat marker. Not visualizing.\n");
+                                "Could not estimate pose of mat marker. Not visualizing.");
           } else {
             if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
               _robot.GetContext()->GetVizManager()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), NamedColors::RED);
             } else {
               PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
-                                  "Cannot visualize a Mat marker whose pose origin is not the camera's origin that saw it.\n");
+                                  "Cannot visualize a Mat marker whose pose origin is not the camera's origin that saw it.");
             }
           }
         }
@@ -877,7 +894,8 @@ namespace Cozmo {
           // Call the passed in member handler to look at the result
           if (RESULT_OK != (this->*handler)(result))
           {
-            PRINT_NAMED_ERROR("VisionComponent.UpdateAllResults", "%s Failed", EnumToString(mode));
+            PRINT_NAMED_ERROR("VisionComponent.UpdateAllResults.LocalHandlerFailed",
+                              "%s Failed", EnumToString(mode));
             anyFailures = true;
           }
         };
@@ -885,21 +903,9 @@ namespace Cozmo {
         tryAndReport(&VisionComponent::UpdateVisionMarkers,       VisionMode::DetectingMarkers);
         tryAndReport(&VisionComponent::UpdateFaces,               VisionMode::DetectingFaces);
         
-        // Special handling for the two types of processing that are enabled by VisionMode::Tracking
-        if (result.modesProcessed.IsBitFlagSet(VisionMode::Tracking))
-        {
-          if (RESULT_OK != VisionComponent::UpdateTrackingQuad(result))
-          {
-            PRINT_NAMED_ERROR("VisionComponent.UpdateAllResults", "UpdateTrackingQuad Failed");
-            anyFailures = true;
-          }
-          
-          if (RESULT_OK != VisionComponent::UpdateDockingErrorSignal(result))
-          {
-            PRINT_NAMED_ERROR("VisionComponent.UpdateAllResults", "UpdateDockingErrorSignal Failed");
-            anyFailures = true;
-          }
-        }
+        // Note: tracking mode has two associated update calls:
+        tryAndReport(&VisionComponent::UpdateTrackingQuad,        VisionMode::Tracking);
+        tryAndReport(&VisionComponent::UpdateDockingErrorSignal,  VisionMode::Tracking);
         
         tryAndReport(&VisionComponent::UpdateMotionCentroid,      VisionMode::DetectingMotion);
         tryAndReport(&VisionComponent::UpdateOverheadEdges,       VisionMode::DetectingOverheadEdges);
@@ -953,8 +959,8 @@ namespace Cozmo {
     {
       lastResult = QueueObservedMarker(visionMarker);
       if(lastResult != RESULT_OK) {
-        PRINT_NAMED_ERROR("VisionComponent.Update.FailedToQueueVisionMarker",
-                          "Got VisionMarker message from vision processing thread but failed to queue it.");
+        PRINT_NAMED_WARNING("VisionComponent.Update.FailedToQueueVisionMarker",
+                            "Got VisionMarker message from vision processing thread but failed to queue it.");
         return lastResult;
       }
       
@@ -1003,14 +1009,6 @@ namespace Cozmo {
                         faceDetection.GetHeadPose().GetTranslation().z());
        */
       
-      // Get historical robot pose at specified timestamp to get
-      // head angle and to attach as parent of the camera pose.
-      TimeStamp_t t;
-      RobotPoseStamp* p = nullptr;
-      HistPoseKey poseKey;
-
-      _robot.GetPoseHistory()->ComputeAndInsertPoseAt(faceDetection.GetTimeStamp(), t, &p, &poseKey, true);
-      
       // Check this before potentially ignoring the face detection for faceWorld's purposes below
       if(faceDetection.GetNumEnrollments() > 0) {
         PRINT_NAMED_DEBUG("VisionComponent.UpdateFaces.ReachedEnrollmentCount",
@@ -1020,6 +1018,25 @@ namespace Cozmo {
         enrollCountMsg.count  = faceDetection.GetNumEnrollments();
         
         _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(enrollCountMsg)));
+      }
+      
+      // Get historical robot pose at specified timestamp to get
+      // head angle and to attach as parent of the camera pose.
+      TimeStamp_t t;
+      RobotPoseStamp* p = nullptr;
+      HistPoseKey poseKey;
+      
+      lastResult = _robot.GetPoseHistory()->ComputeAndInsertPoseAt(faceDetection.GetTimeStamp(), t, &p, &poseKey, true);
+      if(RESULT_FAIL_ORIGIN_MISMATCH == lastResult)
+      {
+        // This failure can easily happen and not indicate a problem, so just report
+        // everything is ok to the caller but don't continue
+        PRINT_NAMED_DEBUG("VisionComponent.UpdateFaces.SkippingDueToMismatchedOrigins", "");
+        return RESULT_OK;
+      }
+      else if(lastResult != RESULT_OK)
+      {
+        return lastResult;
       }
       
       // If we were moving too fast at the timestamp the face was detected then don't update it
@@ -1036,7 +1053,7 @@ namespace Cozmo {
       // Use the faceDetection to update FaceWorld:
       lastResult = _robot.GetFaceWorld().AddOrUpdateFace(faceDetection);
       if(lastResult != RESULT_OK) {
-        PRINT_NAMED_ERROR("VisionComponent.Update.FailedToUpdateFace",
+        PRINT_NAMED_ERROR("VisionComponent.UpdateFaces.FailedToUpdateFace",
                           "Got FaceDetection from vision processing but failed to update it.");
         return lastResult;
       }
@@ -1066,7 +1083,16 @@ namespace Cozmo {
     {
       // Hook the pose coming out of the vision system up to the historical
       // camera at that timestamp
-      Vision::Camera histCamera(_robot.GetHistoricalCamera(procResult.timestamp));
+      Vision::Camera histCamera;
+      Result histCamResult = _robot.GetHistoricalCamera(procResult.timestamp, histCamera);
+      if(RESULT_OK != histCamResult)
+      {
+        PRINT_NAMED_WARNING("VisionComponent.UpdateDockingErrorSignal.HistoricalCameraFail",
+                            "Failed to get historical camera at t=%u, Result=%0x",
+                            procResult.timestamp, histCamResult);
+        return histCamResult;
+      }
+      
       markerPoseWrtCamera.SetParent(&histCamera.GetPose());
       /*
        // Get the pose w.r.t. the (historical) robot pose instead of the camera pose
@@ -1312,7 +1338,7 @@ namespace Cozmo {
       ImuDataHistory::ImuData prev, next;
       if(!_imuHistory.GetImuDataBeforeAndAfter(t, prev, next))
       {
-        PRINT_NAMED_WARNING("VisionComponent.WasHeadMovingTooFast",
+        PRINT_NAMED_WARNING("VisionComponent.WasHeadMovingTooFast.NoIMUData",
                             "Could not get next/previous imu data for timestamp %u", t);
         return true;
       }
@@ -1413,7 +1439,7 @@ namespace Cozmo {
     
     if(RESULT_OK != result) {
       PRINT_NAMED_ERROR("VisionComponent.CompressAndSendImage",
-                        "Unrecognized resolution: %dx%d.\n", captureWidth, captureHeight);
+                        "Unrecognized resolution: %dx%d.", captureWidth, captureHeight);
       return result;
     }
     

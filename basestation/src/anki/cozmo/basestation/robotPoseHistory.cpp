@@ -226,7 +226,7 @@ namespace Anki {
           
           // they asked us for a t_request that is between two origins. We can't interpolate or decide which origin is
           // "right" for you, so, we are going to fail
-          return RESULT_FAIL;
+          return RESULT_FAIL_ORIGIN_MISMATCH;
         }
         
         if(withInterpolation)
@@ -296,8 +296,9 @@ namespace Anki {
       
       // Get the raw pose at the requested timestamp
       RobotPoseStamp p1;
-      if (GetRawPoseAt(t_request, t, p1, withInterpolation) == RESULT_FAIL) {
-        return RESULT_FAIL;
+      const Result getRawResult = GetRawPoseAt(t_request, t, p1, withInterpolation);
+      if (RESULT_OK != getRawResult) {
+        return getRawResult;
       }
       
       // Now get the previous vision-based pose
@@ -434,9 +435,10 @@ namespace Anki {
     {
       RobotPoseStamp ps;
       //printf("COMPUTE+INSERT\n");
-      if (ComputePoseAt(t_request, t, ps, withInterpolation) == RESULT_FAIL) {
+      const Result computeResult = ComputePoseAt(t_request, t, ps, withInterpolation);
+      if (RESULT_OK != computeResult) {
         *p = nullptr;
-        return RESULT_FAIL;
+        return computeResult;
       }
       
       // If computedPose entry exist at t, then overwrite it

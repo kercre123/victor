@@ -77,9 +77,9 @@ namespace Anki {
       // Preferred constructor, used by the factory CreatePlayAnimationAction
       // Numloops 0 causes the action to loop forever
       explicit TriggerAnimationAction(Robot& robot,
-                                        AnimationTrigger animEvent,
-                                        u32 numLoops = 1,
-                                        bool interruptRunning = true);
+                                      AnimationTrigger animEvent,
+                                      u32 numLoops = 1,
+                                      bool interruptRunning = true);
       
     protected:
       virtual ActionResult Init() override;

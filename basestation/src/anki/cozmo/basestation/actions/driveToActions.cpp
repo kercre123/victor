@@ -197,9 +197,9 @@ namespace Anki {
       }
       
       if(possiblePreActionPoses.empty()) {
-        PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoPreActionPoses",
-                          "ActionableObject %d did not return any pre-action poses with action type %d.",
-                          _objectID.GetValue(), _actionType);
+        PRINT_NAMED_WARNING("DriveToObjectAction.CheckPreconditions.NoPreActionPoses",
+                            "ActionableObject %d did not return any pre-action poses with action type %d.",
+                            _objectID.GetValue(), _actionType);
         
         return ActionResult::FAILURE_ABORT;
         

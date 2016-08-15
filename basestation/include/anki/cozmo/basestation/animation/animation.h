@@ -109,7 +109,8 @@ Result Animation::AddKeyFrameToBack(const KeyFrameType& kf)
 {
   Result addResult = GetTrack<KeyFrameType>().AddKeyFrameToBack(kf);
   if(RESULT_OK != addResult) {
-    PRINT_NAMED_ERROR("Animiation.AddKeyFrameToBack.Failed", "");
+    PRINT_NAMED_ERROR("Animation.AddKeyFrameToBack.Failed", "AnimationName:%s",
+                      GetName().c_str());
   }
 
   return addResult;
@@ -121,7 +122,8 @@ Result Animation::AddKeyFrameByTime(const KeyFrameType& kf)
 {
   Result addResult = GetTrack<KeyFrameType>().AddKeyFrameByTime(kf);
   if(RESULT_OK != addResult) {
-    PRINT_NAMED_ERROR("Animiation.AddKeyFrameByTime.Failed", "");
+    PRINT_NAMED_ERROR("Animation.AddKeyFrameByTime.Failed", "AnimationName:%s",
+                      GetName().c_str());
   }
 
   return addResult;
