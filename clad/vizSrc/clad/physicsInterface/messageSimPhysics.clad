@@ -10,7 +10,8 @@ message ApplyForce {
   string DefName
 }
 
-union MessageSimPhysics { }
+// an explicit auto-union that includes all messages in this file
+autounion MessageSimPhysics { }
 
 } // namespace PhysicsInterface
 } // namespace Cozmo

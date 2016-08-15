@@ -35,6 +35,7 @@ SRCFILES="$OUTPUT_DIR/cpptest.cpp \
     $OUTPUT_DIR/Foo.cpp \
     $OUTPUT_DIR/Bar.cpp \
     $OUTPUT_DIR/ExplicitUnion.cpp \
+    $OUTPUT_DIR/ExplicitAutoUnion.cpp \
     $OUTPUT_DIR/UnionOfUnion.cpp \
     $SUPPORTDIR/source/SafeMessageBuffer.cpp"
 

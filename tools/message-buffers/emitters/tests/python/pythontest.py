@@ -11,7 +11,9 @@ import sys
 
 import unittest
 
-from SimpleTest import AnkiTypes, Foo, Bar, Baz, Cat, SoManyStrings, ExplicitlyTaggedUnion, AnInt, AFloat, AListOfDoubles, AFixedListOfBytes, ExplicitlyTaggedUnion
+from SimpleTest import AnkiTypes, Foo, Bar, Baz, Cat, SoManyStrings
+from SimpleTest import ExplicitlyTaggedUnion, AnInt, AFloat, AListOfDoubles, AFixedListOfBytes
+from SimpleTest import ExplicitlyTaggedAutoUnion, AnIntMessage, AFloatMessage, AListOfDoublesMessage, AFixedListOfBytesMessage, ABoolMessage
 from aligned.AutoUnionTest import FunkyMessage, Funky, Monkey, Music
 from DefaultValues import IntsWithDefaultValue, FloatsWithDefaultValue
 
@@ -172,6 +174,27 @@ class TestUnion(unittest.TestCase):
         testUnion.bList = AFixedListOfBytes( (0x00, 0x01, 0x02, 0x03) )
         self.assertEqual(0x81, testUnion.tag)
 
+    def verify_autounion_tag(self, testUnion, autoTags):
+        self.assertIn(testUnion.tag, autoTags)
+        if testUnion.tag in autoTags:
+            autoTags.remove(testUnion.tag)
+            
+    def test_explicitAutoUnionValues(self):
+        autoTags = [3,4,5]
+        testUnion = ExplicitlyTaggedAutoUnion()
+        testUnion.AnIntMessage = AnIntMessage(42)
+        self.assertEqual(0x01, testUnion.tag)
+        testUnion.AFloatMessage = AFloatMessage(10.0)
+        self.verify_autounion_tag(testUnion, autoTags)
+        testUnion.ABoolMessage = ABoolMessage(False)
+        self.verify_autounion_tag(testUnion, autoTags)
+        testUnion.AListOfDoublesMessage = AListOfDoublesMessage([100.1, 200.2])
+        self.verify_autounion_tag(testUnion, autoTags)
+        testUnion.AFixedListOfBytesMessage = AFixedListOfBytesMessage( (0x00, 0x01, 0x02, 0x03) )
+        self.assertEqual(0x02, testUnion.tag)
+        # Every autotag should have been used once and once only, so list should now be empty
+        self.assertEqual(autoTags, [])
+        
     def test_introspection(self):
         kind = 'myDog'
         self.assertTrue(hasattr(Cat.MyMessage, kind))

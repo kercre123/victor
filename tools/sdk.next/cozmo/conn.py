@@ -12,7 +12,8 @@ from . import robot
 
 from . import _clad
 from ._clad import _clad_to_engine_cozmo, _clad_to_engine_iface, _clad_to_game_cozmo, _clad_to_game_iface
-
+from ._internal.clad.externalInterface.messageEngineToGame_hash import messageEngineToGameHash as _messageEngineToGameHash
+from ._internal.clad.externalInterface.messageGameToEngine_hash import messageGameToEngineHash as _messageGameToEngineHash
 
 
 class EvtConnected(event.Event):
@@ -147,7 +148,30 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
     def _recv_msg_end_of_message(self, evt, *a, **kw):
         self.anim_names.dispatch_event(evt)
 
+    def _compare_clad_hashes(self, msgHash, pyHash, name):
+        "Compares the from-engine msgHash with the python side pyHash to verify that CLAD is binary compatible"
+
+        pyHashBytes = pyHash.to_bytes(16, byteorder='little')  # hash is generated on a little endian machine
+
+        if len(pyHashBytes) != len(msgHash):
+            logger.error("%s: CLAD Hash length mismatch (%s != %s))", name, len(pyHashBytes), len(msgHash))
+            return False
+
+        for i in range(len(pyHashBytes)):
+            if (pyHashBytes[i] != msgHash[i]):
+                logger.error("%s: CLAD Hash mismatch at %s (%s != %s))",  name, i, pyHashBytes[i], msgHash[i])
+                return False
+
+        #logger.info("%s: CLAD Hashes Match (%s == %s))", name, pyHash, msgHash)
+        return True
+
     def _recv_msg_ui_device_connected(self, _, *, msg):
+
+        if not (self._compare_clad_hashes(msg.toGameCLADHash, _messageEngineToGameHash, "EngineToGame") and
+                self._compare_clad_hashes(msg.toGameCLADHash, _messageEngineToGameHash, "GameToEngine")):
+            logger.error('Your Python and C++ CLAD versions do not match - connection refused')
+            return
+
         self.dispatch_event(EvtConnected, conn=self)
         self.anim_names.refresh()
         logger.info("UI device connected")

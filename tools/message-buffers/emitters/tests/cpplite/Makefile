@@ -9,6 +9,8 @@
 # Can override from command line with constructs like:
 # make PYTHON=python3
 
+OUTPUT_DIR=./build
+
 CPPLITE_TEST_DIR?=.
 CPPLITE_BUILD_DIR?=$(CPPLITE_TEST_DIR)/build
 CPPLITE_ROOT_DIR?=$(CPPLITE_TEST_DIR)/../../..

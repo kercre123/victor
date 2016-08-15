@@ -182,11 +182,13 @@ class CLADParser(PLYParser):
     def _postprocess_unions(self):
         # Figure out autounions
         for auto_union in self._union_decls:
-            # Autounions are specified as empty unions
-            if auto_union.member_list is None:
+            # Autounions are specified explicitly with the autounion keyword
+            if auto_union.is_explicit_auto_union():
                 coord = auto_union.coord
-                auto_union.member_list = ast.MessageMemberDeclList([], coord)
-            
+
+                if auto_union.member_list is None:
+                    auto_union.member_list = ast.MessageMemberDeclList([], coord)
+
                 names = dict()
                 for message_type in self._message_types:
                     if message_type.name in names:
@@ -198,11 +200,17 @@ class CLADParser(PLYParser):
                             names[message_type.name].fully_qualified_name(),
                             message_type.fully_qualified_name()))
                     names[message_type.name] = message_type
+
+                # generate the list of already initialized names, don't add auto entries for these
+                initialized_names = dict()
+                for member in auto_union.members():
+                    initialized_names[member.name] = member
             
                 for init_value, message_type in enumerate(self._message_types):
-                    decl = ast.MessageMemberDecl(message_type.name, message_type, None, coord)
-                    auto_union.member_list.append(decl)
-                    self._all_members.append(decl)
+                    if message_type.name not in initialized_names:
+                        decl = ast.MessageMemberDecl(message_type.name, message_type, None, coord)
+                        auto_union.member_list.append(decl)
+                        self._all_members.append(decl)
         
         # calculate all union initializers
         for union in self._union_decls:
@@ -593,15 +601,26 @@ class CLADParser(PLYParser):
         value = p[3] if len(p) == 4 else None
         p[0] = ast.EnumMember(p[1], value, self.production_to_coord(p, 1))
 
-    def p_union_decl(self, p):
-        """ union_decl : UNION ID LBRACE union_member_decl_list RBRACE
-                       | UNION ID LBRACE union_member_decl_list COMMA RBRACE
-                       | UNION ID LBRACE RBRACE
+    def p_union_decl_begin(self, p):
+        """ union_decl_begin : UNION
+                             | AUTOUNION
         """
+        p[0] = p[1]
+
+    def p_union_decl(self, p):
+        """ union_decl : union_decl_begin ID LBRACE union_member_decl_list RBRACE
+                       | union_decl_begin ID LBRACE union_member_decl_list COMMA RBRACE
+                       | union_decl_begin ID LBRACE RBRACE
+        """
+
+        is_explicit_auto_union = p[1] == "autounion"
+
         member_list = p[4] if len(p) > 5 else None
         decl = ast.UnionDecl(p[2], member_list,
                              self.production_to_coord(p, 2),
-                             self._get_current_namespace())
+                             self._get_current_namespace(),
+                             is_explicit_auto_union)
+
         p[0] = decl
         
         if len(p) > 5:

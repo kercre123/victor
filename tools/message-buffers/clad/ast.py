@@ -392,11 +392,12 @@ class EnumMember(Node):
     attr_names = tuple(["name"])
 
 class UnionDecl(Decl):
-    def __init__(self, name, member_list, coord, namespace=None):
+    def __init__(self, name, member_list, coord, namespace=None, is_explicit_auto_union=False):
         super(UnionDecl, self).__init__(name, coord=coord, namespace=namespace)
         self.member_list = member_list
         self.tag_storage_type = builtin_types['uint_8']
         self.hash_str = "None"
+        self._is_explicit_auto_union = is_explicit_auto_union
     
     def children(self):
         nodelist = [("member_list", self.member_list)]
@@ -448,6 +449,9 @@ class UnionDecl(Decl):
         "Can always be invalid, because the union tag can be the invalid tag."
         return False
     
+    def is_explicit_auto_union(self):
+        return self._is_explicit_auto_union
+
     attr_names = tuple(["name", "fully_qualified_name", "alignment", "hash_str"])
     
 ##### Types #####        

@@ -114,6 +114,7 @@ class AnkiBufferLexer(object):
         'message',
         'structure',
         'union',
+        'autounion',
         'namespace',
         'include',
         'no_cpp_class',

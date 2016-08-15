@@ -6,6 +6,7 @@ __author__ = "Mark Wesley"
 
 import sys, os, time
 import threading # for threaded engine
+import _thread
 from collections import deque # queue for threaded engine
 from debugConsole import DebugConsoleManager
 from moodManager import MoodManager
@@ -17,6 +18,8 @@ from verboseLevel import VerboseLevel
 try:
     from clad.externalInterface.messageEngineToGame import Anki
     from clad.externalInterface.messageGameToEngine import Anki as _Anki
+    from clad.externalInterface.messageEngineToGame_hash import messageEngineToGameHash
+    from clad.externalInterface.messageGameToEngine_hash import messageGameToEngineHash
 except Exception as e:
     sys.stdout.write("Exception = " + str(e)  + os.linesep)
     sys.exit("Can't import CLAD libraries!{linesep}\t* Are you running from the base SDK directory?{linesep}".format(linesep=os.linesep))
@@ -59,6 +62,24 @@ def ArgListToString(*args):
     return argsToString
 
 
+def _compare_clad_hashes(msgHash, pyHash, name):
+    "Compares the from-engine msgHash with the python side pyHash to verify that CLAD is binary compatible"
+
+    pyHashBytes = pyHash.to_bytes(16, byteorder='little')  # bigendian is not supported!
+
+    if len(pyHashBytes) != len(msgHash):
+        sys.stdout.write(name + ": len(pyHashBytes) (" + str(len(pyHashBytes)) + ") != len(msgHash) (" + str(len(msgHash)) + ")" + os.linesep)
+        return False
+
+    for i in range(len(pyHashBytes)):
+        if (pyHashBytes[i] != msgHash[i]):
+            sys.stdout.write(name + ": Hash mismatch at " + str(i) + " (" + str(pyHashBytes[i]) + " != " + str(msgHash[i]) + ")" + os.linesep)
+            return False
+
+    # sys.stdout.write(name + ": Hashes Match! " + repr(pyHash) + " == " + repr(msgHash) + os.linesep)
+    return True
+
+
 # ================================================================================    
 # Internal Private _EngineInterfaceImpl for talking to/from cozmo-engine
 # ================================================================================
@@ -71,6 +92,7 @@ class _EngineInterfaceImpl:
 
         self.useTcpConnection = useTcpConnection;
         self.verboseLevel = verboseLevel
+        self._exitRequested = False
 
         if self.useTcpConnection:
             sys.stdout.write("Creating TCP SDK Connection" + os.linesep)
@@ -110,15 +132,31 @@ class _EngineInterfaceImpl:
         self.moodManager = MoodManager()
         self.animationManager = AnimationManager()
 
+        # Currently only little-endian is supported, for big endian systems we'd need to expand the serialization
+        # to byte-swap fields when sending and receiving messages. Contact us if you'd be interested in us supporting this
+        if sys.byteorder != 'little':
+            sys.stderr.write("SDK doesn't support byte order '" + sys.byteorder + "' - contact us if you'd like this added" + os.linesep);
+            self._exitRequested = True
+            sys.exit()
+
         
         
     def __del__(self):
         self.Disconnect()    
-         
 
-    def OnConnectionAcked(self):
+
+    def OnConnectionAcked(self, msg):
         "Called when we receive a confirmation message that we're connected to the Engine"
         sys.stdout.write("SDK Connected to Engine" + os.linesep)
+
+        if not (_compare_clad_hashes(msg.toGameCLADHash, messageEngineToGameHash, "EngineToGame") and
+                _compare_clad_hashes(msg.toGameCLADHash, messageEngineToGameHash, "GameToEngine")):
+            sys.stderr.write("Your Python and C++ CLAD versions do not match - exiting!" + os.linesep);
+            self._exitRequested = True
+            return
+
+        sys.stdout.write("SDK Connected to Engine - CLAD version matches!" + os.linesep)
+
         self.engineConnection.OnConnectionAcked()
         # Request any one-off state info (e.g. lists of anything only known at load-time)
         self.HandleSendMessageCommand(*["GetAllDebugConsoleVarMessage"])
@@ -167,9 +205,9 @@ class _EngineInterfaceImpl:
                         if self.verboseLevel >= VerboseLevel.High:
                             sys.stdout.write("Recv: UiDeviceConnected Type=" + str(msg.connectionType) + ", id=" + str(msg.deviceID) + ", success=" + str(msg.successful) + os.linesep)
                         if self.useTcpConnection and (msg.connectionType == Anki.Cozmo.UiConnectionType.SdkOverTcp):
-                            self.OnConnectionAcked()
+                            self.OnConnectionAcked(msg)
                         elif (not self.useTcpConnection) and (msg.connectionType == Anki.Cozmo.UiConnectionType.SdkOverUdp):
-                            self.OnConnectionAcked()
+                            self.OnConnectionAcked(msg)
                         else:
                             sys.stdout.write("Something else Connected to Engine" + os.linesep)
                     elif fromEngMsg.tag == fromEngMsg.Tag.UpdateEngineState:
@@ -635,7 +673,7 @@ class AsyncEngineInterface(threading.Thread):
             self.engineInterface = None        
             
     def run(self):
-        while self._continue:     
+        while self._continue and not self.engineInterface._exitRequested:     
             try:
                 self.updateLock.acquire()
                 try:
@@ -652,6 +690,9 @@ class AsyncEngineInterface(threading.Thread):
                 time.sleep(0.01)
             except Exception as e:
                 sys.stderr.write("[AsyncEngineInterface.Run] Exception: " + str(e) + os.linesep)
+        if self.engineInterface._exitRequested:
+            # interrupt main thread so that it can exit too 
+            _thread.interrupt_main()        
 
     def KillThread(self):
         "Clean up the thread"

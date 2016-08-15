@@ -73,7 +73,7 @@ TEST Foo_should_round_trip()
   myFoo.Pack(&buff[0], length);
   Foo otherFoo;
   otherFoo.Unpack(&buff[0], length);
-  delete buff;
+  delete[] buff;
   
   ASSERT_EQ(myFoo, otherFoo);
   PASS();

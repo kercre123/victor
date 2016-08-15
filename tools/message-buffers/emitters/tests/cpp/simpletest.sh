@@ -10,6 +10,7 @@ TEST_SUPPORTDIR=../support
 
 for file in $CLADSRC/Foo.clad $CLADSRC/Bar.clad $CLADSRC/SimpleTest.clad \
                               $CLADSRC/ExplicitUnion.clad \
+                              $CLADSRC/ExplicitAutoUnion.clad \
                               $CLADSRC/UnionOfUnion.clad \
                               $CLADSRC/aligned/AutoUnionTest.clad \
                               $CLADSRC/aligned/AnkiEnum.clad \

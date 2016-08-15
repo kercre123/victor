@@ -20,9 +20,19 @@ def exception_handler(loop, context):
     loop.default_exception_handler(context)
     loop.stop()
 
+def _verify_minimum_requirements():
+    # Currently only little-endian is supported, for big endian systems we'd need to expand the serialization
+    # to byte-swap fields when sending and receiving messages. Contact us if you'd be interested in us supporting this
+
+    if sys.byteorder != 'little':
+        logger.error("Cozmo SDK doesn't support byte order '%s' - contact Anki support to request this", sys.byteorder)
+        return False
+
+    return True
+
 def connect_async(f=None, loop=None, block=True, conn_factory=conn.CozmoConnection,
         stop_on_exception=True, q=None):
-    """Conects to the Cozmo Engine on the mobile device and executes an asynchronous function.
+    """Connects to the Cozmo Engine on the mobile device and executes an asynchronous function.
 
     Accepts a function, f, that is given a :class:`cozmo.CozmoConnection` object as
     a parameter.  This function is expected to operate asynchronously.  That is,
@@ -44,6 +54,9 @@ def connect_async(f=None, loop=None, block=True, conn_factory=conn.CozmoConnecti
             be logged.
         q: Internal helper parameter.
     """
+
+    if not _verify_minimum_requirements():
+        return
 
     try:
         if loop is None:
@@ -116,6 +129,9 @@ def connect(f, stop_on_exception=True):
     # Create a new event loop and start it running on its own thread
     # Set its conn_factory to produce SyncConn objects, which will automatically
     # be wrapped into base._SyncProxy objects by metaclass voodoo.
+
+    if not _verify_minimum_requirements():
+        return
 
     loop = asyncio.new_event_loop()
     abort_future = concurrent.futures.Future()

@@ -4,6 +4,7 @@
 #include "Foo/Foo.clad"
 #include "Bar/Bar.clad"
 #include "ExplicitUnion/ExplicitUnion.clad"
+#include "ExplicitAutoUnion/ExplicitAutoUnion.clad"
 
 namespace Baz {
   message Dog {

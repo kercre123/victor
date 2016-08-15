@@ -34,6 +34,9 @@
 #include <anki/messaging/basestation/IComms.h>
 #include <anki/messaging/basestation/advertisementService.h>
 
+#include "clad/externalInterface/messageGameToEngine_hash.h"
+#include "clad/externalInterface/messageEngineToGame_hash.h"
+
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/enums/enumOperators.h"
@@ -559,7 +562,26 @@ namespace Anki {
       ISocketComms* socketComms = GetSocketComms(connectionType);
       
       const bool success = socketComms ? socketComms->ConnectToDeviceByID(deviceId) : false;
-      Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UiDeviceConnected(connectionType, deviceId, success)));
+      
+      std::array<uint8_t, 16> toGameCLADHash;
+      std::copy(std::begin(messageEngineToGameHash), std::end(messageEngineToGameHash), std::begin(toGameCLADHash));
+      
+      std::array<uint8_t, 16> toEngineCLADHash;
+      std::copy(std::begin(messageGameToEngineHash), std::end(messageGameToEngineHash), std::begin(toEngineCLADHash));
+      
+      std::string buildVersionString = "local"; // TODO - get a buildVersion automatically for build-machine-built exes
+      
+      // kReservedForTag is for future proofing - if we need to increase tag size to 16 bits, the
+      const uint8_t kReservedForTag = 0;
+      ExternalInterface::UiDeviceConnected deviceConnected(kReservedForTag,
+                                                           connectionType,
+                                                           deviceId,
+                                                           success,
+                                                           toGameCLADHash,
+                                                           toEngineCLADHash,
+                                                           buildVersionString);
+
+      Broadcast( ExternalInterface::MessageEngineToGame(std::move(deviceConnected)) );
     
       return success;
     }

@@ -905,9 +905,9 @@ message NVStorageReadEntry {
   NVStorage::NVEntryTag tag
 }
 
-// keep empty to generate an auto-union that includes all messages in this file
+// an explicit auto-union that includes all messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"
-union MessageGameToEngine { }
+autounion MessageGameToEngine { }
 
 } // namespace U2G
 } // namespace Cozmo
