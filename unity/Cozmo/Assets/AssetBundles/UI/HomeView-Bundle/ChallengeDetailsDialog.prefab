@@ -397,9 +397,6 @@ MonoBehaviour:
   - ObjectPath: ButtonGlint
     FieldName: UnityEngine.UI.Image:m_Sprite
     Reference: {fileID: 21300000, guid: cd8652dcb3b244500a6bf0e4a70cb22a, type: 3}
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedSprite
-    Reference: {fileID: 21300000, guid: 0d05400c965d2429dbf74afacb813d9d, type: 3}
 --- !u!114 &11400584
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -708,6 +705,7 @@ MonoBehaviour:
   _CloseDialogOnTapOutside: 1
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 1
+  _UnlockTween_sec: 0.6
   _AvailableColor: {r: 0.627451, g: 0.9372549, b: 0.23529412, a: 1}
   _UnavailableColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
   _TitleTextLabel: {fileID: 11438278}
@@ -904,7 +902,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22456088}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 114.6, y: 8.5}
@@ -963,7 +961,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22456088}
-  m_RootOrder: 2
+  m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: 2, y: -318}
@@ -1058,7 +1056,6 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
-  - {fileID: 22488202}
   - {fileID: 22419050}
   - {fileID: 22437538}
   m_Father: {fileID: 22439330}
@@ -1117,7 +1114,8 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_Children: []
+  m_Children:
+  - {fileID: 22488202}
   m_Father: {fileID: 22439330}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
@@ -1154,12 +1152,12 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
-  m_Father: {fileID: 22456088}
+  m_Father: {fileID: 22478998}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0.5, y: 1}
-  m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -522.5}
-  m_SizeDelta: {x: 1706, y: 341}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: -56.7157}
+  m_SizeDelta: {x: -426, y: 341}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22489566
 RectTransform:
