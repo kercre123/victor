@@ -70,7 +70,7 @@ private:
   // after finishing, the goal will not run again for this long
   float _cooldownSecs;
   
-  // mood scoring to start the strategy. Only initialized if _requiredMinStartMoodScore is not negative
+  // mood scoring to start the strategy. Only initialized if _requiredMinStartMoodScore is specified in json
   std::unique_ptr<MoodScorer> _startMoodScorer;
   
   // if _requiredMinStartMoodScore is set in json, the _startMoodScorer's score has to be greater than this value, for

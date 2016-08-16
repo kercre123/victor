@@ -239,6 +239,13 @@ bool AIGoalEvaluator::PickNewGoalForSpark(Robot& robot, UnlockId spark, bool isC
       // Since the goal could not pick a valid behavior, but did want to run. Kicking it out now will trigger
       // regular cooldowns, while we might want to set a smaller cooldown due to failure
     
+      // DAS
+      PRINT_NAMED_EVENT("AIGoalEvaluator.NewGoalSelected",
+        "Switched goal from '%s' to '%s' (spark '%s')",
+        _currentGoalPtr ? _currentGoalPtr->GetName().c_str() : "no goal",
+        newGoal         ? newGoal->GetName().c_str() : "no goal",
+        EnumToString(spark) );
+    
       // log
       PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.PickNewGoalForSpark",
         "Switched goal from '%s' to '%s'",
