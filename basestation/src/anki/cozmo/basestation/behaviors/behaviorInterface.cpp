@@ -703,11 +703,9 @@ void IReactionaryBehavior::AlwaysHandle(const GameToEngineEvent& event, const Ro
     BehaviorType behaviorRequest = event.GetData().Get_RequestEnableReactionaryBehavior().behavior;
     bool enable = event.GetData().Get_RequestEnableReactionaryBehavior().enable;
     
-    std::string behaviorName = GetName();
     BehaviorType behaviorType = GetType();
 
-    if(behaviorType == behaviorRequest
-       && behaviorName == BehaviorTypeToString(behaviorRequest)){
+    if(behaviorType == behaviorRequest){
       UpdateDisableIDs(requesterID, enable);
     }
     
