@@ -17,8 +17,6 @@ namespace FaceEnrollment {
     [SerializeField]
     private GameObject _FaceEnrollmentDiagramPrefab;
 
-    private bool _AttemptedEnrollFace = false;
-
     // used by press demo to skip saving to actual robot.
     private bool _SaveToRobot = true;
 
@@ -26,8 +24,7 @@ namespace FaceEnrollment {
 
     private int _FaceIDToEdit;
     private string _FaceOldNameEdit;
-
-    private int _FaceIDToEnroll;
+    private int _ReEnrollFaceID = 0;
 
     private int _FixedFaceID = -1;
 
@@ -49,6 +46,7 @@ namespace FaceEnrollment {
       CurrentRobot.SetHeadAngle(CozmoUtil.kIdealFaceViewHeadValue);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotOnBackFinished>(HandleOnBackFinished);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(HandleEnrolledFace);
     }
 
     protected override void SetupViewAfterCozmoReady(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
@@ -76,6 +74,7 @@ namespace FaceEnrollment {
       _FaceListSlideInstance.OnEnrollNewFaceRequested += EnterNameForNewFace;
       _FaceListSlideInstance.OnEditNameRequested += EditExistingName;
       _FaceListSlideInstance.OnDeleteEnrolledFace += RequestDeleteEnrolledFace;
+      _FaceListSlideInstance.OnReEnrollFaceRequested += RequestReEnrollFace;
       newView.ShelfWidget.SetWidgetText(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDescription);
     }
 
@@ -83,6 +82,7 @@ namespace FaceEnrollment {
       _FaceListSlideInstance.OnEnrollNewFaceRequested -= EnterNameForNewFace;
       _FaceListSlideInstance.OnEditNameRequested -= EditExistingName;
       _FaceListSlideInstance.OnDeleteEnrolledFace -= RequestDeleteEnrolledFace;
+      _FaceListSlideInstance.OnReEnrollFaceRequested -= RequestReEnrollFace;
       SharedMinigameView.HideShelf();
     }
 
@@ -124,8 +124,22 @@ namespace FaceEnrollment {
       _EnterNameSlideInstance.OnNameEntered += HandleUpdatedNameEntered;
     }
 
-    private void HandleNewNameEntered(string name) {
-      _NameForFace = name;
+    private void RequestReEnrollFace(int faceId, string faceName) {
+      _ReEnrollFaceID = faceId;
+
+      _NameForFace = faceName;
+      SharedMinigameView.ShowWideAnimationSlide("faceEnrollment.instructions", "face_enrollment_wait_instructions", _FaceEnrollmentDiagramPrefab, HandleInstructionsSlideEntered);
+      SharedMinigameView.ShowShelf();
+      SharedMinigameView.ShowSpinnerWidget();
+
+      SharedMinigameView.ShowBackButton(() => {
+        SharedMinigameView.ShowQuitButton();
+        ShowFaceListSlide(SharedMinigameView);
+      });
+    }
+
+    private void HandleNewNameEntered(string faceName) {
+      _NameForFace = faceName;
       SharedMinigameView.ShowWideAnimationSlide("faceEnrollment.instructions", "face_enrollment_wait_instructions", _FaceEnrollmentDiagramPrefab, HandleInstructionsSlideEntered);
       SharedMinigameView.ShowShelf();
       SharedMinigameView.ShowSpinnerWidget();
@@ -152,33 +166,20 @@ namespace FaceEnrollment {
 
     private void HandleInstructionsSlideEntered() {
       if (_UseFixedFaceID) {
-        // TODO: Make sure the mergeIntoID makes sense! (COZMO-2926)
-        const int tempMergeIntoID = 0;
-        CurrentRobot.EnrollNamedFace(_FixedFaceID, tempMergeIntoID, _NameForFace, saveToRobot: _SaveToRobot, callback: HandleEnrolledFace);
-        _AttemptedEnrollFace = true;
+        CurrentRobot.EnrollNamedFace(_FixedFaceID, _ReEnrollFaceID, _NameForFace, saveToRobot: _SaveToRobot);
       }
       else {
-        RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedFace>(HandleObservedFace);
+        CurrentRobot.EnrollNamedFace(0, _ReEnrollFaceID, _NameForFace, saveToRobot: _SaveToRobot);
       }
     }
 
-    private void HandleObservedFace(Anki.Cozmo.ExternalInterface.RobotObservedFace message) {
-      bool newFace = message.faceID > 0 && message.name == "";
-
-      if (_AttemptedEnrollFace || !newFace) {
+    private void HandleEnrolledFace(Anki.Cozmo.ExternalInterface.RobotCompletedAction message) {
+      // ignore all messages except ENROLL_NAMED_FACE
+      if (message.actionType != Anki.Cozmo.RobotActionType.ENROLL_NAMED_FACE) {
         return;
       }
 
-      // TODO: Get mergeIntoID from UI if we are re-enrolling! (COZMO-2926)
-      const int tempMergeIntoID = 0;
-      CurrentRobot.EnrollNamedFace(message.faceID, tempMergeIntoID, _NameForFace, saveToRobot: _SaveToRobot, callback: HandleEnrolledFace);
-      _FaceIDToEnroll = message.faceID;
-      _AttemptedEnrollFace = true;
-    }
-
-    private void HandleEnrolledFace(bool success) {
-
-      if (!success) {
+      if (message.result != Anki.Cozmo.ActionResult.SUCCESS) {
         // TODO: Retry or notify failure or something?
         // Currently only does app flash.
         ContextManager.Instance.AppFlash(playChime: true);
@@ -186,22 +187,24 @@ namespace FaceEnrollment {
       else {
 
         GameEventManager.Instance.FireGameEvent(Anki.Cozmo.GameEvent.OnMeetNewPerson);
-        if (CurrentRobot.EnrolledFaces.ContainsKey(_FaceIDToEnroll)) {
+        if (CurrentRobot.EnrolledFaces.ContainsKey(message.completionInfo.faceEnrollmentCompleted.faceID)) {
           DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Re-enrolled existing face: " + _NameForFace);
-          CurrentRobot.EnrolledFaces[_FaceIDToEnroll] = _NameForFace;
+          CurrentRobot.EnrolledFaces[message.completionInfo.faceEnrollmentCompleted.faceID] = _NameForFace;
         }
         else {
-          CurrentRobot.EnrolledFaces.Add(_FaceIDToEnroll, _NameForFace);
+          CurrentRobot.EnrolledFaces.Add(message.completionInfo.faceEnrollmentCompleted.faceID, _NameForFace);
           DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Enrolled new face: " + _NameForFace);
         }
       }
-      EditOrEnrollFaceComplete(success);
-      _AttemptedEnrollFace = false;
-      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedFace>(HandleObservedFace);
+      EditOrEnrollFaceComplete(message.result == Anki.Cozmo.ActionResult.SUCCESS);
+
       // reset fixed face ID constraint after doing an enrollment
       // this handles the edge case of if a fixed ID was set at the start
       // of the activity but we want to enroll multiple faces in the same session
       _FixedFaceID = -1;
+
+      // reset _ReEnrollFaceID
+      _ReEnrollFaceID = 0;
     }
 
     private void EditOrEnrollFaceComplete(bool success) {
@@ -234,7 +237,7 @@ namespace FaceEnrollment {
 
     protected override void CleanUpOnDestroy() {
       SharedMinigameView.HideGameStateSlide();
-      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedFace>(HandleObservedFace);
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(HandleEnrolledFace);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotOnBackFinished>(HandleOnBackFinished);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
     }
