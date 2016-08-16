@@ -74,46 +74,46 @@ bool AIGoalStrategyFPHiking::HasSomethingToDo(const Robot& robot) const
   // exit hiking.
   return true;
 
-  // check if Cozmo needs to create beacons
-  if ( _createBeacons )
-  {
-    // ask whiteboard if there's an active one
-    const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
-    const AIBeacon* activeBeacon = whiteboard.GetActiveBeacon();
-    const bool needsBeacon = ( nullptr == activeBeacon );
-    if ( needsBeacon ) {
-      return true;
-    }
-  }
-
-  // check if Cozmo needs to visit interesting edges
-  if ( _visitInterestingEdges )
-  {
-    // ask memory map if there are any interesting edges
-    const INavMemoryMap* currentNavMemoryMap = robot.GetBlockWorld().GetNavMemoryMap();
-    if( currentNavMemoryMap )
-    {
-      const bool hasInterestingEdges = currentNavMemoryMap->HasContentType( NavMemoryMapTypes::EContentType::InterestingEdge );
-      if ( hasInterestingEdges ) {
-        return true;
-      }
-    }
-  }
-  
-  // check if Cozmo needs to bring cubes to a beacon
-  if ( _gatherUsableCubesOutOfBeacons )
-  {
-    // ask whiteboard if there are any usable cubes we want to bring to beacons
-    AIWhiteboard::ObjectInfoList wasteList;
-    const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
-    const bool hasAnyUsableObjectsOutOfBeacons = whiteboard.FindUsableCubesOutOfBeacons(wasteList);
-    if ( hasAnyUsableObjectsOutOfBeacons ) {
-      return true;
-    }
-  }
-
-  // nothing to do
-  return false;
+//  // check if Cozmo needs to create beacons
+//  if ( _createBeacons )
+//  {
+//    // ask whiteboard if there's an active one
+//    const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+//    const AIBeacon* activeBeacon = whiteboard.GetActiveBeacon();
+//    const bool needsBeacon = ( nullptr == activeBeacon );
+//    if ( needsBeacon ) {
+//      return true;
+//    }
+//  }
+//
+//  // check if Cozmo needs to visit interesting edges
+//  if ( _visitInterestingEdges )
+//  {
+//    // ask memory map if there are any interesting edges
+//    const INavMemoryMap* currentNavMemoryMap = robot.GetBlockWorld().GetNavMemoryMap();
+//    if( currentNavMemoryMap )
+//    {
+//      const bool hasInterestingEdges = currentNavMemoryMap->HasContentType( NavMemoryMapTypes::EContentType::InterestingEdge );
+//      if ( hasInterestingEdges ) {
+//        return true;
+//      }
+//    }
+//  }
+//  
+//  // check if Cozmo needs to bring cubes to a beacon
+//  if ( _gatherUsableCubesOutOfBeacons )
+//  {
+//    // ask whiteboard if there are any usable cubes we want to bring to beacons
+//    AIWhiteboard::ObjectInfoList wasteList;
+//    const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+//    const bool hasAnyUsableObjectsOutOfBeacons = whiteboard.FindUsableCubesOutOfBeacons(wasteList);
+//    if ( hasAnyUsableObjectsOutOfBeacons ) {
+//      return true;
+//    }
+//  }
+//
+//  // nothing to do
+//  return false;
 }
   
 } // namespace
