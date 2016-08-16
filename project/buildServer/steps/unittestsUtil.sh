@@ -6,6 +6,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $DIR
 CUT=`which cut`
 GREP=`which grep`
+
 GIT=`which git`
 if [ -z $GIT ];then
   echo git not found
@@ -14,7 +15,7 @@ fi
 TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
 # prepare
-TESTNAME=cti
+TESTNAME=Util
 PROJECT=$TOPLEVEL/generated/mac
 BUILD_TYPE="Debug"
 GTEST=$TOPLEVEL/lib/util/libs/framework/
