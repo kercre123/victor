@@ -116,13 +116,10 @@ AudioController::AudioController( const CozmoContext* context )
       JNIEnv* env = envWrapper->GetEnv();
       JNI_CHECK(env);
 
-      jclass contextClass = env->FindClass("android/content/ContextWrapper");
-      jobject activity = Util::JNIUtils::getUnityActivity(env);
-      apkPath = Util::JNIUtils::getStringFromObjectMethod(env, contextClass, activity,
+      Util::JClassHandle contextClass{env->FindClass("android/content/ContextWrapper"), env};
+      Util::JObjectHandle activity{Util::JNIUtils::getUnityActivity(env), env};
+      apkPath = Util::JNIUtils::getStringFromObjectMethod(env, contextClass.get(), activity.get(),
         "getPackageCodePath", "()Ljava/lang/String;");
-
-      env->DeleteLocalRef(contextClass);
-      env->DeleteLocalRef(activity);
     }
 
     config.pathToZipFiles.push_back(apkPath + "?" + "assets/cozmo_resources/sound/AudioAssets.zip");
