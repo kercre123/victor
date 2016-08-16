@@ -884,6 +884,7 @@ namespace Cozmo {
 
       public void PlayVideo(string videoPath, System.Action onVideoContinue) {
         _ShowCozmoVideoInstance = GameObject.Instantiate(_ShowCozmoVideoPrefab.gameObject).GetComponent<ShowCozmoVideo>();
+        _ShowCozmoVideoInstance.ShowSkipButton(false);
         _ShowCozmoVideoInstance.PlayVideo(videoPath);
         _ShowCozmoVideoInstance.transform.SetParent(transform, false);
         _ShowCozmoVideoInstance.OnContinueButton += onVideoContinue;
