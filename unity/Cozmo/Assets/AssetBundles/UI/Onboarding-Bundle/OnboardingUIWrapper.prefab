@@ -1,45 +1,33 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &192142
+--- !u!1 &117396
 GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
   m_Component:
-  - 4: {fileID: 430874}
-  - 114: {fileID: 11467430}
-  m_Layer: 0
-  m_Name: OnboardingManager
+  - 224: {fileID: 22408034}
+  - 114: {fileID: 11492020}
+  m_Layer: 5
+  m_Name: OnboardingUIWrapper
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &430874
-Transform:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 192142}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 0
---- !u!114 &11467430
+--- !u!114 &11492020
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 192142}
+  m_GameObject: {fileID: 117396}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4887f77b48c344d53a94972a455cfb2a, type: 3}
+  m_Script: {fileID: 11500000, guid: e1532a2717a40451e8d5f0ea6e81d2a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _DebugLayerPrefab: {fileID: 103178, guid: d8451532cb4d14fc0a3f7bb0535f4fd9, type: 2}
   _PhaseHomePrefabs:
   - {fileID: 11442482, guid: 6204d35ba8a14467e8fb2022b4e3ceb5, type: 2}
   - {fileID: 11442482, guid: 066cb281859864617803ba25b0125af6, type: 2}
@@ -52,11 +40,24 @@ MonoBehaviour:
   - {fileID: 11472044, guid: 7c7a9ce23021e4e2698b50bbcd5e3944, type: 2}
   _PhaseUpgradesPrefabs:
   - {fileID: 11468472, guid: 90d7904adcee24f3d8744541fb895f5c, type: 2}
-  _OnboardingUIPrefabData:
-    _AssetBundle:
-      _EnumValueAsString: onboarding_ui_prefabs
-      _EnumValue: 18
-    _AssetDataName: OnboardingUIWrapper
+--- !u!224 &22408034
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 117396}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0.0000076293945, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -66,5 +67,5 @@ Prefab:
     m_Modifications: []
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
-  m_RootGameObject: {fileID: 192142}
+  m_RootGameObject: {fileID: 117396}
   m_IsPrefabParent: 1

@@ -22,7 +22,7 @@
       "Id": 3
     },
     {
-      "TitleKey": "dailyGoal.title.PlaySpeedTap.Level1",
+      "TitleKey": "dailyGoal.title.FirstWinSpeedTap",
       "RewardType": "experience",
       "PointsRewarded": 10,
       "Target": 1,

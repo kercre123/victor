@@ -10,7 +10,7 @@ GameObject:
   - 224: {fileID: 22445752}
   - 114: {fileID: 11459748}
   m_Layer: 5
-  m_Name: Green Button
+  m_Name: Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -27,7 +27,7 @@ GameObject:
   - 222: {fileID: 22277488}
   - 114: {fileID: 11442482}
   m_Layer: 5
-  m_Name: OnboardingReady
+  m_Name: OnboardingStart
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -108,10 +108,10 @@ MonoBehaviour:
   _ActiveTopBar: 0
   _ActiveTabButtons: 0
   _ActiveMenuContent: 0
-  _ReactionsEnabled: 1
-  _PlayIdle: 0
+  _ReactionsEnabled: 0
+  _PlayIdle: 1
   _ContinueButtonInstance: {fileID: 0}
-  _FreeplayEnabledOnEnter: 1
+  _FreeplayEnabledOnEnter: 0
   _FreeplayEnabledOnExit: 0
 --- !u!114 &11459748
 MonoBehaviour:
@@ -124,7 +124,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Prefab: {fileID: 130312, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
+  Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
@@ -166,7 +166,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '#onboarding.Slide2'
+  m_Text: '#onboarding.Slide1a'
   _AllUppercase: 0
   GlowText: 0
 --- !u!222 &22239440

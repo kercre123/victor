@@ -590,7 +590,9 @@ namespace Anki {
       start_view_ui_sprites,
       main_assets,
       checkin_ui_sprites,
-      checkin_ui_prefabs
+      checkin_ui_prefabs,
+      onboarding_ui_sprites,
+      onboarding_ui_prefabs
     }
 
     [Serializable]
