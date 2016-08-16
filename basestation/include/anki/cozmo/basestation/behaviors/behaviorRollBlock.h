@@ -35,7 +35,8 @@ protected:
   virtual void   StopInternal(Robot& robot) override;
 
   virtual bool IsRunnableInternal(const Robot& robot) const override;
-    
+  virtual bool CarryingObjectHandledInternally() const override {return false;}
+  
 private:
 
   AnimationTrigger _putDownAnimTrigger = AnimationTrigger::Count;
@@ -49,14 +50,12 @@ private:
   std::unique_ptr<BlockWorldFilter>  _blockworldFilter;
 
   const Robot& _robot;
-
-  enum class State {
+  
+  enum class DebugState {
     SettingDownBlock,
     ReactingToBlock,
     PerformingAction
   };
-
-  State _state = State::ReactingToBlock;
 
   void TransitionToSettingDownBlock(Robot& robot);
   void TransitionToReactingToBlock(Robot& robot);
@@ -64,7 +63,6 @@ private:
 
   void SetupRetryAction(Robot& robot, const ExternalInterface::RobotCompletedAction& msg);
   
-  void SetState_internal(State state, const std::string& stateName);
   void ResetBehavior(Robot& robot);
 
   // This should return true if the block is valid for this action, false otherwise. Checks that the block is

@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorReactToRobotOnBack.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnBack.h"
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
@@ -68,9 +68,10 @@ void BehaviorReactToRobotOnBack::DelayThenFlipDown(Robot& robot)
     SendFinishedFlipDownMessage(robot);
   }
 }
-    
+  
 void BehaviorReactToRobotOnBack::SendFinishedFlipDownMessage(Robot& robot){
   // Send message that we're done flipping
+  BehaviorObjectiveAchieved();
   robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnBackFinished()));
 }
 

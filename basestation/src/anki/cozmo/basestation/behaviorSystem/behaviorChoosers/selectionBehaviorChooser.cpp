@@ -13,7 +13,6 @@
 #include "selectionBehaviorChooser.h"
 
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorNone.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"

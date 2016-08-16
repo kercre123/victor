@@ -30,6 +30,7 @@ private:
 
 public:
 
+  virtual bool CarryingObjectHandledInternally() const override { return true;}
   virtual ~BehaviorRequestGameSimple() {}
 
 protected:
@@ -103,8 +104,6 @@ private:
   bool   _shouldUseBlocks;
   bool   _doSecondRequest;
   
-  void SetState_internal(State state, const std::string& stateName);
-
   void TransitionToPlayingInitialAnimation(Robot& robot);
   void TransitionToFacingBlock(Robot& robot);
   void TransitionToPlayingPreDriveAnimation(Robot& robot);

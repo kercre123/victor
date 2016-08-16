@@ -35,7 +35,8 @@ protected:
   virtual Status UpdateInternal(Robot& robot) override;
 
   virtual bool IsRunnableInternal(const Robot& robot) const override;
-  
+  virtual bool CarryingObjectHandledInternally() const override { return true;}
+
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
     
 private:
@@ -48,22 +49,21 @@ private:
   std::unique_ptr<BlockWorldFilter>  _blockworldFilterForBottom;
 
   const Robot& _robot;
-
-  enum class State {
+  
+  enum class DebugState {
     PickingUpBlock,
     StackingBlock,
     PlayingFinalAnim,
     WaitForBlocksToBeValid
   };
 
-  State _state = State::PickingUpBlock;
+  bool _waitingForBlockToBeValid;
 
   void TransitionToPickingUpBlock(Robot& robot);
   void TransitionToStackingBlock(Robot& robot);
   void TransitionToPlayingFinalAnim(Robot& robot);
   void TransitionToWaitForBlocksToBeValid(Robot& robot);
 
-  void SetState_internal(State state, const std::string& stateName);
   void ResetBehavior(const Robot& robot);
 
   bool FilterBlocksForTop(const ObservableObject* obj) const;

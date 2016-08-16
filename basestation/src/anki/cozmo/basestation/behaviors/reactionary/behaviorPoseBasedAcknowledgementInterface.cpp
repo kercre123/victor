@@ -12,7 +12,7 @@
  **/
 
 #include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/behaviors/behaviorPoseBasedAcknowledgementInterface.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorPoseBasedAcknowledgementInterface.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "util/console/consoleInterface.h"

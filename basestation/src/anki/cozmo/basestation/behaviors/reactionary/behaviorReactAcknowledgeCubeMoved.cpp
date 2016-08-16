@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorReactAcknowledgeCubeMoved.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactAcknowledgeCubeMoved.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
@@ -18,8 +18,6 @@
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "util/console/consoleInterface.h"
-
-#define SET_STATE(s) SetState_internal(State::s, #s)
 
 const float kMinTimeMoving_ms = 500;
 const float kDelayForUserPresentBlock_s = 1.0;
@@ -107,7 +105,7 @@ bool BehaviorReactAcknowledgeCubeMoved::ShouldComputationallySwitch(const Robot&
        && ((object.ObjectHasMovedLongEnough(robot)) || object.ObjectUpAxisHasChanged(robot))
        && !isVisible
     ){
-      SET_STATE(PlayingSenseReaction);
+      DEBUG_SET_STATE(PlayingSenseReaction);
       //Ensure there's no throttling between two blocks if moved
       _switchObjectID = object.GetObjectID();
       object.ResetObject();
@@ -153,7 +151,7 @@ void BehaviorReactAcknowledgeCubeMoved::TransitionToPlayingSenseReaction(Robot& 
 
 void BehaviorReactAcknowledgeCubeMoved::TransitionToTurningToLastLocationOfBlock(Robot& robot)
 {
-  SET_STATE(TurningToLastLocationOfBlock);
+  DEBUG_SET_STATE(TurningToLastLocationOfBlock);
   
   const ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_activeObjectID );
   if(obj == nullptr)
@@ -173,9 +171,10 @@ void BehaviorReactAcknowledgeCubeMoved::TransitionToTurningToLastLocationOfBlock
 
 void BehaviorReactAcknowledgeCubeMoved::TransitionToReactingToBlockAbsence(Robot& robot)
 {
-  SET_STATE(ReactingToBlockAbsence);
+  DEBUG_SET_STATE(ReactingToBlockAbsence);
   
   StartActing(new TriggerAnimationAction(robot, AnimationTrigger::CubeMovedUpset));
+  BehaviorObjectiveAchieved();
 }
   
 void BehaviorReactAcknowledgeCubeMoved::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
@@ -234,14 +233,6 @@ BehaviorReactAcknowledgeCubeMoved::Reaction_iter BehaviorReactAcknowledgeCubeMov
   
   return iter;
 }
-
-
-void BehaviorReactAcknowledgeCubeMoved::SetState_internal(State state, const std::string& stateName)
-{
-  _state = state;
-  PRINT_NAMED_DEBUG("BehaviorReactAcknowledgeCubeMoved.TransitionTo", "%s", stateName.c_str());
-  SetStateName(stateName);
-}
   
 //////
 /// ReactionObject
@@ -292,7 +283,7 @@ bool ReactionObjectData::ObjectUpAxisHasChanged(const Robot& robot)
     return false;
   }
   
-  return _hasUpAxisChanged;
+  return _hasUpAxisChanged && _observedSinceLastReaction;
 }
   
 bool ReactionObjectData::ObjectOutsideIgnoreArea(const Robot& robot)

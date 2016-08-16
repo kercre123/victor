@@ -1,8 +1,9 @@
 {
   "behaviorType": "RollBlock",
-  "name": "sparksRollCube",
+  "name": "sparksRollBlock",
   "flatScore" : 5.0,
+  "shouldStreamline": true,
   "behaviorGroups": [
-    "SparksRollCube"
+    "SparksRollBlock"
   ]
 }

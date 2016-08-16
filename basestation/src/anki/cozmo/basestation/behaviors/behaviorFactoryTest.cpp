@@ -347,7 +347,7 @@ namespace Cozmo {
     } else {
       PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.TestFAILED",
                           "%s (code %d, state %s)",
-                          EnumToString(res), static_cast<u8>(res), GetStateName().c_str());
+                          EnumToString(res), static_cast<u8>(res), GetDebugStateName().c_str());
       robot.SetBackpackLights(fail_onColor, fail_offColor,
                               fail_onPeriod_ms, fail_offPeriod_ms,
                               fail_transitionOnPeriod_ms, fail_transitionOffPeriod_ms);
@@ -1556,8 +1556,8 @@ namespace Cozmo {
     
     UpdateStateName();
 
-    BEHAVIOR_VERBOSE_PRINT(DEBUG_FACTORY_TEST_BEHAVIOR, "BehaviorFactoryTest.SetState",
-                           "set state to '%s'", GetStateName().c_str());
+    //BEHAVIOR_VERBOSE_PRINT(DEBUG_FACTORY_TEST_BEHAVIOR, "BehaviorFactoryTest.SetState",
+     //                      "set state to '%s'", GetStateName().c_str());
   }
 
   void BehaviorFactoryTest::UpdateStateName()
@@ -1571,7 +1571,7 @@ namespace Cozmo {
       name += ' ';
     }
 
-    SetStateName(name);
+    //SetStateName(name);
   }
 
 

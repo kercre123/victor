@@ -3,8 +3,8 @@
   "name": "SparkedLookAroundInPlace",
   "flatScore" : 3.0,
   "behaviorGroups": [
-      "SparksRollCube",
-      "SparksStackCube",
+      "SparksRollBlock",
+      "SparksStackBlock",
       "SparksPickUpCube",
       "SparksPopAWheelie",
       "SparksKnockOverCubes",

@@ -14,7 +14,7 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToCliff.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToCliff.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
@@ -22,7 +22,6 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTrigger.h"
 
-#define SET_STATE(s) SetState_internal(State::s, #s)
 
 namespace Anki {
 namespace Cozmo {
@@ -75,7 +74,7 @@ Result BehaviorReactToCliff::InitInternalReactionary(Robot& robot)
 
 void BehaviorReactToCliff::TransitionToPlayingStopReaction(Robot& robot)
 {
-  SET_STATE(PlayingStopReaction);
+  DEBUG_SET_STATE(PlayingStopReaction);
 
   // in case latency spiked between the Stop and Cliff message, add a small extra delay
   const float latencyDelay_s = 0.05f;
@@ -93,8 +92,8 @@ void BehaviorReactToCliff::TransitionToPlayingStopReaction(Robot& robot)
 
 void BehaviorReactToCliff::TransitionToPlayingCliffReaction(Robot& robot)
 {
-  SET_STATE(PlayingCliffReaction);
-
+  DEBUG_SET_STATE(PlayingCliffReaction);
+  
   if( _gotCliff ) {
     StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ReactToCliff),
                 &BehaviorReactToCliff::TransitionToBackingUp);
@@ -113,9 +112,10 @@ void BehaviorReactToCliff::TransitionToBackingUp(Robot& robot)
   }
   else {
     SendFinishedReactToCliffMessage(robot);
+    BehaviorObjectiveAchieved();
   }
 }
-    
+  
 void BehaviorReactToCliff::SendFinishedReactToCliffMessage(Robot& robot) {
   // Send message that we're done reacting
   robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCliffEventFinished()));
@@ -172,13 +172,6 @@ void BehaviorReactToCliff::HandleWhileRunning(const EngineToGameEvent& event, Ro
     default:
       break;
   }
-}
-
-void BehaviorReactToCliff::SetState_internal(State state, const std::string& stateName)
-{
-  _state = state;
-  PRINT_NAMED_DEBUG("BehaviorReactToCliff.TransitionTo", "%s", stateName.c_str());
-  SetStateName(stateName);
 }
 
 } // namespace Cozmo

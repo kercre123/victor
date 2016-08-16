@@ -72,8 +72,6 @@ private:
   void HandleObjectUpAxisChanged(const Robot& robot, const ObjectUpAxisChanged& msg);
   void HandleObservedObject(const Robot& robot, const ExternalInterface::RobotObservedObject& msg);
   Reaction_iter GetReactionaryIterator(ObjectID objectID);
-
-  void SetState_internal(State state, const std::string& stateName);
   
 }; // class BehaviorReactAcknowledgeCubeMoved
 

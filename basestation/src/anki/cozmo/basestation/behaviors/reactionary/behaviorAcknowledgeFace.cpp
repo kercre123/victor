@@ -12,7 +12,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorAcknowledgeFace.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeFace.h"
 
 #include "anki/common/basestation/utils/timer.h"
 
@@ -146,6 +146,7 @@ void BehaviorAcknowledgeFace::FinishIteration(Robot& robot)
   _hasReactedToFace.insert( _targetFace );
   _lastReactionTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
+  BehaviorObjectiveAchieved();
   // move on to the next target, if there is one
   BeginIteration(robot);
 }

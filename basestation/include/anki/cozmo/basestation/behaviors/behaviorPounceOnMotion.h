@@ -30,6 +30,7 @@ private:
 public:
   virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual float EvaluateScoreInternal(const Robot& robot) const override;
+  virtual bool CarryingObjectHandledInternally() const override {return false;}
 
 protected:
 

@@ -18,7 +18,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/shared/radians.h"
 
-#include "anki/cozmo/basestation/behaviors/behaviorPoseBasedAcknowledgementInterface.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorPoseBasedAcknowledgementInterface.h"
 
 #include "clad/types/objectFamilies.h"
 

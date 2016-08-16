@@ -11,7 +11,7 @@
  **/
 
 #include "anki/cozmo/basestation/actions/animActions.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToUnexpectedMovement.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToUnexpectedMovement.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 
@@ -48,6 +48,7 @@ Result BehaviorReactToUnexpectedMovement::InitInternalReactionary(Robot& robot)
                 [this, &robot]()
                 {
                   robot.GetMoveComponent().UnlockTracks((uint8_t)AnimTrackFlag::LIFT_TRACK);
+                  BehaviorObjectiveAchieved();
                 });
   }
   else

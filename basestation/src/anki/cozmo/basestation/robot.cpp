@@ -1066,7 +1066,7 @@ Result Robot::Update(bool ignoreVisionModes)
         behaviorDebugStr = "  ";
       }
       behaviorDebugStr += behavior->GetName();
-      const std::string& stateName = behavior->GetStateName();
+      const std::string& stateName = behavior->GetDebugStateName();
       if (!stateName.empty())
       {
         behaviorDebugStr += "-" + stateName;

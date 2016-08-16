@@ -37,6 +37,7 @@ public:
   // Abstract methods to be overloaded:
   //
   virtual bool IsRunnableInternal(const Robot& robot) const override { return true; }
+  virtual bool CarryingObjectHandledInternally() const override { return true;}
   
 protected:
   

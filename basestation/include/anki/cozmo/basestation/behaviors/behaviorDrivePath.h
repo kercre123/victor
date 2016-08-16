@@ -35,17 +35,16 @@ protected:
 public:
   
   virtual bool IsRunnableInternal(const Robot& robot) const override;
-  
+  virtual bool CarryingObjectHandledInternally() const override {return false;}
+
 protected:
   
   virtual Result InitInternal(Robot& robot) override;
   virtual float EvaluateScoreInternal(const Robot& robot) const override;
   
-  //Functions and shared data for inheriting classes
-  enum class State {
+  enum class DebugState {
     FollowingPath,
   };
-  State _state = State::FollowingPath;
   
   //The path to follow
   Planning::Path _path;
@@ -59,7 +58,6 @@ protected:
   
 private:
   void TransitionToFollowingPath(Robot& robot);
-  void SetState_internal(State state, const std::string& stateName);
   
 }; //class BehaviorDrivePath
 

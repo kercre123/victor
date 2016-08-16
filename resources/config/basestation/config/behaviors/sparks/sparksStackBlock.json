@@ -1,8 +1,9 @@
 {
   "behaviorType": "StackBlocks",
-  "name": "sparksStackCube",
+  "name": "sparksStackBlock",
   "flatScore" : 5.0,
+  "shouldStreamline": true,
   "behaviorGroups": [
-    "SparksStackCube"
+    "SparksStackBlock"
   ]
 }

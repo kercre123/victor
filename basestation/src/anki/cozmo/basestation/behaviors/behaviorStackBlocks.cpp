@@ -26,8 +26,6 @@
 #include "anki/vision/basestation/observableObject.h"
 #include "util/console/consoleInterface.h"
 
-#define SET_STATE(s) SetState_internal(State::s, #s)
-
 namespace Anki {
 namespace Cozmo {
 
@@ -42,6 +40,7 @@ BehaviorStackBlocks::BehaviorStackBlocks(Robot& robot, const Json::Value& config
   , _blockworldFilterForTop( new BlockWorldFilter )
   , _blockworldFilterForBottom( new BlockWorldFilter )
   , _robot(robot)
+  , _waitingForBlockToBeValid(false)
 {
   SetDefaultName("StackBlocks");
 
@@ -73,6 +72,7 @@ bool BehaviorStackBlocks::IsRunnableInternal(const Robot& robot) const
 
 Result BehaviorStackBlocks::InitInternal(Robot& robot)
 {
+  _waitingForBlockToBeValid = false;
   TransitionToPickingUpBlock(robot);
   return Result::RESULT_OK;
 }
@@ -166,7 +166,7 @@ bool BehaviorStackBlocks::AreBlocksAreStillValid(const Robot& robot)
 {
   if( !_targetBlockTop.IsSet() || !_targetBlockBottom.IsSet() ) {
 
-    if( _state != State::WaitForBlocksToBeValid ) {
+    if( !_waitingForBlockToBeValid) {
       PRINT_NAMED_INFO("BehaviorStackBlocks.InvalidBlock.BlocksNoLongerSet",
                        "one of the blocks isn't set");
     }
@@ -223,11 +223,12 @@ bool BehaviorStackBlocks::AreBlocksAreStillValid(const Robot& robot)
 
 IBehavior::Status BehaviorStackBlocks::UpdateInternal(Robot& robot)
 {
-  if( _state == State::WaitForBlocksToBeValid ) {
+  if(_waitingForBlockToBeValid) {
     UpdateTargetBlocks(robot);
     if( AreBlocksAreStillValid(robot) ) {
       PRINT_NAMED_DEBUG("BehaviorStackBlocks.WaitForValid",
                         "Got valid blocks! resuming behavior");
+      _waitingForBlockToBeValid = false;
       TransitionToPickingUpBlock(robot);
     }
   }
@@ -235,7 +236,7 @@ IBehavior::Status BehaviorStackBlocks::UpdateInternal(Robot& robot)
   IBehavior::Status ret = IBehavior::UpdateInternal(robot);
 
   // workaround for bugs that leave us stuck with a cube in our hands
-  if( ret != Status::Running && robot.IsCarryingObject() && _state != State::WaitForBlocksToBeValid ) {
+  if( ret != Status::Running && robot.IsCarryingObject() && !_waitingForBlockToBeValid) {
     TransitionToWaitForBlocksToBeValid(robot);
     return Status::Running;
   }
@@ -245,8 +246,7 @@ IBehavior::Status BehaviorStackBlocks::UpdateInternal(Robot& robot)
 
 void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
 {
-  SET_STATE(PickingUpBlock);
-  
+  DEBUG_SET_STATE(PickingUpBlock);
   // check that blocks are still good
   if( ! AreBlocksAreStillValid(robot) ) {
     // uh oh, blocks are no good, see if we can pick new ones
@@ -341,8 +341,7 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
 
 void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
 {
-  SET_STATE(StackingBlock);
-
+  DEBUG_SET_STATE(StackingBlock);
   // check that blocks are still good
   if( ! AreBlocksAreStillValid(robot) ) {
     // uh oh, blocks are no good, see if we can pick new ones
@@ -387,8 +386,9 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
 
 void BehaviorStackBlocks::TransitionToWaitForBlocksToBeValid(Robot& robot)
 {
-  SET_STATE(WaitForBlocksToBeValid);
-
+  _waitingForBlockToBeValid = true;
+  DEBUG_SET_STATE(WaitForBlocksToBeValid);
+  
   // wait a bit to see if things settle and the cubes become valid (e.g. they were moving, so give them some
   // time to settle). If they become stable, Update will transition us out
   if (robot.IsCarryingObject())
@@ -401,22 +401,16 @@ void BehaviorStackBlocks::TransitionToWaitForBlocksToBeValid(Robot& robot)
 
 void BehaviorStackBlocks::TransitionToPlayingFinalAnim(Robot& robot)
 {
-  SET_STATE(PlayingFinalAnim);
-
+  DEBUG_SET_STATE(PlayingFinalAnim);
+  
   StartActing(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksSuccess));
   IncreaseScoreWhileActing( kBSB_ScoreIncreaseForAction );
-}
-
-void BehaviorStackBlocks::SetState_internal(State state, const std::string& stateName)
-{
-  _state = state;
-  PRINT_NAMED_DEBUG("BehaviorStackBlocks.TransitionTo", "%s", stateName.c_str());
-  SetStateName(stateName);
+  
+  BehaviorObjectiveAchieved();
 }
 
 void BehaviorStackBlocks::ResetBehavior(const Robot& robot)
 {
-  _state = State::PickingUpBlock;
   _targetBlockTop.UnSet();
   _targetBlockBottom.UnSet();
 }

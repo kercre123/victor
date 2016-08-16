@@ -45,7 +45,8 @@ public:
 
   // true if currently there are cliffs that Cozmo would like to explore
   virtual bool IsRunnableInternal(const Robot& robot) const override;
-  
+  virtual bool CarryingObjectHandledInternally() const override {return false;}
+
 protected:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

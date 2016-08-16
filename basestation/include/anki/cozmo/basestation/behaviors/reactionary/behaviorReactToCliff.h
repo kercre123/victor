@@ -59,8 +59,6 @@ private:
   void TransitionToBackingUp(Robot& robot);
   void SendFinishedReactToCliffMessage(Robot& robot);
 
-  void SetState_internal(State state, const std::string& stateName);
-
 }; // class BehaviorReactToCliff
   
 

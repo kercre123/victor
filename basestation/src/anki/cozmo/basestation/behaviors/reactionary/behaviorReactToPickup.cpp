@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPickup.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"

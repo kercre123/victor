@@ -81,12 +81,6 @@ IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& conf
 
 bool IBehaviorRequestGame::IsRunnableInternal(const Robot& robot) const
 {
-
-  if( robot.IsCarryingObject() ) {
-    // if we've already got an object, don't react to / request another
-    return false;
-  }
-  
   const bool isGameAvailable = robot.GetBehaviorManager().IsAnyGameFlagAvailable(_requiredGameFlags);
   if ( !isGameAvailable )
   {

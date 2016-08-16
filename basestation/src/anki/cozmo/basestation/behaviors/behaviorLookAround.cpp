@@ -66,7 +66,7 @@ BehaviorLookAround::~BehaviorLookAround()
   
 bool BehaviorLookAround::IsRunnableInternal(const Robot& robot) const
 {
-  return ! robot.IsCarryingObject();
+  return true;
 }
 
 float BehaviorLookAround::EvaluateRunningScoreInternal(const Robot& robot) const
@@ -670,7 +670,7 @@ void BehaviorLookAround::SetState_internal(State state, const std::string& state
 {
   _currentState = state;
   PRINT_NAMED_DEBUG("BehaviorLookAround.TransitionTo", "%s", stateName.c_str());
-  SetStateName(stateName);
+  SetDebugStateName(stateName);
 }
 
 

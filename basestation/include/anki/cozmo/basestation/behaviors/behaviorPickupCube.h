@@ -40,6 +40,7 @@ protected:
   virtual void   StopInternal(Robot& robot) override;
 
   virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool CarryingObjectHandledInternally() const override { return true;}
 
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   
@@ -47,17 +48,15 @@ private:
   
   void HandleObjectObserved(const Robot& robot, const ExternalInterface::RobotObservedObject& msg);
   
-  enum class State
+  enum class DebugState
   {
-    // Main reaction states
     DoingInitialReaction,
     PickingUpCube,
     DriveWithCube,
     PutDownCube,
     DoingFinalReaction,
   };
-
-  State _state;
+  
   
   void TransitionToDoingInitialReaction(Robot& robot);
   void TransitionToPickingUpCube(Robot& robot);
@@ -66,7 +65,6 @@ private:
   void TransitionToDoingFinalReaction(Robot& robot);
 
   ObjectID    _targetBlock;
-  void SetState_internal(State state, const std::string& stateName);
   
 
 }; // class BehaviorPickUpCube

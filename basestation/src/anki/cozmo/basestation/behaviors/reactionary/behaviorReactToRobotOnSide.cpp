@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorReactToRobotOnSide.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnSide.h"
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"

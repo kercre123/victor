@@ -43,6 +43,8 @@ public:
   virtual ~BehaviorLookAround() override;
   
   virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool CarryingObjectHandledInternally() const override {return false;}
+
 
   void SetLookAroundHeadAngle(float angle_rads) { _lookAroundHeadAngle_rads = angle_rads; }
   
@@ -66,14 +68,13 @@ private:
     LookingAtPossibleObject,
     ExaminingFoundObject
   };
+  void SetState_internal(State state, const std::string& stateName);
 
   void TransitionToWaitForOtherActions(Robot& robot);
   void TransitionToInactive(Robot& robot);
   void TransitionToRoaming(Robot& robot);
   void TransitionToLookingAtPossibleObject(Robot& robot);
   void TransitionToExaminingFoundObject(Robot& robot);
-
-  void SetState_internal(State state, const std::string& stateName);
 
   enum class Destination {
     North = 0,

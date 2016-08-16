@@ -12,7 +12,7 @@
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToOnCharger.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToOnCharger.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"

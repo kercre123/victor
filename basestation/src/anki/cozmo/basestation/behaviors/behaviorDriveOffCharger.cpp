@@ -32,7 +32,6 @@ static const float kInitialDriveAccel = 40.0f;
 
 static const char* const kExtraDriveDistKey = "extraDistanceToDrive_mm";
 
-#define SET_STATE(s) SetState_internal(State::s, #s)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDriveOffCharger::BehaviorDriveOffCharger(Robot& robot, const Json::Value& config)
@@ -159,7 +158,7 @@ IBehavior::Status BehaviorDriveOffCharger::UpdateInternal(Robot& robot)
 
 void BehaviorDriveOffCharger::TransitionToDrivingForward(Robot& robot)
 {
-  SET_STATE(DrivingForward);
+  DEBUG_SET_STATE(DrivingForward);
   if( robot.IsOnChargerPlatform() )
   {
     _timesResumed++;
@@ -170,17 +169,14 @@ void BehaviorDriveOffCharger::TransitionToDrivingForward(Robot& robot)
     // probably interrupted by getting off the charger platform
     DriveStraightAction* action = new DriveStraightAction(robot, _distToDrive_mm, kInitialDriveSpeed);
     action->SetAccel(kInitialDriveAccel);
-    StartActing(action);
+    StartActing(action,[this](ActionResult res){
+      if(res == ActionResult::SUCCESS){
+        BehaviorObjectiveAchieved();
+      }
+    });
     // the Update function will transition back to this state (or out of the behavior) as appropriate
+
   }
-}
-
-
-void BehaviorDriveOffCharger::SetState_internal(State state, const std::string& stateName)
-{
-  _state = state;
-  PRINT_NAMED_DEBUG("BehaviorDriveOffCharger.TransitionTo", "%s", stateName.c_str());
-  SetStateName(stateName);
 }
 
 }

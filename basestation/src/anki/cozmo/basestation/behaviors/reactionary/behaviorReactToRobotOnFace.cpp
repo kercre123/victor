@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorReactToRobotOnFace.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnFace.h"
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
@@ -83,6 +83,8 @@ void BehaviorReactToRobotOnFace::CheckFlipSuccess(Robot& robot)
   if( robot.IsOnFace() ) {
     StartActing(new TriggerAnimationAction(robot, AnimationTrigger::FailedToRightFromFace),
                 &BehaviorReactToRobotOnFace::FlipOverIfNeeded);
+  }else{
+    BehaviorObjectiveAchieved();
   }
 }
 

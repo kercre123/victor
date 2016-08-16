@@ -12,7 +12,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorAcknowledgeObject.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeObject.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
@@ -202,6 +202,7 @@ void BehaviorAcknowledgeObject::FinishIteration(Robot& robot)
   // inform parent class that we completed a reaction
   RobotReactedToId(robot, _currTarget.GetValue());
 
+  BehaviorObjectiveAchieved();
   // move on to the next target, if there is one
   BeginIteration(robot);
 }

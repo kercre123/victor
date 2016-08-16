@@ -444,7 +444,8 @@ void BehaviorVisitInterestingEdge::GenerateVantagePoints(Robot& robot, const Bor
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorVisitInterestingEdge::TransitionToS1_MoveToVantagePoint(Robot& robot, uint8_t retries)
 {
-  SetStateName("TransitionToS1_MoveToVantagePoint");
+  SetDebugStateName("TransitionToS1_MoveToVantagePoint");
+  
   PRINT_CH_INFO("Behaviors", (GetName() + ".S1").c_str(), "Moving to vantage point");
   
   // there have to be vantage points. If it's impossible to generate vantage points from the memory map,

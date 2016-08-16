@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorReactToFrustration.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToFrustration.h"
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/math/pose.h"
@@ -119,6 +119,7 @@ void BehaviorReactToFrustration::AnimationComplete(Robot& robot, FrustrationReac
     DriveToPoseAction* action = new DriveToPoseAction(robot, randomPoseRotAndTrans.GetWithRespectToOrigin());
     StartActing(action); // finish behavior when we are done
   }
+  BehaviorObjectiveAchieved();
 }
 
 BehaviorReactToFrustration::ReactionContainer::iterator BehaviorReactToFrustration::GetReaction(const Robot& robot)

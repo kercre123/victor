@@ -57,23 +57,23 @@
     [
       // Sparks only
       {
-        "name" : "sparksRollCube",
+        "name" : "sparksRollBlock",
         "requireSpark":"RollCube",
         "behaviorChooser" :
         {
           "type" : "simple",
           // this are the behaviors that are allowed in this behavior chooser
-          "behaviorGroups" : [ "SparksRollCube" ]
+          "behaviorGroups" : [ "SparksRollBlock" ]
         }
       },
       {
-        "name" : "sparksStackCube",
+        "name" : "sparksStackBlock",
         "requireSpark":"StackTwoCubes",
         "behaviorChooser" :
         {
           "type" : "simple",
           // this are the behaviors that are allowed in this behavior chooser
-          "behaviorGroups" : [ "SparksStackCube" ]
+          "behaviorGroups" : [ "SparksStackBlock" ]
         }
       },
      {

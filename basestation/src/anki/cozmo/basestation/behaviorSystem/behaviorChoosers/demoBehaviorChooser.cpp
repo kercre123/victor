@@ -99,12 +99,12 @@ DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config
   //_admireStackBehavior = static_cast<BehaviorAdmireStack*>(
   //  _robot.GetBehaviorFactory().FindBehaviorByName(kKnockOverStackBehavior));
 
-//  if( nullptr == _admireStackBehavior ) {
-//    PRINT_NAMED_ERROR("DemoBehaviorChooser.NoAdmireStackBehavior",
-//                      "couldn't find behavior '%s', demo won't work",
-//                      kKnockOverStackBehavior);
-//  }
-  
+  /**if( nullptr == _admireStackBehavior ) {
+    PRINT_NAMED_ERROR("DemoBehaviorChooser.NoAdmireStackBehavior",
+                      "couldn't find behavior '%s', demo won't work",
+                      kKnockOverStackBehavior);
+  }**/
+
   _name = "Demo[]";
 
   SetAllBehaviorsEnabled(false);
