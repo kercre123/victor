@@ -582,9 +582,9 @@
                     'inputs': [ ],
                       'outputs': [ ],
                       'action': [
-                        'ln',  '-s', '-n', '-f',
-                        '<(face_library_lib_path)',
-                        '../../simulator/controllers/webotsCtrlViz/',
+                        '../../tools/build/tools/ankibuild/symlink.py',
+                        '--link_target', '<(face_library_lib_path)',
+                        '--link_name', '../../simulator/controllers/webotsCtrlViz/'
                       ],
                   },
                 ], # actions
@@ -695,16 +695,16 @@
                 'conditions': [
                   ['face_library=="faciometric"', {
                     'action': [
-                      'ln', '-s', '-n', '-f',
-                      '<(face_library_lib_path)',
-                      '../../simulator/controllers/webotsCtrlGameEngine/',
+                      '../../tools/build/tools/ankibuild/symlink.py',
+                      '--link_target', '<(face_library_lib_path)',
+                      '--link_name', '../../simulator/controllers/webotsCtrlGameEngine/'
                     ],
                   }],
                   ['face_library=="facesdk"', {
                     'action': [
-                      'ln', '-s', '-f',
-                      '<(face_library_lib_path)/libfsdk.dylib',
-                      '../../simulator/controllers/webotsCtrlGameEngine/',
+                      '../../tools/build/tools/ankibuild/symlink.py',
+                      '--link_target', '<(face_library_lib_path)/libfsdk.dylib',
+                      '--link_name', '../../simulator/controllers/webotsCtrlGameEngine/'
                     ],
                   }],
                   ['face_library=="opencv" or face_library=="okao"', {
@@ -776,12 +776,9 @@
                     'inputs': [ ],
                     'outputs': [ ],
                     'action': [
-                      'ln',
-                      '-s',
-                      '-n',
-                      '-f',
-                      '<(face_library_lib_path)',
-                      '../../simulator/controllers/webotsCtrlKeyboard/',
+                      '../../tools/build/tools/ankibuild/symlink.py',
+                      '--link_target', '<(face_library_lib_path)',
+                      '--link_name', '../../simulator/controllers/webotsCtrlKeyboard/'
                     ],
                   },
                 ], # actions
@@ -867,18 +864,9 @@
                 'inputs':[],
                 'outputs':[],
                 'action': [
-                  'ln', '-s', '-f',
-                  '<(PRODUCT_DIR)/webotsCtrlKeyboard',
-                  '../../simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard',
-                ],
-              },
-              # create folder 'resources' so that we can create the symlink for webotsCtrlKeyboard
-              {
-                'action_name': 'setup_dir_for_simlink_resources_webotsCtrlKeyboard',
-                'inputs':[],
-                'outputs':[],
-                'action': [
-                  'mkdir', '-p','../../simulator/controllers/webotsCtrlKeyboard/resources',
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(PRODUCT_DIR)/webotsCtrlKeyboard',
+                  '--link_name', '../../simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard'
                 ],
               },
               # create symlink to config, so that webotsCtrlKeyboard can also load json configuration files
@@ -887,9 +875,10 @@
                 'action_name': 'create_symlink_resources_configs_webotsCtrlKeyboard',
                 'inputs':[], 'outputs':[],
                 'action': [
-                  'ln', '-s', '-f', '-n',
-                  '<(cozmo_engine_path)/resources/config',
-                  '../../simulator/controllers/webotsCtrlKeyboard/resources/config',
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(cozmo_engine_path)/resources/config',
+                  '--link_name', '../../simulator/controllers/webotsCtrlKeyboard/resources/config',
+                  '--create_folder', '../../simulator/controllers/webotsCtrlKeyboard/resources'
                 ],
               },
               
@@ -902,9 +891,9 @@
                 'inputs':[],
                 'outputs':[],
                 'action': [
-                  'ln', '-s', '-f',
-                  '<(PRODUCT_DIR)/webotsCtrlBuildServerTest',
-                  '../../simulator/controllers/webotsCtrlBuildServerTest/webotsCtrlBuildServerTest',
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(PRODUCT_DIR)/webotsCtrlBuildServerTest',
+                  '--link_name', '../../simulator/controllers/webotsCtrlBuildServerTest/webotsCtrlBuildServerTest'
                 ],
               },
               
@@ -916,34 +905,9 @@
                 'inputs':[],
                 'outputs':[],
                 'action': [
-                  'ln', '-s', '-f',
-                  '<(PRODUCT_DIR)/webotsCtrlGameEngine',
-                  '../../simulator/controllers/webotsCtrlGameEngine/webotsCtrlGameEngine',
-                ],
-              },
-              # {
-              #  'action_name': 'create_symlink_resources_assets',
-              #   'action': [
-              #    'ln', '-s', '-f', '-n',
-              #     '<(cozmo_asset_path)',
-              #     '../../simulator/controllers/webotsCtrlGameEngine/resources/assets',
-              #   ],
-              # },
-              # {
-              #  'action_name': 'create_symlink_resources_sound',
-              #  'action': [
-              #    'ln', '-s', '-f', '-n',
-              #    '<(externals_path)/cozmosoundbanks/GeneratedSoundBanks/Mac',
-              #    '../../simulator/controllers/webotsCtrlGameEngine/resources/sound',
-              #  ],
-              # },
-              #Simlinks don't create a parent directory, so create it only if it doesn't exist...
-              {
-                'action_name': 'setup_dir_for_simlink',
-                'inputs':[],
-                'outputs':[],
-                'action': [
-                  'mkdir', '-p','../../simulator/controllers/webotsCtrlGameEngine/resources',
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(PRODUCT_DIR)/webotsCtrlGameEngine',
+                  '--link_name', '../../simulator/controllers/webotsCtrlGameEngine/webotsCtrlGameEngine'
                 ],
               },
               {
@@ -951,9 +915,10 @@
                 'inputs':[],
                 'outputs':[],
                 'action': [
-                  'ln', '-s', '-f', '-n',
-                  '<(cozmo_engine_path)/resources/config',
-                  '../../simulator/controllers/webotsCtrlGameEngine/resources/config',
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(cozmo_engine_path)/resources/config',
+                  '--link_name', '../../simulator/controllers/webotsCtrlGameEngine/resources/config',
+                  '--create_folder', '../../simulator/controllers/webotsCtrlGameEngine/resources'
                 ],
               },
               {
@@ -961,12 +926,11 @@
                 'inputs':[],
                 'outputs':[],
                 'action': [
-                  'ln', '-s', '-f', '-n',
-                  '<(cozmo_engine_path)/resources/test',
-                  '../../simulator/controllers/webotsCtrlGameEngine/resources/test',
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(cozmo_engine_path)/resources/test',
+                  '--link_name', '../../simulator/controllers/webotsCtrlGameEngine/resources/test'
                 ],
               },
-
               # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
               # webotsCtrlRobot
               # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -976,18 +940,9 @@
                 'inputs':[],
                 'outputs':[],
                 'action': [
-                  'ln', '-s', '-f',
-                  '<(PRODUCT_DIR)/webotsCtrlRobot',
-                  '../../simulator/controllers/webotsCtrlRobot/webotsCtrlRobot',
-                ],
-              },
-              # create folder 'resources' so that we can create the symlink for webotsCtrlRobot
-              {
-                'action_name': 'setup_dir_for_simlink_resources_webotsCtrlRobot',
-                'inputs':[],
-                'outputs':[],
-                'action': [
-                  'mkdir', '-p','../../simulator/controllers/webotsCtrlRobot/resources',
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(PRODUCT_DIR)/webotsCtrlRobot',
+                  '--link_name', '../../simulator/controllers/webotsCtrlRobot/webotsCtrlRobot'
                 ],
               },
               # create symlink to config, so that webotsCtrlRobot can also load json configuration files
@@ -996,9 +951,10 @@
                 'action_name': 'create_symlink_resources_configs_webotsCtrlRobot',
                 'inputs':[], 'outputs':[],
                 'action': [
-                  'ln', '-s', '-f', '-n',
-                  '<(cozmo_engine_path)/resources/config',
-                  '../../simulator/controllers/webotsCtrlRobot/resources/config',
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(cozmo_engine_path)/resources/config',
+                  '--link_name', '../../simulator/controllers/webotsCtrlRobot/resources/config',
+                  '--create_folder', '../../simulator/controllers/webotsCtrlRobot/resources'
                 ],
               },
               
@@ -1010,18 +966,9 @@
                 'inputs':[],
                 'outputs':[],
                 'action': [
-                  'ln', '-s', '-f',
-                  '<(PRODUCT_DIR)/webotsCtrlViz',
-                  '../../simulator/controllers/webotsCtrlViz/webotsCtrlViz',
-                ],
-              },
-              # create folder 'resources' so that we can create the symlink for webotsCtrlViz
-              {
-                'action_name': 'setup_dir_for_simlink_resources_webotsCtrlViz',
-                'inputs':[],
-                'outputs':[],
-                'action': [
-                  'mkdir', '-p','../../simulator/controllers/webotsCtrlViz/resources',
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(PRODUCT_DIR)/webotsCtrlViz',
+                  '--link_name', '../../simulator/controllers/webotsCtrlViz/webotsCtrlViz'
                 ],
               },
               # create symlink to config, so that webotsCtrlViz can also load json configuration files
@@ -1030,9 +977,10 @@
                 'action_name': 'create_symlink_resources_configs_webotsCtrlViz',
                 'inputs':[], 'outputs':[],
                 'action': [
-                  'ln', '-s', '-f', '-n',
-                  '<(cozmo_engine_path)/resources/config',
-                  '../../simulator/controllers/webotsCtrlViz/resources/config',
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(cozmo_engine_path)/resources/config',
+                  '--link_name', '../../simulator/controllers/webotsCtrlViz/resources/config',
+                  '--create_folder', '../../simulator/controllers/webotsCtrlViz/resources'
                 ],
               },
               
@@ -1044,18 +992,9 @@
                 'inputs':[],
                 'outputs':[],
                 'action': [
-                  'ln', '-s', '-f',
-                  '<(PRODUCT_DIR)/webotsCtrlLightCube',
-                  '../../simulator/controllers/webotsCtrlLightCube/webotsCtrlLightCube',
-                ],
-              },
-              # create folder 'resources' so that we can create the symlink for webotsCtrlLightCube
-              {
-                'action_name': 'setup_dir_for_simlink_resources_webotsCtrlLightCube',
-                'inputs':[],
-                'outputs':[],
-                'action': [
-                  'mkdir', '-p','../../simulator/controllers/webotsCtrlLightCube/resources',
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(PRODUCT_DIR)/webotsCtrlLightCube',
+                  '--link_name', '../../simulator/controllers/webotsCtrlLightCube/webotsCtrlLightCube'
                 ],
               },
               # create symlink to config, so that webotsCtrlLightCube can also load json configuration files
@@ -1064,9 +1003,10 @@
                 'action_name': 'create_symlink_resources_configs_webotsCtrlLightCube',
                 'inputs':[], 'outputs':[],
                 'action': [
-                  'ln', '-s', '-f', '-n',
-                  '<(cozmo_engine_path)/resources/config',
-                  '../../simulator/controllers/webotsCtrlLightCube/resources/config',
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(cozmo_engine_path)/resources/config',
+                  '--link_name', '../../simulator/controllers/webotsCtrlLightCube/resources/config',
+                  '--create_folder', '../../simulator/controllers/webotsCtrlLightCube/resources'
                 ],
               },
               
@@ -1078,9 +1018,9 @@
                 'inputs':[],
                 'outputs':[],
                 'action': [
-                  'ln', '-s', '-f',
-                  '<(PRODUCT_DIR)/libcozmo_physics.dylib',
-                  '../../simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib',
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(PRODUCT_DIR)/libcozmo_physics.dylib',
+                  '--link_name', '../../simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib'
                 ],
               },
 
@@ -1092,9 +1032,9 @@
                 'inputs':[],
                 'outputs':[],
                 'action': [
-                  'ln', '-s', '-f',
-                  '<(PRODUCT_DIR)/webotsCtrlDevLog',
-                  '../../simulator/controllers/webotsCtrlDevLog/webotsCtrlDevLog',
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(PRODUCT_DIR)/webotsCtrlDevLog',
+                  '--link_name', '../../simulator/controllers/webotsCtrlDevLog/webotsCtrlDevLog'
                 ],
               }
             ], # actions
@@ -1163,55 +1103,20 @@
                 },
               ],
             ],
-            #util unit tests copys this first and the copies command doesn't have a pre-existing check.
-            # should probably turn this into a cp action with conditions at some point.
-            # 'copies': [
-            #   {
-            #     'files': [
-            #       '<(ce-gtest_path)/gtest.framework'
-            #     ],
-            #     'destination': '<(PRODUCT_DIR)',
-            #   },
-            # ],
             'actions': [
 
-              # { # in engine only mode, we do not know where the assets are
-              #   'action_name': 'create_symlink_resources_assets',
-              #   'inputs': [
-              #     '<(cozmo_asset_path)',
-              #   ],
-              #   'outputs': [
-              #     '<(PRODUCT_DIR)/resources/assets',
-              #   ],
-              #   'action': [
-              #     'ln',
-              #     '-s',
-              #     '-f',
-              #     '-h',
-              #     '<@(_inputs)',
-              #     '<@(_outputs)',
-              #   ],
-              # },
-              #Simlinks don't create a parent directory, so create it only if it doesn't exist...
-              {
-                'action_name': 'setup_dir_for_simlink',
-                'inputs':[],
-                'outputs':[],
-                'action': [
-                  'mkdir', '-p','<(PRODUCT_DIR)/resources',
-                ],
-              },
-              #These have empty inputs and outputs and are instead in the action 
-              #so gyp doesn't think that they're dupes
+              # These have empty inputs and outputs and are instead in the action
+              # so gyp doesn't think that they're dupes
               {
                 'action_name': 'create_symlink_resources_configs',
                 'inputs':[],
                 'outputs':[],
                 #'message':'create_symlink_resources_configs -> ln -s -f -n <(cozmo_engine_path)/resources/config <(PRODUCT_DIR)/resources/config',
                 'action': [
-                  'ln', '-s', '-f', '-n',
-                  '<(cozmo_engine_path)/resources/config',
-                  '<(PRODUCT_DIR)/resources/config',
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(cozmo_engine_path)/resources/config',
+                  '--link_name', '<(PRODUCT_DIR)/resources/config',
+                  '--create_folder', '<(PRODUCT_DIR)/resources'
                 ],
               },
 
@@ -1220,33 +1125,29 @@
                 'inputs': [],
                 'outputs': [],
                 'action': [
-                  'ln',
-                  '-s',
-                  '-f',
-                  '-n',
-                  '<(cozmo_engine_path)/resources/test',
-                  '<(PRODUCT_DIR)/resources/test',
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(cozmo_engine_path)/resources/test',
+                  '--link_name', '<(PRODUCT_DIR)/resources/test'
                 ],
               },
 
-
-	          {
+  	          {
                 'action_name': 'create_symlink_engineUnitTestfaceLibraryLibs',
                 'inputs':[],
                 'outputs':[],
                 'conditions': [
                   ['face_library=="faciometric"', {
                     'action': [
-                      'ln', '-s', '-f', '-n',
-                      '<(face_library_lib_path)',
-                      '<(PRODUCT_DIR)/',
+                      '../../tools/build/tools/ankibuild/symlink.py',
+                      '--link_target', '<(face_library_lib_path)',
+                      '--link_name', '<(PRODUCT_DIR)/'
                     ],
                   }],
                   ['face_library=="facesdk"', {
                     'action': [
-                      'ln', '-s', '-f', '-n',
-                      '<(face_library_lib_path)/libfsdk.dylib',
-                      '<(PRODUCT_DIR)',
+                      '../../tools/build/tools/ankibuild/symlink.py',
+                      '--link_target', '<(face_library_lib_path)/libfsdk.dylib',
+                      '--link_name', '<(PRODUCT_DIR)/'
                     ],
                   }],
                   ['face_library=="opencv" or face_library=="okao"', {
@@ -1307,15 +1208,6 @@
             ],
 
             'actions': [
-              #Simlinks don't create a parent directory, so create it only if it doesn't exist...
-              {
-                'action_name': 'setup_dir_for_simlink',
-                'inputs':[],
-                'outputs':[],
-                'action': [
-                'mkdir', '-p','<(PRODUCT_DIR)/resources',
-                ],
-              },
               #These have empty inputs and outputs and are instead in the action
               #so gyp doesn't think that they're dupes
               {
@@ -1324,9 +1216,10 @@
                 'outputs':[],
                 #'message':'create_symlink_resources_configs -> ln -s -f -n <(cozmo_engine_path)/resources/config <(PRODUCT_DIR)/resources/config',
                 'action': [
-                  'ln', '-s', '-f', '-n',
-                  '<(cozmo_engine_path)/resources/config',
-                  '<(PRODUCT_DIR)/resources/config',
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(cozmo_engine_path)/resources/config',
+                  '--link_name', '<(PRODUCT_DIR)/resources/config',
+                  '--create_folder', '<(PRODUCT_DIR)/resources'
                 ],
               },
             ], #end actions

@@ -446,24 +446,14 @@
             'dependencies': [],
             'actions': [
             {
-                'action_name': 'setup_dir_for_simlink',
-                'inputs':[],
-                'outputs':[],
-                'action': [
-                  'mkdir', '-p','<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets',
-                ],
-            },
-            {
                 'action_name': 'create_symlink_resources_animations',
                 'inputs': [],
                 'outputs': [],
                 'action': [
-                  'ln',
-                  '-s',
-                  '-f',
-                  '-n',
-                  '<(externals_path)/cozmo-assets/animations',
-                  '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/animations',
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(externals_path)/cozmo-assets/animations',
+                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/animations',
+                  '--create_folder', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets'
                 ],
             },
             {
@@ -471,12 +461,9 @@
                 'inputs': [],
                 'outputs': [],
                 'action': [
-                  'ln',
-                  '-s',
-                  '-f',
-                  '-n',
-                  '<(externals_path)/cozmo-assets/animationGroups',
-                  '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/animationGroups',
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(externals_path)/cozmo-assets/animationGroups',
+                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/animationGroups'
                 ],
             },
             {
@@ -493,29 +480,13 @@
                 ],
             },
             {
-                'action_name': 'create_symlink_resources_behaviors',
-                'inputs': [],
-                'outputs': [],
-                'action': [
-                  'ln',
-                  '-s',
-                  '-f',
-                  '-n',
-                  '<(cozmo_asset_path)/behaviors',
-                  '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/behaviors',
-                ],
-            },
-            {
                 'action_name': 'create_symlink_resources_daily_goals',
                 'inputs': [],
                 'outputs': [],
                 'action': [
-                  'ln',
-                  '-s',
-                  '-f',
-                  '-n',
-                  '<(cozmo_asset_path)/DailyGoals',
-                  '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/DailyGoals',
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(cozmo_asset_path)/DailyGoals',
+                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/DailyGoals'
                 ],
             },
             {
@@ -523,12 +494,9 @@
                 'inputs': [],
                 'outputs': [],
                 'action': [
-                  'ln',
-                  '-s',
-                  '-f',
-                  '-n',
-                  '<(cozmo_asset_path)/animationGroupMaps',
-                  '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/animationGroupMaps',
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(cozmo_asset_path)/animationGroupMaps',
+                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/assets/animationGroupMaps'
                 ],
             },
             {
@@ -536,35 +504,15 @@
                 'inputs': [],
                 'outputs': [],
                 'action': [
-                  'ln',
-                  '-s',
-                  '-f',
-                  '-n',
-                  '<(externals_path)/cozmosoundbanks/GeneratedSoundBanks/Mac',
-                  '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/sound',
+                  '../../tools/build/tools/ankibuild/symlink.py',
+                  '--link_target', '<(externals_path)/cozmosoundbanks/GeneratedSoundBanks/Mac',
+                  '--link_name', '<(cozmo_engine_path)/simulator/controllers/webotsCtrlGameEngine/resources/sound'
                 ],
             },
             ]
           },
 
-          # {
-          #   'target_name': 'allUnitTests',
-          #   'type': 'none',
-          #   'dependencies': [
-          #     '<(cg-ce_gyp_path):cozmoEngineUnitTest',
-          #     '<(cg-cti_gyp_path):ctiUnitTest',
-          #     '<(cg-util_gyp_path):UtilUnitTest',
-          #   ],
-          # },
-
-          # {
-          #   'target_name': 'allCoretechTools',
-          #   'type': 'none',
-          #   'dependencies': [
-          #     '<(cg-cti_gyp_path):ctiPlanningStandalone',
-          #   ],            
-          # },
-          #Build everything for BUILD_WORKSPACE
+          # Build everything for BUILD_WORKSPACE
           # When game was a real target it was built automatically, now manually include what to build.
           {
             'target_name': 'All',
