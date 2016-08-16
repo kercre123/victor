@@ -1,0 +1,30 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "settings.volumePanel.robotToggle.low": {
+    "translation": "Low"
+  },
+  "settings.volumePanel.robotToggle.medium": {
+    "translation": "Med"
+  },
+  "settings.volumePanel.robotToggle.high": {
+    "translation": "High"
+  }
+}

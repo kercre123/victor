@@ -10,6 +10,8 @@ GameObject:
   - 224: {fileID: 22452992}
   - 114: {fileID: 11407746}
   - 114: {fileID: 11409080}
+  - 114: {fileID: 11488424}
+  - 114: {fileID: 11458986}
   m_Layer: 5
   m_Name: PlayTab
   m_TagString: Untagged
@@ -51,6 +53,30 @@ MonoBehaviour:
   m_Spacing: 0
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 1
+--- !u!114 &11458986
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 116496}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1741964061, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_HorizontalFit: 1
+  m_VerticalFit: 0
+--- !u!114 &11488424
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 116496}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01fa14616975747589ddb1eb25154d3d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &22452992
 RectTransform:
   m_ObjectHideFlags: 1

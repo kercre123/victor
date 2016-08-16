@@ -347,6 +347,12 @@ public class StartupManager : MonoBehaviour {
         Cozmo.UI.GenericRewardsConfig.SetInstance(cd);
       });
 
+
+    assetBundleManager.LoadAssetAsync<Cozmo.Settings.DefaultVolumeSettingsConfig>(_GameMetadataAssetBundleName,
+      "DefaultVolumeSettingsConfig", (Cozmo.Settings.DefaultVolumeSettingsConfig dvsc) => {
+        Cozmo.Settings.DefaultVolumeSettingsConfig.SetInstance(dvsc);
+      });
+
     SkillSystem.Instance.Initialize();
 
   }
