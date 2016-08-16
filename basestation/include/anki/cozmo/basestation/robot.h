@@ -916,6 +916,7 @@ protected:
   u16              _forwardSensorValue_mm = 0;
   bool             _isOnChargerPlatform   = false;
   bool             _isCliffReactionDisabled = false;
+  bool             _isBodyInAccessoryMode = true;
 
   enum class OffTredsState{
     OnTreds

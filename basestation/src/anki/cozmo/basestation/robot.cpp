@@ -541,6 +541,8 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
     
 Result Robot::UpdateFullRobotState(const RobotState& msg)
 {
+  #define IS_STATUS_FLAG_SET(x) ((msg.status & (uint16_t)RobotStatusFlag::x) != 0)
+  
   ANKI_CPU_PROFILE("Robot::UpdateFullRobotState");
   
   Result lastResult = RESULT_OK;
@@ -578,19 +580,30 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     _pdo->Update(_currPathSegment, _numFreeSegmentSlots);
   }
   
-  const bool isPickedUpNew = (msg.status & (uint16_t)RobotStatusFlag::IS_PICKED_UP) != 0;
+  const bool isPickedUpNew = IS_STATUS_FLAG_SET(IS_PICKED_UP);
   const bool isDelocalizing = !_isPickedUp && isPickedUpNew;
   
   // this flag can have a small delay with respect to when we actually picked up the block, since Engine notifies
   // the robot, and the robot updates on the next state update. But that delay guarantees that the robot knows what
   // we think it's true, rather than mixing timestamps of when it started carrying vs when the robot knows that it was
   // carrying
-  const bool isCarryingObject = (msg.status&(uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK) != 0;
+  const bool isCarryingObject = IS_STATUS_FLAG_SET(IS_CARRYING_BLOCK);
   //robot->SetCarryingBlock( isCarryingObject ); // Still needed?
-  SetPickingOrPlacing((bool)( msg.status & (uint16_t)RobotStatusFlag::IS_PICKING_OR_PLACING ));
+  SetPickingOrPlacing(IS_STATUS_FLAG_SET(IS_PICKING_OR_PLACING));
   SetPickedUp(isPickedUpNew);
-  SetOnCharger(static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER));
-  _isCliffSensorOn = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::CLIFF_DETECTED);
+  SetOnCharger(IS_STATUS_FLAG_SET(IS_ON_CHARGER));
+  _isCliffSensorOn = IS_STATUS_FLAG_SET(CLIFF_DETECTED);
+
+  if (_isBodyInAccessoryMode && !IS_STATUS_FLAG_SET(IS_BODY_ACC_MODE)) {
+    // This shouldn't happen. This is a firmware bug.
+    PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.BodyNotInAccessoryMode","* * * * Firmware bug (Tell Vandiver) * * * *");
+    _isBodyInAccessoryMode = false;
+  } else if (!_isBodyInAccessoryMode && IS_STATUS_FLAG_SET(IS_BODY_ACC_MODE)) {
+    // This is not by itself a bad thing, but it should only happen if IS_BODY_ACC_MODE was ever false...
+    // which should never happen.
+    PRINT_NAMED_EVENT("Robot.UpdateFullRobotState.BodyInAccessoryMode","");
+    _isBodyInAccessoryMode = true;
+  }
 
   GetMoveComponent().Update(msg);
       
