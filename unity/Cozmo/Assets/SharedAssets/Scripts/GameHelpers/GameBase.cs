@@ -565,15 +565,20 @@ public abstract class GameBase : MonoBehaviour {
     if (ContextManager.Instance.ManagerBusy) {
       ContextManager.Instance.OnAppHoldEnd();
     }
-    if (CurrentRobot != null) {
-      CurrentRobot.ResetRobotState(EndGameRobotReset);
-    }
-    CleanUpOnDestroy();
 
     if (CurrentRobot != null && _StateMachine.GetReactionThatPausedGame() == Anki.Cozmo.BehaviorType.NoneBehavior) {
       // clears the action queue before quitting the game.
       CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
     }
+
+    // Reset robot state after clearing the queue (wheels, head and lift included)
+    if (CurrentRobot != null) {
+      CurrentRobot.ResetRobotState(EndGameRobotReset);
+    }
+
+    // Some CleanUpOnDestroy overrides send a robot animation as well
+    CleanUpOnDestroy();
+
     Destroy(gameObject);
   }
 
