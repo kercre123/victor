@@ -60,6 +60,17 @@ public class RewardedActionManager : MonoBehaviour {
       return _RewardConfig.EnergyID;
     }
   }
+  public string CoinID {
+    get {
+      return _RewardConfig.CoinID;
+    }
+  }
+  public string SparkID {
+    get {
+      return _RewardConfig.SparkID;
+    }
+  }
+
   // Set to -1 if no new difficulty was unlocked, otherwise is set to the new difficulty and included along
   // with Pending Unlockables as the next difficulty unlocked.
   public int NewDifficultyUnlock = -1;

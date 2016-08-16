@@ -21,6 +21,11 @@ namespace Cozmo {
 
       [ItemId]
       public string EnergyID = "experience";
+      [ItemId]
+      public string CoinID = "TestHexItem0";
+      [ItemId]
+      public string SparkID = "treat";
+
       public int ExpPerParticleEffect = 5;
       public int BurstPerParticleHit = 10;
       public float ExpParticleMinSpread = 50.0f;
