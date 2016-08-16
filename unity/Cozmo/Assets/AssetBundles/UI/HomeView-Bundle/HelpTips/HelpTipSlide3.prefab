@@ -127,7 +127,7 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 134696}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
   m_Name: 
@@ -181,8 +181,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 120, y: -97}
-  m_SizeDelta: {x: 1460, y: -354}
+  m_AnchoredPosition: {x: 120, y: -117}
+  m_SizeDelta: {x: 1460, y: -394}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!224 &22413572
 RectTransform:
@@ -199,7 +199,7 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 120, y: -120}
+  m_AnchoredPosition: {x: 120, y: -190}
   m_SizeDelta: {x: 2317, y: 140}
   m_Pivot: {x: 0, y: 1}
 --- !u!224 &22494700
