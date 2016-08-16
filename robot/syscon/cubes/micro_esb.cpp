@@ -216,7 +216,6 @@ uint32_t uesb_start() {
     NRF_RADIO->PACKETPTR   = (uint32_t)&current_payload->data;
     
     NRF_RADIO->TASKS_TXEN  = 1;
-
   } else if (m_rx_fifo.count < UESB_CORE_RX_FIFO_SIZE) {
     // Read to the next spot in the payload
     uesb_payload_t *m_rx_payload = &m_rx_fifo.payload[m_rx_fifo.entry_point];
