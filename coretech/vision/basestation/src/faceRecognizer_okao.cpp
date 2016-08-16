@@ -260,7 +260,7 @@ namespace Vision {
   {
     if(ProcessingState::FeaturesReady == _state)
     {
-      //      PRINT_NAMED_DEBUG("FaceRecognizer.GetRecognitionData.EnrollmentStatus",
+      //      PRINT_CH_DEBUG("FaceRecognizer", "GetRecognitionData.EnrollmentStatus",
       //                        "ForTrackingID:%d EnrollmentCount=%d EnrollID=%d",
       //                        -_detectionInfo.nID, _enrollmentCount, _enrollmentID);
       
@@ -336,11 +336,11 @@ namespace Vision {
               // unclear we'd want to merge two separately enrolled people! We
               // hope this confusion never happens.
               // NOTE: Debug version displays names, warning does not (so they don't get logged)
-              PRINT_NAMED_DEBUG("FaceRecognizer.GetRecognitionData.ConfusedTwoNamedIDs_Debug",
-                            "While tracking face %d with ID=%d (%s), recognized as ID=%d (%s). Not merging!",
-                            -_detectionInfo.nID,
-                            faceID, faceIDenrollData->second.GetName().c_str(),
-                            recognizedID, recIDenrollData->second.GetName().c_str());
+              PRINT_CH_DEBUG("FaceRecognizer", "GetRecognitionData.ConfusedTwoNamedIDs_Debug",
+                             "While tracking face %d with ID=%d (%s), recognized as ID=%d (%s). Not merging!",
+                             -_detectionInfo.nID,
+                             faceID, faceIDenrollData->second.GetName().c_str(),
+                             recognizedID, recIDenrollData->second.GetName().c_str());
               PRINT_NAMED_WARNING("FaceRecognizer.GetRecognitionData.ConfusedTwoNamedIDs",
                                   "While tracking face %d with ID=%d, recognized as ID=%d. Not merging!",
                                   -_detectionInfo.nID, faceID, recognizedID);
@@ -802,13 +802,15 @@ namespace Vision {
                                                 std::chrono::system_clock::now());
     
     auto albumToFaceIter = _albumEntryToFaceID.find(albumEntry);
-    ASSERT_NAMED(albumToFaceIter != _albumEntryToFaceID.end(),
-                 "FaceRecognizer.UpdateExistingUser.MissingAlbumToFaceEntry");
+    ASSERT_NAMED_EVENT(albumToFaceIter != _albumEntryToFaceID.end(),
+                       "FaceRecognizer.UpdateExistingUser.MissingAlbumToFaceEntry",
+                       "AlubmEntry:%d", albumEntry);
     const FaceID_t faceID = albumToFaceIter->second;
     
     auto enrollDataIter = _enrollmentData.find(faceID);
-    ASSERT_NAMED(enrollDataIter != _enrollmentData.end(),
-                 "FaceRecognizer.UpdateExistingUser.MissingEnrollmentStatus");
+    ASSERT_NAMED_EVENT(enrollDataIter != _enrollmentData.end(),
+                       "FaceRecognizer.UpdateExistingUser.MissingEnrollmentStatus",
+                       "FaceID:%d", faceID);
     
     auto & enrollData = enrollDataIter->second;
     
@@ -1348,9 +1350,10 @@ namespace Vision {
               // entries in between, this will likely happen again and they will get merged in one by one.
               // At least that's the theory... This is an unlikely scenario regardless.
               PRINT_CH_INFO("FaceRecognizer", "RecognizeFace.UsingLowerRankedMatch",
-                            "Top match (ID:%d Score:%d) is session-only. "
-                            "Match at index %d (ID:%d Score:%d) is named. Using it and merging.",
-                            matchingID, matchingScore, nextIndex, nextMatchingID, scores[nextIndex]);
+                            "Top match (AlbumEntry:%d ID:%d Score:%d) is session-only. "
+                            "Match at index %d (AlbumEntry:%d ID:%d Score:%d) is named. Using it and merging.",
+                            matchingAlbumEntries[matchIndex], matchingID, matchingScore,
+                            nextIndex, matchingAlbumEntries[nextIndex], nextMatchingID, scores[nextIndex]);
               
               Result mergeResult = MergeFaces(nextMatchingID, matchingID);
               if(RESULT_OK != mergeResult) {
@@ -1794,8 +1797,8 @@ namespace Vision {
     }
     else
     {
-      PRINT_NAMED_DEBUG("FaceRecognizer.AssignNameToID.InvalidID_Debug",
-                        "Unknown ID %d, ignoring name %s", faceID, name.c_str());
+      PRINT_CH_DEBUG("FaceRecognizer", "AssignNameToID.InvalidID_Debug",
+                     "Unknown ID %d, ignoring name %s", faceID, name.c_str());
       
       PRINT_NAMED_WARNING("FaceRecognizer.AssignNameToID.InvalidID",
                           "Unknown ID %d", faceID);
@@ -1858,8 +1861,8 @@ namespace Vision {
         enrollIter->second.SetName( newName );
         PRINT_CH_INFO("FaceRecognizer", "RenameFace.Success", "Renamed ID=%d", faceID);
         // Print additional info with the names in debug only, for privacy reasons
-        PRINT_NAMED_DEBUG("FaceRecognizer.RenameFace.Success_DEBUG", "Renamed ID=%d from '%s' to '%s'",
-                          faceID, oldName.c_str(), enrollIter->second.GetName().c_str());
+        PRINT_CH_DEBUG("FaceRecognizer", "RenameFace.Success_DEBUG", "Renamed ID=%d from '%s' to '%s'",
+                       faceID, oldName.c_str(), enrollIter->second.GetName().c_str());
         
         using namespace std::chrono;
         auto const nowTime = system_clock::now();
@@ -1879,9 +1882,9 @@ namespace Vision {
                             "Refusing to rename ID=%d because old name does not match stored name",
                             faceID);
         // Print additional info with the names in debug only, for privacy reasons
-        PRINT_NAMED_DEBUG("FaceRecognizer.RenameFace.OldNameMismatch_DEBUG",
-                          "OldName '%s' does not match stored name '%s' for ID=%d",
-                          oldName.c_str(), enrollIter->second.GetName().c_str(), faceID);
+        PRINT_CH_DEBUG("FaceRecognizer", "RenameFace.OldNameMismatch_DEBUG",
+                       "OldName '%s' does not match stored name '%s' for ID=%d",
+                       oldName.c_str(), enrollIter->second.GetName().c_str(), faceID);
         
         return RESULT_FAIL;
       }
@@ -1949,9 +1952,9 @@ namespace Vision {
           
           for(auto & entry : _enrollmentData)
           {
-            PRINT_NAMED_DEBUG("FaceRecognizer.SetSerializedData.AddedEnrollmentDataEntry",
-                              "User '%s' with ID=%d",
-                              entry.second.GetName().c_str(), entry.second.GetFaceID());
+            PRINT_CH_DEBUG("FaceRecognizer", "SetSerializedData.AddedEnrollmentDataEntry",
+                           "User '%s' with ID=%d",
+                           entry.second.GetName().c_str(), entry.second.GetFaceID());
             
             loadedFaces.emplace_back(LoadedKnownFace(GetSecondsSince(nowTime, entry.second.GetEnrollmentTime()),
                                                      GetSecondsSince(nowTime, entry.second.FindLastSeenTime()),
@@ -2329,10 +2332,10 @@ namespace Vision {
                                                           entry.GetName()) );
                 
                 // Debug prints name, info does not, for privacy reasons
-                PRINT_NAMED_DEBUG("FaceRecognizer.LoadAlbum.LoadedEnrollmentData_Debug", "ID=%d, '%s'",
-                                  faceID, entry.GetName().c_str());
+                PRINT_CH_DEBUG("FaceRecognizer", "LoadAlbum.LoadedEnrollmentData_Debug", "ID=%d, '%s'",
+                               faceID, entry.GetName().c_str());
                 PRINT_CH_INFO("FaceRecognizer", "LoadAlbum.LoadedEnrollmentData", "ID=%d",
-                                 faceID);
+                              faceID);
 
                 loadedEnrollmentData[faceID] = std::move(entry);
               }

@@ -244,9 +244,9 @@ void EnrolledFaceEntry::Serialize(std::vector<u8>& buffer) const
                      "EnrolledFaceEntry.Serialize.WrongPackedSize",
                      "Packed %zu, Expected %zu", numBytes, expectedNumBytes);
   
-  PRINT_NAMED_DEBUG("EnrolledFaceEntry.Serialize.Success",
-                    "Serialized entry for '%s', ID=%d. Added %zu bytes to buffer (total length now %zu)",
-                    _name.c_str(), _faceID, numBytes, buffer.size());
+  PRINT_CH_DEBUG("FaceRecognizer", "EnrolledFaceEntry.Serialize.Success",
+                 "Serialized entry for '%s', ID=%d. Added %zu bytes to buffer (total length now %zu)",
+                 _name.c_str(), _faceID, numBytes, buffer.size());
   
 } // Serialize()
 
@@ -387,11 +387,11 @@ Result EnrolledFaceEntry::MergeAlbumEntriesHelper(const EnrolledFaceEntry& other
   
   const bool useOtherSessionOnlyEntry = (otherSessionOnlyTime > thisSessionOnlyTime);
   
-  PRINT_NAMED_DEBUG("EnrolledFaceEntry.MergeAlbumEntriesHelper.WhichSessionOnlyEntry",
-                    "Keeping %s (ID:%d) entry's session-only entry (%d)",
-                    useOtherSessionOnlyEntry ? "other" : "this",
-                    useOtherSessionOnlyEntry ? other._faceID : _faceID,
-                    useOtherSessionOnlyEntry ? other._sessionOnlyAlbumEntry : _sessionOnlyAlbumEntry);
+  PRINT_CH_DEBUG("FaceRecognizer", "EnrolledFaceEntry.MergeAlbumEntriesHelper.WhichSessionOnlyEntry",
+                 "Keeping %s (ID:%d) entry's session-only entry (%d)",
+                 useOtherSessionOnlyEntry ? "other" : "this",
+                 useOtherSessionOnlyEntry ? other._faceID : _faceID,
+                 useOtherSessionOnlyEntry ? other._sessionOnlyAlbumEntry : _sessionOnlyAlbumEntry);
   
   // NOTE: the -1's below are for session-only entries
   
@@ -403,9 +403,9 @@ Result EnrolledFaceEntry::MergeAlbumEntriesHelper(const EnrolledFaceEntry& other
   {
     // Simple case: keep all entries
     
-    PRINT_NAMED_DEBUG("EnrolledFaceEntry.MergeAlbumEntriesHelper.KeepingBoth",
-                      "ThisEntry(ID:%d) has %zu entries, OtherEntry(ID:%d) has %zu",
-                      _faceID, _albumEntrySeenTimes.size(), other._faceID, other._albumEntrySeenTimes.size());
+    PRINT_CH_DEBUG("FaceRecognizer", "EnrolledFaceEntry.MergeAlbumEntriesHelper.KeepingBoth",
+                   "ThisEntry(ID:%d) has %zu entries, OtherEntry(ID:%d) has %zu",
+                   _faceID, _albumEntrySeenTimes.size(), other._faceID, other._albumEntrySeenTimes.size());
     
     // First add all non-session-only entries from "other"
     for(auto & otherAlbumEntryPair : other._albumEntrySeenTimes)
@@ -465,6 +465,12 @@ Result EnrolledFaceEntry::MergeAlbumEntriesHelper(const EnrolledFaceEntry& other
     while(_albumEntrySeenTimes.size() < (maxAlbumEntriesToKeep-1) && entriesByTimeIter != allManualEntriesSortedByTime.end())
     {
       // Add the entry to this
+      PRINT_CH_DEBUG("FaceRecognizer", "EnrolledFaceEntry.MergeAlbumEntriesHelper.KeepingFromOne",
+                     "Keeping albumEntry:%d from %s (ID:%d)",
+                     entriesByTimeIter->second.albumEntry,
+                     entriesByTimeIter->second.isFromThis ? "this" : "other",
+                     entriesByTimeIter->second.isFromThis ? _faceID : other._faceID);
+      
       _albumEntrySeenTimes.emplace(entriesByTimeIter->second.albumEntry, entriesByTimeIter->first);
       
       ++entriesByTimeIter;
@@ -496,25 +502,25 @@ Result EnrolledFaceEntry::MergeAlbumEntriesHelper(const EnrolledFaceEntry& other
     }
   }
   
-  // Sanity check
-  if(_albumEntrySeenTimes.size() > maxAlbumEntriesToKeep)
+  // Sanity checks
+  if(ANKI_DEVELOPER_CODE)
   {
-    PRINT_NAMED_WARNING("EnrolledFaceEntry.MergeWithEntriesHelper.Failure",
-                        "Got %zu > %d album entries",
-                        _albumEntrySeenTimes.size(), maxAlbumEntriesToKeep);
-    return RESULT_FAIL;
+    if(_albumEntrySeenTimes.size() > maxAlbumEntriesToKeep)
+    {
+      PRINT_NAMED_WARNING("EnrolledFaceEntry.MergeWithEntriesHelper.Failure",
+                          "Got %zu > %d album entries",
+                          _albumEntrySeenTimes.size(), maxAlbumEntriesToKeep);
+      return RESULT_FAIL;
+    }
+    
+    for(auto albumEntry : entriesRemoved)
+    {
+      ASSERT_NAMED_EVENT(_albumEntrySeenTimes.find(albumEntry) == _albumEntrySeenTimes.end(),
+                         "EnrolledFaceEntry.MergeWithEntriesHelper.EntryKeptAndInRemovedList",
+                         "AlbumEntry:%d", albumEntry);
+    }
   }
   
-  for(auto albumEntry : entriesRemoved)
-  {
-    ASSERT_NAMED_EVENT(_albumEntrySeenTimes.find(albumEntry) == _albumEntrySeenTimes.end(),
-                       "EnrolledFaceEntry.MergeWithEntriesHelper.EntryKeptAndInRemovedList",
-                       "AlbumEntry:%d", albumEntry);
-  }
-  
-  PRINT_NAMED_DEBUG("EnrolledFaceEntry.MergeWith.NumLeftInOther",
-                    "Other has %zu album entries left", other._albumEntrySeenTimes.size());
-                
   return RESULT_OK;
 }
   
