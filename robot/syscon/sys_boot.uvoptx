@@ -158,7 +158,7 @@
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>0</BreakIfRCount>
-          <Filename>&lt;4&gt;.\cubes\cubes.cpp</Filename>
+          <Filename>\\vmware-host\Shared Folders\github\cozmo-one\robot\syscon\cubes\cubes.cpp</Filename>
           <ExecCommand></ExecCommand>
           <Expression></Expression>
         </Bp>
