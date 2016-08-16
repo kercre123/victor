@@ -185,7 +185,7 @@ namespace Anki {
 
       public void Initialize(UnityAction clickCallback, string dasEventButtonName, string dasEventViewController) {
         if (clickCallback != null) {
-          onRelease.AddListener(clickCallback);
+          onClick.AddListener(clickCallback);
         }
         _DASEventButtonName = dasEventButtonName;
         _DASEventViewController = dasEventViewController;
@@ -238,8 +238,6 @@ namespace Anki {
           return;
         }
 
-        // Set to pressed visual state
-        ShowPressedState();
         StartCoroutine(DelayedResetButton());
         _OnClick.Invoke();
       }
