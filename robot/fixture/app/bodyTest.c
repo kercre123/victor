@@ -115,9 +115,9 @@ int TryMotor(s8 motor, s8 speed, bool limitToLimit = false)
       SendCommand(TEST_GETMOTOR, 0, sizeof(first), (u8*)first);
     
     // Run it for a while
-    MicroWait(MOTOR_RUNTIME*2);
+    MicroWait(MOTOR_RUNTIME*3);
     if (motor == MOTOR_HEAD)
-      MicroWait(MOTOR_RUNTIME*2); // Run the head a little longer - since it's slower moving
+      MicroWait(MOTOR_RUNTIME*3); // Run the head a little longer - since it's slower moving
   }
   
   // Get end point, then stop motor

@@ -18,7 +18,7 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 55;
+u8 g_fixtureReleaseVersion = 58;
 const char* BUILD_INFO = "MP";
 
 BOOL g_isDevicePresent = 0;
@@ -189,6 +189,7 @@ bool DetectDevice(void)
     case FIXTURE_LIFETEST_TEST:
     case FIXTURE_RECHARGE_TEST:
     case FIXTURE_PLAYPEN_TEST:
+    case FIXTURE_JAM_TEST:
       return RobotDetect();
     case FIXTURE_MOTOR1A_TEST:
     case FIXTURE_MOTOR1B_TEST:
@@ -381,6 +382,9 @@ static void MainExecution()
     case FIXTURE_PLAYPEN_TEST:
       m_functions = GetPlaypenTestFunctions();
       break;
+    case FIXTURE_JAM_TEST:
+      m_functions = GetJamTestFunctions();
+      break;      
     case FIXTURE_MOTOR1A_TEST:
     case FIXTURE_MOTOR1B_TEST:
       m_functions = GetMotor1TestFunctions();

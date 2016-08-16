@@ -123,11 +123,11 @@ int TryMotor(s8 motor, s8 speed, bool limitToLimit = false);
 
 // Run motors through their paces
 const int SLOW_DRIVE_THRESH = 130, FAST_DRIVE_THRESH = 1170;    // mm/sec
-const int SLOW_LIFT_THRESH = 1000, FAST_LIFT_THRESH = 67400;   // 67.4 deg full-scale minimum
-const int FAST_LIFT_MAX = FAST_LIFT_THRESH + 5000;      // Lift rarely exceeds +5 deg
-const int SLOW_HEAD_THRESH = 800, FAST_HEAD_THRESH = 70000;    // 70.0 deg full-scale minimum
+const int SLOW_LIFT_THRESH = 1000, FAST_LIFT_THRESH = 60000;    // Should be - 67.4 deg full-scale minimum, but we don't reach it at power 80
+const int FAST_LIFT_MAX = FAST_LIFT_THRESH + 8000;      // Lift rarely exceeds +8 deg
+const int SLOW_HEAD_THRESH = 800, FAST_HEAD_THRESH = 70000;    // Should be - 70.0 deg full-scale minimum
 const int FAST_HEAD_MAX = FAST_HEAD_THRESH + 10000;     // Head is typically +6 deg (weird)
-const int SLOW_POWER = 40, FAST_POWER = 124;
+const int SLOW_POWER = 40, FAST_POWER = 124, FAST_HEADLIFT_POWER = 80;
 
 // Run a motor forward and backward, check minimum and (optional) maximum
 void CheckMotor(u8 motor, u8 power, int min, int max)
@@ -137,7 +137,7 @@ void CheckMotor(u8 motor, u8 power, int min, int max)
   // Move lift/head out of the way before test
   if (motor >= 2)
   {
-    if (power < FAST_POWER)
+    if (power <= SLOW_POWER)
       TryMotor(-motor, -power);   // Give extra space at slow power
     TryMotor(-motor, -power);
   }
@@ -148,7 +148,7 @@ void CheckMotor(u8 motor, u8 power, int min, int max)
     throw errbase + 2;    // Wired backward
   if (result < min)
   {
-    if (power < FAST_POWER)
+    if (power <= SLOW_POWER)
       throw errbase;      // Slow fail
     else
       throw errbase + 1;  // Fast fail
@@ -162,7 +162,7 @@ void CheckMotor(u8 motor, u8 power, int min, int max)
     throw errbase + 2;    // Wired backward
   if (result > -min)
   {
-    if (power < FAST_POWER)
+    if (power <= SLOW_POWER)
       throw errbase;      // Slow fail
     else
       throw errbase + 1;  // Fast fail
@@ -180,6 +180,61 @@ void SlowMotors(void)
   CheckMotor(MOTOR_HEAD,        SLOW_POWER, SLOW_HEAD_THRESH, 0);
 }
 
+const int JAM_POWER = 124;    // Full power
+const int JAM_THRESH[4] = { 2000, 2000, 150000, 70000 };  // Measured on 1 unit
+void Jam(u8 motor)
+{
+  int pos[4];
+  int lastpos = 0, diff;
+  int errbase = ERROR_MOTOR_LEFT + motor*10;
+  
+  // Reset motor watchdog and start yanking on the motor
+  SendCommand(TEST_POWERON, 5-1, 0, NULL);  // 5 seconds
+  
+  for (int i = 0; i < 8; i++)
+  {
+    // Each command takes 25-35ms (depending on timing, due to 4 bytes at 3/4 duty cycle at 5ms)
+    SendCommand(TEST_RUNMOTOR, (JAM_POWER&0xFC) + motor, 0, NULL);
+    SendCommand(TEST_GETMOTOR, 0, sizeof(pos), (u8*)pos);
+    
+    // Now driving forward, but results are from reverse
+    diff = pos[motor] - lastpos;
+    lastpos = pos[motor];
+    if (i != 0)
+    {
+      ConsolePrintf("diff-rev,%d,%d,%d\r\n", motor, diff, lastpos);
+      if (diff > -JAM_THRESH[motor])
+        throw errbase + 6;
+    }
+    
+    MicroWait(300000);
+
+    // Now driving reverse, but results are from forward
+    SendCommand(TEST_RUNMOTOR, ((-JAM_POWER)&0xFC) + motor, 0, NULL);
+    SendCommand(TEST_GETMOTOR, 0, sizeof(pos), (u8*)pos);
+    
+    diff = pos[motor] - lastpos;
+    lastpos = pos[motor];
+    ConsolePrintf("diff-fwd,%d,%d,%d\r\n", motor, diff, lastpos);
+    if (diff < JAM_THRESH[motor]*2)
+      throw errbase + 7;
+      
+    MicroWait(150000);
+  }
+ 
+  // Stop the motor
+  SendCommand(TEST_RUNMOTOR, 0 + motor, 0, NULL);  
+}
+
+// This attempts to jam the motors by running them forward and backward at high speed
+void JamTest(void)
+{
+  Jam(MOTOR_LEFT_WHEEL);
+  Jam(MOTOR_RIGHT_WHEEL);
+  Jam(MOTOR_LIFT);
+  Jam(MOTOR_HEAD);  
+}
+
 // This checks whether the head can reach its upper limit within a time limit at SLOW_POWER
 void HeadLimits(void)
 {
@@ -193,7 +248,7 @@ void HeadLimits(void)
   SendCommand(TEST_GETMOTOR, 0, sizeof(first), (u8*)first);
 
   // Reset motor watchdog and fire up the motor
-  SendCommand(TEST_POWERON, 2, 0, NULL);  // 3 seconds
+  SendCommand(TEST_POWERON, 3-1, 0, NULL);  // 3 seconds
   SendCommand(TEST_RUNMOTOR, (SLOW_POWER&0xFC) + MOTOR_HEAD, 0, NULL);
   MicroWait(MOTOR_RUNTIME);
   
@@ -201,6 +256,7 @@ void HeadLimits(void)
   SendCommand(TEST_GETMOTOR, 0, sizeof(second), (u8*)second);
   SendCommand(TEST_RUNMOTOR, 0 + MOTOR_HEAD, 0, NULL);
   
+  // XXX: This test is broken because it doesn't convert ticks to millidegrees!
   int ticks = second[MOTOR_HEAD] - first[MOTOR_HEAD];
   ConsolePrintf("headlimits,%d\r\n", ticks);
   
@@ -216,11 +272,15 @@ void FastMotors(void)
   
   // Do head first to avoid triggering menu mode
   // Check max limit for head only on ROBOT2 and above (head is installed)
-  CheckMotor(MOTOR_HEAD,        FAST_POWER, FAST_HEAD_THRESH, g_fixtureType < FIXTURE_ROBOT2_TEST ? 0 : FAST_HEAD_MAX);
+  CheckMotor(MOTOR_HEAD,        FAST_HEADLIFT_POWER, FAST_HEAD_THRESH, g_fixtureType < FIXTURE_ROBOT2_TEST ? 0 : FAST_HEAD_MAX);
   HeadLimits();
   
   // Check max limit for lift only on ROBOT3 and above (arms are attached)
-  CheckMotor(MOTOR_LIFT,        FAST_POWER, FAST_LIFT_THRESH, g_fixtureType < FIXTURE_ROBOT3_TEST ? 0 : FAST_LIFT_MAX);
+  CheckMotor(MOTOR_LIFT,        FAST_HEADLIFT_POWER, FAST_LIFT_THRESH, g_fixtureType < FIXTURE_ROBOT3_TEST ? 0 : FAST_LIFT_MAX);
+
+  // Per Raymond/Kenny's request, run second lift test after jamming motion
+  if (g_fixtureType == FIXTURE_ROBOT3_TEST)
+    CheckMotor(MOTOR_LIFT,        SLOW_POWER, SLOW_LIFT_THRESH, 0);
 }
 
 // List of all functions invoked by the test, in order
@@ -270,7 +330,7 @@ void RobotFixtureDropSensor(void)
 void SpeakerTest(void)
 {
   // Speaker test not on robot1 (head not yet properly fixtured)
-  if (g_fixtureType != FIXTURE_ROBOT1_TEST)
+  if (g_fixtureType == FIXTURE_ROBOT1_TEST)
     return;
   SendCommand(TEST_PLAYTONE, 0, 0, 0);
 }
@@ -336,6 +396,18 @@ TestFunction* GetPackoutTestFunctions(void)
   {
     InfoTest,
     SpeakerTest,            // Must be last
+    NULL
+  };
+
+  return functions;
+}
+
+TestFunction* GetJamTestFunctions(void)
+{
+  static TestFunction functions[] =
+  {
+    InfoTest,
+    JamTest,
     NULL
   };
 
