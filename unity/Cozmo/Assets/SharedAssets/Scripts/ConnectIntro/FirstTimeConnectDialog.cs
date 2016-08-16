@@ -68,8 +68,8 @@ public class FirstTimeConnectDialog : MonoBehaviour {
   }
 
   private void HandleSoundCheckComplete() {
-    UIManager.CloseViewImmediately(_SoundCheckViewInstance);
-    ShowProfileCreationScreen();
+    _SoundCheckViewInstance.ViewClosed += ShowProfileCreationScreen;
+    UIManager.CloseView(_SoundCheckViewInstance);
   }
 
   private void ShowProfileCreationScreen() {
