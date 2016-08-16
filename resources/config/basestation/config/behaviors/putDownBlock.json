@@ -4,6 +4,7 @@
   "flatScore": 0.1,
   "behaviorGroups": [
     "FP_PlayAlone",
+    "FP_PlayWithHumans",
     "FP_Socialize"
   ]
 }
