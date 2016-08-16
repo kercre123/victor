@@ -23,8 +23,6 @@
 #include "../behaviors/exploration/behaviorLookInPlaceMemoryMap.h"
 #include "../behaviors/exploration/behaviorThinkAboutBeacons.h"
 #include "../behaviors/exploration/behaviorVisitInterestingEdge.h"
-#include "anki/cozmo/basestation/behaviors/behaviorAcknowledgeFace.h"
-#include "anki/cozmo/basestation/behaviors/behaviorAcknowledgeObject.h"
 #include "anki/cozmo/basestation/behaviors/behaviorBuildPyramid.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDemoFearEdge.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
@@ -33,7 +31,6 @@
 #include "anki/cozmo/basestation/behaviors/behaviorDrivePath.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFindFaces.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorKnockOverCubes.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
 #include "anki/cozmo/basestation/behaviors/behaviorNone.h"
@@ -42,20 +39,21 @@
 #include "anki/cozmo/basestation/behaviors/behaviorPopAWheelie.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPounceOnMotion.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPutDownBlock.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactAcknowledgeCubeMoved.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToCliff.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToFrustration.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToNewBlock.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToOnCharger.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToPoke.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToRobotOnBack.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToRobotOnFace.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToRobotOnSide.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToUnexpectedMovement.h"
 #include "anki/cozmo/basestation/behaviors/behaviorRollBlock.h"
 #include "anki/cozmo/basestation/behaviors/behaviorStackBlocks.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeFace.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeObject.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactAcknowledgeCubeMoved.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToCliff.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToFrustration.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToOnCharger.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPickup.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPoke.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnBack.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnFace.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnSide.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToUnexpectedMovement.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -96,11 +94,6 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::LookAround:
     {
       newBehavior = new BehaviorLookAround(robot, config);
-      break;
-    }
-    case BehaviorType::InteractWithFaces:
-    {
-      newBehavior = new BehaviorInteractWithFaces(robot, config);
       break;
     }
     case BehaviorType::ReactToPickup:
@@ -236,11 +229,6 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::DriveOffCharger:
     {
       newBehavior = new BehaviorDriveOffCharger(robot, config);
-      break;
-    }
-    case BehaviorType::ReactToNewBlock:
-    {
-      newBehavior = new BehaviorReactToNewBlock(robot, config);
       break;
     }
     case BehaviorType::PopAWheelie:

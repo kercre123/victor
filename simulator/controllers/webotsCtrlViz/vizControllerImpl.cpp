@@ -541,10 +541,11 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   
   DrawText(VizTextLabelType::TEXT_LABEL_STATUS_FLAG_2, Anki::NamedColors::GREEN, txt);
   
-  sprintf(txt, "        %7s %7s %6s",
+  sprintf(txt, "        %7s %7s %6s %6s",
     payload.state.status & (uint32_t)RobotStatusFlag::LIFT_IN_POS ? "" : "LIFTING",
     payload.state.status & (uint32_t)RobotStatusFlag::HEAD_IN_POS ? "" : "HEADING",
-    payload.state.status & (uint32_t)RobotStatusFlag::IS_MOVING ? "MOVING" : "");
+    payload.state.status & (uint32_t)RobotStatusFlag::IS_MOVING ? "MOVING" : "",
+    payload.state.status & (uint32_t)RobotStatusFlag::IS_BODY_ACC_MODE ? "" : "(BODY)");
   DrawText(VizTextLabelType::TEXT_LABEL_STATUS_FLAG_3, Anki::NamedColors::GREEN, txt);
   
   // Save state to file

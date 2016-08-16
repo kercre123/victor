@@ -443,6 +443,31 @@
         "Amount": 10,
         "DescriptionKey": "reward.description.StartNewDay"
       }
+    },
+    {
+      "Id": 17,
+      "RewardEvent": {
+        "Value": "OnNewDayStarted"
+      },
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentDailyStreakCondition, Assembly-CSharp",
+          "UseMinSession": true,
+          "MinSession": 2,
+          "UseMaxSession": false,
+          "MaxSession": 0,
+          "Label": {
+            "text": "Current Daily Streak Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "TestHexItem0",
+        "Amount": 5,
+        "DescriptionKey": "reward.description.StartNewDay"
+      }
     }
   ]
 }

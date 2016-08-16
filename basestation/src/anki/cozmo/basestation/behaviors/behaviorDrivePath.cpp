@@ -20,7 +20,6 @@
 namespace Anki {
 namespace Cozmo {
   
-#define SET_STATE(s) SetState_internal(State::s, #s)
 
 BehaviorDrivePath::BehaviorDrivePath(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
@@ -47,7 +46,7 @@ Result BehaviorDrivePath::InitInternal(Robot& robot)
 
 void BehaviorDrivePath::TransitionToFollowingPath(Robot& robot)
 {
-  SET_STATE(FollowingPath);
+  DEBUG_SET_STATE(FollowingPath);
   SelectPath(robot.GetPose(), _path);
   
   IActionRunner* drivePath = new DrivePathAction(robot, _path);
@@ -56,6 +55,7 @@ void BehaviorDrivePath::TransitionToFollowingPath(Robot& robot)
     switch(res)
     {
       case ActionResult::SUCCESS:
+        BehaviorObjectiveAchieved();
         break;
         
       case ActionResult::FAILURE_RETRY:
@@ -75,15 +75,6 @@ void BehaviorDrivePath::TransitionToFollowingPath(Robot& robot)
   });
   
 }
-
-
-void BehaviorDrivePath::SetState_internal(State state, const std::string& stateName)
-{
-  _state = state;
-  PRINT_NAMED_DEBUG("BehaviorDrivePath.TransitionTo", "%s", stateName.c_str());
-  SetStateName(stateName);
-}
-
 
 void BehaviorDrivePath::SelectPath(const Pose3d& startingPose, Planning::Path& path)
 {

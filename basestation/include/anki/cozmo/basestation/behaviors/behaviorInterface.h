@@ -33,6 +33,10 @@
 #include "util/random/randomGenerator.h"
 #include "util/signals/simpleSignal_fwd.h"
 
+
+//Transforms enum into string
+#define DEBUG_SET_STATE(s) SetDebugStateName(#s)
+
 // This macro uses PRINT_NAMED_INFO if the supplied define (first arg) evaluates to true, and PRINT_NAMED_DEBUG otherwise
 // All args following the first are passed directly to the chosen print macro
 #define BEHAVIOR_VERBOSE_PRINT(_BEHAVIORDEF, ...) do { \
@@ -119,10 +123,16 @@ public:
   bool IsRunnable(const Robot& robot) const;
   
   const std::string& GetName() const { return _name; }
+  const std::string& GetDebugStateName() const { return _debugStateName;}
   const BehaviorType GetType() const { return _behaviorType; }
-  const std::string& GetStateName() const { return _stateName; }
   virtual bool IsReactionary() const { return false;}
   virtual bool ShouldRunWhilePickedUp() const { return false;}
+  
+  void SetStreamline(bool streamline){_shouldStreamline = streamline;}
+  
+  // Return true if the behavior explicitly handles the case where the robot starts holding the block
+  // Equivalent to !robot.IsCarryingObject() in IsRunnable()
+  virtual bool CarryingObjectHandledInternally() const = 0;
 
   double GetTimeStartedRunning_s() const { return _startedRunningTime_s; }
 
@@ -175,7 +185,10 @@ protected:
     
   // Only sets the name if it's currenty the base default name
   void SetDefaultName(const char* inName);
-  inline void SetStateName(const std::string& inName) { _stateName = inName; }
+  inline void SetDebugStateName(const std::string& inName) {
+    _debugStateName = inName;
+    PRINT_NAMED_DEBUG("TransitionTo", "Behavior:%s, State:%s", GetName().c_str(), _debugStateName.c_str());
+  }
   inline void SetBehaviorType(BehaviorType type) {if(_behaviorType == BehaviorType::NoneBehavior){ _behaviorType = type;}};
     
   virtual Result InitInternal(Robot& robot) = 0;
@@ -298,6 +311,14 @@ protected:
   // was canceled, false otherwise. Note that if you are running, this will trigger a callback for the
   // cancellation unless you set allowCallback to false
   bool StopActing(bool allowCallback = true);
+  
+  // Behaviors should call this function when they reach their completion state
+  // in order to log das events and notify the AI strategy of completion
+  void BehaviorObjectiveAchieved();
+  
+  //Allows behaviors to skip certain steps when streamlined
+  //Can be set in json (for sparks) or programatically
+  bool _shouldStreamline;
 
 private:
             
@@ -314,7 +335,7 @@ private:
   // ==================== Member Vars ====================
     
   std::string _name;
-  std::string _stateName = "";
+  std::string _debugStateName = "";
   BehaviorType _behaviorType;
   
   // if an unlockId is set, the behavior won't be runnable unless the unlockId is unlocked in the progression component
@@ -351,7 +372,7 @@ private:
 
   bool _isRunning;
   bool _isOwnedByFactory;
-    
+  
   bool _enableRepetitionPenalty;
   bool _enableRunningPenalty;
   
@@ -447,6 +468,7 @@ public:
 
   virtual bool IsReactionary() const override { return true;}
   virtual bool ShouldRunWhilePickedUp() const override { return true;}
+  virtual bool CarryingObjectHandledInternally() const override {return true;}
   
   //Deal with default disabling - has to be called after type is set for behavior
   virtual void HandleDisableByDefault(Robot& robot);
@@ -458,11 +480,12 @@ public:
 protected:
 
   virtual Result InitInternal(Robot& robot) override final;
-  virtual Result ResumeInternal(Robot& robot) override final;
   virtual void   StopInternal(Robot& robot) override final;
   
+  //Never Called - reactionary behaviors don't resume
+  virtual Result ResumeInternal(Robot& robot) override final;
+  
   virtual Result InitInternalReactionary(Robot& robot) = 0;
-  virtual Result ResumeInternalReactionary(Robot& robot){return InitInternalReactionary(robot);};
   virtual void   StopInternalReactionary(Robot& robot){};
 
   bool IsReactionEnabled() const { return _disableIDs.empty(); }
@@ -480,6 +503,9 @@ protected:
   std::set<GameToEngineTag> _gameToEngineTags;
   std::set<RobotInterface::RobotToEngineTag> _robotToEngineTags;
   bool _isDisabledByDefault;
+  
+  //Tracks whether lift track was locked for reaction
+  bool _reactionIsLiftTrackLocked;
 
 }; // class IReactionaryBehavior
 

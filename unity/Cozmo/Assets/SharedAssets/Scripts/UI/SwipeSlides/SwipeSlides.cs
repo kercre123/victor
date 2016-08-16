@@ -32,6 +32,8 @@ public class SwipeSlides : MonoBehaviour {
   private bool _Transitioning = false;
   private Vector3 _StartingPosition;
 
+  private GameObject _SwipeContainerMask;
+
   private void Start() {
 
     //_ThresholdSpeed = GetComponent<RectTransform>().rect.width * 0.5f;
@@ -44,8 +46,10 @@ public class SwipeSlides : MonoBehaviour {
     }
     _StartingPosition = _SwipeContainer.localPosition;
 
+    _SwipeContainerMask = _SwipeContainer.transform.parent.gameObject; 
+
     _PageIndicatorInstance = GameObject.Instantiate(_PageIndicatorPrefab.gameObject).GetComponent<SwipePageIndicator>();
-    _PageIndicatorInstance.transform.SetParent(transform, false);
+    _PageIndicatorInstance.transform.SetParent(_SwipeContainerMask.transform, false);
     _PageIndicatorInstance.SetPageCount(_SlidePrefabs.Length);
     _PageIndicatorInstance.SetCurrentPage(_CurrentIndex);
     _PageIndicatorInstance.OnNextButton += TransitionRight;

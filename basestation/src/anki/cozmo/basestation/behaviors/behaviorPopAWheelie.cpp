@@ -24,7 +24,6 @@
 #include "util/console/consoleInterface.h"
 
 
-#define SET_STATE(s) SetState_internal(State::s, #s)
 
 namespace Anki {
 namespace Cozmo {
@@ -49,13 +48,16 @@ bool BehaviorPopAWheelie::IsRunnableInternal(const Robot& robot) const
 {
   UpdateTargetBlock(robot);
   
-  return _targetBlock.IsSet() && ! robot.IsCarryingObject();
+  return _targetBlock.IsSet();
 }
 
 Result BehaviorPopAWheelie::InitInternal(Robot& robot)
 {
-  
-  TransitionToReactingToBlock(robot);
+  if(!_shouldStreamline){
+    TransitionToReactingToBlock(robot);
+  }else{
+    TransitionToPerformingAction(robot);
+  }
   
   return Result::RESULT_OK;
 }
@@ -85,23 +87,24 @@ bool BehaviorPopAWheelie::FilterBlocks(const ObservableObject* obj) const
 
 void BehaviorPopAWheelie::TransitionToReactingToBlock(Robot& robot)
 {
-  SET_STATE(ReactingToBlock);
-    // Turn towards the object and then react to it before performing the pop a wheelie action
-    StartActing(new CompoundActionSequential(robot, {
-      new TurnTowardsObjectAction(robot, _targetBlock, PI_F),
-      new TriggerAnimationAction(robot, AnimationTrigger::PopAWheelieInitial),
-    }),
-    &BehaviorPopAWheelie::TransitionToPerformingAction);
+  DEBUG_SET_STATE(ReactingToBlock);
+
+  // Turn towards the object and then react to it before performing the pop a wheelie action
+  StartActing(new CompoundActionSequential(robot, {
+    new TurnTowardsObjectAction(robot, _targetBlock, PI_F),
+    new TriggerAnimationAction(robot, AnimationTrigger::PopAWheelieInitial),
+  }),
+  &BehaviorPopAWheelie::TransitionToPerformingAction);
 }
 
 void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot)
 {
+  DEBUG_SET_STATE(PerformingAction);
   TransitionToPerformingAction(robot,false);
 }
   
 void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetry)
 {
-  SET_STATE(PerformingAction);
   if( ! _targetBlock.IsSet() ) {
     PRINT_NAMED_WARNING("BehaviorPopAWheelie.NoBlockID",
                         "%s: Transitioning to action state, but we don't have a valid block ID",
@@ -136,7 +139,10 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
                 switch(msg.result)
                 {
                   case ActionResult::SUCCESS:
-                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::SuccessfulWheelie));
+                    if(!_shouldStreamline){
+                      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::SuccessfulWheelie));
+                    }
+                    BehaviorObjectiveAchieved();
                     break;
                     
                   case ActionResult::FAILURE_RETRY:
@@ -203,20 +209,11 @@ void BehaviorPopAWheelie::SetupRetryAction(Robot& robot, const ExternalInterface
   
 }
 
-
-void BehaviorPopAWheelie::SetState_internal(State state, const std::string& stateName)
-{
-  _state = state;
-  PRINT_NAMED_DEBUG("BehaviorPopAWheelie.TransitionTo", "%s", stateName.c_str());
-  SetStateName(stateName);
-}
-
 void BehaviorPopAWheelie::ResetBehavior(Robot& robot)
 {
   
   robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToRobotOnBack, true);
   robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToRobotOnBack, true);
-  _state = State::ReactingToBlock;
   _targetBlock.UnSet();
 }
 

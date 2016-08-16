@@ -30,7 +30,8 @@ protected:
 public:
 
   virtual bool IsRunnableInternal(const Robot& robot) const override;
-  
+  virtual bool CarryingObjectHandledInternally() const override {return false;}
+
 protected:
 
   virtual Result InitInternal(Robot& robot) override;
@@ -42,7 +43,11 @@ protected:
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   virtual float EvaluateScoreInternal(const Robot& robot) const override;
 
-
+  enum class DebugState {
+    DrivingForward,
+  };
+  
+  
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -51,9 +56,6 @@ private:
   
   using BaseClass = IBehavior;
 
-  enum class State {
-    DrivingForward,
-  };
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
@@ -61,13 +63,11 @@ private:
   
   void TransitionToDrivingForward(Robot& robot);
   
-  void SetState_internal(State state, const std::string& stateName);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  State _state = State::DrivingForward;
   int   _timesResumed = 0;
 
   float _distToDrive_mm = 0.0f;

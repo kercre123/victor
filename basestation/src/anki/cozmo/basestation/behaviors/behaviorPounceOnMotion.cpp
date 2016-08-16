@@ -71,7 +71,7 @@ BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& 
 bool BehaviorPounceOnMotion::IsRunnableInternal(const Robot& robot) const
 {
   // Can always run if we aren't holding something. Used to be more motion based.
-  return !robot.IsCarryingObject();
+  return true;
 }
 
 float BehaviorPounceOnMotion::EvaluateScoreInternal(const Robot& robot) const
@@ -380,6 +380,7 @@ void BehaviorPounceOnMotion::TransitionToResultAnim(Robot& robot)
   SET_STATE(PlayingFinalReaction);
   
   robot.GetMoveComponent().EnableLiftPower(true);
+  BehaviorObjectiveAchieved();
 }
   
 void BehaviorPounceOnMotion::TransitionToBackUp(Robot& robot)
@@ -403,7 +404,7 @@ void BehaviorPounceOnMotion::SetState_internal(State state, const std::string& s
 {
   _state = state;
   PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.TransitionTo", "%s", stateName.c_str());
-  SetStateName(stateName);
+  SetDebugStateName(stateName);
 }
   
 Result BehaviorPounceOnMotion::InitInternal(Robot& robot)
@@ -504,7 +505,6 @@ void BehaviorPounceOnMotion::Cleanup(Robot& robot)
   robot.GetAnimationStreamer().PopIdleAnimation();
   robot.GetDrivingAnimationHandler().PopDrivingAnimations();
 }
-
 
 }
 }

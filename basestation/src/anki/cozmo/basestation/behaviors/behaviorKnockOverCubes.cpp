@@ -17,7 +17,6 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/flipBlockAction.h"
-#include "anki/cozmo/basestation/behaviors/behaviorPutDownBlock.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/common/basestation/jsonTools.h"
@@ -25,7 +24,6 @@
 #include "util/console/consoleInterface.h"
 
 
-#define SET_STATE(s) SetState_internal(State::s, #s)
 
 
 static const char* const kReachForBlockTrigger = "reachForBlockTrigger";
@@ -33,9 +31,9 @@ static const char* const kKnockOverEyesTrigger = "knockOverEyesTrigger";
 static const char* const kKnockOverSuccessTrigger = "knockOverSuccessTrigger";
 static const char* const kPutDownTrigger = "knockOverPutDownTrigger";
 static const char* const kMinimumStackHeight = "minimumStackHeight";
-static const char* const kShouldStreamline = "shouldStreamline";
 
 const int numFramesToWaitForBeforeFlip = 5;
+const int maxNumRetries = 1;
 CONSOLE_VAR(f32, kBKS_headAngleForKnockOver_deg, "Behavior.AdmireStack", -14.0f);
 CONSOLE_VAR(f32, kBKS_distanceToTryToGrabFrom_mm, "Behavior.AdmireStack", 85.0f);
 CONSOLE_VAR(f32, kBKS_searchSpeed_mmps, "Behavior.AdmireStack", 60.0f);
@@ -46,6 +44,7 @@ namespace Cozmo {
   
 BehaviorKnockOverCubes::BehaviorKnockOverCubes(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
+  , _numRetries(0)
 {
   SetDefaultName("KnockOverCubes");
   
@@ -63,7 +62,6 @@ void BehaviorKnockOverCubes::LoadConfig(const Json::Value& config)
   GetValueOptional(config, kPutDownTrigger, _putDownAnimTrigger);
   
   _minStackHeight = config.get(kMinimumStackHeight, 3).asInt();
-  _shouldStreamline = config.get(kShouldStreamline, false).asBool();
   
 }
 
@@ -76,17 +74,11 @@ bool BehaviorKnockOverCubes::IsRunnableInternal(const Robot& robot) const
 
 Result BehaviorKnockOverCubes::InitInternal(Robot& robot)
 {
-  if (robot.IsCarryingObject())
-  {
-    TranstitionToSettingDownBlock(robot);
-  }
-  else
-  {
-    if(!_shouldStreamline){
-      TransitionToReachingForBlock(robot);
-    }else{
-      TransitionToDrivingToReadyPose(robot);
-    }
+
+  if(!_shouldStreamline){
+    TransitionToReachingForBlock(robot);
+  }else{
+    TransitionToDrivingToReadyPose(robot);
   }
   
   return Result::RESULT_OK;
@@ -104,13 +96,8 @@ Result BehaviorKnockOverCubes::ResumeInternal(Robot& robot)
   
 void BehaviorKnockOverCubes::StopInternal(Robot& robot)
 {
-  if(_state == State::KnockingOverStack){
-    robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToUnexpectedMovement, true);
-  }
-  
-  if(_state == State::PlayingReaction
-     || _state == State::KnockingOverStack){
-    robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, true);
+  for(auto behaviorType: _disabledReactions){
+    robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), behaviorType, true);
   }
   
   ResetBehavior(robot);
@@ -119,7 +106,7 @@ void BehaviorKnockOverCubes::StopInternal(Robot& robot)
   
 void BehaviorKnockOverCubes::TransitionToReachingForBlock(Robot& robot)
 {
-  SET_STATE(ReachingForBlock);
+  DEBUG_SET_STATE(ReachingForBlock);
   
   ObservableObject* lastObj = robot.GetBlockWorld().GetObjectByID(_baseBlockID);
   ObservableObject* nextObj;
@@ -149,13 +136,12 @@ void BehaviorKnockOverCubes::TransitionToReachingForBlock(Robot& robot)
   
 void BehaviorKnockOverCubes::TransitionToDrivingToReadyPose(Robot& robot)
 {
-  SET_STATE(DrivingToReadyPose);
+  DEBUG_SET_STATE(DrivingToReadyPose);
   
   auto nextFunction = &BehaviorKnockOverCubes::TransitionToTurningTowardsFace;
   
-  if(_shouldStreamline){
+  if(_shouldStreamline || _numRetries > 0){
     nextFunction = &BehaviorKnockOverCubes::TransitionToKnockingOverStack;
-    
   }
   
   StartActing(new DriveToFlipBlockPoseAction(robot, _baseBlockID), nextFunction);
@@ -163,7 +149,7 @@ void BehaviorKnockOverCubes::TransitionToDrivingToReadyPose(Robot& robot)
 
 void BehaviorKnockOverCubes::TransitionToTurningTowardsFace(Robot& robot)
 {
-  SET_STATE(TurningTowardsFace);
+  DEBUG_SET_STATE(TurningTowardsFace);
   
   Pose3d facePose;
   size_t facesInMemory = robot.GetFaceWorld().GetKnownFaceIDs().size();
@@ -183,7 +169,7 @@ void BehaviorKnockOverCubes::TransitionToTurningTowardsFace(Robot& robot)
   
 void BehaviorKnockOverCubes::TransitionToAligningWithStack(Robot& robot)
 {
-  SET_STATE(AligningWithStack);
+  DEBUG_SET_STATE(AligningWithStack);
   
   CompoundActionSequential* action = new CompoundActionSequential(robot);
 
@@ -195,109 +181,66 @@ void BehaviorKnockOverCubes::TransitionToAligningWithStack(Robot& robot)
                                                 false));
   // Move head for knock over
   action->AddAction(new MoveHeadToAngleAction(robot, DEG_TO_RAD(kBKS_headAngleForKnockOver_deg)));
-  
-  if(!_shouldStreamline){
     
-    // Wait for a few frames for block pose to settle down and try turning towards the object again incase
-    // our first turn was slightly off
-    action->AddAction(new WaitForImagesAction(robot, numFramesToWaitForBeforeFlip));
-    
-    // Turn towards bottom block of stack
-    action->AddAction(new TurnTowardsObjectAction(robot,
-                                                  _baseBlockID,
-                                                  Radians(PI_F)
-                                                  ));
-  }
+  // Wait for a few frames for block pose to settle down and try turning towards the object again incase
+  // our first turn was slightly off
+  action->AddAction(new WaitForImagesAction(robot, numFramesToWaitForBeforeFlip));
   
+  // Turn towards bottom block of stack
+  action->AddAction(new TurnTowardsObjectAction(robot,
+                                                _baseBlockID,
+                                                Radians(PI_F)
+                                                ));
+
   StartActing(action, &BehaviorKnockOverCubes::TransitionToKnockingOverStack);
 }
 
   
 void BehaviorKnockOverCubes::TransitionToKnockingOverStack(Robot& robot)
 {
-  SET_STATE(KnockingOverStack);
+  DEBUG_SET_STATE(KnockingOverStack);
   
   robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToUnexpectedMovement, false);
   robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, false);
-
+  _disabledReactions.insert(BehaviorType::ReactToUnexpectedMovement);
+  _disabledReactions.insert(BehaviorType::AcknowledgeObject);
+  
+  
   StartActing(new DriveAndFlipBlockAction(robot, _baseBlockID)
               , [this, &robot](const ActionResult& result){
                 if(result == ActionResult::SUCCESS){
+                  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToUnexpectedMovement, true);
+                  _disabledReactions.erase(BehaviorType::ReactToUnexpectedMovement);
                   TransitionToPlayingReaction(robot);
+                }else if(result == ActionResult::FAILURE_RETRY){
+                  _numRetries += 1;
+                  if(_numRetries > maxNumRetries){
+                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::KnockOverFailure), &BehaviorKnockOverCubes::TransitionToDrivingToReadyPose
+                                );
+                  }
                 }
               });
 }
   
 void BehaviorKnockOverCubes::TransitionToPlayingReaction(Robot& robot)
 {
-  SET_STATE(PlayingReaction);
+  DEBUG_SET_STATE(PlayingReaction);
 
   if(!_shouldStreamline){
     StartActing(new TriggerAnimationAction(robot, _knockOverSuccessTrigger),
                 [this](Robot& robot){
                   robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, true);
-                  SET_STATE(DrivingToStack);
-
+                  _disabledReactions.erase(BehaviorType::AcknowledgeObject);
                 });
   }
+  BehaviorObjectiveAchieved();
 }
-  
-
-void BehaviorKnockOverCubes::TranstitionToSettingDownBlock(Robot& robot)
-{
-  SET_STATE(SettingDownBlock);
-  
-  if( _putDownAnimTrigger == AnimationTrigger::Count) {
-    constexpr float kAmountToReverse_mm = 90.f;
-    IActionRunner* actionsToDo = new CompoundActionSequential(robot, {
-      new DriveStraightAction(robot, -kAmountToReverse_mm, DEFAULT_PATH_MOTION_PROFILE.speed_mmps),
-      new PlaceObjectOnGroundAction(robot)});
-    if(!_shouldStreamline){
-      StartActing(actionsToDo, &BehaviorKnockOverCubes::TransitionToReachingForBlock);
-    }else{
-      StartActing(actionsToDo, &BehaviorKnockOverCubes::TransitionToDrivingToReadyPose);
-    }
-  }
-  else {
-    StartActing(new TriggerAnimationAction(robot, _putDownAnimTrigger),
-                [this](Robot& robot) {
-                  // use same logic as put down block behavior
-                  StartActing(BehaviorPutDownBlock::CreateLookAfterPlaceAction(robot, false),
-                              [this, &robot]() {
-                                if(robot.IsCarryingObject()) {
-                                  // No matter what, even if we didn't see the object we were
-                                  // putting down for some reason, mark the robot as not carrying
-                                  // anything so we don't get stuck in a loop of trying to put
-                                  // something down (i.e. assume the object is no longer on our lift)
-                                  // TODO: We should really be using some kind of PlaceOnGroundAction instead of raw animation (see COZMO-2192)
-                                  PRINT_NAMED_WARNING("BehaviorRollBlock.TransitionToSettingDownBlock.DidNotSeeBlock",
-                                                      "Forcibly setting carried objects as unattached (See COZMO-2192)");
-                                  robot.SetCarriedObjectAsUnattached();
-                                }
-                                if(!_shouldStreamline){
-                                  TransitionToReachingForBlock(robot);
-                                }else{
-                                  TransitionToDrivingToReadyPose(robot);
-                                }
-                              });
-                });
-  }
-}
-
-  
 
   
 void BehaviorKnockOverCubes::ResetBehavior(Robot& robot)
 {
-  _state = State::DrivingToStack;
+  _disabledReactions.clear();
   _baseBlockID.UnSet();
-}
-
-void BehaviorKnockOverCubes::SetState_internal(State state, const std::string& stateName)
-{
-  _state = state;
-  PRINT_NAMED_DEBUG("BehaviorRollBlock.TransitionTo", "%s", stateName.c_str());
-  SetStateName(stateName);
 }
 
 void BehaviorKnockOverCubes::UpdateTargetStack(const Robot& robot) const

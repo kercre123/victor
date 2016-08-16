@@ -36,6 +36,7 @@ protected:
 public:
 
   virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool CarryingObjectHandledInternally() const override {return false;}
   
   virtual float EvaluateScoreInternal(const Anki::Cozmo::Robot &robot) const override;
   

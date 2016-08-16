@@ -40,6 +40,7 @@ namespace Cozmo {
     virtual ~BehaviorFactoryCentroidExtractor() { }
     
     virtual bool IsRunnableInternal(const Robot& robot) const override;
+    virtual bool CarryingObjectHandledInternally() const override {return true;}
     
   private:
     

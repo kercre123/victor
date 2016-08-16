@@ -1,44 +1,47 @@
+#!/usr/bin/env bash
 set -e
-TESTNAME=cozmoEngine
-PROJECTNAME=cozmoEngine
-PROJECTROOT=
+
 # change dir to the project dir, no matter where script is executed from
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-echo "Entering directory \`${DIR}'"
 cd $DIR
-
+CUT=`which cut`
+GREP=`which grep`
 GIT=`which git`
 if [ -z $GIT ];then
   echo git not found
   exit 1
 fi
 TOPLEVEL=`$GIT rev-parse --show-toplevel`
-BUILDTOOLS=$TOPLEVEL/tools/build
 
 # prepare
-PROJECT=$TOPLEVEL/$PROJECTROOT/generated/mac
+TESTNAME=cozmoEngine
+PROJECT=$TOPLEVEL/generated/mac
 BUILD_TYPE="Debug"
-DERIVED_DATA=$PROJECT/DerivedData
 GTEST=$TOPLEVEL/lib/util/libs/framework/
+BUILDTOOLS=$TOPLEVEL/tools/build
 
 # build
 xcodebuild \
--project $PROJECT/$PROJECTNAME.xcodeproj \
--target ${TESTNAME}UnitTest \
+-workspace $PROJECT/CozmoWorkspace_MAC.xcworkspace \
+-scheme BUILD_WORKSPACE \
 -sdk macosx \
--configuration $BUILD_TYPE  \
-SYMROOT="$DERIVED_DATA" \
-OBJROOT="$DERIVED_DATA" \
-build 
+-configuration $BUILD_TYPE \
+build
 
+BUILD_DIR=`xcodebuild \
+-workspace $PROJECT/CozmoWorkspace_MAC.xcworkspace \
+-scheme BUILD_WORKSPACE \
+-sdk macosx \
+-configuration $BUILD_TYPE \
+-showBuildSettings | $GREP TARGET_BUILD_DIR | $CUT -d " " -f 7`
 
 set -o pipefail
 set +e
 
 # clean output
-rm -rf $DERIVED_DATA/$BUILD_TYPE/${TESTNAME}GoogleTest*
-rm -rf $DERIVED_DATA/$BUILD_TYPE/case*
-rm -f $DERIVED_DATA/$BUILD_TYPE/*.txt
+rm -rf $BUILD_DIR/${TESTNAME}GoogleTest*
+rm -rf $BUILD_DIR/case*
+rm -f $BUILD_DIR/*.txt
 
 DUMP_OUTPUT=0
 ARGS=""
@@ -62,14 +65,14 @@ fi
 
 # execute
 $BUILDTOOLS/tools/ankibuild/multiTest.py \
---path $DERIVED_DATA/$BUILD_TYPE \
+--path $BUILD_DIR \
 --gtest_path "$GTEST" \
---work_path "$DERIVED_DATA/$BUILD_TYPE/" \
---config_path "$DERIVED_DATA/$BUILD_TYPE/" \
---gtest_output "xml:$DERIVED_DATA/$BUILD_TYPE/${TESTNAME}GoogleTest_.xml" \
+--work_path "$BUILD_DIR/" \
+--config_path "$BUILD_DIR/" \
+--gtest_output "xml:$BUILD_DIR/${TESTNAME}GoogleTest_.xml" \
 --executable ${TESTNAME}UnitTest \
 --stdout_file \
---xml_dir "$DERIVED_DATA/$BUILD_TYPE" \
+--xml_dir "$BUILD_DIR" \
 --xml_basename ${TESTNAME}GoogleTest_ \
 $ARGS
 
@@ -77,11 +80,11 @@ EXIT_STATUS=$?
 set -e
 
 if (( $DUMP_OUTPUT )); then
-    cat $DERIVED_DATA/$BUILD_TYPE/*.txt
+    cat $BUILD_DIR/*.txt
 fi
 
 #tarball files together
-cd $DERIVED_DATA/$BUILD_TYPE
+cd $BUILD_DIR
 tar czf ${TESTNAME}GoogleTest.tar.gz ${TESTNAME}GoogleTest_*
 mv ${TESTNAME}GoogleTest.tar.gz $TOPLEVEL/build/${TESTNAME}GoogleTest.tar.gz
 # exit

@@ -7,8 +7,8 @@
   "num_loops":1,
   "behaviorGroups": [
     "SparksPounceOnMotion",
-    "SparksRollCube",
-    "SparksStackCube",
+    "SparksRollBlock",
+    "SparksStackBlock",
     "SparksPickUpCube",
     "SparksPopAWheelie",
     "SparksKnockOverCubes"

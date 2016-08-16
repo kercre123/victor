@@ -22,7 +22,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
-
+//#define NATHAN_DEBUG
 //#define NATHAN_CUBE_JUNK
 //#define CUBE_HOP
 
@@ -301,10 +301,20 @@ void uesb_event_handler(uint32_t flags)
       AdvertisePacket advert;
       memcpy(&advert, &rx_payload.data, sizeof(AdvertisePacket));
 
+      #ifdef NATHAN_DEBUG
+      if (advert.id != 0xca11ab1e) {
+        return ;
+      }
+      #endif
+
       // Attempt to locate existing accessory and repair
       int slot = LocateAccessory(advert.id);
 
-      #ifdef NATHAN_CUBE_JUNK
+      #ifdef NATHAN_DEBUG
+      if (slot < 0) {
+        slot = AllocateAccessory(advert.id);
+      }
+      #elif defined(NATHAN_CUBE_JUNK)
       if (slot < 0 && rx_payload.rssi < 50 && rx_payload.rssi > -50) {
         slot = AllocateAccessory(advert.id);
       }
@@ -350,7 +360,7 @@ void uesb_event_handler(uint32_t flags)
       acc->id = advert.id;
       acc->last_received = 0;
       acc->model = advert.model;
-      
+
       if (acc->active == false)
       {
         acc->allocated = true;
@@ -382,17 +392,20 @@ void uesb_event_handler(uint32_t flags)
       if (target_slot <= 0) {
         target_slot += TICK_LOOP;
       }
-      
+
       NRF_TIMER0->TASKS_CAPTURE[3] = 1;
       int clocks = (target_slot * SCHEDULE_PERIOD) - NRF_TIMER0->CC[3] + SILENCE_PERIOD;
-      int ticks_to_next = (clocks << 5) / ((int)NRF_CLOCK_FREQUENCY >> 10);
 
-      if (ticks_to_next < SCHEDULE_PERIOD) {
-        ticks_to_next += RADIO_TOTAL_PERIOD;
+      if (clocks < SCHEDULE_PERIOD) {
+        clocks += RADIO_TOTAL_PERIOD;
         acc->hopSkip = true;
       } else {
         acc->hopSkip = false;
       }
+
+      int ticks_to_next = (clocks << 5) / ((int)NRF_CLOCK_FREQUENCY >> 10);
+
+      ticks_to_next += 0;
 
       acc->hopIndex = (random() & 0xF) + 0x12;
       acc->hopBlackout = (wifiChannel * 5) - 9;
@@ -413,7 +426,7 @@ void uesb_event_handler(uint32_t flags)
       pair.beatsPerRead = 4;
       pair.beatsUntilRead = 4;    // Should be computed to synchronize all tap data
       pair.patchStart = ota_device->patchStart;
-      
+
       // Send a pairing packet
       uesb_write_tx_payload(&address, &pair, sizeof(CapturePacket));
     }
@@ -620,7 +633,6 @@ static void radio_prepare(void) {
 }
 
 static void radio_resume(void) {
-  // Reenable the radio
   uesb_start();
 }
 

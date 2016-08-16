@@ -36,7 +36,8 @@ protected:
 public:
   
   virtual bool IsRunnableInternal(const Robot& robot) const override;
-  
+  virtual bool CarryingObjectHandledInternally() const override {return true;}
+
 protected:
   
   virtual Result InitInternal(Robot& robot) override;
@@ -45,7 +46,7 @@ protected:
 private:
   typedef std::vector<const ObservableObject*> BlockList;
   
-  enum class State {
+  enum class DebugState {
     DrivingToBaseBlock,
     PlacingBaseBlock,
     ObservingBase,
@@ -54,7 +55,6 @@ private:
     PlacingTopBlock,
     ReactingToPyramid
   };
-  State _state = State::DrivingToBaseBlock;
   
   mutable ObjectID _staticBlockID;
   mutable ObjectID _baseBlockID;
@@ -74,7 +74,6 @@ private:
   void UpdatePyramidTargets(const Robot& robot) const;
   void ResetPyramidTargets(const Robot& robot) const;
   ObjectID GetNearestBlockToPose(const Pose3d& pose, const BlockList& allBlocks) const;
-  void SetState_internal(State state, const std::string& stateName);
   
   template<typename T>
   bool EnsurePoseStateUsable(Robot& robot, ObjectID objectID, void(T::*callback)(Robot&));

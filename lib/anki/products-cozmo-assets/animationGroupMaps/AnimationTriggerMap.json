@@ -277,6 +277,10 @@
       "AnimName": "ag_reacttoblock_focusedeyes"
     },
     {
+      "CladEvent": "KnockOverFailure",
+      "AnimName": "ag_majorFail"
+    },
+    {
       "CladEvent": "KnockOverGrabAttempt",
       "AnimName": "knockOverStack_grabAttempt"
     },

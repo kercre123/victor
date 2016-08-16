@@ -54,6 +54,7 @@ public:
   // This behavior is runnable if when we check the memory map around the current robot position, there are still
   // undiscovered areas
   virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool CarryingObjectHandledInternally() const override { return false;}
   
 protected:
   

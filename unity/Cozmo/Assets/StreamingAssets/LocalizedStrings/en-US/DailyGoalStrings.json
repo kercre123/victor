@@ -21,6 +21,9 @@
   "dailyGoal.title.missing": {
     "translation": "Missing Title"
   },
+  "dailyGoal.title.FirstWinSpeedTap": {
+    "translation": "Win your first game of Quick Tap"
+  },
   "dailyGoal.title.PlaySpeedTapTwice": {
     "translation": "Play two games of Quick Tap"
   },

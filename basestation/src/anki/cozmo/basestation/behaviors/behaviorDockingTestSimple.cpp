@@ -556,7 +556,7 @@ namespace Anki {
       UpdateStateName();
       
       BEHAVIOR_VERBOSE_PRINT(DEBUG_DOCKING_TEST_BEHAVIOR, "BehaviorDockingTest.SetState",
-                             "set state to '%s'", GetStateName().c_str());
+                             "set state to '%s'", GetDebugStateName().c_str());
     }
     
     void BehaviorDockingTestSimple::SetCurrStateAndFlashLights(State s, Robot& robot)
@@ -617,7 +617,7 @@ namespace Anki {
         name += ' ';
       }
       
-      SetStateName(name);
+      SetDebugStateName(name);
     }
     
     void BehaviorDockingTestSimple::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)

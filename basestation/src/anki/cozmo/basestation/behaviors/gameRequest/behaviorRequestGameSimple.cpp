@@ -27,7 +27,6 @@
 namespace Anki {
 namespace Cozmo {
 
-#define SET_STATE(s) SetState_internal(s, #s)
 
 #define DO_FACE_VERIFICATION_STEP 0
 
@@ -159,7 +158,9 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot)
   }
   else {
     _activeConfig = &_oneBlockConfig;
-    if( ! IsActing() ) {
+    if(robot.IsCarryingObject()){
+      TransitionToDrivingToFace(robot);
+    }else if( ! IsActing() ) {
       TransitionToPlayingInitialAnimation(robot);
     }
   }
@@ -257,7 +258,7 @@ void BehaviorRequestGameSimple::TransitionToPlayingInitialAnimation(Robot& robot
     robot,
     new TriggerAnimationAction(robot, _activeConfig->initialAnimTrigger) );
   StartActing( animationAction, &BehaviorRequestGameSimple::TransitionToFacingBlock );
-  SET_STATE(State::PlayingInitialAnimation);
+  DEBUG_SET_STATE(PlayingInitialAnimation);
 }
   
 void BehaviorRequestGameSimple::TransitionToFacingBlock(Robot& robot)
@@ -266,7 +267,7 @@ void BehaviorRequestGameSimple::TransitionToFacingBlock(Robot& robot)
   if( targetBlockID.IsSet() ) {
     StartActing(new TurnTowardsObjectAction( robot, targetBlockID, PI_F ),
                 &BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation);
-    SET_STATE(State::FacingBlock);
+    DEBUG_SET_STATE(FacingBlock);
   }
   else {
     PRINT_NAMED_INFO("BehaviorRequestGameSimple.TransiitonToFacingBlock.NoBlock",
@@ -279,7 +280,7 @@ void BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation(Robot& robo
 {
   IActionRunner* animationAction = new TriggerAnimationAction(robot, _activeConfig->preDriveAnimTrigger);
   StartActing(animationAction, &BehaviorRequestGameSimple::TransitionToPickingUpBlock);
-  SET_STATE(State::PlayingPreDriveAnimation);
+  DEBUG_SET_STATE(PlayningPreDriveAnimation);
 }
 
 void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
@@ -327,7 +328,8 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
                   }
                 }
               } );
-  SET_STATE(State::PickingUpBlock);
+  
+  DEBUG_SET_STATE(PickingUpBlock);
 }
 
 void BehaviorRequestGameSimple::TransitionToSearchingForBlock(Robot& robot)
@@ -336,7 +338,7 @@ void BehaviorRequestGameSimple::TransitionToSearchingForBlock(Robot& robot)
   // action if a block is found
   Pose3d lastKnownPose;
   if( GetLastBlockPose(lastKnownPose) ) {
-    SET_STATE(State::SearchingForBlock);
+    DEBUG_SET_STATE(SearchingForBlock);
 
     CompoundActionSequential* searchAction = new CompoundActionSequential(robot);
 
@@ -404,7 +406,7 @@ void BehaviorRequestGameSimple::TransitionToDrivingToFace(Robot& robot)
                                      "failed to drive to a spot to interact with the face, so ending the behavior");
                   }
                 } );
-    SET_STATE(State::DrivingToFace);
+    DEBUG_SET_STATE(DrivingToFace);
   }
 }
 
@@ -434,8 +436,9 @@ void BehaviorRequestGameSimple::TransitionToPlacingBlock(Robot& robot)
                   TransitionToLookingAtFace(robot);
                 }
               } );
+  
+  DEBUG_SET_STATE(PlacingBlock);
 
-  SET_STATE(State::PlacingBlock);
 }
 
 void BehaviorRequestGameSimple::TransitionToLookingAtFace(Robot& robot)
@@ -443,7 +446,7 @@ void BehaviorRequestGameSimple::TransitionToLookingAtFace(Robot& robot)
   const bool sayName = true;
   StartActing(new TurnTowardsLastFacePoseAction(robot, PI_F, sayName),
               &BehaviorRequestGameSimple::TransitionToVerifyingFace);
-  SET_STATE(State::LookingAtFace);
+  DEBUG_SET_STATE(LookingAtFace);
 }
 
 void BehaviorRequestGameSimple::TransitionToVerifyingFace(Robot& robot)
@@ -463,7 +466,7 @@ void BehaviorRequestGameSimple::TransitionToVerifyingFace(Robot& robot)
                     TransitionToPlayingDenyAnim(robot);
                   }
                 } );
-    SET_STATE(State::VerifyingFace);
+    DEBUG_SET_STATE(VerifyingFace);
   }
   else {
     // just skip verification and go straight to playing the request
@@ -477,7 +480,7 @@ void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot) {
         new TriggerAnimationAction(robot, _activeConfig->requestAnimTrigger),
         new TurnTowardsLastFacePoseAction(robot, PI_F)}),
     &BehaviorRequestGameSimple::TransitionToIdle);
-  SET_STATE(State::PlayingRequstAnim);
+  DEBUG_SET_STATE(PlayingRequestAnim);
 }
  
 void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
@@ -498,8 +501,9 @@ void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
   }else{
     StartActing( new HangAction(robot) );
   }
-
-  SET_STATE(State::Idle);
+  
+  DEBUG_SET_STATE(Idle);
+  BehaviorObjectiveAchieved();
 }
 
 void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)
@@ -516,16 +520,9 @@ void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)
     StartActing(denyAnimAction);
   }
   
-  SET_STATE(State::PlayingDenyAnim);
+  DEBUG_SET_STATE(PlayingDenyAnim);
 }
   
-void BehaviorRequestGameSimple::SetState_internal(State state, const std::string& stateName)
-{
-  _state = state;
-  PRINT_NAMED_DEBUG("BehaviorRequestGameSimple.TransitionTo", "%s", stateName.c_str());
-  SetStateName(stateName);
-}
-
 u32 BehaviorRequestGameSimple::GetNumBlocks(const Robot& robot) const
 {
   if( _shouldUseBlocks ) {

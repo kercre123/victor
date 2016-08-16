@@ -36,10 +36,7 @@ namespace{
     return true;
   };
 }
-
   
-#define SET_STATE(s) SetState_internal(State::s, #s)
-
 BehaviorBuildPyramid::BehaviorBuildPyramid(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
@@ -66,8 +63,14 @@ Result BehaviorBuildPyramid::InitInternal(Robot& robot)
 {
   robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToUnexpectedMovement, false);
   robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, false);
-  TransitionToDrivingToBaseBlock(robot);
   _tempEnsureNotLoopingForever = false;
+
+  if(!robot.IsCarryingObject()){
+    TransitionToDrivingToBaseBlock(robot);
+  }else{
+    TransitionToPlacingBaseBlock(robot);
+  }
+  
   return Result::RESULT_OK;
 }
   
@@ -80,8 +83,7 @@ void BehaviorBuildPyramid::StopInternal(Robot& robot)
 
 void BehaviorBuildPyramid::TransitionToDrivingToBaseBlock(Robot& robot)
 {
-  SET_STATE(DrivingToBaseBlock);
-  
+  DEBUG_SET_STATE(DrivingToBaseBlock);
   DriveToPickupObjectAction* driveAction = new DriveToPickupObjectAction(robot, _baseBlockID);
   RetryWrapperAction* wrapper = new RetryWrapperAction(robot, driveAction, retryCallback, retryCount);
 
@@ -97,8 +99,8 @@ void BehaviorBuildPyramid::TransitionToDrivingToBaseBlock(Robot& robot)
   
 void BehaviorBuildPyramid::TransitionToPlacingBaseBlock(Robot& robot)
 {
-  SET_STATE(PlacingBaseBlock);
-  
+  DEBUG_SET_STATE(PlacingBaseBlock);
+
   bool isUsable = EnsurePoseStateUsable(robot, _staticBlockID, &BehaviorBuildPyramid::TransitionToPlacingBaseBlock);
   if(!isUsable){
     return;
@@ -121,8 +123,8 @@ void BehaviorBuildPyramid::TransitionToPlacingBaseBlock(Robot& robot)
   
 void BehaviorBuildPyramid::TransitionToObservingBase(Robot& robot)
 {
-  SET_STATE(ObservingBase);
-  
+  DEBUG_SET_STATE(ObservingBase);
+
   _tempDockingPose = robot.GetPose().GetWithRespectToOrigin();
   
   StartActing(new DriveStraightAction(robot, driveBackDistance, driveBackSpeed),
@@ -131,7 +133,7 @@ void BehaviorBuildPyramid::TransitionToObservingBase(Robot& robot)
 
 void BehaviorBuildPyramid::TransitionToDrivingToTopBlock(Robot& robot)
 {
-  SET_STATE(DrivingToTopBlock);
+  DEBUG_SET_STATE(DrivingToTopBlock);
   
   bool isUsable = EnsurePoseStateUsable(robot, _topBlockID, &BehaviorBuildPyramid::TransitionToDrivingToTopBlock);
   if(!isUsable){
@@ -157,8 +159,8 @@ void BehaviorBuildPyramid::TransitionToDrivingToTopBlock(Robot& robot)
   
 void BehaviorBuildPyramid::TransitionToAligningWithBase(Robot& robot)
 {
-  SET_STATE(AligningWithBase);
-  
+  DEBUG_SET_STATE(AligningWithBase);
+
   bool isUsable = EnsurePoseStateUsable(robot, _staticBlockID, &BehaviorBuildPyramid::TransitionToAligningWithBase);
   if(!isUsable){
     return;
@@ -190,7 +192,7 @@ void BehaviorBuildPyramid::TransitionToAligningWithBase(Robot& robot)
   
 void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
 {
-  SET_STATE(PlacingTopBlock);
+  DEBUG_SET_STATE(PlacingTopBlock);
 
   f32 halfBlockSize = (robot.GetBlockWorld().GetObjectByID(_staticBlockID)->GetSize().y())/2 + cubeSizeBuffer_mm;
   DriveToPlaceRelObjectAction* action = new DriveToPlaceRelObjectAction(robot, _staticBlockID, false, 0, halfBlockSize);
@@ -208,9 +210,10 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
   
 void BehaviorBuildPyramid::TransitionToReactingToPyramid(Robot& robot)
 {
-  SET_STATE(ReactingToPyramid);
-  
+  DEBUG_SET_STATE(ReactingToPyramid);
+
   StartActing( new TriggerAnimationAction(robot, AnimationTrigger::BuildPyramidSuccess));
+  BehaviorObjectiveAchieved();
   
 }
 
@@ -224,7 +227,12 @@ void BehaviorBuildPyramid::UpdatePyramidTargets(const Robot& robot) const
   if(allBlocks.size() >= 3){
     const Pose3d& robotPose = robot.GetPose().GetWithRespectToOrigin();
     
-    _baseBlockID = GetNearestBlockToPose(robotPose, allBlocks);
+    
+    if(robot.IsCarryingObject()){
+      _baseBlockID = robot.GetCarryingObject();
+    }else{
+      _baseBlockID = GetNearestBlockToPose(robotPose, allBlocks);
+    }
     auto baseBlockPose = robot.GetBlockWorld().GetObjectByID(_baseBlockID)->GetPose().GetWithRespectToOrigin();
 
     const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(_baseBlockID);
@@ -241,7 +249,7 @@ void BehaviorBuildPyramid::UpdatePyramidTargets(const Robot& robot) const
     
     
     _topBlockID = GetNearestBlockToPose(staticBlockPose, allBlocks);
-    
+
   }else{
     ResetPyramidTargets(robot);
   }
@@ -305,13 +313,6 @@ bool BehaviorBuildPyramid::EnsurePoseStateUsable(Robot& robot, ObjectID objectID
   }
   
   return true;
-}
-
-void BehaviorBuildPyramid::SetState_internal(State state, const std::string& stateName)
-{
-  _state = state;
-  PRINT_NAMED_DEBUG("BehaviorBuildPyramid.TransitionTo", "%s", stateName.c_str());
-  SetStateName(stateName);
 }
 
 } //namespace Cozmo

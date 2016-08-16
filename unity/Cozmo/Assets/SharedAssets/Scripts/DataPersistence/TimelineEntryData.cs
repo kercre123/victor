@@ -31,12 +31,15 @@ namespace DataPersistence {
 
     public int ChestsGained;
 
+    public Dictionary<string, int> TotalWins;
+
     public Dictionary<Anki.Cozmo.UnlockId, int> SparkCount;
 
     public TimelineEntryData() {
       CompletedChallenges = new List<CompletedChallengeData>();
       DailyGoals = new List<DailyGoal>();
       SparkCount = new Dictionary<Anki.Cozmo.UnlockId, int>();
+      TotalWins = new Dictionary<string, int>();
     }
 
     public TimelineEntryData(Date date) : this() {

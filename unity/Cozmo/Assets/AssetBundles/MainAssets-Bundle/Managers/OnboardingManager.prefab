@@ -52,20 +52,11 @@ MonoBehaviour:
   - {fileID: 11472044, guid: 7c7a9ce23021e4e2698b50bbcd5e3944, type: 2}
   _PhaseUpgradesPrefabs:
   - {fileID: 11468472, guid: 90d7904adcee24f3d8744541fb895f5c, type: 2}
-  _HomeOnboardingStages:
-  - {fileID: 11442482, guid: 6204d35ba8a14467e8fb2022b4e3ceb5, type: 2}
-  - {fileID: 11442482, guid: 066cb281859864617803ba25b0125af6, type: 2}
-  - {fileID: 11413716, guid: 15247645073c44e499f6e9555651de16, type: 2}
-  - {fileID: 11442482, guid: b5c97f63a752c4488817abaa2904e1e0, type: 2}
-  - {fileID: 11413212, guid: c97900b4f20304c87bea97db054b83a2, type: 2}
-  - {fileID: 11498296, guid: b3db4e05e330e46908d15bc271c92558, type: 2}
-  - {fileID: 11472044, guid: 7c7a9ce23021e4e2698b50bbcd5e3944, type: 2}
-  - {fileID: 11468472, guid: 90d7904adcee24f3d8744541fb895f5c, type: 2}
-  - {fileID: 11410378, guid: 908edc21d209b41159416f5383387705, type: 2}
-  - {fileID: 11407180, guid: 9fb21568656644549ab7f9f9783f8815, type: 2}
-  - {fileID: 11442482, guid: f6c2e8426a4ec48fb9ad931e3b8605a2, type: 2}
-  - {fileID: 11481006, guid: 959fa8ad92264464a87d01febec5a53c, type: 2}
-  _DebugLayerPrefab: {fileID: 103178, guid: d8451532cb4d14fc0a3f7bb0535f4fd9, type: 2}
+  _OnboardingUIPrefabData:
+    _AssetBundle:
+      _EnumValueAsString: onboarding_ui_prefabs
+      _EnumValue: 18
+    _AssetDataName: OnboardingUIWrapper
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

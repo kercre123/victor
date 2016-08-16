@@ -91,7 +91,7 @@ void BehaviorDemoFearEdge::SetState_internal(State state, const std::string& sta
 {
   _state = state;
   PRINT_NAMED_DEBUG("BehaviorDemoFearEdge.TransitionTo", "%s", stateName.c_str());
-  SetStateName(stateName);
+  SetDebugStateName(stateName);
 }
 
 }

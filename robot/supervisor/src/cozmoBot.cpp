@@ -273,14 +273,10 @@ namespace Anki {
           AnkiEvent( 228, "CozmoBot.Radio.Connected", 305, "", 0);
           wasConnected_ = true;
           BackpackLightController::TurnOffAll();
-          LiftController::Enable();
-          HeadController::Enable();
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
           AnkiEvent( 229, "CozmoBot.Radio.Disconnected", 305, "", 0);
           Messages::ResetInit();
           SteeringController::ExecuteDirectDrive(0,0);
-          LiftController::Disable();
-          HeadController::Disable();
           PickAndPlaceController::Reset();
           PickAndPlaceController::SetCarryState(CARRY_NONE);
           BackpackLightController::Init();

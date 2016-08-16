@@ -25,8 +25,6 @@
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 
 
-#define SET_STATE(s) SetState_internal(State::s, #s)
-
 namespace Anki {
 namespace Cozmo {
 
@@ -65,7 +63,11 @@ Result BehaviorRollBlock::InitInternal(Robot& robot)
   }
   else
   {
-    TransitionToReactingToBlock(robot);
+    if(!_shouldStreamline){
+      TransitionToReactingToBlock(robot);
+    }else{
+      TransitionToPerformingAction(robot);
+    }
   }
   return Result::RESULT_OK;
 }
@@ -107,16 +109,16 @@ bool BehaviorRollBlock::FilterBlocks(const ObservableObject* obj) const
           _robot.CanPickUpObjectFromGround(*obj) &&
           obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS);
 }
-  
+
 void BehaviorRollBlock::TransitionToSettingDownBlock(Robot& robot)
 {
-  SET_STATE(SettingDownBlock);
-
+  DEBUG_SET_STATE(SettingDownBlock);
+  
   if( _putDownAnimTrigger == AnimationTrigger::Count) {
     constexpr float kAmountToReverse_mm = 90.f;
     IActionRunner* actionsToDo = new CompoundActionSequential(robot, {
-        new DriveStraightAction(robot, -kAmountToReverse_mm, DEFAULT_PATH_MOTION_PROFILE.speed_mmps),
-        new PlaceObjectOnGroundAction(robot)});
+      new DriveStraightAction(robot, -kAmountToReverse_mm, DEFAULT_PATH_MOTION_PROFILE.speed_mmps),
+      new PlaceObjectOnGroundAction(robot)});
     StartActing(actionsToDo, &BehaviorRollBlock::TransitionToReactingToBlock);
   }
   else {
@@ -141,16 +143,19 @@ void BehaviorRollBlock::TransitionToSettingDownBlock(Robot& robot)
   }
 }
 
+  
+  
 void BehaviorRollBlock::TransitionToReactingToBlock(Robot& robot)
 {
-  SET_STATE(ReactingToBlock);
-
+  DEBUG_SET_STATE(ReactingToBlock);
+  
   if( robot.IsCarryingObject() ) {
     PRINT_NAMED_ERROR("BehaviorRollBlock.ReactWhileHolding",
                       "block should be put down at this point. Bailing from behavior");
     _targetBlock.UnSet();
     return;
   }
+  
   // Turn towards the object and then react to it before performing the roll action
   StartActing(new CompoundActionSequential(robot, {
                 new TurnTowardsObjectAction(robot, _targetBlock, PI_F),
@@ -161,7 +166,8 @@ void BehaviorRollBlock::TransitionToReactingToBlock(Robot& robot)
 
 void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
 {
-  SET_STATE(PerformingAction);
+  DEBUG_SET_STATE(PerformingAction);
+  
   if( ! _targetBlock.IsSet() ) {
     PRINT_NAMED_WARNING("BehaviorRollBlock.NoBlockID",
                         "%s: Transitioning to action state, but we don't have a valid block ID",
@@ -195,13 +201,17 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
   });
   
   const bool sayNameAfter = false;
-  CompoundActionSequential* action = new CompoundActionSequential(robot, {
-    rollAction,
-    new TurnTowardsLastFacePoseAction(robot, PI_F, sayNameAfter),
-    waitAction,
-  });
-  
-  action->SetProxyTag(rollAction->GetTag());
+  IActionRunner* action;
+  if(!_shouldStreamline){
+    action = new CompoundActionSequential(robot, {
+      rollAction,
+      new TurnTowardsLastFacePoseAction(robot, PI_F, sayNameAfter),
+      waitAction,
+    });
+    ((CompoundActionSequential*)action)->SetProxyTag(rollAction->GetTag());
+  }else{
+    action = rollAction;
+  }
   
   // Roll the object and then look at a person
   StartActing(action,
@@ -209,8 +219,11 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
                 switch(msg.result)
                 {
                   case ActionResult::SUCCESS:
-                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RollBlockSuccess));
+                    if(!_shouldStreamline){
+                      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RollBlockSuccess));
+                    }
                     IncreaseScoreWhileActing( kBRB_ScoreIncreaseForAction );
+                    BehaviorObjectiveAchieved();
                     break;
                   
                   case ActionResult::FAILURE_RETRY:
@@ -281,17 +294,8 @@ void BehaviorRollBlock::SetupRetryAction(Robot& robot, const ExternalInterface::
 
 }
 
-  
-void BehaviorRollBlock::SetState_internal(State state, const std::string& stateName)
-{
-  _state = state;
-  PRINT_NAMED_DEBUG("BehaviorRollBlock.TransitionTo", "%s", stateName.c_str());
-  SetStateName(stateName);
-}
-
 void BehaviorRollBlock::ResetBehavior(Robot& robot)
 {
-  _state = State::ReactingToBlock;
   _targetBlock.UnSet();
 }
 

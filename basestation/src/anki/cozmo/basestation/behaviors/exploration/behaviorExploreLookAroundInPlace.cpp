@@ -68,11 +68,6 @@ BehaviorExploreLookAroundInPlace::~BehaviorExploreLookAroundInPlace()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorExploreLookAroundInPlace::IsRunnableInternal(const Robot& robot) const
 {
-  // don't run if I'm holding a block (can't really look around through the cube)
-  if( robot.IsCarryingObject() ) {
-    return false;
-  }
-  
   // Probably want to run if I don't have any other exploration behavior that wants to, unless I have completely
   // mapped the floor around me 'recently'.
   // Now this is the case for exploration, but some other supergroup that uses the same behavior would have different
@@ -211,8 +206,8 @@ void BehaviorExploreLookAroundInPlace::AlwaysHandle(const EngineToGameEvent& eve
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreLookAroundInPlace::TransitionToS1_OppositeTurn(Robot& robot)
 {
-  SetStateName("TransitionToS1_OppositeTurn");
-
+  SetDebugStateName("TransitionToS1_OppositeTurn");
+  
   // cache iteration values
   _iterationStartingBodyFacing_rad = robot.GetPose().GetRotationAngle<'Z'>();
   
@@ -230,8 +225,8 @@ void BehaviorExploreLookAroundInPlace::TransitionToS1_OppositeTurn(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreLookAroundInPlace::TransitionToS2_Pause(Robot& robot)
 {
-  SetStateName("TransitionToS2_Pause");
-
+  SetDebugStateName("TransitionToS2_Pause");
+  
   IAction* pauseAction = nullptr;
   
   const std::string& animGroupName = _configParams.s2_WaitAnimTrigger;
@@ -255,8 +250,8 @@ void BehaviorExploreLookAroundInPlace::TransitionToS2_Pause(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreLookAroundInPlace::TransitionToS3_MainTurn(Robot& robot)
 {
-  SetStateName("TransitionToS3_MainTurn");
-
+  SetDebugStateName("TransitionToS3_MainTurn");
+  
   // create turn action for this state
   const EClockDirection turnDir = _mainTurnDirection;
   IAction* turnAction = CreateBodyAndHeadTurnAction(robot, turnDir,
@@ -286,7 +281,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp(Robot& robot)
   {
     std::string stateName = "TransitionToS4_HeadOnlyUp (" + std::to_string(_s4HeadMovesLeft) + "/" +
       std::to_string(_s4HeadMovesRolled) + ")";
-    SetStateName(stateName);
+    SetDebugStateName(stateName);
   }
 
   // cache the rotation the first time that we run S4
@@ -354,8 +349,8 @@ void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreLookAroundInPlace::TransitionToS5_HeadOnlyDown(Robot& robot)
 {
-  SetStateName("TransitionToS5_HeadOnlyDown");
-
+  SetDebugStateName("TransitionToS5_HeadOnlyDown");
+  
   // create head move action for this state
   IAction* moveHeadAction = CreateHeadTurnAction(robot,
         _configParams.s5_BodyAngleRelativeRangeMin_deg,
@@ -373,8 +368,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS5_HeadOnlyDown(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreLookAroundInPlace::TransitionToS6_MainTurnFinal(Robot& robot)
 {
-  SetStateName("TransitionToS6_MainTurnFinal");
-
+  SetDebugStateName("TransitionToS6_MainTurnFinal");
   // create turn action for this state
   const EClockDirection turnDir = _mainTurnDirection;
   IAction* turnAction = CreateBodyAndHeadTurnAction(robot, turnDir,
@@ -389,8 +383,8 @@ void BehaviorExploreLookAroundInPlace::TransitionToS6_MainTurnFinal(Robot& robot
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
 {
-  SetStateName("TransitionToS7_IterationEnd");
-
+  SetDebugStateName("TransitionToS7_IterationEnd");
+  
   Radians currentZ_rad = robot.GetPose().GetRotationAngle<'Z'>();
   float doneThisIteration_rad = (currentZ_rad - _iterationStartingBodyFacing_rad).ToFloat();
   _behaviorBodyFacingDone_rad += doneThisIteration_rad;

@@ -5,6 +5,7 @@ using Anki.Cozmo;
 using Cozmo.HomeHub;
 using DataPersistence;
 using Onboarding;
+using Anki.Assets;
 
 public class OnboardingManager : MonoBehaviour {
 
@@ -20,27 +21,21 @@ public class OnboardingManager : MonoBehaviour {
     None
   };
 
-  // Since the phases are all done in getters anyways, for clarity edit individual names
-  // in the editor rather than a dictionary...
-  [SerializeField]
-  private List<OnboardingBaseStage> _PhaseHomePrefabs;
-  [SerializeField]
-  private List<OnboardingBaseStage> _PhaseLootPrefabs;
-  [SerializeField]
-  private List<OnboardingBaseStage> _PhaseUpgradesPrefabs;
-
   private OnboardingPhases _CurrPhase = OnboardingPhases.None;
 
-  // Must be in order of enums above
-  [SerializeField]
-  private OnboardingBaseStage[] _HomeOnboardingStages;
   private GameObject _CurrStageInst = null;
 
   private Transform _OnboardingTransform;
 
   [SerializeField]
-  private GameObject _DebugLayerPrefab;
-  private GameObject _DebugLayer;
+  private int _NumStagesHome = 7;
+  [SerializeField]
+  private int _NumStagesLoot = 1;
+  [SerializeField]
+  private int _NumStagesUpgrades = 1;
+  [SerializeField]
+  private GameObjectDataLink _OnboardingUIPrefabData;
+  private OnboardingUIWrapper _OnboardingUIInstance;
 
   private void OnEnable() {
     if (Instance != null && Instance != this) {
@@ -74,28 +69,35 @@ public class OnboardingManager : MonoBehaviour {
   }
 
   private int GetMaxStageInPhase(OnboardingPhases phase) {
+    int numPhases = 0;
     switch (phase) {
     case OnboardingPhases.Home:
-      return _PhaseHomePrefabs.Count;
+      numPhases = _NumStagesHome;
+      break;
     case OnboardingPhases.Loot:
-      return _PhaseLootPrefabs.Count;
+      numPhases = _NumStagesLoot;
+      break;
     case OnboardingPhases.Upgrades:
-      return _PhaseUpgradesPrefabs.Count;
+      numPhases = _NumStagesUpgrades;
+      break;
     // Daily goals is a special case where it is just used to save state.
     case OnboardingPhases.DailyGoals:
-      return 1;
+      numPhases = _NumStagesUpgrades;
+      break;
     }
-    return 0;
+    if (_OnboardingUIInstance != null) {
+      // A logical check but we don't want to load the whole asset bundle if we don't have to
+      int numPrefabs = _OnboardingUIInstance.GetMaxStageInPhase(phase);
+      if (numPhases != numPrefabs) {
+        DAS.Error("onboarding.setuperror.PrefabPhasesMismatch", "");
+      }
+    }
+    return numPhases;
   }
   private OnboardingBaseStage GetCurrStagePrefab() {
     int currStage = GetCurrStageInPhase(_CurrPhase);
-    switch (_CurrPhase) {
-    case OnboardingPhases.Home:
-      return _PhaseHomePrefabs[currStage];
-    case OnboardingPhases.Loot:
-      return _PhaseLootPrefabs[currStage];
-    case OnboardingPhases.Upgrades:
-      return _PhaseUpgradesPrefabs[currStage];
+    if (_OnboardingUIInstance != null) {
+      return _OnboardingUIInstance.GetCurrStagePrefab(currStage, _CurrPhase);
     }
     return null;
   }
@@ -119,7 +121,14 @@ public class OnboardingManager : MonoBehaviour {
       SetSpecificStage(GetMaxStageInPhase(_CurrPhase));
     }
     _CurrPhase = phase;
-    SetSpecificStage(0);
+    // we keep the asset bundle around because some phases lead into each other, in common cases
+    // but don't have to.
+    if (_OnboardingUIInstance == null) {
+      AssetBundleManager.Instance.LoadAssetBundleAsync(_OnboardingUIPrefabData.AssetBundle, LoadOnboardingAssetsCallback);
+    }
+    else {
+      SetSpecificStage(0);
+    }
   }
   public void CompletePhase(OnboardingPhases phase) {
     // If it's the current phase clean up UI.
@@ -133,6 +142,27 @@ public class OnboardingManager : MonoBehaviour {
     }
   }
 
+  private void LoadOnboardingAssetsCallback(bool assetBundleSuccess) {
+    _OnboardingUIPrefabData.LoadAssetData((GameObject onboardingUIWrapperPrefab) => {
+      if (_OnboardingUIInstance == null && onboardingUIWrapperPrefab != null) {
+        GameObject wrapper = UIManager.CreateUIElement(onboardingUIWrapperPrefab.gameObject, _OnboardingTransform);
+        _OnboardingUIInstance = wrapper.GetComponent<OnboardingUIWrapper>();
+        SetSpecificStage(0);
+      }
+    });
+  }
+  private void UnloadIfDoneWithAllPhases() {
+    if (!IsOnboardingRequired(OnboardingPhases.Home) &&
+        !IsOnboardingRequired(OnboardingPhases.Loot) &&
+        !IsOnboardingRequired(OnboardingPhases.Upgrades)) {
+      AssetBundleManager.Instance.UnloadAssetBundle(_OnboardingUIPrefabData.AssetBundle);
+      if (_OnboardingUIInstance != null) {
+        GameObject.Destroy(_OnboardingUIInstance);
+        _OnboardingUIInstance = null;
+      }
+    }
+  }
+
   public void GoToNextStage() {
     SetSpecificStage(GetCurrStageInPhase(_CurrPhase) + 1);
   }
@@ -141,13 +171,7 @@ public class OnboardingManager : MonoBehaviour {
     if (_CurrStageInst != null) {
       GameObject.Destroy(_CurrStageInst);
     }
-    // Create the debug layer to have a few buttons to work with on screen easily for QA
-    // who will have to see this all the time.
-#if ENABLE_DEBUG_PANEL
-    if ( _DebugLayer == null && _DebugLayerPrefab != null ) {
-      _DebugLayer = UIManager.CreateUIElement(_DebugLayerPrefab, DebugMenuManager.Instance.DebugOverlayCanvas.transform);
-    }
-#endif
+
     SetCurrStageInPhase(nextStage, _CurrPhase);
     if (nextStage >= 0 && nextStage < GetMaxStageInPhase(_CurrPhase)) {
       OnboardingBaseStage stagePrefab = GetCurrStagePrefab();
@@ -155,15 +179,16 @@ public class OnboardingManager : MonoBehaviour {
       _CurrStageInst = UIManager.CreateUIElement(stagePrefab, _OnboardingTransform);
       UpdateStage(stagePrefab.ActiveTopBar, stagePrefab.ActiveMenuContent,
                   stagePrefab.ActiveTabButtons, stagePrefab.ReactionsEnabled);
+      // Create the debug layer to have a few buttons to work with on screen easily for QA
+      // who will have to see this all the time.
+      _OnboardingUIInstance.AddDebugButtons();
     }
     else {
-      // Officially done with this phase
-      if (_DebugLayer != null) {
-        GameObject.Destroy(_DebugLayer);
-      }
+      _OnboardingUIInstance.RemoveDebugButtons();
       _CurrPhase = OnboardingPhases.None;
       UpdateStage();
       HomeHub.Instance.StartFreeplay(RobotEngineManager.Instance.CurrentRobot);
+      UnloadIfDoneWithAllPhases();
     }
 
     DataPersistenceManager.Instance.Save();

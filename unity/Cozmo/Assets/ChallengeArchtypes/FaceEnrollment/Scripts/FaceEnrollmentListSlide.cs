@@ -7,6 +7,7 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
   public System.Action OnEnrollNewFaceRequested;
   public System.Action<int, string> OnEditNameRequested;
   public System.Action<int> OnDeleteEnrolledFace;
+  public System.Action<int, string> OnReEnrollFaceRequested;
 
   [SerializeField]
   private FaceEnrollmentCell _FaceCellPrefab;
@@ -27,6 +28,7 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
       newFaceCell.Initialize(kvp.Key, kvp.Value);
       newFaceCell.OnEditNameRequested += HandleEditNameRequested;
       newFaceCell.OnDeleteNameRequested += HandleDeleteFace;
+      newFaceCell.OnReEnrollFaceRequested += HandleReEnrollFaceRequested;
       _FaceCellList.Add(newFaceCell);
     }
     _EnrollNewFaceInstance = GameObject.Instantiate(_EnrollNewFacePrefab.gameObject).GetComponent<Cozmo.UI.CozmoButton>();
@@ -59,6 +61,12 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
   private void HandleNewEnrollmentRequested() {
     if (OnEnrollNewFaceRequested != null) {
       OnEnrollNewFaceRequested();
+    }
+  }
+
+  private void HandleReEnrollFaceRequested(int faceID, string faceName) {
+    if (OnReEnrollFaceRequested != null) {
+      OnReEnrollFaceRequested(faceID, faceName);
     }
   }
 

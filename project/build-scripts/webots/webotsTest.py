@@ -287,12 +287,12 @@ def build(build_type):
 
   build_command = [
     'xcodebuild',
-    '-project', get_subpath("generated/mac", "cozmoEngine.xcodeproj"),
-    '-target', 'webotsControllers',
+    '-workspace', get_subpath("generated/mac", "CozmoWorkspace_MAC.xcworkspace"),
+    '-scheme', 'BUILD_WORKSPACE',
     '-sdk', 'macosx',
     '-configuration', build_type.name,
-    'SYMROOT=' + derived_data_path,
-    'OBJROOT=' + derived_data_path,
+    # 'SYMROOT=' + derived_data_path,
+    # 'OBJROOT=' + derived_data_path,
     'build'
     ]
 

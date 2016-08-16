@@ -13,6 +13,7 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
+#include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
@@ -33,6 +34,7 @@
 #include "util/enums/stringToEnumMapper.hpp"
 #include "util/math/numericCast.h"
 
+
 namespace Anki {
 namespace Cozmo {
 
@@ -49,6 +51,8 @@ static const char* kRequiredUnlockKey          = "requiredUnlockId";
 static const char* kRequiredDriveOffChargerKey = "requiredRecentDriveOffCharger_sec";
 static const char* kRequiredParentSwitchKey    = "requiredRecentSwitchToParent_sec";
 static const char* kDisableReactionaryDefault  = "disableByDefault";
+static const char* kShouldStreamline           = "shouldStreamline";
+
   
 IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   : _behaviorType(BehaviorType::NoneBehavior)
@@ -62,7 +66,7 @@ IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   , _lastRunTime_s(0.0)
   , _extraRunningScore(0.0f)
   , _isRunning(false)
-  , _isOwnedByFactory(false)  
+  , _isOwnedByFactory(false)
   , _enableRepetitionPenalty(true)
   , _enableRunningPenalty(true)
 {
@@ -193,6 +197,12 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
   {
     _runningPenalty.AddNode(0.0f, 1.0f); // no penalty for any value
   }
+  
+  // - - - - - - - - - -
+  // Streamline behavior
+  // - - - - - - - - - -
+  
+  _shouldStreamline = config.get(kShouldStreamline, false).asBool();
 
   // - - - - - - - - - -
   // Behavior Groups
@@ -366,6 +376,11 @@ bool IBehavior::IsRunnable(const Robot& robot) const
   
   //check if the behavior runs while in the air
   if(robot.IsPickedUp() && !ShouldRunWhilePickedUp()){
+    return false;
+  }
+  
+  //check if the behavior can handle holding a block
+  if(robot.IsCarryingObject() && !CarryingObjectHandledInternally()){
     return false;
   }
 
@@ -579,6 +594,13 @@ bool IBehavior::StopActing(bool allowCallback)
 
   return false;
 }
+  
+void IBehavior::BehaviorObjectiveAchieved()
+{
+  //TODO: SEND das event and notify Sparks Goal Chooser about successful completions
+  PRINT_CH_INFO("Behaviors", "IBehavior.BehaviorObjectiveAchieved", "Behavior:%s", GetName().c_str());
+}
+
 
 ActionResult IBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* action,
                                                       ActionableObject* object,
@@ -602,10 +624,12 @@ ActionResult IBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* actio
   return ActionResult::SUCCESS;
 }
 
+
 #pragma mark --- IReactionaryBehavior ----
   
 IReactionaryBehavior::IReactionaryBehavior(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
+  , _reactionIsLiftTrackLocked(false)
 {
   // These are the tags that should trigger this behavior to be switched to immediately
   SubscribeToTags({
@@ -632,13 +656,20 @@ Result IReactionaryBehavior::InitInternal(Robot& robot)
   robot.GetMoveComponent().IgnoreDirectDriveMessages(true);
   robot.GetContext()->GetRobotManager()->GetRobotEventHandler().IgnoreExternalActions(true);
   
+  //Prevent reactionary behaviors from moving lift track if carrying block
+  if(robot.IsCarryingObject()){
+    robot.GetMoveComponent().LockTracks((u8)AnimTrackFlag::LIFT_TRACK);
+    _reactionIsLiftTrackLocked = true;
+  }
+  
   return InitInternalReactionary(robot);
 }
   
 Result IReactionaryBehavior::ResumeInternal(Robot& robot)
 {
-  robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::ReactionaryBehaviorTransition>(GetType(), true);
-  return ResumeInternalReactionary(robot);
+  //Never Called - reactionary behaviors don't resume
+  ASSERT_NAMED(false, "IReactionaryBehavior.ResumeInternal - reactionary behaviors should not resume");
+  return Result::RESULT_OK;
 }
 
 void IReactionaryBehavior::StopInternal(Robot& robot)
@@ -646,6 +677,13 @@ void IReactionaryBehavior::StopInternal(Robot& robot)
   robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::ReactionaryBehaviorTransition>(GetType(), false);
   robot.GetMoveComponent().IgnoreDirectDriveMessages(false);
   robot.GetContext()->GetRobotManager()->GetRobotEventHandler().IgnoreExternalActions(false);
+  
+  //Allow lift to move now that reaction has finished playing
+  if(_reactionIsLiftTrackLocked){
+    _reactionIsLiftTrackLocked = false;
+    robot.GetMoveComponent().UnlockTracks((u8)AnimTrackFlag::LIFT_TRACK);
+  }
+  
   StopInternalReactionary(robot);
 }
   
@@ -703,11 +741,9 @@ void IReactionaryBehavior::AlwaysHandle(const GameToEngineEvent& event, const Ro
     BehaviorType behaviorRequest = event.GetData().Get_RequestEnableReactionaryBehavior().behavior;
     bool enable = event.GetData().Get_RequestEnableReactionaryBehavior().enable;
     
-    std::string behaviorName = GetName();
     BehaviorType behaviorType = GetType();
 
-    if(behaviorType == behaviorRequest
-       && behaviorName == BehaviorTypeToString(behaviorRequest)){
+    if(behaviorType == behaviorRequest){
       UpdateDisableIDs(requesterID, enable);
     }
     

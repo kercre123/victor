@@ -35,7 +35,8 @@ namespace Anki {
       virtual void   StopInternal(Robot& robot) override;
       
       virtual bool IsRunnableInternal(const Robot& robot) const override;
-      
+      virtual bool CarryingObjectHandledInternally() const override { return false;}
+
     private:
       
       // TODO:(bn) a few behaviors have used this pattern now, maybe we should re-think having some kind of
@@ -48,20 +49,17 @@ namespace Anki {
       
       const Robot& _robot;
       
-      enum class State {
+      enum class DebugState {
         ReactingToBlock,
         PerformingAction
       };
-      
-      State _state = State::ReactingToBlock;
-      
+            
       void TransitionToReactingToBlock(Robot& robot);
       void TransitionToPerformingAction(Robot& robot);
       void TransitionToPerformingAction(Robot& robot, bool isRetry);
       
       void SetupRetryAction(Robot& robot, const ExternalInterface::RobotCompletedAction& msg);
       
-      void SetState_internal(State state, const std::string& stateName);
       void ResetBehavior(Robot& robot);
       
       // This should return true if the block is valid for this action, false otherwise. Checks that the block is

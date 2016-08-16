@@ -2,7 +2,7 @@
   "behaviorType": "PickUpCube",
   "name": "sparksPickUpCube",
   "flatScore": 5.0,
-  
+  "shouldStreamline": true,
   "behaviorGroups": [
     "SparksPickUpCube"
   ]

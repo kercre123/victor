@@ -23,7 +23,6 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageFromActiveObject.h"
 
-#define SET_STATE(s) SetState_internal(State::s, #s)
 
 namespace Anki {
 namespace Cozmo {
@@ -42,7 +41,16 @@ BehaviorPickUpCube::BehaviorPickUpCube(Robot& robot, const Json::Value& config)
 
 Result BehaviorPickUpCube::InitInternal(Robot& robot)
 {
-  TransitionToDoingInitialReaction(robot);
+  if(robot.IsCarryingObject()){
+    TransitionToDriveWithCube(robot);
+    return Result::RESULT_OK;
+  }
+  
+  if(!_shouldStreamline){
+    TransitionToDoingInitialReaction(robot);
+  }else{
+    TransitionToPickingUpCube(robot);
+  }
   return Result::RESULT_OK;
 }
 
@@ -79,7 +87,7 @@ void BehaviorPickUpCube::HandleObjectObserved(const Robot& robot, const External
   
 void BehaviorPickUpCube::TransitionToDoingInitialReaction(Robot& robot)
 {
-  SET_STATE(DoingInitialReaction);
+  DEBUG_SET_STATE(DoingInitialReaction);
   
   // First, always turns towards object to acknowledge it
   // Note: visually verify is true, so if we don't see the object anymore
@@ -99,7 +107,8 @@ void BehaviorPickUpCube::TransitionToDoingInitialReaction(Robot& robot)
   
 void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
 {
-  SET_STATE(PickingUpCube);
+  DEBUG_SET_STATE(PickingUpCube);
+  
   StartActing(new DriveToPickupObjectAction(robot, _targetBlock, false, 0, false,0, true),
               [this,&robot](ActionResult res) {
                 if(ActionResult::SUCCESS != res) {
@@ -113,7 +122,8 @@ void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
   
 void BehaviorPickUpCube::TransitionToDriveWithCube(Robot& robot)
 {
-  SET_STATE(DriveWithCube);
+  DEBUG_SET_STATE(DriveWithCube);
+  
   double turn_rad = robot.GetRNG().RandDblInRange(M_PI_4 ,PI_F);
   if( robot.GetRNG().RandDbl() < 0.5 )
   {
@@ -132,7 +142,8 @@ void BehaviorPickUpCube::TransitionToDriveWithCube(Robot& robot)
   
 void BehaviorPickUpCube::TransitionToPutDownCube(Robot& robot)
 {
-  SET_STATE(PutDownCube);
+  DEBUG_SET_STATE(PutDownCube);
+  
   static constexpr float kBackUpMinMM = 40.0;
   static constexpr float kBackUpMaxMM = 70.0;
   double backup_amount = robot.GetRNG().RandDblInRange(kBackUpMinMM,kBackUpMaxMM);
@@ -145,22 +156,21 @@ void BehaviorPickUpCube::TransitionToPutDownCube(Robot& robot)
   
 void BehaviorPickUpCube::TransitionToDoingFinalReaction(Robot& robot)
 {
-  // actively want him to just turn around with the same cube...
-  SET_STATE(DoingFinalReaction);
-  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::SparkPickupFinalCubeReaction),
-              [this,&robot](ActionResult res) {
-                  // Will no longer be runnable
-                  _targetBlock.UnSet();
-              });
-
+  DEBUG_SET_STATE(DoingFinalReaction);
+  
+  if(!_shouldStreamline){
+    // actively want him to just turn around with the same cube...
+    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::SparkPickupFinalCubeReaction),
+                [this,&robot](ActionResult res) {
+                    // Will no longer be runnable
+                    _targetBlock.UnSet();
+                    BehaviorObjectiveAchieved();
+                });
+  }else{
+    BehaviorObjectiveAchieved();
+  }
 }
 
-void BehaviorPickUpCube::SetState_internal(State state, const std::string& stateName)
-{
-  _state = state;
-  PRINT_NAMED_DEBUG("BehaviorPickUpCube", "%s", stateName.c_str());
-  SetStateName(stateName);
-}
 
 } // namespace Cozmo
 } // namespace Anki

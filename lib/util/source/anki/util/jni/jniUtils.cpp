@@ -10,8 +10,8 @@ JavaVM* JNIUtils::_sJvm = nullptr;
 
 jobjectArray JNIUtils::convertStringMapToJObjectArray(JNIEnv* env, const std::map<std::string,std::string>& stringMap, std::vector<jstring>& stringRefs)
 {
-  jclass clazz = env->FindClass("java/lang/String");
-  jobjectArray arr = env->NewObjectArray((jsize)(stringMap.size()*2), clazz, 0);
+  JClassHandle clazz{env->FindClass("java/lang/String"), env};
+  jobjectArray arr = env->NewObjectArray((jsize)(stringMap.size()*2), clazz.get(), 0);
   int k = 0;
   for (std::map<std::string,std::string>::const_iterator it = stringMap.begin(); it != stringMap.end(); ++it, k+=2) {
     std::string key = it->first;
@@ -23,7 +23,6 @@ jobjectArray JNIUtils::convertStringMapToJObjectArray(JNIEnv* env, const std::ma
     env->SetObjectArrayElement(arr, k, keyStr);
     env->SetObjectArrayElement(arr, k+1, valStr);
   }
-  env->DeleteLocalRef(clazz);
   return arr;
 }
 
@@ -78,11 +77,9 @@ std::string JNIUtils::getStaticStringFieldFromClass(JNIEnv* env, const jclass cl
   }
 
   jfieldID fieldId = env->GetStaticFieldID(clazz, fieldName, "Ljava/lang/String;");
-  jstring javaString = (jstring)env->GetStaticObjectField(clazz, fieldId);
+  JStringHandle javaString{(jstring)env->GetStaticObjectField(clazz, fieldId), env};
 
-  std::string s = getStringFromJString(env, javaString);
-  env->DeleteLocalRef(javaString);
-  return s;
+  return getStringFromJString(env, javaString.get());
 }
 
 std::string JNIUtils::getStringFromStaticObjectMethod(JNIEnv* env, const jclass clazz,
@@ -102,10 +99,8 @@ std::string JNIUtils::getStringFromStaticObjectMethod(JNIEnv* env, const jclass 
     return std::string();
   }
 
-  jstring javaString = (jstring) env->CallStaticObjectMethod(clazz, method);
-  std::string s = JNIUtils::getStringFromJString(env, javaString);
-  env->DeleteLocalRef(javaString);
-  return s;
+  JStringHandle javaString{(jstring) env->CallStaticObjectMethod(clazz, method), env};
+  return JNIUtils::getStringFromJString(env, javaString.get());
 }
 
 std::string JNIUtils::getStringFromObjectMethod(JNIEnv* env, const jclass clazz,
@@ -127,10 +122,8 @@ std::string JNIUtils::getStringFromObjectMethod(JNIEnv* env, const jobject jobj,
     return std::string();
   }
 
-  jstring javaString = (jstring) env->CallObjectMethod(jobj, method);
-  std::string s = JNIUtils::getStringFromJString(env, javaString);
-  env->DeleteLocalRef(javaString);
-  return s;
+  JStringHandle javaString{(jstring)env->CallObjectMethod(jobj, method), env};
+  return JNIUtils::getStringFromJString(env, javaString.get());
 }
 
 jobject JNIUtils::getUnityActivity(JNIEnv* env)
@@ -139,18 +132,16 @@ jobject JNIUtils::getUnityActivity(JNIEnv* env)
     return nullptr;
   }
 
-  jclass unityPlayer = env->FindClass("com/unity3d/player/UnityPlayer");
+  JClassHandle unityPlayer{env->FindClass("com/unity3d/player/UnityPlayer"), env};
   if (nullptr == unityPlayer) {
     return nullptr;
   }
-  jfieldID activityField = env->GetStaticFieldID(unityPlayer, "currentActivity", "Landroid/app/Activity;");
+  jfieldID activityField = env->GetStaticFieldID(unityPlayer.get(), "currentActivity", "Landroid/app/Activity;");
   if (nullptr == activityField) {
-    env->DeleteLocalRef(unityPlayer);
     return nullptr;
   }
-  jobject activity = env->GetStaticObjectField(unityPlayer, activityField);
+  jobject activity = env->GetStaticObjectField(unityPlayer.get(), activityField);
 
-  env->DeleteLocalRef(unityPlayer);
   return activity;
 }
 

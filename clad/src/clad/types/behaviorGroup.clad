@@ -31,8 +31,8 @@ enum uint_8 BehaviorGroup {
     DemoCubes,
     DemoRequestSpeedTap,
 
-    SparksRollCube,
-    SparksStackCube,
+    SparksRollBlock,
+    SparksStackBlock,
     SparksPounceOnMotion,
     SparksPopAWheelie,
     SparksPickUpCube,

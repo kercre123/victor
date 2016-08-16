@@ -19,7 +19,7 @@
     ]
   },
   "onboarding.Slide0": {
-    "translation": "Create a <b>great</b> play space [ imagine an image here ]"
+    "translation": "Create a <b>great</b> play space "
   },
   "onboarding.Slide1": {
     "translation": "This Cozmo has already been through the Tutorial.\n Would you like to skip it or start again?"
@@ -83,5 +83,8 @@
   },
   "onboarding.Phase5.Body3": {
     "translation": "These are Cozmo Apps. Your first goal is to use Meet Cozmo.\nTry it now!"
+  },
+  "onboarding.Slide0a": {
+    "translation": "Put Cozmo on a clean, open table while you're in a well lit room"
   }
 }

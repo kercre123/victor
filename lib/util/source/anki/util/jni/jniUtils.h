@@ -5,6 +5,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 namespace Anki {
@@ -16,6 +17,7 @@ public:
   virtual ~JNIEnvWrapper() {}
 };
 
+// Class of static helper functions
 class JNIUtils {
 public:
   static std::string getStringFromJString(JNIEnv* env, jstring jString);
@@ -43,6 +45,49 @@ private:
 
   JNIUtils() = delete;
 };
+
+// Smart handle for jobject/jclass local ref that will delete itself
+template <typename jobj>
+class JObjHandleBase {
+public:
+  JObjHandleBase(jobj obj, JNIEnv* env)
+  : _handle(obj, [env] (jobj toDelete) {
+    env->DeleteLocalRef(toDelete);
+  }) {}
+  JObjHandleBase(JObjHandleBase&& other) = default;
+  JObjHandleBase& operator=(JObjHandleBase&& other) = default;
+  jobj operator->() const { return _handle.get(); }
+  jobj get() const { return _handle.get(); }
+
+  bool operator==(std::nullptr_t val) const { return _handle == val; }
+  bool operator!=(std::nullptr_t val) const { return _handle != val; }
+  bool operator==(const JObjHandleBase& other) const { return _handle == other._handle; }
+  bool operator!=(const JObjHandleBase& other) const { return _handle != other._handle; }
+
+private:
+  using jtemplate_base = typename std::remove_pointer<jobj>::type;
+  std::unique_ptr<jtemplate_base, typename std::function<void(jobj)>> _handle;
+
+  // sanity check
+  static_assert(std::is_pointer<jobject>::value, "jobject not a pointer?");
+
+  // requirements for template types
+  static_assert(std::is_pointer<jobj>::value, "object type must be a pointer");
+  using jobject_base = typename std::remove_pointer<jobject>::type;
+  static_assert(std::is_base_of<jobject_base, jtemplate_base>::value, "object type must be derived from jobject");
+};
+
+template <typename T>
+inline bool operator==(std::nullptr_t val, const JObjHandleBase<T>& obj) { return obj == val; }
+template <typename T>
+inline bool operator!=(std::nullptr_t val, const JObjHandleBase<T>& obj) { return obj != val; }
+
+using JObjectHandle = JObjHandleBase<jobject>;
+using JClassHandle = JObjHandleBase<jclass>;
+using JStringHandle = JObjHandleBase<jstring>;
+using JArrayHandle = JObjHandleBase<jarray>;
+using JObjectArrayHandle = JObjHandleBase<jobjectArray>;
+using JByteArrayHandle = JObjHandleBase<jbyteArray>;
 
 }
 }

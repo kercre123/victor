@@ -57,14 +57,14 @@
     [
       // Sparks only
       {
-        "name" : "sparksRollCube",
+        "name" : "sparksRollBlock",
         "requireSpark":"RollCube",
         "priority": 0, // lower is better
         "behaviorChooser" :
         {
           "type" : "simple",
           // these groups are the behaviors that are allowed in this behavior chooser
-          "behaviorGroups" : [ "SparksRollCube" ]
+          "behaviorGroups" : [ "SparksRollBlock" ]
         },
         "goalStrategy":
         {
@@ -72,14 +72,14 @@
         }
       },
       {
-        "name" : "sparksStackCube",
+        "name" : "sparksStackBlock",
         "requireSpark":"StackTwoCubes",
         "priority": 0, // lower is better
         "behaviorChooser" :
         {
           "type" : "simple",
           // these groups are the behaviors that are allowed in this behavior chooser
-          "behaviorGroups" : [ "SparksStackCube" ]
+          "behaviorGroups" : [ "SparksStackBlock" ]
         },
         "goalStrategy":
         {

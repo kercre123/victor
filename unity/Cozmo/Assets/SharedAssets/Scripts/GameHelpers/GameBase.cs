@@ -565,15 +565,20 @@ public abstract class GameBase : MonoBehaviour {
     if (ContextManager.Instance.ManagerBusy) {
       ContextManager.Instance.OnAppHoldEnd();
     }
-    if (CurrentRobot != null) {
-      CurrentRobot.ResetRobotState(EndGameRobotReset);
-    }
-    CleanUpOnDestroy();
 
     if (CurrentRobot != null && _StateMachine.GetReactionThatPausedGame() == Anki.Cozmo.BehaviorType.NoneBehavior) {
       // clears the action queue before quitting the game.
       CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
     }
+
+    // Reset robot state after clearing the queue (wheels, head and lift included)
+    if (CurrentRobot != null) {
+      CurrentRobot.ResetRobotState(EndGameRobotReset);
+    }
+
+    // Some CleanUpOnDestroy overrides send a robot animation as well
+    CleanUpOnDestroy();
+
     Destroy(gameObject);
   }
 
@@ -634,7 +639,12 @@ public abstract class GameBase : MonoBehaviour {
   private void RaiseMiniGameWin() {
     _StateMachine.Stop();
     _WonChallenge = true;
-
+    if (DataPersistence.DataPersistenceManager.Instance.CurrentSession.TotalWins.ContainsKey(_ChallengeData.ChallengeID)) {
+      DataPersistence.DataPersistenceManager.Instance.CurrentSession.TotalWins[_ChallengeData.ChallengeID]++;
+    }
+    else {
+      DataPersistence.DataPersistenceManager.Instance.CurrentSession.TotalWins.Add(_ChallengeData.ChallengeID, 1);
+    }
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Win_Shared);
     if (_ShowScoreboardOnComplete) {
       UpdateScoreboard(didPlayerWin: _WonChallenge);

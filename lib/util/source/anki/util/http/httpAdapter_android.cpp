@@ -33,12 +33,12 @@ HttpAdapter::HttpAdapter()
   auto envWrapper = JNIUtils::getJNIEnvWrapper();
   JNIEnv* env = envWrapper->GetEnv();
   if (nullptr != env) {
-    jclass httpClass = env->FindClass("com/anki/util/http/HttpAdapter");
+    JClassHandle httpClass{env->FindClass("com/anki/util/http/HttpAdapter"), env};
     ASSERT_NAMED(httpClass != nullptr, "HttpAdapter_Android.Init.ClassNotFound");
 
     // get singleton instance of adapter
-    jmethodID instanceMethodID = env->GetStaticMethodID(httpClass, "getInstance", "()Lcom/anki/util/http/HttpAdapter;");
-    _javaObject = env->CallStaticObjectMethod(httpClass, instanceMethodID);
+    jmethodID instanceMethodID = env->GetStaticMethodID(httpClass.get(), "getInstance", "()Lcom/anki/util/http/HttpAdapter;");
+    _javaObject = env->CallStaticObjectMethod(httpClass.get(), instanceMethodID);
 
     // get global ref to class
     jobject oldObject = _javaObject;
@@ -48,10 +48,9 @@ HttpAdapter::HttpAdapter()
 
     // find StartRequest method
     _startRequestMethodID =
-      env->GetMethodID(httpClass, "startRequest",
+      env->GetMethodID(httpClass.get(), "startRequest",
         "(JLjava/lang/String;[Ljava/lang/String;[Ljava/lang/String;[BILjava/lang/String;I)V");
     ASSERT_NAMED(_startRequestMethodID != nullptr, "HttpAdapter_Android.Init.StartRequestMethodNotFound");
-    env->DeleteLocalRef(httpClass);
   }
   else {
     PRINT_NAMED_ERROR("HttpAdapter_Android.Init", "can't get JVM environment");
@@ -76,12 +75,12 @@ void HttpAdapter::StartRequest(const HttpRequest& request,
   JNIEnv* env = envWrapper->GetEnv();
   JNI_CHECK(env);
 
-  jstring uri = env->NewStringUTF(request.uri.c_str());
+  JStringHandle uri{env->NewStringUTF(request.uri.c_str()), env};
 
   // encode headers and params into array [k1,v1,k2,v2,...]
   std::vector<jstring> stringRefs;
-  jobjectArray headers = JNIUtils::convertStringMapToJObjectArray(env, request.headers, stringRefs);
-  jobjectArray params = JNIUtils::convertStringMapToJObjectArray(env, request.params, stringRefs);
+  JObjectArrayHandle headers{JNIUtils::convertStringMapToJObjectArray(env, request.headers, stringRefs), env};
+  JObjectArrayHandle params{JNIUtils::convertStringMapToJObjectArray(env, request.params, stringRefs), env};
 
   uint64_t hash;
   {
@@ -99,29 +98,23 @@ void HttpAdapter::StartRequest(const HttpRequest& request,
   jsize bodySize = (jsize)request.body.size();
   jint requestTimeout = (jint)kHttpRequestTimeOutMSec;
 
-  jbyteArray jbodyArray = env->NewByteArray(bodySize);
-  env->SetByteArrayRegion(jbodyArray, 0, bodySize, (const jbyte*)(request.body.data()));
+  JByteArrayHandle jbodyArray{env->NewByteArray(bodySize), env};
+  env->SetByteArrayRegion(jbodyArray.get(), 0, bodySize, (const jbyte*)(request.body.data()));
 
-  jstring destinationPath = env->NewStringUTF(request.destinationPath.c_str());
+  JStringHandle destinationPath{env->NewStringUTF(request.destinationPath.c_str()), env};
 
   PRINT_CH_INFO("HTTP", "http_adapter.request", "%s :: %s",
                        HttpMethodToString(request.method),
                        request.uri.c_str());
 
   PRINT_NAMED_DEBUG("http_adapter.start_request.call_java", "");
-  env->CallVoidMethod(_javaObject, _startRequestMethodID, hash, uri, headers, params,
-                      jbodyArray, httpMethod, destinationPath, requestTimeout);
+  env->CallVoidMethod(_javaObject, _startRequestMethodID, hash, uri.get(), headers.get(), params.get(),
+                      jbodyArray.get(), httpMethod, destinationPath.get(), requestTimeout);
   PRINT_NAMED_DEBUG("http_adapter.start_request.call_java_done", "");
 
   for (jstring& stringRef : stringRefs) {
     env->DeleteLocalRef(stringRef);
   }
-
-  env->DeleteLocalRef(uri);
-  env->DeleteLocalRef(headers);
-  env->DeleteLocalRef(params);
-  env->DeleteLocalRef(jbodyArray);
-  env->DeleteLocalRef(destinationPath);
 }
 
 void HttpAdapter::GetHttpRequestResponseTypeFromHash(const uint64_t hash,
@@ -200,15 +193,13 @@ Java_com_anki_util_http_HttpAdapter_NativeHttpRequestCallback(JNIEnv* env, jobje
     std::map<std::string,std::string> headers;
     jsize stringCount = env->GetArrayLength(responseHeaders);
     for (jsize i = 0; i < stringCount; i += 2) {
-      jstring jKey = (jstring) env->GetObjectArrayElement(responseHeaders, i);
-      jstring jValue = (jstring) env->GetObjectArrayElement(responseHeaders, i + 1);
-      const char* key = env->GetStringUTFChars(jKey, 0);
-      const char* value = env->GetStringUTFChars(jValue, 0);
+      Anki::Util::JStringHandle jKey{(jstring) env->GetObjectArrayElement(responseHeaders, i), env};
+      Anki::Util::JStringHandle jValue{(jstring) env->GetObjectArrayElement(responseHeaders, i + 1), env};
+      const char* key = env->GetStringUTFChars(jKey.get(), 0);
+      const char* value = env->GetStringUTFChars(jValue.get(), 0);
       headers.emplace(key, value);
-      env->ReleaseStringUTFChars(jKey, key);
-      env->ReleaseStringUTFChars(jValue, value);
-      env->DeleteLocalRef(jKey);
-      env->DeleteLocalRef(jValue);
+      env->ReleaseStringUTFChars(jKey.get(), key);
+      env->ReleaseStringUTFChars(jValue.get(), value);
     }
 
     jsize bytesLen = env->GetArrayLength(responseBody);

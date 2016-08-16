@@ -4,6 +4,7 @@ using System.Collections;
 public class FaceEnrollmentCell : MonoBehaviour {
 
   public System.Action<int, string> OnEditNameRequested;
+  public System.Action<int, string> OnReEnrollFaceRequested;
   public System.Action<int> OnDeleteNameRequested;
 
   private string _FaceName;
@@ -18,6 +19,9 @@ public class FaceEnrollmentCell : MonoBehaviour {
   [SerializeField]
   private Cozmo.UI.CozmoButton _DeleteButton;
 
+  [SerializeField]
+  private Cozmo.UI.CozmoButton _ReEnrollFace;
+
   public void Initialize(int faceID, string faceName) {
     _FaceName = faceName;
     _FaceID = faceID;
@@ -25,6 +29,13 @@ public class FaceEnrollmentCell : MonoBehaviour {
 
     _EditButton.Initialize(HandleEditNameClicked, "edit_button", "face_enrollment_cell");
     _DeleteButton.Initialize(HandleDeleteNameClicked, "delete_button", "face_enrollment_cell");
+    _ReEnrollFace.Initialize(HandleReEnrollFaceClicked, "reenroll_face_button", "face_enrollment_cell");
+  }
+
+  private void HandleReEnrollFaceClicked() {
+    if (OnReEnrollFaceRequested != null) {
+      OnReEnrollFaceRequested(_FaceID, _FaceName);
+    }
   }
 
   private void HandleEditNameClicked() {

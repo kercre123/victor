@@ -33,6 +33,7 @@ protected:
   BehaviorPutDownBlock(Robot& robot, const Json::Value& config);
 
   virtual bool IsRunnableInternal(const Robot& robot) const override;
+  virtual bool CarryingObjectHandledInternally() const override {return true;}
 
   virtual Result InitInternal(Robot& robot) override;
   

@@ -61,6 +61,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   virtual bool IsRunnableInternal(const Robot& robot) const override;  
+  virtual bool CarryingObjectHandledInternally() const override { return true;}
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State functions

@@ -18,7 +18,7 @@ static const int NUM_PROP_LIGHTS = 4;
 static const int RADIO_TOTAL_PERIOD = CYCLES(35.0f);
 static const int SCHEDULE_PERIOD = CYCLES(5.0f);
 static const int SILENCE_PERIOD = CYCLES(1.0f);
-static const int NEXT_CYCLE_FUDGE = 78;
+static const int NEXT_CYCLE_FUDGE = 84;
 
 static const int TICK_LOOP = RADIO_TOTAL_PERIOD / SCHEDULE_PERIOD;
 

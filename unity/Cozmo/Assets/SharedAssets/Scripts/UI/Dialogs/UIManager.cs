@@ -78,7 +78,7 @@ public class UIManager : MonoBehaviour {
   }
 
   void Start() {
-    BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.Yellow);
+    BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.Bone);
   }
 
   /// <summary>

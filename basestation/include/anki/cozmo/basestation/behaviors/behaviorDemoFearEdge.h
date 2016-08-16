@@ -30,6 +30,7 @@ protected:
 public:
 
   virtual bool IsRunnableInternal(const Robot& robot) const override {return true;}
+  virtual bool CarryingObjectHandledInternally() const override { return false;}
   
   // true when we have finished driving to the edge, reacting, and backing up
   bool HasFinished() const { return _state == State::Finished; }

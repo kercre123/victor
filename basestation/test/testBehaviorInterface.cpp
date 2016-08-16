@@ -42,6 +42,7 @@ public:
   bool _inited = false;
   int _numUpdates = 0;
   bool _stopped = false;
+  virtual bool CarryingObjectHandledInternally() const override {return true;}
 
   virtual bool IsRunnableInternal(const Robot& robot) const override {
     return true;
@@ -708,7 +709,9 @@ public:
   bool _stopped = false;
 
   bool _stopAction = false;
-  
+
+  virtual bool CarryingObjectHandledInternally() const override {return true;}
+
   virtual bool IsRunnableInternal(const Robot& robot) const override {
     return true;
   }
