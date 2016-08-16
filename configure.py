@@ -272,7 +272,7 @@ class GamePlatformConfiguration(object):
         self.engine_generated = os.path.join(ENGINE_ROOT, "generated", self.platform)
 
         #because these is being deleted no matter what it must exist for all configurations.
-        self.android_unity_plugin_dir = os.path.join(self.unity_plugin_dir, 'Android', 'libs')
+        self.android_unity_plugin_dir = os.path.join(self.unity_plugin_dir, 'Android', 'libs', 'generated')
         self.android_lib_dir = os.path.join(self.platform_build_dir, 'libs')
         self.android_prestrip_lib_dir = os.path.join(self.platform_build_dir, 'libs-prestrip')
 

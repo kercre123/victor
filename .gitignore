@@ -183,21 +183,7 @@ unity/Cozmo/*.csproj
 unity/Cozmo/*.userprefs
 unity/Cozmo/*.obj
 unity/Cozmo/obj/*
-
-# Unity-AssetBundles
 unity/Cozmo/AssetBundles/*
-unity/Cozmo/Assets/StreamingAssets/AssetBundles/*
-unity/Cozmo/Assets/StreamingAssets/AssetBundles.meta
-
-# Unity cozmo_resources
-unity/Cozmo/Assets/StreamingAssets/cozmo_resources/*
-unity/Cozmo/Assets/StreamingAssets/cozmo_resources.meta
-unity/Cozmo/Assets/StreamingAssets/resources.txt
-unity/Cozmo/Assets/StreamingAssets/resources.txt.meta
-
-# Unity android libs
-unity/Cozmo/Assets/Plugins/Android/libs
-unity/Cozmo/Assets/Plugins/Android/libs.meta
 
 # Visual studio
 *.userprefs
@@ -213,11 +199,6 @@ unity/ios/build
 unity/ios/opencv
 unity/ios/sphinx
 unity/ios/HockeyApp
-unity/Cozmo/Assets/WellFired/shared.meta
-unity/Cozmo/Assets/WellFired/shared/compiled.meta
-unity/Cozmo/Assets/WellFired/shared/compiled/runtime.meta
-unity/Cozmo/Assets/WellFired/shared/compiled/runtime/ProcessRunner.meta
-unity/Cozmo/Assets/Scripts/Generated.meta
 animationTool.zip
 UnityDASDll/UnityDASDll/obj/*
 UnityDASDll/UnityDASDll/bin/*

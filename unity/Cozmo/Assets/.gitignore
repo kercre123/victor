@@ -13,3 +13,16 @@ ScriptedSequenceEditorColors.asset
 ScriptedSequenceEditorColors.asset.meta
 smcs.rsp
 smcs.rsp.meta
+Scripts/Generated.meta
+
+StreamingAssets/AssetBundles/*
+StreamingAssets/AssetBundles.meta
+StreamingAssets/cozmo_resources/*
+StreamingAssets/cozmo_resources.meta
+StreamingAssets/resources.txt
+StreamingAssets/resources.txt.meta
+
+# Compiled Android libs
+Plugins/Android/libs/generated
+Plugins/Android/libs/generated.meta
+
