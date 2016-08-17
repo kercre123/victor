@@ -212,13 +212,12 @@ public class ConnectionFlow : MonoBehaviour {
   private void FirmwareUpdated(bool success) {
     if (!success) {
       DAS.Warn("ConnectionFlow.FirmwareUpdated", "Firmware Update Failed");
-      GameObject.Destroy(_UpdateFirmwareScreenInstance.gameObject);
-
     }
     else {
       DAS.Info("ConnectionFlow.FirmwareUpdated", "Firmware Update Successful");
     }
 
+    GameObject.Destroy(_UpdateFirmwareScreenInstance.gameObject);
     ReplaceCozmoOnCharger();
 
   }
