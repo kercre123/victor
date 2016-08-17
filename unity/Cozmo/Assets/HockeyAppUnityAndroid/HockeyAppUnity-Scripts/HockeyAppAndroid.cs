@@ -40,7 +40,8 @@ public class HockeyAppAndroid : MonoBehaviour
   [Header("Version Updates")]
   public bool updateAlert = true;
 
-  private string hockeyAppId = null;
+  private string _HockeyAppId = null;
+  private string _DeviceId;
 
   void Awake ()
   {
@@ -53,7 +54,7 @@ public class HockeyAppAndroid : MonoBehaviour
     DontDestroyOnLoad(gameObject);
     CreateLogDirectory();
 
-    hockeyAppId = GetManifestProperty(CozmoBinding.GetCurrentActivity(), "HOCKEYAPP_APP_ID");
+    _HockeyAppId = GetManifestProperty(CozmoBinding.GetCurrentActivity(), "HOCKEYAPP_APP_ID");
 
     if(exceptionLogging == true  && IsConnected() == true) {
       List<string> logFileDirs = GetLogFiles();
@@ -105,10 +106,10 @@ public class HockeyAppAndroid : MonoBehaviour
 
     // get DAS (for device ID)
     AndroidJavaClass dasClass = new AndroidJavaClass("com.anki.daslib.DAS");
-    string deviceId = dasClass.CallStatic<string>("getDeviceID", currentActivity);
+    _DeviceId = dasClass.CallStatic<string>("getDeviceID", currentActivity);
 
     // if hockeyapp ID is empty, this is a debug/local build and we don't care about crash reporting
-    if (hockeyAppId.Length == 0) {
+    if (_HockeyAppId.Length == 0) {
       return;
     }
 
@@ -128,12 +129,12 @@ public class HockeyAppAndroid : MonoBehaviour
     AndroidJavaObject nativeCrashManager = nativeCrashManagerClass.CallStatic<AndroidJavaObject>("getInstance",
       currentActivity,
       appRunId,
-      hockeyAppId,
-      deviceId);
-    nativeCrashManager.Call("updateDescriptionFile", getCrashDescriptionJSON(appRunId, deviceId));
+      _HockeyAppId,
+      _DeviceId);
+    nativeCrashManager.Call("updateDescriptionFile", getCrashDescriptionJSON(appRunId, _DeviceId));
 
     AndroidJavaClass pluginClass = new AndroidJavaClass("net.hockeyapp.unity.HockeyUnityPlugin");
-    pluginClass.CallStatic("startHockeyAppManager", currentActivity, urlString, hockeyAppId, secret, authType, updateManagerEnabled, userMetricsEnabled, autoSendEnabled);
+    pluginClass.CallStatic("startHockeyAppManager", currentActivity, urlString, _HockeyAppId, secret, authType, updateManagerEnabled, userMetricsEnabled, autoSendEnabled);
     instance = this;
 
     #endif
@@ -170,7 +171,7 @@ public class HockeyAppAndroid : MonoBehaviour
     #if (UNITY_ANDROID && !UNITY_EDITOR)
     if (instance != null) {
       AndroidJavaClass pluginClass = new AndroidJavaClass("net.hockeyapp.unity.HockeyUnityPlugin"); 
-      pluginClass.CallStatic("checkForUpdate", CozmoBinding.GetCurrentActivity(), instance.serverURL, instance.hockeyAppId);
+      pluginClass.CallStatic("checkForUpdate", CozmoBinding.GetCurrentActivity(), instance.serverURL, instance._HockeyAppId);
     } else {
       Debug.Log("Failed to check for update. SDK has not been initialized, yet.");
     }
@@ -292,7 +293,7 @@ public class HockeyAppAndroid : MonoBehaviour
   /// </summary>
   /// <param name="log">A string that contains information about the exception.</param>
   /// <returns>The form data for the current crash report.</returns>
-  protected virtual WWWForm CreateForm (string log)
+  protected virtual WWWForm CreateForm (string log, string description)
   {
     WWWForm form = new WWWForm ();
 
@@ -338,7 +339,26 @@ public class HockeyAppAndroid : MonoBehaviour
     if(bytes != null) {
       form.AddBinaryData("log", bytes, log, "text/plain");
     }
-    
+
+    if (File.Exists(description)) {
+      byte[] descriptionForLastCrashBytes = null;
+      try {
+        descriptionForLastCrashBytes = File.ReadAllBytes(description);
+      }
+      catch(SystemException se) {
+        descriptionForLastCrashBytes = null;
+        if (Debug.isDebugBuild) {
+          Debug.Log("Failed to read bytes of description file: " + se);
+        }
+      }
+      if (descriptionForLastCrashBytes != null) {
+        form.AddBinaryData("description", descriptionForLastCrashBytes, "description.json", "text/plain");
+      }
+    }
+
+    if (!String.IsNullOrEmpty(_DeviceId)) {
+      form.AddField("userID", _DeviceId);
+    }
     #endif
     
     return form;
@@ -379,7 +399,7 @@ public class HockeyAppAndroid : MonoBehaviour
         foreach (FileInfo file in files) {
           if (file.Extension == ".log") {
             logs.Add(file.FullName);
-          } else {
+          } else if (file.Extension != ".description") {
             File.Delete(file.FullName);
           }
         }
@@ -400,7 +420,7 @@ public class HockeyAppAndroid : MonoBehaviour
   protected virtual IEnumerator SendLogs (List<string> logs)
   {
     string crashPath = HOCKEYAPP_CRASHESPATH;
-    string url = GetBaseURL () + crashPath.Replace ("[APPID]", hockeyAppId);
+    string url = GetBaseURL () + crashPath.Replace ("[APPID]", _HockeyAppId);
 
     #if (UNITY_ANDROID && !UNITY_EDITOR)
     string sdkName = GetSdkName ();
@@ -409,8 +429,9 @@ public class HockeyAppAndroid : MonoBehaviour
     }
     #endif
 
-    foreach (string log in logs) {    
-      WWWForm postForm = CreateForm (log);
+    foreach (string log in logs) {
+      string description = log.Replace (".log", ".description");
+      WWWForm postForm = CreateForm (log, description);
       string lContent = postForm.headers ["Content-Type"].ToString ();
       lContent = lContent.Replace ("\"", "");
       Dictionary<string,string> headers = new Dictionary<string,string> ();
@@ -449,11 +470,16 @@ public class HockeyAppAndroid : MonoBehaviour
     }
     
     List<string> logHeaders = GetLogHeaders();
-    using (StreamWriter file = new StreamWriter(Application.persistentDataPath + LOG_FILE_DIR + "LogFile_" + logSession + ".log", true)) {
+    string logPrefix = Application.persistentDataPath + LOG_FILE_DIR + "LogFile_" + logSession;
+    using (StreamWriter file = new StreamWriter(logPrefix + ".log", true)) {
       foreach (string header in logHeaders) {
         file.WriteLine(header);
       }
       file.WriteLine(log);
+    }
+
+    using (StreamWriter File = new StreamWriter(logPrefix + ".description", true)) {
+      File.WriteLine(getCrashDescriptionJSON(CozmoBinding.AppRunId.ToString(), _DeviceId));
     }
     #endif
   }
