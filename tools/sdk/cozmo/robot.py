@@ -1,5 +1,5 @@
 __all__ = ['EvtRobotReady',
-           'PickupObject', 'PlaceObjectOnGroundHere', 'TurnInPlace', 'GoToPose'
+           'GoToPose', 'PickupObject', 'PlaceOnObject', 'PlaceObjectOnGroundHere', 'SayText', 'TurnInPlace', 'TurnTowardsFace',
            'Cozmo']
 
 
