@@ -19,6 +19,9 @@
 #include "util/logging/logging.h"
 #include <stdint.h>
 #include <memory>
+#include <sstream>
+#include <iomanip>
+//#include <istream>
 
 
 namespace Anki {
@@ -53,8 +56,19 @@ struct AudioFrameData {
       memset( samples + (sourceSize * sizeof(AudioSample)) , 0, (sampleCount-sourceSize) * sizeof(AudioSample));
     }
   }
+  
+  std::string Description() const {
+    std::stringstream strStr;
+    strStr << std::fixed << std::setprecision(2);
+    strStr << "SampleCount: " << sampleCount << "  Samples:";
+    for (size_t idx = 0; idx < sampleCount; ++idx) {
+      strStr << " " << samples[idx] << " |";
+    }
+    return strStr.str();
+  }
 };
 
+//static constexpr AudioFrameData INVALID_AUDIO_FRAME = nullptr;
 
 } // Audio
 } // Cozmo

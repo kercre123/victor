@@ -47,6 +47,8 @@ namespace Cozmo {
     //IKeyFrame(const Json::Value& root);
     ~IKeyFrame();
     
+    // Returns true if the animation's time has reached frame's "trigger" time
+    bool IsTimeToPlay(TimeStamp_t animationTime_ms) const;
     // Returns true if current time has reached frame's "trigger" time, relative
     // to the given start time
     bool IsTimeToPlay(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms) const;
@@ -228,6 +230,8 @@ namespace Cozmo {
   // be displayed on the robot's LED face display. When its GetStreamMessage()
   // is requested, it looks up the actual RLE-compressed image matching the
   // reference in the KeyFrame and fills the streamed message with it.
+  
+  // Depercated
   class FaceImageKeyFrame : public IKeyFrame
   {
   public:

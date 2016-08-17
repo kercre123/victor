@@ -2016,6 +2016,31 @@ namespace Anki {
                 break;
               }
                 
+              // FIXME: Remove after animation iteration - JMR
+              case (s32)'+':
+              {
+                // Send whatever animation is specified in the animationToSendName field
+                webots::Field* animToSendNameField = root_->getField("DEV_AnimationName");
+                if (animToSendNameField == nullptr) {
+                  printf("ERROR: No animationToSendName field found in WebotsKeyboardController.proto\n");
+                  break;
+                }
+                std::string animToSendName = animToSendNameField->getSFString();
+                if (animToSendName.empty()) {
+                  printf("ERROR: animationToSendName field is empty\n");
+                  break;
+                }
+                
+                webots::Field* animNumLoopsField = root_->getField("animationNumLoops");
+                u32 animNumLoops = 1;
+                if (animNumLoopsField && (animNumLoopsField->getSFInt32() > 0)) {
+                  animNumLoops = animNumLoopsField->getSFInt32();
+                }
+                
+                SendDevAnimation(animToSendName.c_str(), animNumLoops);
+                break;
+              }
+                
               case (s32)'F':
               {
                 const bool shiftPressed = modifier_key & webots::Supervisor::KEYBOARD_SHIFT;

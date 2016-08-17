@@ -40,7 +40,10 @@ class RobotAudioAnimationOnDevice : public RobotAudioAnimation {
 public:
 
   // Default Constructor
-  RobotAudioAnimationOnDevice( Animation* anAnimation, RobotAudioClient* audioClient, Util::RandomGenerator* randomGenerator );
+  RobotAudioAnimationOnDevice( Animation* anAnimation,
+                               RobotAudioClient* audioClient,
+                               GameObjectType gameObject,
+                               Util::RandomGenerator* randomGenerator );
 
   // Call at the beginning of the update loop to update the animation's state for the upcoming loop cycle
   virtual AnimationState Update( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms ) override;
@@ -50,12 +53,15 @@ public:
   virtual void PopRobotAudioMessage( RobotInterface::EngineToRobot*& out_RobotAudioMessagePtr,
                                      TimeStamp_t startTime_ms,
                                      TimeStamp_t streamingTime_ms ) override;
-
-
+  
 protected:
   
   // Perform specific preparation to animation
   virtual void PrepareAnimation() override;
+  
+  // All the animations events have and completed
+  virtual bool IsAnimationDone() const override;
+  
 };
 
 } // Audio

@@ -47,6 +47,11 @@ namespace Anki {
       
     }
     
+    bool IKeyFrame::IsTimeToPlay(TimeStamp_t animationTime_ms) const
+    {
+      return GetTriggerTime() <= animationTime_ms;
+    }
+    
     bool IKeyFrame::IsTimeToPlay(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms) const
     {
       return GetTriggerTime() + startTime_ms <= currTime_ms;

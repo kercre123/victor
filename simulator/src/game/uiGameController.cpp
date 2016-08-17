@@ -1442,8 +1442,8 @@ namespace Anki {
       } else {
         PRINT_NAMED_INFO("SendAnimation", "Ignoring duplicate SendAnimation keystroke.");
       }
-      
     }
+    
     void UiGameController::SendAnimationGroup(const char* animName)
     {
       static double lastSendTime_sec = -1e6;
@@ -1459,7 +1459,29 @@ namespace Anki {
       } else {
         PRINT_NAMED_INFO("SendAnimationGroup", "Ignoring duplicate SendAnimation keystroke.");
       }
+    }
+    
+    // FIXME: Remove after code refactor - JMR
+    void UiGameController::SendDevAnimation(const char* animName, u32 numLoops)
+    {
+      static double lastSendTime_sec = -1e6;
       
+      // Don't send repeated animation commands within a half second
+      if(_supervisor.getTime() > lastSendTime_sec + 0.5f)
+      {
+        PRINT_NAMED_INFO("SendDevAnimation", "sending %s", animName);
+        ExternalInterface::PlayAnimation_DEV m;
+        //m.animationID = animId;
+        m.robotId = 1;
+        m.animationName = animName;
+        m.numLoops = numLoops;
+        ExternalInterface::MessageGameToEngine message;
+        message.Set_PlayAnimation_DEV(m);
+        SendMessage(message);
+        lastSendTime_sec = _supervisor.getTime();
+      } else {
+        PRINT_NAMED_INFO("SendDevAnimation", "Ignoring duplicate SendAnimation keystroke.");
+      }
     }
 
     void UiGameController::SendReplayLastAnimation()

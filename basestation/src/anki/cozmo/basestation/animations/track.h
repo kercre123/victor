@@ -57,8 +57,12 @@ public:
   // Return the Streaming message for the current KeyFrame if it is time,
   // nullptr otherwise. Also returns nullptr if there are no KeyFrames
   // left in the track.
+  RobotInterface::EngineToRobot* GetCurrentStreamingMessage(TimeStamp_t animationTime_ms);
+  // Compair current time with start time
   RobotInterface::EngineToRobot* GetCurrentStreamingMessage(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms);
-
+  
+  const FRAME_TYPE* GetCurrentKeyframe(TimeStamp_t animationTime_ms);
+  
   // Get a reference to the current KeyFrame in the track
   FRAME_TYPE& GetCurrentKeyFrame() { return *_frameIter; }
   
@@ -297,6 +301,43 @@ inline Result Track<FRAME_TYPE>::AddKeyFrameByTime(const FRAME_TYPE& keyFrame)
 template<>
 Result Track<BodyMotionKeyFrame>::AddKeyFrameByTime(const BodyMotionKeyFrame& keyFrame);
 
+
+template<typename FRAME_TYPE>
+const FRAME_TYPE* Track<FRAME_TYPE>::GetCurrentKeyframe(TimeStamp_t animationTime_ms)
+{
+  if (HasFramesLeft()) {
+    FRAME_TYPE& currentKeyFrame = GetCurrentKeyFrame();
+    if (currentKeyFrame.IsTimeToPlay(animationTime_ms)) {
+      
+      if(currentKeyFrame.IsDone()) {
+        MoveToNextKeyFrame();
+      }
+      
+      return &currentKeyFrame;
+    }
+  }
+  return nullptr;
+}
+
+template<typename FRAME_TYPE>
+RobotInterface::EngineToRobot* Track<FRAME_TYPE>::GetCurrentStreamingMessage(TimeStamp_t animationTime_ms)
+{
+  RobotInterface::EngineToRobot* msg = nullptr;
+  
+  if(HasFramesLeft()) {
+    FRAME_TYPE& currentKeyFrame = GetCurrentKeyFrame();
+    if(currentKeyFrame.IsTimeToPlay(animationTime_ms))
+    {
+      msg = currentKeyFrame.GetStreamMessage();
+      if(currentKeyFrame.IsDone()) {
+        MoveToNextKeyFrame();
+      }
+    }
+  }
+  
+  return msg;
+}
+
 template<typename FRAME_TYPE>
 RobotInterface::EngineToRobot* Track<FRAME_TYPE>::GetCurrentStreamingMessage(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms)
 {
@@ -304,7 +345,7 @@ RobotInterface::EngineToRobot* Track<FRAME_TYPE>::GetCurrentStreamingMessage(Tim
 
   if(HasFramesLeft()) {
     FRAME_TYPE& currentKeyFrame = GetCurrentKeyFrame();
-    if(currentKeyFrame.IsTimeToPlay(startTime_ms, currTime_ms))
+    if(currentKeyFrame.IsTimeToPlay(currTime_ms - startTime_ms))
     {
       msg = currentKeyFrame.GetStreamMessage();
       if(currentKeyFrame.IsDone()) {

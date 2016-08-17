@@ -192,7 +192,7 @@ TEST_F(RobotAudioTest, TestNoEvents)
   
   config.LoadAudioKeyFrames( *animation );
   
-  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoAnimation )) );
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoBus_1 )) );
   
   RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
   
@@ -212,7 +212,7 @@ TEST_F(RobotAudioTest, TestSingleEventAnimation_FirstFrame )
   
   config.LoadAudioKeyFrames( *animation );
   
-  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoAnimation )) );
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoBus_1 )) );
   
   RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
   
@@ -231,7 +231,7 @@ TEST_F(RobotAudioTest, TestSingleEventAnimation )
   
   config.LoadAudioKeyFrames( *animation );
   
-  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoAnimation )) );
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoBus_1 )) );
   
   RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
   
@@ -252,7 +252,7 @@ TEST_F(RobotAudioTest, TestSingleStream_MultipleEvents_EndInOrder)
   
   config.LoadAudioKeyFrames( *animation );
   
-  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoAnimation )) );
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoBus_1 )) );
   
   RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
   
@@ -273,7 +273,7 @@ TEST_F(RobotAudioTest, TestSingleStream_MultipleEvents_EndInReverseOrder)
   
   config.LoadAudioKeyFrames( *animation );
   
-  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoAnimation )) );
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoBus_1 )) );
   
   RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
   
@@ -295,7 +295,7 @@ TEST_F(RobotAudioTest, TestMultipleStreams_SingleEvent)
   
   config.LoadAudioKeyFrames( *animation );
   
-  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoAnimation )) );
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoBus_1 )) );
   
   RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
   
@@ -318,7 +318,7 @@ TEST_F(RobotAudioTest, TestMultipleStreams_MultipleEvents)
   
   config.LoadAudioKeyFrames( *animation );
   
-  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoAnimation )) );
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoBus_1 )) );
   
   RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
   
@@ -338,7 +338,7 @@ TEST_F(RobotAudioTest, TestMultipleStreams_BackToBack_SameFrame)
   
   config.LoadAudioKeyFrames( *animation );
   
-  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoAnimation )) );
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoBus_1 )) );
   
   RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
   
@@ -357,7 +357,7 @@ TEST_F(RobotAudioTest, TestMultipleStreams_BackToBack_NextFrame)
   
   config.LoadAudioKeyFrames( *animation );
   
-  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoAnimation )) );
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoBus_1 )) );
   
   RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
   
@@ -379,7 +379,7 @@ TEST_F(RobotAudioTest, DISABLED_TestFrameEdgeCase_StartsOnEdge)
   
   config.LoadAudioKeyFrames( *animation );
   
-  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoAnimation )) );
+  config.LoadAudioBuffer( *((RobotAudioTestBuffer*)audioClient.GetRobotAudiobuffer( Anki::Cozmo::Audio::GameObjectType::CozmoBus_1 )) );
   
   RobotAudioAnimationOnRobotTest audioAnimation( animation, &audioClient );
   

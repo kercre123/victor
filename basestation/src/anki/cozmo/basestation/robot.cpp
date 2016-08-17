@@ -7,6 +7,7 @@
 //
 
 #include "anki/cozmo/basestation/actions/actionContainers.h"
+#include "anki/cozmo/basestation/animations/engineAnimationController.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/pathPlanner.h"
@@ -86,6 +87,9 @@
 
 #define DEBUG_BLOCK_LIGHTS 0
 
+#define BUILD_NEW_ANIMATION_CODE 0
+
+
 namespace Anki {
 namespace Cozmo {
     
@@ -148,6 +152,9 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _audioClient(new Audio::RobotAudioClient(this))
   , _animationStreamer(_context, *_audioClient)
   , _drivingAnimationHandler(new DrivingAnimationHandler(*this))
+#if BUILD_NEW_ANIMATION_CODE
+  , _animationController(new RobotAnimation::EngineAnimationController(_context, _audioClient.get()))
+#endif
   , _actionList(new ActionList())
   , _movementComponent(*this)
   , _visionComponentPtr( new VisionComponent(*this, VisionComponent::RunMode::Asynchronous, _context))
@@ -1098,6 +1105,16 @@ Result Robot::Update(bool ignoreVisionModes)
       PRINT_NAMED_WARNING("Robot.Update",
                           "Robot %d had an animation streaming failure.", GetID());
     }
+    
+    // NEW Animations!
+    if (BUILD_NEW_ANIMATION_CODE) {
+      Result result = _animationController->Update(*this);
+      if (result != RESULT_OK) {
+        PRINT_NAMED_WARNING("Robot.Update",
+                            "Robot %d had an animation streaming failure.", GetID());
+      }
+    }
+    
   }
 
   /////////// Update NVStorage //////////

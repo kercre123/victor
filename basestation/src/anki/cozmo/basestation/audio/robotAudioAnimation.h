@@ -66,7 +66,7 @@ public:
   };
   
   // Use sub-class constructor, this class will return an invalid animation
-  explicit RobotAudioAnimation( Util::RandomGenerator* randomGenerator );
+  explicit RobotAudioAnimation( GameObjectType gameObject, Util::RandomGenerator* randomGenerator );
   
   virtual ~RobotAudioAnimation();
   
@@ -114,7 +114,7 @@ protected:
     AnimationEventId eventId = kInvalidAnimationEventId;
     GameEvent::GenericEvent audioEvent = GameEvent::GenericEvent::Invalid;
     uint32_t time_ms = 0;
-    float volume = 1.0f; // scale event's volume 1.0 = 100%
+    float volume = 1.0f;
     AnimationEventState state = AnimationEventState::None;
 
     
@@ -176,7 +176,9 @@ protected:
   // FIXME: This is a temp fix, will remove once we have an Audio Mixer
   float _robotVolume = 1.0f;
 
-
+  // Track what game obj to use for animation
+  GameObjectType _gameObj = GameObjectType::Invalid;
+  
 private:
 
   Util::RandomGenerator* _randomGenerator = nullptr;

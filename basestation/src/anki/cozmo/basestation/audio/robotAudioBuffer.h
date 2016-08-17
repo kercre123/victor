@@ -35,7 +35,6 @@ namespace Anki {
 namespace Cozmo {
 namespace Audio {
   
-
 class RobotAudioBuffer
 {
   
@@ -80,6 +79,9 @@ public:
 
 
 protected:
+  
+  // FIXME: Think there is a bug by not locking the _streamQueue. Both Audio thread and Engine thread use the queue
+  // Maybe we should use producer consumer queue here!?
   
   // A queue of robot audio frames (continuous audio data)
   std::queue< RobotAudioFrameStream > _streamQueue;

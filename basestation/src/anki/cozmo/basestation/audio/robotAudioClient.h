@@ -17,22 +17,27 @@
 #include "anki/cozmo/basestation/audio/robotAudioAnimation.h"
 #include "util/helpers/templateHelpers.h"
 #include <unordered_map>
+#include <queue>
 
 
 namespace Anki {
+  
+namespace Util {
+class RandomGenerator;
+namespace Dispatch {
+class Queue;
+}
+}
 namespace Cozmo {
-
 class Robot;
 class Animation;
   
 namespace Audio {
-  
 class AudioController;
-  
 class RobotAudioBuffer;
   
-class RobotAudioClient : public AudioEngineClient
-{
+class RobotAudioClient : public AudioEngineClient {
+
 public:
 
   // !!! Be sure to update RobotAudioOutputSourceCLAD in messageGameToEngine.clad if this is changed !!!
@@ -50,7 +55,7 @@ public:
 
   // Destructor
   ~RobotAudioClient();
-  
+    
   // The the audio buffer for the corresponding Game Object
   virtual RobotAudioBuffer* GetRobotAudiobuffer( GameObjectType gameObject );
 
@@ -67,22 +72,39 @@ public:
   
   void ProcessEvents() const;
 
+  
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// vvvvvvvvvvvv Depercated vvvvvvvvvvvvvvvv
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
    // Create an Audio Animation for a specific animation. Only one animation can be played at a time
+  // FIXME: Remove after new animtion code goes in
   void CreateAudioAnimation( Animation* anAnimation );
 
+  // FIXME: Remove after new animtion code goes in
   RobotAudioAnimation* GetCurrentAnimation() { return _currentAnimation; }
 
   // Delete audio animation
   // Note: This Does not Abort the animation
+  // FIXME: Remove after new animtion code goes in
   void ClearCurrentAnimation();
 
+  // FIXME: Remove after new animtion code goes in
   bool HasAnimation() const { return _currentAnimation != nullptr; }
 
   // Return true if there is no animation or animation is ready
+  // FIXME: Remove after new animtion code goes in
   bool UpdateAnimationIsReady( TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
 
   // Check Animation States to see if it's completed
+  // FIXME: Remove after new animtion code goes in
   bool AnimationIsComplete();
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// ^^^^^^^^^^^^ Depercated ^^^^^^^^^^^^^
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // Robot Volume Value is between ( 0.0 - 1.0 )
   void SetRobotVolume(float volume);
@@ -91,7 +113,22 @@ public:
   // Must be called after RegisterRobotAudioBuffer() to properly setup robot audio signal flow
   void SetOutputSource( RobotAudioOutputSource outputSource );
   RobotAudioOutputSource GetOutputSource() const { return _outputSource; }
+  
+  
+  bool AvailableGameObjectAndAudioBufferInPool() const { return !_robotBufferGameObjectPool.empty(); }
+  
+  // Set gameObj & audio buffer out_vars for current output source
+  // Return false if buffer is not available
+  // Remove gameObj/buffer from pool
+  bool GetGameObjectAndAudioBufferFromPool(GameObjectType& out_gameObj, RobotAudioBuffer*& out_buffer);
 
+  // Add gameObj/buffer back into pool
+  void ReturnGameObjectToPool(GameObjectType gameObject);
+  
+  Util::Dispatch::Queue* GetAudioQueue() const { return _dispatchQueue; }
+
+  // Get shared random generator
+  Util::RandomGenerator& GetRandomGenerator() const;
 
 private:
   
@@ -108,6 +145,9 @@ private:
   // Provides robot audio buffer
   AudioController* _audioController = nullptr;
   
+  // Animation Audio Event queue
+  Util::Dispatch::Queue* _dispatchQueue = nullptr;
+  
   // Audio Animation Object to provide audio frames to Animation
   RobotAudioAnimation* _currentAnimation = nullptr;
   
@@ -116,6 +156,9 @@ private:
   
   // Store Bus configurations
   std::unordered_map<GameObjectType, RobotBusConfiguration, Util::EnumHasher> _busConfigurationMap;
+  
+  // Keep track of available Game Objects with Audio Buffers
+  std::queue<GameObjectType> _robotBufferGameObjectPool;
   
   // Create Audio Buffer for the corresponding Game Object
   RobotAudioBuffer* RegisterRobotAudioBuffer( GameObjectType gameObject, PluginId_t pluginId, Bus::BusType bus );

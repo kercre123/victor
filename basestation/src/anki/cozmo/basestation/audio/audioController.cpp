@@ -396,7 +396,7 @@ bool AudioController::SetParameterWithPlayingId( AudioEngine::AudioParameterId p
   
   PRINT_CH_INFO(kAudioLogChannelName,
                 "AudioController.SetParameterWithPlayingId",
-                "ParameterId: %u Falue: %f PlayingId: %u Duration: %d Curve: %hhu Success: %c Initalized: %c",
+                "ParameterId: %u Value: %f PlayingId: %u Duration: %d Curve: %hhu Success: %c Initalized: %c",
                 parameterId, rtpcValue, playingId,
                 valueChangeDuration, curve,
                 success ? 'Y' : 'N',
