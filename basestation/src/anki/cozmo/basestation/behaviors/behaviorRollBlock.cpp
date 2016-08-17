@@ -185,36 +185,16 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
 
   // Only turn towards face if this is _not_ a retry
   const Radians maxTurnToFaceAngle( (isRetry ? 0 : DEG_TO_RAD(90)) );
-  const bool sayNameBefore = true;
+  const bool sayNameBefore = !_shouldStreamline;
   DriveToRollObjectAction* rollAction = new DriveToRollObjectAction(robot, _targetBlock,
                                                                     false, 0, false,
                                                                     maxTurnToFaceAngle, sayNameBefore);
   rollAction->RollToUpright();
-  
-  WaitForLambdaAction* waitAction = new WaitForLambdaAction(robot, [this](Robot& robot) {
-    auto block = robot.GetBlockWorld().GetObjectByID(_targetBlock);
-    if(nullptr == block || !block->IsMoving()) {
-      return true;
-    } else {
-      return false;
-    }
-  });
-  
-  const bool sayNameAfter = false;
-  IActionRunner* action;
-  if(!_shouldStreamline){
-    action = new CompoundActionSequential(robot, {
-      rollAction,
-      new TurnTowardsLastFacePoseAction(robot, PI_F, sayNameAfter),
-      waitAction,
-    });
-    ((CompoundActionSequential*)action)->SetProxyTag(rollAction->GetTag());
-  }else{
-    action = rollAction;
-  }
-  
+  rollAction->SetSayNameAnimationTrigger(AnimationTrigger::RollBlockPreActionNamedFace);
+  rollAction->SetNoNameAnimationTrigger(AnimationTrigger::RollBlockPreActionUnnamedFace);
+      
   // Roll the object and then look at a person
-  StartActing(action,
+  StartActing(rollAction,
               [&,this](const ExternalInterface::RobotCompletedAction& msg) {
                 switch(msg.result)
                 {

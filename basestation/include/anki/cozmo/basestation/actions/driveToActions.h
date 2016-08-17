@@ -21,6 +21,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/animationKeyFrames.h"
+#include "clad/types/animationTrigger.h"
 #include "clad/types/dockingSignals.h"
 #include "util/helpers/templateHelpers.h"
 
@@ -250,6 +251,14 @@ namespace Anki {
       // this function instead of the base classes AddAction() in order to set the approriate
       // preDock pose offset for the dock action
       void AddDockAction(IDockAction* dockAction, bool ignoreFailure = false);
+
+      // Sets the animation trigger to use to say the name. Only valid if sayName was true
+      void SetSayNameAnimationTrigger(AnimationTrigger trigger);
+      
+      // Sets the backup animation to play if the name is not known, but there is a confirmed face. Only valid
+      // if sayName is true (this is because we are trying to use an animation to say the name, but if we
+      // don't have a name, we want to use this animation instead)
+      void SetNoNameAnimationTrigger(AnimationTrigger trigger);
       
     protected:
 

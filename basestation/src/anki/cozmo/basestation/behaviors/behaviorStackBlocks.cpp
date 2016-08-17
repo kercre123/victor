@@ -270,11 +270,14 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
     TransitionToStackingBlock(robot);
   }
 
-  const bool sayName = true;
+  const bool sayName = !_shouldStreamline;
   DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot, _targetBlockTop,
                                                                     false, 0, false,
                                                                     kBSB_MaxTurnTowardsFaceBeforePickupAngle_deg,
                                                                     sayName);
+  action->SetSayNameAnimationTrigger(AnimationTrigger::StackBlocksPreActionNamedFace);
+  action->SetNoNameAnimationTrigger(AnimationTrigger::StackBlocksPreActionUnnamedFace);
+
   
   RetryWrapperAction::RetryCallback retryCallback = [this, action](const ExternalInterface::RobotCompletedAction& completion, const u8 retryCount, AnimationTrigger& animTrigger)
   {

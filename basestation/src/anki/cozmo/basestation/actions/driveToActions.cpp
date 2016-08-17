@@ -990,6 +990,30 @@ namespace Anki {
       dockAction->SetPreDockPoseDistOffset(_preDockPoseDistOffsetX_mm);
       AddAction(dockAction, ignoreFailure);
     }
+
+    void IDriveToInteractWithObject::SetSayNameAnimationTrigger(AnimationTrigger trigger)
+    {
+      if( HasStarted() ) {
+        PRINT_NAMED_ERROR("IDriveToInteractWithObject.SetSayNameAnimationTrigger.AfterRunning",
+                          "Tried to update the animations after the action started, this isn't supported");
+        return;
+      }
+      if( nullptr != _turnTowardsLastFacePoseAction ) {
+        _turnTowardsLastFacePoseAction->SetSayNameAnimationTrigger(trigger);
+      }
+    }
+      
+    void IDriveToInteractWithObject::SetNoNameAnimationTrigger(AnimationTrigger trigger)
+    {
+      if( HasStarted() ) {
+        PRINT_NAMED_ERROR("IDriveToInteractWithObject.SetNoNameAnimationTrigger.AfterRunning",
+                          "Tried to update the animations after the action started, this isn't supported");
+        return;
+      }
+      if( nullptr != _turnTowardsLastFacePoseAction ) {
+        _turnTowardsLastFacePoseAction->SetNoNameAnimationTrigger(trigger);
+      }
+    }
     
     void IDriveToInteractWithObject::SetMaxTurnTowardsFaceAngle(const Radians angle)
     {

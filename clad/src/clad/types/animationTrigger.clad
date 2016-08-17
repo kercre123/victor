@@ -125,6 +125,8 @@ enum int_32 AnimationTrigger
   OnboardingReactToFace,
   PlacedOnCharger,
   PopAWheelieInitial,
+  PopAWheeliePreActionNamedFace,
+  PopAWheeliePreActionUnnamedFace,
   PopAWheelieRealign,
   PopAWheelieRetry,
   PounceDriveEnd,
@@ -191,6 +193,8 @@ enum int_32 AnimationTrigger
   RequestGameSpeedTapRequest0,
   RequestGameSpeedTapRequest1,
   RollBlockInitial,
+  RollBlockPreActionNamedFace,
+  RollBlockPreActionUnnamedFace,
   RollBlockPutDown,
   RollBlockRealign,
   RollBlockRetry,
@@ -220,6 +224,8 @@ enum int_32 AnimationTrigger
   SpeedTapDrivingEnd,
   SpeedTapDrivingLoop,
   SpeedTapDrivingStart,
+  StackBlocksPreActionNamedFace,
+  StackBlocksPreActionUnnamedFace,
   StackBlocksRetry,
   StackBlocksSuccess,
   StartSleeping,
@@ -228,6 +234,7 @@ enum int_32 AnimationTrigger
   TestFacialPng,
   TurtleRoll,
   UnitTestAnim,
+
   // Count can specify "none" or "unspecified"
   Count, // Keep count at end.
 }

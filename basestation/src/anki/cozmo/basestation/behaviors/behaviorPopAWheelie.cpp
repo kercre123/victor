@@ -122,8 +122,17 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
   
   // Only turn towards face if this is _not_ a retry
   const Radians maxTurnToFaceAngle( (isRetry ? 0 : DEG_TO_RAD(90)) );
-  
-  IActionRunner* goPopAWheelie = new DriveToPopAWheelieAction(robot, _targetBlock);
+  const bool sayNameBefore = !_shouldStreamline;
+  DriveToPopAWheelieAction* goPopAWheelie = new DriveToPopAWheelieAction(robot,
+                                                                         _targetBlock,
+                                                                         false,
+                                                                         0,
+                                                                         false,
+                                                                         maxTurnToFaceAngle,
+                                                                         sayNameBefore);
+  goPopAWheelie->SetSayNameAnimationTrigger(AnimationTrigger::PopAWheeliePreActionNamedFace);
+  goPopAWheelie->SetNoNameAnimationTrigger(AnimationTrigger::PopAWheeliePreActionUnnamedFace);
+
 
   //Disable on the back reaction
   robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToRobotOnBack, false);

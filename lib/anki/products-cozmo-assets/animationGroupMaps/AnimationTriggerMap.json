@@ -445,6 +445,14 @@
       "AnimName": "rollCube_initial"
     },
     {
+      "CladEvent": "PopAWheeliePreActionNamedFace",
+      "AnimName": "ag_freeplay_reacttoface_identified"
+    },
+    {
+      "CladEvent": "PopAWheeliePreActionUnnamedFace",
+      "AnimName": "ag_freeplay_reacttoface_unidentified"
+    },
+    {
       "CladEvent": "PopAWheelieRealign",
       "AnimName": "rollCube_realign"
     },
@@ -705,6 +713,14 @@
       "AnimName": "rollCube_initial"
     },
     {
+      "CladEvent": "RollBlockPreActionNamedFace",
+      "AnimName": "ag_freeplay_reacttoface_identified"
+    },
+    {
+      "CladEvent": "RollBlockPreActionUnnamedFace",
+      "AnimName": "ag_freeplay_reacttoface_unidentified"
+    },
+    {
       "CladEvent": "RollBlockPutDown",
       "AnimName": "ag_putDownBlock"
     },
@@ -815,6 +831,14 @@
     {
       "CladEvent": "SpeedTapDrivingStart",
       "AnimName": "ag_speedTap_startDriving"
+    },
+    {
+      "CladEvent": "StackBlocksPreActionNamedFace",
+      "AnimName": "ag_freeplay_reacttoface_identified"
+    },
+    {
+      "CladEvent": "StackBlocksPreActionUnnamedFace",
+      "AnimName": "ag_freeplay_reacttoface_unidentified"
     },
     {
       "CladEvent": "StackBlocksRetry",
