@@ -206,5 +206,14 @@ namespace Cozmo.Minigame.CubePounce {
         _CubeCurrentlyMoving = false;
       }
     }
+
+    public bool PitchIndicatesPounceSuccess(float pitchToCheck_deg) {
+      float currentPitch_deg = Mathf.Rad2Deg * CurrentRobot.PitchAngle;
+      float angleChange_deg = Mathf.Abs(Mathf.DeltaAngle(pitchToCheck_deg, currentPitch_deg));
+      if (angleChange_deg > GameConfig.PouncePitchDiffSuccess_deg) {
+        return true;
+      }
+      return false;
+    }
   }
 }

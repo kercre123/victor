@@ -7,6 +7,7 @@ namespace Cozmo.Minigame.CubePounce {
     public override void Enter() {
       base.Enter();
       _CubePounceGame.ResetScore();
+      _CubePounceGame.ResetPounceChance();
       _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderSetupText);
       _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoSetupText);
       _CubePounceGame.SharedMinigameView.HideMiddleBackground();

@@ -552,7 +552,7 @@ public class Robot : IRobot {
     return null;
   }
 
-  private void SendQueueSingleAction<T>(T action, RobotCallback callback, QueueActionPosition queueActionPosition) {
+  public void SendQueueSingleAction<T>(T action, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     var tag = GetNextIdTag();
     RobotEngineManager.Instance.Message.QueueSingleAction =
       Singleton<QueueSingleAction>.Instance.Initialize(robotID: ID,
@@ -1214,7 +1214,8 @@ public class Robot : IRobot {
 
   public void TurnTowardsObject(ObservedObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = kDefaultRadPerSec, float panAccel_radPerSec2 = kPanAccel_radPerSec2,
                                 RobotCallback callback = null,
-                                QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+                                QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
+                                float setTiltTolerance_rad = 0f) {
 
     DAS.Debug(this, "Face Object " + observedObject);
 
@@ -1228,7 +1229,7 @@ public class Robot : IRobot {
       panAccel_radPerSec2: panAccel_radPerSec2,
       maxTiltSpeed_radPerSec: 0f,
       tiltAccel_radPerSec2: 0f,
-      tiltTolerance_rad: 0f,
+      tiltTolerance_rad: setTiltTolerance_rad,
       visuallyVerifyWhenDone: false
     ),
       callback,
@@ -1819,6 +1820,11 @@ public class Robot : IRobot {
 
   public void EnableCubeSleep(bool enable) {
     RobotEngineManager.Instance.Message.EnableCubeSleep = Singleton<EnableCubeSleep>.Instance.Initialize(enable);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void EnableLift(bool enable) {
+    RobotEngineManager.Instance.Message.EnableLiftPower = Singleton<EnableLiftPower>.Instance.Initialize(enable);
     RobotEngineManager.Instance.SendMessage();
   }
 }

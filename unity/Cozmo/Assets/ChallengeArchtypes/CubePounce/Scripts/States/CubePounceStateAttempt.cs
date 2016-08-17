@@ -33,9 +33,7 @@ namespace Cozmo.Minigame.CubePounce {
       base.Update();
 
       // If cozmos current pitch has differed enough from the beginning of the anim, the block was hit
-      float currentPitch_deg = Mathf.Rad2Deg * _CurrentRobot.PitchAngle;
-      float angleChange_deg = Mathf.Abs(Mathf.DeltaAngle(_InitialPitch_deg, currentPitch_deg));
-      if (angleChange_deg > _CubePounceGame.GameConfig.PouncePitchDiffSuccess_deg) {
+      if (_CubePounceGame.PitchIndicatesPounceSuccess(_InitialPitch_deg)) {
         _StateMachine.SetNextState(new CubePounceStatePostPoint(cozmoWon: true));
       }
     }

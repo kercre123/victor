@@ -31,7 +31,7 @@ MonoBehaviour:
   CubeDistanceGreyZone_mm: 50
   PouncePitchDiffSuccess_deg: 5
   CubeLightFlashInterval_s: 0.1
-  CubeVisibleBufferTime_s: 1
+  CubeVisibleBufferTime_s: 0.75
   FakeoutCubeMoveTime_s: 1.1
   CubeFacingAngleTolerance_deg: 8
   TurnSpeed_rps: 10

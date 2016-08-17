@@ -207,7 +207,8 @@ public interface IRobot : IDisposable {
 
   void TurnTowardsObject(ObservedObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
                          RobotCallback callback = null,
-                         QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+                         QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
+                         float setTiltTolerance_rad = 0f);
 
   void TurnTowardsFacePose(Face face, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
                            RobotCallback callback = null,
@@ -317,7 +318,11 @@ public interface IRobot : IDisposable {
 
   void NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag tag, ushort size, byte[] data, byte index = 0, byte numTotalBlobs = 1);
 
+  void SendQueueSingleAction<T>(T action, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+
   void SendQueueCompoundAction(Anki.Cozmo.ExternalInterface.RobotActionUnion[] actions, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool isParallel = false);
 
   void EnableCubeSleep(bool enable);
+
+  void EnableLift(bool enable);
 }

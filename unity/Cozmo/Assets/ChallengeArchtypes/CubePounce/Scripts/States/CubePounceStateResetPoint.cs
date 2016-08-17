@@ -1,3 +1,4 @@
+using Anki.Cozmo.ExternalInterface;
 using UnityEngine;
 using System.Collections;
 
@@ -8,12 +9,14 @@ namespace Cozmo.Minigame.CubePounce {
     private bool _GetReadyAnimInProgress = false;
     private bool _CubeIsValid = false;
     private bool _TurnInProgress = false;
+    private bool _BackupInProgress = false;
+    private bool _GetUnreadyInProgress = false;
+    private float _GetUnreadyStartAngle_deg;
 
     public override void Enter() {
       base.Enter();
       _CubePounceGame.StopCycleCube(_CubePounceGame.GetCubeTarget().ID);
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Tension);
-      _CubePounceGame.ResetPounceChance();
 
       // If the cube hasn't been seen recently, call the cube missing functionality in cube pounce game
       if (_CubePounceGame.CubeSeenRecently) {
@@ -59,21 +62,38 @@ namespace Cozmo.Minigame.CubePounce {
       // TODO:(lc) when these idles are ready (have head angle and lift height set correctly) enable them
       //_CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.CubePounceIdleLiftDown);
 
-      _CurrentRobot.SetLiftHeight(0.0f, null);
+      _CurrentRobot.SetLiftHeight(0.0f, HandleGetUnreadyDone);
 
       _GetReadyAnimCompleted = false;
+      _GetUnreadyInProgress = true;
+      _GetUnreadyStartAngle_deg = _CurrentRobot.PitchAngle;
+    }
+
+    private void HandleGetUnreadyDone(bool success) {
+      _GetUnreadyInProgress = false;
+
+      if (_CubePounceGame.PitchIndicatesPounceSuccess(_GetUnreadyStartAngle_deg)) {
+        DoBackupReaction();
+      }
     }
 
     private void TurnToCube() {
-      Vector3 positionDifference = _CubePounceGame.GetCubeTarget().WorldPosition - _CurrentRobot.WorldPosition;
-      float angleToCube_deg = Mathf.Rad2Deg * Mathf.Atan2(positionDifference.y, positionDifference.x);
-      float angleDelta_deg = Mathf.DeltaAngle(_CurrentRobot.Rotation.eulerAngles.z, angleToCube_deg);
-      _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * angleDelta_deg, _CubePounceGame.GameConfig.TurnSpeed_rps, _CubePounceGame.GameConfig.TurnAcceleration_rps2, HandleTurnFinished);
+      _CurrentRobot.TurnTowardsObject(_CubePounceGame.GetCubeTarget(), 
+        headTrackWhenDone:      false, 
+        maxPanSpeed_radPerSec:  _CubePounceGame.GameConfig.TurnSpeed_rps, 
+        panAccel_radPerSec2:    _CubePounceGame.GameConfig.TurnAcceleration_rps2,
+        callback:               HandleTurnFinished,
+        setTiltTolerance_rad:   Mathf.PI
+      );
       _TurnInProgress = true;
     }
 
     public override void Update() {
       base.Update();
+
+      if (_BackupInProgress || _GetUnreadyInProgress) {
+        return;
+      }
 
       if (_CubeIsValid && !_CubePounceGame.CubeSeenRecently) {
         ReactToCubeGone();
@@ -116,11 +136,36 @@ namespace Cozmo.Minigame.CubePounce {
       _TurnInProgress = false;
     }
 
+    private void DoBackupReaction() {
+      // This is implemented as LiftUp + Wait + DriveStraight (backwards) instead of a simple unpowering
+      // of the lift and drivestraight because of bug COZMO 3890, which causes DriveStraight actions when Cozmo
+      // thinks he's picked up to fail
+      RobotActionUnion[] actions = {
+        new RobotActionUnion().Initialize(Singleton<SetLiftHeight>.Instance.Initialize(
+          height_mm: CozmoUtil.kMaxLiftHeightMM,
+          accel_rad_per_sec2: 5f,
+          max_speed_rad_per_sec: 10f,
+          duration_sec: 0f
+        )),
+        new RobotActionUnion().Initialize(Singleton<Wait>.Instance.Initialize(0.25f)),
+        new RobotActionUnion().Initialize(Singleton<DriveStraight>.Instance.Initialize(500, -30, false))
+      };
+      _CurrentRobot.SendQueueCompoundAction(actions, HandleBackupComplete);
+      _BackupInProgress = true;
+    }
+
+    private void HandleBackupComplete(bool success) {
+      _BackupInProgress = false;
+      _StateMachine.SetNextState(new CubePounceStatePostPoint(cozmoWon: true));
+    }
+
     public override void Exit() {
       base.Exit();
       if (null != _CurrentRobot) {
         _CurrentRobot.CancelCallback(HandleGetInAnimFinish);
         _CurrentRobot.CancelCallback(HandleTurnFinished);
+        _CurrentRobot.CancelCallback(HandleGetUnreadyDone);
+        _CurrentRobot.CancelCallback(HandleBackupComplete);
       }
     }
   }

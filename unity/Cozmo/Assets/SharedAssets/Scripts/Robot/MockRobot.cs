@@ -341,7 +341,8 @@ public class MockRobot : IRobot {
     Rotation = rotation;
   }
 
-  public void TurnTowardsObject(ObservedObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public void TurnTowardsObject(ObservedObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW,
+    float setTiltTolerance_rad = 0f) {
 
     LookAtPosition(observedObject.WorldPosition);
 
@@ -868,10 +869,16 @@ public class MockRobot : IRobot {
   public void NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag tag, ushort size, byte[] data, byte index, byte numTotalBlobs) {
   }
 
+  public void SendQueueSingleAction<T>(T action, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  }
+
   public void SendQueueCompoundAction(Anki.Cozmo.ExternalInterface.RobotActionUnion[] actions, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool isParallel = false) {
   }
 
   public void EnableCubeSleep(bool enable) {
+  }
+
+  public void EnableLift(bool enable) {
   }
 
   public event LightCubeStateEventHandler OnLightCubeAdded;

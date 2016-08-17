@@ -14,6 +14,8 @@ namespace Cozmo.Minigame.CubePounce {
     public override void Enter() {
       base.Enter();
 
+      _CubePounceGame.ResetPounceChance();
+
       if (_CozmoWon) {
         _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderCozmoWinPoint);
         _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoCozmoWinPoint);
