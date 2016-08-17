@@ -16,8 +16,8 @@ MonoBehaviour:
     _EnumValue: 9
   UnlockableType: 1
   Prerequisites:
-  - _EnumValueAsString: StackTwoCubes
-    _EnumValue: 10
+  - _EnumValueAsString: QuickTapGame
+    _EnumValue: 18
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
   NeverAvailable: 0
