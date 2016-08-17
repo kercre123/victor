@@ -85,7 +85,7 @@ public class RewardedActionManager : MonoBehaviour {
 
   public bool NewSkillChangePending {
     get {
-      return NewSkillChange != 0;
+      return NewSkillChange > 0;
     }
   }
 

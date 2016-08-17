@@ -13,8 +13,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _SkillConfig:
     _EvaluateLevelChangeEvent:
-    - _EnumValueAsString: OnChallengeComplete
-      _EnumValue: 3
+    - _EnumValueAsString: OnChallengeRoundEnd
+      _EnumValue: 2
     _ChallengePointEvent:
     - _EnumValueAsString: OnChallengePointScored
       _EnumValue: 1
@@ -31,8 +31,8 @@ MonoBehaviour:
         val: 0.5
       - name: WrongTapChance
         val: 0.1
-      UpperBoundThreshold: 0.7
-      LowerBoundThreshold: 0.3
+      UpperBoundThreshold: 0.6
+      LowerBoundThreshold: 0.4
     - SkillsArray:
       - name: TapDelayMin
         val: 0.15
@@ -40,8 +40,8 @@ MonoBehaviour:
         val: 0.4
       - name: WrongTapChance
         val: 0.075
-      UpperBoundThreshold: 0.7
-      LowerBoundThreshold: 0.3
+      UpperBoundThreshold: 0.6
+      LowerBoundThreshold: 0.4
     - SkillsArray:
       - name: TapDelayMin
         val: 0.05
@@ -49,8 +49,8 @@ MonoBehaviour:
         val: 0.4
       - name: WrongTapChance
         val: 0.04
-      UpperBoundThreshold: 0.7
-      LowerBoundThreshold: 0.3
+      UpperBoundThreshold: 0.6
+      LowerBoundThreshold: 0.4
     - SkillsArray:
       - name: TapDelayMin
         val: 0
@@ -58,8 +58,8 @@ MonoBehaviour:
         val: 0.2
       - name: WrongTapChance
         val: 0
-      UpperBoundThreshold: 0.7
-      LowerBoundThreshold: 0.3
+      UpperBoundThreshold: 0.6
+      LowerBoundThreshold: 0.4
   TapResolutionDelay: 0.1
   Rounds: 3
   MaxScorePerRound: 5

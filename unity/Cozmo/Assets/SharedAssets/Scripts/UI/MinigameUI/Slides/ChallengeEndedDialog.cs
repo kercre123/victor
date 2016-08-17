@@ -150,13 +150,7 @@ public class ChallengeEndedDialog : MonoBehaviour {
                                     _DifficultyUnlockContainer).GetComponent<IconTextLabel>();
 
     iconTextLabel.SetText("");
-    string descKey = "";
-    if (newLevel > 0) {
-      descKey = LocalizationKeys.kRewardDescriptionSkillUp;
-    }
-    else {
-      descKey = LocalizationKeys.kRewardDescriptionSkillDown;
-    }
+    string descKey = LocalizationKeys.kRewardDescriptionSkillUp;
     iconTextLabel.SetDesc(Localization.GetWithArgs(descKey, Localization.Get(_ChallengeConfig.ChallengeTitleLocKey)));
   }
 }
