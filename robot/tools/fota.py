@@ -6,8 +6,8 @@ __author__ = "Daniel Casner <daniel@anki.com>"
 
 import sys, os, time, hashlib, struct, argparse
 
-DEFAULT_FIRMWARE_IMAGES = (os.path.join("build", "cozmo.safe"),
-                           os.path.join("..", "EXTERNALS", "firmware", "build", "cozmo.safe"))
+DEFAULT_FIRMWARE_IMAGES = (os.path.join("release", "cozmo.safe"),
+                           os.path.join("..", "EXTERNALS", "firmware", "release", "cozmo.safe"))
 
 parser = argparse.ArgumentParser(description="Upgrade firmware")
 parser.add_argument("-w", "--wait", type=float,
