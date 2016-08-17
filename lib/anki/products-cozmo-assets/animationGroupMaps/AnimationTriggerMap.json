@@ -847,6 +847,10 @@
     {
       "CladEvent": "UnitTestAnim",
       "AnimName": "ag_askForBlock"
+    },
+    {
+      "CladEvent": "SdkTextToSpeech",
+      "AnimName": "ag_sdk_speak"
     }
   ]
 }

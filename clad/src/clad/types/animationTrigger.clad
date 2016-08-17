@@ -195,6 +195,7 @@ enum int_32 AnimationTrigger
   RollBlockRealign,
   RollBlockRetry,
   RollBlockSuccess,
+  SdkTextToSpeech,
   Shiver,
   Shocked,
   SimonPointCenter,
