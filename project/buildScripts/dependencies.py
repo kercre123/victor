@@ -294,7 +294,7 @@ def teamcity_package(tc_dict):
             pull_down += ['-v']
 
         if not is_up(combined_url):
-            print "WARNING {0} is not available.  Cannot verify {1}.".format(combined_url, package_name)
+            print "WARNING {0} is not available.  Cannot verify {1}.".format(combined_url, build)
             return
 
         if not os.path.exists(loc):
@@ -329,9 +329,9 @@ def teamcity_package(tc_dict):
                     os.remove(dist)
                 print "ERROR {0}ing {1}.  Please try again.".format(tool, package)
             else:
-                print "{0} Downloaded.  New version {1} ".format(package_name.title(), version)
+                print "{0} Downloaded.  New version {1} ".format(build.title(), version)
         else:
-            print "{0} does not need to be updated.  Current version {1}".format(package_name.title(), version)
+            print "{0} does not need to be updated.  Current version {1}".format(build.title(), version)
         if os.path.isfile(dist):
             if os.path.isdir(unpackage_location):
                 shutil.rmtree(unpackage_location)

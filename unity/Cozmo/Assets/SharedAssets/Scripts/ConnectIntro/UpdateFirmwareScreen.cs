@@ -11,7 +11,7 @@ public class UpdateFirmwareScreen : MonoBehaviour {
   private void Start() {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete>(FirmwareUpdateComplete);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress>(HandleFirmwareProgress);
-    RobotEngineManager.Instance.UpdateFirmware(0);
+    RobotEngineManager.Instance.UpdateFirmware(Anki.Cozmo.FirmwareType.Current, 0);
   }
 
   private void OnDestroy() {

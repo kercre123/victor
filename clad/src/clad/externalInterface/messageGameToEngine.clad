@@ -18,6 +18,7 @@
 #include "clad/types/emotionTypes.clad"
 #include "clad/types/faceEnrollmentPoses.clad"
 #include "clad/types/featureGateTypes.clad"
+#include "clad/types/firmwareTypes.clad"
 #include "clad/types/globalVizOrigin.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/liveIdleAnimationParameters.clad"
@@ -100,6 +101,7 @@ message CancelIdleTimeout {
 // UpdateFirmware
 // Tell the engine to start updating the robot firmware to specific version
 message UpdateFirmware {
+  FirmwareType fwType,
   int_32 version
 }
 

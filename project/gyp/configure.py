@@ -385,12 +385,12 @@ def main(scriptArgs):
     UtilLog.error("error creating generated/resources")
     return False
 
-  # revisit for COZMO-1287 to handle multiple firmwares.  
-  if subprocess.call(['ln', '-s', '-f', '-n',
-    os.path.join(externalsPath, 'firmware/release'),
-    os.path.join(projectRoot, 'resources/config/basestation/firmware')]) != 0 :
-    UtilLog.error("error symlinking firmware resources")
-    return False
+  for fwFolder in ['firmware', 'old_firmware']:
+    if subprocess.call(['ln', '-s', '-f', '-n',
+      os.path.join(externalsPath, fwFolder, 'release'),
+      os.path.join(projectRoot, 'resources/config/basestation', fwFolder)]) != 0 :
+      UtilLog.error("error symlinking firmware resources")
+      return False
 
   # paths relative to gyp file
   clad_dir_rel = os.path.relpath(options.cladPath, os.path.join(options.ankiUtilPath, 'project/gyp/'))

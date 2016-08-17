@@ -334,8 +334,8 @@ public class RobotEngineManager : MonoBehaviour {
     SendMessage();
   }
 
-  public void UpdateFirmware(int firmwareVersion) {
-    Message.UpdateFirmware = Singleton<Anki.Cozmo.ExternalInterface.UpdateFirmware>.Instance.Initialize(firmwareVersion);
+  public void UpdateFirmware(Anki.Cozmo.FirmwareType type, int firmwareVersion) {
+    Message.UpdateFirmware = Singleton<Anki.Cozmo.ExternalInterface.UpdateFirmware>.Instance.Initialize(type, firmwareVersion);
     SendMessage();
   }
 

@@ -106,7 +106,7 @@ namespace Anki {
       
       PRINT_NAMED_EVENT("RobotManager.Init.TimeSpent", "%lld milliseconds", timeSpent_millis);
 
-      _firmwareUpdater->LoadHeader(std::bind(&RobotManager::ParseFirmwareHeader, this, std::placeholders::_1));
+      _firmwareUpdater->LoadHeader(FirmwareType::Current, std::bind(&RobotManager::ParseFirmwareHeader, this, std::placeholders::_1));
     }
     
     void RobotManager::AddRobot(const RobotID_t withID)
@@ -207,9 +207,9 @@ namespace Anki {
     }
 
     
-    bool RobotManager::InitUpdateFirmware(int version)
+    bool RobotManager::InitUpdateFirmware(FirmwareType type, int version)
     {
-      return _firmwareUpdater->InitUpdate(_robots, version);
+      return _firmwareUpdater->InitUpdate(_robots, type, version);
     }
     
     

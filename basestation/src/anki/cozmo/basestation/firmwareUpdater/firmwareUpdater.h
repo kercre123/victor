@@ -33,6 +33,7 @@ namespace Cozmo {
   
 
 class CozmoContext;
+enum class FirmwareType : uint8_t;
 class Robot;
 
 namespace RobotInterface
@@ -78,17 +79,17 @@ class FirmwareUpdater
 public:
   static const char* const kFirmwareVersionKey; // = "version";
   static const char* const kFirmwareTimeKey; // = "time";
-  
+
   explicit FirmwareUpdater(const CozmoContext* context);
   ~FirmwareUpdater();
   
   using RobotMap = RobotManager::RobotMap;
   
-  bool InitUpdate(const RobotMap& robots, int version);
+  bool InitUpdate(const RobotMap& robots, FirmwareType type, int version);
   bool Update(const RobotMap& robots);
 
   using JsonCallback = std::function<void(const Json::Value&)>;
-  void LoadHeader(const JsonCallback& callback);
+  void LoadHeader(FirmwareType type, const JsonCallback& callback);
   
   void HandleFlashWriteAck(RobotID_t robotId, const RobotInterface::OTA::Ack& flashWriteAck);
   
@@ -172,6 +173,7 @@ private:
   
   FirmwareUpdateStage     _state;
   FirmwareUpdateSubStage  _subState;
+  FirmwareType            _type;
   
   int16_t _currentPacketNumber = 0;
 };

@@ -47,6 +47,7 @@ class IExternalInterface;
 class CozmoContext;
 class CannedAnimationContainer;
 class AnimationGroupContainer;
+enum class FirmwareType : uint8_t;
 class FirmwareUpdater;
 class AnimationTriggerResponsesContainer;
 class RobotInitialConnection;
@@ -85,7 +86,7 @@ public:
   void UpdateRobotConnection();
   
   // Attempt to begin updating firmware to specified version (return false if it cannot begin)
-  bool InitUpdateFirmware(int version);
+  bool InitUpdateFirmware(FirmwareType type, int version);
   
   // Update firmware (if appropriate) on every connected robot
   bool UpdateFirmware();

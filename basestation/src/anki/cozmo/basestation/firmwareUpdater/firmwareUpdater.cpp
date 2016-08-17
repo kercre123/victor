@@ -37,6 +37,7 @@ FirmwareUpdater::FirmwareUpdater(const CozmoContext* context)
   , _version(0)
   , _state(FirmwareUpdateStage::Flashing)
   , _subState(FirmwareUpdateSubStage::Init)
+  , _type(FirmwareType::Current)
 {
 }
   
@@ -87,15 +88,25 @@ void LoadFirmwareFile(AsyncLoaderData* loaderData, std::function<void()> callbac
     callback();
   }
 }
-  
-std::string GetFirmwareFilename()
+
+std::string GetFirmwareFilename(FirmwareType type)
 {
-  return "config/basestation/firmware/cozmo.safe";
+  const char* folder = nullptr;
+  switch (type)
+  {
+    case FirmwareType::Current:
+      folder = "firmware";
+      break;
+    case FirmwareType::Old:
+      folder = "old_firmware";
+      break;
+  }
+  return std::string{"config/basestation/"} + folder + "/cozmo.safe";
 }
 
-void FirmwareUpdater::LoadHeader(const JsonCallback& callback)
+void FirmwareUpdater::LoadHeader(FirmwareType type, const JsonCallback& callback)
 {
-    _fileLoaderData.Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, GetFirmwareFilename()));
+  _fileLoaderData.Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, GetFirmwareFilename(type)));
 
   auto loadCallback = [this, callback]
   {
@@ -325,7 +336,7 @@ void FirmwareUpdater::UpdateSubState(const RobotMap& robots)
     {
       WaitForLoadingThreadToExit();
 
-      _fileLoaderData.Init( _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, GetFirmwareFilename()) );
+      _fileLoaderData.Init( _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, GetFirmwareFilename(_type)) );
       _loadingThread = std::thread(LoadFirmwareFile, &_fileLoaderData, nullptr);
       
       PRINT_NAMED_INFO("FirmwareUpdater.Update.Init", "State %s:%s, loading file:'%s'\n",
@@ -528,8 +539,8 @@ void FirmwareUpdater::HandleFlashWriteAck(RobotID_t robotId, const RobotInterfac
   PRINT_NAMED_WARNING("FirmwareUpdater.HandleFlashWriteAck.NoRobot", "No Robot entry with id %u", robotId);
 }
 
-  
-bool FirmwareUpdater::InitUpdate(const RobotMap& robots, int version)
+
+bool FirmwareUpdater::InitUpdate(const RobotMap& robots, FirmwareType type, int version)
 {
   IExternalInterface* externalInterface = _context->GetExternalInterface();
   if (nullptr == externalInterface)
@@ -565,6 +576,7 @@ bool FirmwareUpdater::InitUpdate(const RobotMap& robots, int version)
   }
   
   _version = version;
+  _type    = type;
   _state   = FirmwareUpdateStage::Flashing;
   SetSubState(robots, FirmwareUpdateSubStage::Init);
   

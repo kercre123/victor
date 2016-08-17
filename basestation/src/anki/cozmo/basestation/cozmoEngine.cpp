@@ -202,7 +202,7 @@ void CozmoEngine::HandleUpdateFirmware(const AnkiEvent<ExternalInterface::Messag
     return;
   }
 
-  if (_context->GetRobotManager()->InitUpdateFirmware(msg.version))
+  if (_context->GetRobotManager()->InitUpdateFirmware(msg.fwType, msg.version))
   {
     SetEngineState(EngineState::UpdatingFirmware);
   }
