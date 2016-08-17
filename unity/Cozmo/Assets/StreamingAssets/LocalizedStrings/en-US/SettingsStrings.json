@@ -18,6 +18,18 @@
       "/{*}"
     ]
   },
+  "settings.sdkPanel.enableButton.text": {
+    "translation": "Enable SDK"
+  },
+  "settings.sdkPanel.label.title": {
+    "translation": "Cozmo SDK"
+  },
+  "settings.sdkPanel.sdkUrl.label": {
+    "translation": "anki.com/sdk"
+  },
+  "settings.sdkPanel.showSDKButton.text": {
+    "translation": "Show SDK"
+  },
   "settings.volumePanel.robotToggle.low": {
     "translation": "Low"
   },

@@ -2,17 +2,17 @@
 using System.Collections;
 
 namespace Cozmo.Settings {
-  public class DefaultVolumeSettingsConfig : ScriptableObject {
+  public class DefaultSettingsValuesConfig : ScriptableObject {
     public enum RobotVolumeLevels {
       LOW,
       MEDIUM,
       HIGH
     }
 
-    private static DefaultVolumeSettingsConfig _sInstance;
-    public static DefaultVolumeSettingsConfig Instance { get { return _sInstance; } }
+    private static DefaultSettingsValuesConfig _sInstance;
+    public static DefaultSettingsValuesConfig Instance { get { return _sInstance; } }
 
-    public static void SetInstance(DefaultVolumeSettingsConfig instance) {
+    public static void SetInstance(DefaultSettingsValuesConfig instance) {
       _sInstance = instance;
     }
 
@@ -34,5 +34,9 @@ namespace Cozmo.Settings {
     [SerializeField, Range(0f, 1f)]
     private float _DefaultMasterVolume = 1f;
     public float DefaultMasterVolumeLevel { get { return _DefaultMasterVolume; } }
+
+    [SerializeField]
+    private string _SdkUrl = "https://developer.anki.com/en-us";
+    public string SdkUrl { get { return _SdkUrl; } }
   }
 }

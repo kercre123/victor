@@ -9,9 +9,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 88060f389a46f4c62911fd4ef9f18620, type: 3}
-  m_Name: DefaultVolumeSettingsConfig
+  m_Name: DefaultSettingsValuesConfig
   m_EditorClassIdentifier: 
   _LowRobotVolume: 0.2
   _MediumRobotVolume: 0.6
   _HighRobotVolume: 1
   _DefaultMasterVolume: 1
+  _SdkUrl: https://developer.anki.com/en-us
