@@ -689,6 +689,25 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
       // Ignore physical robot's notion of z from the message? (msg.pose_z)
       f32 pose_z = 0.f;
 
+      
+      // Need to put the odometry update in terms of the current robot origin
+      const Pose3d* origin = GetPoseOriginList().GetOriginByID(msg.pose_origin_id);
+      if(nullptr == origin) {
+        PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.BadOriginID",
+                            "Received RobotState with originID=%u, only %zu pose origins available",
+                            msg.pose_origin_id, GetPoseOriginList().GetSize());
+        return RESULT_FAIL;
+      }
+
+      // Initialize new pose to be within the reported origin
+      newPose = Pose3d(msg.pose.angle, Z_AXIS_3D(), {msg.pose.x, msg.pose.y, msg.pose.z}, origin);
+      
+      // It's possible the pose origin to which this update refers has since been
+      // rejiggered and is now the child of another origin. To add to history below,
+      // we must first flatten it. We do all this before "fixing" pose_z because pose_z
+      // will be w.r.t. robot origin so we want newPose to already be as well.
+      newPose = newPose.GetWithRespectToOrigin();
+      
       if(msg.pose_frame_id == GetPoseFrameID()) {
         // Frame IDs match. Use the robot's current Z (but w.r.t. world origin)
         pose_z = GetPose().GetWithRespectToOrigin().GetTranslation().z();
@@ -706,24 +725,11 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
                             msg.pose_frame_id);
           return lastResult;
         }
-        pose_z = p.GetPose().GetTranslation().z();
-      }
-          
-      // Need to put the odometry update in terms of the current robot origin
-      const Pose3d* origin = GetPoseOriginList().GetOriginByID(msg.pose_origin_id);
-      if(nullptr == origin) {
-        PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.BadOriginID",
-                            "Received RobotState with originID=%u, only %zu pose origins available",
-                            msg.pose_origin_id, GetPoseOriginList().GetSize());
-        return RESULT_FAIL;
+        pose_z = p.GetPose().GetWithRespectToOrigin().GetTranslation().z();
       }
       
-      newPose = Pose3d(msg.pose.angle, Z_AXIS_3D(), {msg.pose.x, msg.pose.y, pose_z}, origin);
+      newPose.SetTranslation({newPose.GetTranslation().x(), newPose.GetTranslation().y(), pose_z});
       
-      // It's possible the pose origin to which this update refers has since been
-      // rejiggered and is now the child of another origin. To add to history below,
-      // we must first flatten it.
-      newPose = newPose.GetWithRespectToOrigin();
     } // if/else on ramp
     
     // Add to history

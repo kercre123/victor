@@ -73,6 +73,9 @@ public:
   // e.g. when the robot delocalizes
   void Clear();
   
+  // Get last time that the pose of the object was updated
+  TimeStamp_t GetLastPoseUpdatedTime(const ObjectID& id) const;
+  
 protected:
   
   struct PoseConfirmation
@@ -80,9 +83,10 @@ protected:
     Pose3d lastPose;
     s32    numTimesObserved   = 0; // at this pose, using vision
     s32    numTimesUnobserved = 0;
+    TimeStamp_t    lastPoseUpdatedTime = 0;
     
     PoseConfirmation() { }
-    PoseConfirmation(const Pose3d& initPose, s32 initNumTimesObserved);
+    PoseConfirmation(const Pose3d& initPose, s32 initNumTimesObserved, TimeStamp_t initLastPoseUpdatedTime);
   };
   
   using PoseConfirmations = std::map<ObjectID, PoseConfirmation>;

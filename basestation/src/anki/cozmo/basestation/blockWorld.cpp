@@ -1280,13 +1280,13 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
            // Add all other match pairs from other frames as potentials for localization.
            // We will decide which object(s) to localize to from this list after we've
            // processed all objects seen in this update.
-      for(auto & match : matchingObjects)
-      {
+          for(auto & match : matchingObjects)
+          {
              // Don't try to reinsert the object in the current frame (already did this above)
              if(match.second != matchingObject)
              {
-        potentialObjectsForLocalizingTo.Insert(objSeen, match.second, distToObjSeen);
-      }
+               potentialObjectsForLocalizingTo.Insert(objSeen, match.second, distToObjSeen);
+             }
            }
         }
       

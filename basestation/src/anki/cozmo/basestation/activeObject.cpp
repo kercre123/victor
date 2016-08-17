@@ -151,6 +151,12 @@ namespace Anki {
     
     bool ActiveObject::CanBeUsedForLocalization() const
     {
+      if (IsPoseStateKnown() && IsMoving()) {
+        // This shouldn't happen!
+        PRINT_NAMED_WARNING("ActiveObject.CanBeUsedForLocalization.PoseStateKnownButMoving", "");
+        return false;
+      }
+      
       return (GetPoseState() == PoseState::Known &&
               GetActiveID() >= 0 &&
               GetLastPoseUpdateDistance() >= 0.f &&

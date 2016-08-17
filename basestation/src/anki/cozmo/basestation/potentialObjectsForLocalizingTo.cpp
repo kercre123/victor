@@ -127,9 +127,16 @@ bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
     return false;
   }
   
-  const bool wasRobotMoving = _robot.GetVisionComponent().WasMovingTooFast(observedObject->GetLastObservedTime(),
-                                                                           DEG_TO_RAD(kMaxBodyRotationSpeed_degPerSec),
-                                                                           DEG_TO_RAD(kMaxHeadRotationSpeed_degPerSec));
+
+//  const bool wasRobotMoving = _robot.GetVisionComponent().WasMovingTooFast(observedObject->GetLastObservedTime(),
+//                                                                           DEG_TO_RAD(kMaxBodyRotationSpeed_degPerSec),
+//                                                                           DEG_TO_RAD(kMaxHeadRotationSpeed_degPerSec));
+
+  // Seems to be better than the commented line above which should be more accurate,
+  // but this incorporates some delay which might compensate for whatever timestamp inaccuracies there may be...
+  // or something...
+  const bool wasRobotMoving = _robot.GetMoveComponent().IsMoving();
+  
   
   // We'd like to use this pair for localization, but the robot is moving,
   // so we just drop it on the floor instead (without even updating the object)  :-(
@@ -138,10 +145,32 @@ bool PotentialObjectsForLocalizingTo::Insert(const std::shared_ptr<ObservableObj
   if (wasRobotMoving)
   {
     VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.Insert.IsMoving", "");
-    if(matchedOrigin == _currentWorldOrigin) {
-      UpdateMatchedObjectPose(newPair, wasRobotMoving);
-    }
     return false;
+  }
+  
+  // Check whether or not the robot had moved since the last time the matched object's pose was updated.
+  // If it hasn't moved, then only localize if the observed object pose is nearly identical to the
+  // matched object pose.
+  if(matchedOrigin == _currentWorldOrigin) {
+    const TimeStamp_t lastObservedTime = _robot.GetObjectPoseConfirmer().GetLastPoseUpdatedTime(matchedObject->GetID());
+    const TimeStamp_t currObservedTime = observedObject->GetLastObservedTime();
+    const RobotPoseStamp *rpsMatched;
+    const RobotPoseStamp *rpsObserved;
+    if (_robot.GetPoseHistory()->GetComputedPoseAt(lastObservedTime, &rpsMatched) == RESULT_OK &&
+        _robot.GetPoseHistory()->GetComputedPoseAt(currObservedTime, &rpsObserved) == RESULT_OK) {
+      
+      // Extra tight isSameAs thresholds
+      const f32 kSamePoseThresh_mm = 1.f;
+      const f32 kSameAngleThresh_rad = DEG_TO_RAD(1.f);
+      
+      if (rpsObserved->GetPose().IsSameAs(rpsMatched->GetPose(), kSamePoseThresh_mm, kSameAngleThresh_rad)) {
+        if (!observedObject->GetPose().IsSameAs(matchedObject->GetPose(), kSamePoseThresh_mm, kSameAngleThresh_rad)) {
+          VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.Insert.ObjectPoseNotSameEnough", "");
+          UpdateMatchedObjectPose(newPair, wasRobotMoving);
+          return false;
+        }
+      }
+    }
   }
   
   auto iter = _pairMap.find(matchedOrigin);

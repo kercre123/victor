@@ -91,9 +91,10 @@ Result ObjectPoseConfirmer::MarkObjectUnknown(ObservableObject* object) const
   return RESULT_OK;
 }
   
-ObjectPoseConfirmer::PoseConfirmation::PoseConfirmation(const Pose3d& initPose, s32 initNumTimesObserved)
+ObjectPoseConfirmer::PoseConfirmation::PoseConfirmation(const Pose3d& initPose, s32 initNumTimesObserved, TimeStamp_t initLastPoseUpdatedTime)
 : lastPose(initPose)
 , numTimesObserved(initNumTimesObserved)
+, lastPoseUpdatedTime(initLastPoseUpdatedTime)
 {
   
 }
@@ -120,7 +121,7 @@ Result ObjectPoseConfirmer::AddVisualObservation(ObservableObject* object, const
                    EnumToString(object->GetPoseState()));
     
     // Initialize new entry with one observation (this one)
-    _poseConfirmations[objectID] = PoseConfirmation(newPose, 1);
+    _poseConfirmations[objectID] = PoseConfirmation(newPose, 1, 0);
   
   }
   else
@@ -139,14 +140,26 @@ Result ObjectPoseConfirmer::AddVisualObservation(ObservableObject* object, const
       
       if(poseConf.numTimesObserved >= kMinTimesToObserveObject)
       {
+
+        // Makes the isMoving check more temporally accurate, but might not actually be helping that much.
+        TimeStamp_t stoppedMovingTime;
+        bool objectIsMoving = object->IsMoving(&stoppedMovingTime);
+        if (!objectIsMoving) {
+          if (stoppedMovingTime >= object->GetLastObservedTime()) {
+            PRINT_CH_DEBUG("PoseConfirmer", "AddVisualObservation.ObjectIsStillMoving", "");
+            objectIsMoving = true;
+          }
+        }
+        
         const bool isFarAway = Util::IsFltGT(obsDistance_mm,  kMaxLocalizationDistance_mm);
-        const bool useDirty = isFarAway || robotWasMoving;
+        const bool useDirty = isFarAway || robotWasMoving || objectIsMoving;
         
         // Note that we never change a Known object to Dirty with a visual observation
         if(!useDirty || !object->IsPoseStateKnown())
         {
           const PoseState newPoseState = (useDirty ? PoseState::Dirty : PoseState::Known);
           SetPoseHelper(object, newPose, obsDistance_mm, newPoseState, "AddVisualObservation.Update");
+          poseConf.lastPoseUpdatedTime = object->GetLastObservedTime();
         }
       }
     }
@@ -179,8 +192,10 @@ Result ObjectPoseConfirmer::AddRobotRelativeObservation(ObservableObject* object
   
   SetPoseHelper(object, poseWrtOrigin, -1.f, poseState, "AddRobotRelativeObservation");
   
-  // Note: this uses existing if available, or adds new as needed
-  _poseConfirmations[objectID].lastPose = poseWrtOrigin;
+  // numObservations is set to 1.
+  // Basically, this requires that the object is observed a few times in a row without this method being called
+  // in order for it to be localized to.
+  _poseConfirmations[objectID] = PoseConfirmation(poseWrtOrigin, 1, object->GetLastObservedTime());
   
   return RESULT_OK;
 }
@@ -199,9 +214,9 @@ Result ObjectPoseConfirmer::AddObjectRelativeObservation(ObservableObject* objec
   if(!observedObject->IsPoseStateUnknown())
   {
     SetPoseHelper(objectToUpdate, newPose, -1.f, observedObject->GetPoseState(), "AddObjectRelativeObservation");
+    _poseConfirmations[objectID].lastPoseUpdatedTime = observedObject->GetLastObservedTime();
   }
   
-  // Note: this uses existing if available, or adds new as needed
   _poseConfirmations[objectID].lastPose = newPose;
   
   return RESULT_OK;
@@ -222,8 +237,11 @@ Result ObjectPoseConfirmer::AddLiftRelativeObservation(ObservableObject* object,
 
   SetPoseHelper(object, newPoseWrtLift, -1, PoseState::Dirty, "AddLiftRelativeObservation");
   
-  // Note: this uses existing if available, or adds new as needed
-  _poseConfirmations[objectID].lastPose = newPoseWrtLift;
+  // numObservations is set to 1.
+  // Basically, this requires that the object is observed a few times in a row without this method being called
+  // in order for it to be localized to.
+  _poseConfirmations[objectID] = PoseConfirmation(newPoseWrtLift, 1, object->GetLastObservedTime());
+
   
   return RESULT_OK;
 }
@@ -293,6 +311,16 @@ void ObjectPoseConfirmer::Clear()
   _poseConfirmations.clear();
 }
 
+  
+TimeStamp_t ObjectPoseConfirmer::GetLastPoseUpdatedTime(const ObjectID& id) const
+{
+  auto poseConf = _poseConfirmations.find(id);
+  if (poseConf != _poseConfirmations.end()) {
+    return poseConf->second.lastPoseUpdatedTime;
+  }
+  
+  return 0;
+}
   
 } // namespace Cozmo
 } // namespace Anki
