@@ -156,7 +156,7 @@ void WebotsDevLogController::HandleVizData(const DevLogReader::LogData& logData)
   
 void WebotsDevLogController::HandlePrintLines(const DevLogReader::LogData& logData)
 {
-  std::cout << reinterpret_cast<const char*>(logData._data.data()) << std::endl;
+  std::cout << reinterpret_cast<const char*>(logData._data.data());
 }
 
 } // namespace Cozmo

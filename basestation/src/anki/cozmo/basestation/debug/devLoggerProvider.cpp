@@ -27,8 +27,10 @@ DevLoggerProvider::DevLoggerProvider(const std::string& baseDirectory, std::size
   
 void DevLoggerProvider::Log(ILoggerProvider::LogLevel logLevel, const std::string& message)
 {
+  size_t messageSize = message.size();
+  
   std::ostringstream modMessageStream;
-  modMessageStream << std::setfill('0') << std::setw(7) << DevLoggingSystem::GetAppRunMilliseconds() << " " << message;
+  modMessageStream << std::setfill('0') << std::setw(7) << DevLoggingSystem::GetAppRunMilliseconds() << " " << messageSize << " " << message;
   Util::SaveToFileLoggerProvider::Log(logLevel, modMessageStream.str());
 }
 

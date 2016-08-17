@@ -26,14 +26,19 @@ bool DevLogReaderPrint::FillLogData(std::ifstream& fileHandle, LogData& logData_
   static constexpr auto kMaxLineLength = 1024;
   static char nextLineBuffer[kMaxLineLength];
   
-  fileHandle.getline(nextLineBuffer, kMaxLineLength);
+  // get entry which tells us size of line
+  std::streamsize lineSize;
+  fileHandle >> lineSize;
+  
+  // reading an extra space and discarding it
+  fileHandle.read(nextLineBuffer, 1);
+  fileHandle.read(nextLineBuffer, lineSize);
   if (!fileHandle.good())
   {
     return false;
   }
   
-  // Note that getline removes the line delimiter (\n) from the buffer but does not store it so we reduce gcount by 1
-  const auto lineLength = fileHandle.gcount() - 1;
+  const auto lineLength = fileHandle.gcount();
   
   // We want to include an extra character in the vector for null
   logData_out._data.resize(lineLength + 1);
