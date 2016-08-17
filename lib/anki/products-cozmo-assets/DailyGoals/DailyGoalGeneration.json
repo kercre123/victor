@@ -44,6 +44,17 @@
         {
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
+          "TargetScore": 5,
+          "LessThan": true,
+          "Label": {
+            "text": "Challenge Score Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
+          "IsPlayer": false,
           "TargetScore": 4,
           "LessThan": false,
           "Label": {
@@ -99,8 +110,8 @@
         {
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
-          "TargetScore": 0,
-          "LessThan": false,
+          "TargetScore": 1,
+          "LessThan": true,
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -583,8 +594,8 @@
         },
         {
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
-          "IsPlayer": false,
-          "TargetScore": 4,
+          "IsPlayer": true,
+          "TargetScore": 5,
           "LessThan": false,
           "Label": {
             "text": "Challenge Score Condition",
@@ -594,8 +605,19 @@
         },
         {
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
-          "IsPlayer": true,
+          "IsPlayer": false,
           "TargetScore": 5,
+          "LessThan": true,
+          "Label": {
+            "text": "Challenge Score Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
+          "IsPlayer": false,
+          "TargetScore": 4,
           "LessThan": false,
           "Label": {
             "text": "Challenge Score Condition",
@@ -639,8 +661,8 @@
         {
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
-          "TargetScore": 0,
-          "LessThan": false,
+          "TargetScore": 1,
+          "LessThan": true,
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
