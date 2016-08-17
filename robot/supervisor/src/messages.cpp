@@ -125,6 +125,9 @@ namespace Anki {
           
         }
         
+        // In sim we don't expect to get the PowerState message which normally sets this
+        bodyRadioMode_ = BODY_ACCESSORY_OPERATING_MODE;
+
 #endif
         return RESULT_OK;
       }

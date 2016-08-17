@@ -273,6 +273,12 @@ namespace Anki {
           AnkiEvent( 228, "CozmoBot.Radio.Connected", 305, "", 0);
           wasConnected_ = true;
           BackpackLightController::TurnOffAll();
+          
+#if SIMULATOR
+          LiftController::Enable();
+          HeadController::Enable();
+          WheelController::Enable();
+#endif
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
           AnkiEvent( 229, "CozmoBot.Radio.Disconnected", 305, "", 0);
           Messages::ResetInit();
@@ -284,7 +290,11 @@ namespace Anki {
           waitForFirstMotorCalibAfterConnect_ = true;
           mode_ = INIT_MOTOR_CALIBRATION;
 
-#ifndef TARGET_K02
+#if SIMULATOR
+          LiftController::Disable();
+          HeadController::Disable();
+          WheelController::Disable();
+          
           TestModeController::Start(TM_NONE);
           AnimationController::EnableTracks(ALL_TRACKS);
           HAL::FaceClear();
