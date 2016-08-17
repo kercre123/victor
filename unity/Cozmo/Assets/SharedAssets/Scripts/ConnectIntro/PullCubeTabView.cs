@@ -82,7 +82,8 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
     if (robot != null) {
       if (Time.time - _NewlyConnectedObjectTime > _kTimeBetweenObjectsConnected) {
         DAS.Debug("PullCubeTabView.ProcessNewObject", "Processing: " + _NewlyConnectedObject);
-        _ObjectConnectedImagesList[_NewlyConnectedObjectId].gameObject.SetActive(true);
+        int typeIndex = (int)robot.LightCubes[_NewlyConnectedObjectId].ObjectType - 1;
+        _ObjectConnectedImagesList[typeIndex].gameObject.SetActive(true);
         _ObjectConnectedList.Add(_NewlyConnectedObject);
         _NewlyConnectedObject = Anki.Cozmo.ObjectType.Invalid;
         robot.LightCubes[_NewlyConnectedObjectId].SetLEDs(Color.cyan);
