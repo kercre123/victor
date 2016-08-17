@@ -13,7 +13,6 @@ PY=python3
 
 GENERATED_DIR=generated
 BUILD_DIR=build
-RELEASE_DIR=release
 
 EXTERNALS_DIR=../EXTERNALS/firmware
 
@@ -29,7 +28,7 @@ WIFI_BINARY=$(BUILD_DIR)/esp.user.bin
 RTIP_BINARY=$(BUILD_DIR)/robot.axf
 BODY_BINARY=$(BUILD_DIR)/syscon.axf
 MAP_FILES=$(BUILD_DIR)/esp.map $(BUILD_DIR)/robot.map $(BUILD_DIR)/syscon.map
-OTA_FILE=$(RELEASE_DIR)/cozmo.safe
+OTA_FILE=$(BUILD_DIR)/cozmo.safe
 
 .PHONY: clean AnkiLog purgeAnkiLog verboseAnkiLog esp k02 nrf sim fresh app espBuild server.1 server.2 server.3
 
@@ -57,7 +56,7 @@ clean:
 	make -C clad clean
 	make -C espressif/app clean
 	make -C espressif_bootloader clean
-	rm -rf $(BUILD_DIR) $(GENERATED_DIR) $(RELEASE_DIR) syscon/build
+	rm -rf $(BUILD_DIR) $(GENERATED_DIR) syscon/build
 	rm -rf generated.tar.bz2 keil.tar.bz2 firmware.tar.gz
 
 fresh: clean $(ANKI_LOG_TABLE_JSON) all python
@@ -67,9 +66,6 @@ python:
 	make $@ -C clad -j4
 
 $(BUILD_DIR):
-	mkdir -p $@
-
-$(RELEASE_DIR):
 	mkdir -p $@
 
 $(GENERATED_DIR):
@@ -130,7 +126,7 @@ espBuild: esp AnkiLog
 	$(PY) ./tools/wifiAppImageHeader.py ./espressif/bin/upgrade/user1.2048.new.3.bin $(WIFI_BINARY)
 	cp espressif/app/esp.map $(BUILD_DIR)/esp.map
 
-$(OTA_FILE): Makefile $(RELEASE_DIR) $(WIFI_BINARY) $(RTIP_BINARY) $(BODY_BINARY) tools/sign.py python
+$(OTA_FILE): Makefile $(WIFI_BINARY) $(RTIP_BINARY) $(BODY_BINARY) tools/sign.py python
 	$(PY) ./tools/sign.py -c $(BUILD_NUMBER) $(SIGN_FLAGS) --wifi $(WIFI_BINARY) --rtip $(RTIP_BINARY)  --body $(BODY_BINARY) $@
 
 $(BUILD_DIR)/syscon.map:
@@ -146,7 +142,6 @@ server.2: $(RTIP_BINARY) $(BODY_BINARY) # Run Keil cozmo.uvmpw batch build to ge
 	tar -cjf keil.tar.bz2 $(RTIP_BINARY) $(BODY_BINARY) $(BUILD_DIR)/app/robot.map syscon/build/app/syscon.map
 
 server.3: espBuild $(OTA_FILE)
-	echo $(BUILD_NUMBER) > VERSION
 	mv build/app/robot.map build/robot.map
 	mv syscon/build/app/syscon.map build/syscon.map
-	tar -czf firmware.tar.gz VERSION $(OTA_FILE) $(WIFI_BINARY) $(RTIP_BINARY) $(BODY_BINARY) $(MAP_FILES)
+	tar -czf firmware.tar.gz $(OTA_FILE) $(WIFI_BINARY) $(RTIP_BINARY) $(BODY_BINARY) $(MAP_FILES)
