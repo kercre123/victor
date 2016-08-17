@@ -179,5 +179,8 @@
   },
   "button.skip": {
     "translation": "Skip"
+  },
+  "button.createNew": {
+    "translation": "Create New"
   }
 }

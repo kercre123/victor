@@ -28,7 +28,7 @@
     "translation": "Enter Name"
   },
   "faceEnrollment.faceEnrollmentList.description": {
-    "translation": "These are the faces that Cozmo recognizes."
+    "translation": "Tap a free slot to introduce Cozmo to a new person.\nTap a filled slot to help Cozmo remember a person."
   },
   "faceEnrollment.faceEnrollmentList.deleteConfirmTitle": {
     "translation": "Delete {0}?"

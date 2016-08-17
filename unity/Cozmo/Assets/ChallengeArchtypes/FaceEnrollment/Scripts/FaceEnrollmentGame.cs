@@ -135,6 +135,7 @@ namespace FaceEnrollment {
       SharedMinigameView.ShowBackButton(() => {
         SharedMinigameView.ShowQuitButton();
         ShowFaceListSlide(SharedMinigameView);
+        SharedMinigameView.HideSpinnerWidget();
       });
     }
 

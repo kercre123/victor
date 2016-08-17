@@ -16,8 +16,8 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
   private RectTransform _ContentContainer;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _EnrollNewFacePrefab;
-  private Cozmo.UI.CozmoButton _EnrollNewFaceInstance;
+  private FaceEnrollmentNewCell _EnrollNewFacePrefab;
+  private FaceEnrollmentNewCell _EnrollNewFaceInstance;
 
   private List<FaceEnrollmentCell> _FaceCellList = new List<FaceEnrollmentCell>();
 
@@ -31,9 +31,9 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
       newFaceCell.OnReEnrollFaceRequested += HandleReEnrollFaceRequested;
       _FaceCellList.Add(newFaceCell);
     }
-    _EnrollNewFaceInstance = GameObject.Instantiate(_EnrollNewFacePrefab.gameObject).GetComponent<Cozmo.UI.CozmoButton>();
+    _EnrollNewFaceInstance = GameObject.Instantiate(_EnrollNewFacePrefab.gameObject).GetComponent<FaceEnrollmentNewCell>();
     _EnrollNewFaceInstance.transform.SetParent(_ContentContainer, false);
-    _EnrollNewFaceInstance.Initialize(HandleNewEnrollmentRequested, "enroll_new_face", "face_enrollment_list_slide");
+    _EnrollNewFaceInstance.OnCreateNewButton += HandleNewEnrollmentRequested;
   }
 
   public void ClearList() {
