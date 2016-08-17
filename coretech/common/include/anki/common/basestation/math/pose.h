@@ -284,8 +284,11 @@ namespace Anki {
     const Pose3d& FindOrigin() const;
 
     // Check to see if two poses are the same.  Return true if so.
-    // If requested, Tdiff and angleDiff will contain how different the two
-    // transformations are.
+    // * distThreshold is aligned to "this" pose's orientation, not the parent frame!
+    // * If distThreshold is same in all dimensions (e.g. if set from scalar float),
+    //   simple Euclidean distance is used.
+    // * If requested, Tdiff and angleDiff will contain how different the two
+    //   transformations are.
     bool IsSameAs(const Pose3d&  P_other,
                   const Point3f& distThreshold,
                   const Radians& angleThreshold) const;

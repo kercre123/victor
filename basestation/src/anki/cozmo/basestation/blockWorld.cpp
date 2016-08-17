@@ -130,6 +130,9 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdgeBorderQuads, "BlockWorld.MemoryMap", f
 // kReviewInterestingEdges: if set to true, interesting edges are reviewed after adding new ones to see whether they are still interesting
 CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges", true);
 
+// Enable to draw (semi-experimental) bounding cuboids around stacks of 2 blocks
+CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   BlockWorld::BlockWorld(Robot* robot)
   : _robot(robot)
@@ -1176,9 +1179,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
             // Otherwise, it must've been moved off the lift so unset its carry state.
             if (objectFound->GetID() == _robot->GetCarryingObject())
             {
-              if (!objectFound->GetPose().IsSameAs(objSeen->GetPose(),
-                                                   objSeen->GetSameDistanceTolerance(),
-                                                   objSeen->GetSameAngleTolerance()))
+              if (!objectFound->IsSameAs(*objSeen))
               {
                 _robot->UnSetCarryObject(objectFound->GetID());
               }
@@ -3688,93 +3689,110 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     return matchingObject;
   }
   
-  ObservableObject* BlockWorld::FindObjectOnTopOfHelper(const ObservableObject& objectOnBottom,
-                                                        f32 zTolerance,
-                                                        const BlockWorldFilter& filterIn) const
+  ObservableObject* BlockWorld::FindObjectOnTopOrUnderneathHelper(const ObservableObject& referenceObject,
+                                                                  f32 zTolerance,
+                                                                  const BlockWorldFilter& filterIn,
+                                                                  bool onTop) const
   {
-    Point3f sameDistTol(objectOnBottom.GetSize());
-    sameDistTol.x() *= 0.5f;  // An object should only be considered to be on top if it's midpoint is actually on top of the bottom object's top surface.
-    sameDistTol.y() *= 0.5f;
-    sameDistTol.z() = zTolerance;
-    sameDistTol.Abs();
-
-    Rotation3d rotateBacktoAxisAligned(objectOnBottom.GetPose().GetRotation());
-    rotateBacktoAxisAligned.Invert();
+    // Three checks:
+    // 1. objects are within same coordinate frame
+    // 2. centroid of candiate object projected onto "ground" (XY) plane must lie within
+    //    the check object's projected bounding box
+    // 3. (a) for "onTop": bottom of candidate object must be "near" top of reference object
+    //    (b) for "!onTop": top of canddiate object must be "near" bottom of reference object
+    
+    const Pose3d refWrtOrigin = referenceObject.GetPose().GetWithRespectToOrigin();
+    const Quad2f refProjectedQuad = referenceObject.GetBoundingQuadXY(refWrtOrigin);
     
     // Find the point at the top middle of the object on bottom
-    Point3f rotatedBtmSize(objectOnBottom.GetPose().GetRotation() * objectOnBottom.GetSize());
-    Point3f topOfObjectOnBottom(objectOnBottom.GetPose().GetTranslation());
-    topOfObjectOnBottom.z() += 0.5f*std::abs(rotatedBtmSize.z());
+    // (or if !onTop, the bottom middle of the object on top)
+    const Point3f rotatedBtmSize(refWrtOrigin.GetRotation() * referenceObject.GetSize());
+    const f32 topOfObjectOnBottom = (refWrtOrigin.GetTranslation().z() +
+                                     (onTop ? 0.5f : -0.5f) * std::abs(rotatedBtmSize.z()));
     
     BlockWorldFilter filter(filterIn);
-    filter.AddIgnoreID(objectOnBottom.GetID());
+    filter.AddIgnoreID(referenceObject.GetID());
     filter.AddFilterFcn(
-      [&topOfObjectOnBottom, &sameDistTol, &rotateBacktoAxisAligned](const ObservableObject* candidateObject)
+      [&topOfObjectOnBottom, &refWrtOrigin, &refProjectedQuad, &zTolerance, &onTop](const ObservableObject* candidateObject) -> bool
       {
+        // This should never happen: objects in blockworld should always have parents (and not be origins themselves)
+        ASSERT_NAMED(nullptr != refWrtOrigin.GetParent(),
+                     "BlockWorld.FindObjectOnTopOfUnderneathHelper.NullParent");
+        
+        Pose3d candidateWrtOrigin;
+        const bool inSameFrame = candidateObject->GetPose().GetWithRespectTo(*refWrtOrigin.GetParent(), candidateWrtOrigin);
+        if(!inSameFrame)
+        {
+          return false;
+        }
+        
+        const Point2f projectedCentroid(candidateWrtOrigin.GetTranslation()); // Drops Z coordinate
+        const bool withinProjectedQuad = refProjectedQuad.Contains(projectedCentroid);
+        if(!withinProjectedQuad)
+        {
+          return false;
+        }
+        
         // Find the point at bottom middle of the object we're checking to be on top
-        Point3f rotatedTopSize(candidateObject->GetPose().GetRotation() * candidateObject->GetSize());
-        Point3f bottomOfCandidateObject(candidateObject->GetPose().GetTranslation());
-        bottomOfCandidateObject.z() -= 0.5f*std::abs(rotatedTopSize.z());
-                          
+        // (or if !onTop, the top middle of object we're checking to be underneath)
+        const Point3f rotatedCandidateSize(candidateWrtOrigin.GetRotation() * candidateObject->GetSize());
+        const f32 bottomOfCandidateObject = (candidateWrtOrigin.GetTranslation().z() +
+                                             (onTop ? -0.5f : 0.5f) * std::abs(rotatedCandidateSize.z()));
+        
         // If the top of the bottom object and the bottom the candidate top object are
         // close enough together, return this as the object on top
-        Point3f dist(topOfObjectOnBottom);
-        dist -= bottomOfCandidateObject;
-        dist = rotateBacktoAxisAligned * dist;
-        dist.Abs();
-
-        if(dist < sameDistTol) {
+        const f32 dist = std::abs(topOfObjectOnBottom - bottomOfCandidateObject);
+        
+        if(Util::IsFltLE(dist, zTolerance))
+        {
           return true;
-        } else {
+        }
+        else
+        {
           return false;
         }
       });
     
-    return FindObjectHelper(filter, nullptr, true);
+    ObservableObject* foundObject = FindObjectHelper(filter, nullptr, true);
+    
+    if(kVisualizeStacks && _robot->GetContext()->GetVizManager() != nullptr)
+    {
+      // Cheap method to visualize stacks as a cuboid around both objects involved
+      const u32 stackID = referenceObject.GetID().GetValue() + (onTop ? 250 : 500);
+      if(nullptr != foundObject)
+      {
+        Quad2f foundQuad = foundObject->GetBoundingQuadXY(foundObject->GetPose().GetWithRespectToOrigin());
+        
+        // Get bounding box for the two object's projected bounding quads
+        std::vector<Point2f> corners;
+        corners.reserve(8);
+        std::copy(refProjectedQuad.begin(), refProjectedQuad.end(), std::back_inserter(corners));
+        std::copy(foundQuad.begin(), foundQuad.end(), std::back_inserter(corners));
+        Rectangle<f32> bbox(corners);
+        
+        Pose3d vizPose(0, Z_AXIS_3D(), Point3f(bbox.GetXmid(), bbox.GetYmid(),
+                                               refWrtOrigin.GetTranslation().z() +
+                                               (onTop ? 0.5f : -0.5f)*rotatedBtmSize.z()));
+        
+        const Point3f rotatedFoundSize(foundObject->GetPose().GetWithRespectToOrigin().GetRotation() * foundObject->GetSize());
+        const f32 height = rotatedBtmSize.z() + rotatedFoundSize.z();
+        
+        _robot->GetContext()->GetVizManager()->DrawCuboid(stackID,
+                                                          Point3f(bbox.GetHeight(),
+                                                                  bbox.GetWidth(),
+                                                                  height),
+                                                          vizPose,
+                                                          onTop ? ColorRGBA(0.5f,0.f,0.75f,0.6f) : ColorRGBA(0.75f,0.1f,0.5f,0.6f) );
+      }
+      else
+      {
+        _robot->GetContext()->GetVizManager()->EraseCuboid(stackID);
+      }
+    }
+    
+    return foundObject;
   }
   
-  
-  ObservableObject* BlockWorld::FindObjectUnderneathHelper(const ObservableObject& objectOnTop,
-                                                           f32 zTolerance,
-                                                           const BlockWorldFilter& filterIn) const
-  {
-    Point3f sameDistTol(objectOnTop.GetSize());
-    sameDistTol.x() *= 0.5f;  // An object should only be considered to be on top if it's midpoint is actually on top of the bottom object's top surface.
-    sameDistTol.y() *= 0.5f;
-    sameDistTol.z() = zTolerance;
-    sameDistTol = objectOnTop.GetPose().GetRotation() * sameDistTol;
-    sameDistTol.Abs();
-    
-    // Find the point at the top middle of the object on bottom
-    Point3f rotatedBtmSize(objectOnTop.GetPose().GetRotation() * objectOnTop.GetSize());
-    Point3f bottomOfObjectOnTop(objectOnTop.GetPose().GetTranslation());
-    bottomOfObjectOnTop.z() -= 0.5f*std::abs(rotatedBtmSize.z());
-    
-    BlockWorldFilter filter(filterIn);
-    filter.AddIgnoreID(objectOnTop.GetID());
-    filter.AddFilterFcn([&bottomOfObjectOnTop, &sameDistTol](const ObservableObject* candidateObject)
-                        {
-                          // Find the point at top middle of the object we're checking to be underneath
-                          Point3f rotatedBtmSize(candidateObject->GetPose().GetRotation() * candidateObject->GetSize());
-                          Point3f topOfCandidateObject(candidateObject->GetPose().GetTranslation());
-                          topOfCandidateObject.z() += 0.5f*std::abs(rotatedBtmSize.z());
-                          
-                          // If the top of the bottom object and the bottom the candidate top object are
-                          // close enough together, return this as the object on top
-                          Point3f dist(bottomOfObjectOnTop);
-                          dist -= topOfCandidateObject;
-                          dist.Abs();
-                          
-                          if(dist < sameDistTol) {
-                            return true;
-                          } else {
-                            return false;
-                          }
-                        });
-    
-    return FindObjectHelper(filter, nullptr, true);
-  }
-
   
   ObservableObject* BlockWorld::FindObjectClosestToHelper(const Pose3d& pose,
                                                           const Vec3f&  distThreshold,
@@ -3851,7 +3869,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
   ObservableObject* BlockWorld::FindClosestMatchingObject(const ObservableObject& object,
                                                           const Vec3f& distThreshold,
                                                           const Radians& angleThreshold,
-                                                          const BlockWorldFilter& filterIn)
+                                                                const BlockWorldFilter& filterIn)
   {
     Vec3f closestDist(distThreshold);
     Radians closestAngle(angleThreshold);
@@ -3871,15 +3889,15 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
         return false;
       }
     });
-    
+
     ObservableObject* closestObject = FindObjectHelper(filter);
     return closestObject;
   } // FindClosestMatchingObject(given object)
-
+  
   ObservableObject* BlockWorld::FindClosestMatchingObject(ObjectType withType,
                                                           const Pose3d& pose,
                                                           const Vec3f& distThreshold,
-                                                          const Radians& angleThreshold,
+                                                                const Radians& angleThreshold,
                                                           const BlockWorldFilter& filterIn)
   {
     Vec3f closestDist(distThreshold);
@@ -3904,7 +3922,7 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
     ObservableObject* closestObject = FindObjectHelper(filter);
     return closestObject;
   } // FindClosestMatchingObject(given pose)
-
+  
   void BlockWorld::ClearObjectsByFamily(const ObjectFamily family)
   {
     if(_canDeleteObjects) {

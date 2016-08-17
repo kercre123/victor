@@ -460,13 +460,10 @@ namespace Anki
                                          const ModifierFcn& modiferFcn = nullptr,
                                          bool returnFirstFound = false) const;
       
-      ObservableObject* FindObjectOnTopOfHelper(const ObservableObject& objectOnBottom,
+      ObservableObject* FindObjectOnTopOrUnderneathHelper(const ObservableObject& referenceObject,
                                                 f32 zTolerance,
-                                                const BlockWorldFilter& filterIn = BlockWorldFilter()) const;
-
-      ObservableObject* FindObjectUnderneathHelper(const ObservableObject& objectOnTop,
-                                                   f32 zTolerance,
-                                                   const BlockWorldFilter& filterIn = BlockWorldFilter()) const;
+                                                          const BlockWorldFilter& filterIn,
+                                                          bool onTop) const;
       
       ObservableObject* FindObjectClosestToHelper(const Pose3d& pose,
                                                   const Vec3f&  distThreshold,
@@ -624,28 +621,28 @@ namespace Anki
                                                                  f32 zTolerance,
                                                                  const BlockWorldFilter& filter) const
     {
-      return FindObjectOnTopOfHelper(objectOnBottom, zTolerance, filter); // returns const
+      return FindObjectOnTopOrUnderneathHelper(objectOnBottom, zTolerance, filter, true); // returns const
     }
     
     inline ObservableObject* BlockWorld::FindObjectOnTopOf(const ObservableObject& objectOnBottom,
                                                            f32 zTolerance,
                                                            const BlockWorldFilter& filter)
     {
-      return FindObjectOnTopOfHelper(objectOnBottom, zTolerance, filter); // returns non-const
+      return FindObjectOnTopOrUnderneathHelper(objectOnBottom, zTolerance, filter, true); // returns non-const
     }
     
     inline const ObservableObject* BlockWorld::FindObjectUnderneath(const ObservableObject& objectOnTop,
                                                                  f32 zTolerance,
                                                                  const BlockWorldFilter& filter) const
     {
-      return FindObjectUnderneathHelper(objectOnTop, zTolerance, filter); // returns const
+      return FindObjectOnTopOrUnderneathHelper(objectOnTop, zTolerance, filter, false); // returns const
     }
     
     inline ObservableObject* BlockWorld::FindObjectUnderneath(const ObservableObject& objectOnTop,
                                                               f32 zTolerance,
                                                               const BlockWorldFilter& filter)
     {
-      return FindObjectUnderneathHelper(objectOnTop, zTolerance, filter); // returns non-const
+      return FindObjectOnTopOrUnderneathHelper(objectOnTop, zTolerance, filter, false); // returns non-const
     }
     
     

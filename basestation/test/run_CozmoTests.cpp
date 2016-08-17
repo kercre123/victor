@@ -261,6 +261,171 @@ TEST(BlockWorld, AddAndRemoveObject)
 } // BlockWorld.AddAndRemoveObject
 
 
+TEST(BlockWorld, CubeStacks)
+{
+  using namespace Anki;
+  using namespace Cozmo;
+  
+  Result lastResult;
+  
+  Robot robot(1, cozmoContext);
+  robot.FakeSyncTimeAck();
+  
+  BlockWorld& blockWorld = robot.GetBlockWorld();
+  
+  // There should be nothing in BlockWorld yet
+  ASSERT_TRUE(blockWorld.GetAllExistingObjects().empty());
+  
+  // Add three objects
+  ObjectID objID1 = blockWorld.AddActiveObject(1, 1, ActiveObjectType::OBJECT_CUBE1);
+  ObjectID objID2 = blockWorld.AddActiveObject(2, 2, ActiveObjectType::OBJECT_CUBE2);
+  ObjectID objID3 = blockWorld.AddActiveObject(3, 3, ActiveObjectType::OBJECT_CUBE3);
+  
+  ObservableObject* object1 = blockWorld.GetObjectByID(objID1);
+  ASSERT_NE(nullptr, object1);
+  
+  ObservableObject* object2 = blockWorld.GetObjectByID(objID2);
+  ASSERT_NE(nullptr, object2);
+  
+  ObservableObject* object3 = blockWorld.GetObjectByID(objID3);
+  ASSERT_NE(nullptr, object3);
+  
+  // Put object 2 on top of object 1 and check that FindOnTopOf and FindUnderneath
+  // return the right things. We use ObjectPoseConfirmer because we can't set
+  // poses of the objects directly. This should work for lots of combinations of
+  // rotations and shifts.
+  // Object 3 will be next to the object on bottom and it should never be returned
+  // as on top of or underneath.
+  const std::vector<RotationVector3d> TestInPlaneRotations{
+    {DEG_TO_RAD(0),  Z_AXIS_3D()},
+    {DEG_TO_RAD(10), Z_AXIS_3D()},
+    {DEG_TO_RAD(45), Z_AXIS_3D()},
+    {DEG_TO_RAD(90), Z_AXIS_3D()},
+  };
+  
+  const std::vector<RotationVector3d> TestOutOfPlaneRotations{
+    {DEG_TO_RAD(0),   X_AXIS_3D()},  // None
+    {DEG_TO_RAD(5),   X_AXIS_3D()},  // Slightly rotated around X
+    {DEG_TO_RAD(7.5), Y_AXIS_3D()},  // Slightly rotated around Y
+    {DEG_TO_RAD(88),  X_AXIS_3D()},  // Z not pointing up
+    {DEG_TO_RAD(182), Y_AXIS_3D()},  // Z pointing down
+  };
+  
+  const std::vector<Vec3f> TestBottomTranslations{
+    {100.f,  0.f, 22.f},
+    {106.f, -8.f, 21.f},
+    {98.f, -2.3f, 18.f},
+  };
+  
+  const std::vector<Vec3f> TestTopTranslations{
+    {100.f, 0.f,  66.f},                             // Centered, right on top
+    {105.f, -5.f, 66.f+.25f*STACKED_HEIGHT_TOL_MM},  // Slightly displaced, a little high
+    {90.f, -8.3f, 66.f-.25f*STACKED_HEIGHT_TOL_MM},  // Signigicantly displaced, a little low
+  };
+  
+  const std::vector<Vec3f> TestNextToTranslations{
+    {144.f,   0.f, 21.f},  // On one side in X direction
+    {66.f,    0.f, 20.f},  // On other side in X direction
+    {100.f,  44.f, 23.f},  // On one side in Y direction
+    {100.f, -44.f, 24.f},  // On other side in Y direction
+  };
+  
+  for(auto & btmRot1 : TestInPlaneRotations)
+  {
+    for(auto & btmRot2 : TestOutOfPlaneRotations)
+    {
+      for(auto & btmTrans : TestBottomTranslations)
+      {
+        const Pose3d bottomPose(Rotation3d(btmRot1) * Rotation3d(btmRot2), btmTrans, &robot.GetPose() );
+        
+        lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, bottomPose, PoseState::Known);
+        ASSERT_EQ(RESULT_OK, lastResult);
+        
+        for(auto & topRot1 : TestInPlaneRotations)
+        {
+          for(auto & topRot2 : TestOutOfPlaneRotations)
+          {
+            for(auto & topTrans : TestTopTranslations)
+            {
+              const Pose3d topPose(Rotation3d(topRot1) * Rotation3d(topRot2), topTrans, &robot.GetPose() );
+              
+              // For help debugging when there are failures:
+              //bottomPose.Print("Unnamed", "Bottom");
+              //topPose.Print("Unnamed", "Top");
+
+              lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, topPose, object1);
+              ASSERT_EQ(RESULT_OK, lastResult);
+              
+              ObservableObject* foundObject = blockWorld.FindObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
+              ASSERT_NE(nullptr, foundObject);
+              ASSERT_EQ(object2, foundObject);
+              
+              foundObject = blockWorld.FindObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
+              ASSERT_NE(nullptr, foundObject);
+              ASSERT_EQ(object1, foundObject);
+            }
+            
+            for(auto & nextToTrans : TestNextToTranslations)
+            {
+              const Pose3d nextToPose(Rotation3d(topRot1) * Rotation3d(topRot2), nextToTrans, &robot.GetPose());
+              
+              lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, nextToPose, object1);
+              ASSERT_EQ(RESULT_OK, lastResult);
+              
+              ObservableObject* foundObject = blockWorld.FindObjectOnTopOf(*object3, STACKED_HEIGHT_TOL_MM);
+              ASSERT_EQ(nullptr, foundObject);
+              
+              foundObject = blockWorld.FindObjectUnderneath(*object3, STACKED_HEIGHT_TOL_MM);
+              ASSERT_EQ(nullptr, foundObject);
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  
+  // Put Object 2 above Object 1, but too high, so this Find should fail:
+  const Pose3d bottomPose(0, Z_AXIS_3D(), {100.f, 0.f, 22.f}, &robot.GetPose() );
+  lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, bottomPose, PoseState::Known);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  const Pose3d tooHighPose(0, Z_AXIS_3D(), {100.f, 0.f, 66.f + 1.5f*STACKED_HEIGHT_TOL_MM}, &robot.GetPose());
+  lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, tooHighPose, object1);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  ObservableObject* foundObject = blockWorld.FindObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
+  ASSERT_EQ(nullptr, foundObject);
+  
+  foundObject = blockWorld.FindObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
+  ASSERT_EQ(nullptr, foundObject);
+
+  // Two objects in roughly the same place should also fail
+  lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, bottomPose, object1);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  foundObject = blockWorld.FindObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
+  ASSERT_EQ(nullptr, foundObject);
+  
+  foundObject = blockWorld.FindObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
+  ASSERT_EQ(nullptr, foundObject);
+  
+  
+  // Put Object 2 at the right height to be on top of Object 1, but with its
+  // center of mass _not_ above Object 1. So this should not be considered On Top Of.
+  const Pose3d notAbovePose(0, Z_AXIS_3D(), {130.f, -30.f, 66.f}, &robot.GetPose());
+  lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, notAbovePose, object1);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  foundObject = blockWorld.FindObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
+  ASSERT_EQ(nullptr, foundObject);
+  
+  foundObject = blockWorld.FindObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
+  ASSERT_EQ(nullptr, foundObject);
+  
+} // BlockWorld.CubeStacks
+
+
 // This test object allows us to reuse the TEST_P below with different
 // Json filenames as a parameter
 class BlockWorldTest : public ::testing::TestWithParam<const char*>

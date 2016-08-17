@@ -126,7 +126,7 @@ Result ObjectPoseConfirmer::AddVisualObservation(ObservableObject* object, const
   else
   {
     // Existing entry. Check if the new observation is (roughly) in the same pose as the last one.
-    const Point3f distThreshold  = (newPose.GetRotation() * object->GetSameDistanceTolerance()).GetAbs();
+    const Point3f distThreshold  = object->GetSameDistanceTolerance();
     const Radians angleThreshold = object->GetSameAngleTolerance();
     
     PoseConfirmation& poseConf = iter->second;

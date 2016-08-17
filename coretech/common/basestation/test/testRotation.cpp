@@ -500,24 +500,109 @@ GTEST_TEST(TestRotation, Rotation3d)
 } // TestRotation:Rotation3d
 
 
+GTEST_TEST(TestPose, Inverse)
+{
+  const Pose3d pose(DEG_TO_RAD(45), Z_AXIS_3D(), {100.f, 0.f, 0.f});
+  const Pose3d invPose(pose.GetInverse());
+  
+  Pose3d check = pose * invPose;
+  
+  EXPECT_TRUE(check.GetTranslation().GetAbs().AllLT(1e-5f));
+  EXPECT_TRUE(check.GetRotationAngle().getAbsoluteVal().ToFloat() < 1e-5f);
+  
+  check = invPose * pose;
+  
+  EXPECT_TRUE(check.GetTranslation().GetAbs().AllLT(1e-5f));
+  EXPECT_TRUE(check.GetRotationAngle().getAbsoluteVal().ToFloat() < 1e-5f);
+  
+}
+
 // TODO: move these pose tests to their own testPose.cpp file
 GTEST_TEST(TestPose, IsSameAs)
 {
-  const Pose3d origin;
+  const Pose3d origin, origin2;
   
-  Pose3d P1(M_PI/2, {0,1.f,0}, {10.f,20.f,30.f}, &origin);
+  const std::vector<Pose3d> P1s{
+    Pose3d(0, Z_AXIS_3D(), {10.f,20.f,30.f}, &origin),
+    Pose3d(DEG_TO_RAD(90), Y_AXIS_3D(), {10.f,20.f,30.f}, &origin),
+    Pose3d(DEG_TO_RAD(10), X_AXIS_3D(), {-10.f, 0.f, 100.f}, &origin),
+    Pose3d(DEG_TO_RAD(45), Z_AXIS_3D(), {1.f,0.f,-30.f}, &origin),
+    Pose3d(DEG_TO_RAD(180), Y_AXIS_3D(), {0.f,0.f,0.f}, &origin),
+  };
   
-  // P3 is P1 with a slight perturbation
-  Pose3d P2(P1);
+  for(auto & P1 : P1s)
+  {
+    // P2 is P1 with a slight perturbation
+    Pose3d P2(P1);
+    
+    Pose3d T_perturb(DEG_TO_RAD(2.f), Z_AXIS_3D(), {1.f, 1.f, 1.f});
+    P2.PreComposeWith(T_perturb);
+    
+    // IsSameAs should return true
+    EXPECT_TRUE(P1.IsSameAs(P2, 5.f, DEG_TO_RAD(3.f)));
+    P2 = P1;
+    P2 *= T_perturb;
+    EXPECT_TRUE(P1.IsSameAs(P2, 5.f, DEG_TO_RAD(3.f)));
+    
+    // P3 is a larger perturbation and should fail IsSameAs
+    Pose3d P3(P1);
+    Pose3d T_bigAnglePerturb(DEG_TO_RAD(10), X_AXIS_3D(), {0.f, 0.f, 0.f});
+    P3.PreComposeWith(T_bigAnglePerturb);
+    EXPECT_FALSE(P1.IsSameAs(P3, 5.f, DEG_TO_RAD(3.f)));
+    P3 = P1;
+    P3 *= T_bigAnglePerturb;
+    EXPECT_FALSE(P1.IsSameAs(P3, 5.f, DEG_TO_RAD(3.f)));
+    Pose3d T_bigTransPerturb(0.f, Z_AXIS_3D(), {10.f, -10.f, 5.f});
+    P3 = P1;
+    P3.PreComposeWith(T_bigTransPerturb);
+    EXPECT_FALSE(P1.IsSameAs(P3, 5.f, DEG_TO_RAD(3.f)));
+    P3 = P1;
+    P3 *= T_bigTransPerturb;
+    EXPECT_FALSE(P1.IsSameAs(P3, 5.f, DEG_TO_RAD(3.f)));
+    
+    // Poses with different origins should always fail IsSameAs
+    P3 = P1;
+    P3.SetParent(&origin2);
+    EXPECT_FALSE(P1.IsSameAs(P3, 1000.f, M_PI));
+  }
   
-  Pose3d T_perturb(2.f * M_PI/180.f, Z_AXIS_3D(), {1.f, 1.f, 1.f});
-  P2.PreComposeWith(T_perturb);
   
-  // IsSameAs should return true
-  EXPECT_TRUE(P1.IsSameAs(P2, 5.f, 3.f*M_PI/180.f));
+  // Assymmetric distance threshold: loose check only in X direction, so
+  // shifting P1 along X a bunch should be fine, but small shift along Y should
+  // fail
+  const Pose3d P1(0, Z_AXIS_3D(), {10.f,20.f,30.f}, &origin);
+  const Point3f distThreshold(100.f, 5.f, 5.f);
+  Pose3d P4(P1);
   
+  P4.SetTranslation( P1.GetTranslation() + Point3f{50.f, 1.f, -1.f});
+  EXPECT_TRUE(P1.IsSameAs(P4, distThreshold, DEG_TO_RAD(3.f)));
+
+  P4.SetTranslation(P1.GetTranslation() + Point3f{0.f, -6.f, 0.f});
+  EXPECT_FALSE(P1.IsSameAs(P4, distThreshold, DEG_TO_RAD(3.f)));
   
-} // TestPose:IsSameWithAmbiguity
+  P4.SetTranslation(P1.GetTranslation() + Point3f{0.f, 0.f, 2.5f});
+  EXPECT_TRUE(P1.IsSameAs(P4, distThreshold, DEG_TO_RAD(3.f)));
+  
+  // P6 is not axis aligned. distThreshold will be considered in its rotated frame
+  const Pose3d P6(DEG_TO_RAD(45), Z_AXIS_3D(), {100.f, 100.f, 0.f}, &origin);
+  
+  Pose3d P7;
+  P7.SetParent(&origin);
+  EXPECT_FALSE(P6.IsSameAs(P7, distThreshold, DEG_TO_RAD(30)));
+  
+  P7.SetTranslation({80.f, 80.f, 0.f});
+  EXPECT_FALSE(P6.IsSameAs(P7, distThreshold, DEG_TO_RAD(30))); // Should fail: angle thresh too tight
+  EXPECT_TRUE(P6.IsSameAs(P7, distThreshold, DEG_TO_RAD(90)));  // Should pass with looser angle threshold
+  
+  P7.SetRotation(P6.GetRotation());  // Now rotation matches perfectly
+  P7.SetTranslation(Point3f{105.f,95.f,0.f}); // But translation is just outside the (rotated) box around P6
+  EXPECT_FALSE(P6.IsSameAs(P7, distThreshold, DEG_TO_RAD(90)));
+  
+  P7.SetTranslation(Point3f{120.f, 120.f, 1.f}); // Rotation still matches, translation along lenient dimension
+  EXPECT_TRUE(P6.IsSameAs(P7, distThreshold, DEG_TO_RAD(5))); // Should match even with tight angle threshold
+  
+} // TestPose:IsSameAs
+
 
 GTEST_TEST(TestPose, IsSameWithAmbiguity)
 {

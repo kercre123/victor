@@ -9,6 +9,8 @@
 
 #include "anki/common/shared/utilities_shared.h"
 
+#include "util/math/math.h"
+
 #include <stdexcept>
 #include <cmath>
 
@@ -209,7 +211,7 @@ namespace Anki {
     // rotate.
     Radians angle3d = std::acos(dotProduct);
 
-    if( ! NEAR_ZERO( angle3d ) ) {
+    if( ! Util::IsFltNear(angle3d.ToFloat(), 0.f) ) {
       Vec3f axis3d = CrossProduct(Zaxis, pose2d.GetPlaneNormal());
       Pose3d planePose(angle3d, axis3d, pose2d.GetPlaneOrigin());
       this->PreComposeWith(planePose);
@@ -452,8 +454,13 @@ namespace Anki {
     //
     
     /*
-    P_diff = this->GetInverse();
-    P_diff *= P_other;
+     // P_diff is the transformation which takes us from P1 to P2.
+     // If this transformation is "small" (in translation and rotation), then
+     // P1 and P2 are the same.
+     //   P2 = P_diff * P1
+     //   P_diff = P2 * inv(P1)
+     Pose3d P_diff(P_other);
+     P_diff *= this->GetInverse();
     
     // First, check to see if the translational difference between the two
     // poses is small enough to call them a match
@@ -487,11 +494,10 @@ namespace Anki {
     } // if translation component is small enough
     */
     
-    // Simpler (?) version:
-    // Just directly compare the translations, followed by comparing the
-    // rotation matrices.
-    // Why is this better?!
-    
+    // Problem with the above, seemingly-simple check: rotation affects the translation
+    // comparison. So if it is large, it will make the translations appear different
+    // _even if we have a large angle threshold_. Instead, we choose to just
+    // directly compare the translations, followed by comparing the rotations.
     
     ASSERT_NAMED(P_other.GetParent() == this->GetParent() ||
                  (this->IsOrigin() && P_other.GetParent() == this),
@@ -499,10 +505,25 @@ namespace Anki {
     
     Tdiff = P_other.GetTranslation() - this->GetTranslation();
     
-    // NOTE: using > instead of >= so threshold of zero will still return true for identical poses
-    if(Tdiff.GetAbs().AnyGT(distThreshold))
+    if(Util::IsFltNear(distThreshold.x(), distThreshold.y()) &&
+       Util::IsFltNear(distThreshold.x(), distThreshold.z()))
     {
-      return false;
+      // Use simple euclidean distance
+      if(Tdiff.LengthSq() > distThreshold.x()*distThreshold.x())
+      {
+        return false;
+      }
+    }
+    else
+    {
+      // Compare "unrotated" Tdiff to distThreshold which is specified in the
+      // rotated frame of "this" pose
+      // NOTE: using > instead of >= so threshold of zero will still return true for identical poses
+      const Point3f Tdiff_unrotated = this->GetRotation().GetInverse()*Tdiff;
+      if(Tdiff_unrotated.GetAbs().AnyGT(distThreshold))
+      {
+        return false;
+      }
     }
     
     if(angleThreshold >= M_PI)
@@ -528,7 +549,7 @@ namespace Anki {
       Rdiff.Invert(); // Invert
       Rdiff *= P_other.GetRotation();
       
-      // TODO: Does this directly with quaternions instead of converting to RotationMatrix
+      // TODO: Do this directly with quaternions instead of converting to RotationMatrix
       RotationMatrix3d RdiffMat( Rdiff.GetRotationMatrix() );
       
       if(useAbsRotation) {
