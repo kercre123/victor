@@ -790,12 +790,30 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   public void StartCycleCube(int cubeID, Color[] lightColorsCounterclockwise, float cycleIntervalSeconds) {
+    StartCycleCubeInternal(cubeID, lightColorsCounterclockwise, cycleIntervalSeconds, false);
+  }
+
+  public void StartCycleCubeSingleColor(int cubeID, Color[] lightColors, float cycleIntervalSeconds, Color rotateColor) {
+    StartCycleCubeInternal(cubeID, lightColors, cycleIntervalSeconds, true);
+    if (_CubeCycleTimers.ContainsKey(cubeID)) {
+      _CubeCycleTimers[cubeID].cycleSingleColorOnly = true;
+      _CubeCycleTimers[cubeID].singleColor = rotateColor.ToUInt();
+    }
+  }
+
+  private void StartCycleCubeInternal(int cubeID, Color[] lightColorsCounterclockwise, float cycleIntervalSeconds, bool isSingleColor) {
     // Remove from blink lights if it exists there
     StopBlinkLight(cubeID);
 
     // Set colors
     LightCube cube = CurrentRobot.LightCubes[cubeID];
     cube.SetLEDs(lightColorsCounterclockwise);
+    if (isSingleColor) {
+      cube.rotationPeriodMs = 0f;
+    }
+    else {
+      cube.rotationPeriodMs = cycleIntervalSeconds * 1000f;
+    }
 
     // Set up timing data
     CycleData data = new CycleData();
@@ -815,14 +833,6 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
-  public void StartCycleCubeSingleColor(int cubeID, Color[] lightColors, float cycleIntervalSeconds, Color rotateColor) {
-    StartCycleCube(cubeID, lightColors, cycleIntervalSeconds);
-    if (_CubeCycleTimers.ContainsKey(cubeID)) {
-      _CubeCycleTimers[cubeID].cycleSingleColorOnly = true;
-      _CubeCycleTimers[cubeID].singleColor = rotateColor.ToUInt();
-    }
-  }
-
   public void StopCycleCube(int cubeID) {
     if (_CubeCycleTimers.ContainsKey(cubeID)) {
       _CubeCycleTimers.Remove(cubeID);
@@ -838,7 +848,8 @@ public abstract class GameBase : MonoBehaviour {
           CycleLightsSingleColor(kvp.Value);
         }
         else {
-          CycleLightsClockwise(kvp.Value);
+          // This is now handled engine-side
+          // CycleLightsClockwise(kvp.Value);
         }
         kvp.Value.timeElaspedSeconds %= kvp.Value.cycleIntervalSeconds;
       }
@@ -854,18 +865,6 @@ public abstract class GameBase : MonoBehaviour {
       if (i == data.colorIndex) {
         cube.Lights[i].OnColor = data.singleColor;
       }
-      cube.Lights[i].OnPeriodMs = LightCube.Light.FOREVER;
-    }
-  }
-
-  private void CycleLightsClockwise(CycleData data) {
-    LightCube cube = CurrentRobot.LightCubes[data.cubeID];
-    data.colorIndex++;
-    data.colorIndex %= data.cycleColors.Length;
-    int colorIndex = 0;
-    for (int i = 0; i < cube.Lights.Length; i++) {
-      colorIndex = (data.colorIndex + i) % data.cycleColors.Length;
-      cube.Lights[i].OnColor = data.cycleColors[colorIndex].ToUInt();
       cube.Lights[i].OnPeriodMs = LightCube.Light.FOREVER;
     }
   }
