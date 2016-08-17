@@ -94,6 +94,9 @@ public:
   
   // checks if the given ray collides with the given types (any quad with that types)
   virtual bool HasCollisionRayWithTypes(const Point2f& rayFrom, const Point2f& rayTo, const NavMemoryMapTypes::FullContentArray& types) const = 0;
+  
+  // returns true if there are any nodes of the given type, false otherwise
+  virtual bool HasContentType(EContentType type) const = 0;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Debug

@@ -60,6 +60,9 @@ public:
   // checks if the given ray collides with the given type (any quad with that type)
   virtual bool HasCollisionRayWithTypes(const Point2f& rayFrom, const Point2f& rayTo, const FullContentArray& types) const override;
   
+  // returns true if there are any nodes of the given type, false otherwise
+  virtual bool HasContentType(EContentType type) const override;
+  
   // Draw/stop drawing the memory map
   virtual void Draw(size_t mapIdxHint) const override;
   virtual void ClearDraw() const override;

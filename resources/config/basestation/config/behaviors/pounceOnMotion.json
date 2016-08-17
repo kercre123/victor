@@ -1,6 +1,10 @@
 {
   "behaviorType": "PounceOnMotion",
   "name": "fp_PounceOnMotion",
+  "behaviorGroups": [
+    "FP_Socialize"
+  ],
+  
   "flatScore": 0.5,
   "repetitionPenalty": {
     "nodes": [
@@ -18,10 +22,6 @@
       }
     ]
   },
-  "behaviorGroups": [
-    "FreeplayOne",
-    "ShowOff"
-  ],
   "maxNoGroundMotionBeforeBored_running_Sec": 15.0,
   "maxNoGroundMotionBeforeBored_notRunning_Sec": 3.0,
   "boredomMultiplier": 0.6,

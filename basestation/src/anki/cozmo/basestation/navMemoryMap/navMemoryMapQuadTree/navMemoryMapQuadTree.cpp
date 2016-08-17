@@ -140,6 +140,18 @@ bool NavMemoryMapQuadTree::HasCollisionRayWithTypes(const Point2f& rayFrom, cons
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool NavMemoryMapQuadTree::HasContentType(EContentType type) const
+{
+  // conver to node content type
+  using namespace NavMeshQuadTreeTypes;
+  const ENodeContentType nodeType = ConvertContentType(type);
+  
+  // ask the processor
+  const bool hasAny = _navMesh.GetProcessor().HasContentType(nodeType);
+  return hasAny;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMemoryMapQuadTree::Draw(size_t mapIdxHint) const
 {
   _navMesh.Draw(mapIdxHint);

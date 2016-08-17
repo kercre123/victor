@@ -15,8 +15,6 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviorSystem/AIBeacon.h"
-#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -146,68 +144,9 @@ BehaviorExploreBringCubeToBeacon::~BehaviorExploreBringCubeToBeacon()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const Robot& robot) const
 {
-  // check if any known cubes are not currently in a valid beacon
+  // ask the whiteboard to retrieve the cubes to bring to beacons
   const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
-  const AIWhiteboard::BeaconList& beaconList = whiteboard.GetBeacons();
-  
-  #if ANKI_DEVELOPER_CODE
-  {
-    // we only want to receive the current beacons
-    for ( const auto& beacon : beaconList ) {
-      ASSERT_NAMED(&beacon.GetPose().FindOrigin() == robot.GetWorldOrigin(), "Whiteboard's beacons are dirty!");
-    }
-  }
-  #endif
-
-  _candidateObjects.clear();
-  if ( !beaconList.empty() )
-  {
-    // if we are currently a cube, validate right away, regardless of whether it's inside or outisde the cube.
-    // We would always want to drop it
-    if ( robot.IsCarryingObject() )
-    {
-      const ObservableObject* const carryingObject = robot.GetBlockWorld().GetObjectByID( robot.GetCarryingObject() );
-      if ( nullptr != carryingObject ) {
-        _candidateObjects.emplace_back( carryingObject->GetID(), carryingObject->GetFamily() );
-      } else {
-        // this can block us, since we don't want to try to run. We think we are carrying an object but it does not
-        // exist in the world?
-        PRINT_NAMED_ERROR("BehaviorExploreBringCubeToBeacon.IsRunnable.CarryingNullObject",
-          "Could not get carrying object pointer");
-      }
-    }
-    else
-    {
-      // ask for all cubes we know, and if any is not inside a beacon, then we want to bring that one to the closest beacon
-      BlockWorldFilter filter;
-      filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-      filter.SetFilterFcn([this,&beaconList](const ObservableObject* blockPtr) {
-        if(!blockPtr->IsPoseStateUnknown())
-        {
-          bool isBlockInAnyBeacon = false;
-          
-          // check if the object is within any beacon
-          for ( const auto& beacon : beaconList ) {
-            isBlockInAnyBeacon = beacon.IsLocWithinBeacon(blockPtr->GetPose());
-            if ( isBlockInAnyBeacon ) {
-              break;
-            }
-          }
-          
-          // this block should be carried to a beacon
-          if ( !isBlockInAnyBeacon ) {
-            _candidateObjects.emplace_back( blockPtr->GetID(), blockPtr->GetFamily() );
-          }
-        }
-        return false; // have to return true/false, even though not used
-      });
-      
-      robot.GetBlockWorld().FilterObjects(filter);
-    }
-  }
-
-  // do we have blocks that we want to bring to a beacon?
-  bool hasBlocksOutOfBeacons = !_candidateObjects.empty();
+  const bool hasBlocksOutOfBeacons = whiteboard.FindUsableCubesOutOfBeacons(_candidateObjects);
   return hasBlocksOutOfBeacons;
 }
 

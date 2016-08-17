@@ -2,50 +2,60 @@
   "behaviorType": "ExploreLookAroundInPlace",
   "name": "findFaces_boredom",
 
-  "emotionScorers": [
-    {
-      "emotionType": "Social",
-      "scoreGraph": {
-        "nodes": [
-          {
-            "x": -1.0,
-            "y": 1.0
-          },
-          {
-            "x": 0.0,
-            "y": 0.5
-          },
-          {
-            "x": 0.25,
-            "y": 0.5
-          },
-          {
-            "x": 0.5,
-            "y": 0.1
-          }
-        ]
-      },
-      "trackDelta": false
-    }
+  "behaviorGroups": [
+    "FP_Socialize"
   ],
+  
+  "flatScore": 0.9,
 
-  "repetitionPenalty": {
-    "nodes": [
-      {
-        "x": 5.0,
-        "y": 0.2
-      },
-      {
-        "x": 20.0,
-        "y": 0.5
-      },
-      {
-        "x": 60.0,
-        "y": 1.0
-      }
-    ]
-  },
+// Emotions drive higher level goals now. behaviors should not need it.
+//  "emotionScorers": [
+//    {
+//      "emotionType": "Social",
+//      "scoreGraph": {
+//        "nodes": [
+//          {
+//            "x": -1.0,
+//            "y": 1.0
+//          },
+//          {
+//            "x": 0.0,
+//            "y": 0.5
+//          },
+//          {
+//            "x": 0.25,
+//            "y": 0.5
+//          },
+//          {
+//            "x": 0.5,
+//            "y": 0.1
+//          }
+//        ]
+//      },
+//      "trackDelta": false
+//    }
+//  ],
 
+// Repetition penalties are not currently needed for this behavior since the Socialize goal is very small (only a handfull
+// of behaviors)
+//  "repetitionPenalty": {
+//    "nodes": [
+//      {
+//        "x": 5.0,
+//        "y": 0.2
+//      },
+//      {
+//        "x": 20.0,
+//        "y": 0.5
+//      },
+//      {
+//        "x": 60.0,
+//        "y": 1.0
+//      }
+//    ]
+//  },
+
+  // this allows other behavior to kick in faster, which potentially kicks out the Socialize goal
   "runningPenalty": {
     "nodes": [
       {
@@ -53,19 +63,19 @@
         "y": 1.0
       },
       {
-        "x": 10.0,
+        "x": 12.0,
         "y": 1.0
       },
       {
-        "x": 30.0,
-        "y": 0.6
+        "x": 25.0,
+        "y": 0.5
       },
       {
-        "x": 60.0,
-        "y": 0.4
+        "x": 35.0,
+        "y": 0.1
       }
     ]
-  },      
+  },
 
   "params":
   {
@@ -123,9 +133,6 @@
     "s6_BodyAngleRangeMax_deg":  65.0,
     "s6_HeadAngleRangeMin_deg": 25.0,  // head min fwd turn #2
     "s6_HeadAngleRangeMax_deg": 42.0   // head max fwd turn #2
-  },
-  
-  "behaviorGroups": [
-    "FreeplayOne"
-  ]
+  }
+
 }

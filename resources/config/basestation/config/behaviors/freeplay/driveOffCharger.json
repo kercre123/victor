@@ -4,7 +4,8 @@
   "flatScore" : 3.0,  
   "extraDistanceToDrive_mm": 60.0,
   "behaviorGroups": [
-    "Demo",
-    "FreeplayOne"
+    "FP_Socialize",
+    "FP_PlayWithHumans",
+    "FP_PlayAlone"
   ]
 }

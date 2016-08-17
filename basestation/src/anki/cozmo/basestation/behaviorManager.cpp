@@ -343,36 +343,58 @@ bool BehaviorManager::SwitchToBehavior(IBehavior* nextBehavior)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::SwitchToNextBehavior(bool didCurrentFinish)
+void BehaviorManager::ChooseNextBehaviorAndSwitch()
 {
-  if( _behaviorToResume != nullptr ) {
-    if( _shouldResumeBehaviorAfterReaction ) {
-      PRINT_NAMED_INFO("BehaviorManager.ResumeBehavior",
-                       "Behavior '%s' will be resumed",
-                       _behaviorToResume->GetName().c_str());
+  // we can't call ChooseNextBehaviorAndSwitch while there's a behavior to resume pending. Call TryToResumeBehavior instead
+  ASSERT_NAMED( _behaviorToResume == nullptr,
+    "BehaviorManager.ChooseNextBehaviorAndSwitch.CalledWithResumeBehaviorPending");
+
+  // shouldn't call ChooseNextBehaviorAndSwitch after a reactionary. Call TryToResumeBehavior instead
+  ASSERT_NAMED( (_currentBehavior == nullptr) || !_currentBehavior->IsReactionary(),
+    "BehaviorManager.ChooseNextBehaviorAndSwitch.CantSelectAfterReactionary");
+
+  // the current behavior has to be running. Otherwise current should be nullptr
+  ASSERT_NAMED( (_currentBehavior == nullptr) || _currentBehavior->IsRunning(),
+    "BehaviorManager.ChooseNextBehaviorAndSwitch.CurrentBehaviorIsNotRunning");
+ 
+  // ask the current chooser for the next behavior
+  IBehavior* nextBehavior = _currentChooserPtr->ChooseNextBehavior(_robot, _currentBehavior);
+  SwitchToBehavior( nextBehavior );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorManager::TryToResumeBehavior()
+{
+  if ( _behaviorToResume != nullptr )
+  {
+    if ( _shouldResumeBehaviorAfterReaction )
+    {
       StopCurrentBehavior();
       const Result resumeResult = _behaviorToResume->Resume();
-      if( resumeResult == RESULT_OK ) {
+      if( resumeResult == RESULT_OK )
+      {
+        PRINT_CH_INFO("Behaviors", "BehaviorManager.ResumeBehavior", "Successfully resumed '%s'",
+          _behaviorToResume->GetName().c_str());
+        // the behavior can resume, set as current again
         SendDasTransitionMessage(_currentBehavior, _behaviorToResume);
-        _currentBehavior = _behaviorToResume;
+        _currentBehavior  = _behaviorToResume;
         _behaviorToResume = nullptr;
+        // Successfully resumed the previous behavior, return here
         return;
       }
       else {
-        PRINT_NAMED_INFO("BehaviorManager.ResumeFailed",
-                         "Tried to resume behavior '%s', but failed. Selecting new behavior from chooser",
-                         _behaviorToResume->GetName().c_str());
-        // clear the resume behavior because we won't want to resume it after the next behavior
-        _behaviorToResume = nullptr;
+        PRINT_CH_INFO("Behaviors", "BehaviorManager.ResumeFailed",
+          "Tried to resume behavior '%s', but failed. Clearing current behavior",
+          _behaviorToResume->GetName().c_str() );
       }
     }
-    else {
-      // current behavior says we shouldn't resume, so just clear resume
-      _behaviorToResume = nullptr;
-    }
+    
+    // we didn't resume, clear the resume behavior because we won't want to resume it after the next behavior
+    _behaviorToResume = nullptr;
   }
   
-  SwitchToBehavior( _currentChooserPtr->ChooseNextBehavior(_robot, didCurrentFinish) );
+  // we did not resume, clear current behavior
+  SwitchToBehavior( nullptr );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -429,17 +451,18 @@ Result BehaviorManager::Update()
     
   _currentChooserPtr->Update();
 
-  if( ! _runningReactionaryBehavior ) {
-    const bool didPreviousFinish = (_currentBehavior == nullptr);
-    SwitchToNextBehavior(didPreviousFinish);
+  if( !_runningReactionaryBehavior )
+  {
+    ChooseNextBehaviorAndSwitch();
   }
   
-  //Allow reactionary behaviors to request a switch without a message
+  // Allow reactionary behaviors to request a switch without a message
   CheckForComputationalSwitch();
     
-  if(nullptr != _currentBehavior) {
+  if ( nullptr != _currentBehavior ) {
+    
     // We have a current behavior, update it.
-    IBehavior::Status status = _currentBehavior->Update();
+    const IBehavior::Status status = _currentBehavior->Update();
      
     switch(status)
     {
@@ -450,12 +473,12 @@ Result BehaviorManager::Update()
       case IBehavior::Status::Complete:
         // behavior is complete, switch to null (will also handle stopping current). If it was reactionary,
         // switch now to give the last behavior a chance to resume (if appropriate)
-        PRINT_NAMED_DEBUG("BehaviorManager.Update.BehaviorComplete",
+        PRINT_CH_DEBUG("Behaviors", "BehaviorManager.Update.BehaviorComplete",
                           "Behavior '%s' returned  Status::Complete",
                           _currentBehavior->GetName().c_str());
-        if( _runningReactionaryBehavior ) {
+        if ( _runningReactionaryBehavior ) {
           _runningReactionaryBehavior = false;
-          SwitchToNextBehavior(true);
+          TryToResumeBehavior();
         }
         else {
           SwitchToBehavior(nullptr);
@@ -469,18 +492,11 @@ Result BehaviorManager::Update()
         // same as the Complete case
         if( _runningReactionaryBehavior ) {
           _runningReactionaryBehavior = false;
-          SwitchToNextBehavior(true);
+          TryToResumeBehavior();
         }
         else {
           SwitchToBehavior(nullptr);
         }
-        break;
-        
-      default:
-        PRINT_NAMED_ERROR("BehaviorManager.Update.UnknownStatus",
-                          "Behavior '%s' returned unknown status %d",
-                          _currentBehavior->GetName().c_str(), status);
-        lastResult = RESULT_FAIL;
         break;
     } // switch(status)
   }
@@ -520,7 +536,7 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
 
   // force the new behavior chooser to select something now, instead of waiting for the next tick
   if(currentNotReactionary){
-    SwitchToNextBehavior(true);
+    ChooseNextBehaviorAndSwitch();
   }
 }
 

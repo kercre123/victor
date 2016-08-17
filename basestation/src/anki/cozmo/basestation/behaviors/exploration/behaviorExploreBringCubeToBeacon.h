@@ -14,6 +14,7 @@
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIBeacon.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/objectIDs.h"
@@ -97,12 +98,7 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // list of objects selected in IsRunnable. Cached as a performance optimization
-  struct CandidateInfo {
-    CandidateInfo(ObjectID objId, ObjectFamily fam) : id(objId), family(fam) {}
-    ObjectID id;
-    ObjectFamily family;
-  };
-  mutable std::vector<CandidateInfo> _candidateObjects;
+  mutable AIWhiteboard::ObjectInfoList _candidateObjects;
   
   // cubes on which we have failed to stack, so that we don't try to restack on them
   std::set<ObjectID> _invalidCubesToStackOn;

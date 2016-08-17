@@ -1,8 +1,10 @@
 {
   "behaviorType": "PutDownBlock",
   "name": "PutDownBlock",
-  "flatScore": 0.2,
+  "flatScore": 0.1,
   "behaviorGroups": [
-    "FreeplayOne"
+    "FP_PlayAlone",
+    "FP_PlayWithHumans",
+    "FP_Socialize"
   ]
 }

@@ -11,7 +11,7 @@
   "behaviorType": "LookInPlaceMemoryMap",
   "flatScore": 1.0,
   "behaviorGroups": [
-    "FreeplayHiking"
+    "FP_Hiking"
   ],
   
   "params":

@@ -4,7 +4,6 @@
   "requiredUnlockId": "BuildPyramid",
   "flatScore": 0.9,
   "behaviorGroups": [
-    "FreePlayOne",
-    "ShowOff"
+    "FP_PlayAlone"
   ]
 }

@@ -182,7 +182,7 @@ float SimpleBehaviorChooser::ScoreBonusForCurrentBehavior(float runningDuration)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(Robot& robot, bool didCurrentFinish) const
+IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
 {
   const float kRandomFactor = 0.1f;
   

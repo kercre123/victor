@@ -30,7 +30,6 @@ class Robot;
 
 class DemoBehaviorChooser : public SimpleBehaviorChooser
 {
-  using super = SimpleBehaviorChooser;
 public:
 
   // This disabled all behaviors from running, regardless of the config.
@@ -39,8 +38,6 @@ public:
   virtual void OnSelected() override;
 
   virtual Result Update() override;
-
-  virtual IBehavior* ChooseNextBehavior(Robot& robot, bool didCurrentFinish) const override;
 
   virtual const char* GetName() const override { return _name.c_str(); }
 

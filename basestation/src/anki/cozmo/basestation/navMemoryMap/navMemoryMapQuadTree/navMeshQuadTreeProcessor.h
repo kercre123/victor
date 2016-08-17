@@ -73,6 +73,9 @@ public:
   // region to the content type given (newContent)
   void FillBorder(ENodeContentType filledType, ENodeContentTypePackedType fillingTypeFlags, const NodeContent& newContent);
   
+  // returns true if there are any nodes of the given type, false otherwise
+  bool HasContentType(ENodeContentType type) const;
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Debug
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

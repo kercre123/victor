@@ -4,8 +4,7 @@
   "requiredUnlockId": "RollCube",
   "flatScore": 0.6,
   "put_down_animation_group": "RollBlockPutDown",
-  "behaviorGroups": [
-    "AffectsBlocks",
+  "behaviorGroups": [    
     "Unlock_CubeRoll",
     "Demo",
     "DemoCubes"

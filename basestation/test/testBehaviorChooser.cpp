@@ -29,7 +29,7 @@ static const char* kTestBehavior1Json =
 "   \"behaviorType\" : \"NoneBehavior\","
 "   \"name\" : \"Test1\","
 "   \"behaviorGroups\" : ["
-"     \"AffectsBlocks\","
+"     \"MiniGame\","
 "     \"RequestSpeedTap\""
 "   ]"
 "}";

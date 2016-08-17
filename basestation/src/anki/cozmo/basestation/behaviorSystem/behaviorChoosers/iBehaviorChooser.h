@@ -64,7 +64,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // chooses the next behavior to run (could be the same we are currently running or null if none are desired)
-  virtual IBehavior* ChooseNextBehavior(Robot& robot, bool didCurrentFinish) const = 0;
+  virtual IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior) = 0;
 
   // update internal state of the chooser
   virtual Result Update() { return Result::RESULT_OK; }

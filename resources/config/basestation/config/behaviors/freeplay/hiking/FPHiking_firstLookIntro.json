@@ -11,7 +11,7 @@
   "behaviorType": "PlayAnim",
   "flatScore": 9.0,
   "behaviorGroups": [
-    "FreeplayHiking"
+    "FP_Hiking"
   ],
   
   "requiredRecentSwitchToParent_sec" : 1.0,
