@@ -75,6 +75,14 @@ namespace Cozmo {
 
     private Dictionary<string, ItemData> _IdToData;
 
+    [SerializeField]
+    private int _MaxInventoryLimit;
+    public int MaxInventoryLimit {
+      get {
+        return _MaxInventoryLimit;
+      }
+    }
+
     private void PopulateDictionary() {
       _IdToData = new Dictionary<string, ItemData>();
       foreach (ItemData data in _ItemMap) {

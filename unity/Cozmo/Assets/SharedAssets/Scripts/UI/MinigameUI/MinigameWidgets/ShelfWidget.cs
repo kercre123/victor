@@ -65,6 +65,7 @@ namespace Cozmo {
       private void Awake() {
         Color transparent = Color.white;
         transparent.a = 0f;
+        _ShelfText.gameObject.SetActive(false);
         _ShelfText.text = "";
       }
 
@@ -82,6 +83,7 @@ namespace Cozmo {
       }
 
       public void SetWidgetText(string widgetTextKey) {
+        _ShelfText.gameObject.SetActive(widgetTextKey != string.Empty);
         _ShelfText.text = Localization.Get(widgetTextKey);
       }
 

@@ -120,7 +120,7 @@ public class ChallengeEndedDialog : MonoBehaviour {
     IconTextLabel iconTextLabel = UIManager.CreateUIElement(_RewardIconPrefab,
                                     _EnergyEarnedContainer).GetComponent<IconTextLabel>();
     // TextLabel for amount earned
-    iconTextLabel.SetText(Localization.GetWithArgs(LocalizationKeys.kLabelPlusCount, count));
+    iconTextLabel.SetText(count.ToString());
 
     iconTextLabel.SetDesc(Localization.Get(reward.Reward.DescriptionKey));
   }

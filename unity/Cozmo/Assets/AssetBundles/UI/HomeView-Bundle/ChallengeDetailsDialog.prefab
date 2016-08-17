@@ -51,7 +51,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &120528
 GameObject:
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -276,7 +276,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &171670
 GameObject:
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -325,7 +325,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &192118
 GameObject:
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -390,7 +390,7 @@ MonoBehaviour:
     FieldName: Cozmo.UI.CozmoButton:TextEnabledColor:r
     JsonValue: 1.0
   ModifiedLocalReferences:
-  - ObjectPath: ../../
+  - ObjectPath: ../../../
     FieldName: ChallengeDetailsDialog:_ViewPreReqButton
     ReferencePath: 
   ModifiedGlobalReferences:
@@ -444,7 +444,7 @@ MonoBehaviour:
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#coreUpgradeDetailsDialog.cubesNeeded"'
   ModifiedLocalReferences:
-  - ObjectPath: ../../../
+  - ObjectPath: ../../../../
     FieldName: ChallengeDetailsDialog:_CurrentCostLabel
     ReferencePath: 
   ModifiedGlobalReferences: []
@@ -531,7 +531,7 @@ MonoBehaviour:
     FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
     JsonValue: '"Play__Ui__Window_Close"'
   ModifiedLocalReferences:
-  - ObjectPath: ../../../
+  - ObjectPath: ../../../../
     FieldName: ChallengeDetailsDialog:_StartChallengeButton
     ReferencePath: 
   ModifiedGlobalReferences: []
@@ -584,7 +584,7 @@ MonoBehaviour:
   Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
   ModifiedValues: []
   ModifiedLocalReferences:
-  - ObjectPath: ../../
+  - ObjectPath: ../../../
     FieldName: ChallengeDetailsDialog:_OptionalCloseDialogButton
     ReferencePath: 
   ModifiedGlobalReferences: []
@@ -640,7 +640,7 @@ MonoBehaviour:
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
     JsonValue: 3
   ModifiedLocalReferences:
-  - ObjectPath: ../../../../
+  - ObjectPath: ../../../../../
     FieldName: ChallengeDetailsDialog:_UnlockButton
     ReferencePath: 
   ModifiedGlobalReferences: []
@@ -658,7 +658,7 @@ MonoBehaviour:
   Prefab: {fileID: 116638, guid: 44454b3ff11754c71b8b19311c580825, type: 2}
   ModifiedValues: []
   ModifiedLocalReferences:
-  - ObjectPath: ../../
+  - ObjectPath: ../../../
     FieldName: ChallengeDetailsDialog:_ChallengeIcon
     ReferencePath: 
   ModifiedGlobalReferences: []
@@ -942,7 +942,7 @@ RectTransform:
   - {fileID: 22474498}
   - {fileID: 22463684}
   - {fileID: 22489566}
-  m_Father: {fileID: 22439330}
+  m_Father: {fileID: 22478998}
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -979,15 +979,12 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22478998}
-  - {fileID: 22422102}
-  - {fileID: 22456088}
-  - {fileID: 22452242}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -600, y: -400}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22439382
 RectTransform:
@@ -1038,7 +1035,7 @@ RectTransform:
   m_Children:
   - {fileID: 22446236}
   - {fileID: 22486224}
-  m_Father: {fileID: 22439330}
+  m_Father: {fileID: 22478998}
   m_RootOrder: 3
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -1058,7 +1055,7 @@ RectTransform:
   m_Children:
   - {fileID: 22419050}
   - {fileID: 22437538}
-  m_Father: {fileID: 22439330}
+  m_Father: {fileID: 22478998}
   m_RootOrder: 2
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
@@ -1116,12 +1113,15 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22488202}
+  - {fileID: 22422102}
+  - {fileID: 22456088}
+  - {fileID: 22452242}
   m_Father: {fileID: 22439330}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: -600, y: -400}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22486224
 RectTransform:

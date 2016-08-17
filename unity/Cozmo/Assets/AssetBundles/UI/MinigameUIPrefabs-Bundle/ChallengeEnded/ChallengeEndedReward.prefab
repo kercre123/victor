@@ -178,11 +178,14 @@ MonoBehaviour:
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    JsonValue: 8
+  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
     JsonValue: 120
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"1"'
+    JsonValue: '"99"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
     FieldName: Cozmo.UI.IconTextLabel:_TextLabel
@@ -2057,8 +2060,8 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 27, y: -50}
-  m_SizeDelta: {x: -114, y: -162}
+  m_AnchoredPosition: {x: 5, y: -25}
+  m_SizeDelta: {x: -70, y: -50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22498506
 RectTransform:

@@ -242,11 +242,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83287db4b04964b23839233943654a82, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _FlashColor: {r: 0, g: 0.797, b: 0, a: 0.78431374}
-  _DimColor: {r: 0, g: 0.14901961, b: 0.28235295, a: 1}
-  _DimAlpha: 0.4
-  _FlashAlpha: 0.7
-  _FlashDuration: 0.1
   _OverlayForeground: {fileID: 11410550}
 --- !u!114 &11410550
 MonoBehaviour:
@@ -400,7 +395,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: b4b0671fe079f45dca34d6cbfcdc9613, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 857e68b9a7b0f4100bd7a8a8cbce207e, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -459,7 +454,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: b4b0671fe079f45dca34d6cbfcdc9613, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 857e68b9a7b0f4100bd7a8a8cbce207e, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1

@@ -227,7 +227,7 @@ namespace Cozmo.HomeHub {
         }
         UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
       }
-
+      DailyGoalManager.Instance.OnRefreshDailyGoals += UpdatePlayTabText;
       GameEventManager.Instance.OnGameEvent += HandleDailyGoalCompleted;
       UpdatePlayTabText();
 
@@ -594,6 +594,7 @@ namespace Cozmo.HomeHub {
       ChestRewardManager.Instance.ChestGained -= HandleChestGained;
       _RequirementPointsProgressBar.ProgressUpdateCompleted -= HandleProgressUpdated;
       GameEventManager.Instance.OnGameEvent -= HandleDailyGoalCompleted;
+      DailyGoalManager.Instance.OnRefreshDailyGoals -= UpdatePlayTabText;
       UnlockablesManager.Instance.OnUnlockPopupRequested -= HandleUnlockView;
 
       if (_HelpViewInstance != null) {

@@ -6,12 +6,17 @@ namespace Cozmo {
   [System.Serializable]
   public class Inventory {
     // Delta is always a positive number
-    public delegate void InventoryValueChangedHandler(string itemId,int delta,int newCount);
+    public delegate void InventoryValueChangedHandler(string itemId, int delta, int newCount);
 
     public event InventoryValueChangedHandler ItemAdded;
     public event InventoryValueChangedHandler ItemRemoved;
     public event InventoryValueChangedHandler ItemCountSet;
 
+    public int InventoryCap {
+      get {
+        return ItemDataConfig.Instance.MaxInventoryLimit;
+      }
+    }
     /// <summary>
     /// DO NOT MODIFY OUTSIDE OF CLASS.
     /// Public so that serialization for saving works.
@@ -24,9 +29,20 @@ namespace Cozmo {
 
     public void AddItemAmount(string itemId, int count = 1) {
       if (_ItemIdToCount.ContainsKey(itemId)) {
-        _ItemIdToCount[itemId] = _ItemIdToCount[itemId] + count;
+        // If already at inventory cap just don't add anything or trigger events
+        if (_ItemIdToCount[itemId] >= InventoryCap) {
+          return;
+        }
+        // If would hit cap or exceed it, set to cap but still fire appropriate events.
+        if (CanAddItemAmount(itemId, count)) {
+          _ItemIdToCount[itemId] = _ItemIdToCount[itemId] + count;
+        }
+        else {
+          _ItemIdToCount[itemId] = InventoryCap;
+        }
       }
       else {
+        if (count > InventoryCap) { count = InventoryCap; }
         _ItemIdToCount.Add(itemId, count);
       }
 
@@ -80,6 +96,21 @@ namespace Cozmo {
       if (ItemRemoved != null) {
         ItemRemoved(itemId, count, _ItemIdToCount[itemId]);
       }
+    }
+
+    public bool CanAddItemAmount(string itemId, int count = 1) {
+      bool canAdd = false;
+      if (count == 0) {
+        canAdd = true;
+      }
+      else if (count > 0) {
+        int currentCount = GetItemAmount(itemId);
+        canAdd = (currentCount + count <= InventoryCap);
+      }
+      else {
+        DAS.Error("Inventory.CanAdd", "CanAdd expects positive arguments. count=" + count);
+      }
+      return canAdd;
     }
 
     public bool CanRemoveItemAmount(string itemId, int count = 1) {
