@@ -41,7 +41,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22496728}
-  - 222: {fileID: 22217438}
   - 114: {fileID: 11413872}
   - 114: {fileID: 11429418}
   - 114: {fileID: 11409344}
@@ -152,7 +151,7 @@ MonoBehaviour:
   m_ChildAlignment: 4
   m_Spacing: 0
   m_ChildForceExpandWidth: 1
-  m_ChildForceExpandHeight: 0
+  m_ChildForceExpandHeight: 1
 --- !u!114 &11407424
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -168,7 +167,7 @@ MonoBehaviour:
   m_MinWidth: -1
   m_MinHeight: 125
   m_PreferredWidth: -1
-  m_PreferredHeight: -1
+  m_PreferredHeight: 125
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
 --- !u!114 &11407946
@@ -188,7 +187,7 @@ MonoBehaviour:
   m_PreferredWidth: -1
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
-  m_FlexibleHeight: -1
+  m_FlexibleHeight: 1
 --- !u!114 &11409344
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -201,12 +200,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_IgnoreLayout: 0
-  m_MinWidth: -1
+  m_MinWidth: 1000
   m_MinHeight: -1
   m_PreferredWidth: 1000
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
-  m_FlexibleHeight: -1
+  m_FlexibleHeight: 1
 --- !u!114 &11413872
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -265,7 +264,7 @@ MonoBehaviour:
   m_MinWidth: -1
   m_MinHeight: 80
   m_PreferredWidth: -1
-  m_PreferredHeight: -1
+  m_PreferredHeight: 80
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
 --- !u!114 &11462822
@@ -358,12 +357,6 @@ MonoBehaviour:
   m_Spacing: 0
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
---- !u!222 &22217438
-CanvasRenderer:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 130834}
 --- !u!222 &22234372
 CanvasRenderer:
   m_ObjectHideFlags: 1
