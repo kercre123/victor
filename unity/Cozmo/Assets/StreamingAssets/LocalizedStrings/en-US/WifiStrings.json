@@ -36,7 +36,16 @@
   "wifiStrings.Instructions.Slide0.viewAll": {
     "translation": "Swipe to read all the instructions first!"
   },
+  "wifiStrings.nextButton": {
+    "translation": "Next"
+  },
+  "wifiStrings.backButton": {
+    "translation": "Back"
+  },
   "wifi.gethelp.description": {
     "translation": "Having trouble? Try the following:\n1. Turn your device's wifi off and then on again.\n2. Remove then place Cozmo on his charger.\n\nstill stuck? visit support.anki.com"
+  },
+  "wifi.getHelp.linkText": {
+    "translation": "Get Help"
   }
 }
