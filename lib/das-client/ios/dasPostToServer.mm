@@ -25,6 +25,8 @@ extern "C" {
 
 bool dasPostToServer(const std::string& url, const std::string& postBody)
 {
+  // Needs an autoreleasepool because the NSData_Base64 base64EncodedStringWithData method does a NSString alloc.
+  @autoreleasepool {
     NSString* nsUrlString = [NSString stringWithCString:url.c_str() encoding:NSUTF8StringEncoding];
     NSURL* nsUrl = [[NSURL alloc] initWithString: nsUrlString];
     NSData* nsPostBody = [[NSString stringWithCString:postBody.c_str() encoding:NSUTF8StringEncoding] dataUsingEncoding:NSUTF8StringEncoding];
@@ -63,6 +65,7 @@ bool dasPostToServer(const std::string& url, const std::string& postBody)
     }
     // TODO: what happens when we get a non-2xx response?
     return true;
+  } // @autoreleasepool
 }
 
 #ifdef __cplusplus
