@@ -296,10 +296,10 @@
     "translation": "Four Colors"
   },
  "speedTap.difficulty.easyDescription": {
-   "translation": "Be the first to slap your cube when the colors match\n- but never slap on red!"
+   "translation": "Be the first to tap your cube when the colors match\n- but never slap on red!"
   },
   "speedTap.difficulty.mediumDescription": {
-   "translation": "Same rules as Easy mode, but now with light patterns! Cubes may have up to 2 colors."
+   "translation": "Same rules as before, but now cubes may have up to 2 colors."
   },
   "speedTap.difficulty.hardDescription": {
    "translation": "More complexity!\nCubes may have 1-3 colors."
