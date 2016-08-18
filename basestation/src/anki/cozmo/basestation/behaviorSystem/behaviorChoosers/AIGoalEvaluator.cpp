@@ -51,7 +51,11 @@ void AIGoalEvaluatorSetDebugGoal(const std::string& name)
     PRINT_NAMED_WARNING("AIGoalEvaluatorCycleGoal", "No default goal evaluator. Can't cycle goals.");
   }
 }
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIGoalSetFPNothingToDo( ConsoleFunctionContextRef context ) {
+  AIGoalEvaluatorSetDebugGoal("FP_NothingToDo");
+}
+CONSOLE_FUNC( AIGoalSetFPNothingToDo, "AIGoalEvaluator" );
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIGoalSetFPHiking( ConsoleFunctionContextRef context ) {
   AIGoalEvaluatorSetDebugGoal("FP_Hiking");
