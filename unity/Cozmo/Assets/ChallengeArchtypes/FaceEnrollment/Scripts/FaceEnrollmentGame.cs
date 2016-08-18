@@ -15,8 +15,8 @@ namespace FaceEnrollment {
     private FaceEnrollmentEnterNameSlide _EnterNameSlideInstance;
 
     [SerializeField]
-    private Cozmo.UI.BaseView _FaceEnrollmentInstructionsViewPrefab;
-    private Cozmo.UI.BaseView _FaceEnrollmentInstructionsViewInstance;
+    private FaceEnrollmentInstructionsView _FaceEnrollmentInstructionsViewPrefab;
+    private FaceEnrollmentInstructionsView _FaceEnrollmentInstructionsViewInstance;
 
     // used by press demo to skip saving to actual robot.
     private bool _SaveToRobot = true;
@@ -131,7 +131,7 @@ namespace FaceEnrollment {
 
       ShowInstructions(() => {
         ShowFaceListSlide(SharedMinigameView);
-      });
+      }, faceName);
     }
 
     private void HandleNewNameEntered(string faceName) {
@@ -139,10 +139,10 @@ namespace FaceEnrollment {
 
       ShowInstructions(() => {
         EnterNameForNewFace();
-      });
+      }, faceName);
     }
 
-    private void ShowInstructions(System.Action handleInstructionsDone) {
+    private void ShowInstructions(System.Action handleInstructionsDone, string faceName) {
       SharedMinigameView.HideGameStateSlide();
       _FaceEnrollmentInstructionsViewInstance = UIManager.OpenView(_FaceEnrollmentInstructionsViewPrefab);
       _FaceEnrollmentInstructionsViewInstance.ViewClosed += () => {
@@ -150,6 +150,10 @@ namespace FaceEnrollment {
           handleInstructionsDone();
         }
       };
+      if (string.IsNullOrEmpty(faceName) == false) {
+        _FaceEnrollmentInstructionsViewInstance.SetFaceName(faceName);
+      }
+      HandleInstructionsSlideEntered();
     }
 
     private void HandleUpdatedNameEntered(string newName) {

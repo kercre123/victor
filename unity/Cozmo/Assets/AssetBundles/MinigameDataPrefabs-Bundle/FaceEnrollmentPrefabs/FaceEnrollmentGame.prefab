@@ -53,7 +53,7 @@ MonoBehaviour:
     type: 2}
   _EnterNameSlidePrefab: {fileID: 11431490, guid: e9fb59d52d3f64ef2825d07f7ed56372,
     type: 2}
-  _FaceEnrollmentInstructionsViewPrefab: {fileID: 11440988, guid: 608a10a26f4794b2f8cfb371d89d5626,
+  _FaceEnrollmentInstructionsViewPrefab: {fileID: 11494650, guid: 608a10a26f4794b2f8cfb371d89d5626,
     type: 2}
 --- !u!1001 &100100000
 Prefab:
