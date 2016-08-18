@@ -86,7 +86,7 @@ public class FactoryOptionsPanel : MonoBehaviour {
 
       _EnableNVStorageWrites.gameObject.SetActive(false);
       _CheckPreviousResults.gameObject.SetActive(false);
-      _WipeNVStorageAtStart.gameObject.SetActive(false);
+      //_WipeNVStorageAtStart.gameObject.SetActive(false);
       _SkipBlockPickup.gameObject.SetActive(false);
       _EnableRobotSound.gameObject.SetActive(false);
     }
