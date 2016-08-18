@@ -67,7 +67,9 @@ typedef enum {
   PP_running,
 } PlayPenTestState;
 
-extern "C" bool hasBirthCertificate(void) { return birthCert.second != 0xFF; }
+#define INVALID_BIRTH_SECOND (0x81);
+
+extern "C" bool hasBirthCertificate(void) { return birthCert.second != INVALID_BIRTH_SECOND; }
 
 #define MENU_TIMEOUT 100000000
 
@@ -115,7 +117,7 @@ bool Init()
   menuIndex = 0;
   testModeData = NULL;
   testModePhase = 0;
-  birthCert.second = 0xFF; // Mark invalid
+  birthCert.second = INVALID_BIRTH_SECOND; // Mark invalid
   return true;
 }
 
