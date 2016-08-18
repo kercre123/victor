@@ -29,7 +29,12 @@ public class FaceEnrollmentEnterNameSlide : MonoBehaviour {
   }
 
   public void SetNameInputField(string existing) {
+    // there is a bug with unity's InputField for Name types that cuts off the last character of a programmatically
+    // set string. This is a workaround.
+    // https://fogbugz.unity3d.com/default.asp?824198_olip6sa7g9joavuc
+    _NameInputField.characterLimit = _NameInputField.characterLimit + 1;
     _NameInputField.text = existing;
+    _NameInputField.characterLimit = _NameInputField.characterLimit - 1;
   }
 
   private char ValidateNameField(string input, int charIndex, char charToValidate) {
