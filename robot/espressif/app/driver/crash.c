@@ -244,6 +244,10 @@ void ICACHE_FLASH_ATTR crashHandlerInit(void)
   {
     os_memset(factoryData, 0xff, FACTORY_DATA_SIZE);
   }
+  if ((factoryData[0] & 0xF0000000) == 0xF0000000) // Invalid serial number
+  {
+    spi_flash_read(FACTORY_SECTOR * SECTOR_SIZE + RANDOM_DATA_OFFSET + 16, factoryData, 4);
+  }
 }
 
 extern void FacePrintf(const char *format, ...); // Forward declaration
@@ -297,7 +301,7 @@ uint32_t ICACHE_FLASH_ATTR getSSIDNumber(void)
 {
   const uint32_t sn = getSerialNumber();
   const uint32_t fix = sn >> 24;
-  return (((sn & 0x00FF0000) ^ (fix << 16)) & 0x77) | ((sn & 0x0000FF00) ^ (fix << 8)) | ((sn & 0x000000FF) ^ fix);
+  return (((sn & 0x00FF0000) ^ (fix << 16)) & 0x770000) | ((sn & 0x0000FF00) ^ (fix << 8)) | ((sn & 0x000000FF) ^ fix);
 }
 
 uint16_t ICACHE_FLASH_ATTR getModelNumber(void)
