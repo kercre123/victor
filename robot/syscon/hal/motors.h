@@ -32,16 +32,6 @@ namespace Motors {
   
   // Updates the PWM values for the timers in a safe manner
   void manage();
-
-  // Print the raw encoder input values over the UART
-  void printEncodersRaw();
-  void getRawValues(uint32_t *positions);
-  
-  // Print the motor encoder value in binary
-  void printEncoder(u8 motorID);
-
-  
-  s32 debugWheelsGetTicks(u8 motorID);
 }
 
 #endif

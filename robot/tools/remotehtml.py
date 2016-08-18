@@ -22,11 +22,8 @@ def Remote():
         message = json.loads(request.data.decode("utf-8"))
 
         robotInterface.Send(robotInterface.RI.EngineToRobot(drive=robotInterface.RI.DriveWheels(message['left'], message['right'])))
-
-        if 'lift' in message:
-            robotInterface.Send(robotInterface.RI.EngineToRobot(moveLift=robotInterface.RI.MoveLift(message['lift'])))
-        if 'head' in message:
-            robotInterface.Send(robotInterface.RI.EngineToRobot(moveHead=robotInterface.RI.MoveHead(message['head'])))
+        robotInterface.Send(robotInterface.RI.EngineToRobot(moveLift=robotInterface.RI.MoveLift(message['lift'])))
+        robotInterface.Send(robotInterface.RI.EngineToRobot(moveHead=robotInterface.RI.MoveHead(message['head'])))
 
         return "ok."
 
