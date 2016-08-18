@@ -119,6 +119,7 @@ int main (void)
   // Run the main thread (lite)
   for(;;)
   {
+    Watchdog::kick(WDOG_MAIN_EXEC);
     // Pump Wifi clad as quickly as possible
     do {
       WiFi::Update();
