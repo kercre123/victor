@@ -15,7 +15,8 @@ namespace FaceEnrollment {
     private FaceEnrollmentEnterNameSlide _EnterNameSlideInstance;
 
     [SerializeField]
-    private GameObject _FaceEnrollmentDiagramPrefab;
+    private Cozmo.UI.BaseView _FaceEnrollmentInstructionsViewPrefab;
+    private Cozmo.UI.BaseView _FaceEnrollmentInstructionsViewInstance;
 
     // used by press demo to skip saving to actual robot.
     private bool _SaveToRobot = true;
@@ -76,6 +77,7 @@ namespace FaceEnrollment {
       _FaceListSlideInstance.OnDeleteEnrolledFace += RequestDeleteEnrolledFace;
       _FaceListSlideInstance.OnReEnrollFaceRequested += RequestReEnrollFace;
       newView.ShelfWidget.SetWidgetText(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDescription);
+      newView.ShowQuitButton();
     }
 
     private void CleanupFaceListSlide() {
@@ -108,7 +110,6 @@ namespace FaceEnrollment {
       }
 
       SharedMinigameView.ShowBackButton(() => {
-        SharedMinigameView.ShowQuitButton();
         ShowFaceListSlide(SharedMinigameView);
       });
       CleanupFaceListSlide();
@@ -126,30 +127,29 @@ namespace FaceEnrollment {
 
     private void RequestReEnrollFace(int faceId, string faceName) {
       _ReEnrollFaceID = faceId;
-
       _NameForFace = faceName;
-      SharedMinigameView.ShowWideAnimationSlide("faceEnrollment.instructions", "face_enrollment_wait_instructions", _FaceEnrollmentDiagramPrefab, HandleInstructionsSlideEntered);
-      SharedMinigameView.ShowShelf();
-      SharedMinigameView.ShowSpinnerWidget();
 
-      SharedMinigameView.ShowBackButton(() => {
-        SharedMinigameView.ShowQuitButton();
+      ShowInstructions(() => {
         ShowFaceListSlide(SharedMinigameView);
-        SharedMinigameView.HideSpinnerWidget();
       });
     }
 
     private void HandleNewNameEntered(string faceName) {
       _NameForFace = faceName;
-      SharedMinigameView.ShowWideAnimationSlide("faceEnrollment.instructions", "face_enrollment_wait_instructions", _FaceEnrollmentDiagramPrefab, HandleInstructionsSlideEntered);
-      SharedMinigameView.ShowShelf();
-      SharedMinigameView.ShowSpinnerWidget();
 
-      SharedMinigameView.ShowBackButton(() => {
-        SharedMinigameView.ShowQuitButton();
+      ShowInstructions(() => {
         EnterNameForNewFace();
-        SharedMinigameView.HideSpinnerWidget();
       });
+    }
+
+    private void ShowInstructions(System.Action handleInstructionsDone) {
+      SharedMinigameView.HideGameStateSlide();
+      _FaceEnrollmentInstructionsViewInstance = UIManager.OpenView(_FaceEnrollmentInstructionsViewPrefab);
+      _FaceEnrollmentInstructionsViewInstance.ViewClosed += () => {
+        if (handleInstructionsDone != null) {
+          handleInstructionsDone();
+        }
+      };
     }
 
     private void HandleUpdatedNameEntered(string newName) {
@@ -214,7 +214,6 @@ namespace FaceEnrollment {
       }
       SharedMinigameView.ShowQuitButton();
       ShowFaceListSlide(SharedMinigameView);
-      SharedMinigameView.HideSpinnerWidget();
     }
 
     // pop up a confirmation for deleting an enrolled face

@@ -35,6 +35,11 @@
   },
   "faceEnrollment.faceEnrollmentList.deleteConfirmButton": {
     "translation": "Delete"
+  },
+  "faceEnrollment.instructions.top": {
+    "translation": "Look at Cozmo straight on, and hold still."
+  },
+  "faceEnrollment.instructions.bottom": {
+    "translation": "When Cozmo sees you, you'll hear a chime."
   }
-
 }
