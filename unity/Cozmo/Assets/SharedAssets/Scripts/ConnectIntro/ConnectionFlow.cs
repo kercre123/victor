@@ -117,7 +117,6 @@ public class ConnectionFlow : MonoBehaviour {
 
     CreateConnectionFlowBackground();
     ShowSearchForCozmo();
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connecting);
   }
 
   private void ReturnToTitle() {
@@ -355,7 +354,10 @@ public class ConnectionFlow : MonoBehaviour {
   private void ConnectToRobot() {
     DAS.Info("ConnectionFlow.ConnectToRobot", "Trying to connect to robot");
     RobotEngineManager.Instance.ConnectToRobot(kRobotID, _CurrentRobotIP, _Simulated);
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connecting);
+    // Silent if you've never done it before...
+    if (!OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Home)) {
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connecting);
+    }
   }
 
   private void HandleConnectedToEngine(string connectionIdentifier) {

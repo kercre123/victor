@@ -1355,6 +1355,16 @@ public class Robot : IRobot {
       queueActionPosition);
   }
 
+  public void DriveStraightAction(float speed_mmps, float dist_mm, bool shouldPlayAnimation = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    SendQueueSingleAction(Singleton<DriveStraight>.Instance.Initialize(
+      speed_mmps,
+      dist_mm,
+      shouldPlayAnimation
+     ),
+      callback,
+      queueActionPosition);
+  }
+
   public void GotoObject(ObservedObject obj, float distance_mm, bool goToPreDockPose = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     SendQueueSingleAction(Singleton<GotoObject>.Instance.Initialize(
       objectID: obj,
@@ -1684,6 +1694,13 @@ public class Robot : IRobot {
   }
 
   #endregion
+
+  public void SetEnableFreeplayLightStates(bool enable) {
+    DAS.Debug(this, "SetEnableFreeplayLightStates: " + enable);
+
+    RobotEngineManager.Instance.Message.EnableLightStates = Singleton<EnableLightStates>.Instance.Initialize(enable);
+    RobotEngineManager.Instance.SendMessage();
+  }
 
   public void TurnOffAllLights(bool now = false) {
     var enumerator = LightCubes.GetEnumerator();

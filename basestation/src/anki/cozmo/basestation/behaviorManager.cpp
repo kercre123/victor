@@ -157,14 +157,11 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
                                    case BehaviorChooserType::Freeplay:
                                    {
                                      SetBehaviorChooser( _freeplayChooser );
-                                     _robot.GetLightsComponent().SetEnableComponent(true);
                                      break;
                                    }
                                    case BehaviorChooserType::Selection:
                                    {
                                      SetBehaviorChooser( _selectionChooser );
-                                     // TODO:(bn) do this elsewhere?
-                                     _robot.GetLightsComponent().SetEnableComponent(false);
                                      break;
                                    }
                                    case BehaviorChooserType::Demo:

@@ -18,17 +18,20 @@ namespace Onboarding {
     private RectTransform _CozmoImageTransform;
 
     [SerializeField]
+    private RectTransform _CozmoCubeRightSideUpTransform;
+
+    [SerializeField]
     private CozmoButton _ContinueButtonInstance;
 
     private int _SawCubeID = -1;
 
     enum SubState {
       ErrorCozmo,
-      ErrorCube,
+      ErrorCubeMoved,
+      ErrorCubeWrongSideUp,
       WaitForShowCube,
-      WaitForEnergy,
+      WaitForOKCubeDiscovered,
       WaitForInspectCube,
-      WaitForReactToCube,
       WaitForFinalContinue,
     };
     private SubState _SubState;
@@ -52,6 +55,7 @@ namespace Onboarding {
     private void HandleCubeMoved(int id, float accX, float accY, float aaZ) {
       // TODO: cubed move state needs a more specific warning.
     }
+
     protected void HandleRobotReactionaryBehavior(object messageObject) {
       ReactionaryBehaviorTransition behaviorTransition = messageObject as ReactionaryBehaviorTransition;
       if (behaviorTransition.behaviorStarted) {
@@ -67,7 +71,7 @@ namespace Onboarding {
     }
 
     protected void HandleContinueClicked() {
-      if (_SubState == SubState.WaitForEnergy) {
+      if (_SubState == SubState.WaitForOKCubeDiscovered) {
         UpdateSubstate(SubState.WaitForInspectCube);
       }
       else if (_SubState == SubState.ErrorCozmo) {
@@ -79,11 +83,40 @@ namespace Onboarding {
       }
     }
 
-    private void HandleEndAnimationComplete(bool success) {
-      UpdateSubstate(SubState.WaitForFinalContinue);
-    }
     private void HandleBlockAlignComplete(bool success) {
-      UpdateSubstate(SubState.WaitForReactToCube);
+      DAS.Debug(this, "HandleBlockAlignComplete " + success);
+      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnboardingReactToCube, HandleCubeReactComplete);
+    }
+    private void HandleCubeReactComplete(bool success) {
+      DAS.Debug(this, "HandleCubeReactComplete " + success);
+      // Get to the right distance
+      IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
+      if (CurrentRobot.LightCubes.ContainsKey(_SawCubeID)) {
+        DAS.Debug(this, "HandleCubeReactComplete _SawCubeID" + _SawCubeID);
+        LightCube block = CurrentRobot.LightCubes[_SawCubeID];
+        CurrentRobot.PickupObject(block, true, false, false, 0, HandleCubePickupComplete);
+      }
+      else {
+        UpdateSubstate(SubState.WaitForShowCube);
+      }
+    }
+    private void HandleCubePickupComplete(bool success) {
+      DAS.Debug(this, "HandleCubePickupComplete " + success);
+      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnboardingInteractWithCube, HandlePickupAnimComplete);
+    }
+    private void HandlePickupAnimComplete(bool success) {
+      // Put down cube, Back off...
+      IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
+      CurrentRobot.PlaceObjectOnGroundHere((bool success2) => { CurrentRobot.DriveStraightAction(100.0f, -20.0f, true, HandleBackupComplete); });
+    }
+
+    private void HandleBackupComplete(bool success) {
+      DAS.Debug(this, "HandleBackupComplete " + success);
+      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnboardingReactToCubePutDown, HandleEndAnimationComplete);
+    }
+    private void HandleEndAnimationComplete(bool success) {
+      DAS.Debug(this, "HandleEndAnimationComplete " + success);
+      UpdateSubstate(SubState.WaitForFinalContinue);
     }
 
     public override void SkipPressed() {
@@ -91,7 +124,7 @@ namespace Onboarding {
         OnboardingManager.Instance.GoToNextStage();
       }
       else {
-        UpdateSubstate((SubState)((int)_SubState + 1));
+        UpdateSubstate(SubState.WaitForFinalContinue);
       }
     }
 
@@ -102,47 +135,79 @@ namespace Onboarding {
         if (RobotEngineManager.Instance.CurrentRobot != null) {
           foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
             isAnyInView |= kvp.Value.IsInFieldOfView;
-            _SawCubeID = kvp.Value.ID;
+            if (kvp.Value.IsInFieldOfView) {
+              _SawCubeID = kvp.Key;
+            }
           }
         }
         if (isAnyInView) {
-          UpdateSubstate(SubState.WaitForEnergy);
+          UpdateSubstate(SubState.WaitForOKCubeDiscovered);
+        }
+      }
+      else if (_SubState == SubState.WaitForOKCubeDiscovered) {
+        IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
+        if (CurrentRobot.LightCubes.ContainsKey(_SawCubeID)) {
+          LightCube block = CurrentRobot.LightCubes[_SawCubeID];
+
+          // TODO: remove unknown once firmware fix gets in... COZMO-3962
+          if (block.UpAxis != UpAxis.ZPositive && block.UpAxis != UpAxis.Unknown) {
+            UpdateSubstate(SubState.ErrorCubeWrongSideUp);
+          }
+        }
+      }
+      else if (_SubState == SubState.ErrorCubeWrongSideUp) {
+        IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
+        if (CurrentRobot.LightCubes.ContainsKey(_SawCubeID)) {
+          LightCube block = CurrentRobot.LightCubes[_SawCubeID];
+          if (block.UpAxis == UpAxis.ZPositive && block.IsInFieldOfView) {
+            UpdateSubstate(SubState.WaitForInspectCube);
+          }
+        }
+        else {
+          UpdateSubstate(SubState.WaitForShowCube);
         }
       }
     }
 
     private void UpdateSubstate(SubState nextState) {
+
       if (nextState == SubState.WaitForShowCube) {
         _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3Body1);
         _ContinueButtonInstance.gameObject.SetActive(false);
       }
-      else if (nextState == SubState.WaitForEnergy) {
+      else if (nextState == SubState.WaitForOKCubeDiscovered) {
         _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3Body2);
         _ContinueButtonInstance.gameObject.SetActive(true);
-        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnboardingReactToCube);
+        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnboardingDiscoverCube);
       }
       else if (nextState == SubState.WaitForInspectCube) {
         _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3Body3);
         _ContinueButtonInstance.gameObject.SetActive(false);
+        _CozmoCubeRightSideUpTransform.gameObject.SetActive(false);
+        _CozmoImageTransform.gameObject.SetActive(true);
 
         // Get to the right distance
         IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
         if (CurrentRobot.LightCubes.ContainsKey(_SawCubeID)) {
+          DAS.Debug(this, "AligningWithBlock: " + _SawCubeID);
           LightCube block = CurrentRobot.LightCubes[_SawCubeID];
-          CurrentRobot.AlignWithObject(block, 20.0f, HandleBlockAlignComplete);
+          CurrentRobot.AlignWithObject(block, 23.0f, HandleBlockAlignComplete, false, false);
         }
         else {
-          UpdateSubstate(SubState.WaitForReactToCube);
+          UpdateSubstate(SubState.WaitForShowCube);
         }
-      }
-      else if (nextState == SubState.WaitForReactToCube) {
-        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnboardingInteractWithCube, HandleEndAnimationComplete);
       }
       else if (nextState == SubState.WaitForFinalContinue) {
         _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3Body4);
         _ContinueButtonInstance.gameObject.SetActive(true);
       }
-      else if (nextState == SubState.ErrorCube) {
+      else if (nextState == SubState.ErrorCubeWrongSideUp) {
+        _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCubeRightSideUp);
+        _ContinueButtonInstance.gameObject.SetActive(false);
+        _CozmoCubeRightSideUpTransform.gameObject.SetActive(true);
+        _CozmoImageTransform.gameObject.SetActive(false);
+      }
+      else if (nextState == SubState.ErrorCubeMoved) {
         _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCube);
         _ContinueButtonInstance.gameObject.SetActive(false);
       }

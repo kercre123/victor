@@ -250,6 +250,7 @@ namespace Cozmo.HomeHub {
 
     private void HandleEndGameDialog() {
       RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
+      RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayLightStates(true);
       RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, true);
       RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);

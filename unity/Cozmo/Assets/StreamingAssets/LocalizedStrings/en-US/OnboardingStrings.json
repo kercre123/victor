@@ -51,6 +51,12 @@
   "onboarding.Phase3.ErrorCube": {
     "translation": "The Cube Has moved!"
   },
+  "onboarding.Phase3.ErrorCubeRightSideUp": {
+    "translation": "Lights Side Up!"
+  },
+  "onboarding.Phase3.ErrorCubeRightSideUp2": {
+    "translation": "Turn the Cube so that the lights are on top"
+  },
   "onboarding.Phase3.ErrorCozmo": {
     "translation": "Cozmo needs to be on a stable, flat, surface and to explore on his own."
   },

@@ -44,6 +44,7 @@ public static class LocalizationKeys {
   public const string kWhackAMoleDescription = "whackAMole.description";
   public const string kConnectivityPlaceCozmoOnCharger = "connectivity.placeCozmoOnCharger";
   public const string kConnectivityReplaceCozmoOnCharger = "connectivity.replaceCozmoOnCharger";
+  public const string kWifiGetHelp = "wifi.getHelp";
 
   #endregion
 
@@ -66,6 +67,7 @@ public static class LocalizationKeys {
   public const string kConnectivityCozmoSleepDesc = "connectivity.cozmoSleepDesc";
   public const string kConnectivityCozmoLowBatteryTitle = "connectivity.cozmoLowBatteryTitle";
   public const string kConnectivityCozmoLowBatteryDesc = "connectivity.cozmoLowBatteryDesc";
+  public const string kConnectivityKeepCozmoOnCharger = "connectivity.keepCozmoOnCharger";
 
   #endregion
 
@@ -95,6 +97,7 @@ public static class LocalizationKeys {
   #region DailyGoalStrings
 
   public const string kDailyGoalTitleMissing = "dailyGoal.title.missing";
+  public const string kDailyGoalTitleFirstWinSpeedTap = "dailyGoal.title.FirstWinSpeedTap";
   public const string kDailyGoalTitlePlaySpeedTapTwice = "dailyGoal.title.PlaySpeedTapTwice";
   public const string kDailyGoalTitleWinSpeedTap = "dailyGoal.title.WinSpeedTap";
   public const string kDailyGoalTitlePlaySpeedTapLevel1 = "dailyGoal.title.PlaySpeedTap.Level1";
@@ -303,7 +306,6 @@ public static class LocalizationKeys {
   public const string kNotificationLocal1 = "notification.local1";
   public const string kNotificationLocal2 = "notification.local2";
   public const string kNotificationLocal3 = "notification.local3";
-  public const string kNotificationLocal4 = "notification.local4";
 
   #endregion
 
@@ -320,6 +322,8 @@ public static class LocalizationKeys {
   public const string kOnboardingPhase3Body3 = "onboarding.Phase3.Body3";
   public const string kOnboardingPhase3Body4 = "onboarding.Phase3.Body4";
   public const string kOnboardingPhase3ErrorCube = "onboarding.Phase3.ErrorCube";
+  public const string kOnboardingPhase3ErrorCubeRightSideUp = "onboarding.Phase3.ErrorCubeRightSideUp";
+  public const string kOnboardingPhase3ErrorCubeRightSideUp2 = "onboarding.Phase3.ErrorCubeRightSideUp2";
   public const string kOnboardingPhase3ErrorCozmo = "onboarding.Phase3.ErrorCozmo";
   public const string kOnboardingPhase4Body1a = "onboarding.Phase4.Body1a";
   public const string kOnboardingPhase4Body1b = "onboarding.Phase4.Body1b";
@@ -331,6 +335,7 @@ public static class LocalizationKeys {
   public const string kOnboardingPhase5Body1 = "onboarding.Phase5.Body1";
   public const string kOnboardingPhase5Body2 = "onboarding.Phase5.Body2";
   public const string kOnboardingPhase5Body3 = "onboarding.Phase5.Body3";
+  public const string kOnboardingSlide0a = "onboarding.Slide0a";
 
   #endregion
 
@@ -444,6 +449,7 @@ public static class LocalizationKeys {
   public const string kLabelAvailable = "label.available";
   public const string kButtonReplay = "button.replay";
   public const string kLabelTo = "label.to";
+  public const string kButtonSkip = "button.skip";
 
   #endregion
 
@@ -507,6 +513,7 @@ public static class LocalizationKeys {
   public const string kWifiStringsInstructionsSlide3 = "wifiStrings.Instructions.Slide3";
   public const string kWifiStringsInstructionsSlide4 = "wifiStrings.Instructions.Slide4";
   public const string kWifiStringsInstructionsSlide0ViewAll = "wifiStrings.Instructions.Slide0.viewAll";
+  public const string kWifiGethelpDescription = "wifi.gethelp.description";
 
   #endregion
 }

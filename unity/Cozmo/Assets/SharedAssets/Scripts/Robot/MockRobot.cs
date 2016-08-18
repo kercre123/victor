@@ -429,7 +429,9 @@ public class MockRobot : IRobot {
   public void GotoPose(float x_mm, float y_mm, float rad, bool level = false, bool useManualSpeed = false, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     GotoPose(new Vector3(x_mm, y_mm, 0f), Quaternion.Euler(0, 0, Mathf.Rad2Deg * rad), level, useManualSpeed, callback, queueActionPosition);
   }
-
+  public void DriveStraightAction(float speed_mmps, float dist_mm, bool shouldPlayAnimation = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    QueueCallback(2f, callback);
+  }
   public void GotoObject(ObservedObject obj, float distance_mm, bool goToPreDockPose, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
 
     var delta = (WorldPosition - obj.WorldPosition).normalized * distance_mm;
@@ -588,6 +590,9 @@ public class MockRobot : IRobot {
     if (index == (int)LEDId.LED_BACKPACK_RIGHT) {
 
     }
+  }
+
+  public void SetEnableFreeplayLightStates(bool enable) {
   }
 
   public void TurnOffAllLights(bool now = false) {

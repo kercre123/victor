@@ -121,6 +121,10 @@ public class OnboardingManager : MonoBehaviour {
       SetSpecificStage(GetMaxStageInPhase(_CurrPhase));
     }
     _CurrPhase = phase;
+    if (_CurrPhase == OnboardingPhases.Home) {
+      RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(AnimationTrigger.OnboardingIdle);
+    }
+
     // we keep the asset bundle around because some phases lead into each other, in common cases
     // but don't have to.
     if (_OnboardingUIInstance == null) {
@@ -142,10 +146,16 @@ public class OnboardingManager : MonoBehaviour {
     }
   }
 
+  private void PhaseCompletedInternal() {
+    if (_CurrPhase == OnboardingPhases.Home) {
+      RobotEngineManager.Instance.CurrentRobot.PopIdleAnimation();
+    }
+  }
+
   private void LoadOnboardingAssetsCallback(bool assetBundleSuccess) {
     _OnboardingUIPrefabData.LoadAssetData((GameObject onboardingUIWrapperPrefab) => {
       if (_OnboardingUIInstance == null && onboardingUIWrapperPrefab != null) {
-        GameObject wrapper = UIManager.CreateUIElement(onboardingUIWrapperPrefab.gameObject, _OnboardingTransform);
+        GameObject wrapper = UIManager.CreateUIElement(onboardingUIWrapperPrefab.gameObject);
         _OnboardingUIInstance = wrapper.GetComponent<OnboardingUIWrapper>();
         SetSpecificStage(0);
       }
@@ -184,6 +194,7 @@ public class OnboardingManager : MonoBehaviour {
       _OnboardingUIInstance.AddDebugButtons();
     }
     else {
+      PhaseCompletedInternal();
       _OnboardingUIInstance.RemoveDebugButtons();
       _CurrPhase = OnboardingPhases.None;
       UpdateStage();

@@ -425,6 +425,10 @@
       "AnimName": "ag_launch_firsttimewakeup"
     },
     {
+      "CladEvent": "OnboardingIdle",
+      "AnimName": "ag_pause_idle"
+    },
+    {
       "CladEvent": "OnboardingReactToFace",
       "AnimName": "ag_reactToNewBlock"
     },
@@ -433,8 +437,16 @@
       "AnimName": "ag_launch_reacttocube"
     },
     {
+      "CladEvent": "OnboardingDiscoverCube",
+      "AnimName": "ag_launch_cubediscovery"
+    },
+    {
+      "CladEvent": "OnboardingReactToCubePutDown",
+      "AnimName": "ag_launch_reacttoputdown"
+    },
+    {
       "CladEvent": "OnboardingInteractWithCube",
-      "AnimName": "ag_launch_observecube"
+      "AnimName": "ag_launch_reacttocubepickup"
     },
     {
       "CladEvent": "PlacedOnCharger",

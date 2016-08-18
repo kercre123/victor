@@ -158,6 +158,7 @@ public abstract class GameBase : MonoBehaviour {
 
     if (CurrentRobot != null) {
       CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
+      CurrentRobot.SetEnableFreeplayLightStates(false);
     }
   }
 
