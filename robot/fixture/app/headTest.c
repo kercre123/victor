@@ -42,7 +42,7 @@ bool HeadDetect(void)
   return !!(GPIO_READ(GPIOB) & GPIOB_SWD);
 }
 
-int serial_;
+unsigned int serial_;
 int swd_read32(int addr);
 
 // Connect to and flash the K02
@@ -53,9 +53,15 @@ void HeadK02(void)
   // Try to talk to head on SWD
   SWDInitStub(0x20000000, 0x20001800, g_stubK02, g_stubK02End);
 
-  // If we get this far, allocate a serial number
+  // First check if our program is already on there - 0x800-0x900 (2KB) is convincing enough
   serial_ = swd_read32(SERIAL_ADDR);    // Check existing serial number
-  if (0 == serial_ || 0xffffFFFF == serial_)
+  for (int i = 0x800; i < 0x900; i += 4)
+    if (*(u32*)(g_K02Boot+i) != swd_read32(i))
+      serial_ = 0;                      // Do not use existing serial if there are changes
+  
+  // If we get this far, allocate a serial number
+  ConsolePrintf("old-serial,%08x\r\n", serial_);
+  if (0 == serial_ || 0xf == (serial_ >> 28))
     serial_ = GetSerial();              // Missing serial, get a new one
   ConsolePrintf("serial,%08x\r\n", serial_);
   

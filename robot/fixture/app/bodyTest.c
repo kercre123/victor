@@ -194,6 +194,8 @@ TestFunction* GetBody1TestFunctions(void)
   static TestFunction functions[] =
   {
     BodyNRF51,
+//    HeadlessBoot,
+//    SleepCurrent,
     NULL
   };
   

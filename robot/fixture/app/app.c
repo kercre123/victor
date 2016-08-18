@@ -18,7 +18,7 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 58;
+u8 g_fixtureReleaseVersion = 60;
 const char* BUILD_INFO = "MP";
 
 BOOL g_isDevicePresent = 0;

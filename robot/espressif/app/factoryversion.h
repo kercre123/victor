@@ -1,1 +1,1 @@
-#define FACTORY_VERSION (0x857b162 + 1)
+#define FACTORY_VERSION (0x857b162 + 2)
