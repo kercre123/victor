@@ -14,8 +14,6 @@ enum MotorID
   MOTOR_COUNT
 };
 
-typedef s32 Fixed;
-
 namespace Motors {
   // Initialize the PWM peripheral on the designated pins in the source file.
   void init();
