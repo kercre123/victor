@@ -19,7 +19,6 @@ extern "C" {
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
-
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 
@@ -75,7 +74,15 @@ Fixed g_radiansPerHeadTick;   // XXX: Remove this once Pilot robots are obsolete
 const u32 ENCODER_TIMEOUT_COUNT = 200 * COUNT_PER_MS;
 const u32 ENCODER_NONE = 0xFF;
 
+// This is a map of all motor drive pins
+static const int ALL_N_MOTOR_PINS =
+  PIN_LEFT_N1  | PIN_LEFT_N2 |
+  PIN_RIGHT_N1 | PIN_RIGHT_N2 |
+  PIN_HEAD_N1  | PIN_HEAD_N2 |
+  PIN_LIFT_N1  | PIN_LIFT_N2;
+
 static volatile bool motorDisable = true;
+static bool motorCalibrate = false;
 
 // NOTE: Do NOT re-order the MotorID enum, because this depends on it
 static const MotorConfig m_config[MOTOR_COUNT] = {
@@ -141,9 +148,6 @@ u32 m_lastState = 0;
 
 static void ConfigureTimer(NRF_TIMER_Type* timer, const u8 taskChannel, const u8 ppiChannel)
 {
-  // TODO: There's a PAN about calling TASKS_STOP and TASKS_START in the same
-  // clock period.
-  
   // Ensure the timer is stopped
   timer->TASKS_STOP = 1;
   
@@ -173,7 +177,7 @@ static void ConfigureTimer(NRF_TIMER_Type* timer, const u8 taskChannel, const u8
   
   // Configure PPI channels to toggle the output PWM pins on matching timer compare
   // and toggle the GPIO for the selected duty cycle.
-  
+
   // Match compares
   // 0: PWM n + 0
   // 1: PWM n + 1
@@ -183,57 +187,91 @@ static void ConfigureTimer(NRF_TIMER_Type* timer, const u8 taskChannel, const u8
   sd_ppi_channel_assign(ppiChannel + 1, &timer->EVENTS_COMPARE[2], &NRF_GPIOTE->TASKS_OUT[taskChannel + 0]);
   sd_ppi_channel_assign(ppiChannel + 2, &timer->EVENTS_COMPARE[1], &NRF_GPIOTE->TASKS_OUT[taskChannel + 1]);
   sd_ppi_channel_assign(ppiChannel + 3, &timer->EVENTS_COMPARE[3], &NRF_GPIOTE->TASKS_OUT[taskChannel + 1]);
+
+  // Start the timer
+  timer->TASKS_START = 1;
 }
 
 void Motors::disable(bool disable) {
   if (motorDisable == disable) {
     return ;
   }
-  
+
   // Enable motors, recalibrate encoders
   if (!disable) {
-    using namespace Anki::Cozmo::RobotInterface;
-    
-    StartMotorCalibration msg;
-    msg.calibrateHead = true;
-    msg.calibrateLift = true;
-    SendMessage(msg);
+    setup();
+  } else {
+    teardown();
   }
-
-  motorDisable = disable;
 }
 
+
+// Returns 'true' when the the charger says the battery is full
+bool Motors::getChargeOkay() {
+  return motorDisable ? nrf_gpio_pin_read(PIN_nCHGOK) : false;
+}
+
+
 void Motors::teardown(void) {
-  // Turn off our timers
+  // Prevent manage from reconfiguring the motors
+  motorDisable = true;
+  
+  // Stop our timers timers (they will be cleared before they start back up)
   NRF_TIMER1->TASKS_STOP = 1;
   NRF_TIMER2->TASKS_STOP = 1;
 
-  // Tear down GPIOTE tasks
-  for (int i = 0; i < MOTOR_COUNT; i++) {
-    const MotorConfig* motorConfig = &m_config[i];
-
-    nrf_gpiote_task_disable(i);
-    nrf_gpio_pin_clear(motorConfig->n1Pin);
-    nrf_gpio_pin_clear(motorConfig->n2Pin);
-    nrf_gpio_pin_clear(motorConfig->pPin);
+  // Disable GPIOTE tacks for toggling motor bits
+  for (int motorID = 0; motorID < MOTOR_COUNT; motorID++) {
+    nrf_gpiote_task_disable(motorID);
   }
   
-  // Clear timers
-  NRF_TIMER1->TASKS_CLEAR = 1;
-  NRF_TIMER2->TASKS_CLEAR = 1;
+  // Clear the drive values
+  NRF_GPIO->OUTCLR = ALL_N_MOTOR_PINS;
 
-  MicroWait(250000);
+  // Give the motors time to bleed
+  MicroWait(5000);
 
-  for (int i = 0; i < 32; i++) {
-    if (i == PIN_PWR_EN) continue ;
-    nrf_gpio_cfg_default(i);
+  // Set motor pins to floating
+  for (int motorID = 0; motorID < MOTOR_COUNT; motorID++) {
+    const MotorConfig* motorConfig = &m_config[motorID];
+
+    nrf_gpio_cfg_default(motorConfig->n1Pin);
+    nrf_gpio_cfg_default(motorConfig->n2Pin);
+    nrf_gpio_cfg_default(motorConfig->pPin);
   }
 
-  MicroWait(250000);
+  // Enable charge logic
+  nrf_gpio_cfg_input(PIN_nCHGOK, NRF_GPIO_PIN_PULLUP);
 }
 
-static bool Motors::getChargeOkay() {
-  return false;
+void Motors::setup(void) {
+  // Float our charge pin
+  nrf_gpio_cfg_default(PIN_nCHGOK);
+
+  // Clear our motor pins just for safety's sake (default low / stopped)
+  NRF_GPIO->OUTCLR = ALL_N_MOTOR_PINS;
+
+  // Configure each motor pin as an output
+  for (int motorID = 0; motorID < MOTOR_COUNT; motorID++)
+  {
+    // Configure the pins for the motor bridge to be outputs
+    const MotorConfig* motorConfig = &m_config[motorID];
+
+    nrf_gpiote_task_disable(motorID);
+    nrf_gpio_cfg_output(motorConfig->n1Pin);
+    nrf_gpio_cfg_output(motorConfig->n2Pin);
+    nrf_gpio_cfg_output(motorConfig->pPin);
+  }
+    
+  // Motors need to be recalibrated now
+  motorCalibrate = true;
+
+  // It is now officially safe for manage to run again
+  motorDisable = false;
+
+  // Manage will setup GPIOTE, Pins, and timers
+  // Next manage will reconfigure GPIOTE / pin states
+  manage();
 }
 
 // Reset Nordic tasks to allow less glitchy changes.
@@ -268,7 +306,7 @@ static void ConfigureTask(u8 motorID, volatile u32 *timer)
         NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_HIGH);
       nrf_gpiote_task_enable(motorID);
     }
-    
+
   // Backward
   } else {
     if (motorInfo->unitsPerTick > 0)
@@ -291,7 +329,7 @@ static void ConfigureTask(u8 motorID, volatile u32 *timer)
       nrf_gpiote_task_enable(motorID);
     }
   }
-  
+
   // Point encoder ticks in same direction as nextPWM
   if (motorInfo->unitsPerTick > 0 && motorInfo->nextPWM < 0)
       motorInfo->unitsPerTick = -motorInfo->unitsPerTick;
@@ -306,14 +344,12 @@ static void ConfigureTask(u8 motorID, volatile u32 *timer)
 
 void Motors::init()
 {
+  // NOTE: Motors are not actually enabled, this only stages them
+  
   // Configure TIMER1 and TIMER2 with the appropriate task and PPI channels
   ConfigureTimer(NRF_TIMER1, 0, 0);
   ConfigureTimer(NRF_TIMER2, 2, 4);
   
-  // Start the timers
-  NRF_TIMER1->TASKS_START = 1;
-  NRF_TIMER2->TASKS_START = 1;
-
   // Setup head encoder tick rate for production or pre-production hardware
   g_radiansPerHeadTick = RADIANS_PER_HEAD_TICK;
   if (BODY_VER < BODY_VER_PROD)
@@ -327,7 +363,7 @@ void Motors::init()
   sd_nvic_SetPriority(GPIOTE_IRQn, ENCODER_PRIORITY);
   sd_nvic_EnableIRQ(GPIOTE_IRQn);
 
-    // Clear all GPIOTE interrupts
+  // Clear all GPIOTE interrupts
   NRF_GPIOTE->INTENCLR = 0xFFFFFFFF;
     
   // Clear pending events
@@ -339,19 +375,14 @@ void Motors::init()
   // Enable interrupt on port event
   NRF_GPIOTE->INTENSET = GPIOTE_INTENSET_PORT_Msk;
   
-  // Configure each motor pin as an output
+  // Motors start disabled, nCHGOK is configured for input
+  teardown();
+  
+  // Configure all encoder pins
   for (int i = 0; i < MOTOR_COUNT; i++)
   {
-    // Configure the pins for the motor bridge to be outputs and default low (stopped)
     const MotorConfig* motorConfig = &m_config[i];
 
-    nrf_gpio_pin_clear(motorConfig->n1Pin);
-    nrf_gpio_pin_clear(motorConfig->n2Pin);
-    nrf_gpio_pin_clear(motorConfig->pPin);
-    nrf_gpio_cfg_output(motorConfig->n1Pin);
-    nrf_gpio_cfg_output(motorConfig->n2Pin);
-    nrf_gpio_cfg_output(motorConfig->pPin);
-    
     // Enable sensing for each encoder pin (only one per quadrature encoder)
     const u8 pin = motorConfig->encoderPins[0];
     const u32 mask = 1 << pin;
@@ -410,7 +441,7 @@ void Motors::setPower(u8 motorID, s16 power)
 
   // Scale from [0, SHRT_MAX] to [0, TIMER_TICKS_END-1]
   power /= PWM_DIVISOR;
-  
+
   // Clamp the PWM power
   if (power >= TIMER_TICKS_END)
     power = TIMER_TICKS_END - 1;
@@ -456,7 +487,6 @@ void Motors::manage()
   // Update the SPI data structure to send data back to the head
   g_dataToHead.speeds[0] = FIXED_MUL(Motors::getSpeed(0), METERS_PER_TICK);
   g_dataToHead.speeds[1] = FIXED_MUL(Motors::getSpeed(1), METERS_PER_TICK);
-
   g_dataToHead.speeds[2] = Motors::getSpeed(2);
   g_dataToHead.speeds[3] = Motors::getSpeed(3);
   
@@ -465,11 +495,29 @@ void Motors::manage()
   g_dataToHead.positions[2] = m_motors[2].position;
   g_dataToHead.positions[3] = m_motors[3].position;
 
+  // Update our power settings
+  if (!Head::spokenTo || motorDisable) {
+    // Head not spoken to, motors are disabled, set power to 0
+    for (int i = 0; i < MOTOR_COUNT; i++) {
+      Motors::setPower(i, 0);
+    }
+    return ;
+  }
+
+  if (motorCalibrate) {
+    using namespace Anki::Cozmo::RobotInterface;
+  
+    StartMotorCalibration msg;
+    msg.calibrateHead = true;
+    msg.calibrateLift = true;
+    SendMessage(msg);
+    
+    motorCalibrate = false;
+  }
+
   // Copy (valid) data to update motors
-  bool enable = Head::spokenTo && !motorDisable;
-  for (int i = 0; i < MOTOR_COUNT; i++)
-  {
-    Motors::setPower(i, enable ? g_dataToBody.motorPWM[i] : 0);
+  for (int i = 0; i < MOTOR_COUNT; i++) {
+    Motors::setPower(i, g_dataToBody.motorPWM[i]);
   }
 
   // Stop the timer task and clear it, along with GPIO for the motors
@@ -492,7 +540,7 @@ void Motors::manage()
   {
     NRF_TIMER2->TASKS_STOP = 1;
     NRF_TIMER2->TASKS_CLEAR = 1;
-    
+
     // Try to reconfigure the motors - if there are any faults, bail out
     ConfigureTask(MOTOR_LIFT, &(NRF_TIMER2->CC[0]));
     ConfigureTask(MOTOR_HEAD, &(NRF_TIMER2->CC[1]));
@@ -502,12 +550,6 @@ void Motors::manage()
   }
 }
 
-// Get wheel ticks
-s32 Motors::debugWheelsGetTicks(u8 motorID)
-{
-  return m_motors[motorID].position;
-}
-
 // Encoder code must be optimized for speed - this macro is faster than Nordic's
 #define fast_gpio_cfg_sense_input(pin_number, sense_config) \
   NRF_GPIO->PIN_CNF[pin_number] = (sense_config << GPIO_PIN_CNF_SENSE_Pos) \
@@ -515,14 +557,6 @@ s32 Motors::debugWheelsGetTicks(u8 motorID)
                                 | (NRF_GPIO_PIN_NOPULL << GPIO_PIN_CNF_PULL_Pos) \
                                 | (GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos) \
                                 | (GPIO_PIN_CNF_DIR_Input << GPIO_PIN_CNF_DIR_Pos)
-
-void Motors::printEncoder(u8 motorID) // XXX: wheels are in encoder ticks, not meters
-{
-  /*
-  int i = m_motors[motorID].position;
-  UART::print("%c%c%c%c", i, i >> 8, i >> 16, i >> 24);
-  */
-}
 
 // Apologies for the straight-line code - it's required for performance
 // The encoders literally lose ticks unless this code can finish within ~30uS
