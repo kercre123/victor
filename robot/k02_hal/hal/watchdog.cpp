@@ -15,8 +15,6 @@
 static const int totalReset = (1 << WDOG_TOTAL_CHANNELS) - 1;
 static int watchdogChannels = 0;
 
-static const uint32_t MAXIMUM_RESET_COUNT = 5;
-
 void Anki::Cozmo::HAL::Watchdog::init(void) {
   static const uint32_t RESET_TIME = 2 * 128;  // 2 seconds (1khz LPO)
   volatile uint16_t* ctrlh = &WDOG_STCTRLH;
@@ -94,7 +92,4 @@ extern "C"
 void WDOG_EWM_IRQHandler(void)
 {
   Anki::Cozmo::HAL::DAC::Tone(2.0f);
-  if (WDOG_RSTCNT > MAXIMUM_RESET_COUNT) {
-    Anki::Cozmo::HAL::SPI::EnterRecoveryMode();
-  }
 }
