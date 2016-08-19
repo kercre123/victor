@@ -20,7 +20,7 @@ namespace Anki.Cozmo.Audio {
       }
 
       var types = System.Enum.GetValues(typeof(VolumeParameters.VolumeType));
-      Dictionary<VolumeParameters.VolumeType, float> currentVolumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.VolumePreferences;
+      Dictionary<VolumeParameters.VolumeType, float> currentVolumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.VolumePreferences;
       bool prefsChanged = false;
       foreach (var type in types) {
         var volumeType = (VolumeParameters.VolumeType)type;

@@ -467,7 +467,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void HandleUnlockRewards() {
-    PlayerProfile playerProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
+    DataPersistence.PlayerProfile playerProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
     int currentDifficultyUnlocked = 0;
     if (playerProfile.GameDifficulty.ContainsKey(_ChallengeData.ChallengeID)) {
       currentDifficultyUnlocked = playerProfile.GameDifficulty[_ChallengeData.ChallengeID];
