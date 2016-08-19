@@ -2046,9 +2046,6 @@ namespace Cozmo {
     for(auto & loadedFace : loadedFaces)
     {
       _robot.Broadcast(MessageEngineToGame( Vision::LoadedKnownFace(loadedFace) ));
-      
-      // TODO: Need to determine what styles need to be created
-      _robot.GetTextToSpeechComponent().CreateSpeech(loadedFace.name, SayTextStyle::Normal);
     }
   }
   

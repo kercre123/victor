@@ -490,7 +490,7 @@ namespace Anki {
               robot.GetContext()->GetVizManager()->SendSaveImages(ImageSendMode::Off);
             }
             
-            IActionRunner* action = new CompoundActionSequential(robot, {new SayTextAction(robot, "Test Complete", SayTextStyle::Normal, true), new WaitAction(robot, 3)});
+            IActionRunner* action = new CompoundActionSequential(robot, {new SayTextAction(robot, "Test Complete", SayTextIntent::Text), new WaitAction(robot, 3)});
             StartActing(robot, action,
                         [this](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                           if(result == ActionResult::SUCCESS)
@@ -509,7 +509,7 @@ namespace Anki {
               robot.GetContext()->GetVizManager()->SendSaveImages(ImageSendMode::Off);
             }
             
-            IActionRunner* action = new CompoundActionSequential(robot, {new SayTextAction(robot, "Help", SayTextStyle::Normal, true), new WaitAction(robot, 3)});
+            IActionRunner* action = new CompoundActionSequential(robot, {new SayTextAction(robot, "Help", SayTextIntent::Text), new WaitAction(robot, 3)});
             StartActing(robot, action,
                         [this](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                           if(result == ActionResult::SUCCESS)

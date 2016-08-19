@@ -80,6 +80,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       MessageGameToEngineTag::RealignWithObject,
       MessageGameToEngineTag::RollObject,
       MessageGameToEngineTag::SayText,
+      MessageGameToEngineTag::SayTextWithIntent,
       MessageGameToEngineTag::SearchForObject,
       MessageGameToEngineTag::SetHeadAngle,
       MessageGameToEngineTag::SetLiftHeight,
@@ -744,8 +745,17 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       
     case RobotActionUnionTag::sayText:
     {
-      SayTextAction* sayTextAction = new SayTextAction(robot, actionUnion.Get_sayText().text, actionUnion.Get_sayText().style, true);
-      sayTextAction->SetAnimationTrigger(actionUnion.Get_sayText().playEvent);
+      const auto msg = actionUnion.Get_sayText();
+      SayTextAction* sayTextAction = new SayTextAction(robot, msg.text, msg.voiceStyle, msg.durationScalar);
+      sayTextAction->SetAnimationTrigger(msg.playEvent);
+      return sayTextAction;
+    }
+      
+    case RobotActionUnionTag::sayTextWithIntent:
+    {
+      const auto msg = actionUnion.Get_sayTextWithIntent();
+      SayTextAction* sayTextAction = new SayTextAction(robot, msg.text, msg.intent);
+      sayTextAction->SetAnimationTrigger(msg.playEvent);
       return sayTextAction;
     }
       
@@ -951,7 +961,14 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
     }
     case ExternalInterface::MessageGameToEngineTag::SayText:
     {
-      newAction = new SayTextAction(robotRef, event.GetData().Get_SayText().text, event.GetData().Get_SayText().style, true);
+      const auto msg = event.GetData().Get_SayText();
+      newAction = new SayTextAction(robotRef, msg.text, msg.voiceStyle, msg.durationScalar);
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::SayTextWithIntent:
+    {
+      const auto msg = event.GetData().Get_SayTextWithIntent();
+      newAction = new SayTextAction(robotRef, msg.text, msg.intent);
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::EnrollNamedFace:

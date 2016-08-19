@@ -217,9 +217,16 @@ message RollObject {
 
 // SayText
 message SayText {
-    string       text,
-    AnimationTrigger    playEvent,
-    SayTextStyle style  // "How" to say the text
+  string              text,
+  AnimationTrigger    playEvent,      // Set AnimationTrigger::Count to only play the Tts without an animation
+  SayTextVoiceStyle   voiceStyle,
+  float_32            durationScalar
+}
+
+message SayTextWithIntent {
+  string              text,
+  AnimationTrigger    playEvent,    // Set AnimationTrigger::Count to only play the text without an animation
+  SayTextIntent       intent        // Intents have predefined values for the voice style and duration scalar
 }
 
 // SearchSideToSide
@@ -428,6 +435,7 @@ union RobotActionUnion {
   RealignWithObject         realignWithObject,
   RollObject                rollObject,
   SayText                   sayText,
+  SayTextWithIntent         sayTextWithIntent,
   SearchSideToSide          searchSideToSide,
   SearchForObject           searchForObject,
   SetHeadAngle              setHeadAngle,

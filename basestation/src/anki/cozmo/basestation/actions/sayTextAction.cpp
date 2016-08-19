@@ -13,138 +13,223 @@
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/audio/audioEventTypes.h"
+#include "util/math/numericCast.h"
+#include "util/random/randomGenerator.h"
+
 
 #define DEBUG_SAYTEXT_ACTION 0
 
 
 namespace Anki {
 namespace Cozmo {
+
+const char* kLocalLogChannel = "Actions";
   
-  SayTextAction::SayTextAction(Robot& robot, const std::string& text, SayTextStyle style, bool clearOnCompletion)
-  : IAction(robot,
-            "SayText",
-            RobotActionType::SAY_TEXT,
-            (u8)AnimTrackFlag::NO_TRACKS)
-  , _text(text)
-  , _style(style)
-  , _clearOnCompletion(clearOnCompletion)
-  , _animation("SayTextAnimation")
-  {
-    if (ANKI_DEVELOPER_CODE) {
-      // Only put the text in the action name in dev mode because the text
-      // could be a person's name and we don't want that logged for privacy reasons
-      SetName("SayText_" + _text);
-    }
-    
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTextVoiceStyle style, const float durationScalar)
+: IAction(robot,
+          "SayText",
+          RobotActionType::SAY_TEXT,
+          (u8)AnimTrackFlag::NO_TRACKS)
+, _text(text)
+, _style(style)
+, _durationScalar(durationScalar)
+, _animation("SayTextAnimation")
+
+{
+  GenerateTtsAudio();
+} // SayTextAction()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTextIntent intent)
+: IAction(robot,
+          "SayText",
+          RobotActionType::SAY_TEXT,
+          (u8)AnimTrackFlag::NO_TRACKS)
+, _text(text)
+, _animation("SayTextAnimation")
+{
+  // Create text for 'Intent'
+  // Set voice style & length scalar to generate TtS
+  bool isRandom = false;
+  float minScalar = 0.f;
+  float maxScalar = 0.f;
+  switch (intent) {
+    case SayTextIntent::UnProcessed:
     {
-      // TODO: Remove this TEMP FIX
-      // Override temporary WWise default which says a random name for say text
-      // Once we figure this out, we can change the WWise default ot be "On" and remove this.
-      using namespace Audio::GameState;
-      _robot.GetRobotAudioClient()->PostGameState(StateGroupType::External_Name, (GenericState)External_Name::External_Name_On);
+      // No processing play as is
+      _style = SayTextVoiceStyle::UnProcessed;
+      _durationScalar = 1.2f;
+      break;
+    }
+      
+    case SayTextIntent::Text:
+    {
+      // Use Cozmo Processing with default speed
+      _style = SayTextVoiceStyle::CozmoProcessing;
+      _durationScalar = 1.8f;
+      break;
+    }
+      
+    case SayTextIntent::Name_Normal:
+    {
+      // Normal name
+      _style = SayTextVoiceStyle::CozmoProcessing;
+      isRandom = true;
+      if (text.length() < 7) {
+        // Short names
+        minScalar = 1.8f;
+        maxScalar = 2.1f;
+      }
+      else {
+        // Long names
+        minScalar = 1.7f;
+        maxScalar = 2.f;
+      }
+      break;
+    }
+      
+    case SayTextIntent::Name_FirstIntroduction:
+    {
+      // Say name slower
+      _style = SayTextVoiceStyle::CozmoProcessing;
+      isRandom = true;
+      if (text.length() < 7) {
+        // Short names
+        minScalar = 2.0f;
+        maxScalar = 2.3f;
+      }
+      else {
+        // Long names
+        minScalar = 1.9f;
+        maxScalar = 2.1f;
+      }
+      break;
     }
     
-    // Create speech data
-    TextToSpeechComponent::SpeechState state = _robot.GetTextToSpeechComponent().CreateSpeech( _text, _style );
-    if (state == TextToSpeechComponent::SpeechState::None) {
-      PRINT_NAMED_ERROR("SayTextAction.SayTextAction.CreateSpeech", "SpeechState is None");
-    }
+    case SayTextIntent::Count:
+      ASSERT_NAMED(SayTextIntent::Count == intent, "SayTextAction.ActionStyle.SayTextActionStyle::Count.IsInvalid");
+      break;
   }
   
-  SayTextAction::~SayTextAction()
-  {
-    // Now that we're all done, unload the sounds from memory
-    if (_clearOnCompletion) {
-      _robot.GetTextToSpeechComponent().ClearLoadedSpeechData(_text, _style);
-    }
-    
-    if(_playAnimationAction != nullptr)
-    {
-      _playAnimationAction->PrepForCompletion();
-    }
-    Util::SafeDelete(_playAnimationAction);
+  // If random create
+  if (isRandom) {
+    _durationScalar = Util::numeric_cast<float>(robot.GetRNG().RandDblInRange(minScalar, maxScalar));
   }
+  GenerateTtsAudio();
+} // SayTextAction()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SayTextAction::~SayTextAction()
+{
+  // Now that we're all done, unload the sounds from memory
+  _robot.GetTextToSpeechComponent().ClearOperationData(_ttsOperationId);
   
-  ActionResult SayTextAction::Init()
+  if(_playAnimationAction != nullptr)
   {
-    TextToSpeechComponent::SpeechState state = _robot.GetTextToSpeechComponent().GetSpeechState( _text, _style );
-    switch (state) {
-      case TextToSpeechComponent::SpeechState::Preparing:
-      {
-        // Can't initialize until text to speech is ready
-        if (DEBUG_SAYTEXT_ACTION) {
-          PRINT_NAMED_DEBUG("SayTextAction.Init.LoadingTextToSpeech", "");
-        }
-        return ActionResult::RUNNING;
+    _playAnimationAction->PrepForCompletion();
+  }
+  Util::SafeDelete(_playAnimationAction);
+} // ~SayTextAction()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ActionResult SayTextAction::Init()
+{
+  TextToSpeechComponent::AudioCreationState state = _robot.GetTextToSpeechComponent().GetOperationState(_ttsOperationId);
+  switch (state) {
+    case TextToSpeechComponent::AudioCreationState::Preparing:
+    {
+      // Can't initialize until text to speech is ready
+      if (DEBUG_SAYTEXT_ACTION) {
+        PRINT_CH_INFO(kLocalLogChannel, "SayTextAction.Init.LoadingTextToSpeech", "");
       }
-        break;
-        
-      case TextToSpeechComponent::SpeechState::Ready:
-      {
-        // Set Audio data right before action runs
-        float duration_ms = 0.0f;
-        const bool success = _robot.GetTextToSpeechComponent().PrepareToSay(_text,
-                                                                            _style,
-                                                                            Audio::GameObjectType::CozmoBus_1,
-                                                                            duration_ms);
-        if (!success) {
-          PRINT_NAMED_ERROR("SayTextAction.Init.PrepareToSayFailed", "");
-          return ActionResult::FAILURE_ABORT;
-        }
-        
-        if (duration_ms * 0.001f > _timeout_sec) {
-          PRINT_NAMED_DEBUG("SayTextAction.Init.PrepareToSayDurrationTooLong",
-                            "Text: %s Style: %hhu", _text.c_str(), _style);
-          PRINT_NAMED_ERROR("SayTextAction.Init.PrepareToSayDurrationTooLong", "Durration: %f", duration_ms);
-        }
-        
-        const bool useBuiltInAnim = (AnimationTrigger::Count == _animationTrigger);
-        if (useBuiltInAnim) {
-          // Make our animation a "live" animation with a single audio keyframe at the beginning
-          if (DEBUG_SAYTEXT_ACTION) {
-            PRINT_NAMED_DEBUG("SayTextAction.Init.CreatingAnimation", "");
-          }
-          // Get appropriate audio event for style
-          const Audio::GameEvent::GenericEvent audioEvent = _robot.GetTextToSpeechComponent().GetAudioEvent(_style);
-          
-          _animation.SetIsLive(true);
-          _animation.AddKeyFrameToBack(RobotAudioKeyFrame(RobotAudioKeyFrame::AudioRef(audioEvent), 0));
-          _playAnimationAction = new PlayAnimationAction(_robot, &_animation);
-        } else {
-          if (DEBUG_SAYTEXT_ACTION) {
-            PRINT_NAMED_DEBUG("SayTextAction.Init.UsingAnimationGroup", "GameEvent=%d (%s)",
-                              _animationTrigger, EnumToString(_animationTrigger));
-          }
-          _playAnimationAction = new TriggerAnimationAction(_robot, _animationTrigger);
-        }
-        _isAudioReady = true;
-        
-        return ActionResult::SUCCESS;
-      }
-        break;
-        
-      case TextToSpeechComponent::SpeechState::None:
-      {
-        // Audio load failed
-        if (DEBUG_SAYTEXT_ACTION) {
-          PRINT_NAMED_DEBUG("SayTextAction.Init.TextToSpeechFailed", "");
-        }
+      return ActionResult::RUNNING;
+    }
+      break;
+      
+    case TextToSpeechComponent::AudioCreationState::Ready:
+    {
+      // Set Audio data right before action runs
+      float duration_ms = 0.0f;
+      // FIXME: Need to way to get other Audio GameObjs
+      const bool success = _robot.GetTextToSpeechComponent().PrepareToSay(_ttsOperationId,
+                                                                          Audio::GameObjectType::CozmoBus_1,
+                                                                          duration_ms);
+
+      if (!success) {
+        PRINT_NAMED_ERROR("SayTextAction.Init.PrepareToSayFailed", "");
         return ActionResult::FAILURE_ABORT;
       }
-        break;
+      
+      if (duration_ms * 0.001f > _timeout_sec) {
+        PRINT_NAMED_ERROR("SayTextAction.Init.PrepareToSayDurrationTooLong", "Durration: %f", duration_ms);
+      }
+      
+      const bool useBuiltInAnim = (AnimationTrigger::Count == _animationTrigger);
+      if (useBuiltInAnim) {
+        // Make our animation a "live" animation with a single audio keyframe at the beginning
+        if (DEBUG_SAYTEXT_ACTION) {
+          PRINT_CH_INFO(kLocalLogChannel, "SayTextAction.Init.CreatingAnimation", "");
+        }
+        // Get appropriate audio event for style
+        const Audio::GameEvent::GenericEvent audioEvent = _robot.GetTextToSpeechComponent().GetAudioEvent(_style);
+        
+        _animation.SetIsLive(true);
+        _animation.AddKeyFrameToBack(RobotAudioKeyFrame(RobotAudioKeyFrame::AudioRef(audioEvent), 0));
+        _playAnimationAction = new PlayAnimationAction(_robot, &_animation);
+      } else {
+        if (DEBUG_SAYTEXT_ACTION) {
+          PRINT_CH_INFO(kLocalLogChannel,
+                        "SayTextAction.Init.UsingAnimationGroup", "GameEvent=%d (%s)",
+                        _animationTrigger, EnumToString(_animationTrigger));
+        }
+        _playAnimationAction = new TriggerAnimationAction(_robot, _animationTrigger);
+      }
+      _isAudioReady = true;
+      
+      return ActionResult::SUCCESS;
     }
-  } // Init()
-  
-  ActionResult SayTextAction::CheckIfDone()
-  {
-    ASSERT_NAMED(_isAudioReady, "SayTextAction.CheckIfDone.TextToSpeechNotReady");
-    
-    if (DEBUG_SAYTEXT_ACTION) {
-      PRINT_NAMED_DEBUG("SayTextAction.CheckIfDone.UpdatingAnimation", "");
+      break;
+      
+    case TextToSpeechComponent::AudioCreationState::None:
+    {
+      // Audio load failed
+      if (DEBUG_SAYTEXT_ACTION) {
+        PRINT_CH_INFO(kLocalLogChannel, "SayTextAction.Init.TextToSpeechFailed", "");
+      }
+      return ActionResult::FAILURE_ABORT;
     }
-    
-    return _playAnimationAction->Update();
-  } // CheckIfDone()
+      break;
+  }
+} // Init()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ActionResult SayTextAction::CheckIfDone()
+{
+  ASSERT_NAMED(_isAudioReady, "SayTextAction.CheckIfDone.TextToSpeechNotReady");
   
+  if (DEBUG_SAYTEXT_ACTION) {
+    PRINT_CH_INFO(kLocalLogChannel, "SayTextAction.CheckIfDone.UpdatingAnimation", "");
+  }
+  
+  return _playAnimationAction->Update();
+} // CheckIfDone()
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SayTextAction::GenerateTtsAudio()
+{
+  if (ANKI_DEVELOPER_CODE) {
+    // Only put the text in the action name in dev mode because the text
+    // could be a person's name and we don't want that logged for privacy reasons
+    SetName("SayText_" + _text);
+  }
+  
+  // Create speech data
+  _ttsOperationId = _robot.GetTextToSpeechComponent().CreateSpeech(_text, _style, _durationScalar);
+  if (TextToSpeechComponent::kInvalidOperationId == _ttsOperationId) {
+    PRINT_NAMED_ERROR("SayTextAction.SayTextAction.CreateSpeech", "SpeechState is None");
+  }
+} // GenerateTtsAudio()
+
 } // namespace Cozmo
 } // namespace Anki

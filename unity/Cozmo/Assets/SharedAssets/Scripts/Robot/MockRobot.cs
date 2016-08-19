@@ -855,7 +855,7 @@ public class MockRobot : IRobot {
 
   #endregion
 
-  public void SayTextWithEvent(string text, AnimationTrigger playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void SayTextWithEvent(string text, AnimationTrigger playEvent, SayTextIntent intent = SayTextIntent.Text, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
   }
 

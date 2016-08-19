@@ -2210,10 +2210,14 @@ namespace Anki {
                 if(sayTextMsg.text.empty()) {
                   printf("ERROR: sayString field is empty\n");
                 }
-                // TODO: Add ability to set style from KB controller field too
-                sayTextMsg.style = SayTextStyle::Name_Normal;
-                
-                printf("Saying '%s' in style '%s'\n", sayTextMsg.text.c_str(), EnumToString(sayTextMsg.style));
+                // TODO: Add ability to set action style, voice style and duration scalar from KB controller field too
+                sayTextMsg.voiceStyle = SayTextVoiceStyle::CozmoProcessing;
+                sayTextMsg.durationScalar = 2.f;
+                                
+                printf("Saying '%s' in voice style '%s' w/ duration scalar %f\n",
+                       sayTextMsg.text.c_str(),
+                       EnumToString(sayTextMsg.voiceStyle),
+                       sayTextMsg.durationScalar);
                 SendMessage(ExternalInterface::MessageGameToEngine(std::move(sayTextMsg)));
                 break;
               }

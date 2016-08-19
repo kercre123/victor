@@ -6,16 +6,23 @@
 namespace Anki {
 namespace Cozmo {
 
-  // Styles for how Cozmo says given text
-  // Do not confuse this with cozmo mood, use SayTextStyle::Normal or Name_Normal along with updating the Audio Engine
-  // with the current mood states.
-  enum uint_8 SayTextStyle
+  // Text to speach voice processing style
+  enum uint_8 SayTextVoiceStyle
   {
-    Normal = 0,               // Say non-name text
-    Name_Normal,              // Say a name with current mood
-    Name_FirstIntroduction,   // Say name for the first time
+    UnProcessed = 0,              // Say text with no processing on Text to Speach output
+    CozmoProcessing,              // Say text in Cozmo's voice
     Count
   }
-  
+
+  // Text to Speach Intent
+  enum uint_8 SayTextIntent
+  {
+    UnProcessed = 0,            // Speak text with no processing on Text to Speach output
+    Text,                       // Speak text in Cozmo's' voice & default speed
+    Name_Normal,                // Speak in Cozmo's' voice & chose bounded random speed for names
+    Name_FirstIntroduction,     // Speak in Cozmo's' voice & chose bounded random speed for saying names slowly
+    Count
+  }
+
 } // namespace Cozmo
 } // namespace Anki

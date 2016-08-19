@@ -2,9 +2,9 @@
 * File: textToSpeechComponent.h
 *
 * Author: Molly Jameson
-* Created: 3/21/16
+* Created: 03/21/16
 *
-* Overhaul: Andrew Stein / Jordan Rivas, 5/02/16
+* Overhaul: Andrew Stein / Jordan Rivas, 08/18/16
 *
 * Description: Flite wrapper to generate, cache and use wave data from a given string and style.
 *
@@ -23,7 +23,6 @@
 #include "clad/types/sayTextStyles.h"
 #include "util/helpers/templateHelpers.h"
 #include <mutex>
-#include <set>
 #include <unordered_map>
 
 
@@ -51,7 +50,7 @@ class TextToSpeechComponent
 public:
   
   // Text to Speech data state
-  enum class SpeechState {
+  enum class AudioCreationState {
     None,       // Does NOT exist
     Preparing,  // In process of creating data
     Ready       // Data is ready to use
@@ -61,111 +60,67 @@ public:
   TextToSpeechComponent(const CozmoContext* context);
   ~TextToSpeechComponent();
 
-  // Asynchronous create the wave data for the given text and style, to be played later
-  // Use GetSpeechState() to check if wave data is Ready
-  // Return state of text/style pair
-  SpeechState CreateSpeech(const std::string& text, SayTextStyle style);
+  using OperationId = uint8_t;
+  static const OperationId kInvalidOperationId = 0;
   
-  // Get the current state of the text/style pair
-  SpeechState GetSpeechState(const std::string& text, const SayTextStyle style);
+  // Asynchronous create the wave data for the given text and style, to be played later
+  // Use GetOperationState() to check if wave data is Ready
+  // Return OperationId, if equal to kInvalidOperation there was an error creating speech
+  OperationId CreateSpeech(const std::string& text, const SayTextVoiceStyle style, const float durationScalar);
+  
+  // Get the current state of the create speech operation
+  AudioCreationState GetOperationState(const OperationId operationId) const;
   
   // Set up Audio controller to play text's audio data
   // out_durration_ms provides approximate durration of event before proccessing in audio engine
   // Return false if the audio has NOT been created or is not yet ready, out_duration_ms will NOT be valid.
-  bool PrepareToSay(const std::string& text,
-                    SayTextStyle style,
-                    Audio::GameObjectType audioGameObject,
-                    float& out_duration_ms);
+  bool PrepareToSay(const OperationId operationId, const Audio::GameObjectType audioGameObject, float& out_duration_ms) const;
   
-  // Clear loaded text/style pair audio data from memory
-  void ClearLoadedSpeechData(const std::string& text, SayTextStyle style);
+  // Clear speech operation audio data from memory
+  void ClearOperationData(const OperationId operationId);
   
   // Clear ALL loaded text audio data from memory
   void ClearAllLoadedAudioData();
   
   // Get appropriate Audio Event for SayTextStyle
-  Audio::GameEvent::GenericEvent GetAudioEvent(SayTextStyle style);
+  Audio::GameEvent::GenericEvent GetAudioEvent(SayTextVoiceStyle style) const;
 
 
 private:
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Text Phrase Bundle contains wave data for text phrases styles
-  class TextPhraseBundle {
-  public:
-    
-    // State of audio data for style
-    SpeechState GetSpeechState(const SayTextStyle style);
-    
-    // Get wave data for style
-    Audio::StandardWaveDataContainer* GetWaveData(const SayTextStyle style);
-    
-    // Prepare text style for audio creation
-    // Return the state of a style
-    SpeechState PrepareTextPhrase(const SayTextStyle style);
-    
-    // Store (retain) wave data for style
-    // Return false if text audio style is not prepared first, callers is responsible to handle wave data memory
-    bool SetStandardWaveDataContainer(Audio::StandardWaveDataContainer* waveData , const SayTextStyle style);
-    
-    // Remove style & audio data for style
-    void ClearTextPhrase(const SayTextStyle style);
 
-  private:
-    
-    enum class TextAudioCreationStyle
-    {
-      Normal // TODO: Add More styles
-    };
-    
-    // Bundle stat, SayTextStyles & wave data for a TextAudioCreationStyle
-    struct PhraseCreationStyleBinding {
-      SpeechState state = SpeechState::None;
-      std::set<SayTextStyle> registeredStyleSet;
-      Audio::StandardWaveDataContainer* waveData = nullptr;
-      
-      ~PhraseCreationStyleBinding()
-      {
-        Util::SafeDelete( waveData );
-      }
-    };
-    
-    // Hold TextAudioCreationStyle data
-    std::unordered_map< TextAudioCreationStyle, PhraseCreationStyleBinding, Util::EnumHasher > _phraseStyleMap;
-    
-    // Map SayTextStyle to TextAudioCreationStyles
-    TextAudioCreationStyle GetTextAudioCreationStyle(const SayTextStyle style) const;
-    
-    // Helper
-    // Find corresponding PhraseCreationStyleBinding for style
-    PhraseCreationStyleBinding* GetPhraseCreationStyleBinding(const SayTextStyle style);
-  };
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Private Vars
+  
+  struct TtsBundle {
+    AudioCreationState state                    = AudioCreationState::None;
+    Audio::StandardWaveDataContainer* waveData  = nullptr;
+    ~TtsBundle() { Util::SafeDelete(waveData); }
+  };
+  
   Util::Dispatch::Queue*          _dispatchQueue = nullptr;
   Audio::AudioController*         _audioController = nullptr;
   cst_voice_struct*               _voice = nullptr;
   
-  std::unordered_map<std::string, TextPhraseBundle> _textPhraseCache;
-  std::mutex _lock;
+  std::unordered_map<OperationId, TtsBundle> _ttsWaveDataMap;
+  
+  OperationId                     _prevOperationId = kInvalidOperationId;
+  
+  mutable std::mutex _lock;
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Private Methods
   
   // Use Text to Speech lib to create audio data & reformat into StandardWaveData format
   // Return nullptr if Text to Speech lib fails to create audio data
-  Audio::StandardWaveDataContainer* CreateAudioData(const std::string& text, const SayTextStyle style);
-  
-  // To improve how cozmo says words we provide the length of the audio to the audio engine
-  void PrepareSpeechAudioRtpc(const SayTextStyle style, Audio::GameObjectType audioGameObject, float duration_ms);
+  Audio::StandardWaveDataContainer* CreateAudioData(const std::string& text, const float durationScalar);
   
   // Helpers
-  // Find TextPhraseBundle for text
-  TextPhraseBundle* GetTextPhraseBundle(const std::string& text);
+  // Find TtsBundle for operation
+  const TtsBundle* GetTtsBundle(const OperationId operationId) const;
+  TtsBundle* GetTtsBundle(const OperationId operationId);
   
-  // Create text that can be used to send over Network and used in Logs
-  std::string CreateHashForText(const std::string& text);
+  // Increament the opeation Id
+  OperationId GetNextOperationId();
 
 }; // class TextToSpeech
 

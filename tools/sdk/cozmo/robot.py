@@ -105,7 +105,7 @@ class SayText(action.Action):
     Returned by :meth:`~cozmo.robot.Cozmo.say_text`
     '''
 
-    def __init__(self, text, play_excited_animation, use_cozmo_voice, **kw):
+    def __init__(self, text, play_excited_animation, use_cozmo_voice, duration_scalar, **kw):
         super().__init__(**kw)
         self.text = text
 
@@ -118,16 +118,18 @@ class SayText(action.Action):
             self.play_event = _clad_to_engine_cozmo.AnimationTrigger.Count
 
         if use_cozmo_voice:
-            self.say_style = _clad_to_engine_cozmo.SayTextStyle.Name_Normal
+            self.say_style = _clad_to_engine_cozmo.SayTextVoiceStyle.CozmoProcessing
         else:
             # default male human voice
-            self.say_style = _clad_to_engine_cozmo.SayTextStyle.Normal
+            self.say_style = _clad_to_engine_cozmo.SayTextVoiceStyle.UnProcessed
+
+        self.duration_scalar = duration_scalar
 
     def _repr_values(self):
         return "text=%s" % (self.text)
 
     def _encode(self):
-        return _clad_to_engine_iface.SayText(text=self.text, playEvent=self.play_event, style=self.say_style)
+        return _clad_to_engine_iface.SayText(text=self.text, playEvent=self.play_event, voiceStyle=self.say_style, durationScalar=self.duration_scalar)
 
 class TurnInPlace(action.Action):
     '''Tracks the progress of a turn in place robot action.
@@ -393,19 +395,20 @@ class Cozmo(event.Dispatcher):
         light_arr = [ lights.off_light ] * 5
         self.set_backpack_lights(*light_arr)
 
-    def say_text(self, text, play_excited_animation=False, use_cozmo_voice=True):
+    def say_text(self, text, play_excited_animation=False, use_cozmo_voice=True, duration_scalar=1.8):
         '''Have Cozmo say text!
         
         Args:
             text (string): The words for cozmo to say
             play_excited_animation (bool): Whether to also play an exicted animation whilst speaking (moves Cozmo a lot)
             use_cozmo_voice (bool): Whether to use cozmo's robot voice (otherwise uses a generic human male voice)
+            duration_scalar (float): Adjust the relative duration of the generated text to speech audio
         Returns:
             A class:'cozmo.robot.SayText' instance to track the action in progress.
         '''
 
         action = self.say_text_factory(text, conn=self.conn, robot=self, play_excited_animation=play_excited_animation,
-                                       use_cozmo_voice=use_cozmo_voice, dispatch_parent=self)
+                                       use_cozmo_voice=use_cozmo_voice, duration_scalar=duration_scalar, dispatch_parent=self)
         self._action_dispatcher._send_single_action(action)
         return action
 

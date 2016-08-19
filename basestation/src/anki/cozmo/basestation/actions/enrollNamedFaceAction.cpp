@@ -618,11 +618,11 @@ namespace Cozmo {
                 _robot.GetRobotAudioClient()->PostMusicState((Audio::GameState::GenericState)Audio::GameState::Music::Minigame__Meet_Cozmo_Say_Name, false, 0);
                 
                 // 1. Say name once
-                SayTextAction* sayNameAction1 = new SayTextAction(_robot, _faceName, SayTextStyle::Name_Normal, false);
+                SayTextAction* sayNameAction1 = new SayTextAction(_robot, _faceName, SayTextIntent::Name_FirstIntroduction);
                 sayNameAction1->SetAnimationTrigger(AnimationTrigger::MeetCozmoFirstEnrollmentSayName);
                 
                 // 2. Repeat name
-                SayTextAction* sayNameAction2 = new SayTextAction(_robot, _faceName, SayTextStyle::Name_Normal, false);
+                SayTextAction* sayNameAction2 = new SayTextAction(_robot, _faceName, SayTextIntent::Name_FirstIntroduction);
                 sayNameAction2->SetAnimationTrigger(AnimationTrigger::MeetCozmoFirstEnrollmentRepeatName);
                 
                 // 3. Big celebrate (no name being said)
@@ -633,7 +633,7 @@ namespace Cozmo {
               else
               {
                 // This is a re-enrollment, so do the more subdued animation
-                SayTextAction* sayNameAction = new SayTextAction(_robot, _faceName, SayTextStyle::Name_Normal, false);
+                SayTextAction* sayNameAction = new SayTextAction(_robot, _faceName, SayTextIntent::Name_Normal);
                 sayNameAction->SetAnimationTrigger(AnimationTrigger::MeetCozmoReEnrollmentSayName);
                 
                 finalAnimation = sayNameAction;
