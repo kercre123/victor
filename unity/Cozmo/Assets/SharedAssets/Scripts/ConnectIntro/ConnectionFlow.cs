@@ -81,6 +81,7 @@ public class ConnectionFlow : MonoBehaviour {
 
   private void Cleanup() {
     if (_PullCubeTabViewInstance != null) {
+      _PullCubeTabViewInstance.ViewClosed -= HandlePullCubeTabsCompeted;
       UIManager.CloseViewImmediately(_PullCubeTabViewInstance);
     }
 
