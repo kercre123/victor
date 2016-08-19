@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using DataPersistence;
+using Cozmo.UI;
 
 public class CozmoUnlocksPanel : MonoBehaviour {
 
@@ -30,7 +31,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
 
   [SerializeField]
   private CoreUpgradeDetailsDialog _CoreUpgradeDetailsViewPrefab;
-  private CoreUpgradeDetailsDialog _CoreUpgradeDetailsViewInstance;
+  private BaseView _CoreUpgradeDetailsViewInstance;
 
   void Start() {
     _UnlockedTiles = new List<CozmoUnlockableTile>();
@@ -67,7 +68,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     // Sort within themselves on "SortOrder" since locked doesn't show anything, no need to sort.
     unlockedUnlockData.Sort();
     unlockableUnlockData.Sort();
-	lockedUnlockData.Sort();
+    lockedUnlockData.Sort();
 
     GameObject tileInstance;
     CozmoUnlockableTile unlockableTile;
@@ -98,6 +99,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
         tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
         unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
         unlockableTile.Initialize(lockedUnlockData[i], CozmoUnlockState.Locked, viewControllerName);
+        unlockableTile.OnTapped += HandleTappedUnavailable;
         _LockedTiles.Add(unlockableTile);
         numTilesMade++;
       }
@@ -108,6 +110,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
         tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
         unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
         unlockableTile.Initialize(comingSoonUnlockData[i], CozmoUnlockState.NeverAvailable, viewControllerName);
+        unlockableTile.OnTapped += HandleTappedUnavailable;
         _LockedTiles.Add(unlockableTile);
         numTilesMade++;
       }
@@ -126,6 +129,9 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     }
     _UnlockableTiles.Clear();
 
+    for (int i = 0; i < _LockedTiles.Count; ++i) {
+      _LockedTiles[i].OnTapped -= HandleTappedUnavailable;
+    }
     _LockedTiles.Clear();
 
     for (int i = 0; i < _UnlocksContainer.transform.childCount; ++i) {
@@ -136,17 +142,55 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   private void HandleTappedUnlocked(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped Unlocked: " + unlockInfo.Id);
     if (_CoreUpgradeDetailsViewInstance == null) {
-      _CoreUpgradeDetailsViewInstance = UIManager.OpenView<CoreUpgradeDetailsDialog>(_CoreUpgradeDetailsViewPrefab);
-      _CoreUpgradeDetailsViewInstance.Initialize(unlockInfo, CozmoUnlockState.Unlocked, null);
+      CoreUpgradeDetailsDialog detailView = UIManager.OpenView<CoreUpgradeDetailsDialog>(_CoreUpgradeDetailsViewPrefab);
+      detailView.Initialize(unlockInfo, CozmoUnlockState.Unlocked, null);
+      _CoreUpgradeDetailsViewInstance = detailView;
     }
   }
 
   private void HandleTappedUnlockable(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped available: " + unlockInfo.Id);
     if (_CoreUpgradeDetailsViewInstance == null) {
-      _CoreUpgradeDetailsViewInstance = UIManager.OpenView<CoreUpgradeDetailsDialog>(_CoreUpgradeDetailsViewPrefab);
-      _CoreUpgradeDetailsViewInstance.Initialize(unlockInfo, CozmoUnlockState.Unlockable, HandleUnlockableUpgradeUnlocked);
+      CoreUpgradeDetailsDialog detailView = UIManager.OpenView<CoreUpgradeDetailsDialog>(_CoreUpgradeDetailsViewPrefab);
+      detailView.Initialize(unlockInfo, CozmoUnlockState.Unlockable, HandleUnlockableUpgradeUnlocked);
+      _CoreUpgradeDetailsViewInstance = detailView;
     }
+  }
+
+  private void HandleTappedUnavailable(UnlockableInfo unlockInfo) {
+    DAS.Debug(this, "Tapped unavailable: " + unlockInfo.Id);
+    if (_CoreUpgradeDetailsViewInstance == null) {
+
+      UnlockableInfo preReqInfo = null;
+      for (int i = 0; i < unlockInfo.Prerequisites.Length; i++) {
+        // if available but we haven't unlocked it yet, then it is the upgrade that is blocking us
+        if (UnlockablesManager.Instance.IsUnlockableAvailable(unlockInfo.Prerequisites[i].Value) && !UnlockablesManager.Instance.IsUnlocked(unlockInfo.Prerequisites[i].Value)) {
+          preReqInfo = UnlockablesManager.Instance.GetUnlockableInfo(unlockInfo.Prerequisites[i].Value);
+        }
+      }
+      // Create alert view with Icon
+      AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: true);
+      alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
+      alertView.TitleLocKey = unlockInfo.TitleKey;
+      alertView.DescriptionLocKey = LocalizationKeys.kUnlockableUnavailableDescription;
+      alertView.SetMessageArgs(new object[] { Localization.Get(unlockInfo.TitleKey) });
+
+
+      if (unlockInfo.NeverAvailable) {
+        alertView.DescriptionLocKey = LocalizationKeys.kUnlockableComingSoonDescription;
+      }
+      else if (preReqInfo == null) {
+        alertView.DescriptionLocKey = LocalizationKeys.kUnlockableUnavailableDescription;
+        alertView.SetMessageArgs(new object[] { Localization.Get(unlockInfo.TitleKey) });
+      }
+      else {
+        alertView.DescriptionLocKey = LocalizationKeys.kUnlockablePreReqNeededDescription;
+        alertView.SetMessageArgs(new object[] { Localization.Get(preReqInfo.TitleKey) });
+      }
+
+      _CoreUpgradeDetailsViewInstance = alertView;
+    }
+
   }
 
   private void HandleUnlockableUpgradeUnlocked(UnlockableInfo unlockInfo) {

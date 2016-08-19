@@ -131,5 +131,11 @@
   },
   "sparks.Spark": {
     "translation": "Feed Sparks"
+  },
+  "unlockable.Unavailable.Description": {
+    "translation": "Unlock more upgrades before you can unlock {0}."
+  },
+  "sparks.Spark.Cost": {
+    "translation": "Use {0} {1} to Spark Cozmo"
   }
 }

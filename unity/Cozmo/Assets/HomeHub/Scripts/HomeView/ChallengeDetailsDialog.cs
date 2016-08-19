@@ -148,19 +148,32 @@ public class ChallengeDetailsDialog : BaseView {
         // Must Unlock X First - Hide everything show PreReq container
         _AvailableContainer.SetActive(false);
         _UnavailableContainer.SetActive(true);
-        // Change Description to "You need to earn [Prereq] first!
-        string uName = unlockInfo.TitleKey;
-        _DescriptionTextLabel.text = Localization.GetWithArgs(LocalizationKeys.kUnlockablePreReqNeededDescription, new object[] { Localization.Get(uName) });
-        // View Upgrade button to take you to necessary Cozmo or Play Tab and fire the appropriate dialog
-        _ViewPreReqButton.onClick.AddListener(() => {
-          _PreReqID = unlockInfo.Id.Value;
-          _FindPrereq = true;
-          CloseView();
-        });
 
+        string uName = unlockInfo.TitleKey;
         if (unlockInfo.Id.Value == challengeData.UnlockId.Value) {
-          DAS.Warn("ChallengeDetailsDialog.Initialize", string.Format("No Locked and Available Prereqs in List for {0}", unlockInfo.Id.Value));
+          // If no available prereqs, display completly unavailable text
+          _DescriptionTextLabel.text = Localization.GetWithArgs(LocalizationKeys.kUnlockableUnavailableDescription, new object[] { Localization.Get(uName) });
+
+          _ViewPreReqButton.Text = Localization.Get(LocalizationKeys.kButtonClose);
+          _ViewPreReqButton.onClick.AddListener(() => {
+            _FindPrereq = false;
+            CloseView();
+          });
+
         }
+        else {
+          // Change Description to "You need to earn [Prereq] first!
+          // View Upgrade button to take you to necessary Cozmo or Play Tab and fire the appropriate dialog
+          _DescriptionTextLabel.text = Localization.GetWithArgs(LocalizationKeys.kUnlockablePreReqNeededDescription, new object[] { Localization.Get(uName) });
+
+          _ViewPreReqButton.onClick.AddListener(() => {
+            _PreReqID = unlockInfo.Id.Value;
+            _FindPrereq = true;
+            CloseView();
+          });
+        }
+
+
       }
     }
     _StartChallengeButton.Initialize(HandleStartButtonClicked, string.Format("{0}_start_button", challengeData.ChallengeID), DASEventViewName);

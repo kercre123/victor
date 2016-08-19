@@ -550,8 +550,8 @@ namespace Cozmo.HomeHub {
       }
 
       ChallengeData data = DailyGoalManager.Instance.CurrentChallengeToRequest;
-      // Do not send the minigame message if the challenge is invalid.
-      if (data == null) {
+      // Do not send the minigame message if the challenge is invalid or currently not unlocked.
+      if (data == null || !UnlockablesManager.Instance.IsUnlocked(data.UnlockId.Value)) {
         return;
       }
 

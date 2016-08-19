@@ -44,7 +44,6 @@ public static class LocalizationKeys {
   public const string kWhackAMoleDescription = "whackAMole.description";
   public const string kConnectivityPlaceCozmoOnCharger = "connectivity.placeCozmoOnCharger";
   public const string kConnectivityReplaceCozmoOnCharger = "connectivity.replaceCozmoOnCharger";
-  public const string kWifiGetHelp = "wifi.getHelp";
 
   #endregion
 
@@ -146,6 +145,8 @@ public static class LocalizationKeys {
   public const string kFaceEnrollmentFaceEnrollmentListDescription = "faceEnrollment.faceEnrollmentList.description";
   public const string kFaceEnrollmentFaceEnrollmentListDeleteConfirmTitle = "faceEnrollment.faceEnrollmentList.deleteConfirmTitle";
   public const string kFaceEnrollmentFaceEnrollmentListDeleteConfirmButton = "faceEnrollment.faceEnrollmentList.deleteConfirmButton";
+  public const string kFaceEnrollmentInstructionsTop = "faceEnrollment.instructions.top";
+  public const string kFaceEnrollmentInstructionsBottom = "faceEnrollment.instructions.bottom";
 
   #endregion
 
@@ -470,6 +471,7 @@ public static class LocalizationKeys {
   public const string kButtonReplay = "button.replay";
   public const string kLabelTo = "label.to";
   public const string kButtonSkip = "button.skip";
+  public const string kButtonCreateNew = "button.createNew";
 
   #endregion
 
@@ -522,6 +524,8 @@ public static class LocalizationKeys {
   public const string kSparksSparked = "sparks.Sparked";
   public const string kSparksPressAndHold = "sparks.PressAndHold";
   public const string kSparksSpark = "sparks.Spark";
+  public const string kUnlockableUnavailableDescription = "unlockable.Unavailable.Description";
+  public const string kSparksSparkCost = "sparks.Spark.Cost";
 
   #endregion
 
@@ -533,7 +537,10 @@ public static class LocalizationKeys {
   public const string kWifiStringsInstructionsSlide3 = "wifiStrings.Instructions.Slide3";
   public const string kWifiStringsInstructionsSlide4 = "wifiStrings.Instructions.Slide4";
   public const string kWifiStringsInstructionsSlide0ViewAll = "wifiStrings.Instructions.Slide0.viewAll";
+  public const string kWifiStringsNextButton = "wifiStrings.nextButton";
+  public const string kWifiStringsBackButton = "wifiStrings.backButton";
   public const string kWifiGethelpDescription = "wifi.gethelp.description";
+  public const string kWifiGetHelpLinkText = "wifi.getHelp.linkText";
 
   #endregion
 }

@@ -129,6 +129,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
         _RequestTrickButtonContainer.gameObject.SetActive(true);
         _FragmentInventoryContainer.gameObject.SetActive(false);
         _SparksInventoryContainer.gameObject.SetActive(true);
+        UpdateAvailableCostLabels(unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksSpark, LocalizationKeys.kSparksSparkCost);
         SetupButton(_RequestTrickButton, null, "request_trick_button",
                     unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, _SparksInventoryLabel, true);
         RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.SparkEnded>(HandleSparkEnded);
@@ -141,14 +142,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
       _UnlockUpgradeButtonContainer.gameObject.SetActive(true);
       _FragmentInventoryContainer.gameObject.SetActive(true);
       _SparksInventoryContainer.gameObject.SetActive(false);
-      _AvailablePromptContainer.SetActive(true);
-      _AffordableHighlightContainer.gameObject.SetActive(true);
-      _AvailablePromptLabel.gameObject.SetActive(playerInventory.CanRemoveItemAmount(unlockInfo.UpgradeCostItemId, unlockInfo.UpgradeCostAmountNeeded));
-      _AvailablePromptLabel.text = Localization.Get(LocalizationKeys.kUnlockableAvailable);
-      ItemData itemData = ItemDataConfig.GetData(unlockInfo.UpgradeCostItemId);
-      int cost = unlockInfo.UpgradeCostAmountNeeded;
-      string costName = Localization.Get(itemData.GetPluralName());
-      _AvailablePromptCost.text = Localization.GetWithArgs(LocalizationKeys.kUnlockableBitsRequiredDescription, new object[] { cost, costName });
+      UpdateAvailableCostLabels(unlockInfo.UpgradeCostItemId, unlockInfo.UpgradeCostAmountNeeded, LocalizationKeys.kUnlockableAvailable, LocalizationKeys.kUnlockableBitsRequiredDescription);
       SetupButton(_UnlockUpgradeButton, OnUpgradeClicked, "request_upgrade_button",
                   unlockInfo.UpgradeCostItemId, unlockInfo.UpgradeCostAmountNeeded, _FragmentInventoryLabel, false);
       _UnlockableIcon.color = Color.gray;
@@ -193,7 +187,15 @@ public class CoreUpgradeDetailsDialog : BaseView {
     }
     else {
       Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-      _RequestTrickButton.Interactable = playerInventory.CanRemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
+
+      if (UnlockablesManager.Instance.IsUnlocked(_UnlockInfo.Id.Value)) {
+        _RequestTrickButton.Interactable = playerInventory.CanRemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
+        UpdateAvailableCostLabels(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksSpark, LocalizationKeys.kSparksSparkCost);
+      }
+      else if (UnlockablesManager.Instance.IsUnlockableAvailable(_UnlockInfo.Id.Value)) {
+        _UnlockUpgradeButton.Interactable = playerInventory.CanRemoveItemAmount(_UnlockInfo.UpgradeCostItemId, _UnlockInfo.UpgradeCostAmountNeeded);
+        UpdateAvailableCostLabels(_UnlockInfo.UpgradeCostItemId, _UnlockInfo.UpgradeCostAmountNeeded, LocalizationKeys.kUnlockableAvailable, LocalizationKeys.kUnlockableBitsRequiredDescription);
+      }
     }
     _ButtonCounter.text = string.Format("{0}", _UnlockInfo.RequestTrickCostAmountNeeded);
   }
@@ -228,6 +230,18 @@ public class CoreUpgradeDetailsDialog : BaseView {
     // Go back and look at your accomplishment
     CloseView();
   }
+
+  private void UpdateAvailableCostLabels(string itemID, int cost, string promptLabelKey, string costLabelKey) {
+    Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+    _AvailablePromptContainer.SetActive(true);
+    _AvailablePromptLabel.gameObject.SetActive(playerInventory.CanRemoveItemAmount(itemID, cost));
+    _AvailablePromptLabel.text = Localization.Get(promptLabelKey);
+    _AvailablePromptCost.gameObject.SetActive(true);
+    ItemData itemData = ItemDataConfig.GetData(itemID);
+    string costName = Localization.Get(itemData.GetPluralName());
+    _AvailablePromptCost.text = Localization.GetWithArgs(costLabelKey, new object[] { cost, costName });
+  }
+
 
   private void OnSparkPressed() {
     _SparkButtonPressedTime = Time.time;
@@ -310,6 +324,12 @@ public class CoreUpgradeDetailsDialog : BaseView {
         CleanUpSparkAnimations();
         _SparkButtonPressedTime = -1.0f;
       }
+    }
+
+    IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+    if (robot != null && robot.IsSparked && robot.SparkUnlockId == _UnlockInfo.Id.Value) {
+      _AvailablePromptCost.gameObject.SetActive(false);
+      _AvailablePromptLabel.gameObject.SetActive(false);
     }
   }
 

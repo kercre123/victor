@@ -179,6 +179,10 @@ public class UnlockablesManager : MonoBehaviour {
       return false;
     }
 
+    if (unlockableInfo.NeverAvailable) {
+      return false;
+    }
+
     for (int i = 0; i < unlockableInfo.Prerequisites.Length; ++i) {
       if (!_UnlockablesState[unlockableInfo.Prerequisites[i].Value]) {
         if (unlockableInfo.AnyPrereqUnlock == false) {
