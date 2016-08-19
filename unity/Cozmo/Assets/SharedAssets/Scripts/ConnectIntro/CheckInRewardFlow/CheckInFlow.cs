@@ -295,7 +295,7 @@ public class CheckInFlow : MonoBehaviour {
         break;
       }
     }
-    RewardedActionManager.Instance.PendingActionRewards.Clear();
+    RewardedActionManager.Instance.SendPendingRewardsToInventory();
   }
 
   private Transform SpawnRewardDoober(string rewardID, int count) {

@@ -515,6 +515,7 @@ public abstract class GameBase : MonoBehaviour {
   protected abstract void CleanUpOnDestroy();
 
   public void OnDestroy() {
+    ContextManager.Instance.AppHoldEnd();
     DAS.Event(DASConstants.Game.kEnd, GetGameTimeElapsedAsStr());
     DAS.SetGlobal(DASConstants.Game.kGlobal, null);
     if (_SharedMinigameViewInstance != null) {

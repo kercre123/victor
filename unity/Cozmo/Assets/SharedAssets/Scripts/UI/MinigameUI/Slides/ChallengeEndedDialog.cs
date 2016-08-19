@@ -94,7 +94,7 @@ public class ChallengeEndedDialog : MonoBehaviour {
     if (RewardedActionManager.Instance.NewSkillChangePending) {
       AddSkillChange(RewardedActionManager.Instance.NewSkillChange);
     }
-
+    RewardedActionManager.Instance.ResolveTagRewardCollisions();
     int rewardCells = 0;
     foreach (RewardedActionData earnedReward in RewardedActionManager.Instance.PendingActionRewards.Keys) {
 

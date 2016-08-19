@@ -244,7 +244,23 @@ public class DailyGoalManager : MonoBehaviour {
       toAdd = goalList[UnityEngine.Random.Range(0, goalList.Count)];
       // Remove from list to prevent dupes
       goalList.Remove(toAdd);
+      // Clear out tag collisions
+      if (TagConfig.IsValidTag(toAdd.Tag)) {
+        for (int j = 0; j < goalList.Count;) {
+          if (goalList[j].Tag == toAdd.Tag) {
+            goalList.RemoveAt(j);
+          }
+          else {
+            j++;
+          }
+        }
+      }
       newGoals.Add(new DailyGoal(toAdd.CladEvent, toAdd.TitleKey, toAdd.PointsRewarded, toAdd.Target, toAdd.RewardType, toAdd.ProgressConditions, toAdd.Priority));
+      // If all remaining generatable goals have been removed due to tag conflicts, then don't bother generating any more, even if we have fewer
+      // than the min number of goals for the day.
+      if (goalList.Count <= 0) {
+        break;
+      }
     }
     SendDasEventsForGoalGeneration(newGoals);
     if (OnRefreshDailyGoals != null) {

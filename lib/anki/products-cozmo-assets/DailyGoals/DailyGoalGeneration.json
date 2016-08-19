@@ -3,6 +3,7 @@
     {
       "TitleKey": "dailyGoal.title.WinKeepaway.TieBreaker",
       "RewardType": "experience",
+      "Tag": "KeepawayEndOfGame",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -34,18 +35,7 @@
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": true,
           "TargetScore": 5,
-          "LessThan": false,
-          "Label": {
-            "text": "Challenge Score Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
-          "IsPlayer": false,
-          "TargetScore": 5,
-          "LessThan": true,
+          "compareType": "EQUAL",
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -56,7 +46,7 @@
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
           "TargetScore": 4,
-          "LessThan": false,
+          "compareType": "EQUAL",
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -69,6 +59,7 @@
     {
       "TitleKey": "dailyGoal.title.WinKeepaway.Shutout",
       "RewardType": "experience",
+      "Tag": "KeepawayEndOfGame",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -98,20 +89,9 @@
         },
         {
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
-          "IsPlayer": true,
-          "TargetScore": 5,
-          "LessThan": false,
-          "Label": {
-            "text": "Challenge Score Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
-          "TargetScore": 1,
-          "LessThan": true,
+          "TargetScore": 0,
+          "compareType": "EQUAL",
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -124,6 +104,7 @@
     {
       "TitleKey": "dailyGoal.title.PlaySpeedTap.Level3",
       "RewardType": "experience",
+      "Tag": "QuickTapEndOfGame",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -168,6 +149,7 @@
     {
       "TitleKey": "dailyGoal.title.WinSpeedTap.Level3",
       "RewardType": "experience",
+      "Tag": "QuickTapEndOfGame",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -221,6 +203,7 @@
     {
       "TitleKey": "dailyGoal.title.PlaySpeedTap.Level2",
       "RewardType": "experience",
+      "Tag": "QuickTapEndOfGame",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -265,6 +248,7 @@
     {
       "TitleKey": "dailyGoal.title.WinSpeedTap.Level2",
       "RewardType": "experience",
+      "Tag": "QuickTapEndOfGame",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -318,6 +302,7 @@
     {
       "TitleKey": "dailyGoal.title.PlaySpeedTap.Level1",
       "RewardType": "experience",
+      "Tag": "QuickTapEndOfGame",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -362,6 +347,7 @@
     {
       "TitleKey": "dailyGoal.title.WinSpeedTap.Level1",
       "RewardType": "experience",
+      "Tag": "QuickTapEndOfGame",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -415,6 +401,7 @@
     {
       "TitleKey": "dailyGoal.title.WinKeepaway",
       "RewardType": "experience",
+      "Tag": "KeepawayEndOfGame",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -457,6 +444,7 @@
     {
       "TitleKey": "dailyGoal.title.PlayKeepaway",
       "RewardType": "experience",
+      "Tag": "KeepawayEndOfGame",
       "PointsRewarded": 20,
       "Target": 2,
       "Priority": 0,
@@ -490,6 +478,7 @@
     {
       "TitleKey": "dailyGoal.title.WinSpeedTap",
       "RewardType": "experience",
+      "Tag": "QuickTapEndOfGame",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -532,6 +521,7 @@
     {
       "TitleKey": "dailyGoal.title.PlaySpeedTapTwice",
       "RewardType": "experience",
+      "Tag": "QuickTapEndOfGame",
       "PointsRewarded": 20,
       "Target": 2,
       "Priority": 0,
@@ -565,6 +555,7 @@
     {
       "TitleKey": "dailyGoal.title.SpeedTap.TieBreaker.Round",
       "RewardType": "experience",
+      "Tag": "QuickTapEndOfRound",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -596,18 +587,7 @@
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": true,
           "TargetScore": 5,
-          "LessThan": false,
-          "Label": {
-            "text": "Challenge Score Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
-          "IsPlayer": false,
-          "TargetScore": 5,
-          "LessThan": true,
+          "compareType": "EQUAL",
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -618,7 +598,7 @@
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
           "TargetScore": 4,
-          "LessThan": false,
+          "compareType": "EQUAL",
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -631,6 +611,7 @@
     {
       "TitleKey": "dailyGoal.title.SpeedTap.Shutout.Round",
       "RewardType": "experience",
+      "Tag": "QuickTapEndOfRound",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -661,8 +642,8 @@
         {
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
-          "TargetScore": 1,
-          "LessThan": true,
+          "TargetScore": 0,
+          "compareType": "EQUAL",
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -675,6 +656,7 @@
     {
       "TitleKey": "dailyGoal.title.UnlockQuickTapDifficulty.FourColor",
       "RewardType": "experience",
+      "Tag": "",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -711,6 +693,7 @@
     {
       "TitleKey": "dailyGoal.title.UnlockQuickTapDifficulty.ThreeColor",
       "RewardType": "experience",
+      "Tag": "",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -747,6 +730,7 @@
     {
       "TitleKey": "dailyGoal.title.UnlockQuickTapDifficulty.TwoColor",
       "RewardType": "experience",
+      "Tag": "",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -783,6 +767,7 @@
     {
       "TitleKey": "dailyGoal.title.UnlockAppQuickTapGame",
       "RewardType": "experience",
+      "Tag": "UnlockNewThing",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -816,6 +801,7 @@
     {
       "TitleKey": "dailyGoal.title.UnlockAppKeepawayGame",
       "RewardType": "experience",
+      "Tag": "UnlockNewThing",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -849,6 +835,7 @@
     {
       "TitleKey": "dailyGoal.title.UnlockAppDroneModeGame",
       "RewardType": "experience",
+      "Tag": "UnlockNewThing",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -882,6 +869,7 @@
     {
       "TitleKey": "dailyGoal.title.UnlockUpgradePopAWheelieAction",
       "RewardType": "experience",
+      "Tag": "UnlockNewThing",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -915,6 +903,7 @@
     {
       "TitleKey": "dailyGoal.title.UnlockUpgradePounceOnMotionAction",
       "RewardType": "experience",
+      "Tag": "UnlockNewThing",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -948,6 +937,7 @@
     {
       "TitleKey": "dailyGoal.title.UnlockUpgradeStackTwoCubes",
       "RewardType": "experience",
+      "Tag": "UnlockNewThing",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -981,6 +971,7 @@
     {
       "TitleKey": "dailyGoal.title.UnlockUpgradeRollCube",
       "RewardType": "experience",
+      "Tag": "UnlockNewThing",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -1014,6 +1005,7 @@
     {
       "TitleKey": "dailyGoal.title.UnlockUpgradePickupCube",
       "RewardType": "experience",
+      "Tag": "UnlockNewThing",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -1047,6 +1039,7 @@
     {
       "TitleKey": "dailyGoal.title.UnlockUpgradeKnockOverThreeCubeStack",
       "RewardType": "experience",
+      "Tag": "UnlockNewThing",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -1080,6 +1073,7 @@
     {
       "TitleKey": "dailyGoal.title.UnlockUpgradeBuildPyramid",
       "RewardType": "experience",
+      "Tag": "UnlockNewThing",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,

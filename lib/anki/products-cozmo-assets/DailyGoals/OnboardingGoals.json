@@ -3,6 +3,7 @@
     {
       "TitleKey": "dailyGoal.title.UnlockAppQuickTapGame",
       "RewardType": "experience",
+      "Tag": "",
       "PointsRewarded": 10,
       "Target": 1,
       "Priority": 1,
@@ -24,6 +25,7 @@
     {
       "TitleKey": "dailyGoal.title.FirstWinSpeedTap",
       "RewardType": "experience",
+      "Tag": "",
       "PointsRewarded": 10,
       "Target": 1,
       "Priority": 0,
@@ -54,6 +56,7 @@
     {
       "TitleKey": "dailyGoal.title.MeetNewFace",
       "RewardType": "experience",
+      "Tag": "",
       "PointsRewarded": 10,
       "Target": 1,
       "Priority": 2,

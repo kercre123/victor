@@ -8,7 +8,7 @@ using Anki.Cozmo;
 
 public static class EditorDrawingUtility {
 
-  public static void DrawList<T>(string label, List<T> list, Func<T,T> drawControls, Func<T> createFunc, bool includeCreateFunc = true, bool includeDeleteFunc = true) {
+  public static void DrawList<T>(string label, List<T> list, Func<T, T> drawControls, Func<T> createFunc, bool includeCreateFunc = true, bool includeDeleteFunc = true) {
 
     EditorGUILayout.BeginHorizontal();
     GUILayout.Label(label, SubtitleStyle);
@@ -50,10 +50,10 @@ public static class EditorDrawingUtility {
       EditorGUILayout.BeginHorizontal();
       list[i] = drawControls(list[i], i);
 
-      if (GUILayout.Button("+", GUILayout.Width(30))) {        
+      if (GUILayout.Button("+", GUILayout.Width(30))) {
         list.Insert(i + 1, createFunc(i + 1));
       }
-        
+
       if (GUILayout.Button("-", GUILayout.Width(30))) {
         list.RemoveAt(i);
         i--;
@@ -66,7 +66,7 @@ public static class EditorDrawingUtility {
   /// <summary>
   /// Draws the filtered grouped list. Filters based on U.ToString() containing filterVal, default Val is always visible even with filter used
   /// </summary>
-  public static void DrawFilteredGroupedList<T,U>(string label, List<T> list, Func<T,T> drawControls, Func<T> createFunc, Func<T,U> groupBy, string filterVal, U defaultVal, Func<U,string> getGroupLabel)
+  public static void DrawFilteredGroupedList<T, U>(string label, List<T> list, Func<T, T> drawControls, Func<T> createFunc, Func<T, U> groupBy, string filterVal, U defaultVal, Func<U, string> getGroupLabel)
     where U : IComparable {
     EditorGUILayout.BeginVertical();
     EditorGUILayout.BeginHorizontal();
@@ -75,7 +75,7 @@ public static class EditorDrawingUtility {
     if (GUILayout.Button("+", GUILayout.Width(30))) {
       list.Insert(0, createFunc());
     }
-    
+
     EditorGUILayout.EndHorizontal();
 
     var splitList = list.GroupBy(groupBy).Select(g => new KeyValuePair<U, List<T>>(g.Key, g.ToList()));
@@ -93,7 +93,7 @@ public static class EditorDrawingUtility {
     EditorGUILayout.EndVertical();
   }
 
-  public static void DrawGroupedList<T,U>(string label, List<T> list, Func<T,T> drawControls, Func<T> createFunc, Func<T,U> groupBy, Func<U,string> getGroupLabel)
+  public static void DrawGroupedList<T, U>(string label, List<T> list, Func<T, T> drawControls, Func<T> createFunc, Func<T, U> groupBy, Func<U, string> getGroupLabel)
     where U : IComparable {
     EditorGUILayout.BeginVertical();
     EditorGUILayout.BeginHorizontal();
@@ -119,9 +119,9 @@ public static class EditorDrawingUtility {
     EditorGUILayout.EndVertical();
   }
 
-  public static void DrawDictionary<T>(string label, Dictionary<string, T> dict, Func<T,T> drawControls, Func<T> createFunc) {
+  public static void DrawDictionary<T>(string label, Dictionary<string, T> dict, Func<T, T> drawControls, Func<T> createFunc) {
 
-    var list = new List<KeyValuePair<string,T>>(dict);
+    var list = new List<KeyValuePair<string, T>>(dict);
 
     DrawList(label, list, x => {
       string key = x.Key;
@@ -185,16 +185,16 @@ public static class EditorDrawingUtility {
     float lineHeight = position.height / lineCount;
 
     position.height = lineHeight;
-    int selectedFileIndex = EditorGUI.Popup(position, "Localization File", 
-                              Mathf.Max(0, 
+    int selectedFileIndex = EditorGUI.Popup(position, "Localization File",
+                              Mathf.Max(0,
                                 System.Array.IndexOf(
-                                  LocalizationEditorUtility.LocalizationFiles, 
-                                  localizedStringFile)), 
+                                  LocalizationEditorUtility.LocalizationFiles,
+                                  localizedStringFile)),
                               LocalizationEditorUtility.LocalizationFiles);
     localizedStringFile = LocalizationEditorUtility.LocalizationFiles[selectedFileIndex];
 
     position.y += lineHeight;
-       
+
     var lastLocKey = localizationKey;
     localizationKey = EditorGUI.TextField(position, "Localization Key", localizationKey);
 
@@ -204,7 +204,7 @@ public static class EditorDrawingUtility {
       localizationKey = LocalizationEditorUtility.LocalizationKeys[quickSelect];
       localizedString = string.Empty;
     }
-      
+
     if (localizationKey != lastLocKey && (string.IsNullOrEmpty(localizedString) ||
         localizedString == LocalizationEditorUtility.GetTranslation(localizedStringFile, lastLocKey))) {
       InitializeLocalizationString(localizationKey, out localizedStringFile, out localizedString);
@@ -232,6 +232,19 @@ public static class EditorDrawingUtility {
     }
   }
 
+  public static void DrawTagDropDown(ref string chosenTag) {
+    TagConfig config = AssetDatabase.LoadAssetAtPath<TagConfig>(TagConfig.kTagConfigLocation);
+    TagConfig.SetInstance(config);
+    List<string> tagList = new List<string>();
+    tagList.AddRange(TagConfig.GetAllTags());
+    string[] tagOptions = tagList.ToArray();
+    int currOption = Mathf.Max(0, Array.IndexOf(tagOptions, chosenTag));
+    int newOption = EditorGUILayout.Popup("Tag", currOption, tagOptions);
+    if (newOption != currOption) {
+      chosenTag = tagOptions[newOption];
+    }
+  }
+
   public static string GetConditionListString(List<GoalCondition> condList) {
     string newS = string.Format(" ({0})", condList.Count);
     for (int i = 0; i < condList.Count; i++) {
@@ -241,7 +254,7 @@ public static class EditorDrawingUtility {
   }
 
   // Draws a list of Conditions
-  public static void DrawConditionList<T>(List<T> conditions) where T : GoalCondition {    
+  public static void DrawConditionList<T>(List<T> conditions) where T : GoalCondition {
     for (int i = 0; i < conditions.Count; i++) {
       var cond = conditions[i];
       // clear out any null conditions
@@ -449,7 +462,7 @@ public static class EditorDrawingUtility {
     });
   }
 
-  private static void AddConvertTypeOption<T,U>() {
+  private static void AddConvertTypeOption<T, U>() {
     _TypeNameDictionary[typeof(T)] = _TypeNameDictionary[typeof(U)];
     _TypeDrawers[typeof(T)] = x => Convert.ChangeType(_TypeDrawers[typeof(U)](Convert.ChangeType(x, typeof(U))), typeof(T));
   }
@@ -468,8 +481,8 @@ public static class EditorDrawingUtility {
     AddTypeOption<float>("float", f => EditorGUILayout.FloatField(f));
     AddTypeOption<string>("string", s => EditorGUILayout.TextArea(s ?? string.Empty));
     AddTypeOption<bool>("bool", b => EditorGUILayout.Toggle(b));
-    AddConvertTypeOption<long,int>();
-    AddConvertTypeOption<double,float>();
+    AddConvertTypeOption<long, int>();
+    AddConvertTypeOption<double, float>();
     AddTypeOption<EmotionScorer>("EmotionScorer", DrawEmotionScorer);
     AddTypeOption<AnimationCurve>("AnimationCurve", c => EditorGUILayout.CurveField(c));
     AddListTypeOption<int>("int");
@@ -502,7 +515,7 @@ public static class EditorDrawingUtility {
     if (x != null && _TypeNameDictionary.TryGetValue(x.GetType(), out typeName)) {
       index = Array.IndexOf(_TypeOptions, typeName);
     }
-    else {      
+    else {
       index = 0;
       x = null;
     }

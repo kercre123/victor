@@ -318,7 +318,7 @@ namespace Cozmo.HomeHub {
     }
 
     private void ResolveDooberBurst() {
-      RewardedActionManager.Instance.PendingActionRewards.Clear();
+      RewardedActionManager.Instance.SendPendingRewardsToInventory(); ;
       if (ChestRewardManager.Instance.ChestPending == false) {
         RewardSequenceActive = false;
         if (RobotEngineManager.Instance.CurrentRobot != null) {

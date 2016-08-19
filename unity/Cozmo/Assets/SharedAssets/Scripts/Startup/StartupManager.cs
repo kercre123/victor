@@ -314,6 +314,11 @@ public class StartupManager : MonoBehaviour {
         Cozmo.ItemDataConfig.SetInstance(idc);
       });
 
+    assetBundleManager.LoadAssetAsync<TagConfig>(_GameMetadataAssetBundleName,
+      "TagListConfig", (TagConfig tc) => {
+        TagConfig.SetInstance(tc);
+      });
+
     assetBundleManager.LoadAssetAsync<ChestData>(_GameMetadataAssetBundleName,
       "DefaultChestConfig", (ChestData cd) => {
         ChestData.SetInstance(cd);

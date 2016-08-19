@@ -48,6 +48,7 @@ namespace Anki.Cozmo {
         Target = 1;
         PointsRewarded = 0;
         RewardType = "experience";
+        Tag = "";
         CladEvent = GameEvent.Count;
         GenConditions = new List<GoalCondition>();
         ProgressConditions = new List<GoalCondition>();
@@ -64,6 +65,10 @@ namespace Anki.Cozmo {
       /// </summary>
       [ItemId]
       public string RewardType;
+      /// <summary>
+      /// The tag for generation
+      /// </summary>
+      public string Tag;
       /// <summary>
       /// The amount of the RewardType rewarded.
       /// </summary>

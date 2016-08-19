@@ -19,6 +19,34 @@ namespace Anki {
     [System.Serializable]
     public abstract class GoalCondition {
 
+      public enum ComparisonType {
+        GREATER,
+        LESS,
+        EQUAL,
+        GREATER_INCLUSIVE,
+        LESS_INCLUSIVE,
+        NOT
+      }
+
+      public bool CompareConditionValues(int a, int b, ComparisonType compareType) {
+        switch (compareType) {
+        case ComparisonType.GREATER:
+          return a > b;
+        case ComparisonType.LESS:
+          return a < b;
+        case ComparisonType.EQUAL:
+          return a == b;
+        case ComparisonType.GREATER_INCLUSIVE:
+          return a >= b;
+        case ComparisonType.LESS_INCLUSIVE:
+          return a <= b;
+        case ComparisonType.NOT:
+          return a != b;
+        default:
+          return false;
+        }
+      }
+
       // Override with unique checks to see if certain conditions are met by the current game state
       public virtual bool ConditionMet(GameEventWrapper cozEvent = null) {
         return true;
