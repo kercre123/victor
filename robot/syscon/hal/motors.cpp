@@ -420,19 +420,19 @@ void Motors::setPower(u8 motorID, s16 power)
     0x7FFF
   };
 
-  static int avg_max_power[MOTOR_COUNT];
+  static s16 avg_max_power[MOTOR_COUNT];
 
   // Do not run on head motor
   int current_speed = g_dataToHead.speeds[motorID];
-  int speed_offset = FIXED_MUL(current_speed, speed_scale[motorID]); // We will assume that 1.0 = 0x3FFF
-  int inst_speed = base_speed[motorID] + speed_offset;
-  
-  avg_max_power[motorID] = (inst_speed + avg_max_power[motorID] * 31) / 32;
-  
-  int max_power = avg_max_power[motorID];
+  int64_t speed_offset = (int64_t)current_speed *  (int64_t)speed_scale[motorID]; // We will assume that 1.0 = 0x3FFF
+  int inst_speed = (int)(base_speed[motorID] + speed_offset);
 
-  // Clamp max power to a rational value
-  if (max_power > 0x7FFF) { max_power = 0x7FFF; }
+  // Clamp max power to a rational value (fix underflow)
+  if (inst_speed > 0x7FFF || inst_speed < 0) { inst_speed = 0x7FFF; }
+  
+  avg_max_power[motorID] = (s16)((inst_speed + avg_max_power[motorID] * 31) / 32);
+  
+  s16 max_power = avg_max_power[motorID];
   
   // Don't let power exceed safe value
   if (ABS(power) > max_power) {
