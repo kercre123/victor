@@ -23,7 +23,8 @@ namespace Cozmo {
     [Range(3f, 5f)]
     private float _LowBatteryVoltageValue; // = 3.75f;
 
-    private float _LowPassFilteredVoltage = -1;
+    private const float _kMaxValidBatteryVoltage = 4.2f;
+    private float _LowPassFilteredVoltage = _kMaxValidBatteryVoltage;
     private bool _LowBatteryAlertTriggered = false;
     private AlertView _LowBatteryDialog = null;
 
@@ -53,23 +54,19 @@ namespace Cozmo {
 
     private void Update() {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
-      if (null != robot) {
-        if (_LowPassFilteredVoltage < 0f || _LowPassFilteredVoltage == float.MaxValue) {
-          _LowPassFilteredVoltage = robot.BatteryVoltage;
-        }
-        else {
-          _LowPassFilteredVoltage = _LowPassFilteredVoltage * _FilterSmoothingWeight + (1.0f - _FilterSmoothingWeight) * robot.BatteryVoltage;
+      // Battery voltage gets initialized to the float maxvalue, so ignore it until it's valid 
+      if (null != robot && robot.BatteryVoltage <= _kMaxValidBatteryVoltage) {
+        _LowPassFilteredVoltage = _LowPassFilteredVoltage * _FilterSmoothingWeight + (1.0f - _FilterSmoothingWeight) * robot.BatteryVoltage;
 
-          if (!_LowBatteryAlertTriggered && !_IsPaused && !_IsOnChargerToSleep && _LowPassFilteredVoltage < _LowBatteryVoltageValue) {
-            CloseBatteryDialog();
-            _LowBatteryAlertTriggered = true;
-            Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab);
-            alertView.SetCloseButtonEnabled(true);
-            alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
-            alertView.TitleLocKey = LocalizationKeys.kConnectivityCozmoLowBatteryTitle;
-            alertView.DescriptionLocKey = LocalizationKeys.kConnectivityCozmoLowBatteryDesc;
-            _LowBatteryDialog = alertView;
-          }
+        if (!_LowBatteryAlertTriggered && !_IsPaused && !_IsOnChargerToSleep && _LowPassFilteredVoltage < _LowBatteryVoltageValue) {
+          CloseBatteryDialog();
+          _LowBatteryAlertTriggered = true;
+          Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab);
+          alertView.SetCloseButtonEnabled(true);
+          alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
+          alertView.TitleLocKey = LocalizationKeys.kConnectivityCozmoLowBatteryTitle;
+          alertView.DescriptionLocKey = LocalizationKeys.kConnectivityCozmoLowBatteryDesc;
+          _LowBatteryDialog = alertView;
         }
       }
     }
@@ -144,7 +141,7 @@ namespace Cozmo {
       CloseSleepDialog();
       _IsOnChargerToSleep = false;
       _LowBatteryAlertTriggered = false;
-      _LowPassFilteredVoltage = -1f;
+      _LowPassFilteredVoltage = _kMaxValidBatteryVoltage;
     }
 
     private void CloseSleepDialog() {
