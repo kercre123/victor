@@ -7,6 +7,9 @@ extern "C" {
 }
 
 #include "hardware.h"
+#include "anki/cozmo/robot/crashLogs.h"
+#include "anki/cozmo/robot/spineData.h"
+#include "anki/cozmo/robot/rec_protocol.h"
 
 #include "timer.h"
 #include "storage.h"
@@ -22,10 +25,6 @@ extern "C" {
 #include "messages.h"
 #include "watchdog.h"
 #include "temp.h"
-
-#include "anki/cozmo/robot/crashLogs.h"
-#include "anki/cozmo/robot/spineData.h"
-#include "anki/cozmo/robot/rec_protocol.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 
