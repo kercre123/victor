@@ -9,6 +9,7 @@ public class FaceEnrollmentCell : MonoBehaviour {
 
   private string _FaceName;
   private int _FaceID;
+  private bool _NeedsUpdate;
 
   [SerializeField]
   private Anki.UI.AnkiTextLabel _NameLabel;
@@ -22,10 +23,15 @@ public class FaceEnrollmentCell : MonoBehaviour {
   [SerializeField]
   private Cozmo.UI.CozmoButton _ReEnrollFace;
 
-  public void Initialize(int faceID, string faceName) {
+  [SerializeField]
+  private UnityEngine.UI.Image _UpdateImage;
+
+  public void Initialize(int faceID, string faceName, bool needsUpdate) {
     _FaceName = faceName;
     _FaceID = faceID;
     _NameLabel.text = _FaceName;
+
+    _UpdateImage.gameObject.SetActive(needsUpdate);
 
     _EditButton.Initialize(HandleEditNameClicked, "edit_button", "face_enrollment_cell");
     _DeleteButton.Initialize(HandleDeleteNameClicked, "delete_button", "face_enrollment_cell");

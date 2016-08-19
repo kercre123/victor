@@ -63,7 +63,7 @@ GameObject:
   - 114: {fileID: 11486510}
   - 114: {fileID: 11473976}
   m_Layer: 5
-  m_Name: FaceImage
+  m_Name: FaceButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -154,6 +154,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _CreateNewButton: {fileID: 0}
+  _CreateNewButtonFace: {fileID: 11473976}
 --- !u!114 &11486510
 MonoBehaviour:
   m_ObjectHideFlags: 1

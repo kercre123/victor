@@ -2,6 +2,10 @@
 using System.Collections;
 
 public class FaceEnrollmentGameConfig : MinigameConfigBase {
+
+  public long UpdateThresholdLastSeenSeconds;
+  public long UpdateThresholdLastEnrolledSeconds;
+
   public override int NumCubesRequired() {
     return 0;
   }

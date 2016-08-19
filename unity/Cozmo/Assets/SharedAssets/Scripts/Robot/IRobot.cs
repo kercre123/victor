@@ -85,6 +85,8 @@ public interface IRobot : IDisposable {
   event FaceStateEventHandler OnFaceRemoved;
 
   Dictionary<int, string> EnrolledFaces { get; set; }
+  Dictionary<int, float> EnrolledFacesLastEnrolledTime { get; set; }
+  Dictionary<int, float> EnrolledFacesLastSeenTime { get; set; }
 
   float[] EmotionValues { get; }
 

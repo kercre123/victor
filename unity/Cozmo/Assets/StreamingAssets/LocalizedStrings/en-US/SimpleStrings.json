@@ -185,5 +185,8 @@
   },
   "button.createNew": {
     "translation": "Create New"
+  },
+  "label.update": {
+    "translation": "Update"
   }
 }

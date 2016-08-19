@@ -208,6 +208,9 @@ public class Robot : IRobot {
 
   public Dictionary<int, string> EnrolledFaces { get; set; }
 
+  public Dictionary<int, float> EnrolledFacesLastEnrolledTime { get; set; }
+  public Dictionary<int, float> EnrolledFacesLastSeenTime { get; set; }
+
   public int FriendshipPoints { get; private set; }
 
   public int FriendshipLevel { get; private set; }
@@ -322,6 +325,8 @@ public class Robot : IRobot {
     LightCubes = new Dictionary<int, LightCube>();
     Faces = new List<global::Face>();
     EnrolledFaces = new Dictionary<int, string>();
+    EnrolledFacesLastEnrolledTime = new Dictionary<int, float>();
+    EnrolledFacesLastSeenTime = new Dictionary<int, float>();
 
     // Defaults in clad
     PathMotionProfileDefault = new PathMotionProfile();
@@ -433,8 +438,9 @@ public class Robot : IRobot {
   }
 
   private void HandleLoadedKnownFace(Anki.Vision.LoadedKnownFace loadedKnownFaceMessage) {
-    // TODO: Use the enrollment and last seen times in the message (COZMO-2926)
     EnrolledFaces.Add(loadedKnownFaceMessage.faceID, loadedKnownFaceMessage.name);
+    EnrolledFacesLastEnrolledTime.Add(loadedKnownFaceMessage.faceID, Time.time - loadedKnownFaceMessage.secondsSinceEnrolled);
+    EnrolledFacesLastSeenTime.Add(loadedKnownFaceMessage.faceID, Time.time - loadedKnownFaceMessage.secondsSinceLastSeen);
   }
 
   public bool IsLightCubeInPickupRange(LightCube lightCube) {
@@ -444,8 +450,6 @@ public class Robot : IRobot {
 
     return bounds.Contains(WorldToCozmo(lightCube.WorldPosition));
   }
-
-
 
   public void ResetRobotState(Action onComplete) {
     DriveWheels(0.0f, 0.0f);
@@ -934,6 +938,9 @@ public class Robot : IRobot {
     Face face = Faces.Find(x => x.ID == message.faceID);
     // TODO add image face info
     AddObservedFace(face != null ? face : null, message);
+    if (EnrolledFacesLastSeenTime.ContainsKey(message.faceID)) {
+      EnrolledFacesLastSeenTime[message.faceID] = Time.time;
+    }
   }
 
   public void DisplayProceduralFace(float faceAngle, Vector2 faceCenter, Vector2 faceScale, float[] leftEyeParams, float[] rightEyeParams) {

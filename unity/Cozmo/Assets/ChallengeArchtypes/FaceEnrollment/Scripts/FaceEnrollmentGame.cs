@@ -31,6 +31,9 @@ namespace FaceEnrollment {
 
     private bool _UseFixedFaceID = false;
 
+    private long _UpdateThresholdLastSeenSeconds;
+    private long _UpdateThresholdLastEnrolledSeconds;
+
     // selects if we should save to the actual robot or only keep faces
     // for this session. used by press demo to not save to the actual robot.
     public void SetSaveToRobot(bool saveToRobot) {
@@ -48,6 +51,11 @@ namespace FaceEnrollment {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotOnBackFinished>(HandleOnBackFinished);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(HandleEnrolledFace);
+
+      FaceEnrollmentGameConfig faceEnrollmentConfig = (FaceEnrollmentGameConfig)minigameConfig;
+
+      _UpdateThresholdLastSeenSeconds = faceEnrollmentConfig.UpdateThresholdLastSeenSeconds;
+      _UpdateThresholdLastEnrolledSeconds = faceEnrollmentConfig.UpdateThresholdLastEnrolledSeconds;
     }
 
     protected override void SetupViewAfterCozmoReady(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
@@ -70,7 +78,7 @@ namespace FaceEnrollment {
 
     private void ShowFaceListSlide(Cozmo.MinigameWidgets.SharedMinigameView newView) {
       _FaceListSlideInstance = newView.ShowWideGameStateSlide(_FaceListSlidePrefab.gameObject, "face_list_slide").GetComponent<FaceEnrollmentListSlide>();
-      _FaceListSlideInstance.Initialize(CurrentRobot.EnrolledFaces);
+      _FaceListSlideInstance.Initialize(CurrentRobot.EnrolledFaces, _UpdateThresholdLastSeenSeconds, _UpdateThresholdLastEnrolledSeconds);
       newView.ShowShelf();
       _FaceListSlideInstance.OnEnrollNewFaceRequested += EnterNameForNewFace;
       _FaceListSlideInstance.OnEditNameRequested += EditExistingName;
@@ -145,7 +153,7 @@ namespace FaceEnrollment {
     private void ShowInstructions(System.Action handleInstructionsDone, string faceName) {
       SharedMinigameView.HideGameStateSlide();
       _FaceEnrollmentInstructionsViewInstance = UIManager.OpenView(_FaceEnrollmentInstructionsViewPrefab);
-      _FaceEnrollmentInstructionsViewInstance.ViewClosed += () => {
+      _FaceEnrollmentInstructionsViewInstance.ViewClosedByUser += () => {
         if (handleInstructionsDone != null) {
           handleInstructionsDone();
         }
@@ -190,17 +198,22 @@ namespace FaceEnrollment {
         ContextManager.Instance.AppFlash(playChime: true);
       }
       else {
-
-        GameEventManager.Instance.FireGameEvent(Anki.Cozmo.GameEvent.OnMeetNewPerson);
         if (CurrentRobot.EnrolledFaces.ContainsKey(message.completionInfo.faceEnrollmentCompleted.faceID)) {
           DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Re-enrolled existing face: " + _NameForFace);
           CurrentRobot.EnrolledFaces[message.completionInfo.faceEnrollmentCompleted.faceID] = _NameForFace;
+          CurrentRobot.EnrolledFacesLastEnrolledTime[message.completionInfo.faceEnrollmentCompleted.faceID] = Time.time;
         }
         else {
           CurrentRobot.EnrolledFaces.Add(message.completionInfo.faceEnrollmentCompleted.faceID, _NameForFace);
+          CurrentRobot.EnrolledFacesLastEnrolledTime.Add(message.completionInfo.faceEnrollmentCompleted.faceID, 0);
+          CurrentRobot.EnrolledFacesLastSeenTime.Add(message.completionInfo.faceEnrollmentCompleted.faceID, 0);
+          GameEventManager.Instance.FireGameEvent(Anki.Cozmo.GameEvent.OnMeetNewPerson);
           DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Enrolled new face: " + _NameForFace);
         }
       }
+
+      UIManager.CloseView(_FaceEnrollmentInstructionsViewInstance);
+
       EditOrEnrollFaceComplete(message.result == Anki.Cozmo.ActionResult.SUCCESS);
 
       // reset fixed face ID constraint after doing an enrollment
@@ -222,20 +235,20 @@ namespace FaceEnrollment {
 
     // pop up a confirmation for deleting an enrolled face
     private void RequestDeleteEnrolledFace(int faceID) {
-
       Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_NoText);
-      // Hook up callbacks
+
       alertView.SetCloseButtonEnabled(false);
       alertView.SetPrimaryButton(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmButton, () => HandleDeleteEnrolledFace(faceID));
       alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel);
       alertView.TitleLocKey = Localization.GetWithArgs(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmTitle, CurrentRobot.EnrolledFaces[faceID]);
-      // Listen for dialog close
     }
 
     private void HandleDeleteEnrolledFace(int faceID) {
-      RobotEngineManager.Instance.CurrentRobot.EraseEnrolledFaceByID(faceID);
+      CurrentRobot.EraseEnrolledFaceByID(faceID);
       // TODO: confirm deletion from engine
-      RobotEngineManager.Instance.CurrentRobot.EnrolledFaces.Remove(faceID);
+      CurrentRobot.EnrolledFaces.Remove(faceID);
+      CurrentRobot.EnrolledFacesLastEnrolledTime.Remove(faceID);
+      CurrentRobot.EnrolledFacesLastSeenTime.Remove(faceID);
       _FaceListSlideInstance.RefreshList(RobotEngineManager.Instance.CurrentRobot.EnrolledFaces);
     }
 

@@ -21,19 +21,47 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
 
   private List<FaceEnrollmentCell> _FaceCellList = new List<FaceEnrollmentCell>();
 
-  public void Initialize(Dictionary<int, string> faceDatabase) {
+  private long _UpdateSeenThresholdSeconds;
+  private long _updateEnrolledThresholdSeconds;
+
+  public void Initialize(Dictionary<int, string> faceDatabase, long seenThreshold, long enrolledThreshold) {
+    _UpdateSeenThresholdSeconds = seenThreshold;
+    _updateEnrolledThresholdSeconds = enrolledThreshold;
+
     foreach (KeyValuePair<int, string> kvp in faceDatabase) {
-      FaceEnrollmentCell newFaceCell = GameObject.Instantiate(_FaceCellPrefab.gameObject).GetComponent<FaceEnrollmentCell>();
-      newFaceCell.transform.SetParent(_ContentContainer, false);
-      newFaceCell.Initialize(kvp.Key, kvp.Value);
-      newFaceCell.OnEditNameRequested += HandleEditNameRequested;
-      newFaceCell.OnDeleteNameRequested += HandleDeleteFace;
-      newFaceCell.OnReEnrollFaceRequested += HandleReEnrollFaceRequested;
-      _FaceCellList.Add(newFaceCell);
+      FaceEnrollmentCell faceCellInstance = GameObject.Instantiate(_FaceCellPrefab.gameObject).GetComponent<FaceEnrollmentCell>();
+      faceCellInstance.transform.SetParent(_ContentContainer, false);
+      faceCellInstance.Initialize(kvp.Key, kvp.Value, NeedsUpdate(kvp.Key, seenThreshold, enrolledThreshold));
+      faceCellInstance.OnEditNameRequested += HandleEditNameRequested;
+      faceCellInstance.OnDeleteNameRequested += HandleDeleteFace;
+      faceCellInstance.OnReEnrollFaceRequested += HandleReEnrollFaceRequested;
+      _FaceCellList.Add(faceCellInstance);
     }
     _EnrollNewFaceInstance = GameObject.Instantiate(_EnrollNewFacePrefab.gameObject).GetComponent<FaceEnrollmentNewCell>();
     _EnrollNewFaceInstance.transform.SetParent(_ContentContainer, false);
     _EnrollNewFaceInstance.OnCreateNewButton += HandleNewEnrollmentRequested;
+  }
+
+  private bool NeedsUpdate(int faceID, long seenThreshold, long enrolledThreshold) {
+    if (RobotEngineManager.Instance.CurrentRobot.EnrolledFacesLastSeenTime.ContainsKey(faceID) == false) {
+      DAS.Error("FaceEnrollmentSlide.NeedsUpdate", "EnrolledFacesSecondsSinceSeen Dictionary does not contain ID " + faceID);
+      return false;
+    }
+
+    if (RobotEngineManager.Instance.CurrentRobot.EnrolledFacesLastEnrolledTime.ContainsKey(faceID) == false) {
+      DAS.Error("FaceEnrollmentSlide.NeedsUpdate", "EnrolledFacesSecondsSinceEnrolled Dictionary does not contain ID " + faceID);
+      return false;
+    }
+
+    if (Time.time - RobotEngineManager.Instance.CurrentRobot.EnrolledFacesLastSeenTime[faceID] > seenThreshold) {
+      return true;
+    }
+
+    if (Time.time - RobotEngineManager.Instance.CurrentRobot.EnrolledFacesLastEnrolledTime[faceID] > enrolledThreshold) {
+      return true;
+    }
+
+    return false;
   }
 
   public void ClearList() {
@@ -49,7 +77,7 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
 
   public void RefreshList(Dictionary<int, string> faceDatabase) {
     ClearList();
-    Initialize(faceDatabase);
+    Initialize(faceDatabase, _UpdateSeenThresholdSeconds, _updateEnrolledThresholdSeconds);
   }
 
   private void HandleEditNameRequested(int faceID, string faceName) {

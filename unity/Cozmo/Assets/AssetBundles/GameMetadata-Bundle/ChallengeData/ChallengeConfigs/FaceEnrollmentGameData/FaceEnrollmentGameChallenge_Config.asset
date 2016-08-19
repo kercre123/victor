@@ -13,9 +13,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _SkillConfig:
     _EvaluateLevelChangeEvent: []
-    _GainChallengePointEvent: []
-    _LoseChallengePointEvent: []
+    _ChallengePointEvent: []
     _ResetPointsEvent: []
     _UsePointThreshold: 0
     _ComparedPointThreshold: 0
     _Levels: []
+  UpdateThresholdLastSeenSeconds: 259200
+  UpdateThresholdLastEnrolledSeconds: 604800

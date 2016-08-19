@@ -28,6 +28,14 @@ public class MockRobot : IRobot {
     _EnrolledFaces.Add(1, "Alice");
     _EnrolledFaces.Add(2, "Bob");
     _EnrolledFaces.Add(3, "Carol");
+
+    _EnrolledFacesLastSeenTime.Add(1, -10);
+    _EnrolledFacesLastSeenTime.Add(2, -100);
+    _EnrolledFacesLastSeenTime.Add(3, -1000000);
+
+    _EnrolledFacesLastEnrolledTime.Add(1, -9000);
+    _EnrolledFacesLastEnrolledTime.Add(2, -9001);
+    _EnrolledFacesLastEnrolledTime.Add(3, -3000000);
   }
 
   public bool Status(Anki.Cozmo.RobotStatusFlag s) {
@@ -715,6 +723,26 @@ public class MockRobot : IRobot {
     }
     set {
       _EnrolledFaces = value;
+    }
+  }
+
+  private Dictionary<int, float> _EnrolledFacesLastEnrolledTime = new Dictionary<int, float>();
+  private Dictionary<int, float> _EnrolledFacesLastSeenTime = new Dictionary<int, float>();
+
+  public Dictionary<int, float> EnrolledFacesLastEnrolledTime {
+    get {
+      return _EnrolledFacesLastEnrolledTime;
+    }
+    set {
+      _EnrolledFacesLastEnrolledTime = value;
+    }
+  }
+  public Dictionary<int, float> EnrolledFacesLastSeenTime {
+    get {
+      return _EnrolledFacesLastSeenTime;
+    }
+    set {
+      _EnrolledFacesLastSeenTime = value;
     }
   }
 
