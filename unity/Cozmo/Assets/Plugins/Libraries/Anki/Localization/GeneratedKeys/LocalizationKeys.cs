@@ -394,6 +394,25 @@ public static class LocalizationKeys {
 
   #endregion
 
+  #region SettingsStrings
+
+  public const string kSettingsSdkPanelEnableButtonText = "settings.sdkPanel.enableButton.text";
+  public const string kSettingsSdkPanelLabelTitle = "settings.sdkPanel.label.title";
+  public const string kSettingsSdkPanelSdkUrlLabel = "settings.sdkPanel.sdkUrl.label";
+  public const string kSettingsSdkPanelShowSDKButtonText = "settings.sdkPanel.showSDKButton.text";
+  public const string kSettingsVersionPanelButtonAcknowledgementsLink = "settings.versionPanel.button.acknowledgementsLink";
+  public const string kSettingsVersionPanelButtonEraseCozmo = "settings.versionPanel.button.eraseCozmo";
+  public const string kSettingsVersionPanelButtonSupport = "settings.versionPanel.button.support";
+  public const string kSettingsVersionPanelLabelAppVersion = "settings.versionPanel.label.appVersion";
+  public const string kSettingsVersionPanelLabelCozmoVersion = "settings.versionPanel.label.cozmoVersion";
+  public const string kSettingsVersionPanelLabelDeviceId = "settings.versionPanel.label.deviceId";
+  public const string kSettingsVersionPanelLabelSerialNumber = "settings.versionPanel.label.serialNumber";
+  public const string kSettingsVolumePanelRobotToggleLow = "settings.volumePanel.robotToggle.low";
+  public const string kSettingsVolumePanelRobotToggleMedium = "settings.volumePanel.robotToggle.medium";
+  public const string kSettingsVolumePanelRobotToggleHigh = "settings.volumePanel.robotToggle.high";
+
+  #endregion
+
   #region SimpleStrings
 
   public const string kNameCozmo = "name.cozmo";
@@ -417,6 +436,7 @@ public static class LocalizationKeys {
   public const string kLabelSimpleCount = "label.simpleCount";
   public const string kLabelColonCount = "label.colonCount";
   public const string kLabelTotalCount = "label.totalCount";
+  public const string kLabelFractionCount = "label.fractionCount";
   public const string kLabelDayCount = "label.dayCount";
   public const string kDailySummaryTitle = "dailySummary.title";
   public const string kEndSessionTitle = "endSession.title";

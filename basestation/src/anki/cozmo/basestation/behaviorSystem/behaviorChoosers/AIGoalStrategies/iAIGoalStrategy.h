@@ -62,10 +62,10 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // goal runs for at least this much
-  float _minDurationSecs;
+  float _goalCanEndSecs;
   
   // goal runs for at most this much
-  float _maxDurationSecs;
+  float _goalShouldEndSecs;
 
   // after finishing, the goal will not run again for this long
   float _cooldownSecs;

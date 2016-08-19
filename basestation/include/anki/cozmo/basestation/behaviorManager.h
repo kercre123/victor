@@ -78,7 +78,10 @@ public:
   inline bool AreAllGameFlagsAvailable(BehaviorGameFlag gameFlag) const;
   inline bool IsAnyGameFlagAvailable(BehaviorGameFlag gameFlag) const;
   UnlockId GetActiveSpark() const { return _activeSpark; };
-  
+  UnlockId GetRequestedSpark() const { return _lastRequestedSpark; };
+  bool IsActiveSparkSoft() const  { return (_activeSpark != UnlockId::Count) && _isSoftSpark;}
+  bool IsRequestedSparkSoft() const  { return (_lastRequestedSpark != UnlockId::Count) && _isRequestedSparkSoft;}
+
   // sets which games are available by setting the mask/flag combination
   void SetAvailableGame(BehaviorGameFlag availableGames) { _availableGames = Util::EnumToUnderlying(availableGames); }
   
@@ -99,7 +102,7 @@ public:
   // Stops the current behavior and switches to null. The next time Update is called, the behavior chooser
   // will have a chance to select a new behavior. This is mostly useful as a hack to force a behavior switch
   // when it is needed (e.g. demo). `stoppedByWhom` is a string for debugging so we know why this was stopped
-  void ForceStopCurrentBehavior(const std::string& stoppedByWhom);
+  void RequestCurrentBehaviorEndImmediately(const std::string& stoppedByWhom);
   
   // Returns nullptr if there is no current behavior
   const IBehavior* GetCurrentBehavior() const { return _currentBehavior; }
@@ -119,7 +122,26 @@ public:
   void HandleMessage(const Anki::Cozmo::ExternalInterface::BehaviorManagerMessageUnion& message);
   
   void SetReactionaryBehaviorsEnabled(bool isEnabled, bool stopCurrent = false);
-
+  void RequestCurrentBehaviorEndOnNextActionComplete();
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Sparks
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // Allows Goal evaluator to know if it should kick out the current goal and transition into a spark
+  bool ShouldSwitchToSpark() const { return (_activeSpark != _lastRequestedSpark) && !_didGameRequestSparkEnd;}
+  
+  // Actually switches out the LastRequestedSpark from the game with the active spark
+  // Returns the UnlockID of the newly active spark
+  const UnlockId SwitchToRequestedSpark();
+  
+  // Allows sparks to know if the game has requested that they quit when able
+  bool DidGameRequestSparkEnd() const{ return _didGameRequestSparkEnd;}
+  
+  // Stores the requested spark until it (or a subsequent request) is swapped in to ActiveSpark with a call to
+  // SwitchToRequestedSpark.  This simplifies asyncronous messaging issues
+  // and gives sparks the opportunity to end themselves if they are canceled by the user
+  void SetRequestedSpark(UnlockId spark, bool softSpark);
+  
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -158,12 +180,6 @@ private:
   template<typename EventType>
   void ConsiderReactionaryBehaviorForEvent(const AnkiEvent<EventType>& event);
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Sparks
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // sets the given spark as currently active
-  void SetActiveSpark(UnlockId spark);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
@@ -227,7 +243,14 @@ private:
   
   // current active spark (this does guarantee that behaviors will kick in, only that Cozmo is in a Sparked state)
   UnlockId _activeSpark = UnlockId::Count;
-
+  // Identifies if the spark is a "soft spark" - played when upgrade is unlocked and has some different playback features than normal sparks
+  bool _isSoftSpark = false;
+  
+  // holding variables to keep track of most recent spark messages from game until goalEvaluator Switches out the active spark
+  UnlockId _lastRequestedSpark = UnlockId::Count;
+  bool _isRequestedSparkSoft = false;
+  bool _didGameRequestSparkEnd = false;
+  
   // whiteboard for behaviors to share information, or to store information only useful to behaviors
   std::unique_ptr<AIWhiteboard> _whiteboard;
     

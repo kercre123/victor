@@ -495,9 +495,11 @@ namespace Anki
       Result SetBlockLight(const u32 activeID, const u16* colors);
 
       void DiscoverProp(uint32_t id);
-      void GetPropState(int id, int x, int y, int z, int shocks,
+      void GetPropState(uint8_t id, int x, int y, int z, int shocks,
                         uint8_t tapTime, int8_t tapNeg, int8_t tapPos);
 
+      void ClearActiveObjectData();
+      
       /////////////////////////////////////////////////////////////////////
       // POWER MANAGEMENT
       //

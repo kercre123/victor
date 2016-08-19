@@ -119,7 +119,7 @@ void BehaviorReactToFrustration::AnimationComplete(Robot& robot, FrustrationReac
     DriveToPoseAction* action = new DriveToPoseAction(robot, randomPoseRotAndTrans.GetWithRespectToOrigin());
     StartActing(action); // finish behavior when we are done
   }
-  BehaviorObjectiveAchieved();
+  BehaviorObjectiveAchieved(BehaviorObjective::ReactedToFrustration);
 }
 
 BehaviorReactToFrustration::ReactionContainer::iterator BehaviorReactToFrustration::GetReaction(const Robot& robot)

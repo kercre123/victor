@@ -1,0 +1,43 @@
+// Cozmo known object type definitions file
+//  for the C-Like Abstract Data language
+// Author: Kevin Karol
+// Copyright: Anki Inc (c) 2016
+
+namespace Anki {
+namespace Cozmo {
+
+enum int_32 BehaviorObjective {
+  Unknown,
+  AnimationPlayed,
+  BlockRolled,
+  BlockStacked,
+  BuiltPyramid,
+  DroveAsIntended,
+  FoundFace,
+  KnockedOverBlocks,
+  PickedupBlock,
+  PutdownBlock,
+  Pounced,
+  PoppedWheelie,
+  ReactedAcknowledgedFace,
+  ReactedAcknowledgedObject,
+  ReactedAcknowledgedCubeMoved,
+  ReactedToCliff,
+  ReactedToFrustration,
+  ReactedToOnCharger,
+  ReactedToPickup,
+  ReactedToPoke,
+  ReactedToRobotOnBack,
+  ReactedToRobotOnFace,
+  ReactedToRobotOnSide,
+  ReactedToUnexpectedMovement,
+  RequestedGame,
+  StackedBlock,
+
+  // Count can specify "none" or "unspecified"
+  Count, // Keep count at end.
+
+} // enum class BehaviorObjectives
+  
+} // namespace Cozmo
+} // namespace Anki

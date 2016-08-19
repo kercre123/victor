@@ -48,7 +48,7 @@ Result BehaviorReactToUnexpectedMovement::InitInternalReactionary(Robot& robot)
                 [this, &robot]()
                 {
                   robot.GetMoveComponent().UnlockTracks((uint8_t)AnimTrackFlag::LIFT_TRACK);
-                  BehaviorObjectiveAchieved();
+                  BehaviorObjectiveAchieved(BehaviorObjective::ReactedToUnexpectedMovement);
                 });
   }
   else

@@ -154,7 +154,7 @@ namespace Anki {
           }
 
           if (storeValue) {
-            System.Collections.Generic.Dictionary<VolumeParameters.VolumeType, float> volumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.VolumePreferences;
+            System.Collections.Generic.Dictionary<VolumeParameters.VolumeType, float> volumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.VolumePreferences;
             if (volumePrefs.ContainsKey(parameter)) {
               volumePrefs[parameter] = volume;
             }
@@ -177,7 +177,7 @@ namespace Anki {
           }
 
           // Get stored volume parameters
-          System.Collections.Generic.Dictionary<VolumeParameters.VolumeType, float> volumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.VolumePreferences;
+          System.Collections.Generic.Dictionary<VolumeParameters.VolumeType, float> volumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.VolumePreferences;
           // Set each parameters
           foreach (VolumeParameters.VolumeType aParameter in volumeParamList) {
             float aValue;

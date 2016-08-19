@@ -489,7 +489,7 @@ void DemoBehaviorChooser::HandleMessage(const ExternalInterface::DemoResetState&
 
     _modifiedBehaviorScores[_gameRequestBehavior] = kRunBehaviorNowScore;
 
-    _robot.GetBehaviorManager().ForceStopCurrentBehavior("DemoStateResetButton");
+    _robot.GetBehaviorManager().RequestCurrentBehaviorEndImmediately("DemoStateResetButton");
 
     // cancel any other actions just in case
     _robot.GetActionList().Cancel(RobotActionType::UNKNOWN);

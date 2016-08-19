@@ -2,7 +2,6 @@
   "behaviorType": "StackBlocks",
   "name": "sparksStackBlock",
   "flatScore" : 5.0,
-  "shouldStreamline": true,
   "behaviorGroups": [
     "SparksStackBlock"
   ]

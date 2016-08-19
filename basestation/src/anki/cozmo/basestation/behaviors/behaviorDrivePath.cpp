@@ -55,7 +55,7 @@ void BehaviorDrivePath::TransitionToFollowingPath(Robot& robot)
     switch(res)
     {
       case ActionResult::SUCCESS:
-        BehaviorObjectiveAchieved();
+        BehaviorObjectiveAchieved(BehaviorObjective::DroveAsIntended);
         break;
         
       case ActionResult::FAILURE_RETRY:

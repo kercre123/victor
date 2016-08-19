@@ -84,7 +84,7 @@ void BehaviorReactToRobotOnFace::CheckFlipSuccess(Robot& robot)
     StartActing(new TriggerAnimationAction(robot, AnimationTrigger::FailedToRightFromFace),
                 &BehaviorReactToRobotOnFace::FlipOverIfNeeded);
   }else{
-    BehaviorObjectiveAchieved();
+    BehaviorObjectiveAchieved(BehaviorObjective::ReactedToRobotOnFace);
   }
 }
 

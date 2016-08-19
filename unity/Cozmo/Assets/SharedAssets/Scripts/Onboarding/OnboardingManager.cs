@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 using System.Collections.Generic;
 using Anki.Cozmo;
@@ -108,7 +108,7 @@ public class OnboardingManager : MonoBehaviour {
 
   public void InitHomeHubOnboarding(HomeView homeview, Transform onboardingLayer) {
     _HomeView = homeview;
-    _OnboardingTransform = onboardingLayer;
+    _OnboardingTransform = onboardingLayer.parent.transform;
 
     if (IsOnboardingRequired(OnboardingPhases.Home)) {
       StartPhase(OnboardingPhases.Home);
@@ -123,6 +123,22 @@ public class OnboardingManager : MonoBehaviour {
     _CurrPhase = phase;
     if (_CurrPhase == OnboardingPhases.Home) {
       RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(AnimationTrigger.OnboardingIdle);
+
+      // This is safe because you can't spend currency in the first phase of onboarding
+      Cozmo.ItemData itemData = Cozmo.ItemDataConfig.GetHexData();
+      int currAmt = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.GetItemAmount(RewardedActionManager.Instance.CoinID);
+      if (currAmt < itemData.StartingAmount) {
+        DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.SetItemAmount(RewardedActionManager.Instance.CoinID, itemData.StartingAmount);
+      }
+      // Hex piece bits are their own thing because they will be puzzle pieces..
+      List<string> itemIDs = Cozmo.ItemDataConfig.GetAllItemIds();
+      for (int i = 0; i < itemIDs.Count; ++i) {
+        itemData = Cozmo.ItemDataConfig.GetData(itemIDs[i]);
+        currAmt = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.GetItemAmount(itemData.ID);
+        if (currAmt < itemData.StartingAmount) {
+          DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.SetItemAmount(itemData.ID, itemData.StartingAmount);
+        }
+      }
     }
 
     // we keep the asset bundle around because some phases lead into each other, in common cases
@@ -203,10 +219,6 @@ public class OnboardingManager : MonoBehaviour {
     }
 
     DataPersistenceManager.Instance.Save();
-  }
-
-  public HomeView GetHomeView() {
-    return _HomeView;
   }
 
   private void HandleDailyGoalCompleted(GameEventWrapper gameEvent) {

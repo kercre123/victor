@@ -18,6 +18,22 @@
 
 static uint8_t g_shockCount[MAX_CUBES];
 
+// Motion computation thresholds and vars
+static const u8 START_MOVING_COUNT_THRESH = 2; // Determines number of motion tics that much be observed before Moving msg is sent
+static const u8 STOP_MOVING_COUNT_THRESH = 5;  // Determines number of no-motion tics that much be observed before StoppedMoving msg is sent
+static const u8 ACC_MOVE_THRESH = 5;           // If current value differs from filtered value by this much, block is considered to be moving.
+static u8 movingTimeoutCtr[MAX_CUBES] = {0};
+static bool isMoving[MAX_CUBES] = {false};
+
+static Anki::Cozmo::UpAxis prevMotionDir[MAX_CUBES] = {Anki::Cozmo::Unknown};  // Last sent motion direction
+static Anki::Cozmo::UpAxis prevUpAxis[MAX_CUBES] = {Anki::Cozmo::Unknown};     // Last sent upAxis
+static Anki::Cozmo::UpAxis nextUpAxis[MAX_CUBES] = {Anki::Cozmo::Unknown};     // Candidate next upAxis to send
+static u8 nextUpAxisCount[MAX_CUBES] = {0};          // Number of times candidate next upAxis is observed
+static const u8 UPAXIS_STABLE_COUNT_THRESH = 15;     // How long the candidate upAxis must be observed for before it is reported
+static const Anki::Cozmo::UpAxis idxToUpAxis[3][2] = { {Anki::Cozmo::XPositive, Anki::Cozmo::XNegative},
+                                                       {Anki::Cozmo::YPositive, Anki::Cozmo::YNegative},
+                                                       {Anki::Cozmo::ZPositive, Anki::Cozmo::ZNegative} };
+
 
 namespace Anki
 {
@@ -25,6 +41,19 @@ namespace Anki
   {
     namespace HAL
     {
+      void ClearActiveObjectData()
+      {
+        for (int i=0; i< MAX_CUBES; ++i) {
+          movingTimeoutCtr[i] = 0;
+          isMoving[i] = false;
+          
+          prevMotionDir[i] = Unknown;
+          prevUpAxis[i] = Unknown;
+          nextUpAxis[i] = Unknown;
+          nextUpAxisCount[i] = 0;
+        }
+      }
+      
       void ReportUpAxisChanged(int id, UpAxis a)
       {
         ObjectUpAxisChanged m;
@@ -34,7 +63,7 @@ namespace Anki
         RobotInterface::SendMessage(m);
       }
       
-      void GetPropState(int id, int ax, int ay, int az, int shocks,
+      void GetPropState(uint8_t id, int ax, int ay, int az, int shocks,
                         uint8_t tapTime, int8_t tapNeg, int8_t tapPos) {
         // Tap detection
         if (id >= MAX_CUBES) {
@@ -66,14 +95,6 @@ namespace Anki
         }
 
 
-        // Detect if block moved from accel data
-        const u8 START_MOVING_COUNT_THRESH = 2; // Determines number of motion tics that much be observed before Moving msg is sent
-        const u8 STOP_MOVING_COUNT_THRESH = 5;  // Determines number of no-motion tics that much be observed before StoppedMoving msg is sent
-        const int ACC_MOVE_THRESH = 5;          // If current value differs from filtered value by this much, block is considered to be moving.
-        static u8 movingTimeoutCtr[MAX_CUBES] = {0};
-        static bool isMoving[MAX_CUBES] = {false};
-
-
         // Accumulate IIR filter for each axis
         static s32 acc_filt[MAX_CUBES][3] = {0};
         static const s32 filter_coeff = 20;
@@ -103,17 +124,6 @@ namespace Anki
 //          AnkiDebugPeriodic(50, 217, "CUBE_ACC", 521, "%d: ax %d, ay %d, az %d; filt_x %d, filt_y %d, filt_z %d", 7,
 //                            id, ax, ay, az, acc_filt[id][0], acc_filt[id][1], acc_filt[id][2]);
 //        }
-
-
-        // Motion computation
-        static UpAxis prevMotionDir[MAX_CUBES] = {Unknown};  // Last sent motion direction
-        static UpAxis prevUpAxis[MAX_CUBES] = {Unknown};     // Last sent upAxis
-        static UpAxis nextUpAxis[MAX_CUBES] = {Unknown};     // Candidate next upAxis to send
-        static u8 nextUpAxisCount[MAX_CUBES] = {0};          // Number of times candidate next upAxis is observed
-        static const u8 UPAXIS_STABLE_COUNT_THRESH = 15;  // How long the candidate upAxis must be observed for before it is reported
-        static const UpAxis idxToUpAxis[3][2] = { {XPositive, XNegative},
-                                                  {YPositive, YNegative},
-                                                  {ZPositive, ZNegative} };
         
         // Compute motion direction change. i.e. change in dominant acceleration vector
         s8 maxAccelVal = 0;

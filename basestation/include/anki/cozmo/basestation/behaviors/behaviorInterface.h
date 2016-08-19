@@ -26,6 +26,7 @@
 #include "clad/externalInterface/messageGameToEngineTag.h"
 #include "clad/robotInterface/messageRobotToEngineTag.h"
 #include "clad/types/behaviorGroup.h"
+#include "clad/types/behaviorObjectives.h"
 #include "clad/types/behaviorTypes.h"
 #include "clad/types/unlockTypes.h"
 #include "util/bitFlags/bitFlags.h"
@@ -114,6 +115,11 @@ public:
   // behavior). Any behaviors from StartActing will be canceled.
   void Stop();
 
+  
+  // Prevents the behavior from calling a callback function when ActionCompleted occurs
+  // this allows the behavior to be stopped gracefully
+  void StopOnNextActionComplete();
+  
   //
   // Abstract methods to be overloaded:
   //
@@ -127,9 +133,7 @@ public:
   const BehaviorType GetType() const { return _behaviorType; }
   virtual bool IsReactionary() const { return false;}
   virtual bool ShouldRunWhilePickedUp() const { return false;}
-  
-  void SetStreamline(bool streamline){_shouldStreamline = streamline;}
-  
+    
   // Return true if the behavior explicitly handles the case where the robot starts holding the block
   // Equivalent to !robot.IsCarryingObject() in IsRunnable()
   virtual bool CarryingObjectHandledInternally() const = 0;
@@ -159,7 +163,7 @@ public:
   bool IsOwnedByFactory() const { return _isOwnedByFactory; }
     
   virtual IReactionaryBehavior* AsReactionaryBehavior() { assert(0); return nullptr; }
-    
+  
   bool IsBehaviorGroup(BehaviorGroup behaviorGroup) const { return _behaviorGroups.IsBitFlagSet(behaviorGroup); }
   bool MatchesAnyBehaviorGroups(const BehaviorGroupFlags::StorageType& flags) const {
     return _behaviorGroups.AreAnyBitsInMaskSet(flags);
@@ -313,8 +317,8 @@ protected:
   bool StopActing(bool allowCallback = true);
   
   // Behaviors should call this function when they reach their completion state
-  // in order to log das events and notify the AI strategy of completion
-  void BehaviorObjectiveAchieved();
+  // in order to log das events and notify goal strategies if they listen for the message
+  void BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved);
   
   //Allows behaviors to skip certain steps when streamlined
   //Can be set in json (for sparks) or programatically

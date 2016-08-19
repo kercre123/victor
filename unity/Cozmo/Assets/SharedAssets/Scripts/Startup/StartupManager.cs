@@ -347,6 +347,12 @@ public class StartupManager : MonoBehaviour {
         Cozmo.UI.GenericRewardsConfig.SetInstance(cd);
       });
 
+
+    assetBundleManager.LoadAssetAsync<Cozmo.Settings.DefaultSettingsValuesConfig>(_GameMetadataAssetBundleName,
+      "DefaultSettingsValuesConfig", (Cozmo.Settings.DefaultSettingsValuesConfig dsvc) => {
+        Cozmo.Settings.DefaultSettingsValuesConfig.SetInstance(dsvc);
+      });
+
     SkillSystem.Instance.Initialize();
 
   }

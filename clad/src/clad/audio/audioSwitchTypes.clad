@@ -18,11 +18,11 @@ enum uint_32 Freeplay_Mood
 {
   Busy = 1427625958,
   Chill = 4294400669,
-  Cubedetect = 1800298039,
+  Cubeinteract = 889740396,
+  Frustrated = 1309079467,
   Happy = 1427264549,
   Invalid = 0,
   Neutral = 670611050,
-  Sad = 443572635,
   Sleep = 3671647190,
 }
 

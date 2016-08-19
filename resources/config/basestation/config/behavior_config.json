@@ -60,9 +60,15 @@
         "name" : "sparksRollBlock",
         "requireSpark":"RollCube",
         "priority": 0, // lower is better
+
         "behaviorChooser" :
         {
-          "type" : "simple",
+          "type" : "sparks",
+          "minTimeSecs": 0,
+          "maxTimeSecs": 60,
+          "numberOfRepetitions": 1,
+          "behaviorObjective": "BlockRolled",
+          "softSparkTrigger": "SoftSparkUpgradeLift",
           // these groups are the behaviors that are allowed in this behavior chooser
           "behaviorGroups" : [ "SparksRollBlock" ]
         },
@@ -77,7 +83,12 @@
         "priority": 0, // lower is better
         "behaviorChooser" :
         {
-          "type" : "simple",
+         "type" : "sparks",
+         "minTimeSecs": 0,
+         "maxTimeSecs": 60,
+         "numberOfRepetitions": 1,
+         "behaviorObjective": "StackedBlock",
+         "softSparkTrigger": "SoftSparkUpgradeLift",
           // these groups are the behaviors that are allowed in this behavior chooser
           "behaviorGroups" : [ "SparksStackBlock" ]
         },
@@ -92,7 +103,12 @@
         "priority": 0, // lower is better
         "behaviorChooser" :
         {
-          "type" : "simple",
+         "type" : "sparks",
+         "minTimeSecs": 0,
+         "maxTimeSecs": 60,
+         "numberOfRepetitions": 1,
+         "behaviorObjective": "Pounced",
+         "softSparkTrigger": "SoftSparkUpgradeLift",
           // these groups are the behaviors that are allowed in this behavior chooser
           "behaviorGroups" : [ "SparksPounceOnMotion" ]
         },
@@ -107,7 +123,12 @@
         "priority": 0, // lower is better
         "behaviorChooser" :
         {
-          "type" : "simple",
+         "type" : "sparks",
+         "minTimeSecs": 0,
+         "maxTimeSecs": 60,
+         "numberOfRepetitions": 1,
+         "behaviorObjective": "PoppedWheelie",
+         "softSparkTrigger": "SoftSparkUpgradeTracks",
           // these groups are the behaviors that are allowed in this behavior chooser
           "behaviorGroups" : [ "SparksPopAWheelie" ]
         },
@@ -122,7 +143,12 @@
         "priority": 0, // lower is better
         "behaviorChooser" :
         {
-          "type" : "simple",
+         "type" : "sparks",
+         "minTimeSecs": 0,
+         "maxTimeSecs": 60,
+         "numberOfRepetitions": 1,
+         "behaviorObjective": "KnockedOverBlocks",
+         "softSparkTrigger": "SoftSparkUpgradeTracks",
           // these groups are the behaviors that are allowed in this behavior chooser
           "behaviorGroups" : [ "SparksKnockOverCubes" ]
         },
@@ -137,7 +163,12 @@
         "priority": 0, // lower is better
         "behaviorChooser" :
         {
-          "type" : "simple",
+         "type" : "sparks",
+         "minTimeSecs": 0,
+         "maxTimeSecs": 60,
+         "numberOfRepetitions": 1,
+         "behaviorObjective": "PickedupBlock",
+         "softSparkTrigger": "SoftSparkUpgradeLift",
           // these groups are the behaviors that are allowed in this behavior chooser
           "behaviorGroups" : [ "SparksPickUpCube" ]
         },
@@ -152,7 +183,12 @@
         "priority": 0, // lower is better
         "behaviorChooser" :
         {
-          "type" : "simple",
+          "type" : "sparks",
+          "minTimeSecs": 0,
+          "maxTimeSecs": 60,
+          "numberOfRepetitions": 1,
+          "behaviorObjective": "BuiltPyramid",
+          "softSparkTrigger": "SoftSparkUpgradeLift",
           // this are the behaviors that are allowed in this behavior chooser
           "behaviorGroups" : [ "SparksBuildPyramid" ]
         },

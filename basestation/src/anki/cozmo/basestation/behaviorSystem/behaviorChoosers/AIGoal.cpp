@@ -85,12 +85,14 @@ bool AIGoal::Init(Robot& robot, const Json::Value& config)
 void AIGoal::Enter()
 {
   _lastTimeGoalStartedSecs = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _behaviorChooserPtr->OnSelected();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIGoal::Exit()
 {
   _lastTimeGoalStoppedSecs = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _behaviorChooserPtr->OnDeselected();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

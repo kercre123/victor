@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Name: ShaderHolder
   m_EditorClassIdentifier: 
   _DefaultMaterial: {fileID: 2100000, guid: 873a88300e36d474a9fd71a08b021a54, type: 2}
-  _GradiantSimpleClippingShader: {fileID: 4800000, guid: 0dfa90152ecd34e089deb029fc0ac2b0,
+  _GradiantAlphaClippingShader: {fileID: 4800000, guid: 1dac0605cae7f44a7ab489a10da512dc,
     type: 3}
-  _GradiantComplexClippingShader: {fileID: 4800000, guid: 6e034d923a10343709fa28f6fc6510cb,
+  _GradiantTextureClippingShader: {fileID: 4800000, guid: 6e034d923a10343709fa28f6fc6510cb,
     type: 3}
   _GradiantSimpleClippingScreenspaceShader: {fileID: 4800000, guid: eea05156955924dd8ad9563a7bcf421d,
     type: 3}

@@ -141,7 +141,7 @@ void Anki::Cozmo::HAL::SPI::EnterRecoveryMode(void) {
   static const uint32_t recovery_value = 0xCAFEBABE;
 
   *recovery_word = recovery_value;
-  //NVIC_SystemReset();
+  NVIC_SystemReset();
 }
 
 // This is the nice version, leave espressif synced and running

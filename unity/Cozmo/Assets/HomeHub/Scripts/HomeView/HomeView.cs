@@ -15,7 +15,8 @@ namespace Cozmo.HomeHub {
     public enum HomeTab {
       Cozmo,
       Play,
-      Profile
+      Profile,
+      Settings
     }
 
     public System.Action<StatContainer, StatContainer, Transform[]> DailyGoalsSet;
@@ -32,40 +33,39 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private HomeViewTab _ProfileTabPrefab;
 
-    private HomeViewTab _CurrentTab;
+    [SerializeField]
+    private HomeViewTab _SettingsTabPrefab;
 
-    [SerializeField]
-    private CozmoButton _CozmoTabButton;
-    [SerializeField]
-    private Sprite _CozmoTabUpSpritePlay;
-    [SerializeField]
-    private Sprite _CozmoTabUpSpriteProfile;
-
-    [SerializeField]
-    private CozmoButton _CozmoTabDownButton;
+    private HomeViewTab _CurrentTabInstance;
+    private HomeTab _CurrentTab = HomeTab.Play;
+    private HomeTab _PreviousTab = HomeTab.Play;
 
     [SerializeField]
     private GameObject _AnyUpgradeAffordableIndicator;
 
     [SerializeField]
-    private CozmoButton _PlayTabButton;
-    [SerializeField]
-    private Sprite _PlayTabUpSpriteCozmo;
-    [SerializeField]
-    private Sprite _PlayTabUpSpriteProfile;
+    private CozmoButton[] _CozmoTabButtons;
 
     [SerializeField]
-    private CozmoButton _PlayTabDownButton;
+    private CozmoButton[] _PlayTabButtons;
 
     [SerializeField]
-    private CozmoButton _ProfileTabButton;
-    [SerializeField]
-    private Sprite _ProfileTabUpSpritePlay;
-    [SerializeField]
-    private Sprite _ProfileTabUpSpriteCozmo;
+    private CozmoButton[] _ProfileTabButtons;
 
     [SerializeField]
-    private CozmoButton _ProfileTabDownButton;
+    private GameObject _SettingsSelectedTabs;
+
+    [SerializeField]
+    private GameObject _CozmoSelectedTabs;
+
+    [SerializeField]
+    private GameObject _PlaySelectedTabs;
+
+    [SerializeField]
+    private GameObject _ProfileSelectedTabs;
+
+    [SerializeField]
+    private CozmoButton _SettingsButton;
 
     [SerializeField]
     private RectTransform _ScrollRectContent;
@@ -102,10 +102,7 @@ namespace Cozmo.HomeHub {
     private Transform _EnergyDooberEnd;
 
     [SerializeField]
-    private AnkiTextLabel _DailyGoalsCompletionText;
-
-    [SerializeField]
-    private AnkiTextLabel _DailyGaolsCompletionTextDown;
+    private AnkiTextLabel[] _DailyGoalsCompletionTexts;
 
     [SerializeField]
     private ParticleSystem _EnergyBarEmitter;
@@ -189,14 +186,13 @@ namespace Cozmo.HomeHub {
       HandlePlayTabButton();
       UpdatePuzzlePieceCount();
 
-      _CozmoTabButton.Initialize(HandleCozmoTabButton, "switch_to_cozmo_tab_button", DASEventViewName);
-      _PlayTabButton.Initialize(HandlePlayTabButton, "switch_to_play_tab_button", DASEventViewName);
-      _ProfileTabButton.Initialize(HandleProfileTabButton, "switch_to_profile_tab_button", DASEventViewName);
-      _HelpButton.Initialize(HandleHelpButton, "help_button", DASEventViewName);
+      InitializeButtons(_CozmoTabButtons, HandleCozmoTabButton, "switch_to_cozmo_tab_button");
+      InitializeButtons(_PlayTabButtons, HandlePlayTabButton, "switch_to_play_tab_button");
+      InitializeButtons(_ProfileTabButtons, HandleProfileTabButton, "switch_to_profile_tab_button");
 
-      _CozmoTabDownButton.Initialize(HandleCozmoTabButton, "switch_to_cozmo_tab_button", DASEventViewName);
-      _PlayTabDownButton.Initialize(HandlePlayTabButton, "switch_to_play_tab_button", DASEventViewName);
-      _ProfileTabDownButton.Initialize(HandleProfileTabButton, "switch_to_profile_tab_button", DASEventViewName);
+      _HelpButton.Initialize(HandleHelpButton, "help_button", DASEventViewName);
+      _SettingsButton.Initialize(HandleSettingsButton, "settings_button", DASEventViewName);
+
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
 
@@ -238,6 +234,12 @@ namespace Cozmo.HomeHub {
 
       // Checks if any stages are required...
       OnboardingManager.Instance.InitHomeHubOnboarding(this, _OnboardingTransform);
+    }
+
+    private void InitializeButtons(CozmoButton[] buttons, UnityEngine.Events.UnityAction callback, string dasButtonName) {
+      foreach (CozmoButton button in buttons) {
+        button.Initialize(callback, dasButtonName, DASEventViewName);
+      }
     }
 
     private IEnumerator BurstAfterInit() {
@@ -388,15 +390,11 @@ namespace Cozmo.HomeHub {
       if (HomeViewCurrentlyOccupied) {
         return;
       }
-      ClearCurrentTab();
-      ShowNewCurrentTab(_CozmoTabPrefab);
-      UpdateTabGraphics(HomeTab.Cozmo);
+      SwitchToTab(HomeTab.Cozmo);
     }
 
     private void HandlePlayTabButton() {
-      ClearCurrentTab();
-      ShowNewCurrentTab(_PlayTabPrefab);
-      UpdateTabGraphics(HomeTab.Play);
+      SwitchToTab(HomeTab.Play);
     }
 
     private void HandleProfileTabButton() {
@@ -404,26 +402,66 @@ namespace Cozmo.HomeHub {
       if (HomeViewCurrentlyOccupied) {
         return;
       }
-      ClearCurrentTab();
-      ShowNewCurrentTab(_ProfileTabPrefab);
-      UpdateTabGraphics(HomeTab.Profile);
+      SwitchToTab(HomeTab.Profile);
     }
 
     private void HandleHelpButton() {
       _HelpViewInstance = UIManager.OpenView(_HelpViewPrefab);
     }
 
+    private void HandleSettingsButton() {
+      // Do not allow changing tabs while receiving chests
+      if (HomeViewCurrentlyOccupied) {
+        return;
+      }
+      if (_CurrentTab != HomeTab.Settings) {
+        SwitchToTab(HomeTab.Settings);
+      }
+      else {
+        SwitchToTab(_PreviousTab);
+      }
+    }
+
+    private void SwitchToTab(HomeTab tab) {
+      if (_CurrentTab != tab) {
+        _PreviousTab = _CurrentTab;
+      }
+      _CurrentTab = tab;
+      ClearCurrentTab();
+      ShowNewCurrentTab(GetHomeViewTabPrefab(tab));
+      UpdateTabGraphics(tab);
+    }
+
+    private HomeViewTab GetHomeViewTabPrefab(HomeTab tab) {
+      HomeViewTab tabPrefab = null;
+      switch (tab) {
+      case HomeTab.Cozmo:
+        tabPrefab = _CozmoTabPrefab;
+        break;
+      case HomeTab.Play:
+        tabPrefab = _PlayTabPrefab;
+        break;
+      case HomeTab.Profile:
+        tabPrefab = _ProfileTabPrefab;
+        break;
+      case HomeTab.Settings:
+        tabPrefab = _SettingsTabPrefab;
+        break;
+      }
+      return tabPrefab;
+    }
+
     private void ClearCurrentTab() {
-      if (_CurrentTab != null) {
-        Destroy(_CurrentTab.gameObject);
+      if (_CurrentTabInstance != null) {
+        Destroy(_CurrentTabInstance.gameObject);
       }
     }
 
     private void ShowNewCurrentTab(HomeViewTab homeViewTabPrefab) {
       _ScrollRect.horizontalNormalizedPosition = 0.0f;
-      _CurrentTab = Instantiate(homeViewTabPrefab.gameObject).GetComponent<HomeViewTab>();
-      _CurrentTab.transform.SetParent(_ScrollRectContent, false);
-      _CurrentTab.Initialize(this);
+      _CurrentTabInstance = Instantiate(homeViewTabPrefab.gameObject).GetComponent<HomeViewTab>();
+      _CurrentTabInstance.transform.SetParent(_ScrollRectContent, false);
+      _CurrentTabInstance.Initialize(this);
 
       if (OnTabChanged != null) {
         OnTabChanged(homeViewTabPrefab.name);
@@ -431,30 +469,10 @@ namespace Cozmo.HomeHub {
     }
 
     private void UpdateTabGraphics(HomeTab currentTab) {
-      _CozmoTabButton.gameObject.SetActive(currentTab != HomeTab.Cozmo);
-      _CozmoTabDownButton.gameObject.SetActive(currentTab == HomeTab.Cozmo);
-
-      _PlayTabButton.gameObject.SetActive(currentTab != HomeTab.Play);
-      _PlayTabDownButton.gameObject.SetActive(currentTab == HomeTab.Play);
-
-      _ProfileTabButton.gameObject.SetActive(currentTab != HomeTab.Profile);
-      _ProfileTabDownButton.gameObject.SetActive(currentTab == HomeTab.Profile);
-
-      switch (currentTab) {
-      case HomeTab.Cozmo:
-        _PlayTabButton.GetComponent<Image>().overrideSprite = _PlayTabUpSpriteCozmo;
-        _ProfileTabButton.GetComponent<Image>().overrideSprite = _ProfileTabUpSpriteCozmo;
-        break;
-      case HomeTab.Play:
-        _CozmoTabButton.GetComponent<Image>().overrideSprite = _CozmoTabUpSpritePlay;
-        _ProfileTabButton.GetComponent<Image>().overrideSprite = _ProfileTabUpSpritePlay;
-        break;
-      case HomeTab.Profile:
-        _CozmoTabButton.GetComponent<Image>().overrideSprite = _CozmoTabUpSpriteProfile;
-        _PlayTabButton.GetComponent<Image>().overrideSprite = _PlayTabUpSpriteProfile;
-        break;
-      }
-
+      _SettingsSelectedTabs.gameObject.SetActive(currentTab == HomeTab.Settings);
+      _CozmoSelectedTabs.gameObject.SetActive(currentTab == HomeTab.Cozmo);
+      _PlaySelectedTabs.gameObject.SetActive(currentTab == HomeTab.Play);
+      _ProfileSelectedTabs.gameObject.SetActive(currentTab == HomeTab.Profile);
     }
 
     public Dictionary<string, ChallengeStatePacket> GetChallengeStates() {
@@ -478,20 +496,22 @@ namespace Cozmo.HomeHub {
     }
 
     private void UpdatePlayTabText() {
-      if (DataPersistenceManager.Instance.CurrentSession == null) {
-        _DailyGoalsCompletionText.text = "";
-        _DailyGaolsCompletionTextDown.text = "";
-        return;
-      }
-      int totalGoals = DataPersistenceManager.Instance.CurrentSession.DailyGoals.Count;
-      int goalsCompleted = 0;
-      for (int i = 0; i < DataPersistenceManager.Instance.CurrentSession.DailyGoals.Count; ++i) {
-        if (DataPersistenceManager.Instance.CurrentSession.DailyGoals[i].GoalComplete) {
-          goalsCompleted++;
+      string goalProgressText = "";
+      if (DataPersistenceManager.Instance.CurrentSession != null) {
+        int totalGoals = DataPersistenceManager.Instance.CurrentSession.DailyGoals.Count;
+        int goalsCompleted = 0;
+        for (int i = 0; i < DataPersistenceManager.Instance.CurrentSession.DailyGoals.Count; ++i) {
+          if (DataPersistenceManager.Instance.CurrentSession.DailyGoals[i].GoalComplete) {
+            goalsCompleted++;
+          }
         }
+
+        goalProgressText = Localization.GetWithArgs(LocalizationKeys.kLabelFractionCount, goalsCompleted, totalGoals);
       }
-      _DailyGoalsCompletionText.text = goalsCompleted.ToString() + "/" + totalGoals.ToString();
-      _DailyGaolsCompletionTextDown.text = goalsCompleted.ToString() + "/" + totalGoals.ToString();
+
+      foreach (AnkiTextLabel textLabel in _DailyGoalsCompletionTexts) {
+        textLabel.text = goalProgressText;
+      }
     }
 
     private void HandleItemValueChanged(string itemId, int delta, int newCount) {

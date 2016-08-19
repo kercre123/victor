@@ -785,6 +785,14 @@
       "AnimName": "ag_sleeping"
     },
     {
+      "CladEvent": "SoftSparkUpgradeLift",
+      "AnimName": "ag_upgrade_lift"
+    },
+    {
+      "CladEvent": "SoftSparkUpgradeTracks",
+      "AnimName": "ag_upgrade_tracks"
+    },
+    {
       "CladEvent": "SoundOnlyLiftEffortPickup",
       "AnimName": "LiftEffortPickup"
     },
@@ -809,7 +817,11 @@
       "AnimName": "ag_sparking_getin"
     },
     {
-      "CladEvent": "SparkGetOut",
+      "CladEvent": "SparkGetOutFailure",
+      "AnimName": "ag_sparking_getout"
+    },
+    {
+      "CladEvent": "SparkGetOutSuccess",
       "AnimName": "ag_sparking_getout"
     },
     {

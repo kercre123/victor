@@ -45,7 +45,7 @@ public class PressDemoHubWorld : HubWorldBase {
 
   // HACK: demo hacked settings for skill level selection
   private void HackSkillSpeedTapSetup() {
-    PlayerProfile playerProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
+    DataPersistence.PlayerProfile playerProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
     playerProfile.GameDifficulty["SpeedTapGame"] = 1;
     DataPersistence.DataPersistenceManager.Instance.Save();
   }

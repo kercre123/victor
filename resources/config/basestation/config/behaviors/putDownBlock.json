@@ -5,6 +5,12 @@
   "behaviorGroups": [
     "FP_PlayAlone",
     "FP_PlayWithHumans",
-    "FP_Socialize"
+    "FP_Socialize",
+    "SparksRollBlock",
+    "SparksStackBlock",
+    "SparksPickUpCube",
+    "SparksPopAWheelie",
+    "SparksKnockOverCubes",
+    "SparksBuildPyramid"
   ]
 }

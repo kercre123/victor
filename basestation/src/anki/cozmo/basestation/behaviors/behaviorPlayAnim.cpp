@@ -22,7 +22,7 @@ using namespace ExternalInterface;
 static const char* kAnimTriggerKey = "animTrigger";
 static const char* kLoopsKey = "num_loops";
 
-BehaviorPlayAnim::BehaviorPlayAnim(Robot& robot, const Json::Value& config)
+BehaviorPlayAnim::BehaviorPlayAnim(Robot& robot, const Json::Value& config, bool keyRequired )
   : IBehavior(robot, config)
 {
   SetDefaultName("PlayAnim");
@@ -32,8 +32,9 @@ BehaviorPlayAnim::BehaviorPlayAnim(Robot& robot, const Json::Value& config)
     JsonTools::GetValueOptional(config,kAnimTriggerKey,_animTrigger);
   }
   
-  ASSERT_NAMED(config.isMember(kAnimTriggerKey), "Invalid animation trigger key");
-
+  if(keyRequired){
+    ASSERT_NAMED(config.isMember(kAnimTriggerKey), "Invalid animation trigger key");
+  }
   _numLoops = config.get(kLoopsKey, 1).asInt();
 }
     

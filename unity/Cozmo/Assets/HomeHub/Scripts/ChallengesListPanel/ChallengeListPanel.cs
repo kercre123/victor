@@ -22,16 +22,20 @@ namespace Cozmo.HomeHub {
     public override void Initialize(HomeView homeViewInstance) {
       base.Initialize(homeViewInstance);
       List<KeyValuePair<string, ChallengeStatePacket>> sortedDict = new List<KeyValuePair<string, ChallengeStatePacket>>();
-      foreach (KeyValuePair<string, ChallengeStatePacket> kvp in homeViewInstance.GetChallengeStates()) {
-        // If unlocked add it to the front
-        if (kvp.Value.ChallengeUnlocked) {
-          sortedDict.Insert(0, kvp);
+      sortedDict.AddRange(homeViewInstance.GetChallengeStates());
+
+      // Sort by unlocked first, then by designer order
+      sortedDict.Sort((KeyValuePair<string, ChallengeStatePacket> a, KeyValuePair<string, ChallengeStatePacket> b) => {
+        if (a.Value.ChallengeUnlocked == true && b.Value.ChallengeUnlocked == false) {
+          return -1;
         }
-        else {
-          // If locked add it to the back
-          sortedDict.Add(kvp);
+        else if (a.Value.ChallengeUnlocked == false && b.Value.ChallengeUnlocked == true) {
+          return 1;
         }
-      }
+        UnlockableInfo aInfo = UnlockablesManager.Instance.GetUnlockableInfo(a.Value.Data.UnlockId.Value);
+        UnlockableInfo bInfo = UnlockablesManager.Instance.GetUnlockableInfo(b.Value.Data.UnlockId.Value);
+        return aInfo.SortOrder - bInfo.SortOrder;
+      });
 
       for (int i = 0; i < sortedDict.Count; i++) {
         KeyValuePair<string, ChallengeStatePacket> kvp = sortedDict[i];

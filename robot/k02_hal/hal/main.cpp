@@ -87,6 +87,11 @@ int main (void)
 {
   using namespace Anki::Cozmo::HAL;
 
+  // Force recovery mode if watchdog count gets too high
+  if (WDOG_RSTCNT > MAXIMUM_RESET_COUNT) {
+    Anki::Cozmo::HAL::SPI::EnterRecoveryMode();
+  }
+
   // Enable reset filtering
   RCM_RPFC = RCM_RPFC_RSTFLTSS_MASK | RCM_RPFC_RSTFLTSRW(2);
   RCM_RPFW = 16;
@@ -120,11 +125,12 @@ int main (void)
   for(;;)
   {
     Watchdog::kick(WDOG_MAIN_EXEC);
+    
     // Pump Wifi clad as quickly as possible
     do {
       WiFi::Update();
     } while (!UART::FoundSync());
-
+    
     // Wait for head body sync to occur
     UART::WaitForSync();
     Spine::Manage();

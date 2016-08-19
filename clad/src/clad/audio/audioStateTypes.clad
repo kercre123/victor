@@ -30,7 +30,6 @@ enum uint_32 Music
   Alarm_Clock = 3653788539,
   Connecting = 26556951,
   Freeplay = 150865113,
-  Hex_Puzzle = 3005470335,
   Invalid = 0,
   Minigame__Generic = 713847863,
   Minigame__Keep_Away = 579475288,

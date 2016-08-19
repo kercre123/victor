@@ -1338,6 +1338,10 @@ namespace Anki {
       return RESULT_OK;
     }
  
+    void HAL::ClearActiveObjectData() {
+      // TODO: If we ever start sending upAxis messages from sim robot, clear it here.
+    }
+    
     void HAL::FacePrintf(const char *format, ...)
     {
       // Stub

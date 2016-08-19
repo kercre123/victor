@@ -24,14 +24,22 @@ structure SetAvailableGames
 
 // Tells the behavior manager to activate the given spark. Sparks are used to steer Cozmo towards doing
 // specific behavior sets, for example "stacking and destacking cubes nonstop for 30 seconds"
-structure SetActiveSpark
+structure ActivateSpark
 {
-  UnlockId behaviorSpark
+  UnlockId behaviorSpark,
+}
+
+// Tells the behavior manager that a spark was unlocked and that it should trigger
+// "soft spark" mode
+structure SparkUnlocked
+{
+  UnlockId behaviorSpark,
 }
 
 union BehaviorManagerMessageUnion {
   SetAvailableGames SetAvailableGames,
-  SetActiveSpark SetActiveSpark,
+  ActivateSpark ActivateSpark,
+  SparkUnlocked SparkUnlocked,
 }
 
 } // namespace U2G

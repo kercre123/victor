@@ -206,7 +206,7 @@ TEST_F(RobotAudioTest, TestSingleEventAnimation_FirstFrame )
 {
   EXPECT_EQ( 0, config.GetAudioEvents().size() );
   // Currently, RobotAudioTest doesn't let me test an event starting @ 0 ms, ironic.
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 1, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 1, 100) );
   config.InsertComplete();
   EXPECT_EQ( 1, config.GetAudioEvents().size() );
   
@@ -225,7 +225,7 @@ TEST_F(RobotAudioTest, TestSingleEventAnimation_FirstFrame )
 TEST_F(RobotAudioTest, TestSingleEventAnimation )
 {
   EXPECT_EQ( 0, config.GetAudioEvents().size() );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 200, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 200, 100) );
   config.InsertComplete();
   EXPECT_EQ( 1, config.GetAudioEvents().size() );
   
@@ -244,9 +244,9 @@ TEST_F(RobotAudioTest, TestSingleEventAnimation )
 TEST_F(RobotAudioTest, TestSingleStream_MultipleEvents_EndInOrder)
 {
   EXPECT_EQ( 0, config.GetAudioEvents().size() );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 1, 20) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 10, 40) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 30, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 1, 20) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 10, 40) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 30, 100) );
   config.InsertComplete();
   EXPECT_EQ( 3, config.GetAudioEvents().size() );
   
@@ -264,10 +264,10 @@ TEST_F(RobotAudioTest, TestSingleStream_MultipleEvents_EndInOrder)
 TEST_F(RobotAudioTest, TestSingleStream_MultipleEvents_EndInReverseOrder)
 {
   EXPECT_EQ( 0, config.GetAudioEvents().size() );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 1, 100) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 10, 80) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 30, 40) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 40, 10) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 1, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 10, 80) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 30, 40) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 40, 10) );
   config.InsertComplete();
   EXPECT_EQ( 4, config.GetAudioEvents().size() );
   
@@ -286,10 +286,10 @@ TEST_F(RobotAudioTest, TestSingleStream_MultipleEvents_EndInReverseOrder)
 TEST_F(RobotAudioTest, TestMultipleStreams_SingleEvent)
 {
   EXPECT_EQ( 0, config.GetAudioEvents().size() );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 1, 100) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 200, 100) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 400, 100) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 580, 12) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 1, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 200, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 400, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 580, 12) );
   config.InsertComplete();
   EXPECT_EQ( 4, config.GetAudioEvents().size() );
   
@@ -307,12 +307,12 @@ TEST_F(RobotAudioTest, TestMultipleStreams_SingleEvent)
 TEST_F(RobotAudioTest, TestMultipleStreams_MultipleEvents)
 {
   EXPECT_EQ( 0, config.GetAudioEvents().size() );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 1, 100) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 4, 100) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 20, 100) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 200, 100) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 400, 100) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 580, 12) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 1, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 4, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 20, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 200, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 400, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 580, 12) );
   config.InsertComplete();
   EXPECT_EQ( 6, config.GetAudioEvents().size() );
   
@@ -331,8 +331,8 @@ TEST_F(RobotAudioTest, TestMultipleStreams_MultipleEvents)
 TEST_F(RobotAudioTest, TestMultipleStreams_BackToBack_SameFrame)
 {
   EXPECT_EQ( 0, config.GetAudioEvents().size() );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 1, 100) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 102, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 1, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 102, 100) );
   config.InsertComplete();
   EXPECT_EQ( 2, config.GetAudioEvents().size() );
   
@@ -350,8 +350,8 @@ TEST_F(RobotAudioTest, TestMultipleStreams_BackToBack_SameFrame)
 TEST_F(RobotAudioTest, TestMultipleStreams_BackToBack_NextFrame)
 {
   EXPECT_EQ( 0, config.GetAudioEvents().size() );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 1, 66) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 67, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 1, 66) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 67, 100) );
   config.InsertComplete();
   EXPECT_EQ( 2, config.GetAudioEvents().size() );
   
@@ -372,8 +372,8 @@ TEST_F(RobotAudioTest, TestMultipleStreams_BackToBack_NextFrame)
 TEST_F(RobotAudioTest, DISABLED_TestFrameEdgeCase_StartsOnEdge)
 {
   EXPECT_EQ( 0, config.GetAudioEvents().size() );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 33, 10) );
-  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Vo_Coz_Wakeup_Play, 133, 100) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 33, 10) );
+  config.Insert( AnimationAnimationTestConfig::TestAudioEvent(Audio::GameEvent::GenericEvent::Play__Robot_Vo__Shared_Wakeup, 133, 100) );
   config.InsertComplete();
   EXPECT_EQ( 2, config.GetAudioEvents().size() );
   

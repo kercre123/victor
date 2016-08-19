@@ -15,15 +15,19 @@ MonoBehaviour:
   - _ItemId: experience
     _LocKey: item.experience
     _ItemIcon: {fileID: 21300000, guid: 57bffd227680c43f28139b25c62b84d3, type: 3}
+    _StartingAmount: 0
   - _ItemId: treat
     _LocKey: item.treat
     _ItemIcon: {fileID: 21300000, guid: 2f4324a29fe314be49c316f342f04557, type: 3}
+    _StartingAmount: 5
   _GenericHexItemData:
     _ItemId: genericHex
     _LocKey: item.genericHex
     _ItemIcon: {fileID: 21300000, guid: 28565cca262e9481280b50c6ba7e3892, type: 3}
+    _StartingAmount: 5
   _GenericCubeItemData:
     _ItemId: genericCube
     _LocKey: item.cube
     _ItemIcon: {fileID: 21300000, guid: 5fed27c841207458a9470f484b38130c, type: 3}
+    _StartingAmount: 0
   _MaxInventoryLimit: 999
