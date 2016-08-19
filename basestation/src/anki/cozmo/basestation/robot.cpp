@@ -603,7 +603,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
 
   if (_isBodyInAccessoryMode && !IS_STATUS_FLAG_SET(IS_BODY_ACC_MODE)) {
     // This shouldn't happen. This is a firmware bug.
-    PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.BodyNotInAccessoryMode","* * * * Firmware bug (Tell Vandiver) * * * *");
+    PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.BodyNotInAccessoryMode","* * * * Firmware bug (Vandiver knows already) * * * *");
     _isBodyInAccessoryMode = false;
   } else if (!_isBodyInAccessoryMode && IS_STATUS_FLAG_SET(IS_BODY_ACC_MODE)) {
     // This is not by itself a bad thing, but it should only happen if IS_BODY_ACC_MODE was ever false...

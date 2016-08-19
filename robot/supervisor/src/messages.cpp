@@ -281,6 +281,11 @@ namespace Anki {
         
         // Reset pose history and frameID to zero
         Localization::ResetPoseFrame();
+        
+        // Clearing active object data so that upAxes get computed anew
+        // and sent up to the engine upon connection.
+        HAL::ClearActiveObjectData();
+        
 #ifndef TARGET_K02
         // Reset number of bytes/audio frames played in animation buffer
         AnimationController::ClearNumBytesPlayed();
