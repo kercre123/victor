@@ -26,12 +26,15 @@ private:
   void HandleActiveObjectTapped(const ObjectTapped& msg) override;
   void HandleActiveObjectStoppedMoving(const ObjectStoppedMoving& msg) override;
   void HandleActiveObjectMoved(const ObjectMoved& msg) override;
+  void HandleActiveObjectConnectionState(const ObjectConnectionState& msg) override;
 
   TestState _testState = TestState::Init;
   const Pose3d _cubePose1 = {0, Vec3f(0.f, 0.f, 1.f), Vec3f(200.f, 50.f, 22.1f)};
   bool _wasTapped = false;
   bool _wasStopped = false;
   bool _wasMoved = false;
+  
+  u32 _numObjectsConnected = 0;
 };
 
 REGISTER_COZMO_SIM_TEST_CLASS(CST_MotionMessagesFromBlocks);
@@ -52,11 +55,13 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
 
     case TestState::TapCube:
     {
-      _wasTapped = false;
-      _wasStopped = false;
-      _wasMoved = false;
-      UiGameController::SendApplyForce("cube", 0, 0, 6);
-      _testState = TestState::CheckForTappedMessage;
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(_numObjectsConnected > 0, 5) {
+        _wasTapped = false;
+        _wasStopped = false;
+        _wasMoved = false;
+        UiGameController::SendApplyForce("cube", 0, 0, 6);
+        _testState = TestState::CheckForTappedMessage;
+      }
       break;
     }
 
@@ -126,6 +131,15 @@ void CST_MotionMessagesFromBlocks::HandleActiveObjectStoppedMoving(const ObjectS
 void CST_MotionMessagesFromBlocks::HandleActiveObjectMoved(const ObjectMoved& msg)
 {
   _wasMoved = true;
+}
+  
+void CST_MotionMessagesFromBlocks::HandleActiveObjectConnectionState(const ObjectConnectionState& msg)
+{
+  if (msg.connected) {
+    ++_numObjectsConnected;
+  } else if (_numObjectsConnected > 0) {
+    --_numObjectsConnected;
+  }
 }
 
 }  // namespace Cozmo

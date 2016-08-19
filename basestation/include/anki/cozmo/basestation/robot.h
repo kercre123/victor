@@ -631,6 +631,13 @@ public:
   // Max size of set is ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS.
   Result ConnectToObjects(const FactoryIDArray& factory_ids);
   
+  // Returns true if the robot has succesfully connected to the object with the given factory ID
+  bool IsConnectedToObject(FactoryID factoryID) const;
+
+  // Called when messages related to the connection with the objects are received from the robot
+  void HandleConnectedToObject(uint32_t activeID, FactoryID factoryID, ObjectType objectType);
+  void HandleDisconnectedFromObject(uint32_t activeID, FactoryID factoryID, ObjectType objectType);
+
   // Set whether or not to broadcast to game which objects are available for connection
   void BroadcastAvailableObjects(bool enable);
   
@@ -767,10 +774,11 @@ public:
   
   ExternalInterface::RobotState GetRobotState();
   
-  void SetDiscoveredObjects(FactoryID factoryId, ObjectType objectType, TimeStamp_t lastDiscoveredTimetamp);
+  void SetDiscoveredObjects(FactoryID factoryId, ObjectType objectType, int8_t rssi, TimeStamp_t lastDiscoveredTimetamp);
   ObjectType GetDiscoveredObjectType(FactoryID id);
   void RemoveDiscoveredObjects(FactoryID factoryId) { _discoveredObjects.erase(factoryId); }
   const bool GetEnableDiscoveredObjectsBroadcasting() const { return _enableDiscoveredObjectsBroadcasting; }
+  FactoryID GetClosestDiscoveredObjectsOfType(ObjectType type, uint8_t maxRSSI = std::numeric_limits<uint8_t>::max()) const;
   
   RobotToEngineImplMessaging& GetRobotToEngineImplMessaging() { return *_robotToEngineImplMessaging; }
   
@@ -1017,7 +1025,7 @@ protected:
     }
       
     void Reset() {
-      factoryID = 0;
+      factoryID = ActiveObject::InvalidFactoryID;
       pending = false;
     }
   };
@@ -1025,17 +1033,29 @@ protected:
 
   // Map of discovered objects and the last time that they were heard from
   struct ActiveObjectInfo {
-    FactoryID   factoryID;
-    ObjectType  objectType;
-    TimeStamp_t lastDiscoveredTimeStamp;
+    enum class ConnectionState {
+      Invalid,
+      PendingConnection,
+      Connected,
+      PendingDisconnection,
+      Disconnected
+    };
+    
+    FactoryID       factoryID;
+    ObjectType      objectType;
+    ConnectionState connectionState;
+    uint8_t         rssi;
+    TimeStamp_t     lastDiscoveredTimeStamp;
       
     ActiveObjectInfo() {
       Reset();
     }
       
     void Reset() {
-      factoryID = 0;
+      factoryID = ActiveObject::InvalidFactoryID;
       objectType = ObjectType::Invalid;
+      connectionState = ConnectionState::Invalid;
+      rssi = 0;
       lastDiscoveredTimeStamp = 0;
     }
   };
@@ -1102,11 +1122,14 @@ protected:
 // Inline Mutators
 //
   
-inline void Robot::SetDiscoveredObjects(FactoryID factoryId, ObjectType objectType, TimeStamp_t lastDiscoveredTimetamp)
+inline void Robot::SetDiscoveredObjects(FactoryID factoryId, ObjectType objectType, int8_t rssi, TimeStamp_t lastDiscoveredTimetamp)
 {
-  _discoveredObjects[factoryId].factoryID = factoryId;
-  _discoveredObjects[factoryId].objectType = objectType;
-  _discoveredObjects[factoryId].lastDiscoveredTimeStamp = lastDiscoveredTimetamp;
+  ActiveObjectInfo& discoveredObject = _discoveredObjects[factoryId];
+  
+  discoveredObject.factoryID = factoryId;
+  discoveredObject.objectType = objectType;
+  discoveredObject.rssi = rssi;
+  discoveredObject.lastDiscoveredTimeStamp = lastDiscoveredTimetamp;
 }
   
 //

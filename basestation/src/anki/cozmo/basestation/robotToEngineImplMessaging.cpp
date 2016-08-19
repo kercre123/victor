@@ -412,7 +412,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectDiscovered(const AnkiEvent<Ro
       break;
   }
   
-  robot->SetDiscoveredObjects(payload.factory_id, objType, robot->GetLastMsgTimestamp());  // Not super accurate, but this doesn't need to be
+  robot->SetDiscoveredObjects(payload.factory_id, objType, payload.rssi, robot->GetLastMsgTimestamp());  // Not super accurate, but this doesn't need to be
   
   if (robot->GetEnableDiscoveredObjectsBroadcasting()) {
     if (payload.rssi < DISCOVERED_OBJECTS_RSSI_PRINT_THRESH) {
@@ -462,8 +462,8 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
         }
       }
       
-      // Remove from the list of discovered objects since we are connecting to it
-      robot->RemoveDiscoveredObjects(payload.factoryID);
+      ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(payload.device_type);
+      robot->HandleConnectedToObject(payload.objectID, payload.factoryID, objType);
     }
   } else {
     // Remove active object from blockworld if it exists (in any coordinate frame)
@@ -506,6 +506,9 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
                          payload.device_type, &obj->GetPose().FindOrigin(), clearedObject);
       } // for(auto obj : matchingObjects)
     }
+    
+    ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(payload.device_type);
+    robot->HandleDisconnectedFromObject(payload.objectID, payload.factoryID, objType);
   }
   
   PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Recvd",

@@ -27,6 +27,9 @@ public class BlockPoolPane : MonoBehaviour {
   private InputField _FilterInput;
   private int _FilterRSSI = _DefaultRSSIFilter;
 
+  [SerializeField]
+  private Button _ResetButton;
+
   private U2G.BlockPoolEnabledMessage _BlockPoolEnabledMessage;
   private U2G.BlockSelectedMessage _BlockSelectedMessage;
 
@@ -63,6 +66,8 @@ public class BlockPoolPane : MonoBehaviour {
     _FilterInput.onValueChanged.AddListener(HandleFilterUpdate);
 
     _EnabledCheckbox.onValueChanged.AddListener(HandlePoolEnabledValueChanged);
+
+    _ResetButton.onClick.AddListener(HandleResetButtonClick);
 
     _BlockPoolEnabledMessage = new U2G.BlockPoolEnabledMessage();
     _BlockSelectedMessage = new U2G.BlockSelectedMessage();
@@ -157,7 +162,11 @@ public class BlockPoolPane : MonoBehaviour {
         else {
           // Create the button with the information that we know and disable the button until we hear from the object
           BlockData data = AddButton(initMsg.blockData[i].factory_id, ObjectType.Unknown, initMsg.blockData[i].enabled, 0);
-          DisableButton(data.BlockButton, Color.grey);
+          if (initMsg.blockData[i].enabled) {
+            EnableButton(data.BlockButton, Color.grey);
+          } else {
+            DisableButton(data.BlockButton, Color.grey);
+          }
         }
       }
     }
@@ -210,7 +219,9 @@ public class BlockPoolPane : MonoBehaviour {
     // Update or create the button for the object
     BlockPoolPane.BlockData data;
     if (_BlockStatesById.TryGetValue(message.factoryID, out data)) {
+      data.IsEnabled = message.connected;
       UpdateButton(data);
+      UpdateButtonParent(data);
 
       if (message.connected) {
         EnableButton(data.BlockButton, Color.cyan);
@@ -253,24 +264,36 @@ public class BlockPoolPane : MonoBehaviour {
     }
   }
 
+  private void HandleResetButtonClick() {
+
+    // Disable all the buttons
+    foreach (KeyValuePair<uint, BlockData> kvp in _BlockStatesById) {
+      if (kvp.Value.IsEnabled) {
+        kvp.Value.IsEnabled = false;
+        EnableButton(kvp.Value.BlockButton, Color.white);
+        UpdateButtonParent(kvp.Value);
+      }
+    }
+
+    RobotEngineManager.Instance.Message.BlockPoolResetMessage = new U2G.BlockPoolResetMessage();
+    RobotEngineManager.Instance.SendMessage();
+  }
+
   private void HandleButtonClick(uint factoryID) {
     BlockPoolPane.BlockData data;
     if (_BlockStatesById.TryGetValue(factoryID, out data)) {
       data.IsEnabled = !data.IsEnabled;
 
       // Turn the button to a different color to signal we are trying to connect/disconnect from/to the object
-      DisableButton(data.BlockButton, Color.yellow);
-
-      // Move the button to the correct list depending on whether it is enabled or not
-      if (data.IsEnabled && (data.BlockButton.transform.parent != _EnabledScrollView)) {
-        data.BlockButton.transform.SetParent(_EnabledScrollView);
-      }
-      else if (!data.IsEnabled && (data.BlockButton.transform.parent != _AvailableScrollView)) {
-        data.BlockButton.transform.SetParent(_AvailableScrollView);
-      }
+      // Unless the button is already grey meaning we not hearing from the cube
+      Color newColor = (data.BlockButton.image.color != Color.grey) ? Color.yellow : Color.grey;
+      DisableButton(data.BlockButton, newColor);
+    
+      UpdateButtonParent(data);
 
       // Send the message to engine
       _BlockSelectedMessage.factoryId = factoryID;
+      _BlockSelectedMessage.objectType = data.ObjectType;
       _BlockSelectedMessage.selected = data.IsEnabled;
       RobotEngineManager.Instance.Message.BlockSelectedMessage = _BlockSelectedMessage;
       RobotEngineManager.Instance.SendMessage();
@@ -364,4 +387,15 @@ public class BlockPoolPane : MonoBehaviour {
     button.interactable = false;
     button.image.color = disabledColor;
   }
+
+  void UpdateButtonParent(BlockData data) {
+    // Move the button to the correct list depending on whether it is enabled or not
+    if (data.IsEnabled && (data.BlockButton.transform.parent != _EnabledScrollView)) {
+      data.BlockButton.transform.SetParent(_EnabledScrollView);
+    }
+    else if (!data.IsEnabled && (data.BlockButton.transform.parent != _AvailableScrollView)) {
+        data.BlockButton.transform.SetParent(_AvailableScrollView);
+    }
+  }
+
 }

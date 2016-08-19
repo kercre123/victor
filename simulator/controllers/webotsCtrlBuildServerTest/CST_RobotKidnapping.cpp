@@ -19,6 +19,7 @@ namespace Cozmo {
   
   enum class TestState {
     MoveHead,            // Move head so it can see block
+    WaitForCubeConnections,      // Wait for all 2 cubes to be connected
     InitialLocalization, // Localize to Object A
     NotifyKidnap,        // Move robot to new position and delocalize
     Kidnap,              // Wait for confirmation of delocalization
@@ -49,9 +50,11 @@ namespace Cozmo {
     ObjectID _objectID_A;
     ObjectID _objectID_B;
     
+    u32 _numObjectsConnected = 0;
+    
     // Message handlers
     virtual void HandleRobotStateUpdate(ExternalInterface::RobotState const& msg) override;
-    
+    virtual void HandleActiveObjectConnectionState(const ObjectConnectionState& msg) override;
   };
   
   // Register class with factory
@@ -75,7 +78,15 @@ namespace Cozmo {
         TakeScreenshotsAtInterval("Robot Kidnapping", 1.f);
 
         SendMoveHeadToAngle(DEG_TO_RAD(-5), DEG_TO_RAD(360), DEG_TO_RAD(1000));
-        _testState = TestState::InitialLocalization;
+        _testState = TestState::WaitForCubeConnections;
+        break;
+      }
+        
+      case TestState::WaitForCubeConnections:
+      {
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(_numObjectsConnected == 2, 5) {
+          _testState = TestState::InitialLocalization;
+        }
         break;
       }
         
@@ -185,7 +196,18 @@ namespace Cozmo {
     {
       _objectID_B = _robotState.localizedToObjectID;
     }
-  }  // ================ End of message handler callbacks ==================
+  }
+  
+  void CST_RobotKidnapping::HandleActiveObjectConnectionState(const ObjectConnectionState& msg)
+  {
+    if (msg.connected) {
+      ++_numObjectsConnected;
+    } else if (_numObjectsConnected > 0) {
+      --_numObjectsConnected;
+    }
+  }
+  
+  // ================ End of message handler callbacks ==================
 
 } // end namespace Cozmo
 } // end namespace Anki

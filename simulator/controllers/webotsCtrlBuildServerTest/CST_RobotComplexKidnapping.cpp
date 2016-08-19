@@ -37,6 +37,7 @@ namespace Cozmo {
   
   enum class TestState {
     MoveHead,                    // Look up to see Object A
+    WaitForCubeConnections,      // Wait for all 3 cubes to be connected
     InitialLocalization,         // Localize to Object A
     NotifyKidnap ,               // Move robot to new position and delocalize
     Kidnap,                      // Wait for confirmation of delocalization
@@ -97,10 +98,13 @@ namespace Cozmo {
     bool _turnInPlaceDone = false;
     bool _isMoving = false;
     
+    u32  _numObjectsConnected = 0;
+    
     // Message handlers
     virtual void HandleRobotStateUpdate(ExternalInterface::RobotState const& msg) override;
     virtual void HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg) override;
     virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction &msg) override;
+    virtual void HandleActiveObjectConnectionState(const ObjectConnectionState& msg) override;
     
   };
   
@@ -137,7 +141,15 @@ namespace Cozmo {
         message.Set_EnableLightStates(m);
         SendMessage(message);
         
-        _testState = TestState::InitialLocalization;
+        _testState = TestState::WaitForCubeConnections;
+        break;
+      }
+        
+      case TestState::WaitForCubeConnections:
+      {
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(_numObjectsConnected == 3, 5) {
+          _testState = TestState::InitialLocalization;
+        }
         break;
       }
         
@@ -382,6 +394,15 @@ namespace Cozmo {
     if(msg.actionType == RobotActionType::TURN_IN_PLACE)
     {
       _turnInPlaceDone = true;
+    }
+  }
+  
+  void CST_RobotKidnappingComplex::HandleActiveObjectConnectionState(const ObjectConnectionState& msg)
+  {
+    if (msg.connected) {
+      ++_numObjectsConnected;
+    } else if (_numObjectsConnected > 0) {
+      --_numObjectsConnected;
     }
   }
   

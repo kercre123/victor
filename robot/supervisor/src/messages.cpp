@@ -957,7 +957,7 @@ namespace Anki {
       }
       void Process_setPropSlot(const SetPropSlot& msg)
       {
-        // Nothing to do here
+        HAL::AssignSlot(msg.slot, msg.factory_id);
       }
       void Process_setCubeGamma(const SetCubeGamma& msg)
       {

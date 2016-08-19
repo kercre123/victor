@@ -10,6 +10,7 @@
  * Copyright: Anki, Inc. 2016
  **/
 
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/blocks/blockFilter.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -19,9 +20,8 @@
 #include "util/logging/logging.h"
 
 #include <util/helpers/includeFstream.h>
-//
-#include <sys/stat.h>
 
+#include <sys/stat.h>
 
 // WORKAROUND: For some reason objects in slot 0 display lights incorrectly so don't use it.
 //             The real fix belongs in robot body firmware.
@@ -30,146 +30,182 @@
 
 namespace Anki {
 namespace Cozmo {
-    
+  
+constexpr std::array<ObjectType, 4> BlockFilter::kObjectTypes;
+
 BlockFilter::BlockFilter(Robot* inRobot)
   : _robot(inRobot)
   , _path()
-  , _enabled(false)
+  , _initTime(0)
+  , _lastConnectivityCheckTime(0)
+  , _currentRSSILimit(kInitialRSSI)
+  , _enabled(true)
   , _externalInterface(nullptr)
 {
-  _blocks.fill(0);
 }
 
-BlockFilter::BlockFilter(const std::string &path, Robot* inRobot)
-  : _robot(inRobot)
-  , _blocks()
-  , _path(path)
-  , _enabled(false)
-  , _externalInterface(nullptr)
-{
-  Load(_path);
-}
-  
 void BlockFilter::Init(const std::string &path, IExternalInterface* externalInterface)
 {
   if( _externalInterface == nullptr)
   {
     _path = path;
     _externalInterface = externalInterface;
-    _enabled = Load(path);
-    
+
     if (_externalInterface != nullptr) {
       auto callback = std::bind(&BlockFilter::HandleGameEvents, this, std::placeholders::_1);
       _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::GetBlockPoolMessage, callback));
       _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BlockPoolEnabledMessage, callback));
       _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BlockSelectedMessage, callback));
+      _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BlockPoolResetMessage, callback));
+    }
+
+    _initTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+    // Load the existing list of objects if there is one. Then copy them to the runtime pool and connect to all the objects
+    PRINT_CH_INFO("BlockPool", "BlockFilter.Init", "Loading from file %s", path.c_str());
+    Load();
+    CopyPersistentPoolToRuntimePool();
+    ConnectToObjects();
+  }
+}
+  
+void BlockFilter::Update()
+{
+  if (!_enabled)
+  {
+    return;
+  }
+  
+  // Check connectivity only every once in a while
+  double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if ((_lastConnectivityCheckTime > 0) && (currentTime < (_lastConnectivityCheckTime + kConnectivityCheckDelay))) {
+    return;
+  }
+  
+  UpdateDiscovering();
+  UpdateConnecting();
+  
+  _lastConnectivityCheckTime = currentTime;
+}
+
+void BlockFilter::UpdateDiscovering()
+{
+  // Check if we haven't connected to any of the object types we care about
+  bool atLeastOneFound = false;
+  for (auto objectType : kObjectTypes)
+  {
+    if (!IsTypePooled(objectType))
+    {
+      // Look for the closest object of the type in a given signal strength
+      PRINT_CH_INFO("BlockPool", "BlockFilter.UpdateDiscovering", "Looking for objects of type %s with RSSI < %d", EnumToString(objectType), _currentRSSILimit);
+      FactoryID closestObject = _robot->GetClosestDiscoveredObjectsOfType(objectType, _currentRSSILimit);
+      if (closestObject != ActiveObject::InvalidFactoryID)
+      {
+        PRINT_CH_INFO("BlockPool", "BlockFilter.UpdateDiscovering", "Discovered object 0x%x", closestObject);
+       	AddObjectToPersistentPool(closestObject, objectType);
+        atLeastOneFound = true;
+      }
+    }
+  }
+
+  if (atLeastOneFound)
+  {
+    // Save the new pool and connect to the discovered objects
+    CopyPersistentPoolToRuntimePool();
+    ConnectToObjects();
+  }
+  else
+  {
+	  // If we didn't find anything within the current RSSI, increase it for the next search
+    if (_currentRSSILimit + kIncreaseRSSI < kMaxRSSI)
+    {
+      _currentRSSILimit = +_currentRSSILimit + kIncreaseRSSI;
     }
   }
 }
 
-bool BlockFilter::ContainsFactoryId(FactoryID factoryId) const
+void BlockFilter::UpdateConnecting()
 {
-  return !_enabled || (std::find(_blocks.begin(), _blocks.end(), factoryId) != std::end(_blocks));
+  // Check if any of the objects in the runtime pool is still not connected after the initial waiting period
+  if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() < _initTime + kMaxWaitForPooledObjects)
+  {
+    return;
+  }
+  
+  for (ObjectInfo& objectInfo : _runtimePool)
+  {
+    if ((objectInfo.factoryID != ActiveObject::InvalidFactoryID) && !_robot->IsConnectedToObject(objectInfo.factoryID))
+    {
+      PRINT_CH_INFO("BlockPool", "BlockFilter.UpdateConnecting", "Looking for a replacement for object 0x%x of type %s", objectInfo.factoryID, EnumToString(objectInfo.objectType));
+      FactoryID closestObject = _robot->GetClosestDiscoveredObjectsOfType(objectInfo.objectType, _currentRSSILimit);
+      if ((closestObject != ActiveObject::InvalidFactoryID) && (closestObject != objectInfo.factoryID))
+      {
+        PRINT_CH_INFO("BlockPool", "BlockFilter.UpdateConnecting", "Found replacement object 0x%x", closestObject);
+        objectInfo.factoryID = closestObject;
+        ConnectToObjects();
+      }
+    }
+  }
 }
 
-void BlockFilter::AddFactoryId(const FactoryID factoryId)
+bool BlockFilter::AddObjectToPersistentPool(FactoryID factoryID, ObjectType objectType)
 {
   // Find an available slot
-  auto startIter = std::begin(_blocks);
+  auto startIter = _persistentPool.begin();
 
   if (DONT_USE_SLOT0) {
     ++startIter;
   }
   
-  FactoryIDArray::iterator it = std::find(startIter, std::end(_blocks), 0);
-  if (it != _blocks.end()) {
-    *it = factoryId;
-    ConnectToBlocks();
-  } else {
-    PRINT_NAMED_ERROR("BlockFilter.AddFactoryId", "There is no available slot to add factory ID %#08x", factoryId);
-  }
-}
-
-void BlockFilter::RemoveFactoryId(const FactoryID factoryId)
-{
-  FactoryIDArray::iterator it = std::find(std::begin(_blocks), std::end(_blocks), factoryId);
-  if (it != _blocks.end()) {
-    *it = 0;
-    ConnectToBlocks();
-  } else {
-    PRINT_NAMED_ERROR("BlockFilter.RemoveFactoryId", "Coudn't find factory ID %#08x", factoryId);
-  }
-}
-
-void BlockFilter::RemoveAllFactoryIds()
-{
-  _blocks.fill(0);
-  ConnectToBlocks();
-}
-
-bool BlockFilter::Save(const std::string &path) const
-{
-  // Find if there is any block connnected
-  FactoryIDArray::const_iterator it = std::find_if(std::begin(_blocks), std::end(_blocks), [](FactoryID id) {
-    return id != 0;
+  ObjectInfoArray::iterator it = std::find_if(startIter, _persistentPool.end(), [](ObjectInfo& objectInfo) {
+    return objectInfo.factoryID == ActiveObject::InvalidFactoryID;
   });
   
-  if (it == std::end(_blocks))
-  {
-    // list is empty, delete the file if is exists
-    struct stat buf;
-    int result = 0;
-    if (stat(path.c_str(), &buf) == 0)
-    {
-      result = remove(path.c_str());
-    }
-    return (result == 0);
-  }
-
-  std::ofstream outputFileSteam;
-  outputFileSteam.exceptions(~std::ofstream::goodbit);
-  try
-  {
-    outputFileSteam.open(path);
-    for (FactoryIDArray::const_iterator it = std::begin(_blocks); it != std::end(_blocks); ++it)
-    {
-      const FactoryID &factoryId = *it;
-      if (factoryId != 0) {
-        outputFileSteam << "0x";
-        outputFileSteam << std::hex << factoryId;
-        outputFileSteam << "\n";
-        PRINT_NAMED_DEBUG("BlockFilter.Save", "%#08x", factoryId);
-      }
-    }
-    outputFileSteam.close();
-  }
-  catch (std::ofstream::failure e)
-  {
-    PRINT_NAMED_ERROR("BlockFilter.Save.Error", "%s", e.std::exception::what());
+  if (it != _persistentPool.end()) {
+    it->Reset();
+    it->factoryID = factoryID;
+    it->objectType = objectType;
+    
+    Save();
+    return true;
+  } else {
+    PRINT_NAMED_ERROR("BlockFilter.AddFactoryId", "There is no available slot to add factory ID %#08x,", factoryID);
     return false;
   }
-
-  return true;
 }
 
-bool BlockFilter::Save() const
+bool BlockFilter::RemoveObjectFromPersistentPool(FactoryID factoryID)
 {
-  if (_path.empty())
-    return false;
-
-  return Save(_path);
-}
-
-bool BlockFilter::Load(const std::string &path)
-{
-  std::ifstream inputFileSteam;
-  inputFileSteam.open(path);
-  if (!inputFileSteam.good())
-  {
-    inputFileSteam.close();
+  ObjectInfoArray::iterator it = std::find_if(_persistentPool.begin(), _persistentPool.end(), [factoryID](ObjectInfo& objectInfo) {
+    return objectInfo.factoryID == factoryID;
+  });
+  
+  if (it != _persistentPool.end()) {
+    it->Reset();
+    
+    Save();
+    return true;
+  } else {
+    PRINT_NAMED_ERROR("BlockFilter.RemoveFactoryId", "Coudn't find factory ID %#08x", factoryID);
     return false;
   }
+}
 
+void BlockFilter::CopyPersistentPoolToRuntimePool()
+{
+  std::copy(_persistentPool.begin(), _persistentPool.end(), _runtimePool.begin());
+}
+
+void BlockFilter::Load()
+{
+  std::ifstream inputFileStream;
+  inputFileStream.open(_path);
+  if (!inputFileStream.good())
+  {
+    inputFileStream.close();
+    return;
+  }
+  
   int lineIndex = 0;
   
   if (DONT_USE_SLOT0) {
@@ -177,24 +213,37 @@ bool BlockFilter::Load(const std::string &path)
   }
   
   std::string line;
-  while (std::getline(inputFileSteam, line))
+  while (std::getline(inputFileStream, line))
   {
     if (line.length() == 0)
+    {
       continue;
+    }
     
-    if (lineIndex >= _blocks.size()) {
-      PRINT_NAMED_ERROR("BlockFilter.Load", "Found more than %d lines in the file. They will be ignored", (int)_blocks.size());
+    if (lineIndex >= _persistentPool.size())
+    {
+      PRINT_NAMED_ERROR("BlockFilter.Load", "Found more than %d lines in the file. They will be ignored", (int)_persistentPool.size());
       break;
     }
-
+    
     if (line.compare(0,2,"0x") == 0)
     {
       try
       {
-        FactoryID v = (FactoryID)std::stoul(line, nullptr, 16);
-        _blocks[lineIndex] = v;
-        ++lineIndex;
-        PRINT_NAMED_DEBUG("BlockFilter.Load", "%#08x", v);
+        std::size_t indexOfComma = 0;
+        
+        FactoryID factoryID = (FactoryID)std::stoul(line, &indexOfComma, 16);
+
+        // For compatibility with the old blockpool file format we handle the case where the line doesn't have
+        // a type. In that case, we discard it.
+        if (indexOfComma < line.length()) {
+          ObjectInfo& objectInfo = _persistentPool[lineIndex];
+          objectInfo.factoryID = factoryID;
+          objectInfo.objectType = (ObjectType)std::stoul(line.substr(indexOfComma + 1));
+
+          ++lineIndex;
+          PRINT_CH_INFO("BlockPool", "BlockFilter.Load", "%#08x,%d", objectInfo.factoryID, objectInfo.objectType);
+        }
       }
       catch (std::exception e)
       {
@@ -202,27 +251,81 @@ bool BlockFilter::Load(const std::string &path)
       }
     }
   }
-
-  inputFileSteam.close();
-
-  ConnectToBlocks();
   
-  return true;
+  inputFileStream.close();
 }
- 
-bool BlockFilter::ConnectToBlocks() const
+  
+void BlockFilter::Save() const
 {
-  if (_robot) {
-    if( _robot->ConnectToObjects(_blocks) == RESULT_OK )
+  if (_path.empty())
+  {
+    return;
+  }
+  
+  // Find if there is any block connnected
+  ObjectInfoArray::const_iterator it = std::find_if(_persistentPool.begin(), _persistentPool.end(), [](const ObjectInfo& object) {
+    return object.factoryID != ActiveObject::InvalidFactoryID;
+  });
+  
+  if (it == std::end(_persistentPool))
+  {
+    // list is empty, delete the file if is exists
+    struct stat buf;
+    if (stat(_path.c_str(), &buf) == 0)
     {
-      Save();
+      remove(_path.c_str());
+    }
+  }
+
+  std::ofstream outputFileStream;
+  outputFileStream.exceptions(~std::ofstream::goodbit);
+  try
+  {
+    outputFileStream.open(_path);
+    for (const ObjectInfo& objectInfo : _persistentPool)
+    {
+      if (objectInfo.factoryID != ActiveObject::InvalidFactoryID)
+      {
+        outputFileStream << "0x";
+        outputFileStream << std::hex << objectInfo.factoryID;
+        outputFileStream << ",";
+        outputFileStream << std::to_string((int)objectInfo.objectType);
+        outputFileStream << "\n";
+        PRINT_CH_INFO("BlockPool", "BlockFilter.Save", "%#08x,%d", objectInfo.factoryID, objectInfo.objectType);
+      }
+    }
+    outputFileStream.close();
+  }
+  catch (std::ofstream::failure e)
+  {
+    PRINT_NAMED_ERROR("BlockFilter.Save.Error", "%s", e.std::exception::what());
+  }
+}
+
+bool BlockFilter::IsTypePooled(ObjectType type) const
+{
+  for (const ObjectInfo& objectInfo : _persistentPool)
+  {
+    if (objectInfo.objectType == type)
+    {
       return true;
     }
-    return false;
-  } else {
-    PRINT_NAMED_WARNING("BlockFilter.ConnectToBlocks.NoRobot", "");
-    return false;
   }
+  
+  return false;
+}
+
+void BlockFilter::ConnectToObjects()
+{
+  FactoryIDArray factoryIDs;
+
+  // Connect to the current list of objects
+  for (int i = 0; i < _runtimePool.size(); ++i)
+  {
+    factoryIDs[i] = _runtimePool[i].factoryID;
+  }
+  
+  _robot->ConnectToObjects(factoryIDs);
 }
   
 void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -236,11 +339,11 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
       msg.blockPoolEnabled = _enabled;
       
       std::vector<ExternalInterface::BlockPoolBlockData> allBlocks;
-      for (const FactoryID &factoryId : _blocks ) {
-        if (factoryId != 0) {
+      for (const ObjectInfo &objectInfo : _persistentPool ) {
+        if (objectInfo.factoryID != ActiveObject::InvalidFactoryID) {
           ExternalInterface::BlockPoolBlockData blockData;
           blockData.enabled = true;
-          blockData.factory_id = factoryId;
+          blockData.factory_id = objectInfo.factoryID;
           allBlocks.push_back(blockData);
         }
       }
@@ -251,25 +354,53 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
       _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
       break;
     }
+      
     case ExternalInterface::MessageGameToEngineTag::BlockPoolEnabledMessage:
     {
       const Anki::Cozmo::ExternalInterface::BlockPoolEnabledMessage& msg = event.GetData().Get_BlockPoolEnabledMessage();
       _enabled = msg.enabled;
       break;
     }
+      
     case ExternalInterface::MessageGameToEngineTag::BlockSelectedMessage:
     {
       const Anki::Cozmo::ExternalInterface::BlockSelectedMessage& msg = event.GetData().Get_BlockSelectedMessage();
       if (msg.selected)
       {
-        AddFactoryId( msg.factoryId );
+        if (AddObjectToPersistentPool(msg.factoryId, msg.objectType))
+        {
+          CopyPersistentPoolToRuntimePool();
+          ConnectToObjects();
+        }
       }
       else
       {
-        RemoveFactoryId(msg.factoryId);
+        if (RemoveObjectFromPersistentPool(msg.factoryId))
+        {
+          CopyPersistentPoolToRuntimePool();
+          ConnectToObjects();
+        }
       }
       break;
     }
+      
+    case ExternalInterface::MessageGameToEngineTag::BlockPoolResetMessage:
+    {
+      // Reset the runtime and persistent pools, disconnect from all the objects, and then save to disk
+      std::for_each(_runtimePool.begin(), _runtimePool.end(), [](ObjectInfo& objectInfo) {
+        objectInfo.Reset();
+      });
+
+      std::for_each(_persistentPool.begin(), _persistentPool.end(), [](ObjectInfo& objectInfo) {
+        objectInfo.Reset();
+      });
+      
+      ConnectToObjects();
+      _currentRSSILimit = kInitialRSSI;
+      
+      Save();
+    }
+      
     default:
     {
       PRINT_NAMED_ERROR("BlockFilter::HandleGameEvents unexpected message","%hhu",event.GetData().GetTag());

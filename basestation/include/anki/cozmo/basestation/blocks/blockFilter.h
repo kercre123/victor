@@ -32,41 +32,79 @@ class Robot;
 
 namespace ExternalInterface {
   class MessageGameToEngine;
+  class MessageEngineToGame;
 }
   
 class BlockFilter
 {
 public: 
   BlockFilter(Robot* inRobot = nullptr);
-  explicit BlockFilter(const std::string &path, Robot* inRobot = nullptr);
 
-  void AddFactoryId(const FactoryID factoryId);
-
-  void RemoveFactoryId(const FactoryID factoryId);
-  void RemoveAllFactoryIds();
-
-  bool ContainsFactoryId(FactoryID factoryId) const;
-
-  bool Save(const std::string &path) const;
-  bool Save() const;
-
-  bool Load(const std::string &path);
-
-  void SetEnabled(bool isEnabled) { _enabled = isEnabled; }
-  bool IsEnabled() const { return _enabled; }
-  
   void Init(const std::string &path, IExternalInterface* externalInterface);
 
+  void Update();
+  
 private:
   
-  bool ConnectToBlocks() const;
+  struct ObjectInfo
+  {
+    ObjectInfo()
+    {
+      Reset();
+    }
+    
+    void Reset()
+    {
+      factoryID = ActiveObject::InvalidFactoryID;
+      objectType = ObjectType::Invalid;
+    }
+    
+    FactoryID 			factoryID;
+    ObjectType 			objectType;
+  };
+  
+  static constexpr double kConnectivityCheckDelay = 1.0f; // How often do we check for connectivity changes in seconds
+  static constexpr double kMaxWaitForPooledObjects = 10.f; // How long do we wait for the blockpooled objects before looking for another one of the same type
+  
+  static constexpr uint8_t kInitialRSSI = 50;
+  static constexpr uint8_t kIncreaseRSSI = 5;
+  static constexpr uint8_t kMaxRSSI = 150;
+  
+  // These are the type of objects we care about
+  static constexpr std::array<ObjectType, 4> kObjectTypes = {{
+    ObjectType::Block_LIGHTCUBE1,
+    ObjectType::Block_LIGHTCUBE2,
+    ObjectType::Block_LIGHTCUBE3,
+    ObjectType::Charger_Basic
+  }};
+  
+  void UpdateDiscovering();
+  void UpdateConnecting();
+  
+  bool AddObjectToPersistentPool(FactoryID factoryID, ObjectType objectType);
+  bool RemoveObjectFromPersistentPool(FactoryID factoryID);
+  void CopyPersistentPoolToRuntimePool();
+
+  void Load();
+  void Save() const;
+  
+  bool IsTypePooled(ObjectType type) const;
+  
+  void ConnectToObjects();
   
   void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   
-  Robot*          _robot;
-  FactoryIDArray  _blocks;
-  std::string     _path;
-  bool            _enabled;
+  using ObjectInfoArray = std::array<ObjectInfo, (size_t)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS>;
+  using ObjectTypeSet = std::set<ObjectType>;
+  
+  Robot*              _robot;
+  ObjectInfoArray     _persistentPool;						// The list of objects from the file
+  ObjectInfoArray     _runtimePool;								// The current session pool list
+  std::string         _path;											// Path where we are saving/loading the list of objects
+  double              _initTime;									// Time when the block pool was initialized
+  double              _lastConnectivityCheckTime; // Used to check for connectivity every once in a while
+  uint8_t             _currentRSSILimit;					// Maximum RSSI when looking for objects
+  bool                _enabled;
   
   std::vector<Signal::SmartHandle> _signalHandles;
   IExternalInterface* _externalInterface;

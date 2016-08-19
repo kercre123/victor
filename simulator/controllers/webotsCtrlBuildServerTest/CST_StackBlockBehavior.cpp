@@ -26,6 +26,7 @@ namespace Cozmo {
 
 enum class TestState {
   Init,
+  WaitForCubeConnections,
   VerifyObject1,
   TurnAway,
   VerifyObject2,
@@ -52,6 +53,7 @@ private:
   virtual s32 UpdateSimInternal() override;
 
   virtual void HandleBehaviorTransition(const ExternalInterface::BehaviorTransition& msg) override;
+  virtual void HandleActiveObjectConnectionState(const ObjectConnectionState& msg) override;
   
   TestState _testState = TestState::Init;
 
@@ -62,6 +64,8 @@ private:
   int _cubeIdToMove = -1;
 
   double _behaviorCheckTime = 0.0;
+  
+  u32 _numObjectsConnected = 0;
 };
 
 // Register class with factory
@@ -94,10 +98,19 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
 
           
       SendMoveHeadToAngle(0, 100, 100);
-      SET_STATE(VerifyObject1);
+      SET_STATE(WaitForCubeConnections);
       break;
     }
 
+    case TestState::WaitForCubeConnections:
+    {
+      IF_CONDITION_WITH_TIMEOUT_ASSERT(_numObjectsConnected == 2, 5)
+      {
+        SET_STATE(VerifyObject1);
+      }
+      break;
+    }
+      
     case TestState::VerifyObject1:
     {
       CST_ASSERT( _startedBehavior == 0, "Behavior shouldnt start because we delocalized (should only have one block)" );
@@ -344,6 +357,15 @@ void CST_StackBlockBehavior::HandleBehaviorTransition(const ExternalInterface::B
   }
   if(msg.newBehavior == kBehaviorName) {
     _startedBehavior++;
+  }
+}
+  
+void CST_StackBlockBehavior::HandleActiveObjectConnectionState(const ObjectConnectionState& msg)
+{
+  if (msg.connected) {
+    ++_numObjectsConnected;
+  } else if (_numObjectsConnected > 0) {
+    --_numObjectsConnected;
   }
 }
 

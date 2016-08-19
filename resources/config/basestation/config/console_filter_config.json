@@ -32,7 +32,8 @@
       { "channel": "UiComms",         "enabled": false },
       { "channel": "Mood",            "enabled": false },
       { "channel": "PoseConfirmer",   "enabled": false },
-      { "channel": "BlockWorld",      "enabled": false }
+      { "channel": "BlockWorld",      "enabled": false },
+      { "channel": "BlockPool",       "enabled": false }
 
     ],
     "levels":

@@ -490,8 +490,12 @@ namespace Anki
       //
       void FlashBlockIDs();
 
+#if SIMULATOR
+      bool AssignSlot(u32 slot_id, u32 factory_id);
+      void AssignCubeSlots(int total_ids, const uint32_t* ids);
+#endif
+      
       // Set the color and flashing of each LED on a block separately
-      Result AssignCubeSlots(int total_ids, const uint32_t* ids);
       Result SetBlockLight(const u32 activeID, const u16* colors);
 
       void DiscoverProp(uint32_t id);
