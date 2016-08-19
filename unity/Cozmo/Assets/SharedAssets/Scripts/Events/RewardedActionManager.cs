@@ -46,7 +46,7 @@ public class RewardedActionManager : MonoBehaviour {
   // Map Animation Group Names to Event Enums using the tool
   public Dictionary<GameEvent, List<RewardedActionData>> RewardEventMap = new Dictionary<GameEvent, List<RewardedActionData>>();
 
-  // Rewards that have been earned but haven't been shown to the player.
+  // Energy Rewards that have been earned but haven't been shown to the player.
   public Dictionary<RewardedActionData, int> PendingActionRewards = new Dictionary<RewardedActionData, int>();
 
   public bool RewardPending {
@@ -148,7 +148,6 @@ public class RewardedActionManager : MonoBehaviour {
         RewardedActionData reward = rewardList[i];
         if (RewardConditionsMet(reward, cozEvent)) {
           DAS.Info(this, string.Format("{0} rewarded {1} {2}", cozEvent.GameEventEnum, reward.Reward.Amount, reward.Reward.ItemID));
-          DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount(reward.Reward.ItemID, reward.Reward.Amount);
           if (!PendingActionRewards.ContainsKey(reward)) {
             PendingActionRewards.Add(reward, reward.Reward.Amount);
           }
@@ -194,6 +193,79 @@ public class RewardedActionManager : MonoBehaviour {
         RewardEventMap[gEvent].Add(reward);
       }
     }
+  }
+
+  /// <summary>
+  /// Checks the full list for collisions, at this point these should all
+  /// be different Ids that are stacked based on how many times they were
+  /// triggered midgame. Only keep the highest ending value for rewarding. 
+  /// </summary>
+  public void ResolveTagRewardCollisions() {
+    List<string> tagList = TagConfig.GetAllTags();
+    List<RewardedActionData> toClear = new List<RewardedActionData>();
+    for (int i = 0; i < tagList.Count; i++) {
+      // Get rewards that match an existing tag
+      if (TryGetRewardsByTag(tagList[i], out toClear)) {
+        // Remove the highest value one from the tag list and then clear all
+        // remaining in the tag list from the PendingActionRewards
+        RewardedActionData safeOne = GetHighestValueReward(toClear);
+        if (safeOne != null) {
+          toClear.Remove(safeOne);
+          for (int j = 0; j < toClear.Count; j++) {
+            PendingActionRewards.Remove(toClear[j]);
+          }
+        }
+      }
+    }
+  }
+
+  /// <summary>
+  /// Sends the pending rewards to inventory.
+  /// </summary>
+  public void SendPendingRewardsToInventory() {
+    foreach (RewardedActionData reward in PendingActionRewards.Keys) {
+      DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount(reward.Reward.ItemID, reward.Reward.Amount);
+    }
+    PendingActionRewards.Clear();
+  }
+
+  private bool TryGetRewardsByTag(string Tag, out List<RewardedActionData> foundCollisions) {
+    foundCollisions = new List<RewardedActionData>();
+    // Only bother checking for Valid Tags, if you have blank tag or broken tags ignore tag
+    // fire warning if tag is not empty
+    if (!TagConfig.IsValidTag(Tag)) {
+      if (Tag != "") {
+        DAS.Warn("RewardedActionManager.TryGetPendingRewardFromTag", "Invalid Tag detected");
+      }
+      return false;
+    }
+    foreach (RewardedActionData reward in PendingActionRewards.Keys) {
+      if (reward.Tag == Tag) {
+        foundCollisions.Add(reward);
+      }
+    }
+    return foundCollisions.Count > 0;
+  }
+
+  /// <summary>
+  /// Gets the highest value reward in PendingActionRewards from a list of rewards.
+  /// </summary>
+  /// <returns>The highest value reward.</returns>
+  /// <param name="rewards">Rewards.</param>
+  private RewardedActionData GetHighestValueReward(List<RewardedActionData> rewards) {
+    if (rewards == null || rewards.Count <= 0) {
+      return null;
+    }
+    RewardedActionData best = rewards[0];
+    for (int i = 0; i < rewards.Count; i++) {
+      int toCompare = 0;
+      if (PendingActionRewards.TryGetValue(rewards[i], out toCompare)) {
+        if (toCompare > PendingActionRewards[best]) {
+          best = rewards[i];
+        }
+      }
+    }
+    return best;
   }
 
   private void RegisterEvents() {

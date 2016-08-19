@@ -1,0 +1,17 @@
+//
+// NothingToDo_Idle
+// This behavior triggers when Cozmo has nothing to do. Play random anims.
+//
+//
+//
+{
+  "name": "NothingToDo_Idle",
+
+  "behaviorType": "PlayAnim",
+  "flatScore": 1.0,
+  "behaviorGroups": [
+    "FP_NothingToDo"
+  ],
+  
+   "animTrigger": "NothingToDoBored"
+}

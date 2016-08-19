@@ -364,7 +364,7 @@ class Cozmo(event.Dispatcher):
         '''
         msg = _clad_to_engine_iface.MoveLift()
         msg = _clad_to_engine_iface.MoveLift(speed_rad_per_sec=velocity)
-        self.conn.send_msg('MoveLift', msg)
+        self.conn.send_msg(msg)
 
     def set_backpack_lights(self, light1, light2, light3, light4, light5):
         '''Set the lights on cozmo's back.
@@ -398,6 +398,8 @@ class Cozmo(event.Dispatcher):
         
         Args:
             text (string): The words for cozmo to say
+            play_excited_animation (bool): Whether to also play an exicted animation whilst speaking (moves Cozmo a lot)
+            use_cozmo_voice (bool): Whether to use cozmo's robot voice (otherwise uses a generic human male voice)
         Returns:
             A class:'cozmo.robot.SayText' instance to track the action in progress.
         '''
@@ -420,7 +422,7 @@ class Cozmo(event.Dispatcher):
 
         Args:
             name (str): The name of the animation to play
-            loop_ocunt (int): Number of times to play the animation
+            loop_count (int): Number of times to play the animation
         Returns:
             :class:`cozmo.anim.Animation`
         Raises:
@@ -442,7 +444,7 @@ class Cozmo(event.Dispatcher):
 
         Args:
             trigger (object): An attribute of the :class:`cozmo.anim.Triggers` class
-            loop_ocunt (int): Number of times to play the animation
+            loop_count (int): Number of times to play the animation
         Returns:
             :class:`cozmo.anim.AnimationTrigger`
         Raises:

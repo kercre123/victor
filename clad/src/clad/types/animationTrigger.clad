@@ -90,6 +90,7 @@ enum int_32 AnimationTrigger
   LookInPlaceForFacesHeadMovePause,
   MajorFail,
   MajorWin,
+  NothingToDoBored,             // Cozmo doesn't have anything to do in freeplay
   OnLearnedPlayerName,
   OnSawNewNamedFace,
   OnSawNewUnnamedFace,

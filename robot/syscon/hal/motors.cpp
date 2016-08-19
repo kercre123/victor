@@ -8,12 +8,11 @@ extern "C" {
 #include <limits.h>
 
 #include "hardware.h"
+#include "anki/cozmo/robot/spineData.h"
 
 #include "motors.h"
 #include "timer.h"
 #include "head.h"
-
-#include "anki/cozmo/robot/spineData.h"
 
 #include "messages.h"
 
@@ -406,6 +405,32 @@ void Motors::init()
 
 void Motors::setPower(u8 motorID, s16 power)
 {
+  // Setup burnout protection
+  static const Fixed speed_scale[] = {
+    TO_FIXED(1),      // Left
+    TO_FIXED(1),      // Right
+    TO_FIXED(0.23),   // Lift
+    TO_FIXED(2)       // Head
+  };
+  static int avg_max_power[4];
+
+  static const s16 LOWEST_SPEED = 0x3FFF;
+  int current_speed = g_dataToHead.speeds[motorID];
+  int speed_offset = FIXED_MUL(current_speed, speed_scale[motorID]); // We will assume that 1.0 = 0x3FFF
+  int inst_speed = LOWEST_SPEED + speed_offset;
+  
+  avg_max_power[motorID] = (inst_speed + avg_max_power[motorID] * 31) / 32;
+  
+  int max_power = avg_max_power[motorID];
+
+  // Clamp max power to a rational value
+  if (max_power > 0x7FFF) { max_power = 0x7FFF; }
+  
+  // Don't let power exceed safe value
+  if (ABS(power) > max_power) {
+    power = (power > 0) ? max_power : -max_power;
+  }
+
   // Scale from [0, SHRT_MAX] to [0, TIMER_TICKS_END-1]
   power /= PWM_DIVISOR;
 
@@ -452,14 +477,13 @@ Fixed Motors::getSpeed(u8 motorID)
 void Motors::manage()
 {
   // Update the SPI data structure to send data back to the head
-  g_dataToHead.speeds[0] = ((s64)Motors::getSpeed(0) * METERS_PER_TICK) >> 16;  // 32.32 -> 16.16
-  g_dataToHead.speeds[1] = ((s64)Motors::getSpeed(1) * METERS_PER_TICK) >> 16;  // 32.32 -> 16.16
-
+  g_dataToHead.speeds[0] = FIXED_MUL(Motors::getSpeed(0), METERS_PER_TICK);
+  g_dataToHead.speeds[1] = FIXED_MUL(Motors::getSpeed(1), METERS_PER_TICK);
   g_dataToHead.speeds[2] = Motors::getSpeed(2);
   g_dataToHead.speeds[3] = Motors::getSpeed(3);
   
-  g_dataToHead.positions[0] = ((s64)m_motors[0].position * METERS_PER_TICK) >> 16;  // 32.32 -> 16.16
-  g_dataToHead.positions[1] = ((s64)m_motors[1].position * METERS_PER_TICK) >> 16;  // 32.32 -> 16.16
+  g_dataToHead.positions[0] = FIXED_MUL(m_motors[0].position, METERS_PER_TICK);
+  g_dataToHead.positions[1] = FIXED_MUL(m_motors[1].position, METERS_PER_TICK);
   g_dataToHead.positions[2] = m_motors[2].position;
   g_dataToHead.positions[3] = m_motors[3].position;
 

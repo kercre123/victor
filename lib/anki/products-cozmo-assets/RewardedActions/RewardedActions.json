@@ -5,12 +5,13 @@
       "RewardEvent": {
         "Value": "OnChallengeRoundEnd"
       },
+      "Tag": "QuickTapEndOfRound",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
           "TargetScore": 4,
-          "LessThan": false,
+          "compareType": "GREATER",
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -38,7 +39,7 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 5,
+        "Amount": 10,
         "DescriptionKey": "reward.description.QuickTap.TieBreaker.OneRound"
       }
     },
@@ -47,12 +48,13 @@
       "RewardEvent": {
         "Value": "OnChallengeRoundEnd"
       },
+      "Tag": "QuickTapEndOfRound",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
           "TargetScore": 1,
-          "LessThan": true,
+          "compareType": "GREATER",
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -71,7 +73,7 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 5,
+        "Amount": 20,
         "DescriptionKey": "reward.description.QuickTap.Shutout.SingleRound"
       }
     },
@@ -80,6 +82,7 @@
       "RewardEvent": {
         "Value": "OnChallengeComplete"
       },
+      "Tag": "QuickTapEndOfGame",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
@@ -111,7 +114,7 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 5,
+        "Amount": 8,
         "DescriptionKey": "reward.description.QuickTap.WinGame.FourColor"
       }
     },
@@ -120,6 +123,7 @@
       "RewardEvent": {
         "Value": "OnChallengeComplete"
       },
+      "Tag": "QuickTapEndOfGame",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
@@ -151,7 +155,7 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 5,
+        "Amount": 8,
         "DescriptionKey": "reward.description.QuickTap.WinGame.ThreeColor"
       }
     },
@@ -160,6 +164,7 @@
       "RewardEvent": {
         "Value": "OnChallengeComplete"
       },
+      "Tag": "QuickTapEndOfGame",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
@@ -191,7 +196,7 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 5,
+        "Amount": 8,
         "DescriptionKey": "reward.description.QuickTap.WinGame.TwoColor"
       }
     },
@@ -200,6 +205,7 @@
       "RewardEvent": {
         "Value": "OnChallengeComplete"
       },
+      "Tag": "QuickTapEndOfGame",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
@@ -231,7 +237,7 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 5,
+        "Amount": 8,
         "DescriptionKey": "reward.description.QuickTap.WinGame.OneColor"
       }
     },
@@ -240,6 +246,7 @@
       "RewardEvent": {
         "Value": "OnChallengeComplete"
       },
+      "Tag": "QuickTapEndOfGame",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
@@ -262,6 +269,7 @@
       "RewardEvent": {
         "Value": "OnChallengeComplete"
       },
+      "Tag": "KeepawayEndOfGame",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
@@ -285,7 +293,7 @@
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
           "TargetScore": 4,
-          "LessThan": false,
+          "compareType": "GREATER",
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -295,7 +303,7 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 5,
+        "Amount": 20,
         "DescriptionKey": "reward.description.Keepaway.TieBreaker"
       }
     },
@@ -304,6 +312,7 @@
       "RewardEvent": {
         "Value": "OnChallengeComplete"
       },
+      "Tag": "KeepawayEndOfGame",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
@@ -327,7 +336,7 @@
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
           "TargetScore": 1,
-          "LessThan": true,
+          "compareType": "GREATER",
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -337,7 +346,7 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 5,
+        "Amount": 35,
         "DescriptionKey": "reward.description.Keepaway.Shutout"
       }
     },
@@ -346,6 +355,7 @@
       "RewardEvent": {
         "Value": "OnChallengeComplete"
       },
+      "Tag": "KeepawayEndOfGame",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
@@ -368,7 +378,7 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 5,
+        "Amount": 10,
         "DescriptionKey": "reward.description.Keepaway.Won"
       }
     },
@@ -377,6 +387,7 @@
       "RewardEvent": {
         "Value": "OnChallengeComplete"
       },
+      "Tag": "KeepawayEndOfGame",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
@@ -399,6 +410,7 @@
       "RewardEvent": {
         "Value": "OnNewDayStarted"
       },
+      "Tag": "",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.CurrentDailyStreakCondition, Assembly-CSharp",
@@ -424,6 +436,7 @@
       "RewardEvent": {
         "Value": "OnNewDayStarted"
       },
+      "Tag": "",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.CurrentDailyStreakCondition, Assembly-CSharp",
@@ -449,6 +462,7 @@
       "RewardEvent": {
         "Value": "OnNewDayStarted"
       },
+      "Tag": "",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.CurrentDailyStreakCondition, Assembly-CSharp",

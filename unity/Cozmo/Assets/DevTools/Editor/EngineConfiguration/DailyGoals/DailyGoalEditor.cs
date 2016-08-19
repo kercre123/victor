@@ -406,6 +406,8 @@ public class DailyGoalEditor : EditorWindow {
     else {
       genData.CladEvent = _FilteredCladList[EditorGUILayout.Popup("GameEvent", Mathf.Max(0, Array.IndexOf(_FilteredCladNameOptions, genData.CladEvent.ToString())), _FilteredCladNameOptions)];
     }
+
+    EditorDrawingUtility.DrawTagDropDown(ref genData.Tag);
     genData.Target = EditorGUILayout.IntField(new GUIContent("Target", "Amount of times the goal event needs to fire with all conditions met to complete goal"), genData.Target);
     genData.Priority = EditorGUILayout.IntField(new GUIContent("Priority", "Higher priority goals will appear higher in the Daily Goal panel"), genData.Priority);
 

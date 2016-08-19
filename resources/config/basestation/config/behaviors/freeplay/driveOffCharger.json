@@ -6,6 +6,7 @@
   "behaviorGroups": [
     "FP_Socialize",
     "FP_PlayWithHumans",
-    "FP_PlayAlone"
+    "FP_PlayAlone",
+    "FP_NothingToDo"
   ]
 }

@@ -167,21 +167,23 @@
       // FP_PlayWithHumans  - when Cozmo requests games to play with the player
       // FP_PlayAlone       - when Cozmo does stuff in place on his own, showing off, playing with cubes, ..
       // FP_Socialize       - when Cozmo wants to interact with faces and players, but without playing games
-      // FP_PlayAlone_NothingElseToDo - fallback when Cozmo can't do anything else
+      // FP_NothingToDo     - fallback when Cozmo can't do anything else
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       {
-        "name" : "FP_PlayAlone_NothingElseToDo",
+        "name" : "FP_NothingToDo",
         "priority": 5, // lower is better
         "behaviorChooser" :
         {
           "type" : "simple",
-          "behaviorGroups" : [ "FP_PlayAlone" ]
+          "behaviorGroups" : [ "FP_NothingToDo" ]
         },
         "goalStrategy":
         {
-          "type" : "FP_PlayAlone",
-          "maxDurationSecs" : 600.0 // never finishes. We might want to shut-off at some point 
+          "type" : "FP_Socialize",
+          // never finishes. We might want to shut-off at some point
+          "maxDurationSecs" : 6000.0,
+          "maxTimeWithoutInteractionSecs" : 6000.0
         }
       },
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

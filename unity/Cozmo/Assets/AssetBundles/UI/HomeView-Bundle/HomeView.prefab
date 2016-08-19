@@ -809,7 +809,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 182954, guid: fc282e36b09c149278262224999a7104, type: 2}
-  ModifiedValues: []
+  ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    JsonValue: 6
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    JsonValue: '"#label.emptyWithArg"'
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: Cozmo.UI.ItemDataLabel:_CountLabel
@@ -1330,7 +1336,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 182954, guid: fc282e36b09c149278262224999a7104, type: 2}
-  ModifiedValues: []
+  ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    JsonValue: 6
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    JsonValue: '"#label.emptyWithArg"'
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: Cozmo.UI.ItemDataLabel:_CountLabel

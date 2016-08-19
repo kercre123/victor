@@ -355,6 +355,8 @@ public class RewardedActionsEditor : EditorWindow {
       data.RewardEvent.Value = _FilteredCladList[EditorGUILayout.Popup("GameEvent", Mathf.Max(0, Array.IndexOf(_FilteredCladNameOptions, data.RewardEvent.Value.ToString())), _FilteredCladNameOptions)];
     }
 
+    EditorDrawingUtility.DrawTagDropDown(ref data.Tag);
+
     EditorGUILayout.LabelField("Localization", EditorDrawingUtility.SubtitleStyle);
     EditorDrawingUtility.DrawLocalizationString(ref data.Reward.DescriptionKey);
   }
