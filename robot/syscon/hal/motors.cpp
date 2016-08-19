@@ -379,14 +379,22 @@ void Motors::setPower(u8 motorID, s16 power)
     TO_FIXED(1),      // Left
     TO_FIXED(1),      // Right
     TO_FIXED(0.23),   // Lift
-    TO_FIXED(2)       // Head
+    TO_FIXED(0)
   };
-  static int avg_max_power[4];
 
-  static const s16 LOWEST_SPEED = 0x3FFF;
+  static const int base_speed[] = {
+    0x3FFF,
+    0x3FFF,
+    0x3FFF,
+    0x7FFF
+  };
+
+  static int avg_max_power[MOTOR_COUNT];
+
+  // Do not run on head motor
   int current_speed = g_dataToHead.speeds[motorID];
   int speed_offset = FIXED_MUL(current_speed, speed_scale[motorID]); // We will assume that 1.0 = 0x3FFF
-  int inst_speed = LOWEST_SPEED + speed_offset;
+  int inst_speed = base_speed[motorID] + speed_offset;
   
   avg_max_power[motorID] = (inst_speed + avg_max_power[motorID] * 31) / 32;
   
