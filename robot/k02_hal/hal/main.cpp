@@ -98,6 +98,7 @@ int main (void)
   RCM_RPFC = RCM_RPFC_RSTFLTSS_MASK | RCM_RPFC_RSTFLTSRW(2);
   RCM_RPFW = 16;
 
+  Watchdog::init();
   Power::enableEspressif();
 
   UART::DebugInit();
@@ -118,7 +119,6 @@ int main (void)
   // We can now safely start camera DMA, which shortly after starts HALExec
   // This function returns after the first call to HALExec is complete
   SPI::Init();
-  Watchdog::init();
   CameraStart();
 
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraStart() 
