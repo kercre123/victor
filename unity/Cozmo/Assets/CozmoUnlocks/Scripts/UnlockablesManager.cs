@@ -4,6 +4,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+using Anki.Cozmo.ExternalInterface;
+
+
 public class UnlockablesManager : MonoBehaviour {
 
   public static UnlockablesManager Instance { get; private set; }
@@ -218,6 +221,12 @@ public class UnlockablesManager : MonoBehaviour {
     _UnlockablesState[resultMessage.unlockID] = resultMessage.unlocked;
     if (resultMessage.unlocked) {
       GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnUnlockableEarned, resultMessage.unlockID));
+      RobotEngineManager.Instance.Message.BehaviorManagerMessage =
+        Singleton<BehaviorManagerMessage>.Instance.Initialize(
+          Convert.ToByte(RobotEngineManager.Instance.CurrentRobotID),
+          Singleton<SparkUnlocked>.Instance.Initialize(resultMessage.unlockID)
+        );
+      RobotEngineManager.Instance.SendMessage();
       _NewUnlocks.Add(resultMessage.unlockID);
     }
   }

@@ -85,7 +85,6 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
   private float _SparkButtonPressedTime = -1.0f;
 
-  private float _SparkStopTime = -1.0f;
   private CanvasGroup _DimBackgroundInstance = null;
   private Sequence _SparksSequenceTweener = null;
   private List<Transform> _SparkImageInsts = new List<Transform>();
@@ -132,7 +131,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
         _SparksInventoryContainer.gameObject.SetActive(true);
         SetupButton(_RequestTrickButton, null, "request_trick_button",
                     unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, _SparksInventoryLabel, true);
-        RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.SparkUnlockEnded>(HandleSparkUnlockEnded);
+        RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.SparkEnded>(HandleSparkEnded);
 
         _RequestTrickButton.onPress.AddListener(OnSparkPressed);
         _RequestTrickButton.onRelease.AddListener(OnSparkReleased);
@@ -312,9 +311,6 @@ public class CoreUpgradeDetailsDialog : BaseView {
         _SparkButtonPressedTime = -1.0f;
       }
     }
-    if (_SparkStopTime >= 0 && _SparkStopTime < Time.time) {
-      StopSparkUnlock();
-    }
   }
 
   private void UpdateInventoryLabel(string itemId, AnkiTextLabel label) {
@@ -325,7 +321,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
                                           playerInventory.GetItemAmount(itemId));
   }
 
-  private void HandleSparkUnlockEnded(object message) {
+  private void HandleSparkEnded(object message) {
     StopSparkUnlock();
   }
 
@@ -345,7 +341,6 @@ public class CoreUpgradeDetailsDialog : BaseView {
     playerInventory.RemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
     UpdateInventoryLabel(_UnlockInfo.RequestTrickCostItemId, _SparksInventoryLabel);
 
-    _SparkStopTime = Time.time + _UnlockInfo.TimeSparkedSec;
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Spark);
     RobotEngineManager.Instance.CurrentRobot.EnableSparkUnlock(_UnlockInfo.Id.Value);
 
@@ -364,7 +359,6 @@ public class CoreUpgradeDetailsDialog : BaseView {
       RobotEngineManager.Instance.CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_BACK, Color.black);
       RobotEngineManager.Instance.CurrentRobot.StopSparkUnlock();
     }
-    _SparkStopTime = -1.0f;
     UpdateState();
 
     if (UnlockablesManager.Instance.OnSparkComplete != null) {
@@ -373,7 +367,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
   }
 
   protected override void CleanUp() {
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.SparkUnlockEnded>(HandleSparkUnlockEnded);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.SparkEnded>(HandleSparkEnded);
     StopSparkUnlock();
     CleanUpSparkAnimations();
     // Because of a bug within DOTween Fades don't release even after being killed, so clean up

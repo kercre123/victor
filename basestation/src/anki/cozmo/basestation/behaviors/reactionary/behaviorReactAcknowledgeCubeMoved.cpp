@@ -174,7 +174,7 @@ void BehaviorReactAcknowledgeCubeMoved::TransitionToReactingToBlockAbsence(Robot
   DEBUG_SET_STATE(ReactingToBlockAbsence);
   
   StartActing(new TriggerAnimationAction(robot, AnimationTrigger::CubeMovedUpset));
-  BehaviorObjectiveAchieved();
+  BehaviorObjectiveAchieved(BehaviorObjective::ReactedAcknowledgedCubeMoved);
 }
   
 void BehaviorReactAcknowledgeCubeMoved::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)

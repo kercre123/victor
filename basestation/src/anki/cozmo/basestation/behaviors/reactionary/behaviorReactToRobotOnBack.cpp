@@ -71,7 +71,7 @@ void BehaviorReactToRobotOnBack::DelayThenFlipDown(Robot& robot)
   
 void BehaviorReactToRobotOnBack::SendFinishedFlipDownMessage(Robot& robot){
   // Send message that we're done flipping
-  BehaviorObjectiveAchieved();
+  BehaviorObjectiveAchieved(BehaviorObjective::ReactedToRobotOnBack);
   robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnBackFinished()));
 }
 

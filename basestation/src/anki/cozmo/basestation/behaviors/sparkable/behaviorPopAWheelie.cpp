@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorPopAWheelie.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorPopAWheelie.h"
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
@@ -151,7 +151,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
                     if(!_shouldStreamline){
                       StartActing(new TriggerAnimationAction(robot, AnimationTrigger::SuccessfulWheelie));
                     }
-                    BehaviorObjectiveAchieved();
+                  BehaviorObjectiveAchieved(BehaviorObjective::PoppedWheelie);
                     break;
                     
                   case ActionResult::FAILURE_RETRY:

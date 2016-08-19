@@ -15,6 +15,7 @@
 #include "behaviorChoosers/simpleBehaviorChooser.h"
 #include "behaviorChoosers/demoBehaviorChooser.h"
 #include "behaviorChoosers/selectionBehaviorChooser.h"
+#include "behaviorChoosers/sparksBehaviorChooser.h"
 #include "behaviorChoosers/AIGoalEvaluator.h"
 
 #include "anki/common/basestation/jsonTools.h"
@@ -52,6 +53,9 @@ IBehaviorChooser* CreateBehaviorChooser(Robot& robot, const Json::Value& config)
   }
   else if ( typeStr == "goal" ) {
     newChooser = new AIGoalEvaluator(robot, config);
+  }
+  else if ( typeStr == "sparks") {
+    newChooser = new SparksBehaviorChooser(robot, config);
   }
   else
   {

@@ -11,10 +11,11 @@
  *
  **/
 
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorPounceOnMotion.h"
+
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/behaviors/behaviorPounceOnMotion.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
@@ -380,7 +381,7 @@ void BehaviorPounceOnMotion::TransitionToResultAnim(Robot& robot)
   SET_STATE(PlayingFinalReaction);
   
   robot.GetMoveComponent().EnableLiftPower(true);
-  BehaviorObjectiveAchieved();
+  BehaviorObjectiveAchieved(BehaviorObjective::Pounced);
 }
   
 void BehaviorPounceOnMotion::TransitionToBackUp(Robot& robot)

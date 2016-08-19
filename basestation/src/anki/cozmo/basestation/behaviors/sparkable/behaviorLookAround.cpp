@@ -10,6 +10,9 @@
  *
  **/
 
+
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorLookAround.h"
+
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/common/shared/radians.h"
@@ -17,7 +20,6 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
-#include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"

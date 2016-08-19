@@ -27,12 +27,16 @@ namespace Cozmo {
 namespace {
 CONSOLE_VAR(float, kDefaultGoalMaxDurationSecs, "IAIGoalStrategy", 60.0f);
 static const char* kStartMoodScorerConfigKey = "startMoodScorer";
+static const char* kGoalCanEndConfigKey = "goalCanEndDurationSecs";
+static const char* kGoalShouldEndConfigKey = "goalShouldEndDurationSecs";
+static const char* kGoalCooldownConfigKey = "cooldownSecs";
+
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IAIGoalStrategy::IAIGoalStrategy(const Json::Value& config)
-: _minDurationSecs(-1.0f)
-, _maxDurationSecs(-1.0f)
+: _goalCanEndSecs(-1.0f)
+, _goalShouldEndSecs(-1.0f)
 , _cooldownSecs(-1.0f)
 , _startMoodScorer(nullptr)
 , _requiredMinStartMoodScore(-1.0f)
@@ -40,12 +44,12 @@ IAIGoalStrategy::IAIGoalStrategy(const Json::Value& config)
   using namespace JsonTools;
   
   // set a common default for max duration instead of forcing every goal to define its own
-  _maxDurationSecs = kDefaultGoalMaxDurationSecs;
+  _goalShouldEndSecs = kDefaultGoalMaxDurationSecs;
   
   // timers
-  GetValueOptional(config, "minDurationSecs", _minDurationSecs);
-  GetValueOptional(config, "maxDurationSecs", _maxDurationSecs);
-  GetValueOptional(config, "cooldownSecs", _cooldownSecs);
+  GetValueOptional(config, kGoalCanEndConfigKey, _goalCanEndSecs);
+  GetValueOptional(config, kGoalShouldEndConfigKey, _goalShouldEndSecs);
+  GetValueOptional(config, kGoalCooldownConfigKey, _cooldownSecs);
   
   const bool hasRequiredMinStartMoodScore =
     GetValueOptional(config, "requiredMinStartMoodScore", _requiredMinStartMoodScore);
@@ -112,10 +116,10 @@ bool IAIGoalStrategy::WantsToStart(const Robot& robot, float lastTimeGoalRanSec)
 bool IAIGoalStrategy::WantsToEnd(const Robot& robot, float lastTimeGoalStartedSec) const
 {
   // if we started recently and we have a min duration, this goal doesn't wanna end yet
-  const bool hasMinDuration = FLT_GT(_minDurationSecs, 0.0f);
+  const bool hasMinDuration = FLT_GT(_goalCanEndSecs, 0.0f);
   if ( hasMinDuration ) {
     const float curTimeSecs = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    const float runAtLeastUntil = lastTimeGoalStartedSec + _minDurationSecs;
+    const float runAtLeastUntil = lastTimeGoalStartedSec + _goalCanEndSecs;
     const bool isWithinMinDuration = FLT_LT(curTimeSecs, runAtLeastUntil);
     if ( isWithinMinDuration ) {
       return false; // doesn't wanna end because it's hasn't run enough yet
@@ -123,10 +127,10 @@ bool IAIGoalStrategy::WantsToEnd(const Robot& robot, float lastTimeGoalStartedSe
   }
   
   // check if we have been running for too long
-  const bool hasMaxDuration = FLT_GT(_maxDurationSecs, 0.0f);
+  const bool hasMaxDuration = FLT_GT(_goalShouldEndSecs, 0.0f);
   if ( hasMaxDuration ) {
     const float curTimeSecs = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    const float runAtMostUntil = lastTimeGoalStartedSec + _maxDurationSecs;
+    const float runAtMostUntil = lastTimeGoalStartedSec + _goalShouldEndSecs;
     const bool isBeyondMaxDuration = FLT_GT(curTimeSecs, runAtMostUntil);
     if ( isBeyondMaxDuration ) {
       return true; // wantsToEnd because it's beyond max

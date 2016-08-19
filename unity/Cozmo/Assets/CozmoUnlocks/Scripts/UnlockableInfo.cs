@@ -75,10 +75,6 @@ public class UnlockableInfo : ScriptableObject, IComparable {
 
   public int SortOrder = 100;
 
-  [SerializeField]
-  private float _TimeSparkedSec = 60.0f;
-  public float TimeSparkedSec { get { return _TimeSparkedSec; } }
-
   [Serializable]
   public class SerializableUnlockIds : SerializableEnum<Anki.Cozmo.UnlockId> {
 

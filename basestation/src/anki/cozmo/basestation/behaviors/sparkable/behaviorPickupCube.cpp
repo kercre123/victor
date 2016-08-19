@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorPickupCube.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorPickupCube.h"
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
@@ -164,10 +164,10 @@ void BehaviorPickUpCube::TransitionToDoingFinalReaction(Robot& robot)
                 [this,&robot](ActionResult res) {
                     // Will no longer be runnable
                     _targetBlock.UnSet();
-                    BehaviorObjectiveAchieved();
+                    BehaviorObjectiveAchieved(BehaviorObjective::PickedupBlock);
                 });
   }else{
-    BehaviorObjectiveAchieved();
+    BehaviorObjectiveAchieved(BehaviorObjective::PickedupBlock);
   }
 }
 

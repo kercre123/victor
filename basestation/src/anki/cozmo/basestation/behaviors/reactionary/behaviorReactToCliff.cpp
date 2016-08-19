@@ -112,7 +112,7 @@ void BehaviorReactToCliff::TransitionToBackingUp(Robot& robot)
   }
   else {
     SendFinishedReactToCliffMessage(robot);
-    BehaviorObjectiveAchieved();
+    BehaviorObjectiveAchieved(BehaviorObjective::ReactedToCliff);
   }
 }
   

@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorKnockOverCubes.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorKnockOverCubes.h"
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
@@ -233,7 +233,7 @@ void BehaviorKnockOverCubes::TransitionToPlayingReaction(Robot& robot)
                   _disabledReactions.erase(BehaviorType::AcknowledgeObject);
                 });
   }
-  BehaviorObjectiveAchieved();
+  BehaviorObjectiveAchieved(BehaviorObjective::KnockedOverBlocks);
 }
 
   

@@ -303,7 +303,7 @@ IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, const IBehavior* cu
   bool getNewGoal = false;
   bool isCurrentAllowedToBePicked = true;
   bool hasChosenBehavior = false;
-  const UnlockId activeSpark = robot.GetBehaviorManager().GetActiveSpark();
+  
   
   // check if we have a debugConsole goal
   if ( !_debugConsoleRequestedGoal.empty() )
@@ -319,15 +319,15 @@ IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, const IBehavior* cu
   {
     // no debug requests
     // get a new goal if the current behavior finished succesfully or sparks changed
-    const UnlockId goalSpark   = (nullptr != _currentGoalPtr) ? _currentGoalPtr->GetRequiredSpark() : UnlockId::Count;
-    const bool changeDueToSpark = (activeSpark != goalSpark);
+    
+    const bool changeDueToSpark = robot.GetBehaviorManager().ShouldSwitchToSpark();
     if ( (nullptr == _currentGoalPtr) || changeDueToSpark )
     {
       // the active spark does not match the current goal, pick the first goal available for the spark
       // this covers both going into and out of sparks
-      getNewGoal = true;
       PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior",
-        "Picking new goal to match spark '%s'", EnumToString(activeSpark));
+                    "Picking new goal to match spark '%s'", EnumToString(robot.GetBehaviorManager().GetRequestedSpark()));
+      getNewGoal = true;
     }
     else if ( currentRunningBehavior == nullptr )
     {
@@ -390,7 +390,16 @@ IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, const IBehavior* cu
   // if we have to pick new goal after having chosen a behavior, do it now
   if ( getNewGoal )
   {
+    // Ensure that if a user cancels and re-trigger the same spark, the behavior exits and re-enters
+    if(robot.GetBehaviorManager().GetActiveSpark() == robot.GetBehaviorManager().GetRequestedSpark()
+       && robot.GetBehaviorManager().DidGameRequestSparkEnd()){
+      isCurrentAllowedToBePicked = false;
+      PRINT_CH_INFO("Behaviors","AIGoalEvaluator.ChooseNextBehavior", "Spark re-selected: none behavior will be selected");
+    }
+    
     // select new goal
+    const UnlockId activeSpark = robot.GetBehaviorManager().SwitchToRequestedSpark();
+    
     const bool changedGoal = PickNewGoalForSpark(robot, activeSpark, isCurrentAllowedToBePicked);
     if ( changedGoal || !hasChosenBehavior )
     {
@@ -411,7 +420,7 @@ IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, const IBehavior* cu
             _currentGoalPtr->GetName().c_str());
         }
       } else {
-        PRINT_NAMED_ERROR("AIGoalEvaluator.ChooseNextBehavior", "No current available goal");
+        PRINT_CH_INFO("Behaviors","AIGoalEvaluator.ChooseNextBehavior", "No current available goal");
       }
     }
   }

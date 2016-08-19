@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorRollBlock.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorRollBlock.h"
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
@@ -203,7 +203,7 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
                       StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RollBlockSuccess));
                     }
                     IncreaseScoreWhileActing( kBRB_ScoreIncreaseForAction );
-                    BehaviorObjectiveAchieved();
+                    BehaviorObjectiveAchieved(BehaviorObjective::BlockRolled);
                     break;
                   
                   case ActionResult::FAILURE_RETRY:

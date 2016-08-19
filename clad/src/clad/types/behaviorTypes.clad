@@ -31,6 +31,7 @@ enum uint_8 BehaviorType {
   ReactToCubeMoved,
   ReactToFrustration,
   PlayAnim,
+  PlayArbitraryAnim,
   PounceOnMotion,
   FindFaces,
   ExploreMarkedCube,

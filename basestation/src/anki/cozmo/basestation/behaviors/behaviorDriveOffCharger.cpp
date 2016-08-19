@@ -171,7 +171,7 @@ void BehaviorDriveOffCharger::TransitionToDrivingForward(Robot& robot)
     action->SetAccel(kInitialDriveAccel);
     StartActing(action,[this](ActionResult res){
       if(res == ActionResult::SUCCESS){
-        BehaviorObjectiveAchieved();
+        BehaviorObjectiveAchieved(BehaviorObjective::DroveAsIntended);
       }
     });
     // the Update function will transition back to this state (or out of the behavior) as appropriate

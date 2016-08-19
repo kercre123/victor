@@ -4,6 +4,7 @@
 // Copyright: Anki Inc (c) 2015
 
 #include "clad/types/actionTypes.clad"
+#include "clad/types/behaviorObjectives.clad"
 #include "clad/types/deviceDataTypes.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/imageTypes.clad"
@@ -597,7 +598,7 @@ message RequestEnrollFace {
   int_32 face_id
 }
 
-message SparkUnlockEnded {
+message SparkEnded {
 
 }
 
@@ -623,6 +624,10 @@ message RespondEnabledBehaviorList{
 message ReactionaryBehaviorTransition{
   BehaviorType reactionaryBehaviorType,
   bool behaviorStarted
+}
+
+message BehaviorObjectiveAchieved{
+  BehaviorObjective behaviorObjective
 }
 
 ///////////////////////////////////////////////////////////////////////////////

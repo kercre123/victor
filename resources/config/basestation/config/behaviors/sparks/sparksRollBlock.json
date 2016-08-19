@@ -2,7 +2,6 @@
   "behaviorType": "RollBlock",
   "name": "sparksRollBlock",
   "flatScore" : 5.0,
-  "shouldStreamline": true,
   "behaviorGroups": [
     "SparksRollBlock"
   ]

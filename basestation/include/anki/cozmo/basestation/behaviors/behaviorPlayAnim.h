@@ -21,11 +21,11 @@ namespace Cozmo {
   
 class BehaviorPlayAnim: public IBehavior
 {
-private:
+protected:
   
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  BehaviorPlayAnim(Robot& robot, const Json::Value& config);
+  BehaviorPlayAnim(Robot& robot, const Json::Value& config, bool keyRequired = true);
   
 public:
   
@@ -38,10 +38,6 @@ protected:
   
   virtual Result InitInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override { }
-  
-private:
-  
-  void    PlayAnimation(Robot& robot, const std::string& animName);
   
   // ========== Members ==========
   

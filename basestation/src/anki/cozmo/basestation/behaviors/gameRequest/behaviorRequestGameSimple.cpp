@@ -503,7 +503,7 @@ void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
   }
   
   DEBUG_SET_STATE(Idle);
-  BehaviorObjectiveAchieved();
+  BehaviorObjectiveAchieved(BehaviorObjective::RequestedGame);
 }
 
 void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)

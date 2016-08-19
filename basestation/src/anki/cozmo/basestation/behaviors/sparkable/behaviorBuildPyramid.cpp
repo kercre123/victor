@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/BehaviorBuildPyramid.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/BehaviorBuildPyramid.h"
 
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
@@ -213,7 +213,7 @@ void BehaviorBuildPyramid::TransitionToReactingToPyramid(Robot& robot)
   DEBUG_SET_STATE(ReactingToPyramid);
 
   StartActing( new TriggerAnimationAction(robot, AnimationTrigger::BuildPyramidSuccess));
-  BehaviorObjectiveAchieved();
+  BehaviorObjectiveAchieved(BehaviorObjective::BuiltPyramid);
   
 }
 

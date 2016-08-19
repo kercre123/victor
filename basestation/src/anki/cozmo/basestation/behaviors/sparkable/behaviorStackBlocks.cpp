@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorStackBlocks.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorStackBlocks.h"
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
@@ -409,7 +409,7 @@ void BehaviorStackBlocks::TransitionToPlayingFinalAnim(Robot& robot)
   StartActing(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksSuccess));
   IncreaseScoreWhileActing( kBSB_ScoreIncreaseForAction );
   
-  BehaviorObjectiveAchieved();
+  BehaviorObjectiveAchieved(BehaviorObjective::StackedBlock);
 }
 
 void BehaviorStackBlocks::ResetBehavior(const Robot& robot)

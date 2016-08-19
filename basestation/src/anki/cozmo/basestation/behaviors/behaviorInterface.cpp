@@ -41,18 +41,16 @@ namespace Cozmo {
 // Static initializations
 const char* IBehavior::kBaseDefaultName = "no_name";
   
-static const char* kNameKey                    = "name";
-static const char* kEmotionScorersKey          = "emotionScorers";
-static const char* kFlatScoreKey               = "flatScore";
-static const char* kRepetitionPenaltyKey       = "repetitionPenalty";
-static const char* kRunningPenaltyKey          = "runningPenalty";
-static const char* kBehaviorGroupsKey          = "behaviorGroups";
-static const char* kRequiredUnlockKey          = "requiredUnlockId";
-static const char* kRequiredDriveOffChargerKey = "requiredRecentDriveOffCharger_sec";
-static const char* kRequiredParentSwitchKey    = "requiredRecentSwitchToParent_sec";
-static const char* kDisableReactionaryDefault  = "disableByDefault";
-static const char* kShouldStreamline           = "shouldStreamline";
-
+static const char* kNameKey                      = "name";
+static const char* kEmotionScorersKey            = "emotionScorers";
+static const char* kFlatScoreKey                 = "flatScore";
+static const char* kRepetitionPenaltyKey         = "repetitionPenalty";
+static const char* kRunningPenaltyKey            = "runningPenalty";
+static const char* kBehaviorGroupsKey            = "behaviorGroups";
+static const char* kRequiredUnlockKey            = "requiredUnlockId";
+static const char* kRequiredDriveOffChargerKey   = "requiredRecentDriveOffCharger_sec";
+static const char* kRequiredParentSwitchKey      = "requiredRecentSwitchToParent_sec";
+static const char* kDisableReactionaryDefault    = "disableByDefault";
   
 IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   : _behaviorType(BehaviorType::NoneBehavior)
@@ -199,12 +197,6 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
   }
   
   // - - - - - - - - - -
-  // Streamline behavior
-  // - - - - - - - - - -
-  
-  _shouldStreamline = config.get(kShouldStreamline, false).asBool();
-
-  // - - - - - - - - - -
   // Behavior Groups
   // - - - - - - - - - -
   
@@ -291,6 +283,7 @@ Result IBehavior::Init()
   }
   
   _isRunning = true;
+  _actingCallback = nullptr;
   _startedRunningTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   Result initResult = InitInternal(_robot);
   if ( initResult != RESULT_OK ) {
@@ -299,6 +292,17 @@ Result IBehavior::Init()
   else {
     _startCount++;
   }
+  
+  // If the behavior that is starting is the result of a spark, determine whether
+  // it should be streamlined or not
+  if(_requiredUnlockId  ==  _robot.GetBehaviorManager().GetActiveSpark()){
+    if(_robot.GetBehaviorManager().IsActiveSparkSoft()){
+      _shouldStreamline = false;
+    }else{
+      _shouldStreamline = true;
+    }
+  }
+  
   return initResult;
 }
 
@@ -312,6 +316,7 @@ Result IBehavior::Resume()
   if ( initResult != RESULT_OK ) {
     _isRunning = false;
   }
+  
   return initResult;
 }
 
@@ -331,6 +336,12 @@ void IBehavior::Stop()
   _lastRunTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   StopActing(false);
 }
+
+void IBehavior::StopOnNextActionComplete()
+{
+  _actingCallback = nullptr;
+}
+
 
 bool IBehavior::IsRunnable(const Robot& robot) const
 {
@@ -557,7 +568,7 @@ void IBehavior::HandleActionComplete(const ExternalInterface::RobotCompletedActi
     _lastActionTag = ActionConstants::INVALID_TAG;
     _extraRunningScore = 0.0f;
 
-    if( IsRunning() && _actingCallback ) {
+    if( IsRunning() && _actingCallback) {
       _actingCallback(msg);
     }
   }
@@ -595,10 +606,13 @@ bool IBehavior::StopActing(bool allowCallback)
   return false;
 }
   
-void IBehavior::BehaviorObjectiveAchieved()
+void IBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved)
 {
-  //TODO: SEND das event and notify Sparks Goal Chooser about successful completions
-  PRINT_CH_INFO("Behaviors", "IBehavior.BehaviorObjectiveAchieved", "Behavior:%s", GetName().c_str());
+  //TODO: SEND das event
+  if(_robot.HasExternalInterface()){
+    _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::BehaviorObjectiveAchieved>(objectiveAchieved);
+  }
+  PRINT_CH_INFO("Behaviors", "IBehavior.BehaviorObjectiveAchieved", "Behavior:%s, Objective:%s", GetName().c_str(), EnumToString(objectiveAchieved));
 }
 
 
@@ -657,7 +671,10 @@ Result IReactionaryBehavior::InitInternal(Robot& robot)
   robot.GetContext()->GetRobotManager()->GetRobotEventHandler().IgnoreExternalActions(true);
   
   //Prevent reactionary behaviors from moving lift track if carrying block
-  if(robot.IsCarryingObject()){
+  if(robot.IsCarryingObject()
+     && GetType() != BehaviorType::ReactToRobotOnBack
+     && GetType() != BehaviorType::ReactToRobotOnSide
+     && GetType() != BehaviorType::ReactToRobotOnFace){
     robot.GetMoveComponent().LockTracks((u8)AnimTrackFlag::LIFT_TRACK);
     _reactionIsLiftTrackLocked = true;
   }

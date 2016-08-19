@@ -202,7 +202,7 @@ void BehaviorAcknowledgeObject::FinishIteration(Robot& robot)
   // inform parent class that we completed a reaction
   RobotReactedToId(robot, _currTarget.GetValue());
 
-  BehaviorObjectiveAchieved();
+  BehaviorObjectiveAchieved(BehaviorObjective::ReactedAcknowledgedObject);
   // move on to the next target, if there is one
   BeginIteration(robot);
 }

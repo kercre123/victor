@@ -550,10 +550,10 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::ForceStopCurrentBehavior(const std::string& stoppedByWhom)
+void BehaviorManager::RequestCurrentBehaviorEndImmediately(const std::string& stoppedByWhom)
 {
   PRINT_CH_INFO("Behaviors",
-                "BehaviorManager.ForceStopCurrentBehavior",
+                "BehaviorManager.RequestCurrentBehaviorEndImmediately",
                 "Forcing current behavior to stop: %s",
                 stoppedByWhom.c_str());
   SwitchToBehavior(nullptr);
@@ -602,10 +602,20 @@ void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::Behavi
     }
     
     // Sparks
-    case ExternalInterface::BehaviorManagerMessageUnionTag::SetActiveSpark:
+    case ExternalInterface::BehaviorManagerMessageUnionTag::ActivateSpark:
     {
-      const auto& msg = message.Get_SetActiveSpark();
-      SetActiveSpark(msg.behaviorSpark);
+      const auto& msg = message.Get_ActivateSpark();
+      SetRequestedSpark(msg.behaviorSpark, false);
+      if(msg.behaviorSpark == UnlockId::Count){
+        _didGameRequestSparkEnd = true;
+      }
+      break;
+    }
+    
+    case ExternalInterface::BehaviorManagerMessageUnionTag::SparkUnlocked:
+    {
+      const auto& msg = message.Get_SparkUnlocked();
+      SetRequestedSpark(msg.behaviorSpark, true);
       break;
     }
 
@@ -621,32 +631,35 @@ void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::Behavi
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::SetActiveSpark(UnlockId spark)
+void BehaviorManager::SetRequestedSpark(UnlockId spark, bool softSpark)
+{
+  _lastRequestedSpark = spark;
+  _isRequestedSparkSoft = softSpark;
+}
+  
+const UnlockId BehaviorManager::SwitchToRequestedSpark()
 {
   // going into spark mode
-  if( _activeSpark == UnlockId::Count && spark != UnlockId::Count )
+ /** if( _activeSpark == UnlockId::Count && _lastRequestedSpark != UnlockId::Count )
   {
     _robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::SparkDriveStart,
       AnimationTrigger::SparkDriveLoop,
       AnimationTrigger::SparkDriveEnd});
     _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::SparkIdle);
-    
-    // HACK: to make the intro play properly we reset the chooser time,
-    // Since this is a goal change not a chooser change and goal changing isn't in yet.
-    // TODO: spark intro anim needs to play on goal enter.
-    if ( _currentChooserPtr == _freeplayChooser )
-    {
-      _lastChooserSwitchTime = Util::numeric_cast<float>( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() );
-    }
   }
   // exiting spark mode
-  else if( _activeSpark != UnlockId::Count && spark == UnlockId::Count )
+  else if( _activeSpark != UnlockId::Count && _lastRequestedSpark == UnlockId::Count )
   {
     _robot.GetDrivingAnimationHandler().PopDrivingAnimations();
     _robot.GetAnimationStreamer().PopIdleAnimation();
-  }
+  }**/
+
+  _lastChooserSwitchTime = Util::numeric_cast<float>( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() );
   
-  _activeSpark = spark;
+  _activeSpark = _lastRequestedSpark;
+  _isSoftSpark = _isRequestedSparkSoft;
+  
+  return _activeSpark;
 }
   
 void BehaviorManager::SetReactionaryBehaviorsEnabled(bool isEnabled, bool stopCurrent)
@@ -660,6 +673,13 @@ void BehaviorManager::SetReactionaryBehaviorsEnabled(bool isEnabled, bool stopCu
     SwitchToBehavior(nullptr);
   }
   
+}
+  
+void BehaviorManager::RequestCurrentBehaviorEndOnNextActionComplete()
+{
+  if(nullptr != _currentBehavior){
+    _currentBehavior->StopOnNextActionComplete();
+  }
 }
   
 } // namespace Cozmo

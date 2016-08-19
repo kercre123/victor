@@ -84,9 +84,9 @@ public:
 protected:
   virtual std::vector<std::string> GetEnabledBehaviorList() = 0;
   Util::RandomGenerator& GetRNG() const;
-  
-private:
   Robot& _robot;
+
+private:
   std::vector<Signal::SmartHandle> _signalHandles;
 
   

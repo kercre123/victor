@@ -340,7 +340,7 @@ public class Robot : IRobot {
 
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(ProcessRobotCompletedAction);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.MoodState>(UpdateEmotionFromEngineRobotManager);
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.SparkUnlockEnded>(SparkUnlockEnded);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.SparkEnded>(SparkEnded);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ObjectConnectionState>(HandleObjectConnectionState);
 
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ObjectTapped>(HandleObservedObjectTapped);
@@ -365,7 +365,7 @@ public class Robot : IRobot {
   public void Dispose() {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Reset);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(ProcessRobotCompletedAction);
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.SparkUnlockEnded>(SparkUnlockEnded);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.SparkEnded>(SparkEnded);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ObjectConnectionState>(HandleObjectConnectionState);
 
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ObjectTapped>(HandleObservedObjectTapped);
@@ -1503,7 +1503,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.Message.BehaviorManagerMessage =
       Singleton<BehaviorManagerMessage>.Instance.Initialize(
       ID,
-      Singleton<SetActiveSpark>.Instance.Initialize(SparkUnlockId)
+      Singleton<ActivateSpark>.Instance.Initialize(SparkUnlockId)
     );
     RobotEngineManager.Instance.SendMessage();
   }
@@ -1512,7 +1512,7 @@ public class Robot : IRobot {
     EnableSparkUnlock(UnlockId.Count);
   }
 
-  private void SparkUnlockEnded(object message) {
+  private void SparkEnded(object message) {
     IsSparked = false;
     SparkUnlockId = UnlockId.Count;
   }

@@ -146,7 +146,7 @@ void BehaviorAcknowledgeFace::FinishIteration(Robot& robot)
   _hasReactedToFace.insert( _targetFace );
   _lastReactionTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
-  BehaviorObjectiveAchieved();
+  BehaviorObjectiveAchieved(BehaviorObjective::ReactedAcknowledgedFace);
   // move on to the next target, if there is one
   BeginIteration(robot);
 }

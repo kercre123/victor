@@ -23,7 +23,6 @@
 #include "../behaviors/exploration/behaviorLookInPlaceMemoryMap.h"
 #include "../behaviors/exploration/behaviorThinkAboutBeacons.h"
 #include "../behaviors/exploration/behaviorVisitInterestingEdge.h"
-#include "anki/cozmo/basestation/behaviors/behaviorBuildPyramid.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDemoFearEdge.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryCentroidExtractor.h"
@@ -31,16 +30,10 @@
 #include "anki/cozmo/basestation/behaviors/behaviorDrivePath.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFindFaces.h"
-#include "anki/cozmo/basestation/behaviors/behaviorKnockOverCubes.h"
-#include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
 #include "anki/cozmo/basestation/behaviors/behaviorNone.h"
-#include "anki/cozmo/basestation/behaviors/behaviorPickupCube.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPlayAnim.h"
-#include "anki/cozmo/basestation/behaviors/behaviorPopAWheelie.h"
-#include "anki/cozmo/basestation/behaviors/behaviorPounceOnMotion.h"
+#include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPutDownBlock.h"
-#include "anki/cozmo/basestation/behaviors/behaviorRollBlock.h"
-#include "anki/cozmo/basestation/behaviors/behaviorStackBlocks.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeFace.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeObject.h"
@@ -54,6 +47,14 @@
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnFace.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnSide.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToUnexpectedMovement.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramid.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorKnockOverCubes.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorLookAround.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorPickupCube.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorPopAWheelie.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorPounceOnMotion.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorRollBlock.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorStackBlocks.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -114,6 +115,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::PlayAnim:
     {
       newBehavior = new BehaviorPlayAnim(robot, config);
+      break;
+    }
+    case BehaviorType::PlayArbitraryAnim:
+    {
+      newBehavior = new BehaviorPlayArbitraryAnim(robot, config);
       break;
     }
     case BehaviorType::PounceOnMotion:
@@ -396,7 +402,8 @@ IBehavior* BehaviorFactory::CreateBehavior(const Json::Value& behaviorJson, Robo
   
 void BehaviorFactory::DestroyBehavior(IBehavior* behavior)
 {
-  assert(behavior->IsOwnedByFactory()); // we assume all behaviors are created and owned by factory so this should always be true
+  ASSERT_NAMED_EVENT(behavior->IsOwnedByFactory(),
+               "BehaviorFactory.DestroyBehavior", "Attempted to destroy behavior not owned by factory"); // we assume all behaviors are created and owned by factory so this should always be true
 
   RemoveBehaviorFromMap(behavior);
   DeleteBehaviorInternal(behavior);
