@@ -164,7 +164,10 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   private void HandleOnQuitFlowFromFailedSearch() {
-    GameObject.Destroy(_SearchForCozmoFailedScreenInstance.gameObject);
+    if (_SearchForCozmoFailedScreenInstance != null) {
+      GameObject.Destroy(_SearchForCozmoFailedScreenInstance.gameObject);
+    }
+
     ReturnToTitle();
   }
 
