@@ -76,6 +76,8 @@ public class StartupManager : MonoBehaviour {
     DAS.AddTarget(new UnityDasTarget());
 #endif
 
+    Screen.orientation = ScreenOrientation.LandscapeLeft;
+
     // Start loading bar at close to 0
     _CurrentProgress = 0.05f;
     _LoadingBar.SetProgress(_CurrentProgress);
