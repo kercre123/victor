@@ -14,11 +14,11 @@
                     "animationGroups",
                     "faceAnimations"
                 ],
-                "version": "970"
+                "version": "973"
             },
             "cozmosoundbanks": {
                 "package_name": "GeneratedSoundBanks.tar.gz",
-                "version": "67"
+                "version": "70"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"
@@ -51,5 +51,4 @@
         "pwd": "TQqNwp4ijqboGsjF3rCWDhUtwsvTKLpb",
         "root_url": "https://build.ankicore.com/"
     }
-
 }

@@ -194,11 +194,11 @@ Audio::GameEvent::GenericEvent TextToSpeechComponent::GetAudioEvent(SayTextStyle
       break;
       
     case SayTextStyle::Name_Normal:
-      return Audio::GameEvent::GenericEvent::Vo_Coz_External_Name_Play;
+      return Audio::GameEvent::GenericEvent::Play__Robot_Vo__External_Cozmo_Processing;
       break;
       
     case SayTextStyle::Name_FirstIntroduction:
-      return Audio::GameEvent::GenericEvent::Vo_Coz_External_Name_First_Play;
+      return Audio::GameEvent::GenericEvent::Play__Robot_Vo__External_Cozmo_Processing;
       break;
       
     case SayTextStyle::Count:

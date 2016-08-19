@@ -15,7 +15,8 @@ namespace Anki.Cozmo.Audio {
         { EventGroupType.Dev_Robot, typeof(GameEvent.Dev_Robot) },
         { EventGroupType.GenericEvent, typeof(GameEvent.GenericEvent) },
         { EventGroupType.Music, typeof(GameEvent.Music) },
-        { EventGroupType.Robot, typeof(GameEvent.Robot) },
+        { EventGroupType.Robot_Sfx, typeof(GameEvent.Robot_Sfx) },
+        { EventGroupType.Robot_Vo, typeof(GameEvent.Robot_Vo) },
         { EventGroupType.Sfx, typeof(GameEvent.Sfx) },
         { EventGroupType.Ui, typeof(GameEvent.Ui) },
       };
