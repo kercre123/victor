@@ -104,30 +104,6 @@ Material:
         second: 0
       data:
         first:
-          name: _Stencil
-        second: 0
-      data:
-        first:
-          name: _StencilComp
-        second: 8
-      data:
-        first:
-          name: _StencilOp
-        second: 0
-      data:
-        first:
-          name: _StencilReadMask
-        second: 255
-      data:
-        first:
-          name: _StencilWriteMask
-        second: 255
-      data:
-        first:
-          name: _ColorMask
-        second: 15
-      data:
-        first:
           name: _Parallax
         second: 0.02
       data:
@@ -164,6 +140,34 @@ Material:
         second: 0
       data:
         first:
+          name: _Stencil
+        second: 0
+      data:
+        first:
+          name: _StencilComp
+        second: 8
+      data:
+        first:
+          name: _StencilOp
+        second: 0
+      data:
+        first:
+          name: _StencilReadMask
+        second: 255
+      data:
+        first:
+          name: _StencilWriteMask
+        second: 255
+      data:
+        first:
+          name: _ColorMask
+        second: 15
+      data:
+        first:
+          name: _SkewFactor
+        second: 0.25
+      data:
+        first:
           name: _UVOffsetOverTime
         second: 0.25
       data:
@@ -174,10 +178,6 @@ Material:
         first:
           name: _ScanSize
         second: 1
-      data:
-        first:
-          name: _SkewFactor
-        second: 0.25
     m_Colors:
       data:
         first:
@@ -186,19 +186,23 @@ Material:
       data:
         first:
           name: _Color
-        second: {r: 0, g: 0.14901961, b: 0.28627452, a: 0.8784314}
+        second: {r: 0, g: 0, b: 0, a: 0.766}
       data:
         first:
           name: _ClippingSize
-        second: {r: 0.05, g: 0.05, b: 0.05, a: 0.05}
+        second: {r: 0.1, g: 0.1, b: 0.1, a: 0.1}
       data:
         first:
           name: _ClippingEnd
-        second: {r: 0.97, g: 0.33, b: 0.2, a: 0.2}
+        second: {r: 0.94, g: 0.21, b: 0.18, a: 0.2}
       data:
         first:
           name: _AtlasUV
         second: {r: 0, g: 0, b: 1, a: 1}
+      data:
+        first:
+          name: _Spread
+        second: {r: 0.002, g: 0.002, b: 0, a: 0}
       data:
         first:
           name: _Clipping
@@ -211,10 +215,6 @@ Material:
         first:
           name: _BottomColor
         second: {r: 0.25, g: 0.25, b: 0.5, a: 1}
-      data:
-        first:
-          name: _Spread
-        second: {r: 0.002, g: 0.002, b: 0, a: 0}
       data:
         first:
           name: _ColorTint

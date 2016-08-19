@@ -11,7 +11,6 @@ namespace Cozmo {
     /// <see cref="RectMask2D"/> to handle backgrounds with a fully transparent 
     /// border.  
     /// </summary>
-    [ExecuteInEditMode]
     public class AnkiGradientClipper : MonoBehaviour {
 
       [SerializeField]
@@ -64,21 +63,25 @@ namespace Cozmo {
       private Material _ClippingMaterial;
 
       private void Awake() {
-        _MaskingFrame.sprite = _Graphic;
-        _BackgroundImage.sprite = _Graphic;
-
+        if (_Graphic) {
+          _MaskingFrame.sprite = _Graphic;
+          _BackgroundImage.sprite = _Graphic;
+        }
         CreateMaterial();
         _MaskingFrame.material = _ClippingMaterial;
-
-        _ClippingMaterial.SetVector("_AtlasUV", UIManager.GetAtlasUVs(_Graphic));
+        if (_Graphic) {
+          _ClippingMaterial.SetVector("_AtlasUV", UIManager.GetAtlasUVs(_Graphic));
+        }
       }
 
       private void OnEnable() {
         UpdateMaterial();
       }
-
-      #if UNITY_EDITOR
+#if UNITY_EDITOR
       private void Update() {
+        if (_ClippingMaterial == null || ShaderHolder.Instance == null) {
+          return;
+        }
         if (_ScreenSpace) {
           if ((_SpecifyEndClipping && _ClippingMaterial.shader != ShaderHolder.Instance.GradiantComplexClippingScreenspaceShader)
               || (!_SpecifyEndClipping && _ClippingMaterial.shader != ShaderHolder.Instance.GradiantSimpleClippingScreenspaceShader)) {
@@ -91,19 +94,19 @@ namespace Cozmo {
           }
         }
         else {
-          if ((_SpecifyEndClipping && _ClippingMaterial.shader != ShaderHolder.Instance.GradiantComplexClippingShader)
-              || (!_SpecifyEndClipping && _ClippingMaterial.shader != ShaderHolder.Instance.GradiantSimpleClippingShader)) {
-            if (_SpecifyEndClipping) {
-              _ClippingMaterial.shader = ShaderHolder.Instance.GradiantComplexClippingShader;
+          if ((_Graphic != null && _ClippingMaterial.shader != ShaderHolder.Instance.GradiantTextureClippingShader)
+              || (_Graphic == null && _ClippingMaterial.shader != ShaderHolder.Instance.GradiantAlphaClippingShader)) {
+            if (_Graphic != null) {
+              _ClippingMaterial.shader = ShaderHolder.Instance.GradiantTextureClippingShader;
             }
             else {
-              _ClippingMaterial.shader = ShaderHolder.Instance.GradiantSimpleClippingShader;
+              _ClippingMaterial.shader = ShaderHolder.Instance.GradiantAlphaClippingShader;
             }
           }
         }
         UpdateMaterial();
       }
-      #endif
+#endif
 
       private void CreateMaterial() {
         if (_ScreenSpace) {
@@ -115,18 +118,18 @@ namespace Cozmo {
           }
         }
         else {
-          if (_SpecifyEndClipping) {
-            _ClippingMaterial = MaterialPool.GetMaterial(ShaderHolder.Instance.GradiantComplexClippingShader, _MaskingFrame.defaultMaterial.renderQueue);
+          if (_Graphic != null) {
+            _ClippingMaterial = MaterialPool.GetMaterial(ShaderHolder.Instance.GradiantTextureClippingShader, _MaskingFrame.defaultMaterial.renderQueue);
           }
           else {
-            _ClippingMaterial = MaterialPool.GetMaterial(ShaderHolder.Instance.GradiantSimpleClippingShader, _MaskingFrame.defaultMaterial.renderQueue);
+            _ClippingMaterial = MaterialPool.GetMaterial(ShaderHolder.Instance.GradiantAlphaClippingShader, _MaskingFrame.defaultMaterial.renderQueue);
           }
         }
       }
 
       private void UpdateMaterial() {
         if (_SpecifyEndClipping) {
-          _ClippingMaterial.SetVector("_ClippingEnd", new Vector4(_RightClippingEnd, 
+          _ClippingMaterial.SetVector("_ClippingEnd", new Vector4(_RightClippingEnd,
             _TopClippingEnd, _LeftClippingEnd, _BottomClippingEnd));
 
           _ClippingMaterial.SetVector("_ClippingSize", new Vector4(
@@ -136,7 +139,7 @@ namespace Cozmo {
             Mathf.Clamp(_BottomClippingStart - _BottomClippingEnd, 0.05f, 1f)));
         }
         else {
-          _ClippingMaterial.SetVector("_Clipping", new Vector4(_RightClippingStart, 
+          _ClippingMaterial.SetVector("_Clipping", new Vector4(_RightClippingStart,
             _TopClippingStart, _LeftClippingStart, _BottomClippingStart));
         }
         _ClippingMaterial.color = _MaskingFrame.color;

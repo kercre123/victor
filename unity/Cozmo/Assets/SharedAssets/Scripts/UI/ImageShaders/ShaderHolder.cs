@@ -22,17 +22,17 @@ namespace Cozmo {
     }
 
     [SerializeField]
-    private Shader _GradiantSimpleClippingShader;
+    private Shader _GradiantAlphaClippingShader;
 
-    public Shader GradiantSimpleClippingShader {
-      get { return _GradiantSimpleClippingShader; }
+    public Shader GradiantAlphaClippingShader {
+      get { return _GradiantAlphaClippingShader; }
     }
 
     [SerializeField]
-    private Shader _GradiantComplexClippingShader;
+    private Shader _GradiantTextureClippingShader;
 
-    public Shader GradiantComplexClippingShader {
-      get { return _GradiantComplexClippingShader; }
+    public Shader GradiantTextureClippingShader {
+      get { return _GradiantTextureClippingShader; }
     }
 
     [SerializeField]

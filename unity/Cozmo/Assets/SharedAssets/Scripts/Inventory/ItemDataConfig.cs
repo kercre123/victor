@@ -32,6 +32,13 @@ namespace Cozmo {
       get { return _ItemIcon; }
     }
 
+    [SerializeField]
+    private int _StartingAmount;
+
+    public int StartingAmount {
+      get { return _StartingAmount; }
+    }
+
     public string GetAmountName(int amount) {
       return (amount == 1) ? GetSingularName() : GetPluralName();
     }
