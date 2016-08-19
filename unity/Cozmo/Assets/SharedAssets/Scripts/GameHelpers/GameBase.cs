@@ -111,19 +111,24 @@ public abstract class GameBase : MonoBehaviour {
 
   // called when the game starts to disable reactionary behaviors, then again when the game exits to re-enable them
   protected virtual void InitializeReactionaryBehaviorsForGameStart() {
-    // If the ID is not the same as the true request, it will not go through so make sure they are the same.
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToCubeMoved, false);
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.AcknowledgeObject, false);
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.AcknowledgeFace, false);
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToFrustration, false);
+    if (RobotEngineManager.Instance.CurrentRobot != null) {
+      // If the ID is not the same as the true request, it will not go through so make sure they are the same.
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToCubeMoved, false);
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.AcknowledgeObject, false);
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.AcknowledgeFace, false);
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToFrustration, false);
+    }
   }
 
   protected virtual void ResetReactionaryBehaviorsForGameEnd() {
     // If the ID is not the same as the true request, it will not go through so make sure they are the same.
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToCubeMoved, true);
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.AcknowledgeObject, true);
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.AcknowledgeFace, true);
-    RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToFrustration, true);
+    // We've disconnected if this is null so this would be lost anyways
+    if (RobotEngineManager.Instance.CurrentRobot != null) {
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToCubeMoved, true);
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.AcknowledgeObject, true);
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.AcknowledgeFace, true);
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToFrustration, true);
+    }
   }
 
   // the playGameSpecificMusic flag is mostly used for the press demo / face enrollment if we want the freeplay
