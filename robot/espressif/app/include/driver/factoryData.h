@@ -15,6 +15,9 @@ uint32_t getSerialNumber(void);
 /// Returns the SSID for the robot based on serial number
 uint32_t getSSIDNumber(void);
 
+/// Returns the version of the factory firmware on the robot
+uint32_t getFactoryFirmwareVersion(void);
+
 /// Returns the robot's model number or 0xffff if not set
 uint16_t getModelNumber(void);
 
