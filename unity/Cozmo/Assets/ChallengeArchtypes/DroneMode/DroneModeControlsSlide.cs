@@ -62,6 +62,7 @@ namespace Cozmo.Minigame.DroneMode {
 
     [SerializeField]
     private CozmoButton _HowToPlayButton;
+    private DroneModeHowToPlayView _HowToPlayViewInstance;
 
     [SerializeField]
     private DroneModeHowToPlayView _HowToPlayViewPrefab;
@@ -109,7 +110,11 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     public void OpenHowToPlayView() {
-      UIManager.OpenView<DroneModeHowToPlayView>(_HowToPlayViewPrefab);
+      if (_HowToPlayViewInstance == null) {
+        _HowToPlayViewInstance = UIManager.OpenView<DroneModeHowToPlayView>(_HowToPlayViewPrefab);
+        _SpeedThrottle.SetToRest();
+        _HeadTiltThrottle.SetToRest();
+      }
     }
 
     private void HandleSpeedThrottleValueChanged(float newSliderValue) {

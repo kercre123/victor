@@ -24,7 +24,7 @@ namespace Cozmo {
       protected void Update() {
         if (!_IsTouching && !IsNearRestingState()) {
           if (_SnapBackInstantly) {
-            this.value = _RestingSliderValue;
+            SetToRest();
           }
           else {
             this.value = ((this.value - _RestingSliderValue) * _SliderValueDecayRate) + _RestingSliderValue;
@@ -45,6 +45,10 @@ namespace Cozmo {
       public override void OnPointerUp(UnityEngine.EventSystems.PointerEventData eventData) {
         base.OnPointerUp(eventData);
         _IsTouching = false;
+      }
+
+      public void SetToRest() {
+        this.value = _RestingSliderValue;
       }
     }
   }
