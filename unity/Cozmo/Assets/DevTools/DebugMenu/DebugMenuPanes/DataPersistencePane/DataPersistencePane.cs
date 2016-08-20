@@ -70,7 +70,8 @@ namespace DataPersistence {
       // use reflection to change readonly field
       typeof(DataPersistenceManager).GetField("Data").SetValue(DataPersistenceManager.Instance, new SaveData());
       DataPersistenceManager.Instance.Save();
-      TryReloadHomeHub();
+
+      IntroManager.Instance.ForceBoot();
     }
 
     private void StartNewSessionButtonClicked() {
@@ -86,7 +87,7 @@ namespace DataPersistence {
         DataPersistenceManager.Instance.Save();
       }
 
-      TryReloadHomeHub();
+      IntroManager.Instance.ForceBoot();
     }
 
 

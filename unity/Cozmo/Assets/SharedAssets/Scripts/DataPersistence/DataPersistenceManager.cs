@@ -122,6 +122,7 @@ namespace DataPersistence {
 
     public TimelineEntryData StartNewSession() {
       TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today);
+      DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Add(newSession);
 
       bool needsNewGoals = true;
       // Onboarding special case, keep repeating goals until completed.
@@ -149,8 +150,11 @@ namespace DataPersistence {
         newSession.DailyGoals.Sort((Cozmo.UI.DailyGoal x, Cozmo.UI.DailyGoal y) => {
           return y.Priority.CompareTo(x.Priority);
         });
+
+        if (DailyGoalManager.Instance.OnRefreshDailyGoals != null) {
+          DailyGoalManager.Instance.OnRefreshDailyGoals.Invoke();
+        }
       }
-      DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Add(newSession);
       if (CurrentStreak > Data.DefaultProfile.MaximumStreak) {
         Data.DefaultProfile.MaximumStreak = CurrentStreak;
       }

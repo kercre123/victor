@@ -67,7 +67,8 @@ public class DailyGoalPanel : MonoBehaviour {
   public void UpdateDailySession() {
     var currentSession = DataPersistenceManager.Instance.CurrentSession;
     if (currentSession == null) {
-      currentSession = DataPersistenceManager.Instance.StartNewSession();
+      DAS.Error("DailyGoalPanel.UpdateDailySession", "CurrentSession is NULL!!!");
+      return;
     }
 
     SetDailyGoals(currentSession.DailyGoals);

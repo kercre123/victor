@@ -263,9 +263,6 @@ public class DailyGoalManager : MonoBehaviour {
       }
     }
     SendDasEventsForGoalGeneration(newGoals);
-    if (OnRefreshDailyGoals != null) {
-      OnRefreshDailyGoals.Invoke();
-    }
     return newGoals;
   }
 

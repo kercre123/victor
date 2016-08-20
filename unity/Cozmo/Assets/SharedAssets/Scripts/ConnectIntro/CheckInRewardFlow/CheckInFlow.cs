@@ -509,7 +509,9 @@ public class CheckInFlow : MonoBehaviour {
   }
 
   public void HandleRobotDisconnect() {
-    _ConnectionFlowInstance.HandleRobotDisconnect();
+    if (_ConnectionFlowInstance != null) {
+      _ConnectionFlowInstance.HandleRobotDisconnect();
+    }
   }
 
   #endregion

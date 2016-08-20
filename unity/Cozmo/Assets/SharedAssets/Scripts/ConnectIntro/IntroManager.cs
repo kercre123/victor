@@ -3,6 +3,14 @@ using Anki.Assets;
 
 public class IntroManager : MonoBehaviour {
 
+  private static IntroManager _Instance;
+
+  public static IntroManager Instance {
+    get {
+      return _Instance;
+    }
+  }
+
   [SerializeField]
   private GameObjectDataLink _FirstTimeConnectDialogPrefabData;
   private GameObject _FirstTimeConnectDialogInstance;
@@ -18,7 +26,14 @@ public class IntroManager : MonoBehaviour {
   private ScriptedSequences.ISimpleAsyncToken _IntroSequenceDoneToken;
 
   void Start() {
+    if (_Instance != null) {
+      Destroy(this);
+    }
+    else {
+      _Instance = this;
+    }
     Application.targetFrameRate = 30;
+
     Screen.sleepTimeout = SleepTimeout.NeverSleep;
     Input.gyro.enabled = true;
     Input.compass.enabled = true;
@@ -52,6 +67,24 @@ public class IntroManager : MonoBehaviour {
     Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues();
   }
 
+  public void ForceBoot() {
+    RobotEngineManager.Instance.StartIdleTimeout(0f, 0f);
+    if (null != _HubWorldInstance) {
+      _HubWorldInstance.DestroyHubWorld();
+    }
+
+    // if we are in a connection flow then they should handle the disconnects properly.
+    if (_FirstTimeConnectDialogInstance != null) {
+      _FirstTimeConnectDialogInstance.GetComponent<FirstTimeConnectDialog>().HandleRobotDisconnect();
+      return;
+    }
+    else if (_CheckInDialogInstance != null) {
+      _CheckInDialogInstance.GetComponent<CheckInFlow>().HandleRobotDisconnect();
+      return;
+    }
+
+    StartFlow();
+  }
 
   private void OnRobotDisconnect(object message) {
     if (null != _HubWorldInstance) {
