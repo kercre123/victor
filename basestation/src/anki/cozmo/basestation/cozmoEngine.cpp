@@ -669,6 +669,7 @@ void CozmoEngine::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
     }
     case ExternalInterface::MessageGameToEngineTag::SetEnableSOSLogging:
     {
+      #if ANKI_DEV_CHEATS
       if(Anki::Util::gLoggerProvider != nullptr) {
         Anki::Util::MultiLoggerProvider* multiLoggerProvider = dynamic_cast<Anki::Util::MultiLoggerProvider*>(Anki::Util::gLoggerProvider);
         if (multiLoggerProvider != nullptr) {
@@ -685,6 +686,7 @@ void CozmoEngine::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
 
         }
       }
+      #endif //ANKI_DEV_CHEATS
       break;
     }
     default:
