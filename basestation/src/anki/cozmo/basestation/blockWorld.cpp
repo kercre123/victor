@@ -1258,8 +1258,14 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
         ObservableObject* matchingObject = currFrameMatchIter->second;
         
         // Check if there are objects on top of this object that need to be moved since the
-        // object it's resting on has moved.
-        UpdateRotationOfObjectsStackedOn(matchingObject, objSeen.get());
+        // object it's resting on has moved. This only works if the robot is sitting still
+        // since we can then attribute any perceived change in (relative) position to the objects.
+        // Use IsMoving and WasMoving to be extra conservative.
+        if(!_robot->GetMoveComponent().IsMoving() &&
+           !_robot->GetVisionComponent().WasMovingTooFast(objSeen->GetLastObservedTime()))
+        {
+          UpdateRotationOfObjectsStackedOn(matchingObject, objSeen.get());
+        }
         
         // TODO: Do the same adjustment for blocks that are _below_ observed blocks? Does this make sense?
         
@@ -1373,6 +1379,12 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
     // If the object was already updated this timestamp then don't bother doing this.
     while(objectOnTop != nullptr && objectOnTop->GetLastObservedTime() != objSeen->GetLastObservedTime())
     {
+      if(_robot->GetCarryingObjects().count(objectOnTop->GetID()) > 0)
+      {
+        // Don't update a carried object that we are holding above another object
+        break;
+      }
+      
       // Get difference in position between top object's pose and the previous pose of the observed bottom object.
       // Apply difference to the new observed bottom pose to get the new top object pose.
       Pose3d topPose = objectOnTop->GetPose();
@@ -1384,7 +1396,7 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
       
       // P_top_wrt_origin = P_newBtm_wrt_origin * P_top_wrt_oldBtm:
       topPose.PreComposeWith(newObjectOnBottom->GetPose());
-      topPose.SetParent(objectOnTop->GetPose().GetParent());
+      topPose.SetParent(newObjectOnBottom->GetPose().GetParent());
       
       Util::SafeDelete(oldObjectOnBottom);
       oldObjectOnBottom = objectOnTop->CloneType();
