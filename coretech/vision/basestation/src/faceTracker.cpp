@@ -61,6 +61,11 @@ namespace Vision {
     return _pImpl->Update(frameOrig, faces, updatedIDs);
   }
   
+  void FaceTracker::Reset()
+  {
+    _pImpl->Reset();
+  }
+  
   bool FaceTracker::IsRecognitionSupported()
   {
     return Impl::IsRecognitionSupported();
@@ -87,7 +92,7 @@ namespace Vision {
   }
   
   Result FaceTracker::RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName,
-                                 Vision::LoadedKnownFace& renamedFace)
+                                 Vision::RobotRenamedEnrolledFace& renamedFace)
   {
     return _pImpl->RenameFace(faceID, oldName, newName, renamedFace);
   }

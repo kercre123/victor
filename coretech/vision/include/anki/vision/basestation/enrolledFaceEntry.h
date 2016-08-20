@@ -80,6 +80,8 @@ public:
   
   void SetTrackingID(TrackingID_t newID) { _prevTrackID = _trackID; _trackID = newID; }
   
+  void ClearTrackingID() { _prevTrackID = UnknownFaceID; _trackID = UnknownFaceID; }
+  
   void SetName(const std::string& newName) { _name = newName; }
   
   void SetScore(RecognitionScore newScore) { _score = newScore; }

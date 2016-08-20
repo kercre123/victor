@@ -130,6 +130,7 @@ structure ReadToolCodeCompleted {
 structure FaceEnrollmentCompleted {
   int_32 faceID,
   string name,
+  bool   neverSawValidFace,  // If true, faceID and name containt the (invalid, unenrollable) face we observed
   bool   saidName // Indicates whether the action played the say name animation at end (iff action completed successfully)
 }
 

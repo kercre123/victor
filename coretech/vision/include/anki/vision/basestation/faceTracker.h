@@ -45,6 +45,9 @@ namespace Vision {
                   std::list<TrackedFace>&     faces,
                   std::list<UpdatedFaceID>&   updatedIDs);
     
+    // Clear currently-tracked faces, e.g. in case camera has moved and could cause trouble
+    void Reset();
+    
     void EnableDisplay(bool enabled);
     
     void SetFaceEnrollmentMode(FaceEnrollmentPose pose,
@@ -57,12 +60,12 @@ namespace Vision {
     // returns the minimum distance between eyes a face has to have in order to be enrollable
     static float GetMinEyeDistanceForEnrollment();
     
-    Result   AssignNameToID(FaceID_t faceID, const std::string& name, FaceID_t mergeWithID);
+    Result AssignNameToID(FaceID_t faceID, const std::string& name, FaceID_t mergeWithID);
     
-    Result   EraseFace(FaceID_t faceID);
-    void     EraseAllFaces();
-    Result   RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName,
-                        Vision::LoadedKnownFace& renamedFace);
+    Result EraseFace(FaceID_t faceID);
+    void   EraseAllFaces();
+    Result RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName,
+                      Vision::RobotRenamedEnrolledFace& renamedFace);
     
     Result SaveAlbum(const std::string& albumName);
     Result LoadAlbum(const std::string& albumName, std::list<LoadedKnownFace>& loadedFaces);

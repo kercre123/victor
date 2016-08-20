@@ -298,6 +298,18 @@ namespace Vision {
     _isInitialized = false;
   } // ~Impl()
   
+  void FaceTracker::Impl::Reset()
+  {
+    INT32 result = OKAO_DT_MV_ResetTracking(_okaoDetectorHandle);
+    if(OKAO_NORMAL != result)
+    {
+      PRINT_NAMED_WARNING("FaceTrackerImpl.Reset.OkaoResetFailure",
+                          "OKAO result=%d", result);
+    }
+    
+    _recognizer.ClearAllTrackingData();
+  }
+  
   
   static inline void SetFeatureHelper(const POINT* faceParts, std::vector<s32>&& indices,
                                       TrackedFace::FeatureName whichFeature,
@@ -642,7 +654,7 @@ namespace Vision {
   }
   
   Result FaceTracker::Impl::RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName,
-                                       Vision::LoadedKnownFace& renamedFace)
+                                       Vision::RobotRenamedEnrolledFace& renamedFace)
   {
     return _recognizer.RenameFace(faceID, oldName, newName, renamedFace);
   }

@@ -59,7 +59,7 @@ namespace Vision {
     void     EraseAllFaces();
     
     Result RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName,
-                      Vision::LoadedKnownFace& renamedFace);
+                      Vision::RobotRenamedEnrolledFace& renamedFace);
     
     // Request that the recognizer work on assigning a new or existing FaceID
     // from its album of known faces to the specified trackerID, using the
@@ -78,6 +78,7 @@ namespace Vision {
     void SetAllowedEnrollments(s32 N, FaceID_t forFaceID);
     
     void RemoveTrackingID(TrackingID_t trackerID);
+    void ClearAllTrackingData();
     
     // Return existing or newly-computed recognitino info for a given tracking ID.
     // If a specific enrollment ID and count are in use, and the enrollment just
@@ -119,7 +120,13 @@ namespace Vision {
     
     Result UpdateExistingAlbumEntry(AlbumEntryID_t albumEntry, HFEATURE& hFeature, RecognitionScore score);
     
+    // Matches features to known faces, when features are done being computed
     Result RecognizeFace(FaceID_t& faceID, RecognitionScore& recognitionScore);
+    
+    // Uses the ID and score from RecognizeFace to update the data. Also checks
+    // for merge opportunities.
+    Result UpdateRecognitionData(const FaceID_t recognizedID,
+                                 const RecognitionScore score);
     
 		bool   IsMergingAllowed(FaceID_t toFaceID) const;
 		

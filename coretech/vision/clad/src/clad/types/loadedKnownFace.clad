@@ -16,8 +16,14 @@ namespace Anki {
 namespace Vision {
 
 message LoadedKnownFace {
-    int_64   secondsSinceEnrolled,
+    int_64   secondsSinceFirstEnrolled,
+    int_64   secondsSinceLastUpdated,
     int_64   secondsSinceLastSeen,
+    int_32   faceID,
+    string   name
+}
+
+message RobotRenamedEnrolledFace {
     int_32   faceID,
     string   name
 }

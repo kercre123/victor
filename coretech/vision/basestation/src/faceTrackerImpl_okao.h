@@ -46,6 +46,8 @@ namespace Vision {
                   std::list<TrackedFace>&     faces,
                   std::list<UpdatedFaceID>&   updatedIDs);
     
+    void Reset();
+    
     void EnableDisplay(bool enabled) { }
     
     static bool IsRecognitionSupported() { return true; }
@@ -62,7 +64,7 @@ namespace Vision {
     Result   EraseFace(FaceID_t faceID);
     void     EraseAllFaces();
     Result   RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName,
-                        Vision::LoadedKnownFace& renamedFace);
+                        Vision::RobotRenamedEnrolledFace& renamedFace);
 
     Result LoadAlbum(const std::string& albumName, std::list<LoadedKnownFace>& loadedFaces);
     Result SaveAlbum(const std::string& albumName);

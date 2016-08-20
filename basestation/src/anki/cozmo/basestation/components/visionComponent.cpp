@@ -2022,15 +2022,15 @@ namespace Cozmo {
   
   Result VisionComponent::RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName)
   {
-    Vision::LoadedKnownFace loadedKnownFace;
+    Vision::RobotRenamedEnrolledFace renamedFace;
     Lock();
-    Result result = _visionSystem->RenameFace(faceID, oldName, newName, loadedKnownFace);
+    Result result = _visionSystem->RenameFace(faceID, oldName, newName, renamedFace);
     Unlock();
     
     if(RESULT_OK == result)
     {
       SaveFaceAlbumToRobot();
-      _robot.Broadcast(ExternalInterface::MessageEngineToGame( std::move(loadedKnownFace) ));
+      _robot.Broadcast(ExternalInterface::MessageEngineToGame( std::move(renamedFace) ));
     }
     
     return result;

@@ -184,6 +184,11 @@ namespace Cozmo {
     Result Update(const VisionPoseData&      robotState,
                   const EncodedImage&        encodedImg);
     
+    // Helpers to check whether the body/head have changed more than a given amount
+    // since the previous frame/pose data were provided
+    bool HasBodyPoseChanged(const Radians& bodyAngleThresh, const f32 bodyPoseThresh_mm) const;
+    bool HasHeadAngleChanged(const Radians& headAngleThresh) const;
+    
     Result AddCalibrationImage(const Vision::Image& calibImg, const Anki::Rectangle<s32>& targetROI);
     Result ClearCalibrationImages();
     size_t GetNumStoredCalibrationImages() const { return _calibImages.size(); }
@@ -302,7 +307,7 @@ namespace Cozmo {
     void   EraseAllFaces();
     
     Result RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName,
-                      Vision::LoadedKnownFace& renamedFace);
+                      Vision::RobotRenamedEnrolledFace& renamedFace);
     
     void SetParams(const bool autoExposureOn,
                    const f32 exposureTime,

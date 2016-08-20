@@ -313,6 +313,38 @@
       "AnimName": "ag_freeplay_reacttoface_longname"
     },
     {
+      "CladEvent": "MeetCozmoGetIn",
+      "AnimName" : "ag_meetcozmo_getin"
+    },
+    {
+      "CladEvent": "MeetCozmoScanningIdle",
+      "AnimName" : "ag_meetcozmo_lookface"
+    },
+    {
+      "CladEvent": "MeetCozmoFirstEnrollmentSayName",
+      "AnimName" : "ag_meetcozmo_sayname_01"
+    },
+    {
+      "CladEvent": "MeetCozmoFirstEnrollmentRepeatName",
+      "AnimName" : "ag_meetcozmo_sayname_02"
+    },
+    {
+      "CladEvent": "MeetCozmoFirstEnrollmentCelebration",
+      "AnimName" : "ag_meetcozmo_celebration"
+    },
+    {
+      "CladEvent": "MeetCozmoReEnrollmentSayName",
+      "AnimName" : "ag_meetcozmo_reenrollment_sayname"
+    },
+    {
+      "CladEvent": "NothingToDoBored",
+      "AnimName": "ag_bored_event"
+    },
+    {
+      "CladEvent": "OnLearnedPlayerName",
+      "AnimName": "ag_freeplay_reacttoface_longname"
+    },
+    {
       "CladEvent": "OnSawNewNamedFace",
       "AnimName": "ag_interactFaces_Enrolled"
     },

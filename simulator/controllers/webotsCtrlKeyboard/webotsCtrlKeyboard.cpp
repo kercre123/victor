@@ -194,8 +194,8 @@ namespace Anki {
 
     void WebotsKeyboardController::HandleLoadedKnownFace(Vision::LoadedKnownFace const& msg)
     {
-      printf("HandleLoadedKnownFace: '%s' (ID:%d) enrolled %zd seconds ago, last seen %zd seconds ago\n",
-             msg.name.c_str(), msg.faceID, msg.secondsSinceEnrolled, msg.secondsSinceLastSeen);
+      printf("HandleLoadedKnownFace: '%s' (ID:%d) first enrolled %zd seconds ago, last updated %zd seconds ago, last seen %zd seconds ago\n",
+             msg.name.c_str(), msg.faceID, msg.secondsSinceFirstEnrolled, msg.secondsSinceLastUpdated, msg.secondsSinceLastSeen);
     }
     
     void WebotsKeyboardController::HandleDebugString(ExternalInterface::DebugString const& msg)
@@ -215,6 +215,11 @@ namespace Anki {
           auto & completionInfo = msg.completionInfo.Get_faceEnrollmentCompleted();
           if(msg.result == ActionResult::SUCCESS)
           {
+            if(completionInfo.neverSawValidFace == true)
+            {
+              printf("ERROR: EnrollNamedFace returned success with neverSawValidFace=true!");
+            }
+            
             printf("RobotEnrolledFace: Added '%s' with ID=%d\n",
                    completionInfo.name.c_str(), completionInfo.faceID);
             
@@ -225,6 +230,9 @@ namespace Anki {
 //            sayText.style = SayTextStyle::Name_Normal;
 //            
 //            SendMessage(MessageGameToEngine(std::move(sayText)));
+          } else if(completionInfo.neverSawValidFace) {
+            printf("RobotEnrolledFace FAILED because it never saw a valid face. Saw '%s' ID=%d instead\n",
+                   completionInfo.name.c_str(), completionInfo.faceID);
           } else {
             printf("RobotEnrolledFace FAILED\n");
           }
@@ -2071,7 +2079,7 @@ namespace Anki {
                       
                       printf("Enrolling face ID %d with name '%s'\n", GetLastObservedFaceID(), userName.c_str());
                       ExternalInterface::EnrollNamedFace enrollNamedFace;
-                      enrollNamedFace.faceID      = GetLastObservedFaceID();
+                      enrollNamedFace.faceID      = 0; //GetLastObservedFaceID();
                       enrollNamedFace.mergeIntoID = enrollToID;
                       enrollNamedFace.name        = userName;
                       enrollNamedFace.sequence    = FaceEnrollmentSequence::Simple;

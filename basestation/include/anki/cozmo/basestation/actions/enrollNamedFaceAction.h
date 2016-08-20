@@ -74,7 +74,9 @@ namespace Cozmo {
     // Member variables:
     Vision::FaceID_t          _faceID = Vision::UnknownFaceID;
     Vision::FaceID_t          _saveID = Vision::UnknownFaceID;
+    Vision::FaceID_t          _observedID = Vision::UnknownFaceID;
     std::string               _faceName;
+    std::string               _observedName;
     Radians                   _lastRelBodyAngle = 0.f;
     IActionRunner*            _action = nullptr;
     TimeStamp_t               _lastModeChangeTime_ms;
@@ -88,8 +90,9 @@ namespace Cozmo {
     const f32                 _kMaxTotalBackup_mm = 50.f;
     bool                      _enrollmentCountReached = false;
     bool                      _saveToRobot = true;
-    bool                      _idlePushed = false;
+    bool                      _idlePopped = true;
     bool                      _sayNameWhenDone = true;
+    bool                      _needToAbort = false;
     
     struct EnrollStep {
       Vision::FaceEnrollmentPose pose;

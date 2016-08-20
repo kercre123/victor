@@ -256,188 +256,226 @@ namespace Vision {
     
   } // SanityCheckBookkeeping()
   
+  Result FaceRecognizer::UpdateRecognitionData(const FaceID_t recognizedID,
+                                               const RecognitionScore score)
+  {
+    // See who we're currently recognizing this tracker ID as
+    FaceID_t faceID = UnknownFaceID;
+    auto iter = _trackingToFaceID.find(_detectionInfo.nID);
+    if(iter != _trackingToFaceID.end()) {
+      faceID = iter->second;
+    }
+    
+    if(UnknownFaceID == recognizedID) {
+      // We did not recognize the tracked face in its current position, just leave
+      // the faceID alone
+      
+      // (Nothing to do)
+      
+    } else if(UnknownFaceID == faceID) {
+      // We have not yet assigned a recognition ID to this tracker ID. Use the
+      // one we just found via recognition.
+      PRINT_CH_DEBUG("FaceRecognizer", "UpdateRecognitionData.RecognizedNewTrackingID",
+                     "Tracking ID=%d recognized as FaceID=%d",
+                     -_detectionInfo.nID, recognizedID);
+      
+      faceID = recognizedID;
+      
+    } else if(faceID != recognizedID) {
+      // We recognized this face as a different ID than the one currently
+      // assigned to the tracking ID. Trust the tracker that they are in
+      // fact the same and merge the two, keeping the original (first enrolled)
+      auto faceIDenrollData = _enrollmentData.find(faceID);
+      if(faceIDenrollData == _enrollmentData.end()) {
+        // The tracker's assigned ID got removed (via merge while doing RecognizeFaces).
+        faceID = recognizedID;
+      } else {
+        
+        auto recIDenrollData  = _enrollmentData.find(recognizedID);
+        ASSERT_NAMED(recIDenrollData  != _enrollmentData.end(),
+                     "FaceRecognizer.UpdateRecognitionData.MissingEnrollmentData");
+        
+        FaceID_t mergeTo = Vision::UnknownFaceID, mergeFrom = Vision::UnknownFaceID;
+        
+        if(false == recIDenrollData->second.IsForThisSessionOnly() &&
+           true  == faceIDenrollData->second.IsForThisSessionOnly())
+        {
+          // If the recognized ID is a "permanent" one, and the tracked ID
+          // is for this session only, make sure to keep the "permanent" one
+          mergeFrom = faceID;
+          mergeTo   = recognizedID;
+        }
+        else if(true  == recIDenrollData->second.IsForThisSessionOnly() &&
+                false == faceIDenrollData->second.IsForThisSessionOnly())
+        {
+          // If the tracked ID is a "permanent" one, and the recognized ID
+          // is for this session only, make sure to keep the "permanent" one
+          mergeFrom = recognizedID;
+          mergeTo   = faceID;
+        }
+        else if(false == recIDenrollData->second.IsForThisSessionOnly() &&
+                false == faceIDenrollData->second.IsForThisSessionOnly())
+        {
+          ASSERT_NAMED(!faceIDenrollData->second.GetName().empty() &&
+                       !recIDenrollData->second.GetName().empty(),
+                       "FaceRecognizer.UpdateRecognitionData.PermanentIDsWithNoNames");
+          
+          // Both IDs are named and permanent. Issue a warning, because it's
+          // unclear we'd want to merge two separately enrolled people! We
+          // hope this confusion never happens.
+          // NOTE: Debug version displays names, warning does not (so they don't get logged)
+          PRINT_CH_DEBUG("FaceRecognizer", "UpdateRecognitionData.ConfusedTwoNamedIDs_Debug",
+                         "While tracking face %d with ID=%d (%s), recognized as ID=%d (%s). Not merging!",
+                         -_detectionInfo.nID,
+                         faceID, faceIDenrollData->second.GetName().c_str(),
+                         recognizedID, recIDenrollData->second.GetName().c_str());
+          PRINT_NAMED_WARNING("FaceRecognizer.UpdateRecognitionData.ConfusedTwoNamedIDs",
+                              "While tracking face %d with ID=%d, recognized as ID=%d. Not merging!",
+                              -_detectionInfo.nID, faceID, recognizedID);
+          
+          RemoveTrackingID(_detectionInfo.nID);
+          faceID = recognizedID; // So that we'll udpate the tracking ID to face ID info below
+          
+          // NOTE: Leave mergeTo / mergeFrom set to unknown ID to signal _not_ to merge below
+        }
+        else {
+          // Both IDs are for this session only. Keep the oldest one.
+          ASSERT_NAMED(faceIDenrollData->second.IsForThisSessionOnly() &&
+                       recIDenrollData->second.IsForThisSessionOnly(),
+                       "FaceRecognizer.UpdateRecognitionData.BothIDsNotSessionOnly");
+          
+          if(faceIDenrollData->second.GetEnrollmentTime() <= recIDenrollData->second.GetEnrollmentTime())
+          {
+            mergeFrom = recognizedID;
+            mergeTo   = faceID;
+          } else {
+            mergeFrom = faceID;
+            mergeTo   = recognizedID;
+          }
+          
+          if(kFaceRecognitionExtraDebug)
+          {
+            PRINT_CH_INFO("FaceRecognizer", "UpdateRecognitionData.MergeBasedOnEnrollmentTime",
+                          "Merging ID=%d into ID=%d (%d enrolled at %s, %d enrolled at %s)",
+                          mergeFrom,  mergeTo, faceID,
+                          GetTimeString(faceIDenrollData->second.GetEnrollmentTime()).c_str(),
+                          recognizedID, GetTimeString(recIDenrollData->second.GetEnrollmentTime()).c_str());
+          }
+        }
+        
+        if(mergeFrom != Vision::UnknownFaceID && mergeTo != Vision::UnknownFaceID)
+        {
+          // Only merge the face we are currently tracking into another record
+          // if it passes the enrollment criteria from the tracker.
+          const bool isMergingAllowed = IsMergingAllowed(mergeTo);
+          if(mergeFrom == recognizedID || isMergingAllowed)
+          {
+            PRINT_CH_INFO("FaceRecognizer", "UpdateRecognitionData.MergingFaces",
+                          "Tracking %d: merging ID=%d into ID=%d (merging allowed=%d)",
+                          -_detectionInfo.nID, mergeFrom, mergeTo, isMergingAllowed);
+            
+            Result mergeResult = MergeFaces(mergeTo, mergeFrom);
+            
+            if(RESULT_OK != mergeResult) {
+              PRINT_NAMED_WARNING("FaceRecognizer.UpdateRecognitionData.MergeFail",
+                                  "Trying to merge %d with %d", faceID, recognizedID);
+            }
+          }
+          else if(mergeFrom == _enrollmentID)
+          {
+            PRINT_CH_INFO("FaceRecognizer", "UpdateRecognitionData.UpdateEnrollmentID",
+                          "Updating enrollment ID %d->%d while to tracking %d (not merging)",
+                          _enrollmentID, mergeTo, -_detectionInfo.nID);
+            _enrollmentID = mergeTo;
+          } else if(kFaceRecognitionExtraDebug) {
+            PRINT_CH_INFO("FaceRecognizer", "UpdateRecognitionData.NotMergingTrackedFace",
+                          "Enrollment disabled: not merging tracked face ID=%d into recognized ID=%d",
+                          faceID, recognizedID);
+          }
+          
+          // Either way we want to update the ID associated with this tracker ID
+          faceID = mergeTo;
+        }
+      }
+      
+    } else {
+      // We recognized this person as the same ID already assigned to its tracking ID
+      ASSERT_NAMED(faceID == recognizedID,
+                   "FaceRecognizer.UpdateRecognitionData.UnexpectedRecognizedID");
+    }
+    
+    // Update the stored faceID assigned to this trackerID
+    // (This creates an entry for the current trackerID if there wasn't one already,
+    //  and an entry for this faceID if there wasn't one already)
+    if(UnknownFaceID != recognizedID) {
+      _trackingToFaceID[_detectionInfo.nID] = faceID;
+      _enrollmentData[faceID].SetScore( score );
+    }
+   
+    return RESULT_OK;
+    
+  } // UpdateRecognitionData()
+  
+  
   EnrolledFaceEntry FaceRecognizer::GetRecognitionData(INT32 forTrackingID, s32& enrollmentCountReached)
   {
     if(ProcessingState::FeaturesReady == _state)
     {
-      //      PRINT_CH_DEBUG("FaceRecognizer", "GetRecognitionData.EnrollmentStatus",
-      //                        "ForTrackingID:%d EnrollmentCount=%d EnrollID=%d",
-      //                        -_detectionInfo.nID, _enrollmentCount, _enrollmentID);
-      
-      // Feature extraction thread is done: finish the rest of the recognition
-      // process so we can start accepting new requests to recognize
-      FaceID_t recognizedID = UnknownFaceID;
-      RecognitionScore score = 0;
-      Result result = RecognizeFace(recognizedID, score);
-      
-      // For simulating slow processing (e.g. on a device)
-      //std::this_thread::sleep_for(std::chrono::milliseconds(250));
-      
-      if(RESULT_OK == result)
+      if(_detectionInfo.nID == UnknownFaceID)
       {
-        // See who we're currently recognizing this tracker ID as
-        FaceID_t faceID = UnknownFaceID;
-        auto iter = _trackingToFaceID.find(_detectionInfo.nID);
-        if(iter != _trackingToFaceID.end()) {
-          faceID = iter->second;
-        }
+        // If the tracker ID is set to Unknown, it's because a ClearTrackingData call
+        // was received while the recognition thread was running on a detection.
+        // That detection ID is no longer valid, so drop the result on the floor.
+        // This should only be possible when running asynchronously.
+        ASSERT_NAMED(_isRunningAsync, "FaceRecognizer.GetRecognitionData.InvalidTrackIDinSyncMode");
+        PRINT_CH_INFO("FaceRecognizer", "GetRecognitionData.DroppingFeaturesComputedWhileClearing", "");
+      }
+      else
+      {
+        // Verbose, but useful for enrollment debugging
+        //  PRINT_CH_DEBUG("FaceRecognizer", "GetRecognitionData.EnrollmentStatus",
+        //                 "ForTrackingID:%d EnrollmentCount=%d EnrollID=%d",
+        //                 -_detectionInfo.nID, _enrollmentCount, _enrollmentID);
         
-        if(UnknownFaceID == recognizedID) {
-          // We did not recognize the tracked face in its current position, just leave
-          // the faceID alone
-          
-          // (Nothing to do)
-          
-        } else if(UnknownFaceID == faceID) {
-          // We have not yet assigned a recognition ID to this tracker ID. Use the
-          // one we just found via recognition.
-          faceID = recognizedID;
-          
-        } else if(faceID != recognizedID) {
-          // We recognized this face as a different ID than the one currently
-          // assigned to the tracking ID. Trust the tracker that they are in
-          // fact the same and merge the two, keeping the original (first enrolled)
-          auto faceIDenrollData = _enrollmentData.find(faceID);
-          if(faceIDenrollData == _enrollmentData.end()) {
-            // The tracker's assigned ID got removed (via merge while doing RecognizeFaces).
-            faceID = recognizedID;
-          } else {
-
-            auto recIDenrollData  = _enrollmentData.find(recognizedID);
-            ASSERT_NAMED(recIDenrollData  != _enrollmentData.end(),
-                         "FaceRecognizer.GetRecognitionData.MissingEnrollmentData");
-            
-            FaceID_t mergeTo = Vision::UnknownFaceID, mergeFrom = Vision::UnknownFaceID;
-            
-            if(false == recIDenrollData->second.IsForThisSessionOnly() &&
-               true  == faceIDenrollData->second.IsForThisSessionOnly())
-            {
-              // If the recognized ID is a "permanent" one, and the tracked ID
-              // is for this session only, make sure to keep the "permanent" one
-              mergeFrom = faceID;
-              mergeTo   = recognizedID;
-            }
-            else if(true  == recIDenrollData->second.IsForThisSessionOnly() &&
-                    false == faceIDenrollData->second.IsForThisSessionOnly())
-            {
-              // If the tracked ID is a "permanent" one, and the recognized ID
-              // is for this session only, make sure to keep the "permanent" one
-              mergeFrom = recognizedID;
-              mergeTo   = faceID;
-            }
-            else if(false == recIDenrollData->second.IsForThisSessionOnly() &&
-                    false == faceIDenrollData->second.IsForThisSessionOnly())
-            {
-              ASSERT_NAMED(!faceIDenrollData->second.GetName().empty() &&
-                           !recIDenrollData->second.GetName().empty(),
-                           "FaceRecognizer.GetRecognitionData.PermanentIDsWithNoNames");
-              
-              // Both IDs are named and permanent. Issue a warning, because it's
-              // unclear we'd want to merge two separately enrolled people! We
-              // hope this confusion never happens.
-              // NOTE: Debug version displays names, warning does not (so they don't get logged)
-              PRINT_CH_DEBUG("FaceRecognizer", "GetRecognitionData.ConfusedTwoNamedIDs_Debug",
-                             "While tracking face %d with ID=%d (%s), recognized as ID=%d (%s). Not merging!",
-                             -_detectionInfo.nID,
-                             faceID, faceIDenrollData->second.GetName().c_str(),
-                             recognizedID, recIDenrollData->second.GetName().c_str());
-              PRINT_NAMED_WARNING("FaceRecognizer.GetRecognitionData.ConfusedTwoNamedIDs",
-                                  "While tracking face %d with ID=%d, recognized as ID=%d. Not merging!",
-                                  -_detectionInfo.nID, faceID, recognizedID);
-              
-              // NOTE: Leave mergeTo / mergeFrom set to unknown ID to signal _not_ to merge below
-            }
-            else {
-              // Both IDs are for this session only. Keep the oldest one.
-              ASSERT_NAMED(faceIDenrollData->second.IsForThisSessionOnly() &&
-                           recIDenrollData->second.IsForThisSessionOnly(),
-                           "FaceRecognizer.GetRecognitionData.BothIDsNotSessionOnly");
-              
-              if(faceIDenrollData->second.GetEnrollmentTime() <= recIDenrollData->second.GetEnrollmentTime())
-              { 
-                mergeFrom = recognizedID;
-                mergeTo   = faceID;
-              } else {
-                mergeFrom = faceID;
-                mergeTo   = recognizedID;
-              }
-              
-              if(kFaceRecognitionExtraDebug)
-              {
-                PRINT_CH_INFO("FaceRecognizer", "GetRecognitionData.MergeBasedOnEnrollmentTime",
-                              "Merging ID=%d into ID=%d (%d enrolled at %s, %d enrolled at %s)",
-                              mergeFrom,  mergeTo, faceID,
-                              GetTimeString(faceIDenrollData->second.GetEnrollmentTime()).c_str(),
-                              recognizedID, GetTimeString(recIDenrollData->second.GetEnrollmentTime()).c_str());
-              }
-            }
-            
-            if(mergeFrom != Vision::UnknownFaceID && mergeTo != Vision::UnknownFaceID)
-            {
-              // Only merge the face we are currently tracking into another record
-              // if it passes the enrollment criteria from the tracker.
-              const bool isMergingAllowed = IsMergingAllowed(mergeTo);
-              if(mergeFrom == recognizedID || isMergingAllowed)
-              {
-                PRINT_CH_INFO("FaceRecognizer", "GetRecognitionData.MergingFaces",
-                                 "Tracking %d: merging ID=%d into ID=%d (merging allowed=%d)",
-                                 -_detectionInfo.nID, mergeFrom, mergeTo, isMergingAllowed);
-                Result mergeResult = MergeFaces(mergeTo, mergeFrom);
-                
-                if(RESULT_OK != mergeResult) {
-                  PRINT_NAMED_WARNING("FaceRecognizer.GetRecognitionData.MergeFail",
-                                      "Trying to merge %d with %d", faceID, recognizedID);
-                }
-              }
-              else if(mergeFrom == _enrollmentID)
-              {
-                PRINT_CH_INFO("FaceRecognizer", "GetRecognitionData.UpdateEnrollmentID",
-                                 "Updating enrollment ID %d->%d while to tracking %d (not merging)",
-                                 _enrollmentID, mergeTo, -_detectionInfo.nID);
-                _enrollmentID = mergeTo;
-              } else if(kFaceRecognitionExtraDebug) {
-                PRINT_CH_INFO("FaceRecognizer", "GetRecognitionData.NotMergingTrackedFace",
-                              "Enrollment disabled: not merging tracked face ID=%d into recognized ID=%d",
-                              faceID, recognizedID);
-              }
-              
-              // Either way we want to update the ID associated with this tracker ID
-              faceID = mergeTo;
-            }
+        // Feature extraction thread is done: finish the rest of the recognition
+        // process so we can start accepting new requests to recognize
+        FaceID_t recognizedID = UnknownFaceID;
+        RecognitionScore score = 0;
+        Result result = RecognizeFace(recognizedID, score);
+        
+        // For simulating slow processing (e.g. on a device)
+        //std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        
+        if(RESULT_OK == result)
+        {
+          result = UpdateRecognitionData(recognizedID, score);
+          if(RESULT_OK != result)
+          {
+            PRINT_NAMED_ERROR("FaceRecongnizer.GetRecognitionData.UpdateRecognitionDataFailed", "");
           }
-          
-        } else {
-          // We recognized this person as the same ID already assigned to its tracking ID
-          ASSERT_NAMED(faceID == recognizedID,
-                       "FaceRecognizer.GetRecognitionData.UnexpectedRecognizedID");
+        }
+        else
+        {
+          PRINT_NAMED_ERROR("FaceRecognizer.GetRecognitionData.RecognizeFaceFailed", "");
         }
         
-        // Update the stored faceID assigned to this trackerID
-        // (This creates an entry for the current trackerID if there wasn't one already,
-        //  and an entry for this faceID if there wasn't one already)
-        if(UnknownFaceID != recognizedID) {
-          _trackingToFaceID[_detectionInfo.nID] = faceID;
-          _enrollmentData[faceID].SetScore( score );
+        if(DEBUG_ENROLLMENT_IMAGES)
+        {
+          DisplayEnrollmentImages();
         }
         
-      } else {
-        PRINT_NAMED_ERROR("FaceRecognizer.Run.RecognitionFailed", "");
+        if(ANKI_DEVELOPER_CODE)
+        {
+          const Result sanityResult = SanityCheckBookkeeping(_okaoFaceAlbum,
+                                                             _enrollmentData,
+                                                             _albumEntryToFaceID);
+          ASSERT_NAMED(sanityResult == RESULT_OK,
+                       "FaceRecognizer.GetRecognitionData.SanityCheckFailed");
+        }
       }
       
-      if(DEBUG_ENROLLMENT_IMAGES)
-      {
-        DisplayEnrollmentImages();
-      } // if(DEBUG_ENROLLMENT_IMAGES)
-      
-      if(ANKI_DEVELOPER_CODE)
-      {
-        const Result sanityResult = SanityCheckBookkeeping(_okaoFaceAlbum,
-                                                           _enrollmentData,
-                                                           _albumEntryToFaceID);
-        ASSERT_NAMED(sanityResult == RESULT_OK,
-                     "FaceRecognizer.GetRecognitionData.SanityCheckFailed");
-      }
-      
+      // Whether or not we used the computed features, mark that we are ready to
+      // process more
       _state = ProcessingState::Idle;
       
     } // if(ProcessingState::FeaturesReady == _state)
@@ -494,7 +532,36 @@ namespace Vision {
   
   void FaceRecognizer::RemoveTrackingID(INT32 trackerID)
   {
-    _trackingToFaceID.erase(trackerID);
+    // Remove the trackerID from the LUT for face IDs, and clear it from
+    // any associated enrollment entry as well
+    auto iter = _trackingToFaceID.find(trackerID);
+    if(iter != _trackingToFaceID.end())
+    {
+      const FaceID_t faceID = iter->second;
+      auto enrollIter = _enrollmentData.find(faceID);
+      if(enrollIter != _enrollmentData.end())
+      {
+        enrollIter->second.ClearTrackingID();
+      }
+      _trackingToFaceID.erase(iter);
+    }
+  }
+  
+  void FaceRecognizer::ClearAllTrackingData()
+  {
+    for(auto & enrollData : _enrollmentData)
+    {
+      enrollData.second.ClearTrackingID();
+    }
+    _trackingToFaceID.clear();
+    
+    if(_isRunningAsync)
+    {
+      // If we're in the middle of computing features on the other thread, then
+      // we need to mark that the recognition data that comes back is associated
+      // with a now-invalidated track ID
+      _detectionInfo.nID = UnknownFaceID;
+    }
   }
   
   void FaceRecognizer::Run()
@@ -820,8 +887,8 @@ namespace Vision {
     // Keep the tracking ID current
     if(_detectionInfo.nID != enrollData.GetTrackingID()) {
       PRINT_CH_INFO("FaceRecognizer", "UpdateExistingUser.UpdateTrackID",
-                       "Update trackID for face %d: %d -> %d",
-                       faceID, -enrollData.GetTrackingID(), -_detectionInfo.nID);
+                    "Update trackID for face %d: %d -> %d",
+                    faceID, -enrollData.GetTrackingID(), -_detectionInfo.nID);
       _trackingToFaceID.erase(enrollData.GetTrackingID());
       enrollData.SetTrackingID(_detectionInfo.nID);
     }
@@ -1713,12 +1780,17 @@ namespace Vision {
                             "OKAO Result=%d", okaoResult);
         return RESULT_FAIL;
       }
+      
+      PRINT_CH_INFO("FaceRecognizer", "GetSerializedAlbum.AlbumSize",
+                    "Album with %d permanent faces = %d bytes (%.1f bytes/person)",
+                    permanentIdCount, albumSize, (f32)albumSize/(f32)permanentIdCount);
+      
     } // if(permanentIdCount == 0)
-
-    PRINT_CH_INFO("FaceRecognizer", "GetSerializedAlbum.AlbumSize",
-                     "Album with %d permanent faces = %d bytes (%.1f bytes/person)",
-                     permanentIdCount, albumSize, (f32)albumSize/(f32)permanentIdCount);
-    
+    else
+    {
+      PRINT_CH_INFO("FaceRecognizer", "GetSerializedAlbum.NoNamedIDs", "");
+    }
+  
     return RESULT_OK;
   } // GetSerializedAlbum()
   
@@ -1840,6 +1912,7 @@ namespace Vision {
     
     // These should not be necessary since all the RemoveUser calls should have done it, but...
     _enrollmentData.clear();
+    _albumEntryToFaceID.clear();
     OkaoResult okaoResult = OKAO_FR_ClearAlbum(_okaoFaceAlbum);
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_WARNING("FaceRecognizer.EraseAllFaces.OkaoClearAlbumFailed",
@@ -1851,7 +1924,7 @@ namespace Vision {
   } // EraseAllFaces()
   
   Result FaceRecognizer::RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName,
-                                    Vision::LoadedKnownFace& renamedFace)
+                                    Vision::RobotRenamedEnrolledFace& renamedFace)
   {
     auto enrollIter = _enrollmentData.find(faceID);
     if(enrollIter != _enrollmentData.end())
@@ -1864,14 +1937,9 @@ namespace Vision {
         PRINT_CH_DEBUG("FaceRecognizer", "RenameFace.Success_DEBUG", "Renamed ID=%d from '%s' to '%s'",
                        faceID, oldName.c_str(), enrollIter->second.GetName().c_str());
         
-        using namespace std::chrono;
-        auto const nowTime = system_clock::now();
-        
         // Construct and then swap to make sure we miss fields that get added to LoadedKnownFace later
-        Vision::LoadedKnownFace temp(GetSecondsSince(nowTime, enrollIter->second.GetEnrollmentTime()),
-                                     GetSecondsSince(nowTime, enrollIter->second.FindLastSeenTime()),
-                                     enrollIter->second.GetFaceID(),
-                                     enrollIter->second.GetName());
+        Vision::RobotRenamedEnrolledFace temp(enrollIter->second.GetFaceID(),
+                                              enrollIter->second.GetName());
         std::swap(temp, renamedFace);
         
         return RESULT_OK;
@@ -1904,7 +1972,7 @@ namespace Vision {
     
     if(RESULT_OK != lastResult) {
       PRINT_NAMED_WARNING("FaceRecognizer.GetSerializedData.GetSerializedAlbumFail", "");
-    } else {
+    } else if(!albumData.empty()) {
       lastResult = GetSerializedEnrollData(enrollData);
       if(RESULT_OK != lastResult) {
         PRINT_NAMED_WARNING("FaceRecognizer.GetSerializedData.GetSerializedAlbumFail", "");
@@ -1957,6 +2025,7 @@ namespace Vision {
                            entry.second.GetName().c_str(), entry.second.GetFaceID());
             
             loadedFaces.emplace_back(LoadedKnownFace(GetSecondsSince(nowTime, entry.second.GetEnrollmentTime()),
+                                                     GetSecondsSince(nowTime, entry.second.GetLastUpdateTime()),
                                                      GetSecondsSince(nowTime, entry.second.FindLastSeenTime()),
                                                      entry.second.GetFaceID(),
                                                      entry.second.GetName()));
@@ -2327,6 +2396,7 @@ namespace Vision {
                 EnrolledFaceEntry entry(faceID, json[idStr]);
                 
                 namesAndIDs.emplace_back( LoadedKnownFace(GetSecondsSince(nowTime, entry.GetEnrollmentTime()),
+                                                          GetSecondsSince(nowTime, entry.GetLastUpdateTime()),
                                                           GetSecondsSince(nowTime, entry.FindLastSeenTime()),
                                                           entry.GetFaceID(),
                                                           entry.GetName()) );

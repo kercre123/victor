@@ -103,10 +103,8 @@ namespace Cozmo {
     }
     
     // Always notify game: let it decide whether or not it cares or knows about oldID
-    ExternalInterface::RobotChangedObservedFaceID msg;
-    msg.oldID = oldID;
-    msg.newID = newID;
-    _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+    using namespace ExternalInterface;
+    _robot.Broadcast(MessageEngineToGame(RobotChangedObservedFaceID(oldID, newID)));
 
     return RESULT_OK;
   }

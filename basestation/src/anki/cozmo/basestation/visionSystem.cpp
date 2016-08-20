@@ -111,12 +111,27 @@ namespace Cozmo {
   CONSOLE_VAR(f32,  kGroundMotionCentroidPercentileX, "Vision.MotionDetection", 0.05f); // In robot coordinates (Most important for pounce: distance from robot)
   CONSOLE_VAR(f32,  kGroundMotionCentroidPercentileY, "Vision.MotionDetection", 0.50f); // In robot coordinates
   
+  // Tight constraints on max movement allowed to attempt frame differencing for "motion detection"
+  CONSOLE_VAR(f32,  kMotionDetectionMaxHeadAngleChange_deg, "Vision.MotionDetection", 0.1f);
+  CONSOLE_VAR(f32,  kMotionDetectionMaxBodyAngleChange_deg, "Vision.MotionDetection", 0.1f);
+  CONSOLE_VAR(f32,  kMotionDetectionMaxPoseChange_mm,       "Vision.MotionDetection", 0.5f);
+  
   // Min/max size of calibration pattern blobs and distance between them
   CONSOLE_VAR(float, kMaxCalibBlobPixelArea,         "Vision.Calibration", 800.f);
   CONSOLE_VAR(float, kMinCalibBlobPixelArea,         "Vision.Calibration", 20.f);
   CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f);
   
-  CONSOLE_VAR(bool, kIgnoreFacesBelowRobot, "Vision.FaceDetection", true);
+  // Loose constraints on how fast Cozmo can move and still trust tracker (which has no
+  // knowledge of or access to camera movement). Rough means of deciding these angles:
+  // look at angle created by distance between two faces seen close together at the max
+  // distance we care about seeing them from. If robot turns by that angle between two
+  // consecutve frames, it is possible the tracker will be confused and jump from one
+  // to the other.
+  CONSOLE_VAR(f32,  kFaceTrackingMaxHeadAngleChange_deg, "Vision.FaceDetection", 8.f);
+  CONSOLE_VAR(f32,  kFaceTrackingMaxBodyAngleChange_deg, "Vision.FaceDetection", 8.f);
+  CONSOLE_VAR(f32,  kFaceTrackingMaxPoseChange_mm,       "Vision.FaceDetection", 10.f);
+  CONSOLE_VAR(bool, kIgnoreFacesBelowRobot,              "Vision.FaceDetection", true);
+  
   
   // Vision processing scheduler (COZMO-3218) will probably affects this
   CONSOLE_VAR_RANGED(u8, kMarkerDetectionFrequency, "Vision.Performance", 1, 1, 10);
@@ -1479,7 +1494,7 @@ namespace Cozmo {
   }
   
   Result VisionSystem::RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName,
-                                  Vision::LoadedKnownFace& renamedFace)
+                                  Vision::RobotRenamedEnrolledFace& renamedFace)
   {
     return _faceTracker->RenameFace(faceID, oldName, newName, renamedFace);
   }
@@ -1502,6 +1517,20 @@ namespace Cozmo {
       PRINT_NAMED_ERROR("VisionSystem.Update.NullFaceTracker",
                         "In detecting faces mode, but face tracker is null.");
       return RESULT_FAIL;
+    }
+    
+    // If we've moved too much, reset the tracker so we don't accidentally mistake
+    // one face for another. (If one face it was tracking from the last image is
+    // now on top of a nearby face in the image, the tracker can't tell if that's
+    // because the face moved or the camera moved.)
+    const bool hasHeadMoved = HasHeadAngleChanged(DEG_TO_RAD_F32(kFaceTrackingMaxHeadAngleChange_deg));
+    const bool hasBodyMoved = HasBodyPoseChanged(DEG_TO_RAD_F32(kFaceTrackingMaxBodyAngleChange_deg),
+                                                 kFaceTrackingMaxPoseChange_mm);
+    if(hasHeadMoved || hasBodyMoved)
+    {
+      PRINT_NAMED_DEBUG("VisionSystem.Update.ResetFaceTracker",
+                        "HeadMoved:%d BodyMoved:%d", hasHeadMoved, hasBodyMoved);
+      _faceTracker->Reset();
     }
     
     if(!markerQuads.empty())
@@ -1639,19 +1668,40 @@ namespace Cozmo {
 #   endif // USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID
   } // GetCentroid()
   
+  bool VisionSystem::HasBodyPoseChanged(const Radians& bodyAngleThresh, const f32 bodyPoseThresh_mm) const
+  {
+    const bool isXPositionSame = NEAR(_poseData.poseStamp.GetPose().GetTranslation().x(),
+                                      _prevPoseData.poseStamp.GetPose().GetTranslation().x(),
+                                      bodyPoseThresh_mm);
+    
+    const bool isYPositionSame = NEAR(_poseData.poseStamp.GetPose().GetTranslation().y(),
+                                      _prevPoseData.poseStamp.GetPose().GetTranslation().y(),
+                                      bodyPoseThresh_mm);
+    const bool isAngleSame =  NEAR(_poseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
+                                   _prevPoseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
+                                   bodyAngleThresh.ToFloat());
+    
+    const bool isPoseSame = isXPositionSame && isYPositionSame && isAngleSame;
+    
+    return !isPoseSame;
+  }
+                          
+  bool VisionSystem::HasHeadAngleChanged(const Radians& headAngleThresh) const
+  {
+    const bool headSame =  NEAR(_poseData.poseStamp.GetHeadAngle(),
+                                _prevPoseData.poseStamp.GetHeadAngle(),
+                                headAngleThresh.ToFloat());
+    
+    return !headSame;
+  }
   
   Result VisionSystem::DetectMotion(const Vision::ImageRGB &imageIn)
   {
-    const bool headSame =  NEAR(_poseData.poseStamp.GetHeadAngle(),
-                                _prevPoseData.poseStamp.GetHeadAngle(), DEG_TO_RAD_F32(0.1));
+    const bool headSame = !HasHeadAngleChanged(DEG_TO_RAD_F32(kMotionDetectionMaxHeadAngleChange_deg));
     
-    const bool poseSame = (NEAR(_poseData.poseStamp.GetPose().GetTranslation().x(),
-                                _prevPoseData.poseStamp.GetPose().GetTranslation().x(), .5f) &&
-                           NEAR(_poseData.poseStamp.GetPose().GetTranslation().y(),
-                                _prevPoseData.poseStamp.GetPose().GetTranslation().y(), .5f) &&
-                           NEAR(_poseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
-                                _prevPoseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
-                                DEG_TO_RAD_F32(0.1)));
+    const bool poseSame = !HasBodyPoseChanged(DEG_TO_RAD_F32(kMotionDetectionMaxBodyAngleChange_deg),
+                                              kMotionDetectionMaxPoseChange_mm);
+    
     Vision::ImageRGB image;
     f32 scaleMultiplier = 1.f;
     if(kUseHalfResMotionDetection) {

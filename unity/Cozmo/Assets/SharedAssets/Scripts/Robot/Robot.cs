@@ -439,14 +439,15 @@ public class Robot : IRobot {
 
   private void HandleLoadedKnownFace(Anki.Vision.LoadedKnownFace loadedKnownFaceMessage) {
     EnrolledFaces.Add(loadedKnownFaceMessage.faceID, loadedKnownFaceMessage.name);
-    EnrolledFacesLastEnrolledTime.Add(loadedKnownFaceMessage.faceID, Time.time - loadedKnownFaceMessage.secondsSinceEnrolled);
+    // TODO: hook up secondsSinceFirstEnrolled when concept of "how long Cozmo has known this person is needed
+    EnrolledFacesLastEnrolledTime.Add(loadedKnownFaceMessage.faceID, Time.time - loadedKnownFaceMessage.secondsSinceLastUpdated);
     EnrolledFacesLastSeenTime.Add(loadedKnownFaceMessage.faceID, Time.time - loadedKnownFaceMessage.secondsSinceLastSeen);
   }
 
   public bool IsLightCubeInPickupRange(LightCube lightCube) {
     var bounds = new Bounds(
-                 new Vector3(CozmoUtil.kOriginToLowLiftDDistMM, 0, CozmoUtil.kBlockLengthMM * 0.5f),
-                 Vector3.one * CozmoUtil.kBlockLengthMM);
+                   new Vector3(CozmoUtil.kOriginToLowLiftDDistMM, 0, CozmoUtil.kBlockLengthMM * 0.5f),
+                   Vector3.one * CozmoUtil.kBlockLengthMM);
 
     return bounds.Contains(WorldToCozmo(lightCube.WorldPosition));
   }
@@ -573,12 +574,12 @@ public class Robot : IRobot {
     var tag = GetNextIdTag();
     RobotEngineManager.Instance.Message.QueueCompoundAction =
       Singleton<QueueCompoundAction>.Instance.Initialize(
-        robotID: ID,
-        idTag: tag,
-        numRetries: 0,
-        parallel: isParallel,
-        position: queueActionPosition,
-        actions: actions);
+      robotID: ID,
+      idTag: tag,
+      numRetries: 0,
+      parallel: isParallel,
+      position: queueActionPosition,
+      actions: actions);
     RobotEngineManager.Instance.SendMessage();
 
     _RobotCallbacks.Add(new RobotCallbackWrapper(tag, callback));
@@ -896,8 +897,8 @@ public class Robot : IRobot {
   private ObservedObject AddObservedObject(int id, uint factoryId, ObjectType objectType) {
     ObservedObject createdObject = null;
     bool isCube = ((objectType == ObjectType.Block_LIGHTCUBE1)
-                || (objectType == ObjectType.Block_LIGHTCUBE2)
-                || (objectType == ObjectType.Block_LIGHTCUBE3));
+                  || (objectType == ObjectType.Block_LIGHTCUBE2)
+                  || (objectType == ObjectType.Block_LIGHTCUBE3));
     if (isCube) {
       LightCube lightCube = null;
       if (!LightCubes.TryGetValue(id, out lightCube)) {
@@ -1367,7 +1368,7 @@ public class Robot : IRobot {
       speed_mmps,
       dist_mm,
       shouldPlayAnimation
-     ),
+    ),
       callback,
       queueActionPosition);
   }
