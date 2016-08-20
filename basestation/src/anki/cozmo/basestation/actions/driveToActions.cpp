@@ -502,6 +502,7 @@ namespace Anki {
           ASSERT_NAMED(tempObject != nullptr, "DriveToPlaceCarriedObjectAction.Init.DynamicCastFail");
           
           tempObject->InitPose(_placementPose, PoseState::Unknown);
+          tempObject->SetBeingCarried(true);
           
           // Call parent class's init helper
           result = DriveToObjectAction::InitHelper(tempObject);
