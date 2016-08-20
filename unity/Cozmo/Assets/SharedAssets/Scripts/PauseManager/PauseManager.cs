@@ -5,28 +5,21 @@ using System.Collections;
 namespace Cozmo {
   public class PauseManager : MonoBehaviour {
 
-    [Range(-1f, 120f)]
-    public float TimeTilFaceOff_s;
-
-    [Range(-1f, 120f)]
-    public float TimeTilDisconnect_s;
-
     private static PauseManager _Instance;
     private bool _IsPaused = false;
     private AlertView _GoToSleepDialog = null;
     private bool _IsOnChargerToSleep = false;
-
-    [SerializeField]
-    [Range(0f, 1f)]
-    private float _FilterSmoothingWeight; // = 0.99f;
-    [SerializeField]
-    [Range(3f, 5f)]
-    private float _LowBatteryVoltageValue; // = 3.75f;
+    private bool _StartedIdleTimeout = false;
 
     private const float _kMaxValidBatteryVoltage = 4.2f;
     private float _LowPassFilteredVoltage = _kMaxValidBatteryVoltage;
-    private bool _LowBatteryAlertTriggered = false;
     private AlertView _LowBatteryDialog = null;
+
+    private AlertView _SleepCozmoConfirmDialog;
+
+    public bool IsConfirmSleepDialogOpen { get { return (null != _SleepCozmoConfirmDialog); } }
+    public bool IsGoToSleepDialogOpen { get { return (null != _GoToSleepDialog); } }
+    public bool IsLowBatteryDialogOpen { get { return (null != _LowBatteryDialog); } }
 
     public static PauseManager Instance {
       get {
@@ -43,6 +36,8 @@ namespace Cozmo {
       }
     }
 
+    private Cozmo.Settings.DefaultSettingsValuesConfig Settings { get { return Cozmo.Settings.DefaultSettingsValuesConfig.Instance; } }
+
     private void Awake() {
       Instance = this;
     }
@@ -56,17 +51,10 @@ namespace Cozmo {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       // Battery voltage gets initialized to the float maxvalue, so ignore it until it's valid 
       if (null != robot && robot.BatteryVoltage <= _kMaxValidBatteryVoltage) {
-        _LowPassFilteredVoltage = _LowPassFilteredVoltage * _FilterSmoothingWeight + (1.0f - _FilterSmoothingWeight) * robot.BatteryVoltage;
+        _LowPassFilteredVoltage = _LowPassFilteredVoltage * Settings.FilterSmoothingWeight + (1.0f - Settings.FilterSmoothingWeight) * robot.BatteryVoltage;
 
-        if (!_LowBatteryAlertTriggered && !_IsPaused && !_IsOnChargerToSleep && _LowPassFilteredVoltage < _LowBatteryVoltageValue) {
-          CloseBatteryDialog();
-          _LowBatteryAlertTriggered = true;
-          Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab);
-          alertView.SetCloseButtonEnabled(true);
-          alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
-          alertView.TitleLocKey = LocalizationKeys.kConnectivityCozmoLowBatteryTitle;
-          alertView.DescriptionLocKey = LocalizationKeys.kConnectivityCozmoLowBatteryDesc;
-          _LowBatteryDialog = alertView;
+        if (!_IsPaused && !IsConfirmSleepDialogOpen && !IsGoToSleepDialogOpen && _LowPassFilteredVoltage < Settings.LowBatteryVoltageValue) {
+          OpenLowBatteryDialog();
         }
       }
     }
@@ -90,20 +78,16 @@ namespace Cozmo {
       if (!_IsPaused && shouldBePaused) {
         DAS.Debug("PauseManager.HandleApplicationPause", "Application being paused");
         _IsPaused = true;
-        CloseBatteryDialog();
+        CloseLowBatteryDialog();
+        CloseConfirmSleepDialog();
 
         Cozmo.HomeHub.HomeHub hub = Cozmo.HomeHub.HomeHub.Instance;
         if (null != hub) {
           hub.CloseMiniGameImmediately();
-
-          Robot robot = (Robot)RobotEngineManager.Instance.CurrentRobot;
-          if (null != robot) {
-            robot.ResetRobotState(null);
-          }
         }
 
         if (!_IsOnChargerToSleep) {
-          RobotEngineManager.Instance.StartIdleTimeout(faceOffTime_s: TimeTilFaceOff_s, disconnectTime_s: TimeTilDisconnect_s);
+          StartIdleTimeout(Settings.AppBackground_TimeTilSleep_sec, Settings.AppBackground_TimeTilDisconnect_sec);
         }
       }
       // When unpausing, put the robot back into freeplay
@@ -112,7 +96,7 @@ namespace Cozmo {
         _IsPaused = false;
 
         if (!_IsOnChargerToSleep) {
-          RobotEngineManager.Instance.CancelIdleTimeout();
+          StopIdleTimeout();
         }
 
         Cozmo.HomeHub.HomeHub hub = Cozmo.HomeHub.HomeHub.Instance;
@@ -125,33 +109,102 @@ namespace Cozmo {
       }
     }
 
+    private void HandleConfirmSleepCozmoButtonTapped() {
+      StartIdleTimeout(Settings.PlayerSleepCozmo_TimeTilSleep_sec, Settings.PlayerSleepCozmo_TimeTilDisconnect_sec);
+      OpenGoToSleepDialogAndFreezeUI();
+    }
+
+    // Handles message sent from engine when the player puts cozmo on the charger.
     private void HandleGoingToSleep(Anki.Cozmo.ExternalInterface.GoingToSleep msg) {
-      CloseBatteryDialog();
-      CloseSleepDialog();
+      CloseLowBatteryDialog();
+      CloseConfirmSleepDialog();
       _IsOnChargerToSleep = true;
-      Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
-      alertView.SetCloseButtonEnabled(false);
-      alertView.TitleLocKey = LocalizationKeys.kConnectivityCozmoSleepTitle;
-      alertView.DescriptionLocKey = LocalizationKeys.kConnectivityCozmoSleepDesc;
-      _GoToSleepDialog = alertView;
+      OpenGoToSleepDialogAndFreezeUI();
     }
 
     private void HandleDisconnection(Anki.Cozmo.ExternalInterface.RobotDisconnected msg) {
-      CloseBatteryDialog();
-      CloseSleepDialog();
+      CloseAllDialogs();
+      _StartedIdleTimeout = false;
       _IsOnChargerToSleep = false;
-      _LowBatteryAlertTriggered = false;
       _LowPassFilteredVoltage = _kMaxValidBatteryVoltage;
     }
 
-    private void CloseSleepDialog() {
+    private void StartIdleTimeout(float sleep_sec, float disconnect_sec) {
+      if (!_StartedIdleTimeout) {
+        Robot robot = (Robot)RobotEngineManager.Instance.CurrentRobot;
+        if (null != robot) {
+          robot.ResetRobotState(null);
+        }
+
+        RobotEngineManager.Instance.StartIdleTimeout(faceOffTime_s: sleep_sec, disconnectTime_s: disconnect_sec);
+        _StartedIdleTimeout = true;
+      }
+    }
+
+    private void StopIdleTimeout() {
+      _StartedIdleTimeout = false;
+      RobotEngineManager.Instance.CancelIdleTimeout();
+    }
+
+    public void OpenConfirmSleepCozmoDialog() {
+      CloseLowBatteryDialog();
+      if (!IsConfirmSleepDialogOpen) {
+        _SleepCozmoConfirmDialog = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab, preInitFunc: null,
+                                                    overrideBackgroundDim: null, overrideCloseOnTouchOutside: false);
+        _SleepCozmoConfirmDialog.Initialize(false);
+        _SleepCozmoConfirmDialog.SetCloseButtonEnabled(false);
+        _SleepCozmoConfirmDialog.SetPrimaryButton(LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalButtonConfirm,
+                                                HandleConfirmSleepCozmoButtonTapped);
+        _SleepCozmoConfirmDialog.SetSecondaryButton(LocalizationKeys.kButtonCancel);
+        _SleepCozmoConfirmDialog.TitleLocKey = LocalizationKeys.kSettingsSleepCozmoPanelConfirmationModalTitle;
+        _SleepCozmoConfirmDialog.DescriptionLocKey = LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalDescription;
+      }
+    }
+
+    private void OpenGoToSleepDialogAndFreezeUI() {
+      CloseLowBatteryDialog();
+      CloseConfirmSleepDialog();
+      if (!IsGoToSleepDialogOpen) {
+        Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
+        alertView.SetCloseButtonEnabled(false);
+        alertView.TitleLocKey = LocalizationKeys.kConnectivityCozmoSleepTitle;
+        alertView.DescriptionLocKey = LocalizationKeys.kConnectivityCozmoSleepDesc;
+        _GoToSleepDialog = alertView;
+      }
+    }
+
+    private void OpenLowBatteryDialog() {
+      if (!IsLowBatteryDialogOpen) {
+        Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab);
+        alertView.SetCloseButtonEnabled(true);
+        alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
+        alertView.TitleLocKey = LocalizationKeys.kConnectivityCozmoLowBatteryTitle;
+        alertView.DescriptionLocKey = LocalizationKeys.kConnectivityCozmoLowBatteryDesc;
+        _LowBatteryDialog = alertView;
+      }
+    }
+
+    private void CloseAllDialogs() {
+      CloseConfirmSleepDialog();
+      CloseGoToSleepDialog();
+      CloseLowBatteryDialog();
+    }
+
+    private void CloseConfirmSleepDialog() {
+      if (null != _SleepCozmoConfirmDialog) {
+        _SleepCozmoConfirmDialog.CloseView();
+        _SleepCozmoConfirmDialog = null;
+      }
+    }
+
+    private void CloseGoToSleepDialog() {
       if (null != _GoToSleepDialog) {
         _GoToSleepDialog.CloseView();
         _GoToSleepDialog = null;
       }
     }
 
-    private void CloseBatteryDialog() {
+    private void CloseLowBatteryDialog() {
       if (null != _LowBatteryDialog) {
         _LowBatteryDialog.CloseView();
         _LowBatteryDialog = null;

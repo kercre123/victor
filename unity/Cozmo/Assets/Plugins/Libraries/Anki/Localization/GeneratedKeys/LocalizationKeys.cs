@@ -411,6 +411,11 @@ public static class LocalizationKeys {
   public const string kSettingsVolumePanelRobotToggleLow = "settings.volumePanel.robotToggle.low";
   public const string kSettingsVolumePanelRobotToggleMedium = "settings.volumePanel.robotToggle.medium";
   public const string kSettingsVolumePanelRobotToggleHigh = "settings.volumePanel.robotToggle.high";
+  public const string kSettingsSleepCozmoPanelButtonSleepCozmo = "settings.sleepCozmoPanel.button.sleepCozmo";
+  public const string kSettingsSleepCozmoPanelButtonReturnToTitle = "settings.sleepCozmoPanel.button.returnToTitle";
+  public const string kSettingsSleepCozmoPanelConfirmationModalTitle = "settings.sleepCozmoPanel.confirmationModal.title";
+  public const string kSettingsSleepCozmoPanelConfirmModalDescription = "settings.sleepCozmoPanel.confirmModal.description";
+  public const string kSettingsSleepCozmoPanelConfirmModalButtonConfirm = "settings.sleepCozmoPanel.confirmModal.button.confirm";
 
   #endregion
 

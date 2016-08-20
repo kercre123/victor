@@ -38,5 +38,20 @@
   },
   "settings.volumePanel.robotToggle.high": {
     "translation": "High"
+  }, 
+  "settings.sleepCozmoPanel.button.sleepCozmo":{
+    "translation": "Sleep Cozmo"
+  },
+  "settings.sleepCozmoPanel.button.returnToTitle":{
+    "translation": "(Return To Title)"
+  },
+  "settings.sleepCozmoPanel.confirmationModal.title":{
+    "translation": "Exit to Title?"
+  },
+  "settings.sleepCozmoPanel.confirmModal.description":{
+    "translation": "Disconnecting will put Cozmo to sleep and take you back to the Title Screen."
+  },
+  "settings.sleepCozmoPanel.confirmModal.button.confirm":{
+    "translation": "Disconnect"
   }
 }
