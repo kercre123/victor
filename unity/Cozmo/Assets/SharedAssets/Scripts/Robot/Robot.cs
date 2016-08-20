@@ -279,7 +279,7 @@ public class Robot : IRobot {
 
   private PathMotionProfile PathMotionProfileDefault;
 
-  private uint _LastIdTag;
+  private uint _NextIdTag = (uint)Anki.Cozmo.ActionConstants.FIRST_GAME_TAG;
 
   private ObservedObject _CarryingObject = null;
 
@@ -424,7 +424,16 @@ public class Robot : IRobot {
   }
 
   private uint GetNextIdTag() {
-    return ++_LastIdTag;
+    // Post increment _NextIdTag (and loop within the GAME_TAG range)
+    uint nextIdTag = _NextIdTag;
+    if (_NextIdTag == (uint)Anki.Cozmo.ActionConstants.LAST_GAME_TAG) {
+      _NextIdTag = (uint)Anki.Cozmo.ActionConstants.FIRST_GAME_TAG;
+    }
+    else {
+      ++_NextIdTag;
+    }
+
+    return nextIdTag;
   }
 
   private int SortByDistance(ObservedObject a, ObservedObject b) {

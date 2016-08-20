@@ -622,9 +622,7 @@ class Cozmo(event.Dispatcher):
         Returns:
             A :class:`cozmo.robot.TurnInPlace` action object
         '''
-        # TODO: This action does not return success on completion atm!  Get a 255 tag instead.
         # TODO: add support for absolute vs relative positioning, speed & accel options
-        # See https://ankiinc.atlassian.net/browse/COZMO-3232
         action = self.turn_in_place_factory(angle=angle,
                 conn=self.conn, robot=self, dispatch_parent=self)
         self._action_dispatcher._send_single_action(action)

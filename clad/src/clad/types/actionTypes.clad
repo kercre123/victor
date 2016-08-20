@@ -11,7 +11,16 @@ namespace Anki {
 namespace Cozmo {
 
 enum no_cpp_class uint_32 ActionConstants {
-  INVALID_TAG = 0
+  INVALID_TAG      =          0,
+
+  FIRST_GAME_TAG   =    0000001,
+  LAST_GAME_TAG    =    1000000,
+
+  FIRST_SDK_TAG    =    1000001,
+  LAST_SDK_TAG     =    2000000,
+
+  FIRST_ENGINE_TAG =    2000001,
+  LAST_ENGINE_TAG  = 4294967295
 }
 
 // TODO: Convert to uint_8 or int_16

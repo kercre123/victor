@@ -29,8 +29,38 @@ namespace Anki {
   
   namespace Cozmo {
     
-    u32 IActionRunner::sTagCounter = 10000;
+    // Ensure that nobody sets bad tag ranges (we want them all to be mutually exclusive
+    static_assert(ActionConstants::FIRST_GAME_TAG   > ActionConstants::INVALID_TAG,      "Game Tag Overlap");
+    static_assert(ActionConstants::FIRST_SDK_TAG    > ActionConstants::LAST_GAME_TAG,    "Sdk Tag Overlap");
+    static_assert(ActionConstants::FIRST_ENGINE_TAG > ActionConstants::LAST_SDK_TAG,     "Engine Tag Overlap");
+    static_assert(ActionConstants::LAST_GAME_TAG    > ActionConstants::FIRST_GAME_TAG,   "Bad Game Tag Range");
+    static_assert(ActionConstants::LAST_SDK_TAG     > ActionConstants::FIRST_SDK_TAG,    "Bad Sdk Tag Range");
+    static_assert(ActionConstants::LAST_ENGINE_TAG  > ActionConstants::FIRST_ENGINE_TAG, "Bad Engine Tag Range");
+    
+  
+    u32 IActionRunner::sTagCounter = ActionConstants::FIRST_ENGINE_TAG;
     std::set<u32> IActionRunner::sInUseTagSet;
+    
+    
+    u32 IActionRunner::NextIdTag()
+    {
+      // Post increment IActionRunner::sTagCounter (and loop within the ENGINE_TAG range)
+      u32 nextIdTag = IActionRunner::sTagCounter;
+      if (IActionRunner::sTagCounter == ActionConstants::LAST_ENGINE_TAG)
+      {
+        IActionRunner::sTagCounter = ActionConstants::FIRST_ENGINE_TAG;
+      }
+      else
+      {
+        ++IActionRunner::sTagCounter;
+      }
+      
+      assert((nextIdTag >= ActionConstants::FIRST_ENGINE_TAG) && (nextIdTag <= ActionConstants::LAST_ENGINE_TAG));
+      assert(nextIdTag != ActionConstants::INVALID_TAG);
+      
+      return nextIdTag;
+    }
+    
     
     IActionRunner::IActionRunner(Robot& robot,
                                  const std::string name,
@@ -43,12 +73,13 @@ namespace Anki {
     , _tracks(trackToLock)
     {
       // Assign every action a unique tag that is not currently in use
-      while (IActionRunner::sTagCounter == static_cast<u32>(ActionConstants::INVALID_TAG) ||
-             !IActionRunner::sInUseTagSet.insert(IActionRunner::sTagCounter).second) {
-        ++IActionRunner::sTagCounter;
+      _idTag = NextIdTag();
+      
+      while (!IActionRunner::sInUseTagSet.insert(_idTag).second) {
+        PRINT_NAMED_ERROR("IActionRunner.TagCounterClash", "TagCounters shouldn't overlap");
+        _idTag = NextIdTag();
       }
       
-      _idTag = IActionRunner::sTagCounter++;
       _customTag = _idTag;
       
       // This giant switch is necessary to set the appropriate completion union tags in order

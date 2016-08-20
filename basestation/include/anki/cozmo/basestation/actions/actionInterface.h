@@ -153,6 +153,8 @@ namespace Anki {
       bool IsRunning() const { return _state == ActionResult::RUNNING; }
       bool HasStarted() const { return _state != ActionResult::FAILURE_NOT_STARTED; }
       
+      static u32 NextIdTag();
+      
     private:
 
       u8            _numRetriesRemaining = 0;

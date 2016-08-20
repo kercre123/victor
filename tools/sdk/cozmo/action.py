@@ -193,19 +193,24 @@ class Action(event.Dispatcher):
 
 
 class _ActionDispatcher(event.Dispatcher):
-    _last_action_id = 0
+    _next_action_id = _clad_to_game_cozmo.ActionConstants.FIRST_SDK_TAG
 
     def __init__(self, robot, **kw):
         super().__init__(**kw)
         self.robot = robot
         self._in_progress = {}
 
-    def _next_action_id(self):
-        self.__class__._last_action_id += 1
-        return self.__class__._last_action_id
+    def _get_next_action_id(self):
+        # Post increment _current_action_id (and loop within the SDK_TAG range)
+        next_action_id = self.__class__._next_action_id
+        if self.__class__._next_action_id == _clad_to_game_cozmo.ActionConstants.LAST_SDK_TAG:
+            self.__class__._next_action_id = _clad_to_game_cozmo.ActionConstants.FIRST_SDK_TAG
+        else:
+            self.__class__._next_action_id += 1
+        return next_action_id
 
     def _send_single_action(self, action, position=0, num_retries=0):
-        action_id = self._next_action_id()
+        action_id = self._get_next_action_id()
         action.robot = self.robot
 
         if len(self._in_progress) > 0:
@@ -231,12 +236,37 @@ class _ActionDispatcher(event.Dispatcher):
         self._in_progress[action_id] = action
         action._start()
 
+    def _is_sdk_action_id(self, action_id):
+        return (action_id >= _clad_to_game_cozmo.ActionConstants.FIRST_SDK_TAG) and (action_id <= _clad_to_game_cozmo.ActionConstants.LAST_SDK_TAG)
+
+    def _is_engine_action_id(self, action_id):
+        return (action_id >= _clad_to_game_cozmo.ActionConstants.FIRST_ENGINE_TAG) and (action_id <= _clad_to_game_cozmo.ActionConstants.LAST_ENGINE_TAG)
+
+    def _is_game_action_id(self, action_id):
+        return (action_id >= _clad_to_game_cozmo.ActionConstants.FIRST_GAME_TAG) and (action_id <= _clad_to_game_cozmo.ActionConstants.LAST_GAME_TAG)
+
+    def _action_id_type(self, action_id):
+        if self._is_sdk_action_id(action_id):
+            return "sdk"
+        elif self._is_engine_action_id(action_id):
+            return "engine"
+        elif self._is_game_action_id(action_id):
+            return "game"
+        else:
+            return "unknown"
+
     def _recv_msg_robot_completed_action(self, evt, *, msg):
         action_id = msg.idTag
+        is_sdk_action = self._is_sdk_action_id(action_id)
         action = self._in_progress.get(action_id)
         if action is None:
-            logger.error('Received completed action message for unknown action_id=%s', action_id)
+            if is_sdk_action:
+                logger.error('Received completed action message for unknown SDK action_id=%s', action_id)
             return
+        else:
+            if not is_sdk_action:
+                action_id_type = self._action_id_type(action_id)
+                logger.error('Received completed action message for sdk-known %s action_id=%s', action_id_type, action_id)
         del self._in_progress[action_id]
         # XXX this should generate a real event, not a msg
         # should also dispatch to self so the parent can be notified.
