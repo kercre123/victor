@@ -300,7 +300,7 @@ void Process_TestState(const RobotInterface::TestState& state)
         resetPositions(state.positionsFixed);
         SetMode(RobotInterface::FTM_Sleepy);
       }
-      else if ((state.positionsFixed[3] - minPositions[3]) > 100000)
+      else if ((state.positionsFixed[3] - minPositions[3]) > 80000)
       {
         lastExecTime = now;
         modeTimeout = now + 30000000;
@@ -332,7 +332,7 @@ void Process_TestState(const RobotInterface::TestState& state)
                          UpgradeController::GetFirmwareVersion(), UpgradeController::GetBuildTime(),
                          state.battVolt10x);
       }
-      if ((state.positionsFixed[3] - minPositions[3]) > 100000)
+      if ((state.positionsFixed[3] - minPositions[3]) > 80000)
       {
         lastExecTime = now;
         modeTimeout = now + MENU_TIMEOUT;
