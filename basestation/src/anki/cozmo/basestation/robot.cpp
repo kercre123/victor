@@ -1040,7 +1040,14 @@ Result Robot::Update(bool ignoreVisionModes)
     }
         
   } // if (GetCamera().IsCalibrated())
-      
+  
+  // If anything in updating block world caused a localization update, notify
+  // the physical robot now:
+  if(_needToSendLocalizationUpdate) {
+    SendAbsLocalizationUpdate();
+    _needToSendLocalizationUpdate = false;
+  }
+  
   ///////// MemoryMap ///////////
       
   // update navigation memory map
@@ -2000,12 +2007,16 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
     GetPose().GetRotationAxis().z(),
     GetPoseFrameID());
   */
-      
-  // Send the ground truth pose that was computed instead of the new current
-  // pose and let the robot deal with updating its current pose based on the
-  // history that it keeps.
-  SendAbsLocalizationUpdate();
-      
+  
+  // Don't actually send the update here, because it's possible that we are going to
+  // call LocalizeToObject more than once in this tick, which could cause the pose
+  // frame ID to update multiple times, replacing what's stored for this timestamp
+  // in pose history. We don't want to send a pose frame to the robot that's about
+  // to be replaced in history and never used again (causing errors in looking for it
+  // when we later receive a RobotState message with that invalidated frameID), so just
+  // set this flag to do the localization update once out in Update().
+  _needToSendLocalizationUpdate = true;
+  
   return RESULT_OK;
 } // LocalizeToObject()
     

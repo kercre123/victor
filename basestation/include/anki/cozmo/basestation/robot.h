@@ -886,6 +886,7 @@ protected:
   // May be true even if not localized to an object, if robot has not been picked up
   bool              _isLocalized = true;
   bool              _localizedToFixedObject; // false until robot sees a _fixed_ mat
+  bool              _needToSendLocalizationUpdate = false;
   
   // Stores (squared) distance to the closest observed marker of the object we're localized to
   f32               _localizedMarkerDistToCameraSq;
