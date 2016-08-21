@@ -513,9 +513,6 @@ def run_tests(tests, log_folder, show_graphics, timeout, forward_webots_log_leve
       UtilLog.info('Running test: {test_controller} in world {world_file}'.format(
                       test_controller=test_controller, world_file=world_file))
 
-      log_file_name = get_log_file_path(log_folder, test_controller, world_file, cur_time)
-      UtilLog.info('results will be logged to {file}'.format(file=log_file_name))
-
       source_file_path = get_subpath("simulator/worlds", world_file)
       generate_file_with_replace(GENERATED_FILE_PATH, source_file_path,
                                  WORLD_FILE_TEST_NAME_PLACEHOLDER, test_controller)
@@ -536,6 +533,10 @@ def run_tests(tests, log_folder, show_graphics, timeout, forward_webots_log_leve
         if num_retries_counting_up > 0:
           UtilLog.info("Retry #{retry_number}".format(retry_number=num_retries_counting_up))
 
+        log_file_name = get_log_file_path(log_folder, test_controller, world_file, cur_time, num_retries_counting_up)
+        UtilLog.info('results will be logged to {file}'.format(file=log_file_name))
+        log_file_paths.append(log_file_name)
+      
         output = ThreadOutput()
         run_webots_thread = threading.Thread(target=run_webots, args=[output, GENERATED_FILE_PATH, 
                                                                       show_graphics, log_file_name])
@@ -572,7 +573,6 @@ def run_tests(tests, log_folder, show_graphics, timeout, forward_webots_log_leve
 
         test_result = ResultCode.succeeded  # pylint: disable=redefined-variable-type
 
-      log_file_paths.append(log_file_name)
       total_error_count += error_count
       total_warning_count += warning_count
 
@@ -652,7 +652,7 @@ def get_build_folder(build_type):
   assert build_type in BuildType
   return get_subpath("build/mac", build_type.name)
 
-def get_log_file_path(log_folder, test_name, world_file_name, timestamp=""):
+def get_log_file_path(log_folder, test_name, world_file_name, timestamp="", retry_number=0):
   """Returns what the log file names should be.
 
   log_folder (string) --
@@ -666,12 +666,19 @@ def get_log_file_path(log_folder, test_name, world_file_name, timestamp=""):
 
   timestamp (string, optional)--
     Timestamp of the test run. Will be included in the file name if provided.
+    
+  retry_number (integer)--
+    Which retry of the run this is (0 if it is the original run).
   """
 
+  retry_string = ""
+  if retry_number > 0:
+    retry_string = "_retry{0}".format(retry_number)
+    
   if timestamp == "":
-    file_name = "webots_out_{0}_{1}.txt".format(test_name, world_file_name)
+    file_name = "webots_out_{0}_{1}{2}.txt".format(test_name, world_file_name, retry_string)
   else:
-    file_name = "webots_out_{0}_{1}_{2}.txt".format(test_name, world_file_name, timestamp)
+    file_name = "webots_out_{0}_{1}_{2}{3}.txt".format(test_name, world_file_name, timestamp, retry_string)
 
   log_file_path = os.path.join(log_folder, file_name)
 
@@ -750,7 +757,7 @@ def main(args):
   parser.add_argument('--timeout',
                       dest='timeout',
                       action='store',
-                      default=120,
+                      default=180,
                       type=int,
                       help="""Time limit for each webots test before marking it as failure and killing the webots instance.""")
 

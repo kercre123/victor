@@ -82,7 +82,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
       MakeSynchronous();
       DisableRandomPathSpeeds();
       StartMovieConditional("StackBlockBehavior");
-      //TakeScreenshotsAtInterval("StackBlockBehavior", 1.f);
+      TakeScreenshotsAtInterval("StackBlockBehavior", 1.f);
       
       // make sure rolling is unlocked
       UnlockId unlock = UnlockIdsFromString("StackTwoCubes");
@@ -115,9 +115,10 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
     {
       CST_ASSERT( _startedBehavior == 0, "Behavior shouldnt start because we delocalized (should only have one block)" );
 
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                       NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL) &&
-                                       GetNumObjects() == 1, DEFAULT_TIMEOUT)
+      IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                            !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                            NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL),
+                                            GetNumObjects() == 1)
       {
         ExternalInterface::QueueSingleAction m;
         m.robotID = 1;
@@ -158,7 +159,7 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
           m.idTag = 15;
           m.numRetries = 1;
           uint8_t isAbsolute = 0; // relative turn
-          m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( DEG_TO_RAD(45), PI_F, 500.0f, isAbsolute, 1 ));
+          m.action.Set_turnInPlace(ExternalInterface::TurnInPlace( DEG_TO_RAD(30), PI_F, 500.0f, isAbsolute, 1 ));
           ExternalInterface::MessageGameToEngine message;
           message.Set_QueueSingleAction(m);
           SendMessage(message);
@@ -175,11 +176,11 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
 
       // NOTE: at some point in the future this might fail because GetNumObjects() might not return things not
       // in our current origin. In that case, the test will need to be updated
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                       NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL) &&
-                                       GetNumObjects() == 2, DEFAULT_TIMEOUT)        
+      IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                            !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                            NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL),
+                                            GetNumObjects() == 2)
       {
-
         _behaviorCheckTime = GetSupervisor()->getTime();
         SET_STATE(DontStartBehavior);        
       }
@@ -328,14 +329,14 @@ s32 CST_StackBlockBehavior::UpdateSimInternal()
 
       const float stackingTolerance_mm = 40.0f;
       
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(
-        !IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-        GetCarryingObjectID() == -1 &&
-        // (x,y) positions are nearly on top of each other
-        NEAR(pose0.GetTranslation().x(), pose1.GetTranslation().x(), stackingTolerance_mm) &&
-        NEAR(pose0.GetTranslation().y(), pose1.GetTranslation().y(), stackingTolerance_mm) &&
-        // difference between z's is about a block height
-        NEAR( ABS(pose1.GetTranslation().z() - pose0.GetTranslation().z()), 44.0f, 10.0f), 20)
+      IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(20,
+                                            !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                            GetCarryingObjectID() == -1,
+                                            // (x,y) positions are nearly on top of each other
+                                            NEAR(pose0.GetTranslation().x(), pose1.GetTranslation().x(), stackingTolerance_mm),
+                                            NEAR(pose0.GetTranslation().y(), pose1.GetTranslation().y(), stackingTolerance_mm),
+                                            // difference between z's is about a block height
+                                            NEAR( ABS(pose1.GetTranslation().z() - pose0.GetTranslation().z()), 44.0f, 10.0f))
       {
         StopMovie();
         CST_EXIT();

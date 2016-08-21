@@ -26,12 +26,12 @@ namespace Anki {
       
     } // private namespace
   
-    
     CozmoSimTestController::CozmoSimTestController()
     : UiGameController(BS_TIME_STEP)
     , _result(0)
     , _isRecording(false)
     , _screenshotInterval(-1.f)
+    , _timeOfLastScreenshot(0.)
     , _screenshotNum(0)
     { }
     
@@ -56,11 +56,11 @@ namespace Anki {
   }
     
     bool CozmoSimTestController::IsTrueBeforeTimeout(bool cond,
-                                                     std::string condAsString,
+                                                     const char* condAsString,
                                                      double start_time,
                                                      double timeout,
-                                                     std::string file,
-                                                     std::string func,
+                                                     const char* file,
+                                                     const char* func,
                                                      int line)
     {
       if (GetSupervisor()->getTime() - start_time > timeout) {
@@ -77,20 +77,72 @@ namespace Anki {
       return cond;
     }
     
+    
+    bool CozmoSimTestController::AllTrueBeforeTimeout(std::vector<bool> conditions,
+                                                      const char* conditionsAsString,
+                                                      double start_time,
+                                                      double timeout,
+                                                      const char* file,
+                                                      const char* func,
+                                                      int line)
+    {
+      bool allTrue = true;
+      for(bool thisCond : conditions)
+      {
+        if(!thisCond)
+        {
+          allTrue = false;
+          break;
+        }
+      }
+      
+      if (GetSupervisor()->getTime() - start_time > timeout) {
+        if (!allTrue) {
+          std::string failedConditions;
+          for(s32 iCond = 0; iCond < conditions.size(); ++iCond)
+          {
+            if(!conditions[iCond])
+            {
+              failedConditions += std::to_string(iCond) + " ";
+            }
+          }
+          
+          PRINT_STREAM_WARNING("ALL_CONDITIONS_WITH_TIMEOUT_ASSERT", "Conditions: {" << conditionsAsString << "}. Which still false after " << timeout << " seconds: " << failedConditions << "(" << file << "." << func << "." << line << ")");
+          _result = 255;
+          
+          StopMovie();
+          
+          CST_EXIT();
+        }
+      }
+      
+      return allTrue;
+    }
+    
     s32 CozmoSimTestController::UpdateInternal()
     {
       PRINT_NAMED_INFO("ScreenshotInterval","%f", _screenshotInterval);
       //Check if screenshots need to be taken
       if(_screenshotInterval > 0){
-        time_t now;
-        time(&now);
-        if(difftime(now, _timeOfLastScreenshot) > _screenshotInterval){
+        
+        // Use simulated time intervals to decide _when_ to take the screen shots
+        const double simTime = GetSupervisor()->getTime();
+        
+        if((simTime - _timeOfLastScreenshot) > _screenshotInterval)
+        {
+          // Use system time to time/date-stamp the screenshot filenames so that
+          // subsequent runs (retries) don't step on each other
+          time_t now;
+          time(&now);
+          char timeString[256];
+          strftime(timeString, sizeof(timeString), "%F_%H-%M-%S", localtime(&now));
+          
           std::stringstream ss;
-          ss << kScreenShotsPath << _screenshotID << "_" << _screenshotNum << ".png";
+          ss << kScreenShotsPath << _screenshotID << "_" << timeString << "_" << _screenshotNum << ".png";
           GetSupervisor()->exportImage(ss.str(), 80);
           
           _screenshotNum++;
-          time(&_timeOfLastScreenshot);
+          _timeOfLastScreenshot = simTime;
         }
         
       }
@@ -160,7 +212,6 @@ namespace Anki {
       
       _screenshotInterval = interval;
       _screenshotID = screenshotID;
-      time(&_timeOfLastScreenshot);
     }
 
     

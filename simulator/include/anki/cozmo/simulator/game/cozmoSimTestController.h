@@ -55,6 +55,7 @@ if (!(x)) { \
 // at which point it asserts on the condition.
 #define IF_CONDITION_WITH_TIMEOUT_ASSERT(cond, timeout) static double startTime##__LINE__ = GetSupervisor()->getTime(); if (IsTrueBeforeTimeout(cond, #cond, startTime##__LINE__, timeout, __FILE__, __FUNCTION__, __LINE__))
   
+#define IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(timeout, ...) static double startTime##__LINE__ = GetSupervisor()->getTime(); if(AllTrueBeforeTimeout({__VA_ARGS__}, #__VA_ARGS__, startTime##__LINE__, timeout, __FILE__, __FUNCTION__, __LINE__))
   
 
   
@@ -77,7 +78,7 @@ protected:
   
   //Variables for taking screenshots
   f32 _screenshotInterval;
-  time_t _timeOfLastScreenshot;
+  double _timeOfLastScreenshot;
   std::string _screenshotID;
   int _screenshotNum;
   
@@ -86,12 +87,20 @@ protected:
   virtual void HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg) final override;
   
   bool IsTrueBeforeTimeout(bool cond,
-                           std::string condAsString,
+                           const char* condAsString,
                            double start_time,
                            double timeout,
-                           std::string file,
-                           std::string func,
+                           const char* file,
+                           const char* func,
                            int line);
+  
+  bool AllTrueBeforeTimeout(std::vector<bool> conditions,
+                            const char* conditionsAsString,
+                            double start_time,
+                            double timeout,
+                            const char* file,
+                            const char* func,
+                            int line);
   
   //Only runs if #define RECORD_TEST 1, use for local testing
   void StartMovieConditional(const std::string& name, int speed = 1);
