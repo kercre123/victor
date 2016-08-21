@@ -28,7 +28,8 @@ namespace RobotInterface {
     FTM_Sleepy = 15,
     FTM_FAC = 16,
     FTM_Off = 17,
-    FTM_IMUCalibration = 18
+    FTM_IMUCalibration = 18,
+    FTM_batteryCharging = 19,
   }
   
   /// The active test mode of the robot

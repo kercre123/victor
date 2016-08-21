@@ -51,6 +51,7 @@ static int modeParam;
 static s32 minPositions[4];
 static s32 maxPositions[4];
 static BirthCertificate birthCert;
+static s8  menuIndex;
 
 typedef enum {
   PP_entry = 0,
@@ -61,15 +62,58 @@ typedef enum {
   PP_running,
 } PlayPenTestState;
 
-extern "C" bool hasBirthCertificate(void) { return birthCert.second != 0xFF; }
+#define INVALID_BIRTH_SECOND (0x81)
+
+extern "C" bool hasBirthCertificate(void) { return birthCert.second != INVALID_BIRTH_SECOND; }
+
+#define MENU_TIMEOUT 100000000
+
+static const FTMenuItem rootMenuItems[] = {
+  {"Exit",            RobotInterface::FTM_entry,           0xFFFFffff },
+  {"Power off",       RobotInterface::FTM_batteryCharging, 0xFFFFffff },
+  {"Robot info",      RobotInterface::FTM_WiFiInfo,          30000000 },
+  {"Sensor info",     RobotInterface::FTM_StateMenu,     MENU_TIMEOUT },
+};
+#define NUM_ROOT_MENU_ITEMS (sizeof(rootMenuItems)/sizeof(FTMenuItem))
+
+static const FTMenuItem stateMenuItems[] = {
+  {"ADC info",        RobotInterface::FTM_ADCInfo,           30000000 },
+  {"IMU info",        RobotInterface::FTM_ImuInfo,           30000000 },
+  {"<--",             RobotInterface::FTM_menus,         MENU_TIMEOUT }
+};
+#define NUM_STATE_MENU_ITEMS (sizeof(stateMenuItems)/sizeof(FTMenuItem))
 
 bool Init()
 {
   mode = RobotInterface::FTM_None;
   modeTimeout = 0xFFFFffff;
-  birthCert.second = 0xFF; // Mark invalid
+  birthCert.second = INVALID_BIRTH_SECOND; // Mark invalid
+  menuIndex = 0;
   return true;
 }
+
+static u8 getCurrentMenuItems(const FTMenuItem** items)
+{
+  switch(mode)
+  {
+    case RobotInterface::FTM_menus:
+    {
+      *items = rootMenuItems;
+      return NUM_ROOT_MENU_ITEMS;
+    }
+    case RobotInterface::FTM_StateMenu:
+    {
+      *items = stateMenuItems;
+      return NUM_STATE_MENU_ITEMS;
+    }
+    default:
+    {
+      *items = NULL;
+      return 0;
+    }
+  }
+}
+
 
 static void IMUCalibrationReadCallback(NVStorage::NVStorageBlob* blob, const NVStorage::NVResult result)
 {
@@ -171,11 +215,55 @@ void Update()
         Draw::Flip(frame);
         break;
       }
+      case RobotInterface::FTM_Off:
+      case RobotInterface::FTM_batteryCharging:
+      {
+        if (((now - lastExecTime) > 5000000) && i2spiMessageQueueIsEmpty()) system_deep_sleep(0);
+        break;
+      }
+      case RobotInterface::FTM_menus:
+      case RobotInterface::FTM_StateMenu:
+      {
+        char menuBuf[256];
+        unsigned int bufIndex = 0;
+        const FTMenuItem* items;
+        u8 i, numItems;
+        numItems = getCurrentMenuItems(&items);
+        if (numItems == 0)
+        {
+          Face::FacePrintf("Invalid menu %d", mode);
+        }
+        else
+        {
+          if (menuIndex >= numItems) menuIndex = 0;
+          for (i=0; i<numItems; ++i)
+          {
+            bufIndex += ets_snprintf(menuBuf + bufIndex, sizeof(menuBuf) - bufIndex, "%s %s\n", i==menuIndex ? ">" : " ", items[i].name);
+            if (bufIndex >= sizeof(menuBuf))
+            {
+              bufIndex = sizeof(menuBuf-1);
+              break;
+            }
+          }
+          menuBuf[bufIndex] = 0;
+          Face::FacePrintf(menuBuf);
+        }
+        break;
+      }
       default:
       {
         break;
       }
     }
+  }
+}
+
+void resetPositions(const s32* cur)
+{
+  for (int i=0; i<4; ++i)
+  {
+    minPositions[i] = cur[i];
+    maxPositions[i] = cur[i];
   }
 }
 
@@ -194,38 +282,30 @@ void Process_TestState(const RobotInterface::TestState& state)
     case RobotInterface::FTM_Sleepy:
     case RobotInterface::FTM_Off:
     {
-      if ((state.positionsFixed[2] - maxPositions[2]) < -60000)
+      if ((state.positionsFixed[2] - maxPositions[2]) < -50000)
       {
         lastExecTime = now;
-        SetMode(RobotInterface::FTM_SSID);
         modeTimeout = now + 10000000;
-        for (int i=0; i<4; ++i)
-        {
-          minPositions[i] = state.positionsFixed[i];
-          maxPositions[i] = state.positionsFixed[i];
-        }
+        resetPositions(state.positionsFixed);
+        SetMode(RobotInterface::FTM_SSID);
       }
       break;
     }
     case RobotInterface::FTM_SSID:
     {
-      if ((state.positionsFixed[2] - maxPositions[2]) < -60000)
+      if ((state.positionsFixed[2] - maxPositions[2]) < -50000)
       {
         lastExecTime = now;
-        SetMode(RobotInterface::FTM_Sleepy);
         modeTimeout = 0xFFFFffff;
-        for (int i=0; i<4; ++i)
-        {
-          minPositions[i] = state.positionsFixed[i];
-          maxPositions[i] = state.positionsFixed[i];
-        }
+        resetPositions(state.positionsFixed);
+        SetMode(RobotInterface::FTM_Sleepy);
       }
-      else if ((state.positionsFixed[3] - minPositions[3]) > 70000)
+      else if ((state.positionsFixed[3] - minPositions[3]) > 100000)
       {
         lastExecTime = now;
-        SetMode(RobotInterface::FTM_WiFiInfo);
         modeTimeout = now + 30000000;
-        minPositions[3] = state.positionsFixed[3];
+        resetPositions(state.positionsFixed);
+        SetMode(RobotInterface::FTM_WiFiInfo);
       }
       break;
     }
@@ -251,6 +331,57 @@ void Process_TestState(const RobotInterface::TestState& state)
                          ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num(),
                          UpgradeController::GetFirmwareVersion(), UpgradeController::GetBuildTime(),
                          state.battVolt10x);
+      }
+      if ((state.positionsFixed[3] - minPositions[3]) > 100000)
+      {
+        lastExecTime = now;
+        modeTimeout = now + MENU_TIMEOUT;
+        resetPositions(state.positionsFixed);
+        SetMode(RobotInterface::FTM_menus);
+      }
+      break;
+    }
+    case RobotInterface::FTM_ADCInfo:
+    {
+      Face::FacePrintf("Cliff: %d\nBatV10x: %d\nExtV10x: %d\nChargeState: 0x%x",
+                       state.cliffLevel, state.battVolt10x, state.extVolt10x, state.chargeStat);
+      break;
+    }
+    case RobotInterface::FTM_ImuInfo:
+    {
+      Face::FacePrintf("Gyro:\n%d\n%d\n%d\nAcc:\n%d\n%d\n%d\n",
+                       state.gyro[0], state.gyro[1], state.gyro[2],
+                       state.acc[0],  state.acc[1],  state.acc[2]);
+      break;
+    }
+    case RobotInterface::FTM_menus:
+    case RobotInterface::FTM_StateMenu:
+    {
+      const FTMenuItem* items;
+      const u8 numItems = getCurrentMenuItems(&items);
+      if ((now - lastExecTime > 1000000) && numItems)
+      {
+        if (ABS(state.speedsFixed[0] > 1000))
+        {
+          lastExecTime = now;
+          modeTimeout  = now + MENU_TIMEOUT;
+          menuIndex += 1;
+          if (menuIndex >= numItems) menuIndex = numItems - 1;
+        }
+        else if (ABS(state.speedsFixed[1] > 1000))
+        {
+          lastExecTime = now;
+          modeTimeout  = now + MENU_TIMEOUT;
+          menuIndex -= 1;
+          if (menuIndex < 0) menuIndex = 0;
+        }
+        else if (state.speedsFixed[2] < -10000)
+        {
+          lastExecTime = now;
+          modeTimeout  = now + MENU_TIMEOUT;
+          SetMode(items[menuIndex].mode);
+          modeTimeout = system_get_time() + items[menuIndex].timeout;
+        }
       }
       break;
     }
@@ -324,6 +455,22 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
       os_memset(&msg, 0, sizeof(RobotInterface::EngineToRobot));
       msg.tag = RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
       msg.setBodyRadioMode.radioMode = BODY_IDLE_OPERATING_MODE;
+      RTIP::SendMessage(msg);
+      break;
+    }
+    case RobotInterface::FTM_batteryCharging:
+    {
+      Face::Clear();
+      os_memset(&msg, 0, sizeof(RobotInterface::EngineToRobot));
+      msg.tag = RobotInterface::EngineToRobot::Tag_setBackpackLightsMiddle;
+      msg.setBackpackLightsMiddle.lights[1].onColor  = LED_ENC_YELLOW;
+      msg.setBackpackLightsMiddle.lights[1].offColor = LED_ENC_YELLOW;
+      RTIP::SendMessage(msg);
+      
+      Face::Clear();
+      os_memset(&msg, 0, sizeof(RobotInterface::EngineToRobot));
+      msg.tag = RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
+      msg.setBodyRadioMode.radioMode = BODY_BATTERY_CHARGE_TEST_MODE;
       RTIP::SendMessage(msg);
       break;
     }

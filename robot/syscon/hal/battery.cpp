@@ -189,6 +189,24 @@ void Battery::updateOperatingMode() {
 
   // Setup new mode
   switch(current_operating_mode) {
+    case BODY_BATTERY_CHARGE_TEST_MODE:
+      nrf_gpio_pin_set(PIN_VDDs_EN);
+      Backpack::defaultPattern(LIGHTS_SLEEPING);
+      Motors::disable(true);
+      Head::enterLowPowerMode();
+      
+      // Spinout for ~15 seconds
+      MicroWait(15000000);
+      
+      nrf_gpio_pin_clear(PIN_PWR_EN);
+      
+      // Spinout for ~20 minutes
+      for (int i = 0; i < 20 * 60 * 1000; i++) {
+        MicroWait(1000);
+      }
+
+      Battery::powerOff();
+      break ;
     case BODY_IDLE_OPERATING_MODE:
       // Turn off encoders
       nrf_gpio_pin_set(PIN_VDDs_EN);
