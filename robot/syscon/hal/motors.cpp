@@ -10,6 +10,7 @@ extern "C" {
 #include "hardware.h"
 #include "anki/cozmo/robot/spineData.h"
 
+#include "battery.h"
 #include "motors.h"
 #include "timer.h"
 #include "head.h"
@@ -403,37 +404,65 @@ void Motors::init()
   }
 }
 
-void Motors::setPower(u8 motorID, s16 power)
-{
-  // Setup burnout protection
-  static const Fixed speed_scale[] = {
-    TO_FIXED(1),      // Left
-    TO_FIXED(1),      // Right
-    TO_FIXED(0.23),   // Lift
-    TO_FIXED(0)
-  };
+static s16 limitPower(u8 motorID, const int speed_scale[], const int base_speed[]) {
+  MotorInfo* motorInfo = &m_motors[motorID];
 
-  static const int base_speed[] = {
-    0x3FFF,
-    0x3FFF,
-    0x3FFF,
-    0x7FFF
-  };
-
-  static s16 avg_max_power[MOTOR_COUNT];
-
-  // Do not run on head motor
-  int current_speed = g_dataToHead.speeds[motorID];
-  int64_t speed_offset = (int64_t)current_speed *  (int64_t)speed_scale[motorID]; // We will assume that 1.0 = 0x3FFF
-  int inst_speed = (int)(base_speed[motorID] + speed_offset);
+  int current_speed = ABS((int)motorInfo->position - (int)motorInfo->lastPosition);
+  int64_t speed_offset = (int64_t)current_speed *  (int64_t)speed_scale[motorID];
+  int inst_speed = base_speed[motorID] + (int)(speed_offset >> 16);
 
   // Clamp max power to a rational value (fix underflow)
   if (inst_speed > 0x7FFF || inst_speed < 0) { inst_speed = 0x7FFF; }
+
+  return inst_speed;
+}
+
+void Motors::setPower(u8 motorID, s16 power)
+{
+  // Setup burnout protection
+  static s16 avg_max_power[MOTOR_COUNT];
+  int inst_speed;
   
-  avg_max_power[motorID] = (s16)((inst_speed + avg_max_power[motorID] * 31) / 32);
+  if (Battery::onContacts) {
+    // Eventually we should do a current draw calculation across all motors
+    // to allow animations driving slower to work better
+    
+    static const int base_speed[MOTOR_COUNT] = {
+      0x1000,
+      0x1000,
+       0x800,
+      0x1000,
+    };
+
+    static const int speed_scale[MOTOR_COUNT] = {
+      TO_FIXED(0x4000),
+      TO_FIXED(0x4000),
+      TO_FIXED(0x4000),
+      TO_FIXED(0x2000)
+    };
+
+    inst_speed = limitPower(motorID, speed_scale, base_speed);
+  } else {
+    static const int base_speed[MOTOR_COUNT] = { 
+      0x3FFF, 
+      0x3FFF,
+      0x1FFF,
+      0x7FFF
+    };
+    static const int speed_scale[MOTOR_COUNT] = { 
+      TO_FIXED(0x4000),
+      TO_FIXED(0x4000),
+      TO_FIXED(0x2000),
+      0
+    };
+
+    inst_speed = limitPower(motorID, speed_scale, base_speed);
+  }
+
+  avg_max_power[motorID] = (s16)((inst_speed + avg_max_power[motorID] * 15) / 16);
   
   s16 max_power = avg_max_power[motorID];
-  
+    
   // Don't let power exceed safe value
   if (ABS(power) > max_power) {
     power = (power > 0) ? max_power : -max_power;
