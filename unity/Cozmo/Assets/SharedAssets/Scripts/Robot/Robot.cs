@@ -467,7 +467,10 @@ public class Robot : IRobot {
     CancelAllCallbacks();
     RobotStartIdle();
 
-    EnableCubeSleep(true);
+    foreach (KeyValuePair<int, LightCube> kvp in LightCubes) {
+      kvp.Value.SetLEDs(Color.black);
+    }
+
     SetBackpackLEDs(Color.black.ToUInt());
     SetAllBackpackLEDs();
 

@@ -142,6 +142,7 @@ namespace Cozmo {
         Robot robot = (Robot)RobotEngineManager.Instance.CurrentRobot;
         if (null != robot) {
           robot.ResetRobotState(null);
+          robot.EnableCubeSleep(true);
         }
 
         RobotEngineManager.Instance.StartIdleTimeout(faceOffTime_s: sleep_sec, disconnectTime_s: disconnect_sec);
