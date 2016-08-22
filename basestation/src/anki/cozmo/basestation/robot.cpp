@@ -175,7 +175,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _moodManager(new MoodManager(this))
   , _progressionUnlockComponent(new ProgressionUnlockComponent(*this))
   , _speedChooser(new SpeedChooser(*this))
-  , _blockFilter(new BlockFilter(this))
+  , _blockFilter(new BlockFilter(this, context->GetExternalInterface()))
   , _tapFilterComponent(new BlockTapFilterComponent(*this))
   , _robotToEngineImplMessaging(new RobotToEngineImplMessaging(this))
   , _robotIdleTimeoutComponent(new RobotIdleTimeoutComponent(*this))
@@ -894,8 +894,7 @@ void Robot::SetPhysicalRobot(bool isPhysical)
   // autoConnectToBlocks field is TRUE.
   if (isPhysical) {
     if (_context->GetDataPlatform() != nullptr) {
-      _blockFilter->Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::External, "blockPool.txt"),
-                         _context->GetExternalInterface());
+      _blockFilter->Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::External, "blockPool.txt"));
     }
   }
       

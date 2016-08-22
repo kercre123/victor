@@ -4,6 +4,8 @@ using System.Collections.Generic;
 public class PullCubeTabView : Cozmo.UI.BaseView {
 
   private const float _kTimeBeforeForceContinue = 15.0f;
+  private const float _kMaxDiscoveryTime = 7.0f;
+
 
   // minimum threshold time between each object connecting and it being registered to
   // front end UI
@@ -38,6 +40,13 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
     for (int i = 0; i < _ObjectConnectedImagesList.Length; ++i) {
       _ObjectConnectedImagesList[i].gameObject.SetActive(false);
     }
+
+    // Enable the automatic block pool
+    Anki.Cozmo.ExternalInterface.BlockPoolEnabledMessage blockPoolEnabledMessage = new Anki.Cozmo.ExternalInterface.BlockPoolEnabledMessage();
+    blockPoolEnabledMessage.enabled = true;
+    blockPoolEnabledMessage.discoveryTimeSecs = _kMaxDiscoveryTime;
+    RobotEngineManager.Instance.Message.BlockPoolEnabledMessage = blockPoolEnabledMessage;
+    RobotEngineManager.Instance.SendMessage();
   }
 
   private void Update() {

@@ -33,40 +33,33 @@ namespace Cozmo {
   
 constexpr std::array<ObjectType, 4> BlockFilter::kObjectTypes;
 
-BlockFilter::BlockFilter(Robot* inRobot)
+BlockFilter::BlockFilter(Robot* inRobot, IExternalInterface* externalInterface)
   : _robot(inRobot)
   , _path()
-  , _initTime(0)
+  , _maxDiscoveryTime(0)
+  , _enabledTime(0)
   , _lastConnectivityCheckTime(0)
-  , _currentRSSILimit(kInitialRSSI)
-  , _enabled(true)
-  , _externalInterface(nullptr)
+  , _enabled(false)
+  , _externalInterface(externalInterface)
 {
+  if (_externalInterface != nullptr) {
+    auto callback = std::bind(&BlockFilter::HandleGameEvents, this, std::placeholders::_1);
+    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::GetBlockPoolMessage, callback));
+    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BlockPoolEnabledMessage, callback));
+    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BlockSelectedMessage, callback));
+    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BlockPoolResetMessage, callback));
+  }
 }
 
-void BlockFilter::Init(const std::string &path, IExternalInterface* externalInterface)
+void BlockFilter::Init(const std::string &path)
 {
-  if( _externalInterface == nullptr)
-  {
     _path = path;
-    _externalInterface = externalInterface;
-
-    if (_externalInterface != nullptr) {
-      auto callback = std::bind(&BlockFilter::HandleGameEvents, this, std::placeholders::_1);
-      _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::GetBlockPoolMessage, callback));
-      _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BlockPoolEnabledMessage, callback));
-      _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BlockSelectedMessage, callback));
-      _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BlockPoolResetMessage, callback));
-    }
-
-    _initTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
     // Load the existing list of objects if there is one. Then copy them to the runtime pool and connect to all the objects
     PRINT_CH_INFO("BlockPool", "BlockFilter.Init", "Loading from file %s", path.c_str());
     Load();
     CopyPersistentPoolToRuntimePool();
     ConnectToObjects();
-  }
 }
   
 void BlockFilter::Update()
@@ -82,52 +75,51 @@ void BlockFilter::Update()
     return;
   }
   
-  UpdateDiscovering();
-  UpdateConnecting();
+    UpdateDiscovering();
+    UpdateConnecting();
   
   _lastConnectivityCheckTime = currentTime;
 }
 
 void BlockFilter::UpdateDiscovering()
 {
-  // Check if we haven't connected to any of the object types we care about
-  bool atLeastOneFound = false;
+  // For every object type we care about that is not in the pool already, save the closest available.
   for (auto objectType : kObjectTypes)
   {
     if (!IsTypePooled(objectType))
     {
       // Look for the closest object of the type in a given signal strength
-      PRINT_CH_INFO("BlockPool", "BlockFilter.UpdateDiscovering", "Looking for objects of type %s with RSSI < %d", EnumToString(objectType), _currentRSSILimit);
-      FactoryID closestObject = _robot->GetClosestDiscoveredObjectsOfType(objectType, _currentRSSILimit);
+      PRINT_CH_INFO("BlockPool", "BlockFilter.UpdateDiscovering", "Looking for objects of type %s with RSSI < %d", EnumToString(objectType), kMaxRSSI);
+      FactoryID closestObject = _robot->GetClosestDiscoveredObjectsOfType(objectType, kMaxRSSI);
       if (closestObject != ActiveObject::InvalidFactoryID)
       {
-        PRINT_CH_INFO("BlockPool", "BlockFilter.UpdateDiscovering", "Discovered object 0x%x", closestObject);
-       	AddObjectToPersistentPool(closestObject, objectType);
-        atLeastOneFound = true;
+        PRINT_CH_INFO("BlockPool", "BlockFilter.UpdateDiscovering", "Discovered closer object 0x%x", closestObject);
+        ObjectInfo &objectInfo = _discoveryPool[objectType];
+        objectInfo.factoryID = closestObject;
+        objectInfo.objectType = objectType;
       }
     }
   }
 
-  if (atLeastOneFound)
+  // If the discovery phase is over, then connect to the objects we found
+  if ((BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() >= (_enabledTime + _maxDiscoveryTime)) && (_discoveryPool.size() > 0))
   {
+    PRINT_CH_INFO("BlockPool", "BlockFilter.UpdateDiscovering", "Connecting to discovered objects");
     // Save the new pool and connect to the discovered objects
+    for (const auto& kvp : _discoveryPool)
+    {
+      AddObjectToPersistentPool(kvp.second.factoryID, kvp.second.objectType);
+    }
+    _discoveryPool.clear();
     CopyPersistentPoolToRuntimePool();
     ConnectToObjects();
-  }
-  else
-  {
-	  // If we didn't find anything within the current RSSI, increase it for the next search
-    if (_currentRSSILimit + kIncreaseRSSI < kMaxRSSI)
-    {
-      _currentRSSILimit = +_currentRSSILimit + kIncreaseRSSI;
-    }
   }
 }
 
 void BlockFilter::UpdateConnecting()
 {
   // Check if any of the objects in the runtime pool is still not connected after the initial waiting period
-  if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() < _initTime + kMaxWaitForPooledObjects)
+  if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() < _enabledTime + kMaxWaitForPooledObjects)
   {
     return;
   }
@@ -137,7 +129,7 @@ void BlockFilter::UpdateConnecting()
     if ((objectInfo.factoryID != ActiveObject::InvalidFactoryID) && !_robot->IsConnectedToObject(objectInfo.factoryID))
     {
       PRINT_CH_INFO("BlockPool", "BlockFilter.UpdateConnecting", "Looking for a replacement for object 0x%x of type %s", objectInfo.factoryID, EnumToString(objectInfo.objectType));
-      FactoryID closestObject = _robot->GetClosestDiscoveredObjectsOfType(objectInfo.objectType, _currentRSSILimit);
+      FactoryID closestObject = _robot->GetClosestDiscoveredObjectsOfType(objectInfo.objectType, kMaxRSSI);
       if ((closestObject != ActiveObject::InvalidFactoryID) && (closestObject != objectInfo.factoryID))
       {
         PRINT_CH_INFO("BlockPool", "BlockFilter.UpdateConnecting", "Found replacement object 0x%x", closestObject);
@@ -358,7 +350,12 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
     case ExternalInterface::MessageGameToEngineTag::BlockPoolEnabledMessage:
     {
       const Anki::Cozmo::ExternalInterface::BlockPoolEnabledMessage& msg = event.GetData().Get_BlockPoolEnabledMessage();
+      
+      PRINT_CH_INFO("BlockPool", "BlockFilter.HandleGameEvents", "Enabling automatic block pool with a discovery time of %f seconds", msg.discoveryTimeSecs);
+      _maxDiscoveryTime = msg.discoveryTimeSecs;
       _enabled = msg.enabled;
+      _enabledTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      
       break;
     }
       
@@ -396,7 +393,6 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
       });
       
       ConnectToObjects();
-      _currentRSSILimit = kInitialRSSI;
       
       Save();
     }

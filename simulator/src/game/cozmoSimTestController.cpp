@@ -33,6 +33,7 @@ namespace Anki {
     , _screenshotInterval(-1.f)
     , _timeOfLastScreenshot(0.)
     , _screenshotNum(0)
+    , _isBlockPoolInitialized(false)
     { }
     
     CozmoSimTestController::~CozmoSimTestController()
@@ -121,6 +122,13 @@ namespace Anki {
     
     s32 CozmoSimTestController::UpdateInternal()
     {
+      // Initialize the block pool to detect cubes automatically. Ideally we would put this in
+      // InitIniternal but it is called before engine can receive messages
+      if (!_isBlockPoolInitialized) {
+        SendEnableBlockPool(0, true);
+        _isBlockPoolInitialized = true;
+      }
+      
       PRINT_NAMED_INFO("ScreenshotInterval","%f", _screenshotInterval);
       //Check if screenshots need to be taken
       if(_screenshotInterval > 0){

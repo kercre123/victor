@@ -94,7 +94,7 @@ s32 CST_LEDColor::UpdateSimInternal()
     case TestState::Init:
     {
       CozmoSimTestController::MakeSynchronous();
-      
+
       ExternalInterface::EnableLightStates m;
       m.enable = false;
       ExternalInterface::MessageGameToEngine message;

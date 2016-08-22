@@ -274,6 +274,7 @@ protected:
   void SendNVClearPartialPendingWriteData();
   void SendSetHeadlight(bool enable);
   void SendEnableBlockTapFilter(bool enable);
+  void SendEnableBlockPool(double maxDiscoveryTime, bool enabled);
 
   ///
   // @brief      Send SetActiveObjectLEDs CLAD message

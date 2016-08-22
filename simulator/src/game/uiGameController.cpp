@@ -1644,7 +1644,14 @@ namespace Anki {
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
     }
 
-    void UiGameController::SendSetActiveObjectLEDs(const u32 objectID, 
+    void UiGameController::SendEnableBlockPool(double maxDiscoveryTime, bool enabled)
+    {
+      ExternalInterface::BlockPoolEnabledMessage m(maxDiscoveryTime, enabled);
+      
+      SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
+    }
+
+    void UiGameController::SendSetActiveObjectLEDs(const u32 objectID,
                                                    const u32 onColor,
                                                    const u32 offColor,
                                                    const u32 onPeriod_ms,

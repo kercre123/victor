@@ -811,6 +811,7 @@ message SetEnableSpeedChooser {
 ///////////////////////////////////////////////////////////////////////////////
 
 message BlockPoolEnabledMessage {
+  float_32 discoveryTimeSecs,
   bool enabled
 }
 

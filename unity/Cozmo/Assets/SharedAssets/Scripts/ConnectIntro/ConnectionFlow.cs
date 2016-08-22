@@ -439,6 +439,15 @@ public class ConnectionFlow : MonoBehaviour {
       _ConnectingToCozmoScreenInstance.ConnectionComplete();
     }
 
+    // When we are in the first time user flow, we enable the block pool when we get to the Pull Cube Tab screen
+    if (!DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
+      // Enable the automatic block pool
+      Anki.Cozmo.ExternalInterface.BlockPoolEnabledMessage blockPoolEnabledMessage = new Anki.Cozmo.ExternalInterface.BlockPoolEnabledMessage();
+      blockPoolEnabledMessage.enabled = true;
+      RobotEngineManager.Instance.Message.BlockPoolEnabledMessage = blockPoolEnabledMessage;
+      RobotEngineManager.Instance.SendMessage();
+    }
+
     //Disable reactionary behaviors during wakeup
     RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("wakeup", Anki.Cozmo.BehaviorType.AcknowledgeObject, false);
     RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("wakeup", Anki.Cozmo.BehaviorType.ReactToCubeMoved, false);

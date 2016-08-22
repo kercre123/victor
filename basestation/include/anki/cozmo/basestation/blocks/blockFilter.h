@@ -38,9 +38,9 @@ namespace ExternalInterface {
 class BlockFilter
 {
 public: 
-  BlockFilter(Robot* inRobot = nullptr);
+  BlockFilter(Robot* inRobot, IExternalInterface* externalInterface);
 
-  void Init(const std::string &path, IExternalInterface* externalInterface);
+  void Init(const std::string &path);
 
   void Update();
   
@@ -66,8 +66,6 @@ private:
   static constexpr double kConnectivityCheckDelay = 1.0f; // How often do we check for connectivity changes in seconds
   static constexpr double kMaxWaitForPooledObjects = 10.f; // How long do we wait for the blockpooled objects before looking for another one of the same type
   
-  static constexpr uint8_t kInitialRSSI = 50;
-  static constexpr uint8_t kIncreaseRSSI = 5;
   static constexpr uint8_t kMaxRSSI = 150;
   
   // These are the type of objects we care about
@@ -95,16 +93,17 @@ private:
   void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   
   using ObjectInfoArray = std::array<ObjectInfo, (size_t)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS>;
-  using ObjectTypeSet = std::set<ObjectType>;
+  using ObjectInfoMap = std::map<ObjectType, ObjectInfo>;
   
   Robot*              _robot;
   ObjectInfoArray     _persistentPool;						// The list of objects from the file
   ObjectInfoArray     _runtimePool;								// The current session pool list
+  ObjectInfoMap       _discoveryPool;             // Selected set of objects until the discovery phase is over
   std::string         _path;											// Path where we are saving/loading the list of objects
-  double              _initTime;									// Time when the block pool was initialized
+  double              _maxDiscoveryTime;             // Time we'll spend looking for objects before pooling
+  double              _enabledTime;								// Time when the block pool was enabled
   double              _lastConnectivityCheckTime; // Used to check for connectivity every once in a while
-  uint8_t             _currentRSSILimit;					// Maximum RSSI when looking for objects
-  bool                _enabled;
+  bool                _enabled;                   // True if the automatic pool is enabled
   
   std::vector<Signal::SmartHandle> _signalHandles;
   IExternalInterface* _externalInterface;

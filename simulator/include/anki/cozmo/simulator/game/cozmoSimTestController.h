@@ -70,7 +70,7 @@ public:
   
 protected:
   
-  s32 UpdateInternal() final;
+  virtual s32 UpdateInternal() override final;
   virtual s32 UpdateSimInternal() = 0;
   
   u8 _result = RESULT_OK;
@@ -81,6 +81,8 @@ protected:
   double _timeOfLastScreenshot;
   std::string _screenshotID;
   int _screenshotNum;
+  
+  bool _isBlockPoolInitialized;
   
   // register to receive when the robot is connected, so that we can kindly ask to not play damn
   // pick up animations that mess up with CST timings
