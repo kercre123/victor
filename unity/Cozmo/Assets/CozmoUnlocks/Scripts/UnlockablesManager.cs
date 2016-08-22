@@ -67,14 +67,15 @@ public class UnlockablesManager : MonoBehaviour {
 
   // Should only be called before connecting to robot, robot will overwrite these
   public void InitializeUnlockablesState() {
+    DAS.Info("UnlockablesManager.InitializeUnlockablesState", "InitializeUnlockablesState");
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
       if (_UnlockablesState.ContainsKey(_UnlockableInfoList.UnlockableInfoData[i].Id.Value) == false) {
         _UnlockablesState.Add(_UnlockableInfoList.UnlockableInfoData[i].Id.Value, false);
       }
     }
-    RobotEngineManager.Instance.SendRequestUnlockDataFromBackup();
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleOnUnlockRequestSuccess);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.UnlockStatus>(HandleUnlockStatus);
+    RobotEngineManager.Instance.SendRequestUnlockDataFromBackup();
   }
 
 
@@ -216,6 +217,7 @@ public class UnlockablesManager : MonoBehaviour {
     }
 
     for (int i = 0; i < message.unlocks.Length; ++i) {
+      DAS.Info("UnlockablesManager.HandleUnlockStatus ", message.unlocks[i].ToString());
       loadedUnlockables[message.unlocks[i]] = true;
     }
     OnConnectLoad(loadedUnlockables);

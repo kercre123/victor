@@ -314,15 +314,19 @@ public static class LocalizationKeys {
 
   public const string kOnboardingSlide0 = "onboarding.Slide0";
   public const string kOnboardingSlide1 = "onboarding.Slide1";
+  public const string kOnboardingSlide2Header = "onboarding.Slide2Header";
   public const string kOnboardingSlide2 = "onboarding.Slide2";
   public const string kOnboardingSlide3 = "onboarding.Slide3";
   public const string kOnboardingSlide4 = "onboarding.Slide4";
   public const string kOnboardingSlide1a = "onboarding.Slide1a";
+  public const string kOnboardingPhase3Header1 = "onboarding.Phase3.Header1";
   public const string kOnboardingPhase3Body1 = "onboarding.Phase3.Body1";
   public const string kOnboardingPhase3Body2 = "onboarding.Phase3.Body2";
   public const string kOnboardingPhase3Body3 = "onboarding.Phase3.Body3";
+  public const string kOnboardingPhase3Header3 = "onboarding.Phase3.Header3";
   public const string kOnboardingPhase3Body4 = "onboarding.Phase3.Body4";
   public const string kOnboardingPhase3ErrorCube = "onboarding.Phase3.ErrorCube";
+  public const string kOnboardingPhase3ErrorCube2 = "onboarding.Phase3.ErrorCube2";
   public const string kOnboardingPhase3ErrorCubeRightSideUp = "onboarding.Phase3.ErrorCubeRightSideUp";
   public const string kOnboardingPhase3ErrorCubeRightSideUp2 = "onboarding.Phase3.ErrorCubeRightSideUp2";
   public const string kOnboardingPhase3ErrorCozmo = "onboarding.Phase3.ErrorCozmo";
@@ -401,13 +405,6 @@ public static class LocalizationKeys {
   public const string kSettingsSdkPanelLabelTitle = "settings.sdkPanel.label.title";
   public const string kSettingsSdkPanelSdkUrlLabel = "settings.sdkPanel.sdkUrl.label";
   public const string kSettingsSdkPanelShowSDKButtonText = "settings.sdkPanel.showSDKButton.text";
-  public const string kSettingsVersionPanelButtonAcknowledgementsLink = "settings.versionPanel.button.acknowledgementsLink";
-  public const string kSettingsVersionPanelButtonEraseCozmo = "settings.versionPanel.button.eraseCozmo";
-  public const string kSettingsVersionPanelButtonSupport = "settings.versionPanel.button.support";
-  public const string kSettingsVersionPanelLabelAppVersion = "settings.versionPanel.label.appVersion";
-  public const string kSettingsVersionPanelLabelCozmoVersion = "settings.versionPanel.label.cozmoVersion";
-  public const string kSettingsVersionPanelLabelDeviceId = "settings.versionPanel.label.deviceId";
-  public const string kSettingsVersionPanelLabelSerialNumber = "settings.versionPanel.label.serialNumber";
   public const string kSettingsVolumePanelRobotToggleLow = "settings.volumePanel.robotToggle.low";
   public const string kSettingsVolumePanelRobotToggleMedium = "settings.volumePanel.robotToggle.medium";
   public const string kSettingsVolumePanelRobotToggleHigh = "settings.volumePanel.robotToggle.high";
@@ -477,6 +474,7 @@ public static class LocalizationKeys {
   public const string kLabelTo = "label.to";
   public const string kButtonSkip = "button.skip";
   public const string kButtonCreateNew = "button.createNew";
+  public const string kLabelUpdate = "label.update";
 
   #endregion
 

@@ -53,7 +53,7 @@ public class IntroManager : MonoBehaviour {
   }
 
   private void StartFlow() {
-    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
+    if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Home)) {
       ShowFirstTimeFlow();
     }
     else {

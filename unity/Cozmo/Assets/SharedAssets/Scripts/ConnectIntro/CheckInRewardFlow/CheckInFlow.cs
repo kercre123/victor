@@ -457,6 +457,9 @@ public class CheckInFlow : MonoBehaviour {
 
   private void HandleMockButton() {
     RobotEngineManager.Instance.MockConnect();
+    if (DataPersistence.DataPersistenceManager.Instance.IsNewSessionNeeded) {
+      DataPersistence.DataPersistenceManager.Instance.StartNewSession();
+    }
     if (ConnectionFlowComplete != null) {
       ConnectionFlowComplete();
     }

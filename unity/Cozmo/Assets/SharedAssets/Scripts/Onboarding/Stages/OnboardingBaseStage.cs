@@ -38,6 +38,9 @@ namespace Onboarding {
     }
 
     public virtual void OnDestroy() {
+      if (_PlayIdle) {
+        RobotEngineManager.Instance.CurrentRobot.CancelCallback(HandleLoopedAnimationComplete);
+      }
       DAS.Info("onboarding.stage.ended", name);
     }
 

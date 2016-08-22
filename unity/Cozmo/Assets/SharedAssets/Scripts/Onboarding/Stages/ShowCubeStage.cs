@@ -15,15 +15,28 @@ namespace Onboarding {
     private AnkiTextLabel _ShowCozmoCubesLabel;
 
     [SerializeField]
+    private AnkiTextLabel _ShowShelfTextLabel;
+
+    [SerializeField]
     private RectTransform _CozmoImageTransform;
 
     [SerializeField]
     private RectTransform _CozmoCubeRightSideUpTransform;
 
     [SerializeField]
+    private RectTransform _CozmoMovedErrorTransform;
+
+    [SerializeField]
+    private RectTransform _ImageVisionCone;
+    [SerializeField]
+    private RectTransform _ImageCubeLights;
+
+    [SerializeField]
     private CozmoButton _ContinueButtonInstance;
 
     private int _SawCubeID = -1;
+    private const int _kMaxPickupTries = 3;
+    private int _CubePickupRetries = 0;
 
     enum SubState {
       ErrorCozmo,
@@ -45,6 +58,8 @@ namespace Onboarding {
 
       LightCube.OnMovedAction += HandleCubeMoved;
       RobotEngineManager.Instance.AddCallback<ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
+
+      UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.Bone);
     }
     public override void OnDestroy() {
       base.OnDestroy();
@@ -100,10 +115,19 @@ namespace Onboarding {
         UpdateSubstate(SubState.WaitForShowCube);
       }
     }
+
     private void HandleCubePickupComplete(bool success) {
       DAS.Debug(this, "HandleCubePickupComplete " + success);
-      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnboardingInteractWithCube, HandlePickupAnimComplete);
+
+      if (!success && _CubePickupRetries < _kMaxPickupTries) {
+        _CubePickupRetries++;
+        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.ReactToBlockRetryPickup, HandleCubeReactComplete);
+      }
+      else {
+        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnboardingInteractWithCube, HandlePickupAnimComplete);
+      }
     }
+
     private void HandlePickupAnimComplete(bool success) {
       // Put down cube, Back off...
       IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
@@ -170,22 +194,31 @@ namespace Onboarding {
     }
 
     private void UpdateSubstate(SubState nextState) {
-
       if (nextState == SubState.WaitForShowCube) {
-        _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3Body1);
+        _ShowShelfTextLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3Body1);
+        _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3Header1);
         _ContinueButtonInstance.gameObject.SetActive(false);
+        _CozmoMovedErrorTransform.gameObject.SetActive(false);
+        _ImageCubeLights.gameObject.SetActive(false);
+        _ImageVisionCone.gameObject.SetActive(true);
       }
       else if (nextState == SubState.WaitForOKCubeDiscovered) {
         _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3Body2);
+        _ShowShelfTextLabel.text = "";
         _ContinueButtonInstance.gameObject.SetActive(true);
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Block_Connect);
         RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnboardingDiscoverCube);
+        _ImageCubeLights.gameObject.SetActive(true);
+        _ImageVisionCone.gameObject.SetActive(true);
       }
       else if (nextState == SubState.WaitForInspectCube) {
         _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3Body3);
+        _ShowShelfTextLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3Header3);
         _ContinueButtonInstance.gameObject.SetActive(false);
         _CozmoCubeRightSideUpTransform.gameObject.SetActive(false);
         _CozmoImageTransform.gameObject.SetActive(true);
-
+        _ImageCubeLights.gameObject.SetActive(true);
+        _ImageVisionCone.gameObject.SetActive(false);
         // Get to the right distance
         IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
         if (CurrentRobot.LightCubes.ContainsKey(_SawCubeID)) {
@@ -199,21 +232,26 @@ namespace Onboarding {
       }
       else if (nextState == SubState.WaitForFinalContinue) {
         _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3Body4);
+        _ShowShelfTextLabel.text = "";
         _ContinueButtonInstance.gameObject.SetActive(true);
       }
       else if (nextState == SubState.ErrorCubeWrongSideUp) {
         _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCubeRightSideUp);
+        _ShowShelfTextLabel.text = "";
         _ContinueButtonInstance.gameObject.SetActive(false);
         _CozmoCubeRightSideUpTransform.gameObject.SetActive(true);
         _CozmoImageTransform.gameObject.SetActive(false);
       }
       else if (nextState == SubState.ErrorCubeMoved) {
         _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCube);
+        _ShowShelfTextLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCube2);
         _ContinueButtonInstance.gameObject.SetActive(false);
       }
       else if (nextState == SubState.ErrorCozmo) {
         _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCozmo);
+        _ShowShelfTextLabel.text = "";
         _ContinueButtonInstance.gameObject.SetActive(true);
+        _CozmoMovedErrorTransform.gameObject.SetActive(true);
       }
       _SubState = nextState;
     }

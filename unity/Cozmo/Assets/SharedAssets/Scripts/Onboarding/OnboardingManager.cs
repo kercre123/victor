@@ -37,6 +37,11 @@ public class OnboardingManager : MonoBehaviour {
   private GameObjectDataLink _OnboardingUIPrefabData;
   private OnboardingUIWrapper _OnboardingUIInstance;
 
+#if ENABLE_DEBUG_PANEL
+  private bool _DebugDisplayOn = true;
+#else
+  private bool _DebugDisplayOn = false;
+#endif
   private void OnEnable() {
     if (Instance != null && Instance != this) {
       SetSpecificStage(-1);
@@ -46,7 +51,7 @@ public class OnboardingManager : MonoBehaviour {
     else {
       Instance = this;
       GameEventManager.Instance.OnGameEvent += HandleDailyGoalCompleted;
-      Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("Fill Loot Energy", "Unity", GiveEnergy);
+      Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("Toggle Onboarding Debug Display", "Onboarding", ToggleOnboardingDebugDisplay);
     }
   }
 
@@ -140,6 +145,9 @@ public class OnboardingManager : MonoBehaviour {
         }
       }
     }
+    if (RobotEngineManager.Instance.CurrentRobot != null) {
+      RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.NoGame);
+    }
 
     // we keep the asset bundle around because some phases lead into each other, in common cases
     // but don't have to.
@@ -165,6 +173,9 @@ public class OnboardingManager : MonoBehaviour {
   private void PhaseCompletedInternal() {
     if (_CurrPhase == OnboardingPhases.Home) {
       RobotEngineManager.Instance.CurrentRobot.PopIdleAnimation();
+    }
+    if (RobotEngineManager.Instance.CurrentRobot != null) {
+      RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.All);
     }
   }
 
@@ -207,7 +218,9 @@ public class OnboardingManager : MonoBehaviour {
                   stagePrefab.ActiveTabButtons, stagePrefab.ReactionsEnabled);
       // Create the debug layer to have a few buttons to work with on screen easily for QA
       // who will have to see this all the time.
-      _OnboardingUIInstance.AddDebugButtons();
+      if (Instance._DebugDisplayOn) {
+        _OnboardingUIInstance.AddDebugButtons();
+      }
     }
     else {
       PhaseCompletedInternal();
@@ -235,10 +248,16 @@ public class OnboardingManager : MonoBehaviour {
   }
 
   #region DEBUG
-
-  public void GiveEnergy(string param) {
-    int energy = ChestRewardManager.Instance.GetNextRequirementPoints();
-    DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount("experience", energy);
+  public void ToggleOnboardingDebugDisplay(string param) {
+    Instance._DebugDisplayOn = !Instance._DebugDisplayOn;
+    if (Instance._OnboardingUIInstance != null) {
+      if (Instance._DebugDisplayOn) {
+        Instance._OnboardingUIInstance.AddDebugButtons();
+      }
+      else {
+        Instance._OnboardingUIInstance.RemoveDebugButtons();
+      }
+    }
   }
 
   public void DebugSkipOne() {

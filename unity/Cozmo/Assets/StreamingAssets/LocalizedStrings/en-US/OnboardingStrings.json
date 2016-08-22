@@ -24,8 +24,11 @@
   "onboarding.Slide1": {
     "translation": "This Cozmo has already been through the Tutorial.\n Would you like to skip it or start again?"
   },
+  "onboarding.Slide2Header": {
+    "translation": "<b>Welcome!</b>"
+  },
   "onboarding.Slide2": {
-    "translation": "Cozmo is a very special robot and needs a special owner.\n\n Follow the instructions carefully! <b>Are you ready to begin?</b>"
+    "translation": "Cozmo is a very special robot and needs a special owner.\n\n Follow the instructions carefully!\n <b><color=white>Are you ready to begin?</color></b>"
   },
   "onboarding.Slide3": {
     "translation": "Show Cozmo a Cube."
@@ -36,20 +39,29 @@
   "onboarding.Slide1a": {
     "translation": "COZMO LOGO"
   },
+  "onboarding.Phase3.Header1": {
+    "translation": "<b>Place a cube in front of Cozmo</b>"
+  },
   "onboarding.Phase3.Body1": {
-    "translation": "<b>Show Cozmo a Cube</b> It will turn <color=cyan>cyan</color> when he can see it"
+    "translation": "It will turn <color=cyan>blue</color> when he can see it"
   },
   "onboarding.Phase3.Body2": {
-    "translation": "Just like you, if it's too close, It's hard to see"
+    "translation": "<b>Great!</b>\nJust like you, if it's too close, It's hard to see"
   },
   "onboarding.Phase3.Body3": {
-    "translation": "Let Cozmo inspect the cube on it's own"
+    "translation": "He'll tell you when he's ready to proceed..."
+  },
+  "onboarding.Phase3.Header3": {
+    "translation": "Let Cozmo inspect the cube on his own"
   },
   "onboarding.Phase3.Body4": {
-    "translation": "<b>It looks Good</b>"
+    "translation": "Well done!\nCozmo is ready to play!"
   },
   "onboarding.Phase3.ErrorCube": {
-    "translation": "The Cube Has moved!"
+    "translation": "The Cube has moved!"
+  },
+  "onboarding.Phase3.ErrorCube2": {
+    "translation": "Put the Cube in front of Cozmo to proceed"
   },
   "onboarding.Phase3.ErrorCubeRightSideUp": {
     "translation": "Lights Side Up!"
@@ -58,7 +70,7 @@
     "translation": "Turn the Cube so that the lights are on top"
   },
   "onboarding.Phase3.ErrorCozmo": {
-    "translation": "Cozmo needs to be on a stable, flat, surface and to explore on his own."
+    "translation": "<b>Tutorial Paused</b>\nCozmo needs to be on a stable, flat, surface and to explore on his own."
   },
   "onboarding.Phase4.Body1a": {
     "translation": "As you play with Cozmo, you'll charge his emotion chip"
@@ -85,12 +97,12 @@
     "translation": "It's time to play some games!\n\nTap the Play tab, here."
   },
   "onboarding.Phase5.Body2": {
-    "translation": "Here's what to do next for Today.\n\n\nThis is the quickest way to Upgrade Cozmo!"
+    "translation": "Here's what to do next for Today.\n\n\nThis is the quickest way to upgrade Cozmo!"
   },
   "onboarding.Phase5.Body3": {
     "translation": "These are Cozmo Apps. Your first goal is to use Meet Cozmo.\nTry it now!"
   },
   "onboarding.Slide0a": {
-    "translation": "Put Cozmo on a clean, open table while you're in a well lit room"
+    "translation": "Put Cozmo on a clean, open table in a well lit room"
   }
 }
