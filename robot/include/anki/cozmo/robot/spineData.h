@@ -21,8 +21,8 @@ static const int charger_baud_rate  = 100000;
 
 enum SPISource
 {
-  SPI_SOURCE_HEAD     = 0x64616568,
-  SPI_SOURCE_BODY     = 0x79646f62,
+  SPI_SOURCE_HEAD     = 0x556468AA,
+  SPI_SOURCE_BODY     = 0xAA796455,
   SPI_SOURCE_CRASHLOG = 0x48535243
 };
 

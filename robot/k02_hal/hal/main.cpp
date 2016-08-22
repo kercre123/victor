@@ -88,14 +88,17 @@ int main (void)
   using namespace Anki::Cozmo::HAL;
 
   // Force recovery mode if watchdog count gets too high
-  if (WDOG_RSTCNT > MAXIMUM_RESET_COUNT) {
-    Anki::Cozmo::HAL::SPI::EnterRecoveryMode();
+  if (RCM_SRS0 & RCM_SRS0_WDOG_MASK) {
+    if (WDOG_RSTCNT > MAXIMUM_RESET_COUNT) {
+      Anki::Cozmo::HAL::SPI::EnterRecoveryMode();
+    }
   }
 
   // Enable reset filtering
   RCM_RPFC = RCM_RPFC_RSTFLTSS_MASK | RCM_RPFC_RSTFLTSRW(2);
   RCM_RPFW = 16;
 
+  Watchdog::init();
   Power::enableEspressif();
 
   UART::DebugInit();
@@ -116,7 +119,6 @@ int main (void)
   // We can now safely start camera DMA, which shortly after starts HALExec
   // This function returns after the first call to HALExec is complete
   SPI::Init();
-  Watchdog::init();
   CameraStart();
 
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraStart() 
