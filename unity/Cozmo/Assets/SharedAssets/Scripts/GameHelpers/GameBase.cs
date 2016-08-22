@@ -564,6 +564,9 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   public void CleanUp() {
+
+    DAS.Debug("GameBase.CleanUp", "cleanup called");
+
     _SharedMinigameViewInstance.ViewCloseAnimationFinished -= CleanUp;
 
     ContextManager.Instance.OnAppHoldStart -= HandleAppHoldStart;
@@ -580,12 +583,15 @@ public abstract class GameBase : MonoBehaviour {
 
     // Reset robot state after clearing the queue (wheels, head and lift included)
     if (CurrentRobot != null) {
-      CurrentRobot.ResetRobotState(EndGameRobotReset);
+      CurrentRobot.ResetRobotState(ResetRobotStateComplete);
     }
 
     // Some CleanUpOnDestroy overrides send a robot animation as well
     CleanUpOnDestroy();
 
+  }
+
+  private void ResetRobotStateComplete() {
     Destroy(gameObject);
   }
 
@@ -593,15 +599,17 @@ public abstract class GameBase : MonoBehaviour {
     DeregisterRobotReactionaryBehaviorEvents();
     AddToTotalGamesPlayed();
 
+    DAS.Debug("GameBase.SoftEndGameRobotReset", "soft end game reset called");
+
     if (CurrentRobot != null) {
-      CurrentRobot.ResetRobotState(EndGameRobotReset);
+      CurrentRobot.ResetRobotState(SoftEndGameRobotResetComplete);
       // Disable all Request game behavior groups so we don't request games at the 
       // end of game screen.
       RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.NoGame);
     }
   }
 
-  public void EndGameRobotReset() {
+  private void SoftEndGameRobotResetComplete() {
     if (OnShowEndGameDialog != null) {
       OnShowEndGameDialog();
     }

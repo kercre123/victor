@@ -121,7 +121,7 @@ namespace Cozmo.HomeHub {
       // Show the current state of challenges being locked/unlocked
       _HomeViewInstance.Initialize(_ChallengeStatesById, this);
 
-
+      ResetRobotToFreeplaySettings();
 
       var robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
@@ -206,6 +206,7 @@ namespace Cozmo.HomeHub {
         }
         else {
           // TODO show error dialog and boot to home
+          DAS.Error("HomeHub.HandleHomeViewCloseAnimationFinished", "mini game prefab load failed");
         }
       });
     }
@@ -251,6 +252,10 @@ namespace Cozmo.HomeHub {
     private void HandleEndGameDialog() {
       RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
       RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayLightStates(true);
+      ResetRobotToFreeplaySettings();
+    }
+
+    private void ResetRobotToFreeplaySettings() {
       RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, true);
       RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
@@ -281,7 +286,6 @@ namespace Cozmo.HomeHub {
 
     private void HandleMinigameFinishedClosing() {
       _MiniGameInstance.SharedMinigameView.ViewCloseAnimationFinished -= HandleMinigameFinishedClosing;
-      _MiniGameInstance = null;
       UnloadMinigameAssetBundle();
       StartLoadHomeView();
     }

@@ -461,7 +461,7 @@ public class Robot : IRobot {
     return bounds.Contains(WorldToCozmo(lightCube.WorldPosition));
   }
 
-  public void ResetRobotState(Action onComplete) {
+  public void ResetRobotState(Action onComplete = null) {
     DriveWheels(0.0f, 0.0f);
     TrackToObject(null);
     CancelAllCallbacks();
@@ -501,6 +501,10 @@ public class Robot : IRobot {
     }
 
     ResetLiftAndHead((s) => {
+      DAS.Debug("Robot.TryResetHeadAndLift", "Reset Lift And Head Complete! " + s);
+      if (s == false) {
+        DAS.Warn("Robot.TryResetHeadAndLift", "Reset Lift and Head failed!");
+      }
       if (onComplete != null) {
         onComplete();
       }
@@ -579,7 +583,7 @@ public class Robot : IRobot {
     _RobotCallbacks.Add(new RobotCallbackWrapper(tag, callback));
   }
 
-  public void SendQueueCompoundAction(Anki.Cozmo.ExternalInterface.RobotActionUnion[] actions, RobotCallback callback, QueueActionPosition queueActionPosition, bool isParallel = false) {
+  public void SendQueueCompoundAction(Anki.Cozmo.ExternalInterface.RobotActionUnion[] actions, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool isParallel = false) {
     var tag = GetNextIdTag();
     RobotEngineManager.Instance.Message.QueueCompoundAction =
       Singleton<QueueCompoundAction>.Instance.Initialize(
@@ -1152,16 +1156,7 @@ public class Robot : IRobot {
                            float accelRadSec = 2f,
                            float maxSpeedFactor = 1f) {
 
-    float radians = angleFactor;
-
-    if (!useExactAngle) {
-      if (angleFactor >= 0f) {
-        radians = Mathf.Lerp(0f, CozmoUtil.kMaxHeadAngle * Mathf.Deg2Rad, angleFactor);
-      }
-      else {
-        radians = Mathf.Lerp(0f, CozmoUtil.kMinHeadAngle * Mathf.Deg2Rad, -angleFactor);
-      }
-    }
+    float radians = AngleFactorToRadians(angleFactor, useExactAngle);
 
     if (HeadTrackingObject == -1 && Mathf.Abs(radians - HeadAngle) < 0.001f && queueActionPosition == QueueActionPosition.NOW) {
       if (callback != null) {
@@ -1178,6 +1173,21 @@ public class Robot : IRobot {
         0),
       callback,
       queueActionPosition);
+  }
+
+  private float AngleFactorToRadians(float angleFactor, bool useExactAngle) {
+
+    float radians = angleFactor;
+
+    if (!useExactAngle) {
+      if (angleFactor >= 0f) {
+        radians = Mathf.Lerp(0f, CozmoUtil.kMaxHeadAngle * Mathf.Deg2Rad, angleFactor);
+      }
+      else {
+        radians = Mathf.Lerp(0f, CozmoUtil.kMinHeadAngle * Mathf.Deg2Rad, -angleFactor);
+      }
+    }
+    return radians;
   }
 
   public void SetRobotVolume(float volume) {
@@ -1445,24 +1455,20 @@ public class Robot : IRobot {
   }
 
   public void ResetLiftAndHead(RobotCallback callback = null) {
-    bool headDone = false;
-    bool liftDone = false;
+    RobotActionUnion[] actions = {
+        new RobotActionUnion().Initialize(Singleton<SetLiftHeight>.Instance.Initialize(
+            0.0f,
+            accel_rad_per_sec2: 5f,
+            max_speed_rad_per_sec: 10f,
+            duration_sec: 0f)),
+        new RobotActionUnion().Initialize(Singleton<SetHeadAngle>.Instance.Initialize(
+            AngleFactorToRadians(0.25f, false),
+            CozmoUtil.kMaxSpeedRadPerSec,
+            1.0f,
+            0.0f))
+      };
 
-    SetLiftHeight(0.0f, (s) => {
-      liftDone = true;
-      CheckLiftHeadCallback(headDone, liftDone, s, callback);
-    }, QueueActionPosition.IN_PARALLEL);
-
-    SetHeadAngle(0.0f, (s) => {
-      headDone = true;
-      CheckLiftHeadCallback(headDone, liftDone, s, callback);
-    }, QueueActionPosition.IN_PARALLEL);
-  }
-
-  private void CheckLiftHeadCallback(bool headDone, bool liftDone, bool success, RobotCallback callback) {
-    if (headDone && liftDone) {
-      callback(success);
-    }
+    SendQueueCompoundAction(actions, callback);
   }
 
   // Height factor should be between 0.0f and 1.0f

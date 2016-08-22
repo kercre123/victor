@@ -60,7 +60,7 @@ public class MockRobot : IRobot {
     return bounds.Contains(WorldToCozmo(lightCube.WorldPosition));
   }
 
-  public void ResetRobotState(System.Action onComplete) {
+  public void ResetRobotState(System.Action onComplete = null) {
     // Do Something?
   }
 

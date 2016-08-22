@@ -120,8 +120,7 @@ public interface IRobot : IDisposable {
 
   bool IsLightCubeInPickupRange(LightCube lightCube);
 
-  void ResetRobotState(Action onComplete);
-
+  void ResetRobotState(Action onComplete = null);
 
   void RobotStartIdle();
 
