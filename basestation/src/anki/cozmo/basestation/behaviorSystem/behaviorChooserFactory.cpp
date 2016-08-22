@@ -12,11 +12,12 @@
 #include "behaviorChooserFactory.h"
 
 // behavior choosers
-#include "behaviorChoosers/simpleBehaviorChooser.h"
+#include "behaviorChoosers/AIGoalEvaluator.h"
 #include "behaviorChoosers/demoBehaviorChooser.h"
 #include "behaviorChoosers/selectionBehaviorChooser.h"
+#include "behaviorChoosers/simpleBehaviorChooser.h"
+#include "behaviorChoosers/socializeBehaviorChooser.h"
 #include "behaviorChoosers/sparksBehaviorChooser.h"
-#include "behaviorChoosers/AIGoalEvaluator.h"
 
 #include "anki/common/basestation/jsonTools.h"
 
@@ -56,6 +57,9 @@ IBehaviorChooser* CreateBehaviorChooser(Robot& robot, const Json::Value& config)
   }
   else if ( typeStr == "sparks") {
     newChooser = new SparksBehaviorChooser(robot, config);
+  }
+  else if ( typeStr == "socialize") {
+    newChooser = new FPSocializeBehaviorChooser(robot, config);
   }
   else
   {

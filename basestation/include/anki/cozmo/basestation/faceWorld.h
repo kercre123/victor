@@ -47,11 +47,14 @@ namespace Cozmo {
     const Vision::TrackedFace* GetFace(Vision::FaceID_t faceID) const;
     
     // Returns number of known faces
-    // Actual face IDs returned in faceIDs
-    std::vector<Vision::FaceID_t> GetKnownFaceIDs() const;
+    std::set<Vision::FaceID_t> GetKnownFaceIDs(bool includeTrackingOnlyFaces = true) const;
     
     // Returns known face IDs observed since seenSinceTime_ms (inclusive)
-    std::list<Vision::FaceID_t> GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms) const;
+    std::set<Vision::FaceID_t> GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms,
+                                                            bool includeTrackingOnlyFaces = true) const;
+
+    // Returns true if any faces are known
+    bool HasKnownFaces(TimeStamp_t seenSinceTime_ms = 0, bool includeTrackingOnlyFaces = true) const;
 
     // If the robot has observed a face, sets p to the pose of the last observed face and returns the
     // timestamp when that face was last seen. Otherwise, returns 0    
