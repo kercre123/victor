@@ -38,6 +38,30 @@ public class DailyGoalManager : MonoBehaviour {
   // The Last Challenge ID Cozmo has requested to play
   private ChallengeData _LastChallengeData;
 
+  #region Pending Goal Logic for HomeView animations
+
+
+  // DailyGoals that have been earned but haven't been shown to the player.
+  public List<DailyGoal> PendingDailyGoals = new List<DailyGoal>();
+
+  public bool GoalsPending {
+    get {
+      return PendingDailyGoals.Count > 0;
+    }
+  }
+
+  private DailyGoalPanel _GoalPanelInstance = null;
+  public DailyGoalPanel GoalPanelInstance {
+    get {
+      return _GoalPanelInstance;
+    }
+    set {
+      _GoalPanelInstance = value;
+    }
+  }
+
+  #endregion
+
   #region DailyGoal Generation
 
   // Config file for friendship progression and daily goal generation
@@ -217,6 +241,11 @@ public class DailyGoalManager : MonoBehaviour {
     else {
       DAS.Error(this, string.Format("No DailyGoal Data to load in {0}", sDailyGoalDirectory));
     }
+    GameEventManager.Instance.OnGameEvent += HandleDailyGoalCompleted;
+  }
+
+  void OnDestroy() {
+    GameEventManager.Instance.OnGameEvent -= HandleDailyGoalCompleted;
   }
 
   private string GetDailyGoalFileName() {
@@ -255,7 +284,8 @@ public class DailyGoalManager : MonoBehaviour {
           }
         }
       }
-      newGoals.Add(new DailyGoal(toAdd.CladEvent, toAdd.TitleKey, toAdd.PointsRewarded, toAdd.Target, toAdd.RewardType, toAdd.ProgressConditions, toAdd.Priority));
+      DailyGoal newGoal = new DailyGoal(toAdd.CladEvent, toAdd.TitleKey, toAdd.PointsRewarded, toAdd.Target, toAdd.RewardType, toAdd.ProgressConditions, toAdd.Priority);
+      newGoals.Add(newGoal);
       // If all remaining generatable goals have been removed due to tag conflicts, then don't bother generating any more, even if we have fewer
       // than the min number of goals for the day.
       if (goalList.Count <= 0) {
@@ -264,6 +294,27 @@ public class DailyGoalManager : MonoBehaviour {
     }
     SendDasEventsForGoalGeneration(newGoals);
     return newGoals;
+  }
+
+
+  private void HandleDailyGoalCompleted(GameEventWrapper gameEvent) {
+    if (gameEvent.GameEventEnum == Anki.Cozmo.GameEvent.OnDailyGoalCompleted) {
+      DailyGoalCompleteGameEvent goalEvent = gameEvent as DailyGoalCompleteGameEvent;
+      // Only add to Pending Goals if it is unique, fire Warning otherwise since
+      // that suggests dupe goals or some other funny business I certainly don't
+      // approve of.
+      if (!PendingDailyGoals.Contains(goalEvent.CompletedGoal)) {
+        PendingDailyGoals.Add(goalEvent.CompletedGoal);
+      }
+      else {
+        DAS.Warn("DailyGoalManager.HandleDailyGoalCompleted", "Duplicate DailyGoal completed event fired");
+      }
+    }
+  }
+
+  public void ResolveDailyGoalsEarned() {
+    // TODO: Any other logic necessary to resolve a set of pending Daily Goals being "shown" to the player
+    PendingDailyGoals.Clear();
   }
 
   private void SendDasEventsForGoalGeneration(List<DailyGoal> goals) {

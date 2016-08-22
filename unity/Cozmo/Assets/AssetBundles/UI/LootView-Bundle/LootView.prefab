@@ -50,6 +50,21 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 0
+--- !u!1 &114342
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22469918}
+  m_Layer: 5
+  m_Name: FinalBitsTarget
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &117114
 GameObject:
   m_ObjectHideFlags: 1
@@ -238,7 +253,7 @@ GameObject:
   m_Component:
   - 224: {fileID: 22410096}
   m_Layer: 5
-  m_Name: FinalRewardTarget
+  m_Name: FinalSparksTarget
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -698,7 +713,8 @@ MonoBehaviour:
   - {fileID: 22445366}
   - {fileID: 22473282}
   _DooberStart: {fileID: 22409394}
-  _FinalRewardTarget: {fileID: 22410096}
+  _FinalBitsTarget: {fileID: 22469918}
+  _FinalSparkTarget: {fileID: 22410096}
   _BoxSource: {fileID: 22412946}
   _BannerContainer: {fileID: 22405272}
   _RewardDooberPrefab: {fileID: 125416, guid: da949a90c3ec547bfb567d613a9396a5, type: 2}
@@ -935,10 +951,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 130312, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
-  ModifiedValues:
-  - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"#button.continue"'
+  ModifiedValues: []
   ModifiedLocalReferences:
   - ObjectPath: ../../../
     FieldName: Cozmo.UI.LootView:_ContinueButtonInstance
@@ -4206,7 +4219,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22468726}
-  m_RootOrder: 9
+  m_RootOrder: 10
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
@@ -4278,10 +4291,10 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22468726}
-  m_RootOrder: 8
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 151, y: -245}
+  m_RootOrder: 9
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 625, y: -80}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22412946
@@ -4476,7 +4489,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22468726}
-  m_RootOrder: 10
+  m_RootOrder: 11
   m_AnchorMin: {x: 0, y: 0.4}
   m_AnchorMax: {x: 0.3, y: 0.6}
   m_AnchoredPosition: {x: 0, y: 0}
@@ -4617,6 +4630,7 @@ RectTransform:
   - {fileID: 22481126}
   - {fileID: 22466988}
   - {fileID: 22451474}
+  - {fileID: 22469918}
   - {fileID: 22410096}
   - {fileID: 22405272}
   - {fileID: 22442710}
@@ -4626,6 +4640,24 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!224 &22469918
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 114342}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 22468726}
+  m_RootOrder: 8
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 235, y: -83}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22472410
@@ -4712,7 +4744,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22468726}
-  m_RootOrder: 11
+  m_RootOrder: 12
   m_AnchorMin: {x: 0.7, y: 0.4}
   m_AnchorMax: {x: 1, y: 0.6}
   m_AnchoredPosition: {x: 0.5, y: 0}

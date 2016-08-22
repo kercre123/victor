@@ -138,11 +138,14 @@ namespace Cozmo {
       private string _LootAlmostKey;
       [SerializeField]
       private List<Transform> _MultRewardsTransforms;
-      private List<Transform> _ActiveDooberTransforms;
+      private List<Transform> _ActiveBitsTransforms;
+      private List<Transform> _ActiveSparkTransforms;
       [SerializeField]
       private Transform _DooberStart;
       [SerializeField]
-      private Transform _FinalRewardTarget;
+      private Transform _FinalBitsTarget;
+      [SerializeField]
+      private Transform _FinalSparkTarget;
       [SerializeField]
       private Transform _BoxSource;
       [SerializeField]
@@ -210,7 +213,8 @@ namespace Cozmo {
       private void Awake() {
         Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_EmotionChipWindowOpenSoundEvent);
         _TronPool = new SimpleObjectPool<TronLight>(CreateTronLight, ResetTronLight, 0);
-        _ActiveDooberTransforms = new List<Transform>();
+        _ActiveBitsTransforms = new List<Transform>();
+        _ActiveSparkTransforms = new List<Transform>();
         ContextManager.Instance.AppFlash(playChime: true);
         ContextManager.Instance.CozmoHoldFreeplayStart();
         Color transparentColor = new Color(_LootGlow.color.r, _LootGlow.color.g, _LootGlow.color.b, 0);
@@ -362,7 +366,12 @@ namespace Cozmo {
         if (rewardIcon != null) {
           newDoob.GetComponent<Image>().overrideSprite = rewardIcon;
         }
-        _ActiveDooberTransforms.Add(newDoob);
+        if (rewardID == RewardedActionManager.Instance.SparkID) {
+          _ActiveSparkTransforms.Add(newDoob);
+        }
+        else {
+          _ActiveBitsTransforms.Add(newDoob);
+        }
         return newDoob;
       }
 
@@ -442,14 +451,19 @@ namespace Cozmo {
       // BEGONE DOOBERS! OUT OF MY SIGHT! Staggering their start times slightly, send all active doobers to the
       // FinalRewardTarget position
       private void SendDoobersAway(Sequence closeAnimation) {
-        Sequence dooberSequence = closeAnimation;
-        // If there's more than one reward, give each of them a unique transform to tween out to
-        for (int i = 0; i < _ActiveDooberTransforms.Count; i++) {
-          Transform currDoob = _ActiveDooberTransforms[i];
+        SendTransformsToFinalTarget(closeAnimation, _ActiveBitsTransforms, _FinalBitsTarget);
+        SendTransformsToFinalTarget(closeAnimation, _ActiveSparkTransforms, _FinalSparkTarget);
+      }
+
+      private void SendTransformsToFinalTarget(Sequence currSequence, List<Transform> transList, Transform target) {
+        Sequence dooberSequence = currSequence;
+        for (int i = 0; i < transList.Count; i++) {
+          Transform currDoob = transList[i];
           float doobStagger = UnityEngine.Random.Range(0, _RewardExplosionFinalVariance);
           dooberSequence.Insert(doobStagger, currDoob.DOScale(0.0f, _RewardExplosionFinalDuration).SetEase(Ease.InBack));
-          dooberSequence.Insert(doobStagger, currDoob.DOMove(_FinalRewardTarget.position, _RewardExplosionFinalDuration).SetEase(Ease.InBack));
+          dooberSequence.Insert(doobStagger, currDoob.DOMove(target.position, _RewardExplosionFinalDuration).SetEase(Ease.InBack));
         }
+
       }
 
       protected override void CleanUp() {

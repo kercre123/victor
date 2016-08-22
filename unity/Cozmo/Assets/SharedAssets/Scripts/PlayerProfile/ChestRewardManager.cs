@@ -14,7 +14,7 @@ public class ChestRewardManager {
     _sInstance = new ChestRewardManager();
   }
 
-  public delegate void ChestRequirementsUpdateHandler(int points,int maxPoints);
+  public delegate void ChestRequirementsUpdateHandler(int points, int maxPoints);
 
   public delegate void ChestGainedHandler();
 
@@ -47,6 +47,12 @@ public class ChestRewardManager {
 
   public int GetPreviousRequirementPoints() {
     return GetPreviousLadderValue(GetChestData().RequirementLadder.LadderLevels);
+  }
+
+  public string ChestRequirementItemID {
+    get {
+      return GetChestData().RequirementLadder.ItemId;
+    }
   }
 
   private ChestData GetChestData() {

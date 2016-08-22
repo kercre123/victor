@@ -54,7 +54,7 @@ namespace Cozmo {
         AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_NoText);
         // Hook up callbacks
         alertView.SetCloseButtonEnabled(false);
-        alertView.SetPrimaryButton(LocalizationKeys.kButtonQuit, HandleQuitConfirmed);
+        alertView.SetPrimaryButton(LocalizationKeys.kButtonQuit, HandleQuitConfirmed, Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Click_Back));
         alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel, HandleQuitCancelled);
         if (_IsMinigame) {
           alertView.TitleLocKey = LocalizationKeys.kMinigameQuitViewTitle;

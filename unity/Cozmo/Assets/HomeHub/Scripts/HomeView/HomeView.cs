@@ -93,13 +93,15 @@ namespace Cozmo.HomeHub {
     private LootView _LootViewInstance = null;
 
     public bool RewardSequenceActive = false;
+    private Sequence _RewardSequence;
 
     [SerializeField]
     private GameObject _EnergyDooberPrefab;
     [SerializeField]
-    private RectTransform _EnergyDooberStart;
+    private Transform _EnergyDooberStart;
     [SerializeField]
     private Transform _EnergyDooberEnd;
+    private List<Transform> _EnergyDooberList = new List<Transform>();
 
     [SerializeField]
     private AnkiTextLabel[] _DailyGoalsCompletionTexts;
@@ -196,33 +198,9 @@ namespace Cozmo.HomeHub {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
 
-      ChestRewardManager.Instance.ChestRequirementsGained += HandleChestRequirementsGained;
-      ChestRewardManager.Instance.ChestGained += HandleChestGained;
-      _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleProgressUpdated;
+      _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleGreenPointsBarUpdateComplete;
       UnlockablesManager.Instance.OnUnlockPopupRequested += HandleUnlockView;
-      // If we have energy earned, create the energy doobers and clear pending action rewards
-      if (RewardedActionManager.Instance.RewardPending) {
-        RewardSequenceActive = true;
-        if (RobotEngineManager.Instance.CurrentRobot != null) {
-          RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.NoGame);
-        }
-        int endPoints = ChestRewardManager.Instance.GetCurrentRequirementPoints();
-        if (ChestRewardManager.Instance.ChestPending) {
-          endPoints = ChestRewardManager.Instance.GetPreviousRequirementPoints();
-        }
-        endPoints -= Mathf.Min(endPoints, (RewardedActionManager.Instance.TotalPendingEnergy));
-        if (endPoints < 0) {
-          endPoints = 0;
-        }
-        UpdateChestProgressBar(endPoints, ChestRewardManager.Instance.GetNextRequirementPoints(), true);
-        StartCoroutine(BurstAfterInit());
-      }
-      else {
-        if (RobotEngineManager.Instance.CurrentRobot != null) {
-          DailyGoalManager.Instance.SetMinigameNeed();
-        }
-        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
-      }
+
       DailyGoalManager.Instance.OnRefreshDailyGoals += UpdatePlayTabText;
       GameEventManager.Instance.OnGameEvent += HandleDailyGoalCompleted;
       UpdatePlayTabText();
@@ -242,15 +220,6 @@ namespace Cozmo.HomeHub {
       }
     }
 
-    private IEnumerator BurstAfterInit() {
-      yield return new WaitForFixedUpdate();
-      EnergyDooberBurst(RewardedActionManager.Instance.TotalPendingEnergy);
-    }
-
-    private void HandleChestGained() {
-      UpdateChestProgressBar(ChestRewardManager.Instance.GetPreviousRequirementPoints(), ChestRewardManager.Instance.GetPreviousRequirementPoints());
-    }
-
     private void HandleUnlockView(Anki.Cozmo.UnlockId unlockID, bool showPopup) {
       // TODO: Make Tabs pass in information to allow for immediate Popups like former App Unlock
       // if showPopup, then pass info to the Tab.
@@ -264,81 +233,6 @@ namespace Cozmo.HomeHub {
       CheckIfUnlockablesAffordableAndUpdateBadge();
     }
 
-    // Opens loot view and fires and relevant events
-    private void OpenLootView() {
-      if (HomeViewCurrentlyOccupied && RewardSequenceActive == false) {
-        // Avoid dupes but fail gracefully
-        DAS.Warn("HomeView.OpenLootView", "HomeViewCurrentlyOccupied with non reward stuff when we tried to open LootView");
-        HandleLootViewCloseAnimationFinished();
-        return;
-      }
-      _EmotionChipTag.gameObject.SetActive(false);
-
-      AssetBundleManager.Instance.LoadAssetBundleAsync(_LootViewPrefabData.AssetBundle, (bool success) => {
-        _LootViewPrefabData.LoadAssetData((GameObject prefabObject) => {
-          LootView alertView = UIManager.OpenView(prefabObject.GetComponent<LootView>());
-          alertView.LootBoxRewards = ChestRewardManager.Instance.PendingChestRewards;
-          _LootViewInstance = alertView;
-          _LootViewInstance.ViewCloseAnimationFinished += (() => {
-            HandleLootViewCloseAnimationFinished();
-            // Only unload the asset bundle if we actually loaded it before
-            AssetBundleManager.Instance.UnloadAssetBundle(_LootViewPrefabData.AssetBundle);
-          });
-        });
-      });
-    }
-
-    private void HandleLootViewCloseAnimationFinished() {
-      _EmotionChipTag.gameObject.SetActive(true);
-      RewardSequenceActive = false;
-      _LootViewInstance = null;
-      CheckIfUnlockablesAffordableAndUpdateBadge();
-      UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
-    }
-
-    // Doobstorm 2016 - Create Energy Doobers, set up Tween Sequence, and get it started
-    public void EnergyDooberBurst(int pointsEarned) {
-      GenericRewardsConfig rc = GenericRewardsConfig.Instance;
-      int doobCount = Mathf.CeilToInt((float)pointsEarned / 5.0f);
-      Sequence dooberSequence = DOTween.Sequence();
-      for (int i = 0; i < doobCount; i++) {
-        Transform freshDoobz = UIManager.CreateUIElement(_EnergyDooberPrefab, _EnergyDooberStart).transform;
-        float xOffset = UnityEngine.Random.Range(rc.ExpParticleMinSpread, rc.ExpParticleMaxSpread);
-        float yOffset = UnityEngine.Random.Range(rc.ExpParticleMinSpread, rc.ExpParticleMaxSpread);
-        float exitTime = UnityEngine.Random.Range(0.0f, rc.ExpParticleStagger) + rc.ExpParticleBurst + rc.ExpParticleHold;
-        Vector3 doobTarget = new Vector3(freshDoobz.position.x - xOffset, freshDoobz.position.y + yOffset, freshDoobz.position.z);
-        dooberSequence.Insert(0.0f, freshDoobz.DOMove(doobTarget, rc.ExpParticleBurst).SetEase(Ease.OutBack));
-        dooberSequence.Insert(exitTime, freshDoobz.DOMove(_EnergyDooberEnd.position, rc.ExpParticleLeave).SetEase(Ease.InBack).OnComplete(() => (CleanUpDoober(freshDoobz))));
-      }
-      dooberSequence.AppendCallback(ResolveDooberBurst);
-      dooberSequence.Play();
-    }
-
-    private void CleanUpDoober(Transform toClean) {
-      _EnergyBarEmitter.Emit(GenericRewardsConfig.Instance.BurstPerParticleHit);
-      Destroy(toClean.gameObject);
-    }
-
-    private void ResolveDooberBurst() {
-      RewardedActionManager.Instance.SendPendingRewardsToInventory(); ;
-      if (ChestRewardManager.Instance.ChestPending == false) {
-        RewardSequenceActive = false;
-        if (RobotEngineManager.Instance.CurrentRobot != null) {
-          RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.All);
-        }
-        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
-      }
-      else {
-        HandleChestGained();
-      }
-    }
-
-    private void HandleChestRequirementsGained(int currentPoints, int numPointsNeeded) {
-      // Ignore updating if we are in the process of showing a new LootView
-      if (ChestRewardManager.Instance.ChestPending == false) {
-        UpdateChestProgressBar(currentPoints, numPointsNeeded);
-      }
-    }
 
     private void UpdateChestProgressBar(int currentPoints, int numPointsNeeded, bool instant = false) {
       float progress = ((float)currentPoints / (float)numPointsNeeded);
@@ -352,22 +246,6 @@ namespace Cozmo.HomeHub {
       }
       else {
         _EmotionChipTag.overrideSprite = _EmotionChipSprite_Mid;
-      }
-
-    }
-
-    // If we have a Chest Pending, open the loot view once the progress bar finishes filling.
-    // If there are Rewards Pending, do this when the Energy Sequence ends.
-    private void HandleProgressUpdated() {
-      if (ChestRewardManager.Instance.ChestPending && _LootViewInstance == null
-          && RewardedActionManager.Instance.RewardPending == false) {
-        OpenLootView();
-      }
-      else {
-        // Update Minigame need now that daily goal progress has changed
-        if (RobotEngineManager.Instance.CurrentRobot != null) {
-          DailyGoalManager.Instance.SetMinigameNeed();
-        }
       }
     }
 
@@ -395,6 +273,8 @@ namespace Cozmo.HomeHub {
 
     private void HandlePlayTabButton() {
       SwitchToTab(HomeTab.Play);
+      // Check for Reward sequence whenever we enter the play tab
+      CheckForRewardSequence();
     }
 
     private void HandleProfileTabButton() {
@@ -540,6 +420,158 @@ namespace Cozmo.HomeHub {
       _AnyUpgradeAffordableIndicator.SetActive(canAfford);
     }
 
+    #region Reward Sequence and Lootview
+
+    private void CheckForRewardSequence() {
+      if (RewardedActionManager.Instance.RewardPending || DailyGoalManager.Instance.GoalsPending) {
+        // If Rewards are pending, set sequence to active, shut down input until everything is done
+        // Don't bother updating the chest progress bar to current points 
+        StartCoroutine(BurstEnergyAfterInit());
+      }
+      else {
+        // Otherwise set minigame need and update chest progress bar to whatever it should be at as
+        // we enter the view.
+        if (RobotEngineManager.Instance.CurrentRobot != null) {
+          DailyGoalManager.Instance.SetMinigameNeed();
+        }
+        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
+      }
+    }
+
+    // If we have a Chest Pending, open the loot view once the progress bar finishes filling.
+    // If there are Rewards Pending, do this when the Energy Sequence ends.
+    private void HandleGreenPointsBarUpdateComplete() {
+      if (ChestRewardManager.Instance.ChestPending && _LootViewInstance == null
+          && RewardedActionManager.Instance.RewardPending == false) {
+        OpenLootView();
+      }
+      else {
+        // Update Minigame need now that daily goal progress has changed
+        if (RobotEngineManager.Instance.CurrentRobot != null) {
+          DailyGoalManager.Instance.SetMinigameNeed();
+        }
+      }
+    }
+
+    // Opens loot view and fires and relevant events
+    private void OpenLootView() {
+      if (HomeViewCurrentlyOccupied && RewardSequenceActive == false) {
+        // Avoid dupes but fail gracefully
+        DAS.Warn("HomeView.OpenLootView", "HomeViewCurrentlyOccupied with non reward stuff when we tried to open LootView");
+        HandleLootViewCloseAnimationFinished();
+        return;
+      }
+      _EmotionChipTag.gameObject.SetActive(false);
+
+      AssetBundleManager.Instance.LoadAssetBundleAsync(_LootViewPrefabData.AssetBundle, (bool success) => {
+        _LootViewPrefabData.LoadAssetData((GameObject prefabObject) => {
+          LootView alertView = UIManager.OpenView(prefabObject.GetComponent<LootView>());
+          alertView.LootBoxRewards = ChestRewardManager.Instance.PendingChestRewards;
+          _LootViewInstance = alertView;
+          _LootViewInstance.ViewCloseAnimationFinished += (() => {
+            HandleLootViewCloseAnimationFinished();
+            // Only unload the asset bundle if we actually loaded it before
+            AssetBundleManager.Instance.UnloadAssetBundle(_LootViewPrefabData.AssetBundle);
+          });
+        });
+      });
+    }
+
+    private void HandleLootViewCloseAnimationFinished() {
+      _EmotionChipTag.gameObject.SetActive(true);
+      RewardSequenceActive = false;
+      _LootViewInstance = null;
+      CheckIfUnlockablesAffordableAndUpdateBadge();
+      UpdateChestProgressBar(0, ChestRewardManager.Instance.GetNextRequirementPoints(), true);
+      UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
+    }
+
+    // Doobstorm 2016 - Create Energy Doobers, set up Tween Sequence, and get it started, prevent game requests
+    // and other obnoxious logic when we are doing pretty things with particles
+    public Sequence EnergyDooberBurst(int pointsEarned, Transform energySource, Sequence dooberSequence) {
+      RewardSequenceActive = true;
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.NoGame);
+      }
+      GenericRewardsConfig rc = GenericRewardsConfig.Instance;
+      int doobCount = Mathf.CeilToInt((float)pointsEarned / rc.ExpPerParticleEffect);
+      for (int i = 0; i < doobCount; i++) {
+        Transform freshDoobz = UIManager.CreateUIElement(_EnergyDooberPrefab, energySource).transform;
+        _EnergyDooberList.Add(freshDoobz);
+        float xOffset = UnityEngine.Random.Range(rc.ExpParticleMinSpread, rc.ExpParticleMaxSpread);
+        float yOffset = UnityEngine.Random.Range(rc.ExpParticleMinSpread, rc.ExpParticleMaxSpread);
+        float exitTime = UnityEngine.Random.Range(0.0f, rc.ExpParticleStagger) + rc.ExpParticleBurst + rc.ExpParticleHold;
+        Vector3 doobTarget = new Vector3(freshDoobz.position.x - xOffset, freshDoobz.position.y + yOffset, freshDoobz.position.z);
+        // Use local move for the Vector3 Spread
+        dooberSequence.Insert(0.0f, freshDoobz.DOLocalMove(doobTarget, rc.ExpParticleBurst).SetEase(Ease.OutBack));
+        // Use non local move to properly tween to target end transform position
+        dooberSequence.Insert(exitTime, freshDoobz.DOMove(_EnergyDooberEnd.position, rc.ExpParticleLeave).SetEase(Ease.InBack).OnComplete(() => (CleanUpDoober(freshDoobz))));
+      }
+      return dooberSequence;
+    }
+
+    private void CleanUpDoober(Transform toClean) {
+      _EnergyBarEmitter.Emit(GenericRewardsConfig.Instance.BurstPerParticleHit);
+      Destroy(toClean.gameObject);
+    }
+
+    private void ResolveDooberBurst() {
+      RewardedActionManager.Instance.SendPendingRewardsToInventory();
+      if (ChestRewardManager.Instance.ChestPending == false) {
+        RewardSequenceActive = false;
+        if (RobotEngineManager.Instance.CurrentRobot != null) {
+          RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.All);
+        }
+        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
+      }
+      else {
+        HandleChestGained();
+      }
+    }
+
+    private IEnumerator BurstEnergyAfterInit() {
+      yield return new WaitForFixedUpdate();
+      _RewardSequence = DOTween.Sequence();
+      if (DailyGoalManager.Instance.GoalsPending) {
+        for (int i = 0; i < DailyGoalManager.Instance.PendingDailyGoals.Count; i++) {
+          DailyGoal currGoal = DailyGoalManager.Instance.PendingDailyGoals[i];
+          _RewardSequence = EnergyDooberBurst(currGoal.PointsRewarded, GetGoalSource(currGoal), _RewardSequence);
+        }
+        DailyGoalManager.Instance.ResolveDailyGoalsEarned();
+      }
+      else if (RewardedActionManager.Instance.RewardPending) {
+        _RewardSequence = EnergyDooberBurst(RewardedActionManager.Instance.TotalPendingEnergy, _EnergyDooberStart, _RewardSequence);
+      }
+      // Prevent stray doobers from being forgotten by dotween bug
+      _RewardSequence.AppendInterval(GenericRewardsConfig.Instance.ExpParticleStagger);
+      _RewardSequence.AppendCallback(ResolveDooberBurst);
+      _RewardSequence.Play();
+    }
+
+    // If we earned a chest, have the progress bar reflect the previous requirement level at full.
+    private void HandleChestGained() {
+      UpdateChestProgressBar(ChestRewardManager.Instance.GetPreviousRequirementPoints(), ChestRewardManager.Instance.GetPreviousRequirementPoints());
+    }
+
+    private Transform GetGoalSource(DailyGoal goal) {
+      Transform source = _EnergyDooberStart;
+      if (DailyGoalManager.Instance.GoalPanelInstance == null) {
+        DAS.Warn("HomeView.GetGoalSource", "GoalPanelInstance is NULL, this should only be called with a GoalPanel active");
+        return source;
+      }
+      else {
+        DailyGoalPanel goalPanel = DailyGoalManager.Instance.GoalPanelInstance;
+        for (int i = 0; i < goalPanel.GoalCells.Count; i++) {
+          if (goalPanel.GoalCells[i].Goal == goal) {
+            source = goalPanel.GoalCells[i].transform;
+          }
+        }
+      }
+      return source;
+    }
+
+    #endregion
+
     #region Request Game
 
 
@@ -610,9 +642,8 @@ namespace Cozmo.HomeHub {
     protected override void CleanUp() {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
-      ChestRewardManager.Instance.ChestRequirementsGained -= HandleChestRequirementsGained;
       ChestRewardManager.Instance.ChestGained -= HandleChestGained;
-      _RequirementPointsProgressBar.ProgressUpdateCompleted -= HandleProgressUpdated;
+      _RequirementPointsProgressBar.ProgressUpdateCompleted -= HandleGreenPointsBarUpdateComplete;
       GameEventManager.Instance.OnGameEvent -= HandleDailyGoalCompleted;
       DailyGoalManager.Instance.OnRefreshDailyGoals -= UpdatePlayTabText;
       UnlockablesManager.Instance.OnUnlockPopupRequested -= HandleUnlockView;
@@ -624,7 +655,7 @@ namespace Cozmo.HomeHub {
       Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
       playerInventory.ItemAdded -= HandleItemValueChanged;
       playerInventory.ItemRemoved -= HandleItemValueChanged;
-      StopCoroutine(BurstAfterInit());
+      StopCoroutine(BurstEnergyAfterInit());
     }
 
     protected override void ConstructOpenAnimation(Sequence openAnimation) {

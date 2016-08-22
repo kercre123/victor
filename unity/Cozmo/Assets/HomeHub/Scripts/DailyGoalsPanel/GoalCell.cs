@@ -33,6 +33,11 @@ namespace Cozmo {
       }
 
       private DailyGoal _Goal;
+      public DailyGoal Goal {
+        get {
+          return _Goal;
+        }
+      }
 
       private float _GoalProg;
 

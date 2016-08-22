@@ -131,7 +131,9 @@ public class FirstTimeConnectDialog : MonoBehaviour {
   }
 
   public void HandleRobotDisconnect() {
-    _ConnectionFlowInstance.HandleRobotDisconnect();
+    if (_ConnectionFlowInstance != null) {
+      _ConnectionFlowInstance.HandleRobotDisconnect();
+    }
   }
 
   private void HandleConnectionFlowQuit() {

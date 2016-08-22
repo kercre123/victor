@@ -121,9 +121,14 @@ public class InventoryPane : MonoBehaviour {
   }
 
   private void DebugAddItem(string itemId, int delta) {
-    _PlayerInventory.AddItemAmount(itemId, delta);
+    // Set to Fake Reward Pending if energy so it will behave like normal energy earned
+    // for loot view testing and whatnot
+    // If not an energy item then instantly add to inventory
     if (delta > 0 && itemId == RewardedActionManager.Instance.EnergyID) {
       RewardedActionManager.Instance.FakeRewardPending(delta);
+    }
+    else {
+      _PlayerInventory.AddItemAmount(itemId, delta);
     }
     DataPersistenceManager.Instance.Save();
   }

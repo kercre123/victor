@@ -11,12 +11,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ce0dc538f0af4766a7ae65641170163, type: 3}
   m_Name: GenericRewardsConfig
   m_EditorClassIdentifier: 
+  EnergyID: experience
+  CoinID: TestHexItem0
+  SparkID: treat
   ExpPerParticleEffect: 5
-  BurstPerParticleHit: 10
+  BurstPerParticleHit: 5
   ExpParticleMinSpread: 50
-  ExpParticleMaxSpread: 250
-  ExpParticleBurst: 0.25
-  ExpParticleHold: 0.5
-  ExpParticleLeave: 0.25
-  ExpParticleStagger: 0.75
+  ExpParticleMaxSpread: 400
+  ExpParticleBurst: 0.75
+  ExpParticleHold: 0.25
+  ExpParticleLeave: 0.75
+  ExpParticleStagger: 0.5
   RewardConfigFilename: RewardedActions.json

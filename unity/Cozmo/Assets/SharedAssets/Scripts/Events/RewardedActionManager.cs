@@ -92,11 +92,15 @@ public class RewardedActionManager : MonoBehaviour {
   public int TotalPendingEnergy {
     get {
       int total = 0;
+      List<string> caughtTags = new List<string>();
       foreach (RewardedActionData reward in RewardedActionManager.Instance.PendingActionRewards.Keys) {
         int count = 0;
         if (RewardedActionManager.Instance.PendingActionRewards.TryGetValue(reward, out count)) {
-          if (reward.Reward.ItemID == _RewardConfig.EnergyID) {
-            total += count;
+          if (!caughtTags.Contains(reward.Tag)) {
+            if (reward.Reward.ItemID == _RewardConfig.EnergyID) {
+              total += count;
+              caughtTags.Add(reward.Tag);
+            }
           }
         }
       }
@@ -150,9 +154,6 @@ public class RewardedActionManager : MonoBehaviour {
           DAS.Info(this, string.Format("{0} rewarded {1} {2}", cozEvent.GameEventEnum, reward.Reward.Amount, reward.Reward.ItemID));
           if (!PendingActionRewards.ContainsKey(reward)) {
             PendingActionRewards.Add(reward, reward.Reward.Amount);
-          }
-          else {
-            PendingActionRewards[reward] += reward.Reward.Amount;
           }
         }
       }
@@ -226,7 +227,7 @@ public class RewardedActionManager : MonoBehaviour {
     foreach (RewardedActionData reward in PendingActionRewards.Keys) {
       DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount(reward.Reward.ItemID, reward.Reward.Amount);
     }
-    PendingActionRewards.Clear();
+    ResetPendingRewards();
   }
 
   private bool TryGetRewardsByTag(string Tag, out List<RewardedActionData> foundCollisions) {
@@ -266,6 +267,12 @@ public class RewardedActionManager : MonoBehaviour {
       }
     }
     return best;
+  }
+
+  public void ResetPendingRewards() {
+    PendingActionRewards.Clear();
+    NewDifficultyUnlock = -1;
+    NewSkillChange = 0;
   }
 
   private void RegisterEvents() {

@@ -3,6 +3,7 @@ using Anki.Cozmo;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
+using Cozmo.UI;
 
 // Saves the GameEvents as a string so they don't get out of order when they serielize
 [Serializable]
@@ -128,32 +129,28 @@ public class UnlockableUnlockedGameEvent : GameEventWrapper {
 }
 
 public class DailyGoalCompleteGameEvent : GameEventWrapper {
-  public GameEvent GoalEvent;
-  public int RewardCount;
+  public DailyGoal CompletedGoal;
 
   public override void Init(GameEvent Enum, params object[] args) {
     base.Init(Enum);
 
-    if (args.Length > 0 && args[0].GetType() == typeof(GameEvent)) {
-      GoalEvent = (GameEvent)args[0];
+    if (args.Length > 0 && args[0].GetType() == typeof(DailyGoal)) {
+      CompletedGoal = (DailyGoal)args[0];
     }
 
-    if (args.Length > 1 && args[1].GetType() == typeof(int)) {
-      RewardCount = (int)args[1];
-    }
   }
 }
 
 public class DailyGoalProgressGameEvent : GameEventWrapper {
-  public GameEvent GoalEvent;
+  public DailyGoal GoalProgressed;
   public int Progress;
   public int Target;
 
   public override void Init(GameEvent Enum, params object[] args) {
     base.Init(Enum);
 
-    if (args.Length > 0 && args[0].GetType() == typeof(GameEvent)) {
-      GoalEvent = (GameEvent)args[0];
+    if (args.Length > 0 && args[0].GetType() == typeof(DailyGoal)) {
+      GoalProgressed = (DailyGoal)args[0];
     }
 
     if (args.Length > 1 && args[1].GetType() == typeof(int)) {

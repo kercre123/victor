@@ -44,11 +44,6 @@ namespace Cozmo {
       [JsonIgnore]
       public Action<DailyGoal> OnDailyGoalCompleted;
 
-      // TODO: Refactor GameEvent to allow for more situation based events.
-      // Example : Replace SpeedTapSessionWin with MinigameSessionEnded, but the related Goal would then
-      // have a MinigameIDCondition (SpeedTap) and a DidWinCondition (True).
-      // NOTE : How do we plan to manage gamestate like this? Especially things like DidWin.
-
       // Conditions that must be met in order for this to progress when its event is fired.
       public List<GoalCondition> ProgConditions = new List<GoalCondition>();
 
@@ -97,7 +92,7 @@ namespace Cozmo {
         }
         // Progress Goal
         Progress++;
-        GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnDailyGoalProgress, this.GoalEvent, this.Progress, this.Target));
+        GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnDailyGoalProgress, this));
 
         DAS.Event(this, string.Format("{0} Progressed to {1}", Title, Progress));
         // Check if Completed
@@ -110,7 +105,7 @@ namespace Cozmo {
       public void DebugAddGoalProgress() {
         // Progress Goal
         Progress++;
-        GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnDailyGoalProgress, this.GoalEvent, this.Progress, this.Target));
+        GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnDailyGoalProgress, this));
 
         DAS.Event(this, string.Format("{0} Progressed to {1}", Title, Progress));
         // Check if Completed
@@ -174,7 +169,7 @@ namespace Cozmo {
           if (OnDailyGoalCompleted != null) {
             OnDailyGoalCompleted.Invoke(this);
           }
-          GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnDailyGoalCompleted, this.GoalEvent, this.PointsRewarded));
+          GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnDailyGoalCompleted, this));
           _Completed = true;
           GameEventManager.Instance.OnGameEvent -= ProgressGoal;
         }

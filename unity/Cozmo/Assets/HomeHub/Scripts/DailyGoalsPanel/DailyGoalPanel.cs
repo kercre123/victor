@@ -15,8 +15,8 @@ using DataPersistence;
 /// </summary>
 public class DailyGoalPanel : MonoBehaviour {
 
-  private readonly List<GoalCell> _GoalCells = new List<GoalCell>();
-  private readonly List<GameObject> _EmptyGoalCells = new List<GameObject>();
+  public readonly List<GoalCell> GoalCells = new List<GoalCell>();
+  public readonly List<GameObject> EmptyGoalCells = new List<GameObject>();
   private const float _kFadeTweenDuration = 0.25f;
 
   public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel);
@@ -43,6 +43,7 @@ public class DailyGoalPanel : MonoBehaviour {
 
   void Start() {
     UpdateDailySession();
+    DailyGoalManager.Instance.GoalPanelInstance = this;
     DailyGoalManager.Instance.OnRefreshDailyGoals += UpdateDailySession;
   }
 
@@ -52,16 +53,16 @@ public class DailyGoalPanel : MonoBehaviour {
   }
 
   private void ClearGoalCells() {
-    foreach (GoalCell cell in _GoalCells) {
+    foreach (GoalCell cell in GoalCells) {
       if (cell != null) {
         GameObject.Destroy(cell.gameObject);
       }
     }
-    _GoalCells.Clear();
-    foreach (GameObject cell in _EmptyGoalCells) {
+    GoalCells.Clear();
+    foreach (GameObject cell in EmptyGoalCells) {
       GameObject.Destroy(cell);
     }
-    _EmptyGoalCells.Clear();
+    EmptyGoalCells.Clear();
   }
 
   public void UpdateDailySession() {
@@ -88,8 +89,8 @@ public class DailyGoalPanel : MonoBehaviour {
 
   private int GetGoalsCompletedCount() {
     int completed = 0;
-    for (int i = 0; i < _GoalCells.Count; ++i) {
-      if (_GoalCells[i].GoalComplete()) {
+    for (int i = 0; i < GoalCells.Count; ++i) {
+      if (GoalCells[i].GoalComplete()) {
         completed++;
       }
     }
@@ -135,7 +136,7 @@ public class DailyGoalPanel : MonoBehaviour {
 
 
   private void UpdateCompletedText() {
-    _CompletedText.FormattingArgs = new object[] { GetGoalsCompletedCount(), _GoalCells.Count };
+    _CompletedText.FormattingArgs = new object[] { GetGoalsCompletedCount(), GoalCells.Count };
   }
 
   // Creates a goal badge based on a specified DailyGoal, then hooks in to DailyGoalManager.
@@ -144,13 +145,13 @@ public class DailyGoalPanel : MonoBehaviour {
     GoalCell newBadge = UIManager.CreateUIElement(_GoalCellPrefab.gameObject, _GoalContainer).GetComponent<GoalCell>();
     newBadge.Initialize(goal);
     newBadge.OnProgChanged += OnGoalCellProgression;
-    _GoalCells.Add(newBadge);
+    GoalCells.Add(newBadge);
     return newBadge;
   }
 
   private GameObject CreateEmptyGoalCell() {
     GameObject newEmptyBadge = (UIManager.CreateUIElement(_EmptyGoalCellPrefab, _GoalContainer));
-    _EmptyGoalCells.Add(newEmptyBadge);
+    EmptyGoalCells.Add(newEmptyBadge);
     return newEmptyBadge;
   }
 

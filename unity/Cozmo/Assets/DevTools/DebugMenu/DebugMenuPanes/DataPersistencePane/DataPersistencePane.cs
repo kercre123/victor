@@ -83,6 +83,7 @@ namespace DataPersistence {
       if (days > 0) {
         // Make sure next set of goals is random
         OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.DailyGoals);
+        DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow = false;
         DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.ForEach(x => x.Date = x.Date.AddDays(-days));
         DataPersistenceManager.Instance.Save();
       }
