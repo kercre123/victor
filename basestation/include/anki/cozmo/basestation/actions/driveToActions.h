@@ -180,6 +180,7 @@ namespace Anki {
       
     private:
       GetPossiblePosesFunc _getPossiblePosesFunc;
+      bool _lightsSet = false;
     }; // DriveToObjectAction
 
   

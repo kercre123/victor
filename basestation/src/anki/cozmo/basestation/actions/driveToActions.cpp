@@ -127,7 +127,10 @@ namespace Anki {
     
     DriveToObjectAction::~DriveToObjectAction()
     {
-      _robot.GetLightsComponent().UnSetInteractionObject(_objectID);
+      if(_lightsSet)
+      {
+        _robot.GetLightsComponent().UnSetInteractionObject(_objectID);
+      }
       _compoundAction.PrepForCompletion();
     }
     
@@ -376,7 +379,12 @@ namespace Anki {
       
       // Mark this object as one we are docking with (e.g. so its lights indicate
       // it is being interacted with)
-      _robot.GetLightsComponent().SetInteractionObject(_objectID);
+      // Need to check if we have set the cube lights already in case the action was reset
+      if(!_lightsSet)
+      {
+        _robot.GetLightsComponent().SetInteractionObject(_objectID);
+        _lightsSet = true;
+      }
       
       return result;
     }

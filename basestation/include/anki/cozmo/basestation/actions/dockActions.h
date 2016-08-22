@@ -180,6 +180,8 @@ namespace Anki {
       
       AnimationStreamer::Tag     _squintLayerTag = AnimationStreamer::NotAnimatingTag;
       
+      bool _lightsSet = false;
+      
     }; // class IDockAction
     
     

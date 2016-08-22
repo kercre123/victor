@@ -155,12 +155,12 @@ void LightsComponent::Update()
       newState = CubeLightsState::Interacting;
     }
     // Otherwise if we are just finished interacting with the cube and we aren't carrying the cube
-    // go back to connected
-    else if(_interactionObjects.count((cubeInfoPair.first) == 0) &&
+    // go back to visible
+    else if(_interactionObjects.count(cubeInfoPair.first) == 0 &&
             currState == CubeLightsState::Interacting &&
             _robot.GetCarryingObject() != cubeInfoPair.first)
     {
-      newState = CubeLightsState::Connected;
+      newState = CubeLightsState::Visible;
     }
     
     // Only fade if we did not just end a fade and we can fade from current state to the new state
