@@ -17,6 +17,7 @@
 #include "util/logging/logging.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "util/helpers/templateHelpers.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/audio/audioController.h"
 #include "anki/cozmo/basestation/audio/audioEngineMessageHandler.h"
 #include "anki/cozmo/basestation/audio/audioEngineClientConnection.h"
@@ -74,29 +75,22 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
     Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
   }
   
-  // We'll use this callback for simple events we care about
-  auto callback = std::bind(&CozmoEngine::HandleGameEvents, this, std::placeholders::_1);
-  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotImageSendMode, callback));
-  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ImageRequest, callback));
-  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToRobot, callback));
-  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::DisconnectFromRobot, callback));
-  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ReadAnimationFile, callback));
-  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::StartTestMode, callback));
-  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetEnableSOSLogging, callback));
+  auto helper = MakeAnkiEventUtil(*_context->GetExternalInterface(), *this, _signalHandles);
   
-  // Use a separate callback for StartEngine
-  auto startEngineCallback = std::bind(&CozmoEngine::HandleStartEngine, this, std::placeholders::_1);
-  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::StartEngine, startEngineCallback));
-  
-  auto updateFirmwareCallback = std::bind(&CozmoEngine::HandleUpdateFirmware, this, std::placeholders::_1);
-  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::UpdateFirmware, updateFirmwareCallback));
-
-  auto resetFirmwareCallback = std::bind(&CozmoEngine::HandleResetFirmware, this, std::placeholders::_1);
-  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ResetFirmware, resetFirmwareCallback));
-
-  auto featureRequestsCallback = std::bind(&CozmoEngine::HandleFeatureRequests, this, std::placeholders::_1);
-  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::RequestFeatureToggles, featureRequestsCallback));
-  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetFeatureToggle, featureRequestsCallback));
+  using namespace ExternalInterface;
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::ConnectToRobot>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::DisconnectFromRobot>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::ImageRequest>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadAnimationFile>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::ResetFirmware>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestFeatureToggles>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetEnableSOSLogging>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFeatureToggle>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetGameBeingPaused>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotImageSendMode>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::StartEngine>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::StartTestMode>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::UpdateFirmware>();
 
   _debugConsoleManager.Init(_context->GetExternalInterface());
 }
@@ -181,91 +175,90 @@ Result CozmoEngine::Init(const Json::Value& config) {
   
   return RESULT_OK;
 }
-  
-void CozmoEngine::HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+
+template<>
+void CozmoEngine::HandleMessage(const ExternalInterface::StartEngine& msg)
 {
   if (EngineState::Running == _engineState) {
-    PRINT_NAMED_ERROR("CozmoEngine.HandleStartEngine.AlreadyStarted", "");
+    PRINT_NAMED_ERROR("CozmoEngine.HandleMessage.StartEngine.AlreadyStarted", "");
     return;
   }
   
   SetEngineState(EngineState::WaitingForUIDevices);
 }
-  
-void CozmoEngine::HandleUpdateFirmware(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+
+template<>
+void CozmoEngine::HandleMessage(const ExternalInterface::UpdateFirmware& msg)
 {
-  const ExternalInterface::UpdateFirmware& msg = event.GetData().Get_UpdateFirmware();
-  
   if (EngineState::UpdatingFirmware == _engineState)
   {
-    PRINT_NAMED_WARNING("CozmoEngine.HandleUpdateFirmware.AlreadyStarted", "");
+    PRINT_NAMED_WARNING("CozmoEngine.HandleMessage.UpdateFirmware.AlreadyStarted", "");
     return;
   }
-
+  
   if (_context->GetRobotManager()->InitUpdateFirmware(msg.fwType, msg.version))
   {
     SetEngineState(EngineState::UpdatingFirmware);
   }
 }
 
-void CozmoEngine::HandleFeatureRequests(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+template<>
+void CozmoEngine::HandleMessage(const ExternalInterface::RequestFeatureToggles& msg)
 {
-  switch (event.GetData().GetTag()) {
-    case ExternalInterface::MessageGameToEngine::Tag::RequestFeatureToggles:
-    {
-      // collect feature list and send to UI
-      ExternalInterface::FeatureToggles toggles;
-      auto featureList = _context->GetFeatureGate()->GetFeatures();
-      for (const auto& featurePair : featureList) {
-        toggles.features.emplace_back(featurePair.first, featurePair.second);
-      }
-
-      _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::FeatureToggles>(std::move(toggles));
-      break;
-    }
-    case ExternalInterface::MessageGameToEngine::Tag::SetFeatureToggle:
-    {
-      const auto& message = event.GetData().Get_SetFeatureToggle();
-      _context->GetFeatureGate()->SetFeatureEnabled(message.feature, message.value);
-      break;
-    }
-    default:
-      PRINT_NAMED_ERROR("CozmoEngine.HandleFeatureRequests", "got here with bad message type");
-      break;
+  // collect feature list and send to UI
+  ExternalInterface::FeatureToggles toggles;
+  auto featureList = _context->GetFeatureGate()->GetFeatures();
+  for (const auto& featurePair : featureList) {
+    toggles.features.emplace_back(featurePair.first, featurePair.second);
   }
+  
+  _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::FeatureToggles>(std::move(toggles));
+}
+
+template<>
+void CozmoEngine::HandleMessage(const ExternalInterface::SetFeatureToggle& message)
+{
+  _context->GetFeatureGate()->SetFeatureEnabled(message.feature, message.value);
 }
   
-Result CozmoEngine::ConnectToRobot(const ExternalInterface::ConnectToRobot& connectMsg)
+template<>
+void CozmoEngine::HandleMessage(const ExternalInterface::ConnectToRobot& connectMsg)
 {
   if( CozmoEngine::HasRobotWithID(connectMsg.robotID)) {
-    PRINT_NAMED_INFO("CozmoEngine.ConnectToRobot.AlreadyConnected", "Robot %d already connected", connectMsg.robotID);
-    return RESULT_OK;
+    PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ConnectToRobot.AlreadyConnected", "Robot %d already connected", connectMsg.robotID);
+    return;
   }
   
   _context->GetRobotManager()->GetMsgHandler()->AddRobotConnection(connectMsg);
   
   // Another exception for hosts: have to tell the basestation to add the robot as well
-  return AddRobot(connectMsg.robotID);
+  if(AddRobot(connectMsg.robotID) == RESULT_OK) {
+    PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ConnectToRobot.Success", "Connected to robot %d!", connectMsg.robotID);
+  } else {
+    PRINT_NAMED_ERROR("CozmoEngine.HandleMessage.ConnectToRobot.Fail", "Failed to connect to robot %d!", connectMsg.robotID);
+  }
 }
-void CozmoEngine::HandleResetFirmware(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+  
+template<>
+void CozmoEngine::HandleMessage(const ExternalInterface::ResetFirmware& msg)
 {
   for (RobotID_t robotId : GetRobotIDList())
   {
-    PRINT_NAMED_INFO("CozmoEngine.HandleResetFirmware", "Sending KillBodyCode to Robot %d", robotId);
+    PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ResetFirmware", "Sending KillBodyCode to Robot %d", robotId);
     _context->GetRobotManager()->GetMsgHandler()->SendMessage(robotId, RobotInterface::EngineToRobot(KillBodyCode()));
   }
-}  
-
-Result CozmoEngine::DisconnectFromRobot(const ExternalInterface::DisconnectFromRobot& disconnectMsg)
+}
+  
+template<>
+void CozmoEngine::HandleMessage(const ExternalInterface::DisconnectFromRobot& disconnectMsg)
 {
   if( !CozmoEngine::HasRobotWithID(disconnectMsg.robotID)) {
-    PRINT_NAMED_INFO("CozmoEngine.DisconnectFromRobot.AlreadyDisconnected", "Robot %d already disconnected", disconnectMsg.robotID);
-    return RESULT_OK;
+    PRINT_NAMED_INFO("CozmoEngine.HandleMessage.DisconnectFromRobot.AlreadyDisconnected", "Robot %d already disconnected", disconnectMsg.robotID);
+    return;
   }
   
   _context->GetRobotManager()->GetMsgHandler()->Disconnect();
-  
-  return RESULT_OK;
+  PRINT_NAMED_INFO("CozmoEngine.HandleMessage.DisconnectFromRobot", "Disconnected from robot %d!", disconnectMsg.robotID);
 }
 
 Result CozmoEngine::Update(const float currTime_sec)
@@ -332,7 +325,7 @@ Result CozmoEngine::Update(const float currTime_sec)
       // robots in the world.
       _context->GetRobotManager()->UpdateAllRobots();
       
-      SendLatencyInfo();
+      UpdateLatencyInfo();
 
       break;
     }
@@ -391,10 +384,26 @@ CONSOLE_VAR(bool, kLogMessageLatencyOnce, "Network.Stats", false);
 #endif // REMOTE_CONSOLE_ENABLED
 
 
-void CozmoEngine::SendLatencyInfo()
+void CozmoEngine::UpdateLatencyInfo()
 {
   if (Util::kNetConnStatsUpdate)
   {
+    // If the game is paused, don't bother sending latency info
+    if (_isGamePaused)
+    {
+      return;
+    }
+    
+    // We only want to send latency info every N ticks
+    constexpr int kTickSendFrequency = 10;
+    static int currentTickCount = kTickSendFrequency;
+    if (0 != currentTickCount)
+    {
+      currentTickCount--;
+      return;
+    }
+    currentTickCount = kTickSendFrequency;
+    
     ExternalInterface::TimingInfo wifiLatency(Util::gNetStat2LatencyAvg, Util::gNetStat4LatencyMin, Util::gNetStat5LatencyMax);
     ExternalInterface::TimingInfo extSendQueueTime(Util::gNetStat7ExtQueuedAvg_ms, Util::gNetStat8ExtQueuedMin_ms, Util::gNetStat9ExtQueuedMax_ms);
     ExternalInterface::TimingInfo sendQueueTime(Util::gNetStatAQueuedAvg_ms, Util::gNetStatBQueuedMin_ms, Util::gNetStatCQueuedMax_ms);
@@ -464,11 +473,6 @@ void CozmoEngine::SetEngineState(EngineState newState)
   _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::UpdateEngineState>(oldState, newState);
   
   Anki::Util::sEventF("app.engine.state", {{DDATA,EngineStateToString(newState)}}, "%s", EngineStateToString(oldState));
-}
-
-void CozmoEngine::ReadAnimationsFromDisk()
-{
-  _context->GetRobotManager()->ReadAnimationDir();
 }
   
 Result CozmoEngine::InitInternal()
@@ -590,16 +594,18 @@ std::vector<RobotID_t> const& CozmoEngine::GetRobotIDList() const {
   return _context->GetRobotManager()->GetRobotIDList();
 }
 
-void CozmoEngine::SetImageSendMode(RobotID_t robotID, ImageSendMode newMode)
+template<>
+void CozmoEngine::HandleMessage(const ExternalInterface::ReadAnimationFile& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
-  if(robot != nullptr) {
-    return robot->SetImageSendMode(newMode);
-  }
+  _context->GetRobotManager()->ReadAnimationDir();
 }
-  
-void CozmoEngine::SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, ImageResolution resolution)
+
+template<>
+void CozmoEngine::HandleMessage(const ExternalInterface::SetRobotImageSendMode& msg)
 {
+  const RobotID_t robotID = msg.robotID;
+  const ImageSendMode newMode = msg.mode;
+  const ImageResolution resolution = msg.resolution;
   Robot* robot = GetRobotByID(robotID);
   
   if(robot != nullptr) {
@@ -612,90 +618,52 @@ void CozmoEngine::SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode
     robot->SetImageSendMode(newMode);
     robot->SendRobotMessage<RobotInterface::ImageRequest>(newMode, resolution);
   }
-  
 }
-  
-void CozmoEngine::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-{
-  switch (event.GetData().GetTag())
-  {
-    case ExternalInterface::MessageGameToEngineTag::ConnectToRobot:
-    {
-      const ExternalInterface::ConnectToRobot& msg = event.GetData().Get_ConnectToRobot();
-      const Result success = ConnectToRobot(msg);
-      if(success == RESULT_OK) {
-        PRINT_NAMED_INFO("CozmoEngine.HandleEvents", "Connected to robot %d!", msg.robotID);
-      } else {
-        PRINT_NAMED_ERROR("CozmoEngine.HandleEvents", "Failed to connect to robot %d!", msg.robotID);
-      }
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::DisconnectFromRobot:
-    {
-      const ExternalInterface::DisconnectFromRobot& msg = event.GetData().Get_DisconnectFromRobot();
-      const bool success = DisconnectFromRobot(msg);
-      if(success) {
-        PRINT_NAMED_INFO("CozmoEngine.HandleEvents", "Disconnected from robot %d!", msg.robotID);
-      } else {
-        PRINT_NAMED_ERROR("CozmoEngine.HandleEvents", "Failed to disconnect from robot %d!", msg.robotID);
-      }
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::ReadAnimationFile:
-    {
-      ReadAnimationsFromDisk();
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::SetRobotImageSendMode:
-    {
-      const ExternalInterface::SetRobotImageSendMode& msg = event.GetData().Get_SetRobotImageSendMode();
-      SetRobotImageSendMode(msg.robotID, msg.mode, msg.resolution);
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::ImageRequest:
-    {
-      const ExternalInterface::ImageRequest& msg = event.GetData().Get_ImageRequest();
-      SetImageSendMode(msg.robotID, msg.mode);
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::StartTestMode:
-    {
-      const ExternalInterface::StartTestMode& msg = event.GetData().Get_StartTestMode();
-      Robot* robot = GetRobotByID(msg.robotID);
-      if(robot != nullptr) {
-        robot->SendRobotMessage<StartControllerTestMode>(msg.p1, msg.p2, msg.p3, msg.mode);
-      }
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::SetEnableSOSLogging:
-    {
-      #if ANKI_DEV_CHEATS
-      if(Anki::Util::gLoggerProvider != nullptr) {
-        Anki::Util::MultiLoggerProvider* multiLoggerProvider = dynamic_cast<Anki::Util::MultiLoggerProvider*>(Anki::Util::gLoggerProvider);
-        if (multiLoggerProvider != nullptr) {
-          const std::vector<Anki::Util::ILoggerProvider*>& loggers = multiLoggerProvider->GetProviders();
-          for(int i = 0; i < loggers.size(); ++i) {
-            Anki::Util::SosLoggerProvider* sosLoggerProvider = dynamic_cast<Anki::Util::SosLoggerProvider*>(loggers[i]);
-            if (sosLoggerProvider != nullptr) {
-              sosLoggerProvider->OpenSocket();
-              // disables tags for the SOS program
-              sosLoggerProvider->SetSoSTagEncoding(false);
-              break;
-            }
-          }
 
+template<>
+void CozmoEngine::HandleMessage(const ExternalInterface::ImageRequest& msg)
+{
+  Robot* robot = _context->GetRobotManager()->GetRobotByID(msg.robotID);
+  if(robot != nullptr) {
+    return robot->SetImageSendMode(msg.mode);
+  }
+}
+
+template<>
+void CozmoEngine::HandleMessage(const ExternalInterface::StartTestMode& msg)
+{
+  Robot* robot = GetRobotByID(msg.robotID);
+  if(robot != nullptr) {
+    robot->SendRobotMessage<StartControllerTestMode>(msg.p1, msg.p2, msg.p3, msg.mode);
+  }
+}
+
+template<>
+void CozmoEngine::HandleMessage(const ExternalInterface::SetEnableSOSLogging& msg)
+{
+#if ANKI_DEV_CHEATS
+  if(Anki::Util::gLoggerProvider != nullptr) {
+    Anki::Util::MultiLoggerProvider* multiLoggerProvider = dynamic_cast<Anki::Util::MultiLoggerProvider*>(Anki::Util::gLoggerProvider);
+    if (multiLoggerProvider != nullptr) {
+      const std::vector<Anki::Util::ILoggerProvider*>& loggers = multiLoggerProvider->GetProviders();
+      for(int i = 0; i < loggers.size(); ++i) {
+        Anki::Util::SosLoggerProvider* sosLoggerProvider = dynamic_cast<Anki::Util::SosLoggerProvider*>(loggers[i]);
+        if (sosLoggerProvider != nullptr) {
+          sosLoggerProvider->OpenSocket();
+          // disables tags for the SOS program
+          sosLoggerProvider->SetSoSTagEncoding(false);
+          break;
         }
       }
-      #endif //ANKI_DEV_CHEATS
-      break;
-    }
-    default:
-    {
-      PRINT_STREAM_ERROR("CozmoEngine.HandleEvents",
-                         "Subscribed to unhandled event of type "
-                         << ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()) << "!");
     }
   }
+#endif //ANKI_DEV_CHEATS
+}
+  
+template<>
+void CozmoEngine::HandleMessage(const ExternalInterface::SetGameBeingPaused& msg)
+{
+  _isGamePaused = msg.isPaused;
 }
 
 void CozmoEngine::ExecuteBackgroundTransfers()

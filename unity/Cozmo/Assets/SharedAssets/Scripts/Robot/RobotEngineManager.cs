@@ -425,6 +425,15 @@ public class RobotEngineManager : MonoBehaviour {
     SendMessage();
   }
 
+  public void FlushChannelMessages() {
+    _Channel.FlushQueuedMessages();
+  }
+
+  public void SendGameBeingPaused(bool isPaused) {
+    Message.SetGameBeingPaused = Singleton<Anki.Cozmo.ExternalInterface.SetGameBeingPaused>.Instance.Initialize(isPaused);
+    SendMessage();
+  }
+
   #region Mocks
 
   public void MockConnect() {

@@ -89,11 +89,19 @@ namespace Cozmo {
         if (!_IsOnChargerToSleep) {
           StartIdleTimeout(Settings.AppBackground_TimeTilSleep_sec, Settings.AppBackground_TimeTilDisconnect_sec);
         }
+
+        // Let the engine know that we're being paused
+        RobotEngineManager.Instance.SendGameBeingPaused(true);
+
+        RobotEngineManager.Instance.FlushChannelMessages();
       }
       // When unpausing, put the robot back into freeplay
       else if (_IsPaused && !shouldBePaused) {
         DAS.Debug("PauseManager.HandleApplicationPause", "Application unpaused");
         _IsPaused = false;
+
+        // Let the engine know that we're being unpaused
+        RobotEngineManager.Instance.SendGameBeingPaused(false);
 
         if (!_IsOnChargerToSleep) {
           StopIdleTimeout();

@@ -49,6 +49,7 @@ private:
 
   std::list<std::vector<uint8_t>> _toEngineMessages;
   std::mutex _toEngineMutex;
+  bool _toGameBufferFull = false;
 };
 
 }

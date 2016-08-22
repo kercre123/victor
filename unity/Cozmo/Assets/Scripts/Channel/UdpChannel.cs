@@ -274,6 +274,10 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
     }
   }
 
+  // UdpChannel sends messages immediately (only queueing if async callback is in progress), so this is unnecessary
+  public override void FlushQueuedMessages() {
+  }
+
   protected virtual void BeforeConnect(byte deviceID) {
   }
 

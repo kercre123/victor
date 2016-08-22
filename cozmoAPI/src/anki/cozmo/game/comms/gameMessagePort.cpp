@@ -22,14 +22,19 @@ namespace Cozmo {
 
 void GameMessagePort::PushToGameMessage(const uint8_t* buffer, size_t size)
 {
-  // add to end of buffer, if room
-  if (_toGameSize + size > ExternalInterface::kDirectCommsBufferSize) {
-    ASSERT_NAMED(false, "GameMessagePort.PushToGameMessage.send_buffer_full");
-    return;
-  }
-
   {
     std::lock_guard<std::mutex> bufferLock{_toGameMutex};
+    
+    // add to end of buffer, if room
+    if (_toGameBufferFull || (_toGameSize + size) > ExternalInterface::kDirectCommsBufferSize) {
+      if (!_toGameBufferFull)
+      {
+        _toGameBufferFull = true;
+        ASSERT_NAMED(false, "GameMessagePort.PushToGameMessage.send_buffer_full");
+      }
+      return;
+    }
+    
     std::copy(buffer, buffer+size, &_toGameBuffer[_toGameSize]);
     _toGameSize += size;
   }
@@ -57,6 +62,7 @@ size_t GameMessagePort::PullToGameMessages(uint8_t* buffer, size_t bufferSize)
     std::copy(_toGameBuffer, _toGameBuffer + _toGameSize, buffer);
     sentBytes = _toGameSize;
     _toGameSize = 0;
+    _toGameBufferFull = false;
   }
   return sentBytes;
 }

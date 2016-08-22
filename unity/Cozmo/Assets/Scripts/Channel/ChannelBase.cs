@@ -113,4 +113,10 @@ public abstract class ChannelBase<MessageIn, MessageOut> where MessageIn : IMess
   /// </summary>
   /// <remarks>Only call this from the main Unity thread.</remarks>
   public abstract void Update();
+
+  /// <summary>
+  /// Immediately sends any messages that have been queued to be sent.
+  /// </summary>
+  /// <remarks>Only call this from the main Unity thread.</remarks>
+  public abstract void FlushQueuedMessages();
 }

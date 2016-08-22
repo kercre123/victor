@@ -66,8 +66,6 @@ class AnkiEvent;
 
 namespace ExternalInterface {
   class MessageGameToEngine;
-  struct ConnectToRobot;
-  struct DisconnectFromRobot;
 }
 
 class CozmoEngine
@@ -91,9 +89,6 @@ public:
   // now, it's just the Robot's ID.
   using AdvertisingRobot = RobotID_t;
 
-
-  virtual void ReadAnimationsFromDisk();
-
   // TODO: Add IsConnected methods
   // Check to see if a specified robot / UI device is connected
   // bool IsRobotConnected(AdvertisingRobot whichRobot) const;
@@ -105,14 +100,12 @@ public:
   Robot* GetRobotByID(const RobotID_t robotID); // returns nullptr for invalid ID
   bool   HasRobotWithID(const RobotID_t robotID) const;
   std::vector<RobotID_t> const& GetRobotIDList() const;
-  
-  virtual Result ConnectToRobot(const ExternalInterface::ConnectToRobot& connectMsg);
-  virtual Result DisconnectFromRobot(const ExternalInterface::DisconnectFromRobot& disconnectMsg);
-  
-  void SetImageSendMode(RobotID_t robotID, ImageSendMode newMode);
-  void SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, ImageResolution resolution);
 
   void ExecuteBackgroundTransfers();
+  
+  // Handle various message types
+  template<typename T>
+  void HandleMessage(const T& msg);
 
 protected:
   
@@ -125,19 +118,16 @@ protected:
   std::unique_ptr<BLESystem>                                _bleSystem;
   std::unique_ptr<DeviceDataManager>                        _deviceDataManager;
   Anki::Cozmo::DebugConsoleManager                          _debugConsoleManager;
+  bool                                                      _isGamePaused = false;
 
   virtual Result InitInternal();
-  void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleUpdateFirmware(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleResetFirmware(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleFeatureRequests(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  
   void SetEngineState(EngineState newState);
   
   void ReadCameraCalibration(Robot* robot);
   Result AddRobot(RobotID_t robotID);
   
-  void SendLatencyInfo();
+  void UpdateLatencyInfo();
   
   EngineState _engineState = EngineState::Stopped;
 

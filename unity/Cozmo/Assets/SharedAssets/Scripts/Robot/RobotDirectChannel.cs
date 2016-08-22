@@ -57,6 +57,10 @@ public class RobotDirectChannel : ChannelBase<RobotMessageIn, RobotMessageOut> {
     SendMessages();
   }
 
+  public override void FlushQueuedMessages() {
+    SendMessages();
+  }
+
   protected void SendMessages() {
     if (_SendStream.Position == 0) {
       // nothing to send
