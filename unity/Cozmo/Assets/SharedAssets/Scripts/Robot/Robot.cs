@@ -712,8 +712,12 @@ public class Robot : IRobot {
       }
     }
     else {
-      DAS.Error("Robot.FinishedProcessingImage", "Received old RobotProcessedImage message with timestamp " + engineTimestamp
+      DAS.Error("Robot.FinishedProcessingImage.OldTimestamp", "Received old RobotProcessedImage message with timestamp " + engineTimestamp
       + " _after_ receiving a newer message with timestamp " + _LastProcessedVisionFrameEngineTimestamp + "!");
+
+      // Reset back to zero in case we got a gigantic timestamp which would prevent any future (good) images from getting processed, 
+      // even if they have reasonable timestamps
+      _LastProcessedVisionFrameEngineTimestamp = 0;
     }
   }
 
