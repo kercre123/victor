@@ -11,6 +11,9 @@ namespace Onboarding {
     private GameObject _DebugLayer;
 
     [SerializeField]
+    private GameObject _OutlinePrefab;
+
+    [SerializeField]
     private List<OnboardingBaseStage> _PhaseHomePrefabs;
     [SerializeField]
     private List<OnboardingBaseStage> _PhaseLootPrefabs;
@@ -28,6 +31,10 @@ namespace Onboarding {
       if (_DebugLayer != null) {
         GameObject.Destroy(_DebugLayer);
       }
+    }
+
+    public GameObject GetOutlinePrefab() {
+      return _OutlinePrefab;
     }
 
     public int GetMaxStageInPhase(OnboardingManager.OnboardingPhases phase) {

@@ -102,7 +102,7 @@ public class LightCube : ObservedObject {
 
   public override void HandleUpAxisChanged(ObjectUpAxisChanged message) {
     base.HandleUpAxisChanged(message);
-    DAS.Debug(this, "HandleUpAxisChanged LightCube(" + ID + "): " + message.upAxis + " old " + UpAxis);
+    DAS.Debug(this, "HandleUpAxisChanged LightCube(" + ID + "," + ObjectType + "): " + message.upAxis + " old " + UpAxis);
     UpAxis = message.upAxis;
     if (OnAxisChange != null)
       OnAxisChange(this);

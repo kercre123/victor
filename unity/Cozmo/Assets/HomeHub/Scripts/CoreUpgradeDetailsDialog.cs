@@ -108,7 +108,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
     // No quitting until they've finished onboarding
     if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Upgrades)) {
-      if (_UnlockInfo.UnlockableType == UnlockableType.Action) {
+      if (unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlockable) {
         _OptionalCloseDialogButton.gameObject.SetActive(false);
       }
       if (unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlockable) {

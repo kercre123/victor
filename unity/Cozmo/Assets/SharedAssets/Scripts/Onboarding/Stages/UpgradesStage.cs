@@ -15,14 +15,16 @@ namespace Onboarding {
 
       BaseView.BaseViewOpened += HandleViewOpened;
       GameEventManager.Instance.OnGameEvent += HandleGameEvent;
-      UnlockablesManager.Instance.OnSparkComplete += HandleSparkComplete;
+      BaseView.BaseViewClosed += HandleViewClosed;
+      // Highlight region is set by CozmoUnlocksPanel before this phase starts
+      OnboardingManager.Instance.ShowOutlineRegion(true);
     }
 
     public override void OnDestroy() {
       base.OnDestroy();
       BaseView.BaseViewOpened -= HandleViewOpened;
       GameEventManager.Instance.OnGameEvent -= HandleGameEvent;
-      UnlockablesManager.Instance.OnSparkComplete -= HandleSparkComplete;
+      BaseView.BaseViewClosed -= HandleViewClosed;
     }
 
     private void HandleViewOpened(BaseView view) {
@@ -31,25 +33,31 @@ namespace Onboarding {
         _OverviewInstructions.SetActive(false);
       }
     }
+    // QA could get here if they didn't clear their robot save, but cleared their app save.
+    // so onboarding needs to get cleaned up properly.
+    private void HandleViewClosed(BaseView view) {
+      if (view is CoreUpgradeDetailsDialog) {
+        GoToNextState();
+      }
+    }
 
     public override void SkipPressed() {
+      // Since onboarding hides the close button really the only way to get out
+      // Under the unlocks view, closing happens sooner though, so this is just for debug and sparks
+      if (_UpgradeDetailsView) {
+        _UpgradeDetailsView.CloseView();
+      }
       GoToNextState();
     }
 
     private void HandleGameEvent(GameEventWrapper gameEvent) {
+      // Unlocking already closes window
       if (gameEvent.GameEventEnum == Anki.Cozmo.GameEvent.OnUnlockableEarned) {
         GoToNextState();
       }
     }
-    private void HandleSparkComplete(CoreUpgradeDetailsDialog dialog) {
-      GoToNextState();
-    }
 
     private void GoToNextState() {
-      // Since onboarding hides the close button really the only way to get out
-      if (_UpgradeDetailsView) {
-        _UpgradeDetailsView.CloseView();
-      }
       OnboardingManager.Instance.GoToNextStage();
     }
 

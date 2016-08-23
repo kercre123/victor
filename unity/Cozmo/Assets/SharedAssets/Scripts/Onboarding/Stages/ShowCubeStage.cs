@@ -59,7 +59,7 @@ namespace Onboarding {
       LightCube.OnMovedAction += HandleCubeMoved;
       RobotEngineManager.Instance.AddCallback<ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
 
-      UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.Bone);
+      UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, Color.white);
     }
     public override void OnDestroy() {
       base.OnDestroy();
@@ -234,6 +234,7 @@ namespace Onboarding {
         _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3Body4);
         _ShowShelfTextLabel.text = "";
         _ContinueButtonInstance.gameObject.SetActive(true);
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Block_Connect);
       }
       else if (nextState == SubState.ErrorCubeWrongSideUp) {
         _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCubeRightSideUp);
@@ -241,17 +242,20 @@ namespace Onboarding {
         _ContinueButtonInstance.gameObject.SetActive(false);
         _CozmoCubeRightSideUpTransform.gameObject.SetActive(true);
         _CozmoImageTransform.gameObject.SetActive(false);
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
       }
       else if (nextState == SubState.ErrorCubeMoved) {
         _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCube);
         _ShowShelfTextLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCube2);
         _ContinueButtonInstance.gameObject.SetActive(false);
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
       }
       else if (nextState == SubState.ErrorCozmo) {
         _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCozmo);
         _ShowShelfTextLabel.text = "";
         _ContinueButtonInstance.gameObject.SetActive(true);
         _CozmoMovedErrorTransform.gameObject.SetActive(true);
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
       }
       _SubState = nextState;
     }

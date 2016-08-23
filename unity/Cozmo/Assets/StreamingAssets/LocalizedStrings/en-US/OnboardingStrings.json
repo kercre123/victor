@@ -48,10 +48,10 @@
   "onboarding.Phase3.Body2": {
     "translation": "<b>Great!</b>\nJust like you, if it's too close, It's hard to see"
   },
-  "onboarding.Phase3.Body3": {
+  "onboarding.Phase3.Header3": {
     "translation": "He'll tell you when he's ready to proceed..."
   },
-  "onboarding.Phase3.Header3": {
+  "onboarding.Phase3.Body3": {
     "translation": "Let Cozmo inspect the cube on his own"
   },
   "onboarding.Phase3.Body4": {

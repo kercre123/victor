@@ -28,6 +28,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _DebugLayerPrefab: {fileID: 103178, guid: d8451532cb4d14fc0a3f7bb0535f4fd9, type: 2}
+  _OutlinePrefab: {fileID: 155514, guid: 4b1f85a0dde694822ae983825d11dd9a, type: 2}
   _PhaseHomePrefabs:
   - {fileID: 11442482, guid: 6204d35ba8a14467e8fb2022b4e3ceb5, type: 2}
   - {fileID: 11442482, guid: 066cb281859864617803ba25b0125af6, type: 2}

@@ -37,6 +37,24 @@ public class OnboardingManager : MonoBehaviour {
   private GameObjectDataLink _OnboardingUIPrefabData;
   private OnboardingUIWrapper _OnboardingUIInstance;
 
+  #region OUTLINEAREA
+  // Attaches a small outline around a region of the UI
+  // So we don't need to do any resolution math in the overlay.
+  private Transform _OutlineRegionTransform;
+  private GameObject _UIOutlineInstance;
+  public void SetOutlineRegion(Transform outlineRegion) {
+    _OutlineRegionTransform = outlineRegion;
+  }
+  public void ShowOutlineRegion(bool enable) {
+    if (_UIOutlineInstance != null) {
+      GameObject.Destroy(_UIOutlineInstance);
+    }
+    if (enable && _OutlineRegionTransform != null) {
+      _UIOutlineInstance = UIManager.CreateUIElement(_OnboardingUIInstance.GetOutlinePrefab(), _OutlineRegionTransform);
+    }
+  }
+  #endregion
+
 #if ENABLE_DEBUG_PANEL
   private bool _DebugDisplayOn = true;
 #else
@@ -177,6 +195,7 @@ public class OnboardingManager : MonoBehaviour {
     if (RobotEngineManager.Instance.CurrentRobot != null) {
       RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.All);
     }
+    ShowOutlineRegion(false);
   }
 
   private void LoadOnboardingAssetsCallback(bool assetBundleSuccess) {

@@ -42,6 +42,9 @@ public class CozmoUnlocksPanel : MonoBehaviour {
 
     // Show onboarding for this section if it's the first time here.
     if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Upgrades)) {
+      if (_UnlockableTiles.Count > 0) {
+        OnboardingManager.Instance.SetOutlineRegion(_UnlockableTiles[0].transform);
+      }
       OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.Upgrades);
     }
   }

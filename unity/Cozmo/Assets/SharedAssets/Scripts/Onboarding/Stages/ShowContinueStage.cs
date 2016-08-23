@@ -16,6 +16,9 @@ namespace Onboarding {
     [SerializeField]
     private bool _TransitionBGColorYellow = false;
 
+    [SerializeField]
+    private bool _ShowOutline = false;
+
     public override void Start() {
       base.Start();
       _ContinueButtonInstance.Initialize(HandleContinueClicked, "Onboarding." + name, "Onboarding");
@@ -23,6 +26,15 @@ namespace Onboarding {
 
       if (_TransitionBGColorYellow) {
         UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.Yellow);
+      }
+      if (_ShowOutline) {
+        // Trying to keep the Onboarding as isolated as possible, so rather than making several layers
+        // of getters in homeview, just find it
+        DailyGoalPanel panel = (DailyGoalPanel)GameObject.FindObjectOfType(typeof(DailyGoalPanel));
+        if (panel != null) {
+          OnboardingManager.Instance.SetOutlineRegion(panel.transform);
+          OnboardingManager.Instance.ShowOutlineRegion(true);
+        }
       }
     }
 

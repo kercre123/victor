@@ -191,6 +191,7 @@ MonoBehaviour:
   _FreeplayEnabledOnEnter: 0
   _FreeplayEnabledOnExit: 0
   _TransitionBGColorYellow: 0
+  _ShowOutline: 1
 --- !u!114 &11451468
 MonoBehaviour:
   m_ObjectHideFlags: 1
