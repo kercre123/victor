@@ -5,13 +5,13 @@
       "RewardEvent": {
         "Value": "OnChallengeRoundEnd"
       },
-      "Tag": "QuickTapEndOfRound",
+      "Tag": "QuickTapTieBreaker",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
           "TargetScore": 4,
-          "compareType": "GREATER",
+          "compareType": "EQUAL",
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -48,13 +48,13 @@
       "RewardEvent": {
         "Value": "OnChallengeRoundEnd"
       },
-      "Tag": "QuickTapEndOfRound",
+      "Tag": "QuickTapShutOut",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
           "TargetScore": 1,
-          "compareType": "GREATER",
+          "compareType": "LESS",
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -73,8 +73,51 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 20,
+        "Amount": 5,
         "DescriptionKey": "reward.description.QuickTap.Shutout.SingleRound"
+      }
+    },
+    {
+      "Id": 8,
+      "RewardEvent": {
+        "Value": "OnChallengeRoundEnd"
+      },
+      "Tag": "KeepawayShutOut",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "CubePounceGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
+          "PlayerWin": true,
+          "Label": {
+            "text": "Challenge Winner Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
+          "IsPlayer": false,
+          "TargetScore": 1,
+          "compareType": "LESS",
+          "Label": {
+            "text": "Challenge Score Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 10,
+        "DescriptionKey": "reward.description.Keepaway.Shutout"
       }
     },
     {
@@ -82,7 +125,7 @@
       "RewardEvent": {
         "Value": "OnChallengeComplete"
       },
-      "Tag": "QuickTapEndOfGame",
+      "Tag": "QuickTapGameResult",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
@@ -114,7 +157,7 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 8,
+        "Amount": 20,
         "DescriptionKey": "reward.description.QuickTap.WinGame.FourColor"
       }
     },
@@ -123,7 +166,7 @@
       "RewardEvent": {
         "Value": "OnChallengeComplete"
       },
-      "Tag": "QuickTapEndOfGame",
+      "Tag": "QuickTapGameResult",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
@@ -155,7 +198,7 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 8,
+        "Amount": 15,
         "DescriptionKey": "reward.description.QuickTap.WinGame.ThreeColor"
       }
     },
@@ -164,7 +207,7 @@
       "RewardEvent": {
         "Value": "OnChallengeComplete"
       },
-      "Tag": "QuickTapEndOfGame",
+      "Tag": "QuickTapGameResult",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
@@ -196,7 +239,7 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 8,
+        "Amount": 10,
         "DescriptionKey": "reward.description.QuickTap.WinGame.TwoColor"
       }
     },
@@ -205,7 +248,7 @@
       "RewardEvent": {
         "Value": "OnChallengeComplete"
       },
-      "Tag": "QuickTapEndOfGame",
+      "Tag": "QuickTapGameResult",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
@@ -246,7 +289,7 @@
       "RewardEvent": {
         "Value": "OnChallengeComplete"
       },
-      "Tag": "QuickTapEndOfGame",
+      "Tag": "QuickTapGameResult",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
@@ -269,7 +312,7 @@
       "RewardEvent": {
         "Value": "OnChallengeComplete"
       },
-      "Tag": "KeepawayEndOfGame",
+      "Tag": "KeepawayTieBreaker",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
@@ -293,7 +336,7 @@
           "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
           "IsPlayer": false,
           "TargetScore": 4,
-          "compareType": "GREATER",
+          "compareType": "EQUAL",
           "Label": {
             "text": "Challenge Score Condition",
             "image": null,
@@ -303,51 +346,8 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 20,
+        "Amount": 8,
         "DescriptionKey": "reward.description.Keepaway.TieBreaker"
-      }
-    },
-    {
-      "Id": 8,
-      "RewardEvent": {
-        "Value": "OnChallengeComplete"
-      },
-      "Tag": "KeepawayEndOfGame",
-      "EventConditions": [
-        {
-          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "CubePounceGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
-          "PlayerWin": true,
-          "Label": {
-            "text": "Challenge Winner Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
-          "IsPlayer": false,
-          "TargetScore": 1,
-          "compareType": "GREATER",
-          "Label": {
-            "text": "Challenge Score Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "Reward": {
-        "ItemID": "experience",
-        "Amount": 35,
-        "DescriptionKey": "reward.description.Keepaway.Shutout"
       }
     },
     {
@@ -355,7 +355,7 @@
       "RewardEvent": {
         "Value": "OnChallengeComplete"
       },
-      "Tag": "KeepawayEndOfGame",
+      "Tag": "KeepawayGameResult",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
@@ -378,7 +378,7 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 10,
+        "Amount": 8,
         "DescriptionKey": "reward.description.Keepaway.Won"
       }
     },
@@ -387,7 +387,7 @@
       "RewardEvent": {
         "Value": "OnChallengeComplete"
       },
-      "Tag": "KeepawayEndOfGame",
+      "Tag": "KeepawayGameResult",
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",

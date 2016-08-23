@@ -14,7 +14,14 @@ MonoBehaviour:
   NoTag: NONE
   Tags:
   - NONE
-  - KeepawayEndOfGame
+  - QuickTapGameResult
+  - QuickTapAccuracy
+  - QuickTapShutOut
+  - QuickTapRedCubes
+  - QuickTapTieBreaker
+  - KeepawayGameResult
+  - KeepawayShutOut
+  - KeepawayTieBreaker
+  - ExplorerModeTime
+  - Freeplay
   - UnlockNewThing
-  - QuickTapEndOfGame
-  - QuickTapEndOfRound

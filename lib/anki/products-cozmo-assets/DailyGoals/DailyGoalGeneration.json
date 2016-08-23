@@ -3,11 +3,11 @@
     {
       "TitleKey": "dailyGoal.title.WinKeepaway.TieBreaker",
       "RewardType": "experience",
-      "Tag": "KeepawayEndOfGame",
+      "Tag": "KeepawayTieBreaker",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
-      "CladEvent": "OnChallengeComplete",
+      "CladEvent": "OnChallengeRoundEnd",
       "GenConditions": [
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
@@ -57,505 +57,9 @@
       "Id": 31
     },
     {
-      "TitleKey": "dailyGoal.title.WinKeepaway.Shutout",
-      "RewardType": "experience",
-      "Tag": "KeepawayEndOfGame",
-      "PointsRewarded": 20,
-      "Target": 1,
-      "Priority": 0,
-      "CladEvent": "OnChallengeComplete",
-      "GenConditions": [
-        {
-          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
-          "Unlocked": "KeepawayGame",
-          "IsMatching": true,
-          "State": "Unlocked",
-          "Label": {
-            "text": "Current Unlock Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "ProgressConditions": [
-        {
-          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "CubePounceGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
-          "IsPlayer": false,
-          "TargetScore": 0,
-          "compareType": "EQUAL",
-          "Label": {
-            "text": "Challenge Score Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "Id": 30
-    },
-    {
-      "TitleKey": "dailyGoal.title.PlaySpeedTap.Level3",
-      "RewardType": "experience",
-      "Tag": "QuickTapEndOfGame",
-      "PointsRewarded": 20,
-      "Target": 1,
-      "Priority": 0,
-      "CladEvent": "OnChallengeComplete",
-      "GenConditions": [
-        {
-          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "UseMinDiff": true,
-          "MinDiff": 3,
-          "UseMaxDiff": false,
-          "MaxDiff": 0,
-          "Label": {
-            "text": "Current Difficulty Unlocked Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "ProgressConditions": [
-        {
-          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
-          "Difficulty": 3,
-          "Label": {
-            "text": "Challenge Difficulty Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "Id": 27
-    },
-    {
-      "TitleKey": "dailyGoal.title.WinSpeedTap.Level3",
-      "RewardType": "experience",
-      "Tag": "QuickTapEndOfGame",
-      "PointsRewarded": 20,
-      "Target": 1,
-      "Priority": 0,
-      "CladEvent": "OnChallengeComplete",
-      "GenConditions": [
-        {
-          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "UseMinDiff": true,
-          "MinDiff": 3,
-          "UseMaxDiff": false,
-          "MaxDiff": 0,
-          "Label": {
-            "text": "Current Difficulty Unlocked Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "ProgressConditions": [
-        {
-          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
-          "PlayerWin": true,
-          "Label": {
-            "text": "Challenge Winner Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
-          "Difficulty": 3,
-          "Label": {
-            "text": "Challenge Difficulty Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "Id": 26
-    },
-    {
-      "TitleKey": "dailyGoal.title.PlaySpeedTap.Level2",
-      "RewardType": "experience",
-      "Tag": "QuickTapEndOfGame",
-      "PointsRewarded": 20,
-      "Target": 1,
-      "Priority": 0,
-      "CladEvent": "OnChallengeComplete",
-      "GenConditions": [
-        {
-          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "UseMinDiff": true,
-          "MinDiff": 2,
-          "UseMaxDiff": false,
-          "MaxDiff": 0,
-          "Label": {
-            "text": "Current Difficulty Unlocked Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "ProgressConditions": [
-        {
-          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
-          "Difficulty": 2,
-          "Label": {
-            "text": "Challenge Difficulty Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "Id": 25
-    },
-    {
-      "TitleKey": "dailyGoal.title.WinSpeedTap.Level2",
-      "RewardType": "experience",
-      "Tag": "QuickTapEndOfGame",
-      "PointsRewarded": 20,
-      "Target": 1,
-      "Priority": 0,
-      "CladEvent": "OnChallengeComplete",
-      "GenConditions": [
-        {
-          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "UseMinDiff": true,
-          "MinDiff": 2,
-          "UseMaxDiff": false,
-          "MaxDiff": 0,
-          "Label": {
-            "text": "Current Difficulty Unlocked Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "ProgressConditions": [
-        {
-          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
-          "PlayerWin": true,
-          "Label": {
-            "text": "Challenge Winner Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
-          "Difficulty": 2,
-          "Label": {
-            "text": "Challenge Difficulty Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "Id": 24
-    },
-    {
-      "TitleKey": "dailyGoal.title.PlaySpeedTap.Level1",
-      "RewardType": "experience",
-      "Tag": "QuickTapEndOfGame",
-      "PointsRewarded": 20,
-      "Target": 1,
-      "Priority": 0,
-      "CladEvent": "OnChallengeComplete",
-      "GenConditions": [
-        {
-          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "UseMinDiff": true,
-          "MinDiff": 1,
-          "UseMaxDiff": false,
-          "MaxDiff": 0,
-          "Label": {
-            "text": "Current Difficulty Unlocked Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "ProgressConditions": [
-        {
-          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
-          "Difficulty": 1,
-          "Label": {
-            "text": "Challenge Difficulty Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "Id": 23
-    },
-    {
-      "TitleKey": "dailyGoal.title.WinSpeedTap.Level1",
-      "RewardType": "experience",
-      "Tag": "QuickTapEndOfGame",
-      "PointsRewarded": 20,
-      "Target": 1,
-      "Priority": 0,
-      "CladEvent": "OnChallengeComplete",
-      "GenConditions": [
-        {
-          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "UseMinDiff": true,
-          "MinDiff": 1,
-          "UseMaxDiff": false,
-          "MaxDiff": 0,
-          "Label": {
-            "text": "Current Difficulty Unlocked Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "ProgressConditions": [
-        {
-          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
-          "PlayerWin": true,
-          "Label": {
-            "text": "Challenge Winner Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
-          "Difficulty": 1,
-          "Label": {
-            "text": "Challenge Difficulty Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "Id": 22
-    },
-    {
-      "TitleKey": "dailyGoal.title.WinKeepaway",
-      "RewardType": "experience",
-      "Tag": "KeepawayEndOfGame",
-      "PointsRewarded": 20,
-      "Target": 1,
-      "Priority": 0,
-      "CladEvent": "OnChallengeComplete",
-      "GenConditions": [
-        {
-          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
-          "Unlocked": "KeepawayGame",
-          "IsMatching": true,
-          "State": "Unlocked",
-          "Label": {
-            "text": "Current Unlock Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "ProgressConditions": [
-        {
-          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
-          "PlayerWin": true,
-          "Label": {
-            "text": "Challenge Winner Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "CubePounceGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "Id": 21
-    },
-    {
-      "TitleKey": "dailyGoal.title.PlayKeepaway",
-      "RewardType": "experience",
-      "Tag": "KeepawayEndOfGame",
-      "PointsRewarded": 20,
-      "Target": 2,
-      "Priority": 0,
-      "CladEvent": "OnChallengeComplete",
-      "GenConditions": [
-        {
-          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
-          "Unlocked": "KeepawayGame",
-          "IsMatching": true,
-          "State": "Unlocked",
-          "Label": {
-            "text": "Current Unlock Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "ProgressConditions": [
-        {
-          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "CubePounceGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "Id": 20
-    },
-    {
-      "TitleKey": "dailyGoal.title.WinSpeedTap",
-      "RewardType": "experience",
-      "Tag": "QuickTapEndOfGame",
-      "PointsRewarded": 20,
-      "Target": 1,
-      "Priority": 0,
-      "CladEvent": "OnChallengeComplete",
-      "GenConditions": [
-        {
-          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
-          "Unlocked": "QuickTapGame",
-          "IsMatching": true,
-          "State": "Unlocked",
-          "Label": {
-            "text": "Current Unlock Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "ProgressConditions": [
-        {
-          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
-          "PlayerWin": true,
-          "Label": {
-            "text": "Challenge Winner Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "Id": 2
-    },
-    {
-      "TitleKey": "dailyGoal.title.PlaySpeedTapTwice",
-      "RewardType": "experience",
-      "Tag": "QuickTapEndOfGame",
-      "PointsRewarded": 20,
-      "Target": 2,
-      "Priority": 0,
-      "CladEvent": "OnChallengeComplete",
-      "GenConditions": [
-        {
-          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
-          "Unlocked": "QuickTapGame",
-          "IsMatching": true,
-          "State": "Unlocked",
-          "Label": {
-            "text": "Current Unlock Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "ProgressConditions": [
-        {
-          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "Id": 1
-    },
-    {
       "TitleKey": "dailyGoal.title.SpeedTap.TieBreaker.Round",
       "RewardType": "experience",
-      "Tag": "QuickTapEndOfRound",
+      "Tag": "QuickTapTieBreaker",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -611,7 +115,7 @@
     {
       "TitleKey": "dailyGoal.title.SpeedTap.Shutout.Round",
       "RewardType": "experience",
-      "Tag": "QuickTapEndOfRound",
+      "Tag": "QuickTapShutOut",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -654,9 +158,505 @@
       "Id": 28
     },
     {
+      "TitleKey": "dailyGoal.title.WinKeepaway.Shutout",
+      "RewardType": "experience",
+      "Tag": "KeepawayShutOut",
+      "PointsRewarded": 20,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnChallengeRoundEnd",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
+          "Unlocked": "KeepawayGame",
+          "IsMatching": true,
+          "State": "Unlocked",
+          "Label": {
+            "text": "Current Unlock Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "CubePounceGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
+          "IsPlayer": false,
+          "TargetScore": 0,
+          "compareType": "EQUAL",
+          "Label": {
+            "text": "Challenge Score Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 30
+    },
+    {
+      "TitleKey": "dailyGoal.title.PlaySpeedTap.Level3",
+      "RewardType": "experience",
+      "Tag": "QuickTapGameResult",
+      "PointsRewarded": 20,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnChallengeComplete",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
+          "ChallengeID": "SpeedTapGame",
+          "UseMinDiff": true,
+          "MinDiff": 3,
+          "UseMaxDiff": false,
+          "MaxDiff": 0,
+          "Label": {
+            "text": "Current Difficulty Unlocked Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SpeedTapGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 3,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 27
+    },
+    {
+      "TitleKey": "dailyGoal.title.WinSpeedTap.Level3",
+      "RewardType": "experience",
+      "Tag": "QuickTapGameResult",
+      "PointsRewarded": 20,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnChallengeComplete",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
+          "ChallengeID": "SpeedTapGame",
+          "UseMinDiff": true,
+          "MinDiff": 3,
+          "UseMaxDiff": false,
+          "MaxDiff": 0,
+          "Label": {
+            "text": "Current Difficulty Unlocked Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
+          "PlayerWin": true,
+          "Label": {
+            "text": "Challenge Winner Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SpeedTapGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 3,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 26
+    },
+    {
+      "TitleKey": "dailyGoal.title.PlaySpeedTap.Level2",
+      "RewardType": "experience",
+      "Tag": "QuickTapGameResult",
+      "PointsRewarded": 20,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnChallengeComplete",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
+          "ChallengeID": "SpeedTapGame",
+          "UseMinDiff": true,
+          "MinDiff": 2,
+          "UseMaxDiff": false,
+          "MaxDiff": 0,
+          "Label": {
+            "text": "Current Difficulty Unlocked Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SpeedTapGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 2,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 25
+    },
+    {
+      "TitleKey": "dailyGoal.title.WinSpeedTap.Level2",
+      "RewardType": "experience",
+      "Tag": "QuickTapGameResult",
+      "PointsRewarded": 20,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnChallengeComplete",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
+          "ChallengeID": "SpeedTapGame",
+          "UseMinDiff": true,
+          "MinDiff": 2,
+          "UseMaxDiff": false,
+          "MaxDiff": 0,
+          "Label": {
+            "text": "Current Difficulty Unlocked Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
+          "PlayerWin": true,
+          "Label": {
+            "text": "Challenge Winner Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SpeedTapGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 2,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 24
+    },
+    {
+      "TitleKey": "dailyGoal.title.PlaySpeedTap.Level1",
+      "RewardType": "experience",
+      "Tag": "QuickTapGameResult",
+      "PointsRewarded": 20,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnChallengeComplete",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
+          "ChallengeID": "SpeedTapGame",
+          "UseMinDiff": true,
+          "MinDiff": 1,
+          "UseMaxDiff": false,
+          "MaxDiff": 0,
+          "Label": {
+            "text": "Current Difficulty Unlocked Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SpeedTapGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 1,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 23
+    },
+    {
+      "TitleKey": "dailyGoal.title.WinSpeedTap.Level1",
+      "RewardType": "experience",
+      "Tag": "QuickTapGameResult",
+      "PointsRewarded": 20,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnChallengeComplete",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
+          "ChallengeID": "SpeedTapGame",
+          "UseMinDiff": true,
+          "MinDiff": 1,
+          "UseMaxDiff": false,
+          "MaxDiff": 0,
+          "Label": {
+            "text": "Current Difficulty Unlocked Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
+          "PlayerWin": true,
+          "Label": {
+            "text": "Challenge Winner Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SpeedTapGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 1,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 22
+    },
+    {
+      "TitleKey": "dailyGoal.title.WinKeepaway",
+      "RewardType": "experience",
+      "Tag": "KeepawayGameResult",
+      "PointsRewarded": 20,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnChallengeComplete",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
+          "Unlocked": "KeepawayGame",
+          "IsMatching": true,
+          "State": "Unlocked",
+          "Label": {
+            "text": "Current Unlock Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
+          "PlayerWin": true,
+          "Label": {
+            "text": "Challenge Winner Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "CubePounceGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 21
+    },
+    {
+      "TitleKey": "dailyGoal.title.PlayKeepaway",
+      "RewardType": "experience",
+      "Tag": "KeepawayGameResult",
+      "PointsRewarded": 20,
+      "Target": 2,
+      "Priority": 0,
+      "CladEvent": "OnChallengeComplete",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
+          "Unlocked": "KeepawayGame",
+          "IsMatching": true,
+          "State": "Unlocked",
+          "Label": {
+            "text": "Current Unlock Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "CubePounceGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 20
+    },
+    {
+      "TitleKey": "dailyGoal.title.WinSpeedTap",
+      "RewardType": "experience",
+      "Tag": "QuickTapGameResult",
+      "PointsRewarded": 20,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnChallengeComplete",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
+          "Unlocked": "QuickTapGame",
+          "IsMatching": true,
+          "State": "Unlocked",
+          "Label": {
+            "text": "Current Unlock Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SpeedTapGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
+          "PlayerWin": true,
+          "Label": {
+            "text": "Challenge Winner Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 2
+    },
+    {
+      "TitleKey": "dailyGoal.title.PlaySpeedTapTwice",
+      "RewardType": "experience",
+      "Tag": "QuickTapGameResult",
+      "PointsRewarded": 20,
+      "Target": 2,
+      "Priority": 0,
+      "CladEvent": "OnChallengeComplete",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
+          "Unlocked": "QuickTapGame",
+          "IsMatching": true,
+          "State": "Unlocked",
+          "Label": {
+            "text": "Current Unlock Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SpeedTapGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 1
+    },
+    {
       "TitleKey": "dailyGoal.title.UnlockQuickTapDifficulty.FourColor",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "UnlockNewThing",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -693,7 +693,7 @@
     {
       "TitleKey": "dailyGoal.title.UnlockQuickTapDifficulty.ThreeColor",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "UnlockNewThing",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
@@ -730,7 +730,7 @@
     {
       "TitleKey": "dailyGoal.title.UnlockQuickTapDifficulty.TwoColor",
       "RewardType": "experience",
-      "Tag": "",
+      "Tag": "UnlockNewThing",
       "PointsRewarded": 20,
       "Target": 1,
       "Priority": 0,
