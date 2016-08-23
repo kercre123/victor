@@ -189,6 +189,22 @@ void Battery::updateOperatingMode() {
 
   // Setup new mode
   switch(current_operating_mode) {
+    case BODY_FORCE_RECOVERY:
+      // This will destroy the first sector in the application layer
+      // ... it is also a creative hack to work around a bug in cboot
+
+      __disable_irq();
+
+      NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Een << NVMC_CONFIG_WEN_Pos;
+      while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+      NRF_NVMC->ERASEPAGE = 0x18000;
+      while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+      NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
+      while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+      
+      NVIC_SystemReset();
+      break ;
+
     case BODY_BATTERY_CHARGE_TEST_MODE:
       nrf_gpio_pin_set(PIN_VDDs_EN);
       Backpack::defaultPattern(LIGHTS_SLEEPING);
