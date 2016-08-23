@@ -15,15 +15,23 @@
 #include "anki/cozmo/basestation/firmwareUpdater/firmwareUpdater.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include <json/json.h>
 
 namespace Anki {
 namespace Cozmo {
 
+
+namespace RobotInitialConnectionConsoleVars
+{
+  CONSOLE_VAR(bool, kSkipFirmwareAutoUpdate, "Firmware", false);
+}
+  
 using namespace ExternalInterface;
 using namespace RobotInterface;
-
+using namespace RobotInitialConnectionConsoleVars;
+  
 RobotInitialConnection::RobotInitialConnection(RobotID_t id, MessageHandler* messageHandler,
     IExternalInterface* externalInterface, uint32_t fwVersion, uint32_t fwTime)
 : _id(id)
@@ -133,7 +141,7 @@ void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotToEngine
     robotHasDevFirmware ? " (dev)" : "", robotIsSimulated ? " (SIM)" : "", _fwVersion, appHasDevFirmware ? " (dev)" : "");
 
   RobotConnectionResult result;
-  if (robotIsSimulated) {
+  if (robotIsSimulated || kSkipFirmwareAutoUpdate) {
     result = RobotConnectionResult::Success;
   }
   else if (robotHasDevFirmware != appHasDevFirmware) {

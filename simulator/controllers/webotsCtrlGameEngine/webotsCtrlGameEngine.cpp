@@ -16,6 +16,7 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+#include "util/console/consoleSystem.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/sosLoggerProvider.h"
 #include "util/logging/multiFormattedLoggerProvider.h"
@@ -201,6 +202,10 @@ int main(int argc, char **argv)
   config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 0;
   config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 1;
   config[AnkiUtil::kP_NUM_SDK_DEVICES_TO_WAIT_FOR] = 1;
+  
+  // Set up the console vars to load from file, if it exists
+  ANKI_CONSOLE_SYSTEM_INIT("consoleVars.ini");
+  NativeAnkiUtilConsoleLoadVars();
   
   // Initialize the API
   CozmoAPI myCozmo;

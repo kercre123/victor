@@ -404,20 +404,10 @@ public class ConnectionFlow : MonoBehaviour {
       ReturnToSearch();
       break;
     case RobotConnectionResult.OutdatedApp:
-      if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SkipFirmwareAutoUpdate) {
-        RobotConnectResponseSuccess();
-      }
-      else {
-        UpdateAppScreen();
-      }
+      UpdateAppScreen();
       break;
     case RobotConnectionResult.OutdatedFirmware:
-      if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SkipFirmwareAutoUpdate) {
-        RobotConnectResponseSuccess();
-      }
-      else {
-        UpdateFirmware();
-      }
+      UpdateFirmware();
       break;
     case RobotConnectionResult.NeedsPin:
       GameObject.Destroy(_ConnectingToCozmoScreenInstance);
