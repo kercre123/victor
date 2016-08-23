@@ -176,6 +176,7 @@ private:
   FaceID               _faceID;
   TimeStamp_t          _lastFaceUpdate = 0;
 
+  Signal::SmartHandle _signalHandle;
 
 }; // class TrackFaceAction
 

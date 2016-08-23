@@ -458,9 +458,33 @@ TrackFaceAction::~TrackFaceAction()
 
 ActionResult TrackFaceAction::InitInternal()
 {
+  if(false == _robot.HasExternalInterface()) {
+    PRINT_NAMED_ERROR("TrackFaceAction.InitInternal.NoExternalInterface",
+                      "Robot must have an external interface so action can "
+                      "subscribe to face changed ID events.");
+    return ActionResult::FAILURE_ABORT;
+  }
+  
+  using namespace ExternalInterface;
+  auto HandleFaceChangedID = [this](const AnkiEvent<MessageEngineToGame>& event)
+  {
+    auto & msg = event.GetData().Get_RobotChangedObservedFaceID();
+    if(msg.oldID == _faceID)
+    {
+      PRINT_NAMED_INFO("TrackFaceAction.HandleFaceChangedID",
+                       "Updating tracked face ID from %d to %d",
+                       msg.oldID, msg.newID);
+      
+      _faceID = msg.newID;
+    }
+  };
+  
+  _signalHandle = _robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotChangedObservedFaceID, HandleFaceChangedID);
+  
   SetName("TrackFace" + std::to_string(_faceID));
   _robot.GetMoveComponent().SetTrackToFace(_faceID);
   _lastFaceUpdate = 0;
+  
   return ActionResult::SUCCESS;
 } // InitInternal()
 
@@ -477,6 +501,7 @@ bool TrackFaceAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
   
   if(nullptr == face) {
     // No such face
+    PRINT_NAMED_INFO("TrackFaceAction.GetAngles.BadFaceID", "No face %d in FaceWorld", _faceID);
     return false;
   }
   

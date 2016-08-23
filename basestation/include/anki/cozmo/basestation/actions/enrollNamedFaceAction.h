@@ -109,8 +109,9 @@ namespace Cozmo {
     Result InitSequence();
     Result InitCurrentStep();
     void SetAction(IActionRunner* action);
+    IActionRunner* CreateLookAroundAction();
     
-  }; // class SayTextAction
+  }; // class EnrollNamedFaceAction
 
 
 } // namespace Cozmo

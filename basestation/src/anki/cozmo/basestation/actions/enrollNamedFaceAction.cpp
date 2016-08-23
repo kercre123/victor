@@ -35,7 +35,7 @@
 #define DEBUG_ENROLL_NAMED_FACE_ACTION 0
 
 #if DEBUG_ENROLL_NAMED_FACE_ACTION
-#  define PRINT_ENROLL_DEBUG(...) PRINT_CH_DEBUG("FaceRecognizer", __VA_ARGS__)
+#  define PRINT_ENROLL_DEBUG(...) PRINT_CH_DEBUG(kLogChannelName, __VA_ARGS__)
 #else
 #  define PRINT_ENROLL_DEBUG(...)
 #endif
@@ -50,6 +50,8 @@ namespace Cozmo {
     CONSOLE_VAR(TimeStamp_t,       kTimeoutForBackpackLights_ms,         "Actions.EnrollNamedFace", 250);
     CONSOLE_VAR(f32,               kUpdateFacePositionThreshold_mm,      "Actions.EnrollNamedFace", 100.f);
     CONSOLE_VAR(f32,               kUpdateFaceAngleThreshold_deg,        "Actions.EnrollNamedFace", 45.f);
+    
+    const char* kLogChannelName = "FaceRecognizer";
   }
   
   static void SetBackpackLightsHelper(Robot& robot, const ColorRGBA& color)
@@ -78,9 +80,9 @@ namespace Cozmo {
   , _faceName(name)
   {
     // NOTE: Only print 'name' in debug messages, for privacy reasons (don't want names in our release logs)
-    PRINT_CH_INFO("FaceRecognizer", "EnrollNamedFaceAction.Constructor", "Original ID=%d", _faceID);
-    PRINT_NAMED_DEBUG("EnrollNamedFaceAction.Constructor_DEBUG", "Original ID=%d with name='%s'",
-                     _faceID, _faceName.c_str());
+    PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.Constructor", "Original ID=%d", _faceID);
+    PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.Constructor_DEBUG", "Original ID=%d with name='%s'",
+                   _faceID, _faceName.c_str());
     
     if(_robot.GetExternalInterface() == nullptr) {
       PRINT_NAMED_WARNING("EnrollNamedFaceAction.Constructor.NullExternalInterface",
@@ -96,6 +98,7 @@ namespace Cozmo {
       helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotReachedEnrollmentCount>();
       helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotChangedObservedFaceID>();
       helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedFace>();
+      helper.SubscribeEngineToGame<MessageEngineToGameTag::UnexpectedMovement>();
     }
     
   } // EnrollNamedFaceAction()
@@ -115,7 +118,8 @@ namespace Cozmo {
       _robot.GetAnimationStreamer().PopIdleAnimation();
     }
   
-    _robot.GetBehaviorManager().RequestEnableReactionaryBehavior("EnrollNamedFaceAction", BehaviorType::AcknowledgeFace, true);
+    _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeFace, true);
+    _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToUnexpectedMovement, true);
   }
   
   static TrackFaceAction* CreateTrackAction(Robot& robot, Vision::FaceID_t faceID)
@@ -141,7 +145,7 @@ namespace Cozmo {
         action = new TurnTowardsFaceAction(robot, faceID, DEG_TO_RAD_F32(45.f));
       } else {
         // Couldn't find face in face world, try turning towards last face pose
-        PRINT_CH_INFO("FaceRecognizer", "EnrollNamedFaceAction.CreateTurnTowardsFaceAction.NullFace",
+        PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.CreateTurnTowardsFaceAction.NullFace",
                       "No face with ID=%d in FaceWorld. Using TurnTowardsLastFacePose",
                       faceID);
       }
@@ -187,6 +191,39 @@ namespace Cozmo {
     return action;
   }
   
+  IActionRunner* EnrollNamedFaceAction::CreateLookAroundAction()
+  {
+    // If we haven't seen the face since this behavior was created,
+    // try looking up further: it's more likely a face is further up and
+    // we're looking too low. Add a little movement so he doesn't look dead.
+    // NOTE: we will just keep doing this until timeout if we never see the face!
+    const Radians absHeadAngle = GetRNG().RandDblInRange(MAX_HEAD_ANGLE - DEG_TO_RAD(10), MAX_HEAD_ANGLE);
+    
+    // Rotate in the opposite direction enough to undo the last rotation plus a little more
+    const double newAngle = std::copysign(GetRNG().RandDblInRange(0, DEG_TO_RAD(10)),
+                                          -_lastRelBodyAngle.ToDouble());
+    const Radians relBodyAngle = newAngle -_lastRelBodyAngle;
+    _lastRelBodyAngle = newAngle;
+    
+    CompoundActionSequential* lookAroundAction = new CompoundActionSequential(_robot, {
+      new PanAndTiltAction(_robot, relBodyAngle, absHeadAngle, false, true),
+    });
+    
+    // Also back up a little if we haven't gone too far back already
+    if(_totalBackup_mm <= _kMaxTotalBackup_mm) {
+      const f32 backupSpeed_mmps = 100.f;
+      const f32 backupDist_mm = GetRNG().RandDblInRange(_kMinBackup_mm, _kMaxBackup_mm);
+      _totalBackup_mm += backupDist_mm;
+      const bool shouldPlayAnimation = false; // don't want head to move down!
+      DriveStraightAction* backUpAction = new DriveStraightAction(_robot, -backupDist_mm, backupSpeed_mmps, shouldPlayAnimation);
+      lookAroundAction->AddAction(backUpAction);
+    }
+    
+    lookAroundAction->AddAction(new WaitForImagesAction(_robot, _kNumImagesToWait, VisionMode::DetectingFaces));
+    
+    return lookAroundAction;
+  }
+  
   void EnrollNamedFaceAction::SetAction(IActionRunner* action)
   {
     if(_action != nullptr) {
@@ -209,20 +246,29 @@ namespace Cozmo {
           .startFcn = [this]() {
             PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.SimpleStepOneStart", "");
             SetBackpackLightsHelper(_robot, NamedColors::GREEN);
-            SetAction( new TriggerAnimationAction(_robot, AnimationTrigger::MeetCozmoGetIn) );
+            
+            // TODO: Re-enable once COZMO-4153 is fixed
+            //SetAction( new TriggerAnimationAction(_robot, AnimationTrigger::MeetCozmoGetIn) );
+            
             return RESULT_OK;
           },
           .duringFcn = [this]() {
-            _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::MeetCozmoScanningIdle);
-            _idlePopped = false;
             SetAction( CreateTrackAction(_robot, _faceID) );
+            
+            // TODO: Re-enable once COZMO-4153 is fixed
+            //_robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::MeetCozmoScanningIdle);
+            //_idlePopped = false;
+            
             return RESULT_OK;
           },
           .stopFcn = [this]() {
             PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.SimpleStepOneStop", "");
             SetBackpackLightsHelper(_robot, NamedColors::BLACK);
-            _robot.GetAnimationStreamer().PopIdleAnimation();
-            _idlePopped = true;
+            if(!_idlePopped)
+            {
+              _robot.GetAnimationStreamer().PopIdleAnimation();
+              _idlePopped = true;
+            }
             return RESULT_OK;
           },
         });
@@ -364,7 +410,7 @@ namespace Cozmo {
   ActionResult EnrollNamedFaceAction::Init()
   {
     // NOTE: Only print 'name' in debug messages, for privacy reasons (don't want names in our release logs)
-    PRINT_CH_INFO("FaceRecognizer", "EnrollNamedFaceAction.Init",
+    PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.Init",
                   "Initialize with ID=%d, to be saved to ID=%d",
                   _faceID, _saveID);
 
@@ -377,7 +423,12 @@ namespace Cozmo {
     // AcknowledgeFace, if enabled, can and generally will interupt this action as soon
     // as enrollment finishes, which we don't want. So disable it here.
     // We re-enable in the destructor.
-    _robot.GetBehaviorManager().RequestEnableReactionaryBehavior("EnrollNamedFaceAction", BehaviorType::AcknowledgeFace, false);
+    _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeFace, false);
+    
+    // Same goes for ReactToUnexpectedMovement: we want people to be able to manually re-orient
+    // Cozmo to face them without him registering unexpected movement and cancelling
+    // this Enroll action
+    _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToUnexpectedMovement, false);
     
     Result initSeqResult = InitSequence();
     if(RESULT_OK != initSeqResult) {
@@ -419,35 +470,7 @@ namespace Cozmo {
             PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.TurnTowardsFaceCompleted", "");
             
             if(_lastFaceSeen_ms == 0) {
-              // If we haven't seen the face since this behavior was created,
-              // try looking up further: it's more likely a face is further up and
-              // we're looking too low. Add a little movement so he doesn't look dead.
-              // NOTE: we will just keep doing this until timeout if we never see the face!
-              const Radians absHeadAngle = GetRNG().RandDblInRange(MAX_HEAD_ANGLE - DEG_TO_RAD(10), MAX_HEAD_ANGLE);
-              
-              // Rotate in the opposite direction enough to undo the last rotation plus a little more
-              const double newAngle = std::copysign(GetRNG().RandDblInRange(0, DEG_TO_RAD(10)),
-                                                    -_lastRelBodyAngle.ToDouble());
-              const Radians relBodyAngle = newAngle -_lastRelBodyAngle;
-              _lastRelBodyAngle = newAngle;
-
-              CompoundActionSequential* lookAroundAction = new CompoundActionSequential(_robot, {
-                new PanAndTiltAction(_robot, relBodyAngle, absHeadAngle, false, true),
-              });
-              
-              // Also back up a little if we haven't gone too far back already
-              if(_totalBackup_mm <= _kMaxTotalBackup_mm) {
-                const f32 backupSpeed_mmps = 100.f;
-                const f32 backupDist_mm = GetRNG().RandDblInRange(_kMinBackup_mm, _kMaxBackup_mm);
-                _totalBackup_mm += backupDist_mm;
-                const bool shouldPlayAnimation = false; // don't want head to move down!
-                DriveStraightAction* backUpAction = new DriveStraightAction(_robot, -backupDist_mm, backupSpeed_mmps, shouldPlayAnimation);
-                lookAroundAction->AddAction(backUpAction);
-              }
-              
-              lookAroundAction->AddAction(new WaitForImagesAction(_robot, _kNumImagesToWait, VisionMode::DetectingFaces));
-              
-              SetAction(lookAroundAction);
+              SetAction(CreateLookAroundAction());
               return ActionResult::RUNNING;
             }
             
@@ -740,7 +763,7 @@ namespace Cozmo {
         // and we've just realized that the faceID we were enrolling is already named but is a different
         // ID than we were told to save to, then we should abort.
 
-        PRINT_CH_INFO("FaceRecognizer", "EnrollNamedFaceAction.HandleRobotChangedObservedFaceID.CannotUpdateToNamedFace",
+        PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.HandleRobotChangedObservedFaceID.CannotUpdateToNamedFace",
                       "OldID:%d. NewID:%d is named and != SaveID:%d, so cannot be used",
                       msg.oldID, msg.newID, _saveID);
 
@@ -751,19 +774,30 @@ namespace Cozmo {
       }
       else
       {
-        PRINT_CH_INFO("FaceRecognizer", "EnrollNamedFaceAction.HandleRobotChangedObservedFaceID.UpdatingFaceID",
+        PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.HandleRobotChangedObservedFaceID.UpdatingFaceID",
                       "Was enrolling ID=%d, changing to ID=%d",
                       _faceID, msg.newID);
         
         _faceID = msg.newID;
       }
     }
+    
+    if(msg.oldID == _saveID)
+    {
+      PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.HandleRobotChangedObservedFaceID.UpdatingSaveID",
+                    "Was saving to ID=%d, changing to ID=%d",
+                    _saveID, msg.newID);
+      _saveID = msg.newID;
+    }
   }
   
   template<>
   void EnrollNamedFaceAction::HandleMessage(const ExternalInterface::RobotObservedFace& msg)
   {
-    if(msg.faceID != _faceID)
+    // We only care about this observed face (a) if it is a different one than we
+    // were already using for enrollment, and (b) if it is not for a "tracked" face (one
+    // with negative ID, which we never want to try to enroll)
+    if(msg.faceID != _faceID && msg.faceID > 0)
     {
       // Record the last person we saw, in case we fail and need to message
       // that the reason why was that we we were seeing this named face.
@@ -783,7 +817,7 @@ namespace Cozmo {
                                            kUpdateFacePositionThreshold_mm,
                                            DEG_TO_RAD_F32(kUpdateFaceAngleThreshold_deg)))
         {
-          PRINT_CH_INFO("FaceRecognizer", "EnrollNamedFaceAction.HandleRobotObservedFace.UpdatingFaceID",
+          PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.HandleRobotObservedFace.UpdatingFaceIDbyPose",
                         "Was enrolling ID=%d, changing to ID=%d based on pose",
                         _faceID, msg.faceID);
           
@@ -791,7 +825,7 @@ namespace Cozmo {
           _faceID = msg.faceID;
         }
       }
-      else if(msg.faceID > 0) // Ignore "tracking" faces (negative IDs)
+      else
       {
         // We don't have a face ID set yet. See if we want to use this one.
         
@@ -803,7 +837,7 @@ namespace Cozmo {
           // named faces together.)
           if(msg.faceID == _saveID || msg.name.empty())
           {
-            PRINT_CH_INFO("FaceRecognizer", "EnrollNamedFaceAction.HandleRobotObservedFace.HaveSaveIDandSettingFaceID",
+            PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.HandleRobotObservedFace.HaveSaveIDandSettingFaceID",
                           "Set face ID to unnamed face %d", msg.faceID);
             _faceID = msg.faceID;
           }
@@ -816,7 +850,7 @@ namespace Cozmo {
           // want to enroll it again as a second named entry.
           if(msg.name.empty())
           {
-            PRINT_CH_INFO("FaceRecognizer", "EnrollNamedFaceAction.HandleRobotObservedFace.SettingFaceID",
+            PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.HandleRobotObservedFace.SettingFaceID",
                           "Set face ID to unnamed face %d", msg.faceID);
             
             _faceID = msg.faceID;
@@ -824,20 +858,24 @@ namespace Cozmo {
           else
           {
             // Note: name is only printed in Debug message for privacy reasons
-            PRINT_CH_INFO("FaceRecognizer",
+            PRINT_CH_INFO(kLogChannelName,
                           "EnrollNamedFaceAction.HandleRobotObservedFace.IgnoringNamedFace",
                           "No FaceID specified, no SaveID specified. Cannot allow "
                           "enrollment of named face %d.", msg.faceID);
             
-            PRINT_CH_DEBUG("FaceRecognizer",
+            PRINT_CH_DEBUG(kLogChannelName,
                            "EnrollNamedFaceAction.HandleRobotObservedFace.IgnoringNamedFace_Debug",
                            "Refusing to enroll face %d, named '%s'",
                            msg.faceID, msg.name.c_str());
           }
         }
         
-      }
-    }
+      } // if/else (_faceID != Vision::UnknownFaceID)
+      
+      // Should never be left with a negative faceID to be enrolling
+      ASSERT_NAMED(_faceID >= 0, "EnrollNamedFaceAction.HandleRobotObservedFace.SetNegativeFaceID");
+      
+    } //if(msg.faceID != _faceID && msg.faceID > 0)
     
     if(msg.faceID == _faceID)
     {
@@ -851,6 +889,18 @@ namespace Cozmo {
       _observedID = Vision::UnknownFaceID;
     }
     
+  }
+  
+  
+  template<>
+  void EnrollNamedFaceAction::HandleMessage(const ExternalInterface::UnexpectedMovement& msg)
+  {
+    if(State::LookForFace == _state && _action != nullptr)
+    {
+      // Cancel and replace the existing look-around action so we don't fight a
+      // person trying to re-orient Cozmo towards themself
+      SetAction( CreateLookAroundAction() );
+    }
   }
   
 } // namespace Cozmo
