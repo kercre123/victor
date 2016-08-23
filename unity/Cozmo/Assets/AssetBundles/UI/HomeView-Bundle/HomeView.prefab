@@ -1890,6 +1890,9 @@ MonoBehaviour:
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
     JsonValue: 6
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    JsonValue: '"#label.emptyWithArg"'
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: Cozmo.UI.ItemDataLabel:_CountLabel
@@ -2770,6 +2773,9 @@ MonoBehaviour:
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
     JsonValue: 6
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    JsonValue: '"#label.emptyWithArg"'
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: Cozmo.UI.ItemDataLabel:_CountLabel
@@ -3752,7 +3758,7 @@ MonoBehaviour:
   m_MinHeight: 0
   m_PreferredWidth: -1
   m_PreferredHeight: -1
-  m_FlexibleWidth: -1
+  m_FlexibleWidth: 1
   m_FlexibleHeight: -1
 --- !u!114 &11497270
 MonoBehaviour:
@@ -7261,8 +7267,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 190.25, y: -99}
-  m_SizeDelta: {x: -379.5, y: -249}
+  m_AnchoredPosition: {x: 177, y: -114.5}
+  m_SizeDelta: {x: -354, y: -279}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22469180
 RectTransform:

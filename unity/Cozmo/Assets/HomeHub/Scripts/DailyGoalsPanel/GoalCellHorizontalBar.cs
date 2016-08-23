@@ -6,6 +6,8 @@ public class GoalCellHorizontalBar : MonoBehaviour {
   private UnityEngine.UI.Image _HorizontalMarker;
 
   public void SetHorizontalMarker(bool enable) {
-    _HorizontalMarker.enabled = enable;
+    if (_HorizontalMarker != null) {
+      _HorizontalMarker.enabled = enable;
+    }
   }
 }

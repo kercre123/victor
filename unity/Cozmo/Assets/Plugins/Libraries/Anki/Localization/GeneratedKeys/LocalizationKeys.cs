@@ -322,8 +322,8 @@ public static class LocalizationKeys {
   public const string kOnboardingPhase3Header1 = "onboarding.Phase3.Header1";
   public const string kOnboardingPhase3Body1 = "onboarding.Phase3.Body1";
   public const string kOnboardingPhase3Body2 = "onboarding.Phase3.Body2";
-  public const string kOnboardingPhase3Body3 = "onboarding.Phase3.Body3";
   public const string kOnboardingPhase3Header3 = "onboarding.Phase3.Header3";
+  public const string kOnboardingPhase3Body3 = "onboarding.Phase3.Body3";
   public const string kOnboardingPhase3Body4 = "onboarding.Phase3.Body4";
   public const string kOnboardingPhase3ErrorCube = "onboarding.Phase3.ErrorCube";
   public const string kOnboardingPhase3ErrorCube2 = "onboarding.Phase3.ErrorCube2";
