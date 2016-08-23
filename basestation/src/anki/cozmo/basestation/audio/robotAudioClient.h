@@ -61,6 +61,8 @@ public:
 
   // Post Cozmo specific Audio events
   using CozmoPlayId = uint32_t;
+  static constexpr CozmoPlayId kInvalidCozmoPlayId = 0;
+  
   using CozmoEventCallbackFunc = std::function<void( const AudioEngine::AudioCallbackInfo& callbackInfo )>;
   CozmoPlayId PostCozmoEvent( GameEvent::GenericEvent event,
                               GameObjectType GameObjId = GameObjectType::Invalid,

@@ -47,6 +47,11 @@ RobotAudioAnimation::RobotAudioAnimation( GameObjectType gameObject, Util::Rando
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioAnimation::~RobotAudioAnimation()
 {
+  PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                "RobotAudioAnimation.~RobotAudioAnimation",
+                "Anim: '%s' State: %s",
+                _animationName.c_str(), GetStringForAnimationState(GetAnimationState()).c_str());
+
   _randomGenerator = nullptr;
   if ( _postEventTimerQueue != nullptr ) {
     Util::Dispatch::Stop( _postEventTimerQueue );
@@ -136,8 +141,11 @@ void RobotAudioAnimation::InitAnimation( Animation* anAnimation, RobotAudioClien
 {
   // Load animation audio events
   _animationName = anAnimation->GetName();
-
   SetAnimationState( AnimationState::Preparing );
+  
+  PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                "RobotAudioAnimation.InitAnimation", "Anim: '%s'",
+                _animationName.c_str());
 
   // Loop through tracks
   // Prep animation audio events

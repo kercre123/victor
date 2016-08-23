@@ -435,15 +435,23 @@ void RobotAudioAnimationOnRobot::BeginBufferingAudioOnRobotMode()
           if ( !isAliveWeakPtr.expired() ) {
             HandleCozmoEventCallback( animationEvent, callbackInfo );
           }
-          
         };
+        
+        PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                      "RobotAudioAnimationOnRobot.PostEvent",
+                      "Anim: '%s' EventId: %u",
+                      GetAnimationName().c_str(), animationEvent->audioEvent);
+        
         const PlayId playId = _audioClient->PostCozmoEvent( animationEvent->audioEvent,
                                                             _gameObj,
                                                             callbackFunc );
         // Set event's volume RTPC
-        _audioClient->SetCozmoEventParameter( playId,
-                                              GameParameter::ParameterType::Event_Volume,
-                                              animationEvent->volume );
+        if (RobotAudioClient::kInvalidCozmoPlayId != playId) {
+          _audioClient->SetCozmoEventParameter( playId,
+                                                GameParameter::ParameterType::Event_Volume,
+                                                animationEvent->volume );
+        }
+        
         // Processes event NOW, minimize buffering latency
         _audioClient->ProcessEvents();
       },

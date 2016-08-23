@@ -132,13 +132,20 @@ void RobotAudioAnimationOnDevice::PopRobotAudioMessage( RobotInterface::EngineTo
                               }
                               
                             };
+                            PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                                          "RobotAudioAnimationOnDevice.PostEvent",
+                                          "Anim: '%s' EventId: %u",
+                                          GetAnimationName().c_str(), animationEvent->audioEvent);
                             const PlayId playId = _audioClient->PostCozmoEvent( animationEvent->audioEvent,
                                                                                 _gameObj,
                                                                                 callbackFunc );
                             // Set event's volume RTPC
-                            _audioClient->SetCozmoEventParameter( playId,
-                                                                  GameParameter::ParameterType::Event_Volume,
-                                                                  animationEvent->volume );
+                            if (RobotAudioClient::kInvalidCozmoPlayId != playId) {
+                              _audioClient->SetCozmoEventParameter( playId,
+                                                                   GameParameter::ParameterType::Event_Volume,
+                                                                   animationEvent->volume );
+                            }
+                            
                             // Processes event NOW, minimize playback sync latency
                             _audioClient->ProcessEvents();
                           },
