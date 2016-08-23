@@ -80,13 +80,12 @@ namespace Anki {
     
     bool IKeyFrame::IsDoneHelper(TimeStamp_t durationTime_ms)
     {
-      _currentTime_ms += SAMPLE_LENGTH_MS;
-      
       // Done once enough time has ticked by or if we're not sending a done message
       if(_currentTime_ms >= durationTime_ms) {
         _currentTime_ms = 0; // Reset for next time
         return true;
       } else {
+        _currentTime_ms += SAMPLE_LENGTH_MS;
         return false;
       }
     }
