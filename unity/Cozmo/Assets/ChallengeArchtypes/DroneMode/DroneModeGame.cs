@@ -86,7 +86,11 @@ namespace Cozmo {
             float newDevicePitch = (float)Mathf.Atan(Input.acceleration.x / Mathf.Sqrt(Mathf.Pow(Input.acceleration.y, 2) + Mathf.Pow(Input.acceleration.z, 2)));
             float normalizedTurnDirection = MapDevicePitchToTurnDirection(newDevicePitch);
 
-            if (!float.IsNaN(normalizedTurnDirection) && !normalizedTurnDirection.IsNear(_CurrentTurnDirection, _kChangedTurnDirectionThreshold)) {
+            if (float.IsNaN(normalizedTurnDirection)) {
+              normalizedTurnDirection = _CurrentTurnDirection;
+            }
+
+            if (!float.IsNaN(normalizedTurnDirection)) {
               _CurrentTurnDirection = normalizedTurnDirection;
               if (OnTurnDirectionChanged != null) {
                 OnTurnDirectionChanged(_CurrentTurnDirection);
@@ -98,16 +102,29 @@ namespace Cozmo {
 
         private float MapDevicePitchToTurnDirection(float newDevicePitch) {
           float normalizedPitch = 0f;
-          newDevicePitch = Mathf.Clamp(newDevicePitch, -1f, 1f);
-          float negativeThreshold = -DroneModeConfigData.NeutralTiltSize;
-          if (newDevicePitch < negativeThreshold) {
-            float difference = newDevicePitch - negativeThreshold;
-            normalizedPitch = difference / Mathf.Abs(-1 - negativeThreshold);
+          float halfPi = Mathf.PI * 0.5f;
+          newDevicePitch = Mathf.Clamp(newDevicePitch, -halfPi, halfPi);
+
+          if (!newDevicePitch.IsNear(0f, float.Epsilon)) {
+            float absDevicePitch = Mathf.Abs(newDevicePitch);
+            float neutralPitchRad = Mathf.Deg2Rad * DroneModeConfigData.NeutralTiltSizeDegrees;
+            float maxPitchRad = Mathf.Deg2Rad * DroneModeConfigData.MaxTiltSizeDegrees;
+            if (absDevicePitch > neutralPitchRad && absDevicePitch <= maxPitchRad) {
+              float currentPitch = absDevicePitch - neutralPitchRad;
+              float totalRadRange = maxPitchRad - neutralPitchRad;
+              normalizedPitch = currentPitch / totalRadRange;
+              if (newDevicePitch < 0) {
+                normalizedPitch *= -1f;
+              }
+            }
+            else if (absDevicePitch > maxPitchRad) {
+              normalizedPitch = 1f;
+              if (newDevicePitch < 0) {
+                normalizedPitch *= -1f;
+              }
+            }
           }
-          else if (newDevicePitch > DroneModeConfigData.NeutralTiltSize) {
-            float difference = newDevicePitch - DroneModeConfigData.NeutralTiltSize;
-            normalizedPitch = difference / (1 - DroneModeConfigData.NeutralTiltSize);
-          }
+
           return normalizedPitch;
         }
 

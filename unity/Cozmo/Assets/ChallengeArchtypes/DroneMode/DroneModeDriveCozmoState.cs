@@ -10,9 +10,6 @@ namespace Cozmo {
         private const float _kHeadTiltChangeThreshold_radps = 0.01f;
         private const float _kLiftFactorThreshold = 0.01f;
 
-        private const float _kRadiusMax_mm = 255f;
-        private const float _kRadiusMin_mm = 2f;
-
         private DroneModeGame _DroneModeGame;
         private DroneModeControlsSlide _DroneModeControlsSlide;
 
@@ -251,7 +248,7 @@ namespace Cozmo {
 
         private float DriveRobotWheels(float driveSpeed_mmps, float turnDirection) {
           float driveRobotSpeed_mmps = 0f;
-          float arcRadius_mm = _kRadiusMax_mm;
+          float arcRadius_mm = _DroneModeGame.DroneModeConfigData.MaxTurnArcRadius_mm;
 
           // Don't turn when going backwards (or when not turning... obviously)
           if (driveSpeed_mmps < 0 || turnDirection.IsNear(0f, _kTurnDirectionChangeThreshold)) {
@@ -262,27 +259,29 @@ namespace Cozmo {
             // COZMO-3737: Drive speed should only be denoted by the slider & not tilt direction
             driveRobotSpeed_mmps = driveSpeed_mmps;
 
-            // Drive slower while turning so that we're not spinning like crazy
-            // float absTurnFactor = Mathf.Abs(turnDirection);
-            // driveRobotSpeed_mmps = driveSpeed_mmps * (1 - (absTurnFactor * absTurnFactor * absTurnFactor)); // Cubic ease
+            float normalizedDriveSpeed = Mathf.Abs(driveSpeed_mmps) / _DroneModeGame.DroneModeConfigData.TurboSpeed_mmps;
+            float minTurnRadius = Mathf.Lerp(_DroneModeGame.DroneModeConfigData.MinTurnArcRadius_mm,
+                                             _DroneModeGame.DroneModeConfigData.MinTurnArcRadiusAtMaxSpeed_mm,
+                                             normalizedDriveSpeed);
 
             // Turn more sharply with a greater tilt
-            float turnFactor = (1 - Mathf.Abs(turnDirection));
-            arcRadius_mm = Mathf.Max(_kRadiusMax_mm * turnFactor, _kRadiusMin_mm);
+            float absTurnDirection = Mathf.Abs(turnDirection);
+            arcRadius_mm = Mathf.Lerp(_DroneModeGame.DroneModeConfigData.MaxTurnArcRadius_mm,
+                                      minTurnRadius,
+                                      absTurnDirection);
             if (turnDirection > 0f) {
               arcRadius_mm *= -1;
             }
             _CurrentRobot.DriveArc(driveRobotSpeed_mmps, (int)arcRadius_mm);
           }
 
-          // TODO remove debug text field
           TiltDrivingDebugText = "Drive Arc: \nspeed mmps = " + driveRobotSpeed_mmps + " \nradius mm = " + arcRadius_mm + "\ntilt = " + _TargetTurnDirection;
           return driveRobotSpeed_mmps;
         }
 
         private float PointTurnRobotWheels(float turnDirection) {
           float pointTurnSpeed_mmps = _DroneModeGame.DroneModeConfigData.PointTurnSpeed_mmps * Mathf.Abs(turnDirection);
-          float arcRadius_mm = _kRadiusMin_mm;
+          float arcRadius_mm = _DroneModeGame.DroneModeConfigData.MinTurnArcRadius_mm;
           if (turnDirection > 0f) {
             arcRadius_mm *= -1;
           }
