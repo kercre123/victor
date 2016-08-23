@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToCliff.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -30,6 +31,11 @@ using namespace ExternalInterface;
   
 static const float kCliffBackupDist_mm = 60.0f;
 static const float kCliffBackupSpeed_mmps = 100.0f;
+
+static const std::set<BehaviorType> kBehaviorsToDisable = {BehaviorType::ReactToUnexpectedMovement,
+                                                           BehaviorType::AcknowledgeObject,
+                                                           BehaviorType::AcknowledgeFace,
+                                                           BehaviorType::ReactToCubeMoved};
 
 BehaviorReactToCliff::BehaviorReactToCliff(Robot& robot, const Json::Value& config)
 : IReactionaryBehavior(robot, config)
@@ -51,6 +57,11 @@ bool BehaviorReactToCliff::IsRunnableInternalReactionary(const Robot& robot) con
 Result BehaviorReactToCliff::InitInternalReactionary(Robot& robot)
 {
   robot.GetMoodManager().TriggerEmotionEvent("CliffReact", MoodManager::GetCurrentTimeInSeconds());
+  
+  for(auto behavior : kBehaviorsToDisable)
+  {
+    robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), behavior, false);
+  }
 
   switch( _state ) {
     case State::PlayingStopReaction: 
@@ -124,6 +135,11 @@ void BehaviorReactToCliff::SendFinishedReactToCliffMessage(Robot& robot) {
 void BehaviorReactToCliff::StopInternalReactionary(Robot& robot)
 {
   _state = State::PlayingStopReaction;
+  
+  for(auto behavior : kBehaviorsToDisable)
+  {
+    robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), behavior, true);
+  }
 }
 
 bool BehaviorReactToCliff::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot)
