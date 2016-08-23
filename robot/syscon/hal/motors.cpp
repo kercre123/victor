@@ -453,6 +453,13 @@ void Motors::manage(void* userdata)
     {
       Motors::setPower(i, 0);
     }
+
+    // For the first 2 seconds of the motors being disable,
+    static int headUpCountdown = 100; // 2 seconds
+    if (headUpCountdown > 0) {
+      Motors::setPower(MOTOR_HEAD, 0x2800);
+      headUpCountdown--;
+    }
   }
 
   // Stop the timer task and clear it, along with GPIO for the motors
