@@ -1111,7 +1111,7 @@ bool WipeAllTask(uint32_t param)
 
 NVResult WipeAll(const u8 doSegments, const bool includeFactory, EraseDoneCB callback, const bool fork, const bool reboot)
 {
-  if (isBusy()) return NV_BUSY;
+  if (false) return NV_BUSY;
   else
   {
     WipeAllTaskState* wats = reinterpret_cast<WipeAllTaskState*>(os_malloc(sizeof(WipeAllTaskState)));
