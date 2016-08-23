@@ -33,6 +33,12 @@
 #include <opencv2/highgui.hpp>
 #endif
 
+#if defined(ANDROID) || defined(ANKI_IOS_BUILD)
+#define USE_VIZ_CLIENT 0
+#else
+#define USE_VIZ_CLIENT 1
+#endif
+
 
 namespace Anki {
   namespace Cozmo {
@@ -47,11 +53,13 @@ namespace Anki {
       if(_isInitialized) {
         Disconnect();
       }
-      
+
+      #if USE_VIZ_CLIENT
       if (!_vizClient.Connect(udp_host_address, port)) {
         PRINT_NAMED_INFO("VizManager.Connect", "Failed to init VizManager client (%s:%d)", udp_host_address, port);
         //_isInitialized = false;
       }
+      #endif
       
       if(!_unityVizClient.Connect(unity_host_address, unity_port)) {
         PRINT_NAMED_INFO("VizManager.Connect", "Failed to init VizManager unity client (%s:%d)", unity_host_address, unity_port);
@@ -105,10 +113,12 @@ namespace Anki {
       const size_t numWritten = (uint32_t)message.Pack(buffer, MAX_MESSAGE_SIZE);
       
       {
+        #if USE_VIZ_CLIENT
         ANKI_CPU_PROFILE("VizClient.Send");
         if (_vizClient.Send((const char*)buffer, (int)numWritten) <= 0) {
           PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd failed\n", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
         }
+        #endif
       }
       
       {
