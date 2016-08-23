@@ -78,6 +78,18 @@ namespace Anki {
       return lastResult;
     }
     
+    bool IKeyFrame::IsDoneHelper(TimeStamp_t durationTime_ms)
+    {
+      _currentTime_ms += SAMPLE_LENGTH_MS;
+      
+      // Done once enough time has ticked by or if we're not sending a done message
+      if(_currentTime_ms >= durationTime_ms) {
+        _currentTime_ms = 0; // Reset for next time
+        return true;
+      } else {
+        return false;
+      }
+    }
     
 #pragma mark -
 #pragma mark Helpers
@@ -133,6 +145,11 @@ return RESULT_FAIL; \
       return RESULT_OK;
     }
     
+    bool HeadAngleKeyFrame::IsDone()
+    {
+      return IsDoneHelper(_durationTime_ms);
+    }
+    
 #pragma mark -
 #pragma mark LiftHeightKeyFrame
     //
@@ -169,6 +186,11 @@ return RESULT_FAIL; \
       GET_MEMBER_FROM_JSON(jsonRoot, heightVariability_mm);
       
       return RESULT_OK;
+    }
+    
+    bool LiftHeightKeyFrame::IsDone()
+    {
+      return IsDoneHelper(_durationTime_ms);
     }
     
 #pragma mark -
@@ -294,7 +316,6 @@ return RESULT_FAIL; \
     
     void ProceduralFaceKeyFrame::Reset()
     {
-      _currentTime_ms = GetTriggerTime();
       _isDone = false;
     }
     
@@ -524,6 +545,8 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
       GET_COLOR_FROM_JSON(Left, (int)LEDId::LED_BACKPACK_LEFT);
       GET_COLOR_FROM_JSON(Right, (int)LEDId::LED_BACKPACK_RIGHT);
       
+      GET_MEMBER_FROM_JSON(jsonRoot, durationTime_ms);
+      
       return RESULT_OK;
     }
     
@@ -533,12 +556,16 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
       return new RobotInterface::EngineToRobot(AnimKeyFrame::BackpackLights(_streamMsg));
     }
   
+  
+    bool BackpackLightsKeyFrame::IsDone()
+    {
+      return IsDoneHelper(_durationTime_ms);
+    }
     
 #pragma mark -
 #pragma mark BodyMotionKeyFrame
     
     BodyMotionKeyFrame::BodyMotionKeyFrame()
-    : _currentTime_ms(0)
     {
       _stopMsg.speed = 0;
     }
@@ -621,10 +648,10 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
       //PRINT_NAMED_INFO("BodyMotionKeyFrame.GetStreamMessage",
       //                 "currentTime=%d, duration=%d\n", _currentTime_ms, _duration_ms);
       
-      if(_currentTime_ms == 0) {
+      if(GetCurrentTime() == 0) {
         // Send the motion command at the beginning
         return new RobotInterface::EngineToRobot(AnimKeyFrame::BodyMotion(_streamMsg));
-      } else if(_enableStopMessage && _currentTime_ms >= _durationTime_ms) {
+      } else if(_enableStopMessage && GetCurrentTime() >= _durationTime_ms) {
         // Send a stop command when the duration has passed
         return new RobotInterface::EngineToRobot(AnimKeyFrame::BodyMotion(_stopMsg));
       } else {
@@ -638,13 +665,12 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
     bool BodyMotionKeyFrame::IsDone()
     {
       // Done once enough time has ticked by or if we're not sending a done message
-      if(!_enableStopMessage || _currentTime_ms >= _durationTime_ms) {
-        _currentTime_ms = 0; // Reset for next time
+      if(!_enableStopMessage)
+      {
         return true;
-      } else {
-        _currentTime_ms += SAMPLE_LENGTH_MS;
-        return false;
       }
+      
+      return IsDoneHelper(_durationTime_ms);
     }
     
   } // namespace Cozmo

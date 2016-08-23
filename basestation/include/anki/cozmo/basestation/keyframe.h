@@ -78,6 +78,12 @@ namespace Cozmo {
     // Populate members from Json
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") = 0;
     
+    TimeStamp_t GetCurrentTime() const { return _currentTime_ms; }
+    
+    // Increments member currentTime_ms by SAMPLE_LENGTH_MS and checks it against durationTime_ms.
+    // Once currentTime_ms >= durationTime, it gets reset to 0 to be ready to call again.
+    bool IsDoneHelper(TimeStamp_t durationTime_ms);
+    
     //void SetIsValid(bool isValid) { _isValid = isValid; }
     
     Util::RandomGenerator& GetRNG() const;
@@ -88,6 +94,7 @@ namespace Cozmo {
     static Util::RandomGenerator sRNG;
 
     TimeStamp_t   _triggerTime_ms = 0;
+    TimeStamp_t   _currentTime_ms = 0;
     
   }; // class IKeyFrame
   
@@ -111,6 +118,8 @@ namespace Cozmo {
       static const std::string ClassName("HeadAngleKeyFrame");
       return ClassName;
     }
+    
+    virtual bool IsDone() override;
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
@@ -139,6 +148,8 @@ namespace Cozmo {
       static const std::string ClassName("LiftHeightKeyFrame");
       return ClassName;
     }
+    
+    virtual bool IsDone() override;
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
@@ -327,7 +338,6 @@ namespace Cozmo {
     
   private:
     ProceduralFace  _procFace;
-    TimeStamp_t     _currentTime_ms;
     bool            _isDone = false;
   
     //AnimKeyFrame::FaceImage _faceImageMsg;
@@ -385,11 +395,14 @@ namespace Cozmo {
       return ClassName;
     }
     
+    virtual bool IsDone() override;
+    
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     
   private:
     
+    s32 _durationTime_ms;
     AnimKeyFrame::BackpackLights _streamMsg;
     
   }; // class BackpackLightsKeyFrame
@@ -421,7 +434,6 @@ namespace Cozmo {
   private:
     
     s32 _durationTime_ms;
-    s32 _currentTime_ms;
     bool _enableStopMessage = true;
     
     AnimKeyFrame::BodyMotion _streamMsg;
