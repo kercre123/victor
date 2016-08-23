@@ -34,6 +34,8 @@ extern "C" {
 extern const char* DAS_USER;
 extern const char* BUILD_DATE;
 
+#define TURN_OFF_TIME (30*60*1000000)
+
 typedef void (*FTMUpdateFunc)(void);
 
 struct FTMenuItem
@@ -383,7 +385,7 @@ void Update()
       case RobotInterface::FTM_Sleepy:
       {
         using namespace Anki::Cozmo::Face;
-        // Display WiFi password, alternate rows about every 2 minutes
+        // Display WiFi password, alternate rows about every 30 seconds
         const int y = ((now/30000000) % 2) ? 0 : 32;
         u64 frame[COLS];
         Draw::Clear(frame);
@@ -392,7 +394,7 @@ void Update()
         Draw::Print(frame, wifiPsk + 4, 4, 44, y+16);
         Draw::Print(frame, wifiPsk + 8, 4, 86, y+16);
         Draw::Flip(frame);
-        if ((now - lastExecTime) > 300000000)
+        if ((now - lastExecTime) > TURN_OFF_TIME)
         {
           SetMode(RobotInterface::FTM_Off);
         }
@@ -443,7 +445,7 @@ void Update()
           RTIP::SendMessage(msg);
           lastExecTime = now;
         }
-        if (now > 300000000)
+        if (now > TURN_OFF_TIME)
         {
           SetMode(RobotInterface::FTM_Off);
         }
