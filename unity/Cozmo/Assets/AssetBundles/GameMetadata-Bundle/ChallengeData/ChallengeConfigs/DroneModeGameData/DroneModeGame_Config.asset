@@ -20,8 +20,12 @@ MonoBehaviour:
     _Levels: []
   _MaxReverseSpeed_mmps: 90
   _MaxForwardSpeed_mmps: 120
-  _PointTurnSpeed_mmps: 6
+  _PointTurnSpeed_mmps: 10
   _TurboSpeed_mmps: 160
   _HeadMovementSpeed_radps: 0.25
-  _NeutralTiltSize: 0.15
+  _HeadIdleDelay_s: 4
+  _NeutralTiltSizeDegrees: 5
+  _MaxTurnArcRadius_mm: 255
+  _MinTurnArcRadius_mm: 2
+  _SlowDownForTurnThreshold: 0.5
   _StartingLiftHeight: 0.25
