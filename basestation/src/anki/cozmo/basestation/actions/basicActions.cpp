@@ -1463,7 +1463,7 @@ namespace Anki {
     ActionResult TurnTowardsFaceAction::Init()
     {
       // If we have a last observed face set, use its pose. Otherwise pose wil not be set
-      // and TurnTowardsPoseAction will return failure.
+      // so fail if we require a face, skip ahead if we don't
       Pose3d pose;
       bool gotPose = false;
 
@@ -1505,8 +1505,15 @@ namespace Anki {
       }
       else
       {
-        _state = State::SayingName; // jump to end
-        return ActionResult::SUCCESS;
+        if( _requireFaceConfirmation ) {
+          PRINT_CH_INFO("Actions", "TurnTowardsFaceAction.Init.NoFacePose",
+                        "Required face pose, don't have one, failing");
+          return ActionResult::FAILURE_ABORT;
+        }
+        else {
+          _state = State::SayingName; // jump to end and play animation (if present)
+          return ActionResult::SUCCESS;
+        }
       }
         
     } // Init()
@@ -1636,6 +1643,11 @@ namespace Anki {
             // We saw a/the face. Turn towards it and (optionally) say name.
             CreateFineTuneAction(); // Moves to State:FineTuning
             result = ActionResult::RUNNING;
+          }
+          else if( result != ActionResult::RUNNING && _requireFaceConfirmation ) {
+            // the wait action isn't running anymore, we didn't get a face, and we require a face. This is a
+            // failure
+            result = ActionResult::FAILURE_ABORT;
           }
           break;
         }
