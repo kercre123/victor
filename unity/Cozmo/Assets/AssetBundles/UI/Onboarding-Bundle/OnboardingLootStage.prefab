@@ -75,6 +75,9 @@ MonoBehaviour:
   _ActiveTopBar: 1
   _ActiveTabButtons: 0
   _ActiveMenuContent: 0
+  _ReactionsEnabled: 1
+  _PlayIdle: 0
+  _DASPhaseID: 6
 --- !u!222 &22249756
 CanvasRenderer:
   m_ObjectHideFlags: 1

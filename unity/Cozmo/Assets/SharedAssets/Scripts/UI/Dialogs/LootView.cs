@@ -432,13 +432,22 @@ namespace Cozmo {
           whichItem++;
         }
         dooberSequence.Play();
-
+        int numBits = 0;
+        if (LootBoxRewards.ContainsKey(RewardedActionManager.Instance.CoinID)) {
+          numBits = LootBoxRewards[RewardedActionManager.Instance.CoinID];
+        }
+        int numSparks = 0;
+        if (LootBoxRewards.ContainsKey(RewardedActionManager.Instance.SparkID)) {
+          numSparks = LootBoxRewards[RewardedActionManager.Instance.SparkID];
+        }
+        DAS.Event("onboarding.emotion_chip.open", numBits.ToString(), DASUtil.FormatExtraData(numSparks.ToString()));
         _ContinueButtonInstance.Initialize(OnboardingDooberSplosionComplete, "onboarding.button.loot", "Onboarding");
 
         ChestRewardManager.Instance.PendingChestRewards.Clear();
       }
       private void OnboardingDooberSplosionComplete() {
         _OnboardingDooberStart.gameObject.SetActive(false);
+        ContextManager.Instance.CozmoHoldFreeplayEnd();
         CloseView();
       }
 

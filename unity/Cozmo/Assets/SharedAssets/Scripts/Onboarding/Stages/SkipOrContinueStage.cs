@@ -1,4 +1,4 @@
-﻿using Cozmo.UI;
+using Cozmo.UI;
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -32,6 +32,12 @@ namespace Onboarding {
       }
     }
 
+    protected override void HandleContinueClicked() {
+      base.HandleContinueClicked();
+      // is skip available, Did they skip.
+      DAS.Event("onboarding.skip_status", _OldRobotViewInstance.activeInHierarchy ? "1" : "0", DASUtil.FormatExtraData("0"));
+    }
+
     protected void HandleSkipClicked() {
       // No tutorials needed for the next few phases either
       OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.DailyGoals);
@@ -39,6 +45,8 @@ namespace Onboarding {
       // Complete and shut down onboarding current phase.
       OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Home);
       UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, Color.white);
+
+      DAS.Event("onboarding.skip_status", "1", DASUtil.FormatExtraData("1"));
     }
 
   }

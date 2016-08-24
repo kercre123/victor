@@ -10,6 +10,7 @@ namespace Onboarding {
 
     private BaseView _UpgradeDetailsView = null;
 
+    private float _StartTime;
     public override void Start() {
       base.Start();
 
@@ -18,6 +19,7 @@ namespace Onboarding {
       BaseView.BaseViewClosed += HandleViewClosed;
       // Highlight region is set by CozmoUnlocksPanel before this phase starts
       OnboardingManager.Instance.ShowOutlineRegion(true);
+      _StartTime = Time.time;
     }
 
     public override void OnDestroy() {
@@ -53,6 +55,8 @@ namespace Onboarding {
     private void HandleGameEvent(GameEventWrapper gameEvent) {
       // Unlocking already closes window
       if (gameEvent.GameEventEnum == Anki.Cozmo.GameEvent.OnUnlockableEarned) {
+        float timeToUpgrade = Time.time - _StartTime;
+        DAS.Event("onboarding.upgrade", timeToUpgrade.ToString());
         GoToNextState();
       }
     }

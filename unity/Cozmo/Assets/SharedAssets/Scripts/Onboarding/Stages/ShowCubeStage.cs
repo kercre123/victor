@@ -49,6 +49,9 @@ namespace Onboarding {
     };
     private SubState _SubState;
 
+    private float _StartTime = 0;
+    private int _CubesFoundTimes = 0;
+
     public override void Start() {
       base.Start();
 
@@ -60,7 +63,10 @@ namespace Onboarding {
       RobotEngineManager.Instance.AddCallback<ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
 
       UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, Color.white);
+
+      _StartTime = Time.time;
     }
+
     public override void OnDestroy() {
       base.OnDestroy();
       LightCube.OnMovedAction -= HandleCubeMoved;
@@ -210,6 +216,11 @@ namespace Onboarding {
         RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnboardingDiscoverCube);
         _ImageCubeLights.gameObject.SetActive(true);
         _ImageVisionCone.gameObject.SetActive(true);
+        if (_CubesFoundTimes == 0) {
+          float timeToFindCube = Time.time - _StartTime;
+          DAS.Event("onboarding.upgrade", timeToFindCube.ToString());
+        }
+        _CubesFoundTimes++;
       }
       else if (nextState == SubState.WaitForInspectCube) {
         _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3Body3);
@@ -243,12 +254,14 @@ namespace Onboarding {
         _CozmoCubeRightSideUpTransform.gameObject.SetActive(true);
         _CozmoImageTransform.gameObject.SetActive(false);
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
+        DAS.Event("onboarding.error", "cube_lights_up");
       }
       else if (nextState == SubState.ErrorCubeMoved) {
         _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCube);
         _ShowShelfTextLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCube2);
         _ContinueButtonInstance.gameObject.SetActive(false);
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
+        DAS.Event("onboarding.error", "cube_moved");
       }
       else if (nextState == SubState.ErrorCozmo) {
         _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCozmo);
@@ -256,6 +269,7 @@ namespace Onboarding {
         _ContinueButtonInstance.gameObject.SetActive(true);
         _CozmoMovedErrorTransform.gameObject.SetActive(true);
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
+        DAS.Event("onboarding.error", "cozmo_moved");
       }
       _SubState = nextState;
     }

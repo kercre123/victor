@@ -330,6 +330,7 @@ MonoBehaviour:
   _ActiveMenuContent: 0
   _ReactionsEnabled: 0
   _PlayIdle: 0
+  _DASPhaseID: 3
   _ShowCozmoCubesLabel: {fileID: 0}
   _ShowShelfTextLabel: {fileID: 11486074}
   _CozmoImageTransform: {fileID: 22456960}

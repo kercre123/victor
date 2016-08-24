@@ -37,6 +37,10 @@ public class OnboardingManager : MonoBehaviour {
   private GameObjectDataLink _OnboardingUIPrefabData;
   private OnboardingUIWrapper _OnboardingUIInstance;
 
+  // The DAS phaseIDs are checkpoints from the design doc.
+  private int _CurrDASPhaseID = -1;
+  private float _CurrDASPhaseStartTime = 0;
+
   #region OUTLINEAREA
   // Attaches a small outline around a region of the UI
   // So we don't need to do any resolution math in the overlay.
@@ -146,7 +150,7 @@ public class OnboardingManager : MonoBehaviour {
     _CurrPhase = phase;
     if (_CurrPhase == OnboardingPhases.Home) {
       RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(AnimationTrigger.OnboardingIdle);
-
+      DAS.Event("onboarding.start", "");
       // This is safe because you can't spend currency in the first phase of onboarding
       Cozmo.ItemData itemData = Cozmo.ItemDataConfig.GetHexData();
       int currAmt = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.GetItemAmount(RewardedActionManager.Instance.CoinID);
@@ -227,11 +231,11 @@ public class OnboardingManager : MonoBehaviour {
     if (_CurrStageInst != null) {
       GameObject.Destroy(_CurrStageInst);
     }
-
+    int nextDASPhaseID = -1;
     SetCurrStageInPhase(nextStage, _CurrPhase);
     if (nextStage >= 0 && nextStage < GetMaxStageInPhase(_CurrPhase)) {
       OnboardingBaseStage stagePrefab = GetCurrStagePrefab();
-
+      nextDASPhaseID = stagePrefab.DASPhaseID;
       _CurrStageInst = UIManager.CreateUIElement(stagePrefab, _OnboardingTransform);
       UpdateStage(stagePrefab.ActiveTopBar, stagePrefab.ActiveMenuContent,
                   stagePrefab.ActiveTabButtons, stagePrefab.ReactionsEnabled);
@@ -249,7 +253,18 @@ public class OnboardingManager : MonoBehaviour {
       HomeHub.Instance.StartFreeplay(RobotEngineManager.Instance.CurrentRobot);
       UnloadIfDoneWithAllPhases();
     }
+    // Just started something new...
+    if (_CurrDASPhaseID != nextDASPhaseID) {
+      // Not first time, record a transition out
+      if (_CurrDASPhaseID != -1) {
+        float timeSinceLastPhase = Time.time - _CurrDASPhaseStartTime;
+        DAS.Event("onboarding.phase_time", _CurrDASPhaseID.ToString(), DASUtil.FormatExtraData(timeSinceLastPhase.ToString()));
+      }
 
+      // start recording the next one...
+      _CurrDASPhaseStartTime = Time.time;
+      _CurrDASPhaseID = nextDASPhaseID;
+    }
     DataPersistenceManager.Instance.Save();
   }
 

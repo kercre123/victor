@@ -77,9 +77,10 @@ MonoBehaviour:
   _ActiveMenuContent: 0
   _ReactionsEnabled: 0
   _PlayIdle: 0
+  _DASPhaseID: 2
   _Animation:
     _EnumValueAsString: OnboardingBirth
-    _EnumValue: 112
+    _EnumValue: 114
   _LookForFacesMaxTime_Sec: 8
 --- !u!222 &22277488
 CanvasRenderer:

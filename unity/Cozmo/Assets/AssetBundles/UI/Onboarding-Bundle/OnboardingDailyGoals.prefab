@@ -187,6 +187,7 @@ MonoBehaviour:
   _ActiveMenuContent: 1
   _ReactionsEnabled: 1
   _PlayIdle: 0
+  _DASPhaseID: 4
   _ContinueButtonInstance: {fileID: 0}
   _FreeplayEnabledOnEnter: 0
   _FreeplayEnabledOnExit: 0

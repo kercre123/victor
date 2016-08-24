@@ -439,6 +439,7 @@ MonoBehaviour:
   _ActiveMenuContent: 1
   _ReactionsEnabled: 1
   _PlayIdle: 0
+  _DASPhaseID: 4
   _ClickBlockers:
   - {fileID: 11456308}
   - {fileID: 11487114}

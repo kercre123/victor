@@ -269,6 +269,7 @@ MonoBehaviour:
   _ActiveMenuContent: 1
   _ReactionsEnabled: 1
   _PlayIdle: 0
+  _DASPhaseID: 5
   _OverviewInstructions: {fileID: 196562}
 --- !u!114 &11470592
 MonoBehaviour:

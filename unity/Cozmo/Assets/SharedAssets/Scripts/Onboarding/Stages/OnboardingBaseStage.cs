@@ -11,6 +11,7 @@ namespace Onboarding {
     public bool ActiveTabButtons { get { return _ActiveTabButtons; } }
     public bool ActiveMenuContent { get { return _ActiveMenuContent; } }
     public bool ReactionsEnabled { get { return _ReactionsEnabled; } }
+    public int DASPhaseID { get { return _DASPhaseID; } }
 
     [SerializeField]
     protected bool _ActiveTopBar = false;
@@ -27,6 +28,8 @@ namespace Onboarding {
     [SerializeField]
     protected bool _PlayIdle = false;
 
+    [SerializeField]
+    protected int _DASPhaseID = 0;
 
     public virtual void Start() {
       DAS.Info("onboarding.stage.started", name);

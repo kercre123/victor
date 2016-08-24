@@ -42,7 +42,7 @@ namespace Onboarding {
       RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(_FreeplayEnabledOnExit);
       OnboardingManager.Instance.GoToNextStage();
     }
-    protected void HandleContinueClicked() {
+    protected virtual void HandleContinueClicked() {
       SkipPressed();
     }
   }
