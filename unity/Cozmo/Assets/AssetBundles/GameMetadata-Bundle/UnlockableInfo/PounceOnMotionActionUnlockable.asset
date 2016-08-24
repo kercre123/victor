@@ -23,7 +23,7 @@ MonoBehaviour:
   DescriptionKey: unlockable.PounceOnMotionAction.Description
   TitleKey: unlockable.PounceOnMotionAction.Title
   UpgradeCostItemId: TestHexItem0
-  UpgradeCostAmountNeeded: 1
+  UpgradeCostAmountNeeded: 8
   RequestTrickCostItemId: treat
   RequestTrickCostAmountCurve:
     serializedVersion: 2
