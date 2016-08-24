@@ -1,11 +1,11 @@
 {
   "behaviorType": "PopAWheelie",
   "name": "popAWheelie",
+  "requiredUnlockId": "PopAWheelieAction",
   "behaviorGroups": [
     "FP_PlayAlone"    
   ],
   
-  "requiredUnlockId": "PopAWheelieAction",
   "flatScore":  0.7,
   "shouldHandleConfirmedObject": false,
   "shouldHandlePossibleObject": false,

@@ -658,6 +658,7 @@ const UnlockId BehaviorManager::SwitchToRequestedSpark()
   
   _activeSpark = _lastRequestedSpark;
   _isSoftSpark = _isRequestedSparkSoft;
+  _didGameRequestSparkEnd = false;
   
   return _activeSpark;
 }

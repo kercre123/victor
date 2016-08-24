@@ -33,11 +33,12 @@ namespace Anki {
     PlayAnimationAction::PlayAnimationAction(Robot& robot,
                                              const std::string& animName,
                                              u32 numLoops,
-                                             bool interruptRunning)
+                                             bool interruptRunning,
+                                             u8 tracksToLock)
     : IAction(robot,
               "PlayAnimation" + animName,
               RobotActionType::PLAY_ANIMATION,
-              (u8)AnimTrackFlag::NO_TRACKS)
+              tracksToLock)
     , _animName(animName)
     , _numLoopsRemaining(numLoops)
     , _interruptRunning(interruptRunning)
@@ -48,11 +49,12 @@ namespace Anki {
     PlayAnimationAction::PlayAnimationAction(Robot& robot,
                                              Animation* animation,
                                              u32 numLoops,
-                                             bool interruptRunning)
+                                             bool interruptRunning,
+                                             u8 tracksToLock)
     : IAction(robot,
               "PlayAnimation" + animation->GetName(),
               RobotActionType::PLAY_ANIMATION,
-              (u8)AnimTrackFlag::NO_TRACKS)
+              tracksToLock)
     , _animName(animation->GetName())
     , _numLoopsRemaining(numLoops)
     , _interruptRunning(interruptRunning)
@@ -202,8 +204,9 @@ namespace Anki {
     TriggerAnimationAction::TriggerAnimationAction(Robot& robot,
                              AnimationTrigger animEvent,
                              u32 numLoops,
-                             bool interruptRunning)
-    : PlayAnimationAction(robot, "", numLoops, interruptRunning),
+                             bool interruptRunning,
+                             u8 tracksToLock)
+    : PlayAnimationAction(robot, "", numLoops, interruptRunning, tracksToLock),
     _animGroupName("")
     {
       RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();

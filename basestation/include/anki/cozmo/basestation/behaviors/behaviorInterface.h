@@ -507,9 +507,6 @@ protected:
   std::set<GameToEngineTag> _gameToEngineTags;
   std::set<RobotInterface::RobotToEngineTag> _robotToEngineTags;
   bool _isDisabledByDefault;
-  
-  //Tracks whether lift track was locked for reaction
-  bool _reactionIsLiftTrackLocked;
 
 }; // class IReactionaryBehavior
 

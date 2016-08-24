@@ -1,8 +1,10 @@
 {
   "behaviorType": "PickUpCube",
   "name": "sparksPickUpCube",
-  "flatScore": 5.0,
+  "requiredUnlockId": "PickupCube",
   "behaviorGroups": [
     "SparksPickUpCube"
-  ]
+  ],
+  "flatScore": 5.0
+
 }

@@ -1,8 +1,8 @@
 {
   "behaviorType": "ExploreVisitPossibleMarker",
   "name": "sparksVisitPossibleMarker",
-  "flatScore": 4.0,
   "behaviorGroups": [
-    "SparksPickUpCube"
-  ]  
+      "SparksPickUpCube"
+  ],
+  "flatScore": 4.0
 }

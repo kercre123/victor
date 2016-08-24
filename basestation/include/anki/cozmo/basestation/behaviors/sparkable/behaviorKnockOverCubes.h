@@ -25,7 +25,7 @@ class ObservableObject;
 class Robot;
 
 class BehaviorKnockOverCubes : public IBehavior
-{
+{  
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
@@ -38,6 +38,9 @@ protected:
   virtual bool IsRunnableInternal(const Robot& robot) const override;  
   virtual bool CarryingObjectHandledInternally() const override {return false;}
 
+  virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
+  void HandleObjectUpAxisChanged(const ObjectUpAxisChanged& msg, Robot& robot);
+  
 private:
 
   // TODO:(bn) a few behaviors have used this pattern now, maybe we should re-think having some kind of
@@ -61,21 +64,21 @@ private:
   
   int _numRetries;
   std::set<BehaviorType> _disabledReactions;
+  std::set<ObjectID> _objectsFlipped;
   
   //Values loaded in from JSON
   AnimationTrigger _reachForBlockTrigger = AnimationTrigger::Count;
   AnimationTrigger _putDownAnimTrigger = AnimationTrigger::Count;
   AnimationTrigger _knockOverEyesTrigger = AnimationTrigger::Count;
   AnimationTrigger _knockOverSuccessTrigger = AnimationTrigger::Count;
+  AnimationTrigger _knockOverFailureTrigger = AnimationTrigger::Count;
 
   void TransitionToReachingForBlock(Robot& robot);
-  void TransitionToDrivingToReadyPose(Robot& robot);
-  void TransitionToTurningTowardsFace(Robot& robot);
-  void TransitionToAligningWithStack(Robot& robot);
   void TransitionToKnockingOverStack(Robot& robot);
   void TransitionToPlayingReaction(Robot& robot);
   
   void LoadConfig(const Json::Value& config);
+  void InitializeMemberVars();
   virtual void ResetBehavior(Robot& robot);
   virtual void UpdateTargetStack(const Robot& robot) const;
 

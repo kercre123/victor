@@ -1,8 +1,9 @@
 {
   "behaviorType": "StackBlocks",
   "name": "sparksStackBlock",
-  "flatScore" : 5.0,
+  "requiredUnlockId": "StackTwoCubes",
   "behaviorGroups": [
     "SparksStackBlock"
-  ]
+  ],
+  "flatScore" : 5.0
 }

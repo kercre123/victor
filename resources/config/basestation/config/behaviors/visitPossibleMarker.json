@@ -2,7 +2,7 @@
   // TODO(rsam) Possible Markers are not properly generated currently COZMO-1338
   "behaviorType": "ExploreVisitPossibleMarker",
   "name": "visitPossibleMarker",
-  "flatScore": 0.6,
   "behaviorGroups": [
-  ]
+  ],
+  "flatScore": 0.6
 }

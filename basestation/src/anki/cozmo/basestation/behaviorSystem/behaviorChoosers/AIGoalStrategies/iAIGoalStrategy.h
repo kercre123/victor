@@ -47,6 +47,9 @@ protected:
 
   // true when this goal wants to finish, false if it would rather continue
   virtual bool WantsToEndInternal(const Robot& robot, float lastTimeGoalStartedSec) const = 0;
+  
+  // allow access to GoalShouldEnd in children to tell when the goal's about to be killed
+  void SetGoalShouldEndSecs(float timeout_s){ _goalShouldEndSecs = timeout_s;}
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes

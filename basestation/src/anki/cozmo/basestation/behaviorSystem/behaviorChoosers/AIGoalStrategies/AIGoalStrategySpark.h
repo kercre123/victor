@@ -29,7 +29,7 @@ public:
   virtual bool WantsToStartInternal(const Robot& robot, float lastTimeGoalRanSec) const override { return true; };
 
   // true when this goal wants to finish, false if it would rather continue
-  virtual bool WantsToEndInternal(const Robot& robot, float lastTimeGoalStartedSec) const override { return false; };
+  virtual bool WantsToEndInternal(const Robot& robot, float lastTimeGoalStartedSec) const override { return false;};
 };
   
 } // namespace

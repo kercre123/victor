@@ -107,7 +107,7 @@
          "minTimeSecs": 0,
          "maxTimeSecs": 60,
          "numberOfRepetitions": 1,
-         "behaviorObjective": "Pounced",
+         "behaviorObjective": "PouncedAndCaught",
          "softSparkTrigger": "SoftSparkUpgradeLift",
           // these groups are the behaviors that are allowed in this behavior chooser
           "behaviorGroups" : [ "SparksPounceOnMotion" ]

@@ -74,7 +74,6 @@ private:
   
   ChooserState _state;
   std::vector<Signal::SmartHandle> _signalHandles;
-  bool _isLiftTrackLocked;
   
   // Created with factory
   BehaviorPlayArbitraryAnim* _behaviorPlayAnimation = nullptr;
@@ -90,6 +89,9 @@ private:
   BehaviorObjective _objectiveToListenFor;
   AnimationTrigger _softSparkUpgradeTrigger;
   
+  // Special re-start indicator
+  TimeStamp_t _timePlayingOutroStarted;
+  bool _switchingSoftToHardSpark;
   
 };
    

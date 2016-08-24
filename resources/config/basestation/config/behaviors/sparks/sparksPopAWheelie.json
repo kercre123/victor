@@ -1,6 +1,10 @@
 {
   "behaviorType": "PopAWheelie",
   "name": "sparksPopAWheelie",
+  "requiredUnlockId": "PopAWheelieAction",
+  "behaviorGroups": [
+    "SparksPopAWheelie"
+  ],
   "flatScore": 10,
   "shouldHandleConfirmedObject": false,
   "shouldHandlePossibleObject": false,
@@ -15,8 +19,5 @@
         "y": 1.0
       }
     ]
-  },
-  "behaviorGroups": [
-      "SparksPopAWheelie"
-  ]
+  }
 }

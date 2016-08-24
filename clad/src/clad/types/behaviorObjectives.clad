@@ -17,7 +17,7 @@ enum int_32 BehaviorObjective {
   KnockedOverBlocks,
   PickedupBlock,
   PutdownBlock,
-  Pounced,
+  PouncedAndCaught,
   PoppedWheelie,
   ReactedAcknowledgedFace,
   ReactedAcknowledgedObject,

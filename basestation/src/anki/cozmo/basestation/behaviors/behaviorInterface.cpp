@@ -295,12 +295,15 @@ Result IBehavior::Init()
   
   // If the behavior that is starting is the result of a spark, determine whether
   // it should be streamlined or not
-  if(_requiredUnlockId  ==  _robot.GetBehaviorManager().GetActiveSpark()){
+  if(_requiredUnlockId != UnlockId::Count
+     && _requiredUnlockId == _robot.GetBehaviorManager().GetActiveSpark()){
     if(_robot.GetBehaviorManager().IsActiveSparkSoft()){
       _shouldStreamline = false;
     }else{
       _shouldStreamline = true;
     }
+  }else{
+    _shouldStreamline = false;
   }
   
   return initResult;
@@ -643,7 +646,6 @@ ActionResult IBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* actio
   
 IReactionaryBehavior::IReactionaryBehavior(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
-  , _reactionIsLiftTrackLocked(false)
 {
   // These are the tags that should trigger this behavior to be switched to immediately
   SubscribeToTags({
@@ -669,15 +671,7 @@ Result IReactionaryBehavior::InitInternal(Robot& robot)
   // from doing anything
   robot.GetMoveComponent().IgnoreDirectDriveMessages(true);
   robot.GetContext()->GetRobotManager()->GetRobotEventHandler().IgnoreExternalActions(true);
-  
-  //Prevent reactionary behaviors from moving lift track if carrying block
-  if(robot.IsCarryingObject()
-     && GetType() != BehaviorType::ReactToRobotOnBack
-     && GetType() != BehaviorType::ReactToRobotOnSide
-     && GetType() != BehaviorType::ReactToRobotOnFace){
-    robot.GetMoveComponent().LockTracks((u8)AnimTrackFlag::LIFT_TRACK);
-    _reactionIsLiftTrackLocked = true;
-  }
+
   
   return InitInternalReactionary(robot);
 }
@@ -694,12 +688,6 @@ void IReactionaryBehavior::StopInternal(Robot& robot)
   robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::ReactionaryBehaviorTransition>(GetType(), false);
   robot.GetMoveComponent().IgnoreDirectDriveMessages(false);
   robot.GetContext()->GetRobotManager()->GetRobotEventHandler().IgnoreExternalActions(false);
-  
-  //Allow lift to move now that reaction has finished playing
-  if(_reactionIsLiftTrackLocked){
-    _reactionIsLiftTrackLocked = false;
-    robot.GetMoveComponent().UnlockTracks((u8)AnimTrackFlag::LIFT_TRACK);
-  }
   
   StopInternalReactionary(robot);
 }

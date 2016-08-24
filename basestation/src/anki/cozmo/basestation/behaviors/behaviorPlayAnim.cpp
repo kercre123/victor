@@ -13,6 +13,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorPlayAnim.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
+#include "anki/cozmo/basestation/robot.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -50,7 +51,16 @@ bool BehaviorPlayAnim::IsRunnableInternal(const Robot& robot) const
 
 Result BehaviorPlayAnim::InitInternal(Robot& robot)
 {
-  StartActing(new TriggerAnimationAction(robot, _animTrigger, _numLoops));
+  const bool interruptRunning = true;
+  u8 tracksToLock = (u8) AnimTrackFlag::NO_TRACKS;
+  
+  // Ensure animation doesn't throw cube down, but still can play get down animations
+  if(robot.IsCarryingObject()
+     && !robot.IsPickedUp()){
+    tracksToLock = (u8) AnimTrackFlag::LIFT_TRACK;
+  }
+  
+  StartActing(new TriggerAnimationAction(robot, _animTrigger, _numLoops, interruptRunning, tracksToLock));
   return Result::RESULT_OK;
 }  
 

@@ -24,6 +24,7 @@ using namespace ExternalInterface;
 
 BehaviorPlayArbitraryAnim::BehaviorPlayArbitraryAnim(Robot& robot, const Json::Value& config)
   : BehaviorPlayAnim(robot, config, false)
+  , _animationAlreadySet(false)
 {
   SetDefaultName("PlayArbitraryAnim");
   _animTrigger = AnimationTrigger::Count;
@@ -39,6 +40,24 @@ bool BehaviorPlayArbitraryAnim::IsRunnableInternal(const Robot& robot) const
   const bool retVal = _numLoops >= 0;
   return retVal;
 }
+  
+void BehaviorPlayArbitraryAnim::SetAnimationTrigger(AnimationTrigger trigger, int numLoops)
+{
+  ASSERT_NAMED_EVENT(!_animationAlreadySet, "BehaviorPlayArbitraryAnim.SetAnimationTrigger",
+                     "");
+  _animTrigger = trigger;
+  _numLoops = numLoops;
+  _animationAlreadySet = true;
+}
+
+  
+Result BehaviorPlayArbitraryAnim::InitInternal(Robot& robot)
+{
+  _animationAlreadySet = false;
+  return BaseClass::InitInternal(robot);
+}
+
+
 
 } // namespace Cozmo
 } // namespace Anki

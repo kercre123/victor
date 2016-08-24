@@ -1,11 +1,10 @@
 {
   "behaviorType": "StackBlocks",
   "name": "StackBlocks",
+  "requiredUnlockId": "StackTwoCubes",
   "behaviorGroups": [
     "FP_PlayAlone"
-  ],
-  
-  "requiredUnlockId": "StackTwoCubes",
+  ],  
   "flatScore": 0.8,
   "repetitionPenalty": {
     "nodes": [

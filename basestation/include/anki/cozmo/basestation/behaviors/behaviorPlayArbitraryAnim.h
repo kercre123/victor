@@ -24,6 +24,7 @@ namespace Cozmo {
   
 class BehaviorPlayArbitraryAnim: public BehaviorPlayAnim
 {
+using BaseClass = BehaviorPlayAnim;
 private:
   
   // Enforce creation through BehaviorFactory
@@ -33,9 +34,15 @@ private:
 public:
   
   virtual ~BehaviorPlayArbitraryAnim();
-  void SetAnimationTrigger(AnimationTrigger trigger, int numLoops){_animTrigger = trigger; _numLoops = numLoops;}
+  void SetAnimationTrigger(AnimationTrigger trigger, int numLoops);
   
   virtual bool IsRunnableInternal(const Robot& robot) const override;
+  
+protected:
+  virtual Result InitInternal(Robot& robot) override;
+  
+private:
+  bool _animationAlreadySet;
 };
   
 

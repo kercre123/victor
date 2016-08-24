@@ -4,7 +4,7 @@
  * Author: Brad Neuman
  * Created: 2015-11-18
  *
- * Description: This is a reactionary behavior which "pounces". Basically, it looks for motion nearby in the
+ * Description: This is a behavior which "pounces". Basically, it looks for motion nearby in the
  *              ground plane, and then drive to drive towards it and "catch" it underneath it's lift
  *
  * Copyright: Anki, Inc. 2015
@@ -38,7 +38,6 @@ protected:
   virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
 
   virtual Result InitInternal(Robot& robot) override;
-  virtual Status UpdateInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
 
   float _maxPounceDist = 120.0f;
@@ -76,15 +75,18 @@ private:
     GetOutBored,
     Complete,
   };
+  
+  
+  int16_t _observedX;
+  int16_t _observedY;
+  bool _motionObserved = false;
+  
 
   float _lastTimeRotate;
   float _lastMotionTime;
   State _state = State::Inactive;
-
-  u32 _waitForActionTag = 0;
-
+  
   bool  _cliffReactEnabled = true;
-  float _stopRelaxingTime = 0.0f;
   float _backUpDistance = 0.f;
   float GetDriveDistance();
   void  EnableCliffReacts(bool enable,Robot& robot);
@@ -97,6 +99,7 @@ private:
   void TransitionToBringingHeadDown(Robot& robot);
   void TransitionToRotateToWatchingNewArea(Robot& robot);
   void TransitionToWaitForMotion(Robot& robot);
+  void TransitionFromWaitForMotion(Robot& robot);
   void TransitionToTurnToMotion(Robot& robot, int16_t motion_img_x, int16_t motion_img_y);
   void TransitionToCreepForward(Robot& robot);
   void TransitionToPounce(Robot& robot);
@@ -104,6 +107,9 @@ private:
   void TransitionToResultAnim(Robot& robot);
   void TransitionToBackUp(Robot& robot);
   void TransitionToGetOutBored(Robot& robot);
+  
+  //Allows the waiting for motion action to be canceled and call callback
+  void ExitWaitingForMotion(Robot& robot);
 };
 
 }

@@ -29,17 +29,18 @@ static const char* kMaxTimeConfigKey                 = "maxTimeSecs";
 static const char* kNumberOfRepetitionsConfigKey     = "numberOfRepetitions";
 static const char* kBehaviorObjectiveConfigKey       = "behaviorObjective";
 static const char* ksoftSparkUpgradeTriggerConfigKey = "softSparkTrigger";
+static const float kMaxPlayingOutroTimeout           = 10.0f;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SparksBehaviorChooser::SparksBehaviorChooser(Robot& robot, const Json::Value& config)
   : SimpleBehaviorChooser(robot, config)
   , _state(ChooserState::ChooserSelected)
-  , _isLiftTrackLocked(false)
   , _timeChooserStarted(0.f)
   , _currentObjectiveCompletedCount(0)
   , _minTimeSecs(-1.f)
   , _maxTimeSecs(-1.f)
   , _numberOfRepetitions(-1)
+  , _switchingSoftToHardSpark(false)
 {
   ReloadFromConfig(robot, config);
 
@@ -89,6 +90,8 @@ void SparksBehaviorChooser::OnSelected()
   _timeChooserStarted = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _currentObjectiveCompletedCount = 0;
   _state = ChooserState::ChooserSelected;
+  _switchingSoftToHardSpark = false;
+  _timePlayingOutroStarted = 0;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -116,7 +119,7 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
     if(FLT_GE(currentTime, _timeChooserStarted + _minTimeSecs)
        && _currentObjectiveCompletedCount >= _numberOfRepetitions)
     {
-      robot.GetBehaviorManager().RequestCurrentBehaviorEndImmediately("Sparks repetition count met"); // TODO: Change to stop acting
+      robot.GetBehaviorManager().RequestCurrentBehaviorEndOnNextActionComplete();
       _state = ChooserState::WaitingForCurrentBehaviorToStop;
     }
     
@@ -124,14 +127,14 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
     //Enforce max timer for sparks
     if(FLT_GE(currentTime, _timeChooserStarted + _maxTimeSecs))
     {
-      robot.GetBehaviorManager().RequestCurrentBehaviorEndImmediately("Sparks max time hit"); // TODO: Change to stop acting
+      robot.GetBehaviorManager().RequestCurrentBehaviorEndOnNextActionComplete();
       _state = ChooserState::WaitingForCurrentBehaviorToStop;
     }
     
     //Check to see if user has exited out of spark from unity side
     if(robot.GetBehaviorManager().DidGameRequestSparkEnd())
     {
-      robot.GetBehaviorManager().RequestCurrentBehaviorEndImmediately("Sparks Game requested spark end"); // TODO: Change to stop acting
+      robot.GetBehaviorManager().RequestCurrentBehaviorEndOnNextActionComplete();
       _state = ChooserState::WaitingForCurrentBehaviorToStop;
     }
     
@@ -141,9 +144,21 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
        && robot.GetBehaviorManager().IsRequestedSparkSoft() != true)
     {
       robot.GetBehaviorManager().RequestCurrentBehaviorEndImmediately("Sparks transition soft spark to hard spark of same type");
+      _switchingSoftToHardSpark = true;
       _state = ChooserState::PlayingSparksOutro;
     }
   } // end currentRunningBehavior != nullptr
+  
+  // Ensure that the spark timesout eventually
+  if(_state == ChooserState::PlayingSparksOutro
+     && _timePlayingOutroStarted == 0){
+    _timePlayingOutroStarted = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  }else if(_state == ChooserState::PlayingSparksOutro){
+    ASSERT_NAMED_EVENT(_timePlayingOutroStarted + kMaxPlayingOutroTimeout < currentTime,
+                       "SparksBehaviorChooser.ChooseNextBehavior.OutroTimeout", "Outro has not finished after %u seconds", currentTime - _timePlayingOutroStarted);
+    
+  }
+  
   
   // Handle behavior selection based on current state
   switch(_state){
@@ -157,12 +172,6 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
         introAnim = AnimationTrigger::SparkGetIn;
       }
       
-      // Ensure the robot doesn't throw a block down
-      if(robot.IsCarryingObject()){
-        robot.GetMoveComponent().LockTracks((u8)AnimTrackFlag::LIFT_TRACK);
-        _isLiftTrackLocked = true;
-      }
-      
       _behaviorPlayAnimation->SetAnimationTrigger(introAnim, 1);
       bestBehavior = _behaviorPlayAnimation;
       _state = ChooserState::PlayingSparksIntro;
@@ -171,18 +180,13 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
     }
     case ChooserState::PlayingSparksIntro:
     {
-      if(currentRunningBehavior != nullptr){
+      if(currentRunningBehavior != nullptr
+         && currentRunningBehavior->IsRunning()){
         bestBehavior = _behaviorPlayAnimation;
       }else{
         _state = ChooserState::UsingSimpleBehaviorChooser;
         bestBehavior = BaseClass::ChooseNextBehavior(robot, currentRunningBehavior);
         
-        //Unlock the track if it was locked
-        // Ensure the robot doesn't throw a block down
-        if(_isLiftTrackLocked ){
-          robot.GetMoveComponent().UnlockTracks((u8)AnimTrackFlag::LIFT_TRACK);
-          _isLiftTrackLocked = false;
-        }
       }
       break;
     }
@@ -216,12 +220,6 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
           _behaviorPlayAnimation->SetAnimationTrigger(AnimationTrigger::Count, 1);
         }
         
-        // Ensure the robot doesn't throw a block down
-        if(robot.IsCarryingObject()){
-          robot.GetMoveComponent().LockTracks((u8)AnimTrackFlag::LIFT_TRACK);
-          _isLiftTrackLocked = true;
-        }
-        
         bestBehavior = _behaviorPlayAnimation;
         _state = ChooserState::PlayingSparksOutro;
         break;
@@ -230,21 +228,17 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
     case ChooserState::PlayingSparksOutro:
     {
       bestBehavior = _behaviorPlayAnimation;
-      if(currentRunningBehavior == nullptr){
-        //Notify the game that the spark is over
-        robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::SparkEnded>();
-        
-        //Allow new goal to be chosen if we haven't recieved any updates from the user
-        if(robot.GetBehaviorManager().GetActiveSpark() == robot.GetBehaviorManager().GetRequestedSpark()
-           && !robot.GetBehaviorManager().DidGameRequestSparkEnd()){
-          robot.GetBehaviorManager().SetRequestedSpark(UnlockId::Count, false);
+      if(currentRunningBehavior == nullptr || !currentRunningBehavior->IsRunning()){
+        // Notify the game that the spark is over unless the UI has already updated for a soft->hard spark switch
+        if(!_switchingSoftToHardSpark){
+          robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::SparkEnded>();
         }
         
-        //Unlock the track if it was locked
-        // Ensure the robot doesn't throw a block down
-        if(_isLiftTrackLocked ){
-          robot.GetMoveComponent().UnlockTracks((u8)AnimTrackFlag::LIFT_TRACK);
-          _isLiftTrackLocked = false;
+        //Allow new goal to be chosen if we haven't recieved any updates from the user or switching to same spark
+        if(robot.GetBehaviorManager().GetActiveSpark() == robot.GetBehaviorManager().GetRequestedSpark()
+           && !robot.GetBehaviorManager().DidGameRequestSparkEnd()
+           && !_switchingSoftToHardSpark){
+          robot.GetBehaviorManager().SetRequestedSpark(UnlockId::Count, false);
         }
         
         bestBehavior = _behaviorNone;

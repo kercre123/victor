@@ -1,8 +1,10 @@
 {
   "behaviorType": "BuildPyramid",
   "name": "sparksBuildPyramid",
-  "flatScore": 10.0,
+  "requiredUnlockId": "BuildPyramid",
   "behaviorGroups": [
-    "SparksBuildPyramid"
-  ]
+     "SparksBuildPyramid"
+  ],
+  "flatScore": 10.0
+
 }

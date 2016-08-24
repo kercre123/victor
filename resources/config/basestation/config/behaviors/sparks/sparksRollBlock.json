@@ -1,8 +1,9 @@
 {
   "behaviorType": "RollBlock",
   "name": "sparksRollBlock",
-  "flatScore" : 5.0,
+  "requiredUnlockId": "RollCube",
   "behaviorGroups": [
-    "SparksRollBlock"
-  ]
+      "SparksRollBlock"
+  ],
+  "flatScore" : 5.0
 }

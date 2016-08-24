@@ -85,6 +85,8 @@ enum int_32 AnimationTrigger
   KnockOverEyes,
   KnockOverFailure,
   KnockOverGrabAttempt,
+  KnockOverPreActionNamedFace,
+  KnockOverPreActionUnnamedFace,
   KnockOverSuccess,
   LookInPlaceForFacesBodyPause,
   LookInPlaceForFacesHeadMovePause,

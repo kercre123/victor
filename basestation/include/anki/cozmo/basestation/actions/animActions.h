@@ -33,14 +33,17 @@ namespace Anki {
       PlayAnimationAction(Robot& robot,
                           const std::string& animName,
                           u32 numLoops = 1,
-                          bool interruptRunning = true);
+                          bool interruptRunning = true,
+                          u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS);
       // Constructor for playing an Animation object (e.g. a "live" one created dynamically)
       // Caller owns the animation -- it will not be deleted by this action.
       // Numloops 0 causes the action to loop forever
+      // tracksToLock indicates tracks of the animation which should not play
       PlayAnimationAction(Robot& robot,
                           Animation* animation,
                           u32 numLoops = 1,
-                          bool interruptRunning = true);
+                          bool interruptRunning = true,
+                          u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS);
       
       virtual ~PlayAnimationAction();
       
@@ -79,7 +82,8 @@ namespace Anki {
       explicit TriggerAnimationAction(Robot& robot,
                                       AnimationTrigger animEvent,
                                       u32 numLoops = 1,
-                                      bool interruptRunning = true);
+                                      bool interruptRunning = true,
+                                      u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS);
       
     protected:
       virtual ActionResult Init() override;

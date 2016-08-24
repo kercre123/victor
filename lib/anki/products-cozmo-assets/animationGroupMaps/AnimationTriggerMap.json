@@ -278,11 +278,19 @@
     },
     {
       "CladEvent": "KnockOverFailure",
-      "AnimName": "ag_majorFail"
+      "AnimName": "ag_explorer_drvback_start"
     },
     {
       "CladEvent": "KnockOverGrabAttempt",
       "AnimName": "knockOverStack_grabAttempt"
+    },
+    {
+      "CladEvent": "KnockOverPreActionNamedFace",
+      "AnimName": "ag_freeplay_reacttoface_identified"
+    },
+    {
+      "CladEvent": "KnockOverPreActionUnnamedFace",
+      "AnimName": "ag_freeplay_reacttoface_unidentified"
     },
     {
       "CladEvent": "KnockOverSuccess",
@@ -850,11 +858,11 @@
     },
     {
       "CladEvent": "SparkGetOutFailure",
-      "AnimName": "ag_sparking_getout"
+      "AnimName": "ag_sparking_fail"
     },
     {
       "CladEvent": "SparkGetOutSuccess",
-      "AnimName": "ag_sparking_getout"
+      "AnimName": "ag_sparking_success"
     },
     {
       "CladEvent": "SparkDriveEnd",

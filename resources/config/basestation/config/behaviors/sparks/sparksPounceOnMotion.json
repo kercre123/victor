@@ -1,8 +1,9 @@
 {
   "behaviorType": "PounceOnMotion",
   "name": "sparksPounceOnMotion",
-  "flatScore" : 5.0,
   "behaviorGroups": [
     "SparksPounceOnMotion"
-  ]
+  ],
+  "flatScore" : 5.0
+
 }
