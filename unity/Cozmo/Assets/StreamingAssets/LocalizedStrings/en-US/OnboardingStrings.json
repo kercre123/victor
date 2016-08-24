@@ -104,5 +104,8 @@
   },
   "onboarding.Slide0a": {
     "translation": "Put Cozmo on a clean, open table in a well lit room"
+  },
+  "onboarding.OldRobotSkip": {
+    "translation": "This Cozmo has already been through the Tutorial. Would you like to Skip it, or Start it again?"
   }
 }

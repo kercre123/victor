@@ -42,10 +42,19 @@ public class CozmoUnlocksPanel : MonoBehaviour {
 
     // Show onboarding for this section if it's the first time here.
     if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Upgrades)) {
-      if (_UnlockableTiles.Count > 0) {
-        OnboardingManager.Instance.SetOutlineRegion(_UnlockableTiles[0].transform);
+      // We've gotten into a state that there is no escape. Due to an old robot -> new app setting.
+      // Just skip onboarding, they've figured it out on a previous phone...
+      bool isOldRobot = UnlockablesManager.Instance.IsUnlocked(Anki.Cozmo.UnlockId.StackTwoCubes);
+      if (!isOldRobot) {
+        if (_UnlockableTiles.Count > 0) {
+          OnboardingManager.Instance.SetOutlineRegion(_UnlockableTiles[0].transform);
+        }
+        OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.Upgrades);
       }
-      OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.Upgrades);
+      else {
+        OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Upgrades);
+      }
+
     }
   }
 

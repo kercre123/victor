@@ -119,9 +119,10 @@ MonoBehaviour:
   _ReactionsEnabled: 1
   _PlayIdle: 0
   _ContinueButtonInstance: {fileID: 0}
-  _FreeplayEnabledOnEnter: 1
+  _FreeplayEnabledOnEnter: 0
   _FreeplayEnabledOnExit: 0
   _TransitionBGColorYellow: 0
+  _ShowOutline: 0
 --- !u!114 &11459748
 MonoBehaviour:
   m_ObjectHideFlags: 1

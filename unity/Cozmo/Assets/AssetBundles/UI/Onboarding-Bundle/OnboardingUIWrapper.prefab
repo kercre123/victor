@@ -31,7 +31,7 @@ MonoBehaviour:
   _OutlinePrefab: {fileID: 155514, guid: 4b1f85a0dde694822ae983825d11dd9a, type: 2}
   _PhaseHomePrefabs:
   - {fileID: 11442482, guid: 6204d35ba8a14467e8fb2022b4e3ceb5, type: 2}
-  - {fileID: 11442482, guid: 066cb281859864617803ba25b0125af6, type: 2}
+  - {fileID: 11478974, guid: 066cb281859864617803ba25b0125af6, type: 2}
   - {fileID: 11413716, guid: 15247645073c44e499f6e9555651de16, type: 2}
   - {fileID: 11442482, guid: b5c97f63a752c4488817abaa2904e1e0, type: 2}
   - {fileID: 11413212, guid: c97900b4f20304c87bea97db054b83a2, type: 2}
