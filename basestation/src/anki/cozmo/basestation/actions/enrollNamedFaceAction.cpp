@@ -142,12 +142,13 @@ namespace Cozmo {
       // Try to look at the specified face
       const Vision::TrackedFace* face = robot.GetFaceWorld().GetFace(faceID);
       if(nullptr != face) {
+        PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.CreateTurnTowardsFaceAction.TurningTowardsFaceID",
+                      "Turning towards faceID=%d (saveID=%d)",
+                      faceID, saveID);
+        
         action = new TurnTowardsFaceAction(robot, faceID, DEG_TO_RAD_F32(45.f));
       } else {
-        // Couldn't find face in face world, try turning towards last face pose
-        PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.CreateTurnTowardsFaceAction.NullFace",
-                      "No face with ID=%d in FaceWorld. Using TurnTowardsLastFacePose",
-                      faceID);
+
       }
     }
     else
@@ -178,12 +179,22 @@ namespace Cozmo {
       
       if(nullptr != faceToTurnTowards)
       {
-        action = new TurnTowardsFaceAction(robot, faceToTurnTowards->GetID(), DEG_TO_RAD_F32(60.f));
+        // Couldn't find face in face world, try turning towards last face pose
+        PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.CreateTurnTowardsFaceAction.FoundFace",
+                      "Turning towards faceID=%d last seen at t=%d (saveID=%d)",
+                      faceToTurnTowards->GetID(), faceToTurnTowards->GetTimeStamp(), saveID);
+        
+        action = new TurnTowardsFaceAction(robot, faceToTurnTowards->GetID(), DEG_TO_RAD_F32(90.f));
       }
     }
     
     if(action == nullptr)
     {
+      // Couldn't find face in face world, try turning towards last face pose
+      PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.CreateTurnTowardsFaceAction.NullFace",
+                    "No face found to turn towards. FaceID=%d. SaveID=%d. Turning towards last face pose.",
+                    faceID, saveID);
+      
       // No face found to look towards: fallback on looking at last face pose
       action = new TurnTowardsLastFacePoseAction(robot, DEG_TO_RAD_F32(45.f));
     }
@@ -754,18 +765,21 @@ namespace Cozmo {
     if(msg.oldID == _faceID)
     {
       const Vision::TrackedFace* newFace = _robot.GetFaceWorld().GetFace(msg.newID);
-      if(_saveID != Vision::UnknownFaceID &&
-         msg.newID != _saveID &&
+      if(msg.newID != _saveID &&
          newFace != nullptr &&
          newFace->HasName())
       {
-        // If we've been told to save (i.e. merge) the result of this enrollment into a specific ID,
-        // and we've just realized that the faceID we were enrolling is already named but is a different
-        // ID than we were told to save to, then we should abort.
-
+        // If we just realized the faceID we were enrolling is someone else and that
+        // person is already enrolled with a name, we should abort (unless the newID
+        // mathces the person we were re-enrolling).
+        // NOTE: we print the name in the message in debug only, for privacy reasons
         PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.HandleRobotChangedObservedFaceID.CannotUpdateToNamedFace",
                       "OldID:%d. NewID:%d is named and != SaveID:%d, so cannot be used",
                       msg.oldID, msg.newID, _saveID);
+        
+        PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.HandleRobotChangedObservedFaceID.CannotUpdateToNamedFace_Debug",
+                       "OldID:%d. NewID:%d is named '%s' and != SaveID:%d, so cannot be used",
+                       msg.oldID, msg.newID, newFace->GetName().c_str(), _saveID);
 
         _needToAbort = true;
         
@@ -777,17 +791,18 @@ namespace Cozmo {
         PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.HandleRobotChangedObservedFaceID.UpdatingFaceID",
                       "Was enrolling ID=%d, changing to ID=%d",
                       _faceID, msg.newID);
-        
         _faceID = msg.newID;
       }
     }
     
     if(msg.oldID == _saveID)
     {
-      PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.HandleRobotChangedObservedFaceID.UpdatingSaveID",
-                    "Was saving to ID=%d, changing to ID=%d",
-                    _saveID, msg.newID);
-      _saveID = msg.newID;
+      // I don't think this should happen: we should never update a saveID because it
+      // should be named, meaning we should never merge into it
+      PRINT_NAMED_WARNING("EnrollNamedFaceAction.HandleRobotChangedObservedFaceID.SaveIDChanged",
+                          "Was saving to ID=%d, which apparently changed to %d. Should not happen. Will abort.",
+                          _saveID, msg.newID);
+      _needToAbort = true;
     }
   }
   
@@ -801,76 +816,66 @@ namespace Cozmo {
     {
       // Record the last person we saw, in case we fail and need to message
       // that the reason why was that we we were seeing this named face.
-      // These get unset if we end up uising the face in this message.
-      _observedID = msg.faceID;
+      // These get unset if we end up using the face in this message.
+      _observedID   = msg.faceID;
       _observedName = msg.name;
       
-      if(_faceID != Vision::UnknownFaceID)
+      // We can only switch to this observed faceID if it is unnamed, _unless_
+      // it matches the saveID.
+      // - for new enrollments we can't enroll an already-named face (that's a re-enrollment, by definition)
+      // - for re-enrollment, a face with a name must be the one we are re-enrolling
+      // - if the name matches the face ID, then the faceID matches too and we wouldn't even
+      //   be considering this observation because there's no ID change
+      const bool canUseObservedFace = msg.name.empty() || (msg.faceID == _saveID);
+      
+      if(canUseObservedFace)
       {
-        // Face ID is already set but we're seeing a face with a different ID.
-        // See if it matches the pose of the one we were already enrolling.
-        auto myFace = _robot.GetFaceWorld().GetFace(_faceID);
-        auto newFace = _robot.GetFaceWorld().GetFace(msg.faceID);
-        
-        if(nullptr != myFace && nullptr != newFace &&
-           newFace->GetHeadPose().IsSameAs(myFace->GetHeadPose(),
-                                           kUpdateFacePositionThreshold_mm,
-                                           DEG_TO_RAD_F32(kUpdateFaceAngleThreshold_deg)))
+        if(_faceID != Vision::UnknownFaceID)
         {
-          PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.HandleRobotObservedFace.UpdatingFaceIDbyPose",
-                        "Was enrolling ID=%d, changing to ID=%d based on pose",
-                        _faceID, msg.faceID);
+          // Face ID is already set but we're seeing a face with a different ID.
+          // See if it matches the pose of the one we were already enrolling.
           
-          // NOTE: Making these equal triggers the next "if" on purpose
+          auto myFace = _robot.GetFaceWorld().GetFace(_faceID);
+          auto newFace = _robot.GetFaceWorld().GetFace(msg.faceID);
+          
+          if(nullptr != myFace && nullptr != newFace &&
+             newFace->GetHeadPose().IsSameAs(myFace->GetHeadPose(),
+                                             kUpdateFacePositionThreshold_mm,
+                                             DEG_TO_RAD_F32(kUpdateFaceAngleThreshold_deg)))
+          {
+            PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.HandleRobotObservedFace.UpdatingFaceIDbyPose",
+                          "Was enrolling ID=%d, changing to unnamed ID=%d based on pose (saveID=%d)",
+                          _faceID, msg.faceID, _saveID);
+            
+            // NOTE: Making these equal triggers the next "if" on purpose
+            _faceID = msg.faceID;
+          }
+          
+        }
+        else
+        {
+          // We don't have a face ID set yet. Use this one, since it passed all the earlier checks
+          PRINT_CH_INFO(kLogChannelName,
+                        "EnrollNamedFaceAction.HandleRobotObservedFace.SettingInitialFaceID",
+                        "Set face ID to unnamed face %d (saveID=%d)", msg.faceID, _saveID);
+          
           _faceID = msg.faceID;
         }
       }
       else
       {
-        // We don't have a face ID set yet. See if we want to use this one.
+        // Note: name is only printed in Debug message for privacy reasons
+        PRINT_CH_INFO(kLogChannelName,
+                      "EnrollNamedFaceAction.HandleRobotObservedFace.IgnoringObservedFace",
+                      "Refusing to enroll %s face %d, with current faceID=%d and saveID=%d",
+                      msg.name.empty() ? "unnamed" : "named",
+                      msg.faceID, _faceID, _saveID);
         
-        if(_saveID != Vision::UnknownFaceID)
-        {
-          // If we've been told to save to a specific (presumably named) ID then we can
-          // only use this observed ID for enrollment if it matches the one we're supposed
-          // to save to anyway, or if it is unnamed. (We don't try to merge two different
-          // named faces together.)
-          if(msg.faceID == _saveID || msg.name.empty())
-          {
-            PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.HandleRobotObservedFace.HaveSaveIDandSettingFaceID",
-                          "Set face ID to unnamed face %d", msg.faceID);
-            _faceID = msg.faceID;
-          }
-        }
-        else
-        {
-          // Otherwise, we can just start enrolling whatever unnamed face we see.
-          // We don't allow named faces here, because if saveID wasn't specified, this
-          // is presumably not a re-enrollment, so if we recognize a face, we don't
-          // want to enroll it again as a second named entry.
-          if(msg.name.empty())
-          {
-            PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.HandleRobotObservedFace.SettingFaceID",
-                          "Set face ID to unnamed face %d", msg.faceID);
-            
-            _faceID = msg.faceID;
-          }
-          else
-          {
-            // Note: name is only printed in Debug message for privacy reasons
-            PRINT_CH_INFO(kLogChannelName,
-                          "EnrollNamedFaceAction.HandleRobotObservedFace.IgnoringNamedFace",
-                          "No FaceID specified, no SaveID specified. Cannot allow "
-                          "enrollment of named face %d.", msg.faceID);
-            
-            PRINT_CH_DEBUG(kLogChannelName,
-                           "EnrollNamedFaceAction.HandleRobotObservedFace.IgnoringNamedFace_Debug",
-                           "Refusing to enroll face %d, named '%s'",
-                           msg.faceID, msg.name.c_str());
-          }
-        }
-        
-      } // if/else (_faceID != Vision::UnknownFaceID)
+        PRINT_CH_DEBUG(kLogChannelName,
+                       "EnrollNamedFaceAction.HandleRobotObservedFace.IgnoringObservedFace_Debug",
+                       "Refusing to enroll face %d, named '%s', with current faceID=%d and saveID=%d",
+                       msg.faceID, msg.name.c_str(), _faceID, _saveID);
+      }
       
       // Should never be left with a negative faceID to be enrolling
       ASSERT_NAMED(_faceID >= 0, "EnrollNamedFaceAction.HandleRobotObservedFace.SetNegativeFaceID");

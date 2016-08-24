@@ -1840,6 +1840,23 @@ namespace Vision {
     
     if(mergeWithID != UnknownFaceID)
     {
+      // We should only merge into a named ID
+      iterToRename = _enrollmentData.find(mergeWithID);
+      
+      if(iterToRename == _enrollmentData.end())
+      {
+        PRINT_NAMED_WARNING("FaceRecognizer.AssignNameToID.InvalidMergeWithID",
+                            "No enrollment data for mergeWithID=%d", mergeWithID);
+        return RESULT_FAIL;
+      }
+      
+      if(iterToRename->second.IsForThisSessionOnly())
+      {
+        PRINT_NAMED_WARNING("FaceRecognizer.AssignNameToID.SessionOnlyMergeWithID",
+                            "MergeWithID must be for a named face, not session-only");
+        return RESULT_FAIL;
+      }
+      
       // Merge the two records, keeping mergeWithID, but use the name of the new one,
       // since that's what was just assigned
       Result lastResult = MergeFaces(mergeWithID, faceID);
@@ -1849,8 +1866,6 @@ namespace Vision {
                             faceID, mergeWithID);
         return lastResult;
       }
-      
-      iterToRename = _enrollmentData.find(mergeWithID);
     }
     else
     {
