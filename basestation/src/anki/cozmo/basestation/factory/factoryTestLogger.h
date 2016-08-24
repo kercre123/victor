@@ -64,6 +64,9 @@ public:
   
   // Adds a file with the given contents to the log folder
   bool AddFile(const std::string& filename, const std::vector<uint8_t>& data);
+  
+  // Copies the engine log (DAS msgs) file to log folder
+  bool CopyEngineLog(Util::Data::DataPlatform* dataPlatform);
 
   // Returns the number of logs
   uint32_t GetNumLogs(Util::Data::DataPlatform* dataPlatform);

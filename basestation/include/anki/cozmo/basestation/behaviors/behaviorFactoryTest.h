@@ -37,6 +37,8 @@
 
 namespace Anki {
 namespace Cozmo {
+
+  class Robot;
   
   class BehaviorFactoryTest : public IBehavior
   {
@@ -164,9 +166,14 @@ namespace Cozmo {
     u8 _numPlacementAttempts;
     
     bool _activeObjectDiscovered = false;
-    bool _wrongBodyHWVersion;
     
     Pose3d _closestPredockPose;
+    
+    bool _gotBodyVersion = false;
+    TimeStamp_t _bodyVersionSentTime_sec = 0;
+    const TimeStamp_t kBodyVersionTimeout_sec = 3;
+    
+    Robot& _robot;
     
   }; // class BehaviorFactoryTest
 

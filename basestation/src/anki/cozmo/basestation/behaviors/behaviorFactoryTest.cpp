@@ -166,6 +166,7 @@ namespace Cozmo {
   , _writeTestResult(true)
   , _eraseBirthCertificate(false)
   , _testResult(FactoryTestResultCode::UNKNOWN)
+  , _robot(robot)
   {
     SetDefaultName("FactoryTest");
 
@@ -260,12 +261,12 @@ namespace Cozmo {
     _numPlacementAttempts = 0;
     
     _activeObjectDiscovered = false;
-    _wrongBodyHWVersion = false;
     
-    // Sim robot won't hear from any blocks
+    // Sim robot won't hear from any blocks and also won't send back body firmware version
     if(!robot.IsPhysical())
     {
       _activeObjectDiscovered = true;
+      _gotBodyVersion = true;
     }
     
     // Setup logging to device
@@ -310,6 +311,7 @@ namespace Cozmo {
     
     // Request body firmware version
     robot.SendMessage(RobotInterface::EngineToRobot(GetBodyVersion()));
+    _bodyVersionSentTime_sec = currentTime_sec;
 #endif
     
     _stateTransitionTimestamps.resize(_testResultEntry.timestamps.size());
@@ -363,6 +365,10 @@ namespace Cozmo {
     PrintAndLightResult(robot,resCode);
     robot.Broadcast( ExternalInterface::MessageEngineToGame( FactoryTestResultEntry(_testResultEntry)));
 
+    // Write engine log to log folder if test failed
+    if (resCode != FactoryTestResultCode::SUCCESS && !_factoryTestLogger.CopyEngineLog(robot.GetContextDataPlatform())) {
+      PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.CopyEngineLogFailed", "");
+    }
     _factoryTestLogger.CloseLog();
     
     // Immediately disconnect wifi
@@ -440,6 +446,14 @@ namespace Cozmo {
   
   void BehaviorFactoryTest::EndTest(Robot& robot, FactoryTestResultCode resCode)
   {
+#if IS_FACTORY_BRANCH
+    // Check body hw version
+    if (kBFT_CheckFWVersion && !_gotBodyVersion)
+    {
+      resCode = FactoryTestResultCode::NO_BODY_VERSION_MESSAGE;
+    }
+#endif
+  
     // Send test result out and make this behavior stop running
     if (_testResult == FactoryTestResultCode::UNKNOWN) {
     
@@ -522,6 +536,17 @@ namespace Cozmo {
       }
       
     }
+    
+#if IS_FACTORY_BRANCH
+    // Keep resending the getBodyVersion request every kBodyVersionTimeout_sec until we get a response
+    if(!_gotBodyVersion && currentTime_sec - _bodyVersionSentTime_sec > kBodyVersionTimeout_sec)
+    {
+      PRINT_NAMED_INFO("BehaviorFactoryTest.ResendGetBodyVersion", "Resending getBodyVersion message");
+      // Request body firmware version
+      robot.SendMessage(RobotInterface::EngineToRobot(GetBodyVersion()));
+      _bodyVersionSentTime_sec = currentTime_sec;
+    }
+#endif
     
     // If robot just picked up block then record robot angle
     if (_blockPickedUpReceived) {
@@ -747,11 +772,6 @@ namespace Cozmo {
           // Confirm that the first calib photo was taken
           if(robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() == 0) {
             END_TEST(FactoryTestResultCode::FIRST_CALIB_IMAGE_NOT_TAKEN);
-          }
-          
-          // Check body hw version
-          if (kBFT_CheckFWVersion && _wrongBodyHWVersion) {
-            END_TEST(FactoryTestResultCode::WRONG_BODY_HW_VERSION);
           }
           
           // Make sure cliff (and pickup) detection is enabled
@@ -1381,13 +1401,11 @@ namespace Cozmo {
        
         // Check if there were write failures
         if (_writeFailureCode != FactoryTestResultCode::UNKNOWN) {
+          PRINT_NAMED_WARNING("BehaviorFactoryTest.WaitingForWritesToRobot.WritesFailed", "");
           _testResult = _writeFailureCode;
           _testResultEntry.result = _testResult;
           
-          // If there was a write failure, go ahead and wipe all nvStorage
-          // and don't bother attempting to write anything more to robot.
-          PRINT_NAMED_WARNING("BehaviorFactoryTest.WaitingForWritesToRobot.WipingAll", "");
-          robot.GetNVStorageComponent().WipeAll(true);
+          // If there was a write failure, don't bother attempting to write anything more to robot.
           _writeTestResult = false;
         }
         
@@ -1686,13 +1704,15 @@ namespace Cozmo {
   void BehaviorFactoryTest::HandleBodyVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message)
   {
 #if IS_FACTORY_BRANCH
+    _gotBodyVersion = true;
+    
     const RobotInterface::BodyVersion& payload = message.GetData().Get_bodyVersion();
     
     PRINT_NAMED_INFO("BehaviorFactoryTest.HandleBodyVersion.Recvd",
                      "hwVersion: %d", payload.hw_version);
     
-    if (payload.hw_version < _kMinBodyHWVersion) {
-      _wrongBodyHWVersion = true;
+    if (kBFT_CheckFWVersion && payload.hw_version < _kMinBodyHWVersion) {
+      EndTest(_robot, FactoryTestResultCode::WRONG_BODY_HW_VERSION);
     }
 #endif
   }
