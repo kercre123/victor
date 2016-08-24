@@ -28,20 +28,20 @@ MonoBehaviour:
     m_Curve:
     - time: 0
       value: 0
-      inSlope: 3.0636773
-      outSlope: 3.0636773
+      inSlope: 0
+      outSlope: 0
       tangentMode: 0
     - time: 1
       value: 1
-      inSlope: 0.17171238
-      outSlope: 0.17171238
+      inSlope: 2
+      outSlope: 2
       tangentMode: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 0
-  RequestTrickCostAmountNeededMin: 2
-  RequestTrickCostAmountNeededMaxTimes: 10
-  RequestTrickCostAmountNeededMax: 30
+  RequestTrickCostAmountNeededMin: 1
+  RequestTrickCostAmountNeededMaxTimes: 50
+  RequestTrickCostAmountNeededMax: 99
   CoreUpgradeTintColorName: upgradePurple
   CoreUpgradeIcon: {fileID: 21300000, guid: cd0087eab4066422c8568b78092dea00, type: 3}
   CoreUpgradeOverlayIcon: {fileID: 21300000, guid: 8d9d491aef08b4227a6f50f632e5bd1d,
