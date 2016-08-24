@@ -119,8 +119,6 @@ namespace Cozmo {
       return ClassName;
     }
     
-    virtual bool IsDone() override;
-    
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     
@@ -148,8 +146,6 @@ namespace Cozmo {
       static const std::string ClassName("LiftHeightKeyFrame");
       return ClassName;
     }
-    
-    virtual bool IsDone() override;
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;

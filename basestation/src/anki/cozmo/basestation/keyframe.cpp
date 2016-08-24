@@ -144,11 +144,6 @@ return RESULT_FAIL; \
       return RESULT_OK;
     }
     
-    bool HeadAngleKeyFrame::IsDone()
-    {
-      return IsDoneHelper(_durationTime_ms);
-    }
-    
 #pragma mark -
 #pragma mark LiftHeightKeyFrame
     //
@@ -185,11 +180,6 @@ return RESULT_FAIL; \
       GET_MEMBER_FROM_JSON(jsonRoot, heightVariability_mm);
       
       return RESULT_OK;
-    }
-    
-    bool LiftHeightKeyFrame::IsDone()
-    {
-      return IsDoneHelper(_durationTime_ms);
     }
     
 #pragma mark -
