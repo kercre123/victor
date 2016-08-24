@@ -601,10 +601,11 @@ Result Update()
         }
       }
     }
-    else if (nv.flashPointer >= getEndOfSegment()) // Handle wrap around edge case here
+    else if ((nv.flashPointer < getStartOfSegment()) || (nv.flashPointer >= getEndOfSegment()))
     {
       header.tag = NVEntry_Invalid;
       flashResult = SPI_FLASH_RESULT_OK;
+      nv.flashPointer = getStartOfSegment();
       nv.phase = 1;
     }
     else if (nv.phase == 0)
