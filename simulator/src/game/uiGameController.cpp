@@ -393,6 +393,8 @@ namespace Anki {
   
     UiGameController::UiGameController(s32 step_time_ms)
     : _firstRobotPoseUpdate( true )
+    , _doAutoBlockPool(true)
+    , _isBlockPoolInitialized(false)
     {
       _stepTimeMS = step_time_ms;
       _robotNode = nullptr;
@@ -651,6 +653,14 @@ namespace Anki {
           
           // TODO: Better way to wait for ready. Ready message to game?
           if (_supervisor.getTime() > TIME_UNTIL_READY_SEC) {
+            
+            // Initialize the block pool to detect cubes automatically. Ideally we would put this in
+            // InitIniternal but it is called before engine can receive messages
+            if (_doAutoBlockPool && !_isBlockPoolInitialized) {
+              SendEnableBlockPool(0, true);
+              _isBlockPoolInitialized = true;
+            }
+            
             res = UpdateInternal();
           }
           

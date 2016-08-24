@@ -297,6 +297,12 @@ namespace Anki {
       poseMarkerDiffuseColor_ = root_->getField("poseMarkerDiffuseColor");
         
       cozmoCam_ = GetSupervisor()->getDisplay("uiCamDisplay");
+      
+      auto doAutoBlockpoolField = root_->getField("doAutoBlockpool");
+      if (doAutoBlockpoolField) {
+        PRINT_NAMED_INFO("WebotsCtrlKeyboard.Init.DoAutoBlockpool", "%d", doAutoBlockpoolField->getSFBool());
+        EnableAutoBlockpool(doAutoBlockpoolField->getSFBool());
+      }
     }    
     
     WebotsKeyboardController::WebotsKeyboardController(s32 step_time_ms) :

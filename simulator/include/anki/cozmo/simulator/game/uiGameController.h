@@ -89,6 +89,7 @@ protected:
   virtual void InitInternal() {}
   virtual s32 UpdateInternal() = 0;
 
+  void EnableAutoBlockpool(bool enable) { _doAutoBlockPool = enable; }
   
   // TODO: These default handlers and senders should be CLAD-generated!
   
@@ -498,6 +499,8 @@ private:
 
   UdpClient _physicsControllerClient;
 
+  bool _doAutoBlockPool;
+  bool _isBlockPoolInitialized;
   
 }; // class UiGameController
   

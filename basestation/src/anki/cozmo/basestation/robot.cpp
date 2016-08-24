@@ -890,8 +890,8 @@ void Robot::SetPhysicalRobot(bool isPhysical)
   // Assumes this function is only called once following connection.
       
   // Connect to active objects in saved blockpool, but only for physical robots.
-  // Sim robots automatically connect to all robots in their world as long as CozmoBot's
-  // autoConnectToBlocks field is TRUE.
+  // For sim robots we make blocks connect automatically by sending BlockPoolEnabledMessage from UiGameController.
+  // (Note that when using Unity+Webots, that message is not sent.)
   if (isPhysical) {
     if (_context->GetDataPlatform() != nullptr) {
       _blockFilter->Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::External, "blockPool.txt"));
