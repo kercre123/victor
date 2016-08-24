@@ -679,5 +679,5 @@ void SWDSend(u32 tempaddr, int blocklen, u32 flashaddr, const u8* start, const u
     start += blocklen;
   }
   
-  SlowPrintf("Success!\n");
+  SlowPrintf("Success!\r\n");
 }

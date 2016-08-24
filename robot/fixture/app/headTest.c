@@ -13,6 +13,8 @@
 #include "app/fixture.h"
 #include "hal/monitor.h"
 
+#include "hal/motorled.h"
+
 // Return true if device is detected on contacts
 bool HeadDetect(void)
 {
@@ -65,9 +67,10 @@ void HeadK02(void)
     serial_ = GetSerial();              // Missing serial, get a new one
   ConsolePrintf("serial,%08x\r\n", serial_);
   
-  // Send the bootloader and app
+  // Send the bootloader and app (except on HEAD2 - you can skip the app update there)
   SWDSend(0x20001000, 0x800, 0x0,    g_K02Boot, g_K02BootEnd,   SERIAL_ADDR,  serial_);
-  SWDSend(0x20001000, 0x800, 0x1000, g_K02,     g_K02End,       0,            0);
+  if (g_fixtureType != FIXTURE_HEAD2_TEST)
+    SWDSend(0x20001000, 0x800, 0x1000, g_K02,     g_K02End,       0,            0);
 }
 
 // Connect to and flash the Espressif
@@ -98,6 +101,40 @@ void HeadTest(void)
   // Each CPU will test its own pins for shorts/opens
 }
 
+// With 2.2K, we see most of them just under 550
+const int SAFE_THRESHOLD = 599;
+
+// Put head in test mode
+void HeadQ1Test(void)
+{
+  // Turn off and let power drain out
+  DeinitEspressif();  // XXX - would be better to ensure it was like this up-front
+  SWDDeinit();
+  DisableBAT();     // This has a built-in delay while battery power leaches out
+  InitEspressif();
+  EnableBAT();
+  
+  // About half a second is long enough to get booted and into test mode
+  MicroWait(500000);
+  
+  // Sample the voltage on HEADTRX
+  PIN_ANA(GPIOB, PINB_VDD);     // XXX: Stupid hack for rev 1 boards - remove!
+  PIN_ANA(GPIOC, PINC_RESET);
+
+  const int OVERSAMPLE = 8;
+  int sum = 0;
+  for (int i = 0; i < (1<<OVERSAMPLE); i++)
+  {
+    //sum += QuickADC(ADC_VDD); // XXX: Stupid hack
+    sum += QuickADC(ADC_RESET); 
+  }
+  sum >>= OVERSAMPLE;
+  ConsolePrintf("q1-mv,%d\r\n", sum);
+  
+  if (sum > SAFE_THRESHOLD)
+    throw ERROR_HEAD_Q1;
+}
+
 TestFunction* GetHeadTestFunctions(void)
 {
   static TestFunction functions[] =
@@ -105,6 +142,18 @@ TestFunction* GetHeadTestFunctions(void)
     HeadK02,
     HeadESP,
     HeadTest,
+    NULL
+  };
+
+  return functions;
+}
+
+TestFunction* GetHead2TestFunctions(void)
+{
+  static TestFunction functions[] =
+  {
+    HeadK02,
+    HeadQ1Test,
     NULL
   };
 

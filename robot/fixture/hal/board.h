@@ -15,7 +15,10 @@
 #define GPIOB_SDA         (1 << PINB_SDA)
 
 #define PINB_VDD   0
+#define ADC_VDD    8
+
 #define PINC_RESET 5
+#define ADC_RESET 15
 
 #define PINC_TRX 12
 #define GPIOC_TRX (1 << PINC_TRX)

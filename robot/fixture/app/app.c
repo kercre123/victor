@@ -18,7 +18,7 @@
 
 #include "app/tests.h"
 
-u8 g_fixtureReleaseVersion = 60;
+u8 g_fixtureReleaseVersion = 63;
 const char* BUILD_INFO = "MP";
 
 BOOL g_isDevicePresent = 0;
@@ -100,6 +100,8 @@ int GetSequence(void)
 // Get a serial number for a device in the normal 12.20 fixture.sequence format
 u32 GetSerial()
 {
+  if (FIXTURE_SERIAL >= 0xf0)
+    throw ERROR_SERIAL_INVALID;
   return (FIXTURE_SERIAL << 20) | (GetSequence() & 0xFFffff);
 }
 
@@ -176,6 +178,7 @@ bool DetectDevice(void)
     case FIXTURE_CUBEX_TEST:
       return CubeDetect();
     case FIXTURE_HEAD1_TEST:
+    case FIXTURE_HEAD2_TEST:
       return HeadDetect();
     case FIXTURE_BODY1_TEST:
     case FIXTURE_BODY2_TEST:
@@ -352,6 +355,9 @@ static void MainExecution()
       break;
     case FIXTURE_HEAD1_TEST:
       m_functions = GetHeadTestFunctions();
+      break;    
+    case FIXTURE_HEAD2_TEST:
+      m_functions = GetHead2TestFunctions();
       break;    
     case FIXTURE_BODY1_TEST:
       m_functions = GetBody1TestFunctions();

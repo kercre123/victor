@@ -44,13 +44,15 @@
 
 #define FIXTURE_JAM_TEST       27
 
+#define FIXTURE_HEAD2_TEST     28
+
 #define FIXTURE_DEBUG          32   // Should be last ID
 
 typedef unsigned char FixtureType;
 #define FIXTURE_TYPES { "NO ID",   "BODY1",  "HEAD1",  "MOTOR1H","CHARGER", "CUBE1",  "CUBE2", "CUBE3", \
                         "ROBOT1",  "BODY2",  "MOTOR1L","MOTOR2L","MOTOR2H", "BODY3",  "INFO",  "PLAYPEN", \
                         "FINISHC", "FINISH1","FINISH2","FINISH3","FINISHX", "CUBEX",  "ROBOT2","ROBOT3", \
-                        "PACKOUT","LIFETEST","RECHARGE","JAM","","","","", \
+                        "PACKOUT","LIFETEST","RECHARGE","JAM",   "HEAD2","","","", \
                         "DEBUG" }
 
 extern FixtureType g_fixtureType;
@@ -141,6 +143,7 @@ u32 GetSerial();
 #define ERROR_HEAD_RADIO_TIMEOUT    513   // Unable to send command due to ESP timeout (broken connection?)
 
 #define ERROR_HEAD_SPEAKER          520   // Speaker not connected/damaged
+#define ERROR_HEAD_Q1               530   // Q1 is out of spec
 
 // Body errors
 #define ERROR_BODY_BOOTLOADER       600   // Can't load bootloader onto body

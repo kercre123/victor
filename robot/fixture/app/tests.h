@@ -13,6 +13,7 @@ TestFunction* GetCubeTestFunctions(void);
 
 bool HeadDetect(void);
 TestFunction* GetHeadTestFunctions(void);
+TestFunction* GetHead2TestFunctions(void);
 
 bool RobotDetect(void);
 TestFunction* GetInfoTestFunctions(void);
