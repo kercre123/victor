@@ -116,6 +116,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::robotAvailable,                 &RobotToEngineImplMessaging::HandleRobotSetID);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::firmwareVersion,                 &RobotToEngineImplMessaging::HandleFirmwareVersion);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::motorCalibration,               &RobotToEngineImplMessaging::HandleMotorCalibration);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::motorAutoEnabled,               &RobotToEngineImplMessaging::HandleMotorAutoEnabled);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::dockingStatus,                             &RobotToEngineImplMessaging::HandleDockingStatus);
   
   
@@ -216,13 +217,42 @@ void RobotToEngineImplMessaging::HandleMotorCalibration(const AnkiEvent<RobotInt
   ANKI_CPU_PROFILE("Robot::HandleMotorCalibration");
   
   const MotorCalibration& payload = message.GetData().Get_motorCalibration();
-  PRINT_NAMED_INFO("MotorCalibration", "Motor %d, started %d", (int)payload.motorID, payload.calibStarted);
+  PRINT_NAMED_INFO("HandleMotorCalibration.Recvd", "Motor %d, started %d, autoStarted %d", (int)payload.motorID, payload.calibStarted, payload.autoStarted);
+  
+  if (payload.autoStarted && payload.calibStarted) {
+    // Motor hit a limit and calibration was automatically triggered
+    PRINT_NAMED_EVENT("HandleMotorCalibration.AutoCalib", "%s", EnumToString(payload.motorID));
+  }
   
   if( payload.motorID == MotorID::MOTOR_LIFT && payload.calibStarted && robot->IsCarryingObject() ) {
     // if this was a lift calibration, we are no longer holding a cube
     robot->UnSetCarryObject( robot->GetCarryingObject() );
   }
   robot->Broadcast(ExternalInterface::MessageEngineToGame(MotorCalibration(payload)));
+}
+  
+void RobotToEngineImplMessaging::HandleMotorAutoEnabled(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+{
+  ANKI_CPU_PROFILE("Robot::HandleMotorAutoEnabled");
+  
+  const MotorAutoEnabled& payload = message.GetData().Get_motorAutoEnabled();
+  PRINT_NAMED_INFO("HandleMotorAutoEnabled.Recvd", "Motor %d, enabled %d", (int)payload.motorID, payload.enabled);
+
+  if (!payload.enabled) {
+    // Burnout protection triggered.
+    // Someobody is probably messing with the lift
+    PRINT_NAMED_EVENT("HandleMotorAutoEnabled.MotorDisabled", "%s", EnumToString(payload.motorID));
+  } else {
+    PRINT_NAMED_EVENT("HandleMotorAutoEnabled.MotorEnabled", "%s", EnumToString(payload.motorID));
+  }
+
+  // This probably applies here as it does in HandleMotorCalibration.
+  // Seems reasonable to expect whatever object the robot may have been carrying to no longer be there.
+  if( payload.motorID == MotorID::MOTOR_LIFT && !payload.enabled && robot->IsCarryingObject() ) {
+    robot->UnSetCarryObject( robot->GetCarryingObject() );
+  }
+    
+  robot->Broadcast(ExternalInterface::MessageEngineToGame(MotorAutoEnabled(payload)));
 }
 
 void RobotToEngineImplMessaging::HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

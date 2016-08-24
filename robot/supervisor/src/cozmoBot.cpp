@@ -280,7 +280,7 @@ namespace Anki {
           WheelController::Enable();
 #endif
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
-          AnkiEvent( 229, "CozmoBot.Radio.Disconnected", 305, "", 0);
+          AnkiInfo( 229, "CozmoBot.Radio.Disconnected", 305, "", 0);
           Messages::ResetInit();
           SteeringController::ExecuteDirectDrive(0,0);
           PickAndPlaceController::Reset();
@@ -360,7 +360,7 @@ namespace Anki {
 #ifndef TARGET_K02
               RobotInterface::RobotAvailable msg;
               msg.robotID = HAL::GetIDCard()->esn;
-              AnkiEvent( 179, "CozmoBot.BroadcastingAvailability", 479, "RobotID: %d", 1, msg.robotID);
+              AnkiInfo( 179, "CozmoBot.BroadcastingAvailability", 479, "RobotID: %d", 1, msg.robotID);
               RobotInterface::SendMessage(msg);
               // Start test mode
               if (DEFAULT_TEST_MODE != TM_NONE) {

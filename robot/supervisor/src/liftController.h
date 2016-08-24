@@ -29,7 +29,7 @@ namespace Anki {
       void Disable(bool autoReEnable = false);
       
       // Moves lift all the way down and sets that position to 0
-      void StartCalibrationRoutine();
+      void StartCalibrationRoutine(bool autoStarted = false);
       
       // Returns true if calibration has completed
       bool IsCalibrated();

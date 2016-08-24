@@ -1,5 +1,6 @@
 #include "liftController.h"
 #include "pickAndPlaceController.h"
+#include "imuFilter.h"
 #include <math.h>
 #include "anki/common/constantsAndMacros.h"
 #include "anki/common/robot/config.h"
@@ -190,14 +191,13 @@ namespace Anki {
         isCalibrated_ = true;
       }
 
-      void StartCalibrationRoutine()
+      void StartCalibrationRoutine(bool autoStarted)
       {
-        AnkiEvent( 277, "LiftController.StartingCalibration", 305, "", 0);
         Enable();
         calState_ = LCS_LOWER_LIFT;
         isCalibrated_ = false;
         potentialBurnoutStartTime_ms_ = 0;
-        Messages::SendMotorCalibrationMsg(MOTOR_LIFT, true);
+        Messages::SendMotorCalibrationMsg(MOTOR_LIFT, true, autoStarted);
       }
 
       bool IsCalibrated()
@@ -251,7 +251,6 @@ namespace Anki {
             case LCS_SET_CURR_ANGLE:
               // Wait for motor to relax and then set angle
               if (HAL::GetTimeStamp() - lastLiftMovedTime_ms > LIFT_RELAX_TIME_MS) {
-                AnkiEvent( 278, "LiftController.Calibrated", 305, "", 0);
                 ResetAnglePosition(LIFT_ANGLE_LOW_LIMIT);
                 calState_ = LCS_IDLE;
                 Messages::SendMotorCalibrationMsg(MOTOR_LIFT, false);
@@ -277,16 +276,24 @@ namespace Anki {
         return currentAngle_.ToFloat();
       }
 
+      void ClampSpeedAndAccel()
+      {
+        maxSpeedRad_ = CLIP(maxSpeedRad_, -MAX_LIFT_SPEED_RAD_PER_S, MAX_LIFT_SPEED_RAD_PER_S);
+        accelRad_    = CLIP(accelRad_, -MAX_LIFT_ACCEL_RAD_PER_S2, MAX_LIFT_ACCEL_RAD_PER_S2);
+      }
+      
       void SetMaxSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2)
       {
         maxSpeedRad_ = ABS(max_speed_rad_per_sec);
         accelRad_ = accel_rad_per_sec2;
+        ClampSpeedAndAccel();
       }
 
       void SetMaxLinearSpeedAndAccel(const f32 max_speed_mm_per_sec, const f32 accel_mm_per_sec2)
       {
         maxSpeedRad_ = max_speed_mm_per_sec / LIFT_ARM_LENGTH;
         accelRad_    = accel_mm_per_sec2 / LIFT_ARM_LENGTH;
+        ClampSpeedAndAccel();
       }
 
       void GetMaxSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2)
@@ -321,6 +328,7 @@ namespace Anki {
           //PRINT("Stopping: radSpeed %f, accelRad %f, radToStop %f, currentAngle %f, targetHeight %f\n",
           //      radSpeed_, accelRad_, radToStop, currentAngle_.ToFloat(), targetHeight);
         }
+        ClampSpeedAndAccel();
         SetDesiredHeight(targetHeight);
       }
 
@@ -469,12 +477,13 @@ namespace Anki {
         if (potentialBurnoutStartTime_ms_ == 0) {
           potentialBurnoutStartTime_ms_ = HAL::GetTimeStamp();
         } else if (HAL::GetTimeStamp() - potentialBurnoutStartTime_ms_ > BURNOUT_TIME_THRESH_MS) {
-          if (IsInPosition()) {
-            AnkiWarn( 16, "LiftController", 149, "burnout protection triggered. Stop messing with the lift! Going limp until you do!", 0);
+          if (IsInPosition() || IMUFilter::IsPickedUp()) {
+            // Stop messing with the lift! Going limp until you do!
+            Messages::SendMotorAutoEnabledMsg(MOTOR_LIFT, false);
             Disable(true);
           } else {
-            AnkiWarn( 16, "LiftController", 150, "burnout protection triggered. Recalibrating.", 0);
-            StartCalibrationRoutine();
+            // Burnout protection triggered. Recalibrating.
+            StartCalibrationRoutine(true);
           }
           return true;
         }
@@ -501,7 +510,7 @@ namespace Anki {
             enableAtTime_ms_ = HAL::GetTimeStamp() + REENABLE_TIMEOUT_MS;
             return RESULT_OK;
           } else if (HAL::GetTimeStamp() >= enableAtTime_ms_) {
-            AnkiEvent( 279, "LiftController.AutoEnabled", 305, "", 0);
+            Messages::SendMotorAutoEnabledMsg(MOTOR_LIFT, true);
             Enable();
           } else {
             return RESULT_OK;

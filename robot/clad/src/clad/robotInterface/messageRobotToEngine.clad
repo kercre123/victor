@@ -130,6 +130,7 @@ union RobotToEngine {
   AnimationEvent             animEvent              = 0xD5,
   FactoryTestParameter       factoryTestParam       = 0xD6,
   ObjectUpAxisChanged        activeObjectUpAxisChanged = 0xD7,
+  MotorAutoEnabled           motorAutoEnabled       = 0xD8,
 
   FirmwareVersion            firmwareVersion        = 0xEE,
   OTA::Ack                   otaAck                 = 0xEF,

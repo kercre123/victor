@@ -69,7 +69,9 @@ namespace Anki {
       // stored internally that is updated by UpdateRobotStateMsg().
       Result SendRobotStateMsg(const RobotState* msg = NULL);
 
-      Result SendMotorCalibrationMsg(MotorID motor, bool calibStarted);
+      Result SendMotorCalibrationMsg(MotorID motor, bool calibStarted, bool autoStarted = false);
+      
+      Result SendMotorAutoEnabledMsg(MotorID motor, bool calibStarted);
       
 #ifndef TARGET_K02
       // For sending text message to basestation

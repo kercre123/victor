@@ -512,7 +512,7 @@ namespace Anki {
                 //|| ABS(gyro_robot_frame_filt[2]) > 5.f  // Not checking z-rotation since it is being used to trigger naive poke detection
                 ) {
               if (++pdUnexpectedMotionCnt_ > 40) {
-                AnkiEvent( 331, "IMUFilter.PDWhileStationary", 581, "acc (%f, %f, %f), gyro (%f, %f, %f)", 6,
+                AnkiInfo( 331, "IMUFilter.PDWhileStationary", 581, "acc (%f, %f, %f), gyro (%f, %f, %f)", 6,
                       pdFiltAccX_aligned_, pdFiltAccY_aligned_, pdFiltAccZ_aligned_,
                       gyro_robot_frame_filt[0], gyro_robot_frame_filt[1], gyro_robot_frame_filt[2]);
                 SetPickupDetect(true);
@@ -529,7 +529,7 @@ namespace Anki {
             ++pdRiseCnt_;
             if (pdRiseCnt_ > 40) {
               SetPickupDetect(true);
-              AnkiEvent( 332, "IMUFilter.PickupDetected", 582, "accX = %f, accY = %f, accZ = %f", 3,
+              AnkiInfo( 332, "IMUFilter.PickupDetected", 582, "accX = %f, accY = %f, accZ = %f", 3,
                     pdFiltAccX_aligned_, pdFiltAccY_aligned_, pdFiltAccZ_aligned_);
             }
           } else {

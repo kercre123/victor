@@ -112,9 +112,8 @@ namespace HeadController {
     }
 
 
-    void StartCalibrationRoutine()
+    void StartCalibrationRoutine(bool autoStarted)
     {
-      AnkiEvent( 281, "HeadController.StartingCalibration", 305, "", 0);
       Enable();
       potentialBurnoutStartTime_ms_ = 0;
 
@@ -123,12 +122,12 @@ namespace HeadController {
       // it's at the joint limit.  The arm flies off the robot!
       isCalibrated_ = true;
       SetDesiredAngle(MIN_HEAD_ANGLE);
-      Messages::SendMotorCalibrationMsg(MOTOR_HEAD, true);
+      Messages::SendMotorCalibrationMsg(MOTOR_HEAD, true, autoStarted);
       Messages::SendMotorCalibrationMsg(MOTOR_HEAD, false);
 #else
       calState_ = HCS_LOWER_HEAD;
       isCalibrated_ = false;
-      Messages::SendMotorCalibrationMsg(MOTOR_HEAD, true);
+      Messages::SendMotorCalibrationMsg(MOTOR_HEAD, true, autoStarted);
 #endif
     }
 
@@ -182,7 +181,7 @@ namespace HeadController {
                 HAL::MotorSetPower(MOTOR_HEAD, power_);
 
 #ifdef          CALIB_WHILE_APPLYING_POWER
-                AnkiEvent( 282, "HeadController.CalibratedWhileApplyingPower", 305, "", 0);
+                AnkiInfo( 282, "HeadController.CalibratedWhileApplyingPower", 305, "", 0);
                 ResetLowAnglePosition();
                 calState_ = HCS_IDLE;
                 Messages::SendMotorCalibrationMsg(MOTOR_HEAD, false);
@@ -201,7 +200,7 @@ namespace HeadController {
           case HCS_SET_CURR_ANGLE:
             // Wait for motor to relax and then set angle
             if (HAL::GetTimeStamp() - lastHeadMovedTime_ms > HEAD_STOP_TIME) {
-              AnkiEvent( 283, "HeadController.Calibrated", 305, "", 0);
+              AnkiInfo( 283, "HeadController.Calibrated", 305, "", 0);
               ResetLowAnglePosition();
               calState_ = HCS_IDLE;
               Messages::SendMotorCalibrationMsg(MOTOR_HEAD, false);
@@ -262,6 +261,12 @@ namespace HeadController {
       return radSpeed_;
     }
 
+    void ClampSpeedAndAccel()
+    {
+      maxSpeedRad_ = CLIP(maxSpeedRad_, -MAX_HEAD_SPEED_RAD_PER_S, MAX_HEAD_SPEED_RAD_PER_S);
+      accelRad_ = CLIP(accelRad_, -MAX_HEAD_ACCEL_RAD_PER_S2, MAX_HEAD_ACCEL_RAD_PER_S2);
+    }
+  
     void SetAngularVelocity(const f32 rad_per_sec)
     {
       /*
@@ -290,6 +295,7 @@ namespace HeadController {
         }
         targetAngle = currentAngle_.ToFloat() + radToStop;
       }
+      ClampSpeedAndAccel();
       SetDesiredAngle(targetAngle);
     }
 
@@ -297,6 +303,7 @@ namespace HeadController {
     {
       maxSpeedRad_ = ABS(max_speed_rad_per_sec);
       accelRad_ = accel_rad_per_sec2;
+      ClampSpeedAndAccel();
     }
 
     void GetMaxSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2)
@@ -411,7 +418,7 @@ namespace HeadController {
         potentialBurnoutStartTime_ms_ = HAL::GetTimeStamp();
       } else if (HAL::GetTimeStamp() - potentialBurnoutStartTime_ms_ > BURNOUT_TIME_THRESH_MS) {
         AnkiWarn( 54, "HeadController.MotorBurnoutProtection", 299, "Recalibrating (power = %f)", 1, power_);
-        StartCalibrationRoutine();
+        StartCalibrationRoutine(true);
         return true;
       }
       return false;

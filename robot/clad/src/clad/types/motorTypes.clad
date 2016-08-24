@@ -17,7 +17,17 @@ enum uint_8 MotorID {
 message MotorCalibration
 {
   MotorID motorID,
-  bool calibStarted
+  bool calibStarted,
+  bool autoStarted,
+}
+
+// This message is sent if a motor is automatically enabled/disabled
+// As of 08-2016, only the lift motor will automatically disable if
+// someone messes with the lift.
+message MotorAutoEnabled
+{
+  MotorID motorID,
+  bool enabled
 }
 
 } // namespace Cozmo

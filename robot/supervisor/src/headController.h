@@ -31,7 +31,7 @@ namespace Anki {
       // TODO: Add if/when needed?
       // Result Init();
 
-      void StartCalibrationRoutine();
+      void StartCalibrationRoutine(bool autoStarted = false);
       bool IsCalibrated();
       
       // Enable/Disable HAL commands to head motor

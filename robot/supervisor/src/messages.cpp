@@ -1070,11 +1070,20 @@ namespace Anki {
       }
 
       
-      Result SendMotorCalibrationMsg(MotorID motor, bool calibStarted)
+      Result SendMotorCalibrationMsg(MotorID motor, bool calibStarted, bool autoStarted)
       {
         MotorCalibration m;
         m.motorID = motor;
         m.calibStarted = calibStarted;
+        m.autoStarted = autoStarted;
+        return RobotInterface::SendMessage(m) ? RESULT_OK : RESULT_FAIL;
+      }
+      
+      Result SendMotorAutoEnabledMsg(MotorID motor, bool enabled)
+      {
+        MotorAutoEnabled m;
+        m.motorID = motor;
+        m.enabled = enabled;
         return RobotInterface::SendMessage(m) ? RESULT_OK : RESULT_FAIL;
       }
       
