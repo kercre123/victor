@@ -86,6 +86,9 @@ protected:
   // A queue of robot audio frames (continuous audio data)
   std::queue< RobotAudioFrameStream > _streamQueue;
   
+  // Stream queue mutex
+  std::mutex _lock;
+  
   // Track if the Audio Engine is providing data to stream
   bool _isActive = false;
   
