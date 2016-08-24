@@ -443,6 +443,7 @@ void Motors::setPower(u8 motorID, s16 power)
 
     inst_speed = limitPower(motorID, speed_scale, base_speed);
   } else {
+    /*
     static const int base_speed[MOTOR_COUNT] = { 
       0x3FFF, 
       0x3FFF,
@@ -457,6 +458,8 @@ void Motors::setPower(u8 motorID, s16 power)
     };
 
     inst_speed = limitPower(motorID, speed_scale, base_speed);
+    */
+    inst_speed = 0x7FFF;
   }
 
   avg_max_power[motorID] = (s16)((inst_speed + avg_max_power[motorID] * 15) / 16);
