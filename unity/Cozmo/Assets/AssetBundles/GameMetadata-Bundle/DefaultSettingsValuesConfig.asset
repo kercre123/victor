@@ -21,4 +21,4 @@ MonoBehaviour:
   _PlayerSleepCozmo_TimeTilSleep_sec: 0
   _PlayerSleepCozmo_TimeTilDisconnect_sec: 20
   _FilterSmoothingWeight: 0.99
-  _LowBatteryVoltageValue: 3.75
+  _LowBatteryVoltageValue: 3.5

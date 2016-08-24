@@ -13,6 +13,7 @@ namespace Cozmo {
 
     private const float _kMaxValidBatteryVoltage = 4.2f;
     private float _LowPassFilteredVoltage = _kMaxValidBatteryVoltage;
+    private bool _LowBatteryAlertTriggered = false;
     private AlertView _LowBatteryDialog = null;
 
     private AlertView _SleepCozmoConfirmDialog;
@@ -51,9 +52,9 @@ namespace Cozmo {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       // Battery voltage gets initialized to the float maxvalue, so ignore it until it's valid 
       if (null != robot && robot.BatteryVoltage <= _kMaxValidBatteryVoltage) {
-        _LowPassFilteredVoltage = _LowPassFilteredVoltage * Settings.FilterSmoothingWeight + (1.0f - Settings.FilterSmoothingWeight) * robot.BatteryVoltage;
+        _LowPassFilteredVoltage = _LowPassFilteredVoltage * Settings.FilterSmoothingWeight + (1.0f - Settings.FilterSmoothingWeight) * robot.BatteryVoltage; 
 
-        if (!_IsPaused && !IsConfirmSleepDialogOpen && !IsGoToSleepDialogOpen && _LowPassFilteredVoltage < Settings.LowBatteryVoltageValue) {
+        if (!_IsPaused && !IsConfirmSleepDialogOpen && !IsGoToSleepDialogOpen && _LowPassFilteredVoltage < Settings.LowBatteryVoltageValue && !_LowBatteryAlertTriggered) {
           OpenLowBatteryDialog();
         }
       }
@@ -135,6 +136,7 @@ namespace Cozmo {
       _StartedIdleTimeout = false;
       _IsOnChargerToSleep = false;
       _LowPassFilteredVoltage = _kMaxValidBatteryVoltage;
+      _LowBatteryAlertTriggered = false;
     }
 
     private void StartIdleTimeout(float sleep_sec, float disconnect_sec) {
@@ -190,6 +192,7 @@ namespace Cozmo {
         alertView.TitleLocKey = LocalizationKeys.kConnectivityCozmoLowBatteryTitle;
         alertView.DescriptionLocKey = LocalizationKeys.kConnectivityCozmoLowBatteryDesc;
         _LowBatteryDialog = alertView;
+        _LowBatteryAlertTriggered = true;
       }
     }
 

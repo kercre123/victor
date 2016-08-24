@@ -60,7 +60,7 @@ namespace Cozmo.Settings {
     public float FilterSmoothingWeight { get { return _FilterSmoothingWeight; } }
 
     [SerializeField, Range(3f, 4.2f)]
-    private float _LowBatteryVoltageValue = 3.75f;
+    private float _LowBatteryVoltageValue = 3.5f;
     public float LowBatteryVoltageValue { get { return _LowBatteryVoltageValue; } }
   }
 }
