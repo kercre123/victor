@@ -22,7 +22,10 @@
     "translation": "Connecting to your Cozmo..."
   },
   "connectivity.searchForCozmoFailedText": {
-    "translation": "Cozmo needs your help connecting over wifi."
+    "translation": "Cozmo needs your help to connect over WiFi"
+  },
+  "connectivity.showMeHowButton": {
+    "translation": "Show Me How"
   },
   "connectivity.searchingForCozmo": {
     "translation": "Searching for Cozmo..."

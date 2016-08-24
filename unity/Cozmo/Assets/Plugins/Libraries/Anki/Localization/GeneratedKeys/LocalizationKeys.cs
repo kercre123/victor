@@ -51,6 +51,7 @@ public static class LocalizationKeys {
 
   public const string kConnectivityConnectingToCozmoText = "connectivity.connectingToCozmoText";
   public const string kConnectivitySearchForCozmoFailedText = "connectivity.searchForCozmoFailedText";
+  public const string kConnectivityShowMeHowButton = "connectivity.showMeHowButton";
   public const string kConnectivitySearchingForCozmo = "connectivity.searchingForCozmo";
   public const string kConnectivitySecuringConnection = "connectivity.securingConnection";
   public const string kConnectionWakingUpCozmo = "connection.wakingUpCozmo";
@@ -534,10 +535,13 @@ public static class LocalizationKeys {
 
   #region WifiStrings
 
+  public const string kWifiStringsInstructionsSlideATitleCopy = "wifiStrings.Instructions.SlideA.titleCopy";
+  public const string kWifiStringsInstructionsSlideAAltCopy = "wifiStrings.Instructions.SlideA.altCopy";
   public const string kWifiStringsInstructionsSlide0 = "wifiStrings.Instructions.Slide0";
   public const string kWifiStringsInstructionsSlide1 = "wifiStrings.Instructions.Slide1";
   public const string kWifiStringsInstructionsSlide2 = "wifiStrings.Instructions.Slide2";
   public const string kWifiStringsInstructionsSlide3 = "wifiStrings.Instructions.Slide3";
+  public const string kWifiStringsInstructionsSlide3AltCopy = "wifiStrings.Instructions.Slide3.altCopy";
   public const string kWifiStringsInstructionsSlide4 = "wifiStrings.Instructions.Slide4";
   public const string kWifiStringsInstructionsSlide0ViewAll = "wifiStrings.Instructions.Slide0.viewAll";
   public const string kWifiStringsNextButton = "wifiStrings.nextButton";
