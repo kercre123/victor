@@ -206,10 +206,9 @@ void ProgressionUnlockComponent::WriteCurrentUnlocksToRobot(UnlockId id, bool un
   if(!_robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_GameUnlocks, buf, numBytes,
                                           [this, id, unlocked](NVStorage::NVResult res)
                                           {
-                                            if (res != NVStorage::NVResult::NV_OKAY)
+                                            if (res < NVStorage::NVResult::NV_OKAY)
                                             {
-                                              PRINT_CH_INFO("UnlockComponent",
-                                                            "WriteCurrentUnlocksToRobot",
+                                              PRINT_NAMED_ERROR("UnlockComponent.WriteCurrentUnlocksToRobot,",
                                                             "Write failed with %s",
                                                             EnumToString(res));
                                             }
@@ -239,7 +238,7 @@ void ProgressionUnlockComponent::ReadCurrentUnlocksFromRobot()
   if(!_robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_GameUnlocks,
                                           [this](u8* data, size_t size, NVStorage::NVResult res)
                                           {
-                                            if(res != NVStorage::NVResult::NV_OKAY)
+                                            if(res < NVStorage::NVResult::NV_OKAY)
                                             {
                                               // The tag doesn't exist on the robot indicating the robot is new or has been
                                               // wiped so we need to unlock the default unlocks
@@ -256,8 +255,7 @@ void ProgressionUnlockComponent::ReadCurrentUnlocksFromRobot()
                                               // Otherwise something went wrong with reading from the robot so try again
                                               else
                                               {
-                                                PRINT_CH_INFO("UnlockComponent",
-                                                              "ReadGameUnlocks",
+                                                PRINT_NAMED_ERROR("UnlockComponent.ReadGameUnlocks",
                                                               "Read failed with %s",
                                                               EnumToString(res));
                                               }
