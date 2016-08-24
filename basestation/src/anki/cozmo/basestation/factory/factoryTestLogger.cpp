@@ -28,6 +28,8 @@ namespace Cozmo {
   static const std::string _kArchiveRootDirName = "factory_test_log_archives";
   static const Util::Data::Scope _kLogScope = Util::Data::Scope::Output;
   
+  static const int _kMaxEngineLogSizeBytes = 150000;
+  
   FactoryTestLogger::FactoryTestLogger(bool exportJson)
   : _logDir("")
   , _logFileName("")
@@ -377,7 +379,7 @@ namespace Cozmo {
     
     // If log name was not actually defined yet, do nothing.
     if (!_logFileHandle.is_open()) {
-      PRINT_NAMED_INFO("FactoryTestLogger.Append.LogNotStarted", "Ignoring because log not started");
+      PRINT_NAMED_WARNING("FactoryTestLogger.Append.LogNotStarted", "Ignoring because log not started");
       _json.clear();
       return false;
     }
@@ -390,7 +392,7 @@ namespace Cozmo {
   bool FactoryTestLogger::AddFile(const std::string& filename, const std::vector<uint8_t>& data)
   {
     if (_logDir.empty()) {
-      PRINT_NAMED_INFO("FactoryTestLogger.AddFile.LogNotStarted", "Ignoring because log not started");
+      PRINT_NAMED_WARNING("FactoryTestLogger.AddFile.LogNotStarted", "Ignoring because log not started");
       return false;
     }
     
@@ -412,6 +414,46 @@ namespace Cozmo {
                      outFile.c_str(), data.size());
     
     return Util::FileUtils::WriteFile(outFile, data);
+  }
+
+  bool FactoryTestLogger::CopyEngineLog(Util::Data::DataPlatform* dataPlatform)
+  {
+    if (_logDir.empty()) {
+      PRINT_NAMED_WARNING("FactoryTestLogger.CopyEngineLog.LogNotStarted", "Ignoring because log not started");
+      return false;
+    }
+    
+    if (dataPlatform == nullptr) {
+      PRINT_NAMED_WARNING("FactoryTestLogger.CopyEngineLog.NullDataPlatform", "");
+      return false;
+    }
+    
+    // Get directories inside CurrentGameLog. There should only ever be one.
+    std::string srcDir = dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, "");
+    std::vector<std::string> dirs;
+    Util::FileUtils::ListAllDirectories(srcDir, dirs);
+
+    if (dirs.empty()) {
+      PRINT_NAMED_WARNING("FactoryTestLogger.CopyEngineLog.NoLogFound", "");
+      return false;
+    }
+    
+    if (dirs.size() > 1) {
+      PRINT_NAMED_WARNING("FactoryTestLogger.CopyEngineLog.MoreLogDirsThanExpected", "%zu", dirs.size());
+    }
+    
+    srcDir = Util::FileUtils::FullFilePath({srcDir, dirs.front(), "print"});
+    std::vector<std::string> engineLogFiles = Util::FileUtils::FilesInDirectory(srcDir, true, ".log", true);
+
+    bool res = true;
+    for (auto f : engineLogFiles) {
+      if (!Util::FileUtils::CopyFile(_logDir, f, _kMaxEngineLogSizeBytes)) {
+        PRINT_NAMED_WARNING("FactoryTestLogger.CopyEngineLog.Failed", "%s", f.c_str());
+        res = false;
+      }
+    }
+    
+    return res;
   }
   
   

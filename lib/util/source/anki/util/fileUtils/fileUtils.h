@@ -44,6 +44,14 @@ public:
   static bool WriteFile(const std::string& fileName, const std::string& body);
   
   static bool WriteFile(const std::string& fileName, const std::vector<uint8_t>& body);
+
+  // Copies srcFileName to dest.
+  // If dest is a file, the srcFileName is copied to a file called dest.
+  // If dest is a folder, the copy retains the name of the original file and is put in dest.
+  // If maxBytesToCopyFromEnd != 0, it indicates the maximum number of bytes to be copied from the end
+  // of srcFileName to dest. This is required of the playpen test app for copying the engine log but only
+  // the part we care about for the last robot.
+  static bool CopyFile(const std::string& dest, const std::string& srcFileName, const int maxBytesToCopyFromEnd = 0);
   
   static void DeleteFile(const std::string& fileName);
   
@@ -57,7 +65,12 @@ public:
   // also handled, where the passed-in strings may or may not already have leading/trailing
   // file separators, to avoid duplicates.
   static std::string FullFilePath(std::vector<std::string>&& names);
-  
+
+  // Returns the file name from the full path.
+  // If mustHaveExtension == true, the file name must contain an extension (i.e. a ".").
+  // If "." is not present or the delimeter character is the last character of fullPath, returns "".
+  // If mustHaveExtension == false, returns whatever follows the last delimiter in fullPath.
+  static std::string GetFileName(const std::string& fullPath, bool mustHaveExtension);
 };
 
 } // namespace Util

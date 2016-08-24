@@ -208,6 +208,50 @@ bool FileUtils::WriteFile(const std::string &fileName, const std::vector<uint8_t
   return success;
 }
   
+bool FileUtils::CopyFile(const std::string& dest, const std::string& srcFileName, const int maxBytesToCopyFromEnd)
+{
+  if (!FileExists(srcFileName)) {
+    return false;
+  }
+  
+  std::ifstream inFile(srcFileName.c_str(), std::ios::binary);
+  
+  // Seek to appropriate starting position of input file
+  if (maxBytesToCopyFromEnd != 0) {
+    
+    // Get file size
+    inFile.seekg(0, std::ios_base::end);
+    int fileSize = static_cast<int>(inFile.tellg());
+    
+    // Set stream position to given offset if file size > offset
+    if (fileSize > maxBytesToCopyFromEnd) {
+      inFile.seekg(-std::abs(maxBytesToCopyFromEnd), std::ios_base::end);
+    } else {
+      inFile.seekg(0, std::ios_base::beg);
+    }
+  }
+
+  
+  // If dest is a file use that.
+  // If dest is a folder use the src file name.
+  std::string outFileName = dest;
+  if (GetFileName(dest, true).empty()) {
+    
+    // Remove trailing separator if there is one
+    while (outFileName.back() == kFileSeparator) {
+      outFileName.pop_back();
+    }
+    
+    outFileName += kFileSeparator + GetFileName(srcFileName, false);
+  }
+
+  std::ofstream outFile(outFileName.c_str(), std::ios::binary);
+  
+  outFile << inFile.rdbuf();
+  outFile.close();
+  return true;
+}
+  
 void FileUtils::DeleteFile(const std::string &fileName)
 {
   remove(fileName.c_str());
@@ -301,6 +345,20 @@ std::string FileUtils::FullFilePath(std::vector<std::string>&& names)
   
   return fullpath;
 }
+                        
+std::string FileUtils::GetFileName(const std::string& fullPath, bool mustHaveExtension)
+{
+  size_t i = fullPath.rfind(kFileSeparator, fullPath.length());
+  if (i != std::string::npos &&  i != fullPath.length() - 1) {
+    std::string potentialFile = fullPath.substr(i+1, fullPath.length() - i);
+    if (!mustHaveExtension || potentialFile.find(".") != std::string::npos) {
+      return potentialFile;
+    }
+  }
+  
+  return("");
+}
+                        
   
 }
 }
