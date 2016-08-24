@@ -23,6 +23,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationTrigger.h"
 
+#define ALWAYS_PLAY_REACT_TO_CLIFF 1
 
 namespace Anki {
 namespace Cozmo {
@@ -105,7 +106,7 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction(Robot& robot)
 {
   DEBUG_SET_STATE(PlayingCliffReaction);
   
-  if( _gotCliff ) {
+  if( _gotCliff || ALWAYS_PLAY_REACT_TO_CLIFF) {
     StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ReactToCliff),
                 &BehaviorReactToCliff::TransitionToBackingUp);
   }
