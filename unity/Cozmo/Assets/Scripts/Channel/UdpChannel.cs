@@ -401,6 +401,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
 
   public void DumpReceiveBuffer() {
     receivedMessages.Clear();
+    _BytesReceived = 0;
   }
 
   // synchronous
