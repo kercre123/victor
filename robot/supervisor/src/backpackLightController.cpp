@@ -100,7 +100,9 @@ namespace BackpackLightController {
     memset(&_ledParamsMiddle[BPL_USER], 0, sizeof(_ledParamsMiddle[BPL_USER]));
     memset(&_ledParamsTurnSignals[BPL_USER], 0, sizeof(_ledParamsTurnSignals[BPL_USER]));
     _enable = true;
-
+    
+    TurnOffAll();
+    
     return RESULT_OK;
   }
 
