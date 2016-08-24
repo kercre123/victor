@@ -210,7 +210,7 @@ bool FileUtils::WriteFile(const std::string &fileName, const std::vector<uint8_t
   
 bool FileUtils::CopyFile(const std::string& dest, const std::string& srcFileName, const int maxBytesToCopyFromEnd)
 {
-  if (!FileExists(srcFileName)) {
+  if (!FileExists(srcFileName) || dest.empty()) {
     return false;
   }
   
@@ -237,6 +237,8 @@ bool FileUtils::CopyFile(const std::string& dest, const std::string& srcFileName
   std::string outFileName = dest;
   if (GetFileName(dest, true).empty()) {
     
+    // dest is the output directory name
+    // Get the output file name
     // Remove trailing separator if there is one
     while (outFileName.back() == kFileSeparator) {
       outFileName.pop_back();
@@ -244,11 +246,15 @@ bool FileUtils::CopyFile(const std::string& dest, const std::string& srcFileName
     
     outFileName += kFileSeparator + GetFileName(srcFileName, false);
   }
-
-  std::ofstream outFile(outFileName.c_str(), std::ios::binary);
   
+  // Create output directory in case it doesn't exist already
+  CreateDirectory(outFileName, true, true);
+  
+  // Copy file
+  std::ofstream outFile(outFileName.c_str(), std::ios::binary);
   outFile << inFile.rdbuf();
   outFile.close();
+  
   return true;
 }
   

@@ -70,7 +70,7 @@ public:
   // If mustHaveExtension == true, the file name must contain an extension (i.e. a ".").
   // If "." is not present or the delimeter character is the last character of fullPath, returns "".
   // If mustHaveExtension == false, returns whatever follows the last delimiter in fullPath.
-  static std::string GetFileName(const std::string& fullPath, bool mustHaveExtension);
+  static std::string GetFileName(const std::string& fullPath, bool mustHaveExtension = false);
 };
 
 } // namespace Util
