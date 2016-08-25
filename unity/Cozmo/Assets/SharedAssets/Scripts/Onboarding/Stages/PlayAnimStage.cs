@@ -9,13 +9,6 @@ namespace Onboarding {
     [SerializeField]
     private SerializableAnimationTrigger _Animation;
 
-    [SerializeField]
-    private float _LookForFacesMaxTime_Sec = 8.0f;
-
-    private float _EndLookAtFacesTime_Sec = -1.0f;
-    private bool _HasObservedFace = false;
-    private bool _CompletedInitialAnimation = false;
-
     private IRobot _CurrentRobot;
     public override void Start() {
       base.Start();
@@ -34,42 +27,22 @@ namespace Onboarding {
     }
 
     private void HandleEndAnimationComplete(bool success) {
-      _CompletedInitialAnimation = true;
-      if (_LookForFacesMaxTime_Sec > 0) {
-        // this should really have a 'goal' of finding faces not behavior when that gets in.
-        _EndLookAtFacesTime_Sec = Time.time + _LookForFacesMaxTime_Sec;
-        _CurrentRobot.ExecuteBehavior(BehaviorType.FindFaces);
+      // If we saw a face recently, look at it and play the "hello player"
+      // Otherwise just play the "hello world" and be impressed with the enviornment.
+      if (_CurrentRobot.Faces.Count > 0) {
+        _CurrentRobot.TurnTowardsFacePose(_CurrentRobot.Faces[0], 4.3f, 10, HandleTurnedTowardsFace);
       }
       else {
-        OnboardingManager.Instance.GoToNextStage();
+        _CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnboardingHelloWorld, HandleReactionEndAnimationComplete);
       }
     }
 
     private void HandleTurnedTowardsFace(bool success) {
-      _CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnboardingReactToFace, HandleFaceReactionEndAnimationComplete);
+      _CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnboardingHelloPlayer, HandleReactionEndAnimationComplete);
     }
 
-    private void HandleFaceReactionEndAnimationComplete(bool success) {
+    private void HandleReactionEndAnimationComplete(bool success) {
       OnboardingManager.Instance.GoToNextStage();
-    }
-
-    private void Update() {
-      if (_CompletedInitialAnimation) {
-        // Timed out we can't find a face
-        if (_EndLookAtFacesTime_Sec < Time.time) {
-          OnboardingManager.Instance.GoToNextStage();
-        }
-        // Found a face, so stop looking and react, exit this stage at end of reaction
-        if (!_HasObservedFace) {
-          if (_CurrentRobot.Faces.Count > 0) {
-            // Reset timer so we stop on the reactions but can still timeout if not finding the face.
-            _EndLookAtFacesTime_Sec = Time.time + _LookForFacesMaxTime_Sec;
-            _CurrentRobot.ExecuteBehavior(BehaviorType.NoneBehavior);
-            _CurrentRobot.TurnTowardsFacePose(_CurrentRobot.Faces[0], 4.3f, 10, HandleTurnedTowardsFace);
-            _HasObservedFace = true;
-          }
-        }
-      }
     }
 
   }

@@ -493,6 +493,14 @@
       "AnimName": "ag_pause_idle"
     },
     {
+      "CladEvent": "OnboardingHelloPlayer",
+      "AnimName": "ag_launch_firsttimewakeup_helloplayer"
+    },
+    {
+      "CladEvent": "OnboardingHelloWorld",
+      "AnimName": "ag_launch_firsttimewakeup_helloworld"
+    },
+    {
       "CladEvent": "OnboardingReactToFace",
       "AnimName": "ag_reactToNewBlock"
     },

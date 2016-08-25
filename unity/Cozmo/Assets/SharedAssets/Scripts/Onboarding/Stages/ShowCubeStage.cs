@@ -1,11 +1,10 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using Anki.UI;
 using System.Collections.Generic;
 using Anki.Cozmo;
 using Anki.Cozmo.ExternalInterface;
 using Cozmo.UI;
-using DG.Tweening;
 using DataPersistence;
 
 namespace Onboarding {
@@ -34,14 +33,26 @@ namespace Onboarding {
     [SerializeField]
     private CozmoButton _ContinueButtonInstance;
 
-    private int _SawCubeID = -1;
     private const int _kMaxPickupTries = 3;
+    private const int _kMaxErrorsShown = 3;
+    private const float _kMaxTimeInStage_Sec = 60 * 5;
+    private const float _kDistanceReactToCubeMM = 30.0f;
+
+
+    private int _SawCubeID = -1;
     private int _CubePickupRetries = 0;
+    private uint _PickupIDTag = 0;
+    private int _ErrorsShown = 0;
+    private float _StartTime;
+    private int _CubesFoundTimes = 0;
+    private bool _CubeShouldBeStill = false;
+
 
     enum SubState {
       ErrorCozmo,
       ErrorCubeMoved,
       ErrorCubeWrongSideUp,
+      ErrorFinal,
       WaitForShowCube,
       WaitForOKCubeDiscovered,
       WaitForInspectCube,
@@ -49,11 +60,9 @@ namespace Onboarding {
     };
     private SubState _SubState;
 
-    private float _StartTime = 0;
-    private int _CubesFoundTimes = 0;
-
     public override void Start() {
       base.Start();
+      _StartTime = Time.time;
 
       _ContinueButtonInstance.Initialize(HandleContinueClicked, "Onboarding." + name, "Onboarding");
       RobotEngineManager.Instance.CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
@@ -61,6 +70,9 @@ namespace Onboarding {
 
       LightCube.OnMovedAction += HandleCubeMoved;
       RobotEngineManager.Instance.AddCallback<ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
+      // Because we need very specific information about how something failed to give accurate error messages.
+      // we need nitty gritty info from the engine not just a success bool.
+      RobotEngineManager.Instance.AddCallback<RobotCompletedAction>(ProcessRobotCompletedAction);
 
       UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, Color.white);
 
@@ -71,10 +83,15 @@ namespace Onboarding {
       base.OnDestroy();
       LightCube.OnMovedAction -= HandleCubeMoved;
       RobotEngineManager.Instance.RemoveCallback<ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
+      RobotEngineManager.Instance.RemoveCallback<RobotCompletedAction>(ProcessRobotCompletedAction);
     }
 
     private void HandleCubeMoved(int id, float accX, float accY, float aaZ) {
-      // TODO: cubed move state needs a more specific warning.
+      if (_SawCubeID == id && _CubeShouldBeStill) {
+        if (_SubState == SubState.WaitForInspectCube) {
+          UpdateSubstate(SubState.ErrorCubeMoved);
+        }
+      }
     }
 
     protected void HandleRobotReactionaryBehavior(object messageObject) {
@@ -95,11 +112,11 @@ namespace Onboarding {
       if (_SubState == SubState.WaitForOKCubeDiscovered) {
         UpdateSubstate(SubState.WaitForInspectCube);
       }
-      else if (_SubState == SubState.ErrorCozmo) {
+      else if (_SubState == SubState.ErrorCozmo || _SubState == SubState.ErrorCubeMoved) {
         UpdateSubstate(SubState.WaitForShowCube);
       }
       else {
-        // From SubState.WaitForFinalContinue
+        // From SubState.WaitForFinalContinue or SubState.ErrorFinal
         OnboardingManager.Instance.GoToNextStage();
       }
     }
@@ -115,22 +132,53 @@ namespace Onboarding {
       if (CurrentRobot.LightCubes.ContainsKey(_SawCubeID)) {
         DAS.Debug(this, "HandleCubeReactComplete _SawCubeID" + _SawCubeID);
         LightCube block = CurrentRobot.LightCubes[_SawCubeID];
-        CurrentRobot.PickupObject(block, true, false, false, 0, HandleCubePickupComplete);
+        _CubeShouldBeStill = false;
+        // This will eventually call HandleCubePickupComplete via ProcessRobotCompletedAction
+        _PickupIDTag = CurrentRobot.PickupObject(block);
       }
       else {
         UpdateSubstate(SubState.WaitForShowCube);
       }
     }
 
-    private void HandleCubePickupComplete(bool success) {
-      DAS.Debug(this, "HandleCubePickupComplete " + success);
-
-      if (!success && _CubePickupRetries < _kMaxPickupTries) {
-        _CubePickupRetries++;
-        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.ReactToBlockRetryPickup, HandleCubeReactComplete);
+    private void ProcessRobotCompletedAction(RobotCompletedAction message) {
+      uint idTag = message.idTag;
+      if (_PickupIDTag == idTag) {
+        HandleCubePickupComplete(message.result, message.completionInfo);
       }
-      else {
-        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnboardingInteractWithCube, HandlePickupAnimComplete);
+    }
+
+    private void HandleCubePickupComplete(ActionResult result, ActionCompletedUnion completionUnion) {
+      bool success = result == ActionResult.SUCCESS;
+      DAS.Debug(this, "HandleCubePickupComplete " + success);
+      // If an error has happened the error UI will restart
+      if (_SubState == SubState.WaitForInspectCube) {
+        if (!success && _CubePickupRetries < _kMaxPickupTries) {
+          bool wantsRetry = true;
+          if (completionUnion.GetTag() == ActionCompletedUnion.Tag.objectInteractionCompleted) {
+            if (completionUnion.objectInteractionCompleted.result != ObjectInteractionResult.DID_NOT_REACH_PREACTION_POSE &&
+                completionUnion.objectInteractionCompleted.result != ObjectInteractionResult.NO_PREACTION_POSES) {
+              wantsRetry = false;
+            }
+          }
+          // We want to retry if the drive failed, but not if the pickup failed
+          if (wantsRetry) {
+            _CubePickupRetries++;
+            // Try to pick up again...
+            RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.ReactToBlockRetryPickup, HandleCubeReactComplete);
+          }
+          else {
+            UpdateSubstate(SubState.ErrorFinal);
+          }
+        }
+        else {
+          if (_CubePickupRetries >= _kMaxPickupTries) {
+            UpdateSubstate(SubState.ErrorFinal);
+          }
+          else {
+            RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnboardingInteractWithCube, HandlePickupAnimComplete);
+          }
+        }
       }
     }
 
@@ -159,6 +207,14 @@ namespace Onboarding {
     }
 
     public void Update() {
+
+      float timeInState = Time.time - _StartTime;
+      // They're stuck in this state... just let them continue.
+      if (timeInState > _kMaxTimeInStage_Sec &&
+          _SubState != SubState.ErrorFinal &&
+          _SubState != SubState.WaitForFinalContinue) {
+        UpdateSubstate(SubState.ErrorFinal);
+      }
       // Not using RobotObservedObject because we probably want to constantly track this and go to error if it changes back.
       if (_SubState == SubState.WaitForShowCube || _SubState == SubState.ErrorCozmo) {
         bool isAnyInView = false;
@@ -235,7 +291,8 @@ namespace Onboarding {
         if (CurrentRobot.LightCubes.ContainsKey(_SawCubeID)) {
           DAS.Debug(this, "AligningWithBlock: " + _SawCubeID);
           LightCube block = CurrentRobot.LightCubes[_SawCubeID];
-          CurrentRobot.AlignWithObject(block, 23.0f, HandleBlockAlignComplete, false, false);
+          _CubeShouldBeStill = true;
+          CurrentRobot.AlignWithObject(block, _kDistanceReactToCubeMM, HandleBlockAlignComplete, false, false);
         }
         else {
           UpdateSubstate(SubState.WaitForShowCube);
@@ -254,22 +311,43 @@ namespace Onboarding {
         _CozmoCubeRightSideUpTransform.gameObject.SetActive(true);
         _CozmoImageTransform.gameObject.SetActive(false);
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
-        DAS.Event("onboarding.error", "cube_lights_up");
+        DAS.Event("onboarding.error", "error_cube_lights_up");
       }
-      else if (nextState == SubState.ErrorCubeMoved) {
-        _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCube);
-        _ShowShelfTextLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCube2);
-        _ContinueButtonInstance.gameObject.SetActive(false);
-        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
-        DAS.Event("onboarding.error", "cube_moved");
+      else if (nextState == SubState.ErrorCubeMoved || nextState == SubState.ErrorCozmo) {
+        _ErrorsShown++;
+        // They are messing with Cozmo too much, just move on...
+        if (_ErrorsShown > _kMaxErrorsShown) {
+          UpdateSubstate(SubState.ErrorFinal);
+        }
+        else {
+          if (nextState == SubState.ErrorCubeMoved) {
+            _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCube);
+            _ShowShelfTextLabel.text = "";
+            _ContinueButtonInstance.gameObject.SetActive(true);
+            Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
+            DAS.Event("onboarding.error", "error_cube_moved");
+          }
+          else if (nextState == SubState.ErrorCozmo) {
+            _ErrorsShown++;
+            _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCozmo);
+            _ShowShelfTextLabel.text = "";
+            _ContinueButtonInstance.gameObject.SetActive(true);
+            _CozmoMovedErrorTransform.gameObject.SetActive(true);
+            Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
+            DAS.Event("onboarding.error", "error_cozmo_moved");
+          }
+        }
       }
-      else if (nextState == SubState.ErrorCozmo) {
-        _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCozmo);
+
+      else if (nextState == SubState.ErrorFinal) {
+        _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorFinal);
         _ShowShelfTextLabel.text = "";
         _ContinueButtonInstance.gameObject.SetActive(true);
-        _CozmoMovedErrorTransform.gameObject.SetActive(true);
+        _CozmoMovedErrorTransform.gameObject.SetActive(false);
+        _CozmoCubeRightSideUpTransform.gameObject.SetActive(false);
+        _CozmoImageTransform.gameObject.SetActive(false);
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
-        DAS.Event("onboarding.error", "cozmo_moved");
+        DAS.Event("onboarding.error", "error_final");
       }
       _SubState = nextState;
     }

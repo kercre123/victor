@@ -72,6 +72,9 @@
   "onboarding.Phase3.ErrorCozmo": {
     "translation": "<b>Tutorial Paused</b>\nCozmo needs to be on a stable, flat, surface and to explore on his own."
   },
+  "onboarding.Phase3.ErrorFinal": {
+    "translation": "<b>Having Trouble?</b>\nMake sure Cozmo is on a flat, clean table. Cozmo may struggle on glass surfaces.\n\nIf you're still having issues, visit <b>support.anki.com</b> on another device."
+  },
   "onboarding.Phase4.Body1a": {
     "translation": "As you play with Cozmo, you'll charge his emotion chip"
   },

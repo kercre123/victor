@@ -136,6 +136,8 @@ enum int_32 AnimationTrigger
   OnboardingDiscoverCube,
   OnboardingIdle,
   OnboardingInteractWithCube,
+  OnboardingHelloPlayer,
+  OnboardingHelloWorld,
   OnboardingPreBirth,
   OnboardingReactToCube,
   OnboardingReactToCubePutDown,

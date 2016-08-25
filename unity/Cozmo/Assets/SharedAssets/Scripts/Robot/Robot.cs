@@ -599,7 +599,7 @@ public class Robot : IRobot {
     return null;
   }
 
-  public void SendQueueSingleAction<T>(T action, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public uint SendQueueSingleAction<T>(T action, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     var tag = GetNextIdTag();
     RobotEngineManager.Instance.Message.QueueSingleAction =
       Singleton<QueueSingleAction>.Instance.Initialize(robotID: ID,
@@ -610,6 +610,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
 
     _RobotCallbacks.Add(new RobotCallbackWrapper(tag, callback));
+    return tag;
   }
 
   public void SendQueueCompoundAction(Anki.Cozmo.ExternalInterface.RobotActionUnion[] actions, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool isParallel = false) {
@@ -1341,11 +1342,11 @@ public class Robot : IRobot {
       queueActionPosition);
   }
 
-  public void PickupObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool useApproachAngle = false, float approachAngleRad = 0.0f, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public uint PickupObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool useApproachAngle = false, float approachAngleRad = 0.0f, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     DAS.Debug(this, "Pick And Place Object " + selectedObject + " usePreDockPose " + usePreDockPose + " useManualSpeed " + useManualSpeed);
 
-    SendQueueSingleAction(
+    return SendQueueSingleAction(
       Singleton<PickupObject>.Instance.Initialize(
         objectID: selectedObject,
         motionProf: PathMotionProfileDefault,
