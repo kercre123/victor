@@ -108,8 +108,6 @@ private:
   void TransitionToBackUp(Robot& robot);
   void TransitionToGetOutBored(Robot& robot);
   
-  //Allows the waiting for motion action to be canceled and call callback
-  void ExitWaitingForMotion(Robot& robot);
 };
 
 }

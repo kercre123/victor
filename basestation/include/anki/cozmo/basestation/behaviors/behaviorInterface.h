@@ -118,6 +118,11 @@ public:
   
   // Prevents the behavior from calling a callback function when ActionCompleted occurs
   // this allows the behavior to be stopped gracefully
+
+  // NOTE: this may not actually stop the behavior. It will disable action callbacks, so if the behavior
+  // relies on those to run (like almost all behaviors now do) it will stop. However, if the behavior isn't
+  // using StartActing or is directly doing stuff from its UpdateInternal, this won't actually stop the
+  // behavior
   void StopOnNextActionComplete();
   
   //
@@ -191,7 +196,8 @@ protected:
   void SetDefaultName(const char* inName);
   inline void SetDebugStateName(const std::string& inName) {
     _debugStateName = inName;
-    PRINT_NAMED_DEBUG("TransitionTo", "Behavior:%s, State:%s", GetName().c_str(), _debugStateName.c_str());
+    PRINT_CH_INFO("Behaviors", "Behavior.TransitionToState", "Behavior:%s, State:%s",
+                  GetName().c_str(), _debugStateName.c_str());
   }
   inline void SetBehaviorType(BehaviorType type) {if(_behaviorType == BehaviorType::NoneBehavior){ _behaviorType = type;}};
     
@@ -371,6 +377,7 @@ private:
   u32 _lastActionTag = ActionConstants::INVALID_TAG;
   RobotCompletedActionCallback  _actingCallback;
   float _extraRunningScore;
+  bool _canStartActing = true;
     
   BehaviorGroupFlags  _behaviorGroups;
 

@@ -160,6 +160,7 @@ void BehaviorPounceOnMotion::TransitionToWaitForMotion(Robot& robot)
   _numValidPouncePoses = 0;
   _backUpDistance = 0.f;
   _lastTimeRotate = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _motionObserved = false;
   StartActing(new WaitAction(robot, kWaitForMotionInterval_s), &BehaviorPounceOnMotion::TransitionFromWaitForMotion);
   
 }
@@ -179,7 +180,7 @@ void BehaviorPounceOnMotion::TransitionFromWaitForMotion(Robot& robot)
   // We're done if we haven't seen motion in a long while or since start.
   if ( _lastMotionTime + _maxTimeSinceNoMotion_running_sec < currentTime_sec )
   {
-    PRINT_NAMED_INFO("BehaviorPounceOnMotion.Timeout", "No motion found, giving up");
+    PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.Timeout", "No motion found, giving up");
     
     //Set the exit state information and then cancel the hang action
     TransitionToGetOutBored(robot);
@@ -268,24 +269,23 @@ void BehaviorPounceOnMotion::TransitionToResultAnim(Robot& robot)
   float robotBodyAngleDelta = robot.GetPitchAngle().ToFloat() - _prePouncePitch;
     
   // check the lift angle, after some time, transition state
-  PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult", "lift: %f body: %fdeg (%frad) (%f -> %f)",
-                    robot.GetLiftHeight(),
-                    RAD_TO_DEG(robotBodyAngleDelta),
-                    robotBodyAngleDelta,
-                    RAD_TO_DEG(_prePouncePitch),
-                    RAD_TO_DEG(robot.GetPitchAngle().ToFloat()));
+  PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.CheckResult", "lift: %f body: %fdeg (%frad) (%f -> %f)",
+                robot.GetLiftHeight(),
+                RAD_TO_DEG(robotBodyAngleDelta),
+                robotBodyAngleDelta,
+                RAD_TO_DEG(_prePouncePitch),
+                RAD_TO_DEG(robot.GetPitchAngle().ToFloat()));
 
   bool caught = robot.GetLiftHeight() > liftHeightThresh || robotBodyAngleDelta > bodyAngleThresh;
 
   IActionRunner* newAction = nullptr;
   if( caught ) {
     newAction = new TriggerAnimationAction(robot, AnimationTrigger::PounceSuccess);
-    PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult.Caught", "got it!");
-    BehaviorObjectiveAchieved(BehaviorObjective::PouncedAndCaught);
+    PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.CheckResult.Caught", "got it!");
   }
   else {
     newAction = new TriggerAnimationAction(robot, AnimationTrigger::PounceFail );
-    PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult.Miss", "missed...");
+    PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.CheckResult.Miss", "missed...");
   }
   
   auto callback = &BehaviorPounceOnMotion::TransitionToBringingHeadDown;
@@ -297,6 +297,11 @@ void BehaviorPounceOnMotion::TransitionToResultAnim(Robot& robot)
   robot.GetMoveComponent().EnableLiftPower(true);
   
   StartActing(newAction, callback);
+
+  if( caught ) {
+    // send this after we start the action, so if the goal tries to cancel us, we will play the react first
+    BehaviorObjectiveAchieved(BehaviorObjective::PouncedAndCaught);
+  }
 }
   
 void BehaviorPounceOnMotion::TransitionToBackUp(Robot& robot)
@@ -312,8 +317,7 @@ void BehaviorPounceOnMotion::TransitionToBackUp(Robot& robot)
 void BehaviorPounceOnMotion::TransitionToGetOutBored(Robot& robot)
 {
   SET_STATE(GetOutBored);
-  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::PounceGetOut),
-              &BehaviorPounceOnMotion::Cleanup);
+  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::PounceGetOut));
 }
   
 
@@ -381,20 +385,21 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
             _numValidPouncePoses++;
             _lastValidPouncePoseTime = currTime;
             
-            PRINT_NAMED_INFO("BehaviorPounceOnMotion.GotPose", "got valid pose with dist = %f. Now have %d",
-                             dist, _numValidPouncePoses);
+            PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.GotPose", "got valid pose with dist = %f. Now have %d",
+                          dist, _numValidPouncePoses);
             _lastPoseDist = dist;
             
             //Set the exit state information and then cancel the hang action
             _observedX = motionObserved.img_x;
             _observedY = motionObserved.img_y;
             _motionObserved = true;
-            ExitWaitingForMotion(robot);
+            StopActing();
           }
           else
           {
-            PRINT_NAMED_INFO("BehaviorPounceOnMotion.IgnorePose", "got pose, but dist of %f is too large, ignoring",
-                             dist);
+            PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.IgnorePose",
+                          "got pose, but dist of %f is too large, ignoring",
+                          dist);
           }
         }
         else if(_numValidPouncePoses > 0)
@@ -406,9 +411,9 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
         // reset everything if it's been this long since we got a valid pose
         if( ! gotPose && currTime >= _lastValidPouncePoseTime + _maxTimeBetweenPoses ) {
           if( _numValidPouncePoses > 0 ) {
-            PRINT_NAMED_INFO("BehaviorPounceOnMotion.ResetValid",
-                             "resetting num valid poses because it has been %f seconds since the last one",
-                             currTime - _lastValidPouncePoseTime);
+            PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.ResetValid",
+                          "resetting num valid poses because it has been %f seconds since the last one",
+                          currTime - _lastValidPouncePoseTime);
             _numValidPouncePoses = 0;
           }
         }
@@ -423,13 +428,7 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
   }
 }
   
-void BehaviorPounceOnMotion::ExitWaitingForMotion(Robot& robot)
-{
-  robot.GetActionList().Cancel(RobotActionType::WAIT);
-}
-
-  
-void  BehaviorPounceOnMotion::EnableCliffReacts(bool enable,Robot& robot)
+void BehaviorPounceOnMotion::EnableCliffReacts(bool enable,Robot& robot)
 {
   if( _cliffReactEnabled && !enable )
   {
