@@ -136,6 +136,8 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   BlockWorld::BlockWorld(Robot* robot)
   : _robot(robot)
+  , _lastPlayAreaSizeEventSec(0)
+  , _playAreaSizeEventIntervalSec(60)
   , _didObjectsChange(false)
   , _canDeleteObjects(true)
   , _canAddObjects(true)
@@ -3289,6 +3291,14 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
   Result BlockWorld::Update()
   {
     ANKI_CPU_PROFILE("BlockWorld::Update");
+
+    const f32 currentTimeSec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    if (_lastPlayAreaSizeEventSec + _playAreaSizeEventIntervalSec < currentTimeSec) {
+      _lastPlayAreaSizeEventSec = currentTimeSec;
+      const INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+      const double areaM2 = currentNavMemoryMap->GetExploredRegionAreaM2();
+      Anki::Util::sEventF("robot.play_area_size", {}, "%.2f", areaM2);
+    }
     
     // New timestep, new set of occluders.  Get rid of anything registered as
     // an occluder with the robot's camera

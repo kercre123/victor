@@ -15,6 +15,7 @@ namespace Cozmo {
     private float _LowPassFilteredVoltage = _kMaxValidBatteryVoltage;
     private bool _LowBatteryAlertTriggered = false;
     private AlertView _LowBatteryDialog = null;
+    public static bool _LowBatteryEventLogged = false;
 
     private AlertView _SleepCozmoConfirmDialog;
 
@@ -55,6 +56,10 @@ namespace Cozmo {
         _LowPassFilteredVoltage = _LowPassFilteredVoltage * Settings.FilterSmoothingWeight + (1.0f - Settings.FilterSmoothingWeight) * robot.BatteryVoltage; 
 
         if (!_IsPaused && !IsConfirmSleepDialogOpen && !IsGoToSleepDialogOpen && _LowPassFilteredVoltage < Settings.LowBatteryVoltageValue && !_LowBatteryAlertTriggered) {
+          if (!_LowBatteryEventLogged) {
+            _LowBatteryEventLogged = true;
+            DAS.Event("robot.low_battery", "");
+          }
           OpenLowBatteryDialog();
         }
       }

@@ -81,6 +81,9 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // return the size of the area currently explored
+  virtual double GetExploredRegionAreaM2() const = 0;
 
   // check whether the given content types would have any borders at the moment. This method is expected to
   // be faster than CalculateBorders for the same innerType/outerType combination, since it only queries

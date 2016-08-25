@@ -498,6 +498,8 @@ namespace Anki
       Robot*             _robot;
       
       ObsMarkerListMap_t _obsMarkers;
+      f32 _lastPlayAreaSizeEventSec;
+      const f32 _playAreaSizeEventIntervalSec;
       
       // A place to keep up with all objects' IDs and bounding boxes observed
       // in a single call to Update()

@@ -136,10 +136,10 @@ public:
       // need to stop the thread
       _stopThread = true;
       _threadRequest.notify_all(); // noexcept
-      PRINT_NAMED_EVENT("LatticePlanner.DestoryThread.Join", "");
+      PRINT_NAMED_DEBUG("LatticePlanner.DestoryThread.Join", "");
       try {
         _plannerThread->join();
-        PRINT_NAMED_EVENT("LatticePlanner.DestoryThread.Joined", "");
+        PRINT_NAMED_DEBUG("LatticePlanner.DestoryThread.Joined", "");
       }
       catch (std::runtime_error& err) {
         PRINT_NAMED_ERROR("LatticePlannerImpl.Destory.Exception",

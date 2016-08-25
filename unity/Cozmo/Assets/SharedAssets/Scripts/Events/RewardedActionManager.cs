@@ -173,7 +173,7 @@ public class RewardedActionManager : MonoBehaviour {
   }
 
   private void LoadRewardedActions(string path) {
-    DAS.Event(this, string.Format("LoadRewardedActionData from {0}", Path.GetFileName(path)));
+    DAS.Debug(this, string.Format("LoadRewardedActionData from {0}", Path.GetFileName(path)));
     string json = File.ReadAllText(path);
 
     GameEvent gEvent;

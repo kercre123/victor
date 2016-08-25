@@ -47,6 +47,9 @@ public:
   // change the content type from typeToReplace into newTypeSet if there's a border from any of the typesToFillFrom towards typeToReplace
   virtual void FillBorderInternal(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet) override;
   
+  // return the size of the area currently explored
+  virtual double GetExploredRegionAreaM2() const override;
+  
   // check whether the given content types would have any borders at the moment. This method is expected to
   // be faster than CalculateBorders for the same innerType/outerType combination, since it only queries
   // whether a border exists, without requiring calculating all of them

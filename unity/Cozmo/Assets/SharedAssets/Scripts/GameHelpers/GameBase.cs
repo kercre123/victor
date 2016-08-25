@@ -250,9 +250,9 @@ public abstract class GameBase : MonoBehaviour {
     _SharedMinigameViewInstance.HideSpinnerWidget();
     _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
 
+    DAS.SetGlobal(DASConstants.Game.kGlobal, GetDasGameName());
     DAS.Event(DASConstants.Game.kStart, GetGameUUID());
     DAS.Event(DASConstants.Game.kType, GetDasGameName());
-    DAS.SetGlobal(DASConstants.Game.kGlobal, GetDasGameName());
 
     bool videoPlayedAlready = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.ContainsKey(_ChallengeData.ChallengeID);
     bool noInstructionVideo = string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath);

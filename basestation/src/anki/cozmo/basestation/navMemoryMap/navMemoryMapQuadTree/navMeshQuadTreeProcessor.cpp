@@ -49,6 +49,7 @@ NavMeshQuadTreeProcessor::NavMeshQuadTreeProcessor(VizManager* vizManager)
 , _root(nullptr)
 , _contentGfxDirty(false)
 , _borderGfxDirty(false)
+, _totalExploredArea_m2(0.0)
 , _vizManager(vizManager)
 {
 
@@ -74,7 +75,32 @@ void NavMeshQuadTreeProcessor::SetRoot(NavMeshQuadTreeNode* node)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTreeProcessor::OnNodeContentTypeChanged(const NavMeshQuadTreeNode* node, ENodeContentType oldContent, ENodeContentType newContent)
 {
-  CORETECH_ASSERT(node->GetContentType() == newContent);
+  ASSERT_NAMED(node->GetContentType() == newContent, "NavMeshQuadTreeProcessor.OnNodeContentTypeChanged.MismatchedNewContent");
+  ASSERT_NAMED(oldContent != newContent, "NavMeshQuadTreeProcessor.OnNodeContentTypeChanged.ContentNotChanged");
+  
+  // update exploration area based on the content type
+  {
+    const bool wasOutOld = (oldContent == ENodeContentType::Invalid   ) ||
+                           (oldContent == ENodeContentType::Unknown   ) ||
+                           (oldContent == ENodeContentType::Subdivided);
+    const bool isOutNew  = (newContent == ENodeContentType::Invalid   ) ||
+                           (newContent == ENodeContentType::Unknown   ) ||
+                           (newContent == ENodeContentType::Subdivided);
+    const bool needsToRemove = !wasOutOld &&  isOutNew;
+    const bool needsToAdd    =  wasOutOld && !isOutNew;
+    if ( needsToRemove )
+    {
+      const float side_m = MM_TO_M(node->GetSideLen());
+      const float area_m2 = side_m*side_m;
+      _totalExploredArea_m2 -= area_m2;
+    }
+    else if ( needsToAdd )
+    {
+      const float side_m = MM_TO_M(node->GetSideLen());
+      const float area_m2 = side_m*side_m;
+      _totalExploredArea_m2 += area_m2;
+    }
+  }
 
   // if old content type is cached
   if ( IsCached(oldContent) )
@@ -115,6 +141,20 @@ void NavMeshQuadTreeProcessor::OnNodeDestroyed(const NavMeshQuadTreeNode* node)
     
     // flag as dirty
     _contentGfxDirty = true;
+  }
+
+  // remove the area for this node if it was counted before
+  {
+    const bool wasOutOld = (oldContent == ENodeContentType::Invalid   ) ||
+                           (oldContent == ENodeContentType::Unknown   ) ||
+                           (oldContent == ENodeContentType::Subdivided);
+    const bool needsToRemove = !wasOutOld;
+    if ( needsToRemove )
+    {
+      const float side_m = MM_TO_M(node->GetSideLen());
+      const float area_m2 = side_m*side_m;
+      _totalExploredArea_m2 -= area_m2;
+    }
   }
   
   // invalidate all borders. Note this is not optimal, we could invalidate only affected borders (if such

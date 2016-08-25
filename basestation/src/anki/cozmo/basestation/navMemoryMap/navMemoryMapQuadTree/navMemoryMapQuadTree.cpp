@@ -106,6 +106,14 @@ void NavMemoryMapQuadTree::FillBorderInternal(EContentType typeToReplace, const 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+double NavMemoryMapQuadTree::GetExploredRegionAreaM2() const
+{
+  // delegate on processor
+  const double area = _navMesh.GetProcessor().GetExploredRegionAreaM2();
+  return area;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NavMemoryMapQuadTree::HasBorders(EContentType innerType, const FullContentArray& outerTypes) const
 {
   using namespace NavMeshQuadTreeTypes;

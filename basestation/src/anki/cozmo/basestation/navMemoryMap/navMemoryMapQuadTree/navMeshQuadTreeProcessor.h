@@ -59,6 +59,9 @@ public:
   // Processing
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+  // return the size of the area currently explored
+  inline double GetExploredRegionAreaM2() const { return _totalExploredArea_m2; }
+
   // returns true if we have borders detected of the given type, or we think we do without having to actually calculate
   // them at this moment (which is slightly more costly and requires non-const access)
   bool HasBorders(ENodeContentType innerType, ENodeContentTypePackedType outerTypes) const;
@@ -206,6 +209,9 @@ private:
   // true if there have been changes since last drawn
   mutable bool _contentGfxDirty;
   mutable bool _borderGfxDirty;
+  
+  // area of all quads that have been explored
+  double _totalExploredArea_m2;
   
   VizManager* _vizManager;
   

@@ -257,7 +257,7 @@ public class DailyGoalManager : MonoBehaviour {
 
   private void LoadDailyGoalData(string path) {
     string json = File.ReadAllText(path);
-    DAS.Event(this, string.Format("LoadDailyGoalData from {0}", Path.GetFileName(path)));
+    DAS.Debug(this, string.Format("LoadDailyGoalData from {0}", Path.GetFileName(path)));
     _CurrentGenData = JsonConvert.DeserializeObject<DailyGoalGenerationData>(json, GlobalSerializerSettings.JsonSettings);
   }
 

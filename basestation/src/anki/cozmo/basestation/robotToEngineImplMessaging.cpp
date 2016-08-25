@@ -88,7 +88,6 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   };
   
   Anki::Util::sSetGlobal(DPHYS, "0xbadcode");
-  Anki::Util::sEvent("robot.InitRobotMessageComponent",{},"");
   
   // bind to specific handlers in the robotImplMessaging class
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::printText,                      &RobotToEngineImplMessaging::HandlePrint);
