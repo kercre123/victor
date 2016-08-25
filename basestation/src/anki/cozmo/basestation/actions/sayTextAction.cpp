@@ -122,7 +122,8 @@ SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTex
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SayTextAction::~SayTextAction()
 {
-  // Now that we're all done, unload the sounds from memory
+  // Now that we're all done, remove form the audio engine and unload the sounds from memory
+  _robot.GetTextToSpeechComponent().CompletedSpeech();
   _robot.GetTextToSpeechComponent().ClearOperationData(_ttsOperationId);
   
   if(_playAnimationAction != nullptr)
@@ -152,17 +153,17 @@ ActionResult SayTextAction::Init()
       // Set Audio data right before action runs
       float duration_ms = 0.0f;
       // FIXME: Need to way to get other Audio GameObjs
-      const bool success = _robot.GetTextToSpeechComponent().PrepareToSay(_ttsOperationId,
-                                                                          Audio::GameObjectType::CozmoBus_1,
-                                                                          duration_ms);
+      const bool success = _robot.GetTextToSpeechComponent().PrepareSpeech(_ttsOperationId,
+                                                                           Audio::GameObjectType::CozmoBus_1,
+                                                                           duration_ms);
 
       if (!success) {
-        PRINT_NAMED_ERROR("SayTextAction.Init.PrepareToSayFailed", "");
+        PRINT_NAMED_ERROR("SayTextAction.Init.PrepareSpeech.Failed", "");
         return ActionResult::FAILURE_ABORT;
       }
       
       if (duration_ms * 0.001f > _timeout_sec) {
-        PRINT_NAMED_ERROR("SayTextAction.Init.PrepareToSayDurrationTooLong", "Durration: %f", duration_ms);
+        PRINT_NAMED_ERROR("SayTextAction.Init.PrepareSpeech.DurrationTooLong", "Durration: %f", duration_ms);
       }
       
       const bool useBuiltInAnim = (AnimationTrigger::Count == _animationTrigger);

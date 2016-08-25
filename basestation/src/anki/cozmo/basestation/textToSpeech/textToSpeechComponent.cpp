@@ -111,9 +111,9 @@ TextToSpeechComponent::AudioCreationState TextToSpeechComponent::GetOperationSta
 } // GetOperationState()
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool TextToSpeechComponent::PrepareToSay(const OperationId operationId,
-                                         const Audio::GameObjectType audioGameObject,
-                                         float& out_duration_ms) const
+bool TextToSpeechComponent::PrepareSpeech(const OperationId operationId,
+                                          const Audio::GameObjectType audioGameObject,
+                                          float& out_duration_ms) const
 {
   const auto ttsBundle = GetTtsBundle(operationId);
   if (nullptr == ttsBundle) {
@@ -121,16 +121,16 @@ bool TextToSpeechComponent::PrepareToSay(const OperationId operationId,
   }
   
   ASSERT_NAMED(AudioCreationState::Ready == ttsBundle->state,
-               "TextToSpeechComponent.PrepareToSay.ttsBundle.state.NotReady");
+               "TextToSpeechComponent.PrepareSpeech.ttsBundle.state.NotReady");
   
   const auto waveData = ttsBundle->waveData;
   ASSERT_NAMED(nullptr != waveData,
-               "TextToSpeechComponent.PrepareToSay.ttsBundle.waveData.IsNull");
+               "TextToSpeechComponent.PrepareSpeech.ttsBundle.waveData.IsNull");
   
   using namespace Audio;
-  ASSERT_NAMED(nullptr != _audioController, "TextToSpeechComponent.PrepareToSay.NullAudioController");
+  ASSERT_NAMED(nullptr != _audioController, "TextToSpeechComponent.PrepareSpeech.NullAudioController");
   AudioControllerPluginInterface* pluginInterface = _audioController->GetPluginInterface();
-  ASSERT_NAMED(pluginInterface != nullptr, "TextToSpeechComponent.PrepareToSay.NullAudioControllerPluginInterface");
+  ASSERT_NAMED(pluginInterface != nullptr, "TextToSpeechComponent.PrepareSpeech.NullAudioControllerPluginInterface");
   
   // Clear previously loaded data
   if (pluginInterface->WavePortalHasAudioDataInfo()) {
@@ -149,6 +149,20 @@ bool TextToSpeechComponent::PrepareToSay(const OperationId operationId,
   return true;
 } // PrepareToSay()
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TextToSpeechComponent::CompletedSpeech()
+{
+  using namespace Audio;
+  ASSERT_NAMED(nullptr != _audioController, "TextToSpeechComponent.CompletedSpeech.NullAudioController");
+  AudioControllerPluginInterface* pluginInterface = _audioController->GetPluginInterface();
+  ASSERT_NAMED(pluginInterface != nullptr, "TextToSpeechComponent.CompletedSpeech.NullAudioControllerPluginInterface");
+  
+  // Clear previously loaded data
+  if (pluginInterface->WavePortalHasAudioDataInfo()) {
+    pluginInterface->ClearWavePortalAudioDataInfo();
+  }
+} // CompltedSpeech()
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TextToSpeechComponent::ClearOperationData(const OperationId operationId)
 {

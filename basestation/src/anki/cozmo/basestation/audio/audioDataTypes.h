@@ -53,7 +53,7 @@ struct AudioFrameData {
     memcpy( samples, source, sourceSize * sizeof(AudioSample) );
     // Pad the end of the frame with zeros
     if ( sourceSize < sampleCount) {
-      memset( samples + (sourceSize * sizeof(AudioSample)) , 0, (sampleCount-sourceSize) * sizeof(AudioSample));
+      memset( samples + (sourceSize * sizeof(AudioSample)) , 0.f, (sampleCount-sourceSize) * sizeof(AudioSample));
     }
   }
   
