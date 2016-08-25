@@ -13,6 +13,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_AIGoal_H__
 
 #include "json/json-forwards.h"
+#include "clad/types/animationTrigger.h"
 #include "clad/types/unlockTypes.h"
 
 #include <cassert>
@@ -52,10 +53,10 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // when goal is selected
-  void Enter();
+  void Enter(Robot& robot);
   
   // when goal is kicked out or finishes
-  void Exit();
+  void Exit(Robot& robot);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Behaviors
@@ -92,6 +93,9 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // returns true if driving animation triggers have been defined for this goal
+  bool HasDrivingAnimTriggers() const { return _driveStartAnimTrigger != AnimationTrigger::Count; } // checking one is checking all
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
@@ -108,6 +112,11 @@ private:
   
   // goal name (from config)
   std::string _name;
+  
+  // optional driving animations associated to this goal
+  AnimationTrigger _driveStartAnimTrigger;
+  AnimationTrigger _driveLoopAnimTrigger;
+  AnimationTrigger _driveEndAnimTrigger;
   
   // spark required for this goal
   UnlockId _requiredSpark;

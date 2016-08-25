@@ -14,6 +14,6 @@
     "FP_Hiking"
   ],
   
-  "requiredRecentSwitchToParent_sec" : 1.0,
+  "requiredRecentSwitchToParent_sec" : 0.25, // in case the anim is too short, to not do it again. Could also add repetition penalty
   "animTrigger": "HikingIntro"  
 }

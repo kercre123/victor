@@ -257,12 +257,12 @@ bool AIGoalEvaluator::PickNewGoalForSpark(Robot& robot, UnlockId spark, bool isC
           newGoal         ? newGoal->GetName().c_str() : "no goal" );
       // set new goal and timestamp
       if ( _currentGoalPtr ) {
-        _currentGoalPtr->Exit();
+        _currentGoalPtr->Exit(robot);
       }
       _currentGoalPtr = newGoal;
       _name = "Goal" + ( _currentGoalPtr ? _currentGoalPtr->GetName() : "None");
       if ( _currentGoalPtr ) {
-        _currentGoalPtr->Enter();
+        _currentGoalPtr->Enter(robot);
       }
     }
     else if ( _currentGoalPtr != nullptr )
@@ -398,11 +398,23 @@ IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, const IBehavior* cu
     }
     
     // select new goal
-    const UnlockId activeSpark = robot.GetBehaviorManager().SwitchToRequestedSpark();
-    
-    const bool changedGoal = PickNewGoalForSpark(robot, activeSpark, isCurrentAllowedToBePicked);
+    const UnlockId desiredSpark = robot.GetBehaviorManager().GetRequestedSpark();
+    const bool changedGoal = PickNewGoalForSpark(robot, desiredSpark, isCurrentAllowedToBePicked);
     if ( changedGoal || !hasChosenBehavior )
     {
+      // if we did change goals, flag as a change of spark too
+      if ( changedGoal )
+      {
+        robot.GetBehaviorManager().SwitchToRequestedSpark();
+        // warn if the goal selected does not match the desired spark
+        if ( _currentGoalPtr && (_currentGoalPtr->GetRequiredSpark() != desiredSpark) ) {
+          PRINT_NAMED_WARNING("AIGoalEvaluator.ChooseNextBehavior.GoalNotDesiredSpark",
+            "The selected goal's required spark '%s' does not match the desired '%s'",
+            EnumToString(_currentGoalPtr->GetRequiredSpark()),
+            EnumToString(desiredSpark));
+        }
+      }
+    
       // either we picked a new goal or we have the same but we didn't let it chose behavior before because
       // we wanted to check if there was a better one, so do it now
       if ( _currentGoalPtr )

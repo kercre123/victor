@@ -16,6 +16,9 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalStrategyFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalStrategies/iAIGoalStrategy.h"
 #include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
+#include "anki/cozmo/basestation/drivingAnimationHandler.h"
+#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
+#include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -35,7 +38,11 @@ static const char* kRequiresSparkKey = "requireSpark";
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIGoal::AIGoal()
-: _requiredSpark(UnlockId::Count)
+: _priority(0)
+, _driveStartAnimTrigger(AnimationTrigger::Count)
+, _driveLoopAnimTrigger(AnimationTrigger::Count)
+, _driveEndAnimTrigger(AnimationTrigger::Count)
+, _requiredSpark(UnlockId::Count)
 , _lastTimeGoalStartedSecs(-1.0f)
 , _lastTimeGoalStoppedSecs(-1.0f)
 {
@@ -63,6 +70,26 @@ bool AIGoal::Init(Robot& robot, const Json::Value& config)
     _requiredSpark = UnlockIdsFromString(sparkString.c_str());
   }
   
+  // driving animation triggers
+  std::string animTriggerStr;
+  if ( JsonTools::GetValueOptional(config, "driveStartAnimTrigger", animTriggerStr) ) {
+    _driveStartAnimTrigger = animTriggerStr.empty() ? AnimationTrigger::Count : AnimationTriggerFromString(animTriggerStr.c_str());
+  }
+  if ( JsonTools::GetValueOptional(config, "driveLoopAnimTrigger", animTriggerStr) ) {
+    _driveLoopAnimTrigger = animTriggerStr.empty() ? AnimationTrigger::Count : AnimationTriggerFromString(animTriggerStr.c_str());
+  }
+  if ( JsonTools::GetValueOptional(config, "driveEndAnimTrigger", animTriggerStr) ) {
+    _driveEndAnimTrigger = animTriggerStr.empty() ? AnimationTrigger::Count : AnimationTriggerFromString(animTriggerStr.c_str());
+  }
+  // check that triggers are all or nothing
+  const bool hasAnyDrivingAnim = (_driveStartAnimTrigger != AnimationTrigger::Count) ||
+                                 (_driveLoopAnimTrigger  != AnimationTrigger::Count) ||
+                                 (_driveEndAnimTrigger   != AnimationTrigger::Count);
+  const bool hasAllDrivingAnim = (_driveStartAnimTrigger != AnimationTrigger::Count) &&
+                                 (_driveLoopAnimTrigger  != AnimationTrigger::Count) &&
+                                 (_driveEndAnimTrigger   != AnimationTrigger::Count);
+  ASSERT_NAMED(hasAllDrivingAnim || !hasAnyDrivingAnim, "AIGoal.Init.InvalidDrivingAnimTriggers_AllOrNothing");
+  
   // configure chooser and set in out pointer
   const Json::Value& chooserConfig = config[kBehaviorChooserConfigKey];
   IBehaviorChooser* newChooser = BehaviorChooserFactory::CreateBehaviorChooser(robot, chooserConfig);
@@ -82,17 +109,31 @@ bool AIGoal::Init(Robot& robot, const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIGoal::Enter()
+void AIGoal::Enter(Robot& robot)
 {
   _lastTimeGoalStartedSecs = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _behaviorChooserPtr->OnSelected();
+  
+  // set driving animations for this goal if specified in config
+  const bool hasDrivingAnims = HasDrivingAnimTriggers();
+  if ( hasDrivingAnims ) {
+    robot.GetDrivingAnimationHandler().PushDrivingAnimations( {_driveStartAnimTrigger,
+                                                               _driveLoopAnimTrigger,
+                                                               _driveEndAnimTrigger} );
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIGoal::Exit()
+void AIGoal::Exit(Robot& robot)
 {
   _lastTimeGoalStoppedSecs = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _behaviorChooserPtr->OnDeselected();
+  
+  // clear driving animations for this goal if specified in config
+  const bool hasDrivingAnims = HasDrivingAnimTriggers();
+  if ( hasDrivingAnims ) {
+    robot.GetDrivingAnimationHandler().PopDrivingAnimations();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

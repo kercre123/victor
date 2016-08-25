@@ -24,6 +24,6 @@
     "t1_headAngleAbsRangeMax_deg":  -5.0,
     "t2_headAngleAbsRangeMin_deg":  -5.0,
     "t2_headAngleAbsRangeMax_deg":   5.0,
-    "lookInPlaceAnimTrigger": "LookInPlaceForFacesHeadMovePause"
+    "lookInPlaceAnimTrigger": "HikingLookAround"
   }
 }

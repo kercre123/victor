@@ -226,6 +226,9 @@
       {
         "name" : "FP_Hiking",
         "priority": 4, // lower is better
+        "driveStartAnimTrigger" : "HikingDrivingStart",
+        "driveLoopAnimTrigger" : "HikingDrivingLoop",
+        "driveEndAnimTrigger" : "HikingDrivingEnd",
         "behaviorChooser" :
         {
           "type" : "simple",
