@@ -1235,14 +1235,6 @@ namespace Anki {
       return true;
     }
     
-    void HAL::AssignCubeSlots(int total_ids, const uint32_t *ids)
-    {
-      total_ids = MIN(total_ids, MAX_NUM_ACTIVE_OBJECTS);
-      for (int i=0; i < total_ids; ++i) {
-        AssignSlot(i, ids[i]);
-      }
-    }
-    
     int8_t CalculateObjectRSSI(double signalStrength)
     {
       // Convert the webots signal strength to similar values to what we get from the robot.

@@ -12,7 +12,6 @@ void ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds);
 #include "rtip.h"
 #include "face.h"
 #include "dhTask.h"
-#include "activeObjectManager.h"
 #include "factoryTests.h"
 #include "nvStorage.h"
 #include "wifi_configuration.h"
@@ -259,12 +258,6 @@ namespace Anki {
             {
               memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
               AnimationController::EnableTracks(msg.enableAnimTracks.whichTracks);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_assignCubeSlots:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              ActiveObjectManager::SetSlots(0, msg.assignCubeSlots.factory_id_length, msg.assignCubeSlots.factory_id);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_oledDisplayNumber:

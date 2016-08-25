@@ -29,11 +29,6 @@ namespace Cozmo {
     // This doesn't do much
   }
 
-  message CubeSlots
-  {
-    uint_32 factory_id[uint_32:7] // Don't send more than MAX_NUM_ACTIVE_OBJECTS above
-  }
-
   structure SetPropSlot
   {
     uint_32 factory_id,
@@ -461,7 +456,7 @@ union EngineToRobot
   AnimKeyFrame::DisableAnimTracks disableAnimTracks         = 0x9D,
   AnimKeyFrame::EnableAnimTracks enableAnimTracks           = 0x9E,
   // Anim future expansion                                  = 0x9F,
-  CubeSlots                     assignCubeSlots             = 0xA0,
+  //          FREE SLOT!!!                                  = 0xA0,
   TestState                     testState                   = 0xA1,
   EnterFactoryTestMode          enterTestMode               = 0xA2,
   DisplayNumber                 oledDisplayNumber           = 0xA3,

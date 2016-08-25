@@ -14,7 +14,6 @@ extern "C" {
 #include "driver/crash.h"
 }
 #include "rtip.h"
-#include "activeObjectManager.h"
 #include "face.h"
 #include "dhTask.h"
 #include "factoryTests.h"
@@ -145,12 +144,6 @@ void RadioConnectionStateMachineUpdate()
     }
     case 3:
     {
-      Anki::Cozmo::ActiveObjectManager::DisconnectAll();
-      doRTDisconnectPhase++;
-      break;
-    }
-    case 4:
-    {
       if (Anki::Cozmo::Factory::GetMode() == Anki::Cozmo::RobotInterface::FTM_None)
       {
         Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_entry);
@@ -159,7 +152,7 @@ void RadioConnectionStateMachineUpdate()
       doRTDisconnectPhase++;
       break;
     }
-    case 5:
+    case 4:
     {
       sendRadioState = true;
       doRTDisconnectPhase = 0;
@@ -222,20 +215,15 @@ void Exec(os_event_t *event)
     }
     case 2:
     {
-      ActiveObjectManager::Update();
+      NVStorage::Update();
       break;
     }
     case 3:
     {
-      NVStorage::Update();
-      break;
-    }
-    case 4:
-    {
       UpgradeController::Update();
       break;
     }
-    case 5:
+    case 4:
     {
       static bool haveReported = false;
       if (i2spiPhaseErrorCount > 2)
@@ -256,17 +244,17 @@ void Exec(os_event_t *event)
       }
       break;
     }
-    case 6:
+    case 5:
     {
       RadioConnectionStateMachineUpdate();
       break;
     }
-    case 7:
+    case 6:
     {
       DiffieHellman::Update();
       break;
     }
-    case 8:
+    case 7:
     {
       CrashReporter::Update();
       break;
@@ -326,25 +314,20 @@ extern "C" int8_t backgroundTaskInit(void)
     os_printf("\tCouldn't initalize face controller\r\n");
     return -5;
   }
-  else if (Anki::Cozmo::ActiveObjectManager::Init() == false)
-  {
-    os_printf("\tCouldn't initalize prop manager\r\n");
-    return -6;
-  }
   else if (Anki::Cozmo::Factory::Init() == false)
   {
     os_printf("\tCouldn't initalize factory test framework\r\n");
-    return -7;
+    return -6;
   }
   else if (Anki::Cozmo::WiFiConfiguration::Init() != Anki::RESULT_OK)
   {
     os_printf("\tCouldn't initalize WiFiConfiguration module\r\n");
-    return -8;
+    return -7;
   }
   else if (Anki::Cozmo::CrashReporter::Init() == false)
   {
     os_printf("\tCouldn't initalize CrashReporter\r\n");
-    return -9;
+    return -8;
   }
   // Upgrade controller should be initalized last
   else if (Anki::Cozmo::UpgradeController::Init() == false)
