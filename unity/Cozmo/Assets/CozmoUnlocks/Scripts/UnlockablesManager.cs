@@ -26,6 +26,10 @@ public class UnlockablesManager : MonoBehaviour {
   public Action<CoreUpgradeDetailsDialog> OnSparkComplete;
   public Action<Anki.Cozmo.UnlockId, bool> OnUnlockPopupRequested;
 
+  public bool UnlocksLoaded { get { return _UnlocksLoaded; } }
+
+  private bool _UnlocksLoaded = false;
+
   private Dictionary<Anki.Cozmo.UnlockId, bool> _UnlockablesState = new Dictionary<Anki.Cozmo.UnlockId, bool>();
 
   [SerializeField]
@@ -53,7 +57,9 @@ public class UnlockablesManager : MonoBehaviour {
 
   // should be called when connected to the robot and loaded unlock info from the physical robot.
   public void OnConnectLoad(Dictionary<Anki.Cozmo.UnlockId, bool> loadedUnlockables) {
+    DAS.Info("UnlockablesManager.OnConnectLoad", "Unlocks loaded from robot / engine");
     _UnlockablesState = loadedUnlockables;
+    _UnlocksLoaded = true;
   }
 
   private bool NothingUnlocked() {

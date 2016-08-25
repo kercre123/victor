@@ -110,7 +110,11 @@ namespace Cozmo.HomeHub {
     }
 
     private IEnumerator ShowHomeViewAfterOtherViewClosed(GameObject homeViewPrefab) {
-      while (_MiniGameInstance != null) {
+
+      // wait until minigame instance is destroyed and also wait until the unlocks are properly loaded from
+      // robot.
+      while (_MiniGameInstance != null || !UnlockablesManager.Instance.UnlocksLoaded) {
+
         yield return 0;
       }
 

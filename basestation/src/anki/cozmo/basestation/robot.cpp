@@ -559,6 +559,8 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   if (!_timeSynced) {
     return lastResult;
   }
+  
+  _gotStateMsgAfterTimeSync = true;
     
   // Set flag indicating that robot state messages have been received
   _lastMsgTimestamp = msg.timestamp;
@@ -999,7 +1001,13 @@ void Robot::ActiveObjectLightTest(const ObjectID& objectID) {
 Result Robot::Update(bool ignoreVisionModes)
 {
   ANKI_CPU_PROFILE("Robot::Update");
-
+  
+  if (!_gotStateMsgAfterTimeSync)
+  {
+    PRINT_NAMED_DEBUG("Robot.Update", "Waiting for first full robot state to be handled");
+    return RESULT_OK;
+  }
+  
 #if(0)
   ActiveBlockLightTest(1);
   return RESULT_OK;

@@ -933,6 +933,7 @@ protected:
   bool             _isOnChargerPlatform   = false;
   bool             _isCliffReactionDisabled = false;
   bool             _isBodyInAccessoryMode = true;
+  bool             _gotStateMsgAfterTimeSync = false;
 
   enum class OffTredsState{
     OnTreds
