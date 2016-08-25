@@ -13,9 +13,12 @@
 
 #include "anki/cozmo/cozmoAPI.h"
 #include "anki/cozmo/basestation/cozmoEngine.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/game/comms/gameMessagePort.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
+#include "clad/externalInterface/messageShared.h"
 #include "util/cpuProfiler/cpuProfiler.h"
+#include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
 #include <chrono>
 
@@ -123,6 +126,16 @@ void CozmoAPI::ExecuteBackgroundTransfers()
   }
   engine->ExecuteBackgroundTransfers();
 }
+
+size_t CozmoAPI::SendVizMessages(uint8_t* buffer, size_t bufferSize)
+{
+  GameMessagePort* messagePipe = (_cozmoRunner != nullptr) ? _cozmoRunner->GetVizMessagePort() : nullptr;
+  if (messagePipe == nullptr) {
+    return 0;
+  }
+
+  return messagePipe->PullToGameMessages(buffer, bufferSize);
+}
   
 CozmoAPI::~CozmoAPI()
 {
@@ -153,8 +166,9 @@ void CozmoAPI::Clear()
 
 CozmoAPI::CozmoInstanceRunner::CozmoInstanceRunner(Util::Data::DataPlatform* dataPlatform,
                                                    const Json::Value& config, bool& initResult)
-: _gameMessagePort(new GameMessagePort())
-, _cozmoInstance(new CozmoEngine(dataPlatform, _gameMessagePort.get()))
+: _gameMessagePort(new GameMessagePort(ExternalInterface::kDirectCommsBufferSize, true))
+, _vizMessagePort(CreateVizMessagePort())
+, _cozmoInstance(new CozmoEngine(dataPlatform, _gameMessagePort.get(), _vizMessagePort.get()))
 , _isRunning(true)
 {
   Result initResultReturn = _cozmoInstance->Init(config);
@@ -220,6 +234,15 @@ bool CozmoAPI::CozmoInstanceRunner::Update(const double currentTime_sec)
     PRINT_NAMED_ERROR("CozmoAPI.CozmoInstanceRunner.Update", "Cozmo update failed with error %d", updateResult);
   }
   return updateResult == RESULT_OK;
+}
+
+GameMessagePort* CozmoAPI::CozmoInstanceRunner::CreateVizMessagePort()
+{
+  #if VIZ_ON_DEVICE && ANKI_DEV_CHEATS
+  return new GameMessagePort(ExternalInterface::kVizCommsBufferSize, false);
+  #else
+  return nullptr;
+  #endif
 }
 
 } // namespace Cozmo

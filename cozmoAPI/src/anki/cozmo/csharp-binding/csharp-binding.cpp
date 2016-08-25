@@ -325,6 +325,14 @@ void cozmo_transmit_game_to_engine(const uint8_t* buffer, const size_t size)
   engineAPI->ReceiveMessages(buffer, size);
 }
 
+size_t cozmo_transmit_viz_to_game(uint8_t* const buffer, const size_t size)
+{
+  if (engineAPI == nullptr) {
+    return 0;
+  }
+  return engineAPI->SendVizMessages(buffer, size);
+}
+
 void cozmo_execute_background_transfers()
 {
   if (engineAPI == nullptr) {
