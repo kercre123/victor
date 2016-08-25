@@ -105,6 +105,8 @@ public:
   const std::list<FaceRecognitionMatch>& GetDebugMatchingInfo() const { return _debugMatchingInfo; }
   void SetDebugMatchingInfo(std::list<FaceRecognitionMatch>&& newDebugInfo);
   
+  // Return a string containing the album entries, with session-only marked with "S"
+  std::string GetAlbumEntriesString() const;
   
   // ---------------------------------------------------------------------------
   // Basic methods

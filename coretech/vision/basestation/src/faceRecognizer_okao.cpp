@@ -411,7 +411,7 @@ namespace Vision {
       _trackingToFaceID[_detectionInfo.nID] = faceID;
       _enrollmentData[faceID].SetScore( score );
     }
-   
+    
     return RESULT_OK;
     
   } // UpdateRecognitionData()
@@ -1380,6 +1380,46 @@ namespace Vision {
         return RESULT_FAIL;
       }
       
+      {
+        // Populate the debug info for the recognized face. Always put on the top match
+        // Then add the first (top-scoring) album match for each face ID, until we've
+        // filled the debug list. Do this before checking for 2nd-best or calling
+        // UpdateExistingUser because those could cause us to cull an album entry
+        // associated with matchedID, which could result in GetFaceIDforAlbumEntry
+        // to fail in this loop.
+        std::list<FaceRecognitionMatch> newDebugInfo{
+          FaceRecognitionMatch{
+            .name = matchIter->second.GetName(),
+            .matchedID = matchingID,
+            .score = matchingScore,
+          }
+        };
+        s32 iResult = matchIndex+1;
+        while(iResult < resultNum && newDebugInfo.size() < kFaceRecMaxDebugResults)
+        {
+          // It's possible, due to using a non-top match above, that we have performed
+          // a merge and entries in matchingAlbumEntries
+          auto const matchedID = GetFaceIDforAlbumEntry(matchingAlbumEntries[iResult]);
+          if(matchedID != newDebugInfo.back().matchedID)
+          {
+            auto iter = _enrollmentData.find(matchedID);
+            newDebugInfo.emplace_back(FaceRecognitionMatch{
+              .name = (iter == _enrollmentData.end() ? "" : iter->second.GetName()),
+              .matchedID = matchedID,
+              .score  = scores[iResult],
+            });
+          }
+          ++iResult;
+        }
+        
+        matchIter->second.SetDebugMatchingInfo(std::move(newDebugInfo));
+      }
+      
+      // Typically, we will update the recognized album entry. If we end up
+      // using a 2nd best match, though, it is possible we can't, and this
+      // flag will get set to false.
+      bool shouldUpdateAlbumEntry = true;
+      
       if(resultNum >= 2 && matchIter->second.IsForThisSessionOnly())
       {
         // Find the next match with a different FaceID than the top match, and which
@@ -1422,6 +1462,11 @@ namespace Vision {
                             matchingAlbumEntries[matchIndex], matchingID, matchingScore,
                             nextIndex, matchingAlbumEntries[nextIndex], nextMatchingID, scores[nextIndex]);
               
+              PRINT_CH_DEBUG("FaceRecognizer", "RecognizeFace.BeforeMergeOfLowerRankedMatch",
+                             "Top match entries: %s. Next match entries: %s.",
+                             matchIter->second.GetAlbumEntriesString().c_str(),
+                             nextMatchIter->second.GetAlbumEntriesString().c_str());
+              
               Result mergeResult = MergeFaces(nextMatchingID, matchingID);
               if(RESULT_OK != mergeResult) {
                 PRINT_NAMED_WARNING("FaceRecognizer.RecognizeFace.MergeFacesFailed", "Merging %d into %d",
@@ -1432,6 +1477,11 @@ namespace Vision {
               ASSERT_NAMED(nextMatchIter != _enrollmentData.end(),
                            "FaceRecognizer.RecognizeFace.NextMatchIterNotSet");
               
+              PRINT_CH_DEBUG("FaceRecognizer", "RecognizeFace.AfterMergeOfLowerRankedMatch",
+                             "Top match entries: %s. Next match entries: %s.",
+                             matchIter->second.GetAlbumEntriesString().c_str(),
+                             nextMatchIter->second.GetAlbumEntriesString().c_str());
+              
               // We just merged, so the matching album entry for "matchIndex" no
               // longer exists. Update it to be what is in "nextIndex".
               matchingAlbumEntries[matchIndex] = matchingAlbumEntries[nextIndex];
@@ -1440,6 +1490,23 @@ namespace Vision {
               matchingScore = scores[nextIndex];
               matchIndex    = nextIndex;
               matchIter     = nextMatchIter;
+              
+              const AlbumEntryID_t recognizedAlbumEntryID = matchingAlbumEntries[matchIndex];
+              auto const& matchIterAlbumEntries = matchIter->second.GetAlbumEntries();
+              if(matchIterAlbumEntries.find(recognizedAlbumEntryID) == matchIterAlbumEntries.end())
+              {
+                // The merge above removed the album entry we actually recognized, so
+                // we have nothing to update below with the call to UpdateExistingAlbumEntry().
+                shouldUpdateAlbumEntry = false;
+                
+                // If the recognized entry isn't part of the matched enrollment data anymore (matchIter),
+                // then neither should it be in the album entry to face ID lookup table anymore.
+                ASSERT_NAMED_EVENT(_albumEntryToFaceID.find(recognizedAlbumEntryID) == _albumEntryToFaceID.end(),
+                                   "FaceRecognizer.RecognizeFace.UnexpectedAlbumEntryToFaceID",
+                                   "matchIndex:%d albumEntry:%d still maps to faceID:%d",
+                                   matchIndex, recognizedAlbumEntryID,
+                                   _albumEntryToFaceID.at(recognizedAlbumEntryID));
+              }
             }
             
             // Stop looking once we find a non-session-only face, whether or not
@@ -1456,45 +1523,15 @@ namespace Vision {
       faceID = matchingID;
       recognitionScore = matchingScore;
       
+      if(shouldUpdateAlbumEntry)
       {
-        // Populate the debug info for the recognized face. Always put on the match
-        // we just found above. Then add the first (top-scoring) album match for
-        // each face ID, until we've filled the debug list. Do this before calling
-        // UpdateExistingUser because that could cause us to cull an album entry
-        // associated with matchedID, which could result in GetFaceIDforAlbumEntry
-        // to fail in this loop.
-        std::list<FaceRecognitionMatch> newDebugInfo{
-          FaceRecognitionMatch{
-            .name = matchIter->second.GetName(),
-            .matchedID = matchingID,
-            .score = matchingScore,
-          }
-        };
-        s32 iResult = matchIndex+1;
-        while(iResult < resultNum && newDebugInfo.size() < kFaceRecMaxDebugResults)
-        {
-          auto const matchedID = GetFaceIDforAlbumEntry(matchingAlbumEntries[iResult]);
-          if(matchedID != newDebugInfo.back().matchedID)
-          {
-            auto iter = _enrollmentData.find(matchedID);
-            newDebugInfo.emplace_back(FaceRecognitionMatch{
-              .name = (iter == _enrollmentData.end() ? "" : iter->second.GetName()),
-              .matchedID = matchedID,
-              .score  = scores[iResult],
-            });
-          }
-          ++iResult;
+        Result result = UpdateExistingAlbumEntry(matchingAlbumEntries[matchIndex],
+                                                 _okaoRecognitionFeatureHandle,
+                                                 recognitionScore);
+        if(RESULT_OK != result) {
+          PRINT_NAMED_WARNING("FaceRecognizer.RecognizeFace.UpdatingExistingAlbumEntryFailed",
+                              "albumEntry:%d", matchingAlbumEntries[matchIndex]);
         }
-        
-        matchIter->second.SetDebugMatchingInfo(std::move(newDebugInfo));
-      }
-      
-      Result result = UpdateExistingAlbumEntry(matchingAlbumEntries[matchIndex],
-                                               _okaoRecognitionFeatureHandle,
-                                               recognitionScore);
-      if(RESULT_OK != result) {
-        PRINT_NAMED_WARNING("FaceRecognizer.RecognizeFace.UpdatingExistingAlbumEntryFailed",
-                            "albumEntry:%d", matchingAlbumEntries[matchIndex]);
       }
       
       if(_enrollmentID == faceID && _enrollmentTrackID != _detectionInfo.nID)
@@ -1780,11 +1817,11 @@ namespace Vision {
                             "OKAO Result=%d", okaoResult);
         return RESULT_FAIL;
       }
-      
+
       PRINT_CH_INFO("FaceRecognizer", "GetSerializedAlbum.AlbumSize",
                     "Album with %d permanent faces = %d bytes (%.1f bytes/person)",
                     permanentIdCount, albumSize, (f32)albumSize/(f32)permanentIdCount);
-      
+    
     } // if(permanentIdCount == 0)
     else
     {

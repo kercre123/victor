@@ -229,6 +229,33 @@ void EnrolledFaceEntry::SetDebugMatchingInfo(std::list<FaceRecognitionMatch>&& n
 {
   std::swap(_debugMatchingInfo, newDebugInfo);
 }
+ 
+std::string EnrolledFaceEntry::GetAlbumEntriesString() const
+{
+  std::string str;
+  
+  if(_albumEntrySeenTimes.empty())
+  {
+    str = "<none>";
+  }
+  else
+  {
+    for(auto iter = _albumEntrySeenTimes.begin(); iter != _albumEntrySeenTimes.end(); ++iter)
+    {
+      str += (iter == _albumEntrySeenTimes.begin()) ? "[" : " ";
+      
+      const AlbumEntryID_t albumEntry = iter->first;
+      str += std::to_string(albumEntry);
+      if(albumEntry == _sessionOnlyAlbumEntry)
+      {
+        str += "S";
+      }
+    }
+    str += "]";
+  }
+  
+  return str;
+}
   
 void EnrolledFaceEntry::Serialize(std::vector<u8>& buffer) const
 {
