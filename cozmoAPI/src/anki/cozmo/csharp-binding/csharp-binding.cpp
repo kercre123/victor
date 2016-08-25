@@ -199,7 +199,7 @@ int cozmo_startup(const char *configuration_data)
 
   // Initialize logging
   #if ANKI_DEV_CHEATS
-    DevLoggingSystem::CreateInstance(dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, ""));
+    DevLoggingSystem::CreateInstance(dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, ""), appRunId);
   #endif
   
   Util::IFormattedLoggerProvider* sosLoggerProvider = new Util::SosLoggerProvider();

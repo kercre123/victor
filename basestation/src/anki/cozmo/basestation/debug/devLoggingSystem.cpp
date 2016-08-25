@@ -39,12 +39,13 @@ const std::string DevLoggingSystem::kEngineToGameName = "engineToGame";
 const std::string DevLoggingSystem::kRobotToEngineName = "robotToEngine";
 const std::string DevLoggingSystem::kEngineToRobogName = "engineToRobot";
 const std::string DevLoggingSystem::kEngineToVizName = "engineToViz";
+const std::string DevLoggingSystem::kAppRunExtension = ".apprun";
 
-void DevLoggingSystem::CreateInstance(const std::string& loggingBaseDirectory)
+void DevLoggingSystem::CreateInstance(const std::string& loggingBaseDirectory, const std::string& appRunId)
 {
   Util::SafeDelete(sInstance);
 
-  sInstance = new DevLoggingSystem(loggingBaseDirectory);
+  sInstance = new DevLoggingSystem(loggingBaseDirectory, appRunId);
 }
 
 void DevLoggingSystem::DestroyInstance()
@@ -52,10 +53,11 @@ void DevLoggingSystem::DestroyInstance()
   Util::SafeDelete(sInstance);
 }
 
-DevLoggingSystem::DevLoggingSystem(const std::string& baseDirectory)
+DevLoggingSystem::DevLoggingSystem(const std::string& baseDirectory, const std::string& appRunId)
+: _allLogsBaseDirectory(baseDirectory)
+, _appRunId(appRunId)
 {
   std::string appRunTimeString = Util::RollingFileLogger::GetDateTimeString(DevLoggingSystem::GetAppRunStartTime());
-  _allLogsBaseDirectory = baseDirectory;
 
   // TODO:(lc) For the playtest we don't want to delete any log files, since they could be very valuable
   //DeleteFiles(_allLogsBaseDirectory, kArchiveExtensionString);
@@ -67,6 +69,9 @@ DevLoggingSystem::DevLoggingSystem(const std::string& baseDirectory)
   _robotToEngineLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, kRobotToEngineName)));
   _engineToRobotLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, kEngineToRobogName)));
   _engineToVizLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, kEngineToVizName)));
+
+  // write apprun file
+  Util::FileUtils::WriteFile(GetPathString(_devLoggingBaseDirectory, appRunTimeString + kAppRunExtension), appRunId);
 }
   
 void DevLoggingSystem::DeleteFiles(const std::string& baseDirectory, const std::string& extension) const
@@ -77,7 +82,12 @@ void DevLoggingSystem::DeleteFiles(const std::string& baseDirectory, const std::
     Util::FileUtils::DeleteFile(file);
   }
 }
-  
+
+void DevLoggingSystem::CopyFile(const std::string& sourceFile, const std::string& destination)
+{
+  Util::FileUtils::WriteFile(destination, Util::FileUtils::ReadFile(sourceFile));
+}
+
 void DevLoggingSystem::ArchiveDirectories(const std::string& baseDirectory, const std::vector<std::string>& excludeDirectories) const
 {
   std::vector<std::string> directoryList;
@@ -98,20 +108,41 @@ void DevLoggingSystem::ArchiveDirectories(const std::string& baseDirectory, cons
   for (auto& directory : directoryList)
   {
     auto directoryPath = GetPathString(baseDirectory, directory);
-    auto filePaths = Util::FileUtils::FilesInDirectory(directoryPath, true, Util::RollingFileLogger::kDefaultFileExtension, true);
-    ArchiveUtil::CreateArchiveFromFiles(directoryPath + kArchiveExtensionString, directoryPath, filePaths);
+    {
+      // copy apprun file where we need it
+      auto appRunSources = Util::FileUtils::FilesInDirectory(directoryPath, true, kAppRunExtension.c_str());
+      if (!appRunSources.empty())
+      {
+        CopyFile(appRunSources[0], directoryPath + kAppRunExtension);
+      }
+    }
+    ArchiveOneDirectory(directoryPath);
     Util::FileUtils::RemoveDirectory(directoryPath);
   }
 }
-  
+
+void DevLoggingSystem::ArchiveOneDirectory(const std::string& baseDirectory)
+{
+  auto filePaths = Util::FileUtils::FilesInDirectory(baseDirectory, true, {Util::RollingFileLogger::kDefaultFileExtension, kAppRunExtension.c_str()}, true);
+  ArchiveUtil::CreateArchiveFromFiles(baseDirectory + kArchiveExtensionString, baseDirectory, filePaths);
+}
+
 void DevLoggingSystem::PrepareForUpload(const std::string& namePrefix) const
 {
   // First create an archive for the current logs
-  auto filePaths = Util::FileUtils::FilesInDirectory(_devLoggingBaseDirectory, true, Util::RollingFileLogger::kDefaultFileExtension, true);
-  ArchiveUtil::CreateArchiveFromFiles(_devLoggingBaseDirectory + kArchiveExtensionString, _devLoggingBaseDirectory, filePaths);
-  
+  ArchiveOneDirectory(_devLoggingBaseDirectory);
+
+  // Copy current apprun file up one dir
+  {
+    auto appRunSources = Util::FileUtils::FilesInDirectory(_devLoggingBaseDirectory, false, kAppRunExtension.c_str(), false);
+    if (appRunSources.size() > 0)
+    {
+      CopyFile(GetPathString(_devLoggingBaseDirectory, appRunSources[0]), GetPathString(_allLogsBaseDirectory, appRunSources[0]));
+    }
+  }
+
   // Now move all existing archives to the upload directory
-  auto filesToMove = Util::FileUtils::FilesInDirectory(_allLogsBaseDirectory, false, kArchiveExtensionString.c_str());
+  auto filesToMove = Util::FileUtils::FilesInDirectory(_allLogsBaseDirectory, false, {kArchiveExtensionString.c_str(), kAppRunExtension.c_str()});
   
   // If we had nothing to move, we have nothing left to do
   if (filesToMove.empty())
@@ -133,6 +164,23 @@ std::vector<std::string> DevLoggingSystem::GetLogFilenamesForUpload() const
 {
   std::string waitingDir = GetPathString(_allLogsBaseDirectory, kWaitingForUploadDirName);
   return Util::FileUtils::FilesInDirectory(waitingDir, true, kArchiveExtensionString.c_str());
+}
+
+std::string DevLoggingSystem::GetAppRunId(const std::string& archiveFilename) const
+{
+  auto appRunFilename = GetAppRunFilename(archiveFilename);
+  return Util::FileUtils::ReadFile(appRunFilename);
+}
+
+std::string DevLoggingSystem::GetAppRunFilename(const std::string& archiveFilename)
+{
+  return archiveFilename.substr(0, archiveFilename.find(kArchiveExtensionString)) + kAppRunExtension;
+}
+
+void DevLoggingSystem::DeleteLog(const std::string& archiveFilename) const
+{
+  Util::FileUtils::DeleteFile(GetAppRunFilename(archiveFilename));
+  Util::FileUtils::DeleteFile(archiveFilename);
 }
 
 std::string DevLoggingSystem::GetPathString(const std::string& base, const std::string& path) const

@@ -51,8 +51,14 @@ void GameLogTransferTask::OnReady(const StartRequestFunc& requestFunc)
     std::string baseFilename = filename.substr(filenameStartIndex);
     request.uri = "https://blobstore-dev.api.anki.com/1/cozmo/blobs/" + baseFilename;
 
+    // get apprun
+    std::string fileAppRun = devLoggingSystem->GetAppRunId(filename);
+
     // add headers
     request.headers.emplace("Anki-App-Key", "toh5awu3kee1ahfaikeeGh");
+    if (!fileAppRun.empty()) {
+      request.headers.emplace("Usr-apprun", std::move(fileAppRun));
+    }
 
     // submit request
     requestFunc(request, [filename] (const HttpRequest& innerRequest,
@@ -60,8 +66,16 @@ void GameLogTransferTask::OnReady(const StartRequestFunc& requestFunc)
                                      const std::map<std::string, std::string>&,
                                      const std::vector<uint8_t>&) {
       if (isHttpSuccessCode(responseCode)) {
-        FileUtils::DeleteFile(filename);
-        PRINT_NAMED_INFO("GameLogTransferTask", "uploaded %s", innerRequest.uri.c_str());
+        auto* loggingSystem = Cozmo::DevLoggingSystem::GetInstance();
+        if (loggingSystem != nullptr) {
+          loggingSystem->DeleteLog(filename);
+        }
+        else {
+          FileUtils::DeleteFile(filename);
+        }
+        auto it = innerRequest.headers.find("Usr-apprun");
+        const char* appRunId = (it == innerRequest.headers.end()) ? "" : it->second.c_str();
+        PRINT_NAMED_INFO("GameLogTransferTask", "uploaded %s, apprun %s", innerRequest.uri.c_str(), appRunId);
       }
       else {
         PRINT_NAMED_WARNING("GameLogTransferTask", "could not upload %s", innerRequest.uri.c_str());

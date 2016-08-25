@@ -102,7 +102,7 @@ int main(int argc, char **argv)
   
   
 #if ANKI_DEV_CHEATS
-  DevLoggingSystem::CreateInstance(dataPlatform.pathToResource(Util::Data::Scope::CurrentGameLog, ""));
+  DevLoggingSystem::CreateInstance(dataPlatform.pathToResource(Util::Data::Scope::CurrentGameLog, ""), "mac");
 #endif
 
   // - create and set logger
