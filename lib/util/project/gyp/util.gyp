@@ -5,7 +5,7 @@
     'utilunittest_source_file_name': 'utilUnitTest.lst',
     'jsoncpp_source_file_name': 'jsoncpp.lst',
     'kazmath_source_file_name': 'kazmath.lst',
-    'folly_source_file_name' : 'folly.lst',
+    'folly_source_file_name': 'folly.lst',
     'networkApp_source_file_name': 'networkApp.lst',
 
     'build_flavor%': 'dev',
@@ -492,23 +492,12 @@
       },
       'type': '<(jsoncpp_library_type)',
     },
-    {
-      'target_name': 'folly',
-      'sources': [ '<!@(cat <(folly_source_file_name))' ],
-      'include_dirs': [
-        '../../source/3rd/folly',
-      ],
-      'direct_dependent_settings': {
-        'include_dirs': [
-          '../../source/3rd/folly',
-        ],
-      },
-      'type': '<(folly_library_type)',
-    },
+
     {
       'target_name': 'util',
       'sources': [
         '<!@(cat <(util_source_file_name))',
+        '<!@(cat <(folly_source_file_name))',
         '<(clad_dir)/support/cpp/source/SafeMessageBuffer.cpp',
       ],
       'include_dirs': [

@@ -173,7 +173,6 @@ def main(scriptArgs):
     defines = {
             'jsoncpp_library_type': 'static_library',
             'kazmath_library_type': 'static_library',
-            'folly_library_type' : 'static_library',
             'util_library_type': 'static_library',
             'OS': 'mac',
             'output_location': projectRoot+'/project/gyp-mac',
@@ -208,7 +207,6 @@ def main(scriptArgs):
     defines = {
             'jsoncpp_library_type': 'static_library',
             'kazmath_library_type': 'static_library',
-            'folly_library_type' : 'static_library',
             'util_library_type': 'static_library',
             'OS': 'ios',
             'output_location': 'gyp-ios', 
@@ -240,7 +238,6 @@ def main(scriptArgs):
     defines = {
             'jsoncpp_library_type': 'static_library',
             'kazmath_library_type': 'static_library',
-            'folly_library_type' : 'static_library',
             'util_library_type': 'static_library',
             'os_posix': 1,
             'GYP_CROSSCOMPILE': 1,
@@ -307,7 +304,6 @@ def main(scriptArgs):
     defines = {
             'jsoncpp_library_type': 'static_library',
             'kazmath_library_type': 'static_library',
-            'folly_library_type' : 'static_library',
             'util_library_type': 'static_library',
             'os_posix': 1,
             'GYP_CROSSCOMPILE': 1,
@@ -354,7 +350,6 @@ def main(scriptArgs):
     os.environ['GYP_DEFINES'] = """ 
                                 jsoncpp_library_type=static_library
                                 kazmath_library_type=static_library
-                                folly_library_type=static_library
                                 util_library_type=static_library
                                 os_posix=1
                                 OS=cmake

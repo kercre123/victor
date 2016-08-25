@@ -181,7 +181,6 @@ def main(scriptArgs):
                                 ndk_root=INVALID
                                 kazmath_library_type=static_library
                                 jsoncpp_library_type=static_library
-                                folly_library_type=static_library
                                 util_library_type=static_library
                                 worldviz_library_type=static_library
                                 arch_group={0}
@@ -210,7 +209,6 @@ def main(scriptArgs):
                                 OS=ios
                                 kazmath_library_type=static_library
                                 jsoncpp_library_type=static_library
-                                folly_library_type=static_library
                                 util_library_type=static_library
                                 worldviz_library_type=static_library
                                 arch_group={0}
@@ -239,7 +237,6 @@ def main(scriptArgs):
                                 ndk_root=INVALID
                                 kazmath_library_type=static_library
                                 jsoncpp_library_type=static_library
-                                folly_library_type=static_library
                                 util_library_type=static_library
                                 worldviz_library_type=static_library
                                 arch_group={0}
@@ -292,7 +289,6 @@ def main(scriptArgs):
     os.environ['GYP_DEFINES'] = """ 
                                 kazmath_library_type=static_library
                                 jsoncpp_library_type=static_library
-                                folly_library_type=static_library
                                 util_library_type=static_library
                                 worldviz_library_type=static_library
                                 das_library_type=shared_library
