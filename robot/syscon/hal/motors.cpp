@@ -424,10 +424,10 @@ void Motors::setPower(u8 motorID, s16 power)
     // to allow animations driving slower to work better
     
     static const int base_speed[MOTOR_COUNT] = {
-      0x1000,
-      0x1000,
-       0x800,
-      0x1000,
+      0x2000, // 0x1000,
+      0x2000, // 0x1000,
+      0x2000, // 0x800,
+      0x2000, // 0x1000,
     };
 
     static const int speed_scale[MOTOR_COUNT] = {
