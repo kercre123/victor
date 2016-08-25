@@ -268,6 +268,20 @@ Result ObjectPoseConfirmer::CopyWithNewPose(ObservableObject *newObject, const P
   return RESULT_OK;
 }
   
+
+Result ObjectPoseConfirmer::AddInExistingPose(const ObservableObject* object)
+{
+  ASSERT_NAMED(nullptr != object, "ObjectPoseConfirmer.AddInExistingPose.NullObject");
+  
+  const ObjectID& objectID = object->GetID();
+  
+  ASSERT_NAMED(objectID.IsSet(), "ObjectPoseConfirmer.AddInExistingPose.UnSetObjectID");
+  
+  _poseConfirmations[objectID].lastPose = object->GetPose();
+  
+  return RESULT_OK;
+}
+  
   
 Result ObjectPoseConfirmer::MarkObjectUnobserved(ObservableObject* object)
 {

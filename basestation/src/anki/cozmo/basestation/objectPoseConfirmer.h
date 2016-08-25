@@ -58,6 +58,10 @@ public:
   Result CopyWithNewPose(ObservableObject* newObject, const Pose3d& newPose,
                          const ObservableObject* oldObject);
   
+  // Simply adds the given object in its current pose to the PoseConfirmer's records,
+  // without changing its pose or changing its observation count.
+  Result AddInExistingPose(const ObservableObject* object);
+  
   // Increment the number of times the object has gone unobserved.
   // Once object is unobserved enough times, its pose state will be set to Unknown
   // and it will be cleared from BlockWorld.

@@ -732,7 +732,7 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
         
         // Use all of oldObject's time bookkeeping, then update the pose and pose state
         newObject->SetObservationTimes(oldObject);
-        _robot->GetObjectPoseConfirmer().CopyWithNewPose(newObject, newPose, oldObject);
+        result = _robot->GetObjectPoseConfirmer().CopyWithNewPose(newObject, newPose, oldObject);
 
         if(addNewObject) {
           // Note: need to call SetPose first because that sets the origin which
@@ -753,6 +753,20 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
       // because all the objects in the oldOrigin should now exist in the new origin
       DeleteObjectsByOrigin(oldOrigin, false);
     }
+    
+    // Now go through all the objects already in the origin we are switching _to_
+    // (the "new" origin) and make sure PoseConfirmer knows about them since we
+    // have delocalized since last being in this origin (which clears the PoseConfirmer)
+    BlockWorldFilter filterNew;
+    filterOld.SetFilterFcn(nullptr); // Disable known-pose-state check
+    filterOld.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
+    filterOld.AddAllowedOrigin(newOrigin);
+    
+    ModifierFcn addToPoseConfirmer = [this](ObservableObject* object){
+      _robot->GetObjectPoseConfirmer().AddInExistingPose(object);
+    };
+    
+    FindObjectHelper(filterNew, addToPoseConfirmer, false);
     
     // if memory maps are enabled, we can merge old into new
     if ( kEnableMemoryMap )
