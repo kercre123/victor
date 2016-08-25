@@ -407,7 +407,7 @@ namespace Cozmo.HomeHub {
         return;
       }
       Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-      List<UnlockableInfo> unlockableUnlockData = UnlockablesManager.Instance.GetAvailableAndLockedExplicit();
+      List<UnlockableInfo> unlockableUnlockData = UnlockablesManager.Instance.GetAvailableAndLocked();
 
       bool canAfford = false;
       for (int i = 0; i < unlockableUnlockData.Count; ++i) {

@@ -34,6 +34,17 @@ enum int_32 UnlockId
   MemoryMatchGame         = 17,
   QuickTapGame            = 18,
 
+  FaceEnrollmentSlot0     = 19,
+  FaceEnrollmentSlot1     = 20,
+  FaceEnrollmentSlot2     = 21,
+  FaceEnrollmentSlot3     = 22,
+  FaceEnrollmentSlot4     = 23,
+  FaceEnrollmentSlot5     = 24,
+  FaceEnrollmentSlot6     = 25,
+  FaceEnrollmentSlot7     = 26,
+  FaceEnrollmentSlot8     = 27,
+  FaceEnrollmentSlot9     = 28,
+
   // ADD NEW UNLOCKS HERE
 
   Count

@@ -188,5 +188,8 @@
   },
   "label.update": {
     "translation": "Update"
+  },
+  "button.unlock": {
+    "translation": "Unlock"
   }
 }

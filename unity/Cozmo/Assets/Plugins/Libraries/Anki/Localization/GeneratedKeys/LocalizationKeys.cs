@@ -148,6 +148,11 @@ public static class LocalizationKeys {
   public const string kFaceEnrollmentFaceEnrollmentListDeleteConfirmButton = "faceEnrollment.faceEnrollmentList.deleteConfirmButton";
   public const string kFaceEnrollmentInstructionsTop = "faceEnrollment.instructions.top";
   public const string kFaceEnrollmentInstructionsBottom = "faceEnrollment.instructions.bottom";
+  public const string kFaceEnrollmentUnlockViewDescription = "faceEnrollment.unlockView.description";
+  public const string kFaceEnrollmentErrorsNeverSawValidFaceTitle = "faceEnrollment.errors.neverSawValidFace.title";
+  public const string kFaceEnrollmentErrorsNeverSawValidFaceDescription = "faceEnrollment.errors.neverSawValidFace.description";
+  public const string kFaceEnrollmentErrorsTimeOutTitle = "faceEnrollment.errors.timeOut.title";
+  public const string kFaceEnrollmentErrorsTimeOutDescription = "faceEnrollment.errors.timeOut.description";
 
   #endregion
 
@@ -342,6 +347,7 @@ public static class LocalizationKeys {
   public const string kOnboardingPhase5Body2 = "onboarding.Phase5.Body2";
   public const string kOnboardingPhase5Body3 = "onboarding.Phase5.Body3";
   public const string kOnboardingSlide0a = "onboarding.Slide0a";
+  public const string kOnboardingOldRobotSkip = "onboarding.OldRobotSkip";
 
   #endregion
 
@@ -476,6 +482,7 @@ public static class LocalizationKeys {
   public const string kButtonSkip = "button.skip";
   public const string kButtonCreateNew = "button.createNew";
   public const string kLabelUpdate = "label.update";
+  public const string kButtonUnlock = "button.unlock";
 
   #endregion
 
@@ -546,7 +553,9 @@ public static class LocalizationKeys {
   public const string kWifiStringsInstructionsSlide0ViewAll = "wifiStrings.Instructions.Slide0.viewAll";
   public const string kWifiStringsNextButton = "wifiStrings.nextButton";
   public const string kWifiStringsBackButton = "wifiStrings.backButton";
+  public const string kWifiGethelpTitle = "wifi.gethelp.title";
   public const string kWifiGethelpDescription = "wifi.gethelp.description";
+  public const string kWifiGethelpFooter = "wifi.gethelp.footer";
   public const string kWifiGetHelpLinkText = "wifi.getHelp.linkText";
 
   #endregion

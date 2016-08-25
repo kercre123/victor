@@ -19,7 +19,6 @@ MonoBehaviour:
   - _EnumValueAsString: PickupCube
     _EnumValue: 6
   AnyPrereqUnlock: 0
-  ExplicitUnlock: 1
   NeverAvailable: 0
   DescriptionKey: unlockable.CubeStackAction.Description
   TitleKey: unlockable.CubeStackAction.Title

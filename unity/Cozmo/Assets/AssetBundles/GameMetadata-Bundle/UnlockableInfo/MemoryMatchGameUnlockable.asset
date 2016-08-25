@@ -13,18 +13,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: MemoryMatchGame
-    _EnumValue: 17
+    _EnumValue: 11
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0
-  ExplicitUnlock: 1
   NeverAvailable: 1
   DescriptionKey: unlockable.Simon.Description
   TitleKey: unlockable.Simon.Title
   UpgradeCostItemId: TestHexItem0
   UpgradeCostAmountNeeded: 2
   RequestTrickCostItemId: treat
-  RequestTrickCostAmountNeeded: 2
+  RequestTrickCostAmountCurve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  RequestTrickCostAmountNeededMin: 0
+  RequestTrickCostAmountNeededMaxTimes: 0
+  RequestTrickCostAmountNeededMax: 0
   CoreUpgradeTintColorName: upgradePurple
   CoreUpgradeIcon: {fileID: 21300000, guid: c3a1e28304056497c81d66c7599a4aaf, type: 3}
   CoreUpgradeOverlayIcon: {fileID: 21300000, guid: e599f55eac7d54b38a60c412eef68915,

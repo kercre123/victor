@@ -72,10 +72,10 @@ public class CozmoUnlocksPanel : MonoBehaviour {
 
     string viewControllerName = "home_hub_cozmo_unlock_panel";
     int numTilesMade = 0;
-    List<UnlockableInfo> unlockedUnlockData = UnlockablesManager.Instance.GetUnlocked(true);
-    List<UnlockableInfo> unlockableUnlockData = UnlockablesManager.Instance.GetAvailableAndLockedExplicit();
-    List<UnlockableInfo> lockedUnlockData = UnlockablesManager.Instance.GetUnavailableExplicit();
-    List<UnlockableInfo> comingSoonUnlockData = UnlockablesManager.Instance.GetNeverAvailableExplicit();
+    List<UnlockableInfo> unlockedUnlockData = UnlockablesManager.Instance.GetUnlocked();
+    List<UnlockableInfo> unlockableUnlockData = UnlockablesManager.Instance.GetAvailableAndLocked();
+    List<UnlockableInfo> lockedUnlockData = UnlockablesManager.Instance.GetUnavailable();
+    List<UnlockableInfo> comingSoonUnlockData = UnlockablesManager.Instance.GetNeverAvailable();
 
     // Sort within themselves on "SortOrder" since locked doesn't show anything, no need to sort.
     unlockedUnlockData.Sort();

@@ -41,5 +41,20 @@
   },
   "faceEnrollment.instructions.bottom": {
     "translation": "When Cozmo sees you, you'll hear a chime."
-  }
+  },
+  "faceEnrollment.unlockView.description": {
+    "translation": "Unlock this slot to\nintroduce Cozmo to another person."
+  },
+  "faceEnrollment.errors.neverSawValidFace.title": {
+    "translation": "Cozmo already knows you!"
+  }, 
+  "faceEnrollment.errors.neverSawValidFace.description": {
+    "translation": "Cozmo already recognizes you as: {0}"
+  },
+  "faceEnrollment.errors.timeOut.title": {
+    "translation": "Cozmo is having trouble seeing you"
+  }, 
+  "faceEnrollment.errors.timeOut.description": {
+    "translation": "Make sure you're in a well-lit room and that you're aligned with Cozmo's face. Cozmo should be on a flat, stable surface."
+  } 
 }

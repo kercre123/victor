@@ -864,11 +864,20 @@ public class MockRobot : IRobot {
   }
 
   public void EraseEnrolledFaceByID(int faceID) {
-
+    string faceName = EnrolledFaces[faceID];
+    EnrolledFaces.Remove(faceID);
+    EnrolledFacesLastEnrolledTime.Remove(faceID);
+    EnrolledFacesLastSeenTime.Remove(faceID);
+    if (OnEnrolledFaceRemoved != null) {
+      OnEnrolledFaceRemoved(faceID, faceName);
+    }
   }
 
   public void UpdateEnrolledFaceByID(int faceID, string oldFaceName, string newFaceName) {
-
+    EnrolledFaces[faceID] = newFaceName;
+    if (OnEnrolledFaceRenamed != null) {
+      OnEnrolledFaceRenamed(faceID, newFaceName);
+    }
   }
 
   public void SendDemoResetState() {
@@ -924,4 +933,6 @@ public class MockRobot : IRobot {
 
   public event FaceStateEventHandler OnFaceAdded;
   public event FaceStateEventHandler OnFaceRemoved;
+  public event EnrolledFaceRemoved OnEnrolledFaceRemoved;
+  public event EnrolledFaceRenamed OnEnrolledFaceRenamed;
 }

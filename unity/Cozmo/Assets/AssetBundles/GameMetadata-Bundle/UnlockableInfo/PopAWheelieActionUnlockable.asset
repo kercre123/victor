@@ -13,13 +13,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: PopAWheelieAction
-    _EnumValue: 13
+    _EnumValue: 11
   UnlockableType: 1
   Prerequisites:
   - _EnumValueAsString: KnockOverThreeCubeStack
     _EnumValue: 5
   AnyPrereqUnlock: 0
-  ExplicitUnlock: 1
   NeverAvailable: 0
   DescriptionKey: unlockable.PopAWheelieAction.Description
   TitleKey: unlockable.PopAWheelieAction.Title

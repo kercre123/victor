@@ -13,13 +13,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: PounceOnMotionAction
-    _EnumValue: 12
+    _EnumValue: 11
   UnlockableType: 1
   Prerequisites:
   - _EnumValueAsString: RollCube
     _EnumValue: 9
   AnyPrereqUnlock: 0
-  ExplicitUnlock: 1
   NeverAvailable: 0
   DescriptionKey: unlockable.PounceOnMotionAction.Description
   TitleKey: unlockable.PounceOnMotionAction.Title

@@ -102,6 +102,7 @@ enum int_32 AnimationTrigger
   MeetCozmoFirstEnrollmentRepeatName,   // 4. Fist-time enrollment, confirm player's name
   MeetCozmoFirstEnrollmentCelebration,  // 5. First-time enrollment, big special celebration for new name
   MeetCozmoReEnrollmentSayName,         // 3b. Re-enrollment, say player's name
+  MeetCozmoRenameFaceSayName,           // Say player's new name when rename occurs
   NothingToDoBored,             // Cozmo doesn't have anything to do in freeplay
   OnLearnedPlayerName,
   OnSawNewNamedFace,

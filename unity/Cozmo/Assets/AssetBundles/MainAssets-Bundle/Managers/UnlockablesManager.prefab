@@ -25,6 +25,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -41,6 +42,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _UnlockableInfoList: {fileID: 11400000, guid: 70b66002a720f4539948df1e77a8314a,
     type: 2}
+  _NewUnlocks: 
+  _FaceSlotUnlockMap: 130000001400000015000000160000001700000018000000190000001a0000001b0000001c000000
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

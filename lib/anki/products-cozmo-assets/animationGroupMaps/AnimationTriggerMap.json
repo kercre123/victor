@@ -361,6 +361,10 @@
       "AnimName" : "ag_meetcozmo_reenrollment_sayname"
     },
     {
+      "CladEvent": "MeetCozmoRenameFaceSayName",
+      "AnimName" : "ag_meetcozmo_reenrollment_sayname"
+    },
+    {
       "CladEvent": "NothingToDoBored",
       "AnimName": "ag_bored_event"
     },

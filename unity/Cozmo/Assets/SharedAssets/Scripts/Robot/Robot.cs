@@ -205,6 +205,8 @@ public class Robot : IRobot {
 
   public event FaceStateEventHandler OnFaceAdded;
   public event FaceStateEventHandler OnFaceRemoved;
+  public event EnrolledFaceRemoved OnEnrolledFaceRemoved;
+  public event EnrolledFaceRenamed OnEnrolledFaceRenamed;
 
   public Dictionary<int, string> EnrolledFaces { get; set; }
 
@@ -362,6 +364,8 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DebugString>(HandleDebugString);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedFace>(UpdateObservedFaceInfo);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotErasedEnrolledFace>(HandleRobotErasedEnrolledFace);
+    RobotEngineManager.Instance.AddCallback<Anki.Vision.RobotRenamedEnrolledFace>(HandleRobotRenamedEnrolledFace);
 
     ObservedObject.AnyInFieldOfViewStateChanged += HandleInFieldOfViewStateChanged;
     RobotEngineManager.Instance.AddCallback<Anki.Vision.LoadedKnownFace>(HandleLoadedKnownFace);
@@ -387,6 +391,8 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DebugString>(HandleDebugString);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedFace>(UpdateObservedFaceInfo);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotErasedEnrolledFace>(HandleRobotErasedEnrolledFace);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Vision.RobotRenamedEnrolledFace>(HandleRobotRenamedEnrolledFace);
 
     ObservedObject.AnyInFieldOfViewStateChanged -= HandleInFieldOfViewStateChanged;
   }
@@ -395,6 +401,15 @@ public class Robot : IRobot {
     Vector3 offset = worldSpacePosition - this.WorldPosition;
     offset = Quaternion.Inverse(this.Rotation) * offset;
     return offset;
+  }
+
+  private void HandleRobotErasedEnrolledFace(Anki.Cozmo.ExternalInterface.RobotErasedEnrolledFace message) {
+    EnrolledFaces.Remove(message.faceID);
+    EnrolledFacesLastEnrolledTime.Remove(message.faceID);
+    EnrolledFacesLastSeenTime.Remove(message.faceID);
+    if (OnEnrolledFaceRemoved != null) {
+      OnEnrolledFaceRemoved(message.faceID, message.name);
+    }
   }
 
   private void HandleDebugString(Anki.Cozmo.ExternalInterface.DebugString message) {
@@ -447,10 +462,21 @@ public class Robot : IRobot {
   }
 
   private void HandleLoadedKnownFace(Anki.Vision.LoadedKnownFace loadedKnownFaceMessage) {
+    if (EnrolledFaces.ContainsKey(loadedKnownFaceMessage.faceID)) {
+      DAS.Error("Robot.HandleLoadedKnownFace", "Attempting to load already exisiting face ID: " + loadedKnownFaceMessage.faceID + " " + loadedKnownFaceMessage.name);
+      return;
+    }
     EnrolledFaces.Add(loadedKnownFaceMessage.faceID, loadedKnownFaceMessage.name);
     // TODO: hook up secondsSinceFirstEnrolled when concept of "how long Cozmo has known this person is needed
     EnrolledFacesLastEnrolledTime.Add(loadedKnownFaceMessage.faceID, Time.time - loadedKnownFaceMessage.secondsSinceLastUpdated);
     EnrolledFacesLastSeenTime.Add(loadedKnownFaceMessage.faceID, Time.time - loadedKnownFaceMessage.secondsSinceLastSeen);
+  }
+
+  private void HandleRobotRenamedEnrolledFace(Anki.Vision.RobotRenamedEnrolledFace message) {
+    EnrolledFaces[message.faceID] = message.name;
+    if (OnEnrolledFaceRenamed != null) {
+      OnEnrolledFaceRenamed(message.faceID, message.name);
+    }
   }
 
   public bool IsLightCubeInPickupRange(LightCube lightCube) {
@@ -781,8 +807,9 @@ public class Robot : IRobot {
 
   private void HandleChangedObservedFaceID(Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID message) {
     for (int i = 0; i < Faces.Count; i++) {
+      // remove the old face we saw, new face will be added by RobotObservedFace
       if (Faces[i].ID == message.oldID) {
-        Faces[i].UpdateFaceID(message.newID);
+        Faces.RemoveAt(i);
         break;
       }
     }

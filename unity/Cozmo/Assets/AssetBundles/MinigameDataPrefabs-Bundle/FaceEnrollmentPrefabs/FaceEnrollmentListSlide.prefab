@@ -115,6 +115,10 @@ MonoBehaviour:
   _ContentContainer: {fileID: 22445982}
   _EnrollNewFacePrefab: {fileID: 11481334, guid: 8fa0f275cbd7646bd8bb10ae52704236,
     type: 2}
+  _LockedNewFaceSlotPrefab: {fileID: 11481334, guid: 6935c21df1ca741bcb60384e00791ac1,
+    type: 2}
+  _UnlockFaceCellViewPrefab: {fileID: 11443690, guid: 1c809a7639e4743bc9639a1a15a7a707,
+    type: 2}
 --- !u!114 &11480294
 MonoBehaviour:
   m_ObjectHideFlags: 1

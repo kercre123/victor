@@ -38,6 +38,10 @@ public class UnlockablesManager : MonoBehaviour {
   [SerializeField]
   private List<Anki.Cozmo.UnlockId> _NewUnlocks = new List<UnlockId>();
 
+  // index is the face slot, value is the unlockID;
+  [SerializeField]
+  private int[] _FaceSlotUnlockMap;
+
   public bool IsNewUnlock(Anki.Cozmo.UnlockId uID) {
     return _NewUnlocks.Contains(uID);
   }
@@ -71,6 +75,28 @@ public class UnlockablesManager : MonoBehaviour {
     return true;
   }
 
+  public bool IsFaceSlotUnlocked(int faceSlot) {
+    if (faceSlot >= _FaceSlotUnlockMap.Length) {
+      DAS.Error("UnlockablesManager.IsFaceSlotUnlocked", "Face slot out of range " + faceSlot);
+    }
+    return IsUnlocked((Anki.Cozmo.UnlockId)_FaceSlotUnlockMap[faceSlot]);
+  }
+
+  public int FaceSlotsSize() {
+    return _FaceSlotUnlockMap.Length;
+  }
+
+  public void UnlockNextAvailableFaceSlot() {
+    for (int i = 0; i < _FaceSlotUnlockMap.Length; ++i) {
+      if (!IsUnlocked((Anki.Cozmo.UnlockId)_FaceSlotUnlockMap[i])) {
+        TrySetUnlocked((UnlockId)_FaceSlotUnlockMap[i], true);
+        return;
+      }
+    }
+    DAS.Warn("UnlockablesManager.UnlockNextAvailableFaceSlot", "No slots left!");
+  }
+
+
   // Should only be called before connecting to robot, robot will overwrite these
   public void InitializeUnlockablesState() {
     DAS.Info("UnlockablesManager.InitializeUnlockablesState", "InitializeUnlockablesState");
@@ -84,25 +110,22 @@ public class UnlockablesManager : MonoBehaviour {
     RobotEngineManager.Instance.SendRequestUnlockDataFromBackup();
   }
 
-
-
-  public List<UnlockableInfo> GetUnlockedGames() {
-    List<UnlockableInfo> unlocked = new List<UnlockableInfo>();
+  public List<UnlockableInfo> GetUnlockablesByType(UnlockableType unlockableType) {
+    List<UnlockableInfo> unlockables = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
-      if (_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id.Value] &&
-          _UnlockableInfoList.UnlockableInfoData[i].UnlockableType == UnlockableType.Game) {
-        unlocked.Add(_UnlockableInfoList.UnlockableInfoData[i]);
+      if (_UnlockableInfoList.UnlockableInfoData[i].UnlockableType == unlockableType) {
+        unlockables.Add(_UnlockableInfoList.UnlockableInfoData[i]);
       }
     }
-    return unlocked;
+    return unlockables;
   }
 
-  public List<UnlockableInfo> GetUnlocked(bool getExplicitOnly) {
+  public List<UnlockableInfo> GetUnlocked() {
     List<UnlockableInfo> unlocked = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
       bool neverAvailable = _UnlockableInfoList.UnlockableInfoData[i].NeverAvailable;
       if (_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id.Value]) {
-        if (!neverAvailable && ((!getExplicitOnly) || (getExplicitOnly && _UnlockableInfoList.UnlockableInfoData[i].ExplicitUnlock))) {
+        if (!neverAvailable) {
           unlocked.Add(_UnlockableInfoList.UnlockableInfoData[i]);
         }
       }
@@ -111,13 +134,13 @@ public class UnlockablesManager : MonoBehaviour {
   }
 
   // explicit unlocks only.
-  public List<UnlockableInfo> GetAvailableAndLockedExplicit() {
+  public List<UnlockableInfo> GetAvailableAndLocked() {
     List<UnlockableInfo> available = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
       bool locked = !_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id.Value];
       bool neverAvailable = _UnlockableInfoList.UnlockableInfoData[i].NeverAvailable;
       bool isAvailable = !neverAvailable && IsUnlockableAvailable(_UnlockableInfoList.UnlockableInfoData[i].Id.Value);
-      if (locked && isAvailable && _UnlockableInfoList.UnlockableInfoData[i].ExplicitUnlock) {
+      if (locked && isAvailable) {
         available.Add(_UnlockableInfoList.UnlockableInfoData[i]);
       }
     }
@@ -125,29 +148,28 @@ public class UnlockablesManager : MonoBehaviour {
   }
 
   // explicit unlocks only.
-  public List<UnlockableInfo> GetUnavailableExplicit() {
+  public List<UnlockableInfo> GetUnavailable() {
     List<UnlockableInfo> unavailable = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
       bool neverAvailable = _UnlockableInfoList.UnlockableInfoData[i].NeverAvailable;
       bool locked = !_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id.Value];
       bool isAvailable = IsUnlockableAvailable(_UnlockableInfoList.UnlockableInfoData[i].Id.Value);
-      if (!neverAvailable && locked && !isAvailable && _UnlockableInfoList.UnlockableInfoData[i].ExplicitUnlock) {
+      if (!neverAvailable && locked && !isAvailable) {
         unavailable.Add(_UnlockableInfoList.UnlockableInfoData[i]);
       }
     }
     return unavailable;
   }
 
-  public List<UnlockableInfo> GetNeverAvailableExplicit() {
+  public List<UnlockableInfo> GetNeverAvailable() {
     List<UnlockableInfo> comingSoon = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
       bool neverAvailable = _UnlockableInfoList.UnlockableInfoData[i].NeverAvailable;
-      if (neverAvailable && _UnlockableInfoList.UnlockableInfoData[i].ExplicitUnlock) {
+      if (neverAvailable) {
         comingSoon.Add(_UnlockableInfoList.UnlockableInfoData[i]);
       }
     }
     return comingSoon;
-
   }
 
   public UnlockableInfo GetUnlockableInfo(Anki.Cozmo.UnlockId id) {

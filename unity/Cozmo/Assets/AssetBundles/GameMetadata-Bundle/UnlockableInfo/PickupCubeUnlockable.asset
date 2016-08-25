@@ -13,11 +13,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: PickupCube
-    _EnumValue: 6
+    _EnumValue: 11
   UnlockableType: 1
   Prerequisites: []
   AnyPrereqUnlock: 0
-  ExplicitUnlock: 1
   NeverAvailable: 0
   DescriptionKey: unlockable.PickupCube.Description
   TitleKey: unlockable.PickupCube.Title

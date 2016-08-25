@@ -19,7 +19,16 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
   private FaceEnrollmentNewCell _EnrollNewFacePrefab;
   private FaceEnrollmentNewCell _EnrollNewFaceInstance;
 
+  [SerializeField]
+  private FaceEnrollmentNewCell _LockedNewFaceSlotPrefab;
+  private FaceEnrollmentNewCell _LockedNewFaceSlotInstance;
+
+  [SerializeField]
+  private FaceEnrollmentUnlockView _UnlockFaceCellViewPrefab;
+  private FaceEnrollmentUnlockView _UnlockFaceCellViewInstance;
+
   private List<FaceEnrollmentCell> _FaceCellList = new List<FaceEnrollmentCell>();
+  private List<FaceEnrollmentNewCell> _FaceNewCellList = new List<FaceEnrollmentNewCell>();
 
   private long _UpdateSeenThresholdSeconds;
   private long _updateEnrolledThresholdSeconds;
@@ -37,9 +46,40 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
       faceCellInstance.OnReEnrollFaceRequested += HandleReEnrollFaceRequested;
       _FaceCellList.Add(faceCellInstance);
     }
-    _EnrollNewFaceInstance = GameObject.Instantiate(_EnrollNewFacePrefab.gameObject).GetComponent<FaceEnrollmentNewCell>();
-    _EnrollNewFaceInstance.transform.SetParent(_ContentContainer, false);
-    _EnrollNewFaceInstance.OnCreateNewButton += HandleNewEnrollmentRequested;
+
+    for (int i = _FaceCellList.Count; i < UnlockablesManager.Instance.FaceSlotsSize(); ++i) {
+      if (UnlockablesManager.Instance.IsFaceSlotUnlocked(i)) {
+        // show enroll cell
+        _EnrollNewFaceInstance = GameObject.Instantiate(_EnrollNewFacePrefab.gameObject).GetComponent<FaceEnrollmentNewCell>();
+        _EnrollNewFaceInstance.transform.SetParent(_ContentContainer, false);
+        _EnrollNewFaceInstance.OnCreateNewButton += HandleNewEnrollmentRequested;
+        _FaceNewCellList.Add(_EnrollNewFaceInstance);
+      }
+      else {
+        // show locked cell, need to find next available locked face cell to unlock
+        _LockedNewFaceSlotInstance = GameObject.Instantiate(_LockedNewFaceSlotPrefab.gameObject).GetComponent<FaceEnrollmentNewCell>();
+        _LockedNewFaceSlotInstance.transform.SetParent(_ContentContainer, false);
+        _LockedNewFaceSlotInstance.OnCreateNewButton += () => {
+          _UnlockFaceCellViewInstance = UIManager.OpenView(_UnlockFaceCellViewPrefab);
+          _UnlockFaceCellViewInstance.OnUnlockButton += () => {
+            UnlockablesManager.Instance.UnlockNextAvailableFaceSlot();
+          };
+        };
+        _FaceNewCellList.Add(_LockedNewFaceSlotInstance);
+      }
+    }
+  }
+
+  private void HandleUnlockResults(Anki.Cozmo.ExternalInterface.RequestSetUnlockResult message) {
+    RefreshList(RobotEngineManager.Instance.CurrentRobot.EnrolledFaces);
+  }
+
+  private void Start() {
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleUnlockResults);
+  }
+
+  private void OnDestroy() {
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleUnlockResults);
   }
 
   private bool NeedsUpdate(int faceID, long seenThreshold, long enrolledThreshold) {
@@ -64,14 +104,15 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
     return false;
   }
 
-  public void ClearList() {
-    if (_EnrollNewFaceInstance != null) {
-      GameObject.Destroy(_EnrollNewFaceInstance.gameObject);
+  private void ClearList() {
+    for (int i = 0; i < _FaceNewCellList.Count; ++i) {
+      GameObject.Destroy(_FaceNewCellList[i].gameObject);
     }
 
     for (int i = 0; i < _FaceCellList.Count; ++i) {
       GameObject.Destroy(_FaceCellList[i].gameObject);
     }
+    _FaceNewCellList.Clear();
     _FaceCellList.Clear();
   }
 
