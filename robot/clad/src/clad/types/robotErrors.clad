@@ -1,0 +1,42 @@
+/** @file Clad definitions of robot error conditions
+ * @author Daniel Casner <daniel@anki.com>
+ * @date 2016 August 24th
+ */
+
+namespace Anki {
+namespace Cozmo {
+namespace RobotInterface {
+
+  // Enum must use explict values that are never reused to preserve forward / backward binary compatibility
+  enum int_8 CrashSource
+  {
+    WiFiCrash = 0,
+    RTIPCrash = 1,
+    BodyCrash = 2,
+    PropCrash = 3,
+  }
+
+  // Enum must use explict values that are never reused to preserve forward / backward binary compatibility
+  enum int_32 RobotErrorCode
+  {
+    REC_CrashReport = 0, ///< Must be 0 to match crash logging firmware
+    REC_I2SPI_TMD   = 1, ///< I2SPI drift
+  }
+
+  message CrashReport
+  {
+    int_32  errorCode, ///< Cannot be RobotErrorCode because of strict typing and forward / backwards compatibility requirements
+    int_16  RESERVED, //< Padding for now
+    CrashSource which,
+    uint_32 dump[uint_8],
+  }
+  
+  message RobotErrorReport
+  {
+    RobotErrorCode error, ///< The numbered erorr that happened
+    bool fatal ///< Whether the error was fatal and the engine should give up talking to the robot now
+  }
+  
+} // namespace RobotInterface
+} // namespace Cozmo
+} // namespace Anki

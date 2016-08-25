@@ -189,33 +189,38 @@ void Update()
     {
       RobotInterface::CrashReport report;
       report.errorCode = record.errorCode;
-      switch (record.reporter)
+      report.which = record.reporter;
+      if (report.errorCode == 0) // Crash dump
       {
-        case RobotInterface::WiFiCrash:
+        switch (record.reporter)
         {
-          report.which = RobotInterface::WiFiCrash;
-          report.dump_length = sizeof(CrashLog_ESP)/sizeof(uint32_t);
-          break;
+          case RobotInterface::WiFiCrash:
+          {
+            report.dump_length = sizeof(CrashLog_ESP)/sizeof(uint32_t);
+            break;
+          }
+          case RobotInterface::RTIPCrash:
+          {
+            report.dump_length = sizeof(CrashLog_K02)/sizeof(uint32_t);
+            break;
+          }
+          case RobotInterface::BodyCrash:
+          {
+            report.dump_length = sizeof(CrashLog_NRF)/sizeof(uint32_t);
+            break;
+          }
+          default:
+          {
+            AnkiWarn( 206, "CrashReporter.UnknownReporter", 513, "Reporter = %d", 1, record.reporter);
+            report.dump_length = 0;
+          }
         }
-        case RobotInterface::RTIPCrash:
-        {
-          report.which = RobotInterface::RTIPCrash;
-          report.dump_length = sizeof(CrashLog_K02)/sizeof(uint32_t);
-          break;
-        }
-        case RobotInterface::BodyCrash:
-        {
-          report.which = RobotInterface::BodyCrash;
-          report.dump_length = sizeof(CrashLog_NRF)/sizeof(uint32_t);
-          break;
-        }
-        default:
-        {
-          AnkiWarn( 206, "CrashReporter.UnknownReporter", 513, "Reporter = %d", 1, record.reporter);
-          report.dump_length = 0;
-        }
+        os_memcpy(report.dump, record.dump, report.dump_length);
       }
-      os_memcpy(report.dump, record.dump, report.dump_length);
+      else
+      {
+        report.dump_length = 0;
+      }
       if (RobotInterface::SendMessage(report))
       {
         crashHandlerMarkReported(reportIndex);

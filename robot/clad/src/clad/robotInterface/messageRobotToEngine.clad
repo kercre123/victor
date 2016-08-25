@@ -15,6 +15,7 @@
 #include "clad/robotInterface/otaMessages.clad"
 #include "clad/types/nvStorage.clad"
 #include "clad/types/animationEvents.clad"
+#include "clad/types/robotErrors.clad"
 #include "clad/types/fwTestMessages.clad"
 #include "clad/types/factoryFWOnly.clad"
 
@@ -66,21 +67,6 @@ message NVOpResultToEngine
   NVStorage::NVOpResult report
 }
 
-enum int_8 CrashSource
-{
-  WiFiCrash,
-  RTIPCrash,
-  BodyCrash,
-  PropCrash,
-}
-
-message CrashReport
-{
-  int_32  errorCode,
-  int_16  RESERVED, // Padding for now
-  CrashSource which,
-  uint_32 dump[uint_8],
-}
 
 /// *************** Overall message pipe ******************************* ///
 
@@ -131,6 +117,7 @@ union RobotToEngine {
   FactoryTestParameter       factoryTestParam       = 0xD6,
   ObjectUpAxisChanged        activeObjectUpAxisChanged = 0xD7,
   MotorAutoEnabled           motorAutoEnabled       = 0xD8,
+  RobotErrorReport           robotError             = 0xD9,
 
   FirmwareVersion            firmwareVersion        = 0xEE,
   OTA::Ack                   otaAck                 = 0xEF,

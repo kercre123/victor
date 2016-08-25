@@ -11,6 +11,7 @@ extern "C" {
 #include "backgroundTask.h"
 #include "client.h"
 #include "driver/i2spi.h"
+#include "driver/crash.h"
 }
 #include "rtip.h"
 #include "activeObjectManager.h"
@@ -236,11 +237,22 @@ void Exec(os_event_t *event)
     }
     case 5:
     {
-      static uint32_t lastErrorReport = 0;
-      if (i2spiPhaseErrorCount - lastErrorReport > 2)
+      static bool haveReported = false;
+      if (i2spiPhaseErrorCount > 2)
       {
-        lastErrorReport = i2spiPhaseErrorCount;
+        RobotInterface::RobotErrorReport rer;
+        rer.error = RobotInterface::REC_I2SPI_TMD;
+        rer.fatal = true;
+        RobotInterface::SendMessage(rer);
         AnkiWarn( 185, "I2SPI.TooMuchDrift", 486, "TMD=%d\tintegral=%d", 2, i2spiPhaseErrorCount, i2spiIntegralDrift);
+        if (haveReported == false)
+        {
+          CrashRecord cr;
+          os_memset(&cr, 0xff, sizeof(CrashRecord));
+          cr.reporter = RobotInterface::WiFiCrash;
+          cr.errorCode = rer.error;
+          if (crashHandlerPutReport(&cr) >= 0) haveReported = true;
+        }
       }
       break;
     }
