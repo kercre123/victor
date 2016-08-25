@@ -283,6 +283,7 @@ Result IBehavior::Init()
   }
   
   _isRunning = true;
+  _canStartActing = true;
   _actingCallback = nullptr;
   _startedRunningTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   Result initResult = InitInternal(_robot);
@@ -342,6 +343,8 @@ void IBehavior::Stop()
 
 void IBehavior::StopOnNextActionComplete()
 {
+  // clear the callback and don't let any new actions start
+  _canStartActing = false;
   _actingCallback = nullptr;
 }
 
@@ -526,6 +529,12 @@ float IBehavior::EvaluateScore(const Robot& robot) const
 
 bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback callback)
 {
+  // needed for StopOnNextActionComplete to work properly, don't allow starting new actions if we've requested
+  // the behavior to stop
+  if( ! _canStartActing ) {
+    return false;
+  }
+  
   if( ! IsRunning() ) {
     PRINT_NAMED_WARNING("IBehavior.StartActing.Failure.NotRunning",
                         "Behavior '%s' can't start acting because it is not running",
@@ -595,14 +604,18 @@ bool IBehavior::StopActing(bool allowCallback)
       // if we want to block the callback, clear the tag here, before the cancel
       _lastActionTag = ActionConstants::INVALID_TAG;
     }
-      
+
+    // NOTE: if we are allowing callbacks, this cancel could run a bunch of behavior code
     bool ret = _robot.GetActionList().Cancel( tagToCancel );
 
     // note that the callback, if there was one (and it was allowed to run), should have already been called
     // at this point, so it's safe to clear the tag. Also, if the cancel itself failed, that is probably a
     // bug, but somehow the action is gone, so no sense keeping the tag around (and it clearly isn't
-    // running)
-    _lastActionTag = ActionConstants::INVALID_TAG;
+    // running). If the callback called StartActing, we may have a new action tag, so only clear this if the
+    // cancel didn't change it
+    if( _lastActionTag == tagToCancel ) {
+      _lastActionTag = ActionConstants::INVALID_TAG;
+    }
     return ret;
   }
 
