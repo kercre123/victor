@@ -133,6 +133,9 @@ espBuild: esp AnkiLog
 $(OTA_FILE): Makefile $(RELEASE_DIR) $(WIFI_BINARY) $(RTIP_BINARY) $(BODY_BINARY) tools/sign.py python
 	$(PY) ./tools/sign.py -c $(BUILD_NUMBER) $(SIGN_FLAGS) --wifi $(WIFI_BINARY) --rtip $(RTIP_BINARY)  --body $(BODY_BINARY) $@
 
+update_k02_bootloader.safe: 
+	$(PY) ./tools/sign.py -c 9999 $(SIGN_FLAGS) --wifi $(WIFI_BINARY) --rtip ./build/recover/robot_recover.axf  --body $(BODY_BINARY) $@
+
 $(BUILD_DIR)/syscon.map:
 	if test -e syscon/build/app/syscon.map; then cp syscon/build/app/syscon.map $@; fi
 
