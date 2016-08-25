@@ -69,6 +69,13 @@ TextToSpeechComponent::OperationId TextToSpeechComponent::CreateSpeech(const std
 {
   // Prepare to generate TtS on other thread
   OperationId opId = GetNextOperationId();
+  // Don't print text string in non-developer mode
+  const char* logStr = ANKI_DEVELOPER_CODE ? text.c_str() : "<private>";
+  PRINT_CH_INFO(Audio::AudioController::kAudioLogChannelName,
+                "TextToSpeechComponent.CreateSpeech",
+                "Text '%s' Style: %s Duration: %f OperationId: %u",
+                logStr, EnumToString(style), durationScalar, opId);
+  
   const auto it =_ttsWaveDataMap.emplace(opId, TtsBundle());
   if (!it.second) {
     PRINT_NAMED_ERROR("TextToSpeechComponent.CreateSpeech.DispatchAysnc", "OperationId %d already in cache", opId);
@@ -112,13 +119,18 @@ TextToSpeechComponent::AudioCreationState TextToSpeechComponent::GetOperationSta
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool TextToSpeechComponent::PrepareSpeech(const OperationId operationId,
-                                          const Audio::GameObjectType audioGameObject,
                                           float& out_duration_ms) const
 {
   const auto ttsBundle = GetTtsBundle(operationId);
   if (nullptr == ttsBundle) {
+    PRINT_NAMED_ERROR("TextToSpeechComponent.PrepareSpeech", "OperationId: %u Not Found", operationId);
     return false;
   }
+  
+  PRINT_CH_INFO(Audio::AudioController::kAudioLogChannelName,
+                "TextToSpeechComponent.PrepareSpeech",
+                "OperationId: %u",
+                operationId);
   
   ASSERT_NAMED(AudioCreationState::Ready == ttsBundle->state,
                "TextToSpeechComponent.PrepareSpeech.ttsBundle.state.NotReady");
@@ -152,6 +164,9 @@ bool TextToSpeechComponent::PrepareSpeech(const OperationId operationId,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TextToSpeechComponent::CompletedSpeech()
 {
+  PRINT_CH_INFO(Audio::AudioController::kAudioLogChannelName,
+                "TextToSpeechComponent.CompletedSpeech", "");
+  
   using namespace Audio;
   ASSERT_NAMED(nullptr != _audioController, "TextToSpeechComponent.CompletedSpeech.NullAudioController");
   AudioControllerPluginInterface* pluginInterface = _audioController->GetPluginInterface();
@@ -166,6 +181,11 @@ void TextToSpeechComponent::CompletedSpeech()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TextToSpeechComponent::ClearOperationData(const OperationId operationId)
 {
+  PRINT_CH_INFO(Audio::AudioController::kAudioLogChannelName,
+                "TextToSpeechComponent.ClearOperationData",
+                "OperationId: %u",
+                operationId);
+  
   std::lock_guard<std::mutex> lock(_lock);
   const auto it = _ttsWaveDataMap.find(operationId);
   if (it != _ttsWaveDataMap.end()) {
@@ -176,6 +196,9 @@ void TextToSpeechComponent::ClearOperationData(const OperationId operationId)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TextToSpeechComponent::ClearAllLoadedAudioData()
 {
+  PRINT_CH_INFO(Audio::AudioController::kAudioLogChannelName,
+                "TextToSpeechComponent.ClearAllLoadedAudioData", "");
+  
   std::lock_guard<std::mutex> lock(_lock);
   _ttsWaveDataMap.clear();
 } // ClearAllLoadedAudioData()

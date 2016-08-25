@@ -154,7 +154,6 @@ ActionResult SayTextAction::Init()
       float duration_ms = 0.0f;
       // FIXME: Need to way to get other Audio GameObjs
       const bool success = _robot.GetTextToSpeechComponent().PrepareSpeech(_ttsOperationId,
-                                                                           Audio::GameObjectType::CozmoBus_1,
                                                                            duration_ms);
 
       if (!success) {

@@ -75,7 +75,7 @@ public:
   // out_durration_ms provides approximate durration of event before proccessing in audio engine
   // Return false if the audio has NOT been created or is not yet ready, out_duration_ms will NOT be valid.
   // TODO: Currently there is only 1 source plugin for inserting audio it would be nice to have more
-  bool PrepareSpeech(const OperationId operationId, const Audio::GameObjectType audioGameObject, float& out_duration_ms) const;
+  bool PrepareSpeech(const OperationId operationId, float& out_duration_ms) const;
   
   // Clear Speech audio data from audio controller
   // TODO: Currently there is only 1 source plugin for inserting audio it would be nice to have more
