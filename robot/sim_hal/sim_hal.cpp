@@ -1258,7 +1258,6 @@ namespace Anki {
         ActiveObjectSlotInfo* cubeInfo = &activeObjectSlots_[i];
         if (cubeInfo->connected && (HAL::GetTimeStamp() - cubeInfo->lastHeardTime > 3000)) {  // Threshold needs to be greater than ActiveBlock::DISCOVERED_MESSAGE_PERIOD * ActiveBlock::TIMESTEP
           cubeInfo->connected = false;
-          cubeInfo->assignedFactoryID = 0;
           SendObjectConnectionState(i);
         }
       }
