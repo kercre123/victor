@@ -193,18 +193,29 @@ namespace Anki {
 
       void StartCalibrationRoutine(bool autoStarted)
       {
-        Enable();
-        calState_ = LCS_LOWER_LIFT;
-        isCalibrated_ = false;
-        potentialBurnoutStartTime_ms_ = 0;
-        Messages::SendMotorCalibrationMsg(MOTOR_LIFT, true, autoStarted);
+        if (!IsCalibrating()) {
+          Enable();
+          calState_ = LCS_LOWER_LIFT;
+          isCalibrated_ = false;
+          potentialBurnoutStartTime_ms_ = 0;
+          Messages::SendMotorCalibrationMsg(MOTOR_LIFT, true, autoStarted);
+        }
       }
 
       bool IsCalibrated()
       {
         return isCalibrated_;
       }
-
+      
+      bool IsCalibrating()
+      {
+        return calState_ != LCS_IDLE;
+      }
+      
+      void ClearCalibration()
+      {
+        isCalibrated_ = false;
+      }
 
       bool IsMoving()
       {

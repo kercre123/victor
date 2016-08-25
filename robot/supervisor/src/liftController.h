@@ -32,7 +32,12 @@ namespace Anki {
       void StartCalibrationRoutine(bool autoStarted = false);
       
       // Returns true if calibration has completed
-      bool IsCalibrated();
+      bool IsCalibrated();      
+      
+      bool IsCalibrating();
+      
+      // Puts motor in uncalibrated state
+      void ClearCalibration();
 
       // Specifies max velocity and acceleration that SetDesiredHeight() uses.
       void SetMaxSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2);

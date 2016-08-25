@@ -83,7 +83,6 @@ static const int ALL_N_MOTOR_PINS =
   PIN_LIFT_N1  | PIN_LIFT_N2;
 
 static volatile bool motorDisable = true;
-static bool motorCalibrate = false;
 
 // NOTE: Do NOT re-order the MotorID enum, because this depends on it
 static const MotorConfig m_config[MOTOR_COUNT] = {
@@ -263,9 +262,6 @@ void Motors::setup(void) {
     nrf_gpio_cfg_output(motorConfig->n2Pin);
     nrf_gpio_cfg_output(motorConfig->pPin);
   }
-    
-  // Motors need to be recalibrated now
-  motorCalibrate = true;
 
   // It is now officially safe for manage to run again
   motorDisable = false;
@@ -534,17 +530,6 @@ void Motors::manage()
       Motors::setPower(i, 0);
     }
     return ;
-  }
-
-  if (motorCalibrate) {
-    using namespace Anki::Cozmo::RobotInterface;
-  
-    StartMotorCalibration msg;
-    msg.calibrateHead = true;
-    msg.calibrateLift = true;
-    SendMessage(msg);
-    
-    motorCalibrate = false;
   }
 
   // Copy (valid) data to update motors

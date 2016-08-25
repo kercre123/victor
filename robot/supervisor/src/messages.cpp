@@ -813,16 +813,22 @@ namespace Anki {
         vExt_ = static_cast<float>(msg.VExtFixed)/65536.0f;
         onCharger_  = msg.onCharger;
         isCharging_ = msg.isCharging;
-        bodyRadioMode_ = msg.operatingMode;
-        
-        if (bodyRadioMode_ == BODY_ACCESSORY_OPERATING_MODE ) {
-          LiftController::Enable();
-          HeadController::Enable();
-          WheelController::Enable();
-        } else {
-          LiftController::Disable();
-          HeadController::Disable();
-          WheelController::Disable();
+
+        if (bodyRadioMode_ != msg.operatingMode) {
+          bodyRadioMode_ = msg.operatingMode;
+          if (bodyRadioMode_ == BODY_ACCESSORY_OPERATING_MODE ) {
+            LiftController::Enable();
+            LiftController::StartCalibrationRoutine();
+            HeadController::Enable();
+            HeadController::StartCalibrationRoutine();
+            WheelController::Enable();
+          } else {
+            LiftController::Disable();
+            LiftController::ClearCalibration();
+            HeadController::Disable();
+            HeadController::ClearCalibration();
+            WheelController::Disable();
+          }
         }
       }
       void Process_getPropState(const PropState& msg)

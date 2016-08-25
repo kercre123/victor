@@ -101,23 +101,6 @@ namespace Anki {
       //
       // Methods:
       //
-
-      // The initial "stretch" and reset motor positions routine
-      // Returns true when done.
-      bool MotorCalibrationUpdate()
-      {
-        bool isDone = false;
-
-        if (LiftController::IsCalibrated() && HeadController::IsCalibrated())
-				{
-          AnkiEvent( 218, "CozmoBot.MotorsCalibrated", 305, "", 0);
-          IMUFilter::Reset();
-          isDone = true;
-        }
-        return isDone;
-      }
-
-
       Result Init(void)
       {
         Result lastResult = RESULT_OK;
@@ -352,7 +335,7 @@ namespace Anki {
         {
           case INIT_MOTOR_CALIBRATION:
           {
-            if(MotorCalibrationUpdate()) {
+            if (LiftController::IsCalibrated() && HeadController::IsCalibrated()) {
               // Once initialization is done, broadcast a message that this robot
               // is ready to go
               waitForFirstMotorCalibAfterConnect_ = false;
@@ -370,13 +353,6 @@ namespace Anki {
                 }
               }
 #endif
-              
-              // Keep lift and head limp by default if not already connected
-              // which at this point it usually shouldn't be
-              if (!HAL::RadioIsConnected()) {
-                LiftController::Disable();
-                HeadController::Disable();
-              }
               
               mode_ = WAITING;
             }

@@ -355,6 +355,10 @@ namespace Anki {
       {
         rot_ = 0;
         rotSpeed_ = 0;
+        
+        pitch_ = 0;
+        pickedUp_ = 0;
+        imu_data_.Reset();
 
         //eventActivationCallbacks[LEFTSIDE_DOWN] = TurnOnIndicatorLight;
         //eventDeactivationCallbacks[LEFTSIDE_DOWN] = StartPathFollowTest;
@@ -694,6 +698,7 @@ namespace Anki {
 
         // Don't do IMU updates until head is calibrated
         if (!HeadController::IsCalibrated()) {
+          Reset();
           return retVal;
         }
 

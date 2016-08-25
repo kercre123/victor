@@ -33,6 +33,10 @@ namespace Anki {
 
       void StartCalibrationRoutine(bool autoStarted = false);
       bool IsCalibrated();
+      bool IsCalibrating();
+      
+      // Puts motor in uncalibrated state
+      void ClearCalibration();
       
       // Enable/Disable HAL commands to head motor
       void Enable();
