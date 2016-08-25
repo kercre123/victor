@@ -41,20 +41,20 @@ namespace Anki
   {
     namespace HAL
     {
-      void ClearActiveObjectData()
+      void ClearActiveObjectData(uint8_t slot)
       {
-        for (int i=0; i< MAX_CUBES; ++i) {
-          movingTimeoutCtr[i] = 0;
-          isMoving[i] = false;
+        if (slot < MAX_CUBES) {
+          movingTimeoutCtr[slot] = 0;
+          isMoving[slot] = false;
           
-          prevMotionDir[i] = Unknown;
-          prevUpAxis[i] = Unknown;
-          nextUpAxis[i] = Unknown;
-          nextUpAxisCount[i] = 0;
+          prevMotionDir[slot] = Unknown;
+          prevUpAxis[slot] = Unknown;
+          nextUpAxis[slot] = Unknown;
+          nextUpAxisCount[slot] = 0;
         }
       }
       
-      void ReportUpAxisChanged(int id, UpAxis a)
+      void ReportUpAxisChanged(uint8_t id, UpAxis a)
       {
         ObjectUpAxisChanged m;
         m.timestamp = HAL::GetTimeStamp();

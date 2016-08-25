@@ -282,10 +282,6 @@ namespace Anki {
         // Reset pose history and frameID to zero
         Localization::ResetPoseFrame();
         
-        // Clearing active object data so that upAxes get computed anew
-        // and sent up to the engine upon connection.
-        HAL::ClearActiveObjectData();
-        
 #ifndef TARGET_K02
         // Reset number of bytes/audio frames played in animation buffer
         AnimationController::ClearNumBytesPlayed();
@@ -836,6 +832,23 @@ namespace Anki {
         HAL::GetPropState(msg.slot, -msg.x, msg.z, msg.y, msg.shockCount,
                           msg.tapTime, msg.tapNeg, msg.tapPos);
 #endif
+      }
+      
+      void Process_objectConnectionStateToRobot(const ObjectConnectionStateToRobot& msg)
+      {
+        if (msg.connected) {
+          // Clear motion data for the object on connect so that
+          // ObjectUpAxisChanged will be sent up soon after.
+          HAL::ClearActiveObjectData(msg.objectID);
+        }
+        
+        // Forward on the 'to-engine' version of this message
+        ObjectConnectionState newMsg;
+        newMsg.objectID = msg.objectID;
+        newMsg.device_type = msg.device_type;
+        newMsg.factoryID = msg.factoryID;
+        newMsg.connected = msg.connected;
+        RobotInterface::SendMessage(newMsg);
       }
       
       void Process_enableTestStateMessage(const RobotInterface::EnableTestStateMessage& msg)

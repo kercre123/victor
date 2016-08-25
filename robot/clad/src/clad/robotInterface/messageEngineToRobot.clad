@@ -432,6 +432,7 @@ union EngineToRobot
   RollActionParams              rollActionParams            = 0x59,
   EnableStopOnCliff             enableStopOnCliff           = 0x60,
   ForceDelocalizeSimulatedRobot forceDelocalizeSimulatedRobot = 0x61, // Used for simulation only, no-op for physical
+  ObjectConnectionStateToRobot  objectConnectionStateToRobot = 0x62,
 
   
   // 0x80 to 0xAF: To WiFi

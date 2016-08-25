@@ -502,7 +502,8 @@ namespace Anki
       void GetPropState(uint8_t id, int x, int y, int z, int shocks,
                         uint8_t tapTime, int8_t tapNeg, int8_t tapPos);
 
-      void ClearActiveObjectData();
+      // Clear the motion data for the specified slot
+      void ClearActiveObjectData(uint8_t slot);
       
       /////////////////////////////////////////////////////////////////////
       // POWER MANAGEMENT

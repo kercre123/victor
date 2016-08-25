@@ -220,7 +220,7 @@ static void EnterState(RadioState state) {
 
 static void SendObjectConnectionState(int slot)
 {
-  ObjectConnectionState msg;
+  ObjectConnectionStateToRobot msg;
   msg.objectID = slot;
   msg.factoryID = accessories[slot].id;
   msg.connected = accessories[slot].active;
