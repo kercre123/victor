@@ -60,6 +60,10 @@ void RobotAudioBuffer::UpdateBuffer( const AudioSample* samples, const size_t sa
   std::lock_guard<std::mutex> lock( _lock );
   
   ASSERT_NAMED(!_streamQueue.empty(), "RobotAudioBuffer.UpdateBuffer._streamQueue.IsEmpty");
+  if (_streamQueue.empty())
+  {
+    return;
+  }
   
   // Copy audio samples into frame & push it into the queue
   AudioFrameData *audioFrame = new AudioFrameData( sampleCount );
@@ -83,6 +87,10 @@ void RobotAudioBuffer::CloseAudioBuffer()
   std::lock_guard<std::mutex> lock( _lock );
   if ( !_isWaitingForReset ) {
     ASSERT_NAMED(!_streamQueue.empty(), "RobotAudioBuffer.CloseAudioBuffer._streamQueue.IsEmpty");
+    if (_streamQueue.empty())
+    {
+      return;
+    }
     _streamQueue.back().SetIsComplete();
   }
   _isActive = false;
@@ -92,8 +100,12 @@ void RobotAudioBuffer::CloseAudioBuffer()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
 RobotAudioFrameStream* RobotAudioBuffer::GetFrontAudioBufferStream()
 {
-  ASSERT_NAMED( !_streamQueue.empty(), "Must check if a Robot Audio Buffer Stream is in Queue befor calling this method") ;
   std::lock_guard<std::mutex> lock( _lock );
+  ASSERT_NAMED( !_streamQueue.empty(), "Must check if a Robot Audio Buffer Stream is in Queue befor calling this method") ;
+  if (_streamQueue.empty())
+  {
+    return nullptr;
+  }
   return &_streamQueue.front();
 }
 
@@ -105,9 +117,14 @@ void RobotAudioBuffer::PopAudioBufferStream()
                        (unsigned long)_streamQueue.size(),
                        Util::Time::UniversalTime::GetCurrentTimeInSeconds() );
   }
+  std::lock_guard<std::mutex> lock( _lock );
+  if (_streamQueue.empty())
+  {
+    PRINT_NAMED_ERROR("RobotAudioBuffer.PopAudioBufferStream.EmptyQueue", "Tried to pop from an empty stream queue.");
+    return;
+  }
   
   ASSERT_NAMED(_streamQueue.front().IsComplete(), "RobotAudioBuffer.PopAudioBufferStream._streamQueue.front.IsNOTComplete");
-  std::lock_guard<std::mutex> lock( _lock );
   _streamQueue.pop();
 }
 
@@ -140,6 +157,11 @@ void RobotAudioBuffer::ResetAudioBuffer()
   }
 }
 
+bool RobotAudioBuffer::HasAudioBufferStream()
+{
+  std::lock_guard<std::mutex> lock( _lock );
+  return !_streamQueue.empty();
+}
   
 } // Audio
 } // Cozmo
