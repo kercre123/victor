@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: FaceEnrollmentSlot4
-    _EnumValue: 11
+    _EnumValue: 23
   UnlockableType: 2
   Prerequisites: []
   AnyPrereqUnlock: 0
@@ -21,7 +21,7 @@ MonoBehaviour:
   DescriptionKey: unlockable.FaceEnrollment.Description
   TitleKey: unlockable.FaceEnrollment.Title
   UpgradeCostItemId: TestHexItem0
-  UpgradeCostAmountNeeded: 2
+  UpgradeCostAmountNeeded: 5
   RequestTrickCostItemId: treat
   RequestTrickCostAmountCurve:
     serializedVersion: 2
