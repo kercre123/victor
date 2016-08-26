@@ -43,7 +43,7 @@
     "translation": "When Cozmo sees you, you'll hear a chime."
   },
   "faceEnrollment.unlockView.description": {
-    "translation": "Unlock this slot to\nintroduce Cozmo to another person."
+    "translation": "Unlock this slot to allow\nCozmo to recognize more people."
   },
   "faceEnrollment.errors.neverSawValidFace.title": {
     "translation": "Cozmo already knows you!"

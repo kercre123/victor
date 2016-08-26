@@ -316,7 +316,8 @@ public class CoreUpgradeDetailsDialog : BaseView {
     CleanUpSparkAnimations();
   }
 
-  private void Update() {
+  protected override void Update() {
+    base.Update();
     if (_SparkButtonPressedTime > 0) {
       float heldTime = (Time.time - _SparkButtonPressedTime);
       if (heldTime >= _SparkHoldTimeSec) {

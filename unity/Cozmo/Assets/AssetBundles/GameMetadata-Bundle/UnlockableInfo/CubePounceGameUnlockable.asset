@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: KeepawayGame
-    _EnumValue: 15
+    _EnumValue: 11
   UnlockableType: 0
   Prerequisites:
   - _EnumValueAsString: PounceOnMotionAction
@@ -23,7 +23,7 @@ MonoBehaviour:
   DescriptionKey: unlockable.CubePounce.Description
   TitleKey: unlockable.CubePounce.Title
   UpgradeCostItemId: TestHexItem0
-  UpgradeCostAmountNeeded: 2
+  UpgradeCostAmountNeeded: 5
   RequestTrickCostItemId: treat
   RequestTrickCostAmountCurve:
     serializedVersion: 2

@@ -69,12 +69,11 @@ TextToSpeechComponent::OperationId TextToSpeechComponent::CreateSpeech(const std
 {
   // Prepare to generate TtS on other thread
   OperationId opId = GetNextOperationId();
-  // Don't print text string in non-developer mode
-  const char* logStr = ANKI_DEVELOPER_CODE ? text.c_str() : "<private>";
   PRINT_CH_INFO(Audio::AudioController::kAudioLogChannelName,
                 "TextToSpeechComponent.CreateSpeech",
                 "Text '%s' Style: %s Duration: %f OperationId: %u",
-                logStr, EnumToString(style), durationScalar, opId);
+                Util::HidePersonallyIdentifiableInfo(text.c_str()), // could be a name!
+                EnumToString(style), durationScalar, opId);
   
   const auto it =_ttsWaveDataMap.emplace(opId, TtsBundle());
   if (!it.second) {

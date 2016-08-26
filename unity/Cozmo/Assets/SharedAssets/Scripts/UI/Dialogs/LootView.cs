@@ -229,10 +229,6 @@ namespace Cozmo {
 
         GameObject banner = UIManager.CreateUIElement(_BannerPrefab.gameObject, _BannerContainer);
         _BannerInstance = banner.GetComponent<Banner>();
-
-        if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Loot)) {
-          OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.Loot);
-        }
       }
 
       private IEnumerator InitializeBox() {
@@ -291,7 +287,8 @@ namespace Cozmo {
         }
       }
 
-      private void Update() {
+      protected override void Update() {
+        base.Update();
         // Decay charge if the box hasn't been opened yet, update the progressbar.
         if (_BoxOpened == false) {
           if (_currentCharge > 0.0f) {

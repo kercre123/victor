@@ -15,11 +15,12 @@
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/common/basestation/objectIDs.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include <vector>
 
 namespace Anki {
 namespace Cozmo {
-
+  
 class BehaviorReactToPickup : public IReactionaryBehavior
 {
 private:
@@ -38,18 +39,15 @@ protected:
   virtual Result InitInternalReactionary(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
   virtual void   StopInternalReactionary(Robot& robot) override;
+  virtual bool ShouldRunWhileOffTreads() const override { return true;}
+  virtual bool ShouldComputationallySwitch(const Robot& robot) override;
 
-  virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) override;
-  
   void StartAnim(Robot& robot);
 
 private:
 
-  bool _isInAir = false;
   double _nextRepeatAnimationTime = 0;
   double _repeatAnimatingMultiplier = 1;
-
-  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
   
 }; // class BehaviorReactToPickup
   

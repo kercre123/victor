@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: PounceOnMotionAction
-    _EnumValue: 11
+    _EnumValue: 12
   UnlockableType: 1
   Prerequisites:
   - _EnumValueAsString: RollCube
@@ -23,27 +23,27 @@ MonoBehaviour:
   DescriptionKey: unlockable.PounceOnMotionAction.Description
   TitleKey: unlockable.PounceOnMotionAction.Title
   UpgradeCostItemId: TestHexItem0
-  UpgradeCostAmountNeeded: 1
+  UpgradeCostAmountNeeded: 8
   RequestTrickCostItemId: treat
   RequestTrickCostAmountCurve:
     serializedVersion: 2
     m_Curve:
     - time: 0
       value: 0
-      inSlope: 3.0636773
-      outSlope: 3.0636773
+      inSlope: 0
+      outSlope: 0
       tangentMode: 0
     - time: 1
       value: 1
-      inSlope: 0.17171238
-      outSlope: 0.17171238
+      inSlope: 2
+      outSlope: 2
       tangentMode: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 0
   RequestTrickCostAmountNeededMin: 2
-  RequestTrickCostAmountNeededMaxTimes: 10
-  RequestTrickCostAmountNeededMax: 30
+  RequestTrickCostAmountNeededMaxTimes: 50
+  RequestTrickCostAmountNeededMax: 99
   CoreUpgradeTintColorName: upgradeGreen
   CoreUpgradeIcon: {fileID: 21300000, guid: 5a4d4d5c9323648ffbd88c731add0028, type: 3}
   CoreUpgradeOverlayIcon: {fileID: 21300000, guid: 3d82dcb60a5964ab9adfd0732e5f2139,

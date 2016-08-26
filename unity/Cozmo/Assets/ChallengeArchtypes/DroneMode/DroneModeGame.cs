@@ -32,20 +32,9 @@ namespace Cozmo {
           InitializeStateMachine();
         }
 
-        private const string _kDroneModeReactionaryBehaviorOwnerId = "drone_mode";
-
-        protected override void InitializeReactionaryBehaviorsForGameStart() {
-          // If the ID is not the same as the true request, it will not go through so make sure they are the same.
-          // Handled on a state-by-state basis in drone mode
-          RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kDroneModeReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToCubeMoved, false);
-          RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kDroneModeReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToCliff, false);
-        }
-
-        protected override void ResetReactionaryBehaviorsForGameEnd() {
-          // If the ID is not the same as the true request, it will not go through so make sure they are the same.
-          // Handled on a state-by-state basis in drone mode
-          RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kDroneModeReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToCubeMoved, true);
-          RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kDroneModeReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToCliff, true);
+        protected override void AddDisabledReactionaryBehaviors() {
+          _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToCubeMoved);
+          _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToCliff);
         }
 
         private void InitializeStateMachine() {

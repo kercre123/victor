@@ -77,17 +77,19 @@ message DockingStatus
   Status status,
 }
 
-message BlockPickedUp
+enum int_8 BlockStatus
 {
-  uint_32  timestamp,
-  bool didSucceed,
-  DockingResult result,
+  NO_BLOCK,
+  BLOCK_PLACED,
+  BLOCK_PICKED_UP
 }
 
-message BlockPlaced
+message PickAndPlaceResult
 {
-  uint_32  timestamp,
+  uint_32 timestamp,
   bool didSucceed,
+  DockingResult result,
+  BlockStatus blockStatus
 }
 
 message MovingLiftPostDock

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: MeetCozmoGame
-    _EnumValue: 11
+    _EnumValue: 16
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0
@@ -21,7 +21,7 @@ MonoBehaviour:
   DescriptionKey: unlockable.FaceEnrollment.Description
   TitleKey: unlockable.FaceEnrollment.Title
   UpgradeCostItemId: TestHexItem0
-  UpgradeCostAmountNeeded: 2
+  UpgradeCostAmountNeeded: 0
   RequestTrickCostItemId: treat
   RequestTrickCostAmountCurve:
     serializedVersion: 2

@@ -1,0 +1,23 @@
+// UiMessageDefinitions message definition file
+//  for the C-Like Abstract Data language
+// Author: Kevin M. Karol
+// Copyright: Anki Inc (c) 2016
+
+namespace Anki {
+namespace Cozmo {
+
+enum int_8 OffTreadsState {
+  OnTreads,
+  InAir,
+  OnBack, 
+  OnLeftSide, 
+  OnRightSide, 
+  OnFace, 
+
+  Count
+}
+
+
+
+} // namespace Cozmo
+} // namespace Anki

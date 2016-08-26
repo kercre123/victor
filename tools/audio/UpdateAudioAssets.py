@@ -131,7 +131,9 @@ def __updateSoundbanks(version, mergeMetadataPath):
          # Write file
         with open(__depsFilePath, "w") as deps_file:
             json.dump(deps_json, deps_file, indent=4, sort_keys=True, separators=(',', ': '))
-            print("DEPS file has been updated (%s)" % path.realpath(__depsFilePath))
+            deps_file.write(os.linesep)
+
+        print("DEPS file has been updated (%s)" % path.realpath(__depsFilePath))
 
         # Download Soundbanks
         dependencies.extract_dependencies(__depsFilePath, __externalsDir)

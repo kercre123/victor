@@ -56,7 +56,7 @@ Result BehaviorPlayAnim::InitInternal(Robot& robot)
   
   // Ensure animation doesn't throw cube down, but still can play get down animations
   if(robot.IsCarryingObject()
-     && !robot.IsPickedUp()){
+     && robot.GetOffTreadsState() == OffTreadsState::OnTreads){
     tracksToLock = (u8) AnimTrackFlag::LIFT_TRACK;
   }
   

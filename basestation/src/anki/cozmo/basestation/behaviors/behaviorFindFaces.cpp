@@ -69,7 +69,7 @@ BehaviorFindFaces::BehaviorFindFaces(Robot& robot, const Json::Value& config)
     
   SubscribeToTags({{
     EngineToGameTag::RobotCompletedAction,
-    EngineToGameTag::RobotPickedUp
+    EngineToGameTag::RobotOffTreadsStateChanged
   }});
 
   if (GetEmotionScorerCount() == 0)
@@ -139,7 +139,7 @@ void BehaviorFindFaces::HandleWhileRunning(const EngineToGameEvent& event, Robot
       }
       break;
     }
-    case EngineToGameTag::RobotPickedUp:
+    case EngineToGameTag::RobotOffTreadsStateChanged:
     {
       // Handled in AlwaysHandle
       break;
@@ -154,11 +154,14 @@ void BehaviorFindFaces::HandleWhileRunning(const EngineToGameEvent& event, Robot
   
 void BehaviorFindFaces::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
 {
-  if (_useFaceAngleCenter && EngineToGameTag::RobotPickedUp == event.GetData().GetTag())
+  if (_useFaceAngleCenter && EngineToGameTag::RobotOffTreadsStateChanged == event.GetData().GetTag())
   {
-    _faceAngleCenterSet = false;
+    if(event.GetData().Get_RobotOffTreadsStateChanged().treadsState != OffTreadsState::OnTreads){
+      _faceAngleCenterSet = false;
+    }
   }
 }
+  
   
 Result BehaviorFindFaces::InitInternal(Robot& robot)
 {
@@ -172,6 +175,7 @@ Result BehaviorFindFaces::InitInternal(Robot& robot)
 
 IBehavior::Status BehaviorFindFaces::UpdateInternal(Robot& robot)
 {
+  
   // First time we're updating, set our face angle center
   if (_useFaceAngleCenter && !_faceAngleCenterSet)
   {

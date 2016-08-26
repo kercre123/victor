@@ -135,6 +135,17 @@ namespace Cozmo {
         CloseView();
       }
 
+      protected virtual void Update() {
+#if (UNITY_ANDROID && !UNITY_EDITOR)
+        // Android Back button.
+        if (_OptionalCloseDialogButton != null) {
+          if (Input.GetKeyDown(KeyCode.Escape)) {
+            HandleUserClose();
+          }
+        }
+#endif
+      }
+
       public void CloseView() {
         // if we are already closing the view don't make multiple calls
         // to the callback and don't try to play the close animation again

@@ -40,28 +40,40 @@ void RobotIdleTimeoutComponent::Update(double currentTime_s)
   // If it's time to do sleep and face off
   if(_faceOffTimeout_s > 0.0f && _faceOffTimeout_s <= currentTime_s)
   {
-    _faceOffTimeout_s = -1.0f;
+    _faceOffTimeout_s = 0.0f;
     _robot.GetActionList().QueueActionNow(CreateGoToSleepAnimSequence(_robot));
   }
   
   // If it's time to disconnect
-  if(_disconnectTimeout_s > 0.f && _disconnectTimeout_s <= currentTime_s)
+  if(_disconnectTimeout_s > 0.0f && _disconnectTimeout_s <= currentTime_s)
   {
-    _disconnectTimeout_s = -1.0f;
+    _disconnectTimeout_s = 0.0f;
     _robot.GetRobotMessageHandler()->Disconnect();
   }
+}
+  
+static bool ShouldUpdateTimeoutHelper(double currentTime, double oldTimeout, double newTimeoutDuration)
+{
+  bool oldTimeoutNotSet = (oldTimeout == -1.0f);
+  // If we have a new timeout duration to use and (no existing timeout or a later existing timeout)
+  if (newTimeoutDuration >= 0.0f &&
+      (oldTimeoutNotSet || (currentTime + newTimeoutDuration) < oldTimeout) )
+  {
+    return true;
+  }
+  return false;
 }
   
 template<>
 void RobotIdleTimeoutComponent::HandleMessage(const ExternalInterface::StartIdleTimeout& msg)
 {
   const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if (msg.faceOffTime_s >= 0.0f)
+  if (ShouldUpdateTimeoutHelper(currentTime, _faceOffTimeout_s, msg.faceOffTime_s))
   {
     _faceOffTimeout_s = currentTime + msg.faceOffTime_s;
   }
   
-  if (msg.disconnectTime_s >= 0.0f)
+  if (ShouldUpdateTimeoutHelper(currentTime, _disconnectTimeout_s, msg.disconnectTime_s))
   {
     _disconnectTimeout_s = currentTime + msg.disconnectTime_s;
   }

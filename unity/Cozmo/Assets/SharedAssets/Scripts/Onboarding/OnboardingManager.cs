@@ -21,6 +21,8 @@ public class OnboardingManager : MonoBehaviour {
     None
   };
 
+  public Action<OnboardingPhases, int> OnOnboardingStageStarted;
+
   private OnboardingPhases _CurrPhase = OnboardingPhases.None;
 
   private GameObject _CurrStageInst = null;
@@ -30,7 +32,7 @@ public class OnboardingManager : MonoBehaviour {
   [SerializeField]
   private int _NumStagesHome = 7;
   [SerializeField]
-  private int _NumStagesLoot = 1;
+  private int _NumStagesLoot = 2;
   [SerializeField]
   private int _NumStagesUpgrades = 1;
   [SerializeField]
@@ -237,6 +239,9 @@ public class OnboardingManager : MonoBehaviour {
       OnboardingBaseStage stagePrefab = GetCurrStagePrefab();
       nextDASPhaseID = stagePrefab.DASPhaseID;
       _CurrStageInst = UIManager.CreateUIElement(stagePrefab, _OnboardingTransform);
+      if (OnOnboardingStageStarted != null) {
+        OnOnboardingStageStarted.Invoke(_CurrPhase, nextStage);
+      }
       UpdateStage(stagePrefab.ActiveTopBar, stagePrefab.ActiveMenuContent,
                   stagePrefab.ActiveTabButtons, stagePrefab.ReactionsEnabled);
       // Create the debug layer to have a few buttons to work with on screen easily for QA

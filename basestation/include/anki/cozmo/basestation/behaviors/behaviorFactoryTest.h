@@ -75,13 +75,13 @@ namespace Cozmo {
     Result HandleObjectMoved(const Robot& robot, const ObjectMoved &msg);
     Result HandleCameraCalibration(Robot& robot, const CameraCalibration &msg);
     Result HandleRobotStopped(Robot& robot, const ExternalInterface::RobotStopped &msg);
-    Result HandleRobotPickedUp(Robot& robot, const ExternalInterface::RobotPickedUp &msg);
+    Result HandleRobotOfftreadsStateChanged(Robot& robot, const ExternalInterface::RobotOffTreadsStateChanged &msg);
     Result HandleMotorCalibration(Robot& robot, const MotorCalibration &msg);
     Result HandleActionCompleted(Robot& robot, const ExternalInterface::RobotCompletedAction& msg);
     
     // Handlers for signals coming from robot
     void HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& msg);
-    void HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& msg);
+    void HandlePickAndPlaceResult(const AnkiEvent<RobotInterface::RobotToEngine>& msg);
     void HandleFactoryTestParameter(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBodyVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message);
 

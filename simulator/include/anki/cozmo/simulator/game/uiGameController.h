@@ -120,7 +120,7 @@ protected:
   virtual void HandleBehaviorTransition(ExternalInterface::BehaviorTransition const& msg){};
   virtual void HandleEnabledBehaviorList(ExternalInterface::RespondEnabledBehaviorList const& msg){};
   virtual void HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg){};
-  virtual void HandleRobotPickedUp(const ExternalInterface::RobotPickedUp& msg){};
+  virtual void HandleRobotOffTreadsStateChanged(const ExternalInterface::RobotOffTreadsStateChanged& msg){};
   
   // Message senders
   void SendMessage(const ExternalInterface::MessageGameToEngine& msg);
@@ -416,7 +416,7 @@ protected:
 private:
   void HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg);
   void HandleRobotDelocalizedBase(ExternalInterface::RobotDelocalized const& msg);
-  void HandleRobotPutDownBase(ExternalInterface::RobotPutDown const& msg);
+  void HandleRobotOffTreadsStateChangedBase(ExternalInterface::RobotOffTreadsStateChanged const& msg);
   void HandleRobotObservedObjectBase(ExternalInterface::RobotObservedObject const& msg);
   void HandleRobotObservedFaceBase(ExternalInterface::RobotObservedFace const& msg);
   void HandleRobotDeletedObjectBase(ExternalInterface::RobotDeletedObject const& msg);
@@ -438,7 +438,6 @@ private:
   void HandleBehaviorTransitionBase(ExternalInterface::BehaviorTransition const& msg);
   void HandleEnabledBehaviorListBase(ExternalInterface::RespondEnabledBehaviorList const& msg);
   void HandleEndOfMessageBase(ExternalInterface::EndOfMessage const& msg);
-  void HandleRobotPickedUpBase(ExternalInterface::RobotPickedUp const& msg);
   void HandleFactoryTestResultEntryBase(FactoryTestResultEntry const& msg);
   void HandleLoadedKnownFaceBase(Vision::LoadedKnownFace const& msg);
   

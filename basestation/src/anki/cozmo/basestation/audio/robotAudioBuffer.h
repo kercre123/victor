@@ -59,7 +59,7 @@ public:
 
   bool IsActive() const { return _isActive; }
   
-  bool HasAudioBufferStream() const { return !_streamQueue.empty(); }
+  bool HasAudioBufferStream();
   
   // Get the front / top Audio Buffer stream in the queue
   RobotAudioFrameStream* GetFrontAudioBufferStream();

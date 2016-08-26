@@ -218,11 +218,8 @@ ActionResult SayTextAction::CheckIfDone()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SayTextAction::GenerateTtsAudio()
 {
-  if (ANKI_DEVELOPER_CODE) {
-    // Only put the text in the action name in dev mode because the text
-    // could be a person's name and we don't want that logged for privacy reasons
-    SetName("SayText_" + _text);
-  }
+  // Be careful with putting text in the action name because it could be a player name, which is PII
+  SetName(std::string("SayText_") + Util::HidePersonallyIdentifiableInfo(_text.c_str()));
   
   // Create speech data
   _ttsOperationId = _robot.GetTextToSpeechComponent().CreateSpeech(_text, _style, _durationScalar);

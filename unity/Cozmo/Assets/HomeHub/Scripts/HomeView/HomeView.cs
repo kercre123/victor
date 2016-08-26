@@ -443,7 +443,15 @@ namespace Cozmo.HomeHub {
     private void HandleGreenPointsBarUpdateComplete() {
       if (ChestRewardManager.Instance.ChestPending && _LootViewInstance == null
           && RewardedActionManager.Instance.RewardPending == false) {
-        OpenLootView();
+        // phase Loot onboarding is two stages, the first one is just an explination pointing to your meter,
+        // then the callback from Onboarding will open the loot view.
+        if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Loot)) {
+          OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.Loot);
+          OnboardingManager.Instance.OnOnboardingStageStarted += HandleOnboardingLootStarted;
+        }
+        else {
+          OpenLootView();
+        }
       }
       else {
         // Update Minigame need now that daily goal progress has changed
@@ -475,6 +483,13 @@ namespace Cozmo.HomeHub {
           });
         });
       });
+    }
+
+    private void HandleOnboardingLootStarted(OnboardingManager.OnboardingPhases phase, int onboardingStage) {
+      if (phase == OnboardingManager.OnboardingPhases.Loot && onboardingStage > 0) {
+        OpenLootView();
+        OnboardingManager.Instance.OnOnboardingStageStarted -= HandleOnboardingLootStarted;
+      }
     }
 
     private void HandleLootViewCloseAnimationFinished() {

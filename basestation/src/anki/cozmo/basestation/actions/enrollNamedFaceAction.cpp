@@ -79,10 +79,8 @@ namespace Cozmo {
   , _saveID(saveID)
   , _faceName(name)
   {
-    // NOTE: Only print 'name' in debug messages, for privacy reasons (don't want names in our release logs)
-    PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.Constructor", "Original ID=%d", _faceID);
-    PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.Constructor_DEBUG", "Original ID=%d with name='%s'",
-                   _faceID, _faceName.c_str());
+    PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.Constructor", "Original ID=%d with name='%s'",
+                  _faceID, Util::HidePersonallyIdentifiableInfo(_faceName.c_str()));
     
     if(_robot.GetExternalInterface() == nullptr) {
       PRINT_NAMED_WARNING("EnrollNamedFaceAction.Constructor.NullExternalInterface",
@@ -420,14 +418,10 @@ namespace Cozmo {
   
   ActionResult EnrollNamedFaceAction::Init()
   {
-    // NOTE: Only print 'name' in debug messages, for privacy reasons (don't want names in our release logs)
     PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.Init",
-                  "Initialize with ID=%d, to be saved to ID=%d",
-                  _faceID, _saveID);
+                  "Initialize with ID=%d and name '%s', to be saved to ID=%d",
+                  _faceID, Util::HidePersonallyIdentifiableInfo(_faceName.c_str()), _saveID);
 
-    PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.Init_DEBUG",
-                       "Initialize with ID=%d and name '%s', to be saved to ID=%d",
-                       _faceID, _faceName.c_str(), _saveID);
 
     // TOOD: If saveID is specified, make sure that it is the ID of a _named_ face
    
@@ -740,6 +734,20 @@ namespace Cozmo {
     completionUnion.Set_faceEnrollmentCompleted(std::move( info ));
   }
   
+  f32 EnrollNamedFaceAction::GetTimeoutInSeconds() const
+  {
+    if(_state == State::Finishing && nullptr != _action)
+    {
+      // This is kinda hacky, but we could have used up a lot of our timeout time
+      // during enrollment and don't want to cutoff the final action (which could be
+      // pretty long if it's a first time enrollment), so increase our timeout
+      // at this point.
+      return 2.f*IAction::GetTimeoutInSeconds();
+    }
+  
+    // Normally, just use the base class's default timeout
+    return IAction::GetTimeoutInSeconds();
+  }
   
 #pragma mark -
 #pragma mark Event Handlers
@@ -772,14 +780,11 @@ namespace Cozmo {
         // If we just realized the faceID we were enrolling is someone else and that
         // person is already enrolled with a name, we should abort (unless the newID
         // mathces the person we were re-enrolling).
-        // NOTE: we print the name in the message in debug only, for privacy reasons
-        PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.HandleRobotChangedObservedFaceID.CannotUpdateToNamedFace",
-                      "OldID:%d. NewID:%d is named and != SaveID:%d, so cannot be used",
-                      msg.oldID, msg.newID, _saveID);
-        
-        PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.HandleRobotChangedObservedFaceID.CannotUpdateToNamedFace_Debug",
+        PRINT_CH_INFO(kLogChannelName,
+                      "EnrollNamedFaceAction.HandleRobotChangedObservedFaceID.CannotUpdateToNamedFace",
                        "OldID:%d. NewID:%d is named '%s' and != SaveID:%d, so cannot be used",
-                       msg.oldID, msg.newID, newFace->GetName().c_str(), _saveID);
+                      msg.oldID, msg.newID,
+                      Util::HidePersonallyIdentifiableInfo(newFace->GetName().c_str()), _saveID);
 
         _needToAbort = true;
         
@@ -864,17 +869,11 @@ namespace Cozmo {
       }
       else
       {
-        // Note: name is only printed in Debug message for privacy reasons
         PRINT_CH_INFO(kLogChannelName,
                       "EnrollNamedFaceAction.HandleRobotObservedFace.IgnoringObservedFace",
                       "Refusing to enroll %s face %d, with current faceID=%d and saveID=%d",
-                      msg.name.empty() ? "unnamed" : "named",
+                      msg.name.empty() ? "unnamed" : Util::HidePersonallyIdentifiableInfo(msg.name.c_str()),
                       msg.faceID, _faceID, _saveID);
-        
-        PRINT_CH_DEBUG(kLogChannelName,
-                       "EnrollNamedFaceAction.HandleRobotObservedFace.IgnoringObservedFace_Debug",
-                       "Refusing to enroll face %d, named '%s', with current faceID=%d and saveID=%d",
-                       msg.faceID, msg.name.c_str(), _faceID, _saveID);
       }
       
       // Should never be left with a negative faceID to be enrolling

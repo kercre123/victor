@@ -30,11 +30,15 @@ BehaviorReactToRobotOnBack::BehaviorReactToRobotOnBack(Robot& robot, const Json:
 {
   SetDefaultName("ReactToRobotOnBack");
 
-  // These are the tags that should trigger this behavior to be switched to immediately
-  SubscribeToTriggerTags({
-    EngineToGameTag::RobotOnBack
-  });
+
 }
+
+  
+bool BehaviorReactToRobotOnBack::ShouldComputationallySwitch(const Robot& robot)
+{
+  return robot.GetOffTreadsState() == OffTreadsState::OnBack;
+}
+
 
 bool BehaviorReactToRobotOnBack::IsRunnableInternalReactionary(const Robot& robot) const
 {
@@ -49,41 +53,24 @@ Result BehaviorReactToRobotOnBack::InitInternalReactionary(Robot& robot)
 
 void BehaviorReactToRobotOnBack::FlipDownIfNeeded(Robot& robot)
 {
-  if( robot.IsOnBack() ) {
+  if( robot.GetOffTreadsState() == OffTreadsState::OnBack ) {
     StartActing(new TriggerAnimationAction(robot, AnimationTrigger::FlipDownFromBack),
                 &BehaviorReactToRobotOnBack::DelayThenFlipDown);
   }
   else {
-    SendFinishedFlipDownMessage(robot);
+    BehaviorObjectiveAchieved(BehaviorObjective::ReactedToRobotOnBack);
   }
 }
 
 void BehaviorReactToRobotOnBack::DelayThenFlipDown(Robot& robot)
 {
-  if( robot.IsOnBack() ) {
+  if( robot.GetOffTreadsState() == OffTreadsState::OnBack ) {
     StartActing(new WaitAction(robot, kWaitTimeBeforeRepeatAnim_s),
                 &BehaviorReactToRobotOnBack::FlipDownIfNeeded);
   }
   else {
-    SendFinishedFlipDownMessage(robot);
+    BehaviorObjectiveAchieved(BehaviorObjective::ReactedToRobotOnBack);
   }
-}
-  
-void BehaviorReactToRobotOnBack::SendFinishedFlipDownMessage(Robot& robot){
-  // Send message that we're done flipping
-  BehaviorObjectiveAchieved(BehaviorObjective::ReactedToRobotOnBack);
-  robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnBackFinished()));
-}
-
-bool BehaviorReactToRobotOnBack::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot)
-{
-  if( event.GetTag() != MessageEngineToGameTag::RobotOnBack ) {
-    PRINT_NAMED_ERROR("BehaviorReactToRobotOnBack.ShouldRunForEvent.BadEventType",
-                      "Calling ShouldRunForEvent with an event we don't care about, this is a bug");
-    return false;
-  }
-
-  return event.Get_RobotOnBack().onBack;
 }
 
 void BehaviorReactToRobotOnBack::StopInternalReactionary(Robot& robot)

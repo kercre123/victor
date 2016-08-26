@@ -36,11 +36,16 @@ protected:
   virtual Result InitInternalReactionary(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
   
-  void TransitionToIdleLoop(Robot& robot);
+  virtual void HandleWhileRunning(const GameToEngineEvent& event, Robot& robot) override;
+  
+  virtual void StopInternalReactionary(Robot& robot) override;
   
 private:
   
   bool _isOnCharger = false;
+  float _timeTilSleepAnimation_s = -1.0;
+  float _timeTilDisconnect_s = 0.0;
+  
 }; // class BehaviorReactToOnCharger
   
 

@@ -324,14 +324,12 @@ namespace Vision {
           // unclear we'd want to merge two separately enrolled people! We
           // hope this confusion never happens.
           // NOTE: Debug version displays names, warning does not (so they don't get logged)
-          PRINT_CH_DEBUG("FaceRecognizer", "UpdateRecognitionData.ConfusedTwoNamedIDs_Debug",
-                         "While tracking face %d with ID=%d (%s), recognized as ID=%d (%s). Not merging!",
-                         -_detectionInfo.nID,
-                         faceID, faceIDenrollData->second.GetName().c_str(),
-                         recognizedID, recIDenrollData->second.GetName().c_str());
           PRINT_NAMED_WARNING("FaceRecognizer.UpdateRecognitionData.ConfusedTwoNamedIDs",
-                              "While tracking face %d with ID=%d, recognized as ID=%d. Not merging!",
-                              -_detectionInfo.nID, faceID, recognizedID);
+                              "While tracking face %d with ID=%d (%s), recognized as ID=%d (%s). Not merging!",
+                              -_detectionInfo.nID, faceID,
+                              Util::HidePersonallyIdentifiableInfo(faceIDenrollData->second.GetName().c_str()),
+                              recognizedID,
+                              Util::HidePersonallyIdentifiableInfo(recIDenrollData->second.GetName().c_str()));
           
           RemoveTrackingID(_detectionInfo.nID);
           faceID = recognizedID; // So that we'll udpate the tracking ID to face ID info below
@@ -1458,9 +1456,10 @@ namespace Vision {
               // At least that's the theory... This is an unlikely scenario regardless.
               PRINT_CH_INFO("FaceRecognizer", "RecognizeFace.UsingLowerRankedMatch",
                             "Top match (AlbumEntry:%d ID:%d Score:%d) is session-only. "
-                            "Match at index %d (AlbumEntry:%d ID:%d Score:%d) is named. Using it and merging.",
+                            "Match at index %d (AlbumEntry:%d ID:%d Score:%d) is named ('%s'). Using it and merging.",
                             matchingAlbumEntries[matchIndex], matchingID, matchingScore,
-                            nextIndex, matchingAlbumEntries[nextIndex], nextMatchingID, scores[nextIndex]);
+                            nextIndex, matchingAlbumEntries[nextIndex], nextMatchingID, scores[nextIndex],
+                            Util::HidePersonallyIdentifiableInfo(nextMatchIter->second.GetName().c_str()));
               
               PRINT_CH_DEBUG("FaceRecognizer", "RecognizeFace.BeforeMergeOfLowerRankedMatch",
                              "Top match entries: %s. Next match entries: %s.",
@@ -1921,11 +1920,10 @@ namespace Vision {
     }
     else
     {
-      PRINT_CH_DEBUG("FaceRecognizer", "AssignNameToID.InvalidID_Debug",
-                     "Unknown ID %d, ignoring name %s", faceID, name.c_str());
-      
       PRINT_NAMED_WARNING("FaceRecognizer.AssignNameToID.InvalidID",
-                          "Unknown ID %d", faceID);
+                          "Unknown ID %d, ignoring name %s",
+                          faceID, Util::HidePersonallyIdentifiableInfo(name.c_str()));
+      
       return RESULT_FAIL;
     }
     
@@ -1984,10 +1982,10 @@ namespace Vision {
       if(enrollIter->second.GetName() == oldName)
       {
         enrollIter->second.SetName( newName );
-        PRINT_CH_INFO("FaceRecognizer", "RenameFace.Success", "Renamed ID=%d", faceID);
-        // Print additional info with the names in debug only, for privacy reasons
-        PRINT_CH_DEBUG("FaceRecognizer", "RenameFace.Success_DEBUG", "Renamed ID=%d from '%s' to '%s'",
-                       faceID, oldName.c_str(), enrollIter->second.GetName().c_str());
+        
+        PRINT_CH_INFO("FaceRecognizer", "RenameFace.Success", "Renamed ID=%d from '%s' to '%s'",
+                      faceID, Util::HidePersonallyIdentifiableInfo(oldName.c_str()),
+                      Util::HidePersonallyIdentifiableInfo(enrollIter->second.GetName().c_str()));
         
         // Construct and then swap to make sure we miss fields that get added to LoadedKnownFace later
         Vision::RobotRenamedEnrolledFace temp(enrollIter->second.GetFaceID(),
@@ -1999,12 +1997,10 @@ namespace Vision {
       else
       {
         PRINT_NAMED_WARNING("FaceRecognizer.RenameFace.OldNameMismatch",
-                            "Refusing to rename ID=%d because old name does not match stored name",
+                            "OldName '%s' does not match stored name '%s' for ID=%d",
+                            Util::HidePersonallyIdentifiableInfo(oldName.c_str()),
+                            Util::HidePersonallyIdentifiableInfo(enrollIter->second.GetName().c_str()),
                             faceID);
-        // Print additional info with the names in debug only, for privacy reasons
-        PRINT_CH_DEBUG("FaceRecognizer", "RenameFace.OldNameMismatch_DEBUG",
-                       "OldName '%s' does not match stored name '%s' for ID=%d",
-                       oldName.c_str(), enrollIter->second.GetName().c_str(), faceID);
         
         return RESULT_FAIL;
       }
@@ -2453,12 +2449,9 @@ namespace Vision {
                                                           entry.GetFaceID(),
                                                           entry.GetName()) );
                 
-                // Debug prints name, info does not, for privacy reasons
-                PRINT_CH_DEBUG("FaceRecognizer", "LoadAlbum.LoadedEnrollmentData_Debug", "ID=%d, '%s'",
-                               faceID, entry.GetName().c_str());
-                PRINT_CH_INFO("FaceRecognizer", "LoadAlbum.LoadedEnrollmentData", "ID=%d",
-                              faceID);
-
+                PRINT_CH_INFO("FaceRecognizer", "LoadAlbum.LoadedEnrollmentData", "ID=%d, '%s'",
+                              faceID, Util::HidePersonallyIdentifiableInfo(entry.GetName().c_str()));
+                
                 loadedEnrollmentData[faceID] = std::move(entry);
               }
             }

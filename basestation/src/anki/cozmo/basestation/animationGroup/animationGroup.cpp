@@ -114,7 +114,7 @@ const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood,
       bool validHeadAngle = true;
       if( entry->GetUseHeadAngle())
       {
-        if( !(headAngleRad > entry->GetHeadAngleMin() && headAngleRad < entry->GetHeadAngleMax()))
+        if( !(headAngleRad >= entry->GetHeadAngleMin() && headAngleRad <= entry->GetHeadAngleMax()))
         {
           validHeadAngle = false;
         }

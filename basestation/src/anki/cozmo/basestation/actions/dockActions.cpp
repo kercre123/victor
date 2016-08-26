@@ -702,7 +702,7 @@ namespace Anki {
         case DockAction::DA_ALIGN:
         {
           // What does it mean to verify this action other than to complete
-          if (!_robot.IsPickingOrPlacing() && !_robot.IsTraversingPath()) {
+          if (!_robot.IsPickingOrPlacing() && !_robot.IsTraversingPath() && _robot.GetLastPickOrPlaceSucceeded()) {
             PRINT_STREAM_INFO("AlignWithObjectAction.Verify", "Align with object SUCCEEDED!");
             result = ActionResult::SUCCESS;
           }

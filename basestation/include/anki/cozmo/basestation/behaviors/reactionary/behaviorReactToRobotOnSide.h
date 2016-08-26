@@ -30,7 +30,8 @@ public:
   
   virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
   virtual bool ShouldResumeLastBehavior() const override { return false; }
-  virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) override;
+  virtual bool ShouldRunWhileOffTreads() const override { return true;}
+  virtual bool ShouldComputationallySwitch(const Robot& robot) override;
   
 protected:
     
@@ -44,8 +45,6 @@ private:
   //Ensures no other behaviors run while Cozmo is still on his side
   void HoldingLoop(Robot& robot);
   
-  bool _onRightSide;
-
 };
 
 }

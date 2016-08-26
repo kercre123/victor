@@ -137,7 +137,7 @@ public:
   const std::string& GetDebugStateName() const { return _debugStateName;}
   const BehaviorType GetType() const { return _behaviorType; }
   virtual bool IsReactionary() const { return false;}
-  virtual bool ShouldRunWhilePickedUp() const { return false;}
+  virtual bool ShouldRunWhileOffTreads() const { return false;}
     
   // Return true if the behavior explicitly handles the case where the robot starts holding the block
   // Equivalent to !robot.IsCarryingObject() in IsRunnable()
@@ -478,7 +478,6 @@ public:
   virtual IReactionaryBehavior* AsReactionaryBehavior() override { return this; }
 
   virtual bool IsReactionary() const override { return true;}
-  virtual bool ShouldRunWhilePickedUp() const override { return true;}
   virtual bool CarryingObjectHandledInternally() const override {return true;}
   
   //Deal with default disabling - has to be called after type is set for behavior

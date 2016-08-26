@@ -85,7 +85,7 @@ namespace Anki {
         EngineToGameTag::RobotDeletedObject,
         EngineToGameTag::ObjectMoved,
         EngineToGameTag::RobotStopped,
-        EngineToGameTag::RobotPutDown
+        EngineToGameTag::RobotOffTreadsStateChanged
       }});
       
       if(nullptr != robot.GetContext()->GetRobotManager() &&
@@ -636,28 +636,30 @@ namespace Anki {
           HandleRobotStopped(robot, event.GetData().Get_RobotStopped());
           break;
           
-        case EngineToGameTag::RobotPutDown:
+        case EngineToGameTag::RobotOffTreadsStateChanged:
         {
-          _currentState = State::Init;
-          
-          _numDockingRetries = 0;
-          _numConsecFails = 0;
-          _didHM = false;
-          _failedCurrentAttempt = false;
-          
-          
-          if(_reset)
-          {
-            Write("\n\n------Test Manually Reset------\n");
+          if(event.GetData().Get_RobotOffTreadsStateChanged().treadsState == OffTreadsState::OnTreads){
+            _currentState = State::Init;
+            
+            _numDockingRetries = 0;
+            _numConsecFails = 0;
+            _didHM = false;
+            _failedCurrentAttempt = false;
+            
+            
+            if(_reset)
+            {
+              Write("\n\n------Test Manually Reset------\n");
+            }
+            else
+            {
+              _numAttempts = 0;
+              _numFails = 0;
+            }
+            _yellForCompletion = false;
+            _yellForHelp = false;
+            _reset = false;
           }
-          else
-          {
-            _numAttempts = 0;
-            _numFails = 0;
-          }
-          _yellForCompletion = false;
-          _yellForHelp = false;
-          _reset = false;
           break;
         }
           

@@ -10,6 +10,7 @@
  *
  **/
 
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToOnCharger.h"
@@ -23,6 +24,9 @@ namespace Anki {
 namespace Cozmo {
   
 using namespace ExternalInterface;
+  
+static const char* kTimeTilSleepAnimationKey = "timeTilSleepAnimation_s";
+static const char* kTimeTilDisconnectionKey = "timeTilDisconnection_s";
 
 BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Value& config)
 : IReactionaryBehavior(robot, config)
@@ -33,6 +37,19 @@ BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Val
     EngineToGameTag::ChargerEvent,
   });
   
+  SubscribeToTags({
+    GameToEngineTag::CancelIdleTimeout
+  });
+  
+  if (!JsonTools::GetValueOptional(config, kTimeTilSleepAnimationKey, _timeTilSleepAnimation_s))
+  {
+    PRINT_NAMED_ERROR("BehaviorReactToOnCharger.Constructor", "Config missing value for key: %s", kTimeTilSleepAnimationKey);
+  }
+  
+  if (!JsonTools::GetValueOptional(config, kTimeTilDisconnectionKey, _timeTilDisconnect_s))
+  {
+    PRINT_NAMED_ERROR("BehaviorReactToOnCharger.Constructor", "Config missing value for key: %s", kTimeTilDisconnectionKey);
+  }
 }
   
 bool BehaviorReactToOnCharger::IsRunnableInternalReactionary(const Robot& robot) const
@@ -45,8 +62,14 @@ Result BehaviorReactToOnCharger::InitInternalReactionary(Robot& robot)
   robot.GetBehaviorManager().SetReactionaryBehaviorsEnabled(false);
   robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::GoingToSleep>();
   
-  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::PlacedOnCharger),&BehaviorReactToOnCharger::TransitionToIdleLoop);
+  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::PlacedOnCharger));
+  robot.GetExternalInterface()->BroadcastToEngine<StartIdleTimeout>(_timeTilSleepAnimation_s, _timeTilDisconnect_s);
   return Result::RESULT_OK;
+}
+  
+void BehaviorReactToOnCharger::StopInternalReactionary(Robot& robot)
+{
+  robot.GetBehaviorManager().SetReactionaryBehaviorsEnabled(true);
 }
   
 IBehavior::Status BehaviorReactToOnCharger::UpdateInternal(Robot& robot)
@@ -69,12 +92,21 @@ bool BehaviorReactToOnCharger::ShouldRunForEvent(const ExternalInterface::Messag
   
   return false;
 }
-
-void BehaviorReactToOnCharger::TransitionToIdleLoop(Robot& robot)
-{
-  auto doDisconnect = [] (Robot& robot) { robot.GetRobotMessageHandler()->Disconnect(); };
   
-  StartActing(RobotIdleTimeoutComponent::CreateGoToSleepAnimSequence(robot), doDisconnect);
+void BehaviorReactToOnCharger::HandleWhileRunning(const GameToEngineEvent& event, Robot& robot)
+{
+  switch (event.GetData().GetTag())
+  {
+    case GameToEngineTag::CancelIdleTimeout:
+    {
+      _isOnCharger = false;
+      break;
+    }
+    default:
+    {
+      break;
+    }
+  }
 }
 
 } // namespace Cozmo

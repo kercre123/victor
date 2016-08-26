@@ -72,7 +72,8 @@ public class HexPuzzleView : BaseView {
     }
   }
 
-  private void Update() {
+  protected override void Update() {
+    base.Update();
     if (_SelectedPuzzlePiece != null) {
       // update selected puzzle piece position based on dragging.
       // highlight available close by slots

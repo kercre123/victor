@@ -3,5 +3,7 @@
   "behaviorGroups": [
     "Reactionary"
   ],
-  "disableByDefault": true
+  "disableByDefault": true,
+  "timeTilSleepAnimation_s": 20.0,
+  "timeTilDisconnection_s": 40.0
 }

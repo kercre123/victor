@@ -1,6 +1,9 @@
 {
   "defaultUnlocks": [
     "MeetCozmoGame",
-    "PickupCube"
+    "PickupCube",
+    "FaceEnrollmentSlot0",
+    "FaceEnrollmentSlot1",
+    "FaceEnrollmentSlot2"
   ]
 }

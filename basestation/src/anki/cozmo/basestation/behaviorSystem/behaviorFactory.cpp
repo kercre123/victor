@@ -43,6 +43,7 @@
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToOnCharger.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPickup.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPoke.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToReturnedToTreads.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnBack.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnFace.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnSide.h"
@@ -195,6 +196,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::DemoFearEdge:
     {
       newBehavior = new BehaviorDemoFearEdge(robot, config);
+      break;
+    }
+    case BehaviorType::ReactToReturnedToTreads:
+    {
+      newBehavior = new BehaviorReactToReturnedToTreads(robot, config);
       break;
     }
     case BehaviorType::ReactToRobotOnBack:

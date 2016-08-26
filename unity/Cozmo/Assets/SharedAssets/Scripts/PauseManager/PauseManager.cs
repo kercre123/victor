@@ -133,7 +133,7 @@ namespace Cozmo {
       CloseLowBatteryDialog();
       CloseConfirmSleepDialog();
       _IsOnChargerToSleep = true;
-      OpenGoToSleepDialogAndFreezeUI();
+      OpenConfirmSleepCozmoDialog(handleOnChargerSleepCancel: true);
     }
 
     private void HandleDisconnection(Anki.Cozmo.ExternalInterface.RobotDisconnected msg) {
@@ -162,7 +162,7 @@ namespace Cozmo {
       RobotEngineManager.Instance.CancelIdleTimeout();
     }
 
-    public void OpenConfirmSleepCozmoDialog() {
+    public void OpenConfirmSleepCozmoDialog(bool handleOnChargerSleepCancel) {
       CloseLowBatteryDialog();
       if (!IsConfirmSleepDialogOpen) {
         _SleepCozmoConfirmDialog = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab, preInitFunc: null,
@@ -171,10 +171,22 @@ namespace Cozmo {
         _SleepCozmoConfirmDialog.SetCloseButtonEnabled(false);
         _SleepCozmoConfirmDialog.SetPrimaryButton(LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalButtonConfirm,
                                                 HandleConfirmSleepCozmoButtonTapped);
-        _SleepCozmoConfirmDialog.SetSecondaryButton(LocalizationKeys.kButtonCancel);
+
+        if (handleOnChargerSleepCancel) {
+          _SleepCozmoConfirmDialog.SetSecondaryButton(LocalizationKeys.kButtonCancel, HandleOnChargerSleepCancel);
+        }
+        else {
+          _SleepCozmoConfirmDialog.SetSecondaryButton(LocalizationKeys.kButtonCancel);
+        }
+
         _SleepCozmoConfirmDialog.TitleLocKey = LocalizationKeys.kSettingsSleepCozmoPanelConfirmationModalTitle;
         _SleepCozmoConfirmDialog.DescriptionLocKey = LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalDescription;
       }
+    }
+
+    private void HandleOnChargerSleepCancel() {
+      StopIdleTimeout();
+      _IsOnChargerToSleep = false;
     }
 
     private void OpenGoToSleepDialogAndFreezeUI() {

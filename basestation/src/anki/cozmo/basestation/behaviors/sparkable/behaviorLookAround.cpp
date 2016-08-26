@@ -57,7 +57,7 @@ BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
   SubscribeToTags({{
     EngineToGameTag::RobotObservedObject,
     EngineToGameTag::RobotObservedPossibleObject,
-    EngineToGameTag::RobotPutDown,
+    EngineToGameTag::RobotOffTreadsStateChanged,
     EngineToGameTag::CliffEvent
   }});
 }
@@ -98,8 +98,8 @@ void BehaviorLookAround::HandleWhileRunning(const EngineToGameEvent& event, Robo
                            robot);
       break;
             
-    case EngineToGameTag::RobotPutDown:
-      HandleRobotPutDown(event, robot);
+    case EngineToGameTag::RobotOffTreadsStateChanged:
+      HandleRobotOfftreadsStateChanged(event, robot);
       break;
 
     case EngineToGameTag::CliffEvent:
@@ -120,7 +120,7 @@ void BehaviorLookAround::AlwaysHandle(const EngineToGameEvent& event, const Robo
   {
     case EngineToGameTag::RobotObservedObject:
     case EngineToGameTag::RobotObservedPossibleObject:
-    case EngineToGameTag::RobotPutDown:
+    case EngineToGameTag::RobotOffTreadsStateChanged:
       // Handled above
       break;
 
@@ -644,9 +644,9 @@ BehaviorLookAround::Destination BehaviorLookAround::GetNextDestination(BehaviorL
   return *newDestIter;
 }
   
-void BehaviorLookAround::HandleRobotPutDown(const EngineToGameEvent& event, Robot& robot)
+void BehaviorLookAround::HandleRobotOfftreadsStateChanged(const EngineToGameEvent& event, Robot& robot)
 {
-  const RobotPutDown& msg = event.GetData().Get_RobotPutDown();
+  const RobotOffTreadsStateChanged& msg = event.GetData().Get_RobotOffTreadsStateChanged();
   if (robot.GetID() == msg.robotID)
   {
     ResetSafeRegion(robot);
