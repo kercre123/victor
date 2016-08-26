@@ -266,13 +266,17 @@ public class UnlockablesManager : MonoBehaviour {
     _UnlockablesState[resultMessage.unlockID] = resultMessage.unlocked;
     if (resultMessage.unlocked) {
       GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnUnlockableEarned, resultMessage.unlockID));
-      RobotEngineManager.Instance.Message.BehaviorManagerMessage =
-        Singleton<BehaviorManagerMessage>.Instance.Initialize(
-          Convert.ToByte(RobotEngineManager.Instance.CurrentRobotID),
-          Singleton<SparkUnlocked>.Instance.Initialize(resultMessage.unlockID)
-        );
-      RobotEngineManager.Instance.SendMessage();
       _NewUnlocks.Add(resultMessage.unlockID);
+
+      // Trigger soft spark in the engine if the unlock was an action
+      if (GetUnlockableInfo(resultMessage.unlockID).UnlockableType == UnlockableType.Action) {
+        RobotEngineManager.Instance.Message.BehaviorManagerMessage =
+        Singleton<BehaviorManagerMessage>.Instance.Initialize(
+          Convert.ToByte (RobotEngineManager.Instance.CurrentRobotID),
+          Singleton<SparkUnlocked>.Instance.Initialize (resultMessage.unlockID)
+        );
+        RobotEngineManager.Instance.SendMessage();
+      }
     }
   }
 
