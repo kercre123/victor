@@ -12,31 +12,23 @@ using Cozmo.HomeHub;
 using UnityEditor;
 #endif
 /// <summary>
-/// Goal condition that check the total score in a game
+/// Goal condition that check the player errors in a game
 /// </summary>
 namespace Anki {
   namespace Cozmo {
     [System.Serializable]
-    public class ChallengeTotalScoreCondition : GoalCondition {
+    public class ChallengeErrorsCondition : GoalCondition {
 
-      public bool IsPlayer;
-      public int TargetScore;
       public ComparisonType compareType;
+      public int TargetErrors;
 
-      // Returns true if the specified player's score matches the target range
+      // Returns true if the specified player's errors are equal to the target
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
         if ((cozEvent is MinigameGameEvent)) {
           GameBase miniGameInstance = HomeHub.Instance.MiniGameInstance;
           if (miniGameInstance == null) { return false; }
-          int toCheck = 0;
-          if (IsPlayer) {
-            toCheck = miniGameInstance.PlayerScoreTotal;
-          }
-          else {
-            toCheck = miniGameInstance.CozmoScoreTotal;
-          }
-          isMet = CompareConditionValues(toCheck, TargetScore, compareType);
+          isMet = CompareConditionValues(miniGameInstance.PlayerMistakeCount, TargetErrors, compareType);
         }
         return isMet;
       }
@@ -44,9 +36,8 @@ namespace Anki {
 #if UNITY_EDITOR
       public override void DrawControls() {
         EditorGUILayout.BeginHorizontal();
-        IsPlayer = EditorGUILayout.Toggle(new GUIContent("Check Player", "True if we are checking PlayerScore, False if we are checking CozmoScore"), IsPlayer);
         compareType = (ComparisonType)EditorGUILayout.EnumPopup(compareType);
-        TargetScore = EditorGUILayout.IntField(new GUIContent("Target Score", "Target points to check"), TargetScore);
+        TargetErrors = EditorGUILayout.IntField(new GUIContent("Target Errors", "Target errors to check"), TargetErrors);
         EditorGUILayout.EndHorizontal();
       }
 #endif

@@ -1,6 +1,40 @@
 {
   "GenList": [
     {
+      "TitleKey": "dailyGoal.title.SparkPickupCube",
+      "RewardType": "experience",
+      "Tag": "",
+      "PointsRewarded": 10,
+      "Target": 1,
+      "Priority": 0,
+      "CladEvent": "OnUnlockableSparked",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
+          "Unlocked": "PickupCube",
+          "IsMatching": true,
+          "State": "Unlocked",
+          "Label": {
+            "text": "Current Unlock Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.UnlockIDCondition, Assembly-CSharp",
+          "Unlocked": "PickupCube",
+          "Label": {
+            "text": "Unlock ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Id": 32
+    },
+    {
       "TitleKey": "dailyGoal.title.WinKeepaway.TieBreaker",
       "RewardType": "experience",
       "Tag": "KeepawayTieBreaker",

@@ -346,9 +346,22 @@ public abstract class GameBase : MonoBehaviour {
   [HideInInspector]
   public int CozmoScoreTotal;
 
+  // Number of Errors made, Error being a player action
+  // that causes failure (not cozmo scoring a point)
+  private int _PlayerMistakeCount;
+  public int PlayerMistakeCount {
+    get {
+      return _PlayerMistakeCount;
+    }
+  }
+
   // Points needed to win Round
   [HideInInspector]
   public int MaxScorePerRound;
+
+  public virtual void PlayerMistake() {
+    _PlayerMistakeCount++;
+  }
 
   public void ResetScore() {
     CozmoScore = 0;
@@ -957,6 +970,10 @@ public abstract class GameBase : MonoBehaviour {
 
   private string GetGameTimeElapsedAsStr() {
     return string.Format("{0}", Time.time - _GameStartTime);
+  }
+
+  public float GetGameTimeElapsedInSeconds() {
+    return Time.time - _GameStartTime;
   }
 
   #endregion

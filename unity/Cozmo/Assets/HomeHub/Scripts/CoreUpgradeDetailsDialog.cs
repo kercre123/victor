@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using Cozmo.UI;
 using Anki.UI;
+using Anki.Cozmo;
 using DataPersistence;
 using Cozmo;
 using DG.Tweening;
@@ -361,6 +362,8 @@ public class CoreUpgradeDetailsDialog : BaseView {
     // Inventory valid was already checked when the button was initialized.
     playerInventory.RemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
     UpdateInventoryLabel(_UnlockInfo.RequestTrickCostItemId, _SparksInventoryLabel);
+
+    GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnUnlockableSparked, _UnlockInfo.Id.Value));
 
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Spark);
     RobotEngineManager.Instance.CurrentRobot.EnableSparkUnlock(_UnlockInfo.Id.Value);

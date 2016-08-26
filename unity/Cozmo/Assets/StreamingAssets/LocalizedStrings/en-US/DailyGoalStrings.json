@@ -134,5 +134,8 @@
   },
   "dailyGoal.title.UnlockQuickTapDifficulty.FourColor": {
     "translation": "Unlock the 'Four Color' game mode in Quick Tap"
+  },
+  "dailyGoal.title.SparkPickupCube": {
+    "translation": "Spark the 'Pick up Cube' Upgrade"
   }
 }

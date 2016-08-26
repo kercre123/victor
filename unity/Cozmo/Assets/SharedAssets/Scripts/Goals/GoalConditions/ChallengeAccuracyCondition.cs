@@ -12,18 +12,18 @@ using Cozmo.HomeHub;
 using UnityEditor;
 #endif
 /// <summary>
-/// Goal condition that check the total score in a game
+/// Goal condition that check the % score out of total score in a game
 /// </summary>
 namespace Anki {
   namespace Cozmo {
     [System.Serializable]
-    public class ChallengeTotalScoreCondition : GoalCondition {
+    public class ChallengeAccuracyCondition : GoalCondition {
 
       public bool IsPlayer;
-      public int TargetScore;
+      public float TargetAcc;
       public ComparisonType compareType;
 
-      // Returns true if the specified player's score matches the target range
+      // Returns true if the specified player's % points earned out of total matches the target
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
         if ((cozEvent is MinigameGameEvent)) {
@@ -36,7 +36,8 @@ namespace Anki {
           else {
             toCheck = miniGameInstance.CozmoScoreTotal;
           }
-          isMet = CompareConditionValues(toCheck, TargetScore, compareType);
+          float acc = ((float)toCheck / (float)(miniGameInstance.PlayerScoreTotal + miniGameInstance.CozmoScoreTotal));
+          isMet = CompareConditionValues(acc, TargetAcc, compareType);
         }
         return isMet;
       }
@@ -46,7 +47,7 @@ namespace Anki {
         EditorGUILayout.BeginHorizontal();
         IsPlayer = EditorGUILayout.Toggle(new GUIContent("Check Player", "True if we are checking PlayerScore, False if we are checking CozmoScore"), IsPlayer);
         compareType = (ComparisonType)EditorGUILayout.EnumPopup(compareType);
-        TargetScore = EditorGUILayout.IntField(new GUIContent("Target Score", "Target points to check"), TargetScore);
+        TargetAcc = EditorGUILayout.Slider(TargetAcc, 0.0f, 1.0f);
         EditorGUILayout.EndHorizontal();
       }
 #endif

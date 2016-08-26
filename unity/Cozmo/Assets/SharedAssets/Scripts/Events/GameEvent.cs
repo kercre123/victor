@@ -36,8 +36,10 @@ namespace Anki {
       // 14
       OnNewDayStarted,
       // 15
-      Count
+      OnUnlockableSparked,
       // 16
+      Count
+      // 17
 
 
 

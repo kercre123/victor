@@ -135,6 +135,7 @@ public static class LocalizationKeys {
   public const string kDailyGoalTitleUnlockQuickTapDifficultyTwoColor = "dailyGoal.title.UnlockQuickTapDifficulty.TwoColor";
   public const string kDailyGoalTitleUnlockQuickTapDifficultyThreeColor = "dailyGoal.title.UnlockQuickTapDifficulty.ThreeColor";
   public const string kDailyGoalTitleUnlockQuickTapDifficultyFourColor = "dailyGoal.title.UnlockQuickTapDifficulty.FourColor";
+  public const string kDailyGoalTitleSparkPickupCube = "dailyGoal.title.SparkPickupCube";
 
   #endregion
 

@@ -47,6 +47,9 @@ namespace SpeedTap {
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
 
       _SpeedTapGame.AddPoint(_CurrentWinner == PointWinner.Player);
+      if (_WasMistakeMade && _CurrentWinner == PointWinner.Cozmo) {
+        _SpeedTapGame.PlayerMistake();
+      }
       // Depends on points being scored first
       _SpeedTapGame.UpdateUI();
 
@@ -116,7 +119,7 @@ namespace SpeedTap {
         _WinningCube.SetLEDsOff();
         SetLosingLightPattern(losingBlock, _kWinCycleSpeedSeconds);
         _CurrentCubeLightState = CubeLightState.LoserFlashing;
-        GameAudioClient.PostSFXEvent (Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Lose);
+        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Lose);
       }
       else {
         GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Win);
