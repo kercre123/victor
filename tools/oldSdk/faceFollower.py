@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 from cozmoInterface import CozmoInterface
-from imageViewerTk import ImageViewerTk
+useFlaskForImages = True
+if useFlaskForImages:
+    from imageViewerFlask import ImageViewerFlask
+else:
+    from imageViewerTk import ImageViewerTk
 from threading import Thread
 from time import sleep
 
@@ -24,11 +28,17 @@ def FaceTrackingDemo(imageViewer):
     cozmo.Shutdown()
 
 if __name__ == '__main__':
-    imageViewer = ImageViewerTk()
+    if useFlaskForImages:
+        imageViewer = ImageViewerFlask()
+    else:
+        imageViewer = ImageViewerTk()
     thread = Thread(target=FaceTrackingDemo, kwargs=dict(imageViewer=imageViewer))
     thread.daemon = True  # Force to quit on main quitting
     thread.start()
-    imageViewer.mainloop()
+    if useFlaskForImages:
+        imageViewer.RunFlask()
+    else:
+        imageViewer.mainloop()
     thread.join()
 
 
