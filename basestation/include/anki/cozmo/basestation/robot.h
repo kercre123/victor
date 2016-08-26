@@ -355,13 +355,7 @@ public:
 
   bool IsCarryingObject()   const {return _carryingObjectID.IsSet(); }
   bool IsPickingOrPlacing() const {return _isPickingOrPlacing;}
-  bool IsPickedUp()         const {return _isPickedUp;}
-
-  // returns true if the robot is on it's back. Note that this does not correspond 1 to 1 with the
-  // RobotOnBack message, because there is some throttling / delay on the mesage
-  bool IsOnBack() const {return _offTredsState == OffTredsState::OnBack;}
-  bool IsOnSide() const {return _offTredsState == OffTredsState::OnSide;}
-  bool IsOnFace() const {return _offTredsState == OffTredsState::OnFace;}
+  OffTreadsState GetOffTreadsState() const {return _offTreadsState;}
   
   EncodedImage& GetEncodedImage() { return _encodedImage; }
   
@@ -919,7 +913,6 @@ protected:
   
   // State
   bool             _isPickingOrPlacing    = false;
-  bool             _isPickedUp            = false;
   bool             _isOnCharger           = false;
   f32              _battVoltage           = 5;
   ImageSendMode    _imageSendMode         = ImageSendMode::Off;
@@ -935,16 +928,10 @@ protected:
   bool             _isBodyInAccessoryMode = true;
   bool             _gotStateMsgAfterTimeSync = false;
 
-  enum class OffTredsState{
-    OnTreds
-    , OnBack
-    , OnSide
-    , OnFace
-  };
-  
-  OffTredsState    _offTredsState         = OffTredsState::OnTreds;
-  TimeStamp_t      _robotFirstOffTreds_ms = 0;
-  bool             _lastSendOffTredsValue = false;
+  OffTreadsState    _offTreadsState  = OffTreadsState::OnTreads;
+  OffTreadsState    _awaitingConfirmationTreadState = OffTreadsState::OnTreads;
+  TimeStamp_t      _timeOffTreadStateChanged_ms = 0;
+
   
   // Sets robot pose but does not update the pose on the robot.
   // Unless you know what you're doing you probably want to use
@@ -998,9 +985,10 @@ protected:
   void SetNumFreeSegmentSlots(const u8 n) {_numFreeSegmentSlots = n;}
   void SetLastRecvdPathID(u16 path_id)    {_lastRecvdPathID = path_id;}
   void SetPickingOrPlacing(bool t)        {_isPickingOrPlacing = t;}
-  void SetPickedUp(bool isPickedUpNew);
   void SetOnCharger(bool onCharger);
   
+  // returns whether the tread state was updated or not
+  bool CheckAndUpdateTreadsState(const RobotState& msg);
   
   ///////// Mood/Emotions ////////
   MoodManager*         _moodManager;

@@ -48,7 +48,7 @@ namespace FaceEnrollment {
     protected override void InitializeGame(MinigameConfigBase minigameConfig) {
       // make cozmo look up
       CurrentRobot.SetHeadAngle(CozmoUtil.kIdealFaceViewHeadValue);
-      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotOnBackFinished>(HandleOnBackFinished);
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotOffTreadsStateChanged>(HandleOffTredsStateChanged);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(HandleEnrolledFace);
       CurrentRobot.OnEnrolledFaceRemoved += HandleEraseEnrolledFace;
@@ -72,9 +72,11 @@ namespace FaceEnrollment {
       }
     }
 
-    private void HandleOnBackFinished(Anki.Cozmo.ExternalInterface.RobotOnBackFinished message) {
-      // make cozmo look up after response to back
-      CurrentRobot.SetHeadAngle(CozmoUtil.kIdealFaceViewHeadValue);
+    private void HandleOffTredsStateChanged(Anki.Cozmo.ExternalInterface.RobotOffTreadsStateChanged message) {
+      if (message.treadsState == Anki.Cozmo.OffTreadsState.OnTreads) {
+        // make cozmo look up after response to back
+        CurrentRobot.SetHeadAngle (CozmoUtil.kIdealFaceViewHeadValue);
+      }
     }
 
     private void ShowFaceListSlide(Cozmo.MinigameWidgets.SharedMinigameView newView) {
@@ -273,7 +275,7 @@ namespace FaceEnrollment {
     protected override void CleanUpOnDestroy() {
       SharedMinigameView.HideGameStateSlide();
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(HandleEnrolledFace);
-      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotOnBackFinished>(HandleOnBackFinished);
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotOffTreadsStateChanged>(HandleOffTredsStateChanged);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
       CurrentRobot.OnEnrolledFaceRemoved -= HandleEraseEnrolledFace;
     }

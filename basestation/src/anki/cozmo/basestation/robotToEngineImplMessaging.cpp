@@ -621,7 +621,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectMoved(const AnkiEvent<RobotIn
                            "Unsetting %s %d, which moved, as robot %d's localization object.",
                            ObjectTypeToString(object->GetType()), object->GetID().GetValue(), robot->GetID());
           robot->SetLocalizedTo(nullptr);
-        } else if(!(robot->IsLocalized()) && !(robot->IsPickedUp())) {
+        } else if(!(robot->IsLocalized()) && robot->GetOffTreadsState() == OffTreadsState::OnTreads) {
           // If we are not localized and there is nothing else left in the world that
           // we could localize to, then go ahead and mark us as localized (via
           // odometry alone)
@@ -712,7 +712,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectStopped(const AnkiEvent<Robot
                            "Unsetting %s %d, which stopped moving, as robot %d's localization object.",
                            ObjectTypeToString(object->GetType()), object->GetID().GetValue(), robot->GetID());
           robot->SetLocalizedTo(nullptr);
-        } else if(!(robot->IsLocalized()) && !(robot->IsPickedUp())) {
+        } else if(!(robot->IsLocalized()) && robot->GetOffTreadsState() == OffTreadsState::OnTreads) {
           // If we are not localized and there is nothing else left in the world that
           // we could localize to, then go ahead and mark us as localized (via
           // odometry alone)

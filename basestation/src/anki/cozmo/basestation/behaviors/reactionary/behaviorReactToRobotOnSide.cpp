@@ -29,11 +29,13 @@ BehaviorReactToRobotOnSide::BehaviorReactToRobotOnSide(Robot& robot, const Json:
 : IReactionaryBehavior(robot, config)
 {
   SetDefaultName("ReactToRobotOnSide");
-
-  // These are the tags that should trigger this behavior to be switched to immediately
-  SubscribeToTriggerTags({
-    EngineToGameTag::RobotOnSide
-  });
+}
+  
+  
+bool BehaviorReactToRobotOnSide::ShouldComputationallySwitch(const Robot& robot)
+{
+  return robot.GetOffTreadsState() == OffTreadsState::OnLeftSide
+      || robot.GetOffTreadsState() == OffTreadsState::OnRightSide;
 }
 
 bool BehaviorReactToRobotOnSide::IsRunnableInternalReactionary(const Robot& robot) const
@@ -49,14 +51,17 @@ Result BehaviorReactToRobotOnSide::InitInternalReactionary(Robot& robot)
 
 void BehaviorReactToRobotOnSide::ReactToBeingOnSide(Robot& robot)
 {
-  if( robot.IsOnSide()) {
-    AnimationTrigger anim;
-    if(_onRightSide){
-      anim = AnimationTrigger::ReactToOnRightSide;
-    }else{
-      anim = AnimationTrigger::ReactToOnLeftSide;
-    }
-    
+  AnimationTrigger anim = AnimationTrigger::Count;
+  
+  if( robot.GetOffTreadsState() == OffTreadsState::OnLeftSide){
+    anim = AnimationTrigger::ReactToOnLeftSide;
+  }
+  
+  if(robot.GetOffTreadsState() == OffTreadsState::OnRightSide) {
+    anim = AnimationTrigger::ReactToOnRightSide;
+  }
+  
+  if(anim != AnimationTrigger::Count){
     StartActing(new TriggerAnimationAction(robot, anim),
                 &BehaviorReactToRobotOnSide::AskToBeRighted);
   }
@@ -64,14 +69,17 @@ void BehaviorReactToRobotOnSide::ReactToBeingOnSide(Robot& robot)
 
 void BehaviorReactToRobotOnSide::AskToBeRighted(Robot& robot)
 {
-  if( robot.IsOnSide()) {
-    AnimationTrigger anim;
-    if(_onRightSide){
-      anim = AnimationTrigger::AskToBeRightedRight;
-    }else{
-      anim = AnimationTrigger::AskToBeRightedLeft;
-    }
-    
+  AnimationTrigger anim = AnimationTrigger::Count;
+  
+  if( robot.GetOffTreadsState() == OffTreadsState::OnLeftSide){
+    anim = AnimationTrigger::AskToBeRightedLeft;
+  }
+  
+  if(robot.GetOffTreadsState() == OffTreadsState::OnRightSide) {
+    anim = AnimationTrigger::AskToBeRightedRight;
+  }
+  
+  if(anim != AnimationTrigger::Count){
     StartActing(new TriggerAnimationAction(robot, anim),
                 &BehaviorReactToRobotOnSide::HoldingLoop);
   }
@@ -80,22 +88,12 @@ void BehaviorReactToRobotOnSide::AskToBeRighted(Robot& robot)
   
 void BehaviorReactToRobotOnSide::HoldingLoop(Robot& robot)
 {
-  if( robot.IsOnSide() ) {
+  
+  if( robot.GetOffTreadsState() == OffTreadsState::OnRightSide
+     || robot.GetOffTreadsState() == OffTreadsState::OnLeftSide) {
     StartActing(new WaitAction(robot, kWaitTimeBeforeRepeatAnim_s),
                 &BehaviorReactToRobotOnSide::HoldingLoop);
   }
-}
-
-bool BehaviorReactToRobotOnSide::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot)
-{
-  if( event.GetTag() != MessageEngineToGameTag::RobotOnSide ) {
-    PRINT_NAMED_ERROR("BehaviorReactToRobotOnSide.ShouldRunForEvent.BadEventType",
-                      "Calling ShouldRunForEvent with an event we don't care about, this is a bug");
-    return false;
-  }
-  
-  _onRightSide = event.Get_RobotOnSide().onRightSide;
-  return true;
 }
 
 void BehaviorReactToRobotOnSide::StopInternalReactionary(Robot& robot)

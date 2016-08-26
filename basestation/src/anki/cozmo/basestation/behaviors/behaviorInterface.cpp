@@ -392,7 +392,8 @@ bool IBehavior::IsRunnable(const Robot& robot) const
   }
   
   //check if the behavior runs while in the air
-  if(robot.IsPickedUp() && !ShouldRunWhilePickedUp()){
+  if(robot.GetOffTreadsState() != OffTreadsState::OnTreads
+     && !ShouldRunWhileOffTreads()){
     return false;
   }
   

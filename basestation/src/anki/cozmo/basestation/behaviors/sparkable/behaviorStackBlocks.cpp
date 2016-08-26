@@ -56,7 +56,7 @@ BehaviorStackBlocks::BehaviorStackBlocks(Robot& robot, const Json::Value& config
                                                        std::placeholders::_1) );
   
   SubscribeToTags({
-    EngineToGameTag::RobotPutDown
+    EngineToGameTag::RobotOffTreadsStateChanged
   });
 }
 
@@ -442,9 +442,11 @@ void BehaviorStackBlocks::AlwaysHandle(const EngineToGameEvent& event, const Rob
 {
   switch (event.GetData().GetTag())
   {
-    case EngineToGameTag::RobotPutDown:
+    case EngineToGameTag::RobotOffTreadsStateChanged:
     {
-      ResetBehavior(robot);
+      if(event.GetData().Get_RobotOffTreadsStateChanged().treadsState == OffTreadsState::OnTreads){
+        ResetBehavior(robot);
+      }
       break;
     }
     default:

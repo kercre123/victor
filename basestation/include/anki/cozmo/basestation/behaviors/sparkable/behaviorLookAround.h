@@ -135,7 +135,7 @@ private:
   void UpdateSafeRegionForCliff(const Pose3d& objectPose);
 
   void HandleObjectObserved(const ExternalInterface::RobotObservedObject& msg, bool confirmed, Robot& robot);
-  void HandleRobotPutDown(const EngineToGameEvent& event, Robot& robot);
+  void HandleRobotOfftreadsStateChanged(const EngineToGameEvent& event, Robot& robot);
   void HandleCliffEvent(const EngineToGameEvent& event, const Robot& robot);
 
 };

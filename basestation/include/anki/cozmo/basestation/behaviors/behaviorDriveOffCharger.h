@@ -40,7 +40,6 @@ protected:
   virtual void   StopInternal(Robot& robot) override;
   
   virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
-  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   virtual float EvaluateScoreInternal(const Robot& robot) const override;
 
   enum class DebugState {

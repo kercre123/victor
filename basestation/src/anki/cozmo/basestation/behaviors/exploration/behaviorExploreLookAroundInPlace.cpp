@@ -45,7 +45,7 @@ BehaviorExploreLookAroundInPlace::BehaviorExploreLookAroundInPlace(Robot& robot,
   SetDefaultName("BehaviorExploreLookAroundInPlace");
 
   SubscribeToTags({
-    EngineToGameTag::RobotPutDown
+    EngineToGameTag::RobotOffTreadsStateChanged
   });
   
   // parse all parameters now
@@ -191,9 +191,11 @@ void BehaviorExploreLookAroundInPlace::AlwaysHandle(const EngineToGameEvent& eve
 {
   switch (event.GetData().GetTag())
   {
-    case EngineToGameTag::RobotPutDown:
+    case EngineToGameTag::RobotOffTreadsStateChanged:
     {
-      _initialBodyDirection = robot.GetPose().GetRotationAngle<'Z'>();
+      if(event.GetData().Get_RobotOffTreadsStateChanged().treadsState == OffTreadsState::OnTreads){
+        _initialBodyDirection = robot.GetPose().GetRotationAngle<'Z'>();
+      }
       break;
     }
     default:

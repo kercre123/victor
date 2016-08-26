@@ -1516,7 +1516,7 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
     // Don't bother if the robot is picked up or if it was moving too fast to
     // have been able to see the markers on the objects anyway.
     // NOTE: Just using default speed thresholds, which should be conservative.
-    if(_robot->IsPickedUp() ||
+    if(_robot->GetOffTreadsState() != OffTreadsState::OnTreads ||
        _robot->GetVisionComponent().WasMovingTooFast(atTimestamp))
     {
       return numVisibleObjects;

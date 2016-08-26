@@ -3,33 +3,34 @@
 // Author: Greg Nagel
 // Copyright: Anki Inc (c) 2015
 
-#include "clad/types/actionTypes.clad"
-#include "clad/types/behaviorObjectives.clad"
-#include "clad/types/deviceDataTypes.clad"
-#include "clad/types/robotStatusAndActions.clad"
-#include "clad/types/imageTypes.clad"
-#include "clad/types/objectTypes.clad"
-#include "clad/types/objectFamilies.clad"
-#include "clad/types/proxMessages.clad"
-#include "clad/types/debugConsoleTypes.clad"
-#include "clad/types/engineState.clad"
-#include "clad/types/firmwareTypes.clad"
-#include "clad/types/toolCodes.clad"
-#include "clad/types/factoryTestTypes.clad"
-#include "clad/types/unlockTypes.clad"
-#include "clad/types/uiConnectionTypes.clad"
-#include "clad/types/visionModes.clad"
-#include "clad/types/nvStorageTypes.clad"
-#include "clad/types/animationEvents.clad"
-#include "clad/types/motorTypes.clad"
-#include "clad/types/featureGateTypes.clad"
-#include "clad/types/poseStructs.clad"
-#include "clad/types/behaviorTypes.clad"
+#include "clad/audio/audioCallbackMessage.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
-#include "clad/audio/audioCallbackMessage.clad"
+#include "clad/types/actionTypes.clad"
+#include "clad/types/animationEvents.clad"
+#include "clad/types/behaviorObjectives.clad"
+#include "clad/types/behaviorTypes.clad"
+#include "clad/types/debugConsoleTypes.clad"
+#include "clad/types/deviceDataTypes.clad"
 #include "clad/types/engineErrorCodes.clad"
+#include "clad/types/engineState.clad"
+#include "clad/types/factoryTestTypes.clad"
+#include "clad/types/featureGateTypes.clad"
+#include "clad/types/firmwareTypes.clad"
+#include "clad/types/imageTypes.clad"
 #include "clad/types/loadedKnownFace.clad"
+#include "clad/types/motorTypes.clad"
+#include "clad/types/nvStorageTypes.clad"
+#include "clad/types/objectFamilies.clad"
+#include "clad/types/objectTypes.clad"
+#include "clad/types/offTreadsStates.clad"
+#include "clad/types/poseStructs.clad"
+#include "clad/types/proxMessages.clad"
+#include "clad/types/robotStatusAndActions.clad"
+#include "clad/types/toolCodes.clad"
+#include "clad/types/uiConnectionTypes.clad"
+#include "clad/types/unlockTypes.clad"
+#include "clad/types/visionModes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -132,14 +133,6 @@ message RobotDelocalized {
     uint_8   robotID
 }
 
-message RobotPickedUp {
-    uint_8   robotID
-}
-
-message RobotPutDown {
-    uint_8   robotID
-}
-
 message RobotPoked {
     uint_8   robotID
 }
@@ -147,20 +140,9 @@ message RobotPoked {
 message RobotStopped {
 }
 
-message RobotOnBack {
-    bool onBack
-}
-
-message RobotOnBackFinished {
-}
-
-message RobotOnSide {
-    bool onSide,
-    bool onRightSide
-}
-
-message RobotOnFace{
-    bool onFace
+message RobotOffTreadsStateChanged {
+    uint_8   robotID,
+    OffTreadsState treadsState
 }
 
 message RobotCliffEventFinished {

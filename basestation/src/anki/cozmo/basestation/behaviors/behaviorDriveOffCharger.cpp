@@ -42,10 +42,9 @@ BehaviorDriveOffCharger::BehaviorDriveOffCharger(Robot& robot, const Json::Value
   float extraDist_mm = config.get(kExtraDriveDistKey, 0.0f).asFloat();
   _distToDrive_mm = Charger::GetLength() + extraDist_mm;
 
-  SubscribeToTags({{
-    EngineToGameTag::RobotPickedUp,
+  SubscribeToTags({
     EngineToGameTag::ChargerEvent,
-  }});
+  });
   
   PRINT_NAMED_DEBUG("BehaviorDriveOffCharger.DriveDist",
                     "Driving %fmm off the charger (%f length + %f extra)",
@@ -88,20 +87,7 @@ Result BehaviorDriveOffCharger::ResumeInternal(Robot& robot)
   TransitionToDrivingForward(robot);
   return Result::RESULT_OK;
 }
- 
-  
-void BehaviorDriveOffCharger::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
-{
-  switch(event.GetData().GetTag()){
-    case EngineToGameTag::RobotPickedUp:
-      _internalScore = 0.0f;
-      break;
-    default:
-      break;
-  }
-  
-  
-}
+
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDriveOffCharger::HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot)
@@ -121,6 +107,10 @@ void BehaviorDriveOffCharger::HandleWhileNotRunning(const EngineToGameEvent& eve
   
 float BehaviorDriveOffCharger::EvaluateScoreInternal(const Robot& robot) const
 {
+  if(robot.GetOffTreadsState() != OffTreadsState::OnTreads){
+    return 0.f;
+  }
+  
   return _internalScore;
 }
 

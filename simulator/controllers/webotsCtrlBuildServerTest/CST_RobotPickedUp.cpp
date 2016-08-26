@@ -22,7 +22,7 @@ private:
 
   bool _robotWasPickedUp = false;
 
-  void HandleRobotPickedUp(ExternalInterface::RobotPickedUp const& msg) override;
+  void HandleRobotOffTreadsStateChanged(ExternalInterface::RobotOffTreadsStateChanged const& msg) override;
 };
 
 REGISTER_COZMO_SIM_TEST_CLASS(CST_RobotPickedUp);
@@ -67,9 +67,11 @@ s32 CST_RobotPickedUp::UpdateSimInternal()
   return _result;
 }
 
-void CST_RobotPickedUp::HandleRobotPickedUp(ExternalInterface::RobotPickedUp const& msg)
+void CST_RobotPickedUp::HandleRobotOffTreadsStateChanged(ExternalInterface::RobotOffTreadsStateChanged const& msg)
 {
-  _robotWasPickedUp = true;
+  if(msg.treadsState != OffTreadsState::OnTreads){
+    _robotWasPickedUp = true;
+  }
 }
 
 }  // namespace Cozmo

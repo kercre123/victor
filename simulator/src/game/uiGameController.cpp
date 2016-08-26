@@ -77,13 +77,6 @@ namespace Anki {
       UpdateVizOriginToRobot();
     }
 
-    void UiGameController::HandleRobotPutDownBase(ExternalInterface::RobotPutDown const& msg)
-    {
-      // the robot is in a new place, update VizOrigin to the robot automatically
-      // (for example after you put him down after picking it up)
-      UpdateVizOriginToRobot();
-    }
-
     void UiGameController::HandleRobotObservedObjectBase(ExternalInterface::RobotObservedObject const& msg)
     {
       // Get object info
@@ -362,11 +355,11 @@ namespace Anki {
       HandleEnabledBehaviorList(msg);
     }
 
-    void UiGameController::HandleRobotPickedUpBase(ExternalInterface::RobotPickedUp const& msg)
+    void UiGameController::HandleRobotOffTreadsStateChangedBase(ExternalInterface::RobotOffTreadsStateChanged const& msg)
     {
-      PRINT_NAMED_INFO("HandleRobotPickedUp", "Recieved RobotPickedUp message.");
-
-      HandleRobotPickedUp(msg);
+      PRINT_NAMED_INFO("HandleRobotOfftreadsStateChanged", "Recieved RobotPickedUp message.");
+      HandleRobotOffTreadsStateChanged(msg);
+      UpdateVizOriginToRobot();
     }
 
     
@@ -469,9 +462,6 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGame::Tag::RobotDelocalized:
             HandleRobotDelocalizedBase(message.Get_RobotDelocalized());
             break;
-          case ExternalInterface::MessageEngineToGame::Tag::RobotPutDown:
-            HandleRobotPutDownBase(message.Get_RobotPutDown());
-            break;
           case ExternalInterface::MessageEngineToGame::Tag::RobotObservedObject:
             HandleRobotObservedObjectBase(message.Get_RobotObservedObject());
             break;
@@ -532,8 +522,8 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGameTag::RespondEnabledBehaviorList:
             HandleEnabledBehaviorListBase(message.Get_RespondEnabledBehaviorList());
             break;
-          case ExternalInterface::MessageEngineToGameTag::RobotPickedUp:
-            HandleRobotPickedUpBase(message.Get_RobotPickedUp());
+          case ExternalInterface::MessageEngineToGameTag::RobotOffTreadsStateChanged:
+            HandleRobotOffTreadsStateChangedBase(message.Get_RobotOffTreadsStateChanged());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::FactoryTestResultEntry:
             HandleFactoryTestResultEntryBase(message.Get_FactoryTestResultEntry());

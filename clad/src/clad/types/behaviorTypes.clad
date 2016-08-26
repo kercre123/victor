@@ -30,6 +30,7 @@ enum uint_8 BehaviorType {
   ReactToOnCharger,
   ReactToCubeMoved,
   ReactToFrustration,
+  ReactToReturnedToTreads,
   PlayAnim,
   PlayArbitraryAnim,
   PounceOnMotion,

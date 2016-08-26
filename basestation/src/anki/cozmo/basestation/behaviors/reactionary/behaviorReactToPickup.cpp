@@ -18,7 +18,6 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "clad/externalInterface/messageEngineToGame.h"
 #include "util/console/consoleInterface.h"
 
 
@@ -35,38 +34,28 @@ BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& co
 : IReactionaryBehavior(robot, config)
 {
   SetDefaultName("ReactToPickup");
- 
-  // These are the tags that should trigger this behavior to be switched to immediately
-  SubscribeToTriggerTags({
-    EngineToGameTag::RobotPickedUp
-  });
+
+}
   
-  // These are additional tags that this behavior should handle
-  SubscribeToTags({{
-    EngineToGameTag::RobotPutDown,
-    EngineToGameTag::RobotOnBack
-  }});
-
-}
-
-bool BehaviorReactToPickup::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot)
+bool BehaviorReactToPickup::ShouldComputationallySwitch(const Robot& robot)
 {
-  ASSERT_NAMED( event.GetTag() == EngineToGameTag::RobotPickedUp, "BehaviorReactToPickup.TriggerForWrongTag" );
-
-  // always run, unless we are on the charger or playing alternate reactionary behavior
-  // TODO:(bn) a reaction for being carried in the charger?
-  return ! (robot.IsOnCharger() || robot.IsOnSide() || robot.IsOnBack() || robot.IsOnFace());
+  return robot.GetOffTreadsState() == OffTreadsState::InAir;
 }
-
+  
 bool BehaviorReactToPickup::IsRunnableInternalReactionary(const Robot& robot) const
 {
-  return true;
+  return robot.GetOffTreadsState() == OffTreadsState::InAir;
 }
+  
 
 Result BehaviorReactToPickup::InitInternalReactionary(Robot& robot)
 {
   _repeatAnimatingMultiplier = 1;
-  StartAnim(robot);
+  
+  // Delay introduced since cozmo can be marked as "In air" in robot.cpp while we
+  // wait for the cliffDetect sensor to confirm he's on the ground
+  const f32 wait_s = 1.5f;
+  StartActing(new WaitAction(robot, wait_s), &BehaviorReactToPickup::StartAnim);
   return Result::RESULT_OK;
 }
   
@@ -84,7 +73,7 @@ void BehaviorReactToPickup::StartAnim(Robot& robot)
 IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot)
 {
   const bool isActing = IsActing();
-  if( !isActing && !_isInAir ) {
+  if( !isActing && robot.GetOffTreadsState() != OffTreadsState::InAir ) {
     return Status::Complete;
   }
 
@@ -107,36 +96,6 @@ IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot)
   
 void BehaviorReactToPickup::StopInternalReactionary(Robot& robot)
 {
-}
-
-void BehaviorReactToPickup::AlwaysHandleInternal(const EngineToGameEvent& event,
-                                         const Robot& robot)
-{
-  // We want to get these messages, even when not running
-  switch (event.GetData().GetTag())
-  {
-    case MessageEngineToGameTag::RobotPickedUp:
-    {
-      _isInAir = true;
-      break;
-    }
-    case MessageEngineToGameTag::RobotPutDown:
-    {
-      _isInAir = false;
-      break;
-    }
-    case MessageEngineToGameTag::RobotOnBack:
-    {
-      if( event.GetData().Get_RobotOnBack().onBack ) {
-        _isInAir = false;
-      }
-      break;
-    }
-    default:
-    {
-      break;
-    }
-  }
 }
 
 } // namespace Cozmo

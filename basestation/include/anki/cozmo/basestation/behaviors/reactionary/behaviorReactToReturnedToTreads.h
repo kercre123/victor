@@ -1,48 +1,44 @@
 /**
- * File: behaviorReactToRobotOnFace.h
+ * File: behaviorReactToReturnedToTreads.h
  *
  * Author: Kevin M. Karol
- * Created: 2016-07-18
+ * Created: 2016-08-24
  *
- * Description: 
+ * Description: Cozmo reacts to being placed back on his treads (cancels playing animations)
  *
  * Copyright: Anki, Inc. 2016
  *
  **/
 
-#ifndef __Cozmo_Basestation_Behaviors_BeahviorReactToRobotOnFace_H__
-#define __Cozmo_Basestation_Behaviors_BeahviorReactToRobotOnFace_H__
+#ifndef __Cozmo_Basestation_Behaviors_BeahviorReactToReturnedToTreads_H__
+#define __Cozmo_Basestation_Behaviors_BeahviorReactToReturnedToTreads_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorReactToRobotOnFace : public IReactionaryBehavior
+class BehaviorReactToReturnedToTreads : public IReactionaryBehavior
 {
 private:
   
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  BehaviorReactToRobotOnFace(Robot& robot, const Json::Value& config);
-  
+  BehaviorReactToReturnedToTreads(Robot& robot, const Json::Value& config);
+  virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) override;
+
 public:
   
   virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
   virtual bool ShouldResumeLastBehavior() const override { return false; }
   virtual bool ShouldRunWhileOffTreads() const override { return true;}
-  virtual bool ShouldComputationallySwitch(const Robot& robot) override;
-
+  
 protected:
     
   virtual Result InitInternalReactionary(Robot& robot) override;
   virtual void   StopInternalReactionary(Robot& robot) override;
 
 private:
-  void FlipOverIfNeeded(Robot& robot);
-  void DelayThenCheckState(Robot& robot);
-  void CheckFlipSuccess(Robot& robot);
-  
   
 };
 

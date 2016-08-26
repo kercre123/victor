@@ -191,7 +191,7 @@ namespace Cozmo {
       EngineToGameTag::ObjectMoved,
       EngineToGameTag::CameraCalibration,
       EngineToGameTag::RobotStopped,
-      EngineToGameTag::RobotPickedUp,
+      EngineToGameTag::RobotOffTreadsStateChanged,
       EngineToGameTag::MotorCalibration
     }});
 
@@ -531,7 +531,7 @@ namespace Cozmo {
       }
       
       // Check for pickup
-      if (robot.IsPickedUp() && _currentState > FactoryTestState::ChargerAndIMUCheck) {
+      if (robot.GetOffTreadsState() != OffTreadsState::OnTreads && _currentState > FactoryTestState::ChargerAndIMUCheck) {
         END_TEST(FactoryTestResultCode::ROBOT_PICKUP);
       }
       
@@ -1540,8 +1540,8 @@ namespace Cozmo {
         _lastHandlerResult = HandleRobotStopped(robot, event.GetData().Get_RobotStopped());
         break;
 
-      case EngineToGameTag::RobotPickedUp:
-        _lastHandlerResult = HandleRobotPickedUp(robot, event.GetData().Get_RobotPickedUp());
+      case EngineToGameTag::RobotOffTreadsStateChanged:
+        _lastHandlerResult = HandleRobotOfftreadsStateChanged(robot, event.GetData().Get_RobotOffTreadsStateChanged());
         break;
         
       case EngineToGameTag::MotorCalibration:
@@ -1827,9 +1827,11 @@ namespace Cozmo {
     return RESULT_OK;
   }
 
-  Result BehaviorFactoryTest::HandleRobotPickedUp(Robot& robot, const ExternalInterface::RobotPickedUp &msg)
+  Result BehaviorFactoryTest::HandleRobotOfftreadsStateChanged(Robot& robot, const ExternalInterface::RobotOffTreadsStateChanged &msg)
   {
-    EndTest(robot, FactoryTestResultCode::ROBOT_PICKUP);
+    if(msg.treadsState != OffTreadsState::OnTreads){
+      EndTest(robot, FactoryTestResultCode::ROBOT_PICKUP);
+    }
     return RESULT_OK;
   }
 

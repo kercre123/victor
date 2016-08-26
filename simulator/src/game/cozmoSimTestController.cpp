@@ -53,6 +53,11 @@ namespace Anki {
                                                          "CozmoSimTestController",
                                                          BehaviorType::AcknowledgeObject,
                                                          false)));
+    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::RequestEnableReactionaryBehavior(
+                                                         "CozmoSimTestController",
+                                                         BehaviorType::ReactToReturnedToTreads,
+                                                         false)));
+
   }
     
     bool CozmoSimTestController::IsTrueBeforeTimeout(bool cond,

@@ -23,23 +23,22 @@ namespace Cozmo {
   
 using namespace ExternalInterface;
 
-//Constants for on face - Note these values are duplicated in robot.cpp
 static const float kWaitTimeBeforeRepeatAnim_s = 0.5f;
-static const float kPitchAngleOnFaceTurtleMin_rads = DEG_TO_RAD(90.f);
-static const float kPitchAngleOnFaceTurtleMax_rads = DEG_TO_RAD(-110.f);
-static const float kPitchAngleOnFaceTurtleMin_sim_rads = DEG_TO_RAD(90.f); //This has not been tested
-static const float kPitchAngleOnFaceTurtleMax_sim_rads = DEG_TO_RAD(-110.f); //This has not been tested
+static const float kRobotMinLiftAngleForArmUpAnim_s = 45.f;
+
   
 BehaviorReactToRobotOnFace::BehaviorReactToRobotOnFace(Robot& robot, const Json::Value& config)
 : IReactionaryBehavior(robot, config)
 {
   SetDefaultName("ReactToRobotOnFace");
-
-  // These are the tags that should trigger this behavior to be switched to immediately
-  SubscribeToTriggerTags({
-    EngineToGameTag::RobotOnFace
-  });
 }
+  
+  
+bool BehaviorReactToRobotOnFace::ShouldComputationallySwitch(const Robot& robot)
+{
+  return robot.GetOffTreadsState() == OffTreadsState::OnFace;
+}
+  
 
 bool BehaviorReactToRobotOnFace::IsRunnableInternalReactionary(const Robot& robot) const
 {
@@ -54,11 +53,9 @@ Result BehaviorReactToRobotOnFace::InitInternalReactionary(Robot& robot)
 
 void BehaviorReactToRobotOnFace::FlipOverIfNeeded(Robot& robot)
 {
-  if( robot.IsOnFace() ) {
+  if( robot.GetOffTreadsState() == OffTreadsState::OnFace ) {
     AnimationTrigger anim;
-    const float turtleRollMinAngle = robot.IsPhysical() ? kPitchAngleOnFaceTurtleMin_rads : kPitchAngleOnFaceTurtleMin_sim_rads;
-    const float turtleRollMaxAngle = robot.IsPhysical() ? kPitchAngleOnFaceTurtleMax_rads : kPitchAngleOnFaceTurtleMax_sim_rads;
-    if(robot.GetPitchAngle() > turtleRollMinAngle || robot.GetPitchAngle() < turtleRollMaxAngle){
+    if(robot.GetLiftAngle() < kRobotMinLiftAngleForArmUpAnim_s){
       anim = AnimationTrigger::FacePlantRoll;
     }else{
       anim = AnimationTrigger::FacePlantRollArmUp;
@@ -71,7 +68,7 @@ void BehaviorReactToRobotOnFace::FlipOverIfNeeded(Robot& robot)
 
 void BehaviorReactToRobotOnFace::DelayThenCheckState(Robot& robot)
 {
-  if( robot.IsOnFace() ) {
+  if( robot.GetOffTreadsState() == OffTreadsState::OnFace ) {
     StartActing(new WaitAction(robot, kWaitTimeBeforeRepeatAnim_s),
                 &BehaviorReactToRobotOnFace::CheckFlipSuccess);
   }
@@ -80,23 +77,12 @@ void BehaviorReactToRobotOnFace::DelayThenCheckState(Robot& robot)
   
 void BehaviorReactToRobotOnFace::CheckFlipSuccess(Robot& robot)
 {
-  if( robot.IsOnFace() ) {
+  if(robot.GetOffTreadsState() == OffTreadsState::OnFace) {
     StartActing(new TriggerAnimationAction(robot, AnimationTrigger::FailedToRightFromFace),
                 &BehaviorReactToRobotOnFace::FlipOverIfNeeded);
   }else{
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedToRobotOnFace);
   }
-}
-
-bool BehaviorReactToRobotOnFace::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot)
-{
-  if( event.GetTag() != MessageEngineToGameTag::RobotOnFace ) {
-    PRINT_NAMED_ERROR("BehaviorReactToRobotOnFace.ShouldRunForEvent.BadEventType",
-                      "Calling ShouldRunForEvent with an event we don't care about, this is a bug");
-    return false;
-  }
-
-  return true;
 }
 
 void BehaviorReactToRobotOnFace::StopInternalReactionary(Robot& robot)

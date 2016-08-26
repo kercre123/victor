@@ -90,10 +90,12 @@
 
 #define BUILD_NEW_ANIMATION_CODE 0
 
+#define IS_STATUS_FLAG_SET(x) ((msg.status & (uint16_t)RobotStatusFlag::x) != 0)
 
 namespace Anki {
 namespace Cozmo {
-    
+
+  
 /*
 // static initializers
 const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
@@ -104,35 +106,37 @@ const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
 */
 
 CONSOLE_VAR(bool, kDebugPossibleBlockInteraction, "Robot", false);
-  
+
+
+////////
+// Consts for robot offtreadsState
+///////
+
+// timeToConsiderOfftreads is tuned based on the fact that we have to wait half a second from the time the cliff sensor detects
+// ground to when the robot state message updates to the fact that it is no longer picked up
+static const float kRobotTimeToConsiderOfftreads_ms = 250.0f;
+
+// Laying flat angles
+static const float kPitchAngleOntreads_rads = DEG_TO_RAD(0);
+static const float kPitchAngleOntreadsTolerence_rads = DEG_TO_RAD(45);
+
 //Constants for on back
 static const float kPitchAngleOnBack_rads = DEG_TO_RAD(74.5f);
 static const float kPitchAngleOnBack_sim_rads = DEG_TO_RAD(96.4f);
+static const float kPitchAngleOnBackTolerance_deg = 15.0f;
 
-CONSOLE_VAR(f32, kPitchAngleOnBackTolerance_deg, "Robot", 5.0f);
-CONSOLE_VAR(u32, kRobotTimeToConsiderOnBack_ms, "Robot", 300);
-  
 //Constants for on side
 static const float kOnLeftSide_rawYAccel = -9000.0;
 static const float kOnRightSide_rawYAccel = 10500.0;
-CONSOLE_VAR(f32, kOnSideTolerance_rawYAccel, "Robot", 3000.0f);
-CONSOLE_VAR(u32, kRobotTimeToConsiderOnSide_ms, "Robot", 300);
-  
+static const float kOnSideTolerance_rawYAccel =3000.0f;
 
-//Constants for on face - Note these values are duplicated in behaviorReactToRobotOnFace.cpp
-static const float kPitchAngleOnFacePlant_rads = DEG_TO_RAD(-90.f);
-static const float kPitchAngleOnFacePlantTolerenece_rads = DEG_TO_RAD(20.f);
-static const float kPitchAngleOnFaceTurtleMin_rads = DEG_TO_RAD(90.f);
-static const float kPitchAngleOnFaceTurtleMax_rads = DEG_TO_RAD(-110.f);
-  
-static const float kPitchAngleOnFacePlant_sim_rads = DEG_TO_RAD(-90.f); //This has not been tested
-static const float kPitchAngleOnFacePlantTolerence_sim_rads = DEG_TO_RAD(20.f); //This has not been tested
-static const float kPitchAngleOnFaceTurtleMin_sim_rads = DEG_TO_RAD(90.f); //This has not been tested
-static const float kPitchAngleOnFaceTurtleMax_sim_rads = DEG_TO_RAD(-110.f); //This has not been tested
-  
-CONSOLE_VAR(u32, kRobotTimeToConsiderOnFace_ms, "Robot", 300);
+// On face angles
+static const float kPitchAngleOnFacePlantMin_rads = DEG_TO_RAD(110.f);
+static const float kPitchAngleOnFacePlantMax_rads = DEG_TO_RAD(-110.f);
+static const float kPitchAngleOnFacePlantMin_sim_rads = DEG_TO_RAD(110.f); //This has not been tested
+static const float kPitchAngleOnFacePlantMax_sim_rads = DEG_TO_RAD(-110.f); //This has not been tested
 
-  
+
 // For tool code reading
 // 4-degree look down: (Make sure to update cozmoBot.proto to match!)
 const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
@@ -365,51 +369,150 @@ ObjectID Robot::AddUnconnectedCharger()
 }
 
     
-void Robot::SetPickedUp(bool isPickedUpNew)
+bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
 {
-  // We use the cliff sensor to help determine if we're picked up; if it's disabled then ignore when it is
-  // reported as true. If it's false we want to be able to go through the put down logic below.
-  if (!IsCliffSensorEnabled() && isPickedUpNew) {
-    return;
-  }
-      
-  if(_isPickedUp == false && isPickedUpNew == true) {
-    // Robot is being picked up from not being picked up, notify systems
-
-    _visionComponentPtr->Pause(true);
-        
-    Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPickedUp(GetID())));
-        
-    if( _isOnChargerPlatform )
+  const bool isOfftreads = IS_STATUS_FLAG_SET(IS_PICKED_UP);
+  TimeStamp_t currentTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  
+  //////////
+  // Check the robot's orientation
+  //////////
+  
+  //// COZMO_UP_RIGHT
+  const bool currOntreads = std::abs(GetPitchAngle().ToDouble() - kPitchAngleOntreads_rads) <= kPitchAngleOntreadsTolerence_rads;
+  
+  //// COZMO_ON_BACK
+  const float backAngle = IsPhysical() ? kPitchAngleOnBack_rads : kPitchAngleOnBack_sim_rads;
+  const bool currOnBack = std::abs( GetPitchAngle().ToDouble() - backAngle ) <= DEG_TO_RAD( kPitchAngleOnBackTolerance_deg );
+  //// COZMO_ON_SIDE
+  const float rawY = msg.rawAccelY;
+  const bool onRightSide =  (std::abs(rawY - kOnRightSide_rawYAccel) <= kOnSideTolerance_rawYAccel);
+  const bool currOnSide = onRightSide || (std::abs(rawY - kOnLeftSide_rawYAccel) <= kOnSideTolerance_rawYAccel);
+  //// COZMO_ON_FACE
+  const float facePlantMinAngle = IsPhysical() ? kPitchAngleOnFacePlantMin_rads : kPitchAngleOnFacePlantMin_sim_rads;
+  const float facePlantMaxAngle = IsPhysical() ? kPitchAngleOnFacePlantMax_rads : kPitchAngleOnFacePlantMax_sim_rads;
+  
+  const bool currFacePlant = GetPitchAngle() > facePlantMinAngle || GetPitchAngle() < facePlantMaxAngle;
+  
+  /////
+  // Orientation based state transitions
+  ////
+  
+  if(currOnSide){
+    if((_awaitingConfirmationTreadState != OffTreadsState::OnRightSide
+        && _awaitingConfirmationTreadState != OffTreadsState::OnLeftSide))
     {
-      _isOnChargerPlatform = false;
-      Broadcast(
-        ExternalInterface::MessageEngineToGame(
-          ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform)));
+      // Transition to Robot on Side
+      if(onRightSide){
+        _awaitingConfirmationTreadState = OffTreadsState::OnRightSide;
+      }else{
+        _awaitingConfirmationTreadState = OffTreadsState::OnLeftSide;
+      }
+      _timeOffTreadStateChanged_ms = currentTimestamp;
     }
   }
-  else if (true == _isPickedUp && false == isPickedUpNew) {
-    // Robot just got put back down
-    _visionComponentPtr->Pause(false);
-        
-    ASSERT_NAMED(!IsLocalized(), "Robot should be delocalized when first put back down!");
-        
-    // If we are not localized and there is nothing else left in the world that
-    // we could localize to, then go ahead and mark us as localized (via
-    // odometry alone)
-    if(false == _blockWorld.AnyRemainingLocalizableObjects()) {
-      PRINT_NAMED_INFO("Robot.SetPickedUp.NoMoreRemainingLocalizableObjects",
-                       "Marking previously-unlocalized robot %d as localized to odometry because "
-                       "there are no more objects to localize to in the world.", GetID());
-      SetLocalizedTo(nullptr); // marks us as localized to odometry only
+  else{
+    //Not on side
+    
+    if(currOntreads
+       && _awaitingConfirmationTreadState != OffTreadsState::InAir
+       && _awaitingConfirmationTreadState != OffTreadsState::OnTreads)
+    {
+      _awaitingConfirmationTreadState = OffTreadsState::InAir;
+      _timeOffTreadStateChanged_ms = currentTimestamp;
     }
-        
+    
+    if(currOnBack
+       && _awaitingConfirmationTreadState != OffTreadsState::OnBack)
+    {
+      // Transition to Robot on Back
+      _awaitingConfirmationTreadState = OffTreadsState::OnBack;
+      _timeOffTreadStateChanged_ms = currentTimestamp;
+    }
+
+    if(currFacePlant
+       && _awaitingConfirmationTreadState != OffTreadsState::OnFace)
+    {
+      // Transition to Robot on Face
+      _awaitingConfirmationTreadState = OffTreadsState::OnFace;
+      _timeOffTreadStateChanged_ms = currentTimestamp;
+    }
+  
+  }// end if(currOnSide)
+    
+  /////
+  // Message based tred state transitions
+  ////
+  
+  // Transition from ontreads to InAir - happens instantly
+  if(_awaitingConfirmationTreadState == OffTreadsState::OnTreads && isOfftreads == true) {
+    // Robot is being picked up from not being picked up, notify systems
+    _awaitingConfirmationTreadState = OffTreadsState::InAir;
+    // Allows this to be called instantly
+    _timeOffTreadStateChanged_ms = currentTimestamp - kRobotTimeToConsiderOfftreads_ms;
+  }
+  
+  // Transition from inAir to Ontreads
+  // there is a delay for the cliff sensor to confirm the robot is no longer picked up
+  if (_awaitingConfirmationTreadState != OffTreadsState::OnTreads && isOfftreads != true
+      && !currOnBack && !currOnSide && !currFacePlant) {
+    _awaitingConfirmationTreadState = OffTreadsState::OnTreads;
+    // Allows this to be called instantly
+    _timeOffTreadStateChanged_ms = currentTimestamp - kRobotTimeToConsiderOfftreads_ms;
+    
     // Check the lift to see if tool changed while we were picked up
     //_actionList->QueueActionNext(new ReadToolCodeAction(*this));
-        
-    Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPutDown(GetID())));
   }
-  _isPickedUp = isPickedUpNew;
+  
+  //////////
+  // A new tred state has been confirmed
+  //////////
+  if(_timeOffTreadStateChanged_ms + kRobotTimeToConsiderOfftreads_ms <= currentTimestamp
+     && _offTreadsState != _awaitingConfirmationTreadState)
+  {
+    // Special case for just left treads
+    if(_offTreadsState == OffTreadsState::OnTreads){
+      _visionComponentPtr->Pause(true);
+    }
+    
+    _offTreadsState = _awaitingConfirmationTreadState;
+    Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOffTreadsStateChanged(GetID(), _offTreadsState)));
+    PRINT_CH_INFO("RobotState", "Robot.OfftreadsState.TreadStateChanged", "TreadState changed to:%s", EnumToString(_offTreadsState));
+    
+    // Special case logic for returning to treads
+    if(_offTreadsState == OffTreadsState::OnTreads){
+      // Robot just got put back down
+      _visionComponentPtr->Pause(false);
+      
+      ASSERT_NAMED(!IsLocalized(), "Robot should be delocalized when first put back down!");
+      
+      // If we are not localized and there is nothing else left in the world that
+      // we could localize to, then go ahead and mark us as localized (via
+      // odometry alone)
+      if(false == _blockWorld.AnyRemainingLocalizableObjects()) {
+        PRINT_NAMED_INFO("Robot.UpdateOfftreadsState.NoMoreRemainingLocalizableObjects",
+                         "Marking previously-unlocalized robot %d as localized to odometry because "
+                         "there are no more objects to localize to in the world.", GetID());
+        SetLocalizedTo(nullptr); // marks us as localized to odometry only
+      }
+    }
+    
+    // If the robot was carrying a block we don't know what happened to it
+    if(IsCarryingObject() && _offTreadsState != OffTreadsState::OnTreads){
+      UnSetCarryingObjects();
+    }
+    
+    // if the robot was on the charging platform and its state changes it's not on the platform anymore
+    if(_isOnChargerPlatform && _offTreadsState != OffTreadsState::OnTreads)
+    {
+      _isOnChargerPlatform = false;
+      Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform)));
+    }
+    
+    return true;
+  }
+  
+  return false;
 }
     
 void Robot::Delocalize(bool isCarryingObject)
@@ -549,7 +652,6 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
     
 Result Robot::UpdateFullRobotState(const RobotState& msg)
 {
-  #define IS_STATUS_FLAG_SET(x) ((msg.status & (uint16_t)RobotStatusFlag::x) != 0)
   
   ANKI_CPU_PROFILE("Robot::UpdateFullRobotState");
   
@@ -590,9 +692,10 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     _pdo->Update(_currPathSegment, _numFreeSegmentSlots);
   }
   
-  const bool isPickedUpNew = IS_STATUS_FLAG_SET(IS_PICKED_UP);
-  const bool isDelocalizing = !_isPickedUp && isPickedUpNew;
-  
+  // Update cozmo's internal offTreadsState knowledge
+  const bool wasTreadsStateUpdated = CheckAndUpdateTreadsState(msg);
+  const bool isDelocalizing = wasTreadsStateUpdated && _offTreadsState != OffTreadsState::OnTreads;
+
   // this flag can have a small delay with respect to when we actually picked up the block, since Engine notifies
   // the robot, and the robot updates on the next state update. But that delay guarantees that the robot knows what
   // we think it's true, rather than mixing timestamps of when it started carrying vs when the robot knows that it was
@@ -600,7 +703,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   const bool isCarryingObject = IS_STATUS_FLAG_SET(IS_CARRYING_BLOCK);
   //robot->SetCarryingBlock( isCarryingObject ); // Still needed?
   SetPickingOrPlacing(IS_STATUS_FLAG_SET(IS_PICKING_OR_PLACING));
-  SetPickedUp(isPickedUpNew);
   SetOnCharger(IS_STATUS_FLAG_SET(IS_ON_CHARGER));
   _isCliffSensorOn = IS_STATUS_FLAG_SET(CLIFF_DETECTED);
 
@@ -622,7 +724,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
   _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
       
-  _hasMovedSinceLocalization |= GetMoveComponent().IsMoving() || _isPickedUp;
+  _hasMovedSinceLocalization |= GetMoveComponent().IsMoving() || _offTreadsState != OffTreadsState::OnTreads;
       
   if ( isDelocalizing )
   {
@@ -763,94 +865,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     msg.timestamp, msg.pose_frame_id,
     msg.pose_x, msg.pose_y, msg.pose_angle*180.f/M_PI);
   */
-  
-  ////////
-  /// Checking to see if Cozmo is not in normal driving position
-  ////////
-  
-  // check if the robot is stuck on it's back. We track internally if it's on it's back, but don't send
-  // the message out until some time.  // TODO:(bn) probably want to check that the robot isn't moving
-  // around based on accelerometer here
-  
-  //// COZMO_ON_BACK
-  const float backAngle = IsPhysical() ? kPitchAngleOnBack_rads : kPitchAngleOnBack_sim_rads;
-  const bool currOnBack = std::abs( GetPitchAngle().ToDouble() - backAngle ) <= DEG_TO_RAD( kPitchAngleOnBackTolerance_deg );
-  //// COZMO_ON_SIDE
-  const float rawY = msg.rawAccelY;
-  const bool onRightSide =  (std::abs(rawY - kOnRightSide_rawYAccel) <= kOnSideTolerance_rawYAccel);
-  const bool currOnSide = onRightSide || (std::abs(rawY - kOnLeftSide_rawYAccel) <= kOnSideTolerance_rawYAccel);
-  //// COZMO_ON_FACE
-  const float facePlantAngle = IsPhysical() ? kPitchAngleOnFacePlant_rads : kPitchAngleOnFacePlant_sim_rads;
-  const float turtleRollMinAngle = IsPhysical() ? kPitchAngleOnFaceTurtleMin_rads : kPitchAngleOnFaceTurtleMin_sim_rads;
-  const float turtleRollMaxAngle = IsPhysical() ? kPitchAngleOnFaceTurtleMax_rads : kPitchAngleOnFaceTurtleMax_sim_rads;
-  const float pitchAngleTolerence = IsPhysical() ? kPitchAngleOnFacePlantTolerenece_rads : kPitchAngleOnFacePlantTolerence_sim_rads;
-  
-  const bool currFacePlant = std::abs( GetPitchAngle().ToDouble() - facePlantAngle ) <= pitchAngleTolerence;
-  const bool currTurtleRoll = GetPitchAngle() > turtleRollMinAngle || GetPitchAngle() < turtleRollMaxAngle;
-  
-  
-  bool sendOffTredsValue = _lastSendOffTredsValue;
-  switch(_offTredsState){
-    case OffTredsState::OnFace:
-      {
-        if(msg.timestamp > _robotFirstOffTreds_ms + kRobotTimeToConsiderOnFace_ms){
-          sendOffTredsValue = true;
-        }
-        if(!(currFacePlant || currTurtleRoll)){
-          _offTredsState = OffTredsState::OnTreds;
-          sendOffTredsValue = false;
-        }
-        if( sendOffTredsValue != _lastSendOffTredsValue ) {
-          Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnFace( sendOffTredsValue )));
-          _lastSendOffTredsValue = sendOffTredsValue;
-        }
-        break;
-      }
-    case OffTredsState::OnSide:
-      {
-        if(msg.timestamp > _robotFirstOffTreds_ms + kRobotTimeToConsiderOnSide_ms){
-          sendOffTredsValue = true;
-        }
-        if(!currOnSide){
-          _offTredsState = OffTredsState::OnTreds;
-          sendOffTredsValue = false;
-        }
-        if( sendOffTredsValue != _lastSendOffTredsValue ) {
-          Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnSide( sendOffTredsValue, onRightSide )));
-          _lastSendOffTredsValue = sendOffTredsValue;
-        }
-        break;
-      }
-    case OffTredsState::OnBack:
-      {
-        if(msg.timestamp > _robotFirstOffTreds_ms + kRobotTimeToConsiderOnBack_ms){
-          sendOffTredsValue = true;
-        }
-        if(!currOnBack){
-          _offTredsState = OffTredsState::OnTreds;
-          sendOffTredsValue = false;
-        }
-        if( sendOffTredsValue != _lastSendOffTredsValue ) {
-          Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnBack( sendOffTredsValue )));
-          _lastSendOffTredsValue = sendOffTredsValue;
-        }
-        break;
-      }
-    case OffTredsState::OnTreds:
-      {
-        if(currOnBack){
-          _offTredsState = OffTredsState::OnBack;
-        }else if(currFacePlant || currTurtleRoll){
-          _offTredsState = OffTredsState::OnFace;
-        }else if(currOnSide){
-          _offTredsState = OffTredsState::OnSide;
-        }else{
-          _robotFirstOffTreds_ms = msg.timestamp;
-        }
-        break;
-      }
-  } //end switch(_offTredsState)
-  
   
   // Engine modifications to state message.
   // TODO: Should this just be a different message? Or one that includes the state message from the robot?
@@ -1381,7 +1395,7 @@ Result Robot::Update(bool ignoreVisionModes)
       
   // Update ChargerPlatform
   ObservableObject* charger = GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger);
-  if( charger && charger->IsPoseStateKnown() && !IsPickedUp() )
+  if( charger && charger->IsPoseStateKnown() && _offTreadsState == OffTreadsState::OnTreads)
   {
     // This state is useful for knowing not to play a cliff react when just driving off the charger.
     bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());
@@ -3866,7 +3880,7 @@ ExternalInterface::RobotState Robot::GetRobotState()
   msg.status = 0;
   if(GetMoveComponent().IsMoving()) { msg.status |= (uint32_t)RobotStatusFlag::IS_MOVING; }
   if(IsPickingOrPlacing()) { msg.status |= (uint32_t)RobotStatusFlag::IS_PICKING_OR_PLACING; }
-  if(IsPickedUp())         { msg.status |= (uint32_t)RobotStatusFlag::IS_PICKED_UP; }
+  if(_offTreadsState != OffTreadsState::OnTreads) { msg.status |= (uint32_t)RobotStatusFlag::IS_PICKED_UP; }
   if(IsAnimating())        { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING; }
   if(IsIdleAnimating())    { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING_IDLE; }
   if(IsCarryingObject())   {
@@ -3881,7 +3895,7 @@ ExternalInterface::RobotState Robot::GetRobotState()
   }
       
   msg.gameStatus = 0;
-  if (IsLocalized() && !IsPickedUp()) { msg.gameStatus |= (uint8_t)GameStatusFlag::IsLocalized; }
+  if (IsLocalized() && _offTreadsState == OffTreadsState::OnTreads) { msg.gameStatus |= (uint8_t)GameStatusFlag::IsLocalized; }
       
   msg.headTrackingObjectID = GetMoveComponent().GetTrackToObject();
       
