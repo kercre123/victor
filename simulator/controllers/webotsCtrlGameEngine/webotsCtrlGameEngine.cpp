@@ -112,7 +112,8 @@ int main(int argc, char **argv)
     sosLoggerProvider
     , printfLoggerProvider
 #if ANKI_DEV_CHEATS
-    , new DevLoggerProvider(Util::FileUtils::FullFilePath( {DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory(), DevLoggingSystem::kPrintName} ))
+    , new DevLoggerProvider(DevLoggingSystem::GetInstance()->GetQueue(),
+            Util::FileUtils::FullFilePath( {DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory(), DevLoggingSystem::kPrintName} ))
 #endif
   });
   loggerProvider.SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);

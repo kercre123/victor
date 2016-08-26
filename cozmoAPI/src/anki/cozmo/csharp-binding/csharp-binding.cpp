@@ -209,7 +209,8 @@ int cozmo_startup(const char *configuration_data)
     , new Util::DasLoggerProvider()
 #endif
 #if ANKI_DEV_CHEATS
-    , new DevLoggerProvider(Util::FileUtils::FullFilePath( {DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory(), DevLoggingSystem::kPrintName} ))
+    , new DevLoggerProvider(DevLoggingSystem::GetInstance()->GetQueue(),
+                            Util::FileUtils::FullFilePath( {DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory(), DevLoggingSystem::kPrintName} ))
 #endif
   });
   Anki::Util::gLoggerProvider = loggerProvider;

@@ -20,7 +20,7 @@ namespace Cozmo {
 class DevLoggerProvider : public Util::SaveToFileLoggerProvider {
 public:
   
-  DevLoggerProvider(const std::string& baseDirectory, std::size_t maxFileSize = kDefaultMaxFileSize);
+  DevLoggerProvider(Util::Dispatch::Queue* queue, const std::string& baseDirectory, std::size_t maxFileSize = kDefaultMaxFileSize);
   
   void Log(ILoggerProvider::LogLevel logLevel, const std::string& message) override;
 };

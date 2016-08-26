@@ -72,7 +72,7 @@ namespace Anki {
     , _initialVisionMarker(Vision::MARKER_UNKNOWN)
     , _markerBeingSeen(Vision::MARKER_UNKNOWN)
     , _cubePlacementPose(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, &robot.GetPose().FindOrigin())
-    , _logger(robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "dockingTest"))
+    , _logger(nullptr, robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "dockingTest"))
     {
       SetDefaultName("DockingTestSimple");
       

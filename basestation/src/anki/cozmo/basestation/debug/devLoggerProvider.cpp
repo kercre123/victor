@@ -20,8 +20,8 @@ namespace Anki {
 namespace Cozmo {
   
   
-DevLoggerProvider::DevLoggerProvider(const std::string& baseDirectory, std::size_t maxFileSize)
-: Util::SaveToFileLoggerProvider(baseDirectory, maxFileSize)
+DevLoggerProvider::DevLoggerProvider(Util::Dispatch::Queue* queue, const std::string& baseDirectory, std::size_t maxFileSize)
+: Util::SaveToFileLoggerProvider(queue, baseDirectory, maxFileSize)
 {
 }
   

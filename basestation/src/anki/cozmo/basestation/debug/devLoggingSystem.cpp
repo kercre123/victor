@@ -18,6 +18,7 @@
 #include "clad/vizInterface/messageViz.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
+#include "util/dispatchQueue/dispatchQueue.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/rollingFileLogger.h"
@@ -54,7 +55,8 @@ void DevLoggingSystem::DestroyInstance()
 }
 
 DevLoggingSystem::DevLoggingSystem(const std::string& baseDirectory, const std::string& appRunId)
-: _allLogsBaseDirectory(baseDirectory)
+: _queue(Util::Dispatch::Create("DevLogger"))
+, _allLogsBaseDirectory(baseDirectory)
 , _appRunId(appRunId)
 {
   std::string appRunTimeString = Util::RollingFileLogger::GetDateTimeString(DevLoggingSystem::GetAppRunStartTime());
@@ -64,11 +66,11 @@ DevLoggingSystem::DevLoggingSystem(const std::string& baseDirectory, const std::
   ArchiveDirectories(_allLogsBaseDirectory, {appRunTimeString, kWaitingForUploadDirName} );
   
   _devLoggingBaseDirectory = GetPathString(_allLogsBaseDirectory, appRunTimeString);
-  _gameToEngineLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, kGameToEngineName)));
-  _engineToGameLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, kEngineToGameName)));
-  _robotToEngineLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, kRobotToEngineName)));
-  _engineToRobotLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, kEngineToRobogName)));
-  _engineToVizLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, kEngineToVizName)));
+  _gameToEngineLog.reset(new Util::RollingFileLogger(_queue, GetPathString(_devLoggingBaseDirectory, kGameToEngineName)));
+  _engineToGameLog.reset(new Util::RollingFileLogger(_queue, GetPathString(_devLoggingBaseDirectory, kEngineToGameName)));
+  _robotToEngineLog.reset(new Util::RollingFileLogger(_queue, GetPathString(_devLoggingBaseDirectory, kRobotToEngineName)));
+  _engineToRobotLog.reset(new Util::RollingFileLogger(_queue, GetPathString(_devLoggingBaseDirectory, kEngineToRobogName)));
+  _engineToVizLog.reset(new Util::RollingFileLogger(_queue, GetPathString(_devLoggingBaseDirectory, kEngineToVizName)));
 
   // write apprun file
   Util::FileUtils::WriteFile(GetPathString(_devLoggingBaseDirectory, appRunTimeString + kAppRunExtension), appRunId);
@@ -195,7 +197,11 @@ std::string DevLoggingSystem::GetPathString(const std::string& base, const std::
   return pathStream.str();
 }
 
-DevLoggingSystem::~DevLoggingSystem() = default;
+DevLoggingSystem::~DevLoggingSystem()
+{
+  Util::Dispatch::Stop(_queue);
+  Util::Dispatch::Release(_queue);
+}
 
 template<typename MsgType>
 std::string DevLoggingSystem::PrepareMessage(const MsgType& message) const
