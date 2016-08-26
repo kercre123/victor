@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: KnockOverThreeCubeStack
-    _EnumValue: 11
+    _EnumValue: 5
   UnlockableType: 1
   Prerequisites:
   - _EnumValueAsString: PounceOnMotionAction

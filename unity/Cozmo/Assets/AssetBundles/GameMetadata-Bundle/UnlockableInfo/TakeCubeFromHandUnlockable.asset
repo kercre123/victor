@@ -17,7 +17,6 @@ MonoBehaviour:
   UnlockableType: 1
   Prerequisites: []
   AnyPrereqUnlock: 0
-  ExplicitUnlock: 1
   NeverAvailable: 1
   DescriptionKey: unlockable.TakeCubeFromHand.Description
   TitleKey: unlockable.TakeCubeFromHand.Title

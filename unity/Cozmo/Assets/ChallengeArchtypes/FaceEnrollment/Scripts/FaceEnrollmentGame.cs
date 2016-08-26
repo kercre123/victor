@@ -192,6 +192,9 @@ namespace FaceEnrollment {
         return;
       }
 
+      // resume minigame music
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());
+
       // dont show errors if we cancelled.
       if (message.result == Anki.Cozmo.ActionResult.CANCELLED) {
         // reset _ReEnrollFaceID

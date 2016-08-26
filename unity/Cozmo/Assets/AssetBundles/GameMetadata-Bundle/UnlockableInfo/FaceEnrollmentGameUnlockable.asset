@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: MeetCozmoGame
-    _EnumValue: 11
+    _EnumValue: 16
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0
