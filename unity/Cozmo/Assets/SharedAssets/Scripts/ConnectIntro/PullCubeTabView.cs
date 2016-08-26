@@ -49,7 +49,8 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  private void Update() {
+  protected override void Update() {
+    base.Update();
     if (_AllObjectsConnected || ClosingAnimationPlaying) {
       return;
     }

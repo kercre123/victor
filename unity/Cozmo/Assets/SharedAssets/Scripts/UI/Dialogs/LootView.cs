@@ -287,7 +287,8 @@ namespace Cozmo {
         }
       }
 
-      private void Update() {
+      protected override void Update() {
+        base.Update();
         // Decay charge if the box hasn't been opened yet, update the progressbar.
         if (_BoxOpened == false) {
           if (_currentCharge > 0.0f) {
