@@ -10,19 +10,19 @@ Starting Up the SDK
 
 1. Plug the smartphone containing the Cozmo app into your computer.
 2. Open the Cozmo app on the phone. Make sure Cozmo is on and connected to the app via WiFi.
-3. On the computer, open two Terminal windows.
+3. On the computer, open two Terminal windows, and change to the directory where you extracted the sdk (e.g. cd CozmoSdk) 
 
 .. important:: Windows users will need to install a bash shell on their systems. Windows 10 (64-bit) "has a bash shell as of the Anniversary Update <https://msdn.microsoft.com/commandline/wsl/install_guide>", or users on an earlier version of Windows may wish to use a utility like "win-bash <http://win-bash.sourceforge.net/>" or "MSYS2 <https://sourceforge.net/projects/msys2/>". Anki does not provide support for third-party programs.
 
   1. In the first Terminal window, type the following and press Enter::
 
-      cd CozmoSdk/sdk/tcprelay_usbmux_p
+      cd tcprelay
 
   2. Next, open communications between the robot and the computer.
 
     1. For iOS devices, type the following into the same window and press Enter::
 
-      ./openSdkTcpRelay.sh
+      ./iosSdkTcpRelay.sh
 
     2. For Android devices, type the following into the same window and press Enter::
 
@@ -32,10 +32,8 @@ Starting Up the SDK
 
   .. warning:: Do NOT close the first Terminal window. Closing the first Terminal window while operating with the SDK will close communications with the Cozmo robot and cause errors within the program.
 
-4. In the *second*  Terminal window, type the following and press Enter::
-
-      cd CozmoSdk/sdk
-
+4. In the *second*  Terminal window, maks sure you're in the root of the sdk directory::
+      
   The second Terminal window is the one where you will execute programs for Cozmo to run.
 
 ---------------------------
@@ -51,7 +49,7 @@ The Program
 1. Make sure the two Terminal windows are still open.
 2. Type the following into the second Terminal window and then press Enter::
 
-    /run-example.sh examples/hello_world.py
+    ./run-example.sh examples/hello_world.py
 
 3. If done correctly, Cozmo will say "Hello, World!"
 
@@ -93,6 +91,6 @@ Next Steps - "Night-Night"
 5. At the top of the screen, select *File -> Save As*, and save the program in the *examples* directory as ``nightnight.py``.
 6. Now you can run your program. Open the second Terminal window, type in the following, and press Enter::
 
-    /run-example.sh examples/nightnight.py
+    ./run-example.sh examples/nightnight.py
 
 7. If done correctly, Cozmo will say the new phrase.
