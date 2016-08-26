@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. image:: cozmo_sdk_preview.jpg
+.. image:: cozmo.png
 
 =======================================
 Welcome to the Cozmo SDK alpha version!
@@ -11,26 +11,7 @@ Welcome to the Cozmo SDK alpha version!
 
 .. toctree::
     :maxdepth: 2
-    :caption: Installation
-    
-    install
-    
-.. toctree::
-    :maxdepth: 2
-    :caption: Get Started
-    
-    getstarted
-    
-.. toctree::
-    :maxdepth: 2
-    :caption: Beginner Tutorial
-    
-    tutorial-beginner.rst
-    
-.. toctree::
-    :maxdepth: 2
-    :caption: API Reference
-
+    :caption: Table of Contents
     api
 
 ------------------

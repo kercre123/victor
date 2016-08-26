@@ -1,5 +1,5 @@
 =======================================================
-Programming Cozmo - Beginner's Tutorials (OS X / Linux)
+Programming Cozmo - Beginner's Tutorials (Windows)
 =======================================================
 
 Cozmo is programmed in Python_. If you are new to Python, `After Hours Programming <http://www.afterhoursprogramming.com/tutorial/Python/Overview/>` and `Codecademy <http://www.codecademy.com/tracks/python>` offer beginner's courses in learning Python; `Python.org's website <https://wiki.python.org/moin/BeginnersGuide/NonProgrammers>` offers a more comprehensive list of video and web tutorials. This tutorial assumes you have a minimal understanding of programming in general.
@@ -111,21 +111,21 @@ Running the Program
 
 1. Plug the smartphone containing the Cozmo app into your computer.
 2. Open the Cozmo app on the phone. Make sure Cozmo is on and connected to the app via WiFi.
-3. On the computer, open two Terminal windows.
+3. On the computer, open two Command-line windows.
 
-  1. In the first Terminal window, type the following and press Enter::
+  1. In the first window, type the following and press Enter::
 
-    cd cozmo-one/tools/sdk/tcprelay_usbmux_p
+    cd CozmoSdk\sdk\tcprelay_usbmux_p
 
   2. Next, open communications between the robot and the computer.
 
       1. For iOS devices, type the following into the same window and press Enter::
 
-        ./openSdkTcpRelay.sh
+        openSdkTcpRelay.bat
 
       2. For Android devices, type the following into the same window and press Enter::
 
-        ./androidSdkTcpRelay.sh
+        androidSdkTcpRelay.bat
 
         .. important:: Make sure adb (Android Debug Bridge) is installed on your system prior to this step.
 
@@ -133,13 +133,13 @@ Running the Program
 
   3. In the *second* Terminal window, type the following and press Enter::
 
-      cd cozmo-one/tools/sdk
+      cd CozmoSdk\sdk
 
     The second Terminal window is the one where you will execute programs for Cozmo to run.
 
 4. Type the following into the second Terminal window and then press Enter::
 
-  /run-example.sh examples/drive_forward.py
+  run-example.bat examples\drive_forward.py
 
 5. If done correctly, Cozmo will drive forward for three seconds and then stop.
 
@@ -226,17 +226,17 @@ Running the Program
 
   1. In the first Terminal window, type the following and press Enter::
 
-    cd cozmo-one/tools/sdk/tcprelay_usbmux_p
+    cd CozmoSdk\sdk\tcprelay_usbmux_p
 
   2. Next, open communications between the robot and the computer.
 
       1. For iOS devices, type the following into the same window and press Enter::
 
-        ./openSdkTcpRelay.sh
+        openSdkTcpRelay.bat
 
       2. For Android devices, type the following into the same window and press Enter::
 
-        ./androidSdkTcpRelay.sh
+        androidSdkTcpRelay.bat
 
         .. important:: Make sure adb (Android Debug Bridge) is installed on your system prior to this step.
 
@@ -244,11 +244,11 @@ Running the Program
 
 4. In the *second* Terminal window, type the following and press Enter::
 
-    cd cozmo-one/tools/sdk
+    cd cCozmoSdk\sdk
 
 5. Type the following into the second Terminal window and then press Enter::
 
-  ./turnaround.py
+  run-example.bat examples\turnaround.py
 
 3. If done correctly, Cozmo will turn and do a happy dance.
 
@@ -335,17 +335,17 @@ Running the Program
 
   1. In the first Terminal window, type the following and press Enter::
 
-    cd cozmo-one/tools/sdk/tcprelay_usbmux_p
+    cd CozmoSdk\sdk\tcprelay_usbmux_p
 
   2. Next, open communications between the robot and the computer.
 
       1. For iOS devices, type the following into the same window and press Enter::
 
-        ./openSdkTcpRelay.sh
+        openSdkTcpRelay.bat
 
       2. For Android devices, type the following into the same window and press Enter::
 
-        ./androidSdkTcpRelay.sh
+        androidSdkTcpRelay.bat
 
         .. important:: Make sure adb (Android Debug Bridge) is installed on your system prior to this step.
 
@@ -353,10 +353,10 @@ Running the Program
 
 4. In the *second* Terminal window, type the following and press Enter::
 
-    cd cozmo-one/tools/sdk
+    cd CozmoSdk\sdk
 
 5. Type the following into the second Terminal window and then press Enter::
 
-  ./cubestack.py
+  run-example.bat examples\cubestack.py
 
 3. If done correctly, Cozmo will look around for 30 seconds, then pick up a cube and stack it atop another cube.
