@@ -45,7 +45,7 @@ _GIT_EMAIL="anki-smartling@anki.com"
 rm -rf $_EXTERNALS_DIR
 mkdir -p $_SOUNDBANK_DIR
 
-svn_rev=$(svn info $_SVN_COZMOSOUNDBANKS_REPO | grep 'Last Changed Rev' | awk '{ print $4; }')
+svn_rev=$(svn info $_SVN_COZMOSOUNDBANKS_REPO --username $SVN_USERNAME --password $SVN_PASSWORD | grep 'Last Changed Rev' | awk '{ print $4; }')
 
 exit_status=0
 python $_UPDATE_AUDIO_ASSETS_SCRIPT update $svn_rev || exit_status=$?
