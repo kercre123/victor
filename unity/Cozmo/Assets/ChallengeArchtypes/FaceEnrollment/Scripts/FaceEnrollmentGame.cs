@@ -123,12 +123,11 @@ namespace FaceEnrollment {
       CleanupFaceListSlide();
     }
 
-    private void EnterNameForNewFace() {
+    private void EnterNameForNewFace(string preFilledName) {
       _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "enter_new_name", NewNameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
 
-      // if this the first name then we should pre-populate the name with the profile name.
-      if (CurrentRobot.EnrolledFaces.Count == 0) {
-        _EnterNameSlideInstance.SetNameInputField(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName);
+      if (string.IsNullOrEmpty(preFilledName) == false) {
+        _EnterNameSlideInstance.SetNameInputField(preFilledName);
       }
 
       SharedMinigameView.ShowBackButton(() => {
@@ -160,7 +159,7 @@ namespace FaceEnrollment {
       _NameForFace = faceName;
 
       ShowInstructions(() => {
-        EnterNameForNewFace();
+        EnterNameForNewFace(faceName);
       }, faceName);
     }
 
@@ -234,6 +233,16 @@ namespace FaceEnrollment {
         else {
           alertView.TitleLocKey = LocalizationKeys.kFaceEnrollmentErrorsTimeOutTitle;
           alertView.DescriptionLocKey = LocalizationKeys.kFaceEnrollmentErrorsTimeOutDescription;
+          alertView.SetPrimaryButton(LocalizationKeys.kButtonRetry, () => {
+            CleanupFaceListSlide();
+            bool reEnrolling = _ReEnrollFaceID != 0;
+            if (reEnrolling) {
+              RequestReEnrollFace(_ReEnrollFaceID, _NameForFace);
+            }
+            else {
+              HandleNewNameEntered(_NameForFace);
+            }
+          });
           alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel);
         }
       }
