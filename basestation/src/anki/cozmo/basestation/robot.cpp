@@ -710,6 +710,17 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     // This shouldn't happen. This is a firmware bug.
     PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.BodyNotInAccessoryMode","* * * * Firmware bug (Vandiver knows already) * * * *");
     _isBodyInAccessoryMode = false;
+    
+    
+    // ==== HACK: Workaround for robot not getting itself into accessory mode ===
+    static int setBodyModeTicDelay = 3;
+    if (++setBodyModeTicDelay >= 3) {
+      PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.SettingBodyModeHack", "Shouldn't need to do this, but for some reason body's not in the correct mode");
+      SendMessage(RobotInterface::EngineToRobot(SetBodyRadioMode(BodyRadioMode::BODY_ACCESSORY_OPERATING_MODE)));
+      setBodyModeTicDelay = 0;
+    }
+    // ==========================================================================
+    
   } else if (!_isBodyInAccessoryMode && IS_STATUS_FLAG_SET(IS_BODY_ACC_MODE)) {
     // This is not by itself a bad thing, but it should only happen if IS_BODY_ACC_MODE was ever false...
     // which should never happen.
