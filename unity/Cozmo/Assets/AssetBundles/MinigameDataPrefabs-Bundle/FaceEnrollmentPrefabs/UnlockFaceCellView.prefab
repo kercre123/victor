@@ -401,7 +401,7 @@ MonoBehaviour:
     disabledColor: {r: 1, g: 1, b: 1, a: 0}
   _GlintAnimator: {fileID: 11489122}
   _UISoundEvent:
-    _Event: 945548936
+    _Event: Play__Ui__Click_General
     _EventType: Ui
     _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0

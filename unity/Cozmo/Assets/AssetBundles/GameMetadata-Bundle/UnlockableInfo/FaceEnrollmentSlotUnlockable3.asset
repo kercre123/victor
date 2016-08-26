@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: FaceEnrollmentSlot3
-    _EnumValue: 22
+    _EnumValue: 19
   UnlockableType: 2
   Prerequisites: []
   AnyPrereqUnlock: 0

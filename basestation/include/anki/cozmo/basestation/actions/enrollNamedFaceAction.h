@@ -94,7 +94,7 @@ namespace Cozmo {
     bool                      _enrollmentCountReached = false;
     bool                      _saveToRobot = true;
     bool                      _idlePopped = true;
-    bool                      _sayNameWhenDone = true;
+    bool                      _sayNameWhenDone = false;
     bool                      _needToAbort = false;
     
     struct EnrollStep {
