@@ -62,6 +62,14 @@ namespace FaceEnrollment {
       _UpdateThresholdLastEnrolledSeconds = faceEnrollmentConfig.UpdateThresholdLastEnrolledSeconds;
     }
 
+    protected override void AddDisabledReactionaryBehaviors() {
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToCubeMoved);
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToCliff);
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToPickup);
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement);
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToFrustration);
+    }
+
     protected override void SetupViewAfterCozmoReady(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
       base.SetupViewAfterCozmoReady(newView, data);
       ShowFaceListSlide(newView);
