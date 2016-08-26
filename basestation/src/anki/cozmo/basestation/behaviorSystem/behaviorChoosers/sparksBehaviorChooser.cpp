@@ -92,7 +92,21 @@ void SparksBehaviorChooser::OnSelected()
   _state = ChooserState::ChooserSelected;
   _switchingSoftToHardSpark = false;
   _timePlayingOutroStarted = 0;
+  
+  _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, false);
+  _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeFace, false);
+  _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCubeMoved, false);
+
 }
+  
+void SparksBehaviorChooser::OnDeselected()
+{
+  _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, true);
+  _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeFace, true);
+  _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCubeMoved, true);
+  
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
@@ -152,9 +166,9 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
   // Ensure that the spark timesout eventually
   if(_state == ChooserState::PlayingSparksOutro
      && _timePlayingOutroStarted == 0){
-    _timePlayingOutroStarted = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    _timePlayingOutroStarted = currentTime;
   }else if(_state == ChooserState::PlayingSparksOutro){
-    ASSERT_NAMED_EVENT(_timePlayingOutroStarted + kMaxPlayingOutroTimeout < currentTime,
+    ASSERT_NAMED_EVENT(_timePlayingOutroStarted + kMaxPlayingOutroTimeout > currentTime,
                        "SparksBehaviorChooser.ChooseNextBehavior.OutroTimeout", "Outro has not finished after %u seconds", currentTime - _timePlayingOutroStarted);
     
   }

@@ -53,6 +53,7 @@ public:
   virtual const char* GetName() const override { return "Sparks"; }
   
   virtual void OnSelected() override;
+  virtual void OnDeselected() override;
   
   // ==================== Event/Message Handling ====================
   // Handle various message types

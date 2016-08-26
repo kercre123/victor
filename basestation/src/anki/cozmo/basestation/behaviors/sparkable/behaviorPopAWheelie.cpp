@@ -148,10 +148,9 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
                 switch(msg.result)
                 {
                   case ActionResult::SUCCESS:
-                    if(!_shouldStreamline){
-                      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::SuccessfulWheelie));
-                    }
-                  BehaviorObjectiveAchieved(BehaviorObjective::PoppedWheelie);
+                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::SuccessfulWheelie),[this]{
+                      BehaviorObjectiveAchieved(BehaviorObjective::PoppedWheelie);
+                    });
                     break;
                     
                   case ActionResult::FAILURE_RETRY:
