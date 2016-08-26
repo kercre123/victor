@@ -61,7 +61,9 @@ public class MockRobot : IRobot {
   }
 
   public void ResetRobotState(System.Action onComplete = null) {
-    // Do Something?
+    if (onComplete != null) {
+      onComplete();
+    }
   }
 
 

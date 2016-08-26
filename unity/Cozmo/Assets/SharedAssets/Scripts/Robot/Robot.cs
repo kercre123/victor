@@ -524,7 +524,20 @@ public class Robot : IRobot {
     // and try lowering lift
     foreach (var lightCube in LightCubes.Values) {
       if (IsLightCubeInPickupRange(lightCube)) {
-        TurnInPlace(Mathf.PI * 0.5f, 1000, 1000, (s) => TryResetHeadAndLift(onComplete));
+        // there is a light cube in the way, lets try turning...
+        TurnInPlace(Mathf.PI * 0.5f, 1000, 1000, (success) => {
+          if (!success) {
+            // we failed to turn for whatever reason (probably due to an interrupt, let's just give up.
+            if (onComplete != null) {
+              onComplete();
+            }
+          }
+          else {
+            // done turning, let's check again
+            TryResetHeadAndLift(onComplete);
+          }
+
+        });
         return;
       }
     }
