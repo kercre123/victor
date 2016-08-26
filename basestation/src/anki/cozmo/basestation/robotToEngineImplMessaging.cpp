@@ -94,8 +94,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribe(RobotInterface::RobotToEngineTag::trace,                                     &RobotToEngineImplMessaging::HandleTrace);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::crashReport,                               &RobotToEngineImplMessaging::HandleCrashReport);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::factoryFirmwareVersion,         &RobotToEngineImplMessaging::HandleFWVersionInfo);
-  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::blockPickedUp,                  &RobotToEngineImplMessaging::HandleBlockPickedUp);
-  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::blockPlaced,                    &RobotToEngineImplMessaging::HandleBlockPlaced);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::pickAndPlaceResult,             &RobotToEngineImplMessaging::HandlePickAndPlaceResult);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectDiscovered,         &RobotToEngineImplMessaging::HandleActiveObjectDiscovered);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectConnectionState,    &RobotToEngineImplMessaging::HandleActiveObjectConnectionState);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectMoved,              &RobotToEngineImplMessaging::HandleActiveObjectMoved);
@@ -360,50 +359,55 @@ void RobotToEngineImplMessaging::HandleFWVersionInfo(const AnkiEvent<RobotInterf
   }
 }
 
-
-void RobotToEngineImplMessaging::HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+void RobotToEngineImplMessaging::HandlePickAndPlaceResult(const AnkiEvent<RobotInterface::RobotToEngine>& message,
+                                                          Robot* const robot)
 {
-  ANKI_CPU_PROFILE("Robot::HandleBlockPickedUp");
+  ANKI_CPU_PROFILE("Robot::HandlePickAndPlaceResult");
   
-  const BlockPickedUp& payload = message.GetData().Get_blockPickedUp();
+  const PickAndPlaceResult& payload = message.GetData().Get_pickAndPlaceResult();
   const char* successStr = (payload.didSucceed ? "succeeded" : "failed");
-  const char* resultStr = EnumToString(payload.result);
   
-  PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageBlockPickedUp",
-                   "Robot %d reported it %s picking up block with %s. Stopping docking and turning on Look-for-Markers mode.", robot->GetID(), successStr, resultStr);
-  
-  if(payload.didSucceed) {
-    robot->SetDockObjectAsAttachedToLift();
-    robot->SetLastPickOrPlaceSucceeded(true);
-  }
-  else {
-    robot->SetLastPickOrPlaceSucceeded(false);
-  }
+  robot->SetLastPickOrPlaceSucceeded(payload.didSucceed);
   
   // Note: this returns the vision system to whatever mode it was in before
   // it was docking/tracking
   robot->GetVisionComponent().EnableMode(VisionMode::Tracking, false);
-}
+  
+  switch(payload.blockStatus)
+  {
+    case BlockStatus::NO_BLOCK:
+    {
+      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.HandlePickAndPlaceResult.NoBlock",
+                       "Robot %d reported it %s doing something without a block. Stopping docking and turning on Look-for-Markers mode.", robot->GetID(), successStr);
+      break;
+    }
+    case BlockStatus::BLOCK_PLACED:
+    {
+      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.HandlePickAndPlaceResult.BlockPlaced",
+                       "Robot %d reported it %s placing block. Stopping docking and turning on Look-for-Markers mode.", robot->GetID(), successStr);
+    
+      if(payload.didSucceed) {
+        robot->SetCarriedObjectAsUnattached();
+      }
+      
+      robot->GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
+      
+      break;
+    }
+    case BlockStatus::BLOCK_PICKED_UP:
+    {
+      const char* resultStr = EnumToString(payload.result);
+      
+      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.HandlePickAndPlaceResult.BlockPickedUp",
+                       "Robot %d reported it %s picking up block with %s. Stopping docking and turning on Look-for-Markers mode.", robot->GetID(), successStr, resultStr);
+    
+      if(payload.didSucceed) {
+        robot->SetDockObjectAsAttachedToLift();
+      }
 
-void RobotToEngineImplMessaging::HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
-{
-  ANKI_CPU_PROFILE("Robot::HandleBlockPlaced");
-  
-  const BlockPlaced& payload = message.GetData().Get_blockPlaced();
-  const char* successStr = (payload.didSucceed ? "succeeded" : "failed");
-  PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageBlockPlaced",
-                   "Robot %d reported it %s placing block. Stopping docking and turning on Look-for-Markers mode.", robot->GetID(), successStr);
-  
-  if(payload.didSucceed) {
-    robot->SetCarriedObjectAsUnattached();
-    robot->SetLastPickOrPlaceSucceeded(true);
+      break;
+    }
   }
-  else {
-    robot->SetLastPickOrPlaceSucceeded(false);
-  }
-  
-  robot->GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
-  robot->GetVisionComponent().EnableMode(VisionMode::Tracking, false);
 }
 
 void RobotToEngineImplMessaging::HandleDockingStatus(const AnkiEvent<RobotInterface::RobotToEngine>& message)

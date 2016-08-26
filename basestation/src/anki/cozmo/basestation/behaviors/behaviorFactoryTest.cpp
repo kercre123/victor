@@ -213,7 +213,7 @@ namespace Cozmo {
     // bind to specific handlers in the robot class
     doRobotSubscribe(RobotInterface::RobotToEngineTag::factoryTestParam, &BehaviorFactoryTest::HandleFactoryTestParameter);
     doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectDiscovered, &BehaviorFactoryTest::HandleActiveObjectDiscovered);
-    doRobotSubscribe(RobotInterface::RobotToEngineTag::blockPickedUp, &BehaviorFactoryTest::HandleBlockPickedUp);
+    doRobotSubscribe(RobotInterface::RobotToEngineTag::pickAndPlaceResult, &BehaviorFactoryTest::HandlePickAndPlaceResult);
     
 #if IS_FACTORY_BRANCH
     doRobotSubscribe(RobotInterface::RobotToEngineTag::bodyVersion, &BehaviorFactoryTest::HandleBodyVersion);
@@ -1879,9 +1879,10 @@ namespace Cozmo {
     }
   }
  
-  void BehaviorFactoryTest::HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& msg)
+  void BehaviorFactoryTest::HandlePickAndPlaceResult(const AnkiEvent<RobotInterface::RobotToEngine>& msg)
   {
-    _blockPickedUpReceived = true;
+    const PickAndPlaceResult payload = msg.GetData().Get_pickAndPlaceResult();
+    _blockPickedUpReceived = (payload.didSucceed && payload.blockStatus == BlockStatus::BLOCK_PICKED_UP);
   }
   
   void BehaviorFactoryTest::StartActing(Robot& robot, IActionRunner* action, ActionResultCallback callback, u32 actionCallbackTag)

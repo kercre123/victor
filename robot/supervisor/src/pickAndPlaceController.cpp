@@ -160,24 +160,16 @@ namespace Anki {
       {
         Localization::GetCurrentMatPose(ptStamp_.x, ptStamp_.y, angleStamp_);
       }
-
-      Result SendBlockPickUpMessage(const bool success)
+      
+      Result SendPickAndPlaceResultMessage(const bool success,
+                                           const BlockStatus blockStatus)
       {
-        BlockPickedUp msg;
+        PickAndPlaceResult msg;
         msg.timestamp = HAL::GetTimeStamp();
         msg.didSucceed = success;
+        msg.blockStatus = blockStatus;
         msg.result = DockingController::GetDockingResult();
-        if(RobotInterface::SendMessage(msg)) {
-          return RESULT_OK;
-        }
-        return RESULT_FAIL;
-      }
-
-      Result SendBlockPlacedMessage(const bool success)
-      {
-        BlockPlaced msg;
-        msg.timestamp = HAL::GetTimeStamp();
-        msg.didSucceed = success;
+        
         if(RobotInterface::SendMessage(msg)) {
           return RESULT_OK;
         }
@@ -391,6 +383,7 @@ namespace Anki {
                   #if(DEBUG_PAP_CONTROLLER)
                   AnkiDebug( 14, "PAP", 123, "ALIGN", 0);
                   #endif
+                  SendPickAndPlaceResultMessage(true, NO_BLOCK);
                   mode_ = IDLE;
                 } else if(action_ == DA_RAMP_DESCEND) {
                   #if(DEBUG_PAP_CONTROLLER)
@@ -439,7 +432,7 @@ namespace Anki {
                   case DA_PICKUP_LOW:
                   case DA_PICKUP_HIGH:
                   {
-                    SendBlockPickUpMessage(false);
+                    SendPickAndPlaceResultMessage(false, BLOCK_PICKED_UP);
                     break;
                   } // PICKUP
 
@@ -450,9 +443,14 @@ namespace Anki {
                   case DA_DEEP_ROLL_LOW:
                   case DA_POP_A_WHEELIE:
                   {
-                    SendBlockPlacedMessage(false);
+                    SendPickAndPlaceResultMessage(false, BLOCK_PLACED);
                     break;
                   } // PLACE
+                  case DA_ALIGN:
+                  {
+                    SendPickAndPlaceResultMessage(false, NO_BLOCK);
+                    break;
+                  }
                   default:
                     AnkiError( 289, "PAP.DOCKING.InvalidAction", 347, "%d", 1, action_);
                 } // switch(action_)
@@ -589,8 +587,7 @@ namespace Anki {
             // Either the robot has pitched up, or timeout
             if (IMUFilter::GetPitch() > 1.2 || HAL::GetTimeStamp() > transitionTime_) {
               SteeringController::ExecuteDirectDrive(0, 0);
-              SendBlockPlacedMessage(true);  // TODO: Send different message?
-                                             //       Only doing this here so that the engine knows docking succeeded.
+              SendPickAndPlaceResultMessage(true, NO_BLOCK);
               mode_ = IDLE;
             }
             break;
@@ -605,7 +602,7 @@ namespace Anki {
                 case DA_PICKUP_LOW:
                 case DA_PICKUP_HIGH:
                 {
-                  SendBlockPickUpMessage(true);
+                  SendPickAndPlaceResultMessage(true, BLOCK_PICKED_UP);
                   carryState_ = CARRY_1_BLOCK;
                   break;
                 } // PICKUP
@@ -626,7 +623,7 @@ namespace Anki {
                 case DA_PLACE_LOW_BLIND:
                 case DA_PLACE_HIGH:
                 {
-                  SendBlockPlacedMessage(true);
+                  SendPickAndPlaceResultMessage(true, BLOCK_PLACED);
                   carryState_ = CARRY_NONE;
                   break;
                 } // PLACE
