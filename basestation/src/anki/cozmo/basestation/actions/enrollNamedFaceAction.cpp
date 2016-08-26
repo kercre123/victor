@@ -740,6 +740,20 @@ namespace Cozmo {
     completionUnion.Set_faceEnrollmentCompleted(std::move( info ));
   }
   
+  f32 EnrollNamedFaceAction::GetTimeoutInSeconds() const
+  {
+    if(_state == State::Finishing && nullptr != _action)
+    {
+      // This is kinda hacky, but we could have used up a lot of our timeout time
+      // during enrollment and don't want to cutoff the final action (which could be
+      // pretty long if it's a first time enrollment), so increase our timeout
+      // at this point.
+      return 2.f*IAction::GetTimeoutInSeconds();
+    }
+  
+    // Normally, just use the base class's default timeout
+    return IAction::GetTimeoutInSeconds();
+  }
   
 #pragma mark -
 #pragma mark Event Handlers

@@ -48,6 +48,9 @@ namespace Cozmo {
     
     void SetSayNameWhenDone(bool tf) { _sayNameWhenDone = tf; }
     
+    // Override timeout to be longer if we get to the end and need to play an animation
+    virtual f32 GetTimeoutInSeconds() const override;
+    
     //void SetIdleAnimation(const std::string& name) { _idleAnimName = name; }
     
     template<typename T>
