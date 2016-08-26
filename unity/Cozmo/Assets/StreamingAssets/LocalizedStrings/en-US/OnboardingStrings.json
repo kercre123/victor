@@ -88,10 +88,10 @@
     "translation": "you need to open it!"
   },
   "onboarding.Phase4.Body3bits": {
-    "translation": "Use <color=purple>bits</color> to Upgrade Cozmo"
+    "translation": "Use <color=#ffcc00ff>bits</color> to Upgrade Cozmo"
   },
   "onboarding.Phase4.Body3sparks": {
-    "translation": "Use <color=blue>sparks</color> to get Cozmo to perform"
+    "translation": "Use <color=#11a2f0ff>sparks</color> to get Cozmo to perform"
   },
   "onboarding.Phase4.Body4": {
     "translation": "These are Cozmo's Upgrades. Use your <color=purple>BITS</color> to Upgrade the Pickup Cube."

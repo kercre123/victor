@@ -229,10 +229,6 @@ namespace Cozmo {
 
         GameObject banner = UIManager.CreateUIElement(_BannerPrefab.gameObject, _BannerContainer);
         _BannerInstance = banner.GetComponent<Banner>();
-
-        if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Loot)) {
-          OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.Loot);
-        }
       }
 
       private IEnumerator InitializeBox() {

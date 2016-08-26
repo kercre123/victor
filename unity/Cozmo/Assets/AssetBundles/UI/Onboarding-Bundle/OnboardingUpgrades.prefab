@@ -211,7 +211,7 @@ MonoBehaviour:
   _TopClippingEnd: -0.05
   _BottomClippingEnd: -0.05
   _LeftClippingEnd: -0.05
-  _RightClippingEnd: 1.3
+  _RightClippingEnd: 1.8
 --- !u!114 &11443352
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -337,7 +337,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 2100000, guid: da4b9e5c314be4a769e7e663b7ec0a48, type: 2}
-  m_Color: {r: 0, g: 0.008620684, b: 0.03676468, a: 0.572}
+  m_Color: {r: 0, g: 0.07058824, b: 0.30980393, a: 0.9019608}
   m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -378,7 +378,7 @@ MonoBehaviour:
     m_BestFit: 0
     m_MinSize: 1
     m_MaxSize: 100
-    m_Alignment: 0
+    m_Alignment: 5
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
@@ -490,10 +490,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22480888}
   m_RootOrder: 2
-  m_AnchorMin: {x: 1, y: 0.5}
-  m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1000, y: 455}
+  m_AnchorMin: {x: 1, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -148, y: -0.000086784}
+  m_SizeDelta: {x: 1765, y: 0}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!224 &22461814
 RectTransform:

@@ -272,7 +272,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 2100000, guid: da4b9e5c314be4a769e7e663b7ec0a48, type: 2}
-  m_Color: {r: 0, g: 0.008620684, b: 0.03676468, a: 0.581}
+  m_Color: {r: 0, g: 0.07058824, b: 0.30980393, a: 0.903}
   m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -508,7 +508,7 @@ MonoBehaviour:
   m_FontData:
     m_Font: {fileID: 12800000, guid: 6ef5f80c68ce34039a34f24769e5dc26, type: 3}
     m_FontSize: 100
-    m_FontStyle: 0
+    m_FontStyle: 1
     m_BestFit: 0
     m_MinSize: 1
     m_MaxSize: 100

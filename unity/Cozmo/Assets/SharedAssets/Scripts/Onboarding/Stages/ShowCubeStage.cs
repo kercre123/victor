@@ -230,17 +230,17 @@ namespace Onboarding {
           UpdateSubstate(SubState.WaitForOKCubeDiscovered);
         }
       }
-      else if (_SubState == SubState.WaitForOKCubeDiscovered) {
+      // TODO: uncomment once firmware fix gets in... COZMO-4230
+      /*else if (_SubState == SubState.WaitForOKCubeDiscovered) {
+
         IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
         if (CurrentRobot.LightCubes.ContainsKey(_SawCubeID)) {
           LightCube block = CurrentRobot.LightCubes[_SawCubeID];
-
-          // TODO: remove unknown once firmware fix gets in... COZMO-3962
-          if (block.UpAxis != UpAxis.ZPositive && block.UpAxis != UpAxis.Unknown) {
+          if (block.UpAxis != UpAxis.ZPositive ) {
             UpdateSubstate(SubState.ErrorCubeWrongSideUp);
           }
         }
-      }
+      }*/
       else if (_SubState == SubState.ErrorCubeWrongSideUp) {
         IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
         if (CurrentRobot.LightCubes.ContainsKey(_SawCubeID)) {

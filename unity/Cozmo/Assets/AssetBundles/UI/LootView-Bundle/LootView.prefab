@@ -951,7 +951,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 130312, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
-  ModifiedValues: []
+  ModifiedValues:
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    JsonValue: '"#button.continue"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../
     FieldName: Cozmo.UI.LootView:_ContinueButtonInstance
@@ -4382,11 +4385,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22486736}
   m_RootOrder: 1
-  m_AnchorMin: {x: 0.7, y: 0.4}
-  m_AnchorMax: {x: 1, y: 0.6}
-  m_AnchoredPosition: {x: 956.7015, y: 153.64993}
-  m_SizeDelta: {x: 818.6, y: 307.29987}
-  m_Pivot: {x: 0.5, y: 1}
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: 1372, y: -0.01004}
+  m_SizeDelta: {x: 825, y: 1826}
+  m_Pivot: {x: 1, y: 0.5}
 --- !u!224 &22422646
 RectTransform:
   m_ObjectHideFlags: 1
@@ -4490,11 +4493,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22468726}
   m_RootOrder: 11
-  m_AnchorMin: {x: 0, y: 0.4}
-  m_AnchorMax: {x: 0.3, y: 0.6}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 1}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 40}
+  m_SizeDelta: {x: 839, y: 972}
+  m_Pivot: {x: 0, y: 0.5}
 --- !u!224 &22445366
 RectTransform:
   m_ObjectHideFlags: 1
@@ -4673,11 +4676,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22486736}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 0.4}
-  m_AnchorMax: {x: 0.3, y: 0.6}
-  m_AnchoredPosition: {x: -956.1997, y: 153.64993}
-  m_SizeDelta: {x: 819.60004, y: 307.29987}
-  m_Pivot: {x: 0.5, y: 1}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: -1365.9998, y: 0}
+  m_SizeDelta: {x: 728, y: 1826}
+  m_Pivot: {x: 0, y: 0.5}
 --- !u!224 &22473282
 RectTransform:
   m_ObjectHideFlags: 1
@@ -4745,11 +4748,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22468726}
   m_RootOrder: 12
-  m_AnchorMin: {x: 0.7, y: 0.4}
-  m_AnchorMax: {x: 1, y: 0.6}
-  m_AnchoredPosition: {x: 0.5, y: 0}
-  m_SizeDelta: {x: -1, y: 0}
-  m_Pivot: {x: 0.5, y: 1}
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 862, y: 1201.4}
+  m_Pivot: {x: 1, y: 0.5}
 --- !u!224 &22481126
 RectTransform:
   m_ObjectHideFlags: 1
@@ -4811,8 +4814,8 @@ RectTransform:
   - {fileID: 22436112}
   m_Father: {fileID: 22446516}
   m_RootOrder: 7
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
