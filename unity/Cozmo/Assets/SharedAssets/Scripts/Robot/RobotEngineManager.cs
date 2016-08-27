@@ -31,6 +31,8 @@ public class RobotEngineManager : MonoBehaviour {
     _CallbackManager.RemoveCallback(callback);
   }
 
+  public Cozmo.BlockPool.BlockPoolTracker BlockPoolTracker { get; private set; }
+
   public Dictionary<int, IRobot> Robots { get; private set; }
 
   // Cache the last current robot
@@ -230,6 +232,10 @@ public class RobotEngineManager : MonoBehaviour {
     if (ConnectedToClient != null) {
       ConnectedToClient(connectionIdentifier);
     }
+
+    if (BlockPoolTracker == null) {
+      BlockPoolTracker = new Cozmo.BlockPool.BlockPoolTracker(this);
+    }
   }
 
   private void Disconnected(DisconnectionReason reason) {
@@ -350,7 +356,7 @@ public class RobotEngineManager : MonoBehaviour {
       CurrentRobot.ResetRobotState();
     }
 
-    SetEnableReactionaryBehaviors (false);
+    SetEnableReactionaryBehaviors(false);
   }
 
   public void SetEnableReactionaryBehaviors(bool enable) {
