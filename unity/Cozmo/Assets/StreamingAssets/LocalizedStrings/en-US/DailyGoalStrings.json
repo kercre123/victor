@@ -54,6 +54,15 @@
   "dailyGoal.title.SpeedTap.TieBreaker.Round": {
     "translation": "Win a round of Quick Tap after being tied 4-4"
   },
+  "dailyGoal.title.WinSpeedTap.Accuracy.50": {
+    "translation": "Win a game of Quick Tap with better than 50% Accuracy"
+  },
+  "dailyGoal.title.WinSpeedTap.Accuracy.75": {
+    "translation": "Win a game of Quick Tap with better than 75% Accuracy"
+  },
+  "dailyGoal.title.WinSpeedTap.Accuracy.100": {
+    "translation": "Win a game of Quick Tap with 100% Accuracy"
+  },
   "dailyGoal.title.WinSpeedTap.NoRed": {
     "translation": "Win a game of Quick Tap without ever tapping on a red cube"
   },
@@ -77,6 +86,21 @@
   },
   "dailyGoal.title.MeetNewFace": {
     "translation": "Teach Cozmo your name with <color='#1100FF'>Meet Cozmo</color>"
+  },
+  "dailyGoal.title.MeetCozmo.NewFace": {
+    "translation": "Introduce someone new with the Meet Cozmo app"
+  },
+  "dailyGoal.title.MeetCozmo.UpdateFace": {
+    "translation": "Update {0}'s data in the Meet Cozmo app"
+  },
+  "dailyGoal.title.ExplorerMode.Playtime.10": {
+    "translation": "Play Explorer Mode for 10 minutes"
+  },
+  "dailyGoal.title.TotalPlayTime.30": {
+    "translation": "Play with Cozmo for 30 minutes"
+  },
+  "dailyGoal.title.FreeplayTime.10": {
+    "translation": "Let Cozmo play uninterrupted for 10 minutes"
   },
   "dailyGoal.title.UnlockUpgradeBuildPyramid": {
     "translation": "Unlock Cozmo's 'Build a Pyramid' upgrade."
@@ -137,5 +161,20 @@
   },
   "dailyGoal.title.SparkPickupCube": {
     "translation": "Spark the 'Pick up Cube' Upgrade"
+  },
+  "dailyGoal.title.SparkStackCubes": {
+    "translation": "Spark the 'Stack Cubes' Upgrade"
+  },
+  "dailyGoal.title.SparkRollCubes": {
+    "translation": "Spark the 'Roll Cubes' Upgrade"
+  },
+  "dailyGoal.title.SparkPounceOnMotion": {
+    "translation": "Spark the 'Pounce on Motion' Upgrade"
+  },
+  "dailyGoal.title.SparkKnockOverStacks": {
+    "translation": "Spark the 'Knock Over Stacks' Upgrade"
+  },
+  "dailyGoal.title.SparkPopAWheelie": {
+    "translation": "Spark the 'Pop a Wheelie' Upgrade"
   }
 }

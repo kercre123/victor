@@ -1,6 +1,19 @@
 {
   "RewardedActions": [
     {
+      "Id": 21,
+      "RewardEvent": {
+        "Value": "OnUnlockableSparked"
+      },
+      "Tag": "Freeplay",
+      "EventConditions": [],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 5,
+        "DescriptionKey": "reward.description.Freeplay.Spark"
+      }
+    },
+    {
       "Id": 20,
       "RewardEvent": {
         "Value": "OnChallengeComplete"
@@ -21,7 +34,7 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 20,
+        "Amount": 10,
         "DescriptionKey": "reward.description.QuickTap.Accuracy.75"
       }
     },
@@ -54,7 +67,7 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 30,
+        "Amount": 5,
         "DescriptionKey": "reward.description.Explorer.Time.5"
       }
     },
@@ -87,7 +100,7 @@
       ],
       "Reward": {
         "ItemID": "experience",
-        "Amount": 25,
+        "Amount": 4,
         "DescriptionKey": "reward.description.QuickTap.RedCubes.NeverTap"
       }
     },
@@ -374,6 +387,155 @@
         "ItemID": "experience",
         "Amount": 5,
         "DescriptionKey": "reward.description.Keepaway.Played"
+      }
+    },
+    {
+      "Id": 22,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "Tag": "QuickTapAccuracy",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeAccuracyCondition, Assembly-CSharp",
+          "IsPlayer": true,
+          "TargetAcc": 0.5,
+          "compareType": "GREATER_INCLUSIVE",
+          "Label": {
+            "text": "Challenge Accuracy Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 5,
+        "DescriptionKey": "reward.description.QuickTap.Accuracy.50"
+      }
+    },
+    {
+      "Id": 23,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "Tag": "QuickTapAccuracy",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeAccuracyCondition, Assembly-CSharp",
+          "IsPlayer": true,
+          "TargetAcc": 1.0,
+          "compareType": "GREATER_INCLUSIVE",
+          "Label": {
+            "text": "Challenge Accuracy Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 15,
+        "DescriptionKey": "reward.description.QuickTap.Accuracy.100"
+      }
+    },
+    {
+      "Id": 24,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "Tag": "ExplorerModeTime",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeTimePlayedCondition, Assembly-CSharp",
+          "TargetTime": 600.0,
+          "compareType": "GREATER_INCLUSIVE",
+          "Label": {
+            "text": "Challenge Time Played Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "DroneModeGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 10,
+        "DescriptionKey": "reward.description.Explorer.Time.10"
+      }
+    },
+    {
+      "Id": 25,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "Tag": "ExplorerModeTime",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeTimePlayedCondition, Assembly-CSharp",
+          "TargetTime": 900.0,
+          "compareType": "GREATER_INCLUSIVE",
+          "Label": {
+            "text": "Challenge Time Played Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "DroneModeGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 15,
+        "DescriptionKey": "reward.description.Explorer.Time.15"
+      }
+    },
+    {
+      "Id": 26,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "Tag": "ExplorerModeTime",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeTimePlayedCondition, Assembly-CSharp",
+          "TargetTime": 1200.0,
+          "compareType": "GREATER_INCLUSIVE",
+          "Label": {
+            "text": "Challenge Time Played Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "DroneModeGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 20,
+        "DescriptionKey": "reward.description.Explorer.Time.20"
       }
     },
     {
