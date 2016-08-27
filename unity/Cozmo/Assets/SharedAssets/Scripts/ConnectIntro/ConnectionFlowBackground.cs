@@ -9,7 +9,6 @@ public class ConnectionFlowBackground : Cozmo.UI.BaseView {
   [SerializeField]
   private Sprite _CompletedStateBackground;
 
-
   [SerializeField]
   private Sprite _InProgressBackground;
 
@@ -39,6 +38,7 @@ public class ConnectionFlowBackground : Cozmo.UI.BaseView {
       _InProgressSpinners[i].SetActive(false);
     }
     for (int i = 0; i < _StateImages.Length; ++i) {
+      _StateImages[i].gameObject.SetActive(true);
       _StateImages[i].overrideSprite = null;
     }
     for (int i = 0; i < _StateBackgrounds.Length; ++i) {
