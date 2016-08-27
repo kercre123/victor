@@ -430,7 +430,7 @@ void AudioController::UnregisterRobotAudioBuffer( AudioEngine::AudioGameObject g
 {
   const auto it = _robotAudioBufferIdMap.find( pluginId );
   if (it != _robotAudioBufferIdMap.end()) {
-    delete it->second;
+    Util::SafeDelete(it->second);
     _robotAudioBufferIdMap.erase(it);
   } else {
     PRINT_NAMED_ERROR( "AudioController.UnregisterRobotAudioBuffer",
@@ -447,7 +447,6 @@ void AudioController::UnregisterRobotAudioBuffer( AudioEngine::AudioGameObject g
                       pluginId, static_cast<uint32_t>( gameObject ) );
   }
 }
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioBuffer* AudioController::GetRobotAudioBufferWithGameObject( AudioEngine::AudioGameObject gameObjectId ) const
@@ -538,11 +537,15 @@ void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
   {
     PRINT_CH_INFO(kAudioLogChannelName, "AudioController.HijackAudioPlugin", "Create Plugin id: %d callback", plugInId);
     RobotAudioBuffer* buffer = GetRobotAudioBufferWithPluginId( plugInId );
-    // Catch mistakes with wwise project
-    ASSERT_NAMED( buffer != nullptr,
-                  "AudioController.SetupHijackAudioPlugInAndRobotAudioBuffers.SetCreatePlugInCallback.RobotAudioBufferNull");
+
     if ( buffer != nullptr ) {
       buffer->PrepareAudioBuffer();
+    }
+    else {
+      // Buffer doesn't exist
+      PRINT_CH_INFO(AudioController::kAudioLogChannelName,
+                    "AudioController.SetupHijackAudioPlugInAndRobotAudioBuffers.CreatePlugInCallback",
+                    "PluginId: %u NotFound", plugInId);
     }
     
     
@@ -556,12 +559,16 @@ void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
   {
     PRINT_CH_INFO(kAudioLogChannelName, "AudioController.HijackAudioPlugin", "Destroy Plugin id: %d callback", plugInId);
     RobotAudioBuffer* buffer = GetRobotAudioBufferWithPluginId( plugInId );
-    // Catch mistakes with wwise project
-    ASSERT_NAMED( buffer != nullptr,
-                  "AudioController.SetupHijackAudioPlugInAndRobotAudioBuffers.SetDestroyPluginCallback.RobotAudioBufferNull");
+
     // Done with voice clear audio buffer
     if ( buffer != nullptr ) {
       buffer->CloseAudioBuffer();
+    }
+    else {
+      // Buffer doesn't exist
+      PRINT_CH_INFO(AudioController::kAudioLogChannelName,
+                    "AudioController.SetupHijackAudioPlugInAndRobotAudioBuffers.DestroyPluginCallback",
+                    "PluginId: %u NotFound", plugInId);
     }
     
     
@@ -575,11 +582,14 @@ void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
   _hijackAudioPlugIn->SetProcessCallback( [this] ( const uint32_t plugInId, const AudioReal32* samples, const uint32_t sampleCount )
   {
     RobotAudioBuffer* buffer = GetRobotAudioBufferWithPluginId( plugInId );
-    // Catch mistakes with wwise project
-    ASSERT_NAMED( buffer != nullptr,
-                  "AudioController.SetupHijackAudioPlugInAndRobotAudioBuffers.GetRobotAudioBufferWithPluginId.RobotAudioBufferNull");
     if ( buffer != nullptr ) {
       buffer->UpdateBuffer( samples, sampleCount );
+    }
+    else {
+      // Buffer doesn't exist
+      PRINT_CH_INFO(AudioController::kAudioLogChannelName,
+                    "AudioController.SetupHijackAudioPlugInAndRobotAudioBuffers.ProcessCallback",
+                    "PluginId: %u NotFound", plugInId);
     }
      
 #if HijackAudioPlugInDebugLogs

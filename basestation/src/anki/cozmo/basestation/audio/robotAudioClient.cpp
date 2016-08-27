@@ -117,19 +117,12 @@ RobotAudioClient::~RobotAudioClient()
   Util::Dispatch::Stop(_dispatchQueue);
   Util::Dispatch::Release(_dispatchQueue);
   
-  // For Unit Test bale out if there is no robot or Audio Server
-  if (_robot == nullptr) {
-    return;
+  if (nullptr != _audioController) {
+    UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_1, 1, Bus::BusType::Robot_Bus_1 );
+    UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_2, 2, Bus::BusType::Robot_Bus_2 );
+    UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_3, 3, Bus::BusType::Robot_Bus_3 );
+    UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_4, 4, Bus::BusType::Robot_Bus_4 );
   }
-  const CozmoContext* context = _robot->GetContext();
-  if (context == nullptr || context->GetAudioServer() == nullptr ) {
-    return;
-  }
-  
-  UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_1, 1, Bus::BusType::Robot_Bus_1 );
-  UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_2, 2, Bus::BusType::Robot_Bus_2 );
-  UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_3, 3, Bus::BusType::Robot_Bus_3 );
-  UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_4, 4, Bus::BusType::Robot_Bus_4 );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -349,39 +342,6 @@ void RobotAudioClient::SetOutputSource( RobotAudioOutputSource outputSource )
     return;
   }
   _outputSource = outputSource;
-  
-//  switch ( _outputSource ) {
-//    case RobotAudioOutputSource::None:
-//    case RobotAudioOutputSource::PlayOnDevice:
-//    {
-//      // Setup Audio engine to play audio through device
-//      // Remove GameObject Aux sends
-//      AudioController::AuxSendList emptyList;
-//      for ( auto& aKVP : _busConfigurationMap ) {
-//        const AudioGameObject aGameObject = static_cast<const AudioGameObject>( aKVP.second.gameObject );
-//        // Set Aux send settings in Audio Engine
-//        _audioController->SetGameObjectAuxSendValues( aGameObject, emptyList );
-//      }
-//    }
-//      break;
-//      
-//    case RobotAudioOutputSource::PlayOnRobot:
-//    {
-//      // Setup Audio engine to play audio through device
-//      // Setup GameObject Aux Sends
-//      for ( auto& aKVP : _busConfigurationMap ) {
-//        RobotBusConfiguration& busConfig = aKVP.second;
-//        const AudioGameObject aGameObject = static_cast<const AudioGameObject>( busConfig.gameObject );
-//        AudioAuxBusValue aBusValue( static_cast<AudioAuxBusId>( busConfig.bus ), 1.0f );
-//        AudioController::AuxSendList sendList;
-//        sendList.emplace_back( aBusValue );
-//        // Set Aux send settings in Audio Engine
-//        _audioController->SetGameObjectAuxSendValues( aGameObject, sendList );
-//        _audioController->SetGameObjectOutputBusVolume( aGameObject, 0.0f );
-//      }
-//    }
-//      break;
-//  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -498,9 +458,9 @@ RobotAudioBuffer* RobotAudioClient::RegisterRobotAudioBuffer(GameObjectType game
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioClient::UnregisterRobotAudioBuffer( GameObjectType gameObject,
-                                                             PluginId_t pluginId,
-                                                             Bus::BusType audioBus )
+void RobotAudioClient::UnregisterRobotAudioBuffer(GameObjectType gameObject,
+                                                  PluginId_t pluginId,
+                                                  Bus::BusType audioBus)
 {
   ASSERT_NAMED( _audioController != nullptr, "RobotAudioClient.UnregisterRobotAudioBuffer.AudioControllerNull" );
   
