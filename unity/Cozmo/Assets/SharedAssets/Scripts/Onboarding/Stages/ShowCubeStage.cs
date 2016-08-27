@@ -78,7 +78,7 @@ namespace Onboarding {
       RobotEngineManager.Instance.AddCallback<RobotCompletedAction>(ProcessRobotCompletedAction);
 
       UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, Color.white);
-
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Onboarding__Show_Cube);
       _StartTime = Time.time;
     }
 
@@ -87,6 +87,8 @@ namespace Onboarding {
       LightCube.OnMovedAction -= HandleCubeMoved;
       RobotEngineManager.Instance.RemoveCallback<ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
       RobotEngineManager.Instance.RemoveCallback<RobotCompletedAction>(ProcessRobotCompletedAction);
+
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Onboarding__Play_Tab);
     }
 
     private void HandleCubeMoved(int id, float accX, float accY, float aaZ) {
