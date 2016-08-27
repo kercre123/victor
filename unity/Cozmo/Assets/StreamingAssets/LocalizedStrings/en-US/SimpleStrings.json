@@ -191,5 +191,8 @@
   },
   "button.unlock": {
     "translation": "Unlock"
+  },
+  "soundcheck.description.confirm": {
+    "translation": "Did you hear the sound?"
   }
 }
