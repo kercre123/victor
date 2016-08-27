@@ -107,6 +107,9 @@ namespace Cozmo {
       }
 
       [SerializeField]
+      private ShelfWidget _TallShelfWidgetPrefab;
+
+      [SerializeField]
       private SpinnerWidget _SpinnerWidgetPrefab;
       private SpinnerWidget _SpinnerWidgetInstance;
 
@@ -214,9 +217,12 @@ namespace Cozmo {
 
       private bool _IsMinigame = true;
 
+      private ChallengeData _ChallengeData;
+
       public void Initialize(ChallengeData data) {
         HideNarrowInfoTextSlide();
         _IsMinigame = data.IsMinigame;
+        _ChallengeData = data;
       }
 
       #region Base View
@@ -358,10 +364,6 @@ namespace Cozmo {
 
         if (_BackButtonInstance != null) {
           _BackButtonInstance.DASEventViewController = currentViewName;
-        }
-
-        if (_HowToPlayButtonInstance != null) {
-          _HowToPlayButtonInstance.DASEventViewController = currentViewName;
         }
 
         if (_ContinueButtonInstance != null) {
@@ -583,7 +585,6 @@ namespace Cozmo {
 
       private void HandleQuitConfirmed() {
         HideGameStateSlide();
-        CloseHowToPlayView();
         if (QuitMiniGameConfirmed != null) {
           QuitMiniGameConfirmed();
         }
@@ -591,42 +592,18 @@ namespace Cozmo {
 
       #endregion
 
-      #region How To Play Button
+      #region HowToPlay
 
-      public void ShowHowToPlayButton(string howToPlayDescKey, GameObject howToPlayAnimationPrefab) {
+      public void ShowHowToPlayButton() {
         CreateWidgetIfNull<HowToPlayButton>(ref _HowToPlayButtonInstance, _HowToPlayButtonPrefab);
-        _HowToPlayButtonInstance.Initialize(howToPlayDescKey, howToPlayAnimationPrefab, ComposeDasViewName(_CurrentSlideName), UIColorPalette.GameToggleColor);
-        _HowToPlayButtonInstance.OnHowToPlayButtonClicked += HandleHowToPlayButtonClicked;
+        _HowToPlayButtonInstance.OnHowToPlayButtonClicked += () => {
+          PlayVideo(_ChallengeData.InstructionVideoPath, null, true);
+        };
       }
 
       public void HideHowToPlayButton() {
-        if (_HowToPlayButtonInstance != null) {
-          HideWidget(_HowToPlayButtonInstance);
-          _HowToPlayButtonInstance = null;
-        }
-      }
-
-      public void OpenHowToPlayView() {
-        if (_HowToPlayButtonInstance != null) {
-          _HowToPlayButtonInstance.IsHowToPlayViewOpen = true;
-        }
-      }
-
-      public void CloseHowToPlayView() {
-        if (_HowToPlayButtonInstance != null) {
-          _HowToPlayButtonInstance.CloseHowToPlayView();
-        }
-      }
-
-      private void HandleHowToPlayButtonClicked(bool isHowToPlayViewOpen) {
-        if (isHowToPlayViewOpen) {
-          ShelfWidget.MoveCarat(_HowToPlayButtonInstance.transform.position.x);
-          ShowOverlayBackground();
-        }
-        else {
-          ShelfWidget.HideCaratOffscreenLeft();
-          HideOverlayBackground();
-        }
+        HideWidget(_HowToPlayButtonInstance);
+        _HowToPlayButtonInstance = null;
       }
 
       #endregion
@@ -684,6 +661,18 @@ namespace Cozmo {
 
       public void ShowShelf() {
         CreateWidgetIfNull<ShelfWidget>(ref _ShelfWidgetInstance, _ShelfWidgetPrefab);
+      }
+
+      public void ShowTallShelf(bool showTall) {
+        if (_ShelfWidgetInstance != null) {
+          HideShelf();
+        }
+        if (showTall) {
+          CreateWidgetIfNull<ShelfWidget>(ref _ShelfWidgetInstance, _TallShelfWidgetPrefab);
+        }
+        else {
+          ShowShelf();
+        }
       }
 
       public void HideShelf() {
@@ -882,9 +871,9 @@ namespace Cozmo {
         _SpinnerWidgetInstance = null;
       }
 
-      public void PlayVideo(string videoPath, System.Action onVideoContinue) {
+      public void PlayVideo(string videoPath, System.Action onVideoContinue, bool showSkipButton = false) {
         _ShowCozmoVideoInstance = GameObject.Instantiate(_ShowCozmoVideoPrefab.gameObject).GetComponent<ShowCozmoVideo>();
-        _ShowCozmoVideoInstance.ShowSkipButton(false);
+        _ShowCozmoVideoInstance.ShowSkipButton(showSkipButton);
         _ShowCozmoVideoInstance.PlayVideo(videoPath);
         _ShowCozmoVideoInstance.transform.SetParent(transform, false);
         _ShowCozmoVideoInstance.OnContinueButton += onVideoContinue;

@@ -536,6 +536,8 @@ MonoBehaviour:
   _HowToPlayButtonPrefab: {fileID: 11438504, guid: 7ae16cb335cec4733bcb35a2776c79ca,
     type: 2}
   _ShelfWidgetPrefab: {fileID: 11434798, guid: 67811252d71234c3bab17cbc8daea4a0, type: 2}
+  _TallShelfWidgetPrefab: {fileID: 11434798, guid: 5ea512769a24c4ae595c0f2d848aee41,
+    type: 2}
   _SpinnerWidgetPrefab: {fileID: 11403224, guid: 1b659e3d2e3de4a9098bb86e27352d88,
     type: 2}
   _DifficultySelectButtonPanelPrefab: {fileID: 11473774, guid: 8468318169eb444e19bb73e530a79d21,

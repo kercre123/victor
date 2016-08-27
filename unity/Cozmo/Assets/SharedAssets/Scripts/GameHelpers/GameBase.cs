@@ -271,6 +271,9 @@ public abstract class GameBase : MonoBehaviour {
       DataPersistence.DataPersistenceManager.Instance.Save();
     }
     InitializeGame(_ChallengeData.MinigameConfig);
+    if (!string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath)) {
+      _SharedMinigameViewInstance.ShowHowToPlayButton();
+    }
     SetupViewAfterCozmoReady(_SharedMinigameViewInstance, _ChallengeData);
   }
 
@@ -706,15 +709,12 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   protected virtual void ShowWinnerState() {
-    _SharedMinigameViewInstance.CloseHowToPlayView();
-
     SoftEndGameRobotReset();
 
     string winnerText = _WonChallenge ? Localization.Get(LocalizationKeys.kMinigameTextPlayerWins) : Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
     SharedMinigameView.InfoTitleText = winnerText;
     SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultAdvance,
       Localization.Get(LocalizationKeys.kButtonContinue), "end_of_game_continue_button");
-    SharedMinigameView.HideHowToPlayButton();
     _AutoAdvanceTimestamp = Time.time;
   }
 

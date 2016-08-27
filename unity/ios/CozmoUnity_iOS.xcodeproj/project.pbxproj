@@ -217,6 +217,7 @@
 		EE28E8936F3D8B1462A1891F /* UnityAdsConfig.h in Sources */ = {isa = PBXBuildFile; fileRef = 0B7DDD377CEE0F081F1DE12E /* UnityAdsConfig.h */; };
 		F532341AEB2FCCD3D3E0EEEA /* Bulk_Generics_7.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 481D25FD28C6FD7E8BDCD56B /* Bulk_Generics_7.cpp */; };
 		F560670A2A45BE2EBF173CFC /* OrientationSupport.h in Sources */ = {isa = PBXBuildFile; fileRef = 16A3CE38904C77905E030BA9 /* OrientationSupport.h */; };
+		F56E022A563A841851CB8ACF /* Bulk_Assembly-CSharp_12.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A82145767EFA1ADAE7219EC4 /* Bulk_Assembly-CSharp_12.cpp */; };
 		F7A4B2A9164A00DB5C14D13A /* RenderPluginDelegate.h in Sources */ = {isa = PBXBuildFile; fileRef = CDA9CE31FBE0C996FF9AB79A /* RenderPluginDelegate.h */; };
 		F8BD0CE01B5EAF0400F71EA3 /* ios.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */; };
 		F8BD0CFA1B5EB38D00F71EA3 /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F8BD0CF91B5EB38D00F71EA3 /* CoreText.framework */; };
@@ -400,6 +401,7 @@
 		A512A8847E198206767637D3 /* Bulk_Generics_1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_1.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_1.cpp; sourceTree = "<group>"; };
 		A65E9D7950F7B3B01F7245AF /* Bulk_Assembly-CSharp_5.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "Bulk_Assembly-CSharp_5.cpp"; path = "UnityBuild/Classes/Native/Bulk_Assembly-CSharp_5.cpp"; sourceTree = "<group>"; };
 		A6DE1F8B422716A2BB0D2BA5 /* GenericMethods0.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GenericMethods0.cpp; path = UnityBuild/Classes/Native/GenericMethods0.cpp; sourceTree = "<group>"; };
+		A82145767EFA1ADAE7219EC4 /* Bulk_Assembly-CSharp_12.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "Bulk_Assembly-CSharp_12.cpp"; path = "UnityBuild/Classes/Native/Bulk_Assembly-CSharp_12.cpp"; sourceTree = "<group>"; };
 		A8AF295C7F87BE4272543C4B /* Bulk_UnityEngine_0.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_UnityEngine_0.cpp; path = UnityBuild/Classes/Native/Bulk_UnityEngine_0.cpp; sourceTree = "<group>"; };
 		ADED22171B9A2E7900B5D289 /* libpocketSphinx.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpocketSphinx.a; path = sphinx/libpocketSphinx.a; sourceTree = "<group>"; };
 		ADED22181B9A2E7900B5D289 /* libsphinxad.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsphinxad.a; path = sphinx/libsphinxad.a; sourceTree = "<group>"; };
@@ -720,6 +722,7 @@
 				6B824E24831C69D2FF4421F3 /* Bulk_Assembly-CSharp_1.cpp */,
 				BC10CAE4B17107B4422D472C /* Bulk_Assembly-CSharp_10.cpp */,
 				504DDA5A281ECB75D7EB5296 /* Bulk_Assembly-CSharp_11.cpp */,
+				A82145767EFA1ADAE7219EC4 /* Bulk_Assembly-CSharp_12.cpp */,
 				02116FB4BD6761255D2F34A7 /* Bulk_Assembly-CSharp_2.cpp */,
 				2A63A3FAA2BE81B674403C63 /* Bulk_Assembly-CSharp_3.cpp */,
 				128C338A16E7AD2B170E7F06 /* Bulk_Assembly-CSharp_4.cpp */,
@@ -1023,6 +1026,7 @@
 				E8E1A3504D99900D8743DE22 /* Bulk_Assembly-CSharp_1.cpp in Sources */,
 				773018D48C7C9EC8BDA83040 /* Bulk_Assembly-CSharp_10.cpp in Sources */,
 				D4BAD120FA4C0EEEC6F93351 /* Bulk_Assembly-CSharp_11.cpp in Sources */,
+				F56E022A563A841851CB8ACF /* Bulk_Assembly-CSharp_12.cpp in Sources */,
 				556E7C433F164B5F3C54987F /* Bulk_Assembly-CSharp_2.cpp in Sources */,
 				149D4FCFB154DC0C846B3464 /* Bulk_Assembly-CSharp_3.cpp in Sources */,
 				DD37D7B33548878A51FF4F9B /* Bulk_Assembly-CSharp_4.cpp in Sources */,
