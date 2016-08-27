@@ -44,7 +44,7 @@ bool BehaviorPlayArbitraryAnim::IsRunnableInternal(const Robot& robot) const
 void BehaviorPlayArbitraryAnim::SetAnimationTrigger(AnimationTrigger trigger, int numLoops)
 {
   ASSERT_NAMED_EVENT(!_animationAlreadySet, "BehaviorPlayArbitraryAnim.SetAnimationTrigger",
-                     "");
+                     "Animation set twice before being played");
   _animTrigger = trigger;
   _numLoops = numLoops;
   _animationAlreadySet = true;
