@@ -154,6 +154,7 @@ public static class LocalizationKeys {
   public const string kFaceEnrollmentErrorsNeverSawValidFaceDescription = "faceEnrollment.errors.neverSawValidFace.description";
   public const string kFaceEnrollmentErrorsTimeOutTitle = "faceEnrollment.errors.timeOut.title";
   public const string kFaceEnrollmentErrorsTimeOutDescription = "faceEnrollment.errors.timeOut.description";
+  public const string kFaceEnrollmentConditionAllChangesSaved = "faceEnrollment.condition.allChangesSaved";
 
   #endregion
 

@@ -56,5 +56,8 @@
   }, 
   "faceEnrollment.errors.timeOut.description": {
     "translation": "Make sure you're in a well-lit room and that you're aligned with Cozmo's face. Cozmo should be on a flat, stable surface."
-  } 
+  },
+  "faceEnrollment.condition.allChangesSaved": {
+    "translation": "All changes have been saved."
+  }
 }

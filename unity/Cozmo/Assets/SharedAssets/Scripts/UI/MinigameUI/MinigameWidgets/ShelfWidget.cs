@@ -8,6 +8,8 @@ namespace Cozmo {
 
     public class ShelfWidget : MinigameWidget {
 
+      public System.Action GameDoneButtonPressed;
+
       private const float kAnimXOffset = 0.0f;
       private const float kAnimYOffset = -476.0f;
       private const float kAnimDur = 0.25f;
@@ -60,6 +62,9 @@ namespace Cozmo {
       private Banner _BannerWidgetInstance;
 
       [SerializeField]
+      private Cozmo.UI.CozmoButton _GameDoneButton;
+
+      [SerializeField]
       private Anki.UI.AnkiTextLabel _ShelfText;
 
       private void Awake() {
@@ -67,6 +72,13 @@ namespace Cozmo {
         transparent.a = 0f;
         _ShelfText.gameObject.SetActive(false);
         _ShelfText.text = "";
+
+        _GameDoneButton.Initialize(() => {
+          if (GameDoneButtonPressed != null) {
+            GameDoneButtonPressed();
+          }
+        }, "game_done_button", "shelf_widget");
+        ShowGameDoneButton(false);
       }
 
       private void Start() {
@@ -85,6 +97,10 @@ namespace Cozmo {
       public void SetWidgetText(string widgetTextKey) {
         _ShelfText.gameObject.SetActive(widgetTextKey != string.Empty);
         _ShelfText.text = Localization.Get(widgetTextKey);
+      }
+
+      public void ShowGameDoneButton(bool show) {
+        _GameDoneButton.gameObject.SetActive(show);
       }
 
       public void GrowShelfBackground() {

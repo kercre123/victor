@@ -37,6 +37,8 @@ namespace FaceEnrollment {
 
     private bool _UserCancelledEnrollment = false;
 
+    private bool _ShowDoneShelf = false;
+
     // selects if we should save to the actual robot or only keep faces
     // for this session. used by press demo to not save to the actual robot.
     public void SetSaveToRobot(bool saveToRobot) {
@@ -93,12 +95,11 @@ namespace FaceEnrollment {
     private void ShowFaceListSlide(Cozmo.MinigameWidgets.SharedMinigameView newView) {
       _FaceListSlideInstance = newView.ShowWideGameStateSlide(_FaceListSlidePrefab.gameObject, "face_list_slide").GetComponent<FaceEnrollmentListSlide>();
       _FaceListSlideInstance.Initialize(CurrentRobot.EnrolledFaces, _UpdateThresholdLastSeenSeconds, _UpdateThresholdLastEnrolledSeconds);
-      newView.ShowShelf();
+      ShowShelf(newView);
       _FaceListSlideInstance.OnEnrollNewFaceRequested += EnterNameForNewFace;
       _FaceListSlideInstance.OnEditNameRequested += EditExistingName;
       _FaceListSlideInstance.OnDeleteEnrolledFace += RequestDeleteEnrolledFace;
       _FaceListSlideInstance.OnReEnrollFaceRequested += RequestReEnrollFace;
-      newView.ShelfWidget.SetWidgetText(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDescription);
       newView.ShowQuitButton();
     }
 
@@ -317,6 +318,7 @@ namespace FaceEnrollment {
 
     private void EditOrEnrollFaceComplete(bool success) {
       SharedMinigameView.ShowQuitButton();
+      _ShowDoneShelf = true;
       ShowFaceListSlide(SharedMinigameView);
     }
 
@@ -337,6 +339,23 @@ namespace FaceEnrollment {
 
     private void HandleEraseEnrolledFace(int faceId, string faceName) {
       _FaceListSlideInstance.RefreshList(RobotEngineManager.Instance.CurrentRobot.EnrolledFaces);
+      _ShowDoneShelf = true;
+    }
+
+    private void ShowShelf(Cozmo.MinigameWidgets.SharedMinigameView newView) {
+      newView.ShowShelf();
+
+      if (_ShowDoneShelf) {
+        newView.ShelfWidget.SetWidgetText(LocalizationKeys.kFaceEnrollmentConditionAllChangesSaved);
+        newView.ShelfWidget.ShowGameDoneButton(true);
+        newView.ShelfWidget.GameDoneButtonPressed += () => {
+          RaiseMiniGameQuit();
+        };
+      }
+      else {
+        newView.ShelfWidget.SetWidgetText(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDescription);
+      }
+
     }
 
     protected override void CleanUpOnDestroy() {
