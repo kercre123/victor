@@ -94,7 +94,7 @@
     "translation": "Use <color=#11a2f0ff>sparks</color> to get Cozmo to perform"
   },
   "onboarding.Phase4.Body4": {
-    "translation": "These are Cozmo's Upgrades. Use your <color=purple>BITS</color> to Upgrade the Pickup Cube."
+    "translation": "These are Cozmo's Upgrades. Use your <color=#ffcc00ff>BITS</color> to Upgrade Stack Cubes."
   },
   "onboarding.Phase5.Body1": {
     "translation": "It's time to play some games!\n\nTap the Play tab, here."

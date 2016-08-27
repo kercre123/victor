@@ -14,6 +14,9 @@ namespace Onboarding {
     private AnkiTextLabel _ShowCozmoCubesLabel;
 
     [SerializeField]
+    private AnkiTextLabel _FullScreenLabel;
+
+    [SerializeField]
     private AnkiTextLabel _ShowShelfTextLabel;
 
     [SerializeField]
@@ -36,7 +39,7 @@ namespace Onboarding {
     private const int _kMaxPickupTries = 3;
     private const int _kMaxErrorsShown = 3;
     private const float _kMaxTimeInStage_Sec = 60 * 5;
-    private const float _kDistanceReactToCubeMM = 30.0f;
+    private const float _kDistanceReactToCubeMM = 60.0f;
 
 
     private int _SawCubeID = -1;
@@ -156,6 +159,7 @@ namespace Onboarding {
         if (!success && _CubePickupRetries < _kMaxPickupTries) {
           bool wantsRetry = true;
           if (completionUnion.GetTag() == ActionCompletedUnion.Tag.objectInteractionCompleted) {
+            DAS.Info(this, "HandleCubePickupComplete FAIL " + completionUnion.objectInteractionCompleted.result);
             if (completionUnion.objectInteractionCompleted.result != ObjectInteractionResult.DID_NOT_REACH_PREACTION_POSE &&
                 completionUnion.objectInteractionCompleted.result != ObjectInteractionResult.NO_PREACTION_POSES) {
               wantsRetry = false;
@@ -185,7 +189,18 @@ namespace Onboarding {
     private void HandlePickupAnimComplete(bool success) {
       // Put down cube, Back off...
       IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
-      CurrentRobot.PlaceObjectOnGroundHere((bool success2) => { CurrentRobot.DriveStraightAction(100.0f, -20.0f, true, HandleBackupComplete); });
+      DAS.Debug(this, "RobotStatusFlag.IS_CARRYING_BLOCK " + ((CurrentRobot.RobotStatus | RobotStatusFlag.IS_CARRYING_BLOCK) != 0) + " , " + CurrentRobot.RobotStatus);
+
+      // There is a bug in the firmware where we have to make sure the lift is all the way up before Placing an object on ground.
+      // And sometimes the animation doesn't make it all the way up
+      CurrentRobot.SetLiftHeight(1.0f,
+                                (bool success2) => { CurrentRobot.PlaceObjectOnGroundHere(HandlePutDownComplete); });
+
+    }
+
+    private void HandlePutDownComplete(bool success) {
+      DAS.Debug(this, "HandlePutDownComplete " + success);
+      RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(100.0f, -_kDistanceReactToCubeMM, true, HandleBackupComplete);
     }
 
     private void HandleBackupComplete(bool success) {
@@ -292,7 +307,15 @@ namespace Onboarding {
           DAS.Debug(this, "AligningWithBlock: " + _SawCubeID);
           LightCube block = CurrentRobot.LightCubes[_SawCubeID];
           _CubeShouldBeStill = true;
-          CurrentRobot.AlignWithObject(block, _kDistanceReactToCubeMM, HandleBlockAlignComplete, false, false);
+
+          float cubeDistance = Vector3.Distance(block.WorldPosition, CurrentRobot.WorldPosition);
+          // Don't drive a weird direction just to get a closer look if we're already close.
+          if (cubeDistance > _kDistanceReactToCubeMM) {
+            CurrentRobot.AlignWithObject(block, _kDistanceReactToCubeMM, HandleBlockAlignComplete, false, false);
+          }
+          else {
+            CurrentRobot.TurnTowardsObject(block, false, 4.3f, 10, HandleBlockAlignComplete);
+          }
         }
         else {
           UpdateSubstate(SubState.WaitForShowCube);
@@ -331,6 +354,7 @@ namespace Onboarding {
             _ErrorsShown++;
             _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCozmo);
             _ShowShelfTextLabel.text = "";
+            _CozmoImageTransform.gameObject.SetActive(false);
             _ContinueButtonInstance.gameObject.SetActive(true);
             _CozmoMovedErrorTransform.gameObject.SetActive(true);
             Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
@@ -338,9 +362,9 @@ namespace Onboarding {
           }
         }
       }
-
       else if (nextState == SubState.ErrorFinal) {
-        _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorFinal);
+        _FullScreenLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorFinal);
+        _ShowCozmoCubesLabel.text = "";
         _ShowShelfTextLabel.text = "";
         _ContinueButtonInstance.gameObject.SetActive(true);
         _CozmoMovedErrorTransform.gameObject.SetActive(false);

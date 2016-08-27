@@ -290,8 +290,9 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   private void CheckForRestoreRobotFlow() {
+    // we've never connected before so still have setup
     if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
-      // we are done with first time user flow.. TODO: move this to after onboarding?
+      // we are done with first time user flow..
       DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow = false;
       DataPersistence.DataPersistenceManager.Instance.Save();
 
@@ -307,6 +308,11 @@ public class ConnectionFlow : MonoBehaviour {
 
       FinishConnectionFlow();
     }
+    // connected before but quit while the "special moments" were still happening so play again rather than normal wakeup
+    else if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Home)) {
+      FinishConnectionFlow();
+    }
+    // normal flow
     else {
       WakeupSequence();
     }
