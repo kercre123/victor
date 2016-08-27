@@ -1,3 +1,17 @@
+/**
+ * File: faceWorld.h
+ *
+ * Author: Andrew Stein (andrew)
+ * Created: 2014
+ *
+ * Description: Implements a container for mirroring on the main thread, the known faces 
+ *              from the vision system (which generally runs on another thread).
+ *
+ * Copyright: Anki, Inc. 2014
+ *
+ **/
+
+
 #ifndef __Anki_Cozmo_FaceWorld_H__
 #define __Anki_Cozmo_FaceWorld_H__
 
@@ -73,9 +87,6 @@ namespace Cozmo {
     Pose3d      _lastObservedFacePose;
     TimeStamp_t _lastObservedFaceTimeStamp = 0;
     
-    // The distance (in mm) threshold inside of which to head positions are considered to be the same face
-    static constexpr float headCenterPointThreshold = 220.f;
-    
     // Removes the face and advances the iterator. Notifies any listeners that
     // the face was removed if broadcast==true.
     void RemoveFace(KnownFaceIter& faceIter, bool broadcast = true);
@@ -83,6 +94,8 @@ namespace Cozmo {
     void RemoveFaceByID(Vision::FaceID_t faceID);
 
     void SetupEventHandlers(IExternalInterface& externalInterface);
+    
+    void DrawFace(KnownFace& knownFace);
     
     std::vector<Signal::SmartHandle> _eventHandles;
     

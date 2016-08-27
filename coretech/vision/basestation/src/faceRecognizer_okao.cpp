@@ -1418,7 +1418,14 @@ namespace Vision {
       // flag will get set to false.
       bool shouldUpdateAlbumEntry = true;
       
-      if(resultNum >= 2 && matchIter->second.IsForThisSessionOnly())
+      // If we've got more than one match, the top match is session-only, and it's
+      // not the ID we're specifically enrolling, then consider using a lower-scoring,
+      // named match instead
+      const bool haveMoreResults = resultNum >= 2;
+      const bool isTopMatchSessionOnly = matchIter->second.IsForThisSessionOnly();
+      const bool isTopMatchBeingEnrolled = matchingID == _enrollmentID;
+      
+      if(haveMoreResults && isTopMatchSessionOnly && !isTopMatchBeingEnrolled)
       {
         // Find the next match with a different FaceID than the top match, and which
         // is also named (non-session-only, unlike the top match)
