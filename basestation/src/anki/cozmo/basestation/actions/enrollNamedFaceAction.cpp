@@ -255,19 +255,13 @@ namespace Cozmo {
           .startFcn = [this]() {
             PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.SimpleStepOneStart", "");
             SetBackpackLightsHelper(_robot, NamedColors::GREEN);
-            
-            // TODO: Re-enable once COZMO-4153 is fixed
-            //SetAction( new TriggerAnimationAction(_robot, AnimationTrigger::MeetCozmoGetIn) );
-            
+            SetAction( new TriggerAnimationAction(_robot, AnimationTrigger::MeetCozmoGetIn) );
             return RESULT_OK;
           },
           .duringFcn = [this]() {
             SetAction( CreateTrackAction(_robot, _faceID) );
-            
-            // TODO: Re-enable once COZMO-4153 is fixed
-            //_robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::MeetCozmoScanningIdle);
-            //_idlePopped = false;
-            
+            _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::MeetCozmoScanningIdle);
+            _idlePopped = false;
             return RESULT_OK;
           },
           .stopFcn = [this]() {
