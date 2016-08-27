@@ -1905,4 +1905,14 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.Message.EnableLiftPower = Singleton<EnableLiftPower>.Instance.Initialize(enable);
     RobotEngineManager.Instance.SendMessage();
   }
+
+  public void EnterSDKMode() {
+    RobotEngineManager.Instance.Message.EnterSdkMode = Singleton<EnterSdkMode>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void ExitSDKMode() {
+    RobotEngineManager.Instance.Message.ExitSdkMode = Singleton<ExitSdkMode>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+  }
 }

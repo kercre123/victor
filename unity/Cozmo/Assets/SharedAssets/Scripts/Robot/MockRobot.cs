@@ -927,6 +927,12 @@ public class MockRobot : IRobot {
   public void EnableLift(bool enable) {
   }
 
+  public void EnterSDKMode() {
+  }
+
+  public void ExitSDKMode() {
+  }
+
   public event LightCubeStateEventHandler OnLightCubeAdded;
   public event LightCubeStateEventHandler OnLightCubeRemoved;
 

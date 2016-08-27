@@ -423,6 +423,12 @@ public static class LocalizationKeys {
   public const string kSettingsSleepCozmoPanelConfirmationModalTitle = "settings.sleepCozmoPanel.confirmationModal.title";
   public const string kSettingsSleepCozmoPanelConfirmModalDescription = "settings.sleepCozmoPanel.confirmModal.description";
   public const string kSettingsSleepCozmoPanelConfirmModalButtonConfirm = "settings.sleepCozmoPanel.confirmModal.button.confirm";
+  public const string kSettingsSdkPanelDisableButtonText = "settings.sdkPanel.disableButton.text";
+  public const string kSettingsSdkPanelLastMessageTimeText = "settings.sdkPanel.lastMessageTime.text";
+  public const string kSettingsSdkPanelNoMessagesText = "settings.sdkPanel.noMessages.text";
+  public const string kSettingsSdkPanelActivateSDKalertText = "settings.sdkPanel.activateSDKalert.text";
+  public const string kSettingsSdkPanelSdkConnectedText = "settings.sdkPanel.sdkConnected.text";
+  public const string kSettingsSdkPanelSdkNotConnectedText = "settings.sdkPanel.sdkNotConnected.text";
 
   #endregion
 

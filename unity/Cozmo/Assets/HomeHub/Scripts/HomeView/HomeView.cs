@@ -185,8 +185,6 @@ namespace Cozmo.HomeHub {
       DASEventViewName = "home_view";
 
       _ChallengeStates = challengeStatesById;
-      HandlePlayTabButton();
-      UpdatePuzzlePieceCount();
 
       InitializeButtons(_CozmoTabButtons, HandleCozmoTabButton, "switch_to_cozmo_tab_button");
       InitializeButtons(_PlayTabButtons, HandlePlayTabButton, "switch_to_play_tab_button");
@@ -212,6 +210,16 @@ namespace Cozmo.HomeHub {
 
       // Checks if any stages are required...
       OnboardingManager.Instance.InitHomeHubOnboarding(this, _OnboardingTransform);
+
+      // If in SDK Mode, immediately open Settings and SDK view instead of PlayTab,
+      // otherwise default to opening PlayTab
+      if (DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) {
+        HandleSettingsButton();
+      }
+      else {
+        HandlePlayTabButton();
+      }
+      UpdatePuzzlePieceCount();
     }
 
     private void InitializeButtons(CozmoButton[] buttons, UnityEngine.Events.UnityAction callback, string dasButtonName) {

@@ -197,7 +197,7 @@ def parse_game_arguments():
     # signing_group = parser.add_mutually_exclusive_group(required=False)
 
     parser.add_argument('--features', action='append', dest='features',
-                      choices=['factoryTest', 'factoryTestDev'], nargs='+',
+                      choices=['factoryTest', 'factoryTestDev', 'sdkOnly'], nargs='+',
                       help="Generates feature flags for project")
 
     parser.add_argument(
@@ -386,6 +386,8 @@ class GamePlatformConfiguration(object):
             smcsSettings = smcsSettings + "-define:FACTORY_TEST"
         elif self.options.features != None and 'factoryTestDev' in self.options.features[0]:
             smcsSettings = smcsSettings + "-define:FACTORY_TEST" + "\n-define:FACTORY_TEST_DEV"
+        elif self.options.features != None and 'sdkOnly' in self.options.features[0]:
+            smcsSettings = smcsSettings + "-define:SDK_ONLY"
  
 
         smcsFile.write(smcsSettings + '\n');

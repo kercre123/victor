@@ -53,5 +53,23 @@
   },
   "settings.sleepCozmoPanel.confirmModal.button.confirm":{
     "translation": "Disconnect"
+  },
+  "settings.sdkPanel.disableButton.text": {
+    "translation": "Disable SDK"
+  },
+  "settings.sdkPanel.lastMessageTime.text": {
+    "translation": "Time Since Last Message : {0}"
+  },
+  "settings.sdkPanel.noMessages.text": {
+    "translation": "No Messages Received"
+  },
+  "settings.sdkPanel.activateSDKalert.text": {
+    "translation": "Activate SDK Mode?"
+  },
+  "settings.sdkPanel.sdkConnected.text": {
+    "translation": "Robot Connected"
+  },
+  "settings.sdkPanel.sdkNotConnected.text": {
+    "translation": "Robot Not Connected"
   }
 }

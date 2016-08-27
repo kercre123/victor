@@ -9,36 +9,60 @@ namespace Cozmo.Settings {
     private CozmoButton _EnableSDKButton;
 
     [SerializeField]
-    private CozmoButton _ShowSDKButton;
+    private CozmoButton _AnkiSDKLinkButton;
 
     [SerializeField]
-    private CozmoButton _AnkiSDKLinkButton;
+    private SDKView _SDKViewPrefab;
+
+    private AlertView _ActivateSDKModal = null;
+
 
     // Use this for initialization
     private void Start() {
-      bool isSDKEnabled = DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled;
-      _EnableSDKButton.gameObject.SetActive(!isSDKEnabled);
-      _ShowSDKButton.gameObject.SetActive(isSDKEnabled);
-
       _EnableSDKButton.Initialize(HandleEnableSDKButtonTapped, "enable_sdk_button", "settings_sdk_panel");
-      _ShowSDKButton.Initialize(HandleShowSDKUIButtonTapped, "show_sdk_ui_button", "settings_sdk_panel");
       _AnkiSDKLinkButton.Initialize(HandleSDKLinkButtonTapped, "sdk_link_button", "settings_sdk_panel");
+      // Immediately open the SDK UI upon opening this view if the SDK is enabled
+      if (DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) {
+        EnableSDK();
+      }
     }
 
     private void HandleEnableSDKButtonTapped() {
       DAS.Info("SettingsSDKPanel.HandleEnableSDKButtonTapped", "Enable SDK Button tapped!");
-      _EnableSDKButton.gameObject.SetActive(false);
-      _ShowSDKButton.gameObject.SetActive(true);
+      if (_ActivateSDKModal == null) {
+        // If the SDK has already been activated, skip the confirmation modal
+        if (DataPersistenceManager.Instance.Data.DeviceSettings.SDKActivated) {
+          EnableSDK();
+        }
+        else {
+          // If this is the first time enabling the SDK, display a confirmation modal
+          // with EULA and only EnableSDK on confirmation.
+          // Create alert view with Icon
+          AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_NoText, overrideCloseOnTouchOutside: true);
+          // Hook up callbacks
+          alertView.SetCloseButtonEnabled(false);
+          alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, EnableSDK);
+          alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleCloseSDKPopup);
+          alertView.TitleLocKey = LocalizationKeys.kSettingsSdkPanelActivateSDKalertText;
+          _ActivateSDKModal = alertView;
+        }
+      }
 
-      DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled = true;
-      DataPersistenceManager.Instance.Save();
-
-      // TODO: Show SDK UI on first enabling SDK
     }
 
-    private void HandleShowSDKUIButtonTapped() {
-      DAS.Info("SettingsSDKPanel.HandleShowSDKUIButtonTapped", "Show SDK UI Button tapped!");
-      // TODO: Open SDK UI here
+    private void EnableSDK() {
+
+      DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled = true;
+      DataPersistenceManager.Instance.Data.DeviceSettings.SDKActivated = true;
+      DataPersistenceManager.Instance.Save();
+      UIManager.OpenView(_SDKViewPrefab);
+
+    }
+
+    private void HandleCloseSDKPopup() {
+      if (_ActivateSDKModal != null) {
+        _ActivateSDKModal.CloseView();
+      }
     }
 
     private void HandleSDKLinkButtonTapped() {

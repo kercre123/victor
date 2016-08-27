@@ -334,4 +334,8 @@ public interface IRobot : IDisposable {
   void EnableCubeSleep(bool enable);
 
   void EnableLift(bool enable);
+
+  void EnterSDKMode();
+
+  void ExitSDKMode();
 }

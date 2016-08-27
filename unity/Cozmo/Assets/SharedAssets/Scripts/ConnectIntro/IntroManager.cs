@@ -46,6 +46,13 @@ public class IntroManager : MonoBehaviour {
 #if !UNITY_EDITOR
     SetupEngine();
 #endif
+    // If SDK Only, force flag to true, this build flag is also used to hide any options to disable SDK mode
+#if SDK_ONLY
+    DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled = true;
+    DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.SDKActivated = true;
+    DataPersistence.DataPersistenceManager.Instance.Save();
+#endif
+
   }
 
   private void OnDestroy() {
