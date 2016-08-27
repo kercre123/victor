@@ -53,6 +53,7 @@ namespace FaceEnrollment {
     protected override void InitializeGame(MinigameConfigBase minigameConfig) {
       // make cozmo look up
       CurrentRobot.SetHeadAngle(CozmoUtil.kIdealFaceViewHeadValue);
+      CurrentRobot.SetLiftHeight(0.0f);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotOffTreadsStateChanged>(HandleOffTredsStateChanged);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(HandleEnrolledFace);
