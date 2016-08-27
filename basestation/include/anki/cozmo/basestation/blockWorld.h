@@ -47,11 +47,6 @@ namespace Anki
     class BlockWorld
     {
     public:
-      
-      using ObjectsMapByID_t     = std::map<ObjectID, std::shared_ptr<ObservableObject> >;
-      using ObjectsMapByType_t   = std::map<ObjectType, ObjectsMapByID_t >;
-      using ObjectsMapByFamily_t = std::map<ObjectFamily, ObjectsMapByType_t>;
-      
       using ObservableObjectLibrary = Vision::ObservableObjectLibrary<ObservableObject>;
       
       BlockWorld(Robot* robot);
@@ -123,10 +118,9 @@ namespace Anki
       // NOTE: Like IDs, object types are unique across objects so they can be
       //       used without specifying which family.
       const ObservableObjectLibrary& GetObjectLibrary(ObjectFamily whichFamily) const;
-      const ObjectsMapByFamily_t& GetAllExistingObjects() const;
-      const ObjectsMapByType_t& GetExistingObjectsByFamily(const ObjectFamily whichFamily) const;
-      const ObjectsMapByID_t GetExistingObjectsByType(const ObjectType whichType,
-                                                      const bool inAnyFrame = false);
+      const void GetExistingObjectsByType(const ObjectType whichType,
+                                          const BlockWorldFilter& filterIn,
+                                          std::vector<ObservableObject*>& res);
       
       // Return a pointer to an object with the specified ID (in the current world
       // coordinate frame. If that object does not exist or its pose is unknown, nullptr is returned.
@@ -356,6 +350,10 @@ namespace Anki
       void HandleMessage(const T& msg);
       
     protected:
+      
+      using ObjectsMapByID_t     = std::map<ObjectID, std::shared_ptr<ObservableObject> >;
+      using ObjectsMapByType_t   = std::map<ObjectType, ObjectsMapByID_t >;
+      using ObjectsMapByFamily_t = std::map<ObjectFamily, ObjectsMapByType_t>;
       
       // Typedefs / Aliases
       //using ObsMarkerContainer_t = std::multiset<Vision::ObservedMarker, Vision::ObservedMarker::Sorter()>;

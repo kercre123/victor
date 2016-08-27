@@ -350,69 +350,15 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
 
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  const BlockWorld::ObjectsMapByFamily_t& BlockWorld::GetAllExistingObjects() const
-  {
-    auto originIter = _existingObjects.find(_robot->GetWorldOrigin());
-    if(originIter != _existingObjects.end()) {
-      return originIter->second;
-    } else {
-      static const ObjectsMapByFamily_t EmptyObjectMapByFamily;
-      return EmptyObjectMapByFamily;
-    }
-  }
   
-  const BlockWorld::ObjectsMapByType_t& BlockWorld::GetExistingObjectsByFamily(const ObjectFamily whichFamily) const
+  const void BlockWorld::GetExistingObjectsByType(const ObjectType whichType,
+                                                  const BlockWorldFilter& filterIn,
+                                                  std::vector<ObservableObject*>& res)
   {
-    auto originIter = _existingObjects.find(_robot->GetWorldOrigin());
-    if(originIter != _existingObjects.end())
-    {
-      auto objectsWithFamilyIter = originIter->second.find(whichFamily);
-      if(objectsWithFamilyIter != originIter->second.end()) {
-        return objectsWithFamilyIter->second;
-      }
-    }
-
-    static const BlockWorld::ObjectsMapByType_t EmptyObjectMapByType;
-    return EmptyObjectMapByType;
-  }
+    BlockWorldFilter filter(filterIn);
+    filter.SetAllowedTypes({whichType});
   
-  const BlockWorld::ObjectsMapByID_t BlockWorld::GetExistingObjectsByType(const ObjectType whichType,
-                                                                          const bool inAnyFrame)
-  {
-    if(inAnyFrame)
-    {
-      ObjectsMapByID_t map;
-      for(auto originIter = _existingObjects.begin(); originIter != _existingObjects.end(); ++originIter)
-      {
-        for(auto & objectsByFamily : originIter->second) {
-          auto objectsWithType = objectsByFamily.second.find(whichType);
-          if(objectsWithType != objectsByFamily.second.end()) {
-            for(auto elem : objectsWithType->second)
-            {
-              map.insert(map.end(), elem);
-            }
-          }
-        }
-      }
-      return map;
-    }
-    else
-    {
-      auto originIter = _existingObjects.find(_robot->GetWorldOrigin());
-      if(originIter != _existingObjects.end())
-      {
-        for(auto & objectsByFamily : originIter->second) {
-          auto objectsWithType = objectsByFamily.second.find(whichType);
-          if(objectsWithType != objectsByFamily.second.end()) {
-            return objectsWithType->second;
-          }
-        }
-      }
-      
-      // Type not found!
-      static const BlockWorld::ObjectsMapByID_t EmptyObjectMapByID;
-      return EmptyObjectMapByID;
-    }
+    FindMatchingObjects(filter, res);
   }
   
   
@@ -2646,14 +2592,18 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
     
     if (matchingObjects.empty()) {
       // If no match found, find one of the same type with an invalid activeID and assume it's that
-      const ObjectsMapByID_t& objectsOfSameType = GetExistingObjectsByType(objType, true);
+      BlockWorldFilter filter;
+      filter.SetFilterFcn(nullptr);
+      filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+      
+      std::vector<ObservableObject*> objectsOfSameType;
+      GetExistingObjectsByType(objType, filter, objectsOfSameType);
       
       if(!objectsOfSameType.empty())
       {
         ObjectID ret = -1;
         bool needToAddNewObject = false;
-        for (auto& objIt : objectsOfSameType) {
-          ObservableObject* sameTypeObject = objIt.second.get();
+        for (auto& sameTypeObject : objectsOfSameType) {
           if (sameTypeObject->GetActiveID() < 0) {
             sameTypeObject->SetActiveID(activeID);
             sameTypeObject->SetFactoryID(factoryID);
@@ -4287,47 +4237,40 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
     bool newSelectedObjectSet = false;
     
     // Iterate through all the objects
-    auto const & allObjects = GetAllExistingObjects();
-    for(auto const & objectsByFamily : allObjects)
+    BlockWorldFilter filter;
+    filter.SetFilterFcn(BlockWorldFilter::ActiveObjectsFilter);
+    std::vector<ObservableObject*> allObjects;
+    FindMatchingObjects(filter, allObjects);
+    for(auto const & obj : allObjects)
     {
       // Markerless objects are not Actionable, so ignore them for selection
-      if(objectsByFamily.first != ObjectFamily::MarkerlessObject)
+      if(obj->GetFamily() != ObjectFamily::MarkerlessObject)
       {
-        for (auto const & objectsByType : objectsByFamily.second){
-          
-          //PRINT_INFO("currType: %d", blockType.first);
-          for (auto const & objectsByID : objectsByType.second) {
-            
-            ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second.get());
-            if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried() &&
-               !object->IsPoseStateUnknown())
-            {
-              //PRINT_INFO("currID: %d", block.first);
-              if (currSelectedObjectFound) {
-                // Current block of interest has been found.
-                // Set the new block of interest to the next block in the list.
-                _selectedObject = object->GetID();
-                newSelectedObjectSet = true;
-                //PRINT_INFO("new block found: id %d  type %d", block.first, blockType.first);
-                break;
-              } else if (object->GetID() == _selectedObject) {
-                currSelectedObjectFound = true;
-                //PRINT_INFO("curr block found: id %d  type %d", block.first, blockType.first);
-              }
-            }
-          } // for each ID
-          
-          if (newSelectedObjectSet) {
+        ActionableObject* object = dynamic_cast<ActionableObject*>(obj);
+        if(object != nullptr &&
+           object->HasPreActionPoses() &&
+           !object->IsBeingCarried() &&
+           !object->IsPoseStateUnknown())
+        {
+          //PRINT_INFO("currID: %d", block.first);
+          if (currSelectedObjectFound) {
+            // Current block of interest has been found.
+            // Set the new block of interest to the next block in the list.
+            _selectedObject = object->GetID();
+            newSelectedObjectSet = true;
+            //PRINT_INFO("new block found: id %d  type %d", block.first, blockType.first);
             break;
+          } else if (object->GetID() == _selectedObject) {
+            currSelectedObjectFound = true;
+            //PRINT_INFO("curr block found: id %d  type %d", block.first, blockType.first);
           }
-          
-        } // for each type
-        
-        if(newSelectedObjectSet) {
-          break;
         }
-      } // if family != MARKERLESS_OBJECTS
-    } // for each family
+      }
+          
+      if (newSelectedObjectSet) {
+        break;
+      }
+    } // for all objects
     
     // If the current object of interest was found, but a new one was not set
     // it must have been the last block in the map. Set the new object of interest
@@ -4336,23 +4279,14 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
       
       // Find first object
       ObjectID firstObject; // initialized to un-set
-      for(auto const & objectsByFamily : allObjects) {
-        for (auto const & objectsByType : objectsByFamily.second) {
-          for (auto const & objectsByID : objectsByType.second) {
-            const ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second.get());
-            if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried() &&
-              !object->IsPoseStateUnknown())
-            {
-              firstObject = objectsByID.first;
-              break;
-            }
-          }
-          if (firstObject.IsSet()) {
-            break;
-          }
-        }
-        
-        if (firstObject.IsSet()) {
+      for(auto const & obj : allObjects) {
+        const ActionableObject* object = dynamic_cast<ActionableObject*>(obj);
+        if(object != nullptr &&
+           object->HasPreActionPoses() &&
+           !object->IsBeingCarried() &&
+           !object->IsPoseStateUnknown())
+        {
+          firstObject = obj->GetID();
           break;
         }
       } // for each family
