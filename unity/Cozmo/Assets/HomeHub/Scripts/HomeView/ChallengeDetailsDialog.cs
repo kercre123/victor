@@ -127,7 +127,7 @@ public class ChallengeDetailsDialog : BaseView {
           _CurrentCostLabel.color = _AvailableColor;
           _LockedIcon.SetActive(false);
           _AffordableIcon.SetActive(true);
-          _UnlockButton.onClick.AddListener(OnUpgradeClicked);
+          _UnlockButton.Initialize(OnUpgradeClicked, "unlock_button", "challenge_details_dialog");
         }
         else {
           // Can Currently Unlock and Afford
@@ -199,6 +199,7 @@ public class ChallengeDetailsDialog : BaseView {
       UnlockablesManager.Instance.TrySetUnlocked(unlockInfo.Id.Value, true);
 
       _UnlockButton.Interactable = false;
+      UnlockablesManager.Instance.OnUnlockComplete += HandleUnlockFromRobotResponded;
       PlayUpgradeAnimation();
     }
   }
@@ -206,14 +207,37 @@ public class ChallengeDetailsDialog : BaseView {
   private void PlayUpgradeAnimation() {
     _UnlockTween = DOTween.Sequence();
     _UnlockTween.Join(_ChallengeIcon.IconImage.DOColor(Color.white, _UnlockTween_sec));
-    _UnlockTween.AppendCallback(HandleUpgradeUnlocked);
+    _UnlockTween.AppendCallback(HandleUpgradeAnimationPlayed);
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Win_Shared);
   }
 
   //Reinitialize with new state if unlocked
+  private bool _UpgradeAnimationPlayed = false;
+  private bool _UnlockFromRobotResponded = false;
+
+  private void HandleUpgradeAnimationPlayed() {
+    _UpgradeAnimationPlayed = true;
+    if (_UpgradeAnimationPlayed && _UnlockFromRobotResponded) {
+      HandleUpgradeUnlocked();
+    }
+  }
+
+  private void HandleUnlockFromRobotResponded(Anki.Cozmo.UnlockId unlockId) {
+    if (unlockId == _ChallengeData.UnlockId.Value) {
+      UnlockablesManager.Instance.OnUnlockComplete -= HandleUnlockFromRobotResponded;
+      _UnlockFromRobotResponded = true;
+      if (_UnlockFromRobotResponded && _UpgradeAnimationPlayed) {
+        HandleUpgradeUnlocked();
+      }
+    }
+  }
+
   private void HandleUpgradeUnlocked() {
     Initialize(_ChallengeData);
     _NewUnlock = true;
+
+    _UpgradeAnimationPlayed = false;
+    _UnlockFromRobotResponded = false;
   }
 
   protected override void CleanUp() {
