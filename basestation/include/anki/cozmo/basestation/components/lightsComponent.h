@@ -39,7 +39,10 @@ public:
 
   // Tell this component to stop controlling these lights (e.g. because game is going to do it), or start
   // again. Disabling turns them all to "off"
-  void SetEnableComponent(bool enable);
+  void SetEnableComponent(const bool enable);
+  void SetEnableCubeLights(const ObjectID objectID, const bool enable);
+  const bool AreAllCubesEnabled() const;
+  const bool IsCubeEnabled(const ObjectID objectID) const;
 
   void SetInteractionObject(ObjectID objectID);
   void UnSetInteractionObject(ObjectID objectID);
@@ -81,6 +84,8 @@ private:
   struct ObjectInfo {
     ObjectInfo();
 
+    bool enabled;
+
     // Desired state is what we want, currState is the last thing we've sent down (this avoids spamming too
     // many messages)
     
@@ -97,8 +102,9 @@ private:
   
   std::multiset<ObjectID> _interactionObjects;
   
-  void UpdateToDesiredLights();
-  void SetLights(ObjectID object, CubeLightsState state);
+  void UpdateToDesiredLights(const bool force = false);
+  void UpdateToDesiredLights(const ObjectID objectID, const bool force = false);
+  void SetLights(ObjectID object, CubeLightsState state, bool forceSet = false);
 
   // Returns true if we should change the lights from currState to nextState
   bool ShouldOverrideState(CubeLightsState currState, CubeLightsState nextState);
@@ -110,10 +116,12 @@ private:
   void AddLightStateValues(CubeLightsState state, const Json::Value& data);
   LEDArray JsonColorValueToArray(const Json::Value& value);
   LEDArray JsonValueToArray(const Json::Value& value);
+  
+  void RestorePrevStates();
+  void RestorePrevState(const ObjectID objectID);
+  void CheckAndUpdatePrevState(const ObjectID objectID);
 
   Robot& _robot;
-
-  bool _enabled = true;
   
   std::list<Signal::SmartHandle> _eventHandles;
   
@@ -122,6 +130,8 @@ private:
   u32 _fadePeriod_ms    = 0;
   u32 _fadeTime_ms      = 0;
   u32 _sleepTime_ms     = 0;
+  
+  bool _allCubesEnabled = true;
   
 }; // class LightsComponent
 

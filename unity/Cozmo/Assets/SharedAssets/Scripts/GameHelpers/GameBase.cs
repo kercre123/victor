@@ -548,6 +548,8 @@ public abstract class GameBase : MonoBehaviour {
 
     ResetReactionaryBehaviorsForGameEnd();
 
+    CurrentRobot.SetEnableFreeplayLightStates(true);
+
     AssetBundleManager.Instance.UnloadAssetBundle(AssetBundleNames.minigame_ui_prefabs.ToString());
   }
 

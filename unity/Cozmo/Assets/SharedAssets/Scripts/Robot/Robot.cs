@@ -1766,10 +1766,10 @@ public class Robot : IRobot {
 
   #endregion
 
-  public void SetEnableFreeplayLightStates(bool enable) {
+  public void SetEnableFreeplayLightStates(bool enable, int objectID = -1) {
     DAS.Debug(this, "SetEnableFreeplayLightStates: " + enable);
 
-    RobotEngineManager.Instance.Message.EnableLightStates = Singleton<EnableLightStates>.Instance.Initialize(enable);
+    RobotEngineManager.Instance.Message.EnableLightStates = Singleton<EnableLightStates>.Instance.Initialize(enable, objectID);
     RobotEngineManager.Instance.SendMessage();
   }
 

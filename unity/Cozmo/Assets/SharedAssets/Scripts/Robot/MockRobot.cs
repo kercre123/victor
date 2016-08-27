@@ -603,7 +603,7 @@ public class MockRobot : IRobot {
     }
   }
 
-  public void SetEnableFreeplayLightStates(bool enable) {
+  public void SetEnableFreeplayLightStates(bool enable, int objectID) {
   }
 
   public void TurnOffAllLights(bool now = false) {
