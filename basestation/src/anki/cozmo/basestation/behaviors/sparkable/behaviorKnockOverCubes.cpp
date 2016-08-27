@@ -137,7 +137,7 @@ void BehaviorKnockOverCubes::TransitionToReachingForBlock(Robot& robot)
     }
   }
   
-  action->AddAction(new TriggerAnimationAction(robot, _reachForBlockTrigger));
+  action->AddAction(new TriggerLiftSafeAnimationAction(robot, _reachForBlockTrigger));
   StartActing(action, &BehaviorKnockOverCubes::TransitionToKnockingOverStack);
   
 }
@@ -159,7 +159,7 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(Robot& robot)
       // Failed to knock over stack
       _numRetries += 1;
       if(_numRetries <= kMaxNumRetries){
-        StartActing(new TriggerAnimationAction(robot, _knockOverFailureTrigger),
+        StartActing(new TriggerLiftSafeAnimationAction(robot, _knockOverFailureTrigger),
                     &BehaviorKnockOverCubes::TransitionToKnockingOverStack);
       }
     }
@@ -189,7 +189,7 @@ void BehaviorKnockOverCubes::TransitionToPlayingReaction(Robot& robot)
   
   if(!_shouldStreamline){
     
-    StartActing(new TriggerAnimationAction(robot, animationTrigger),
+    StartActing(new TriggerLiftSafeAnimationAction(robot, animationTrigger),
                 [this](Robot& robot){
                   robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, true);
                   _disabledReactions.erase(BehaviorType::AcknowledgeObject);

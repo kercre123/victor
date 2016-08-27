@@ -143,7 +143,7 @@ void BehaviorReactAcknowledgeCubeMoved::StopInternalReactionary(Robot& robot)
 void BehaviorReactAcknowledgeCubeMoved::TransitionToPlayingSenseReaction(Robot& robot)
 {
   StartActing(new CompoundActionParallel(robot, {
-    new TriggerAnimationAction(robot, AnimationTrigger::CubeMovedSense),
+    new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::CubeMovedSense),
     new WaitAction(robot, kDelayForUserPresentBlock_s) }),
               &BehaviorReactAcknowledgeCubeMoved::TransitionToTurningToLastLocationOfBlock);
   
@@ -173,7 +173,7 @@ void BehaviorReactAcknowledgeCubeMoved::TransitionToReactingToBlockAbsence(Robot
 {
   DEBUG_SET_STATE(ReactingToBlockAbsence);
   
-  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::CubeMovedUpset));
+  StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::CubeMovedUpset));
   BehaviorObjectiveAchieved(BehaviorObjective::ReactedAcknowledgedCubeMoved);
 }
   

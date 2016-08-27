@@ -823,7 +823,7 @@ void RobotToEngineImplMessaging::HandlePotentialCliffEvent(const AnkiEvent<Robot
   ANKI_CPU_PROFILE("Robot::HandlePotentialCliffEvent");
   
   if(robot->GetIsCliffReactionDisabled()){
-    IActionRunner* action = new TriggerAnimationAction(*robot, AnimationTrigger::DroneModeCliffEvent);
+    IActionRunner* action = new TriggerLiftSafeAnimationAction(*robot, AnimationTrigger::DroneModeCliffEvent);
     robot->GetActionList().QueueActionNow(action);
   }else{
     PRINT_NAMED_WARNING("Robot.HandlePotentialCliffEvent", "Got potential cliff message but not in drone mode");

@@ -57,6 +57,8 @@ static const bool  kShouldUseBlocksDefault = true;
 static const bool  kDoSecondRequestDefault = false;
 
 static const int   kFaceVerificationNumImages = 4;
+static const int   kMaxNumberOfRetries = 2;
+
 
 // #define kDistToMoveTowardsFace_mm {120.0f, 100.0f, 140.0f, 50.0f, 180.0f, 20.0f}
 // to avoid cliff issues, we're only going to move slightly forwards
@@ -80,6 +82,9 @@ void BehaviorRequestGameSimple::ConfigPerNumBlocks::LoadFromJson(const Json::Val
 
 BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::Value& config)
   : IBehaviorRequestGame(robot, config)
+  , _numRetriesPickingUpBlock(0)
+  , _numRetriesDrivingToFace(0)
+  , _numRetriesPlacingBlock(0)
 {
   SetDefaultName("BehaviorRequestGameSimple");
 
@@ -166,6 +171,10 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot)
   }
 
   _initialRequest = true;
+  _numRetriesPickingUpBlock = 0;
+  _numRetriesDrivingToFace = 0;
+  _numRetriesPlacingBlock = 0;
+  
   
   return RESULT_OK;
 }
@@ -285,6 +294,13 @@ void BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation(Robot& robo
 
 void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
 {
+  // Ensure we don't loop forever
+  if(_numRetriesPickingUpBlock > kMaxNumberOfRetries){
+    ComputeFaceInteractionPose(robot);
+    TransitionToDrivingToFace(robot);
+    return;
+  }
+  
   ObjectID targetBlockID = GetRobotsBlockID(robot);
   DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot, targetBlockID);
   action->SetMotionProfile(_driveToPickupProfile);
@@ -295,7 +311,7 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
                   TransitionToDrivingToFace(robot);
                 }
                 else if ( resultMsg.result == ActionResult::FAILURE_RETRY ) {
-
+                  _numRetriesPickingUpBlock++;
                   // TODO:(bn) animation groups here?
                   IActionRunner* animAction = nullptr;
                   switch(resultMsg.completionInfo.Get_objectInteractionCompleted().result)
@@ -377,6 +393,12 @@ void BehaviorRequestGameSimple::ComputeFaceInteractionPose(Robot& robot)
 
 void BehaviorRequestGameSimple::TransitionToDrivingToFace(Robot& robot)
 {
+  // Ensure we don't loop forever
+  if(_numRetriesDrivingToFace > kMaxNumberOfRetries){
+    TransitionToPlacingBlock(robot);
+    return;
+  }
+  
   if( ! _hasFaceInteractionPose ) {
     PRINT_NAMED_INFO("BehaviorRequestGameSimple.TransitionToDrivingToFace.NoPose",
                      "%s: No interaction pose set to drive to face!",
@@ -398,6 +420,7 @@ void BehaviorRequestGameSimple::TransitionToDrivingToFace(Robot& robot)
                     TransitionToPlacingBlock(robot);
                   }
                   else if (result == ActionResult::FAILURE_RETRY) {
+                    _numRetriesDrivingToFace++;
                     TransitionToDrivingToFace(robot);
                   }
                   else {
@@ -412,6 +435,12 @@ void BehaviorRequestGameSimple::TransitionToDrivingToFace(Robot& robot)
 
 void BehaviorRequestGameSimple::TransitionToPlacingBlock(Robot& robot)
 {
+  // Ensure we don't loop forever
+  if(_numRetriesPlacingBlock > kMaxNumberOfRetries){
+    TransitionToLookingAtFace(robot);
+    return;
+  }
+  
   StartActing(new CompoundActionSequential(robot,
                 {
                   new PlaceObjectOnGroundAction(robot),
@@ -420,6 +449,7 @@ void BehaviorRequestGameSimple::TransitionToPlacingBlock(Robot& robot)
                 }),
               [this, &robot](ActionResult result) {
                 if ( result == ActionResult::SUCCESS ) {
+                  _numRetriesPlacingBlock++;
                   TransitionToLookingAtFace(robot);
                 }
                 else if (result == ActionResult::FAILURE_RETRY) {

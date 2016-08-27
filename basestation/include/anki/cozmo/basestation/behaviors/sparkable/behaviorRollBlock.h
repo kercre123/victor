@@ -35,7 +35,7 @@ protected:
   virtual void   StopInternal(Robot& robot) override;
 
   virtual bool IsRunnableInternal(const Robot& robot) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
+  virtual bool CarryingObjectHandledInternally() const override {return true;}
   
 private:
 

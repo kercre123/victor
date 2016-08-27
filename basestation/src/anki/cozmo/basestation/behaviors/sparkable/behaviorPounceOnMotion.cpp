@@ -121,7 +121,7 @@ void BehaviorPounceOnMotion::TransitionToInitialWarningAnim(Robot& robot)
 {
   PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.TransitionToInitialWarningAnim","BehaviorPounceOnMotion.TransitionToInitialWarningAnim");
   SET_STATE(InitialAnim);
-  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::PounceInitial),
+  StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PounceInitial),
               &BehaviorPounceOnMotion::TransitionToBringingHeadDown);
 }
 
@@ -240,7 +240,7 @@ void BehaviorPounceOnMotion::TransitionToPounce(Robot& robot)
     _backUpDistance = GetDriveDistance();
   }
   
-  IActionRunner* animAction = new TriggerAnimationAction(robot, AnimationTrigger::PouncePounce);
+  IActionRunner* animAction = new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PouncePounce);
   // when we're driving forward is when cliff reacts are most likely
   EnableCliffReacts(false,robot);
   
@@ -280,11 +280,11 @@ void BehaviorPounceOnMotion::TransitionToResultAnim(Robot& robot)
 
   IActionRunner* newAction = nullptr;
   if( caught ) {
-    newAction = new TriggerAnimationAction(robot, AnimationTrigger::PounceSuccess);
+    newAction = new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PounceSuccess);
     PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.CheckResult.Caught", "got it!");
   }
   else {
-    newAction = new TriggerAnimationAction(robot, AnimationTrigger::PounceFail );
+    newAction = new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PounceFail );
     PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.CheckResult.Miss", "missed...");
   }
   
@@ -317,7 +317,7 @@ void BehaviorPounceOnMotion::TransitionToBackUp(Robot& robot)
 void BehaviorPounceOnMotion::TransitionToGetOutBored(Robot& robot)
 {
   SET_STATE(GetOutBored);
-  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::PounceGetOut));
+  StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PounceGetOut));
 }
   
 

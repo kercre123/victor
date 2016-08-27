@@ -159,7 +159,7 @@ void BehaviorRollBlock::TransitionToReactingToBlock(Robot& robot)
   // Turn towards the object and then react to it before performing the roll action
   StartActing(new CompoundActionSequential(robot, {
                 new TurnTowardsObjectAction(robot, _targetBlock, PI_F),
-    new TriggerAnimationAction(robot, AnimationTrigger::RollBlockInitial),
+    new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::RollBlockInitial),
               }),
               [this,&robot]{ this->TransitionToPerformingAction(robot); });
 }

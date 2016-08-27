@@ -44,6 +44,7 @@ private:
 
 public:
   virtual bool ShouldResumeLastBehavior() const override { return true; }
+  virtual bool CarryingObjectHandledInternally() const override {return false;}
   
 protected:
   // Enforce creation through BehaviorFactory

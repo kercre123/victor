@@ -89,9 +89,9 @@ void RobotIdleTimeoutComponent::HandleMessage(const ExternalInterface::CancelIdl
 IActionRunner* RobotIdleTimeoutComponent::CreateGoToSleepAnimSequence(Robot& robot)
 {
   CompoundActionSequential* goToSleepAnims = new CompoundActionSequential(robot);
-  goToSleepAnims->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GoToSleepGetIn));
-  goToSleepAnims->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GoToSleepSleeping));
-  goToSleepAnims->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GoToSleepOff));
+  goToSleepAnims->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::GoToSleepGetIn));
+  goToSleepAnims->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::GoToSleepSleeping));
+  goToSleepAnims->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::GoToSleepOff));
   return goToSleepAnims;
 }
 

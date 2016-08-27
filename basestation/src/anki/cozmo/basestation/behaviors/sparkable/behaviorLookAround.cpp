@@ -294,7 +294,7 @@ void BehaviorLookAround::TransitionToExaminingFoundObject(Robot& robot)
   
   StartActing(new CompoundActionSequential(robot, {
                   new TurnTowardsObjectAction(robot, recentObjectID, PI_F),
-                  new TriggerAnimationAction(robot, AnimationTrigger::BlockReact) }),
+                  new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::BlockReact) }),
                [this, &robot, recentObjectID](ActionResult result) {
                  if( result == ActionResult::SUCCESS ) {
                    PRINT_NAMED_DEBUG("BehaviorLookAround.Objects",

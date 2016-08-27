@@ -128,7 +128,7 @@ namespace Cozmo {
           return res;
         }
         
-        _animationAction = new TriggerAnimationAction(_robot, animTrigger);
+        _animationAction = new TriggerLiftSafeAnimationAction(_robot, animTrigger);
         
         _subAction->Reset(false);
       }

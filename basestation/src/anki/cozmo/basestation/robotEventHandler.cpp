@@ -657,7 +657,7 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionUnionTag::playAnimationTrigger:
     {
       auto & playAnimationTrigger = actionUnion.Get_playAnimationTrigger();
-      return new TriggerAnimationAction(robot, playAnimationTrigger.trigger, playAnimationTrigger.numLoops);
+      return new TriggerLiftSafeAnimationAction(robot, playAnimationTrigger.trigger, playAnimationTrigger.numLoops);
     }
     case RobotActionUnionTag::pickupObject:
       return GetPickupActionHelper(robot, actionUnion.Get_pickupObject());
@@ -893,7 +893,7 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
     case ExternalInterface::MessageGameToEngineTag::PlayAnimationTrigger:
     {
       const ExternalInterface::PlayAnimationTrigger& msg = event.GetData().Get_PlayAnimationTrigger();
-      newAction = new TriggerAnimationAction(robotRef, msg.trigger, msg.numLoops);
+      newAction = new TriggerLiftSafeAnimationAction(robotRef, msg.trigger, msg.numLoops);
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::SearchForObject:

@@ -183,7 +183,7 @@ ActionResult SayTextAction::Init()
                         "SayTextAction.Init.UsingAnimationGroup", "GameEvent=%d (%s)",
                         _animationTrigger, EnumToString(_animationTrigger));
         }
-        _playAnimationAction = new TriggerAnimationAction(_robot, _animationTrigger);
+        _playAnimationAction = new TriggerLiftSafeAnimationAction(_robot, _animationTrigger);
       }
       _isAudioReady = true;
       

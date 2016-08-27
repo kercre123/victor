@@ -104,6 +104,10 @@ private:
   bool   _shouldUseBlocks;
   bool   _doSecondRequest;
   
+  int    _numRetriesPickingUpBlock;
+  int    _numRetriesDrivingToFace;
+  int    _numRetriesPlacingBlock;
+  
   void TransitionToPlayingInitialAnimation(Robot& robot);
   void TransitionToFacingBlock(Robot& robot);
   void TransitionToPlayingPreDriveAnimation(Robot& robot);

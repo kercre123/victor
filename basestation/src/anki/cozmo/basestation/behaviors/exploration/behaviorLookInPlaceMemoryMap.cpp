@@ -393,7 +393,7 @@ void BehaviorLookInPlaceMemoryMap::VisitSector(Robot& robot, const int16_t index
   // 2) play anim
   if ( _configParams.lookInPlaceAnimTrigger != AnimationTrigger::Count )
   {
-    IAction* imExploringAction = new TriggerAnimationAction(robot, _configParams.lookInPlaceAnimTrigger);
+    IAction* imExploringAction = new TriggerLiftSafeAnimationAction(robot, _configParams.lookInPlaceAnimTrigger);
     fullVisitAction->AddAction( imExploringAction );
   }
   

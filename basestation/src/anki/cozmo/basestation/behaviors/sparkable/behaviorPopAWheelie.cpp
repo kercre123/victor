@@ -92,7 +92,7 @@ void BehaviorPopAWheelie::TransitionToReactingToBlock(Robot& robot)
   // Turn towards the object and then react to it before performing the pop a wheelie action
   StartActing(new CompoundActionSequential(robot, {
     new TurnTowardsObjectAction(robot, _targetBlock, PI_F),
-    new TriggerAnimationAction(robot, AnimationTrigger::PopAWheelieInitial),
+    new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PopAWheelieInitial),
   }),
   &BehaviorPopAWheelie::TransitionToPerformingAction);
 }
@@ -196,12 +196,12 @@ void BehaviorPopAWheelie::SetupRetryAction(Robot& robot, const ExternalInterface
     case ObjectInteractionResult::INCOMPLETE:
     case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
     {
-      animAction = new TriggerAnimationAction(robot, AnimationTrigger::PopAWheelieRealign);
+      animAction = new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PopAWheelieRealign);
       break;
     }
       
     default: {
-      animAction = new TriggerAnimationAction(robot, AnimationTrigger::PopAWheelieRetry);
+      animAction = new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PopAWheelieRetry);
       break;
     }
   }
