@@ -13,30 +13,6 @@
     "minRequestDelay_s" : 20.0
   },
 
-  "one_block_config": {
-    "initial_animName" : "RequestGameSpeedTapInitial1",
-    "preDrive_animName" : "RequestGameSpeedTapPreDrive1",
-    "request_animName" : "RequestGameSpeedTapRequest1",
-    "deny_animName" : "RequestGameSpeedTapDeny1",
-    "minRequestDelay_s" : 20.0
-  },
-
-  "after_place_backup_dist_mm": 60.0,
-  "after_place_backup_speed_mmps": 80.0,
-
-  "pickup_motion_profile": {
-    "speed_mmps": 80.0
-  },
-
-  "place_motion_profile": {
-    "speed_mmps": 120.0,
-    "pointTurnSpeed_rad_per_sec": 2.5,
-    "reverseSpeed_mmps": 80.0
-  },
-
-  "place_position_threshold_mm": 20.0,
-  "place_position_threshold_rads": 0.261799387799,
-
   "flatScore": 1.0,
   
   "repetitionPenalty" :

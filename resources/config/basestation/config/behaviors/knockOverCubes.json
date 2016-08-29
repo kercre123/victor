@@ -3,10 +3,10 @@
   "name": "knockOverCubes",
   "requiredUnlockId": "KnockOverThreeCubeStack",
   "behaviorGroups": [
-    "FP_PlayAlone"
+    "Reactionary"
   ],
-  "flatScore": 7.0,
   "minimumStackHeight": 3,
+  "disableByDefault": false,
   "reachForBlockTrigger" : "KnockOverGrabAttempt",
   "knockOverEyesTrigger" : "KnockOverEyes",
   "knockOverSuccessTrigger" : "KnockOverSuccess",

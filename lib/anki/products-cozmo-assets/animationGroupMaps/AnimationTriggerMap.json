@@ -329,14 +329,6 @@
       "AnimName": "ag_majorWin"
     },
     {
-      "CladEvent": "NothingToDoBored",
-      "AnimName": "ag_bored_event"
-    },
-    {
-      "CladEvent": "OnLearnedPlayerName",
-      "AnimName": "ag_freeplay_reacttoface_longname"
-    },
-    {
       "CladEvent": "MeetCozmoGetIn",
       "AnimName" : "ag_meetcozmo_getin"
     },

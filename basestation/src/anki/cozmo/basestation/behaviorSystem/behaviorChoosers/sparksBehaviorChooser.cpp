@@ -94,6 +94,7 @@ void SparksBehaviorChooser::OnSelected()
   _switchingSoftToHardSpark = false;
   _timePlayingOutroStarted = 0;
   
+
   // Set the idle driving animations to sparks driving anims
   _robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::SparkBackpackLights,
     AnimationTrigger::SparkBackpackLights,
@@ -101,7 +102,6 @@ void SparksBehaviorChooser::OnSelected()
   _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::SparkBackpackLights);
   
   // Turn off reactionary behaviors that could interrupt the spark
-  _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, false);
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeFace, false);
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCubeMoved, false);
 }
@@ -112,8 +112,6 @@ void SparksBehaviorChooser::OnDeselected()
   _robot.GetDrivingAnimationHandler().PopDrivingAnimations();
   _robot.GetAnimationStreamer().PopIdleAnimation();
   
-  // Turn reactionary behaviors back on
-  _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, true);
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeFace, true);
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCubeMoved, true);
 }

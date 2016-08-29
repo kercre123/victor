@@ -184,15 +184,14 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
   }
 
   // Only turn towards face if this is _not_ a retry
-  const Radians maxTurnToFaceAngle( (isRetry ? 0 : DEG_TO_RAD(90)) );
-  const bool sayNameBefore = !_shouldStreamline;
+  const Radians maxTurnToFaceAngle( (_shouldStreamline || isRetry ? 0 : DEG_TO_RAD(90)) );
   DriveToRollObjectAction* rollAction = new DriveToRollObjectAction(robot, _targetBlock,
                                                                     false, 0, false,
-                                                                    maxTurnToFaceAngle, sayNameBefore);
+                                                                    maxTurnToFaceAngle);
   rollAction->RollToUpright();
   rollAction->SetSayNameAnimationTrigger(AnimationTrigger::RollBlockPreActionNamedFace);
   rollAction->SetNoNameAnimationTrigger(AnimationTrigger::RollBlockPreActionUnnamedFace);
-      
+
   // Roll the object and then look at a person
   StartActing(rollAction,
               [&,this](const ExternalInterface::RobotCompletedAction& msg) {
