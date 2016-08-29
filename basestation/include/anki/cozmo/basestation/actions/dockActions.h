@@ -84,6 +84,12 @@ namespace Anki {
       // Is used when checking if we are close enough to the preDock pose
       void SetPreDockPoseDistOffset(f32 offset) { _preDockPoseDistOffsetX_mm = offset; }
       
+      // Whether or not the action will check that we are currently seeing a specific marker
+      // (the one corresponding to the closest preDock pose) on the object before docking or
+      // that we are seeing any marker on the object
+      // By default this is false (the action is looking for a specific marker)
+      void SetShouldVisuallyVerifyObjectOnly(const bool b) { _visuallyVerifyObjectOnly = b; }
+      
       struct PreActionPoseInfo
       {
         // Inputs
@@ -180,7 +186,8 @@ namespace Anki {
       
       AnimationStreamer::Tag     _squintLayerTag = AnimationStreamer::NotAnimatingTag;
       
-      bool _lightsSet = false;
+      bool _lightsSet                = false;
+      bool _visuallyVerifyObjectOnly = false;
       
     }; // class IDockAction
     

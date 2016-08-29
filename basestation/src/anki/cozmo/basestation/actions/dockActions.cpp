@@ -371,9 +371,9 @@ namespace Anki {
       // marker of the selected object before proceeding
       // NOTE: This also disables tracking head to object if there was any
       _faceAndVerifyAction = new TurnTowardsObjectAction(_robot,
-                                                  _dockObjectID,
-                                                  _dockMarker->GetCode(),
-                                                  0, true, false);
+                                                         _dockObjectID,
+                                                         (_visuallyVerifyObjectOnly ? Vision::Marker::ANY_CODE : _dockMarker->GetCode()),
+                                                         0, true, false);
 
       // Disable the visual verification from issuing a completion signal
       _faceAndVerifyAction->ShouldEmitCompletionSignal(false);
@@ -425,17 +425,17 @@ namespace Anki {
             PRINT_NAMED_INFO("IDockAction.DockWithObjectHelper.BeginDocking", "Docking with marker %d (%s) using action %s.",
                              _dockMarker->GetCode(), Vision::MarkerTypeStrings[_dockMarker->GetCode()], DockActionToString(_dockAction));
             if(_robot.DockWithObject(_dockObjectID,
-                                      _dockSpeed_mmps,
-                                      _dockAccel_mmps2,
-                                      _dockDecel_mmps2,
-                                      _dockMarker, _dockMarker2,
-                                      _dockAction,
-                                      _placementOffsetX_mm,
-                                      _placementOffsetY_mm,
-                                      _placementOffsetAngle_rad,
-                                      _useManualSpeed,
-                                      _numDockingRetries,
-                                      _dockingMethod) == RESULT_OK)
+                                     _dockSpeed_mmps,
+                                     _dockAccel_mmps2,
+                                     _dockDecel_mmps2,
+                                     _dockMarker, _dockMarker2,
+                                     _dockAction,
+                                     _placementOffsetX_mm,
+                                     _placementOffsetY_mm,
+                                     _placementOffsetAngle_rad,
+                                     _useManualSpeed,
+                                     _numDockingRetries,
+                                     _dockingMethod) == RESULT_OK)
             {
               //NOTE: Any completion (success or failure) after this point should tell
               // the robot to stop tracking and go back to looking for markers!

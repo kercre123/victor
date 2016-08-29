@@ -202,6 +202,8 @@ IActionRunner* GetPickupActionHelper(Robot& robot, const ExternalInterface::Pick
     PickupObjectAction* action = new PickupObjectAction(robot, selectedObjectID, msg.useManualSpeed);
     action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
+    // We don't care about a specific marker just that we are docking with the correct object
+    action->SetShouldVisuallyVerifyObjectOnly(true);
     return action;
   }
 }
@@ -238,6 +240,8 @@ IActionRunner* GetPlaceRelActionHelper(Robot& robot, const ExternalInterface::Pl
                                                             0,
                                                             msg.useManualSpeed);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
+    // We don't care about a specific marker just that we are docking with the correct object
+    action->SetShouldVisuallyVerifyObjectOnly(true);
     return action;
   }
 }
@@ -272,6 +276,8 @@ IActionRunner* GetPlaceOnActionHelper(Robot& robot, const ExternalInterface::Pla
                                                             0,
                                                             msg.useManualSpeed);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
+    // We don't care about a specific marker just that we are docking with the correct object
+    action->SetShouldVisuallyVerifyObjectOnly(true);
     return action;
   }
 }
@@ -337,6 +343,8 @@ IActionRunner* GetDriveToAlignWithObjectActionHelper(Robot& robot, const Externa
                                                               msg.useManualSpeed);
     action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
+    // We don't care about aligning with a specific marker just that we are aligning with the correct object
+    action->SetShouldVisuallyVerifyObjectOnly(true);
     return action;
   }
 }
@@ -368,6 +376,9 @@ IActionRunner* GetRollObjectActionHelper(Robot& robot, const ExternalInterface::
     action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     action->EnableDeepRoll(msg.doDeepRoll);
+    
+    // We don't care about a specific marker just that we are docking with the correct object
+    action->SetShouldVisuallyVerifyObjectOnly(true);
     return action;
   }
 }
@@ -397,6 +408,8 @@ IActionRunner* GetPopAWheelieActionHelper(Robot& robot, const ExternalInterface:
     PopAWheelieAction* action = new PopAWheelieAction(robot, selectedObjectID, msg.useManualSpeed);
     action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
+    // We don't care about a specific marker just that we are docking with the correct object
+    action->SetShouldVisuallyVerifyObjectOnly(true);
     return action;
   }
 }
