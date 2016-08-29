@@ -12,6 +12,21 @@ plot(A.data(:,1:3));
 title('Accel');
 
 
+% Display accelerometer magnitude (squared), (mm/s^2)^2
+figure(4);
+A.data(:,1:3);
+accData = A.data(:,1:3);
+accSum = [];
+ACC_RANGE_CONST  = (1.0 / 16384.0) * 9810.0; 
+for i=1:size(accData,1)
+    accSum = [accSum, (accData(i,1)*accData(i,1) + accData(i,2)*accData(i,2) + accData(i,3)*accData(i,3)) * (ACC_RANGE_CONST^2)];
+    
+end
+plot(accSum);
+title('AccSum');
+
+
+
 %%%%%%%%%% Gyro data %%%%%%%%%
 figure(2);
 subplot(2,1,1);

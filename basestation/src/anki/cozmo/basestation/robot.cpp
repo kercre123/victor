@@ -90,7 +90,7 @@
 
 #define BUILD_NEW_ANIMATION_CODE 0
 
-#define IS_STATUS_FLAG_SET(x) ((msg.status & (uint16_t)RobotStatusFlag::x) != 0)
+#define IS_STATUS_FLAG_SET(x) ((msg.status & (uint32_t)RobotStatusFlag::x) != 0)
 
 namespace Anki {
 namespace Cozmo {
@@ -372,6 +372,7 @@ ObjectID Robot::AddUnconnectedCharger()
 bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
 {
   const bool isOfftreads = IS_STATUS_FLAG_SET(IS_PICKED_UP);
+  const bool isFalling = IS_STATUS_FLAG_SET(IS_FALLING);
   TimeStamp_t currentTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   
   //////////
@@ -398,9 +399,15 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   // Orientation based state transitions
   ////
   
-  if(currOnSide){
-    if((_awaitingConfirmationTreadState != OffTreadsState::OnRightSide
-        && _awaitingConfirmationTreadState != OffTreadsState::OnLeftSide))
+  if (isFalling) {
+    if (_awaitingConfirmationTreadState != OffTreadsState::Falling) {
+      _awaitingConfirmationTreadState = OffTreadsState::Falling;
+      _timeOffTreadStateChanged_ms = currentTimestamp - kRobotTimeToConsiderOfftreads_ms;
+    }
+  }
+  else if(currOnSide){
+    if(_awaitingConfirmationTreadState != OffTreadsState::OnRightSide
+       && _awaitingConfirmationTreadState != OffTreadsState::OnLeftSide)
     {
       // Transition to Robot on Side
       if(onRightSide){
@@ -411,34 +418,27 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
       _timeOffTreadStateChanged_ms = currentTimestamp;
     }
   }
-  else{
-    //Not on side
-    
-    if(currOntreads
-       && _awaitingConfirmationTreadState != OffTreadsState::InAir
-       && _awaitingConfirmationTreadState != OffTreadsState::OnTreads)
-    {
-      _awaitingConfirmationTreadState = OffTreadsState::InAir;
-      _timeOffTreadStateChanged_ms = currentTimestamp;
-    }
-    
-    if(currOnBack
-       && _awaitingConfirmationTreadState != OffTreadsState::OnBack)
-    {
-      // Transition to Robot on Back
-      _awaitingConfirmationTreadState = OffTreadsState::OnBack;
-      _timeOffTreadStateChanged_ms = currentTimestamp;
-    }
-
-    if(currFacePlant
-       && _awaitingConfirmationTreadState != OffTreadsState::OnFace)
-    {
-      // Transition to Robot on Face
-      _awaitingConfirmationTreadState = OffTreadsState::OnFace;
-      _timeOffTreadStateChanged_ms = currentTimestamp;
-    }
-  
-  }// end if(currOnSide)
+  else if(currFacePlant
+          && _awaitingConfirmationTreadState != OffTreadsState::OnFace)
+  {
+    // Transition to Robot on Face
+    _awaitingConfirmationTreadState = OffTreadsState::OnFace;
+    _timeOffTreadStateChanged_ms = currentTimestamp;
+  }
+  else if(currOnBack
+          && _awaitingConfirmationTreadState != OffTreadsState::OnBack)
+  {
+    // Transition to Robot on Back
+    _awaitingConfirmationTreadState = OffTreadsState::OnBack;
+    _timeOffTreadStateChanged_ms = currentTimestamp;
+  }
+  else if(currOntreads
+          && _awaitingConfirmationTreadState != OffTreadsState::InAir
+          && _awaitingConfirmationTreadState != OffTreadsState::OnTreads)
+  {
+    _awaitingConfirmationTreadState = OffTreadsState::InAir;
+    _timeOffTreadStateChanged_ms = currentTimestamp;
+  }// end if(isFalling)
     
   /////
   // Message based tred state transitions
@@ -473,6 +473,21 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     // Special case for just left treads
     if(_offTreadsState == OffTreadsState::OnTreads){
       _visionComponentPtr->Pause(true);
+    }
+    
+    // Falling seems worthy of a DAS event
+    if (_awaitingConfirmationTreadState == OffTreadsState::Falling) {
+      _fallingStartedTime_ms = GetLastMsgTimestamp();
+      PRINT_NAMED_EVENT("Robot.CheckAndUpdateTreadsState.FallingStarted",
+                        "t=%dms",
+                        _fallingStartedTime_ms);
+    } else if (_offTreadsState == OffTreadsState::Falling) {
+      // This is not an exact measurement of fall time since it includes some detection delays on the robot side
+      // It may also include kRobotTimeToConsiderOfftreads_ms depending on how the robot lands
+      PRINT_NAMED_EVENT("Robot.CheckAndUpdateTreadsState.FallingStopped",
+                        "t=%dms, duration=%dms",
+                        GetLastMsgTimestamp(), GetLastMsgTimestamp() - _fallingStartedTime_ms);
+      _fallingStartedTime_ms = 0;
     }
     
     _offTreadsState = _awaitingConfirmationTreadState;
@@ -711,22 +726,22 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.BodyNotInAccessoryMode","* * * * Firmware bug (Vandiver knows already) * * * *");
     _isBodyInAccessoryMode = false;
     
-    
-    // ==== HACK: Workaround for robot not getting itself into accessory mode ===
-    static int setBodyModeTicDelay = 3;
-    if (++setBodyModeTicDelay >= 3) {
-      PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.SettingBodyModeHack", "Shouldn't need to do this, but for some reason body's not in the correct mode");
-      SendMessage(RobotInterface::EngineToRobot(SetBodyRadioMode(BodyRadioMode::BODY_ACCESSORY_OPERATING_MODE)));
-      setBodyModeTicDelay = 0;
-    }
-    // ==========================================================================
-    
   } else if (!_isBodyInAccessoryMode && IS_STATUS_FLAG_SET(IS_BODY_ACC_MODE)) {
     // This is not by itself a bad thing, but it should only happen if IS_BODY_ACC_MODE was ever false...
     // which should never happen.
     PRINT_NAMED_EVENT("Robot.UpdateFullRobotState.BodyInAccessoryMode","");
     _isBodyInAccessoryMode = true;
   }
+  
+  // ==== HACK: Workaround for robot not getting itself into accessory mode ===
+  static int setBodyModeTicDelay = 3;
+  if (!_isBodyInAccessoryMode && ++setBodyModeTicDelay >= 3) {
+    PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.SettingBodyModeHack", "Shouldn't need to do this, but for some reason body's not in the correct mode");
+    SendMessage(RobotInterface::EngineToRobot(SetBodyRadioMode(BodyRadioMode::BODY_ACCESSORY_OPERATING_MODE)));
+    setBodyModeTicDelay = 0;
+  }
+  // ==========================================================================
+
 
   GetMoveComponent().Update(msg);
       
@@ -3892,6 +3907,7 @@ ExternalInterface::RobotState Robot::GetRobotState()
   if(GetMoveComponent().IsMoving()) { msg.status |= (uint32_t)RobotStatusFlag::IS_MOVING; }
   if(IsPickingOrPlacing()) { msg.status |= (uint32_t)RobotStatusFlag::IS_PICKING_OR_PLACING; }
   if(_offTreadsState != OffTreadsState::OnTreads) { msg.status |= (uint32_t)RobotStatusFlag::IS_PICKED_UP; }
+  if(_offTreadsState != OffTreadsState::Falling)  { msg.status |= (uint32_t)RobotStatusFlag::IS_FALLING; }
   if(IsAnimating())        { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING; }
   if(IsIdleAnimating())    { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING_IDLE; }
   if(IsCarryingObject())   {

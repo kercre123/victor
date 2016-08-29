@@ -92,7 +92,11 @@ namespace HeadController {
 
     void Enable()
     {
-      enable_ = true;
+      if (!enable_) {
+        enable_ = true;
+        power_ = 0;
+        HAL::MotorSetPower(MOTOR_HEAD, power_);
+      }
     }
 
     void Disable()

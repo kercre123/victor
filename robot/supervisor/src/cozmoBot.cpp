@@ -130,37 +130,15 @@ namespace Anki {
         lastResult = Localization::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 221, "CozmoBot.InitFail.Localization", 305, "", 0);
 
-        /*
-        lastResult = VisionSystem::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 39, "Robot::Init()", 243, "Vision System init failed.\n", 0);
-         */
-
         lastResult = PathFollower::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 222, "CozmoBot.InitFail.PathFollower", 305, "", 0);
+        
         lastResult = BackpackLightController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 223, "CozmoBot.InitFail.BackpackLightController", 305, "", 0);
-        // Initialize subsystems if/when available:
-        /*
-         if(WheelController::Init() == RESULT_FAIL) {
-         PRINT("WheelController initialization failed.\n");
-         return RESULT_FAIL;
-         }
-
-         if(SpeedController::Init() == RESULT_FAIL) {
-         PRINT("SpeedController initialization failed.\n");
-         return RESULT_FAIL;
-         }
-
-         if(SteeringController::Init() == RESULT_FAIL) {
-         PRINT("SteeringController initialization failed.\n");
-         return RESULT_FAIL;
-         }
-
-         if(HeadController::Init() == RESULT_FAIL) {
-         PRINT("HeadController initialization failed.\n");
-         return RESULT_FAIL;
-         }
-         */
+        
+        lastResult = IMUFilter::Init();
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 364, "CozmoBot.InitFail.IMUFilter", 305, "", 0);
+        
         lastResult = DockingController::Init();;
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 224, "CozmoBot.InitFail.DockingController", 305, "", 0);
 

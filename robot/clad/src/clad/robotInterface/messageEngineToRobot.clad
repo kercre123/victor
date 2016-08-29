@@ -327,6 +327,11 @@ message EnableStopOnCliff
   bool enable
 }
 
+message EnableBraceWhenFalling
+{
+  bool enable
+}
+
 enum uint_32 ToRobotAddressSpace
 {
   GLOBAL_INVALID_TAG = 0,
@@ -428,6 +433,7 @@ union EngineToRobot
   EnableStopOnCliff             enableStopOnCliff           = 0x60,
   ForceDelocalizeSimulatedRobot forceDelocalizeSimulatedRobot = 0x61, // Used for simulation only, no-op for physical
   ObjectConnectionStateToRobot  objectConnectionStateToRobot = 0x62,
+  EnableBraceWhenFalling        enableBraceWhenFalling      = 0x63,
 
   
   // 0x80 to 0xAF: To WiFi

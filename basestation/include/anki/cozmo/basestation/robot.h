@@ -931,7 +931,7 @@ protected:
   OffTreadsState    _offTreadsState  = OffTreadsState::OnTreads;
   OffTreadsState    _awaitingConfirmationTreadState = OffTreadsState::OnTreads;
   TimeStamp_t      _timeOffTreadStateChanged_ms = 0;
-
+  TimeStamp_t      _fallingStartedTime_ms = 0;
   
   // Sets robot pose but does not update the pose on the robot.
   // Unless you know what you're doing you probably want to use
