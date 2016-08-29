@@ -1089,13 +1089,6 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueCompoundActi
     return;
   }
   
-  if(_ignoreExternalActions)
-  {
-    PRINT_NAMED_INFO("RobotEventHandler.QueueCompoundAction",
-                     "Ignoring QueueCompoundAction message while external actions are disabled");
-    return;
-  }
-  
   // Create an empty parallel or sequential compound action:
   ICompoundAction* compoundAction = nullptr;
   if(msg.parallel) {
@@ -1115,9 +1108,21 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueCompoundActi
   } // for each action/actionType
   
   // If setting the tag failed then delete the action which will emit a completion signal indicating failure
-  if(!compoundAction->SetTag(msg.idTag))
+  const bool didSetTag = compoundAction->SetTag(msg.idTag);
+  
+  if(!didSetTag || _ignoreExternalActions)
   {
-    PRINT_NAMED_ERROR("RobotEventHandler.HandleQueueCompoundAction", "Failure to set action tag deleting action");
+    if(_ignoreExternalActions)
+    {
+      PRINT_NAMED_INFO("RobotEventHandler.QueueCompoundAction",
+                       "Ignoring QueueCompoundAction message while external actions are disabled");
+    }
+    else
+    {
+      PRINT_NAMED_ERROR("RobotEventHandler.HandleQueueCompoundAction", "Failure to set action tag deleting action");
+    }
+    
+    compoundAction->PrepForCompletion();
     Util::SafeDelete(compoundAction);
   }
   else
