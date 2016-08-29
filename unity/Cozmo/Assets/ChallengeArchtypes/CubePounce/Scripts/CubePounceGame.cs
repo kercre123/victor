@@ -159,14 +159,8 @@ namespace Cozmo.Minigame.CubePounce {
       playerScoreWidget.MaxRounds = halfTotalRounds;
       playerScoreWidget.RoundsWon = PlayerRoundsWon;
 
-      if (AllRoundsCompleted) {
-        // Hide Current Round at end
-        SharedMinigameView.InfoTitleText = string.Empty;
-      }
-      else {
-        // Display the current round
-        SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, CozmoRoundsWon + PlayerRoundsWon + 1);
-      }
+      // don't show any round information for cube pounce.
+      SharedMinigameView.InfoTitleText = string.Empty;
     }
 
     protected override void SendCustomEndGameDasEvents() {
