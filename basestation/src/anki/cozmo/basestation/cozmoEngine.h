@@ -72,7 +72,7 @@ class CozmoEngine
 {
 public:
 
-  CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort* gameMessagePort);
+  CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort* gameMessagePort, GameMessagePort* vizMessagePort);
   virtual ~CozmoEngine();
 
 

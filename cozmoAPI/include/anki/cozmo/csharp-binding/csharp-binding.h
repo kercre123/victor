@@ -28,6 +28,9 @@ extern "C" {
   // Called from C# to push messages to the engine
   void cozmo_transmit_game_to_engine(const uint8_t* buffer, size_t size);
 
+  // Called from C# to get viz messages from the engine
+  size_t cozmo_transmit_viz_to_game(uint8_t* buffer, size_t size);
+
   // Invoked by background OS notifications when we have internet
   void cozmo_execute_background_transfers();
   

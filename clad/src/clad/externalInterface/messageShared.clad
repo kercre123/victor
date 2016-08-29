@@ -12,6 +12,7 @@ namespace ExternalInterface {
 
 enum no_cpp_class uint_32 CommsConstants {
   kDirectCommsBufferSize = 1048576, // 1024 * 1024
+  kVizCommsBufferSize = 131072, // 128 * 1024
 }
 
 message Ping {

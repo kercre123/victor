@@ -13,6 +13,7 @@
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/viz/vizObjectBaseId.h"
 #include "anki/cozmo/basestation/debug/devLoggingSystem.h"
+#include "anki/cozmo/game/comms/gameMessagePort.h"
 #include "anki/common/basestation/exceptions.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/polygon_impl.h"
@@ -33,7 +34,6 @@
 #include <opencv2/highgui.hpp>
 #endif
 
-
 namespace Anki {
   namespace Cozmo {
     
@@ -47,15 +47,17 @@ namespace Anki {
       if(_isInitialized) {
         Disconnect();
       }
-      
+
+      #if !VIZ_ON_DEVICE
       if (!_vizClient.Connect(udp_host_address, port)) {
         PRINT_NAMED_INFO("VizManager.Connect", "Failed to init VizManager client (%s:%d)", udp_host_address, port);
         //_isInitialized = false;
       }
-      
+
       if(!_unityVizClient.Connect(unity_host_address, unity_port)) {
         PRINT_NAMED_INFO("VizManager.Connect", "Failed to init VizManager unity client (%s:%d)", unity_host_address, unity_port);
       }
+      #endif
      
       PRINT_STREAM_INFO("VizManager.Connect", "VizManager connected.");
       _isInitialized = true;
@@ -67,7 +69,10 @@ namespace Anki {
     {
       if(_isInitialized) {
         bool vizDisconnected = _vizClient.Disconnect();
-        bool unityDisconnected = _unityVizClient.Disconnect();
+        bool unityDisconnected = true;
+        #if !VIZ_ON_DEVICE
+        unityDisconnected = _unityVizClient.Disconnect();
+        #endif
         
         if (vizDisconnected || unityDisconnected) {
           _isInitialized = false;
@@ -100,24 +105,32 @@ namespace Anki {
       ANKI_CPU_PROFILE("VizManager::SendMessage");
 
       const size_t MAX_MESSAGE_SIZE{(size_t)VizConstants::MaxMessageSize};
-      uint8_t buffer[MAX_MESSAGE_SIZE]{0};
+      uint8_t buffer[MAX_MESSAGE_SIZE];
 
       const size_t numWritten = (uint32_t)message.Pack(buffer, MAX_MESSAGE_SIZE);
       
       {
+        #if !VIZ_ON_DEVICE
         ANKI_CPU_PROFILE("VizClient.Send");
         if (_vizClient.Send((const char*)buffer, (int)numWritten) <= 0) {
           PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd failed\n", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
         }
+        #endif
       }
       
       {
         ANKI_CPU_PROFILE("UnityVizClient.Send");
+        #if VIZ_ON_DEVICE
+        if (_unityVizPort != nullptr) {
+          _unityVizPort->PushToGameMessage(buffer, numWritten);
+        }
+        #else
         if (_unityVizClient.Send((const char*)buffer, (int)numWritten) <= 0) {
           if ( _unityVizClient.IsConnected() ) { // prevents webots from crying when no Unity app is launched
             PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd to Unity failed\n", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
           }
         }
+        #endif
       }
         
       // Log viz messages from here.
