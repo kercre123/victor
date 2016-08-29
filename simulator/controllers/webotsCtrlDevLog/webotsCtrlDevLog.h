@@ -21,6 +21,7 @@
 
 namespace webots {
   class Supervisor;
+  class Node;
 }
 
 class UdpClient;
@@ -36,6 +37,12 @@ public:
   WebotsDevLogController(int32_t stepTime_ms);
   virtual ~WebotsDevLogController();
   
+  std::string GetDirectoryPath() const;
+  void InitDevLogProcessor(const std::string& directoryPath);
+  
+  // Set save images state
+  void EnableSaveImages(bool enable);
+  
   int32_t Update();
   
 private:
@@ -44,12 +51,14 @@ private:
   std::unique_ptr<DevLogProcessor>    _devLogProcessor;
   std::unique_ptr<UdpClient>          _vizConnection;
   std::set<int>                       _lastKeysPressed;
+  webots::Node*                       _selfNode;
+  bool                                _savingImages;
   
   void HandleVizData(const DevLogReader::LogData& logData);
   void HandlePrintLines(const DevLogReader::LogData& logData);
   void UpdateKeyboard();
   bool UpdatePressedKeys();
-  void InitDevLogProcessor(const std::string& directoryPath);
+  void EnableSaveImagesIfChecked();
   
 }; // class WebotsDevLogController
 } // namespace Cozmo

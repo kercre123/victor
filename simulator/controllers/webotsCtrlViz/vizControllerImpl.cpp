@@ -167,6 +167,11 @@ void VizControllerImpl::ProcessSaveImages(const AnkiEvent<VizInterface::MessageV
     } else {
       _savedImagesFolder = payload.path;
     }
+    printf("ProcessSaveImages: will save to %s\n", _savedImagesFolder.c_str());
+  }
+  else
+  {
+    printf("ProcessSaveImages: disabling image saving\n");
   }
 }
   

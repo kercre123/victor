@@ -28,6 +28,10 @@
 
 namespace Anki {
 namespace Cozmo {
+
+// Save every Nth image (in chunks) to the log. Camera is 15fps.
+// So 0 disables saving, 15 saves one image per second, 75 saves an image every 5 seconds.
+CONSOLE_VAR_RANGED(uint8_t, kSaveImageFrequency, "DevLogging", 0, 0, 75);
   
 DevLoggingSystem* DevLoggingSystem::sInstance                                   = nullptr;
 const DevLoggingClock::time_point DevLoggingSystem::kAppRunStartTime            = DevLoggingClock::now();
@@ -282,10 +286,13 @@ void DevLoggingSystem::LogMessage(const RobotInterface::RobotToEngine& message)
 template<>
 void DevLoggingSystem::LogMessage(const VizInterface::MessageViz& message)
 {
-  // Ignore image chunks for now since they are too large in size.
+  // Only save image chunk messages if enabled and it's the right time, since they're big.
   if (VizInterface::MessageVizTag::ImageChunk == message.GetTag())
   {
-    return;
+    if(kSaveImageFrequency == 0 || (message.Get_ImageChunk().imageId % kSaveImageFrequency) != 0)
+    {
+      return;
+    }
   }
     
   ANKI_CPU_PROFILE("LogMessage_Viz");

@@ -1,7 +1,8 @@
 PROTO WebotsDevLogController [
   field SFString name "WebotsDevLogController"
   field SFString logsDirectory ""
-
+  field SFBool   saveImages TRUE # If there are ImageChunk Viz messages, enable saving them
+  
   # This is a dummy field created only to be accessed by the lua script below, which
   # is only there to create a reference that results in variables in the PROTO existing.
   # HACKS UPON HACKS
