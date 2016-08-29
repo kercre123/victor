@@ -570,6 +570,10 @@ void BehaviorManager::StopCurrentBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::CheckForComputationalSwitch()
 {
+  if( !_reactionsEnabled )
+  {
+    return;
+  }
   //Check to see if any reactionary behaviors want to perform a computational switch
   bool hasSwitched = false;
   for( auto rBehavior: _reactionaryBehaviors){
