@@ -111,6 +111,7 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInte
     return;
   }
   
+  // Just use the first matching object since they will all be the same (matching ObjectIDs, ActiveIDs, FactoryIDs)
   ObservableObject* object = matchingObjects.front();
   
   int16_t intensity = payload.tapPos - payload.tapNeg;

@@ -118,9 +118,6 @@ namespace Anki
       // NOTE: Like IDs, object types are unique across objects so they can be
       //       used without specifying which family.
       const ObservableObjectLibrary& GetObjectLibrary(ObjectFamily whichFamily) const;
-      const void GetExistingObjectsByType(const ObjectType whichType,
-                                          const BlockWorldFilter& filterIn,
-                                          std::vector<ObservableObject*>& res);
       
       // Return a pointer to an object with the specified ID (in the current world
       // coordinate frame. If that object does not exist or its pose is unknown, nullptr is returned.
@@ -134,11 +131,6 @@ namespace Anki
       // ActiveObject type.
       ActiveObject* GetActiveObjectByID(const ObjectID& objectID, ObjectFamily inFamily = ObjectFamily::Unknown);
       const ActiveObject* GetActiveObjectByID(const ObjectID& objectID, ObjectFamily inFamily = ObjectFamily::Unknown) const;
-      
-      // Same as above, but search by active ID instead of (BlockWorld-assigned) object ID.
-      std::vector<ActiveObject*> GetActiveObjectByActiveID(const u32 activeID,
-                                                           ObjectFamily inFamily = ObjectFamily::Unknown,
-                                                           const BlockWorldFilter::OriginMode originMode = BlockWorldFilter::OriginMode::InRobotFrame);
       
       // Returns (in arguments) all objects matching a filter
       // NOTE: does not clear result (thus can be used multiple times with the same vector)
@@ -368,9 +360,6 @@ namespace Anki
       // Note these are marked const but return non-const pointers.
       ObservableObject* GetObjectByIdHelper(const ObjectID& objectID, ObjectFamily inFamily) const;
       ActiveObject* GetActiveObjectByIdHelper(const ObjectID& objectID, ObjectFamily inFamily) const;
-      std::vector<ActiveObject*> GetActiveObjectByActiveIdHelper(const u32 activeID,
-                                                                 ObjectFamily inFamily,
-                                                                 const BlockWorldFilter::OriginMode originMode);
       
       bool UpdateRobotPose(PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
       
@@ -573,10 +562,6 @@ namespace Anki
     
     inline const ActiveObject* BlockWorld::GetActiveObjectByID(const ObjectID& objectID, ObjectFamily inFamily) const {
       return GetActiveObjectByIdHelper(objectID, inFamily); // returns const*
-    }
-    
-    inline std::vector<ActiveObject*> BlockWorld::GetActiveObjectByActiveID(const u32 activeID, ObjectFamily inFamily, const BlockWorldFilter::OriginMode originMode) {
-      return GetActiveObjectByActiveIdHelper(activeID, inFamily, originMode); // returns non-const*
     }
     
     inline void BlockWorld::AddNewObject(const std::shared_ptr<ObservableObject>& object)

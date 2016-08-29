@@ -351,16 +351,6 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  const void BlockWorld::GetExistingObjectsByType(const ObjectType whichType,
-                                                  const BlockWorldFilter& filterIn,
-                                                  std::vector<ObservableObject*>& res)
-  {
-    BlockWorldFilter filter(filterIn);
-    filter.SetAllowedTypes({whichType});
-  
-    FindMatchingObjects(filter, res);
-  }
-  
   
   ObservableObject* BlockWorld::GetObjectByIdHelper(const ObjectID& objectID, ObjectFamily inFamily) const
   {
@@ -397,38 +387,8 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
     
     return dynamic_cast<ActiveObject*>(object);
   } // GetActiveObjectByIDHelper()
-  
-  
-  std::vector<ActiveObject*> BlockWorld::GetActiveObjectByActiveIdHelper(const u32 activeID,
-                                                                         const ObjectFamily inFamily,
-                                                                         const BlockWorldFilter::OriginMode originMode)
-  {
-    BlockWorldFilter filter;
-    
-    if(inFamily != ObjectFamily::Unknown) {
-      filter.AddAllowedFamily(inFamily);
-    }
-    
-    filter.SetOriginMode(originMode);
-    
-    // Note: this replaces default filter fcn, so it will also search over any pose state
-    filter.SetFilterFcn([activeID](const ObservableObject* object) {
-                          return object->IsActive() && object->GetActiveID() == activeID;
-                        });
-   
-    std::vector<ObservableObject*> matchingObjects;
-    FindMatchingObjects(filter, matchingObjects);
-    
-    std::vector<ActiveObject*> matchingActiveObjects;
-    for(auto obj : matchingObjects)
-    {
-      matchingActiveObjects.push_back(dynamic_cast<ActiveObject*>(obj));
-    }
-    
-    return matchingActiveObjects;
-  } // GetActiveObjectByActiveIDHelper()
 
-  
+
     void CheckForOverlapHelper(const ObservableObject* objectToMatch,
                                ObservableObject* objectToCheck,
                                std::vector<ObservableObject*>& overlappingObjects)
@@ -2588,20 +2548,24 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
     // Is there an active object with the same activeID that already exists?
     ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(activeObjectType);
     const char* objTypeStr = EnumToString(objType);
-    std::vector<ActiveObject*> matchingObjects = GetActiveObjectByActiveID(activeID);
+    BlockWorldFilter filter;
+    filter.AddFilterFcn([activeID](const ObservableObject* object) { return object->GetActiveID() == activeID;} );
+    std::vector<ObservableObject*> matchingObjects;
+    FindMatchingObjects(filter, matchingObjects);
     
     if (matchingObjects.empty()) {
       // If no match found, find one of the same type with an invalid activeID and assume it's that
       BlockWorldFilter filter;
       filter.SetFilterFcn(nullptr);
       filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+      filter.SetAllowedTypes({objType});
       
       std::vector<ObservableObject*> objectsOfSameType;
-      GetExistingObjectsByType(objType, filter, objectsOfSameType);
+      FindMatchingObjects(filter, objectsOfSameType);
       
       if(!objectsOfSameType.empty())
       {
-        ObjectID ret = -1;
+        ObjectID ret;
         bool needToAddNewObject = false;
         for (auto& sameTypeObject : objectsOfSameType) {
           if (sameTypeObject->GetActiveID() < 0) {
@@ -2632,12 +2596,14 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
               }
               
               // We need to add a new object to this frame that is copied from a good matching object in another frame
-              needToAddNewObject = true;
-              if(objToCopyId == nullptr)
+              if(&sameTypeObject->GetPose().FindOrigin() != _robot->GetWorldOrigin())
               {
-                objToCopyId = sameTypeObject;
+                needToAddNewObject = true;
+                if(objToCopyId == nullptr)
+                {
+                  objToCopyId = sameTypeObject;
+                }
               }
-              
             } else {
               PRINT_CH_INFO("BlockWorld", "AddActiveObject.FoundIdenticalObjectOnDifferentSlot",
                             "Updating activeID of block with factoryID 0x%x from %d to %d",
@@ -2654,54 +2620,66 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
         }
       }
     } else {
-      ASSERT_NAMED(matchingObjects.size() == 1, "More than one matching object in current frame");
-      
-      for(ActiveObject* matchingObject : matchingObjects)
+      if(matchingObjects.size() != 1)
       {
-        // A match was found but does it have the same factory ID?
-        if(matchingObject->GetFactoryID() == factoryID) {
-          PRINT_CH_INFO("BlockWorld", "AddActiveObject.FoundMatchingActiveObject",
-                        "objectID %d, activeID %d, type %s, factoryID 0x%x",
-                        matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), objTypeStr, matchingObject->GetFactoryID());
-          return matchingObject->GetID();
-        } else if (matchingObject->GetFactoryID() == 0) {
-          // Existing object was only previously observed, never connected, so its factoryID is 0
-          PRINT_NAMED_WARNING("BlockWorld.AddActiveObject.FoundMatchingActiveObjectThatWasNeverConnected",
-                           "objectID %d, activeID %d, type %s, factoryID 0x%x",
-                           matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), objTypeStr, matchingObject->GetFactoryID());
-          
+        PRINT_NAMED_ERROR("BlockWorld.AddActiveObject.TooManyMatchingObjects",
+                          "Expecting only one matching object in current frame but found %lu",
+                          matchingObjects.size());
+      }
+      
+      ObservableObject* matchingObject = matchingObjects.front();
+
+      // A match was found but does it have the same factory ID?
+      if(matchingObject->GetFactoryID() == factoryID) {
+        PRINT_CH_INFO("BlockWorld", "AddActiveObject.FoundMatchingActiveObject",
+                      "objectID %d, activeID %d, type %s, factoryID 0x%x",
+                      matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), objTypeStr, matchingObject->GetFactoryID());
+        return matchingObject->GetID();
+      } else if (matchingObject->GetFactoryID() == 0) {
+        // Existing object was only previously observed, never connected, so its factoryID is 0
+        PRINT_NAMED_WARNING("BlockWorld.AddActiveObject.FoundMatchingActiveObjectThatWasNeverConnected",
+                         "objectID %d, activeID %d, type %s, factoryID 0x%x",
+                         matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), objTypeStr, matchingObject->GetFactoryID());
+        
+        if(factoryID > 0)
+        {
           // Need to check exisiting objects in other frames and update to match new object
           // (only if new object has a valid factory id)
-          std::vector<ActiveObject*> matchingObjectsInAllFrames = GetActiveObjectByActiveID(activeID, ObjectFamily::Unknown, BlockWorldFilter::OriginMode::InAnyFrame);
+          std::vector<ObservableObject*> matchingObjectsInAllFrames;
+          BlockWorldFilter filter;
+          filter.AddFilterFcn([activeID](const ObservableObject* object) { return object->GetActiveID() == activeID;} );
+          FindMatchingObjects(filter, matchingObjectsInAllFrames);
+        
+          PRINT_NAMED_INFO("BlockWorld.AddActiveObject.UpdateExisitingObjects",
+                           "Updating %lu exisiting objects in other frames to match object with factoryID 0x%x and activeID %d",
+                           matchingObjectsInAllFrames.size(),
+                           factoryID,
+                           activeID);
           
-          if(factoryID > 0)
+          ObjectID idPrev;
+          if(!matchingObjectsInAllFrames.empty())
           {
-            PRINT_NAMED_INFO("BlockWorld.AddActiveObject.UpdateExisitingObjects",
-                             "Updating %lu exisiting objects in other frames to match object with factoryID 0x%x and activeID %d",
-                             matchingObjectsInAllFrames.size(),
-                             factoryID,
-                             activeID);
-            
-            ObjectID idPrev = (matchingObjectsInAllFrames.empty() ? (ObjectID)-1 : matchingObjectsInAllFrames.front()->GetID());
-            for(ActiveObject* obj : matchingObjectsInAllFrames)
-            {
-              obj->SetFactoryID(factoryID);
-              obj->SetActiveID(activeID);
-              ASSERT_NAMED(obj->GetID() == idPrev, "Matching objects in different frames don't have same ObjectId");
-              idPrev = obj->GetID();
-            }
+            idPrev = matchingObjectsInAllFrames.front()->GetID();
           }
-          
-          return matchingObject->GetID();
-        } else {
-          // FactoryID mismatch. Delete the current object and fall through to add a new one
-          PRINT_NAMED_WARNING("BlockWorld.AddActiveObject.MismatchedFactoryID",
-                              "objectID %d, activeID %d, type %s, factoryID 0x%x (expected 0x%x)",
-                              matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), objTypeStr, factoryID, matchingObject->GetFactoryID());
-          DeleteObject(matchingObject->GetID());
+          for(ObservableObject* obj : matchingObjectsInAllFrames)
+          {
+            obj->SetFactoryID(factoryID);
+            obj->SetActiveID(activeID);
+            ASSERT_NAMED(obj->GetID() == idPrev, "Matching objects in different frames don't have same ObjectId");
+            idPrev = obj->GetID();
+          }
         }
+        
+        return matchingObject->GetID();
+      } else {
+        // FactoryID mismatch. Delete the current object and fall through to add a new one
+        PRINT_NAMED_WARNING("BlockWorld.AddActiveObject.MismatchedFactoryID",
+                            "objectID %d, activeID %d, type %s, factoryID 0x%x (expected 0x%x)",
+                            matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), objTypeStr, factoryID, matchingObject->GetFactoryID());
+        DeleteObject(matchingObject->GetID());
       }
     }
+    
 
     // An existing object with activeID was not found so add it
     ObservableObject* newObjectPtr = nullptr;
@@ -4238,32 +4216,29 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
     
     // Iterate through all the objects
     BlockWorldFilter filter;
-    filter.SetFilterFcn(BlockWorldFilter::ActiveObjectsFilter);
+    // Markerless objects are not Actionable, so ignore them for selection
+    filter.SetIgnoreFamilies({ObjectFamily::MarkerlessObject});
     std::vector<ObservableObject*> allObjects;
     FindMatchingObjects(filter, allObjects);
     for(auto const & obj : allObjects)
     {
-      // Markerless objects are not Actionable, so ignore them for selection
-      if(obj->GetFamily() != ObjectFamily::MarkerlessObject)
+      ActionableObject* object = dynamic_cast<ActionableObject*>(obj);
+      if(object != nullptr &&
+         object->HasPreActionPoses() &&
+         !object->IsBeingCarried() &&
+         !object->IsPoseStateUnknown())
       {
-        ActionableObject* object = dynamic_cast<ActionableObject*>(obj);
-        if(object != nullptr &&
-           object->HasPreActionPoses() &&
-           !object->IsBeingCarried() &&
-           !object->IsPoseStateUnknown())
-        {
-          //PRINT_INFO("currID: %d", block.first);
-          if (currSelectedObjectFound) {
-            // Current block of interest has been found.
-            // Set the new block of interest to the next block in the list.
-            _selectedObject = object->GetID();
-            newSelectedObjectSet = true;
-            //PRINT_INFO("new block found: id %d  type %d", block.first, blockType.first);
-            break;
-          } else if (object->GetID() == _selectedObject) {
-            currSelectedObjectFound = true;
-            //PRINT_INFO("curr block found: id %d  type %d", block.first, blockType.first);
-          }
+        //PRINT_INFO("currID: %d", block.first);
+        if (currSelectedObjectFound) {
+          // Current block of interest has been found.
+          // Set the new block of interest to the next block in the list.
+          _selectedObject = object->GetID();
+          newSelectedObjectSet = true;
+          //PRINT_INFO("new block found: id %d  type %d", block.first, blockType.first);
+          break;
+        } else if (object->GetID() == _selectedObject) {
+          currSelectedObjectFound = true;
+          //PRINT_INFO("curr block found: id %d  type %d", block.first, blockType.first);
         }
       }
           

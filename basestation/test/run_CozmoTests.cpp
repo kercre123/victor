@@ -151,7 +151,8 @@ TEST(BlockWorld, AddAndRemoveObject)
   // There should now be an object of the right type, with the right ID in BlockWorld
   objects.clear();
   filter.SetFilterFcn(nullptr);
-  blockWorld.GetExistingObjectsByType(testType, filter, objects);
+  filter.SetAllowedTypes({testType});
+  blockWorld.FindMatchingObjects(filter, objects);
   ASSERT_EQ(objects.size(), 1);
   auto objByIdIter = objects.begin();
   ASSERT_NE(objByIdIter, objects.end());
@@ -246,8 +247,9 @@ TEST(BlockWorld, AddAndRemoveObject)
   // it had no active ID set)
   {
     BlockWorldFilter filter;
+    filter.SetAllowedTypes({testType});
     std::vector<ObservableObject*> objects;
-    blockWorld.GetExistingObjectsByType(testType, filter, objects);
+    blockWorld.FindMatchingObjects(filter, objects);
     ASSERT_EQ(objects.size(), 1);
     auto objByIdIter = objects.begin();
     ASSERT_NE(objByIdIter, objects.end());
@@ -687,8 +689,9 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         // matches the ground truth pose
         
         BlockWorldFilter filter;
+        filter.SetAllowedTypes({libObject->GetType()});
         std::vector<ObservableObject*> observedObjects;
-        robot.GetBlockWorld().GetExistingObjectsByType(libObject->GetType(), filter, observedObjects);
+        robot.GetBlockWorld().FindMatchingObjects(filter, observedObjects);
         int matchesFound = 0;
         
         /*

@@ -868,8 +868,9 @@ namespace Anki {
           }
           
           BlockWorldFilter filter;
+          filter.SetAllowedTypes({carryObject->GetType()});
           std::vector<ObservableObject*> objectsWithType;
-          blockWorld.GetExistingObjectsByType(carryObject->GetType(), filter, objectsWithType);
+          blockWorld.FindMatchingObjects(filter, objectsWithType);
           
           // Robot's pose parent could have changed due to delocalization.
           // Assume it's actual pose is relatively accurate w.r.t. that original

@@ -1428,7 +1428,7 @@ Result Robot::Update(bool ignoreVisionModes)
     filter.SetAllowedFamilies({ObjectFamily::LightCube});
     std::vector<ObservableObject*> matchingObjects;
     GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
-    for( const auto& obj : matchingObjects ) {
+    for( const auto obj : matchingObjects ) {
         const ObservableObject* topObj = GetBlockWorld().FindObjectOnTopOf(*obj, STACKED_HEIGHT_TOL_MM);
         Pose3d relPose;
         bool gotRelPose = obj->GetPose().GetWithRespectTo(GetPose(), relPose);
