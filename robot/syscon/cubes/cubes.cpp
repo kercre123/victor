@@ -35,7 +35,7 @@ static void EnterState(RadioState state);
 enum TIMER_COMPARE {
   PREPARE_COMPARE,
   RESUME_COMPARE,
-  RESET_COMPARE
+  ROTATE_COMPARE
 };
 
 // Global head / body sync values
@@ -81,7 +81,9 @@ static RadioState        radioState;
 static uint8_t _tapTime = 0;
 
 static unsigned int lastSlot = MAX_ACCESSORIES;
-static uint8_t lastRotationPeriod = 0;
+static uint8_t rotationPeriod[MAX_ACCESSORIES];
+static uint8_t rotationOffset[MAX_ACCESSORIES];
+static uint8_t rotationNext[MAX_ACCESSORIES];
 
 void Radio::init() {
   light_gamma = 0x100;
@@ -105,65 +107,40 @@ void Radio::advertise(void) {
   LightState colors[NUM_PROP_LIGHTS];
   memset(&colors, 0, sizeof(colors));
 
-  colors[0].onFrames =
-  colors[1].onFrames =
-  colors[2].onFrames =
-  colors[3].onFrames =
-  colors[0].offFrames =
-  colors[1].offFrames =
-  colors[2].offFrames =
-  colors[3].offFrames = 10;
-
-  colors[0].onColor = 0x7C00;
-  colors[2].onColor = 0x03E0;
-  colors[1].onColor = 0x001F;
-  colors[3].onColor = 0x7FE0;
-
-  colors[0].offColor = 0x001F;
-  colors[1].offColor = 0x7FE0;
-  colors[2].offColor = 0x7C00;
-  colors[3].offColor = 0x03E0;
+  colors[0].onColor = colors[0].offColor = 0x7C00;
+  colors[1].onColor = colors[1].offColor = 0x03E0;
+  colors[2].onColor = colors[2].offColor = 0x001F;
+  colors[3].onColor = colors[3].offColor = 0x7FE0;
 
   for (int c = 0; c < MAX_ACCESSORIES; c++) {
-    Radio::setPropLightsID(c, 0);
+    Radio::setPropLightsID(c, 20);
     Radio::setPropLights(colors);
   }
-  #else
-  LightState black[NUM_PROP_LIGHTS];
-  memset(&black, 0, sizeof(black));
-
-  for (int c = 0; c < MAX_ACCESSORIES; c++) {
-    Radio::setPropLightsID(c, 0);
-    Radio::setPropLights(black);
-  }
   #endif
-  
+
   uesb_init(&uesb_config);
 
   // Timer scheduling
-  NRF_TIMER0->POWER = 1;
-  
-  NRF_TIMER0->TASKS_STOP = 1;
-  NRF_TIMER0->TASKS_CLEAR = 1;
-  
-  NRF_TIMER0->MODE = TIMER_MODE_MODE_Timer;
-  NRF_TIMER0->PRESCALER = 0;
-  NRF_TIMER0->BITMODE = TIMER_BITMODE_BITMODE_32Bit;
-  
-  NRF_TIMER0->INTENCLR = ~0;
-  NRF_TIMER0->INTENSET = TIMER_INTENSET_COMPARE0_Msk |
-                         TIMER_INTENSET_COMPARE1_Msk;
+  NRF_RTC0->POWER = 1;
 
-  NVIC_EnableIRQ(TIMER0_IRQn);
-  NVIC_SetPriority(TIMER0_IRQn, RADIO_TIMER_PRIORITY);
+  NRF_RTC0->TASKS_STOP = 1;
+  NRF_RTC0->TASKS_CLEAR = 1;
 
-  NRF_TIMER0->CC[PREPARE_COMPARE] = SCHEDULE_PERIOD;
-  NRF_TIMER0->CC[RESUME_COMPARE] = SILENCE_PERIOD;
-  NRF_TIMER0->CC[RESET_COMPARE] = SCHEDULE_PERIOD;
-  
-  NRF_TIMER0->SHORTS = TIMER_SHORTS_COMPARE2_CLEAR_Msk;
+  NRF_RTC0->PRESCALER = 0;
 
-  NRF_TIMER0->TASKS_START = 1;
+  NRF_RTC0->INTENCLR = ~0;
+  NRF_RTC0->INTENSET = RTC_INTENSET_COMPARE0_Msk |
+                       RTC_INTENSET_COMPARE1_Msk |
+                       RTC_INTENSET_COMPARE2_Msk;
+
+  NRF_RTC0->CC[PREPARE_COMPARE] = SCHEDULE_PERIOD;
+  NRF_RTC0->CC[RESUME_COMPARE] = SILENCE_PERIOD;
+  NRF_RTC0->CC[ROTATE_COMPARE] = ROTATE_PERIOD;
+
+  NVIC_SetPriority(RTC0_IRQn, RADIO_TIMER_PRIORITY);
+  NVIC_EnableIRQ(RTC0_IRQn);
+
+  NRF_RTC0->TASKS_START = 1;
 }
 
 void Radio::setLightGamma(uint8_t gamma) {
@@ -171,8 +148,8 @@ void Radio::setLightGamma(uint8_t gamma) {
 }
 
 void Radio::shutdown(void) {
-  NRF_TIMER0->TASKS_STOP = 1;
-  NVIC_DisableIRQ(TIMER0_IRQn);
+  NRF_RTC0->TASKS_STOP = 1;
+  NVIC_DisableIRQ(RTC0_IRQn);
 
   uesb_disable();
 }
@@ -262,7 +239,7 @@ static void OTARemoteDevice(const uint32_t id) {
   pair.ticksUntilStart = 132; // Lowest legal value
   pair.hopIndex = 0;
   pair.hopBlackout = OTAAddress.rf_channel;
-  pair.ticksPerBeat = CLOCKS(SCHEDULE_PERIOD);    // 32768/164 = 200Hz
+  pair.ticksPerBeat = SCHEDULE_PERIOD;    // 32768/164 = 200Hz
   pair.beatsPerHandshake = TICK_LOOP; // 1 out of 7 beats handshakes with this cube
   pair.ticksToListen = 0;     // Currently unused
   pair.beatsPerRead = 4;
@@ -315,12 +292,12 @@ void uesb_event_handler(uint32_t flags)
         slot = AllocateAccessory(advert.id);
       }
       #elif defined(NATHAN_CUBE_JUNK)
-      if (slot < 0 && rx_payload.rssi < 50 && rx_payload.rssi > -50) {
+      if (slot < 0 && rx_payload.rssi < 60 && rx_payload.rssi > -60) {
         slot = AllocateAccessory(advert.id);
       }
       #endif
       
-      if (slot < 0) {     
+      if (slot < 0) {
         ObjectDiscovered msg;
         msg.device_type = advert.model;
         msg.factory_id = advert.id;
@@ -393,8 +370,8 @@ void uesb_event_handler(uint32_t flags)
         target_slot += TICK_LOOP;
       }
 
-      NRF_TIMER0->TASKS_CAPTURE[3] = 1;
-      int clocks = (target_slot * SCHEDULE_PERIOD) - NRF_TIMER0->CC[3] + SILENCE_PERIOD;
+      // Note: This is inaccurate, requires nathan to be here with his magic cube to fix
+      int ticks_to_next = (target_slot * SCHEDULE_PERIOD) - NRF_RTC0->COUNTER + SILENCE_PERIOD;
 
       if (clocks < SCHEDULE_PERIOD) {
         clocks += RADIO_TOTAL_PERIOD;
@@ -402,10 +379,6 @@ void uesb_event_handler(uint32_t flags)
       } else {
         acc->hopSkip = false;
       }
-
-      int ticks_to_next = (clocks << 5) / ((int)NRF_CLOCK_FREQUENCY >> 10);
-
-      ticks_to_next += 0;
 
       acc->hopIndex = (random() & 0xF) + 0x12;
       acc->hopBlackout = (wifiChannel * 5) - 9;
@@ -419,7 +392,7 @@ void uesb_event_handler(uint32_t flags)
       pair.hopBlackout = acc->hopBlackout;
       #endif
 
-      pair.ticksPerBeat = CLOCKS(SCHEDULE_PERIOD);
+      pair.ticksPerBeat = SCHEDULE_PERIOD;
       pair.beatsPerHandshake = TICK_LOOP; // 1 out of 7 beats handshakes with this cube
 
       pair.ticksToListen = 0;     // Currently unused
@@ -459,14 +432,17 @@ void uesb_event_handler(uint32_t flags)
   }
 }
 
-void Radio::setPropLightsID(unsigned int slot, uint8_t rotationPeriod)
+void Radio::setPropLightsID(unsigned int slot, uint8_t period)
 {
   if (slot >= MAX_ACCESSORIES) {
     return ;
   }
   
   lastSlot = slot;
-  lastRotationPeriod = rotationPeriod;
+
+  rotationPeriod[slot] = period;
+  rotationNext[slot] = period;
+  rotationOffset[slot] = 0;
 }
 
 void Radio::setPropLights(const LightState *state) {
@@ -475,7 +451,7 @@ void Radio::setPropLights(const LightState *state) {
   }
   
   for (int c = 0; c < NUM_PROP_LIGHTS; c++) {
-    Lights::update(lightController.cube[lastSlot][c], &state[c], lastSlot, lastRotationPeriod);
+    Lights::update(lightController.cube[lastSlot][c], &state[c]);
   }
   
   lastSlot = MAX_ACCESSORIES;
@@ -590,7 +566,13 @@ static void radio_prepare(void) {
     const int num_lights = (target->model == OBJECT_CHARGER) ? 3 : 4;
     
     for (int light = 0; light < num_lights; light++) {
-      uint8_t* rgbi = (uint8_t*) &lightController.cube[currentAccessory][channel_order[light]].values;
+      int index = light + rotationOffset[currentAccessory];
+      
+      if (index >= num_lights) {
+        index -= num_lights;
+      }
+      
+      uint8_t* rgbi = (uint8_t*) &lightController.cube[currentAccessory][channel_order[index]].values;
 
       for (int ch = 0; ch < 3; ch++) {
         tx_state.ledStatus[tx_index++] = (rgbi[ch] * light_gamma) >> 8;
@@ -632,25 +614,45 @@ static void radio_prepare(void) {
   }
 }
 
-static void radio_resume(void) {
-  uesb_start();
-}
-
-extern "C" void TIMER0_IRQHandler(void) {
+extern "C" void RTC0_IRQHandler(void) {
   // We are in bluetooth mode, do not do this
   if (m_uesb_mainstate == UESB_STATE_UNINITIALIZED) {
     return ;
   }
 
-  if (NRF_TIMER0->EVENTS_COMPARE[PREPARE_COMPARE]) {
-    NRF_TIMER0->EVENTS_COMPARE[PREPARE_COMPARE] = 0;
+  if (NRF_RTC0->EVENTS_COMPARE[PREPARE_COMPARE]) {
+    NRF_RTC0->EVENTS_COMPARE[PREPARE_COMPARE] = 0;
+    NRF_RTC0->CC[PREPARE_COMPARE] += SCHEDULE_PERIOD;
 
     radio_prepare();
   }
 
-  if (NRF_TIMER0->EVENTS_COMPARE[RESUME_COMPARE]) {
-    NRF_TIMER0->EVENTS_COMPARE[RESUME_COMPARE] = 0;
+  if (NRF_RTC0->EVENTS_COMPARE[RESUME_COMPARE]) {
+    NRF_RTC0->EVENTS_COMPARE[RESUME_COMPARE] = 0;
+    NRF_RTC0->CC[RESUME_COMPARE] += SCHEDULE_PERIOD;
 
-    radio_resume();
+    uesb_start();
+  }
+  
+  if (NRF_RTC0->EVENTS_COMPARE[ROTATE_COMPARE]) {
+    NRF_RTC0->EVENTS_COMPARE[ROTATE_COMPARE] = 0;
+    NRF_RTC0->CC[ROTATE_COMPARE] += ROTATE_PERIOD;
+
+    for (int i = 0; i < MAX_ACCESSORIES; i++) {
+      // Not rotating
+      if (rotationPeriod[i] <= 0) {
+        continue ;
+      }
+      
+      // Have we underflowed ?
+      if (--rotationNext[i] <= 0) {
+        // Rotate the light
+        if (++rotationOffset[i] > NUM_PROP_LIGHTS) {
+          rotationOffset[i] = 0;
+        }
+        
+        rotationNext[i] = rotationPeriod[i];
+      }
+    }
   }
 }
