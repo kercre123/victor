@@ -10,6 +10,7 @@ extern "C" {
 #include "hardware.h"
 #include "anki/cozmo/robot/spineData.h"
 
+#include "backpack.h"
 #include "battery.h"
 #include "motors.h"
 #include "timer.h"
@@ -146,6 +147,22 @@ static MotorInfo m_motors[MOTOR_COUNT] =
 
 u32 m_lastState = 0;
 
+static void ConfigurePPI(NRF_TIMER_Type* timer, const u8 taskChannel, const u8 ppiChannel)
+{
+  // Configure PPI channels to toggle the output PWM pins on matching timer compare
+  // and toggle the GPIO for the selected duty cycle.
+
+  // Match compares
+  // 0: PWM n + 0
+  // 1: PWM n + 1
+  // 2: timer wrap-around
+  // 3: timer wrap-around
+  sd_ppi_channel_assign(ppiChannel + 0, &timer->EVENTS_COMPARE[0], &NRF_GPIOTE->TASKS_OUT[taskChannel + 0]);
+  sd_ppi_channel_assign(ppiChannel + 1, &timer->EVENTS_COMPARE[2], &NRF_GPIOTE->TASKS_OUT[taskChannel + 0]);
+  sd_ppi_channel_assign(ppiChannel + 2, &timer->EVENTS_COMPARE[1], &NRF_GPIOTE->TASKS_OUT[taskChannel + 1]);
+  sd_ppi_channel_assign(ppiChannel + 3, &timer->EVENTS_COMPARE[3], &NRF_GPIOTE->TASKS_OUT[taskChannel + 1]);
+}
+
 static void ConfigureTimer(NRF_TIMER_Type* timer, const u8 taskChannel, const u8 ppiChannel)
 {
   // Ensure the timer is stopped
@@ -174,22 +191,6 @@ static void ConfigureTimer(NRF_TIMER_Type* timer, const u8 taskChannel, const u8
 
   // TODO: Verify PAN 33: TIMER: One CC register is not able to generate an 
   // event for the second of two subsequent counter/ timer values.
-  
-  // Configure PPI channels to toggle the output PWM pins on matching timer compare
-  // and toggle the GPIO for the selected duty cycle.
-
-  // Match compares
-  // 0: PWM n + 0
-  // 1: PWM n + 1
-  // 2: timer wrap-around
-  // 3: timer wrap-around
-  sd_ppi_channel_assign(ppiChannel + 0, &timer->EVENTS_COMPARE[0], &NRF_GPIOTE->TASKS_OUT[taskChannel + 0]);
-  sd_ppi_channel_assign(ppiChannel + 1, &timer->EVENTS_COMPARE[2], &NRF_GPIOTE->TASKS_OUT[taskChannel + 0]);
-  sd_ppi_channel_assign(ppiChannel + 2, &timer->EVENTS_COMPARE[1], &NRF_GPIOTE->TASKS_OUT[taskChannel + 1]);
-  sd_ppi_channel_assign(ppiChannel + 3, &timer->EVENTS_COMPARE[3], &NRF_GPIOTE->TASKS_OUT[taskChannel + 1]);
-
-  // Start the timer
-  timer->TASKS_START = 1;
 }
 
 void Motors::disable(bool disable) {
@@ -204,7 +205,6 @@ void Motors::disable(bool disable) {
     teardown();
   }
 }
-
 
 // Returns 'true' when the the charger says the battery is full
 bool Motors::getChargeOkay() {
@@ -245,6 +245,10 @@ void Motors::teardown(void) {
 }
 
 void Motors::setup(void) {
+  // Reconfigure timer for motors
+  ConfigureTimer(NRF_TIMER1, 0, 0);
+  ConfigureTimer(NRF_TIMER2, 2, 4);
+
   // Float our charge pin
   nrf_gpio_cfg_default(PIN_nCHGOK);
 
@@ -344,8 +348,8 @@ void Motors::init()
   // NOTE: Motors are not actually enabled, this only stages them
   
   // Configure TIMER1 and TIMER2 with the appropriate task and PPI channels
-  ConfigureTimer(NRF_TIMER1, 0, 0);
-  ConfigureTimer(NRF_TIMER2, 2, 4);
+  ConfigurePPI(NRF_TIMER1, 0, 0);
+  ConfigurePPI(NRF_TIMER2, 2, 4);
   
   // Setup head encoder tick rate for production or pre-production hardware
   g_radiansPerHeadTick = RADIANS_PER_HEAD_TICK;

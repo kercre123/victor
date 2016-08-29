@@ -35,6 +35,7 @@ static const Fixed VBAT_SCALE  = TO_FIXED(4.0); // Cozmo 4.1 voltage divider
 
 static const Fixed VBAT_CHGD_HI_THRESHOLD = TO_FIXED(4.05); // V
 static const Fixed VBAT_CHGD_LO_THRESHOLD = TO_FIXED(3.45); // V
+static const Fixed VBAT_LOW_THRESHOLD     = TO_FIXED(3.50); // V
 
 static const Fixed VEXT_DETECT_THRESHOLD  = TO_FIXED(4.40); // V
 static const Fixed VEXT_CHARGE_THRESHOLD  = TO_FIXED(4.00); // V
@@ -171,10 +172,12 @@ void Battery::updateOperatingMode() {
   // Tear down existing mode
   switch (active_operating_mode) {
     case BODY_BLUETOOTH_OPERATING_MODE:
+      Backpack::detachTimer(NRF_TIMER1, TIMER1_IRQn);
       Bluetooth::shutdown();
       break ;
     
     case BODY_ACCESSORY_OPERATING_MODE:
+      Backpack::detachTimer(NRF_TIMER0, TIMER0_IRQn);
       Radio::shutdown();
       break ;
 
@@ -206,8 +209,9 @@ void Battery::updateOperatingMode() {
       break ;
 
     case BODY_BATTERY_CHARGE_TEST_MODE:
+      Backpack::lightsOff();
+
       nrf_gpio_pin_set(PIN_VDDs_EN);
-      Backpack::defaultPattern(LIGHTS_SLEEPING);
       Motors::disable(true);
       Head::enterLowPowerMode();
       
@@ -224,9 +228,10 @@ void Battery::updateOperatingMode() {
       Battery::powerOff();
       break ;
     case BODY_IDLE_OPERATING_MODE:
+      Backpack::lightsOff();
+
       // Turn off encoders
       nrf_gpio_pin_set(PIN_VDDs_EN);
-      Backpack::defaultPattern(LIGHTS_SLEEPING);
       Motors::disable(true);
       Head::enterLowPowerMode();
       Battery::powerOff();
@@ -234,8 +239,9 @@ void Battery::updateOperatingMode() {
       break ;
     
     case BODY_BLUETOOTH_OPERATING_MODE:
+      Backpack::setLayer(BPL_IMPULSE);
       Motors::disable(true);
-    
+
       Battery::powerOn();
 
       // This is temporary until I figure out why this thing is being lame
@@ -251,14 +257,18 @@ void Battery::updateOperatingMode() {
         NVIC_EnableIRQ(RTC1_IRQn);
       }
 
+      Backpack::useTimer(NRF_TIMER1, TIMER1_IRQn);
+
       break ;
     
     case BODY_ACCESSORY_OPERATING_MODE:
       Motors::disable(false);
+      Backpack::setLayer(BPL_USER);
 
       Battery::powerOn();
       Radio::advertise();
 
+      Backpack::useTimer(NRF_TIMER0, TIMER0_IRQn);
       break ;
   }
 
@@ -279,13 +289,6 @@ void Battery::powerOff()
   MicroWait(10000);
 }
 
-enum CurrentChargeState {
-  CHARGE_OFF_CHARGER,
-  CHARGE_CHARGING,
-  CHARGE_CHARGED,
-  CHARGE_CHARGER_OUT_OF_SPEC
-};
-
 static CurrentChargeState charge_state = CHARGE_OFF_CHARGER;
 
 static void setChargeState(CurrentChargeState state) {
@@ -295,25 +298,23 @@ static void setChargeState(CurrentChargeState state) {
 
   charge_state = state;
 
+  Backpack::setChargeState(state);
+
   switch(state) {
     case CHARGE_OFF_CHARGER:
-      isCharging = false;
-      Backpack::defaultPattern(LIGHTS_USER);
+      isCharging = false;   
       nrf_gpio_pin_clear(PIN_CHARGE_EN);
       break ;
     case CHARGE_CHARGING:
       isCharging = true;
-      Backpack::defaultPattern(LIGHTS_CHARGING);
       nrf_gpio_pin_set(PIN_CHARGE_EN);
       break ;
     case CHARGE_CHARGED:
       isCharging = false;
-      Backpack::defaultPattern(LIGHTS_CHARGED);
       nrf_gpio_pin_clear(PIN_CHARGE_EN);
       break ;
     case CHARGE_CHARGER_OUT_OF_SPEC:
       isCharging = false;
-      Backpack::defaultPattern(LIGHTS_CHARGER_OOS);
       nrf_gpio_pin_clear(PIN_CHARGE_EN);
       break ;
   }
@@ -419,6 +420,7 @@ void Battery::manage()
     case ANALOG_V_BAT_SENSE:
       {
         vBat = calcResult(VBAT_SCALE);
+        Backpack::setLowBattery(vBat < VBAT_LOW_THRESHOLD);
 
         // after 1 minute of low battery, turn off
         static int lowBatTimer = GetCounter() + LOW_BAT_TIME;

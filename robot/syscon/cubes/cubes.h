@@ -8,22 +8,20 @@
 #include "clad/types/ledTypes.h"
 #include "timer.h"
 
-#define NRF_CLOCK_FREQUENCY 16000000.0f
-
-#define CYCLES(ms) (int)((ms) * NRF_CLOCK_FREQUENCY / 1000.0f)
-#define CLOCKS(c) (int)((((c) / NRF_CLOCK_FREQUENCY)) * 32768.0f + 0.5f)
+#define CYCLES(ms) (int)((ms) * 32768.0f / 1000.0f + 0.5f)
 
 static const int NUM_PROP_LIGHTS = 4;
+static const int MAX_ACCESSORIES = 4;
 
-static const int RADIO_TOTAL_PERIOD = CYCLES(35.0f);
+static const int TICK_LOOP = 7;
 static const int SCHEDULE_PERIOD = CYCLES(5.0f);
+static const int RADIO_TOTAL_PERIOD = SCHEDULE_PERIOD * TICK_LOOP;
+
+static const int ROTATE_PERIOD = CYCLES(1000.0f / 30.0f); // 30 FPS
 static const int SILENCE_PERIOD = CYCLES(1.0f);
 static const int NEXT_CYCLE_FUDGE = 84;
 
-static const int TICK_LOOP = RADIO_TOTAL_PERIOD / SCHEDULE_PERIOD;
-
-static const int ACCESSORY_TIMEOUT = 50;         // 0.5s timeout before accessory is considered lost
-static const int MAX_ACCESSORIES = TICK_LOOP;
+static const int ACCESSORY_TIMEOUT = 100;       // 1s timeout before accessory is considered lost
 
 static const int ADV_CHANNEL = 81;
 

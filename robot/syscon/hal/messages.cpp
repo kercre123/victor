@@ -49,12 +49,12 @@ static void Process_diffieHellmanResults(const DiffieHellmanResults& msg) {
 
 static void Process_setBackpackLightsMiddle(const RobotInterface::BackpackLightsMiddle& msg)
 {
-  Backpack::setLightsMiddle(msg.lights);
+  Backpack::setLightsMiddle(BPL_USER, msg.lights);
 }
 
 static void Process_setBackpackLightsTurnSignals(const RobotInterface::BackpackLightsTurnSignals& msg)
 {
-  Backpack::setLightsTurnSignals(msg.lights);
+  Backpack::setLightsTurnSignals(BPL_USER, msg.lights);
 }
 
 static void Process_setCubeID(const CubeID& msg)

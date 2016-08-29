@@ -32,13 +32,12 @@ using namespace Anki::Cozmo;
    PACK_IR(i) \
 )
 
+static const int MAX_KEYFRAMES = 8;
+
 enum LightMode {
-  HOLD_VALUE,
-  TRANSITION_UP,
-  HOLD_ON,
-  TRANSITION_DOWN,
-  HOLD_OFF,
-  WAIT,
+  SOLID = 0,
+  HOLD,
+  FADE
 };
 
 struct LightSet {
@@ -48,29 +47,30 @@ struct LightSet {
   uint8_t ir;
 };
 
+struct Keyframe {
+  uint16_t color;
+  uint8_t holdFrames;
+  uint8_t transitionFrames;
+};
+
 struct LightValues {
+  // Color palette
+  Keyframe keyframes[MAX_KEYFRAMES];
+
   // Operating mode
   LightMode mode;
-
-  // Phase info
-  int clock;
-  int phase;
   LightSet values;
 
-  // Configuration
-  LightSet onColor, offColor;
-  uint8_t onFrames;
-  uint8_t offFrames;
-  uint8_t transitionOnFrames;
-  uint8_t transitionOffFrames;
-  uint8_t onOffset;
-  uint8_t offOffset;
+  // Phase info
+  int phase;
+  int index;
+  int frameCount;
 };
 
 union ControllerLights {
   struct {
     LightValues cube[MAX_ACCESSORIES][NUM_PROP_LIGHTS];
-    LightValues backpack[BACKPACK_LIGHT_CHANNELS];
+    LightValues backpack[BACKPACK_LIGHTS];
   };
   
   LightValues lights[];
@@ -83,7 +83,7 @@ extern ControllerLights lightController;
 namespace Lights {
   void init();
   void manage();
-  void update(LightValues& light, const LightState* ledParams, const int cubeSlot = -1, const uint8_t rotationPeriod = 0);
+  void update(LightValues& light, const LightState* ledParams);
 };
 
 #endif

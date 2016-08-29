@@ -6,6 +6,13 @@
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 
+enum CurrentChargeState {
+  CHARGE_OFF_CHARGER,
+  CHARGE_CHARGING,
+  CHARGE_CHARGED,
+  CHARGE_CHARGER_OUT_OF_SPEC
+};
+
 namespace Battery {
   // Initialize the charge pins and sensing
   void init();
