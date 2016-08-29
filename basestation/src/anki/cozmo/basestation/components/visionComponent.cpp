@@ -230,15 +230,16 @@ namespace Cozmo {
     
     if(_running) {
       PRINT_NAMED_INFO("VisionComponent.Start.Restarting",
-                       "Thread already started, call Stop() and then restarting.");
+                       "Thread already started, calling Stop() and then restarting (paused:%d).",
+                       _paused);
       Stop();
     } else {
       PRINT_NAMED_INFO("VisionComponent.Start",
-                       "Starting vision processing thread.");
+                       "Starting vision processing thread (paused:%d)",
+                       _paused);
     }
     
     _running = true;
-    _paused = false;
     
     // Note that we're giving the Processor a pointer to "this", so we
     // have to ensure this VisionSystem object outlives the thread.
@@ -513,7 +514,12 @@ namespace Cozmo {
         }
       } // if (_storeNextImageForCalibration || _doFactoryDotTest)
       
-
+      if(_paused)
+      {
+        _vizManager->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
+                             "Vision: <PAUSED>");
+      }
+      
       switch(_runMode)
       {
         case RunMode::Synchronous:

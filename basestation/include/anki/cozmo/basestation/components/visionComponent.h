@@ -90,8 +90,7 @@ struct DockingErrorSignal;
     //       be valid in the caller after using this method.
     Result SetNextImage(EncodedImage& encodedImage);
 
-    void Pause(); // toggle paused state
-    void Pause(bool isPaused); // set pause state
+    void Pause(bool isPaused);
     
     // Enable/disable different types of processing
     Result EnableMode(VisionMode mode, bool enable);
@@ -340,11 +339,9 @@ struct DockingErrorSignal;
     
   }; // class VisionComponent
   
-  inline void VisionComponent::Pause() {
-    _paused = !_paused;
-  }
-  
   inline void VisionComponent::Pause(bool isPaused) {
+    PRINT_CH_INFO("VisionComponent", "Pause.Set", "Setting Paused from %d to %d",
+                  _paused, isPaused);
     _paused = isPaused;
   }
   
