@@ -90,12 +90,6 @@
   "dailySummary.title": {
     "translation": "Daily Summary for {0}/{1}"
   },
-  "endSession.title": {
-    "translation": "End Session?"
-  },
-  "endSession.description": {
-    "translation": "Need a break? Tap END SESSION and send Cozmo back to his charger."
-  },
   "requestGame.title": {
     "translation": "{0}!"
   },

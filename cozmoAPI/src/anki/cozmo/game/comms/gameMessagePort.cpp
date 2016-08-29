@@ -20,17 +20,23 @@
 namespace Anki {
 namespace Cozmo {
 
+GameMessagePort::GameMessagePort(const size_t toGameBufferSize, const bool isCritical)
+: _toGameBuffer(new uint8_t[toGameBufferSize])
+, _toGameCapacity(toGameBufferSize)
+, _isCritical(isCritical)
+{
+}
+
 void GameMessagePort::PushToGameMessage(const uint8_t* buffer, size_t size)
 {
   {
     std::lock_guard<std::mutex> bufferLock{_toGameMutex};
     
     // add to end of buffer, if room
-    if (_toGameBufferFull || (_toGameSize + size) > ExternalInterface::kDirectCommsBufferSize) {
-      if (!_toGameBufferFull)
-      {
+    if (_toGameBufferFull || (_toGameSize + size) > _toGameCapacity) {
+      if (!_toGameBufferFull) {
         _toGameBufferFull = true;
-        ASSERT_NAMED(false, "GameMessagePort.PushToGameMessage.send_buffer_full");
+        ASSERT_NAMED(!_isCritical, "GameMessagePort.PushToGameMessage.send_buffer_full");
       }
       return;
     }
@@ -43,7 +49,7 @@ void GameMessagePort::PushToGameMessage(const uint8_t* buffer, size_t size)
 size_t GameMessagePort::PullToGameMessages(uint8_t* buffer, size_t bufferSize)
 {
   // deal with catastrophes
-  ASSERT_NAMED(bufferSize == ExternalInterface::kDirectCommsBufferSize, "GameMessagePort.MismatchedOutboundBuffer");
+  ASSERT_NAMED(bufferSize == _toGameCapacity, "GameMessagePort.MismatchedOutboundBuffer");
   if (_toGameSize > bufferSize) {
     ASSERT_NAMED(false, "GameMessagePort.PullToGameMessages.buffer_too_large_to_send");
     _toGameSize = 0;
@@ -59,7 +65,7 @@ size_t GameMessagePort::PullToGameMessages(uint8_t* buffer, size_t bufferSize)
   size_t sentBytes;
   {
     std::lock_guard<std::mutex> bufferLock{_toGameMutex};
-    std::copy(_toGameBuffer, _toGameBuffer + _toGameSize, buffer);
+    std::copy(_toGameBuffer.get(), _toGameBuffer.get() + _toGameSize, buffer);
     sentBytes = _toGameSize;
     _toGameSize = 0;
     _toGameBufferFull = false;

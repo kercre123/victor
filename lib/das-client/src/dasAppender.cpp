@@ -69,33 +69,29 @@ void DasAppender::append(DASLogLevel level, const char* eventName, const char* e
   }
   uint32_t curSequence = sDasSequenceNumber++;
 
-  std::map<std::string,std::string> eventDictionary;
-  for (const auto& kv : *globals) {
-    eventDictionary[kv.first] = kv.second;
-  }
-  for (const auto& kv : data) {
-    eventDictionary[kv.first] = kv.second;
-  }
+  auto* eventDictionaryPtr = new std::map<std::string, std::string>{*globals};
+  eventDictionaryPtr->insert(data.begin(), data.end());
+  eventDictionaryPtr->emplace(eventName, eventValue);
 
-  std::string logSequence = std::to_string(curSequence);
-  eventDictionary[kSequenceGlobalKey] = logSequence;
-  if( eventDictionary.end() == eventDictionary.find(kMessageVersionGlobalKey) ) {
-    eventDictionary[kMessageVersionGlobalKey] = kMessageVersionGlobalValue;
-  }
-  eventDictionary[eventName] = eventValue;
+  _syncQueue.Wake([this, eventDictionaryPtr, curSequence]() {
+    auto& eventDictionary = *eventDictionaryPtr;
 
-  std::string logData = AnkiUtil::StringMapToJson(eventDictionary) + ",";
+    std::string logSequence = std::to_string(curSequence);
+    eventDictionary[kSequenceGlobalKey] = logSequence;
+    if( eventDictionary.end() == eventDictionary.find(kMessageVersionGlobalKey) ) {
+      eventDictionary[kMessageVersionGlobalKey] = kMessageVersionGlobalValue;
+    }
 
-  if (logData.size() <= _maxLogLength) {
-    _syncQueue.Wake([this, logData]() {
-        _logFileAppender->WriteDataToCurrentLogfile(logData);
-        SetTimedFlush();
-      });
-  } else {
-    LOGD("Error! Dropping message of length %zd", logData.size());
-  }
+    std::string logData = AnkiUtil::StringMapToJson(eventDictionary) + ",";
 
-  return;
+    if (logData.size() <= _maxLogLength) {
+      _logFileAppender->WriteDataToCurrentLogfile(logData);
+      SetTimedFlush();
+    } else {
+      LOGD("Error! Dropping message of length %zd", logData.size());
+    }
+    delete eventDictionaryPtr;
+  });
 }
 
 void DasAppender::close() {

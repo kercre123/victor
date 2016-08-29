@@ -290,9 +290,6 @@ void RobotToEngineImplMessaging::HandleFirmwareVersion(const AnkiEvent<RobotInte
                       Audio::RobotAudioClient::RobotAudioOutputSource::PlayOnRobot :
                       Audio::RobotAudioClient::RobotAudioOutputSource::PlayOnDevice;
   robot->GetRobotAudioClient()->SetOutputSource(outputSource);
-  
-  // Send syncTime
-  robot->SyncTime();
 }
   
 

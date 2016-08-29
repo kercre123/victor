@@ -33,7 +33,7 @@ public:
   static constexpr std::size_t  kDefaultMaxFileSize = 1024 * 1024 * 20;
   static const char * const     kDefaultFileExtension;
   
-  RollingFileLogger(const std::string& baseDirectory, const std::string& extension = kDefaultFileExtension, std::size_t maxFileSize = kDefaultMaxFileSize);
+  RollingFileLogger(Dispatch::Queue* queue, const std::string& baseDirectory, const std::string& extension = kDefaultFileExtension, std::size_t maxFileSize = kDefaultMaxFileSize);
   virtual ~RollingFileLogger();
   
   void Write(const std::string& message);
@@ -42,6 +42,7 @@ public:
   static time_t GetTimeT(const ClockType::time_point& time);
   
 private:
+  void ExecuteBlock(const std::function<void()>& block);
   
   Dispatch::Queue*  _dispatchQueue;
   std::string       _baseDirectory;

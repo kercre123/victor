@@ -34,7 +34,7 @@
     "translation": "Low"
   },
   "settings.volumePanel.robotToggle.medium": {
-    "translation": "Med"
+    "translation": "Medium"
   },
   "settings.volumePanel.robotToggle.high": {
     "translation": "High"
@@ -46,13 +46,13 @@
     "translation": "(Return To Title)"
   },
   "settings.sleepCozmoPanel.confirmationModal.title":{
-    "translation": "Exit to Title?"
+    "translation": "Sleep Cozmo?"
   },
   "settings.sleepCozmoPanel.confirmModal.description":{
-    "translation": "Disconnecting will put Cozmo to sleep and take you back to the Title Screen."
+    "translation": "Putting Cozmo to sleep will disconnect from your robot and take you back to the title screen."
   },
   "settings.sleepCozmoPanel.confirmModal.button.confirm":{
-    "translation": "Disconnect"
+    "translation": "Sleep"
   },
   "settings.sdkPanel.disableButton.text": {
     "translation": "Disable SDK"

@@ -1,15 +1,27 @@
 #ifndef LIGHTS_H
 #define LIGHTS_H
 
+extern "C" {
+  #include "nrf51.h"
+}
+
 #include <stdint.h>
 #include "clad/types/ledTypes.h"
+#include "battery.h"
 
 using namespace Anki::Cozmo;
 
-static const int BACKPACK_LIGHT_CHANNELS = 5;
+static const int BACKPACK_LIGHTS = 5;
+
+enum BackpackLayer {
+  BPL_ANIMATION,
+  BPL_USER,
+  BPL_IMPULSE,
+  BACKPACK_LAYERS
+};
 
 enum DefaultBackpackPattern {
-  LIGHTS_USER,
+  LIGHTS_OFF,
   LIGHTS_CHARGING,
   LIGHTS_CHARGED,
   LIGHTS_SLEEPING,
@@ -20,12 +32,19 @@ namespace Backpack {
   void init();
   void manage();
   
-  void update(int channel);
-  void blink(void);
+  int update();
+  void setLayer(BackpackLayer);
 
-  void defaultPattern(DefaultBackpackPattern pattern);
-  void setLightsMiddle(const LightState* lights);
-  void setLightsTurnSignals(const LightState* lights);
+  void useTimer(NRF_TIMER_Type*, IRQn_Type);
+  void detachTimer(NRF_TIMER_Type*, IRQn_Type);
+  
+  void lightsOff();
+  void setLowBattery(bool batteryLow);
+  void setChargeState(CurrentChargeState state);
+
+  void setLights(BackpackLayer, const LightState* lights);
+  void setLightsMiddle(BackpackLayer, const LightState* lights);
+  void setLightsTurnSignals(BackpackLayer, const LightState* lights);
 }
 
 #endif /* LIGHTS_H */

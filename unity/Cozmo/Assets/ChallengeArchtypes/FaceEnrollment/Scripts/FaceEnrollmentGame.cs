@@ -36,7 +36,7 @@ namespace FaceEnrollment {
     private long _UpdateThresholdLastEnrolledSeconds;
 
     private bool _UserCancelledEnrollment = false;
-
+    private bool _EnrollingFace = false;
     private bool _ShowDoneShelf = false;
 
     // selects if we should save to the actual robot or only keep faces
@@ -169,8 +169,10 @@ namespace FaceEnrollment {
       SharedMinigameView.HideGameStateSlide();
       _FaceEnrollmentInstructionsViewInstance = UIManager.OpenView(_FaceEnrollmentInstructionsViewPrefab);
       _FaceEnrollmentInstructionsViewInstance.ViewClosedByUser += () => {
-        CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.ENROLL_NAMED_FACE);
-        _UserCancelledEnrollment = true;
+        if (_EnrollingFace) {
+          CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.ENROLL_NAMED_FACE);
+          _UserCancelledEnrollment = true;
+        }
         if (handleInstructionsDone != null) {
           handleInstructionsDone();
         }
@@ -198,6 +200,7 @@ namespace FaceEnrollment {
       else {
         CurrentRobot.EnrollNamedFace(0, _ReEnrollFaceID, _NameForFace, saveToRobot: _SaveToRobot);
       }
+      _EnrollingFace = true;
     }
 
     private void HandleEnrolledFace(Anki.Cozmo.ExternalInterface.RobotCompletedAction message) {
@@ -205,6 +208,8 @@ namespace FaceEnrollment {
       if (message.actionType != Anki.Cozmo.RobotActionType.ENROLL_NAMED_FACE) {
         return;
       }
+
+      _EnrollingFace = false;
 
       // dont show errors if we user cancels enrollment.
       if (_UserCancelledEnrollment) {

@@ -218,7 +218,7 @@
         {
           "type" : "FP_Socialize",
           // never finishes. We might want to shut-off at some point
-          "maxDurationSecs" : 6000.0,
+          "goalShouldEndDurationSecs" : 6000.0,
           "maxTimeWithoutInteractionSecs" : 6000.0
         }
       },
@@ -243,7 +243,7 @@
         "goalStrategy":
         {
           "type" : "FP_Hiking",
-          "maxDurationSecs" : 120.0, // hiking will automatically finish when it completes, so a higher max time is ok
+          "goalShouldEndDurationSecs" : 120.0, // hiking will automatically finish when it completes, so a higher max time is ok
           "cooldownSecs" : 10.0,
           "createBeacons" : true,
           "visitInterestingEdges" : true,
@@ -265,7 +265,7 @@
         {
           "type" : "FP_PlayAlone",
           // future: it might be a good idea to check how many behaviors are available to tune the duration based on that
-          "maxDurationSecs" : 25.0,
+          "goalShouldEndDurationSecs" : 25.0,
           "cooldownSecs" : 30.0,
           // require a minimum playful score
           "requiredMinStartMoodScore" : 0.5,
@@ -337,7 +337,7 @@
         {
           "type" : "FP_Socialize",
           // at least interact for this amount of time every time
-          "minDurationSecs" : 12.0,
+          "goalCanEndDurationSecs" : 12.0,
           // do not go back immediately even if still wants to social
           // (it should be possible to fire with other triggers, like pick up)
           "cooldownSecs" : 30.0,

@@ -12,7 +12,9 @@
 #include "webotsCtrlDevLog.h"
 #include "anki/cozmo/basestation/debug/devLogProcessor.h"
 #include "anki/messaging/shared/UdpClient.h"
+#include "clad/types/imageTypes.h"
 #include "clad/types/vizTypes.h"
+#include "clad/vizInterface/messageViz.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
@@ -28,13 +30,17 @@ namespace Cozmo {
   
 static constexpr auto kDevLogStepTime_ms = 10;
 static const char* kLogsDirectoryFieldName = "logsDirectory";
+static const char* kSaveImagesFieldName = "saveImages";
   
 WebotsDevLogController::WebotsDevLogController(int32_t stepTime_ms)
 : _stepTime_ms(stepTime_ms)
 , _supervisor(new webots::Supervisor())
 , _devLogProcessor()
 , _vizConnection(new UdpClient())
+, _selfNode(_supervisor->getSelf())
+, _savingImages(false)
 {
+  ASSERT_NAMED(nullptr != _selfNode, "WebotsDevLogController.Constructor.SelfNodeMissing");
   _supervisor->keyboardEnable(stepTime_ms);
   _vizConnection->Connect("127.0.0.1", Util::EnumToUnderlying(VizConstants::VIZ_SERVER_PORT));
 }
@@ -62,10 +68,76 @@ int32_t WebotsDevLogController::Update()
   
   if (_supervisor->step(_stepTime_ms) == -1)
   {
-    PRINT_NAMED_INFO("WebotsDevLogController.Update.StepFailed", "");
+    PRINT_NAMED_ERROR("WebotsDevLogController.Update.StepFailed", "");
     return -1;
   }
   return 0;
+}
+  
+std::string WebotsDevLogController::GetDirectoryPath() const
+{
+  std::string dirPath;
+  
+  webots::Field* logNameField = _selfNode->getField(kLogsDirectoryFieldName);
+  if (nullptr == logNameField)
+  {
+    PRINT_NAMED_ERROR("WebotsDevLogController.GetDirectoryPath.MissingDataField",
+                      "Name: %s", kLogsDirectoryFieldName);
+  }
+  else
+  {
+    dirPath = logNameField->getSFString();
+  }
+  
+  return dirPath;
+}
+
+void WebotsDevLogController::EnableSaveImagesIfChecked()
+{
+  const webots::Field* saveImagesField = _selfNode->getField(kSaveImagesFieldName);
+  if (nullptr == saveImagesField)
+  {
+    PRINT_NAMED_ERROR("WebotsDevLogController.ToggleImageSaving.MissingSaveImagesField",
+                      "Name: %s", kSaveImagesFieldName);
+  }
+  else
+  {
+    EnableSaveImages(saveImagesField->getSFBool());
+  }
+}
+  
+void WebotsDevLogController::EnableSaveImages(bool enable)
+{
+  if(enable == _savingImages)
+  {
+    // Nothing to do, already in correct mode
+    return;
+  }
+  
+  ImageSendMode mode = ImageSendMode::Off;
+  if(enable)
+  {
+    mode = ImageSendMode::Stream;
+    _savingImages = true;
+  }
+  else
+  {
+    _savingImages = false;
+  }
+
+  // Save images to "savedVizImages" in log directory
+  std::string path = Util::FileUtils::FullFilePath({_devLogProcessor->GetDirectoryName(), "savedImages"});
+  
+  VizInterface::MessageViz message(VizInterface::SaveImages(mode, path));
+  
+  const size_t MAX_MESSAGE_SIZE{(size_t)VizConstants::MaxMessageSize};
+  uint8_t buffer[MAX_MESSAGE_SIZE]{0};
+  
+  const size_t numWritten = (uint32_t)message.Pack(buffer, MAX_MESSAGE_SIZE);
+  
+  if (_vizConnection->Send((const char*)buffer, (int)numWritten) <= 0) {
+    PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd failed\n", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
+  }
 }
   
 void WebotsDevLogController::UpdateKeyboard()
@@ -83,23 +155,40 @@ void WebotsDevLogController::UpdateKeyboard()
     // Set key to its modifier-less self
     key &= webots::Supervisor::KEYBOARD_KEY;
   
-    if ('L' == key)
+    switch(key)
     {
-      const webots::Node* selfNode = _supervisor->getSelf();
-      ASSERT_NAMED(nullptr != selfNode, "WebotsDevLogController.UpdateKeyboard.SelfNodeMissing");
-      if (nullptr != selfNode)
+      case(int)'I':
       {
-        webots::Field* logNameField = selfNode->getField(kLogsDirectoryFieldName);
-        if (nullptr == logNameField)
+        // Toggle save state:
+        EnableSaveImages(!_savingImages);
+        
+        // Make field in object tree match new state (EnableSaveImages changes _savingImages)
+        webots::Field* saveImagesField = _selfNode->getField(kSaveImagesFieldName);
+        if (nullptr == saveImagesField)
         {
-          PRINT_NAMED_ERROR("WebotsDevLogController.UpdateKeyboard.MissingDataField", "Name: %s", kLogsDirectoryFieldName);
+          PRINT_NAMED_ERROR("WebotsDevLogController.ToggleImageSaving.MissingSaveImagesField",
+                            "Name: %s", kSaveImagesFieldName);
         }
         else
         {
-          InitDevLogProcessor(logNameField->getSFString());
+          saveImagesField->setSFBool(_savingImages);
         }
+        
+        break;
       }
-    }
+        
+      case (int)'L':
+      {
+        std::string dirPath = GetDirectoryPath();
+        if(!dirPath.empty())
+        {
+          InitDevLogProcessor(dirPath);
+        }
+        break;
+      }
+     
+    } // switch(key)
+
   }
 }
   
@@ -144,6 +233,9 @@ void WebotsDevLogController::InitDevLogProcessor(const std::string& directoryPat
   _devLogProcessor.reset(new DevLogProcessor(directoryPath));
   _devLogProcessor->SetVizMessageCallback(std::bind(&WebotsDevLogController::HandleVizData, this, std::placeholders::_1));
   _devLogProcessor->SetPrintCallback(std::bind(&WebotsDevLogController::HandlePrintLines, this, std::placeholders::_1));
+  
+  // Initialize saveImages to on if box is already checked
+  EnableSaveImagesIfChecked();
 }
   
 void WebotsDevLogController::HandleVizData(const DevLogReader::LogData& logData)
@@ -178,6 +270,15 @@ int main(int argc, char **argv)
 
   Anki::Cozmo::WebotsDevLogController webotsCtrlDevLog(Anki::Cozmo::kDevLogStepTime_ms);
 
+  // If log directory is already specified when we start, just go ahead and use it,
+  // without needing to press 'L' key
+  std::string dirPath = webotsCtrlDevLog.GetDirectoryPath();
+  if(!dirPath.empty())
+  {
+    webotsCtrlDevLog.Update(); // Tick once first 
+    webotsCtrlDevLog.InitDevLogProcessor(dirPath);
+  }
+  
   while (webotsCtrlDevLog.Update() == 0) { }
 
   return 0;

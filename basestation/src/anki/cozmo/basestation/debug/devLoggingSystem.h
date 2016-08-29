@@ -44,7 +44,9 @@ public:
   void DeleteLog(const std::string& archiveFilename) const;
   std::vector<std::string> GetLogFilenamesForUpload() const;
   std::string GetAppRunId(const std::string& archiveFilename) const;
-  
+
+  Util::Dispatch::Queue* GetQueue() { return _queue; }
+
   static const std::string kPrintName;
   static const std::string kGameToEngineName;
   static const std::string kEngineToGameName;
@@ -59,6 +61,7 @@ private:
   static const std::string kArchiveExtensionString;
   static const std::string kAppRunExtension;
 
+  Util::Dispatch::Queue*                      _queue;
   std::unique_ptr<Util::RollingFileLogger>    _gameToEngineLog;
   std::unique_ptr<Util::RollingFileLogger>    _engineToGameLog;
   std::unique_ptr<Util::RollingFileLogger>    _robotToEngineLog;

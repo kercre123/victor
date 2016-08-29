@@ -1,6 +1,6 @@
 ../ios/DASFileSearch.h
 ../ios/DASFileSearch.m
-../ios/dasLocalAppender.cpp
+../ios/dasLocalAppender.mm
 ../ios/dasLogMacros.h
 ../ios/dasNSLog.h
 ../ios/dasNSLog.mm
