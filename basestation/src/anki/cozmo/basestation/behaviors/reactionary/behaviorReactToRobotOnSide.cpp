@@ -23,7 +23,7 @@ namespace Cozmo {
   
 using namespace ExternalInterface;
 
-static const float kWaitTimeBeforeRepeatAnim_s = 0.5f;
+static const float kWaitTimeBeforeRepeatAnim_s = 15.f;
   
 BehaviorReactToRobotOnSide::BehaviorReactToRobotOnSide(Robot& robot, const Json::Value& config)
 : IReactionaryBehavior(robot, config)
@@ -91,8 +91,10 @@ void BehaviorReactToRobotOnSide::HoldingLoop(Robot& robot)
   
   if( robot.GetOffTreadsState() == OffTreadsState::OnRightSide
      || robot.GetOffTreadsState() == OffTreadsState::OnLeftSide) {
-    StartActing(new WaitAction(robot, kWaitTimeBeforeRepeatAnim_s),
-                &BehaviorReactToRobotOnSide::HoldingLoop);
+    StartActing(new CompoundActionSequential(robot, {
+      new WaitAction(robot, kWaitTimeBeforeRepeatAnim_s),
+      new TriggerAnimationAction(robot, AnimationTrigger::NothingToDoBored)
+    }),  &BehaviorReactToRobotOnSide::HoldingLoop);
   }
 }
 

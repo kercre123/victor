@@ -54,7 +54,8 @@ Result BehaviorReactToPickup::InitInternalReactionary(Robot& robot)
   
   // Delay introduced since cozmo can be marked as "In air" in robot.cpp while we
   // wait for the cliffDetect sensor to confirm he's on the ground
-  const f32 wait_s = 1.5f;
+  const f32 bufferDelay_s = .5f;
+  const f32 wait_s = CLIFF_EVENT_DELAY_MS/1000 + bufferDelay_s;
   StartActing(new WaitAction(robot, wait_s), &BehaviorReactToPickup::StartAnim);
   return Result::RESULT_OK;
 }

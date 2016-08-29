@@ -52,6 +52,9 @@ public static class CozmoBinding {
   public static extern void cozmo_transmit_game_to_engine(byte[] bytes, System.UIntPtr len);
 
   [DllImport("__Internal")]
+  public static extern uint cozmo_transmit_viz_to_game([MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] byte[] bytes, System.UIntPtr len);
+
+  [DllImport("__Internal")]
   public static extern void cozmo_execute_background_transfers();
 
   #elif UNITY_ANDROID
@@ -73,6 +76,9 @@ public static class CozmoBinding {
 
   [DllImport("cozmoEngine")]
   public static extern void cozmo_transmit_game_to_engine(byte[] bytes, System.UIntPtr len);
+
+  [DllImport("cozmoEngine")]
+  public static extern uint cozmo_transmit_viz_to_game([MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] byte[] bytes, System.UIntPtr len);
 
   [DllImport("cozmoEngine")]
   public static extern void cozmo_install_google_breakpad(string path);

@@ -73,7 +73,7 @@ static inline uint16_t MuLawDecompress(uint8_t byte) {
     bits = (0x10 | bits) << (exp - 1);
   }
 
-  return 0x7FF + ((byte & 0x80) ? -bits : bits);
+  return (0x7FF + ((byte & 0x80) ? -bits : bits)) >> 1;
 }
 
 void Anki::Cozmo::HAL::DAC::Sync() {

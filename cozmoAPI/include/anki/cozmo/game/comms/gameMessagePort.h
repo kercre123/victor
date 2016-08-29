@@ -14,11 +14,9 @@
 #ifndef ANKI_COZMOAPI_GAME_MESSAGE_PORT_H
 #define ANKI_COZMOAPI_GAME_MESSAGE_PORT_H
 
-#include "clad/externalInterface/messageShared.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal.hpp"
 #include <cstdint>
-#include <functional>
 #include <list>
 #include <mutex>
 
@@ -28,7 +26,7 @@ namespace Cozmo {
 class GameMessagePort : private Util::noncopyable
 {
 public:
-  using ReceiveFromUnityFunc = std::function<void(const uint8_t*, size_t)>;
+  GameMessagePort(size_t toGameBufferSize, bool isCritical);
 
   // for engine to send message to unity
   void PushToGameMessage(const uint8_t* buffer, size_t size);
@@ -43,13 +41,16 @@ public:
   size_t PullToGameMessages(uint8_t* buffer, size_t bufferSize);
 
 private:
-  uint8_t _toGameBuffer[ExternalInterface::kDirectCommsBufferSize];
+  std::unique_ptr<uint8_t[]> _toGameBuffer;
+  const size_t _toGameCapacity;
   size_t _toGameSize{0};
   std::mutex _toGameMutex;
 
   std::list<std::vector<uint8_t>> _toEngineMessages;
   std::mutex _toEngineMutex;
   bool _toGameBufferFull = false;
+
+  const bool _isCritical;
 };
 
 }

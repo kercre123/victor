@@ -360,7 +360,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _DASEventViewName: face_enrollment_unlock
   _DASEventViewType: 0
-  _CloseDialogOnTapOutside: 0
+  _CloseDialogOnTapOutside: 1
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 1
   _AvailableColor: {r: 0.627451, g: 0.9372549, b: 0.23529412, a: 1}

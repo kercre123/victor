@@ -209,7 +209,8 @@ int cozmo_startup(const char *configuration_data)
     , new Util::DasLoggerProvider()
 #endif
 #if ANKI_DEV_CHEATS
-    , new DevLoggerProvider(Util::FileUtils::FullFilePath( {DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory(), DevLoggingSystem::kPrintName} ))
+    , new DevLoggerProvider(DevLoggingSystem::GetInstance()->GetQueue(),
+                            Util::FileUtils::FullFilePath( {DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory(), DevLoggingSystem::kPrintName} ))
 #endif
   });
   Anki::Util::gLoggerProvider = loggerProvider;
@@ -322,6 +323,14 @@ void cozmo_transmit_game_to_engine(const uint8_t* buffer, const size_t size)
     return;
   }
   engineAPI->ReceiveMessages(buffer, size);
+}
+
+size_t cozmo_transmit_viz_to_game(uint8_t* const buffer, const size_t size)
+{
+  if (engineAPI == nullptr) {
+    return 0;
+  }
+  return engineAPI->SendVizMessages(buffer, size);
 }
 
 void cozmo_execute_background_transfers()

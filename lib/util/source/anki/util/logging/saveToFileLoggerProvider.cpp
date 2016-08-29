@@ -17,8 +17,8 @@ namespace Anki {
 namespace Util {
   
   
-SaveToFileLoggerProvider::SaveToFileLoggerProvider(const std::string& baseDirectory, std::size_t maxFileSize)
-: _fileLogger(new RollingFileLogger(baseDirectory, RollingFileLogger::kDefaultFileExtension, maxFileSize))
+SaveToFileLoggerProvider::SaveToFileLoggerProvider(Dispatch::Queue* queue, const std::string& baseDirectory, std::size_t maxFileSize)
+: _fileLogger(new RollingFileLogger(queue, baseDirectory, RollingFileLogger::kDefaultFileExtension, maxFileSize))
 {
   
 }

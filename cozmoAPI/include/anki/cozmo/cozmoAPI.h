@@ -48,6 +48,9 @@ public:
   size_t SendMessages(uint8_t* buffer, size_t bufferSize);
   void ReceiveMessages(const uint8_t* buffer, size_t size);
   void ExecuteBackgroundTransfers();
+
+  // Debug viz communication
+  size_t SendVizMessages(uint8_t* buffer, size_t bufferSize);
   
   // Destroys any running thread and game instance
   void Clear();
@@ -68,10 +71,13 @@ private:
     // For manually ticking the game
     bool Update(const double currentTime_sec);
     GameMessagePort* GetGameMessagePort() const { return _gameMessagePort.get(); }
+    GameMessagePort* GetVizMessagePort() const { return _vizMessagePort.get(); }
     CozmoEngine* GetEngine() const { return _cozmoInstance.get(); }
     
   private:
+    static GameMessagePort* CreateVizMessagePort();
     std::unique_ptr<GameMessagePort> _gameMessagePort;
+    std::unique_ptr<GameMessagePort> _vizMessagePort;
     std::unique_ptr<CozmoEngine> _cozmoInstance;
     std::atomic<bool> _isRunning;
 

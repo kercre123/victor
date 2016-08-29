@@ -270,11 +270,12 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
     TransitionToStackingBlock(robot);
   }
 
-  const bool sayName = !_shouldStreamline;
+  //skips turning towards face if this action is streamlined
+  const f32 angleTurnTowardsFace = _shouldStreamline ? 0 : kBSB_MaxTurnTowardsFaceBeforePickupAngle_deg;
   DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot, _targetBlockTop,
                                                                     false, 0, false,
-                                                                    kBSB_MaxTurnTowardsFaceBeforePickupAngle_deg,
-                                                                    sayName);
+                                                                    angleTurnTowardsFace,
+                                                                    false);
   action->SetSayNameAnimationTrigger(AnimationTrigger::StackBlocksPreActionNamedFace);
   action->SetNoNameAnimationTrigger(AnimationTrigger::StackBlocksPreActionUnnamedFace);
 
@@ -371,7 +372,9 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
     StartActing(new DriveToPlaceOnObjectAction(robot, _targetBlockBottom),
                 [this, &robot](ActionResult res) {
                   if( res == ActionResult::SUCCESS ) {
-                    TransitionToPlayingFinalAnim(robot);
+                    if(!_shouldStreamline){
+                      TransitionToPlayingFinalAnim(robot);
+                    }
                   }
                   else if( res == ActionResult::FAILURE_RETRY ) {
                     StartActing(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksRetry),

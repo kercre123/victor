@@ -29,9 +29,9 @@ namespace Anki {
 namespace Util {
   
 const char * const RollingFileLogger::kDefaultFileExtension = ".log";
-  
-RollingFileLogger::RollingFileLogger(const std::string& baseDirectory, const std::string& extension, std::size_t maxFileSize)
-: _dispatchQueue(Dispatch::Create("RolFileLogger"))
+
+RollingFileLogger::RollingFileLogger(Dispatch::Queue* queue, const std::string& baseDirectory, const std::string& extension, std::size_t maxFileSize)
+: _dispatchQueue(queue)
 , _baseDirectory(baseDirectory)
 , _extension(extension)
 , _maxFileSize(maxFileSize)
@@ -41,14 +41,24 @@ RollingFileLogger::RollingFileLogger(const std::string& baseDirectory, const std
   
 RollingFileLogger::~RollingFileLogger()
 {
-  Dispatch::Stop(_dispatchQueue);
-  Dispatch::Release(_dispatchQueue);
   _currentLogFileHandle.close();
+}
+
+void RollingFileLogger::ExecuteBlock(const std::function<void ()>& block)
+{
+  if (nullptr != _dispatchQueue)
+  {
+    Dispatch::Async(_dispatchQueue, block);
+  }
+  else
+  {
+    block();
+  }
 }
 
 void RollingFileLogger::Write(const std::string& message)
 {
-  Dispatch::Async(_dispatchQueue, [this, message] {
+  ExecuteBlock([this, message] {
     WriteInternal(message);
   });
 }

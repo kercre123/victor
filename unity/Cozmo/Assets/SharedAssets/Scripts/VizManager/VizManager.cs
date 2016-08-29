@@ -1,4 +1,8 @@
-﻿using System;
+﻿#if !UNITY_EDITOR && (UNITY_IOS || UNITY_ANDROID)
+#define VIZ_ON_DEVICE
+#endif
+
+using System;
 using UnityEngine;
 using System.Collections.Generic;
 using Anki.Cozmo.VizInterface;
@@ -8,51 +12,15 @@ using Cozmo.Util;
 namespace Anki.Cozmo.Viz {
   public class VizManager : MonoBehaviour {
 
-    private class MessageVizWrapper : IMessageWrapper {
-      public readonly MessageViz Message = new MessageViz();
-
-      #region IMessageWrapper implementation
-
-      public void Unpack(System.IO.Stream stream) {
-        Message.Unpack(stream);
-      }
-
-      public void Unpack(System.IO.BinaryReader reader) {
-        Message.Unpack(reader);
-      }
-
-      public void Pack(System.IO.Stream stream) {
-        Message.Pack(stream);
-      }
-
-      public void Pack(System.IO.BinaryWriter writer) {
-        Message.Pack(writer);
-      }
-
-      public string GetTag() {
-        return Message.GetTag().ToString();
-      }
-
-      public int Size {
-        get {
-          return Message.Size;
-        }
-      }
-
-      public bool IsValid {
-        get {
-          return Message.GetTag() != MessageViz.Tag.INVALID;
-        }
-      }
-
-      #endregion
-    }
-
     private class VizUdpChannel : UdpChannel<MessageVizWrapper, MessageVizWrapper> {
 
     }
 
+    #if VIZ_ON_DEVICE
+    private VizDirectChannel _Channel = null;
+    #else
     private VizUdpChannel _Channel = null;
+    #endif
 
     private DisconnectionReason _LastDisconnectionReason;
 
@@ -159,7 +127,11 @@ namespace Anki.Cozmo.Viz {
         Instance = this;
       }
 
+      #if VIZ_ON_DEVICE
+      _Channel = new VizDirectChannel();
+      #else
       _Channel = new VizUdpChannel();
+      #endif
       _Channel.ConnectedToClient += Connected;
       _Channel.DisconnectedFromClient += Disconnected;
       _Channel.MessageReceived += ReceivedMessage;

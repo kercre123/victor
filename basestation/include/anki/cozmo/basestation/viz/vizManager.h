@@ -34,6 +34,12 @@
 #include <vector>
 #include <map>
 
+#if defined(ANDROID) || defined(ANKI_IOS_BUILD)
+#define VIZ_ON_DEVICE 1
+#else
+#define VIZ_ON_DEVICE 0
+#endif
+
 namespace Anki {
   
   // Forward declaration
@@ -49,6 +55,7 @@ namespace Anki {
   struct RobotMood;
   } // end namespace VizInterface
     
+    class GameMessagePort;
     class IExternalInterface;
 
     class VizManager
@@ -73,6 +80,10 @@ namespace Anki {
       // NOTE: Connect() will call Disconnect() first if already connected.
       Result Connect(const char *udp_host_address, const unsigned short port, const char* unity_host_address, const unsigned short unity_port);
       Result Disconnect();
+
+      #if VIZ_ON_DEVICE
+      void SetMessagePort(GameMessagePort* port) { _unityVizPort = port; }
+      #endif
       
       // Whether or not to display the viz objects
       void ShowObjects(bool show);
@@ -405,7 +416,11 @@ namespace Anki {
 
       bool               _isInitialized;
       UdpClient          _vizClient;
+      #if VIZ_ON_DEVICE
+      GameMessagePort*   _unityVizPort = nullptr;
+      #else
       UdpClient          _unityVizClient;
+      #endif
       
 
       /*
