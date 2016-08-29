@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
+#include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -93,18 +94,28 @@ void SparksBehaviorChooser::OnSelected()
   _switchingSoftToHardSpark = false;
   _timePlayingOutroStarted = 0;
   
+  // Set the idle driving animations to sparks driving anims
+  _robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::SparkBackpackLights,
+    AnimationTrigger::SparkBackpackLights,
+    AnimationTrigger::SparkBackpackLights});
+  _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::SparkBackpackLights);
+  
+  // Turn off reactionary behaviors that could interrupt the spark
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, false);
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeFace, false);
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCubeMoved, false);
-
 }
   
 void SparksBehaviorChooser::OnDeselected()
 {
+  // Revert driving anmis
+  _robot.GetDrivingAnimationHandler().PopDrivingAnimations();
+  _robot.GetAnimationStreamer().PopIdleAnimation();
+  
+  // Turn reactionary behaviors back on
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, true);
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeFace, true);
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCubeMoved, true);
-  
 }
 
 

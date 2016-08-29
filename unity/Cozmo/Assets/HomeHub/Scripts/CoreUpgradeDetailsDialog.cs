@@ -368,19 +368,12 @@ public class CoreUpgradeDetailsDialog : BaseView {
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Spark);
     RobotEngineManager.Instance.CurrentRobot.EnableSparkUnlock(_UnlockInfo.Id.Value);
 
-    // apparently not a bitflag in unity
-    RobotEngineManager.Instance.CurrentRobot.SetFlashingBackpackLED(Anki.Cozmo.LEDId.LED_BACKPACK_FRONT, Color.blue);
-    RobotEngineManager.Instance.CurrentRobot.SetFlashingBackpackLED(Anki.Cozmo.LEDId.LED_BACKPACK_MIDDLE, Color.blue);
-    RobotEngineManager.Instance.CurrentRobot.SetFlashingBackpackLED(Anki.Cozmo.LEDId.LED_BACKPACK_BACK, Color.blue);
     UpdateState();
     DataPersistenceManager.Instance.Save();
   }
   private void StopSparkUnlock() {
     if (RobotEngineManager.Instance.CurrentRobot.IsSparked) {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
-      RobotEngineManager.Instance.CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_FRONT, Color.black);
-      RobotEngineManager.Instance.CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_MIDDLE, Color.black);
-      RobotEngineManager.Instance.CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_BACK, Color.black);
       RobotEngineManager.Instance.CurrentRobot.StopSparkUnlock();
     }
     UpdateState();
