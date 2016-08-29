@@ -189,5 +189,41 @@ void NavMemoryMapQuadTree::AddQuadInternal(const Quad2f& quad, const INavMemoryM
   _navMesh.AddQuad(quad, nodeContent);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMemoryMapQuadTree::AddLineInternal(const Point2f& from, const Point2f& to, EContentType type)
+{
+  const NavMeshQuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(type);
+  NodeContent nodeContent(nodeContentType);
+  _navMesh.AddLine(from, to, nodeContent);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMemoryMapQuadTree::AddLineInternal(const Point2f& from, const Point2f& to, const INavMemoryMapQuadData& content)
+{
+  const NavMeshQuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(content.type);
+  NodeContent nodeContent(nodeContentType);
+  nodeContent.data.reset( content.Clone() );
+
+  _navMesh.AddLine(from, to, nodeContent);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMemoryMapQuadTree::AddTriangleInternal(const Triangle2f& tri, EContentType type)
+{
+  const NavMeshQuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(type);
+  NodeContent nodeContent(nodeContentType);
+  _navMesh.AddTriangle(tri, nodeContent);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMemoryMapQuadTree::AddTriangleInternal(const Triangle2f& tri, const INavMemoryMapQuadData& content)
+{
+  const NavMeshQuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(content.type);
+  NodeContent nodeContent(nodeContentType);
+  nodeContent.data.reset( content.Clone() );
+
+  _navMesh.AddTriangle(tri, nodeContent);
+}
+
 } // namespace Cozmo
 } // namespace Anki

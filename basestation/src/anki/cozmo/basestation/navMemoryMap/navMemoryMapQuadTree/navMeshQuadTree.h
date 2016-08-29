@@ -17,6 +17,7 @@
 
 #include "anki/cozmo/basestation/navMemoryMap/navMemoryMapTypes.h"
 #include "anki/common/basestation/math/point.h"
+#include "anki/common/basestation/math/triangle.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -50,6 +51,10 @@ public:
 
   // notify the navmesh that the given quad has the specified content
   void AddQuad(const Quad2f& quad, const NodeContent& nodeContent);
+  // notify the navmesh that the given line has the specified content
+  void AddLine(const Point2f& from, const Point2f& to, const NodeContent& nodeContent);
+  // notify the navmesh that the given triangle has the specified content
+  void AddTriangle(const Triangle2f& tri, const NodeContent& nodeContent);
   
   // merge the given quadtree into this quad tree, applying to the quads from other the given transform
   void Merge(const NavMeshQuadTree& other, const Pose3d& transform);
@@ -66,6 +71,10 @@ private:
   
   // Expand the root node so that the given quad is included in the navMesh
   void Expand(const Quad2f& quadToCover);
+  // Expand the root node so that the given point is included in the navMesh
+  void Expand(const Point2f& pointToInclude);
+  // Expand the root node so that the given triangle is included in the navMesh
+  void Expand(const Triangle2f& triangleToCover);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes

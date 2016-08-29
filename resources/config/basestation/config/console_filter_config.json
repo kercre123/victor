@@ -52,7 +52,9 @@
     [
       { "channel": "Unnamed",         "enabled": false }, // Unnamed is currently the default channel
       { "channel": "Unity"  ,         "enabled": false },
-      { "channel": "Audio",           "enabled": false }
+      { "channel": "Audio",           "enabled": false },
+      { "channel": "Unfiltered",      "enabled": true  }, // things the are required always (like callstack dump on assert)
+      { "channel": "CpuProfiler",     "enabled": true  }
     ],
     "levels":
     [
@@ -70,7 +72,9 @@
     [
       { "channel": "Unnamed",         "enabled": false }, // Unnamed is currently the default channel
       { "channel": "Unity"  ,         "enabled": false },
-      { "channel": "Audio",           "enabled": false }
+      { "channel": "Audio",           "enabled": false },
+      { "channel": "Unfiltered",      "enabled": true  }, // things the are required always (like callstack dump on assert)
+      { "channel": "CpuProfiler",     "enabled": true  }
     ],
     "levels":
     [

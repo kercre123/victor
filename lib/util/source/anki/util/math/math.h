@@ -85,7 +85,7 @@ inline constexpr bool IsFltNear(double x, float y)
 // IsNear implementations
 // TRUE if x is within epsilon tolerance of y
   
-inline constexpr bool IsNear(float x, float y, float epsilon)
+inline constexpr bool IsNear(float x, float y, float epsilon=Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT)
 {
   return (Anki::Util::Abs(x-y) < epsilon);
 }

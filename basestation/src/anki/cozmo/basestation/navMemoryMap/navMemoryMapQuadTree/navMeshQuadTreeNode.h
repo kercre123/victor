@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
 #include "anki/common/basestation/math/point.h"
+#include "anki/common/basestation/math/triangle.h"
 
 #include "util/helpers/noncopyable.h"
 
@@ -44,6 +45,40 @@ public:
 
   using NodeCPtrVector = std::vector<const NavMeshQuadTreeNode*>;
 
+  struct SegmentLineEquation {
+    const Point2f& from;
+    const Point2f& to;
+    bool isXAligned; // m and 1/m are not useful in this case
+    bool isYAligned; // m and 1/m are not useful in this case
+    float segM;      // m (segment-line slope)
+    float oneOverM;  // 1/m
+    float segB;      // y-intercept
+    
+    inline void CalculateMB()
+    {
+      const float xInc = from.x() - to.x();
+      const float yInc = from.y() - to.y();
+      isXAligned = FLT_NEAR(xInc, 0.0f);
+      isYAligned = FLT_NEAR(yInc, 0.0f);
+      const bool computeLineEq = !isXAligned && !isYAligned;
+      if ( computeLineEq )
+      {
+        // m = (y-y1) / (x-x1)
+        segM = yInc / xInc;
+        oneOverM = 1.0f / segM;
+        // y = mx + b   -->   b = y - mx
+        segB = from.y() - (segM * from.x());
+      }
+      else {
+        segM = oneOverM = segB = 0.0f; // they are not 0, I just set to 0 because I don't use them for X or Y aligned segments
+      }
+    }
+    
+    inline SegmentLineEquation(const Point2f& f, const Point2f& t) : from(f), to(t) { CalculateMB(); }
+  };
+  using QuadSegmentArray = SegmentLineEquation[4];
+  using TriangleSegmentArray = SegmentLineEquation[3];
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialization
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -80,6 +115,10 @@ public:
   
   // returns true if this node FULLY contains the given quad, false if any corner is not within this node's quad
   bool Contains(const Quad2f& quad) const;
+  // returns true if this node contains the given point
+  bool Contains(const Point2f& point) const;
+  // returns true if this node FULLY contains the given triangle
+  bool Contains(const Triangle2f& tri) const;
 
   // Builds a quad from our coordinates
   Quad3f MakeQuad() const;
@@ -96,8 +135,14 @@ public:
   // Modification
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // helper for the specific add functions. It properly processes the quad down the tree for the given content
-  bool AddQuad(const Quad2f& quad, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
+  // processes the given quad within the tree and appropriately stores the content in the quad tree where the quad overlaps
+  bool AddContentQuad(const Quad2f& quad, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
+  
+  // processes the given line within the tree and appropriately stores the content in the quad tree where the line collides
+  bool AddContentLine(const Point2f& from, const Point2f& to, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
+  
+  // processes the given triangle within the tree and appropriately stores the content in the quad tree where the line collides
+  bool AddContentTriangle(const Triangle2f& tri, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
 
   // Convert this node into a parent of its level, delegating its children to the new child that substitutes it
   // In order for a quadtree to be valid, the only way this could work without further operations is calling this
@@ -150,6 +195,37 @@ private:
   // Query
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+  // setup precomputes common variables that the recursive method is going to use
+  bool AddTriangle_Setup(const Triangle2f& quad,
+                         const NodeContent& detectedContent,
+                         NavMeshQuadTreeProcessor& processor);
+
+  // checks how the given triangle affects this node, and properly acts, delegating on children if needed
+  bool AddTriangle_Recursive(const Triangle2f& triangle,
+                             const TriangleSegmentArray& triangleSegments,
+                             const NodeContent& detectedContent,
+                             NavMeshQuadTreeProcessor& processor);
+  
+  // checks how the given line affects this node, and properly acts, delegating on children if needed
+  bool AddLine_Recursive(const SegmentLineEquation& segmentLine, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
+ 
+  // old implementation (slow) of AddQuad
+  // checks how the given quad affects this node, and properly acts, delegating on children if needed
+  bool AddQuad_OldRecursive(const Quad2f& quad, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
+  
+  // new implementation (fast) of AddQuad
+  // setup precomputes common variables that the recursive method is going to use
+  bool AddQuad_NewSetup(const Quad2f &quad,
+                        const NodeContent& detectedContent,
+                        NavMeshQuadTreeProcessor& processor);
+  
+  // new implementation (fast) of AddQuad
+  // checks how the given quad affects this node, and properly acts, delegating on children if needed
+  bool AddQuad_NewRecursive(const Quad2f& quad,
+                            const QuadSegmentArray& nonAAQuadSegments,
+                            const NodeContent& detectedContent,
+                            NavMeshQuadTreeProcessor& processor);
+  
   // return true if this quad can subdivide
   bool CanSubdivide() const { return _level > 0; }
   

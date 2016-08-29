@@ -1097,8 +1097,8 @@ Result Robot::Update(bool ignoreVisionModes)
   
   ///////// MemoryMap ///////////
       
-  // update navigation memory map
-  _blockWorld.UpdateNavMemoryMap();        
+  // update the memory map based on the current's robot pose
+  _blockWorld.UpdateRobotPoseInMemoryMap();
       
   ///////// Update the behavior manager ///////////
       
@@ -2877,7 +2877,7 @@ bool Robot::CanInteractWithObjectHelper(const ObservableObject& object, Pose3d& 
 inline static bool IsTooHigh(const ObservableObject& object, const Pose3d& poseWrtRobot,
                              float heightMultiplier, float heightTol, bool useTop)
 {
-  const Point3f rotatedSize( object.GetPose().GetRotation() * object.GetSize() );
+  const Point3f rotatedSize( poseWrtRobot.GetRotation() * object.GetSize() );
   const float rotatedHeight = std::abs( rotatedSize.z() );
   float z = poseWrtRobot.GetTranslation().z();
   if(useTop) {

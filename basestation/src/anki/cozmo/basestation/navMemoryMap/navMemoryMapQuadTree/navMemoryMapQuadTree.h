@@ -76,9 +76,17 @@ protected:
   // From INavMemoryMap
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // add a quad that with the specified content type
+  // add a quad with the specified content
   virtual void AddQuadInternal(const Quad2f& quad, EContentType type) override;
   virtual void AddQuadInternal(const Quad2f& quad, const INavMemoryMapQuadData& content) override;
+  
+  // add a line with the specified content
+  virtual void AddLineInternal(const Point2f& from, const Point2f& to, EContentType type) override;
+  virtual void AddLineInternal(const Point2f& from, const Point2f& to, const INavMemoryMapQuadData& content) override;
+  
+  // add a triangle with the specified content
+  virtual void AddTriangleInternal(const Triangle2f& tri, EContentType type) override;
+  virtual void AddTriangleInternal(const Triangle2f& tri, const INavMemoryMapQuadData& content) override;
 
 private:
 

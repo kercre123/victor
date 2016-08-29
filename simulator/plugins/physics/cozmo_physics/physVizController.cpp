@@ -320,9 +320,9 @@ void PhysVizController::Draw(int pass, const char *view)
             quadInVector.center[0]-halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2]  // lo R
          );
 
-        const bool kRenderQuadBorder = false;
+        const bool kRenderQuadBorder = true;
         if ( kRenderQuadBorder ) {
-          glColor4ub(255,255,255,255);
+          glColor4ub(255,255,255,10);
           DrawQuad(
               quadInVector.center[0]+halfSize, quadInVector.center[1]+halfSize, quadInVector.center[2], // up L
               quadInVector.center[0]-halfSize, quadInVector.center[1]+halfSize, quadInVector.center[2], // lo L

@@ -65,8 +65,7 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject* object, const P
   }
   
   // Notify about the change we are about to make from old to new:
-  _robot.GetBlockWorld().OnObjectPoseChanged(object->GetID(), object->GetFamily(), object->GetPose(),
-                                             object->GetPoseState(), newPose, newPoseState );
+  _robot.GetBlockWorld().OnObjectPoseChanged(object->GetID(), object->GetFamily(), newPose, newPoseState);
   
   if(newPoseState == PoseState::Unknown)
   {
@@ -213,7 +212,8 @@ Result ObjectPoseConfirmer::AddObjectRelativeObservation(ObservableObject* objec
 
   if(!observedObject->IsPoseStateUnknown())
   {
-    SetPoseHelper(objectToUpdate, newPose, -1.f, observedObject->GetPoseState(), "AddObjectRelativeObservation");
+    const PoseState newPoseState = PoseState::Dirty; // do not inherit the pose state from the observed object
+    SetPoseHelper(objectToUpdate, newPose, -1.f, newPoseState, "AddObjectRelativeObservation");
     _poseConfirmations[objectID].lastPoseUpdatedTime = observedObject->GetLastObservedTime();
   }
   
