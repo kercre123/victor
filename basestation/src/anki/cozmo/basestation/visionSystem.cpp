@@ -133,8 +133,9 @@ namespace Cozmo {
   CONSOLE_VAR(bool, kIgnoreFacesBelowRobot,              "Vision.FaceDetection", true);
   
   
-  // Vision processing scheduler (COZMO-3218) will probably affects this
+  // Vision processing scheduler (COZMO-3218) will probably affects these
   CONSOLE_VAR_RANGED(u8, kMarkerDetectionFrequency, "Vision.Performance", 1, 1, 10);
+  CONSOLE_VAR_RANGED(u8, kOverheadEdgeDetectionFrequency, "Vision.Performance", 1, 1, 10);
   
   namespace {
     // Image quality checks:
@@ -3070,6 +3071,11 @@ namespace Cozmo {
     }
     
     if (VisionMode::CheckingQuality == mode && (_frameNumber % kQualityCheckFrequency) != 0)
+    {
+      return false;
+    }
+    
+    if (VisionMode::DetectingOverheadEdges == mode && (_frameNumber % kOverheadEdgeDetectionFrequency) != 0)
     {
       return false;
     }
