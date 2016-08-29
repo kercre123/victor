@@ -21,9 +21,9 @@ namespace Anki {
 
       public bool IsPlayer;
       public int TargetScore;
-      public bool LessThan;
+      public ComparisonType compareType;
 
-      // Returns true if the specified player's score is equal to or greater than the target
+      // Returns true if the specified player's score matches the target range
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
         if ((cozEvent is MinigameGameEvent)) {
@@ -36,12 +36,7 @@ namespace Anki {
           else {
             toCheck = miniGameInstance.CozmoScoreTotal;
           }
-          if (toCheck >= TargetScore) {
-            isMet = !LessThan;
-          }
-          else {
-            isMet = LessThan;
-          }
+          isMet = CompareConditionValues(toCheck, TargetScore, compareType);
         }
         return isMet;
       }
@@ -50,7 +45,7 @@ namespace Anki {
       public override void DrawControls() {
         EditorGUILayout.BeginHorizontal();
         IsPlayer = EditorGUILayout.Toggle(new GUIContent("Check Player", "True if we are checking PlayerScore, False if we are checking CozmoScore"), IsPlayer);
-        LessThan = EditorGUILayout.Toggle(new GUIContent("Is Less Than", "If we are checking less than rather than equal to or greater than"), LessThan);
+        compareType = (ComparisonType)EditorGUILayout.EnumPopup(compareType);
         TargetScore = EditorGUILayout.IntField(new GUIContent("Target Score", "Target points to check"), TargetScore);
         EditorGUILayout.EndHorizontal();
       }

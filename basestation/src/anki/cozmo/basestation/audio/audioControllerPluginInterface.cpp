@@ -14,12 +14,14 @@
 
 #include "anki/cozmo/basestation/audio/audioControllerPluginInterface.h"
 #include "anki/cozmo/basestation/audio/audioController.h"
+#include "util/math/numericCast.h"
 
 #ifndef EXCLUDE_ANKI_AUDIO_LIBS
 
 #define USE_AUDIO_ENGINE 1
 #include "DriveAudioEngine/PlugIns/hijackAudioPlugIn.h"
 #include "DriveAudioEngine/PlugIns/wavePortalPlugIn.h"
+#include "DriveAudioEngine/PlugIns/wavePortalFxTypes.h"
 #else
 
 // If we're excluding the audio libs, don't link any of the audio engine
@@ -38,29 +40,28 @@ AudioControllerPluginInterface::AudioControllerPluginInterface( AudioController&
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioControllerPluginInterface::SetWavePortalAudioDataInfo( uint32_t sampleRate,
-                                                                 uint16_t numberOfChannels,
-                                                                 float duration_ms,
-                                                                 float* audioBuffer,
-                                                                 uint32_t bufferSize )
+void AudioControllerPluginInterface::GiveWavePortalAudioDataOwnership(const StandardWaveDataContainer* audioData)
 {
 #if USE_AUDIO_ENGINE
-  if ( _parentAudioController._wavePortalPlugIn != nullptr ) {
-    _parentAudioController._wavePortalPlugIn->SetAudioDataInfo( sampleRate,
-                                                                numberOfChannels,
-                                                                duration_ms,
-                                                                audioBuffer,
-                                                                bufferSize );
+  if ( nullptr != _parentAudioController._wavePortalPlugIn && nullptr != audioData ) {
+    using namespace AudioEngine::PlugIns;
+    const AudioDataStream* dataStream = new AudioDataStream(audioData->sampleRate,
+                                                            audioData->numberOfChannels,
+                                                            audioData->ApproximateDuration_ms(),
+                                                            audioData->audioBuffer,
+                                                            Util::numeric_cast<uint32_t>(audioData->bufferSize));
+
+    _parentAudioController._wavePortalPlugIn->SetAudioDataOwnership(dataStream);
   }
 #endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioControllerPluginInterface::ClearWavePortalAudioDataInfo()
+void AudioControllerPluginInterface::ClearWavePortalAudioData()
 {
 #if USE_AUDIO_ENGINE
   if ( _parentAudioController._wavePortalPlugIn != nullptr ) {
-    _parentAudioController._wavePortalPlugIn->ClearAudioDataInfo();
+    _parentAudioController._wavePortalPlugIn->ClearAudioData();
   }
 #endif
 }

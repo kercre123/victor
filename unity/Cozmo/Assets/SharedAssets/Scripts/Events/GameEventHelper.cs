@@ -116,7 +116,7 @@ public class DifficultyUnlockedGameEvent : GameEventWrapper {
   }
 }
 
-public class UnlockableUnlockedGameEvent : GameEventWrapper {
+public class UnlockableGameEvent : GameEventWrapper {
   public UnlockId Unlock;
 
   public override void Init(GameEvent Enum, params object[] args) {
@@ -203,10 +203,11 @@ public class GameEventWrapperFactory {
     Register(GameEvent.OnChallengeRoundEnd, typeof(MinigameGameEvent));
     Register(GameEvent.OnChallengeComplete, typeof(MinigameGameEvent));
     Register(GameEvent.OnChallengeDifficultyUnlock, typeof(DifficultyUnlockedGameEvent));
-    Register(GameEvent.OnUnlockableEarned, typeof(UnlockableUnlockedGameEvent));
+    Register(GameEvent.OnUnlockableEarned, typeof(UnlockableGameEvent));
     Register(GameEvent.OnDailyGoalProgress, typeof(DailyGoalProgressGameEvent));
     Register(GameEvent.OnDailyGoalCompleted, typeof(DailyGoalCompleteGameEvent));
     Register(GameEvent.OnNewDayStarted, typeof(SessionStartedGameEvent));
+    Register(GameEvent.OnUnlockableSparked, typeof(UnlockableGameEvent));
   }
 
   private static void Register(Anki.Cozmo.GameEvent Enum, Type type) {

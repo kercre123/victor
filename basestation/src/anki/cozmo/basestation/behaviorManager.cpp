@@ -21,7 +21,6 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/components/lightsComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
-#include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/messageHelpers.h"
@@ -570,6 +569,10 @@ void BehaviorManager::StopCurrentBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::CheckForComputationalSwitch()
 {
+  if( !_reactionsEnabled )
+  {
+    return;
+  }
   //Check to see if any reactionary behaviors want to perform a computational switch
   bool hasSwitched = false;
   for( auto rBehavior: _reactionaryBehaviors){
@@ -639,21 +642,6 @@ void BehaviorManager::SetRequestedSpark(UnlockId spark, bool softSpark)
   
 const UnlockId BehaviorManager::SwitchToRequestedSpark()
 {
-  // going into spark mode
- /** if( _activeSpark == UnlockId::Count && _lastRequestedSpark != UnlockId::Count )
-  {
-    _robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::SparkDriveStart,
-      AnimationTrigger::SparkDriveLoop,
-      AnimationTrigger::SparkDriveEnd});
-    _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::SparkIdle);
-  }
-  // exiting spark mode
-  else if( _activeSpark != UnlockId::Count && _lastRequestedSpark == UnlockId::Count )
-  {
-    _robot.GetDrivingAnimationHandler().PopDrivingAnimations();
-    _robot.GetAnimationStreamer().PopIdleAnimation();
-  }**/
-
   _lastChooserSwitchTime = Util::numeric_cast<float>( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() );
   
   _activeSpark = _lastRequestedSpark;

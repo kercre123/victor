@@ -25,6 +25,7 @@ public class SelectDifficultyState : State {
       "selected_difficulty_continue_button");
     _Game.SharedMinigameView.ShelfWidget.GrowShelfBackground();
 
+    _Game.SharedMinigameView.ShowTallShelf(true);
     _DifficultySelectButtonPanel = _Game.SharedMinigameView.ShowDifficultySelectButtons(_DifficultyOptions,
       _HighestLevelCompleted, HandleInitialDifficultySelected);
   }
@@ -38,6 +39,7 @@ public class SelectDifficultyState : State {
   }
 
   public override void Exit() {
+    _Game.SharedMinigameView.ShowTallShelf(false);
     _DifficultySelectButtonPanel.OnDifficultySelected -= HandleDifficultySelected;
   }
 
@@ -78,7 +80,7 @@ public class SelectDifficultyState : State {
     _Game.SharedMinigameView.HideGameStateSlide();
 
     _SelectedDifficultyData.LoadAnimationPrefabData((UnityEngine.GameObject animationPrefab) => {
-      _Game.SharedMinigameView.ShowHowToPlayButton(_SelectedDifficultyData.DifficultyDescription.Key, animationPrefab);
+
     });
 
     _StateMachine.SetNextState(_NextState);

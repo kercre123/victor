@@ -603,7 +603,7 @@ public class MockRobot : IRobot {
     }
   }
 
-  public void SetEnableFreeplayLightStates(bool enable) {
+  public void SetEnableFreeplayLightStates(bool enable, int objectID) {
   }
 
   public void TurnOffAllLights(bool now = false) {
@@ -925,6 +925,12 @@ public class MockRobot : IRobot {
   }
 
   public void EnableLift(bool enable) {
+  }
+
+  public void EnterSDKMode() {
+  }
+
+  public void ExitSDKMode() {
   }
 
   public event LightCubeStateEventHandler OnLightCubeAdded;

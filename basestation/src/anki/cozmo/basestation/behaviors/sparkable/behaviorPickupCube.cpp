@@ -94,7 +94,7 @@ void BehaviorPickUpCube::TransitionToDoingInitialReaction(Robot& robot)
   // this compound action will fail and we will not contionue this behavior.
   CompoundActionSequential* action = new CompoundActionSequential(robot);
   action->AddAction(new TurnTowardsObjectAction(robot, _targetBlock, Radians(PI_F), true));
-  action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::SparkPickupInitialCubeReaction));
+  action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::SparkPickupInitialCubeReaction));
   StartActing(action,
               [this,&robot](ActionResult res) {
                 if(ActionResult::SUCCESS != res) {

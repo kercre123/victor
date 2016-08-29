@@ -49,6 +49,9 @@ enum uint_32 GenericEvent
   Play__Dev_Robot__Tone_1K_5Sec = 1034417959,
   Play__Dev_Robot__Tone_440Hz_5Sec = 1471825745,
   Play__Music__Play = 2748524418,
+  Play__Robot_Sfx__Bored_Brickout = 4013569785,
+  Play__Robot_Sfx__Bored_Pendulum = 62303530,
+  Play__Robot_Sfx__Bored_Slot = 3905586496,
   Play__Robot_Sfx__Bpk_Blue_Loop_Play = 4211412779,
   Play__Robot_Sfx__Bpk_Green_Loop_Play = 1352654968,
   Play__Robot_Sfx__Bpk_Red_Loop_Play = 2658520760,
@@ -321,6 +324,9 @@ enum uint_32 Music
 
 enum uint_32 Robot_Sfx
 {
+  Bored_Brickout = 4013569785,
+  Bored_Pendulum = 62303530,
+  Bored_Slot = 3905586496,
   Bpk_Blue_Loop_Play = 4211412779,
   Bpk_Blue_Loop_Stop = 3465206791,
   Bpk_Green_Loop_Play = 1352654968,

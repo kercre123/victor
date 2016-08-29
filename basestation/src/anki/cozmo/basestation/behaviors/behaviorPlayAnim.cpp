@@ -51,16 +51,8 @@ bool BehaviorPlayAnim::IsRunnableInternal(const Robot& robot) const
 
 Result BehaviorPlayAnim::InitInternal(Robot& robot)
 {
-  const bool interruptRunning = true;
-  u8 tracksToLock = (u8) AnimTrackFlag::NO_TRACKS;
   
-  // Ensure animation doesn't throw cube down, but still can play get down animations
-  if(robot.IsCarryingObject()
-     && robot.GetOffTreadsState() == OffTreadsState::OnTreads){
-    tracksToLock = (u8) AnimTrackFlag::LIFT_TRACK;
-  }
-  
-  StartActing(new TriggerAnimationAction(robot, _animTrigger, _numLoops, interruptRunning, tracksToLock));
+  StartActing(new TriggerLiftSafeAnimationAction(robot, _animTrigger, _numLoops));
   return Result::RESULT_OK;
 }  
 

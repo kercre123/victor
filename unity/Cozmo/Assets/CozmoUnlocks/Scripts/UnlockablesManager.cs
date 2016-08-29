@@ -25,6 +25,7 @@ public class UnlockablesManager : MonoBehaviour {
   public Action<UnlockId> OnSparkStarted;
   public Action<CoreUpgradeDetailsDialog> OnSparkComplete;
   public Action<Anki.Cozmo.UnlockId, bool> OnUnlockPopupRequested;
+  public Action<UnlockId> OnUnlockComplete;
 
   public bool UnlocksLoaded { get { return _UnlocksLoaded; } }
 
@@ -272,10 +273,14 @@ public class UnlockablesManager : MonoBehaviour {
       if (GetUnlockableInfo(resultMessage.unlockID).UnlockableType == UnlockableType.Action) {
         RobotEngineManager.Instance.Message.BehaviorManagerMessage =
         Singleton<BehaviorManagerMessage>.Instance.Initialize(
-          Convert.ToByte (RobotEngineManager.Instance.CurrentRobotID),
-          Singleton<SparkUnlocked>.Instance.Initialize (resultMessage.unlockID)
+          Convert.ToByte(RobotEngineManager.Instance.CurrentRobotID),
+          Singleton<SparkUnlocked>.Instance.Initialize(resultMessage.unlockID)
         );
         RobotEngineManager.Instance.SendMessage();
+      }
+
+      if (OnUnlockComplete != null) {
+        OnUnlockComplete(resultMessage.unlockID);
       }
     }
   }

@@ -235,7 +235,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS2_Pause(Robot& robot)
   AnimationTrigger trigger = animGroupName.empty()  ? AnimationTrigger::Count : AnimationTriggerFromString(animGroupName.c_str());
   if ( trigger != AnimationTrigger::Count )
   {
-    pauseAction = new TriggerAnimationAction(robot,trigger);
+    pauseAction = new TriggerLiftSafeAnimationAction(robot,trigger);
   }
   else
   {
@@ -330,7 +330,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp(Robot& robot)
   AnimationTrigger trigger = animGroupName.empty()  ? AnimationTrigger::Count : AnimationTriggerFromString(animGroupName.c_str());
   if ( trigger != AnimationTrigger::Count )
   {
-    pauseAction = new TriggerAnimationAction(robot, trigger);
+    pauseAction = new TriggerLiftSafeAnimationAction(robot, trigger);
   }
   else
   {

@@ -682,8 +682,10 @@ message SetBackpackLEDs {
   uint_8   robotID
 }
 
+// Enables/disables specific cube light states
 message EnableLightStates {
-  bool enable
+  bool enable,
+  int_32 objectID = -1 // -1 is to enable/disable all cube light states
 }
 
 message EnableCubeSleep {
@@ -859,6 +861,12 @@ message ContinueFreeplayFromIdle{
 
 message EnableDroneMode {
   bool   isStarted
+}
+
+message EnterSdkMode {
+}
+
+message ExitSdkMode {
 }
 
 ///////////////////////////////////////////////////////////////////////////////

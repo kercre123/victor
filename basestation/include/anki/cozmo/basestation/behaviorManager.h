@@ -128,7 +128,8 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // Allows Goal evaluator to know if it should kick out the current goal and transition into a spark
-  bool ShouldSwitchToSpark() const { return (_activeSpark != _lastRequestedSpark) && !_didGameRequestSparkEnd;}
+  // Goal evaluator only switches from non-sparked to sparked.  Otherwise the sparkBehaviorChooser will kill itself
+  bool ShouldSwitchToSpark() const { return _activeSpark == UnlockId::Count && _activeSpark != _lastRequestedSpark;}
   
   // Actually switches out the LastRequestedSpark from the game with the active spark
   // Returns the UnlockID of the newly active spark

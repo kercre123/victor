@@ -24,21 +24,27 @@ class BlockWorldFilter;
 class ObservableObject;
 class Robot;
 
-class BehaviorKnockOverCubes : public IBehavior
-{  
+class BehaviorKnockOverCubes : public IReactionaryBehavior
+{
+public:
+  // Overridden to distinguish between the reactionary and spark versions of the behavior
+  virtual bool IsReactionary() const override;
+  
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorKnockOverCubes(Robot& robot, const Json::Value& config);
 
-  virtual Result InitInternal(Robot& robot) override;
-  virtual Result ResumeInternal(Robot& robot) override;
-  virtual void   StopInternal(Robot& robot) override;
-
-  virtual bool IsRunnableInternal(const Robot& robot) const override;  
+  virtual Result InitInternalReactionary(Robot& robot) override;
+  virtual void   StopInternalReactionary(Robot& robot) override;
+  virtual bool ShouldComputationallySwitch(const Robot& robot) override;
+  
+  virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
   virtual bool CarryingObjectHandledInternally() const override {return false;}
-
+  virtual bool ShouldResumeLastBehavior() const override { return false;}
+  
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
+  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
   void HandleObjectUpAxisChanged(const ObjectUpAxisChanged& msg, Robot& robot);
   
 private:
@@ -47,6 +53,9 @@ private:
   // UpdateWhileNotRunning
   mutable ObjectID _baseBlockID;
   mutable uint8_t _stackHeight;
+  mutable bool _objectObservedChanged;
+  // For checking computational switch
+  ObjectID _lastObservedObject;
   
   uint8_t _minStackHeight;
   
@@ -61,7 +70,8 @@ private:
     SettingDownBlock
   };
   
-  
+
+
   int _numRetries;
   std::set<BehaviorType> _disabledReactions;
   std::set<ObjectID> _objectsFlipped;
@@ -72,6 +82,7 @@ private:
   AnimationTrigger _knockOverEyesTrigger = AnimationTrigger::Count;
   AnimationTrigger _knockOverSuccessTrigger = AnimationTrigger::Count;
   AnimationTrigger _knockOverFailureTrigger = AnimationTrigger::Count;
+  bool _isReactionary;
 
   void TransitionToReachingForBlock(Robot& robot);
   void TransitionToKnockingOverStack(Robot& robot);
@@ -81,6 +92,7 @@ private:
   void InitializeMemberVars();
   virtual void ResetBehavior(Robot& robot);
   virtual void UpdateTargetStack(const Robot& robot) const;
+  bool CheckIfRunnable() const;
 
 };
 

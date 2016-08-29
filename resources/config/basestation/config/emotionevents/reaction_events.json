@@ -17,7 +17,16 @@
             "value": 1.0
          }
       ]
-    }      
+    },
+    {
+      "name": "ReactToUnexpectedMovement",
+      "emotionAffectors": [
+         {
+            "emotionType": "Confident",
+            "value": -0.2
+         }
+      ]
+    }
   ]
 }
 

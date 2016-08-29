@@ -58,7 +58,7 @@ private:
     PlacingBlock,
     LookingAtFace,
     VerifyingFace,
-    PlayingRequstAnim,
+    PlayingRequestAnim,
     Idle,
     PlayingDenyAnim,
     SearchingForBlock
@@ -103,6 +103,12 @@ private:
 
   bool   _shouldUseBlocks;
   bool   _doSecondRequest;
+  
+  int    _numRetriesPickingUpBlock;
+  int    _numRetriesDrivingToFace;
+  int    _numRetriesPlacingBlock;
+  
+  void SetState_internal(State state, const std::string& stateName);
   
   void TransitionToPlayingInitialAnimation(Robot& robot);
   void TransitionToFacingBlock(Robot& robot);

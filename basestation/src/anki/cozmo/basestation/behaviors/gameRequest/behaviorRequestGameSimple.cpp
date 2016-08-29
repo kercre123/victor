@@ -26,7 +26,8 @@
 
 namespace Anki {
 namespace Cozmo {
-
+  
+#define SET_STATE(s) SetState_internal(State::s, #s)
 
 #define DO_FACE_VERIFICATION_STEP 0
 
@@ -57,6 +58,8 @@ static const bool  kShouldUseBlocksDefault = true;
 static const bool  kDoSecondRequestDefault = false;
 
 static const int   kFaceVerificationNumImages = 4;
+static const int   kMaxNumberOfRetries = 2;
+
 
 // #define kDistToMoveTowardsFace_mm {120.0f, 100.0f, 140.0f, 50.0f, 180.0f, 20.0f}
 // to avoid cliff issues, we're only going to move slightly forwards
@@ -80,6 +83,9 @@ void BehaviorRequestGameSimple::ConfigPerNumBlocks::LoadFromJson(const Json::Val
 
 BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::Value& config)
   : IBehaviorRequestGame(robot, config)
+  , _numRetriesPickingUpBlock(0)
+  , _numRetriesDrivingToFace(0)
+  , _numRetriesPlacingBlock(0)
 {
   SetDefaultName("BehaviorRequestGameSimple");
 
@@ -166,6 +172,10 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot)
   }
 
   _initialRequest = true;
+  _numRetriesPickingUpBlock = 0;
+  _numRetriesDrivingToFace = 0;
+  _numRetriesPlacingBlock = 0;
+  
   
   return RESULT_OK;
 }
@@ -258,7 +268,7 @@ void BehaviorRequestGameSimple::TransitionToPlayingInitialAnimation(Robot& robot
     robot,
     new TriggerAnimationAction(robot, _activeConfig->initialAnimTrigger) );
   StartActing( animationAction, &BehaviorRequestGameSimple::TransitionToFacingBlock );
-  DEBUG_SET_STATE(PlayingInitialAnimation);
+  SET_STATE(PlayingInitialAnimation);
 }
   
 void BehaviorRequestGameSimple::TransitionToFacingBlock(Robot& robot)
@@ -267,7 +277,7 @@ void BehaviorRequestGameSimple::TransitionToFacingBlock(Robot& robot)
   if( targetBlockID.IsSet() ) {
     StartActing(new TurnTowardsObjectAction( robot, targetBlockID, PI_F ),
                 &BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation);
-    DEBUG_SET_STATE(FacingBlock);
+    SET_STATE(FacingBlock);
   }
   else {
     PRINT_NAMED_INFO("BehaviorRequestGameSimple.TransiitonToFacingBlock.NoBlock",
@@ -280,11 +290,18 @@ void BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation(Robot& robo
 {
   IActionRunner* animationAction = new TriggerAnimationAction(robot, _activeConfig->preDriveAnimTrigger);
   StartActing(animationAction, &BehaviorRequestGameSimple::TransitionToPickingUpBlock);
-  DEBUG_SET_STATE(PlayningPreDriveAnimation);
+  SET_STATE(PlayingPreDriveAnimation);
 }
 
 void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
 {
+  // Ensure we don't loop forever
+  if(_numRetriesPickingUpBlock > kMaxNumberOfRetries){
+    ComputeFaceInteractionPose(robot);
+    TransitionToDrivingToFace(robot);
+    return;
+  }
+  
   ObjectID targetBlockID = GetRobotsBlockID(robot);
   DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot, targetBlockID);
   action->SetMotionProfile(_driveToPickupProfile);
@@ -295,7 +312,7 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
                   TransitionToDrivingToFace(robot);
                 }
                 else if ( resultMsg.result == ActionResult::FAILURE_RETRY ) {
-
+                  _numRetriesPickingUpBlock++;
                   // TODO:(bn) animation groups here?
                   IActionRunner* animAction = nullptr;
                   switch(resultMsg.completionInfo.Get_objectInteractionCompleted().result)
@@ -329,7 +346,7 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
                 }
               } );
   
-  DEBUG_SET_STATE(PickingUpBlock);
+  SET_STATE(PickingUpBlock);
 }
 
 void BehaviorRequestGameSimple::TransitionToSearchingForBlock(Robot& robot)
@@ -338,7 +355,7 @@ void BehaviorRequestGameSimple::TransitionToSearchingForBlock(Robot& robot)
   // action if a block is found
   Pose3d lastKnownPose;
   if( GetLastBlockPose(lastKnownPose) ) {
-    DEBUG_SET_STATE(SearchingForBlock);
+    SET_STATE(SearchingForBlock);
 
     CompoundActionSequential* searchAction = new CompoundActionSequential(robot);
 
@@ -377,6 +394,12 @@ void BehaviorRequestGameSimple::ComputeFaceInteractionPose(Robot& robot)
 
 void BehaviorRequestGameSimple::TransitionToDrivingToFace(Robot& robot)
 {
+  // Ensure we don't loop forever
+  if(_numRetriesDrivingToFace > kMaxNumberOfRetries){
+    TransitionToPlacingBlock(robot);
+    return;
+  }
+  
   if( ! _hasFaceInteractionPose ) {
     PRINT_NAMED_INFO("BehaviorRequestGameSimple.TransitionToDrivingToFace.NoPose",
                      "%s: No interaction pose set to drive to face!",
@@ -398,6 +421,7 @@ void BehaviorRequestGameSimple::TransitionToDrivingToFace(Robot& robot)
                     TransitionToPlacingBlock(robot);
                   }
                   else if (result == ActionResult::FAILURE_RETRY) {
+                    _numRetriesDrivingToFace++;
                     TransitionToDrivingToFace(robot);
                   }
                   else {
@@ -406,12 +430,18 @@ void BehaviorRequestGameSimple::TransitionToDrivingToFace(Robot& robot)
                                      "failed to drive to a spot to interact with the face, so ending the behavior");
                   }
                 } );
-    DEBUG_SET_STATE(DrivingToFace);
+    SET_STATE(DrivingToFace);
   }
 }
 
 void BehaviorRequestGameSimple::TransitionToPlacingBlock(Robot& robot)
 {
+  // Ensure we don't loop forever
+  if(_numRetriesPlacingBlock > kMaxNumberOfRetries){
+    TransitionToLookingAtFace(robot);
+    return;
+  }
+  
   StartActing(new CompoundActionSequential(robot,
                 {
                   new PlaceObjectOnGroundAction(robot),
@@ -420,6 +450,7 @@ void BehaviorRequestGameSimple::TransitionToPlacingBlock(Robot& robot)
                 }),
               [this, &robot](ActionResult result) {
                 if ( result == ActionResult::SUCCESS ) {
+                  _numRetriesPlacingBlock++;
                   TransitionToLookingAtFace(robot);
                 }
                 else if (result == ActionResult::FAILURE_RETRY) {
@@ -437,7 +468,7 @@ void BehaviorRequestGameSimple::TransitionToPlacingBlock(Robot& robot)
                 }
               } );
   
-  DEBUG_SET_STATE(PlacingBlock);
+  SET_STATE(PlacingBlock);
 
 }
 
@@ -446,7 +477,7 @@ void BehaviorRequestGameSimple::TransitionToLookingAtFace(Robot& robot)
   const bool sayName = true;
   StartActing(new TurnTowardsLastFacePoseAction(robot, PI_F, sayName),
               &BehaviorRequestGameSimple::TransitionToVerifyingFace);
-  DEBUG_SET_STATE(LookingAtFace);
+  SET_STATE(LookingAtFace);
 }
 
 void BehaviorRequestGameSimple::TransitionToVerifyingFace(Robot& robot)
@@ -466,7 +497,7 @@ void BehaviorRequestGameSimple::TransitionToVerifyingFace(Robot& robot)
                     TransitionToPlayingDenyAnim(robot);
                   }
                 } );
-    DEBUG_SET_STATE(VerifyingFace);
+    SET_STATE(VerifyingFace);
   }
   else {
     // just skip verification and go straight to playing the request
@@ -480,7 +511,7 @@ void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot) {
         new TriggerAnimationAction(robot, _activeConfig->requestAnimTrigger),
         new TurnTowardsLastFacePoseAction(robot, PI_F)}),
     &BehaviorRequestGameSimple::TransitionToIdle);
-  DEBUG_SET_STATE(PlayingRequestAnim);
+  SET_STATE(PlayingRequestAnim);
 }
  
 void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
@@ -502,7 +533,7 @@ void BehaviorRequestGameSimple::TransitionToIdle(Robot& robot)
     StartActing( new HangAction(robot) );
   }
   
-  DEBUG_SET_STATE(Idle);
+  SET_STATE(Idle);
   BehaviorObjectiveAchieved(BehaviorObjective::RequestedGame);
 }
 
@@ -520,8 +551,16 @@ void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)
     StartActing(denyAnimAction);
   }
   
-  DEBUG_SET_STATE(PlayingDenyAnim);
+  SET_STATE(PlayingDenyAnim);
 }
+
+void BehaviorRequestGameSimple::SetState_internal(State state, const std::string& stateName)
+{
+  _state = state;
+  PRINT_NAMED_DEBUG("BehaviorRequestGameSimple.TransitionTo", "%s", stateName.c_str());
+  DEBUG_SET_STATE(s);
+}
+  
   
 u32 BehaviorRequestGameSimple::GetNumBlocks(const Robot& robot) const
 {

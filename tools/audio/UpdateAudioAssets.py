@@ -19,7 +19,7 @@ import dependencies
 
 # Project specific files and directors to perform scripts
 __externalsDir = path.join(__projectRoot, 'EXTERNALS')
-__wwiseToAppMetadataScript = path.join(__projectRoot, 'lib', 'audio', 'tools', 'WWiseToAppMetadata', 'WWiseToAppMetadata.py')
+__wwiseToAppMetadataScript = path.join(__projectRoot, 'lib', 'audio', 'tools', 'WWiseToAppMetadata', 'WwiseToAppMetadata.py')
 __wwiseIdFileName = 'Wwise_IDs.h'
 __wwiseIdsFilePath = path.join(__externalsDir, 'cozmosoundbanks', 'GeneratedSoundBanks', __wwiseIdFileName)
 __audioMetadataFileName= "audioEventMetadata.csv"

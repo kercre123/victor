@@ -242,6 +242,7 @@ namespace Anki {
         robotState_.status |= HAL::BatteryIsOnCharger() ? IS_ON_CHARGER : 0;
         robotState_.status |= HAL::BatteryIsCharging() ? IS_CHARGING : 0;
         robotState_.status |= HAL::IsCliffDetected() ? CLIFF_DETECTED : 0;
+        robotState_.status |= IMUFilter::IsFalling() ? IS_FALLING : 0;
         robotState_.status |= bodyRadioMode_ == BODY_ACCESSORY_OPERATING_MODE ? IS_BODY_ACC_MODE : 0;
 #ifdef  SIMULATOR
         robotState_.batteryVoltage = HAL::BatteryGetVoltage();
@@ -716,6 +717,10 @@ namespace Anki {
         ProxSensors::EnableStopOnCliff(msg.enable);
       }
 
+      void Process_enableBraceWhenFalling(const RobotInterface::EnableBraceWhenFalling& msg)
+      {
+        IMUFilter::EnableBraceWhenFalling(msg.enable);
+      }
       
       // --------- Block control messages ----------
 

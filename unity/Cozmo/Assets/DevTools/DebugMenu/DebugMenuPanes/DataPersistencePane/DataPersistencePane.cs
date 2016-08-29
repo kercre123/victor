@@ -72,6 +72,11 @@ namespace DataPersistence {
       DataPersistenceManager.Instance.Save();
 
       IntroManager.Instance.ForceBoot();
+
+      // Clear the block pool
+      Anki.Cozmo.ExternalInterface.BlockPoolResetMessage blockPoolResetMessage = new Anki.Cozmo.ExternalInterface.BlockPoolResetMessage();
+      RobotEngineManager.Instance.Message.BlockPoolResetMessage = blockPoolResetMessage;
+      RobotEngineManager.Instance.SendMessage();
     }
 
     private void StartNewSessionButtonClicked() {

@@ -83,7 +83,7 @@ void CpuThreadProfile::LogProfile(uint32_t threadIndex) const
       const Stats::StatsAccumulator& lifeTimeStats = sampleStats.GetLifetimeStats();
       const Stats::StatsAccumulator& recentStats   = sampleStats.GetRecentStats();
       
-      PRINT_CH_INFO("CpuProfile", "CPS", "%s%s: %.3fms [Start:%.3f, End:%.3f] (recent: %.3f..%.3f avg: %.3f num: %.0f) (lifetime: %.3f..%.3f avg: %.3f num: %.0f)",
+      PRINT_CH_INFO("CpuProfiler", "CPS", "%s%s: %.3fms [Start:%.3f, End:%.3f] (recent: %.3f..%.3f avg: %.3f num: %.0f) (lifetime: %.3f..%.3f avg: %.3f num: %.0f)",
                     depthToPrefix((int)sampleStackDepth),
                     sample.GetName(),
                     sample.GetDuration_ms(),

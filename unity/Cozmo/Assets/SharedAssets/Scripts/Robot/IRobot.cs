@@ -283,7 +283,7 @@ public interface IRobot : IDisposable {
 
   void SetFlashingBackpackLED(LEDId ledToChange, Color color, uint onDurationMs = 200, uint offDurationMs = 200, uint transitionDurationMs = 0);
 
-  void SetEnableFreeplayLightStates(bool enable);
+  void SetEnableFreeplayLightStates(bool enable, int objectID = -1);
 
   void TurnOffAllLights(bool now = false);
 
@@ -334,4 +334,8 @@ public interface IRobot : IDisposable {
   void EnableCubeSleep(bool enable);
 
   void EnableLift(bool enable);
+
+  void EnterSDKMode();
+
+  void ExitSDKMode();
 }

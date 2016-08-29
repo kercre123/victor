@@ -25,6 +25,7 @@ namespace Anki {
 
     namespace IMUFilter {
 
+      Result Init();
       void Reset();
 
       // TODO: Add if/when needed?
@@ -55,6 +56,12 @@ namespace Anki {
       // Returns true when pickup detected.
       // Pickup detect is reset when the robot stops moving.
       bool IsPickedUp();
+
+      // Returns true if falling detected
+      bool IsFalling();
+      
+      // Enables/Disables the brace reaction when falling is detected
+      void EnableBraceWhenFalling(bool enable);
 
     } // namespace IMUFilter
   } // namespace Cozmo

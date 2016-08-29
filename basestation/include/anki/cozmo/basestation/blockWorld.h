@@ -84,9 +84,8 @@ namespace Anki
       
       // notify the blockWorld that someone has changed the pose of an object
       void OnObjectPoseChanged(const ObjectID& objectID, ObjectFamily family,
-        const Pose3d& oldPose, PoseState oldPoseState,
         const Pose3d& newPose, PoseState newPoseState);
-	  
+      
       // returns true if the given origin is a zombie origin. A zombie origin means that no active objects are currently
       // in that origin/frame, which would make it impossible to relocalize to any other origin. Note that current origin
       // is not a zombie even if it doesn't have any cubes yet.
@@ -307,8 +306,8 @@ namespace Anki
       const INavMemoryMap* GetNavMemoryMap() const;
       INavMemoryMap* GetNavMemoryMap();
       
-      // update memory map
-      void UpdateNavMemoryMap();
+      // update memory map with the current robot pose if needed (objects use other notification methods)
+      void UpdateRobotPoseInMemoryMap();
       
       // flags any interesting edges in the given quad as not interesting anymore. Quad should be passed wrt current origin
       void FlagQuadAsNotInterestingEdges(const Quad2f& quadWRTOrigin);
@@ -472,6 +471,13 @@ namespace Anki
       // enable/disable rendering of the memory maps
       void SetMemoryMapRenderEnabled(bool enabled);
       
+      // updates the objects reported in curOrigin that are moving to the relocalizedOrigin by virtue of rejiggering
+      void UpdateOriginsOfObjectsReportedInMemMap(const Pose3d* curOrigin, const Pose3d* relocalizedOrigin);
+      
+      // add/remove the given object to/from the memory map
+      void AddObjectReportToMemMap(const ObservableObject& object, const Pose3d& newPose);
+      void RemoveObjectReportFromMemMap(const ObservableObject& object, const Pose3d* origin);
+      
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Vision border detection
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -523,6 +529,18 @@ namespace Anki
       NavMemoryMapTable _navMemoryMaps;
       const Pose3d* _currentNavMemoryMapOrigin;
       bool _isNavMemoryMapRenderEnabled;
+      
+      // poses we have sent to the memory map for objects we know, in each origin
+      struct PoseInMapInfo {
+        PoseInMapInfo(const Pose3d& p, bool inMap) : pose(p), isInMap(inMap) {}
+        PoseInMapInfo() : pose(), isInMap(false) {}
+        Pose3d pose;
+        bool isInMap; // if true the pose was sent to the map, if false the pose was removed from the map
+      };
+      using OriginToPoseInMapInfo = std::map<const PoseOrigin*, PoseInMapInfo>;
+      using ObjectIdToPosesPerOrigin = std::map<int, OriginToPoseInMapInfo>;
+      ObjectIdToPosesPerOrigin _navMapReportedPoses;
+      Pose3d _navMapReportedRobotPose;
       
       // For allowing the calling of VizManager draw functions
       bool _enableDraw;

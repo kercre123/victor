@@ -12,7 +12,8 @@ enum int_8 OffTreadsState {
   OnBack, 
   OnLeftSide, 
   OnRightSide, 
-  OnFace, 
+  OnFace,
+  Falling,
 
   Count
 }

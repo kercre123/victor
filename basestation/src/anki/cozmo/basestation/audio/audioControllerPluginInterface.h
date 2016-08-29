@@ -16,6 +16,7 @@
 #define __Basestation_Audio_AudioControllerPluginInterface_H__
 
 
+#include "anki/cozmo/basestation/audio/standardWaveDataContainer.h"
 #include "util/helpers/noncopyable.h"
 #include <cstdint>
 #include <functional>
@@ -34,15 +35,13 @@ public:
   
   // WavePortal Interface
   // TODO: At some point there will be more then 1 instance of the WavePortal Plug-in they will be tracked by their Id
-  // Set Audio Data to be used when the plugin is used
-  void SetWavePortalAudioDataInfo( uint32_t sampleRate,
-                                   uint16_t numberOfChannels,
-                                   float duration_ms,
-                                   float* audioBuffer,
-                                   uint32_t bufferSize );
+  
+  // Give Audio Data ownership to plugin for playback
+  void GiveWavePortalAudioDataOwnership(const StandardWaveDataContainer* audioData);
   
   // Clear the Audio Data from the plugin
-  void ClearWavePortalAudioDataInfo();
+  // Note: This is used to release audio data that is not going to be used
+  void ClearWavePortalAudioData();
   
   // Check if the plugin has Audio Data
   bool WavePortalHasAudioDataInfo() const;
@@ -55,7 +54,8 @@ public:
   using PluginCallbackFunc = std::function<void( const AudioControllerPluginInterface* pluginInstance )>;
   void SetWavePortalInitCallback( PluginCallbackFunc callback );
   void SetWavePortalTerminateCallback( PluginCallbackFunc callback );
-  
+
+
 private:
   
   AudioController& _parentAudioController;

@@ -14,6 +14,8 @@
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToUnexpectedMovement.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
+
 
 namespace Anki {
 namespace Cozmo {
@@ -35,26 +37,17 @@ bool BehaviorReactToUnexpectedMovement::IsRunnableInternalReactionary(const Robo
 
 Result BehaviorReactToUnexpectedMovement::InitInternalReactionary(Robot& robot)
 {
+  // Make Cozmo more frustrated if he keeps running into things/being turned
+  robot.GetMoodManager().TriggerEmotionEvent("ReactToUnexpectedMovement", MoodManager::GetCurrentTimeInSeconds());
+  
   robot.AbortDrivingToPose();
   robot.GetMoveComponent().StopAllMotors();
   robot.GetActionList().Cancel();
 
-  if(robot.IsCarryingObject())
-  {
-    // Just for this temp animation we need to lock the lift otherwise the block we are carrying will be
-    // slammed into the ground
-    robot.GetMoveComponent().LockTracks((uint8_t)AnimTrackFlag::LIFT_TRACK);
-    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ReactToUnexpectedMovement),
-                [this, &robot]()
-                {
-                  robot.GetMoveComponent().UnlockTracks((uint8_t)AnimTrackFlag::LIFT_TRACK);
-                  BehaviorObjectiveAchieved(BehaviorObjective::ReactedToUnexpectedMovement);
-                });
-  }
-  else
-  {
-    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ReactToUnexpectedMovement));
-  }
+  StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToUnexpectedMovement), [this](){
+    BehaviorObjectiveAchieved(BehaviorObjective::ReactedToUnexpectedMovement);
+  });
+  
   return RESULT_OK;
 }
 

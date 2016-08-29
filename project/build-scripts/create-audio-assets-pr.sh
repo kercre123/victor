@@ -90,12 +90,13 @@ EOF
         $GIT branch | grep -v '* master' | xargs $GIT branch -D
     fi
 
+    $GIT config remote.origin.url $_GIT_COZMO_URI
     $GIT config user.email $_GIT_USERNAME
     $GIT config user.name $_GIT_EMAIL
     $GIT checkout -b $_GIT_BRANCH_NAME
     $GIT commit -am "Updating Audio Assets v${svn_rev}."
     $GIT push origin $_GIT_BRANCH_NAME
-    pr_url=$(hub pull-request -m "${GIT_BRANCH_NAME}")
+    pr_url=$(hub pull-request -m $_GIT_BRANCH_NAME)
 
     send_slack_message "cozmo-one PR for updated audio assets: $pr_url" "good" 0
 

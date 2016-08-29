@@ -172,7 +172,6 @@ public abstract class GameBase : MonoBehaviour {
     AssetBundleManager.Instance.LoadAssetBundleAsync(
       minigameAssetBundleName, (bool success) => {
         LoadSharedMinigameView(minigameAssetBundleName);
-        CubePalette.LoadCubePalette(minigameAssetBundleName);
       });
   }
 
@@ -272,6 +271,9 @@ public abstract class GameBase : MonoBehaviour {
       DataPersistence.DataPersistenceManager.Instance.Save();
     }
     InitializeGame(_ChallengeData.MinigameConfig);
+    if (!string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath)) {
+      _SharedMinigameViewInstance.ShowHowToPlayButton();
+    }
     SetupViewAfterCozmoReady(_SharedMinigameViewInstance, _ChallengeData);
   }
 
@@ -346,9 +348,22 @@ public abstract class GameBase : MonoBehaviour {
   [HideInInspector]
   public int CozmoScoreTotal;
 
+  // Number of Errors made, Error being a player action
+  // that causes failure (not cozmo scoring a point)
+  private int _PlayerMistakeCount;
+  public int PlayerMistakeCount {
+    get {
+      return _PlayerMistakeCount;
+    }
+  }
+
   // Points needed to win Round
   [HideInInspector]
   public int MaxScorePerRound;
+
+  public virtual void PlayerMistake() {
+    _PlayerMistakeCount++;
+  }
 
   public void ResetScore() {
     CozmoScore = 0;
@@ -535,6 +550,8 @@ public abstract class GameBase : MonoBehaviour {
 
     ResetReactionaryBehaviorsForGameEnd();
 
+    CurrentRobot.SetEnableFreeplayLightStates(true);
+
     AssetBundleManager.Instance.UnloadAssetBundle(AssetBundleNames.minigame_ui_prefabs.ToString());
   }
 
@@ -692,15 +709,12 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   protected virtual void ShowWinnerState() {
-    _SharedMinigameViewInstance.CloseHowToPlayView();
-
     SoftEndGameRobotReset();
 
     string winnerText = _WonChallenge ? Localization.Get(LocalizationKeys.kMinigameTextPlayerWins) : Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
     SharedMinigameView.InfoTitleText = winnerText;
     SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultAdvance,
       Localization.Get(LocalizationKeys.kButtonContinue), "end_of_game_continue_button");
-    SharedMinigameView.HideHowToPlayButton();
     _AutoAdvanceTimestamp = Time.time;
   }
 
@@ -957,6 +971,10 @@ public abstract class GameBase : MonoBehaviour {
 
   private string GetGameTimeElapsedAsStr() {
     return string.Format("{0}", Time.time - _GameStartTime);
+  }
+
+  public float GetGameTimeElapsedInSeconds() {
+    return Time.time - _GameStartTime;
   }
 
   #endregion

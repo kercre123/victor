@@ -195,7 +195,7 @@ Result BehaviorVisitInterestingEdge::InitInternal(Robot& robot)
       if ( trigger != AnimationTrigger::Count )
       {
         // play the animation that let's us know he is thinking and discarding goals
-        IAction* discardedGoalAnimAction = new TriggerAnimationAction(robot, trigger);
+        IAction* discardedGoalAnimAction = new TriggerLiftSafeAnimationAction(robot, trigger);
         StartActing( discardedGoalAnimAction );
       }
       else
@@ -500,7 +500,7 @@ void BehaviorVisitInterestingEdge::TransitionToS2_ObserveAtVantagePoint(Robot& r
   const AnimationTrigger trigger = animTriggerName.empty() ? AnimationTrigger::Count : AnimationTriggerFromString(animTriggerName.c_str());
   if ( trigger != AnimationTrigger::Count )
   {
-    pauseAction = new TriggerAnimationAction(robot,trigger);
+    pauseAction = new TriggerLiftSafeAnimationAction(robot,trigger);
   }
   else
   {

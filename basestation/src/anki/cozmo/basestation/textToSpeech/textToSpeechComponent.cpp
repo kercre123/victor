@@ -89,7 +89,17 @@ TextToSpeechComponent::OperationId TextToSpeechComponent::CreateSpeech(const std
     {
       std::lock_guard<std::mutex> lock(_lock);
       const auto bundle = GetTtsBundle(opId);
-      ASSERT_NAMED(nullptr != bundle, "TextToSpeechComponent.CreateSpeech.DispatchAysnc.TtsBundle.IsNull");
+      
+      // Check if the ttsBundle is still valid
+      if (nullptr == bundle) {
+        PRINT_CH_INFO(Audio::AudioController::kAudioLogChannelName,
+                      "TextToSpeechComponent.CreateSpeech.AsyncDispatch",
+                      "OperationId: %u for Tts Bundle NOT found", opId);
+        Util::SafeDelete(audioData);
+        return;
+      }
+      
+      // Check if audio was generated for Text to Speech
       if (nullptr == audioData) {
         PRINT_NAMED_ERROR("TextToSpeechComponent.CreateSpeech.DispatchAysnc", "No Audio data was created");
         bundle->state = AudioCreationState::None;
@@ -117,63 +127,68 @@ TextToSpeechComponent::AudioCreationState TextToSpeechComponent::GetOperationSta
 } // GetOperationState()
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool TextToSpeechComponent::PrepareSpeech(const OperationId operationId,
-                                          float& out_duration_ms) const
+bool TextToSpeechComponent::PrepareAudioEngine(const OperationId operationId,
+                                               float& out_duration_ms)
 {
   const auto ttsBundle = GetTtsBundle(operationId);
   if (nullptr == ttsBundle) {
-    PRINT_NAMED_ERROR("TextToSpeechComponent.PrepareSpeech", "OperationId: %u Not Found", operationId);
+    PRINT_NAMED_ERROR("TextToSpeechComponent.PrepareAudioEngine", "OperationId: %u Not Found", operationId);
     return false;
   }
   
   PRINT_CH_INFO(Audio::AudioController::kAudioLogChannelName,
-                "TextToSpeechComponent.PrepareSpeech",
+                "TextToSpeechComponent.PrepareAudioEngine",
                 "OperationId: %u",
                 operationId);
   
   ASSERT_NAMED(AudioCreationState::Ready == ttsBundle->state,
-               "TextToSpeechComponent.PrepareSpeech.ttsBundle.state.NotReady");
+               "TextToSpeechComponent.PrepareAudioEngine.ttsBundle.state.NotReady");
   
-  const auto waveData = ttsBundle->waveData;
-  ASSERT_NAMED(nullptr != waveData,
-               "TextToSpeechComponent.PrepareSpeech.ttsBundle.waveData.IsNull");
+  if (nullptr == ttsBundle->waveData) {
+    PRINT_NAMED_ERROR("TextToSpeechComponent.PrepareAudioEngine", "WaveDataPtr.IsNull");
+    return false;
+  }
   
   using namespace Audio;
-  ASSERT_NAMED(nullptr != _audioController, "TextToSpeechComponent.PrepareSpeech.NullAudioController");
+  ASSERT_NAMED(nullptr != _audioController, "TextToSpeechComponent.PrepareAudioEngine.NullAudioController");
   AudioControllerPluginInterface* pluginInterface = _audioController->GetPluginInterface();
-  ASSERT_NAMED(pluginInterface != nullptr, "TextToSpeechComponent.PrepareSpeech.NullAudioControllerPluginInterface");
+  ASSERT_NAMED(pluginInterface != nullptr, "TextToSpeechComponent.PrepareAudioEngine.NullAudioControllerPluginInterface");
   
   // Clear previously loaded data
   if (pluginInterface->WavePortalHasAudioDataInfo()) {
-    pluginInterface->ClearWavePortalAudioDataInfo();
+    pluginInterface->ClearWavePortalAudioData();
   }
-  
+
   // Set OUT value
   out_duration_ms = ttsBundle->waveData->ApproximateDuration_ms();
-  // Set audio data in plugin buffer
-  pluginInterface->SetWavePortalAudioDataInfo(waveData->sampleRate,
-                                               waveData->numberOfChannels,
-                                               out_duration_ms,
-                                               waveData->audioBuffer,
-                                               static_cast<uint32_t>(waveData->bufferSize));
+  // Pass ownership of audio data to plugin
+  pluginInterface->GiveWavePortalAudioDataOwnership(ttsBundle->waveData);
+  // Release ownership of audio data and clear operation form bookkeeping
+  ttsBundle->waveData->ReleaseAudioDataOwnership();
+  ClearOperationData(operationId);
   
   return true;
 } // PrepareToSay()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TextToSpeechComponent::CompletedSpeech()
+void TextToSpeechComponent::CleanupAudioEngine(const OperationId operationId)
 {
   PRINT_CH_INFO(Audio::AudioController::kAudioLogChannelName,
-                "TextToSpeechComponent.CompletedSpeech", "");
+                "TextToSpeechComponent.CleanupAudioEngine", "");
   
   using namespace Audio;
-  ASSERT_NAMED(nullptr != _audioController, "TextToSpeechComponent.CompletedSpeech.NullAudioController");
+  ASSERT_NAMED(nullptr != _audioController, "TextToSpeechComponent.CleanupAudioEngine.NullAudioController");
   AudioControllerPluginInterface* pluginInterface = _audioController->GetPluginInterface();
-  ASSERT_NAMED(pluginInterface != nullptr, "TextToSpeechComponent.CompletedSpeech.NullAudioControllerPluginInterface");
+  ASSERT_NAMED(pluginInterface != nullptr, "TextToSpeechComponent.CleanupAudioEngine.NullAudioControllerPluginInterface");
   
   // Clear previously loaded data
   if (pluginInterface->WavePortalHasAudioDataInfo()) {
-    pluginInterface->ClearWavePortalAudioDataInfo();
+    pluginInterface->ClearWavePortalAudioData();
+  }
+  
+  // Clear operation data if needed
+  if (TextToSpeechComponent::kInvalidOperationId != operationId) {
+    ClearOperationData(operationId);
   }
 } // CompltedSpeech()
   
@@ -253,8 +268,8 @@ Audio::StandardWaveDataContainer* TextToSpeechComponent::CreateAudioData(const s
   
   // Create Standard Wave
   Audio::StandardWaveDataContainer* data = new Audio::StandardWaveDataContainer(waveData->sample_rate,
-                                                                                 waveData->num_channels,
-                                                                                 (size_t)waveData->num_samples);
+                                                                                waveData->num_channels,
+                                                                                (size_t)waveData->num_samples);
 
   // Convert waveData format into StandardWaveDataContainer's format
   const float kOneOverSHRT_MAX = 1.0 / float(SHRT_MAX);

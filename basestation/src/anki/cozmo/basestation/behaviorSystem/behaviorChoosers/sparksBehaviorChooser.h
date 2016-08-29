@@ -64,7 +64,10 @@ protected:
   // initialize the chooser, return result of operation
   Result ReloadFromConfig(Robot& robot, const Json::Value& config);
 
-private:  
+private:
+  
+  void CheckIfSparkShouldEnd(Robot& robot);
+  
   enum class ChooserState{
     ChooserSelected,
     PlayingSparksIntro,

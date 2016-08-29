@@ -107,14 +107,15 @@ void LightsComponent::Update()
 {
   ANKI_CPU_PROFILE("LightsComponent::Update");
   
-  if( !_enabled ) {
-    return;
-  }
-
   const TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   
   for( auto& cubeInfoPair : _cubeInfo )
   {
+    if(!cubeInfoPair.second.enabled)
+    {
+      continue;
+    }
+  
     CubeLightsState newState = cubeInfoPair.second.desiredState;
     CubeLightsState currState = cubeInfoPair.second.currState;
     const TimeStamp_t timeDiff = currTime - cubeInfoPair.second.startCurrStateTime;
@@ -173,16 +174,29 @@ void LightsComponent::Update()
     {
       cubeInfoPair.second.desiredState = newState;
     }
+    
+    UpdateToDesiredLights(cubeInfoPair.first);
   }
-
-  UpdateToDesiredLights();
 }
 
-void LightsComponent::UpdateToDesiredLights()
+void LightsComponent::UpdateToDesiredLights(const ObjectID objectID, const bool force)
+{
+  const auto cube = _cubeInfo.find(objectID);
+  if(cube == _cubeInfo.end())
+  {
+    PRINT_NAMED_WARNING("LightsComponent.UpdateToDesiredLights", "No object %d in _cubeInfo map", objectID.GetValue());
+    return;
+  }
+  if( cube->second.currState != cube->second.desiredState || force) {
+    SetLights( objectID, cube->second.desiredState, force );
+  }
+}
+
+void LightsComponent::UpdateToDesiredLights(const bool force)
 {
   for( const auto& cubeInfoPair : _cubeInfo ) {
-    if( cubeInfoPair.second.currState != cubeInfoPair.second.desiredState ) {
-      SetLights( cubeInfoPair.first, cubeInfoPair.second.desiredState );
+    if( cubeInfoPair.second.currState != cubeInfoPair.second.desiredState || force) {
+      SetLights( cubeInfoPair.first, cubeInfoPair.second.desiredState, force );
     }
   }
 }
@@ -247,36 +261,103 @@ bool LightsComponent::FadeBetween(CubeLightsState from, CubeLightsState to,
   return false;
 }
 
-void LightsComponent::SetEnableComponent(bool enable)
+void LightsComponent::SetEnableComponent(const bool enable)
 {
-  if( _enabled && !enable) {
-    for( auto& cube : _cubeInfo ) {
-      cube.second.desiredState = CubeLightsState::Off;
+  SetEnableCubeLights(-1, enable);
+}
+
+void LightsComponent::SetEnableCubeLights(const ObjectID objectID, const bool enable)
+{
+  auto enableHelper = [this, enable](ObjectID id)
+  {
+    PRINT_NAMED_INFO("LightsComponent.SetEnableCubeLights", "Setting object %d to %s",
+                     id.GetValue(), (enable ? "enabled" : "disabled"));
+    
+    auto cube = _cubeInfo.find(id);
+    if(cube == _cubeInfo.end())
+    {
+      PRINT_NAMED_WARNING("LightsComponent.SetEnableCubeLights",
+                          "No object with id %d in _cubeInfo map",
+                          id.GetValue());
+      return;
     }
+    
+    if(cube->second.enabled && !enable)
+    {
+      cube->second.desiredState = CubeLightsState::Off;
+    }
+    else if(!cube->second.enabled && enable)
+    {
+      RestorePrevState(id);
+    }
+  
+    cube->second.enabled = enable;
+  };
 
-    UpdateToDesiredLights();
+  if(objectID == -1)
+  {
+    _allCubesEnabled = enable;
+    for(auto& cube : _cubeInfo)
+    {
+      enableHelper(cube.first);
+    }
   }
-
-  _enabled = enable;
+  else
+  {
+    enableHelper(objectID);
+  }
+  
+  UpdateToDesiredLights(true);
 }
 
 
-void LightsComponent::SetLights(ObjectID object, CubeLightsState state)
+const bool LightsComponent::AreAllCubesEnabled() const
 {
-  if( _cubeInfo[object].currState == state ){
+  bool res = true;
+  for(const auto& cube : _cubeInfo)
+  {
+    res &= cube.second.enabled;
+  }
+  return res;
+  
+}
+
+const bool LightsComponent::IsCubeEnabled(const ObjectID objectID) const
+{
+  const auto cube = _cubeInfo.find(objectID);
+  if(cube != _cubeInfo.end())
+  {
+    return cube->second.enabled;
+  }
+  return false;
+}
+
+void LightsComponent::SetLights(ObjectID object, CubeLightsState state, bool forceSet)
+{
+  auto cube = _cubeInfo.find(object);
+  if(cube == _cubeInfo.end())
+  {
+    PRINT_NAMED_WARNING("LightsComponent.SetLights",
+                        "Trying to set lights for object %d but no object found in _cubeInfo map",
+                        object.GetValue());
     return;
   }
   
-  _cubeInfo[object].startCurrStateTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();;
-  
-  // Don't update prevState if our current state is sleep
-  if(_cubeInfo[object].currState != CubeLightsState::Sleep &&
-     _cubeInfo[object].currState != CubeLightsState::Off)
+  if(!forceSet && cube->second.currState == state)
   {
-    _cubeInfo[object].prevState = _cubeInfo[object].currState;
+    return;
   }
   
-  _cubeInfo[object].currState = state;
+  cube->second.startCurrStateTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();;
+  
+  // Don't update prevState if our current state is sleep
+  if(cube->second.currState != CubeLightsState::Sleep &&
+     cube->second.currState != CubeLightsState::Off)
+  {
+    cube->second.prevState = cube->second.currState;
+  }
+  
+  cube->second.currState = state;
   
   PRINT_NAMED_INFO("LightsComponent.SetLights",
                    "Setting object %d to state %d",
@@ -302,8 +383,24 @@ void LightsComponent::HandleMessage(const ExternalInterface::RobotObservedObject
   }
 
   if( msg.markersVisible  ) {
+    // Safe to do automatic insertion into map since we know we are observing a cube
     _cubeInfo[msg.objectID].lastObservedTime_ms = msg.timestamp;
+    
+    // If all cubes have been disabled then make sure to also disable new cubes that we connect to
+    if(!_allCubesEnabled)
+    {
+      _cubeInfo[msg.objectID].enabled = false;
+    }
+    
     if( ShouldOverrideState( _cubeInfo[msg.objectID].desiredState, CubeLightsState::Visible ) ) {
+      
+      // Update our prevState if we are disabled so if we are moved while disabled our state will
+      // be properly restored
+      if(!_cubeInfo[msg.objectID].enabled)
+      {
+        _cubeInfo[msg.objectID].prevState = CubeLightsState::Visible;
+      }
+    
       _cubeInfo[msg.objectID].desiredState = CubeLightsState::Visible;
     }
   }
@@ -312,27 +409,60 @@ void LightsComponent::HandleMessage(const ExternalInterface::RobotObservedObject
 template<>
 void LightsComponent::HandleMessage(const ObjectMoved& msg)
 {
-  if( ShouldOverrideState( _cubeInfo[msg.objectID].desiredState, CubeLightsState::Connected ) ) {
-    _cubeInfo[msg.objectID].desiredState = CubeLightsState::Connected;
+  auto cube = _cubeInfo.find(msg.objectID);
+  if(cube == _cubeInfo.end())
+  {
+    PRINT_NAMED_WARNING("LightsComponent.HandleObjectMoved",
+                        "Got object moved message from object %d but no matching object in _cubeInfo map",
+                        msg.objectID);
+    return;
+  }
+  
+  if( ShouldOverrideState( cube->second.desiredState, CubeLightsState::Connected ) )
+  {
+    // Update our prevState if we are disabled so if we are moved while disabled our state will
+    // be properly restored
+    if(!cube->second.enabled)
+    {
+      cube->second.prevState = CubeLightsState::Connected;
+    }
+    
+    cube->second.desiredState = CubeLightsState::Connected;
   }
 }
 
 template<>
 void LightsComponent::HandleMessage(const ObjectConnectionState& msg)
 {
+  // Note: A new objectID is automatically added to the _cubeInfo map if one doesn't
+  // already exist
   if( msg.connected &&
      (msg.device_type == ActiveObjectType::OBJECT_CUBE1 ||
       msg.device_type == ActiveObjectType::OBJECT_CUBE2 ||
       msg.device_type == ActiveObjectType::OBJECT_CUBE3) &&
-     ShouldOverrideState( _cubeInfo[msg.objectID].desiredState, CubeLightsState::WakeUp ) ) {
+     ShouldOverrideState( _cubeInfo[msg.objectID].desiredState, CubeLightsState::WakeUp ) )
+  {
     _cubeInfo[msg.objectID].desiredState = CubeLightsState::WakeUp;
+    
+    // If all cubes have been disabled then make sure to also disable new cubes that we connect to
+    if(!_allCubesEnabled)
+    {
+      _cubeInfo[msg.objectID].enabled = false;
+    }
   }
 }
 
 template<>
 void LightsComponent::HandleMessage(const ExternalInterface::EnableLightStates& msg)
 {
-  SetEnableComponent(msg.enable);
+  if(msg.objectID == -1)
+  {
+    SetEnableComponent(msg.enable);
+  }
+  else
+  {
+    SetEnableCubeLights(msg.objectID, msg.enable);
+  }
 }
 
 template<>
@@ -347,27 +477,46 @@ void LightsComponent::HandleMessage(const ExternalInterface::EnableCubeSleep& ms
   }
   else
   {
-    // If coming out of sleep go back to previous states
-    for(auto& pair : _cubeInfo)
-    {
-      pair.second.desiredState = pair.second.prevState;
-      
-      // If returning to a previous state of interacting or fading just go back to visible
-      if(pair.second.desiredState == CubeLightsState::Interacting ||
-         pair.second.fadeFromTo.first != CubeLightsState::Invalid)
-      {
-        pair.second.desiredState = CubeLightsState::Visible;
-      }
-    }
+    RestorePrevStates();
   }
   // Make sure we are enabled
-  _enabled = true;
+  SetEnableComponent(true);
+  
   UpdateToDesiredLights();
 }
 
+void LightsComponent::RestorePrevStates()
+{
+  for(auto& pair : _cubeInfo)
+  {
+    RestorePrevState(pair.first);
+  }
+}
+
+void LightsComponent::RestorePrevState(const ObjectID objectID)
+{
+  auto cube = _cubeInfo.find(objectID);
+  if(cube == _cubeInfo.end())
+  {
+    PRINT_NAMED_WARNING("LightsComponent.RestorePrevState", "No object %d in _cubeInfo map", objectID.GetValue());
+    return;
+  }
+  
+  cube->second.desiredState = cube->second.prevState;
+  
+  // If returning to a previous state of interacting or fading just go back to visible
+  if(cube->second.desiredState == CubeLightsState::Interacting ||
+     cube->second.fadeFromTo.first != CubeLightsState::Invalid)
+  {
+    cube->second.desiredState = CubeLightsState::Visible;
+  }
+}
+
 LightsComponent::ObjectInfo::ObjectInfo()
-  : desiredState( LightsComponent::CubeLightsState::Off )
-  , currState(  LightsComponent::CubeLightsState::Off )
+  : enabled(true)
+  , desiredState( LightsComponent::CubeLightsState::Off )
+  , currState( LightsComponent::CubeLightsState::Off )
+  , prevState(LightsComponent::CubeLightsState::Connected)
   , lastObservedTime_ms(0)
 {
 }

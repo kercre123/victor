@@ -329,14 +329,6 @@
       "AnimName": "ag_majorWin"
     },
     {
-      "CladEvent": "NothingToDoBored",
-      "AnimName": "ag_bored_event"
-    },
-    {
-      "CladEvent": "OnLearnedPlayerName",
-      "AnimName": "ag_freeplay_reacttoface_longname"
-    },
-    {
       "CladEvent": "MeetCozmoGetIn",
       "AnimName" : "ag_meetcozmo_getin"
     },
@@ -881,6 +873,10 @@
       "AnimName": "ag_soundOnlyTurnSmall"
     },
     {
+      "CladEvent": "SparkBackpackLights",
+      "AnimName": "ag_sparking_backpack_loop"
+    },
+    {
       "CladEvent": "SparkGetIn",
       "AnimName": "ag_sparking_getin"
     },
@@ -891,22 +887,6 @@
     {
       "CladEvent": "SparkGetOutSuccess",
       "AnimName": "ag_sparking_success"
-    },
-    {
-      "CladEvent": "SparkDriveEnd",
-      "AnimName": "ag_sparking_driving_stop"
-    },
-    {
-      "CladEvent": "SparkDriveLoop",
-      "AnimName": "ag_sparking_driving_loop"
-    },
-    {
-      "CladEvent": "SparkDriveStart",
-      "AnimName": "ag_sparking_driving_start"
-    },
-    {
-      "CladEvent": "SparkIdle",
-      "AnimName": "ag_sparking_idle"
     },
     {
       "CladEvent": "SparkPickupInitialCubeReaction",

@@ -516,7 +516,7 @@ message EngineErrorCodeMessage {
 
 structure BlockPoolBlockData {
   uint_32 factory_id,
-  bool enabled
+  bool enabled // This is always true?
 }
 
 message InitBlockPoolMessage {
@@ -582,6 +582,12 @@ message RequestEnrollFace {
 
 message SparkEnded {
 
+}
+
+message SdkStatus {
+  string sdkStatus,
+  float_32 timeSinceLastSdkMessage_s,
+  bool isConnected
 }
 
 ///////////////////////////////////////////////////////////////////////////////

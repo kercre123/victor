@@ -236,6 +236,31 @@ namespace Anki {
     }
 
     
+    #pragma mark ---- TriggerLiftSafeAnimationAction ----
+
+    TriggerLiftSafeAnimationAction::TriggerLiftSafeAnimationAction(Robot& robot,
+                                            AnimationTrigger animEvent,
+                                            u32 numLoops,
+                                            bool interruptRunning,
+                                            u8 tracksToLock)
+    : TriggerAnimationAction(robot, animEvent, numLoops, interruptRunning,TracksToLock(robot, tracksToLock))
+    {
+    }
+    
+    
+    u8 TriggerLiftSafeAnimationAction::TracksToLock(Robot& robot, u8 tracksCurrentlyLocked)
+    {
+      
+      // Ensure animation doesn't throw cube down, but still can play get down animations
+      if(robot.IsCarryingObject()
+         && robot.GetOffTreadsState() == OffTreadsState::OnTreads){
+        tracksCurrentlyLocked = tracksCurrentlyLocked | (u8) AnimTrackFlag::LIFT_TRACK;
+      }
+      
+      return tracksCurrentlyLocked;
+    }
+
+    
 
     #pragma mark ---- DeviceAudioAction ----
 

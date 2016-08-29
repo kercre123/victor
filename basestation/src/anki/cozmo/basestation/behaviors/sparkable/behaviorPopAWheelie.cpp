@@ -92,7 +92,7 @@ void BehaviorPopAWheelie::TransitionToReactingToBlock(Robot& robot)
   // Turn towards the object and then react to it before performing the pop a wheelie action
   StartActing(new CompoundActionSequential(robot, {
     new TurnTowardsObjectAction(robot, _targetBlock, PI_F),
-    new TriggerAnimationAction(robot, AnimationTrigger::PopAWheelieInitial),
+    new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PopAWheelieInitial),
   }),
   &BehaviorPopAWheelie::TransitionToPerformingAction);
 }
@@ -121,15 +121,13 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
   }
   
   // Only turn towards face if this is _not_ a retry
-  const Radians maxTurnToFaceAngle( (isRetry ? 0 : DEG_TO_RAD(90)) );
-  const bool sayNameBefore = !_shouldStreamline;
+  const Radians maxTurnToFaceAngle( (isRetry || _shouldStreamline ? 0 : DEG_TO_RAD(90)) );
   DriveToPopAWheelieAction* goPopAWheelie = new DriveToPopAWheelieAction(robot,
                                                                          _targetBlock,
                                                                          false,
                                                                          0,
                                                                          false,
-                                                                         maxTurnToFaceAngle,
-                                                                         sayNameBefore);
+                                                                         maxTurnToFaceAngle);
   goPopAWheelie->SetSayNameAnimationTrigger(AnimationTrigger::PopAWheeliePreActionNamedFace);
   goPopAWheelie->SetNoNameAnimationTrigger(AnimationTrigger::PopAWheeliePreActionUnnamedFace);
 
@@ -196,12 +194,12 @@ void BehaviorPopAWheelie::SetupRetryAction(Robot& robot, const ExternalInterface
     case ObjectInteractionResult::INCOMPLETE:
     case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
     {
-      animAction = new TriggerAnimationAction(robot, AnimationTrigger::PopAWheelieRealign);
+      animAction = new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PopAWheelieRealign);
       break;
     }
       
     default: {
-      animAction = new TriggerAnimationAction(robot, AnimationTrigger::PopAWheelieRetry);
+      animAction = new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PopAWheelieRetry);
       break;
     }
   }

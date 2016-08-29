@@ -20,6 +20,7 @@ namespace Onboarding {
       // Highlight region is set by CozmoUnlocksPanel before this phase starts
       OnboardingManager.Instance.ShowOutlineRegion(true);
       _StartTime = Time.time;
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Onboarding__Core_Upgrades);
     }
 
     public override void OnDestroy() {
@@ -27,6 +28,7 @@ namespace Onboarding {
       BaseView.BaseViewOpened -= HandleViewOpened;
       GameEventManager.Instance.OnGameEvent -= HandleGameEvent;
       BaseView.BaseViewClosed -= HandleViewClosed;
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
     }
 
     private void HandleViewOpened(BaseView view) {

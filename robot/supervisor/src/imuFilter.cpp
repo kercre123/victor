@@ -27,9 +27,6 @@
 #include "messages.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
-// For event callbacks
-#include "testModeController.h"
-
 #define DEBUG_IMU_FILTER 0
 
 // Define type of data to send when IMURequest received
@@ -37,6 +34,8 @@
 #define RECORD_AND_SEND_FILT_DATA 1
 #define RECORD_AND_SEND_MODE RECORD_AND_SEND_RAW_DATA
 
+// Whether or not to tuck head and lift down when falling is detected
+#define DEFAULT_BRACE_WHEN_FALLING true
 
 namespace Anki {
   namespace Cozmo {
@@ -126,10 +125,10 @@ namespace Anki {
         u32 eventTime_[NUM_IMU_EVENTS] = {0};
 
         // The amount of time required for eventStateRaw to be true for eventState to be true
-        const u32 eventActivationTime_ms_[NUM_IMU_EVENTS] = {500, 2000, 500, 500, 500};
+        const u32 eventActivationTime_ms_[NUM_IMU_EVENTS] = {200, 2000, 500, 500, 500};
 
         // The amount of time required for eventStateRaw to be false for eventState to be false
-        const u32 eventDeactivationTime_ms_[NUM_IMU_EVENTS] = {500, 500, 500, 500, 500};
+        const u32 eventDeactivationTime_ms_[NUM_IMU_EVENTS] = {250, 500, 500, 500, 500};
 
         // Callback functions associated with event activation and deactivation
         typedef void (*eventCallbackFn)(void);
@@ -137,7 +136,9 @@ namespace Anki {
         eventCallbackFn eventDeactivationCallbacks[NUM_IMU_EVENTS] = {0};
 
         // Falling
-        const f32 FALLING_THRESH_MMPS2_SQRD = 4000000;
+        const f32 FALLING_THRESH_MMPS2_SQRD = 40000000;
+        const f32 LIFT_BRACE_POWER = -0.7f;
+        const f32 HEAD_BRACE_POWER = -0.9f;
 
         // N-side down
         const f32 NSIDE_DOWN_THRESH_MMPS2 = 8000;
@@ -267,33 +268,20 @@ namespace Anki {
 
 
       // ==== Event callback functions ===
-
-      void TurnOnIndicatorLight()
+      
+      void BraceForImpact()
       {
-#ifndef TARGET_K02
-        TestModeController::Start(TM_NONE);
-#endif
-        HAL::SetLED(INDICATOR_LED_ID, LED_ENC_RED);
+        LiftController::Disable();
+        HeadController::Disable();
+        
+        HAL::MotorSetPower(MOTOR_LIFT, LIFT_BRACE_POWER);
+        HAL::MotorSetPower(MOTOR_HEAD, HEAD_BRACE_POWER);
       }
-      void TurnOffIndicatorLight()
+      
+      void UnbraceAfterImpact()
       {
-        HAL::SetLED(INDICATOR_LED_ID, LED_ENC_OFF);
-      }
-
-      void StartPathFollowTest()
-      {
-        #ifndef TARGET_K02
-        TestModeController::Start(TM_PATH_FOLLOW);
-        #endif
-        TurnOffIndicatorLight();
-      }
-
-      void StartLiftTest()
-      {
-        #ifndef TARGET_K02
-        TestModeController::Start(TM_LIFT);
-        #endif
-        TurnOffIndicatorLight();
+        LiftController::Enable();
+        HeadController::Enable();
       }
 
       //===== End of event callbacks ====
@@ -350,6 +338,24 @@ namespace Anki {
           wasParalyzed = false;
         }
       }
+      
+      void EnableBraceWhenFalling(bool enable)
+      {
+        AnkiInfo( 187, "IMUFilter.EnableBraceWhenFalling", 347, "%d", 1, enable);
+        if (enable) {
+          eventActivationCallbacks[FALLING] = BraceForImpact;
+          eventDeactivationCallbacks[FALLING] = UnbraceAfterImpact;
+        } else {
+          eventActivationCallbacks[FALLING] = 0;
+          eventDeactivationCallbacks[FALLING] = 0;
+        }
+      }
+      
+      Result Init()
+      {
+        EnableBraceWhenFalling(DEFAULT_BRACE_WHEN_FALLING);
+        return RESULT_OK;
+      }
 
       void Reset()
       {
@@ -359,11 +365,6 @@ namespace Anki {
         pitch_ = 0;
         pickedUp_ = 0;
         imu_data_.Reset();
-
-        //eventActivationCallbacks[LEFTSIDE_DOWN] = TurnOnIndicatorLight;
-        //eventDeactivationCallbacks[LEFTSIDE_DOWN] = StartPathFollowTest;
-        //eventActivationCallbacks[FRONTSIDE_DOWN] = TurnOnIndicatorLight;
-        //eventDeactivationCallbacks[FRONTSIDE_DOWN] = StartLiftTest;
       }
 
 
@@ -436,9 +437,9 @@ namespace Anki {
 
       void DetectFalling()
       {
-        const f32 accelMagnitudeSqrd = accel_filt[0]*accel_filt[0] +
-                                       accel_filt[1]*accel_filt[1] +
-                                       accel_filt[2]*accel_filt[2];
+        const f32 accelMagnitudeSqrd = imu_data_.acc_x * imu_data_.acc_x +
+                                       imu_data_.acc_y * imu_data_.acc_y +
+                                       imu_data_.acc_z * imu_data_.acc_z;
 
         eventStateRaw_[FALLING] = accelMagnitudeSqrd < FALLING_THRESH_MMPS2_SQRD;
       }
@@ -562,7 +563,8 @@ namespace Anki {
 
           if (!eventState_[e]) {
             if (eventStateRaw_[e]) {
-              if (eventTime_[e] == 0) {
+              // If eventTime wasn't initialized yet or time was reset via syncTime
+              if (eventTime_[e] == 0 || eventTime_[e] > currTime) {
                 // Raw event state conditions met for the first time
                 eventTime_[e] = currTime;
               } else if (currTime - eventTime_[e] > eventActivationTime_ms_[e]) {
@@ -584,7 +586,8 @@ namespace Anki {
           } else {
 
             if (!eventStateRaw_[e]){
-              if (eventTime_[e] == 0) {
+              // If eventTime wasn't initialized yet or time was reset via syncTime
+              if (eventTime_[e] == 0 || eventTime_[e] > currTime) {
                 eventTime_[e] = currTime;
               } else if (currTime - eventTime_[e] > eventDeactivationTime_ms_[e]) {
                 // Event deactivated
@@ -880,9 +883,13 @@ namespace Anki {
 
       bool IsPickedUp()
       {
-        return pickedUp_;
+        return pickedUp_ || IsFalling();
       }
 
+      bool IsFalling()
+      {
+        return eventState_[FALLING];
+      }
 
       void RecordAndSend(const u32 length_ms)
       {

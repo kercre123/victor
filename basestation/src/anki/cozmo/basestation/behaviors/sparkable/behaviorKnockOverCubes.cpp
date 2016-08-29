@@ -32,11 +32,14 @@ static const char* const kKnockOverSuccessTrigger = "knockOverSuccessTrigger";
 static const char* const kKnockOverFailureTrigger = "knockOverFailureTrigger";
 static const char* const kPutDownTrigger = "knockOverPutDownTrigger";
 static const char* const kMinimumStackHeight = "minimumStackHeight";
+static const char* const kIsReactionaryConfigFlag = "isReactionary";
 
 const int kMaxNumRetries = 1;
 const int kMinThresholdRealign = 40;
 const int kMinBlocksForSuccess = 2;
 const float kWaitForBlockUpAxisChangeSecs = 0.5f;
+const f32 kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad = RAD_TO_DEG(90.f);
+
 CONSOLE_VAR(f32, kBKS_headAngleForKnockOver_deg, "Behavior.AdmireStack", -14.0f);
 CONSOLE_VAR(f32, kBKS_distanceToTryToGrabFrom_mm, "Behavior.AdmireStack", 85.0f);
 CONSOLE_VAR(f32, kBKS_searchSpeed_mmps, "Behavior.AdmireStack", 60.0f);
@@ -46,15 +49,19 @@ namespace Cozmo {
   
   
 BehaviorKnockOverCubes::BehaviorKnockOverCubes(Robot& robot, const Json::Value& config)
-  : IBehavior(robot, config)
+  : IReactionaryBehavior(robot, config)
+  , _objectObservedChanged(false)
+  , _lastObservedObject(-1)
   , _numRetries(0)
+  , _isReactionary(true)
 {
   SetDefaultName("KnockOverCubes");
   LoadConfig(config);
   
-  SubscribeToTags({
-    EngineToGameTag::ObjectUpAxisChanged
-  });
+  SubscribeToTags({{
+    EngineToGameTag::ObjectUpAxisChanged,
+    EngineToGameTag::RobotObservedObject
+  }});
 
 }
   
@@ -69,17 +76,38 @@ void BehaviorKnockOverCubes::LoadConfig(const Json::Value& config)
   GetValueOptional(config, kPutDownTrigger, _putDownAnimTrigger);
   
   _minStackHeight = config.get(kMinimumStackHeight, 3).asInt();
+  _isReactionary = config.get(kIsReactionaryConfigFlag, true).asBool();
   
 }
 
-bool BehaviorKnockOverCubes::IsRunnableInternal(const Robot& robot) const
+bool BehaviorKnockOverCubes::IsRunnableInternalReactionary(const Robot& robot) const
 {
-  UpdateTargetStack(robot);
+  if(robot.GetBehaviorManager().GetActiveSpark() == UnlockId::KnockOverThreeCubeStack
+     && IsReactionary()){
+    return false;
+  }
   
+  if(_objectObservedChanged){
+    _objectObservedChanged = false;
+    UpdateTargetStack(robot);
+    return CheckIfRunnable();
+  }
+  
+  return false;
+}
+
+bool BehaviorKnockOverCubes::CheckIfRunnable() const
+{
   return _baseBlockID.IsSet() && (_stackHeight >= _minStackHeight) ;
 }
+  
+bool BehaviorKnockOverCubes::IsReactionary() const
+{
+  return _isReactionary;
+}
 
-Result BehaviorKnockOverCubes::InitInternal(Robot& robot)
+  
+Result BehaviorKnockOverCubes::InitInternalReactionary(Robot& robot)
 {
   if(!_shouldStreamline){
     TransitionToReachingForBlock(robot);
@@ -91,21 +119,9 @@ Result BehaviorKnockOverCubes::InitInternal(Robot& robot)
 
   return Result::RESULT_OK;
 }
-  
-Result BehaviorKnockOverCubes::ResumeInternal(Robot& robot)
-{
-  if(IsRunnableInternal(robot)){
-    TransitionToKnockingOverStack(robot);
-    return Result::RESULT_OK;
-  }
-  
-  InitializeMemberVars();
-  
-  return Result::RESULT_FAIL;
-}
 
   
-void BehaviorKnockOverCubes::StopInternal(Robot& robot)
+void BehaviorKnockOverCubes::StopInternalReactionary(Robot& robot)
 {
   for(auto behaviorType: _disabledReactions){
     robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), behaviorType, true);
@@ -113,6 +129,12 @@ void BehaviorKnockOverCubes::StopInternal(Robot& robot)
   
   ResetBehavior(robot);
   
+}
+  
+bool BehaviorKnockOverCubes::ShouldComputationallySwitch(const Robot& robot)
+{
+  // Variables set in IsRunnable
+  return CheckIfRunnable();
 }
   
 void BehaviorKnockOverCubes::TransitionToReachingForBlock(Robot& robot)
@@ -137,7 +159,7 @@ void BehaviorKnockOverCubes::TransitionToReachingForBlock(Robot& robot)
     }
   }
   
-  action->AddAction(new TriggerAnimationAction(robot, _reachForBlockTrigger));
+  action->AddAction(new TriggerLiftSafeAnimationAction(robot, _reachForBlockTrigger));
   StartActing(action, &BehaviorKnockOverCubes::TransitionToKnockingOverStack);
   
 }
@@ -159,14 +181,16 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(Robot& robot)
       // Failed to knock over stack
       _numRetries += 1;
       if(_numRetries <= kMaxNumRetries){
-        StartActing(new TriggerAnimationAction(robot, _knockOverFailureTrigger),
+        StartActing(new TriggerLiftSafeAnimationAction(robot, _knockOverFailureTrigger),
                     &BehaviorKnockOverCubes::TransitionToKnockingOverStack);
       }
     }
   };
   
-  const bool sayNameBefore = !_shouldStreamline && _numRetries == 0;
-  DriveAndFlipBlockAction* flipAction = new DriveAndFlipBlockAction(robot, _baseBlockID, false, 0, false, 0.f, sayNameBefore, kMinThresholdRealign);
+  //skips turning towards face if this action is streamlined
+  const f32 angleTurnTowardsFace_rad = !_shouldStreamline && _numRetries == 0 ? kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad : 0;
+  
+  DriveAndFlipBlockAction* flipAction = new DriveAndFlipBlockAction(robot, _baseBlockID, false, 0, false, angleTurnTowardsFace_rad, false, kMinThresholdRealign);
   
   flipAction->SetSayNameAnimationTrigger(AnimationTrigger::KnockOverPreActionNamedFace);
   flipAction->SetNoNameAnimationTrigger(AnimationTrigger::KnockOverPreActionUnnamedFace);
@@ -189,7 +213,7 @@ void BehaviorKnockOverCubes::TransitionToPlayingReaction(Robot& robot)
   
   if(!_shouldStreamline){
     
-    StartActing(new TriggerAnimationAction(robot, animationTrigger),
+    StartActing(new TriggerLiftSafeAnimationAction(robot, animationTrigger),
                 [this](Robot& robot){
                   robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, true);
                   _disabledReactions.erase(BehaviorType::AcknowledgeObject);
@@ -229,11 +253,36 @@ void BehaviorKnockOverCubes::HandleWhileRunning(const EngineToGameEvent& event, 
       HandleObjectUpAxisChanged(event.GetData().Get_ObjectUpAxisChanged(), robot);
       break;
       
+    case ExternalInterface::MessageEngineToGameTag::RobotObservedObject:
+      // Handled in always handle
+      break;
+      
     default:
       PRINT_NAMED_ERROR("BehaviorKnockOverCubes.HandleWhileRunning.InvalidEvent", "");
       break;
   }
 }
+  
+void BehaviorKnockOverCubes::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
+{
+  switch (event.GetData().GetTag()) {
+    case ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged:
+      // handled only while running
+      break;
+      
+    case ExternalInterface::MessageEngineToGameTag::RobotObservedObject:
+      if(event.GetData().Get_RobotObservedObject().objectID != _lastObservedObject){
+        _lastObservedObject = event.GetData().Get_RobotObservedObject().objectID;
+        _objectObservedChanged = true;
+      }
+      break;
+      
+    default:
+      PRINT_NAMED_ERROR("BehaviorKnockOverCubes.AlwaysHandleInternal.InvalidEvent", "");
+      break;
+  }
+}
+
   
 }
 }

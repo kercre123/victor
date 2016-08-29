@@ -1655,7 +1655,7 @@ namespace Anki {
               if(nullptr != face) {
                 if( face->GetName().empty() ) {
                   if( _noNameAnimTrigger != AnimationTrigger::Count ) {
-                    SetAction(new TriggerAnimationAction(_robot, _noNameAnimTrigger));
+                    SetAction(new TriggerLiftSafeAnimationAction(_robot, _noNameAnimTrigger));
                     _state = State::SayingName;
                     result = ActionResult::RUNNING;
                   }

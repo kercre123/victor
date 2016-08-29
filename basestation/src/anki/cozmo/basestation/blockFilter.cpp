@@ -395,6 +395,7 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
       ConnectToObjects();
       
       Save();
+      break;
     }
       
     default:

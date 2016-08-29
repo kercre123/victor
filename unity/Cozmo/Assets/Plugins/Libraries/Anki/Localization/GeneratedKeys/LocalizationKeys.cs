@@ -135,6 +135,7 @@ public static class LocalizationKeys {
   public const string kDailyGoalTitleUnlockQuickTapDifficultyTwoColor = "dailyGoal.title.UnlockQuickTapDifficulty.TwoColor";
   public const string kDailyGoalTitleUnlockQuickTapDifficultyThreeColor = "dailyGoal.title.UnlockQuickTapDifficulty.ThreeColor";
   public const string kDailyGoalTitleUnlockQuickTapDifficultyFourColor = "dailyGoal.title.UnlockQuickTapDifficulty.FourColor";
+  public const string kDailyGoalTitleSparkPickupCube = "dailyGoal.title.SparkPickupCube";
 
   #endregion
 
@@ -153,6 +154,7 @@ public static class LocalizationKeys {
   public const string kFaceEnrollmentErrorsNeverSawValidFaceDescription = "faceEnrollment.errors.neverSawValidFace.description";
   public const string kFaceEnrollmentErrorsTimeOutTitle = "faceEnrollment.errors.timeOut.title";
   public const string kFaceEnrollmentErrorsTimeOutDescription = "faceEnrollment.errors.timeOut.description";
+  public const string kFaceEnrollmentConditionAllChangesSaved = "faceEnrollment.condition.allChangesSaved";
 
   #endregion
 
@@ -421,6 +423,12 @@ public static class LocalizationKeys {
   public const string kSettingsSleepCozmoPanelConfirmationModalTitle = "settings.sleepCozmoPanel.confirmationModal.title";
   public const string kSettingsSleepCozmoPanelConfirmModalDescription = "settings.sleepCozmoPanel.confirmModal.description";
   public const string kSettingsSleepCozmoPanelConfirmModalButtonConfirm = "settings.sleepCozmoPanel.confirmModal.button.confirm";
+  public const string kSettingsSdkPanelDisableButtonText = "settings.sdkPanel.disableButton.text";
+  public const string kSettingsSdkPanelLastMessageTimeText = "settings.sdkPanel.lastMessageTime.text";
+  public const string kSettingsSdkPanelNoMessagesText = "settings.sdkPanel.noMessages.text";
+  public const string kSettingsSdkPanelActivateSDKalertText = "settings.sdkPanel.activateSDKalert.text";
+  public const string kSettingsSdkPanelSdkConnectedText = "settings.sdkPanel.sdkConnected.text";
+  public const string kSettingsSdkPanelSdkNotConnectedText = "settings.sdkPanel.sdkNotConnected.text";
 
   #endregion
 

@@ -137,7 +137,16 @@ namespace Anki {
     return isContained;
   }
   
-  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  template<typename T>
+  Point<2, T> Triangle<T>::GetCentroid() const
+  {
+    // pick any 2 edges and find the middle point
+    const Point<2, T>& midPoint = ((*this)[0] + (*this)[1]) * 0.5f;
+    const Point<2, T>& oppositePointTowardsMidPoint = midPoint - (*this)[2];
+    Point<2, T> centroid = (*this)[2] + oppositePointTowardsMidPoint * 0.666f; // it's 2/3 away from the point along the median
+    return centroid;
+  }
   
 } // namespace Anki
 

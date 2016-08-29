@@ -96,7 +96,7 @@ void BehaviorReactToCliff::TransitionToPlayingStopReaction(Robot& robot)
   // play the stop animation, but also wait at least the minimum time so we keep running 
   _gotCliff = false;
   StartActing(new CompoundActionParallel(robot, {
-    new TriggerAnimationAction(robot, AnimationTrigger::ReactToCliffDetectorStop),
+    new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliffDetectorStop),
         new WaitAction(robot, minWaitTime_s) }),
     &BehaviorReactToCliff::TransitionToPlayingCliffReaction);
 }
@@ -108,7 +108,7 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction(Robot& robot)
   
   if( _gotCliff || ALWAYS_PLAY_REACT_TO_CLIFF) {
     Anki::Util::sEvent("robot.cliff_detected", {}, "");
-    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ReactToCliff),
+    StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliff),
                 &BehaviorReactToCliff::TransitionToBackingUp);
   }
   // else end the behavior now

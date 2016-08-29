@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public class FaceEnrollmentListSlide : MonoBehaviour {
 
-  public System.Action OnEnrollNewFaceRequested;
+  public System.Action<string> OnEnrollNewFaceRequested;
   public System.Action<int, string> OnEditNameRequested;
   public System.Action<int> OnDeleteEnrolledFace;
   public System.Action<int, string> OnReEnrollFaceRequested;
@@ -129,7 +129,15 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
 
   private void HandleNewEnrollmentRequested() {
     if (OnEnrollNewFaceRequested != null) {
-      OnEnrollNewFaceRequested();
+
+      // if this the first name then we should pre-populate the name with the profile name.
+      if (RobotEngineManager.Instance.CurrentRobot.EnrolledFaces.Count == 0) {
+        OnEnrollNewFaceRequested(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName);
+      }
+      else {
+        OnEnrollNewFaceRequested("");
+      }
+
     }
   }
 

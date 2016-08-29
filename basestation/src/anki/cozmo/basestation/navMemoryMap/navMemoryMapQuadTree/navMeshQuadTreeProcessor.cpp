@@ -385,7 +385,7 @@ void NavMeshQuadTreeProcessor::FillBorder(ENodeContentType filledType, ENodeCont
   
   // add flooded quads to the tree (not this does not cause flood filling)
   for( const auto& q : floodedQuads ) {
-    _root->AddQuad(q, newContent, *this);
+    _root->AddContentQuad(q, newContent, *this);
   }
   
   timer.Toc("NavMeshQuadTreeProcessor.MergeContinuousContent");

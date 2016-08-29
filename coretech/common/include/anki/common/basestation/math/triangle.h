@@ -10,6 +10,7 @@
 #define CORETECH_BASESTATION_MATH_TRIANGLE_H
 
 #include "anki/common/basestation/math/point.h"
+#include "anki/common/types.h"
 
 namespace Anki {
   
@@ -31,6 +32,10 @@ namespace Anki {
     
     T GetArea() const;
     
+    // Calculates centroid of the triangle (barycenter), which always divides each median in a 2:1 ratio, or in
+    // other words, it's always 2/3 away from each vertex
+    Point<2, T> GetCentroid() const;
+    
   }; // class Triangle
   
   
@@ -48,6 +53,10 @@ namespace Anki {
                              const std::array<Point<2,T>, 3>& triangle);
 
 
+// common typedefs
+using Triangle2f = Triangle<f32>;
+
 } // namespace Anki
+
 
 #endif // CORETECH_BASESTATION_MATH_TRIANGLE_H

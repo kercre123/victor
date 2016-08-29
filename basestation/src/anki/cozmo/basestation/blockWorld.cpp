@@ -120,6 +120,23 @@ CONSOLE_VAR(bool, kEnableMemoryMap, "BlockWorld.MemoryMap", true);
 // how often we request redrawing maps. Added because I think clad is getting overloaded with the amount of quads
 CONSOLE_VAR(float, kMemoryMapRenderRate_sec, "BlockWorld.MemoryMap", 0.25f);
 
+// kObjectRotationChangeToReport_deg: if the rotation of an object changes by this much, memory map will be notified
+CONSOLE_VAR(float, kObjectRotationChangeToReport_deg, "BlockWorld.MemoryMap", 10.0f);
+// kObjectPositionChangeToReport_mm: if the position of an object changes by this much, memory map will be notified
+CONSOLE_VAR(float, kObjectPositionChangeToReport_mm, "BlockWorld.MemoryMap", 5.0f);
+
+// kRobotRotationChangeToReport_deg: if the rotation of the robot changes by this much, memory map will be notified
+CONSOLE_VAR(float, kRobotRotationChangeToReport_deg, "BlockWorld.MemoryMap", 20.0f);
+// kRobotPositionChangeToReport_mm: if the position of the robot changes by this much, memory map will be notified
+CONSOLE_VAR(float, kRobotPositionChangeToReport_mm, "BlockWorld.MemoryMap", 8.0f);
+
+// kOverheadEdgeCloseMaxLenForTriangle_mm: maximum length of the close edge to be considered a triangle instead of a quad
+CONSOLE_VAR(float, kOverheadEdgeCloseMaxLenForTriangle_mm, "BlockWorld.MemoryMap", 15.0f);
+// kOverheadEdgeFarMaxLenForLine_mm: maximum length of the far edge to be considered a line instead of a triangle or a quad
+CONSOLE_VAR(float, kOverheadEdgeFarMaxLenForLine_mm, "BlockWorld.MemoryMap", 15.0f);
+// kOverheadEdgeFarMinLenForLine_mm: minimum length of the far edge to even report the line
+CONSOLE_VAR(float, kOverheadEdgeFarMinLenForClearReport_mm, "BlockWorld.MemoryMap", 3.0f); // tested 5 and was too big
+
 // kDebugRenderOverheadEdges: enables/disables debug render of points reported from vision
 CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MemoryMap", false);
 // kDebugRenderOverheadEdgeClearQuads: enables/disables debug render of nonBorder quads from overhead detection (clear)
@@ -717,6 +734,10 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
       ASSERT_NAMED( _navMemoryMaps.find(newOrigin) != _navMemoryMaps.end(), "BlockWorld.UpdateObjectOrigins.missingMapOriginNew");
       ASSERT_NAMED( oldOrigin == _currentNavMemoryMapOrigin, "BlockWorld.UpdateObjectOrigins.updatingMapNotCurrent");
 
+      // before we merge the object information from the memory maps, apply rejiggering also to their
+      // reported poses
+      UpdateOriginsOfObjectsReportedInMemMap(oldOrigin, newOrigin);
+
       // grab the underlying memory map and merge them
       INavMemoryMap* oldMap = _navMemoryMaps[oldOrigin].get();
       INavMemoryMap* newMap = _navMemoryMaps[newOrigin].get();
@@ -770,28 +791,39 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::UpdateNavMemoryMap()
+  void BlockWorld::UpdateRobotPoseInMemoryMap()
   {
-    ANKI_CPU_PROFILE("BlockWorld::UpdateNavMemoryMap");
+    ANKI_CPU_PROFILE("BlockWorld::UpdateRobotPoseInMemoryMap");
     
-    INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
-    if ( nullptr != currentNavMemoryMap )
+    // grab current robot pose
+    ASSERT_NAMED(_robot->GetWorldOrigin() == _currentNavMemoryMapOrigin, "BlockWorld.OnRobotPoseChanged.InvalidWorldOrigin");
+    const Pose3d& robotPose = _robot->GetPose();
+    const Pose3d& robotPoseWrtOrigin = robotPose.GetWithRespectToOrigin();
+    
+    // check if we have moved far enough that we need to resend
+    const Point3f distThreshold(kRobotPositionChangeToReport_mm, kRobotPositionChangeToReport_mm, kRobotPositionChangeToReport_mm);
+    const Radians angleThreshold( DEG_TO_RAD(kRobotRotationChangeToReport_deg) );
+    const bool isPrevSet = (_navMapReportedRobotPose.GetParent() != nullptr);
+    const bool isFarFromPrev = !isPrevSet || (!robotPoseWrtOrigin.IsSameAs(_navMapReportedRobotPose, distThreshold, angleThreshold));
+      
+    // if we need to add
+    const bool addAgain = isFarFromPrev;
+    if ( addAgain )
     {
+      INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+      ASSERT_NAMED(currentNavMemoryMap, "BlockWorld.OnRobotPoseChanged.NoMemoryMap");
       // cliff quad: clear or cliff
       {
         // TODO configure this size somethere else
         Point3f cliffSize = MarkerlessObject(ObjectType::ProxObstacle).GetSize() * 0.5f;
-        
-        const Pose3d robotPoseWrtOrigin = _robot->GetPose().GetWithRespectToOrigin();
-        
-        // cliff quad
         Quad3f cliffquad {
           {+cliffSize.x(), +cliffSize.y(), cliffSize.z()},  // up L
           {-cliffSize.x(), +cliffSize.y(), cliffSize.z()},  // lo L
           {+cliffSize.x(), -cliffSize.y(), cliffSize.z()},  // up R
           {-cliffSize.x(), -cliffSize.y(), cliffSize.z()}}; // lo R
         robotPoseWrtOrigin.ApplyTo(cliffquad, cliffquad);
-        
+
+        // depending on cliff on/off, add as ClearOfCliff or as Cliff
         if ( _robot->IsCliffDetected() )
         {
           // build data we want to embed for this quad
@@ -805,116 +837,23 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
           currentNavMemoryMap->AddQuad(cliffquad, INavMemoryMap::EContentType::ClearOfCliff);
         }
       }
-      
-      // forward sensor
-      #define TRUST_FORWARD_SENSOR 0
-      if( TRUST_FORWARD_SENSOR )
-      {
-        // - - -
-        // ClearOfObstacle from 0                      to _forwardSensorValue_mm
-        // Obstacle        from _forwardSensorValue_mm to MaxSensor
-        // - - -
-        const float sensorValue = ((float)_robot->GetForwardSensorValue());
-        const float maxSensorValue = ((float)FORWARD_COLLISION_SENSOR_LENGTH_MM);
-      
-        // debug?
-        const float kDebugRenderZOffset = 25.0f; // Z offset for render only so that it doesn't render underground
-        const bool kDebugRenderForwardQuads = false;
-        _robot->GetContext()->GetVizManager()->EraseSegments("BlockWorld::UpdateNavMemoryMap");
-        
-        // fetch vars
-        const float kFrontCollisionSensorWidth = 1.0f; // TODO Should this be in CozmoEngineConfig.h ?
-        const Pose3d& robotPoseWrtOrigin = _robot->GetPose().GetWithRespectToOrigin();
 
-        // ray we cast from sensor
-        const Vec3f forwardRay = robotPoseWrtOrigin.GetRotation() * X_AXIS_3D();
-        
-        // robot detection points
-        Point3f robotForwardLeft  = robotPoseWrtOrigin * Vec3f{ 0.0f,  kFrontCollisionSensorWidth, 0.0f};
-        Point3f robotForwardRight = robotPoseWrtOrigin * Vec3f{ 0.0f, -kFrontCollisionSensorWidth, 0.0f};
-        const Point3f clearUntilLeft  = robotForwardLeft  + (forwardRay*sensorValue);
-        const Point3f clearUntilRight = robotForwardRight + (forwardRay*sensorValue);
-        
-        // clear
-        const bool hasClearInFront = Util::IsFltGTZero(sensorValue);
-        if ( hasClearInFront )
-        {
-          // create quad for ClearOfObstacle
-          const Point2f clearQuadBL( robotForwardLeft  );
-          const Point2f clearQuadBR( robotForwardRight );
-          const Point2f clearQuadTL( clearUntilLeft    );
-          const Point2f clearQuadTR( clearUntilRight   );
-          Quad2f clearCollisionQuad { clearQuadTL, clearQuadBL, clearQuadTR, clearQuadBR };
-          currentNavMemoryMap->AddQuad(clearCollisionQuad, INavMemoryMap::EContentType::ClearOfObstacle);
-          
-          // also notify behavior whiteboard.
-          // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
-          // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
-          // robot component, like a VisualInformationProcessingComponent
-          _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(clearCollisionQuad);
-        
-          // debug render detection lines
-          if ( kDebugRenderForwardQuads )
-          {
-            _robot->GetContext()->GetVizManager()->DrawSegment("BlockWorld::UpdateNavMemoryMap",
-              Point3f{clearQuadBL.x(),clearQuadBL.y(), kDebugRenderZOffset},
-              Point3f{clearQuadTL.x(),clearQuadTL.y(), kDebugRenderZOffset},
-              Anki::NamedColors::WHITE,
-              false);
-            _robot->GetContext()->GetVizManager()->DrawSegment("BlockWorld::UpdateNavMemoryMap",
-              Point3f{clearQuadBR.x(),clearQuadBR.y(), kDebugRenderZOffset},
-              Point3f{clearQuadTR.x(),clearQuadTR.y(), kDebugRenderZOffset},
-              Anki::NamedColors::OFFWHITE,
-              false);
-          }
-        }
+      const Quad2f& robotQuad = _robot->GetBoundingQuadXY(robotPoseWrtOrigin);
 
-        // obstacle
-        const bool detectedObstacle = Util::IsFltLT(sensorValue, maxSensorValue);
-        if ( detectedObstacle )
-        {
-          // TODO configure this elsewhere. Should not need to create an obstacle just to grab its size
-          Point3f obstacleSize = MarkerlessObject(ObjectType::ProxObstacle).GetSize() * 0.5f;
-          const float distance = obstacleSize.x();
-          const Point3f obstacleUntilLeft  = clearUntilLeft  + (forwardRay*distance);
-          const Point3f obstacleUntilRight = clearUntilRight + (forwardRay*distance);
-          
-          // create quad for ObstacleUnrecognized
-          const Point2f obsQuadBL( clearUntilLeft     );
-          const Point2f obsQuadBR( clearUntilRight    );
-          const Point2f obsQuadTL( obstacleUntilLeft  );
-          const Point2f obsQuadTR( obstacleUntilRight );
-          Quad2f obsCollisionQuad { obsQuadTL, obsQuadBL, obsQuadTR, obsQuadBR };
-          currentNavMemoryMap->AddQuad(obsCollisionQuad, INavMemoryMap::EContentType::ObstacleUnrecognized);
-        
-          // debug render detection lines
-          if ( kDebugRenderForwardQuads )
-          {
-            _robot->GetContext()->GetVizManager()->DrawSegment("BlockWorld::UpdateNavMemoryMap",
-              Point3f{obsQuadBL.x(),obsQuadBL.y(), kDebugRenderZOffset},
-              Point3f{obsQuadTL.x(),obsQuadTL.y(), kDebugRenderZOffset},
-              Anki::NamedColors::ORANGE,
-              false);
-            _robot->GetContext()->GetVizManager()->DrawSegment("BlockWorld::UpdateNavMemoryMap",
-              Point3f{obsQuadBR.x(),obsQuadBR.y(), kDebugRenderZOffset},
-              Point3f{obsQuadTR.x(),obsQuadTR.y(), kDebugRenderZOffset},
-              Anki::NamedColors::RED,
-              false);
-          }
-        }
-      }
-      
-      currentNavMemoryMap->AddQuad(_robot->GetBoundingQuadXY(_robot->GetPose().GetWithRespectToOrigin()),
-                                   INavMemoryMap::EContentType::ClearOfObstacle );
+      // regular clear of obstacle
+      currentNavMemoryMap->AddQuad(robotQuad, INavMemoryMap::EContentType::ClearOfObstacle );
+
+      // also notify behavior whiteboard.
+      // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
+      // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
+      // robot component, like a VisualInformationProcessingComponent
+      _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(robotQuad);
+
+      // update las reported pose
+      _navMapReportedRobotPose = robotPoseWrtOrigin;
     }
-    
-    // also notify behavior whiteboard.
-    // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
-    // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
-    // robot component, like a VisualInformationProcessingComponent
-    _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(_robot->GetBoundingQuadXY());
   }
-  
+    
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::FlagQuadAsNotInterestingEdges(const Quad2f& quadWRTOrigin)
   {
@@ -2719,9 +2658,8 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
     return newObject->GetID();
   }
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::OnObjectPoseChanged(const ObjectID& objectID, ObjectFamily family,
-    const Pose3d& oldPose, PoseState oldPoseState,
     const Pose3d& newPose, PoseState newPoseState)
   {
     ASSERT_NAMED(objectID.IsSet(), "BlockWorld.OnObjectPoseChanged.InvalidObjectID");
@@ -2735,84 +2673,238 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
       return;
     }
 
-    // get current memory map
-    INavMemoryMap* const currentNavMemoryMap = GetNavMemoryMap();
-    if( nullptr == currentNavMemoryMap ) {
+    // find the info for this object in the same origin as the new pose
+    const int objectIdInt = objectID.GetValue();
+    OriginToPoseInMapInfo& reportedPosesForObject = _navMapReportedPoses[objectIdInt];
+    const PoseOrigin* curOrigin = &newPose.FindOrigin();
+    auto matchIt = reportedPosesForObject.find( curOrigin );
+    if ( matchIt != reportedPosesForObject.end() )
+    {
+      // note that for distThreshold, since Z affects whether we add to the memory map, distThreshold should
+      // be smaller than the threshold to not report
+      ASSERT_NAMED(kObjectPositionChangeToReport_mm < object->GetSize().z()*0.5f, "OnObjectPoseChanged.ChangeThresholdTooBig");
+      const float distThreshold = kObjectPositionChangeToReport_mm;
+      const Radians angleThreshold( DEG_TO_RAD(kObjectRotationChangeToReport_deg) );
+
+      // found a previous entry, compare old
+      const PoseInMapInfo& info = matchIt->second;
+      const bool isNewUnknown = ( newPoseState == PoseState::Unknown );
+      const bool isUsableAndFarFromPrev = !isNewUnknown &&
+      ( !info.isInMap || (!newPose.IsSameAs(info.pose, Point3f(distThreshold), angleThreshold)));
+      
+      // if new one is Unknown or far, we want to remove the old one, since it's being cleared or overriden
+      const bool removeOld = ( isNewUnknown || isUsableAndFarFromPrev );
+      if ( removeOld ) {
+        RemoveObjectReportFromMemMap(*object, curOrigin);
+      }
+
+      // if new one is notUnknown and far, we want to add the new one
+      const bool addNew = isUsableAndFarFromPrev;
+      if ( addNew ) {
+        AddObjectReportToMemMap(*object, newPose);
+      }
+    }
+    else
+    {
+      // if new one is notUnknown, we want to add the new one
+      const bool isUnknown = ( newPoseState == PoseState::Unknown );
+      const bool addNew = !isUnknown;
+      if ( addNew ) {
+        AddObjectReportToMemMap(*object, newPose);
+      }
+    }
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::AddObjectReportToMemMap(const ObservableObject& object, const Pose3d& newPose)
+  {
+    const int objectId = object.GetID().GetValue();
+    const ObjectFamily objectFam = object.GetFamily();
+    const NavMemoryMapTypes::EContentType addType = ObjectFamilyToMemoryMapContentType(objectFam, true);
+    if ( addType == NavMemoryMapTypes::EContentType::Unknown )
+    {
+      // this is ok, this obstacle family is not tracked in the memory map
+      PRINT_CH_INFO("BlockWorld", "BlockWorld.RemoveObjectReportFromMemMap.InvalidRemovalType",
+                    "Family '%s' is not known in memory map",
+                    ObjectFamilyToString(objectFam) );
       return;
     }
     
-    // ---- Remove from old if it was not unknown
-    if ( oldPoseState != PoseState::Unknown )
+    // find the memory map for the given origin
+    const PoseOrigin* origin = &newPose.FindOrigin();
+    auto matchPair = _navMemoryMaps.find(origin);
+    if ( matchPair != _navMemoryMaps.end() )
     {
-      // get the type we use for removal
-      const NavMemoryMapTypes::EContentType removalContent = ObjectFamilyToMemoryMapContentType(family, false);
-      if ( removalContent != NavMemoryMapTypes::EContentType::Unknown )
+      // in order to properly handle stacks, do not add the quad to the memory map for objects that are not
+      // on the floor
+      Pose3d objWrtRobot;
+      if ( newPose.GetWithRespectTo(_robot->GetPose(), objWrtRobot) )
       {
-        // Related to COZMO-3383: Consider removing cube quads from maps not in current origin
-        // get old bounding quad wrt current origin
-        Pose3d oldPoseWrtCurrentWorld;
-        if ( oldPose.GetWithRespectTo(*_robot->GetWorldOrigin(), oldPoseWrtCurrentWorld) )
+        INavMemoryMap* memoryMap = matchPair->second.get();
+        
+        // TODO turn into helper, see Robot.cpp's IsTooHigh
+        const Point3f rotatedSizeWrtRobot(objWrtRobot.GetRotation() * object.GetSize());
+        const f32 bottomOfObjectWrtRobot = objWrtRobot.GetTranslation().z() - (0.5f* std::abs(rotatedSizeWrtRobot.z()));
+        const float zFloatingThreshold = fabsf(rotatedSizeWrtRobot.z()*0.5f);
+        const bool isFloating = FLT_GE(fabsf(bottomOfObjectWrtRobot), zFloatingThreshold);
+        if ( isFloating )
         {
-          const Quad2f& newQuad = object->GetBoundingQuadXY(oldPoseWrtCurrentWorld);
-          currentNavMemoryMap->AddQuad(newQuad, removalContent);
+          // store in as a reported pose, but set as not in map (the pose value is not relevant)
+          _navMapReportedPoses[objectId][origin] = PoseInMapInfo(newPose, false);
         }
         else
         {
-          // until COZMO-3383 is done, it should be ok to find an old pose in another origin
-//          PRINT_NAMED_WARNING("BlockWorld.OnObjectPoseChanged.InvalidNewPose",
-//            "New pose not valid in this world for ID %d",
-//            objectID.GetValue());
-        }
-      } else {
-        PRINT_CH_INFO("BlockWorld", "OnObjectPoseChanged.NonMapFamilyForRemoval",
-                      "Family '%s' does not have a removal type in memory map",
-                      ObjectFamilyToString(family) );
-      }
-    }
-    
-    // ---- Add to new if new pose is not unknown
-    if ( newPoseState != PoseState::Unknown )
-    {
-      // get the type we use for addition
-      const NavMemoryMapTypes::EContentType addedContent = ObjectFamilyToMemoryMapContentType(family, true);
-      if ( addedContent != NavMemoryMapTypes::EContentType::Unknown )
-      {
-        // get new bounding quad wrt current origin
-        Pose3d newPoseWrtWorld;
-        if ( newPose.GetWithRespectTo(*_robot->GetWorldOrigin(), newPoseWrtWorld) )
-        {
-          const Quad2f& newQuad = object->GetBoundingQuadXY(newPoseWrtWorld);
-          currentNavMemoryMap->AddQuad(newQuad, addedContent);
+          // add to memory map flattened out wrt origin
+          Pose3d newPoseWrtOrigin = newPose.GetWithRespectToOrigin();
+          const Quad2f& newQuad = object.GetBoundingQuadXY(newPoseWrtOrigin);
+          memoryMap->AddQuad(newQuad, addType);
           
+          // store in as a reported pose
+          _navMapReportedPoses[objectId][origin] = PoseInMapInfo(newPoseWrtOrigin, true);
           
           // since we added an obstacle, any borders we saw while dropping it should not be interesting
           const float kScaledQuadToIncludeEdges = 2.0f;
-          // kScaledQuadToIncludeEdges: the resulting edge quad should include the interesting edges that
-          // are susceptible of being filled as not interesting. In other words: because we want to
-          // consider interesting edges around this obstacle, to see if we want them to be flagged as non-interesting,
-          // the quad to search for these edges has to be equal to the obstacle quad plus the margin
-          // in which we would find edges. For example, a good tight limit would be the size of the smallest
-          // quad in the memory map, since edges should be adjacent to the cube. This quad however is merely
-          // to limit the search for interesting edges, so it being bigger than the tightest threshold it's only a
-          // negligible performance hit (since the current quad tree processor caches nodes anyway for faster processing)
+          // kScaledQuadToIncludeEdges: we want to consider interesting edges around this obstacle as non-interesting,
+          // since we know they belong to this object. The quad to search for these edges has to be equal to the
+          // obstacle quad plus the margin in which we would find edges. For example, a good tight limit would be the size
+          // of the smallest quad in the memory map, since edges should be adjacent to the cube. This quad however is merely
+          // to limit the search for interesting edges, so it being bigger than the tightest threshold should not
+          // incur in a big penalty hit
           const Quad2f& edgeQuad = newQuad.GetScaled(kScaledQuadToIncludeEdges);
           ReviewInterestingEdges(edgeQuad);
         }
-        else
-        {
-          // how is this a known or dirty pose in another origin?
-          PRINT_NAMED_WARNING("BlockWorld.OnObjectPoseChanged.InvalidNewPose",
-            "New pose not valid in this world for ID %d",
-            objectID.GetValue());
-        }
-      } else {
-        PRINT_CH_INFO("BlockWorld", "OnObjectPoseChanged.NonMapFamilyForAddition",
-                      "Family '%s' is not known in memory map", ObjectFamilyToString(family) );
+      }
+      else
+      {
+        // should not happen, so warn about it
+        PRINT_NAMED_WARNING("BlockWorld.AddObjectReportToMemMap.InvalidPose",
+                            "Could not get object's new pose wrt robot. Won't add to map");
       }
     }
-    
+    else
+    {
+      // if the map was removed (for zombies), we shouldn't be asking to remove an object from it
+      ASSERT_NAMED(matchPair == _navMemoryMaps.end(), "BlockWorld.RemoveObjectReportFromMemMap.NoMapForOrigin");
+    }
   }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::RemoveObjectReportFromMemMap(const ObservableObject& object, const Pose3d* origin)
+  {
+    const int objectId = object.GetID().GetValue();
+    const ObjectFamily objectFam = object.GetFamily();
+    const NavMemoryMapTypes::EContentType removalType = ObjectFamilyToMemoryMapContentType(objectFam, false);
+    if ( removalType == NavMemoryMapTypes::EContentType::Unknown )
+    {
+      // this is not ok, this obstacle family can be added but can't be removed from the map
+      PRINT_NAMED_WARNING("BlockWorld.RemoveObjectReportFromMemMap.InvalidRemovalType",
+                          "Family '%s' does not have a removal type in memory map",
+                          ObjectFamilyToString(objectFam) );
+      return;
+    }
+    
+    // find origins for the given object
+    const ObjectIdToPosesPerOrigin::iterator originsForObjectIt = _navMapReportedPoses.find(objectId);
+    if ( originsForObjectIt != _navMapReportedPoses.end() )
+    {
+      OriginToPoseInMapInfo& infosPerOrigin = originsForObjectIt->second;
+      const OriginToPoseInMapInfo::iterator infosForOriginIt = infosPerOrigin.find(origin);
+      if ( infosForOriginIt != infosPerOrigin.end() )
+      {
+        PoseInMapInfo& info = infosForOriginIt->second;
+        
+        // if it's already not in the map do nothing
+        if ( info.isInMap )
+        {
+          // pose should be correct if it's in map (could be from an old origin if it's not in map)
+          ASSERT_NAMED(infosForOriginIt->second.pose.GetParent() == origin, "BlockWorld.RemoveObjectReportFromMemMap.PoseNotFlattenedOut");
+          
+          // find the memory map for the given origin
+          auto matchPair = _navMemoryMaps.find(origin);
+          if ( matchPair != _navMemoryMaps.end() )
+          {
+            INavMemoryMap* memoryMap = matchPair->second.get();
 
+            // remove from the memory map
+            const Pose3d& oldPoseInThisOrigin = info.pose;
+            const Quad2f& newQuad = object.GetBoundingQuadXY(oldPoseInThisOrigin);
+            memoryMap->AddQuad(newQuad, removalType);
+          }
+          else
+          {
+            // if the map was removed (for zombies), we shouldn't be asking to remove an object from it
+            ASSERT_NAMED(matchPair == _navMemoryMaps.end(), "BlockWorld.RemoveObjectReportFromMemMap.NoMapForOrigin");
+          }
+        
+          // flag as not in map anymore
+          // we do not want to remove the entry in case we rejigger origins. By setting this flag we are saying
+          // "we had a pose here, but has become unknown", rather than "we don't have a pose" if we called erase
+          info.isInMap = false;
+        }
+      }
+    }
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::UpdateOriginsOfObjectsReportedInMemMap(const Pose3d* curOrigin, const Pose3d* relocalizedOrigin)
+  {
+    // for every object in the current map, we have a decision to make. We are going to bring that memory map
+    // into what is becoming the current one. That means also bringing the last reported pose of every object
+    // onto the new map. The current map is obviously more up to date than the map we merge into, since the map
+    // we merge into is map we identified a while ago. This means that if an object moved and we now know where
+    // it is, the good pose is in the currentMap, not in the mapWeMergeInto. So, for every object in the currentMap
+    // we are going to remove their pose from the mapWeMergeInto. This will make the map we merge into gain the new
+    // info, at the same time that we remove info known to not be the most accurate
+    
+    // for every object in the current origin
+    for ( auto& pairIdToPoseInfoByOrigin : _navMapReportedPoses )
+    {
+      // find object in the world
+      const ObservableObject* object = GetObjectByID(pairIdToPoseInfoByOrigin.first);
+      if ( nullptr == object )
+      {
+        PRINT_CH_INFO("BlockWorld", "BlockWorld::UpdateObjectsReportedInMepMap.NotAnObject",
+                      "Could not find object ID '%d' in BlockWorld updating their quads", pairIdToPoseInfoByOrigin.first );
+        continue;
+      }
+    
+      // find the reported pose for this object in the current origin
+      OriginToPoseInMapInfo& poseInfoByOriginForObj = pairIdToPoseInfoByOrigin.second;
+      const auto& matchInCurOrigin = poseInfoByOriginForObj.find(curOrigin);
+      const bool isObjectReportedInCurrent = (matchInCurOrigin != poseInfoByOriginForObj.end());
+      if ( isObjectReportedInCurrent )
+      {
+        // we have an entry in the current origin. We don't care if `isInMap` is true or false. If it's true
+        // it means we have a better position available in this frame, if it's false it means we saw the object
+        // in this frame, but somehow it became unknown. If it became unknown, the position it had in the origin
+        // we are relocalizing to is old and not to be trusted. This is the reason why we don't erase reported poses,
+        // but rather flag them as !isInMap.
+        // Additionally we don't have to worry about the container we are iterating changing, since iterators are not
+        // affected by changing a boolean, but are if we erased from it.
+        RemoveObjectReportFromMemMap(*object, relocalizedOrigin);
+        
+        // we are bringing over the current info into the relocalized origin, update the reported pose in the
+        // relocalized origin to be that of the newest information
+        poseInfoByOriginForObj[relocalizedOrigin].isInMap = matchInCurOrigin->second.isInMap;
+        if ( matchInCurOrigin->second.isInMap ) {
+          // bring over the pose if it's in map (otherwise we don't care about the pose)
+          // when we bring it, flatten out to the relocalized origin
+          ASSERT_NAMED(relocalizedOrigin == &matchInCurOrigin->second.pose.FindOrigin(), "BlockWorld.UpdateObjectsReportedInMepMap.PoseDidNotHookGranpa");
+          poseInfoByOriginForObj[relocalizedOrigin].pose = matchInCurOrigin->second.pose.GetWithRespectToOrigin();
+        }
+        // also, erase the current origin from the reported poses of this object, since we will never use it after this
+        // Note this should not alter the iterators we are using for _navMapReportedPoses
+        poseInfoByOriginForObj.erase(curOrigin);
+      }
+      else
+      {
+        // we don't have this object in the current memory map. The info from this object if at all is in the previous
+        // origin (then one we are relocalizing to), or another origin not related to these two, do nothing in those
+        // cases
+      }
+    }
+  }
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool BlockWorld::IsZombiePoseOrigin(const Pose3d* origin) const
   {
@@ -2977,11 +3069,18 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
               frameInfo.groundplane[Quad::BottomRight].y(),
               0.0f);
 
-    const float kBorderDepth = 1.0f;
-    
-    // TODO reserve some quads in each vector (what makes sense?)
+    // quads that are clear, either because there are not borders behind them or from the camera to that border
     std::vector<Quad2f> visionQuadsClear;
-    std::vector<Quad2f> visionQuadsWithInterestingBorders;
+   
+    // detected borders are simply lines
+    struct Segment {
+      Segment(const Point2f& f, const Point2f& t) : from(f), to(t) {}
+      Point2f from;
+      Point2f to;
+    };
+    std::vector<Segment> visionSegmentsWithInterestingBorders;
+    
+    // iterate every chain finding contiguous segments
     for( const auto& chain : frameInfo.chains )
     {
 
@@ -3150,16 +3249,9 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
             if ( success ) {
               visionQuadsClear.emplace_back(clearQuad);
             }
-            // if it's a detected border, add from segment on with kBorderDepth
+            // if it's a detected border, add the segment
             if ( chain.isBorder ) {
-              Vec3f segStartDepthDir = (segmentStart - cameraOrigin);
-              segStartDepthDir.MakeUnitLength();
-              Vec3f segEndDepthDir = (segmentEnd - cameraOrigin);
-              segEndDepthDir.MakeUnitLength();
-              // TL, BL, TR, BR
-              Quad2f borderQuad = { segmentStart + segStartDepthDir*kBorderDepth, segmentStart,
-                                    segmentEnd   + segEndDepthDir*kBorderDepth  ,   segmentEnd };
-              visionQuadsWithInterestingBorders.emplace_back(borderQuad);
+              visionSegmentsWithInterestingBorders.emplace_back(segmentStart, segmentEnd);
             }
           }
           // else { not enough points in the segment to send. That's ok, just do not send }
@@ -3201,49 +3293,160 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
         ++curPointInChainIdx;
       } while (curPointInChainIdx < chain.points.size()); // while we still have points
     }
-    
-    // send quads to memory map
-    for ( const auto& clearQuad2D : visionQuadsClear )
-    {
-      if ( kDebugRenderOverheadEdgeClearQuads )
-      {
-        ColorRGBA color = Anki::NamedColors::GREEN;
-        VizManager* vizManager = _robot->GetContext()->GetVizManager();
-        vizManager->DrawQuadAsSegments("BlockWorld.AddVisionOverheadEdges", clearQuad2D, kDebugRenderOverheadEdgesZ_mm, color, false);
-      }
 
-      // add clear info to map
-      if ( currentNavMemoryMap ) {
-        currentNavMemoryMap->AddQuad(clearQuad2D, INavMemoryMap::EContentType::ClearOfObstacle);
+    // send clear quads/triangles to memory map
+    // clear information should be quads, since the ground plane has a min dist that truncates the cone that spans
+    // from the camera to the max ground plane distance. If the quad close segment is short though, it becomes
+    // narrower, thus more similar to a triangle. As a performance optimization we are going to consider narrow
+    // quads as triangles. This should be ok since the information is currently stored in quads that have a minimum
+    // size, so the likelyhood that a quad that should be covered with the quads won't be hit by the triangles is
+    // very small, and we are willing to take that risk to optimize this.
+    /*
+          Quad as it should be         Quad split into 3 quads with
+                                          narrow close segment
+                  v                                 v
+               ________                         __     --
+               \      /                         \ |---| /
+                \    /                           \ | | /
+                 \__/                             \_|_/
+     
+    */
+    // for the same reason, if the far edge is too small, the triangle is very narrow, so it can be turned into a line,
+    // and thanks to intersection we will probably not notice anything
+    
+    // Any quad whose closest edge is smaller than kOverheadEdgeNarrowCone_mm will be considered a triangle
+    // const float minFarLenToBeReportedSq = kOverheadEdgeFarMinLenForClearReport_mm*kOverheadEdgeFarMinLenForClearReport_mm;
+    const float maxFarLenToBeLineSq = kOverheadEdgeFarMaxLenForLine_mm*kOverheadEdgeFarMaxLenForLine_mm;
+    const float maxCloseLenToBeTriangleSq = kOverheadEdgeCloseMaxLenForTriangle_mm*kOverheadEdgeCloseMaxLenForTriangle_mm;
+    for ( const auto& potentialClearQuad2D : visionQuadsClear )
+    {
+    
+// rsam note: I want to filter out small ones, but there were instances were this was not very good, for example if it
+// happened at the border, since we would completely miss it. I will leave this out unless profiling says we need
+// more optimizations
+//      // quads that are too small are discarded. This is because in the general case they will be covered by nearby
+//      // borders. If we discarded all because detection was too fine-grained, then we could run this loop again
+//      // without this min restriction, but I don't think it will be an issue based on my tests, and the fact that we
+//      // care more about big detectable borders, rather than small differences in the image (for example, we want
+//      // to detect objects in real life that are similar to Cozmo's size)
+//      const float farLenSq   = (potentialClearQuad2D.GetTopLeft() - potentialClearQuad2D.GetTopRight()).LengthSq();
+//      const bool isTooSmall = FLT_LE(farLenSq, minFarLenToBeReportedSq);
+//      if ( isTooSmall ) {
+//        if ( kDebugRenderOverheadEdgeClearQuads )
+//        {
+//          ColorRGBA color = Anki::NamedColors::DARKGRAY;
+//          VizManager* vizManager = _robot->GetContext()->GetVizManager();
+//          vizManager->DrawQuadAsSegments("BlockWorld.AddVisionOverheadEdges", potentialClearQuad2D, kDebugRenderOverheadEdgesZ_mm, color, false);
+//        }
+//        continue;
+//      }
+      const float farLenSq   = (potentialClearQuad2D.GetTopLeft() - potentialClearQuad2D.GetTopRight()).LengthSq();
+      
+      // test whether we can report as Line, Triangle or Quad
+      const bool isLine = FLT_LE(farLenSq, maxFarLenToBeLineSq);
+      if ( isLine )
+      {
+        // far segment is small enough that a single line would be fine
+        const Point2f& clearFrom = (potentialClearQuad2D.GetBottomLeft() + potentialClearQuad2D.GetBottomRight()) * 0.5f;
+        const Point2f& clearTo   = (potentialClearQuad2D.GetTopLeft()    + potentialClearQuad2D.GetTopRight()   ) * 0.5f;
+      
+        if ( kDebugRenderOverheadEdgeClearQuads )
+        {
+          ColorRGBA color = Anki::NamedColors::CYAN;
+          VizManager* vizManager = _robot->GetContext()->GetVizManager();
+          vizManager->DrawSegment("BlockWorld.AddVisionOverheadEdges",
+            Point3f(clearFrom.x(), clearFrom.y(), kDebugRenderOverheadEdgesZ_mm),
+            Point3f(clearTo.x(), clearTo.y(), kDebugRenderOverheadEdgesZ_mm),
+            color, false);
+        }
+
+        // add clear info to map
+        if ( currentNavMemoryMap ) {
+          currentNavMemoryMap->AddLine(clearFrom, clearTo, INavMemoryMap::EContentType::ClearOfObstacle);
+        }
+      }
+      else
+      {
+        const float closeLenSq = (potentialClearQuad2D.GetBottomLeft() - potentialClearQuad2D.GetBottomRight()).LengthSq();
+        const bool isTriangle = FLT_LE(closeLenSq, maxCloseLenToBeTriangleSq);
+        if ( isTriangle )
+        {
+          // far segment is big, but close one is small enough that a triangle would be fine
+          const Point2f& triangleClosePoint = (potentialClearQuad2D.GetBottomLeft() + potentialClearQuad2D.GetBottomRight()) * 0.5f;
+          
+          Triangle2f clearTri2D(triangleClosePoint, potentialClearQuad2D.GetTopLeft(), potentialClearQuad2D.GetTopRight());
+          if ( kDebugRenderOverheadEdgeClearQuads )
+          {
+            ColorRGBA color = Anki::NamedColors::DARKGREEN;
+            VizManager* vizManager = _robot->GetContext()->GetVizManager();
+            vizManager->DrawSegment("BlockWorld.AddVisionOverheadEdges",
+              Point3f(clearTri2D[0].x(), clearTri2D[0].y(), kDebugRenderOverheadEdgesZ_mm),
+              Point3f(clearTri2D[1].x(), clearTri2D[1].y(), kDebugRenderOverheadEdgesZ_mm),
+              color, false);
+            vizManager->DrawSegment("BlockWorld.AddVisionOverheadEdges",
+              Point3f(clearTri2D[1].x(), clearTri2D[1].y(), kDebugRenderOverheadEdgesZ_mm),
+              Point3f(clearTri2D[2].x(), clearTri2D[2].y(), kDebugRenderOverheadEdgesZ_mm),
+              color, false);
+            vizManager->DrawSegment("BlockWorld.AddVisionOverheadEdges",
+              Point3f(clearTri2D[2].x(), clearTri2D[2].y(), kDebugRenderOverheadEdgesZ_mm),
+              Point3f(clearTri2D[0].x(), clearTri2D[0].y(), kDebugRenderOverheadEdgesZ_mm),
+              color, false);
+          }
+
+          // add clear info to map
+          if ( currentNavMemoryMap ) {
+            currentNavMemoryMap->AddTriangle(clearTri2D, INavMemoryMap::EContentType::ClearOfObstacle);
+          }
+        }
+        else
+        {
+          // segments are too big, we need to report as quad
+          if ( kDebugRenderOverheadEdgeClearQuads )
+          {
+            ColorRGBA color = Anki::NamedColors::GREEN;
+            VizManager* vizManager = _robot->GetContext()->GetVizManager();
+            vizManager->DrawQuadAsSegments("BlockWorld.AddVisionOverheadEdges", potentialClearQuad2D, kDebugRenderOverheadEdgesZ_mm, color, false);
+          }
+
+          // add clear info to map
+          if ( currentNavMemoryMap ) {
+            currentNavMemoryMap->AddQuad(potentialClearQuad2D, INavMemoryMap::EContentType::ClearOfObstacle);
+          }
+        }
       }
       
       // also notify behavior whiteboard.
       // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
       // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
       // robot component, like a VisualInformationProcessingComponent
-      _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(clearQuad2D);
+      // Note: we always consider quad here since whiteboard does not need the triangle optiomization
+      _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(potentialClearQuad2D);
     }
     
-    // send quads to memory map
-    for ( const auto& borderQuad2D : visionQuadsWithInterestingBorders )
+    // send border segments to memory map
+    for ( const auto& borderSegment : visionSegmentsWithInterestingBorders )
     {
       if ( kDebugRenderOverheadEdgeBorderQuads )
       {
         ColorRGBA color = Anki::NamedColors::BLUE;
         VizManager* vizManager = _robot->GetContext()->GetVizManager();
-        vizManager->DrawQuadAsSegments("BlockWorld.AddVisionOverheadEdges", borderQuad2D, kDebugRenderOverheadEdgesZ_mm, color, false);
+        vizManager->DrawSegment("BlockWorld.AddVisionOverheadEdges",
+          Point3f(borderSegment.from.x(), borderSegment.from.y(), kDebugRenderOverheadEdgesZ_mm),
+          Point3f(borderSegment.to.x(), borderSegment.to.y(), kDebugRenderOverheadEdgesZ_mm),
+          color, false);
       }
     
       // add interesting edge
       if ( currentNavMemoryMap ) {
-        currentNavMemoryMap->AddQuad(borderQuad2D, INavMemoryMap::EContentType::InterestingEdge);
+        currentNavMemoryMap->AddLine(borderSegment.from, borderSegment.to, INavMemoryMap::EContentType::InterestingEdge);
       }
     }
     
     // now merge interesting edges into non-interesting
-    const bool addedEdges = !visionQuadsWithInterestingBorders.empty();
+    const bool addedEdges = !visionSegmentsWithInterestingBorders.empty();
     if ( addedEdges )
     {
+      // TODO Optimization, build bounding box from detected edges, rather than doing the whole ground plane
       Point2f wrtOrigin2DTL = observedPose * Point3f(frameInfo.groundplane[Quad::TopLeft].x(),
                                                      frameInfo.groundplane[Quad::TopLeft].y(),
                                                      0.0f);

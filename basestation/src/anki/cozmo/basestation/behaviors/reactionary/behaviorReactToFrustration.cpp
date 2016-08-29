@@ -69,7 +69,7 @@ Result BehaviorReactToFrustration::InitInternalReactionary(Robot& robot)
 void BehaviorReactToFrustration::TransitionToReaction(Robot& robot, FrustrationReaction& reaction)
 {
 
-  TriggerAnimationAction* action = new TriggerAnimationAction(robot, reaction.params.anim);
+  TriggerLiftSafeAnimationAction* action = new TriggerLiftSafeAnimationAction(robot, reaction.params.anim);
 
   StartActing(action, [this, &reaction](Robot& robot) {
       AnimationComplete(robot, reaction);

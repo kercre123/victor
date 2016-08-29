@@ -1,3 +1,16 @@
+/**
+ * File: faceWorld.cpp
+ *
+ * Author: Andrew Stein (andrew)
+ * Created: 2014
+ *
+ * Description: Implements a container for mirroring on the main thread, the known faces
+ *              from the vision system (which generally runs on another thread).
+ *
+ * Copyright: Anki, Inc. 2014
+ *
+ **/
+
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -13,8 +26,16 @@
 namespace Anki {
 namespace Cozmo {
   
-  CONSOLE_VAR(u32, kDeletionTimeout_ms, "Vision.FaceWorld", 15000); // How long before deleting unobserved face
-  CONSOLE_VAR(u32, kKnownFaceDeletionTimeout_ms, "Vision.FaceWorld", 15000);
+  // How long before deleting an unnamed, unobserved face.
+  // NOTE: we never delete _named_ faces.
+  CONSOLE_VAR(u32, kDeletionTimeout_ms, "Vision.FaceWorld", 15000);
+  
+  // The distance threshold inside of which to head positions are considered to be the same face
+  CONSOLE_VAR(float, kHeadCenterPointThreshold_mm, "Vision.FaceWorld", 220.f);
+  
+  static const char * const kLoggingChannelName = "FaceRecognizer";
+  
+  static const Point3f kHumanHeadSize{148.f, 225.f, 195.f};
   
   FaceWorld::KnownFace::KnownFace(Vision::TrackedFace& faceIn)
   : face(faceIn)
@@ -46,11 +67,17 @@ namespace Cozmo {
   
   void FaceWorld::RemoveFace(KnownFaceIter& knownFaceIter, bool broadcast)
   {
-    if(broadcast) {
+    if(broadcast)
+    {
       using namespace ExternalInterface;
       _robot.Broadcast(MessageEngineToGame(RobotDeletedFace(knownFaceIter->first, _robot.GetID())));
     }
-    _robot.GetContext()->GetVizManager()->EraseVizObject(knownFaceIter->second.vizHandle);
+    
+    if(knownFaceIter->second.vizHandle != VizManager::INVALID_HANDLE)
+    {
+      _robot.GetContext()->GetVizManager()->EraseVizObject(knownFaceIter->second.vizHandle);
+    }
+    
     knownFaceIter = _knownFaces.erase(knownFaceIter);
   }
   
@@ -71,8 +98,8 @@ namespace Cozmo {
     
     if(knownFaceIter != _knownFaces.end())
     {
-      PRINT_NAMED_INFO("FaceWorld.RemoveFaceByID",
-                       "Removing face %d", faceID);
+      PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.RemoveFaceByID",
+                    "Removing face %d", faceID);
       
       RemoveFace(knownFaceIter);
     }
@@ -83,19 +110,25 @@ namespace Cozmo {
   {
     auto knownFaceIter = _knownFaces.find(oldID);
     if(knownFaceIter != _knownFaces.end()) {
+      
+      Vision::TrackedFace& face = knownFaceIter->second.face;
+      
       // TODO: Is there a more efficient move operation I could do here?
-      knownFaceIter->second.face.SetID(newID);
-      _knownFaces.insert({newID, knownFaceIter->second.face});
+      face.SetID(newID);
+      auto result = _knownFaces.insert({newID, face});
       RemoveFace(knownFaceIter, false); // NOTE: don't broadcast the deletion
       
-      PRINT_NAMED_INFO("FaceWorld.ChangeFaceID.Success",
-                       "Updating old face %d to new ID %d",
-                       oldID, newID);
+      // Re-draw the face and update the viz handle
+      DrawFace(result.first->second);
+      
+      PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.ChangeFaceID.Success",
+                    "Updating old face %d to new ID %d",
+                    oldID, newID);
       
     } else if(oldID > 0){
-      PRINT_NAMED_INFO("FaceWorld.ChangeFaceID.UnknownOldID",
-                          "ID %d does not exist, cannot update to %d",
-                          oldID, newID);
+      PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.ChangeFaceID.UnknownOldID",
+                    "ID %d does not exist, cannot update to %d",
+                    oldID, newID);
     } else {
       // Probably no match for old ID because it was a tracked ID and wasn't
       // even added to face world before being recognized and being assigned this
@@ -126,7 +159,7 @@ namespace Cozmo {
     face.SetHeadPose(headPose);
 
     /*
-    PRINT_NAMED_INFO("FaceWorld.AddOrUpdateFace",
+    PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.AddOrUpdateFace",
                      "Updating with face at (x,y,w,h)=(%.1f,%.1f,%.1f,%.1f), "
                      "at t=%d Pose: roll=%.1f, pitch=%.1f yaw=%.1f, T=(%.1f,%.1f,%.1f).",
                      face.GetRect().GetX(), face.GetRect().GetY(),
@@ -139,8 +172,6 @@ namespace Cozmo {
                      face.GetHeadPose().GetTranslation().y(),
                      face.GetHeadPose().GetTranslation().z());
     */
-    
-    static const Point3f humanHeadSize{148.f, 225.f, 195.f};
     
     KnownFace* knownFace = nullptr;
 
@@ -178,7 +209,7 @@ namespace Cozmo {
         {
           auto posDiffVec = knownFaceIter->second.face.GetHeadPose().GetTranslation() - face.GetHeadPose().GetTranslation();
           float posDiffSq = posDiffVec.LengthSq();
-          if(posDiffSq <= headCenterPointThreshold * headCenterPointThreshold) {
+          if(posDiffSq <= kHeadCenterPointThreshold_mm * kHeadCenterPointThreshold_mm) {
             if(foundMatch) {
               // If we had already found a match, delete the last one, because this
               // new face matches multiple existing faces
@@ -196,10 +227,10 @@ namespace Cozmo {
         const Vision::FaceID_t matchedID = knownFace->face.GetID();
         
         // Verbose! Useful for debugging
-        //PRINT_NAMED_DEBUG("FaceWorld.UpdateFace.UpdatingKnownFaceByPose",
-        //                  "Updating face with ID=%lld from t=%d to %d, observed %d times",
-        //                  matchedID, knownFace->face.GetTimeStamp(), face.GetTimeStamp(),
-        //                  face.GetNumTimesObserved());
+        //PRINT_CH_DEBUG(kLoggingChannelName, "FaceWorld.UpdateFace.UpdatingKnownFaceByPose",
+        //               "Updating face with ID=%lld from t=%d to %d, observed %d times",
+        //               matchedID, knownFace->face.GetTimeStamp(), face.GetTimeStamp(),
+        //               face.GetNumTimesObserved());
         
         knownFace->face = face;
         knownFace->face.SetID(matchedID);
@@ -207,8 +238,8 @@ namespace Cozmo {
       
       // Didn't find a match based on pose, so add a new face with a new ID:
       else {
-        PRINT_NAMED_INFO("FaceWorld.UpdateFace.NewFace",
-                         "Added new face with ID=%d at t=%d.", _idCtr, face.GetTimeStamp());
+        PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.UpdateFace.NewFace",
+                      "Added new face with ID=%d at t=%d.", _idCtr, face.GetTimeStamp());
         face.SetID(_idCtr); // Use our own ID here for the new face
         auto insertResult = _knownFaces.insert({_idCtr, face});
         if(insertResult.second == false) {
@@ -228,9 +259,9 @@ namespace Cozmo {
       knownFace = &insertResult.first->second;
       
       if(insertResult.second) {
-        PRINT_NAMED_INFO("FaceWorld.UpdateFace.NewFace",
-                         "Added new face with ID=%d at t=%d.",
-                         face.GetID(), face.GetTimeStamp());
+        PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.UpdateFace.NewFace",
+                      "Added new face with ID=%d at t=%d.",
+                      face.GetID(), face.GetTimeStamp());
       } else {
         // Update the existing face:
         if(!face.HasEyes()) {
@@ -265,9 +296,9 @@ namespace Cozmo {
           // since our ability to accurately localize face's 3D pose is limited.
           if(knownFaceIter->second.face.GetHeadPose().IsSameAs(face.GetHeadPose(), 100.f, DEG_TO_RAD(45)))
           {
-            PRINT_NAMED_INFO("FaceWorld.UpdateFace.RemovingOverlappingFace",
-                             "Removing old face with ID=%lld because it overlaps new face %lld",
-                             knownFaceIter->second.face.GetID(), face.GetID());
+            PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.UpdateFace.RemovingOverlappingFace",
+                          "Removing old face with ID=%lld because it overlaps new face %lld",
+                          knownFaceIter->second.face.GetID(), face.GetID());
             RemoveFace(knownFaceIter);
           } else {
             ++knownFaceIter;
@@ -287,18 +318,19 @@ namespace Cozmo {
         _lastObservedFacePose = knownFace->face.GetHeadPose();
         _lastObservedFaceTimeStamp = knownFace->face.GetTimeStamp();
 
-      // Draw 3D face
-      knownFace->vizHandle = _robot.GetContext()->GetVizManager()->DrawHumanHead(0,
-                                                                      humanHeadSize,
-                                                                      knownFace->face.GetHeadPose(),
-                                                                      ::Anki::NamedColors::DARKGRAY);
+        // Draw 3D face for the last observed pose
+        knownFace->vizHandle = _robot.GetContext()->GetVizManager()->DrawHumanHead(0,
+                                                                                   kHumanHeadSize,
+                                                                                   knownFace->face.GetHeadPose(),
+                                                                                   ::Anki::NamedColors::DARKGRAY);
       }
 
-      // Draw 3D face
-      ColorRGBA drawFaceColor = ColorRGBA::CreateFromColorIndex((u32)knownFace->face.GetID());
+      // Draw face in 3D and in camera
+      DrawFace(*knownFace);
+
 
       /*
-      PRINT_NAMED_INFO("FaceWorld.AddOrUpdateFace",
+      PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.AddOrUpdateFace",
                        "Known face at (x,y,w,h)=(%.1f,%.1f,%.1f,%.1f), "
                        "at t=%d Pose: roll=%.1f, pitch=%.1f yaw=%.1f, T=(%.1f,%.1f,%.1f).",
                        knownFace->face.GetRect().GetX(), knownFace->face.GetRect().GetY(),
@@ -311,16 +343,6 @@ namespace Cozmo {
                        knownFace->face.GetHeadPose().GetTranslation().y(),
                        knownFace->face.GetHeadPose().GetTranslation().z());
       */
-      
-      const s32 vizID = (s32)knownFace->face.GetID() + (knownFace->face.GetID() >= 0 ? 1 : 0);
-      knownFace->vizHandle = _robot.GetContext()->GetVizManager()->DrawHumanHead(vizID,
-                                                                                 humanHeadSize,
-                                                                                 knownFace->face.GetHeadPose(),
-                                                                                 drawFaceColor);
-
-      // Draw box around recognized face (with ID) now that we have the real ID set
-      _robot.GetContext()->GetVizManager()->DrawCameraFace(knownFace->face, drawFaceColor);
-
       
       // Send out an event about this face being observed
       using namespace ExternalInterface;
@@ -359,23 +381,23 @@ namespace Cozmo {
   {
     ANKI_CPU_PROFILE("FaceWorld::Update");
     
-    // Delete any faces we haven't seen in awhile
+    const TimeStamp_t lastProcImageTime = _robot.GetVisionComponent().GetLastProcessedImageTimeStamp();
+    
+    // Delete any unnamed faces we haven't seen in awhile
     for(auto faceIter = _knownFaces.begin(); faceIter != _knownFaces.end(); )
     {
       Vision::TrackedFace& face = faceIter->second.face;
       
-      const u32 timeout = face.GetName().empty() ? kDeletionTimeout_ms : kKnownFaceDeletionTimeout_ms;
-      if(_robot.GetVisionComponent().GetLastProcessedImageTimeStamp() > timeout + face.GetTimeStamp()) {
-        
-        PRINT_NAMED_INFO("FaceWorld.Update.DeletingOldFace",
-                         "Removing %sface %d at t=%d, because it hasn't been seen since t=%d.",
-                         face.GetName().empty() ? "" : "known ",
-                         faceIter->first, _robot.GetLastImageTimeStamp(),
-                         faceIter->second.face.GetTimeStamp());
+      if(face.GetName().empty() && (lastProcImageTime > kDeletionTimeout_ms + face.GetTimeStamp()))
+      {
+        PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.Update.DeletingOldFace",
+                      "Removing unnamed face %d at t=%d, because it hasn't been seen since t=%d.",
+                      faceIter->first, lastProcImageTime, face.GetTimeStamp());
         
         RemoveFace(faceIter); // Increments faceIter!
-        
-      } else {
+      }
+      else
+      {
         ++faceIter;
       }
     }
@@ -445,6 +467,24 @@ namespace Cozmo {
     
     return _lastObservedFaceTimeStamp;    
   }
+  
+  void FaceWorld::DrawFace(KnownFace& knownFace)
+  {
+    const Vision::TrackedFace& trackedFace = knownFace.face;
+    
+    ColorRGBA drawFaceColor = ColorRGBA::CreateFromColorIndex((u32)trackedFace.GetID());
+    
+    const s32 vizID = (s32)trackedFace.GetID() + (trackedFace.GetID() >= 0 ? 1 : 0);
+    knownFace.vizHandle = _robot.GetContext()->GetVizManager()->DrawHumanHead(vizID,
+                                                                              kHumanHeadSize,
+                                                                              trackedFace.GetHeadPose(),
+                                                                              drawFaceColor);
+    
+    // Draw box around recognized face (with ID) now that we have the real ID set
+    _robot.GetContext()->GetVizManager()->DrawCameraFace(trackedFace, drawFaceColor);
+
+  }
+  
 
 } // namespace Cozmo
 } // namespace Anki

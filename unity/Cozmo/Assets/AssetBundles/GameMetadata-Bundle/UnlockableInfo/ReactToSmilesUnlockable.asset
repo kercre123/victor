@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: StackTwoCubes
-    _EnumValue: 11
+    _EnumValue: 10
   UnlockableType: 1
   Prerequisites: []
   AnyPrereqUnlock: 0

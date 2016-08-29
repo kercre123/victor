@@ -238,7 +238,7 @@ ActionResult ITrackAction::CheckIfDone()
     if( currentTime > _nextSoundTime && angleLargeEnoughForSound)
     {
       // Queue sound to only play if nothing else is playing
-      PlayAnimationAction* soundAction = new TriggerAnimationAction(_robot, _turningSoundAnimTrigger, 1, false);
+      PlayAnimationAction* soundAction = new TriggerLiftSafeAnimationAction(_robot, _turningSoundAnimTrigger, 1, false);
       _soundAnimTag = soundAction->GetTag();
       _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, soundAction);
       

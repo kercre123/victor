@@ -26,7 +26,7 @@
     "translation": "Let Cozmo explore uninterrupted for 5 minutes"
   },
   "reward.description.Freeplay.Spark": {
-    "translation": "Spark a behavior"
+    "translation": "Spark an Upgrade"
   },
   "reward.description.Freeplay.CompleteBehavior.Stack": {
     "translation": "Cozmo Completed the “Stack Cubes” behavior successfully"
@@ -74,13 +74,13 @@
     "translation": "Shut out Cozmo in two rounds of Quick Tap"
   },
   "reward.description.QuickTap.RedCubes.NeverTap": {
-    "translation": "Finished a game of Quick Tap without ever tapping on a red cube"
+    "translation": "Never tapped on a red cube!"
   },
   "reward.description.QuickTap.TieBreaker.OneRound": {
-    "translation": "Won a round of Quick Tap after being tied 4-4"
+    "translation": "Won a round of after being tied 4-4"
   },
   "reward.description.QuickTap.TieBreaker.TwoRounds": {
-    "translation": "Won two rounds of Quick Tap after being tied 4-4"
+    "translation": "Won two rounds of after being tied 4-4"
   },  
   "reward.description.Keepaway.Played": {
     "translation": "Played a game of Keepaway"
@@ -98,16 +98,16 @@
     "translation": "Won Keepaway after being tied 4-4"
   },
   "reward.description.Explorer.Time.5": {
-    "translation": "Played Explorer Mode for > 5 minutes"
+    "translation": "Played Explorer Mode for longer than 5 minutes"
   },
   "reward.description.Explorer.Time.10": {
-    "translation": "Played Explorer Mode for > 10 minutes"
+    "translation": "Played Explorer Mode for longer than 10 minutes"
   },
   "reward.description.Explorer.Time.15": {
-    "translation": "Played Explorer Mode for > 15 minutes"
+    "translation": "Played Explorer Mode for longer than 15 minutes"
   },
   "reward.description.Explorer.Time.20": {
-    "translation": "Played Explorer Mode for > 20 minutes"
+    "translation": "Played Explorer Mode for longer than 20 minutes"
   },
   "reward.collect.CollectEnergy": {
     "translation": "+{0} Energy!"

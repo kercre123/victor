@@ -150,7 +150,7 @@ MonoBehaviour:
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
   TextPressedColor: {r: 0.4, g: 0.4, b: 0.4, a: 1}
-  TextDisabledColor: {r: 1, g: 1, b: 1, a: 0.509}
+  TextDisabledColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 11403850}

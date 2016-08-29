@@ -169,7 +169,7 @@
     "translation": "Start"
   },
   "soundcheck.description": {
-    "translation": "Turn on your device's audio!"
+    "translation": "Please make sure your device's sound is turned on."
   },
   "label.available": {
     "translation": "Available!"
@@ -191,5 +191,8 @@
   },
   "button.unlock": {
     "translation": "Unlock"
+  },
+  "soundcheck.description.confirm": {
+    "translation": "Did you hear the sound?"
   }
 }

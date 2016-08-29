@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/components/lightsComponent.h"
 #include "anki/cozmo/basestation/robotEventHandler.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -657,7 +658,7 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionUnionTag::playAnimationTrigger:
     {
       auto & playAnimationTrigger = actionUnion.Get_playAnimationTrigger();
-      return new TriggerAnimationAction(robot, playAnimationTrigger.trigger, playAnimationTrigger.numLoops);
+      return new TriggerLiftSafeAnimationAction(robot, playAnimationTrigger.trigger, playAnimationTrigger.numLoops);
     }
     case RobotActionUnionTag::pickupObject:
       return GetPickupActionHelper(robot, actionUnion.Get_pickupObject());
@@ -893,7 +894,7 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
     case ExternalInterface::MessageGameToEngineTag::PlayAnimationTrigger:
     {
       const ExternalInterface::PlayAnimationTrigger& msg = event.GetData().Get_PlayAnimationTrigger();
-      newAction = new TriggerAnimationAction(robotRef, msg.trigger, msg.numLoops);
+      newAction = new TriggerLiftSafeAnimationAction(robotRef, msg.trigger, msg.numLoops);
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::SearchForObject:
@@ -1510,6 +1511,11 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetActiveObjectLE
   {
     PRINT_NAMED_WARNING("RobotEventHandler.HandleSetActiveObjectLEDs.InvalidRobotID", "Failed to find robot.");
   }
+  else if(robot->GetLightsComponent().IsCubeEnabled(msg.objectID))
+  {
+    PRINT_NAMED_INFO("RobotEventHandler.HandleSetActiveObjectLEDS.LightsComponentEnabled",
+                     "Not setting lights while cube lights for object %d are enabled by engine", msg.objectID);
+  }
   else
   {
     assert(msg.objectID <= s32_MAX);
@@ -1535,7 +1541,12 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetAllActiveObjec
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleSetAllActiveObjectLEDss.InvalidRobotID", "Failed to find robot.");
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleSetAllActiveObjectLEDs.InvalidRobotID", "Failed to find robot.");
+  }
+  else if(robot->GetLightsComponent().IsCubeEnabled(msg.objectID))
+  {
+    PRINT_NAMED_INFO("RobotEventHandler.HandleSetActiveObjectLEDS.LightsComponentEnabled",
+                     "Not setting lights while cube lights for object %d are enabled by engine", msg.objectID);
   }
   else
   {

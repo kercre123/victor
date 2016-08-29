@@ -37,6 +37,8 @@ namespace FaceEnrollment {
 
     private bool _UserCancelledEnrollment = false;
 
+    private bool _ShowDoneShelf = false;
+
     // selects if we should save to the actual robot or only keep faces
     // for this session. used by press demo to not save to the actual robot.
     public void SetSaveToRobot(bool saveToRobot) {
@@ -51,6 +53,7 @@ namespace FaceEnrollment {
     protected override void InitializeGame(MinigameConfigBase minigameConfig) {
       // make cozmo look up
       CurrentRobot.SetHeadAngle(CozmoUtil.kIdealFaceViewHeadValue);
+      CurrentRobot.SetLiftHeight(0.0f);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotOffTreadsStateChanged>(HandleOffTredsStateChanged);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(HandleEnrolledFace);
@@ -93,12 +96,11 @@ namespace FaceEnrollment {
     private void ShowFaceListSlide(Cozmo.MinigameWidgets.SharedMinigameView newView) {
       _FaceListSlideInstance = newView.ShowWideGameStateSlide(_FaceListSlidePrefab.gameObject, "face_list_slide").GetComponent<FaceEnrollmentListSlide>();
       _FaceListSlideInstance.Initialize(CurrentRobot.EnrolledFaces, _UpdateThresholdLastSeenSeconds, _UpdateThresholdLastEnrolledSeconds);
-      newView.ShowShelf();
+      ShowShelf(newView);
       _FaceListSlideInstance.OnEnrollNewFaceRequested += EnterNameForNewFace;
       _FaceListSlideInstance.OnEditNameRequested += EditExistingName;
       _FaceListSlideInstance.OnDeleteEnrolledFace += RequestDeleteEnrolledFace;
       _FaceListSlideInstance.OnReEnrollFaceRequested += RequestReEnrollFace;
-      newView.ShelfWidget.SetWidgetText(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDescription);
       newView.ShowQuitButton();
     }
 
@@ -123,12 +125,11 @@ namespace FaceEnrollment {
       CleanupFaceListSlide();
     }
 
-    private void EnterNameForNewFace() {
+    private void EnterNameForNewFace(string preFilledName) {
       _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "enter_new_name", NewNameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
 
-      // if this the first name then we should pre-populate the name with the profile name.
-      if (CurrentRobot.EnrolledFaces.Count == 0) {
-        _EnterNameSlideInstance.SetNameInputField(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName);
+      if (string.IsNullOrEmpty(preFilledName) == false) {
+        _EnterNameSlideInstance.SetNameInputField(preFilledName);
       }
 
       SharedMinigameView.ShowBackButton(() => {
@@ -160,7 +161,7 @@ namespace FaceEnrollment {
       _NameForFace = faceName;
 
       ShowInstructions(() => {
-        EnterNameForNewFace();
+        EnterNameForNewFace(faceName);
       }, faceName);
     }
 
@@ -216,6 +217,8 @@ namespace FaceEnrollment {
       // cancelled for some other reason (eg. interrupt by picking up / place on back).
       if (message.result == Anki.Cozmo.ActionResult.CANCELLED) {
         _ReEnrollFaceID = 0;
+        EditOrEnrollFaceComplete(false);
+        ContextManager.Instance.AppFlash(playChime: true);
         UIManager.CloseView(_FaceEnrollmentInstructionsViewInstance);
         return;
       }
@@ -234,6 +237,16 @@ namespace FaceEnrollment {
         else {
           alertView.TitleLocKey = LocalizationKeys.kFaceEnrollmentErrorsTimeOutTitle;
           alertView.DescriptionLocKey = LocalizationKeys.kFaceEnrollmentErrorsTimeOutDescription;
+          alertView.SetPrimaryButton(LocalizationKeys.kButtonRetry, () => {
+            CleanupFaceListSlide();
+            bool reEnrolling = _ReEnrollFaceID != 0;
+            if (reEnrolling) {
+              RequestReEnrollFace(_ReEnrollFaceID, _NameForFace);
+            }
+            else {
+              HandleNewNameEntered(_NameForFace);
+            }
+          });
           alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel);
         }
       }
@@ -308,6 +321,9 @@ namespace FaceEnrollment {
 
     private void EditOrEnrollFaceComplete(bool success) {
       SharedMinigameView.ShowQuitButton();
+      if (success) {
+        _ShowDoneShelf = true;
+      }
       ShowFaceListSlide(SharedMinigameView);
     }
 
@@ -327,7 +343,26 @@ namespace FaceEnrollment {
     }
 
     private void HandleEraseEnrolledFace(int faceId, string faceName) {
+      _ShowDoneShelf = true;
       _FaceListSlideInstance.RefreshList(RobotEngineManager.Instance.CurrentRobot.EnrolledFaces);
+      // calling this explicitly to show the conditional shelf after erasing a face
+      ShowShelf(SharedMinigameView);
+    }
+
+    private void ShowShelf(Cozmo.MinigameWidgets.SharedMinigameView newView) {
+      newView.ShowShelf();
+
+      if (_ShowDoneShelf) {
+        newView.ShelfWidget.SetWidgetText(LocalizationKeys.kFaceEnrollmentConditionAllChangesSaved);
+        newView.ShelfWidget.ShowGameDoneButton(true);
+        newView.ShelfWidget.GameDoneButtonPressed += () => {
+          RaiseMiniGameQuit();
+        };
+      }
+      else {
+        newView.ShelfWidget.SetWidgetText(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDescription);
+      }
+
     }
 
     protected override void CleanUpOnDestroy() {

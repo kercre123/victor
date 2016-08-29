@@ -92,6 +92,23 @@ namespace Anki {
       
     }; // class TriggerAnimationAction
     
+    
+    // A special subclass of TriggerAnimationAction which checks to see
+    // if the robot is holding a cube and locks the tracks
+    class TriggerLiftSafeAnimationAction : public TriggerAnimationAction
+    {
+    public:
+      // Preferred constructor, used by the factory CreatePlayAnimationAction
+      // Numloops 0 causes the action to loop forever
+      explicit TriggerLiftSafeAnimationAction(Robot& robot,
+                                      AnimationTrigger animEvent,
+                                      u32 numLoops = 1,
+                                      bool interruptRunning = true,
+                                      u8 tracksToLock = (u8)AnimTrackFlag::NO_TRACKS);
+      static u8 TracksToLock(Robot& robot, u8 tracksCurrentlyLocked);
+      
+      
+    };
 
     class DeviceAudioAction : public IAction
     {

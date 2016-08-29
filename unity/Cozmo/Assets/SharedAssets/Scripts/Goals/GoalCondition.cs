@@ -28,7 +28,7 @@ namespace Anki {
         NOT
       }
 
-      public bool CompareConditionValues(int a, int b, ComparisonType compareType) {
+      public bool CompareConditionValues(float a, float b, ComparisonType compareType) {
         switch (compareType) {
         case ComparisonType.GREATER:
           return a > b;

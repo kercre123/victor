@@ -30,10 +30,16 @@ CONSOLE_VAR(bool, kRenderNavMeshQuadTree         , "NavMeshQuadTree", true);
 CONSOLE_VAR(bool, kRenderLastAddedQuad           , "NavMeshQuadTree", false);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+namespace {
+constexpr float kQuadTreeInitialRootSideLength = 200.0f;
+constexpr uint8_t kQuadTreeInitialMaxDepth = 4;
+};
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 NavMeshQuadTree::NavMeshQuadTree(VizManager* vizManager)
 : _gfxDirty(true)
 , _processor(vizManager)
-, _root({0,0,1}, 256, 5, NavMeshQuadTreeTypes::EQuadrant::Root, nullptr)
+, _root({0,0,1}, kQuadTreeInitialRootSideLength, kQuadTreeInitialMaxDepth, NavMeshQuadTreeTypes::EQuadrant::Root, nullptr)
 , _vizManager(vizManager)
 {
   _processor.SetRoot( &_root );
@@ -140,7 +146,43 @@ void NavMeshQuadTree::AddQuad(const Quad2f& quad, const NodeContent& nodeContent
   }
 
   // add quad now
-  _gfxDirty = _root.AddQuad(quad, nodeContent, _processor) || _gfxDirty;
+  _gfxDirty = _root.AddContentQuad(quad, nodeContent, _processor) || _gfxDirty;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTree::AddLine(const Point2f& from, const Point2f& to, const NodeContent& nodeContent)
+{
+  ANKI_CPU_PROFILE("NavMeshQuadTree::AddLine");
+
+  // if the root does not contain origin, we need to expand in that direction
+  if ( !_root.Contains( from ) )
+  {
+    Expand( from );
+  }
+
+  // if the root does not contain destination, we need to expand in that direction
+  if ( !_root.Contains( to ) )
+  {
+    Expand( to );
+  }
+
+  // add segment now
+  _gfxDirty = _root.AddContentLine(from, to, nodeContent, _processor) || _gfxDirty;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTree::AddTriangle(const Triangle2f& tri, const NodeContent& nodeContent)
+{
+  ANKI_CPU_PROFILE("NavMeshQuadTree::AddTriangle");
+
+  // if the root does not contain the triangle, we need to expand in that direction
+  if ( !_root.Contains( tri ) )
+  {
+    Expand( tri );
+  }
+
+  // add triangle now
+  _gfxDirty = _root.AddContentTriangle(tri, nodeContent, _processor) || _gfxDirty;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -183,6 +225,8 @@ void NavMeshQuadTree::Merge(const NavMeshQuadTree& other, const Pose3d& transfor
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTree::Expand(const Quad2f& quadToCover)
 {
+  ANKI_CPU_PROFILE("NavMeshQuadTree::ExpandByQuad");
+  
   // allow expanding several times until the quad fits in the tree, as long as we can expand, we keep trying,
   // relying on the root to tell us if we reached a limit
   bool expanded = false;
@@ -209,6 +253,71 @@ void NavMeshQuadTree::Expand(const Quad2f& quadToCover)
   // always flag as dirty since we have modified the root
   _gfxDirty = true;
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTree::Expand(const Point2f& pointToInclude)
+{
+  ANKI_CPU_PROFILE("NavMeshQuadTree::ExpandByPoint");
+  
+  // allow expanding several times until the point fits in the tree, as long as we can expand, we keep trying,
+  // relying on the root to tell us if we reached a limit
+  bool expanded = false;
+  bool pointInMap = false;
+  
+  do {
+
+    // Find in which direction we are expanding and upgrade root level in that direction
+    const Vec2f& direction = pointToInclude - Point2f{_root.GetCenter().x(), _root.GetCenter().y()};
+    expanded = _root.UpgradeRootLevel(direction, _processor);
+    
+    // check if the point now fits in the expanded root
+    pointInMap = _root.Contains(pointToInclude);
+    
+  } while( !pointInMap && expanded );
+  
+  // the point should be contained, if it's not, we have reached the limit of expansions and the point does not
+  // fit, which will cause information loss
+  if ( !pointInMap ) {
+    PRINT_NAMED_ERROR("NavMeshQuadTree.Expand.InsufficientExpansion",
+      "Point caused expansion, but expansion was not enough.");
+  }
+  
+  // always flag as dirty since we have modified the root
+  _gfxDirty = true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTree::Expand(const Triangle2f& triangleToCover)
+{
+  ANKI_CPU_PROFILE("NavMeshQuadTree::ExpandByTriangle");
+  
+  // allow expanding several times until the triangle fits in the tree, as long as we can expand, we keep trying,
+  // relying on the root to tell us if we reached a limit
+  bool expanded = false;
+  bool triangleInMap = false;
+  
+  do {
+
+    // Find in which direction we are expanding and upgrade root level in that direction
+    const Vec2f& direction = triangleToCover.GetCentroid() - Point2f{_root.GetCenter().x(), _root.GetCenter().y()};
+    expanded = _root.UpgradeRootLevel(direction, _processor);
+    
+    // check if the point now fits in the expanded root
+    triangleInMap = _root.Contains(triangleToCover);
+    
+  } while( !triangleInMap && expanded );
+  
+  // the point should be contained, if it's not, we have reached the limit of expansions and the point does not
+  // fit, which will cause information loss
+  if ( !triangleInMap ) {
+    PRINT_NAMED_ERROR("NavMeshQuadTree.Expand.InsufficientExpansion",
+      "Triangle caused expansion, but expansion was not enough.");
+  }
+  
+  // always flag as dirty since we have modified the root
+  _gfxDirty = true;
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

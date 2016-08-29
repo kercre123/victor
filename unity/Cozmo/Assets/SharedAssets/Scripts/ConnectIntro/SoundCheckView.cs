@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using DG.Tweening;
 
 public class SoundCheckView : Cozmo.UI.BaseView {
 
@@ -14,12 +15,19 @@ public class SoundCheckView : Cozmo.UI.BaseView {
   [SerializeField]
   private Cozmo.UI.CozmoButton _SoundsGoodButton;
 
+  [SerializeField]
+  private UnityEngine.UI.Image _SoundImageFill;
+
+  [SerializeField]
+  private Anki.UI.AnkiTextLabel _SoundTextConfirm;
+
   private bool _PlayedOnce = false;
 
   private void Awake() {
     _PlayButton.Initialize(HandlePlayButton, "play_sound_button", this.DASEventViewName);
     _SoundsGoodButton.Initialize(HandleSoundsGoodButton, "sounds_good_button", this.DASEventViewName);
     _PlayAgainButton.Initialize(HandlePlayButton, "play_again_button", this.DASEventViewName);
+    _SoundTextConfirm.gameObject.SetActive(false);
   }
 
   private void Start() {
@@ -31,12 +39,17 @@ public class SoundCheckView : Cozmo.UI.BaseView {
   private void HandlePlayButton() {
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Win);
     // TODO: use actual audio finish trigger?
-    Invoke("HandlePlaySoundComplete", 1.5f);
+    const float audioDuration = 0.35f;
+    Invoke("HandlePlaySoundComplete", audioDuration);
+    _SoundImageFill.fillAmount = 0.0f;
+    DOTween.To(() => _SoundImageFill.fillAmount, x => _SoundImageFill.fillAmount = x, 1.0f, audioDuration);
+
     _PlayButton.Interactable = false;
     _PlayAgainButton.Interactable = false;
   }
 
   private void HandlePlaySoundComplete() {
+    _SoundTextConfirm.gameObject.SetActive(true);
     _PlayAgainButton.Interactable = true;
     if (_PlayedOnce == false) {
       _SoundsGoodButton.Text = Localization.Get(LocalizationKeys.kButtonSoundsGood);

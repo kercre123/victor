@@ -154,7 +154,6 @@ void BehaviorAcknowledgeFace::FinishIteration(Robot& robot)
   
 bool BehaviorAcknowledgeFace::IsRunnableInternalReactionary(const Robot& robot) const
 {
-  // TODO: consider !carrying object, or maybe lock lift track if we are carrying?
   return kEnableFaceAcknowledgeReact && !robot.IsOnCharger() && !robot.IsOnChargerPlatform();
 }
   
