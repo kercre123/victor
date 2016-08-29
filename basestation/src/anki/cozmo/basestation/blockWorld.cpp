@@ -2724,8 +2724,8 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
         // TODO turn into helper, see Robot.cpp's IsTooHigh
         const Point3f rotatedSizeWrtRobot(objWrtRobot.GetRotation() * object.GetSize());
         const f32 bottomOfObjectWrtRobot = objWrtRobot.GetTranslation().z() - (0.5f* std::abs(rotatedSizeWrtRobot.z()));
-        const float zFloatingThreshold = fabsf(rotatedSizeWrtRobot.z()*0.5f);
-        const bool isFloating = FLT_GE(fabsf(bottomOfObjectWrtRobot), zFloatingThreshold);
+        const float zFloatingThreshold = std::abs(rotatedSizeWrtRobot.z()*0.5f);
+        const bool isFloating = FLT_GT(std::abs(bottomOfObjectWrtRobot), zFloatingThreshold);
         if ( isFloating )
         {
           // store in as a reported pose, but set as not in map (the pose value is not relevant)
