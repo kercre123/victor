@@ -217,6 +217,8 @@ namespace FaceEnrollment {
       // cancelled for some other reason (eg. interrupt by picking up / place on back).
       if (message.result == Anki.Cozmo.ActionResult.CANCELLED) {
         _ReEnrollFaceID = 0;
+        EditOrEnrollFaceComplete(false);
+        ContextManager.Instance.AppFlash(playChime: true);
         UIManager.CloseView(_FaceEnrollmentInstructionsViewInstance);
         return;
       }
@@ -319,7 +321,9 @@ namespace FaceEnrollment {
 
     private void EditOrEnrollFaceComplete(bool success) {
       SharedMinigameView.ShowQuitButton();
-      _ShowDoneShelf = true;
+      if (success) {
+        _ShowDoneShelf = true;
+      }
       ShowFaceListSlide(SharedMinigameView);
     }
 
@@ -339,8 +343,10 @@ namespace FaceEnrollment {
     }
 
     private void HandleEraseEnrolledFace(int faceId, string faceName) {
-      _FaceListSlideInstance.RefreshList(RobotEngineManager.Instance.CurrentRobot.EnrolledFaces);
       _ShowDoneShelf = true;
+      _FaceListSlideInstance.RefreshList(RobotEngineManager.Instance.CurrentRobot.EnrolledFaces);
+      // calling this explicitly to show the conditional shelf after erasing a face
+      ShowShelf(SharedMinigameView);
     }
 
     private void ShowShelf(Cozmo.MinigameWidgets.SharedMinigameView newView) {
