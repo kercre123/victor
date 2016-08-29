@@ -2643,15 +2643,15 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
         
         if(factoryID > 0)
         {
-          // Need to check exisiting objects in other frames and update to match new object
+          // Need to check existing objects in other frames and update to match new object
           // (only if new object has a valid factory id)
           std::vector<ObservableObject*> matchingObjectsInAllFrames;
           BlockWorldFilter filter;
           filter.AddFilterFcn([activeID](const ObservableObject* object) { return object->GetActiveID() == activeID;} );
           FindMatchingObjects(filter, matchingObjectsInAllFrames);
         
-          PRINT_NAMED_INFO("BlockWorld.AddActiveObject.UpdateExisitingObjects",
-                           "Updating %lu exisiting objects in other frames to match object with factoryID 0x%x and activeID %d",
+          PRINT_NAMED_INFO("BlockWorld.AddActiveObject.UpdateExistingObjects",
+                           "Updating %lu existing objects in other frames to match object with factoryID 0x%x and activeID %d",
                            matchingObjectsInAllFrames.size(),
                            factoryID,
                            activeID);
@@ -4217,7 +4217,7 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
     // Iterate through all the objects
     BlockWorldFilter filter;
     // Markerless objects are not Actionable, so ignore them for selection
-    filter.SetIgnoreFamilies({ObjectFamily::MarkerlessObject});
+    filter.SetIgnoreFamilies({ObjectFamily::MarkerlessObject, ObjectFamily::CustomObject});
     std::vector<ObservableObject*> allObjects;
     FindMatchingObjects(filter, allObjects);
     for(auto const & obj : allObjects)
