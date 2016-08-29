@@ -64,9 +64,19 @@ namespace Anki {
           return ( (bufferSize > 0) && (audioBuffer != nullptr) );
         }
         
-        float ApproximateDuration_ms() {
+        float ApproximateDuration_ms() const
+        {
           const double sampleCount = bufferSize / numberOfChannels;
           return static_cast<float>( (sampleCount / (double)sampleRate) * 1000.0 );
+        }
+        
+        void ReleaseAudioDataOwnership()
+        {
+          // Reset vars
+          sampleRate = 0;
+          numberOfChannels = 0;
+          bufferSize = 0;
+          audioBuffer = nullptr;
         }
       };
       

@@ -71,15 +71,16 @@ public:
   // Get the current state of the create speech operation
   AudioCreationState GetOperationState(const OperationId operationId) const;
   
-  // Set up Audio controller to play text's audio data
+  // Set up Audio Engine to play text's audio data
   // out_durration_ms provides approximate durration of event before proccessing in audio engine
   // Return false if the audio has NOT been created or is not yet ready, out_duration_ms will NOT be valid.
+  // NOTE: If this method is able to pass speech audio data ownership to plugin it will call ClearOperationData()
   // TODO: Currently there is only 1 source plugin for inserting audio it would be nice to have more
-  bool PrepareSpeech(const OperationId operationId, float& out_duration_ms) const;
+  bool PrepareAudioEngine(const OperationId operationId, float& out_duration_ms);
   
-  // Clear Speech audio data from audio controller
+  // Clear Speech audio data from audio engine and clear operation data
   // TODO: Currently there is only 1 source plugin for inserting audio it would be nice to have more
-  void CompletedSpeech();
+  void CleanupAudioEngine(const OperationId operationId);
   
   // Clear speech operation audio data from memory
   void ClearOperationData(const OperationId operationId);
@@ -126,7 +127,7 @@ private:
   
   // Increament the opeation Id
   OperationId GetNextOperationId();
-
+  
 }; // class TextToSpeech
 
 

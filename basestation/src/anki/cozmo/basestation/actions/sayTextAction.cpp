@@ -34,6 +34,7 @@ SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTex
 , _text(text)
 , _style(style)
 , _durationScalar(durationScalar)
+, _ttsOperationId(TextToSpeechComponent::kInvalidOperationId)
 , _animation("SayTextAnimation")
 
 {
@@ -47,6 +48,7 @@ SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTex
           RobotActionType::SAY_TEXT,
           (u8)AnimTrackFlag::NO_TRACKS)
 , _text(text)
+, _ttsOperationId(TextToSpeechComponent::kInvalidOperationId)
 , _animation("SayTextAnimation")
 {
   // Create text for 'Intent'
@@ -122,12 +124,11 @@ SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTex
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SayTextAction::~SayTextAction()
 {
-  // Now that we're all done, remove form the audio engine and unload the sounds from memory
-  _robot.GetTextToSpeechComponent().CompletedSpeech();
-  _robot.GetTextToSpeechComponent().ClearOperationData(_ttsOperationId);
+  // Now that we're all done, cleanup possible audio data leaks caused by action or animations being aborted. This is
+  // safe to call for success as well.
+  _robot.GetTextToSpeechComponent().CleanupAudioEngine(_ttsOperationId);
   
-  if(_playAnimationAction != nullptr)
-  {
+  if(_playAnimationAction != nullptr) {
     _playAnimationAction->PrepForCompletion();
   }
   Util::SafeDelete(_playAnimationAction);
@@ -153,16 +154,19 @@ ActionResult SayTextAction::Init()
       // Set Audio data right before action runs
       float duration_ms = 0.0f;
       // FIXME: Need to way to get other Audio GameObjs
-      const bool success = _robot.GetTextToSpeechComponent().PrepareSpeech(_ttsOperationId,
-                                                                           duration_ms);
-
-      if (!success) {
-        PRINT_NAMED_ERROR("SayTextAction.Init.PrepareSpeech.Failed", "");
+      const bool success = _robot.GetTextToSpeechComponent().PrepareAudioEngine(_ttsOperationId,
+                                                                                duration_ms);
+      if (success) {
+        // Don't need to be responsible for audio data after successfully TextToSpeechComponent().PrepareAudioEngine()
+        _ttsOperationId = TextToSpeechComponent::kInvalidOperationId;
+      }
+      else {
+        PRINT_NAMED_ERROR("SayTextAction.Init.PrepareAudioEngine.Failed", "");
         return ActionResult::FAILURE_ABORT;
       }
       
       if (duration_ms * 0.001f > _timeout_sec) {
-        PRINT_NAMED_ERROR("SayTextAction.Init.PrepareSpeech.DurrationTooLong", "Durration: %f", duration_ms);
+        PRINT_NAMED_ERROR("SayTextAction.Init.PrepareAudioEngine.DurrationTooLong", "Duration: %f", duration_ms);
       }
       
       const bool useBuiltInAnim = (AnimationTrigger::Count == _animationTrigger);

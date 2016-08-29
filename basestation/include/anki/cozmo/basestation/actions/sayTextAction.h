@@ -59,14 +59,14 @@ private:
   std::string               _text;
   SayTextVoiceStyle         _style;
   float                     _durationScalar       = 0.f;
-  uint8_t                   _ttsOperationId       = 0;
+  uint8_t                   _ttsOperationId       = 0;        // This is set while the action is managing the audio data
   bool                      _isAudioReady         = false;
   Animation                 _animation;
   AnimationTrigger          _animationTrigger     = AnimationTrigger::Count; // Count == use built-in animation
   IActionRunner*            _playAnimationAction  = nullptr;
   f32                       _timeout_sec          = 30.f;
   
-  // Call to start processing text to speach
+  // Call to start processing text to speech
   void GenerateTtsAudio();
   
 }; // class SayTextAction
