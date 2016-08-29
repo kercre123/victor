@@ -39,7 +39,7 @@ RobotInitialConnection::RobotInitialConnection(RobotID_t id, MessageHandler* mes
 , _externalInterface(externalInterface)
 , _fwVersion(fwVersion)
 , _fwTime(fwTime)
-, _validFirmware(true) // innocent until proven guilty
+, _validFirmware(false) // guilty until proven innocent
 {
   if (_externalInterface == nullptr) {
     return;
@@ -96,7 +96,6 @@ bool RobotInitialConnection::HandleDisconnect()
   PRINT_NAMED_INFO("RobotInitialConnection.HandleDisconnect", "robot connection failed");
 
   const auto result = RobotConnectionResult::ConnectionFailure;
-  _externalInterface->Broadcast(MessageEngineToGame{RobotConnectionResponse{_id, result}});
   OnNotified(result);
   return true;
 }
@@ -110,7 +109,6 @@ void RobotInitialConnection::HandleFactoryFirmware(const AnkiEvent<RobotToEngine
   PRINT_NAMED_INFO("RobotInitialConnection.HandleFactoryFirmware", "robot has factory firmware");
 
   const auto result = RobotConnectionResult::OutdatedFirmware;
-  _externalInterface->Broadcast(MessageEngineToGame{RobotConnectionResponse{_id, result}});
   OnNotified(result);
 }
 
@@ -160,7 +158,6 @@ void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotToEngine
     }
   }
 
-  _externalInterface->Broadcast(MessageEngineToGame{RobotConnectionResponse{_id, result}});
   OnNotified(result);
 }
 
@@ -172,10 +169,13 @@ void RobotInitialConnection::OnNotified(RobotConnectionResult result)
       _validFirmware = false;
       break;
     default:
+      _validFirmware = true;
       break;
   }
   _notified = true;
   ClearSignalHandles();
+  
+  _externalInterface->Broadcast(MessageEngineToGame{RobotConnectionResponse{_id, result}});
 }
 
 }
