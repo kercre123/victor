@@ -2623,7 +2623,7 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
       if(matchingObjects.size() != 1)
       {
         PRINT_NAMED_ERROR("BlockWorld.AddActiveObject.TooManyMatchingObjects",
-                          "Expecting only one matching object in current frame but found %lu",
+                          "Expecting only one matching object in current frame but found %zu",
                           matchingObjects.size());
       }
       
@@ -2651,7 +2651,7 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
           FindMatchingObjects(filter, matchingObjectsInAllFrames);
         
           PRINT_NAMED_INFO("BlockWorld.AddActiveObject.UpdateExistingObjects",
-                           "Updating %lu existing objects in other frames to match object with factoryID 0x%x and activeID %d",
+                           "Updating %zu existing objects in other frames to match object with factoryID 0x%x and activeID %d",
                            matchingObjectsInAllFrames.size(),
                            factoryID,
                            activeID);
