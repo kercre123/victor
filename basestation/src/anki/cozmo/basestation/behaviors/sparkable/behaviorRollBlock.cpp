@@ -29,6 +29,7 @@ namespace Anki {
 namespace Cozmo {
 
 static const char* const kPutDownAnimGroupKey = "put_down_animation_group";
+static const char* const kIsBlockRotationImportant = "isBlockRotationImportant";
 
 CONSOLE_VAR(f32, kBRB_ScoreIncreaseForAction, "Behavior.RollBlock", 0.8f);
 CONSOLE_VAR(f32, kBRB_MaxTowardFaceAngle_deg, "Behavior.RollBlock", 90.f);
@@ -37,11 +38,13 @@ CONSOLE_VAR(s32, kBRB_MaxRollRetries,         "Behavior.RollBlock", 1);
 BehaviorRollBlock::BehaviorRollBlock(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
   , _blockworldFilter( new BlockWorldFilter )
+  , _isBlockRotationImportant(true)
   , _robot(robot)
 {
   SetDefaultName("RollBlock");
 
   JsonTools::GetValueOptional(config,kPutDownAnimGroupKey,_putDownAnimTrigger);
+  _isBlockRotationImportant = config.get(kIsBlockRotationImportant, true).asBool();
 
   // set up the filter we will use for finding blocks we care about
   _blockworldFilter->OnlyConsiderLatestUpdate(false);
@@ -107,7 +110,7 @@ bool BehaviorRollBlock::FilterBlocks(const ObservableObject* obj) const
 {
   return (!obj->IsPoseStateUnknown() &&
           _robot.CanPickUpObjectFromGround(*obj) &&
-          obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS);
+          (!_isBlockRotationImportant || obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS));
 }
 
 void BehaviorRollBlock::TransitionToSettingDownBlock(Robot& robot)

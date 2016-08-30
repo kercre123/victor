@@ -48,6 +48,7 @@ private:
   s32 _numRollActionRetries = 0;
 
   std::unique_ptr<BlockWorldFilter>  _blockworldFilter;
+  bool _isBlockRotationImportant;
 
   const Robot& _robot;
   
