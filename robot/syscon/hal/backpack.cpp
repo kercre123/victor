@@ -189,7 +189,7 @@ void Backpack::useTimer(NRF_TIMER_Type* timer, IRQn_Type interrupt) {
   
   timer->TASKS_START = 1;
 
-  NVIC_SetPriority(interrupt, RADIO_TIMER_PRIORITY);
+  NVIC_SetPriority(interrupt, LIGHT_PRIORITY);
   NVIC_EnableIRQ(interrupt);
 }
 
