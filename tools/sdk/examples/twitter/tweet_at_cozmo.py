@@ -82,26 +82,26 @@ class ReactToTweetsStreamListener(twitter_helpers.CozmoTweetStreamListener):
 
     def do_lift(self, args):
 
-        usage = "'lift X' where X is speed to move lift"
+        usage = "'lift X' where X is desired height for lift"
 
-        lift_velocity = extract_float(args)
+        lift_height = extract_float(args)
 
-        if lift_velocity is not None:
-            self.cozmo.move_lift(lift_velocity)#.wait_for_completed()
-            return "I moved lift " + str(lift_velocity) + " vel!"
+        if lift_height is not None:
+            self.cozmo.set_lift_height(height=lift_height).wait_for_completed()
+            return "I moved lift to " + str(lift_height)
 
         return "Error: usage = " + usage
 
 
-    def do_tilthead(self, args):
+    def do_head(self, args):
 
-        usage = "'tilthead X' where X is speed to tilt head"
+        usage = "'head X' where X is desired angle for head" #-25 (down) to 45 degrees (up)
 
-        head_velocity = extract_float(args)
+        head_angle = extract_float(args)
 
-        if head_velocity is not None:
-            self.cozmo.move_head(head_velocity)#.wait_for_completed()
-            return "I moved head " + str(head_velocity) + " vel!"
+        if head_angle is not None:
+            self.cozmo.set_head_angle(degrees(head_angle)).wait_for_completed()
+            return "I moved head to " + str(head_angle)
 
         return "Error: usage = " + usage
 
@@ -142,16 +142,22 @@ class ReactToTweetsStreamListener(twitter_helpers.CozmoTweetStreamListener):
         return supported_commands
 
 
+    def get_command(self, command_name):
+        '''Find a matching "do_" function and return it. return None if there's no match'''
+        try:
+            return getattr(self, 'do_' + command_name.lower())
+        except AttributeError:
+            return None
+
+
     def extract_command_from_string(self, in_string):
         '''Separate inString at each space, loop through until we find a command, return tuple of command and args'''
 
         split_string = in_string.split()
 
         for i in range(len(split_string)):
-            try:
-                func = getattr(self, 'do_' + split_string[i].lower())
-            except AttributeError:
-                func = None
+
+            func = self.get_command(split_string[i])
 
             if func:
                 command_args = split_string[i + 1:]

@@ -1,5 +1,6 @@
 __all__ = ['EvtRobotReady',
-           'GoToPose', 'PickupObject', 'PlaceOnObject', 'PlaceObjectOnGroundHere', 'SayText', 'TurnInPlace', 'TurnTowardsFace',
+           'GoToPose', 'PickupObject', 'PlaceOnObject', 'PlaceObjectOnGroundHere', 'SayText', 'SetHeadAngle',
+           'SetLiftHeight', 'TurnInPlace', 'TurnTowardsFace',
            'Cozmo']
 
 
@@ -77,7 +78,7 @@ class PlaceOnObject(action.Action):
         self.use_pre_dock_pose = use_pre_dock_pose
 
     def _repr_values(self):
-        return "object=%s" % (self.obj)
+        return "object=%s use_pre_dock_pose=%s" % (self.obj, self.use_pre_dock_pose)
 
     def _encode(self):
         return _clad_to_engine_iface.PlaceOnObject(objectID=self.obj.object_id, usePreDockPose=self.use_pre_dock_pose)
@@ -126,10 +127,55 @@ class SayText(action.Action):
         self.duration_scalar = duration_scalar
 
     def _repr_values(self):
-        return "text=%s" % (self.text)
+        return "text=%s style=%s event=%s" % (self.text, self.say_style, self.play_event)
 
     def _encode(self):
         return _clad_to_engine_iface.SayText(text=self.text, playEvent=self.play_event, voiceStyle=self.say_style, durationScalar=self.duration_scalar)
+
+class SetHeadAngle(action.Action):
+    '''Represents the Set Head Angle action in progress.
+       Returned by :meth:`~cozmo.robot.Cozmo.set_head_angle`
+    '''
+
+    def __init__(self, angle, max_speed, accel, duration, **kw):
+        super().__init__(**kw)
+        self.angle = angle
+        self.max_speed = max_speed
+        self.accel = accel
+        self.duration = duration
+
+    def _repr_values(self):
+        return "angle=%s max_speed=%s accel=%s duration=%s" % (self.angle, self.max_speed, self.accel, self.duration)
+
+    def _encode(self):
+        return _clad_to_engine_iface.SetHeadAngle(angle_rad=self.angle.radians, max_speed_rad_per_sec=self.max_speed, accel_rad_per_sec2=self.accel, duration_sec=self.duration)
+
+class SetLiftHeight(action.Action):
+    '''Represents the Set Lift Height action in progress.
+       Returned by :meth:`~cozmo.robot.Cozmo.set_lift_height`
+    '''
+
+    def __init__(self, height, max_speed, accel, duration, **kw):
+        super().__init__(**kw)
+
+        min_lift_height_mm = 32.0 # TODO: fix engine to expose these directly
+        max_lift_height_mm = 92.0
+        if (height < 0.0):
+            self.lift_height_mm = min_lift_height_mm
+        elif (height > 1.0):
+            self.lift_height_mm = max_lift_height_mm
+        else:
+            self.lift_height_mm = min_lift_height_mm + (height * (max_lift_height_mm - min_lift_height_mm))
+
+        self.max_speed = max_speed
+        self.accel = accel
+        self.duration = duration
+
+    def _repr_values(self):
+        return "height=%s max_speed=%s accel=%s duration=%s" % (self.lift_height_mm, self.max_speed, self.accel, self.duration)
+
+    def _encode(self):
+        return _clad_to_engine_iface.SetLiftHeight(height_mm=self.lift_height_mm, max_speed_rad_per_sec=self.max_speed, accel_rad_per_sec2=self.accel, duration_sec=self.duration)
 
 class TurnInPlace(action.Action):
     '''Tracks the progress of a turn in place robot action.
@@ -193,6 +239,8 @@ class Cozmo(event.Dispatcher):
     go_to_pose_factory = GoToPose
     place_object_on_ground_here_factory = PlaceObjectOnGroundHere
     say_text_factory = SayText
+    set_head_angle_factory = SetHeadAngle
+    set_lift_height_factory = SetLiftHeight
 
     # other factories
     animation_factory = anim.Animation
@@ -285,7 +333,22 @@ class Cozmo(event.Dispatcher):
         self._pose = util.Pose(x=msg.pose.x, y=msg.pose.y, z=msg.pose.z,
                                q0=msg.pose.q0, q1=msg.pose.q1,
                                q2=msg.pose.q2, q3=msg.pose.q3)
+        self.pose_angle = util.radians(msg.poseAngle_rad) # heading in X-Y plane
+        self.pose_pitch = util.radians(msg.posePitch_rad)
+        self.head_angle = util.radians(msg.headAngle_rad)
+        # self.left_wheel_speed  = msg.leftWheelSpeed_mmps  # add speed (and distance) helper class to convert units?
+        # self.right_wheel_speed = msg.rightWheelSpeed_mmps
+        # self.lift_height = msg.liftHeight_mm # in min_lift_height_mm .. max_lift_height_mm range (not 0..1)
+        # float_32 batteryVoltage
+        # int_32   carryingObjectID,      // will be -1 if not carrying object
+        # int_32   carryingObjectOnTopID, // will be -1 if no object on top of object being carried
+        # int_32   headTrackingObjectID,  // will be -1 if head is not tracking to any object
+        # int_32   localizedToObjectID,   // Will be -1 if not localized to any object
         self.last_image_time = msg.lastImageTimeStamp
+        # uint_16  status,                // See RobotStatusFlag in cozmoTypes.h
+        # uint_8   gameStatus,            // See GameStatusFlag in cozmoTypes.h
+        if msg.robotID != self.robot_id:
+            logger.error("robot id changed mismatch (msg=%s, self=%s)", msg.robotID, self.robot_id )
 
     #### Public Event Handlers ####
 
@@ -301,12 +364,18 @@ class Cozmo(event.Dispatcher):
         msg = _clad_to_engine_iface.EnableReactionaryBehaviors(enabled=should_enable)
         self.conn.send_msg(msg)
 
-    def set_robot_image_send_mode(self):
+    def set_robot_image_send_mode(self, enable_stream=True):
         '''Send this message when you want to enable Cozmo streaming images to the SDK.'''
-        msg = _clad_to_engine_iface.SetRobotImageSendMode(
-                robotID=1, mode=_clad_to_engine_cozmo.ImageSendMode.Stream)
-        self.send_msg(msg)
+        if enable_stream:
+            image_send_mode = _clad_to_engine_cozmo.ImageSendMode.Stream
+        else:
+            image_send_mode = _clad_to_engine_cozmo.ImageSendMode.Off
 
+        image_resolution = _clad_to_engine_cozmo.ImageResolution.QVGA
+
+        msg = _clad_to_engine_iface.SetRobotImageSendMode(
+                robotID=self.robot_id, mode=image_send_mode, resolution=image_resolution)
+        self.conn.send_msg(msg)
 
     ### Low-Level Commands ###
 
@@ -368,6 +437,24 @@ class Cozmo(event.Dispatcher):
         msg = _clad_to_engine_iface.MoveLift(speed_rad_per_sec=velocity)
         self.conn.send_msg(msg)
 
+    def say_text(self, text, play_excited_animation=False, use_cozmo_voice=True, duration_scalar=1.8):
+        '''Have Cozmo say text!
+
+        Args:
+            text (string): The words for cozmo to say
+            play_excited_animation (bool): Whether to also play an exicted animation whilst speaking (moves Cozmo a lot)
+            use_cozmo_voice (bool): Whether to use cozmo's robot voice (otherwise uses a generic human male voice)
+            duration_scalar (float): Adjust the relative duration of the generated text to speech audio
+        Returns:
+            A class:'cozmo.robot.SayText' instance to track the action in progress.
+        '''
+
+        action = self.say_text_factory(text=text, play_excited_animation=play_excited_animation,
+                                       use_cozmo_voice=use_cozmo_voice, duration_scalar=duration_scalar,
+                                       conn=self.conn, robot=self, dispatch_parent=self)
+        self._action_dispatcher._send_single_action(action)
+        return action
+
     def set_backpack_lights(self, light1, light2, light3, light4, light5):
         '''Set the lights on cozmo's back.
         
@@ -395,23 +482,28 @@ class Cozmo(event.Dispatcher):
         light_arr = [ lights.off_light ] * 5
         self.set_backpack_lights(*light_arr)
 
-    def say_text(self, text, play_excited_animation=False, use_cozmo_voice=True, duration_scalar=1.8):
-        '''Have Cozmo say text!
-        
+    def set_head_angle(self, angle, accel=10.0, max_speed=10.0, duration=0.0):
+        '''Tell Cozmo's head to turn to a given angle
         Args:
-            text (string): The words for cozmo to say
-            play_excited_animation (bool): Whether to also play an exicted animation whilst speaking (moves Cozmo a lot)
-            use_cozmo_voice (bool): Whether to use cozmo's robot voice (otherwise uses a generic human male voice)
-            duration_scalar (float): Adjust the relative duration of the generated text to speech audio
+            angle (float): desired angle for Cozmo's head. (-25 to 44.5 degrees - clamped in engine to this range)
         Returns:
-            A class:'cozmo.robot.SayText' instance to track the action in progress.
+            A class:'cozmo.robot.SetHeadAngle' instance to track the action in progress.
         '''
+        action = self.set_head_angle_factory(angle=angle, max_speed=max_speed, accel=accel, duration=duration, conn=self.conn, robot=self, dispatch_parent=self)
 
-        action = self.say_text_factory(text, conn=self.conn, robot=self, play_excited_animation=play_excited_animation,
-                                       use_cozmo_voice=use_cozmo_voice, duration_scalar=duration_scalar, dispatch_parent=self)
         self._action_dispatcher._send_single_action(action)
         return action
 
+    def set_lift_height(self, height, accel=1.0, max_speed=1.0, duration=10.0):
+        '''Tell Cozmo's lift to move to a given height
+        Args:
+            height (float): desired height for Cozmo's lift 0.0 (bottom) to 1.0 (top) (we clamp it to this range internally)
+        Returns:
+            A class:'cozmo.robot.SetLiftHeight' instance to track the action in progress.
+        '''
+        action = self.set_lift_height_factory(height=height, max_speed=max_speed, accel=accel, duration=duration, conn=self.conn, robot=self, dispatch_parent=self)
+        self._action_dispatcher._send_single_action(action)
+        return action
 
     ## Animation Commands ##
 

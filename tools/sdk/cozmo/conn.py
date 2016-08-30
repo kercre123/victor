@@ -59,6 +59,10 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
 
         #: An anim.AnimationNames object that references all available animation names
         self.anim_names = self.anim_names_factory(self)
+        self._image_chunk_handlers = []
+
+    def add_image_chunk_handler(self, image_handler):
+        self._image_chunk_handlers.append( image_handler )
 
     def connection_made(self, transport):
         super().connection_made(transport)
@@ -129,11 +133,15 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
 
     def _handle_ping(self, msg):
         '''Response to a ping event'''
-        resp = _clad_to_engine_iface.Ping(
-            counter=msg.counter,
-            timeSent_ms=msg.timeSent_ms,
-            isResponse=True)
-        self.send_msg(msg)
+        if msg.isResponse:
+            # To avoid duplication, pings originate from engine, and engine accumulates the latency info from the responses
+            logger.error("Only engine should receive responses")
+        else:
+            resp = _clad_to_engine_iface.Ping(
+                counter=msg.counter,
+                timeSent_ms=msg.timeSent_ms,
+                isResponse=True)
+            self.send_msg(resp)
 
     def _recv_default_handler(self, event, **kw):
         '''Default event handler'''
@@ -175,6 +183,10 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
         self.dispatch_event(EvtConnected, conn=self)
         self.anim_names.refresh()
         logger.info("UI device connected")
+
+    def _recv_msg_image_chunk(self, _, *, msg):
+        for image_chunk_handler in self._image_chunk_handlers:
+            image_chunk_handler(msg)
 
 
     #### Public Event Handlers ####

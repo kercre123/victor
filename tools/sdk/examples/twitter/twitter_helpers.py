@@ -78,9 +78,15 @@ class CozmoStream(tweepy.Stream):
        Primarily just to avoid needing to import tweepy outside of this file
     '''
 
+def has_default_twitter_keys(twitter_keys):
+    default_key = 'XXXXXXXXXX'
+    return (twitter_keys.consumer_key == default_key) and (twitter_keys.consumer_secret == default_key) and \
+           (twitter_keys.access_token == default_key) and (twitter_keys.access_token_secret == default_key)
 
 def auth_twitter(twitter_keys):
     '''Perform OAuth authentication with twitter, using the keys provided'''
+    if has_default_twitter_keys(twitter_keys):
+        sys.exit("Error: You need to configure your twitter_keys")
     auth = tweepy.OAuthHandler(twitter_keys.consumer_key, twitter_keys.consumer_secret)
     auth.set_access_token(twitter_keys.access_token, twitter_keys.access_token_secret)
     return auth
