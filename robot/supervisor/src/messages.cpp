@@ -30,6 +30,7 @@
 #include "testModeController.h"
 #include "proxSensors.h"
 #ifdef TARGET_K02
+#include "hal/dac.h"
 #include "hal/uart.h"
 #include "hal/imu.h"
 #include "hal/wifi.h"
@@ -260,6 +261,11 @@ namespace Anki {
 
 // #pragma --- Message Dispatch Functions ---
 
+      void Process_setAudioVolume(const SetAudioVolume& msg) {
+#ifdef TARGET_K02
+        HAL::DAC::SetVolume(msg.volume);
+#endif
+      }
 
       void Process_syncTime(const RobotInterface::SyncTime& msg)
       {

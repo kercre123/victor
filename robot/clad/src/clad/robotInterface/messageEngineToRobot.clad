@@ -35,6 +35,11 @@ namespace Cozmo {
     uint_8  slot
   }
 
+  message SetAudioVolume
+  {
+    uint_16 volume
+  }
+
   message SetCubeGamma
   {
     uint_8  gamma
@@ -444,7 +449,7 @@ union EngineToRobot
   NVStorage::NVStorageRead      readNV                      = 0x84,
   NVStorage::NVWipeAll          wipeAllNV                   = 0x85,
   // Available for future use                               = 0x86,
-  //          FREE SLOT!!!                                  = 0x87,
+  SetAudioVolume                setAudioVolume              = 0x87,
   DebugSetRTTO                  setRTTO                     = 0x89,
   AbortAnimation                abortAnimation              = 0x90,
   AnimKeyFrame::AudioSample     animAudioSample             = 0x91,
