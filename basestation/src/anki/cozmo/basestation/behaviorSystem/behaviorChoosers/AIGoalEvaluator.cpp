@@ -311,7 +311,7 @@ IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, const IBehavior* cu
     // if we are not running the debug requested goal, ask to change. It should be picked if name is available
     if ( (!_currentGoalPtr) || _currentGoalPtr->GetName() != _debugConsoleRequestedGoal ) {
       getNewGoal = true;
-      PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior",
+      PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior.DebugForcedChange",
         "Picking new goal because debug is forcing '%s'", _debugConsoleRequestedGoal.c_str());
     }
   }
@@ -325,7 +325,7 @@ IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, const IBehavior* cu
     {
       // the active spark does not match the current goal, pick the first goal available for the spark
       // this covers both going into and out of sparks
-      PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior",
+      PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior.NullOrChangeDueToSpark",
                     "Picking new goal to match spark '%s'", EnumToString(robot.GetBehaviorManager().GetRequestedSpark()));
       getNewGoal = true;
     }
@@ -341,7 +341,7 @@ IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, const IBehavior* cu
       if ( currentWantsToEnd )
       {
         getNewGoal = true;
-        PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior",
+        PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior.BehaviorAndGoalEnded",
           "Picking new goal because '%s' wants to end, and behavior finished",
           _currentGoalPtr->GetName().c_str());
       }
@@ -363,7 +363,7 @@ IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, const IBehavior* cu
     {
       getNewGoal = true;
       isCurrentAllowedToBePicked = false;
-      PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior",
+      PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior.NoBehaviorChosenWhileRunning",
         "Picking new goal because '%s' chose behavior '%s'. This goal is not allowed to be repicked.",
         _currentGoalPtr->GetName().c_str(),
         chosenBehavior ? chosenBehavior->GetName().c_str() : "(null)" );
@@ -380,7 +380,7 @@ IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, const IBehavior* cu
       if ( currentWantsToEnd )
       {
         getNewGoal = true;
-        PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior",
+        PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior.NewBehaviorChosenWhileRunning",
           "Picking new goal because '%s' wants to end, and behavior finished",
           _currentGoalPtr->GetName().c_str());
       }
@@ -394,7 +394,7 @@ IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, const IBehavior* cu
     if(robot.GetBehaviorManager().GetActiveSpark() == robot.GetBehaviorManager().GetRequestedSpark()
        && robot.GetBehaviorManager().DidGameRequestSparkEnd()){
       isCurrentAllowedToBePicked = false;
-      PRINT_CH_INFO("Behaviors","AIGoalEvaluator.ChooseNextBehavior", "Spark re-selected: none behavior will be selected");
+      PRINT_CH_INFO("Behaviors","AIGoalEvaluator.ChooseNextBehavior.SparkReselected", "Spark re-selected: none behavior will be selected");
     }
     
     // select new goal
@@ -427,12 +427,16 @@ IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, const IBehavior* cu
         // the goal.
         if ( changedGoal && ((!chosenBehavior)||(chosenBehavior->GetType() == BehaviorType::NoneBehavior)))
         {
-          PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior",
+          PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior.NewGoalDidNotChooseBehavior",
             "The new goal '%s' picked no behavior. It probably didn't cover the same conditions as the behaviors.",
             _currentGoalPtr->GetName().c_str());
         }
       } else {
-        PRINT_CH_INFO("Behaviors","AIGoalEvaluator.ChooseNextBehavior", "No current available goal");
+        if ( isCurrentAllowedToBePicked ) {
+          PRINT_NAMED_ERROR("AIGoalEvaluator.NoGoalAvailableError", "No current available goal");
+        } else {
+          PRINT_CH_INFO("Behaviors","AIGoalEvaluator.NoGoalAvailable.CurrentNotAllowed", "No current available goal");
+        }
       }
     }
   }
