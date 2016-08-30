@@ -247,10 +247,12 @@ public class RewardedActionsEditor : EditorWindow {
 
   // Outputs a CSV file for quick reference in spreadsheets
   private void GenerateCSV() {
-    string toCSV = "Description,Reward\n";
+    string toCSV = "Description,Reward,Tag\n";
     for (int i = 0; i < _CurrentRewardData.RewardedActions.Count; i++) {
       RewardedActionData data = _CurrentRewardData.RewardedActions[i];
-      toCSV += string.Format("{0},{1}\n", LocalizationEditorUtility.GetTranslationSansFormatting(data.Reward.DescriptionKey), data.Reward.Amount);
+      toCSV += string.Format("{0},{1},{2}\n", LocalizationEditorUtility.GetTranslationSansFormatting(data.Reward.DescriptionKey),
+                             data.Reward.Amount,
+                             data.Tag);
     }
     string targetCSV = Path.Combine(sCSVDirectory, kRewardedActionsCSV);
     if (File.Exists(targetCSV)) {

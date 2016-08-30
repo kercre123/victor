@@ -260,10 +260,12 @@ public class DailyGoalEditor : EditorWindow {
 
   // Outputs a CSV file for quick reference in spreadsheets
   private void GenerateCSV() {
-    string toCSV = "Title,Reward\n";
+    string toCSV = "Title,Reward,Tag\n";
     for (int i = 0; i < _CurrentGenData.GenList.Count; i++) {
       DailyGoalGenerationData.GoalEntry goal = _CurrentGenData.GenList[i];
-      toCSV += string.Format("{0},{1}\n", LocalizationEditorUtility.GetTranslationSansFormatting(goal.TitleKey), goal.PointsRewarded);
+      toCSV += string.Format("{0},{1},{2}\n", LocalizationEditorUtility.GetTranslationSansFormatting(goal.TitleKey),
+                             goal.PointsRewarded,
+                             goal.Tag);
     }
     string targetCSV = Path.Combine(sCSVDirectory, kDailyGoalFileCSV);
     if (File.Exists(targetCSV)) {
