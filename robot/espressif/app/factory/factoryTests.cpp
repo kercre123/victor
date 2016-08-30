@@ -11,6 +11,7 @@ extern "C" {
 #include "driver/factoryData.h"
 #include "driver/i2spi.h"
 #include "foregroundTask.h"
+#include "user_config.h"  
 }
 #include "anki/cozmo/robot/logging.h"
 #include "anki/common/constantsAndMacros.h"
@@ -62,6 +63,7 @@ typedef enum {
   PP_running,
 } PlayPenTestState;
 
+
 #define INVALID_BIRTH_SECOND (0x81)
 
 extern "C" bool hasBirthCertificate(void) { return birthCert.second != INVALID_BIRTH_SECOND; }
@@ -73,6 +75,7 @@ static const FTMenuItem rootMenuItems[] = {
   {"Power off",       RobotInterface::FTM_batteryCharging, 0xFFFFffff },
   {"Robot info",      RobotInterface::FTM_WiFiInfo,          30000000 },
   {"Sensor info",     RobotInterface::FTM_StateMenu,     MENU_TIMEOUT },
+  {"Connections",     RobotInterface::FTM_ConnectionInfo,    30000000 },
 };
 #define NUM_ROOT_MENU_ITEMS (sizeof(rootMenuItems)/sizeof(FTMenuItem))
 
@@ -354,6 +357,21 @@ void Process_TestState(const RobotInterface::TestState& state)
                        state.acc[0],  state.acc[1],  state.acc[2]);
       break;
     }
+    case RobotInterface::FTM_ConnectionInfo:
+    {
+      char menuBuf[256]="";
+      unsigned int bufIndex = 0;
+      u8 numConnected = wifi_softap_get_station_num();
+      bufIndex += ets_snprintf(menuBuf + bufIndex, sizeof(menuBuf) - bufIndex, "%d connections\n", numConnected);
+      if (numConnected > 0)
+      {
+        bufIndex += ets_snprintf(menuBuf + bufIndex, sizeof(menuBuf) - bufIndex,
+                                 MACSTR "\n", MAC2STR(connectedMac));
+      }
+      Face::FacePrintf(menuBuf);
+      break;
+    }
+    
     case RobotInterface::FTM_menus:
     case RobotInterface::FTM_StateMenu:
     {
@@ -494,3 +512,4 @@ void Process_EnterFactoryTestMode(const RobotInterface::EnterFactoryTestMode& ms
 } // Factory
 } // Cozmo
 } // Anki
+

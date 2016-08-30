@@ -30,6 +30,7 @@ namespace RobotInterface {
     FTM_Off = 17,
     FTM_IMUCalibration = 18,
     FTM_batteryCharging = 19,
+    FTM_ConnectionInfo = 20,
   }
   
   /// The active test mode of the robot

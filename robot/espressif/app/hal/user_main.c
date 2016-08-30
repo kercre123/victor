@@ -28,6 +28,7 @@ void user_rf_pre_init(void)
 }
 
 char wifiPsk[WIFI_PSK_LEN];
+uint8_t connectedMac[MAC_ADDR_BYTES];
 
 /// Forward declarations
 typedef void (*NVInitDoneCB)(const int8_t);
@@ -60,6 +61,23 @@ static void system_init_done(void)
   // Must be called after backgroundTaskInit and foregroundTaskInit
   NVInit(true, nv_init_done);
 }
+
+static void wifi_event_callback(System_Event_t *evt)
+{
+  switch (evt->event) {
+  case EVENT_SOFTAPMODE_STACONNECTED:
+    {
+      os_memcpy(connectedMac, evt->event_info.sta_connected.mac, MAC_ADDR_BYTES);
+      break;
+    }
+  case EVENT_SOFTAPMODE_STADISCONNECTED:
+    {
+      os_memset(connectedMac, 0x00, MAC_ADDR_BYTES);
+      break;
+    }
+  }
+}
+
 
 /** User initialization function
  * This function is responsible for setting all the wireless parameters and
@@ -118,7 +136,6 @@ void user_init(void)
   os_sprintf((char*)ap_config.ssid, ssid);
   for (i=0; i<WIFI_PSK_LEN; ++i)
   {
-    
     ap_config.password[i] = wifiPsk[i] = VALID_PSK_CHARS[randomPSKChars[i] % (sizeof(VALID_PSK_CHARS)-1)]; // Sizeof string includes null which we don't want
   }
   ap_config.password[WIFI_PSK_LEN] = 0; // Null terminate
@@ -130,6 +147,7 @@ void user_init(void)
   ap_config.beacon_interval = 33; // Must be 50 or lower for iOS devices to connect
 
   // Setup ESP module to AP mode and apply settings
+  wifi_set_event_handler_cb(wifi_event_callback);
   wifi_set_opmode(SOFTAP_MODE);
   wifi_softap_set_config(&ap_config);
   wifi_set_phy_mode(PHY_MODE_11G);

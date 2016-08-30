@@ -26,5 +26,7 @@ extern int xPortGetFreeHeapSize(void);    // Faster than system_get_free_heap_si
 
 #define WIFI_PSK_LEN (12)
 extern char wifiPsk[WIFI_PSK_LEN];
+#define MAC_ADDR_BYTES (6)
+extern uint8_t connectedMac[MAC_ADDR_BYTES];
 
 #endif

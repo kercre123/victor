@@ -39,6 +39,7 @@ namespace WiFiConfiguration {
     return RobotInterface::SendMessage(msg);
   }
 
+
   Result Init()
   {
     if (!wifi_softap_get_config(&apConfig)) return RESULT_FAIL;
@@ -49,6 +50,7 @@ namespace WiFiConfiguration {
     os_memset(staConfig.password, 0, sizeof(staConfig.password));
     apConfig.ssid_len = 0;
     db_printf("WiFiConfig::Init() OKAY\r\n");
+
     return RESULT_OK;
   }
   
