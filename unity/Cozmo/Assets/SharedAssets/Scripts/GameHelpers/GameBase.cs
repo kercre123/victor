@@ -161,8 +161,9 @@ public abstract class GameBase : MonoBehaviour {
 
     if (CurrentRobot != null) {
       CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
-      // If is Runnable because Cozmo is holding a cube will run, otherwise don't do anything....
-      CurrentRobot.ExecuteBehavior(BehaviorType.PutDownBlock);
+      if ((CurrentRobot.RobotStatus | RobotStatusFlag.IS_CARRYING_BLOCK) != 0) {
+        CurrentRobot.PlaceObjectOnGroundHere();
+      }
       CurrentRobot.SetEnableFreeplayLightStates(false);
     }
   }
