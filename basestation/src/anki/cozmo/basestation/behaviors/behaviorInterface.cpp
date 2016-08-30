@@ -307,6 +307,11 @@ Result IBehavior::Init()
     _shouldStreamline = false;
   }
   
+  // Disable acknowledgeObject when cozmo should be concentrating on an action
+  if(_shouldStreamline){
+    _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, false);
+  }
+  
   return initResult;
 }
 
@@ -321,6 +326,12 @@ Result IBehavior::Resume()
     _isRunning = false;
   }
   
+  // Disable acknowledgeObject when cozmo should be concentrating on an action
+  if(_shouldStreamline){
+    _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, false);
+  }
+
+  
   return initResult;
 }
 
@@ -328,6 +339,12 @@ Result IBehavior::Resume()
 IBehavior::Status IBehavior::Update()
 {
   ASSERT_NAMED(IsRunning(), "IBehavior::UpdateNotRunning");
+  // Ensure that behaviors which have been requested to stop, stop
+  if(!_canStartActing && !IsActing()){
+    UpdateInternal(_robot);
+    return Status::Complete;
+  }
+  
   return UpdateInternal(_robot);
 }
 
@@ -339,6 +356,12 @@ void IBehavior::Stop()
   StopInternal(_robot);
   _lastRunTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   StopActing(false);
+  
+  // Re-enable acknowledgeObject if it was disabled in order to concentrate on the task
+  if(_shouldStreamline){
+    _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, true);
+  }
+
 }
 
 void IBehavior::StopOnNextActionComplete()
