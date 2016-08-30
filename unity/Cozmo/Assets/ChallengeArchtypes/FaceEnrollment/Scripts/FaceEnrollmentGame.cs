@@ -201,6 +201,7 @@ namespace FaceEnrollment {
     }
 
     private void HandleInstructionsSlideEntered() {
+      CurrentRobot.SetEnableCliffSensor(false);
       if (_UseFixedFaceID) {
         CurrentRobot.EnrollNamedFace(_FixedFaceID, _ReEnrollFaceID, _NameForFace, saveToRobot: _SaveToRobot);
       }
@@ -217,7 +218,7 @@ namespace FaceEnrollment {
       }
 
       _EnrollingFace = false;
-
+      CurrentRobot.SetEnableCliffSensor(true);
       // dont show errors if we user cancels enrollment.
       if (_UserCancelledEnrollment) {
         // reset _ReEnrollFaceID
