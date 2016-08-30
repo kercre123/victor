@@ -24,7 +24,6 @@ namespace Anki {
     public class CurrentUnlockCondition : GoalCondition {
 
       public UnlockId Unlocked;
-      public bool IsMatching = true;
       public UnlockableState State;
 
       // Returns true if the UnlockID's unlock status matches the isUnlocked flag
@@ -41,16 +40,15 @@ namespace Anki {
           isMet = (UnlockablesManager.Instance.IsUnlocked(Unlocked) == true);
           break;
         }
-        return (IsMatching == isMet);
+        return isMet;
       }
 
-      #if UNITY_EDITOR
+#if UNITY_EDITOR
       public override void DrawControls() {
         Unlocked = (UnlockId)EditorGUILayout.EnumPopup("Unlock", (Enum)Unlocked);
         State = (UnlockableState)EditorGUILayout.EnumPopup(new GUIContent("State", "Locked if not available or unlocked. Available if available but not unlocked. Unlocked if unlocked."), (Enum)State);
-        IsMatching = EditorGUILayout.Toggle(new GUIContent("IsMatching", "Are we checking if the unlock is in this state or NOT in this state"), IsMatching);
       }
-      #endif
+#endif
     }
   }
 }

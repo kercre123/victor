@@ -47,9 +47,11 @@ namespace Cozmo {
       // Conditions that must be met in order for this to progress when its event is fired.
       public List<GoalCondition> ProgConditions = new List<GoalCondition>();
 
+      private List<GoalCondition> GenConditions = new List<GoalCondition>();
+
       // Generate a daily goal from parameters
       [JsonConstructor]
-      public DailyGoal(GameEvent gEvent, string titleKey, int reward, int target, string rewardType, List<GoalCondition> triggerCon, int priority = 0, int currProg = 0) {
+      public DailyGoal(GameEvent gEvent, string titleKey, int reward, int target, string rewardType, List<GoalCondition> triggerCon, List<GoalCondition> genConds, int priority = 0, int currProg = 0) {
         GoalEvent = gEvent;
         Title = new LocalizedString();
         Title.Key = titleKey;
@@ -59,6 +61,7 @@ namespace Cozmo {
         _Completed = GoalComplete;
         RewardType = rewardType;
         ProgConditions = triggerCon;
+        GenConditions = genConds;
         Priority = priority;
         GameEventManager.Instance.OnGameEvent += ProgressGoal;
       }
@@ -75,6 +78,7 @@ namespace Cozmo {
         RewardType = goalData.RewardType;
         ProgConditions = goalData.ProgressConditions;
         Priority = goalData.Priority;
+        GenConditions = goalData.GenConditions;
         GameEventManager.Instance.OnGameEvent += ProgressGoal;
       }
 
@@ -174,6 +178,63 @@ namespace Cozmo {
           GameEventManager.Instance.OnGameEvent -= ProgressGoal;
         }
       }
+
+      public void CheckAndResolveInvalidGenConditions() {
+        // Force a daily goal complete if its gen conditions are not met but it is still
+        // in your daily goal list. This should only turn up if something goes weird with unlocks.
+        // Don't force complete if we haven't progressed to that point.
+        // Connecting to a mature account with less mature cozmo
+        // will require you to generate fresh goals
+        if (!GoalComplete && GenConditions != null && GenConditions.Count > 0) {
+          for (int i = 0; i < GenConditions.Count; i++) {
+            // If the GenCondition is not met, we may be in a state where this goal should have
+            // already been earned
+            if (!GenConditions[i].ConditionMet()) {
+              // Check for Unlockables progress
+              if (GenConditions[i] is CurrentUnlockCondition) {
+                if (ValidateUnlockIdGenCondition(GenConditions[i] as CurrentUnlockCondition)) {
+                  DebugSetGoalProgress(Target);
+                  return;
+                }
+              }// Check for Difficulty Level Progress
+              else if (GenConditions[i] is CurrentDifficultyUnlockedCondition) {
+                if (ValidateDifficultyGenCondtion(GenConditions[i] as CurrentDifficultyUnlockedCondition)) {
+                  DebugSetGoalProgress(Target);
+                  return;
+                }
+              }
+
+            }
+          }
+        }
+      }
+
+      // Check if the CurrentUnlockCondition should have already been completed
+      public bool ValidateUnlockIdGenCondition(CurrentUnlockCondition unlockCond) {
+        bool forceComplete = false;
+        if (UnlockablesManager.Instance.IsUnlocked(unlockCond.Unlocked)) {
+          // We already unlocked this but don't want this goal unlocked for generation, force complete
+          if (unlockCond.State == UnlockableState.Available || unlockCond.State == UnlockableState.Locked) {
+            forceComplete = true;
+          }
+        }
+        return forceComplete;
+      }
+
+      // Check if the CurrentDifficultyUnlockedCondition should have already been completed
+      public bool ValidateDifficultyGenCondtion(CurrentDifficultyUnlockedCondition diffCond) {
+        bool forceComplete = false;
+        // Only force complete if we have a higher difficulty unlocked than expected
+        int diff = 0;
+        if (DataPersistenceManager.Instance.Data.DefaultProfile.GameDifficulty.TryGetValue(diffCond.ChallengeID, out diff)) {
+          if (diffCond.UseMaxDiff && diff > diffCond.MaxDiff) {
+            forceComplete = true;
+          }
+        }
+
+        return forceComplete;
+      }
+
 
       public bool CanProgress(GameEventWrapper gEvent) {
         if (ProgConditions == null) {

@@ -12,7 +12,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "DroneModeGame",
-          "IsMatching": true,
           "State": "Unlocked",
           "Label": {
             "text": "Current Unlock Condition",
@@ -56,7 +55,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "QuickTapGame",
-          "IsMatching": true,
           "State": "Unlocked",
           "Label": {
             "text": "Current Unlock Condition",
@@ -398,7 +396,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "KeepawayGame",
-          "IsMatching": true,
           "State": "Unlocked",
           "Label": {
             "text": "Current Unlock Condition",
@@ -441,7 +438,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "KeepawayGame",
-          "IsMatching": true,
           "State": "Unlocked",
           "Label": {
             "text": "Current Unlock Condition",
@@ -475,7 +471,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "QuickTapGame",
-          "IsMatching": true,
           "State": "Unlocked",
           "Label": {
             "text": "Current Unlock Condition",
@@ -518,7 +513,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "QuickTapGame",
-          "IsMatching": true,
           "State": "Unlocked",
           "Label": {
             "text": "Current Unlock Condition",
@@ -552,7 +546,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "QuickTapGame",
-          "IsMatching": true,
           "State": "Unlocked",
           "Label": {
             "text": "Current Unlock Condition",
@@ -597,7 +590,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "QuickTapGame",
-          "IsMatching": true,
           "State": "Unlocked",
           "Label": {
             "text": "Current Unlock Condition",
@@ -642,7 +634,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "QuickTapGame",
-          "IsMatching": true,
           "State": "Unlocked",
           "Label": {
             "text": "Current Unlock Condition",
@@ -686,7 +677,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "PickupCube",
-          "IsMatching": true,
           "State": "Unlocked",
           "Label": {
             "text": "Current Unlock Condition",
@@ -720,7 +710,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "StackTwoCubes",
-          "IsMatching": true,
           "State": "Unlocked",
           "Label": {
             "text": "Current Unlock Condition",
@@ -754,7 +743,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "RollCube",
-          "IsMatching": true,
           "State": "Unlocked",
           "Label": {
             "text": "Current Unlock Condition",
@@ -788,7 +776,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "PounceOnMotionAction",
-          "IsMatching": true,
           "State": "Unlocked",
           "Label": {
             "text": "Current Unlock Condition",
@@ -822,7 +809,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "KnockOverThreeCubeStack",
-          "IsMatching": true,
           "State": "Unlocked",
           "Label": {
             "text": "Current Unlock Condition",
@@ -856,7 +842,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "PopAWheelieAction",
-          "IsMatching": true,
           "State": "Unlocked",
           "Label": {
             "text": "Current Unlock Condition",
@@ -890,7 +875,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "KeepawayGame",
-          "IsMatching": true,
           "State": "Unlocked",
           "Label": {
             "text": "Current Unlock Condition",
@@ -946,7 +930,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "QuickTapGame",
-          "IsMatching": true,
           "State": "Unlocked",
           "Label": {
             "text": "Current Unlock Condition",
@@ -1002,7 +985,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "QuickTapGame",
-          "IsMatching": true,
           "State": "Unlocked",
           "Label": {
             "text": "Current Unlock Condition",
@@ -1047,7 +1029,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "KeepawayGame",
-          "IsMatching": true,
           "State": "Unlocked",
           "Label": {
             "text": "Current Unlock Condition",
@@ -1203,7 +1184,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "QuickTapGame",
-          "IsMatching": true,
           "State": "Available",
           "Label": {
             "text": "Current Unlock Condition",
@@ -1237,7 +1217,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "KeepawayGame",
-          "IsMatching": true,
           "State": "Available",
           "Label": {
             "text": "Current Unlock Condition",
@@ -1271,7 +1250,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "DroneModeGame",
-          "IsMatching": true,
           "State": "Available",
           "Label": {
             "text": "Current Unlock Condition",
@@ -1305,7 +1283,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "PopAWheelieAction",
-          "IsMatching": true,
           "State": "Available",
           "Label": {
             "text": "Current Unlock Condition",
@@ -1339,7 +1316,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "PounceOnMotionAction",
-          "IsMatching": true,
           "State": "Available",
           "Label": {
             "text": "Current Unlock Condition",
@@ -1373,7 +1349,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "StackTwoCubes",
-          "IsMatching": true,
           "State": "Available",
           "Label": {
             "text": "Current Unlock Condition",
@@ -1407,7 +1382,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "RollCube",
-          "IsMatching": true,
           "State": "Available",
           "Label": {
             "text": "Current Unlock Condition",
@@ -1441,7 +1415,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "PickupCube",
-          "IsMatching": true,
           "State": "Available",
           "Label": {
             "text": "Current Unlock Condition",
@@ -1475,7 +1448,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "KnockOverThreeCubeStack",
-          "IsMatching": true,
           "State": "Available",
           "Label": {
             "text": "Current Unlock Condition",
@@ -1509,7 +1481,6 @@
         {
           "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
           "Unlocked": "BuildPyramid",
-          "IsMatching": true,
           "State": "Available",
           "Label": {
             "text": "Current Unlock Condition",

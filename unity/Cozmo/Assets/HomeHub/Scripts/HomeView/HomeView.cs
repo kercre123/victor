@@ -198,7 +198,6 @@ namespace Cozmo.HomeHub {
 
       _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleGreenPointsBarUpdateComplete;
       UnlockablesManager.Instance.OnUnlockPopupRequested += HandleUnlockView;
-
       DailyGoalManager.Instance.OnRefreshDailyGoals += UpdatePlayTabText;
       GameEventManager.Instance.OnGameEvent += HandleDailyGoalCompleted;
       UpdatePlayTabText();
@@ -431,6 +430,7 @@ namespace Cozmo.HomeHub {
     #region Reward Sequence and Lootview
 
     private void CheckForRewardSequence() {
+      DailyGoalManager.Instance.ValidateExistingGoals();
       if (RewardedActionManager.Instance.RewardPending || DailyGoalManager.Instance.GoalsPending) {
         // If Rewards are pending, set sequence to active, shut down input until everything is done
         // Don't bother updating the chest progress bar to current points 

@@ -284,7 +284,7 @@ public class DailyGoalManager : MonoBehaviour {
           }
         }
       }
-      DailyGoal newGoal = new DailyGoal(toAdd.CladEvent, toAdd.TitleKey, toAdd.PointsRewarded, toAdd.Target, toAdd.RewardType, toAdd.ProgressConditions, toAdd.Priority);
+      DailyGoal newGoal = new DailyGoal(toAdd.CladEvent, toAdd.TitleKey, toAdd.PointsRewarded, toAdd.Target, toAdd.RewardType, toAdd.ProgressConditions, toAdd.GenConditions, toAdd.Priority);
       newGoals.Add(newGoal);
       // If all remaining generatable goals have been removed due to tag conflicts, then don't bother generating any more, even if we have fewer
       // than the min number of goals for the day.
@@ -334,6 +334,22 @@ public class DailyGoalManager : MonoBehaviour {
 
   public bool AreAllDailyGoalsComplete() {
     return GetTodayProgress() >= 1.0f;
+  }
+
+  /// <summary>
+  /// Check current session's goals, if any of them could not be generated with
+  /// current game state because we have already unlocked the unlockID/Difficulty level
+  /// then assume we've already completed the goal and auto complete them.
+  /// </summary>
+  public void ValidateExistingGoals() {
+    if (DataPersistenceManager.Instance.CurrentSession != null) {
+      for (int i = 0; i < DataPersistenceManager.Instance.CurrentSession.DailyGoals.Count; i++) {
+        DailyGoal toCheck = DataPersistenceManager.Instance.CurrentSession.DailyGoals[i];
+        if (!toCheck.GoalComplete) {
+          toCheck.CheckAndResolveInvalidGenConditions();
+        }
+      }
+    }
   }
 
   #endregion

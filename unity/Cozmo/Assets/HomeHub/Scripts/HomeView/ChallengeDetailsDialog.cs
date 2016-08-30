@@ -172,8 +172,6 @@ public class ChallengeDetailsDialog : BaseView {
             CloseView();
           });
         }
-
-
       }
     }
     _StartChallengeButton.Initialize(HandleStartButtonClicked, string.Format("{0}_start_button", challengeData.ChallengeID), DASEventViewName);
@@ -181,6 +179,9 @@ public class ChallengeDetailsDialog : BaseView {
   }
 
   private void HandleStartButtonClicked() {
+    // Don't attempt to refresh home view if we are already destroying it to start a game
+    _NewUnlock = false;
+    _FindPrereq = false;
     if (ChallengeStarted != null) {
       ChallengeStarted(_ChallengeId);
     }
