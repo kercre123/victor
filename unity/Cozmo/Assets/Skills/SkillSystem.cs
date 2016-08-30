@@ -190,11 +190,12 @@ public class SkillSystem {
           }
           if (thresholdPassed) {
             float winPercent = (currSkillData.WinPointsTotal / pointTotal);
-            // We're losing too much, level up
-            RewardedActionManager.Instance.NewSkillChange = 1;
 
             if (winPercent < skillLevelConfig.LowerBoundThreshold) {
               int cozmoSkillLevel = GetCozmoSkillLevel(currSkillData);
+
+              // We're losing too much, level up
+              RewardedActionManager.Instance.NewSkillChange = 1;
 
               //  if new high, let the player know
               if (cozmoSkillLevel + 1 < skillConfig.GetMaxLevel()) {
