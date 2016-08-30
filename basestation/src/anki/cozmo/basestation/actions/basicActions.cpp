@@ -1808,6 +1808,9 @@ namespace Anki {
         return ActionResult::RUNNING;
       }
       
+      // Reset the signalHandler to unsubscribe from the ProcessedImage message in case this action is not
+      // immediatly destroyed after completion
+      _imageProcSignalHandle.reset();
       return ActionResult::SUCCESS;
     }
     

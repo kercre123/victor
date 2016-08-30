@@ -110,6 +110,21 @@ namespace Anki {
       }
     }
     
+    void ICompoundAction::SetDeleteActionOnCompletion(bool deleteOnCompletion)
+    {
+      _deleteActionOnCompletion = deleteOnCompletion;
+      
+      // Need to go through all of our subactions and update _deleteOnCompletion for any compound actions
+      for(auto* action : _actions)
+      {
+        ICompoundAction* compound = dynamic_cast<ICompoundAction*>(action);
+        if(compound != nullptr)
+        {
+          compound->SetDeleteActionOnCompletion(deleteOnCompletion);
+        }
+      }
+    }
+    
     void ICompoundAction::StoreUnionAndDelete(std::list<IActionRunner*>::iterator& currentAction)
     {
       // Store this actions completion union before deleting it

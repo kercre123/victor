@@ -132,6 +132,7 @@ namespace Anki {
       // If set, instead of driving to the nearest preActionPose, only the preActionPose
       // that is most closely aligned with the approach angle is considered.
       void SetApproachAngle(const f32 angle_rad);
+      const bool GetUseApproachAngle() const;
       
       // Whether or not to verify the final pose, once the path is complete,
       // according to the latest know preAction pose for the specified object.
@@ -260,6 +261,8 @@ namespace Anki {
       // if sayName is true (this is because we are trying to use an animation to say the name, but if we
       // don't have a name, we want to use this animation instead)
       void SetNoNameAnimationTrigger(AnimationTrigger trigger);
+      
+      const bool GetUseApproachAngle() const;
       
     protected:
 

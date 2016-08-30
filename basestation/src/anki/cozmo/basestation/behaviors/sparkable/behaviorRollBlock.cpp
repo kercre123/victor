@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPutDownBlock.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
@@ -177,68 +178,84 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
                         GetName().c_str());
     return;
   }
-  
-  if(isRetry) {
-    ++_numRollActionRetries;
-    PRINT_NAMED_INFO("BehaviorRollBlock.TransitionToPerformingAction.Retrying",
-                     "Retry %d of %d", _numRollActionRetries, kBRB_MaxRollRetries);
-  } else {
-    _numRollActionRetries = 0;
-  }
 
-  // Only turn towards face if this is _not_ a retry
-  const Radians maxTurnToFaceAngle( (_shouldStreamline || isRetry ? 0 : DEG_TO_RAD(90)) );
+  const Radians maxTurnToFaceAngle(_shouldStreamline ? 0 : DEG_TO_RAD(90));
   DriveToRollObjectAction* rollAction = new DriveToRollObjectAction(robot, _targetBlock,
                                                                     false, 0, false,
                                                                     maxTurnToFaceAngle);
   rollAction->RollToUpright();
   rollAction->SetSayNameAnimationTrigger(AnimationTrigger::RollBlockPreActionNamedFace);
   rollAction->SetNoNameAnimationTrigger(AnimationTrigger::RollBlockPreActionUnnamedFace);
+  
+  RetryWrapperAction::RetryCallback retryCallback = [this, &robot, rollAction](const ExternalInterface::RobotCompletedAction& completion,
+                                                                               const u8 retryCount,
+                                                                               AnimationTrigger& retryAnimTrigger)
+  {
+    // Don't turn towards the face when retrying
+    rollAction->SetMaxTurnTowardsFaceAngle(0);
+  
+    // Only try to use another preAction pose if we aren't using an approach angle otherwise there is only
+    // one preAction pose to roll the object upright and the roll action failed due to not seeing the object
+    if(!rollAction->GetUseApproachAngle() &&
+       completion.completionInfo.Get_objectInteractionCompleted().result == ObjectInteractionResult::VISUAL_VERIFICATION_FAILED)
+    {
+      // Use a different preAction pose if we are retrying
+      rollAction->GetDriveToObjectAction()->SetGetPossiblePosesFunc([this, rollAction](ActionableObject* object,
+                                                                                       std::vector<Pose3d>& possiblePoses,
+                                                                                       bool& alreadyInPosition)
+      {
+        return IBehavior::UseSecondClosestPreActionPose(rollAction->GetDriveToObjectAction(),object, possiblePoses, alreadyInPosition);
+      });
+    }
+    
+    switch(completion.completionInfo.Get_objectInteractionCompleted().result)
+    {
+      case ObjectInteractionResult::INCOMPLETE:
+      case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
+      {
+        retryAnimTrigger = AnimationTrigger::RollBlockRealign;
+        break;
+      }
+      
+      default:
+      {
+        retryAnimTrigger = AnimationTrigger::RollBlockRetry;
+        break;
+      }
+    }
+  
+    return true;
+  };
+  
+  RetryWrapperAction* action = new RetryWrapperAction(robot,
+                                                      rollAction,
+                                                      retryCallback,
+                                                      kBRB_MaxRollRetries);
 
   // Roll the object and then look at a person
-  StartActing(rollAction,
+  StartActing(action,
               [&,this](const ExternalInterface::RobotCompletedAction& msg) {
-                switch(msg.result)
+                if(msg.result == ActionResult::SUCCESS)
                 {
-                  case ActionResult::SUCCESS:
-                    if(!_shouldStreamline){
-                      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RollBlockSuccess));
-                    }
-                    IncreaseScoreWhileActing( kBRB_ScoreIncreaseForAction );
-                    BehaviorObjectiveAchieved(BehaviorObjective::BlockRolled);
-                    break;
-                  
-                  case ActionResult::FAILURE_RETRY:
-                    if(_numRollActionRetries < kBRB_MaxRollRetries)
-                    {
-                      SetupRetryAction(robot, msg);
-                      break;
-                    }
-                    
-                    // else: too many retries, fall through to failure abort
-                    
-                  case ActionResult::FAILURE_ABORT:
-                    // assume that failure is because we didn't visually verify (although it could be due to an
-                    // error)
-                    PRINT_NAMED_INFO("BehaviorRollBlock.FailedAbort",
-                                     "Failed to verify roll, searching for block");
-                    StartActing(new SearchSideToSideAction(robot),
-                                [this](Robot& robot) {
-                                  if( IsRunnable(robot) ) {
-                                    TransitionToPerformingAction(robot);
-                                  }
-                                  // TODO:(bn) if we actually succeeded here, we should play the success anim,
-                                  // or at least a recognition anim
-                                });
-                    break;
-                    
-                  default:
-                    // other failure, just end
-                    PRINT_NAMED_INFO("BehaviorRollBlock.FailedRollAction",
-                                     "action failed with %s, behavior ending",
-                                     EnumToString(msg.result));
-                } // switch(msg.result)
-                
+                  if(!_shouldStreamline){
+                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RollBlockSuccess));
+                  }
+                  IncreaseScoreWhileActing( kBRB_ScoreIncreaseForAction );
+                  BehaviorObjectiveAchieved(BehaviorObjective::BlockRolled);
+                }
+                else
+                {
+                  PRINT_NAMED_INFO("BehaviorRollBlock.FailedAbort",
+                                   "Failed to verify roll, searching for block");
+                  StartActing(new SearchSideToSideAction(robot),
+                              [this](Robot& robot) {
+                                if( IsRunnable(robot) ) {
+                                  TransitionToPerformingAction(robot);
+                                }
+                                // TODO:(bn) if we actually succeeded here, we should play the success anim,
+                                // or at least a recognition anim
+                              });
+                }
               });
   IncreaseScoreWhileActing( kBRB_ScoreIncreaseForAction );
 }

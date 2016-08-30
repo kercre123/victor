@@ -150,6 +150,11 @@ namespace Anki {
       _approachAngle_rad = angle_rad;
     }
     
+    const bool DriveToObjectAction::GetUseApproachAngle() const
+    {
+      return _useApproachAngle;
+    }
+    
     void DriveToObjectAction::SetMotionProfile(const PathMotionProfile& motionProfile)
     {
       _hasMotionProfile = true;
@@ -1072,6 +1077,15 @@ namespace Anki {
       } else {
         PRINT_NAMED_WARNING("IDriveToInteractWithObject.SetApproachAngle.NullDriveToAction", "");
       }
+    }
+    
+    const bool IDriveToInteractWithObject::GetUseApproachAngle() const
+    {
+      if(nullptr != _driveToObjectAction)
+      {
+        return _driveToObjectAction->GetUseApproachAngle();
+      }
+      return false;
     }
     
     void IDriveToInteractWithObject::SetMotionProfile(const PathMotionProfile& motionProfile)

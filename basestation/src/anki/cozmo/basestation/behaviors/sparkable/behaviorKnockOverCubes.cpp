@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/flipBlockAction.h"
+#include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/common/basestation/jsonTools.h"
@@ -176,26 +177,39 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(Robot& robot)
     if(result == ActionResult::SUCCESS){
       //Knocked over stack successfully
       TransitionToPlayingReaction(robot);
-      
-    }else if(result == ActionResult::FAILURE_RETRY){
-      // Failed to knock over stack
-      _numRetries += 1;
-      if(_numRetries <= kMaxNumRetries){
-        StartActing(new TriggerLiftSafeAnimationAction(robot, _knockOverFailureTrigger),
-                    &BehaviorKnockOverCubes::TransitionToKnockingOverStack);
-      }
     }
   };
   
   //skips turning towards face if this action is streamlined
-  const f32 angleTurnTowardsFace_rad = !_shouldStreamline && _numRetries == 0 ? kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad : 0;
+  const f32 angleTurnTowardsFace_rad = !_shouldStreamline ? kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad : 0;
   
   DriveAndFlipBlockAction* flipAction = new DriveAndFlipBlockAction(robot, _baseBlockID, false, 0, false, angleTurnTowardsFace_rad, false, kMinThresholdRealign);
   
   flipAction->SetSayNameAnimationTrigger(AnimationTrigger::KnockOverPreActionNamedFace);
   flipAction->SetNoNameAnimationTrigger(AnimationTrigger::KnockOverPreActionUnnamedFace);
   
-  StartActing(new CompoundActionSequential(robot, {flipAction,
+  RetryWrapperAction::RetryCallback retryCallback = [this, flipAction](const ExternalInterface::RobotCompletedAction& completion,
+                                                                       const u8 retryCount,
+                                                                       AnimationTrigger& retryAnimTrigger)
+  {
+    retryAnimTrigger = _knockOverFailureTrigger;
+    
+    flipAction->SetMaxTurnTowardsFaceAngle(0);
+
+    // Use a different preAction pose if we are retrying
+    flipAction->GetDriveToObjectAction()->SetGetPossiblePosesFunc([this, flipAction](ActionableObject* object,
+                                                                                     std::vector<Pose3d>& possiblePoses,
+                                                                                     bool& alreadyInPosition)
+    {
+      return IBehavior::UseSecondClosestPreActionPose(flipAction->GetDriveToObjectAction(),object, possiblePoses, alreadyInPosition);
+    });
+    
+    return true;
+    };
+  
+  RetryWrapperAction* action = new RetryWrapperAction(robot, flipAction, retryCallback, kMaxNumRetries);
+  
+  StartActing(new CompoundActionSequential(robot, {action,
                                                    new WaitAction(robot, kWaitForBlockUpAxisChangeSecs)}),
               flipCallback);
 }

@@ -44,7 +44,7 @@ namespace Anki {
       
       // Sets whether or not to delete actions from the compound action when they complete
       // By default actions will be destroyed on completion
-      void SetDeleteActionOnCompletion(bool deleteOnCompletion) { _deleteActionOnCompletion = deleteOnCompletion; }
+      void SetDeleteActionOnCompletion(bool deleteOnCompletion);
 
     protected:
       

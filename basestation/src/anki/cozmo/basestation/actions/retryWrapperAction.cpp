@@ -83,7 +83,8 @@ namespace Cozmo {
   
   f32 RetryWrapperAction::GetTimeoutInSeconds() const
   {
-    return _numRetries * 20.f;
+    // Add 1 to account for the initial run
+    return (_numRetries+1) * 20.f;
   }
   
   ActionResult RetryWrapperAction::Init()

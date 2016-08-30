@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -108,8 +109,35 @@ void BehaviorPickUpCube::TransitionToDoingInitialReaction(Robot& robot)
 void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
 {
   DEBUG_SET_STATE(PickingUpCube);
+  DriveToPickupObjectAction* pickupAction = new DriveToPickupObjectAction(robot, _targetBlock, false, 0, false,0, true);
   
-  StartActing(new DriveToPickupObjectAction(robot, _targetBlock, false, 0, false,0, true),
+  RetryWrapperAction::RetryCallback retryCallback = [this, pickupAction](const ExternalInterface::RobotCompletedAction& completion,
+                                                                         const u8 retryCount,
+                                                                         AnimationTrigger& retryAnimTrigger)
+  {
+    retryAnimTrigger = AnimationTrigger::RollBlockRealign;
+    
+    // Use a different preAction pose if we are retrying because we weren't seeing the object
+    if(completion.completionInfo.Get_objectInteractionCompleted().result == ObjectInteractionResult::VISUAL_VERIFICATION_FAILED)
+    {
+      pickupAction->GetDriveToObjectAction()->SetGetPossiblePosesFunc([this, pickupAction](ActionableObject* object,
+                                                                                           std::vector<Pose3d>& possiblePoses,
+                                                                                           bool& alreadyInPosition)
+      {
+        return IBehavior::UseSecondClosestPreActionPose(pickupAction->GetDriveToObjectAction(),
+                                                        object, possiblePoses, alreadyInPosition);
+      });
+    }
+    return true;
+  };
+  
+  static const u8 kNumRetries = 1;
+  RetryWrapperAction* action = new RetryWrapperAction(robot,
+                                                      pickupAction,
+                                                      retryCallback,
+                                                      kNumRetries);
+  
+  StartActing(action,
               [this,&robot](ActionResult res) {
                 if(ActionResult::SUCCESS != res) {
                   _targetBlock.UnSet();
