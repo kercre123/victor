@@ -663,11 +663,7 @@ namespace Cozmo {
               
               SetAction( finalAnimation );
             }
-            
-            // Save the new album to the robot.
-            if(_saveToRobot) {
-              _robot.GetVisionComponent().SaveFaceAlbumToRobot();
-            }
+
             _state = State::Finishing;
             
             break;
@@ -689,14 +685,22 @@ namespace Cozmo {
     
       case State::Finishing:
       {
+        ActionResult result = ActionResult::SUCCESS;
+        
+        // Finish the final success SayTextAction, if it exists
         if(nullptr != _action)
         {
-          // Finish the final success SayTextAction. Once it completes, this action
-          // will return SUCCESS.
-          return _action->Update();
-        } else {
-          return ActionResult::SUCCESS;
+          result = _action->Update();
         }
+
+        // Save the new album to the robot here, only once we are about to return SUCCESS,
+        // to ensure that the face gets saved if and only if the action reports success.
+        if(ActionResult::SUCCESS == result && _saveToRobot)
+        {
+          _robot.GetVisionComponent().SaveFaceAlbumToRobot();
+        }
+        
+        return result;
       }
         
     } // switch(_state)
