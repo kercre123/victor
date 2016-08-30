@@ -36,10 +36,11 @@ namespace Onboarding {
     [SerializeField]
     private CozmoButton _ContinueButtonInstance;
 
-    private const int _kMaxPickupTries = 3;
+    private const int _kMaxPickupTries = 6;
     private const int _kMaxErrorsShown = 3;
     private const float _kMaxTimeInStage_Sec = 60 * 5;
     private const float _kDistanceReactToCubeMM = 60.0f;
+    private const float _kBackupDistanceToCubeMM = 100.0f;
 
 
     private int _SawCubeID = -1;
@@ -202,7 +203,7 @@ namespace Onboarding {
 
     private void HandlePutDownComplete(bool success) {
       DAS.Debug(this, "HandlePutDownComplete " + success);
-      RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(100.0f, -_kDistanceReactToCubeMM, true, HandleBackupComplete);
+      RobotEngineManager.Instance.CurrentRobot.DriveStraightAction(100.0f, -_kBackupDistanceToCubeMM, true, HandleBackupComplete);
     }
 
     private void HandleBackupComplete(bool success) {

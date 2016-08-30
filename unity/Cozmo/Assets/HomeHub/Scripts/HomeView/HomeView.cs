@@ -146,9 +146,6 @@ namespace Cozmo.HomeHub {
     private BaseView _HelpViewPrefab;
     private BaseView _HelpViewInstance;
 
-    [SerializeField]
-    private Transform _OnboardingTransform;
-
     private AlertView _RequestDialog = null;
 
     private HomeHub _HomeHubInstance;
@@ -206,9 +203,6 @@ namespace Cozmo.HomeHub {
       playerInventory.ItemAdded += HandleItemValueChanged;
       playerInventory.ItemRemoved += HandleItemValueChanged;
       CheckIfUnlockablesAffordableAndUpdateBadge();
-
-      // Checks if any stages are required...
-      OnboardingManager.Instance.InitHomeHubOnboarding(this, _OnboardingTransform);
 
       // If in SDK Mode, immediately open Settings and SDK view instead of PlayTab,
       // otherwise default to opening PlayTab

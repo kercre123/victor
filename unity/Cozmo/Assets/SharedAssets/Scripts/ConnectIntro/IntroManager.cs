@@ -61,6 +61,7 @@ public class IntroManager : MonoBehaviour {
 
   private void StartFlow() {
     if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Home)) {
+      OnboardingManager.Instance.PreloadOnboarding();
       ShowFirstTimeFlow();
     }
     else {

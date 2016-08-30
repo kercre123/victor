@@ -9,12 +9,23 @@ namespace Onboarding {
     [SerializeField]
     private SerializableAnimationTrigger _Animation;
 
+    [SerializeField]
+    private Transform _Logo;
+
+    [SerializeField]
+    private Transform _OldRobotLogoPos;
+
     private IRobot _CurrentRobot;
     public override void Start() {
       base.Start();
       _CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Onboarding);
       _CurrentRobot.SendAnimationTrigger(_Animation.Value, HandleEndAnimationComplete);
+      // Match the logo jumping of the previous screen
+      bool isOldRobot = UnlockablesManager.Instance.IsUnlocked(Anki.Cozmo.UnlockId.StackTwoCubes);
+      if (isOldRobot) {
+        _Logo.position = _OldRobotLogoPos.position;
+      }
     }
 
     public override void OnDestroy() {
@@ -30,15 +41,13 @@ namespace Onboarding {
       // If we saw a face recently, look at it and play the "hello player"
       // Otherwise just play the "hello world" and be impressed with the enviornment.
       if (_CurrentRobot.Faces.Count > 0) {
-        _CurrentRobot.TurnTowardsFacePose(_CurrentRobot.Faces[0], 4.3f, 10, HandleTurnedTowardsFace);
+        // In order to move things along quickly people don't want to wait for the vision system to confirm a
+        // TurnTowardsFacePose, They've only had a few seconds since cozmo looked up so mostly should be in same place.
+        _CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnboardingHelloPlayer, HandleReactionEndAnimationComplete);
       }
       else {
         _CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnboardingHelloWorld, HandleReactionEndAnimationComplete);
       }
-    }
-
-    private void HandleTurnedTowardsFace(bool success) {
-      _CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnboardingHelloPlayer, HandleReactionEndAnimationComplete);
     }
 
     private void HandleReactionEndAnimationComplete(bool success) {

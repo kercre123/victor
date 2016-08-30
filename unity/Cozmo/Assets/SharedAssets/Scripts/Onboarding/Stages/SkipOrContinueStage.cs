@@ -19,6 +19,11 @@ namespace Onboarding {
     [SerializeField]
     private GameObject _NewRobotViewInstance;
 
+    [SerializeField]
+    private Transform[] _OldRobotSecondaryInfo;
+    [SerializeField]
+    private Transform _OldRobotSpinner;
+
     public override void Start() {
       base.Start();
       // More than just the default unlocks, therefore something has connected to this robot before.
@@ -42,11 +47,19 @@ namespace Onboarding {
       // No tutorials needed for the next few phases either
       OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.DailyGoals);
       OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Upgrades);
+      DAS.Event("onboarding.skip_status", "1", DASUtil.FormatExtraData("1"));
+      for (int i = 0; i < _OldRobotSecondaryInfo.Length; ++i) {
+        _OldRobotSecondaryInfo[i].gameObject.SetActive(false);
+      }
+      _OldRobotSpinner.gameObject.SetActive(true);
+
+      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.ConnectWakeUp, HandleWakeAnimationComplete);
+    }
+
+    private void HandleWakeAnimationComplete(bool success) {
       // Complete and shut down onboarding current phase.
       OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Home);
       UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, Color.white);
-
-      DAS.Event("onboarding.skip_status", "1", DASUtil.FormatExtraData("1"));
     }
 
   }

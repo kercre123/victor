@@ -18,7 +18,7 @@ namespace Onboarding {
       GameEventManager.Instance.OnGameEvent += HandleGameEvent;
       BaseView.BaseViewClosed += HandleViewClosed;
       // Highlight region is set by CozmoUnlocksPanel before this phase starts
-      OnboardingManager.Instance.ShowOutlineRegion(true);
+      OnboardingManager.Instance.ShowOutlineRegion(true, true);
       _StartTime = Time.time;
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Onboarding__Core_Upgrades);
     }

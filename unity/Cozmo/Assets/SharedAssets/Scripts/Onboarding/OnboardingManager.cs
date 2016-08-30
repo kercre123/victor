@@ -51,12 +51,12 @@ public class OnboardingManager : MonoBehaviour {
   public void SetOutlineRegion(Transform outlineRegion) {
     _OutlineRegionTransform = outlineRegion;
   }
-  public void ShowOutlineRegion(bool enable) {
+  public void ShowOutlineRegion(bool enable, bool useLargerOutline = false) {
     if (_UIOutlineInstance != null) {
       GameObject.Destroy(_UIOutlineInstance);
     }
     if (enable && _OutlineRegionTransform != null) {
-      _UIOutlineInstance = UIManager.CreateUIElement(_OnboardingUIInstance.GetOutlinePrefab(), _OutlineRegionTransform);
+      _UIOutlineInstance = UIManager.CreateUIElement(useLargerOutline ? _OnboardingUIInstance.GetOutlineLargePrefab() : _OnboardingUIInstance.GetOutlinePrefab(), _OutlineRegionTransform);
     }
   }
   #endregion
@@ -135,9 +135,9 @@ public class OnboardingManager : MonoBehaviour {
     return GetCurrStageInPhase(phase) < GetMaxStageInPhase(phase);
   }
 
-  public void InitHomeHubOnboarding(HomeView homeview, Transform onboardingLayer) {
+  public void InitHomeHubOnboarding(HomeView homeview) {
     _HomeView = homeview;
-    _OnboardingTransform = onboardingLayer.parent.transform;
+    _OnboardingTransform = homeview.transform;
 
     if (IsOnboardingRequired(OnboardingPhases.Home)) {
       StartPhase(OnboardingPhases.Home);
@@ -173,12 +173,8 @@ public class OnboardingManager : MonoBehaviour {
       RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.NoGame);
     }
 
-    // we keep the asset bundle around because some phases lead into each other, in common cases
-    // but don't have to.
-    if (_OnboardingUIInstance == null) {
-      AssetBundleManager.Instance.LoadAssetBundleAsync(_OnboardingUIPrefabData.AssetBundle, LoadOnboardingAssetsCallback);
-    }
-    else {
+    // If assets are already loaded, go otherwise this will wait for callback
+    if (PreloadOnboarding()) {
       SetSpecificStage(0);
     }
   }
@@ -204,12 +200,21 @@ public class OnboardingManager : MonoBehaviour {
     ShowOutlineRegion(false);
   }
 
+  public bool PreloadOnboarding() {
+    if (_OnboardingUIInstance == null) {
+      AssetBundleManager.Instance.LoadAssetBundleAsync(_OnboardingUIPrefabData.AssetBundle, LoadOnboardingAssetsCallback);
+      return false;
+    }
+    return true;
+  }
   private void LoadOnboardingAssetsCallback(bool assetBundleSuccess) {
     _OnboardingUIPrefabData.LoadAssetData((GameObject onboardingUIWrapperPrefab) => {
       if (_OnboardingUIInstance == null && onboardingUIWrapperPrefab != null) {
         GameObject wrapper = UIManager.CreateUIElement(onboardingUIWrapperPrefab.gameObject);
         _OnboardingUIInstance = wrapper.GetComponent<OnboardingUIWrapper>();
-        SetSpecificStage(0);
+        if (_CurrPhase != OnboardingPhases.None) {
+          SetSpecificStage(0);
+        }
       }
     });
   }

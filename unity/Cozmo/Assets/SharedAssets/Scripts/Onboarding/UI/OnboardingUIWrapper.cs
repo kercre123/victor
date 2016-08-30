@@ -14,6 +14,9 @@ namespace Onboarding {
     private GameObject _OutlinePrefab;
 
     [SerializeField]
+    private GameObject _OutlineLargePrefab;
+
+    [SerializeField]
     private List<OnboardingBaseStage> _PhaseHomePrefabs;
     [SerializeField]
     private List<OnboardingBaseStage> _PhaseLootPrefabs;
@@ -35,6 +38,10 @@ namespace Onboarding {
 
     public GameObject GetOutlinePrefab() {
       return _OutlinePrefab;
+    }
+
+    public GameObject GetOutlineLargePrefab() {
+      return _OutlineLargePrefab;
     }
 
     public int GetMaxStageInPhase(OnboardingManager.OnboardingPhases phase) {

@@ -125,6 +125,9 @@ namespace Cozmo.HomeHub {
       // Show the current state of challenges being locked/unlocked
       _HomeViewInstance.Initialize(_ChallengeStatesById, this);
 
+      // Checks if any stages are required
+      OnboardingManager.Instance.InitHomeHubOnboarding(_HomeViewInstance);
+
       ResetRobotToFreeplaySettings();
 
       var robot = RobotEngineManager.Instance.CurrentRobot;
