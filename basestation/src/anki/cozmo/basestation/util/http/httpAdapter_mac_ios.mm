@@ -36,22 +36,22 @@ namespace Util {
   {
     switch (request.method) {
       case HttpMethodGet:
-        ProcessGetRequest(@"GET", request, queue, callback);
+        ProcessGetRequest(@"GET", request, queue, std::move(callback));
         break;
       case HttpMethodHead:
-        ProcessGetRequest(@"HEAD", request, queue, callback);
+        ProcessGetRequest(@"HEAD", request, queue, std::move(callback));
         break;
 
       case HttpMethodPost:
-        ProcessUploadRequest(@"POST", request, queue, callback);
+        ProcessUploadRequest(@"POST", request, queue, std::move(callback));
         break;
 
       case HttpMethodPut:
-        ProcessUploadRequest(@"PUT", request, queue, callback);
+        ProcessUploadRequest(@"PUT", request, queue, std::move(callback));
         break;
 
       case HttpMethodDelete:
-        ProcessUploadRequest(@"DELETE", request, queue, callback);
+        ProcessUploadRequest(@"DELETE", request, queue, std::move(callback));
         break;
 
       default:
@@ -78,7 +78,6 @@ namespace Util {
                                NSURLResponse* response,
                                NSError* error)
   {
-    HttpRequest localRequestRef = request;
     std::map<std::string,std::string> responseHeaders;
     SetResponseHeaders(response, responseHeaders);
     std::vector<uint8_t> responseBody;
@@ -100,8 +99,8 @@ namespace Util {
                          responseCode,
                          request.uri.c_str());
 
-    Util::Dispatch::Async(queue, [localRequestRef, responseBody, responseCode, responseHeaders, callback] {
-      callback(localRequestRef, responseCode, responseHeaders, responseBody);
+    Util::Dispatch::Async(queue, [request, responseBody, responseCode, responseHeaders, callback] {
+      callback(request, responseCode, responseHeaders, responseBody);
       auto start = Util::CodeTimer::Start();
       
       int elapsedMillis = Util::CodeTimer::MillisecondsElapsed(start);
@@ -122,7 +121,7 @@ namespace Util {
   void HttpAdapter::ProcessGetRequest(NSString* httpMethod, const HttpRequest& request,
                                       Util::Dispatch::Queue* queue, HttpRequestCallback callback)
   {
-    HttpRequest localRequestRef = request;
+    __block HttpRequest localRequestRef = request;
     NSMutableURLRequest* urlRequest = CreateURLRequest(request, httpMethod);
 
     NSURLSessionTask* task = nil;
@@ -140,7 +139,7 @@ namespace Util {
           NSFileManager* fm = [[NSFileManager alloc] init];
           [fm moveItemAtURL:location toURL:destinationUrl error:&error];
         }
-        DoCallback(queue, callback, localRequestRef, nil, response, error);
+        DoCallback(queue, std::move(callback), localRequestRef, nil, response, error);
 
       }];
     } else {
@@ -148,7 +147,7 @@ namespace Util {
                             completionHandler:^(NSData* data,
                                                 NSURLResponse* response,
                                                 NSError* error) {
-        DoCallback(queue, callback, localRequestRef, data, response, error);
+        DoCallback(queue, std::move(callback), localRequestRef, data, response, error);
       }];
     }
     [task resume];
@@ -159,7 +158,7 @@ namespace Util {
                                          Util::Dispatch::Queue* queue,
                                          HttpRequestCallback callback)
   {
-    HttpRequest localRequestRef = request;
+    __block HttpRequest localRequestRef = request;
     NSMutableURLRequest* urlRequest = CreateURLRequest(request, httpMethod);
 
     NSMutableData* bodyData;
@@ -179,7 +178,7 @@ namespace Util {
                                                   completionHandler:^(NSData* data,
                                                                       NSURLResponse* response,
                                                                       NSError* error) {
-      DoCallback(queue, callback, localRequestRef, data, response, error);
+      DoCallback(queue, std::move(callback), localRequestRef, data, response, error);
     }];
     [task resume];
   }

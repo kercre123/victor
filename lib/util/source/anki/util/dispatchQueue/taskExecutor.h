@@ -55,10 +55,10 @@ public:
   explicit TaskExecutor(const char* name = nullptr, ThreadPriority threadPriority=ThreadPriority::Default);
   virtual ~TaskExecutor();
   void StopExecution();
-  void Wake(const std::function<void()> task, const char* name);
-  void WakeSync(const std::function<void()> task, const char* name);
-  void WakeAfter(const std::function<void()> task, std::chrono::time_point<std::chrono::steady_clock> when, const char* name);
-  TaskHandle WakeAfterRepeat(const std::function<void()> task, std::chrono::milliseconds period, const char* name);
+  void Wake(std::function<void()> task, const char* name);
+  void WakeSync(std::function<void()> task, const char* name);
+  void WakeAfter(std::function<void()> task, std::chrono::time_point<std::chrono::steady_clock> when, const char* name);
+  TaskHandle WakeAfterRepeat(std::function<void()> task, std::chrono::milliseconds period, const char* name);
 protected:
   TaskExecutor(const TaskExecutor&) = delete;
   TaskExecutor& operator=(const TaskExecutor&) = delete;
@@ -66,9 +66,8 @@ protected:
                     std::condition_variable &condition,
                     const std::vector<TaskHolder>* tasks) const;
 private:
-  void PrvWake(const std::function<void()> task, bool sync);
-  void AddTaskHolder(const TaskHolder taskHolder);
-  void AddTaskHolderToDeferredQueue(const TaskHolder taskHolder);
+  void AddTaskHolder(TaskHolder taskHolder);
+  void AddTaskHolderToDeferredQueue(TaskHolder taskHolder);
   void RemoveTaskFromDeferredQueue(int taskId);
   void Execute(std::string threadName);
   void ProcessDeferredQueue(std::string threadName);
