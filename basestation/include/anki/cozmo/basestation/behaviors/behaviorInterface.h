@@ -329,6 +329,10 @@ protected:
   //Allows behaviors to skip certain steps when streamlined
   //Can be set in json (for sparks) or programatically
   bool _shouldStreamline;
+  
+  // A list of reactions that have been disabled at some point during the behavior
+  // these will be automatically re-enabled during IBehavior::Stop using the current behavior's name
+  std::set<BehaviorType> _disabledReactions;
 
 private:
             

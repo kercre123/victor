@@ -17,7 +17,6 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
@@ -375,6 +374,7 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
                     if(!_shouldStreamline){
                       TransitionToPlayingFinalAnim(robot);
                     }
+                    BehaviorObjectiveAchieved(BehaviorObjective::StackedBlock);
                   }
                   else if( res == ActionResult::FAILURE_RETRY ) {
                     StartActing(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksRetry),
@@ -412,7 +412,6 @@ void BehaviorStackBlocks::TransitionToPlayingFinalAnim(Robot& robot)
   StartActing(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksSuccess));
   IncreaseScoreWhileActing( kBSB_ScoreIncreaseForAction );
   
-  BehaviorObjectiveAchieved(BehaviorObjective::StackedBlock);
 }
 
 void BehaviorStackBlocks::ResetBehavior(const Robot& robot)

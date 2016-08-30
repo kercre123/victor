@@ -294,22 +294,19 @@ Result IBehavior::Init()
     _startCount++;
   }
   
-  // If the behavior that is starting is the result of a spark, determine whether
-  // it should be streamlined or not
-  if(_requiredUnlockId != UnlockId::Count
-     && _requiredUnlockId == _robot.GetBehaviorManager().GetActiveSpark()){
-    if(_robot.GetBehaviorManager().IsActiveSparkSoft()){
-      _shouldStreamline = false;
-    }else{
+  // Streamline all IBehaviors when a spark is active
+  if(_robot.GetBehaviorManager().GetActiveSpark() != UnlockId::Count
+      && !_robot.GetBehaviorManager().IsActiveSparkSoft()){
       _shouldStreamline = true;
-    }
   }else{
     _shouldStreamline = false;
   }
   
-  // Disable acknowledgeObject when cozmo should be concentrating on an action
-  if(_shouldStreamline){
+  // Disable Acknowledge object if this behavior is the sparked version
+  if(_requiredUnlockId != UnlockId::Count
+       && _requiredUnlockId == _robot.GetBehaviorManager().GetActiveSpark()){
     _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, false);
+    _disabledReactions.insert(BehaviorType::AcknowledgeObject);
   }
   
   return initResult;
@@ -326,11 +323,12 @@ Result IBehavior::Resume()
     _isRunning = false;
   }
   
-  // Disable acknowledgeObject when cozmo should be concentrating on an action
-  if(_shouldStreamline){
+  // Disable Acknowledge object if this behavior is the sparked version
+  if(_requiredUnlockId != UnlockId::Count
+     && _requiredUnlockId == _robot.GetBehaviorManager().GetActiveSpark()){
     _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, false);
+    _disabledReactions.insert(BehaviorType::AcknowledgeObject);
   }
-
   
   return initResult;
 }
@@ -357,11 +355,9 @@ void IBehavior::Stop()
   _lastRunTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   StopActing(false);
   
-  // Re-enable acknowledgeObject if it was disabled in order to concentrate on the task
-  if(_shouldStreamline){
-    _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, true);
+  for(auto behaviorType: _disabledReactions){
+    _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), behaviorType, true);
   }
-
 }
 
 void IBehavior::StopOnNextActionComplete()

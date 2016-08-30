@@ -421,7 +421,7 @@ void BehaviorManager::SwitchToReactionaryBehavior(IReactionaryBehavior* nextBeha
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::RequestEnableReactionaryBehavior(std::string requesterID, BehaviorType behavior, bool enable)
+void BehaviorManager::RequestEnableReactionaryBehavior(const std::string& requesterID, BehaviorType behavior, bool enable)
 {
   // If we don't have an external interface (Unit tests), bail early; we can't setup callbacks
   if (!_robot.HasExternalInterface()) {

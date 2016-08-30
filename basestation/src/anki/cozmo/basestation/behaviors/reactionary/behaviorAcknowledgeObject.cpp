@@ -110,8 +110,9 @@ void BehaviorAcknowledgeObject::BeginIteration(Robot& robot)
     action->AddAction(verifyAction);
   }
 
-  action->AddAction(new TriggerLiftSafeAnimationAction(robot, _params.reactionAnimTrigger));
-
+  if(!_shouldStreamline){
+    action->AddAction(new TriggerLiftSafeAnimationAction(robot, _params.reactionAnimTrigger));
+  }
 
   StartActing(action, &BehaviorAcknowledgeObject::LookUpForStackedCube);
 }

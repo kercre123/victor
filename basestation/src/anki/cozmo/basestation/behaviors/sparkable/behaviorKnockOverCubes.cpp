@@ -124,12 +124,7 @@ Result BehaviorKnockOverCubes::InitInternalReactionary(Robot& robot)
   
 void BehaviorKnockOverCubes::StopInternalReactionary(Robot& robot)
 {
-  for(auto behaviorType: _disabledReactions){
-    robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), behaviorType, true);
-  }
-  
   ResetBehavior(robot);
-  
 }
   
 bool BehaviorKnockOverCubes::ShouldComputationallySwitch(const Robot& robot)
