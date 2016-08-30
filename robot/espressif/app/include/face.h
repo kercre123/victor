@@ -43,6 +43,9 @@ namespace Anki {
       /// Clears all content from the face
       void Clear();
 
+      /// Runs burn-in protection  (clears after long idle)
+      void Update(void); 
+
       namespace Draw {
         void Clear(u64* frame);
         void Copy(u64* frame, const u64* image);

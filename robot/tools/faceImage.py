@@ -13,24 +13,55 @@ Anki = robotInterface.Anki
 SCREEN_WIDTH = 128
 SCREEN_HEIGHT = 64
 
+#converts rgba or rgb into greyscale.
+def greyscale(pixel):
+    try:
+        r,g,b,a = pixel
+    except (ValueError,TypeError):
+        try:
+            a = 1.0
+            r,g,b = pixel
+        except (ValueError,TypeError):
+            r = g = b = pixel
+    return (r+r+g+g+g+b)/6 * a
+
+#divides brightness range (greyscale -> b/w)
+def find_threshold(img):
+        maxval = 0
+        for y in range(img.size[1]):
+            for x in range(img.size[0]):
+                p = greyscale(img.getpixel((x,y)))
+                maxval = max(maxval, p)
+        return maxval/2
+
+
 def loadImage(filePathName, invert=False):
     "Load an image and return a face keyframe message"
     img = Image.open(filePathName)
+    if img.size[0] > SCREEN_WIDTH or img.size[1] > SCREEN_HEIGHT:
+        img.thumbnail((SCREEN_WIDTH, SCREEN_HEIGHT))
     if img.size[0] > SCREEN_WIDTH:
         raise ValueError("Image too wide: {:d} > {:d}".format(img.size[0], SCREEN_WIDTH))
     elif img.size[1] > SCREEN_HEIGHT:
         raise ValueError("Image to tall: {:d} > {:d}".format(img.size[1], SCREEN_HEIGHT))
     else:
+        threshold = find_threshold(img)
+        
         hPadding = (SCREEN_WIDTH  - img.size[0])//2
         vPadding = (SCREEN_HEIGHT - img.size[1])//2
         bitmap = [1]*(SCREEN_WIDTH*SCREEN_HEIGHT)
         for y in range(img.size[1]):
             for x in range(img.size[0]):
-                bitmap[(hPadding + x)*SCREEN_HEIGHT + (vPadding + y)] = 1 if img.getpixel((x,y)) > 128 else 0
+                pixel = 1 if greyscale(img.getpixel((x,y))) > threshold else 0
+                bitmap[(hPadding + x)*SCREEN_HEIGHT + (vPadding + y)] = pixel
+                print(pixel,end="")
+            print(end="\n")
         if invert: bitmap = [0 if b else 1 for b in bitmap]
         packed = [0]*(SCREEN_WIDTH*SCREEN_HEIGHT//8)
         for c in range(len(packed)):
             packed[c] = (bitmap[c*8 + 0] << 0) | (bitmap[c*8 + 1]) << 1 | (bitmap[c*8 + 2] << 2) | (bitmap[c*8 + 3] << 3) | (bitmap[c*8 + 4] << 4) | (bitmap[c*8 + 5] << 5) | (bitmap[c*8 + 6] << 6) | (bitmap[c*8 + 7] << 7)
+        print("Sending Face image of {} bytes".format(len(packed)))
+            
         return Anki.Cozmo.AnimKeyFrame.FaceImage(packed)
 
 def SendFaceImage(*args):
@@ -50,3 +81,4 @@ if __name__ == "__main__":
         time.sleep(3600)
     except KeyboardInterrupt:
         pass
+

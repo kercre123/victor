@@ -259,6 +259,11 @@ void Exec(os_event_t *event)
       CrashReporter::Update();
       break;
     }
+    case 8:
+    {
+      Face::Update();
+      break;
+    }
     // Add new "long execution" tasks as switch cases here.
     default:
     {

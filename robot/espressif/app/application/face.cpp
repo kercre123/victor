@@ -208,6 +208,7 @@ namespace Face {
   RectScanStatus m_scanStatus;
   int m_remainingRects;
   bool m_rectLock;
+  uint32 m_lastUpdateTime;
 
   typedef enum {
     graphics = 0x00,
@@ -238,6 +239,7 @@ namespace Face {
     memset(m_frame, 0, sizeof(m_frame));
 
     ResetScan();
+    m_lastUpdateTime = system_get_time();
   }
 
   Result Init()
@@ -346,6 +348,7 @@ namespace Face {
     while (ConsolidateRects()) ;
 
     ResetScan();
+    m_lastUpdateTime = system_get_time();
 
     m_rectLock = false;
   }
@@ -564,6 +567,22 @@ namespace Face {
     CreateRects((u64*) frame);
   }
 
+#define MAX_SCREEN_IDLE_TIME_US  (30*1000*1000)  //30 seconds
+
+  static bool IsFrozen(void)
+  {
+    const u32 idleTime = system_get_time() - m_lastUpdateTime;
+    return (idleTime > MAX_SCREEN_IDLE_TIME_US);
+  }
+
+  void Update(void)
+  {
+    if (IsFrozen())
+    {
+      Clear();
+    }
+  }
+
   // Display text on the screen until turned off
   extern "C" void FacePrintf(const char *format, ...)
   {
@@ -619,6 +638,7 @@ namespace Face {
     CreateRects(frame, sx, sy, ex, ey);
   }
   */
+
 
 } // Face
 
