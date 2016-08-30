@@ -50,6 +50,7 @@ public:
   bool SendData(const uint8_t* buffer, unsigned int size);
   
   bool PopData(std::vector<uint8_t>& data_out);
+  void ClearData();
   
   const Anki::Util::Stats::StatsAccumulator& GetQueuedTimes_ms() const;
   
