@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine.UI;
 using Anki.Cozmo.ExternalInterface;
 
+// TODO: refactor into state machines...
 namespace FaceEnrollment {
   public class FaceEnrollmentGame : GameBase {
 
@@ -172,6 +173,12 @@ namespace FaceEnrollment {
         if (_EnrollingFace) {
           CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.ENROLL_NAMED_FACE);
           _UserCancelledEnrollment = true;
+        }
+        else {
+          // not enrolling face probably means we are playing say name animations, let's
+          // clear the queue and don't listen to any callback responses
+          CurrentRobot.CancelAllCallbacks();
+          CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.UNKNOWN);
         }
         if (handleInstructionsDone != null) {
           handleInstructionsDone();
