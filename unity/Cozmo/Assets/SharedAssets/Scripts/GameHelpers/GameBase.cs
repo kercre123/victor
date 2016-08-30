@@ -161,7 +161,7 @@ public abstract class GameBase : MonoBehaviour {
 
     if (CurrentRobot != null) {
       CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
-      if ((CurrentRobot.RobotStatus | RobotStatusFlag.IS_CARRYING_BLOCK) != 0) {
+      if ((CurrentRobot.RobotStatus & RobotStatusFlag.IS_CARRYING_BLOCK) != 0) {
         CurrentRobot.PlaceObjectOnGroundHere();
       }
       CurrentRobot.SetEnableFreeplayLightStates(false);
