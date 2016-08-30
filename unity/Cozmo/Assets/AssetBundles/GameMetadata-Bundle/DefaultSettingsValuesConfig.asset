@@ -17,7 +17,7 @@ MonoBehaviour:
   _DefaultMasterVolume: 1
   _SdkUrl: https://developer.anki.com/en-us
   _AppBackground_TimeTilSleep_sec: 20
-  _AppBackground_TimeTilDisconnect_sec: 40
+  _AppBackground_TimeTilDisconnect_sec: 45
   _PlayerSleepCozmo_TimeTilSleep_sec: 0
   _PlayerSleepCozmo_TimeTilDisconnect_sec: 20
   _FilterSmoothingWeight: 0.99

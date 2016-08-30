@@ -225,6 +225,10 @@
       "AnimName": "ag_gotosleep_getin"
     },
     {
+      "CladEvent": "GoToSleepGetOut",
+      "AnimName": "ag_gotosleep_getout"
+    },
+    {
       "CladEvent": "GoToSleepOff",
       "AnimName": "ag_gotosleep_off"
     },

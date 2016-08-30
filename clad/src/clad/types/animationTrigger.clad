@@ -70,6 +70,7 @@ enum int_32 AnimationTrigger
   FrustratedByFailure,
   FrustratedByFailureMajor,
   GoToSleepGetIn,
+  GoToSleepGetOut,
   GoToSleepOff,
   GoToSleepSleeping,
   HikingDrivingStart,           // loco-driving anim (so that Cozmo can be humming while hiking) - start

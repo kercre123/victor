@@ -5,5 +5,5 @@
   ],
   "disableByDefault": true,
   "timeTilSleepAnimation_s": 20.0,
-  "timeTilDisconnection_s": 40.0
+  "timeTilDisconnection_s": 45.0
 }
