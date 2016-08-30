@@ -516,7 +516,7 @@ message EngineErrorCodeMessage {
 
 structure BlockPoolBlockData {
   uint_32 factory_id,
-  bool enabled // This is always true?
+  bool enabled
 }
 
 message InitBlockPoolMessage {

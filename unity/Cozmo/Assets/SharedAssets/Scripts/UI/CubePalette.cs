@@ -7,7 +7,9 @@ namespace Cozmo {
       private static CubePalette _sInstance;
 
       public static CubePalette Instance {
-        get { return _sInstance; }
+        get {
+          return _sInstance;
+        }
         private set {
           if (_sInstance == null) {
             _sInstance = value;
@@ -24,27 +26,57 @@ namespace Cozmo {
 
       [SerializeField]
       private CubeColor _OffColor;
-      public CubeColor OffColor { get { return _OffColor; } }
+
+      public CubeColor OffColor {
+        get {
+          return _OffColor;
+        }
+      }
 
       [SerializeField]
       private CubeColor _InViewColor;
-      public CubeColor InViewColor { get { return _InViewColor; } }
+
+      public CubeColor InViewColor {
+        get {
+          return _InViewColor;
+        }
+      }
 
       [SerializeField]
       private CubeColor _OutOfViewColor;
-      public CubeColor OutOfViewColor { get { return _OutOfViewColor; } }
+
+      public CubeColor OutOfViewColor {
+        get {
+          return _OutOfViewColor;
+        }
+      }
 
       [SerializeField]
       private CubeColor _ReadyColor;
-      public CubeColor ReadyColor { get { return _ReadyColor; } }
+
+      public CubeColor ReadyColor {
+        get {
+          return _ReadyColor;
+        }
+      }
 
       [SerializeField]
       private CubeColor _ErrorColor;
-      public CubeColor ErrorColor { get { return _ErrorColor; } }
+
+      public CubeColor ErrorColor {
+        get {
+          return _ErrorColor;
+        }
+      }
 
       [SerializeField]
       private CubeCycleColors _TapMeColor;
-      public CubeCycleColors TapMeColor { get { return _TapMeColor; } }
+
+      public CubeCycleColors TapMeColor {
+        get {
+          return _TapMeColor;
+        }
+      }
 
       [System.Serializable]
       public class CubeColor {

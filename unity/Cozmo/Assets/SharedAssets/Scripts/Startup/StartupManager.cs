@@ -355,9 +355,8 @@ public class StartupManager : MonoBehaviour {
         Cozmo.Settings.DefaultSettingsValuesConfig.SetInstance(dsvc);
       });
 
-    Cozmo.UI.CubePalette.LoadCubePalette(_BasicUIPrefabAssetBundleName);
-
     SkillSystem.Instance.Initialize();
+
   }
 
   private void LoadMainScene(AssetBundleManager assetBundleManager) {

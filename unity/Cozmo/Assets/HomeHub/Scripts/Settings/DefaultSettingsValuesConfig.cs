@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections;
 
 namespace Cozmo.Settings {
   public class DefaultSettingsValuesConfig : ScriptableObject {

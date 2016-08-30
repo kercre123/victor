@@ -47,12 +47,6 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
     blockPoolEnabledMessage.discoveryTimeSecs = _kMaxDiscoveryTime;
     RobotEngineManager.Instance.Message.BlockPoolEnabledMessage = blockPoolEnabledMessage;
     RobotEngineManager.Instance.SendMessage();
-
-    RobotEngineManager.Instance.BlockPoolTracker.SendAvailableObjects(true, (byte)RobotEngineManager.Instance.CurrentRobotID);
-  }
-
-  private void OnDestroy() {
-    RobotEngineManager.Instance.BlockPoolTracker.SendAvailableObjects(false, (byte)RobotEngineManager.Instance.CurrentRobotID);
   }
 
   protected override void Update() {
