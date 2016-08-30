@@ -3119,36 +3119,104 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
         // map can efficiently figure out the order in which to check for collision (there's a fast check
         // I can think of that involves simply knowing from which quadrant the ray starts)
         
-        // check line towards candidate point
-        const Vec2f& rayFrom  = cameraOrigin;
-        const Vec2f& rayTo    = candidate3D;
-    
-        // these are types that if the ray crosses them, we should have seen a border. The fact that
-        // we didn't see the border is not proof that the object is not there. Ideally that's exactly
-        // what we would want to deduct, but we can't trust failure to detect edges so reliably
-        constexpr NavMemoryMapTypes::FullContentArray typesThatOccludeValidInfo =
+        bool occludedBeforeNearPlane = false;
+        bool occludedInsideROI = false;
+        Vec2f innerRayFrom = cameraOrigin; // it will be updated with the intersection with the near plane (if found)
+
+        // - calculate occlusion between camera and near plane of ROI
         {
-          {NavMemoryMapTypes::EContentType::Unknown               , false},
-          {NavMemoryMapTypes::EContentType::ClearOfObstacle       , false},
-          {NavMemoryMapTypes::EContentType::ClearOfCliff          , false},
-          {NavMemoryMapTypes::EContentType::ObstacleCube          , true },
-          {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
-          {NavMemoryMapTypes::EContentType::ObstacleCharger       , true },
-          {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, true },
-          {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
-          {NavMemoryMapTypes::EContentType::Cliff                 , false},
-          {NavMemoryMapTypes::EContentType::InterestingEdge       , false},
-          {NavMemoryMapTypes::EContentType::NotInterestingEdge    , false}
-        };
-        static_assert(NavMemoryMapTypes::ContentValueEntry::IsValidArray(typesThatOccludeValidInfo),
-          "This array does not define all types once and only once.");
+          // check if we cross something between the camera and the near plane (outside of ROI plane)
+          // from camera to candidate
+          kmRay2 fullRay;
+          kmVec2 kmFrom{cameraOrigin.x(), cameraOrigin.y()};
+          kmVec2 kmTo  {candidate3D.x() , candidate3D.y() };
+          kmRay2FillWithEndpoints(&fullRay, &kmFrom, &kmTo);
           
-        const bool crossesObject = currentNavMemoryMap->HasCollisionRayWithTypes(rayFrom , rayTo, typesThatOccludeValidInfo);
+          // near plane segment
+          kmRay2 nearPlaneSegment;
+          kmVec2 kmNearL{nearPlaneLeft.x() , nearPlaneLeft.y() };
+          kmVec2 kmNearR{nearPlaneRight.x(), nearPlaneRight.y()};
+          kmRay2FillWithEndpoints(&nearPlaneSegment, &kmNearL, &kmNearR);
+          
+          // find the intersection between the two
+          kmVec2 rayAtNearPlane;
+          const kmBool foundNearPlane = kmSegment2WithSegmentIntersection(&fullRay, &nearPlaneSegment , &rayAtNearPlane);
+          if ( foundNearPlane )
+          {
+            /*
+              Note on occludedBeforeNearPlane vs occludedInsideROI:
+              We want to check two different zones: one from cameraOrigin to nearPlane and another from nearPlane to candidate3D. 
+              The first one, being out of the current ground ROI can be more restrictive (fail on borders), since we
+              literally have no information to back up a ClearOfObstacle, however the second one can't fail on borders,
+              since borders are exactly what we are detecting, so the point can't become invalid when a border is detected.
+              That should be the main difference between typesThatOccludeValidInfoOutOfROI vs typesThatOccludeValidInfoInsideROI.
+            */
+            // typesThatOccludeValidInfoOutOfROI = types to check against outside ground ROI:
+            constexpr NavMemoryMapTypes::FullContentArray typesThatOccludeValidInfoOutOfROI =
+            {
+              {NavMemoryMapTypes::EContentType::Unknown               , false},
+              {NavMemoryMapTypes::EContentType::ClearOfObstacle       , false},
+              {NavMemoryMapTypes::EContentType::ClearOfCliff          , false},
+              {NavMemoryMapTypes::EContentType::ObstacleCube          , true },
+              {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
+              {NavMemoryMapTypes::EContentType::ObstacleCharger       , true },
+              {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, true },
+              {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
+              {NavMemoryMapTypes::EContentType::Cliff                 , true },
+              {NavMemoryMapTypes::EContentType::InterestingEdge       , true },
+              {NavMemoryMapTypes::EContentType::NotInterestingEdge    , true }
+            };
+            static_assert(NavMemoryMapTypes::ContentValueEntry::IsValidArray(typesThatOccludeValidInfoOutOfROI),
+              "This array does not define all types once and only once.");
+            
+            // check if it's occluded before the near plane
+            const Vec2f& outerRayFrom = cameraOrigin;
+            const Vec2f outerRayTo(rayAtNearPlane.x, rayAtNearPlane.y);
+            occludedBeforeNearPlane = currentNavMemoryMap->HasCollisionRayWithTypes(outerRayFrom, outerRayTo, typesThatOccludeValidInfoOutOfROI);
+            
+            // update innerRayFrom so that the second ray (if needed) only checks the inside of the ROI plane
+            innerRayFrom = outerRayTo; // start inner (innerFrom) where the outer ends (outerTo)
+          }
+        }
+    
+        // - calculate occlusion inside ROI
+        if ( !occludedBeforeNearPlane )
+        {
+          /*
+            Note on occludedBeforeNearPlane vs occludedInsideROI:
+            We want to check two different zones: one from cameraOrigin to nearPlane and another from nearPlane to candidate3D. 
+            The first one, being out of the current ground ROI can be more restrictive (fail on borders), since we
+            literally have no information to back up a ClearOfObstacle, however the second one can't fail on borders,
+            since borders are exactly what we are detecting, so the point can't become invalid when a border is detected.
+            That should be the main difference between typesThatOccludeValidInfoOutOfROI vs typesThatOccludeValidInfoInsideROI.
+          */
+          // typesThatOccludeValidInfoInsideROI = types to check against inside ground ROI:
+          constexpr NavMemoryMapTypes::FullContentArray typesThatOccludeValidInfoInsideROI =
+          {
+            {NavMemoryMapTypes::EContentType::Unknown               , false},
+            {NavMemoryMapTypes::EContentType::ClearOfObstacle       , false},
+            {NavMemoryMapTypes::EContentType::ClearOfCliff          , false},
+            {NavMemoryMapTypes::EContentType::ObstacleCube          , true },
+            {NavMemoryMapTypes::EContentType::ObstacleCubeRemoved   , false},
+            {NavMemoryMapTypes::EContentType::ObstacleCharger       , true },
+            {NavMemoryMapTypes::EContentType::ObstacleChargerRemoved, true },
+            {NavMemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
+            {NavMemoryMapTypes::EContentType::Cliff                 , false},
+            {NavMemoryMapTypes::EContentType::InterestingEdge       , false },
+            {NavMemoryMapTypes::EContentType::NotInterestingEdge    , false }
+          };
+          static_assert(NavMemoryMapTypes::ContentValueEntry::IsValidArray(typesThatOccludeValidInfoInsideROI),
+            "This array does not define all types once and only once.");
+          
+          // Vec2f innerRayFrom: already calculated for us
+          const Vec2f& innerRayTo = candidate3D;
+          occludedInsideROI = currentNavMemoryMap->HasCollisionRayWithTypes(innerRayFrom, innerRayTo, typesThatOccludeValidInfoInsideROI);
+        }
         
         // if we cross an object, ignore this point, regardless of whether we saw a border or not
         // this is because if we are crossing an object, chances are we are seeing its border, of we should have,
         // so the info is more often disrupting than helpful
-        bool isValidPoint = !crossesObject;
+        bool isValidPoint = !occludedBeforeNearPlane && !occludedBeforeNearPlane;
         
         // this flag is set by a point that can't merge into the previous segment and wants to start one
         // on its own

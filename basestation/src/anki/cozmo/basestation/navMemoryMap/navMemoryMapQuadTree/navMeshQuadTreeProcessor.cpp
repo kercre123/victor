@@ -16,6 +16,7 @@
 #include "anki/vision/basestation/profiler.h"
 
 #include "util/console/consoleInterface.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
 #include "util/math/constantsAndMacros.h"
 
@@ -309,6 +310,10 @@ bool NavMeshQuadTreeProcessor::HasCollisionRayWithTypes(const Point2f& rayFrom, 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NavMeshQuadTreeProcessor::HasCollisionRayWithTypes(const NavMeshQuadTreeNode* node, const Point2f& rayFrom, const Point2f& rayTo, ENodeContentTypePackedType types) const
 {
+  // this function could be easily optimized by using axis-aligned math available in NavMeshQuadTreeNode. Adding profile
+  // here to prove that we need to
+  ANKI_CPU_PROFILE("NavMeshQuadTreeProcessor::HasCollisionRayWithTypes");
+
   // does this node match the types we are looking for?
   const ENodeContentType curNodeType = node->GetContentType();
   const bool matchesType = IsInENodeContentTypePackedType(curNodeType, types);
