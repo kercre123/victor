@@ -134,6 +134,12 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
   IBehavior* bestBehavior = nullptr;
   TimeStamp_t currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
+  // This is checked first to ensure we switch over to the new
+  // chooser state during the same tick and avoid another behavior starting
+  if(_state == ChooserState::UsingSimpleBehaviorChooser){
+    CheckIfSparkShouldEnd(robot);
+  }
+  
   // Handle behavior selection based on current state
   switch(_state){
     case ChooserState::ChooserSelected:
@@ -166,7 +172,6 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
 
     case ChooserState::UsingSimpleBehaviorChooser:
     {
-      CheckIfSparkShouldEnd(robot);
       bestBehavior = BaseClass::ChooseNextBehavior(robot, currentRunningBehavior);
       break;
     }
