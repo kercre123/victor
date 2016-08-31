@@ -2507,13 +2507,13 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
         ObjectID ret;
         bool needToAddNewObject = false;
         for (auto& sameTypeObject : objectsOfSameType) {
+          ret = sameTypeObject->GetID();
           if (sameTypeObject->GetActiveID() < 0) {
             sameTypeObject->SetActiveID(activeID);
             sameTypeObject->SetFactoryID(factoryID);
             PRINT_CH_INFO("BlockWorld", "AddActiveObject.FoundMatchingObjectWithNoActiveID",
                           "objectID %d, activeID %d, type %s",
                           sameTypeObject->GetID().GetValue(), sameTypeObject->GetActiveID(), objTypeStr);
-            ret = sameTypeObject->GetID();
           } else {
             // If found an existing object of the same type but not same factoryID then ignore it
             // until we figure out how to deal with multiple objects of same type.
@@ -2548,7 +2548,6 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
                             "Updating activeID of block with factoryID 0x%x from %d to %d",
                             sameTypeObject->GetFactoryID(), sameTypeObject->GetActiveID(), activeID);
               sameTypeObject->SetActiveID(activeID);
-              ret = sameTypeObject->GetID();
             }
           }
         }
