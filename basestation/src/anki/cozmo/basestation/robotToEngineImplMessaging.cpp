@@ -523,6 +523,12 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
                              "Object %d (activeID %d, factoryID 0x%x, device_type 0x%hx, origin %p)",
                              objID.GetValue(), payload.objectID, payload.factoryID,
                              payload.device_type, &obj->GetPose().FindOrigin());
+          
+          // When disconnecting from an object make sure to set the factoryIDs of all matching objects in all frames
+          // to zero in case we see this disconnected object in the world
+          // Also update activeIDs so we don't try to localize to it
+          obj->SetFactoryID(0);
+          obj->SetActiveID(-1);
         }
         
         if( ! obj->IsPoseStateKnown() ) {
@@ -581,74 +587,74 @@ void RobotToEngineImplMessaging::HandleActiveObjectMoved(const AnkiEvent<RobotIn
     return;
   }
   
-  for(auto object : matchingObjects)
+  // Just use the first matching object since they will all be the same (matching ObjectIDs, ActiveIDs, FactoryIDs)
+  ObservableObject* object = matchingObjects.front();
+  
+  // Ignore move messages for objects we are docking to, since we expect to bump them
+  if(object->GetID() != robot->GetDockObject())
   {
-    // Ignore move messages for objects we are docking to, since we expect to bump them
-    if(object->GetID() != robot->GetDockObject())
+    if( object->GetID() == robot->GetCharger() )
     {
-      if( object->GetID() == robot->GetCharger() )
-      {
-        PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.Charger","Charger sending garbage move messages");
-        continue;
-      }
-      
-      ASSERT_NAMED(object->IsActive(), "Robot.HandleActiveObjectMoved.NonActiveObject");
-      
-      PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.ObjectMoved",
+      PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.Charger","Charger sending garbage move messages");
+      return;
+    }
+    
+    ASSERT_NAMED(object->IsActive(), "Robot.HandleActiveObjectMoved.NonActiveObject");
+    
+    PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.ObjectMoved",
+                     "ObjectID: %d (Active ID %d), type: %s, axisOfAccel: %s",
+                     object->GetID().GetValue(), object->GetActiveID(),
+                     EnumToString(object->GetType()), EnumToString(payload.axisOfAccel));
+    
+    if(object->GetPoseState() == PoseState::Known)
+    {
+      PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.DelocalizingMovedObject",
                        "ObjectID: %d (Active ID %d), type: %s, axisOfAccel: %s",
                        object->GetID().GetValue(), object->GetActiveID(),
                        EnumToString(object->GetType()), EnumToString(payload.axisOfAccel));
-      
-      if(object->GetPoseState() == PoseState::Known)
-      {
-        PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.DelocalizingMovedObject",
-                         "ObjectID: %d (Active ID %d), type: %s, axisOfAccel: %s",
-                         object->GetID().GetValue(), object->GetActiveID(),
-                         EnumToString(object->GetType()), EnumToString(payload.axisOfAccel));
 
-        // Once an object moves, we can no longer use it for localization because
-        // we don't know where it is anymore. Next time we see it, relocalize it
-        // relative to robot's pose estimate. Then we can use it for localization
-        // again.
-        object->SetPoseState(PoseState::Dirty);
-        
-        // If this is the object we were localized to, unset our localizedToID.
-        // Note we are still "localized" by odometry, however.
-        if(robot->GetLocalizedTo() == object->GetID()) {
-          ASSERT_NAMED(&object->GetPose().FindOrigin() == robot->GetWorldOrigin(),
-                       "Robot.HandleActiveObjectMoved.LocalizedObjectWithBadOrigin");
-          ASSERT_NAMED(robot->IsLocalized(), "Robot.HandleActiveObjectMoved.BadIsLocalizedCheck");
-          PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.UnsetLocalzedToID",
-                           "Unsetting %s %d, which moved, as robot %d's localization object.",
-                           ObjectTypeToString(object->GetType()), object->GetID().GetValue(), robot->GetID());
-          robot->SetLocalizedTo(nullptr);
-        } else if(!(robot->IsLocalized()) && robot->GetOffTreadsState() == OffTreadsState::OnTreads) {
-          // If we are not localized and there is nothing else left in the world that
-          // we could localize to, then go ahead and mark us as localized (via
-          // odometry alone)
-          if(false == robot->GetBlockWorld().AnyRemainingLocalizableObjects()) {
-            PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.NoMoreRemainingLocalizableObjects",
-                             "Marking previously-unlocalized robot %d as localized to odometry because "
-                             "there are no more objects to localize to in the world.", robot->GetID());
-            robot->SetLocalizedTo(nullptr);
-          }
-        }
-      }
+      // Once an object moves, we can no longer use it for localization because
+      // we don't know where it is anymore. Next time we see it, relocalize it
+      // relative to robot's pose estimate. Then we can use it for localization
+      // again.
+      object->SetPoseState(PoseState::Dirty);
       
-      // Don't notify game about moving objects that are being carried, nor moving
-      // NOTE: Game could receive multiple messages for the same object in different frames. Is that OK?
-      if(robot->GetCarryingObjects().count(object->GetID()) == 0)
-      {
-        // Update the ID to be the blockworld ID before broadcasting
-        payload.objectID = object->GetID();
-        payload.robotID = robot->GetID();
-        robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectMoved(payload)));
+      // If this is the object we were localized to, unset our localizedToID.
+      // Note we are still "localized" by odometry, however.
+      if(robot->GetLocalizedTo() == object->GetID()) {
+        ASSERT_NAMED(&object->GetPose().FindOrigin() == robot->GetWorldOrigin(),
+                     "Robot.HandleActiveObjectMoved.LocalizedObjectWithBadOrigin");
+        ASSERT_NAMED(robot->IsLocalized(), "Robot.HandleActiveObjectMoved.BadIsLocalizedCheck");
+        PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.UnsetLocalzedToID",
+                         "Unsetting %s %d, which moved, as robot %d's localization object.",
+                         ObjectTypeToString(object->GetType()), object->GetID().GetValue(), robot->GetID());
+        robot->SetLocalizedTo(nullptr);
+      } else if(!(robot->IsLocalized()) && robot->GetOffTreadsState() == OffTreadsState::OnTreads) {
+        // If we are not localized and there is nothing else left in the world that
+        // we could localize to, then go ahead and mark us as localized (via
+        // odometry alone)
+        if(false == robot->GetBlockWorld().AnyRemainingLocalizableObjects()) {
+          PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.NoMoreRemainingLocalizableObjects",
+                           "Marking previously-unlocalized robot %d as localized to odometry because "
+                           "there are no more objects to localize to in the world.", robot->GetID());
+          robot->SetLocalizedTo(nullptr);
+        }
       }
     }
     
-    // Set moving state of object
-    object->SetIsMoving(true, payload.timestamp);
+    // Don't notify game about moving objects that are being carried, nor moving
+    // NOTE: Game could receive multiple messages for the same object in different frames. Is that OK?
+    if(robot->GetCarryingObjects().count(object->GetID()) == 0)
+    {
+      // Update the ID to be the blockworld ID before broadcasting
+      payload.objectID = object->GetID();
+      payload.robotID = robot->GetID();
+      robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectMoved(payload)));
+    }
   }
+  
+  // Set moving state of object
+  object->SetIsMoving(true, payload.timestamp);
 }
 
 void RobotToEngineImplMessaging::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
@@ -677,64 +683,64 @@ void RobotToEngineImplMessaging::HandleActiveObjectStopped(const AnkiEvent<Robot
     return;
   }
   
-  for(ObservableObject* object : matchingObjects)
+  // Just use the first matching object since they will all be the same (matching ObjectIDs, ActiveIDs, FactoryIDs)
+  ObservableObject* object = matchingObjects.front();
+  
+  assert(object != nullptr); // FindMatchingObjects should not return nullptrs
+  
+  // Ignore stopped-moving messages for objects we are docking to, since we expect to bump them
+  if(object->GetID() != robot->GetDockObject())
   {
-    assert(object != nullptr); // FindMatchingObjects should not return nullptrs
+    ASSERT_NAMED(object->IsActive(), "Robot.HandleActiveObjectStopped.NonActiveObject");
     
-    // Ignore stopped-moving messages for objects we are docking to, since we expect to bump them
-    if(object->GetID() != robot->GetDockObject())
+    PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.ObjectStoppedMoving",
+                     "Received message that %s %d (Active ID %d) stopped moving.",
+                     EnumToString(object->GetType()),
+                     object->GetID().GetValue(), payload.objectID);
+    
+    if( object->GetID() == robot->GetCharger() )
     {
-      ASSERT_NAMED(object->IsActive(), "Robot.HandleActiveObjectStopped.NonActiveObject");
-      
-      PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.ObjectStoppedMoving",
-                       "Received message that %s %d (Active ID %d) stopped moving.",
-                       EnumToString(object->GetType()),
-                       object->GetID().GetValue(), payload.objectID);
-      
-      if( object->GetID() == robot->GetCharger() )
-      {
-        PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.Charger","Charger sending garbage stop messages");
-        continue;
-      }
-      
-      if(object->GetPoseState() == PoseState::Known) {
-        // Not sure how an object could have a known pose before it stopped moving,
-        // but just to be safe, re-delocalize and force a re-localization now
-        // that we've gotten the stopped-moving message.
-        object->SetPoseState(PoseState::Dirty);
-        
-        // If this is the object we were localized to, unset our localizedToID.
-        // Note we are still "localized" by odometry, however.
-        if(robot->GetLocalizedTo() == object->GetID()) {
-          ASSERT_NAMED(&object->GetPose().FindOrigin() == robot->GetWorldOrigin(),
-                       "Robot.HandleActiveObjectStopped.LocalizedObjectWithBadOrigin");
-          ASSERT_NAMED(robot->IsLocalized(), "Robot should think it is localized if GetLocalizedTo is set to something.");
-          PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.UnsetLocalzedToID",
-                           "Unsetting %s %d, which stopped moving, as robot %d's localization object.",
-                           ObjectTypeToString(object->GetType()), object->GetID().GetValue(), robot->GetID());
-          robot->SetLocalizedTo(nullptr);
-        } else if(!(robot->IsLocalized()) && robot->GetOffTreadsState() == OffTreadsState::OnTreads) {
-          // If we are not localized and there is nothing else left in the world that
-          // we could localize to, then go ahead and mark us as localized (via
-          // odometry alone)
-          if(false == robot->GetBlockWorld().AnyRemainingLocalizableObjects()) {
-            PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.NoMoreRemainingLocalizableObjects",
-                             "Marking previously-unlocalized robot %d as localized to odometry because "
-                             "there are no more objects to localize to in the world.", robot->GetID());
-            robot->SetLocalizedTo(nullptr);
-          }
-        }
-      }
-      
-      // Update the ID to be the blockworld ID before broadcasting
-      payload.objectID = object->GetID();
-      payload.robotID = robot->GetID();
-      robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectStoppedMoving(payload)));
+      PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.Charger","Charger sending garbage stop messages");
+      return;
     }
     
-    // Set moving state of object
-    object->SetIsMoving(false, payload.timestamp);
-  } // for(auto & object : matchingObjects)
+    if(object->GetPoseState() == PoseState::Known) {
+      // Not sure how an object could have a known pose before it stopped moving,
+      // but just to be safe, re-delocalize and force a re-localization now
+      // that we've gotten the stopped-moving message.
+      object->SetPoseState(PoseState::Dirty);
+      
+      // If this is the object we were localized to, unset our localizedToID.
+      // Note we are still "localized" by odometry, however.
+      if(robot->GetLocalizedTo() == object->GetID()) {
+        ASSERT_NAMED(&object->GetPose().FindOrigin() == robot->GetWorldOrigin(),
+                     "Robot.HandleActiveObjectStopped.LocalizedObjectWithBadOrigin");
+        ASSERT_NAMED(robot->IsLocalized(), "Robot should think it is localized if GetLocalizedTo is set to something.");
+        PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.UnsetLocalzedToID",
+                         "Unsetting %s %d, which stopped moving, as robot %d's localization object.",
+                         ObjectTypeToString(object->GetType()), object->GetID().GetValue(), robot->GetID());
+        robot->SetLocalizedTo(nullptr);
+      } else if(!(robot->IsLocalized()) && robot->GetOffTreadsState() == OffTreadsState::OnTreads) {
+        // If we are not localized and there is nothing else left in the world that
+        // we could localize to, then go ahead and mark us as localized (via
+        // odometry alone)
+        if(false == robot->GetBlockWorld().AnyRemainingLocalizableObjects()) {
+          PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.NoMoreRemainingLocalizableObjects",
+                           "Marking previously-unlocalized robot %d as localized to odometry because "
+                           "there are no more objects to localize to in the world.", robot->GetID());
+          robot->SetLocalizedTo(nullptr);
+        }
+      }
+    }
+    
+    // Update the ID to be the blockworld ID before broadcasting
+    payload.objectID = object->GetID();
+    payload.robotID = robot->GetID();
+    robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectStoppedMoving(payload)));
+  }
+  
+  // Set moving state of object
+  object->SetIsMoving(false, payload.timestamp);
 }
 
 
@@ -764,20 +770,20 @@ void RobotToEngineImplMessaging::HandleActiveObjectUpAxisChanged(const AnkiEvent
     return;
   }
 
-  for(auto object : matchingObjects)
-  {
-
-    PRINT_NAMED_INFO("Robot.HandleActiveObjectUpAxisChanged.UpAxisChanged",
-                     "Type: %s, ObjectID: %d, UpAxis: %s",
-                     EnumToString(object->GetType()),
-                     object->GetID().GetValue(),
-                     EnumToString(payload.upAxis));
-    
-    // Update the ID to be the blockworld ID before broadcasting
-    payload.objectID = object->GetID();
-    payload.robotID = robot->GetID();
-    robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectUpAxisChanged(payload)));
-  }
+  // Just use the first matching object since they will all be the same (matching ObjectIDs, ActiveIDs, FactoryIDs)
+  ObservableObject* object = matchingObjects.front();
+  
+  PRINT_NAMED_INFO("Robot.HandleActiveObjectUpAxisChanged.UpAxisChanged",
+                   "Type: %s, ObjectID: %d, UpAxis: %s",
+                   EnumToString(object->GetType()),
+                   object->GetID().GetValue(),
+                   EnumToString(payload.upAxis));
+  
+  // Update the ID to be the blockworld ID before broadcasting
+  payload.objectID = object->GetID();
+  payload.robotID = robot->GetID();
+  robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectUpAxisChanged(payload)));
+  
 }
 
 void RobotToEngineImplMessaging::HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

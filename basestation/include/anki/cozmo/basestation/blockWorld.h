@@ -47,11 +47,6 @@ namespace Anki
     class BlockWorld
     {
     public:
-      
-      using ObjectsMapByID_t     = std::map<ObjectID, std::shared_ptr<ObservableObject> >;
-      using ObjectsMapByType_t   = std::map<ObjectType, ObjectsMapByID_t >;
-      using ObjectsMapByFamily_t = std::map<ObjectFamily, ObjectsMapByType_t>;
-      
       using ObservableObjectLibrary = Vision::ObservableObjectLibrary<ObservableObject>;
       
       BlockWorld(Robot* robot);
@@ -122,9 +117,6 @@ namespace Anki
       // NOTE: Like IDs, object types are unique across objects so they can be
       //       used without specifying which family.
       const ObservableObjectLibrary& GetObjectLibrary(ObjectFamily whichFamily) const;
-      const ObjectsMapByFamily_t& GetAllExistingObjects() const;
-      const ObjectsMapByType_t& GetExistingObjectsByFamily(const ObjectFamily whichFamily) const;
-      const ObjectsMapByID_t& GetExistingObjectsByType(const ObjectType whichType) const;
       
       // Return a pointer to an object with the specified ID (in the current world
       // coordinate frame. If that object does not exist or its pose is unknown, nullptr is returned.
@@ -138,10 +130,6 @@ namespace Anki
       // ActiveObject type.
       ActiveObject* GetActiveObjectByID(const ObjectID& objectID, ObjectFamily inFamily = ObjectFamily::Unknown);
       const ActiveObject* GetActiveObjectByID(const ObjectID& objectID, ObjectFamily inFamily = ObjectFamily::Unknown) const;
-      
-      // Same as above, but search by active ID instead of (BlockWorld-assigned) object ID.
-      ActiveObject* GetActiveObjectByActiveID(const u32 activeID, ObjectFamily inFamily = ObjectFamily::Unknown);
-      const ActiveObject* GetActiveObjectByActiveID(const u32 activeID, ObjectFamily inFamily = ObjectFamily::Unknown) const;
       
       // Returns (in arguments) all objects matching a filter
       // NOTE: does not clear result (thus can be used multiple times with the same vector)
@@ -354,6 +342,10 @@ namespace Anki
       
     protected:
       
+      using ObjectsMapByID_t     = std::map<ObjectID, std::shared_ptr<ObservableObject> >;
+      using ObjectsMapByType_t   = std::map<ObjectType, ObjectsMapByID_t >;
+      using ObjectsMapByFamily_t = std::map<ObjectFamily, ObjectsMapByType_t>;
+      
       // Typedefs / Aliases
       //using ObsMarkerContainer_t = std::multiset<Vision::ObservedMarker, Vision::ObservedMarker::Sorter()>;
       //using ObsMarkerList_t = std::list<Vision::ObservedMarker>;
@@ -367,7 +359,6 @@ namespace Anki
       // Note these are marked const but return non-const pointers.
       ObservableObject* GetObjectByIdHelper(const ObjectID& objectID, ObjectFamily inFamily) const;
       ActiveObject* GetActiveObjectByIdHelper(const ObjectID& objectID, ObjectFamily inFamily) const;
-      ActiveObject* GetActiveObjectByActiveIdHelper(const u32 activeID, ObjectFamily inFamily) const;
       
       bool UpdateRobotPose(PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
       
@@ -589,14 +580,6 @@ namespace Anki
     
     inline const ActiveObject* BlockWorld::GetActiveObjectByID(const ObjectID& objectID, ObjectFamily inFamily) const {
       return GetActiveObjectByIdHelper(objectID, inFamily); // returns const*
-    }
-    
-    inline ActiveObject* BlockWorld::GetActiveObjectByActiveID(const u32 activeID, ObjectFamily inFamily) {
-      return GetActiveObjectByActiveIdHelper(activeID, inFamily); // returns non-const*
-    }
-    
-    inline const ActiveObject* BlockWorld::GetActiveObjectByActiveID(const u32 activeID, ObjectFamily inFamily) const {
-      return GetActiveObjectByActiveIdHelper(activeID, inFamily); // returns const*
     }
     
     inline void BlockWorld::AddNewObject(const std::shared_ptr<ObservableObject>& object)

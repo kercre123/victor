@@ -61,7 +61,10 @@ TEST(BlockWorld, AddAndRemoveObject)
   BlockWorld& blockWorld = robot.GetBlockWorld();
   
   // There should be nothing in BlockWorld yet
-  ASSERT_TRUE(blockWorld.GetAllExistingObjects().empty());
+  BlockWorldFilter filter;
+  std::vector<ObservableObject*> objects;
+  blockWorld.FindMatchingObjects(filter, objects);
+  ASSERT_TRUE(objects.empty());
 
   // Fake a state message update for robot
   RobotState stateMsg;
@@ -146,13 +149,16 @@ TEST(BlockWorld, AddAndRemoveObject)
   ASSERT_EQ(lastResult, RESULT_OK);
   
   // There should now be an object of the right type, with the right ID in BlockWorld
-  const BlockWorld::ObjectsMapByID_t& objByID = blockWorld.GetExistingObjectsByType(testType);
-  ASSERT_EQ(objByID.size(), 1);
-  auto objByIdIter = objByID.begin();
-  ASSERT_NE(objByIdIter, objByID.end());
-  ASSERT_NE(objByIdIter->second, nullptr);
+  objects.clear();
+  filter.SetFilterFcn(nullptr);
+  filter.SetAllowedTypes({testType});
+  blockWorld.FindMatchingObjects(filter, objects);
+  ASSERT_EQ(objects.size(), 1);
+  auto objByIdIter = objects.begin();
+  ASSERT_NE(objByIdIter, objects.end());
+  ASSERT_NE(*objByIdIter, nullptr);
   
-  ObjectID objID = objByIdIter->second->GetID();
+  ObjectID objID = (*objByIdIter)->GetID();
   ObservableObject* object = blockWorld.GetObjectByID(objID);
   ASSERT_NE(object, nullptr);
   ASSERT_EQ(object->GetID(), objID);
@@ -240,12 +246,15 @@ TEST(BlockWorld, AddAndRemoveObject)
   // Find the object again (because it may have been deleted while unknown since
   // it had no active ID set)
   {
-    const BlockWorld::ObjectsMapByID_t& objByID = blockWorld.GetExistingObjectsByType(testType);
-    ASSERT_EQ(objByID.size(), 1);
-    auto objByIdIter = objByID.begin();
-    ASSERT_NE(objByIdIter, objByID.end());
-    ASSERT_NE(objByIdIter->second, nullptr);
-    object = objByIdIter->second.get();
+    BlockWorldFilter filter;
+    filter.SetAllowedTypes({testType});
+    std::vector<ObservableObject*> objects;
+    blockWorld.FindMatchingObjects(filter, objects);
+    ASSERT_EQ(objects.size(), 1);
+    auto objByIdIter = objects.begin();
+    ASSERT_NE(objByIdIter, objects.end());
+    ASSERT_NE(*objByIdIter, nullptr);
+    object = *objByIdIter;
     objID = object->GetID();
   }
   
@@ -274,7 +283,10 @@ TEST(BlockWorld, CubeStacks)
   BlockWorld& blockWorld = robot.GetBlockWorld();
   
   // There should be nothing in BlockWorld yet
-  ASSERT_TRUE(blockWorld.GetAllExistingObjects().empty());
+  BlockWorldFilter filter;
+  std::vector<ObservableObject*> objects;
+  blockWorld.FindMatchingObjects(filter, objects);
+  ASSERT_TRUE(objects.empty());
   
   // Add three objects
   ObjectID objID1 = blockWorld.AddActiveObject(1, 1, ActiveObjectType::OBJECT_CUBE1);
@@ -675,7 +687,11 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         
         // Make sure this ground truth object was seen and its estimated pose
         // matches the ground truth pose
-        auto observedObjects = robot.GetBlockWorld().GetExistingObjectsByType(libObject->GetType());
+        
+        BlockWorldFilter filter;
+        filter.SetAllowedTypes({libObject->GetType()});
+        std::vector<ObservableObject*> observedObjects;
+        robot.GetBlockWorld().FindMatchingObjects(filter, observedObjects);
         int matchesFound = 0;
         
         /*
@@ -698,14 +714,14 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
         
         for(auto & observedObject : observedObjects)
         {
-          objectPose.SetParent(&observedObject.second->GetPose().FindOrigin());
+          objectPose.SetParent(&observedObject->GetPose().FindOrigin());
           
           std::unique_ptr<ObservableObject> groundTruthObject(libObject->CloneType());
           
           groundTruthObject->InitPose(objectPose, PoseState::Unknown); // pose state here shouldn't really matter
           
           
-          if(groundTruthObject->IsSameAs(*observedObject.second))
+          if(groundTruthObject->IsSameAs(*observedObject))
           {
             if(matchesFound > 0) {
               // We just found multiple matches for this ground truth block
@@ -758,12 +774,12 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
             fprintf(stdout, "Observed type-%d %s object %d at (%.2f,%.2f,%.2f) does not match "
                     "type-%d ground truth at (%.2f,%.2f,%.2f).\n", // T_diff = %2fmm (vs. %.2fmm), "
                     //"Angle_diff = %.1fdeg (vs. %.1fdeg)\n",
-                    int(observedObject.second->GetType()),
+                    int(observedObject->GetType()),
                     objectFamilyString.c_str(),
-                    int(observedObject.second->GetID()),
-                    observedObject.second->GetPose().GetTranslation().x(),
-                    observedObject.second->GetPose().GetTranslation().y(),
-                    observedObject.second->GetPose().GetTranslation().z(),
+                    int(observedObject->GetID()),
+                    observedObject->GetPose().GetTranslation().x(),
+                    observedObject->GetPose().GetTranslation().y(),
+                    observedObject->GetPose().GetTranslation().z(),
                     int(groundTruthObject->GetType()),
                     groundTruthObject->GetPose().GetTranslation().x(),
                     groundTruthObject->GetPose().GetTranslation().y(),
