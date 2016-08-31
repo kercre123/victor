@@ -37,7 +37,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
   private AnkiTextLabel _AvailablePromptCost;
 
   [SerializeField]
-  private Text _ButtonCounter;
+  private Text _ButtonCostLabel;
 
 
   [SerializeField]
@@ -175,7 +175,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
     else {
       button.Text = Localization.Get(LocalizationKeys.kUnlockableUnlock);
     }
-    _ButtonCounter.text = string.Format("{0}", costAmount);
+    _ButtonCostLabel.text = string.Format("{0}", costAmount);
     inventoryLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelTotalCount,
       itemData.GetPluralName(),
       playerInventory.GetItemAmount(costItemId));
@@ -198,7 +198,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
         UpdateAvailableCostLabels(_UnlockInfo.UpgradeCostItemId, _UnlockInfo.UpgradeCostAmountNeeded, LocalizationKeys.kUnlockableAvailable, LocalizationKeys.kUnlockableBitsRequiredDescription);
       }
     }
-    _ButtonCounter.text = string.Format("{0}", _UnlockInfo.RequestTrickCostAmountNeeded);
+
   }
 
   private void OnUpgradeClicked() {
@@ -241,6 +241,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
     ItemData itemData = ItemDataConfig.GetData(itemID);
     string costName = Localization.Get(itemData.GetPluralName());
     _AvailablePromptCost.text = Localization.GetWithArgs(costLabelKey, new object[] { cost, costName });
+    _ButtonCostLabel.text = string.Format("{0}", cost);
   }
 
 
