@@ -376,8 +376,8 @@ public class CoreUpgradeDetailsDialog : BaseView {
     DataPersistenceManager.Instance.Save();
   }
   private void StopSparkUnlock() {
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
     if (RobotEngineManager.Instance.CurrentRobot.IsSparked) {
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
       RobotEngineManager.Instance.CurrentRobot.StopSparkUnlock();
     }
     UpdateState();
