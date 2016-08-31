@@ -96,6 +96,7 @@ namespace Cozmo {
       if (ItemRemoved != null) {
         ItemRemoved(itemId, count, _ItemIdToCount[itemId]);
       }
+      DataPersistence.DataPersistenceManager.Instance.Save();
     }
 
     public bool CanAddItemAmount(string itemId, int count = 1) {
@@ -152,6 +153,7 @@ namespace Cozmo {
       if (ItemCountSet != null) {
         ItemCountSet(itemId, count - oldValue, count);
       }
+      DataPersistence.DataPersistenceManager.Instance.Save();
     }
 
     public int GetItemAmount(string itemId) {
