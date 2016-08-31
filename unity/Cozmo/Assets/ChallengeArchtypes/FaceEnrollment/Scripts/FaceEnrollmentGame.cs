@@ -228,11 +228,11 @@ namespace FaceEnrollment {
       }
 
       // cancelled for some other reason (eg. interrupt by picking up / place on back).
-      if (message.result == Anki.Cozmo.ActionResult.CANCELLED) {
-        _ReEnrollFaceID = 0;
-        EditOrEnrollFaceComplete(false);
-        ContextManager.Instance.AppFlash(playChime: true);
-        UIManager.CloseView(_FaceEnrollmentInstructionsViewInstance);
+      // we also include FAILURE_NOT_STARTED because that can be triggered if the action was interrupted
+      // before we even start the action (but it is queued).
+      if (message.result == Anki.Cozmo.ActionResult.CANCELLED || message.result == Anki.Cozmo.ActionResult.FAILURE_NOT_STARTED) {
+        // start listening for when the reactionary behavior is done so we can try again
+        RobotEngineManager.Instance.AddCallback<ReactionaryBehaviorTransition>(RetryFaceEnrollmentOnReactionaryBehaviorEnd);
         return;
       }
 
@@ -338,6 +338,13 @@ namespace FaceEnrollment {
         _ShowDoneShelf = true;
       }
       ShowFaceListSlide(SharedMinigameView);
+    }
+
+    private void RetryFaceEnrollmentOnReactionaryBehaviorEnd(Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition message) {
+      if (message.behaviorStarted == false) {
+        HandleInstructionsSlideEntered();
+        RobotEngineManager.Instance.RemoveCallback<ReactionaryBehaviorTransition>(RetryFaceEnrollmentOnReactionaryBehaviorEnd);
+      }
     }
 
     // pop up a confirmation for deleting an enrolled face
