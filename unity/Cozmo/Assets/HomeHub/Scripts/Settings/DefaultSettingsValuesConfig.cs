@@ -47,6 +47,10 @@ namespace Cozmo.Settings {
     public float _AppBackground_TimeTilDisconnect_sec = 40f;
     public float AppBackground_TimeTilDisconnect_sec { get { return _AppBackground_TimeTilDisconnect_sec; } }
 
+    [SerializeField, Range(0f, 5f)]
+    public float _AppBackground_SleepAnimGetInBuffer_sec = 3f;
+    public float AppBackground_SleepAnimGetInBuffer_sec { get { return _AppBackground_SleepAnimGetInBuffer_sec; } }
+
     [SerializeField, Range(-1f, 120f)]
     public float _PlayerSleepCozmo_TimeTilSleep_sec = 0f;
     public float PlayerSleepCozmo_TimeTilSleep_sec { get { return _PlayerSleepCozmo_TimeTilSleep_sec; } }
