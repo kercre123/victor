@@ -63,8 +63,17 @@ namespace Cozmo {
   // (in order to provide a little breathing room for main thread)
   CONSOLE_VAR_RANGED(u8, kVision_MinSleepTime_ms, "Vision.General", 2, 1, 10);
   
+  namespace JsonKey
+  {
+    const char * const ImageQualityGroup = "ImageQuality";
+    const char * const PerformanceLogging = "PerformanceLogging";
+    const char * const DropStatsWindowLength = "DropStatsWindowLength_sec";
+    const char * const ImageQualityAlertDuration = "TimeBeforeErrorMessage_ms";
+    const char * const ImageQualityAlertSpacing = "RepeatedErrorMessageInverval_ms";
+  }
   
-  namespace {
+  namespace
+  {
     // These aren't actually constant, b/c they are loaded from configuration files,
     // but they are used like constants in the code.
     
@@ -114,26 +123,27 @@ namespace Cozmo {
     
   } // VisionSystem()
 
+  
   Result VisionComponent::Init(const Json::Value& config)
   {
     _isInitialized = false;
     
-    const Json::Value& imageQualityConfig = config["ImageQuality"];
-    if(!JsonTools::GetValueOptional(imageQualityConfig,
-                                    "TimeBeforeErrorMessage_ms",
-                                    kImageQualityAlertDuration_ms))
-    {
-      PRINT_NAMED_ERROR("VisionComponent.Init.MissingJsonParameter", "ImageQuality.TimeBeforeErrorMessage_ms");
-      return RESULT_FAIL;
-    }
+    // Helper macro for grabbing a parameter from Json config and printing an
+    // error message and returning failure if it doesn't exist
+#   define GET_JSON_PARAMETER(__json__, __fieldName__, __variable__) \
+    do { \
+      if(!JsonTools::GetValueOptional(__json__, __fieldName__, __variable__)) { \
+        PRINT_NAMED_ERROR("VisionSystem.Init.MissingJsonParameter", "%s", __fieldName__); \
+        return RESULT_FAIL; \
+    }} while(0)
+
+    const Json::Value& imageQualityConfig = config[JsonKey::ImageQualityGroup];
+    GET_JSON_PARAMETER(imageQualityConfig, JsonKey::ImageQualityAlertDuration, kImageQualityAlertDuration_ms);
+    GET_JSON_PARAMETER(imageQualityConfig, JsonKey::ImageQualityAlertSpacing,  kImageQualityAlertSpacing_ms);
     
-    if(!JsonTools::GetValueOptional(imageQualityConfig,
-                                    "RepeatedErrorMessageInverval_ms",
-                                    kImageQualityAlertSpacing_ms))
-    {
-      PRINT_NAMED_ERROR("VisionComponent.Init.MissingJsonParameter", "ImageQuality.RepeatedErrorMessageInverval_ms");
-      return RESULT_FAIL;
-    }
+    f32 kDropStatsWindowLength_sec = -1.f;
+    const Json::Value& performanceConfig = config[JsonKey::PerformanceLogging];
+    GET_JSON_PARAMETER(performanceConfig, JsonKey::DropStatsWindowLength, kDropStatsWindowLength_sec);
     
     Result result = _visionSystem->Init(config);
     if(RESULT_OK != result) {
@@ -163,7 +173,9 @@ namespace Cozmo {
       }
     }
     
+    const f32 kCameraFrameRate_fps = 15.f;
     _dropStats.SetChannelName("VisionComponent");
+    _dropStats.SetRecentWindowLength(kDropStatsWindowLength_sec * kCameraFrameRate_fps);
     
     _isInitialized = true;
     return RESULT_OK;

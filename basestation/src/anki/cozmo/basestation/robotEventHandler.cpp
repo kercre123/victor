@@ -136,6 +136,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     
     // EngineToGame: (in alphabetical order)
     helper.SubscribeEngineToGame<MessageEngineToGameTag::AnimationAborted>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotCompletedAction>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotConnectionResponse>();
   }
 }
@@ -1357,6 +1358,46 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::AnimationAborted&
     robot->AbortAnimation();
     PRINT_NAMED_INFO("RobotEventHandler.HandleAnimationAborted.SendingRobotAbortAnimation", "");
   }
+}
+  
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::RobotCompletedAction& msg)
+{
+  // Log DAS events for specific action completions
+  switch(msg.actionType)
+  {
+    case RobotActionType::ALIGN_WITH_OBJECT:
+    case RobotActionType::ASCEND_OR_DESCEND_RAMP:
+    case RobotActionType::CROSS_BRIDGE:
+    case RobotActionType::MOUNT_CHARGER:
+    case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
+    case RobotActionType::PICKUP_OBJECT_HIGH:
+    case RobotActionType::PICKUP_OBJECT_LOW:
+    case RobotActionType::PLACE_OBJECT_HIGH:
+    case RobotActionType::PLACE_OBJECT_LOW:
+    case RobotActionType::POP_A_WHEELIE:
+    case RobotActionType::ROLL_OBJECT_LOW:
+    {
+      auto const& completionInfo = msg.completionInfo.Get_objectInteractionCompleted();
+     
+      // Don't log incomplete docks -- they can happen for many reasons (such as
+      // interruptions / cancellations on the way to docking) and we're most interested
+      // in figuring out how successful the robot is when it gets a chance to actually
+      // start trying to dock with the object
+      if(completionInfo.result != ObjectInteractionResult::INCOMPLETE)
+      {
+        // Put action type in DDATA field and object interaction result in s_val
+        Util::sEventF("robot.dock_action_completed", {{DDATA, EnumToString(msg.actionType)}},
+                      "%s", EnumToString(completionInfo.result));
+      }
+      
+      break;
+    }
+      
+    default:
+      break;
+  }
+  
 }
 
 template<>

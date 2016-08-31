@@ -532,8 +532,6 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     
 void Robot::Delocalize(bool isCarryingObject)
 {
-  PRINT_NAMED_INFO("Robot.Delocalize", "Delocalizing robot %d.\n", GetID());
-      
   _isLocalized = false;
   _localizedToID.UnSet();
   _localizedToFixedObject = false;
@@ -558,6 +556,10 @@ void Robot::Delocalize(bool isCarryingObject)
   _worldOrigin = new Pose3d();
   PoseOriginID_t originID = _poseOriginList.AddOrigin(_worldOrigin);
   _worldOrigin->SetName("Robot" + std::to_string(_ID) + "_PoseOrigin" + std::to_string(originID));
+  
+  // Log delocalization, new origin name, and num origins to DAS
+  PRINT_NAMED_EVENT("Robot.Delocalize", "Delocalizing robot %d. New origin: %s. NumOrigins=%zu",
+                    GetID(), _worldOrigin->GetName().c_str(), _poseOriginList.GetSize());
   
   _pose.SetRotation(0, Z_AXIS_3D());
   _pose.SetTranslation({0.f, 0.f, 0.f});
@@ -1976,13 +1978,11 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   // rooted to this world origin will get updated to be w.r.t. the new origin.
   if(_worldOrigin != &existingObject->GetPose().FindOrigin())
   {
-    PRINT_NAMED_INFO("Robot.LocalizeToObject.RejiggeringOrigins",
-                     "Robot %d's current world origin is %s, about to "
-                     "localize to world origin %s.",
-                     GetID(),
-                     _worldOrigin->GetName().c_str(),
-                     existingObject->GetPose().FindOrigin().GetName().c_str());
-        
+    PRINT_NAMED_EVENT("Robot.LocalizeToObject.RejiggeringOrigins",
+                      "Robot %d's current origin is %s, about to localize to origin %s.",
+                      GetID(), _worldOrigin->GetName().c_str(),
+                      existingObject->GetPose().FindOrigin().GetName().c_str());
+    
     // Store the current origin we are about to change so that we can
     // find objects that are using it below
     const Pose3d* oldOrigin = _worldOrigin;

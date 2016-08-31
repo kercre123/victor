@@ -9,8 +9,8 @@
  * Copyright: Anki, Inc. 2016
  **/
 
-#ifndef __Anki_Vision_Basestation_DropedFrameStats_H__
-#define __Anki_Vision_Basestation_DropedFrameStats_H__
+#ifndef __Anki_Vision_Basestation_DroppedFrameStats_H__
+#define __Anki_Vision_Basestation_DroppedFrameStats_H__
 
 #include "util/logging/logging.h"
 
@@ -39,17 +39,28 @@ public:
     {
       ++_numTotalDrops;
       ++_numRecentDrops;
-      
-      PRINT_CH_INFO(_channelName, "DroppedFrameStats",
-                    "Dropped %u of %u total images (%.1f%%), %u of last %u (%.1f%%)",
-                    _numTotalDrops, _numFrames,
-                    (f32)_numTotalDrops/(f32)_numFrames * 100.f,
-                    _numRecentDrops, _numRecentFrames,
-                    (f32)_numRecentDrops / (f32)_numRecentFrames * 100.f);
-      
     }
     
-    if(_numRecentFrames == _recentN) {
+    if(_numRecentFrames == _recentN)
+    {
+      // NOTE: Logging drop counts, putting associated frame count in Data field
+      // So to get rate, divide s_val (count) by frame count (ddata)
+      Util::sEventF("robot.vision.dropped_frame_overall_count", {{DDATA, TO_DDATA_STR(_numFrames)}},
+                    "%u", _numTotalDrops);
+      
+      Util::sEventF("robot.vision.dropped_frame_recent_count", {{DDATA, TO_DDATA_STR(_numRecentFrames)}},
+                    "%u", _numRecentDrops);
+      
+      if(_numRecentDrops > 0)
+      {
+        PRINT_CH_INFO(_channelName, "DroppedFrameStats",
+                      "Dropped %u of %u total images (%.1f%%), %u of last %u (%.1f%%)",
+                      _numTotalDrops, _numFrames,
+                      (f32)_numTotalDrops/(f32)_numFrames * 100.f,
+                      _numRecentDrops, _numRecentFrames,
+                      (f32)_numRecentDrops / (f32)_numRecentFrames * 100.f);
+      }
+      
       _numRecentFrames = 0;
       _numRecentDrops = 0;
     }
@@ -65,10 +76,10 @@ private:
   u32  _numTotalDrops   = 0;
   u32  _numRecentDrops  = 0;
   
-};
+}; // class DroppedFrameStats
 
   
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Anki_Vision_Basestation_DropedFrameStats_H__
+#endif // __Anki_Vision_Basestation_DroppedFrameStats_H__

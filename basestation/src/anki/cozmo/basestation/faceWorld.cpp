@@ -33,7 +33,15 @@ namespace Cozmo {
   // The distance threshold inside of which to head positions are considered to be the same face
   CONSOLE_VAR(float, kHeadCenterPointThreshold_mm, "Vision.FaceWorld", 220.f);
   
+  // We don't log session-only (unnamed) faces to DAS until we consider them "stable"
+  CONSOLE_VAR(u32, kNumTimesToSeeFrontalToBeStable, "Vision.FaceWorld", 30);
+  
+  // Log recognition to DAS if we haven't seen a face for this long and then re-see it
+  CONSOLE_VAR(u32, kTimeUnobservedBeforeReLoggingToDAS_ms, "Vision.FaceWorld", 10000);
+  
   static const char * const kLoggingChannelName = "FaceRecognizer";
+  static const char * const kIsNamedStringDAS = "1";
+  static const char * const kIsSessionOnlyStringDAS = "0";
   
   static const Point3f kHumanHeadSize{148.f, 225.f, 195.f};
   
@@ -44,6 +52,12 @@ namespace Cozmo {
   
   }
 
+  inline bool FaceWorld::KnownFace::HasStableID() const
+  {
+    // Only true for non-tracking faces which are named or have been seen enough
+    // times from the front
+    return face.GetID() > 0 && (IsNamed() || numTimesObservedFacingCamera >= kNumTimesToSeeFrontalToBeStable);
+  }
   
   FaceWorld::FaceWorld(Robot& robot)
   : _robot(robot)
@@ -125,6 +139,16 @@ namespace Cozmo {
                     "Updating old face %d to new ID %d",
                     oldID, newID);
       
+      // Log ID changes to DAS when they are not tracking IDs and the new face is
+      // either named or a "stable" session-only face.
+      // Store old ID in DDATA and new ID in s_val.
+      const KnownFace& newKnownFace = result.first->second;
+      if(oldID > 0 && newID > 0 && newKnownFace.HasStableID())
+      {
+        Util::sEventF("robot.vision.update_face_id", {{DDATA, TO_DDATA_STR(oldID)}},
+                      "%d", newID);
+      }
+      
     } else if(oldID > 0){
       PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.ChangeFaceID.UnknownOldID",
                     "ID %d does not exist, cannot update to %d",
@@ -174,7 +198,8 @@ namespace Cozmo {
     */
     
     KnownFace* knownFace = nullptr;
-
+    TimeStamp_t timeSinceLastSeen_ms = 0;
+    
     if(false == Vision::FaceTracker::IsRecognitionSupported())
     {
       // Can't get an ID from face recognition, so use pose instead
@@ -262,8 +287,21 @@ namespace Cozmo {
         PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.UpdateFace.NewFace",
                       "Added new face with ID=%d at t=%d.",
                       face.GetID(), face.GetTimeStamp());
+        
       } else {
         // Update the existing face:
+        
+        if(face.GetTimeStamp() > knownFace->face.GetTimeStamp())
+        {
+          timeSinceLastSeen_ms = face.GetTimeStamp() - knownFace->face.GetTimeStamp();
+        }
+        else
+        {
+          PRINT_NAMED_WARNING("FaceWorld.UpdateFace.BadTimeStamp",
+                              "Face observed before previous observation (%u <= %u)",
+                              face.GetTimeStamp(), knownFace->face.GetTimeStamp());
+        }
+        
         if(!face.HasEyes()) {
           // If no eyes were detected, the translation we have at this point was
           // computed using "fake" eye locations, so just use the last translation
@@ -282,33 +320,43 @@ namespace Cozmo {
     
     knownFace->numTimesObserved++;
     
+    // Keep up with how many times non-tracking-only faces have been seen facing
+    // facing the camera (and thus potentially recognizable)
+    if(knownFace->face.IsFacingCamera())
+    {
+      knownFace->numTimesObservedFacingCamera++;
+    }
+    
+    // Log any DAS events based on this face observation
+    const bool isNamed = knownFace->IsNamed();
+    if(knownFace->numTimesObserved == 1 && isNamed)
+    {
+      // Log to DAS that we immediately recognized a new face with a name
+      Util::sEventF("robot.vision.face_recognition.immediate_recognition", {{DDATA, kIsNamedStringDAS}},
+                    "%d", knownFace->face.GetID());
+    }
+    else if(!isNamed && knownFace->numTimesObservedFacingCamera == kNumTimesToSeeFrontalToBeStable)
+    {
+      // Log to DAS that we've seen this session-only face for awhile and not
+      // recognized it as someone else (so this is a stable session-only face)
+      // NOTE: we do this just once, when we cross the num times observed threshold
+      Util::sEventF("robot.vision.face_recognition.persistent_session_only", {{DDATA, kIsSessionOnlyStringDAS}},
+                    "%d", knownFace->face.GetID());
+      
+      // HACK: increment the counter again so we don't send this multiple times if not seeing frontal anymore
+      knownFace->numTimesObservedFacingCamera++;
+    }
+    else if(timeSinceLastSeen_ms > kTimeUnobservedBeforeReLoggingToDAS_ms && knownFace->HasStableID())
+    {
+      // Log to DAS that we are re-seeing this face after not having seen it for a bit
+      // (and recognizing it as an existing named person or stable session-only ID)
+      Util::sEventF("robot.vision.face_recognition.re_recognized", {{DDATA, isNamed ? kIsNamedStringDAS : kIsSessionOnlyStringDAS}}, "%d", knownFace->face.GetID());
+    }
+    
     // Wait to report this face until we've seen it enough times to be convinced it's
     // not a false positive (random detection), or if it has been recognized already.
     if(knownFace->numTimesObserved >= MinTimesToSeeFace || !knownFace->face.GetName().empty())
     {
-#     if 0 // !USE_POSE_FOR_ID
-      // Remove any known faces whose poses overlap with this observed face
-      for(auto knownFaceIter = _knownFaces.begin(); knownFaceIter != _knownFaces.end(); /* in loop */)
-      {
-        if(knownFaceIter != insertResult.first)
-        {
-          // Note we're using really loose thresholds for checking pose sameness
-          // since our ability to accurately localize face's 3D pose is limited.
-          if(knownFaceIter->second.face.GetHeadPose().IsSameAs(face.GetHeadPose(), 100.f, DEG_TO_RAD(45)))
-          {
-            PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.UpdateFace.RemovingOverlappingFace",
-                          "Removing old face with ID=%lld because it overlaps new face %lld",
-                          knownFaceIter->second.face.GetID(), face.GetID());
-            RemoveFace(knownFaceIter);
-          } else {
-            ++knownFaceIter;
-          }
-        } else {
-          ++knownFaceIter;
-        }
-      } // for each known face
-#     endif // if !USE_POSE_FOR_ID
-      
       // Update the last observed face pose.
       // If more than one was observed in the same timestamp then take the closest one.
       if (((_lastObservedFaceTimeStamp != knownFace->face.GetTimeStamp()) ||
@@ -393,6 +441,15 @@ namespace Cozmo {
         PRINT_CH_INFO(kLoggingChannelName, "FaceWorld.Update.DeletingOldFace",
                       "Removing unnamed face %d at t=%d, because it hasn't been seen since t=%d.",
                       faceIter->first, lastProcImageTime, face.GetTimeStamp());
+        
+        if(faceIter->second.HasStableID())
+        {
+          // Log to DAS the removal of any "stable" face that gets removed because
+          // we haven't seen it in awhile
+          Util::sEventF("robot.vision.remove_unobserved_session_only_face",
+                        {{DDATA, TO_DDATA_STR(face.GetTimeStamp())}},
+                        "%d", faceIter->first);
+        }
         
         RemoveFace(faceIter); // Increments faceIter!
       }

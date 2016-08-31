@@ -28,5 +28,10 @@
     "TooBrightStddevThreshold"    : 30,  // ... standard deviation is below this threshold.
     
     "CheckFrequency" : 30                // How often VisionSystem checks quality (in number of frames)
+  },
+  "PerformanceLogging" : {
+    "DropStatsWindowLength_sec"         : 30,  // How long to average dropped image stats
+    "TimeBetweenProfilerInfoPrints_sec" : 5,   // How often to print Profiler info messages to the logs
+    "TimeBetweenProfilerDasLogs_sec"    : 60   // How often to log Profiler DAS events
   }
 }

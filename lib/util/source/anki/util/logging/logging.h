@@ -97,6 +97,8 @@ void sSetGlobal(const char* key, const char* value);
 #define DGROUP "$group"
 #define DGAME "$game"
 
+#define TO_DDATA_STR(__val__) std::to_string(__val__).c_str()
+
 #define DEFAULT_CHANNEL_NAME "Unnamed"
 
 // send BI event

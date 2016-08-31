@@ -413,6 +413,9 @@ void RobotToEngineImplMessaging::HandleDockingStatus(const AnkiEvent<RobotInterf
   
   // TODO: Do something with the docking status message like play sound or animation
   //const DockingStatus& payload = message.GetData().Get_dockingStatus();
+  
+  // Log event to help us track whether backup or "Hanns Manuever" is being used
+  PRINT_NAMED_EVENT("robot.docking.status", "%s", EnumToString(message.GetData().Get_dockingStatus().status));
 }
 
 void RobotToEngineImplMessaging::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
