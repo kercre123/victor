@@ -389,6 +389,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
   protected override void CleanUp() {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.SparkEnded>(HandleSparkEnded);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Spark_Button_Loop_Stop);
     StopSparkUnlock();
     CleanUpSparkAnimations();
     // Because of a bug within DOTween Fades don't release even after being killed, so clean up
