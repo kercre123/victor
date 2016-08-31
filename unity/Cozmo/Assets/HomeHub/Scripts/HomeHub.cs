@@ -140,7 +140,9 @@ namespace Cozmo.HomeHub {
           ProceduralEyeParameters.MakeDefaultLeftEye(),
           ProceduralEyeParameters.MakeDefaultRightEye());
 
-        StartFreeplay(robot);
+        robot.ResetRobotState(() => {
+          StartFreeplay(robot);
+        });
       }
     }
 
