@@ -95,7 +95,7 @@ void Radio::advertise(void) {
     UESB_CRC_16BIT,
     RADIO_TXPOWER_TXPOWER_Neg4dBm,
     4,              // Address length
-    RADIO_PRIORITY  // Service speed doesn't need to be that fast (prevent blocking encoders)
+    RADIO_SERVICE_PRIORITY  // IRQ priority for processing inbound messages
   };
 
   // Clear our our states
@@ -647,7 +647,7 @@ extern "C" void RTC0_IRQHandler(void) {
       // Have we underflowed ?
       if (--rotationNext[i] <= 0) {
         // Rotate the light
-        if (++rotationOffset[i] > NUM_PROP_LIGHTS) {
+        if (++rotationOffset[i] >= NUM_PROP_LIGHTS) {
           rotationOffset[i] = 0;
         }
         
