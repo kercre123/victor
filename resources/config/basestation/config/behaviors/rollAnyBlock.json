@@ -1,0 +1,12 @@
+{
+  "behaviorType": "RollBlock",
+  "name": "RollAnyBlock",
+  "requiredUnlockId": "RollCube",
+  "behaviorGroups": [
+    "FP_PlayAlone"    
+  ],
+  
+  "flatScore": 0.9,
+  "put_down_animation_group": "RollBlockPutDown",
+  "isBlockRotationImportant" : false
+}
