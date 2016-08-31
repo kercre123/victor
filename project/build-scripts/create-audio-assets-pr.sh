@@ -91,8 +91,8 @@ EOF
     fi
 
     $GIT config remote.origin.url $_GIT_COZMO_URI
-    $GIT config user.email $_GIT_USERNAME
-    $GIT config user.name $_GIT_EMAIL
+    $GIT config user.email $_GIT_EMAIL
+    $GIT config user.name $_GIT_USERNAME
     $GIT checkout -b $_GIT_BRANCH_NAME
     $GIT commit -am "Updating Audio Assets v${svn_rev}."
     $GIT push origin $_GIT_BRANCH_NAME
