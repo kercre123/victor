@@ -108,6 +108,10 @@ public interface IRobot : IDisposable {
 
   string CurrentDebugAnimationString { get; set; }
 
+  uint FirmwareVersion { get; set; }
+
+  uint SerialNumber { get; set; }
+
   ObservedObject CarryingObject { get; }
 
   event Action<ObservedObject> OnCarryingObjectSet;

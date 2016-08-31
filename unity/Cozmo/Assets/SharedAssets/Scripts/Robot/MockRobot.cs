@@ -817,6 +817,16 @@ public class MockRobot : IRobot {
     set;
   }
 
+  public uint FirmwareVersion {
+    get;
+    set;
+  }
+
+  public uint SerialNumber {
+    get;
+    set;
+  }
+
   private ObservedObject _CarryingObject;
 
   public ObservedObject CarryingObject {

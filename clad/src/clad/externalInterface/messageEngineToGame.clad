@@ -48,7 +48,12 @@ message UiDeviceAvailable {
 
 message RobotConnectionResponse {
     uint_32 robotID,
-    RobotConnectionResult result
+    RobotConnectionResult result,
+    uint_32 fwVersion
+}
+
+message RobotSerialNumber {
+    uint_32 serial
 }
 
 message RobotDisconnected {
@@ -624,6 +629,15 @@ message BehaviorObjectiveAchieved{
 
 message DemoState {
   uint_8 stateNum
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////  MISC  /////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// Data to display in UI that's useful to customer support
+message SupportInfo {
+  string deviceId
 }
 
 ///////////////////////////////////////////////////////////////////////////////

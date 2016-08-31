@@ -49,7 +49,7 @@ public:
 private:
   void HandleFactoryFirmware(const AnkiEvent<RobotInterface::RobotToEngine>&);
   void HandleFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>&);
-  void OnNotified(RobotConnectionResult result);
+  void OnNotified(RobotConnectionResult result, uint32_t robotFwVersion);
 
   RobotID_t _id;
   bool _notified;

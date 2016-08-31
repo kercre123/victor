@@ -268,6 +268,9 @@ void RobotToEngineImplMessaging::HandleRobotSetID(const AnkiEvent<RobotInterface
   
   robot->SetSerialNumber(payload.robotID);
   robot->SetModelNumber(payload.modelID);
+
+  // Send info to UI
+  robot->Broadcast(ExternalInterface::MessageEngineToGame{ExternalInterface::RobotSerialNumber{payload.robotID}});
 }
   
   

@@ -128,6 +128,7 @@ protected:
   Result AddRobot(RobotID_t robotID);
   
   void UpdateLatencyInfo();
+  void SendSupportInfo() const;
   
   EngineState _engineState = EngineState::Stopped;
 

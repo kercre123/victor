@@ -120,6 +120,8 @@ namespace DataPersistence {
       }
     }
 
+    public string DeviceId { get; private set; }
+
     public TimelineEntryData StartNewSession() {
       TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today);
       DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Add(newSession);
@@ -204,6 +206,10 @@ namespace DataPersistence {
       }
 
       File.WriteAllText(sSaveFilePath, jsonValue);
+    }
+
+    public void HandleSupportInfo(Anki.Cozmo.ExternalInterface.SupportInfo info) {
+      DeviceId = info.deviceId;
     }
 
     #endregion

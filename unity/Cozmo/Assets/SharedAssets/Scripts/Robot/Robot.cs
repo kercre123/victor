@@ -279,6 +279,10 @@ public class Robot : IRobot {
 
   public string CurrentDebugAnimationString { get; set; }
 
+  public uint FirmwareVersion { get; set; }
+
+  public uint SerialNumber { get; set; }
+
   private PathMotionProfile PathMotionProfileDefault;
 
   private uint _NextIdTag = (uint)Anki.Cozmo.ActionConstants.FIRST_GAME_TAG;

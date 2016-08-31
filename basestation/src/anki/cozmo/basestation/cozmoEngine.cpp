@@ -48,6 +48,11 @@
 #include "util/transport/connectionStats.h"
 #include <cstdlib>
 
+#if USE_DAS
+#include <DAS/DAS.h>
+#include <DAS/DASPlatform.h>
+#endif
+
 #if ANKI_DEV_CHEATS
 #include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
 #endif
@@ -176,7 +181,8 @@ Result CozmoEngine::Init(const Json::Value& config) {
 
   _context->GetDataLoader()->LoadData();
   _context->GetRobotManager()->Init(_config);
-  
+
+  SendSupportInfo();
   return RESULT_OK;
 }
 
@@ -462,6 +468,16 @@ void CozmoEngine::UpdateLatencyInfo()
     
     _context->GetExternalInterface()->Broadcast( std::move(debugLatencyMessage) );
   }
+}
+
+void CozmoEngine::SendSupportInfo() const
+{
+  #if USE_DAS
+  const DAS::IDASPlatform* platform = DASGetPlatform();
+  if (platform != nullptr) {
+    _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::SupportInfo>(platform->GetDeviceId());
+  }
+  #endif
 }
 
 void CozmoEngine::SetEngineState(EngineState newState)

@@ -268,6 +268,12 @@ public class RobotEngineManager : MonoBehaviour {
     case Anki.Cozmo.ExternalInterface.MessageEngineToGame.Tag.AnimationAvailable:
       SetAvailableAnimationNames(message.AnimationAvailable);
       break;
+    case Anki.Cozmo.ExternalInterface.MessageEngineToGame.Tag.RobotSerialNumber:
+      SetSerialNumber(message.RobotSerialNumber);
+      break;
+    case Anki.Cozmo.ExternalInterface.MessageEngineToGame.Tag.SupportInfo:
+      ProcessSupportInfo(message.SupportInfo);
+      break;
     }
 
     // since the property to access individual message data in a CLAD message shares its name
@@ -303,6 +309,7 @@ public class RobotEngineManager : MonoBehaviour {
     if (!_IsRobotConnected && message.result != RobotConnectionResult.ConnectionFailure) {
       _IsRobotConnected = true;
       AddRobot((byte)message.robotID);
+      CurrentRobot.FirmwareVersion = message.fwVersion;
     }
   }
 
@@ -328,6 +335,17 @@ public class RobotEngineManager : MonoBehaviour {
   private void SetAvailableAnimationNames(Anki.Cozmo.ExternalInterface.AnimationAvailable message) {
     if (!_RobotAnimationNames.Contains(message.animName))
       _RobotAnimationNames.Add(message.animName);
+  }
+
+  private void SetSerialNumber(Anki.Cozmo.ExternalInterface.RobotSerialNumber message) {
+    var robot = CurrentRobot;
+    if (robot != null) {
+      robot.SerialNumber = message.serial;
+    }
+  }
+
+  private void ProcessSupportInfo(Anki.Cozmo.ExternalInterface.SupportInfo message) {
+    DataPersistence.DataPersistenceManager.Instance.HandleSupportInfo(message);
   }
 
   public void StartEngine() {
