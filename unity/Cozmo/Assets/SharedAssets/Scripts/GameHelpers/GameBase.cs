@@ -210,6 +210,7 @@ public abstract class GameBase : MonoBehaviour {
     newView.ShowWideSlideWithText(LocalizationKeys.kMinigameLabelCozmoPrep, null);
     newView.ShowShelf();
     newView.ShowSpinnerWidget();
+    newView.QuitMiniGameConfirmed += HandleQuitConfirmed;
     ContextManager.Instance.OnAppHoldStart += HandleAppHoldStart;
     ContextManager.Instance.OnAppHoldEnd += HandleAppHoldEnd;
   }
@@ -249,7 +250,6 @@ public abstract class GameBase : MonoBehaviour {
   private void FinishTurnToFace(bool success) {
     _SharedMinigameViewInstance.ShowMiddleBackground();
     _SharedMinigameViewInstance.HideSpinnerWidget();
-    _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
 
     DAS.SetGlobal(DASConstants.Game.kGlobal, GetDasGameName());
     DAS.Event(DASConstants.Game.kStart, GetGameUUID());
@@ -560,6 +560,10 @@ public abstract class GameBase : MonoBehaviour {
   private void QuitMinigame() {
     _SharedMinigameViewInstance.ViewCloseAnimationFinished += QuitMinigameAnimationFinished;
     _SharedMinigameViewInstance.CloseView();
+
+    // cancels any queed up actions or co-routines
+    CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
+    StopAllCoroutines();
   }
 
   private void QuitMinigameAnimationFinished() {
