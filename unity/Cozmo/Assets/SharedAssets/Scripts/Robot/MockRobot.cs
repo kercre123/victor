@@ -520,6 +520,10 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
+  public void ExecuteBehaviorByName(string behaviorName) {
+    // Do nothing
+  }
+
   public void SetEnableFreeplayBehaviorChooser(bool enable) {
     // Do nothing
   }

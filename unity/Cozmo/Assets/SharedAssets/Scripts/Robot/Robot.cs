@@ -1643,6 +1643,13 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
+  public void ExecuteBehaviorByName(string behaviorName) {
+    DAS.Debug(this, "Execute Behavior By Name" + behaviorName);
+
+    RobotEngineManager.Instance.Message.ExecuteBehaviorByName = Singleton<ExecuteBehaviorByName>.Instance.Initialize(behaviorName);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
   public void SetEnableFreeplayBehaviorChooser(bool enable) {
     if (enable) {
       ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Freeplay);
