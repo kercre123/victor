@@ -334,8 +334,8 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
       for (const ObjectInfo &objectInfo : _persistentPool ) {
         if (objectInfo.factoryID != ActiveObject::InvalidFactoryID) {
           ExternalInterface::BlockPoolBlockData blockData;
-          blockData.enabled = true;
           blockData.factory_id = objectInfo.factoryID;
+          blockData.objectType = objectInfo.objectType;
           allBlocks.push_back(blockData);
         }
       }

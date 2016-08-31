@@ -42,11 +42,7 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
     }
 
     // Enable the automatic block pool
-    Anki.Cozmo.ExternalInterface.BlockPoolEnabledMessage blockPoolEnabledMessage = new Anki.Cozmo.ExternalInterface.BlockPoolEnabledMessage();
-    blockPoolEnabledMessage.enabled = true;
-    blockPoolEnabledMessage.discoveryTimeSecs = _kMaxDiscoveryTime;
-    RobotEngineManager.Instance.Message.BlockPoolEnabledMessage = blockPoolEnabledMessage;
-    RobotEngineManager.Instance.SendMessage();
+    RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(true, _kMaxDiscoveryTime);
   }
 
   protected override void Update() {
