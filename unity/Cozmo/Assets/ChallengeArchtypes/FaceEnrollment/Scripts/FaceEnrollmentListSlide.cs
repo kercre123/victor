@@ -47,6 +47,8 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
       _FaceCellList.Add(faceCellInstance);
     }
 
+    bool foundFirstLockedSlot = false;
+
     for (int i = _FaceCellList.Count; i < UnlockablesManager.Instance.FaceSlotsSize(); ++i) {
       if (UnlockablesManager.Instance.IsFaceSlotUnlocked(i)) {
         // show enroll cell
@@ -60,12 +62,19 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
         // show locked cell, need to find next available locked face cell to unlock
         _LockedNewFaceSlotInstance = GameObject.Instantiate(_LockedNewFaceSlotPrefab.gameObject).GetComponent<FaceEnrollmentNewCell>();
         _LockedNewFaceSlotInstance.transform.SetParent(_ContentContainer, false);
+
+        _FaceNewCellList.Add(_LockedNewFaceSlotInstance);
+        if (foundFirstLockedSlot) {
+          _LockedNewFaceSlotInstance.EnableCell(false);
+        }
+
         _LockedNewFaceSlotInstance.OnCreateNewButton += () => {
           _UnlockFaceCellViewInstance = UIManager.OpenView(_UnlockFaceCellViewPrefab);
           KeyValuePair<string, int> unlockCostInfo = UnlockablesManager.Instance.FaceUnlockCost(faceSlot);
           _UnlockFaceCellViewInstance.Initialize(unlockCostInfo.Key, unlockCostInfo.Value);
         };
-        _FaceNewCellList.Add(_LockedNewFaceSlotInstance);
+
+        foundFirstLockedSlot = true;
       }
     }
   }
