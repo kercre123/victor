@@ -3,13 +3,16 @@ using System.Collections.Generic;
 
 public class PullCubeTabView : Cozmo.UI.BaseView {
 
+  [SerializeField]
   private const float _kTimeBeforeForceContinue = 15.0f;
-  private const float _kMaxDiscoveryTime = 7.0f;
 
+  [SerializeField]
+  private const float _kMaxDiscoveryTime = 7.0f;
 
   // minimum threshold time between each object connecting and it being registered to
   // front end UI
-  private const float _kTimeBetweenObjectsConnected = 0.5f;
+  [SerializeField]
+  private const float _kTimeBetweenObjectsConnected = 1.5f;
 
   [SerializeField]
   private Cozmo.UI.CozmoButton _ContinueButton;
