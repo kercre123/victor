@@ -81,6 +81,7 @@ namespace SpeedTap {
     private Vector3 _CozmoPos;
     private Quaternion _CozmoRot;
 
+    public bool RedMatch = false;
     public LightCube CozmoBlock;
     public LightCube PlayerBlock;
 

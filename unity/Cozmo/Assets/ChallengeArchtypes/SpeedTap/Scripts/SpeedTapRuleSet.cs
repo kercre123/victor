@@ -19,7 +19,7 @@ namespace SpeedTap {
 
     public SpeedTapRulesBase() {
       // defaults
-      _Colors = new Color[]{ Color.yellow, Color.green, Color.blue, Color.magenta };
+      _Colors = new Color[] { Color.yellow, Color.green, Color.blue, Color.magenta };
     }
 
     public virtual void SetUsableColors(Color[] colors) {
@@ -37,6 +37,7 @@ namespace SpeedTap {
         game.CozmoWinColor = Color.white;
         setCubesRed = true;
       }
+      game.RedMatch = setCubesRed;
       return setCubesRed;
     }
 

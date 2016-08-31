@@ -11,4 +11,5 @@ public class DailyGoalGenerationConfig : ScriptableObject {
   public int MinGoals;
 
   public string OnboardingGoalFileName;
+  public Sprite DailyGoalIcon;
 }

@@ -47,7 +47,8 @@ namespace SpeedTap {
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
 
       _SpeedTapGame.AddPoint(_CurrentWinner == PointWinner.Player);
-      if (_WasMistakeMade && _CurrentWinner == PointWinner.Cozmo) {
+      // Only count player as making mistake when they tap on red as desired for goals/rewards.
+      if (_WasMistakeMade && _SpeedTapGame.RedMatch && _CurrentWinner == PointWinner.Cozmo) {
         _SpeedTapGame.PlayerMistake();
       }
       // Depends on points being scored first

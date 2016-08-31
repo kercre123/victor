@@ -15,3 +15,4 @@ MonoBehaviour:
   MaxGoals: 3
   MinGoals: 3
   OnboardingGoalFileName: OnboardingGoals.json
+  DailyGoalIcon: {fileID: 21300000, guid: 3c676f00b99ed41cf8615bf0fb6753ba, type: 3}

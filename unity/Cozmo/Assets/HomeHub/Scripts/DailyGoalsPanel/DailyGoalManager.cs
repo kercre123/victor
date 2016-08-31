@@ -241,11 +241,11 @@ public class DailyGoalManager : MonoBehaviour {
     else {
       DAS.Error(this, string.Format("No DailyGoal Data to load in {0}", sDailyGoalDirectory));
     }
-    GameEventManager.Instance.OnGameEvent += HandleDailyGoalCompleted;
+    GameEventManager.Instance.OnGameEvent += HandleGameEvent;
   }
 
   void OnDestroy() {
-    GameEventManager.Instance.OnGameEvent -= HandleDailyGoalCompleted;
+    GameEventManager.Instance.OnGameEvent -= HandleGameEvent;
   }
 
   private string GetDailyGoalFileName() {
@@ -297,7 +297,7 @@ public class DailyGoalManager : MonoBehaviour {
   }
 
 
-  private void HandleDailyGoalCompleted(GameEventWrapper gameEvent) {
+  private void HandleGameEvent(GameEventWrapper gameEvent) {
     if (gameEvent.GameEventEnum == Anki.Cozmo.GameEvent.OnDailyGoalCompleted) {
       DailyGoalCompleteGameEvent goalEvent = gameEvent as DailyGoalCompleteGameEvent;
       // Only add to Pending Goals if it is unique, fire Warning otherwise since
@@ -310,7 +310,34 @@ public class DailyGoalManager : MonoBehaviour {
         DAS.Warn("DailyGoalManager.HandleDailyGoalCompleted", "Duplicate DailyGoal completed event fired");
       }
     }
+    else {
+      List<DailyGoal> goals = DataPersistenceManager.Instance.CurrentSession.DailyGoals;
+      for (int i = 0; i < goals.Count; i++) {
+        GoalProgCheck(goals[i], gameEvent);
+      }
+    }
   }
+
+  public void GoalProgCheck(DailyGoal goal, GameEventWrapper gEvent) {
+    if (gEvent.GameEventEnum != goal.GoalEvent) {
+      return;
+    }
+    // If ProgConditions aren't met, don't progress
+    if (!goal.CanProgress(gEvent)) {
+      return;
+    }
+    // Progress Goal
+    goal.Progress++;
+    GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnDailyGoalProgress, this));
+
+    DAS.Event(this, string.Format("{0} Progressed to {1}", goal.Title, goal.Progress));
+    // Check if Completed
+    goal.CheckIfComplete();
+    if (goal.OnDailyGoalUpdated != null) {
+      goal.OnDailyGoalUpdated.Invoke(goal);
+    }
+  }
+
 
   public void ResolveDailyGoalsEarned() {
     // TODO: Any other logic necessary to resolve a set of pending Daily Goals being "shown" to the player

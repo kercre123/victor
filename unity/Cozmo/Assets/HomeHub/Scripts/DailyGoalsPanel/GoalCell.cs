@@ -12,6 +12,12 @@ namespace Cozmo {
       [SerializeField]
       private ProgressBar _GoalProgressBar;
 
+      public Transform GoalCellSource {
+        get {
+          return _GoalProgressBar.transform;
+        }
+      }
+
       public Action<GoalCell> OnProgChanged;
 
       [SerializeField]

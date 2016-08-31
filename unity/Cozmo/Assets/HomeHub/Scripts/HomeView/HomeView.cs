@@ -427,7 +427,6 @@ namespace Cozmo.HomeHub {
       DailyGoalManager.Instance.ValidateExistingGoals();
       if (RewardedActionManager.Instance.RewardPending || DailyGoalManager.Instance.GoalsPending) {
         // If Rewards are pending, set sequence to active, shut down input until everything is done
-        // Don't bother updating the chest progress bar to current points 
         StartCoroutine(BurstEnergyAfterInit());
       }
       else {
@@ -438,6 +437,32 @@ namespace Cozmo.HomeHub {
         }
         UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
       }
+    }
+
+    private IEnumerator BurstEnergyAfterInit() {
+      yield return new WaitForFixedUpdate();
+      _RewardSequence = DOTween.Sequence();
+      if (DailyGoalManager.Instance.GoalsPending) {
+        int goalPointOffset = 0;
+        for (int i = 0; i < DailyGoalManager.Instance.PendingDailyGoals.Count; i++) {
+          DailyGoal currGoal = DailyGoalManager.Instance.PendingDailyGoals[i];
+          _RewardSequence = EnergyDooberBurst(currGoal.PointsRewarded, DailyGoalManager.Instance.GoalPanelInstance.GetGoalSource(currGoal), _RewardSequence);
+          goalPointOffset += currGoal.PointsRewarded;
+        }
+        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints() - goalPointOffset, ChestRewardManager.Instance.GetNextRequirementPoints(), true);
+        DailyGoalManager.Instance.ResolveDailyGoalsEarned();
+      }
+      else {
+        // Only do the offset for goal points since those are rewarded when the goal is completed
+        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
+      }
+      if (RewardedActionManager.Instance.RewardPending) {
+        _RewardSequence = EnergyDooberBurst(RewardedActionManager.Instance.TotalPendingEnergy, _EnergyDooberStart, _RewardSequence);
+      }
+      // Prevent stray doobers from being forgotten by dotween bug
+      _RewardSequence.AppendInterval(GenericRewardsConfig.Instance.ExpParticleStagger);
+      _RewardSequence.AppendCallback(ResolveDooberBurst);
+      _RewardSequence.Play();
     }
 
     // If we have a Chest Pending, open the loot view once the progress bar finishes filling.
@@ -546,45 +571,9 @@ namespace Cozmo.HomeHub {
       }
     }
 
-    private IEnumerator BurstEnergyAfterInit() {
-      yield return new WaitForFixedUpdate();
-      _RewardSequence = DOTween.Sequence();
-      if (DailyGoalManager.Instance.GoalsPending) {
-        for (int i = 0; i < DailyGoalManager.Instance.PendingDailyGoals.Count; i++) {
-          DailyGoal currGoal = DailyGoalManager.Instance.PendingDailyGoals[i];
-          _RewardSequence = EnergyDooberBurst(currGoal.PointsRewarded, GetGoalSource(currGoal), _RewardSequence);
-        }
-        DailyGoalManager.Instance.ResolveDailyGoalsEarned();
-      }
-      else if (RewardedActionManager.Instance.RewardPending) {
-        _RewardSequence = EnergyDooberBurst(RewardedActionManager.Instance.TotalPendingEnergy, _EnergyDooberStart, _RewardSequence);
-      }
-      // Prevent stray doobers from being forgotten by dotween bug
-      _RewardSequence.AppendInterval(GenericRewardsConfig.Instance.ExpParticleStagger);
-      _RewardSequence.AppendCallback(ResolveDooberBurst);
-      _RewardSequence.Play();
-    }
-
     // If we earned a chest, have the progress bar reflect the previous requirement level at full.
     private void HandleChestGained() {
       UpdateChestProgressBar(ChestRewardManager.Instance.GetPreviousRequirementPoints(), ChestRewardManager.Instance.GetPreviousRequirementPoints());
-    }
-
-    private Transform GetGoalSource(DailyGoal goal) {
-      Transform source = _EnergyDooberStart;
-      if (DailyGoalManager.Instance.GoalPanelInstance == null) {
-        DAS.Warn("HomeView.GetGoalSource", "GoalPanelInstance is NULL, this should only be called with a GoalPanel active");
-        return source;
-      }
-      else {
-        DailyGoalPanel goalPanel = DailyGoalManager.Instance.GoalPanelInstance;
-        for (int i = 0; i < goalPanel.GoalCells.Count; i++) {
-          if (goalPanel.GoalCells[i].Goal == goal) {
-            source = goalPanel.GoalCells[i].transform;
-          }
-        }
-      }
-      return source;
     }
 
     #endregion

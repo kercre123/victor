@@ -17,6 +17,7 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
+      _SpeedTapGame.RedMatch = false;
 
       _SpeedTapGame.CozmoBlock.SetLEDs(0);
       _SpeedTapGame.PlayerBlock.SetLEDs(0);

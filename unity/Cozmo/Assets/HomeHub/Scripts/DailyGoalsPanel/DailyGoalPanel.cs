@@ -65,6 +65,16 @@ public class DailyGoalPanel : MonoBehaviour {
     EmptyGoalCells.Clear();
   }
 
+  public Transform GetGoalSource(DailyGoal goal) {
+    Transform source = transform;
+    for (int i = 0; i < GoalCells.Count; i++) {
+      if (GoalCells[i].Goal == goal) {
+        source = GoalCells[i].GoalCellSource;
+      }
+    }
+    return source;
+  }
+
   public void UpdateDailySession() {
     var currentSession = DataPersistenceManager.Instance.CurrentSession;
     if (currentSession == null) {
@@ -154,5 +164,4 @@ public class DailyGoalPanel : MonoBehaviour {
     EmptyGoalCells.Add(newEmptyBadge);
     return newEmptyBadge;
   }
-
 }
