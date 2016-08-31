@@ -16,15 +16,17 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorPlayArbitraryAnim_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorPlayArbitraryAnim_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorPlayAnim.h"
+#include "anki/cozmo/basestation/behaviors/behaviorPlayAnimSequence.h"
 #include "clad/types/animationTrigger.h"
+
+#include <vector>
 
 namespace Anki {
 namespace Cozmo {
   
-class BehaviorPlayArbitraryAnim: public BehaviorPlayAnim
+class BehaviorPlayArbitraryAnim: public BehaviorPlayAnimSequence
 {
-using BaseClass = BehaviorPlayAnim;
+using BaseClass = BehaviorPlayAnimSequence;
 private:
   
   // Enforce creation through BehaviorFactory
@@ -35,6 +37,7 @@ public:
   
   virtual ~BehaviorPlayArbitraryAnim();
   void SetAnimationTrigger(AnimationTrigger trigger, int numLoops);
+  void SetAnimationTriggers(std::vector<AnimationTrigger>& triggers, int sequenceLoopCount);
   
   virtual bool IsRunnableInternal(const Robot& robot) const override;
   

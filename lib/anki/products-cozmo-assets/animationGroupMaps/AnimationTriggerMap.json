@@ -361,8 +361,20 @@
       "AnimName" : "ag_meetcozmo_reenrollment_sayname"
     },
     {
-      "CladEvent": "NothingToDoBored",
+      "CladEvent": "NothingToDoBoredIdle",
+      "AnimName": "ag_hiking_lookAround"
+    },
+    {
+      "CladEvent": "NothingToDoBoredIntro",
+      "AnimName": "ag_bored"
+    },
+    {
+      "CladEvent": "NothingToDoBoredEvent",
       "AnimName": "ag_bored_event"
+    },
+    {
+      "CladEvent": "NothingToDoBoredOutro",
+      "AnimName": "ag_bored_getout"
     },
     {
       "CladEvent": "OnLearnedPlayerName",

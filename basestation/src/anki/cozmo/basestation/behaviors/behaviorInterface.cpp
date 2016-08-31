@@ -407,7 +407,9 @@ bool IBehavior::IsRunnable(const Robot& robot) const
     const float curTime  = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     const float changedAgoSecs = curTime - lastTime;
     const bool isSwitchRecent = FLT_LE(changedAgoSecs, _requiredRecentSwitchToParent_sec);
-    return isSwitchRecent;
+    if ( !isSwitchRecent ) {
+      return false;
+    }
   }
   
   //check if the behavior runs while in the air

@@ -93,7 +93,9 @@ void BehaviorReactToRobotOnSide::HoldingLoop(Robot& robot)
      || robot.GetOffTreadsState() == OffTreadsState::OnLeftSide) {
     StartActing(new CompoundActionSequential(robot, {
       new WaitAction(robot, kWaitTimeBeforeRepeatAnim_s),
-      new TriggerAnimationAction(robot, AnimationTrigger::NothingToDoBored)
+      // note: NothingToDoBored anims can move the robot, so Intro/Outro may not work here well, should
+      // we be playing a specific loop here?
+      new TriggerAnimationAction(robot, AnimationTrigger::NothingToDoBoredEvent)
     }),  &BehaviorReactToRobotOnSide::HoldingLoop);
   }
 }
