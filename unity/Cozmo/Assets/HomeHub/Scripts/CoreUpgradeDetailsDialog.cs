@@ -356,15 +356,17 @@ public class CoreUpgradeDetailsDialog : BaseView {
     }
     Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
     TimelineEntryData sess = DataPersistenceManager.Instance.CurrentSession;
+
+    // Inventory valid was already checked when the button was initialized.
+    playerInventory.RemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
+    UpdateInventoryLabel(_UnlockInfo.RequestTrickCostItemId, _SparksInventoryLabel);
+
     if (sess.SparkCount.ContainsKey(_UnlockInfo.Id.Value)) {
       sess.SparkCount[_UnlockInfo.Id.Value]++;
     }
     else {
       sess.SparkCount.Add(_UnlockInfo.Id.Value, 1);
     }
-    // Inventory valid was already checked when the button was initialized.
-    playerInventory.RemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
-    UpdateInventoryLabel(_UnlockInfo.RequestTrickCostItemId, _SparksInventoryLabel);
 
     GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnUnlockableSparked, _UnlockInfo.Id.Value));
 
