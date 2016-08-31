@@ -309,7 +309,13 @@ public class OnboardingManager : MonoBehaviour {
   }
 
   public void DebugSkipAll() {
-    OnboardingManager.Instance.SetSpecificStage(GetMaxStageInPhase(Instance._CurrPhase));
+    // special debug case. Since this loot view is listening for a state starting it hangs so just let it start loot.
+    if (Instance._CurrPhase == OnboardingPhases.Loot && Instance.GetCurrStageInPhase(OnboardingPhases.Loot) == 0) {
+      Instance.GoToNextStage();
+    }
+    else {
+      OnboardingManager.Instance.SetSpecificStage(GetMaxStageInPhase(Instance._CurrPhase));
+    }
   }
   private void SkipPressed() {
     if (_CurrStageInst != null) {
