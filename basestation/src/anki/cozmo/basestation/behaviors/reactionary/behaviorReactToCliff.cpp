@@ -59,10 +59,7 @@ Result BehaviorReactToCliff::InitInternalReactionary(Robot& robot)
 {
   robot.GetMoodManager().TriggerEmotionEvent("CliffReact", MoodManager::GetCurrentTimeInSeconds());
   
-  for(auto behavior : kBehaviorsToDisable)
-  {
-    robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), behavior, false);
-  }
+  SmartDisableReactionaryBehavior(kBehaviorsToDisable);
 
   switch( _state ) {
     case State::PlayingStopReaction: 
@@ -137,11 +134,6 @@ void BehaviorReactToCliff::SendFinishedReactToCliffMessage(Robot& robot) {
 void BehaviorReactToCliff::StopInternalReactionary(Robot& robot)
 {
   _state = State::PlayingStopReaction;
-  
-  for(auto behavior : kBehaviorsToDisable)
-  {
-    robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), behavior, true);
-  }
 }
 
 bool BehaviorReactToCliff::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot)

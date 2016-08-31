@@ -165,9 +165,6 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(Robot& robot)
 {
   DEBUG_SET_STATE(KnockingOverStack);
   
-  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, false);
-  _disabledReactions.insert(BehaviorType::AcknowledgeObject);
-  
   auto flipCallback = [this, &robot](const ActionResult& result){
     if(result == ActionResult::SUCCESS){
       //Knocked over stack successfully
@@ -222,11 +219,7 @@ void BehaviorKnockOverCubes::TransitionToPlayingReaction(Robot& robot)
   
   if(!_shouldStreamline){
     
-    StartActing(new TriggerLiftSafeAnimationAction(robot, animationTrigger),
-                [this](Robot& robot){
-                  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, true);
-                  _disabledReactions.erase(BehaviorType::AcknowledgeObject);
-                });
+    StartActing(new TriggerLiftSafeAnimationAction(robot, animationTrigger));
   }
   
 }
@@ -241,7 +234,6 @@ void BehaviorKnockOverCubes::InitializeMemberVars()
   
 void BehaviorKnockOverCubes::ResetBehavior(Robot& robot)
 {
-  _disabledReactions.clear();
   _baseBlockID.UnSet();
 }
 

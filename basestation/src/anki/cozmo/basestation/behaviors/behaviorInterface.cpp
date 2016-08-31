@@ -282,6 +282,14 @@ Result IBehavior::Init()
                         GetName().c_str(), _robot.GetActionList().GetQueueLength(0));
   }
   
+  // Streamline all IBehaviors when a spark is active
+  if(_robot.GetBehaviorManager().GetActiveSpark() != UnlockId::Count
+     && !_robot.GetBehaviorManager().IsActiveSparkSoft()){
+    _shouldStreamline = true;
+  }else{
+    _shouldStreamline = false;
+  }
+  
   _isRunning = true;
   _canStartActing = true;
   _actingCallback = nullptr;
@@ -294,19 +302,11 @@ Result IBehavior::Init()
     _startCount++;
   }
   
-  // Streamline all IBehaviors when a spark is active
-  if(_robot.GetBehaviorManager().GetActiveSpark() != UnlockId::Count
-      && !_robot.GetBehaviorManager().IsActiveSparkSoft()){
-      _shouldStreamline = true;
-  }else{
-    _shouldStreamline = false;
-  }
-  
   // Disable Acknowledge object if this behavior is the sparked version
   if(_requiredUnlockId != UnlockId::Count
-       && _requiredUnlockId == _robot.GetBehaviorManager().GetActiveSpark()){
-    _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, false);
-    _disabledReactions.insert(BehaviorType::AcknowledgeObject);
+       && _requiredUnlockId == _robot.GetBehaviorManager().GetActiveSpark())
+  {
+    SmartDisableReactionaryBehavior(BehaviorType::AcknowledgeObject);
   }
   
   return initResult;
@@ -326,8 +326,7 @@ Result IBehavior::Resume()
   // Disable Acknowledge object if this behavior is the sparked version
   if(_requiredUnlockId != UnlockId::Count
      && _requiredUnlockId == _robot.GetBehaviorManager().GetActiveSpark()){
-    _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, false);
-    _disabledReactions.insert(BehaviorType::AcknowledgeObject);
+    SmartDisableReactionaryBehavior(BehaviorType::AcknowledgeObject);
   }
   
   return initResult;
@@ -355,9 +354,11 @@ void IBehavior::Stop()
   _lastRunTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   StopActing(false);
   
-  for(auto behaviorType: _disabledReactions){
-    _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), behaviorType, true);
-  }
+  // Re-enable any reactionary behaviors which the behavior disabled and didn't have a chance to
+  // re-enable before stopping
+  SmartReEnableReactionaryBehavior(_disabledReactions);
+  
+  ASSERT_NAMED(_disabledReactions.empty(), "IBehavior.Stop.DisabledReactionsNotEmpty");
 }
 
 void IBehavior::StopOnNextActionComplete()
@@ -652,7 +653,50 @@ void IBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved)
   }
   PRINT_CH_INFO("Behaviors", "IBehavior.BehaviorObjectiveAchieved", "Behavior:%s, Objective:%s", GetName().c_str(), EnumToString(objectiveAchieved));
 }
+  
 
+void IBehavior::SmartDisableReactionaryBehavior(BehaviorType type)
+{
+  _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), type, false);
+  _disabledReactions.insert(type);
+}
+
+void IBehavior::SmartDisableReactionaryBehavior(const std::set<BehaviorType> typeList)
+{
+  for(auto behavior: typeList){
+    SmartDisableReactionaryBehavior(behavior);
+  }
+  
+}
+  
+  
+void IBehavior::SmartReEnableReactionaryBehavior(BehaviorType type)
+{
+  if(_disabledReactions.find(type) != _disabledReactions.end()) {
+    _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), type, true);
+    _disabledReactions.erase(type);
+  }else{
+    PRINT_NAMED_ERROR("IBehavior.SmartReEnableReactionaryBehavior",
+                        "Attempted to re-enable reaction that wasn't disabled with smart disable");
+  }
+}
+  
+
+void IBehavior::SmartReEnableReactionaryBehavior(const std::set<BehaviorType> typeList)
+{
+  for(auto behavior: typeList){
+    SmartReEnableReactionaryBehavior(behavior);
+  }
+}
+
+
+
+IBehavior::BehaviorIter IBehavior::SmartReEnableReactionaryBehavior(BehaviorIter iter)
+{
+  _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), *iter, true);
+  return  _disabledReactions.erase(iter);
+}
+  
 
 ActionResult IBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* action,
                                                       ActionableObject* object,
@@ -713,8 +757,12 @@ Result IReactionaryBehavior::InitInternal(Robot& robot)
   
 Result IReactionaryBehavior::ResumeInternal(Robot& robot)
 {
-  //Never Called - reactionary behaviors don't resume
-  ASSERT_NAMED(false, "IReactionaryBehavior.ResumeInternal - reactionary behaviors should not resume");
+  // It's possible for behaviors to be both reactionary and sparkable - the different versions
+  // are distinguished with IsReactionary so anything which overloads that shouldn't hit an Assert
+  if(IsReactionary()){
+    //Never Called - reactionary behaviors don't resume
+    ASSERT_NAMED_EVENT(false, "IReactionaryBehavior.ResumeInternal", "Reactionary behaviors should not resume");
+  }
   return Result::RESULT_OK;
 }
 

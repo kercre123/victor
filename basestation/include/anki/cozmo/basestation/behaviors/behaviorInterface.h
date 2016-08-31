@@ -326,14 +326,23 @@ protected:
   // in order to log das events and notify goal strategies if they listen for the message
   void BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved);
   
+  // Allows the behavior to disable and enable reactions without having to worry about re-enabling them
+  // these behaviors will be automatically re-enabled when the behavior stops
+  void SmartDisableReactionaryBehavior(BehaviorType type);
+  void SmartDisableReactionaryBehavior(const std::set<BehaviorType> typeList);
+
+  // If a behavior needs to re-enable a reactionary behavior for later stages after being
+  // disabled with SmartDisablesableReactionaryBehavior  this function will re-enable the behavior
+  // and stop tracking it
+  void SmartReEnableReactionaryBehavior(BehaviorType type);
+  void SmartReEnableReactionaryBehavior(const std::set<BehaviorType> typeList);
+  
+  
   //Allows behaviors to skip certain steps when streamlined
   //Can be set in json (for sparks) or programatically
   bool _shouldStreamline;
   
-  // A list of reactions that have been disabled at some point during the behavior
-  // these will be automatically re-enabled during IBehavior::Stop using the current behavior's name
-  std::set<BehaviorType> _disabledReactions;
-
+  
 private:
             
   template<class EventType>
@@ -341,6 +350,11 @@ private:
 
   // this is an internal handler just form StartActing
   void HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg);
+  
+  typedef std::set<BehaviorType>::iterator BehaviorIter;
+  // Used internally to delete 
+  BehaviorIter SmartReEnableReactionaryBehavior(BehaviorIter iter);
+  
     
   // ==================== Static Member Vars ====================
             
@@ -393,6 +407,12 @@ private:
   
   const f32 kSamePreactionPoseDistThresh_mm = 30.f;
   const f32 kSamePreactionPoseAngleThresh_deg = 45.f;
+
+  
+  // A list of reactions that have been disabled at some point during the behavior
+  // these will be automatically re-enabled during IBehavior::Stop using the current behavior's name
+  // populated by SmartDisableReactionaryBehavior and SmartReEnableReactionaryBehavior
+  std::set<BehaviorType> _disabledReactions;
     
 }; // class IBehavior
   

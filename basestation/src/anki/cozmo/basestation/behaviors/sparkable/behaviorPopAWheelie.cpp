@@ -133,14 +133,13 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
 
 
   //Disable on the back reaction
-  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToRobotOnBack, false);
-  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToPickup, false);
+  SmartDisableReactionaryBehavior(BehaviorType::ReactToRobotOnBack);
+  SmartDisableReactionaryBehavior(BehaviorType::ReactToPickup);
 
   StartActing(goPopAWheelie,
               [&,this](const ExternalInterface::RobotCompletedAction& msg) {
                 if(msg.result != ActionResult::SUCCESS){
-                  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToRobotOnBack, true);
-                  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToRobotOnBack, true);
+                  SmartReEnableReactionaryBehavior(BehaviorType::ReactToRobotOnBack);
                 }
                 
                 switch(msg.result)
@@ -217,9 +216,6 @@ void BehaviorPopAWheelie::SetupRetryAction(Robot& robot, const ExternalInterface
 
 void BehaviorPopAWheelie::ResetBehavior(Robot& robot)
 {
-  
-  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToRobotOnBack, true);
-  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToRobotOnBack, true);
   _targetBlock.UnSet();
 }
 
