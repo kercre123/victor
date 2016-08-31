@@ -41,7 +41,9 @@ ITrackAction::ITrackAction(Robot& robot, const std::string name, const RobotActi
           ((u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK))
 , _eyeShiftTag(AnimationStreamer::NotAnimatingTag)
 {
-  
+  _actionCompletedHandle = _robot.GetExternalInterface()->Subscribe(
+    ExternalInterface::MessageEngineToGameTag::RobotCompletedAction,
+    std::bind(&ITrackAction::HandleActionCompleted, this, std::placeholders::_1));
 }
 
 ITrackAction::~ITrackAction()
@@ -57,6 +59,51 @@ ITrackAction::~ITrackAction()
   
   // Make sure we abort any sound actions we triggered
   _robot.GetActionList().Cancel(_soundAnimTag);
+}
+
+// TODO:(bn) if we implemented a parallel compound action function like "Stop on first action complete"
+// instead of the current behavior of "stop when all actions are complete", I don't think we'd need this
+// anymore
+void ITrackAction::StopTrackingWhenOtherActionCompleted( u32 otherActionTag )
+{
+  if( HasStarted() ) {
+    if( otherActionTag != ActionConstants::INVALID_TAG &&
+        ! IsTagInUse( otherActionTag ) ) {
+      PRINT_NAMED_WARNING("ITrackAction.SetOtherAction.InvalidOtherActionTag",
+                          "[%d] trying to set tag %d, but it is not in use. Keeping tag as old value of %d",
+                          GetTag(),
+                          otherActionTag,
+                          _stopOnOtherActionTag);
+    }
+    else {
+      // This means we are changing the tag while we are running, which is a bit weird but should work as long
+      // as the action is valid (or INVALID_TAG)
+
+      if( otherActionTag == ActionConstants::INVALID_TAG ) {
+        PRINT_CH_INFO("Actions", "ITrackAction.StopTrackingOnOtherAction.Clear",
+                      "[%d] Was waiting on action %d to stop, now will hang",
+                      GetTag(),
+                      _stopOnOtherActionTag);
+      }
+      else {
+        PRINT_CH_INFO("Actions", "ITrackAction.StopTrackingOnOtherAction.SetWhileRunning",
+                      "[%d] Will stop this action when %d completes",
+                      GetTag(),
+                      otherActionTag);
+      }
+      
+      _stopOnOtherActionTag = otherActionTag;
+    }
+  }
+  else {
+    // this action will be checked in Init to see if it is in use (it is done there so it can cause the action
+    // to fail), so don't do anything with it now
+    PRINT_CH_INFO("Actions", "ITrackAction.StopTrackingOnOtherAction.Set",
+                  "[%d] Will stop this action when %d completes",
+                  GetTag(),
+                  otherActionTag);
+    _stopOnOtherActionTag = otherActionTag;
+  }
 }
 
 void ITrackAction::SetTiltSpeeds(f32 minSpeed_radPerSec, f32 maxSpeed_radPerSec) {
@@ -99,6 +146,11 @@ void ITrackAction::SetMode(Mode newMode)
         break;
     }
   }
+  else {
+    PRINT_NAMED_WARNING("ITrackAction.SetMode.AlreadyRunning",
+                        "[%d] Trying to set tracking mode, but action is running so track locking will be wrong",
+                        GetTag());
+  }
 }
   
 void ITrackAction::SetPanTolerance(const Radians& panThreshold)
@@ -132,11 +184,22 @@ void ITrackAction::SetTiltTolerance(const Radians& tiltThreshold)
 
 ActionResult ITrackAction::Init()
 {
+  _stopActionNow = false;
+  
   // Store eye dart setting so we can restore after tracking
   _originalEyeDartDist = _robot.GetAnimationStreamer().GetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix);
   
   // Reduce eye darts so we better appear to be tracking and not look around
   _robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, 1.f);
+
+  if( _stopOnOtherActionTag != ActionConstants::INVALID_TAG &&
+      ! IsTagInUse( _stopOnOtherActionTag ) ) {
+    PRINT_NAMED_WARNING("ITrackAction.Init.InvalidOtherActionTag",
+                        "[%d] Waiting on tag %d to stop this action, but that tag is no longer in use. Stopping now",
+                        GetTag(),
+                        _stopOnOtherActionTag);
+    return ActionResult::FAILURE_ABORT;
+  }
   
   return InitInternal();
 }
@@ -149,8 +212,17 @@ bool ITrackAction::InterruptInternal()
 
 ActionResult ITrackAction::CheckIfDone()
 {
-  Radians absPanAngle = 0, absTiltAngle = 0;
+
+  if( _stopActionNow ) {
+    PRINT_CH_INFO("Actions", "ITrackAction.FinishedByOtherAction",
+                  "[%d] action %s stopping because we were told to stop when another action stops (and it did)",
+                  GetTag(),
+                  GetName().c_str());
+    return ActionResult::SUCCESS;
+  }
   
+  Radians absPanAngle = 0, absTiltAngle = 0;
+
   const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   // See if there are new absolute pan/tilt angles from the derived class
@@ -310,6 +382,19 @@ ActionResult ITrackAction::CheckIfDone()
   }
   
   return ActionResult::RUNNING;
+}
+
+void ITrackAction::HandleActionCompleted(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
+{
+  const auto& msg = event.GetData().Get_RobotCompletedAction();
+  if( msg.idTag == _stopOnOtherActionTag ) {
+    PRINT_CH_INFO("Actions", "ITrackAction.CompletedOtherAction",
+                  "[%d] completed other action with tag %d, so telling this action to stop",
+                  GetTag(),
+                  _stopOnOtherActionTag);
+    _stopOnOtherActionTag = ActionConstants::INVALID_TAG;
+    _stopActionNow = true;
+  }
 }
   
 #pragma mark -

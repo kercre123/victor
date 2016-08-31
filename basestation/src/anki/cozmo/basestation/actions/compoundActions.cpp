@@ -51,7 +51,7 @@ namespace Anki {
       }
     }
     
-    void ICompoundAction::AddAction(IActionRunner* action, bool ignoreFailure)
+    void ICompoundAction::AddAction(IActionRunner* action, bool ignoreFailure, bool emitCompletionSignal)
     {
       std::string name = GetName();
       if(_actions.empty()) {
@@ -64,9 +64,12 @@ namespace Anki {
       // All added actions have the same message display setting as the parent
       // compound action in which they are included
       action->EnableMessageDisplay(IsMessageDisplayEnabled());
-      
-      // As part of a compound action this should not emit completion
-      action->ShouldEmitCompletionSignal(false);
+
+      // sometimes we want to block completion signals
+      // TODO:(bn) figure out why. This seems dirty to me because we may miss things (e.g. some code which is
+      // listening for any RollBlock actions which fail might not run if that roll block were part of a
+      // compound action)
+      action->ShouldEmitCompletionSignal(emitCompletionSignal);
       
       _actions.emplace_back(action);
       name += action->GetName();
