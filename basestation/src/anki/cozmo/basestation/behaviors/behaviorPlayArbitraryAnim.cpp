@@ -75,6 +75,12 @@ Result BehaviorPlayArbitraryAnim::InitInternal(Robot& robot)
   _animationAlreadySet = false;
   return BaseClass::InitInternal(robot);
 }
+  
+Result BehaviorPlayArbitraryAnim::ResumeInternal(Robot& robot)
+{
+  return RESULT_OK;
+}
+
 
 
 

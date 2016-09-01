@@ -16,7 +16,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorPlayArbitraryAnim_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorPlayArbitraryAnim_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorPlayAnimSequence.h"
+#include "anki/cozmo/basestation/behaviors/gitTempPlayAnimSequence.h"
 #include "clad/types/animationTrigger.h"
 
 #include <vector>
@@ -43,6 +43,9 @@ public:
   
 protected:
   virtual Result InitInternal(Robot& robot) override;
+  // We shouldn't play the animation a second time if it's interrupted so simply return RESULT_OK
+  virtual Result ResumeInternal(Robot& robot) override;
+
   
 private:
   bool _animationAlreadySet;

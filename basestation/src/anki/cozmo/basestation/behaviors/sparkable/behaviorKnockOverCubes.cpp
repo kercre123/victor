@@ -37,7 +37,7 @@ static const char* const kIsReactionaryConfigFlag = "isReactionary";
 
 const int kMaxNumRetries = 1;
 const int kMinThresholdRealign = 40;
-const int kMinBlocksForSuccess = 2;
+const int kMinBlocksForSuccess = 1;
 const float kWaitForBlockUpAxisChangeSecs = 0.5f;
 const f32 kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad = RAD_TO_DEG(90.f);
 

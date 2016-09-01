@@ -42,6 +42,7 @@ SparksBehaviorChooser::SparksBehaviorChooser(Robot& robot, const Json::Value& co
   , _maxTimeSecs(-1.f)
   , _numberOfRepetitions(-1)
   , _switchingSoftToHardSpark(false)
+  , _idleAnimationsSet(false)
 {
   ReloadFromConfig(robot, config);
 
@@ -93,13 +94,17 @@ void SparksBehaviorChooser::OnSelected()
   _state = ChooserState::ChooserSelected;
   _switchingSoftToHardSpark = false;
   _timePlayingOutroStarted = 0;
+  _idleAnimationsSet = false;
   
 
-  // Set the idle driving animations to sparks driving anims
-  _robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::SparkBackpackLights,
-    AnimationTrigger::SparkBackpackLights,
-    AnimationTrigger::SparkBackpackLights});
-  _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::SparkBackpackLights);
+  if(_robot.GetBehaviorManager().IsRequestedSparkSoft()){
+    // Set the idle driving animations to sparks driving anims
+    _robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::SparkDrivingStart,
+                                                               AnimationTrigger::SparkDrivingLoop,
+                                                               AnimationTrigger::SparkDrivingStop});
+    _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::SparkIdle);
+    _idleAnimationsSet = true;
+  }
   
   // Turn off reactionary behaviors that could interrupt the spark
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeFace, false);
@@ -108,9 +113,12 @@ void SparksBehaviorChooser::OnSelected()
   
 void SparksBehaviorChooser::OnDeselected()
 {
-  // Revert driving anmis
-  _robot.GetDrivingAnimationHandler().PopDrivingAnimations();
-  _robot.GetAnimationStreamer().PopIdleAnimation();
+  if(_idleAnimationsSet){
+    // Revert driving anmis
+    _robot.GetDrivingAnimationHandler().PopDrivingAnimations();
+    _robot.GetAnimationStreamer().PopIdleAnimation();
+    _idleAnimationsSet = false;
+  }
   
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeFace, true);
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCubeMoved, true);
@@ -247,7 +255,9 @@ void SparksBehaviorChooser::CheckIfSparkShouldEnd(Robot& robot)
   TimeStamp_t currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const BehaviorManager& mngr = robot.GetBehaviorManager();
   
-  const bool minTimeAndRepetitions = FLT_GE(currentTime, _timeChooserStarted + _minTimeSecs) && _currentObjectiveCompletedCount >= _numberOfRepetitions;
+  // Behaviors with _numberOfRepetions == 0 will always wait until max time and then play success outro
+  const bool minTimeAndRepetitions = FLT_GE(currentTime, _timeChooserStarted + _minTimeSecs)
+                                                && (_numberOfRepetitions != 0 && _currentObjectiveCompletedCount >= _numberOfRepetitions);
   const bool maxTimeout = FLT_GE(currentTime, _timeChooserStarted + _maxTimeSecs);
   const bool gameRequestedSparkEnd = mngr.DidGameRequestSparkEnd();
   
