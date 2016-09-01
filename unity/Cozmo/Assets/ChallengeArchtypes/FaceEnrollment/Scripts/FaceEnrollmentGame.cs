@@ -67,6 +67,8 @@ namespace FaceEnrollment {
     }
 
     protected override void AddDisabledReactionaryBehaviors() {
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.AcknowledgeFace);
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.AcknowledgeObject);
       _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToCubeMoved);
       _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToCliff);
       _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToPickup);
