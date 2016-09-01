@@ -280,7 +280,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
     _AvailablePromptLabel.text = Localization.Get(promptLabelKey);
     _AvailablePromptCost.gameObject.SetActive(true);
     ItemData itemData = ItemDataConfig.GetData(itemID);
-    string costName = Localization.Get(itemData.GetPluralName());
+    string costName = Localization.Get(itemData.GetAmountName(cost));
     _AvailablePromptCost.text = Localization.GetWithArgs(costLabelKey, new object[] { cost, costName });
     _ButtonCostLabel.text = string.Format("{0}", cost);
   }
