@@ -114,7 +114,7 @@ void SparksBehaviorChooser::OnSelected()
 void SparksBehaviorChooser::OnDeselected()
 {
   if(_idleAnimationsSet){
-    // Revert driving anmis
+    // Revert to driving anims
     _robot.GetDrivingAnimationHandler().PopDrivingAnimations();
     _robot.GetAnimationStreamer().PopIdleAnimation();
     _idleAnimationsSet = false;

@@ -31,7 +31,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFindFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorNone.h"
-#include "anki/cozmo/basestation/behaviors/gitTempPlayAnimSequence.h"
+#include "anki/cozmo/basestation/behaviors/behaviorPlayAnimSequence.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPutDownBlock.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"

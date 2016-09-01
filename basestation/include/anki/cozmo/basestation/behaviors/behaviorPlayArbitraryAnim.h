@@ -16,7 +16,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorPlayArbitraryAnim_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorPlayArbitraryAnim_H__
 
-#include "anki/cozmo/basestation/behaviors/gitTempPlayAnimSequence.h"
+#include "anki/cozmo/basestation/behaviors/behaviorPlayAnimSequence.h"
 #include "clad/types/animationTrigger.h"
 
 #include <vector>
