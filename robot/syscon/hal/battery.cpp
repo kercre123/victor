@@ -220,8 +220,6 @@ void Battery::updateOperatingMode() {
       break ;
 
     case BODY_BATTERY_CHARGE_TEST_MODE:
-      Backpack::lightsOff();
-
       nrf_gpio_pin_set(PIN_VDDs_EN);
       Motors::disable(true);
       Head::enterLowPowerMode();
@@ -239,8 +237,6 @@ void Battery::updateOperatingMode() {
       Battery::powerOff();
       break ;
     case BODY_IDLE_OPERATING_MODE:
-      Backpack::lightsOff();
-
       // Turn off encoders
       nrf_gpio_pin_set(PIN_VDDs_EN);
       Motors::disable(true);
@@ -431,6 +427,7 @@ void Battery::manage()
     case ANALOG_V_BAT_SENSE:
       {
         vBat = calcResult(VBAT_SCALE);
+        
         Backpack::setLowBattery(vBat < VBAT_LOW_THRESHOLD);
 
         // after 1 minute of low battery, turn off

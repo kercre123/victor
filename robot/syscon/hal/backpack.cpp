@@ -198,9 +198,16 @@ void Backpack::useTimer(NRF_TIMER_Type* timer, IRQn_Type interrupt) {
 }
 
 void Backpack::detachTimer(NRF_TIMER_Type* timer, IRQn_Type interrupt) {
+  // Detach from the timer
   timer->INTENCLR = ~0;
   NVIC_DisableIRQ(interrupt);
   timer->TASKS_STOP = 1;
+
+  // Clear out backpack leds
+  nrf_gpio_cfg_input(PIN_LED1, NRF_GPIO_PIN_NOPULL);
+  nrf_gpio_cfg_input(PIN_LED2, NRF_GPIO_PIN_NOPULL);
+  nrf_gpio_cfg_input(PIN_LED3, NRF_GPIO_PIN_NOPULL);
+  nrf_gpio_cfg_input(PIN_LED4, NRF_GPIO_PIN_NOPULL);
 }
 
 static void backpack_update(NRF_TIMER_Type* const timer) {
