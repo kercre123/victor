@@ -16,22 +16,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!1 &107494
-GameObject:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
-  m_Component:
-  - 224: {fileID: 22446236}
-  - 114: {fileID: 11400300}
-  m_Layer: 5
-  m_Name: PreReqButton
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
 --- !u!1 &117148
 GameObject:
   m_ObjectHideFlags: 1
@@ -355,48 +339,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &11400300
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 107494}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
-  ModifiedValues:
-  - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"#unlockable.ViewPreReq"'
-  - ObjectPath: ButtonBackground
-    FieldName: UnityEngine.UI.Image:m_Color:b
-    JsonValue: 0.6476169
-  - ObjectPath: ButtonBackground
-    FieldName: UnityEngine.UI.Image:m_Color:g
-    JsonValue: 0.0
-  - ObjectPath: ButtonBackground
-    FieldName: UnityEngine.UI.Image:m_Color:r
-    JsonValue: 0.727941155
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextEnabledColor:b
-    JsonValue: 1.0
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextEnabledColor:g
-    JsonValue: 1.0
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextEnabledColor:r
-    JsonValue: 1.0
-  ModifiedLocalReferences:
-  - ObjectPath: ../../../
-    FieldName: ChallengeDetailsDialog:_ViewPreReqButton
-    ReferencePath: 
-  ModifiedGlobalReferences:
-  - ObjectPath: ButtonGlint
-    FieldName: UnityEngine.UI.Image:m_Sprite
-    Reference: {fileID: 21300000, guid: cd8652dcb3b244500a6bf0e4a70cb22a, type: 3}
 --- !u!114 &11400584
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1004,24 +946,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: -102.99999}
   m_SizeDelta: {x: 300, y: 300}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!224 &22446236
-RectTransform:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 107494}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_Children: []
-  m_Father: {fileID: 22452242}
-  m_RootOrder: 0
-  m_AnchorMin: {x: 0.5, y: 0}
-  m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0, y: 200}
-  m_SizeDelta: {x: 770, y: 248}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22452242
 RectTransform:
   m_ObjectHideFlags: 1
@@ -1033,7 +957,6 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
-  - {fileID: 22446236}
   - {fileID: 22486224}
   m_Father: {fileID: 22478998}
   m_RootOrder: 3
@@ -1135,7 +1058,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22452242}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: 0, y: -102.99999}
