@@ -39,8 +39,7 @@ namespace Onboarding {
     private const int _kMaxPickupTries = 6;
     private const int _kMaxErrorsShown = 3;
     private const float _kMaxTimeInStage_Sec = 60 * 5;
-    private const float _kDistanceReactToCubeMM = 60.0f;
-    private const float _kBackupDistanceToCubeMM = 100.0f;
+    private const float _kBackupDistanceToCubeMM = 50.0f;
 
 
     private int _SawCubeID = -1;
@@ -127,10 +126,6 @@ namespace Onboarding {
       }
     }
 
-    private void HandleBlockAlignComplete(bool success) {
-      DAS.Debug(this, "HandleBlockAlignComplete " + success);
-      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnboardingReactToCube, HandleCubeReactComplete);
-    }
     private void HandleCubeReactComplete(bool success) {
       DAS.Debug(this, "HandleCubeReactComplete " + success);
       // Get to the right distance
@@ -163,8 +158,7 @@ namespace Onboarding {
           bool wantsRetry = true;
           if (completionUnion.GetTag() == ActionCompletedUnion.Tag.objectInteractionCompleted) {
             DAS.Info(this, "HandleCubePickupComplete FAIL " + completionUnion.objectInteractionCompleted.result);
-            if (completionUnion.objectInteractionCompleted.result != ObjectInteractionResult.DID_NOT_REACH_PREACTION_POSE &&
-                completionUnion.objectInteractionCompleted.result != ObjectInteractionResult.NO_PREACTION_POSES) {
+            if (completionUnion.objectInteractionCompleted.result == ObjectInteractionResult.VISUAL_VERIFICATION_FAILED) {
               wantsRetry = false;
             }
           }
@@ -172,7 +166,7 @@ namespace Onboarding {
           if (wantsRetry) {
             _CubePickupRetries++;
             // Try to pick up again...
-            RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.ReactToBlockRetryPickup, HandleCubeReactComplete);
+            RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.RollBlockRealign, HandleCubeReactComplete);
           }
           else {
             UpdateSubstate(SubState.ErrorFinal);
@@ -183,7 +177,8 @@ namespace Onboarding {
             UpdateSubstate(SubState.ErrorFinal);
           }
           else {
-            RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnboardingInteractWithCube, HandlePickupAnimComplete);
+            RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnboardingInteractWithCube,
+                                                      HandlePickupAnimComplete, QueueActionPosition.NOW, false);
           }
         }
       }
@@ -192,7 +187,7 @@ namespace Onboarding {
     private void HandlePickupAnimComplete(bool success) {
       // Put down cube, Back off...
       IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
-      DAS.Debug(this, "RobotStatusFlag.IS_CARRYING_BLOCK " + ((CurrentRobot.RobotStatus | RobotStatusFlag.IS_CARRYING_BLOCK) != 0) + " , " + CurrentRobot.RobotStatus);
+      DAS.Debug(this, "RobotStatusFlag.IS_CARRYING_BLOCK " + ((CurrentRobot.RobotStatus & RobotStatusFlag.IS_CARRYING_BLOCK) != 0) + " , " + CurrentRobot.RobotStatus);
 
       // There is a bug in the firmware where we have to make sure the lift is all the way up before Placing an object on ground.
       // And sometimes the animation doesn't make it all the way up
@@ -310,14 +305,11 @@ namespace Onboarding {
           DAS.Debug(this, "AligningWithBlock: " + _SawCubeID);
           LightCube block = CurrentRobot.LightCubes[_SawCubeID];
           _CubeShouldBeStill = true;
-
-          float cubeDistance = Vector3.Distance(block.WorldPosition, CurrentRobot.WorldPosition);
-          // Don't drive a weird direction just to get a closer look if we're already close.
-          if (cubeDistance > _kDistanceReactToCubeMM) {
-            CurrentRobot.AlignWithObject(block, _kDistanceReactToCubeMM, HandleBlockAlignComplete, false, false);
+          if (block.IsInFieldOfView) {
+            RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnboardingReactToCube, HandleCubeReactComplete);
           }
           else {
-            CurrentRobot.TurnTowardsObject(block, false, 4.3f, 10, HandleBlockAlignComplete);
+            UpdateSubstate(SubState.ErrorCubeMoved);
           }
         }
         else {
@@ -328,7 +320,7 @@ namespace Onboarding {
         _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3Body4);
         _ShowShelfTextLabel.text = "";
         _ContinueButtonInstance.gameObject.SetActive(true);
-        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Block_Connect);
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
       }
       else if (nextState == SubState.ErrorCubeWrongSideUp) {
         _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCubeRightSideUp);

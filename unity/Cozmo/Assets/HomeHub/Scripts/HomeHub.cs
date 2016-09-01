@@ -156,7 +156,13 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleUnlockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
-      OpenChallengeDetailsDialog(challengeClicked, buttonTransform);
+      // If onboarding jump directly into the game
+      if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Home)) {
+        PlayMinigame(challengeClicked);
+      }
+      else {
+        OpenChallengeDetailsDialog(challengeClicked, buttonTransform);
+      }
     }
 
     private void OpenChallengeDetailsDialog(string challenge, Transform buttonTransform) {

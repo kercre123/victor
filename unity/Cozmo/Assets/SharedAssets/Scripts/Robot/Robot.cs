@@ -1113,20 +1113,10 @@ public class Robot : IRobot {
     SendQueueSingleAction(Singleton<EnrollNamedFace>.Instance.Initialize(faceID, mergeIntoID, name, seq, saveToRobot), callback, queueActionPosition);
   }
 
-  /*public void SendAnimationGroup(string animGroupName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true) {
 
-    DAS.Debug(this, "Sending Group " + animGroupName + " with " + 1 + " loop");
-
-    SendQueueSingleAction(Singleton<PlayAnimationGroup>.Instance.Initialize(ID, 1, animGroupName), callback, queueActionPosition);
-  }*/
-
-  public void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-
-    DAS.Debug(this, "Sending Trigger " + animTriggerEvent + " with " + 1 + " loop");
-    //RobotEngineManager.Instance.Message.PlayAnimationTrigger = Singleton<PlayAnimationTrigger>.Instance.Initialize(ID, 1, animTriggerEvent);
-    //RobotEngineManager.Instance.SendMessage();
-    //PlayAnimationGroup
-    SendQueueSingleAction(Singleton<PlayAnimationTrigger>.Instance.Initialize(ID, 1, animTriggerEvent), callback, queueActionPosition);
+    DAS.Debug(this, "Sending Trigger " + animTriggerEvent + " with " + 1 + " loop " + useSafeLiftMotion);
+    SendQueueSingleAction(Singleton<PlayAnimationTrigger>.Instance.Initialize(ID, 1, animTriggerEvent, useSafeLiftMotion), callback, queueActionPosition);
   }
 
   public void SetIdleAnimation(AnimationTrigger default_anim) {

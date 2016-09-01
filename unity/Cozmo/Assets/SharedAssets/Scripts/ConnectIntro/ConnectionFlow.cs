@@ -368,6 +368,9 @@ public class ConnectionFlow : MonoBehaviour {
     if (!OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Home)) {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connecting);
     }
+    else {
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
+    }
   }
 
   private void HandleConnectedToEngine(string connectionIdentifier) {

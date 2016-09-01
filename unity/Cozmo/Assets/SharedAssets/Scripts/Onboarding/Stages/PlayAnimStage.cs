@@ -30,7 +30,7 @@ namespace Onboarding {
 
     public override void OnDestroy() {
       base.OnDestroy();
-      _CurrentRobot.ExecuteBehavior(BehaviorType.NoneBehavior);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
     }
 
     public override void SkipPressed() {

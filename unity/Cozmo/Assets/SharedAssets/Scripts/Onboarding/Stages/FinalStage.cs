@@ -12,7 +12,8 @@ namespace Onboarding {
     private List<UnityEngine.UI.Button> _ClickBlockers;
     public override void Start() {
       base.Start();
-      BaseView.BaseViewOpened += HandleViewOpened;
+      BaseView.BaseViewOpened += HandleViewChanged;
+      BaseView.BaseViewClosed += HandleViewChanged;
 
       for (int i = 0; i < _ClickBlockers.Count; ++i) {
         _ClickBlockers[i].onClick.AddListener(OnBlockerClicked);
@@ -28,14 +29,15 @@ namespace Onboarding {
 
     public override void OnDestroy() {
       base.OnDestroy();
-      BaseView.BaseViewOpened -= HandleViewOpened;
+      BaseView.BaseViewOpened -= HandleViewChanged;
+      BaseView.BaseViewClosed -= HandleViewChanged;
     }
 
     public void OnBlockerClicked() {
       OnboardingManager.Instance.GoToNextStage();
     }
 
-    public void HandleViewOpened(BaseView view) {
+    public void HandleViewChanged(BaseView view) {
       OnboardingManager.Instance.GoToNextStage();
     }
   }
