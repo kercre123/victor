@@ -265,11 +265,14 @@ namespace Cozmo.HomeHub {
     }
 
     private void ResetRobotToFreeplaySettings() {
-      RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, true);
-      RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
-      RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
-      // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
-      RobotEngineManager.Instance.CurrentRobot.SetEnableCliffSensor(true);
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (null != robot) {
+        robot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, true);
+        robot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
+        robot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
+        // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
+        robot.SetEnableCliffSensor(true);
+      }
     }
 
     private void HandleMiniGameWin() {
