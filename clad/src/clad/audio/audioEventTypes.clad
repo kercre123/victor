@@ -5,6 +5,13 @@ namespace Cozmo {
 namespace Audio {
 namespace GameEvent {
 
+enum uint_32 Coz_App
+{
+  Enter_Background = 2017190380,
+  Enter_Foreground = 1225777195,
+  Invalid = 0,  // Use this to check for Invalid events
+}
+
 enum uint_32 Dev_Device
 {
   External_Source = 3462246304,
@@ -26,6 +33,7 @@ enum uint_32 Dev_Robot
 
 enum uint_32 EventGroupType
 {
+  Coz_App,
   Dev_Device,
   Dev_Robot,
   GenericEvent,
@@ -39,6 +47,8 @@ enum uint_32 EventGroupType
 enum uint_32 GenericEvent
 {
   Invalid = 0,  // Use this to check for Invalid events
+  Play__Coz_App__Enter_Background = 2017190380,
+  Play__Coz_App__Enter_Foreground = 1225777195,
   Play__Dev_Device__External_Source = 3462246304,
   Play__Dev_Robot__External_Source = 2539447680,
   Play__Dev_Robot__Freq_Sweep = 2028515806,
@@ -68,20 +78,25 @@ enum uint_32 GenericEvent
   Play__Robot_Sfx__Scrn_Angry = 2974471057,
   Play__Robot_Sfx__Scrn_Angry_Long = 3501460118,
   Play__Robot_Sfx__Scrn_Angry_Short = 105427450,
+  Play__Robot_Sfx__Scrn_Angry_Single = 1286585712,
   Play__Robot_Sfx__Scrn_Blink = 2666670780,
   Play__Robot_Sfx__Scrn_Curious = 1701725212,
   Play__Robot_Sfx__Scrn_Curious_Long = 3031263429,
   Play__Robot_Sfx__Scrn_Curious_Short = 2929211683,
+  Play__Robot_Sfx__Scrn_Curious_Single = 2347235575,
   Play__Robot_Sfx__Scrn_Happy = 302804072,
   Play__Robot_Sfx__Scrn_Happy_Long = 1961931745,
   Play__Robot_Sfx__Scrn_Happy_Short = 3678808343,
+  Play__Robot_Sfx__Scrn_Happy_Single = 1484658355,
   Play__Robot_Sfx__Scrn_Look = 3560778311,
   Play__Robot_Sfx__Scrn_Sad = 2370771958,
   Play__Robot_Sfx__Scrn_Sad_Long = 1620542011,
   Play__Robot_Sfx__Scrn_Sad_Short = 2584633397,
+  Play__Robot_Sfx__Scrn_Sad_Single = 775385813,
   Play__Robot_Sfx__Scrn_Surprised = 3774252557,
   Play__Robot_Sfx__Scrn_Surprised_Long = 1923508322,
   Play__Robot_Sfx__Scrn_Surprised_Short = 3952553918,
+  Play__Robot_Sfx__Scrn_Surprised_Single = 3984545916,
   Play__Robot_Sfx__Spark_Launch = 771536042,
   Play__Robot_Sfx__Srv_Angry = 1322826570,
   Play__Robot_Sfx__Srv_Angry_Long = 3491658847,
@@ -204,6 +219,7 @@ enum uint_32 GenericEvent
   Play__Robot_Vo__Shared_Bored_Sigh_Short = 2741090610,
   Play__Robot_Vo__Shared_Celebrate_Spin = 2159643843,
   Play__Robot_Vo__Shared_Curious = 3556785413,
+  Play__Robot_Vo__Shared_Curious_Long = 2068109610,
   Play__Robot_Vo__Shared_Curious_Short = 4047754278,
   Play__Robot_Vo__Shared_Disappointed_Short = 327662522,
   Play__Robot_Vo__Shared_Effort_Lift = 3824979789,
@@ -224,9 +240,12 @@ enum uint_32 GenericEvent
   Play__Robot_Vo__Shared_Giggle_Mischief = 855062857,
   Play__Robot_Vo__Shared_Giggle_Short = 3928693597,
   Play__Robot_Vo__Shared_Happy = 3531557633,
+  Play__Robot_Vo__Shared_Happy_Long = 174359366,
   Play__Robot_Vo__Shared_Happy_Loop_Play = 3025145855,
+  Play__Robot_Vo__Shared_Happy_Short = 1066816362,
   Play__Robot_Vo__Shared_Idea = 2993967144,
   Play__Robot_Vo__Shared_Idea_Loop_Play = 1684239554,
+  Play__Robot_Vo__Shared_Idea_Short = 1143549143,
   Play__Robot_Vo__Shared_Inhale = 237432456,
   Play__Robot_Vo__Shared_Pounce_Charge = 4216929694,
   Play__Robot_Vo__Shared_Pounce_Fail = 4228327806,
@@ -351,20 +370,25 @@ enum uint_32 Robot_Sfx
   Scrn_Angry = 2974471057,
   Scrn_Angry_Long = 3501460118,
   Scrn_Angry_Short = 105427450,
+  Scrn_Angry_Single = 1286585712,
   Scrn_Blink = 2666670780,
   Scrn_Curious = 1701725212,
   Scrn_Curious_Long = 3031263429,
   Scrn_Curious_Short = 2929211683,
+  Scrn_Curious_Single = 2347235575,
   Scrn_Happy = 302804072,
   Scrn_Happy_Long = 1961931745,
   Scrn_Happy_Short = 3678808343,
+  Scrn_Happy_Single = 1484658355,
   Scrn_Look = 3560778311,
   Scrn_Sad = 2370771958,
   Scrn_Sad_Long = 1620542011,
   Scrn_Sad_Short = 2584633397,
+  Scrn_Sad_Single = 775385813,
   Scrn_Surprised = 3774252557,
   Scrn_Surprised_Long = 1923508322,
   Scrn_Surprised_Short = 3952553918,
+  Scrn_Surprised_Single = 3984545916,
   Spark_Launch = 771536042,
   Srv_Angry = 1322826570,
   Srv_Angry_Long = 3491658847,
@@ -493,6 +517,7 @@ enum uint_32 Robot_Vo
   Shared_Bored_Sigh_Short = 2741090610,
   Shared_Celebrate_Spin = 2159643843,
   Shared_Curious = 3556785413,
+  Shared_Curious_Long = 2068109610,
   Shared_Curious_Short = 4047754278,
   Shared_Disappointed_Short = 327662522,
   Shared_Effort_Lift = 3824979789,
@@ -516,11 +541,14 @@ enum uint_32 Robot_Vo
   Shared_Giggle_Mischief = 855062857,
   Shared_Giggle_Short = 3928693597,
   Shared_Happy = 3531557633,
+  Shared_Happy_Long = 174359366,
   Shared_Happy_Loop_Play = 3025145855,
   Shared_Happy_Loop_Stop = 4286366971,
+  Shared_Happy_Short = 1066816362,
   Shared_Idea = 2993967144,
   Shared_Idea_Loop_Play = 1684239554,
   Shared_Idea_Loop_Stop = 273762158,
+  Shared_Idea_Short = 1143549143,
   Shared_Inhale = 237432456,
   Shared_Pounce_Charge = 4216929694,
   Shared_Pounce_Fail = 4228327806,
