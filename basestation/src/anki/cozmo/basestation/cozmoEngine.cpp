@@ -684,6 +684,11 @@ template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::SetGameBeingPaused& msg)
 {
   _isGamePaused = msg.isPaused;
+  
+  // Update Audio
+  if (nullptr != _context->GetAudioServer()) {
+    _context->GetAudioServer()->GetAudioController()->AppIsInFocus(!_isGamePaused);
+  }
 }
 
 void CozmoEngine::ExecuteBackgroundTransfers()
