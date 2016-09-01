@@ -89,6 +89,8 @@ private:
   // Loaded in from behavior_config
   float _minTimeSecs;
   float _maxTimeSecs;
+  // Setting numberOfRepetitions to 0 will cause the spark to always play until its max time
+  // and then play the success animaiton.  This allows non-time dependent sparks
   int _numberOfRepetitions;
   BehaviorObjective _objectiveToListenFor;
   AnimationTrigger _softSparkUpgradeTrigger;
@@ -96,6 +98,9 @@ private:
   // Special re-start indicator
   TimeStamp_t _timePlayingOutroStarted;
   bool _switchingSoftToHardSpark;
+  
+  // Track if idle animations swapped out
+  bool _idleAnimationsSet;
   
 };
    

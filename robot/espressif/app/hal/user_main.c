@@ -98,7 +98,7 @@ void user_init(void)
   REG_SET_BIT(0x3ff00014, BIT(0)); //< Set CPU frequency to 160MHz
   err = system_update_cpu_freq(160);
 
-  uart_init(BIT_RATE_230400, BIT_RATE_115200);
+  uart_init(BIT_RATE_3000000, BIT_RATE_115200);
 
   gpio_init();
 
@@ -192,7 +192,7 @@ void user_init(void)
     os_printf("Couldn't restart DHCP server\r\n");
   }
 
-  os_printf("SSID: %s\r\nPSK: %s\r\n", ap_config.ssid, ap_config.password);
+  os_printf("SSID: %s\t(Chan: %d)\r\nPSK: %s\r\n", ap_config.ssid, ap_config.channel, ap_config.password);
 
   // Register callbacks
   system_init_done_cb(&system_init_done);

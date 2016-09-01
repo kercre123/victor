@@ -130,6 +130,8 @@ public:
   // This flushes all audio events that have been posted
   void ProcessAudioQueue() const;
   
+  // Handle when the app is goes in and out of Focus
+  void AppIsInFocus( const bool inFocus );
 
 private:
 

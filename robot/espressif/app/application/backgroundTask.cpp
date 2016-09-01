@@ -55,109 +55,18 @@ void RadioConnectionStateMachineUpdate()
   {
     sendRadioState = true;
   }
-  else if ((lastStaCount  > 0) && (currentStaCount == 0)) // Last station disconnected
-  {
-    sendRadioState = true;
-  }
   
   if ((lastConCount == 0) && (currentConCount  > 0)) // First reliable transport connection
   {
+    sendRadioState = true;
     doRTConnectPhase    = 1;
     doRTDisconnectPhase = 0;
   }
   else if ((lastConCount  > 0) && (currentConCount == 0)) // Last reliable transport disconnection
   {
+    sendRadioState = true;
     doRTConnectPhase    = 0;
     doRTDisconnectPhase = 1;
-  }
-  
-  switch (doRTConnectPhase)
-  {
-    case 0: // Idle
-      break;
-    case 1:
-    {
-      SetBodyRadioMode bMsg;
-      bMsg.radioMode = BODY_ACCESSORY_OPERATING_MODE;
-      if (RobotInterface::SendMessage(bMsg)) doRTConnectPhase++;
-      // Body will initiate motor calibration after entering accessory mode
-      break;
-    }
-    case 2:
-    {
-      AnimationController::Clear();
-      AnimationController::ClearNumBytesPlayed();
-      AnimationController::ClearNumAudioFramesPlayed();
-      doRTConnectPhase++;
-      break;
-    }
-    case 3:
-    {
-      Factory::SetMode(RobotInterface::FTM_None);
-      doRTConnectPhase++;
-      break;
-    }
-    case 4:
-    {
-      RobotInterface::RobotAvailable idMsg;
-      idMsg.robotID = getSerialNumber();
-      idMsg.modelID = getModelNumber();
-      if (RobotInterface::SendMessage(idMsg)) doRTConnectPhase++;
-      break;
-    }
-    case 5:
-    {
-      RobotInterface::FirmwareVersion versionMsg;
-      u32* versionInfoAsU32 = reinterpret_cast<u32*>(versionMsg.json);
-      os_memcpy(versionInfoAsU32,
-                Anki::Cozmo::UpgradeController::GetVersionInfo(),
-                Anki::Cozmo::UpgradeController::VERSION_INFO_MAX_LENGTH);
-      versionMsg.json_length = os_strlen((const char*)versionMsg.json);
-      if (RobotInterface::SendMessage(versionMsg)) doRTConnectPhase++;
-      break;
-    }
-    case 6:
-    {
-      sendRadioState = true;
-      CrashReporter::StartSending();
-      doRTConnectPhase = 0; // Done
-      break;
-    }
-  }
-  
-  switch (doRTDisconnectPhase)
-  {
-    case 0: // Idle
-      break;
-    case 1:
-    {
-      SetBodyRadioMode bMsg;
-      bMsg.radioMode = BODY_BLUETOOTH_OPERATING_MODE;
-      if (RobotInterface::SendMessage(bMsg)) doRTDisconnectPhase++;
-      break;
-    }
-    case 2:
-    {
-      Anki::Cozmo::UpgradeController::OnDisconnect();
-      doRTDisconnectPhase++;
-      break;
-    }
-    case 3:
-    {
-      if (Anki::Cozmo::Factory::GetMode() == Anki::Cozmo::RobotInterface::FTM_None)
-      {
-        Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_entry);
-        Anki::Cozmo::Face::Clear();
-      }
-      doRTDisconnectPhase++;
-      break;
-    }
-    case 4:
-    {
-      sendRadioState = true;
-      doRTDisconnectPhase = 0;
-      break;
-    }
   }
   
   if (sendRadioState)
@@ -167,6 +76,97 @@ void RadioConnectionStateMachineUpdate()
     rws.staCount = currentStaCount;
     rws.rtCount  = currentConCount;
     if (RobotInterface::SendMessage(rws)) sendRadioState = false;
+  }
+  else if (doRTConnectPhase)
+  {
+    switch (doRTConnectPhase)
+    {
+      case 1:
+      {
+        AnimationController::Clear();
+        AnimationController::ClearNumBytesPlayed();
+        AnimationController::ClearNumAudioFramesPlayed();
+        doRTConnectPhase++;
+        break;
+      }
+      case 2:
+      {
+        Factory::SetMode(RobotInterface::FTM_None);
+        doRTConnectPhase++;
+        break;
+      }
+      case 3:
+      {
+        RobotInterface::RobotAvailable idMsg;
+        idMsg.robotID = getSerialNumber();
+        idMsg.modelID = getModelNumber();
+        if (RobotInterface::SendMessage(idMsg)) doRTConnectPhase++;
+        break;
+      }
+      case 4:
+      {
+        SetBodyRadioMode bMsg;
+        bMsg.radioMode = BODY_ACCESSORY_OPERATING_MODE;
+        if (RobotInterface::SendMessage(bMsg)) doRTConnectPhase++;
+        // Body will initiate motor calibration after entering accessory mode
+        break;
+      }
+      case 5:
+      {
+        RobotInterface::FirmwareVersion versionMsg;
+        u32* versionInfoAsU32 = reinterpret_cast<u32*>(versionMsg.json);
+        os_memcpy(versionInfoAsU32,
+                  Anki::Cozmo::UpgradeController::GetVersionInfo(),
+                  Anki::Cozmo::UpgradeController::VERSION_INFO_MAX_LENGTH);
+        versionMsg.json_length = os_strlen((const char*)versionMsg.json);
+        if (clientQueueAvailable() > ((int)versionMsg.Size() + 200))
+        {
+          if (RobotInterface::SendMessage(versionMsg)) doRTConnectPhase++;
+        }
+        break;
+      }
+      case 6:
+      {
+        CrashReporter::StartSending();
+        doRTConnectPhase = 0; // Done
+        break;
+      }
+    }
+  }
+  else if (doRTDisconnectPhase)
+  {
+    switch (doRTDisconnectPhase)
+    {
+      case 1:
+      {
+        SetBodyRadioMode bMsg;
+        bMsg.radioMode = BODY_BLUETOOTH_OPERATING_MODE;
+        if (RobotInterface::SendMessage(bMsg)) doRTDisconnectPhase++;
+        break;
+      }
+      case 2:
+      {
+        Anki::Cozmo::UpgradeController::OnDisconnect();
+        doRTDisconnectPhase++;
+        break;
+      }
+      case 3:
+      {
+        if (Anki::Cozmo::Factory::GetMode() == Anki::Cozmo::RobotInterface::FTM_None)
+        {
+          Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_entry);
+          Anki::Cozmo::Face::Clear();
+        }
+        doRTDisconnectPhase++;
+        break;
+      }
+      case 4:
+      {
+        sendRadioState = true;
+        doRTDisconnectPhase = 0;
+        break;
+      }
+    }
   }
   
   lastStaCount = currentStaCount;
@@ -188,7 +188,7 @@ void Exec(os_event_t *event)
     AnkiWarn( 51, "BackgroundTask.IntervalTooLong", 295, "Background task interval too long: %dus!", 1, btInterval);
   }
 
-  clientUpdate();
+  RTIP::Update();
 
   switch (event->sig)
   {
@@ -226,13 +226,14 @@ void Exec(os_event_t *event)
     case 4:
     {
       static bool haveReported = false;
-      if (i2spiPhaseErrorCount > 2)
+      const uint32_t pec = i2spiGetPhaseErrorCount();
+      if (pec > 2)
       {
         RobotInterface::RobotErrorReport rer;
         rer.error = RobotInterface::REC_I2SPI_TMD;
         rer.fatal = true;
         RobotInterface::SendMessage(rer);
-        AnkiWarn( 185, "I2SPI.TooMuchDrift", 486, "TMD=%d\tintegral=%d", 2, i2spiPhaseErrorCount, i2spiIntegralDrift);
+        AnkiWarn( 185, "I2SPI.TooMuchDrift", 486, "TMD=%d\tintegral=%d", 2, pec, i2spiGetIntegralDrift());
         if (haveReported == false)
         {
           CrashRecord cr;
@@ -240,6 +241,11 @@ void Exec(os_event_t *event)
           cr.reporter = RobotInterface::WiFiCrash;
           cr.errorCode = rer.error;
           if (crashHandlerPutReport(&cr) >= 0) haveReported = true;
+        }
+        else
+        {
+          os_printf("Seppuku\r\n");
+          system_deep_sleep(0); // Die
         }
       }
       break;
@@ -261,6 +267,11 @@ void Exec(os_event_t *event)
     }
     case 8:
     {
+      AnimationController::Update();
+      break;
+    }
+    case 9:
+    {
       Face::Update();
       break;
     }
@@ -270,6 +281,8 @@ void Exec(os_event_t *event)
       event->sig = -1; // So next call will be event 0
     }
   }
+
+  clientUpdate(); // Do this last to send all the messages we just generated
 
   const u32 btRunTime = system_get_time() - btStart;
   if ((btRunTime > BT_MAX_RUN_TIME_US) && (periodicPrint++ == 0))
@@ -348,6 +361,7 @@ extern "C" int8_t backgroundTaskInit(void)
 
 extern "C" bool i2spiSynchronizedCallback(uint32 param)
 {
+  os_printf("I2SPI Synchronized at offset %d\r\n", param);
   Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_entry);
   Anki::Cozmo::CrashReporter::StartQuerry();
   return false;

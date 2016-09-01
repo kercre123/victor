@@ -385,6 +385,12 @@ namespace Anki {
         _lightsSet = true;
       }
       
+      // If this is a reset clear the _squintLayerTag
+      if(_squintLayerTag != AnimationStreamer::NotAnimatingTag){
+        _robot.GetAnimationStreamer().RemovePersistentFaceLayer(_squintLayerTag, 250);
+        _squintLayerTag = AnimationStreamer::NotAnimatingTag;
+      }
+      
       // Go ahead and Update the FaceObjectAction once now, so we don't
       // waste a tick doing so in CheckIfDone (since this is the first thing
       // that will be done in CheckIfDone anyway)

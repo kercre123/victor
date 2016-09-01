@@ -188,5 +188,11 @@
   },
   "soundcheck.description.confirm": {
     "translation": "Did you hear the sound?"
+  },
+  "label.cozmo.serial": {
+    "translation": "Last Connected Cozmo: {0}"
+  },
+  "label.deviceid": {
+    "translation": "Device ID: {0}"
   }
 }

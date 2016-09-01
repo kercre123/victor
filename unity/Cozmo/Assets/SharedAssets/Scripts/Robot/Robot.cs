@@ -1,3 +1,4 @@
+using Cozmo.BlockPool;
 using UnityEngine;
 using System;
 using System.Collections;
@@ -347,12 +348,13 @@ public class Robot : IRobot {
 
     ClearData(true);
 
+    RobotEngineManager.Instance.BlockPoolTracker.OnBlockDataConnectionChanged += HandleBlockDataConnectionChanged;
+
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Reset);
 
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(ProcessRobotCompletedAction);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.MoodState>(UpdateEmotionFromEngineRobotManager);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.SparkEnded>(SparkEnded);
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ObjectConnectionState>(HandleObjectConnectionState);
 
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ObjectTapped>(HandleObservedObjectTapped);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotProcessedImage>(FinishedProcessingImage);
@@ -376,10 +378,11 @@ public class Robot : IRobot {
   }
 
   public void Dispose() {
+    RobotEngineManager.Instance.BlockPoolTracker.OnBlockDataConnectionChanged -= HandleBlockDataConnectionChanged;
+
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Reset);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(ProcessRobotCompletedAction);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.SparkEnded>(SparkEnded);
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ObjectConnectionState>(HandleObjectConnectionState);
 
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ObjectTapped>(HandleObservedObjectTapped);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotProcessedImage>(FinishedProcessingImage);
@@ -772,34 +775,16 @@ public class Robot : IRobot {
     }
   }
 
-  private void HandleObjectConnectionState(ObjectConnectionState message) {
-    DAS.Debug("Robot.HandleObjectConnectionState", (message.connected ? "Connected " : "Disconnected ") + "object of type " + message.device_type.ToString() + " with ID " + message.objectID + " and factoryId " + message.factoryID.ToString("X"));
+  private void HandleBlockDataConnectionChanged(BlockPoolData blockData) {
+    DAS.Debug("Robot.HandleObjectConnectionState", (blockData.IsConnected ? "Connected " : "Disconnected ")
+              + "object of type " + blockData.ObjectType + " with ID " + blockData.ObjectID
+              + " and factoryId " + blockData.FactoryID.ToString("X"));
 
-    if (message.connected) {
-      // Get the ObjectType from ActiveObjectType
-      ObjectType objectType = ObjectType.Invalid;
-      switch (message.device_type) {
-      case ActiveObjectType.OBJECT_CUBE1:
-        objectType = ObjectType.Block_LIGHTCUBE1;
-        break;
-      case ActiveObjectType.OBJECT_CUBE2:
-        objectType = ObjectType.Block_LIGHTCUBE2;
-        break;
-      case ActiveObjectType.OBJECT_CUBE3:
-        objectType = ObjectType.Block_LIGHTCUBE3;
-        break;
-      case ActiveObjectType.OBJECT_CHARGER:
-        objectType = ObjectType.Charger_Basic;
-        break;
-      case ActiveObjectType.OBJECT_UNKNOWN:
-        objectType = ObjectType.Unknown;
-        break;
-      }
-
-      AddObservedObject((int)message.objectID, message.factoryID, objectType);
+    if (blockData.IsConnected) {
+      AddObservedObject((int)blockData.ObjectID, blockData.FactoryID, blockData.ObjectType);
     }
     else {
-      DeleteObservedObject((int)message.objectID);
+      DeleteObservedObject((int)blockData.ObjectID);
     }
   }
 
@@ -960,6 +945,12 @@ public class Robot : IRobot {
   }
 
   private ObservedObject AddObservedObject(int id, uint factoryId, ObjectType objectType) {
+    if (id < 0) {
+      // Negative object ids are invalid
+      DAS.Warn("Robot.AddObservedObject", "Tried to add an object with an invalid object id! id=" + id + " objectType=" + objectType);
+      return null;
+    }
+
     ObservedObject createdObject = null;
     bool isCube = ((objectType == ObjectType.Block_LIGHTCUBE1)
                   || (objectType == ObjectType.Block_LIGHTCUBE2)
@@ -967,7 +958,7 @@ public class Robot : IRobot {
     if (isCube) {
       LightCube lightCube = null;
       if (!LightCubes.TryGetValue(id, out lightCube)) {
-        DAS.Debug("Robot.AddObservedObject", "Registered LightCube: id=" + id + " factoryId = " + factoryId + " objectType=" + objectType);
+        DAS.Debug("Robot.AddObservedObject", "Registered LightCube: id=" + id + " factoryId = " + factoryId.ToString("X") + " objectType=" + objectType);
         lightCube = new LightCube(id, factoryId, ObjectFamily.LightCube, objectType);
         LightCubes.Add(id, lightCube);
         if (OnLightCubeAdded != null) {
@@ -987,14 +978,13 @@ public class Robot : IRobot {
     }
     else if (objectType == ObjectType.Charger_Basic) {
       if (Charger == null) {
-        DAS.Debug("Robot.AddObservedObject", "Registered Charger: id=" + id + " factoryId = " + factoryId + " objectType=" + objectType);
+        DAS.Debug("Robot.AddObservedObject", "Registered Charger: id=" + id + " factoryId = " + factoryId.ToString("X") + " objectType=" + objectType);
         Charger = new ObservedObject(id, factoryId, ObjectFamily.Charger, objectType);
         createdObject = Charger;
       }
     }
     else {
       DAS.Warn("Robot.AddObservedObject", "Tried to add an object with unsupported ObjectType! id=" + id + " objectType=" + objectType);
-      DeleteObservedObject(id);
     }
 
     return createdObject;

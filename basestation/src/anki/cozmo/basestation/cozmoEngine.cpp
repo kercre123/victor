@@ -182,7 +182,6 @@ Result CozmoEngine::Init(const Json::Value& config) {
   _context->GetDataLoader()->LoadData();
   _context->GetRobotManager()->Init(_config);
 
-  SendSupportInfo();
   return RESULT_OK;
 }
 
@@ -320,6 +319,7 @@ Result CozmoEngine::Update(const float currTime_sec)
     {
       if (_uiMsgHandler->HasDesiredNumUiDevices()) {
         _context->GetRobotManager()->BroadcastAvailableAnimations();
+        SendSupportInfo();
         SetEngineState(EngineState::Running);
       }
       break;
@@ -684,6 +684,11 @@ template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::SetGameBeingPaused& msg)
 {
   _isGamePaused = msg.isPaused;
+  
+  // Update Audio
+  if (nullptr != _context->GetAudioServer()) {
+    _context->GetAudioServer()->GetAudioController()->AppIsInFocus(!_isGamePaused);
+  }
 }
 
 void CozmoEngine::ExecuteBackgroundTransfers()

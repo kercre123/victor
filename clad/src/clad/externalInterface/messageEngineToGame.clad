@@ -521,7 +521,7 @@ message EngineErrorCodeMessage {
 
 structure BlockPoolBlockData {
   uint_32 factory_id,
-  bool enabled
+  ObjectType objectType
 }
 
 message InitBlockPoolMessage {

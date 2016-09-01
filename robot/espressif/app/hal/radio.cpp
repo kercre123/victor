@@ -2,12 +2,18 @@ extern "C" {
   #include "client.h"
   #include "osapi.h"
   #include "user_interface.h"
+  #include "imageSender.h"
 }
 #include "anki/cozmo/robot/hal.h"
 #include "rtip.h"
 #include "clad/types/imageTypes.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+
+// Confirm pure C def agrees with clad
+ct_assert(IMAGE_DATA_MAX_LENGTH == Anki::Cozmo::IMAGE_CHUNK_SIZE);
+// We need the purce C ImageDataBuffer and CLAD Anki::Cozmo::ImageChunk to be binary compatible
+ct_assert(sizeof(ImageDataBuffer) == sizeof(Anki::Cozmo::ImageChunk));
 
 namespace Anki {
   namespace Cozmo {
@@ -30,53 +36,69 @@ namespace Anki {
         }
       }
     }
-    
-    void sendImgChunk(ImageChunk& msg, bool eof)
-    {
-      static bool skipFrame = true; // Want to wait for the first whole frame before sending anything
-      msg.imageEncoding = JPEGMinimizedGray;
-      msg.resolution    = QVGA;
-      
-      // As soon as we skip one chunk of a frame, skip the remaining chunks - the robot can't recover it anyway
-      if (!skipFrame)
-        if (!clientSendMessage(msg.GetBuffer(), msg.Size(), RobotInterface::RobotToEngine::Tag_image, false, eof))
-          skipFrame = true;
-        
-      if (eof)
-      {
-        msg.chunkId = 0;
-        skipFrame = false;
-      }
-      else
-      {
-        msg.chunkId++;
-      }
-      msg.data_length = 0;
-    }
 
-    extern "C" void imageSenderQueueData(uint8_t* imgData, uint8_t len, bool eof)
+    /** Task for sending image data
+     */
+    extern "C" void sendImageTask(os_event_t *event)
     {
-      static ImageChunk msg; // Relying on 0 initalization of static structures
-      msg.chunkDebug = len | (eof << 8);
-      if (msg.data_length + len > IMAGE_CHUNK_SIZE) // No room left in this chunk for this data
+      static u32  imageId = 0;
+      static u8   chunkId = 0;
+      static bool skipFrame = false;
+      const uint32_t flags = event->sig;
+      
+      if (unlikely(flags & QIS_overflow))
       {
-        sendImgChunk(msg, false); // Send what we have
+        skipFrame = true;
+        chunkId = 0;
+        imageId = 0;
       }
-      if (eof)
+      else if (unlikely(flags & QIS_resume))
       {
-        os_memcpy(msg.data + msg.data_length, imgData, len-8);
-        msg.data_length += len - 8;
-        msg.frameTimeStamp = *((u32*)(imgData + len-8));
-        msg.imageChunkCount = msg.chunkId + 1;
-        sendImgChunk(msg, true);
-        msg.frameTimeStamp = 0; // Mark as invalid
-        msg.imageId = *((u32*)(imgData + len-4)) + 1; // Set for next frame
-        msg.imageChunkCount = 0; // Mark as invalid
+        skipFrame = false;
+        imageId = event->par + 1;
+        chunkId = 0;
       }
       else
       {
-        os_memcpy(msg.data + msg.data_length, imgData, len);
-        msg.data_length += len;
+        ImageChunk* msg = (ImageChunk*)(event->par);
+        const bool eof = flags & QIS_endOfFrame;
+        const u32* meta = (u32*)(msg->data + msg->data_length - 8);
+
+        msg->status++; // Indicate the task is processing the message
+        msg->imageEncoding = JPEGMinimizedGray;
+        msg->resolution    = QVGA;
+        msg->imageId       = imageId;
+        msg->chunkId       = chunkId;
+        
+        if (skipFrame == false)
+        {
+          if (eof)
+          {
+            msg->data_length -= 8;
+            msg->frameTimeStamp = meta[0];
+            msg->imageChunkCount = chunkId + 1;
+          }
+          if (!clientSendMessage(msg->GetBuffer(), msg->Size(), RobotInterface::RobotToEngine::Tag_image, false, eof))
+          {
+            skipFrame = true;
+          }
+        }
+        
+        if (eof)
+        {
+          imageId = meta[1] + 1; // Set for next frame
+          chunkId = 0;
+          skipFrame = false;
+        }
+        else
+        {
+          chunkId++;
+        }
+        
+        msg->imageChunkCount = 0; // Mark as invalid
+        msg->frameTimeStamp = 0; // Mark as invalid
+        msg->data_length = 0;
+        msg->status = 0; // Mark as transmitted
       }
     }
 

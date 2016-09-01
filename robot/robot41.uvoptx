@@ -73,11 +73,11 @@
         <LExpSel>0</LExpSel>
       </OPTXL>
       <OPTFL>
-        <tvExp>0</tvExp>
+        <tvExp>1</tvExp>
         <tvExpOptDlg>0</tvExpOptDlg>
         <IsCurrentTarget>1</IsCurrentTarget>
       </OPTFL>
-      <CpuCode>8</CpuCode>
+      <CpuCode>14</CpuCode>
       <DebugOpt>
         <uSim>0</uSim>
         <uTrg>1</uTrg>
@@ -100,7 +100,7 @@
         <tRSysVw>1</tRSysVw>
         <sRunDeb>0</sRunDeb>
         <sLrtime>0</sLrtime>
-        <nTsel>6</nTsel>
+        <nTsel>1</nTsel>
         <sDll></sDll>
         <sDllPa></sDllPa>
         <sDlgDll></sDlgDll>
@@ -111,7 +111,7 @@
         <tDlgDll></tDlgDll>
         <tDlgPa></tDlgPa>
         <tIfile></tIfile>
-        <pMon>Segger\JL2CM3.dll</pMon>
+        <pMon>BIN\UL2CM3.DLL</pMon>
       </DebugOpt>
       <TargetDriverDllRegistry>
         <SetRegEntry>
@@ -257,9 +257,6 @@
       <LintExecutable></LintExecutable>
       <LintConfigFile></LintConfigFile>
       <bLintAuto>0</bLintAuto>
-      <Lin2Executable></Lin2Executable>
-      <Lin2ConfigFile></Lin2ConfigFile>
-      <bLin2Auto>0</bLin2Auto>
     </TargetOption>
   </Target>
 
@@ -274,6 +271,7 @@
       <FileNumber>1</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>k02_hal/hal/main.cpp</PathWithFileName>
@@ -286,6 +284,7 @@
       <FileNumber>2</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\camera.cpp</PathWithFileName>
@@ -298,6 +297,7 @@
       <FileNumber>3</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\i2c.cpp</PathWithFileName>
@@ -310,6 +310,7 @@
       <FileNumber>4</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\timer.cpp</PathWithFileName>
@@ -322,6 +323,7 @@
       <FileNumber>5</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\enjpeg.cpp</PathWithFileName>
@@ -334,6 +336,7 @@
       <FileNumber>6</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\dac.cpp</PathWithFileName>
@@ -346,6 +349,7 @@
       <FileNumber>7</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\oled.cpp</PathWithFileName>
@@ -358,6 +362,7 @@
       <FileNumber>8</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\spi.cpp</PathWithFileName>
@@ -370,6 +375,7 @@
       <FileNumber>9</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\uart.cpp</PathWithFileName>
@@ -382,6 +388,7 @@
       <FileNumber>10</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\debug.cpp</PathWithFileName>
@@ -394,6 +401,7 @@
       <FileNumber>11</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\wifi.cpp</PathWithFileName>
@@ -406,6 +414,7 @@
       <FileNumber>12</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\imu.cpp</PathWithFileName>
@@ -418,6 +427,7 @@
       <FileNumber>13</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\motors.cpp</PathWithFileName>
@@ -430,6 +440,7 @@
       <FileNumber>14</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\lights.cpp</PathWithFileName>
@@ -442,6 +453,7 @@
       <FileNumber>15</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\cube.cpp</PathWithFileName>
@@ -454,6 +466,7 @@
       <FileNumber>16</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\spine.cpp</PathWithFileName>
@@ -466,6 +479,7 @@
       <FileNumber>17</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\watchdog.cpp</PathWithFileName>
@@ -478,6 +492,7 @@
       <FileNumber>18</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\power.cpp</PathWithFileName>
@@ -490,6 +505,7 @@
       <FileNumber>19</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\crashlogger.cpp</PathWithFileName>
@@ -510,6 +526,7 @@
       <FileNumber>20</FileNumber>
       <FileType>2</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>k02_hal/startup/startup_MK02F12810.s</PathWithFileName>
@@ -522,6 +539,7 @@
       <FileNumber>21</FileNumber>
       <FileType>1</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>k02_hal/startup/startup.c</PathWithFileName>
@@ -542,6 +560,7 @@
       <FileNumber>22</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\messages.cpp</PathWithFileName>
@@ -554,6 +573,7 @@
       <FileNumber>23</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\generated\clad\clad.cpp</PathWithFileName>
@@ -574,6 +594,7 @@
       <FileNumber>24</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\cozmoBot.cpp</PathWithFileName>
@@ -586,6 +607,7 @@
       <FileNumber>25</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\liftController.cpp</PathWithFileName>
@@ -598,6 +620,7 @@
       <FileNumber>26</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\velocityProfileGenerator.cpp</PathWithFileName>
@@ -610,6 +633,7 @@
       <FileNumber>27</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\radians.cpp</PathWithFileName>
@@ -622,6 +646,7 @@
       <FileNumber>28</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\headController.cpp</PathWithFileName>
@@ -634,6 +659,7 @@
       <FileNumber>29</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\imuFilter.cpp</PathWithFileName>
@@ -646,6 +672,7 @@
       <FileNumber>30</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\trig_fast.cpp</PathWithFileName>
@@ -658,6 +685,7 @@
       <FileNumber>31</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\dockingController.cpp</PathWithFileName>
@@ -670,6 +698,7 @@
       <FileNumber>32</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\localization.cpp</PathWithFileName>
@@ -682,6 +711,7 @@
       <FileNumber>33</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\localization_geometry.cpp</PathWithFileName>
@@ -694,6 +724,7 @@
       <FileNumber>34</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\path.cpp</PathWithFileName>
@@ -706,6 +737,7 @@
       <FileNumber>35</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\pathFollower.cpp</PathWithFileName>
@@ -718,6 +750,7 @@
       <FileNumber>36</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\pickAndPlaceController.cpp</PathWithFileName>
@@ -730,6 +763,7 @@
       <FileNumber>37</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\speedController.cpp</PathWithFileName>
@@ -742,6 +776,7 @@
       <FileNumber>38</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\steeringController.cpp</PathWithFileName>
@@ -754,6 +789,7 @@
       <FileNumber>39</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\timeProfiler.cpp</PathWithFileName>
@@ -766,6 +802,7 @@
       <FileNumber>40</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\wheelController.cpp</PathWithFileName>
@@ -778,6 +815,7 @@
       <FileNumber>41</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\proxSensors.cpp</PathWithFileName>
@@ -790,6 +828,7 @@
       <FileNumber>42</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\testModeController.cpp</PathWithFileName>
@@ -802,6 +841,7 @@
       <FileNumber>43</FileNumber>
       <FileType>8</FileType>
       <tvExp>0</tvExp>
+      <Focus>1</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\backpackLightController.cpp</PathWithFileName>

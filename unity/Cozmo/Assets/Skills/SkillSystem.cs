@@ -204,6 +204,14 @@ public class SkillSystem {
                 if (cozmoSkillLevel == currSkillData.LastLevel) {
                   currSkillData.ChangeLevel(currSkillData.LastLevel + 1);
                 }
+
+                // Extra checking since we're seeing an error here
+                if (_ChallengeIndex < 0 || _ChallengeIndex >= _CozmoHighestLevels.Length) {
+                  DAS.Error("SkillSystem.HandleGameEvent", "GameEvent " + cozEvent.GameEventEnum + 
+                    " can't be handled with _ChallengeIndex " + _ChallengeIndex +
+                    " and _CozmoHighestLevels.Length " + _CozmoHighestLevels.Length);
+                }
+                  
                 if (_CozmoHighestLevels[_ChallengeIndex] < currSkillData.LastLevel) {
                   _CozmoHighestLevels[_ChallengeIndex]++;
                 }
@@ -291,7 +299,8 @@ public class SkillSystem {
     numChallenges = Mathf.Max(robotDataLen, numChallenges);
     _CozmoHighestLevels = new byte[numChallenges];
     // first time init
-    if (robotData != null) {
+    if (robotData != null && robotDataLen > 0) {
+      DAS.Info("SkillSystem.SetCozmoHighestLevelsReached", "Copying " + robotDataLen + " elements.");
       System.Array.Copy(robotData, _CozmoHighestLevels, robotDataLen);
     }
   }

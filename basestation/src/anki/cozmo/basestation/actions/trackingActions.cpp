@@ -24,6 +24,8 @@
 
 #include "anki/common/basestation/utils/timer.h"
 
+#include "util/math/math.h"
+
 #define DEBUG_TRACKING_ACTIONS 0
 
 namespace Anki {
@@ -151,7 +153,7 @@ ActionResult ITrackAction::CheckIfDone()
   
   const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
-  // See if there are new relative pan/tilt angles from the derived class
+  // See if there are new absolute pan/tilt angles from the derived class
   if(GetAngles(absPanAngle, absTiltAngle))
   {
 
@@ -174,9 +176,17 @@ ActionResult ITrackAction::CheckIfDone()
     f32  eyeShiftX = 0.f, eyeShiftY = 0.f;
     
     // Tilt Head:
-    const f32 relTiltAngle = (absTiltAngle - _robot.GetHeadAngle()).ToFloat();
+    f32 relTiltAngle = (absTiltAngle - _robot.GetHeadAngle()).ToFloat();
+    
+    // If enabled, always move at least the tolerance amount
+    if(_clampSmallAngles && FLT_LE(std::abs(relTiltAngle), _tiltTolerance.ToFloat()))
+    {
+      relTiltAngle = std::copysign(_tiltTolerance.ToFloat(), relTiltAngle);
+      absTiltAngle = _robot.GetHeadAngle() + relTiltAngle;
+    }
+    
     if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) &&
-       std::abs(relTiltAngle) > _tiltTolerance.ToFloat())
+       FLT_GE(std::abs(relTiltAngle), _tiltTolerance.ToFloat()))
     {
       // Set speed/accel based on angle difference
       const f32 angleFrac = std::abs(relTiltAngle)/(MAX_HEAD_ANGLE-MIN_HEAD_ANGLE);
@@ -199,8 +209,17 @@ ActionResult ITrackAction::CheckIfDone()
     }
     
     // Pan Body:
-    const f32 relPanAngle = (absPanAngle - _robot.GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat();
-    if((Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode) && std::abs(relPanAngle) > _panTolerance.ToFloat())
+    f32 relPanAngle = (absPanAngle - _robot.GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat();
+    
+    // If enabled, always move at least the tolerance amount
+    if(_clampSmallAngles && FLT_LE(std::abs(relPanAngle), _panTolerance.ToFloat()))
+    {
+      relPanAngle = std::copysign(_panTolerance.ToFloat(), relPanAngle);
+      absPanAngle = _robot.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat() + relPanAngle;
+    }
+    
+    if((Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode) &&
+       FLT_GE(std::abs(relPanAngle), _panTolerance.ToFloat()))
     {
       // Get rotation angle around drive center
       Pose3d rotatedPose;
@@ -209,7 +228,7 @@ ActionResult ITrackAction::CheckIfDone()
       _robot.ComputeOriginPose(dcPose, rotatedPose);
       
       // Set speed/accel based on angle difference
-      const f32 angleFrac = std::min(1.f, std::abs(relPanAngle)/(f32)M_PI);
+      const f32 angleFrac = std::min(1.f, std::abs(relPanAngle)/PI_F);
       const f32 speed = (_maxPanSpeed_radPerSec - _minPanSpeed_radPerSec)*angleFrac + _minPanSpeed_radPerSec;
       const f32 accel = 10.f; //(MaxAccel - MinAccel)*angleFrac + MinAccel;
       
@@ -249,8 +268,8 @@ ActionResult ITrackAction::CheckIfDone()
     if(_moveEyes && (eyeShiftX != 0.f || eyeShiftY != 0.f))
     {
       // Clip, but retain sign
-      eyeShiftX = CLIP(eyeShiftX, -ProceduralFace::WIDTH/4, ProceduralFace::WIDTH/4);
-      eyeShiftY = CLIP(eyeShiftY, -ProceduralFace::HEIGHT/4, ProceduralFace::HEIGHT/4);
+      eyeShiftX = CLIP(eyeShiftX, (f32)-ProceduralFace::WIDTH/4,  (f32)ProceduralFace::WIDTH/4);
+      eyeShiftY = CLIP(eyeShiftY, (f32)-ProceduralFace::HEIGHT/4, (f32)ProceduralFace::HEIGHT/4);
       
 #     if DEBUG_TRACKING_ACTIONS
       PRINT_NAMED_DEBUG("ITrackAction.CheckIfDone.EyeShift",

@@ -31,6 +31,8 @@ public class RobotEngineManager : MonoBehaviour {
     _CallbackManager.RemoveCallback(callback);
   }
 
+  public Cozmo.BlockPool.BlockPoolTracker BlockPoolTracker { get; private set; }
+
   public Dictionary<int, IRobot> Robots { get; private set; }
 
   // Cache the last current robot
@@ -179,6 +181,10 @@ public class RobotEngineManager : MonoBehaviour {
     IRobot robot = new Robot(robotID);
     Robots.Add(robotID, robot);
     CurrentRobotID = robotID;
+
+    if (BlockPoolTracker != null) {
+      BlockPoolTracker.InitBlockPool();
+    }
   }
 
   public void RemoveRobot(byte robotID) {
@@ -192,6 +198,10 @@ public class RobotEngineManager : MonoBehaviour {
 
       if (0 == Robots.Count) {
         _IsRobotConnected = false;
+      }
+
+      if (BlockPoolTracker != null) {
+        BlockPoolTracker.SendAvailableObjects(false, (byte)robotID);
       }
     }
   }
@@ -229,6 +239,10 @@ public class RobotEngineManager : MonoBehaviour {
   private void Connected(string connectionIdentifier) {
     if (ConnectedToClient != null) {
       ConnectedToClient(connectionIdentifier);
+    }
+
+    if (BlockPoolTracker == null) {
+      BlockPoolTracker = new Cozmo.BlockPool.BlockPoolTracker(this);
     }
   }
 
@@ -342,6 +356,12 @@ public class RobotEngineManager : MonoBehaviour {
     if (robot != null) {
       robot.SerialNumber = message.serial;
     }
+    var persistence = DataPersistence.DataPersistenceManager.Instance;
+    var currentSerial = persistence.Data.DeviceSettings.LastCozmoSerial;
+    if (message.serial != currentSerial) {
+      persistence.Data.DeviceSettings.LastCozmoSerial = message.serial;
+      persistence.Save();
+    }
   }
 
   private void ProcessSupportInfo(Anki.Cozmo.ExternalInterface.SupportInfo message) {
@@ -368,7 +388,7 @@ public class RobotEngineManager : MonoBehaviour {
       CurrentRobot.ResetRobotState();
     }
 
-    SetEnableReactionaryBehaviors (false);
+    SetEnableReactionaryBehaviors(false);
   }
 
   public void SetEnableReactionaryBehaviors(bool enable) {

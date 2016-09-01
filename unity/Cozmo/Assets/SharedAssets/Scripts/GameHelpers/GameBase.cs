@@ -173,7 +173,6 @@ public abstract class GameBase : MonoBehaviour {
     AssetBundleManager.Instance.LoadAssetBundleAsync(
       minigameAssetBundleName, (bool success) => {
         LoadSharedMinigameView(minigameAssetBundleName);
-        CubePalette.LoadCubePalette(minigameAssetBundleName);
       });
   }
 

@@ -5,31 +5,14 @@
 #include "anki/cozmo/robot/drop.h" ///< I2SPI transaction contract
 #include "anki/cozmo/robot/rec_protocol.h" ///< Protocol for upgrades
 
-/// Buffer size must match I2S TX FIFO depth
-#define DMA_BUF_SIZE (512) /// This must be 512 Espressif DMA to work and for logic in i2spi.c to work
-/// How often we will garuntee servicing the DMA buffers
-#define DMA_SERVICE_INTERVAL_MS (5)
-/// How many buffers are required given the above constraints.
-#define DMA_BUF_COUNT ((I2SPI_RAW_BYTES_PER_SECOND * DMA_SERVICE_INTERVAL_MS / 1000 / DMA_BUF_SIZE))
-/// Buffer size for sending messages to the RTIP
-#define I2SPI_MESSAGE_BUF_SIZE (1024)
-ASSERT_IS_POWER_OF_TWO(I2SPI_MESSAGE_BUF_SIZE); // Required for mask below
-/// Size mask for index math on message buffer
-#define I2SPI_MESSAGE_BUF_SIZE_MASK (I2SPI_MESSAGE_BUF_SIZE-1)
+#define AUDIO_BUFFER_SIZE (1024)
+#define AUDIO_BUFFER_SIZE_MASK (AUDIO_BUFFER_SIZE-1)
+ASSERT_IS_POWER_OF_TWO(AUDIO_BUFFER_SIZE);
 
-/// Task priority level for processing I2SPI data
-#define I2SPI_PRIO USER_TASK_PRIO_2
-
-/// I2SPI interface operating modes
-typedef enum {
-  I2SPI_NORMAL,     ///< Normal drop communication, synchronization is implied
-  I2SPI_BOOTLOADER, ///< Bootloader communication, synchronization is implied
-  I2SPI_PAUSED,     ///< Communication paused, 0xFFFFffff is sent continuously.
-  I2SPI_REBOOT,     ///< Inform the K02 we want to reboot
-  I2SPI_RECOVERY,   ///< Inform the K02 we want to reboot into recovery
-  I2SPI_SHUTDOWN,   ///< Inform the K02 we want to shut down
-  I2SPI_RESUME,     ///< Attempt to resume a paused connection without resyncing
-} I2SpiMode;
+#define SCREEN_BUFFER_SIZE (32)
+#define SCREEN_BUFFER_SIZE_MASK (SCREEN_BUFFER_SIZE-1)
+ASSERT_IS_POWER_OF_TWO(SCREEN_BUFFER_SIZE);
+ct_assert(MAX_SCREEN_BYTES_PER_DROP == sizeof(uint32_t)); // Required for samples to be optimized as uint32_t
 
 /** Initalize the I2S peripheral, IO pins and DMA for bi-directional transfer
  * @return 0 on success or non-0 on an error
@@ -49,11 +32,15 @@ bool i2spiQueueMessage(const uint8_t* msgData, const int msgLen);
  */
 bool i2spiMessageQueueIsEmpty(void);
 
-/** Switch the operating mode of the I2SPI interface
- * I2SPI_NORMAL is the default mode
- * @param mode Which mode to transition insertion
+/** Periodic update function for RTIP RX queue estimate
  */
-void i2spiSwitchMode(const I2SpiMode mode);
+void i2spiUpdateRtipQueueEstimate(void);
+
+/** Get any received CLAD messages
+ * @param[out] data A a pointer to a clad buffer
+ * @return The number of bytes written to data, 0 if no data was available
+ */
+int i2spiGetCladMessage(uint8_t* data);
 
 /** Check the status of the RTIP bootloader
  */
@@ -73,13 +60,57 @@ bool i2spiBootloaderPushChunk(FirmwareBlock* chunk);
  */
 bool i2spiBootloaderCommandDone(void);
 
-/// Count how many tx underruns we've had
-extern uint32_t i2spiTxUnderflowCount;
+/** Return the number of samples available to push into the screen buffer
+ */
+int8_t i2spiGetScreenBufferAvailable(void);
+
+/** Push a sample into the screen data buffer
+ * @param data The sample to push
+ * @param rect True if the sample is rect data, false if pixel data
+ */
+void i2spiPushScreenData(const uint32_t* data, const bool rect);
+
+/** Queue the specified number of samples of silence
+ * @param Number of samples of silence
+ */
+void i2spiSetAudioSilenceSamples(const int16_t silence);
+
+/** Get how many samples of silence are currently queued.
+ */
+int16_t i2spiGetAudioSilenceSamples(void);
+
+/** Get how many samples are available to push into the audio buffer
+ */
+int16_t i2spiGetAudioBufferAvailable(void);
+
+/** Push data into the audio buffer
+ * @NOTE At least length bytes must be available before calling this function
+ * @param buffer Pointer to the data to queued
+ * @param length How many bytes to push into the queue
+ */
+void i2spiBufferAudio(uint8_t* buffer, const int16_t length);
+
+typedef enum
+{
+  I2SPI_SYNC = 0,
+  I2SPI_NORMAL,
+  I2SPI_BOOTLOADER,
+} I2SPIMode;
+
+/** Switch I2SPI operating mode.
+ * @warning Use with extreme caution.
+ * @param mode The new mode to switch to
+ * @return true if the more was accepted false if the transition was invalid
+ */
+bool i2spiSwitchMode(const I2SPIMode mode);
+
 /// Count how many tx overruns we've had
-extern uint32_t i2spiTxOverflowCount;
+uint32_t i2spiGetTxOverflowCount(void);
+/// Count how many tx overruns we've had
+uint32_t i2spiGetRxOverflowCount(void);
 /// Count how many times the drop phase has jumped more than we expected it to
-extern uint32_t i2spiPhaseErrorCount;
+uint32_t i2spiGetPhaseErrorCount(void);
 /// Count the integral drift in the I2SPI system
-extern int32_t i2spiIntegralDrift;
+int32_t i2spiGetIntegralDrift(void);
 
 #endif

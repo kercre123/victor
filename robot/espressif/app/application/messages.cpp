@@ -130,202 +130,179 @@ namespace Anki {
         SendNVOpResult(&msg, nvOpReportTo);
       }
       
+      void ProcessMessage(RobotInterface::EngineToRobot& msg)
+      {
+        switch(msg.tag)
+        {
+          case RobotInterface::EngineToRobot::Tag_otaWrite:
+          {
+            UpgradeController::Write(msg.otaWrite);
+            break;
+          }
+          case RobotInterface::EngineToRobot::Tag_writeNV:
+          {
+            NVStorage::NVOpResult result;
+            result.tag    = msg.writeNV.entry.tag;
+            result.write  = true;
+            if (msg.writeNV.writeNotErase)
+            {
+              result.result = NVStorage::Write(&msg.writeNV.entry,
+                                (msg.writeNV.reportEach || msg.writeNV.reportDone) ? NVWriteDoneCallback : 0);
+            }
+            else if (msg.writeNV.rangeEnd == NVStorage::NVEntry_Invalid)
+            {
+              result.result = NVStorage::Erase(msg.writeNV.entry.tag,
+                                (msg.writeNV.reportEach || msg.writeNV.reportDone) ? NVEraseDoneCallback : 0);
+            }
+            else
+            {
+              result.result = NVStorage::EraseRange(msg.writeNV.entry.tag, msg.writeNV.rangeEnd,
+                                                    msg.writeNV.reportEach ? NVEraseDoneCallback : 0,
+                                                    msg.writeNV.reportDone ? NVMultiEraseDoneCB  : 0);
+            }
+            if (result.result >= 0) nvOpReportTo = msg.writeNV.reportTo;
+            else SendNVOpResult(&result, msg.writeNV.reportTo);
+            break;
+          }
+          case RobotInterface::EngineToRobot::Tag_readNV:
+          {
+            NVStorage::NVOpResult result;
+            result.tag    = msg.readNV.tag;
+            result.write  = false;
+            if (msg.readNV.tagRangeEnd == NVStorage::NVEntry_Invalid)
+            {
+              result.result = NVStorage::Read(msg.readNV.tag, NVReadDoneCB);
+            }
+            else
+            {
+              result.result = NVStorage::ReadRange(msg.readNV.tag, msg.readNV.tagRangeEnd,
+                                                   NVReadDoneCB, NVMultiReadDoneCB);
+            }
+            if (result.result >= 0) nvOpReportTo = msg.readNV.to;
+            else SendNVOpResult(&result, msg.readNV.to);
+            break;
+          }
+          case RobotInterface::EngineToRobot::Tag_wipeAllNV:
+          {
+            NVStorage::NVOpResult result;
+            result.tag = NVStorage::NVEntry_WipeAll;
+            result.write = true;
+            if (os_strncmp(msg.wipeAllNV.key, "Yes I really want to do this!", msg.wipeAllNV.key_length) != 0)
+            {
+              result.result = NVStorage::NV_BAD_ARGS;
+              SendNVOpResult(&result, msg.wipeAllNV.to);
+            }
+            else
+            {
+              result.result = NVStorage::WipeAll(msg.wipeAllNV.doSegments, msg.wipeAllNV.includeFactory, NVEraseDoneCallback, true, msg.wipeAllNV.reboot);
+              if (result.result >= 0) nvOpReportTo = msg.wipeAllNV.to;
+              else SendNVOpResult(&result, msg.wipeAllNV.to);
+            }
+            break;
+          }
+          case RobotInterface::EngineToRobot::Tag_setRTTO:
+          {
+            AnkiDebug( 144, "ReliableTransport.SetConnectionTimeout", 399, "Timeout is now %dms", 1, msg.setRTTO.timeoutMilliseconds);
+            ReliableTransport_SetConnectionTimeout(msg.setRTTO.timeoutMilliseconds * 1000);
+            break;
+          }
+          case RobotInterface::EngineToRobot::Tag_abortAnimation:
+          {
+            AnimationController::Clear();
+            break;
+          }
+          case RobotInterface::EngineToRobot::Tag_calculateDiffieHellman:
+          {
+            DiffieHellman::Start(msg.calculateDiffieHellman.local, msg.calculateDiffieHellman.remote);
+            break ;
+          }
+          case RobotInterface::EngineToRobot::Tag_disableAnimTracks:
+          {
+            AnimationController::DisableTracks(msg.disableAnimTracks.whichTracks);
+            break;
+          }
+          case RobotInterface::EngineToRobot::Tag_enableAnimTracks:
+          {
+            AnimationController::EnableTracks(msg.enableAnimTracks.whichTracks);
+            break;
+          }
+          case RobotInterface::EngineToRobot::Tag_oledDisplayNumber:
+          {
+            using namespace Anki::Cozmo::Face;
+            u64 frame[COLS];
+            Draw::Clear(frame);
+            Draw::Number(frame, msg.oledDisplayNumber.digits, msg.oledDisplayNumber.value, msg.oledDisplayNumber.x, msg.oledDisplayNumber.y);
+            Draw::Flip(frame);
+            break;
+          }
+          case RobotInterface::EngineToRobot::Tag_testState:
+          {
+            Factory::Process_TestState(msg.testState);
+            break;
+          }
+          case RobotInterface::EngineToRobot::Tag_enterTestMode:
+          {
+            Factory::Process_EnterFactoryTestMode(msg.enterTestMode);
+            break;
+          }
+          case RobotInterface::EngineToRobot::Tag_appConCfgString:
+          {
+            WiFiConfiguration::ProcessConfigString(msg.appConCfgString);
+            break;
+          }
+          case RobotInterface::EngineToRobot::Tag_appConCfgFlags:
+          {
+            WiFiConfiguration::ProcessConfigFlags(msg.appConCfgFlags);
+            break;
+          }
+          case RobotInterface::EngineToRobot::Tag_appConCfgIPInfo:
+          {
+            WiFiConfiguration::ProcessConfigIPInfo(msg.appConCfgIPInfo);
+            break;
+          }
+          case RobotInterface::EngineToRobot::Tag_appConGetRobotIP:
+          {
+            WiFiConfiguration::SendRobotIpInfo(msg.appConGetRobotIP.ifId);
+            break;
+          }
+          case RobotInterface::EngineToRobot::Tag_wifiOff:
+          {
+            WiFiConfiguration::Off(msg.wifiOff.sleep);
+            break;
+          }
+          case RobotInterface::EngineToRobot::Tag_bodyStorageContents:
+          {
+            CrashReporter::AcceptBodyStorage(msg.bodyStorageContents);
+            break;
+          }
+          default:
+          {
+            AnkiWarn( 137, "WiFi.Messages", 259, "Received message not expected here tag=%02x", 1, msg.tag);
+          }
+        }
+      }
+      
       void ProcessMessage(u8* buffer, u16 bufferSize)
       {
-        AnkiConditionalWarnAndReturn(buffer[0] <= RobotInterface::TO_WIFI_END, 137, "WiFi.Messages", 394, "ToRobot message %x[%d] like like it has tag for engine (> 0x%x)", 3, buffer[0], bufferSize, (int)RobotInterface::TO_WIFI_END);
+        AnkiConditionalWarnAndReturn(buffer[0] <= RobotInterface::TO_WIFI_END, 364, "WiFi.Messages.ProcessMessage.AddressedToEngine", 394, "ToRobot message %x[%d] like like it has tag for engine (> 0x%x)", 3, buffer[0], bufferSize, (int)RobotInterface::TO_WIFI_END);
+        AnkiConditionalWarnAndReturn(bufferSize <= RobotInterface::EngineToRobot::MAX_SIZE, 365, "WiFi.Messages.ProcessMessage.TooBig", 256, "Received message too big! %02x[%d] > %d", 3, buffer[0], bufferSize, RobotInterface::EngineToRobot::MAX_SIZE);
         if (buffer[0] < RobotInterface::TO_WIFI_START) // Message for someone further down than us
         {
           RTIP::SendMessage(buffer, bufferSize);
         }
+        else if (RobotInterface::ANIM_BUFFER_START <= buffer[0] && buffer[0] <= RobotInterface::ANIM_BUFFER_END)
+        {
+          if(AnimationController::BufferKeyFrame(buffer, bufferSize) != RESULT_OK)
+          {
+            AnkiWarn( 137, "WiFi.Messages", 258, "Failed to buffer a keyframe! Clearing Animation buffer!\n", 0);
+            AnimationController::Clear();
+          }
+        }
         else
         {
           RobotInterface::EngineToRobot msg;
-          AnkiConditionalWarnAndReturn(bufferSize <= msg.MAX_SIZE, 137, "WiFi.Messages", 256, "Received message too big! %02x[%d] > %d", 3, buffer[0], bufferSize, msg.MAX_SIZE);
-          switch(buffer[0])
-          {
-            case RobotInterface::EngineToRobot::Tag_otaWrite:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize);
-              UpgradeController::Write(msg.otaWrite);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_writeNV:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              NVStorage::NVOpResult result;
-              result.tag    = msg.writeNV.entry.tag;
-              result.write  = true;
-              if (msg.writeNV.writeNotErase)
-              {
-                result.result = NVStorage::Write(&msg.writeNV.entry,
-                                  (msg.writeNV.reportEach || msg.writeNV.reportDone) ? NVWriteDoneCallback : 0);
-              }
-              else if (msg.writeNV.rangeEnd == NVStorage::NVEntry_Invalid)
-              {
-                result.result = NVStorage::Erase(msg.writeNV.entry.tag,
-                                  (msg.writeNV.reportEach || msg.writeNV.reportDone) ? NVEraseDoneCallback : 0);
-              }
-              else
-              {
-                result.result = NVStorage::EraseRange(msg.writeNV.entry.tag, msg.writeNV.rangeEnd,
-                                                      msg.writeNV.reportEach ? NVEraseDoneCallback : 0,
-                                                      msg.writeNV.reportDone ? NVMultiEraseDoneCB  : 0);
-              }
-              if (result.result >= 0) nvOpReportTo = msg.writeNV.reportTo;
-              else SendNVOpResult(&result, msg.writeNV.reportTo);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_readNV:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              NVStorage::NVOpResult result;
-              result.tag    = msg.readNV.tag;
-              result.write  = false;
-              if (msg.readNV.tagRangeEnd == NVStorage::NVEntry_Invalid)
-              {
-                result.result = NVStorage::Read(msg.readNV.tag, NVReadDoneCB);
-              }
-              else
-              {
-                result.result = NVStorage::ReadRange(msg.readNV.tag, msg.readNV.tagRangeEnd,
-                                                     NVReadDoneCB, NVMultiReadDoneCB);
-              }
-              if (result.result >= 0) nvOpReportTo = msg.readNV.to;
-              else SendNVOpResult(&result, msg.readNV.to);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_wipeAllNV:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              NVStorage::NVOpResult result;
-              result.tag = NVStorage::NVEntry_WipeAll;
-              result.write = true;
-              if (os_strncmp(msg.wipeAllNV.key, "Yes I really want to do this!", msg.wipeAllNV.key_length) != 0)
-              {
-                result.result = NVStorage::NV_BAD_ARGS;
-                SendNVOpResult(&result, msg.wipeAllNV.to);
-              }
-              else
-              {
-                result.result = NVStorage::WipeAll(msg.wipeAllNV.doSegments, msg.wipeAllNV.includeFactory, NVEraseDoneCallback, true, msg.wipeAllNV.reboot);
-                if (result.result >= 0) nvOpReportTo = msg.wipeAllNV.to;
-                else SendNVOpResult(&result, msg.wipeAllNV.to);
-              }
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_setRTTO:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize);
-              AnkiDebug( 144, "ReliableTransport.SetConnectionTimeout", 399, "Timeout is now %dms", 1, msg.setRTTO.timeoutMilliseconds);
-              ReliableTransport_SetConnectionTimeout(msg.setRTTO.timeoutMilliseconds * 1000);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_abortAnimation:
-            {
-              AnimationController::Clear();
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_animAudioSample:
-            case RobotInterface::EngineToRobot::Tag_animAudioSilence:
-            case RobotInterface::EngineToRobot::Tag_animHeadAngle:
-            case RobotInterface::EngineToRobot::Tag_animLiftHeight:
-            case RobotInterface::EngineToRobot::Tag_animEvent:
-            case RobotInterface::EngineToRobot::Tag_animFaceImage:
-            case RobotInterface::EngineToRobot::Tag_animBackpackLights:
-            case RobotInterface::EngineToRobot::Tag_animBodyMotion:
-            case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:
-            case RobotInterface::EngineToRobot::Tag_animStartOfAnimation:
-            {
-              if(AnimationController::BufferKeyFrame(buffer, bufferSize) != RESULT_OK) {
-                AnkiWarn( 137, "WiFi.Messages", 258, "Failed to buffer a keyframe! Clearing Animation buffer!\n", 0);
-                AnimationController::Clear();
-              }
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_calculateDiffieHellman:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              DiffieHellman::Start(msg.calculateDiffieHellman.local, msg.calculateDiffieHellman.remote);
-              break ;
-            }
-            case RobotInterface::EngineToRobot::Tag_disableAnimTracks:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              AnimationController::DisableTracks(msg.disableAnimTracks.whichTracks);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_enableAnimTracks:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              AnimationController::EnableTracks(msg.enableAnimTracks.whichTracks);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_oledDisplayNumber:
-            {
-              using namespace Anki::Cozmo::Face;
-
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              
-              u64 frame[COLS];
-
-              Draw::Clear(frame);
-              Draw::Number(frame, msg.oledDisplayNumber.digits, msg.oledDisplayNumber.value, msg.oledDisplayNumber.x, msg.oledDisplayNumber.y);
-              Draw::Flip(frame);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_testState:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              Factory::Process_TestState(msg.testState);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_enterTestMode:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              Factory::Process_EnterFactoryTestMode(msg.enterTestMode);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_appConCfgString:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              WiFiConfiguration::ProcessConfigString(msg.appConCfgString);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_appConCfgFlags:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              WiFiConfiguration::ProcessConfigFlags(msg.appConCfgFlags);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_appConCfgIPInfo:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              WiFiConfiguration::ProcessConfigIPInfo(msg.appConCfgIPInfo);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_appConGetRobotIP:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              WiFiConfiguration::SendRobotIpInfo(msg.appConGetRobotIP.ifId);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_wifiOff:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              WiFiConfiguration::Off(msg.wifiOff.sleep);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_bodyStorageContents:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              CrashReporter::AcceptBodyStorage(msg.bodyStorageContents);
-              break;
-            }
-            default:
-            {
-              AnkiWarn( 137, "WiFi.Messages", 259, "Received message not expected here tag=%02x", 1, buffer[0]);
-            }
-          }
+          memcpy(msg.GetBuffer(), buffer, bufferSize);
+          ProcessMessage(msg);
         }
       } 
 

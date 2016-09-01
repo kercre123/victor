@@ -13,6 +13,12 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
   private Cozmo.UI.CozmoButton _GetACozmoButton;
 
   [SerializeField]
+  private Anki.UI.AnkiTextLabel _LastCozmoLabel;
+
+  [SerializeField]
+  private Anki.UI.AnkiTextLabel _DeviceIdLabel;
+
+  [SerializeField]
   private WifiInstructionsView _WifiInstructionsViewPrefab;
   private WifiInstructionsView _WifiInstructionsViewInstance;
 
@@ -25,6 +31,21 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
   private void Awake() {
     _ShowMeButton.Initialize(HandleShowMeButton, "show_me_button", "search_for_cozmo_failed_screen");
     _GetACozmoButton.Initialize(HandleGetACozmoButton, "get_a_cozmo_button", "search_for_cozmo_failed_screen");
+
+    var persistence = DataPersistence.DataPersistenceManager.Instance;
+    var lastCozmoSerial = persistence.Data.DeviceSettings.LastCozmoSerial;
+    if (lastCozmoSerial != 0) {
+      _LastCozmoLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelCozmoSerial, lastCozmoSerial.ToString("X"));
+    } else {
+      _LastCozmoLabel.gameObject.SetActive(false);
+    }
+
+    var deviceId = persistence.DeviceId;
+    if (!string.IsNullOrEmpty(deviceId)) {
+      _DeviceIdLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelDeviceid, persistence.DeviceId);
+    } else {
+      _DeviceIdLabel.gameObject.SetActive(false);
+    }
   }
 
   private void OnDestroy() {

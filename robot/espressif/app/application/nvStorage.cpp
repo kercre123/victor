@@ -1048,7 +1048,6 @@ bool WipeAllTask(uint32_t param)
     {
       if (i2spiMessageQueueIsEmpty())
       {
-        i2spiSwitchMode(I2SPI_PAUSED);
         state->sectorCount = (NV_STORAGE_AREA_SIZE * state->doSegments / SECTOR_SIZE) - 1;
         state->phase = WAT_segments;
       }
@@ -1077,7 +1076,6 @@ bool WipeAllTask(uint32_t param)
     }
     case WAT_resume:
     {
-      i2spiSwitchMode(I2SPI_RESUME);
       state->phase = WAT_callback;
       return true;
     }
@@ -1092,7 +1090,6 @@ bool WipeAllTask(uint32_t param)
     {
       if (i2spiMessageQueueIsEmpty()) 
       {
-        i2spiSwitchMode(I2SPI_REBOOT);
         state->phase = WAT_done;
       }
       return true;
