@@ -168,18 +168,20 @@ namespace AnimationController {
   
   void SendAnimationEnded()
   {
-    #ifdef TARGET_ESPRESSIF
-    // Send animation ended keyframe to K02
-    RTIP::SendMessage(NULL, 0, RobotInterface::EngineToRobot::Tag_animEndOfAnimation);
-    #else 
-    // Basically invoking messages::Process_animEndOfAnimation()
-    BackpackLightController::EnableLayer(BackpackLightController::BackpackLightLayer::BPL_USER);
-    #endif
-    
-    // Send animation ended to engine
-    RobotInterface::AnimationEnded aem;
-    aem.tag = _currentTag;
-    RobotInterface::SendMessage(aem);
+    if (_currentTag > 0) {
+      #ifdef TARGET_ESPRESSIF
+      // Send animation ended keyframe to K02
+      RTIP::SendMessage(NULL, 0, RobotInterface::EngineToRobot::Tag_animEndOfAnimation);
+      #else 
+      // Basically invoking messages::Process_animEndOfAnimation()
+      BackpackLightController::EnableLayer(BackpackLightController::BackpackLightLayer::BPL_USER);
+      #endif
+      
+      // Send animation ended to engine
+      RobotInterface::AnimationEnded aem;
+      aem.tag = _currentTag;
+      RobotInterface::SendMessage(aem);
+    }
   }
 
   void Clear()
@@ -187,6 +189,8 @@ namespace AnimationController {
 #   if DEBUG_ANIMATION_CONTROLLER
     AnkiDebug( 2, "AnimationController", 4, "Clearing", 0);
 #   endif
+    
+    SendAnimationEnded();
 
     _numBytesPlayed += GetNumBytesInBuffer();
     _numAudioFramesPlayed += _numAudioFramesBuffered;
@@ -504,7 +508,7 @@ namespace AnimationController {
         {
           case RobotInterface::EngineToRobot::Tag_animAudioSample:
           {
-            _tracksInUse |= BACKPACK_LIGHTS_TRACK;
+            _tracksInUse |= AUDIO_TRACK;
             // Fall through to below...
           }
           case RobotInterface::EngineToRobot::Tag_animAudioSilence:
