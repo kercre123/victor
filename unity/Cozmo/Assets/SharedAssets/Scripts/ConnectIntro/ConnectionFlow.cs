@@ -86,7 +86,7 @@ public class ConnectionFlow : MonoBehaviour {
     }
 
     if (_ConnectionFlowBackgroundInstance != null) {
-      GameObject.Destroy(_ConnectionFlowBackgroundInstance.gameObject);
+      UIManager.CloseViewImmediately(_ConnectionFlowBackgroundInstance);
     }
 
     if (_UpdateFirmwareScreenInstance != null) {
@@ -121,8 +121,14 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   private void ReturnToTitle() {
-    _ConnectionFlowBackgroundInstance.ViewClosed += QuitConnectionFlow;
-    UIManager.CloseView(_ConnectionFlowBackgroundInstance);
+    if (_ConnectionFlowBackgroundInstance != null) {
+      _ConnectionFlowBackgroundInstance.ViewClosed += QuitConnectionFlow;
+      UIManager.CloseView(_ConnectionFlowBackgroundInstance);
+      _ConnectionFlowBackgroundInstance = null;
+    }
+    else {
+      QuitConnectionFlow();
+    }
   }
 
   private void QuitConnectionFlow() {
@@ -282,6 +288,8 @@ public class ConnectionFlow : MonoBehaviour {
     else {
       if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
         ShowPullCubeTabsFlow();
+        UIManager.CloseView(_ConnectionFlowBackgroundInstance);
+        _ConnectionFlowBackgroundInstance = null;
       }
       else {
         CheckForRestoreRobotFlow();
@@ -343,7 +351,11 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   private void FinishConnectionFlow() {
-    UIManager.CloseView(_ConnectionFlowBackgroundInstance);
+    if (_ConnectionFlowBackgroundInstance != null) {
+      UIManager.CloseView(_ConnectionFlowBackgroundInstance);
+      _ConnectionFlowBackgroundInstance = null;
+    }
+
     if (RobotEngineManager.Instance.CurrentRobot != null) {
       RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("default_disabled", Anki.Cozmo.BehaviorType.ReactToOnCharger, true);
       RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("wakeup", Anki.Cozmo.BehaviorType.AcknowledgeObject, true);
