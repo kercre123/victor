@@ -19,14 +19,13 @@ public class TagConfig : ScriptableObject {
     }
   }
 
-  [SerializeField]
-  string NoTag = "NONE";
+  public const string NoTag = "NONE";
 
   [SerializeField]
   List<string> Tags = new List<string>();
 
   public static bool IsValidTag(string toCheck) {
-    if (toCheck == Instance.NoTag) { return false; }
+    if (toCheck == NoTag) { return false; }
     return TagConfig.GetAllTags().Contains(toCheck);
   }
 

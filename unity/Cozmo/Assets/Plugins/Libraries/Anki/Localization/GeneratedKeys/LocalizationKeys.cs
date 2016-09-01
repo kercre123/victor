@@ -364,6 +364,7 @@ public static class LocalizationKeys {
   public const string kOnboardingPhase5Body3 = "onboarding.Phase5.Body3";
   public const string kOnboardingSlide0a = "onboarding.Slide0a";
   public const string kOnboardingOldRobotSkip = "onboarding.OldRobotSkip";
+  public const string kOnboardingBirthWait = "onboarding.BirthWait";
 
   #endregion
 
@@ -504,6 +505,8 @@ public static class LocalizationKeys {
   public const string kLabelUpdate = "label.update";
   public const string kButtonUnlock = "button.unlock";
   public const string kSoundcheckDescriptionConfirm = "soundcheck.description.confirm";
+  public const string kErrorBadLightTop = "error.badLight.Top";
+  public const string kErrorBadLightBottom = "error.badLight.Bottom";
   public const string kLabelCozmoSerial = "label.cozmo.serial";
   public const string kLabelDeviceid = "label.deviceid";
 
@@ -560,6 +563,8 @@ public static class LocalizationKeys {
   public const string kSparksSpark = "sparks.Spark";
   public const string kUnlockableUnavailableDescription = "unlockable.Unavailable.Description";
   public const string kSparksSparkCost = "sparks.Spark.Cost";
+  public const string kSparksSparkConfirmQuit = "sparks.Spark.ConfirmQuit";
+  public const string kSparksSparkConfirmQuitDescription = "sparks.Spark.ConfirmQuit.Description";
 
   #endregion
 

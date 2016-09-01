@@ -148,11 +148,6 @@ namespace DataPersistence {
 
       if (needsNewGoals) {
         newSession.DailyGoals = DailyGoalManager.Instance.GenerateDailyGoals();
-        // Sort by priority, placing higher priority at the front of the list
-        newSession.DailyGoals.Sort((Cozmo.UI.DailyGoal x, Cozmo.UI.DailyGoal y) => {
-          return y.Priority.CompareTo(x.Priority);
-        });
-
         if (DailyGoalManager.Instance.OnRefreshDailyGoals != null) {
           DailyGoalManager.Instance.OnRefreshDailyGoals.Invoke();
         }

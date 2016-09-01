@@ -16,3 +16,5 @@ MonoBehaviour:
     type: 2}
   _AlertViewPrefab_Icon: {fileID: 11445856, guid: 6df6cacad361b454391645f3c10a68dd,
     type: 2}
+  _AlertViewPrefab_BadLight: {fileID: 11497196, guid: c0f4aad8d980c4533bc2aa6874374a65,
+    type: 2}

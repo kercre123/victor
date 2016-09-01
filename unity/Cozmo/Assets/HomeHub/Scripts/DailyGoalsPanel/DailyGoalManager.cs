@@ -292,6 +292,10 @@ public class DailyGoalManager : MonoBehaviour {
         break;
       }
     }
+    // Sort by priority, placing higher priority at the front of the list
+    newGoals.Sort((Cozmo.UI.DailyGoal x, Cozmo.UI.DailyGoal y) => {
+      return y.Priority.CompareTo(x.Priority);
+    });
     SendDasEventsForGoalGeneration(newGoals);
     return newGoals;
   }

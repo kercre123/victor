@@ -21,6 +21,12 @@ namespace Cozmo.HomeHub {
 
     private HomeView _HomeViewInstance;
 
+    public HomeView HomeViewInstance {
+      get {
+        return _HomeViewInstance;
+      }
+    }
+
     [SerializeField]
     private GameObjectDataLink _ChallengeDetailsPrefabData;
 

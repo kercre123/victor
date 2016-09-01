@@ -199,7 +199,9 @@ public class RewardedActionManager : MonoBehaviour {
   /// <summary>
   /// Checks the full list for collisions, at this point these should all
   /// be different Ids that are stacked based on how many times they were
-  /// triggered midgame. Only keep the highest ending value for rewarding. 
+  /// triggered midgame. Only keep the highest ending value for rewarding.
+  /// Also sorts remaining rewards by value and removes any that aren't
+  /// the top X rewards, where X is the number we intend to display
   /// </summary>
   public void ResolveTagRewardCollisions() {
     List<string> tagList = TagConfig.GetAllTags();
@@ -218,6 +220,24 @@ public class RewardedActionManager : MonoBehaviour {
         }
       }
     }
+    // Sort Pending Rewards and then remove all that have lower values than the top X,
+    // where X is the number of rewards we intend to display
+    List<RewardedActionData> survivingRewards = new List<RewardedActionData>();
+    foreach (RewardedActionData reward in PendingActionRewards.Keys) {
+      survivingRewards.Add(reward);
+    }
+    survivingRewards.Sort((RewardedActionData x, RewardedActionData y) => {
+      return y.Reward.Amount.CompareTo(x.Reward.Amount);
+    });
+    List<RewardedActionData> topX = new List<RewardedActionData>();
+    for (int i = 0; i < Mathf.Min(survivingRewards.Count, _RewardConfig.MaxRewardsPerGame); i++) {
+      topX.Add(survivingRewards[i]);
+    }
+    // Clean up Pending Action Rewards, only add back in the topX
+    PendingActionRewards.Clear();
+    for (int i = 0; i < topX.Count; i++) {
+      PendingActionRewards.Add(topX[i], topX[i].Reward.Amount);
+    }
   }
 
   /// <summary>
@@ -235,7 +255,7 @@ public class RewardedActionManager : MonoBehaviour {
     // Only bother checking for Valid Tags, if you have blank tag or broken tags ignore tag
     // fire warning if tag is not empty
     if (!TagConfig.IsValidTag(Tag)) {
-      if (Tag != "") {
+      if (Tag != TagConfig.NoTag && Tag != "") {
         DAS.Warn("RewardedActionManager.TryGetPendingRewardFromTag", "Invalid Tag detected");
       }
       return false;
@@ -289,7 +309,9 @@ public class RewardedActionManager : MonoBehaviour {
     fakeData.RewardEvent.Value = GameEvent.Count;
     fakeData.Reward.Amount = count;
     fakeData.Reward.DescriptionKey = "FAKE";
+    fakeData.Tag = "FAKE";
     fakeData.Reward.ItemID = _RewardConfig.EnergyID;
+
     PendingActionRewards.Add(fakeData, fakeData.Reward.Amount);
   }
 

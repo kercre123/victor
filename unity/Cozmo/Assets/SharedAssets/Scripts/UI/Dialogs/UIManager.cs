@@ -220,8 +220,15 @@ public class UIManager : MonoBehaviour {
     if (_NumDialogsDimmingBackground == 1) {
       if (_DimBackgroundInstance == null) {
         // First dialog to dim the background, we need to create a dimmer
-        // on top of existing ui
-        _DimBackgroundInstance = Instantiate(Instance._DimBackgroundPrefab.gameObject).GetComponent<CanvasGroup>();
+        // on top of existing ui, if the view has a specific prefab it wants
+        // to use for dimming the background, use that instead
+        // (For instance, onboarding background dimming that wants to avoid
+        // covering the entire screen)
+        GameObject toInstantiate = Instance._DimBackgroundPrefab.gameObject;
+        if (view.DimBackgroundPrefabOverride != null) {
+          toInstantiate = view.DimBackgroundPrefabOverride.gameObject;
+        }
+        _DimBackgroundInstance = Instantiate(toInstantiate).GetComponent<CanvasGroup>();
         _DimBackgroundInstance.transform.SetParent(targetCanvas, false);
         _DimBackgroundInstance.alpha = 0;
       }

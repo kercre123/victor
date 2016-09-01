@@ -9,8 +9,6 @@ using Anki.Cozmo;
 
 public class ChallengeEndedDialog : MonoBehaviour {
 
-  private const int kMaxRewardFields = 3;
-
   [SerializeField]
   private AnkiTextLabel _AdditionalInfoLabel;
 
@@ -94,18 +92,11 @@ public class ChallengeEndedDialog : MonoBehaviour {
     if (RewardedActionManager.Instance.NewSkillChangePending) {
       AddSkillChange(RewardedActionManager.Instance.NewSkillChange);
     }
-    RewardedActionManager.Instance.ResolveTagRewardCollisions();
-    int rewardCells = 0;
     foreach (RewardedActionData earnedReward in RewardedActionManager.Instance.PendingActionRewards.Keys) {
 
       int count = 0;
       if (RewardedActionManager.Instance.PendingActionRewards.TryGetValue(earnedReward, out count)) {
         AddEnergyReward(earnedReward, count);
-        rewardCells++;
-      }
-      // TODO: Make reward fields properly collapse into eachother by game event
-      if (kMaxRewardFields <= rewardCells) {
-        break;
       }
     }
     RewardedActionManager.Instance.NewDifficultyUnlock = -1;

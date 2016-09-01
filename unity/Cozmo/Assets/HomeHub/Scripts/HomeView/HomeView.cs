@@ -98,7 +98,9 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private GameObject _EnergyDooberPrefab;
     [SerializeField]
-    private Transform _EnergyDooberStart;
+    private Transform _EnergyDooberStart_PlayTab;
+    [SerializeField]
+    private Transform _EnergyDooberStart_CozmoTab;
     [SerializeField]
     private Transform _EnergyDooberEnd;
     private List<Transform> _EnergyDooberList = new List<Transform>();
@@ -148,6 +150,8 @@ namespace Cozmo.HomeHub {
 
     private AlertView _RequestDialog = null;
 
+    private AlertView _BadLightDialog = null;
+
     private HomeHub _HomeHubInstance;
 
     public HomeHub HomeHubInstance {
@@ -160,7 +164,8 @@ namespace Cozmo.HomeHub {
     }
     public bool HomeViewCurrentlyOccupied {
       get {
-        return (_RequestDialog != null || _LootViewInstance != null || _HomeHubInstance.IsChallengeDetailsActive || RewardSequenceActive);
+        return (_RequestDialog != null || _LootViewInstance != null || _BadLightDialog != null ||
+                _HomeHubInstance.IsChallengeDetailsActive || RewardSequenceActive);
       }
     }
     public Transform TabButtonContainer {
@@ -191,6 +196,7 @@ namespace Cozmo.HomeHub {
       _SettingsButton.Initialize(HandleSettingsButton, "settings_button", DASEventViewName);
 
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.EngineErrorCodeMessage>(HandleEngineErrorCode);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
 
       _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleGreenPointsBarUpdateComplete;
@@ -218,6 +224,22 @@ namespace Cozmo.HomeHub {
     private void InitializeButtons(CozmoButton[] buttons, UnityEngine.Events.UnityAction callback, string dasButtonName) {
       foreach (CozmoButton button in buttons) {
         button.Initialize(callback, dasButtonName, DASEventViewName);
+      }
+    }
+
+    private void HandleEngineErrorCode(Anki.Cozmo.ExternalInterface.EngineErrorCodeMessage message) {
+      if (HomeViewCurrentlyOccupied) {
+        return;
+      }
+      if (message.errorCode == Anki.Cozmo.EngineErrorCode.ImageQualityTooBright ||
+          message.errorCode == Anki.Cozmo.EngineErrorCode.ImageQualityTooDark) {
+
+        ContextManager.Instance.AppFlash(playChime: true);
+        // Create alert view with Icon
+        AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_BadLight, overrideCloseOnTouchOutside: true);
+        // Hook up callbacks
+        alertView.SetCloseButtonEnabled(true);
+        _BadLightDialog = alertView;
       }
     }
 
@@ -265,24 +287,14 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleCozmoTabButton() {
-      // Do not allow changing tabs while receiving chests
-      if (HomeViewCurrentlyOccupied) {
-        return;
-      }
       SwitchToTab(HomeTab.Cozmo);
     }
 
     private void HandlePlayTabButton() {
       SwitchToTab(HomeTab.Play);
-      // Check for Reward sequence whenever we enter the play tab
-      CheckForRewardSequence();
     }
 
     private void HandleProfileTabButton() {
-      // Do not allow changing tabs while receiving chests
-      if (HomeViewCurrentlyOccupied) {
-        return;
-      }
       SwitchToTab(HomeTab.Profile);
     }
 
@@ -304,6 +316,10 @@ namespace Cozmo.HomeHub {
     }
 
     private void SwitchToTab(HomeTab tab) {
+      // Do not allow changing tabs while receiving chests
+      if (HomeViewCurrentlyOccupied) {
+        return;
+      }
       if (_CurrentTab != tab) {
         _PreviousTab = _CurrentTab;
       }
@@ -311,6 +327,8 @@ namespace Cozmo.HomeHub {
       ClearCurrentTab();
       ShowNewCurrentTab(GetHomeViewTabPrefab(tab));
       UpdateTabGraphics(tab);
+      // Check for Reward sequence whenever we enter a new tab
+      CheckForRewardSequence();
     }
 
     private HomeViewTab GetHomeViewTabPrefab(HomeTab tab) {
@@ -373,6 +391,9 @@ namespace Cozmo.HomeHub {
     private void HandleDailyGoalCompleted(GameEventWrapper gameEvent) {
       if (gameEvent.GameEventEnum == Anki.Cozmo.GameEvent.OnDailyGoalCompleted) {
         UpdatePlayTabText();
+        if (_CurrentTab == HomeTab.Play) {
+          CheckForRewardSequence();
+        }
       }
     }
 
@@ -423,7 +444,7 @@ namespace Cozmo.HomeHub {
 
     #region Reward Sequence and Lootview
 
-    private void CheckForRewardSequence() {
+    public void CheckForRewardSequence() {
       DailyGoalManager.Instance.ValidateExistingGoals();
       if (RewardedActionManager.Instance.RewardPending || DailyGoalManager.Instance.GoalsPending) {
         // If Rewards are pending, set sequence to active, shut down input until everything is done
@@ -442,11 +463,12 @@ namespace Cozmo.HomeHub {
     private IEnumerator BurstEnergyAfterInit() {
       yield return new WaitForFixedUpdate();
       _RewardSequence = DOTween.Sequence();
-      if (DailyGoalManager.Instance.GoalsPending) {
+      // Only handle goal rewards 
+      if (_CurrentTab == HomeTab.Play && DailyGoalManager.Instance.GoalsPending) {
         int goalPointOffset = 0;
         for (int i = 0; i < DailyGoalManager.Instance.PendingDailyGoals.Count; i++) {
           DailyGoal currGoal = DailyGoalManager.Instance.PendingDailyGoals[i];
-          _RewardSequence = EnergyDooberBurst(currGoal.PointsRewarded, DailyGoalManager.Instance.GoalPanelInstance.GetGoalSource(currGoal), _RewardSequence);
+          _RewardSequence = EnergyDooberBurst(currGoal.PointsRewarded, GetGoalSource(currGoal), _RewardSequence);
           goalPointOffset += currGoal.PointsRewarded;
         }
         UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints() - goalPointOffset, ChestRewardManager.Instance.GetNextRequirementPoints(), true);
@@ -456,14 +478,20 @@ namespace Cozmo.HomeHub {
         // Only do the offset for goal points since those are rewarded when the goal is completed
         UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
       }
+      Transform source = _EnergyDooberStart_PlayTab;
+      if (_CurrentTab == HomeTab.Cozmo) {
+        source = _EnergyDooberStart_CozmoTab;
+      }
       if (RewardedActionManager.Instance.RewardPending) {
-        _RewardSequence = EnergyDooberBurst(RewardedActionManager.Instance.TotalPendingEnergy, _EnergyDooberStart, _RewardSequence);
+        RewardedActionManager.Instance.ResolveTagRewardCollisions();
+        _RewardSequence = EnergyDooberBurst(RewardedActionManager.Instance.TotalPendingEnergy, source, _RewardSequence);
       }
       // Prevent stray doobers from being forgotten by dotween bug
       _RewardSequence.AppendInterval(GenericRewardsConfig.Instance.ExpParticleStagger);
       _RewardSequence.AppendCallback(ResolveDooberBurst);
       _RewardSequence.Play();
     }
+
 
     // If we have a Chest Pending, open the loot view once the progress bar finishes filling.
     // If there are Rewards Pending, do this when the Energy Sequence ends.
@@ -536,14 +564,20 @@ namespace Cozmo.HomeHub {
         RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.NoGame);
       }
       GenericRewardsConfig rc = GenericRewardsConfig.Instance;
-      int doobCount = Mathf.CeilToInt((float)pointsEarned / rc.ExpPerParticleEffect);
+      int doobCount = Mathf.CeilToInt((float)pointsEarned / (float)rc.ExpPerParticleEffect);
       for (int i = 0; i < doobCount; i++) {
         Transform freshDoobz = UIManager.CreateUIElement(_EnergyDooberPrefab, energySource).transform;
         _EnergyDooberList.Add(freshDoobz);
         float xOffset = UnityEngine.Random.Range(rc.ExpParticleMinSpread, rc.ExpParticleMaxSpread);
+        if (UnityEngine.Random.Range(0.0f, 1.0f) >= 0.5f) {
+          xOffset *= -1.0f;
+        }
         float yOffset = UnityEngine.Random.Range(rc.ExpParticleMinSpread, rc.ExpParticleMaxSpread);
+        if (UnityEngine.Random.Range(0.0f, 1.0f) >= 0.5f) {
+          yOffset *= -1.0f;
+        }
         float exitTime = UnityEngine.Random.Range(0.0f, rc.ExpParticleStagger) + rc.ExpParticleBurst + rc.ExpParticleHold;
-        Vector3 doobTarget = new Vector3(freshDoobz.position.x - xOffset, freshDoobz.position.y + yOffset, freshDoobz.position.z);
+        Vector3 doobTarget = new Vector3(freshDoobz.position.x + xOffset, freshDoobz.position.y + yOffset, freshDoobz.position.z);
         // Use local move for the Vector3 Spread
         dooberSequence.Insert(0.0f, freshDoobz.DOLocalMove(doobTarget, rc.ExpParticleBurst).SetEase(Ease.OutBack));
         // Use non local move to properly tween to target end transform position
@@ -570,10 +604,26 @@ namespace Cozmo.HomeHub {
         HandleChestGained();
       }
     }
-
     // If we earned a chest, have the progress bar reflect the previous requirement level at full.
     private void HandleChestGained() {
       UpdateChestProgressBar(ChestRewardManager.Instance.GetPreviousRequirementPoints(), ChestRewardManager.Instance.GetPreviousRequirementPoints());
+    }
+
+    private Transform GetGoalSource(DailyGoal goal) {
+      Transform source = _EnergyDooberStart_CozmoTab;
+      if (DailyGoalManager.Instance.GoalPanelInstance == null) {
+        DAS.Warn("HomeView.GetGoalSource", "GoalPanelInstance is NULL, this should only be called with a GoalPanel active");
+        return source;
+      }
+      else {
+        DailyGoalPanel goalPanel = DailyGoalManager.Instance.GoalPanelInstance;
+        for (int i = 0; i < goalPanel.GoalCells.Count; i++) {
+          if (goalPanel.GoalCells[i].Goal == goal) {
+            source = goalPanel.GoalCells[i].transform;
+          }
+        }
+      }
+      return source;
     }
 
     #endregion
@@ -648,6 +698,7 @@ namespace Cozmo.HomeHub {
     protected override void CleanUp() {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.EngineErrorCodeMessage>(HandleEngineErrorCode);
       ChestRewardManager.Instance.ChestGained -= HandleChestGained;
       _RequirementPointsProgressBar.ProgressUpdateCompleted -= HandleGreenPointsBarUpdateComplete;
       GameEventManager.Instance.OnGameEvent -= HandleDailyGoalCompleted;

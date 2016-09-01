@@ -723,6 +723,7 @@ public abstract class GameBase : MonoBehaviour {
     if (RewardedActionManager.Instance.RewardPending || RewardedActionManager.Instance.NewDifficultyPending) {
       SharedMinigameView.HidePlayerScoreboard();
       SharedMinigameView.HideCozmoScoreboard();
+      RewardedActionManager.Instance.ResolveTagRewardCollisions();
       SharedMinigameView.ShowContinueButtonOffset(HandleChallengeResultViewClosed,
         Localization.GetWithArgs(LocalizationKeys.kRewardCollectCollectEnergy, RewardedActionManager.Instance.TotalPendingEnergy),
         Localization.Get(LocalizationKeys.kRewardCollectInstruction),

@@ -211,6 +211,7 @@ namespace Cozmo {
       private bool _BoxOpened;
 
       private void Awake() {
+        _OnboardingDooberStart.gameObject.SetActive(false);
         Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_EmotionChipWindowOpenSoundEvent);
         _TronPool = new SimpleObjectPool<TronLight>(CreateTronLight, ResetTronLight, 0);
         _ActiveBitsTransforms = new List<Transform>();
