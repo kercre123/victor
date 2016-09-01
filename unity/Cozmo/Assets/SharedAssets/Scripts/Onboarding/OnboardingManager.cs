@@ -138,9 +138,21 @@ public class OnboardingManager : MonoBehaviour {
   public void InitHomeHubOnboarding(HomeView homeview) {
     _HomeView = homeview;
     _OnboardingTransform = homeview.transform;
+    _HomeView.ViewClosed += HandleHomeViewClosed;
 
     if (IsOnboardingRequired(OnboardingPhases.Home)) {
       StartPhase(OnboardingPhases.Home);
+    }
+  }
+
+  // Clear out the phase if the homeview closed unexpected like a disconnect.
+  // The UI is destroyed but our save state will reinit us next time.
+  private void HandleHomeViewClosed() {
+    if (_CurrPhase != OnboardingPhases.None) {
+      _CurrPhase = OnboardingPhases.None;
+      if (_OnboardingUIInstance != null) {
+        _OnboardingUIInstance.RemoveDebugButtons();
+      }
     }
   }
 

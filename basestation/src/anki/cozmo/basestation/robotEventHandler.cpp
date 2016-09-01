@@ -690,7 +690,15 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionUnionTag::playAnimationTrigger:
     {
       auto & playAnimationTrigger = actionUnion.Get_playAnimationTrigger();
-      return new TriggerLiftSafeAnimationAction(robot, playAnimationTrigger.trigger, playAnimationTrigger.numLoops);
+      TriggerAnimationAction* newAction = nullptr;
+      if( playAnimationTrigger.useLiftSafe ) {
+        newAction = new TriggerLiftSafeAnimationAction(robot, playAnimationTrigger.trigger, playAnimationTrigger.numLoops);
+      }
+      else {
+        newAction = new TriggerAnimationAction(robot, playAnimationTrigger.trigger, playAnimationTrigger.numLoops);
+      }
+
+      return newAction;
     }
     case RobotActionUnionTag::pickupObject:
       return GetPickupActionHelper(robot, actionUnion.Get_pickupObject());
@@ -916,7 +924,12 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
     case ExternalInterface::MessageGameToEngineTag::PlayAnimationTrigger:
     {
       const ExternalInterface::PlayAnimationTrigger& msg = event.GetData().Get_PlayAnimationTrigger();
-      newAction = new TriggerLiftSafeAnimationAction(robotRef, msg.trigger, msg.numLoops);
+      if( msg.useLiftSafe ) {
+        newAction = new TriggerLiftSafeAnimationAction(robotRef, msg.trigger, msg.numLoops);
+      }
+      else {
+        newAction = new TriggerAnimationAction(robotRef, msg.trigger, msg.numLoops);
+      }
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::SearchForObject:

@@ -1451,7 +1451,7 @@ namespace Anki {
       if(_supervisor.getTime() > lastSendTime_sec + 0.5f)
       {
         PRINT_NAMED_INFO("SendAnimationGroup", "sending %s", animName);
-        ExternalInterface::PlayAnimationTrigger m(1,1,AnimationTriggerFromString(animName));
+        ExternalInterface::PlayAnimationTrigger m(1,1,AnimationTriggerFromString(animName),false);
         ExternalInterface::MessageGameToEngine message;
         message.Set_PlayAnimationTrigger(m);
         SendMessage(message);

@@ -110,5 +110,8 @@
   },
   "onboarding.OldRobotSkip": {
     "translation": "This Cozmo has already been through the Tutorial. Would you like to Skip it, or Start it again?"
+  },
+  "onboarding.BirthWait": {
+    "translation": "Watch Cozmo come to life"
   }
 }
