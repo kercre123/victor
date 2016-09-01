@@ -108,6 +108,9 @@ public static class LocalizationKeys {
   public const string kDailyGoalTitleWinSpeedTapLevel3 = "dailyGoal.title.WinSpeedTap.Level3";
   public const string kDailyGoalTitleSpeedTapShutoutRound = "dailyGoal.title.SpeedTap.Shutout.Round";
   public const string kDailyGoalTitleSpeedTapTieBreakerRound = "dailyGoal.title.SpeedTap.TieBreaker.Round";
+  public const string kDailyGoalTitleWinSpeedTapAccuracy50 = "dailyGoal.title.WinSpeedTap.Accuracy.50";
+  public const string kDailyGoalTitleWinSpeedTapAccuracy75 = "dailyGoal.title.WinSpeedTap.Accuracy.75";
+  public const string kDailyGoalTitleWinSpeedTapAccuracy100 = "dailyGoal.title.WinSpeedTap.Accuracy.100";
   public const string kDailyGoalTitleWinSpeedTapNoRed = "dailyGoal.title.WinSpeedTap.NoRed";
   public const string kDailyGoalTitlePlayKeepaway = "dailyGoal.title.PlayKeepaway";
   public const string kDailyGoalTitleWinKeepaway = "dailyGoal.title.WinKeepaway";
@@ -116,6 +119,11 @@ public static class LocalizationKeys {
   public const string kDailyGoalCompletedText = "dailyGoal.completedText";
   public const string kDailyGoalTitleUnlockMeetCozmo = "dailyGoal.title.UnlockMeetCozmo";
   public const string kDailyGoalTitleMeetNewFace = "dailyGoal.title.MeetNewFace";
+  public const string kDailyGoalTitleMeetCozmoNewFace = "dailyGoal.title.MeetCozmo.NewFace";
+  public const string kDailyGoalTitleMeetCozmoUpdateFace = "dailyGoal.title.MeetCozmo.UpdateFace";
+  public const string kDailyGoalTitleExplorerModePlaytime10 = "dailyGoal.title.ExplorerMode.Playtime.10";
+  public const string kDailyGoalTitleTotalPlayTime30 = "dailyGoal.title.TotalPlayTime.30";
+  public const string kDailyGoalTitleFreeplayTime10 = "dailyGoal.title.FreeplayTime.10";
   public const string kDailyGoalTitleUnlockUpgradeBuildPyramid = "dailyGoal.title.UnlockUpgradeBuildPyramid";
   public const string kDailyGoalTitleUnlockUpgradeFlipOntoBack = "dailyGoal.title.UnlockUpgradeFlipOntoBack";
   public const string kDailyGoalTitleUnlockUpgradeKnockOverThreeCubeStack = "dailyGoal.title.UnlockUpgradeKnockOverThreeCubeStack";
@@ -136,6 +144,11 @@ public static class LocalizationKeys {
   public const string kDailyGoalTitleUnlockQuickTapDifficultyThreeColor = "dailyGoal.title.UnlockQuickTapDifficulty.ThreeColor";
   public const string kDailyGoalTitleUnlockQuickTapDifficultyFourColor = "dailyGoal.title.UnlockQuickTapDifficulty.FourColor";
   public const string kDailyGoalTitleSparkPickupCube = "dailyGoal.title.SparkPickupCube";
+  public const string kDailyGoalTitleSparkStackCubes = "dailyGoal.title.SparkStackCubes";
+  public const string kDailyGoalTitleSparkRollCubes = "dailyGoal.title.SparkRollCubes";
+  public const string kDailyGoalTitleSparkPounceOnMotion = "dailyGoal.title.SparkPounceOnMotion";
+  public const string kDailyGoalTitleSparkKnockOverStacks = "dailyGoal.title.SparkKnockOverStacks";
+  public const string kDailyGoalTitleSparkPopAWheelie = "dailyGoal.title.SparkPopAWheelie";
 
   #endregion
 
@@ -458,8 +471,6 @@ public static class LocalizationKeys {
   public const string kLabelFractionCount = "label.fractionCount";
   public const string kLabelDayCount = "label.dayCount";
   public const string kDailySummaryTitle = "dailySummary.title";
-  public const string kEndSessionTitle = "endSession.title";
-  public const string kEndSessionDescription = "endSession.description";
   public const string kRequestGameTitle = "requestGame.title";
   public const string kRequestGameDescription = "requestGame.description";
   public const string kDailyGoalTitle = "dailyGoal.title";
@@ -492,6 +503,9 @@ public static class LocalizationKeys {
   public const string kButtonCreateNew = "button.createNew";
   public const string kLabelUpdate = "label.update";
   public const string kButtonUnlock = "button.unlock";
+  public const string kSoundcheckDescriptionConfirm = "soundcheck.description.confirm";
+  public const string kLabelCozmoSerial = "label.cozmo.serial";
+  public const string kLabelDeviceid = "label.deviceid";
 
   #endregion
 

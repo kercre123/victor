@@ -356,6 +356,12 @@ public class RobotEngineManager : MonoBehaviour {
     if (robot != null) {
       robot.SerialNumber = message.serial;
     }
+    var persistence = DataPersistence.DataPersistenceManager.Instance;
+    var currentSerial = persistence.Data.DeviceSettings.LastCozmoSerial;
+    if (message.serial != currentSerial) {
+      persistence.Data.DeviceSettings.LastCozmoSerial = message.serial;
+      persistence.Save();
+    }
   }
 
   private void ProcessSupportInfo(Anki.Cozmo.ExternalInterface.SupportInfo message) {
