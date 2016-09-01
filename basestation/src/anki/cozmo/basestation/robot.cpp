@@ -115,6 +115,7 @@ CONSOLE_VAR(bool, kDebugPossibleBlockInteraction, "Robot", false);
 // timeToConsiderOfftreads is tuned based on the fact that we have to wait half a second from the time the cliff sensor detects
 // ground to when the robot state message updates to the fact that it is no longer picked up
 static const float kRobotTimeToConsiderOfftreads_ms = 250.0f;
+static const float kRobotTimeToConsiderOfftreadsOnBack_ms = kRobotTimeToConsiderOfftreads_ms * 5.0f;
 
 // Laying flat angles
 static const float kPitchAngleOntreads_rads = DEG_TO_RAD(0);
@@ -430,7 +431,8 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   {
     // Transition to Robot on Back
     _awaitingConfirmationTreadState = OffTreadsState::OnBack;
-    _timeOffTreadStateChanged_ms = currentTimestamp;
+    // On Back is a special case as it is also an intermediate state for coming from onface -> ontreads. hence we wait a little longer than usual(kRobotTimeToConsiderOfftreads_ms) to check if it's on back.
+    _timeOffTreadStateChanged_ms = currentTimestamp + kRobotTimeToConsiderOfftreadsOnBack_ms;
   }
   else if(currOntreads
           && _awaitingConfirmationTreadState != OffTreadsState::InAir
