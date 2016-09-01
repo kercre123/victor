@@ -200,7 +200,6 @@ namespace Cozmo.HomeHub {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
 
       _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleGreenPointsBarUpdateComplete;
-      UnlockablesManager.Instance.OnUnlockPopupRequested += HandleUnlockView;
       DailyGoalManager.Instance.OnRefreshDailyGoals += UpdatePlayTabText;
       GameEventManager.Instance.OnGameEvent += HandleDailyGoalCompleted;
       UpdatePlayTabText();
@@ -233,29 +232,18 @@ namespace Cozmo.HomeHub {
       }
       if (message.errorCode == Anki.Cozmo.EngineErrorCode.ImageQualityTooBright ||
           message.errorCode == Anki.Cozmo.EngineErrorCode.ImageQualityTooDark) {
-
-        ContextManager.Instance.AppFlash(playChime: true);
-        // Create alert view with Icon
-        AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_BadLight, overrideCloseOnTouchOutside: true);
-        // Hook up callbacks
-        alertView.SetCloseButtonEnabled(true);
-        _BadLightDialog = alertView;
+        CreateBadLightPopup();
       }
     }
 
-    private void HandleUnlockView(Anki.Cozmo.UnlockId unlockID, bool showPopup) {
-      // TODO: Make Tabs pass in information to allow for immediate Popups like former App Unlock
-      // if showPopup, then pass info to the Tab.
-      UnlockableInfo info = UnlockablesManager.Instance.GetUnlockableInfo(unlockID);
-      if (info.UnlockableType == UnlockableType.Game) {
-        HandlePlayTabButton();
-      }
-      else {
-        HandleCozmoTabButton();
-      }
-      CheckIfUnlockablesAffordableAndUpdateBadge();
+    private void CreateBadLightPopup() {
+      ContextManager.Instance.AppFlash(playChime: true);
+      // Create alert view with Icon
+      AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_BadLight, overrideCloseOnTouchOutside: true);
+      // Hook up callbacks
+      alertView.SetCloseButtonEnabled(true);
+      _BadLightDialog = alertView;
     }
-
 
     private void UpdateChestProgressBar(int currentPoints, int numPointsNeeded, bool instant = false) {
       float progress = ((float)currentPoints / (float)numPointsNeeded);
@@ -703,7 +691,6 @@ namespace Cozmo.HomeHub {
       _RequirementPointsProgressBar.ProgressUpdateCompleted -= HandleGreenPointsBarUpdateComplete;
       GameEventManager.Instance.OnGameEvent -= HandleDailyGoalCompleted;
       DailyGoalManager.Instance.OnRefreshDailyGoals -= UpdatePlayTabText;
-      UnlockablesManager.Instance.OnUnlockPopupRequested -= HandleUnlockView;
 
       if (_HelpViewInstance != null) {
         UIManager.CloseView(_HelpViewInstance);
