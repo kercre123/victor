@@ -167,6 +167,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
       CoreUpgradeDetailsDialog detailView = UIManager.OpenView<CoreUpgradeDetailsDialog>(_CoreUpgradeDetailsViewPrefab);
       detailView.Initialize(unlockInfo, CozmoUnlockState.Unlockable, HandleUnlockableUpgradeUnlocked);
       _CoreUpgradeDetailsViewInstance = detailView;
+      detailView.ViewClosed += LoadTiles;
     }
   }
 

@@ -24,7 +24,6 @@ public class UnlockablesManager : MonoBehaviour {
 
   public Action<UnlockId> OnSparkStarted;
   public Action<CoreUpgradeDetailsDialog> OnSparkComplete;
-  public Action<Anki.Cozmo.UnlockId, bool> OnUnlockPopupRequested;
   public Action<UnlockId> OnUnlockComplete;
 
   public bool UnlocksLoaded { get { return _UnlocksLoaded; } }
