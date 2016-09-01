@@ -598,6 +598,23 @@ IActionRunner* GetEnrollNamedFaceActionHelper(Robot& robot, const ExternalInterf
   enrollAction->EnableSaveToRobot(enrollNamedFace.saveToRobot);
   return enrollAction;
 }
+
+// Version for SayText message
+IActionRunner* GetSayTextAction(Robot& robot, const ExternalInterface::SayText& sayText)
+{
+  SayTextAction* sayTextAction = new SayTextAction(robot, sayText.text, sayText.voiceStyle, sayText.durationScalar);
+  sayTextAction->SetAnimationTrigger(sayText.playEvent);
+  return sayTextAction;
+}
+  
+// Version for SayTextWithIntent message
+IActionRunner* GetSayTextAction(Robot& robot, const ExternalInterface::SayTextWithIntent& sayTextWithIntent)
+{
+  SayTextAction* sayTextAction = new SayTextAction(robot, sayTextWithIntent.text, sayTextWithIntent.intent);
+  sayTextAction->SetAnimationTrigger(sayTextWithIntent.playEvent);
+  return sayTextAction;
+}
+
   
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::SetLiftHeight& msg)
@@ -760,20 +777,10 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       return GetRealignWithObjectActionHelper(robot, actionUnion.Get_realignWithObject());
       
     case RobotActionUnionTag::sayText:
-    {
-      const auto msg = actionUnion.Get_sayText();
-      SayTextAction* sayTextAction = new SayTextAction(robot, msg.text, msg.voiceStyle, msg.durationScalar);
-      sayTextAction->SetAnimationTrigger(msg.playEvent);
-      return sayTextAction;
-    }
+      return GetSayTextAction(robot, actionUnion.Get_sayText());
       
     case RobotActionUnionTag::sayTextWithIntent:
-    {
-      const auto msg = actionUnion.Get_sayTextWithIntent();
-      SayTextAction* sayTextAction = new SayTextAction(robot, msg.text, msg.intent);
-      sayTextAction->SetAnimationTrigger(msg.playEvent);
-      return sayTextAction;
-    }
+      return GetSayTextAction(robot, actionUnion.Get_sayTextWithIntent());
       
     case RobotActionUnionTag::enrollNamedFace:
       return GetEnrollNamedFaceActionHelper(robot, actionUnion.Get_enrollNamedFace());
@@ -977,14 +984,12 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
     }
     case ExternalInterface::MessageGameToEngineTag::SayText:
     {
-      const auto msg = event.GetData().Get_SayText();
-      newAction = new SayTextAction(robotRef, msg.text, msg.voiceStyle, msg.durationScalar);
+      newAction = GetSayTextAction(robotRef, event.GetData().Get_SayText());
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::SayTextWithIntent:
     {
-      const auto msg = event.GetData().Get_SayTextWithIntent();
-      newAction = new SayTextAction(robotRef, msg.text, msg.intent);
+      newAction = GetSayTextAction(robotRef, event.GetData().Get_SayTextWithIntent());
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::EnrollNamedFace:
