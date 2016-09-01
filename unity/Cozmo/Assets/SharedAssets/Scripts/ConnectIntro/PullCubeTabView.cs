@@ -24,7 +24,7 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
   private UnityEngine.UI.Image[] _ObjectConnectedImagesList;
 
   [SerializeField]
-  private Sprite _ConnectedStateSprite;
+  private GameObject[] _DoneMarks;
 
   private List<Anki.Cozmo.ObjectType> _ObjectConnectedList = new List<Anki.Cozmo.ObjectType>();
   // staging area for newly connected objects so we can add a delay / animation before putting it into
@@ -42,6 +42,10 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
     _StartTime = Time.time;
     for (int i = 0; i < _ObjectConnectedImagesList.Length; ++i) {
       _ObjectConnectedImagesList[i].gameObject.SetActive(false);
+    }
+
+    for (int i = 0; i < _DoneMarks.Length; ++i) {
+      _DoneMarks[i].gameObject.SetActive(false);
     }
 
     // Enable the automatic block pool
@@ -93,6 +97,7 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
         DAS.Debug("PullCubeTabView.ProcessNewObject", "Processing: " + _NewlyConnectedObject);
         int typeIndex = (int)robot.LightCubes[_NewlyConnectedObjectId].ObjectType - 1;
         _ObjectConnectedImagesList[typeIndex].gameObject.SetActive(true);
+        _DoneMarks[typeIndex].gameObject.SetActive(true);
         _ObjectConnectedList.Add(_NewlyConnectedObject);
         _NewlyConnectedObject = Anki.Cozmo.ObjectType.Invalid;
         robot.LightCubes[_NewlyConnectedObjectId].SetLEDs(Color.cyan);
