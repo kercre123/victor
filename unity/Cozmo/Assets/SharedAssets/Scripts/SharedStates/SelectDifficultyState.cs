@@ -10,6 +10,7 @@ public class SelectDifficultyState : State {
   private State _NextState;
   private DifficultySelectButtonPanel _DifficultySelectButtonPanel;
   private DifficultySelectOptionData _SelectedDifficultyData;
+  private bool _DifficultySelectLockState = false;
 
   public SelectDifficultyState(State nextState, List<DifficultySelectOptionData> difficultyOptions, int highestLevelCompleted) {
     _NextState = nextState;
@@ -53,12 +54,19 @@ public class SelectDifficultyState : State {
     _SelectedDifficultyData = data;
     _Game.SharedMinigameView.ShelfWidget.MoveCarat(buttonXWorldPosition);
     _Game.SharedMinigameView.EnableContinueButton(isUnlocked);
+
+    _DifficultySelectLockState = isUnlocked;
+
     if (isUnlocked) {
       _Game.SharedMinigameView.HideLockedBackground();
       _Game.SharedMinigameView.ShowMiddleBackground();
       _SelectedDifficultyData.LoadAnimationPrefabData((UnityEngine.GameObject animationPrefab) => {
-        _Game.SharedMinigameView.ShowWideAnimationSlide(_SelectedDifficultyData.DifficultyDescription.Key, data.DifficultyName.Key + "_description",
-                                                        animationPrefab, null, LocalizationKeys.kMinigameTextHowToPlayHeader);
+
+        // guards against async issue where two buttons were pressed right after each other.
+        if (_DifficultySelectLockState) {
+          _Game.SharedMinigameView.ShowWideAnimationSlide(_SelectedDifficultyData.DifficultyDescription.Key, data.DifficultyName.Key + "_description",
+                                                animationPrefab, null, LocalizationKeys.kMinigameTextHowToPlayHeader);
+        }
       });
     }
     else {
