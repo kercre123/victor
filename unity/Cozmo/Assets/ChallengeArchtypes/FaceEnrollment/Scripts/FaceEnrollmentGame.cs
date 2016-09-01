@@ -302,12 +302,12 @@ namespace FaceEnrollment {
 
       RobotActionUnion[] actions = {
         // 1. say name once
-        new RobotActionUnion().Initialize(Singleton<SayTextWithIntent>.Instance.Initialize(
+        new RobotActionUnion().Initialize(new SayTextWithIntent().Initialize(
           _NameForFace,
           Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentSayName,
           Anki.Cozmo.SayTextIntent.Name_FirstIntroduction)),
         // 2. repeat name                      
-        new RobotActionUnion().Initialize(Singleton<SayTextWithIntent>.Instance.Initialize(
+        new RobotActionUnion().Initialize(new SayTextWithIntent().Initialize(
           _NameForFace,
           Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentRepeatName,
           Anki.Cozmo.SayTextIntent.Name_FirstIntroduction)),

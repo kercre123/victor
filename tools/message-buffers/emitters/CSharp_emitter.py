@@ -890,6 +890,7 @@ class UnionEmitter(ast.NodeVisitor):
         
     def emitUnion(self, node, globals):
         self.output.write('\tprivate object _state = null;\n\n')
+        self.output.write('\tpublic object GetState() { return _state; }\n\n')
     def emitGetTag(self, node, globals):
         self.output.write('\tpublic Tag GetTag() { return _tag; }\n\n')
         
