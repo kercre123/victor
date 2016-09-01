@@ -14,6 +14,11 @@ extern int xPortGetFreeHeapSize(void);    // Faster than system_get_free_heap_si
 /// Based on 1MB flash map
 #define FLASH_MEMORY_MAP (0x40200000)
 
+#define STACK_START (0x40000000)
+#define STACK_END   (0x3fffe000)
+
+#define STACK_LEFT(ARG) if((ARG)) { int a; os_printf(__FILE__ " %d: %x\r\n", __LINE__, ((unsigned int)&a) - STACK_END); }
+
 /// Must drop 6dBm below max for FCC
 #define MAX_TPW (82-24)
 

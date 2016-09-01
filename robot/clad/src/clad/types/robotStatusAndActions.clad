@@ -127,7 +127,6 @@ namespace RobotInterface {
     uint_32 timestamp,
     int_32  numAnimBytesPlayed,
     int_32  numAudioFramesPlayed,
-    RobotStatusFlag status, // RobotStatusFlag packs as a uint_16
     uint_8  enabledAnimTracks,
     uint_8 tag,
   }

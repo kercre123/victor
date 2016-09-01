@@ -56,75 +56,44 @@ bool SendMessage(RobotInterface::EngineToRobot& msg)
   return SendMessage(msg.GetBuffer(), msg.Size());
 }
 
-#define RELAY_BUFFER_SIZE (384)
-ct_assert(RELAY_BUFFER_SIZE > RTIP_MAX_CLAD_MSG_SIZE + DROP_TO_WIFI_MAX_PAYLOAD);
-
-extern "C" bool AcceptRTIPMessage(uint8_t* payload, uint8_t length)
+void Update()
 {
-  static uint8 relayBuffer[RELAY_BUFFER_SIZE];
-  static uint8 relayQueued = 0;
-  AnkiConditionalErrorAndReturnValue(length <= RTIP_MAX_CLAD_MSG_SIZE, false, 50, "RTIP.AcceptRTIPMessage", 396, "Impossible message length %d > RTIP_MAX_CLAD_MSG_SIZE (%d)", 2, length, RTIP_MAX_CLAD_MSG_SIZE);
-  if (length > (RELAY_BUFFER_SIZE - relayQueued))
+  RobotInterface::EngineToRobot msg;
+  i2spiUpdateRtipQueueEstimate();
+  u8* buffer = msg.GetBuffer();
+  int size = i2spiGetCladMessage(buffer);
+  while (size > 0)
   {
-    AnkiError( 50, "RTIP.AcceptRTIPMessage", 288, "overflow! %d > %d - %d", 3, length, RELAY_BUFFER_SIZE, relayQueued);
-    AnkiConditionalError(relayQueued < 2, 50, "RTIP.AcceptRTIPMessage", 290, "Waiting for message of size %d", 1, relayBuffer[0]);
-    relayQueued = 0;
-    return false;
-  }
-  else
-  {
-    os_memcpy(relayBuffer + relayQueued, payload, length);
-    relayQueued += length;
-    while (relayQueued > 1) // Have a header +
+    if (msg.tag < RobotInterface::TO_WIFI_START)
     {
-      const u8 size = relayBuffer[0];
-      const u8 sizeWHeader = size + 1;
-      if (relayQueued >= sizeWHeader)
+      AnkiError( 50, "RTIP.AcceptRTIPMessage", 376, "WiFi received message from RTIP, %x[%d] that seems bound below (< 0x%x)", 3, msg.tag, size, (int)RobotInterface::TO_WIFI_START);
+    }
+    else if (msg.tag <= RobotInterface::TO_WIFI_END) // This message is for us
+    {
+      Messages::ProcessMessage(msg);
+    }
+    else if (clientConnected())
+    {
+      if ((msg.tag == RobotInterface::RobotToEngine::Tag_trace) && (clientQueueAvailable() < 200))
       {
-        const u8 tag = relayBuffer[1];
-        if (tag < RobotInterface::TO_WIFI_START)
-        {
-          AnkiError( 50, "RTIP.AcceptRTIPMessage", 376, "WiFi received message from RTIP, %x[%d] that seems bound below (< 0x%x)", 3, tag, size, (int)RobotInterface::TO_WIFI_START);
-        }
-        else if (tag <= RobotInterface::TO_WIFI_END) // This message is for us
-        {
-          Messages::ProcessMessage(relayBuffer + 1, size);
-        }
-        else // This message is above us
-        {
-          if (clientConnected())
-          {
-            if ((tag == RobotInterface::RobotToEngine::Tag_trace) && (clientQueueAvailable() < 200))
-            {
-              AnkiWarn( 50, "RTIP.AcceptRTIPMessage", 442, "dropping RTIP trace", 0);
-            }
-            else
-            {
-              const bool reliable = tag < RobotInterface::TO_ENG_UNREL;
-              if (reliable)
-              {
-                AnkiConditionalError(clientSendMessage(relayBuffer + 1, size, RobotInterface::GLOBAL_INVALID_TAG, true, false), 50, "RTIP.AcceptRTIPMessage", 289, "Couldn't relay message (%x[%d]) from RTIP over wifi", 2, tag, size);
-              }
-              else 
-              {
-                clientSendMessage(relayBuffer + 1, size, RobotInterface::GLOBAL_INVALID_TAG, false, false);
-              }
-            }
-          }
-        }
-        relayQueued -= sizeWHeader;
-        os_memmove(relayBuffer, relayBuffer + sizeWHeader, relayQueued);
+        AnkiWarn( 50, "RTIP.AcceptRTIPMessage", 442, "dropping RTIP trace", 0);
       }
       else
       {
-        break;
+        const bool reliable = msg.tag < RobotInterface::TO_ENG_UNREL;
+        if (reliable)
+        {
+          AnkiConditionalError(clientSendMessage(buffer, size, RobotInterface::GLOBAL_INVALID_TAG, true, false), 50, "RTIP.AcceptRTIPMessage", 289, "Couldn't relay message (%x[%d]) from RTIP over wifi", 2, msg.tag, msg.Size());
+        }
+        else 
+        {
+          clientSendMessage(buffer, size, RobotInterface::GLOBAL_INVALID_TAG, false, false);
+        }
       }
     }
-    return true;
+    size = i2spiGetCladMessage(buffer);
   }
 }
-
-
 
 } // RTIP
 } // Cozmo

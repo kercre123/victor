@@ -149,6 +149,7 @@ bool clientSendMessage(const u8* buffer, const u16 size, const u8 msgID, const b
     {
       if (unlikely(ReliableTransport_SendMessage(buffer, size, clientConnection, eRMT_SingleReliableMessage, hot, msgID) == false)) // failed to queue reliable message!
       {
+        os_printf("Disconnecting because couldn't queue message %x[%d], %d\r\n", buffer[0], size, msgID);
         ReliableTransport_Disconnect(clientConnection);
         Receiver_OnDisconnect(clientConnection);
         return false;

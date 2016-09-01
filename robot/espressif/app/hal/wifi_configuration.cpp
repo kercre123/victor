@@ -179,8 +179,6 @@ namespace WiFiConfiguration {
     apConfig.beacon_interval = msg.beaconInterval;
     staConfig.bssid_set      = (msg.apFlags & AP_BSSID)  ? true : false;
     
-    //i2spiSwitchMode(I2SPI_PAUSED);
-    
     if (msg.rfMax_dBm <= MAX_TPW) // A valid dBm, use 0xff to disable setting
     {
       system_phy_set_max_tpw(msg.rfMax_dBm);
@@ -239,8 +237,6 @@ namespace WiFiConfiguration {
         conditionalFlagsError(wifi_softap_dhcps_stop(), FLAGS_ERR_OFFSET-30, "Failed to stop softap DHCP server");
       }
     }
-    
-    //i2spiSwitchMode(I2SPI_RESUME);
     
     sendResult(0, EngineToRobot::Tag_appConCfgFlags);
   }

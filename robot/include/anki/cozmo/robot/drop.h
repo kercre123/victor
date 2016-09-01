@@ -27,6 +27,7 @@
  * This is a quasi-magic number derrived from Nathans JPEG encoding logic.
  */
 #define DROP_SPACING (168)
+ASSERT_IS_MULTIPLE_OF_TWO(DROP_SPACING);
 /// Number of usable bytes on the I2SPI bus for drops from RTIP to WiFi
 #define DROP_TO_WIFI_SIZE (100)
 /// Number of usable bytes on the I2SPI bus for drops from WiFi to the RTIP
@@ -67,6 +68,7 @@ typedef struct
 } DropToRTIP;
 
 ct_assert(sizeof(DropToRTIP) == DROP_TO_RTIP_SIZE);
+
 ASSERT_IS_MULTIPLE_OF_TWO(DROP_TO_RTIP_SIZE);
 
 /// Message receive buffer size on the RTIP
@@ -86,6 +88,7 @@ typedef struct
 } DropToWiFi;
 
 ct_assert(sizeof(DropToWiFi) == DROP_TO_WIFI_SIZE);
+
 ASSERT_IS_MULTIPLE_OF_TWO(DROP_TO_WIFI_SIZE);
 
 /// Droplet bit masks and flags.

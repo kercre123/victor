@@ -65,9 +65,6 @@ namespace AnimationController {
 
     int _tracksInUse = 0;
 
-    s16 _audioReadInd;
-    bool _playSilence;
-
     bool _disabled;
 
 #   if DEBUG_ANIMATION_CONTROLLER
@@ -205,8 +202,6 @@ namespace AnimationController {
     _isPlaying = false;
     _isBufferStarved = false;
     _bufferFullMessagePrintedThisTick = false;
-    _audioReadInd = 0;
-    _playSilence = false;
 
     StopTracksInUse();
 
@@ -221,9 +216,6 @@ namespace AnimationController {
     msg.timestamp = system_get_time();
     msg.numAnimBytesPlayed = GetTotalNumBytesPlayed();
     msg.numAudioFramesPlayed = GetTotalNumAudioFramesPlayed();
-    msg.status = 0;
-    if (IsBufferFull()) msg.status |= IS_ANIM_BUFFER_FULL;
-    if (_isPlaying) msg.status     |= IS_ANIMATING;
     msg.enabledAnimTracks = GetEnabledTracks();
     msg.tag = GetCurrentTag();
     if (Anki::Cozmo::HAL::RadioSendMessage(msg.GetBuffer(), msg.Size(), RobotInterface::RobotToEngine::Tag_animState))
@@ -418,14 +410,11 @@ namespace AnimationController {
     return ready;
   } // IsReadyToPlay()
 
-  extern "C" bool PumpAudioData(uint8_t* dest)
+  inline bool AdvanceAudio()
   {
-    if(IsReadyToPlay()) {
-      #ifdef TARGET_ESPRESSIF
-      if (_audioReadInd == 0)
-      #else
+    if (_disabled) return false;
+    else if(IsReadyToPlay()) {
       if (HAL::AudioReady())
-      #endif
       {
         START_TIME_PROFILE(Anim, AUDIOPLAY);
 
@@ -448,41 +437,19 @@ namespace AnimationController {
           case RobotInterface::EngineToRobot::Tag_animAudioSilence:
           {
             GetFromBuffer(&msg);
-            _playSilence = true;
-            #ifdef TARGET_ESPRESSIF
-              _audioReadInd = MAX_AUDIO_BYTES_PER_DROP;
-              return false; // Do not play audio
-            #else
-              HAL::AudioPlaySilence();
-              return true; // Advance animation
-            #endif
+            HAL::AudioPlaySilence();
+            return true; // Advance animation
           }
           case RobotInterface::EngineToRobot::Tag_animAudioSample:
           {
             if(_tracksToPlay & AUDIO_TRACK) {
-              _playSilence = false;
-              #ifdef TARGET_ESPRESSIF
-                u8 header[3];
-                GetFromBuffer(header, 3); // Get the size + audio sample header
-                GetFromBuffer(dest, MAX_AUDIO_BYTES_PER_DROP); // Get the first MAX_AUDIO_BYTES_PER_DROP from the buffer
-                CountConsumedBytes(1 + MAX_AUDIO_BYTES_PER_DROP); // Advance by header plus the bytes we just consumed
-                _audioReadInd = MAX_AUDIO_BYTES_PER_DROP;
-                return true; // Play audio
-              #else
-                GetFromBuffer(&msg);
-                HAL::AudioPlayFrame(&msg.animAudioSample);
-                return true; // Advance animation
-              #endif
+              GetFromBuffer(&msg);
+              HAL::AudioPlayFrame(&msg.animAudioSample);
+              return true; // Advance animation
             } else {
               GetFromBuffer(&msg);
-              _playSilence = true;
-              #ifdef TARGET_ESPRESSIF
-                _audioReadInd = MAX_AUDIO_BYTES_PER_DROP;
-                return false; // Do not play audio
-              #else
-                HAL::AudioPlaySilence();
-                return true; // Advance animation
-              #endif
+              HAL::AudioPlaySilence();
+              return true; // Advance animation
             }
           }
           default:
@@ -495,30 +462,7 @@ namespace AnimationController {
       }
       else
       {
-#ifdef TARGET_ESPRESSIF
-        if (!_playSilence)
-        {
-          GetFromBuffer(dest, MAX_AUDIO_BYTES_PER_DROP); // Get the next MAX_AUDIO_BYTES_PER_DROP from the buffer
-          CountConsumedBytes(MAX_AUDIO_BYTES_PER_DROP);
-        }
-        _audioReadInd += MAX_AUDIO_BYTES_PER_DROP;
-        if (_audioReadInd >= AUDIO_SAMPLE_SIZE)
-        {
-          --_numAudioFramesBuffered;
-          ++_numAudioFramesPlayed;
-#         if DEBUG_ANIMATION_CONTROLLER
-          AnkiDebug( 2, "AnimationController", 14, "Update()\tari = %d\tnafb = %d", 2, _audioReadInd, _numAudioFramesBuffered);
-#         endif
-          _audioReadInd = 0;
-          Update(); // Done with audio message, grab next thing from buffer
-#         if DEBUG_ANIMATION_CONTROLLER
-          _currentTime_ms += 33;
-#         endif
-        }
-        return !_playSilence; // Return whether we are playing audio or not
-#else
         return false; // Do not advance animation
-#endif
       }
     }
     else
@@ -529,9 +473,7 @@ namespace AnimationController {
 
   Result Update()
   {
-#ifndef TARGET_ESPRESSIF
-    if (PumpAudioData(NULL))
-#endif
+    if (AdvanceAudio())
     {
       RobotInterface::EngineToRobot msg;
       RobotInterface::EngineToRobot::Tag msgID;
@@ -757,10 +699,8 @@ namespace AnimationController {
         } // switch
       } // while(!nextAudioFrameFound && !terminatorFound)
 
-      #ifndef TARGET_ESPRESSIF
-        ++_numAudioFramesPlayed;
-        --_numAudioFramesBuffered;
-      #endif
+      ++_numAudioFramesPlayed;
+      --_numAudioFramesBuffered;
 
       if(terminatorFound) {
         _isPlaying = false;
@@ -780,7 +720,7 @@ namespace AnimationController {
       PERIODIC_PRINT_AND_RESET_TIME_PROFILE(Anim, 120);
 
 
-    } // if PumpAudio
+    } // if AdvanceAudio
 
     return RESULT_OK;
   } // Update()

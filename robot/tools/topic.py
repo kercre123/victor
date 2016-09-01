@@ -21,11 +21,16 @@ class TopicPrinter:
     def parseState(self, msg):
         sys.stdout.write("\t".join(["{}: {}".format(key, getattr(msg, key)) for key in self.stateParse if hasattr(msg, key)]))
         sys.stdout.write(os.linesep)
+        
+    def imageDebug(self, img):
+        sys.stdout.write("\tts={0.frameTimeStamp:08d}\tid={0.imageId:08d}\tdb={0.chunkDebug:08x}\tcc={0.imageChunkCount:02d}\tci={0.chunkId:02d}{1}".format(img, os.linesep))
     
     def __init__(self, args):
         if args.state_parse:
             self.stateParse = args.state_parse
             robotInterface.SubscribeToTag(robotInterface.RI.RobotToEngine.Tag.state, self.parseState)
+        elif args.image_debug:
+            robotInterface.SubscribeToTag(robotInterface.RI.RobotToEngine.Tag.image, self.imageDebug)
         else:
             for t in args.tags:
                 if type(t) is int:
@@ -46,6 +51,7 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--ip_address', default="172.31.1.1", help="Specify robot's ip address")
     parser.add_argument('-p', '--port', default=5551, type=int, help="Manually specify robot's port")
     parser.add_argument('--state_parse', nargs='*', help="Print just the specified fields from the robot state message")
+    parser.add_argument('--image_debug', action='store_true', help="Print image chunk debugging summary")
     parser.add_argument('tags', nargs='*', help="The tags to subscribe to")
     args = parser.parse_args()
 
