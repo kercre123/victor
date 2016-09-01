@@ -54,7 +54,7 @@ namespace Cozmo {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       // Battery voltage gets initialized to the float maxvalue, so ignore it until it's valid 
       if (null != robot && robot.BatteryVoltage <= _kMaxValidBatteryVoltage) {
-        _LowPassFilteredVoltage = _LowPassFilteredVoltage * Settings.FilterSmoothingWeight + (1.0f - Settings.FilterSmoothingWeight) * robot.BatteryVoltage; 
+        _LowPassFilteredVoltage = _LowPassFilteredVoltage * Settings.FilterSmoothingWeight + (1.0f - Settings.FilterSmoothingWeight) * robot.BatteryVoltage;
 
         if (!_IsPaused && !IsConfirmSleepDialogOpen && !IsGoToSleepDialogOpen && _LowPassFilteredVoltage < Settings.LowBatteryVoltageValue && !_LowBatteryAlertTriggered) {
           if (!_LowBatteryEventLogged) {
@@ -190,7 +190,8 @@ namespace Cozmo {
         _SleepCozmoConfirmDialog.Initialize(false);
         _SleepCozmoConfirmDialog.SetCloseButtonEnabled(false);
         _SleepCozmoConfirmDialog.SetPrimaryButton(LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalButtonConfirm,
-                                                HandleConfirmSleepCozmoButtonTapped);
+                                                  HandleConfirmSleepCozmoButtonTapped,
+                                                  Anki.Cozmo.Audio.AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Disconnect));
 
         if (handleOnChargerSleepCancel) {
           _SleepCozmoConfirmDialog.SetSecondaryButton(LocalizationKeys.kButtonCancel, HandleOnChargerSleepCancel);
