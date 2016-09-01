@@ -71,7 +71,18 @@ static inline void startADCsample(AnalogInput channel)
 
 static inline Fixed calcResult(const Fixed scale)
 {
-  return FIXED_MUL(FIXED_DIV(TO_FIXED(NRF_ADC->RESULT * V_REFERNCE_MV * V_PRESCALE / V_SCALE), TO_FIXED(1000)), scale);
+  int sample = NRF_ADC->RESULT;
+  
+  // Calibrate the ADC value if hardware revision is 3 or higher. 
+  int rev = (*((uint32_t volatile *)0xF0000FE8)) & 0x000000F0;
+  if (rev > 0x70) {
+    const int8_t GAIN_OFFSET = *(const int8_t*) 0x10000024;
+    const int8_t GAIN_ERROR  = *(const int8_t*) 0x10000025;
+
+    sample = sample * (1024 + GAIN_ERROR) / 1024 + GAIN_OFFSET;
+  }
+  
+  return FIXED_MUL(FIXED_DIV(TO_FIXED(sample * V_REFERNCE_MV * V_PRESCALE / V_SCALE), TO_FIXED(1000)), scale);
 }
 
 static inline Fixed getADCsample(AnalogInput channel, const Fixed scale)
