@@ -40,13 +40,9 @@ public class Robot : IRobot {
 
     public uint TransitionOffPeriodMs { get; set; }
 
-    public uint _LastOnOffset;
+    public int _LastOffset;
 
-    public uint OnOffset { get; set; }
-
-    public uint _LastOffOffset;
-
-    public uint OffOffset { get; set; }
+    public int Offset { get; set; }
 
     public void SetLastInfo() {
       _LastOnColor = OnColor;
@@ -55,8 +51,7 @@ public class Robot : IRobot {
       _LastOffPeriodMs = OffPeriodMs;
       _LastTransitionOnPeriodMs = TransitionOnPeriodMs;
       _LastTransitionOffPeriodMs = TransitionOffPeriodMs;
-      _LastOnOffset = OnOffset;
-      _LastOffOffset = OffOffset;
+      _LastOffset = Offset;
     }
 
     public bool Changed {
@@ -73,6 +68,7 @@ public class Robot : IRobot {
       OffPeriodMs = 0;
       TransitionOnPeriodMs = 0;
       TransitionOffPeriodMs = 0;
+      Offset = 0;
 
       _LastOnColor = 0;
       _LastOffColor = 0;
@@ -80,6 +76,7 @@ public class Robot : IRobot {
       _LastOffPeriodMs = 0;
       _LastTransitionOnPeriodMs = 0;
       _LastTransitionOffPeriodMs = 0;
+      _LastOffset = 0;
 
       MessageDelay = 0f;
     }

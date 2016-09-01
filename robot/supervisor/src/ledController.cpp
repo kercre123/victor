@@ -54,34 +54,34 @@ namespace Cozmo {
       phaseFrame = 0;
     }
     
-    if(phaseFrame <= ledParams.onOffset)
+    if(phaseFrame <= ledParams.offset)
     {
       return false;
     }
-    else if (phaseFrame <= ledParams.transitionOnFrames + ledParams.onOffset) // Still turning on
+    else if (phaseFrame <= ledParams.transitionOnFrames + ledParams.offset) // Still turning on
     {
-      newColor = AlphaBlend(ledParams.onColor, ledParams.offColor, float(phaseFrame - ledParams.onOffset)/float(ledParams.transitionOnFrames));
+      newColor = AlphaBlend(ledParams.onColor, ledParams.offColor, float(phaseFrame - ledParams.offset)/float(ledParams.transitionOnFrames));
       return true;
     }
-    else if (phaseFrame <= (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.onOffset))
+    else if (phaseFrame <= (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.offset))
     {
       newColor = ledParams.onColor;
       
       // Return true for the first frame in the onColor to make sure it's set
-      return phaseFrame <= ledParams.transitionOnFrames + ledParams.onOffset + 1;
+      return phaseFrame <= ledParams.transitionOnFrames + ledParams.offset + 1;
     }
-    else if (phaseFrame <= (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.transitionOffFrames + ledParams.onOffset))
+    else if (phaseFrame <= (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.transitionOffFrames + ledParams.offset))
     {
-      const u16 offPhase = phaseFrame - (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.onOffset);
+      const u16 offPhase = phaseFrame - (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.offset);
       newColor = AlphaBlend(ledParams.offColor, ledParams.onColor, float(offPhase)/float(ledParams.transitionOffFrames));
       return true;
     }
-    else if (phaseFrame <= (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.transitionOffFrames + ledParams.offFrames + ledParams.onOffset + ledParams.offOffset))
+    else if (phaseFrame <= (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.transitionOffFrames + ledParams.offFrames + ledParams.offset))
     {
       newColor = ledParams.offColor;
       
       // Return true for the first frame in the offColor to make sure it's set
-      return phaseFrame <= (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.transitionOffFrames + ledParams.onOffset) + 1;
+      return phaseFrame <= (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.transitionOffFrames + ledParams.offset) + 1;
     }
 
     newColor = ledParams.offColor;

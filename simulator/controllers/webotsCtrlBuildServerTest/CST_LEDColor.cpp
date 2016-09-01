@@ -82,8 +82,7 @@ s32 CST_LEDColor::UpdateSimInternal()
   const u32 kOffPeriod_ms = 240;
   const u32 kTransitionOnPeriod_ms = 0;
   const u32 kTransitionOffPeriod_ms = 0;
-  const u32 kOnOffset_ms = 0;
-  const u32 kOffOffset_ms = 0;
+  const u32 kOffset_ms = 0;
   const u32 kRotationPeriod_ms = 0;
   // relative x, y are garbage values since MakeRelativeMode = RELATIVE_LED_MODE_OFF; see COZMO-3049
   const f32 kRelativeToX = 0;
@@ -133,8 +132,7 @@ s32 CST_LEDColor::UpdateSimInternal()
                                  offPeriod_ms,
                                  transitionOnPeriod_ms,
                                  transitionOffPeriod_ms,
-                                 {{kOnOffset_ms,kOnOffset_ms,kOnOffset_ms,kOnOffset_ms}},
-                                 {{kOffOffset_ms,kOffOffset_ms,kOffOffset_ms,kOffOffset_ms}},
+                                 {{kOffset_ms,kOffset_ms,kOffset_ms,kOffset_ms}},
                                  kRotationPeriod_ms,
                                  kRelativeToX,
                                  kRelativeToY,
@@ -185,8 +183,7 @@ s32 CST_LEDColor::UpdateSimInternal()
                               kOffPeriod_ms,
                               kTransitionOnPeriod_ms,
                               kTransitionOffPeriod_ms,
-                              kOnOffset_ms,
-                              kOffOffset_ms,
+                              kOffset_ms,
                               kRotationPeriod_ms,
                               kRelativeToX,
                               kRelativeToY,

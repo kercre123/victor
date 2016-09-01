@@ -1650,7 +1650,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetAllActiveObjec
                            msg.onColor, msg.offColor,
                            msg.onPeriod_ms, msg.offPeriod_ms,
                            msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms,
-                           msg.onOffset, msg.offOffset,
+                           msg.offset,
                            msg.makeRelative, Point2f(msg.relativeToX, msg.relativeToY),
                            msg.rotationPeriod_ms);
   }

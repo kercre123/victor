@@ -3329,6 +3329,7 @@ void Robot::SetBackpackLights(const std::array<u32,(size_t)LEDId::NUM_BACKPACK_L
       turnSignals[turnCount].offFrames = MS_TO_LED_FRAMES(offPeriod_ms[i]);
       turnSignals[turnCount].transitionOnFrames  = MS_TO_LED_FRAMES(transitionOnPeriod_ms[i]);
       turnSignals[turnCount].transitionOffFrames = MS_TO_LED_FRAMES(transitionOffPeriod_ms[i]);
+      turnSignals[turnCount].offset = 0;
       ++turnCount;
     }
     else
@@ -3339,6 +3340,7 @@ void Robot::SetBackpackLights(const std::array<u32,(size_t)LEDId::NUM_BACKPACK_L
       middleLights[middleCount].offFrames = MS_TO_LED_FRAMES(offPeriod_ms[i]);
       middleLights[middleCount].transitionOnFrames  = MS_TO_LED_FRAMES(transitionOnPeriod_ms[i]);
       middleLights[middleCount].transitionOffFrames = MS_TO_LED_FRAMES(transitionOffPeriod_ms[i]);
+      middleLights[middleCount].offset = 0;
       ++middleCount;
     }
   
@@ -3398,7 +3400,7 @@ Result Robot::SetObjectLights(const ObjectID& objectID,
 
         
     activeObject->SetLEDs(rotatedWhichLEDs, onColor, offColor, onPeriod_ms, offPeriod_ms,
-                          transitionOnPeriod_ms, transitionOffPeriod_ms, 0, 0,
+                          transitionOnPeriod_ms, transitionOffPeriod_ms, 0,
                           turnOffUnspecifiedLEDs);
         
     std::array<Anki::Cozmo::LightState, 4> lights;
@@ -3411,8 +3413,7 @@ Result Robot::SetObjectLights(const ObjectID& objectID,
       lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
       lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
       lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
-      lights[i].onOffset = MS_TO_LED_FRAMES(ledState.onOffset);
-      lights[i].offOffset = MS_TO_LED_FRAMES(ledState.offOffset);
+      lights[i].offset = MS_TO_LED_FRAMES(ledState.offset);
       // PRINT_NAMED_DEBUG("SetObjectLights(1)",
       //                   "LED %u, onColor 0x%x (0x%x), offColor 0x%x (0x%x)",
       //                   i,
@@ -3442,8 +3443,7 @@ Result Robot::SetObjectLights(
   const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offPeriod_ms,
   const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOnPeriod_ms,
   const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOffPeriod_ms,
-  const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& onOffset,
-  const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offOffset,
+  const std::array<s32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offset,
   const MakeRelativeMode makeRelative,
   const Point2f& relativeToPoint,
   const u32 rotationPeriod_ms)
@@ -3455,7 +3455,7 @@ Result Robot::SetObjectLights(
     return RESULT_FAIL_INVALID_OBJECT;
   } else {
         
-    activeObject->SetLEDs(onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms, onOffset, offOffset);
+    activeObject->SetLEDs(onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms, offset);
 
 
     ActiveCube* activeCube = dynamic_cast<ActiveCube*>(activeObject);
@@ -3477,18 +3477,18 @@ Result Robot::SetObjectLights(
       lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
       lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
       lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
-      lights[i].onOffset = MS_TO_LED_FRAMES(ledState.onOffset);
-      lights[i].offOffset = MS_TO_LED_FRAMES(ledState.offOffset);
+      lights[i].offset = MS_TO_LED_FRAMES(ledState.offset);
       
 //       PRINT_NAMED_DEBUG("SetObjectLights(2)",
 //                         "LED %u, onColor 0x%x (0x%x), offColor 0x%x (0x%x), onFrames 0x%x (%ums), "
-//                         "offFrames 0x%x (%ums), transOnFrames 0x%x (%ums), transOffFrames 0x%x (%ums)",
+//                         "offFrames 0x%x (%ums), transOnFrames 0x%x (%ums), transOffFrames 0x%x (%ums), offset 0x%x (%ums)",
 //                         i, lights[i].onColor, ledState.onColor.AsRGBA(),
 //                         lights[i].offColor, ledState.offColor.AsRGBA(),
 //                         lights[i].onFrames, ledState.onPeriod_ms,
 //                         lights[i].offFrames, ledState.offPeriod_ms,
 //                         lights[i].transitionOnFrames, ledState.transitionOnPeriod_ms,
-//                         lights[i].transitionOffFrames, ledState.transitionOffPeriod_ms);
+//                         lights[i].transitionOffFrames, ledState.transitionOffPeriod_ms,
+//                         lights[i].offset, ledState.offset);
       
     }
 
