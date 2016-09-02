@@ -17,13 +17,10 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private RectTransform _BottomChallengeContainer;
 
-    private HomeView _HomeViewInstance;
-
     private readonly Dictionary<string, GameObject> _ChallengeButtons = new Dictionary<string, GameObject>();
 
     public override void Initialize(HomeView homeViewInstance) {
       base.Initialize(homeViewInstance);
-      _HomeViewInstance = homeViewInstance;
       LoadTiles();
       UnlockablesManager.Instance.ResolveNewUnlocks();
       UnlockablesManager.Instance.OnUnlockComplete += HandleUnlockCompleted;
@@ -37,7 +34,7 @@ namespace Cozmo.HomeHub {
       ClearTiles();
 
       List<KeyValuePair<string, ChallengeStatePacket>> sortedDict = new List<KeyValuePair<string, ChallengeStatePacket>>();
-      sortedDict.AddRange(_HomeViewInstance.GetChallengeStates());
+      sortedDict.AddRange(GetHomeViewInstance().GetChallengeStates());
 
       // Sort by unlocked first, then by designer order
       sortedDict.Sort((KeyValuePair<string, ChallengeStatePacket> a, KeyValuePair<string, ChallengeStatePacket> b) => {

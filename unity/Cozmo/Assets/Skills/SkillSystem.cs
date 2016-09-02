@@ -39,6 +39,13 @@ public class SkillSystem {
     SkillSystem.Instance.Init();
   }
 
+  public void InitChallengeDefaults(ChallengeDataList dataList) {
+    // If the robot nvstorage hasn't already initialized a size, overwrite.
+    if (_CozmoHighestLevels == null || _CozmoHighestLevels.Length < dataList.ChallengeData.Length) {
+      SetCozmoHighestLevelsReached(null, 0);
+    }
+  }
+
   public void DestroyInstance() {
     SkillSystem.Instance.Destroy();
     _sInstance = null;
@@ -297,7 +304,17 @@ public class SkillSystem {
       numChallenges = challengeList.ChallengeData.Length;
     }
     numChallenges = Mathf.Max(robotDataLen, numChallenges);
-    _CozmoHighestLevels = new byte[numChallenges];
+    // Usually hits the default from the Challenge List loading
+    if (_CozmoHighestLevels == null) {
+      _CozmoHighestLevels = new byte[numChallenges];
+    }
+    else {
+      // if we connected to the robot first, but a patch installed new challenges.
+      // or the defaults were in initalized already, just keep them
+      byte[] oldValues = _CozmoHighestLevels;
+      _CozmoHighestLevels = new byte[numChallenges];
+      System.Array.Copy(oldValues, _CozmoHighestLevels, oldValues.Length);
+    }
     // first time init
     if (robotData != null && robotDataLen > 0) {
       DAS.Info("SkillSystem.SetCozmoHighestLevelsReached", "Copying " + robotDataLen + " elements.");
