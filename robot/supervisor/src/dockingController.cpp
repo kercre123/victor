@@ -208,7 +208,7 @@ namespace Anki {
 
         // When hybrid docking the hanns maneuver tolerance for rel_x needs to be increased since we didn't push the
         // block
-        const u8 HYBRID_REL_X_TOL_MM = 4;
+        const u8 HYBRID_REL_X_TOL_MM = 20;
 
         // If the robot's pose relative to the dockPose is more than these tolerances off it is not in position and
         // should backup and retry docking
@@ -793,7 +793,7 @@ namespace Anki {
                     }
                   }
                   // If we can't use the last docking error signal then check if the robot's pose is within some
-                  // tolerenaces of the dockPose
+                  // tolerences of the dockPose
                   else if((HAL::GetTimeStamp() - dockingErrSignalMsg_.timestamp) > TIME_SINCE_LAST_ERRSIG &&
                           (rel_vert_dist_block > VERT_DOCK_TOL_MM ||
                            ABS(rel_horz_dist_block) > HORZ_DOCK_TOL_MM ||

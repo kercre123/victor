@@ -35,7 +35,12 @@ SelectionBehaviorChooser::SelectionBehaviorChooser(Robot& robot, const Json::Val
                                ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByName,
                                std::bind(&SelectionBehaviorChooser::HandleExecuteBehavior,
                                          this, std::placeholders::_1)));
-}
+    
+    _eventHandlers.push_back(_robot.GetExternalInterface()->Subscribe(
+                               ExternalInterface::MessageGameToEngineTag::ExecuteBehavior,
+                               std::bind(&SelectionBehaviorChooser::HandleExecuteBehavior,
+                                         this, std::placeholders::_1)));
+  }
   
   // Setup None Behavior now since it's always the fallback
   _behaviorNone = robot.GetBehaviorFactory().CreateBehavior(BehaviorType::NoneBehavior, robot, config);
@@ -76,14 +81,31 @@ void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInt
       selectedBehavior = _robot.GetBehaviorFactory().FindBehaviorByName( msg.behaviorName );
 
       if( selectedBehavior != nullptr ) {
-        PRINT_NAMED_INFO("SelectionBehaviorChooser.HandleExecuteBehavior.SelectBehavior",
+        PRINT_NAMED_INFO("SelectionBehaviorChooser.HandleExecuteBehaviorByName.SelectBehavior",
                          "selecting behavior name '%s'", msg.behaviorName.c_str() );
       } else {
-        PRINT_NAMED_WARNING("SelectionBehaviorChooser.HandleExecuteBehavior.UnknownBehavior",
+        PRINT_NAMED_WARNING("SelectionBehaviorChooser.HandleExecuteBehaviorByName.UnknownBehavior",
                             "Unknown behavior %s",
                             msg.behaviorName.c_str());
       }
 
+      break;
+    }
+    
+    case ExternalInterface::MessageGameToEngineTag::ExecuteBehavior:
+    {
+      const ExternalInterface::ExecuteBehavior& msg = event.GetData().Get_ExecuteBehavior();
+      selectedBehavior = _robot.GetBehaviorFactory().FindBehaviorByType( msg.behaviorType );
+      
+      if( selectedBehavior != nullptr ) {
+        PRINT_NAMED_INFO("SelectionBehaviorChooser.HandleExecuteBehaviorByType.SelectBehavior",
+                         "selecting behavior name '%s'", EnumToString(msg.behaviorType) );
+      } else {
+        PRINT_NAMED_WARNING("SelectionBehaviorChooser.HandleExecuteBehaviorByType.UnknownBehavior",
+                            "Unknown behavior %s",
+                            EnumToString(msg.behaviorType));
+      }
+      
       break;
     }
 

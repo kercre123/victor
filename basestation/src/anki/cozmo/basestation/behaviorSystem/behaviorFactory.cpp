@@ -461,6 +461,18 @@ IBehavior* BehaviorFactory::FindBehaviorByName(const std::string& inName)
   return foundBehavior;
 }
 
+IBehavior* BehaviorFactory::FindBehaviorByType(const BehaviorType& type)
+{
+  for(const auto behavior : _nameToBehaviorMap)
+  {
+    if(behavior.second->GetType() == type)
+    {
+      return behavior.second;
+    }
+  }
+  return nullptr;
+}
+
   
 } // namespace Cozmo
 } // namespace Anki
