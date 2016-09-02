@@ -42,7 +42,7 @@ namespace Cozmo {
       }
 
       public override Sequence CreateCloseAnimSequence() {
-        return CreateCloseAnimSequence(kAnimXOffset, kAnimYOffset, kAnimDur);
+        return CreateCloseAnimSequence(kAnimXOffset, -kAnimYOffset, kAnimDur);
       }
     }
   }
