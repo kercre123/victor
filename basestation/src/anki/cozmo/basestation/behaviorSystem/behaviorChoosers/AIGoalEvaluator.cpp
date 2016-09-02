@@ -112,6 +112,18 @@ AIGoalEvaluator::~AIGoalEvaluator()
   }
   #endif
 }
+  
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIGoalEvaluator::OnDeselected()
+{
+  if ( _currentGoalPtr ) {
+    _currentGoalPtr->Exit(_robot);
+    _currentGoalPtr = nullptr;
+  }
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIGoalEvaluator::CreateFromConfig(Robot& robot, const Json::Value& config)
