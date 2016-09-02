@@ -95,6 +95,9 @@ private:
     TimeStamp_t     startCurrStateTime;
     // When we are fading between states this keeps track of what the starting and ending states are
     std::pair<CubeLightsState, CubeLightsState> fadeFromTo;
+    
+    // The time this cube started flashing
+    TimeStamp_t flashStartTime;
   };
   
   std::map< ObjectID, ObjectInfo > _cubeInfo;
@@ -120,6 +123,10 @@ private:
   void RestorePrevStates();
   void RestorePrevState(const ObjectID objectID);
   void CheckAndUpdatePrevState(const ObjectID objectID);
+  
+  // Send a mesage to game to let them know the objects current light values
+  // Will only send if _sendTransitionMessages is true
+  void SendTransitionMessage(const ObjectID& objectID, const LightValues& values);
 
   Robot& _robot;
   
@@ -131,7 +138,15 @@ private:
   u32 _fadeTime_ms      = 0;
   u32 _sleepTime_ms     = 0;
   
+  // Variables for making the cubes flash
+  LEDArray _flashColor  = {{0,0,0,0}};
+  u32 _flashPeriod_ms   = 0;
+  u32 _flashTimes       = 0;
+  
+  
   bool _allCubesEnabled = true;
+  
+  bool _sendTransitionMessages = false;
   
 }; // class LightsComponent
 

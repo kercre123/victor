@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/ledEncoding.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "anki/cozmo/basestation/blockWorld.h"
@@ -36,6 +37,8 @@ LightsComponent::LightsComponent(Robot& robot)
     helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectConnectionState>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableLightStates>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableCubeSleep>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableCubeLightsStateTransitionMessages>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::FlashCurrentLightsState>();
   }
   
   if(robot.GetContextDataPlatform() != nullptr)
@@ -57,6 +60,10 @@ LightsComponent::LightsComponent(Robot& robot)
         _fadePeriod_ms    = json["fadePeriod_ms"].asUInt();
         _fadeTime_ms      = json["fadeTransitionTime_ms"].asUInt();
         _sleepTime_ms     = json["sleepDuration_ms"].asUInt();
+        
+        _flashColor     = JsonColorValueToArray(json["flashColor"]);
+        _flashPeriod_ms = json["flashPeriod_ms"].asUInt();
+        _flashTimes     = json["flashTimes"].asUInt();
       }
     }
   }
@@ -124,6 +131,21 @@ void LightsComponent::Update()
     {
       continue;
     }
+    
+    bool isFlashing = cubeInfoPair.second.flashStartTime > 0;
+    bool doForceLightUpdate = false;
+    
+    // The total duration of flashing is flashPeriod*2 (onPeriod and offPeriod are both set to flashPeriod)
+    // * (the number of times the lights need to flash)
+    if(isFlashing &&
+       (currTime - cubeInfoPair.second.flashStartTime) > (_flashPeriod_ms*2 * _flashTimes))
+    {
+      cubeInfoPair.second.flashStartTime = 0;
+      
+      // When coming out of flashing we need to force update this cubes lights to stop the flashing
+      doForceLightUpdate = true;
+      isFlashing = false;
+    }
   
     CubeLightsState newState = cubeInfoPair.second.desiredState;
     CubeLightsState currState = cubeInfoPair.second.currState;
@@ -184,7 +206,11 @@ void LightsComponent::Update()
       cubeInfoPair.second.desiredState = newState;
     }
     
-    UpdateToDesiredLights(cubeInfoPair.first);
+    // Only update lights if they aren't being flashed
+    if(!isFlashing)
+    {
+      UpdateToDesiredLights(cubeInfoPair.first, doForceLightUpdate);
+    }
   }
 }
 
@@ -380,6 +406,8 @@ void LightsComponent::SetLights(ObjectID object, CubeLightsState state, bool for
                          values.offset,
                          MakeRelativeMode::RELATIVE_LED_MODE_OFF,
                          Point2f{0,0}, values.rotationPeriod_ms);
+  
+  SendTransitionMessage(object, values);
 }
 
 
@@ -493,6 +521,48 @@ void LightsComponent::HandleMessage(const ExternalInterface::EnableCubeSleep& ms
   UpdateToDesiredLights();
 }
 
+template<>
+void LightsComponent::HandleMessage(const ExternalInterface::EnableCubeLightsStateTransitionMessages& msg)
+{
+  _sendTransitionMessages = msg.enable;
+  
+  // Send messages for all objects so that game knows their current state
+  for(const auto& pair : _cubeInfo)
+  {
+    SendTransitionMessage(pair.first, _stateToValues[pair.second.currState]);
+  }
+}
+
+template<>
+void LightsComponent::HandleMessage(const ExternalInterface::FlashCurrentLightsState& msg)
+{
+  auto cube = _cubeInfo.find(msg.objectID);
+  if(cube == _cubeInfo.end())
+  {
+    PRINT_NAMED_INFO("LightsComponent.FlashCurrentLights.InvalidObjectID",
+                     "No object with id %d", msg.objectID);
+    return;
+  }
+  
+  if(!cube->second.enabled)
+  {
+    PRINT_NAMED_INFO("LightsComponent.FlashCurrentLights.CubeNotEnabled",
+                     "Object %d is not enabled (game has control of lights)", msg.objectID);
+    return;
+  }
+  
+  cube->second.flashStartTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  _robot.SetObjectLights(msg.objectID,
+                         _flashColor,
+                         _stateToValues[cube->second.currState].onColors,
+                         {{_flashPeriod_ms, _flashPeriod_ms, _flashPeriod_ms, _flashPeriod_ms}},
+                         {{_flashPeriod_ms, _flashPeriod_ms, _flashPeriod_ms, _flashPeriod_ms}},
+                         {{0,0,0,0}},
+                         {{0,0,0,0}},
+                         {{0,0,0,0}},
+                         MakeRelativeMode::RELATIVE_LED_MODE_OFF, {0,0}, 0);
+}
+
 void LightsComponent::RestorePrevStates()
 {
   for(auto& pair : _cubeInfo)
@@ -517,6 +587,49 @@ void LightsComponent::RestorePrevState(const ObjectID objectID)
      cube->second.fadeFromTo.first != CubeLightsState::Invalid)
   {
     cube->second.desiredState = CubeLightsState::Visible;
+  }
+}
+
+void LightsComponent::SendTransitionMessage(const ObjectID& objectID, const LightValues& values)
+{
+  const auto cube = _cubeInfo.find(objectID);
+  if(cube == _cubeInfo.end())
+  {
+    PRINT_NAMED_WARNING("LightsComponent.SendTransitionMessage", "No cube in _cubeInfo with id %d", objectID.GetValue());
+    return;
+  }
+  
+  if(_sendTransitionMessages && cube->second.enabled)
+  {
+    ObservableObject* obj = _robot.GetBlockWorld().GetObjectByID(objectID);
+    if(obj == nullptr)
+    {
+      PRINT_NAMED_WARNING("LightsComponent.SendTransitionMessage",
+                          "Got null object using id %d",
+                          objectID.GetValue());
+      return;
+    }
+    
+    ExternalInterface::CubeLightsStateTransition msg;
+    msg.objectID = objectID;
+    msg.factoryID = obj->GetFactoryID();
+    msg.objectType = obj->GetType();
+    
+    LightState lights;
+    for(u8 i = 0; i < (u8)ActiveObjectConstants::NUM_CUBE_LEDS; ++i)
+    {
+      msg.lights[i].onColor = ENCODED_COLOR(values.onColors[i]);
+      msg.lights[i].offColor = ENCODED_COLOR(values.offColors[i]);
+      msg.lights[i].transitionOnFrames = MS_TO_LED_FRAMES(values.transitionOnPeriod_ms[i]);
+      msg.lights[i].transitionOffFrames = MS_TO_LED_FRAMES(values.transitionOffPeriod_ms[i]);
+      msg.lights[i].onFrames = MS_TO_LED_FRAMES(values.onPeriod_ms[i]);
+      msg.lights[i].offFrames = MS_TO_LED_FRAMES(values.offPeriod_ms[i]);
+      msg.lights[i].offset = MS_TO_LED_FRAMES(values.offset[i]);
+    }
+    
+    msg.lightRotation_ms = values.rotationPeriod_ms;
+    
+    _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
   }
 }
 
