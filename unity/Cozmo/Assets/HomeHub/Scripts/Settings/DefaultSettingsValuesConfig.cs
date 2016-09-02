@@ -65,5 +65,9 @@ namespace Cozmo.Settings {
     [SerializeField, Range(3f, 4.2f)]
     private float _LowBatteryVoltageValue = 3.5f;
     public float LowBatteryVoltageValue { get { return _LowBatteryVoltageValue; } }
+
+    [SerializeField]
+    private int _CharactersOfAppInfoToShow = 15;
+    public int CharactersOfAppInfoToShow { get { return _CharactersOfAppInfoToShow; } }
   }
 }

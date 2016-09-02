@@ -382,7 +382,7 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
   }
 
   public void SetLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0,
-    uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
+                      uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
 
     Light light;
     for (int i = 0; i < Lights.Length; ++i) {
@@ -394,6 +394,27 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
       light.TransitionOnPeriodMs = transitionOnPeriod_ms;
       light.TransitionOffPeriodMs = transitionOffPeriod_ms;
       light.Offset = 0;
+    }
+
+    relativeMode = 0;
+    relativeToX = 0;
+    relativeToY = 0;
+    rotationPeriodMs = 0;
+  }
+
+  public void SetLEDs(uint onColor, uint offColor, uint onPeriod_ms, uint offPeriod_ms,
+                      uint transitionOnPeriod_ms, uint transitionOffPeriod_ms, int[] offset) {
+
+    Light light;
+    for (int i = 0; i < Lights.Length; ++i) {
+      light = Lights[i];
+      light.OnColor = onColor;
+      light.OffColor = offColor;
+      light.OnPeriodMs = onPeriod_ms;
+      light.OffPeriodMs = offPeriod_ms;
+      light.TransitionOnPeriodMs = transitionOnPeriod_ms;
+      light.TransitionOffPeriodMs = transitionOffPeriod_ms;
+      light.Offset = offset[i];
     }
 
     relativeMode = 0;

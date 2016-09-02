@@ -30,6 +30,30 @@
   "settings.sdkPanel.showSDKButton.text": {
     "translation": "Show SDK"
   },
+  "settings.versionPanel.button.acknowledgementsLink": {
+    "translation": "Acknowledgements"
+  },
+  "settings.versionPanel.button.eraseCozmo": {
+    "translation": "Erase Cozmo"
+  },
+  "settings.versionPanel.button.support": {
+    "translation": "Support"
+  },
+  "settings.versionPanel.label.appRun": {
+    "translation": "App Run ID: {0}"
+  },
+  "settings.versionPanel.label.appVersion": {
+    "translation": "App Version: {0}"
+  },
+  "settings.versionPanel.label.cozmoVersion": {
+    "translation": "Cozmo Version: {0}"
+  },
+  "settings.versionPanel.label.deviceId": {
+    "translation": "Device ID: {0}"
+  },
+  "settings.versionPanel.label.serialNumber": {
+    "translation": "Serial: {0}"
+  },
   "settings.volumePanel.robotToggle.low": {
     "translation": "Low"
   },

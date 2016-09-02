@@ -36,6 +36,12 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
   private float _StartTime;
   private bool _AllObjectsConnected = false;
 
+  private const uint kConnectedOnPeriod_ms = 10;
+  private const uint kConnectedOffPeriod_ms = 380;
+  private const uint kConnectedOnTransition_ms = 200;
+  private const uint kConnectedOffTransition_ms = 50;
+  private readonly int[] kConnectedOffset = new int[] { 0, 100, 200, 300 };
+
   private void Awake() {
     _ContinueButton.Initialize(HandleContinueButton, "pull_cube_tab_continue_button", this.DASEventViewName);
     _ContinueButton.gameObject.SetActive(false);
@@ -46,6 +52,12 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
 
     for (int i = 0; i < _DoneMarks.Length; ++i) {
       _DoneMarks[i].gameObject.SetActive(false);
+    }
+
+    // Disable freeplay light states
+    IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+    if (robot != null) {
+      robot.SetEnableFreeplayLightStates(false);
     }
 
     // Enable the automatic block pool
@@ -100,7 +112,10 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
           _ObjectConnectedImagesList[typeIndex].gameObject.SetActive(true);
           _DoneMarks[typeIndex].gameObject.SetActive(true);
           _ObjectConnectedList.Add(_NewlyConnectedObject);
-          robot.LightCubes[_NewlyConnectedObjectId].SetLEDs(Color.cyan);
+          robot.LightCubes[_NewlyConnectedObjectId].SetLEDs(Color.green.ToUInt(), Color.black.ToUInt(),
+                                                            kConnectedOnPeriod_ms, kConnectedOffPeriod_ms,
+                                                            kConnectedOnTransition_ms, kConnectedOffTransition_ms,
+                                                            kConnectedOffset);
         }
         _NewlyConnectedObject = Anki.Cozmo.ObjectType.Invalid;
       }
@@ -115,11 +130,10 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
   }
 
   protected override void CleanUp() {
+    // Reenable freeplay light states
     IRobot robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {
-      foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
-        kvp.Value.SetLEDsOff();
-      }
+      robot.SetEnableFreeplayLightStates(true);
     }
   }
 }

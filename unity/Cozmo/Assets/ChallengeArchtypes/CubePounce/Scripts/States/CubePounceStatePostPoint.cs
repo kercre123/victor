@@ -30,7 +30,7 @@ namespace Cozmo.Minigame.CubePounce {
         _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoPlayerWinPoint);
         _CubePounceGame.AddPoint(true);
         GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Win_Shared);
-        _CubePounceGame.StartCycleCubeSingleColor(_CubePounceGame.GetCubeTarget().ID, new Color[] { Color.green }, _CubePounceGame.GameConfig.CubeLightFlashInterval_s, Color.black);
+        _CubePounceGame.StartCycleCubeSingleColor(_CubePounceGame.GetCubeTarget().ID, new Color[] { Color.green }, _CubePounceGame.GameConfig.CubeLightFlashInterval_s, Color.white);
 
         Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Player_Fail);
       }

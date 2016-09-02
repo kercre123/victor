@@ -18,8 +18,6 @@ namespace SpeedTap {
       None
     }
 
-    private const float _kWinCycleSpeedSeconds = 0.1f;
-
     private SpeedTapGame _SpeedTapGame;
 
     private PointWinner _CurrentWinner;
@@ -30,8 +28,17 @@ namespace SpeedTap {
 
     private float _StartWinEffectTimestampSeconds;
 
-    private float _CubeCycleDurationSeconds = 0;
-    private float _CubeFlashingDurationSeconds = 0;
+    private const float _kWinCycleSpeedSeconds = 0.07f;
+    private float _CubeCycleDurationSeconds = 0.4f;
+    private const int _TotalNumCubeCycles = 2;
+    private int _NumCubeCycles = 0;
+
+    private const float _kWinFlashSpeedSeconds = 0.1f;
+    private float _CubeFlashingDurationSeconds = 0.4f;
+    private const int _TotalNumFlashes = 2;
+    private int _NumCubeFlashes = 0;
+
+    private bool _EndAnimFinished = false;
 
     private bool _IsPlayingWinGameAnimation = false;
 
@@ -80,14 +87,33 @@ namespace SpeedTap {
       float secondsSinceAnimationStarted = Time.time - _StartWinEffectTimestampSeconds;
       if (_CurrentCubeLightState == CubeLightState.WinnerCycling && secondsSinceAnimationStarted >= _CubeCycleDurationSeconds) {
         _StartWinEffectTimestampSeconds = Time.time;
-        _SpeedTapGame.StopCycleCube(_WinningCube);
-        SetWinningFlashingPattern(_WinningCube, _WinColors, _kWinCycleSpeedSeconds);
-        _CurrentCubeLightState = CubeLightState.WinnerFlashing;
+
+        if (_NumCubeFlashes == 0) {
+          _SpeedTapGame.StopCycleCube(_WinningCube);
+          SetWinningFlashingPattern(_WinningCube, _WinColors, _kWinFlashSpeedSeconds);
+        }
+
+        _NumCubeFlashes++;
+
+        // Transition to the next state only when we have finished flashing the cube lights the desired number of times and the EndAnim has completed
+        if (_NumCubeFlashes >= _TotalNumFlashes && _EndAnimFinished) {
+          _SpeedTapGame.ClearWinningLightPatterns();
+          _StateMachine.SetNextState(new SpeedTapHandCubesOff());
+        }
       }
       else if (_CurrentCubeLightState == CubeLightState.WinnerFlashing && secondsSinceAnimationStarted >= _CubeFlashingDurationSeconds) {
         _StartWinEffectTimestampSeconds = Time.time;
-        SetWinningCyclePattern(_WinningCube, _WinColors, _kWinCycleSpeedSeconds);
-        _CurrentCubeLightState = CubeLightState.WinnerCycling;
+
+        if (_NumCubeCycles == 0) {
+          SetWinningCyclePattern(_WinningCube, _WinColors, _kWinCycleSpeedSeconds);
+        }
+
+        _NumCubeCycles++;
+
+        if (_NumCubeCycles >= _TotalNumCubeCycles) {
+          _CurrentCubeLightState = CubeLightState.WinnerCycling;
+          _NumCubeCycles = 0;
+        }
       }
     }
 
@@ -131,16 +157,16 @@ namespace SpeedTap {
     }
 
     private void StartWinningBlockPattern() {
-      /*_CubeCycleDurationSeconds = _SpeedTapGame.GetCycleDurationSeconds(3, _kWinCycleSpeedSeconds);
-      _CubeFlashingDurationSeconds = 6 * _kWinCycleSpeedSeconds;
+      //_CubeCycleDurationSeconds = _SpeedTapGame.GetCycleDurationSeconds(3, _kWinCycleSpeedSeconds);
+      //_CubeFlashingDurationSeconds = 6 * _kWinCycleSpeedSeconds;
       SetWinningCyclePattern(_WinningCube, _WinColors, _kWinCycleSpeedSeconds);
-      _CurrentCubeLightState = CubeLightState.WinnerCycling;
-      _StartWinEffectTimestampSeconds = Time.time;*/
+      _CurrentCubeLightState = CubeLightState.WinnerFlashing;
+      _StartWinEffectTimestampSeconds = Time.time;
 
       // INGO PR DEMO COZMO-2005
       // For press demo, switching the win animation to flashing white because that will look better.
-      _CurrentCubeLightState = CubeLightState.None;
-      SetWinningFlashingPattern(_WinningCube, _WinColors, _kWinCycleSpeedSeconds);
+      //_CurrentCubeLightState = CubeLightState.None;
+      //SetWinningFlashingPattern(_WinningCube, _WinColors, _kWinCycleSpeedSeconds);
     }
 
     private void SetWinningCyclePattern(LightCube winningBlock, Color[] winColors, float cycleDurationSeconds) {
@@ -193,8 +219,14 @@ namespace SpeedTap {
     }
 
     private void HandleHandEndAnimDone(bool success) {
-      _SpeedTapGame.ClearWinningLightPatterns();
-      _StateMachine.SetNextState(new SpeedTapHandCubesOff());
+      _EndAnimFinished = true;
+
+      // If we are flashing loser lights on a cube then immediately transition states when the EndAnim completes
+      // Otherwise only transition states if we have flashed the cube lights the desired number of times
+      if (_NumCubeFlashes >= _TotalNumFlashes || _CurrentCubeLightState == CubeLightState.LoserFlashing) {
+        _SpeedTapGame.ClearWinningLightPatterns();
+        _StateMachine.SetNextState(new SpeedTapHandCubesOff());
+      }
     }
 
     private void HandleEndGameAnimDone(bool success) {
