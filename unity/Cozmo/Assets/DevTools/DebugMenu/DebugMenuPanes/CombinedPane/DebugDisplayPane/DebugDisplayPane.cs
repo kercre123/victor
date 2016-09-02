@@ -113,7 +113,7 @@ public class DebugDisplayPane : MonoBehaviour {
           break;
         }
       default: {
-          DAS.Debug("PerformancePane.HandleDeviceDataMessage.UnhandledDataType", currentPair.dataType.ToString());
+          DAS.Debug("DebugDisplayPane.HandleDeviceDataMessage.UnhandledDataType", currentPair.dataType.ToString());
           break;
         }
       }

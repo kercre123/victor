@@ -429,6 +429,14 @@ public static class LocalizationKeys {
   public const string kSettingsSdkPanelLabelTitle = "settings.sdkPanel.label.title";
   public const string kSettingsSdkPanelSdkUrlLabel = "settings.sdkPanel.sdkUrl.label";
   public const string kSettingsSdkPanelShowSDKButtonText = "settings.sdkPanel.showSDKButton.text";
+  public const string kSettingsVersionPanelButtonAcknowledgementsLink = "settings.versionPanel.button.acknowledgementsLink";
+  public const string kSettingsVersionPanelButtonEraseCozmo = "settings.versionPanel.button.eraseCozmo";
+  public const string kSettingsVersionPanelButtonSupport = "settings.versionPanel.button.support";
+  public const string kSettingsVersionPanelLabelAppRun = "settings.versionPanel.label.appRun";
+  public const string kSettingsVersionPanelLabelAppVersion = "settings.versionPanel.label.appVersion";
+  public const string kSettingsVersionPanelLabelCozmoVersion = "settings.versionPanel.label.cozmoVersion";
+  public const string kSettingsVersionPanelLabelDeviceId = "settings.versionPanel.label.deviceId";
+  public const string kSettingsVersionPanelLabelSerialNumber = "settings.versionPanel.label.serialNumber";
   public const string kSettingsVolumePanelRobotToggleLow = "settings.volumePanel.robotToggle.low";
   public const string kSettingsVolumePanelRobotToggleMedium = "settings.volumePanel.robotToggle.medium";
   public const string kSettingsVolumePanelRobotToggleHigh = "settings.volumePanel.robotToggle.high";
