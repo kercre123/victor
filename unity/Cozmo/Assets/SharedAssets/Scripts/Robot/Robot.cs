@@ -632,6 +632,15 @@ public class Robot : IRobot {
 
   public void SendQueueCompoundAction(Anki.Cozmo.ExternalInterface.RobotActionUnion[] actions, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool isParallel = false) {
     var tag = GetNextIdTag();
+
+    for (int i = 0; i < actions.Length; ++i) {
+      for (int j = i + 1; j < actions.Length; ++j) {
+        if (System.Object.ReferenceEquals(actions[i].GetState(), actions[j].GetState())) {
+          DAS.Error("UnityRobot.SendQueueCompondAction", "Matching action with same reference address. You shouldn't use Singleton<> to queue compond actions of the same type");
+        }
+      }
+    }
+
     RobotEngineManager.Instance.Message.QueueCompoundAction =
       Singleton<QueueCompoundAction>.Instance.Initialize(
       robotID: ID,

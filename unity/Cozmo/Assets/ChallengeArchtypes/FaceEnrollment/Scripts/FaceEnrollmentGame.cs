@@ -67,6 +67,8 @@ namespace FaceEnrollment {
     }
 
     protected override void AddDisabledReactionaryBehaviors() {
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.AcknowledgeFace);
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.AcknowledgeObject);
       _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToCubeMoved);
       _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToCliff);
       _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToPickup);
@@ -302,12 +304,12 @@ namespace FaceEnrollment {
 
       RobotActionUnion[] actions = {
         // 1. say name once
-        new RobotActionUnion().Initialize(Singleton<SayTextWithIntent>.Instance.Initialize(
+        new RobotActionUnion().Initialize(new SayTextWithIntent().Initialize(
           _NameForFace,
           Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentSayName,
           Anki.Cozmo.SayTextIntent.Name_FirstIntroduction)),
         // 2. repeat name                      
-        new RobotActionUnion().Initialize(Singleton<SayTextWithIntent>.Instance.Initialize(
+        new RobotActionUnion().Initialize(new SayTextWithIntent().Initialize(
           _NameForFace,
           Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentRepeatName,
           Anki.Cozmo.SayTextIntent.Name_FirstIntroduction)),
