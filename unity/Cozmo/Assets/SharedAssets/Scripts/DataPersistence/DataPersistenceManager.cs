@@ -93,30 +93,28 @@ namespace DataPersistence {
         if (Data.DefaultProfile.Sessions.Count < 2) {
           return 1;
         }
-        int streak = 0;
-        bool streakBroken = false;
-        List<TimelineEntryData> allSessions = new List<TimelineEntryData>();
-        allSessions.AddRange(Data.DefaultProfile.Sessions);
-        allSessions.Reverse();
-        Date CurrDay = allSessions[0].Date;
-        Date PrevDay = allSessions[1].Date;
-        while (streakBroken == false) {
-          if (CurrDay.AddDays(-1).Equals(PrevDay)) {
-            streak += 1;
-            // Remove Current Day, set to prev Day
-            CurrDay = PrevDay;
-            allSessions.RemoveAt(0);
-            if (allSessions.Count < 2) {
-              return streak;
-            }
-            // Get next PrevDay
-            PrevDay = allSessions[1].Date;
+
+        int streakCount = 1;
+
+        int currentIndex = Data.DefaultProfile.Sessions.Count - 1;
+        int previousIndex = Data.DefaultProfile.Sessions.Count - 2;
+
+        while (previousIndex >= 0) {
+          Date currentDate = Data.DefaultProfile.Sessions[currentIndex].Date;
+          Date previousDate = Data.DefaultProfile.Sessions[previousIndex].Date;
+
+          if (previousDate.AddDays(1).Equals(currentDate)) {
+            streakCount++;
           }
           else {
-            streakBroken = true;
+            return streakCount;
           }
+
+          currentIndex--;
+          previousIndex--;
         }
-        return streak;
+
+        return streakCount;
       }
     }
 
