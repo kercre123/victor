@@ -188,8 +188,30 @@ public abstract class GameBase : MonoBehaviour {
         }
       });
 
-      PrepRobotForGame();
+      bool videoPlayedAlready = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.ContainsKey(_ChallengeData.ChallengeID);
+      bool noInstructionVideo = string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath);
+
+      if (videoPlayedAlready || noInstructionVideo) {
+        FinishedInstructionalVideo();
+      }
+      else {
+        SharedMinigameView.PlayVideo(_ChallengeData.InstructionVideoPath, FinishedInstructionalVideo);
+      }
+
     });
+  }
+
+  private void FinishedInstructionalVideo() {
+    bool videoPlayedAlready = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.ContainsKey(_ChallengeData.ChallengeID);
+    if (!videoPlayedAlready) {
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.Add(_ChallengeData.ChallengeID, true);
+      DataPersistence.DataPersistenceManager.Instance.Save();
+    }
+    InitializeGame(_ChallengeData.MinigameConfig);
+    if (!string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath)) {
+      _SharedMinigameViewInstance.ShowHowToPlayButton();
+    }
+    PrepRobotForGame();
   }
 
   private void InitializeMinigameView(SharedMinigameView newView, ChallengeData data) {
@@ -254,28 +276,8 @@ public abstract class GameBase : MonoBehaviour {
     DAS.Event(DASConstants.Game.kStart, GetGameUUID());
     DAS.Event(DASConstants.Game.kType, GetDasGameName());
 
-    bool videoPlayedAlready = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.ContainsKey(_ChallengeData.ChallengeID);
-    bool noInstructionVideo = string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath);
-
-    if (videoPlayedAlready || noInstructionVideo) {
-      FinishedInstructionalVideo();
-    }
-    else {
-      SharedMinigameView.PlayVideo(_ChallengeData.InstructionVideoPath, FinishedInstructionalVideo);
-    }
-  }
-
-  private void FinishedInstructionalVideo() {
-    bool videoPlayedAlready = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.ContainsKey(_ChallengeData.ChallengeID);
-    if (!videoPlayedAlready) {
-      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.Add(_ChallengeData.ChallengeID, true);
-      DataPersistence.DataPersistenceManager.Instance.Save();
-    }
-    InitializeGame(_ChallengeData.MinigameConfig);
-    if (!string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath)) {
-      _SharedMinigameViewInstance.ShowHowToPlayButton();
-    }
     SetupViewAfterCozmoReady(_SharedMinigameViewInstance, _ChallengeData);
+
   }
 
   /// <summary>
