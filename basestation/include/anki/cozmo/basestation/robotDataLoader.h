@@ -17,6 +17,7 @@
 #include <json/json.h>
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -101,6 +102,8 @@ private:
   Json::Value _robotMoodConfig;
   Json::Value _robotBehaviorConfig;
   Json::Value _robotVisionConfig;
+  
+  std::mutex  _animationAddMutex;
 };
 
 }

@@ -77,7 +77,7 @@ private:
 }; // class AnkiEventUtil
 
 template <typename TNew, typename HNew>
-static AnkiEventUtil<TNew, HNew> MakeAnkiEventUtil(IExternalInterface& externalInterface, TNew& object, HNew& handlersIn)
+AnkiEventUtil<TNew, HNew> MakeAnkiEventUtil(IExternalInterface& externalInterface, TNew& object, HNew& handlersIn)
 {
   return AnkiEventUtil<TNew, HNew>(externalInterface, object, handlersIn);
 }
