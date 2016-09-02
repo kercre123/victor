@@ -60,6 +60,12 @@
   "button.play": {
     "translation": "Play"
   },
+  "button.leave": {
+    "translation": "Leave"
+  },
+  "button.staySparked": {
+    "translation": "Stay Sparked"
+  },
   "button.soundsGood": {
     "translation": "Sounds Good"
   },
