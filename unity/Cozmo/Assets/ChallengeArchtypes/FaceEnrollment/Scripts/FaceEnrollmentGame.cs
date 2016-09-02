@@ -307,12 +307,12 @@ namespace FaceEnrollment {
         new RobotActionUnion().Initialize(new SayTextWithIntent().Initialize(
           _NameForFace,
           Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentSayName,
-          Anki.Cozmo.SayTextIntent.Name_FirstIntroduction)),
+          Anki.Cozmo.SayTextIntent.Name_FirstIntroduction_1)),
         // 2. repeat name                      
         new RobotActionUnion().Initialize(new SayTextWithIntent().Initialize(
           _NameForFace,
           Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentRepeatName,
-          Anki.Cozmo.SayTextIntent.Name_FirstIntroduction)),
+          Anki.Cozmo.SayTextIntent.Name_FirstIntroduction_2)),
         // 3. final celebration (no name said)                
         new RobotActionUnion().Initialize(Singleton<PlayAnimationTrigger>.Instance.Initialize(CurrentRobot.ID, 1, Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentCelebration,true))
       };
