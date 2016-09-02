@@ -132,7 +132,7 @@ namespace AnimationController {
       // stop tracks we weren't using, in case we were, for example, playing
       // a head animation while driving a path.
 #ifdef TARGET_ESPRESSIF
-      RobotInterface::EngineToRobot msg;
+      MAKE_RTIP_MSG(msg);
 #endif
       if(_tracksInUse & HEAD_TRACK) {
 #ifdef TARGET_ESPRESSIF
@@ -380,7 +380,7 @@ namespace AnimationController {
           // when the controller reaches its desired value.
           if(_tracksInUse & BODY_TRACK) {
             #ifdef TARGET_ESPRESSIF
-            RobotInterface::EngineToRobot msg;
+            MAKE_RTIP_MSG(msg);
             msg.tag = RobotInterface::EngineToRobot::Tag_animBodyMotion;
             msg.animBodyMotion.speed = 0;
             msg.animBodyMotion.curvatureRadius_mm = 0;
@@ -414,7 +414,7 @@ namespace AnimationController {
     return ready;
   } // IsReadyToPlay()
 
-  inline bool AdvanceAudio()
+  inline bool AdvanceAudio(RobotInterface::EngineToRobot& msg)
   {
     if (_disabled) return false;
     else if(IsReadyToPlay()) {
@@ -424,7 +424,6 @@ namespace AnimationController {
 
         // Next thing in the buffer should be audio or silence:
         RobotInterface::EngineToRobot::Tag msgID = PeekBufferTag();
-        RobotInterface::EngineToRobot msg;
 
         // If the next message is not audio, the animation queue has completely desynchronized
         // We almost certainly are looking at the middle of a message (and not start), so we can't continue
@@ -477,9 +476,9 @@ namespace AnimationController {
 
   Result Update()
   {
-    if (AdvanceAudio())
+    RobotInterface::EngineToRobot msg; // Allocate on stack here to share with AdvanceAudio function
+    if (AdvanceAudio(msg))
     {
-      RobotInterface::EngineToRobot msg;
       RobotInterface::EngineToRobot::Tag msgID;
 #       if DEBUG_ANIMATION_CONTROLLER
       _currentTime_ms += 33;
@@ -544,7 +543,7 @@ namespace AnimationController {
             // when the controller reaches its desired value.
             if(_tracksInUse & BODY_TRACK) {
               #ifdef TARGET_ESPRESSIF
-                RobotInterface::EngineToRobot msg;
+                // Reusing existing msg struct here to save stack
                 msg.tag = RobotInterface::EngineToRobot::Tag_animBodyMotion;
                 msg.animBodyMotion.speed = 0;
                 msg.animBodyMotion.curvatureRadius_mm = 0;

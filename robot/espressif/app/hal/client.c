@@ -9,6 +9,7 @@
 #include "ets_sys.h"
 #include "osapi.h"
 #include "backgroundTask.h"
+#include "driver/uart.h"
 #include "anki/cozmo/transport/IReceiver.h"
 #include "anki/cozmo/transport/reliableTransport.h"
 
@@ -57,6 +58,8 @@ static void socketRecvCB(void *arg, char *usrdata, unsigned short len)
 {
   struct espconn* src = (struct espconn*)arg;
   static esp_udp s_dest;
+
+  ISR_STACK_LEFT('C');
 
   sendHoldoff = false;
   

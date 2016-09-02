@@ -17,7 +17,32 @@ extern int xPortGetFreeHeapSize(void);    // Faster than system_get_free_heap_si
 #define STACK_START (0x40000000)
 #define STACK_END   (0x3fffe000)
 
-#define STACK_LEFT(ARG) if((ARG)) { int a; os_printf(__FILE__ " %d: %x\r\n", __LINE__, ((unsigned int)&a) - STACK_END); }
+#define STACK_DEBUG 0
+
+#if STACK_DEBUG
+#define STACK_LEFT(ARG) do { if((ARG)) { int a; os_printf(__FILE__ " %d: %x\r\n", __LINE__, ((unsigned int)&a) - STACK_END); }} while(0)
+#define STACK_LEFT_PERIODIC(MS) do { \
+  static uint32_t lastTime__FILE____LINE__ = 0; \
+  const uint32_t now = system_get_time(); \
+  if ((now - lastTime__FILE____LINE__) > ((MS) * 1000)) {\
+    STACK_LEFT(1); \
+    lastTime__FILE____LINE__ = now; \
+  } \
+} while(0)
+#define ISR_STACK_LEFT(M) do { \
+  int a;\
+  const unsigned int left = (unsigned int)&a - STACK_END; \
+  if (left < 0x0db0) { \
+    os_put_char((M)); \
+    os_put_hex(left, 3); \
+    os_put_char('\r'); os_put_char('\n'); \
+  } \
+} while(0)
+#else
+#define STACK_LEFT(...)
+#define STACK_LEFT_PERIODIC(...)
+#define ISR_STACK_LEFT(...)
+#endif
 
 /// Must drop 6dBm below max for FCC
 #define MAX_TPW (82-24)

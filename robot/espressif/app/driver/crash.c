@@ -11,6 +11,8 @@
 #include "spi_flash.h"
 #include "anki/cozmo/transport/reliableTransport.h"
 
+#define CRASH_DUMP_SOFISTICATED 1
+
 extern ReliableConnection g_conn;   // So we can check canaries when we crash
 
 static int nextCrashRecordSlot;
@@ -24,8 +26,9 @@ void os_put_str(char* str)
   }
 }
 
-#define STACKOK(i) (((unsigned int)i > 0x3fffc000) && ((unsigned int)i < 0x40000000) && (((unsigned int)i & 3) == 0))
+#define STACKOK(i) (((unsigned int)i > STACK_END) && ((unsigned int)i < STACK_START) && (((unsigned int)i & 3) == 0))
 
+#if CRASH_DUMP_SOFISTICATED
 static int get_excvaddr() {
   int v;
   asm volatile (
@@ -43,9 +46,11 @@ static int get_depc() {
   );
   return v;
 }
+#endif
 
 extern void crash_dump(int* sp) {
   ex_regs_esp *regs = (ex_regs_esp*) sp;
+#if CRASH_DUMP_SOFISTICATED
   // stack pointer at exception place
   int* ex_sp = (sp + 256 / 4);
   int* p = ex_sp - 8;
@@ -53,7 +58,7 @@ extern void crash_dump(int* sp) {
   int i;
   CrashRecord record;
   CrashLog_ESP* cle = (CrashLog_ESP*)record.dump;
-
+#endif
   ets_intr_lock(); // Disable all interrupts
 
   os_put_str("Fatal Exception: ");
@@ -65,6 +70,7 @@ extern void crash_dump(int* sp) {
   os_put_char('\r');
   os_put_char('\n');
   
+#if CRASH_DUMP_SOFISTICATED  
   record.nWritten = 0;
   record.nReported = 0xFFFFffff;
   record.reporter  = 0; // Espressif is 0
@@ -89,6 +95,7 @@ extern void crash_dump(int* sp) {
   }
 
   os_put_hex(crashHandlerPutReport(&record), 2);
+#endif
 
   while (1);    // Wait for watchdog to get us
 }
@@ -180,6 +187,7 @@ int ICACHE_FLASH_ATTR crashHandlerGetReport(const int index, CrashRecord* record
 /// Must not be ICACHE_FLASH_ATTR if we want to use in actual crash handler
 int crashHandlerPutReport(CrashRecord* record)
 {
+  STACK_LEFT(true);
   if (nextCrashRecordSlot < 0 || nextCrashRecordSlot >= MAX_CRASH_LOGS) return -1;
   if (record == NULL) return -2;
   const uint32 recordWriteAddress = (CRASH_DUMP_SECTOR * SECTOR_SIZE) + (CRASH_RECORD_SIZE * nextCrashRecordSlot);

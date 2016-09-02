@@ -114,12 +114,13 @@ void RadioConnectionStateMachineUpdate()
       case 5:
       {
         RobotInterface::FirmwareVersion versionMsg;
+        STACK_LEFT(true);
         u32* versionInfoAsU32 = reinterpret_cast<u32*>(versionMsg.json);
         os_memcpy(versionInfoAsU32,
                   Anki::Cozmo::UpgradeController::GetVersionInfo(),
                   Anki::Cozmo::UpgradeController::VERSION_INFO_MAX_LENGTH);
         versionMsg.json_length = os_strlen((const char*)versionMsg.json);
-        if (clientQueueAvailable() > ((int)versionMsg.Size() + 200))
+        if (clientQueueAvailable() > ((int)versionMsg.Size() + LOW_PRIORITY_BUFFER_ROOM))
         {
           if (RobotInterface::SendMessage(versionMsg)) doRTConnectPhase++;
         }
@@ -257,7 +258,7 @@ void Exec(os_event_t *event)
     }
     case 6:
     {
-      DiffieHellman::Update();
+      //DiffieHellman::Update();
       break;
     }
     case 7:

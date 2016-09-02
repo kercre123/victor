@@ -4,7 +4,19 @@
 #ifndef __RTIP_h
 #define __RTIP_h
 
+extern "C"
+{
+  #include "anki/cozmo/robot/drop.h"
+}
+
 #include "clad/robotInterface/messageEngineToRobot.h"
+
+/** Makes a buffer smaller than a full EngineToRobot message bug big enough for anything to send to RTIP on the stack
+ * and creates a variable of type EngineToRobot referencing it.
+ */
+#define MAKE_RTIP_MSG(msg) \
+uint32_t msg__buffer[(DROP_TO_RTIP_MAX_VAR_PAYLOAD/sizeof(uint32_t)) + 1]; \
+Anki::Cozmo::RobotInterface::EngineToRobot& msg = *((Anki::Cozmo::RobotInterface::EngineToRobot*)msg__buffer)
 
 namespace Anki {
   namespace Cozmo {

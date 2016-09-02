@@ -5,6 +5,7 @@
 #include "anki/cozmo/robot/logging.h"
 extern "C" {
   #include "driver/i2spi.h"
+  #include "driver/uart.h"
 }
 #include <stdarg.h>
 
@@ -674,6 +675,7 @@ namespace HAL {
     else
     {
       u64 frame[COLS];
+      ISR_STACK_LEFT('F');
       FaceDisplayDecode(image, ROWS, COLS, frame);
       Face::CreateRects(frame);
     }

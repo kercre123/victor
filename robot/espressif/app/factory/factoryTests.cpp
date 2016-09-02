@@ -450,6 +450,7 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
     {
       os_memset(minPositions, 0, sizeof(minPositions));
       os_memset(maxPositions, 0, sizeof(maxPositions));
+      lastExecTime = system_get_time();
       break;
     }
     case RobotInterface::FTM_None:

@@ -8,7 +8,6 @@ extern "C" {
 #include "osapi.h"
 #include "mem.h"
 #include "driver/i2spi.h"
-#include "anki/cozmo/robot/drop.h"
 #include "client.h"
 }
 #include "anki/cozmo/robot/logging.h"
@@ -74,7 +73,7 @@ void Update()
     }
     else if (clientConnected())
     {
-      if ((msg.tag == RobotInterface::RobotToEngine::Tag_trace) && (clientQueueAvailable() < 200))
+      if ((msg.tag == RobotInterface::RobotToEngine::Tag_trace) && (clientQueueAvailable() < LOW_PRIORITY_BUFFER_ROOM))
       {
         AnkiWarn( 50, "RTIP.AcceptRTIPMessage", 442, "dropping RTIP trace", 0);
       }

@@ -19,7 +19,7 @@
 #include "imageSender.h"
 
 
-#define I2SPI_DEBUG 1
+#define I2SPI_DEBUG 0
 #if I2SPI_DEBUG
 #define debug(...) os_printf(__VA_ARGS__)
 #define dbpc(char) os_put_char(char)
@@ -42,7 +42,7 @@
 #define I2SPI_ISR_PROFILE_NORM 6
 #define I2SPI_ISR_PROFILE_TMD  7
 
-#define I2SPI_ISR_PROFILING I2SPI_ISR_PROFILE_FULL
+#define I2SPI_ISR_PROFILING I2SPI_ISR_PROFILE_TX
 #if I2SPI_ISR_PROFILING
 #define PROFILING_PIN 0
 #define isrProfStart(which) if ((which) == I2SPI_ISR_PROFILING) GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, 1<<PROFILING_PIN)
@@ -54,6 +54,9 @@
 
 extern bool i2spiSynchronizedCallback(uint32 param);
 extern bool i2spiRecoveryCallback(uint32 param);
+
+// Variables made static just to keep them from being placed on the stack, not because they need to be preserved
+#define nostack static
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
@@ -200,27 +203,25 @@ inline uint8_t PumpScreenData(uint8_t* dest)
   }
   else
   {
-    const int8_t wind = screen.wind;
-    const int8_t rind = screen.rind;
-    if (wind == rind)
+    if (screen.wind == screen.rind)
     {
       transmitChain = 0;
       return 0;
     }
     else
     {
+      nostack uint8_t ret;
       transmitChain++;
-      os_memcpy(dest, &(screen.buffer[rind]), MAX_SCREEN_BYTES_PER_DROP);
-      screen.rind = (rind + 1) & SCREEN_BUFFER_SIZE_MASK;
-      return screenDataValid | ((screen.rectFlags & 1<<rind) ? screenRectData : 0);
+      os_memcpy(dest, &(screen.buffer[screen.rind]), MAX_SCREEN_BYTES_PER_DROP);
+      ret = screenDataValid | ((screen.rectFlags & 1<<screen.rind) ? screenRectData : 0);
+      screen.rind = (screen.rind + 1) & SCREEN_BUFFER_SIZE_MASK;
+      return ret;
     }
   }
 }
 
 inline uint8_t PumpAudioData(uint8_t* dest)
 {
-  const int16_t wind = audio.wind;
-  int16_t rind = audio.rind;
   // Decrement silence if we have any
   if (audio.silenceSamples > 0)
   {
@@ -228,19 +229,16 @@ inline uint8_t PumpAudioData(uint8_t* dest)
     if (audio.silenceSamples < 0) audio.silenceSamples = 0; // Don't go below 0
     return 0;
   }
-  else if (rind == wind) // Check for empty buffer
+  else if (audio.rind == audio.wind) // Check for empty buffer
   {
     return 0;
   }
   else
   {
-    int i;
-    for (i=0; i<MAX_AUDIO_BYTES_PER_DROP; ++i)
-    {
-      dest[i] = audioBuffer[rind];
-      rind = (rind + 1) & AUDIO_BUFFER_SIZE_MASK;
-    }
-    audio.rind = rind;
+    ct_assert(MAX_AUDIO_BYTES_PER_DROP == 3); // For loop unrolling
+    dest[0] = audioBuffer[audio.rind]; audio.rind = (audio.rind + 1) & AUDIO_BUFFER_SIZE_MASK;
+    dest[1] = audioBuffer[audio.rind]; audio.rind = (audio.rind + 1) & AUDIO_BUFFER_SIZE_MASK;
+    dest[2] = audioBuffer[audio.rind]; audio.rind = (audio.rind + 1) & AUDIO_BUFFER_SIZE_MASK;
     return audioDataValid;
   }
 }
@@ -286,7 +284,8 @@ void prepSdioQueue(struct sdio_queue* desc, uint8 eof)
  */
 inline void processDrop(DropToWiFi* drop)
 {
-  const int8 rxJpegLen = (drop->droplet & jpegLenMask) * 4;
+  nostack int8 rxJpegLen;
+  rxJpegLen = (drop->droplet & jpegLenMask) * 4;
   if (rxJpegLen > 0) // Handle jpeg data
   {
     static int8_t activeImgBuffer = 0;
@@ -314,7 +313,8 @@ inline void processDrop(DropToWiFi* drop)
     }
     else
     {
-      int remainingJpegSpace = IMAGE_DATA_MAX_LENGTH - imageBuffers[activeImgBuffer].length;
+      nostack int remainingJpegSpace;
+      remainingJpegSpace = IMAGE_DATA_MAX_LENGTH - imageBuffers[activeImgBuffer].length;
       assert(remainingJpegSpace >= rxJpegLen, "WTF: %x %x %x\r\n", imageBuffers[activeImgBuffer].length, remainingJpegSpace, rxJpegLen);
       // drop payload is 4 byte aligned and rxJpegLen is always a multiple of 4 so 4 byte aligned copy will always work
       os_memcpy(imageBuffers[activeImgBuffer].data + imageBuffers[activeImgBuffer].length, drop->payload, rxJpegLen);
@@ -351,22 +351,19 @@ inline void processDrop(DropToWiFi* drop)
   
   if (drop->payloadLen > 0) // Handling CLAD data
   {
-    const uint16_t rind = self.rtipBufferRind;
-    uint16_t wind = self.rtipBufferWind;
-    const uint16_t available = RELAY_BUFFER_SIZE - ((wind - rind) & RELAY_BUFFER_SIZE_MASK);
-    if (likely(drop->payloadLen < available)) // Leave space for head and tail to not touch
+    if (likely(drop->payloadLen < (RELAY_BUFFER_SIZE - ((self.rtipBufferWind - self.rtipBufferRind) & RELAY_BUFFER_SIZE_MASK)))) // Leave space for head and tail to not touch
     {
-      const int firstCopy = RELAY_BUFFER_SIZE - wind;
+      const int firstCopy = RELAY_BUFFER_SIZE - self.rtipBufferWind;
       if (unlikely(firstCopy < drop->payloadLen))
       {
-        os_memcpy(relayBuffer + wind, drop->payload + rxJpegLen, firstCopy);
+        os_memcpy(relayBuffer + self.rtipBufferWind, drop->payload + rxJpegLen, firstCopy);
         os_memcpy(relayBuffer, drop->payload + rxJpegLen + firstCopy, drop->payloadLen - firstCopy);
       }
       else
       {
-        os_memcpy(relayBuffer + wind, drop->payload + rxJpegLen, drop->payloadLen);
+        os_memcpy(relayBuffer + self.rtipBufferWind, drop->payload + rxJpegLen, drop->payloadLen);
       }
-      self.rtipBufferWind = (wind + drop->payloadLen) & RELAY_BUFFER_SIZE_MASK;
+      self.rtipBufferWind = (self.rtipBufferWind + drop->payloadLen) & RELAY_BUFFER_SIZE_MASK;
     }
     else
     {
@@ -387,12 +384,13 @@ ct_assert(DMA_BUF_SIZE == 512); // We assume that the DMA buff size is 128 32bit
 // Subhandler for dmaisr for receive interrupts
 inline void receiveCompleteHandler(void)
 {
-  uint32_t eofDesAddr = READ_PERI_REG(SLC_TX_EOF_DES_ADDR);
-  struct sdio_queue* desc = asDesc(eofDesAddr);
   static DropToWiFi drop;
   static uint8 dropRdInd = 0; // In 16bit half-words
   static int16_t drift = 0;
-  uint16_t* buf = (uint16_t*)(desc->buf_ptr);
+  nostack struct sdio_queue* desc;
+  desc = asDesc(READ_PERI_REG(SLC_TX_EOF_DES_ADDR));
+  nostack uint16_t* buf;
+  buf = (uint16_t*)(desc->buf_ptr);
   
   while(true)
   {
@@ -407,7 +405,7 @@ inline void receiveCompleteHandler(void)
             self.phaseErrorCount++;
             isrProfStart(I2SPI_ISR_PROFILE_TMD);
             dbpc('!'); dbpc('T'); dbpc('M'); dbpc('D'); dbph(drift, 4);
-            system_deep_sleep(0);
+            while (drift > DRIFT_MARGIN*2); // Die
             isrProfEnd(I2SPI_ISR_PROFILE_TMD);
           }
           self.outgoingPhase += drift;
@@ -459,28 +457,24 @@ inline bool makeDrop(uint16_t* txBuf)
     drop.droplet = PumpAudioData(drop.audioData) |
                    PumpScreenData(drop.screenData);
     
-    const uint16_t wind = self.messageBufferWind;
-    uint16_t rind = self.messageBufferRind;
-    if (rind != wind) // Have CLAD payload to send
+    if (self.messageBufferRind != self.messageBufferWind) // Have CLAD payload to send
     {
-      const uint16_t messageAvailable = I2SPI_MESSAGE_BUF_SIZE - ((rind - wind) & I2SPI_MESSAGE_BUF_SIZE_MASK);
-      const uint8_t messageSize = messageBuffer[rind];
-      assert(messageSize <= messageAvailable, "ERROR I2SPI messageBuffer is corrupt! %d > %d, %02x\r\n", messageSize, messageAvailable, messageBuffer[rind]);
+      const uint8_t messageSize = messageBuffer[self.messageBufferRind];
       if (pokeRTIPqueue(messageSize)) // Estimate that the RTIP has room for this
       {
-        rind = (rind + 1) & I2SPI_MESSAGE_BUF_SIZE_MASK; // Advance past size
+        self.messageBufferRind = (self.messageBufferRind + 1) & I2SPI_MESSAGE_BUF_SIZE_MASK; // Advance past size
         drop.payloadLen = messageSize;
-        const int firstCopy = I2SPI_MESSAGE_BUF_SIZE - rind;
+        const int firstCopy = I2SPI_MESSAGE_BUF_SIZE - self.messageBufferRind;
         if (unlikely(firstCopy < messageSize))
         {
-          os_memcpy(drop.payload, messageBuffer + rind, firstCopy);
+          os_memcpy(drop.payload, messageBuffer + self.messageBufferRind, firstCopy);
           os_memcpy(drop.payload + firstCopy, messageBuffer, messageSize - firstCopy);
         }
         else
         {
-          os_memcpy(drop.payload, messageBuffer + rind, messageSize);
+          os_memcpy(drop.payload, messageBuffer + self.messageBufferRind, messageSize);
         }
-        self.messageBufferRind = (rind + messageSize) & I2SPI_MESSAGE_BUF_SIZE_MASK;
+        self.messageBufferRind = (self.messageBufferRind + messageSize) & I2SPI_MESSAGE_BUF_SIZE_MASK;
       }
     }
   }
@@ -530,9 +524,12 @@ void dmaisrNormal(void* arg) {
   isrProfStart(I2SPI_ISR_PROFILE_NORM);
   
   //Grab int status
-  const uint32 slc_intr_status = READ_PERI_REG(SLC_INT_STATUS);
+  nostack uint32 slc_intr_status;
+  slc_intr_status = READ_PERI_REG(SLC_INT_STATUS);
   //clear all intr flags
   WRITE_PERI_REG(SLC_INT_CLR, slc_intr_status);
+  
+  ISR_STACK_LEFT('I');
   
   if (slc_intr_status & SLC_TX_EOF_INT_ST)
   {
@@ -543,11 +540,11 @@ void dmaisrNormal(void* arg) {
   
   if (slc_intr_status & SLC_RX_EOF_INT_ST) // Transmit complete interrupt
   {
-    isrProfEnd(I2SPI_ISR_PROFILE_RX);
-    const uint32_t eofDesAddr = READ_PERI_REG(SLC_RX_EOF_DES_ADDR);
-    struct sdio_queue* desc = asDesc(eofDesAddr);
-    uint16_t* txBuf = (uint16_t*)(desc->buf_ptr);
-    const int16_t remaining = DMA_BUF_SIZE - (self.outgoingPhase*2);
+    isrProfStart(I2SPI_ISR_PROFILE_TX);
+    nostack uint16_t* txBuf;
+    txBuf = (uint16_t*)(asDesc(READ_PERI_REG(SLC_RX_EOF_DES_ADDR))->buf_ptr);
+    nostack int16_t remaining;
+    remaining = DMA_BUF_SIZE - (self.outgoingPhase*2);
     if (remaining < (int16_t)DROP_TO_RTIP_SIZE)
     {
       self.outgoingPhase -= DMA_BUF_SIZE/2; // Handle wrap around before calling make drop

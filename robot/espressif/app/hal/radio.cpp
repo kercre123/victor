@@ -28,11 +28,12 @@ namespace Anki {
         else
         {
           // Check if this is a trace or text message (debugging)
-          if ((realID == RobotInterface::RobotToEngine::Tag_trace) || (realID == RobotInterface::RobotToEngine::Tag_printText))
+          if ((realID == RobotInterface::RobotToEngine::Tag_trace) ||
+              (realID == RobotInterface::RobotToEngine::Tag_printText))
           {
-            if (clientQueueAvailable() < 200) return false;
+            if (clientQueueAvailable() < LOW_PRIORITY_BUFFER_ROOM) return false;
           }
-          return clientSendMessage((u8*)buffer, size, msgID, msgID < RobotInterface::TO_ENG_UNREL, false);
+          return clientSendMessage((u8*)buffer, size, msgID, realID < RobotInterface::TO_ENG_UNREL, false);
         }
       }
     }
