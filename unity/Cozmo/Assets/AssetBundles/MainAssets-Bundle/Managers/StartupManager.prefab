@@ -17,6 +17,35 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &154004
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 463824}
+  - 114: {fileID: 11436284}
+  m_Layer: 0
+  m_Name: RobotEngineManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &463824
+Transform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 154004}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.4912033, y: -9.085854, z: -500.82257}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 472660}
+  m_RootOrder: 0
 --- !u!4 &472660
 Transform:
   m_ObjectHideFlags: 1
@@ -24,11 +53,26 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 117198}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.4912033, y: 9.085854, z: 500.82257}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children:
+  - {fileID: 463824}
   m_Father: {fileID: 0}
   m_RootOrder: 0
+--- !u!114 &11436284
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 154004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8fbb100ef2e504caca60c424650496b8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  RobotConnectionType: 0
+  _Configuration: {fileID: 4900000, guid: 0af30709c80ce4039978f9ccbfc2b24b, type: 3}
 --- !u!114 &11456402
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -40,7 +84,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e78a1b88fa854825acf2c27a34a2601, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  appID: 3e78b35bae854fa8b3137db388bed136
   packageID: com.anki.cozmo
   serverURL: 
   authenticatorType: 0
@@ -67,7 +110,6 @@ MonoBehaviour:
   - main_scene
   _MainSceneAssetBundleName: main_scene
   _MainSceneName: HomeHub
-  _MinigameUIPrefabAssetBundleName: minigame_ui_prefabs
   _BasicUIPrefabAssetBundleName: basic_ui_prefabs
   _GameMetadataAssetBundleName: minigame_metadata
   _DebugAssetBundleName: debug_prefabs

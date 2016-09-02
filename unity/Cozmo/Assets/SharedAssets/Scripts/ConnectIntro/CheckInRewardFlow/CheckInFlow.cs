@@ -22,12 +22,6 @@ public class CheckInFlow : MonoBehaviour {
   private Cozmo.UI.CozmoButton _ConnectButton;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _SimButton;
-
-  [SerializeField]
-  private Cozmo.UI.CozmoButton _MockButton;
-
-  [SerializeField]
   private GameObject _EnvelopeContainer;
   [SerializeField]
   private Text _TapToOpenText;
@@ -99,9 +93,13 @@ public class CheckInFlow : MonoBehaviour {
 
   private void Awake() {
 
-    _ConnectButton.Initialize(HandleConnectButton, "connect_button", "checkin_dialog");
-    _SimButton.Initialize(HandleSimButton, "sim_button", "checkin_dialog");
-    _MockButton.Initialize(HandleMockButton, "mock_button", "checkin_dialog");
+    if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
+      _ConnectButton.Initialize(HandleMockButton, "connect_button", "checkin_dialog");
+    }
+    else {
+      _ConnectButton.Initialize(HandleConnectButton, "connect_button", "checkin_dialog");
+    }
+
     _EnvelopeButton.Initialize(HandleEnvelopeButton, "envelope_button", "checkin_dialog");
     _EnvelopeButton.Text = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName;
     _OpenEnvelopeNameText.text = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName;
@@ -124,12 +122,6 @@ public class CheckInFlow : MonoBehaviour {
       UpdateProgBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
       rewardSequence.Play();
     }
-
-#if !UNITY_EDITOR
-    // hide sim and mock buttons for on device deployments
-    _SimButton.gameObject.SetActive(false);
-    _MockButton.gameObject.SetActive(false);
-#endif
 
     _ConnectButton.Text = Localization.Get(LocalizationKeys.kLabelConnect);
     UIManager.Instance.BackgroundColorController.SetBackgroundColor(Cozmo.UI.BackgroundColorController.BackgroundColor.Bone);
@@ -543,14 +535,7 @@ public class CheckInFlow : MonoBehaviour {
     _ConnectionFlowInstance = GameObject.Instantiate(_ConnectionFlowPrefab.gameObject).GetComponent<ConnectionFlow>();
     _ConnectionFlowInstance.ConnectionFlowComplete += HandleConnectionFlowComplete;
     _ConnectionFlowInstance.ConnectionFlowQuit += HandleConnectionFlowQuit;
-    _ConnectionFlowInstance.Play(sim: false);
-  }
-
-  private void HandleSimButton() {
-    _ConnectionFlowInstance = GameObject.Instantiate(_ConnectionFlowPrefab.gameObject).GetComponent<ConnectionFlow>();
-    _ConnectionFlowInstance.ConnectionFlowComplete += HandleConnectionFlowComplete;
-    _ConnectionFlowInstance.ConnectionFlowQuit += HandleConnectionFlowQuit;
-    _ConnectionFlowInstance.Play(sim: true);
+    _ConnectionFlowInstance.StartConnectionFlow();
   }
 
   private void HandleConnectionFlowComplete() {

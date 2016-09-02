@@ -10,12 +10,6 @@ public class FirstTimeConnectDialog : MonoBehaviour {
   private Cozmo.UI.CozmoButton _StartButton;
 
   [SerializeField]
-  private Cozmo.UI.CozmoButton _SimButton;
-
-  [SerializeField]
-  private Cozmo.UI.CozmoButton _MockButton;
-
-  [SerializeField]
   private ConnectionFlow _ConnectionFlowPrefab;
   private ConnectionFlow _ConnectionFlowInstance;
 
@@ -31,17 +25,14 @@ public class FirstTimeConnectDialog : MonoBehaviour {
   private ProfileCreationView _ProfileCreationViewPrefab;
   private ProfileCreationView _ProfileCreationViewInstance;
 
-  private void Start() {
+  private void Awake() {
 
-    _StartButton.Initialize(HandleStartButton, "start_button", "simple_connect_dialog");
-    _SimButton.Initialize(HandleSimButton, "sim_button", "simple_connect_dialog");
-    _MockButton.Initialize(HandleMockButton, "mock_button", "simple_connect_dialog");
-
-#if !UNITY_EDITOR
-    // hide sim and mock buttons for on device deployments
-    _SimButton.gameObject.SetActive(false);
-    _MockButton.gameObject.SetActive(false);
-#endif
+    if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
+      _StartButton.Initialize(HandleMockButton, "start_button", "simple_connect_dialog");
+    }
+    else {
+      _StartButton.Initialize(HandleStartButton, "start_button", "simple_connect_dialog");
+    }
 
     _StartButton.Text = Localization.Get(LocalizationKeys.kLabelStart);
     UIManager.Instance.BackgroundColorController.SetBackgroundColor(Cozmo.UI.BackgroundColorController.BackgroundColor.Yellow);
@@ -107,14 +98,7 @@ public class FirstTimeConnectDialog : MonoBehaviour {
     _ConnectionFlowInstance = GameObject.Instantiate(_ConnectionFlowPrefab.gameObject).GetComponent<ConnectionFlow>();
     _ConnectionFlowInstance.ConnectionFlowComplete += HandleConnectionFlowComplete;
     _ConnectionFlowInstance.ConnectionFlowQuit += HandleConnectionFlowQuit;
-    _ConnectionFlowInstance.Play(sim: false);
-  }
-
-  private void HandleSimButton() {
-    _ConnectionFlowInstance = GameObject.Instantiate(_ConnectionFlowPrefab.gameObject).GetComponent<ConnectionFlow>();
-    _ConnectionFlowInstance.ConnectionFlowComplete += HandleConnectionFlowComplete;
-    _ConnectionFlowInstance.ConnectionFlowQuit += HandleConnectionFlowQuit;
-    _ConnectionFlowInstance.Play(sim: true);
+    _ConnectionFlowInstance.StartConnectionFlow();
   }
 
   private void HandleConnectionFlowComplete() {

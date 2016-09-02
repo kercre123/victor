@@ -62,17 +62,14 @@ public class ConnectionFlow : MonoBehaviour {
 
   private const int kRobotID = 1;
 
-  private bool _Simulated = false;
   private string _CurrentRobotIP;
 
   private void Start() {
-    RobotEngineManager.Instance.ConnectedToClient += HandleConnectedToEngine;
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Disconnected);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(RobotConnectionResponse);
   }
 
   private void OnDestroy() {
-    RobotEngineManager.Instance.ConnectedToClient -= HandleConnectedToEngine;
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Disconnected);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(RobotConnectionResponse);
 
@@ -106,10 +103,9 @@ public class ConnectionFlow : MonoBehaviour {
     }
   }
 
-  public void Play(bool sim) {
-    _Simulated = sim;
+  public void StartConnectionFlow() {
 
-    if (sim) {
+    if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Sim) {
       _CurrentRobotIP = RobotEngineManager.kSimRobotIP;
     }
     else {
@@ -156,7 +152,7 @@ public class ConnectionFlow : MonoBehaviour {
   private void HandleSearchForCozmoScreenDone(bool success) {
     GameObject.Destroy(_SearchForCozmoScreenInstance.gameObject);
 
-    if (success || _Simulated) {
+    if (success || RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Sim) {
       _ConnectionFlowBackgroundInstance.SetStateComplete(0);
       ShowConnectingToCozmoScreen();
     }
@@ -191,18 +187,7 @@ public class ConnectionFlow : MonoBehaviour {
     _ConnectingToCozmoScreenInstance.ConnectionScreenComplete += HandleConnectingToCozmoScreenDone;
     _ConnectionFlowBackgroundInstance.SetStateInProgress(1);
 
-    TryConnect();
-  }
-
-  private void TryConnect() {
-    // In editor we delay the connection to the engine. This is so we can use things
-    // like mock mode which does not require the engine.
-    if (RobotEngineManager.Instance.IsConnectedToEngine) {
-      ConnectToRobot();
-    }
-    else {
-      ConnectToEngine();
-    }
+    ConnectToRobot();
   }
 
   private void HandleConnectingToCozmoScreenDone() {
@@ -374,8 +359,8 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   private void ConnectToRobot() {
-    DAS.Info("ConnectionFlow.ConnectToRobot", "Trying to connect to robot");
-    RobotEngineManager.Instance.ConnectToRobot(kRobotID, _CurrentRobotIP, _Simulated);
+    DAS.Info("ConnectionFlow.ConnectToRobot", "Trying to connect to robot " + _CurrentRobotIP);
+    RobotEngineManager.Instance.ConnectToRobot(kRobotID, _CurrentRobotIP);
     // Silent if you've never done it before...
     if (!OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Home)) {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connecting);
@@ -383,16 +368,6 @@ public class ConnectionFlow : MonoBehaviour {
     else {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
     }
-  }
-
-  private void HandleConnectedToEngine(string connectionIdentifier) {
-#if UNITY_EDITOR
-    // in editor we have to wait to connect to the engine first before connecting
-    // to the robot.
-    DAS.Info("ConnectionFlow.HandleConnectedToEngine", "In Editor so connecting to robot after connecting to engine");
-    SetupEngine();
-    ConnectToRobot();
-#endif
   }
 
   private void Disconnected(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {
