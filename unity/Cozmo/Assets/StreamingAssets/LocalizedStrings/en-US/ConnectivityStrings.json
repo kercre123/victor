@@ -37,7 +37,7 @@
     "translation": "Waking up Cozmo..."
   },
   "connectivity.updatingFirmware": {
-    "translation": "Updating Firmware"
+    "translation": "Updating your Cozmo..."
   },
   "connectivity.pairingPinTitle": {
     "translation": "Enter the pin shown on your Cozmo"
@@ -64,15 +64,15 @@
     "translation": "Sleep"
   },
   "connectivity.cozmoSleepDesc": {
-    "translation": "Cozmo is going to sleep and will disconnect soon."
+    "translation": "Cozmo is going to sleep and will disconnect soon"
   },
   "connectivity.cozmoLowBatteryTitle": {
     "translation": "Low Battery"
   },
   "connectivity.cozmoLowBatteryDesc": {
-    "translation": "Please place Cozmo on the charger."
+    "translation": "Please place Cozmo on the charger"
   },
   "connectivity.keepCozmoOnCharger": {
-    "translation": "Please keep Cozmo on his charger during Setup."
+    "translation": "Please keep Cozmo on his charger during Setup"
   }
 }

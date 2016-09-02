@@ -25,22 +25,28 @@
     "translation": "READ ALL INSTRUCTIONS FIRST"
   },
   "wifiStrings.Instructions.Slide0": {
-    "translation": "Step 1:\nFind and tap on your device's Settings icon"
+    "translation": "Find and tap on your device's Settings icon"
   },
   "wifiStrings.Instructions.Slide1": {
-    "translation": "Step 2:\nSelect the WiFi section from your Settings menu"
+    "translation": "Select the WiFi section from your Settings menu"
   },
   "wifiStrings.Instructions.Slide2": {
-    "translation": "Step 3:\nChoose Cozmo's network from the list."
+    "translation": "Choose Cozmo's network from the list"
   },
   "wifiStrings.Instructions.Slide3": {
-    "translation": "Step 4:\nEnter the WiFi password shown on your Cozmo.\nUse ALL CAPS!"
+    "translation": "Enter the WiFi password shown on your Cozmo"
   },
   "wifiStrings.Instructions.Slide3.altCopy": {
-    "translation": "DON’T SEE A PASSWORD?\nTAP 'GET HELP'"
+    "translation": "Don't see a password?  Tap Here:"
+  },
+  "wifiStrings.Instructions.Slide3altCopy2": {
+    "translation": "Use *ALL CAPS* with no spaces"
   },
   "wifiStrings.Instructions.Slide4": {
-    "translation": "Step 5:\nExit Settings and tap on your Cozmo app"
+    "translation": "Exit Settings and tap on your Cozmo App"
+  },
+    "wifiStrings.Instructions.Slide4altCopy": {
+    "translation": "The App will know when Cozmo is connected"
   },
   "wifiStrings.Instructions.Slide0.viewAll": {
     "translation": "Swipe to read all the instructions first!"
@@ -52,13 +58,16 @@
     "translation": "Back"
   },
   "wifi.gethelp.title": {
-    "translation": "Having trouble connecting to WiFi?"
+    "translation": "Having trouble connecting to Cozmo's WiFi?"
   },
   "wifi.gethelp.description": {
-    "translation": "Try the following:\n1. Turn your device's WiFi OFF then back ON\n2. Remove then place Cozmo on his charger\n3. Raise & Lower Cozmo's lift to see his\nWiFi Network Info"
+    "translation": "Try the following:\n\n1. Turn your device's WiFi OFF then back ON\n2. Remove then place Cozmo on his charger"
+  },
+  "wifi.gethelp.description2": {
+    "translation": "If you need to see Cozmo's Network Info Raise and Lower his lift"
   },
   "wifi.gethelp.footer": {
-    "translation": "Still stuck? Visit support.anki.com"
+    "translation": "Still stuck? Disconnect from Cozmo and navigate to:\nsupport.anki.com"
   },
   "wifi.getHelp.linkText": {
     "translation": "Get Help"
