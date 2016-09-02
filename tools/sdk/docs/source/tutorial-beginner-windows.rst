@@ -115,31 +115,29 @@ Running the Program
 
   1. In the first window, type the following and press Enter::
 
-    cd CozmoSdk\sdk\tcprelay_usbmux_p
+      cd SDKDirectory
 
-  2. Next, open communications between the robot and the computer.
+  where *SDKDirectory* is the name of the directory you extracted the SDK into.
+
+  2. Next, type the following and press Enter::
+
+    cd tcprelay
+
+  3. Now open communications between the robot and the computer.
 
       1. For iOS devices, type the following into the same window and press Enter::
 
-        openSdkTcpRelay.bat
+          iosSdkTcpRelay.bat
 
       2. For Android devices, type the following into the same window and press Enter::
 
-        androidSdkTcpRelay.bat
+          androidSdkTcpRelay.bat
 
-        .. important:: Make sure adb (Android Debug Bridge) is installed on your system prior to this step.
-
-  .. warning:: Do NOT close the first Terminal window. Closing the first Terminal window while operating with the SDK will close communications with the Cozmo robot and cause errors within the program.
-
-  3. In the *second* Terminal window, type the following and press Enter::
-
-      cd CozmoSdk\sdk
-
-    The second Terminal window is the one where you will execute programs for Cozmo to run.
+      The second Terminal window is the one where you will execute programs for Cozmo to run.
 
 4. Type the following into the second Terminal window and then press Enter::
 
-  run-example.bat examples\drive_forward.py
+    run-example.bat examples\drive_forward.py
 
 5. If done correctly, Cozmo will drive forward for three seconds and then stop.
 
@@ -156,16 +154,16 @@ Writing the Program
 1. In your source code editor, create a new document (*File -> New Document*).
 2. As in the first example, type the following lines into your document exactly as shown::
 
-import asyncio
+  import asyncio
 
-import cozmo
-from cozmo.util import degrees
+  import cozmo
+  from cozmo.util import degrees
 
   1. ``from cozmo.util import degrees`` is a new module. This module sets the program up to use degrees as a standard of measurement.
 
 3. Next, you need to tell the program wait for Cozmo to connect. Type the following lines into the document exactly as shown::
 
-  def run(coz_conn):
+    def run(coz_conn):
       coz = coz_conn.wait_for_robot()
 
 4. Now type in the following command as shown::
@@ -187,7 +185,7 @@ from cozmo.util import degrees
 
 6. Type in the last three lines::
 
-if __name__ == '__main__':
+  if __name__ == '__main__':
     cozmo.setup_basic_logging()
     cozmo.connect(run)
 
@@ -195,13 +193,13 @@ if __name__ == '__main__':
 
 The completed program should look like this::
 
-import asyncio
+  import asyncio
 
-import cozmo
-from cozmo.util import degrees
+  import cozmo
+  from cozmo.util import degrees
 
 
-def run(coz_conn):
+  def run(coz_conn):
     coz = coz_conn.wait_for_robot()
 
     # Turn 90 degrees, play an animation, exit.
@@ -211,7 +209,7 @@ def run(coz_conn):
     anim.wait_for_completed()
 
 
-if __name__ == '__main__':
+  if __name__ == '__main__':
     cozmo.setup_basic_logging()
     cozmo.connect(run)
 
@@ -224,33 +222,31 @@ Running the Program
 2. Open the Cozmo app on the phone. Make sure Cozmo is on and connected to the app via WiFi.
 3. On the computer, open two Terminal windows.
 
-  1. In the first Terminal window, type the following and press Enter::
+  1. In the first window, type the following and press Enter::
 
-    cd CozmoSdk\sdk\tcprelay_usbmux_p
+      cd SDKDirectory
 
-  2. Next, open communications between the robot and the computer.
+  where *SDKDirectory* is the name of the directory you extracted the SDK into.
 
-      1. For iOS devices, type the following into the same window and press Enter::
+  2. Next, type the following and press Enter::
 
-        openSdkTcpRelay.bat
+      cd tcprelay
 
-      2. For Android devices, type the following into the same window and press Enter::
+  3. Now open communications between the robot and the computer.
+
+    1. For iOS devices, type the following into the same window and press Enter::
+
+        iosSdkTcpRelay.bat
+
+    2. For Android devices, type the following into the same window and press Enter::
 
         androidSdkTcpRelay.bat
 
-        .. important:: Make sure adb (Android Debug Bridge) is installed on your system prior to this step.
+4. Type the following into the second Terminal window and then press Enter::
 
-  .. warning:: Do NOT close the first Terminal window. Closing the first Terminal window while operating with the SDK will close communications with the Cozmo robot and cause errors within the program.
+    run-example.bat examples\turnaround.py
 
-4. In the *second* Terminal window, type the following and press Enter::
-
-    cd cCozmoSdk\sdk
-
-5. Type the following into the second Terminal window and then press Enter::
-
-  run-example.bat examples\turnaround.py
-
-3. If done correctly, Cozmo will turn and do a happy dance.
+5. If done correctly, Cozmo will turn and do a happy dance.
 
 -----------------------
 Example 3 - Cube Stack

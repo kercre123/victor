@@ -2,31 +2,30 @@
 Programming Cozmo - Beginner's Tutorials (OS X / Linux)
 =======================================================
 
-Cozmo is programmed in Python_. If you are new to Python, `After Hours Programming <http://www.afterhoursprogramming.com/tutorial/Python/Overview/>` and `Codecademy <http://www.codecademy.com/tracks/python>` offer beginner's courses in learning Python; `Python.org's website <https://wiki.python.org/moin/BeginnersGuide/NonProgrammers>` offers a more comprehensive list of video and web tutorials. This tutorial assumes you have a minimal understanding of programming in general.
+Cozmo is programmed in Python_. If you are new to Python, `After Hours Programming <http://www.afterhoursprogramming.com/tutorial/Python/Overview/>`_ and `Codecademy <http://www.codecademy.com/tracks/python>`_ offer beginner's courses in learning Python; `Python.org's website <https://wiki.python.org/moin/BeginnersGuide/NonProgrammers>`_ offers a more comprehensive list of video and web tutorials. This tutorial assumes you have a minimal understanding of programming in general.
 
 -----------------------
 The Baseline - Hello World
 -----------------------
 
-Cozmo's programs are composed of *modules*. Each module calls a specific
-function. Functions can either direct Cozmo to perform an action, provide
-information for the system, or set parameters necessary for proper operation.
-The Hello World program is a good example of the basic modules used in
-Cozmo's programs.
+Cozmo's programs are composed of *modules*. Each module calls a specific function. Functions can either direct Cozmo to perform an action, provide information for the system, or set parameters necessary for proper operation. The Hello World program is a good example of the basic modules used in Cozmo's programs.
 
-The code for the Hello World program looks like this::
+The code for the Hello World program looks like this.
 
-import cozmo
+.. code-block:: python
+  :linenos:
 
-'''Simplest "Hello World" Cozmo example program'''
+  import cozmo
 
-def run(coz_conn):
-  coz = coz_conn.wait_for_robot()
-   coz.say_text("Hello World").wait_for_completed()
+  '''Simplest "Hello World" Cozmo example program'''
 
-if __name__ == '__main__':
-   cozmo.setup_basic_logging()
-   cozmo.connect(run)
+  def run(coz_conn):
+    coz = coz_conn.wait_for_robot()
+    coz.say_text("Hello World").wait_for_completed()
+
+  if __name__ == '__main__':
+    cozmo.setup_basic_logging()
+    cozmo.connect(run)
 
 The breakdown of each module in the program is as follows:
 
@@ -55,17 +54,24 @@ Writing the Program
 ^^^^^^^^^^^^^^^^^^^
 
 1. In your source code editor, create a new document (*File -> New Document*).
-2. First, you need to tell the program to import some important information. Type the following lines into your document exactly as shown::
+2. First, you need to tell the program to import some important information. Type the following lines into your document exactly as shown:
 
-import asyncio
+.. code-block:: python
+  :linenos:
 
-import cozmo
+  import asyncio
 
+  import cozmo
+
+..
 
   1. ``import asyncio`` is a necessary module that assists the computer and Cozmo in communicating.
   2. ``import cozmo`` allows your program to access the information contained within the ``cozmo`` module.
 
-3. Next, you need to tell the program wait for Cozmo to connect. Type the following lines into the document exactly as shown::
+3. Next, you need to tell the program wait for Cozmo to connect. Type the following lines into the document exactly as shown:
+
+.. code-block:: python
+  :linenos:
 
   def run(coz_conn):
       coz = coz_conn.wait_for_robot()
@@ -77,30 +83,38 @@ import cozmo
   2. ``50,50`` is the velocity of his left and right treads, respectively. Velocity is measured in millimeters per second (mm/s). In this example, Cozmo will move forward 50 millimeters per second.
   3. ``duration=3`` specifies how long Cozmo will move. Duration is measured in seconds. In this example, Cozmo will move for three seconds.
 
-5. Type in the last three lines::
+5. Type in the last three lines:
+
+.. code-block:: python
+  :linenos:
 
   if __name__ == '__main__':
       cozmo.setup_basic_logging()
       cozmo.connect(run)
+
+..
 
     1. ``cozmo.setup_basic_logging()`` tells the program to alert you if any errors occur when running the program.
     2. ``cozmo.connect(run)`` tells the program to run as soon as Cozmo connects to the computer.
 
 6. Save the file in the *examples* directory as ``drive_forward.py``.
 
-The completed program should look like this::
+The completed program should look like this.
 
-import asyncio
+.. code-block:: python
+  :linenos:
 
-import cozmo
-from cozmo.util import degrees
+  import asyncio
 
-def run(coz_conn):
+  import cozmo
+  from cozmo.util import degrees
+
+  def run(coz_conn):
     coz = coz_conn.wait_for_robot()
 
     coz.drive_wheels(50,50, duration=3)
 
-if __name__ == '__main__':
+  if __name__ == '__main__':
     cozmo.setup_basic_logging()
     cozmo.connect(run)
 
@@ -113,35 +127,41 @@ Running the Program
 2. Open the Cozmo app on the phone. Make sure Cozmo is on and connected to the app via WiFi.
 3. On the computer, open two Terminal windows.
 
-  1. In the first Terminal window, type the following and press Enter::
+  1. In the first window, type the following and press Enter::
 
-    cd cozmo-one/tools/sdk/tcprelay_usbmux_p
+      cd SDKDirectory
 
-  2. Next, open communications between the robot and the computer.
+  where *SDKDirectory* is the name of the directory you extracted the SDK into.
 
-      1. For iOS devices, type the following into the same window and press Enter::
+  2. Next, type the following and press Enter::
 
-        ./openSdkTcpRelay.sh
+      cd tcprelay
 
-      2. For Android devices, type the following into the same window and press Enter::
+  3. Now open communications between the robot and the computer.
+
+    1. For iOS devices, type the following into the same window and press Enter::
+
+        ./iosSdkTcpRelay.sh
+
+    2. For Android devices, type the following into the same window and press Enter::
 
         ./androidSdkTcpRelay.sh
 
-        .. important:: Make sure adb (Android Debug Bridge) is installed on your system prior to this step.
+    .. important:: Make sure adb (Android Debug Bridge) is installed on your system prior to this step.
 
   .. warning:: Do NOT close the first Terminal window. Closing the first Terminal window while operating with the SDK will close communications with the Cozmo robot and cause errors within the program.
 
-  3. In the *second* Terminal window, type the following and press Enter::
+4. In the *second* Terminal window, type the following and press Enter::
 
-      cd cozmo-one/tools/sdk
+    cd SDKDirectory
 
-    The second Terminal window is the one where you will execute programs for Cozmo to run.
+where SDKDirectory is the name of the directory you extracted the SDK into.
 
-4. Type the following into the second Terminal window and then press Enter::
+5. Type the following into the second Terminal window and then press Enter::
 
-  /run-example.sh examples/drive_forward.py
+    /run-example.sh examples/drive_forward.py
 
-5. If done correctly, Cozmo will drive forward for three seconds and then stop.
+6. If done correctly, Cozmo will drive forward for three seconds and then stop.
 
 -----------------------
 Example 2 - Turn Around
@@ -154,12 +174,17 @@ Writing the Program
 ^^^^^^^^^^^^^^^^^^^
 
 1. In your source code editor, create a new document (*File -> New Document*).
-2. As in the first example, type the following lines into your document exactly as shown::
+2. As in the first example, type the following lines into your document exactly as shown:
 
-import asyncio
+.. code-block:: python
+  :linenos:
 
-import cozmo
-from cozmo.util import degrees
+  import asyncio
+
+  import cozmo
+  from cozmo.util import degrees
+
+..
 
   1. ``from cozmo.util import degrees`` is a new module. This module sets the program up to use degrees as a standard of measurement.
 
@@ -172,6 +197,8 @@ from cozmo.util import degrees
 
       coz.turn_in_place(degrees(90)).wait_for_completed()
 
+..
+
   1. ``coz.turn_in_place`` directs Cozmo to turn in place.
   2. (degrees(90)) sets how far he turns in relation to where he is. Cozmo's initial position is assumed to be 0 degrees; he will turn 90 degrees, or directly to his right. The number of degrees goes from 0 - 360, where 0 will not move him and 360 moves him in a complete circle going clockwise. To make Cozmo move counter-clockwise, enter a negative number. For example, entering -90 makes Cozmo turn 90 degrees to the left.
   3. ``wait_for_completed()`` is a signal that makes sure Cozmo completes his turn before performing his next action.
@@ -181,6 +208,7 @@ from cozmo.util import degrees
       anim = coz.play_anim_trigger(cozmo.anim.Triggers.MajorWin)
       anim.wait_for_completed()
 
+..
 
   1. ``anim = coz.play_anim_trigger(cozmo.anim.Triggers.MajorWin)`` triggers Cozmo to play a specific animation - in this case, his "Major Win" happy dance.
   2. ``anim.wait_for_completed`` is a signal that makes sure Cozmo completes his dance before performing his next action.
@@ -193,15 +221,18 @@ if __name__ == '__main__':
 
 7. Save the file in the SDK directory as ``turnaround.py``.
 
-The completed program should look like this::
+The completed program should look like this.
 
-import asyncio
+.. code-block:: python
+  :linenos:
 
-import cozmo
-from cozmo.util import degrees
+  import asyncio
+
+  import cozmo
+  from cozmo.util import degrees
 
 
-def run(coz_conn):
+  def run(coz_conn):
     coz = coz_conn.wait_for_robot()
 
     # Turn 90 degrees, play an animation, exit.
@@ -211,7 +242,7 @@ def run(coz_conn):
     anim.wait_for_completed()
 
 
-if __name__ == '__main__':
+  if __name__ == '__main__':
     cozmo.setup_basic_logging()
     cozmo.connect(run)
 
@@ -224,33 +255,41 @@ Running the Program
 2. Open the Cozmo app on the phone. Make sure Cozmo is on and connected to the app via WiFi.
 3. On the computer, open two Terminal windows.
 
-  1. In the first Terminal window, type the following and press Enter::
+  1. In the first window, type the following and press Enter::
 
-    cd cozmo-one/tools/sdk/tcprelay_usbmux_p
+      cd SDKDirectory
 
-  2. Next, open communications between the robot and the computer.
+  where *SDKDirectory* is the name of the directory you extracted the SDK into.
 
-      1. For iOS devices, type the following into the same window and press Enter::
+  2. Next, type the following and press Enter::
 
-        ./openSdkTcpRelay.sh
+      cd tcprelay
 
-      2. For Android devices, type the following into the same window and press Enter::
+  3. Now open communications between the robot and the computer.
+
+    1. For iOS devices, type the following into the same window and press Enter::
+
+        ./iosSdkTcpRelay.sh
+
+    2. For Android devices, type the following into the same window and press Enter::
 
         ./androidSdkTcpRelay.sh
 
-        .. important:: Make sure adb (Android Debug Bridge) is installed on your system prior to this step.
+    .. important:: Make sure adb (Android Debug Bridge) is installed on your system prior to this step.
 
   .. warning:: Do NOT close the first Terminal window. Closing the first Terminal window while operating with the SDK will close communications with the Cozmo robot and cause errors within the program.
 
 4. In the *second* Terminal window, type the following and press Enter::
 
-    cd cozmo-one/tools/sdk
+    cd SDKDirectory
+
+where SDKDirectory is the name of the directory you extracted the SDK into.
 
 5. Type the following into the second Terminal window and then press Enter::
 
-  ./turnaround.py
+    ./turnaround.py
 
-3. If done correctly, Cozmo will turn and do a happy dance.
+6. If done correctly, Cozmo will turn and do a happy dance.
 
 -----------------------
 Example 3 - Cube Stack
@@ -265,16 +304,16 @@ Writing the Program
 1. In your source code editor, create a new document (*File -> New Document*).
 2. As in the first example, type the following lines into your document exactly as shown::
 
-import asyncio
+  import asyncio
 
-import cozmo
+  import cozmo
 
-def run(coz_conn):
+  def run(coz_conn):
     coz = coz_conn.wait_for_robot()
 
 3. Now type in the following command as shown::
 
-  cubes = coz.world.wait_until_observe_num_objects(num=2, object_type=cozmo.objects.LightCube, timeout=30)
+    cubes = coz.world.wait_until_observe_num_objects(num=2, object_type=cozmo.objects.LightCube, timeout=30)
 
   1. ``coz.world.wait_until_observe_num_objects`` directs Cozmo to wait until his sensors detect a specified number of objects.
   2. ``num=2`` specifies the number of objects Cozmo has to find in order to trigger the next behavior.
@@ -291,7 +330,7 @@ def run(coz_conn):
 
 5. Type in the following as shown::
 
-  coz.place_on_object(cubes[1]).wait_for_completed()
+    coz.place_on_object(cubes[1]).wait_for_completed()
 
   1. ``coz.place_on_object`` directs Cozmo to place the object he is holding on top of another object.
   2. ``(cubes[1])`` specifies the Cube Cozmo needs to place what he is holding onto; in this case, it is the second Cube Cozmo detected.
@@ -299,27 +338,30 @@ def run(coz_conn):
 
 6. Type in the last three lines::
 
-if __name__ == '__main__':
+  if __name__ == '__main__':
     cozmo.setup_basic_logging()
     cozmo.connect(run)
 
 7. Save the file in the SDK directory as ``cubestack.py``.
 
-The completed program should look like this::
+The completed program should look like this.
 
-import asyncio
+.. code-block:: python
+  :linenos:
 
-import cozmo
+  import asyncio
 
-def run(coz_conn):
+  import cozmo
+
+  def run(coz_conn):
     coz = coz_conn.wait_for_robot()
 
-  cubes = coz.world.wait_until_observe_num_objects(num=2, object_type=cozmo.objects.LightCube, timeout=30)
+    cubes = coz.world.wait_until_observe_num_objects(num=2, object_type=cozmo.objects.LightCube, timeout=30)
 
-  coz.pickup_object(cubes[0]).wait_for_completed()
-  coz.place_on_object(cubes[1]).wait_for_completed()
+    coz.pickup_object(cubes[0]).wait_for_completed()
+    coz.place_on_object(cubes[1]).wait_for_completed()
 
-if __name__ == '__main__':
+  if __name__ == '__main__':
     cozmo.setup_basic_logging()
     cozmo.connect(run)
 
@@ -333,30 +375,94 @@ Running the Program
 2. Open the Cozmo app on the phone. Make sure Cozmo is on and connected to the app via WiFi.
 3. On the computer, open two Terminal windows.
 
-  1. In the first Terminal window, type the following and press Enter::
+  1. In the first window, type the following and press Enter::
 
-    cd cozmo-one/tools/sdk/tcprelay_usbmux_p
+      cd SDKDirectory
 
-  2. Next, open communications between the robot and the computer.
+  where *SDKDirectory* is the name of the directory you extracted the SDK into.
 
-      1. For iOS devices, type the following into the same window and press Enter::
+  2. Next, type the following and press Enter::
 
-        ./openSdkTcpRelay.sh
+      cd tcprelay
 
-      2. For Android devices, type the following into the same window and press Enter::
+  3. Now open communications between the robot and the computer.
+
+    1. For iOS devices, type the following into the same window and press Enter::
+
+        ./iosSdkTcpRelay.sh
+
+    2. For Android devices, type the following into the same window and press Enter::
 
         ./androidSdkTcpRelay.sh
 
-        .. important:: Make sure adb (Android Debug Bridge) is installed on your system prior to this step.
+    .. important:: Make sure adb (Android Debug Bridge) is installed on your system prior to this step.
 
   .. warning:: Do NOT close the first Terminal window. Closing the first Terminal window while operating with the SDK will close communications with the Cozmo robot and cause errors within the program.
 
 4. In the *second* Terminal window, type the following and press Enter::
 
-    cd cozmo-one/tools/sdk
+    cd SDKDirectory
+
+where SDKDirectory is the name of the directory you extracted the SDK into.
 
 5. Type the following into the second Terminal window and then press Enter::
 
   ./cubestack.py
 
-3. If done correctly, Cozmo will look around for 30 seconds, then pick up a cube and stack it atop another cube.
+6. If done correctly, Cozmo will look around for 30 seconds, then pick up a cube and stack it atop another cube.
+
+-------------------------
+Example 4 - Stack or Roll
+-------------------------
+
+Let's build on the code introduced in Example 3, and instruct Cozmo to perform different behaviors depending upon the number of cubes he sees.
+
+^^^^^^^^^^^^^^^^^^^
+Writing the Program
+^^^^^^^^^^^^^^^^^^^
+
+1. In your source code editor, create a new document (*File -> New Document*).
+2. The code for the program is listed below.
+
+.. code-block:: python
+  :linenos:
+
+    import asyncio
+    import cozmo
+
+    '''This script shows off simple decision making.
+    It tells Cozmo to look around, and then wait until he sees a certain amount of objects.
+    Based on how many objects he sees before he times out, he will perform different actions.
+    If he does not see any blocks, he plays an angry animation.
+    If he sees one block, he will roll it, but ONLY if it is not right-side-up.
+    If he sees two or more blocks, he will stack one block atop the other, but only if two of the blocks are right-side-up.
+    '''
+
+    def run(coz_conn):
+      coz = coz_conn.wait_for_robot()
+
+      lookaround = coz.start_behavior(cozmo.behavior.BehaviorTypes.LookAround)
+
+      cubes = coz.world.wait_until_observe_num_objects(num=2, object_type=cozmo.objects.LightCube, timeout=10)
+
+      print(cubes)
+
+      lookaround.stop()
+
+      if len(cubes) == 0:
+        coz.play_anim_trigger(cozmo.anim.Triggers.MajorFail).wait_for_completed()
+      elif len(cubes) == 1:
+        coz.run_timed_behavior(cozmo.behavior.BehaviorTypes.RollBlock, active_time=60)
+      else:
+        coz.run_timed_behavior(cozmo.behavior.BehaviorTypes.StackBlocks, active_time=60)
+
+  if __name__ == '__main__':
+    cozmo.setup_basic_logging()
+    cozmo.connect(run)
+
+
+The new code elements introduced in this section are as follows:
+  1. ``coz.start_behavior(cozmo.behavior.BehaviorTypes.LookAround)``
+    1. ``coz.start_behavior`` initiates a specific behavior.
+    2. ``cozmo.behavior.BehaviorTypes.LookAround`` is a special behavior where Cozmo will actively move around and search for objects.
+  2. ``

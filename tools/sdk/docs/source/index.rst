@@ -12,21 +12,23 @@ Welcome to the Cozmo SDK alpha version!
 .. toctree::
     :maxdepth: 2
     :caption: Installation
-    
+
     install
-    
+
 .. toctree::
     :maxdepth: 2
     :caption: Get Started
-    
-    getstarted
-    
+
+    getstarted.rst
+    getstarted-windows.rst
+
 .. toctree::
     :maxdepth: 2
     :caption: Beginner Tutorial
-    
+
     tutorial-beginner.rst
-    
+    tutorial-beginner-windows.rst
+
 .. toctree::
     :maxdepth: 2
     :caption: API Reference
