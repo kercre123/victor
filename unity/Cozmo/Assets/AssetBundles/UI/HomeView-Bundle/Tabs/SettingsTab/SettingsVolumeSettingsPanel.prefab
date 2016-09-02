@@ -306,8 +306,17 @@ MonoBehaviour:
   Prefab: {fileID: 180676, guid: d996dbae2d79f4c968c6452eea31de98, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MinSize
+    JsonValue: 0
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    JsonValue: 80
+  - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#settings.volumePanel.robotToggle.low"'
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoToggleButton:ButtonGraphics:2:pressedColor:a
+    JsonValue: 0.196078435
   ModifiedLocalReferences:
   - ObjectPath: ../../
     FieldName: Cozmo.Settings.SettingsVolumePanel:_LowRobotVolumeToggle
@@ -500,8 +509,17 @@ MonoBehaviour:
   Prefab: {fileID: 180676, guid: d996dbae2d79f4c968c6452eea31de98, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MinSize
+    JsonValue: 0
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    JsonValue: 80
+  - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#settings.volumePanel.robotToggle.medium"'
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoToggleButton:ButtonGraphics:2:pressedColor:a
+    JsonValue: 0.196078435
   ModifiedLocalReferences:
   - ObjectPath: ../../
     FieldName: Cozmo.Settings.SettingsVolumePanel:_MediumRobotVolumeToggle
@@ -560,8 +578,14 @@ MonoBehaviour:
   Prefab: {fileID: 180676, guid: d996dbae2d79f4c968c6452eea31de98, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    JsonValue: 80
+  - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#settings.volumePanel.robotToggle.high"'
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoToggleButton:ButtonGraphics:2:pressedColor:a
+    JsonValue: 0.196078435
   ModifiedLocalReferences:
   - ObjectPath: ../../
     FieldName: Cozmo.Settings.SettingsVolumePanel:_HighRobotVolumeToggle

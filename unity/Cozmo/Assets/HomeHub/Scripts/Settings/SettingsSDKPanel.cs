@@ -9,9 +9,6 @@ namespace Cozmo.Settings {
     private CozmoButton _EnableSDKButton;
 
     [SerializeField]
-    private CozmoButton _AnkiSDKLinkButton;
-
-    [SerializeField]
     private SDKView _SDKViewPrefab;
 
     private AlertView _ActivateSDKModal = null;
@@ -20,7 +17,6 @@ namespace Cozmo.Settings {
     // Use this for initialization
     private void Start() {
       _EnableSDKButton.Initialize(HandleEnableSDKButtonTapped, "enable_sdk_button", "settings_sdk_panel");
-      _AnkiSDKLinkButton.Initialize(HandleSDKLinkButtonTapped, "sdk_link_button", "settings_sdk_panel");
       // Immediately open the SDK UI upon opening this view if the SDK is enabled
       if (DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) {
         EnableSDK();
@@ -65,8 +61,5 @@ namespace Cozmo.Settings {
       }
     }
 
-    private void HandleSDKLinkButtonTapped() {
-      Application.OpenURL(DefaultSettingsValuesConfig.Instance.SdkUrl);
-    }
   }
 }

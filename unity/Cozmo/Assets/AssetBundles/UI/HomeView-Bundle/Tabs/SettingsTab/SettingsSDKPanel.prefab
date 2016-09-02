@@ -76,7 +76,6 @@ GameObject:
   - 224: {fileID: 22495818}
   - 222: {fileID: 22200438}
   - 114: {fileID: 11423220}
-  - 114: {fileID: 11492518}
   m_Layer: 5
   m_Name: SDKLinkText
   m_TagString: Untagged
@@ -127,7 +126,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 1, a: 1}
+  m_Color: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -189,7 +188,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _EnableSDKButton: {fileID: 0}
-  _AnkiSDKLinkButton: {fileID: 11492518}
   _SDKViewPrefab: {fileID: 11468710, guid: 9864527536aa14573a92ea45cac05dbf, type: 2}
 --- !u!114 &11454530
 MonoBehaviour:
@@ -259,31 +257,6 @@ MonoBehaviour:
     JsonValue: '"#settings.sdkPanel.label.title"'
   ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
---- !u!114 &11492518
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 145508}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 85cd9fd3aa63043d096ef878f6a2c553, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _Interactable: 1
-  _TextLabel: {fileID: 11423220}
-  _TextLabelOffset: -5
-  TextEnabledColor: {r: 0, g: 0, b: 1, a: 1}
-  TextPressedColor: {r: 0.43382353, g: 0.43382353, b: 1, a: 1}
-  TextDisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 0.509}
-  _AlphaController: {fileID: 0}
-  ButtonGraphics: []
-  _GlintAnimator: {fileID: 0}
-  _UISoundEvent:
-    _Event: Play__Ui__Click_General
-    _EventType: Ui
-    _GameObjectType: 2
-  _ShowDisabledStateWhenInteractable: 0
 --- !u!222 &22200438
 CanvasRenderer:
   m_ObjectHideFlags: 1
