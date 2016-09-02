@@ -390,14 +390,20 @@ void BehaviorLookInPlaceMemoryMap::VisitSector(Robot& robot, const int16_t index
     _configParams.headTurnSpeed_degPerSec );
   fullVisitAction->AddAction( turnAction1 );
   
-  // 2) play anim
+  // 2) make sure lift is down
+  {
+    IAction* moveLiftDownAction = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
+    fullVisitAction->AddAction( moveLiftDownAction );
+  }
+  
+  // 3) play anim
   if ( _configParams.lookInPlaceAnimTrigger != AnimationTrigger::Count )
   {
     IAction* imExploringAction = new TriggerLiftSafeAnimationAction(robot, _configParams.lookInPlaceAnimTrigger);
     fullVisitAction->AddAction( imExploringAction );
   }
   
-  // 3) explore different angle
+  // 4) explore different angle
   IAction* turnAction2 = CreateBodyAndHeadTurnAction( robot,
     -1.0f * _configParams.bodyAngleFromSectorCenterRangeMin_deg,
     -1.0f * _configParams.bodyAngleFromSectorCenterRangeMax_deg,
