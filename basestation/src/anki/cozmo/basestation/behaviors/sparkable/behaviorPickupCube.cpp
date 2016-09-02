@@ -180,15 +180,25 @@ void BehaviorPickUpCube::TransitionToDriveWithCube(Robot& robot)
 void BehaviorPickUpCube::TransitionToPutDownCube(Robot& robot)
 {
   DEBUG_SET_STATE(PutDownCube);
+
+  CompoundActionSequential* action = new CompoundActionSequential(robot);
+
+  {
+    PlaceObjectOnGroundAction* placeAction = new PlaceObjectOnGroundAction(robot);
+    const bool shouldEmitCompletion = true;
+    action->AddAction(placeAction, false, shouldEmitCompletion);
+  }
+
+  {  
+    static constexpr float kBackUpMinMM = 40.0;
+    static constexpr float kBackUpMaxMM = 70.0;
+    double backup_amount = robot.GetRNG().RandDblInRange(kBackUpMinMM,kBackUpMaxMM);
+    
+    action->AddAction( new DriveStraightAction(robot, -backup_amount, DEFAULT_PATH_MOTION_PROFILE.speed_mmps) );
+  }
+
   
-  static constexpr float kBackUpMinMM = 40.0;
-  static constexpr float kBackUpMaxMM = 70.0;
-  double backup_amount = robot.GetRNG().RandDblInRange(kBackUpMinMM,kBackUpMaxMM);
-  StartActing(new CompoundActionSequential(robot, {
-    new PlaceObjectOnGroundAction(robot),
-    new DriveStraightAction(robot, -backup_amount, DEFAULT_PATH_MOTION_PROFILE.speed_mmps),
-  }),
-  &BehaviorPickUpCube::TransitionToDoingFinalReaction);
+  StartActing(action, &BehaviorPickUpCube::TransitionToDoingFinalReaction);
 }
   
 void BehaviorPickUpCube::TransitionToDoingFinalReaction(Robot& robot)

@@ -441,13 +441,18 @@ void BehaviorRequestGameSimple::TransitionToPlacingBlock(Robot& robot)
     TransitionToLookingAtFace(robot);
     return;
   }
-  
-  StartActing(new CompoundActionSequential(robot,
-                {
-                  new PlaceObjectOnGroundAction(robot),
-                  // TODO:(bn) use same motion profile here
-                  new DriveStraightAction(robot, -_afterPlaceBackupDist_mm, -_afterPlaceBackupSpeed_mmps)
-                }),
+
+  CompoundActionSequential* action = new CompoundActionSequential(robot);
+
+  {
+    const bool shouldEmitCompletion = true;
+    action->AddAction( new PlaceObjectOnGroundAction(robot), false, shouldEmitCompletion );
+  }
+
+  // TODO:(bn) use same motion profile here
+  action->AddAction(new DriveStraightAction(robot, -_afterPlaceBackupDist_mm, -_afterPlaceBackupSpeed_mmps));
+
+  StartActing(action,
               [this, &robot](ActionResult result) {
                 if ( result == ActionResult::SUCCESS ) {
                   _numRetriesPlacingBlock++;
