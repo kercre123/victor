@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "util/dispatchWorker/dispatchWorker.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/time/stepTimers.h"
@@ -139,13 +140,19 @@ void RobotDataLoader::LoadAnimationsInternal()
   // Disable super-verbose warnings about clipping face parameters in json files
   // To help find bad/deprecated animations, try removing this.
   ProceduralFace::EnableClippingWarning(false);
+  
+  using MyDispatchWorker = Util::DispatchWorker<3, const std::string&>;
+  MyDispatchWorker::FunctionType loadFileFunc = std::bind(&RobotDataLoader::LoadAnimationFile, this, std::placeholders::_1);
+  MyDispatchWorker myWorker(loadFileFunc);
 
   const auto& fileList = _jsonFiles[FileType::Animation];
   const auto size = fileList.size();
   for (int i = 0; i < size; i++) {
-    LoadAnimationFile(fileList[i]);
+    myWorker.PushJob(fileList[i]);
     //PRINT_NAMED_DEBUG("RobotDataLoader.LoadAnimations", "loaded regular anim %d of %zu", i, size);
   }
+  
+  myWorker.Process();
 
 #if USE_USB_TUNNEL
   // Only when not shipping use our temp dir
@@ -209,6 +216,7 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
   const bool success = _platform->readAsJson(path.c_str(), animDefs);
   std::string animationId;
   if (success && !animDefs.empty()) {
+    std::lock_guard<std::mutex> guard(_animationAddMutex);
     _cannedAnimations->DefineFromJson(animDefs, animationId);
 
     if(path.find(animationId) == std::string::npos) {
