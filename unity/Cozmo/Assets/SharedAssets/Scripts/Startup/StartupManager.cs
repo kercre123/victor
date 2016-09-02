@@ -66,10 +66,10 @@ public class StartupManager : MonoBehaviour {
   private bool _EngineConnected = false;
 
   public void StartLoadAsync() {
-    StartCoroutine(StartupCoutine());
+    StartCoroutine(LoadCoroutine());
   }
 
-  private IEnumerator StartupCoutine() {
+  private IEnumerator LoadCoroutine() {
     // Initialize DAS first so we can have error messages during intialization
 #if ANIMATION_TOOL
     DAS.AddTarget(new ConsoleDasTarget());
