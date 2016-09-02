@@ -1016,7 +1016,7 @@ namespace Cozmo {
     }
   }
   
-  Result AnimationStreamer::StreamFaceLayersOrAudio(Robot& robot)
+  Result AnimationStreamer::StreamFaceLayers(Robot& robot)
   {
     Result lastResult = RESULT_OK;
     
@@ -1039,11 +1039,8 @@ namespace Cozmo {
     // Add more stuff to send buffer from face layers
     while(_sendBuffer.empty() && HaveFaceLayersToSend())
     {
-      // If we have face layers to send, we _do_ want BufferAudioToSend to
-      // buffer audio silence keyframes to keep the clock ticking. If not, we
-      // don't need to send audio silence.
-      const bool sendSilence = (_faceLayers.empty() ? false : true);
-      BufferAudioToSend( sendSilence, _startTime_ms, _streamingTime_ms );
+      // If we have face layers to send with silent audio frames
+      BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
       
       if(!_startOfAnimationSent) {
         IncrementTagCtr();
@@ -1106,8 +1103,8 @@ namespace Cozmo {
     // Is it time to play device audio? (using actual basestation time)
     if(deviceAudioTrack.HasFramesLeft() &&
        deviceAudioTrack.GetCurrentKeyFrame().IsTimeToPlay(_startTime_ms, currTime_ms)) {
-      deviceAudioTrack.GetCurrentKeyFrame().PlayOnDevice();
-      deviceAudioTrack.MoveToNextKeyFrame();
+       deviceAudioTrack.GetCurrentKeyFrame().PlayOnDevice();
+       deviceAudioTrack.MoveToNextKeyFrame();
     }
     
     UpdateAmountToSend(robot);
@@ -1349,7 +1346,10 @@ namespace Cozmo {
           // Reset the animation so it can be played again:
           InitStream(_streamingAnimation, _tagCtr);
           
-        } else {
+          // To avoid streaming faceLayers set true and start streaming animation next Update() tick.
+          streamUpdated = true;
+        }
+        else {
           if(DEBUG_ANIMATION_STREAMING) {
             PRINT_NAMED_INFO("AnimationStreamer.Update.FinishedStreaming",
                              "Finished streaming '%s' animation.\n",
@@ -1359,20 +1359,21 @@ namespace Cozmo {
           _streamingAnimation = nullptr;
         }
         
-      } else {
+      }
+      else {
         // We do want to store this face to the robot since it's coming from an actual animation
         lastResult = UpdateStream(robot, _streamingAnimation, true);
         _isIdling = false;
         streamUpdated = true;
         _lastStreamTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       }
-    } else if(!_idleAnimationNameStack.empty() && _idleAnimationNameStack.back() != AnimationTrigger::Count) {
+    } // if(_streamingAnimation != nullptr)
+    else if(!_idleAnimationNameStack.empty() && _idleAnimationNameStack.back() != AnimationTrigger::Count) {
       
       AnimationTrigger idleAnimationGroupTrigger = _idleAnimationNameStack.back();
       
       Animation* oldIdleAnimation = _idleAnimation;
-      if(idleAnimationGroupTrigger == AnimationTrigger::ProceduralLive)
-      {
+      if(idleAnimationGroupTrigger == AnimationTrigger::ProceduralLive) {
         // Make sure these are set, in case we just popped an idle and came back to idle
         _idleAnimation = &_liveAnimation;
         _isLiveTwitchEnabled = true;
@@ -1384,7 +1385,8 @@ namespace Cozmo {
                             "Failed updating live animation from current robot state.");
           return lastResult;
         }
-      } else if(_idleAnimation == nullptr || IsFinished(_idleAnimation) || !_isIdling) {
+      } // if(idleAnimationGroupTrigger == AnimationTrigger::ProceduralLive)
+      else if(_idleAnimation == nullptr || IsFinished(_idleAnimation) || !_isIdling) {
         // We aren't doing "live" idle and the robot is either done with the last
         // idle animation or hasn't started idling yet. So it's time to select the
         // next idle from the group.
@@ -1414,7 +1416,7 @@ namespace Cozmo {
                             "Selected idle animation '%s' from group '%s'",
                             animName.c_str(), idleAnimationGroupName.c_str());
         } // if(!idleAnimationGroupName.empty())
-      }
+      } // else if(_idleAnimation == nullptr || IsFinished(_idleAnimation) || !_isIdling)
       
       ASSERT_NAMED(_idleAnimation != nullptr, "AnimationStreamer.Update.NullIdleAnimation");
       
@@ -1435,24 +1437,26 @@ namespace Cozmo {
         InitStream(_idleAnimation, IdleAnimationTag);
         _isIdling = true;
         
-      } else {
+        // To avoid streaming faceLayers set true and start streaming idle animation next Update() tick.
+        streamUpdated = true;
+      }
+      else {
         // This is just an idle animation, so we don't want to save the face to the robot
         lastResult = UpdateStream(robot, _idleAnimation, false);
         streamUpdated = true;
         _lastStreamTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       }
       _timeSpentIdling_ms += BS_TIME_STEP;
-    }
+    } // else if(!_idleAnimationNameStack.empty() && _idleAnimationNameStack.back() != AnimationTrigger::Count)
     
-    // If we didn't do any streaming above, but we've still got face layers to
-    // stream or there's audio waiting to go out, stream those now
+    // If we didn't do any streaming above, but we've still got face layers to stream
     if(!streamUpdated)
     {
       if(HaveFaceLayersToSend()) {
-        lastResult = StreamFaceLayersOrAudio(robot);
+        lastResult = StreamFaceLayers(robot);
       } else if(!_sendBuffer.empty()) {
         PRINT_NAMED_WARNING("AnimationStreamer.Update.SendBufferNotEmpty",
-                            "Expect send buffer to be emptied by UpdateStream or StreamFaceLayersOrAudio "
+                            "Expect send buffer to be emptied by UpdateStream or StreamFaceLayers "
                             "by now, has %zu messages",
                             _sendBuffer.size());
         

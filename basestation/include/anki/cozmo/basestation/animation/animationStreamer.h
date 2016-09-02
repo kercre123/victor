@@ -199,7 +199,7 @@ namespace Cozmo {
     void KeepFaceAlive(Robot& robot);
     
     // Used to stream _just_ the stuff left in face layers or audio in the buffer
-    Result StreamFaceLayersOrAudio(Robot& robot);
+    Result StreamFaceLayers(Robot& robot);
     
     void IncrementTagCtr();
     void IncrementLayerTagCtr();
