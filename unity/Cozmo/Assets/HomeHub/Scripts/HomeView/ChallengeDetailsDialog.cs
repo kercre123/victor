@@ -84,10 +84,6 @@ public class ChallengeDetailsDialog : BaseView {
 
   private string _ChallengeId;
 
-  private Anki.Cozmo.UnlockId _PreReqID;
-  private bool _FindPrereq = false;
-  private bool _NewUnlock = false;
-
   [SerializeField]
   private CanvasGroup _AlphaController;
 
@@ -153,24 +149,11 @@ public class ChallengeDetailsDialog : BaseView {
         if (unlockInfo.Id.Value == challengeData.UnlockId.Value) {
           // If no available prereqs, display completly unavailable text
           _DescriptionTextLabel.text = Localization.GetWithArgs(LocalizationKeys.kUnlockableUnavailableDescription, new object[] { Localization.Get(uName) });
-
-          _ViewPreReqButton.Text = Localization.Get(LocalizationKeys.kButtonClose);
-          _ViewPreReqButton.onClick.AddListener(() => {
-            _FindPrereq = false;
-            CloseView();
-          });
-
         }
         else {
           // Change Description to "You need to earn [Prereq] first!
           // View Upgrade button to take you to necessary Cozmo or Play Tab and fire the appropriate dialog
           _DescriptionTextLabel.text = Localization.GetWithArgs(LocalizationKeys.kUnlockablePreReqNeededDescription, new object[] { Localization.Get(uName) });
-
-          _ViewPreReqButton.onClick.AddListener(() => {
-            _PreReqID = unlockInfo.Id.Value;
-            _FindPrereq = true;
-            CloseView();
-          });
         }
       }
     }
@@ -180,8 +163,6 @@ public class ChallengeDetailsDialog : BaseView {
 
   private void HandleStartButtonClicked() {
     // Don't attempt to refresh home view if we are already destroying it to start a game
-    _NewUnlock = false;
-    _FindPrereq = false;
     if (ChallengeStarted != null) {
       ChallengeStarted(_ChallengeId);
     }
@@ -235,7 +216,6 @@ public class ChallengeDetailsDialog : BaseView {
 
   private void HandleUpgradeUnlocked() {
     Initialize(_ChallengeData);
-    _NewUnlock = true;
 
     _UpgradeAnimationPlayed = false;
     _UnlockFromRobotResponded = false;
@@ -257,18 +237,9 @@ public class ChallengeDetailsDialog : BaseView {
   protected override void ConstructCloseAnimation(Sequence closeAnimation) {
     closeAnimation.Append(transform.DOLocalMoveY(
       -50, 0.15f).SetEase(Ease.OutQuad).SetRelative());
+
     if (_AlphaController != null) {
       closeAnimation.Join(_AlphaController.DOFade(0, 0.25f));
     }
-    closeAnimation.AppendCallback(() => {
-      if (UnlockablesManager.Instance.OnUnlockPopupRequested != null) {
-        if (_FindPrereq) {
-          UnlockablesManager.Instance.OnUnlockPopupRequested.Invoke(_PreReqID, true);
-        }
-        else if (_NewUnlock) {
-          UnlockablesManager.Instance.OnUnlockPopupRequested.Invoke(_ChallengeData.UnlockId.Value, false);
-        }
-      }
-    });
   }
 }

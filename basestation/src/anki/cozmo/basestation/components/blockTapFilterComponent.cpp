@@ -111,46 +111,47 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInte
     return;
   }
   
-  for(ObservableObject* object : matchingObjects)
+  // Just use the first matching object since they will all be the same (matching ObjectIDs, ActiveIDs, FactoryIDs)
+  ObservableObject* object = matchingObjects.front();
+  
+  int16_t intensity = payload.tapPos - payload.tapNeg;
+  Anki::TimeStamp_t engineTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  PRINT_CH_INFO("blocks","BlockTapFilterComponent.HandleActiveObjectTapped.MessageActiveObjectTapped",
+                "Received message that %s %d (Active ID %d) was tapped %d times "
+                "(robotTime %d, tapTime %d, intensity: %d, engineTime: %d).",
+                EnumToString(object->GetType()),
+                object->GetID().GetValue(), payload.objectID, payload.numTaps,
+                payload.timestamp, payload.tapTime, intensity, engineTime);
+  
+  // Update the ID to be the blockworld ID before broadcasting
+  payload.objectID = object->GetID();
+  payload.robotID = _robot.GetID();
+  
+  if (!_enabled)
   {
-    int16_t intensity = payload.tapPos - payload.tapNeg;
-    Anki::TimeStamp_t engineTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-    PRINT_CH_INFO("blocks","BlockTapFilterComponent.HandleActiveObjectTapped.MessageActiveObjectTapped",
-                  "Received message that %s %d (Active ID %d) was tapped %d times "
-                  "(robotTime %d, tapTime %d, intensity: %d, engineTime: %d).",
-                  EnumToString(object->GetType()),
-                  object->GetID().GetValue(), payload.objectID, payload.numTaps,
-                  payload.timestamp, payload.tapTime, intensity, engineTime);
-    
-    if (!_enabled)
-    {
-      // Do not filter any taps if block tap filtering was disabled.
-      _robot.Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(payload)));
-      continue;
-    }
-
-    if (intensity <= kTapIntensityMin)
-    {
-      // Taps below threshold should be filtered and ignored.
-      PRINT_CH_INFO("blocks", "BlockTapFilterComponent.HandleEnableTapFilter.Ignored",
-                    "Tap ignored %d < %d",intensity,kTapIntensityMin);
-      continue;
-    }
-
-    // Update the ID to be the blockworld ID before broadcasting
-    payload.objectID = object->GetID();
-    payload.robotID = _robot.GetID();
-
-    // A new "group" of taps is coming in, evaluate after a certain amount of time after the first one
-    if( _tapInfo.empty() )
-    {
-      // Potentially we could add more time based on LatencyAvg if we wanted to track that in the
-      // shipping app. Latency should be higher on lower end devices
-      _waitToTime = engineTime + kTapWaitOffset_ms;
-    }
-
-    _tapInfo.emplace_back(std::move(payload));
+    // Do not filter any taps if block tap filtering was disabled.
+    _robot.Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(payload)));
+    return;
   }
+
+  if (intensity <= kTapIntensityMin)
+  {
+    // Taps below threshold should be filtered and ignored.
+    PRINT_CH_INFO("blocks", "BlockTapFilterComponent.HandleEnableTapFilter.Ignored",
+                  "Tap ignored %d < %d",intensity,kTapIntensityMin);
+    return;
+  }
+
+  // A new "group" of taps is coming in, evaluate after a certain amount of time after the first one
+  if( _tapInfo.empty() )
+  {
+    // Potentially we could add more time based on LatencyAvg if we wanted to track that in the
+    // shipping app. Latency should be higher on lower end devices
+    _waitToTime = engineTime + kTapWaitOffset_ms;
+  }
+
+  _tapInfo.emplace_back(std::move(payload));
+  
 }
   
 

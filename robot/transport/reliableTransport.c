@@ -128,7 +128,7 @@ static ICACHE_FLASH_ATTR bool QueueMessage(const uint8_t* buffer, const uint16_t
     int i;
     for (i = 0; i < connection->numPendingReliableMessages; i++)
     {
-      printf("%d,", msg[3]);
+      printf("%x[%d],", msg[3], connection->pendingMsgMeta[i].messageSize);
       msg += connection->pendingMsgMeta[i].messageSize;
     }
     printf("\r\n");

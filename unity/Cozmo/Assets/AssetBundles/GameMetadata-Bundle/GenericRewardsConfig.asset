@@ -14,12 +14,12 @@ MonoBehaviour:
   EnergyID: experience
   CoinID: TestHexItem0
   SparkID: treat
-  ExpPerParticleEffect: 5
-  BurstPerParticleHit: 5
-  ExpParticleMinSpread: 50
-  ExpParticleMaxSpread: 400
-  ExpParticleBurst: 0.75
-  ExpParticleHold: 0.25
-  ExpParticleLeave: 0.75
+  ExpPerParticleEffect: 8
+  BurstPerParticleHit: 3
+  ExpParticleMinSpread: 25
+  ExpParticleMaxSpread: 180
+  ExpParticleBurst: 0.25
+  ExpParticleHold: 0.05
+  ExpParticleLeave: 1
   ExpParticleStagger: 0.5
   RewardConfigFilename: RewardedActions.json

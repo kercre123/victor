@@ -643,8 +643,7 @@ public:
                          const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offPeriod_ms,
                          const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOnPeriod_ms,
                          const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOffPeriod_ms,
-                         const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& onOffset,
-                         const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offOffset,
+                         const std::array<s32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offset,
                          const MakeRelativeMode makeRelative,
                          const Point2f& relativeToPoint,
                          const u32 rotationPeriod_ms);

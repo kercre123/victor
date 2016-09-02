@@ -25,7 +25,7 @@
 
 // WORKAROUND: For some reason objects in slot 0 display lights incorrectly so don't use it.
 //             The real fix belongs in robot body firmware.
-#define DONT_USE_SLOT0 1
+#define DONT_USE_SLOT0 0
 
 
 namespace Anki {
@@ -334,8 +334,8 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
       for (const ObjectInfo &objectInfo : _persistentPool ) {
         if (objectInfo.factoryID != ActiveObject::InvalidFactoryID) {
           ExternalInterface::BlockPoolBlockData blockData;
-          blockData.enabled = true;
           blockData.factory_id = objectInfo.factoryID;
+          blockData.objectType = objectInfo.objectType;
           allBlocks.push_back(blockData);
         }
       }

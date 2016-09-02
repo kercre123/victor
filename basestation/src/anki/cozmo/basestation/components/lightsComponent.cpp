@@ -67,23 +67,32 @@ void LightsComponent::AddLightStateValues(CubeLightsState state, const Json::Val
   LightValues values = {
     .onColors               = JsonColorValueToArray(data["onColors"]),
     .offColors              = JsonColorValueToArray(data["offColors"]),
-    .onPeriod_ms            = JsonValueToArray(data["onPeriod_ms"]),
-    .offPeriod_ms           = JsonValueToArray(data["offPeriod_ms"]),
-    .transitionOnPeriod_ms  = JsonValueToArray(data["transitionOnPeriod_ms"]),
-    .transitionOffPeriod_ms = JsonValueToArray(data["transitionOffPeriod_ms"]),
-    .onOffset               = JsonValueToArray(data["onOffset"]),
-    .offOffset              = JsonValueToArray(data["offOffset"]),
+    .onPeriod_ms            = JsonValueToU32Array(data["onPeriod_ms"]),
+    .offPeriod_ms           = JsonValueToU32Array(data["offPeriod_ms"]),
+    .transitionOnPeriod_ms  = JsonValueToU32Array(data["transitionOnPeriod_ms"]),
+    .transitionOffPeriod_ms = JsonValueToU32Array(data["transitionOffPeriod_ms"]),
+    .offset                 = JsonValueToS32Array(data["offset"]),
     .rotationPeriod_ms      = data["rotationPeriod_ms"].asUInt()
   };
   _stateToValues.emplace(state, values);
 }
 
-std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS> LightsComponent::JsonValueToArray(const Json::Value& value)
+std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS> LightsComponent::JsonValueToU32Array(const Json::Value& value)
 {
   LEDArray arr;
   for(u8 i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i)
   {
     arr[i] = value[i].asUInt();
+  }
+  return arr;
+}
+
+std::array<s32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS> LightsComponent::JsonValueToS32Array(const Json::Value& value)
+{
+  std::array<s32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS> arr;
+  for(u8 i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i)
+  {
+    arr[i] = value[i].asInt();
   }
   return arr;
 }
@@ -250,8 +259,7 @@ bool LightsComponent::FadeBetween(CubeLightsState from, CubeLightsState to,
       .offPeriod_ms           = {{_fadePeriod_ms*2,_fadePeriod_ms*2,_fadePeriod_ms*2,_fadePeriod_ms*2}},
       .transitionOnPeriod_ms  = {{0,0,0,0}},
       .transitionOffPeriod_ms = {{_fadeTime_ms,_fadeTime_ms,_fadeTime_ms,_fadeTime_ms}},
-      .onOffset               = {{0,0,0,0}},
-      .offOffset              = {{0,0,0,0}},
+      .offset                 = {{0,0,0,0}},
       .rotationPeriod_ms      = 0
     };
     _stateToValues[CubeLightsState::Fade] = fadeValues;
@@ -369,7 +377,7 @@ void LightsComponent::SetLights(ObjectID object, CubeLightsState state, bool for
                          values.onColors, values.offColors,
                          values.onPeriod_ms, values.offPeriod_ms,
                          values.transitionOnPeriod_ms, values.transitionOffPeriod_ms,
-                         values.onOffset, values.offOffset,
+                         values.offset,
                          MakeRelativeMode::RELATIVE_LED_MODE_OFF,
                          Point2f{0,0}, values.rotationPeriod_ms);
 }

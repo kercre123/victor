@@ -179,7 +179,7 @@ namespace UpgradeController {
     AnkiDebug( 170, "UpdateController", 466, "Reset()", 0);
     if (phase < OTAT_Enter_Recovery)
     {
-      i2spiSwitchMode(I2SPI_REBOOT);
+      system_deep_sleep(0); // Shut down and wait for timeout
     }
     else if (didRTIP)
     {
@@ -319,7 +319,7 @@ namespace UpgradeController {
       {
         if ((system_get_time() > timer) && i2spiMessageQueueIsEmpty())
         {
-          i2spiSwitchMode(I2SPI_PAUSED);
+          i2spiSwitchMode(I2SPI_SYNC);
           phase = OTAT_Flash_Erase;
           retries = MAX_RETRIES;
           counter = 0;
@@ -355,7 +355,7 @@ namespace UpgradeController {
         else // Done with erase, advance state
         {
           AnkiDebug( 172, "UpgradeController.state", 469, "sync recovery", 0);
-          i2spiSwitchMode(I2SPI_BOOTLOADER); // Start synchronizing with the bootloader
+          i2spiSwitchMode(I2SPI_SYNC); // Start synchronizing with the bootloader
           phase = OTAT_Sync_Recovery;
           timer = system_get_time() + 5000000; // 5 second timeout
           retries = MAX_RETRIES;
@@ -475,7 +475,7 @@ namespace UpgradeController {
             #if DEBUG_OTA
             os_printf("OTA Sig header\r\n");
             #endif
-
+            retries = MAX_RETRIES;
             counter = 0;
             timer = 0;
             phase = OTAT_Sig_Check;
@@ -756,55 +756,41 @@ namespace UpgradeController {
       }
       case OTAT_Sig_Check:
       {
-        cert_state_t* cert_state = (cert_state_t*) Anki::Cozmo::Face::m_frame;
-        #if DEBUG_OTA
-        os_printf("\tSC %d\r\n", counter);
-        #endif
-        switch (counter++)
+        cert_state_t* cert_state = (cert_state_t*)os_zalloc(sizeof(cert_state_t));
+        if (cert_state == NULL)
         {
-        case 0: // Setup
+          if (retries-- <= 0)
           {
-            if (cert_state == NULL) {
-              Reset();
-              break ;
-            }
-
-            FirmwareBlock* fwb = reinterpret_cast<FirmwareBlock*>(buffer);
-            CertificateData* cert = reinterpret_cast<CertificateData*>(fwb->flashBlock);
-
-            uint8_t digest[SHA512_DIGEST_SIZE];
-            sha512_done(firmware_digest, digest);
-            sha512_init(firmware_digest);
-
-            verify_init(*cert_state, RSA_CERT_MONT, CERT_RSA, digest, cert->data, cert->length);
-            
-            i2spiSwitchMode(I2SPI_PAUSED);
-            
-            break ;
+            #if DEBUG_OTA
+            os_printf("Couldn't allocate memory (%d bytes) for cert_state\r\n", sizeof(cert_state_t));
+            #endif
+            ack.result = ERR_NO_MEM;
+            RobotInterface::SendMessage(ack);
+            Reset();
           }
-        case 1: // Stage 1
+          break;
+        }
+        else
+        {
+          FirmwareBlock* fwb = reinterpret_cast<FirmwareBlock*>(buffer);
+          CertificateData* cert = reinterpret_cast<CertificateData*>(fwb->flashBlock);
+          
+          os_memcpy(&(cert_state->mont), &RSA_CERT_MONT, sizeof(RSA_CERT_MONT));
+          os_memcpy(&(cert_state->rsa),  &CERT_RSA,      sizeof(CERT_RSA));
+          
+          sha512_done(firmware_digest, cert_state->checksum);
+          sha512_init(firmware_digest);
+          if (verify_cert(cert_state, cert->data, cert->length) == false)
           {
-            verify_stage1(*cert_state);
-            break ;
+            #if DEBUG_OTA
+            os_printf("Invalid Cert\r\n");
+            #endif
+            Reset();
           }
-        case 2: // Stage 2
+          else
           {
-            verify_stage2(*cert_state);
-            break ;
-          }
-        case 3: // Stage 3
-          {
-            verify_stage3(*cert_state);
-            break ;
-          }
-        case 4: // Stage 4
-          {
-            if (!verify_stage4(*cert_state)) {
-              Reset();
-              break ;
-            } else {
-              haveValidCert = true;
-            }
+            os_free(cert_state);
+            haveValidCert = true;
             retries = MAX_RETRIES*MAX_RETRIES; // More retries just after sig check
             bufferUsed -= sizeof(FirmwareBlock);
             os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
@@ -818,9 +804,8 @@ namespace UpgradeController {
             AnkiDebug( 172, "UpgradeController.state", 461, "Flash verify", 0);
             os_printf("Flash verify\r\n");
             #endif
-            i2spiSwitchMode(I2SPI_BOOTLOADER);
-            break;
           }
+          break;
         }
         break ;
       }

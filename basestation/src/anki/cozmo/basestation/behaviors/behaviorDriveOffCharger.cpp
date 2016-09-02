@@ -67,17 +67,14 @@ Result BehaviorDriveOffCharger::InitInternal(Robot& robot)
   TransitionToDrivingForward(robot);
   _timesResumed = 0;
   
-  //Disable Cliff Reaction
-  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCliff, false);
+  //Disable Cliff Reaction during behavior
+  SmartDisableReactionaryBehavior(BehaviorType::ReactToCliff);
   return Result::RESULT_OK;
 }
   
 void BehaviorDriveOffCharger::StopInternal(Robot& robot)
 {
   robot.GetDrivingAnimationHandler().PopDrivingAnimations();
-  //Enable Cliff Reaction
-  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCliff, true);
-
 }
 
 

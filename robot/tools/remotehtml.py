@@ -3,7 +3,7 @@
 Python command line interface for Robot over the network
 """
 
-import sys, os, json
+import sys, os, json, webbrowser
 sys.path.insert(0, os.path.join("tools"))
 
 from flask import Flask, make_response, send_from_directory, request
@@ -32,7 +32,7 @@ def Remote():
         message = json.loads(request.data.decode("utf-8"))
         lights = robotInterface.RI.BackpackLightsMiddle()
 
-        color = (int(message['red']   * 0x1F) << 10) + (int(message['green'] * 0x1F) << 5) + (int(message['blue']  * 0x1F) << 0)        
+        color = (int(message['red']   * 0x1F) << 10) + (int(message['green'] * 0x1F) << 5) + (int(message['blue']  * 0x1F) << 0)
 
         for light in lights.lights:
             light.onColor = light.offColor = color
@@ -66,6 +66,7 @@ def Remote():
     imageReceiver = minipegReceiver.MinipegReceiver(receiveImage)
 
     robotInterface.Connect()
+    webbrowser.open("http://127.0.0.1:5000/")
     app.run()
     robotInterface.Send(robotInterface.RI.EngineToRobot(stop=robotInterface.RI.StopAllMotors()))
     robotInterface.Die()

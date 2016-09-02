@@ -244,11 +244,7 @@ public class MockRobot : IRobot {
     QueueCallback(0.5f, callback);
   }
 
-  /*public void SendAnimationGroup(string animGroupName, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
-    // lets just say half a second, since its random anyway
-    QueueCallback(0.5f, callback);
-  }*/
-  public void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true) {
     QueueCallback(0.5f, callback);
   }
 
@@ -517,6 +513,10 @@ public class MockRobot : IRobot {
   }
 
   public void ExecuteBehavior(Anki.Cozmo.BehaviorType type) {
+    // Do nothing
+  }
+
+  public void ExecuteBehaviorByName(string behaviorName) {
     // Do nothing
   }
 
@@ -809,6 +809,16 @@ public class MockRobot : IRobot {
   }
 
   public string CurrentDebugAnimationString {
+    get;
+    set;
+  }
+
+  public uint FirmwareVersion {
+    get;
+    set;
+  }
+
+  public uint SerialNumber {
     get;
     set;
   }

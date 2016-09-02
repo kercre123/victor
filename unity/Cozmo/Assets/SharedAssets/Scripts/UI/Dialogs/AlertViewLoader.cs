@@ -35,6 +35,13 @@ namespace Cozmo {
       public AlertView AlertViewPrefab_Icon {
         get { return _AlertViewPrefab_Icon; }
       }
+
+      [SerializeField]
+      private AlertView _AlertViewPrefab_BadLight;
+
+      public AlertView AlertViewPrefab_BadLight {
+        get { return _AlertViewPrefab_BadLight; }
+      }
     }
   }
 }

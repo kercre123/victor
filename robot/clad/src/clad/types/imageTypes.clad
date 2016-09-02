@@ -58,7 +58,8 @@ message ImageChunk {
   ImageResolution resolution,
   uint_8 imageChunkCount,
   uint_8 chunkId,
-  uint_8 data[uint_16:1200], // ^ IMAGE_CHUNK_SIZE above
+  int_16 status, // Used for book keeping in firmware
+  uint_8 data[uint_16:1200], // ^ IMAGE_CHUNK_SIZE above. Also need chunk to be u32 aligned
 }
 
 message ImageImuData {

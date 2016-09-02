@@ -113,7 +113,7 @@ public:
         BehaviorFactory& GetBehaviorFactory()       { assert(_behaviorFactory); return *_behaviorFactory; }
   
   // Enable and disable reactionary behaviors
-  void RequestEnableReactionaryBehavior(std::string requesterID, BehaviorType behavior, bool enable);
+  void RequestEnableReactionaryBehavior(const std::string& requesterID, BehaviorType behavior, bool enable);
   
   // accessors: whiteboard
   const AIWhiteboard& GetWhiteboard() const { assert(_whiteboard); return *_whiteboard; }

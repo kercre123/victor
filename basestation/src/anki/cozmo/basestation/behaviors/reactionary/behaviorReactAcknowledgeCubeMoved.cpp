@@ -26,11 +26,11 @@ const float kRadiusRobotTolerence = 50;
 
 namespace Anki {
 namespace Cozmo {
-
+  
 namespace {
 CONSOLE_VAR(bool, kEnableObjectMovedReact, "BehaviorReactAcknowledgeCubeMoved", false);
 }
-
+  
 class ReactionObjectData{
 public:
   ReactionObjectData(ObjectID objectID);

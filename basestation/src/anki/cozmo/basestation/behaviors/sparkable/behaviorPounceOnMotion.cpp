@@ -97,11 +97,14 @@ Result BehaviorPounceOnMotion::InitInternal(Robot& robot)
   double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _lastMotionTime = (float)currentTime_sec;
   
-  robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::PounceFace);
-  
-  robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::PounceDriveStart,
-    AnimationTrigger::PounceDriveLoop,
-    AnimationTrigger::PounceDriveEnd});
+  // Don't override sparks idle animation
+  if(!_shouldStreamline){
+    robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::PounceFace);
+    
+    robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::PounceDriveStart,
+      AnimationTrigger::PounceDriveLoop,
+      AnimationTrigger::PounceDriveEnd});
+  }
   
   if(!_shouldStreamline){
     TransitionToInitialWarningAnim(robot);
@@ -433,12 +436,12 @@ void BehaviorPounceOnMotion::EnableCliffReacts(bool enable,Robot& robot)
   if( _cliffReactEnabled && !enable )
   {
     //Disable Cliff Reaction
-    robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCliff, false);
+    SmartDisableReactionaryBehavior(BehaviorType::ReactToCliff);
   }
   else if( !_cliffReactEnabled && enable )
   {
     //Enable Cliff Reaction
-    robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCliff, true);
+    SmartReEnableReactionaryBehavior(BehaviorType::ReactToCliff);
 
   }
   
@@ -457,8 +460,11 @@ void BehaviorPounceOnMotion::Cleanup(Robot& robot)
   _numValidPouncePoses = 0;
   _lastValidPouncePoseTime = 0.0f;
   
-  robot.GetAnimationStreamer().PopIdleAnimation();
-  robot.GetDrivingAnimationHandler().PopDrivingAnimations();
+  // Only pop animations if set within this behavior
+  if(!_shouldStreamline){
+    robot.GetAnimationStreamer().PopIdleAnimation();
+    robot.GetDrivingAnimationHandler().PopDrivingAnimations();
+  }
 }
   
 void BehaviorPounceOnMotion::SetState_internal(State state, const std::string& stateName)

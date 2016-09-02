@@ -17,7 +17,6 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
-#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/cozmoObservableObject.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -61,8 +60,7 @@ bool BehaviorBuildPyramid::IsRunnableInternal(const Robot& robot) const
 
 Result BehaviorBuildPyramid::InitInternal(Robot& robot)
 {
-  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToUnexpectedMovement, false);
-  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, false);
+  SmartDisableReactionaryBehavior(BehaviorType::ReactToUnexpectedMovement);
   _tempEnsureNotLoopingForever = false;
 
   if(!robot.IsCarryingObject()){
@@ -76,8 +74,6 @@ Result BehaviorBuildPyramid::InitInternal(Robot& robot)
   
 void BehaviorBuildPyramid::StopInternal(Robot& robot)
 {
-  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToUnexpectedMovement, true);
-  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, true);
   ResetPyramidTargets(robot);
 }
 

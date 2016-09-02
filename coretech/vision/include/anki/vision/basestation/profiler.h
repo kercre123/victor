@@ -60,6 +60,9 @@ namespace Vision {
     // Set the minimum time between automatic average timing prints in milliseconds
     void SetPrintFrequency(int64_t printFrequency_ms) { _timeBetweenPrints_ms = printFrequency_ms; }
     
+    // Set the minimum time between logging timing info to DAS, in milliseconds
+    void SetDasLogFrequency(int64_t dasFrequency_ms) { _timeBetweenDasLogging_ms = dasFrequency_ms; }
+    
     // For scoped Tic/Toc pair. Use TicToc() method below. This is just defining the object.
     class TicTocObject
     {
@@ -81,14 +84,20 @@ namespace Vision {
     
   private:
     
-    struct Timer {
+    struct Timer
+    {
       std::chrono::time_point<ClockType> startTime;
-      std::chrono::time_point<ClockType> lastPrintTime = ClockType::now();
+      std::chrono::time_point<ClockType> lastPrintTime  = ClockType::now();
+      std::chrono::time_point<ClockType> lastDasLogTime = ClockType::now();
+      
       Resolution currentTime;
-      Resolution totalTime = Resolution(0);
-      Resolution totalTimeAtLastPrint = Resolution(0);
-      int count = 0;
-      int countAtLastPrint = 0;
+      Resolution totalTime             = Resolution(0);
+      Resolution totalTimeAtLastPrint  = Resolution(0);
+      Resolution totalTimeAtLastDasLog = Resolution(0);
+      
+      int count             = 0;
+      int countAtLastPrint  = 0;
+      int countAtLastDasLog = 0;
       
       void Update();
     };
@@ -101,8 +110,10 @@ namespace Vision {
     std::string _printChannelName = "Profiler";
     
     int64_t _timeBetweenPrints_ms = -1;
+    int64_t _timeBetweenDasLogging_ms = -1;
     
     void PrintTimerData(const char* name, Timer& timer);
+    void LogTimerDataToDAS(const char* name, Timer& timer);
     
   }; // class Profiler
   

@@ -51,11 +51,20 @@ SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTex
 , _ttsOperationId(TextToSpeechComponent::kInvalidOperationId)
 , _animation("SayTextAnimation")
 {
+  if (DEBUG_SAYTEXT_ACTION) {
+    PRINT_CH_INFO(kLocalLogChannel,
+                  "SayTextAction.Init",
+                  "Text '%s' SayTextIntent '%s'",
+                  Util::HidePersonallyIdentifiableInfo(_text.c_str()), EnumToString(intent));
+  }
+  
   // Create text for 'Intent'
   // Set voice style & length scalar to generate TtS
-  bool isRandom = false;
+  bool isRandom   = false;
   float minScalar = 0.f;
   float maxScalar = 0.f;
+  float stepSize  = 0.f;
+  const uint8_t charLengthThreshold = 7;
   switch (intent) {
     case SayTextIntent::UnProcessed:
     {
@@ -77,8 +86,9 @@ SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTex
     {
       // Normal name
       _style = SayTextVoiceStyle::CozmoProcessing;
+      stepSize = 0.05f;
       isRandom = true;
-      if (text.length() < 7) {
+      if (text.length() < charLengthThreshold) {
         // Short names
         minScalar = 1.8f;
         maxScalar = 2.1f;
@@ -91,15 +101,35 @@ SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTex
       break;
     }
       
-    case SayTextIntent::Name_FirstIntroduction:
+    case SayTextIntent::Name_FirstIntroduction_1:
     {
-      // Say name slower
+      // Say name very slow the first time
       _style = SayTextVoiceStyle::CozmoProcessing;
+      stepSize = 0.1f;
       isRandom = true;
-      if (text.length() < 7) {
+      if (text.length() < charLengthThreshold) {
+        // Short names
+        minScalar = 2.35f;
+        maxScalar = 2.65f;
+      }
+      else {
+        // Long names
+        minScalar = 2.25f;
+        maxScalar = 2.55f;
+      }
+      break;
+    }
+      
+    case SayTextIntent::Name_FirstIntroduction_2:
+    {
+      // Say name slightly faster then the first time
+      _style = SayTextVoiceStyle::CozmoProcessing;
+      stepSize = 0.1f;
+      isRandom = true;
+      if (text.length() < charLengthThreshold) {
         // Short names
         minScalar = 2.0f;
-        maxScalar = 2.3f;
+        maxScalar = 2.2f;
       }
       else {
         // Long names
@@ -116,7 +146,12 @@ SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTex
   
   // If random create
   if (isRandom) {
-    _durationScalar = Util::numeric_cast<float>(robot.GetRNG().RandDblInRange(minScalar, maxScalar));
+    // Break scalar range into step sizes
+    ASSERT_NAMED(stepSize > 0.f, "SayTextAction.SayTextAction.stepSize.IsZero");
+    // (Scalar Range / stepSize) + 1 = number of total possible steps
+    const uint8_t stepCount = ((maxScalar - minScalar) / stepSize) + 1;
+    const auto randStep = robot.GetRNG().RandInt(stepCount);
+    _durationScalar = minScalar + (stepSize * randStep);
   }
   GenerateTtsAudio();
 } // SayTextAction()

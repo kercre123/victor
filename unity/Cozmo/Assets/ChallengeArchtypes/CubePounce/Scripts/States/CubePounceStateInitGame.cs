@@ -15,11 +15,14 @@ namespace Cozmo.Minigame.CubePounce {
       _CubePounceGame.UpdateScoreboard();
       _CubePounceGame.SelectCubeTarget();
 
+      _CubePounceGame.SharedMinigameView.HideHowToPlayButton();
+
       LightCube target = _CubePounceGame.GetCubeTarget();
       // If we don't have a cube ready for whatever reason, go back to the initial cube state
       if (target == null || !target.IsInFieldOfView) {
         _StateMachine.SetNextState(new InitialCubesState(new CubePounceStateInitGame(), _CubePounceGame.GameConfig.NumCubesRequired()));
-      } else {
+      }
+      else {
         _StateMachine.SetNextState(new CubePounceStateResetPoint());
       }
 

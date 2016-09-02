@@ -79,6 +79,10 @@ namespace Vision {
     const char* RunMode = "RunMode";
     const char* Synchronous = "synchronous";
     const char* Asynchronous = "asynchronous";
+    
+    const char* PerformanceLoggingGroup = "PerformanceLogging";
+    const char* TimeBetweenInfoPrints = "TimeBetweenProfilerInfoPrints_sec";
+    const char* TimeBetweenDasEvents = "TimeBetweenProfilerDasLogs_sec";
   }
   
   static std::string GetTimeString(EnrolledFaceEntry::Time time)
@@ -125,8 +129,39 @@ namespace Vision {
       }
     } else {
       PRINT_NAMED_WARNING("FaceRecognizer.Constructor.NoFaceRecParameters",
-                          "Did not find 'faceRecognition' field in config");
+                          "Did not find '%s' group in config", JsonKey::FaceRecognitionGroup);
     }
+    
+    // Set up profiler logging frequencies
+    f32 timeBetweenProfilerInfoPrints_sec = 5.f;
+    f32 timeBetweenProfilerDasLogs_sec = 60.f;
+    
+    if(config.isMember(JsonKey::PerformanceLoggingGroup))
+    {
+      const Json::Value& performanceConfig = config[JsonKey::PerformanceLoggingGroup];
+      if(!JsonTools::GetValueOptional(performanceConfig, JsonKey::TimeBetweenInfoPrints,
+                                      timeBetweenProfilerInfoPrints_sec))
+      {
+        PRINT_NAMED_WARNING("FaceRecognizer.Constructor.MissingJsonField", "%s.%s",
+                            JsonKey::PerformanceLoggingGroup, JsonKey::TimeBetweenInfoPrints);
+      }
+      
+      if(!JsonTools::GetValueOptional(performanceConfig, JsonKey::TimeBetweenDasEvents,
+                                      timeBetweenProfilerDasLogs_sec))
+      {
+        PRINT_NAMED_WARNING("FaceRecognizer.Constructor.MissingJsonField", "%s.%s",
+                            JsonKey::PerformanceLoggingGroup, JsonKey::TimeBetweenDasEvents);
+      }
+      
+    } else {
+      PRINT_NAMED_WARNING("FaceRecognizer.Constructor.NoPerfLoggingParameters",
+                          "Did not find '%s' group in config", JsonKey::PerformanceLoggingGroup);
+    }
+
+    Profiler::SetPrintFrequency(SEC_TO_MILIS(timeBetweenProfilerInfoPrints_sec));
+    Profiler::SetDasLogFrequency(SEC_TO_MILIS(timeBetweenProfilerDasLogs_sec));
+    Profiler::SetPrintChannelName("FaceRecognizer");
+    Profiler::SetProfileGroupName("FaceRecognizer");
   }
   
   FaceRecognizer::~FaceRecognizer()
@@ -189,10 +224,6 @@ namespace Vision {
     if(_isRunningAsync) {
       _featureExtractionThread = std::thread(&FaceRecognizer::Run, this);
     }
-    
-    Profiler::SetPrintFrequency(5000);
-    Profiler::SetPrintChannelName("FaceRecognizer");
-    Profiler::SetProfileGroupName("FaceRecognizer");
     
     _isInitialized = true;
     

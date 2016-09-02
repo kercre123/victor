@@ -37,7 +37,7 @@ static const char* const kIsReactionaryConfigFlag = "isReactionary";
 
 const int kMaxNumRetries = 1;
 const int kMinThresholdRealign = 40;
-const int kMinBlocksForSuccess = 2;
+const int kMinBlocksForSuccess = 1;
 const float kWaitForBlockUpAxisChangeSecs = 0.5f;
 const f32 kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad = RAD_TO_DEG(90.f);
 
@@ -124,12 +124,7 @@ Result BehaviorKnockOverCubes::InitInternalReactionary(Robot& robot)
   
 void BehaviorKnockOverCubes::StopInternalReactionary(Robot& robot)
 {
-  for(auto behaviorType: _disabledReactions){
-    robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), behaviorType, true);
-  }
-  
   ResetBehavior(robot);
-  
 }
   
 bool BehaviorKnockOverCubes::ShouldComputationallySwitch(const Robot& robot)
@@ -169,9 +164,6 @@ void BehaviorKnockOverCubes::TransitionToReachingForBlock(Robot& robot)
 void BehaviorKnockOverCubes::TransitionToKnockingOverStack(Robot& robot)
 {
   DEBUG_SET_STATE(KnockingOverStack);
-  
-  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, false);
-  _disabledReactions.insert(BehaviorType::AcknowledgeObject);
   
   auto flipCallback = [this, &robot](const ActionResult& result){
     if(result == ActionResult::SUCCESS){
@@ -227,11 +219,7 @@ void BehaviorKnockOverCubes::TransitionToPlayingReaction(Robot& robot)
   
   if(!_shouldStreamline){
     
-    StartActing(new TriggerLiftSafeAnimationAction(robot, animationTrigger),
-                [this](Robot& robot){
-                  robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeObject, true);
-                  _disabledReactions.erase(BehaviorType::AcknowledgeObject);
-                });
+    StartActing(new TriggerLiftSafeAnimationAction(robot, animationTrigger));
   }
   
 }
@@ -246,7 +234,6 @@ void BehaviorKnockOverCubes::InitializeMemberVars()
   
 void BehaviorKnockOverCubes::ResetBehavior(Robot& robot)
 {
-  _disabledReactions.clear();
   _baseBlockID.UnSet();
 }
 

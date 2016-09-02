@@ -288,6 +288,10 @@ void RobotDataLoader::LoadBehaviors()
 void RobotDataLoader::LoadFaceAnimations()
 {
   FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_platform);
+#if USE_USB_TUNNEL
+  // Only when not shipping read facial animation from cache
+  FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_platform, true);
+#endif
 }
 
 void RobotDataLoader::LoadAnimationTriggerResponses()

@@ -136,6 +136,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     
     // EngineToGame: (in alphabetical order)
     helper.SubscribeEngineToGame<MessageEngineToGameTag::AnimationAborted>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotCompletedAction>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotConnectionResponse>();
   }
 }
@@ -597,6 +598,23 @@ IActionRunner* GetEnrollNamedFaceActionHelper(Robot& robot, const ExternalInterf
   enrollAction->EnableSaveToRobot(enrollNamedFace.saveToRobot);
   return enrollAction;
 }
+
+// Version for SayText message
+IActionRunner* GetSayTextAction(Robot& robot, const ExternalInterface::SayText& sayText)
+{
+  SayTextAction* sayTextAction = new SayTextAction(robot, sayText.text, sayText.voiceStyle, sayText.durationScalar);
+  sayTextAction->SetAnimationTrigger(sayText.playEvent);
+  return sayTextAction;
+}
+  
+// Version for SayTextWithIntent message
+IActionRunner* GetSayTextAction(Robot& robot, const ExternalInterface::SayTextWithIntent& sayTextWithIntent)
+{
+  SayTextAction* sayTextAction = new SayTextAction(robot, sayTextWithIntent.text, sayTextWithIntent.intent);
+  sayTextAction->SetAnimationTrigger(sayTextWithIntent.playEvent);
+  return sayTextAction;
+}
+
   
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::SetLiftHeight& msg)
@@ -672,7 +690,15 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionUnionTag::playAnimationTrigger:
     {
       auto & playAnimationTrigger = actionUnion.Get_playAnimationTrigger();
-      return new TriggerLiftSafeAnimationAction(robot, playAnimationTrigger.trigger, playAnimationTrigger.numLoops);
+      TriggerAnimationAction* newAction = nullptr;
+      if( playAnimationTrigger.useLiftSafe ) {
+        newAction = new TriggerLiftSafeAnimationAction(robot, playAnimationTrigger.trigger, playAnimationTrigger.numLoops);
+      }
+      else {
+        newAction = new TriggerAnimationAction(robot, playAnimationTrigger.trigger, playAnimationTrigger.numLoops);
+      }
+
+      return newAction;
     }
     case RobotActionUnionTag::pickupObject:
       return GetPickupActionHelper(robot, actionUnion.Get_pickupObject());
@@ -759,20 +785,10 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       return GetRealignWithObjectActionHelper(robot, actionUnion.Get_realignWithObject());
       
     case RobotActionUnionTag::sayText:
-    {
-      const auto msg = actionUnion.Get_sayText();
-      SayTextAction* sayTextAction = new SayTextAction(robot, msg.text, msg.voiceStyle, msg.durationScalar);
-      sayTextAction->SetAnimationTrigger(msg.playEvent);
-      return sayTextAction;
-    }
+      return GetSayTextAction(robot, actionUnion.Get_sayText());
       
     case RobotActionUnionTag::sayTextWithIntent:
-    {
-      const auto msg = actionUnion.Get_sayTextWithIntent();
-      SayTextAction* sayTextAction = new SayTextAction(robot, msg.text, msg.intent);
-      sayTextAction->SetAnimationTrigger(msg.playEvent);
-      return sayTextAction;
-    }
+      return GetSayTextAction(robot, actionUnion.Get_sayTextWithIntent());
       
     case RobotActionUnionTag::enrollNamedFace:
       return GetEnrollNamedFaceActionHelper(robot, actionUnion.Get_enrollNamedFace());
@@ -908,7 +924,12 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
     case ExternalInterface::MessageGameToEngineTag::PlayAnimationTrigger:
     {
       const ExternalInterface::PlayAnimationTrigger& msg = event.GetData().Get_PlayAnimationTrigger();
-      newAction = new TriggerLiftSafeAnimationAction(robotRef, msg.trigger, msg.numLoops);
+      if( msg.useLiftSafe ) {
+        newAction = new TriggerLiftSafeAnimationAction(robotRef, msg.trigger, msg.numLoops);
+      }
+      else {
+        newAction = new TriggerAnimationAction(robotRef, msg.trigger, msg.numLoops);
+      }
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::SearchForObject:
@@ -976,14 +997,12 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
     }
     case ExternalInterface::MessageGameToEngineTag::SayText:
     {
-      const auto msg = event.GetData().Get_SayText();
-      newAction = new SayTextAction(robotRef, msg.text, msg.voiceStyle, msg.durationScalar);
+      newAction = GetSayTextAction(robotRef, event.GetData().Get_SayText());
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::SayTextWithIntent:
     {
-      const auto msg = event.GetData().Get_SayTextWithIntent();
-      newAction = new SayTextAction(robotRef, msg.text, msg.intent);
+      newAction = GetSayTextAction(robotRef, event.GetData().Get_SayTextWithIntent());
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::EnrollNamedFace:
@@ -1358,6 +1377,46 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::AnimationAborted&
     PRINT_NAMED_INFO("RobotEventHandler.HandleAnimationAborted.SendingRobotAbortAnimation", "");
   }
 }
+  
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::RobotCompletedAction& msg)
+{
+  // Log DAS events for specific action completions
+  switch(msg.actionType)
+  {
+    case RobotActionType::ALIGN_WITH_OBJECT:
+    case RobotActionType::ASCEND_OR_DESCEND_RAMP:
+    case RobotActionType::CROSS_BRIDGE:
+    case RobotActionType::MOUNT_CHARGER:
+    case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
+    case RobotActionType::PICKUP_OBJECT_HIGH:
+    case RobotActionType::PICKUP_OBJECT_LOW:
+    case RobotActionType::PLACE_OBJECT_HIGH:
+    case RobotActionType::PLACE_OBJECT_LOW:
+    case RobotActionType::POP_A_WHEELIE:
+    case RobotActionType::ROLL_OBJECT_LOW:
+    {
+      auto const& completionInfo = msg.completionInfo.Get_objectInteractionCompleted();
+     
+      // Don't log incomplete docks -- they can happen for many reasons (such as
+      // interruptions / cancellations on the way to docking) and we're most interested
+      // in figuring out how successful the robot is when it gets a chance to actually
+      // start trying to dock with the object
+      if(completionInfo.result != ObjectInteractionResult::INCOMPLETE)
+      {
+        // Put action type in DDATA field and object interaction result in s_val
+        Util::sEventF("robot.dock_action_completed", {{DDATA, EnumToString(msg.actionType)}},
+                      "%s", EnumToString(completionInfo.result));
+      }
+      
+      break;
+    }
+      
+    default:
+      break;
+  }
+  
+}
 
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::RobotConnectionResponse& msg)
@@ -1591,7 +1650,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetAllActiveObjec
                            msg.onColor, msg.offColor,
                            msg.onPeriod_ms, msg.offPeriod_ms,
                            msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms,
-                           msg.onOffset, msg.offOffset,
+                           msg.offset,
                            msg.makeRelative, Point2f(msg.relativeToX, msg.relativeToY),
                            msg.rotationPeriod_ms);
   }

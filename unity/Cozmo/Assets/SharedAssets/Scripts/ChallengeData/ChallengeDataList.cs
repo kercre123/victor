@@ -14,6 +14,7 @@ public class ChallengeDataList : ScriptableObject {
 
   public static void SetInstance(ChallengeDataList instance) {
     _sInstance = instance;
+    SkillSystem.Instance.InitChallengeDefaults(instance);
   }
 
   public static ChallengeDataList Instance {

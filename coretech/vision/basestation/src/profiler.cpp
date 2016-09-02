@@ -18,6 +18,7 @@
 namespace Anki {
 namespace Vision {
   
+  static const std::string kDasEventNamePrefix("robot.vision.profiler.");
   Profiler::Profiler(const char* name)
   : _eventName(name)
   {
@@ -56,20 +57,47 @@ namespace Vision {
     ++count;
   }
   
+  inline static bool IsTimeToPrintOrLog(const std::chrono::time_point<Profiler::ClockType>& currentTime,
+                                        const int64_t timeBetween,
+                                        std::chrono::time_point<Profiler::ClockType>& lastTime)
+  {
+    // How long since last time
+    const auto lastPrintTimeDiff_ms = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastTime);
+    
+    // Has it been long enough?
+    const bool isTimeToPrint = (timeBetween >= 0 && lastPrintTimeDiff_ms.count() > timeBetween);
+    
+    if (isTimeToPrint)
+    {
+      // Update last time for next check
+      lastTime = currentTime;
+      return true;
+    }
+    
+    return false;
+  }
+  
   double Profiler::Toc(const char* timerName)
   {
     auto timerIter = _timers.find(timerName);
-    if(timerIter != _timers.end()) {
+    if(timerIter != _timers.end())
+    {
       Timer& timer = timerIter->second;
       timer.Update();
       const auto currentTime = ClockType::now();
-      const auto timeDiff_ms = std::chrono::duration_cast<Resolution>(currentTime - timer.lastPrintTime);
-      if (_timeBetweenPrints_ms >= 0 &&
-          timeDiff_ms.count() > _timeBetweenPrints_ms)
+      
+      // Print to log if it's time
+      if(IsTimeToPrintOrLog(currentTime, _timeBetweenPrints_ms, timer.lastPrintTime))
       {
         PrintTimerData(timerName, timer);
-        timer.lastPrintTime = currentTime;
       }
+
+      // Log to DAS if it's time
+      if(IsTimeToPrintOrLog(currentTime, _timeBetweenDasLogging_ms, timer.lastDasLogTime))
+      {
+        LogTimerDataToDAS(timerName, timer);
+      }
+      
       return timer.currentTime.count();
     } else {
       return 0;
@@ -115,7 +143,7 @@ namespace Vision {
   
   template<>
   inline const char* GetAbbreviation<std::chrono::microseconds>() {
-    return "µs";
+    return "us";
   }
   
   template<>
@@ -131,17 +159,36 @@ namespace Vision {
     const double avgOverAllTime = (timer.count > 0 ? (double)timer.totalTime.count() / (double)timer.count : 0);
     const double avgSinceLastPrint = (countSinceLastPrint > 0 ? (double)timeSinceLastPrint / (double)countSinceLastPrint : 0);
     
-    PRINT_CH_INFO(_printChannelName.c_str(), _eventName.c_str(), "%s averaged %.4f%s over %d calls (%.4f%s over %d calls since last print)",
-                  name,
-                  avgOverAllTime,
-                  GetAbbreviation<Resolution>(),
-                  timer.count,
-                  avgSinceLastPrint,
-                  GetAbbreviation<Resolution>(),
+    const char* units = GetAbbreviation<Resolution>();
+    PRINT_CH_INFO(_printChannelName.c_str(), _eventName.c_str(),
+                  "%s averaged %.4f%s over %d calls (%.4f%s over %d calls since last print)",
+                  name, avgOverAllTime, units,
+                  timer.count, avgSinceLastPrint, units,
                   countSinceLastPrint);
     
     timer.totalTimeAtLastPrint = timer.totalTime;
     timer.countAtLastPrint = timer.count;
+  }
+  
+  void Profiler::LogTimerDataToDAS(const char* name, Timer& timer)
+  {
+    const auto timeSinceLastDasLog = timer.totalTime.count() - timer.totalTimeAtLastDasLog.count();
+    const auto countSinceLastDasLog = timer.count - timer.countAtLastDasLog;
+    
+    const char* units = GetAbbreviation<Resolution>();
+
+    // Log overall and recent times to DAS, coupled with number of calls in the DDATA field,
+    // so we can compute averages / rates later from the logs
+    // NOTE: using camel case here because event and timer names are already
+    //       being specified in camel case
+    const std::string fullPrefix(kDasEventNamePrefix + _eventName + "." + name);
+    Util::sEventF((fullPrefix + ".OverallTime_" + units).c_str(), {{DDATA, TO_DDATA_STR(timer.count)}},
+                  "%lld", timer.totalTime.count());
+    Util::sEventF((fullPrefix + ".RecentTime_" + units).c_str(), {{DDATA, TO_DDATA_STR(countSinceLastDasLog)}},
+                  "%lld", timeSinceLastDasLog);
+    
+    timer.totalTimeAtLastDasLog = timer.totalTime;
+    timer.countAtLastDasLog = timer.count;
   }
   
   Profiler::TicTocObject::TicTocObject(Profiler& profiler, const char* timerName)

@@ -48,6 +48,11 @@
 #include "util/transport/connectionStats.h"
 #include <cstdlib>
 
+#if USE_DAS
+#include <DAS/DAS.h>
+#include <DAS/DASPlatform.h>
+#endif
+
 #if ANKI_DEV_CHEATS
 #include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
 #endif
@@ -82,6 +87,7 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   helper.SubscribeGameToEngine<MessageGameToEngineTag::DisconnectFromRobot>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ImageRequest>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadAnimationFile>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadFaceAnimationDir>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ResetFirmware>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestFeatureToggles>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SetEnableSOSLogging>();
@@ -176,7 +182,7 @@ Result CozmoEngine::Init(const Json::Value& config) {
 
   _context->GetDataLoader()->LoadData();
   _context->GetRobotManager()->Init(_config);
-  
+
   return RESULT_OK;
 }
 
@@ -314,6 +320,7 @@ Result CozmoEngine::Update(const float currTime_sec)
     {
       if (_uiMsgHandler->HasDesiredNumUiDevices()) {
         _context->GetRobotManager()->BroadcastAvailableAnimations();
+        SendSupportInfo();
         SetEngineState(EngineState::Running);
       }
       break;
@@ -464,6 +471,16 @@ void CozmoEngine::UpdateLatencyInfo()
   }
 }
 
+void CozmoEngine::SendSupportInfo() const
+{
+  #if USE_DAS
+  const DAS::IDASPlatform* platform = DASGetPlatform();
+  if (platform != nullptr) {
+    _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::SupportInfo>(platform->GetDeviceId());
+  }
+  #endif
+}
+
 void CozmoEngine::SetEngineState(EngineState newState)
 {
   EngineState oldState = _engineState;
@@ -605,6 +622,12 @@ void CozmoEngine::HandleMessage(const ExternalInterface::ReadAnimationFile& msg)
 }
 
 template<>
+void CozmoEngine::HandleMessage(const ExternalInterface::ReadFaceAnimationDir& msg)
+{
+  _context->GetRobotManager()->ReadFaceAnimationDir();
+}
+
+template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::SetRobotImageSendMode& msg)
 {
   const RobotID_t robotID = msg.robotID;
@@ -668,6 +691,11 @@ template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::SetGameBeingPaused& msg)
 {
   _isGamePaused = msg.isPaused;
+  
+  // Update Audio
+  if (nullptr != _context->GetAudioServer()) {
+    _context->GetAudioServer()->GetAudioController()->AppIsInFocus(!_isGamePaused);
+  }
 }
 
 void CozmoEngine::ExecuteBackgroundTransfers()

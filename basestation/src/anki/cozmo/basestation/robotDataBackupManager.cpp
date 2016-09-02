@@ -348,12 +348,12 @@ bool RobotDataBackupManager::GetFileToUseForBackup(std::string& file)
   if(Util::FileUtils::FileExists(kPathToFile + _fileName))
   {
     PRINT_NAMED_INFO("RobotDataBackupManager.GetFileToUseForBackup",
-                     "Have exisiting backup for current robot using it to restore");
+                     "Have existing backup for current robot using it to restore");
     file = _fileName;
     return true;
   }
 
-  // We don't have an exisiting backup so read the connection counts in statsForBackup.json
+  // We don't have an existing backup so read the connection counts in statsForBackup.json
   // and find the robot that we have connected the most to
   Json::Value stats;
   if(Util::FileUtils::FileExists(kPathToFile + kStatsForBackupFile))

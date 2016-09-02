@@ -21,8 +21,20 @@ namespace Cozmo.HomeHub {
 
     public override void Initialize(HomeView homeViewInstance) {
       base.Initialize(homeViewInstance);
+      LoadTiles();
+      UnlockablesManager.Instance.ResolveNewUnlocks();
+      UnlockablesManager.Instance.OnUnlockComplete += HandleUnlockCompleted;
+    }
+
+    void OnDestroy() {
+      UnlockablesManager.Instance.OnUnlockComplete -= HandleUnlockCompleted;
+    }
+
+    private void LoadTiles() {
+      ClearTiles();
+
       List<KeyValuePair<string, ChallengeStatePacket>> sortedDict = new List<KeyValuePair<string, ChallengeStatePacket>>();
-      sortedDict.AddRange(homeViewInstance.GetChallengeStates());
+      sortedDict.AddRange(GetHomeViewInstance().GetChallengeStates());
 
       // Sort by unlocked first, then by designer order
       sortedDict.Sort((KeyValuePair<string, ChallengeStatePacket> a, KeyValuePair<string, ChallengeStatePacket> b) => {
@@ -43,8 +55,14 @@ namespace Cozmo.HomeHub {
           CreateChallengeButton(kvp.Value.Data, _UnlockedChallengeButtonPrefab.gameObject,
             HandleUnlockedChallengeClicked, "home_hub_challenge_list_panel"));
       }
+    }
 
-      UnlockablesManager.Instance.ResolveNewUnlocks();
+    private void ClearTiles() {
+      foreach (GameObject button in _ChallengeButtons.Values) {
+        button.GetComponent<HubWorldButton>().OnButtonClicked -= HandleUnlockedChallengeClicked;
+        Destroy(button);
+      }
+      _ChallengeButtons.Clear();
     }
 
     private GameObject CreateChallengeButton(ChallengeData challengeData, GameObject prefab,
@@ -63,6 +81,10 @@ namespace Cozmo.HomeHub {
       buttonScript.Initialize(challengeData, dasParentViewName, true, isNew, UnlockablesManager.Instance.IsUnlocked(challengeData.UnlockId.Value), isAvailable);
       buttonScript.OnButtonClicked += handler;
       return newButton;
+    }
+
+    private void HandleUnlockCompleted(Anki.Cozmo.UnlockId unlockID) {
+      LoadTiles();
     }
 
     private void HandleNewChallengeUnlock(UnlockableInfo unlockInfo) {

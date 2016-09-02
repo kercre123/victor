@@ -21,6 +21,12 @@ namespace Cozmo.HomeHub {
 
     private HomeView _HomeViewInstance;
 
+    public HomeView HomeViewInstance {
+      get {
+        return _HomeViewInstance;
+      }
+    }
+
     [SerializeField]
     private GameObjectDataLink _ChallengeDetailsPrefabData;
 
@@ -140,7 +146,9 @@ namespace Cozmo.HomeHub {
           ProceduralEyeParameters.MakeDefaultLeftEye(),
           ProceduralEyeParameters.MakeDefaultRightEye());
 
-        StartFreeplay(robot);
+        robot.ResetRobotState(() => {
+          StartFreeplay(robot);
+        });
       }
     }
 
@@ -154,7 +162,13 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleUnlockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
-      OpenChallengeDetailsDialog(challengeClicked, buttonTransform);
+      // If onboarding jump directly into the game
+      if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Home)) {
+        PlayMinigame(challengeClicked);
+      }
+      else {
+        OpenChallengeDetailsDialog(challengeClicked, buttonTransform);
+      }
     }
 
     private void OpenChallengeDetailsDialog(string challenge, Transform buttonTransform) {
@@ -263,11 +277,14 @@ namespace Cozmo.HomeHub {
     }
 
     private void ResetRobotToFreeplaySettings() {
-      RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, true);
-      RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
-      RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
-      // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
-      RobotEngineManager.Instance.CurrentRobot.SetEnableCliffSensor(true);
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (null != robot) {
+        robot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, true);
+        robot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
+        robot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
+        // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
+        robot.SetEnableCliffSensor(true);
+      }
     }
 
     private void HandleMiniGameWin() {

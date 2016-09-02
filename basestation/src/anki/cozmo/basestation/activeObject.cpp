@@ -70,8 +70,7 @@ namespace Anki {
                              const u32 offPeriod_ms,
                              const u32 transitionOnPeriod_ms,
                              const u32 transitionOffPeriod_ms,
-                             const u32 onOffset,
-                             const u32 offOffset,
+                             const s32 offset,
                              const bool turnOffUnspecifiedLEDs)
     {
       static const u8 FIRST_BIT = 0x01;
@@ -86,8 +85,7 @@ namespace Anki {
           _ledState[iLED].offPeriod_ms = offPeriod_ms;
           _ledState[iLED].transitionOnPeriod_ms = transitionOnPeriod_ms;
           _ledState[iLED].transitionOffPeriod_ms = transitionOffPeriod_ms;
-          _ledState[iLED].onOffset = onOffset;
-          _ledState[iLED].offOffset = offOffset;
+          _ledState[iLED].offset = offset;
         } else if(turnOffUnspecifiedLEDs) {
           _ledState[iLED].onColor      = ::Anki::NamedColors::BLACK;
           _ledState[iLED].offColor     = ::Anki::NamedColors::BLACK;
@@ -95,8 +93,7 @@ namespace Anki {
           _ledState[iLED].offPeriod_ms = 1000;
           _ledState[iLED].transitionOnPeriod_ms = 0;
           _ledState[iLED].transitionOffPeriod_ms = 0;
-          _ledState[iLED].onOffset = 0;
-          _ledState[iLED].offOffset = 0;
+          _ledState[iLED].offset = 0;
         }
         shiftedLEDs = shiftedLEDs >> 1;
       }
@@ -110,8 +107,7 @@ namespace Anki {
                              const std::array<u32,NUM_LEDS>& offPeriods_ms,
                              const std::array<u32,NUM_LEDS>& transitionOnPeriods_ms,
                              const std::array<u32,NUM_LEDS>& transitionOffPeriods_ms,
-                             const std::array<u32,NUM_LEDS>& onOffsets,
-                             const std::array<u32,NUM_LEDS>& offOffsets)
+                             const std::array<s32,NUM_LEDS>& offsets)
     {
       for(u8 iLED=0; iLED<NUM_LEDS; ++iLED) {
         _ledState[iLED].onColor      = onColors[iLED];
@@ -141,8 +137,7 @@ namespace Anki {
         
         _ledState[iLED].transitionOnPeriod_ms = transitionOnPeriods_ms[iLED];
         _ledState[iLED].transitionOffPeriod_ms = transitionOffPeriods_ms[iLED];
-        _ledState[iLED].onOffset = onOffsets[iLED];
-        _ledState[iLED].offOffset = offOffsets[iLED];
+        _ledState[iLED].offset = offsets[iLED];
       }
       RecomputeGamma();
       DoWhiteBalancing();

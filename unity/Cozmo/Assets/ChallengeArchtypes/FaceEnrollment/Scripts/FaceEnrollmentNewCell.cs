@@ -16,6 +16,11 @@ public class FaceEnrollmentNewCell : MonoBehaviour {
     _CreateNewButton.Initialize(HandleEnrollNewFaceButton, "create_new_button", "face_enrollment_new_cell");
   }
 
+  public void EnableCell(bool enable) {
+    _CreateNewButtonFace.Interactable = enable;
+    _CreateNewButton.gameObject.SetActive(enable);
+  }
+
   private void HandleEnrollNewFaceButton() {
     if (OnCreateNewButton != null) {
       OnCreateNewButton();

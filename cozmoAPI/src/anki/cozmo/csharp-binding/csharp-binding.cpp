@@ -202,11 +202,15 @@ int cozmo_startup(const char *configuration_data)
     DevLoggingSystem::CreateInstance(dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, ""), appRunId);
   #endif
   
+  #if USE_DAS
+    Util::DasLoggerProvider* dasLoggerProvider = new Util::DasLoggerProvider();
+  #endif
+  
   Util::IFormattedLoggerProvider* sosLoggerProvider = new Util::SosLoggerProvider();
   Anki::Util::MultiLoggerProvider*loggerProvider = new Anki::Util::MultiLoggerProvider({
     sosLoggerProvider
 #if USE_DAS
-    , new Util::DasLoggerProvider()
+    , dasLoggerProvider
 #endif
 #if ANKI_DEV_CHEATS
     , new DevLoggerProvider(DevLoggingSystem::GetInstance()->GetQueue(),
@@ -239,6 +243,12 @@ int cozmo_startup(const char *configuration_data)
     
     // also parse additional info for providers
     sosLoggerProvider->ParseLogLevelSettings(consoleFilterConfigOnPlatform);
+    
+    #define FILTER_DAS 0 // for local testing only
+    #if USE_DAS && FILTER_DAS
+      dasLoggerProvider->SetFilter(filterPtr);
+    #endif
+    
   }
   
   PRINT_NAMED_INFO("cozmo_startup", "Creating engine");

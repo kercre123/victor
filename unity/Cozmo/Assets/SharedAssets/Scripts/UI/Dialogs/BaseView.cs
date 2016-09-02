@@ -59,6 +59,7 @@ namespace Cozmo {
       protected Cozmo.UI.CozmoButton _OptionalCloseDialogButton;
 
       public bool DimBackground = false;
+      public CanvasGroup DimBackgroundPrefabOverride = null;
 
       private Sequence _TransitionAnimation;
 
@@ -130,7 +131,7 @@ namespace Cozmo {
         }
       }
 
-      private void HandleUserClose() {
+      protected virtual void HandleUserClose() {
         _UserClosedView = true;
         CloseView();
       }

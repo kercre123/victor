@@ -57,7 +57,7 @@ public:
   void SetPanSpeeds(f32 minSpeed_radPerSec,  f32 maxSpeed_radPerSec);
 
   // Sound settings: which animation (should be sound only), how frequent, and
-  // minimum angle required to play sound. Use empty animation name for sound to
+  // minimum angle required to play sound. Use AnimationTrigger::Count for sound to
   // disable. (Note that there *is* sound by default.)
   void SetSound(const AnimationTrigger animName) { _turningSoundAnimTrigger = animName; }
   void SetSoundSpacing(f32 spacingMin_sec, f32 spacingMax_sec);
@@ -72,6 +72,13 @@ public:
   void SetPanTolerance(const Radians& panThreshold);
   void SetTiltTolerance(const Radians& tiltThreshold);
 
+  // If enabled, angles returned by GetAngles() below tolerance (which would generally
+  // be ignored) are clamped to the tolerances so that the robot _always_ moves
+  // by at least the tolerance amounts (in the correct direction). This creates
+  // extra (technically, unncessary) movement of the robot, but keeps him looking
+  // more alive while tracking. Disabled by default.
+  void SetClampSmallAnglesToTolerances(bool tf) { _clampSmallAngles = tf; }
+  
   void SetMaxHeadAngle(const Radians& maxHeadAngle_rads) { _maxHeadAngle = maxHeadAngle_rads; }
 
   // Enable/disable moving of eyes while tracking. Default is false.
@@ -115,12 +122,13 @@ private:
   Radians  _minPanAngleForSound = DEG_TO_RAD(10);
   Radians  _minTiltAngleForSound = DEG_TO_RAD(10);
   
-  f32      _minTiltSpeed_radPerSec = 30.f;
-  f32      _maxTiltSpeed_radPerSec = 50.f;
-  f32      _minPanSpeed_radPerSec  = 20.f;
-  f32      _maxPanSpeed_radPerSec  = 80.f;
+  f32      _minTiltSpeed_radPerSec = DEG_TO_RAD_F32(30.f);
+  f32      _maxTiltSpeed_radPerSec = DEG_TO_RAD_F32(90.f);
+  f32      _minPanSpeed_radPerSec  = DEG_TO_RAD_F32(40.f);
+  f32      _maxPanSpeed_radPerSec  = DEG_TO_RAD_F32(120.f);
   
   u32      _soundAnimTag = (u32)ActionConstants::INVALID_TAG;
+  bool     _clampSmallAngles = false;
   
 }; // class ITrackAction
   

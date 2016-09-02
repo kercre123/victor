@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using DataPersistence;
 using Cozmo.UI;
+using Cozmo.HomeHub;
 
 public class CozmoUnlocksPanel : MonoBehaviour {
 
@@ -153,7 +154,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
 
   private void HandleTappedUnlocked(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped Unlocked: " + unlockInfo.Id);
-    if (_CoreUpgradeDetailsViewInstance == null) {
+    if (_CoreUpgradeDetailsViewInstance == null && !HomeHub.Instance.HomeViewInstance.HomeViewCurrentlyOccupied) {
       CoreUpgradeDetailsDialog detailView = UIManager.OpenView<CoreUpgradeDetailsDialog>(_CoreUpgradeDetailsViewPrefab);
       detailView.Initialize(unlockInfo, CozmoUnlockState.Unlocked, null);
       _CoreUpgradeDetailsViewInstance = detailView;
@@ -162,16 +163,17 @@ public class CozmoUnlocksPanel : MonoBehaviour {
 
   private void HandleTappedUnlockable(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped available: " + unlockInfo.Id);
-    if (_CoreUpgradeDetailsViewInstance == null) {
+    if (_CoreUpgradeDetailsViewInstance == null && !HomeHub.Instance.HomeViewInstance.HomeViewCurrentlyOccupied) {
       CoreUpgradeDetailsDialog detailView = UIManager.OpenView<CoreUpgradeDetailsDialog>(_CoreUpgradeDetailsViewPrefab);
       detailView.Initialize(unlockInfo, CozmoUnlockState.Unlockable, HandleUnlockableUpgradeUnlocked);
       _CoreUpgradeDetailsViewInstance = detailView;
+      detailView.ViewClosed += LoadTiles;
     }
   }
 
   private void HandleTappedUnavailable(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped unavailable: " + unlockInfo.Id);
-    if (_CoreUpgradeDetailsViewInstance == null) {
+    if (_CoreUpgradeDetailsViewInstance == null && !HomeHub.Instance.HomeViewInstance.HomeViewCurrentlyOccupied) {
 
       UnlockableInfo preReqInfo = null;
       for (int i = 0; i < unlockInfo.Prerequisites.Length; i++) {

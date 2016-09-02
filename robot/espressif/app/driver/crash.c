@@ -11,11 +11,11 @@
 #include "spi_flash.h"
 #include "anki/cozmo/transport/reliableTransport.h"
 
+#define CRASH_DUMP_SOFISTICATED 1
+
 extern ReliableConnection g_conn;   // So we can check canaries when we crash
 
 static int nextCrashRecordSlot;
-
-extern u64 m_frame[128+12]; // Face frame buffer which we will take over to build our dump in
 
 void os_put_str(char* str)
 {
@@ -26,8 +26,9 @@ void os_put_str(char* str)
   }
 }
 
-#define STACKOK(i) (((unsigned int)i > 0x3fffc000) && ((unsigned int)i < 0x40000000) && (((unsigned int)i & 3) == 0))
+#define STACKOK(i) (((unsigned int)i > STACK_END) && ((unsigned int)i < STACK_START) && (((unsigned int)i & 3) == 0))
 
+#if CRASH_DUMP_SOFISTICATED
 static int get_excvaddr() {
   int v;
   asm volatile (
@@ -45,17 +46,19 @@ static int get_depc() {
   );
   return v;
 }
+#endif
 
 extern void crash_dump(int* sp) {
   ex_regs_esp *regs = (ex_regs_esp*) sp;
+#if CRASH_DUMP_SOFISTICATED
   // stack pointer at exception place
   int* ex_sp = (sp + 256 / 4);
   int* p = ex_sp - 8;
   int usestack = STACKOK(p);
   int i;
-  CrashRecord* record = (CrashRecord*)m_frame;
-  CrashLog_ESP* cle = (CrashLog_ESP*)record->dump;
-
+  CrashRecord record;
+  CrashLog_ESP* cle = (CrashLog_ESP*)record.dump;
+#endif
   ets_intr_lock(); // Disable all interrupts
 
   os_put_str("Fatal Exception: ");
@@ -67,14 +70,15 @@ extern void crash_dump(int* sp) {
   os_put_char('\r');
   os_put_char('\n');
   
-  record->nWritten = 0;
-  record->nReported = 0xFFFFffff;
-  record->reporter  = 0; // Espressif is 0
-  record->errorCode = 0; // Regular crash
+#if CRASH_DUMP_SOFISTICATED  
+  record.nWritten = 0;
+  record.nReported = 0xFFFFffff;
+  record.reporter  = 0; // Espressif is 0
+  record.errorCode = 0; // Regular crash
   // Copy in exception registers
   for (i=0; i<sizeof(ex_regs_esp)/sizeof(int); ++i)
   {
-    record->dump[i] = sp[i];
+    record.dump[i] = sp[i];
   }
   cle->sp = (int)sp;
   if (usestack)
@@ -90,7 +94,8 @@ extern void crash_dump(int* sp) {
     cle->stackDumpSize =  0;
   }
 
-  os_put_hex(crashHandlerPutReport(record), 2);
+  os_put_hex(crashHandlerPutReport(&record), 2);
+#endif
 
   while (1);    // Wait for watchdog to get us
 }
@@ -182,6 +187,7 @@ int ICACHE_FLASH_ATTR crashHandlerGetReport(const int index, CrashRecord* record
 /// Must not be ICACHE_FLASH_ATTR if we want to use in actual crash handler
 int crashHandlerPutReport(CrashRecord* record)
 {
+  STACK_LEFT(true);
   if (nextCrashRecordSlot < 0 || nextCrashRecordSlot >= MAX_CRASH_LOGS) return -1;
   if (record == NULL) return -2;
   const uint32 recordWriteAddress = (CRASH_DUMP_SECTOR * SECTOR_SIZE) + (CRASH_RECORD_SIZE * nextCrashRecordSlot);

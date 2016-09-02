@@ -70,6 +70,7 @@ enum int_32 AnimationTrigger
   FrustratedByFailure,
   FrustratedByFailureMajor,
   GoToSleepGetIn,
+  GoToSleepGetOut,
   GoToSleepOff,
   GoToSleepSleeping,
   HikingDrivingStart,           // loco-driving anim (so that Cozmo can be humming while hiking) - start
@@ -103,7 +104,10 @@ enum int_32 AnimationTrigger
   MeetCozmoFirstEnrollmentCelebration,  // 5. First-time enrollment, big special celebration for new name
   MeetCozmoReEnrollmentSayName,         // 3b. Re-enrollment, say player's name
   MeetCozmoRenameFaceSayName,           // Say player's new name when rename occurs
-  NothingToDoBored,             // Cozmo doesn't have anything to do in freeplay
+  NothingToDoBoredIdle,              // Cozmo doesn't have anything to do in freeplay - idling (not playing game sequence)
+  NothingToDoBoredIntro,             // Cozmo doesn't have anything to do in freeplay - start of bored game sequence
+  NothingToDoBoredEvent,             // Cozmo doesn't have anything to do in freeplay - bored game in the middle
+  NothingToDoBoredOutro,             // Cozmo doesn't have anything to do in freeplay - end of bored game sequence
   OnLearnedPlayerName,
   OnSawNewNamedFace,
   OnSawNewUnnamedFace,
@@ -234,10 +238,13 @@ enum int_32 AnimationTrigger
   SoundOnlyLiftEffortPlaceLow,
   SoundOnlyLiftEffortPlaceRoll,
   SoundOnlyTurnSmall,
-  SparkBackpackLights,
+  SparkDrivingLoop,
+  SparkDrivingStart,
+  SparkDrivingStop,
   SparkGetIn,
   SparkGetOutFailure,
   SparkGetOutSuccess,
+  SparkIdle,
   SparkPickupFinalCubeReaction,
   SparkPickupInitialCubeReaction,
   SpeedTapDrivingEnd,

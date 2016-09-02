@@ -453,9 +453,23 @@ void BehaviorVisitInterestingEdge::TransitionToS1_MoveToVantagePoint(Robot& robo
   ASSERT_NAMED(!_currentVantagePoints.empty(),
     "BehaviorVisitInterestingEdge.TransitionToS1_MoveToVantagePoint.NoVantagePoints");
   
-  // todo rsam: what happens if we are already close to the pose? Check that the action will succeed
-  // request the action
-  DriveToPoseAction* driveToPoseAction = new DriveToPoseAction( robot, _currentVantagePoints );
+  // create compound action to force lift to be on low dock (just in case) and then move
+  CompoundActionSequential* moveAction = new CompoundActionSequential(robot);
+
+  // 1) make sure lift is down so that we can detect more edges as we move
+  {
+    IAction* moveLiftDownAction = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
+    moveAction->AddAction( moveLiftDownAction );
+  }
+  
+  // 2) now move to the vantage point
+  {
+    // todo rsam: what happens if we are already close to the pose? Check that the action will succeed
+    // request the action
+    DriveToPoseAction* driveToPoseAction = new DriveToPoseAction( robot, _currentVantagePoints );
+    moveAction->AddAction( driveToPoseAction );
+  }
+  
   RobotCompletedActionCallback onActionResult = [this, &robot, retries](const ExternalInterface::RobotCompletedAction& actionRet)
   {
     if ( actionRet.result == ActionResult::SUCCESS ) {
@@ -479,7 +493,7 @@ void BehaviorVisitInterestingEdge::TransitionToS1_MoveToVantagePoint(Robot& robo
   };
   
   // start moving, and react to action results
-  StartActing(driveToPoseAction, onActionResult);
+  StartActing(moveAction, onActionResult);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

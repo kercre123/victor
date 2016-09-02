@@ -60,54 +60,54 @@ TaskExecutor::~TaskExecutor()
   }
 }
 
-void TaskExecutor::Wake(const std::function<void()> task)
+void TaskExecutor::Wake(std::function<void()> task)
 {
-  WakeAfter(task, std::chrono::time_point<std::chrono::system_clock>::min());
+  WakeAfter(std::move(task), std::chrono::time_point<std::chrono::system_clock>::min());
 }
 
-void TaskExecutor::WakeSync(const std::function<void()> task)
+void TaskExecutor::WakeSync(std::function<void()> task)
 {
   std::lock_guard<std::mutex> lock(_addSyncTaskMutex);
 
   TaskHolder taskHolder;
   taskHolder.sync = true;
-  taskHolder.task = task;
+  taskHolder.task = std::move(task);
   taskHolder.when = std::chrono::time_point<std::chrono::system_clock>::min();
   _syncTaskDone = false;
 
-  AddTaskHolder(taskHolder);
+  AddTaskHolder(std::move(taskHolder));
 
   std::unique_lock<std::mutex> lk(_syncTaskCompleteMutex);
   _syncTaskCondition.wait(lk, [this]{return _syncTaskDone;});
 
 }
 
-void TaskExecutor::WakeAfter(const std::function<void()> task, std::chrono::time_point<std::chrono::system_clock> when)
+void TaskExecutor::WakeAfter(std::function<void()> task, std::chrono::time_point<std::chrono::system_clock> when)
 {
   TaskHolder taskHolder;
   taskHolder.sync = false;
-  taskHolder.task = task;
+  taskHolder.task = std::move(task);
   taskHolder.when = when;
 
   auto now = std::chrono::system_clock::now();
   if (now >= when) {
-    AddTaskHolder(taskHolder);
+    AddTaskHolder(std::move(taskHolder));
   } else {
-    AddTaskHolderToDeferredQueue(taskHolder);
+    AddTaskHolderToDeferredQueue(std::move(taskHolder));
   }
 }
 
-void TaskExecutor::AddTaskHolder(const TaskHolder taskHolder)
+void TaskExecutor::AddTaskHolder(TaskHolder taskHolder)
 {
   std::lock_guard<std::mutex> lock(_taskQueueMutex);
-  _taskQueue.push_back(taskHolder);
+  _taskQueue.push_back(std::move(taskHolder));
   _taskQueueCondition.notify_one();
 }
 
-void TaskExecutor::AddTaskHolderToDeferredQueue(const TaskHolder taskHolder)
+void TaskExecutor::AddTaskHolderToDeferredQueue(TaskHolder taskHolder)
 {
   std::lock_guard<std::mutex> lock(_taskDeferredQueueMutex);
-  _deferredTaskQueue.push_back(taskHolder);
+  _deferredTaskQueue.push_back(std::move(taskHolder));
   // Sort the tasks so that the next one due is at the back of the queue
   std::sort(_deferredTaskQueue.begin(), _deferredTaskQueue.end());
   _taskDeferredCondition.notify_one();
@@ -146,9 +146,9 @@ void TaskExecutor::ProcessDeferredQueue()
     bool endLoop = false;
     while (_executing && !_deferredTaskQueue.empty() && !endLoop) {
       auto now = std::chrono::system_clock::now();
-      auto taskHolder = _deferredTaskQueue.back();
+      auto& taskHolder = _deferredTaskQueue.back();
       if (now >= taskHolder.when) {
-        AddTaskHolder(taskHolder);
+        AddTaskHolder(std::move(taskHolder));
         _deferredTaskQueue.pop_back();
       } else {
         endLoop = true;
@@ -165,7 +165,7 @@ void TaskExecutor::ProcessDeferredQueue()
 void TaskExecutor::Run(std::unique_lock<std::mutex> &lock)
 {
   // copy
-  std::vector<TaskHolder> taskQueue = _taskQueue;
+  std::vector<TaskHolder> taskQueue = std::move(_taskQueue);
   _taskQueue.clear();
   // we only need the lock when we're reading from _taskQueue
   lock.unlock();

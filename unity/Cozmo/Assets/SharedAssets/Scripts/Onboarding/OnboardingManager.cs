@@ -138,9 +138,21 @@ public class OnboardingManager : MonoBehaviour {
   public void InitHomeHubOnboarding(HomeView homeview) {
     _HomeView = homeview;
     _OnboardingTransform = homeview.transform;
+    _HomeView.ViewClosed += HandleHomeViewClosed;
 
     if (IsOnboardingRequired(OnboardingPhases.Home)) {
       StartPhase(OnboardingPhases.Home);
+    }
+  }
+
+  // Clear out the phase if the homeview closed unexpected like a disconnect.
+  // The UI is destroyed but our save state will reinit us next time.
+  private void HandleHomeViewClosed() {
+    if (_CurrPhase != OnboardingPhases.None) {
+      _CurrPhase = OnboardingPhases.None;
+      if (_OnboardingUIInstance != null) {
+        _OnboardingUIInstance.RemoveDebugButtons();
+      }
     }
   }
 
@@ -309,7 +321,13 @@ public class OnboardingManager : MonoBehaviour {
   }
 
   public void DebugSkipAll() {
-    OnboardingManager.Instance.SetSpecificStage(GetMaxStageInPhase(Instance._CurrPhase));
+    // special debug case. Since this loot view is listening for a state starting it hangs so just let it start loot.
+    if (Instance._CurrPhase == OnboardingPhases.Loot && Instance.GetCurrStageInPhase(OnboardingPhases.Loot) == 0) {
+      Instance.GoToNextStage();
+    }
+    else {
+      OnboardingManager.Instance.SetSpecificStage(GetMaxStageInPhase(Instance._CurrPhase));
+    }
   }
   private void SkipPressed() {
     if (_CurrStageInst != null) {

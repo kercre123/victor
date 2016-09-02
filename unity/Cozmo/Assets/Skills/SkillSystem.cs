@@ -39,6 +39,13 @@ public class SkillSystem {
     SkillSystem.Instance.Init();
   }
 
+  public void InitChallengeDefaults(ChallengeDataList dataList) {
+    // If the robot nvstorage hasn't already initialized a size, overwrite.
+    if (_CozmoHighestLevels == null || _CozmoHighestLevels.Length < dataList.ChallengeData.Length) {
+      SetCozmoHighestLevelsReached(null, 0);
+    }
+  }
+
   public void DestroyInstance() {
     SkillSystem.Instance.Destroy();
     _sInstance = null;
@@ -190,11 +197,12 @@ public class SkillSystem {
           }
           if (thresholdPassed) {
             float winPercent = (currSkillData.WinPointsTotal / pointTotal);
-            // We're losing too much, level up
-            RewardedActionManager.Instance.NewSkillChange = 1;
 
             if (winPercent < skillLevelConfig.LowerBoundThreshold) {
               int cozmoSkillLevel = GetCozmoSkillLevel(currSkillData);
+
+              // We're losing too much, level up
+              RewardedActionManager.Instance.NewSkillChange = 1;
 
               //  if new high, let the player know
               if (cozmoSkillLevel + 1 < skillConfig.GetMaxLevel()) {
@@ -203,6 +211,14 @@ public class SkillSystem {
                 if (cozmoSkillLevel == currSkillData.LastLevel) {
                   currSkillData.ChangeLevel(currSkillData.LastLevel + 1);
                 }
+
+                // Extra checking since we're seeing an error here
+                if (_ChallengeIndex < 0 || _ChallengeIndex >= _CozmoHighestLevels.Length) {
+                  DAS.Error("SkillSystem.HandleGameEvent", "GameEvent " + cozEvent.GameEventEnum + 
+                    " can't be handled with _ChallengeIndex " + _ChallengeIndex +
+                    " and _CozmoHighestLevels.Length " + _CozmoHighestLevels.Length);
+                }
+                  
                 if (_CozmoHighestLevels[_ChallengeIndex] < currSkillData.LastLevel) {
                   _CozmoHighestLevels[_ChallengeIndex]++;
                 }
@@ -288,9 +304,20 @@ public class SkillSystem {
       numChallenges = challengeList.ChallengeData.Length;
     }
     numChallenges = Mathf.Max(robotDataLen, numChallenges);
-    _CozmoHighestLevels = new byte[numChallenges];
+    // Usually hits the default from the Challenge List loading
+    if (_CozmoHighestLevels == null) {
+      _CozmoHighestLevels = new byte[numChallenges];
+    }
+    else {
+      // if we connected to the robot first, but a patch installed new challenges.
+      // or the defaults were in initalized already, just keep them
+      byte[] oldValues = _CozmoHighestLevels;
+      _CozmoHighestLevels = new byte[numChallenges];
+      System.Array.Copy(oldValues, _CozmoHighestLevels, oldValues.Length);
+    }
     // first time init
-    if (robotData != null) {
+    if (robotData != null && robotDataLen > 0) {
+      DAS.Info("SkillSystem.SetCozmoHighestLevelsReached", "Copying " + robotDataLen + " elements.");
       System.Array.Copy(robotData, _CozmoHighestLevels, robotDataLen);
     }
   }

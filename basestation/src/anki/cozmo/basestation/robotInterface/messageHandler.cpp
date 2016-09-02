@@ -116,7 +116,34 @@ void MessageHandler::ProcessMessages()
       }
 #endif
       
+      bool fatalErrorNeedsDisconnect = false;
+      // Special case handling of fatal error report messages; means we need to drop connection.
+      if (RobotInterface::RobotToEngineTag::robotError == message.GetTag())
+      {
+        const RobotErrorReport& report = message.Get_robotError();
+        const char* errorCode = RobotErrorCodeToString(report.error);
+        if (report.fatal)
+        {
+          fatalErrorNeedsDisconnect = true;
+          Util::sEventF("robot.error.fatal", {{DDATA,errorCode}}, "Error type %s", errorCode);
+        }
+        else
+        {
+          Util::sEventF("robot.error.nonfatal", {{DDATA,errorCode}}, "Error type %s", errorCode);
+        }
+      }
+      
       Broadcast(robotId, std::move(message));
+      
+      if (fatalErrorNeedsDisconnect)
+      {
+        // Anything sent after a fatal error could have corrupted data, so drop it
+        _robotConnectionManager->ClearData();
+        // This connection can't safely be maintained so be done with it
+        Disconnect();
+        // This break isn't strictly necessary since we just cleared the remaining data, but it's more explicit
+        break;
+      }
     }
   }
 }

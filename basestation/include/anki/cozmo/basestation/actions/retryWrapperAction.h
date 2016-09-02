@@ -50,6 +50,7 @@ namespace Cozmo {
     virtual ActionResult Init() override;
     virtual ActionResult CheckIfDone() override;
     
+    virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
     virtual f32 GetTimeoutInSeconds() const override;
     
   private:

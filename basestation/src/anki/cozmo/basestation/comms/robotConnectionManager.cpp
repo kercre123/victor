@@ -228,6 +228,11 @@ bool RobotConnectionManager::PopData(std::vector<uint8_t>& data_out)
   return true;
 }
   
+void RobotConnectionManager::ClearData()
+{
+  _readyData.clear();
+}
+  
 const Anki::Util::Stats::StatsAccumulator& RobotConnectionManager::GetQueuedTimes_ms() const
 {
 #if TRACK_INCOMING_PACKET_LATENCY

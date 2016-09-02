@@ -137,5 +137,11 @@
   },
   "sparks.Spark.Cost": {
     "translation": "Use {0} {1} to Spark Cozmo"
+  },
+  "sparks.Spark.ConfirmQuit": {
+    "translation": "Are you sure?"
+  },
+  "sparks.Spark.ConfirmQuit.Description": {
+    "translation": "You will lose your sparks and stop Cozmo's sparking"
   }
 }

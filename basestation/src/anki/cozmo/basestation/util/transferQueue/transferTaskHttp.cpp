@@ -46,7 +46,7 @@ void TransferTaskHttp::OnTransferReady(Dispatch::Queue* queue, const TransferQue
     };
 
     _numTransfers++;
-    _httpAdapter->StartRequest(request, queue, userCallbackWrapper);
+    _httpAdapter->StartRequest(request, queue, std::move(userCallbackWrapper));
   };
   OnReady(startRequestFunc);
 

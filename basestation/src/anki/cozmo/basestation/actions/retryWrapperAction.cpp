@@ -167,5 +167,14 @@ namespace Cozmo {
     PRINT_NAMED_WARNING("RetryWrapperAction.CheckIfDone", "Reached supposedly unreachable code");
     return ActionResult::FAILURE_ABORT;
   }
+  
+  void RetryWrapperAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
+  {
+    if(_subAction != nullptr)
+    {
+      _subAction->GetCompletionUnion(completionUnion);
+    }
+  }
+  
 }
 }

@@ -272,6 +272,11 @@ namespace Anki {
       _context->GetDataLoader()->LoadAnimations();
       BroadcastAvailableAnimations();
     }
+
+    void RobotManager::ReadFaceAnimationDir()
+    {
+      _context->GetDataLoader()->LoadFaceAnimations();
+    }
     
     void RobotManager::BroadcastAvailableAnimations()
     {

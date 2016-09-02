@@ -482,7 +482,7 @@ GameObject:
   - 222: {fileID: 22208790}
   - 114: {fileID: 11402262}
   m_Layer: 5
-  m_Name: CountCounter
+  m_Name: ButtonCostLabel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -983,7 +983,7 @@ MonoBehaviour:
   _AffordableHighlightContainer: {fileID: 150868}
   _AvailablePromptLabel: {fileID: 0}
   _AvailablePromptCost: {fileID: 0}
-  _ButtonCounter: {fileID: 11402262}
+  _ButtonCostLabel: {fileID: 11402262}
   _UnlockableIcon: {fileID: 11459738}
   _CubesRequiredLabel: {fileID: 11442860}
   _UnlockUpgradeButtonContainer: {fileID: 104356}

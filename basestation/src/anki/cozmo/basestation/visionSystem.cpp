@@ -179,9 +179,6 @@ namespace Cozmo {
     VisionMarker::GetNearestNeighborLibrary();
 #   endif
     
-    Profiler::SetProfileGroupName("VisionSystem");
-    Profiler::SetPrintFrequency(5000);
-    
     VisionMarker::SetDataPath(_dataPath);
     
     // Default processing modes should be set from vision_config.json now!
@@ -217,10 +214,11 @@ namespace Cozmo {
     // Helper macro to try to get the specified field and store it in the given variable
     // and return RESULT_FAIL if that doesn't work
 #   define GET_JSON_PARAMETER(__json__, __fieldName__, __variable__) \
+    do { \
     if(!JsonTools::GetValueOptional(__json__, __fieldName__, __variable__)) { \
       PRINT_NAMED_ERROR("VisionSystem.Init.MissingJsonParameter", "%s", __fieldName__); \
       return RESULT_FAIL; \
-    }
+    }} while(0)
 
     const Json::Value& imageQualityConfig = config["ImageQuality"];
     GET_JSON_PARAMETER(imageQualityConfig, "CheckFrequency", kQualityCheckFrequency);
@@ -232,6 +230,20 @@ namespace Cozmo {
     GET_JSON_PARAMETER(imageQualityConfig, "TooBrightMeanThreshold_high", kImageMeanTooBrightHighThreshold);
     GET_JSON_PARAMETER(imageQualityConfig, "TooBrightMeanThreshold_low",  kImageMeanTooBrightLowThreshold);
     GET_JSON_PARAMETER(imageQualityConfig, "TooBrightStddevThreshold",    kImageStddevTooBrightThreshold);
+    
+    {
+      // Set up profiler logging frequencies
+      f32 timeBetweenProfilerInfoPrints_sec = 5.f;
+      f32 timeBetweenProfilerDasLogs_sec = 60.f;
+      
+      const Json::Value& performanceConfig = config["PerformanceLogging"];
+      GET_JSON_PARAMETER(performanceConfig, "TimeBetweenProfilerInfoPrints_sec", timeBetweenProfilerInfoPrints_sec);
+      GET_JSON_PARAMETER(performanceConfig, "TimeBetweenProfilerDasLogs_sec",    timeBetweenProfilerDasLogs_sec);
+      
+      Profiler::SetProfileGroupName("VisionSystem");
+      Profiler::SetPrintFrequency(SEC_TO_MILIS(timeBetweenProfilerInfoPrints_sec));
+      Profiler::SetDasLogFrequency(SEC_TO_MILIS(timeBetweenProfilerDasLogs_sec));
+    }
     
     PRINT_NAMED_INFO("VisionSystem.Constructor.InstantiatingFaceTracker",
                      "With model path %s.", _dataPath.c_str());

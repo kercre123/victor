@@ -1,3 +1,4 @@
+using Cozmo.BlockPool;
 using UnityEngine;
 using System;
 using System.Collections;
@@ -39,13 +40,9 @@ public class Robot : IRobot {
 
     public uint TransitionOffPeriodMs { get; set; }
 
-    public uint _LastOnOffset;
+    public int _LastOffset;
 
-    public uint OnOffset { get; set; }
-
-    public uint _LastOffOffset;
-
-    public uint OffOffset { get; set; }
+    public int Offset { get; set; }
 
     public void SetLastInfo() {
       _LastOnColor = OnColor;
@@ -54,8 +51,7 @@ public class Robot : IRobot {
       _LastOffPeriodMs = OffPeriodMs;
       _LastTransitionOnPeriodMs = TransitionOnPeriodMs;
       _LastTransitionOffPeriodMs = TransitionOffPeriodMs;
-      _LastOnOffset = OnOffset;
-      _LastOffOffset = OffOffset;
+      _LastOffset = Offset;
     }
 
     public bool Changed {
@@ -72,6 +68,7 @@ public class Robot : IRobot {
       OffPeriodMs = 0;
       TransitionOnPeriodMs = 0;
       TransitionOffPeriodMs = 0;
+      Offset = 0;
 
       _LastOnColor = 0;
       _LastOffColor = 0;
@@ -79,6 +76,7 @@ public class Robot : IRobot {
       _LastOffPeriodMs = 0;
       _LastTransitionOnPeriodMs = 0;
       _LastTransitionOffPeriodMs = 0;
+      _LastOffset = 0;
 
       MessageDelay = 0f;
     }
@@ -279,6 +277,10 @@ public class Robot : IRobot {
 
   public string CurrentDebugAnimationString { get; set; }
 
+  public uint FirmwareVersion { get; set; }
+
+  public uint SerialNumber { get; set; }
+
   private PathMotionProfile PathMotionProfileDefault;
 
   private uint _NextIdTag = (uint)Anki.Cozmo.ActionConstants.FIRST_GAME_TAG;
@@ -343,12 +345,13 @@ public class Robot : IRobot {
 
     ClearData(true);
 
+    RobotEngineManager.Instance.BlockPoolTracker.OnBlockDataConnectionChanged += HandleBlockDataConnectionChanged;
+
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Reset);
 
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(ProcessRobotCompletedAction);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.MoodState>(UpdateEmotionFromEngineRobotManager);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.SparkEnded>(SparkEnded);
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ObjectConnectionState>(HandleObjectConnectionState);
 
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ObjectTapped>(HandleObservedObjectTapped);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotProcessedImage>(FinishedProcessingImage);
@@ -372,10 +375,11 @@ public class Robot : IRobot {
   }
 
   public void Dispose() {
+    RobotEngineManager.Instance.BlockPoolTracker.OnBlockDataConnectionChanged -= HandleBlockDataConnectionChanged;
+
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Reset);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(ProcessRobotCompletedAction);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.SparkEnded>(SparkEnded);
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ObjectConnectionState>(HandleObjectConnectionState);
 
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ObjectTapped>(HandleObservedObjectTapped);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotProcessedImage>(FinishedProcessingImage);
@@ -628,6 +632,15 @@ public class Robot : IRobot {
 
   public void SendQueueCompoundAction(Anki.Cozmo.ExternalInterface.RobotActionUnion[] actions, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool isParallel = false) {
     var tag = GetNextIdTag();
+
+    for (int i = 0; i < actions.Length; ++i) {
+      for (int j = i + 1; j < actions.Length; ++j) {
+        if (System.Object.ReferenceEquals(actions[i].GetState(), actions[j].GetState())) {
+          DAS.Error("UnityRobot.SendQueueCompondAction", "Matching action with same reference address. You shouldn't use Singleton<> to queue compond actions of the same type");
+        }
+      }
+    }
+
     RobotEngineManager.Instance.Message.QueueCompoundAction =
       Singleton<QueueCompoundAction>.Instance.Initialize(
       robotID: ID,
@@ -768,34 +781,16 @@ public class Robot : IRobot {
     }
   }
 
-  private void HandleObjectConnectionState(ObjectConnectionState message) {
-    DAS.Debug("Robot.HandleObjectConnectionState", (message.connected ? "Connected " : "Disconnected ") + "object of type " + message.device_type.ToString() + " with ID " + message.objectID + " and factoryId " + message.factoryID.ToString("X"));
+  private void HandleBlockDataConnectionChanged(BlockPoolData blockData) {
+    DAS.Debug("Robot.HandleObjectConnectionState", (blockData.IsConnected ? "Connected " : "Disconnected ")
+              + "object of type " + blockData.ObjectType + " with ID " + blockData.ObjectID
+              + " and factoryId " + blockData.FactoryID.ToString("X"));
 
-    if (message.connected) {
-      // Get the ObjectType from ActiveObjectType
-      ObjectType objectType = ObjectType.Invalid;
-      switch (message.device_type) {
-      case ActiveObjectType.OBJECT_CUBE1:
-        objectType = ObjectType.Block_LIGHTCUBE1;
-        break;
-      case ActiveObjectType.OBJECT_CUBE2:
-        objectType = ObjectType.Block_LIGHTCUBE2;
-        break;
-      case ActiveObjectType.OBJECT_CUBE3:
-        objectType = ObjectType.Block_LIGHTCUBE3;
-        break;
-      case ActiveObjectType.OBJECT_CHARGER:
-        objectType = ObjectType.Charger_Basic;
-        break;
-      case ActiveObjectType.OBJECT_UNKNOWN:
-        objectType = ObjectType.Unknown;
-        break;
-      }
-
-      AddObservedObject((int)message.objectID, message.factoryID, objectType);
+    if (blockData.IsConnected) {
+      AddObservedObject((int)blockData.ObjectID, blockData.FactoryID, blockData.ObjectType);
     }
     else {
-      DeleteObservedObject((int)message.objectID);
+      DeleteObservedObject((int)blockData.ObjectID);
     }
   }
 
@@ -956,6 +951,12 @@ public class Robot : IRobot {
   }
 
   private ObservedObject AddObservedObject(int id, uint factoryId, ObjectType objectType) {
+    if (id < 0) {
+      // Negative object ids are invalid
+      DAS.Warn("Robot.AddObservedObject", "Tried to add an object with an invalid object id! id=" + id + " objectType=" + objectType);
+      return null;
+    }
+
     ObservedObject createdObject = null;
     bool isCube = ((objectType == ObjectType.Block_LIGHTCUBE1)
                   || (objectType == ObjectType.Block_LIGHTCUBE2)
@@ -963,7 +964,7 @@ public class Robot : IRobot {
     if (isCube) {
       LightCube lightCube = null;
       if (!LightCubes.TryGetValue(id, out lightCube)) {
-        DAS.Debug("Robot.AddObservedObject", "Registered LightCube: id=" + id + " factoryId = " + factoryId + " objectType=" + objectType);
+        DAS.Debug("Robot.AddObservedObject", "Registered LightCube: id=" + id + " factoryId = " + factoryId.ToString("X") + " objectType=" + objectType);
         lightCube = new LightCube(id, factoryId, ObjectFamily.LightCube, objectType);
         LightCubes.Add(id, lightCube);
         if (OnLightCubeAdded != null) {
@@ -983,14 +984,13 @@ public class Robot : IRobot {
     }
     else if (objectType == ObjectType.Charger_Basic) {
       if (Charger == null) {
-        DAS.Debug("Robot.AddObservedObject", "Registered Charger: id=" + id + " factoryId = " + factoryId + " objectType=" + objectType);
+        DAS.Debug("Robot.AddObservedObject", "Registered Charger: id=" + id + " factoryId = " + factoryId.ToString("X") + " objectType=" + objectType);
         Charger = new ObservedObject(id, factoryId, ObjectFamily.Charger, objectType);
         createdObject = Charger;
       }
     }
     else {
       DAS.Warn("Robot.AddObservedObject", "Tried to add an object with unsupported ObjectType! id=" + id + " objectType=" + objectType);
-      DeleteObservedObject(id);
     }
 
     return createdObject;
@@ -1119,20 +1119,10 @@ public class Robot : IRobot {
     SendQueueSingleAction(Singleton<EnrollNamedFace>.Instance.Initialize(faceID, mergeIntoID, name, seq, saveToRobot), callback, queueActionPosition);
   }
 
-  /*public void SendAnimationGroup(string animGroupName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true) {
 
-    DAS.Debug(this, "Sending Group " + animGroupName + " with " + 1 + " loop");
-
-    SendQueueSingleAction(Singleton<PlayAnimationGroup>.Instance.Initialize(ID, 1, animGroupName), callback, queueActionPosition);
-  }*/
-
-  public void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-
-    DAS.Debug(this, "Sending Trigger " + animTriggerEvent + " with " + 1 + " loop");
-    //RobotEngineManager.Instance.Message.PlayAnimationTrigger = Singleton<PlayAnimationTrigger>.Instance.Initialize(ID, 1, animTriggerEvent);
-    //RobotEngineManager.Instance.SendMessage();
-    //PlayAnimationGroup
-    SendQueueSingleAction(Singleton<PlayAnimationTrigger>.Instance.Initialize(ID, 1, animTriggerEvent), callback, queueActionPosition);
+    DAS.Debug(this, "Sending Trigger " + animTriggerEvent + " with " + 1 + " loop " + useSafeLiftMotion);
+    SendQueueSingleAction(Singleton<PlayAnimationTrigger>.Instance.Initialize(ID, 1, animTriggerEvent, useSafeLiftMotion), callback, queueActionPosition);
   }
 
   public void SetIdleAnimation(AnimationTrigger default_anim) {
@@ -1640,6 +1630,13 @@ public class Robot : IRobot {
     DAS.Debug(this, "Execute Behavior " + type);
 
     RobotEngineManager.Instance.Message.ExecuteBehavior = Singleton<ExecuteBehavior>.Instance.Initialize(type);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void ExecuteBehaviorByName(string behaviorName) {
+    DAS.Debug(this, "Execute Behavior By Name" + behaviorName);
+
+    RobotEngineManager.Instance.Message.ExecuteBehaviorByName = Singleton<ExecuteBehaviorByName>.Instance.Initialize(behaviorName);
     RobotEngineManager.Instance.SendMessage();
   }
 

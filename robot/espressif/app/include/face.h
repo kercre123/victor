@@ -25,11 +25,6 @@ namespace Anki {
       static const int COLS = 128;
       static const int ROWS = 64;
       static const int PAGES = ROWS / 8;
-      
-      extern "C"
-      {
-        extern u64 m_frame[COLS+12];
-      }
 
       // Sets up data structures, call before any other methods
       Result Init();
@@ -39,7 +34,7 @@ namespace Anki {
       
       /// Convert a regular number to 8 digits of BCD
       u32 DecToBCD(const u32 val);
-            
+
       /// Clears all content from the face
       void Clear();
 
@@ -70,7 +65,14 @@ namespace Anki {
         
         // Display debug text on the screen, overriding regular printf
         void FaceDebugPrintf(const char *format, ...);
-      }
+      } // Extern "C"
+
+      // Suspend face operation and return a pointer to the face buffer
+      s32 SuspendAndGetBuffer(void** buffer);
+
+      // Return the buffer to the face and resume operation
+      void ResumeAndRestoreBuffer();
+
     } // Face
   } // Cozmo
 } // Anki

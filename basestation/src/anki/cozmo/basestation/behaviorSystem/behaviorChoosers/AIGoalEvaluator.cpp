@@ -112,6 +112,18 @@ AIGoalEvaluator::~AIGoalEvaluator()
   }
   #endif
 }
+  
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIGoalEvaluator::OnDeselected()
+{
+  if ( _currentGoalPtr ) {
+    _currentGoalPtr->Exit(_robot);
+    _currentGoalPtr = nullptr;
+  }
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIGoalEvaluator::CreateFromConfig(Robot& robot, const Json::Value& config)
@@ -298,12 +310,12 @@ IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, const IBehavior* cu
 {
   // returned variable
   IBehavior* chosenBehavior = nullptr;
+  const bool hasGoalAtStart = (_currentGoalPtr != nullptr);
   
   // see if anything causes a goal change
   bool getNewGoal = false;
   bool isCurrentAllowedToBePicked = true;
   bool hasChosenBehavior = false;
-  
   
   // check if we have a debugConsole goal
   if ( !_debugConsoleRequestedGoal.empty() )
@@ -432,13 +444,20 @@ IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, const IBehavior* cu
             _currentGoalPtr->GetName().c_str());
         }
       } else {
-        if ( isCurrentAllowedToBePicked ) {
-          PRINT_NAMED_ERROR("AIGoalEvaluator.NoGoalAvailableError", "No current available goal");
-        } else {
-          PRINT_CH_INFO("Behaviors","AIGoalEvaluator.NoGoalAvailable.CurrentNotAllowed", "No current available goal");
-        }
+        // selecting no goal is a valid situation. We need the lowest ordering goal to say it wants to end, so that
+        // a higher ordering goal can take over. If none are avaiable, since the lowest ordering goal will give up
+        // to give others a chance, there will be at least a frame in which there will be no goal selected.
+        PRINT_CH_INFO("Behaviors","AIGoalEvaluator.NoGoalSelected", "Picked no goal");
       }
     }
+  }
+  
+  // not selecting a goal at the end of a frame is a valid situation, as long as we had one this frame. We want to
+  // check however that if we didn't have a goal at start, and we have not picked a new one, Cozmo is effectively
+  // lost, not knowing what to do.
+  const bool hasGoalAtEnd = (_currentGoalPtr != nullptr);
+  if ( !hasGoalAtStart && !hasGoalAtEnd ) {
+    PRINT_NAMED_ERROR("AIGoalEvaluator.NoGoalAvailableError", "There was no goal, and no goal was selected");
   }
   
   return chosenBehavior;

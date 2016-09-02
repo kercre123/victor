@@ -123,8 +123,8 @@ std::vector<std::string> FileUtils::FilesInDirectory(const std::string& path,
   std::function<bool(const char* fname)> FilterFilename = [](const char*) { return true; };
   
   if(!withExtensions.empty()) {
-    FilterFilename = [withExtensions](const char* fname) {
-      for(auto ext : withExtensions) {
+    FilterFilename = [&withExtensions](const char* fname) {
+      for(auto* ext : withExtensions) {
         if(FilenameHasSuffix(fname, ext)) {
           return true;
         }
@@ -140,9 +140,9 @@ std::vector<std::string> FileUtils::FilesInDirectory(const std::string& path,
       if( info->d_type==DT_REG && FilterFilename(info->d_name) ) {
         std::string fileName(info->d_name);
         if(useFullPath) {
-          files.push_back(FullFilePath({path, fileName}));
+          files.push_back(FullFilePath({path, std::move(fileName)}));
         } else {
-          files.push_back(fileName);
+          files.push_back(std::move(fileName));
         }
       }
       else if(recurse &&
@@ -152,7 +152,7 @@ std::vector<std::string> FileUtils::FilesInDirectory(const std::string& path,
       {
         // Note we simply pass true as the recurse and useFullPath values here, since we already know we want to recurse
         auto recurseResults = FilesInDirectory(FullFilePath({path, info->d_name}), true, withExtensions, true);
-        files.insert(files.end(), recurseResults.begin(), recurseResults.end());
+        files.insert(files.end(), std::make_move_iterator(recurseResults.begin()), std::make_move_iterator(recurseResults.end()));
       }
     }
     closedir(listingDir);

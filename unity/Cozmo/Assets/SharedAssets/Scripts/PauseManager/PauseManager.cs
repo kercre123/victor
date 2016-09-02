@@ -10,6 +10,7 @@ namespace Cozmo {
     private AlertView _GoToSleepDialog = null;
     private bool _IsOnChargerToSleep = false;
     private bool _StartedIdleTimeout = false;
+    private float _ShouldPlayWakeupTimestamp = -1;
 
     private const float _kMaxValidBatteryVoltage = 4.2f;
     private float _LowPassFilteredVoltage = _kMaxValidBatteryVoltage;
@@ -53,7 +54,7 @@ namespace Cozmo {
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       // Battery voltage gets initialized to the float maxvalue, so ignore it until it's valid 
       if (null != robot && robot.BatteryVoltage <= _kMaxValidBatteryVoltage) {
-        _LowPassFilteredVoltage = _LowPassFilteredVoltage * Settings.FilterSmoothingWeight + (1.0f - Settings.FilterSmoothingWeight) * robot.BatteryVoltage; 
+        _LowPassFilteredVoltage = _LowPassFilteredVoltage * Settings.FilterSmoothingWeight + (1.0f - Settings.FilterSmoothingWeight) * robot.BatteryVoltage;
 
         if (!_IsPaused && !IsConfirmSleepDialogOpen && !IsGoToSleepDialogOpen && _LowPassFilteredVoltage < Settings.LowBatteryVoltageValue && !_LowBatteryAlertTriggered) {
           if (!_LowBatteryEventLogged) {
@@ -92,8 +93,11 @@ namespace Cozmo {
           hub.CloseMiniGameImmediately();
         }
 
+        _ShouldPlayWakeupTimestamp = -1;
         if (!_IsOnChargerToSleep) {
           StartIdleTimeout(Settings.AppBackground_TimeTilSleep_sec, Settings.AppBackground_TimeTilDisconnect_sec);
+          // Set up a timer so that if we unpause after starting the goToSleep, we'll do the wakeup (using a little buffer past beginning of sleep)
+          _ShouldPlayWakeupTimestamp = Time.realtimeSinceStartup + Settings.AppBackground_TimeTilSleep_sec + Settings.AppBackground_SleepAnimGetInBuffer_sec;
         }
 
         // Let the engine know that we're being paused
@@ -109,16 +113,22 @@ namespace Cozmo {
         // Let the engine know that we're being unpaused
         RobotEngineManager.Instance.SendGameBeingPaused(false);
 
+        bool shouldPlayWakeup = false;
         if (!_IsOnChargerToSleep) {
           StopIdleTimeout();
+          if (_ShouldPlayWakeupTimestamp > 0 && Time.realtimeSinceStartup >= _ShouldPlayWakeupTimestamp) {
+            shouldPlayWakeup = true;
+          }
         }
 
-        Cozmo.HomeHub.HomeHub hub = Cozmo.HomeHub.HomeHub.Instance;
-        Robot robot = (Robot)RobotEngineManager.Instance.CurrentRobot;
-
-        if (null != robot && null != hub) {
-          hub.StartFreeplay(robot);
-          robot.EnableCubeSleep(false);
+        if (shouldPlayWakeup) {
+          IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+          if (null != robot) {
+            robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.GoToSleepGetOut, HandleFinishedWakeup);
+          }
+        }
+        else {
+          HandleFinishedWakeup(true);
         }
       }
     }
@@ -126,6 +136,16 @@ namespace Cozmo {
     private void HandleConfirmSleepCozmoButtonTapped() {
       StartIdleTimeout(Settings.PlayerSleepCozmo_TimeTilSleep_sec, Settings.PlayerSleepCozmo_TimeTilDisconnect_sec);
       OpenGoToSleepDialogAndFreezeUI();
+    }
+
+    private void HandleFinishedWakeup(bool success) {
+      Cozmo.HomeHub.HomeHub hub = Cozmo.HomeHub.HomeHub.Instance;
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+
+      if (null != robot && null != hub) {
+        hub.StartFreeplay(robot);
+        robot.EnableCubeSleep(false);
+      }
     }
 
     // Handles message sent from engine when the player puts cozmo on the charger.
@@ -170,7 +190,8 @@ namespace Cozmo {
         _SleepCozmoConfirmDialog.Initialize(false);
         _SleepCozmoConfirmDialog.SetCloseButtonEnabled(false);
         _SleepCozmoConfirmDialog.SetPrimaryButton(LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalButtonConfirm,
-                                                HandleConfirmSleepCozmoButtonTapped);
+                                                  HandleConfirmSleepCozmoButtonTapped,
+                                                  Anki.Cozmo.Audio.AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Disconnect));
 
         if (handleOnChargerSleepCancel) {
           _SleepCozmoConfirmDialog.SetSecondaryButton(LocalizationKeys.kButtonCancel, HandleOnChargerSleepCancel);

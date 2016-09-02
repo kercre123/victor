@@ -73,7 +73,6 @@ private:
 
 
   int _numRetries;
-  std::set<BehaviorType> _disabledReactions;
   std::set<ObjectID> _objectsFlipped;
   
   //Values loaded in from JSON

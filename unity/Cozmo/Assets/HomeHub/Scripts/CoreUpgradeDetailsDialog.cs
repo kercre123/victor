@@ -7,6 +7,7 @@ using DataPersistence;
 using Cozmo;
 using DG.Tweening;
 using System.Collections.Generic;
+using Cozmo.HomeHub;
 
 public class CoreUpgradeDetailsDialog : BaseView {
 
@@ -37,7 +38,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
   private AnkiTextLabel _AvailablePromptCost;
 
   [SerializeField]
-  private Text _ButtonCounter;
+  private Text _ButtonCostLabel;
 
 
   [SerializeField]
@@ -95,6 +96,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
   private CoreUpgradeRequestedHandler _ButtonCostPaidSuccessCallback;
 
   private Sequence _UpgradeTween;
+  private bool _ConfirmedQuit = false;
 
   public void Initialize(UnlockableInfo unlockInfo, CozmoUnlocksPanel.CozmoUnlockState unlockState, CoreUpgradeRequestedHandler buttonCostPaidCallback) {
     _UnlockInfo = unlockInfo;
@@ -175,10 +177,49 @@ public class CoreUpgradeDetailsDialog : BaseView {
     else {
       button.Text = Localization.Get(LocalizationKeys.kUnlockableUnlock);
     }
-    _ButtonCounter.text = string.Format("{0}", costAmount);
+    _ButtonCostLabel.text = string.Format("{0}", costAmount);
     inventoryLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelTotalCount,
       itemData.GetPluralName(),
       playerInventory.GetItemAmount(costItemId));
+  }
+
+  protected override void HandleUserClose() {
+
+    if (RobotEngineManager.Instance.CurrentRobot.IsSparked) {
+      CreateConfirmQuitAlert();
+    }
+    else {
+      base.HandleUserClose();
+    }
+  }
+
+  private void CreateConfirmQuitAlert() {
+    // Open confirmation dialog instead
+    AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
+    // Hook up callbacks
+    alertView.SetCloseButtonEnabled(false);
+    alertView.SetPrimaryButton(LocalizationKeys.kButtonStaySparked, HandleStaySparked, Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Click_Back));
+    alertView.SetSecondaryButton(LocalizationKeys.kButtonLeave, HandleLeaveSpark);
+    alertView.TitleLocKey = LocalizationKeys.kSparksSparkConfirmQuit;
+    alertView.DescriptionLocKey = LocalizationKeys.kSparksSparkConfirmQuitDescription;
+    // Listen for dialog close
+    alertView.ViewCloseAnimationFinished += HandleQuitViewClosed;
+    _ConfirmedQuit = false;
+  }
+
+  private void HandleQuitViewClosed() {
+    if (_ConfirmedQuit) {
+      CloseView();
+    }
+    _ConfirmedQuit = false;
+  }
+
+  private void HandleStaySparked() {
+    _ConfirmedQuit = false;
+  }
+
+  private void HandleLeaveSpark() {
+    _ConfirmedQuit = true;
   }
 
   private void UpdateState() {
@@ -198,7 +239,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
         UpdateAvailableCostLabels(_UnlockInfo.UpgradeCostItemId, _UnlockInfo.UpgradeCostAmountNeeded, LocalizationKeys.kUnlockableAvailable, LocalizationKeys.kUnlockableBitsRequiredDescription);
       }
     }
-    _ButtonCounter.text = string.Format("{0}", _UnlockInfo.RequestTrickCostAmountNeeded);
+
   }
 
   private void OnUpgradeClicked() {
@@ -239,8 +280,9 @@ public class CoreUpgradeDetailsDialog : BaseView {
     _AvailablePromptLabel.text = Localization.Get(promptLabelKey);
     _AvailablePromptCost.gameObject.SetActive(true);
     ItemData itemData = ItemDataConfig.GetData(itemID);
-    string costName = Localization.Get(itemData.GetPluralName());
+    string costName = Localization.Get(itemData.GetAmountName(cost));
     _AvailablePromptCost.text = Localization.GetWithArgs(costLabelKey, new object[] { cost, costName });
+    _ButtonCostLabel.text = string.Format("{0}", cost);
   }
 
 
@@ -346,6 +388,9 @@ public class CoreUpgradeDetailsDialog : BaseView {
   }
 
   private void HandleSparkEnded(object message) {
+    // Only fire the game event when we receive the spark ended message, rewards are only applied
+    // when COMPLETING a sparked action (or timing out). View includes a warning dialog for exiting.
+    GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnUnlockableSparked, _UnlockInfo.Id.Value));
     StopSparkUnlock();
   }
 
@@ -355,18 +400,19 @@ public class CoreUpgradeDetailsDialog : BaseView {
     }
     Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
     TimelineEntryData sess = DataPersistenceManager.Instance.CurrentSession;
+
+    // Inventory valid was already checked when the button was initialized.
+    playerInventory.RemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
+    UpdateInventoryLabel(_UnlockInfo.RequestTrickCostItemId, _SparksInventoryLabel);
+
     if (sess.SparkCount.ContainsKey(_UnlockInfo.Id.Value)) {
       sess.SparkCount[_UnlockInfo.Id.Value]++;
     }
     else {
       sess.SparkCount.Add(_UnlockInfo.Id.Value, 1);
     }
-    // Inventory valid was already checked when the button was initialized.
-    playerInventory.RemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
-    UpdateInventoryLabel(_UnlockInfo.RequestTrickCostItemId, _SparksInventoryLabel);
 
-    GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnUnlockableSparked, _UnlockInfo.Id.Value));
-
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Spark_Button_Loop_Stop);
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Spark_Launch);
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Spark);
     RobotEngineManager.Instance.CurrentRobot.EnableSparkUnlock(_UnlockInfo.Id.Value);
@@ -374,9 +420,10 @@ public class CoreUpgradeDetailsDialog : BaseView {
     UpdateState();
     DataPersistenceManager.Instance.Save();
   }
+
   private void StopSparkUnlock() {
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
     if (RobotEngineManager.Instance.CurrentRobot.IsSparked) {
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
       RobotEngineManager.Instance.CurrentRobot.StopSparkUnlock();
     }
     UpdateState();
@@ -388,6 +435,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
   protected override void CleanUp() {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.SparkEnded>(HandleSparkEnded);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Spark_Button_Loop_Stop);
     StopSparkUnlock();
     CleanUpSparkAnimations();
     // Because of a bug within DOTween Fades don't release even after being killed, so clean up
@@ -397,6 +445,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
     if (_UpgradeTween != null) {
       _UpgradeTween.Kill();
     }
+    HomeHub.Instance.HomeViewInstance.CheckForRewardSequence();
   }
 
   protected override void ConstructOpenAnimation(Sequence openAnimation) {

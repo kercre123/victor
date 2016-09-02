@@ -122,9 +122,9 @@
     "translation": "Check In Streak Reward"
   },
   "reward.description.SkillUp": {
-    "translation": "Cozmo's {0} Skills has increased!"
+    "translation": "Cozmo's {0} skill has increased!"
   },
   "reward.description.SkillDown": {
-    "translation": "Cozmo's {0} Skills has decreased!"
+    "translation": "Cozmo's {0} skill has decreased!"
   }
 }

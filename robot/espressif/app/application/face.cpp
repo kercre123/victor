@@ -4,7 +4,8 @@
 #include "anki/cozmo/robot/esp.h"
 #include "anki/cozmo/robot/logging.h"
 extern "C" {
-#include "anki/cozmo/robot/drop.h"
+  #include "driver/i2spi.h"
+  #include "driver/uart.h"
 }
 #include <stdarg.h>
 
@@ -14,6 +15,9 @@ namespace Face {
 
   #define MAX_RECTS 4
   #define WORKING_RECTS (MAX_RECTS+1)
+
+  // Overallocate so there is enough space to reuse buffer for crypto durring OTA
+  static const int FRAME_ALLOC_COLS = (COLS + 12);
 
   typedef struct {
     u8 left;
@@ -200,10 +204,9 @@ namespace Face {
     {0x0000, 0x0f03, 0x0f83, 0x0dc3, 0x0ce3, 0x0c73, 0x0c3b, 0x0c1f, 0x0c0f, 0x0000}, // X
   };
 
-  extern "C" {
-    u64 m_frame[COLS + 12]; // OVERALLOCATE FOR OTA BECAUSE REASONS
-  }
-  ScreenRect m_rects[WORKING_RECTS]; // Extra rect for working
+  u64 m_frame[FRAME_ALLOC_COLS];
+
+  ScreenRect STORE_ATTR m_rects[WORKING_RECTS]; // Extra rect for working
   ScreenRect *m_activeRect;
   RectScanStatus m_scanStatus;
   int m_remainingRects;
@@ -214,10 +217,11 @@ namespace Face {
     graphics = 0x00,
     text     = 0x01,
     debug    = 0x02,
-    inverted = 0x04
+    inverted = 0x04,
+    suspended= 0x08, 
   } FaceMode;
 
-  s8 _mode;
+  static s8 m_mode;
   
   static void ResetScan() {
     if (m_remainingRects > 0) {
@@ -228,6 +232,8 @@ namespace Face {
   }
 
   static void ResetScreen() {
+    if (m_mode & suspended) return;
+    
     m_remainingRects = 1;
     m_activeRect = &m_rects[0];
     
@@ -247,7 +253,7 @@ namespace Face {
     // Setup a single frame transfer
     ResetScreen();
 
-    _mode = graphics;
+    m_mode = graphics;
     return RESULT_OK;
   }
   
@@ -309,6 +315,7 @@ namespace Face {
   }
 
   static void CreateRects(u64* frame, u8 sx = 0, u8 sy = 0, u8 ex = COLS, u8 ey = PAGES) {
+    if (m_mode & suspended) return;
     // We cannot create new rects while we are currently transmitting
     if (m_remainingRects > 0) return ;
 
@@ -353,48 +360,53 @@ namespace Face {
     m_rectLock = false;
   }
 
-  // Pump face buffer data out to OLED
-  extern "C" uint8_t PumpScreenData(uint8_t* dest)
+  void FillScreenData(void)
   {
-    static u8 transmitChain = 0;
+    if (m_mode & suspended) return;
+    
+    s8 wordsToFill = i2spiGetScreenBufferAvailable();
+    //if (wordsToFill) os_printf("FSD %d\r\n", wordsToFill);
+    
+    while (wordsToFill > 0)
+    {
+      wordsToFill--;
 
-    // Stampede PrintFormattedtection / Idle state
-    if (m_rectLock || m_remainingRects == 0 || transmitChain == MAX_TX_CHAIN_COUNT) {
-      transmitChain = 0;
-      return 0;
-    }
+      if (m_rectLock || m_remainingRects <= 0) {
+        return;
+      }
 
-    // We are transmitting, so increment stampede counter
-    transmitChain++;
+      // We need to update the bounding box
+      if (m_scanStatus.transmitRect) {
+        m_scanStatus.transmitRect = false;
+        i2spiPushScreenData((const uint32_t*)m_activeRect, true);
+      }
+      else
+      {
+        // Transmit the screen bytes
+        uint32_t data = 0;
+        uint8_t* dest = (uint8_t*)&data;
+        for (int i = 0; i < MAX_SCREEN_BYTES_PER_DROP; i++)
+        {
+          dest[i] = PIXEL(m_frame, m_scanStatus.x, m_scanStatus.y);
 
-    // We need to update the bounding box
-    if (m_scanStatus.transmitRect) {
-      m_scanStatus.transmitRect = false;
-      memcpy(dest, (uint8_t*) m_activeRect, sizeof(ScreenRect));
+          // Advance cursor through the rectangle
+          if (++m_scanStatus.x > m_activeRect->right)
+          {
+            m_scanStatus.x = m_activeRect->left;
 
-      return screenDataValid | screenRectData;
-    }
-
-    // Transmit the screen bytes
-    for (int i = 0; i < MAX_SCREEN_BYTES_PER_DROP; i++) {
-      *(dest++) = PIXEL(m_frame, m_scanStatus.x, m_scanStatus.y);
-
-      // Advance cursor through the rectangle
-      if (++m_scanStatus.x > m_activeRect->right) {
-        m_scanStatus.x = m_activeRect->left;
-
-        if (++m_scanStatus.y > m_activeRect->bottom) {
-          // Overflow to next rectangle
-          m_activeRect++;
-          m_remainingRects--;
-          ResetScan();
-
-          break ;
+            if (++m_scanStatus.y > m_activeRect->bottom)
+            {
+              // Overflow to next rectangle
+              m_activeRect++;
+              m_remainingRects--;
+              ResetScan();
+              break;
+            }
+          }
         }
+        i2spiPushScreenData(&data, false);
       }
     }
-
-    return screenDataValid;
   }
 
   void PrintFormatted(char *buffer)
@@ -434,7 +446,7 @@ namespace Face {
       x++;
     }
     
-    if (_mode & inverted)
+    if (m_mode & inverted)
     {
       for (y=0; y<COLS; ++y) frame[y] = ~frame[y];
     }
@@ -581,12 +593,14 @@ namespace Face {
     {
       Clear();
     }
+    
+    FillScreenData();
   }
 
   // Display text on the screen until turned off
   extern "C" void FacePrintf(const char *format, ...)
   {
-    if ((_mode & debug) == 0)
+    if ((m_mode & debug) == 0)
       {// Build the printf into a local buffer and zero-terminate it
       char buffer[256];
       va_list argptr;
@@ -595,7 +609,7 @@ namespace Face {
       va_end(argptr);
       buffer[sizeof(buffer)-1] = '\0';
       
-      _mode = text;
+      m_mode = text;
 
       PrintFormatted(buffer);
     }
@@ -611,7 +625,7 @@ namespace Face {
     va_end(argptr);
     buffer[sizeof(buffer)-1] = '\0';
     
-    _mode |= debug | inverted;
+    m_mode |= debug | inverted;
 
     PrintFormatted(buffer);
   }
@@ -619,7 +633,7 @@ namespace Face {
   // Return display to normal function
   extern "C" void FaceUnPrintf(void)
   {
-    _mode = graphics;
+    m_mode = graphics;
     m_rectLock = true;
     ResetScreen();
     m_rectLock = false;
@@ -630,14 +644,19 @@ namespace Face {
     return m_remainingRects;
   }
 
-  /*
-  void Draw(const u64* image, const u8 sx, const u8 sy, const u8 ex, const u8 ey, const u64 columnMask)
+  s32 SuspendAndGetBuffer(void** buffer)
   {
-    u64 frame[COLS];
-    for (int c=0; c<COLS; ++c) frame[c] = image[c] & columnMask;
-    CreateRects(frame, sx, sy, ex, ey);
+    m_mode = suspended;
+    // Must not clear buffer because we want to allow callers to use repeatedly so they don't have to maintain pointer
+    *buffer = m_frame;
+    return sizeof(m_frame);
   }
-  */
+  
+  void ResumeAndRestoreBuffer()
+  {
+    m_mode = graphics;
+    ResetScreen();
+  }
 
 
 } // Face
@@ -647,7 +666,7 @@ namespace HAL {
   {
     using namespace Anki::Cozmo::Face;
 
-    if (Face::_mode != Face::graphics || Face::m_remainingRects > 0) return; // Ignore when in text mode
+    if (Face::m_mode != Face::graphics || Face::m_remainingRects > 0) return; // Ignore when in text mode
 
     else if (length == MAX_FACE_FRAME_SIZE) // If it's this size, it's raw
     {
@@ -656,6 +675,7 @@ namespace HAL {
     else
     {
       u64 frame[COLS];
+      ISR_STACK_LEFT('F');
       FaceDisplayDecode(image, ROWS, COLS, frame);
       Face::CreateRects(frame);
     }

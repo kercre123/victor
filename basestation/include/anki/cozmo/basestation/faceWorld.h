@@ -74,8 +74,11 @@ namespace Cozmo {
       Vision::TrackedFace      face;
       VizManager::Handle_t     vizHandle;
       s32                      numTimesObserved = 0;
+      s32                      numTimesObservedFacingCamera = 0;
 
       KnownFace(Vision::TrackedFace& faceIn);
+      bool IsNamed() const { return !face.GetName().empty(); }
+      bool HasStableID() const;
     };
     
     using FaceContainer = std::map<Vision::FaceID_t, KnownFace>;

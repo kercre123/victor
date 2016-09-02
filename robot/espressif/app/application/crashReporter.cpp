@@ -188,6 +188,7 @@ void Update()
     if (record.nWritten == 0 && record.nReported != 0)
     {
       RobotInterface::CrashReport report;
+      STACK_LEFT(DEBUG_CR);
       report.errorCode = record.errorCode;
       report.which = record.reporter;
       if (report.errorCode == 0) // Crash dump
@@ -237,6 +238,7 @@ void Update()
 void AcceptBodyStorage(BodyStorageContents& msg)
 {
   debug("Got body storage data: %d, %d, %d\r\n", msg.key, msg.offset, msg.data_length);
+  STACK_LEFT(DEBUG_CR);
   if (msg.key == BodyNVTagRTIPCrash)
   {
     if ((msg.offset == 0) && (msg.data_length == 0))

@@ -161,7 +161,7 @@ void Spine::processMessages(const uint8_t* buf) {
     if (size == 0) {
       break ;
     }
-    
+
     memcpy(msg.GetBuffer(), buf, size);
     buf += size;
     remaining -= size + 1;

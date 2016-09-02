@@ -32,7 +32,6 @@ namespace Backpack {
   void init();
   void manage();
   
-  int update();
   void setLayer(BackpackLayer);
 
   void useTimer(NRF_TIMER_Type*, IRQn_Type);

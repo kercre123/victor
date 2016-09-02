@@ -7,6 +7,8 @@
 #include <stdint.h>
 #include "os_type.h"
 
+#define LOW_PRIORITY_BUFFER_ROOM (200)
+
 /** Initalize the client connection
  * @return 0 for okay or non-zero on error
  */

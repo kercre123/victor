@@ -120,6 +120,8 @@ namespace DataPersistence {
       }
     }
 
+    public string DeviceId { get; private set; }
+
     public TimelineEntryData StartNewSession() {
       TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today);
       DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Add(newSession);
@@ -146,11 +148,6 @@ namespace DataPersistence {
 
       if (needsNewGoals) {
         newSession.DailyGoals = DailyGoalManager.Instance.GenerateDailyGoals();
-        // Sort by priority, placing higher priority at the front of the list
-        newSession.DailyGoals.Sort((Cozmo.UI.DailyGoal x, Cozmo.UI.DailyGoal y) => {
-          return y.Priority.CompareTo(x.Priority);
-        });
-
         if (DailyGoalManager.Instance.OnRefreshDailyGoals != null) {
           DailyGoalManager.Instance.OnRefreshDailyGoals.Invoke();
         }
@@ -204,6 +201,10 @@ namespace DataPersistence {
       }
 
       File.WriteAllText(sSaveFilePath, jsonValue);
+    }
+
+    public void HandleSupportInfo(Anki.Cozmo.ExternalInterface.SupportInfo info) {
+      DeviceId = info.deviceId;
     }
 
     #endregion

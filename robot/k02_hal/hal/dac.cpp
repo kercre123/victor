@@ -18,6 +18,7 @@ static volatile uint16_t* DAC_WRITE = (volatile uint16_t*) &DAC0_DAT0L;
 static const int DAC_WORDS = 16;
 
 static unsigned int write_pointer = 0;
+static uint16_t audioVolume;
 
 void Anki::Cozmo::HAL::DAC::Init(void) {
   #ifdef EP1_HEADBOARD
@@ -31,7 +32,8 @@ void Anki::Cozmo::HAL::DAC::Init(void) {
   
   // Configure and clear DAC
   DAC0_C0 = DAC_C0_DACEN_MASK 
-          | DAC_C0_DACRFS_MASK;
+          | DAC_C0_DACRFS_MASK
+          | DAC_C0_LPEN_MASK;
   DAC0_C1 = DAC_C1_DACBFMD(0)
           | DAC_C1_DACBFEN_MASK;
 
@@ -53,6 +55,8 @@ void Anki::Cozmo::HAL::DAC::Init(void) {
   PDB0_SC |= PDB_SC_SWTRIG_MASK ;       // Trigger the PDB because why not
 
   Mute();
+  
+  audioVolume = 0xFFFF;
 }
 
 void Anki::Cozmo::HAL::DAC::EnableAudio(bool enable) {
@@ -65,7 +69,7 @@ void Anki::Cozmo::HAL::DAC::EnableAudio(bool enable) {
   #endif
 }
 
-static inline uint16_t MuLawDecompress(uint8_t byte) {
+static inline uint32_t MuLawDecompress(uint8_t byte) {
   uint16_t bits = byte & 0xF;
   uint8_t exp = (byte >> 4) & 0x7;
 
@@ -73,7 +77,7 @@ static inline uint16_t MuLawDecompress(uint8_t byte) {
     bits = (0x10 | bits) << (exp - 1);
   }
 
-  return (0x7FF + ((byte & 0x80) ? -bits : bits)) >> 1;
+  return 0x7FF + ((byte & 0x80) ? -bits : bits);
 }
 
 void Anki::Cozmo::HAL::DAC::Sync() {
@@ -98,10 +102,15 @@ void Anki::Cozmo::HAL::DAC::Feed(bool enabled, uint8_t* samples) {
   EnableAudio(enabled);
 
   for (int length = MAX_AUDIO_BYTES_PER_DROP; length > 0; length--) {
-    DAC_WRITE[write_pointer] = MuLawDecompress(*(samples++));
+    // Extra bit because of protection
+    DAC_WRITE[write_pointer] = (MuLawDecompress(*(samples++)) * audioVolume) >> 17;
     write_pointer = (write_pointer+1) % DAC_WORDS;
   }
   #endif
+}
+
+void Anki::Cozmo::HAL::DAC::SetVolume(uint16_t volume) {
+  audioVolume = volume;
 }
 
 // This is temporary

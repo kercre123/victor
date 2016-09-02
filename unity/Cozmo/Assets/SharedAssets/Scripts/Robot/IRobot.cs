@@ -108,6 +108,10 @@ public interface IRobot : IDisposable {
 
   string CurrentDebugAnimationString { get; set; }
 
+  uint FirmwareVersion { get; set; }
+
+  uint SerialNumber { get; set; }
+
   ObservedObject CarryingObject { get; }
 
   event Action<ObservedObject> OnCarryingObjectSet;
@@ -179,7 +183,7 @@ public interface IRobot : IDisposable {
 
   void EnrollNamedFace(int faceID, int mergeIntoID, string name, Anki.Cozmo.FaceEnrollmentSequence seq = Anki.Cozmo.FaceEnrollmentSequence.Default, bool saveToRobot = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
-  void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+  void SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true);
 
   void SetIdleAnimation(AnimationTrigger default_anim);
 
@@ -264,6 +268,8 @@ public interface IRobot : IDisposable {
   void SetEnableSOSLogging(bool enable);
 
   void ExecuteBehavior(BehaviorType type);
+
+  void ExecuteBehaviorByName(string behaviorName);
 
   void SetEnableFreeplayBehaviorChooser(bool enable);
 

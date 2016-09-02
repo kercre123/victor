@@ -56,6 +56,7 @@ class OTAStreamer:
 
     def OnConnect(self, connectionInfo):
         "Handles robot connected event, starts upgrade"
+        time.sleep(0.1)
         self.writing = True
         
     def OnAck(self, ack):
@@ -113,7 +114,7 @@ if __name__ == '__main__':
         sys.exit("Couldn't find OTA file to load")
     
     print("Loading", fwi)
-    robotInterface.Init(True, forkTransportThread = False)
+    robotInterface.Init(False, forkTransportThread = False)
     up = OTAStreamer(fwi)
     robotInterface.Connect(syncTime = None)
     up.main()

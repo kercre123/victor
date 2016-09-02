@@ -6,6 +6,7 @@ using Anki.Cozmo;
 using Anki.UI;
 using Cozmo;
 using Cozmo.UI;
+using DataPersistence;
 
 public class CheckInFlow : MonoBehaviour {
 
@@ -49,8 +50,6 @@ public class CheckInFlow : MonoBehaviour {
   [SerializeField]
   private CanvasGroup _ConnectCanvas;
   [SerializeField]
-  private GameObject _DailyGoalItem;
-  [SerializeField]
   private CanvasGroup _DailyGoalPanel;
   [SerializeField]
   private Transform _NewGoalsFirstTarget;
@@ -90,11 +89,13 @@ public class CheckInFlow : MonoBehaviour {
   [SerializeField]
   private Transform _GoalsCollectTarget;
 
+  private List<Transform> _ActiveNewGoalTransforms = new List<Transform>();
   private List<Transform> _ActiveExpTransforms = new List<Transform>();
   private List<Transform> _ActiveSparksTransforms = new List<Transform>();
   private List<Transform> _ActiveCoinsTransforms = new List<Transform>();
 
   private Sequence _TimelineSequence;
+  private Sequence _CurrentSequence;
 
   private void Awake() {
 
@@ -107,7 +108,6 @@ public class CheckInFlow : MonoBehaviour {
     _EnvelopeContainer.SetActive(false);
     _TimelineReviewContainer.SetActive(false);
     _ConnectContainer.SetActive(false);
-    _DailyGoalItem.SetActive(false);
     _DailyGoalPanel.gameObject.SetActive(false);
     // Do Check in Rewards if we need a new session
     if (DataPersistence.DataPersistenceManager.Instance.IsNewSessionNeeded) {
@@ -116,6 +116,7 @@ public class CheckInFlow : MonoBehaviour {
     }
     else {
       Sequence rewardSequence = DOTween.Sequence();
+      _CurrentSequence = rewardSequence;
       rewardSequence.Join(UIDefaultTransitionSettings.Instance.CreateFadeInTween(_DailyGoalPanel, Ease.Unset, _ConnectIntroDuration));
       rewardSequence.Join(UIDefaultTransitionSettings.Instance.CreateFadeInTween(_ConnectCanvas, Ease.Unset, _ConnectIntroDuration));
       _DailyGoalPanel.gameObject.SetActive(true);
@@ -135,6 +136,12 @@ public class CheckInFlow : MonoBehaviour {
   }
 
   private void OnDestroy() {
+    if (_TimelineSequence != null) {
+      _TimelineSequence.Kill();
+    }
+    if (_CurrentSequence != null) {
+      _CurrentSequence.Kill();
+    }
     if (_ConnectionFlowInstance != null) {
       GameObject.Destroy(_ConnectionFlowInstance.gameObject);
     }
@@ -162,6 +169,7 @@ public class CheckInFlow : MonoBehaviour {
   private void HandleEnvelopeButton() {
     Transform envelope = _EnvelopeButton.transform;
     Sequence envelopeSequence = DOTween.Sequence();
+    _CurrentSequence = envelopeSequence;
     envelopeSequence.Join(_TapToOpenText.DOFade(0.0f, _EnvelopeShrinkDuration));
     envelopeSequence.Join(envelope.DOScaleY(_EnvelopeOpenStartScale, _EnvelopeShrinkDuration));
     envelopeSequence.Append(envelope.DOScaleY(_EnvelopeOpenMaxScale, _EnvelopeOpenDuration));
@@ -204,10 +212,6 @@ public class CheckInFlow : MonoBehaviour {
   private float _TimelineSettleDuration = 1.5f;
   [SerializeField]
   private float _TimelineOutroDuration = 1.5f;
-  [SerializeField]
-  private float _DailyGoalMiniScale = 1.0f;
-  [SerializeField]
-  private float _DailyGoalRotation = 45f;
 
   private bool _QuickConnect = true;
 
@@ -223,15 +227,10 @@ public class CheckInFlow : MonoBehaviour {
     DataPersistence.DataPersistenceManager.Instance.StartNewSession();
     _QuickConnect = false;
     Sequence rewardSequence = DOTween.Sequence();
-
+    _TimelineSequence = rewardSequence;
     // Create the new session here to minimize risk of cheating/weird timing bugs allowing you to harvest
     // streak rewards by quitting out mid animation
     AnimateRewardIcons(rewardSequence);
-    _DailyGoalItem.SetActive(true);
-    rewardSequence.Join(_DailyGoalItem.transform.DOMove(_NewGoalsFirstTarget.position, _TimelineRewardPopDuration));
-    rewardSequence.Join(_DailyGoalItem.transform.DOScale(0.0f, _TimelineRewardPopDuration).From());
-    rewardSequence.Join(_DailyGoalItem.transform.DORotate(new Vector3(0f, 0f, _DailyGoalRotation), _TimelineRewardPopDuration));
-    rewardSequence.Append(_DailyGoalItem.transform.DOScale(_DailyGoalMiniScale, _TimelineRewardPopDuration));
     rewardSequence.AppendInterval(_TimelineRewardHoldDuration);
     // Fade in the Timeline as we move the current envelope to the respective location, then hide it and replace it with its own StreakEnvelopeCell
     rewardSequence.Append(_TimelineCanvas.transform.DOLocalMoveY(_TimelineCanvasYOffset, _TimelineSettleDuration).From());
@@ -241,6 +240,7 @@ public class CheckInFlow : MonoBehaviour {
     rewardSequence.Join(_OpenEnvelope.transform.DOMove(_FinalEnvelopeTarget.position, _TimelineSettleDuration));
     rewardSequence.Join(_EnvelopeShadow.DOFade(0.0f, _TimelineSettleDuration));
     rewardSequence.Play();
+    _TimelineSequence = rewardSequence;
     // If not using Timeline Animations, add HandleTimelineAnimEnd as a callback instead of using the Streak Timeline
     if (DataPersistence.DataPersistenceManager.Instance.CurrentStreak <= 1) {
       rewardSequence.AppendCallback(HandleTimelineAnimEnd);
@@ -250,6 +250,7 @@ public class CheckInFlow : MonoBehaviour {
 
   private void HandleStreakFillEnd() {
     Sequence rewardSequence = DOTween.Sequence();
+    _CurrentSequence = rewardSequence;
     // Fill up each Bar Segment and make the Checkmarks Pop/fade in
     // Fade out and slide out the timeline, send rewards to targets (Energy to EnergyBar at top, Hexes/Sparks to Counters at top, DailyGoal Panel into position)
     // Rewards are independent from Containers
@@ -260,44 +261,79 @@ public class CheckInFlow : MonoBehaviour {
   }
 
   private void AnimateRewardIcons(Sequence dooberSequence) {
-    List<Transform> doobTargets = new List<Transform>();
-    doobTargets.AddRange(_MultRewardsTransforms);
+    string itemID = "";
+    Transform newDoob = null;
+    Vector3 doobTarget = Vector3.zero;
+    // SpawnDailyGoalDoobers here for each of the newly generated goals
+    for (int i = 0; i < DataPersistenceManager.Instance.CurrentSession.DailyGoals.Count; i++) {
+      newDoob = SpawnDailyGoalDoober();
+      doobTarget = GetRandomTarget();
+      dooberSequence.Join(newDoob.DOScale(0.0f, _TimelineRewardPopDuration).From().SetEase(Ease.OutBack));
+      dooberSequence.Join(newDoob.DOLocalMove(doobTarget, _TimelineRewardPopDuration).SetEase(Ease.OutBack));
+    }
+
     Dictionary<RewardedActionData, int> rewardsToCreate = RewardedActionManager.Instance.PendingActionRewards;
     foreach (RewardedActionData reward in rewardsToCreate.Keys) {
-      string itemID = reward.Reward.ItemID;
-      Transform newDoob = null;
-      Transform toRemove = null;
-      Vector3 doobTarget = Vector3.zero;
+      itemID = reward.Reward.ItemID;
+      newDoob = null;
+      doobTarget = GetRandomTarget();
+      // should only be Vector3.zero if out of valid targets
+      if (doobTarget == Vector3.zero) {
+        break;
+      }
       if (itemID == RewardedActionManager.Instance.EnergyID) {
         newDoob = SpawnRewardDoober(itemID, reward.Reward.Amount);
-        toRemove = doobTargets[UnityEngine.Random.Range(0, doobTargets.Count)];
-        doobTarget = toRemove.position;
-        doobTargets.Remove(toRemove);
         // Spawn Doober, grab random target
         dooberSequence.Join(newDoob.DOScale(0.0f, _TimelineRewardPopDuration).From().SetEase(Ease.OutBack));
-        dooberSequence.Join(newDoob.DOMove(doobTarget, _TimelineRewardPopDuration).SetEase(Ease.OutBack));
+        dooberSequence.Join(newDoob.DOLocalMove(doobTarget, _TimelineRewardPopDuration).SetEase(Ease.OutBack));
       }
       else {
         // Instead of doing a count, do a cluster with non exp rewards
-        toRemove = doobTargets[UnityEngine.Random.Range(0, doobTargets.Count)];
         for (int i = 0; i < reward.Reward.Amount; i++) {
           newDoob = SpawnRewardDoober(itemID, 1);
-          doobTarget = toRemove.localPosition;
-          doobTarget = GetSpreadPos(doobTarget);
+          Vector3 spreadTarget = GetSpreadPos(doobTarget);
           // Spawn Doober, grab random target
           dooberSequence.Join(newDoob.DOScale(0.0f, _TimelineRewardPopDuration).From().SetEase(Ease.OutBack));
-          dooberSequence.Join(newDoob.DOLocalMove(doobTarget, _TimelineRewardPopDuration).SetEase(Ease.OutBack));
+          dooberSequence.Join(newDoob.DOLocalMove(spreadTarget, _TimelineRewardPopDuration).SetEase(Ease.OutBack));
         }
-        doobTargets.Remove(toRemove);
-      }
-      // If all out of available targets, just ignore it.
-      if (doobTargets.Count <= 0) {
-        break;
       }
     }
     RewardedActionManager.Instance.SendPendingRewardsToInventory();
   }
 
+  // Pulls a random transform from the target list, removes it, and
+  // returns its localposition
+  private Vector3 GetRandomTarget() {
+    if (_MultRewardsTransforms.Count <= 0) {
+      return Vector3.zero;
+    }
+    List<Transform> doobTargets = new List<Transform>();
+    doobTargets.AddRange(_MultRewardsTransforms);
+    Transform toRemove = null;
+    toRemove = doobTargets[UnityEngine.Random.Range(0, doobTargets.Count)];
+    Vector3 doobTarget = Vector3.zero;
+    doobTarget = toRemove.localPosition;
+    _MultRewardsTransforms.Remove(toRemove);
+
+    return doobTarget;
+  }
+
+  // Spawn Daily Goal Doobers for Goal Cell animations
+  private Transform SpawnDailyGoalDoober() {
+    Transform newDoob = UIManager.CreateUIElement(_RewardPrefab.gameObject, _DooberSourceTransform).transform;
+
+    Image doobImage = newDoob.GetComponent<Image>();
+    doobImage.overrideSprite = DailyGoalManager.Instance.GetDailyGoalGenConfig().DailyGoalIcon;
+
+    Text countText = newDoob.GetComponentInChildren<Text>();
+    countText.gameObject.SetActive(false);
+
+    _ActiveNewGoalTransforms.Add(newDoob);
+
+    return newDoob;
+  }
+
+  // Spawn Reward Doobers for various item IDs
   private Transform SpawnRewardDoober(string rewardID, int count) {
     Transform newDoob = UIManager.CreateUIElement(_RewardPrefab.gameObject, _DooberSourceTransform).transform;
     Sprite rewardIcon = null;
@@ -402,25 +438,31 @@ public class CheckInFlow : MonoBehaviour {
   private float _RewardCollectZoneDuration = 0.25f;
   [SerializeField]
   private float _RewardCollectZoneVariance = 0.25f;
+  [SerializeField]
+  private float _GoalTweenDelay = 0.05f;
+  [SerializeField]
+  private float _GoalFadeDuration = 0.5f;
 
   private void HandleTimelineAnimEnd() {
     Sequence goalSequence = DOTween.Sequence();
-    goalSequence.Join(_DailyGoalItem.transform.DORotate(Vector3.zero, _RewardCollectZoneDuration));
-    goalSequence.Join(_DailyGoalItem.transform.DOMove(_GoalsCollectTarget.position, _RewardCollectZoneDuration));
-    goalSequence.Join(_DailyGoalItem.transform.DOScale(1.0f, _RewardCollectZoneDuration));
+    _TimelineSequence = goalSequence;
     goalSequence.Join(UIDefaultTransitionSettings.Instance.CreateFadeInTween(_DailyGoalPanel, Ease.Unset, _ConnectIntroDuration));
     goalSequence.Join(UIDefaultTransitionSettings.Instance.CreateFadeInTween(_ConnectCanvas, Ease.Unset, _ConnectIntroDuration));
-    MoveRewardsToCollectZone(goalSequence);
     _DailyGoalPanel.gameObject.SetActive(true);
+    MoveRewardsToCollectZone(goalSequence);
     _ConnectContainer.SetActive(true);
+    goalSequence.InsertCallback(_GoalTweenDelay, HandleDailyGoalTweens);
     goalSequence.AppendCallback(() => {
+      for (int i = 0; i < _ActiveNewGoalTransforms.Count; i++) {
+        _ActiveNewGoalTransforms[i].gameObject.SetActive(false);
+      }
       _TimelineReviewContainer.SetActive(false);
     });
     goalSequence.Play();
   }
 
   private void MoveRewardsToCollectZone(Sequence goalSequence) {
-    // If there's more than one reward, give each of them a unique transform to tween out to
+    // Tween Goals to Panel and other rewards to collect zone.
     goalSequence = TweenAllToCollectZone(goalSequence, _ActiveExpTransforms, _GoalsCollectTarget);
     goalSequence = TweenAllToCollectZone(goalSequence, _ActiveCoinsTransforms, _GoalsCollectTarget);
     goalSequence = TweenAllToCollectZone(goalSequence, _ActiveSparksTransforms, _GoalsCollectTarget);
@@ -443,6 +485,25 @@ public class CheckInFlow : MonoBehaviour {
     goalSequence = TweenAllToFinalTarget(goalSequence, _ActiveExpTransforms, _FinalExpTarget);
     goalSequence = TweenAllToFinalTarget(goalSequence, _ActiveCoinsTransforms, _FinalCoinTarget);
     goalSequence = TweenAllToFinalTarget(goalSequence, _ActiveSparksTransforms, _FinalSparkTarget);
+  }
+
+  // Handled as a callback in order for us to have the appropriate delay after DailyGoalPanel becomes
+  // active for Start to fire.
+  private void HandleDailyGoalTweens() {
+    _CurrentSequence = DOTween.Sequence();
+    for (int i = 0; i < _ActiveNewGoalTransforms.Count; i++) {
+      Transform currTransform = _ActiveNewGoalTransforms[i];
+      float stagger = UnityEngine.Random.Range(0, _RewardSendoffVariance);
+      // Since Goal Doobers are made based on daily goal count, these lists should always be the same size and correspond
+      // 1 to 1
+      Transform finalTarget = DailyGoalManager.Instance.GoalPanelInstance.GetGoalSource(DataPersistenceManager.Instance.CurrentSession.DailyGoals[i]);
+      _CurrentSequence.Insert(stagger, currTransform.DOMove(finalTarget.position, _RewardSendoffDuration).SetEase(Ease.InBack));
+      Image goalIcon = currTransform.GetComponent<Image>();
+      if (goalIcon != null) {
+        _CurrentSequence.Insert(_RewardSendoffDuration + _RewardSendoffVariance, goalIcon.DOFade(0.0f, _GoalFadeDuration));
+      }
+    }
+    _CurrentSequence.Play();
   }
 
   private Sequence TweenAllToFinalTarget(Sequence currSequence, List<Transform> activeTransforms, Transform finalTarget) {
@@ -473,7 +534,6 @@ public class CheckInFlow : MonoBehaviour {
       _ConnectButton.Interactable = false;
       Sequence collectSequence = DOTween.Sequence();
       SendRewardsAway(collectSequence);
-      collectSequence.Join(_DailyGoalItem.transform.DOMove(_NewGoalsFinalTarget.position, _RewardSendoffDuration));
       collectSequence.AppendInterval(_RewardSendoffVariance);
       collectSequence.AppendCallback(StartConnectionFlow);
     }

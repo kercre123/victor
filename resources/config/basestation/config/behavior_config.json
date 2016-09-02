@@ -106,7 +106,7 @@
          "type" : "sparks",
          "minTimeSecs": 0,
          "maxTimeSecs": 60,
-         "numberOfRepetitions": 1,
+         "numberOfRepetitions": 0,
          "behaviorObjective": "PouncedAndCaught",
          "softSparkTrigger": "SoftSparkUpgradeLift",
           // these groups are the behaviors that are allowed in this behavior chooser
@@ -217,9 +217,10 @@
         "goalStrategy":
         {
           "type" : "FP_Socialize",
-          // never finishes. We might want to shut-off at some point
-          "goalShouldEndDurationSecs" : 6000.0,
-          "maxTimeWithoutInteractionSecs" : 6000.0
+          // goals need to give up so that higher priority can take over. Give up as soon as we finish one
+          // iteration
+          "goalShouldEndDurationSecs" : 1.0,
+          "maxTimeWithoutInteractionSecs" : 0.0
         }
       },
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

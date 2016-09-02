@@ -60,8 +60,7 @@ private:
     LEDArray offPeriod_ms;
     LEDArray transitionOnPeriod_ms;
     LEDArray transitionOffPeriod_ms;
-    LEDArray onOffset;
-    LEDArray offOffset;
+    std::array<s32, (size_t)ActiveObjectConstants::NUM_CUBE_LEDS> offset;
     u32 rotationPeriod_ms;
   };
 
@@ -115,7 +114,8 @@ private:
   
   void AddLightStateValues(CubeLightsState state, const Json::Value& data);
   LEDArray JsonColorValueToArray(const Json::Value& value);
-  LEDArray JsonValueToArray(const Json::Value& value);
+  LEDArray JsonValueToU32Array(const Json::Value& value);
+  std::array<s32, (size_t)ActiveObjectConstants::NUM_CUBE_LEDS> JsonValueToS32Array(const Json::Value& value);
   
   void RestorePrevStates();
   void RestorePrevState(const ObjectID objectID);

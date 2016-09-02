@@ -39,9 +39,9 @@ class TaskExecutor {
 public:
   TaskExecutor();
   ~TaskExecutor();
-  void Wake(const std::function<void()> task);
-  void WakeSync(const std::function<void()> task);
-  void WakeAfter(const std::function<void()> task, std::chrono::time_point<std::chrono::system_clock> when);
+  void Wake(std::function<void()> task);
+  void WakeSync(std::function<void()> task);
+  void WakeAfter(std::function<void()> task, std::chrono::time_point<std::chrono::system_clock> when);
 protected:
   TaskExecutor(const TaskExecutor&) = delete;
   TaskExecutor& operator=(const TaskExecutor&) = delete;
@@ -49,9 +49,8 @@ protected:
             std::condition_variable &condition,
             const std::vector<TaskHolder>* tasks) const;
 private:
-  void PrvWake(const std::function<void()> task, bool sync);
-  void AddTaskHolder(const TaskHolder taskHolder);
-  void AddTaskHolderToDeferredQueue(const TaskHolder taskHolder);
+  void AddTaskHolder(TaskHolder taskHolder);
+  void AddTaskHolderToDeferredQueue(TaskHolder taskHolder);
   void Execute();
   void ProcessDeferredQueue();
   void Run(std::unique_lock<std::mutex> &lock);

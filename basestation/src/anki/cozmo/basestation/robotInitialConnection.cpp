@@ -96,7 +96,7 @@ bool RobotInitialConnection::HandleDisconnect()
   PRINT_NAMED_INFO("RobotInitialConnection.HandleDisconnect", "robot connection failed");
 
   const auto result = RobotConnectionResult::ConnectionFailure;
-  OnNotified(result);
+  OnNotified(result, 0);
   return true;
 }
 
@@ -109,7 +109,7 @@ void RobotInitialConnection::HandleFactoryFirmware(const AnkiEvent<RobotToEngine
   PRINT_NAMED_INFO("RobotInitialConnection.HandleFactoryFirmware", "robot has factory firmware");
 
   const auto result = RobotConnectionResult::OutdatedFirmware;
-  OnNotified(result);
+  OnNotified(result, 0);
 }
 
 void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotToEngine>& message)
@@ -158,10 +158,10 @@ void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotToEngine
     }
   }
 
-  OnNotified(result);
+  OnNotified(result, robotVersion);
 }
 
-void RobotInitialConnection::OnNotified(RobotConnectionResult result)
+void RobotInitialConnection::OnNotified(RobotConnectionResult result, uint32_t robotFwVersion)
 {
   switch (result) {
     case RobotConnectionResult::OutdatedFirmware:
@@ -174,8 +174,8 @@ void RobotInitialConnection::OnNotified(RobotConnectionResult result)
   }
   _notified = true;
   ClearSignalHandles();
-  
-  _externalInterface->Broadcast(MessageEngineToGame{RobotConnectionResponse{_id, result}});
+
+  _externalInterface->Broadcast(MessageEngineToGame{RobotConnectionResponse{_id, result, robotFwVersion}});
 }
 
 }

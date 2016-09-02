@@ -137,7 +137,7 @@ namespace Anki {
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 223, "CozmoBot.InitFail.BackpackLightController", 305, "", 0);
         
         lastResult = IMUFilter::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 364, "CozmoBot.InitFail.IMUFilter", 305, "", 0);
+        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 366, "CozmoBot.InitFail.IMUFilter", 305, "", 0);
         
         lastResult = DockingController::Init();;
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 224, "CozmoBot.InitFail.DockingController", 305, "", 0);

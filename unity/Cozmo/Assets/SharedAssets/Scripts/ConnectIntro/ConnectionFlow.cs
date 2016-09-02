@@ -86,7 +86,7 @@ public class ConnectionFlow : MonoBehaviour {
     }
 
     if (_ConnectionFlowBackgroundInstance != null) {
-      GameObject.Destroy(_ConnectionFlowBackgroundInstance.gameObject);
+      UIManager.CloseViewImmediately(_ConnectionFlowBackgroundInstance);
     }
 
     if (_UpdateFirmwareScreenInstance != null) {
@@ -121,8 +121,14 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   private void ReturnToTitle() {
-    _ConnectionFlowBackgroundInstance.ViewClosed += QuitConnectionFlow;
-    UIManager.CloseView(_ConnectionFlowBackgroundInstance);
+    if (_ConnectionFlowBackgroundInstance != null) {
+      _ConnectionFlowBackgroundInstance.ViewClosed += QuitConnectionFlow;
+      UIManager.CloseView(_ConnectionFlowBackgroundInstance);
+      _ConnectionFlowBackgroundInstance = null;
+    }
+    else {
+      QuitConnectionFlow();
+    }
   }
 
   private void QuitConnectionFlow() {
@@ -282,6 +288,8 @@ public class ConnectionFlow : MonoBehaviour {
     else {
       if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
         ShowPullCubeTabsFlow();
+        UIManager.CloseView(_ConnectionFlowBackgroundInstance);
+        _ConnectionFlowBackgroundInstance = null;
       }
       else {
         CheckForRestoreRobotFlow();
@@ -343,7 +351,11 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   private void FinishConnectionFlow() {
-    UIManager.CloseView(_ConnectionFlowBackgroundInstance);
+    if (_ConnectionFlowBackgroundInstance != null) {
+      UIManager.CloseView(_ConnectionFlowBackgroundInstance);
+      _ConnectionFlowBackgroundInstance = null;
+    }
+
     if (RobotEngineManager.Instance.CurrentRobot != null) {
       RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("default_disabled", Anki.Cozmo.BehaviorType.ReactToOnCharger, true);
       RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("wakeup", Anki.Cozmo.BehaviorType.AcknowledgeObject, true);
@@ -367,6 +379,9 @@ public class ConnectionFlow : MonoBehaviour {
     // Silent if you've never done it before...
     if (!OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Home)) {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connecting);
+    }
+    else {
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
     }
   }
 
@@ -438,10 +453,7 @@ public class ConnectionFlow : MonoBehaviour {
     // When we are in the first time user flow, we enable the block pool when we get to the Pull Cube Tab screen
     if (!DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
       // Enable the automatic block pool
-      Anki.Cozmo.ExternalInterface.BlockPoolEnabledMessage blockPoolEnabledMessage = new Anki.Cozmo.ExternalInterface.BlockPoolEnabledMessage();
-      blockPoolEnabledMessage.enabled = true;
-      RobotEngineManager.Instance.Message.BlockPoolEnabledMessage = blockPoolEnabledMessage;
-      RobotEngineManager.Instance.SendMessage();
+      RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(true);
     }
 
     //Disable reactionary behaviors during wakeup

@@ -521,6 +521,14 @@ void AudioController::ProcessAudioQueue() const
 #endif
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioController::AppIsInFocus( const bool inFocus )
+{
+  PRINT_CH_INFO(kAudioLogChannelName, "AudioController.AppIsInFocus", "inFocus %c", inFocus ? 'Y' : 'N');
+  // Post App State Event
+  const GameEvent::Coz_App event = inFocus ? GameEvent::Coz_App::Enter_Foreground : GameEvent::Coz_App::Enter_Background;
+  PostAudioEvent(static_cast<const AudioEngine::AudioEventId>(event));
+}
 
 // Private
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

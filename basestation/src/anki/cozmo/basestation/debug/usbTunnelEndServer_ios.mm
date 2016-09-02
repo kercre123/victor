@@ -81,10 +81,92 @@
 - (BOOL)expectsRequestBodyFromMethod:(NSString *)method atPath:(NSString *)path
 {
   // Inform HTTP server that we expect a body to accompany a POST request
-  if([method isEqualToString:@"POST"])
+  if ([method isEqualToString:@"POST"])
     return YES;
   
   return [super expectsRequestBodyFromMethod:method atPath:path];
+}
+
+- (BOOL)prepareFaceAnimDir:(NSString *)path
+{
+  NSArray* path_list = [path componentsSeparatedByString:@"/"];
+  if (path_list && [path_list count] > 2)
+  {
+    // strip name from path
+    std::string anim_name = [[path_list objectAtIndex:2] UTF8String];
+
+    CozmoUSBTunnelHTTPServer* cozmo_server = (CozmoUSBTunnelHTTPServer*)[config server];
+    Anki::Util::Data::DataPlatform* data_platform = [cozmo_server GetDataPlatform];
+    if (data_platform)
+    {
+      // The "resource" file is not directly writable on device, so write to documents and then let reload overwrite.
+      std::string face_anim_dir = data_platform->pathToResource(Anki::Util::Data::Scope::Cache,
+                                                                Anki::Cozmo::USBTunnelServer::FaceAnimsDir);
+      std::string full_path = Anki::Util::FileUtils::FullFilePath({face_anim_dir, anim_name});
+      if (Anki::Util::FileUtils::DirectoryExists(full_path))
+      {
+        Anki::Util::FileUtils::RemoveDirectory(full_path);
+      }
+      Anki::Util::FileUtils::CreateDirectory(full_path);
+      return YES;
+    }
+  }
+  return NO;
+}
+
+- (BOOL)doFaceAnimUpdate:(NSString *)path
+{
+  // TODO: Change this to receive binary data and then "CopyFile()" instead of "WriteFile()" ???
+  NSData *postData = [request body];
+  if (postData)
+  {
+    NSArray* path_list = [path componentsSeparatedByString:@"/"];
+    if (path_list && [path_list count] > 3)
+    {
+      // strip names from path
+      std::string anim_name = [[path_list objectAtIndex:2] UTF8String];
+      std::string file_name = [[path_list objectAtIndex:3] UTF8String];
+
+      CozmoUSBTunnelHTTPServer* cozmo_server = (CozmoUSBTunnelHTTPServer*)[config server];
+      Anki::Util::Data::DataPlatform* data_platform = [cozmo_server GetDataPlatform];
+      if (data_platform)
+      {
+        // The "resource" file is not directly writable on device, so write to documents and then let reload overwrite.
+        std::string face_anim_dir = data_platform->pathToResource(Anki::Util::Data::Scope::Cache,
+                                                                  Anki::Cozmo::USBTunnelServer::FaceAnimsDir);
+        std::string dir_path = Anki::Util::FileUtils::FullFilePath({face_anim_dir, anim_name});
+        std::string file_path = Anki::Util::FileUtils::FullFilePath({dir_path, file_name});
+
+        // Can this be more efficient?
+        NSUInteger length = postData.length;
+        uint8_t *bytes = (uint8_t *)[postData bytes];
+        std::vector<uint8_t> v(bytes, bytes + length);
+        Anki::Util::FileUtils::WriteFile(file_path, v);
+
+        return YES;
+      }
+    }
+  }
+  return NO;
+}
+
+- (BOOL)processFaceAnimUpdate:(NSString *)path
+{
+  NSData *postData = [request body];
+  if (postData)
+  {
+    CozmoUSBTunnelHTTPServer* cozmo_server = (CozmoUSBTunnelHTTPServer*)[config server];
+    Anki::Cozmo::IExternalInterface* external_interface = [cozmo_server GetExternalInterface];
+    if (external_interface)
+    {
+      Anki::Cozmo::ExternalInterface::MessageGameToEngine read_msg;
+      Anki::Cozmo::ExternalInterface::ReadFaceAnimationDir m;
+      read_msg.Set_ReadFaceAnimationDir(m);
+      external_interface->BroadcastDeferred(std::move(read_msg));
+      return YES;
+    }
+  }
+  return NO;
 }
 
 - (BOOL)doAnimUpdate:(NSString *)path
@@ -94,7 +176,7 @@
   {
     NSString* postStr = [[NSString alloc] initWithData:postData encoding:NSUTF8StringEncoding];
     NSArray* path_list = [path componentsSeparatedByString:@"/"];
-    if( path_list && [path_list count] > 2)
+    if (path_list && [path_list count] > 2)
     {
       // strip name from path
       std::string anim_name = [[path_list objectAtIndex:2] UTF8String];
@@ -102,7 +184,7 @@
       CozmoUSBTunnelHTTPServer* cozmo_server = (CozmoUSBTunnelHTTPServer*)[config server];
       Anki::Util::Data::DataPlatform* data_platform = [cozmo_server GetDataPlatform];
       Anki::Cozmo::IExternalInterface* external_interface = [cozmo_server GetExternalInterface];
-      if( data_platform && external_interface)
+      if (data_platform && external_interface)
       {
         
         // The "resource" file is not directly writable on device, so write to documents and then let reload overwrite.
@@ -133,7 +215,7 @@
 {
   CozmoUSBTunnelHTTPServer* cozmo_server = (CozmoUSBTunnelHTTPServer*)[config server];
   Anki::Cozmo::IExternalInterface* external_interface = [cozmo_server GetExternalInterface];
-  if( external_interface)
+  if (external_interface)
   {
     bool is_enabled = [path containsString:@"true"];
     Anki::Cozmo::ExternalInterface::MessageGameToEngine reaction_enable_msg;
@@ -149,14 +231,26 @@
 {
   @autoreleasepool
   {
-    if ([method isEqualToString:@"POST"] )
+    if ( [method isEqualToString:@"POST"] )
     {
-     //Check for command that says update and play an animation
+      //Check for command that says update and play an animation
       // In the future we could have a command for updating other things via server command line as well.
       //localhost:2223/cmd_anim_update/anim_name
       if( [path containsString:@"cmd_anim_update/"] )
       {
         [self doAnimUpdate:path];
+      }
+      else if( [path containsString:@"cmd_face_anim_setup/"] )
+      {
+        [self prepareFaceAnimDir:path];
+      }
+      else if( [path containsString:@"cmd_face_anim_install/"] )
+      {
+        [self doFaceAnimUpdate:path];
+      }
+      else if( [path containsString:@"cmd_face_anim_refresh/"] )
+      {
+        [self processFaceAnimUpdate:path];
       }
       else if( [path containsString:@"cmd_enable_reactions/"] )
       {
@@ -166,7 +260,7 @@
       NSData *response = [@"Cozmo USB tunnel: Post Recieved\n" dataUsingEncoding:NSUTF8StringEncoding];
       return [[HTTPDataResponse alloc] initWithData:response];
     }
-    else if([method isEqualToString:@"GET"] )
+    else if( [method isEqualToString:@"GET"] )
     {
       NSData *get_response = [@"<html><body>Cozmo USB tunnel: Get Recieved<body></html>\n" dataUsingEncoding:NSUTF8StringEncoding];
       return [[HTTPDataResponse alloc] initWithData:get_response];
@@ -196,6 +290,7 @@ namespace Anki {
     };
     
     const std::string USBTunnelServer::TempAnimFileName("TestAnim.json");
+    const std::string USBTunnelServer::FaceAnimsDir(Anki::Util::FileUtils::FullFilePath({"assets", "faceAnimations"}));
     
     USBTunnelServer::USBTunnelServer(Anki::Cozmo::IExternalInterface* externalInterface, Anki::Util::Data::DataPlatform* dataPlatform) : _impl(new USBTunnelServerImpl{})
     {
@@ -212,7 +307,8 @@ namespace Anki {
         [_impl->_httpServer setConnectionClass:[CozmoUSBTunnelHTTPConnection class]];
         
         NSError *err = nil;
-        if (![_impl->_httpServer start:&err]) {
+        if (![_impl->_httpServer start:&err])
+        {
           [_impl->_httpServer stop];
           _impl->_httpServer = nil;
           NSString* errorString = [NSString stringWithFormat:@"%@", err];
@@ -224,13 +320,19 @@ namespace Anki {
     USBTunnelServer::~USBTunnelServer()
     {
       // Stop the server
-      if (_impl->_httpServer != nil) {
+      if (_impl->_httpServer != nil)
+      {
          Anki::Util::Data::DataPlatform* dataPlatform = [_impl->_httpServer GetDataPlatform];
         // Clean up what we might have created
         std::string full_path = dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, USBTunnelServer::TempAnimFileName);
         if( Util::FileUtils::FileExists(full_path))
         {
           Util::FileUtils::DeleteFile(full_path);
+        }
+        std::string face_anim_dir = dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, USBTunnelServer::FaceAnimsDir);
+        if (Util::FileUtils::DirectoryExists(face_anim_dir))
+        {
+          Util::FileUtils::RemoveDirectory(face_anim_dir);
         }
         [_impl->_httpServer stop];
         _impl->_httpServer = nil;
@@ -243,6 +345,7 @@ namespace Anki {
 namespace Anki {
   namespace Cozmo {
       const std::string USBTunnelServer::TempAnimFileName("TestAnim.json");
+      const std::string USBTunnelServer::FaceAnimsDir(Anki::Util::FileUtils::FullFilePath({"assets", "faceAnimations"}));
       struct USBTunnelServer::USBTunnelServerImpl {};
       USBTunnelServer::USBTunnelServer(Anki::Cozmo::IExternalInterface* , Anki::Util::Data::DataPlatform* ) {}
       USBTunnelServer::~USBTunnelServer() {}

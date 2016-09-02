@@ -15,5 +15,5 @@
   ],
   
   "requiredRecentDriveOffCharger_sec" : 1.0,
-  "animTrigger": "HikingWakeUpOffCharger"
+  "animTriggers": ["HikingWakeUpOffCharger"]
 }

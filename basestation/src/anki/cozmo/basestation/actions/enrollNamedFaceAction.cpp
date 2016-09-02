@@ -44,12 +44,24 @@ namespace Anki {
 namespace Cozmo {
 
   namespace {
-    CONSOLE_VAR(f32,               kMinSoundSpace_s,                     "Actions.EnrollNamedFace", 0.25f);
-    CONSOLE_VAR(f32,               kMaxSoundSpace_s,                     "Actions.EnrollNamedFace", 0.75f);
+    // Use backpack lights to help debug when enrollment is occurring or not.
     CONSOLE_VAR(bool,              kUseBackpackLights,                   "Actions.EnrollNamedFace", false);
     CONSOLE_VAR(TimeStamp_t,       kTimeoutForBackpackLights_ms,         "Actions.EnrollNamedFace", 250);
+    
+    // Thresholds for when to update face ID based on pose
     CONSOLE_VAR(f32,               kUpdateFacePositionThreshold_mm,      "Actions.EnrollNamedFace", 100.f);
     CONSOLE_VAR(f32,               kUpdateFaceAngleThreshold_deg,        "Actions.EnrollNamedFace", 45.f);
+    
+    // Default timeout for this action (vs. the one inherited from IAction
+    CONSOLE_VAR(f32,               kFaceEnrollmentTimeout_sec,           "Actions.EnrollNamedFace", 15.f);
+    
+    // Amount to drive forward once face is found to signify intent
+    CONSOLE_VAR(f32,               kDriveForwardIntentDist_mm,           "Actions.EnrollNamedFace", 14.f);
+    CONSOLE_VAR(f32,               kDriveForwardIntentSpeed_mmps,        "Actions.EnrollNamedFace", 75.f);
+    
+    // Minimum angles to turn during tracking to keep the robot moving and looking alive
+    CONSOLE_VAR(f32,               kMinTrackingPanAngle_deg,             "Actions.EnrollNamedFace", 5.0f);
+    CONSOLE_VAR(f32,               kMinTrackingTiltAngle_deg,            "Actions.EnrollNamedFace", 4.0f);
     
     const char* kLogChannelName = "FaceRecognizer";
   }
@@ -123,11 +135,16 @@ namespace Cozmo {
   static TrackFaceAction* CreateTrackAction(Robot& robot, Vision::FaceID_t faceID)
   {
     TrackFaceAction* trackAction = new TrackFaceAction(robot, faceID);
-    //trackAction->SetSound("");
-    // Make him make more sound while enrolling:
-    trackAction->SetSoundSpacing(kMinSoundSpace_s, kMaxSoundSpace_s);
-    trackAction->SetMinPanAngleForSound(DEG_TO_RAD(5));
-    trackAction->SetMinTiltAngleForSound(DEG_TO_RAD(5));
+    
+    // Disable tracking sounds because we have a face enrollment idle animation
+    // which has special sound
+    trackAction->SetSound(AnimationTrigger::Count);
+    
+    // Add constant small movement
+    trackAction->SetTiltTolerance(DEG_TO_RAD_F32(kMinTrackingTiltAngle_deg));
+    trackAction->SetPanTolerance(DEG_TO_RAD_F32(kMinTrackingPanAngle_deg));
+    trackAction->SetClampSmallAnglesToTolerances(true);
+    
     return trackAction;
   }
   
@@ -255,7 +272,10 @@ namespace Cozmo {
           .startFcn = [this]() {
             PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.SimpleStepOneStart", "");
             SetBackpackLightsHelper(_robot, NamedColors::GREEN);
-            SetAction( new TriggerAnimationAction(_robot, AnimationTrigger::MeetCozmoGetIn) );
+            SetAction( new CompoundActionParallel(_robot, {
+              new TriggerAnimationAction(_robot, AnimationTrigger::MeetCozmoGetIn),
+              new DriveStraightAction(_robot, kDriveForwardIntentDist_mm, kDriveForwardIntentSpeed_mmps, false)
+            }));
             return RESULT_OK;
           },
           .duringFcn = [this]() {
@@ -588,6 +608,7 @@ namespace Cozmo {
           PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.TransitionToPostActing", "");
           _state = State::PostActing;
         }
+        
         break;
       }
         
@@ -640,11 +661,11 @@ namespace Cozmo {
                 _robot.GetRobotAudioClient()->PostMusicState((Audio::GameState::GenericState)Audio::GameState::Music::Minigame__Meet_Cozmo_Say_Name, false, 0);
                 
                 // 1. Say name once
-                SayTextAction* sayNameAction1 = new SayTextAction(_robot, _faceName, SayTextIntent::Name_FirstIntroduction);
+                SayTextAction* sayNameAction1 = new SayTextAction(_robot, _faceName, SayTextIntent::Name_FirstIntroduction_1);
                 sayNameAction1->SetAnimationTrigger(AnimationTrigger::MeetCozmoFirstEnrollmentSayName);
                 
                 // 2. Repeat name
-                SayTextAction* sayNameAction2 = new SayTextAction(_robot, _faceName, SayTextIntent::Name_FirstIntroduction);
+                SayTextAction* sayNameAction2 = new SayTextAction(_robot, _faceName, SayTextIntent::Name_FirstIntroduction_2);
                 sayNameAction2->SetAnimationTrigger(AnimationTrigger::MeetCozmoFirstEnrollmentRepeatName);
                 
                 // 3. Big celebrate (no name being said)
@@ -743,8 +764,8 @@ namespace Cozmo {
       return 2.f*IAction::GetTimeoutInSeconds();
     }
   
-    // Normally, just use the base class's default timeout
-    return IAction::GetTimeoutInSeconds();
+    // Regular timeout, as determined by console var:
+    return kFaceEnrollmentTimeout_sec;
   }
   
 #pragma mark -

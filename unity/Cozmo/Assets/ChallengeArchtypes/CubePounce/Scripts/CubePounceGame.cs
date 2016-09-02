@@ -56,7 +56,6 @@ namespace Cozmo.Minigame.CubePounce {
       CurrentRobot.SetEnableCliffSensor(false);
       LightCube.OnMovedAction += HandleCubeMoved;
       LightCube.OnStoppedAction += HandleCubeStopped;
-      SharedMinigameView.HideHowToPlayButton();
     }
 
     protected void InitializeMinigameObjects(int numCubes) {

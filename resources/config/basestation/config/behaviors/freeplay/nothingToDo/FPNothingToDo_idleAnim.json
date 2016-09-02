@@ -1,6 +1,6 @@
 //
 // NothingToDo_Idle
-// This behavior triggers when Cozmo has nothing to do. Play random anims.
+// This behavior triggers when Cozmo has nothing to do. Play idle animations
 //
 //
 //
@@ -13,5 +13,6 @@
     "FP_NothingToDo"
   ],
   
-   "animTrigger": "NothingToDoBored"
+  // anim
+  "animTriggers": [ "NothingToDoBoredIdle" ]
 }

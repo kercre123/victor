@@ -1,7 +1,7 @@
 {
   "behaviorType": "PlayAnim",
   "name": "demo_wakeUp",
-  "animTrigger": "ConnectWakeUp",
+  "animTriggers": ["ConnectWakeUp"],
   "emotionScorers": [
     {
       "emotionType": "Excited",

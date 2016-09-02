@@ -161,8 +161,9 @@ public abstract class GameBase : MonoBehaviour {
 
     if (CurrentRobot != null) {
       CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
-      // If is Runnable because Cozmo is holding a cube will run, otherwise don't do anything....
-      CurrentRobot.ExecuteBehavior(BehaviorType.PutDownBlock);
+      if ((CurrentRobot.RobotStatus & RobotStatusFlag.IS_CARRYING_BLOCK) != 0) {
+        CurrentRobot.PlaceObjectOnGroundHere();
+      }
       CurrentRobot.SetEnableFreeplayLightStates(false);
     }
   }
@@ -172,7 +173,6 @@ public abstract class GameBase : MonoBehaviour {
     AssetBundleManager.Instance.LoadAssetBundleAsync(
       minigameAssetBundleName, (bool success) => {
         LoadSharedMinigameView(minigameAssetBundleName);
-        CubePalette.LoadCubePalette(minigameAssetBundleName);
       });
   }
 
@@ -188,8 +188,30 @@ public abstract class GameBase : MonoBehaviour {
         }
       });
 
-      PrepRobotForGame();
+      bool videoPlayedAlready = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.ContainsKey(_ChallengeData.ChallengeID);
+      bool noInstructionVideo = string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath);
+
+      if (videoPlayedAlready || noInstructionVideo) {
+        FinishedInstructionalVideo();
+      }
+      else {
+        SharedMinigameView.PlayVideo(_ChallengeData.InstructionVideoPath, FinishedInstructionalVideo);
+      }
+
     });
+  }
+
+  private void FinishedInstructionalVideo() {
+    bool videoPlayedAlready = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.ContainsKey(_ChallengeData.ChallengeID);
+    if (!videoPlayedAlready) {
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.Add(_ChallengeData.ChallengeID, true);
+      DataPersistence.DataPersistenceManager.Instance.Save();
+    }
+    InitializeGame(_ChallengeData.MinigameConfig);
+    if (!string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath)) {
+      _SharedMinigameViewInstance.ShowHowToPlayButton();
+    }
+    PrepRobotForGame();
   }
 
   private void InitializeMinigameView(SharedMinigameView newView, ChallengeData data) {
@@ -209,6 +231,7 @@ public abstract class GameBase : MonoBehaviour {
     newView.ShowWideSlideWithText(LocalizationKeys.kMinigameLabelCozmoPrep, null);
     newView.ShowShelf();
     newView.ShowSpinnerWidget();
+    newView.QuitMiniGameConfirmed += HandleQuitConfirmed;
     ContextManager.Instance.OnAppHoldStart += HandleAppHoldStart;
     ContextManager.Instance.OnAppHoldEnd += HandleAppHoldEnd;
   }
@@ -248,34 +271,13 @@ public abstract class GameBase : MonoBehaviour {
   private void FinishTurnToFace(bool success) {
     _SharedMinigameViewInstance.ShowMiddleBackground();
     _SharedMinigameViewInstance.HideSpinnerWidget();
-    _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
 
     DAS.SetGlobal(DASConstants.Game.kGlobal, GetDasGameName());
     DAS.Event(DASConstants.Game.kStart, GetGameUUID());
     DAS.Event(DASConstants.Game.kType, GetDasGameName());
 
-    bool videoPlayedAlready = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.ContainsKey(_ChallengeData.ChallengeID);
-    bool noInstructionVideo = string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath);
-
-    if (videoPlayedAlready || noInstructionVideo) {
-      FinishedInstructionalVideo();
-    }
-    else {
-      SharedMinigameView.PlayVideo(_ChallengeData.InstructionVideoPath, FinishedInstructionalVideo);
-    }
-  }
-
-  private void FinishedInstructionalVideo() {
-    bool videoPlayedAlready = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.ContainsKey(_ChallengeData.ChallengeID);
-    if (!videoPlayedAlready) {
-      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.Add(_ChallengeData.ChallengeID, true);
-      DataPersistence.DataPersistenceManager.Instance.Save();
-    }
-    InitializeGame(_ChallengeData.MinigameConfig);
-    if (!string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath)) {
-      _SharedMinigameViewInstance.ShowHowToPlayButton();
-    }
     SetupViewAfterCozmoReady(_SharedMinigameViewInstance, _ChallengeData);
+
   }
 
   /// <summary>
@@ -559,6 +561,10 @@ public abstract class GameBase : MonoBehaviour {
   private void QuitMinigame() {
     _SharedMinigameViewInstance.ViewCloseAnimationFinished += QuitMinigameAnimationFinished;
     _SharedMinigameViewInstance.CloseView();
+
+    // cancels any queed up actions or co-routines
+    CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
+    StopAllCoroutines();
   }
 
   private void QuitMinigameAnimationFinished() {
@@ -601,17 +607,8 @@ public abstract class GameBase : MonoBehaviour {
       CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
     }
 
-    // Reset robot state after clearing the queue (wheels, head and lift included)
-    if (CurrentRobot != null) {
-      CurrentRobot.ResetRobotState(ResetRobotStateComplete);
-    }
-
     // Some CleanUpOnDestroy overrides send a robot animation as well
     CleanUpOnDestroy();
-
-  }
-
-  private void ResetRobotStateComplete() {
     Destroy(gameObject);
   }
 
@@ -622,14 +619,9 @@ public abstract class GameBase : MonoBehaviour {
     DAS.Debug("GameBase.SoftEndGameRobotReset", "soft end game reset called");
 
     if (CurrentRobot != null) {
-      CurrentRobot.ResetRobotState(SoftEndGameRobotResetComplete);
-      // Disable all Request game behavior groups so we don't request games at the 
-      // end of game screen.
       RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.NoGame);
     }
-  }
 
-  private void SoftEndGameRobotResetComplete() {
     if (OnShowEndGameDialog != null) {
       OnShowEndGameDialog();
     }
@@ -733,6 +725,7 @@ public abstract class GameBase : MonoBehaviour {
     if (RewardedActionManager.Instance.RewardPending || RewardedActionManager.Instance.NewDifficultyPending) {
       SharedMinigameView.HidePlayerScoreboard();
       SharedMinigameView.HideCozmoScoreboard();
+      RewardedActionManager.Instance.ResolveTagRewardCollisions();
       SharedMinigameView.ShowContinueButtonOffset(HandleChallengeResultViewClosed,
         Localization.GetWithArgs(LocalizationKeys.kRewardCollectCollectEnergy, RewardedActionManager.Instance.TotalPendingEnergy),
         Localization.Get(LocalizationKeys.kRewardCollectInstruction),

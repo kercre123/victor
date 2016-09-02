@@ -27,8 +27,7 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
       OffPeriodMs = offDurationMs;
       TransitionOnPeriodMs = transitionMs;
       TransitionOffPeriodMs = transitionMs;
-      OnOffset = 0;
-      OffOffset = 0;
+      Offset = 0;
     }
   }
 
@@ -325,8 +324,7 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
       SetAllActiveObjectLEDsMessage.transitionOffPeriod_ms[i] = Lights[i].TransitionOffPeriodMs;
       SetAllActiveObjectLEDsMessage.onColor[i] = Lights[i].OnColor;
       SetAllActiveObjectLEDsMessage.offColor[i] = Lights[i].OffColor;
-      SetAllActiveObjectLEDsMessage.onOffset [i] = Lights[i].OnOffset;
-      SetAllActiveObjectLEDsMessage.offOffset [i] = Lights[i].OffOffset;
+      SetAllActiveObjectLEDsMessage.offset[i] = Lights[i].Offset;
     }
 
     SetAllActiveObjectLEDsMessage.makeRelative = relativeMode;
@@ -395,8 +393,7 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
       light.OffPeriodMs = offPeriod_ms;
       light.TransitionOnPeriodMs = transitionOnPeriod_ms;
       light.TransitionOffPeriodMs = transitionOffPeriod_ms;
-      light.OnOffset = 0;
-      light.OffOffset = 0;
+      light.Offset = 0;
     }
 
     relativeMode = 0;
@@ -419,8 +416,7 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
       light.OffPeriodMs = offPeriod_ms;
       light.TransitionOnPeriodMs = transitionOnPeriod_ms;
       light.TransitionOffPeriodMs = transitionOffPeriod_ms;
-      light.OnOffset = 0;
-      light.OffOffset = 0;
+      light.Offset = 0;
     }
 
     relativeMode = 0;

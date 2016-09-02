@@ -54,6 +54,7 @@ namespace Cozmo {
         }
         protected override void CleanUpOnDestroy() {
           // TODO
+          StopAllCoroutines();
         }
 
         public void EnableTiltInput() {

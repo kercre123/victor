@@ -108,7 +108,7 @@ public class IntroManager : MonoBehaviour {
       _CheckInDialogInstance.GetComponent<CheckInFlow>().HandleRobotDisconnect();
       return;
     }
-
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
     StartFlow();
   }
 

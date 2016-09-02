@@ -18,6 +18,7 @@
 
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
+#include "util/logging/callstack.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 
@@ -122,6 +123,26 @@ void NavMeshQuadTree::AddQuad(const Quad2f& quad, const NodeContent& nodeContent
 {
   ANKI_CPU_PROFILE("NavMeshQuadTree::AddQuad");
   
+  {
+    // I have had a unit test send here a NaN quad, probably because a cube pose was busted, detect that case
+    // here and ignore the quad so that we don't assert because we expand indefinitely
+    const bool isNaNQuad =
+      std::isnan(quad.GetTopLeft().x()    ) ||
+      std::isnan(quad.GetTopLeft().y()    ) ||
+      std::isnan(quad.GetTopRight().x()   ) ||
+      std::isnan(quad.GetTopRight().y()   ) ||
+      std::isnan(quad.GetBottomLeft().x() ) ||
+      std::isnan(quad.GetBottomLeft().y() ) ||
+      std::isnan(quad.GetBottomRight().x()) ||
+      std::isnan(quad.GetBottomRight().y());
+    if ( isNaNQuad ) {
+      PRINT_NAMED_ERROR("NavMeshQuadTree.AddQuad.NaNQuad",
+        "Quad is not valid, at least one coordinate is NaN.");
+      Util::sDumpCallstack("NavMeshQuadTree::AddQuad");
+      return;
+    }
+  }
+  
   // render approx last quad added
   if ( kRenderLastAddedQuad )
   {
@@ -153,6 +174,22 @@ void NavMeshQuadTree::AddQuad(const Quad2f& quad, const NodeContent& nodeContent
 void NavMeshQuadTree::AddLine(const Point2f& from, const Point2f& to, const NodeContent& nodeContent)
 {
   ANKI_CPU_PROFILE("NavMeshQuadTree::AddLine");
+  
+  {
+    // I have had a unit test send here a NaN quad, probably because a cube pose was busted, detect here
+    // if a line is also nan
+    const bool isNaNLine =
+      std::isnan(from.x()) ||
+      std::isnan(from.y()) ||
+      std::isnan(to.x()  ) ||
+      std::isnan(to.y()  );
+    if ( isNaNLine ) {
+      PRINT_NAMED_ERROR("NavMeshQuadTree.AddLine.NaNQuad",
+        "Line is not valid, at least one coordinate is NaN.");
+      Util::sDumpCallstack("NavMeshQuadTree::AddLine");
+      return;
+    }
+  }
 
   // if the root does not contain origin, we need to expand in that direction
   if ( !_root.Contains( from ) )
@@ -174,6 +211,24 @@ void NavMeshQuadTree::AddLine(const Point2f& from, const Point2f& to, const Node
 void NavMeshQuadTree::AddTriangle(const Triangle2f& tri, const NodeContent& nodeContent)
 {
   ANKI_CPU_PROFILE("NavMeshQuadTree::AddTriangle");
+  
+  {
+    // I have had a unit test send here a NaN quad, probably because a cube pose was busted, detect here if
+    // a triangle becomes NaN ever to prevent expanding indefinitely
+    const bool isNaNTri =
+      std::isnan(tri[0].x()) ||
+      std::isnan(tri[0].y()) ||
+      std::isnan(tri[1].x()) ||
+      std::isnan(tri[1].y()) ||
+      std::isnan(tri[2].x()) ||
+      std::isnan(tri[2].y());
+    if ( isNaNTri ) {
+      PRINT_NAMED_ERROR("NavMeshQuadTree.AddTriangle.NaNQuad",
+        "Triangle is not valid, at least one coordinate is NaN.");
+      Util::sDumpCallstack("NavMeshQuadTree::AddTriangle");
+      return;
+    }
+  }
 
   // if the root does not contain the triangle, we need to expand in that direction
   if ( !_root.Contains( tri ) )

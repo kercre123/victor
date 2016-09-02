@@ -67,6 +67,8 @@ namespace FaceEnrollment {
     }
 
     protected override void AddDisabledReactionaryBehaviors() {
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.AcknowledgeFace);
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.AcknowledgeObject);
       _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToCubeMoved);
       _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToCliff);
       _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToPickup);
@@ -201,6 +203,7 @@ namespace FaceEnrollment {
     }
 
     private void HandleInstructionsSlideEntered() {
+      CurrentRobot.SetEnableCliffSensor(false);
       if (_UseFixedFaceID) {
         CurrentRobot.EnrollNamedFace(_FixedFaceID, _ReEnrollFaceID, _NameForFace, saveToRobot: _SaveToRobot);
       }
@@ -217,7 +220,7 @@ namespace FaceEnrollment {
       }
 
       _EnrollingFace = false;
-
+      CurrentRobot.SetEnableCliffSensor(true);
       // dont show errors if we user cancels enrollment.
       if (_UserCancelledEnrollment) {
         // reset _ReEnrollFaceID
@@ -227,11 +230,11 @@ namespace FaceEnrollment {
       }
 
       // cancelled for some other reason (eg. interrupt by picking up / place on back).
-      if (message.result == Anki.Cozmo.ActionResult.CANCELLED) {
-        _ReEnrollFaceID = 0;
-        EditOrEnrollFaceComplete(false);
-        ContextManager.Instance.AppFlash(playChime: true);
-        UIManager.CloseView(_FaceEnrollmentInstructionsViewInstance);
+      // we also include FAILURE_NOT_STARTED because that can be triggered if the action was interrupted
+      // before we even start the action (but it is queued).
+      if (message.result == Anki.Cozmo.ActionResult.CANCELLED || message.result == Anki.Cozmo.ActionResult.FAILURE_NOT_STARTED) {
+        // start listening for when the reactionary behavior is done so we can try again
+        RobotEngineManager.Instance.AddCallback<ReactionaryBehaviorTransition>(RetryFaceEnrollmentOnReactionaryBehaviorEnd);
         return;
       }
 
@@ -301,17 +304,17 @@ namespace FaceEnrollment {
 
       RobotActionUnion[] actions = {
         // 1. say name once
-        new RobotActionUnion().Initialize(Singleton<SayTextWithIntent>.Instance.Initialize(
+        new RobotActionUnion().Initialize(new SayTextWithIntent().Initialize(
           _NameForFace,
           Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentSayName,
-          Anki.Cozmo.SayTextIntent.Name_FirstIntroduction)),
+          Anki.Cozmo.SayTextIntent.Name_FirstIntroduction_1)),
         // 2. repeat name                      
-        new RobotActionUnion().Initialize(Singleton<SayTextWithIntent>.Instance.Initialize(
+        new RobotActionUnion().Initialize(new SayTextWithIntent().Initialize(
           _NameForFace,
           Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentRepeatName,
-          Anki.Cozmo.SayTextIntent.Name_FirstIntroduction)),
+          Anki.Cozmo.SayTextIntent.Name_FirstIntroduction_2)),
         // 3. final celebration (no name said)                
-        new RobotActionUnion().Initialize(Singleton<PlayAnimationTrigger>.Instance.Initialize(CurrentRobot.ID, 1, Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentCelebration))
+        new RobotActionUnion().Initialize(Singleton<PlayAnimationTrigger>.Instance.Initialize(CurrentRobot.ID, 1, Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentCelebration,true))
       };
 
       CurrentRobot.SendQueueCompoundAction(actions, HandleEnrollFaceAnimationSequenceComplete);
@@ -337,6 +340,13 @@ namespace FaceEnrollment {
         _ShowDoneShelf = true;
       }
       ShowFaceListSlide(SharedMinigameView);
+    }
+
+    private void RetryFaceEnrollmentOnReactionaryBehaviorEnd(Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition message) {
+      if (message.behaviorStarted == false) {
+        HandleInstructionsSlideEntered();
+        RobotEngineManager.Instance.RemoveCallback<ReactionaryBehaviorTransition>(RetryFaceEnrollmentOnReactionaryBehaviorEnd);
+      }
     }
 
     // pop up a confirmation for deleting an enrolled face

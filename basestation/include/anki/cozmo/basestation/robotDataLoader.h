@@ -47,6 +47,7 @@ public:
 
   // refresh individual data pieces after initial load
   void LoadAnimations();
+  void LoadFaceAnimations();
 
   using FileJsonMap = std::unordered_map<std::string, const Json::Value>;
   const FileJsonMap& GetEmotionEventJsons() const { return _emotionEvents; }
@@ -67,7 +68,6 @@ private:
   void LoadAnimationFile(const std::string& path);
   void LoadAnimationGroups();
   void LoadAnimationGroupFile(const std::string& path);
-  void LoadFaceAnimations();
   void LoadAnimationTriggerResponses();
   void LoadRobotConfigs();
 

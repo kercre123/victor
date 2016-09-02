@@ -60,6 +60,12 @@
   "button.play": {
     "translation": "Play"
   },
+  "button.leave": {
+    "translation": "Leave"
+  },
+  "button.staySparked": {
+    "translation": "Stay Sparked"
+  },
   "button.soundsGood": {
     "translation": "Sounds Good"
   },
@@ -188,5 +194,17 @@
   },
   "soundcheck.description.confirm": {
     "translation": "Did you hear the sound?"
+  },
+  "error.badLight.Top": {
+    "translation": "Cozmo is having trouble seeing!"
+  },
+  "error.badLight.Bottom": {
+    "translation": "Cozmo works best indoors in a well lit space"
+  },
+  "label.cozmo.serial": {
+    "translation": "Last Connected Cozmo: {0}"
+  },
+  "label.deviceid": {
+    "translation": "Device ID: {0}"
   }
 }

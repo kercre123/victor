@@ -50,17 +50,16 @@ static inline void AlphaBlend(
   const uint16_t startColor, const uint16_t endColor,
   const uint16_t phase, const int frames)
 {
-  const int coff = phase * DivTable[frames];
-  const uint8_t alpha = coff >> 8;
-  const uint8_t invAlpha = ~alpha;
+  const unsigned int alpha = phase * DivTable[frames];
+  const unsigned int invAlpha = 0x10000 - alpha;
 
   const LightSet start = { UNPACK_COLORS(startColor) };
   const LightSet end = { UNPACK_COLORS(endColor) };
   
-  color.red = (start.red * invAlpha + end.red * alpha) >> 8;
-  color.green = (start.green * invAlpha + end.green * alpha) >> 8;
-  color.blue = (start.blue * invAlpha + end.blue * alpha) >> 8;
-  color.ir = (invAlpha >= 0x80) ? start.ir : end.ir;
+  color.red = (start.red * invAlpha + end.red * alpha) >> 16;
+  color.green = (start.green * invAlpha + end.green * alpha) >> 16;
+  color.blue = (start.blue * invAlpha + end.blue * alpha) >> 16;
+  color.ir = (alpha < 0x8000) ? start.ir : end.ir;
 }
 
 static inline bool transition(int& phase, LightMode& mode, const uint16_t frames, const LightMode next) {
@@ -156,7 +155,8 @@ void Lights::update(LightValues& light, const LightState* params) {
   } else {
     light.mode = HOLD;
     light.index = 0;
-    light.phase = 0;
+    // offset + offFrames so we start in the fade on phase
+    light.phase = params->offset + params->offFrames;
     light.frameCount = 2;
 
     light.keyframes[0].color = params->offColor;

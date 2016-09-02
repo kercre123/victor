@@ -385,6 +385,12 @@ namespace Anki {
         _lightsSet = true;
       }
       
+      // If this is a reset clear the _squintLayerTag
+      if(_squintLayerTag != AnimationStreamer::NotAnimatingTag){
+        _robot.GetAnimationStreamer().RemovePersistentFaceLayer(_squintLayerTag, 250);
+        _squintLayerTag = AnimationStreamer::NotAnimatingTag;
+      }
+      
       // Go ahead and Update the FaceObjectAction once now, so we don't
       // waste a tick doing so in CheckIfDone (since this is the first thing
       // that will be done in CheckIfDone anyway)
@@ -867,7 +873,10 @@ namespace Anki {
             break;
           }
           
-          const BlockWorld::ObjectsMapByID_t& objectsWithType = blockWorld.GetExistingObjectsByType(carryObject->GetType());
+          BlockWorldFilter filter;
+          filter.SetAllowedTypes({carryObject->GetType()});
+          std::vector<ObservableObject*> objectsWithType;
+          blockWorld.FindMatchingObjects(filter, objectsWithType);
           
           // Robot's pose parent could have changed due to delocalization.
           // Assume it's actual pose is relatively accurate w.r.t. that original
@@ -883,18 +892,18 @@ namespace Anki {
             // TODO: is it safe to always have useAbsRotation=true here?
             Vec3f Tdiff;
             Radians angleDiff;
-            if(object.second->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose, // dock obj orig pose is w.r.t. robot
-                                                               carryObject->GetRotationAmbiguities(),
-                                                               carryObject->GetSameDistanceTolerance()*0.5f,
-                                                               carryObject->GetSameAngleTolerance(), true,
-                                                               Tdiff, angleDiff))
+            if(object->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose, // dock obj orig pose is w.r.t. robot
+                                                        carryObject->GetRotationAmbiguities(),
+                                                        carryObject->GetSameDistanceTolerance()*0.5f,
+                                                        carryObject->GetSameAngleTolerance(), true,
+                                                        Tdiff, angleDiff))
             {
               PRINT_NAMED_INFO("PickupObjectAction.Verify.ObjectInOrigPose",
                                "Seeing object %d in original pose. (Tdiff = (%.1f,%.1f,%.1f), "
                                "AngleDiff=%.1fdeg",
-                               object.first.GetValue(),
+                               object->GetID().GetValue(),
                                Tdiff.x(), Tdiff.y(), Tdiff.z(), angleDiff.getDegrees());
-              objectInOriginalPose = object.second.get();
+              objectInOriginalPose = object;
               break;
             }
           }

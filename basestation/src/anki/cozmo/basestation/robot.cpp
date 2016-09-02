@@ -115,6 +115,7 @@ CONSOLE_VAR(bool, kDebugPossibleBlockInteraction, "Robot", false);
 // timeToConsiderOfftreads is tuned based on the fact that we have to wait half a second from the time the cliff sensor detects
 // ground to when the robot state message updates to the fact that it is no longer picked up
 static const float kRobotTimeToConsiderOfftreads_ms = 250.0f;
+static const float kRobotTimeToConsiderOfftreadsOnBack_ms = kRobotTimeToConsiderOfftreads_ms * 5.0f;
 
 // Laying flat angles
 static const float kPitchAngleOntreads_rads = DEG_TO_RAD(0);
@@ -430,7 +431,8 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   {
     // Transition to Robot on Back
     _awaitingConfirmationTreadState = OffTreadsState::OnBack;
-    _timeOffTreadStateChanged_ms = currentTimestamp;
+    // On Back is a special case as it is also an intermediate state for coming from onface -> ontreads. hence we wait a little longer than usual(kRobotTimeToConsiderOfftreads_ms) to check if it's on back.
+    _timeOffTreadStateChanged_ms = currentTimestamp + kRobotTimeToConsiderOfftreadsOnBack_ms;
   }
   else if(currOntreads
           && _awaitingConfirmationTreadState != OffTreadsState::InAir
@@ -532,8 +534,6 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     
 void Robot::Delocalize(bool isCarryingObject)
 {
-  PRINT_NAMED_INFO("Robot.Delocalize", "Delocalizing robot %d.\n", GetID());
-      
   _isLocalized = false;
   _localizedToID.UnSet();
   _localizedToFixedObject = false;
@@ -558,6 +558,10 @@ void Robot::Delocalize(bool isCarryingObject)
   _worldOrigin = new Pose3d();
   PoseOriginID_t originID = _poseOriginList.AddOrigin(_worldOrigin);
   _worldOrigin->SetName("Robot" + std::to_string(_ID) + "_PoseOrigin" + std::to_string(originID));
+  
+  // Log delocalization, new origin name, and num origins to DAS
+  PRINT_NAMED_EVENT("Robot.Delocalize", "Delocalizing robot %d. New origin: %s. NumOrigins=%zu",
+                    GetID(), _worldOrigin->GetName().c_str(), _poseOriginList.GetSize());
   
   _pose.SetRotation(0, Z_AXIS_3D());
   _pose.SetTranslation({0.f, 0.f, 0.f});
@@ -1439,11 +1443,11 @@ Result Robot::Update(bool ignoreVisionModes)
 
   if( kDebugPossibleBlockInteraction ) {
     // print a bunch of info helpful for debugging block states
-    for( const auto& objByTypePair : GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube) ) {
-      for( const auto& objByIdPair : objByTypePair.second ) {
-        ObjectID objID = objByIdPair.first;
-        const ObservableObject* obj = objByIdPair.second.get();
-
+    BlockWorldFilter filter;
+    filter.SetAllowedFamilies({ObjectFamily::LightCube});
+    std::vector<ObservableObject*> matchingObjects;
+    GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
+    for( const auto obj : matchingObjects ) {
         const ObservableObject* topObj = GetBlockWorld().FindObjectOnTopOf(*obj, STACKED_HEIGHT_TOL_MM);
         Pose3d relPose;
         bool gotRelPose = obj->GetPose().GetWithRespectTo(GetPose(), relPose);
@@ -1456,12 +1460,12 @@ Result Robot::Update(bool ignoreVisionModes)
           case AxisName::Y_NEG: axisStr="-Y"; break;
           case AxisName::Z_POS: axisStr="+Z"; break;
           case AxisName::Z_NEG: axisStr="-Z"; break;
-        }
+        
               
         PRINT_NAMED_DEBUG("Robot.ObjectInteractionState",
                           "block:%d poseState:%8s moving?%d RestingFlat?%d carried?%d poseWRT?%d objOnTop:%d"
                           " z=%6.2f UpAxis:%s CanStack?%d CanPickUp?%d FromGround?%d",
-                          objID.GetValue(),
+                          obj->GetID().GetValue(),
                           obj->PoseStateToString( obj->GetPoseState() ),
                           obj->IsMoving(),
                           obj->IsRestingFlat(),
@@ -1976,13 +1980,11 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   // rooted to this world origin will get updated to be w.r.t. the new origin.
   if(_worldOrigin != &existingObject->GetPose().FindOrigin())
   {
-    PRINT_NAMED_INFO("Robot.LocalizeToObject.RejiggeringOrigins",
-                     "Robot %d's current world origin is %s, about to "
-                     "localize to world origin %s.",
-                     GetID(),
-                     _worldOrigin->GetName().c_str(),
-                     existingObject->GetPose().FindOrigin().GetName().c_str());
-        
+    PRINT_NAMED_EVENT("Robot.LocalizeToObject.RejiggeringOrigins",
+                      "Robot %d's current origin is %s, about to localize to origin %s.",
+                      GetID(), _worldOrigin->GetName().c_str(),
+                      existingObject->GetPose().FindOrigin().GetName().c_str());
+    
     // Store the current origin we are about to change so that we can
     // find objects that are using it below
     const Pose3d* oldOrigin = _worldOrigin;
@@ -3327,6 +3329,7 @@ void Robot::SetBackpackLights(const std::array<u32,(size_t)LEDId::NUM_BACKPACK_L
       turnSignals[turnCount].offFrames = MS_TO_LED_FRAMES(offPeriod_ms[i]);
       turnSignals[turnCount].transitionOnFrames  = MS_TO_LED_FRAMES(transitionOnPeriod_ms[i]);
       turnSignals[turnCount].transitionOffFrames = MS_TO_LED_FRAMES(transitionOffPeriod_ms[i]);
+      turnSignals[turnCount].offset = 0;
       ++turnCount;
     }
     else
@@ -3337,6 +3340,7 @@ void Robot::SetBackpackLights(const std::array<u32,(size_t)LEDId::NUM_BACKPACK_L
       middleLights[middleCount].offFrames = MS_TO_LED_FRAMES(offPeriod_ms[i]);
       middleLights[middleCount].transitionOnFrames  = MS_TO_LED_FRAMES(transitionOnPeriod_ms[i]);
       middleLights[middleCount].transitionOffFrames = MS_TO_LED_FRAMES(transitionOffPeriod_ms[i]);
+      middleLights[middleCount].offset = 0;
       ++middleCount;
     }
   
@@ -3396,7 +3400,7 @@ Result Robot::SetObjectLights(const ObjectID& objectID,
 
         
     activeObject->SetLEDs(rotatedWhichLEDs, onColor, offColor, onPeriod_ms, offPeriod_ms,
-                          transitionOnPeriod_ms, transitionOffPeriod_ms, 0, 0,
+                          transitionOnPeriod_ms, transitionOffPeriod_ms, 0,
                           turnOffUnspecifiedLEDs);
         
     std::array<Anki::Cozmo::LightState, 4> lights;
@@ -3409,8 +3413,7 @@ Result Robot::SetObjectLights(const ObjectID& objectID,
       lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
       lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
       lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
-      lights[i].onOffset = MS_TO_LED_FRAMES(ledState.onOffset);
-      lights[i].offOffset = MS_TO_LED_FRAMES(ledState.offOffset);
+      lights[i].offset = MS_TO_LED_FRAMES(ledState.offset);
       // PRINT_NAMED_DEBUG("SetObjectLights(1)",
       //                   "LED %u, onColor 0x%x (0x%x), offColor 0x%x (0x%x)",
       //                   i,
@@ -3440,8 +3443,7 @@ Result Robot::SetObjectLights(
   const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offPeriod_ms,
   const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOnPeriod_ms,
   const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOffPeriod_ms,
-  const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& onOffset,
-  const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offOffset,
+  const std::array<s32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offset,
   const MakeRelativeMode makeRelative,
   const Point2f& relativeToPoint,
   const u32 rotationPeriod_ms)
@@ -3453,7 +3455,7 @@ Result Robot::SetObjectLights(
     return RESULT_FAIL_INVALID_OBJECT;
   } else {
         
-    activeObject->SetLEDs(onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms, onOffset, offOffset);
+    activeObject->SetLEDs(onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms, offset);
 
 
     ActiveCube* activeCube = dynamic_cast<ActiveCube*>(activeObject);
@@ -3475,18 +3477,18 @@ Result Robot::SetObjectLights(
       lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
       lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
       lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
-      lights[i].onOffset = MS_TO_LED_FRAMES(ledState.onOffset);
-      lights[i].offOffset = MS_TO_LED_FRAMES(ledState.offOffset);
+      lights[i].offset = MS_TO_LED_FRAMES(ledState.offset);
       
 //       PRINT_NAMED_DEBUG("SetObjectLights(2)",
 //                         "LED %u, onColor 0x%x (0x%x), offColor 0x%x (0x%x), onFrames 0x%x (%ums), "
-//                         "offFrames 0x%x (%ums), transOnFrames 0x%x (%ums), transOffFrames 0x%x (%ums)",
+//                         "offFrames 0x%x (%ums), transOnFrames 0x%x (%ums), transOffFrames 0x%x (%ums), offset 0x%x (%ums)",
 //                         i, lights[i].onColor, ledState.onColor.AsRGBA(),
 //                         lights[i].offColor, ledState.offColor.AsRGBA(),
 //                         lights[i].onFrames, ledState.onPeriod_ms,
 //                         lights[i].offFrames, ledState.offPeriod_ms,
 //                         lights[i].transitionOnFrames, ledState.transitionOnPeriod_ms,
-//                         lights[i].transitionOffFrames, ledState.transitionOffPeriod_ms);
+//                         lights[i].transitionOffFrames, ledState.transitionOffPeriod_ms,
+//                         lights[i].offset, ledState.offset);
       
     }
 

@@ -108,6 +108,9 @@ namespace Cozmo {
         _CurrDir = NewDir(_CurrDir);
         switch (_CurrDir) {
         case Direction.Up:
+          // Always use min turn dist for getting target heading up
+          // to reduce tron lines flying off of background
+          _CurrDist = _MinTurnDist;
           newT = new Vector3(0, _CurrDist, 0);
           break;
         case Direction.Right:
