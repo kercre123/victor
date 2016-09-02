@@ -472,13 +472,43 @@ MonoBehaviour:
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    JsonValue: 1.0
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    JsonValue: 1.0
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    JsonValue: 1.0
+  - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#button.continue"'
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:b
+    JsonValue: 0.495458454
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:g
+    JsonValue: 0.852941155
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:r
+    JsonValue: 0.739290535
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:TextEnabledColor:b
+    JsonValue: 1.0
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:TextEnabledColor:g
+    JsonValue: 1.0
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:TextEnabledColor:r
+    JsonValue: 1.0
   ModifiedLocalReferences:
   - ObjectPath: ../../
     FieldName: Onboarding.ShowCubeStage:_ContinueButtonInstance
     ReferencePath: 
-  ModifiedGlobalReferences: []
+  ModifiedGlobalReferences:
+  - ObjectPath: ButtonBackground
+    FieldName: UnityEngine.UI.Image:m_Sprite
+    Reference: {fileID: 21300000, guid: eccf0d7ea36bd47fbb85c8ced7961a86, type: 3}
 --- !u!114 &11439578
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -619,7 +649,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: 
+  m_Text: TEST TEST TEST
   _AllUppercase: 0
   GlowText: 0
 --- !u!114 &11491880
