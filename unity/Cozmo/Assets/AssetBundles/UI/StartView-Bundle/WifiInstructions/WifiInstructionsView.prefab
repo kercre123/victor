@@ -382,11 +382,9 @@ MonoBehaviour:
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 0
+  DimBackgroundPrefabOverride: {fileID: 0}
   _HelpButton: {fileID: 11422328}
   _GetHelpViewPrefab: {fileID: 11427416, guid: 653baf3a6ff6740d48efd8461b8e662f, type: 2}
-  _ReplaceCozmoOnChargerViewPrefab: {fileID: 11427416, guid: f61fddef4182147cbaf282da6547956b,
-    type: 2}
-  _ReplaceCozmoViewTimeout: 25
 --- !u!222 &22249756
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -462,8 +460,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 150}
-  m_SizeDelta: {x: 2632, y: 1137.608}
+  m_AnchoredPosition: {x: 0, y: -0.000076293945}
+  m_SizeDelta: {x: 2632, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22409474
 RectTransform:
