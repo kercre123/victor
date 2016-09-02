@@ -54,11 +54,12 @@ namespace Anki {
       
       virtual ~IDockAction();
       
-      // Set whether or not to check if robot is near predock pose before docking.
+      // If true robot will check that it is close enough to the closest preaction pose before docking
+      // If false robot will dock with closest visible marker on dockObject from current position
       void SetDoNearPredockPoseCheck(bool doCheck) { _doNearPredockPoseCheck = doCheck; }
       
       // Use a value <= 0 to ignore how far away the robot is from the closest
-      // PreActionPose and proceed regardless.
+      // PreActionPose and proceed to dock with marker corresponding to closest preaction pose.
       void SetPreActionPoseAngleTolerance(Radians angleTolerance);
       
       // Set docking speed and acceleration
@@ -116,6 +117,9 @@ namespace Anki {
         , doNearPreDockPoseCheck(doNearPreDockPoseCheck)
         , preActionPoseAngleTolerance(preActionPoseAngleTolerance)
         , preDockPoseDistOffsetX_mm(preDockPoseDistOffsetX_mm)
+        , actionResult(ActionResult::FAILURE_NOT_STARTED)
+        , interactionResult(ObjectInteractionResult::INCOMPLETE)
+        , closestIndex(-1)
         {
           
         }

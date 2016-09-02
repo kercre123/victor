@@ -302,15 +302,26 @@ namespace Anki {
                                           _doNearPredockPoseCheck,
                                           _preDockPoseDistOffsetX_mm,
                                           _preActionPoseAngleTolerance.ToFloat());
-      IsCloseEnoughToPreActionPose(_robot, preActionPoseInfo);
-      _interactionResult = preActionPoseInfo.interactionResult;
       
-      if(preActionPoseInfo.actionResult != ActionResult::SUCCESS)
+      if(_doNearPredockPoseCheck)
       {
-        return preActionPoseInfo.actionResult;
+        IsCloseEnoughToPreActionPose(_robot, preActionPoseInfo);
+      
+        _interactionResult = preActionPoseInfo.interactionResult;
+        
+        if(preActionPoseInfo.actionResult != ActionResult::SUCCESS)
+        {
+          return preActionPoseInfo.actionResult;
+        }
       }
       
       ActionableObject* dockObject = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_dockObjectID));
+      
+      if(dockObject == nullptr)
+      {
+        PRINT_NAMED_WARNING("IDockAction.NullDockObject", "Dock object in null returning failure");
+        return ActionResult::FAILURE_ABORT;
+      }
       
       if(SelectDockAction(dockObject) != RESULT_OK) {
         PRINT_NAMED_WARNING("IDockAction.CheckPreconditions.DockActionSelectionFailure",
@@ -355,17 +366,59 @@ namespace Anki {
       
       
       if (_doNearPredockPoseCheck) {
-        PRINT_NAMED_INFO("IDockAction.Init.BeginDocking",
+        PRINT_NAMED_INFO("IDockAction.Init.BeginDockingFromPreActionPose",
                          "Robot is within (%.1fmm,%.1fmm) of the nearest pre-action pose, "
                          "proceeding with docking.", preActionPoseInfo.closestPoint.x(), preActionPoseInfo.closestPoint.y());
+        
+        // Set dock markers
+        _dockMarker = preActionPoseInfo.preActionPoses[preActionPoseInfo.closestIndex].GetMarker();
+        _dockMarker2 = GetDockMarker2(preActionPoseInfo.preActionPoses, preActionPoseInfo.closestIndex);
+        
       } else {
-        PRINT_NAMED_INFO("IDockAction.Init.BeginDocking",
-                         "Proceeding with docking.");
+        std::vector<const Vision::KnownMarker*> markers;
+        dockObject->GetObservedMarkers(markers);
+        
+        if(markers.empty())
+        {
+          PRINT_NAMED_ERROR("IDockAction.Init.NoMarkers",
+                            "Using currently observed markers instead of preDock pose but no currently visible marker");
+          _interactionResult = ObjectInteractionResult::VISUAL_VERIFICATION_FAILED;
+          return ActionResult::FAILURE_ABORT;
+        }
+        else if(markers.size() == 1)
+        {
+          _dockMarker = markers.front();
+        }
+        else
+        {
+          f32 distToClosestMarker = std::numeric_limits<f32>::max();
+          for(const Vision::KnownMarker* marker : markers)
+          {
+            Pose3d p;
+            if(!marker->GetPose().GetWithRespectTo(_robot.GetPose(), p))
+            {
+              PRINT_NAMED_INFO("IDockAction.Init.GetMarkerWRTRobot",
+                               "Failed to get marker %s's pose wrt to robot",
+                               marker->GetCodeName());
+              continue;
+            }
+            
+            if(p.GetTranslation().LengthSq() < distToClosestMarker*distToClosestMarker)
+            {
+              distToClosestMarker = p.GetTranslation().Length();
+              _dockMarker = marker;
+            }
+          }
+        }
+        PRINT_NAMED_INFO("IDockAction.Init.BeginDockingToMarker",
+                         "Proceeding with docking to marker %s", _dockMarker->GetCodeName());
       }
       
-      // Set dock markers
-      _dockMarker = preActionPoseInfo.preActionPoses[preActionPoseInfo.closestIndex].GetMarker();
-      _dockMarker2 = GetDockMarker2(preActionPoseInfo.preActionPoses, preActionPoseInfo.closestIndex);
+      if(_dockMarker == nullptr)
+      {
+        PRINT_NAMED_WARNING("IDockAction.Init.NullDockMarker", "Dock marker is null returning failure");
+        return ActionResult::FAILURE_ABORT;
+      }
 
       // Set up a visual verification action to make sure we can still see the correct
       // marker of the selected object before proceeding
