@@ -316,13 +316,13 @@ void Robot::SetOnCharger(bool onCharger)
       ASSERT_NAMED(nullptr != charger, "Robot.SetOnCharger.FailedToAddUnconnectedCharger");
     }
           
-    PRINT_NAMED_INFO("Robot.SetOnCharger.OnCharger", "");
+    PRINT_NAMED_EVENT("robot.on_charger", "");
     Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(true)));
         
   }
   else if (!onCharger && _isOnCharger)
   {
-    PRINT_NAMED_INFO("Robot.SetOnCharger.OffCharger", "");
+    PRINT_NAMED_EVENT("robot.off_charger", "");
     Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ChargerEvent(false)));
   }
       

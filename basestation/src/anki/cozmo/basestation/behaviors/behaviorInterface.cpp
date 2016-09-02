@@ -647,11 +647,13 @@ bool IBehavior::StopActing(bool allowCallback)
   
 void IBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchieved)
 {
-  //TODO: SEND das event
   if(_robot.HasExternalInterface()){
     _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::BehaviorObjectiveAchieved>(objectiveAchieved);
   }
   PRINT_CH_INFO("Behaviors", "IBehavior.BehaviorObjectiveAchieved", "Behavior:%s, Objective:%s", GetName().c_str(), EnumToString(objectiveAchieved));
+  // send das event
+  Util::sEventF("robot.freeplay_objective_achieved", {{DDATA, EnumToString(objectiveAchieved)}}, "%s", GetName().c_str());
+
 }
   
 

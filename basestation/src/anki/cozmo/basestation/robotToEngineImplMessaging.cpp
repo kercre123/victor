@@ -473,10 +473,16 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
   // Do checking here that the unsigned number we get as ActiveID (specified as payload.objectID) is actually less
   // than the max slot we're supposed to have as ActiveID. Extra checking here is necessary since the number is unsigned
   // and we do allow a negative ActiveID when calling AddActiveObject elsewhere, for adding the charger.
-  ASSERT_NAMED(payload.objectID < Util::numeric_cast<uint32_t>(ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS),
-               "Robot.HandleActiveObjectConnectionState.InvalidActiveID");
+  if(payload.objectID >= Util::numeric_cast<uint32_t>(ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS)) {
+    ASSERT_NAMED(false, "Robot.HandleActiveObjectConnectionState.InvalidActiveID");
+    return;
+  }
+  
   
   if (payload.connected) {
+    // log event to das
+    Anki::Util::sEventF("robot.accessory_connection", {{DDATA,"connected"}}, "0x%x,%s", payload.factoryID, EnumToString(payload.device_type));
+
     // Add active object to blockworld if not already there
     objID = robot->GetBlockWorld().AddActiveObject(payload.objectID, payload.factoryID, payload.device_type);
     if (objID.IsSet()) {
@@ -502,6 +508,9 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
       robot->HandleConnectedToObject(payload.objectID, payload.factoryID, objType);
     }
   } else {
+    // log event to das
+    Anki::Util::sEventF("robot.accessory_connection", {{DDATA,"disconnected"}}, "0x%x,%s", payload.factoryID, EnumToString(payload.device_type));
+
     // Remove active object from blockworld if it exists (in any coordinate frame)
     BlockWorldFilter filter;
     filter.SetFilterFcn([&payload](const ObservableObject* object) {

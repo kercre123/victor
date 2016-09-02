@@ -988,6 +988,16 @@ public abstract class GameBase : MonoBehaviour {
 
   protected void HandleRobotReactionaryBehavior(object messageObject) {
     ReactionaryBehaviorTransition behaviorTransition = messageObject as ReactionaryBehaviorTransition;
+
+    // log das event
+    string currentStateString = "";
+    State currState = _StateMachine.GetCurrState();
+    if (currState != null) {
+      currentStateString = currState.GetType().ToString();
+    }
+    DAS.Event("robot.interrupt", currentStateString, null, 
+      new Dictionary<string, string>(){{"$data", behaviorTransition.reactionaryBehaviorType.ToString()}});
+
     if (behaviorTransition.behaviorStarted) {
       PauseStateMachine(State.PauseReason.ENGINE_MESSAGE, behaviorTransition.reactionaryBehaviorType);
     }

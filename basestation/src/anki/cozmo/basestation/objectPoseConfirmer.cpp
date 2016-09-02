@@ -67,6 +67,11 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject* object, const P
   // Notify about the change we are about to make from old to new:
   _robot.GetBlockWorld().OnObjectPoseChanged(object->GetID(), object->GetFamily(), newPose, newPoseState);
   
+  // if state changed from unknown to known or dirty
+  if (object->IsPoseStateUnknown() && newPoseState != PoseState::Unknown){
+    Util::sEventF("robot.object_seen", {{DDATA, TO_DDATA_STR(distance)}}, "%s", EnumToString(object->GetType()));
+  }
+  
   if(newPoseState == PoseState::Unknown)
   {
     MarkObjectUnknown(object);

@@ -266,6 +266,9 @@ namespace FaceEnrollment {
         }
       }
       else {
+        // log to das
+        DAS.Event("robot.face_enrollment", message.completionInfo.faceEnrollmentCompleted.faceID.ToString());
+
         if (CurrentRobot.EnrolledFaces.ContainsKey(message.completionInfo.faceEnrollmentCompleted.faceID)) {
           DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Re-enrolled existing face: " + _NameForFace);
           CurrentRobot.EnrolledFaces[message.completionInfo.faceEnrollmentCompleted.faceID] = _NameForFace;
@@ -273,6 +276,10 @@ namespace FaceEnrollment {
           ReEnrolledExisitingFaceAnimationSequence();
         }
         else {
+          // log to das
+          DAS.Event("robot.face_slots_used", CurrentRobot.EnrolledFaces.Count.ToString(), null, 
+            new Dictionary<string, string>(){{"$data", "1"}});
+
           CurrentRobot.EnrolledFaces.Add(message.completionInfo.faceEnrollmentCompleted.faceID, _NameForFace);
           CurrentRobot.EnrolledFacesLastEnrolledTime.Add(message.completionInfo.faceEnrollmentCompleted.faceID, 0);
           CurrentRobot.EnrolledFacesLastSeenTime.Add(message.completionInfo.faceEnrollmentCompleted.faceID, 0);
@@ -369,6 +376,10 @@ namespace FaceEnrollment {
       _FaceListSlideInstance.RefreshList(RobotEngineManager.Instance.CurrentRobot.EnrolledFaces);
       // calling this explicitly to show the conditional shelf after erasing a face
       ShowShelf(SharedMinigameView);
+      // log to das
+      DAS.Event("robot.face_slots_used", CurrentRobot.EnrolledFaces.Count.ToString(), null, 
+        new Dictionary<string, string>(){{"$data", "-1"}});
+      
     }
 
     private void ShowShelf(Cozmo.MinigameWidgets.SharedMinigameView newView) {

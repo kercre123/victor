@@ -121,6 +121,9 @@ void AIGoal::Enter(Robot& robot)
                                                                _driveLoopAnimTrigger,
                                                                _driveEndAnimTrigger} );
   }
+  
+  // log event to das
+  Util::sEventF("robot.freeplay_goal_started", {}, "%s", _name.c_str());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -134,6 +137,9 @@ void AIGoal::Exit(Robot& robot)
   if ( hasDrivingAnims ) {
     robot.GetDrivingAnimationHandler().PopDrivingAnimations();
   }
+
+  // log event to das
+  Util::sEventF("robot.freeplay_goal_ended", {{DDATA, TO_DDATA_STR(static_cast<int>(_lastTimeGoalStoppedSecs - _lastTimeGoalStartedSecs))}}, "%s", _name.c_str());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

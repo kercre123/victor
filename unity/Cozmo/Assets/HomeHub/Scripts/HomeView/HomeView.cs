@@ -91,6 +91,8 @@ namespace Cozmo.HomeHub {
     private GameObjectDataLink _LootViewPrefabData;
 
     private LootView _LootViewInstance = null;
+    private System.Diagnostics.Stopwatch _Stopwatch = null;
+    private string _CurrentChallengeId = null;
 
     public bool RewardSequenceActive = false;
     private Sequence _RewardSequence;
@@ -632,12 +634,16 @@ namespace Cozmo.HomeHub {
       }
 
       ContextManager.Instance.AppFlash(playChime: true);
+      // start response timer
+      _Stopwatch = new System.Diagnostics.Stopwatch(); // allways create new sintance - GC can take care of previous ones.
+      _Stopwatch.Start();
+      _CurrentChallengeId = data.ChallengeID;
       // Create alert view with Icon
       AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: true);
       // Hook up callbacks
       alertView.SetCloseButtonEnabled(false);
       alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleMiniGameConfirm);
-      alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, LearnToCopeWithMiniGameRejection);
+      alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleMiniGameRejection);
       alertView.SetIcon(data.ChallengeIcon);
       alertView.ViewClosed += HandleRequestDialogClose;
       alertView.TitleLocKey = LocalizationKeys.kRequestGameTitle;
@@ -647,13 +653,33 @@ namespace Cozmo.HomeHub {
       _RequestDialog = alertView;
     }
 
-    private void LearnToCopeWithMiniGameRejection() {
-      DAS.Info(this, "LearnToCopeWithMiniGameRejection");
+    private void HandleMiniGameRejection() {
+      float elapsedSec = 0.0f;
+      if (_Stopwatch != null) {
+        _Stopwatch.Stop();
+        elapsedSec = _Stopwatch.ElapsedMilliseconds / 1000.0f;
+      }
+      DAS.Event("robot.request_app", _CurrentChallengeId, null, 
+        new Dictionary<string, string>(){{"$data", "fail"}});
+      DAS.Event("robot.request_app_time", _CurrentChallengeId, null, 
+        new Dictionary<string, string>(){{"$data", elapsedSec.ToString()}});
+      _CurrentChallengeId = null;
+
       RobotEngineManager.Instance.SendDenyGameStart();
     }
 
     private void HandleMiniGameConfirm() {
-      DAS.Info(this, "HandleMiniGameConfirm");
+      float elapsedSec = 0.0f;
+      if (_Stopwatch != null) {
+        _Stopwatch.Stop();
+        elapsedSec = _Stopwatch.ElapsedMilliseconds / 1000.0f;
+      }
+      DAS.Event("robot.request_app", _CurrentChallengeId, null, 
+        new Dictionary<string, string>(){{"$data", "success"}});
+      DAS.Event("robot.request_app_time", _CurrentChallengeId, null, 
+        new Dictionary<string, string>(){{"$data", elapsedSec.ToString()}});
+      _CurrentChallengeId = null;
+
       if (_RequestDialog != null) {
         _RequestDialog.DisableAllButtons();
         _RequestDialog.ViewClosed -= HandleRequestDialogClose;
@@ -668,6 +694,16 @@ namespace Cozmo.HomeHub {
 
     private void HandleExternalRejection(object messageObject) {
       DAS.Info(this, "HandleExternalRejection");
+      float elapsedSec = 0.0f;
+      if (_Stopwatch != null) {
+        _Stopwatch.Stop();
+        elapsedSec = _Stopwatch.ElapsedMilliseconds / 1000.0f;
+      }
+      DAS.Event("robot.request_app", _CurrentChallengeId, null, 
+        new Dictionary<string, string>(){{"$data", "robot_canceled"}});
+      DAS.Event("robot.request_app_time", _CurrentChallengeId, null, 
+        new Dictionary<string, string>(){{"$data", elapsedSec.ToString()}});
+      
       if (_RequestDialog != null) {
         _RequestDialog.CloseView();
       }

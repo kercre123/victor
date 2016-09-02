@@ -292,9 +292,7 @@ Result CozmoEngine::Update(const float currTime_sec)
       const double maxLatency = BS_TIME_STEP + 15.;
       if (timeSinceLastUpdate > maxLatency)
       {
-        char dataString[20]{0};
-        std::snprintf(dataString, sizeof(dataString), "%d", BS_TIME_STEP);
-        Anki::Util::sEventF("cozmo_engine.update.sleep.slow", {{DDATA,dataString}}, "%.2f", timeSinceLastUpdate);
+        Anki::Util::sEventF("cozmo_engine.update.sleep.slow", {{DDATA,TO_DDATA_STR(BS_TIME_STEP)}}, "%.2f", timeSinceLastUpdate);
       }
     }
     lastUpdateTimeMs = startUpdateTimeMs;
@@ -371,9 +369,7 @@ Result CozmoEngine::Update(const float currTime_sec)
     const double maxUpdateDuration = BS_TIME_STEP;
     if (updateLengthMs > maxUpdateDuration)
     {
-      char dataString[20]{0};
-      std::snprintf(dataString, sizeof(dataString), "%d", BS_TIME_STEP);
-      Anki::Util::sEventF("cozmo_engine.update.run.slow", {{DDATA,dataString}}, "%.2f", updateLengthMs);
+      Anki::Util::sEventF("cozmo_engine.update.run.slow", {{DDATA,TO_DDATA_STR(BS_TIME_STEP)}}, "%.2f", updateLengthMs);
     }
   }
 #endif // ENABLE_CE_RUN_TIME_DIAGNOSTICS

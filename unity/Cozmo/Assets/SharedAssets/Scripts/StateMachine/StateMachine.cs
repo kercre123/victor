@@ -8,6 +8,14 @@ public class StateMachine {
   private State _CurrState = null;
   private State _NextState = null;
 
+  public State GetCurrState() {
+    return _CurrState;
+  }
+
+  public State GetNextState() {
+    return _NextState;
+  }
+
   private GameBase _Game = null;
 
   private bool _IsPaused = false;
