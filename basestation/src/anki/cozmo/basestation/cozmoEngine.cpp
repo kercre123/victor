@@ -87,6 +87,7 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   helper.SubscribeGameToEngine<MessageGameToEngineTag::DisconnectFromRobot>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ImageRequest>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadAnimationFile>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadFaceAnimationDir>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ResetFirmware>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestFeatureToggles>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SetEnableSOSLogging>();
@@ -618,6 +619,12 @@ template<>
 void CozmoEngine::HandleMessage(const ExternalInterface::ReadAnimationFile& msg)
 {
   _context->GetRobotManager()->ReadAnimationDir();
+}
+
+template<>
+void CozmoEngine::HandleMessage(const ExternalInterface::ReadFaceAnimationDir& msg)
+{
+  _context->GetRobotManager()->ReadFaceAnimationDir();
 }
 
 template<>

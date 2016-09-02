@@ -39,6 +39,7 @@ namespace Anki {
       virtual ~USBTunnelServer();
       
       static const std::string TempAnimFileName;
+      static const std::string FaceAnimsDir;
       
     private:
       // pImlp to keep out nasty obj-c

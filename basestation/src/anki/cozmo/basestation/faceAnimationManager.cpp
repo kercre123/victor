@@ -12,6 +12,7 @@
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/common/basestation/utils/data/dataScope.h"
 #include "anki/common/basestation/array2d_impl.h"
 #include "anki/cozmo/robot/faceDisplayDecode.h"
 #include "clad/types/animationKeyFrames.h"
@@ -72,10 +73,16 @@ namespace Cozmo {
   }
   
   // Read the animations in a dir
-  void FaceAnimationManager::ReadFaceAnimationDir(const Util::Data::DataPlatform* dataPlatform)
+  void FaceAnimationManager::ReadFaceAnimationDir(const Util::Data::DataPlatform* dataPlatform, bool fromCache)
   {
     if (dataPlatform == nullptr) { return; }
-    const std::string animationFolder = dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/faceAnimations/");
+    Util::Data::Scope resourceScope;
+    if (fromCache) {
+        resourceScope = Util::Data::Scope::Cache;
+    } else {
+        resourceScope = Util::Data::Scope::Resources;
+    }
+    const std::string animationFolder = dataPlatform->pathToResource(resourceScope, "assets/faceAnimations/");
     
     DIR* dir = opendir(animationFolder.c_str());
     if ( dir != nullptr) {
@@ -105,6 +112,12 @@ namespace Cozmo {
             time_t tmpSeconds = attrib.st_mtime;
 #endif
           if (mapIt == _availableAnimations.end()) {
+            _availableAnimations[animName].lastLoadedTime = tmpSeconds;
+            loadAnimDir = true;
+          } else if (fromCache) {
+            // It should probably be the default behavior to clear the
+            // "rleFrames" vector when "loadAnimDir" is true, right?
+            _availableAnimations[animName].rleFrames.clear();
             _availableAnimations[animName].lastLoadedTime = tmpSeconds;
             loadAnimDir = true;
           } else {

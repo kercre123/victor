@@ -112,6 +112,9 @@ public:
   // Read the animations in a dir
   void ReadAnimationDir();
 
+  // Read the face animations in a dir
+  void ReadFaceAnimationDir();
+
   // Iterate through the loaded animations and broadcast their names
   void BroadcastAvailableAnimations();
     

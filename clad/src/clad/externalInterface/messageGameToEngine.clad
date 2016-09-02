@@ -578,6 +578,10 @@ message PopIdleAnimation {
 
 }
 
+// ReadFaceAnimationDir
+message ReadFaceAnimationDir {
+}
+
 // ReadAnimationFile
 message ReadAnimationFile {
 }
