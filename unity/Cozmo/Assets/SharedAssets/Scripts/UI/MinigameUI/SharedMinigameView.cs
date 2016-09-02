@@ -585,6 +585,7 @@ namespace Cozmo {
 
       private void HandleQuitConfirmed() {
         HideGameStateSlide();
+        HideHowToPlayButton();
         if (QuitMiniGameConfirmed != null) {
           QuitMiniGameConfirmed();
         }

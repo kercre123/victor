@@ -207,10 +207,6 @@ public abstract class GameBase : MonoBehaviour {
       DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.Add(_ChallengeData.ChallengeID, true);
       DataPersistence.DataPersistenceManager.Instance.Save();
     }
-    InitializeGame(_ChallengeData.MinigameConfig);
-    if (!string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath)) {
-      _SharedMinigameViewInstance.ShowHowToPlayButton();
-    }
     PrepRobotForGame();
   }
 
@@ -275,6 +271,11 @@ public abstract class GameBase : MonoBehaviour {
     DAS.SetGlobal(DASConstants.Game.kGlobal, GetDasGameName());
     DAS.Event(DASConstants.Game.kStart, GetGameUUID());
     DAS.Event(DASConstants.Game.kType, GetDasGameName());
+
+    InitializeGame(_ChallengeData.MinigameConfig);
+    if (!string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath)) {
+      _SharedMinigameViewInstance.ShowHowToPlayButton();
+    }
 
     SetupViewAfterCozmoReady(_SharedMinigameViewInstance, _ChallengeData);
 
