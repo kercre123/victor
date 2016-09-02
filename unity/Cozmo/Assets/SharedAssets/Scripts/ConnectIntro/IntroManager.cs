@@ -42,10 +42,8 @@ public class IntroManager : MonoBehaviour {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(OnRobotDisconnect);
 
     StartFlow();
-
-#if !UNITY_EDITOR
     SetupEngine();
-#endif
+
     // If SDK Only, force flag to true, this build flag is also used to hide any options to disable SDK mode
 #if SDK_ONLY
     DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled = true;

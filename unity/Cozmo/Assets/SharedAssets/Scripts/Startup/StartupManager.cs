@@ -65,8 +65,11 @@ public class StartupManager : MonoBehaviour {
 
   private bool _EngineConnected = false;
 
-  // Use this for initialization
-  private IEnumerator Start() {
+  public void StartLoadAsync() {
+    StartCoroutine(StartupCoutine());
+  }
+
+  private IEnumerator StartupCoutine() {
     // Initialize DAS first so we can have error messages during intialization
 #if ANIMATION_TOOL
     DAS.AddTarget(new ConsoleDasTarget());
@@ -107,10 +110,10 @@ public class StartupManager : MonoBehaviour {
 
     RobotEngineManager.Instance.CozmoEngineInitialization();
 
-#if !UNITY_EDITOR
-    RobotEngineManager.Instance.ConnectedToClient += HandleConnectedToEngine;
-    ConnectToEngine();
-#endif
+    if (RobotEngineManager.Instance.RobotConnectionType != RobotEngineManager.ConnectionType.Mock) {
+      RobotEngineManager.Instance.ConnectedToClient += HandleConnectedToEngine;
+      ConnectToEngine();
+    }
 
     // Load asset bundler
     AssetBundleManager.IsLogEnabled = true;
@@ -146,9 +149,9 @@ public class StartupManager : MonoBehaviour {
       AddComponents();
     }
 
-#if !UNITY_EDITOR
-    yield return CheckForEngineConnection();
-#endif
+    if (RobotEngineManager.Instance.RobotConnectionType != RobotEngineManager.ConnectionType.Mock) {
+      yield return CheckForEngineConnection();
+    }
 
     _LoadingBar.SetProgress(1.0f);
 

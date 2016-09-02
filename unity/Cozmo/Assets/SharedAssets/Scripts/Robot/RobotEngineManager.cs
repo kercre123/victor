@@ -19,6 +19,14 @@ public class RobotEngineManager : MonoBehaviour {
   public const string kEngineIP = "127.0.0.1";
   public const string kSimRobotIP = "127.0.0.1";
 
+  public enum ConnectionType {
+    Robot,
+    Sim,
+    Mock
+  }
+
+  public ConnectionType RobotConnectionType = ConnectionType.Robot;
+
   public static RobotEngineManager Instance = null;
 
   private CallbackManager _CallbackManager = new CallbackManager();
@@ -432,13 +440,7 @@ public class RobotEngineManager : MonoBehaviour {
     SendMessage();
   }
 
-  /// <summary>
-  /// Forcibly adds a new robot.
-  /// </summary>
-  /// <param name="robotId">The robot identifier.</param>
-  /// <param name="robotIP">The ip address the robot is connected to.</param>
-  /// <param name="robotIsSimulated">Specify true for a simulated robot.</param>
-  public void ConnectToRobot(int robotID, string robotIP, bool robotIsSimulated) {
+  public void ConnectToRobot(int robotID, string robotIP) {
     if (robotID < 0 || robotID > 255) {
       throw new ArgumentException("ID must be between 0 and 255.", "robotID");
     }
@@ -454,7 +456,7 @@ public class RobotEngineManager : MonoBehaviour {
     ConnectToRobotMessage.ipAddress[length] = 0;
 
     ConnectToRobotMessage.robotID = (byte)robotID;
-    ConnectToRobotMessage.isSimulated = robotIsSimulated ? (byte)1 : (byte)0;
+    ConnectToRobotMessage.isSimulated = RobotConnectionType == ConnectionType.Sim ? (byte)1 : (byte)0;
 
     Message.ConnectToRobot = ConnectToRobotMessage;
     SendMessage();
