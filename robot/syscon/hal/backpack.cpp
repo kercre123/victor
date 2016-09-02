@@ -46,7 +46,7 @@ static const BackpackLight setting[] = {
 
 static const int LIGHT_COUNT = sizeof(setting) / sizeof(setting[0]);
 
-static const int TIMER_GRAIN = 10;
+static const int TIMER_GRAIN = 7;//10;
 static const int TIMER_DELTA_MINIMUM = 4 << TIMER_GRAIN;
 static const int DARK_TIME = ((LIGHT_COUNT + 1) * 0x100) << TIMER_GRAIN;
 
@@ -190,7 +190,7 @@ void Backpack::useTimer(NRF_TIMER_Type* timer, IRQn_Type interrupt) {
 
   backpack_update(timer);
   timer->SHORTS = 0;
-  
+
   timer->TASKS_START = 1;
 
   NVIC_SetPriority(interrupt, LIGHT_PRIORITY);
