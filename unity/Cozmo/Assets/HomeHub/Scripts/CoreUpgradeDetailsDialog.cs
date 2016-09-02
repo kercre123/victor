@@ -198,8 +198,8 @@ public class CoreUpgradeDetailsDialog : BaseView {
     AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
     // Hook up callbacks
     alertView.SetCloseButtonEnabled(false);
-    alertView.SetPrimaryButton(LocalizationKeys.kButtonQuit, HandleQuitConfirmed, Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Click_Back));
-    alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel, HandleQuitCancelled);
+    alertView.SetPrimaryButton(LocalizationKeys.kButtonStaySparked, HandleStaySparked, Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Click_Back));
+    alertView.SetSecondaryButton(LocalizationKeys.kButtonLeave, HandleLeaveSpark);
     alertView.TitleLocKey = LocalizationKeys.kSparksSparkConfirmQuit;
     alertView.DescriptionLocKey = LocalizationKeys.kSparksSparkConfirmQuitDescription;
     // Listen for dialog close
@@ -214,11 +214,11 @@ public class CoreUpgradeDetailsDialog : BaseView {
     _ConfirmedQuit = false;
   }
 
-  private void HandleQuitCancelled() {
+  private void HandleStaySparked() {
     _ConfirmedQuit = false;
   }
 
-  private void HandleQuitConfirmed() {
+  private void HandleLeaveSpark() {
     _ConfirmedQuit = true;
   }
 

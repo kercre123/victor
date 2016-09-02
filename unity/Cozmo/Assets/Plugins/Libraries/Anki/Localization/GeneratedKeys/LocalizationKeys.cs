@@ -462,6 +462,8 @@ public static class LocalizationKeys {
   public const string kButtonClose = "button.close";
   public const string kButtonDone = "button.done";
   public const string kButtonPlay = "button.play";
+  public const string kButtonLeave = "button.leave";
+  public const string kButtonStaySparked = "button.staySparked";
   public const string kButtonSoundsGood = "button.soundsGood";
   public const string kLabelPercentComplete = "label.percentComplete";
   public const string kLabelPlusCount = "label.plusCount";
