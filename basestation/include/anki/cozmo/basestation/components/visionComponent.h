@@ -166,6 +166,9 @@ struct DockingErrorSignal;
                           const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10),
                           const int numImuDataToLookBack = 0);
 
+    // Add an occluder to the camera for the cross-bar of the lift in its position
+    // at the requested time
+    void AddLiftOccluder(TimeStamp_t t_request);
     
     // Camera calibration
     void StoreNextImageForCameraCalibration(const Rectangle<s32>& targetROI);

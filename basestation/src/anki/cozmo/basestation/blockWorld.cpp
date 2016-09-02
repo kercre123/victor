@@ -1069,13 +1069,18 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
           
           if(origin == currFrame)
           {
-            // If this is the object we're carrying observed in the carry position,
-            // do nothing and continue to the next observed object.
-            // Otherwise, it must've been moved off the lift so unset its carry state.
             if (objectFound->GetID() == _robot->GetCarryingObject())
             {
-              if (!objectFound->IsSameAs(*objSeen))
+              if (objectFound->IsSameAs(*objSeen))
               {
+                // If this is the object we're carrying observed in the carry position,
+                // do nothing and continue to the next observed object.
+                continue;
+              }
+              else
+              {
+                // Otherwise, it must've been moved off the lift so unset its carry state
+                // and update it as normal
                 _robot->UnSetCarryObject(objectFound->GetID());
               }
             }
@@ -1514,9 +1519,9 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
       const u16 xBorderPad = static_cast<u16>(0.05*static_cast<f32>(camera.GetCalibration()->GetNcols()));
       const u16 yBorderPad = static_cast<u16>(0.05*static_cast<f32>(camera.GetCalibration()->GetNrows()));
       bool hasNothingBehind = false;
-        const bool shouldBeVisible = unobserved.object->IsVisibleFrom(camera,
-                                                                      MAX_MARKER_NORMAL_ANGLE_FOR_SHOULD_BE_VISIBLE_CHECK_DEG,
-                                                                      MIN_MARKER_SIZE_FOR_SHOULD_BE_VISIBLE_CHECK_PIX,
+      const bool shouldBeVisible = unobserved.object->IsVisibleFrom(camera,
+                                                                    MAX_MARKER_NORMAL_ANGLE_FOR_SHOULD_BE_VISIBLE_CHECK_RAD,
+                                                                    MIN_MARKER_SIZE_FOR_SHOULD_BE_VISIBLE_CHECK_PIX,
                                                                     xBorderPad, yBorderPad,
                                                                     hasNothingBehind);
       
@@ -3591,10 +3596,6 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
       Anki::Util::sEventF("robot.play_area_size", {}, "%.2f", areaM2);
     }
     
-    // New timestep, new set of occluders.  Get rid of anything registered as
-    // an occluder with the robot's camera
-    _robot->GetVisionComponent().GetCamera().ClearOccluders();
-    
     // New timestep, clear list of observed object bounding boxes
     //_obsProjectedObjects.clear();
     //_currentObservedObjectIDs.clear();
@@ -3614,6 +3615,11 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
       const TimeStamp_t atTimestamp = obsMarkerListMapIter->first;
       
       lastObsMarkerTime = std::max(lastObsMarkerTime, atTimestamp);
+     
+      // New timestep, new set of occluders.  Get rid of anything registered as
+      // an occluder with the robot's camera
+      _robot->GetVisionComponent().GetCamera().ClearOccluders();
+      _robot->GetVisionComponent().AddLiftOccluder(atTimestamp);
       
       //
       // Localize robots using mat observations
@@ -3717,7 +3723,25 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
       // Even if there were no markers observed, check to see if there are
       // any previously-observed objects that are partially visible (some part
       // of them projects into the image even if none of their markers fully do)
+      _robot->GetVisionComponent().GetCamera().ClearOccluders();
+      _robot->GetVisionComponent().AddLiftOccluder(_robot->GetLastImageTimeStamp());
       CheckForUnobservedObjects(_robot->GetLastImageTimeStamp());
+    }
+    
+#   define DISPLAY_ALL_OCCLUDERS 0
+    if(DISPLAY_ALL_OCCLUDERS)
+    {
+      static Vision::Image dispOcc(240,320);
+      dispOcc.FillWith(0);
+      std::vector<Rectangle<f32>> occluders;
+      _robot->GetVisionComponent().GetCamera().GetAllOccluders(occluders);
+      for(auto const& rect : occluders)
+      {
+        std::vector<cv::Point2i> points{rect.GetTopLeft().get_CvPoint_(), rect.GetTopRight().get_CvPoint_(),
+          rect.GetBottomRight().get_CvPoint_(), rect.GetBottomLeft().get_CvPoint_()};
+        cv::fillConvexPoly(dispOcc.get_CvMat_(), points, 255);
+      }
+      dispOcc.Display("Occluders");
     }
     
     //PRINT_CH_INFO("BlockWorld", "Update.NumBlocksObserved", "Saw %d blocks", numBlocksObserved);

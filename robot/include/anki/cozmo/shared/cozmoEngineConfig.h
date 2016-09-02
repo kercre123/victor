@@ -18,7 +18,7 @@ namespace Anki {
     // Resolution of images that are streamed to basestation (dev purposes)
     const ImageResolution IMG_STREAM_RES = ImageResolution::QQQVGA;
     
-    const f32 MAX_MARKER_NORMAL_ANGLE_FOR_SHOULD_BE_VISIBLE_CHECK_DEG = 45.f;
+    const f32 MAX_MARKER_NORMAL_ANGLE_FOR_SHOULD_BE_VISIBLE_CHECK_RAD = DEG_TO_RAD_F32(45.f);
     const f32 MIN_MARKER_SIZE_FOR_SHOULD_BE_VISIBLE_CHECK_PIX = 40.f;
     
     /***************************************************************************

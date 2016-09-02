@@ -1411,6 +1411,56 @@ namespace Cozmo {
             WasBodyMovingTooFast(t, bodyTurnSpeedLimit_radPerSec, numImuDataToLookBack));
   }
 
+  void VisionComponent::AddLiftOccluder(TimeStamp_t t_request)
+  {
+    // TODO: More precise check for position of lift in FOV given head angle
+    RobotPoseStamp poseStamp;
+    TimeStamp_t t;
+    Result result = _robot.GetPoseHistory()->GetRawPoseAt(t_request, t, poseStamp, false);
+    
+    if(RESULT_FAIL_ORIGIN_MISMATCH == result)
+    {
+      // Not a warning, this can legitimately happen
+      PRINT_CH_INFO("VisionComponent", "VisionComponent.AddLiftOccluder.PoseHistoryOriginMismatch",
+                    "Cound not get pose at t=%u due to origin change. Skipping.", t_request);
+      return;
+    }
+    else if(RESULT_OK != result)
+    {
+      PRINT_NAMED_WARNING("VisionComponent.WasLiftInFOV.PoseHistoryFailure",
+                          "Could not get raw pose at t=%u", t_request);
+      return;
+    }
+    
+    const Pose3d& liftPoseWrtCamera = _robot.GetLiftPoseWrtCamera(poseStamp.GetLiftAngle(),
+                                                                  poseStamp.GetHeadAngle());
+    
+    const f32 padding = _robot.IsPhysical() ? LIFT_HARDWARE_FALL_SLACK_MM : 0.f;
+    std::vector<Point3f> liftCrossBar{
+      // NOTE: adding points for front and back because which will be outermost in projection
+      //       depends on lift angle, so let Occluder, which uses bounding box of all the
+      //       points, take care of that for us
+      
+      // Top:
+      Point3f(LIFT_FRONT_WRT_WRIST_JOINT, -LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT),
+      Point3f(LIFT_FRONT_WRT_WRIST_JOINT,  LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT),
+      Point3f(LIFT_BACK_WRT_WRIST_JOINT,  -LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT),
+      Point3f(LIFT_BACK_WRT_WRIST_JOINT,   LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT),
+      
+      // Bottom
+      Point3f(LIFT_FRONT_WRT_WRIST_JOINT, -LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_BOTTOM_WRT_WRIST_JOINT - padding),
+      Point3f(LIFT_FRONT_WRT_WRIST_JOINT,  LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_BOTTOM_WRT_WRIST_JOINT - padding),
+      Point3f(LIFT_BACK_WRT_WRIST_JOINT,  -LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_BOTTOM_WRT_WRIST_JOINT - padding),
+      Point3f(LIFT_BACK_WRT_WRIST_JOINT,   LIFT_XBAR_WIDTH*0.5f, LIFT_XBAR_BOTTOM_WRT_WRIST_JOINT - padding),
+    };
+    
+    liftPoseWrtCamera.ApplyTo(liftCrossBar, liftCrossBar);
+    
+    std::vector<Point2f> liftCrossBarProj;
+    _camera.Project3dPoints(liftCrossBar, liftCrossBarProj);
+    _camera.AddOccluder(liftCrossBarProj, liftPoseWrtCamera.GetTranslation().Length());
+  }
+  
   template<class PixelType>
   Result VisionComponent::CompressAndSendImage(const Vision::ImageBase<PixelType>& img, s32 quality)
   {

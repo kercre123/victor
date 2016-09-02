@@ -289,7 +289,7 @@ Supervisor {
 						width IS cameraWidth
 						height IS cameraHeight
 						fieldOfView IS fieldOfView
-						near 0.010
+						near 0.005
 						antiAliasing TRUE
 						
 						%{ if fields.vizMode.value or fields.hideCameraDisplay.value then }%

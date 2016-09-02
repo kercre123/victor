@@ -69,6 +69,8 @@ const f32 LIFT_FORK_HEIGHT_REL_TO_ARM_END = 0;
 const f32 LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT = -20.f;
 // Lift xbar height from top (where tool codes are) to bottom (the other side, the one at the bottom)
 const f32 LIFT_XBAR_HEIGHT = 8.5f; // measured manually (not in dimensions sheet)
+// Width of cross bar inside the two vertical sides (approximate)
+const f32 LIFT_XBAR_WIDTH = 30.f;
 // The height of the bottom of the lift crossbar with respect to the wrist joint.
 // This is also the lift's overall bottom wrt wrist
 const f32 LIFT_XBAR_BOTTOM_WRT_WRIST_JOINT = LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT-LIFT_XBAR_HEIGHT;
