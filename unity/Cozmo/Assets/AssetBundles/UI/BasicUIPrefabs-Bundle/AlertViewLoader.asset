@@ -18,3 +18,5 @@ MonoBehaviour:
     type: 2}
   _AlertViewPrefab_BadLight: {fileID: 11497196, guid: c0f4aad8d980c4533bc2aa6874374a65,
     type: 2}
+  _ScrollingTextViewPrefab: {fileID: 11422892, guid: a9bae51dad15b4085b12a1640c774477,
+    type: 2}

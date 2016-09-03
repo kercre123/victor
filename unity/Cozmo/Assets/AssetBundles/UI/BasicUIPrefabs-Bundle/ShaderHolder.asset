@@ -16,8 +16,6 @@ MonoBehaviour:
     type: 3}
   _GradiantTextureClippingShader: {fileID: 4800000, guid: 6e034d923a10343709fa28f6fc6510cb,
     type: 3}
-  _GradiantSimpleClippingScreenspaceShader: {fileID: 4800000, guid: eea05156955924dd8ad9563a7bcf421d,
-    type: 3}
   _GradiantComplexClippingScreenspaceShader: {fileID: 4800000, guid: 920258e957b2141dca2500de63f9cbb7,
     type: 3}
   _GrayscaleShader: {fileID: 4800000, guid: 7ec20e72d8cc74e7191ddb125a92534c, type: 3}

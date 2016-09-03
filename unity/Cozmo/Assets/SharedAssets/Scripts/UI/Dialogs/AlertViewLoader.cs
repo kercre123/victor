@@ -42,6 +42,13 @@ namespace Cozmo {
       public AlertView AlertViewPrefab_BadLight {
         get { return _AlertViewPrefab_BadLight; }
       }
+
+      [SerializeField]
+      private ScrollingTextView _ScrollingTextViewPrefab;
+
+      public ScrollingTextView ScrollingTextViewPrefab {
+        get { return _ScrollingTextViewPrefab; }
+      }
     }
   }
 }

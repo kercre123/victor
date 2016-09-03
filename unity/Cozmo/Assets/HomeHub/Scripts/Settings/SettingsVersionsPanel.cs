@@ -23,6 +23,8 @@ namespace Cozmo.Settings {
     [SerializeField]
     private CozmoButton _AcknowledgementsLinkButton;
 
+    private ScrollingTextView _AcknowledgementsDialogInstance;
+
     private void Start() {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DeviceDataMessage>(HandleDeviceDataMessage);
       RobotEngineManager.Instance.SendRequestDeviceData();
@@ -39,6 +41,9 @@ namespace Cozmo.Settings {
 
     private void OnDestroy() {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DeviceDataMessage>(HandleDeviceDataMessage);
+      if (_AcknowledgementsDialogInstance != null) {
+        _AcknowledgementsDialogInstance.CloseViewImmediately();
+      }
     }
 
     private void HandleDeviceDataMessage(Anki.Cozmo.ExternalInterface.DeviceDataMessage message) {
@@ -71,8 +76,12 @@ namespace Cozmo.Settings {
     }
 
     private void HandleAcknowledgementsLinkButtonTapped() {
-      // TODO INGO: Show some kind of dialog here
-      DAS.Info("SettingsVersionsPanel.HandleAcknowledgementsLinkButtonTapped", "Acknowledgements button tapped!");
+      if (_AcknowledgementsDialogInstance == null) {
+        _AcknowledgementsDialogInstance = UIManager.OpenView(AlertViewLoader.Instance.ScrollingTextViewPrefab,
+                                                             (ScrollingTextView view) => { view.DASEventViewName = "acknowledgements_view"; });
+        _AcknowledgementsDialogInstance.Initialize(LocalizationKeys.kSettingsVersionPanelAcknowledgementsModalTitle,
+                                                   LocalizationKeys.kSettingsVersionPanelAcknowledgementsModalDescription);
+      }
     }
   }
 }

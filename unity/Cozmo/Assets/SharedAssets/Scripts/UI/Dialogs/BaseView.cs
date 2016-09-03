@@ -38,7 +38,7 @@ namespace Cozmo {
 
       public string DASEventViewName {
         get { return _DASEventViewName; }
-        protected set { _DASEventViewName = value; }
+        set { _DASEventViewName = value; }
       }
 
       [SerializeField]

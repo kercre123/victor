@@ -83,14 +83,8 @@ namespace Cozmo {
           return;
         }
         if (_ScreenSpace) {
-          if ((_SpecifyEndClipping && _ClippingMaterial.shader != ShaderHolder.Instance.GradiantComplexClippingScreenspaceShader)
-              || (!_SpecifyEndClipping && _ClippingMaterial.shader != ShaderHolder.Instance.GradiantSimpleClippingScreenspaceShader)) {
-            if (_SpecifyEndClipping) {
-              _ClippingMaterial.shader = ShaderHolder.Instance.GradiantComplexClippingScreenspaceShader;
-            }
-            else {
-              _ClippingMaterial.shader = ShaderHolder.Instance.GradiantSimpleClippingScreenspaceShader;
-            }
+          if ((_SpecifyEndClipping && _ClippingMaterial.shader != ShaderHolder.Instance.GradiantComplexClippingScreenspaceShader)) {
+            _ClippingMaterial.shader = ShaderHolder.Instance.GradiantComplexClippingScreenspaceShader;
           }
         }
         else {
@@ -110,12 +104,7 @@ namespace Cozmo {
 
       private void CreateMaterial() {
         if (_ScreenSpace) {
-          if (_SpecifyEndClipping) {
-            _ClippingMaterial = MaterialPool.GetMaterial(ShaderHolder.Instance.GradiantComplexClippingScreenspaceShader, _MaskingFrame.defaultMaterial.renderQueue);
-          }
-          else {
-            _ClippingMaterial = MaterialPool.GetMaterial(ShaderHolder.Instance.GradiantSimpleClippingScreenspaceShader, _MaskingFrame.defaultMaterial.renderQueue);
-          }
+          _ClippingMaterial = MaterialPool.GetMaterial(ShaderHolder.Instance.GradiantComplexClippingScreenspaceShader, _MaskingFrame.defaultMaterial.renderQueue);
         }
         else {
           if (_Graphic != null) {

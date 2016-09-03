@@ -425,10 +425,23 @@ public static class LocalizationKeys {
 
   #region SettingsStrings
 
+  public const string kSettingsSdkPanelActivateSDKalertText = "settings.sdkPanel.activateSDKalert.text";
+  public const string kSettingsSdkPanelDisableButtonText = "settings.sdkPanel.disableButton.text";
   public const string kSettingsSdkPanelEnableButtonText = "settings.sdkPanel.enableButton.text";
   public const string kSettingsSdkPanelLabelTitle = "settings.sdkPanel.label.title";
+  public const string kSettingsSdkPanelLastMessageTimeText = "settings.sdkPanel.lastMessageTime.text";
+  public const string kSettingsSdkPanelNoMessagesText = "settings.sdkPanel.noMessages.text";
+  public const string kSettingsSdkPanelSdkConnectedText = "settings.sdkPanel.sdkConnected.text";
   public const string kSettingsSdkPanelSdkUrlLabel = "settings.sdkPanel.sdkUrl.label";
+  public const string kSettingsSdkPanelSdkNotConnectedText = "settings.sdkPanel.sdkNotConnected.text";
   public const string kSettingsSdkPanelShowSDKButtonText = "settings.sdkPanel.showSDKButton.text";
+  public const string kSettingsSleepCozmoPanelButtonReturnToTitle = "settings.sleepCozmoPanel.button.returnToTitle";
+  public const string kSettingsSleepCozmoPanelButtonSleepCozmo = "settings.sleepCozmoPanel.button.sleepCozmo";
+  public const string kSettingsSleepCozmoPanelConfirmationModalTitle = "settings.sleepCozmoPanel.confirmationModal.title";
+  public const string kSettingsSleepCozmoPanelConfirmModalDescription = "settings.sleepCozmoPanel.confirmModal.description";
+  public const string kSettingsSleepCozmoPanelConfirmModalButtonConfirm = "settings.sleepCozmoPanel.confirmModal.button.confirm";
+  public const string kSettingsVersionPanelAcknowledgementsModalDescription = "settings.versionPanel.acknowledgementsModal.description";
+  public const string kSettingsVersionPanelAcknowledgementsModalTitle = "settings.versionPanel.acknowledgementsModal.title";
   public const string kSettingsVersionPanelButtonAcknowledgementsLink = "settings.versionPanel.button.acknowledgementsLink";
   public const string kSettingsVersionPanelButtonEraseCozmo = "settings.versionPanel.button.eraseCozmo";
   public const string kSettingsVersionPanelButtonSupport = "settings.versionPanel.button.support";
@@ -438,19 +451,8 @@ public static class LocalizationKeys {
   public const string kSettingsVersionPanelLabelDeviceId = "settings.versionPanel.label.deviceId";
   public const string kSettingsVersionPanelLabelSerialNumber = "settings.versionPanel.label.serialNumber";
   public const string kSettingsVolumePanelRobotToggleLow = "settings.volumePanel.robotToggle.low";
-  public const string kSettingsVolumePanelRobotToggleMedium = "settings.volumePanel.robotToggle.medium";
   public const string kSettingsVolumePanelRobotToggleHigh = "settings.volumePanel.robotToggle.high";
-  public const string kSettingsSleepCozmoPanelButtonSleepCozmo = "settings.sleepCozmoPanel.button.sleepCozmo";
-  public const string kSettingsSleepCozmoPanelButtonReturnToTitle = "settings.sleepCozmoPanel.button.returnToTitle";
-  public const string kSettingsSleepCozmoPanelConfirmationModalTitle = "settings.sleepCozmoPanel.confirmationModal.title";
-  public const string kSettingsSleepCozmoPanelConfirmModalDescription = "settings.sleepCozmoPanel.confirmModal.description";
-  public const string kSettingsSleepCozmoPanelConfirmModalButtonConfirm = "settings.sleepCozmoPanel.confirmModal.button.confirm";
-  public const string kSettingsSdkPanelDisableButtonText = "settings.sdkPanel.disableButton.text";
-  public const string kSettingsSdkPanelLastMessageTimeText = "settings.sdkPanel.lastMessageTime.text";
-  public const string kSettingsSdkPanelNoMessagesText = "settings.sdkPanel.noMessages.text";
-  public const string kSettingsSdkPanelActivateSDKalertText = "settings.sdkPanel.activateSDKalert.text";
-  public const string kSettingsSdkPanelSdkConnectedText = "settings.sdkPanel.sdkConnected.text";
-  public const string kSettingsSdkPanelSdkNotConnectedText = "settings.sdkPanel.sdkNotConnected.text";
+  public const string kSettingsVolumePanelRobotToggleMedium = "settings.volumePanel.robotToggle.medium";
 
   #endregion
 
