@@ -989,6 +989,10 @@ public class Robot : IRobot {
         createdObject = Charger;
       }
     }
+    else if (objectType == ObjectType.ProxObstacle) {
+      // Just ignore prox obstacle observations because game/Unity doesn't care about them
+      return null;
+    }
     else {
       DAS.Warn("Robot.AddObservedObject", "Tried to add an object with unsupported ObjectType! id=" + id + " objectType=" + objectType);
     }

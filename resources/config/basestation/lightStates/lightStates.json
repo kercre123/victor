@@ -72,5 +72,9 @@
     "sleepDuration_ms" : 2000,
 
     "fadePeriod_ms" : 0,
-    "fadeTransitionTime_ms" : 200
+    "fadeTransitionTime_ms" : 200,
+  
+    "flashColor" : [[1,1,1,1], [1,1,1,1], [1,1,1,1], [1,1,1,1]],
+    "flashPeriod_ms" : 100,
+    "flashTimes" : 3
 }

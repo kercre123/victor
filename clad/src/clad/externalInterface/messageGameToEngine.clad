@@ -694,6 +694,15 @@ message EnableCubeSleep {
   bool enable
 }
 
+// Whether or not engine should be sending CubeLightsStateTransition messages to game
+message EnableCubeLightsStateTransitionMessages {
+  bool enable
+}
+
+// Makes the specified object flash its lights
+message FlashCurrentLightsState {
+  uint_32 objectID
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////

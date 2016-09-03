@@ -93,7 +93,7 @@ void user_init(void)
 
   wifi_status_led_uninstall();
   //system_phy_set_tpw_via_vdd33(system_get_vdd33());
-  system_phy_set_max_tpw(MAX_TPW-12); // take off another 3dB in the office where there are so many cozmos. need to make this a debug feature
+  system_phy_set_max_tpw(MAX_TPW);
   
   REG_SET_BIT(0x3ff00014, BIT(0)); //< Set CPU frequency to 160MHz
   err = system_update_cpu_freq(160);
