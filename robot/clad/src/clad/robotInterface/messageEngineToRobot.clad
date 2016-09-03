@@ -441,6 +441,7 @@ union EngineToRobot
   ForceDelocalizeSimulatedRobot forceDelocalizeSimulatedRobot = 0x61, // Used for simulation only, no-op for physical
   ObjectConnectionStateToRobot  objectConnectionStateToRobot = 0x62,
   EnableBraceWhenFalling        enableBraceWhenFalling      = 0x63,
+  SetAudioVolume                setAudioVolume              = 0x64,
 
   
   // 0x80 to 0xAF: To WiFi
@@ -451,7 +452,7 @@ union EngineToRobot
   NVStorage::NVStorageRead      readNV                      = 0x84,
   NVStorage::NVWipeAll          wipeAllNV                   = 0x85,
   // Available for future use                               = 0x86,
-  SetAudioVolume                setAudioVolume              = 0x87,
+  // Available for future use                               = 0x87,
   DebugSetRTTO                  setRTTO                     = 0x89,
   AbortAnimation                abortAnimation              = 0x90,
   AnimKeyFrame::AudioSample     animAudioSample             = 0x91,
