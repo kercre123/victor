@@ -1425,7 +1425,7 @@ Result Robot::Update(bool ignoreVisionModes)
       
   // Update ChargerPlatform
   ObservableObject* charger = GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger);
-  if( charger && charger->IsPoseStateKnown() && _offTreadsState == OffTreadsState::OnTreads)
+  if( nullptr != charger && charger->IsPoseStateKnown() && _offTreadsState == OffTreadsState::OnTreads)
   {
     // This state is useful for knowing not to play a cliff react when just driving off the charger.
     bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());

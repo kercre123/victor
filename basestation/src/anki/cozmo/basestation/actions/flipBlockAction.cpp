@@ -265,6 +265,11 @@ void FlipBlockAction::SetShouldCheckPreActionPose(bool shouldCheck)
 ActionResult FlipBlockAction::Init()
 {
   ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_objectID);
+  if(nullptr == object)
+  {
+    PRINT_NAMED_WARNING("FlipBlockAction.Init.NullObject", "ObjectID=%d", _objectID.GetValue());
+    return ActionResult::FAILURE_ABORT;
+  }
   
   IDockAction::PreActionPoseInfo preActionPoseInfo(_objectID,
                                                    PreActionPose::FLIPPING,
@@ -312,6 +317,12 @@ ActionResult FlipBlockAction::CheckIfDone()
   }
   
   ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
+  if(nullptr == object)
+  {
+    PRINT_NAMED_WARNING("FlipBlockAction.CheckIfDone.NullObject", "ObjectID=%d", _objectID.GetValue());
+    return ActionResult::FAILURE_ABORT;
+  }
+  
   Pose3d p;
   object->GetPose().GetWithRespectTo(_robot.GetPose(), p);
   if(p.GetTranslation().Length() < kDistToObjectToFlip_mm && _flipTag == -1)

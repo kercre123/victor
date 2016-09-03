@@ -1244,6 +1244,13 @@ namespace Cozmo {
 
         // Write cube's pose to nv storage
         ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(_blockObjectID);
+        if(nullptr == oObject)
+        {
+          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.FailedToFindObject",
+                              "BlockObjectID=%d", _blockObjectID.GetValue());
+          END_TEST(FactoryTestResultCode::CUBE_NOT_FOUND);
+        }
+        
         const Pose3d& cubePose = oObject->GetPose();
         PoseData poseData = ConvertToPoseData(cubePose);
         
@@ -1630,6 +1637,13 @@ namespace Cozmo {
 
     ObjectID objectID = msg.objectID;
     const ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(objectID);
+    
+    if(nullptr == oObject)
+    {
+      PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleObservedObject.NullObject",
+                          "Object %d is NULL", objectID.GetValue());
+      return RESULT_FAIL;
+    }
     
     // Check if this is the markerless object for the cliff
     if (oObject->GetFamily() == ObjectFamily::MarkerlessObject) {

@@ -1081,6 +1081,9 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
               {
                 // Otherwise, it must've been moved off the lift so unset its carry state
                 // and update it as normal
+                PRINT_CH_INFO("BlockWorld", "AddAndUpdateObjects.SeeingCarryingObjectNotOnLift",
+                              "Thought we were carrying object %d but seeing it in non-carry pose",
+                              _robot->GetCarryingObject().GetValue());
                 _robot->UnSetCarryObject(objectFound->GetID());
               }
             }
@@ -1453,7 +1456,7 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
               // just delete it, but only if this is a non-active object or radio
               // connection has not been established yet
               if (!object->IsActive() || object->GetActiveID() < 0) {
-                PRINT_CH_INFO("BlockWorld", "CheckForUnobservedObjects",
+                PRINT_CH_INFO("BlockWorld", "CheckForUnobservedObjects.DeleteObject",
                               "Deleting %s object %d with unknown pose state.",
                               ObjectTypeToString(object->GetType()),
                               object->GetID().GetValue());
@@ -3615,7 +3618,7 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
       const TimeStamp_t atTimestamp = obsMarkerListMapIter->first;
       
       lastObsMarkerTime = std::max(lastObsMarkerTime, atTimestamp);
-     
+      
       // New timestep, new set of occluders.  Get rid of anything registered as
       // an occluder with the robot's camera
       _robot->GetVisionComponent().GetCamera().ClearOccluders();

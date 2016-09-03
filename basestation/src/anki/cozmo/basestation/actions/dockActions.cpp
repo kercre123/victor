@@ -953,9 +953,11 @@ namespace Anki {
             {
               PRINT_NAMED_INFO("PickupObjectAction.Verify.ObjectInOrigPose",
                                "Seeing object %d in original pose. (Tdiff = (%.1f,%.1f,%.1f), "
-                               "AngleDiff=%.1fdeg",
+                               "AngleDiff=%.1fdeg), carrying object %d",
                                object->GetID().GetValue(),
-                               Tdiff.x(), Tdiff.y(), Tdiff.z(), angleDiff.getDegrees());
+                               Tdiff.x(), Tdiff.y(), Tdiff.z(), angleDiff.getDegrees(),
+                               carryObject->GetID().GetValue());
+              
               objectInOriginalPose = object;
               break;
             }
@@ -969,9 +971,12 @@ namespace Anki {
             // (This prevents a new object with different ID being created.)
             if(carryObject->GetID() != objectInOriginalPose->GetID())
             {
-              PRINT_NAMED_INFO("PickupObjectAction.Verify",
-                               "Moving carried object to object seen in original pose "
-                               "and deleting that object (ID=%d).",
+              PRINT_NAMED_INFO("PickupObjectAction.Verify.SeeingDifferentObjectInOrigPose",
+                               "Moving carried object (%s ID=%d) to object seen in original pose "
+                               "and deleting that object (%s ID=%d).",
+                               EnumToString(carryObject->GetType()),
+                               carryObject->GetID().GetValue(),
+                               EnumToString(objectInOriginalPose->GetType()),
                                objectInOriginalPose->GetID().GetValue());
               
               _robot.GetObjectPoseConfirmer().CopyWithNewPose(carryObject, objectInOriginalPose->GetPose(), objectInOriginalPose);
@@ -980,12 +985,12 @@ namespace Anki {
             }
             _robot.UnSetCarryingObjects();
             
-            PRINT_NAMED_INFO("PickupObjectAction.Verify",
+            PRINT_NAMED_INFO("PickupObjectAction.Verify.SeeingCarriedObjectInOrigPose",
                              "Object pick-up FAILED! (Still seeing object in same place.)");
             _interactionResult = ObjectInteractionResult::NOT_CARRYING;
             result = ActionResult::FAILURE_RETRY;
           } else {
-            PRINT_NAMED_INFO("PickupObjectAction.Verify", "Object pick-up SUCCEEDED!");
+            PRINT_NAMED_INFO("PickupObjectAction.Verify.Success", "Object pick-up SUCCEEDED!");
             result = ActionResult::SUCCESS;
           }
           break;

@@ -1464,7 +1464,15 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::DrawPoseMarker& m
   {
     if(robot->IsCarryingObject()) {
       Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 0));
-      Quad2f objectFootprint = robot->GetBlockWorld().GetObjectByID(robot->GetCarryingObject())->GetBoundingQuadXY(targetPose);
+      const ObservableObject* carryObject = robot->GetBlockWorld().GetObjectByID(robot->GetCarryingObject());
+      if(nullptr == carryObject)
+      {
+        PRINT_NAMED_WARNING("RobotEventHandler.HandleDrawPoseMarker.NullCarryObject",
+                            "Carry object set to ID=%d, but BlockWorld returned NULL",
+                            robot->GetCarryingObject().GetValue());
+        return;
+      }
+      Quad2f objectFootprint = carryObject->GetBoundingQuadXY(targetPose);
       robot->GetContext()->GetVizManager()->DrawPoseMarker(0, objectFootprint, ::Anki::NamedColors::GREEN);
     }
   }

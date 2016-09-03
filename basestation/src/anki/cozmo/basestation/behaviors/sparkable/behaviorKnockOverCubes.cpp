@@ -138,6 +138,14 @@ void BehaviorKnockOverCubes::TransitionToReachingForBlock(Robot& robot)
   DEBUG_SET_STATE(ReachingForBlock);
   
   ObservableObject* lastObj = robot.GetBlockWorld().GetObjectByID(_baseBlockID);
+  if(nullptr == lastObj)
+  {
+    PRINT_NAMED_WARNING("BehaviorKnockOverCubes.TransitionToReachingForBlock.BaseBlockNull",
+                        "BaseBlockID=%d", _baseBlockID.GetValue());
+    _baseBlockID.UnSet();
+    return;
+  }
+  
   ObservableObject* nextObj;
   
   BOUNDED_WHILE(10, nextObj = robot.GetBlockWorld().FindObjectOnTopOf(*lastObj, STACKED_HEIGHT_TOL_MM)){

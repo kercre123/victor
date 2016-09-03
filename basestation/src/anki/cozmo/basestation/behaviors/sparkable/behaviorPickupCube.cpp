@@ -79,7 +79,16 @@ void BehaviorPickUpCube::AlwaysHandle(const EngineToGameEvent& event, const Robo
 
 void BehaviorPickUpCube::HandleObjectObserved(const Robot& robot, const ExternalInterface::RobotObservedObject& msg)
 {
-  const ObservableObject* cube =robot.GetBlockWorld().GetObjectByID(msg.objectID);
+  const ObservableObject* cube = robot.GetBlockWorld().GetObjectByID(msg.objectID);
+  
+  if(nullptr == cube)
+  {
+    PRINT_NAMED_WARNING("BehaviorPickUpCube.HandleObjectObserved.NullObservedObject",
+                        "Object %d observed, but NULL returned from BlockWorld",
+                        msg.objectID);
+    return;
+  }
+  
   if( !_targetBlock.IsSet() && robot.CanPickUpObject(*cube) )
   {
     _targetBlock = msg.objectID;

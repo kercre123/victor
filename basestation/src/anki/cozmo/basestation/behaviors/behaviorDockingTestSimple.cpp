@@ -238,10 +238,16 @@ namespace Anki {
         {
           if(_blockObjectIDPickup.IsSet())
           {
-            _initialCubePose = robot.GetBlockWorld().GetObjectByID(_blockObjectIDPickup)->GetPose();
+            ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_blockObjectIDPickup);
+            if(nullptr == object)
+            {
+              EndAttempt(robot, ActionResult::FAILURE_ABORT, "PickupObjectIsNull", true);
+              return Status::Failure;
+            }
+            
+            _initialCubePose = object->GetPose();
             _initialRobotPose = robot.GetPose();
             
-            ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_blockObjectIDPickup);
             Block* block = dynamic_cast<Block*>(object);
             Pose3d junk;
             _initialVisionMarker = const_cast<Vision::KnownMarker&>(block->GetTopMarker(junk));
@@ -298,7 +304,14 @@ namespace Anki {
         {
           if(_blockObjectIDPickup.IsSet())
           {
-            _initialCubePose = robot.GetBlockWorld().GetObjectByID(_blockObjectIDPickup)->GetPose();
+            const ObservableObject* blockToPickup = robot.GetBlockWorld().GetObjectByID(_blockObjectIDPickup);
+            if(nullptr == blockToPickup)
+            {
+              EndAttempt(robot, ActionResult::FAILURE_ABORT, "BlockToPickupNull", true);
+              break;
+            }
+            
+            _initialCubePose = blockToPickup->GetPose();
             _initialRobotPose = robot.GetPose();
             
             if(kDriveToAndPickupBlock)
@@ -727,6 +740,13 @@ namespace Anki {
     {
       ObjectID objectID = msg.objectID;
       const ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(objectID);
+      
+      if(nullptr == oObject)
+      {
+        PRINT_NAMED_WARNING("BehaviorDockingTestSimple.HandleObservedObject.NullObject",
+                            "Object %d is NULL", objectID.GetValue());
+        return;
+      }
       
       if(oObject->GetFamily() == ObjectFamily::LightCube)
       {

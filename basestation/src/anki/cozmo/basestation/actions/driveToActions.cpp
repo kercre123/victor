@@ -39,6 +39,12 @@ namespace Anki {
       }
       
       const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(objectID);
+      if(nullptr == object)
+      {
+        PRINT_NAMED_WARNING("DriveToActions.ComputePlacementApproachAngle.NullObject",
+                            "ObjectID=%d", objectID.GetValue());
+        return RESULT_FAIL;
+      }
       
       // Check that up axis of carried object and the desired placementPose are the same.
       // Otherwise, it's impossible for the robot to place it there!
@@ -1430,18 +1436,26 @@ namespace Anki {
       
 
       ObservableObject* observableObject = robot.GetBlockWorld().GetObjectByID(objectID);
-      
-      // if block's state is not known, find it.
-      Pose3d p;
-      observableObject->GetPose().GetWithRespectTo(robot.GetPose(), p);
-      if(!(observableObject->IsPoseStateKnown()) || (p.GetTranslation().y() < minTrans))
+      if(nullptr == observableObject)
       {
-        MoveHeadToAngleAction* moveHeadToAngleAction = new MoveHeadToAngleAction(robot, kIdealViewBlockHeadAngle);
-        AddAction(moveHeadToAngleAction);
-        DriveStraightAction* driveAction = new DriveStraightAction(robot, -moveBackDist, DEFAULT_PATH_MOTION_PROFILE.reverseSpeed_mmps, false);
-        AddAction(driveAction);
-        WaitAction* waitAction = new WaitAction(robot, waitTime);
-        AddAction(waitAction);
+        PRINT_NAMED_WARNING("DriveToRealignWithObjectAction.Constructor.NullObservableObject",
+                            "ObjectID=%d. Will not use add MoveHead+DriveStraight+Wait actions.",
+                            objectID.GetValue());
+      }
+      else
+      {
+        // if block's state is not known, find it.
+        Pose3d p;
+        observableObject->GetPose().GetWithRespectTo(robot.GetPose(), p);
+        if(!(observableObject->IsPoseStateKnown()) || (p.GetTranslation().y() < minTrans))
+        {
+          MoveHeadToAngleAction* moveHeadToAngleAction = new MoveHeadToAngleAction(robot, kIdealViewBlockHeadAngle);
+          AddAction(moveHeadToAngleAction);
+          DriveStraightAction* driveAction = new DriveStraightAction(robot, -moveBackDist, DEFAULT_PATH_MOTION_PROFILE.reverseSpeed_mmps, false);
+          AddAction(driveAction);
+          WaitAction* waitAction = new WaitAction(robot, waitTime);
+          AddAction(waitAction);
+        }
       }
       
       // Drive towards found block and verify it.

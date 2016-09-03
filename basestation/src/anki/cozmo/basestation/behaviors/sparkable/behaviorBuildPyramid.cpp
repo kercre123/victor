@@ -49,10 +49,16 @@ bool BehaviorBuildPyramid::IsRunnableInternal(const Robot& robot) const
   //Possibly add other limits later
   bool allSet = _staticBlockID.IsSet() && _baseBlockID.IsSet() && _topBlockID.IsSet();
   bool allOnGround = true;
-  if(allSet){
-    allOnGround = allOnGround && (robot.GetBlockWorld().GetObjectByID(_staticBlockID)->IsRestingAtHeight(0, ON_GROUND_HEIGHT_TOL_MM));
-    allOnGround = allOnGround && (robot.GetBlockWorld().GetObjectByID(_baseBlockID)->IsRestingAtHeight(0, ON_GROUND_HEIGHT_TOL_MM));
-    allOnGround = allOnGround && (robot.GetBlockWorld().GetObjectByID(_topBlockID)->IsRestingAtHeight(0, ON_GROUND_HEIGHT_TOL_MM));
+  if(allSet)
+  {
+    const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
+    allOnGround = allOnGround && (nullptr != object && object->IsRestingAtHeight(0, ON_GROUND_HEIGHT_TOL_MM));
+    
+    object = robot.GetBlockWorld().GetObjectByID(_baseBlockID);
+    allOnGround = allOnGround && (nullptr != object && object->IsRestingAtHeight(0, ON_GROUND_HEIGHT_TOL_MM));
+    
+    object = robot.GetBlockWorld().GetObjectByID(_topBlockID);
+    allOnGround = allOnGround && (nullptr != object && object->IsRestingAtHeight(0, ON_GROUND_HEIGHT_TOL_MM));
     
   }
   return allSet && allOnGround;
@@ -102,7 +108,16 @@ void BehaviorBuildPyramid::TransitionToPlacingBaseBlock(Robot& robot)
     return;
   }
   
-  f32 blockSize = robot.GetBlockWorld().GetObjectByID(_staticBlockID)->GetSize().y() + cubeSizeBuffer_mm;
+  const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
+  if(nullptr == object)
+  {
+    PRINT_NAMED_WARNING("BehaviorBuildPyramid.TransitionToPlacingBaseBlock.NullObject",
+                        "Object %d is NULL", _staticBlockID.GetValue());
+    _staticBlockID.UnSet();
+    return;
+  }
+  
+  f32 blockSize = object->GetSize().y() + cubeSizeBuffer_mm;
   DriveToPlaceRelObjectAction* driveAction = new DriveToPlaceRelObjectAction(robot, _staticBlockID, true, 0, blockSize);
   RetryWrapperAction* wrapper = new RetryWrapperAction(robot, driveAction, retryCallback, retryCount);
   
@@ -190,7 +205,16 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
 {
   DEBUG_SET_STATE(PlacingTopBlock);
 
-  f32 halfBlockSize = (robot.GetBlockWorld().GetObjectByID(_staticBlockID)->GetSize().y())/2 + cubeSizeBuffer_mm;
+  const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
+  if(nullptr == object)
+  {
+    PRINT_NAMED_WARNING("BehaviorBuildPyramid.TransitionToPlacingTopBlock.NullObject",
+                        "Object %d is NULL", _staticBlockID.GetValue());
+    _staticBlockID.UnSet();
+    return;
+  }
+  
+  f32 halfBlockSize = (object->GetSize().y())/2 + cubeSizeBuffer_mm;
   DriveToPlaceRelObjectAction* action = new DriveToPlaceRelObjectAction(robot, _staticBlockID, false, 0, halfBlockSize);
   
   RetryWrapperAction* wrapper = new RetryWrapperAction(robot, action, retryCallback, retryCount);
@@ -223,23 +247,36 @@ void BehaviorBuildPyramid::UpdatePyramidTargets(const Robot& robot) const
   if(allBlocks.size() >= 3){
     const Pose3d& robotPose = robot.GetPose().GetWithRespectToOrigin();
     
-    
     if(robot.IsCarryingObject()){
       _baseBlockID = robot.GetCarryingObject();
     }else{
       _baseBlockID = GetNearestBlockToPose(robotPose, allBlocks);
     }
-    auto baseBlockPose = robot.GetBlockWorld().GetObjectByID(_baseBlockID)->GetPose().GetWithRespectToOrigin();
-
+    
     const ObservableObject* baseBlock = robot.GetBlockWorld().GetObjectByID(_baseBlockID);
+    if(nullptr == baseBlock)
+    {
+      PRINT_NAMED_WARNING("BehaviorBuildPyramid.UpdatePyramidTargets.BaseBlockNull",
+                          "BaseBlockID=%d", _baseBlockID.GetValue());
+      _baseBlockID.UnSet();
+      return;
+    }
+    
+    auto baseBlockPose = baseBlock->GetPose().GetWithRespectToOrigin();
     auto baseIter = std::find(allBlocks.begin(), allBlocks.end(), baseBlock);
     allBlocks.erase(baseIter);
     
-    
     _staticBlockID = GetNearestBlockToPose(baseBlockPose, allBlocks);
-    auto staticBlockPose = robot.GetBlockWorld().GetObjectByID(_staticBlockID)->GetPose().GetWithRespectToOrigin();
-
     const ObservableObject* staticBlock = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
+    if(nullptr == staticBlock)
+    {
+      PRINT_NAMED_WARNING("BehaviorBuildPyramid.UpdatePyramidTargets.StaticBlockNull",
+                          "StaticBlockID=%d", _staticBlockID.GetValue());
+      _staticBlockID.UnSet();
+      return;
+    }
+    
+    auto staticBlockPose = staticBlock->GetPose().GetWithRespectToOrigin();
     auto staticIter = std::find(allBlocks.begin(), allBlocks.end(), staticBlock);
     allBlocks.erase(staticIter);
     
@@ -291,7 +328,7 @@ bool BehaviorBuildPyramid::EnsurePoseStateUsable(Robot& robot, ObjectID objectID
                     const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(objectID);
                     if(object != nullptr
                        && object->IsPoseStateUnknown()){
-                      const Pose3d& lastKnownPose =  robot.GetBlockWorld().GetObjectByID(objectID)->GetPose();
+                      const Pose3d& lastKnownPose =  object->GetPose();
                       StartActing(new DriveToPoseAction(robot, lastKnownPose),
                                   [this, &robot, objectID, callback](const ActionResult& result){
                                     const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(objectID);
