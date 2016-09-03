@@ -105,7 +105,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     if (!_SOSLoggingEnabled && enable) {
       _SOSLoggingEnabled = enable;
       SOSLogManager.Instance.CreateListener();
-      RobotEngineManager.Instance.CurrentRobot.SetEnableSOSLogging(true);
+      RobotEngineManager.Instance.SetEnableSOSLogging(true);
       SOSLogManager.Instance.RegisterListener(HandleNewSOSLog);
     }
     else if (_SOSLoggingEnabled && !enable) {
@@ -171,7 +171,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   void IDASTarget.Ch_Info(string channelName, string eventName, string eventValue, object context, Dictionary<string, string> keyValues) {
     SaveLogPacket(LogPacket.ELogKind.Info, channelName + "-" + eventName, eventValue, context, keyValues);
   }
-  
+
   void IDASTarget.Ch_Debug(string channelName, string eventName, string eventValue, object context, Dictionary<string, string> keyValues) {
     SaveLogPacket(LogPacket.ELogKind.Debug, channelName + "-" + eventName, eventValue, context, keyValues);
   }
@@ -359,7 +359,7 @@ public class LogPacket {
       keyValuesStr = string.Join(", ", KeyValues.Select(kvp => kvp.Key + "=" + kvp.Value).ToArray());
     }
 
-    StringBuilder formatStr = new StringBuilder("[{0}] {1}: {2}"); 
+    StringBuilder formatStr = new StringBuilder("[{0}] {1}: {2}");
     if (!string.IsNullOrEmpty(contextStr)) {
       formatStr.Append(" ({3})");
     }
@@ -400,7 +400,7 @@ public class LogPacket {
       colorStr = "00cc00";
       break;
     }
-    
+
     string contextStr = "";
     if (Context != null) {
       Dictionary<string, string> contextDict = Context as Dictionary<string, string>;
@@ -417,7 +417,7 @@ public class LogPacket {
       keyValuesStr = string.Join(", ", KeyValues.Select(kvp => kvp.Key + "=" + kvp.Value).ToArray());
     }
 
-    StringBuilder formatStr = new StringBuilder("<color=#{0}>[{1}] {2}: {3}"); 
+    StringBuilder formatStr = new StringBuilder("<color=#{0}>[{1}] {2}: {3}");
     if (!string.IsNullOrEmpty(contextStr)) {
       formatStr.Append(" ({4})");
     }

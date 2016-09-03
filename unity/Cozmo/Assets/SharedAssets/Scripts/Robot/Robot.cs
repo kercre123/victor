@@ -1624,12 +1624,6 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void SetEnableSOSLogging(bool enable) {
-    DAS.Debug(this, "Set enable SOS Logging: " + enable);
-    RobotEngineManager.Instance.Message.SetEnableSOSLogging = Singleton<SetEnableSOSLogging>.Instance.Initialize(enable);
-    RobotEngineManager.Instance.SendMessage();
-  }
-
   public void ExecuteBehavior(BehaviorType type) {
     DAS.Debug(this, "Execute Behavior " + type);
 

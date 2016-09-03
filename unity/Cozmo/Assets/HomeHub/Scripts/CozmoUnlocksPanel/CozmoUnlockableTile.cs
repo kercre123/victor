@@ -42,6 +42,9 @@ public class CozmoUnlockableTile : MonoBehaviour {
 
     _TileButton.Text = Localization.Get(unlockableData.TitleKey);
 
+    _TileButton.onPress.AddListener(HandlePointerDown);
+    _TileButton.onRelease.AddListener(HandlePointerUp);
+
     _LockedBackgroundContainer.SetActive(unlockState == CozmoUnlocksPanel.CozmoUnlockState.Locked);
     _AvailableBackgroundContainer.SetActive(unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlockable);
     _UnlockedBackgroundContainer.SetActive(unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlocked);
@@ -76,6 +79,14 @@ public class CozmoUnlockableTile : MonoBehaviour {
       break;
     }
 
+  }
+
+  private void HandlePointerDown() {
+    transform.localScale = new Vector3(0.9f, 0.9f, 1.0f);
+  }
+
+  private void HandlePointerUp() {
+    transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
   }
 
   private void HandleButtonTapped() {
