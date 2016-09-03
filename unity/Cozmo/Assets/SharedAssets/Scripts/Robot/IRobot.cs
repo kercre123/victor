@@ -265,8 +265,6 @@ public interface IRobot : IDisposable {
 
   void RequestSetUnlock(Anki.Cozmo.UnlockId unlockID, bool unlocked);
 
-  void SetEnableSOSLogging(bool enable);
-
   void ExecuteBehavior(BehaviorType type);
 
   void ExecuteBehaviorByName(string behaviorName);

@@ -183,6 +183,12 @@ public class RobotEngineManager : MonoBehaviour {
     return _RobotAnimationNames;
   }
 
+  public void SetEnableSOSLogging(bool enable) {
+    DAS.Debug(this, "Set enable SOS Logging: " + enable);
+    RobotEngineManager.Instance.Message.SetEnableSOSLogging = Singleton<SetEnableSOSLogging>.Instance.Initialize(enable);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
   public void AddRobot(byte robotID) {
     RemoveRobot(robotID);
 
