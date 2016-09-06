@@ -52,36 +52,44 @@ namespace Anki {
         // Angle of accelerometer wrt gravity horizontal
         f32 pitch_ = 0;
 
-        f32 gyro_filt[3]                = {0};    // Filtered gyro measurements
+        f32 gyro_robot_frame[3]         = {0};    // Unfiltered gyro measurements in robot frame
         f32 gyro_robot_frame_filt[3]    = {0};    // Filtered gyro measurements in robot frame
-        const f32 RATE_FILT_COEFF       = 1.f;    // IIR filter coefficient (1 == disable filter)
+        const f32 RATE_FILT_COEFF       = 1.f;    // IIR low-pass filter coefficient (1 == disable filter)
         
         f32 gyro_drift_filt[3]          = {0};    // Filtered gyro drift offset. (Accumulate only when all axes are below GYRO_MOTION_THRESH)
-        const f32 RATE_DRIFT_FILT_COEFF = 0.01f;   // IIR filter coefficient (1 == disable filter)
+        const f32 RATE_DRIFT_FILT_COEFF = 0.01f;   // IIR low-pass filter coefficient (1 == disable filter)
 
         f32 accel_filt[3]               = {0};    // Filtered accelerometer measurements
+        f32 accel_robot_frame[3]        = {0};    // Unfiltered accelerometer measurements in robot frame
         f32 accel_robot_frame_filt[3]   = {0};    // Filtered accelerometer measurements in robot frame
-        const f32 ACCEL_FILT_COEFF      = 0.1f;   // IIR filter coefficient (1 == disable filter)
+        f32 abs_accel_robot_frame_filt[3] = {0};
+        const f32 ACCEL_FILT_COEFF      = 0.1f;   // IIR low-pass filter coefficient (1 == disable filter)
+ 
+        f32 accelMagnitudeSqrd_         = 9810 * 9810;
 
+        const f32 HP_ACCEL_FILT_COEFF   = 0.5f;     // IIR high-pass filter coefficient (0 == no-pass)
+        f32 accel_robot_frame_high_pass[3] = {0};
+        
         // ==== Pickup detection ===
-        bool pickupDetectEnabled_ = true;
-        bool pickedUp_ = false;
+        bool pickupDetectEnabled_       = true;
+        bool pickedUp_                  = false;
+        bool enablePickupParalysis_     = false;
 
-        bool enablePickupParalysis_ = false;
-
-        // Filter coefficient on z-axis accelerometer
-        const f32 ACCEL_PICKUP_FILT_COEFF = 0.1f;
-
-        f32 pdFiltAccX_aligned_ = 0;
-        f32 pdFiltAccY_aligned_ = 0;
-        f32 pdFiltAccZ_aligned_ = 0;
-        f32 pdFiltAccX_ = 0.f;
-        f32 pdFiltAccY_ = 0.f;
-        f32 pdFiltAccZ_ = 9800.f;
-        u8 pdRiseCnt_ = 0;
-        u8 pdFallCnt_ = 0;
-        u8 pdLastHeadMoveCnt_ = 0;
-        u8 pdUnexpectedMotionCnt_ = 0;
+        const f32 PICKUP_WHILE_MOVING_ACC_THRESH[3]  = {5000, 5000, 12000}; // mm/s^2
+        const f32 PICKUP_WHILE_MOVING_GYRO_THRESH[3] = {0.5f, 0.5f, 0.5f}; // rad/s
+        const u8 PICKUP_COUNT_WHILE_MOVING           = 40;
+        const u8 PICKUP_COUNT_WHILE_MOTIONLESS       = 20;
+        u8 potentialPickupCnt_                       = 0;
+        
+        const f32 PUTDOWN_HYSTERESIS = 500.f;
+        const u8  PUTDOWN_COUNT      = 40;
+        u8 putdownCnt_               = 0;
+        
+        u16 cliffValWhileNotMoving_      = 0;
+        const u16 CLIFF_DELTA_FOR_PICKUP = 50;
+        
+        const f32 ACCEL_DISTURBANCE_MOTION_THRESH = 40.f;
+        s8 external_accel_disturbance_cnt[3]      = {0};
         // === End of Pickup detection ===
 
 
@@ -142,9 +150,6 @@ namespace Anki {
 
         // N-side down
         const f32 NSIDE_DOWN_THRESH_MMPS2 = 8000;
-
-        // LED assignments
-        const LEDId INDICATOR_LED_ID = LED_BACKPACK_LEFT;
 
       } // "private" namespace
 
@@ -285,20 +290,20 @@ namespace Anki {
       }
 
       //===== End of event callbacks ====
+      void ResetPickupVars() {
+        pickedUp_ = 0;
+        cliffValWhileNotMoving_ = 0;
+        potentialPickupCnt_ = 0;
+        putdownCnt_ = 0;
+        external_accel_disturbance_cnt[0] = external_accel_disturbance_cnt[1] = external_accel_disturbance_cnt[2] = 0;
+      }
+      
       void SetPickupDetect(bool pickupDetected)
       {
-        // TEST WITH LIGHT
-        if (pickupDetected) {
-          HAL::SetLED(INDICATOR_LED_ID, LED_ENC_RED);
-        } else {
-          HAL::SetLED(INDICATOR_LED_ID, LED_ENC_OFF);
+        if (pickedUp_ != pickupDetected) {
+          ResetPickupVars();
+          pickedUp_ = pickupDetected;
         }
-
-        pickedUp_ = pickupDetected;
-        pdFallCnt_ = 0;
-        pdRiseCnt_ = 0;
-        pdLastHeadMoveCnt_ = 0;
-        pdUnexpectedMotionCnt_ = 0;
       }
 
       void EnablePickupDetect(bool enable)
@@ -361,12 +366,35 @@ namespace Anki {
       {
         rot_ = 0;
         rotSpeed_ = 0;
-        
         pitch_ = 0;
-        pickedUp_ = 0;
         imu_data_.Reset();
+        
+        ResetPickupVars();
+      }
+      
+      // Applies low-pass filtering to 3-element input, storing result to 3-element output assuming
+      // output is passed in with previous timestep's filter values.
+      void LowPassFilter(f32* output, const f32* input, const f32 coeff)
+      {
+        output[0] = input[0] * coeff + output[0] * (1.f - coeff);
+        output[1] = input[1] * coeff + output[1] * (1.f - coeff);
+        output[2] = input[2] * coeff + output[2] * (1.f - coeff);
       }
 
+      // Returns low pass filtered output given single input and previous timestep's output
+      f32 LowPassFilter_single(const f32 prev_output, const f32 input, const f32 coeff)
+      {
+        return input * coeff + prev_output * (1.f - coeff);
+      }
+
+      // Applies high-pass filtering to 3-element input and prev_input,
+      // storing result to 3-element output assuming output is passed in with previous timestep's filter values.
+      void HighPassFilter(f32* output, const f32* input, const f32* prev_input, const f32 coeff)
+      {
+        output[0] = coeff * (output[0] + input[0] - prev_input[0]);
+        output[1] = coeff * (output[1] + input[1] - prev_input[1]);
+        output[2] = coeff * (output[2] + input[2] - prev_input[2]);
+      }
 
       // Simple poke detect
       // If wheels aren't moving but a sudden rotation about z-axis was detected
@@ -437,11 +465,7 @@ namespace Anki {
 
       void DetectFalling()
       {
-        const f32 accelMagnitudeSqrd = imu_data_.acc_x * imu_data_.acc_x +
-                                       imu_data_.acc_y * imu_data_.acc_y +
-                                       imu_data_.acc_z * imu_data_.acc_z;
-
-        eventStateRaw_[FALLING] = accelMagnitudeSqrd < FALLING_THRESH_MMPS2_SQRD;
+        eventStateRaw_[FALLING] = accelMagnitudeSqrd_ < FALLING_THRESH_MMPS2_SQRD;
       }
 
       void DetectNsideDown()
@@ -453,13 +477,27 @@ namespace Anki {
         eventStateRaw_[BACKSIDE_DOWN] = accel_robot_frame_filt[0] > NSIDE_DOWN_THRESH_MMPS2;
       }
 
-      // Checks for accelerations
-      bool CheckUnintendedAcceleration() {
-        return (ABS(pdFiltAccX_aligned_) > 5000) ||
-               (ABS(pdFiltAccY_aligned_) > 5000) ||
-               (ABS(pdFiltAccZ_aligned_) > 12000);
+      // Conservative check for unintended acceleration that are
+      // valid even while the motors are moving.
+      bool CheckPickupWhileMoving() {
+        return (abs_accel_robot_frame_filt[0] > PICKUP_WHILE_MOVING_ACC_THRESH[0]) ||
+               (abs_accel_robot_frame_filt[1] > PICKUP_WHILE_MOVING_ACC_THRESH[1]) ||
+               (abs_accel_robot_frame_filt[2] > PICKUP_WHILE_MOVING_ACC_THRESH[2]);
       }
 
+      // Conservative check for unintended acceleration that are
+      // valid even while the motors are moving.
+      bool CheckPutdown() {
+        return  (abs_accel_robot_frame_filt[0] < PICKUP_WHILE_MOVING_ACC_THRESH[0] - PUTDOWN_HYSTERESIS) ||
+                (abs_accel_robot_frame_filt[1] < PICKUP_WHILE_MOVING_ACC_THRESH[1] - PUTDOWN_HYSTERESIS) ||
+                (abs_accel_robot_frame_filt[2] < PICKUP_WHILE_MOVING_ACC_THRESH[2] - PUTDOWN_HYSTERESIS);
+      }
+      
+      bool AreMotorsMoving() {
+        return  WheelController::AreWheelsPowered() || WheelController::AreWheelsMoving()
+                || HeadController::IsMoving() || !HeadController::IsInPosition()
+                || LiftController::IsMoving() || !LiftController::IsInPosition();
+      }
 
       bool MotionDetected() {
         return (lastMotionDetectedTime_ms + MOTION_DETECT_TIMEOUT_MS) >= HAL::GetTimeStamp();
@@ -484,63 +522,97 @@ namespace Anki {
         if (!pickupDetectEnabled_)
           return;
 
-        // Compute the acceleration componenet aligned with the z-axis of the robot
-        const f32 xzAccelMagnitude = sqrtf(pdFiltAccX_*pdFiltAccX_ + pdFiltAccZ_*pdFiltAccZ_);
-        const f32 accel_angle_imu_frame = atan2_fast(pdFiltAccZ_, pdFiltAccX_);
-        const f32 accel_angle_robot_frame = accel_angle_imu_frame + HeadController::GetAngleRad();
-
-        pdFiltAccX_aligned_ = xzAccelMagnitude * cosf(accel_angle_robot_frame);
-        pdFiltAccY_aligned_ = pdFiltAccY_;
-        pdFiltAccZ_aligned_ = xzAccelMagnitude * sinf(accel_angle_robot_frame);
-
-
-
         if (IsPickedUp()) {
-
-          // Picked up flag is reset only when the robot has stopped moving
-          // and it has been set upright.
-          if (!MotionDetected() &&
-              !CheckUnintendedAcceleration() &&
+          
+          // Picked up flag is reset only when the robot has
+          // stopped moving, detects no cliffs, and has been set upright.
+          if (!HAL::IsCliffDetected() &&
+              CheckPutdown() &&
               (accel_robot_frame_filt[2] > NSIDE_DOWN_THRESH_MMPS2)) {
-            SetPickupDetect(false);
+            if (++putdownCnt_ > PUTDOWN_COUNT) {
+              SetPickupDetect(false);
+            }
+          } else {
+            putdownCnt_ = 0;
           }
 
         } else {
-          // Do simple check first.
-          // If wheels aren't moving, any motion is because a person was messing with it!
-          if (!WheelController::AreWheelsPowered()
-              && !HeadController::IsMoving() && HeadController::IsInPosition()
-              && !LiftController::IsMoving() && LiftController::IsInPosition()) {
-            if (CheckUnintendedAcceleration()
-                || ABS(gyro_robot_frame_filt[0]) > 5.f
-                || ABS(gyro_robot_frame_filt[1]) > 5.f
-                //|| ABS(gyro_robot_frame_filt[2]) > 5.f  // Not checking z-rotation since it is being used to trigger naive poke detection
-                ) {
-              if (++pdUnexpectedMotionCnt_ > 40) {
-                AnkiInfo( 331, "IMUFilter.PDWhileStationary", 581, "acc (%f, %f, %f), gyro (%f, %f, %f)", 6,
-                      pdFiltAccX_aligned_, pdFiltAccY_aligned_, pdFiltAccZ_aligned_,
-                      gyro_robot_frame_filt[0], gyro_robot_frame_filt[1], gyro_robot_frame_filt[2]);
-                SetPickupDetect(true);
+          
+          // If cliff sensor changes while wheels not moving this is indicative of pickup
+          bool cliffBasedPickupDetect = false;
+          if (!WheelController::AreWheelsMoving() && !WheelController::AreWheelsPowered()) {
+            s16 cliffDelta = 0;
+            if (cliffValWhileNotMoving_ == 0) {
+              cliffValWhileNotMoving_ = HAL::GetRawCliffData();
+            } else {
+              cliffDelta = ABS(cliffValWhileNotMoving_ - HAL::GetRawCliffData());
+            }
+            
+            cliffBasedPickupDetect = cliffDelta > CLIFF_DELTA_FOR_PICKUP;
+            
+          } else {
+            cliffValWhileNotMoving_ = 0;
+          }
+
+          
+          // Sensitive check
+          // If motors aren't moving, any motion is because a person was messing with it!
+          if (!AreMotorsMoving()) {
+            
+            // Sufficient gyro motion is evidence of pickup
+            bool gyroBasedMotionDetected = (ABS(gyro_robot_frame_filt[0]) > PICKUP_WHILE_MOVING_GYRO_THRESH[0]) ||
+                                           (ABS(gyro_robot_frame_filt[1]) > PICKUP_WHILE_MOVING_GYRO_THRESH[1]) ||
+                                           (ABS(gyro_robot_frame_filt[2]) > PICKUP_WHILE_MOVING_GYRO_THRESH[2]);
+
+            if (cliffBasedPickupDetect || gyroBasedMotionDetected) {
+              ++potentialPickupCnt_;
+            }
+            
+            // Sufficient acceleration is evidence of pickup.
+            // Only evaluating the horiztonal axes. Z-acceleration is sensitive to surface vibrations,
+            // plus z-motion should be captured more reliably by the cliff sensor.
+            // Keeping track of sign of disturbance because if it crosses 0 this is more indicative of
+            // vibration versus steady motion.
+            for (u8 i=0; i < 2; ++i) {
+              if (ABS(accel_robot_frame_high_pass[i]) > ACCEL_DISTURBANCE_MOTION_THRESH) {
+                s8 incr = accel_robot_frame_high_pass[i] > 0 ? 1 : -1;
+                if (accel_robot_frame_high_pass[i] > 0 == external_accel_disturbance_cnt[i] >= 0) {
+                  external_accel_disturbance_cnt[i] += incr;
+                } else {
+                  external_accel_disturbance_cnt[i] = incr;
+                }
+              } else {
+                external_accel_disturbance_cnt[i] = 0;
               }
             }
-          } else {
-            pdUnexpectedMotionCnt_ = 0;
-          }
-
-          // Do conservative check for pickup.
-          // Only when we're really sure it's moving!
-          // TODO: Make this smarter!
-          if (!IsPickedUp() && CheckUnintendedAcceleration()) {
-            ++pdRiseCnt_;
-            if (pdRiseCnt_ > 40) {
+            
+            bool accelBasedMotionDetected = (ABS(external_accel_disturbance_cnt[0]) > PICKUP_COUNT_WHILE_MOTIONLESS) ||
+                                            (ABS(external_accel_disturbance_cnt[1]) > PICKUP_COUNT_WHILE_MOTIONLESS);
+            
+            if (potentialPickupCnt_ > PICKUP_COUNT_WHILE_MOTIONLESS || accelBasedMotionDetected) {
+              AnkiInfo( 369, "IMUFilter.PDWhileStationary", 606, "acc (%f, %f, %f), gyro (%f, %f, %f)", 6,
+                    accel_robot_frame_filt[0], accel_robot_frame_filt[1], accel_robot_frame_filt[2],
+                    gyro_robot_frame_filt[0], gyro_robot_frame_filt[1], gyro_robot_frame_filt[2]);
               SetPickupDetect(true);
-              AnkiInfo( 332, "IMUFilter.PickupDetected", 582, "accX = %f, accY = %f, accZ = %f", 3,
-                    pdFiltAccX_aligned_, pdFiltAccY_aligned_, pdFiltAccZ_aligned_);
             }
-          } else {
-            pdRiseCnt_ = 0;
-          }
 
+          } else {
+            
+            // Do conservative check for pickup.
+            // Only when we're really sure it's moving!
+            // TODO: Make this smarter!
+            if (CheckPickupWhileMoving() || cliffBasedPickupDetect) {
+              if (++potentialPickupCnt_ > PICKUP_COUNT_WHILE_MOVING) {
+                SetPickupDetect(true);
+                AnkiInfo( 332, "IMUFilter.PickupDetected", 582, "accX = %f, accY = %f, accZ = %f", 3,
+                         accel_robot_frame_filt[0], accel_robot_frame_filt[1], accel_robot_frame_filt[2]);
+              }
+            } else {
+              potentialPickupCnt_ = 0;
+            }
+            
+          }
+          
         }
       }
 
@@ -712,12 +784,10 @@ namespace Anki {
 
         ////// Gyro Update //////
 
-        // Filter rotation speeds
-        // TODO: Do this in hardware?
-        gyro_filt[0] = (imu_data_.rate_x - gyro_drift_filt[0]) * RATE_FILT_COEFF + gyro_filt[0] * (1.f-RATE_FILT_COEFF);
-        gyro_filt[1] = (imu_data_.rate_y - gyro_drift_filt[1]) * RATE_FILT_COEFF + gyro_filt[1] * (1.f-RATE_FILT_COEFF);
-        gyro_filt[2] = (imu_data_.rate_z - gyro_drift_filt[2]) * RATE_FILT_COEFF + gyro_filt[2] * (1.f-RATE_FILT_COEFF);
-
+        // Drift corrected gyro readings
+        f32 gyro[3] = { imu_data_.rate_x - gyro_drift_filt[0],
+                        imu_data_.rate_y - gyro_drift_filt[1],
+                        imu_data_.rate_z - gyro_drift_filt[2] };
 
         // Compute head angle wrt to world horizontal plane
         const f32 headAngle = HeadController::GetAngleRad();  // TODO: Use encoders or accelerometer data? If encoders,
@@ -738,31 +808,51 @@ namespace Anki {
         // In our case, we only care about yaw. In other words, it's always true that r = y = 0.
         // (NOTE: This is true as long as we don't start turning on ramps!!!)
         // So the result simplifies to...
-        gyro_robot_frame_filt[0] = gyro_filt[0] + gyro_filt[2] * tanf(headAngle);
-        gyro_robot_frame_filt[1] = gyro_filt[1];
-        gyro_robot_frame_filt[2] = gyro_filt[2] / cosf(headAngle);
+        gyro_robot_frame[0] = gyro[0] + gyro[2] * tanf(headAngle);
+        gyro_robot_frame[1] = gyro[1];
+        gyro_robot_frame[2] = gyro[2] / cosf(headAngle);
         // TODO: We actually only care about gyro_robot_frame_filt[2]. Any point in computing the others?
 
-
-
-
-
+        // Fiter gyro readings in robot frame
+        LowPassFilter(gyro_robot_frame_filt, gyro_robot_frame, RATE_FILT_COEFF);
 
 
         ///// Accelerometer update /////
-        accel_filt[0] = imu_data_.acc_x * ACCEL_FILT_COEFF + accel_filt[0] * (1.f-ACCEL_FILT_COEFF);
-        accel_filt[1] = imu_data_.acc_y * ACCEL_FILT_COEFF + accel_filt[1] * (1.f-ACCEL_FILT_COEFF);
-        accel_filt[2] = imu_data_.acc_z * ACCEL_FILT_COEFF + accel_filt[2] * (1.f-ACCEL_FILT_COEFF);
-        //printf("accel: %f %f %f\n", accel_filt[0], accel_filt[1], accel_filt[2]);
-
+          
+        accel_filt[0] = LowPassFilter_single(accel_filt[0], imu_data_.acc_x, ACCEL_FILT_COEFF);
+        accel_filt[1] = LowPassFilter_single(accel_filt[1], imu_data_.acc_y, ACCEL_FILT_COEFF);
+        accel_filt[2] = LowPassFilter_single(accel_filt[2], imu_data_.acc_z, ACCEL_FILT_COEFF);
+          
         // Compute accelerations in robot frame
-        const f32 xzAccelMagnitude = sqrtf(accel_filt[0]*accel_filt[0] + accel_filt[2]*accel_filt[2]);
-        const f32 accel_angle_imu_frame = atan2_fast(accel_filt[2], accel_filt[0]);
+        const f32 xzAccelMagnitude = sqrtf(imu_data_.acc_x * imu_data_.acc_x + imu_data_.acc_z * imu_data_.acc_z);
+        const f32 accel_angle_imu_frame = atan2_fast(imu_data_.acc_z, imu_data_.acc_x);
         const f32 accel_angle_robot_frame = accel_angle_imu_frame + headAngle;
+        
+        accel_robot_frame[0] = xzAccelMagnitude * cosf(accel_angle_robot_frame);
+        accel_robot_frame[1] = imu_data_.acc_y;
+        accel_robot_frame[2] = xzAccelMagnitude * sinf(accel_angle_robot_frame);
+        
 
-        accel_robot_frame_filt[0] = xzAccelMagnitude * cosf(accel_angle_robot_frame);
-        accel_robot_frame_filt[1] = accel_filt[1];
-        accel_robot_frame_filt[2] = xzAccelMagnitude * sinf(accel_angle_robot_frame);
+        f32 prev_accel_robot_frame_filt[3] = { accel_robot_frame_filt[0],
+                                               accel_robot_frame_filt[1],
+                                               accel_robot_frame_filt[2] };
+          
+        // Filter accel readings in robot frame
+        LowPassFilter(accel_robot_frame_filt, accel_robot_frame, ACCEL_FILT_COEFF);
+          
+        // High-pass filter accelerations
+        HighPassFilter(accel_robot_frame_high_pass, accel_robot_frame_filt, prev_accel_robot_frame_filt, HP_ACCEL_FILT_COEFF);
+
+        // Absolute values (fall-detection)
+        abs_accel_robot_frame_filt[0] = ABS(accel_robot_frame_filt[0]);
+        abs_accel_robot_frame_filt[1] = ABS(accel_robot_frame_filt[1]);
+        abs_accel_robot_frame_filt[2] = ABS(accel_robot_frame_filt[2]);
+          
+        accelMagnitudeSqrd_ = imu_data_.acc_x * imu_data_.acc_x +
+                              imu_data_.acc_y * imu_data_.acc_y +
+                              imu_data_.acc_z * imu_data_.acc_z;
+
+          
 
 #if(DEBUG_IMU_FILTER)
         PERIODIC_PRINT(200, "Accel angle %f %f\n", accel_angle_imu_frame, accel_angle_robot_frame);
@@ -784,24 +874,13 @@ namespace Anki {
         
         MadgwickAHRSupdateIMU(imu_data_.rate_x, imu_data_.rate_y, imu_data_.rate_z,
                               imu_data_.acc_x, imu_data_.acc_y, imu_data_.acc_z);
-        //MadgwickAHRSupdateIMU(gyro_filt[0], gyro_filt[1], gyro_filt[2],
-        //                      accel_filt[0], accel_filt[1], accel_filt[2]);
-
         
         if (!MotionDetected()) {
           // Update gyro drift offset while not moving
-          gyro_drift_filt[0] = imu_data_.rate_x * RATE_DRIFT_FILT_COEFF + gyro_drift_filt[0] * (1.f - RATE_DRIFT_FILT_COEFF);
-          gyro_drift_filt[1] = imu_data_.rate_y * RATE_DRIFT_FILT_COEFF + gyro_drift_filt[1] * (1.f - RATE_DRIFT_FILT_COEFF);
-          gyro_drift_filt[2] = imu_data_.rate_z * RATE_DRIFT_FILT_COEFF + gyro_drift_filt[2] * (1.f - RATE_DRIFT_FILT_COEFF);
+          gyro_drift_filt[0] = LowPassFilter_single(gyro_drift_filt[0], imu_data_.rate_x, RATE_DRIFT_FILT_COEFF);
+          gyro_drift_filt[1] = LowPassFilter_single(gyro_drift_filt[1], imu_data_.rate_y, RATE_DRIFT_FILT_COEFF);
+          gyro_drift_filt[2] = LowPassFilter_single(gyro_drift_filt[2], imu_data_.rate_z, RATE_DRIFT_FILT_COEFF);
         }
-
-        // XXX: DEBUG!
-        //UpdateEventDetection();
-
-        // Pickup detection
-        pdFiltAccX_ = imu_data_.acc_x * ACCEL_PICKUP_FILT_COEFF + pdFiltAccX_ * (1.f - ACCEL_PICKUP_FILT_COEFF);
-        pdFiltAccY_ = imu_data_.acc_y * ACCEL_PICKUP_FILT_COEFF + pdFiltAccY_ * (1.f - ACCEL_PICKUP_FILT_COEFF);
-        pdFiltAccZ_ = imu_data_.acc_z * ACCEL_PICKUP_FILT_COEFF + pdFiltAccZ_ * (1.f - ACCEL_PICKUP_FILT_COEFF);
 
         // XXX: Commenting this out because pickup detection seems to be firing
         //      when the robot drives up ramp (or the side of a platform) and
@@ -842,6 +921,14 @@ namespace Anki {
       
           // Raw IMU chunks
           HAL::IMUReadRawData(imuRawDataMsg_.a, imuRawDataMsg_.g, &imuRawDataMsg_.timestamp);
+          
+//          imuRawDataMsg_.a[0] = accel_robot_frame_filt[0];
+//          imuRawDataMsg_.a[1] = accel_robot_frame_filt[1];
+//          imuRawDataMsg_.a[2] = accel_robot_frame_filt[2];
+//          imuRawDataMsg_.g[0] = gyro_robot_frame_filt[0];
+//          imuRawDataMsg_.g[1] = gyro_robot_frame_filt[1];
+//          imuRawDataMsg_.g[2] = gyro_robot_frame_filt[2];
+          
           ++sentIMUDataMsgs_;
           if (sentIMUDataMsgs_ == totalIMUDataMsgsToSend_) {
             AnkiDebug( 336, "IMUFilter.IMURecording.CompleteRaw", 584, "time %dms", 1, HAL::GetTimeStamp());
