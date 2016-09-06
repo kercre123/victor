@@ -32,6 +32,10 @@ public class CozmoUnlockableTile : MonoBehaviour {
 
   private UnlockableInfo _UnlockData;
 
+  public UnlockableInfo GetUnlockData() {
+    return _UnlockData;
+  }
+
   public void Initialize(UnlockableInfo unlockableData, CozmoUnlocksPanel.CozmoUnlockState unlockState, string dasViewController) {
     _UnlockData = unlockableData;
 
