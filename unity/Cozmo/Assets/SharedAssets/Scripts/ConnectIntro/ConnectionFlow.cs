@@ -7,7 +7,7 @@ public class ConnectionFlow : MonoBehaviour {
   public System.Action ConnectionFlowComplete;
   public System.Action ConnectionFlowQuit;
 
-  public const float kConnectionFlowDelay = 3.0f;
+  public static float ConnectionFlowDelay = 3.0f;
 
   [SerializeField]
   private ConnectionFlowBackground _ConnectionFlowBackgroundPrefab;
@@ -107,6 +107,7 @@ public class ConnectionFlow : MonoBehaviour {
 
     if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Sim) {
       _CurrentRobotIP = RobotEngineManager.kSimRobotIP;
+      ConnectionFlowDelay = 0.25f;
     }
     else {
       _CurrentRobotIP = RobotEngineManager.kRobotIP;
