@@ -37,6 +37,7 @@ namespace SpeedTap {
 
     public override void Exit() {
       base.Exit();
+      _SpeedTapGame.SharedMinigameView.ShowShelf();
     }
   }
 }
