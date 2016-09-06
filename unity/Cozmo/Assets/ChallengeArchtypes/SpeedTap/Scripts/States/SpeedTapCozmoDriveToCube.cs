@@ -28,6 +28,7 @@ namespace SpeedTap {
                                    CubePalette.Instance.TapMeColor.lightColors,
                                    CubePalette.Instance.TapMeColor.cycleIntervalSeconds);
 
+      _SpeedTapGame.SharedMinigameView.ShowShelf();
       _SpeedTapGame.ShowWaitForCozmoSlide();
       _SpeedTapGame.SharedMinigameView.HideMiddleBackground();
       _SpeedTapGame.SharedMinigameView.ShowSpinnerWidget();
