@@ -81,39 +81,6 @@
       }
     },
     {
-      "Id": 18,
-      "RewardEvent": {
-        "Value": "OnChallengeComplete"
-      },
-      "Tag": "QuickTapRedCubes",
-      "EventConditions": [
-        {
-          "$type": "Anki.Cozmo.ChallengeErrorsCondition, Assembly-CSharp",
-          "compareType": "EQUAL",
-          "TargetErrors": 0,
-          "Label": {
-            "text": "Challenge Errors Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SpeedTapGame",
-          "Label": {
-            "text": "Challenge ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "Reward": {
-        "ItemID": "experience",
-        "Amount": 4,
-        "DescriptionKey": "reward.description.QuickTap.RedCubes.NeverTap"
-      }
-    },
-    {
       "Id": 14,
       "RewardEvent": {
         "Value": "OnChallengeComplete"

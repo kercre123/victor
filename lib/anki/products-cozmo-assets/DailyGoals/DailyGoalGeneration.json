@@ -623,49 +623,6 @@
       "Id": 40
     },
     {
-      "TitleKey": "dailyGoal.title.WinSpeedTap.NoRed",
-      "RewardType": "experience",
-      "Tag": "QuickTapRedCubes",
-      "PointsRewarded": 30,
-      "Target": 1,
-      "Priority": 0,
-      "CladEvent": "OnChallengeComplete",
-      "GenConditions": [
-        {
-          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
-          "Unlocked": "QuickTapGame",
-          "State": "Unlocked",
-          "Label": {
-            "text": "Current Unlock Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "ProgressConditions": [
-        {
-          "$type": "Anki.Cozmo.UnlockIDCondition, Assembly-CSharp",
-          "Unlocked": "QuickTapGame",
-          "Label": {
-            "text": "Unlock ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.ChallengeErrorsCondition, Assembly-CSharp",
-          "compareType": "EQUAL",
-          "TargetErrors": 0,
-          "Label": {
-            "text": "Challenge Errors Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "Id": 41
-    },
-    {
       "TitleKey": "dailyGoal.title.SparkPickupCube",
       "RewardType": "experience",
       "Tag": "",
