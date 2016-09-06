@@ -8,6 +8,11 @@ public class UpdateFirmwareScreen : MonoBehaviour {
   [SerializeField]
   private Cozmo.UI.ProgressBar _ProgressBar;
 
+  [SerializeField]
+  private float _DoneUpdateDelay = 10.0f;
+
+  public bool DoneUpdateDelayInProgress = false;
+
   private void Start() {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete>(FirmwareUpdateComplete);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress>(HandleFirmwareProgress);
@@ -28,6 +33,14 @@ public class UpdateFirmwareScreen : MonoBehaviour {
   }
 
   private void FirmwareUpdateComplete(Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete message) {
+    DoneUpdateDelayInProgress = true;
+    StartCoroutine(NotifyFirmwareComplete(message));
+  }
+
+  private IEnumerator NotifyFirmwareComplete(Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete message) {
+
+    yield return new WaitForSeconds(_DoneUpdateDelay);
+
     if (FirmwareUpdateDone != null) {
       if (message.result == Anki.Cozmo.FirmwareUpdateResult.Success) {
         FirmwareUpdateDone(true);
@@ -36,7 +49,8 @@ public class UpdateFirmwareScreen : MonoBehaviour {
         DAS.Error("UpdateFirmwareScreen.FirmwareUpdateComplete", "Firmware Update Failed: " + message.result);
         FirmwareUpdateDone(false);
       }
-
     }
+
+    DoneUpdateDelayInProgress = false;
   }
 }
