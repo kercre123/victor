@@ -62,15 +62,13 @@ const ble_gap_sec_params_t m_sec_params = {
   .max_key_size = 16
 };
 
-const uint8_t DEVICE_NAME[] = "Cozmo";
-const int DEVICE_NAME_LENGTH = 5;
-
-ManufacturerData  manif_data;
+const uint8_t DEVICE_NAME[] = "Cozmo \xF0\x9F\xA4\x96";
+const int DEVICE_NAME_LENGTH = sizeof(DEVICE_NAME) - 1;
 
 const ble_advdata_manuf_data_t m_manuf_data = {
   .company_identifier = MFG_DATA_ID,
-  .data.size = sizeof(manif_data),
-  .data.p_data = (uint8_t*)&manif_data
+  .data.size = 0,
+  .data.p_data = NULL
 };
 
 const ble_advdata_t m_advdata = {

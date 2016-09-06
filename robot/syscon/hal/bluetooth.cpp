@@ -647,9 +647,6 @@ void Bluetooth::advertise(void) {
   APP_ERROR_CHECK(err_code);
 
   // Initialize advertising 
-  manif_data.deviceid[0] = NRF_FICR->DEVICEID[0];
-  manif_data.deviceid[1] = NRF_FICR->DEVICEID[1];
-
   ble_advdata_t scanrsp;
   memset(&scanrsp, 0, sizeof(scanrsp));
   scanrsp.uuids_complete.uuid_cnt = sizeof(adv_uuids) / sizeof(ble_uuid_t);

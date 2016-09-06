@@ -9,14 +9,8 @@
 #include "conn_params.h"
 #include "ble_stack_handler_types.h"
 
-__packed typedef struct {
-  uint32_t  deviceid[2];
-} ManufacturerData;
-
 // These are constants for the system
 #define IS_SRVC_CHANGED_CHARACT_PRESENT 0
-
-extern ManufacturerData manif_data;
 
 extern const ble_uuid128_t COZMO_UUID_BASE;
 extern const uint16_t COZMO_UUID_SERVICE;
