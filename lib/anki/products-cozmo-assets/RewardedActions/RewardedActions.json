@@ -30,6 +30,15 @@
             "image": null,
             "tooltip": ""
           }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SpeedTapGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
         }
       ],
       "Reward": {
