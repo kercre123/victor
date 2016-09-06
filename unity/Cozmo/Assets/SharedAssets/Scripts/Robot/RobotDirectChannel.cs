@@ -102,6 +102,7 @@ public class RobotDirectChannel : ChannelBase<RobotMessageIn, RobotMessageOut> {
     case "DebugLatencyMessage":
     case "RobotProcessedImage":
     case "RobotObservedObject":
+    case "ImageChunk":
     case "DebugString":
     case "RobotState":
     case "MoodState":
