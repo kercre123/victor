@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using Anki.Assets;
+using System;
 
 public class IntroManager : MonoBehaviour {
 
@@ -75,21 +76,7 @@ public class IntroManager : MonoBehaviour {
 
   public void ForceBoot() {
     RobotEngineManager.Instance.StartIdleTimeout(0f, 0f);
-    if (null != _HubWorldInstance) {
-      _HubWorldInstance.DestroyHubWorld();
-    }
-
-    // if we are in a connection flow then they should handle the disconnects properly.
-    if (_FirstTimeConnectDialogInstance != null) {
-      _FirstTimeConnectDialogInstance.GetComponent<FirstTimeConnectDialog>().HandleRobotDisconnect();
-      return;
-    }
-    else if (_CheckInDialogInstance != null) {
-      _CheckInDialogInstance.GetComponent<CheckInFlow>().HandleRobotDisconnect();
-      return;
-    }
-
-    StartFlow();
+    OnRobotDisconnect(new Anki.Cozmo.ExternalInterface.RobotDisconnected());
   }
 
   private void OnRobotDisconnect(object message) {
@@ -107,6 +94,8 @@ public class IntroManager : MonoBehaviour {
       return;
     }
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
+    UIManager.CloseAllViewsImmediately();
+    UIManager.EnableTouchEvents();
     StartFlow();
   }
 

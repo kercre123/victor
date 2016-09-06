@@ -639,7 +639,7 @@ namespace Cozmo.HomeHub {
       _Stopwatch.Start();
       _CurrentChallengeId = data.ChallengeID;
       // Create alert view with Icon
-      AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: true);
+      AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: false);
       // Hook up callbacks
       alertView.SetCloseButtonEnabled(false);
       alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleMiniGameConfirm);

@@ -13,3 +13,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ChallengeID: DroneModeGame
   RequestBehaviorGameFlag: 2
+  RequestAcceptedAnimationTrigger: 177

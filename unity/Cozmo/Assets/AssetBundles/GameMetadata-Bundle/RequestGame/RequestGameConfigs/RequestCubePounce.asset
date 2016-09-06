@@ -13,3 +13,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ChallengeID: CubePounceGame
   RequestBehaviorGameFlag: 4
+  RequestAcceptedAnimationTrigger: 165

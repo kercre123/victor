@@ -89,6 +89,7 @@ namespace Cozmo {
         if (_SecondaryButtonLayoutElement != null) {
           _SecondaryButtonLayoutElement.gameObject.SetActive(false);
         }
+
       }
 
       protected override void CleanUp() {

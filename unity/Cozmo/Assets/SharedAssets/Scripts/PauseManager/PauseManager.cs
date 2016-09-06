@@ -1,11 +1,13 @@
 ﻿using UnityEngine;
 using Cozmo.UI;
+using System;
 using System.Collections;
 
 namespace Cozmo {
   public class PauseManager : MonoBehaviour {
 
     private static PauseManager _Instance;
+    public Action OnPauseDialogOpen;
     private bool _IsPaused = false;
     private AlertView _GoToSleepDialog = null;
     private bool _IsOnChargerToSleep = false;
@@ -19,6 +21,12 @@ namespace Cozmo {
     public static bool _LowBatteryEventLogged = false;
 
     private AlertView _SleepCozmoConfirmDialog;
+
+    public bool IsAnyDialogOpen {
+      get {
+        return (IsConfirmSleepDialogOpen || IsGoToSleepDialogOpen || IsLowBatteryDialogOpen);
+      }
+    }
 
     public bool IsConfirmSleepDialogOpen { get { return (null != _SleepCozmoConfirmDialog); } }
     public bool IsGoToSleepDialogOpen { get { return (null != _GoToSleepDialog); } }
@@ -202,6 +210,9 @@ namespace Cozmo {
 
         _SleepCozmoConfirmDialog.TitleLocKey = LocalizationKeys.kSettingsSleepCozmoPanelConfirmationModalTitle;
         _SleepCozmoConfirmDialog.DescriptionLocKey = LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalDescription;
+        if (OnPauseDialogOpen != null) {
+          OnPauseDialogOpen.Invoke();
+        }
       }
     }
 
@@ -219,6 +230,9 @@ namespace Cozmo {
         alertView.TitleLocKey = LocalizationKeys.kConnectivityCozmoSleepTitle;
         alertView.DescriptionLocKey = LocalizationKeys.kConnectivityCozmoSleepDesc;
         _GoToSleepDialog = alertView;
+        if (OnPauseDialogOpen != null) {
+          OnPauseDialogOpen.Invoke();
+        }
       }
     }
 
@@ -231,6 +245,10 @@ namespace Cozmo {
         alertView.DescriptionLocKey = LocalizationKeys.kConnectivityCozmoLowBatteryDesc;
         _LowBatteryDialog = alertView;
         _LowBatteryAlertTriggered = true;
+        RobotEngineManager.Instance.TurnOffReactionaryBehavior();
+        if (OnPauseDialogOpen != null) {
+          OnPauseDialogOpen.Invoke();
+        }
       }
     }
 
@@ -256,6 +274,7 @@ namespace Cozmo {
 
     private void CloseLowBatteryDialog() {
       if (null != _LowBatteryDialog) {
+        RobotEngineManager.Instance.SetEnableReactionaryBehaviors(true);
         _LowBatteryDialog.CloseView();
         _LowBatteryDialog = null;
       }

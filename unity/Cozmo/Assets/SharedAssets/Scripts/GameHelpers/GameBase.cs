@@ -3,6 +3,7 @@ using Cozmo.UI;
 using System.Collections;
 using System.Collections.Generic;
 using Cozmo.MinigameWidgets;
+using Cozmo;
 using Anki.Cozmo;
 using Anki.Cozmo.ExternalInterface;
 using Anki.Assets;
@@ -38,6 +39,8 @@ public abstract class GameBase : MonoBehaviour {
   public event SharedMinigameViewHandler OnSharedMinigameViewInitialized;
 
   public IRobot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
+
+  private AlertView _InterruptedAlertView = null;
 
   private SharedMinigameView _SharedMinigameViewInstance;
 
@@ -230,6 +233,7 @@ public abstract class GameBase : MonoBehaviour {
     newView.QuitMiniGameConfirmed += HandleQuitConfirmed;
     ContextManager.Instance.OnAppHoldStart += HandleAppHoldStart;
     ContextManager.Instance.OnAppHoldEnd += HandleAppHoldEnd;
+    PauseManager.Instance.OnPauseDialogOpen += HandlePauseManagerDialogOpened;
   }
 
   private void PrepRobotForGame() {
@@ -598,6 +602,7 @@ public abstract class GameBase : MonoBehaviour {
 
     ContextManager.Instance.OnAppHoldStart -= HandleAppHoldStart;
     ContextManager.Instance.OnAppHoldEnd -= HandleAppHoldEnd;
+    PauseManager.Instance.OnPauseDialogOpen -= HandlePauseManagerDialogOpened;
 
     if (ContextManager.Instance.ManagerBusy) {
       ContextManager.Instance.OnAppHoldEnd();
@@ -1013,14 +1018,24 @@ public abstract class GameBase : MonoBehaviour {
 
   protected void ShowInterruptionQuitGameView(string titleKey, string descriptionKey) {
     SoftEndGameRobotReset();
+    _SharedMinigameViewInstance.HideQuitButton();
+    // Don't set everything on fire if its already on fire, that's a waste of perfectly good fire
+    if (_InterruptedAlertView == null && PauseManager.Instance.IsAnyDialogOpen == false) {
+      Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
+      alertView.SetCloseButtonEnabled(false);
+      alertView.SetPrimaryButton(LocalizationKeys.kButtonQuitGame, null);
+      alertView.ViewCloseAnimationFinished += HandleInterruptionQuitGameViewClosed;
+      alertView.TitleLocKey = titleKey;
+      alertView.DescriptionLocKey = descriptionKey;
+      _InterruptedAlertView = alertView;
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Game_End);
+    }
+  }
 
-    Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
-    alertView.SetCloseButtonEnabled(false);
-    alertView.SetPrimaryButton(LocalizationKeys.kButtonQuitGame, null);
-    alertView.ViewCloseAnimationFinished += HandleInterruptionQuitGameViewClosed;
-    alertView.TitleLocKey = titleKey;
-    alertView.DescriptionLocKey = descriptionKey;
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Game_End);
+  private void HandlePauseManagerDialogOpened() {
+    if (_InterruptedAlertView != null) {
+      _InterruptedAlertView.CloseViewImmediately();
+    }
   }
 
   private void HandleInterruptionQuitGameViewClosed() {

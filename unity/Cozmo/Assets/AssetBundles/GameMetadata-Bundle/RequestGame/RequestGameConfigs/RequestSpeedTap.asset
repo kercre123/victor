@@ -13,3 +13,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ChallengeID: SpeedTapGame
   RequestBehaviorGameFlag: 1
+  RequestAcceptedAnimationTrigger: 190

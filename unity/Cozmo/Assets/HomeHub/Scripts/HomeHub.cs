@@ -64,7 +64,9 @@ namespace Cozmo.HomeHub {
     public override bool DestroyHubWorld() {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(RefreshChallengeUnlockInfo);
       CloseMiniGameImmediately();
-
+      if (_ChallengeDetailsDialogInstance != null) {
+        _ChallengeDetailsDialogInstance.CloseViewImmediately();
+      }
       // Deregister events
       // Destroy dialog if it exists
       if (_HomeViewInstance != null) {
@@ -206,6 +208,21 @@ namespace Cozmo.HomeHub {
       // Reset the robot behavior
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
+        // If accepted a request, because we've turned off freeplay behavior
+        // we need to send Cozmo their animation from unity.
+        if (wasRequest) {
+          RequestGameListConfig rcList = DailyGoalManager.Instance.GetRequestMinigameConfig();
+          RequestGameConfig rc = null;
+          for (int i = 0; i < rcList.RequestList.Length; i++) {
+            if (rcList.RequestList[i].ChallengeID == challengeId) {
+              rc = rcList.RequestList[i];
+              break;
+            }
+          }
+          if (rc != null) {
+            RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(rc.RequestAcceptedAnimationTrigger);
+          }
+        }
       }
 
       GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeStarted, challengeId, wasRequest));
