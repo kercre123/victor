@@ -126,6 +126,9 @@ public abstract class GameBase : MonoBehaviour {
     _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.AcknowledgeObject);
     _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.AcknowledgeFace);
     _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToFrustration);
+
+    // for some reason this became a reactionary behavior but isn't named like one...
+    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.KnockOverCubes);
   }
 
   private void ResetReactionaryBehaviorsForGameEnd() {
@@ -1001,8 +1004,8 @@ public abstract class GameBase : MonoBehaviour {
     if (currState != null) {
       currentStateString = currState.GetType().ToString();
     }
-    DAS.Event("robot.interrupt", currentStateString, null, 
-      new Dictionary<string, string>(){{"$data", behaviorTransition.reactionaryBehaviorType.ToString()}});
+    DAS.Event("robot.interrupt", currentStateString, null,
+      new Dictionary<string, string>() { { "$data", behaviorTransition.reactionaryBehaviorType.ToString() } });
 
     if (behaviorTransition.behaviorStarted) {
       PauseStateMachine(State.PauseReason.ENGINE_MESSAGE, behaviorTransition.reactionaryBehaviorType);
