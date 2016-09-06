@@ -3557,11 +3557,21 @@ void Robot::HandleConnectedToObject(uint32_t activeID, FactoryID factoryID, Obje
 {
   ActiveObjectInfo& objectInfo = _connectedObjects[activeID];
   
-  ASSERT_NAMED_EVENT(_connectedObjects[activeID].factoryID == factoryID,
-                     "Robot.HandleConnectedToObject",
-                     "Connected to object 0x%x with unexpected active ID %d",
-                     factoryID, activeID);
-
+  // Remove from the list of discovered objects since we are connecting to it
+  RemoveDiscoveredObjects(factoryID);
+  
+  if(_connectedObjects[activeID].factoryID != factoryID)
+  {
+    PRINT_NAMED_INFO("Robot.HandleConnectedToObject",
+                     "Ignoring connection to object 0x%x [%s] with active ID %d because expecting connection to 0x%x [%s]",
+                     factoryID,
+                     EnumToString(objectType),
+                     activeID,
+                     objectInfo.factoryID,
+                     EnumToString(objectInfo.objectType));
+    return;
+  }
+  
   ASSERT_NAMED_EVENT((objectInfo.connectionState == ActiveObjectInfo::ConnectionState::PendingConnection) ||
                      (objectInfo.connectionState == ActiveObjectInfo::ConnectionState::Disconnected),
                      "Robot.HandleConnectedToObject",
@@ -3574,9 +3584,6 @@ void Robot::HandleConnectedToObject(uint32_t activeID, FactoryID factoryID, Obje
   
   _connectedObjects[activeID].connectionState = ActiveObjectInfo::ConnectionState::Connected;
 
-  // Remove from the list of discovered objects since we are connecting to it
-  RemoveDiscoveredObjects(factoryID);
-
   // For debugging purposes, turn on the lights
 //  ActiveObject* activeObject = GetBlockWorld().GetActiveObjectByActiveID(activeID);
 //  SetObjectLights(activeObject->GetID(), Anki::Cozmo::WhichCubeLEDs::ALL, NamedColors::RED, NamedColors::RED, 999999, 0, 0, 0, true, MakeRelativeMode::RELATIVE_LED_MODE_OFF, Point2f{0, 0}, 0);
@@ -3585,11 +3592,18 @@ void Robot::HandleConnectedToObject(uint32_t activeID, FactoryID factoryID, Obje
 void Robot::HandleDisconnectedFromObject(uint32_t activeID, FactoryID factoryID, ObjectType objectType)
 {
   ActiveObjectInfo& objectInfo = _connectedObjects[activeID];
-  
-  ASSERT_NAMED_EVENT(objectInfo.factoryID == factoryID,
-                     "Robot.HandleDisconnectedFromObject",
-                     "Disconnected from object 0x%x with unexpected active ID %d",
-                     factoryID, activeID);
+
+  if(objectInfo.factoryID != factoryID)
+  {
+    PRINT_NAMED_INFO("Robot.HandleDisconnectedFromObject",
+                     "Ignoring disconnection from object 0x%x [%s] with active ID %d because expecting connection to 0x%x [%s]",
+                     factoryID,
+                     EnumToString(objectType),
+                     activeID,
+                     objectInfo.factoryID,
+                     EnumToString(objectInfo.objectType));
+    return;
+  }
 
   ASSERT_NAMED_EVENT((objectInfo.connectionState == ActiveObjectInfo::ConnectionState::PendingDisconnection) ||
                      (objectInfo.connectionState == ActiveObjectInfo::ConnectionState::Connected),
