@@ -46,14 +46,14 @@ static const BackpackLight setting[] = {
 
 static const int LIGHT_COUNT = sizeof(setting) / sizeof(setting[0]);
 
-static const int TIMER_GRAIN = 7;//10;
+static const int TIMER_GRAIN = 10;
 static const int TIMER_DELTA_MINIMUM = 4 << TIMER_GRAIN;
 static const int DARK_TIME = ((LIGHT_COUNT + 1) * 0x100) << TIMER_GRAIN;
 
 static LightState lightState[BACKPACK_LAYERS][BACKPACK_LIGHTS];
 static BackpackLayer currentLayer = BPL_IMPULSE;
 
-static void backpack_update(NRF_TIMER_Type* const timer);
+extern "C" void TIMER1_IRQHandler(void);
 
 // Charlieplexing magic constants
 static int led_value[LIGHT_COUNT];
@@ -175,33 +175,33 @@ void Backpack::setLightsTurnSignals(BackpackLayer layer, const LightState* updat
   }
 }
 
-void Backpack::useTimer(NRF_TIMER_Type* timer, IRQn_Type interrupt) {
-  timer->POWER = 1;
+void Backpack::useTimer() {
+  NRF_TIMER1->POWER = 1;
   
-  timer->TASKS_STOP = 1;
-  timer->TASKS_CLEAR = 1;
+  NRF_TIMER1->TASKS_STOP = 1;
+  NRF_TIMER1->TASKS_CLEAR = 1;
   
-  timer->MODE = TIMER_MODE_MODE_Timer;
-  timer->PRESCALER = 0;
-  timer->BITMODE = TIMER_BITMODE_BITMODE_32Bit;
+  NRF_TIMER1->MODE = TIMER_MODE_MODE_Timer;
+  NRF_TIMER1->PRESCALER = 0;
+  NRF_TIMER1->BITMODE = TIMER_BITMODE_BITMODE_32Bit;
   
-  timer->INTENCLR = ~0;
-  timer->INTENSET = TIMER_INTENSET_COMPARE0_Msk;
+  NRF_TIMER1->INTENCLR = ~0;
+  NRF_TIMER1->INTENSET = TIMER_INTENSET_COMPARE0_Msk;
 
-  backpack_update(timer);
-  timer->SHORTS = 0;
+  TIMER1_IRQHandler();
+  NRF_TIMER1->SHORTS = 0;
 
-  timer->TASKS_START = 1;
+  NRF_TIMER1->TASKS_START = 1;
 
-  NVIC_SetPriority(interrupt, LIGHT_PRIORITY);
-  NVIC_EnableIRQ(interrupt);
+  NVIC_SetPriority(TIMER1_IRQn, LIGHT_PRIORITY);
+  NVIC_EnableIRQ(TIMER1_IRQn);
 }
 
-void Backpack::detachTimer(NRF_TIMER_Type* timer, IRQn_Type interrupt) {
+void Backpack::detachTimer() {
   // Detach from the timer
-  timer->INTENCLR = ~0;
-  NVIC_DisableIRQ(interrupt);
-  timer->TASKS_STOP = 1;
+  NRF_TIMER1->INTENCLR = ~0;
+  NVIC_DisableIRQ(TIMER1_IRQn);
+  NRF_TIMER1->TASKS_STOP = 1;
 
   // Clear out backpack leds
   nrf_gpio_cfg_input(PIN_LED1, NRF_GPIO_PIN_NOPULL);
@@ -210,14 +210,14 @@ void Backpack::detachTimer(NRF_TIMER_Type* timer, IRQn_Type interrupt) {
   nrf_gpio_cfg_input(PIN_LED4, NRF_GPIO_PIN_NOPULL);
 }
 
-static void backpack_update(NRF_TIMER_Type* const timer) {
+extern "C" void TIMER1_IRQHandler(void) { 
   static int drive_value[LIGHT_COUNT];
   static int active_channel = 0;
   static const BackpackLight* currentChannel = &setting[0];
   static int blackout_time = DARK_TIME;
   int delta;
 
-  timer->EVENTS_COMPARE[0] = 0;
+  NRF_TIMER1->EVENTS_COMPARE[0] = 0;
 
   // Turn off lights
   nrf_gpio_cfg_input(currentChannel->anode, NRF_GPIO_PIN_NOPULL);
@@ -235,8 +235,8 @@ static void backpack_update(NRF_TIMER_Type* const timer) {
       // Prevent sheering of single LED value
       memcpy(drive_value, led_value, sizeof(drive_value));
       
-      timer->TASKS_CAPTURE[0] = 1;
-      timer->CC[0] += dark_time;
+      NRF_TIMER1->TASKS_CAPTURE[0] = 1;
+      NRF_TIMER1->CC[0] += dark_time;
       return ;
     }
 
@@ -247,8 +247,8 @@ static void backpack_update(NRF_TIMER_Type* const timer) {
   blackout_time -= delta;
   
   // Setup next interrupt
-  timer->TASKS_CAPTURE[0] = 1;
-  timer->CC[0] += delta;
+  NRF_TIMER1->TASKS_CAPTURE[0] = 1;
+  NRF_TIMER1->CC[0] += delta;
 
   // Drive cathode
   nrf_gpio_pin_clear(currentChannel->cathode);
@@ -257,13 +257,5 @@ static void backpack_update(NRF_TIMER_Type* const timer) {
   // Turn on our anode
   nrf_gpio_pin_set(currentChannel->anode);
   nrf_gpio_cfg_output(currentChannel->anode);
-}
-
-extern "C" void TIMER0_IRQHandler(void) { 
-  backpack_update(NRF_TIMER0);
-}
-
-extern "C" void TIMER1_IRQHandler(void) { 
-  backpack_update(NRF_TIMER1);
 }
 

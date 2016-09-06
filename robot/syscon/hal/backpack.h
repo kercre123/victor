@@ -34,8 +34,8 @@ namespace Backpack {
   
   void setLayer(BackpackLayer);
 
-  void useTimer(NRF_TIMER_Type*, IRQn_Type);
-  void detachTimer(NRF_TIMER_Type*, IRQn_Type);
+  void useTimer();
+  void detachTimer();
   
   void lightsOff();
   void setLowBattery(bool batteryLow);

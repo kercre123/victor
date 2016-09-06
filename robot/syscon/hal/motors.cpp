@@ -217,7 +217,7 @@ void Motors::teardown(void) {
   motorDisable = true;
   
   // Stop our timers timers (they will be cleared before they start back up)
-  NRF_TIMER1->TASKS_STOP = 1;
+  NRF_TIMER0->TASKS_STOP = 1;
   NRF_TIMER2->TASKS_STOP = 1;
 
   // Disable GPIOTE tacks for toggling motor bits
@@ -246,7 +246,7 @@ void Motors::teardown(void) {
 
 void Motors::setup(void) {
   // Reconfigure timer for motors
-  ConfigureTimer(NRF_TIMER1, 0, 0);
+  ConfigureTimer(NRF_TIMER0, 0, 0);
   ConfigureTimer(NRF_TIMER2, 2, 4);
 
   // Float our charge pin
@@ -347,8 +347,8 @@ void Motors::init()
 {
   // NOTE: Motors are not actually enabled, this only stages them
   
-  // Configure TIMER1 and TIMER2 with the appropriate task and PPI channels
-  ConfigurePPI(NRF_TIMER1, 0, 0);
+  // Configure TIMER0 and TIMER2 with the appropriate task and PPI channels
+  ConfigurePPI(NRF_TIMER0, 0, 0);
   ConfigurePPI(NRF_TIMER2, 2, 4);
   
   // Setup head encoder tick rate for production or pre-production hardware
@@ -545,15 +545,15 @@ void Motors::manage()
   if ((m_motors[0].nextPWM != m_motors[0].oldPWM) ||
       (m_motors[1].nextPWM != m_motors[1].oldPWM))
   {
-    NRF_TIMER1->TASKS_STOP = 1;
-    NRF_TIMER1->TASKS_CLEAR = 1;
+    NRF_TIMER0->TASKS_STOP = 1;
+    NRF_TIMER0->TASKS_CLEAR = 1;
     
     // Try to reconfigure the motors - if there are any faults, bail out
-    ConfigureTask(MOTOR_LEFT_WHEEL, &(NRF_TIMER1->CC[0]));
-    ConfigureTask(MOTOR_RIGHT_WHEEL, &(NRF_TIMER1->CC[1]));
+    ConfigureTask(MOTOR_LEFT_WHEEL, &(NRF_TIMER0->CC[0]));
+    ConfigureTask(MOTOR_RIGHT_WHEEL, &(NRF_TIMER0->CC[1]));
 
     // Restart the timer
-    NRF_TIMER1->TASKS_START = 1;
+    NRF_TIMER0->TASKS_START = 1;
   }
   
   if ((m_motors[2].nextPWM != m_motors[2].oldPWM) ||

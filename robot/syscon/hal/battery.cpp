@@ -183,12 +183,12 @@ void Battery::updateOperatingMode() {
   // Tear down existing mode
   switch (active_operating_mode) {
     case BODY_BLUETOOTH_OPERATING_MODE:
-      Backpack::detachTimer(NRF_TIMER1, TIMER1_IRQn);
+      Backpack::detachTimer();
       Bluetooth::shutdown();
       break ;
     
     case BODY_ACCESSORY_OPERATING_MODE:
-      Backpack::detachTimer(NRF_TIMER0, TIMER0_IRQn);
+      Backpack::detachTimer();
       Radio::shutdown();
       break ;
 
@@ -264,10 +264,10 @@ void Battery::updateOperatingMode() {
         NVIC_EnableIRQ(RTC1_IRQn);
       }
 
-      Backpack::useTimer(NRF_TIMER1, TIMER1_IRQn);
+      Backpack::useTimer();
 
       break ;
-    
+
     case BODY_ACCESSORY_OPERATING_MODE:
       Motors::disable(false);
       Backpack::setLayer(BPL_USER);
@@ -275,7 +275,7 @@ void Battery::updateOperatingMode() {
       Battery::powerOn();
       Radio::advertise();
 
-      Backpack::useTimer(NRF_TIMER0, TIMER0_IRQn);
+      Backpack::useTimer();
       break ;
   }
 
