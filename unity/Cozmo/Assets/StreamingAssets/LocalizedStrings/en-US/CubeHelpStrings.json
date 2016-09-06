@@ -1,0 +1,45 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "cubeHelpStrings.Instructions.Slide0": {
+    "translation": "Cozmo can't hear all of the Power Cubes. Place them near him."
+  },
+  "cubeHelpStrings.Instructions.Slide0altCopy": {
+    "translation": "Tap Next if you're still having trouble"
+  },
+  "cubeHelpStrings.Instructions.Slide1": {
+    "translation": "Let's try changing your Power Cube's battery"
+  },
+  "cubeHelpStrings.Instructions.Slide1altCopy": {
+    "translation": "Place it upside down and unscrew the cover"
+  },
+  "cubeHelpStrings.Instructions.Slide2": {
+    "translation": "Replace the battery with a fresh N cell"
+  },
+  "cubeHelpStrings.Instructions.Slide2altCopy": {
+    "translation": "Inset the new battery positive (+) end up"
+  },
+  "cubeHelpStrings.Instructions.Slide3": {
+    "translation": "Replace the cover and fasten it gently"
+  },
+  "cubeHelpStrings.Instructions.Slide3altCopy": {
+    "translation": "The Power Cube should now light up"
+  }
+}
