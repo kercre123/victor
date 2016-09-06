@@ -45,7 +45,7 @@ namespace SpeedTap {
       // Play banner animation with score
       string bannerText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextRoundScore,
                             _SpeedTapGame.PlayerRoundsWon, _SpeedTapGame.CozmoRoundsWon);
-      _SpeedTapGame.SharedMinigameView.ShelfWidget.PlayBannerAnimation(bannerText, HandleBannerAnimationDone,
+      _SpeedTapGame.SharedMinigameView.PlayBannerAnimation(bannerText, HandleBannerAnimationDone,
         roundEndSlideScript.BannerAnimationDurationSeconds);
 
       ContextManager.Instance.AppFlash(playChime: true);

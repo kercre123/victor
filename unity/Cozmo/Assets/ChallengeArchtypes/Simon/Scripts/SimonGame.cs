@@ -293,7 +293,7 @@ namespace Simon {
 
     public void ShowBanner(string bannerKey) {
       string bannerText = Localization.Get(bannerKey);
-      SharedMinigameView.ShelfWidget.PlayBannerAnimation(bannerText, null,
+      SharedMinigameView.PlayBannerAnimation(bannerText, null,
         _BannerAnimationDurationSeconds);
     }
 

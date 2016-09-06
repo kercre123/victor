@@ -18,7 +18,8 @@ namespace SpeedTap {
 
       // Play banner animation
       string bannerText = Localization.Get(LocalizationKeys.kSpeedTapTextGetReady);
-      _SpeedTapGame.SharedMinigameView.ShelfWidget.PlayBannerAnimation(bannerText, HandleBannerAnimationEnd);
+      _SpeedTapGame.SharedMinigameView.PlayBannerAnimation(bannerText, HandleBannerAnimationEnd);
+      _SpeedTapGame.SharedMinigameView.HideShelf();
     }
 
     private void HandleBannerAnimationEnd() {

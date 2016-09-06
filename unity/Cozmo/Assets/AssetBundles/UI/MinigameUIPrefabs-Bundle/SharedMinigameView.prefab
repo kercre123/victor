@@ -207,6 +207,21 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &180676
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22444798}
+  m_Layer: 5
+  m_Name: BannerContainer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &188944
 GameObject:
   m_ObjectHideFlags: 1
@@ -524,6 +539,7 @@ MonoBehaviour:
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 0
+  DimBackgroundPrefabOverride: {fileID: 0}
   _BottomWidgetContainer: {fileID: 22499356}
   _MiddleWidgetContainer: {fileID: 22483326}
   _OverlayWidgetContainer: {fileID: 22494750}
@@ -548,6 +564,9 @@ MonoBehaviour:
   _TallShelfWidgetPrefab: {fileID: 11434798, guid: 5ea512769a24c4ae595c0f2d848aee41,
     type: 2}
   _SpinnerWidgetPrefab: {fileID: 11403224, guid: 1b659e3d2e3de4a9098bb86e27352d88,
+    type: 2}
+  _BannerContainer: {fileID: 22444798}
+  _BannerWidgetPrefab: {fileID: 11461144, guid: dce7dd2a487f34d82bfde4e18a754998,
     type: 2}
   _DifficultySelectButtonPanelPrefab: {fileID: 11473774, guid: 8468318169eb444e19bb73e530a79d21,
     type: 2}
@@ -772,6 +791,24 @@ RectTransform:
   m_AnchoredPosition: {x: -545, y: 0}
   m_SizeDelta: {x: 519, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!224 &22444798
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 180676}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 22499356}
+  m_RootOrder: 3
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 0, y: -963.4983}
+  m_SizeDelta: {x: 3000, y: 162}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22454498
 RectTransform:
   m_ObjectHideFlags: 1
@@ -876,10 +913,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22430074}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 0.20139897}
+  m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -155.00125}
-  m_SizeDelta: {x: 0, y: 310}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22480596
 RectTransform:
@@ -953,6 +990,7 @@ RectTransform:
   - {fileID: 22405404}
   - {fileID: 22442982}
   - {fileID: 22403472}
+  - {fileID: 22444798}
   m_Father: {fileID: 22430574}
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}

@@ -113,6 +113,13 @@ namespace Cozmo {
       private SpinnerWidget _SpinnerWidgetPrefab;
       private SpinnerWidget _SpinnerWidgetInstance;
 
+      [SerializeField]
+      private RectTransform _BannerContainer;
+
+      [SerializeField]
+      private Banner _BannerWidgetPrefab;
+      private Banner _BannerWidgetInstance;
+
       #endregion
 
       #region Difficulty Select
@@ -329,6 +336,7 @@ namespace Cozmo {
         GameObject newWidget = UIManager.CreateUIElement(widgetPrefab.gameObject, parentTransform);
         widgetInstance = newWidget.GetComponent<T>();
         AddWidget(widgetInstance);
+
         return true;
       }
 
@@ -870,6 +878,13 @@ namespace Cozmo {
       public void HideSpinnerWidget() {
         HideWidget(_SpinnerWidgetInstance);
         _SpinnerWidgetInstance = null;
+      }
+
+      public void PlayBannerAnimation(string textToDisplay, TweenCallback animationEndCallback = null, float customSlowDurationSeconds = 0f) {
+        if (_BannerWidgetInstance == null) {
+          _BannerWidgetInstance = UIManager.CreateUIElement(_BannerWidgetPrefab.gameObject, _BannerContainer).GetComponent<Banner>();
+        }
+        _BannerWidgetInstance.PlayBannerAnimation(textToDisplay, animationEndCallback, customSlowDurationSeconds);
       }
 
       public void PlayVideo(string videoPath, System.Action onVideoContinue, bool showSkipButton = false) {
