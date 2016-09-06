@@ -74,6 +74,9 @@ namespace FaceEnrollment {
       _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToPickup);
       _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement);
       _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToFrustration);
+
+      // for some reason this became a reactionary behavior but isn't named like one...
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.KnockOverCubes);
     }
 
     protected override void SetupViewAfterCozmoReady(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
@@ -277,8 +280,8 @@ namespace FaceEnrollment {
         }
         else {
           // log to das
-          DAS.Event("robot.face_slots_used", CurrentRobot.EnrolledFaces.Count.ToString(), null, 
-            new Dictionary<string, string>(){{"$data", "1"}});
+          DAS.Event("robot.face_slots_used", CurrentRobot.EnrolledFaces.Count.ToString(), null,
+            new Dictionary<string, string>() { { "$data", "1" } });
 
           CurrentRobot.EnrolledFaces.Add(message.completionInfo.faceEnrollmentCompleted.faceID, _NameForFace);
           CurrentRobot.EnrolledFacesLastEnrolledTime.Add(message.completionInfo.faceEnrollmentCompleted.faceID, 0);
@@ -377,9 +380,9 @@ namespace FaceEnrollment {
       // calling this explicitly to show the conditional shelf after erasing a face
       ShowShelf(SharedMinigameView);
       // log to das
-      DAS.Event("robot.face_slots_used", CurrentRobot.EnrolledFaces.Count.ToString(), null, 
-        new Dictionary<string, string>(){{"$data", "-1"}});
-      
+      DAS.Event("robot.face_slots_used", CurrentRobot.EnrolledFaces.Count.ToString(), null,
+        new Dictionary<string, string>() { { "$data", "-1" } });
+
     }
 
     private void ShowShelf(Cozmo.MinigameWidgets.SharedMinigameView newView) {
