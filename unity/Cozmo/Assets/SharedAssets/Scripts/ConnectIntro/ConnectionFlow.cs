@@ -443,6 +443,12 @@ public class ConnectionFlow : MonoBehaviour {
       return;
     }
 
+    if (_UpdateFirmwareScreenInstance != null && _UpdateFirmwareScreenInstance.DoneUpdateDelayInProgress) {
+      // if we are delaying the firmware screen to wait for robot reboot don't reset the flow during the
+      // delay.
+      return;
+    }
+
     Cleanup();
     CreateConnectionFlowBackground();
     ShowSearchForCozmo();
