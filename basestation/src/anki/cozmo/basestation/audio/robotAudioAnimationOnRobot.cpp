@@ -325,7 +325,7 @@ void RobotAudioAnimationOnRobot::PopRobotAudioMessage( RobotInterface::EngineToR
                  "Block size must be less or equal to audioSameple size");
     // Convert audio format to robot format
     for ( size_t idx = 0; idx < audioFrame->sampleCount; ++idx ) {
-      keyFrame.sample[idx] = encodeMuLaw( audioFrame->samples[idx] * _robotVolume );
+      keyFrame.sample[idx] = encodeMuLaw( audioFrame->samples[idx] );
     }
     
     // Pad the back of the buffer with 0s

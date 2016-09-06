@@ -95,8 +95,6 @@ public:
   static constexpr uint32_t kInvalidEventTime = UINT32_MAX;
   uint32_t GetNextEventTime_ms();
   
-  // FIXME: This is a temp fix, will remove once we have an Audio Mixer
-  void SetRobotVolume( float volume ) { _robotVolume = volume; }
 
 protected:
   
@@ -172,9 +170,6 @@ protected:
 
   // Handle AudioClient's PostCozmo() callbacks from audio engine (Wwise)s
   void HandleCozmoEventCallback( AnimationEvent* animationEvent, const AudioEngine::AudioCallbackInfo& callbackInfo );
-  
-  // FIXME: This is a temp fix, will remove once we have an Audio Mixer
-  float _robotVolume = 1.0f;
 
   // Track what game obj to use for animation
   GameObjectType _gameObj = GameObjectType::Invalid;

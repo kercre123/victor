@@ -1771,21 +1771,6 @@ void Robot::ShiftEyes(AnimationStreamer::Tag& tag, f32 xPix, f32 yPix,
     GetAnimationStreamer().AddToPersistentFaceLayer(tag, std::move(keyframe));
   }
 }
-    
-Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)
-{
-  Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::PlaySound(soundName, numLoops, volume)));
-      
-  //CozmoEngineSignals::PlaySoundForRobotSignal().emit(GetID(), soundName, numLoops, volume);
-  return RESULT_OK;
-} // PlaySound()
-      
-      
-void Robot::StopSound()
-{
-  Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::StopSound()));
-} // StopSound()
-
 
 void Robot::LoadEmotionEvents()
 {

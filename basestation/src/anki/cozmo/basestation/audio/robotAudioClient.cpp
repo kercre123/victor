@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "clad/audio/messageAudioClient.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 #include "DriveAudioEngine/audioCallback.h"
 #include "util/dispatchQueue/dispatchQueue.h"
 #include "util/helpers/templateHelpers.h"
@@ -229,9 +230,6 @@ void RobotAudioClient::CreateAudioAnimation( Animation* anAnimation )
   if ( audioAnimation == nullptr ) {
     return;
   }
-  
-  // FIXME: This is a temp fix, will remove once we have an Audio Mixer
-    audioAnimation->SetRobotVolume( _robotVolume );
 
   // Check if animation is valid
   const RobotAudioAnimation::AnimationState animationState = audioAnimation->GetAnimationState();
@@ -320,9 +318,13 @@ bool RobotAudioClient::AnimationIsComplete()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioClient::SetRobotVolume(float volume)
 {
-  // Keep On device robot volume (Wwise) in sync with robot volume
-  PostParameter(GameParameter::ParameterType::Robot_Volume, volume, GameObjectType::Invalid);
+  // Update robot volume
   _robotVolume = volume;
+  const uint16_t vol = Util::numeric_cast<uint16_t>(UINT16_MAX * _robotVolume);
+  // Send volume message to Robot (Play on Robot)
+  _robot->SendMessage(RobotInterface::EngineToRobot(SetAudioVolume(vol)));
+  // Set volume in Audio Engine (Play on Device)
+  PostParameter(GameParameter::ParameterType::Robot_Volume, _robotVolume, GameObjectType::Invalid);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -516,10 +516,6 @@ public:
   // =========== Audio =============
   Audio::RobotAudioClient* GetRobotAudioClient() { return _audioClient.get(); }
   
-  // Ask the UI to play a sound for us
-  // TODO: REMOVE OLD AUDIO SYSTEM
-  Result PlaySound(const std::string& soundName, u8 numLoops, u8 volume);
-  void   StopSound();
   
   // Load in all data-driven behaviors
   void LoadBehaviors();
