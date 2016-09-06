@@ -179,7 +179,8 @@ public class StartupManager : MonoBehaviour {
     DAS.Info("StartupManager.HandleConnectedToEngine", "Engine connected!");
     _EngineConnected = true;
     if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled) {
-      ConsoleLogManager.Instance.EnableSOSLogs(true);
+      // TODO: SOS logger is super old and rotten, commenting it out until someone actually has time to fix this
+      //ConsoleLogManager.Instance.EnableSOSLogs(true);
     }
   }
 
