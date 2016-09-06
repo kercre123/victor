@@ -103,7 +103,7 @@ private:
   Json::Value _robotBehaviorConfig;
   Json::Value _robotVisionConfig;
   
-  std::mutex  _animationAddMutex;
+  std::mutex  _parallelLoadingMutex;
 };
 
 }

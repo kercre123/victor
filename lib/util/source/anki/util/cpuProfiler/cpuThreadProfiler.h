@@ -118,6 +118,9 @@ public:
   
   static void SetMinSampleDuration_ms(double newVal) { sMinSampleDuration_ms = newVal; }
   
+  bool HasStaleSettings() const { return _hasStaleSettings; }
+  void SetHasStaleSettings(bool newVal = true) { _hasStaleSettings = newVal; }
+  
 private:
   
   void WarnOfSkippedProfileSample(const CpuProfileSampleShared& sharedData, double duration_ms);
@@ -135,6 +138,7 @@ private:
   uint32_t                    _logFrequency;   // log profile every _logFrequency ticks
   bool                        _hasBeenDeleted;
   bool                        _profileRequested;
+  bool                        _hasStaleSettings;
 };
 
   

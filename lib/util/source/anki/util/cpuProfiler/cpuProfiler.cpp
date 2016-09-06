@@ -88,6 +88,15 @@ CpuThreadProfiler* CpuProfiler::GetThreadProfilerByName(const char* threadName)
   return nullptr;
 }
 
+void CpuProfiler::CheckAndUpdateProfiler(CpuThreadProfiler& profiler, double maxTickTime_ms, uint32_t logFreq) const
+{
+  if (profiler.HasStaleSettings())
+  {
+    profiler.SetMaxTickTime_ms(maxTickTime_ms);
+    profiler.SetLogFrequency(logFreq);
+    profiler.SetHasStaleSettings(false);
+  }
+}
 
 CpuThreadProfiler* CpuProfiler::GetOrAddThreadProfiler(CpuThreadId threadId, const char* threadName,
                                                        double maxTickTime_ms, uint32_t logFreq)
@@ -95,6 +104,7 @@ CpuThreadProfiler* CpuProfiler::GetOrAddThreadProfiler(CpuThreadId threadId, con
   CpuThreadProfiler* existingProfiler = GetThreadProfiler(threadId);
   if (existingProfiler)
   {
+    CheckAndUpdateProfiler(*existingProfiler, maxTickTime_ms, logFreq);
     return existingProfiler;
   }
   
@@ -107,6 +117,8 @@ CpuThreadProfiler* CpuProfiler::GetOrAddThreadProfiler(CpuThreadId threadId, con
     {
       // Reuse this thread
       existingProfiler->ReuseThread(threadId);
+      
+      CheckAndUpdateProfiler(*existingProfiler, maxTickTime_ms, logFreq);
       
       PRINT_CH_INFO("CpuProfiler", "CpuProfiler.ThreadReused", "Thread %u: '%s' being reused", existingProfiler->GetThreadIndex(), threadName);
       return existingProfiler;

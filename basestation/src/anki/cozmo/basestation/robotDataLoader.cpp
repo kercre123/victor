@@ -20,10 +20,10 @@
 #include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/dispatchWorker/dispatchWorker.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
-#include "util/time/stepTimers.h"
 #include <json/json.h>
 #include <string>
 #include <sys/stat.h>
@@ -59,43 +59,48 @@ void RobotDataLoader::LoadData()
   if (_platform == nullptr) {
     return;
   }
-  Util::Time::PushTimedStep("RobotDataLoader::LoadData");
+  
+  ANKI_CPU_TICK_ONE_TIME("RobotDataLoader::LoadData");
 
-  Util::Time::PushTimedStep("CollectFiles");
-  CollectJsonFiles();
-  Util::Time::PopTimedStep();
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::CollectFiles");
+    CollectJsonFiles();
+  }
 
-  Util::Time::PushTimedStep("LoadAnimations");
-  LoadAnimationsInternal();
-  Util::Time::PopTimedStep();
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimations");
+    LoadAnimationsInternal();
+  }
 
-  Util::Time::PushTimedStep("LoadAnimationGroups");
-  LoadAnimationGroups();
-  Util::Time::PopTimedStep();
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationGroups");
+    LoadAnimationGroups();
+  }
 
-  Util::Time::PushTimedStep("LoadFaceAnimations");
-  LoadFaceAnimations();
-  Util::Time::PopTimedStep();
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadFaceAnimations");
+    LoadFaceAnimations();
+  }
 
-  Util::Time::PushTimedStep("LoadEmotionEvents");
-  LoadEmotionEvents();
-  Util::Time::PopTimedStep();
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadEmotionEvents");
+    LoadEmotionEvents();
+  }
 
-  Util::Time::PushTimedStep("LoadBehaviors");
-  LoadBehaviors();
-  Util::Time::PopTimedStep();
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadBehaviors");
+    LoadBehaviors();
+  }
 
-  Anki::Util::Time::PushTimedStep("LoadGameEventResponses");
-  LoadAnimationTriggerResponses();
-  Anki::Util::Time::PopTimedStep();
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadGameEventResponses");
+    LoadAnimationTriggerResponses();
+  }
 
-  Anki::Util::Time::PushTimedStep("LoadRobotConfigs");
-  LoadRobotConfigs();
-  Anki::Util::Time::PopTimedStep();
-
-  Util::Time::PopTimedStep();
-  Util::Time::PrintTimedSteps();
-  Util::Time::ClearSteps();
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadRobotConfigs");
+    LoadRobotConfigs();
+  }
 
   // this map doesn't need to be persistent
   _jsonFiles.clear();
@@ -167,12 +172,16 @@ void RobotDataLoader::LoadAnimationsInternal()
 
 void RobotDataLoader::LoadAnimationGroups()
 {
+  using MyDispatchWorker = Util::DispatchWorker<3, const std::string&>;
+  MyDispatchWorker::FunctionType loadFileFunc = std::bind(&RobotDataLoader::LoadAnimationGroupFile, this, std::placeholders::_1);
+  MyDispatchWorker myWorker(loadFileFunc);
   const auto& fileList = _jsonFiles[FileType::AnimationGroup];
   const auto size = fileList.size();
   for (int i = 0; i < size; i++) {
-    LoadAnimationGroupFile(fileList[i]);
+    myWorker.PushJob(fileList[i]);
     //PRINT_NAMED_DEBUG("RobotDataLoader.LoadAnimationGroups", "loaded anim group %d of %zu", i, size);
   }
+  myWorker.Process();
 }
 
 void RobotDataLoader::WalkAnimationDir(const std::string& animationDir, TimestampMap& timestamps, const std::function<void(const std::string&)>& walkFunc)
@@ -216,7 +225,7 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
   const bool success = _platform->readAsJson(path.c_str(), animDefs);
   std::string animationId;
   if (success && !animDefs.empty()) {
-    std::lock_guard<std::mutex> guard(_animationAddMutex);
+    std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
     _cannedAnimations->DefineFromJson(animDefs, animationId);
 
     if(path.find(animationId) == std::string::npos) {
@@ -244,6 +253,7 @@ void RobotDataLoader::LoadAnimationGroupFile(const std::string& path)
 
     PRINT_NAMED_INFO("RobotDataLoader.LoadAnimationGroupFile", "reading %s - %s", animationGroupName.c_str(), path.c_str());
 
+    std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
     ASSERT_NAMED(nullptr != _cannedAnimations, "RobotDataLoader.LoadAnimationGroupFile.NullCannedAnimations");
     _animationGroups->DefineFromJson(animGroupDef, animationGroupName, _cannedAnimations.get());
   }

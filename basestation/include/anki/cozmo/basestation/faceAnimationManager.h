@@ -89,6 +89,7 @@ namespace Cozmo {
     };
     
     AvailableAnim* GetAnimationByName(const std::string& name);
+    void LoadAnimationImageFrames(const std::string& animationFolder, const std::string& animName);
     
     std::unordered_map<std::string, AvailableAnim> _availableAnimations;
     

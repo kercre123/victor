@@ -16,6 +16,7 @@
 #include "anki/common/basestation/array2d_impl.h"
 #include "anki/cozmo/robot/faceDisplayDecode.h"
 #include "clad/types/animationKeyFrames.h"
+#include "util/dispatchWorker/dispatchWorker.h"
 #include "util/logging/logging.h"
 #include "util/fileUtils/fileUtils.h"
 
@@ -84,168 +85,173 @@ namespace Cozmo {
     }
     const std::string animationFolder = dataPlatform->pathToResource(resourceScope, "assets/faceAnimations/");
     
-    DIR* dir = opendir(animationFolder.c_str());
-    if ( dir != nullptr) {
-      dirent* ent = nullptr;
-      while ( (ent = readdir(dir)) != nullptr) {
-        if (ent->d_type == DT_DIR && ent->d_name[0] != '.') {
-          const std::string animName(ent->d_name);
-          if(animName == ProceduralAnimName) {
-            PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir.ReservedName",
-                              "'_PROCEDURAL_' is a reserved face animation name. Ignoring.");
-            continue;
-          }
-          
-          std::string fullDirName = Util::FileUtils::FullFilePath({animationFolder, ent->d_name});
-          struct stat attrib{0};
-          int result = stat(fullDirName.c_str(), &attrib);
-          if (result == -1) {
-            PRINT_NAMED_WARNING("FaceAnimationManager.ReadFaceAnimationDir",
-                                "could not get mtime for %s", fullDirName.c_str());
-            continue;
-          }
-          bool loadAnimDir = false;
-          auto mapIt = _availableAnimations.find(animName);
-#ifdef __APPLE__ // TODO: COZMO-1057 
-            time_t tmpSeconds = attrib.st_mtimespec.tv_sec; //This maps to __darwin_time_t
+    // Get the list of all the directory names
+    std::vector<std::string> faceAnimDirNames;
+    Util::FileUtils::ListAllDirectories(animationFolder, faceAnimDirNames);
+    
+    // Set up the worker that will process all the image frame folders
+    using MyDispatchWorker = Util::DispatchWorker<3, const std::string&>;
+    MyDispatchWorker::FunctionType workerFunction = std::bind(&FaceAnimationManager::LoadAnimationImageFrames, this, animationFolder, std::placeholders::_1);
+    MyDispatchWorker worker(workerFunction);
+    
+    // Go through the list of directories, removing disallowed names, updating timestamps, and removing ones that don't need to be loaded
+    auto nameIter = faceAnimDirNames.begin();
+    while (nameIter != faceAnimDirNames.end())
+    {
+      const std::string& animName = *nameIter;
+      
+      // Remove the disallowed name from the list if it's there
+      if (animName == ProceduralAnimName)
+      {
+        PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir.ReservedName",
+                          "'_PROCEDURAL_' is a reserved face animation name. Ignoring.");
+        nameIter = faceAnimDirNames.erase(nameIter);
+        continue;
+      }
+      
+      std::string fullDirName = Util::FileUtils::FullFilePath({animationFolder, animName});
+      struct stat attrib{0};
+      int result = stat(fullDirName.c_str(), &attrib);
+      if (result == -1) {
+        PRINT_NAMED_WARNING("FaceAnimationManager.ReadFaceAnimationDir",
+                            "could not get mtime for %s", fullDirName.c_str());
+        nameIter = faceAnimDirNames.erase(nameIter);
+        continue;
+      }
+      
+      auto mapIt = _availableAnimations.find(animName);
+#ifdef __APPLE__ // TODO: COZMO-1057
+      time_t tmpSeconds = attrib.st_mtimespec.tv_sec; //This maps to __darwin_time_t
 #else
-            time_t tmpSeconds = attrib.st_mtime;
+      time_t tmpSeconds = attrib.st_mtime;
 #endif
-          if (mapIt == _availableAnimations.end()) {
-            _availableAnimations[animName].lastLoadedTime = tmpSeconds;
-            loadAnimDir = true;
-          } else if (fromCache) {
-            // It should probably be the default behavior to clear the
-            // "rleFrames" vector when "loadAnimDir" is true, right?
-            _availableAnimations[animName].rleFrames.clear();
-            _availableAnimations[animName].lastLoadedTime = tmpSeconds;
-            loadAnimDir = true;
-          } else {
-            if (mapIt->second.lastLoadedTime < tmpSeconds) {
-              mapIt->second.lastLoadedTime = tmpSeconds;
-              loadAnimDir = true;
-            } else {
-              //PRINT_NAMED_INFO("Robot.ReadAnimationFile", "old time stamp for %s", fullFileName.c_str());
-            }
-          }
-          if (loadAnimDir) {
-            
-            DIR* animDir = opendir(fullDirName.c_str());
-            if(animDir != nullptr) {
-              dirent* frameEntry = nullptr;
-              while ( (frameEntry = readdir(animDir)) != nullptr) {
-                if(frameEntry->d_type == DT_REG && frameEntry->d_name[0] != '.') {
-                  
-                  // Get the frame number in this filename
-                  const std::string filename(frameEntry->d_name);
-                  size_t underscorePos = filename.find_last_of("_");
-                  size_t dotPos = filename.find_last_of(".");
-                  if(dotPos == std::string::npos) {
-                    PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
-                                      "Could not find '.' in frame filename %s",
-                                      filename.c_str());
-                    return;
-                  } else if(underscorePos == std::string::npos) {
-                    PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
-                                      "Could not find '_' in frame filename %s",
-                                      filename.c_str());
-                    return;
-                  } else if(dotPos <= underscorePos+1) {
-                    PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
-                                      "Unexpected relative positions for '.' and '_' in frame filename %s",
-                                      filename.c_str());
-                    return;
-                  }
-                  
-                  const std::string digitStr(filename.substr(underscorePos+1,
-                                                             (dotPos-underscorePos-1)));
-                  
-                  s32 frameNum = 0;
-                  try {
-                    frameNum = std::stoi(digitStr);
-                  } catch (std::invalid_argument&) {
-                    PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
-                                      "Could not get frame number from substring '%s' "
-                                      "of filename '%s'.",
-                                      digitStr.c_str(), filename.c_str());
-                    return;
-                  }
-                  
-                  if(frameNum < 0) {
-                    PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
-                                      "Found negative frame number (%d) for filename '%s'.",
-                                      frameNum, filename.c_str());
-                    return;
-                  }
-                  
-                  AvailableAnim& anim = _availableAnimations[animName];
-                  
-                  // Add empty frames if there's a gap
-                  if(frameNum > 1) {
-                    
-                    s32 emptyFramesAdded = 0;
-                    while(anim.rleFrames.size() < frameNum-1) {
-                      anim.rleFrames.push_back({});
-                      ++emptyFramesAdded;
-                    }
-                    
-                    /*
-                    if(emptyFramesAdded > 0) {
-                      PRINT_NAMED_DEBUG("FaceAnimationManager.ReadFaceAnimationDir.InsertEmptyFrames",
-                                        "Inserted %d empty frames before frame %d in animation %s.",
-                                        emptyFramesAdded, frameNum, animName.c_str());
-                    }
-                     */
-                  }
-                  
-                  // Read the image
-                  const std::string fullFilename = Util::FileUtils::FullFilePath({fullDirName, frameEntry->d_name});
-                  Vision::Image img;
-                  Result loadResult = img.Load(fullFilename);
-                  
-                  if(loadResult != RESULT_OK ||
-                     img.GetNumRows() != IMAGE_HEIGHT ||
-                     img.GetNumCols() != IMAGE_WIDTH)
-                  {
-                    PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
-                                      "Image in %s is %dx%d instead of %dx%d.",
-                                      fullFilename.c_str(),
-                                      img.GetNumCols(), img.GetNumRows(),
-                                      IMAGE_WIDTH, IMAGE_HEIGHT);
-                    continue;
-                  }
-                  
-                  // Binarize
-                  img.Threshold(128);
-                  
-                  // DEBUG
-                  //cv::imshow("FaceAnimImage", img);
-                  //cv::waitKey(30);
-
-                  // Compress twice: once for each scanline version
-                  std::pair<std::vector<u8>, std::vector<u8> > compressedScanlinedPair;
-                  AddScanlinesHelper(img, compressedScanlinedPair);
-                  
-                  anim.rleFrames.push_back(std::move(compressedScanlinedPair));
-                }
-              }
-            }
-            
-            //PRINT_NAMED_INFO("FaceAnimationManager.ReadFaceAnimationDir",
-            //                 "Added %lu files/frames to animation %s",
-            //                 (unsigned long)_availableAnimations[animName].GetNumFrames(),
-            //                 animName.c_str());
-          }
+      
+      if (mapIt == _availableAnimations.end()) {
+        _availableAnimations[animName].lastLoadedTime = tmpSeconds;
+      } else if (fromCache) {
+        // It should probably be the default behavior to clear the
+        // "rleFrames" vector when "loadAnimDir" is true, right?
+        _availableAnimations[animName].rleFrames.clear();
+        _availableAnimations[animName].lastLoadedTime = tmpSeconds;
+      } else {
+        if (mapIt->second.lastLoadedTime < tmpSeconds) {
+          mapIt->second.lastLoadedTime = tmpSeconds;
+        } else {
+          // If we already have this anim loaded and its timestamp isn't old, we don't need to reload it
+          nameIter = faceAnimDirNames.erase(nameIter);
+          continue;
         }
       }
-      closedir(dir);
-    } else {
-      PRINT_NAMED_INFO("FaceAnimationManager.ReadFaceAnimationDir",
-                       "folder not found, no face animations read %s",
-                       animationFolder.c_str());
+      
+      // Now we can start looking at the next name, this one is ok to load
+      worker.PushJob(animName);
+      ++nameIter;
     }
     
+    // Go through and load the anims from our list
+    worker.Process();
+    
   } // ReadFaceAnimationDir()
+  
+  
+  void FaceAnimationManager::LoadAnimationImageFrames(const std::string& animationFolder, const std::string& animName)
+  {
+    const std::string fullDirName = Util::FileUtils::FullFilePath({animationFolder, animName});
+    std::vector<std::string> fileNames = Util::FileUtils::FilesInDirectory(fullDirName);
+    for (auto fileIter = fileNames.begin(); fileIter != fileNames.end(); ++fileIter)
+    {
+      const std::string& filename = *fileIter;
+      size_t underscorePos = filename.find_last_of("_");
+      size_t dotPos = filename.find_last_of(".");
+      if(dotPos == std::string::npos) {
+        PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
+                          "Could not find '.' in frame filename %s",
+                          filename.c_str());
+        return;
+      } else if(underscorePos == std::string::npos) {
+        PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
+                          "Could not find '_' in frame filename %s",
+                          filename.c_str());
+        return;
+      } else if(dotPos <= underscorePos+1) {
+        PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
+                          "Unexpected relative positions for '.' and '_' in frame filename %s",
+                          filename.c_str());
+        return;
+      }
+      
+      const std::string digitStr(filename.substr(underscorePos+1,
+                                                 (dotPos-underscorePos-1)));
+      
+      s32 frameNum = 0;
+      try {
+        frameNum = std::stoi(digitStr);
+      } catch (std::invalid_argument&) {
+        PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
+                          "Could not get frame number from substring '%s' "
+                          "of filename '%s'.",
+                          digitStr.c_str(), filename.c_str());
+        return;
+      }
+      
+      if(frameNum < 0) {
+        PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
+                          "Found negative frame number (%d) for filename '%s'.",
+                          frameNum, filename.c_str());
+        return;
+      }
+      
+      AvailableAnim& anim = _availableAnimations[animName];
+      
+      // Add empty frames if there's a gap
+      if(frameNum > 1) {
+        
+        s32 emptyFramesAdded = 0;
+        while(anim.rleFrames.size() < frameNum-1) {
+          anim.rleFrames.push_back({});
+          ++emptyFramesAdded;
+        }
+        
+        /*
+         if(emptyFramesAdded > 0) {
+         PRINT_NAMED_DEBUG("FaceAnimationManager.ReadFaceAnimationDir.InsertEmptyFrames",
+         "Inserted %d empty frames before frame %d in animation %s.",
+         emptyFramesAdded, frameNum, animName.c_str());
+         }
+         */
+      }
+      
+      // Read the image
+      const std::string fullFilename = Util::FileUtils::FullFilePath({fullDirName, filename});
+      Vision::Image img;
+      Result loadResult = img.Load(fullFilename);
+      
+      if(loadResult != RESULT_OK ||
+         img.GetNumRows() != IMAGE_HEIGHT ||
+         img.GetNumCols() != IMAGE_WIDTH)
+      {
+        PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir",
+                          "Image in %s is %dx%d instead of %dx%d.",
+                          fullFilename.c_str(),
+                          img.GetNumCols(), img.GetNumRows(),
+                          IMAGE_WIDTH, IMAGE_HEIGHT);
+        continue;
+      }
+      
+      // Binarize
+      img.Threshold(128);
+      
+      // DEBUG
+      //cv::imshow("FaceAnimImage", img);
+      //cv::waitKey(30);
+      
+      // Compress twice: once for each scanline version
+      std::pair<std::vector<u8>, std::vector<u8> > compressedScanlinedPair;
+      AddScanlinesHelper(img, compressedScanlinedPair);
+      
+      anim.rleFrames.push_back(std::move(compressedScanlinedPair));
+    }
+  }
   
   FaceAnimationManager::AvailableAnim* FaceAnimationManager::GetAnimationByName(const std::string& name)
   {

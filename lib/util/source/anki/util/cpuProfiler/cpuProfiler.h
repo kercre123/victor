@@ -95,6 +95,8 @@
     CpuThreadProfiler           _threadProfilers[kCpuProfilerMaxThreads];
     std::atomic<uint32_t>       _threadProfilerCount;
     CpuProfileClock::time_point _creationTimePoint;
+    
+    void CheckAndUpdateProfiler(CpuThreadProfiler& profiler, double maxTickTime_ms, uint32_t logFreq) const;
   };
   
     
@@ -109,9 +111,10 @@
   {
   public:
     
-    explicit ScopedCpuTick(const char* tickName, float maxTickTime_ms, uint32_t logFreq)
+    explicit ScopedCpuTick(const char* tickName, float maxTickTime_ms, uint32_t logFreq, bool oneTimeUse = false)
       : _tickName(tickName)
       , _started(false)
+      , _isOneTimeUse(oneTimeUse)
     {
       CpuThreadProfiler* profiler = CpuProfiler::GetOrAddCurrentThreadProfiler(tickName, maxTickTime_ms, logFreq);
       if (profiler)
@@ -133,6 +136,10 @@
         if (profiler)
         {
           profiler->EndTick();
+          if (_isOneTimeUse)
+          {
+            profiler->SetHasStaleSettings();
+          }
         }
         else
         {
@@ -148,6 +155,7 @@
     
     const char* _tickName;
     bool        _started;
+    bool        _isOneTimeUse;
   };
 
   
@@ -237,6 +245,9 @@
 
   #define ANKI_CPU_TICK(tickName, maxTickTime_ms, logFreq) \
     Anki::Util::ScopedCpuTick                     ANKI_CPU_UNIQUE_VAR_NAME(scopedCpuTick)(tickName, maxTickTime_ms, logFreq)
+
+  #define ANKI_CPU_TICK_ONE_TIME(tickName) \
+    Anki::Util::ScopedCpuTick                     ANKI_CPU_UNIQUE_VAR_NAME(scopedCpuTick)(tickName, 0, 0, true)
 
   #define ANKI_CPU_REMOVE_THIS_THREAD()         Anki::Util::CpuProfiler::RemoveCurrentThreadProfiler()
 

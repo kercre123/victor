@@ -39,6 +39,7 @@ CpuThreadProfiler::CpuThreadProfiler()
   , _logFrequency(kLogFrequencyNever)
   , _hasBeenDeleted(false)
   , _profileRequested(false)
+  , _hasStaleSettings(false)
 {
 }
 
@@ -68,6 +69,7 @@ void CpuThreadProfiler::Init(CpuThreadId threadId, uint32_t threadIndex, const c
   _logFrequency = logFrequency;
   _hasBeenDeleted = false;
   _profileRequested = false;
+  _hasStaleSettings = false;
 }
   
   
