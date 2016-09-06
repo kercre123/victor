@@ -35,7 +35,6 @@ namespace Cozmo {
       public float ExpParticleLeave = 0.25f;
       public float ExpParticleStagger = 0.75f;
       public string RewardConfigFilename = "";
-      public int MaxRewardsPerGame = 3;
     }
 
   }

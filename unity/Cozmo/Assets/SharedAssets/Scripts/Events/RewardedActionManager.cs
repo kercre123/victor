@@ -220,24 +220,6 @@ public class RewardedActionManager : MonoBehaviour {
         }
       }
     }
-    // Sort Pending Rewards and then remove all that have lower values than the top X,
-    // where X is the number of rewards we intend to display
-    List<RewardedActionData> survivingRewards = new List<RewardedActionData>();
-    foreach (RewardedActionData reward in PendingActionRewards.Keys) {
-      survivingRewards.Add(reward);
-    }
-    survivingRewards.Sort((RewardedActionData x, RewardedActionData y) => {
-      return y.Reward.Amount.CompareTo(x.Reward.Amount);
-    });
-    List<RewardedActionData> topX = new List<RewardedActionData>();
-    for (int i = 0; i < Mathf.Min(survivingRewards.Count, _RewardConfig.MaxRewardsPerGame); i++) {
-      topX.Add(survivingRewards[i]);
-    }
-    // Clean up Pending Action Rewards, only add back in the topX
-    PendingActionRewards.Clear();
-    for (int i = 0; i < topX.Count; i++) {
-      PendingActionRewards.Add(topX[i], topX[i].Reward.Amount);
-    }
   }
 
   /// <summary>
