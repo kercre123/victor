@@ -62,17 +62,39 @@ static void system_init_done(void)
   NVInit(true, nv_init_done);
 }
 
+static bool wifi_monitor_connection_status(uint32_t param)
+{
+  u8 numConnected = wifi_softap_get_station_num();
+  if (numConnected > 0)
+  {
+    u8 i;
+    for (i=0; i<MAC_ADDR_BYTES; i++)
+    {
+      if (connectedMac[i] != 0) { break; }
+    }
+    if (i == MAC_ADDR_BYTES)  //All zeros: something's wrong
+    {
+      os_printf("WIFI has connected station but no MAC. Resetting\r\f");
+      wifi_set_opmode_current(NULL_MODE);  //off
+      wifi_set_opmode_current(SOFTAP_MODE); //ap-mode back on.
+    }
+  }
+  return false;
+}
+
 static void wifi_event_callback(System_Event_t *evt)
 {
-  switch (evt->event) {
-  case EVENT_SOFTAPMODE_STACONNECTED:
+  switch (evt->event)
+  {
+    case EVENT_SOFTAPMODE_STACONNECTED:
     {
       os_memcpy(connectedMac, evt->event_info.sta_connected.mac, MAC_ADDR_BYTES);
       break;
     }
-  case EVENT_SOFTAPMODE_STADISCONNECTED:
+    case EVENT_SOFTAPMODE_STADISCONNECTED:
     {
       os_memset(connectedMac, 0x00, MAC_ADDR_BYTES);
+      foregroundTaskPost(wifi_monitor_connection_status, 0);
       break;
     }
   }

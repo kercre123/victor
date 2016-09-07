@@ -28,7 +28,7 @@ enum uint_32 Mood
 enum uint_32 Music
 {
   Alarm_Clock = 3653788539,
-  Connecting = 26556951,
+  Connectivity = 1264085260,
   Freeplay = 150865113,
   Invalid = 0,
   Minigame__Generic = 713847863,
