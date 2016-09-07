@@ -29,3 +29,9 @@ MonoBehaviour:
   IsMinigame: 0
   InstructionVideoPath: 
   DifficultyOptions: []
+  GetInAnimTrigger:
+    _EnumValueAsString: DroneModeGetIn
+    _EnumValue: 48
+  GetOutAnimTrigger:
+    _EnumValueAsString: DroneModeGetOut
+    _EnumValue: 49

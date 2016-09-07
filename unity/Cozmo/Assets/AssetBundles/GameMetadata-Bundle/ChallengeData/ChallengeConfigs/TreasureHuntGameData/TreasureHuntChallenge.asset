@@ -21,10 +21,17 @@ MonoBehaviour:
   _ChallengeDescriptionLocKey: treasureHuntGame01.description
   _ChallengeIcon: {fileID: 21300000, guid: f28815dae66704e729160fe1d7e1e61f, type: 3}
   _UnlockId:
-    _EnumValueAsString: CubeRollAction
+    _EnumValueAsString: Invalid
     _EnumValue: 0
   _Music:
     _Music: 713847863
   MinigameConfig: {fileID: 11400000, guid: 21ae4f208edde456aa5ed8d867e03ea8, type: 2}
   IsMinigame: 0
+  InstructionVideoPath: 
   DifficultyOptions: []
+  GetInAnimTrigger:
+    _EnumValueAsString: Count
+    _EnumValue: 249
+  GetOutAnimTrigger:
+    _EnumValueAsString: Count
+    _EnumValue: 249

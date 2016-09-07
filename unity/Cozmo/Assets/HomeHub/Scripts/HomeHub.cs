@@ -53,6 +53,8 @@ namespace Cozmo.HomeHub {
 
     private CompletedChallengeData _CurrentChallengePlaying;
 
+    private AnimationTrigger _MinigameGetOutAnimTrigger = AnimationTrigger.Count;
+
     public override bool LoadHubWorld() {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(RefreshChallengeUnlockInfo);
       _Instance = this;
@@ -149,7 +151,10 @@ namespace Cozmo.HomeHub {
           ProceduralEyeParameters.MakeDefaultRightEye());
 
         robot.ResetRobotState(() => {
-          StartFreeplay(robot);
+          robot.SendAnimationTrigger(_MinigameGetOutAnimTrigger, (bool success) => {
+            _MinigameGetOutAnimTrigger = AnimationTrigger.Count;
+            StartFreeplay(robot);
+          });
         });
       }
     }
@@ -256,6 +261,8 @@ namespace Cozmo.HomeHub {
 
     private void LoadMinigame(ChallengeData challengeData) {
       challengeData.LoadPrefabData((ChallengePrefabData prefabData) => {
+        // Set the GetOut animation to play when this minigame is destroyed
+        _MinigameGetOutAnimTrigger = challengeData.GetOutAnimTrigger.Value;
         StartCoroutine(ShowMinigameAfterHomeViewCloses(challengeData, prefabData));
       });
     }

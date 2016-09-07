@@ -77,6 +77,12 @@ public class ChallengeData : ScriptableObject {
   public string InstructionVideoPath;
 
   public List<DifficultySelectOptionData> DifficultyOptions = new List<DifficultySelectOptionData>();
+
+  [SerializeField]
+  public SerializableAnimationTrigger GetInAnimTrigger;
+
+  [SerializeField]
+  public SerializableAnimationTrigger GetOutAnimTrigger;
 }
 
 [System.Serializable]

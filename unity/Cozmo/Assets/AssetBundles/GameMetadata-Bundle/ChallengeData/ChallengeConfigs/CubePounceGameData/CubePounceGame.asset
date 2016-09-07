@@ -29,3 +29,9 @@ MonoBehaviour:
   IsMinigame: 1
   InstructionVideoPath: Videos/htp_Keepaway_iphone_24fps.mp4
   DifficultyOptions: []
+  GetInAnimTrigger:
+    _EnumValueAsString: Count
+    _EnumValue: 249
+  GetOutAnimTrigger:
+    _EnumValueAsString: Count
+    _EnumValue: 249

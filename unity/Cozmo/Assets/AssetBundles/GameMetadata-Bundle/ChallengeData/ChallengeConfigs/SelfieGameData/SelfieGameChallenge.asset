@@ -27,4 +27,11 @@ MonoBehaviour:
     _Music: 713847863
   MinigameConfig: {fileID: 11400000, guid: e178656b5f907407ba3a5deca3c43d9d, type: 2}
   IsMinigame: 0
+  InstructionVideoPath: 
   DifficultyOptions: []
+  GetInAnimTrigger:
+    _EnumValueAsString: Count
+    _EnumValue: 249
+  GetOutAnimTrigger:
+    _EnumValueAsString: Count
+    _EnumValue: 249

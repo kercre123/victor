@@ -61,6 +61,8 @@ enum int_32 AnimationTrigger
   DroneModeForwardDrivingEnd,
   DroneModeForwardDrivingLoop,
   DroneModeForwardDrivingStart,
+  DroneModeGetIn,
+  DroneModeGetOut,
   DroneModeIdle,
   DroneModeTurboDrivingStart,
   FacePlantRoll,
