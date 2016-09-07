@@ -29,8 +29,6 @@
 namespace Anki {
 namespace Cozmo {
   
-// kVieMaxBorderGoals: we currently only support one goal because we don't check with the planner which goal it will take us to
-CONSOLE_VAR(uint8_t, kVieMaxBorderGoals, "BehaviorVisitInterestingEdge", 1); // max number of goals to ask the planner
 // kVie_MoveActionRetries: should probably not be in json, since it's not subject to gameplay tweaks
 CONSOLE_VAR(uint8_t, kVie_MoveActionRetries, "BehaviorVisitInterestingEdge", 3);
 // kVieDrawDebugInfo: Debug. If set to true the behavior renders debug privimitives
@@ -105,6 +103,7 @@ static const char* kConfigParamsKey = "params";
 BehaviorVisitInterestingEdge::BehaviorVisitInterestingEdge(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 , _configParams{}
+, _operatingState(EOperatingState::Invalid)
 {
   SetDefaultName("BehaviorVisitInterestingEdge");
   
@@ -133,8 +132,14 @@ bool BehaviorVisitInterestingEdge::IsRunnableInternal(const Robot& robot) const
 Result BehaviorVisitInterestingEdge::InitInternal(Robot& robot)
 {
   // select borders we want to visit
-  BorderScoreVector borderGoals;
-  PickGoals(robot, borderGoals);
+  BorderScore selectedGoal;
+  PickBestGoal(robot, selectedGoal);
+  
+  if ( !selectedGoal.IsValid() ) {
+    PRINT_NAMED_ERROR("BehaviorVisitInterestingEdge.InitInternal", "'%s' is runnable, but no goals were found",
+      GetName().c_str());
+    return RESULT_FAIL;
+  }
   
   // validate whether the goal is reachable
   bool isGoalValid = true;
@@ -142,8 +147,7 @@ Result BehaviorVisitInterestingEdge::InitInternal(Robot& robot)
   const bool allowGoalsBehindOthers = _configParams.allowGoalsBehindOtherEdges;
   if ( !allowGoalsBehindOthers )
   {
-    ASSERT_NAMED(borderGoals.size() == 1, "BehaviorVisitInterestingEdge.MultipleGoalsAreNotSupported");
-    const Vec3f& goalPoint = borderGoals[0].borderInfo.GetCenter();
+    const Vec3f& goalPoint = selectedGoal.borderInfo.GetCenter();
     isGoalValid = CheckGoalReachable(robot, goalPoint);
   }
   
@@ -151,71 +155,51 @@ Result BehaviorVisitInterestingEdge::InitInternal(Robot& robot)
   _currentVantagePoints.clear();
   if ( isGoalValid )
   {
-    // cache the goal pose so that we know what we are looking at from the vantage point.
-    // Note: currently we support only one goal. If we want to support multiple, we need to know which vantage point
-    // the planner took us to, and which goal was associated to that vantage point. It's doable, just don't wanna support
-    // that now (rsam 07/20/16)
-    if ( !borderGoals.empty() ) {
-      ASSERT_NAMED(borderGoals.size() == 1, "BehaviorVisitInterestingEdge.MultipleGoalsAreNotSupported");
-      const Vec3f& insideGoalDir = (-borderGoals[0].borderInfo.normal);
-      const Vec3f& lookAtPoint = borderGoals[0].borderInfo.GetCenter() + (insideGoalDir * _configParams.distanceInsideGoalToLookAt_mm);
-      _lookAtPoint = lookAtPoint;
-      // actually I have no use for it being a pose, since if we deloc the behavior should be interrupted (guarantee this)
-      //const Vec3f& kUpVector = Z_AXIS_3D();
-      //_lookAtPoint = Pose3d(Rotation3d(0, kUpVector), lookAtPoint, robot.GetWorldOrigin(), "InterestingEdgeLookAtPoint");
-    }
+    // pick the lookAtPoint and vantage points for it
+    const Vec3f& insideGoalDir = (-selectedGoal.borderInfo.normal);
+    const Vec3f& lookAtPoint = selectedGoal.borderInfo.GetCenter() + (insideGoalDir * _configParams.distanceInsideGoalToLookAt_mm);
+    _lookAtPoint = lookAtPoint;
 
-    // for every goal, pick a target point to look at the cube from there. Those are the goals we will feed the planner
-    GenerateVantagePoints(robot, borderGoals, _currentVantagePoints);
+    // pick a vantage point from where to look at the goal. Those are the points we will feed the planner
+    GenerateVantagePoints(robot, selectedGoal, _lookAtPoint, _currentVantagePoints);
   }
 
   // we couldn't calculate vantage points for the selected goal, maybe the goal was in an unreachable place
-  if ( _currentVantagePoints.empty() ) {
-  
+  if ( _currentVantagePoints.empty() )
+  {
     // flag this goal as not intereseting so that we don't try to visit it again
     const float noVantageGoalHalfQuadSideSize_mm = _configParams.noVantageGoalHalfQuadSideSize_mm;
-    if ( FLT_GT(noVantageGoalHalfQuadSideSize_mm, 0.0f) )
-    {
-      // code below only flags first goal
-      ASSERT_NAMED(borderGoals.size() == 1, "BehaviorVisitInterestingEdge.MultipleGoalsAreNotSupported");
-      // grab goal 0 point and direction
-      const Point3f& goalPoint  = borderGoals[0].borderInfo.GetCenter();
-      const Point3f& goalNormal = borderGoals[0].borderInfo.normal;
-      // flag as not goo to visit
-      FlagQuadAroundGoalAsNotInteresting(robot, goalPoint, goalNormal, noVantageGoalHalfQuadSideSize_mm);
-      
-      // log
-      PRINT_CH_INFO("Behaviors", (GetName() + ".InitInternal").c_str(), "Goal is not reachable, flagging as not interesting");
+    // grab goal's point and direction
+    const Point3f& goalPoint  = selectedGoal.borderInfo.GetCenter();
+    const Point3f& goalNormal = selectedGoal.borderInfo.normal;
+    // flag as not good to visit
+    FlagQuadAroundGoalAsNotInteresting(robot, goalPoint, goalNormal, noVantageGoalHalfQuadSideSize_mm);
+    
+    // log
+    PRINT_CH_INFO("Behaviors", (GetName() + ".InitInternal").c_str(),
+      "Goal at [%.2f,%.2f,%.2f] is not reachable, flagging as not interesting",
+      goalPoint.x(), goalPoint.y(), goalPoint.z());
 
-      // Consider playing a keepAlive animation here if it looks weird that the robot is simply stopped. This should
-      // simulate that he is thinking and calculating stuff, and also gives us some debug render time for the quad around
-      // goal
-      const std::string& animTriggerName = _configParams.goalDiscardedAnimTrigger;
-      AnimationTrigger trigger = animTriggerName.empty()  ? AnimationTrigger::Count : AnimationTriggerFromString(animTriggerName.c_str());
-      if ( trigger != AnimationTrigger::Count )
-      {
-        // play the animation that let's us know he is thinking and discarding goals
-        IAction* discardedGoalAnimAction = new TriggerLiftSafeAnimationAction(robot, trigger);
-        StartActing( discardedGoalAnimAction );
-      }
-      else
-      {
-        PRINT_NAMED_WARNING("BehaviorVisitInterestingEdge.InitInternal",
-        "[%s] Invalid animation trigger '%s'",
-        GetName().c_str(),
-        animTriggerName.c_str());
-      }
-      
-    }
-    else
+    // simulate that he is thinking and calculating stuff, since that's what he is doing
+    const AnimationTrigger trigger = _configParams.goalDiscardedAnimTrigger;
+    if ( trigger != AnimationTrigger::Count )
     {
-      // if the quad size is 0 or negative, we won't clear the goal, which can cause retrying forever
-      PRINT_NAMED_WARNING("BehaviorVisitInterestingEdge.InitInternal",
-        "Could not calculate vantage point nor clear the goal. Robot can get stuck in this behavior.");
+      // play the animation that let's us know he is thinking and discarding goals
+      IAction* discardedGoalAnimAction = new TriggerLiftSafeAnimationAction(robot, trigger);
+      StartActing( discardedGoalAnimAction );
     }
+
+    // we are going to discard goals
+    _operatingState = EOperatingState::DiscardingGoals;
+    
+    // discarding goals doesn't have other states
+    SetDebugStateName("DiscardingGoals");
   }
   else
   {
+    // we are going to visit a goal
+    _operatingState = EOperatingState::VisitingGoal;
+  
     // we have a vantage point, go there now
     TransitionToS1_MoveToVantagePoint(robot, 0);
   }
@@ -230,9 +214,25 @@ void BehaviorVisitInterestingEdge::StopInternal(Robot& robot)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVisitInterestingEdge::PickGoals(Robot& robot, BorderScoreVector& outGoals) const
+BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::UpdateInternal(Robot& robot)
 {
-  outGoals.clear();
+  // try to discard a new goal per tick while discarding
+  if ( _operatingState == EOperatingState::DiscardingGoals ) {
+    const bool discardedOne = DiscardNextUnreachableGoal(robot);
+    if ( !discardedOne ) {
+      _operatingState = EOperatingState::DoneDiscarding;
+    }
+  }
+
+  // delegate on parent for return value
+  const BaseClass::Status baseRet = BaseClass::UpdateInternal(robot);
+  return baseRet;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorVisitInterestingEdge::PickBestGoal(Robot& robot, BorderScore& bestGoal) const
+{
+  bestGoal.Reset();
 
   // grab borders
   INavMemoryMap::BorderVector borders;
@@ -240,46 +240,23 @@ void BehaviorVisitInterestingEdge::PickGoals(Robot& robot, BorderScoreVector& ou
   memoryMap->CalculateBorders(NavMemoryMapTypes::EContentType::InterestingEdge, typesToExploreFrom, borders);
   if ( !borders.empty() )
   {
-    outGoals.reserve(kVieMaxBorderGoals);
+    const Vec3f& robotLoc = robot.GetPose().GetWithRespectToOrigin().GetTranslation();
+  
     for ( const auto& border : borders )
     {
       // debugging all borders
       if ( kVieDrawDebugInfo )
       {
         robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
-        border.from, border.to, Anki::NamedColors::YELLOW, false, 15.0f);
+        border.from, border.to, Anki::NamedColors::YELLOW, false, 35.0f);
       }
       
-      // find where this goal would go with respect to the rest
-      // note we compare the center of the border, not the destination point we will choose to go to
-      const float curDistSQ = (border.GetCenter() - robot.GetPose().GetWithRespectToOrigin().GetTranslation()).LengthSq();
-      BorderScoreVector::iterator goalIt = outGoals.begin();
-      while( goalIt != outGoals.end() )
-      {
-        if ( curDistSQ < goalIt->distanceSQ ) {
-          break;
-        }
-        ++goalIt;
-      }
-      
-      // this border should be in the goals, if it's better or if we don't have the max
-      if ( (goalIt != outGoals.end()) || (outGoals.size() < kVieMaxBorderGoals) )
-      {
-        // if we have the max already, we need to kick out the last one
-        if ( outGoals.size() >= kVieMaxBorderGoals )
-        {
-          // kicking out the last one invalidates iterators pointing at it, check if we were pointing at last
-          bool newIsLast = (goalIt == outGoals.end()-1);
-          // kick out last one
-          outGoals.pop_back();
-          // if we were pointing at the last one, grab end() now, since we destroyed the last one
-          if ( newIsLast ) {
-            goalIt = outGoals.end();
-          }
-        }
-
-        // add this goal where it should go within the vector (sorted by distance)
-        outGoals.emplace(goalIt, border, curDistSQ);
+      // compare goal to best so far
+      const float curDistSQ = (border.GetCenter() - robotLoc).LengthSq();
+      const bool isBetter = FLT_LT(curDistSQ, bestGoal.distanceSQ);
+      if ( isBetter ) {
+        // this is the new best
+        bestGoal.Set(border, curDistSQ);
       }
     }
   }
@@ -287,21 +264,17 @@ void BehaviorVisitInterestingEdge::PickGoals(Robot& robot, BorderScoreVector& ou
   // debugging
   if ( kVieDrawDebugInfo )
   {
-    // border goals
-    for ( const auto& bG : outGoals )
-    {
-      const NavMemoryMapTypes::Border& b = bG.borderInfo;
-      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
-        b.from, b.to, Anki::NamedColors::DARKGREEN, false, 15.0f);
-      Vec3f centerLine = (b.from + b.to)*0.5f;
-      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
-        centerLine, centerLine+b.normal*15.0f, Anki::NamedColors::YELLOW, false, 25.0f);
-    }
+    const NavMemoryMapTypes::Border& b = bestGoal.borderInfo;
+    robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
+      b.from, b.to, Anki::NamedColors::DARKGREEN, false, 15.0f);
+    Vec3f centerLine = (b.from + b.to)*0.5f;
+    robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
+      centerLine, centerLine+b.normal*15.0f, Anki::NamedColors::YELLOW, false, 45.0f);
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorVisitInterestingEdge::CheckGoalReachable(Robot& robot, const Vec3f& goalPosition)
+bool BehaviorVisitInterestingEdge::CheckGoalReachable(const Robot& robot, const Vec3f& goalPosition) const
 {
   const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
   ASSERT_NAMED(nullptr != memoryMap, "BehaviorVisitInterestingEdge.CheckGoalReachable.NeedMemoryMap");
@@ -332,7 +305,7 @@ bool BehaviorVisitInterestingEdge::CheckGoalReachable(Robot& robot, const Vec3f&
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVisitInterestingEdge::GenerateVantagePoints(Robot& robot, const BorderScoreVector& goals, VantagePointVector& outVantagePoints) const
+void BehaviorVisitInterestingEdge::GenerateVantagePoints(Robot& robot, const BorderScore& goal, const Vec3f& lookAtPoint, VantagePointVector& outVantagePoints) const
 {
   const Vec3f& kFwdVector = X_AXIS_3D();
   const Vec3f& kRightVector = -Y_AXIS_3D();
@@ -341,13 +314,7 @@ void BehaviorVisitInterestingEdge::GenerateVantagePoints(Robot& robot, const Bor
   const Pose3d* worldOrigin = robot.GetWorldOrigin();
 
   outVantagePoints.clear();
-  for ( const auto& goal : goals )
   {
-    // since we use _lookAtPoint, this only supports one goal at the moment. When we switch to multiple, we
-    // will need to provide here the lookAtPoint for every goal.
-    ASSERT_NAMED(goals.size() == 1, "ProvideLookAtPosePerGoal");
-    const Vec3f& lookAtPoint = _lookAtPoint;
-  
     uint16_t totalRayTries = _configParams.vantagePointAngleOffsetTries * 2; // *2 because we do +-angle per try
     uint16_t rayIndex = 0;
     while ( rayIndex <= totalRayTries )
@@ -445,6 +412,8 @@ void BehaviorVisitInterestingEdge::GenerateVantagePoints(Robot& robot, const Bor
 void BehaviorVisitInterestingEdge::TransitionToS1_MoveToVantagePoint(Robot& robot, uint8_t retries)
 {
   SetDebugStateName("TransitionToS1_MoveToVantagePoint");
+  ASSERT_NAMED( _operatingState == EOperatingState::VisitingGoal,
+    "BehaviorVisitInterestingEdge.TransitionToS1_MoveToVantagePoint.InvalidState" );
   
   PRINT_CH_INFO("Behaviors", (GetName() + ".S1").c_str(), "Moving to vantage point");
   
@@ -499,6 +468,10 @@ void BehaviorVisitInterestingEdge::TransitionToS1_MoveToVantagePoint(Robot& robo
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorVisitInterestingEdge::TransitionToS2_ObserveAtVantagePoint(Robot& robot)
 {
+  SetDebugStateName("TransitionToS2_ObserveAtVantagePoint");
+  ASSERT_NAMED( _operatingState == EOperatingState::VisitingGoal,
+    "BehaviorVisitInterestingEdge.TransitionToS2_ObserveAtVantagePoint.InvalidState" );
+  
   PRINT_CH_INFO("Behaviors", (GetName() + ".S2").c_str(), "Observing edges from vantage point");
 
   // ask blockworld to flag the interesting edges in front of Cozmo as noninteresting anymore
@@ -510,18 +483,14 @@ void BehaviorVisitInterestingEdge::TransitionToS2_ObserveAtVantagePoint(Robot& r
   // play "i'm observing stuff" animation
   IAction* pauseAction = nullptr;
   
-  const std::string& animTriggerName = _configParams.observeEdgeAnimTrigger;
-  const AnimationTrigger trigger = animTriggerName.empty() ? AnimationTrigger::Count : AnimationTriggerFromString(animTriggerName.c_str());
+  const AnimationTrigger trigger = _configParams.observeEdgeAnimTrigger;
   if ( trigger != AnimationTrigger::Count )
   {
     pauseAction = new TriggerLiftSafeAnimationAction(robot,trigger);
   }
   else
   {
-    PRINT_NAMED_WARNING("BehaviorVisitInterestingEdge.TransitionToS2_ObserveAtVantagePoint",
-      "Failed to use animation trigger '%s'", animTriggerName.c_str());
-  
-    // create wait action as fallback (alternatively we could blink, but honestly, this should not happen ever)
+    // create wait action as fallback (should not happen since a proper anim should have been specified)
     const double waitTime_sec = 1.0f;
     pauseAction = new WaitAction( robot, waitTime_sec );
   }
@@ -529,6 +498,72 @@ void BehaviorVisitInterestingEdge::TransitionToS2_ObserveAtVantagePoint(Robot& r
   // request action with transition to proper state
   ASSERT_NAMED( nullptr!=pauseAction, "BehaviorExploreLookAroundInPlace::TransitionToS2_Pause.NullAction");
   StartActing( pauseAction );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorVisitInterestingEdge::DiscardNextUnreachableGoal(Robot& robot) const
+{
+  // we only discard during discarding state
+  ASSERT_NAMED( _operatingState == EOperatingState::DiscardingGoals,
+    "BehaviorVisitInterestingEdge.DiscardNextUnreachableGoal.InvalidState" );
+
+  // select the next potential goal (note that we would have already flagged the first one as not interesting,
+  // so searching here again will return a different one)
+  BorderScore potentialGoal;
+  PickBestGoal(robot, potentialGoal);
+  
+  if ( !potentialGoal.IsValid() )
+  {
+    // log - no more goals available
+    PRINT_CH_INFO("Behaviors", (GetName() + ".DiscardNextUnreachableGoal").c_str(),
+      "No more goals available, done discarding" );
+    return false;
+  }
+  
+  // check if the goal is reachable
+  bool isGoalReachable = true;
+  // this is in place of the planner not getting us there (TODO)
+  const bool allowGoalsBehindOthers = _configParams.allowGoalsBehindOtherEdges;
+  if ( !allowGoalsBehindOthers )
+  {
+    const Vec3f& goalPoint = potentialGoal.borderInfo.GetCenter();
+    isGoalReachable = CheckGoalReachable(robot, goalPoint);
+  }
+  
+  // calculate vantage points for the goal, only if it's valid/reachable
+  VantagePointVector potentialVantagePoints;
+  if ( isGoalReachable )
+  {
+    // pick the lookAtPoint and vantage points for it
+    const Vec3f& insideGoalDir = (-potentialGoal.borderInfo.normal);
+    const Vec3f& potentialLookAtPoint = potentialGoal.borderInfo.GetCenter() + (insideGoalDir * _configParams.distanceInsideGoalToLookAt_mm);
+
+    // pick a vantage point from where to look at the goal. Those are the points we will feed the planner
+    GenerateVantagePoints(robot, potentialGoal, potentialLookAtPoint, potentialVantagePoints);
+  }
+
+  // we couldn't calculate vantage points for the selected goal, maybe the goal was in an unreachable place
+  if ( _currentVantagePoints.empty() )
+  {
+    // also flag this goal as not interesting
+    const float noVantageGoalHalfQuadSideSize_mm = _configParams.noVantageGoalHalfQuadSideSize_mm;
+    // grab goal's point and direction
+    const Point3f& goalPoint  = potentialGoal.borderInfo.GetCenter();
+    const Point3f& goalNormal = potentialGoal.borderInfo.normal;
+    // flag as not good to visit
+    FlagQuadAroundGoalAsNotInteresting(robot, goalPoint, goalNormal, noVantageGoalHalfQuadSideSize_mm);
+    
+    // log
+    PRINT_CH_INFO("Behaviors", (GetName() + ".DiscardNextUnreachableGoal.Discarded").c_str(),
+      "Goal at [%.2f,%.2f,%.2f] is not reachable, flagging as not interesting",
+      goalPoint.x(), goalPoint.y(), goalPoint.z());
+
+    // we discarded one, keep discarding later
+    return true;
+  }
+  
+  // the goal and some vantage points are actually reachable, so we should stop discarding now
+  return false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -589,8 +624,17 @@ void BehaviorVisitInterestingEdge::LoadConfig(const Json::Value& config)
   using namespace JsonTools;
   const std::string& debugName = GetName() + ".BehaviorVisitInterestingEdge.LoadConfig";
 
-  _configParams.observeEdgeAnimTrigger = ParseString(config, "observeEdgeAnimTrigger", debugName);
-  _configParams.goalDiscardedAnimTrigger = ParseString(config, "goalDiscardedAnimTrigger", debugName);
+  // observeEdge animation
+  const std::string& obsAnimTriggerName = ParseString(config, "observeEdgeAnimTrigger", debugName);
+  _configParams.observeEdgeAnimTrigger = obsAnimTriggerName.empty() ?
+    AnimationTrigger::Count :
+    AnimationTriggerFromString(obsAnimTriggerName.c_str());
+  // goalDiscarded animation
+  const std::string& gdAnimTriggerName = ParseString(config, "goalDiscardedAnimTrigger", debugName);
+  _configParams.goalDiscardedAnimTrigger = gdAnimTriggerName.empty() ?
+    AnimationTrigger::Count :
+    AnimationTriggerFromString(gdAnimTriggerName.c_str());
+  // gameplay params
   _configParams.allowGoalsBehindOtherEdges = ParseBool(config, "allowGoalsBehindOtherEdges", debugName);
   _configParams.distanceFromLookAtPointMin_mm = ParseFloat(config, "distanceFromLookAtPointMin_mm", debugName);
   _configParams.distanceFromLookAtPointMax_mm = ParseFloat(config, "distanceFromLookAtPointMax_mm", debugName);
@@ -607,11 +651,16 @@ void BehaviorVisitInterestingEdge::LoadConfig(const Json::Value& config)
   GetValueOptional(config, "noVantageGoalHalfQuadSideSize_mm", _configParams.noVantageGoalHalfQuadSideSize_mm);
   
   // validate
+  ASSERT_NAMED( FLT_GT(_configParams.noVantageGoalHalfQuadSideSize_mm, 0.0f),
+    "BehaviorVisitInterestingEdge.LoadConfig.InvalidNoVantageGoalHalfQuadSideSize_mm");
+  ASSERT_NAMED( _configParams.observeEdgeAnimTrigger != AnimationTrigger::Count,
+    "BehaviorVisitInterestingEdge.LoadConfig.InvalidObserveEdgeAnimTrigger");
+  ASSERT_NAMED( _configParams.goalDiscardedAnimTrigger != AnimationTrigger::Count,
+    "BehaviorVisitInterestingEdge.LoadConfig.InvalidGGoalDiscardedAnimTrigger");
   ASSERT_NAMED( FLT_LE(_configParams.distanceFromLookAtPointMin_mm,_configParams.distanceFromLookAtPointMax_mm),
     "BehaviorVisitInterestingEdge.LoadConfig.InvalidDistanceFromGoalRange");
   ASSERT_NAMED( (_configParams.vantagePointAngleOffsetTries == 0) || FLT_GT(_configParams.vantagePointAngleOffsetPerTry_deg,0.0f),
     "BehaviorVisitInterestingEdge.LoadConfig.InvalidOffsetConfiguration");
-  
 }
 
 } // namespace Cozmo

@@ -48,16 +48,16 @@ mkdir -p $_SOUNDBANK_DIR
 svn_rev=$(svn info $_SVN_COZMOSOUNDBANKS_REPO --username $SVN_USERNAME --password $SVN_PASSWORD | grep 'Last Changed Rev' | awk '{ print $4; }')
 
 exit_status=0
-python $_UPDATE_AUDIO_ASSETS_SCRIPT update $svn_rev || exit_status=$?
+error_output=$(python $_UPDATE_AUDIO_ASSETS_SCRIPT update $svn_rev 2>&1 >/dev/null) || exit_status=$?
 
 if [ $exit_status -ne 0 ]; then
-    send_slack_message "There was a problem getting r${svn_rev} audio assets. Check build log!" "danger" $exit_status
+    send_slack_message "There was a problem getting r${svn_rev} audio assets.\n${error_output}" "danger" $exit_status
 fi
 
 
-python $_UPDATE_AUDIO_ASSETS_SCRIPT generate || exit_status=$?
+error_output=$(python $_UPDATE_AUDIO_ASSETS_SCRIPT generate 2>&1 >/dev/null) || exit_status=$?
 if [ $exit_status -ne 0 ]; then
-    send_slack_message "There was a problem generating CLAD files. Check build log!" "danger" $exit_status
+    send_slack_message "There was a problem generating CLAD files.\n${error_output}" "danger" $exit_status
 fi
 
 pushd $_TOPLEVEL_COZMO
@@ -94,7 +94,7 @@ EOF
     $GIT config user.email $_GIT_EMAIL
     $GIT config user.name $_GIT_USERNAME
     $GIT checkout -b $_GIT_BRANCH_NAME
-    $GIT commit -am "Updating Audio Assets v${svn_rev}."
+    $GIT commit -am "Updating Audio Assets v${svn_rev}"
     $GIT push origin $_GIT_BRANCH_NAME
     pr_url=$(hub pull-request -m $_GIT_BRANCH_NAME)
 

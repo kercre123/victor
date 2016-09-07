@@ -7,21 +7,24 @@ namespace Anki {
 namespace Cozmo {
 
 enum int_32 BehaviorObjective {
+
   Unknown,
+  
   AnimationPlayed,
   BlockRolled,
   BlockStacked,
   BuiltPyramid,
   DroveAsIntended,
   FoundFace,
+  InteractedWithFace,
   KnockedOverBlocks,
   PickedupBlock,
-  PutdownBlock,
-  PouncedAndCaught,
   PoppedWheelie,
+  PouncedAndCaught,
+  PutDownBlock,
+  ReactedAcknowledgedCubeMoved,
   ReactedAcknowledgedFace,
   ReactedAcknowledgedObject,
-  ReactedAcknowledgedCubeMoved,
   ReactedToCliff,
   ReactedToFrustration,
   ReactedToOnCharger,

@@ -75,9 +75,9 @@ enum int_32 AnimationTrigger
   GoToSleepGetOut,
   GoToSleepOff,
   GoToSleepSleeping,
-  HikingDrivingStart,           // loco-driving anim (so that Cozmo can be humming while hiking) - start
-  HikingDrivingLoop,            // loco-driving anim (so that Cozmo can be humming while hiking) - loop
   HikingDrivingEnd,             // loco-driving anim (so that Cozmo can be humming while hiking) - end
+  HikingDrivingLoop,            // loco-driving anim (so that Cozmo can be humming while hiking) - loop
+  HikingDrivingStart,           // loco-driving anim (so that Cozmo can be humming while hiking) - start
   HikingInterestingEdgeThought, // Cozmo decided something about an interesting edge (probably decided he can't reach it)
   HikingIntro,                  // played when we start hiking. This may be used as Intro anim for hiking goal
   HikingLookAround,             // when Cozmo spins around looking for edges and cubes
@@ -87,8 +87,9 @@ enum int_32 AnimationTrigger
   HikingReactToPossibleMarker,  // when Cozmo sees a cube from far away (this may be used for discovering edges)
   HikingWakeUpOffCharger,       // when Cozmo wakes up directly into hiking. This may not be needed for final product
   IdleOnCharger,
-  InteractWithFacesInitial,
-  InteractWithFacesWait,
+  InteractWithFaceTrackingIdle,
+  InteractWithFacesInitialNamed,
+  InteractWithFacesInitialUnnamed,
   KnockOverEyes,
   KnockOverFailure,
   KnockOverGrabAttempt,
@@ -106,9 +107,9 @@ enum int_32 AnimationTrigger
   MeetCozmoFirstEnrollmentCelebration,  // 5. First-time enrollment, big special celebration for new name
   MeetCozmoReEnrollmentSayName,         // 3b. Re-enrollment, say player's name
   MeetCozmoRenameFaceSayName,           // Say player's new name when rename occurs
+  NothingToDoBoredEvent,             // Cozmo doesn't have anything to do in freeplay - bored game in the middle
   NothingToDoBoredIdle,              // Cozmo doesn't have anything to do in freeplay - idling (not playing game sequence)
   NothingToDoBoredIntro,             // Cozmo doesn't have anything to do in freeplay - start of bored game sequence
-  NothingToDoBoredEvent,             // Cozmo doesn't have anything to do in freeplay - bored game in the middle
   NothingToDoBoredOutro,             // Cozmo doesn't have anything to do in freeplay - end of bored game sequence
   OnLearnedPlayerName,
   OnSawNewNamedFace,
@@ -140,13 +141,13 @@ enum int_32 AnimationTrigger
   OnWiggle,
   OnboardingBirth,
   OnboardingDiscoverCube,
-  OnboardingDriveStart,
-  OnboardingDriveLoop,
   OnboardingDriveEnd,
-  OnboardingIdle,
-  OnboardingInteractWithCube,
+  OnboardingDriveLoop,
+  OnboardingDriveStart,
   OnboardingHelloPlayer,
   OnboardingHelloWorld,
+  OnboardingIdle,
+  OnboardingInteractWithCube,
   OnboardingPreBirth,
   OnboardingReactToCube,
   OnboardingReactToCubePutDown,

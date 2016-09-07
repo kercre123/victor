@@ -14,9 +14,10 @@
 
 #include "AIBeacon.h" 
 
+#include "anki/cozmo/basestation/externalInterface/externalInterface_fwd.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/objectIDs.h"
-#include "anki/cozmo/basestation/externalInterface/externalInterface_fwd.h"
+#include "anki/vision/basestation/faceIdTypes.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -102,6 +103,15 @@ public:
   // recentFailureTimeout_sec: objects that failed to be picked up more recently than this ago will be
   // discarded
   bool FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) const;
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Face tracking
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // shared logic to get a face to track which requires the least panning and tilting (based on the current
+  // robot pose). If preferNamed is true, then will prefer faces with a name to those without
+  Vision::FaceID_t GetBestFaceToTrack(const std::set< Vision::FaceID_t >& possibleFaces,
+                                      const bool preferNamedFaces) const;
   
   // returns true if all active cubes are known to be in beacons
   bool AreAllCubesInBeacons() const;

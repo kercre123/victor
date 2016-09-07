@@ -66,6 +66,10 @@ namespace Anki {
       // If a custom tag has been set return will be that otherwise it is the same as the
       // auto-generated tag
       u32  GetTag() const { return _customTag; }
+
+      // returns true if the action tag is currently "in use". Tags are in use from the moment the action is
+      // created (in the constructor), until the action is deleted
+      static bool IsTagInUse(u32 tag) { return sInUseTagSet.find(tag) != sInUseTagSet.end(); }
       
       // If a FAILURE_RETRY is encountered, how many times will the action
       // be retried before return FAILURE_ABORT.

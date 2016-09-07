@@ -40,7 +40,7 @@ protected:
   
   // Default configuration parameters which can be overriden by JSON config
   struct ConfigParams {
-    AnimationTrigger reactionAnimTrigger   = AnimationTrigger::InteractWithFacesInitial;
+    AnimationTrigger reactionAnimTrigger   = AnimationTrigger::Count;
     Radians     maxTurnAngle_rad           = DEG_TO_RAD_F32(45.f);
     Radians     samePoseAngleThreshold_rad = DEG_TO_RAD_F32(45.f);
     Radians     panTolerance_rad           = DEG_TO_RAD_F32(5.f);

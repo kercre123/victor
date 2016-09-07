@@ -14,6 +14,7 @@
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 //#define DISABLE_TASK_CHECK
+#define DISABLE_BLE
 
 #define member_size(type, member) sizeof(((type *)0)->member)
   
@@ -601,6 +602,7 @@ void Bluetooth::advertise(void) {
     m_sd_enabled      = true;
   }
 
+  #ifndef DISABLE_BLE
   // Enable BLE stack 
   ble_enable_params_t ble_enable_params;
   memset(&ble_enable_params, 0, sizeof(ble_enable_params));
@@ -665,6 +667,7 @@ void Bluetooth::advertise(void) {
   // Start advertising
   err_code = sd_ble_gap_adv_start(&adv_params);
   APP_ERROR_CHECK(err_code);
+  #endif
 }
 
 void Bluetooth::shutdown(void) {

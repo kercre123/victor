@@ -1,0 +1,9 @@
+{
+  "behaviorType": "InteractWithFaces",
+  "name": "interactWithFaces",
+  "behaviorGroups": [
+    "FP_Socialize"
+  ],
+
+  "flatScore": 0.0 // chosen directly by chooser
+}

@@ -25,7 +25,7 @@ namespace Anki {
     public:
       ICompoundAction(Robot& robot, std::list<IActionRunner*> actions);
       
-      virtual void AddAction(IActionRunner* action, bool ignoreFailure = false);
+      virtual void AddAction(IActionRunner* action, bool ignoreFailure = false, bool emitCompletionSignal = false);
       
       // First calls cleanup on any constituent actions and then removes them
       // from this compound action completely.

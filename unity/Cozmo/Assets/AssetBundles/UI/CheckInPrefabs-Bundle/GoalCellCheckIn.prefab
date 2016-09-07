@@ -174,7 +174,7 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 12800000, guid: 6ef5f80c68ce34039a34f24769e5dc26, type: 3}
-    m_FontSize: 68
+    m_FontSize: 66
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 6
@@ -184,8 +184,8 @@ MonoBehaviour:
     m_RichText: 1
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
-    m_LineSpacing: 1
-  m_Text: Goal text here it can fit two lines more easily
+    m_LineSpacing: 0.95
+  m_Text: Win a game of Quick Tap with better than 75% Accuracy
   _AllUppercase: 0
   GlowText: 0
 --- !u!114 &11405530
@@ -550,8 +550,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 110, y: -8}
-  m_SizeDelta: {x: 768, y: 228}
+  m_AnchoredPosition: {x: 161, y: -8}
+  m_SizeDelta: {x: 870, y: 274}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22463648
 RectTransform:
