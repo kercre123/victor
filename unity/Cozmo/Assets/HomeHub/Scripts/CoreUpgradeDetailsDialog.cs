@@ -280,11 +280,6 @@ public class CoreUpgradeDetailsDialog : BaseView {
     _ButtonCostLabel.text = string.Format("{0}", cost);
   }
 
-
-  private void OnSparkPressed() {
-    StartSparkUnlock();
-  }
-
   protected override void Update() {
     base.Update();
 
