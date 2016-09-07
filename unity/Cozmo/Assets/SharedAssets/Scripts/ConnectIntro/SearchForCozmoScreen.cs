@@ -16,7 +16,7 @@ public class SearchForCozmoScreen : MonoBehaviour {
   }
 
   private void Start() {
-    Invoke("CheckForConnection", ConnectionFlow.kConnectionFlowDelay);
+    Invoke("CheckForConnection", ConnectionFlow.ConnectionFlowDelay);
   }
 
   private void CheckForConnection() {
@@ -25,7 +25,7 @@ public class SearchForCozmoScreen : MonoBehaviour {
       ShowScreenComplete();
     }
     else {
-      Invoke("CheckForConnection", ConnectionFlow.kConnectionFlowDelay);
+      Invoke("CheckForConnection", ConnectionFlow.ConnectionFlowDelay);
     }
   }
 
