@@ -4,6 +4,10 @@ using System.Collections;
 
 public class ShowCozmoVideo : MonoBehaviour {
 
+  #if ENABLE_DEBUG_PANEL
+  private const uint kDevSkipVideoTapCount = 3;
+  #endif
+
   public System.Action OnContinueButton;
 
   [SerializeField]
@@ -22,6 +26,9 @@ public class ShowCozmoVideo : MonoBehaviour {
   private Cozmo.UI.CozmoButton _SkipButton;
 
   private string _Filename;
+  #if ENABLE_DEBUG_PANEL
+  private uint _TapCount;
+  #endif
 
 #if UNITY_EDITOR
   // The plugin only works in iOS and Android. In the editor we use Unity's video player functionality.
@@ -48,6 +55,9 @@ public class ShowCozmoVideo : MonoBehaviour {
 
     // Register a function to enable the buttons once the video is finished
     _MediaPlayerCtrl.OnEnd += () => {
+      #if ENABLE_DEBUG_PANEL
+      _TapCount = 0;
+      #endif
       HandleVideoFinished();
     };
 #endif
@@ -80,6 +90,14 @@ public class ShowCozmoVideo : MonoBehaviour {
     ShowSkipButton(false);
   }
 
+  #if ENABLE_DEBUG_PANEL
+  protected void Update() {
+    if (Input.GetMouseButtonDown(0)) {
+      OnTapVideo();
+    }
+  }
+  #endif
+
   public void ShowSkipButton(bool show) {
     _SkipButton.gameObject.SetActive(show);
   }
@@ -101,6 +119,20 @@ public class ShowCozmoVideo : MonoBehaviour {
       PlayVideo(_Filename);
     }
   }
+
+  #if ENABLE_DEBUG_PANEL
+  private void OnTapVideo() {
+    if (_MediaPlayerCtrl.GetCurrentState() != MediaPlayerCtrl.MEDIAPLAYER_STATE.PLAYING) {
+      return;
+    }
+
+    _TapCount++;
+    if (_TapCount >= kDevSkipVideoTapCount) {
+      DAS.Info("ShowCozmoVideo.OnTapVideo", "Stopping video...");
+      _MediaPlayerCtrl.SeekTo(_MediaPlayerCtrl.GetDuration());
+    }
+  }
+  #endif
 
 #if UNITY_EDITOR
   private IEnumerator LoadAndPlayCoroutine(string filename) {

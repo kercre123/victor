@@ -472,26 +472,42 @@ namespace Cozmo {
     }
   }
 
-  std::vector<Vision::FaceID_t> FaceWorld::GetKnownFaceIDs() const
+  std::set<Vision::FaceID_t> FaceWorld::GetKnownFaceIDs(bool includeTrackingOnlyFaces) const
   {
-    std::vector<Vision::FaceID_t> faceIDs;
+    std::set<Vision::FaceID_t> faceIDs;
     for (const auto& pair : _knownFaces) {
-      faceIDs.push_back(pair.first);
-    }
-    return faceIDs;
-  }
-  
-  std::list<Vision::FaceID_t> FaceWorld::GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms) const
-  {
-    std::list<Vision::FaceID_t> faceIDs;
-    for (const auto& pair : _knownFaces) {
-      if (pair.second.face.GetTimeStamp() >= seenSinceTime_ms) {
-        faceIDs.push_back(pair.second.face.GetID());
+      if( includeTrackingOnlyFaces || pair.first > 0 ) {
+        faceIDs.insert(pair.first);
       }
     }
     return faceIDs;
   }
   
+  std::set<Vision::FaceID_t> FaceWorld::GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms,
+                                                                        bool includeTrackingOnlyFaces) const
+  {
+    std::set<Vision::FaceID_t> faceIDs;
+    for (const auto& pair : _knownFaces) {
+      if (pair.second.face.GetTimeStamp() >= seenSinceTime_ms) {
+        if( includeTrackingOnlyFaces || pair.first > 0 ) {
+          faceIDs.insert(pair.second.face.GetID());
+        }
+      }
+    }
+    return faceIDs;
+  }
+
+  bool FaceWorld::HasKnownFaces(TimeStamp_t seenSinceTime_ms, bool includeTrackingOnlyFaces) const
+  {
+    for (const auto& pair : _knownFaces) {
+      if (pair.second.face.GetTimeStamp() >= seenSinceTime_ms) {
+        if( includeTrackingOnlyFaces || pair.first > 0 ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
   
   TimeStamp_t FaceWorld::GetLastObservedFace(Pose3d& p) const
   {

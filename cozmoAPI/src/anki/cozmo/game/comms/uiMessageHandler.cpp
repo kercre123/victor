@@ -25,6 +25,7 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
+#include "anki/cozmo/buildVersion.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -54,9 +55,16 @@ namespace Anki {
     
 #if (defined(ANKI_IOS_BUILD) || defined(ANDROID))
   #define ANKI_ENABLE_SDK_OVER_UDP  0
+  CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", false);
 #else
   #define ANKI_ENABLE_SDK_OVER_UDP  1
+  CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", true);
 #endif
+    
+#if defined(SHIPPING)
+    static_assert(!kEnableSdkCommsAlways, "Must be const and false - we cannot leave the socket open outside of sdk for released builds!");
+#endif
+    
 
 #define ANKI_ENABLE_SDK_OVER_TCP  1
     
@@ -67,6 +75,7 @@ namespace Anki {
     CONSOLE_VAR(bool, kAcceptMessagesFromUI,  "UiComms", true);
     CONSOLE_VAR(bool, kAcceptMessagesFromSDK, "UiComms", true);
     CONSOLE_VAR(uint32_t, kPingSendFreq, "UiComms", 20); // 0 = never
+    CONSOLE_VAR(uint32_t, kSdkStatusSendFreq, "UiComms", 1); // 0 = never
     
     
     bool IsSdkConnection(UiConnectionType type)
@@ -85,7 +94,8 @@ namespace Anki {
     }
     
     
-    ISocketComms* CreateSocketComms(UiConnectionType type, GameMessagePort* gameMessagePort, ISocketComms::DeviceId hostDeviceId)
+    ISocketComms* CreateSocketComms(UiConnectionType type, GameMessagePort* gameMessagePort,
+                                    ISocketComms::DeviceId hostDeviceId, bool isSdkCommunicationEnabled)
     {
       // Note: Some SocketComms are deliberately null depending on the build platform, type etc.
 
@@ -102,6 +112,9 @@ namespace Anki {
         case UiConnectionType::SdkOverUdp:
         {
         #if ANKI_ENABLE_SDK_OVER_UDP
+          #if defined(SHIPPING)
+            #error To enable SDK over UDP in SHIPPING builds requires support for closing the socket outside of SDK mode
+          #endif
           return new UdpSocketComms(type);
         #else
           return nullptr;
@@ -110,7 +123,7 @@ namespace Anki {
         case UiConnectionType::SdkOverTcp:
         {
         #if ANKI_ENABLE_SDK_OVER_TCP
-          return new TcpSocketComms();
+          return new TcpSocketComms(isSdkCommunicationEnabled);
         #else
           return nullptr;
         #endif
@@ -125,12 +138,12 @@ namespace Anki {
     
 
     UiMessageHandler::UiMessageHandler(u32 hostUiDeviceID, GameMessagePort* gameMessagePort)
-      : _isInitialized(false)
-      , _hostUiDeviceID(hostUiDeviceID)
+      : _hostUiDeviceID(hostUiDeviceID)
     {
+      const bool isSdkCommunicationEnabled = IsSdkCommunicationEnabled();
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
-        _socketComms[(uint32_t)i] = CreateSocketComms(i, gameMessagePort, GetHostUiDeviceID());
+        _socketComms[(uint32_t)i] = CreateSocketComms(i, gameMessagePort, GetHostUiDeviceID(), isSdkCommunicationEnabled);
       }
     }
     
@@ -167,6 +180,13 @@ namespace Anki {
       // Subscribe to desired events
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToUiDevice, commonCallback));
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::DisconnectFromUiDevice, commonCallback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::UiDeviceConnectionWrongVersion, commonCallback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::UiDeviceConnectionSuccess, commonCallback));
+      
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::EnterSdkMode,
+                                         std::bind(&UiMessageHandler::OnEnterSdkMode, this, std::placeholders::_1)));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::ExitSdkMode,
+                                         std::bind(&UiMessageHandler::OnExitSdkMode, this, std::placeholders::_1)));
       
       return RESULT_OK;
     }
@@ -182,9 +202,15 @@ namespace Anki {
         default:
         {
           assert(0);
-          return false;
+          return true;
         }
       }
+    }
+    
+    
+    bool UiMessageHandler::IsSdkCommunicationEnabled() const
+    {
+      return (_sdkStatus.IsInSdkMode() || kEnableSdkCommsAlways);
     }
     
 
@@ -262,8 +288,8 @@ namespace Anki {
 
       while (bytesRemaining > 0)
       {
-        size_t bytesUnpacked = message.Unpack(messagePtr, bytesRemaining);
-        if (isSingleMessage && bytesUnpacked != packetSize)
+        const size_t bytesUnpacked = message.Unpack(messagePtr, bytesRemaining);
+        if (isSingleMessage && (bytesUnpacked != packetSize))
         {
           PRINT_STREAM_ERROR("UiMessageHandler.MessageBufferWrongSize",
                              "Buffer's size does not match expected size for this message ID. (Msg "
@@ -282,7 +308,7 @@ namespace Anki {
         bytesRemaining -= bytesUnpacked;
         messagePtr += bytesUnpacked;
 
-        HandleProcessedMessage(message, connectionType, handleMessagesFromConnection);
+        HandleProcessedMessage(message, connectionType, bytesUnpacked, handleMessagesFromConnection);
       }
 
       return RESULT_OK;
@@ -306,8 +332,28 @@ namespace Anki {
     }
 
     
+    bool AlwaysHandleMessageTypeForNonSdkConnection(ExternalInterface::MessageGameToEngine::Tag messageTag)
+    {
+      // Return true for small subset of message types that we handle even if we're not listening to the UI connection
+      // We still want to accept certain message types (e.g. enter/exit mode and console vars for debugging)
+      
+      using GameToEngineTag = ExternalInterface::MessageGameToEngineTag;
+      switch (messageTag)
+      {
+        case GameToEngineTag::SetDebugConsoleVarMessage:    return true;
+        case GameToEngineTag::RunDebugConsoleFuncMessage:   return true;
+        case GameToEngineTag::GetDebugConsoleVarMessage:    return true;
+        case GameToEngineTag::GetAllDebugConsoleVarMessage: return true;
+        case GameToEngineTag::EnterSdkMode:                 return true;
+        case GameToEngineTag::ExitSdkMode:                  return true;
+        default:
+          return false;
+      }
+    }
+    
+    
     void UiMessageHandler::HandleProcessedMessage(const ExternalInterface::MessageGameToEngine& message,
-                                                  UiConnectionType connectionType, bool handleMessagesFromConnection)
+                                UiConnectionType connectionType, size_t messageSize, bool handleMessagesFromConnection)
     {
       const ExternalInterface::MessageGameToEngine::Tag messageTag = message.GetTag();
       if (!handleMessagesFromConnection)
@@ -319,12 +365,27 @@ namespace Anki {
         }
       }
       
+      if (_sdkStatus.IsInSdkMode() && !IsSdkConnection(connectionType))
+      {
+        // Accept a limited set of messages (e.g. enter/exit mode)
+        if (!AlwaysHandleMessageTypeForNonSdkConnection(messageTag))
+        {
+          return;
+        }
+      }
+      
       #if ANKI_DEV_CHEATS
       if (nullptr != DevLoggingSystem::GetInstance())
       {
         DevLoggingSystem::GetInstance()->LogMessage(message);
       }
       #endif
+      
+      if (IsSdkConnection(connectionType))
+      {
+        _sdkStatus.OnRecvMessage(message, messageSize);
+      }
+      
       // We must handle pings at this level because they are a connection type specific message
       // and must be dealt with at the transport level rather than at the app level
       if (messageTag == ExternalInterface::MessageGameToEngineTag::Ping)
@@ -553,9 +614,62 @@ namespace Anki {
         }
       }
       
+      UpdateSdk();
+      
       return lastResult;
     } // Update()
 
+    
+    void UiMessageHandler::UpdateSdk()
+    {
+      if (_sdkStatus.IsInSdkMode())
+      {
+        const ISocketComms* sdkSocketComms = GetSdkSocketComms();
+        ASSERT_NAMED(sdkSocketComms, "Sdk.InModeButNoComms");
+        
+        if (!sdkSocketComms)
+        {
+          return;
+        }
+
+        _sdkStatus.UpdateConnectionStatus(sdkSocketComms);
+        
+        const bool sendStatusThisTick = (kSdkStatusSendFreq > 0) && ((_updateCount % kSdkStatusSendFreq) == 0);
+        
+        if (sendStatusThisTick)
+        {
+          // Send status to the UI comms
+         
+          const double currentTime_s = _sdkStatus.GetCurrentTime_s();
+          
+          ExternalInterface::SdkConnectionStatus connectionStatus(_sdkStatus.GetSdkBuildVersion(),
+                                                                  kBuildVersion,
+                                                                  _sdkStatus.NumCommandsOverConnection(),
+                                                                  _sdkStatus.TimeInCurrentConnection_s(currentTime_s),
+                                                                  _sdkStatus.IsConnected(),
+                                                                  _sdkStatus.IsWrongSdkVersion());
+          
+          std::vector<std::string> sdkStatusStrings;
+          sdkStatusStrings.reserve((size_t)SdkStatusType::Count);
+          for (uint32_t i=0; i < (size_t)SdkStatusType::Count; ++i)
+          {
+            sdkStatusStrings.push_back( _sdkStatus.GetStatus(SdkStatusType(i)) );
+          }
+          
+          ExternalInterface::SdkStatus sdkStatus(std::move(connectionStatus),
+                                                 std::move(sdkStatusStrings),
+                                                 _sdkStatus.NumTimesConnected(),
+                                                 _sdkStatus.TimeInMode_s(currentTime_s),
+                                                 _sdkStatus.TimeSinceLastSdkMessage_s(currentTime_s),
+                                                 _sdkStatus.TimeSinceLastSdkCommand_s(currentTime_s));
+            
+          ExternalInterface::MessageEngineToGame message(std::move(sdkStatus));
+          
+          DeliverToGame(message, (DestinationId)UiConnectionType::UI);
+        }
+      }
+    }
+    
     
     bool UiMessageHandler::ConnectToUiDevice(ISocketComms::DeviceId deviceId, UiConnectionType connectionType)
     {
@@ -569,8 +683,6 @@ namespace Anki {
       std::array<uint8_t, 16> toEngineCLADHash;
       std::copy(std::begin(messageGameToEngineHash), std::end(messageGameToEngineHash), std::begin(toEngineCLADHash));
       
-      std::string buildVersionString = "local"; // TODO - get a buildVersion automatically for build-machine-built exes
-      
       // kReservedForTag is for future proofing - if we need to increase tag size to 16 bits, the
       const uint8_t kReservedForTag = 0;
       ExternalInterface::UiDeviceConnected deviceConnected(kReservedForTag,
@@ -579,7 +691,7 @@ namespace Anki {
                                                            success,
                                                            toGameCLADHash,
                                                            toEngineCLADHash,
-                                                           buildVersionString);
+                                                           kBuildVersion);
 
       Broadcast( ExternalInterface::MessageEngineToGame(std::move(deviceConnected)) );
     
@@ -591,6 +703,25 @@ namespace Anki {
     {
       switch (event.GetData().GetTag())
       {
+        case ExternalInterface::MessageGameToEngineTag::UiDeviceConnectionWrongVersion:
+        {
+          const ExternalInterface::UiDeviceConnectionWrongVersion& msg = event.GetData().Get_UiDeviceConnectionWrongVersion();
+          if (IsSdkConnection(msg.connectionType))
+          {
+            _sdkStatus.OnWrongVersion(msg);
+          }
+          break;
+        }
+        case ExternalInterface::MessageGameToEngineTag::UiDeviceConnectionSuccess:
+        {
+          const ExternalInterface::UiDeviceConnectionSuccess& msg = event.GetData().Get_UiDeviceConnectionSuccess();
+          if (IsSdkConnection(msg.connectionType))
+          {
+            _sdkStatus.OnConnectionSuccess(msg);
+            
+          }
+          break;
+        }
         case ExternalInterface::MessageGameToEngineTag::ConnectToUiDevice:
         {
           const ExternalInterface::ConnectToUiDevice& msg = event.GetData().Get_ConnectToUiDevice();
@@ -630,6 +761,47 @@ namespace Anki {
         }
       }
     }
+    
+    
+    void UiMessageHandler::OnEnterSdkMode(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+    {
+      // Clear Behaviors etc.
+      
+      Broadcast( ExternalInterface::MessageGameToEngine(
+                                    ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection) ) );
+      // TODO - force behavior to NoneBehavior type / entry
+      
+      _sdkStatus.EnterMode();
+      UpdateIsSdkCommunicationEnabled();
+    }
+    
+    
+    void UiMessageHandler::OnExitSdkMode(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+    {
+      // Restore reactionary behaviors?
+      
+      _sdkStatus.ExitMode();
+      UpdateIsSdkCommunicationEnabled();
+    }
+    
+    
+    void UiMessageHandler::UpdateIsSdkCommunicationEnabled()
+    {
+      const bool isSdkCommunicationEnabled = IsSdkCommunicationEnabled();
+      
+      for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
+      {
+        if (IsSdkConnection(i))
+        {
+          ISocketComms* socketComms = GetSocketComms(i);
+          if (socketComms)
+          {
+            socketComms->EnableConnection(isSdkCommunicationEnabled);
+          }
+        }
+      }
+    }
+    
     
     bool UiMessageHandler::HasDesiredNumUiDevices() const
     {

@@ -519,23 +519,31 @@ namespace Anki {
         }
         assert(_currentAction != nullptr);
         
-        VizManager* vizManager = _currentAction->GetRobot().GetContext()->GetVizManager();
+        const CozmoContext* cozmoContext = _currentAction->GetRobot().GetContext();
+        VizManager* vizManager = cozmoContext->GetVizManager();
         ASSERT_NAMED(nullptr != vizManager, "Expecting a non-null VizManager");
         
-        vizManager->SetText(VizManager::ACTION, NamedColors::GREEN,
-                                           "Action: %s", _currentAction->GetName().c_str());
-        
         const ActionResult actionResult = _currentAction->Update();
+        const bool isRunning = (actionResult == ActionResult::RUNNING);
         
-        if(actionResult != ActionResult::RUNNING) {
+        if (isRunning)
+        {
+          vizManager->SetText(VizManager::ACTION, NamedColors::GREEN, "Action: %s", _currentAction->GetName().c_str());
+          cozmoContext->SetSdkStatus(SdkStatusType::Action, std::string(_currentAction->GetName()));
+        }
+        else
+        {
+          vizManager->SetText(VizManager::ACTION, NamedColors::GREEN, "");
+          cozmoContext->SetSdkStatus(SdkStatusType::Action, "");
+        }
+        
+        if (!isRunning) {
           // Current action is no longer running delete it
           DeleteCurrentAction();
           
           if(actionResult != ActionResult::SUCCESS && actionResult != ActionResult::CANCELLED) {
             lastResult = RESULT_FAIL;
           }
-          
-          vizManager->SetText(VizManager::ACTION, NamedColors::GREEN, "");
         }
       } // if queue not empty
       

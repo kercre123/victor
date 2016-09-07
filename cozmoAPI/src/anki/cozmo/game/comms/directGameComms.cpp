@@ -42,7 +42,7 @@ void DirectGameComms::Update()
   _receivedMessages.splice(_receivedMessages.end(), std::move(newMessages));
 }
 
-bool DirectGameComms::SendMessage(const Comms::MsgPacket& msgPacket)
+bool DirectGameComms::SendMessageInternal(const Comms::MsgPacket& msgPacket)
 {
   if (_connectState == ConnectionState::Connected) {
     _messagePort->PushToGameMessage(msgPacket.data, msgPacket.dataLen);
@@ -53,7 +53,7 @@ bool DirectGameComms::SendMessage(const Comms::MsgPacket& msgPacket)
   }
 }
 
-bool DirectGameComms::RecvMessage(std::vector<uint8_t>& outBuffer)
+bool DirectGameComms::RecvMessageInternal(std::vector<uint8_t>& outBuffer)
 {
   // if "connecting", we're connected when the UI sends us something
   if (_connectState == ConnectionState::Connecting && !_receivedMessages.empty()) {

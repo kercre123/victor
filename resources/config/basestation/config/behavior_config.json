@@ -331,14 +331,35 @@
         "priority": 1, // lower is better
         "behaviorChooser" :
         {
-          "type" : "simple",
-          "behaviorGroups" : [ "FP_Socialize" ]
+          "type" : "socialize",
+          "behaviorGroups" : [ "FP_Socialize" ],
+
+          "maxNumFindFacesSearchIterations": 2,
+          "requiredObjectives": [
+            {
+              "objective": "InteractedWithFace"
+            },
+            {
+              "objective": "PouncedAndCaught",
+              "ignoreIfLocked": "PounceOnMotionAction",
+              "probabilityToRequireObjective": 0.5,
+              "randomCompletionsNeededMin": 1,
+              "randomCompletionsNeededMax": 3
+              // NOTE: this behavior will quite on it's own if it gets "bored" due to lack of movement, so
+              // these don't need to be met every time (but if they are met, socialize will end sooner)
+            }
+          ]
         },
         "goalStrategy":
         {
           "type" : "FP_Socialize",
           // at least interact for this amount of time every time
-          "goalCanEndDurationSecs" : 12.0,
+          "goalCanEndDurationSecs" : 5.0,
+          
+          // stop running after this time (want to stop, don't actually stop until behavior is done)
+          // NOTE: this should never really be hit, only if a bunch of new behaviors get added
+          "goalShouldEndDurationSecs": 300.0,
+          
           // do not go back immediately even if still wants to social
           // (it should be possible to fire with other triggers, like pick up)
           "cooldownSecs" : 30.0,
@@ -360,9 +381,7 @@
               },
               "trackDelta" : false
             }
-          ],
-          // finish if it's been a while since we interacted for the last time
-          "maxTimeWithoutInteractionSecs" : 8.0
+          ]
         }
       }
     ]

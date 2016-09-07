@@ -293,12 +293,16 @@
       "AnimName": "ag_SleepLoop"
     },
     {
-      "CladEvent": "InteractWithFacesInitial",
-      "AnimName": "interactWithFaces_initial"
+      "CladEvent": "InteractWithFaceTrackingIdle",
+      "AnimName": "ag_pause_idle"
     },
     {
-      "CladEvent": "InteractWithFacesWait",
-      "AnimName": "ag_freeplay_reacttoface_wait"
+      "CladEvent": "InteractWithFacesInitialNamed",
+      "AnimName": "ag_freeplay_reacttoface_sayname"
+    },
+    {
+      "CladEvent": "InteractWithFacesInitialUnnamed",
+      "AnimName": "ag_freeplay_reacttoface_unidentified"
     },
     {
       "CladEvent": "KnockOverEyes",

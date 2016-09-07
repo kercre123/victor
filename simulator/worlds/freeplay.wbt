@@ -75,6 +75,7 @@ WebotsKeyboardController {
   userName "Billy"
   unlockName "CubeStackAction"
   autoConnect FALSE
+  filterLogs TRUE
 }
 CozmoVizDisplay {
   moodViz TRUE

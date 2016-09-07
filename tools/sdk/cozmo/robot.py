@@ -275,8 +275,6 @@ class Cozmo(event.Dispatcher):
             self.enable_reactionary_behaviors(False)
             await self.world.delete_all_custom_objects()
             self._reset_behavior_state()
-            self.unlock_all_behaviors()
-            # SetRobotImageSendMode(True)
             # wait for animations to load
             await self.conn.anim_names.wait_for_loaded()
             self._is_ready = True
@@ -592,12 +590,6 @@ class Cozmo(event.Dispatcher):
         b = self.start_behavior(behavior_type)
         await asyncio.sleep(active_time, loop=self._loop)
         b.stop()
-
-    def unlock_all_behaviors(self):
-        '''Makes all behaviors available on the robot.'''
-        umsg = _clad_to_engine_iface.RequestSetUnlock(unlocked=True)
-        umsg.unlockID = _clad_to_engine_cozmo.UnlockId.All
-        self.conn.send_msg(umsg)
 
 
     ## Object Commands ##

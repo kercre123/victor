@@ -28,9 +28,11 @@ namespace Cozmo {
 using MessageSizeType = uint16_t; // Must match on Engine and Python SDK side
 
 
-TcpSocketComms::TcpSocketComms()
-  : _tcpServer( new TcpServer() )
+TcpSocketComms::TcpSocketComms(bool isEnabled)
+  : ISocketComms(isEnabled)
+  , _tcpServer( new TcpServer() )
   , _connectedId( kDeviceIdInvalid )
+  , _port(0)
   , _hasClient(false)
 {
   _receivedBuffer.reserve(4096); // Big enough to hold several messages without reallocating
@@ -52,8 +54,23 @@ bool TcpSocketComms::Init(UiConnectionType connectionType, const Json::Value& co
   if (portValue.isNumeric())
   {
     const uint32_t port = portValue.asUInt();
-    PRINT_CH_INFO("UiComms", "TcpSocketComms.StartListening", "Start Listening on port %u", port);
-    _tcpServer->StartListening(port);
+    _port = port;
+    
+    if ((uint32_t)_port != port)
+    {
+      PRINT_NAMED_ERROR("TcpSocketComms.Init",
+                        "Bad '%s' entry in Json config file should fit in u16 (%u != %u)",
+                        AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT, (uint32_t)_port, port);
+      return false;
+    }
+    
+    _tcpServer->DisconnectClient();
+    _tcpServer->StopListening();
+    if (IsConnectionEnabled())
+    {
+      PRINT_CH_INFO("UiComms", "TcpSocketComms.StartListening", "Start Listening on port %u", _port);
+      _tcpServer->StartListening(_port);
+    }
   }
   else
   {
@@ -63,6 +80,20 @@ bool TcpSocketComms::Init(UiConnectionType connectionType, const Json::Value& co
   }
   
   return true;
+}
+  
+  
+void TcpSocketComms::OnEnableConnection(bool wasEnabled, bool isEnabled)
+{
+  if (isEnabled)
+  {
+    _tcpServer->StartListening(_port);
+  }
+  else
+  {
+    _tcpServer->DisconnectClient();
+    _tcpServer->StopListening();
+  }
 }
 
 
@@ -85,7 +116,7 @@ void TcpSocketComms::Update()
     HandleDisconnect();
   }
   
-  if (!_hasClient)
+  if (!_hasClient && IsConnectionEnabled())
   {
     if (_tcpServer->Accept())
     {
@@ -99,7 +130,7 @@ void TcpSocketComms::Update()
 }
 
 
-bool TcpSocketComms::SendMessage(const Comms::MsgPacket& msgPacket)
+bool TcpSocketComms::SendMessageInternal(const Comms::MsgPacket& msgPacket)
 {
   ANKI_CPU_PROFILE("TcpSocketComms::SendMessage");
   
@@ -172,7 +203,7 @@ bool TcpSocketComms::ExtractNextMessage(std::vector<uint8_t>& outBuffer)
 }
   
   
-bool TcpSocketComms::RecvMessage(std::vector<uint8_t>& outBuffer)
+bool TcpSocketComms::RecvMessageInternal(std::vector<uint8_t>& outBuffer)
 {
   if (IsConnected())
   {

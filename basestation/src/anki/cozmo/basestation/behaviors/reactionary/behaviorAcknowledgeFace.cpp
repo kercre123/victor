@@ -18,8 +18,9 @@
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -32,8 +33,6 @@ namespace Cozmo {
 namespace AcknowledgeFaceConsoleVars{
 CONSOLE_VAR(bool, kEnableFaceAcknowledgeReact, "AcknowledgeFaceBehavior", true);
 CONSOLE_VAR(bool, kDebugFaceDist, "AcknowledgementBehaviors", false);
-CONSOLE_VAR(f32, kFaceReact_HeadAngleDistFactor, "AcknowledgementBehaviors", 1.0);
-CONSOLE_VAR(f32, kFaceReact_BodyAngleDistFactor, "AcknowledgementBehaviors", 3.0);
 CONSOLE_VAR(u32, kNumImagesToWaitFor, "AcknowledgementBehaviors", 3);
 CONSOLE_VAR_RANGED(f32, kDistanceToConsiderClose_mm, "AcknowledgementBehaviors", 300.0f, 0.0f, 1000.0f);
 CONSOLE_VAR_RANGED(f32, kDistanceToConsiderClose_gap_mm, "AcknowledgementBehaviors", 100.0f, 0.0f, 1000.0f);
@@ -80,46 +79,17 @@ IBehavior::Status BehaviorAcknowledgeFace::UpdateInternal(Robot& robot)
 
 bool BehaviorAcknowledgeFace::GetBestTarget(const Robot& robot)
 {
-  if( _desiredTargets.empty() ) {
+  const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+  const bool preferName = false;  
+  Vision::FaceID_t bestFace = whiteboard.GetBestFaceToTrack( _desiredTargets, preferName );
+  
+  if( bestFace == Vision::UnknownFaceID ) {
     return false;
   }
-
-  if( _desiredTargets.size() == 1 ) {
-    _targetFace = *_desiredTargets.begin();
+  else {
+    _targetFace = bestFace;
     return true;
   }
-
-  float bestCost = std::numeric_limits<float>::max();
-  bool ret = false;
-  for( auto targetID : _desiredTargets ) {
-
-    const Vision::TrackedFace* face = robot.GetFaceWorld().GetFace(targetID);
-    if( nullptr == face ) {
-      continue;
-    }
-    
-    Pose3d poseWrtRobot;    
-    if( ! face->GetHeadPose().GetWithRespectTo(robot.GetPose(), poseWrtRobot) ) {
-      // no transform, probably a different origin
-      continue;
-    }
-
-    Radians absHeadTurnAngle = TurnTowardsPoseAction::GetAbsoluteHeadAngleToLookAtPose(poseWrtRobot.GetTranslation());
-    Radians relBodyTurnAngle = TurnTowardsPoseAction::GetRelativeBodyAngleToLookAtPose(poseWrtRobot.GetTranslation());
-
-    Radians relHeadTurnAngle = absHeadTurnAngle - robot.GetHeadAngle();
-    
-    float cost = kFaceReact_HeadAngleDistFactor * relHeadTurnAngle.getAbsoluteVal().ToFloat() +
-      kFaceReact_BodyAngleDistFactor * relBodyTurnAngle.getAbsoluteVal().ToFloat();
-
-    if( cost < bestCost ) {
-      _targetFace = targetID;
-      bestCost = cost;
-      ret = true;
-    }
-  }
-
-  return ret;
 }
 
 void BehaviorAcknowledgeFace::BeginIteration(Robot& robot)

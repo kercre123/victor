@@ -11,9 +11,10 @@
  **/
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 
+#include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
-#include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/rotation.h"
@@ -43,6 +44,10 @@ CONSOLE_VAR(bool, kBW_DebugRenderPossibleObjects, "AIWhiteboard", true);
 CONSOLE_VAR(float, kBW_DebugRenderPossibleObjectsZ, "AIWhiteboard", 35.0f);
 CONSOLE_VAR(bool, kBW_DebugRenderBeacons, "AIWhiteboard", true);
 CONSOLE_VAR(float, kBW_DebugRenderBeaconZ, "AIWhiteboard", 35.0f);
+// face tracking
+CONSOLE_VAR(float, kFaceTracking_HeadAngleDistFactor, "AIWhiteboard", 1.0);
+CONSOLE_VAR(float, kFaceTracking_BodyAngleDistFactor, "AIWhiteboard", 3.0);
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const char* ObjectUseActionToString(AIWhiteboard::ObjectUseAction action)
@@ -480,6 +485,57 @@ AIWhiteboard::ObjectFailureTable& AIWhiteboard::GetObjectFailureTable(ObjectUseA
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Vision::FaceID_t AIWhiteboard::GetBestFaceToTrack(const std::set< Vision::FaceID_t >& possibleFaces,
+                                                  bool preferNamedFaces) const
+{
+  if( possibleFaces.empty() ) {
+    return Vision::UnknownFaceID;
+  }
+
+  if( possibleFaces.size() == 1 ) {
+    return *possibleFaces.begin();
+  }
+
+  // add a large penalty to any face without a name, if we are preferring named faces
+  static const f32 kUnnamedFacePenalty = preferNamedFaces ? 1000.0f : 0.0f;
+  
+  float bestCost = std::numeric_limits<float>::max();
+  Vision::FaceID_t bestFace = Vision::UnknownFaceID;
+  for( auto targetID : possibleFaces ) {
+
+    const Vision::TrackedFace* face = _robot.GetFaceWorld().GetFace(targetID);
+    if( nullptr == face ) {
+      continue;
+    }
+    
+    Pose3d poseWrtRobot;    
+    if( ! face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), poseWrtRobot) ) {
+      // no transform, probably a different origin
+      continue;
+    }
+
+    Radians absHeadTurnAngle = TurnTowardsPoseAction::GetAbsoluteHeadAngleToLookAtPose(poseWrtRobot.GetTranslation());
+    Radians relBodyTurnAngle = TurnTowardsPoseAction::GetRelativeBodyAngleToLookAtPose(poseWrtRobot.GetTranslation());
+
+    Radians relHeadTurnAngle = absHeadTurnAngle - _robot.GetHeadAngle();
+
+    const float headTurnCost = kFaceTracking_HeadAngleDistFactor * relHeadTurnAngle.getAbsoluteVal().ToFloat();
+    const float bodyTurnCost = kFaceTracking_BodyAngleDistFactor * relBodyTurnAngle.getAbsoluteVal().ToFloat();
+    const float penalty = face->HasName() ? 0.0f : kUnnamedFacePenalty;
+    
+    const float cost = headTurnCost + bodyTurnCost + penalty;      
+
+    if( cost < bestCost ) {
+      
+      bestFace = targetID;
+      bestCost = cost;
+    }
+  }
+
+  return bestFace;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::GetPossibleObjectsWRTOrigin(PossibleObjectVector& possibleObjects) const
 {
   possibleObjects.clear();
@@ -825,6 +881,7 @@ void AIWhiteboard::UpdateBeaconRender()
     }
   }
 }
+
 
 } // namespace Cozmo
 } // namespace Anki

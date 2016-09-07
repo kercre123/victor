@@ -22,6 +22,7 @@ public:
 
   bool StartListening(const unsigned short port);
   void StopListening();
+  bool IsListening() const { return socketfd >= 0; }
 
   bool Accept();
   void DisconnectClient();

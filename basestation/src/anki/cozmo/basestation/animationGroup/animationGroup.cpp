@@ -128,43 +128,43 @@ const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood,
 
           if( DEBUG_ANIMATION_GROUP_SELECTION )
           {
-            PRINT_NAMED_INFO("AnimationGroup.GetAnimation.ConsiderAnimation",
-                             "%s: considering animation '%s' with weight %f",
-                             _name.c_str(),
-                             entry->GetName().c_str(),
-                             entry->GetWeight());
+            PRINT_CH_INFO("Animations", "AnimationGroup.GetAnimation.ConsiderAnimation",
+                          "%s: considering animation '%s' with weight %f",
+                          _name.c_str(),
+                          entry->GetName().c_str(),
+                          entry->GetWeight());
           }
         }
         else if( DEBUG_ANIMATION_GROUP_SELECTION )
         {
-          PRINT_NAMED_INFO("AnimationGroup.GetAnimation.RejectAnimation.Cooldown",
-                           "%s: rejecting animation %s with mood %s is on cooldown (timer=%f)",
-                           _name.c_str(),
-                           entry->GetName().c_str(),
-                           SimpleMoodTypeToString(entry->GetMood()),
-                           entry->GetCooldown());
+          PRINT_CH_INFO("Animations", "AnimationGroup.GetAnimation.RejectAnimation.Cooldown",
+                        "%s: rejecting animation %s with mood %s is on cooldown (timer=%f)",
+                        _name.c_str(),
+                        entry->GetName().c_str(),
+                        SimpleMoodTypeToString(entry->GetMood()),
+                        entry->GetCooldown());
         }
       }
       else if( DEBUG_ANIMATION_GROUP_SELECTION ) {
-        PRINT_NAMED_INFO("AnimationGroup.GetAnimation.RejectAnimation.HeadAngle",
-                         "%s: rejecting animation %s with head angle (%f) out of range (%f,%f)",
-                         _name.c_str(),
-                         entry->GetName().c_str(),
-                         RAD_TO_DEG(headAngleRad),
-                         entry->GetHeadAngleMin(),
-                         entry->GetHeadAngleMax());
+        PRINT_CH_INFO("Animations", "AnimationGroup.GetAnimation.RejectAnimation.HeadAngle",
+                      "%s: rejecting animation %s with head angle (%f) out of range (%f,%f)",
+                      _name.c_str(),
+                      entry->GetName().c_str(),
+                      RAD_TO_DEG(headAngleRad),
+                      entry->GetHeadAngleMin(),
+                      entry->GetHeadAngleMax());
       }
     }
     else if( DEBUG_ANIMATION_GROUP_SELECTION )
     {
-      PRINT_NAMED_INFO("AnimationGroup.GetAnimation.RejectAnimation.WrongMood",
-                       "%s: rejecting animation %s with mood %s %son cooldown",
-                       _name.c_str(),
-                       entry->GetName().c_str(),
-                       SimpleMoodTypeToString(entry->GetMood()),
-                       animationGroupContainer.IsAnimationOnCooldown(entry->GetName(),currentTime_s) ?
-                       "" :
-                       "not ");
+      PRINT_CH_INFO("Animations", "AnimationGroup.GetAnimation.RejectAnimation.WrongMood",
+                    "%s: rejecting animation %s with mood %s %son cooldown",
+                    _name.c_str(),
+                    entry->GetName().c_str(),
+                    SimpleMoodTypeToString(entry->GetMood()),
+                    animationGroupContainer.IsAnimationOnCooldown(entry->GetName(),currentTime_s) ?
+                    "" :
+                    "not ");
     }
   }
       
@@ -186,15 +186,21 @@ const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood,
   // select any, so return the last one if its not the end
   if(lastEntry != nullptr) {
     animationGroupContainer.SetAnimationCooldown(lastEntry->GetName(), currentTime_s + lastEntry->GetCooldown());
+
+    PRINT_CH_INFO("Animations", "AnimationGroup.GetAnimation.Found",
+                  "Group '%s' returning animation name '%s'",
+                  _name.c_str(),
+                  lastEntry->GetName().c_str());
+    
     return lastEntry->GetName();
   }
 
   // we couldn't find an animation. If we were in a non-default mood, try again with the default mood
   if( mood != SimpleMoodType::Default ) {
-    PRINT_NAMED_INFO("AnimationGroup.GetAnimation.NoMoodMatch",
-                     "No animations from group '%s' selected matching mood '%s', trying with default mood",
-                     _name.c_str(),
-                     SimpleMoodTypeToString(mood));
+    PRINT_CH_INFO("Animations", "AnimationGroup.GetAnimation.NoMoodMatch",
+                  "No animations from group '%s' selected matching mood '%s', trying with default mood",
+                  _name.c_str(),
+                  SimpleMoodTypeToString(mood));
     
     return GetAnimationName(SimpleMoodType::Default, currentTime_s, animationGroupContainer,headAngleRad);
   }
@@ -206,8 +212,8 @@ const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood,
     const AnimationGroupEntry* bestEntry = nullptr;
     float minCooldown = std::numeric_limits<float>::max();
 
-    PRINT_NAMED_INFO("AnimationGroup.GetAnimation.AllOnCooldown",
-                     "All animations are on cooldown. Selecting the one closest to being finished");
+    PRINT_CH_INFO("Animations", "AnimationGroup.GetAnimation.AllOnCooldown",
+                  "All animations are on cooldown. Selecting the one closest to being finished");
 
     for (auto entry = _animations.begin(); entry != _animations.end(); entry++)
     {
@@ -215,11 +221,11 @@ const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood,
         float timeLeft = animationGroupContainer.TimeUntilCooldownOver(entry->GetName(), currentTime_s);
 
         if( DEBUG_ANIMATION_GROUP_SELECTION ) {
-          PRINT_NAMED_INFO("AnimationGroup.GetAnimation.ConsiderIgnoringCooldown",
-                           "%s: animation %s has %f left on it's cooldown",
-                           _name.c_str(),
-                           entry->GetName().c_str(),
-                           timeLeft);
+          PRINT_CH_DEBUG("Animations", "AnimationGroup.GetAnimation.ConsiderIgnoringCooldown",
+                         "%s: animation %s has %f left on it's cooldown",
+                         _name.c_str(),
+                         entry->GetName().c_str(),
+                         timeLeft);
         }
 
         if(timeLeft < minCooldown) {
@@ -230,7 +236,17 @@ const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood,
     }
 
     if( bestEntry != nullptr ) {
+      PRINT_CH_INFO("Animations", "AnimationGroup.GetAnimation.BackupAnimationFound",
+                    "All animations in group '%s' were on cooldown / invalid, so selected '%s'",
+                    _name.c_str(),
+                    bestEntry->GetName().c_str());
+
       return bestEntry->GetName();
+    }
+    else {
+      PRINT_CH_INFO("Animations", "AnimationGroup.GetAnimation.NoBackup",
+                    "All animations in group '%s' were on cooldown / invalid nothing could be returned",
+                    _name.c_str());
     }
   }
 

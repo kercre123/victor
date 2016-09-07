@@ -97,7 +97,7 @@ namespace Anki {
 
     void VizManager::SendMessage(const VizInterface::MessageViz& message)
     {
-      if (!_isInitialized || !kSendAnythingToViz)
+      if (!ANKI_DEV_CHEATS || !_isInitialized || !kSendAnythingToViz)
       {
         return;
       }
@@ -134,12 +134,11 @@ namespace Anki {
       }
         
       // Log viz messages from here.
-      #if ANKI_DEV_CHEATS
-      if(nullptr != DevLoggingSystem::GetInstance())
+      if(ANKI_DEV_CHEATS && nullptr != DevLoggingSystem::GetInstance())
       {
         DevLoggingSystem::GetInstance()->LogMessage(message);
       }
-      #endif
+    
     }
 
     

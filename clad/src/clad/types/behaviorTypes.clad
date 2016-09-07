@@ -21,6 +21,7 @@ enum uint_8 BehaviorGameFlag {
 enum uint_8 BehaviorType {
   NoneBehavior, // Named differently to not conflict with the Python keyword
   LookAround,
+  InteractWithFaces,
   ReactToCliff,
   ReactToPickup,
   ReactToPoke,

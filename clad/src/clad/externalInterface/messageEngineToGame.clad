@@ -27,6 +27,7 @@
 #include "clad/types/poseStructs.clad"
 #include "clad/types/proxMessages.clad"
 #include "clad/types/robotStatusAndActions.clad"
+#include "clad/types/sdkStatusTypes.clad"
 #include "clad/types/toolCodes.clad"
 #include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/unlockTypes.clad"
@@ -582,13 +583,25 @@ message RequestEnrollFace {
 }
 
 message SparkEnded {
+}
 
+message SdkConnectionStatus
+{
+  string   sdkBuildVersion,
+  string   requiredSdkBuildVersion,
+  uint_32  numCommands,
+  float_32 timeInCurrentConnection_s,
+  bool     isConnected,
+  bool     isWrongSdkVersion,
 }
 
 message SdkStatus {
-  string sdkStatus,
+  SdkConnectionStatus connectionStatus,
+  string   sdkStatus[uint_8],
+  uint_32  numTimesConnected,
+  float_32 timeInSdkMode_s,
   float_32 timeSinceLastSdkMessage_s,
-  bool isConnected
+  float_32 timeSinceLastSdkCommand_s,
 }
 
 ///////////////////////////////////////////////////////////////////////////////

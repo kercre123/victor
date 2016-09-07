@@ -154,6 +154,7 @@ def connect(f, stop_on_exception=True):
         print("START FROM THREAD", threading.get_ident())
         f(base._SyncProxy(coz_conn))
     finally:
+        coz_conn.stop_dispatching()
         loop.stop()
         thread.join()
 

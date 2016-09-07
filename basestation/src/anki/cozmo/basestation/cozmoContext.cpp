@@ -3,6 +3,7 @@
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/audio/audioController.h"
 #include "anki/cozmo/basestation/audio/audioServer.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/util/transferQueue/dasTransferTask.h"
 #include "anki/cozmo/basestation/util/transferQueue/gameLogTransferTask.h"
@@ -51,6 +52,26 @@ CozmoContext::~CozmoContext()
 {
   _robotMgr->RemoveRobots();
 }
+  
+  
+bool CozmoContext::IsInSdkMode() const
+{
+  if (_externalInterface)
+  {
+    return _externalInterface->IsInSdkMode();
+  }
+  return false;
+}
+  
+  
+void CozmoContext::SetSdkStatus(SdkStatusType statusType, std::string&& statusText) const
+{
+  if (_externalInterface)
+  {
+    _externalInterface->SetSdkStatus(statusType, std::move(statusText));
+  }
+}
+
   
 } // namespace Cozmo
 } // namespace Anki

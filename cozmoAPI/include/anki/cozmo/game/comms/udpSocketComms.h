@@ -44,8 +44,6 @@ public:
   virtual void Update() override;
 
   virtual bool AreMessagesGrouped() const override { return false; }
-  virtual bool SendMessage(const Comms::MsgPacket& msgPacket) override;
-  virtual bool RecvMessage(std::vector<uint8_t>& outBuffer) override;
 
   virtual bool ConnectToDeviceByID(DeviceId deviceId) override;
   virtual bool DisconnectDeviceByID(DeviceId deviceId) override;
@@ -58,6 +56,9 @@ private:
   
   // ============================== Private Member Functions ==============================
   
+  virtual bool SendMessageInternal(const Comms::MsgPacket& msgPacket) override;
+  virtual bool RecvMessageInternal(std::vector<uint8_t>& outBuffer) override;
+
   void  StartAdvertising(UiConnectionType type);
   
   // ============================== Private Member Vars ==============================

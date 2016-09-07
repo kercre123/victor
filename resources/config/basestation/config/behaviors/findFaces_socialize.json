@@ -1,81 +1,14 @@
 {
-  "behaviorType": "ExploreLookAroundInPlace",
-  "name": "findFaces_boredom",
+  "behaviorType": "FindFaces",
+  "name": "findFaces_socialize",
 
   "behaviorGroups": [
     "FP_Socialize"
   ],
+
+  "flatScore": 0.0, // selected manually by the socialize chooser
   
-  "flatScore": 0.9,
-
-// Emotions drive higher level goals now. behaviors should not need it.
-//  "emotionScorers": [
-//    {
-//      "emotionType": "Social",
-//      "scoreGraph": {
-//        "nodes": [
-//          {
-//            "x": -1.0,
-//            "y": 1.0
-//          },
-//          {
-//            "x": 0.0,
-//            "y": 0.5
-//          },
-//          {
-//            "x": 0.25,
-//            "y": 0.5
-//          },
-//          {
-//            "x": 0.5,
-//            "y": 0.1
-//          }
-//        ]
-//      },
-//      "trackDelta": false
-//    }
-//  ],
-
-// Repetition penalties are not currently needed for this behavior since the Socialize goal is very small (only a handfull
-// of behaviors)
-//  "repetitionPenalty": {
-//    "nodes": [
-//      {
-//        "x": 5.0,
-//        "y": 0.2
-//      },
-//      {
-//        "x": 20.0,
-//        "y": 0.5
-//      },
-//      {
-//        "x": 60.0,
-//        "y": 1.0
-//      }
-//    ]
-//  },
-
-  // this allows other behavior to kick in faster, which potentially kicks out the Socialize goal
-  "runningPenalty": {
-    "nodes": [
-      {
-        "x": 0.0,
-        "y": 1.0
-      },
-      {
-        "x": 12.0,
-        "y": 1.0
-      },
-      {
-        "x": 25.0,
-        "y": 0.5
-      },
-      {
-        "x": 35.0,
-        "y": 0.1
-      }
-    ]
-  },
+  "maxFaceAgeToLook_ms": 120000,
 
   "params":
   {
@@ -83,8 +16,9 @@
     "behavior_ResetBodyFacingOnStart": true,
     "behavior_ShouldLowerLift": true,
     "behavior_DistanceFromRecentLocationMin_mm": 100.0,
-    "behavior_RecentLocationsMax": 1,
-    "behavior_AngleOfFocus_deg": 0.0, // no "cone of investors / reporters"
+    "behavior_RecentLocationsMax": 0,
+    "behavior_AngleOfFocus_deg": 30.0, // cone will be based on position where the behavior starts
+    "behavior_NumberOfScansBeforeStop": 0,
     
     // shared speeds
     "sx_BodyTurnSpeed_degPerSec": 150.0,   // turn speed
@@ -116,8 +50,8 @@
     "s4_BodyAngleRelativeRangeMax_deg" : 10.0, // +- body mini-turn from [min,max]
     "s4_HeadAngleRangeMin_deg": 20.0,   // head min in place
     "s4_HeadAngleRangeMax_deg": 45.0,   // head max in place
-    "s4_HeadAngleChangesMin":  3,
-    "s4_HeadAngleChangesMax":  5,
+    "s4_HeadAngleChangesMin":  2,
+    "s4_HeadAngleChangesMax":  3,
     "s4_WaitBetweenChangesMin_sec" : 0.01,
     "s4_WaitBetweenChangesMax_sec" : 0.2,
     "s4_WaitAnimTrigger": "LookInPlaceForFacesHeadMovePause",

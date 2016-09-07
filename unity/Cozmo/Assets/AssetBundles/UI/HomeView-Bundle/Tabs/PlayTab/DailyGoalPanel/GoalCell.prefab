@@ -238,8 +238,8 @@ MonoBehaviour:
     m_RichText: 1
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
-    m_LineSpacing: 0.85
-  m_Text: Goal text here it can fit two lines more easily
+    m_LineSpacing: 0.95
+  m_Text: Win a game of Quick Tap with better than 75% Accuracy
   _AllUppercase: 0
   GlowText: 0
 --- !u!114 &11403540
@@ -783,7 +783,7 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 222, y: 0}
+  m_AnchoredPosition: {x: 222, y: -10}
   m_SizeDelta: {x: 660, y: 228}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!224 &22463648
@@ -873,10 +873,10 @@ RectTransform:
   - {fileID: 22404648}
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 460, y: -185.44482}
-  m_SizeDelta: {x: 920, y: 370.88965}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &100100000
 Prefab:

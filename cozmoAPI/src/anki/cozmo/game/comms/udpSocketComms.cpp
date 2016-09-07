@@ -93,11 +93,11 @@ bool UdpSocketComms::Init(UiConnectionType connectionType, const Json::Value& co
   if(!config.isMember(numDevicesKey))
   {
     PRINT_NAMED_WARNING("UdpSocketComms.Init.NoNumDevices",
-                        "No %s defined in Json config, defaulting to %d", numDevicesKey, _desiredNumDevices);
+                        "No %s defined in Json config, defaulting to %d", numDevicesKey, GetNumDesiredDevices());
   }
   else
   {
-    _desiredNumDevices = config[numDevicesKey].asInt();
+    SetNumDesiredNumDevices( config[numDevicesKey].asInt() );
   }
   
   return true;
@@ -118,7 +118,7 @@ void UdpSocketComms::Update()
 }
 
   
-bool UdpSocketComms::SendMessage(const Comms::MsgPacket& msgPacket)
+bool UdpSocketComms::SendMessageInternal(const Comms::MsgPacket& msgPacket)
 {
   if (_comms->GetNumConnectedDevices() > 0)
   {
@@ -132,7 +132,7 @@ bool UdpSocketComms::SendMessage(const Comms::MsgPacket& msgPacket)
 }
   
 
-bool UdpSocketComms::RecvMessage(std::vector<uint8_t>& outBuffer)
+bool UdpSocketComms::RecvMessageInternal(std::vector<uint8_t>& outBuffer)
 {
   return _comms->GetNextMsgPacket(outBuffer);
 }

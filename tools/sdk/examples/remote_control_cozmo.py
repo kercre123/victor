@@ -75,13 +75,55 @@ class RemoteControlCozmo:
         self.is_mouse_look_enabled = _is_mouse_look_enabled_by_default
         self.mouse_dir = 0
 
-        self.anim_names = list(self.cozmo.anim_names)
-        self.anim_names.sort()
-        self.anim_index_for_key = [0] * 10
+        all_anim_names = list(self.cozmo.anim_names)
+        all_anim_names.sort()
+        self.anim_names = []
 
-        # for now just default the selections to the first N anims
-        for i in range(len(self.anim_index_for_key)):
-            self.anim_index_for_key[i] = i
+        # temp workaround - remove any of the animations known to misbehave
+        bad_anim_names = [
+            "skip bad anim ANIMATION_TEST",
+            "skip bad anim ID_AlignToObject_Content_Drive",
+            "skip bad anim ID_AlignToObject_Content_Start",
+            "skip bad anim ID_AlignToObject_Content_Stop",
+            "skip bad anim ID_AlignToObject_Frustrated_Drive",
+            "skip bad anim ID_AlignToObject_Frustrated_Start",
+            "skip bad anim ID_AlignToObject_Frustrated_Stop",
+            "skip bad anim ID_catch_start",
+            "skip bad anim ID_end",
+            "skip bad anim ID_reactTppl_Surprise",
+            "skip bad anim ID_test",
+            "skip bad anim ID_wake_openEyes",
+            "skip bad anim ID_wake_sleeping",
+            "skip bad anim LiftEffortPickup",
+            "skip bad anim LiftEffortPlaceHigh",
+            "skip bad anim LiftEffortPlaceLow",
+            "skip bad anim LiftEffortRoll",
+            "skip bad anim soundTestAnim",
+            "skip bad anim testSound"]
+
+        for anim_name in all_anim_names:
+            if anim_name not in bad_anim_names:
+                self.anim_names.append(anim_name)
+
+        default_anims_for_keys = [  "ID_catCatch_happyB", # 0
+                                    "ID_head_test", #1
+                                    "Happy_turnInPlace_react", #2
+                                    "ID_pokedB",  # 3
+                                    "anim_bored_event_02",  # 4
+                                    "anim_bored_event_03",  # 5
+                                    "id_react2face_disgust",  # 6
+                                    "loco_dockadjust_01",  # 7
+                                    "practice",  # 8
+                                    "shocked"  # 9
+                                    ]
+
+        self.anim_index_for_key = [0] * 10
+        kI = 0
+        for default_key in default_anims_for_keys:
+            anim_idx = self.anim_names.index(default_key)
+            self.anim_index_for_key[kI] = anim_idx
+            kI += 1
+
 
         self.action_queue = []
         self.text_to_say = "Hi I'm Cozmo"
@@ -123,6 +165,15 @@ class RemoteControlCozmo:
            Holding a key down may result in repeated handle_key calls with is_key_down==True
         '''
 
+        # Update desired speed / fidelity of actions based on shift/alt being held
+        was_go_fast = self.go_fast
+        was_go_slow = self.go_slow
+
+        self.go_fast = is_shift_down
+        self.go_slow = is_alt_down
+
+        speed_changed = (was_go_fast != self.go_fast) or (was_go_slow != self.go_slow)
+
         # Update state of driving intent from keyboard, and if anything changed then call update_driving
         update_driving = True
         if key_code == ord('W'):
@@ -134,7 +185,8 @@ class RemoteControlCozmo:
         elif key_code == ord('D'):
             self.turn_right = is_key_down
         else:
-            update_driving = False
+            if not speed_changed:
+                update_driving = False
 
         # Update state of lift move intent from keyboard, and if anything changed then call update_lift
         update_lift = True
@@ -143,7 +195,8 @@ class RemoteControlCozmo:
         elif key_code == ord('F'):
             self.lift_down = is_key_down
         else:
-            update_lift = False
+            if not speed_changed:
+                update_lift = False
 
         # Update state of head move intent from keyboard, and if anything changed then call update_head
         update_head = True
@@ -152,11 +205,8 @@ class RemoteControlCozmo:
         elif key_code == ord('G'):
             self.head_down = is_key_down
         else:
-            update_head = False
-
-        # Update desired speed / fidelity of actions based on shift/alt being held
-        self.go_fast = is_shift_down
-        self.go_slow = is_alt_down
+            if not speed_changed:
+                update_head = False
 
         # Update driving, head and lift as appropriate
         if update_driving:
@@ -255,7 +305,7 @@ class RemoteControlCozmo:
 
 
     def update_lift(self):
-        lift_speed = self.pick_speed(2, 1, 0.5)
+        lift_speed = self.pick_speed(8, 4, 2)
         lift_vel = (self.lift_up - self.lift_down) * lift_speed
         self.cozmo.move_lift(lift_vel)
 
@@ -341,8 +391,8 @@ def handle_index_page():
                         <b>R</b> : Move Lift Up<br>
                         <b>F</b>: Move Lift Down<br>
                         <h3>General:</h3>
-                        <b>Shift</b> : Hold to Move Faster<br>
-                        <b>Alt</b> : Hold to Move Slower<br>
+                        <b>Shift</b> : Hold to Move Faster (Driving, Head and Lift)<br>
+                        <b>Alt</b> : Hold to Move Slower (Driving, Head and Lift)<br>
                         <h3>Play Animations</h3>
                         <b>0 .. 9</b> : Play Animation mapped to that key<br>
                         <h3>Talk</h3>

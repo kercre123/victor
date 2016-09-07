@@ -34,8 +34,6 @@ public:
   virtual void Update() override;
 
   virtual bool AreMessagesGrouped() const override { return true; }
-  virtual bool SendMessage(const Comms::MsgPacket& msgPacket) override;
-  virtual bool RecvMessage(std::vector<uint8_t>& outBuffer) override;
 
   virtual bool ConnectToDeviceByID(DeviceId deviceId) override;
   virtual bool DisconnectDeviceByID(DeviceId deviceId) override;
@@ -45,6 +43,10 @@ public:
   virtual uint32_t GetNumConnectedDevices() const override;
 
 private:
+  
+  virtual bool SendMessageInternal(const Comms::MsgPacket& msgPacket) override;
+  virtual bool RecvMessageInternal(std::vector<uint8_t>& outBuffer) override;
+
   // received messages = list of uint8_t buffers (vectors)
   std::list<std::vector<uint8_t>> _receivedMessages;
 

@@ -252,12 +252,17 @@ class Dispatcher(base.Base):
             raise ValueError("Loop was not supplied to "+self.__class__.__name__)
         self._loop = loop or asyncio.get_event_loop()
         self._active_dispatch = None
+        self._stop_dispatching = False
 
     def _set_parent_dispatcher(self, parent):
         self._dispatch_parent = parent
 
     def _add_child_dispatcher(self, child):
         self._dispatch_children.append(child)
+
+    def stop_dispatching(self):
+        """Stop dispatching events - call before closing the connection to prevent stray dispatched events"""
+        self._stop_dispatching = True
 
     def add_event_handler(self, event, f):
         """Register an event handler to be notified when this object receives a type of Event.
@@ -338,6 +343,10 @@ class Dispatcher(base.Base):
             A :class:`asyncio.Task` or :class:`asyncio.Future` that will
             complete once all event handlers have been called.
         '''
+
+        if self._stop_dispatching:
+            return
+
         event_cls = event
         if not isinstance(event, Event):
             if not isinstance(event, type) or not issubclass(event, Event):
