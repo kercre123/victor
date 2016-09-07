@@ -93,7 +93,7 @@ MonoBehaviour:
     m_BestFit: 0
     m_MinSize: 1
     m_MaxSize: 100
-    m_Alignment: 1
+    m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
@@ -139,7 +139,7 @@ MonoBehaviour:
   ModifiedValues:
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"#button.yes"'
+    JsonValue: '"#button.begin"'
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: Onboarding.ShowContinueStage:_ContinueButtonInstance
@@ -213,8 +213,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1800, y: 800}
+  m_AnchoredPosition: {x: 0, y: 145}
+  m_SizeDelta: {x: 1800, y: 612}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22445752
 RectTransform:
@@ -249,7 +249,7 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 32, y: -100}
+  m_AnchoredPosition: {x: 0, y: -85}
   m_SizeDelta: {x: 2064, y: 340}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!224 &22461814

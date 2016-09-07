@@ -162,14 +162,26 @@
   "title.soundCheck": {
     "translation": "Sound Check"
   },
+  "button.soundCheckPlay": {
+    "translation": "Play"
+  },
+  "button.soundCheckPlayAgain": {
+    "translation": "Play Again"
+  },
+  "button.soundCheckContinue": {
+    "translation": "Sounds Good"
+  },
   "button.GetACozmo": {
     "translation": "Get A Cozmo"
   },
   "button.start": {
     "translation": "Start"
   },
+  "button.begin": {
+    "translation": "Let's Begin"
+  },
   "soundcheck.description": {
-    "translation": "Please make sure your device's sound is turned on."
+    "translation": "Please make sure your device's sound is turned on"
   },
   "label.available": {
     "translation": "Available!"
@@ -196,13 +208,13 @@
     "translation": "Did you hear the sound?"
   },
   "error.badLight.Top": {
-    "translation": "Cozmo is having trouble seeing!"
+    "translation": "Cozmo is having trouble seeing"
   },
   "error.badLight.Bottom": {
     "translation": "Cozmo works best indoors in a well lit space"
   },
   "label.cozmo.serial": {
-    "translation": "Last Connected Cozmo: {0}"
+    "translation": "Cozmo ID: {0}"
   },
   "label.deviceid": {
     "translation": "Device ID: {0}"

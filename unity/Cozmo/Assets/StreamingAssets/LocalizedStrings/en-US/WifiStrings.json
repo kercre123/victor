@@ -19,13 +19,13 @@
     ]
   },
   "wifiStrings.Instructions.SlideA.titleCopy": {
-    "translation": "To connect to Cozmo you'll need to go to your device's WiFi settings"
+    "translation": "To connect to Cozmo's WiFi, you'll need to go to your device's Settings"
   },
   "wifiStrings.Instructions.SlideA.altCopy": {
     "translation": "READ ALL INSTRUCTIONS FIRST"
   },
   "wifiStrings.Instructions.Slide0": {
-    "translation": "Find and tap on your device's Settings icon"
+    "translation": "Find and tap your device's Settings icon"
   },
   "wifiStrings.Instructions.Slide1": {
     "translation": "Select the WiFi section from your Settings menu"
@@ -34,16 +34,16 @@
     "translation": "Choose Cozmo's network from the list"
   },
   "wifiStrings.Instructions.Slide3": {
-    "translation": "Enter the WiFi password shown on your Cozmo"
+    "translation": "Enter the password shown on your Cozmo"
   },
   "wifiStrings.Instructions.Slide3.altCopy": {
     "translation": "Don't see a password?  Tap Here:"
   },
   "wifiStrings.Instructions.Slide3altCopy2": {
-    "translation": "Use *ALL CAPS* with no spaces"
+    "translation": "Use ALL CAPS with no spaces"
   },
   "wifiStrings.Instructions.Slide4": {
-    "translation": "Exit Settings and tap on your Cozmo App"
+    "translation": "Exit Settings and return to the Cozmo App"
   },
     "wifiStrings.Instructions.Slide4altCopy": {
     "translation": "The App will know when Cozmo is connected"
@@ -61,13 +61,13 @@
     "translation": "Having trouble connecting to Cozmo's WiFi?"
   },
   "wifi.gethelp.description": {
-    "translation": "Try the following:\n\n1. Turn your device's WiFi OFF then back ON\n2. Remove then place Cozmo on his charger"
+    "translation": "Try the following:\n\n1. Turn your device's WiFi OFF then back ON\n2. Remove then replace Cozmo on his charger"
   },
   "wifi.gethelp.description2": {
-    "translation": "If you need to see Cozmo's Network Info Raise and Lower his lift"
+    "translation": "If you need to see Cozmo's network info, raise and lower his lift"
   },
   "wifi.gethelp.footer": {
-    "translation": "Still stuck? Disconnect from Cozmo and navigate to:\nsupport.anki.com"
+    "translation": "Still stuck? Visit  <b>support.anki.com</b>  on another device"
   },
   "wifi.getHelp.linkText": {
     "translation": "Get Help"

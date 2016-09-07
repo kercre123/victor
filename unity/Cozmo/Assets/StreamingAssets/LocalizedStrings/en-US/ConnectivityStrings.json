@@ -39,6 +39,9 @@
   "connectivity.updatingFirmware": {
     "translation": "Updating your Cozmo..."
   },
+  "connectivity.updatingFirmwareSubTitle": {
+    "translation": "Please keep Cozmo on his charger"
+  },
   "connectivity.pairingPinTitle": {
     "translation": "Enter the pin shown on your Cozmo"
   },
@@ -52,10 +55,10 @@
     "translation": "Pull the tabs on your Power Cubes"
   },
   "connectivity.enterDOB": {
-    "translation": "Enter your birthdate"
+    "translation": "Enter your birthday"
   },
   "connectivity.enterName": {
-    "translation": "Enter your name"
+    "translation": "Enter your first name"
   },
   "connectivity.pairingDesc": {
     "translation": "This step is required when connecting from a new device"
@@ -70,7 +73,7 @@
     "translation": "Low Battery"
   },
   "connectivity.cozmoLowBatteryDesc": {
-    "translation": "Please place Cozmo on the charger"
+    "translation": "Please place Cozmo on his charger"
   },
   "connectivity.keepCozmoOnCharger": {
     "translation": "Please keep Cozmo on his charger during Setup"
