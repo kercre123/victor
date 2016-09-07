@@ -364,7 +364,7 @@ public class ConnectionFlow : MonoBehaviour {
     RobotEngineManager.Instance.ConnectToRobot(kRobotID, _CurrentRobotIP);
     // Silent if you've never done it before...
     if (!OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Home)) {
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connecting);
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connectivity);
     }
     else {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
