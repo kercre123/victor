@@ -70,6 +70,9 @@ public class CoreUpgradeDetailsDialog : BaseView {
   private GameObject _SparksInventoryContainer;
 
   [SerializeField]
+  private GameObject _SparkSpinner;
+
+  [SerializeField]
   private float _UpgradeTween_sec = 0.6f;
 
   [SerializeField]
@@ -375,6 +378,11 @@ public class CoreUpgradeDetailsDialog : BaseView {
       _AvailablePromptCost.gameObject.SetActive(false);
       _AvailablePromptLabel.gameObject.SetActive(false);
     }
+
+    if (robot != null) {
+      _SparkSpinner.gameObject.SetActive(robot.IsSparked);
+    }
+
   }
 
   private void UpdateInventoryLabel(string itemId, AnkiTextLabel label) {
