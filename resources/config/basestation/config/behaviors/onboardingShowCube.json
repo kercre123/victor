@@ -1,0 +1,10 @@
+{
+  "behaviorType": "OnboardingShowCube",
+  "name": "OnboardingShowCube",
+  "behaviorGroups": [
+  ],
+  "MaxErrorsTotal": 3,
+  "MaxErrorsPickup": 5,
+  
+  "flatScore": 5.0
+}

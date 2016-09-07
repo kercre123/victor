@@ -505,8 +505,20 @@
       "AnimName": "ag_launch_firsttimewakeup"
     },
     {
+      "CladEvent": "OnboardingDriveStart",
+      "AnimName": "ag_launch_startDriving"
+    },
+    {
+      "CladEvent": "OnboardingDriveLoop",
+      "AnimName": "ag_launch_drivingLoop"
+    },
+    {
+      "CladEvent": "OnboardingDriveEnd",
+      "AnimName": "ag_launch_endDriving"
+    },
+    {
       "CladEvent": "OnboardingIdle",
-      "AnimName": "ag_pause_idle"
+      "AnimName": "ag_launch_idle_01"
     },
     {
       "CladEvent": "OnboardingHelloPlayer",

@@ -31,6 +31,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFindFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorNone.h"
+#include "anki/cozmo/basestation/behaviors/behaviorOnboardingShowCube.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPlayAnimSequence.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPutDownBlock.h"
@@ -291,6 +292,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::ReactToFrustration:
     {
       newBehavior = new BehaviorReactToFrustration(robot, config);
+      break;
+    }
+    case BehaviorType::OnboardingShowCube:
+    {
+      newBehavior = new BehaviorOnboardingShowCube(robot, config);
       break;
     }
     case BehaviorType::Count:

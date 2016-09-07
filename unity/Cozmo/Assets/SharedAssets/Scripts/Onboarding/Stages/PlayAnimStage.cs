@@ -34,6 +34,7 @@ namespace Onboarding {
     }
 
     public override void SkipPressed() {
+      _CurrentRobot.CancelAction(RobotActionType.PLAY_ANIMATION);
       OnboardingManager.Instance.GoToNextStage();
     }
 

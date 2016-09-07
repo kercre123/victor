@@ -380,7 +380,7 @@ MonoBehaviour:
   _ActiveTopBar: 0
   _ActiveTabButtons: 0
   _ActiveMenuContent: 0
-  _ReactionsEnabled: 0
+  _ReactionsEnabled: 1
   _PlayIdle: 0
   _DASPhaseID: 3
   _ShowCozmoCubesLabel: {fileID: 0}
