@@ -48,6 +48,8 @@ class RobotDataLoader;
 class RobotManager;
 class VizManager;
   
+enum class SdkStatusType : uint8_t;
+  
 namespace RobotInterface {
   class MessageHandler;
 }
@@ -84,6 +86,9 @@ public:
   Audio::AudioServer*                   GetAudioServer() const { return _audioServer.get(); }
   VizManager*                           GetVizManager() const { return _vizManager.get(); }
   Util::TransferQueueMgr*               GetTransferQueue() const { return _transferQueueMgr.get(); }
+  
+  bool  IsInSdkMode() const;
+  void  SetSdkStatus(SdkStatusType statusType, std::string&& statusText) const;
   
 private:
   // This is passed in and held onto, but not owned by the context (yet.

@@ -1,4 +1,5 @@
-public static class LocalizationKeys {
+public static class LocalizationKeys
+{
 
   #region ChallengeTitleStrings
 
@@ -426,15 +427,23 @@ public static class LocalizationKeys {
   #region SettingsStrings
 
   public const string kSettingsSdkPanelActivateSDKalertText = "settings.sdkPanel.activateSDKalert.text";
+  public const string kSettingsSdkPanelConnectionCommandCount = "settings.sdkPanel.connectionCommandCount.text";
+  public const string kSettingsSdkPanelConnectionDuration = "settings.sdkPanel.connectionDuration.text";
   public const string kSettingsSdkPanelDisableButtonText = "settings.sdkPanel.disableButton.text";
   public const string kSettingsSdkPanelEnableButtonText = "settings.sdkPanel.enableButton.text";
   public const string kSettingsSdkPanelLabelTitle = "settings.sdkPanel.label.title";
+  public const string kSettingsSdkPanelLastCommandTimeIdleText = "settings.sdkPanel.lastCommandTimeIdle.text";
+  public const string kSettingsSdkPanelLastCommandTimePausedText = "settings.sdkPanel.lastCommandTimePaused.text";
+  public const string kSettingsSdkPanelLastCommandTimeText = "settings.sdkPanel.lastCommandTime.text";
   public const string kSettingsSdkPanelLastMessageTimeText = "settings.sdkPanel.lastMessageTime.text";
+  public const string kSettingsSdkPanelModeDuration = "settings.sdkPanel.modeDuration.text";
   public const string kSettingsSdkPanelNoMessagesText = "settings.sdkPanel.noMessages.text";
+  public const string kSettingsSdkPanelProgramsRun = "settings.sdkPanel.programsRun.text";
   public const string kSettingsSdkPanelSdkConnectedText = "settings.sdkPanel.sdkConnected.text";
   public const string kSettingsSdkPanelSdkUrlLabel = "settings.sdkPanel.sdkUrl.label";
   public const string kSettingsSdkPanelSdkNotConnectedText = "settings.sdkPanel.sdkNotConnected.text";
   public const string kSettingsSdkPanelShowSDKButtonText = "settings.sdkPanel.showSDKButton.text";
+  public const string kSettingsSdkPanelWrongVersion = "settings.sdkPanel.wrongVersion.text";
   public const string kSettingsSleepCozmoPanelButtonReturnToTitle = "settings.sleepCozmoPanel.button.returnToTitle";
   public const string kSettingsSleepCozmoPanelButtonSleepCozmo = "settings.sleepCozmoPanel.button.sleepCozmo";
   public const string kSettingsSleepCozmoPanelConfirmationModalTitle = "settings.sleepCozmoPanel.confirmationModal.title";

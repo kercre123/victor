@@ -42,6 +42,23 @@ namespace ExternalInterface {
 // Communication / Connectivity
 ///////////////////////////////////////////////////////////////////////////////
 
+
+// DO NOT CHANGE THIS MESSAGE - it must be compatible across all versions so we can reliably handshake with SDK
+//                            - (and by definition this message implies a version mismatch)
+message UiDeviceConnectionWrongVersion {
+  uint_8  reserved, // future-proofing (we can increase tag size to a uint_16 and still retain binary compatability)
+  UiConnectionType  connectionType,
+  uint_32 deviceID,
+  string  buildVersion,
+}
+
+// this (and all subsequent) messages can change post-ship - it's only sent if versions match
+message UiDeviceConnectionSuccess {
+  UiConnectionType  connectionType,
+  uint_32 deviceID,
+  string  buildVersion
+}
+
 message ConnectToRobot {
     uint_8 ipAddress[16],
     uint_8 robotID,
@@ -942,9 +959,15 @@ message NVStorageReadEntry {
   NVStorage::NVEntryTag tag
 }
 
-// an explicit auto-union that includes all messages in this file
+// explicit autounion - this will force the values given, and then add every other messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"
-autounion MessageGameToEngine { }
+// DO NOT CHANGE ANY EXPLICITELY DECLARED VALUES - they must be compatible across all versions so we can reliably
+// handshake between and App and SDK version combination
+autounion MessageGameToEngine
+{
+  UiDeviceConnectionWrongVersion          UiDeviceConnectionWrongVersion          = 0x00, // DO NOT CHANGE THIS VALUE
+}
+
 
 } // namespace U2G
 } // namespace Cozmo

@@ -46,7 +46,7 @@ public:
   using DeviceId = int;
   static constexpr DeviceId kDeviceIdInvalid = -1;
   
-  ISocketComms();
+  explicit ISocketComms(bool isEnabled=true);
   virtual ~ISocketComms();
   
   virtual bool Init(UiConnectionType connectionType, const Json::Value& config) = 0;
@@ -62,8 +62,8 @@ public:
   // (returning false = every buffer contains exactly one message)
   virtual bool AreMessagesGrouped() const = 0;
 
-  virtual bool SendMessage(const Comms::MsgPacket& msgPacket) = 0;
-  virtual bool RecvMessage(std::vector<uint8_t>& outBuffer) = 0;
+  bool SendMessage(const Comms::MsgPacket& msgPacket) { return SendMessageInternal(msgPacket); }
+  bool RecvMessage(std::vector<uint8_t>& outBuffer)   { return RecvMessageInternal(outBuffer); }
 
   virtual bool ConnectToDeviceByID(DeviceId deviceId) = 0;
   virtual bool DisconnectDeviceByID(DeviceId deviceId) = 0;
@@ -83,12 +83,30 @@ public:
   
   const Util::Stats::StatsAccumulator& GetLatencyStats() const { return _latencyStats.GetPrimaryAccumulator(); }
   
-private:
-  Util::Stats::RecentStatsAccumulator _latencyStats;
+  bool IsConnectionEnabled() const { return _isEnabled; }
+  void EnableConnection(bool newVal=true)
+  {
+    bool wasEnabled = _isEnabled;
+    _isEnabled = newVal;
+    OnEnableConnection(wasEnabled, _isEnabled);
+  }
   
 protected:
+  
+  virtual void OnEnableConnection(bool wasEnabled, bool isEnabled) { }
+  
+  uint32_t GetNumDesiredDevices() const { return _desiredNumDevices; }
+  void SetNumDesiredNumDevices(uint32_t newVal) { _desiredNumDevices = newVal; }
+  
+private:
+  
+  virtual bool SendMessageInternal(const Comms::MsgPacket& msgPacket) = 0;
+  virtual bool RecvMessageInternal(std::vector<uint8_t>& outBuffer) = 0;
+  
+  Util::Stats::RecentStatsAccumulator _latencyStats;
   uint32_t  _pingCounter;
   uint32_t  _desiredNumDevices = 0;
+  bool      _isEnabled;
 };
   
   

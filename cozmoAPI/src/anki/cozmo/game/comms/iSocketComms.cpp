@@ -25,11 +25,18 @@ CONSOLE_VAR(bool, kPrintUiMessageLatency, "UiComms", false);
 const uint32_t kMaxLatencySamples = 20;
 const uint32_t kReportFrequency = 10;
 
-ISocketComms::ISocketComms()
+ISocketComms::ISocketComms(bool isEnabled)
   : _latencyStats(kMaxLatencySamples)
   , _pingCounter(0)
+  , _isEnabled(isEnabled)
 {
 }
+
+  
+ISocketComms::~ISocketComms()
+{
+}
+
 
 void ISocketComms::HandlePingResponse(const ExternalInterface::Ping& pingMsg)
 {
@@ -50,11 +57,6 @@ void ISocketComms::HandlePingResponse(const ExternalInterface::Ping& pingMsg)
                            averageLatency, minLatency, maxLatency, stdDevLatency, numSamples);
     }
   }
-}
-
-
-ISocketComms::~ISocketComms()
-{
 }
 
   

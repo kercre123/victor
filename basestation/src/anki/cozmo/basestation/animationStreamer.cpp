@@ -1293,6 +1293,7 @@ namespace Cozmo {
     
     bool streamUpdated = false;
     
+    const CozmoContext* cozmoContext = robot.GetContext();
     VizManager* vizManager = robot.GetContext()->GetVizManager();
     ASSERT_NAMED(nullptr != vizManager, "Expecting a non-null VizManager");
 
@@ -1300,12 +1301,15 @@ namespace Cozmo {
     if(nullptr == _streamingAnimation && nullptr == _idleAnimation)
     {
       vizManager->SetText(VizManager::ANIMATION_NAME, NamedColors::WHITE, "Anim: <none>");
+      cozmoContext->SetSdkStatus(SdkStatusType::Anim, "None");
     } else if(nullptr != _streamingAnimation) {
       vizManager->SetText(VizManager::ANIMATION_NAME, NamedColors::WHITE, "Anim: %s",
                           _streamingAnimation->GetName().c_str());
+      cozmoContext->SetSdkStatus(SdkStatusType::Anim, std::string(_streamingAnimation->GetName()));
     } else if(nullptr != _idleAnimation) {
       vizManager->SetText(VizManager::ANIMATION_NAME, NamedColors::WHITE, "Anim[Idle]: %s",
                           _idleAnimation->GetName().c_str());
+      cozmoContext->SetSdkStatus(SdkStatusType::Anim, std::string("Idle:") + _idleAnimation->GetName());
     }
     
     // Always keep face alive, unless we have a streaming animation, since we rely on it

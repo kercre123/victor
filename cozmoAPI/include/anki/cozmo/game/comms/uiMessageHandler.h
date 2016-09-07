@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/events/ankiEventMgr.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/game/comms/iSocketComms.h"
+#include "anki/cozmo/game/comms/sdkStatus.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/uiConnectionTypes.h"
@@ -77,8 +78,17 @@ namespace Anki {
       const Util::Stats::StatsAccumulator& GetLatencyStats(UiConnectionType type) const;
       
       bool HasDesiredNumUiDevices() const;
+      
+      virtual bool IsInSdkMode() const override { return _sdkStatus.IsInSdkMode(); }
+      
+      virtual void SetSdkStatus(SdkStatusType statusType, std::string&& statusText) override
+      {
+        _sdkStatus.SetStatus(statusType, std::move(statusText));
+      }
 
     private:
+      
+      // ============================== Private Member Functions ==============================
       
       const ISocketComms* GetSocketComms(UiConnectionType type) const
       {
@@ -93,18 +103,28 @@ namespace Anki {
         return const_cast<ISocketComms*>( const_cast<const UiMessageHandler*>(this)->GetSocketComms(type) );
       }
       
+      const ISocketComms* GetSdkSocketComms() const
+      {
+        const ISocketComms* socketComms = GetSocketComms(UiConnectionType::SdkOverTcp);
+        return socketComms ? socketComms : GetSocketComms(UiConnectionType::SdkOverUdp);
+      }
+      
+      ISocketComms* GetSdkSocketComms()
+      {
+        return const_cast<ISocketComms*>( const_cast<const UiMessageHandler*>(this)->GetSdkSocketComms() );
+      }
+      
       uint32_t GetNumConnectedDevicesOnAnySocket() const;
       
       bool ShouldHandleMessagesFromConnection(UiConnectionType type) const;
       
-    protected:
+      bool IsSdkCommunicationEnabled() const;
       
-      ISocketComms* _socketComms[(size_t)UiConnectionType::Count];
-
-      bool                                          _isInitialized = false;
-      u32                                           _hostUiDeviceID = 0;
+      void OnEnterSdkMode(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+      void OnExitSdkMode(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
       
-      std::vector<Signal::SmartHandle>              _signalHandles;
+      void UpdateSdk();
+      void UpdateIsSdkCommunicationEnabled();
       
       // As long as there are messages available from the comms object,
       // process them and pass them along to robots.
@@ -113,7 +133,8 @@ namespace Anki {
       // Process a raw byte buffer as a GameToEngine CLAD message and broadcast it
       Result ProcessMessageBytes(const uint8_t* packetBytes, size_t packetSize,
                                  UiConnectionType connectionType, bool isSingleMessage, bool handleMessagesFromConnection);
-      void HandleProcessedMessage(const ExternalInterface::MessageGameToEngine& message, UiConnectionType connectionType, bool handleMessagesFromConnection);
+      void HandleProcessedMessage(const ExternalInterface::MessageGameToEngine& message, UiConnectionType connectionType,
+                                  size_t messageSize, bool handleMessagesFromConnection);
       
       // Send a message to a specified ID
       virtual void DeliverToGame(const ExternalInterface::MessageEngineToGame& message, DestinationId = kDestinationIdEveryone) override;
@@ -121,13 +142,30 @@ namespace Anki {
       bool ConnectToUiDevice(ISocketComms::DeviceId deviceId, UiConnectionType connectionType);
       void HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
       
-      AnkiEventMgr<ExternalInterface::MessageEngineToGame> _eventMgrToGame;
-      AnkiEventMgr<ExternalInterface::MessageGameToEngine> _eventMgrToEngine;
+      // ============================== Private Types ==============================
       
-      std::vector<ExternalInterface::MessageGameToEngine> _threadedMsgs;
-      std::mutex _mutex;
+      using MessageEngineToGame = ExternalInterface::MessageEngineToGame;
+      using MessageGameToEngine = ExternalInterface::MessageGameToEngine;
       
-      uint32_t   _updateCount = 0;
+      // ============================== Private Member Vars ==============================
+
+      ISocketComms* _socketComms[(size_t)UiConnectionType::Count];
+      
+      std::vector<Signal::SmartHandle>    _signalHandles;
+      
+      AnkiEventMgr<MessageEngineToGame>   _eventMgrToGame;
+      AnkiEventMgr<MessageGameToEngine>   _eventMgrToEngine;
+      
+      std::vector<MessageGameToEngine>    _threadedMsgs;
+      std::mutex                          _mutex;
+      
+      SdkStatus                           _sdkStatus;
+      
+      uint32_t                            _hostUiDeviceID = 0;
+      
+      uint32_t                            _updateCount = 0;
+      
+      bool                                _isInitialized = false;
       
     }; // class MessageHandler
     

@@ -30,23 +30,47 @@
   "settings.sdkPanel.label.title": {
     "translation": "Cozmo SDK"
   },
+  "settings.sdkPanel.connectionCommandCount.text": {
+    "translation": "Comands: {0}"
+  },
+  "settings.sdkPanel.connectionDuration.text": {
+    "translation": "Connected for: {0}"
+  },
+  "settings.sdkPanel.lastCommandTimeIdle.text": {
+    "translation": "Last Command: {0:n1} seconds ago (Idle?)"
+  },
+  "settings.sdkPanel.lastCommandTimePaused.text": {
+    "translation": "Last Command: {0:n1} seconds ago (Paused?)"
+  },
+  "settings.sdkPanel.lastCommandTime.text": {
+    "translation": "Last Command: {0:n1} seconds ago"
+  },
   "settings.sdkPanel.lastMessageTime.text": {
-    "translation": "Time Since Last Message : {0}"
+    "translation": "Time Since Last Message : {0:n1} seconds"
   },
   "settings.sdkPanel.noMessages.text": {
     "translation": "No Messages Received"
   },
+  "settings.sdkPanel.modeDuration.text": {
+    "translation": "In SDK mode for: {0}"
+  },
+  "settings.sdkPanel.programsRun.text": {
+    "translation": "Programs Run: {0}"
+  },
   "settings.sdkPanel.sdkConnected.text": {
-    "translation": "Robot Connected"
+    "translation": "SDK Connected"
   },
   "settings.sdkPanel.sdkUrl.label": {
-    "translation": "anki.com/sdk"
+    "translation": "developer.anki.com/cozmo"
   },
   "settings.sdkPanel.sdkNotConnected.text": {
-    "translation": "Robot Not Connected"
+    "translation": "SDK Not Connected"
   },
   "settings.sdkPanel.showSDKButton.text": {
     "translation": "Show SDK"
+  },
+  "settings.sdkPanel.wrongVersion.text": {
+    "translation": "Incompatible SDK Version"
   },
   "settings.sleepCozmoPanel.button.returnToTitle":{
     "translation": "(Return To Title)"

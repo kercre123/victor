@@ -29,6 +29,7 @@ enum class MessageEngineToGameTag : uint8_t;
 enum class MessageGameToEngineTag : uint8_t;
 } // end namespace ExternalInterface
 
+enum class SdkStatusType : uint8_t;
 
 class IExternalInterface {
 public:
@@ -57,6 +58,10 @@ public:
   virtual Signal::SmartHandle Subscribe(const ExternalInterface::MessageEngineToGameTag& tagType, std::function<void(const AnkiEvent<ExternalInterface::MessageEngineToGame>&)> messageHandler) = 0;
   
   virtual Signal::SmartHandle Subscribe(const ExternalInterface::MessageGameToEngineTag& tagType, std::function<void(const AnkiEvent<ExternalInterface::MessageGameToEngine>&)> messageHandler) = 0;
+  
+  virtual bool IsInSdkMode() const = 0;
+  
+  virtual void SetSdkStatus(SdkStatusType statusType, std::string&& statusText) = 0;
   
   using DestinationId = uint32_t;
   static constexpr DestinationId kDestinationIdEveryone = 0xffffffff;

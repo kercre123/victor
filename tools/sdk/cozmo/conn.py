@@ -14,6 +14,8 @@ from . import _clad
 from ._clad import _clad_to_engine_cozmo, _clad_to_engine_iface, _clad_to_game_cozmo, _clad_to_game_iface
 from ._internal.clad.externalInterface.messageEngineToGame_hash import messageEngineToGameHash as _messageEngineToGameHash
 from ._internal.clad.externalInterface.messageGameToEngine_hash import messageGameToEngineHash as _messageGameToEngineHash
+from ._internal.build_version import _build_version
+from ._internal.sdk_version import _sdk_version
 
 
 class EvtConnected(event.Event):
@@ -94,7 +96,8 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
 
     def eof_received(self):
         logger.error('Lost connection while talking to device; aborting message loop')
-        raise RuntimeError("Lost connection to Cozmo")
+        #Note: Raising an error here causes the error to spam for the rest of the program's execution
+        #raise RuntimeError("Lost connection to Cozmo")
 
     def _process_robot_msg(self, robot_id, evttype, msg):
         if robot_id > 1:
@@ -175,9 +178,40 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
 
     def _recv_msg_ui_device_connected(self, _, *, msg):
 
-        if not (self._compare_clad_hashes(msg.toGameCLADHash, _messageEngineToGameHash, "EngineToGame") and
-                self._compare_clad_hashes(msg.toGameCLADHash, _messageEngineToGameHash, "GameToEngine")):
+        if msg.connectionType != _clad_to_engine_cozmo.UiConnectionType.SdkOverTcp:
+            # This isn't for us
+            return
+
+        if msg.deviceID != 1:
+            logger.error('Unexpected Device Id %s' % msg.deviceID)
+            return
+
+        # Verify that engine and SDK are compatible
+
+        clad_hashes_match = self._compare_clad_hashes(msg.toGameCLADHash, _messageEngineToGameHash, "EngineToGame") and\
+                            self._compare_clad_hashes(msg.toEngineCLADHash, _messageGameToEngineHash, "GameToEngine")
+        build_versions_match = _build_version == msg.buildVersion
+
+        if clad_hashes_match:
+            if not build_versions_match:
+                logger.warning("Build versions don't match (%s != %s) but CLAD is still compatible" % (_build_version, msg.buildVersion))
+
+            connection_success_msg = _clad_to_engine_iface.UiDeviceConnectionSuccess(
+                connectionType=msg.connectionType,
+                deviceID=msg.deviceID,
+                buildVersion = _build_version + "_" + str(_sdk_version))
+            self.send_msg(connection_success_msg)
+        else:
             logger.error('Your Python and C++ CLAD versions do not match - connection refused')
+
+            wrong_version_msg = _clad_to_engine_iface.UiDeviceConnectionWrongVersion(
+                reserved=0,
+                connectionType=msg.connectionType,
+                deviceID = msg.deviceID,
+                buildVersion = _build_version + "_" + str(_sdk_version))
+
+            self.send_msg(wrong_version_msg)
+
             return
 
         self.dispatch_event(EvtConnected, conn=self)

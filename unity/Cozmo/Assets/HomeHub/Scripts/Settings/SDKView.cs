@@ -1,5 +1,6 @@
 ﻿using Cozmo.UI;
 using DataPersistence;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -32,7 +33,7 @@ namespace Cozmo.Settings {
       _DisableSDKButton.gameObject.SetActive(false);
 #endif
 
-      _SDKMessageOutput.text = "...";
+      _SDKMessageOutput.text = "";
       _TimeSinceLastMessageLabel.text = Localization.Get(LocalizationKeys.kSettingsSdkPanelNoMessagesText);
 
       _DisableSDKButton.Initialize(HandleDisableSDKButtonTapped, "disable_sdk_button", "sdk_view");
@@ -49,21 +50,78 @@ namespace Cozmo.Settings {
       CloseView();
     }
 
+    private string SecondsToDateTimeString(float inSeconds) {
+      TimeSpan timespan = TimeSpan.FromSeconds(inSeconds);
+
+      int tenthsOfASecond = timespan.Milliseconds / 100;
+      if (timespan.Days > 0) {
+        return string.Format("{0}d:{1:D2}h:{2:D2}m:{3:D2}.{4:D1}s", timespan.Days, timespan.Hours, timespan.Minutes,
+                                    timespan.Seconds, tenthsOfASecond);
+      }
+      else {
+        return string.Format("{0:D2}h:{1:D2}m:{2:D2}.{3:D1}s", timespan.Hours, timespan.Minutes,
+                                    timespan.Seconds, tenthsOfASecond);
+      }
+    }
+
     private void HandleSDKMessageReceived(Anki.Cozmo.ExternalInterface.SdkStatus message) {
+
+      _SDKMessageOutput.text = Localization.GetWithArgs(LocalizationKeys.kSettingsSdkPanelModeDuration,
+                                                           SecondsToDateTimeString(message.timeInSdkMode_s)) + "\n";
+      _SDKMessageOutput.text += Localization.GetWithArgs(LocalizationKeys.kSettingsSdkPanelProgramsRun,
+                                                           message.numTimesConnected) + "\n\n";
+
       if (message.timeSinceLastSdkMessage_s >= 0.0f) {
-        _SDKMessageOutput.text = message.sdkStatus;
         _TimeSinceLastMessageLabel.text = Localization.GetWithArgs(LocalizationKeys.kSettingsSdkPanelLastMessageTimeText, message.timeSinceLastSdkMessage_s);
       }
       else {
-        _SDKMessageOutput.text = "...";
         _TimeSinceLastMessageLabel.text = Localization.Get(LocalizationKeys.kSettingsSdkPanelNoMessagesText);
       }
-      if (message.isConnected) {
+
+      const float kConnectionTimeoutThreshold_s = 5.0f;
+
+      if (message.connectionStatus.isConnected) {
         _ConnectionStatusLabel.text = Localization.Get(LocalizationKeys.kSettingsSdkPanelSdkConnectedText);
+
+        _SDKMessageOutput.text += Localization.GetWithArgs(LocalizationKeys.kSettingsSdkPanelConnectionDuration,
+                                                           SecondsToDateTimeString(message.connectionStatus.timeInCurrentConnection_s)) + "\n";
+        _SDKMessageOutput.text += Localization.GetWithArgs(LocalizationKeys.kSettingsSdkPanelConnectionCommandCount,
+                                                           message.connectionStatus.numCommands) + "\n";
+
+        if (message.timeSinceLastSdkCommand_s >= 0.0f) {
+          if (message.timeSinceLastSdkCommand_s >= kConnectionTimeoutThreshold_s) {
+            if (message.timeSinceLastSdkMessage_s >= kConnectionTimeoutThreshold_s) {
+              // Connection may have timed out (we don't close it, just message this to user)
+              _SDKMessageOutput.text += Localization.GetWithArgs(LocalizationKeys.kSettingsSdkPanelLastCommandTimePausedText,
+                                                                       message.timeSinceLastSdkCommand_s) + "\n";
+            }
+            else {
+              // Connection is still active, just no commands - message as idle
+              _SDKMessageOutput.text += Localization.GetWithArgs(LocalizationKeys.kSettingsSdkPanelLastCommandTimeIdleText,
+                                                                       message.timeSinceLastSdkCommand_s) + "\n";
+            }
+          }
+          else {
+            _SDKMessageOutput.text += Localization.GetWithArgs(LocalizationKeys.kSettingsSdkPanelLastCommandTimeText,
+                                                                     message.timeSinceLastSdkCommand_s) + "\n";
+          }
+        }
       }
       else {
         _ConnectionStatusLabel.text = Localization.Get(LocalizationKeys.kSettingsSdkPanelSdkNotConnectedText);
+        if (message.connectionStatus.isWrongSdkVersion) {
+          _SDKMessageOutput.text += Localization.Get(LocalizationKeys.kSettingsSdkPanelWrongVersion) + "\n";
+        }
       }
+
+      _SDKMessageOutput.text += "\n";
+
+      for (int i = 0; i < message.sdkStatus.Length; ++i) {
+        var sdkStatus = message.sdkStatus[i];
+        Anki.Cozmo.SdkStatusType statusType = (Anki.Cozmo.SdkStatusType)i;
+        _SDKMessageOutput.text += statusType.ToString() + ": " + sdkStatus + "\n";
+      }
+
     }
 
     // If we background the app while in SDK View, immediately time out

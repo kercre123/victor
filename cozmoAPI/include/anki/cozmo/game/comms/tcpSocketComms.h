@@ -29,7 +29,7 @@ class TcpSocketComms : public ISocketComms
 {
 public:
   
-  TcpSocketComms();
+  explicit TcpSocketComms(bool isEnabled);
   virtual ~TcpSocketComms();
   
   virtual bool Init(UiConnectionType connectionType, const Json::Value& config) override;
@@ -37,8 +37,6 @@ public:
   virtual void Update() override;
 
   virtual bool AreMessagesGrouped() const override { return false; }
-  virtual bool SendMessage(const Comms::MsgPacket& msgPacket) override;
-  virtual bool RecvMessage(std::vector<uint8_t>& outBuffer) override;
   
   virtual bool ConnectToDeviceByID(DeviceId deviceId) override;
   virtual bool DisconnectDeviceByID(DeviceId deviceId) override;
@@ -50,6 +48,11 @@ public:
 private:
   
   // ============================== Private Member Functions ==============================
+
+  virtual bool SendMessageInternal(const Comms::MsgPacket& msgPacket) override;
+  virtual bool RecvMessageInternal(std::vector<uint8_t>& outBuffer) override;
+
+  virtual void OnEnableConnection(bool wasEnabled, bool isEnabled) override;
   
   void  HandleDisconnect();
   bool  IsConnected() const;
@@ -66,6 +69,7 @@ private:
   std::vector<uint8_t>  _receivedBuffer;
   
   DeviceId              _connectedId;
+  uint16_t              _port;
   bool                  _hasClient;
 };
 

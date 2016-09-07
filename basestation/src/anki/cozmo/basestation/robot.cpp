@@ -1156,8 +1156,10 @@ Result Robot::Update(bool ignoreVisionModes)
       
   GetContext()->GetVizManager()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
                                          "%s", behaviorDebugStr.c_str());
-
-      
+  
+  GetContext()->SetSdkStatus(SdkStatusType::Behavior,
+                                 std::string(behaviorChooserName) + std::string(":") + behaviorDebugStr);
+  
   //////// Update Robot's State Machine /////////////
   Result actionResult = _actionList->Update();
   if(actionResult != RESULT_OK) {

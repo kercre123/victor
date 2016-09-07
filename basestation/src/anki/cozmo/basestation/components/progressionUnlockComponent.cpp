@@ -159,6 +159,11 @@ bool ProgressionUnlockComponent::SetUnlock(UnlockId unlock, bool unlocked)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ProgressionUnlockComponent::IsUnlocked(UnlockId unlock) const
 {
+  if (_robot.GetContext()->IsInSdkMode())
+  {
+    // Progression is irrelevant in sdk mode - just force everything unlocked
+    return true;
+  }
   const auto matchIt = _currentUnlocks.find(unlock);
   const bool isUnlocked = (matchIt != _currentUnlocks.end());
   return isUnlocked;
