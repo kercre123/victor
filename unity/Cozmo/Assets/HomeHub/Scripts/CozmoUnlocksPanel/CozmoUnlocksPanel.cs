@@ -34,6 +34,10 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   private CoreUpgradeDetailsDialog _CoreUpgradeDetailsViewPrefab;
   private BaseView _CoreUpgradeDetailsViewInstance;
 
+  [SerializeField]
+  private UnlockAnimation _CoreUpgradeAnimatedIconPrefab;
+  private UnlockAnimation _CoreupgradeAnimatedIconInstance;
+
   void Start() {
     _UnlockedTiles = new List<CozmoUnlockableTile>();
     _UnlockableTiles = new List<CozmoUnlockableTile>();
@@ -67,7 +71,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleRequestSetUnlockResult);
   }
 
-  public void LoadTiles() {
+  private void LoadTiles() {
 
     ClearTiles();
 
@@ -167,7 +171,6 @@ public class CozmoUnlocksPanel : MonoBehaviour {
       CoreUpgradeDetailsDialog detailView = UIManager.OpenView<CoreUpgradeDetailsDialog>(_CoreUpgradeDetailsViewPrefab);
       detailView.Initialize(unlockInfo, CozmoUnlockState.Unlockable, HandleUnlockableUpgradeUnlocked);
       _CoreUpgradeDetailsViewInstance = detailView;
-      detailView.ViewClosed += LoadTiles;
     }
   }
 
@@ -211,8 +214,26 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     UnlockablesManager.Instance.TrySetUnlocked(unlockInfo.Id.Value, true);
   }
 
-  private void HandleRequestSetUnlockResult(object message) {
+  private void HandleRequestSetUnlockResult(Anki.Cozmo.ExternalInterface.RequestSetUnlockResult message) {
     LoadTiles();
+    AnimateNewlyUnlocked(message.unlockID);
+  }
+
+  private void AnimateNewlyUnlocked(Anki.Cozmo.UnlockId newlyUnlockedId) {
+    // look for the newly unlocked in the unlocks panel list
+    CozmoUnlockableTile unlockableTile = null;
+    for (int i = 0; i < _UnlockedTiles.Count; ++i) {
+      if (_UnlockedTiles[i].GetUnlockData().Id.Value == newlyUnlockedId) {
+        unlockableTile = _UnlockedTiles[i];
+      }
+    }
+
+    if (unlockableTile != null) {
+      _CoreupgradeAnimatedIconInstance = GameObject.Instantiate(_CoreUpgradeAnimatedIconPrefab.gameObject).GetComponent<UnlockAnimation>();
+      _CoreupgradeAnimatedIconInstance.Initialize(unlockableTile._UnlockedIconSprite.sprite, unlockableTile.transform);
+      // making this a child of CozmoUnlocksPanel so it gets cleaned up if CozmoUnlocksPanel is destroyed
+      _CoreupgradeAnimatedIconInstance.transform.SetParent(transform, false);
+    }
   }
 
 }

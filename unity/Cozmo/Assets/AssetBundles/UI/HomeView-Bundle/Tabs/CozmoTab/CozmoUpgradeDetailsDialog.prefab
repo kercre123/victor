@@ -975,6 +975,7 @@ MonoBehaviour:
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 0
+  DimBackgroundPrefabOverride: {fileID: 0}
   _AlphaController: {fileID: 22516724}
   _ContentContainer: {fileID: 166184}
   _UnlockableNameLabel: {fileID: 0}
@@ -1594,8 +1595,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1136, y: 475}
+  m_AnchoredPosition: {x: 0, y: 86}
+  m_SizeDelta: {x: 1136, y: 275}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22401344
 RectTransform:
@@ -1612,7 +1613,7 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 400, y: 62}
+  m_AnchoredPosition: {x: 400, y: 0}
   m_SizeDelta: {x: 246, y: 212}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22403378
@@ -1650,8 +1651,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1136, y: 475}
+  m_AnchoredPosition: {x: 0, y: 86}
+  m_SizeDelta: {x: 1136, y: 275}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22412412
 RectTransform:
@@ -1935,7 +1936,7 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 400, y: 81}
+  m_AnchoredPosition: {x: 400, y: 0}
   m_SizeDelta: {x: 180, y: 180}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22454500
@@ -2011,7 +2012,7 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -0.0000019073486, y: 76}
+  m_AnchoredPosition: {x: -0.0000019073486, y: 0}
   m_SizeDelta: {x: 1136, y: 275}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22465916
@@ -2214,7 +2215,7 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -0.0000019073486, y: 76}
+  m_AnchoredPosition: {x: -0.0000019073486, y: 0}
   m_SizeDelta: {x: 1136, y: 275}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22495898
@@ -2232,8 +2233,8 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 278, y: 0}
-  m_SizeDelta: {x: 160, y: 150}
+  m_AnchoredPosition: {x: 278, y: -51.50001}
+  m_SizeDelta: {x: 160, y: 275}
   m_Pivot: {x: 1, y: 0}
 --- !u!224 &22499570
 RectTransform:
