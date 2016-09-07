@@ -363,6 +363,7 @@ MonoBehaviour:
   _CloseDialogOnTapOutside: 1
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 1
+  DimBackgroundPrefabOverride: {fileID: 0}
   _AvailableColor: {r: 0.627451, g: 0.9372549, b: 0.23529412, a: 1}
   _UnavailableColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
   _UnlockButton: {fileID: 11464456}
@@ -452,7 +453,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
+  m_Color: {r: 0.48235297, g: 0.6862745, b: 0.050980397, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -460,7 +461,7 @@ MonoBehaviour:
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
-    m_Font: {fileID: 12800000, guid: 6ef5f80c68ce34039a34f24769e5dc26, type: 3}
+    m_Font: {fileID: 12800000, guid: 01314919a94634a228a0ccc4039bcf62, type: 3}
     m_FontSize: 80
     m_FontStyle: 0
     m_BestFit: 0
