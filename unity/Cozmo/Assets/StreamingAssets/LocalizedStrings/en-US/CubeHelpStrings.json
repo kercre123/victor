@@ -25,7 +25,7 @@
     "translation": "Tap Next if you're still having trouble"
   },
   "cubeHelpStrings.Instructions.Slide1": {
-    "translation": "Let's try changing your Power Cube's battery"
+    "translation": "Let's try changing your Cube's battery"
   },
   "cubeHelpStrings.Instructions.Slide1altCopy": {
     "translation": "Place it upside down and unscrew the cover"
@@ -40,6 +40,6 @@
     "translation": "Replace the cover and fasten it gently"
   },
   "cubeHelpStrings.Instructions.Slide3altCopy": {
-    "translation": "The Power Cube should now light up"
+    "translation": "The Cube should now light up"
   }
 }
