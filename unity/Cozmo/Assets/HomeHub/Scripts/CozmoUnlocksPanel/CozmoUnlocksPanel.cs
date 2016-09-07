@@ -34,6 +34,10 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   private CoreUpgradeDetailsDialog _CoreUpgradeDetailsViewPrefab;
   private BaseView _CoreUpgradeDetailsViewInstance;
 
+  [SerializeField]
+  private UnityEngine.UI.Image _CoreUpgradeAnimatedIconPrefab;
+  private UnityEngine.UI.Image _CoreupgradeAnimatedIconInstance;
+
   void Start() {
     _UnlockedTiles = new List<CozmoUnlockableTile>();
     _UnlockableTiles = new List<CozmoUnlockableTile>();
