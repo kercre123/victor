@@ -133,9 +133,6 @@ MonoBehaviour:
   Prefab: {fileID: 176534, guid: 499f749270bfb4a5a8665a125ff61430, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
-    JsonValue: 1
-  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#error.badLight.Bottom"'
   ModifiedLocalReferences:
@@ -156,9 +153,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 176534, guid: 499f749270bfb4a5a8665a125ff61430, type: 2}
   ModifiedValues:
-  - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
-    JsonValue: 7
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#error.badLight.Top"'
@@ -362,8 +356,8 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1890, y: 250}
+  m_AnchoredPosition: {x: 0, y: 94}
+  m_SizeDelta: {x: 1890, y: 156}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!224 &22457750
 RectTransform:
@@ -398,8 +392,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1956, y: 717}
+  m_AnchoredPosition: {x: 1.5, y: 0}
+  m_SizeDelta: {x: 1953, y: 717}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22461660
 RectTransform:
