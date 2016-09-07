@@ -129,7 +129,7 @@ void main()
 
   // Sleep until robot is ready
   EA = 0;   // XXX: Can clean this up in production cubes
-  WUF = 0;
+  RFF = WUF = 0;
   PWRDWN = STANDBY;
   WUF = 0;
   RTC2CON = 0;

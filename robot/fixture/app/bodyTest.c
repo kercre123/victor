@@ -149,20 +149,23 @@ void BodyMotor(void)
     throw ERROR_MOTOR_RIGHT;    
 }
 
+// Console test
 void DropSensor(void)
 {
   int onoff[2];
   SendCommand(TEST_DROP, 0, sizeof(onoff), (u8*)onoff);
   ConsolePrintf("drop,%d,%d\r\n", onoff[0], onoff[1]);
-  //if (onoff[0] < 
 }
 
+// Check for drop leakage
+// Most are under 50, but allow a little margin for operator slop
+const int DROP_LIMIT = 99;  
 void DropLeakage(void)
 {
   int onoff[2];
   SendCommand(TEST_DROP, 0, sizeof(onoff), (u8*)onoff);
   ConsolePrintf("drop,%d,%d\r\n", onoff[0], onoff[1]);
-  if (onoff[0] > 200 || onoff[1] > 200)
+  if (onoff[0] > DROP_LIMIT || onoff[1] > DROP_LIMIT)
     throw ERROR_DROP_LEAKAGE;
 }
 
@@ -194,8 +197,8 @@ TestFunction* GetBody1TestFunctions(void)
   static TestFunction functions[] =
   {
     BodyNRF51,
-//    HeadlessBoot,
-//    SleepCurrent,
+    HeadlessBoot,
+    SleepCurrent,
     NULL
   };
   
@@ -221,7 +224,7 @@ TestFunction* GetBody3TestFunctions(void)
     BodyNRF51,
     HeadlessBoot,
     BodyMotor,
-    DropSensor,
+    DropLeakage,
     NULL
   };
 

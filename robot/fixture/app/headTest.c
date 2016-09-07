@@ -73,8 +73,8 @@ void HeadK02(void)
     SWDSend(0x20001000, 0x800, 0x1000, g_K02,     g_K02End,       0,            0);
 }
 
-// Connect to and flash the Espressif
-void HeadESP(void)
+// Boot K02 in test mode
+void BootK02Test(void)
 {
   // Turn off and let power drain out
   DeinitEspressif();  // XXX - would be better to ensure it was like this up-front
@@ -90,7 +90,11 @@ void HeadESP(void)
   */
   InitEspressif();
   EnableBAT();
+}
 
+// Connect to and flash the Espressif
+void HeadESP(void)
+{
   // Program espressif, which will start up, following the program
   ProgramEspressif(serial_);
 }
@@ -107,13 +111,6 @@ const int SAFE_THRESHOLD = 599;
 // Put head in test mode
 void HeadQ1Test(void)
 {
-  // Turn off and let power drain out
-  DeinitEspressif();  // XXX - would be better to ensure it was like this up-front
-  SWDDeinit();
-  DisableBAT();     // This has a built-in delay while battery power leaches out
-  InitEspressif();
-  EnableBAT();
-  
   // About half a second is long enough to get booted and into test mode
   MicroWait(500000);
   
@@ -140,7 +137,9 @@ TestFunction* GetHeadTestFunctions(void)
   static TestFunction functions[] =
   {
     HeadK02,
+    BootK02Test,
     HeadESP,
+    HeadQ1Test,
     HeadTest,
     NULL
   };
@@ -153,6 +152,7 @@ TestFunction* GetHead2TestFunctions(void)
   static TestFunction functions[] =
   {
     HeadK02,
+    BootK02Test,
     HeadQ1Test,
     NULL
   };

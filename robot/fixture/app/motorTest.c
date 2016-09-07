@@ -123,7 +123,7 @@ void TestEncoders(void)
 // Count encoder ticks, check direction, and collect min/max a/b values
 const int OVERSAMPLE = 18;    // 2^N samples
 const int ENC_LOW = 1000, ENC_HIGH = 2300;   // Low/high threshold
-int MeasureMotor(int speed)
+int MeasureMotor(int speed, bool fast)
 {
   int mina = 2800, minb = 2800, maxa = 0, maxb = 0;
   bool ahi = 0, bhi = 0;
@@ -169,11 +169,12 @@ int MeasureMotor(int speed)
   ConsolePrintf("motortest,%d,%d,%d,%d,%d,%d,%d,%d,%d\r\n", speed, normalized, hz, aticks, mina, maxa, bticks, minb, maxb);
   MotorMV(0);
   
+  // Throw some errors - note that 'fast' tests are really checking the encoder (not wiring)
   int diff = aticks-bticks;
   if (diff > 2 || diff < -2)
-    throw ERROR_ENCODER_FAULT;
+    throw fast ? ERROR_ENCODER_SPEED_FAULT : ERROR_ENCODER_FAULT;
   if (aticks < 0)
-    throw ERROR_MOTOR_BACKWARD;
+    throw fast ? ERROR_ENCODER_RISE_TIME : ERROR_MOTOR_BACKWARD;
   
   return normalized;
 }
@@ -184,9 +185,9 @@ void TestMotorA(void)
 {
   const int TICKS_SLOW = 10;
   const int TICKS_FAST = 80;
-  if (MeasureMotor(MOTOR_LOW_MV) < TICKS_SLOW)
+  if (MeasureMotor(MOTOR_LOW_MV, false) < TICKS_SLOW)
     throw ERROR_MOTOR_SLOW;
-  if (MeasureMotor(MOTOR_FULL_MV) < TICKS_FAST)
+  if (MeasureMotor(MOTOR_FULL_MV, true) < TICKS_FAST)
     throw ERROR_MOTOR_FAST;    
 }
 
@@ -195,9 +196,9 @@ void TestMotorB(void)
 {
   const int TICKS_SLOW = 10;
   const int TICKS_FAST = 80;
-  if (MeasureMotor(MOTOR_LOW_MV) < TICKS_SLOW)
+  if (MeasureMotor(MOTOR_LOW_MV, false) < TICKS_SLOW)
     throw ERROR_MOTOR_SLOW;
-  if (MeasureMotor(MOTOR_FULL_MV) < TICKS_FAST)
+  if (MeasureMotor(MOTOR_FULL_MV, true) < TICKS_FAST)
     throw ERROR_MOTOR_FAST;    
 }
 

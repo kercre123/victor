@@ -160,12 +160,15 @@ u32 GetSerial();
 #define ERROR_BAT_CHARGER           622   // Battery charger not working
 
 // Motor harness errors
-#define ERROR_BACKPACK_LED          650   // Backpack LED miswired
-#define ERROR_ENCODER_FAULT         651   // Encoder broken
-#define ERROR_MOTOR_BACKWARD        652   // Motor harness or encoder is miswired
-#define ERROR_MOTOR_SLOW            653   // Motor (or encoder) problems at low speed
-#define ERROR_MOTOR_FAST            654   // Encoder problem at high speed
-#define ERROR_ENCODER_UNDERVOLT     655   // Encoder can't meet minimum voltage
+#define ERROR_BACKPACK_LED          650   // Backpack LED miswired or bad LED
+#define ERROR_ENCODER_FAULT         651   // Encoder wire/solder broken
+#define ERROR_MOTOR_BACKWARD        652   // Motor or encoder is wired backward
+#define ERROR_MOTOR_SLOW            653   // Motor cannot turn easily (too tight or debris inside)
+
+#define ERROR_MOTOR_FAST            664   // Encoder does not meet Anki spec (can't count every tick at speed)
+#define ERROR_ENCODER_UNDERVOLT     665   // Encoder does not meet Anki spec (can't meet minimum voltage)
+#define ERROR_ENCODER_SPEED_FAULT   666   // Encoder does not meet Anki spec (rise/fall threshold)
+#define ERROR_ENCODER_RISE_TIME     667   // Encoder does not meet Anki spec (A vs B rise time)
 
 // Cube/charger errors
 #define ERROR_CUBE_CANNOT_WRITE     700   // MCU is locked

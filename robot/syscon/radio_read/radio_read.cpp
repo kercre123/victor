@@ -38,7 +38,7 @@ static const int PIN_TX = 17;
 static const int PIN_RX = 18;
 // Test thresholds
 static const int ONEG = 64;                 // Cube default settings define ONE G as "64"
-static const int ACCEL_THRESH = ONEG*0.18;  // Rejected if beyond 0.18G
+static const int ACCEL_THRESH = ONEG*0.22;  // Rejected if at or above 0.22G
 
 // This value is set based on a fixture the factory built that averages around RSSI=59
 static const int MAX_RSSI = 59+3;           // Smaller is closer, higher is further - add 3dB margin
