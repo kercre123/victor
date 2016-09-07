@@ -171,6 +171,7 @@ public abstract class GameBase : MonoBehaviour {
         CurrentRobot.PlaceObjectOnGroundHere();
       }
       CurrentRobot.SetEnableFreeplayLightStates(false);
+      CurrentRobot.SendAnimationTrigger(_ChallengeData.GetInAnimTrigger.Value);
     }
   }
 

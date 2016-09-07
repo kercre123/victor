@@ -76,6 +76,7 @@ static const FTMenuItem rootMenuItems[] = {
   {"Robot info",      RobotInterface::FTM_WiFiInfo,          30000000 },
   {"Sensor info",     RobotInterface::FTM_StateMenu,     MENU_TIMEOUT },
   {"Connections",     RobotInterface::FTM_ConnectionInfo,    30000000 },
+  {"Factory Reset",   RobotInterface::FTM_FactoryReset,    0xFFFFffff },
 };
 #define NUM_ROOT_MENU_ITEMS (sizeof(rootMenuItems)/sizeof(FTMenuItem))
 
@@ -251,6 +252,12 @@ void Update()
           menuBuf[bufIndex] = 0;
           Face::FacePrintf(menuBuf);
         }
+        break;
+      }
+      case RobotInterface::FTM_FactoryReset:
+      {
+        // This message will most likely never be seen but it's nice to have in case it takes a minute to reset
+        Face::FacePrintf("\n   RESETTING TO FACTORY\n        FIRMWARE\n");
         break;
       }
       default:
@@ -493,6 +500,12 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
       RTIP::SendMessage(msg);
       break;
     }
+    case RobotInterface::FTM_FactoryReset:
+    {
+      msg.tag = RobotInterface::EngineToRobot::Tag_killBodyCode;
+      RTIP::SendMessage(msg);
+      break;
+    }
     default:
     {
       // Nothing to do
@@ -513,4 +526,3 @@ void Process_EnterFactoryTestMode(const RobotInterface::EnterFactoryTestMode& ms
 } // Factory
 } // Cozmo
 } // Anki
-

@@ -53,7 +53,7 @@ namespace Util {
 
     void DoCallback(Util::Dispatch::Queue* queue,
                     HttpRequestCallback callback,
-                    const HttpRequest& request,
+                    HttpRequest request,
                     NSData* data,
                     NSURLResponse* response,
                     NSError* error);

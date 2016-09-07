@@ -124,7 +124,6 @@ protected:
   
   void SetEngineState(EngineState newState);
   
-  void ReadCameraCalibration(Robot* robot);
   Result AddRobot(RobotID_t robotID);
   
   void UpdateLatencyInfo();

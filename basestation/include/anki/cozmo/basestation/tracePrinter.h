@@ -7,33 +7,39 @@
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "util/signals/signalHolder.h"
 #include <map>
 #include <string>
 #include <utility>
 
 namespace Anki {
   namespace Cozmo {  
+    
+    class Robot;
   
     typedef std::map<const int, const std::string> IntStringMap;
     typedef std::pair<const std::string, const int> FormatInfo;
     typedef std::map<const int, const FormatInfo> IntFormatMap;
     
   
-    class TracePrinter {
+    class TracePrinter : private Util::SignalHolder {
     public:
       /// Default constructor, loads the string tables from the default location
       // @param dp A data platform instance to use to load the tables
-      TracePrinter(Util::Data::DataPlatform* dp);
+      TracePrinter(Robot* robot);
       
       /// Sets the log level which will result in printing
       void SetPrintThreshold(const RobotInterface::LogLevel level);
       
       /// Handler for incoming trace messages
-      void HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message) const;
+      void HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message);
       
       /// Handler for robot firmware crash dumps
       // @TODO this should be moved to a different module
-      void HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message) const;
+      void HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+      
+      template<typename T>
+      void HandleMessage(const T& msg);
       
       /// Retrieve the name string from a name ID
       const std::string& GetName(const int nameId) const;
@@ -48,6 +54,7 @@ namespace Anki {
       static const std::string UnknownTraceFormat;
       static const std::string RobotNamePrefix;
       RobotInterface::LogLevel printThreshold;
+      Robot* _robot;
     };
     
   }

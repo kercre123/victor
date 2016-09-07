@@ -77,3 +77,9 @@ MonoBehaviour:
         _EnumValueAsString: minigame_data_prefabs
         _EnumValue: 1
       _AssetDataName: SpeedTapHowToPlayExpertAnimation
+  GetInAnimTrigger:
+    _EnumValueAsString: Count
+    _EnumValue: 249
+  GetOutAnimTrigger:
+    _EnumValueAsString: OnSpeedtapGetOut
+    _EnumValue: 114

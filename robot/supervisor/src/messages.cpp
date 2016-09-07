@@ -1036,6 +1036,9 @@ namespace Anki {
       void Process_appConGetRobotIP(const Anki::Cozmo::RobotInterface::AppConnectGetRobotIP& msg) {}
       void Process_wifiOff(const Anki::Cozmo::RobotInterface::WiFiOff& msg) {}
 #endif
+      
+      // Stubbed for both simulator and K02
+      void Process_requestCrashReports(const Anki::Cozmo::RobotInterface::RequestCrashReports& msg) {}
 
 // ----------- Send messages -----------------
 

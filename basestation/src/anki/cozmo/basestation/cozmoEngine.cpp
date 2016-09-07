@@ -515,50 +515,6 @@ Result CozmoEngine::InitInternal()
   return RESULT_OK;
 }
   
-  
-void CozmoEngine::ReadCameraCalibration(Robot* robot)
-{
-  NVStorageComponent::NVStorageReadCallback readCamCalibCallback = [this,robot](u8* data, size_t size, NVStorage::NVResult res) {
-    
-    if (res == NVStorage::NVResult::NV_OKAY) {
-      CameraCalibration payload;
-      
-      if (size != NVStorageComponent::MakeWordAligned(payload.Size())) {
-        PRINT_NAMED_WARNING("CozmoEngine.ReadCameraCalibration.SizeMismatch",
-                            "Expected %zu, got %zu",
-                            NVStorageComponent::MakeWordAligned(payload.Size()), size);
-      } else {
-        
-        payload.Unpack(data, size);
-        PRINT_NAMED_INFO("CozmoEngine.ReadCameraCalibration.Recvd",
-                         "Received new %dx%d camera calibration from robot. (fx: %f, fy: %f, cx: %f cy: %f)",
-                         payload.ncols, payload.nrows,
-                         payload.focalLength_x, payload.focalLength_y,
-                         payload.center_x, payload.center_y);
-        
-        // Convert calibration message into a calibration object to pass to the robot
-        Vision::CameraCalibration calib(payload.nrows,
-                                        payload.ncols,
-                                        payload.focalLength_x,
-                                        payload.focalLength_y,
-                                        payload.center_x,
-                                        payload.center_y,
-                                        payload.skew,
-                                        payload.distCoeffs);
-        
-        robot->GetVisionComponent().SetCameraCalibration(calib);
-      }
-    } else {
-      PRINT_NAMED_WARNING("CozmoEngine.ReadCameraCalibration.Failed", "");
-    }
-    
-    robot->GetVisionComponent().Enable(true);
-  };
-  
-  robot->GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_CameraCalib, readCamCalibCallback);
-  
-}
-  
 Result CozmoEngine::AddRobot(RobotID_t robotID)
 {
   Result lastResult = RESULT_OK;
@@ -570,9 +526,6 @@ Result CozmoEngine::AddRobot(RobotID_t robotID)
     lastResult = RESULT_FAIL;
   } else {
     PRINT_NAMED_INFO("CozmoEngine.AddRobot", "Sending init to the robot %d.", robotID);
-    
-    // Requesting camera calibration
-    ReadCameraCalibration(robot);
     
     // Setup Audio Server with Robot Audio Connection & Client
     using namespace Audio;

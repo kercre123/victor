@@ -119,6 +119,8 @@ namespace Cozmo {
       helper.SubscribeGameToEngine<MessageGameToEngineTag::VisionRunMode>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::VisionWhileMoving>();
 
+      // Separate list for engine messages to listen to:
+      helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotConnectionResponse>();
     }
     
   } // VisionSystem()
@@ -2184,6 +2186,52 @@ namespace Cozmo {
   void VisionComponent::HandleMessage(const ExternalInterface::UpdateEnrolledFaceByID& msg)
   {
     RenameFace(msg.faceID, msg.oldName, msg.newName);
+  }
+  
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::RobotConnectionResponse& msg)
+  {
+    if (msg.result == RobotConnectionResult::Success)
+    {
+      NVStorageComponent::NVStorageReadCallback readCamCalibCallback = [this](u8* data, size_t size, NVStorage::NVResult res)
+      {
+        if (res == NVStorage::NVResult::NV_OKAY) {
+          CameraCalibration payload;
+          
+          if (size != NVStorageComponent::MakeWordAligned(payload.Size())) {
+            PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.SizeMismatch",
+                                "Expected %zu, got %zu",
+                                NVStorageComponent::MakeWordAligned(payload.Size()), size);
+          } else {
+            
+            payload.Unpack(data, size);
+            PRINT_NAMED_INFO("VisionComponent.ReadCameraCalibration.Recvd",
+                             "Received new %dx%d camera calibration from robot. (fx: %f, fy: %f, cx: %f cy: %f)",
+                             payload.ncols, payload.nrows,
+                             payload.focalLength_x, payload.focalLength_y,
+                             payload.center_x, payload.center_y);
+            
+            // Convert calibration message into a calibration object to pass to the robot
+            Vision::CameraCalibration calib(payload.nrows,
+                                            payload.ncols,
+                                            payload.focalLength_x,
+                                            payload.focalLength_y,
+                                            payload.center_x,
+                                            payload.center_y,
+                                            payload.skew,
+                                            payload.distCoeffs);
+            
+            SetCameraCalibration(calib);
+          }
+        } else {
+          PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.Failed", "");
+        }
+        
+        Enable(true);
+      };
+      
+      _robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_CameraCalib, readCamCalibCallback);
+    }
   }
   
 } // namespace Cozmo

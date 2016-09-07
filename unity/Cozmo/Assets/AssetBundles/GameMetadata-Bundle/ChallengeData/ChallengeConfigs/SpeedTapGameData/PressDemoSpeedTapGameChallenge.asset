@@ -53,3 +53,9 @@ MonoBehaviour:
         _EnumValueAsString: minigame_data_prefabs
         _EnumValue: 1
       _AssetDataName: SpeedTapHowToPlayHardAnimation
+  GetInAnimTrigger:
+    _EnumValueAsString: Count
+    _EnumValue: 249
+  GetOutAnimTrigger:
+    _EnumValueAsString: Count
+    _EnumValue: 249

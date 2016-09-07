@@ -11,14 +11,15 @@
  **/
 #include "behaviorExploreBringCubeToBeacon.h"
 
-//#include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
+#include "anki/common/basestation/utils/timer.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
@@ -30,22 +31,45 @@
 namespace Anki {
 namespace Cozmo {
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// internal constants and helpers
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+namespace {
+
 // padding between cubes when calculating destination positions inside a beacon
 CONSOLE_VAR(float, kBebctb_PaddingBetweenCubes_mm, "BehaviorExploreBringCubeToBeacon", 10.0f);
 // debug render for the behavior
 CONSOLE_VAR(float, kBebctb_DebugRenderAll, "BehaviorExploreBringCubeToBeacon", true);
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// internal helpers
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-namespace {
+// number of attempts to do an action before flagging as failure
+const int kMaxAttempts = 2; // 1 + retries
+// how long we care about recent failures. Cozmo normally shouldn't forget when things happen, but since
+// we don't have ways to reliable detect when conditions change, this has to be a sweet tweak between "not too often"
+// and "not forever"
+const float kRecentFailure_sec = 45.0f;
+// if a cube fails, how far does it have to move so that we ignore that previous failure
+const float kCubeFailureDist_mm = 20.0f;
+// if a cube fails, how far does it have to turn so that we ignore that previous failure
+const float kCubeFailureRot_rad = DEG_TO_RAD_F32(22.5f);
+
+// if a location fails, how far does it invalidate other poses
+// if a location failed, chances are nearby locations will fail too. Now, the whiteboard doesn't store all failures, so
+// if we find one, and we fail, it has to invalidate a bunch of locations, otherwise we may find a valid one, fail, and
+// add it to the whiteboard, which can cause the first location we tried to be removed as failure (due to limited
+// storage) and we will try again on that location despite we should have known it can fail. The distance here should be
+// enough that we won't try within a beacon more locations that we can store as failures in the whiteboard. This can
+// be tricky to figure out, so I will just tune: beacon radius, whiteboard storage and this distance to work together.
+// If any changes, chances are the robot can get stuck here.
+const float kLocationFailureDist_mm = 100.0f;
+// if a location fails, what rotation invalidates for other poses
+const float kLocationFailureRot_rad = M_PI;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // LocationCalculator: given row and column can calculate a 3d pose in a beacon
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 struct LocationCalculator {
   LocationCalculator(const ObservableObject* pickedUpObject, const Vec3f& beaconCenter, const Rotation3d& directionality, float beaconRadius, const Robot& robot)
-  : object(pickedUpObject), center(beaconCenter), rotation(directionality), radiusSQ(beaconRadius*beaconRadius), robotRef(robot), isFirstFind(true)
+  : object(pickedUpObject), center(beaconCenter), rotation(directionality), radiusSQ(beaconRadius*beaconRadius), robotRef(robot), renderAsFirstFind(true)
   {
     ASSERT_NAMED( nullptr != object, "BehaviorExploreBringCubeToBeacon.LocationCalculator.NullObjectWillCrash" );
   }
@@ -55,7 +79,7 @@ struct LocationCalculator {
   const Rotation3d& rotation;
   const float radiusSQ;
   const Robot& robotRef;
-  mutable bool isFirstFind;
+  mutable bool renderAsFirstFind;
 
   // calculate location offset given current config
   float GetLocationOffset() const;
@@ -81,6 +105,7 @@ bool LocationCalculator::IsLocationFreeForObject(const int row, const int col, P
   Vec3f offset{ locOffset*row, locOffset*col, 0.0f};
   offset = rotation * offset;
   Vec3f candidateLoc = center + offset;
+  outPose = Pose3d(rotation, candidateLoc, &robotRef.GetPose().FindOrigin()); // override even if not free
   
   // check if out of radius
   if ( offset.LengthSq() > radiusSQ )
@@ -88,38 +113,45 @@ bool LocationCalculator::IsLocationFreeForObject(const int row, const int col, P
     // debug render
     if ( kBebctb_DebugRenderAll )
     {
-      outPose = Pose3d(rotation, candidateLoc, &robotRef.GetPose().FindOrigin());
       Quad2f candidateQuad = object->GetBoundingQuadXY(outPose);
       robotRef.GetContext()->GetVizManager()->DrawQuadAsSegments("BehaviorExploreBringCubeToBeacon.Locations",
         candidateQuad, 20.0f, NamedColors::BLACK, false);
     }
     return false;
   }
-
-  bool isFree = true;
   
-  // calculate if candidate pose is free for this object
+  // calculate if candidate pose is close to a previous failure
+  const bool isLocationFailureInWhiteboard = robotRef.GetBehaviorManager().GetWhiteboard().DidFailToUse(-1,
+    AIWhiteboard::ObjectUseAction::PlaceObjectAt,
+    kRecentFailure_sec,
+    outPose, kLocationFailureDist_mm, kLocationFailureRot_rad);
+  
+  // calculate if candidate pose is free of other objects
+  bool collidesWithObjects = false;
+  if ( !isLocationFailureInWhiteboard )
   {
     // note: this part of the code is similar to the DriveToPlaceCarriedObjectAction free goal check, standarize?
     BlockWorldFilter ignoreSelfFilter;
     ignoreSelfFilter.AddIgnoreID( object->GetID() );
     
     // calculate quad at candidate destination
-    outPose = Pose3d(rotation, candidateLoc, &robotRef.GetPose().FindOrigin());
-    Quad2f candidateQuad = object->GetBoundingQuadXY(outPose);
+    const Quad2f& candidateQuad = object->GetBoundingQuadXY(outPose);
 
     // TODO rsam: this only checks for other cubes, but not for unknown obstacles since we don't have collision sensor
     std::vector<const ObservableObject *> intersectingObjects;
     robotRef.GetBlockWorld().FindIntersectingObjects(candidateQuad, intersectingObjects, kBebctb_PaddingBetweenCubes_mm, ignoreSelfFilter);
     
-    isFree = intersectingObjects.empty();
+    collidesWithObjects = !intersectingObjects.empty();
+  }
 
-    // debug render
-    if ( kBebctb_DebugRenderAll ) {
-      robotRef.GetContext()->GetVizManager()->DrawQuadAsSegments("BehaviorExploreBringCubeToBeacon.Locations",
-        candidateQuad, 20.0f, isFree ? (isFirstFind ? NamedColors::YELLOW : NamedColors::WHITE) : NamedColors::RED, false);
-    }
-    isFirstFind = isFirstFind && !isFree;
+  // it's free if it passes all checks
+  bool isFree = !isLocationFailureInWhiteboard && !collidesWithObjects;
+  
+  // debug render
+  if ( kBebctb_DebugRenderAll ) {
+    robotRef.GetContext()->GetVizManager()->DrawQuadAsSegments("BehaviorExploreBringCubeToBeacon.Locations",
+      object->GetBoundingQuadXY(outPose), 20.0f, isFree ? (renderAsFirstFind ? NamedColors::YELLOW : NamedColors::WHITE) : NamedColors::RED, false);
+    renderAsFirstFind = renderAsFirstFind && !isFree; // render as first as long as we don't find one free
   }
   
   return isFree;
@@ -144,10 +176,55 @@ BehaviorExploreBringCubeToBeacon::~BehaviorExploreBringCubeToBeacon()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const Robot& robot) const
 {
-  // ask the whiteboard to retrieve the cubes to bring to beacons
+  _candidateObjects.clear();
   const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
-  const bool hasBlocksOutOfBeacons = whiteboard.FindUsableCubesOutOfBeacons(_candidateObjects);
-  return hasBlocksOutOfBeacons;
+  
+  // check that we have an active beacon
+  const AIBeacon* selectedBeacon = whiteboard.GetActiveBeacon();
+  if ( nullptr == selectedBeacon ) {
+    return false;
+  }
+  
+  // check that we haven't failed recently here
+  const float lastBeaconFailure = selectedBeacon->GetLastTimeFailedToFindLocation();
+  const bool beaconEverFailed = !NEAR_ZERO(lastBeaconFailure);
+  if ( beaconEverFailed ) {
+    const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const float beaconTimeoutUntil = lastBeaconFailure + kRecentFailure_sec;
+    const bool beaconIsInCooldown = FLT_LT(curTime, beaconTimeoutUntil);
+    if ( beaconIsInCooldown ) {
+      return false;
+    }
+  }
+
+  // ask the whiteboard to retrieve the cubes to bring to beacons
+  AIWhiteboard::ObjectInfoList cubesOutOfBeacons;
+  const bool hasBlocksOutOfBeacons = whiteboard.FindUsableCubesOutOfBeacons(cubesOutOfBeacons);
+  if ( hasBlocksOutOfBeacons )
+  {
+    // check if there were recent failures with those objects, we don't want to try to pick them up again
+    // so that we don't go into a loop on pick up
+    for( const AIWhiteboard::ObjectInfo& objectInfo : cubesOutOfBeacons )
+    {
+      const ObservableObject* objPtr = robot.GetBlockWorld().GetObjectByID( objectInfo.id, objectInfo.family );
+      if ( nullptr != objPtr )
+      {
+        const Pose3d& currentPose = objPtr->GetPose();
+        const bool recentFail = whiteboard.DidFailToUse(objectInfo.id,
+          AIWhiteboard::ObjectUseAction::PickUpObject,
+          kRecentFailure_sec,
+          currentPose, kCubeFailureDist_mm, kCubeFailureRot_rad);
+        if ( !recentFail )
+        {
+          // this object should be ok to be picked up
+          _candidateObjects.emplace_back(objectInfo);
+        }
+      }
+    }
+  }
+  
+  const bool hasCandidates = !_candidateObjects.empty();
+  return hasCandidates;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -155,7 +232,6 @@ Result BehaviorExploreBringCubeToBeacon::InitInternal(Robot& robot)
 {
   // clear variables from previous run
   _selectedObjectID.UnSet();
-  _invalidCubesToStackOn.clear();
   
   // calculate starting state
   if ( robot.IsCarryingObject() )
@@ -174,8 +250,21 @@ Result BehaviorExploreBringCubeToBeacon::InitInternal(Robot& robot)
     // we are not currently carrying one, pick up one
     TransitionToPickUpObject(robot);
   }
+  
+  // this is now a valid situation. We started the behavior but did not find valid poses. It should have flagged
+  // the beacon as not valid anymore
+  bool shouldBeActing = true;
+  if ( !IsActing() ) {
+    const AIBeacon* activeBeacon = robot.GetBehaviorManager().GetWhiteboard().GetActiveBeacon();
+    const float lastBeaconFailure = activeBeacon->GetLastTimeFailedToFindLocation();
+    const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const bool beaconFlaggedFail = FLT_NEAR(curTime, lastBeaconFailure);
+    shouldBeActing = !beaconFlaggedFail; // should be acting if the beacon is valid
+  }
 
-  const Result ret = IsActing() ? RESULT_OK : RESULT_FAIL;
+  // we consider an init to be ok if we realize that we don't want to act
+  const bool initOk = (shouldBeActing == IsActing());
+  const Result ret = initOk ? RESULT_OK : RESULT_FAIL;
   return ret;
 }
 
@@ -197,18 +286,24 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(Robot& robot)
     const bool isRetry = _selectedObjectID.IsSet();
     if ( !isRetry )
     {
-      // pick closest block
-      const Vec3f& robotLoc = robot.GetPose().GetTranslation();
+      // pick closest block (rsam/brad: this would be a good place to use path distance instead of euclidean)
+      const Pose3d& robotPose = robot.GetPose();
       const BlockWorld& world = robot.GetBlockWorld();
-      // TODO rsam/brad: consider using path distance here
+
       size_t bestIndex = 0;
       const ObservableObject* candidateObj = GetCandidate(world, bestIndex);
-      float bestDistSQ = (nullptr != candidateObj) ? (candidateObj->GetPose().GetTranslation() - robotLoc).LengthSq() : FLT_MAX;
-      for( size_t idx=1; idx<_candidateObjects.size(); ++idx)
+      float bestDistSQ = FLT_MAX;
+      for( size_t idx=0; idx<_candidateObjects.size(); ++idx)
       {
         candidateObj = GetCandidate(world, bestIndex);
-        float candidateDistSQ = (nullptr != candidateObj) ? (candidateObj->GetPose().GetTranslation() - robotLoc).LengthSq() : FLT_MAX;
-        if ( candidateDistSQ < bestDistSQ )
+        
+        // calculate distance wrt robot
+        Pose3d objWrtRobot;
+        const bool canGetWrtRobot = (candidateObj && candidateObj->GetPose().GetWithRespectTo(robotPose, objWrtRobot) );
+        const float candidateDistSQ = canGetWrtRobot ? objWrtRobot.GetTranslation().LengthSq() : FLT_MAX;
+        
+        // check if candidate is better than current best
+        if ( FLT_LT(candidateDistSQ, bestDistSQ) )
         {
           bestDistSQ = candidateDistSQ;
           bestIndex = idx;
@@ -219,46 +314,224 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(Robot& robot)
       const bool foundCandidate = FLT_LT(bestDistSQ, FLT_MAX);
       if ( foundCandidate ) {
         _selectedObjectID = _candidateObjects[bestIndex].id;
+        PRINT_CH_INFO("Behaviors", (GetName() + ".TransitionToPickUpObject.Selected").c_str(), "Going to pick up '%d'", _selectedObjectID.GetValue());
       } else {
         PRINT_NAMED_ERROR("BehaviorExploreBringCubeToBeacon.TransitionToPickUpObject.InvalidCandidates", "Could not pick candidate");
         return;
       }
     }
-
+    else
+    {
+      PRINT_CH_INFO("Behaviors", (GetName() + ".TransitionToPickUpObject.Retry").c_str(), "Trying to pick up '%d' again", _selectedObjectID.GetValue());
+    }
 
     // fire action with proper callback
     DriveToPickupObjectAction* pickUpAction = new DriveToPickupObjectAction(robot, _selectedObjectID );
-    RobotCompletedActionCallback onActionResult = [this, &robot, isRetry](const ExternalInterface::RobotCompletedAction& actionRet)
+    RobotCompletedActionCallback onPickUpActionResult = [this, &robot, isRetry](const ExternalInterface::RobotCompletedAction& actionRet)
     {
+      // arguably here we could check isCarrying regardless of action result. Even if the action failed, as long
+      // as we are carrying the object we intended to pick up, we should be good
+      bool pickUpFinalFail = false;
       if ( actionRet.result == ActionResult::SUCCESS ) {
         // object was picked up
+        PRINT_CH_INFO("Behaviors", (GetName() + ".onPickUpActionResult.Done").c_str(), "Picked up '%d'", _selectedObjectID.GetValue());
         TransitionToObjectPickedUp(robot);
       }
-      else if ((actionRet.result == ActionResult::FAILURE_RETRY) || (actionRet.result == ActionResult::FAILURE_TIMEOUT))
+      else if (actionRet.result == ActionResult::FAILURE_RETRY)
       {
         // do we currently have the object in the lift?
         const bool isCarrying = (robot.IsCarryingObject() && robot.GetCarryingObject() == _selectedObjectID);
         if ( isCarrying )
         {
-          // TODO rsam: set a max number of retries?
-          // we were already carrying the object, try to find a new position for it
+          PRINT_CH_INFO("Behaviors", (GetName() + ".onPickUpActionResult.RetryOk").c_str(), "We do have '%d' picked up, so pretend we are fine", _selectedObjectID.GetValue());
+          // not sure what failed on pick up, but we are carrying the object, so continue to next state
           TransitionToObjectPickedUp( robot );
         }
         else if ( !isRetry )
         {
+          PRINT_CH_INFO("Behaviors", (GetName() + ".onPickUpActionResult.RetryMaybe").c_str(), "Let's try to pick up '%d' again", _selectedObjectID.GetValue());
           // something else failed, maybe we failed to align with the cube, try to pick up the cube again
           TransitionToPickUpObject( robot );
         }
+        else
+        {
+          PRINT_CH_INFO("Behaviors", (GetName() + ".onPickUpActionResult.Fail").c_str(), "Not trying to pick up '%d' again. Failing", _selectedObjectID.GetValue());
+          // do not queue more actions here so that we get kicked out, flag as fail
+          pickUpFinalFail = true;
+        }
       } else {
-        PRINT_NAMED_INFO("BehaviorExploreBringCubeToBeacon.TransitionToPickUpObject.DriveToPickUpFailed", "Unhandled result");
+        PRINT_CH_INFO("Behaviors", (GetName() + ".onPickUpActionResult.NoRetry").c_str(), "Failed to pick up '%d', action does not retry.", _selectedObjectID.GetValue());
+        // do not queue more actions here so that we get kicked out, flag as fail
+        pickUpFinalFail = true;
+      }
+      
+      // failed to pick up this object, tell the whiteboard about it
+      if ( pickUpFinalFail ) {
+        const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID( _selectedObjectID );
+        if ( failedObject ) {
+          robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PickUpObject);
+        }
+        
+        // rsam: considering this, but pickUp action would already fire emotion events
+        // fire emotion event, Cozmo is sad he could not pick up the cube it selected
+        // robot.GetMoodManager().TriggerEmotionEvent("HikingFailedToPickUp", MoodManager::GetCurrentTimeInSeconds());
       }
     };
-    StartActing(pickUpAction, onActionResult);
+    StartActing(pickUpAction, onPickUpActionResult);
   }
   else
   {
     PRINT_NAMED_ERROR("BehaviorExploreBringCubeToBeacon.TransitionToPickUpObject.NoCandidates", "Can't run with no selected objects");
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploreBringCubeToBeacon::TryToStackOn(Robot& robot, const ObjectID& bottomCubeID, int attempt)
+{
+  // note pass bottomCubeID to the lambda as copy, do not trust it's scope
+  // create action to stack
+  DriveToPlaceOnObjectAction* stackAction = new DriveToPlaceOnObjectAction(robot, bottomCubeID);
+  RobotCompletedActionCallback onStackActionResult = [this, &robot, bottomCubeID, attempt](const ExternalInterface::RobotCompletedAction& actionRet)
+  {
+    bool stackOnCubeFinalFail = false;
+    if (actionRet.result == ActionResult::SUCCESS)
+    {
+      PRINT_CH_INFO("Behaviors", (GetName() + ".onStackActionResult.Done").c_str(), "Successfully stacked cube");
+      
+      // emotions
+      const bool allCubesInBeacons = robot.GetBehaviorManager().GetWhiteboard().AreAllCubesInBeacons();
+      if ( allCubesInBeacons )
+      {
+        // fire emotion event, Cozmo is happy he brought the last cube to the beacon
+        robot.GetMoodManager().TriggerEmotionEvent("HikingBroughtLastCubeToBeacon", MoodManager::GetCurrentTimeInSeconds());
+      }
+      else
+      {
+        // fire emotion event, Cozmo is happy he brought a cube to the beacon
+        robot.GetMoodManager().TriggerEmotionEvent("HikingBroughtCubeToBeacon", MoodManager::GetCurrentTimeInSeconds());
+      }
+    }
+    if (actionRet.result == ActionResult::FAILURE_RETRY)
+    {
+      const bool canRetry = (attempt < kMaxAttempts);
+      const bool isCarrying = (robot.IsCarryingObject() && robot.GetCarryingObject() == _selectedObjectID);
+      if ( canRetry && isCarrying )
+      {
+        PRINT_CH_INFO("Behaviors", (GetName() + ".onStackActionResult.CanRetry").c_str(),
+          "Failed to stack '%d' on top of '%d', but can retry",
+          _selectedObjectID.GetValue(), bottomCubeID.GetValue());
+
+        // we are carrying the cube and we can try to stack again
+        TryToStackOn( robot, bottomCubeID, attempt+1 );
+      }
+      else
+      {
+        PRINT_CH_INFO("Behaviors", (GetName() + ".onStackActionResult.CannotRetry").c_str(),
+          "Failed to stack '%d' on top of '%d' (attempt=%d/%d) (carrying=%s)",
+          _selectedObjectID.GetValue(), bottomCubeID.GetValue(),
+          attempt, kMaxAttempts,
+          isCarrying ? "yes" : "no");
+        // if we are not carrying the cube, wth happened? Did someone remove the cube from the lift?
+        // it probably isn't the bottom's cube fault, but maybe it actually is, so flag as a failure
+        // to stack on top of it, in case we tried and we dropped our cube upon placing it on top of the bottom one
+        // if we are carrying the cube, this is definitely a stack issue
+        stackOnCubeFinalFail = true;
+      }
+    } else {
+      PRINT_CH_INFO("Behaviors", (GetName() + ".onStackActionResult.NoRetryAllowed").c_str(), "Failed to stack (no retry allowed by action)");
+      stackOnCubeFinalFail = true;
+    }
+    
+    // failed to stack on the bottom object, notify the whiteboard
+    if ( stackOnCubeFinalFail ) {
+      const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID( bottomCubeID );
+      if ( failedObject ) {
+        robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::StackOnObject);
+      }
+      
+      // rsam: considering this, but placeOn action would already fire emotion events
+      // fire emotion event, Cozmo is sad he could not stack the cube on top of the other one
+      // robot.GetMoodManager().TriggerEmotionEvent("HikingFailedToStack", MoodManager::GetCurrentTimeInSeconds());
+    }
+  };
+  StartActing( stackAction, onStackActionResult );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(Robot& robot, const Pose3d& pose, int attempt)
+{
+  // note pass pose to the lambda as copy, do not trust it's scope
+  // create action to drive to the drop location
+  const bool checkFreeDestination = true;
+  const float padding_mm = kBebctb_PaddingBetweenCubes_mm;
+  PlaceObjectOnGroundAtPoseAction* placeObjectAction = new PlaceObjectOnGroundAtPoseAction(robot, pose, false, false, checkFreeDestination, padding_mm);
+  RobotCompletedActionCallback onPlaceActionResult = [this, &robot, pose, attempt](const ExternalInterface::RobotCompletedAction& actionRet)
+  {
+    bool placeAtCubeFinalFail = false;
+    if (actionRet.result == ActionResult::SUCCESS)
+    {
+      PRINT_CH_INFO("Behaviors", (GetName() + ".onPlaceActionResult.Done").c_str(), "Successfully placed cube");
+      
+      // emotions
+      const bool allCubesInBeacons = robot.GetBehaviorManager().GetWhiteboard().AreAllCubesInBeacons();
+      if ( allCubesInBeacons )
+      {
+        // fire emotion event, Cozmo is happy he brought the last cube to the beacon
+        robot.GetMoodManager().TriggerEmotionEvent("HikingBroughtLastCubeToBeacon", MoodManager::GetCurrentTimeInSeconds());
+      }
+      else
+      {
+        // fire emotion event, Cozmo is happy he brought a cube to the beacon
+        robot.GetMoodManager().TriggerEmotionEvent("HikingBroughtCubeToBeacon", MoodManager::GetCurrentTimeInSeconds());
+      }
+    }
+    else if (actionRet.result == ActionResult::FAILURE_RETRY)
+    {
+      const bool canRetry = false || (attempt < kMaxAttempts);
+      const bool isCarrying = (robot.IsCarryingObject() && robot.GetCarryingObject() == _selectedObjectID);
+      if ( canRetry && isCarrying )
+      {
+        PRINT_CH_INFO("Behaviors", (GetName() + ".onPlaceActionResult.Done.CanRetry").c_str(),
+          "Failed to place '%d' at pose [%.2f,%.2f,%.2f], but can retry",
+          _selectedObjectID.GetValue(), pose.GetTranslation().x(), pose.GetTranslation().y(), pose.GetTranslation().z() );
+
+        // we are carrying the cube and we want to retry this location
+        TryToPlaceAt( robot, pose, attempt+1 );
+      }
+      else
+      {
+        PRINT_CH_INFO("Behaviors", (GetName() + ".onPlaceActionResult.CannotRetry").c_str(),
+          "Failed to place '%d' at pose [%.2f,%.2f,%.2f] (attempt=%d/%d) (carrying=%s)",
+          _selectedObjectID.GetValue(),
+          pose.GetTranslation().x(), pose.GetTranslation().y(), pose.GetTranslation().z(),
+          attempt, kMaxAttempts,
+          isCarrying ? "yes" : "no");
+        // if we are not carrying the cube, wth happened? Did someone remove the cube from the lift?
+        // it although the location was probably not the reason why we failed, maybe it is, so flag here as
+        // a failure to place this cube at that specific location
+        placeAtCubeFinalFail = true;
+      }
+    } else {
+      PRINT_CH_INFO("Behaviors", (GetName() + ".onPlaceActionResult.NoRetryAllowed").c_str(), "Failed to place (no retry allowed by action)");
+      placeAtCubeFinalFail = true;
+    }
+    
+    // failed to place this cube at this location
+    if ( placeAtCubeFinalFail ) {
+      const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID( _selectedObjectID );
+      if ( failedObject ) {
+        robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PlaceObjectAt, pose);
+      }
+
+      // rsam: considering this, but placeAt action would already fire emotion events
+      // fire emotion event, Cozmo is sad he could not place the cube at the selected destination
+      // robot.GetMoodManager().TriggerEmotionEvent("HikingFailedToPlace", MoodManager::GetCurrentTimeInSeconds());
+    }
+
+  };
+
+  StartActing( placeObjectAction, onPlaceActionResult );
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -280,8 +553,8 @@ void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(Robot& robot)
     }
     
     // grab the selected beacon (there should be one)
-    const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
-    const AIBeacon* selectedBeacon = whiteboard.GetActiveBeacon();
+    AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+    AIBeacon* selectedBeacon = whiteboard.GetActiveBeacon();
     if ( nullptr == selectedBeacon ) {
       ASSERT_NAMED( nullptr!= selectedBeacon, "BehaviorExploreBringCubeToBeacon.TransitionToObjectPickedUp.NullBeacon");
       return;
@@ -291,71 +564,57 @@ void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(Robot& robot)
     const ObservableObject* bottomCube = FindFreeCubeToStackOn(pickedUpObject, selectedBeacon, robot);
     if ( nullptr != bottomCube )
     {
-      // create action to stack
-      DriveToPlaceOnObjectAction* stackAction = new DriveToPlaceOnObjectAction(robot, bottomCube->GetID());
-      RobotCompletedActionCallback onPlaceActionResult = [this, &robot](const ExternalInterface::RobotCompletedAction& actionRet)
-      {
-        if (actionRet.result == ActionResult::FAILURE_RETRY)
-        {
-          // do we currently have the object in the lift?
-          const bool isCarrying = (robot.IsCarryingObject() && robot.GetCarryingObject() == _selectedObjectID);
-          if ( isCarrying )
-          {
-            // TODO rsam: set a max number of retries?
-            // we were already carrying the object, try to find a new position for it
-            TransitionToObjectPickedUp( robot );
-          }
-        } else {
-          // PRINT_NAMED_INFO("BehaviorExploreBringCubeToBeacon.TransitionToPickUpObject.DriveToPickUpFailed", "Unhandled result");
-        }
-      };
-      StartActing( stackAction, onPlaceActionResult );
+      // log
+      PRINT_CH_INFO("Behaviors", (GetName() + ".TransitionToObjectPickedUp").c_str(), "Decided to place '%d' on top of '%d'",
+        _selectedObjectID.GetValue(),
+        bottomCube->GetID().GetValue());
+      
+      // queue stack on action
+      const ObjectID& bottomCubeID = bottomCube->GetID();
+      const int attemptNumber = 1;
+      TryToStackOn(robot, bottomCubeID, attemptNumber);
     }
     else
     {
       // 2) otherwise, find area as close to the center as possible (use memory map for this?)
+      
       Pose3d dropPose;
       const bool foundPose = FindFreePoseInBeacon(pickedUpObject, selectedBeacon, robot, dropPose);
       if ( foundPose )
       {
-        const bool checkFreeDestination = true;
-        const float padding_mm = kBebctb_PaddingBetweenCubes_mm;
-        // create action to drive to the drop location
-        PlaceObjectOnGroundAtPoseAction* placeObjectAction = new PlaceObjectOnGroundAtPoseAction(robot, dropPose, false, false, checkFreeDestination, padding_mm);
-        RobotCompletedActionCallback onPlaceActionResult = [this, &robot](const ExternalInterface::RobotCompletedAction& actionRet)
-        {
-          if (actionRet.result == ActionResult::FAILURE_RETRY)
-          {
-            // do we currently have the object in the lift?
-            const bool isCarrying = (robot.IsCarryingObject() && robot.GetCarryingObject() == _selectedObjectID);
-            if ( isCarrying )
-            {
-              // TODO rsam: set a max number of retries?
-              // we were already carrying the object, try to find a new position for it
-              TransitionToObjectPickedUp( robot );
-            }
-          } else {
-            // PRINT_NAMED_INFO("BehaviorExploreBringCubeToBeacon.TransitionToPickUpObject.DriveToPickUpFailed", "Unhandled result");
-          }
-        };
+        // log
+        PRINT_CH_INFO("Behaviors", (GetName() + ".TransitionToObjectPickedUp").c_str(),
+          "Decided to place '%d' on the floor at [%.2f,%.2f,%.2f]",
+          _selectedObjectID.GetValue(), dropPose.GetTranslation().x(), dropPose.GetTranslation().y(), dropPose.GetTranslation().z());
         
-        StartActing( placeObjectAction, onPlaceActionResult );
+        // queue place at action
+        const int attemptNumber = 1;
+        TryToPlaceAt(robot, dropPose, attemptNumber);
       }
       else
       {
-        PRINT_NAMED_ERROR("BehaviorExploreBringCubeToBeacon.TransitionToObjectPickedUp.NoFreePoses",
-          "Could not decide where to drop the cube in the beacon");
+        // aw, this beacon is bad :( do not use anymore (at least for some time)
+        // maybe this should cause the creation of a new beacon? <--
+        whiteboard.FailedToFindLocationInBeacon(selectedBeacon);
+      
+        // log
+        PRINT_CH_INFO("Behaviors", (GetName() + ".TransitionToObjectPickedUp.NoFreePoses").c_str(),
+          "Could not decide where to drop the cube in the beacon (all poses failed)");
+
+        // fire emotion event, Cozmo is sad he could not put down the cube in the beacon
+        // This may be hard for the player to understand, but at least will give context as to why
+        // Cozmo is simply putting down the cube
+        robot.GetMoodManager().TriggerEmotionEvent("HikingNoLocationAtBeacon", MoodManager::GetCurrentTimeInSeconds());
       }
     }
   }
   else
   {
     PRINT_NAMED_ERROR("BehaviorExploreBringCubeToBeacon.TransitionToObjectPickedUp.NotPickedUp",
-      "We did not pick up the cube. Retry?");
+      "We do not have the cube picked up, we should not have transitioned here.");
   }
 
 }
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(const ObservableObject* object,
@@ -376,14 +635,21 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
   const float kPrecisionOffset_mm = 10.0f; // this is just to account for errors when readjusting cube positions
   const float inwardThreshold_mm = object->GetSize().x() + kPrecisionOffset_mm;
   
-  filter.SetFilterFcn([object,beacon,&robot,inwardThreshold_mm,this](const ObservableObject* blockPtr) {
+  filter.SetFilterFcn([object,beacon,&robot,inwardThreshold_mm,this](const ObservableObject* blockPtr)
+  {
     // if this is our block or state is not good, skip
     if ( blockPtr == object || !blockPtr->IsPoseStateKnown() ) {
       return false;
     }
     
     // if we don't want to stack on this cube, skip
-    if ( _invalidCubesToStackOn.find(blockPtr->GetID()) != _invalidCubesToStackOn.end() )
+    const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+    const Pose3d& currentPose = blockPtr->GetPose();
+    const bool recentFail = whiteboard.DidFailToUse(blockPtr->GetID(),
+      AIWhiteboard::ObjectUseAction::StackOnObject,
+      kRecentFailure_sec,
+      currentPose, kCubeFailureDist_mm, kCubeFailureRot_rad);
+    if ( recentFail )
     {
       return false;
     }

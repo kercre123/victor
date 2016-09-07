@@ -337,6 +337,11 @@ message EnableBraceWhenFalling
   bool enable
 }
 
+message RequestCrashReports
+{
+  int_32 index
+}
+
 enum uint_32 ToRobotAddressSpace
 {
   GLOBAL_INVALID_TAG = 0,
@@ -445,7 +450,7 @@ union EngineToRobot
 
   
   // 0x80 to 0xAF: To WiFi
-  // Available for future use                               = 0x80,
+  RequestCrashReports           requestCrashReports         = 0x80,
   // Available for future use                               = 0x81,
   CalculateDiffieHellman        calculateDiffieHellman      = 0x82,
   NVStorage::NVStorageWrite     writeNV                     = 0x83,

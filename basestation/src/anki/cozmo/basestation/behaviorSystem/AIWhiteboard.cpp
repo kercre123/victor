@@ -17,18 +17,19 @@
 
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/rotation.h"
+#include "anki/common/basestation/utils/timer.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
-//#include "util/math/numericCast.h"
-//#include "util/random/randomGenerator.h"
 
 #define DEBUG_AI_WHITEBOARD_POSSIBLE_OBJECTS 0
 
 namespace Anki {
 namespace Cozmo {
+
+namespace {
 
 // all coordinates have to be this close from their counterpart to be considered the same observation (and thus override it)
 CONSOLE_VAR(float, kBW_PossibleObjectClose_mm, "AIWhiteboard", 50.0f);
@@ -42,6 +43,39 @@ CONSOLE_VAR(bool, kBW_DebugRenderPossibleObjects, "AIWhiteboard", true);
 CONSOLE_VAR(float, kBW_DebugRenderPossibleObjectsZ, "AIWhiteboard", 35.0f);
 CONSOLE_VAR(bool, kBW_DebugRenderBeacons, "AIWhiteboard", true);
 CONSOLE_VAR(float, kBW_DebugRenderBeaconZ, "AIWhiteboard", 35.0f);
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const char* ObjectUseActionToString(AIWhiteboard::ObjectUseAction action)
+{
+  using ObjectUseAction = AIWhiteboard::ObjectUseAction;
+  switch(action) {
+    case ObjectUseAction::PickUpObject : { return "PickUp";  }
+    case ObjectUseAction::StackOnObject: { return "StackOn"; }
+    case ObjectUseAction::PlaceObjectAt: { return "PlaceAt"; }
+  };
+
+  // should never get here, assert if it does (programmer error specifying action enum class)
+  ASSERT_NAMED(false, "AIWhiteboard.ObjectUseActionToString.InvalidAction");
+  return "UNDEFINED_ERROR";
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// return how many max entries of the given type we store. DO NOT return 0, at least there has to be 1
+size_t GetObjectFailureListMaxSize(AIWhiteboard::ObjectUseAction action)
+{
+  using ObjectUseAction = AIWhiteboard::ObjectUseAction;
+  switch(action) {
+    case ObjectUseAction::PickUpObject : { return 1; }
+    case ObjectUseAction::StackOnObject: { return 1; }
+    case ObjectUseAction::PlaceObjectAt: { return 10; } // this can affect behaviorExploreBringCubeToBeacon's kLocationFailureDist_mm (read note there)
+  };
+
+  // should never get here, assert if it does (programmer error specifying action enum class)
+  ASSERT_NAMED(false, "AIWhiteboard.GetObjectFailureListMaxSize.InvalidAction");
+  return 0;
+}
+
+};
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // AIWhiteboard
@@ -151,19 +185,23 @@ bool AIWhiteboard::FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) co
       filter.SetFilterFcn([this, &outObjectList](const ObservableObject* blockPtr) {
         if(!blockPtr->IsPoseStateUnknown())
         {
-          bool isBlockInAnyBeacon = false;
-          
-          // check if the object is within any beacon
-          for ( const auto& beacon : _beacons ) {
-            isBlockInAnyBeacon = beacon.IsLocWithinBeacon(blockPtr->GetPose());
-            if ( isBlockInAnyBeacon ) {
-              break;
+          // check if the robot can pick up this object
+          const bool canPickUp = _robot.CanPickUpObject(*blockPtr);
+          if ( canPickUp )
+          {
+            bool isBlockInAnyBeacon = false;
+            // check if the object is within any beacon
+            for ( const auto& beacon : _beacons ) {
+              isBlockInAnyBeacon = beacon.IsLocWithinBeacon(blockPtr->GetPose());
+              if ( isBlockInAnyBeacon ) {
+                break;
+              }
             }
-          }
-          
-          // this block should be carried to a beacon
-          if ( !isBlockInAnyBeacon ) {
-            outObjectList.emplace_back( blockPtr->GetID(), blockPtr->GetFamily() );
+            
+            // this block should be carried to a beacon
+            if ( !isBlockInAnyBeacon ) {
+              outObjectList.emplace_back( blockPtr->GetID(), blockPtr->GetFamily() );
+            }
           }
         }
         return false; // have to return true/false, even though not used
@@ -176,6 +214,269 @@ bool AIWhiteboard::FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) co
   // do we have any usable cubes out of beacons?
   bool hasBlocksOutOfBeacons = !outObjectList.empty();
   return hasBlocksOutOfBeacons;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::AreAllCubesInBeacons() const
+{
+  #if ANKI_DEVELOPER_CODE
+  {
+    // all beacons should be in this world
+    for ( const auto& beacon : _beacons ) {
+      ASSERT_NAMED(&beacon.GetPose().FindOrigin() == _robot.GetWorldOrigin(), "AIWhiteboard.FindUsableCubesOutOfBeacons.DirtyBeacons");
+    }
+  }
+  #endif
+
+  bool allInBeacon = false;
+  if ( !_beacons.empty() )
+  {
+    // robot can't be carrying an object, otherwise they are not in beacons
+    if ( !_robot.IsCarryingObject() )
+    {
+      allInBeacon = true;
+      
+      // ask for all cubes we know if they are in beacons
+      BlockWorldFilter filter;
+      filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+      filter.SetFilterFcn([this, &allInBeacon](const ObservableObject* blockPtr)
+      {
+        if(!blockPtr->IsPoseStateUnknown())
+        {
+          bool isBlockInAnyBeacon = false;
+          // check if the object is within any beacon
+          for ( const auto& beacon : _beacons ) {
+            isBlockInAnyBeacon = beacon.IsLocWithinBeacon(blockPtr->GetPose());
+            if ( isBlockInAnyBeacon ) {
+              break;
+            }
+          }
+        
+          // this block should be carried to a beacon
+          if ( !isBlockInAnyBeacon ) {
+            allInBeacon = false;
+          }
+        }
+        else
+        {
+          // object position is unknown, consider not in beacon
+          allInBeacon = false;
+        }
+        return false; // have to return true/false, even though not used
+      });
+      
+      _robot.GetBlockWorld().FilterObjects(filter);
+    }
+  }
+
+  // return the result of the filter
+  return allInBeacon;
+}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::SetFailedToUse(const ObservableObject& object, ObjectUseAction action)
+{
+  // PlaceObjectAt should provide location
+  ASSERT_NAMED(action != ObjectUseAction::PlaceObjectAt, "AIWhiteboard.SetFailedToUse.PlaceObjectAtRequiresLocation");
+
+  // use object current pose
+  const Pose3d& objectPose = object.GetPose();
+  SetFailedToUse(object, action, objectPose);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::SetFailedToUse(const ObservableObject& object, ObjectUseAction action, const Pose3d& atLocation)
+{
+  // simply store failure's timestamp
+  ObjectFailureTable& failureTableForAction = GetObjectFailureTable(action);
+  FailureList& failureListForObj = failureTableForAction[object.GetID().GetValue()];
+  
+  // check if we need to remove an entry because we have reached the maximum
+  const size_t maxItemsInList = GetObjectFailureListMaxSize(action);
+  ASSERT_NAMED(maxItemsInList>0, "AIWhiteboard.SetFailedToUse.MaxIs0");
+  if ( failureListForObj.size() >= maxItemsInList )
+  {
+    // can't have an empty list or a list bigger than the max (so it has to be equal to the max)
+    ASSERT_NAMED(!failureListForObj.empty(), "AIWhiteboard.SetFailedToUse.EmptyListReachedMax");
+    ASSERT_NAMED(failureListForObj.size() == maxItemsInList, "AIWhiteboard.SetFailedToUse.ListBeyondMax");
+    
+    // print the one we are removing
+    PRINT_CH_INFO("AIWhiteboard", "SetFailedToUse",
+      "Removed failure on ['%s'] for object '%d' atPose (%.2f,%.2f,%.2f) atTime (%fs) to add one (we are at the max=%zu)",
+      ObjectUseActionToString(action),
+      object.GetID().GetValue(),
+      failureListForObj.begin()->_pose.GetTranslation().x(),
+      failureListForObj.begin()->_pose.GetTranslation().y(),
+      failureListForObj.begin()->_pose.GetTranslation().z(),
+      failureListForObj.begin()->_timestampSecs,
+      maxItemsInList);
+  
+    // remove first
+    failureListForObj.pop_front();
+  }
+
+  // always add
+  {
+    // insert at back (newest)
+    const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    failureListForObj.emplace_back(atLocation, curTime);
+    
+    // log the new one
+    PRINT_CH_INFO("AIWhiteboard", "SetFailedToUse",
+      "Added failure on ['%s'] for object '%d' atPose (%.2f,%.2f,%.2f) atTime (%fs) ",
+      ObjectUseActionToString(action),
+      object.GetID().GetValue(),
+      atLocation.GetTranslation().x(),
+      atLocation.GetTranslation().y(),
+      atLocation.GetTranslation().z(),
+      curTime);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::DidFailToUse(const int objectID, ObjectUseAction action) const
+{
+  const bool ret = DidFailToUse(objectID, action, -1.f, Pose3d(), -1.f, Radians());
+  return ret;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::DidFailToUse(const int objectID, ObjectUseAction action, float recentSecs) const
+{
+  const bool ret = DidFailToUse(objectID, action, recentSecs, Pose3d(), -1.f, Radians());
+  return ret;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::DidFailToUse(const int objectID, ObjectUseAction action,
+  const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const
+{
+  const bool ret = DidFailToUse(objectID, action, -1.f, atPose, distThreshold_mm, angleThreshold);
+  return ret;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::DidFailToUse(const int objectID, ObjectUseAction action, float recentSecs,
+  const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const
+{
+  const ObjectFailureTable& failureTable = GetObjectFailureTable(action);
+  const bool ret = FindMatchingEntry(failureTable, objectID, recentSecs, atPose, distThreshold_mm, angleThreshold);
+  return ret;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::FindMatchingEntry(const ObjectFailureTable& failureTable, const int objectID,
+  float recentSecs,
+  const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const
+{
+  // if we are looking for failures in any object
+  if ( objectID == ANY_OBJECT )
+  {
+    // iterate all the queues for all objects
+    for( const auto& pair : failureTable )
+    {
+      // iterate all entries in each queue
+      const FailureList& failuresForObj = pair.second;
+      for( const FailureInfo& failureInfo : failuresForObj)
+      {
+        // check if the entry matches the search
+        const bool matchesSearch = EntryMatches(failureInfo, recentSecs, atPose, distThreshold_mm, angleThreshold);
+        if ( matchesSearch ) {
+          // it does, we found a failure we care about
+          return true;
+        }
+      }
+    }
+    
+    // none of the current entries for any object matched
+    return false;
+  }
+  else
+  {
+    // find failures for the specific object
+    const auto& failuresForObjIt = failureTable.find( objectID );
+    if ( failuresForObjIt != failureTable.end() )
+    {
+      // iterate all entries in this queue
+      const FailureList& failuresForObj = failuresForObjIt->second;
+      for( const FailureInfo& failureInfo : failuresForObj)
+      {
+        // check if the entry matches the search
+        const bool matchesSearch = EntryMatches(failureInfo, recentSecs, atPose, distThreshold_mm, angleThreshold);
+        if ( matchesSearch ) {
+          // it does, we found a failure we care about
+          return true;
+        }
+      }
+    }
+    
+    // none of the current entries for this object matched
+    return false;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::EntryMatches(const FailureInfo& entry, float recentSecs, const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const
+{
+  // if we specified a timestamp (ie: if we care about recent entries only)
+  const bool checkTime = FLT_GE(recentSecs, 0.0f);
+  if ( checkTime )
+  {
+    const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const float timeSinceFailureSecs = curTime - entry._timestampSecs;
+    const bool entryIsTooOld = FLT_GE(timeSinceFailureSecs, recentSecs);
+    if ( entryIsTooOld ) {
+      // the entry is too old, we do not care about it
+      return false;
+    }
+  }
+  
+  // passed time checks, check pose
+  const bool checkLocation = FLT_GE(distThreshold_mm, 0.0f);
+  if ( checkLocation )
+  {
+    const bool arePosesClose = entry._pose.IsSameAs(atPose, Point3f(distThreshold_mm), angleThreshold);
+    if ( !arePosesClose ) {
+      // the entry is too far, we do not care about it
+      return false;
+    }
+  }
+  
+  // entry passed all checks, this entry does match the search
+  return true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const AIWhiteboard::ObjectFailureTable& AIWhiteboard::GetObjectFailureTable(ObjectUseAction action) const
+{
+  switch(action) {
+    case ObjectUseAction::PickUpObject : { return _pickUpFailures;  }
+    case ObjectUseAction::StackOnObject: { return _stackOnFailures; }
+    case ObjectUseAction::PlaceObjectAt: { return _placeAtFailures; }
+  }
+
+  // should never get here, assert if it does (programmer error specifying action enum class)
+  {
+    ASSERT_NAMED(false, "AIWhiteboard.GetFailureMap.InvalidAction");
+    static ObjectFailureTable empty;
+    return empty;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+AIWhiteboard::ObjectFailureTable& AIWhiteboard::GetObjectFailureTable(ObjectUseAction action)
+{
+  switch(action) {
+    case ObjectUseAction::PickUpObject : { return _pickUpFailures;  }
+    case ObjectUseAction::StackOnObject: { return _stackOnFailures; }
+    case ObjectUseAction::PlaceObjectAt: { return _placeAtFailures; }
+  }
+
+  // should never get here, assert if it does (programmer error specifying action enum class)
+  {
+    ASSERT_NAMED(false, "AIWhiteboard.GetFailureMap.InvalidAction");
+    static ObjectFailureTable empty;
+    return empty;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -206,7 +507,27 @@ void AIWhiteboard::AddBeacon( const Pose3d& beaconPos )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::FailedToFindLocationInBeacon(AIBeacon* beacon)
+{
+  // set time stamp in the beacon
+  beacon->FailedToFindLocation();
+  
+  // update render
+  UpdateBeaconRender();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const AIBeacon* AIWhiteboard::GetActiveBeacon() const
+{
+  if ( _beacons.empty() ) {
+    return nullptr;
+  }
+  
+  return &_beacons[0];
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+AIBeacon* AIWhiteboard::GetActiveBeacon()
 {
   if ( _beacons.empty() ) {
     return nullptr;
@@ -490,14 +811,17 @@ void AIWhiteboard::UpdateBeaconRender()
       ASSERT_NAMED( (&beacon.GetPose().FindOrigin()) == _robot.GetWorldOrigin(),
       "AIWhiteboard.UpdateBeaconRender.BeaconFromOldOrigin");
       
+      // note that since we don't know what timeout behaviors use, we can only say that it ever failed
+      ColorRGBA color = NEAR_ZERO(beacon.GetLastTimeFailedToFindLocation()) ? NamedColors::DARKGREEN : NamedColors::ORANGE;
+      
       Vec3f center = beacon.GetPose().GetTranslation();
       center.z() += kBW_DebugRenderBeaconZ;
       _robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments("AIWhiteboard.UpdateBeaconRender",
-          center, beacon.GetRadius(), NamedColors::DARKGREEN, false);
+          center, beacon.GetRadius(), color, false);
       _robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments("AIWhiteboard.UpdateBeaconRender",
-          center, beacon.GetRadius()-0.5f, NamedColors::DARKGREEN, false); // double line
+          center, beacon.GetRadius()-0.5f, color, false); // double line
       _robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments("AIWhiteboard.UpdateBeaconRender",
-          center, beacon.GetRadius()-1.0f, NamedColors::DARKGREEN, false); // triple line (jane's request)
+          center, beacon.GetRadius()-1.0f, color, false); // triple line (jane's request)
     }
   }
 }

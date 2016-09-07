@@ -73,7 +73,7 @@ namespace Util {
 
   void HttpAdapter::DoCallback(Util::Dispatch::Queue* queue,
                                HttpRequestCallback callback,
-                               const HttpRequest& request,
+                               HttpRequest request,
                                NSData* data,
                                NSURLResponse* response,
                                NSError* error)
@@ -121,34 +121,44 @@ namespace Util {
   void HttpAdapter::ProcessGetRequest(NSString* httpMethod, const HttpRequest& request,
                                       Util::Dispatch::Queue* queue, HttpRequestCallback callback)
   {
-    __block HttpRequest localRequestRef = request;
-    NSMutableURLRequest* urlRequest = CreateURLRequest(request, httpMethod);
-
     NSURLSessionTask* task = nil;
 
-    if (!request.destinationPath.empty()) {
-      NSString* destinationPath =
-      [NSString stringWithCString:request.destinationPath.c_str()
-                         encoding:[NSString defaultCStringEncoding]];
-      NSURL* destinationUrl = [NSURL fileURLWithPath:destinationPath];
-      task = [_urlSession downloadTaskWithRequest:urlRequest
-                                completionHandler:^(NSURL *location,
-                                                    NSURLResponse *response,
-                                                    NSError *error) {
-        if (!error) {
-          NSFileManager* fm = [[NSFileManager alloc] init];
-          [fm moveItemAtURL:location toURL:destinationUrl error:&error];
-        }
-        DoCallback(queue, std::move(callback), localRequestRef, nil, response, error);
+    try {
+      __block HttpRequest localRequestRef = request;
+      NSMutableURLRequest* urlRequest = CreateURLRequest(request, httpMethod);
 
-      }];
-    } else {
-      task = [_urlSession dataTaskWithRequest:urlRequest
-                            completionHandler:^(NSData* data,
-                                                NSURLResponse* response,
-                                                NSError* error) {
-        DoCallback(queue, std::move(callback), localRequestRef, data, response, error);
-      }];
+      if (!request.destinationPath.empty()) {
+        NSString* destinationPath =
+        [NSString stringWithCString:request.destinationPath.c_str()
+                           encoding:[NSString defaultCStringEncoding]];
+        NSURL* destinationUrl = [NSURL fileURLWithPath:destinationPath];
+        task = [_urlSession downloadTaskWithRequest:urlRequest
+                                  completionHandler:^(NSURL *location,
+                                                      NSURLResponse *response,
+                                                      NSError *error) {
+          if (!error) {
+            NSFileManager* fm = [[NSFileManager alloc] init];
+            [fm moveItemAtURL:location toURL:destinationUrl error:&error];
+          }
+          DoCallback(queue, std::move(callback), std::move(localRequestRef), nil, response, error);
+
+        }];
+      } else {
+        task = [_urlSession dataTaskWithRequest:urlRequest
+                              completionHandler:^(NSData* data,
+                                                  NSURLResponse* response,
+                                                  NSError* error) {
+          DoCallback(queue, std::move(callback), std::move(localRequestRef), data, response, error);
+        }];
+      }
+    }
+    catch (const std::exception& e) {
+      PRINT_NAMED_WARNING("HttpAdapter.ProcessGetRequest", "exception: %s", e.what());
+      return;
+    }
+    catch (...) {
+      PRINT_NAMED_WARNING("HttpAdapter.ProcessGetRequest", "Objective-C exception?");
+      return;
     }
     [task resume];
   }
@@ -158,29 +168,39 @@ namespace Util {
                                          Util::Dispatch::Queue* queue,
                                          HttpRequestCallback callback)
   {
-    __block HttpRequest localRequestRef = request;
-    NSMutableURLRequest* urlRequest = CreateURLRequest(request, httpMethod);
+    try {
+      __block HttpRequest localRequestRef = request;
+      NSMutableURLRequest* urlRequest = CreateURLRequest(request, httpMethod);
 
-    NSMutableData* bodyData;
+      NSMutableData* bodyData;
 
-    if (localRequestRef.body.empty()){
-      // Generate & Set Parameter Data
-      NSMutableString *bodyString = [NSMutableString string];
-      ConvertParamsToBodyString(localRequestRef, bodyString);
-      bodyData = [[bodyString dataUsingEncoding:NSUTF8StringEncoding] copy];
-    }else{
-      bodyData = [[NSMutableData alloc] initWithCapacity:localRequestRef.body.size()];
-      [bodyData appendBytes:localRequestRef.body.data() length:localRequestRef.body.size()];
+      if (localRequestRef.body.empty()){
+        // Generate & Set Parameter Data
+        NSMutableString *bodyString = [NSMutableString string];
+        ConvertParamsToBodyString(localRequestRef, bodyString);
+        bodyData = [[bodyString dataUsingEncoding:NSUTF8StringEncoding] copy];
+      }else{
+        bodyData = [[NSMutableData alloc] initWithCapacity:localRequestRef.body.size()];
+        [bodyData appendBytes:localRequestRef.body.data() length:localRequestRef.body.size()];
+      }
+
+      NSURLSessionDataTask *task = [_urlSession uploadTaskWithRequest:urlRequest
+                                                             fromData:bodyData
+                                                    completionHandler:^(NSData* data,
+                                                                        NSURLResponse* response,
+                                                                        NSError* error) {
+        DoCallback(queue, std::move(callback), std::move(localRequestRef), data, response, error);
+      }];
+      [task resume];
     }
-
-    NSURLSessionDataTask *task = [_urlSession uploadTaskWithRequest:urlRequest
-                                                           fromData:bodyData
-                                                  completionHandler:^(NSData* data,
-                                                                      NSURLResponse* response,
-                                                                      NSError* error) {
-      DoCallback(queue, std::move(callback), localRequestRef, data, response, error);
-    }];
-    [task resume];
+    catch (const std::exception& e) {
+      PRINT_NAMED_WARNING("HttpAdapter.ProcessUploadRequest", "exception: %s", e.what());
+      return;
+    }
+    catch (...) {
+      PRINT_NAMED_WARNING("HttpAdapter.ProcessUploadRequest", "Objective-C exception?");
+      return;
+    }
   }
 
   NSMutableURLRequest* HttpAdapter::CreateURLRequest(const Anki::Util::HttpRequest& request,

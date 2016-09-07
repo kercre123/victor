@@ -189,6 +189,14 @@
       "AnimName": "ag_explorer_startDriving"
     },
     {
+      "CladEvent": "DroneModeGetIn",
+      "AnimName": "ag_explorer_getin"
+    },
+    {
+      "CladEvent": "DroneModeGetOut",
+      "AnimName": "ag_explorer_getout"
+    },
+    {
       "CladEvent": "DroneModeIdle",
       "AnimName": "ag_explorer_idle"
     },

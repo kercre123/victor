@@ -93,15 +93,18 @@ private:
   // helper to simplify code. Returns object addressed by index in the _candidateObjects vector, null if not a valid entry
   const ObservableObject* GetCandidate(const BlockWorld& world, size_t index) const;
   
+  // generate the proper action and callback to try to stack the cube we are carrying on top of the given one
+  void TryToStackOn(Robot& robot, const ObjectID& bottomCubeID, int attempt);
+  
+  // generate the proper action and callback to try to place the cube we are carrying at the given location
+  void TryToPlaceAt(Robot& robot, const Pose3d& pose, int attempt);
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // list of objects selected in IsRunnable. Cached as a performance optimization
   mutable AIWhiteboard::ObjectInfoList _candidateObjects;
-  
-  // cubes on which we have failed to stack, so that we don't try to restack on them
-  std::set<ObjectID> _invalidCubesToStackOn;
   
   // store ID in case something happen to the object while we move there
   ObjectID _selectedObjectID;

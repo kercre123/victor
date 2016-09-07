@@ -63,7 +63,7 @@ using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
 RobotToEngineImplMessaging::RobotToEngineImplMessaging(Robot* robot) :
     _hasMismatchedEngineToRobotCLAD(false)
   , _hasMismatchedRobotToEngineCLAD(false)
-  , _traceHandler(robot->GetContext()->GetDataPlatform())
+  , _traceHandler(robot)
 {
 }
 
@@ -91,8 +91,6 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   
   // bind to specific handlers in the robotImplMessaging class
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::printText,                      &RobotToEngineImplMessaging::HandlePrint);
-  doRobotSubscribe(RobotInterface::RobotToEngineTag::trace,                                     &RobotToEngineImplMessaging::HandleTrace);
-  doRobotSubscribe(RobotInterface::RobotToEngineTag::crashReport,                               &RobotToEngineImplMessaging::HandleCrashReport);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::factoryFirmwareVersion,         &RobotToEngineImplMessaging::HandleFWVersionInfo);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::pickAndPlaceResult,             &RobotToEngineImplMessaging::HandlePickAndPlaceResult);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::activeObjectDiscovered,         &RobotToEngineImplMessaging::HandleActiveObjectDiscovered);
@@ -301,18 +299,6 @@ void RobotToEngineImplMessaging::HandlePrint(const AnkiEvent<RobotInterface::Rob
   ANKI_CPU_PROFILE("Robot::HandlePrint");
   const RobotInterface::PrintText& payload = message.GetData().Get_printText();
   printf("ROBOT-PRINT (%d): %s", robot->GetID(), payload.text.c_str());
-}
-
-void RobotToEngineImplMessaging::HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message)
-{
-  ANKI_CPU_PROFILE("Robot::HandleTrace");
-  _traceHandler.HandleTrace(message);
-}
-
-void RobotToEngineImplMessaging::HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message)
-{
-  ANKI_CPU_PROFILE("Robot::HandleCrashReport");
-  _traceHandler.HandleCrashReport(message);
 }
 
 void RobotToEngineImplMessaging::HandleFWVersionInfo(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
