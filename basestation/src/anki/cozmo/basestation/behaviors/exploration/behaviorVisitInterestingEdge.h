@@ -18,12 +18,16 @@
 
 #include "anki/common/basestation/math/pose.h"
 
+#include "clad/types/animationTrigger.h"
+
 namespace Anki {
 namespace Cozmo {
   
 class BehaviorVisitInterestingEdge : public IBehavior
 {
 private:
+  
+  using BaseClass = IBehavior;
   
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
@@ -45,7 +49,7 @@ public:
   // true if currently there are edges that Cozmo would like to visit
   virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual bool CarryingObjectHandledInternally() const override { return false;}
-
+  
 protected:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -54,6 +58,9 @@ protected:
   
   virtual Result InitInternal(Robot& robot) override;  
   virtual void   StopInternal(Robot& robot) override;
+
+  // update internal: to handle discarding more goals while running
+  virtual Status UpdateInternal(Robot& robot) override;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State transitions
@@ -61,6 +68,11 @@ protected:
   
   void TransitionToS1_MoveToVantagePoint(Robot& robot, uint8_t retries);
   void TransitionToS2_ObserveAtVantagePoint(Robot& robot);
+  
+  // evaluates what would be the best goal if we were to select one now, and if it's not reachable it discards it,
+  // without starting new actions or changing Cozmo. This can run while Cozmo is performing other actions
+  // returns true if it discarded a goal, false if either there are no more goals or the next one won't be discarded
+  bool DiscardNextUnreachableGoal(Robot& robot) const;
   
 private:
 
@@ -71,8 +83,8 @@ private:
   // behavior configuration passed on initialization
   struct Configuration
   {
-    std::string observeEdgeAnimTrigger;   // animation to play when we observe an interesting edge
-    std::string goalDiscardedAnimTrigger; // animation to play when a goal is discarded
+    AnimationTrigger observeEdgeAnimTrigger;   // animation to play when we observe an interesting edge
+    AnimationTrigger goalDiscardedAnimTrigger; // animation to play when a goal is discarded
     // goal selection / vantage point calculation
     bool    allowGoalsBehindOtherEdges = true;        // if set to false, goals behind other edges won't be selected, if true any goal is valid
     float   distanceFromLookAtPointMin_mm = 0.0f;     // min value of random distance from LookAt point to generate vantage point
@@ -90,30 +102,47 @@ private:
     float noVantageGoalHalfQuadSideSize_mm = 50.0f; // when we can't find a goal, half of the side size of the quad centered around the goal that flags as not interesting (optional)
   };
   
+  // enum for how the behavior is running
+  enum class EOperatingState {
+    Invalid,          // not set
+    DiscardingGoals,  // Cozmo found a non reachable edge, so he is going to be thinking about it and discarding others
+    DoneDiscarding,   // Cozmo was discarding goals, but there are no more goals or the next one would be reachable
+    VisitingGoal      // Cozmo is interested in a goal, and is moving there to visit it
+  };
+  
   // score/distance associated with a border
   struct BorderScore {
-    BorderScore() : borderInfo(), distanceSQ(0) {}
-    BorderScore(const NavMemoryMapTypes::Border& b, float dSQ) : borderInfo(b), distanceSQ(dSQ) {}
+    BorderScore() : borderInfo(), distanceSQ(FLT_MAX) {}
+    // clear info and distance
+    inline void Reset() {
+      borderInfo = NavMemoryMapTypes::Border();
+      distanceSQ = FLT_MAX;
+    }
+    // set info and distance
+    void Set(const NavMemoryMapTypes::Border& b, float dSQ) {
+      borderInfo = b;
+      distanceSQ = dSQ;
+    }
+    inline bool IsValid() const { return !FLT_NEAR(distanceSQ, FLT_MAX); }
+    // attributes
     NavMemoryMapTypes::Border borderInfo;
     float distanceSQ;
   };
   
-  using BorderScoreVector = std::vector<BorderScore>;
   using VantagePointVector = std::vector<Pose3d>;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Border processing
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // select the border segments we want to visit. It queries the robot's nav memory map to retrieve borders
-  // and then selects a few of them among them, returning them in the outGoals vector
-  void PickGoals(Robot& robot, BorderScoreVector& outGoals) const;
+  // select the best goal that we would want to visit (based on euclidean distance or other scoring)
+  void PickBestGoal(Robot& robot, BorderScore& bestGoal) const;
   
   // returns true if the goal position appears to be reachable from the current position by raycasting in the memory map
-  bool CheckGoalReachable(Robot& robot, const Vec3f& goalPosition);
+  bool CheckGoalReachable(const Robot& robot, const Vec3f& goalPosition) const;
 
   // given a set of border goals, generate the vantage points for the robot to observe/clear those borders
-  void GenerateVantagePoints(Robot& robot, const BorderScoreVector& goals, VantagePointVector& outVantagePoints) const;
+  void GenerateVantagePoints(Robot& robot, const BorderScore& goal, const Vec3f& lookAtPoint, VantagePointVector& outVantagePoints) const;
   
   // flags a quad in front of the robot as not interesting. The quad is defined from robot pose to the look at point, plus
   // an additional distance from the lookAt point. Each plane (at robot and at lookAt+dist) has a width defined in parameters
@@ -154,8 +183,11 @@ private:
   // set of points the robot is interested in visiting towards clearing borders
   VantagePointVector _currentVantagePoints;
   
-  // point we are looking at
+  // point we are looking at (created from the goal)
   Vec3f _lookAtPoint;
+  
+  // what Cozmo is doing
+  EOperatingState _operatingState;
 };
   
 
