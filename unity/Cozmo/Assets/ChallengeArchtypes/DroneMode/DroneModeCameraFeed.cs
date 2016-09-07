@@ -26,6 +26,10 @@ namespace Cozmo.Minigame.DroneMode {
     private Dictionary<IVisibleInCamera, DroneModeCameraReticle> _ObjToReticle = new Dictionary<IVisibleInCamera, DroneModeCameraReticle>();
     private SimpleObjectPool<DroneModeCameraReticle> _ReticlePool;
 
+    // allow reticles to move smoothly
+    private const int kReticleSmoothingCount = 5;
+    private Dictionary<IVisibleInCamera, List<Rect>> _smoothingReticleMap = new Dictionary<IVisibleInCamera, List<Rect>>();
+
     private Vector2 _CameraImageSize;
     private float _CameraImageScale;
 
@@ -195,6 +199,7 @@ namespace Cozmo.Minigame.DroneMode {
       DroneModeCameraReticle toRemove;
       if (_ObjToReticle.TryGetValue(reticleFocus, out toRemove)) {
         _ObjToReticle.Remove(reticleFocus);
+        _smoothingReticleMap.Remove(reticleFocus);
         reticleFocus.OnVizRectChanged -= HandleVizRectChanged;
         _ReticlePool.ReturnToPool(toRemove);
 
@@ -205,8 +210,45 @@ namespace Cozmo.Minigame.DroneMode {
     private void HandleVizRectChanged(IVisibleInCamera reticleFocus, Rect newVizRect) {
       DroneModeCameraReticle cachedReticle;
       if (_ObjToReticle.TryGetValue(reticleFocus, out cachedReticle)) {
-        PositionReticle(cachedReticle, newVizRect);
+        Rect averagedVizRect = CalculateAverageVizRect(reticleFocus, newVizRect);
+        PositionReticle(cachedReticle, averagedVizRect);
       }
+    }
+
+    private Rect CalculateAverageVizRect(IVisibleInCamera reticleFocus, Rect newVizRect) {
+      Rect averagedVizRect = newVizRect;
+      List<Rect> averagedList;
+
+      if (_smoothingReticleMap.TryGetValue(reticleFocus, out averagedList)) {
+        // update the list
+        averagedList.Add(newVizRect);
+        int listLen = averagedList.Count;
+        if (listLen > kReticleSmoothingCount) {
+          averagedList.RemoveAt(0);
+          listLen--;
+        }
+
+        // average together the rect values
+        float allX = 0;
+        float allY = 0;
+        float allHeight = 0;
+        float allWidth = 0;
+        foreach (Rect entry in averagedList) {
+          allX += entry.x;
+          allY += entry.y;
+          allHeight += entry.height;
+          allWidth += entry.width;
+        }
+        Vector2 rectSize = new Vector2(allX / listLen, allY / listLen);
+        Vector2 rectPosition = new Vector2(allWidth / listLen, allHeight / listLen);
+        averagedVizRect = new Rect(rectSize, rectPosition);
+
+      }
+      else {
+        _smoothingReticleMap.Add(reticleFocus, new List<Rect> {newVizRect});
+      }
+
+      return averagedVizRect;
     }
 
     private void PositionReticle(DroneModeCameraReticle reticle, Rect vizRect) {
@@ -254,7 +296,7 @@ namespace Cozmo.Minigame.DroneMode {
           _FocusedObjectFrameContainer.gameObject.SetActive(true);
           _FocusedObjectTextLabel.text = text;
           reticle.ReticleLabel = text;
-          reticle.ShowReticleLabelText(true);
+          reticle.ShowReticleLabelText(false);
         }
         else {
           _FocusedObjectFrameContainer.gameObject.SetActive(false);
