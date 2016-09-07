@@ -15,10 +15,7 @@
 
 #include "simpleBehaviorChooser.h"
 #include "clad/types/behaviorObjectives.h"
-
-namespace Json {
-  class Value;
-}
+#include "json/json-forwards.h"
 
 
 namespace Anki {

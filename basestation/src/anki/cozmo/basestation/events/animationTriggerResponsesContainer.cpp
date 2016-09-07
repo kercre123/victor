@@ -61,6 +61,12 @@ namespace Cozmo
                         AnimationTriggerToString(ev));
       return "";
     }
+
+    PRINT_CH_INFO("Animations", "GetResponseForAnimationTrigger.Found",
+                  "%s -> %s",
+                  AnimationTriggerToString(ev),
+                  retVal->second.c_str());
+    
     return retVal->second;
   }
   

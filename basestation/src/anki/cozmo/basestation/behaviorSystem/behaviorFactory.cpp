@@ -25,11 +25,12 @@
 #include "../behaviors/exploration/behaviorVisitInterestingEdge.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDemoFearEdge.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
-#include "anki/cozmo/basestation/behaviors/behaviorFactoryCentroidExtractor.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDriveOffCharger.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDrivePath.h"
+#include "anki/cozmo/basestation/behaviors/behaviorFactoryCentroidExtractor.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFindFaces.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorNone.h"
 #include "anki/cozmo/basestation/behaviors/behaviorOnboardingShowCube.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPlayAnimSequence.h"
@@ -97,6 +98,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::LookAround:
     {
       newBehavior = new BehaviorLookAround(robot, config);
+      break;
+    }
+    case BehaviorType::InteractWithFaces:
+    {
+      newBehavior = new BehaviorInteractWithFaces(robot, config);
       break;
     }
     case BehaviorType::ReactToPickup:

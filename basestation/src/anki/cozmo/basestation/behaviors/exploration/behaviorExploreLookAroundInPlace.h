@@ -38,7 +38,7 @@ class IAction;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class BehaviorExploreLookAroundInPlace : public IBehavior
 {
-private:
+protected:
   
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
@@ -61,6 +61,13 @@ public:
   virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual bool CarryingObjectHandledInternally() const override { return false;}
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Methods
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // a number which increases each time the state machine reaches the end. It is never reset for the behavior
+  unsigned int GetNumIterationsCompleted() const { return _numIterationsCompleted; }
+
 protected:
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -74,12 +81,15 @@ protected:
   // IBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  virtual Result InitInternal(Robot& robot) override;
+  virtual Result InitInternal(Robot& robot) final override;
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State transitions
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // called by Init to enter the state machine after setup
+  virtual void BeginStateMachine(Robot& robot);
   
   void TransitionToS1_OppositeTurn(Robot& robot);
   void TransitionToS2_Pause(Robot& robot);
@@ -88,16 +98,30 @@ protected:
   void TransitionToS5_HeadOnlyDown(Robot& robot);
   void TransitionToS6_MainTurnFinal(Robot& robot);
   void TransitionToS7_IterationEnd(Robot& robot);
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // State helpers accessible to derived classes
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-private:
+  // request the proper action given the parameters so that the robot moves its head.
+  // Animation team suggested to also do a small body move
+  IAction* CreateHeadTurnAction(
+    Robot& robot,
+    float bodyRelativeMin_deg, float bodyRelativeMax_deg,           // to provide mini-turns with head moves (animation team suggests)
+    float bodyReference_deg,                                        // angle the relative ones use as referance (to turn absolute)
+    float headAbsoluteMin_deg, float headAbsoluteMax_deg,           // head min/max range absolute
+    float bodyTurnSpeed_degPerSec, float headTurnSpeed_degPerSec);  // turn speed
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Setters
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  void SetInitialBodyDirection(const Radians& rads) { _initialBodyDirection = rads; }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // Turn direction
-  enum class EClockDirection { CW, CCW };
-  
   // attributes specifically for configuration of every state
   struct Configuration
   {
@@ -151,6 +175,22 @@ private:
   };
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Attributes
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // parsed configurations params from json
+  Configuration _configParams;
+
+private:
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Types
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // Turn direction
+  enum class EClockDirection { CW, CCW };
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State helpers
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
@@ -171,21 +211,11 @@ private:
             float headAbsoluteMin_deg, float headAbsoluteMax_deg,           // head min/max range absolute
             float bodyTurnSpeed_degPerSec, float headTurnSpeed_degPerSec);  // turn speeds
   
-  // request the proper action given the parameters so that the robot moves its head.
-  // Animation team suggested to also do a small body move
-  IAction* CreateHeadTurnAction(Robot& robot,
-            float bodyRelativeMin_deg, float bodyRelativeMax_deg,           // to provide mini-turns with head moves (animation team suggests)
-            float bodyReference_deg,                                        // angle the relative ones use as referance (to turn absolute)
-            float headAbsoluteMin_deg, float headAbsoluteMax_deg,           // head min/max range absolute
-            float bodyTurnSpeed_degPerSec, float headTurnSpeed_degPerSec);  // turn speed
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // parsed configurations params from json
-  Configuration _configParams;
-  
+    
   // facing direction when we start an iteration
   Radians _iterationStartingBodyFacing_rad;
   
@@ -194,6 +224,9 @@ private:
   
   // number of times we have bounced off a cone side (requires cone of focus). 2 means an entire cone was done, 4 twice, ...
   uint8_t _coneSidesReached;
+
+  // count the total number of iterations through the state machine. This number will only increase (it never gets reset)
+  unsigned int _numIterationsCompleted = 0;
 
   // the robot completes a turn in this direction, but in between angles, it moves back and forth and it moves the head
   // up and down

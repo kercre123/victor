@@ -43,5 +43,6 @@ WebotsKeyboardController{
   forcedRobotIsSimulated FALSE
   forcedRobotIP "172.31.1.1"
   doAutoBlockpool FALSE
+  filterLogs TRUE
 }
 

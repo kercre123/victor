@@ -33,6 +33,9 @@ class Robot;
 class RobotPoseStamp;
 class DriveStraightAction;
 
+template <typename Type>
+class AnkiEvent;
+
 class ITrackAction : public IAction
 {
 public:
@@ -51,6 +54,10 @@ public:
   // track. After this, it will complete "successfully".
   // Set to 0 to disable timeout (default).
   void SetUpdateTimeout(double timeout_sec) { _updateTimeout_sec = timeout_sec; }
+
+  // Tells this action to keep running until another action (being run separately) stops. As soon as this
+  // other action completes, this action will complete as well
+  void StopTrackingWhenOtherActionCompleted( u32 otherActionTag );
   
   // Set min/max speeds
   void SetTiltSpeeds(f32 minSpeed_radPerSec, f32 maxSpeed_radPerSec);
@@ -104,6 +111,8 @@ protected:
   virtual bool InterruptInternal() override final;
   
 private:
+
+  void HandleActionCompleted(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
   
   Mode     _mode = Mode::HeadAndBody;
   double   _updateTimeout_sec = 0.;
@@ -111,6 +120,8 @@ private:
   Radians  _panTolerance  = POINT_TURN_ANGLE_TOL;
   Radians  _tiltTolerance = HEAD_ANGLE_TOL;
   Radians  _maxHeadAngle  = MAX_HEAD_ANGLE;
+  u32      _stopOnOtherActionTag = ActionConstants::INVALID_TAG;
+  bool     _stopActionNow = false;
   
   u32      _eyeShiftTag;
   bool     _moveEyes    = false;
@@ -129,6 +140,8 @@ private:
   
   u32      _soundAnimTag = (u32)ActionConstants::INVALID_TAG;
   bool     _clampSmallAngles = false;
+
+  Signal::SmartHandle _actionCompletedHandle;
   
 }; // class ITrackAction
   

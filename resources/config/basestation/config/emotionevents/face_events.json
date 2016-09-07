@@ -1,81 +1,6 @@
 {
   "emotionEvents" : [
     {
-      "name" : "SeeSometingNew",
-      "emotionAffectors" : [										  
-        {
-          "emotionType" : "Excited",
-          "value" : 0.08
-        },
-        {
-          "emotionType" : "Happy",
-          "value" : 0.08
-        }
-      ]
-    },
-    {
-      "name": "LotsOfFace",
-      "emotionAffectors" : [
-        {
-          "emotionType" : "Social",
-          "value" : 0.12
-        },
-        {
-          "emotionType" : "Happy",
-          "value" : 0.08
-        }
-      ]
-    },
-    {
-      "name": "NewUnnamedFace",
-      "emotionAffectors" : [
-        {
-          "emotionType" : "Social",
-          "value" : 0.4
-        }
-      ]
-    },
-    {
-      "name": "NewNamedFace",
-      "emotionAffectors" : [
-        {
-          "emotionType" : "Social",
-          "value" : 0.75
-        }
-      ]
-    },
-    {
-      "name": "OldUnnamedFace",
-      "emotionAffectors" : [
-        {
-          "emotionType" : "Social",
-          "value" : 0.15
-        }
-      ]
-    },
-    {
-      "name": "OldNamedFace",
-      "emotionAffectors" : [
-        {
-          "emotionType" : "Social",
-          "value" : 0.2
-        }
-      ]
-    },
-    {
-      "name": "LostFace",
-      "emotionAffectors" : [
-        {
-          "emotionType" : "Social",
-          "value" : -0.08
-        },
-        {
-          "emotionType" : "Happy",
-          "value" : -0.06
-        }
-      ]
-    },
-    {
       "name": "LookAtFaceVerified",
       "emotionAffectors" : [
         {
@@ -83,6 +8,34 @@
           "value" : 0.08
         }
       ]
-    }   
+    },
+    {
+      "name": "InteractWithNamedFace",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Social",
+          "value" : 0.8
+        }
+      ]
+    },
+    {
+      "name": "InteractWithUnnamedFace",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Social",
+          "value" : 0.6
+        }
+      ]
+    },
+    {
+      "name": "InteractWithFaceRetry",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Confident",
+          "value" : -0.1
+        }
+      ]
+    }
+    
   ]
 }

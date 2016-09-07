@@ -25,11 +25,16 @@
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 #include "util/random/randomGenerator.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 
 namespace Anki {
 namespace Cozmo {
 
+namespace {
+CONSOLE_VAR(bool, kVizConeOfFocus, "Behavior.LookAroundInPlace", false);
 static const char* kConfigParamsKey = "params";
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorExploreLookAroundInPlace::BehaviorExploreLookAroundInPlace(Robot& robot, const Json::Value& config)
@@ -72,6 +77,10 @@ bool BehaviorExploreLookAroundInPlace::IsRunnableInternal(const Robot& robot) co
   // mapped the floor around me 'recently'.
   // Now this is the case for exploration, but some other supergroup that uses the same behavior would have different
   // conditions. Maybe conditions should be datadriven?
+
+  // NOTE: if _configParams.behavior_RecentLocationsMax == 0, we never add anything to _visitedLocations, so
+  // this will return true
+  
   bool nearRecentLocation = false;
   for( const auto& recentLocation : _visitedLocations )
   {
@@ -177,15 +186,55 @@ Result BehaviorExploreLookAroundInPlace::InitInternal(Robot& robot)
   // if we should lower the lift, do that now
   if( _configParams.behavior_ShouldLowerLift ) {
     IActionRunner* lowerLiftAction = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
-    StartActing(lowerLiftAction, &BehaviorExploreLookAroundInPlace::TransitionToS1_OppositeTurn);
+    StartActing(lowerLiftAction, &BehaviorExploreLookAroundInPlace::BeginStateMachine);
   }
   else {
-    TransitionToS1_OppositeTurn(robot);
+    BeginStateMachine(robot);
   }
 
   return Result::RESULT_OK;
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploreLookAroundInPlace::BeginStateMachine(Robot& robot)
+{
+
+  if( kVizConeOfFocus ) {
+    const bool hasConeOfFocus = !Util::IsNearZero(_configParams.behavior_AngleOfFocus_deg);
+    if( hasConeOfFocus ) {
+      robot.GetContext()->GetVizManager()->EraseSegments("BehaviorLookInPlace.FocusCone");
+
+      Point3f center = robot.GetPose().GetWithRespectToOrigin().GetTranslation();
+      float theta = _initialBodyDirection.ToFloat();
+      float halfTurn = 0.5f * DEG_TO_RAD(_configParams.behavior_AngleOfFocus_deg);
+      const float coneLength_mm = 200.0f;
+      Point3f coneCenter {center.x() + coneLength_mm * cosf(theta),
+                          center.y() + coneLength_mm * sinf(theta),
+                          center.z()};
+      Point3f coneLeft   {center.x() + coneLength_mm * cosf(theta + halfTurn),
+                          center.y() + coneLength_mm * sinf(theta + halfTurn),
+                          center.z()};
+      Point3f coneRight  {center.x() + coneLength_mm * cosf(theta - halfTurn),
+                          center.y() + coneLength_mm * sinf(theta - halfTurn),
+                          center.z()};
+
+      const float zOffset_mm = 20.0f;
+
+      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorLookInPlace.FocusCone",
+                                                       center, coneCenter,
+                                                       Anki::NamedColors::WHITE, false, zOffset_mm);
+      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorLookInPlace.FocusCone",
+                                                       center, coneLeft,
+                                                       Anki::NamedColors::YELLOW, false, zOffset_mm);
+      robot.GetContext()->GetVizManager()->DrawSegment("BehaviorLookInPlace.FocusCone",
+                                                       center, coneRight,
+                                                       Anki::NamedColors::YELLOW, false, zOffset_mm);
+    }
+  }
   
+  TransitionToS1_OppositeTurn(robot);
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreLookAroundInPlace::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
 {
@@ -386,6 +435,8 @@ void BehaviorExploreLookAroundInPlace::TransitionToS6_MainTurnFinal(Robot& robot
 void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
 {
   SetDebugStateName("TransitionToS7_IterationEnd");
+
+  _numIterationsCompleted++;
   
   Radians currentZ_rad = robot.GetPose().GetRotationAngle<'Z'>();
   float doneThisIteration_rad = (currentZ_rad - _iterationStartingBodyFacing_rad).ToFloat();
@@ -450,14 +501,17 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
   else
   {
     PRINT_CH_INFO("Behaviors", (GetName() + ".IterationEnd").c_str(), "Done (reached max iterations)");
-    // we have finished at this location, note down as recent location (make room if necessary)
-    if ( _visitedLocations.size() >= _configParams.behavior_RecentLocationsMax ) {
-      assert( !_visitedLocations.empty() ); // otherwise the limit of locations is 0, so the behavior would run forever
-      _visitedLocations.pop_front();
-    }
+
+    if( _configParams.behavior_RecentLocationsMax >= 0 ) {
+      // we have finished at this location, note down as recent location (make room if necessary)
+      if ( _visitedLocations.size() >= _configParams.behavior_RecentLocationsMax ) {
+        assert( !_visitedLocations.empty() ); // otherwise the behavior would run forever
+        _visitedLocations.pop_front();
+      }
   
-    // note down this location so that we don't do it again in the same place
-    _visitedLocations.emplace_back( robot.GetPose() );
+      // note down this location so that we don't do it again in the same place
+      _visitedLocations.emplace_back( robot.GetPose() );
+    }
   }
 
 }

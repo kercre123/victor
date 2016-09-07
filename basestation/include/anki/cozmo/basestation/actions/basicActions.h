@@ -447,7 +447,7 @@ namespace Cozmo {
     
     
     // Turn towards the last known face pose. Note that this action "succeeds" without doing
-    // anything if there is no face.
+    // anything if there is no face (unless requireFace is set to true)
     // If a face is seen after we stop turning, "fine tune" the turn a bit and
     // say the face's name if we recognize it (and sayName=true).
     class TurnTowardsFaceAction : public TurnTowardsPoseAction
@@ -467,6 +467,11 @@ namespace Cozmo {
       // if sayName is true (this is because we are trying to use an animation to say the name, but if we
       // don't have a name, we want to use this animation instead)
       void SetNoNameAnimationTrigger(AnimationTrigger trigger);
+
+      // Sets whether or not we require a face. Default is false (it will play animations and return success
+      // even if no face is found). If set to true and no face is found, the action will fail with
+      // FAILURE_ABORT and no animations will be played
+      void SetRequireFaceConfirmation(bool isRequired) { _requireFaceConfirmation = isRequired; }
       
       // Template for all events we subscribe to
       template<typename T>
@@ -485,16 +490,17 @@ namespace Cozmo {
         SayingName, // saying name, or playing noNameAnimTrigger
       };
       
-      Vision::FaceID_t  _faceID            = Vision::UnknownFaceID;
-      IActionRunner*    _action            = nullptr;
-      f32               _closestDistSq     = std::numeric_limits<f32>::max();
-      u32               _maxFramesToWait   = 10;
-      Vision::FaceID_t  _obsFaceID         = Vision::UnknownFaceID;
-      State             _state             = State::Turning;
-      bool              _sayName           = false;
-      bool              _tracksLocked      = false;
-      AnimationTrigger  _nameAnimTrigger   = AnimationTrigger::Count;
-      AnimationTrigger  _noNameAnimTrigger = AnimationTrigger::Count;
+      Vision::FaceID_t  _faceID                  = Vision::UnknownFaceID;
+      IActionRunner*    _action                  = nullptr;
+      f32               _closestDistSq           = std::numeric_limits<f32>::max();
+      u32               _maxFramesToWait         = 10;
+      Vision::FaceID_t  _obsFaceID               = Vision::UnknownFaceID;
+      State             _state                   = State::Turning;
+      bool              _sayName                 = false;
+      bool              _tracksLocked            = false;
+      bool              _requireFaceConfirmation = false;
+      AnimationTrigger  _nameAnimTrigger         = AnimationTrigger::Count;
+      AnimationTrigger  _noNameAnimTrigger       = AnimationTrigger::Count;
 
       
       std::vector<Signal::SmartHandle> _signalHandles;

@@ -206,12 +206,19 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(Robot& robot)
     
     return true;
     };
+
+  CompoundActionSequential* flipAndWaitAction = new CompoundActionSequential(robot);
+
+  {
+    RetryWrapperAction* action = new RetryWrapperAction(robot, flipAction, retryCallback, kMaxNumRetries);
+    // emit completion signal so that the mood manager can react
+    const bool shouldEmitCompletion = true;
+    flipAndWaitAction->AddAction(action, false, shouldEmitCompletion);
+  }
+
+  flipAndWaitAction->AddAction(new WaitAction(robot, kWaitForBlockUpAxisChangeSecs));
   
-  RetryWrapperAction* action = new RetryWrapperAction(robot, flipAction, retryCallback, kMaxNumRetries);
-  
-  StartActing(new CompoundActionSequential(robot, {action,
-                                                   new WaitAction(robot, kWaitForBlockUpAxisChangeSecs)}),
-              flipCallback);
+  StartActing(flipAndWaitAction, flipCallback);
 }
 
 void BehaviorKnockOverCubes::TransitionToPlayingReaction(Robot& robot)

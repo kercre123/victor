@@ -1,32 +1,26 @@
 /**
  * File: behaviorFindFaces.h
  *
- * Author: Lee Crippen
- * Created: 12/22/15
+ * Author: Brad Neuman
+ * Created: 2016-08-31
  *
- * Description: Behavior for rotating around to find faces.
+ * Description: Originally written by Lee, rewritten by Brad to be based on the "look in place" behavior
  *
- * Copyright: Anki, Inc. 2015
+ * Copyright: Anki, Inc. 2016
  *
  **/
 
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorFindFaces_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorFindFaces_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
-#include "anki/common/shared/radians.h"
+#include "anki/cozmo/basestation/behaviors/exploration/behaviorExploreLookAroundInPlace.h"
 
 namespace Anki {
 namespace Cozmo {
-
-// Forward declaration
-template<typename TYPE> class AnkiEvent;
-namespace ExternalInterface { class MessageEngineToGame; }
   
-class BehaviorFindFaces : public IBehavior
+class BehaviorFindFaces : public BehaviorExploreLookAroundInPlace
 {
-private:
-  using super = IBehavior;
+  using BaseClass = BehaviorExploreLookAroundInPlace;
 protected:
   
   // Enforce creation through BehaviorFactory
@@ -35,61 +29,22 @@ protected:
   
 public:
 
+  virtual ~BehaviorFindFaces() override {}
+
   virtual bool IsRunnableInternal(const Robot& robot) const override;
-  virtual bool CarryingObjectHandledInternally() const override {return false;}
-  
-  virtual float EvaluateScoreInternal(const Anki::Cozmo::Robot &robot) const override;
-  
+    
 protected:
   
-  virtual Result InitInternal(Robot& robot) override;
-  virtual Status UpdateInternal(Robot& robot) override;
-  virtual void   StopInternal(Robot& robot) override;
-  
-  virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
-  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
-
-  virtual float EvaluateRunningScoreInternal(const Robot& robot) const override;
+  virtual void BeginStateMachine(Robot& robot) override;
   
 private:
-  enum class State {
-    Inactive,
-    StartMoving,
-    WaitToFinishMoving,
-    PauseToSee
-  };
-  
-  // Min angle to move relative to current, in degrees
-  constexpr static float kPanMin = 35;
-  // Max angle to move relative to current, in degrees
-  constexpr static float kPanMax = 80;
-  // Min absolute angle to move head to, in degrees
-  constexpr static float kTiltMin = 25;
-  // Max absolute angle to move head to, in degrees
-  constexpr static float kTiltMax = 42;
-  // Width of zone to focus on
-  constexpr static float kFocusAreaAngle_deg = 120;
-  
-  // The length of time in seconds it has to have been since we last
-  // saw a face in order to enter this behavior
-  double _minimumTimeSinceSeenLastFace_sec;
 
-  // Min time to pause after moving
-  float _pauseMin_s;
-  // Max time to pause after moving
-  float _pauseMax_s;
+  void TransitionToLookUp(Robot& robot);
+  void TransitionToLookAtLastFace(Robot& robot);
+  void TransitionToBaseClass(Robot& robot);
 
-  State _currentState = State::Inactive;
-  uint32_t _currentDriveActionID; // Init in cpp to not have constants include in header
-  double _lookPauseTimer = 0;
-  Radians _faceAngleCenter;
-  bool _faceAngleCenterSet = false;
-  bool _useFaceAngleCenter = true;
-  float _minScoreWhileActive = 0.0f;
-  bool _stopOnAnyFace = false;
+  u32 _maxFaceAgeToLook_ms = 0;
   
-  float GetRandomPanAmount() const;
-  void StartMoving(Robot& robot);
 };
   
 
