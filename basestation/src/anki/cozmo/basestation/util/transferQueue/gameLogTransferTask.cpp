@@ -24,6 +24,8 @@
 namespace Anki {
 namespace Util {
 
+static const size_t kMaxUploadSize = 10 * 1024 * 1024;
+
 void GameLogTransferTask::OnReady(const StartRequestFunc& requestFunc)
 {
   Cozmo::DevLoggingSystem* devLoggingSystem = Cozmo::DevLoggingSystem::GetInstance();
@@ -40,24 +42,34 @@ void GameLogTransferTask::OnReady(const StartRequestFunc& requestFunc)
   devLoggingSystem->PrepareForUpload(deviceId);
   auto filesToUpload = devLoggingSystem->GetLogFilenamesForUpload();
 
+  size_t bytesQueued = 0;
+
   for (const std::string& filename : filesToUpload) {
     HttpRequest request;
-    request.body = FileUtils::ReadFileAsBinary(filename);
-    request.method = HttpMethodPut;
+    try {
+      request.body = FileUtils::ReadFileAsBinary(filename);
+      request.method = HttpMethodPut;
 
-    // get filename
-    auto filenameStartIndex = filename.find_last_of('/');
-    filenameStartIndex = (filenameStartIndex == std::string::npos) ? 0 : filenameStartIndex + 1;
-    std::string baseFilename = filename.substr(filenameStartIndex);
-    request.uri = "https://blobstore-dev.api.anki.com/1/cozmo/blobs/" + baseFilename;
+      bytesQueued += request.body.size();
 
-    // get apprun
-    std::string fileAppRun = devLoggingSystem->GetAppRunId(filename);
+      // get filename
+      auto filenameStartIndex = filename.find_last_of('/');
+      filenameStartIndex = (filenameStartIndex == std::string::npos) ? 0 : filenameStartIndex + 1;
+      std::string baseFilename = filename.substr(filenameStartIndex);
+      request.uri = "https://blobstore-dev.api.anki.com/1/cozmo/blobs/" + baseFilename;
 
-    // add headers
-    request.headers.emplace("Anki-App-Key", "toh5awu3kee1ahfaikeeGh");
-    if (!fileAppRun.empty()) {
-      request.headers.emplace("Usr-apprun", std::move(fileAppRun));
+      // get apprun
+      std::string fileAppRun = devLoggingSystem->GetAppRunId(filename);
+
+      // add headers
+      request.headers.emplace("Anki-App-Key", "toh5awu3kee1ahfaikeeGh");
+      if (!fileAppRun.empty()) {
+        request.headers.emplace("Usr-apprun", std::move(fileAppRun));
+      }
+    }
+    catch (const std::exception& e) {
+      PRINT_NAMED_WARNING("GameLogTransferTask.RequestException", "%s", e.what());
+      break;
     }
 
     // submit request
@@ -81,6 +93,11 @@ void GameLogTransferTask::OnReady(const StartRequestFunc& requestFunc)
         PRINT_NAMED_WARNING("GameLogTransferTask", "could not upload %s", innerRequest.uri.c_str());
       }
     });
+
+    if (bytesQueued > kMaxUploadSize) {
+      // upload more later, don't do too much at once
+      break;
+    }
   }
 }
 
