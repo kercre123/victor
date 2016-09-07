@@ -39,16 +39,21 @@ public class FakeTouchManager : MonoBehaviour {
 
   }
 
-  #if ENABLE_DEBUG_PANEL
+#if ENABLE_DEBUG_PANEL
   /// <summary>
   /// Update this instance, listens for fake touches and records input
-  /// Only bother with this if using Debug Tools
+  /// Only bother with this if using Debug Tools and those flags have
+  /// been thrown
   /// </summary>
   void Update() {
-    UpdatePlayback();
-    RecordInput();
+    if (IsPlayingTouches || IsSoakingTouches) {
+      UpdatePlayback();
+    }
+    if (IsRecordingTouches) {
+      RecordInput();
+    }
   }
-  #endif
+#endif
 
 
 
@@ -77,7 +82,7 @@ public class FakeTouchManager : MonoBehaviour {
   }
 
   public void RecordInput() {
-    if (IsRecordingTouches && (DebugMenuManager.Instance.IsDialogOpen() == false)) {
+    if (!DebugMenuManager.Instance.IsDialogOpen()) {
       if (Input.GetMouseButtonDown(0)) {
         Debug.Log(string.Format("TouchRecorded : Timestamp : {0} Pos : {1}", Time.time - _RecordingStartTimestamp, Input.mousePosition));
         _RecordedTouches.Add(new FakeTouch(Input.mousePosition, Time.time - _RecordingStartTimestamp));
@@ -87,7 +92,7 @@ public class FakeTouchManager : MonoBehaviour {
 
   public void SaveRecordedInputs(string recordingName) {
     Debug.Log(string.Format("Save Playback of {0} touches", _RecordedTouches.Count));
-    Dictionary<string,List<FakeTouch>> savedRecordings = DataPersistenceManager.Instance.Data.DebugPrefs.FakeTouchRecordings;
+    Dictionary<string, List<FakeTouch>> savedRecordings = DataPersistenceManager.Instance.Data.DebugPrefs.FakeTouchRecordings;
     if (savedRecordings.ContainsKey(recordingName)) {
       savedRecordings[recordingName].Clear();
       savedRecordings[recordingName].AddRange(_RecordedTouches);
@@ -119,6 +124,9 @@ public class FakeTouchManager : MonoBehaviour {
   }
 
   public void UpdatePlayback() {
+    if (DebugMenuManager.Instance == null) {
+      return;
+    }
     if (DebugMenuManager.Instance.IsDialogOpen() == false) {
       if (IsPlayingTouches) {
         if (_PlaybackTouches.Count <= 0) {

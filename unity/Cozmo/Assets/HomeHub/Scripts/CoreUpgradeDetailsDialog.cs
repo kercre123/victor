@@ -303,12 +303,10 @@ public class CoreUpgradeDetailsDialog : BaseView {
     _SparksSequenceTweener.Join(_DimBackgroundInstance.DOFade(1, _SparkHoldTimeSec).SetEase(UIDefaultTransitionSettings.Instance.FadeInEasing));
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Spark_Button_Loop_Play);
 
-
-    for (int i = 0; i < _UnlockInfo.UpgradeCostAmountNeeded; ++i) {
+    for (int i = 0; i < _UnlockInfo.RequestTrickCostAmountNeeded; ++i) {
       Transform newSpark = UIManager.CreateUIElement(_SparkImagePrefab, _RequestTrickButton.transform.parent).transform;
       Vector3 endPos = new Vector3(_SparkTargetCenter.x + Random.Range(-_SparkTargetRandOffset, _SparkTargetRandOffset),
                                    _SparkTargetCenter.y + Random.Range(-_SparkTargetRandOffset, _SparkTargetRandOffset));
-
       RectTransform rectTransform = newSpark.GetComponent<RectTransform>();
       rectTransform.transform.position = _RequestTrickButton.transform.position;
       _SparksSequenceTweener.Join(newSpark.DOMove(endPos, _SparkHoldTimeSec)).SetEase(Ease.OutBack);
@@ -416,7 +414,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Spark_Launch);
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Spark);
     RobotEngineManager.Instance.CurrentRobot.EnableSparkUnlock(_UnlockInfo.Id.Value);
-
+    ContextManager.Instance.AppHoldStart(false);
     UpdateState();
     DataPersistenceManager.Instance.Save();
   }
@@ -426,6 +424,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
     if (RobotEngineManager.Instance.CurrentRobot.IsSparked) {
       RobotEngineManager.Instance.CurrentRobot.StopSparkUnlock();
     }
+    ContextManager.Instance.AppHoldEnd();
     UpdateState();
 
     if (UnlockablesManager.Instance.OnSparkComplete != null) {

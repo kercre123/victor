@@ -252,6 +252,11 @@ namespace Cozmo {
       }
     }
 
+    // returns true if the specified view is created by the pause manager
+    private bool IsPauseManagerView(BaseView view) {
+      return (view == _GoToSleepDialog || view == _SleepCozmoConfirmDialog || view == _IsOnChargerToSleep);
+    }
+
     private void CloseAllDialogs() {
       CloseConfirmSleepDialog();
       CloseGoToSleepDialog();

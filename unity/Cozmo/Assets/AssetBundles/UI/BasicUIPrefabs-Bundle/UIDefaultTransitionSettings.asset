@@ -11,6 +11,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d217d5e59bb54279a8bf24a41b254e8, type: 3}
   m_Name: UIDefaultTransitionSettings
   m_EditorClassIdentifier: 
+  _ContextFlashColor: {r: 0, g: 1, b: 0, a: 1}
+  _ContextDimColor: {r: 0, g: 0.14901961, b: 0.28235295, a: 1}
+  _ContextDimAlpha: 0.7
+  _ContextFlashAlpha: 0.7
+  _ContextFlashDuration: 0.2
   _CascadeDelay_sec: 0.2
   _FadeInTransitionDuration_sec: 0.5
   _FadeInEasing: 3
