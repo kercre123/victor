@@ -543,7 +543,7 @@ bool BehaviorVisitInterestingEdge::DiscardNextUnreachableGoal(Robot& robot) cons
   }
 
   // we couldn't calculate vantage points for the selected goal, maybe the goal was in an unreachable place
-  if ( _currentVantagePoints.empty() )
+  if ( potentialVantagePoints.empty() )
   {
     // also flag this goal as not interesting
     const float noVantageGoalHalfQuadSideSize_mm = _configParams.noVantageGoalHalfQuadSideSize_mm;
