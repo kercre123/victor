@@ -56,7 +56,9 @@ namespace Anki {
       void SetLinearVelocity(const f32 mm_per_sec);
       
       // Command the desired height of the lift
-      void SetDesiredHeight(f32 height_mm);
+      // If useVPG, the commanded position profile considers current velocity and honors max velocity/acceleration.
+      // If not useVPG, desired height_mm is commanded instantaneously.
+      void SetDesiredHeight(f32 height_mm, bool useVPG = true);
       
       // Command the desired height of the lift
       // duration_seconds:  The time it should take for it to reach the desired height
