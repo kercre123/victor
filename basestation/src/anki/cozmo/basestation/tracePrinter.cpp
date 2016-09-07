@@ -1,7 +1,12 @@
 /// Implementation for printTrace functionality
 
+#include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/tracePrinter.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/common/basestation/jsonTools.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
 #include "debug/devLoggingSystem.h"
 #include <stdlib.h>
@@ -15,8 +20,37 @@ const std::string TracePrinter::UnknownTraceName   = "UnknownTraceName";
 const std::string TracePrinter::UnknownTraceFormat = "Unknown trace format [%d] with %d parameters";
 const std::string TracePrinter::RobotNamePrefix    = "RobotFirmware.";
 
-TracePrinter::TracePrinter(Util::Data::DataPlatform* dp):
-  printThreshold(RobotInterface::LogLevel::ANKI_LOG_LEVEL_DEBUG) {
+TracePrinter::TracePrinter(Robot* robot)
+  : printThreshold(RobotInterface::LogLevel::ANKI_LOG_LEVEL_DEBUG)
+  , _robot(robot)
+{
+  // Listen to some messages from the robot
+  RobotInterface::MessageHandler* messageHandler = _robot->GetContext()->GetRobotManager()->GetMsgHandler();
+  if (messageHandler)
+  {
+    using localHandlerType= void(TracePrinter::*)(const AnkiEvent<RobotInterface::RobotToEngine>&);
+    auto robotId = _robot->GetID();
+    auto& signalHandles = GetSignalHandles();
+    auto doRobotSubscribe = [this, &signalHandles, robotId, messageHandler] (RobotInterface::RobotToEngineTag tagType, localHandlerType handler)
+    {
+      signalHandles.push_back(messageHandler->Subscribe(robotId, tagType, std::bind(handler, this, std::placeholders::_1)));
+    };
+    
+    doRobotSubscribe(RobotInterface::RobotToEngineTag::trace,         &TracePrinter::HandleTrace);
+    doRobotSubscribe(RobotInterface::RobotToEngineTag::crashReport,   &TracePrinter::HandleCrashReport);
+  }
+  
+  // Listen to some messages from the engine
+  IExternalInterface* externalInterface = _robot->GetContext()->GetExternalInterface();
+  if (externalInterface)
+  {
+    using namespace ExternalInterface;
+    
+    auto helper = MakeAnkiEventUtil(*externalInterface, *this, GetSignalHandles());
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotConnectionResponse>();
+  }
+  
+  Util::Data::DataPlatform* dp = _robot->GetContextDataPlatform();
   if (dp) {
     Json::Value jsonDict;
     const std::string jsonFilename = "config/basestation/AnkiLogStringTables.json";
@@ -43,7 +77,8 @@ TracePrinter::TracePrinter(Util::Data::DataPlatform* dp):
   }
 }
 
-void TracePrinter::HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message) const {
+void TracePrinter::HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message) {
+  ANKI_CPU_PROFILE("TracePrinter::HandleTrace");
   const RobotInterface::PrintTrace& trace = message.GetData().Get_trace();
   if (trace.level >= printThreshold) {
     const std::string name = RobotNamePrefix + GetName(trace.name);
@@ -81,7 +116,8 @@ void TracePrinter::HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& m
   }
 }
 
-void TracePrinter::HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message) const {
+void TracePrinter::HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message) {
+  ANKI_CPU_PROFILE("TracePrinter::HandleCrashReport");
   const RobotInterface::CrashReport& report = message.GetData().Get_crashReport();
   PRINT_NAMED_EVENT("RobotFirmware.CrashReport", "Firmware crash report received: %d, %x", (int)report.which, report.errorCode);
   char dumpFileName[2048];
@@ -212,6 +248,14 @@ std::string TracePrinter::GetFormatted(const RobotInterface::PrintTrace& trace) 
   }
 }
 
+template<>
+void TracePrinter::HandleMessage(const ExternalInterface::RobotConnectionResponse& msg)
+{
+  if (msg.result == RobotConnectionResult::Success) {
+    // Request the first crash report
+    _robot->SendRobotMessage<RobotInterface::RequestCrashReports>(0);
+  }
+}
 
 } // Namespace Cozmo
 } // Namespace Anki
