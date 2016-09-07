@@ -5,7 +5,7 @@ public class SecuringConnectionScreen : MonoBehaviour {
   public System.Action OnScreenComplete;
 
   private void Start() {
-    Invoke("ShowScreenComplete", ConnectionFlow.kConnectionFlowDelay);
+    Invoke("ShowScreenComplete", ConnectionFlow.ConnectionFlowDelay);
   }
 
   private void ShowScreenComplete() {
