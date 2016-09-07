@@ -35,8 +35,8 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   private BaseView _CoreUpgradeDetailsViewInstance;
 
   [SerializeField]
-  private UnityEngine.UI.Image _CoreUpgradeAnimatedIconPrefab;
-  private UnityEngine.UI.Image _CoreupgradeAnimatedIconInstance;
+  private UnlockAnimation _CoreUpgradeAnimatedIconPrefab;
+  private UnlockAnimation _CoreupgradeAnimatedIconInstance;
 
   void Start() {
     _UnlockedTiles = new List<CozmoUnlockableTile>();
@@ -229,7 +229,10 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     }
 
     if (unlockableTile != null) {
-      // TODO: do unlocked animation
+      _CoreupgradeAnimatedIconInstance = GameObject.Instantiate(_CoreUpgradeAnimatedIconPrefab.gameObject).GetComponent<UnlockAnimation>();
+      _CoreupgradeAnimatedIconInstance.Initialize(unlockableTile._UnlockedIconSprite.sprite, unlockableTile.transform);
+      // making this a child of CozmoUnlocksPanel so it gets cleaned up if CozmoUnlocksPanel is destroyed
+      _CoreupgradeAnimatedIconInstance.transform.SetParent(transform, false);
     }
   }
 

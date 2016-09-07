@@ -311,6 +311,8 @@ MonoBehaviour:
   _UnlocksTilePrefab: {fileID: 11487174, guid: 8ab911dc7ee844400aacb3da9b5028f6, type: 2}
   _CoreUpgradeDetailsViewPrefab: {fileID: 11454172, guid: 004aa32e5f8004fffa7f51c3a4061e75,
     type: 2}
+  _CoreUpgradeAnimatedIconPrefab: {fileID: 11439878, guid: e509e98c549f24912ba50af026f7847f,
+    type: 2}
 --- !u!224 &22401556
 RectTransform:
   m_ObjectHideFlags: 1
