@@ -322,25 +322,21 @@ namespace Anki {
       void SetAngularVelocity(const f32 rad_per_sec)
       {
         // Command a target height based on the sign of the desired speed
-        f32 targetHeight = 0;
-        if (rad_per_sec > 0) {
+        bool useVPG = true;
+        f32 targetHeight = 0.f;
+        if (rad_per_sec > 0.f) {
           targetHeight = LIFT_HEIGHT_CARRY;
           maxSpeedRad_ = rad_per_sec;
-        } else if (rad_per_sec < 0) {
+        } else if (rad_per_sec < 0.f) {
           targetHeight = LIFT_HEIGHT_LOWDOCK;
           maxSpeedRad_ = rad_per_sec;
         } else {
-          // Compute the expected height if we were to start slowing down now
-          f32 radToStop = 0.5f*(radSpeed_*radSpeed_) / accelRad_;
-          if (radSpeed_ < 0) {
-            radToStop *= -1;
-          }
-          targetHeight = CLIP(Rad2Height( currentAngle_.ToFloat() + radToStop ), LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
-          //PRINT("Stopping: radSpeed %f, accelRad %f, radToStop %f, currentAngle %f, targetHeight %f\n",
-          //      radSpeed_, accelRad_, radToStop, currentAngle_.ToFloat(), targetHeight);
+          // Stop immediately!
+          targetHeight = Rad2Height(currentAngle_.ToFloat());
+          useVPG = false;
         }
         ClampSpeedAndAccel();
-        SetDesiredHeight(targetHeight);
+        SetDesiredHeight(targetHeight, useVPG);
       }
 
       f32 GetAngularVelocity()
@@ -367,13 +363,7 @@ namespace Anki {
         prevHalPos_ = HAL::MotorGetPosition(MOTOR_LIFT);
       }
 
-      void SetDesiredHeight(f32 height_mm)
-      {
-        //PRINT("LiftHeight: %fmm, speed %f, accel %f\n", height_mm, maxSpeedRad_, accelRad_);
-        SetDesiredHeight(height_mm, DEFAULT_START_ACCEL_FRAC, DEFAULT_END_ACCEL_FRAC, 0);
-      }
-
-      static void SetDesiredHeight_internal(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
+      static void SetDesiredHeight_internal(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds, bool useVPG)
       {
 
         // Do range check on height
@@ -445,8 +435,16 @@ namespace Anki {
                   startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
         }
         if (!res) {
+          f32 vpgSpeed = maxSpeedRad_;
+          f32 vpgAccel = accelRad_;
+          if (!useVPG) {
+            // If not useVPG, just use really large velocity and accelerations
+            vpgSpeed = 1000000.f;
+            vpgAccel = 1000000.f;
+          }
+          
           vpg_.StartProfile(startRadSpeed, startRad,
-                            maxSpeedRad_, accelRad_,
+                            vpgSpeed, vpgAccel,
                             0, desiredAngle_.ToFloat(),
                             CONTROL_DT);
         }
@@ -460,10 +458,14 @@ namespace Anki {
 
       void SetDesiredHeight(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
       {
-        SetDesiredHeight_internal(height_mm, acc_start_frac, acc_end_frac, duration_seconds);
+        SetDesiredHeight_internal(height_mm, acc_start_frac, acc_end_frac, duration_seconds, true);
       }
 
-
+      void SetDesiredHeight(f32 height_mm, bool useVPG)
+      {
+        SetDesiredHeight_internal(height_mm, DEFAULT_START_ACCEL_FRAC, DEFAULT_END_ACCEL_FRAC, 0, useVPG);
+      }
+      
       f32 GetDesiredHeight()
       {
         return desiredHeight_;

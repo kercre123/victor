@@ -471,10 +471,12 @@ namespace Anki {
       }
 
       void Process_moveLift(const RobotInterface::MoveLift& msg) {
+        LiftController::SetMaxSpeedAndAccel(msg.speed_rad_per_sec, MAX_LIFT_ACCEL_RAD_PER_S2);
         LiftController::SetAngularVelocity(msg.speed_rad_per_sec);
       }
 
       void Process_moveHead(const RobotInterface::MoveHead& msg) {
+        HeadController::SetMaxSpeedAndAccel(msg.speed_rad_per_sec, MAX_HEAD_ACCEL_RAD_PER_S2);
         HeadController::SetAngularVelocity(msg.speed_rad_per_sec);
       }
 
