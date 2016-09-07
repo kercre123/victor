@@ -1,0 +1,44 @@
+{
+  "emotionEvents": [
+    {
+      "name": "HikingBroughtLastCubeToBeacon",
+      "emotionAffectors": [										  
+        {
+          "emotionType" : "Excited",
+          "value" : 0.20
+        },
+        {
+          "emotionType" : "Happy",
+          "value" : 0.36
+        }
+      ]
+    },
+    {
+      "name": "HikingBroughtCubeToBeacon",
+      "emotionAffectors": [										  
+        {
+          "emotionType" : "Excited",
+          "value" : 0.16
+        },
+        {
+          "emotionType" : "Happy",
+          "value" : 0.12
+        }
+      ]
+    },
+    {
+      "name": "HikingNoLocationAtBeacon",
+      "emotionAffectors": [
+        {
+          "emotionType" : "Excited",
+          "value" : -0.10
+        },
+        {
+          "emotionType" : "Happy",
+          "value" : -0.16
+        }
+      ]
+    }
+  ]
+}
+

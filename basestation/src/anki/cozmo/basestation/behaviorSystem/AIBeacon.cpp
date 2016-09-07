@@ -12,6 +12,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/AIBeacon.h"
 
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/utils/timer.h"
 
 #include "util/console/consoleInterface.h"
 
@@ -20,7 +21,7 @@ namespace Anki {
 namespace Cozmo {
 
 // beacon radius (it could be problem if we had too many cubes and not enough beacons to place them)
-CONSOLE_VAR(float, kB_BeaconRadius_mm, "AIBeacon", 150.0f);
+CONSOLE_VAR(float, kB_BeaconRadius_mm, "AIBeacon", 175.0f);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Beacon
@@ -48,6 +49,13 @@ bool AIBeacon::IsLocWithinBeacon(const Pose3d& pose, float inwardThreshold_mm) c
 float AIBeacon::GetRadius() const
 {
   return kB_BeaconRadius_mm;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIBeacon::FailedToFindLocation()
+{
+  const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _lastTimeFailedToFindLocation_secs = curTime;
 }
 
 } // namespace Cozmo
