@@ -58,6 +58,8 @@ private:
   };
 
   bool _waitingForBlockToBeValid;
+  
+  bool _stackInAnyOrientation = false;
 
   void TransitionToPickingUpBlock(Robot& robot);
   void TransitionToStackingBlock(Robot& robot);

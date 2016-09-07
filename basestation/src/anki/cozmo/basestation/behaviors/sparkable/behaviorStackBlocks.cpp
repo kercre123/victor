@@ -33,6 +33,8 @@ CONSOLE_VAR(f32, kBSB_MaxTurnTowardsFaceBeforePickupAngle_deg, "Behavior.StackBl
 CONSOLE_VAR(s32, kBSB_MaxNumPickupRetries, "Behavior.StackBlocks", 2);
 CONSOLE_VAR(f32, kBSB_SamePreactionPoseDistThresh_mm, "Behavior.StackBlocks", 30.f);
 CONSOLE_VAR(f32, kBSB_SamePreactionPoseAngleThresh_deg, "Behavior.StackBlocks", 45.f);
+
+static const char* const kStackInAnyOrientationKey = "stackInAnyOrientation";
   
 BehaviorStackBlocks::BehaviorStackBlocks(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -42,6 +44,8 @@ BehaviorStackBlocks::BehaviorStackBlocks(Robot& robot, const Json::Value& config
   , _waitingForBlockToBeValid(false)
 {
   SetDefaultName("StackBlocks");
+  
+  _stackInAnyOrientation = config.get(kStackInAnyOrientationKey, false).asBool();
 
   // set up the filter we will use for finding blocks we care about
   _blockworldFilterForTop->OnlyConsiderLatestUpdate(false);
@@ -147,7 +151,9 @@ bool BehaviorStackBlocks::FilterBlocksHelper(const ObservableObject* obj) const
   const bool upAxisOk = ! _robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::RollCube) ||
     obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
 
-  return obj->GetFamily() == ObjectFamily::LightCube && !obj->IsPoseStateUnknown() && upAxisOk;
+  return (obj->GetFamily() == ObjectFamily::LightCube &&
+          !obj->IsPoseStateUnknown() &&
+          (upAxisOk || _stackInAnyOrientation));
 }
 
 bool BehaviorStackBlocks::FilterBlocksForTop(const ObservableObject* obj) const
