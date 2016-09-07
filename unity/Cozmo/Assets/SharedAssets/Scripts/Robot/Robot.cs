@@ -817,7 +817,10 @@ public class Robot : IRobot {
   private void HandleChangedObservedFaceID(Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID message) {
     for (int i = 0; i < Faces.Count; i++) {
       // remove the old face we saw, new face will be added by RobotObservedFace
-      if (Faces[i].ID == message.oldID) {
+      if (Faces[i].ID == message.oldID){
+        if (OnFaceRemoved != null) {
+          OnFaceRemoved(Faces[i]);
+        }
         Faces.RemoveAt(i);
         break;
       }
