@@ -1120,6 +1120,8 @@ MonoBehaviour:
   _AvailablePromptLabel: {fileID: 0}
   _AvailablePromptCost: {fileID: 0}
   _ButtonCostLabel: {fileID: 11402262}
+  _RequestTrickButtonLabel: {fileID: 0}
+  _RequestTrickButtonIcon: {fileID: 11411018}
   _UnlockableIcon: {fileID: 11459738}
   _CubesRequiredLabel: {fileID: 11442860}
   _UnlockUpgradeButtonContainer: {fileID: 104356}
@@ -1618,6 +1620,9 @@ MonoBehaviour:
   - ObjectPath: ../../../../
     FieldName: CoreUpgradeDetailsDialog:_RequestTrickButton
     ReferencePath: 
+  - ObjectPath: ../../../../
+    FieldName: CoreUpgradeDetailsDialog:_RequestTrickButtonLabel
+    ReferencePath: ButtonText
   ModifiedGlobalReferences:
   - ObjectPath: ButtonBackground
     FieldName: UnityEngine.UI.Image:m_Sprite
