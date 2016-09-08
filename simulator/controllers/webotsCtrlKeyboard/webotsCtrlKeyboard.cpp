@@ -2223,9 +2223,11 @@ namespace Anki {
                 if(sayTextMsg.text.empty()) {
                   printf("ERROR: sayString field is empty\n");
                 }
-                // TODO: Add ability to set action style, voice style and duration scalar from KB controller field too
+                // TODO: Add ability to set action style, voice style, duration scalar and pitch from KB controller
                 sayTextMsg.voiceStyle = SayTextVoiceStyle::CozmoProcessing;
                 sayTextMsg.durationScalar = 2.f;
+                sayTextMsg.voicePitch = 0.f;
+                sayTextMsg.playEvent = AnimationTrigger::Count;
                                 
                 printf("Saying '%s' in voice style '%s' w/ duration scalar %f\n",
                        sayTextMsg.text.c_str(),

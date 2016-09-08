@@ -13,7 +13,7 @@
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/audio/audioEventTypes.h"
-#include "util/math/numericCast.h"
+#include "util/math/math.h"
 #include "util/random/randomGenerator.h"
 
 
@@ -26,7 +26,11 @@ namespace Cozmo {
 const char* kLocalLogChannel = "Actions";
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTextVoiceStyle style, const float durationScalar)
+SayTextAction::SayTextAction(Robot& robot,
+                             const std::string& text,
+                             const SayTextVoiceStyle style,
+                             const float durationScalar,
+                             const float voicePitch)
 : IAction(robot,
           "SayText",
           RobotActionType::SAY_TEXT,
@@ -34,9 +38,9 @@ SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTex
 , _text(text)
 , _style(style)
 , _durationScalar(durationScalar)
+, _voicePitch(voicePitch)
 , _ttsOperationId(TextToSpeechComponent::kInvalidOperationId)
 , _animation("SayTextAnimation")
-
 {
   GenerateTtsAudio();
 } // SayTextAction()
@@ -58,13 +62,30 @@ SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTex
                   Util::HidePersonallyIdentifiableInfo(_text.c_str()), EnumToString(intent));
   }
   
+  // Helper Struct
+  struct RandomRange {
+    float min = 0.f;
+    float max = 0.f;
+    RandomRange(){}
+    RandomRange(float min, float max)
+    : min(min)
+    , max(max)
+    { ASSERT_NAMED(min <= max, "SayTextAction.RandomRange.SetRange.Max.IsLessThan.Min"); }
+    void SetRange(float minVal, float maxVal)
+    {
+      ASSERT_NAMED(minVal <= maxVal, "SayTextAction.RandomRange.SetRange.MaxVal.IsLessThan.MinVal");
+      min = minVal;
+      max = maxVal;
+    }
+  };
+  
   // Create text for 'Intent'
   // Set voice style & length scalar to generate TtS
   bool isRandom   = false;
-  float minScalar = 0.f;
-  float maxScalar = 0.f;
+  RandomRange durationRange;
+  RandomRange pitchRange;
   float stepSize  = 0.f;
-  const uint8_t charLengthThreshold = 7;
+  const uint8_t kCharLengthThreshold = 7;
   switch (intent) {
     case SayTextIntent::UnProcessed:
     {
@@ -86,17 +107,16 @@ SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTex
     {
       // Normal name
       _style = SayTextVoiceStyle::CozmoProcessing;
+      pitchRange.SetRange(0.f, 0.3f);
       stepSize = 0.05f;
       isRandom = true;
-      if (text.length() < charLengthThreshold) {
+      if (text.length() < kCharLengthThreshold) {
         // Short names
-        minScalar = 1.8f;
-        maxScalar = 2.1f;
+        durationRange.SetRange(1.8f, 2.1f);
       }
       else {
         // Long names
-        minScalar = 1.7f;
-        maxScalar = 2.f;
+        durationRange.SetRange(1.7f, 2.f);
       }
       break;
     }
@@ -105,17 +125,16 @@ SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTex
     {
       // Say name very slow the first time
       _style = SayTextVoiceStyle::CozmoProcessing;
+      pitchRange.SetRange(-0.1f, 0.1f);
       stepSize = 0.1f;
       isRandom = true;
-      if (text.length() < charLengthThreshold) {
+      if (text.length() < kCharLengthThreshold) {
         // Short names
-        minScalar = 2.35f;
-        maxScalar = 2.65f;
+        durationRange.SetRange(2.35f, 2.65f);
       }
       else {
         // Long names
-        minScalar = 2.25f;
-        maxScalar = 2.55f;
+        durationRange.SetRange(2.25f, 2.55f);
       }
       break;
     }
@@ -124,17 +143,16 @@ SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTex
     {
       // Say name slightly faster then the first time
       _style = SayTextVoiceStyle::CozmoProcessing;
+      pitchRange.SetRange(0.3f, 0.6f);
       stepSize = 0.1f;
       isRandom = true;
-      if (text.length() < charLengthThreshold) {
+      if (text.length() < kCharLengthThreshold) {
         // Short names
-        minScalar = 2.0f;
-        maxScalar = 2.2f;
+        durationRange.SetRange(2.f, 2.2f);
       }
       else {
         // Long names
-        minScalar = 1.9f;
-        maxScalar = 2.1f;
+        durationRange.SetRange(1.9f, 2.1f);
       }
       break;
     }
@@ -146,12 +164,15 @@ SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTex
   
   // If random create
   if (isRandom) {
-    // Break scalar range into step sizes
-    ASSERT_NAMED(stepSize > 0.f, "SayTextAction.SayTextAction.stepSize.IsZero");
+    // Break duration scalar range into step sizes
+    ASSERT_NAMED(Util::IsFltGTZero(stepSize), "SayTextAction.SayTextAction.stepSize.IsZero");
     // (Scalar Range / stepSize) + 1 = number of total possible steps
-    const uint8_t stepCount = ((maxScalar - minScalar) / stepSize) + 1;
+    const uint8_t stepCount = ((durationRange.max - durationRange.min) / stepSize) + 1;
     const auto randStep = robot.GetRNG().RandInt(stepCount);
-    _durationScalar = minScalar + (stepSize * randStep);
+    _durationScalar = durationRange.min + (stepSize * randStep);
+    
+    // Set Random pitch
+    _voicePitch = Util::numeric_cast<float>(robot.GetRNG().RandDblInRange(pitchRange.min, pitchRange.max));
   }
   GenerateTtsAudio();
 } // SayTextAction()
@@ -211,12 +232,22 @@ ActionResult SayTextAction::Init()
           PRINT_CH_INFO(kLocalLogChannel, "SayTextAction.Init.CreatingAnimation", "");
         }
         // Get appropriate audio event for style
-        const Audio::GameEvent::GenericEvent audioEvent = _robot.GetTextToSpeechComponent().GetAudioEvent(_style);
-        
+        using namespace Audio;
+        const GameEvent::GenericEvent audioEvent = _robot.GetTextToSpeechComponent().GetAudioEvent(_style);
         _animation.SetIsLive(true);
         _animation.AddKeyFrameToBack(RobotAudioKeyFrame(RobotAudioKeyFrame::AudioRef(audioEvent), 0));
         _playAnimationAction = new PlayAnimationAction(_robot, &_animation);
-      } else {
+        
+        // Set voice Pitch
+        // FIXME: This is a temp fix, we are asuming the TtS animatoin is using the CozmoBus_1 or Cozmo_OnDevice game object.
+        // We need to add the ability to set rtpc in animations so they are posted with the animation audio events.
+        GameObjectType gameObj = (_robot.GetRobotAudioClient()->GetOutputSource() == RobotAudioClient::RobotAudioOutputSource::PlayOnRobot) ?
+                                  GameObjectType::CozmoBus_1 : GameObjectType::Cozmo_OnDevice;
+        _robot.GetRobotAudioClient()->PostParameter(Audio::GameParameter::ParameterType::External_Process_Pitch,
+                                                    _voicePitch,
+                                                    gameObj);
+      }
+      else {
         if (DEBUG_SAYTEXT_ACTION) {
           PRINT_CH_INFO(kLocalLogChannel,
                         "SayTextAction.Init.UsingAnimationGroup", "GameEvent=%d (%s)",

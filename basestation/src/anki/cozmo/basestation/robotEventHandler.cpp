@@ -601,7 +601,11 @@ IActionRunner* GetEnrollNamedFaceActionHelper(Robot& robot, const ExternalInterf
 // Version for SayText message
 IActionRunner* GetSayTextAction(Robot& robot, const ExternalInterface::SayText& sayText)
 {
-  SayTextAction* sayTextAction = new SayTextAction(robot, sayText.text, sayText.voiceStyle, sayText.durationScalar);
+  SayTextAction* sayTextAction = new SayTextAction(robot,
+                                                   sayText.text,
+                                                   sayText.voiceStyle,
+                                                   sayText.durationScalar,
+                                                   sayText.voicePitch);
   sayTextAction->SetAnimationTrigger(sayText.playEvent);
   return sayTextAction;
 }

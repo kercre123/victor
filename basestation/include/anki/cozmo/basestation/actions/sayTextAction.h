@@ -34,7 +34,11 @@ public:
   //       you can use a values around 1.0 which is what the TtS generator normal speed. When using CozmoProcessing
   //       it is more common to use a value between 1.8 - 2.3 which gets sped up in the audio engine resulting in a
   //       duration close to the unprocessed voice.
-  SayTextAction(Robot& robot, const std::string& text, const SayTextVoiceStyle style, const float durationScalar);
+  //       When using SayTextVoiceStyle::CozmoProcessing adjust processing pitch by seeting value [-1.0, 1.0].
+  SayTextAction(Robot& robot, const std::string& text,
+                const SayTextVoiceStyle style,
+                const float durationScalar = 1.f,
+                const float voicePitch = 0.f);
   
   // Play a predefined text to speech style by passing in an intent
   SayTextAction(Robot& robot, const std::string& text, const SayTextIntent intent);
@@ -59,6 +63,7 @@ private:
   std::string               _text;
   SayTextVoiceStyle         _style;
   float                     _durationScalar       = 0.f;
+  float                     _voicePitch           = 0.f;      // Adjust Cozmo voice processing pitch [-1.0, 1.0]
   uint8_t                   _ttsOperationId       = 0;        // This is set while the action is managing the audio data
   bool                      _isAudioReady         = false;
   Animation                 _animation;
