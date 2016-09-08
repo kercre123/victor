@@ -114,10 +114,6 @@ public class ChestRewardManager {
       return;
     }
 
-    // Deregister Events so this won't trigger itself with Items granted
-    Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-    DeregisterEvents(playerInventory);
-
     LadderLevel[] requirementLadderLevels = GetChestData().RequirementLadder.LadderLevels;
     int currentLadderMax = GetCurrentLadderValue(requirementLadderLevels);
     while (newCount >= currentLadderMax) {
@@ -153,8 +149,6 @@ public class ChestRewardManager {
       ChestRequirementsGained(newCount, currentLadderMax);
     }
 
-    RegisterEvents(playerInventory);
-
     DataPersistenceManager.Instance.Save();
   }
 
@@ -176,12 +170,6 @@ public class ChestRewardManager {
     inventory.ItemAdded += HandleItemValueChanged;
     inventory.ItemRemoved += HandleItemValueChanged;
     inventory.ItemCountSet += HandleItemValueChanged;
-  }
-
-  private void DeregisterEvents(Cozmo.Inventory inventory) {
-    inventory.ItemAdded -= HandleItemValueChanged;
-    inventory.ItemRemoved -= HandleItemValueChanged;
-    inventory.ItemCountSet -= HandleItemValueChanged;
   }
 
 }

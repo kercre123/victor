@@ -399,7 +399,6 @@ namespace Cozmo.UI {
       }
 
       rewardSequence.InsertCallback(_RewardExplosionDuration + _RewardExplosionStayDuration, () => {
-        ChestRewardManager.Instance.ApplyChestRewards();
         CloseView();
       });
       rewardSequence.Play();
@@ -427,9 +426,6 @@ namespace Cozmo.UI {
         whichItem++;
       }
 
-      rewardSequence.InsertCallback(_RewardExplosionDuration + _RewardExplosionStayDuration, () => {
-        ChestRewardManager.Instance.ApplyChestRewards();
-      });
       rewardSequence.Play();
 
       int numBits = 0;
@@ -474,6 +470,7 @@ namespace Cozmo.UI {
     }
 
     protected override void CleanUp() {
+      ChestRewardManager.Instance.ApplyChestRewards();
       RewardedActionManager.Instance.SendPendingRewardsToInventory();
       _LootButton.onClick.RemoveAllListeners();
       _TronPool.ReturnAllObjectsToPool();
