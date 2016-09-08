@@ -17,7 +17,7 @@ namespace Anki {
       void Update();
       
       /// Start sending crash reports to the engine
-      void StartSending();
+      void StartSending(u8 index);
       
       /// Start querrying the body for any crash reports it has
       void StartQuerry();

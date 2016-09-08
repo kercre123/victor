@@ -128,7 +128,6 @@ void RadioConnectionStateMachineUpdate()
       }
       case 6:
       {
-        CrashReporter::StartSending();
         doRTConnectPhase = 0; // Done
         break;
       }

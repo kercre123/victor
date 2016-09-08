@@ -6,6 +6,7 @@
 #include "anki/cozmo/basestation/tracePrinter.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/common/basestation/jsonTools.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
 #include "debug/devLoggingSystem.h"
@@ -19,9 +20,11 @@ namespace Cozmo {
 const std::string TracePrinter::UnknownTraceName   = "UnknownTraceName";
 const std::string TracePrinter::UnknownTraceFormat = "Unknown trace format [%d] with %d parameters";
 const std::string TracePrinter::RobotNamePrefix    = "RobotFirmware.";
+static const int MAX_CRASH_LOGS = 4;
 
 TracePrinter::TracePrinter(Robot* robot)
   : printThreshold(RobotInterface::LogLevel::ANKI_LOG_LEVEL_DEBUG)
+  , lastLogRequested(MAX_CRASH_LOGS)
   , _robot(robot)
 {
   // Listen to some messages from the robot
@@ -119,26 +122,38 @@ void TracePrinter::HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& m
 void TracePrinter::HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message) {
   ANKI_CPU_PROFILE("TracePrinter::HandleCrashReport");
   const RobotInterface::CrashReport& report = message.GetData().Get_crashReport();
-  PRINT_NAMED_EVENT("RobotFirmware.CrashReport", "Firmware crash report received: %d, %x", (int)report.which, report.errorCode);
-  char dumpFileName[2048];
-  snprintf(dumpFileName, sizeof(dumpFileName), "%s/robotFirmware/crash_%d_%x_%lld.log", // Only .log files are archived and transmitted
-    DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory().c_str(),
-    (int)report.which,
-    report.errorCode,
-    std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-  std::ofstream fileOut;
-  fileOut.open(dumpFileName, std::ios::out | std::ofstream::binary);
-  if( fileOut.is_open() ) {
-    char crashDumpData[2048]; // Whole message can never be bigger than a UDP MTU which for Cozmo is 1420 bytes
-    const size_t dumpSize = report.dump.size() * sizeof(report.dump[0]);
-    memcpy(crashDumpData, report.dump.data(), dumpSize);
-    fileOut.write(crashDumpData, dumpSize);
-    fileOut.close();
-    PRINT_NAMED_EVENT("RobotFirmware.CrashReport.Written", "Firmware crash report writtend to \"%s\"", dumpFileName);
+  if (report.errorCode || report.dump.size()) {
+    PRINT_NAMED_EVENT("RobotFirmware.CrashReport", "Firmware crash report received: %d, %x", (int)report.which, report.errorCode);
+    char dumpFileName[64];
+    snprintf(dumpFileName, sizeof(dumpFileName), "crash_%d_%x_%lld.log", // Only .log files are archived and transmitted
+             (int)report.which,
+             report.errorCode,
+             std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+
+    std::ostringstream dumpFilepathStream;
+    dumpFilepathStream << DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory().c_str() <<  "/robotFirmware/";
+    dumpFilepathStream << dumpFileName;
+    std::string dumpFilepath =dumpFilepathStream.str();
+    Util::FileUtils::CreateDirectory(dumpFilepath, true, true);
+
+    std::ofstream fileOut;
+    fileOut.open(dumpFilepath, std::ios::out | std::ofstream::binary);
+    if( fileOut.is_open() ) {
+      char crashDumpData[2048]; // Whole message can never be bigger than a UDP MTU which for Cozmo is 1420 bytes
+      const size_t dumpSize = report.dump.size() * sizeof(report.dump[0]);
+      memcpy(crashDumpData, report.dump.data(), dumpSize);
+      fileOut.write(crashDumpData, dumpSize);
+      fileOut.close();
+      PRINT_NAMED_EVENT("RobotFirmware.CrashReport.Written", "Firmware crash report written to \"%s\"", dumpFileName);
+    }
+    else
+    {
+      PRINT_NAMED_ERROR("RobotFirmware.CrashReport.FailedToWrite", "Couldn't write report to file \"%s\"", dumpFileName);
+    }
   }
-  else
+  if (lastLogRequested < MAX_CRASH_LOGS)
   {
-    PRINT_NAMED_ERROR("RobotFirmware.CrashReport.FailedToWrite", "Couldn't write report to file \"%s\"", dumpFileName);
+      _robot->SendRobotMessage<RobotInterface::RequestCrashReports>(lastLogRequested++);
   }
 }
 
@@ -253,7 +268,10 @@ void TracePrinter::HandleMessage(const ExternalInterface::RobotConnectionRespons
 {
   if (msg.result == RobotConnectionResult::Success) {
     // Request the first crash report
-    _robot->SendRobotMessage<RobotInterface::RequestCrashReports>(0);
+    if (lastLogRequested >= MAX_CRASH_LOGS) {
+      lastLogRequested = 0;
+      _robot->SendRobotMessage<RobotInterface::RequestCrashReports>(lastLogRequested++);
+    }
   }
 }
 

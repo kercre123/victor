@@ -275,6 +275,10 @@ namespace Anki {
             CrashReporter::AcceptBodyStorage(msg.bodyStorageContents);
             break;
           }
+          case RobotInterface::EngineToRobot::Tag_requestCrashReports:
+          {
+            CrashReporter::StartSending(msg.requestCrashReports.index);
+          }
           default:
           {
             AnkiWarn( 137, "WiFi.Messages", 259, "Received message not expected here tag=%02x", 1, msg.tag);

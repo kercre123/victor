@@ -54,6 +54,7 @@ namespace Anki {
       static const std::string UnknownTraceFormat;
       static const std::string RobotNamePrefix;
       RobotInterface::LogLevel printThreshold;
+      int lastLogRequested;
       Robot* _robot;
     };
     
