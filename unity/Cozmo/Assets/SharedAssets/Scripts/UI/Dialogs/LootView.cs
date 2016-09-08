@@ -398,10 +398,12 @@ namespace Cozmo.UI {
         }
       }
 
-      rewardSequence.InsertCallback(_RewardExplosionDuration + _RewardExplosionStayDuration, CloseView);
+      rewardSequence.InsertCallback(_RewardExplosionDuration + _RewardExplosionStayDuration, () => {
+        ChestRewardManager.Instance.ApplyChestRewards();
+        CloseView();
+      });
       rewardSequence.Play();
 
-      ChestRewardManager.Instance.PendingChestRewards.Clear();
       ContextManager.Instance.CozmoHoldFreeplayEnd();
     }
 
@@ -424,7 +426,12 @@ namespace Cozmo.UI {
         }
         whichItem++;
       }
+
+      rewardSequence.InsertCallback(_RewardExplosionDuration + _RewardExplosionStayDuration, () => {
+        ChestRewardManager.Instance.ApplyChestRewards();
+      });
       rewardSequence.Play();
+
       int numBits = 0;
       if (LootBoxRewards.ContainsKey(RewardedActionManager.Instance.CoinID)) {
         numBits = LootBoxRewards[RewardedActionManager.Instance.CoinID];
@@ -436,7 +443,6 @@ namespace Cozmo.UI {
       DAS.Event("onboarding.emotion_chip.open", numBits.ToString(), DASUtil.FormatExtraData(numSparks.ToString()));
       _ContinueButtonInstance.Initialize(HandleOnboardingRewardsContinueButton, "onboarding.button.loot", "Onboarding");
 
-      ChestRewardManager.Instance.PendingChestRewards.Clear();
     }
 
     private void HandleOnboardingRewardsContinueButton() {

@@ -55,6 +55,8 @@ public class ChestRewardManager {
     }
   }
 
+  private Dictionary<string, int> _PendingDeductions = new Dictionary<string, int>();
+
   private ChestData GetChestData() {
     return ChestData.Instance;
   }
@@ -122,7 +124,6 @@ public class ChestRewardManager {
       int rewardAmount = 0;
       foreach (Ladder ladder in GetChestData().RewardLadders) {
         rewardAmount = GetCurrentLadderValue(ladder.LadderLevels);
-        playerInventory.AddItemAmount(ladder.ItemId, rewardAmount);
         if (PendingChestRewards.ContainsKey(ladder.ItemId)) {
           PendingChestRewards[ladder.ItemId] += rewardAmount;
         }
@@ -136,11 +137,17 @@ public class ChestRewardManager {
         ChestGained();
       }
 
+      if (_PendingDeductions.ContainsKey(itemId)) {
+        _PendingDeductions[itemId] += currentLadderMax;
+      }
+      else {
+        _PendingDeductions.Add(itemId, currentLadderMax);
+      }
+
       newCount -= currentLadderMax;
+
       currentLadderMax = GetCurrentLadderValue(requirementLadderLevels);
     }
-
-    playerInventory.SetItemAmount(itemId, newCount);
 
     if (ChestRequirementsGained != null) {
       ChestRequirementsGained(newCount, currentLadderMax);
@@ -149,6 +156,20 @@ public class ChestRewardManager {
     RegisterEvents(playerInventory);
 
     DataPersistenceManager.Instance.Save();
+  }
+
+  public void ApplyChestRewards() {
+    Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+    foreach (KeyValuePair<string, int> kvp in PendingChestRewards) {
+      playerInventory.AddItemAmount(kvp.Key, kvp.Value);
+    }
+    PendingChestRewards.Clear();
+
+    foreach (KeyValuePair<string, int> kvp in _PendingDeductions) {
+      playerInventory.RemoveItemAmount(kvp.Key, kvp.Value);
+    }
+    _PendingDeductions.Clear();
+    DataPersistence.DataPersistenceManager.Instance.Save();
   }
 
   private void RegisterEvents(Cozmo.Inventory inventory) {
