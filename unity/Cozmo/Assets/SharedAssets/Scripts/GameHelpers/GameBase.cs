@@ -133,7 +133,9 @@ public abstract class GameBase : MonoBehaviour {
 
   private void ResetReactionaryBehaviorsForGameEnd() {
     foreach (Anki.Cozmo.BehaviorType reactionaryBehavior in _DisabledReactionaryBehaviors) {
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, reactionaryBehavior, true);
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, reactionaryBehavior, true);
+      }
     }
   }
 
@@ -562,7 +564,9 @@ public abstract class GameBase : MonoBehaviour {
 
     ResetReactionaryBehaviorsForGameEnd();
 
-    CurrentRobot.SetEnableFreeplayLightStates(true);
+    if (CurrentRobot != null) {
+      CurrentRobot.SetEnableFreeplayLightStates(true);
+    }
 
     AssetBundleManager.Instance.UnloadAssetBundle(AssetBundleNames.minigame_ui_prefabs.ToString());
   }
