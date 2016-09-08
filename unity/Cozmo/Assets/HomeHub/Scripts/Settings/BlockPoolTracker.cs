@@ -35,6 +35,9 @@ namespace Cozmo.BlockPool {
     public delegate void BlockStateUpdateHandler(BlockPoolData data, bool wasCreated);
     public event BlockStateUpdateHandler OnBlockDataUpdated;
 
+    public delegate void AutoBlockPoolEnabledChangedHandler(bool enabled);
+    public event AutoBlockPoolEnabledChangedHandler OnAutoBlockPoolEnabledChanged;
+
     private U2G.BlockPoolEnabledMessage _BlockPoolEnabledMessage;
     private U2G.BlockSelectedMessage _BlockSelectedMessage;
 
@@ -43,7 +46,21 @@ namespace Cozmo.BlockPool {
 
     private Dictionary<uint, BlockPoolData> _BlockStatesById;
     public List<BlockPoolData> BlockStates { get; private set; }
-    public bool AutoBlockPoolEnabled { get; private set; }
+
+    private bool _autoBlockPoolEnabled;
+    public bool AutoBlockPoolEnabled { 
+      get {
+        return _autoBlockPoolEnabled;
+      } 
+
+      private set {
+        _autoBlockPoolEnabled = value;
+
+        if (OnAutoBlockPoolEnabledChanged != null) {
+          OnAutoBlockPoolEnabledChanged(value);
+        }
+      } 
+    }
 
     // TODO: Bucket BlockData by ObjectType or provide getter functions
     // private Dictionary<ObjectType, List<BlockData>> _BlockStatesByType;

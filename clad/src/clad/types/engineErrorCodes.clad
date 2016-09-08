@@ -34,11 +34,12 @@ enum uint_8 EngineErrorCode
   WriteFacesToRobot,
 
   // Description
-  //  Image quality appears to be too bright or too dark
+  //  Image quality appears to be too bright or too dark (or has returned to good)
   // Solution
   //  Notify user to adjust lighting
   ImageQualityTooDark,
   ImageQualityTooBright,
+  ImageQualityGood,
 
   Count
 }

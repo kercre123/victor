@@ -103,7 +103,7 @@
     "translation": "Safe Play:"
   },
   "droneMode.safePlay.description":{
-    "translation": "- Be careful of cliffs\n- Drive on flat surfaces like the floor\n- Explore indoors in well lit spaces\n- Stay near Cozmo for the best experience"
+    "translation": "- Explore indoors in well lit spaces\n- Drive on flat surfaces\n- Be careful of falling off edges\n- Stay close to Cozmo for the best experience"
   },
   "droneMode.button.howToPlayConfirm":{
     "translation": "Got it!"
@@ -169,7 +169,7 @@
     "translation": "Take turns with Cozmo to make patterns. When Cozmo makes a pattern, watch closely and  try to copy him by tapping the cubes in the same order. When It's your turn, tap the cubes to make a pattern for Cozmo to copy! The game ends when someone messes up. Try for a high score!"
   },
   "simonGame.label.placeCenter": {
-    "translation": "Put 1 cube in front of Cozmo, and two others on either side.\n\nLeave space in-between."
+    "translation": "Put 1 Cube in front of Cozmo, and two others on either side.\n\nLeave space in-between."
   },
   "simonGame.label.waitingForCubes.placeCenter": {
     "translation": "Waiting to see center cube..."
@@ -260,7 +260,7 @@
     "translation": "Cozmo wins! They slapped the Cube!"
   },
   "cubePounce.info.setupText": {
-    "translation": "Place a cube in front of Cozmo, hold it still when it turns green."
+    "translation": "Place a Cube in front of Cozmo and hold it still when it turns green."
   },
   "cubePounce.header.cozmoWinEarly": {
     "translation": "Don't Move the Cube!"
@@ -269,7 +269,7 @@
     "translation": "You Win a Point!"
   },
   "cubePounce.header.waitForPounce": {
-    "translation": "Wait for Pounce..."
+    "translation": "Slowly push the Cube towards Cozmo"
   },
   "cubePounce.header.cozmoWinPoint": {
     "translation": "Cozmo Wins a Point!"
@@ -296,16 +296,16 @@
     "translation": "Four Colors"
   },
  "speedTap.difficulty.easyDescription": {
-   "translation": "Be the first to tap your cube when the colors match\n- but never slap on red!"
+   "translation": "Be the first to tap your Cube when the colors match, but never tap on red!"
   },
   "speedTap.difficulty.mediumDescription": {
-   "translation": "Same rules as before, but now cubes may have up to 2 colors."
+   "translation": "Be the first to tap your Cube when the patterns match, but now cubes have 2 colors."
   },
   "speedTap.difficulty.hardDescription": {
-   "translation": "More complexity!\nCubes may have 1-3 colors."
+   "translation": "Watch out! Cube patterns are now more complex with 3 colors."
   },
   "speedTap.difficulty.expertDescription": {
-   "translation": "Experts only:\nCubes may have 1-4 colors."
+   "translation": "Experts only! Cubes now have 4 colors, challenging even the best players."
   },
   "button.retry": {
     "translation": "Try Again"
@@ -317,13 +317,13 @@
     "translation": "Unlock by unlocking Quick Tap."
   },
   "speedTap.difficulty.mediumDescription.locked": {
-    "translation": "Unlock by winning Quick Tap in One-Color Mode."
+    "translation": "Two Color Mode is Locked\nUnlock by winning Quick Tap in One Color Mode."
   },
   "speedTap.difficulty.hardDescription.locked": {
-    "translation": "Unlock by winning Quick Tap in Two-Color Mode."
+    "translation": "Three Color Mode is Locked\nUnlock by winning Quick Tap in Two Color Mode."
   },
   "speedTap.difficulty.expertDescription.locked": {
-    "translation": "Unlock by winning Quick Tap in Three-Color Mode."
+    "translation": "Four Color Mode is Locked\nUnlock by winning Quick Tap in Three Color Mode."
   }, 
   "speedTap.text.getReady": {
     "translation": "Get Ready!"

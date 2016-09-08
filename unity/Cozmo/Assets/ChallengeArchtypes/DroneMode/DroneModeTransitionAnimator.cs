@@ -178,5 +178,15 @@ namespace Cozmo.Minigame.DroneMode {
       _DebugString = "DroneModeTransitionAnimator." + methodTag
         + "\nState: " + _CurrentAnimationState + "\nCurrent:" + _CurrentDriveSpeedSegment + "\nTarget:" + _TargetDriveSpeedSegment;
     }
+
+    public void PushHeadStill() {
+      PushRobotIdleAnimation (Anki.Cozmo.AnimationTrigger.Count);
+    }
+
+    public void PopHeadStill() {
+      if(_IdleAnimationStack.Peek() == Anki.Cozmo.AnimationTrigger.Count) {
+        PopRobotIdleAnimation();
+      }
+    }
   }
 }

@@ -273,7 +273,7 @@ namespace Cozmo {
             PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.SimpleStepOneStart", "");
             SetBackpackLightsHelper(_robot, NamedColors::GREEN);
             SetAction( new CompoundActionParallel(_robot, {
-              new TriggerAnimationAction(_robot, AnimationTrigger::MeetCozmoGetIn),
+              new TriggerAnimationAction(_robot, AnimationTrigger::MeetCozmoLookFaceGetIn),
               new DriveStraightAction(_robot, kDriveForwardIntentDist_mm, kDriveForwardIntentSpeed_mmps, false)
             }));
             return RESULT_OK;

@@ -2899,7 +2899,7 @@ namespace Cozmo {
     // Set up the results for this frame:
     VisionProcessingResult result;
     result.timestamp = inputImage.GetTimestamp();
-    result.imageQuality = ImageQuality::Good;
+    result.imageQuality = ImageQuality::Unchecked;
     std::swap(result, _currentResult);
     
     auto& visionModesProcessed = _currentResult.modesProcessed;
@@ -3069,7 +3069,8 @@ namespace Cozmo {
       return false;
     }
     
-    if (_currentResult.imageQuality != ImageQuality::Good)
+    if (_currentResult.imageQuality != ImageQuality::Good &&
+        _currentResult.imageQuality != ImageQuality::Unchecked)
     {
       return false;
     }

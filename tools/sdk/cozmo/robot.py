@@ -106,7 +106,7 @@ class SayText(action.Action):
     Returned by :meth:`~cozmo.robot.Cozmo.say_text`
     '''
 
-    def __init__(self, text, play_excited_animation, use_cozmo_voice, duration_scalar, **kw):
+    def __init__(self, text, play_excited_animation, use_cozmo_voice, duration_scalar, voice_pitch, **kw):
         super().__init__(**kw)
         self.text = text
 
@@ -125,12 +125,13 @@ class SayText(action.Action):
             self.say_style = _clad_to_engine_cozmo.SayTextVoiceStyle.UnProcessed
 
         self.duration_scalar = duration_scalar
+        self.voice_pitch = voice_pitch
 
     def _repr_values(self):
-        return "text=%s style=%s event=%s" % (self.text, self.say_style, self.play_event)
+        return "text=%s style=%s event=%s duration=%s pitch=%s" % (self.text, self.say_style, self.play_event, self.duration_scalar, self.voice_pitch)
 
     def _encode(self):
-        return _clad_to_engine_iface.SayText(text=self.text, playEvent=self.play_event, voiceStyle=self.say_style, durationScalar=self.duration_scalar)
+        return _clad_to_engine_iface.SayText(text=self.text, playEvent=self.play_event, voiceStyle=self.say_style, durationScalar=self.duration_scalar, voicePitch=self.voice_pitch)
 
 class SetHeadAngle(action.Action):
     '''Represents the Set Head Angle action in progress.
@@ -435,7 +436,7 @@ class Cozmo(event.Dispatcher):
         msg = _clad_to_engine_iface.MoveLift(speed_rad_per_sec=velocity)
         self.conn.send_msg(msg)
 
-    def say_text(self, text, play_excited_animation=False, use_cozmo_voice=True, duration_scalar=1.8):
+    def say_text(self, text, play_excited_animation=False, use_cozmo_voice=True, duration_scalar=1.8, voice_pitch=0.0):
         '''Have Cozmo say text!
 
         Args:
@@ -443,13 +444,15 @@ class Cozmo(event.Dispatcher):
             play_excited_animation (bool): Whether to also play an exicted animation whilst speaking (moves Cozmo a lot)
             use_cozmo_voice (bool): Whether to use cozmo's robot voice (otherwise uses a generic human male voice)
             duration_scalar (float): Adjust the relative duration of the generated text to speech audio
+            voice_pitch (float): Adjust the pitch of cozmo's robot voice [-1.0, 1.0]
         Returns:
             A class:'cozmo.robot.SayText' instance to track the action in progress.
         '''
 
         action = self.say_text_factory(text=text, play_excited_animation=play_excited_animation,
                                        use_cozmo_voice=use_cozmo_voice, duration_scalar=duration_scalar,
-                                       conn=self.conn, robot=self, dispatch_parent=self)
+                                       voice_pitch=voice_pitch, conn=self.conn,
+                                       robot=self, dispatch_parent=self)
         self._action_dispatcher._send_single_action(action)
         return action
 
