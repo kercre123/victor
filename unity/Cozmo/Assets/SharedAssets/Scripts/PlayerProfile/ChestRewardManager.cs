@@ -109,14 +109,15 @@ public class ChestRewardManager {
     return value;
   }
 
-  private void HandleItemValueChanged(string itemId, int delta, int newCount) {
-    if (itemId != GetChestData().RequirementLadder.ItemId) {
-      return;
-    }
+  // checks if we need to populate the chest with rewards
+  public void TryPopulateChestRewards() {
+    string itemId = GetChestData().RequirementLadder.ItemId;
+    int itemCount = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.GetItemAmount(itemId);
 
     LadderLevel[] requirementLadderLevels = GetChestData().RequirementLadder.LadderLevels;
     int currentLadderMax = GetCurrentLadderValue(requirementLadderLevels);
-    while (newCount >= currentLadderMax) {
+
+    while (itemCount >= currentLadderMax) {
       int rewardAmount = 0;
       foreach (Ladder ladder in GetChestData().RewardLadders) {
         rewardAmount = GetCurrentLadderValue(ladder.LadderLevels);
@@ -140,16 +141,23 @@ public class ChestRewardManager {
         _PendingDeductions.Add(itemId, currentLadderMax);
       }
 
-      newCount -= currentLadderMax;
+      itemCount -= currentLadderMax;
 
       currentLadderMax = GetCurrentLadderValue(requirementLadderLevels);
     }
 
     if (ChestRequirementsGained != null) {
-      ChestRequirementsGained(newCount, currentLadderMax);
+      ChestRequirementsGained(itemCount, currentLadderMax);
     }
 
-    DataPersistenceManager.Instance.Save();
+  }
+
+  private void HandleItemValueChanged(string itemId, int delta, int newCount) {
+    if (itemId == GetChestData().RequirementLadder.ItemId) {
+      // see if we need to populate the chest every time we get value updates from the
+      // requirement ladder item type.
+      TryPopulateChestRewards();
+    }
   }
 
   public void ApplyChestRewards() {

@@ -202,6 +202,11 @@ namespace Cozmo.HomeHub {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.EngineErrorCodeMessage>(HandleEngineErrorCode);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
 
+      // automatically apply chest rewards that are queued up incase the app is exitied during the middle
+      // of a reward loot view flow.
+      ChestRewardManager.Instance.TryPopulateChestRewards();
+      ChestRewardManager.Instance.ApplyChestRewards();
+
       _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleGreenPointsBarUpdateComplete;
       DailyGoalManager.Instance.OnRefreshDailyGoals += UpdatePlayTabText;
       GameEventManager.Instance.OnGameEvent += HandleDailyGoalCompleted;
