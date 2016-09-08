@@ -101,6 +101,7 @@ enum int_32 AnimationTrigger
   MajorFail,
   MajorWin,
   MeetCozmoGetIn,                       // 1. Transition into "scanning" player's face
+  MeetCozmoGetOut,
   MeetCozmoScanningIdle,                // 2. Looping animation while "scanning"
   MeetCozmoFirstEnrollmentSayName,      // 3a. First-time enrollment, say player's name
   MeetCozmoFirstEnrollmentRepeatName,   // 4. Fist-time enrollment, confirm player's name
