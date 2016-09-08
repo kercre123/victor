@@ -957,7 +957,10 @@ MonoBehaviour:
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#button.continue"'
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../../../
+    FieldName: Cozmo.UI.LootView:_ContinueButtonInstance
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11497132
 MonoBehaviour:
