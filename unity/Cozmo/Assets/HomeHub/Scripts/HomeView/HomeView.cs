@@ -236,6 +236,9 @@ namespace Cozmo.HomeHub {
           message.errorCode == Anki.Cozmo.EngineErrorCode.ImageQualityTooDark) {
         CreateBadLightPopup();
       }
+      else if (_BadLightDialog != null && message.errorCode == Anki.Cozmo.EngineErrorCode.ImageQualityGood) {
+        _BadLightDialog.CloseView();
+      }
     }
 
     private void CreateBadLightPopup() {
