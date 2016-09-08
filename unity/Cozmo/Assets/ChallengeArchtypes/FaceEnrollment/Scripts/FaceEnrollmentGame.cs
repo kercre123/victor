@@ -276,7 +276,7 @@ namespace FaceEnrollment {
           DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Re-enrolled existing face: " + _NameForFace);
           CurrentRobot.EnrolledFaces[message.completionInfo.faceEnrollmentCompleted.faceID] = _NameForFace;
           CurrentRobot.EnrolledFacesLastEnrolledTime[message.completionInfo.faceEnrollmentCompleted.faceID] = Time.time;
-          ReEnrolledExisitingFaceAnimationSequence();
+          ReEnrolledExistingFaceAnimationSequence();
         }
         else {
           // log to das
@@ -333,7 +333,7 @@ namespace FaceEnrollment {
 
     }
 
-    private void ReEnrolledExisitingFaceAnimationSequence() {
+    private void ReEnrolledExistingFaceAnimationSequence() {
 
       RobotActionUnion[] actions = {
         // 0. get out animation
