@@ -130,11 +130,29 @@
 
                 if (doMotor) calcSpeed(motors);
                 if (doLight) send(lights);
+                
+                e.preventDefault();
             });
 
             document.addEventListener("keyup", function (e) {
                 var doMotor, doLight;
                 switch (e.keyCode) {
+                case 87: // W
+                    motors.lift = 0;
+                    doMotor = true;
+                    break ;
+                case 83: // S
+                    motors.lift = 0;
+                    doMotor = true;
+                    break ;
+                case 69: // E
+                    motors.head = 0;
+                    doMotor = true;
+                    break ;
+                case 68: // D
+                    motors.head = 0;
+                    doMotor = true;
+                    break ;
                 case 38: // up
                     motors.up = false;
                     doMotor = true;
@@ -167,6 +185,8 @@
 
                 if (doMotor) calcSpeed(motors);
                 if (doLight) send(lights);
+
+                e.preventDefault();
             });
 
             read();

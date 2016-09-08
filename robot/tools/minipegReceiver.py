@@ -55,16 +55,22 @@ class MinipegReceiver:
         "Handle incoming image chunks"
         #sys.stdout.write(repr(chunk))
         #sys.stdout.write(os.linesep)
-        if self.imageBuffer is None and chunk.chunkId == 0:
-            self.imageBuffer = []
-        if self.imageBuffer is not None:
-            self.imageBuffer.extend(chunk.data)
-            if chunk.imageChunkCount == chunk.chunkId+1:
-                self.imageCallback(mini2jpeg(self.imageBuffer, robotInterface.CameraResolutions[chunk.resolution]), chunk.imageId)
-                self.imageBuffer = []
+        if self.currentImage != chunk.imageId:
+          self.currentImage = chunk.imageId
+          self.imageBuffer = {}
+
+        if self.currentImage == chunk.imageId:
+          self.imageBuffer[chunk.chunkId] = chunk.data
+
+        if len(self.imageBuffer.keys()) == chunk.imageChunkCount:
+          imageBuffer = []
+          for i in range(chunk.imageChunkCount):
+            imageBuffer.extend(self.imageBuffer[i])
+          self.imageCallback(mini2jpeg(imageBuffer, robotInterface.CameraResolutions[chunk.resolution]), chunk.imageId)
 
     def __init__(self, imageCallback):
-        self.imageBuffer = None
+        self.currentImage = None
+        self.imageBuffer = {}
         self.imageCallback = imageCallback
         robotInterface.SubscribeToTag(RI.RobotToEngine.Tag.image, self.recvData)
 
