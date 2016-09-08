@@ -559,6 +559,21 @@ void BehaviorManager::RequestCurrentBehaviorEndImmediately(const std::string& st
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IReactionaryBehavior* BehaviorManager::GetReactionaryBehaviorByType(BehaviorType behaviorType)
+{
+  for(IReactionaryBehavior* reactionaryBehavior : _reactionaryBehaviors)
+  {
+    if(reactionaryBehavior->GetType() == behaviorType)
+    {
+      return reactionaryBehavior;
+    }
+  }
+  
+  return nullptr;
+}
+
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::StopCurrentBehavior()
 {
   if ( nullptr != _currentBehavior && _currentBehavior->IsRunning() ) {

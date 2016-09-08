@@ -30,10 +30,8 @@ namespace Anki {
     {
     public:
       
-      using Type = ObjectType;
-      
       // Constructor, based on Type
-      MarkerlessObject(Type type);
+      MarkerlessObject(ObjectType type);
       
       virtual ~MarkerlessObject();
       
@@ -53,6 +51,8 @@ namespace Anki {
       
       // Markerless object functions
       virtual const Point3f& GetSize() const override { return _size; }
+      
+      static const Point3f& GetSizeByType(ObjectType type);
       
     protected:
       

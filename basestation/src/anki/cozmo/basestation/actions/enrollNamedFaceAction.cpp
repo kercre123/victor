@@ -52,7 +52,7 @@ namespace Cozmo {
     CONSOLE_VAR(f32,               kUpdateFacePositionThreshold_mm,      "Actions.EnrollNamedFace", 100.f);
     CONSOLE_VAR(f32,               kUpdateFaceAngleThreshold_deg,        "Actions.EnrollNamedFace", 45.f);
     
-    // Default timeout for this action (vs. the one inherited from IAction
+    // Default timeout for this action (vs. the one inherited from IAction)
     CONSOLE_VAR(f32,               kFaceEnrollmentTimeout_sec,           "Actions.EnrollNamedFace", 15.f);
     
     // Amount to drive forward once face is found to signify intent

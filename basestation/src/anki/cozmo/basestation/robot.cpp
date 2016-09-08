@@ -765,7 +765,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   {
     Delocalize(isCarryingObject);
   }
-  else
+  else if(msg.pose_frame_id >= GetPoseFrameID()) // ignore state messages with old frame ID
   {
     Pose3d newPose;
         
@@ -1521,9 +1521,21 @@ void Robot::SetNewPose(const Pose3d& newPose)
 {
   SetPose(newPose.GetWithRespectToOrigin());
   ++_frameId;
-      
-  const TimeStamp_t timeStamp = _poseHistory->GetNewestTimeStamp();
-      
+  
+  // Note: using last message timestamp instead of newest timestamp in history
+  //  because it's possible we did not put the last-received state message into
+  //  history (if it had old frame ID), but we still want the latest time we
+  //  can get.
+  const TimeStamp_t timeStamp = GetLastMsgTimestamp();
+  
+  Result addResult = AddRawOdomPoseToHistory(timeStamp, _frameId, _pose, GetHeadAngle(), GetLiftAngle(), IsCarryingObject());
+  if(RESULT_OK != addResult)
+  {
+    PRINT_NAMED_ERROR("Robot.SetNewPose.AddRawOdomPoseFailed",
+                      "t=%d FrameID=%d", timeStamp, _frameId);
+    return;
+  }
+    
   SendAbsLocalizationUpdate(_pose, timeStamp, _frameId);
 }
     

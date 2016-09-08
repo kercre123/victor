@@ -123,6 +123,10 @@ public:
   
   void SetReactionaryBehaviorsEnabled(bool isEnabled, bool stopCurrent = false);
   void RequestCurrentBehaviorEndOnNextActionComplete();
+  
+  // Returns first reactionary behavior with given type or nullptr if none found
+  IReactionaryBehavior* GetReactionaryBehaviorByType(BehaviorType behaviorType);
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Sparks
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

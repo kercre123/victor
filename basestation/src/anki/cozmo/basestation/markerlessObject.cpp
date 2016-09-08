@@ -36,18 +36,20 @@ namespace Anki {
       return CanonicalCorners;
     }
     
-    static const Point3f& GetSizeByType(MarkerlessObject::Type type)
+    const Point3f& MarkerlessObject::GetSizeByType(ObjectType type)
     {
-      static const std::map<MarkerlessObject::Type, Point3f> Sizes = {
-        {MarkerlessObject::Type::ProxObstacle, {20.f, 40.f, 50.f}},
+      static const std::map<ObjectType, Point3f> Sizes = {
+        {ObjectType::ProxObstacle,      {20.f, 40.f, 50.f}},
+        {ObjectType::CliffDetection,    {20.f, 40.f, 50.f}}, // TODO: Update size?
+        {ObjectType::CollisionObstacle, {20.f, ROBOT_BOUNDING_Y, ROBOT_BOUNDING_Z}},
       };
     
       auto iter = Sizes.find(type);
       if(iter == Sizes.end()) {
         PRINT_NAMED_ERROR("MarkerlessObject.GetSizeByType.UndefinedType",
-                          "No size defined for type %s (%d).\n",
+                          "No size defined for type %s (%d).",
                           ObjectTypeToString(type), type);
-        static const Point3f DefaultSize(0.f,0.f,0.f);
+        static const Point3f DefaultSize(10.f,10.f,10.f);
         return DefaultSize;
       } else {
         return iter->second;
@@ -55,8 +57,8 @@ namespace Anki {
     }
     
     
-    MarkerlessObject::MarkerlessObject(Type type)
-    : ObservableObject(ObjectFamily::MarkerlessObject, ObjectType::ProxObstacle)
+    MarkerlessObject::MarkerlessObject(ObjectType type)
+    : ObservableObject(ObjectFamily::MarkerlessObject, type)
     , _size(GetSizeByType(_type))
     , _vizHandle(VizManager::INVALID_HANDLE)
     {

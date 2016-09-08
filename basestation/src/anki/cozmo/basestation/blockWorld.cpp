@@ -98,11 +98,24 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
     case ObjectFamily::Charger:
       retType = isAdding ? ContentType::ObstacleCharger : ContentType::ObstacleChargerRemoved;
       break;
+    case ObjectFamily::MarkerlessObject:
+    {
+      if(!isAdding)
+      {
+        PRINT_NAMED_WARNING("ObjectFamilyToMemoryMapContentType.BadIsAdding",
+                            "isAdding must be true for ContentType ObstacleUnrecognized");
+      }
+      else
+      {
+        retType = ContentType::ObstacleUnrecognized;
+      }
+      break;
+    }
+      
     case ObjectFamily::Invalid:
     case ObjectFamily::Unknown:
     case ObjectFamily::Ramp:
     case ObjectFamily::Mat:
-    case ObjectFamily::MarkerlessObject:
     case ObjectFamily::CustomObject:
     break;
   };
@@ -149,6 +162,12 @@ CONSOLE_VAR(bool, kReviewInterestingEdges, "BlockWorld.kReviewInterestingEdges",
 
 // Enable to draw (semi-experimental) bounding cuboids around stacks of 2 blocks
 CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
+  
+// How long to wait until deleting non-cliff Markerless objects
+CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
+  
+// Whehter or not to put markerless objects like collision/prox obstacles and cliffs into the memory map
+CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   BlockWorld::BlockWorld(Robot* robot)
@@ -1283,7 +1302,7 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
     // If the object was already updated this timestamp then don't bother doing this.
     while(objectOnTop != nullptr && objectOnTop->GetLastObservedTime() != objSeen->GetLastObservedTime())
     {
-      if(_robot->GetCarryingObjects().count(objectOnTop->GetID()) > 0)
+      if(_robot->IsCarryingObject(objectOnTop->GetID()))
       {
         // Don't update a carried object that we are holding above another object
         break;
@@ -1570,8 +1589,7 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
         }
       }
       }
-      else if(unobserved.family != ObjectFamily::Mat &&
-              _robot->GetCarryingObjects().count(unobserved.object->GetID()) == 0)
+      else if(unobserved.family != ObjectFamily::Mat && !_robot->IsCarryingObject(unobserved.object->GetID()))
       {
         // If the object should _not_ be visible (i.e. none of its markers project
         // into the camera), but some part of the object is within frame, it is
@@ -1692,12 +1710,13 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
     }
   }
 
-  Result BlockWorld::AddMarkerlessObject(const Pose3d& p)
+  Result BlockWorld::AddMarkerlessObject(const Pose3d& p, ObjectType type)
   {
     TimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
 
     // Create an instance of the detected object
-    auto markerlessObject = std::make_shared<MarkerlessObject>(ObjectType::ProxObstacle);
+    auto markerlessObject = std::make_shared<MarkerlessObject>(type);
+    markerlessObject->SetLastObservedTime(lastTimestamp);
 
     // Raise origin of object above ground.
     // NOTE: Assuming detected obstacle is at ground level no matter what angle the head is at.
@@ -1741,6 +1760,12 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
     AddNewObject(markerlessObject);
     _didObjectsChange = true;
     _currentObservedObjects.push_back(markerlessObject.get());
+    
+    if(kAddMarkerlessObjectsToMemMap)
+    {
+      // Add as obstacle in the memory map
+      AddObjectReportToMemMap(*markerlessObject.get(), obsPose);
+    }
     
     return RESULT_OK;
   }
@@ -2933,16 +2958,24 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
   Result BlockWorld::AddCliff(const Pose3d& p)
   {
     // at the moment we treat them as markerless objects
-    const Result ret = AddMarkerlessObject(p);
+    const Result ret = AddMarkerlessObject(p, ObjectType::CliffDetection);
     return ret;
   }
 
   Result BlockWorld::AddProxObstacle(const Pose3d& p)
   {
     // add markerless object
-    const Result ret = AddMarkerlessObject(p);
+    const Result ret = AddMarkerlessObject(p, ObjectType::ProxObstacle);
     return ret;
   }
+  
+  Result BlockWorld::AddCollisionObstacle(const Pose3d& p)
+  {
+    const Result ret = AddMarkerlessObject(p, ObjectType::CollisionObstacle);
+    return ret;
+  }
+  
+  
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result BlockWorld::ProcessVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
@@ -3775,13 +3808,7 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
           {
             for(auto & objectIdPair : objectsByType.second)
             {
-              ActionableObject* object = dynamic_cast<ActionableObject*>(objectIdPair.second.get());
-              if(object == nullptr) {
-                PRINT_NAMED_ERROR("BlockWorld.Update.ExpectingActionableObject",
-                                  "In robot/object collision check, can currently only "
-                                  "handle ActionableObjects.");
-                continue;
-              }
+              ObservableObject* object = objectIdPair.second.get();
               
               // Collision check objects that
               // - were not observed in the last image,
@@ -3790,10 +3817,10 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
               // - are not the obect we are docking with (since we are _trying_ to get close)
               // - can intersect the robot (e.g. not charger)
               if(object->GetLastObservedTime() < _robot->GetLastImageTimeStamp() &&
-                 !object->IsBeingCarried() &&
                  object->IsPoseStateKnown() &&
                  object->GetID() != _robot->GetDockObject() &&
-                 !object->CanIntersectWithRobot())
+                 !object->CanIntersectWithRobot() &&
+                 !_robot->IsCarryingObject(object->GetID()))
               {
                 // Check block's bounding box in same coordinates as this robot to
                 // see if it intersects with the robot's bounding box. Also check to see
@@ -3870,6 +3897,8 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
     // Toss any remaining markers?
     ClearAllObservedMarkers();      
     
+    Result lastResult = UpdateMarkerlessObjects(_robot->GetLastImageTimeStamp());
+    
     /*
     Result lastResult = UpdateProxObstaclePoses();
     if(lastResult != RESULT_OK) {
@@ -3877,9 +3906,74 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
     }
     */
 
-    return RESULT_OK;
+    return lastResult;
     
   } // Update()
+  
+  Result BlockWorld::UpdateMarkerlessObjects(TimeStamp_t atTimestamp)
+  {
+    // Remove old obstacles or ones intersecting with robot (except cliffs)
+    BlockWorldFilter filter;
+    filter.AddAllowedFamily(ObjectFamily::MarkerlessObject);
+    filter.AddIgnoreType(ObjectType::CliffDetection);
+    
+    const f32 robotBottom  = _robot->GetPose().GetTranslation().z();
+    const f32 robotTop     = robotBottom + ROBOT_BOUNDING_Z;
+    const Quad2f robotBBox = _robot->GetBoundingQuadXY(_robot->GetPose().GetWithRespectToOrigin());
+    
+    filter.AddFilterFcn([this, atTimestamp, robotBottom, robotTop, &robotBBox](const ObservableObject* object) -> bool
+                        {
+                          if(object->GetLastObservedTime() + kMarkerlessObjectExpirationTime_ms < atTimestamp)
+                          {
+                            // Object has expired
+                            PRINT_CH_DEBUG("BlockWorld", "BlockWorld.UpdateMarkerlessObjects.RemovingExpired",
+                                           "%s %d not seen since %d. Current time=%d",
+                                           EnumToString(object->GetType()), object->GetID().GetValue(),
+                                           object->GetLastObservedTime(), atTimestamp);
+                            return true;
+                          }
+                          
+                          if(object->GetLastObservedTime() >= atTimestamp)
+                          {
+                            // Don't remove by collision markerless objects that were _just_
+                            // created/observed
+                            return false;
+                          }
+                          
+                          Pose3d objectPoseWrtRobotOrigin;
+                          if(true == object->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), objectPoseWrtRobotOrigin))
+                          {
+                            const f32  objectHeight = objectPoseWrtRobotOrigin.GetTranslation().z();
+                            const bool inSamePlane = (objectHeight >= robotBottom && objectHeight <= robotTop);
+                            
+                            if( inSamePlane )
+                            {
+                              const Quad2f objectBBox = object->GetBoundingQuadXY(objectPoseWrtRobotOrigin);
+                              
+                              if( robotBBox.Intersects(objectBBox) )
+                              {
+                                // Object intersects robot's position
+                                PRINT_CH_DEBUG("BlockWorld", "BlockWorld.UpdateMarkerlessObjects.RemovingIntersectWithRobot",
+                                               "%s %d",
+                                               EnumToString(object->GetType()), object->GetID().GetValue());
+                                return true;
+                              }
+                            }
+                          }
+                          
+                          return false;
+                        });
+    
+    std::vector<ObservableObject*> intersectingAndOldObjects;
+    FindMatchingObjects(filter, intersectingAndOldObjects);
+    
+    for(ObservableObject* object : intersectingAndOldObjects)
+    {
+      DeleteObject(object);
+    }
+    
+    return RESULT_OK;
+  }
   
   
   Result BlockWorld::QueueObservedMarker(HistPoseKey& poseKey, Vision::ObservedMarker& marker)

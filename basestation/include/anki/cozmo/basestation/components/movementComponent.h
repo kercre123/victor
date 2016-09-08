@@ -142,7 +142,29 @@ private:
   };
   std::map<AnimationStreamer::Tag, FaceLayerToRemove> _faceLayerTagsToRemoveOnHeadMovement;
   
-  u8 _unexpectedMovementCount              = 0;
+  // Helper class for detecting unexpected movement
+  class UnexpectedMovement
+  {
+    TimeStamp_t  _startTime;
+    f32          _sumWheelSpeedL_mmps;
+    f32          _sumWheelSpeedR_mmps;
+    u8           _count;
+    
+  public:
+    
+    UnexpectedMovement() { Reset(); }
+    
+    u8          GetCount() const { return _count; }
+    TimeStamp_t GetStartTime() const { return _startTime; }
+    void        GetAvgWheelSpeeds(f32& left, f32& right) const;
+    
+    void Increment(u8 countInc, f32 leftSpeed_mmps, f32 rightSpeed_mmps, TimeStamp_t currentTime);
+    void Decrement();
+    void Reset();
+  };
+  
+  UnexpectedMovement _unexpectedMovement;
+  
   const f32 kGyroTol_radps                 = DEG_TO_RAD(10);
   const f32 kWheelDifForTurning_mmps       = 30;
   const u8  kMaxUnexpectedMovementCount    = 10;

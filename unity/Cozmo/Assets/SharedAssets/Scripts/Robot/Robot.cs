@@ -992,8 +992,10 @@ public class Robot : IRobot {
         createdObject = Charger;
       }
     }
-    else if (objectType == ObjectType.ProxObstacle) {
-      // Just ignore prox obstacle observations because game/Unity doesn't care about them
+    else if ((objectType == ObjectType.ProxObstacle)
+             || (objectType == ObjectType.CollisionObstacle)
+             || (objectType == ObjectType.CliffDetection)) {
+      // Just ignore cliff/obstacle observations because game/Unity doesn't care about them
       return null;
     }
     else {

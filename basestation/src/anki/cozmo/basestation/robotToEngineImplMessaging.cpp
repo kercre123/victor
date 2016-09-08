@@ -677,7 +677,7 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
       // Don't notify game about moving objects that are being carried or docked with
       // (We expect those to move)
       const bool isDockingObject  = object->GetID() == robot->GetDockObject();
-      const bool isCarryingObject = robot->GetCarryingObjects().count(object->GetID()) > 0;
+      const bool isCarryingObject = robot->IsCarryingObject(object->GetID());
       
       if(!isCarryingObject && !isDockingObject)
       {

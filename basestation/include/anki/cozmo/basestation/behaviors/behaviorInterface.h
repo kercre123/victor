@@ -168,6 +168,7 @@ public:
   bool IsOwnedByFactory() const { return _isOwnedByFactory; }
     
   virtual IReactionaryBehavior* AsReactionaryBehavior() { assert(0); return nullptr; }
+  virtual const IReactionaryBehavior* AsReactionaryBehavior() const { assert(0); return nullptr; }
   
   bool IsBehaviorGroup(BehaviorGroup behaviorGroup) const { return _behaviorGroups.IsBitFlagSet(behaviorGroup); }
   bool MatchesAnyBehaviorGroups(const BehaviorGroupFlags::StorageType& flags) const {
@@ -500,9 +501,11 @@ public:
   virtual bool ShouldInterruptOtherReactionaryBehavior() { return true; }
   
   virtual IReactionaryBehavior* AsReactionaryBehavior() override { return this; }
-
+  virtual const IReactionaryBehavior* AsReactionaryBehavior() const override { return this; }
+  
   virtual bool IsReactionary() const override { return true;}
   virtual bool CarryingObjectHandledInternally() const override {return true;}
+  bool IsReactionEnabled() const { return _disableIDs.empty(); }
   
   //Deal with default disabling - has to be called after type is set for behavior
   virtual void HandleDisableByDefault(Robot& robot);
@@ -522,8 +525,6 @@ protected:
   virtual Result InitInternalReactionary(Robot& robot) = 0;
   virtual void   StopInternalReactionary(Robot& robot){};
 
-  bool IsReactionEnabled() const { return _disableIDs.empty(); }
-  
   void LoadConfig(Robot& robot, const Json::Value& config);
   
   //Handle tracking enable/disable requests

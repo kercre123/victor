@@ -219,7 +219,6 @@ public:
   const ObjectID GetCharger() const { return _chargerID; }
   // Updates the pose of the robot.
   // Sends new pose down to robot.
-  // Increments frameID
   void SetNewPose(const Pose3d& newPose);
   
   const bool GetIsCliffReactionDisabled() { return _isCliffReactionDisabled; }
@@ -354,6 +353,8 @@ public:
   const Vision::KnownMarker*  GetCarryingMarker() const {return _carryingMarker; }
 
   bool IsCarryingObject()   const {return _carryingObjectID.IsSet(); }
+  bool IsCarryingObject(const ObjectID& objectID) const { return _carryingObjectID == objectID || _carryingObjectOnTopID == objectID; }
+  
   bool IsPickingOrPlacing() const {return _isPickingOrPlacing;}
   OffTreadsState GetOffTreadsState() const {return _offTreadsState;}
   
