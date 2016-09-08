@@ -41,9 +41,10 @@
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/enums/enumOperators.h"
+#include "util/helpers/ankiDefines.h"
 #include "util/time/universalTime.h"
 
-#if defined(ANDROID) || defined(ANKI_IOS_BUILD)
+#if defined(ANKI_PLATFORM_ANDROID) || defined(ANKI_PLATFORM_IOS)
 #define USE_DIRECT_COMMS 1
 #else
 #define USE_DIRECT_COMMS 0
@@ -53,7 +54,7 @@ namespace Anki {
   namespace Cozmo {
     
     
-#if (defined(ANKI_IOS_BUILD) || defined(ANDROID))
+#if (defined(ANKI_PLATFORM_IOS) || defined(ANKI_PLATFORM_ANDROID))
   #define ANKI_ENABLE_SDK_OVER_UDP  0
   CONSOLE_VAR(bool, kEnableSdkCommsAlways,  "Sdk", false);
 #else

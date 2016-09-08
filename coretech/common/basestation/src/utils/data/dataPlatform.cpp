@@ -15,6 +15,7 @@
 #include "json/json.h"
 #include "util/logging/logging.h"
 #include "util/helpers/includeFstream.h"
+#include "util/helpers/ankiDefines.h"
 #include "util/fileUtils/fileUtils.h"
 
 namespace Anki {
@@ -75,12 +76,14 @@ std::string DataPlatform::pathToResource(const Scope& resourceScope, const std::
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string DataPlatform::GetOSPlatformString()
 {
-  #if defined(ANKI_IOS_BUILD)
+  #if defined(ANKI_PLATFORM_IOS)
     return "ios";
-  #elif defined(ANDROID)
+  #elif defined(ANKI_PLATFORM_ANDROID)
     return "android";
-  #else
+  #elif defined(ANKI_PLATFORM_OSX)
     return "osx";
+  #else
+    return "undefined";
   #endif
 }
 

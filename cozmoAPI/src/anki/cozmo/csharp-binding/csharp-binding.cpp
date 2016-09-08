@@ -18,6 +18,7 @@
 
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/helpers/ankiDefines.h"
 #include "util/logging/channelFilter.h"
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
@@ -28,13 +29,6 @@
 #include <string>
 #include <vector>
 
-#ifdef __APPLE__
-#include "TargetConditionals.h"
-#if TARGET_OS_IPHONE
-#define USE_IOS
-#endif
-#endif
-
 #if ANKI_DEV_CHEATS
 #include "anki/cozmo/basestation/debug/devLoggerProvider.h"
 #include "anki/cozmo/basestation/debug/devLoggingSystem.h"
@@ -42,9 +36,9 @@
 #include "util/logging/rollingFileLogger.h"
 #endif
 
-#ifdef USE_IOS
+#if defined(ANKI_PLATFORM_IOS)
 #include "anki/cozmo/csharp-binding/ios/ios-binding.h"
-#elif defined(ANDROID)
+#elif defined(ANKI_PLATFORM_ANDROID)
 #include "anki/cozmo/csharp-binding/android/android-binding.h"
 #if USE_DAS
 #include <DAS/dasPlatform_android.h>
@@ -254,10 +248,10 @@ int cozmo_startup(const char *configuration_data)
   PRINT_NAMED_INFO("cozmo_startup", "Creating engine");
   PRINT_NAMED_DEBUG("cozmo_startup", "Initialized data platform with filesPath = %s, cachePath = %s, externalPath = %s, resourcesPath = %s", filesPath.c_str(), cachePath.c_str(), externalPath.c_str(), resourcesPath.c_str());
 
-#ifdef USE_IOS
+#if defined(ANKI_PLATFORM_IOS)
     // init DAS among other things
     result = Anki::Cozmo::iOSBinding::cozmo_startup(dataPlatform, appRunId);
-#elif defined(ANDROID) && USE_DAS
+#elif defined(ANKI_PLATFORM_ANDROID) && USE_DAS
     std::unique_ptr<DAS::DASPlatform_Android> dasPlatform{new DAS::DASPlatform_Android(appRunId)};
     dasPlatform->InitForUnityPlayer();
     DASNativeInit(std::move(dasPlatform), "cozmo");
@@ -286,7 +280,7 @@ int cozmo_shutdown()
 {
   int result = (int)RESULT_OK;
     
-#ifdef USE_IOS
+#if defined(ANKI_PLATFORM_IOS)
     result = Anki::Cozmo::iOSBinding::cozmo_shutdown();
 #endif
     
@@ -306,7 +300,7 @@ int cozmo_wifi_setup(const char* wifiSSID, const char* wifiPasskey)
 {
   int result = (int)RESULT_OK;
   
-#ifdef USE_IOS
+#if defined(ANKI_PLATFORM_IOS)
   result = Anki::Cozmo::iOSBinding::cozmo_engine_wifi_setup(wifiSSID, wifiPasskey);
 #endif
   
@@ -314,7 +308,7 @@ int cozmo_wifi_setup(const char* wifiSSID, const char* wifiPasskey)
 }
 
 void cozmo_send_to_clipboard(const char* log) {
-#ifdef USE_IOS
+#if defined(ANKI_PLATFORM_IOS)
   Anki::Cozmo::iOSBinding::cozmo_engine_send_to_clipboard(log);
 #endif
 }

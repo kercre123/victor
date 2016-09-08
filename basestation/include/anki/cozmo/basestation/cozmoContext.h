@@ -26,6 +26,7 @@ namespace Util {
   class GameLogTransferTask;
   class RandomGenerator;
   class TransferQueueMgr;
+  class Locale;
   namespace Data {
     class DataPlatform;
   }
@@ -81,6 +82,7 @@ public:
 
   CozmoFeatureGate*                     GetFeatureGate() const { return _featureGate.get(); }
   Util::RandomGenerator*                GetRandom() const { return _random.get(); }
+  Util::Locale*                         GetLocale() const { return _locale.get(); }
   RobotDataLoader*                      GetDataLoader() const { return _dataLoader.get(); }
   RobotManager*                         GetRobotManager() const { return _robotMgr.get(); }
   Audio::AudioServer*                   GetAudioServer() const { return _audioServer.get(); }
@@ -100,6 +102,7 @@ private:
   std::unique_ptr<Audio::AudioServer>             _audioServer;
   std::unique_ptr<CozmoFeatureGate>               _featureGate;
   std::unique_ptr<Util::RandomGenerator>          _random;
+  std::unique_ptr<Util::Locale>                   _locale;
   std::unique_ptr<RobotDataLoader>                _dataLoader;
   std::unique_ptr<RobotManager>                   _robotMgr;
   std::unique_ptr<VizManager>                     _vizManager;

@@ -34,7 +34,10 @@ HttpAdapter::HttpAdapter()
   JNIEnv* env = envWrapper->GetEnv();
   if (nullptr != env) {
     JClassHandle httpClass{env->FindClass("com/anki/util/http/HttpAdapter"), env};
-    ASSERT_NAMED(httpClass != nullptr, "HttpAdapter_Android.Init.ClassNotFound");
+    if (httpClass == nullptr) {
+      ASSERT_NAMED(false, "HttpAdapter_Android.Init.ClassNotFound");
+      return;
+    }
 
     // get singleton instance of adapter
     jmethodID instanceMethodID = env->GetStaticMethodID(httpClass.get(), "getInstance", "()Lcom/anki/util/http/HttpAdapter;");
@@ -44,13 +47,19 @@ HttpAdapter::HttpAdapter()
     jobject oldObject = _javaObject;
     _javaObject = env->NewGlobalRef(_javaObject);
     env->DeleteLocalRef(oldObject);
-    ASSERT_NAMED(_javaObject != nullptr, "HttpAdapter_Android.Init.ClassGlobalRef");
+    if (_javaObject == nullptr) {
+      ASSERT_NAMED(false, "HttpAdapter_Android.Init.ClassGlobalRef");
+      return;
+    }
 
     // find StartRequest method
     _startRequestMethodID =
       env->GetMethodID(httpClass.get(), "startRequest",
         "(JLjava/lang/String;[Ljava/lang/String;[Ljava/lang/String;[BILjava/lang/String;I)V");
-    ASSERT_NAMED(_startRequestMethodID != nullptr, "HttpAdapter_Android.Init.StartRequestMethodNotFound");
+    if (_startRequestMethodID == nullptr) {
+      ASSERT_NAMED(false, "HttpAdapter_Android.Init.StartRequestMethodNotFound");
+      return;
+    }
   }
   else {
     PRINT_NAMED_ERROR("HttpAdapter_Android.Init", "can't get JVM environment");
@@ -74,6 +83,10 @@ void HttpAdapter::StartRequest(const HttpRequest& request,
   auto envWrapper = JNIUtils::getJNIEnvWrapper();
   JNIEnv* env = envWrapper->GetEnv();
   JNI_CHECK(env);
+  if (_javaObject == nullptr || _startRequestMethodID == nullptr) {
+    ASSERT_NAMED(false, "HttpAdapter_Android.StartRequest.not_initialized");
+    return;
+  }
 
   JStringHandle uri{env->NewStringUTF(request.uri.c_str()), env};
 

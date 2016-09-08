@@ -10,8 +10,8 @@
 
 #import <Security/Security.h>
 
-void BLECozmoGetRandomBytes(uint8_t* buffer, uint32_t numBytes)
+int BLECozmoGetRandomBytes(uint8_t* buffer, uint32_t numBytes)
 {
-  SecRandomCopyBytes(kSecRandomDefault, numBytes, buffer);
+  return SecRandomCopyBytes(kSecRandomDefault, numBytes, buffer);
 }
 

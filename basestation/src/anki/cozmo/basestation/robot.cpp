@@ -71,6 +71,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/helpers/ankiDefines.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/transport/reliableConnection.h"
 
@@ -955,7 +956,7 @@ void Robot::SetPhysicalRobot(bool isPhysical)
   // them We do this regardless of previous state to ensure it works when adding 1st simulated robot (as
   // _isPhysical already == false in that case) Note: We don't do this on phone by default, they also have a
   // remote connection to the simulator so removing timeout would force user to restart both sides each time.
-  #if !(defined(ANKI_IOS_BUILD) || defined(ANDROID))
+  #if !(defined(ANKI_PLATFORM_IOS) || defined(ANKI_PLATFORM_ANDROID))
   {
     static const double kPhysicalRobotNetConnectionTimeoutInMS =
       Anki::Util::ReliableConnection::GetConnectionTimeoutInMS(); // grab default on 1st call
@@ -966,7 +967,7 @@ void Robot::SetPhysicalRobot(bool isPhysical)
                      netConnectionTimeoutInMS, isPhysical ? "Physical" : "Simulated");
     Anki::Util::ReliableConnection::SetConnectionTimeoutInMS(netConnectionTimeoutInMS);
   }
-  #endif // !(ANKI_IOS_BUILD || ANDROID)
+  #endif // !(ANKI_PLATFORM_IOS || ANKI_PLATFORM_ANDROID)
 }
 
 Result Robot::GetHistoricalCamera(TimeStamp_t t_request, Vision::Camera& camera) const

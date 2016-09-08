@@ -253,7 +253,6 @@
         "OS=='ios'",
         {
           'defines': [
-            'ANKI_IOS_BUILD=1',
           ],
         },
       ],

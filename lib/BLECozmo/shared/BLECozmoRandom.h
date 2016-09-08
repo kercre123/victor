@@ -15,7 +15,11 @@
 extern "C" {
 #endif
 
-void BLECozmoGetRandomBytes(uint8_t* buffer, uint32_t numBytes);
+// Return count random bytes in *bytes, allocated by the caller.
+// It is critical to check the return value for error
+//  @result Return 0 on success or -1 if something went wrong, check errno
+//    to find out the real error.
+int BLECozmoGetRandomBytes(uint8_t* buffer, uint32_t numBytes);
   
 #ifdef __cplusplus
 }

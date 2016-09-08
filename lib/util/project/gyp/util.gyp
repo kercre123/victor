@@ -362,6 +362,12 @@
               "<!@(cat <(util_source_file_name))",
               '<(clad_dir)/support/cpp/source/SafeMessageBuffer.cpp',
             ],
+            'conditions': [
+              ['OS!="mac"',     {'sources/': [['exclude', '_osx\\.']]}],
+              ['OS!="ios"',     {'sources/': [['exclude', '_ios\\.|_iOS\\.']]}],
+              ['OS!="android"', {'sources/': [['exclude', '_android\\.']]}],
+              ['OS!="linux"',   {'sources/': [['exclude', '_linux\\.']]}],
+            ],
             'include_dirs': [
               '../../source/anki',
               '../../libs/packaged/include',
@@ -499,6 +505,12 @@
         '<!@(cat <(util_source_file_name))',
         '<!@(cat <(folly_source_file_name))',
         '<(clad_dir)/support/cpp/source/SafeMessageBuffer.cpp',
+      ],
+      'conditions': [
+        ['OS!="mac"',     {'sources/': [['exclude', '_osx\\.']]}],
+        ['OS!="ios"',     {'sources/': [['exclude', '_ios\\.|_iOS\\.']]}],
+        ['OS!="android"', {'sources/': [['exclude', '_android\\.']]}],
+        ['OS!="linux"',   {'sources/': [['exclude', '_linux\\.']]}],
       ],
       'include_dirs': [
         '../../source/anki',

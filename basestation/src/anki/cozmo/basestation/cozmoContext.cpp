@@ -13,6 +13,8 @@
 //#include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "util/random/randomGenerator.h"
+#include "util/environment/locale.h"
+
 
 namespace Anki {
 namespace Cozmo {
@@ -22,6 +24,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   , _dataPlatform(dataPlatform)
   , _featureGate(new CozmoFeatureGate())
   , _random(new Anki::Util::RandomGenerator())
+  , _locale(new Util::Locale(Util::Locale::GetNativeLocale()))
   , _dataLoader(new RobotDataLoader(this))
   , _robotMgr(new RobotManager(this))
   , _vizManager(new VizManager())

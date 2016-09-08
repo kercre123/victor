@@ -315,7 +315,6 @@
         "OS=='ios'",
         {
           'defines': [
-            'ANKI_IOS_BUILD=1',
             'USE_DAS=1',
           ],
         },

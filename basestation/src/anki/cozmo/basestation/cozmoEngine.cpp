@@ -45,8 +45,12 @@
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/multiLoggerProvider.h"
 #include "util/time/universalTime.h"
+#include "util/environment/locale.h"
 #include "util/transport/connectionStats.h"
 #include <cstdlib>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 
 #if USE_DAS
 #include <DAS/DAS.h>
@@ -80,6 +84,16 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
     Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
   }
   
+  // log additional das info
+  PRINT_NAMED_EVENT("device.language_locale", "%s", _context->GetLocale()->GetLocaleString().c_str());
+  std::time_t t = std::time(nullptr);
+  std::tm tm = *std::localtime(&t);
+  std::stringstream timeZoneString;
+  timeZoneString << std::put_time(&tm, "%Z");
+  std::stringstream timeZoneOffset;
+  timeZoneOffset << std::put_time(&tm, "%z");
+  Util::sEventF("device.timezone", {{DDATA, timeZoneOffset.str().c_str()}}, "%s", timeZoneString.str().c_str());
+
   auto helper = MakeAnkiEventUtil(*_context->GetExternalInterface(), *this, _signalHandles);
   
   using namespace ExternalInterface;

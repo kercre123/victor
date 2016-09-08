@@ -10,7 +10,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/utilities.h"
 #include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/array2d.h"
-
+#include "util/helpers/ankiDefines.h"
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
 #include "opencv2/core/core.hpp"
 #endif
@@ -223,7 +223,7 @@ namespace Anki
       timeInSeconds = (f32)(counter.QuadPart - startCounter) / frequency;
 #elif defined(__APPLE_CC__)
       struct timeval time;
-#     ifndef ANKI_IOS_BUILD
+#     if !defined(ANKI_PLATFORM_IOS)
       // TODO: Fix build error when using this in an iOS build for arm architectures
       gettimeofday(&time, NULL);
 #     endif
@@ -271,7 +271,7 @@ namespace Anki
       timeInSeconds = (f64)(counter.QuadPart - startCounter) / frequency;
 #elif defined(__APPLE_CC__)
       struct timeval time;
-#     ifndef ANKI_IOS_BUILD
+#     if !defined(ANKI_PLATFORM_IOS)
       // TODO: Fix build error when using this in an iOS build for arm architectures
       gettimeofday(&time, NULL);
 #     endif
@@ -311,7 +311,7 @@ namespace Anki
       return static_cast<u32>((counter.QuadPart - startCounter) & 0xFFFFFFFF);
 #elif defined(__APPLE_CC__)
       struct timeval time;
-#     ifndef ANKI_IOS_BUILD
+#     if !defined(ANKI_PLATFORM_IOS)
       // TODO: Fix build error when using this in an iOS build for arm architectures
       gettimeofday(&time, NULL);
 #     endif

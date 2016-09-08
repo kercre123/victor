@@ -20,6 +20,7 @@
 #include "anki/common/basestation/math/polygon.h"
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/types.h"
+#include "util/helpers/ankiDefines.h"
 #include "anki/vision/CameraSettings.h"
 #include "anki/planning/shared/path.h"
 #include "anki/messaging/shared/UdpClient.h"
@@ -34,7 +35,7 @@
 #include <vector>
 #include <map>
 
-#if defined(ANDROID) || defined(ANKI_IOS_BUILD)
+#if defined(ANKI_PLATFORM_ANDROID) || defined(ANKI_PLATFORM_IOS)
 #define VIZ_ON_DEVICE 1
 #else
 #define VIZ_ON_DEVICE 0
