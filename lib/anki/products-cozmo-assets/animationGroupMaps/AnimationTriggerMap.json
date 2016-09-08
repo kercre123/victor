@@ -346,11 +346,11 @@
     },
     {
       "CladEvent": "MeetCozmoGetIn",
-      "AnimName" : "ag_meetcozmo_getin"
+      "AnimName" : "ag_meetcozmo_lookface_getin"
     },
     {
-      "CladEvent": "MeetCozmoGetOut",
-      "AnimName" : "ag_meetcozmo_getout"
+      "CladEvent": "MeetCozmoLookFaceGetOut",
+      "AnimName" : "ag_meetcozmo_lookface_getout"
     },
     {
       "CladEvent": "MeetCozmoScanningIdle",
