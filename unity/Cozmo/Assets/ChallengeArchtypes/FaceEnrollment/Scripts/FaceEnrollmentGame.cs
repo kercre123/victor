@@ -276,7 +276,7 @@ namespace FaceEnrollment {
           DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Re-enrolled existing face: " + _NameForFace);
           CurrentRobot.EnrolledFaces[message.completionInfo.faceEnrollmentCompleted.faceID] = _NameForFace;
           CurrentRobot.EnrolledFacesLastEnrolledTime[message.completionInfo.faceEnrollmentCompleted.faceID] = Time.time;
-          ReEnrolledExisitingFaceAnimationSequence();
+          ReEnrolledExistingFaceAnimationSequence();
         }
         else {
           // log to das
@@ -313,6 +313,8 @@ namespace FaceEnrollment {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Meet_Cozmo_Say_Name);
 
       RobotActionUnion[] actions = {
+        // 0. get out animation
+        new RobotActionUnion().Initialize(Singleton<PlayAnimationTrigger>.Instance.Initialize(CurrentRobot.ID, 1, Anki.Cozmo.AnimationTrigger.MeetCozmoLookFaceGetOut, true)),
         // 1. say name once
         new RobotActionUnion().Initialize(new SayTextWithIntent().Initialize(
           _NameForFace,
@@ -324,15 +326,26 @@ namespace FaceEnrollment {
           Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentRepeatName,
           Anki.Cozmo.SayTextIntent.Name_FirstIntroduction_2)),
         // 3. final celebration (no name said)                
-        new RobotActionUnion().Initialize(Singleton<PlayAnimationTrigger>.Instance.Initialize(CurrentRobot.ID, 1, Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentCelebration,true))
+        new RobotActionUnion().Initialize(Singleton<PlayAnimationTrigger>.Instance.Initialize(CurrentRobot.ID, 1, Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentCelebration, true))
       };
 
       CurrentRobot.SendQueueCompoundAction(actions, HandleEnrollFaceAnimationSequenceComplete);
 
     }
 
-    private void ReEnrolledExisitingFaceAnimationSequence() {
-      CurrentRobot.SayTextWithEvent(_NameForFace, Anki.Cozmo.AnimationTrigger.MeetCozmoReEnrollmentSayName, Anki.Cozmo.SayTextIntent.Name_Normal, HandleEnrollFaceAnimationSequenceComplete);
+    private void ReEnrolledExistingFaceAnimationSequence() {
+
+      RobotActionUnion[] actions = {
+        // 0. get out animation
+        new RobotActionUnion().Initialize(Singleton<PlayAnimationTrigger>.Instance.Initialize(CurrentRobot.ID, 1, Anki.Cozmo.AnimationTrigger.MeetCozmoLookFaceGetOut, true)),
+        // 1. say name once
+        new RobotActionUnion().Initialize(new SayTextWithIntent().Initialize(
+          _NameForFace,
+          Anki.Cozmo.AnimationTrigger.MeetCozmoReEnrollmentSayName,
+          Anki.Cozmo.SayTextIntent.Name_Normal))
+      };
+
+      CurrentRobot.SendQueueCompoundAction(actions, HandleEnrollFaceAnimationSequenceComplete);
     }
 
     private void HandleEnrollFaceAnimationSequenceComplete(bool success) {
