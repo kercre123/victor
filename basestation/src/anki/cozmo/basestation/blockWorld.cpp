@@ -2538,7 +2538,10 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
       if(!objectsOfSameType.empty())
       {
         ObjectID ret;
-        bool needToAddNewObject = false;
+        
+        // Assume we will need to add a new object to this frame
+        bool needToAddNewObject = true;
+        
         for (auto& sameTypeObject : objectsOfSameType) {
           ret = sameTypeObject->GetID();
           if (sameTypeObject->GetActiveID() < 0) {
@@ -2566,22 +2569,26 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
                 sameTypeObject->SetActiveID(activeID);
                 sameTypeObject->SetFactoryID(factoryID);
               }
-              
-              // We need to add a new object to this frame that is copied from a good matching object in another frame
-              if(&sameTypeObject->GetPose().FindOrigin() != _robot->GetWorldOrigin())
-              {
-                needToAddNewObject = true;
-                if(objToCopyId == nullptr)
-                {
-                  objToCopyId = sameTypeObject;
-                }
-              }
             } else {
               PRINT_CH_INFO("BlockWorld", "AddActiveObject.FoundIdenticalObjectOnDifferentSlot",
                             "Updating activeID of block with factoryID 0x%x from %d to %d",
                             sameTypeObject->GetFactoryID(), sameTypeObject->GetActiveID(), activeID);
               sameTypeObject->SetActiveID(activeID);
             }
+          }
+          
+          // We need to add a new object to this frame, as long as we don't find one already
+          // in this frame, that is copied from a good matching object in another frame
+          if(&sameTypeObject->GetPose().FindOrigin() != _robot->GetWorldOrigin() && needToAddNewObject)
+          {
+            if(objToCopyId == nullptr)
+            {
+              objToCopyId = sameTypeObject;
+            }
+          }
+          else
+          {
+            needToAddNewObject = false;
           }
         }
         
