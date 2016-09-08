@@ -2,7 +2,7 @@ __all__ = []
 
 from . import event
 
-from  ._internal.clad.externalInterface import messageEngineToGame as messageEngineToGame
+from ._internal.clad.externalInterface import messageEngineToGame as messageEngineToGame
 from ._internal.clad.externalInterface import messageGameToEngine as messageGameToEngine
 
 # shortcut access to CLAD classes
