@@ -205,6 +205,10 @@ namespace Anki {
       //printf("HandleDebugString: %s\n", msg.text.c_str());
     }
 
+    void WebotsKeyboardController::HandleEngineErrorCode(const ExternalInterface::EngineErrorCodeMessage& msg)
+    {
+      printf("HandleEngineErrorCode: %s\n", EnumToString(msg.errorCode));
+    }
 
     void WebotsKeyboardController::HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction &msg)
     {

@@ -121,6 +121,7 @@ protected:
   virtual void HandleEnabledBehaviorList(ExternalInterface::RespondEnabledBehaviorList const& msg){};
   virtual void HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg){};
   virtual void HandleRobotOffTreadsStateChanged(const ExternalInterface::RobotOffTreadsStateChanged& msg){};
+  virtual void HandleEngineErrorCode(const ExternalInterface::EngineErrorCodeMessage& msg) {};
   
   // Message senders
   void SendMessage(const ExternalInterface::MessageGameToEngine& msg);
@@ -438,6 +439,7 @@ private:
   void HandleEndOfMessageBase(ExternalInterface::EndOfMessage const& msg);
   void HandleFactoryTestResultEntryBase(FactoryTestResultEntry const& msg);
   void HandleLoadedKnownFaceBase(Vision::LoadedKnownFace const& msg);
+  void HandleEngineErrorCodeBase(const ExternalInterface::EngineErrorCodeMessage& msg);
   
   void UpdateActualObjectPoses();
   bool ForceAddRobotIfSpecified();
