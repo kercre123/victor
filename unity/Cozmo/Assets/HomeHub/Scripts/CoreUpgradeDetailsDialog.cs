@@ -40,6 +40,11 @@ public class CoreUpgradeDetailsDialog : BaseView {
   [SerializeField]
   private Text _ButtonCostLabel;
 
+  [SerializeField]
+  private AnkiTextLabel _RequestTrickButtonLabel;
+
+  [SerializeField]
+  private UnityEngine.UI.Image _RequestTrickButtonIcon;
 
   [SerializeField]
   private Image _UnlockableIcon;
@@ -70,6 +75,9 @@ public class CoreUpgradeDetailsDialog : BaseView {
   private GameObject _SparksInventoryContainer;
 
   [SerializeField]
+  private GameObject _SparkSpinner;
+
+  [SerializeField]
   private float _UpgradeTween_sec = 0.6f;
 
   [SerializeField]
@@ -78,18 +86,8 @@ public class CoreUpgradeDetailsDialog : BaseView {
   private GameObject _DimmerPrefab;
   [SerializeField]
   private AnkiTextLabel _SparksButtonDescriptionLabel;
-  [SerializeField]
-  private Vector2 _SparkTargetCenter;
-  [SerializeField]
-  private float _SparkTargetRandOffset = 1.5f;
-  [SerializeField]
-  private float _SparkHoldTimeSec = 1.0f;
-
-  private float _SparkButtonPressedTime = -1.0f;
 
   private CanvasGroup _DimBackgroundInstance = null;
-  private Sequence _SparksSequenceTweener = null;
-  private List<Transform> _SparkImageInsts = new List<Transform>();
 
   private UnlockableInfo _UnlockInfo;
 
@@ -133,12 +131,9 @@ public class CoreUpgradeDetailsDialog : BaseView {
         _FragmentInventoryContainer.gameObject.SetActive(false);
         _SparksInventoryContainer.gameObject.SetActive(true);
         UpdateAvailableCostLabels(unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksSpark, LocalizationKeys.kSparksSparkCost);
-        SetupButton(_RequestTrickButton, null, "request_trick_button",
+        SetupButton(_RequestTrickButton, StartSparkUnlock, "request_trick_button",
                     unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, _SparksInventoryLabel, true);
         RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.SparkEnded>(HandleSparkEnded);
-
-        _RequestTrickButton.onPress.AddListener(OnSparkPressed);
-        _RequestTrickButton.onRelease.AddListener(OnSparkReleased);
       }
     }
     else if (unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlockable) {
@@ -285,96 +280,22 @@ public class CoreUpgradeDetailsDialog : BaseView {
     _ButtonCostLabel.text = string.Format("{0}", cost);
   }
 
-
-  private void OnSparkPressed() {
-    _SparkButtonPressedTime = Time.time;
-
-    // attach a dimmer to show hold needed and an animation
-    CleanUpSparkAnimations();
-
-    if (_DimBackgroundInstance == null) {
-      _DimBackgroundInstance = Instantiate(_DimmerPrefab.gameObject).GetComponent<CanvasGroup>();
-      _DimBackgroundInstance.transform.SetParent(transform, false);
-      _DimBackgroundInstance.blocksRaycasts = false;
-    }
-    _DimBackgroundInstance.alpha = 0;
-
-    _SparksSequenceTweener = DOTween.Sequence();
-    _SparksSequenceTweener.Join(_DimBackgroundInstance.DOFade(1, _SparkHoldTimeSec).SetEase(UIDefaultTransitionSettings.Instance.FadeInEasing));
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Spark_Button_Loop_Play);
-
-    for (int i = 0; i < _UnlockInfo.RequestTrickCostAmountNeeded; ++i) {
-      Transform newSpark = UIManager.CreateUIElement(_SparkImagePrefab, _RequestTrickButton.transform.parent).transform;
-      Vector3 endPos = new Vector3(_SparkTargetCenter.x + Random.Range(-_SparkTargetRandOffset, _SparkTargetRandOffset),
-                                   _SparkTargetCenter.y + Random.Range(-_SparkTargetRandOffset, _SparkTargetRandOffset));
-      RectTransform rectTransform = newSpark.GetComponent<RectTransform>();
-      rectTransform.transform.position = _RequestTrickButton.transform.position;
-      _SparksSequenceTweener.Join(newSpark.DOMove(endPos, _SparkHoldTimeSec)).SetEase(Ease.OutBack);
-      _SparkImageInsts.Add(newSpark);
-    }
-  }
-
-  private void OnSparkReleased() {
-    // Update has already happened and processed the spark
-    if (_SparkButtonPressedTime > 0) {
-      // Reverse, positive case is handled by Update
-      float heldTime = (Time.time - _SparkButtonPressedTime);
-      if (heldTime < _SparkHoldTimeSec) {
-        // Reverse the animations...
-        if (_SparksSequenceTweener != null) {
-          _SparksSequenceTweener.Kill();
-          _SparksSequenceTweener = null;
-        }
-        _SparksSequenceTweener = DOTween.Sequence();
-        _SparksSequenceTweener.Join(_DimBackgroundInstance.DOFade(0, heldTime));
-        for (int i = 0; i < _SparkImageInsts.Count; ++i) {
-          _SparksSequenceTweener.Join(_SparkImageInsts[i].DOMove(_RequestTrickButton.transform.position, heldTime));
-        }
-        _SparksSequenceTweener.OnComplete(HandleSparkReverseAnimationEnd);
-      }
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Spark_Button_Loop_Stop);
-      _SparkButtonPressedTime = -1.0f;
-    }
-  }
-
-  private void CleanUpSparkAnimations() {
-    // DoTweenFade keeps a reference so we can't just kill and Destroy
-    // the instance without a ton of exceptions, so just destroy on close.
-    if (_DimBackgroundInstance != null) {
-      _DimBackgroundInstance.alpha = 0;
-    }
-
-    if (_SparksSequenceTweener != null) {
-      _SparksSequenceTweener.Kill();
-      _SparksSequenceTweener = null;
-    }
-
-    for (int i = 0; i < _SparkImageInsts.Count; ++i) {
-      Destroy(_SparkImageInsts[i].gameObject);
-    }
-    _SparkImageInsts.Clear();
-  }
-
-  private void HandleSparkReverseAnimationEnd() {
-    CleanUpSparkAnimations();
-  }
-
   protected override void Update() {
     base.Update();
-    if (_SparkButtonPressedTime > 0) {
-      float heldTime = (Time.time - _SparkButtonPressedTime);
-      if (heldTime >= _SparkHoldTimeSec) {
-        StartSparkUnlock();
-        CleanUpSparkAnimations();
-        _SparkButtonPressedTime = -1.0f;
-      }
-    }
 
     IRobot robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null && robot.IsSparked && robot.SparkUnlockId == _UnlockInfo.Id.Value) {
       _AvailablePromptCost.gameObject.SetActive(false);
       _AvailablePromptLabel.gameObject.SetActive(false);
     }
+
+    if (robot != null) {
+      _SparkSpinner.gameObject.SetActive(robot.IsSparked);
+      _ButtonCostLabel.gameObject.SetActive(!robot.IsSparked);
+      _RequestTrickButtonLabel.gameObject.SetActive(!robot.IsSparked && _RequestTrickButton.IsActive());
+      _RequestTrickButtonIcon.gameObject.SetActive(!robot.IsSparked && _RequestTrickButton.IsActive());
+    }
+
   }
 
   private void UpdateInventoryLabel(string itemId, AnkiTextLabel label) {
@@ -436,7 +357,6 @@ public class CoreUpgradeDetailsDialog : BaseView {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.SparkEnded>(HandleSparkEnded);
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Spark_Button_Loop_Stop);
     StopSparkUnlock();
-    CleanUpSparkAnimations();
     // Because of a bug within DOTween Fades don't release even after being killed, so clean up
     if (_DimBackgroundInstance != null) {
       Destroy(_DimBackgroundInstance.gameObject);
