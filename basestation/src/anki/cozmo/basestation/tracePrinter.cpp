@@ -17,16 +17,16 @@
 namespace Anki {
 namespace Cozmo {
 
-const std::string TracePrinter::UnknownTraceName   = "UnknownTraceName";
-const std::string TracePrinter::UnknownTraceFormat = "Unknown trace format [%d] with %d parameters";
-const std::string TracePrinter::RobotNamePrefix    = "RobotFirmware.";
+const std::string TracePrinter::_kUnknownTraceName   = "UnknownTraceName";
+const std::string TracePrinter::_kUnknownTraceFormat = "Unknown trace format [%d] with %d parameters";
+const std::string TracePrinter::_kRobotNamePrefix    = "RobotFirmware.";
   
 // constant calculated from ram size in robot/espressif/app/include/driver/crash.h, which is not in app search path.
-static const int MAX_CRASH_LOGS = 4;
+static const int kMaxCrashLogs = 4;
 
 TracePrinter::TracePrinter(Robot* robot)
-  : printThreshold(RobotInterface::LogLevel::ANKI_LOG_LEVEL_DEBUG)
-  , lastLogRequested(MAX_CRASH_LOGS)
+  : _printThreshold(RobotInterface::LogLevel::ANKI_LOG_LEVEL_DEBUG)
+  , _lastLogRequested(kMaxCrashLogs)
   , _robot(robot)
 {
   // Listen to some messages from the robot
@@ -69,7 +69,7 @@ TracePrinter::TracePrinter(Robot* robot)
     
     const Json::Value jsonNameTable   = jsonDict["nameTable"];
     for (Json::ValueIterator itr = jsonNameTable.begin(); itr != jsonNameTable.end(); itr++) {
-      nameTable.insert(std::pair<const int, const std::string>(atoi(itr.key().asString().c_str()), itr->asString()));
+      _nameTable.insert(std::pair<const int, const std::string>(atoi(itr.key().asString().c_str()), itr->asString()));
     }
     
     const Json::Value jsonFormatTable = jsonDict["formatTable"];
@@ -77,7 +77,7 @@ TracePrinter::TracePrinter(Robot* robot)
       const int key = atoi(itr.key().asString().c_str());
       const std::string fmt = (*itr)[0].asString();
       const int nargs = (*itr)[1].asInt();
-      formatTable.insert(std::pair<const int, const FormatInfo>(key, FormatInfo(fmt, nargs)));
+      _formatTable.insert(std::pair<const int, const FormatInfo>(key, FormatInfo(fmt, nargs)));
     }
   }
 }
@@ -85,8 +85,8 @@ TracePrinter::TracePrinter(Robot* robot)
 void TracePrinter::HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message) {
   ANKI_CPU_PROFILE("TracePrinter::HandleTrace");
   const RobotInterface::PrintTrace& trace = message.GetData().Get_trace();
-  if (trace.level >= printThreshold) {
-    const std::string name = RobotNamePrefix + GetName(trace.name);
+  if (trace.level >= _printThreshold) {
+    const std::string name = _kRobotNamePrefix + GetName(trace.name);
     const std::string mesg = GetFormatted(trace);
     switch (trace.level)
     {
@@ -126,51 +126,53 @@ void TracePrinter::HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngi
   const RobotInterface::CrashReport& report = message.GetData().Get_crashReport();
   if (report.errorCode || report.dump.size()) {
     PRINT_NAMED_EVENT("RobotFirmware.CrashReport", "Firmware crash report received: %d, %x", (int)report.which, report.errorCode);
-    char dumpFileName[64];
-    snprintf(dumpFileName, sizeof(dumpFileName), "crash_%d_%x_%lld.log", // Only .log files are archived and transmitted
-             (int)report.which,
-             report.errorCode,
-             std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-
-    std::ostringstream dumpFilepathStream;
-    dumpFilepathStream << DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory().c_str() <<  "/robotFirmware/";
-    dumpFilepathStream << dumpFileName;
-    std::string dumpFilepath =dumpFilepathStream.str();
-    Util::FileUtils::CreateDirectory(dumpFilepath, true, true);
-
-    std::ofstream fileOut;
-    fileOut.open(dumpFilepath, std::ios::out | std::ofstream::binary);
-    if( fileOut.is_open() ) {
-      char crashDumpData[2048]; // Whole message can never be bigger than a UDP MTU which for Cozmo is 1420 bytes
-      const size_t dumpSize = report.dump.size() * sizeof(report.dump[0]);
-      memcpy(crashDumpData, report.dump.data(), dumpSize);
-      fileOut.write(crashDumpData, dumpSize);
-      fileOut.close();
-      PRINT_NAMED_EVENT("RobotFirmware.CrashReport.Written", "Firmware crash report written to \"%s\"", dumpFileName);
-    }
-    else
-    {
-      PRINT_NAMED_ERROR("RobotFirmware.CrashReport.FailedToWrite", "Couldn't write report to file \"%s\"", dumpFileName);
+    if (DevLoggingSystem::GetInstance() != NULL) {
+      char dumpFileName[64];
+      snprintf(dumpFileName, sizeof(dumpFileName), "crash_%d_%x_%lld.log", // Only .log files are archived and transmitted
+               (int)report.which,
+               report.errorCode,
+               std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+      
+      std::ostringstream dumpFilepathStream;
+      dumpFilepathStream << DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory().c_str() <<  "/robotFirmware/";
+      dumpFilepathStream << dumpFileName;
+      std::string dumpFilepath =dumpFilepathStream.str();
+      Util::FileUtils::CreateDirectory(dumpFilepath, true, true);
+      
+      std::ofstream fileOut;
+      fileOut.open(dumpFilepath, std::ios::out | std::ofstream::binary);
+      if( fileOut.is_open() ) {
+        char crashDumpData[2048]; // Whole message can never be bigger than a UDP MTU which for Cozmo is 1420 bytes
+        const size_t dumpSize = report.dump.size() * sizeof(report.dump[0]);
+        memcpy(crashDumpData, report.dump.data(), dumpSize);
+        fileOut.write(crashDumpData, dumpSize);
+        fileOut.close();
+        PRINT_NAMED_EVENT("RobotFirmware.CrashReport.Written", "Firmware crash report written to \"%s\"", dumpFileName);
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("RobotFirmware.CrashReport.FailedToWrite", "Couldn't write report to file \"%s\"", dumpFileName);
+      }
     }
   }
-  if (lastLogRequested < MAX_CRASH_LOGS)
+  if (_lastLogRequested < kMaxCrashLogs)
   {
-      _robot->SendRobotMessage<RobotInterface::RequestCrashReports>(lastLogRequested++);
+      _robot->SendRobotMessage<RobotInterface::RequestCrashReports>(_lastLogRequested++);
   }
 }
 
 const std::string& TracePrinter::GetName(const int nameId) const {
-  const IntStringMap::const_iterator it = nameTable.find(nameId);
-  if (it == nameTable.end()) return UnknownTraceName;
+  const IntStringMap::const_iterator it = _nameTable.find(nameId);
+  if (it == _nameTable.end()) return _kUnknownTraceName;
   else return it->second;
 }
 
 std::string TracePrinter::GetFormatted(const RobotInterface::PrintTrace& trace) const {
   char pbuf[512];
   char fbuf[64];
-  const IntFormatMap::const_iterator it = formatTable.find(trace.stringId);
-  if (it == formatTable.end()) {
-    snprintf(pbuf, sizeof(pbuf), UnknownTraceFormat.c_str(), trace.stringId, trace.value.size());
+  const IntFormatMap::const_iterator it = _formatTable.find(trace.stringId);
+  if (it == _formatTable.end()) {
+    snprintf(pbuf, sizeof(pbuf), _kUnknownTraceFormat.c_str(), trace.stringId, trace.value.size());
     return pbuf;
   }
   else {
@@ -270,9 +272,9 @@ void TracePrinter::HandleMessage(const ExternalInterface::RobotConnectionRespons
 {
   if (msg.result == RobotConnectionResult::Success) {
     // Request the first crash report
-    if (lastLogRequested >= MAX_CRASH_LOGS) {
-      lastLogRequested = 0;
-      _robot->SendRobotMessage<RobotInterface::RequestCrashReports>(lastLogRequested++);
+    if (_lastLogRequested >= kMaxCrashLogs) {
+      _lastLogRequested = 0;
+      _robot->SendRobotMessage<RobotInterface::RequestCrashReports>(_lastLogRequested++);
     }
   }
 }

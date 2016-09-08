@@ -48,13 +48,13 @@ namespace Anki {
       std::string GetFormatted(const RobotInterface::PrintTrace& trace) const;
       
     private:
-      IntStringMap nameTable;
-      IntFormatMap formatTable;
-      static const std::string UnknownTraceName;
-      static const std::string UnknownTraceFormat;
-      static const std::string RobotNamePrefix;
-      RobotInterface::LogLevel printThreshold;
-      int lastLogRequested;
+      IntStringMap _nameTable;
+      IntFormatMap _formatTable;
+      static const std::string _kUnknownTraceName;
+      static const std::string _kUnknownTraceFormat;
+      static const std::string _kRobotNamePrefix;
+      RobotInterface::LogLevel _printThreshold;
+      int _lastLogRequested;
       Robot* _robot;
     };
     
