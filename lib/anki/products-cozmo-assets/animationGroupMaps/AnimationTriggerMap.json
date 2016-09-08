@@ -346,6 +346,10 @@
     },
     {
       "CladEvent": "MeetCozmoGetIn",
+      "AnimName" : "ag_meetcozmo_getin"
+    },
+    {
+      "CladEvent": "MeetCozmoLookFaceGetIn",
       "AnimName" : "ag_meetcozmo_lookface_getin"
     },
     {

@@ -100,7 +100,8 @@ enum int_32 AnimationTrigger
   LookInPlaceForFacesHeadMovePause,
   MajorFail,
   MajorWin,
-  MeetCozmoGetIn,                       // 1. Transition into "scanning" player's face
+  MeetCozmoGetIn,                       // Meet Cozmo Activity get in animation
+  MeetCozmoLookFaceGetIn,               // 1. Transition into "scanning" player's face
   MeetCozmoLookFaceGetOut,
   MeetCozmoScanningIdle,                // 2. Looping animation while "scanning"
   MeetCozmoFirstEnrollmentSayName,      // 3a. First-time enrollment, say player's name
