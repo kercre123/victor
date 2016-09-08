@@ -28,7 +28,7 @@
     "translation": "Enter Name"
   },
   "faceEnrollment.faceEnrollmentList.description": {
-    "translation": "Tap a free slot to introduce Cozmo to a new person.\nTap a filled slot to help Cozmo remember a person."
+    "translation": "Tap an available slot to introduce Cozmo to a new person.\nTap an existing entry to edit, update, or delete it."
   },
   "faceEnrollment.faceEnrollmentList.deleteConfirmTitle": {
     "translation": "Delete {0}?"
@@ -37,25 +37,25 @@
     "translation": "Delete"
   },
   "faceEnrollment.instructions.top": {
-    "translation": "Look at Cozmo straight on, and hold still."
+    "translation": "Look at Cozmo straight on, and hold still"
   },
   "faceEnrollment.instructions.bottom": {
-    "translation": "When Cozmo sees you, you'll hear a chime."
+    "translation": "When Cozmo is done, he'll say your name"
   },
   "faceEnrollment.unlockView.description": {
-    "translation": "Unlock this slot to allow\nCozmo to recognize more people."
+    "translation": "Unlock this slot to allow\nCozmo to recognize another person."
   },
   "faceEnrollment.errors.neverSawValidFace.title": {
     "translation": "Cozmo already knows you!"
   }, 
   "faceEnrollment.errors.neverSawValidFace.description": {
-    "translation": "Cozmo already recognizes you as: {0}"
+    "translation": "Cozmo recognizes you as {0}"
   },
   "faceEnrollment.errors.timeOut.title": {
     "translation": "Cozmo is having trouble seeing you"
   }, 
   "faceEnrollment.errors.timeOut.description": {
-    "translation": "Make sure you're in a well-lit room and that you're aligned with Cozmo's face. Cozmo should be on a flat, stable surface."
+    "translation": "Make sure you're in a well-lit room and are aligned with Cozmo's face. Cozmo should be on a flat, stable surface."
   },
   "faceEnrollment.condition.allChangesSaved": {
     "translation": "All changes have been saved."

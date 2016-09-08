@@ -58,19 +58,19 @@
     "translation": "Keepaway"
   },
   "cubeSlap.description": {
-    "translation": "Think you're faster than Cozmo? Put your reaction time to the test!"
+    "translation": "Tempt Cozmo to pounce on a Cube, then pull it away before he can!"
   },
   "droneMode.title": {
     "translation": "Explorer Mode"
   },
   "droneMode.description": {
-    "translation": "Cozmo allows you to pilot him."
+    "translation": "Cozmo allows you to take control and explore the world through his eyes."
   },
   "faceEnrollment.title": {
     "translation": "Meet Cozmo"
   },
   "faceEnrollment.description": {
-    "translation": "Cozmo can recognize you, and save your name in his memory banks."
+    "translation": "Introduce Cozmo to new people so he can learn to say their name."
   },
   "investorDemo.investorDemoScene1": {
     "translation": "Investor Scene 1"
@@ -124,7 +124,7 @@
     "translation": "Quick Tap"
   },
   "speedTap.description": {
-    "translation": "Quick Tap is a test of fast reflexes and sharp wits. Pay close attention, and try to keep your cool!"
+    "translation": "A color matching game of fast reflexes and sharp wits."
   },
   "treasureHuntGame01.title": {
     "translation": "Treasure Hunt Challenge"
