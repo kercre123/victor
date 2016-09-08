@@ -406,7 +406,9 @@ namespace FaceEnrollment {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(HandleEnrolledFace);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotOffTreadsStateChanged>(HandleOffTredsStateChanged);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
-      CurrentRobot.OnEnrolledFaceRemoved -= HandleEraseEnrolledFace;
+      if (CurrentRobot != null) {
+        CurrentRobot.OnEnrolledFaceRemoved -= HandleEraseEnrolledFace;
+      }
     }
 
   }
