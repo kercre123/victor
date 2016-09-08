@@ -705,12 +705,15 @@ ActionResult IBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* actio
                                                       std::vector<Pose3d>& possiblePoses,
                                                       bool& alreadyInPosition)
 {
-  action->GetPossiblePoses(object, possiblePoses, alreadyInPosition);
+  auto result = action->GetPossiblePoses(object, possiblePoses, alreadyInPosition);
+  if (result != ActionResult::SUCCESS) {
+    return result;
+  }
   
   for(auto iter = possiblePoses.begin(); iter != possiblePoses.end(); )
   {
-    if(iter->IsSameAs(_robot.GetPose(), kSamePreactionPoseDistThresh_mm,
-                      DEG_TO_RAD(kSamePreactionPoseAngleThresh_deg)))
+    if(possiblePoses.size() > 1 && iter->IsSameAs(_robot.GetPose(), kSamePreactionPoseDistThresh_mm,
+                                                  DEG_TO_RAD(kSamePreactionPoseAngleThresh_deg)))
     {
       iter = possiblePoses.erase(iter);
       alreadyInPosition = false;
