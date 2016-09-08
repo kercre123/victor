@@ -202,7 +202,9 @@ namespace Cozmo {
 
       private void OnCloseAnimationsFinished() {
         DAS.Info(this, "OnCloseAnimationsFinished start");
-        UIManager.EnableTouchEvents();
+        if (UIManager.Instance != null) {
+          UIManager.EnableTouchEvents();
+        }
         _ClosingAnimationPlaying = false;
         CleanUp();
         RaiseViewCloseAnimationFinished(this);
