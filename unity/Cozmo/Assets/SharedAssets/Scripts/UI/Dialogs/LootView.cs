@@ -388,12 +388,12 @@ namespace Cozmo.UI {
             if (rewardTargets.Count <= 0) {
               break;
             }
-            Transform newRewawrd = SpawnReward(itemID);
+            Transform newReward = SpawnReward(itemID);
             Transform toRemove = rewardTargets[UnityEngine.Random.Range(0, rewardTargets.Count)];
             Vector3 rewardTarget = toRemove.position;
             rewardTargets.Remove(toRemove);
-            rewardSequence.Join(newRewawrd.DOScale(0.0f, _RewardExplosionDuration).From().SetEase(Ease.OutBack));
-            rewardSequence.Join(newRewawrd.DOMove(rewardTarget, _RewardExplosionDuration).SetEase(Ease.OutBack));
+            rewardSequence.Join(newReward.DOScale(0.0f, _RewardExplosionDuration).From().SetEase(Ease.OutBack));
+            rewardSequence.Join(newReward.DOMove(rewardTarget, _RewardExplosionDuration).SetEase(Ease.OutBack));
           }
         }
       }
