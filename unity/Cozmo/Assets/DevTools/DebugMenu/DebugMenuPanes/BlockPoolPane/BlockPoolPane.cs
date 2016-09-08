@@ -59,6 +59,7 @@ namespace Cozmo.BlockPool {
       }
 
       // Listen for any changes
+      _BlockPoolTracker.OnAutoBlockPoolEnabledChanged += HandleAutoBlockPoolEnabledChanged;
       _BlockPoolTracker.OnBlockDataUpdated += HandleBlockDataUpdated;
       _BlockPoolTracker.OnBlockDataUnavailable += HandleBlockDataUnavailable;
       _BlockPoolTracker.OnBlockDataConnectionChanged += HandleBlockDataConnectionChanged;
@@ -74,6 +75,7 @@ namespace Cozmo.BlockPool {
     }
 
     private void OnDestroy() {
+      _BlockPoolTracker.OnAutoBlockPoolEnabledChanged -= HandleAutoBlockPoolEnabledChanged;
       _BlockPoolTracker.OnBlockDataUpdated -= HandleBlockDataUpdated;
       _BlockPoolTracker.OnBlockDataUnavailable -= HandleBlockDataUnavailable;
       _BlockPoolTracker.OnBlockDataConnectionChanged -= HandleBlockDataConnectionChanged;
@@ -81,13 +83,15 @@ namespace Cozmo.BlockPool {
 
       // clear the lights we've turned blue to show connections. Force the values right away since we are
       // being destroyed
-      if (RobotEngineManager.Instance.CurrentRobot != null) {
-        foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        foreach (KeyValuePair<int, LightCube> kvp in robot.LightCubes) {
           kvp.Value.SetLEDs(0, 0, 0, 0);
           kvp.Value.SetAllLEDs();
+          robot.SetEnableFreeplayLightStates(true, kvp.Value.ID);
         }
 
-        if (RobotEngineManager.Instance.CurrentRobot.GetCharger() != null) {
+        if (robot.GetCharger() != null) {
           RobotEngineManager.Instance.CurrentRobot.GetCharger().SetLEDs(0, 0, 0, 0);
         }
       }
@@ -180,6 +184,10 @@ namespace Cozmo.BlockPool {
       }
     }
 
+    private void HandleAutoBlockPoolEnabledChanged(bool enabled) {
+      _EnabledCheckbox.isOn = _BlockPoolTracker.AutoBlockPoolEnabled;
+    }
+
     private void HandleBlockDataUpdated(BlockPoolData data, bool wasCreated) {
       AddOrUpdateButtonInternal(data, wasCreated);
       SortList();
@@ -193,30 +201,34 @@ namespace Cozmo.BlockPool {
       UpdateButton(data);
 
       // TODO Fix this part
-      LightCube cube = RobotEngineManager.Instance.CurrentRobot.GetLightCubeWithFactoryID(data.FactoryID);
-      if (cube != null) {
-        EnableButton(data.FactoryID, (data.IsConnected ? Color.cyan : Color.white));
-
-        // Show all our enabled lights to blue so we can see what is currently connected
-        cube.SetLEDs(Color.blue.ToUInt(), Color.cyan.ToUInt());
-      }
-      else {
-        ObservedObject observedObject = RobotEngineManager.Instance.CurrentRobot.GetObservedObjectWithFactoryID(data.FactoryID);
-        if (observedObject != null) {
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        LightCube cube = robot.GetLightCubeWithFactoryID(data.FactoryID);
+        if (cube != null) {
           EnableButton(data.FactoryID, (data.IsConnected ? Color.cyan : Color.white));
 
-          // Turn on the lights to show that we are connected
-          if (observedObject.ObjectType == ObjectType.Charger_Basic) {
-            observedObject.SetLEDs(Color.blue.ToUInt(), Color.cyan.ToUInt());
-          }
+          // Show all our enabled lights to blue so we can see what is currently connected
+          robot.SetEnableFreeplayLightStates(false, cube.ID);
+          cube.SetLEDs(Color.blue.ToUInt(), Color.cyan.ToUInt());
         }
         else {
-          // Disable the button until we hear from the object if not enabled
-          if (data.IsConnected) {
-            EnableButton(data.FactoryID, Color.grey);
+          ObservedObject observedObject = robot.GetObservedObjectWithFactoryID(data.FactoryID);
+          if (observedObject != null) {
+            EnableButton(data.FactoryID, (data.IsConnected ? Color.cyan : Color.white));
+
+            // Turn on the lights to show that we are connected
+            if (observedObject.ObjectType == ObjectType.Charger_Basic) {
+              observedObject.SetLEDs(Color.blue.ToUInt(), Color.cyan.ToUInt());
+            }
           }
           else {
-            EnableButton(data.FactoryID, Color.white);
+            // Disable the button until we hear from the object if not enabled
+            if (data.IsConnected) {
+              EnableButton(data.FactoryID, Color.grey);
+            }
+            else {
+              EnableButton(data.FactoryID, Color.white);
+            }
           }
         }
       }

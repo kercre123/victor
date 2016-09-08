@@ -3561,59 +3561,61 @@ void Robot::HandleConnectedToObject(uint32_t activeID, FactoryID factoryID, Obje
 {
   ActiveObjectInfo& objectInfo = _connectedObjects[activeID];
   
-  // Remove from the list of discovered objects since we are connecting to it
-  RemoveDiscoveredObjects(factoryID);
-  
-  if(_connectedObjects[activeID].factoryID != factoryID)
+  if (_connectedObjects[activeID].factoryID != factoryID)
   {
-    PRINT_NAMED_INFO("Robot.HandleConnectedToObject",
-                     "Ignoring connection to object 0x%x [%s] with active ID %d because expecting connection to 0x%x [%s]",
-                     factoryID,
-                     EnumToString(objectType),
-                     activeID,
-                     objectInfo.factoryID,
-                     EnumToString(objectInfo.objectType));
+    PRINT_CH_INFO("BlockPool",
+                  "Robot.HandleConnectedToObject",
+                  "Ignoring connection to object 0x%x [%s] with active ID %d because expecting connection to 0x%x [%s]",
+                  factoryID,
+                  EnumToString(objectType),
+                  activeID,
+                  objectInfo.factoryID,
+                  EnumToString(objectInfo.objectType));
     return;
   }
   
-  ASSERT_NAMED_EVENT((objectInfo.connectionState == ActiveObjectInfo::ConnectionState::PendingConnection) ||
-                     (objectInfo.connectionState == ActiveObjectInfo::ConnectionState::Disconnected),
-                     "Robot.HandleConnectedToObject",
-                     "Invalid state %d when connected to object 0x%x with active ID %d",
-                     (int)objectInfo.connectionState, factoryID, activeID);
+  if ((objectInfo.connectionState != ActiveObjectInfo::ConnectionState::PendingConnection) &&
+      (objectInfo.connectionState != ActiveObjectInfo::ConnectionState::Disconnected))
+  {
+    PRINT_NAMED_ERROR("Robot.HandleConnectedToObject.InvalidState",
+                      "Invalid state %d when connected to object 0x%x with active ID %d",
+                      (int)objectInfo.connectionState, factoryID, activeID);
+  }
 
   PRINT_CH_INFO("BlockPool", "Robot.HandleConnectToObject",
                 "Connected to active Id %d with factory Id 0x%x of type %s. Connection State = %d",
                 activeID, factoryID, EnumToString(objectType), objectInfo.connectionState);
   
+  // Remove from the list of discovered objects since we are connecting to it
+  RemoveDiscoveredObjects(factoryID);
+  
   _connectedObjects[activeID].connectionState = ActiveObjectInfo::ConnectionState::Connected;
-
-  // For debugging purposes, turn on the lights
-//  ActiveObject* activeObject = GetBlockWorld().GetActiveObjectByActiveID(activeID);
-//  SetObjectLights(activeObject->GetID(), Anki::Cozmo::WhichCubeLEDs::ALL, NamedColors::RED, NamedColors::RED, 999999, 0, 0, 0, true, MakeRelativeMode::RELATIVE_LED_MODE_OFF, Point2f{0, 0}, 0);
 }
 
 void Robot::HandleDisconnectedFromObject(uint32_t activeID, FactoryID factoryID, ObjectType objectType)
 {
   ActiveObjectInfo& objectInfo = _connectedObjects[activeID];
 
-  if(objectInfo.factoryID != factoryID)
+  if (objectInfo.factoryID != factoryID)
   {
-    PRINT_NAMED_INFO("Robot.HandleDisconnectedFromObject",
-                     "Ignoring disconnection from object 0x%x [%s] with active ID %d because expecting connection to 0x%x [%s]",
-                     factoryID,
-                     EnumToString(objectType),
-                     activeID,
-                     objectInfo.factoryID,
-                     EnumToString(objectInfo.objectType));
+    PRINT_CH_INFO("BlockPool",
+                  "Robot.HandleDisconnectedFromObject",
+                  "Ignoring disconnection from object 0x%x [%s] with active ID %d because expecting connection to 0x%x [%s]",
+                  factoryID,
+                  EnumToString(objectType),
+                  activeID,
+                  objectInfo.factoryID,
+                  EnumToString(objectInfo.objectType));
     return;
   }
 
-  ASSERT_NAMED_EVENT((objectInfo.connectionState == ActiveObjectInfo::ConnectionState::PendingDisconnection) ||
-                     (objectInfo.connectionState == ActiveObjectInfo::ConnectionState::Connected),
-                     "Robot.HandleDisconnectedFromObject",
-                     "Invalid state %d when disconnected from object 0x%x with active ID %d",
-                     (int)objectInfo.connectionState, factoryID, activeID);
+  if ((objectInfo.connectionState != ActiveObjectInfo::ConnectionState::PendingDisconnection) &&
+      (objectInfo.connectionState != ActiveObjectInfo::ConnectionState::Connected))
+  {
+    PRINT_NAMED_ERROR("Robot.HandleDisconnectedFromObject.InvalidState",
+                      "Invalid state %d when disconnected from object 0x%x with active ID %d",
+                      (int)objectInfo.connectionState, factoryID, activeID);
+  }
   
   PRINT_CH_INFO("BlockPool", "Robot.HandleDisconnectedFromObject",
                 "Disconnected from active Id %d with factory Id 0x%x of type %s. Connection State = %d",
@@ -3982,12 +3984,16 @@ FactoryID Robot::GetClosestDiscoveredObjectsOfType(ObjectType type, uint8_t maxR
   FactoryID closest = ActiveObject::InvalidFactoryID;
   uint8_t closestRSSI = maxRSSI;
 
-//  PRINT_CH_INFO("BlockPool", "Robot.GetClosestDiscoveredObjectsOfType", "Total # of objects = %zu", _discoveredObjects.size());
 //  std::stringstream str;
-//  for (auto& objectInfo : _discoveredObjects)
+//  str << "Search for objects of type = " << EnumToString(type) << ":" << std::endl;
+//  std::for_each(_discoveredObjects.cbegin(), _discoveredObjects.cend(), [&](const std::pair<FactoryID, ActiveObjectInfo>& pair)
 //  {
-//    str << "Factory ID = 0x" << std::hex << objectInfo.second.factoryID << ", object type = " << EnumToString(objectInfo.second.objectType) << ", RSSI = " << std::dec << (int)objectInfo.second.rssi << std::endl;
-//  }
+//    const ActiveObjectInfo& object = pair.second;
+//    if (object.objectType == type)
+//    {
+//      str << "Factory ID = 0x" << std::hex << object.factoryID << ", RSSI = " << std::dec << (int)object.rssi << std::endl;
+//    }
+//  });
 //  PRINT_CH_INFO("BlockPool", "Robot.GetClosestDiscoveredObjectsOfType", "Total # of objects = %zu\n%s", _discoveredObjects.size(), str.str().c_str());
   
   std::for_each(_discoveredObjects.cbegin(), _discoveredObjects.cend(), [&](const std::pair<FactoryID, ActiveObjectInfo>& pair)
