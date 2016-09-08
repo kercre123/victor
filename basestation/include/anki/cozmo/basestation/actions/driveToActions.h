@@ -327,6 +327,8 @@ namespace Anki {
       
       void SetDockingMethod(DockingMethod dockingMethod);
       
+      void SetPostDockLiftMovingAnimation(Anki::Cozmo::AnimationTrigger trigger);
+      
     private:
       PickupObjectAction* _pickupAction = nullptr;
     };

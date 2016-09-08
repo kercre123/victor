@@ -557,8 +557,20 @@
       "AnimName": "ag_launch_reacttoputdown"
     },
     {
+      "CladEvent": "OnboardingCubeDockFail",
+      "AnimName": "ag_RequestGameDriveFail"
+    },
+    {
       "CladEvent": "OnboardingInteractWithCube",
       "AnimName": "ag_launch_reacttocubepickup"
+    },
+    {
+      "CladEvent": "OnboardingSoundOnlyLiftEffortPickup",
+      "AnimName": "ag_launch_lifteffortpickup"
+    },
+    {
+      "CladEvent": "OnboardingSoundOnlyLiftEffortPlaceLow",
+      "AnimName": "ag_launch_lifteffortplacelow"
     },
     {
       "CladEvent": "PlacedOnCharger",

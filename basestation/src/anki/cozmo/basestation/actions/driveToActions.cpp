@@ -1194,6 +1194,15 @@ namespace Anki {
       }
     }
     
+    void DriveToPickupObjectAction::SetPostDockLiftMovingAnimation(Anki::Cozmo::AnimationTrigger trigger)
+    {
+      if(nullptr != _pickupAction) {
+        _pickupAction->SetPostDockLiftMovingAnimation(trigger);
+      } else {
+        PRINT_NAMED_WARNING("DriveToPickupObjectAction.SetPostDockLiftMovingAnimation.NullPickupAction", "");
+      }
+    }
+    
 
     
 #pragma mark ---- DriveToPlaceOnObjectAction ----

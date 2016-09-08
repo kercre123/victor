@@ -34,9 +34,10 @@ namespace Anki {
 namespace Cozmo {
 using namespace ExternalInterface;
   
-  static const char* kMaxErrorsTotalKey  = "MaxErrorsTotal";
-  static const char* kMaxErrorsPickupKey = "MaxErrorsPickup";
-
+static const char* kMaxErrorsTotalKey  = "MaxErrorsTotal";
+static const char* kMaxErrorsPickupKey = "MaxErrorsPickup";
+static const char* kMaxTimeBeforeTimeoutSecKey = "Timeout_Sec";
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorOnboardingShowCube::BehaviorOnboardingShowCube(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -53,6 +54,7 @@ BehaviorOnboardingShowCube::BehaviorOnboardingShowCube(Robot& robot, const Json:
   
   JsonTools::GetValueOptional(config, kMaxErrorsTotalKey, _maxErrorsTotal);
   JsonTools::GetValueOptional(config, kMaxErrorsPickupKey, _maxErrorsPickup);
+  JsonTools::GetValueOptional(config, kMaxTimeBeforeTimeoutSecKey, _maxTimeBeforeTimeout_Sec);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -89,14 +91,13 @@ void BehaviorOnboardingShowCube::StopInternal(Robot& robot)
   PRINT_CH_INFO("Behaviors","BehaviorOnboardingShowCube::StopInternal", " %hhu ",_state);
 }
 
-
 void BehaviorOnboardingShowCube::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
 {
   if( event.GetData().GetTag() == MessageEngineToGameTag::ReactionaryBehaviorTransition )
   {
     // Only react when the behavior is running ( not inactive )
     const ExternalInterface::ReactionaryBehaviorTransition& msg = event.GetData().Get_ReactionaryBehaviorTransition();
-    if( msg.behaviorStarted &&  _state != State::ErrorCozmo && _state != State::Inactive)
+    if( msg.behaviorStarted &&  _state != State::ErrorCozmo && !IsSequenceComplete())
     {
       switch (msg.reactionaryBehaviorType)
       {
@@ -155,6 +156,14 @@ void BehaviorOnboardingShowCube::HandleWhileRunning(const GameToEngineEvent& eve
 // This  Behavior is killed by unity switching to none
 IBehavior::Status BehaviorOnboardingShowCube::UpdateInternal(Robot& robot)
 {
+  if( !IsActing() && !IsSequenceComplete() )
+  {
+    double timeRunning = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - GetTimeStartedRunning_s();
+    if( timeRunning > _maxTimeBeforeTimeout_Sec )
+    {
+      SET_STATE(ErrorFinal,robot);
+    }
+  }
   return Status::Running;
 }
   
@@ -271,13 +280,14 @@ void BehaviorOnboardingShowCube::TransitionToWaitToInspectCube(Robot& robot)
 void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(Robot& robot)
 {
   DriveToPickupObjectAction* driveAndPickupAction = new DriveToPickupObjectAction(robot, _targetBlock);
+  driveAndPickupAction->SetPostDockLiftMovingAnimation(AnimationTrigger::OnboardingSoundOnlyLiftEffortPickup);
   RetryWrapperAction::RetryCallback retryCallback = [this, driveAndPickupAction](const ExternalInterface::RobotCompletedAction& completion, const u8 retryCount, AnimationTrigger& animTrigger)
   {
     animTrigger = AnimationTrigger::Count;
     if(completion.result == ActionResult::FAILURE_ABORT ||
        completion.result == ActionResult::FAILURE_RETRY)
     {
-      animTrigger = AnimationTrigger::RollBlockRealign;
+      animTrigger = AnimationTrigger::OnboardingCubeDockFail;
       return true;
     }
     return false;
@@ -297,16 +307,24 @@ void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(Robot& robot)
                 }
               });
 }
-  
+
 void BehaviorOnboardingShowCube::StartSubStateCelebratePickup(Robot& robot)
 {
   CompoundActionSequential* action = new CompoundActionSequential(robot,
   {
     new TriggerAnimationAction(robot, AnimationTrigger::OnboardingInteractWithCube),
     new MoveLiftToHeightAction(robot,MoveLiftToHeightAction::Preset::CARRY),
-    new PlaceObjectOnGroundAction(robot),
-    new TriggerAnimationAction(robot, AnimationTrigger::OnboardingReactToCubePutDown)
   });
+  
+  // because PutDown isn't a real docking action, it doesn't have any sounds associated with it.
+  // So just play a sound animation at the same time.
+  CompoundActionParallel* parallelAction = new CompoundActionParallel(robot,{
+    new TriggerAnimationAction(robot, AnimationTrigger::OnboardingSoundOnlyLiftEffortPlaceLow),
+    new PlaceObjectOnGroundAction(robot)
+  });
+  action->AddAction(parallelAction);
+  
+  action->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::OnboardingReactToCubePutDown));
   
   StartActing(action,
               [this,&robot](const ExternalInterface::RobotCompletedAction& msg)
@@ -337,6 +355,12 @@ void BehaviorOnboardingShowCube::HandleObjectObserved(Robot& robot, const Extern
       TransitionToNextState(robot);
     }
   }
+}
+
+// If we're just waiting for them to hit a final continue, don't need to pop any errors.
+bool BehaviorOnboardingShowCube::IsSequenceComplete()
+{
+  return _state == State::Inactive || _state == State::ErrorFinal || _state == State::WaitForFinalContinue;
 }
   
 void BehaviorOnboardingShowCube::EnableSpecificReactionaryBehavior(Robot& robot, bool enable)

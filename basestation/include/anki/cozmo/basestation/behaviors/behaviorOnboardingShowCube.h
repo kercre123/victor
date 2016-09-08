@@ -76,8 +76,11 @@ private:
   void StartSubStatePickUpBlock(Robot& robot);
   void StartSubStateCelebratePickup(Robot& robot);
   
+  bool IsSequenceComplete();
+  
   uint8_t _maxErrorsTotal = 4;
   uint8_t _maxErrorsPickup = 5;
+  double  _maxTimeBeforeTimeout_Sec = 5 * 60.0;
 };
 
 }
