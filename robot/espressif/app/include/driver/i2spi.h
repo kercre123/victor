@@ -95,6 +95,7 @@ typedef enum
   I2SPI_SYNC = 0,
   I2SPI_NORMAL,
   I2SPI_BOOTLOADER,
+  I2SPI_NULL,
 } I2SPIMode;
 
 /** Switch I2SPI operating mode.

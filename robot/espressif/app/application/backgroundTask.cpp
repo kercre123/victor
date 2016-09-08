@@ -226,29 +226,13 @@ void Exec(os_event_t *event)
     }
     case 4:
     {
-      static bool haveReported = false;
+      static uint32_t lastPEC = 0;
       const uint32_t pec = i2spiGetPhaseErrorCount();
-      if (pec > 2)
+      if (pec > lastPEC)
       {
-        RobotInterface::RobotErrorReport rer;
-        rer.error = RobotInterface::REC_I2SPI_TMD;
-        rer.fatal = true;
-        RobotInterface::SendMessage(rer);
         AnkiWarn( 185, "I2SPI.TooMuchDrift", 486, "TMD=%d\tintegral=%d", 2, pec, i2spiGetIntegralDrift());
-        if (haveReported == false)
-        {
-          CrashRecord cr;
-          os_memset(&cr, 0xff, sizeof(CrashRecord));
-          cr.reporter = RobotInterface::WiFiCrash;
-          cr.errorCode = rer.error;
-          if (crashHandlerPutReport(&cr) >= 0) haveReported = true;
-        }
-        else
-        {
-          os_printf("Seppuku\r\n");
-          system_deep_sleep(0); // Die
-        }
       }
+      lastPEC = pec;
       break;
     }
     case 5:
@@ -366,4 +350,15 @@ extern "C" bool i2spiSynchronizedCallback(uint32 param)
   Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_entry);
   Anki::Cozmo::CrashReporter::StartQuerry();
   return false;
+}
+
+extern "C" void i2spiResyncCallback(void)
+{
+  using namespace Anki::Cozmo::RobotInterface;
+  RobotErrorReport rer;
+  rer.error = REC_I2SPI_TMD;
+  rer.fatal = false;
+  SendMessage(rer);
+  Anki::Cozmo::Face::ResetScreen();
+  AnkiWarn( 370, "I2SPI.Resync", 607, "I2SPI resynchronizing", 0);
 }
