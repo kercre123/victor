@@ -16,14 +16,14 @@ MonoBehaviour:
     _EnumValue: 15
   UnlockableType: 0
   Prerequisites:
-  - _EnumValueAsString: PounceOnMotionAction
-    _EnumValue: 12
+  - _EnumValueAsString: RollCube
+    _EnumValue: 9
   AnyPrereqUnlock: 0
   NeverAvailable: 0
   DescriptionKey: unlockable.CubePounce.Description
   TitleKey: unlockable.CubePounce.Title
   UpgradeCostItemId: TestHexItem0
-  UpgradeCostAmountNeeded: 5
+  UpgradeCostAmountNeeded: 4
   RequestTrickCostItemId: treat
   RequestTrickCostAmountCurve:
     serializedVersion: 2
