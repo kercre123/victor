@@ -277,7 +277,8 @@ namespace Anki {
           }
           case RobotInterface::EngineToRobot::Tag_requestCrashReports:
           {
-            CrashReporter::StartSending(msg.requestCrashReports.index);
+            CrashReporter::TriggerLogSend(msg.requestCrashReports.index);
+            break;
           }
           default:
           {

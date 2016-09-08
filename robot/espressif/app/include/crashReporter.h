@@ -17,10 +17,10 @@ namespace Anki {
       void Update();
       
       /// Start sending crash reports to the engine
-      void StartSending(u8 index);
+      void TriggerLogSend(u8 index);
       
       /// Start querrying the body for any crash reports it has
-      void StartQuerry();
+      void StartQuery();
       
       /// Accept body NV storage data
       void AcceptBodyStorage(BodyStorageContents& msg);

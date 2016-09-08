@@ -61,21 +61,21 @@ bool Init()
   return true;
 }
 
-void StartSending(u8 index)
+void TriggerLogSend(u8 index)
 {
   if (reportIndex == MAX_CRASH_LOGS && index < MAX_CRASH_LOGS)
   {
     reportIndex = index;
   }
-  debug("StartSending: %d\r\n", reportIndex);
+  debug("TriggerLogSend: %d\r\n", reportIndex);
 }
 
-void StartQuerry()
+void StartQuery()
 {
   crashHandlerShowStatus(); //report what we found at startup
   rtipCrashReadState = RBS_read;
 }
-  
+
 void Update()
 {  
   if (rtipCrashReadState >= RBS_read)
@@ -194,7 +194,7 @@ void Update()
     crashHandlerGetReport(reportIndex, &record);
     if (record.nWritten == 0 && record.nReported != 0)
     {
-      debug("Sending crash report %d\r\n",reportIndex);
+      os_printf("Sending crash report %d\r\n",reportIndex);
       RobotInterface::CrashReport report;
       STACK_LEFT(DEBUG_CR);
       report.errorCode = record.errorCode;

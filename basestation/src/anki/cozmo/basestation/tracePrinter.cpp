@@ -20,6 +20,8 @@ namespace Cozmo {
 const std::string TracePrinter::UnknownTraceName   = "UnknownTraceName";
 const std::string TracePrinter::UnknownTraceFormat = "Unknown trace format [%d] with %d parameters";
 const std::string TracePrinter::RobotNamePrefix    = "RobotFirmware.";
+  
+// constant calculated from ram size in robot/espressif/app/include/driver/crash.h, which is not in app search path.
 static const int MAX_CRASH_LOGS = 4;
 
 TracePrinter::TracePrinter(Robot* robot)

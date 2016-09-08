@@ -77,12 +77,16 @@ def print_regs(reporter, data):
 
 parser = argparse.ArgumentParser(description='Extract crashdumps from Espressif NVStorage')
 parser.add_argument('filename', help='the binary datafile')
+parser.add_argument('-das', action='store_true')
 args = parser.parse_args()
 
 START = 0x02000
-SegSize = 0x3000-START
+SegSize = 0x1000
 CRASH_RECORD_SIZE = 1024
 Names = {0:"Esp ", 1:"Body", 2:"RTIP"}
+
+if args.das:
+    START = 0
 
 with open(args.filename, 'rb') as infile:
     infile.seek(START)
