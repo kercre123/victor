@@ -273,7 +273,7 @@ public class RewardedActionManager : MonoBehaviour {
     return best;
   }
 
-  public void ResetPendingRewards() {
+  private void ResetPendingRewards() {
     PendingActionRewards.Clear();
     NewDifficultyUnlock = -1;
     NewSkillChange = 0;

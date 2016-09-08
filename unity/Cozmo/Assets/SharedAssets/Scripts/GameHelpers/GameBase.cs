@@ -158,7 +158,7 @@ public abstract class GameBase : MonoBehaviour {
 
     SkillSystem.Instance.StartGame(_ChallengeData);
     // Clear Pending Rewards and Unlocks so ChallengeEndedDialog only displays things earned during this game
-    RewardedActionManager.Instance.ResetPendingRewards();
+    RewardedActionManager.Instance.SendPendingRewardsToInventory();
     //SkillSystem.Instance.OnLevelUp += HandleCozmoSkillLevelUp;
 
     InitializeReactionaryBehaviorsForGameStart();
@@ -597,7 +597,7 @@ public abstract class GameBase : MonoBehaviour {
 
   public void CloseMinigameImmediately() {
     DAS.Info(this, "Close Minigame Immediately");
-    RewardedActionManager.Instance.ResetPendingRewards();
+    RewardedActionManager.Instance.SendPendingRewardsToInventory();
     _SharedMinigameViewInstance.CloseViewImmediately();
     CleanUp();
   }
@@ -662,7 +662,7 @@ public abstract class GameBase : MonoBehaviour {
   protected void RaiseMiniGameQuit() {
     _StateMachine.Stop();
 
-    RewardedActionManager.Instance.ResetPendingRewards();
+    RewardedActionManager.Instance.SendPendingRewardsToInventory();
     DAS.Event(DASConstants.Game.kQuit, null);
     SendCustomEndGameDasEvents();
 
