@@ -149,9 +149,23 @@ bool BlockFilter::AddObjectToPersistentPool(FactoryID factoryID, ObjectType obje
     ++startIter;
   }
   
-  ObjectInfoArray::iterator it = std::find_if(startIter, _persistentPool.end(), [](ObjectInfo& objectInfo) {
-    return objectInfo.factoryID == ActiveObject::InvalidFactoryID;
-  });
+  auto it = _persistentPool.end();
+  for(auto iter = startIter; iter != _persistentPool.end(); ++iter)
+  {
+    if(iter->factoryID == factoryID || iter->objectType == objectType)
+    {
+      PRINT_NAMED_ERROR("BlockFilter.AddObjectToPersistentPool",
+                        "Object with factory ID 0x%x and/or type %s already in _persistentPool",
+                        factoryID,
+                        EnumToString(objectType));
+      return false;
+    }
+    
+    if(it == _persistentPool.end() && iter->factoryID == ActiveObject::InvalidFactoryID)
+    {
+      it = iter;
+    }
+  }
   
   if (it != _persistentPool.end()) {
     it->Reset();
