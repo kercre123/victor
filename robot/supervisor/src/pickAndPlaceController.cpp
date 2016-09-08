@@ -1,4 +1,3 @@
-#include "anki/common/robot/config.h"
 #include "pickAndPlaceController.h"
 #include <math.h>
 #include "anki/common/constantsAndMacros.h"
@@ -585,7 +584,7 @@ namespace Anki {
           }
           case POPPING_A_WHEELIE:
             // Either the robot has pitched up, or timeout
-            if (IMUFilter::GetPitch() > 1.2 || HAL::GetTimeStamp() > transitionTime_) {
+            if (IMUFilter::GetPitch() > 1.2f || HAL::GetTimeStamp() > transitionTime_) {
               SteeringController::ExecuteDirectDrive(0, 0);
               SendPickAndPlaceResultMessage(true, NO_BLOCK);
               mode_ = IDLE;

@@ -483,6 +483,10 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
       PRINT_NAMED_EVENT("Robot.CheckAndUpdateTreadsState.FallingStarted",
                         "t=%dms",
                         _fallingStartedTime_ms);
+      
+      // Stop all actions
+      GetActionList().Cancel();
+      
     } else if (_offTreadsState == OffTreadsState::Falling) {
       // This is not an exact measurement of fall time since it includes some detection delays on the robot side
       // It may also include kRobotTimeToConsiderOfftreads_ms depending on how the robot lands

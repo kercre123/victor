@@ -32,7 +32,6 @@
 #ifndef ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
 #define ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
 #include "anki/types.h"
-#include "anki/common/robot/config.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/imageTypes.h"

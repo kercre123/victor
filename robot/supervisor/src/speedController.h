@@ -55,8 +55,6 @@ namespace Anki {
     //Runs one iteration of the vheicle speed controller to compute the commanded vehicle speed
     void Manage(void);
     
-    void ResetIntegralError(void);
-    
   } // namespace SpeedController
   } // namespace Cozmo
 } // namespace Anki

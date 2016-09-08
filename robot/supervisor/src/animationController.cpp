@@ -18,7 +18,6 @@ extern "C" {
   #include "anki/cozmo/robot/drop.h"
 }
 extern "C" void FacePrintf(const char *format, ...);
-#define ONCHIP
 #else // Not on Espressif
 #define STORE_ATTR
 #include <string.h>
@@ -45,7 +44,7 @@ namespace AnimationController {
     static const s32 ANIMATION_PREROLL_LENGTH = 7;
 
     // Circular byte buffer for keyframe messages
-    ONCHIP STORE_ATTR u8 _keyFrameBuffer[KEYFRAME_BUFFER_SIZE];
+    STORE_ATTR u8 _keyFrameBuffer[KEYFRAME_BUFFER_SIZE];
     s32 _currentBufferPos;
     s32 _lastBufferPos;
 

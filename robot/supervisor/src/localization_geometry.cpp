@@ -12,7 +12,7 @@
 namespace Anki {
   namespace Embedded {
 
-#pragma mark ------ Point2f class --------
+    // ------ Point2f class --------
     
     Point2f::Point2f(): x(0.0f), y(0.0f) {}
     Point2f::Point2f(const float x, const float y): x(x), y(y) {}
@@ -72,7 +72,7 @@ namespace Anki {
       return sqrtf(x*x + y*y);
     }
     
-#pragma mark ------- Rotation2d class ----------
+    // ------- Rotation2d class ----------
     
     Rotation2d::Rotation2d()
     : _angle(0)
@@ -118,7 +118,7 @@ namespace Anki {
     }
     
     
-#pragma mark ------ Pose2d class --------
+    // ------ Pose2d class --------
     
     Pose2d Pose2d::operator*(const Pose2d& other)
     {

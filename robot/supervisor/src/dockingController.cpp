@@ -1,4 +1,3 @@
-#include "anki/common/robot/config.h"
 #include "trig_fast.h"
 #include "dockingController.h"
 #include "headController.h"

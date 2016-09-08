@@ -60,11 +60,6 @@ namespace Anki {
       namespace {
 
         // Parameters / Constants:
-
-        // TESTING
-        // Change this value to run different test modes
-        const TestMode DEFAULT_TEST_MODE = TM_NONE;
-
         Robot::OperationMode mode_ = INIT_MOTOR_CALIBRATION;
         bool wasConnected_ = false;
 
@@ -323,13 +318,6 @@ namespace Anki {
               msg.robotID = HAL::GetIDCard()->esn;
               AnkiInfo( 179, "CozmoBot.BroadcastingAvailability", 479, "RobotID: %d", 1, msg.robotID);
               RobotInterface::SendMessage(msg);
-              // Start test mode
-              if (DEFAULT_TEST_MODE != TM_NONE) {
-                if(TestModeController::Start(DEFAULT_TEST_MODE) == RESULT_FAIL) {
-                  AnkiWarn( 180, "CozmoBot.TestModeFailed", 480, "TestMode %d failed to start.", 1, DEFAULT_TEST_MODE);
-                  return RESULT_FAIL;
-                }
-              }
 #endif
               
               mode_ = WAITING;

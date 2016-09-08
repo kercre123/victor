@@ -67,8 +67,6 @@ namespace Anki {
       // The controller needs to regulate the speed of the car "around" the user commanded speed [mm/sec]
       s16 controllerCommandedVehicleSpeed_ = 0;
 
-      s32 errorsum_ = 0;
-
     } // private namespace
 
 // #pragma mark --- Method Implementations ---
@@ -185,69 +183,8 @@ namespace Anki {
       //Later we will (potentially) change this to a PI contontroller trying to achieve the speed we want
 
       RunAccelerationUpdate();
-      Run(GetUserCommandedCurrentVehicleSpeed());
+      controllerCommandedVehicleSpeed_ = GetUserCommandedCurrentVehicleSpeed();
 
-    }
-
-    // Integral speed controller.
-    // Adjusts contollerCommandedVehicleSpeed according to given desiredVehicleSpeed.
-    void Run(s16 desVehicleSpeed)
-    {
-#if (0)
-      s32 currspeed = GetCurrentMeasuredVehicleSpeed();
-
-      // Get the current error
-      s32 currerror = desVehicleSpeed - currspeed;
-
-      // We run 500 times per second
-      // We get a new reading every 4.3mm
-      // Lets say we try to drive 1.5m/s, but only drive 1.4 (on average)
-      // Over 50 cycles (1/10 second), our sum will be (100mm * 50) = 5000 ||| 50
-      // Over 500 cycles (in one second), our sum will be (100mm * 500) = 50000 ||| 500  (some of those number are too big for signed short!!!!)
-      controllerCommandedVehicleSpeed_ = (desVehicleSpeed + (currerror * KP) +
-                                          (errorsum_ * KI));
-
-
-      // Update and cap errorsum so that it doesn't get too huge.
-      errorsum_ += currerror;
-      errorsum_ = CLIP(errorsum_, -MAX_ERRORSUM, MAX_ERRORSUM);
-
-      //Anti zero-crossover
-      //Define a deadband above 0 where we command nothing to the wheels:
-      //1) If the current wheelspeed is smaller= than the deadband
-      //2) And the desired speed is smaller than the current speed
-      //ATTENTION: This should work in reverse dirving as well, BUT requires
-      //the encoders to return values
-      if (ABS(currspeed) <= WheelController::WHEEL_DEAD_BAND_MM_S) {
-        if ((currspeed >= 0 && desVehicleSpeed <= currspeed) || (currspeed < 0 && desVehicleSpeed >= currspeed)) {
-          controllerCommandedVehicleSpeed_ = desVehicleSpeed;
-          errorsum_ = 0;
-          //ResetWheelControllerIntegralGainSums();
-        }
-      }
-
-      // If considered stopped, force stop
-      if (ABS(desVehicleSpeed) <= WheelController::WHEEL_SPEED_COMMAND_STOPPED_MM_S) {
-        controllerCommandedVehicleSpeed_ = desVehicleSpeed;
-        errorsum_ = 0;
-        //ResetWheelControllerIntegralGainSums();
-      }
-
-#if(DEBUG_SPEED_CONTROLLER)
-      AnkiDebug( 28, "SpeedController", 170, "userDesSpeed: %d, userCurrSpeed: %f, measSpeed: %d, userAccel: %d, controllerSpeed: %d, currError: %d, errorSum: %d\n", 7, userCommandedDesiredVehicleSpeed_, userCommandedCurrentVehicleSpeed_, GetCurrentMeasuredVehicleSpeed(), userCommandedAcceleration_, controllerCommandedVehicleSpeed_, currerror, errorsum_);
-#endif
-
-#else
-      // KEVIN 2012_12_18: Disabled integral vehicle controller per Gabe's recommendations.
-      // He says increasing Ki of wheel speed controller is sufficient.
-      controllerCommandedVehicleSpeed_ = desVehicleSpeed;
-      //s32 currerror = 0;
-#endif
-    }
-
-
-    void ResetIntegralError() {
-      errorsum_ = 0;
     }
 
   } // namespace SpeedController

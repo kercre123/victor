@@ -101,7 +101,6 @@ namespace Anki
           AnkiError( 253, "Path.GetLength.UndefinedSegment", 347, "%d", 1, type_);
           AnkiAssert(false, 275);
       }
-      return 0;
     }
 
     void PathSegment::OffsetStart(f32 xOffset, f32 yOffset)
@@ -342,7 +341,7 @@ namespace Anki
 
         f32 b_inv = y + x/line_m_;
 
-        f32 x_intersect = (b_inv - line_b_) / (line_m_ + (1.0/line_m_));
+        f32 x_intersect = (b_inv - line_b_) / (line_m_ + (1.f/line_m_));
         f32 y_intersect = - (x_intersect / line_m_) + b_inv;
 
         f32 dy = y - y_intersect;
@@ -904,7 +903,6 @@ namespace Anki
             default:
               AnkiError( 265, "Path.GenerateDubinsPath.InvalidSegment", 305, "", 0);
               AnkiAssert(0, 279);
-              break;
           }
 
         }

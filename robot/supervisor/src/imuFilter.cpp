@@ -133,10 +133,10 @@ namespace Anki {
         u32 eventTime_[NUM_IMU_EVENTS] = {0};
 
         // The amount of time required for eventStateRaw to be true for eventState to be true
-        const u32 eventActivationTime_ms_[NUM_IMU_EVENTS] = {200, 2000, 500, 500, 500};
+        const u32 eventActivationTime_ms_[NUM_IMU_EVENTS] = {150, 2000, 500, 500, 500};
 
         // The amount of time required for eventStateRaw to be false for eventState to be false
-        const u32 eventDeactivationTime_ms_[NUM_IMU_EVENTS] = {250, 500, 500, 500, 500};
+        const u32 eventDeactivationTime_ms_[NUM_IMU_EVENTS] = {200, 500, 500, 500, 500};
 
         // Callback functions associated with event activation and deactivation
         typedef void (*eventCallbackFn)(void);
@@ -145,8 +145,6 @@ namespace Anki {
 
         // Falling
         const f32 FALLING_THRESH_MMPS2_SQRD = 40000000;
-        const f32 LIFT_BRACE_POWER = -0.7f;
-        const f32 HEAD_BRACE_POWER = -0.9f;
 
         // N-side down
         const f32 NSIDE_DOWN_THRESH_MMPS2 = 8000;
@@ -276,17 +274,14 @@ namespace Anki {
       
       void BraceForImpact()
       {
-        LiftController::Disable();
-        HeadController::Disable();
-        
-        HAL::MotorSetPower(MOTOR_LIFT, LIFT_BRACE_POWER);
-        HAL::MotorSetPower(MOTOR_HEAD, HEAD_BRACE_POWER);
+        LiftController::Brace();
+        HeadController::Brace();
       }
       
       void UnbraceAfterImpact()
       {
-        LiftController::Enable();
-        HeadController::Enable();
+        LiftController::Unbrace();
+        HeadController::Unbrace();
       }
 
       //===== End of event callbacks ====
@@ -465,7 +460,15 @@ namespace Anki {
 
       void DetectFalling()
       {
-        eventStateRaw_[FALLING] = accelMagnitudeSqrd_ < FALLING_THRESH_MMPS2_SQRD;
+        const f32 STOPPED_TUMBLING_THRESH = 50.f;
+        if (!IsFalling()) {
+          eventStateRaw_[FALLING] = accelMagnitudeSqrd_ < FALLING_THRESH_MMPS2_SQRD;
+        } else {
+          // Check for high-freq activity on x-axis (this could easily be any other axis since the threshold is so small)
+          // to determine when the robot is definitely no longer moving.
+          eventStateRaw_[FALLING] = accelMagnitudeSqrd_ < FALLING_THRESH_MMPS2_SQRD ||
+                                    accel_robot_frame_high_pass[0] > STOPPED_TUMBLING_THRESH;
+        }
       }
 
       void DetectNsideDown()
@@ -590,9 +593,10 @@ namespace Anki {
                                             (ABS(external_accel_disturbance_cnt[1]) > PICKUP_COUNT_WHILE_MOTIONLESS);
             
             if (potentialPickupCnt_ > PICKUP_COUNT_WHILE_MOTIONLESS || accelBasedMotionDetected) {
-              AnkiInfo( 369, "IMUFilter.PDWhileStationary", 606, "acc (%f, %f, %f), gyro (%f, %f, %f)", 6,
+              AnkiInfo( 368, "IMUFilter.PDWhileStationary", 604, "acc (%f, %f, %f), gyro (%f, %f, %f), cliff %d", 7,
                     accel_robot_frame_filt[0], accel_robot_frame_filt[1], accel_robot_frame_filt[2],
-                    gyro_robot_frame_filt[0], gyro_robot_frame_filt[1], gyro_robot_frame_filt[2]);
+                    gyro_robot_frame_filt[0], gyro_robot_frame_filt[1], gyro_robot_frame_filt[2],
+                    cliffBasedPickupDetect);
               SetPickupDetect(true);
             }
 
@@ -604,8 +608,8 @@ namespace Anki {
             if (CheckPickupWhileMoving() || cliffBasedPickupDetect) {
               if (++potentialPickupCnt_ > PICKUP_COUNT_WHILE_MOVING) {
                 SetPickupDetect(true);
-                AnkiInfo( 332, "IMUFilter.PickupDetected", 582, "accX = %f, accY = %f, accZ = %f", 3,
-                         accel_robot_frame_filt[0], accel_robot_frame_filt[1], accel_robot_frame_filt[2]);
+                AnkiInfo( 369, "IMUFilter.PickupDetected", 605, "accX = %f, accY = %f, accZ = %f, cliff = %d", 4,
+                         accel_robot_frame_filt[0], accel_robot_frame_filt[1], accel_robot_frame_filt[2], cliffBasedPickupDetect);
               }
             } else {
               potentialPickupCnt_ = 0;

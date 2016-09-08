@@ -3,7 +3,6 @@
 #include "imuFilter.h"
 #include <math.h>
 #include "anki/common/constantsAndMacros.h"
-#include "anki/common/robot/config.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
@@ -125,6 +124,11 @@ namespace Anki {
         // If enableAtTime_ms_ is non-zero, this is the time beyond current time
         // that the motor will be re-enabled if the lift is not moving.
         const u32 REENABLE_TIMEOUT_MS = 2000;
+        
+        // Bracing for impact
+        // Lowers lift quickly and then disables
+        // Prevents any new heights from being commanded
+        bool bracing_ = false;
 
       } // "private" members
 
@@ -171,6 +175,7 @@ namespace Anki {
           HAL::MotorSetPower(MOTOR_LIFT, power_);
           
           potentialBurnoutStartTime_ms_ = 0;
+          bracing_ = false;
           
           if (autoReEnable) {
             enableAtTime_ms_ = HAL::GetTimeStamp() + REENABLE_TIMEOUT_MS;
@@ -365,6 +370,9 @@ namespace Anki {
 
       static void SetDesiredHeight_internal(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds, bool useVPG)
       {
+        if (bracing_) {
+          return;
+        }
 
         // Do range check on height
         const f32 newDesiredHeight = CLIP(height_mm, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
@@ -482,7 +490,7 @@ namespace Anki {
       // Returns true if a protection action was triggered.
       bool MotorBurnoutProtection() {
         
-        if (ABS(power_) < BURNOUT_POWER_THRESH) {
+        if (ABS(power_) < BURNOUT_POWER_THRESH || bracing_) {
           potentialBurnoutStartTime_ms_ = 0;
           return false;
         }
@@ -504,6 +512,17 @@ namespace Anki {
         return false;
       }
       
+      void Brace() {
+        
+        SetMaxSpeedAndAccel(MAX_LIFT_SPEED_RAD_PER_S, MAX_LIFT_ACCEL_RAD_PER_S2);
+        SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+        bracing_ = true;
+      }
+      
+      void Unbrace() {
+        bracing_ = false;
+        Enable();
+      }
       
       Result Update()
       {
@@ -538,6 +557,10 @@ namespace Anki {
           return RESULT_OK;
         }
 
+        if (bracing_ && IsInPosition()) {
+          Disable();
+          return RESULT_OK;
+        }
 
 #if SIMULATOR
         if (disengageGripperAtDest_ && currentAngle_.ToFloat() < disengageAtAngle_) {

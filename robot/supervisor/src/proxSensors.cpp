@@ -28,9 +28,11 @@ namespace Anki {
         TimeStamp_t _pendingCliffEvent = 0;
         TimeStamp_t _pendingUncliffEvent = 0;
         
+#ifdef SIMULATOR
         // Forward prox sensor
         u8 _lastForwardObstacleDetectedDist = FORWARD_COLLISION_SENSOR_LENGTH_MM + 1;
         const u32 PROX_EVENT_CYCLE_PERIOD = 6;
+#endif
         
         bool _stopOnCliff = true;
         

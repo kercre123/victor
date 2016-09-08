@@ -529,7 +529,7 @@ namespace Anki {
     {
       //AnkiDebug( 184, "PTURN", 485, "%d: %f   %f ", 3, HAL::GetTimeStamp(), angularVel, angularAccel);
       
-      if (fabsf(angularVel) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC + 1e-6) {
+      if (fabsf(angularVel) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
         AnkiWarn( 244, "SteeringController.ExecutePointTurn_2.PointTurnTooFast", 533, "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.", 2,
               RAD_TO_DEG_F32(angularVel), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
         angularVel = copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, angularVel);
@@ -557,7 +557,7 @@ namespace Anki {
 
     void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel, f32 angleTolerance, bool useShortestDir)
     {
-      if (fabsf(maxAngularVel) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC + 1e-6) {
+      if (fabsf(maxAngularVel) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
         AnkiWarn( 245, "SteeringController.ExecutePointTurn.PointTurnTooFast", 533, "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.", 2,
               RAD_TO_DEG_F32(maxAngularVel), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
         maxAngularVel = copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, maxAngularVel);

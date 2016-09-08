@@ -87,6 +87,11 @@ namespace HeadController {
 
       bool enable_ = false;
 
+      // Bracing for impact
+      // Lowers head quickly and then disables
+      // Prevents any new angles from being commanded
+      bool bracing_ = false;
+
     } // "private" members
 
 
@@ -109,6 +114,7 @@ namespace HeadController {
         angleErrorSum_ = 0.f;
 
         potentialBurnoutStartTime_ms_ = 0;
+        bracing_ = false;
         
         power_ = 0;
         HAL::MotorSetPower(MOTOR_HEAD, power_);
@@ -201,12 +207,13 @@ namespace HeadController {
                 calState_ = HCS_IDLE;
                 Messages::SendMotorCalibrationMsg(MOTOR_HEAD, false);
                 break;
-#endif
+#else
                 // Set timestamp to be used in next state to wait for motor to "relax"
                 lastHeadMovedTime_ms = HAL::GetTimeStamp();
 
                 // Go to next state
                 calState_ = HCS_SET_CURR_ANGLE;
+#endif
               }
             } else {
               lastHeadMovedTime_ms = HAL::GetTimeStamp();
@@ -330,6 +337,10 @@ namespace HeadController {
     // TODO: There is common code with the other SetDesiredAngle() that can be pulled out into a shared function.
     static void SetDesiredAngle_internal(f32 angle, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
     {
+      if (bracing_) {
+        return;
+      }
+      
       // Do range check on angle
       angle = CLIP(angle, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
 
@@ -424,7 +435,7 @@ namespace HeadController {
     // Returns true if a protection action was triggered.
     bool MotorBurnoutProtection() {
       
-      if (ABS(power_) < BURNOUT_POWER_THRESH) {
+      if (ABS(power_) < BURNOUT_POWER_THRESH || bracing_) {
         potentialBurnoutStartTime_ms_ = 0;
         return false;
       }
@@ -439,6 +450,16 @@ namespace HeadController {
       return false;
     }
 
+    void Brace() {
+      SetMaxSpeedAndAccel(MAX_HEAD_SPEED_RAD_PER_S, MAX_HEAD_ACCEL_RAD_PER_S2);
+      SetDesiredAngle(MIN_HEAD_ANGLE);
+      bracing_ = true;
+    }
+  
+    void Unbrace() {
+      bracing_ = false;
+      Enable();
+    }
   
     Result Update()
     {
@@ -447,6 +468,11 @@ namespace HeadController {
       PoseAndSpeedFilterUpdate();
 
       if (!enable_ || !IsCalibrated() || MotorBurnoutProtection()) {
+        return RESULT_OK;
+      }
+      
+      if (bracing_ && IsInPosition()) {
+        Disable();
         return RESULT_OK;
       }
 
