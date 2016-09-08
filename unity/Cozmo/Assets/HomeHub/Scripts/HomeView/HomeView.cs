@@ -229,15 +229,15 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleEngineErrorCode(Anki.Cozmo.ExternalInterface.EngineErrorCodeMessage message) {
+      if (_BadLightDialog != null && message.errorCode == Anki.Cozmo.EngineErrorCode.ImageQualityGood) {
+        _BadLightDialog.CloseView();
+      }
       if (HomeViewCurrentlyOccupied) {
         return;
       }
       if (message.errorCode == Anki.Cozmo.EngineErrorCode.ImageQualityTooBright ||
           message.errorCode == Anki.Cozmo.EngineErrorCode.ImageQualityTooDark) {
         CreateBadLightPopup();
-      }
-      else if (_BadLightDialog != null && message.errorCode == Anki.Cozmo.EngineErrorCode.ImageQualityGood) {
-        _BadLightDialog.CloseView();
       }
     }
 
