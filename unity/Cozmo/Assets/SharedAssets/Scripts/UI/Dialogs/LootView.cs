@@ -468,6 +468,7 @@ namespace Cozmo.UI {
     }
 
     protected override void CleanUp() {
+      RewardedActionManager.Instance.SendPendingRewardsToInventory();
       _LootButton.onClick.RemoveAllListeners();
       _TronPool.ReturnAllObjectsToPool();
       if (RobotEngineManager.Instance.CurrentRobot != null) {

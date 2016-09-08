@@ -221,6 +221,8 @@ namespace Cozmo.HomeHub {
         HandlePlayTabButton();
       }
       UpdatePuzzlePieceCount();
+
+      ChestRewardManager.Instance.ChestGained += HandleChestGained;
     }
 
     private void InitializeButtons(CozmoButton[] buttons, UnityEngine.Events.UnityAction callback, string dasButtonName) {
@@ -572,7 +574,9 @@ namespace Cozmo.HomeHub {
         // Use local move for the Vector3 Spread
         rewardSeqeuence.Insert(0.0f, newRewardParticles.DOLocalMove(rewardTarget, rc.ExpParticleBurst).SetEase(Ease.OutBack));
         // Use non local move to properly tween to target end transform position
-        rewardSeqeuence.Insert(exitTime, newRewardParticles.DOMove(_EnergyRewardTarget.position, rc.ExpParticleLeave).SetEase(Ease.InBack).OnComplete(() => (CleanUpRewardParticles(newRewardParticles))));
+        rewardSeqeuence.Insert(exitTime, newRewardParticles.DOMove(_EnergyRewardTarget.position, rc.ExpParticleLeave).SetEase(Ease.InBack).OnComplete(() => {
+          CleanUpRewardParticles(newRewardParticles);
+        }));
       }
       return rewardSeqeuence;
     }
