@@ -29,6 +29,7 @@ class CreateSymlink(object):
         parser.add_argument('--create_folder', dest='createLinkFolder',
                             action='store', default=None, help='folder to create before creating a link')
         (self.options, args) = parser.parse_known_args(scriptArgs)
+        self.log.info(self.options)
 
     def run(self, scriptArgs):
         self.getOptions(scriptArgs)
@@ -77,8 +78,14 @@ class CreateSymlink(object):
             except OSError:
                 self.log.error("removing existing symlink failed")
                 return False
-            os.symlink(self.options.linkTarget, self.options.linkName)
-            return True
+
+            # if link name does not exist make link
+            self.callOsSymLink(self.options.linkTarget, self.options.linkName)
+            # check if the link already exists correctly
+            ## due to xcode build parallelization two or more build processes could have executed this script at the same time
+            ## just because os.symlink failed does not mean that link was not created by one of the other processes
+            success = self.verifySymLink(self.options.linkTarget, self.options.linkName)
+            return success
         else:
             # if link name exists return false
             if os.path.exists(self.options.linkName):
@@ -91,9 +98,34 @@ class CreateSymlink(object):
                 return False
 
             # if link name does not exist make link
-            os.symlink(self.options.linkTarget, self.options.linkName)
-            return True
+            self.callOsSymLink(self.options.linkTarget, self.options.linkName)
+            # check if the link already exists correctly
+            ## due to xcode build parallelization two or more build processes could have executed this script at the same time
+            ## just because os.symlink failed does not mean that link was not created by one of the other processes
+            success = self.verifySymLink(self.options.linkTarget, self.options.linkName)
+            return success
 
+
+    def callOsSymLink(self, linkTarget, linkName):
+        self.log.info("creating link %s -> %s" % (linkName, linkTarget))
+        try:
+            os.symlink(linkTarget, linkName)
+        except OSError:
+            self.log.error("creating symlink failed")
+
+
+    def verifySymLink(self, linkTarget, linkName):
+        if os.path.islink(linkName):
+            existingLink = os.readlink(linkName)
+            self.log.info("We currently have %s -> %s" % (linkName, existingLink))
+            if existingLink == linkTarget:
+                self.log.info("Symlink is correct")
+                return True
+            else:
+                self.log.info("Symlink is not correct")
+        else:
+            self.log.info("%s linkName is not symlink "% (linkName))
+        return False
 
 if __name__ == '__main__':
 
