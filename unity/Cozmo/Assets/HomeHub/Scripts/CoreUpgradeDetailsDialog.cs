@@ -44,7 +44,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
   private AnkiTextLabel _RequestTrickButtonLabel;
 
   [SerializeField]
-  private UnityEngine.UI.Image _RequestTrickButtonIcon;
+  private GameObject _RequestTrickButtonIcons;
 
   [SerializeField]
   private Image _UnlockableIcon;
@@ -293,7 +293,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
       _SparkSpinner.gameObject.SetActive(robot.IsSparked);
       _ButtonCostLabel.gameObject.SetActive(!robot.IsSparked);
       _RequestTrickButtonLabel.gameObject.SetActive(!robot.IsSparked && _RequestTrickButton.IsActive());
-      _RequestTrickButtonIcon.gameObject.SetActive(!robot.IsSparked && _RequestTrickButton.IsActive());
+      _RequestTrickButtonIcons.SetActive(!robot.IsSparked && _RequestTrickButton.IsActive());
     }
 
   }
