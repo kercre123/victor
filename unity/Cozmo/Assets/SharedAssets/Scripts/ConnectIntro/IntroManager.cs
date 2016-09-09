@@ -128,14 +128,12 @@ public class IntroManager : MonoBehaviour {
   }
 
   private void LoadConnectView(bool assetBundleSuccess) {
-    AssetBundleManager.Instance.LoadAssetBundleAsync(_PlatformSpecificAssetBundleName.ToString(), (obj) => {
-      _FirstTimeConnectDialogPrefabData.LoadAssetData((GameObject connectViewPrefab) => {
-        if (_FirstTimeConnectDialogInstance == null && connectViewPrefab != null) {
-          _FirstTimeConnectDialogInstance = UIManager.CreateUIElement(connectViewPrefab.gameObject);
-          _FirstTimeConnectDialogInstance.GetComponent<FirstTimeConnectDialog>().ConnectionFlowComplete += HandleFirstTimeConnectionFlowComplete;
-          _FirstTimeConnectDialogInstance.GetComponent<FirstTimeConnectDialog>().ConnectionFlowQuit += HandleFirstTimeConnectFlowQuit;
-        }
-      });
+    _FirstTimeConnectDialogPrefabData.LoadAssetData((GameObject connectViewPrefab) => {
+      if (_FirstTimeConnectDialogInstance == null && connectViewPrefab != null) {
+        _FirstTimeConnectDialogInstance = UIManager.CreateUIElement(connectViewPrefab.gameObject);
+        _FirstTimeConnectDialogInstance.GetComponent<FirstTimeConnectDialog>().ConnectionFlowComplete += HandleFirstTimeConnectionFlowComplete;
+        _FirstTimeConnectDialogInstance.GetComponent<FirstTimeConnectDialog>().ConnectionFlowQuit += HandleFirstTimeConnectFlowQuit;
+      }
     });
   }
 
