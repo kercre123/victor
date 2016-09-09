@@ -21,6 +21,7 @@ namespace RobotInterface {
   {
     REC_CrashReport = 0, ///< Must be 0 to match crash logging firmware
     REC_I2SPI_TMD   = 1, ///< I2SPI drift
+    REC_ReliableTransport = 2, ///< Reliable transport dropped messages
   }
 
   message CrashReport
