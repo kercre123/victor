@@ -334,7 +334,7 @@ namespace Cozmo {
       if(msg.success)
       {
         Json::Value& node = _json["CentroidInfo"];
-        node["HeadAngle_deg"] = RAD_TO_DEG(msg.headAngle);
+        node["HeadAngle_deg"] = RAD_TO_DEG_F32(msg.headAngle);
         node["UpperLeft"][0] = msg.dotCenX_pix[0];
         node["UpperLeft"][1] = msg.dotCenY_pix[0];
         node["LowerLeft"][0] = msg.dotCenX_pix[1];
@@ -356,7 +356,7 @@ namespace Cozmo {
       if(msg.success)
       {
         ss << "\n[CentroidInfo]" << std::fixed
-        << "\nHeadAngle_deg: " << RAD_TO_DEG(msg.headAngle)
+        << "\nHeadAngle_deg: " << RAD_TO_DEG_F32(msg.headAngle)
         << "\nUpperLeft: "  << msg.dotCenX_pix[0] << " " << msg.dotCenY_pix[0]
         << "\nLowerLeft: "  << msg.dotCenX_pix[1] << " " << msg.dotCenY_pix[1]
         << "\nUpperRight: " << msg.dotCenX_pix[2] << " " << msg.dotCenY_pix[2]

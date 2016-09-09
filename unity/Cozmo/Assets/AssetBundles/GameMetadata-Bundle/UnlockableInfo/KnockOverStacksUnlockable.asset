@@ -23,27 +23,27 @@ MonoBehaviour:
   DescriptionKey: unlockable.KnockOverThreeCubeStack.Description
   TitleKey: unlockable.KnockOverThreeCubeStack.Title
   UpgradeCostItemId: TestHexItem0
-  UpgradeCostAmountNeeded: 12
+  UpgradeCostAmountNeeded: 8
   RequestTrickCostItemId: treat
   RequestTrickCostAmountCurve:
     serializedVersion: 2
     m_Curve:
     - time: 0
       value: 0
-      inSlope: 1
-      outSlope: 1
-      tangentMode: 10
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
     - time: 1
       value: 1
-      inSlope: 1
-      outSlope: 1
-      tangentMode: 10
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 0
-  RequestTrickCostAmountNeededMin: 3
-  RequestTrickCostAmountNeededMaxTimes: 50
-  RequestTrickCostAmountNeededMax: 99
+  RequestTrickCostAmountNeededMin: 2
+  RequestTrickCostAmountNeededMaxTimes: 7
+  RequestTrickCostAmountNeededMax: 6
   CoreUpgradeTintColorName: upgradePurple
   CoreUpgradeIcon: {fileID: 21300000, guid: a0b8d9ff6dce44bfd8f462d7f814504e, type: 3}
   CoreUpgradeOverlayIcon: {fileID: 21300000, guid: d06dda776cd77466a87509f56df730a2,

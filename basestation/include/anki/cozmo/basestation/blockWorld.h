@@ -70,6 +70,9 @@ namespace Anki
       // Adds a cliff (detected with cliff detector)
       Result AddCliff(const Pose3d& p);
       
+      // Adds a collision-based obstacle (for when we think we bumped into something)
+      Result AddCollisionObstacle(const Pose3d& p);
+      
       // Processes the edges found in the given frame
       Result ProcessVisionOverheadEdges(const OverheadEdgeFrame& frameInfo);
       
@@ -366,6 +369,8 @@ namespace Anki
                                const ObjectFamily& inFamily,
                                const TimeStamp_t atTimestamp);
       
+      Result UpdateMarkerlessObjects(TimeStamp_t atTimestamp);
+      
       /*
       // Adds/Removes proxObstacles based on current sensor readings and age of existing proxObstacles
       Result UpdateProxObstaclePoses();
@@ -421,7 +426,7 @@ namespace Anki
       void RemoveUsedMarkers(PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap);
 
       // adds a markerless object at the given pose
-      Result AddMarkerlessObject(const Pose3d& pose);
+      Result AddMarkerlessObject(const Pose3d& pose, ObjectType type);
       
       ObjectID CreateFixedCustomObject(const Pose3d& p, const f32 xSize_mm, const f32 ySize_mm, const f32 zSize_mm);
       

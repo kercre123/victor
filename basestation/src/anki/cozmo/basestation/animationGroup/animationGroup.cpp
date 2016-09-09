@@ -150,7 +150,7 @@ const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood,
                       "%s: rejecting animation %s with head angle (%f) out of range (%f,%f)",
                       _name.c_str(),
                       entry->GetName().c_str(),
-                      RAD_TO_DEG(headAngleRad),
+                      RAD_TO_DEG_F32(headAngleRad),
                       entry->GetHeadAngleMin(),
                       entry->GetHeadAngleMax());
       }

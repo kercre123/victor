@@ -100,7 +100,9 @@ enum int_32 AnimationTrigger
   LookInPlaceForFacesHeadMovePause,
   MajorFail,
   MajorWin,
-  MeetCozmoGetIn,                       // 1. Transition into "scanning" player's face
+  MeetCozmoGetIn,                       // Meet Cozmo Activity get in animation
+  MeetCozmoLookFaceGetIn,               // 1. Transition into "scanning" player's face
+  MeetCozmoLookFaceGetOut,              // 3. Transition out of the "scanning" of player's face
   MeetCozmoScanningIdle,                // 2. Looping animation while "scanning"
   MeetCozmoFirstEnrollmentSayName,      // 3a. First-time enrollment, say player's name
   MeetCozmoFirstEnrollmentRepeatName,   // 4. Fist-time enrollment, confirm player's name
@@ -140,6 +142,7 @@ enum int_32 AnimationTrigger
   OnWaitForCubesMinigameSetup,
   OnWiggle,
   OnboardingBirth,
+  OnboardingCubeDockFail,
   OnboardingDiscoverCube,
   OnboardingDriveEnd,
   OnboardingDriveLoop,
@@ -152,6 +155,8 @@ enum int_32 AnimationTrigger
   OnboardingReactToCube,
   OnboardingReactToCubePutDown,
   OnboardingReactToFace,
+  OnboardingSoundOnlyLiftEffortPickup,
+  OnboardingSoundOnlyLiftEffortPlaceLow,
   PlacedOnCharger,
   PopAWheelieInitial,
   PopAWheeliePreActionNamedFace,

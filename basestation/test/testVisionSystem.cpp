@@ -61,7 +61,7 @@ TEST(VisionSystem, MarkerDetectionTests)
   
   // Construct a vision system
   Cozmo::VisionSystem visionSystem(dataPath, nullptr);
-  cozmoContext->GetDataLoader()->LoadData();
+  cozmoContext->GetDataLoader()->LoadRobotConfigs();
   Result result = visionSystem.Init(cozmoContext->GetDataLoader()->GetRobotVisionConfig());
   ASSERT_EQ(RESULT_OK, result);
   

@@ -765,7 +765,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   {
     Delocalize(isCarryingObject);
   }
-  else
+  else if(msg.pose_frame_id >= GetPoseFrameID()) // ignore state messages with old frame ID
   {
     Pose3d newPose;
         
@@ -1108,6 +1108,24 @@ Result Robot::Update(bool ignoreVisionModes)
       
   // update the memory map based on the current's robot pose
   _blockWorld.UpdateRobotPoseInMemoryMap();
+  
+  
+  
+  // Update ChargerPlatform - this has to happen before the behaviors which might need this information
+  ObservableObject* charger = GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger);
+  if( charger && charger->IsPoseStateKnown() && _offTreadsState == OffTreadsState::OnTreads)
+  {
+    // This state is useful for knowing not to play a cliff react when just driving off the charger.
+    bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());
+    if( isOnChargerPlatform != _isOnChargerPlatform)
+    {
+      _isOnChargerPlatform = isOnChargerPlatform;
+      Broadcast(
+         ExternalInterface::MessageEngineToGame(
+           ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform))
+                );
+    }
+  }
       
   ///////// Update the behavior manager ///////////
       
@@ -1429,21 +1447,6 @@ Result Robot::Update(bool ignoreVisionModes)
     SendDebugString(buffer);
     _lastDebugStringHash = curr_hash;
   }
-      
-  // Update ChargerPlatform
-  ObservableObject* charger = GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger);
-  if( nullptr != charger && charger->IsPoseStateKnown() && _offTreadsState == OffTreadsState::OnTreads)
-  {
-    // This state is useful for knowing not to play a cliff react when just driving off the charger.
-    bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());
-    if( isOnChargerPlatform != _isOnChargerPlatform)
-    {
-      _isOnChargerPlatform = isOnChargerPlatform;
-      Broadcast(
-        ExternalInterface::MessageEngineToGame(
-          ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform)));
-    }
-  }
 
   _lightsComponent->Update();
 
@@ -1521,9 +1524,21 @@ void Robot::SetNewPose(const Pose3d& newPose)
 {
   SetPose(newPose.GetWithRespectToOrigin());
   ++_frameId;
-      
-  const TimeStamp_t timeStamp = _poseHistory->GetNewestTimeStamp();
-      
+  
+  // Note: using last message timestamp instead of newest timestamp in history
+  //  because it's possible we did not put the last-received state message into
+  //  history (if it had old frame ID), but we still want the latest time we
+  //  can get.
+  const TimeStamp_t timeStamp = GetLastMsgTimestamp();
+  
+  Result addResult = AddRawOdomPoseToHistory(timeStamp, _frameId, _pose, GetHeadAngle(), GetLiftAngle(), IsCarryingObject());
+  if(RESULT_OK != addResult)
+  {
+    PRINT_NAMED_ERROR("Robot.SetNewPose.AddRawOdomPoseFailed",
+                      "t=%d FrameID=%d", timeStamp, _frameId);
+    return;
+  }
+    
   SendAbsLocalizationUpdate(_pose, timeStamp, _frameId);
 }
     
@@ -1556,7 +1571,7 @@ void Robot::SetHeadAngle(const f32& angle)
   if (!IsValidHeadAngle(angle, &_currentHeadAngle)) {
     PRINT_NAMED_WARNING("Robot.GetCameraHeadPose.HeadAngleOOB",
                         "Angle %.3frad / %.1f (TODO: Send correction or just recalibrate?)\n",
-                        angle, RAD_TO_DEG(angle));
+                        angle, RAD_TO_DEG_F32(angle));
   }
       
   _visionComponentPtr->GetCamera().SetPose(GetCameraPose(_currentHeadAngle));
@@ -3549,59 +3564,61 @@ void Robot::HandleConnectedToObject(uint32_t activeID, FactoryID factoryID, Obje
 {
   ActiveObjectInfo& objectInfo = _connectedObjects[activeID];
   
-  // Remove from the list of discovered objects since we are connecting to it
-  RemoveDiscoveredObjects(factoryID);
-  
-  if(_connectedObjects[activeID].factoryID != factoryID)
+  if (_connectedObjects[activeID].factoryID != factoryID)
   {
-    PRINT_NAMED_INFO("Robot.HandleConnectedToObject",
-                     "Ignoring connection to object 0x%x [%s] with active ID %d because expecting connection to 0x%x [%s]",
-                     factoryID,
-                     EnumToString(objectType),
-                     activeID,
-                     objectInfo.factoryID,
-                     EnumToString(objectInfo.objectType));
+    PRINT_CH_INFO("BlockPool",
+                  "Robot.HandleConnectedToObject",
+                  "Ignoring connection to object 0x%x [%s] with active ID %d because expecting connection to 0x%x [%s]",
+                  factoryID,
+                  EnumToString(objectType),
+                  activeID,
+                  objectInfo.factoryID,
+                  EnumToString(objectInfo.objectType));
     return;
   }
   
-  ASSERT_NAMED_EVENT((objectInfo.connectionState == ActiveObjectInfo::ConnectionState::PendingConnection) ||
-                     (objectInfo.connectionState == ActiveObjectInfo::ConnectionState::Disconnected),
-                     "Robot.HandleConnectedToObject",
-                     "Invalid state %d when connected to object 0x%x with active ID %d",
-                     (int)objectInfo.connectionState, factoryID, activeID);
+  if ((objectInfo.connectionState != ActiveObjectInfo::ConnectionState::PendingConnection) &&
+      (objectInfo.connectionState != ActiveObjectInfo::ConnectionState::Disconnected))
+  {
+    PRINT_NAMED_ERROR("Robot.HandleConnectedToObject.InvalidState",
+                      "Invalid state %d when connected to object 0x%x with active ID %d",
+                      (int)objectInfo.connectionState, factoryID, activeID);
+  }
 
   PRINT_CH_INFO("BlockPool", "Robot.HandleConnectToObject",
                 "Connected to active Id %d with factory Id 0x%x of type %s. Connection State = %d",
                 activeID, factoryID, EnumToString(objectType), objectInfo.connectionState);
   
+  // Remove from the list of discovered objects since we are connecting to it
+  RemoveDiscoveredObjects(factoryID);
+  
   _connectedObjects[activeID].connectionState = ActiveObjectInfo::ConnectionState::Connected;
-
-  // For debugging purposes, turn on the lights
-//  ActiveObject* activeObject = GetBlockWorld().GetActiveObjectByActiveID(activeID);
-//  SetObjectLights(activeObject->GetID(), Anki::Cozmo::WhichCubeLEDs::ALL, NamedColors::RED, NamedColors::RED, 999999, 0, 0, 0, true, MakeRelativeMode::RELATIVE_LED_MODE_OFF, Point2f{0, 0}, 0);
 }
 
 void Robot::HandleDisconnectedFromObject(uint32_t activeID, FactoryID factoryID, ObjectType objectType)
 {
   ActiveObjectInfo& objectInfo = _connectedObjects[activeID];
 
-  if(objectInfo.factoryID != factoryID)
+  if (objectInfo.factoryID != factoryID)
   {
-    PRINT_NAMED_INFO("Robot.HandleDisconnectedFromObject",
-                     "Ignoring disconnection from object 0x%x [%s] with active ID %d because expecting connection to 0x%x [%s]",
-                     factoryID,
-                     EnumToString(objectType),
-                     activeID,
-                     objectInfo.factoryID,
-                     EnumToString(objectInfo.objectType));
+    PRINT_CH_INFO("BlockPool",
+                  "Robot.HandleDisconnectedFromObject",
+                  "Ignoring disconnection from object 0x%x [%s] with active ID %d because expecting connection to 0x%x [%s]",
+                  factoryID,
+                  EnumToString(objectType),
+                  activeID,
+                  objectInfo.factoryID,
+                  EnumToString(objectInfo.objectType));
     return;
   }
 
-  ASSERT_NAMED_EVENT((objectInfo.connectionState == ActiveObjectInfo::ConnectionState::PendingDisconnection) ||
-                     (objectInfo.connectionState == ActiveObjectInfo::ConnectionState::Connected),
-                     "Robot.HandleDisconnectedFromObject",
-                     "Invalid state %d when disconnected from object 0x%x with active ID %d",
-                     (int)objectInfo.connectionState, factoryID, activeID);
+  if ((objectInfo.connectionState != ActiveObjectInfo::ConnectionState::PendingDisconnection) &&
+      (objectInfo.connectionState != ActiveObjectInfo::ConnectionState::Connected))
+  {
+    PRINT_NAMED_ERROR("Robot.HandleDisconnectedFromObject.InvalidState",
+                      "Invalid state %d when disconnected from object 0x%x with active ID %d",
+                      (int)objectInfo.connectionState, factoryID, activeID);
+  }
   
   PRINT_CH_INFO("BlockPool", "Robot.HandleDisconnectedFromObject",
                 "Disconnected from active Id %d with factory Id 0x%x of type %s. Connection State = %d",
@@ -3970,12 +3987,16 @@ FactoryID Robot::GetClosestDiscoveredObjectsOfType(ObjectType type, uint8_t maxR
   FactoryID closest = ActiveObject::InvalidFactoryID;
   uint8_t closestRSSI = maxRSSI;
 
-//  PRINT_CH_INFO("BlockPool", "Robot.GetClosestDiscoveredObjectsOfType", "Total # of objects = %zu", _discoveredObjects.size());
 //  std::stringstream str;
-//  for (auto& objectInfo : _discoveredObjects)
+//  str << "Search for objects of type = " << EnumToString(type) << ":" << std::endl;
+//  std::for_each(_discoveredObjects.cbegin(), _discoveredObjects.cend(), [&](const std::pair<FactoryID, ActiveObjectInfo>& pair)
 //  {
-//    str << "Factory ID = 0x" << std::hex << objectInfo.second.factoryID << ", object type = " << EnumToString(objectInfo.second.objectType) << ", RSSI = " << std::dec << (int)objectInfo.second.rssi << std::endl;
-//  }
+//    const ActiveObjectInfo& object = pair.second;
+//    if (object.objectType == type)
+//    {
+//      str << "Factory ID = 0x" << std::hex << object.factoryID << ", RSSI = " << std::dec << (int)object.rssi << std::endl;
+//    }
+//  });
 //  PRINT_CH_INFO("BlockPool", "Robot.GetClosestDiscoveredObjectsOfType", "Total # of objects = %zu\n%s", _discoveredObjects.size(), str.str().c_str());
   
   std::for_each(_discoveredObjects.cbegin(), _discoveredObjects.cend(), [&](const std::pair<FactoryID, ActiveObjectInfo>& pair)

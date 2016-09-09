@@ -450,7 +450,7 @@ namespace Anki {
       
       
       // TODO: rotation...
-      v.rot_deg = (float)RAD_TO_DEG( pose.GetRotationAngle().ToFloat() );
+      v.rot_deg = pose.GetRotationAngle().getDegrees();
       v.rot_axis_x = pose.GetRotationAxis().x();
       v.rot_axis_y = pose.GetRotationAxis().y();
       v.rot_axis_z = pose.GetRotationAxis().z();

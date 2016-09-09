@@ -221,7 +221,8 @@ message SayText {
   string              text,
   AnimationTrigger    playEvent,      // Set AnimationTrigger::Count to only play the Tts without an animation
   SayTextVoiceStyle   voiceStyle,
-  float_32            durationScalar
+  float_32            durationScalar = 1.0,
+  float_32            voicePitch = 0.0
 }
 
 message SayTextWithIntent {

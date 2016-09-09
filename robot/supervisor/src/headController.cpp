@@ -282,64 +282,50 @@ namespace HeadController {
     {
       return radSpeed_;
     }
-
-    void ClampSpeedAndAccel()
-    {
-      maxSpeedRad_ = CLIP(maxSpeedRad_, -MAX_HEAD_SPEED_RAD_PER_S, MAX_HEAD_SPEED_RAD_PER_S);
-      accelRad_ = CLIP(accelRad_, -MAX_HEAD_ACCEL_RAD_PER_S2, MAX_HEAD_ACCEL_RAD_PER_S2);
-    }
   
-    void SetAngularVelocity(const f32 rad_per_sec)
+    void SetAngularVelocity(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2)
     {
-      /*
-      // TODO: Figure out power-to-speed ratio on actual robot. Normalize with battery power?
-      // NOTE: You can use this to test if it's possible to make Cozmo head skip gear teeth by
-      //       driving the motor too hard.
-      f32 power = CLIP(rad_per_sec / HAL::MAX_HEAD_SPEED, -1.0, 1.0);
-      HAL::MotorSetPower(MOTOR_HEAD, power);
-      inPosition_ = true;
-       */
-       
-
       // Command a target angle based on the sign of the desired speed
       f32 targetAngle = 0;
-      if (rad_per_sec > 0) {
+      bool useVPG = true;
+      if (speed_rad_per_sec > 0) {
         targetAngle = MAX_HEAD_ANGLE;
-        maxSpeedRad_ = rad_per_sec;
-      } else if (rad_per_sec < 0) {
+      } else if (speed_rad_per_sec < 0) {
         targetAngle = MIN_HEAD_ANGLE;
-        maxSpeedRad_ = rad_per_sec;
       } else {
-        // Compute the expected height if we were to start slowing down now
-        f32 radToStop = 0.5f*(radSpeed_*radSpeed_) / accelRad_;
-        if (radSpeed_ < 0) {
-          radToStop *= -1;
-        }
-        targetAngle = currentAngle_.ToFloat() + radToStop;
+        // Stop immediately!
+        targetAngle = currentAngle_.ToFloat();
+        useVPG = false;
       }
-      ClampSpeedAndAccel();
-      SetDesiredAngle(targetAngle);
+      SetDesiredAngle(targetAngle, speed_rad_per_sec, accel_rad_per_sec2, useVPG);
     }
 
     void SetMaxSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2)
     {
       maxSpeedRad_ = ABS(max_speed_rad_per_sec);
-      accelRad_ = accel_rad_per_sec2;
-      ClampSpeedAndAccel();
-    }
+      accelRad_ = ABS(accel_rad_per_sec2);
 
-    void GetMaxSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2)
-    {
-      max_speed_rad_per_sec = maxSpeedRad_;
-      accel_rad_per_sec2 = accelRad_;
+      if (NEAR_ZERO(maxSpeedRad_)) {
+        maxSpeedRad_ = MAX_HEAD_SPEED_RAD_PER_S;
+      }
+      if (NEAR_ZERO(accelRad_)) {
+        accelRad_ = MAX_HEAD_ACCEL_RAD_PER_S2;
+      }
+      
+      maxSpeedRad_ = CLIP(maxSpeedRad_, 0, MAX_HEAD_SPEED_RAD_PER_S);
+      accelRad_    = CLIP(accelRad_, 0, MAX_HEAD_ACCEL_RAD_PER_S2);
+      
     }
 
     // TODO: There is common code with the other SetDesiredAngle() that can be pulled out into a shared function.
-    static void SetDesiredAngle_internal(f32 angle, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
+    void SetDesiredAngle_internal(f32 angle, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds,
+                                  f32 speed_rad_per_sec, f32 accel_rad_per_sec2, bool useVPG)
     {
       if (bracing_) {
         return;
       }
+      
+      SetMaxSpeedAndAccel(speed_rad_per_sec, accel_rad_per_sec2);
       
       // Do range check on angle
       angle = CLIP(angle, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
@@ -400,10 +386,16 @@ namespace HeadController {
                 startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
       }
       if (!res) {
-        //SetDesiredAngle_internal(angle);
-        // Start profile of head trajectory
+        f32 vpgSpeed = maxSpeedRad_;
+        f32 vpgAccel = accelRad_;
+        if (!useVPG) {
+          // If not useVPG, just use really large velocity and accelerations
+          vpgSpeed = 1000000.f;
+          vpgAccel = 1000000.f;
+        }
+        
         vpg_.StartProfile(startRadSpeed, startRad,
-                          maxSpeedRad_, accelRad_,
+                          vpgSpeed, vpgAccel,
                           0, desiredAngle_.ToFloat(),
                           CONTROL_DT);
       }
@@ -415,13 +407,18 @@ namespace HeadController {
 
     } // SetDesiredAngle_internal()
 
-    void SetDesiredAngle(f32 angle, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
+    void SetDesiredAngleByDuration(f32 angle_rad, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
     {
-      SetDesiredAngle_internal(angle, acc_start_frac, acc_end_frac, duration_seconds);
+      SetDesiredAngle_internal(angle_rad, acc_start_frac, acc_end_frac, duration_seconds,
+                               MAX_HEAD_SPEED_RAD_PER_S, MAX_HEAD_ACCEL_RAD_PER_S2, true);
     }
 
-    void SetDesiredAngle(f32 angle) {
-      SetDesiredAngle(angle, DEFAULT_START_ACCEL_FRAC, DEFAULT_END_ACCEL_FRAC, 0);
+    void SetDesiredAngle(f32 angle_rad,
+                         f32 speed_rad_per_sec,
+                         f32 accel_rad_per_sec2,
+                         bool useVPG) {
+      SetDesiredAngle_internal(angle_rad, DEFAULT_START_ACCEL_FRAC, DEFAULT_END_ACCEL_FRAC, 0,
+                               speed_rad_per_sec, accel_rad_per_sec2, useVPG);
     }
 
     bool IsInPosition(void) {
@@ -451,8 +448,7 @@ namespace HeadController {
     }
 
     void Brace() {
-      SetMaxSpeedAndAccel(MAX_HEAD_SPEED_RAD_PER_S, MAX_HEAD_ACCEL_RAD_PER_S2);
-      SetDesiredAngle(MIN_HEAD_ANGLE);
+      SetDesiredAngle(MIN_HEAD_ANGLE, MAX_HEAD_SPEED_RAD_PER_S, MAX_HEAD_ACCEL_RAD_PER_S2);
       bracing_ = true;
     }
   

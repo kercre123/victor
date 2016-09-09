@@ -289,6 +289,7 @@ struct DockingErrorSignal;
     TimeStamp_t _framePeriod_ms = 0;       // How fast we are receiving frames
     
     ImageQuality _lastImageQuality = ImageQuality::Good;
+    ImageQuality _lastBroadcastImageQuality = ImageQuality::Unchecked;
     TimeStamp_t  _currentQualityBeginTime_ms = 0;
     TimeStamp_t  _waitForNextAlert_ms = 0;
     
@@ -383,8 +384,8 @@ struct DockingErrorSignal;
   inline void VisionComponent::GetMarkerDetectionTurnSpeedThresholds(f32& bodyTurnSpeedThresh_degPerSec,
                                                                      f32& headTurnSpeedThresh_degPerSec) const
   {
-    bodyTurnSpeedThresh_degPerSec = RAD_TO_DEG(_markerDetectionBodyTurnSpeedThreshold_radPerSec);
-    headTurnSpeedThresh_degPerSec = RAD_TO_DEG(_markerDetectionHeadTurnSpeedThreshold_radPerSec);
+    bodyTurnSpeedThresh_degPerSec = RAD_TO_DEG_F32(_markerDetectionBodyTurnSpeedThreshold_radPerSec);
+    headTurnSpeedThresh_degPerSec = RAD_TO_DEG_F32(_markerDetectionHeadTurnSpeedThreshold_radPerSec);
   }
   
   inline void VisionComponent::StoreNextImageForCameraCalibration() {

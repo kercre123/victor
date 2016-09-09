@@ -231,7 +231,7 @@ namespace Face {
     }
   }
 
-  static void ResetScreen() {
+  void ResetScreen() {
     if (m_mode & suspended) return;
     
     m_remainingRects = 1;

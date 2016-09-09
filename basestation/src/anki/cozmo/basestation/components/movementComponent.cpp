@@ -10,9 +10,13 @@
  *
  **/
 
+#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/animTrackHelpers.h"
+#include "anki/cozmo/basestation/markerlessObject.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -26,7 +30,8 @@
 namespace Anki {
 namespace Cozmo {
   
-  CONSOLE_VAR(bool, kDebugTrackLocking, "Robot", false);
+CONSOLE_VAR(bool, kDebugTrackLocking, "Robot", false);
+CONSOLE_VAR(bool, kCreateUnexpectedMovementObstacles, "Robot", true);
   
 using namespace ExternalInterface;
 
@@ -126,7 +131,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
      robotState.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER ||
      robotState.status & (uint16_t)RobotStatusFlag::CLIFF_DETECTED)
   {
-    _unexpectedMovementCount = 0;
+    _unexpectedMovement.Reset();
     return;
   }
   
@@ -147,10 +152,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
   // Wheels aren't moving (using kMinWheelSpeed_mmps as a dead band)
   if(ABS(lWheelSpeed_mmps) + ABS(rWheelSpeed_mmps) < kMinWheelSpeed_mmps)
   {
-    if(_unexpectedMovementCount > 0)
-    {
-      _unexpectedMovementCount--;
-    }
+    _unexpectedMovement.Decrement();
     return;
   }
   
@@ -160,7 +162,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
     // But wheels say we are turning (the direction of the wheels are different like during a point turn)
     if(signbit(lWheelSpeed_mmps) != signbit(rWheelSpeed_mmps))
     {
-      _unexpectedMovementCount++;
+      _unexpectedMovement.Increment(1, lWheelSpeed_mmps, rWheelSpeed_mmps, robotState.timestamp);
       unexpectedMovementType = UnexpectedMovementType::TURNED_BUT_STOPPED;
     }
     // Wheels are moving in same direction but the difference between what the gyro is reporting and what we expect
@@ -170,7 +172,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
     // measuring
     else if(ABS(ABS(omega*0.5f) - ABS(zGyro_radps)) > kExpectedVsActualGyroTol_radps)
     {
-      _unexpectedMovementCount++;
+      _unexpectedMovement.Increment(1, lWheelSpeed_mmps, rWheelSpeed_mmps, robotState.timestamp);
       unexpectedMovementType = UnexpectedMovementType::TURNED_BUT_STOPPED;
     }
   }
@@ -190,30 +192,135 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
 //      _unexpectedMovementCount++;
 //      unexpectedMovementType = UnexpectedMovementType::TURNED_IN_SAME_DIRECTION;
 //    }
-    if(_unexpectedMovementCount > 0)
-    {
-      _unexpectedMovementCount--;
-      return;
-    }
+    _unexpectedMovement.Decrement();
+    return;
   }
   // Otherwise gyro says we are turning but our wheel speeds don't agree
   else
   {
     // Increment by 2 here to get this case to trigger twice as fast as other cases
     // The intuition is that this case is easier and more reliable to detect so there should not be any false positives
-    _unexpectedMovementCount+=2;
+    _unexpectedMovement.Increment(2, lWheelSpeed_mmps, rWheelSpeed_mmps, robotState.timestamp);
     unexpectedMovementType = UnexpectedMovementType::TURNED_IN_OPPOSITE_DIRECTION;
   }
   
-  if(_unexpectedMovementCount > kMaxUnexpectedMovementCount)
+  if(_unexpectedMovement.GetCount() > kMaxUnexpectedMovementCount)
   {
     PRINT_NAMED_WARNING("MovementComponent.CheckForUnexpectedMovement",
                         "Unexpected movement detected %s",
                         EnumToString(unexpectedMovementType));
     
-    _unexpectedMovementCount = 0;
+    // Only create obstacles for certain types of unexpected movement, and only when
+    // enabled by the console var and when ReactToUnexpectedMovement is enabled
+    // as a reactionary behavior. (So if someone turns off the reaction behavior
+    // adding of obstacles gets turned off too. This is kind of a hack to avoid
+    // needing another message/system for turning this on and off.
+
+    const bool isValidTypeOfUnexpectedMovement = (unexpectedMovementType == UnexpectedMovementType::TURNED_BUT_STOPPED ||
+                                                  unexpectedMovementType == UnexpectedMovementType::TURNED_IN_OPPOSITE_DIRECTION);
+    
+    const IReactionaryBehavior* behavior = _robot.GetBehaviorManager().GetReactionaryBehaviorByType(BehaviorType::ReactToUnexpectedMovement);
+    
+    const bool isBehaviorEnabled = (behavior != nullptr && behavior->IsReactionEnabled());
+                                    
+    if(kCreateUnexpectedMovementObstacles && isValidTypeOfUnexpectedMovement && isBehaviorEnabled)
+    {
+      // Add obstacle based on when this started and how robot was trying to turn
+      // TODO: Broadcast sufficient information to blockworld and do it there?
+      f32 avgLeftWheelSpeed_mmps, avgRightWheelSpeed_mmps;
+      _unexpectedMovement.GetAvgWheelSpeeds(avgLeftWheelSpeed_mmps, avgRightWheelSpeed_mmps);
+      
+      const bool leftGoingForward  = FLT_GT(avgLeftWheelSpeed_mmps,  0.f);
+      const bool rightGoingForward = FLT_GT(avgRightWheelSpeed_mmps, 0.f);
+      
+      RobotPoseStamp poseStamp;
+      TimeStamp_t historicalTime;
+      Result poseResult = _robot.GetPoseHistory()->ComputePoseAt(_unexpectedMovement.GetStartTime(), historicalTime,
+                                                                 poseStamp, true);
+      
+      if(RESULT_FAIL_ORIGIN_MISMATCH == poseResult)
+      {
+        // This particular "failure" of pose history can happen and does not deserve
+        // a warning, just an info
+        PRINT_NAMED_INFO("MovementComponent.CheckForUnexpectedMovement.PoseHistoryOriginMismatch",
+                         "Could not get robot pose at t=%u", _unexpectedMovement.GetStartTime());
+      }
+      else if(RESULT_OK != poseResult)
+      {
+        PRINT_NAMED_WARNING("MovementComponent.CheckForUnexpectedMovement.PoseHistoryFailure",
+                            "Could not get robot pose at t=%u", _unexpectedMovement.GetStartTime());
+      }
+      else
+      {
+        Pose3d obstaclePoseWrtRobot;
+        
+        const f32 extraPad_mm = 5.f; // fudge factor
+        const f32 obstaclePositionPad_mm = MarkerlessObject::GetSizeByType(ObjectType::CollisionObstacle).x() + extraPad_mm;
+        
+        const char *debugStr = "";
+        
+        if(leftGoingForward != rightGoingForward)
+        {
+          // Turning
+          
+          if(leftGoingForward)
+          {
+            // Put obstacle on right side
+            obstaclePoseWrtRobot.SetRotation(-M_PI_2, Z_AXIS_3D());
+            obstaclePoseWrtRobot.SetTranslation({0.f, -0.5f*ROBOT_BOUNDING_Y - obstaclePositionPad_mm, 0.f});
+            debugStr = "to right of";
+          }
+          else
+          {
+            // Put obstacle on left side
+            obstaclePoseWrtRobot.SetRotation(M_PI_2, Z_AXIS_3D());
+            obstaclePoseWrtRobot.SetTranslation({0.f, 0.5f*ROBOT_BOUNDING_Y + obstaclePositionPad_mm, 0.f});
+            debugStr = "to left of";
+          }
+        }
+        else
+        {
+          // Going (roughly) forward or backward
+          
+          if(leftGoingForward && rightGoingForward)
+          {
+            // Put obstacle in front of robot (note: leave unrotated)
+            obstaclePoseWrtRobot.SetTranslation({ROBOT_BOUNDING_X_FRONT + obstaclePositionPad_mm, 0.f, 0.f});
+            debugStr = "in front of";
+          }
+          else
+          {
+            // Put obstacle behind robot
+            obstaclePoseWrtRobot.SetTranslation({ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X - obstaclePositionPad_mm, 0.f, 0.f});
+            debugStr = "behind";
+          }
+        }
+        
+        // Put the robot's _position_ back where it was when the unexpected movement began.
+        // However, use the latest _orientation_. (Gyro keeps updating if the robot is stuck,
+        // but we were likely slipping, so translation is garbage.)
+        // Note that this also increments pose frame ID and sends a localization update
+        // to the physical robot.
+        Pose3d newPose(poseStamp.GetPose());
+        newPose.SetRotation(_robot.GetPose().GetRotation());
+        _robot.SetNewPose(newPose);
+        
+        // Create obstacle relative to robot at its new pose
+        obstaclePoseWrtRobot.SetParent(&_robot.GetPose());
+        const Pose3d& obstaclePose = obstaclePoseWrtRobot.GetWithRespectToOrigin();
+
+        PRINT_NAMED_INFO("MovementComponent.CheckForUnexpectedMovement.AddingCollisionObstacle",
+                         "Adding obstacle %s robot", debugStr);
+        
+        _robot.GetBlockWorld().AddCollisionObstacle(obstaclePose);
+      }
+      
+    } // if(unexpectedMovementType == UnexpectedMovementType::TURNED_BUT_STOPPED)
     
     _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UnexpectedMovement(robotState.timestamp, unexpectedMovementType)));
+    
+    _unexpectedMovement.Reset();
+    
   }
 }
 
@@ -541,6 +648,42 @@ void MovementComponent::PrintLockState() const
   }
 
   PRINT_NAMED_DEBUG("MovementComponent.Locks", "%s", ss.str().c_str());
+}
+  
+#pragma mark -
+#pragma mark Unexpected Movement 
+  
+void MovementComponent::UnexpectedMovement::Increment(u8 countInc, f32 leftSpeed_mmps, f32 rightSpeed_mmps, TimeStamp_t currentTime)
+{
+  if(_count == 0)
+  {
+    _startTime = currentTime;
+  }
+  _count += countInc;
+  _sumWheelSpeedL_mmps += (f32)countInc * leftSpeed_mmps;
+  _sumWheelSpeedR_mmps += (f32)countInc * rightSpeed_mmps;
+}
+
+void MovementComponent::UnexpectedMovement::Decrement()
+{
+  if(_count > 0)
+  {
+    --_count;
+  }
+}
+
+void MovementComponent::UnexpectedMovement::Reset()
+{
+  _startTime = 0;
+  _count = 0;
+  _sumWheelSpeedL_mmps = 0.f;
+  _sumWheelSpeedR_mmps = 0.f;
+}
+  
+void MovementComponent::UnexpectedMovement::GetAvgWheelSpeeds(f32& left, f32& right) const
+{
+  left  = _sumWheelSpeedL_mmps / (f32) _count;
+  right = _sumWheelSpeedR_mmps / (f32) _count;
 }
 
 } // namespace Cozmo

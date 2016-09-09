@@ -57,6 +57,7 @@ public static class LocalizationKeys
   public const string kConnectivitySecuringConnection = "connectivity.securingConnection";
   public const string kConnectionWakingUpCozmo = "connection.wakingUpCozmo";
   public const string kConnectivityUpdatingFirmware = "connectivity.updatingFirmware";
+  public const string kConnectivityUpdatingFirmwareSubTitle = "connectivity.updatingFirmwareSubTitle";
   public const string kConnectivityPairingPinTitle = "connectivity.pairingPinTitle";
   public const string kConnectivityInvalidPinTitle = "connectivity.invalidPinTitle";
   public const string kConnectivityUpdateApp = "connectivity.updateApp";
@@ -92,6 +93,19 @@ public static class LocalizationKeys
   public const string kTestConvoNode4 = "TestConvo.Node 4";
   public const string kTestConvoNode5 = "TestConvo.Node 5";
   public const string kTestConvoNode6 = "TestConvo.Node 6";
+
+  #endregion
+
+  #region CubeHelpStrings
+
+  public const string kCubeHelpStringsInstructionsSlide0 = "cubeHelpStrings.Instructions.Slide0";
+  public const string kCubeHelpStringsInstructionsSlide0altCopy = "cubeHelpStrings.Instructions.Slide0altCopy";
+  public const string kCubeHelpStringsInstructionsSlide1 = "cubeHelpStrings.Instructions.Slide1";
+  public const string kCubeHelpStringsInstructionsSlide1altCopy = "cubeHelpStrings.Instructions.Slide1altCopy";
+  public const string kCubeHelpStringsInstructionsSlide2 = "cubeHelpStrings.Instructions.Slide2";
+  public const string kCubeHelpStringsInstructionsSlide2altCopy = "cubeHelpStrings.Instructions.Slide2altCopy";
+  public const string kCubeHelpStringsInstructionsSlide3 = "cubeHelpStrings.Instructions.Slide3";
+  public const string kCubeHelpStringsInstructionsSlide3altCopy = "cubeHelpStrings.Instructions.Slide3altCopy";
 
   #endregion
 
@@ -364,6 +378,8 @@ public static class LocalizationKeys
   public const string kOnboardingPhase5Body2 = "onboarding.Phase5.Body2";
   public const string kOnboardingPhase5Body3 = "onboarding.Phase5.Body3";
   public const string kOnboardingSlide0a = "onboarding.Slide0a";
+  public const string kOnboardingGreatPlaySpace2Header = "onboarding.GreatPlaySpace2Header";
+  public const string kOnboardingGreatPlaySpace2Footer = "onboarding.GreatPlaySpace2Footer";
   public const string kOnboardingOldRobotSkip = "onboarding.OldRobotSkip";
   public const string kOnboardingBirthWait = "onboarding.BirthWait";
 
@@ -427,23 +443,23 @@ public static class LocalizationKeys
   #region SettingsStrings
 
   public const string kSettingsSdkPanelActivateSDKalertText = "settings.sdkPanel.activateSDKalert.text";
-  public const string kSettingsSdkPanelConnectionCommandCount = "settings.sdkPanel.connectionCommandCount.text";
-  public const string kSettingsSdkPanelConnectionDuration = "settings.sdkPanel.connectionDuration.text";
   public const string kSettingsSdkPanelDisableButtonText = "settings.sdkPanel.disableButton.text";
   public const string kSettingsSdkPanelEnableButtonText = "settings.sdkPanel.enableButton.text";
   public const string kSettingsSdkPanelLabelTitle = "settings.sdkPanel.label.title";
+  public const string kSettingsSdkPanelConnectionCommandCountText = "settings.sdkPanel.connectionCommandCount.text";
+  public const string kSettingsSdkPanelConnectionDurationText = "settings.sdkPanel.connectionDuration.text";
   public const string kSettingsSdkPanelLastCommandTimeIdleText = "settings.sdkPanel.lastCommandTimeIdle.text";
   public const string kSettingsSdkPanelLastCommandTimePausedText = "settings.sdkPanel.lastCommandTimePaused.text";
   public const string kSettingsSdkPanelLastCommandTimeText = "settings.sdkPanel.lastCommandTime.text";
   public const string kSettingsSdkPanelLastMessageTimeText = "settings.sdkPanel.lastMessageTime.text";
-  public const string kSettingsSdkPanelModeDuration = "settings.sdkPanel.modeDuration.text";
   public const string kSettingsSdkPanelNoMessagesText = "settings.sdkPanel.noMessages.text";
-  public const string kSettingsSdkPanelProgramsRun = "settings.sdkPanel.programsRun.text";
+  public const string kSettingsSdkPanelModeDurationText = "settings.sdkPanel.modeDuration.text";
+  public const string kSettingsSdkPanelProgramsRunText = "settings.sdkPanel.programsRun.text";
   public const string kSettingsSdkPanelSdkConnectedText = "settings.sdkPanel.sdkConnected.text";
   public const string kSettingsSdkPanelSdkUrlLabel = "settings.sdkPanel.sdkUrl.label";
   public const string kSettingsSdkPanelSdkNotConnectedText = "settings.sdkPanel.sdkNotConnected.text";
   public const string kSettingsSdkPanelShowSDKButtonText = "settings.sdkPanel.showSDKButton.text";
-  public const string kSettingsSdkPanelWrongVersion = "settings.sdkPanel.wrongVersion.text";
+  public const string kSettingsSdkPanelWrongVersionText = "settings.sdkPanel.wrongVersion.text";
   public const string kSettingsSleepCozmoPanelButtonReturnToTitle = "settings.sleepCozmoPanel.button.returnToTitle";
   public const string kSettingsSleepCozmoPanelButtonSleepCozmo = "settings.sleepCozmoPanel.button.sleepCozmo";
   public const string kSettingsSleepCozmoPanelConfirmationModalTitle = "settings.sleepCozmoPanel.confirmationModal.title";
@@ -515,8 +531,12 @@ public static class LocalizationKeys
   public const string kLootAnnounce = "loot.Announce";
   public const string kLabelEmptyWithArg = "label.emptyWithArg";
   public const string kTitleSoundCheck = "title.soundCheck";
+  public const string kButtonSoundCheckPlay = "button.soundCheckPlay";
+  public const string kButtonSoundCheckPlayAgain = "button.soundCheckPlayAgain";
+  public const string kButtonSoundCheckContinue = "button.soundCheckContinue";
   public const string kButtonGetACozmo = "button.GetACozmo";
   public const string kButtonStart = "button.start";
+  public const string kButtonBegin = "button.begin";
   public const string kSoundcheckDescription = "soundcheck.description";
   public const string kLabelAvailable = "label.available";
   public const string kButtonReplay = "button.replay";
@@ -598,12 +618,15 @@ public static class LocalizationKeys
   public const string kWifiStringsInstructionsSlide2 = "wifiStrings.Instructions.Slide2";
   public const string kWifiStringsInstructionsSlide3 = "wifiStrings.Instructions.Slide3";
   public const string kWifiStringsInstructionsSlide3AltCopy = "wifiStrings.Instructions.Slide3.altCopy";
+  public const string kWifiStringsInstructionsSlide3altCopy2 = "wifiStrings.Instructions.Slide3altCopy2";
   public const string kWifiStringsInstructionsSlide4 = "wifiStrings.Instructions.Slide4";
+  public const string kWifiStringsInstructionsSlide4altCopy = "wifiStrings.Instructions.Slide4altCopy";
   public const string kWifiStringsInstructionsSlide0ViewAll = "wifiStrings.Instructions.Slide0.viewAll";
   public const string kWifiStringsNextButton = "wifiStrings.nextButton";
   public const string kWifiStringsBackButton = "wifiStrings.backButton";
   public const string kWifiGethelpTitle = "wifi.gethelp.title";
   public const string kWifiGethelpDescription = "wifi.gethelp.description";
+  public const string kWifiGethelpDescription2 = "wifi.gethelp.description2";
   public const string kWifiGethelpFooter = "wifi.gethelp.footer";
   public const string kWifiGetHelpLinkText = "wifi.getHelp.linkText";
 

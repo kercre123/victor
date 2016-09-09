@@ -415,11 +415,19 @@ namespace Cozmo {
         HideBackground(ref _IsShowingLocked, ref _LockedBackgroundTween, _LockedBackgroundImage);
       }
 
+      // Make Title Text use SetupTextColor rather than base TextColor with MiddleBackground
       public void ShowMiddleBackground() {
+        if (_TitleWidgetInstance != null) {
+          _TitleWidgetInstance.TitleTextColor = UIColorPalette.SetupTextColor;
+        }
         ShowBackground(ref _IsShowingMiddle, ref _MiddleBackgroundTween, _MiddleBackgroundImage);
       }
 
+      // Revert Title Text to MinigameTitle Color when hiding MiddleBackground
       public void HideMiddleBackground() {
+        if (_TitleWidgetInstance != null) {
+          _TitleWidgetInstance.TitleTextColor = UIColorPalette.MinigameTextColor;
+        }
         HideBackground(ref _IsShowingMiddle, ref _MiddleBackgroundTween, _MiddleBackgroundImage);
       }
 

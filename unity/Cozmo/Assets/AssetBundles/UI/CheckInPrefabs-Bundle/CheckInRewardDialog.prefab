@@ -827,7 +827,7 @@ GameObject:
   m_Component:
   - 224: {fileID: 22418678}
   m_Layer: 5
-  m_Name: DoobContainer
+  m_Name: RewardsParticleContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1074,7 +1074,7 @@ MonoBehaviour:
   - {fileID: 22401884}
   - {fileID: 22461250}
   - {fileID: 22479170}
-  _DooberSourceTransform: {fileID: 22418678}
+  _RewardParticleSource: {fileID: 22418678}
   _FinalExpTarget: {fileID: 22419998}
   _FinalCoinTarget: {fileID: 22463848}
   _FinalSparkTarget: {fileID: 22409264}

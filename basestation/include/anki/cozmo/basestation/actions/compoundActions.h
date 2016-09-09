@@ -15,6 +15,8 @@
 
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 
+#include <map>
+
 namespace Anki {
   namespace Cozmo {
     
@@ -25,6 +27,8 @@ namespace Anki {
     public:
       ICompoundAction(Robot& robot, std::list<IActionRunner*> actions);
       
+      using ShouldIgnoreFailureFcn = std::function<bool(ActionResult, const IActionRunner*)>;
+      virtual void AddAction(IActionRunner* action, ShouldIgnoreFailureFcn fcn, bool emitCompletionSignal = false);
       virtual void AddAction(IActionRunner* action, bool ignoreFailure = false, bool emitCompletionSignal = false);
       
       // First calls cleanup on any constituent actions and then removes them
@@ -53,7 +57,7 @@ namespace Anki {
       
       std::list<IActionRunner*> _actions;
       
-      bool ShouldIgnoreFailure(IActionRunner* action) const;
+      bool ShouldIgnoreFailure(ActionResult result, const IActionRunner* action) const;
       
       // Stack of pairs of actionCompletionUnions and actionTypes of the already completed actions
       struct CompletionData {
@@ -70,7 +74,7 @@ namespace Anki {
     private:
       
       // If actions are in this list, we ignore their failures
-      std::set<IActionRunner*> _ignoreFailure;
+      std::map<const IActionRunner*, ShouldIgnoreFailureFcn> _ignoreFailure;
       u32  _proxyTag;
       bool _proxySet = false;
       

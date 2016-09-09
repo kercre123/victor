@@ -992,8 +992,10 @@ public class Robot : IRobot {
         createdObject = Charger;
       }
     }
-    else if (objectType == ObjectType.ProxObstacle) {
-      // Just ignore prox obstacle observations because game/Unity doesn't care about them
+    else if ((objectType == ObjectType.ProxObstacle)
+             || (objectType == ObjectType.CollisionObstacle)
+             || (objectType == ObjectType.CliffDetection)) {
+      // Just ignore cliff/obstacle observations because game/Unity doesn't care about them
       return null;
     }
     else {
@@ -1215,6 +1217,32 @@ public class Robot : IRobot {
       callback,
       queueActionPosition);
   }
+
+  /// <summary>
+  /// Tells engine to preserve a head and lift state even if reactions are triggered
+  /// This should be called with enabled as false to cancel the defaults before leaving the current activity
+  /// </summary>
+  /// <param name="headAngle">headAngle</param> usually from -1 (MIN_HEAD_ANGLE) to 1 (kMaxHeadAngle)
+  /// <param name="liftHeight">liftHeight</param> the height to set the lift to
+  public void SetDefaultHeadAndLiftState(bool enable, float headAngleFactor, float liftHeight) {
+
+    float radians = AngleFactorToRadians(headAngleFactor, true);
+
+    RobotEngineManager.Instance.Message.SetDefaultHeadAndLiftState = 
+    Singleton<SetDefaultHeadAndLiftState>.Instance.Initialize (
+      enable,
+      radians,
+      liftHeight
+    );
+
+    RobotEngineManager.Instance.SendMessage();
+
+
+
+
+  }
+
+
 
   private float AngleFactorToRadians(float angleFactor, bool useExactAngle) {
 

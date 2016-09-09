@@ -13,6 +13,7 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
@@ -59,9 +60,12 @@ static const char* kDemoChooserConfigKey = "demoBehaviorChooserConfig";
 static const char* kSelectionChooserConfigKey = "selectionBehaviorChooserConfig";
 static const char* kFreeplayChooserConfigKey = "freeplayBehaviorChooserConfig";
   
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorManager::BehaviorManager(Robot& robot)
   : _robot(robot)
+  , _defaultHeadAngle(kIgnoreDefaultHeandAndLiftState)
+  , _defaultLiftHeight(kIgnoreDefaultHeandAndLiftState)
   , _behaviorFactory(new BehaviorFactory())
   , _lastChooserSwitchTime(-1.0f)
   , _whiteboard( new AIWhiteboard(robot) )
@@ -178,6 +182,16 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
                                    }
                                  }
                                }));
+    
+    _eventHandlers.push_back(externalInterface->Subscribe(
+                                ExternalInterface::MessageGameToEngineTag::SetDefaultHeadAndLiftState,
+                                [this, config] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+                                {
+                                  bool enable = event.GetData().Get_SetDefaultHeadAndLiftState().enable;
+                                  float headAngle = event.GetData().Get_SetDefaultHeadAndLiftState().headAngle;
+                                  float liftHeight = event.GetData().Get_SetDefaultHeadAndLiftState().liftHeight;
+                                  SetDefaultHeadAndLiftState(enable, headAngle, liftHeight);
+                                }));
   }
   _isInitialized = true;
     
@@ -242,6 +256,27 @@ void BehaviorManager::AddReactionaryBehavior(IReactionaryBehavior* behavior)
   }
   
 }
+  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorManager::SetDefaultHeadAndLiftState(bool enable, f32 headAngle, f32 liftHeight)
+{
+  if(enable){
+    _defaultHeadAngle = headAngle;
+    _defaultLiftHeight = liftHeight;
+    
+    if(_robot.GetActionList().GetNumQueues() > 0 && _robot.GetActionList().GetQueueLength(0) == 0) {
+      IActionRunner* moveHeadAction = new MoveHeadToAngleAction(_robot, _defaultHeadAngle);
+      IActionRunner* moveLiftAction = new MoveLiftToHeightAction(_robot, _defaultLiftHeight);
+      _robot.GetActionList().QueueActionNow(new CompoundActionParallel(_robot, {moveHeadAction, moveLiftAction}));
+    }
+    
+  }else{
+    _defaultHeadAngle = kIgnoreDefaultHeandAndLiftState;
+    _defaultLiftHeight = kIgnoreDefaultHeandAndLiftState;
+  }
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<typename EventType>
@@ -361,6 +396,20 @@ void BehaviorManager::ChooseNextBehaviorAndSwitch()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::TryToResumeBehavior()
 {
+  // Return the robot's head and lift to their height when the behavior that's being resumed was interrupted
+  // this is a convenience for behaviors like MeetCozmo when interrupted by reactions with animations
+  // we don't care if it actually completes so if the behavior immediately overrides these that's fine
+  // if a behavior checks the head or lift angle right as they start this may introduce a race condition
+  // blame Brad
+  
+  if(AreDefaultHeandAndLiftStateSet() &&
+     (_robot.GetActionList().GetNumQueues() > 0 && _robot.GetActionList().GetQueueLength(0) == 0))
+  {
+    IActionRunner* moveHeadAction = new MoveHeadToAngleAction(_robot, _defaultHeadAngle);
+    IActionRunner* moveLiftAction = new MoveLiftToHeightAction(_robot, _defaultLiftHeight);
+    _robot.GetActionList().QueueActionNow(new CompoundActionParallel(_robot, {moveHeadAction, moveLiftAction}));
+  }
+    
   if ( _behaviorToResume != nullptr )
   {
     if ( _shouldResumeBehaviorAfterReaction )
@@ -375,6 +424,7 @@ void BehaviorManager::TryToResumeBehavior()
         SendDasTransitionMessage(_currentBehavior, _behaviorToResume);
         _currentBehavior  = _behaviorToResume;
         _behaviorToResume = nullptr;
+        
         // Successfully resumed the previous behavior, return here
         return;
       }
@@ -408,6 +458,7 @@ void BehaviorManager::SwitchToReactionaryBehavior(IReactionaryBehavior* nextBeha
   }
 
   if( SwitchToBehavior(nextBehavior) ) {
+    
     if( !_runningReactionaryBehavior ) {
       // by default, we do want to resume this behavior
       _shouldResumeBehaviorAfterReaction = true;
@@ -513,6 +564,10 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
   if ( _currentChooserPtr ) {
     _currentChooserPtr->OnDeselected();
   }
+  
+  // default head and lift states should not be preserved between choosers
+  ASSERT_NAMED(!AreDefaultHeandAndLiftStateSet(),
+               "BehaviorManager.ChooseNextBehaviorAndSwitch.DefaultHeadAndLiftStatesStillSet");
 
   bool currentNotReactionary = !(_currentBehavior != nullptr && _currentBehavior->IsReactionary());
   
@@ -558,6 +613,21 @@ void BehaviorManager::RequestCurrentBehaviorEndImmediately(const std::string& st
   SwitchToBehavior(nullptr);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IReactionaryBehavior* BehaviorManager::GetReactionaryBehaviorByType(BehaviorType behaviorType)
+{
+  for(IReactionaryBehavior* reactionaryBehavior : _reactionaryBehaviors)
+  {
+    if(reactionaryBehavior->GetType() == behaviorType)
+    {
+      return reactionaryBehavior;
+    }
+  }
+  
+  return nullptr;
+}
+
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::StopCurrentBehavior()
 {

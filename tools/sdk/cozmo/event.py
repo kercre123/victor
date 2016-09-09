@@ -11,7 +11,7 @@ represents is tapped.
 The event can be observed in a number of different ways:
 
 #. By calling the :meth:`~Dispatcher.wait_for` method on the object to observe.
-   This will wait until the specific even has been sent to that object and
+   This will wait until the specific event has been sent to that object and
    return the generated event.
 #. By calling :meth:`~Dispatcher.add_event_handler` on the object
    to observe, which will cause the supplied function to be called every time
@@ -413,7 +413,7 @@ class Dispatcher(base.Base):
         '''Waits for the specified event to be sent to the current object.
 
         Args:
-            event_or_filter (:class:`Event): Either a :class:`Event` class
+            event_or_filter (:class:`Event`): Either a :class:`Event` class
                 or a :class:`Filter` instance to wait to trigger
             timeout: Maximum time to wait for the event.  Pass None to wait indefinitely.
         Returns:

@@ -25,6 +25,8 @@
 namespace Anki {
 namespace Cozmo {
 
+static std::set<UnlockId> _defaultUnlocks;
+
 static const char* kDefaultUnlockIdsConfigKey = "defaultUnlocks";
 
 CONSOLE_VAR(u32, kNumAttemptsToWrite, "ProgressionUnlockComponent", 5);
@@ -37,6 +39,8 @@ ProgressionUnlockComponent::ProgressionUnlockComponent(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ProgressionUnlockComponent::Init(const Json::Value &config)
 {
+  _defaultUnlocks.clear();
+  
   // load default unlocks from json
   if( !config.isNull() && config[kDefaultUnlockIdsConfigKey].isArray() ) {
     for( const auto& unlockIdJson : config[kDefaultUnlockIdsConfigKey] ) {
@@ -64,6 +68,11 @@ void ProgressionUnlockComponent::Init(const Json::Value &config)
     using namespace ExternalInterface;
     helper.SubscribeGameToEngine< MessageGameToEngineTag::RequestSetUnlock >();
   }
+}
+
+const std::set<UnlockId>& ProgressionUnlockComponent::GetDefaultUnlocks()
+{
+  return _defaultUnlocks;
 }
 
 bool ProgressionUnlockComponent::IsUnlockIdValid(UnlockId id)

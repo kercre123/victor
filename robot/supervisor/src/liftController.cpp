@@ -3,7 +3,6 @@
 #include "imuFilter.h"
 #include <math.h>
 #include "anki/common/constantsAndMacros.h"
-#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
 #include "messages.h"
@@ -292,56 +291,38 @@ namespace Anki {
         return currentAngle_.ToFloat();
       }
 
-      void ClampSpeedAndAccel()
-      {
-        maxSpeedRad_ = CLIP(maxSpeedRad_, -MAX_LIFT_SPEED_RAD_PER_S, MAX_LIFT_SPEED_RAD_PER_S);
-        accelRad_    = CLIP(accelRad_, -MAX_LIFT_ACCEL_RAD_PER_S2, MAX_LIFT_ACCEL_RAD_PER_S2);
-      }
-      
       void SetMaxSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2)
       {
         maxSpeedRad_ = ABS(max_speed_rad_per_sec);
-        accelRad_ = accel_rad_per_sec2;
-        ClampSpeedAndAccel();
+        accelRad_ = ABS(accel_rad_per_sec2);
+        
+        if (NEAR_ZERO(maxSpeedRad_)) {
+          maxSpeedRad_ = MAX_LIFT_SPEED_RAD_PER_S;
+        }
+        if (NEAR_ZERO(accelRad_)) {
+          accelRad_ = MAX_LIFT_ACCEL_RAD_PER_S2;
+        }
+
+        maxSpeedRad_ = CLIP(maxSpeedRad_, 0, MAX_LIFT_SPEED_RAD_PER_S);
+        accelRad_    = CLIP(accelRad_, 0, MAX_LIFT_ACCEL_RAD_PER_S2);
       }
 
-      void SetMaxLinearSpeedAndAccel(const f32 max_speed_mm_per_sec, const f32 accel_mm_per_sec2)
-      {
-        maxSpeedRad_ = max_speed_mm_per_sec / LIFT_ARM_LENGTH;
-        accelRad_    = accel_mm_per_sec2 / LIFT_ARM_LENGTH;
-        ClampSpeedAndAccel();
-      }
-
-      void GetMaxSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2)
-      {
-        max_speed_rad_per_sec = maxSpeedRad_;
-        accel_rad_per_sec2 = accelRad_;
-      }
-
-      void SetLinearVelocity(const f32 mm_per_sec)
-      {
-        const f32 rad_per_sec = Height2Rad(mm_per_sec);
-        SetAngularVelocity(rad_per_sec);
-      }
-
-      void SetAngularVelocity(const f32 rad_per_sec)
+      void SetAngularVelocity(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2)
       {
         // Command a target height based on the sign of the desired speed
         bool useVPG = true;
         f32 targetHeight = 0.f;
-        if (rad_per_sec > 0.f) {
+        if (speed_rad_per_sec > 0.f) {
           targetHeight = LIFT_HEIGHT_CARRY;
-          maxSpeedRad_ = rad_per_sec;
-        } else if (rad_per_sec < 0.f) {
+        } else if (speed_rad_per_sec < 0.f) {
           targetHeight = LIFT_HEIGHT_LOWDOCK;
-          maxSpeedRad_ = rad_per_sec;
         } else {
           // Stop immediately!
           targetHeight = Rad2Height(currentAngle_.ToFloat());
           useVPG = false;
         }
-        ClampSpeedAndAccel();
-        SetDesiredHeight(targetHeight, useVPG);
+
+        SetDesiredHeight(targetHeight, speed_rad_per_sec, accel_rad_per_sec2, useVPG);
       }
 
       f32 GetAngularVelocity()
@@ -368,11 +349,16 @@ namespace Anki {
         prevHalPos_ = HAL::MotorGetPosition(MOTOR_LIFT);
       }
 
-      static void SetDesiredHeight_internal(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds, bool useVPG)
+      void SetDesiredHeight_internal(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds,
+                                     const f32 speed_rad_per_sec,
+                                     const f32 accel_rad_per_sec2,
+                                     bool useVPG)
       {
         if (bracing_) {
           return;
         }
+        
+        SetMaxSpeedAndAccel(speed_rad_per_sec, accel_rad_per_sec2);
 
         // Do range check on height
         const f32 newDesiredHeight = CLIP(height_mm, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
@@ -464,14 +450,19 @@ namespace Anki {
       } // SetDesiredHeight_internal
 
 
-      void SetDesiredHeight(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
+      void SetDesiredHeightByDuration(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds)
       {
-        SetDesiredHeight_internal(height_mm, acc_start_frac, acc_end_frac, duration_seconds, true);
+        SetDesiredHeight_internal(height_mm, acc_start_frac, acc_end_frac, duration_seconds,
+                                  MAX_LIFT_SPEED_RAD_PER_S, MAX_LIFT_ACCEL_RAD_PER_S2, true);
       }
 
-      void SetDesiredHeight(f32 height_mm, bool useVPG)
+      void SetDesiredHeight(f32 height_mm,
+                            f32 speed_rad_per_sec,
+                            f32 accel_rad_per_sec2,
+                            bool useVPG)
       {
-        SetDesiredHeight_internal(height_mm, DEFAULT_START_ACCEL_FRAC, DEFAULT_END_ACCEL_FRAC, 0, useVPG);
+        SetDesiredHeight_internal(height_mm, DEFAULT_START_ACCEL_FRAC, DEFAULT_END_ACCEL_FRAC, 0,
+                                  speed_rad_per_sec, accel_rad_per_sec2, useVPG);
       }
       
       f32 GetDesiredHeight()
@@ -513,9 +504,7 @@ namespace Anki {
       }
       
       void Brace() {
-        
-        SetMaxSpeedAndAccel(MAX_LIFT_SPEED_RAD_PER_S, MAX_LIFT_ACCEL_RAD_PER_S2);
-        SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+        SetDesiredHeight(LIFT_HEIGHT_LOWDOCK, MAX_LIFT_SPEED_RAD_PER_S, MAX_LIFT_ACCEL_RAD_PER_S2);
         bracing_ = true;
       }
       

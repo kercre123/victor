@@ -121,6 +121,7 @@ protected:
   virtual void HandleEnabledBehaviorList(ExternalInterface::RespondEnabledBehaviorList const& msg){};
   virtual void HandleEndOfMessage(const ExternalInterface::EndOfMessage& msg){};
   virtual void HandleRobotOffTreadsStateChanged(const ExternalInterface::RobotOffTreadsStateChanged& msg){};
+  virtual void HandleEngineErrorCode(const ExternalInterface::EngineErrorCodeMessage& msg) {};
   
   // Message senders
   void SendMessage(const ExternalInterface::MessageGameToEngine& msg);
@@ -438,6 +439,8 @@ private:
   void HandleEndOfMessageBase(ExternalInterface::EndOfMessage const& msg);
   void HandleFactoryTestResultEntryBase(FactoryTestResultEntry const& msg);
   void HandleLoadedKnownFaceBase(Vision::LoadedKnownFace const& msg);
+  void HandleEngineErrorCodeBase(const ExternalInterface::EngineErrorCodeMessage& msg);
+  void HandleEngineLoadingStatusBase(const ExternalInterface::EngineLoadingDataStatus& msg);
   
   void UpdateActualObjectPoses();
   bool ForceAddRobotIfSpecified();
@@ -484,6 +487,7 @@ private:
   
   typedef enum {
     UI_WAITING_FOR_GAME = 0,
+    UI_WAITING_FOR_ENGINE_LOAD,
     UI_RUNNING
   } UI_State_t;
   
@@ -498,6 +502,8 @@ private:
 
   bool _doAutoBlockPool;
   bool _isBlockPoolInitialized;
+  
+  float _engineLoadedRatio = 0.0f;
   
 }; // class UiGameController
   

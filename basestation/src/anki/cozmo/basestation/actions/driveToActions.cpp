@@ -206,6 +206,7 @@ namespace Anki {
         
         if (!bestPreActionPoseFound) {
           PRINT_NAMED_INFO("DriveToObjectAction.GetPossiblePoses.NoPreActionPosesAtApproachAngleExist", "");
+          _interactionResult = ObjectInteractionResult::NO_PREACTION_POSES;
           return ActionResult::FAILURE_ABORT;
         }
       }
@@ -214,11 +215,11 @@ namespace Anki {
         PRINT_NAMED_WARNING("DriveToObjectAction.CheckPreconditions.NoPreActionPoses",
                             "ActionableObject %d did not return any pre-action poses with action type %d.",
                             _objectID.GetValue(), _actionType);
-        
+        _interactionResult = ObjectInteractionResult::NO_PREACTION_POSES;
         return ActionResult::FAILURE_ABORT;
-        
-      } else {
-        
+      }
+      else
+      {
         // Check to see if we already close enough to a pre-action pose that we can
         // just skip path planning. In case multiple pre-action poses are close
         // enough, keep the closest one.
@@ -260,6 +261,13 @@ namespace Anki {
                   closestPreActionPose = &preActionPose;
                 }
               }
+              
+              PRINT_NAMED_DEBUG("DriveToObjectAction.GetPossiblePoses.ConsideringPose",
+                                "Considering (%f, %f, %f), dist = %f",
+                                possiblePose.GetTranslation().x(),
+                                possiblePose.GetTranslation().y(),
+                                possiblePose.GetTranslation().z(),
+                                Tdiff.Length());
             }
           }
         }
@@ -267,12 +275,17 @@ namespace Anki {
         if(possiblePoses.empty()) {
           PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoPossiblePoses",
                             "No pre-action poses survived as possible docking poses.");
+          _interactionResult = ObjectInteractionResult::NO_PREACTION_POSES;
           result = ActionResult::FAILURE_ABORT;
         }
         else if (closestPreActionPose != nullptr) {
           PRINT_NAMED_INFO("DriveToObjectAction.InitHelper",
-                           "Robot's current pose is close enough to a pre-action pose. "
-                           "Just using current pose as the goal.");
+                           "Robot's current pose (%f,%f,%f) is close enough (%f) to a pre-action pose. "
+                           "Just using current pose as the goal.",
+                           closestPreActionPose->GetPose().GetTranslation().x(),
+                           closestPreActionPose->GetPose().GetTranslation().y(),
+                           closestPreActionPose->GetPose().GetTranslation().z(),
+                           closestPoseDist);
           
           alreadyInPosition = true;
           result = ActionResult::SUCCESS;
@@ -372,18 +385,24 @@ namespace Anki {
     {
       ActionResult result = ActionResult::SUCCESS;
       ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
-      if(object == nullptr) {
-        PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoObjectWithID",
-                          "Robot %d's block world does not have an ActionableObject with ID=%d.",
-                          _robot.GetID(), _objectID.GetValue());
-        
+      if(object == nullptr)
+      {
+        PRINT_NAMED_WARNING("DriveToObjectAction.CheckPreconditions.NoObjectWithID",
+                            "Robot %d's block world does not have an ActionableObject with ID=%d.",
+                            _robot.GetID(), _objectID.GetValue());
+        _interactionResult = ObjectInteractionResult::INVALID_OBJECT;
         result = ActionResult::FAILURE_ABORT;
-      } else if(PoseState::Unknown == object->GetPoseState()) {
-        PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.ObjectPoseStateUnknown",
-                          "Robot %d cannot plan a path to ActionableObject %d, whose pose state is Unknown.",
-                          _robot.GetID(), _objectID.GetValue());
+      }
+      else if(PoseState::Unknown == object->GetPoseState())
+      {
+        PRINT_NAMED_INFO("DriveToObjectAction.CheckPreconditions.ObjectPoseStateUnknown",
+                         "Robot %d cannot plan a path to ActionableObject %d, whose pose state is Unknown.",
+                         _robot.GetID(), _objectID.GetValue());
+        _interactionResult = ObjectInteractionResult::INVALID_OBJECT;
         result = ActionResult::FAILURE_ABORT;
-      } else {
+      }
+      else
+      {
         // Use a helper here so that it can be shared with DriveToPlaceCarriedObjectAction
         result = InitHelper(object);
       } // if/else object==nullptr
@@ -418,21 +437,27 @@ namespace Anki {
         // we completed the planned path successfully. If that's the case, we
         // want to retry.
         ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
-        if(object == nullptr) {
-          PRINT_NAMED_ERROR("DriveToObjectAction.CheckIfDone.NoObjectWithID",
-                            "Robot %d's block world does not have an ActionableObject with ID=%d.",
-                            _robot.GetID(), _objectID.GetValue());
-          
+        if(object == nullptr)
+        {
+          PRINT_NAMED_WARNING("DriveToObjectAction.CheckIfDone.NoObjectWithID",
+                              "Robot %d's block world does not have an ActionableObject with ID=%d.",
+                              _robot.GetID(), _objectID.GetValue());
+          _interactionResult = ObjectInteractionResult::INVALID_OBJECT;
           result = ActionResult::FAILURE_ABORT;
-        } else if( _actionType == PreActionPose::ActionType::NONE) {
-          
+        }
+        else if( _actionType == PreActionPose::ActionType::NONE)
+        {
           // Check to see if we got close enough
           Pose3d objectPoseWrtRobotParent;
-          if(false == object->GetPose().GetWithRespectTo(*_robot.GetPose().GetParent(), objectPoseWrtRobotParent)) {
+          if(false == object->GetPose().GetWithRespectTo(*_robot.GetPose().GetParent(), objectPoseWrtRobotParent))
+          {
             PRINT_NAMED_ERROR("DriveToObjectAction.InitHelper.PoseProblem",
                               "Could not get object pose w.r.t. robot parent pose.");
+            _interactionResult = ObjectInteractionResult::INVALID_OBJECT;
             result = ActionResult::FAILURE_ABORT;
-          } else {
+          }
+          else
+          {
             const f32 distanceSq = (Point2f(objectPoseWrtRobotParent.GetTranslation()) - Point2f(_robot.GetPose().GetTranslation())).LengthSq();
             if(distanceSq > _distance_mm*_distance_mm) {
               PRINT_NAMED_INFO("DriveToObjectAction.CheckIfDone",
@@ -441,8 +466,9 @@ namespace Anki {
               result = ActionResult::FAILURE_RETRY;
             }
           }
-        } else {
-          
+        }
+        else
+        {
           std::vector<Pose3d> possiblePoses; // don't really need these
           bool inPosition = false;
           result = GetPossiblePoses(object, possiblePoses, inPosition);
@@ -451,12 +477,20 @@ namespace Anki {
             PRINT_NAMED_INFO("DriveToObjectAction.CheckIfDone",
                              "[%d] Robot not in position, will return FAILURE_RETRY.",
                              GetTag());
+            _interactionResult = ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE;
             result = ActionResult::FAILURE_RETRY;
           }
         }
       }
       
       return result;
+    }
+    
+    void DriveToObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
+    {
+      ObjectInteractionCompleted interactionCompleted({{_objectID.GetValue(), -1, -1, -1, -1}}, 1,
+                                                      _interactionResult);
+      completionUnion.Set_objectInteractionCompleted(interactionCompleted);
     }
     
 #pragma mark ---- DriveToPlaceCarriedObjectAction ----
@@ -671,7 +705,7 @@ namespace Anki {
                        _goalPoses.back().GetTranslation().x(),
                        _goalPoses.back().GetTranslation().y(),
                        _goalPoses.back().GetTranslation().z(),
-                       RAD_TO_DEG(_goalPoses.back().GetRotationAngle<'Z'>().ToFloat()));
+                       _goalPoses.back().GetRotationAngle<'Z'>().getDegrees());
       
       _isGoalSet = true;
       
@@ -970,8 +1004,49 @@ namespace Anki {
                                                      approachAngle_rad,
                                                      useManualSpeed);
 
-      AddAction(_driveToObjectAction, true);
+      // TODO: Use the function-based ShouldIgnoreFailure option for AddAction to catch some failures of DriveToObject earlier
+      //  (Started to do this but it started to feel messy/dangerous right before ship)
+      /*
+      // Ignore DriveTo failures iff we simply did not reach preaction pose or
+      // failed visual verification (since we'll presumably recheck those at start
+      // of object interaction action)
+      ICompoundAction::ShouldIgnoreFailureFcn shouldIgnoreFailure = [](ActionResult result, const IActionRunner* action)
+      {
+        if(nullptr == action)
+        {
+          PRINT_NAMED_ERROR("IDriveToInteractWithObject.Constructor.NullAction",
+                            "ShouldIgnoreFailureFcn cannot check null action");
+          return false;
+        }
+        
+        if(ActionResult::SUCCESS == result)
+        {
+          PRINT_NAMED_WARNING("IDriveToInteractWithObject.Constructor.CheckingIgnoreForSuccessResult",
+                              "Not expecting ShouldIgnoreFailure to be called for successful action result");
+          return false;
+        }
+       
+        // Note that DriveToObjectActions return ObjectInteractionCompleted unions
+        ActionCompletedUnion completionUnion;
+        action->GetCompletionUnion(completionUnion);
+        const ObjectInteractionCompleted& objInteractionCompleted = completionUnion.Get_objectInteractionCompleted();
+        
+        switch(objInteractionCompleted.result)
+        {
+          case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
+          case ObjectInteractionResult::VISUAL_VERIFICATION_FAILED:
+            return true;
+            
+          default:
+            return false;
+        }
+      };
       
+      AddAction(_driveToObjectAction, shouldIgnoreFailure);
+      */
+        
+      AddAction(_driveToObjectAction, true);
+        
       if(maxTurnTowardsFaceAngle_rad > 0.f)
       {
         _turnTowardsLastFacePoseAction = new TurnTowardsLastFacePoseAction(robot, maxTurnTowardsFaceAngle_rad, sayName);
@@ -1191,6 +1266,15 @@ namespace Anki {
         _pickupAction->SetDockingMethod(dockingMethod);
       } else {
         PRINT_NAMED_WARNING("DriveToPickupObjectAction.SetDockingMethod.NullPickupAction", "");
+      }
+    }
+    
+    void DriveToPickupObjectAction::SetPostDockLiftMovingAnimation(Anki::Cozmo::AnimationTrigger trigger)
+    {
+      if(nullptr != _pickupAction) {
+        _pickupAction->SetPostDockLiftMovingAnimation(trigger);
+      } else {
+        PRINT_NAMED_WARNING("DriveToPickupObjectAction.SetPostDockLiftMovingAnimation.NullPickupAction", "");
       }
     }
     

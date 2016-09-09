@@ -34,6 +34,7 @@
 #define assert(...)
 #endif
 
+#define I2SPI_ISR_PROFILE_NONE 0
 #define I2SPI_ISR_PROFILE_FULL 1
 #define I2SPI_ISR_PROFILE_RX   2
 #define I2SPI_ISR_PROFILE_TX   3
@@ -42,7 +43,11 @@
 #define I2SPI_ISR_PROFILE_NORM 6
 #define I2SPI_ISR_PROFILE_TMD  7
 
-#define I2SPI_ISR_PROFILING I2SPI_ISR_PROFILE_TX
+#if I2SPI_DEBUG
+#define I2SPI_ISR_PROFILING I2SPI_ISR_PROFILE_TMD
+#else
+#define I2SPI_ISR_PROFILING I2SPI_ISR_PROFILE_NONE
+#endif
 #if I2SPI_ISR_PROFILING
 #define PROFILING_PIN 0
 #define isrProfStart(which) if ((which) == I2SPI_ISR_PROFILING) GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, 1<<PROFILING_PIN)
@@ -54,6 +59,7 @@
 
 extern bool i2spiSynchronizedCallback(uint32 param);
 extern bool i2spiRecoveryCallback(uint32 param);
+extern void i2spiResyncCallback(void);
 
 // Variables made static just to keep them from being placed on the stack, not because they need to be preserved
 #define nostack static
@@ -267,6 +273,32 @@ bool pokeRTIPqueue(const int bytes)
   else return false;
 }
 
+/// Resets the buffer states
+void resetState(void)
+{
+  os_memset(&self, 0, sizeof(I2SpiDriver));
+  self.rtipBootloaderState = STATE_UNKNOWN;
+  self.bootloaderCommandPhase = BLCP_none;
+  
+  os_memset(&audio,  0, sizeof(AudioBufferState));
+  os_memset(&screen, 0, sizeof(ScreenBufferState));
+  os_memset(&imageBuffers, 0, sizeof(ImageDataBuffer)*NUM_IMAGE_DATA_BUFFERS);
+  
+  os_memset(messageBuffer, 0, I2SPI_MESSAGE_BUF_SIZE);
+  os_memset(relayBuffer,   0, RELAY_BUFFER_SIZE);
+  os_memset(audioBuffer,   0, AUDIO_BUFFER_SIZE);
+  
+  os_memset(txBufs, 0xff, DMA_BUF_COUNT*DMA_BUF_SIZE);
+  os_memset(rxBufs, 0xff, DMA_BUF_COUNT*DMA_BUF_SIZE);
+}
+
+bool beginResync(uint32_t param)
+{
+  resetState();
+  i2spiSwitchMode(I2SPI_SYNC);
+  i2spiResyncCallback();
+  return false;
+}
 
 /// Prep an sdio_queue structure (DMA descriptor) for (re)use
 void prepSdioQueue(struct sdio_queue* desc, uint8 eof)
@@ -371,7 +403,7 @@ inline void processDrop(DropToWiFi* drop)
       self.rtipBufferRind = 0; // Reset buffer
       self.rtipBufferWind = 0;
       os_memset(relayBuffer, 0 , RELAY_BUFFER_SIZE);
-      dbpc('C'); dbpc('R'); dbpc('O'); dbpc('F'); dbph(self.rtipBufferRind, 4); dbph(wind, 4);
+      dbpc('C'); dbpc('R'); dbpc('O'); dbpc('F'); dbph(self.rtipBufferRind, 4); dbph(self.rtipBufferWind, 4); dbnl();
     }
   }
 }
@@ -405,7 +437,11 @@ inline void receiveCompleteHandler(void)
             self.phaseErrorCount++;
             isrProfStart(I2SPI_ISR_PROFILE_TMD);
             dbpc('!'); dbpc('T'); dbpc('M'); dbpc('D'); dbph(drift, 4);
-            while (drift > DRIFT_MARGIN*2); // Die
+            if (drift > DRIFT_MARGIN*2)
+            {
+              i2spiSwitchMode(I2SPI_NULL);
+              foregroundTaskPost(beginResync, 0);
+            }
             isrProfEnd(I2SPI_ISR_PROFILE_TMD);
           }
           self.outgoingPhase += drift;
@@ -577,7 +613,7 @@ void dmaisrBootloader(void* arg)
     struct sdio_queue* desc = asDesc(eofDesAddr);
     uint32_t* txBuf = (uint32_t*)(desc->buf_ptr);
     int word;
-    for (word=0; word<DMA_BUF_SIZE/4; word++) 
+    for (word=0; word<DMA_BUF_SIZE/4; word++)
     {
       // Use ifelse tree because faster than switch
       if (self.bootloaderCommandPhase >= 0)
@@ -686,27 +722,22 @@ void dmaisrSync(void* arg)
   isrProfEnd(I2SPI_ISR_PROFILE_SYNC);
 }
 
+/** DMA no op isr
+ * Just clears interrupt registers
+ */
+void dmaisrNull(void* arg)
+{
+  //clear all intr flags
+  WRITE_PERI_REG(SLC_INT_CLR, READ_PERI_REG(SLC_INT_STATUS));
+}
+
 //Initialize I2S subsystem for DMA circular buffer use
 int8_t ICACHE_FLASH_ATTR i2spiInit() {
   int i;
 
   system_os_task(sendImageTask, IMAGE_SEND_TASK_PRIO, imageSendTaskQueue, IMAGE_SEND_TASK_QUEUE_DEPTH);
 
-  os_memset(&self, 0, sizeof(I2SpiDriver));
-  self.pendingFWB        = NULL;
-  self.rtipBootloaderState    = STATE_UNKNOWN;
-  self.bootloaderCommandPhase = BLCP_none;
-  
-  os_memset(&audio,  0, sizeof(AudioBufferState));
-  os_memset(&screen, 0, sizeof(ScreenBufferState));
-  os_memset(&imageBuffers, 0, sizeof(ImageDataBuffer)*NUM_IMAGE_DATA_BUFFERS);
-  
-  os_memset(messageBuffer, 0, I2SPI_MESSAGE_BUF_SIZE);
-  os_memset(relayBuffer,   0, RELAY_BUFFER_SIZE);
-  os_memset(audioBuffer,   0, AUDIO_BUFFER_SIZE);
-  
-  os_memset(txBufs, 0xff, DMA_BUF_COUNT*DMA_BUF_SIZE);
-  os_memset(rxBufs, 0xff, DMA_BUF_COUNT*DMA_BUF_SIZE);
+  resetState();
   
   // Setup the buffers and descriptors
   for (i=0; i<DMA_BUF_COUNT; ++i)
@@ -945,24 +976,26 @@ bool i2spiSwitchMode(const I2SPIMode mode)
     ets_isr_attach(ETS_SLC_INUM, dmaisrSync, NULL);
     return true;
   }
-  else if (self.mode != I2SPI_SYNC) return false;
-  else
+  else if (mode == I2SPI_NORMAL)
   {
-    if (mode == I2SPI_NORMAL)
-    {
-      self.mode = I2SPI_NORMAL;
-      ets_isr_attach(ETS_SLC_INUM, dmaisrNormal, NULL);
-      return true;
-    }
-    else if (mode == I2SPI_BOOTLOADER)
-    {
-      self.mode = I2SPI_BOOTLOADER;
-      ets_isr_attach(ETS_SLC_INUM, dmaisrBootloader, NULL);
-      return true;
-    }
-    // Invalid state
-    return false;
+    self.mode = I2SPI_NORMAL;
+    ets_isr_attach(ETS_SLC_INUM, dmaisrNormal, NULL);
+    return true;
   }
+  else if (mode == I2SPI_BOOTLOADER)
+  {
+    self.mode = I2SPI_BOOTLOADER;
+    ets_isr_attach(ETS_SLC_INUM, dmaisrBootloader, NULL);
+    return true;
+  }
+  else if (mode == I2SPI_NULL)
+  {
+    self.mode = I2SPI_NULL;
+    ets_isr_attach(ETS_SLC_INUM, dmaisrNull, NULL);
+    return true;
+  }
+  // Invalid state
+  return false;
 }
 
 uint32_t i2spiGetTxOverflowCount(void) { return self.txOverflowCount; }

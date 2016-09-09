@@ -59,6 +59,12 @@ public class StartupManager : MonoBehaviour {
   [SerializeField]
   private string[] _StartupDebugPrefabNames;
 
+  // These don't go through the normal loc system because it isn't loaded yet but is in the same format.
+  // Add more when we have more than just EN-us, or just change the format to include multiple languages.
+  [SerializeField]
+  private TextAsset _BootLocEnStrings;
+  private JSONObject _BootStrings = null;
+
   private string _ExtractionErrorMessage;
 
   private bool _IsDebugBuild = false;
@@ -68,6 +74,8 @@ public class StartupManager : MonoBehaviour {
   public void StartLoadAsync() {
     StartCoroutine(LoadCoroutine());
   }
+
+  private float _EngineLoadingProgress = 0.0f;
 
   private IEnumerator LoadCoroutine() {
     // Initialize DAS first so we can have error messages during intialization
@@ -112,6 +120,7 @@ public class StartupManager : MonoBehaviour {
 
     if (RobotEngineManager.Instance.RobotConnectionType != RobotEngineManager.ConnectionType.Mock) {
       RobotEngineManager.Instance.ConnectedToClient += HandleConnectedToEngine;
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.EngineLoadingDataStatus>(HandleDataLoaded);
       ConnectToEngine();
     }
 
@@ -151,9 +160,26 @@ public class StartupManager : MonoBehaviour {
 
     if (RobotEngineManager.Instance.RobotConnectionType != RobotEngineManager.ConnectionType.Mock) {
       yield return CheckForEngineConnection();
+      SetupEngine();
+    }
+
+    // As soon as we're done connecting to the engine, start up some music
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connectivity);
+
+    if (RobotEngineManager.Instance.RobotConnectionType != RobotEngineManager.ConnectionType.Mock) {
+      float progressBeforeEngineLoading = _CurrentProgress;
+      while (_EngineLoadingProgress < 1.0f) {
+        float progressToAdd = _EngineLoadingProgress * (1.0f - progressBeforeEngineLoading);
+        _LoadingBar.SetProgress(progressBeforeEngineLoading + progressToAdd);
+        yield return 0;
+      }
     }
 
     _LoadingBar.SetProgress(1.0f);
+
+    if (RobotEngineManager.Instance.RobotConnectionType != RobotEngineManager.ConnectionType.Mock) {
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.EngineLoadingDataStatus>(HandleDataLoaded);
+    }
 
     // Stop loading dots coroutine
     StopAllCoroutines();
@@ -182,6 +208,16 @@ public class StartupManager : MonoBehaviour {
       // TODO: SOS logger is super old and rotten, commenting it out until someone actually has time to fix this
       //ConsoleLogManager.Instance.EnableSOSLogs(true);
     }
+  }
+
+  private void HandleDataLoaded(Anki.Cozmo.ExternalInterface.EngineLoadingDataStatus message) {
+    _EngineLoadingProgress = message.ratioComplete;
+  }
+
+  private void SetupEngine() {
+    RobotEngineManager.Instance.StartEngine();
+    // Set initial volumes
+    Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues();
   }
 
   private IEnumerator LoadDebugAssetBundle(AssetBundleManager assetBundleManager, bool isDebugBuild) {
@@ -379,7 +415,7 @@ public class StartupManager : MonoBehaviour {
 
   private IEnumerator UpdateLoadingDots() {
     while (true) {
-      string loadingText = "Loading";
+      string loadingText = "";
       for (int i = 0; i < _CurrentNumDots; i++) {
         loadingText += ".";
       }
@@ -397,6 +433,22 @@ public class StartupManager : MonoBehaviour {
       _CurrentProgress += amount;
       _LoadingBar.SetProgress(_CurrentProgress);
     }
+  }
+
+  private string GetBootString(string key, params object[] args) {
+    string stringOut = "";
+    if (_BootStrings == null && _BootLocEnStrings != null) {
+      _BootStrings = JSONObject.Create(_BootLocEnStrings.text);
+    }
+    if (_BootStrings != null) {
+      JSONObject wrapper = _BootStrings.GetField(key);
+      if (wrapper != null) {
+        if (wrapper.GetField(ref stringOut, "translation")) {
+          stringOut = string.Format(stringOut, args);
+        }
+      }
+    }
+    return stringOut;
   }
 
   private IEnumerator ExtractResourceFiles(Action<float> progressUpdater) {
@@ -419,8 +471,8 @@ public class StartupManager : MonoBehaviour {
           diskBytes = File.ReadAllBytes(toPath + assetPath);
         }
       } catch (Exception e) {
-        _ExtractionErrorMessage = "Exception checking asset hash: " + e.ToString();
-        Debug.LogError(_ExtractionErrorMessage);
+        _ExtractionErrorMessage = GetBootString("boot.errorReadingFiles",0);
+        Debug.LogError("Exception checking asset hash: " + e.ToString());
         yield break;
       }
 
@@ -434,8 +486,8 @@ public class StartupManager : MonoBehaviour {
             hashMatches = true;
           }
         } catch (Exception e) {
-          _ExtractionErrorMessage = "Exception checking asset hash: " + e.ToString();
-          Debug.LogError(_ExtractionErrorMessage);
+          _ExtractionErrorMessage = GetBootString("boot.errorReadingFiles",1);
+          Debug.LogError("Exception checking asset hash: " + e.ToString());
           yield break;
         }
       }
@@ -454,8 +506,8 @@ public class StartupManager : MonoBehaviour {
       Directory.CreateDirectory(toPath);
     }
     catch (Exception e) {
-      _ExtractionErrorMessage = "There was an exception extracting the resource files: " + e.ToString();
-      Debug.LogError(_ExtractionErrorMessage);
+      _ExtractionErrorMessage = GetBootString("boot.errorReadingFiles",2);
+      Debug.LogError("There was an exception extracting the resource files: " + e.ToString());
       yield break;
     }
 
@@ -464,8 +516,8 @@ public class StartupManager : MonoBehaviour {
     yield return resourcesWWW;
 
     if (!string.IsNullOrEmpty(resourcesWWW.error)) {
-      _ExtractionErrorMessage = "Error loading resources.txt: " + resourcesWWW.error;
-      Debug.LogError(_ExtractionErrorMessage);
+      _ExtractionErrorMessage = GetBootString("boot.errorReadingFiles",3);
+      Debug.LogError("Error loading resources.txt: " + resourcesWWW.error);
       yield break;
     }
 
@@ -481,8 +533,8 @@ public class StartupManager : MonoBehaviour {
           Directory.CreateDirectory(toPath + fileName);
         }
         catch (Exception e) {
-          _ExtractionErrorMessage = "Error extracting file: " + e.ToString();
-          Debug.LogError(_ExtractionErrorMessage);
+          _ExtractionErrorMessage = GetBootString("boot.errorDiskFull");
+          Debug.LogError("Error extracting file: " + e.ToString());
           yield break;
         }
       }
@@ -543,8 +595,8 @@ public class StartupManager : MonoBehaviour {
 
   private bool ExtractOneFile(WWW www, string toPath) {
     if (!string.IsNullOrEmpty(www.error)) {
-      _ExtractionErrorMessage = "Error extracting file: " + www.error;
-      Debug.LogError(_ExtractionErrorMessage);
+      _ExtractionErrorMessage = GetBootString("boot.errorDiskFull");
+      Debug.LogError("Error extracting file: " + www.error);
       return false;
     }
 
@@ -552,8 +604,8 @@ public class StartupManager : MonoBehaviour {
       File.WriteAllBytes(toPath, www.bytes);
     }
     catch (Exception e) {
-      _ExtractionErrorMessage = "Error extracting file: " + e.ToString();
-      Debug.LogError(_ExtractionErrorMessage);
+      _ExtractionErrorMessage = GetBootString("boot.errorDiskFull");
+      Debug.LogError("Error extracting file: " + e.ToString());
       return false;
     }
 

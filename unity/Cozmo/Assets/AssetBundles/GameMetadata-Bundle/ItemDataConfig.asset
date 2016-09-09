@@ -19,12 +19,12 @@ MonoBehaviour:
   - _ItemId: treat
     _LocKey: item.treat
     _ItemIcon: {fileID: 21300000, guid: 2f4324a29fe314be49c316f342f04557, type: 3}
-    _StartingAmount: 5
+    _StartingAmount: 8
   _GenericHexItemData:
     _ItemId: genericHex
     _LocKey: item.genericHex
     _ItemIcon: {fileID: 21300000, guid: 28565cca262e9481280b50c6ba7e3892, type: 3}
-    _StartingAmount: 5
+    _StartingAmount: 8
   _GenericCubeItemData:
     _ItemId: genericCube
     _LocKey: item.cube

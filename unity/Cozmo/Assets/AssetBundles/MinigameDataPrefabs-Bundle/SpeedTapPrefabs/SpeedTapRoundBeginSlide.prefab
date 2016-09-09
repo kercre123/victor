@@ -60,7 +60,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 176160, guid: 10f33d59217b548c690367d9dbad1e40, type: 2}
-  ModifiedValues: []
+  ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    JsonValue: 1.0
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    JsonValue: 1.0
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    JsonValue: 1.0
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: SpeedTap.SpeedTapRoundBeginSlide:_RoundHeaderLabel
@@ -106,6 +115,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22442722}
   m_RootOrder: 1
@@ -123,6 +133,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22442722}
   m_RootOrder: 0
@@ -140,6 +151,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22440810}
   - {fileID: 22439082}
@@ -147,8 +159,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: -61}
+  m_SizeDelta: {x: 0, y: 660}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &100100000
 Prefab:

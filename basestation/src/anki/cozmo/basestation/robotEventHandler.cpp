@@ -126,6 +126,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::IMURequest>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::QueueSingleAction>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::QueueCompoundAction>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestUnlockDataFromBackup>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveCalibrationImage>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SendAvailableObjects>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetActiveObjectLEDs>();
@@ -601,7 +602,11 @@ IActionRunner* GetEnrollNamedFaceActionHelper(Robot& robot, const ExternalInterf
 // Version for SayText message
 IActionRunner* GetSayTextAction(Robot& robot, const ExternalInterface::SayText& sayText)
 {
-  SayTextAction* sayTextAction = new SayTextAction(robot, sayText.text, sayText.voiceStyle, sayText.durationScalar);
+  SayTextAction* sayTextAction = new SayTextAction(robot,
+                                                   sayText.text,
+                                                   sayText.voiceStyle,
+                                                   sayText.durationScalar,
+                                                   sayText.voicePitch);
   sayTextAction->SetAnimationTrigger(sayText.playEvent);
   return sayTextAction;
 }
@@ -1661,6 +1666,12 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetAllActiveObjec
                            msg.makeRelative, Point2f(msg.relativeToX, msg.relativeToY),
                            msg.rotationPeriod_ms);
   }
+}
+
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::RequestUnlockDataFromBackup& msg)
+{
+  RobotDataBackupManager::HandleRequestUnlockDataFromBackup(msg, _context);
 }
 
 void RobotEventHandler::SetupGainsHandlers(IExternalInterface& externalInterface)

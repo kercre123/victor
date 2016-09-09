@@ -206,6 +206,8 @@ public interface IRobot : IDisposable {
                     float accelRadSec = 2f,
                     float maxSpeedFactor = 1f);
 
+  void SetDefaultHeadAndLiftState(bool enable, float headAngleFactor, float liftHeight);
+
   void SetRobotVolume(float volume);
 
   float GetRobotVolume();

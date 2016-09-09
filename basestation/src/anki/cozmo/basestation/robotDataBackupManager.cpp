@@ -7,7 +7,7 @@
  * Description: Manages the robot data backups and handles picking which one to use to restore a robot
  *              Only saves backups of robot data if the robot has completed onboarding
  *              The backup file is <robot serial number>.backup
-  *              The tags we are backing up are specified in backup_config.json
+ *              The tags we are backing up are specified in backup_config.json
  *
  * Copyright: Anki, Inc. 2016
  **/
@@ -17,7 +17,6 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotDataBackupManager.h"
 #include "anki/cozmo/basestation/robotManager.h"
-#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/onboardingData.h"
 #include "json/json.h"
 #include "util/fileUtils/fileUtils.h"
@@ -25,9 +24,19 @@
 namespace Anki {
 namespace Cozmo {
   
+// Filename for keeping track of relevent stats for determining which file to use for restoring
+static const std::string kStatsForBackupFile = "statsForBackup.json";
+static const std::string kConnectionCountKey = "ConnectionCount";
+
+// Config file containing the tags that we want to backup
+static const std::string kBackupConfig = "config/basestation/config/backup_config.json";
+
+// File name of the backup file for the currently connected robot
+static std::string _fileName;
+  
 RobotDataBackupManager::RobotDataBackupManager(Robot& robot)
 : _robot(robot)
-, kPathToFile((_robot.GetContextDataPlatform() != nullptr ? _robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Persistent, "robotBackups/") : ""))
+, kPathToFile((_robot.GetContextDataPlatform() != nullptr ? _robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Persistent, GetBackupFolder()) : ""))
 {
   if(_robot.HasExternalInterface())
   {
@@ -40,7 +49,6 @@ RobotDataBackupManager::RobotDataBackupManager(Robot& robot)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RestoreRobotFromBackup>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::WipeRobotGameData>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestRobotRestoreData>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestUnlockDataFromBackup>();
   }
   
   if(Util::FileUtils::CreateDirectory(kPathToFile, false, true) == false)
@@ -210,7 +218,7 @@ void RobotDataBackupManager::QueueDataToWrite(const Tag tag, const std::vector<u
   _tagDataMap[static_cast<u32>(tag)].push_back(blob);
 }
 
-void RobotDataBackupManager::WriteDataForTag(const Tag forTag, const NVStorage::NVResult res)
+void RobotDataBackupManager::WriteDataForTag(const Tag forTag, const NVStorage::NVResult res, const bool writeNotErase)
 {
   u32 tag = static_cast<u32>(forTag);
   auto iter = _tagDataMap.find(tag);
@@ -225,7 +233,8 @@ void RobotDataBackupManager::WriteDataForTag(const Tag forTag, const NVStorage::
   }
   
   // If the write to robot failed then the data for this tag wasn't actually written so erase it
-  if(res != NVStorage::NVResult::NV_OKAY)
+  // Or this was an erase (no data is empty in _tagDataMap)
+  if(res != NVStorage::NVResult::NV_OKAY || !writeNotErase)
   {
     _tagDataMap.erase(iter);
     return;
@@ -240,9 +249,12 @@ void RobotDataBackupManager::WriteDataForTag(const Tag forTag, const NVStorage::
   // Special case for if we are writting to the onboarding tag then we need to update _hasCompletedOnboarding
   if(forTag == NVStorage::NVEntryTag::NVEntry_OnboardingData)
   {
-    OnboardingData data;
-    data.Unpack(_dataOnRobot[tag].blob.data(), _dataOnRobot[tag].blob.size());
-    _hasCompletedOnboarding = data.hasCompletedOnboarding;
+    if(_dataOnRobot[tag].blob.size() != 0)
+    {
+      OnboardingData data;
+      data.Unpack(_dataOnRobot[tag].blob.data(), _dataOnRobot[tag].blob.size());
+      _hasCompletedOnboarding = data.hasCompletedOnboarding;
+    }
   }
   
   WriteBackupFile();
@@ -275,7 +287,7 @@ void RobotDataBackupManager::HandleMessage(const ExternalInterface::RestoreRobot
   if(msg.robotToRestoreFrom == 0 ||
      !Util::FileUtils::FileExists(kPathToFile + std::to_string(msg.robotToRestoreFrom) + ".backup"))
   {
-    if(!GetFileToUseForBackup(fileName))
+    if(!GetFileToUseForBackup(fileName, kPathToFile, _robot.GetContextDataPlatform()))
     {
       PRINT_NAMED_ERROR("RobotDataBackupManager.RestoreFromBackup.NoBackup", "No backup to restore from");
       return;
@@ -290,7 +302,7 @@ void RobotDataBackupManager::HandleMessage(const ExternalInterface::RestoreRobot
   PRINT_NAMED_INFO("RobotDataBackupManager.RestoreFromBackup", "Using file %s for backup", fileName.c_str());
   
   // _dataOnRobot will get cleared by this call so only _tagDataMap will need to be cleared
-  if(!ParseBackupFile(fileName, _dataOnRobot))
+  if(!ParseBackupFile(fileName, kPathToFile, _dataOnRobot))
   {
     return;
   }
@@ -342,23 +354,31 @@ void RobotDataBackupManager::HandleMessage(const ExternalInterface::RestoreRobot
   }
 }
 
-bool RobotDataBackupManager::GetFileToUseForBackup(std::string& file)
+bool RobotDataBackupManager::GetFileToUseForBackup(std::string& file,
+                                                   const std::string& pathToFile,
+                                                   Util::Data::DataPlatform* dp)
 {
   // Check to see if we have a backup for the robot
-  if(Util::FileUtils::FileExists(kPathToFile + _fileName))
+  if(Util::FileUtils::FileExists(pathToFile + _fileName))
   {
     PRINT_NAMED_INFO("RobotDataBackupManager.GetFileToUseForBackup",
                      "Have existing backup for current robot using it to restore");
     file = _fileName;
     return true;
   }
+  
+  if(dp == nullptr)
+  {
+    PRINT_NAMED_ERROR("RobotDataBackupManager.GetFileToUseForBackup.NullDataPlatform", "");
+    return false;
+  }
 
   // We don't have an existing backup so read the connection counts in statsForBackup.json
   // and find the robot that we have connected the most to
   Json::Value stats;
-  if(Util::FileUtils::FileExists(kPathToFile + kStatsForBackupFile))
+  if(Util::FileUtils::FileExists(pathToFile + kStatsForBackupFile))
   {
-    if(!_robot.GetContextDataPlatform()->readAsJson(kPathToFile + kStatsForBackupFile, stats))
+    if(!dp->readAsJson(pathToFile + kStatsForBackupFile, stats))
     {
       PRINT_NAMED_ERROR("RobotDataBackupManager.GetFileToUseForBackup.ReadJson.Failed",
                         "Failed to read %s",
@@ -482,14 +502,23 @@ void RobotDataBackupManager::HandleMessage(const ExternalInterface::RequestRobot
   _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(restoreOptions)));
 }
 
-template<>
-void RobotDataBackupManager::HandleMessage(const ExternalInterface::RequestUnlockDataFromBackup& msg)
+void RobotDataBackupManager::HandleRequestUnlockDataFromBackup(const ExternalInterface::RequestUnlockDataFromBackup& msg,
+                                                               const CozmoContext* context)
 {
+  if(context == nullptr ||
+     context->GetExternalInterface() == nullptr ||
+     context->GetDataPlatform() == nullptr)
+  {
+    PRINT_NAMED_ERROR("RobotDataBackupManager.HandleRequestUnlockDataFromBackup.NullContext", "");
+    return;
+  }
+
   std::unordered_map<u32, NVStorage::NVStorageBlob> dataInBackup;
   std::string file;
-  if(GetFileToUseForBackup(file))
+  const std::string pathToFile = context->GetDataPlatform()->pathToResource(Util::Data::Scope::Persistent, GetBackupFolder());
+  if(GetFileToUseForBackup(file, pathToFile, context->GetDataPlatform()))
   {
-    if(ParseBackupFile(file, dataInBackup))
+    if(ParseBackupFile(file, pathToFile, dataInBackup))
     {
       // Check to see if there is unlock data in the backup if not we will just send back the default unlocks
       auto unlocks = dataInBackup.find(static_cast<u32>(NVStorage::NVEntryTag::NVEntry_GameUnlocks));
@@ -509,17 +538,17 @@ void RobotDataBackupManager::HandleMessage(const ExternalInterface::RequestUnloc
         }
         
         // Send to game telling them this unlock data is from the backup not the actual robot
-        _robot.GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UnlockStatus(std::vector<UnlockId>(vec.begin(), vec.end()), true)));
+        context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UnlockStatus(std::vector<UnlockId>(vec.begin(), vec.end()), true)));
       }
       else
       {
         PRINT_NAMED_INFO("RobotDataBackupManager.HandleRequestUnlockDataFromBackup",
                          "No unlock data in backup sending default unlock data");
         
-        const auto& defaultUnlocks = _robot.GetProgressionUnlockComponent().GetDefaultUnlocks();
+        const auto& defaultUnlocks = ProgressionUnlockComponent::GetDefaultUnlocks();
         
         // Send to game telling them this unlock data is from the backup not the actual robot
-        _robot.GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UnlockStatus(std::vector<UnlockId>(defaultUnlocks.begin(), defaultUnlocks.end()), true)));
+        context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UnlockStatus(std::vector<UnlockId>(defaultUnlocks.begin(), defaultUnlocks.end()), true)));
       }
       
       
@@ -527,10 +556,11 @@ void RobotDataBackupManager::HandleMessage(const ExternalInterface::RequestUnloc
   }
 }
 
-bool RobotDataBackupManager::ParseBackupFile(const std::string fileName,
+bool RobotDataBackupManager::ParseBackupFile(const std::string& fileName,
+                                             const std::string& pathToFile,
                                              std::unordered_map<u32, NVStorage::NVStorageBlob>& dataInBackup)
 {
-  std::string file = Util::FileUtils::ReadFile(kPathToFile + fileName);
+  std::string file = Util::FileUtils::ReadFile(pathToFile + fileName);
   
   if(file.length() == 0)
   {

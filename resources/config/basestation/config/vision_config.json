@@ -15,7 +15,7 @@
     "RunMode": "asynchronous"  // "synchronous" or "asynchronous"
   },
   "ImageQuality" : {
-    "TimeBeforeErrorMessage_ms" :       3000, // How long VisionSystem must detect "bad" quality before notifying game
+    "TimeBeforeErrorMessage_ms" :       2000, // How long VisionSystem must detect "bad" quality before notifying game
     "RepeatedErrorMessageInverval_ms" : 5000, // Time between error messages once triggered
     
     // NOTE: All threshold values below are in image brightness units: [0,255]

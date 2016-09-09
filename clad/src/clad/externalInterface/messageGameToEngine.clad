@@ -508,6 +508,14 @@ message RequestEnableReactionaryBehavior{
 }
 
 
+// Engine will preserve the head and lift state between reactionary behaviors
+message SetDefaultHeadAndLiftState {
+  bool enable,
+  float_32 headAngle,
+  float_32 liftHeight
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // Blockworld
 ///////////////////////////////////////////////////////////////////////////////

@@ -9,7 +9,7 @@ namespace Cozmo {
 enum uint_8 EngineState {
   Stopped,
   WaitingForUIDevices,
-  WaitingForRobots,
+  LoadingData,
   Running,
   UpdatingFirmware,
 

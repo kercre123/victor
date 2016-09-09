@@ -42,7 +42,7 @@ GameObject:
   - 224: {fileID: 22484660}
   - 114: {fileID: 11499144}
   m_Layer: 5
-  m_Name: FragmentCountLabelContainer (1)
+  m_Name: FragmentCountContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -293,7 +293,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &147030
 GameObject:
   m_ObjectHideFlags: 1
@@ -304,6 +304,23 @@ GameObject:
   - 224: {fileID: 22440950}
   m_Layer: 5
   m_Name: ButtonAreaContainer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!1 &149416
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22431624}
+  - 222: {fileID: 22272130}
+  - 114: {fileID: 11479604}
+  m_Layer: 5
+  m_Name: SparkButtonIcon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -515,6 +532,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22454500}
+  - 114: {fileID: 11485828}
   m_Layer: 5
   m_Name: AvailablePromptContainer
   m_TagString: Untagged
@@ -600,7 +618,7 @@ GameObject:
   - 222: {fileID: 22235754}
   - 114: {fileID: 11492546}
   m_Layer: 5
-  m_Name: FragmentCountLabel(Proxy)
+  m_Name: FragmentCountLabel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -651,7 +669,7 @@ GameObject:
   - 222: {fileID: 22263146}
   - 114: {fileID: 11411018}
   m_Layer: 5
-  m_Name: SparkButtonIcon
+  m_Name: SparkButtonIcon2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -677,7 +695,7 @@ MonoBehaviour:
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_Font: {fileID: 12800000, guid: 01314919a94634a228a0ccc4039bcf62, type: 3}
     m_FontSize: 100
     m_FontStyle: 0
     m_BestFit: 0
@@ -904,7 +922,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.6275859, b: 1, a: 1}
+  m_Color: {r: 0.14305799, g: 0.75616354, b: 0.9264706, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -1121,7 +1139,7 @@ MonoBehaviour:
   _AvailablePromptCost: {fileID: 0}
   _ButtonCostLabel: {fileID: 11402262}
   _RequestTrickButtonLabel: {fileID: 0}
-  _RequestTrickButtonIcon: {fileID: 11411018}
+  _RequestTrickButtonIcon: {fileID: 11479604}
   _UnlockableIcon: {fileID: 11459738}
   _CubesRequiredLabel: {fileID: 11442860}
   _UnlockUpgradeButtonContainer: {fileID: 104356}
@@ -1223,7 +1241,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.6275859, b: 1, a: 1}
+  m_Color: {r: 0.14305799, g: 0.75616354, b: 0.9264706, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -1360,13 +1378,13 @@ MonoBehaviour:
   ModifiedValues:
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Color:b
-    JsonValue: 0.0235294122
+    JsonValue: 0.8313726
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Color:g
-    JsonValue: 0.7019608
+    JsonValue: 0.5686275
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Color:r
-    JsonValue: 0.4862745
+    JsonValue: 0.117647067
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
     JsonValue: 8
@@ -1429,30 +1447,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
-  ModifiedValues:
-  - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
-    JsonValue: 3
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:a
-    JsonValue: 1.0
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextEnabledColor:b
-    JsonValue: 1.0
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextEnabledColor:g
-    JsonValue: 1.0
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:TextEnabledColor:r
-    JsonValue: 1.0
+  ModifiedValues: []
   ModifiedLocalReferences:
   - ObjectPath: ../../../../
     FieldName: CoreUpgradeDetailsDialog:_UnlockUpgradeButton
     ReferencePath: 
-  ModifiedGlobalReferences:
-  - ObjectPath: ButtonBackground
-    FieldName: UnityEngine.UI.Image:m_Sprite
-    Reference: {fileID: 21300000, guid: eccf0d7ea36bd47fbb85c8ced7961a86, type: 3}
+  ModifiedGlobalReferences: []
 --- !u!114 &11477634
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1465,7 +1465,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.6275859, b: 1, a: 1}
+  m_Color: {r: 0.14305799, g: 0.75616354, b: 0.9264706, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -1473,6 +1473,33 @@ MonoBehaviour:
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_Sprite: {fileID: 21300000, guid: 34b733b5c70c245f7a4d8feeebf35da2, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 1
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+--- !u!114 &11479604
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 149416}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+  m_Sprite: {fileID: 21300000, guid: 2f4324a29fe314be49c316f342f04557, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -1513,6 +1540,26 @@ MonoBehaviour:
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Font
     Reference: {fileID: 12800000, guid: 6ef5f80c68ce34039a34f24769e5dc26, type: 3}
+--- !u!114 &11485828
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 172766}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1297475563, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 5
+  m_Spacing: -30
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 1
 --- !u!114 &11487146
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1602,10 +1649,37 @@ MonoBehaviour:
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
-    JsonValue: 3
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    JsonValue: 1.0
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    JsonValue: 1.0
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    JsonValue: 1.0
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:disabledColor:a
+    JsonValue: 1.0
   - ObjectPath: 
     FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:a
+    JsonValue: 1.0
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:b
+    JsonValue: 0.852941155
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:g
+    JsonValue: 0.806983
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:r
+    JsonValue: 0.671064
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:b
+    JsonValue: 1.0
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:g
+    JsonValue: 1.0
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:TextPressedColor:r
     JsonValue: 1.0
   - ObjectPath: 
     FieldName: Cozmo.UI.CozmoButton:TextEnabledColor:b
@@ -1626,7 +1700,10 @@ MonoBehaviour:
   ModifiedGlobalReferences:
   - ObjectPath: ButtonBackground
     FieldName: UnityEngine.UI.Image:m_Sprite
-    Reference: {fileID: 21300000, guid: eccf0d7ea36bd47fbb85c8ced7961a86, type: 3}
+    Reference: {fileID: 21300000, guid: b2cceb8b225484e4dac8687f352791c8, type: 3}
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedSprite
+    Reference: {fileID: 21300000, guid: 8bea84bf556d1499da2ef38d235f8987, type: 3}
 --- !u!114 &11499144
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1776,6 +1853,12 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 160286}
+--- !u!222 &22272130
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 149416}
 --- !u!222 &22280972
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -1803,11 +1886,11 @@ RectTransform:
   - {fileID: 22449026}
   m_Father: {fileID: 22440950}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0.5, y: 0}
-  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchorMin: {x: 1, y: 0}
+  m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 86}
-  m_SizeDelta: {x: 1136, y: 275}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_SizeDelta: {x: 1100, y: 320}
+  m_Pivot: {x: 1, y: 0.5}
 --- !u!224 &22401344
 RectTransform:
   m_ObjectHideFlags: 1
@@ -1823,8 +1906,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 400, y: 0}
-  m_SizeDelta: {x: 246, y: 212}
+  m_AnchoredPosition: {x: -61, y: 131.2}
+  m_SizeDelta: {x: 246, y: 160}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22403378
 RectTransform:
@@ -1875,13 +1958,14 @@ RectTransform:
   m_Children:
   - {fileID: 22495650}
   - {fileID: 22401344}
+  - {fileID: 22431624}
   m_Father: {fileID: 22440950}
   m_RootOrder: 1
-  m_AnchorMin: {x: 0.5, y: 0}
-  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchorMin: {x: 1, y: 0}
+  m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 86}
-  m_SizeDelta: {x: 1136, y: 275}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_SizeDelta: {x: 1100, y: 320}
+  m_Pivot: {x: 1, y: 0.5}
 --- !u!224 &22412412
 RectTransform:
   m_ObjectHideFlags: 1
@@ -1972,10 +2056,28 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22454500}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0.5, y: 0}
-  m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: -366, y: 531}
-  m_SizeDelta: {x: 1000, y: 200}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 1, y: 0.5}
+--- !u!224 &22431624
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 149416}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 22408966}
+  m_RootOrder: 2
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 26, y: 136}
+  m_SizeDelta: {x: 246, y: 212}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22432298
 RectTransform:
@@ -2066,11 +2168,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22454500}
   m_RootOrder: 1
-  m_AnchorMin: {x: 0.5, y: 0}
-  m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: -366, y: 379}
-  m_SizeDelta: {x: 1000, y: 148}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 1, y: 0.5}
 --- !u!224 &22435810
 RectTransform:
   m_ObjectHideFlags: 1
@@ -2106,11 +2208,11 @@ RectTransform:
   - {fileID: 22480132}
   m_Father: {fileID: 22499570}
   m_RootOrder: 2
-  m_AnchorMin: {x: 0.5, y: 0}
-  m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 787, y: 400}
+  m_AnchorMin: {x: 1, y: 0}
+  m_AnchorMax: {x: 1, y: 0}
+  m_AnchoredPosition: {x: -50, y: 400}
   m_SizeDelta: {x: 1136, y: 475}
-  m_Pivot: {x: 0.5, y: 0}
+  m_Pivot: {x: 1, y: 0}
 --- !u!224 &22447400
 RectTransform:
   m_ObjectHideFlags: 1
@@ -2165,7 +2267,7 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 400, y: 0}
+  m_AnchoredPosition: {x: 6, y: 137}
   m_SizeDelta: {x: 180, y: 180}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22452054
@@ -2201,11 +2303,11 @@ RectTransform:
   - {fileID: 22435332}
   m_Father: {fileID: 22499570}
   m_RootOrder: 1
-  m_AnchorMin: {x: 0.5, y: 0}
-  m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0, y: 259}
-  m_SizeDelta: {x: 2732, y: 500}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: -1184, y: -291}
+  m_SizeDelta: {x: 1480, y: 233.5}
+  m_Pivot: {x: 1, y: 0.5}
 --- !u!224 &22458810
 RectTransform:
   m_ObjectHideFlags: 1
@@ -2257,11 +2359,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22400090}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -0.0000019073486, y: 0}
-  m_SizeDelta: {x: 1136, y: 275}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 1, y: 0.5}
 --- !u!224 &22465916
 RectTransform:
   m_ObjectHideFlags: 1
@@ -2446,9 +2548,9 @@ RectTransform:
   m_RootOrder: 3
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 550, y: 200}
-  m_SizeDelta: {x: 1632, y: 600}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 550, y: 520}
+  m_SizeDelta: {x: 1632, y: 576.7}
+  m_Pivot: {x: 0.5, y: 1}
 --- !u!224 &22493264
 RectTransform:
   m_ObjectHideFlags: 1
@@ -2499,11 +2601,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22408966}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -0.0000019073486, y: 0}
-  m_SizeDelta: {x: 1136, y: 275}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 1, y: 0.5}
 --- !u!224 &22495898
 RectTransform:
   m_ObjectHideFlags: 1
@@ -2517,11 +2619,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22440950}
   m_RootOrder: 2
-  m_AnchorMin: {x: 0.5, y: 0}
-  m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 278, y: -51.50001}
-  m_SizeDelta: {x: 160, y: 275}
-  m_Pivot: {x: 1, y: 0}
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: -966, y: -162}
+  m_SizeDelta: {x: 187, y: 192.5}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22499570
 RectTransform:
   m_ObjectHideFlags: 1

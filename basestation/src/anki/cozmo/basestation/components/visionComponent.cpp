@@ -627,7 +627,7 @@ namespace Cozmo {
         _groundPlaneHomographyLUT[headAngle_rad] = H;
       } else {
         PRINT_CH_INFO("VisionComponent", "PopulateGroundPlaneHomographyLUT.MaxHeadAngleReached",
-                         "Stopping at %.1fdeg", RAD_TO_DEG(headAngle_rad));
+                         "Stopping at %.1fdeg", RAD_TO_DEG_F32(headAngle_rad));
         break;
       }
     }
@@ -646,7 +646,7 @@ namespace Cozmo {
     if(iter == _groundPlaneHomographyLUT.end()) {
       PRINT_NAMED_WARNING("VisionComponent.LookupGroundPlaneHomography.KeyNotFound",
                           "Failed to find homogrphay using headangle of %.2frad (%.1fdeg) as lower bound",
-                          atHeadAngle, RAD_TO_DEG(atHeadAngle));
+                          atHeadAngle, RAD_TO_DEG_F32(atHeadAngle));
       --iter;
     } else {
       auto nextIter = iter; ++nextIter;
@@ -1289,27 +1289,37 @@ namespace Cozmo {
   
   Result VisionComponent::UpdateImageQuality(const VisionProcessingResult& procResult)
   {
+    if(!_robot.IsPhysical() || procResult.imageQuality == ImageQuality::Unchecked)
+    {
+      // Nothing to do
+      return RESULT_OK;
+    }
+    
     if(procResult.imageQuality != _lastImageQuality || _currentQualityBeginTime_ms==0)
     {
       // Just switched image qualities
       _currentQualityBeginTime_ms = procResult.timestamp;
       _waitForNextAlert_ms = kImageQualityAlertDuration_ms; // for first alert, use "duration" time
+      _lastBroadcastImageQuality = ImageQuality::Unchecked; // i.e. reset so we definitely broadcast again
     }
-    else if(procResult.imageQuality != ImageQuality::Good)
+    else if(_lastBroadcastImageQuality != ImageQuality::Good) // Don't keep broadcasting once in Good state
     {
       const TimeStamp_t timeWithThisQuality_ms = procResult.timestamp - _currentQualityBeginTime_ms;
       
       if(timeWithThisQuality_ms > _waitForNextAlert_ms)
       {
-        // If we get here, we've been in a non-good image quality for too long.
-        // Send out a warning.
+        // If we get here, we've been in a new image quality for long enough to trust it and broadcast.
         EngineErrorCode errorCode = EngineErrorCode::Count;
         
         switch(_lastImageQuality)
         {
-          case ImageQuality::Good:
+          case ImageQuality::Unchecked:
             // can't get here due to IF above (but need case to prevent compiler error without default)
             assert(false);
+            break;
+            
+          case ImageQuality::Good:
+            errorCode = EngineErrorCode::ImageQualityGood;
             break;
             
           case ImageQuality::TooDark:
@@ -1321,15 +1331,20 @@ namespace Cozmo {
             break;
         }
         
-        PRINT_CH_INFO("VisionComponent", "UpdateImageQuality.BroadcastingBadImageQuality",
-                      "Seeing %s for more than %u > %ums, broadcasting engine error %s",
-                      EnumToString(procResult.imageQuality), timeWithThisQuality_ms,
-                      _waitForNextAlert_ms, EnumToString(errorCode));
+        PRINT_NAMED_EVENT("robot.vision.image_quality", "%s", EnumToString(errorCode));
+        
+        PRINT_CH_DEBUG("VisionComponent", "UpdateImageQuality.BroadcastingImageQualityChange",
+                       "Seeing %s for more than %u > %ums, broadcasting %s",
+                       EnumToString(procResult.imageQuality), timeWithThisQuality_ms,
+                       _waitForNextAlert_ms, EnumToString(errorCode));
         
         using namespace ExternalInterface;
         _robot.Broadcast(MessageEngineToGame(EngineErrorCodeMessage(errorCode)));
+        _lastBroadcastImageQuality = _lastImageQuality;
         
-        // Reset start time just to avoid spamming the error
+        // Reset start time just to avoid spamming if this is a "bad" quality, which
+        // we will keep sending until it's better. (Good quality is only broadcast
+        // one time, once we transition out of Bad quality)
         _currentQualityBeginTime_ms = procResult.timestamp;
         _waitForNextAlert_ms = kImageQualityAlertSpacing_ms; // after first alert use "spacing" time
       }

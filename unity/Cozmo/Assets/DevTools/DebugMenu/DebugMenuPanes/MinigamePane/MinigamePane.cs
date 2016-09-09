@@ -68,14 +68,14 @@ public class MinigamePane : MonoBehaviour {
   private void CozmoWinGameClicked() {
     var minigame = GetCurrMinigame();
     if (minigame != null) {
-      minigame.StartPointlessGameEnd(false);
+      minigame.StartBaseGameEnd(false);
     }
   }
   // Force Game Win For Player
   private void PlayerWinGameClicked() {
     var minigame = GetCurrMinigame();
     if (minigame != null) {
-      minigame.StartPointlessGameEnd(true);
+      minigame.StartBaseGameEnd(true);
     }
   }
 

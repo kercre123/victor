@@ -49,7 +49,6 @@ namespace SpeedTap {
         roundEndSlideScript.BannerAnimationDurationSeconds);
 
       ContextManager.Instance.AppFlash(playChime: true);
-      ContextManager.Instance.HideForeground();
       // Play cozmo animation
       PlayReactToRoundAnimationAndSendEvent();
     }
@@ -99,6 +98,7 @@ namespace SpeedTap {
 
     private void MoveToNextState() {
       _SpeedTapGame.SharedMinigameView.HideGameStateSlide();
+      _SpeedTapGame.UpdateUI();
       _SpeedTapGame.ClearWinningLightPatterns();
       _StateMachine.SetNextState(new SpeedTapCozmoDriveToCube(false));
     }

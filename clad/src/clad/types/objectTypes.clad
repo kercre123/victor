@@ -75,6 +75,8 @@ namespace Cozmo {
     // Markerless Objects (e.g. obstacles)
     //
     ProxObstacle,
+    CliffDetection,
+    CollisionObstacle,
 
     //////////////////////////////////////////////////////////////////////////
     // Custom Objects created using the old "block" markers i.e star and arrow

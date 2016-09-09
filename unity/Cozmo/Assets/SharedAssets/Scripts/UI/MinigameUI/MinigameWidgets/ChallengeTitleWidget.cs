@@ -28,6 +28,18 @@ namespace Cozmo {
         }
       }
 
+      public Color TitleTextColor {
+        set {
+          _ChallengeTitleLabel.color = value;
+        }
+      }
+
+      public Color SubtitleTextColor {
+        set {
+          _ChallengeSubtitleLabel.color = value;
+        }
+      }
+
       #region IMinigameWidget
 
       public override void DestroyWidgetImmediately() {

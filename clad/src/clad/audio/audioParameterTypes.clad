@@ -9,6 +9,7 @@ enum uint_32 ParameterType
 {
   Event_Volume = 3530059848,
   External_Name_Duration = 2145805753,
+  External_Process_Pitch = 2027863301,
   Invalid = 0,
   Mood = 3128647864,
   Music_Mood = 1579946944,
@@ -16,6 +17,7 @@ enum uint_32 ParameterType
   Mvt_Speed = 3464961452,
   Relationship = 3723222599,
   Robot_Volume = 1669075520,
+  Sfx_Charge = 3433595557,
   Sfx_Volume = 1564184899,
   Ss_Air_Fear = 1351367891,
   Ss_Air_Freefall = 3002758120,

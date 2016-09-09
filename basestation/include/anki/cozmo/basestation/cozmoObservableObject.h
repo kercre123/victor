@@ -86,6 +86,8 @@ namespace Cozmo {
     void         SetFactoryID(FactoryID factoryID)      { assert(IsActive()); _factoryID = factoryID; }
     FactoryID    GetFactoryID()                 const   { return _factoryID; }
 
+    // Override in derived classes to allow them to exist co-located with robot
+    virtual bool CanIntersectWithRobot() const { return false; }
     
   protected:
     

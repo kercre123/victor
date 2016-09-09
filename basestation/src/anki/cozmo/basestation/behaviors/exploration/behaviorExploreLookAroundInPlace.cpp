@@ -364,7 +364,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp(Robot& robot)
     IAction* moveHeadAction = CreateHeadTurnAction(robot,
           _configParams.s4_BodyAngleRelativeRangeMin_deg,
           _configParams.s4_BodyAngleRelativeRangeMax_deg,
-          RAD_TO_DEG( _s4_s5StartingBodyFacing_rad.ToFloat() ),
+          _s4_s5StartingBodyFacing_rad.getDegrees(),
           _configParams.s4_HeadAngleRangeMin_deg,
           _configParams.s4_HeadAngleRangeMax_deg,
           _configParams.sx_BodyTurnSpeed_degPerSec,
@@ -406,7 +406,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS5_HeadOnlyDown(Robot& robot)
   IAction* moveHeadAction = CreateHeadTurnAction(robot,
         _configParams.s5_BodyAngleRelativeRangeMin_deg,
         _configParams.s5_BodyAngleRelativeRangeMax_deg,
-        RAD_TO_DEG( _s4_s5StartingBodyFacing_rad.ToFloat() ),
+        _s4_s5StartingBodyFacing_rad.getDegrees(),
         _configParams.s5_HeadAngleRangeMin_deg,
         _configParams.s5_HeadAngleRangeMax_deg,
         _configParams.sx_BodyTurnSpeed_degPerSec,
@@ -484,7 +484,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
   {
     PRINT_CH_INFO("Behaviors", (GetName() + ".IterationEnd").c_str(),
       "Done %.2f deg so far",
-      fabsf((float)RAD_TO_DEG(_behaviorBodyFacingDone_rad)));
+      fabsf(RAD_TO_DEG_F32(_behaviorBodyFacingDone_rad)));
     
     // no cone of focus
     // while not completed a whole turn start another iteration
@@ -584,8 +584,8 @@ IAction* BehaviorExploreLookAroundInPlace::CreateHeadTurnAction(Robot& robot,
   turnAction->SetMaxTiltSpeed( DEG_TO_RAD(headTurnSpeed_degPerSec) );
 
   PRINT_CH_INFO("Behaviors", (GetName() + ".PanAndTilt").c_str(), "Body %.2f, Head %.2f, BSpeed %.2f, HSpeed %.2f",
-    RAD_TO_DEG(bodyTargetAngleAbs_rad.ToFloat()),
-    RAD_TO_DEG(headTargetAngleAbs_rad.ToFloat()),
+    bodyTargetAngleAbs_rad.getDegrees(),
+    headTargetAngleAbs_rad.getDegrees(),
     bodyTurnSpeed_degPerSec,
     headTurnSpeed_degPerSec);
   

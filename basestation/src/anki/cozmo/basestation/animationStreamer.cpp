@@ -1678,7 +1678,7 @@ namespace Cozmo {
       {
         _headMoveDuration_ms = _rng.RandIntInRange(GET_PARAM(s32, HeadMovementDurationMin_ms),
                                                    GET_PARAM(s32, HeadMovementDurationMax_ms));
-        const s8 currentAngle_deg = static_cast<s8>(RAD_TO_DEG(robot.GetHeadAngle()));
+        const s8 currentAngle_deg = static_cast<s8>(RAD_TO_DEG_F32(robot.GetHeadAngle()));
 
         if(DEBUG_ANIMATION_STREAMING) {
           PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.HeadTwitch",

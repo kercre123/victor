@@ -93,7 +93,7 @@ namespace Anki {
 
       TimeStamp_t newestTime = poses_.rbegin()->first;
       if (newestTime > windowSize_ && t < newestTime - windowSize_) {
-        PRINT_NAMED_WARNING("RobotPoseHistory.AddRawOdomPose.TimeTooOld", "newestTime %d, oldestAllowedTime %d, t %d\n", newestTime, newestTime - windowSize_, t);
+        PRINT_NAMED_WARNING("RobotPoseHistory.AddRawOdomPose.TimeTooOld", "newestTime %d, oldestAllowedTime %d, t %d", newestTime, newestTime - windowSize_, t);
         return RESULT_FAIL;
       }
       
@@ -535,7 +535,7 @@ namespace Anki {
       // specified ID. Fail if we get back to the beginning without finding it.
       if(poses_.empty()) {
         PRINT_NAMED_ERROR("RobotPoseHistory.GetLastPoseWithFrameID.EmptyHistory",
-                          "Looking for last pose with frame ID=%d, but pose history is empty.\n", frameID);
+                          "Looking for last pose with frame ID=%d, but pose history is empty.", frameID);
         return RESULT_FAIL;
       }
       
@@ -574,9 +574,9 @@ namespace Anki {
         
       } else {
         PRINT_NAMED_ERROR("RobotPoseHistory.GetLastPoseWithFrameID.FrameIdNotFound",
-                          "Could not frame ID=%d in pose history. "
+                          "Could not find frame ID=%d in pose history. "
                           "(First frameID in pose history is %d, last is %d. "
-                          "First frameID in vis pose history is %d, last is %d.\n", frameID,
+                          "First frameID in vis pose history is %d, last is %d.", frameID,
                           poses_.begin()->second.GetFrameId(),
                           poses_.rbegin()->second.GetFrameId(),
                           visPoses_.begin()->second.GetFrameId(),

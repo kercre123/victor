@@ -471,25 +471,29 @@ namespace Anki {
       }
 
       void Process_moveLift(const RobotInterface::MoveLift& msg) {
-        LiftController::SetMaxSpeedAndAccel(msg.speed_rad_per_sec, MAX_LIFT_ACCEL_RAD_PER_S2);
-        LiftController::SetAngularVelocity(msg.speed_rad_per_sec);
+        LiftController::SetAngularVelocity(msg.speed_rad_per_sec, MAX_LIFT_ACCEL_RAD_PER_S2);
       }
 
       void Process_moveHead(const RobotInterface::MoveHead& msg) {
-        HeadController::SetMaxSpeedAndAccel(msg.speed_rad_per_sec, MAX_HEAD_ACCEL_RAD_PER_S2);
-        HeadController::SetAngularVelocity(msg.speed_rad_per_sec);
+        HeadController::SetAngularVelocity(msg.speed_rad_per_sec, MAX_HEAD_ACCEL_RAD_PER_S2);
       }
 
       void Process_liftHeight(const RobotInterface::SetLiftHeight& msg) {
         //AnkiInfo( 109, "Messages.Process_liftHeight.Recvd", 357, "height %f, maxSpeed %f, duration %f", 3, msg.height_mm, msg.max_speed_rad_per_sec, msg.duration_sec);
-        LiftController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
-        LiftController::SetDesiredHeight(msg.height_mm, 0.1f, 0.1f, msg.duration_sec);
+        if (msg.duration_sec > 0) {
+          LiftController::SetDesiredHeightByDuration(msg.height_mm, 0.1f, 0.1f, msg.duration_sec);
+        } else {
+          LiftController::SetDesiredHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+        }
       }
 
       void Process_headAngle(const RobotInterface::SetHeadAngle& msg) {
         //AnkiInfo( 117, "Messages.Process_headAngle.Recvd", 365, "angle %f, maxSpeed %f, duration %f", 3, msg.angle_rad, msg.max_speed_rad_per_sec, msg.duration_sec);
-        HeadController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
-        HeadController::SetDesiredAngle(msg.angle_rad, 0.1f, 0.1f, msg.duration_sec);
+        if (msg.duration_sec > 0) {
+          HeadController::SetDesiredAngleByDuration(msg.angle_rad, 0.1f, 0.1f, msg.duration_sec);
+        } else {
+          HeadController::SetDesiredAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
+        }
       }
 
       void Process_headAngleUpdate(const RobotInterface::HeadAngleUpdate& msg) {
@@ -751,8 +755,8 @@ namespace Anki {
       }
       void Process_animHeadAngle(const Anki::Cozmo::AnimKeyFrame::HeadAngle& msg)
       {
-        HeadController::SetDesiredAngle(DEG_TO_RAD_F32(static_cast<f32>(msg.angle_deg)), 0.1f, 0.1f,
-                                                static_cast<f32>(msg.time_ms)*.001f);
+        HeadController::SetDesiredAngleByDuration(DEG_TO_RAD_F32(static_cast<f32>(msg.angle_deg)), 0.1f, 0.1f,
+                                                  static_cast<f32>(msg.time_ms)*.001f);
       }
       void Process_animBodyMotion(const Anki::Cozmo::AnimKeyFrame::BodyMotion& msg)
       {
@@ -760,8 +764,8 @@ namespace Anki {
       }
       void Process_animLiftHeight(const Anki::Cozmo::AnimKeyFrame::LiftHeight& msg)
       {
-        LiftController::SetDesiredHeight(static_cast<f32>(msg.height_mm), 0.1f, 0.1f,
-                                         static_cast<f32>(msg.time_ms)*.001f);
+        LiftController::SetDesiredHeightByDuration(static_cast<f32>(msg.height_mm), 0.1f, 0.1f,
+                                                   static_cast<f32>(msg.time_ms)*.001f);
 
       }
       void Process_animAudioSample(const Anki::Cozmo::AnimKeyFrame::AudioSample&)

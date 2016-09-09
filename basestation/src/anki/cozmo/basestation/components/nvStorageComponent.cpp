@@ -682,7 +682,9 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
       }
       
       // Let the backup manager know that the write for this tag has completed
-      _backupManager.WriteDataForTag(static_cast<NVStorage::NVEntryTag>(baseTag), payload.report.result);
+      _backupManager.WriteDataForTag(static_cast<NVStorage::NVEntryTag>(baseTag),
+                                     payload.report.result,
+                                     _writeDataAckMap[baseTag].writeNotErase);
       
       _writeDataAckMap.erase(baseTag);
     }

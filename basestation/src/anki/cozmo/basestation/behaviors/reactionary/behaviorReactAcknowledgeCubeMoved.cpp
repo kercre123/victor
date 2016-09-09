@@ -12,6 +12,7 @@
 
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactAcknowledgeCubeMoved.h"
 
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
@@ -19,7 +20,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "util/console/consoleInterface.h"
 
-const float kMinTimeMoving_ms = 500;
+const float kMinTimeMoving_ms = 1000;
 const float kDelayForUserPresentBlock_s = 1.0;
 const float kDelayToRecognizeBlock_s = 0.5;
 const float kRadiusRobotTolerence = 50;
@@ -28,7 +29,7 @@ namespace Anki {
 namespace Cozmo {
   
 namespace {
-CONSOLE_VAR(bool, kEnableObjectMovedReact, "BehaviorReactAcknowledgeCubeMoved", false);
+CONSOLE_VAR(bool, kEnableObjectMovedReact, "BehaviorReactAcknowledgeCubeMoved", true);
 }
   
 class ReactionObjectData{
@@ -117,6 +118,8 @@ bool BehaviorReactAcknowledgeCubeMoved::ShouldComputationallySwitch(const Robot&
 
 Result BehaviorReactAcknowledgeCubeMoved::InitInternalReactionary(Robot& robot)
 {
+  SmartDisableReactionaryBehavior(BehaviorType::AcknowledgeObject);
+  
   _activeObjectID = _switchObjectID;
   switch(_state){
     case State::PlayingSenseReaction:
@@ -132,9 +135,18 @@ Result BehaviorReactAcknowledgeCubeMoved::InitInternalReactionary(Robot& robot)
   
   return Result::RESULT_OK;
 }
+  
+IBehavior::Status BehaviorReactAcknowledgeCubeMoved::UpdateInternal(Robot& robot)
+{
+  if(ShouldComputationallySwitch(robot)){
+    return Status::Complete;
+  }
+  return IBehavior::UpdateInternal(robot);
+}
+
 
 void BehaviorReactAcknowledgeCubeMoved::StopInternalReactionary(Robot& robot)
-{
+{  
   //Ensure that two cubes being moved does not cause the robot to throttle back and forth
   auto iter = GetReactionaryIterator(_activeObjectID);
   iter->ResetObject();
@@ -268,7 +280,7 @@ bool ReactionObjectData::ObjectHasMovedLongEnough(const Robot& robot)
   
   if(_isObjectMoving && _observedSinceLastReaction){
     TimeStamp_t time_ms = robot.GetLastMsgTimestamp();
-    if(time_ms - _timeStartedMoving > kMinTimeMoving_ms){
+    if(_timeStartedMoving != 0 && time_ms - _timeStartedMoving > kMinTimeMoving_ms){
       return true;
     }
   }
@@ -341,6 +353,7 @@ void ReactionObjectData::ResetObject()
   _isObjectMoving = false;
   _hasUpAxisChanged = false;
   _observedSinceLastReaction = false;
+  _timeStartedMoving = 0;
 }
   
 } // namespace Cozmo

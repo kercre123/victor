@@ -1004,9 +1004,9 @@ TEST(FactoryTest, FindDotsInImages)
                      "'%s'[%s]: position=(%.1f,%.1f,%.1f)mm Roll=%.1fdeg Pitch=%.1fdeg, Yaw=%.1fdeg",
                      test.filename.c_str(), msg.success ? "SUCCESS" : "FAIL",
                      msg.camPoseX_mm, msg.camPoseY_mm, msg.camPoseZ_mm,
-                     RAD_TO_DEG(msg.camPoseRoll_rad),
-                     RAD_TO_DEG(msg.camPosePitch_rad),
-                     RAD_TO_DEG(msg.camPoseYaw_rad));
+                     RAD_TO_DEG_F32(msg.camPoseRoll_rad),
+                     RAD_TO_DEG_F32(msg.camPosePitch_rad),
+                     RAD_TO_DEG_F32(msg.camPoseYaw_rad));
     
     // TODO: Check the rest of the message contents for sane values
   }
@@ -1077,8 +1077,9 @@ int main(int argc, char ** argv)
   //LEAKING HERE
   Anki::Util::Data::DataPlatform* dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcePath);
   cozmoContext = new Anki::Cozmo::CozmoContext(dataPlatform, nullptr);
-
-  cozmoContext->GetDataLoader()->LoadData();
+  
+  cozmoContext->GetDataLoader()->LoadRobotConfigs();
+  cozmoContext->GetDataLoader()->LoadNonConfigData();
   
   //// should we do this here? clean previously dirty folders?
   //std::string cache = dataPlatform->pathToResource(Anki::Cozmo::Data::Scope::Cache, "");

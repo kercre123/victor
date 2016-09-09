@@ -213,7 +213,7 @@ EComputePathStatus MinimalAnglePlanner::ComputeNewPathIfNeeded(const Pose3d& sta
   }
 
   PRINT_NAMED_INFO("MinimalAnglePlanner.FinalPosition", "(%f, %f, %fdeg)",
-                   curr.GetX(), curr.GetY(), RAD_TO_DEG( curr.GetAngle().ToFloat() ));
+                   curr.GetX(), curr.GetY(), curr.GetAngle().getDegrees() );
 
   _hasValidPath = true;
 

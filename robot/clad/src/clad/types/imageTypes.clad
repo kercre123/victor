@@ -83,7 +83,8 @@ message CameraCalibration
 }
 
 enum uint_8 ImageQuality {
-  Good       = 0,
+  Unchecked  = 0,
+  Good,
   TooDark,
   TooBright
 }

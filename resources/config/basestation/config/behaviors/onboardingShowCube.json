@@ -4,7 +4,8 @@
   "behaviorGroups": [
   ],
   "MaxErrorsTotal": 3,
-  "MaxErrorsPickup": 5,
+  "MaxErrorsPickup": 3,
+  "Timeout_Sec": 300,
   
   "flatScore": 5.0
 }

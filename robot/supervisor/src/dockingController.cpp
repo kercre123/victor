@@ -915,7 +915,7 @@ namespace Anki {
                     else if(!isAligning &&
                             !PickAndPlaceController::IsCarryingBlock())
                     {
-                      LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK, 0.25, 0.25, 1);
+                      LiftController::SetDesiredHeightByDuration(LIFT_HEIGHT_LOWDOCK, 0.25, 0.25, 1);
                     }
                     dockingToBlockOnGround = true;
                     

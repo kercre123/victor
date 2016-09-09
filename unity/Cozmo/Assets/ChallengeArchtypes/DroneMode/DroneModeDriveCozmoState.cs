@@ -7,8 +7,8 @@ namespace Cozmo {
         private const float _kSendMessageInterval_sec = 0.1f;
         private const float _kDriveSpeedChangeThreshold_mmps = 1f;
         private const float _kTurnDirectionChangeThreshold = 0.01f;
-        private const float _kHeadTiltChangeThreshold_radps = 0.01f;
-        private const float _kLiftFactorThreshold = 0.01f;
+        private const float _kHeadTiltChangeThreshold_radps = 0.05f;
+        private const float _kLiftFactorThreshold = 0.05f;
 
         private DroneModeGame _DroneModeGame;
         private DroneModeControlsSlide _DroneModeControlsSlide;
@@ -29,6 +29,8 @@ namespace Cozmo {
         private float _LockedHeadAngle_rad = 0f;
 
         private DroneModeTransitionAnimator _RobotAnimator;
+
+        private bool isStill = false;
 
         public string TiltDrivingDebugText = "";
         public string HeadDrivingDebugText = "";
@@ -181,6 +183,10 @@ namespace Cozmo {
             HeadDrivingDebugText = "\nPlayer driving head   timestamp=" + _StoppedDrivingHeadTimestamp;
             _StoppedDrivingHeadTimestamp = -1f;
             droveHead = true;
+            if (!isStill) {
+              _RobotAnimator.PushHeadStill ();
+              isStill = true;
+            }
           }
           else if (ShouldStopDriveHead(_TargetDriveHeadSpeed_radps)) {
             _TargetDriveHeadSpeed_radps = 0f;
@@ -192,14 +198,11 @@ namespace Cozmo {
             HeadDrivingDebugText = "\nPlayer stop driving head   timestamp=" + _StoppedDrivingHeadTimestamp;
             droveHead = true;
           }
-          else if (ShouldHoldHead()) {
-            HeadDrivingDebugText = "\nCozmo holding head   timestamp=" + _StoppedDrivingHeadTimestamp;
-            _CurrentRobot.SetHeadAngle(_LockedHeadAngle_rad, useExactAngle: true);
-            droveHead = true;
-          }
           else if (ShouldStopHoldHead()) {
             _StoppedDrivingHeadTimestamp = -1f;
             HeadDrivingDebugText = "\nCozmo stop holding head   timestamp=" + _StoppedDrivingHeadTimestamp;
+            _RobotAnimator.PopHeadStill();
+            isStill = false;
           }
           return droveHead;
         }
@@ -234,11 +237,6 @@ namespace Cozmo {
           return targetHeadSpeed.IsNear(0f, _kHeadTiltChangeThreshold_radps)
                                 && !targetHeadSpeed.IsNear(_CurrentDriveHeadSpeed_radps, _kHeadTiltChangeThreshold_radps)
                                 && _StoppedDrivingHeadTimestamp == -1f;
-        }
-
-        private bool ShouldHoldHead() {
-          return _StoppedDrivingHeadTimestamp != -1f
-                                && ((Time.time - _StoppedDrivingHeadTimestamp) < _DroneModeGame.DroneModeConfigData.HeadIdleDelay_s);
         }
 
         private bool ShouldStopHoldHead() {

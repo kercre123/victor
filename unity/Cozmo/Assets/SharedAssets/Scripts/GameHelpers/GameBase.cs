@@ -13,7 +13,7 @@ using Anki.Assets;
 public abstract class GameBase : MonoBehaviour {
 
   private const float kWaitForPickupOrPlaceTimeout_sec = 30f;
-  private const float kChallengeCompleteScoreboardDelay = 10f;
+  private const float kChallengeCompleteScoreboardDelay = 5f;
   private float _AutoAdvanceTimestamp = -1f;
 
   private System.Guid? _GameUUID;
@@ -129,11 +129,14 @@ public abstract class GameBase : MonoBehaviour {
 
     // for some reason this became a reactionary behavior but isn't named like one...
     _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.KnockOverCubes);
+    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.CantHandleTallStack);
   }
 
   private void ResetReactionaryBehaviorsForGameEnd() {
     foreach (Anki.Cozmo.BehaviorType reactionaryBehavior in _DisabledReactionaryBehaviors) {
-      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, reactionaryBehavior, true);
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, reactionaryBehavior, true);
+      }
     }
   }
 
@@ -156,7 +159,7 @@ public abstract class GameBase : MonoBehaviour {
 
     SkillSystem.Instance.StartGame(_ChallengeData);
     // Clear Pending Rewards and Unlocks so ChallengeEndedDialog only displays things earned during this game
-    RewardedActionManager.Instance.ResetPendingRewards();
+    RewardedActionManager.Instance.SendPendingRewardsToInventory();
     //SkillSystem.Instance.OnLevelUp += HandleCozmoSkillLevelUp;
 
     InitializeReactionaryBehaviorsForGameStart();
@@ -480,10 +483,10 @@ public abstract class GameBase : MonoBehaviour {
   public virtual void StartRoundBasedGameEnd() {
     // Fire OnGameComplete, passing in ChallengeID, CurrentDifficulty, and if Playerwon
     bool playerWon = PlayerRoundsWon > CozmoRoundsWon;
-    StartPointlessGameEnd(playerWon);
+    StartBaseGameEnd(playerWon);
   }
 
-  public virtual void StartPointlessGameEnd(bool playerWon) {
+  public virtual void StartBaseGameEnd(bool playerWon) {
     GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeComplete, _ChallengeData.ChallengeID, _CurrentDifficulty, playerWon, PlayerScore, CozmoScore, IsHighIntensityRound()));
 
     if (playerWon) {
@@ -562,7 +565,9 @@ public abstract class GameBase : MonoBehaviour {
 
     ResetReactionaryBehaviorsForGameEnd();
 
-    CurrentRobot.SetEnableFreeplayLightStates(true);
+    if (CurrentRobot != null) {
+      CurrentRobot.SetEnableFreeplayLightStates(true);
+    }
 
     AssetBundleManager.Instance.UnloadAssetBundle(AssetBundleNames.minigame_ui_prefabs.ToString());
   }
@@ -593,7 +598,7 @@ public abstract class GameBase : MonoBehaviour {
 
   public void CloseMinigameImmediately() {
     DAS.Info(this, "Close Minigame Immediately");
-    RewardedActionManager.Instance.ResetPendingRewards();
+    RewardedActionManager.Instance.SendPendingRewardsToInventory();
     _SharedMinigameViewInstance.CloseViewImmediately();
     CleanUp();
   }
@@ -658,13 +663,15 @@ public abstract class GameBase : MonoBehaviour {
   protected void RaiseMiniGameQuit() {
     _StateMachine.Stop();
 
-    RewardedActionManager.Instance.ResetPendingRewards();
+    RewardedActionManager.Instance.SendPendingRewardsToInventory();
     DAS.Event(DASConstants.Game.kQuit, null);
     SendCustomEndGameDasEvents();
 
     // Track # times played for activities that have no win or lose state
+    // Also fire OnChallengeComplete here for those
     if (!_ChallengeData.IsMinigame) {
       AddToTotalGamesPlayed();
+      GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeComplete, _ChallengeData.ChallengeID, _CurrentDifficulty, true, PlayerScore, CozmoScore, IsHighIntensityRound()));
     }
 
     QuitMinigame();
@@ -714,10 +721,9 @@ public abstract class GameBase : MonoBehaviour {
   protected virtual void ShowWinnerState() {
     SoftEndGameRobotReset();
 
+    ContextManager.Instance.AppFlash(playChime: true);
     string winnerText = _WonChallenge ? Localization.Get(LocalizationKeys.kMinigameTextPlayerWins) : Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
     SharedMinigameView.InfoTitleText = winnerText;
-    SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultAdvance,
-      Localization.Get(LocalizationKeys.kButtonContinue), "end_of_game_continue_button");
     _AutoAdvanceTimestamp = Time.time;
   }
 
@@ -731,7 +737,6 @@ public abstract class GameBase : MonoBehaviour {
   // if there are none, close the view.
   private void HandleChallengeResultAdvance() {
     _AutoAdvanceTimestamp = -1;
-    ContextManager.Instance.AppFlash(playChime: true);
     if (RewardedActionManager.Instance.RewardPending || RewardedActionManager.Instance.NewDifficultyPending) {
       SharedMinigameView.HidePlayerScoreboard();
       SharedMinigameView.HideCozmoScoreboard();
@@ -739,7 +744,7 @@ public abstract class GameBase : MonoBehaviour {
       SharedMinigameView.ShowContinueButtonOffset(HandleChallengeResultViewClosed,
         Localization.GetWithArgs(LocalizationKeys.kRewardCollectCollectEnergy, RewardedActionManager.Instance.TotalPendingEnergy),
         Localization.Get(LocalizationKeys.kRewardCollectInstruction),
-        Color.gray,
+        UIColorPalette.EnergyTextColor,
         "game_results_continue_button");
       string subtitleText = _WonChallenge ? Localization.Get(LocalizationKeys.kMinigameTextPlayerWins) : Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
       _ChallengeEndViewInstance = _SharedMinigameViewInstance.ShowChallengeEndedSlide(subtitleText, _ChallengeData);

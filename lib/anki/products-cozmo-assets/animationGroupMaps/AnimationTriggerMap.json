@@ -42,11 +42,11 @@
     },
     {
       "CladEvent": "CubeMovedSense",
-      "AnimName": "ag_reacttocliff_huh_01"
+      "AnimName": "ag_reacttoblock_blockpickup_01"
     },
     {
       "CladEvent": "CubeMovedUpset",
-      "AnimName": "ag_reacttocliff_pickup"
+      "AnimName": "ag_reacttoblock_blockgone_01"
     },
     {
       "CladEvent": "CubePounceFake",
@@ -349,6 +349,14 @@
       "AnimName" : "ag_meetcozmo_getin"
     },
     {
+      "CladEvent": "MeetCozmoLookFaceGetIn",
+      "AnimName" : "ag_meetcozmo_lookface_getin"
+    },
+    {
+      "CladEvent": "MeetCozmoLookFaceGetOut",
+      "AnimName" : "ag_meetcozmo_lookface_getout"
+    },
+    {
       "CladEvent": "MeetCozmoScanningIdle",
       "AnimName" : "ag_meetcozmo_lookface"
     },
@@ -549,8 +557,20 @@
       "AnimName": "ag_launch_reacttoputdown"
     },
     {
+      "CladEvent": "OnboardingCubeDockFail",
+      "AnimName": "ag_RequestGameDriveFail"
+    },
+    {
       "CladEvent": "OnboardingInteractWithCube",
       "AnimName": "ag_launch_reacttocubepickup"
+    },
+    {
+      "CladEvent": "OnboardingSoundOnlyLiftEffortPickup",
+      "AnimName": "ag_launch_lifteffortpickup"
+    },
+    {
+      "CladEvent": "OnboardingSoundOnlyLiftEffortPlaceLow",
+      "AnimName": "ag_launch_lifteffortplacelow"
     },
     {
       "CladEvent": "PlacedOnCharger",

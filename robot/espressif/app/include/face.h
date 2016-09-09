@@ -38,6 +38,9 @@ namespace Anki {
       /// Clears all content from the face
       void Clear();
 
+      /// Invalidates the screen state and forces it to start drawing blank
+      void ResetScreen();
+
       /// Runs burn-in protection  (clears after long idle)
       void Update(void); 
 

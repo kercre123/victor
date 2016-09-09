@@ -570,7 +570,7 @@ namespace AnimationController {
               #ifdef TARGET_ESPRESSIF
                 RTIP::SendMessage(msg);
               #else
-                HeadController::SetDesiredAngle(DEG_TO_RAD_F32(static_cast<f32>(msg.animHeadAngle.angle_deg)), 0.1f, 0.1f,
+                HeadController::SetDesiredAngleByDuration(DEG_TO_RAD_F32(static_cast<f32>(msg.animHeadAngle.angle_deg)), 0.1f, 0.1f,
                                                 static_cast<f32>(msg.animHeadAngle.time_ms)*.001f);
               #endif
               _tracksInUse |= HEAD_TRACK;
@@ -591,8 +591,8 @@ namespace AnimationController {
               #ifdef TARGET_ESPRESSIF
                 RTIP::SendMessage(msg);
               #else
-                LiftController::SetDesiredHeight(static_cast<f32>(msg.animLiftHeight.height_mm), 0.1f, 0.1f,
-                                                static_cast<f32>(msg.animLiftHeight.time_ms)*.001f);
+                LiftController::SetDesiredHeightByDuration(static_cast<f32>(msg.animLiftHeight.height_mm), 0.1f, 0.1f,
+                                                           static_cast<f32>(msg.animLiftHeight.time_ms)*.001f);
               #endif
               _tracksInUse |= LIFT_TRACK;
             }

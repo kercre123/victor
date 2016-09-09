@@ -225,27 +225,25 @@ void Exec(os_event_t *event)
     }
     case 4:
     {
-      static bool haveReported = false;
-      const uint32_t pec = i2spiGetPhaseErrorCount();
-      if (pec > 2)
       {
-        RobotInterface::RobotErrorReport rer;
-        rer.error = RobotInterface::REC_I2SPI_TMD;
-        rer.fatal = true;
-        RobotInterface::SendMessage(rer);
-        AnkiWarn( 185, "I2SPI.TooMuchDrift", 486, "TMD=%d\tintegral=%d", 2, pec, i2spiGetIntegralDrift());
-        if (haveReported == false)
+        static uint32_t lastPEC = 0;
+        const uint32_t pec = i2spiGetPhaseErrorCount();
+        if (pec > lastPEC)
         {
-          CrashRecord cr;
-          os_memset(&cr, 0xff, sizeof(CrashRecord));
-          cr.reporter = RobotInterface::WiFiCrash;
-          cr.errorCode = rer.error;
-          if (crashHandlerPutReport(&cr) >= 0) haveReported = true;
+          AnkiWarn( 185, "I2SPI.TooMuchDrift", 486, "TMD=%d\tintegral=%d", 2, pec, i2spiGetIntegralDrift());
         }
-        else
+        lastPEC = pec;
+      }
+      {
+        static uint32_t lastDropCount = 0;
+        const uint32_t dc = clientDropCount();
+        if ((dc > lastDropCount) && clientQueueAvailable() > LOW_PRIORITY_BUFFER_ROOM)
         {
-          os_printf("Seppuku\r\n");
-          system_deep_sleep(0); // Die
+          RobotInterface::RobotErrorReport rer;
+          rer.error = RobotInterface::REC_ReliableTransport;
+          rer.fatal = false;
+          if (RobotInterface::SendMessage(rer)) lastDropCount = dc;
+          AnkiWarn( 370, "client.reliable_message_dropped", 607, "count = %d", 1, dc);
         }
       }
       break;
@@ -365,4 +363,15 @@ extern "C" bool i2spiSynchronizedCallback(uint32 param)
   Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_entry);
   Anki::Cozmo::CrashReporter::StartQuery();
   return false;
+}
+
+extern "C" void i2spiResyncCallback(void)
+{
+  using namespace Anki::Cozmo::RobotInterface;
+  RobotErrorReport rer;
+  rer.error = REC_I2SPI_TMD;
+  rer.fatal = false;
+  SendMessage(rer);
+  Anki::Cozmo::Face::ResetScreen();
+  AnkiWarn( 371, "I2SPI.Resync", 608, "I2SPI resynchronizing", 0);
 }

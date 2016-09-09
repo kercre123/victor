@@ -22,12 +22,8 @@ MonoBehaviour:
   - ItemId: TestHexItem0
     LadderLevels:
     - Level: 0
-      Value: 4
-    - Level: 5
       Value: 5
-    - Level: 10
-      Value: 6
   - ItemId: treat
     LadderLevels:
     - Level: 0
-      Value: 5
+      Value: 10

@@ -11,7 +11,7 @@ GameObject:
   - 222: {fileID: 22297654}
   - 114: {fileID: 11461638}
   m_Layer: 5
-  m_Name: CheckInDoober
+  m_Name: CheckInReward
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

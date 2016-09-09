@@ -93,8 +93,8 @@ namespace Anki {
       if( _angleTolerance.ToFloat() < POINT_TURN_ANGLE_TOL ) {
         PRINT_NAMED_WARNING("TurnInPlaceAction.InvalidTolerance",
                             "Tried to set tolerance of %fdeg, min is %f",
-                            RAD_TO_DEG(_angleTolerance.ToFloat()),
-                            RAD_TO_DEG(POINT_TURN_ANGLE_TOL));
+                            _angleTolerance.getDegrees(),
+                            RAD_TO_DEG_F32(POINT_TURN_ANGLE_TOL));
         _angleTolerance = POINT_TURN_ANGLE_TOL;
       }
     }
@@ -272,7 +272,7 @@ namespace Anki {
                          _currentAngle.getDegrees(),
                          _currentTargetAngle.getDegrees(),
                          _variability.getDegrees(),
-                         _angleTolerance.ToFloat(),
+                         _angleTolerance.getDegrees(),
                          _robot.GetPoseFrameID(),
                          (_robot.GetMoveComponent().AreWheelsMoving() ? "Yes" : "No"));
       } else {
@@ -282,7 +282,7 @@ namespace Anki {
                          _currentAngle.getDegrees(),
                          _currentTargetAngle.getDegrees(),
                          _variability.getDegrees(),
-                         _angleTolerance.ToFloat(),
+                         _angleTolerance.getDegrees(),
                          _robot.GetPoseFrameID());
         
 
@@ -348,9 +348,9 @@ namespace Anki {
       PRINT_NAMED_DEBUG("SearchSideToSideAction.Init",
                         "Action will wait %f, turn %fdeg, wait %f, turn %fdeg, wait %f",
                         initialWait_s,
-                        RAD_TO_DEG(firstAngle_rads),
+                        RAD_TO_DEG_F32(firstAngle_rads),
                         afterFirstTurnWait_s,
-                        RAD_TO_DEG(secondAngle_rads),
+                        RAD_TO_DEG_F32(secondAngle_rads),
                         afterSecondTurnWait_s);
 
       _compoundAction.AddAction(new WaitAction(_robot, initialWait_s));
@@ -506,7 +506,7 @@ namespace Anki {
     
     MoveHeadToAngleAction::MoveHeadToAngleAction(Robot& robot, const Radians& headAngle, const Radians& tolerance, const Radians& variability)
     : IAction(robot,
-              "MoveHeadTo" + std::to_string(RAD_TO_DEG(headAngle.ToFloat())) + "Deg",
+              "MoveHeadTo" + std::to_string(headAngle.getDegrees()) + "Deg",
               RobotActionType::MOVE_HEAD_TO_ANGLE,
               (u8)AnimTrackFlag::HEAD_TRACK)
     , _headAngle(headAngle)
@@ -517,20 +517,20 @@ namespace Anki {
       if(_headAngle < MIN_HEAD_ANGLE) {
         PRINT_NAMED_WARNING("MoveHeadToAngleAction.Constructor",
                             "Requested head angle (%.1fdeg) less than min head angle (%.1fdeg). Clipping.",
-                            _headAngle.getDegrees(), RAD_TO_DEG(MIN_HEAD_ANGLE));
+                            _headAngle.getDegrees(), RAD_TO_DEG_F32(MIN_HEAD_ANGLE));
         _headAngle = MIN_HEAD_ANGLE;
       } else if(_headAngle > MAX_HEAD_ANGLE) {
         PRINT_NAMED_WARNING("MoveHeadToAngleAction.Constructor",
                             "Requested head angle (%.1fdeg) more than max head angle (%.1fdeg). Clipping.",
-                            _headAngle.getDegrees(), RAD_TO_DEG(MAX_HEAD_ANGLE));
+                            _headAngle.getDegrees(), RAD_TO_DEG_F32(MAX_HEAD_ANGLE));
         _headAngle = MAX_HEAD_ANGLE;
       }
       
       if( _angleTolerance.ToFloat() < HEAD_ANGLE_TOL ) {
         PRINT_NAMED_WARNING("MoveHeadToAngleAction.InvalidTolerance",
                             "Tried to set tolerance of %fdeg, min is %f",
-                            RAD_TO_DEG(_angleTolerance.ToFloat()),
-                            RAD_TO_DEG(HEAD_ANGLE_TOL));
+                            _angleTolerance.getDegrees(),
+                            RAD_TO_DEG_F32(HEAD_ANGLE_TOL));
         _angleTolerance = HEAD_ANGLE_TOL;
       }
       
@@ -625,7 +625,7 @@ namespace Anki {
                            "[%d] Currently at %.1fdeg, on the way to %.1fdeg, within "
                            "half angle of %.1fdeg",
                            GetTag(),
-                           RAD_TO_DEG(_robot.GetHeadAngle()),
+                           RAD_TO_DEG_F32(_robot.GetHeadAngle()),
                            _headAngle.getDegrees(),
                            _halfAngle.getDegrees());
           
@@ -647,7 +647,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "MoveHeadToAngleAction.CheckIfDone",
                          "[%d] Waiting for head to get in position: %.1fdeg vs. %.1fdeg(+/-%.1f)",
                          GetTag(),
-                         RAD_TO_DEG(_robot.GetHeadAngle()), _headAngle.getDegrees(), _variability.getDegrees());
+                         RAD_TO_DEG_F32(_robot.GetHeadAngle()), _headAngle.getDegrees(), _variability.getDegrees());
         
         if( _motionStarted && ! _robot.GetMoveComponent().IsHeadMoving() ) {
           PRINT_NAMED_WARNING("MoveHeadToAngleAction.StoppedMakingProgress",
@@ -900,8 +900,8 @@ namespace Anki {
       if( _panAngleTol.ToFloat() < POINT_TURN_ANGLE_TOL ) {
         PRINT_NAMED_WARNING("PanAndTiltAction.InvalidTolerance",
                             "Tried to set tolerance of %fdeg, min is %f",
-                            RAD_TO_DEG(_panAngleTol.ToFloat()),
-                            RAD_TO_DEG(POINT_TURN_ANGLE_TOL));
+                            _panAngleTol.getDegrees(),
+                            RAD_TO_DEG_F32(POINT_TURN_ANGLE_TOL));
         _panAngleTol = POINT_TURN_ANGLE_TOL;
       }
     }
@@ -938,8 +938,8 @@ namespace Anki {
       if( _tiltAngleTol.ToFloat() < HEAD_ANGLE_TOL ) {
         PRINT_NAMED_WARNING("PanAndTiltAction.InvalidTolerance",
                             "Tried to set tolerance of %fdeg, min is %f",
-                            RAD_TO_DEG(_tiltAngleTol.ToFloat()),
-                            RAD_TO_DEG(HEAD_ANGLE_TOL));
+                            _tiltAngleTol.getDegrees(),
+                            RAD_TO_DEG_F32(HEAD_ANGLE_TOL));
         _tiltAngleTol = HEAD_ANGLE_TOL;
       }
     }
