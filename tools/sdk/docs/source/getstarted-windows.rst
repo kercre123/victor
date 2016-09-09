@@ -95,6 +95,6 @@ Next Steps - "Night-Night"
 5. At the top of the screen, select *File -> Save As*, and save the program in the *examples* directory as ``nightnight.py``.
 6. Now you can run your program. Open the second Terminal window, type in the following, and press Enter::
 
-  run-example.bat examples/nightnight.py
+    run-example.bat examples/nightnight.py
 
 7. If done correctly, Cozmo will say the new phrase.

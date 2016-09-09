@@ -326,6 +326,8 @@ Writing the Program
 
     cubes = coz.world.wait_until_observe_num_objects(num=2, object_type=cozmo.objects.LightCube, timeout=30)
 
+..
+
   1. ``coz.world.wait_until_observe_num_objects`` directs Cozmo to wait until his sensors detect a specified number of objects.
   2. ``num=2`` specifies the number of objects Cozmo has to find in order to trigger the next behavior.
   3. ``object_type=cozmo.objects.LightCube`` directs Cozmo to specifically find his Cubes. He will not count other objects, such as your hands or other objects on the play area.
@@ -338,9 +340,11 @@ Writing the Program
 
   coz.pickup_object(cubes[0]).wait_for_completed()
 
-  1. `coz.pickup_object` directs Cozmo to pick up an object. Note that currently, Cozmo can only pick up his Cubes.
-  2. `(cubes[0])` specifies the Cube Cozmo needs to pick up; in this case, it is the first Cube Cozmo detected.
-  3. `wait_for_completed()` is a signal that makes sure Cozmo completes his action before performing his next action.
+..
+
+  1. ``coz.pickup_object`` directs Cozmo to pick up an object. Note that currently, Cozmo can only pick up his Cubes.
+  2. ``(cubes[0])`` specifies the Cube Cozmo needs to pick up; in this case, it is the first Cube Cozmo detected.
+  3. ``wait_for_completed()`` is a signal that makes sure Cozmo completes his action before performing his next action.
 
 5. Type in the following as shown::
 
@@ -348,6 +352,8 @@ Writing the Program
   :lineno-start: 11
 
     coz.place_on_object(cubes[1]).wait_for_completed()
+
+..
 
   1. ``coz.place_on_object`` directs Cozmo to place the object he is holding on top of another object.
   2. ``(cubes[1])`` specifies the Cube Cozmo needs to place what he is holding onto; in this case, it is the second Cube Cozmo detected.

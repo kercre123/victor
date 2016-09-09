@@ -34,7 +34,7 @@ Starting Up the SDK
 
   .. warning:: Do NOT close the first Terminal window. Closing the first Terminal window while operating with the SDK will close communications with the Cozmo robot and cause errors within the program.
 
-4. In the *second* Terminal window, type cd SDKDirectory where *SDKDirectory* is the name of the directory you extracted the SDK into and press Enter.
+4. In the *second* Terminal window, type ``cd SDKDirectory`` where *SDKDirectory* is the name of the directory you extracted the SDK into and press Enter.
 
 The second Terminal window is the one where you will execute programs for Cozmo to run.
 

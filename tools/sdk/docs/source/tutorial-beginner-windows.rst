@@ -235,7 +235,7 @@ Writing the Program
 
 7. Save the file in the SDK directory as ``turnaround.py``.
 
-The completed program should look like this::
+The completed program should look like this:
 
 .. code-block:: python
   :linenos:
@@ -321,6 +321,8 @@ Writing the Program
 
     cubes = coz.world.wait_until_observe_num_objects(num=2, object_type=cozmo.objects.LightCube, timeout=30)
 
+..
+
   1. ``coz.world.wait_until_observe_num_objects`` directs Cozmo to wait until his sensors detect a specified number of objects.
   2. ``num=2`` specifies the number of objects Cozmo has to find in order to trigger the next behavior.
   3. ``object_type=cozmo.objects.LightCube`` directs Cozmo to specifically find his Cubes. He will not count other objects, such as your hands or other objects on the play area.
@@ -333,6 +335,8 @@ Writing the Program
 
   coz.pickup_object(cubes[0]).wait_for_completed()
 
+..
+
   1. `coz.pickup_object` directs Cozmo to pick up an object. Note that currently, Cozmo can only pick up his Cubes.
   2. `(cubes[0])` specifies the Cube Cozmo needs to pick up; in this case, it is the first Cube Cozmo detected.
   3. `wait_for_completed()` is a signal that makes sure Cozmo completes his action before performing his next action.
@@ -343,6 +347,8 @@ Writing the Program
   :lineno-start: 11
 
     coz.place_on_object(cubes[1]).wait_for_completed()
+
+..
 
   1. ``coz.place_on_object`` directs Cozmo to place the object he is holding on top of another object.
   2. ``(cubes[1])`` specifies the Cube Cozmo needs to place what he is holding onto; in this case, it is the second Cube Cozmo detected.
@@ -359,7 +365,7 @@ Writing the Program
 
 7. Save the file in the SDK directory as ``cubestack.py``.
 
-The completed program should look like this::
+The completed program should look like this:
 
 .. code-block:: python
   :linenos:
@@ -397,11 +403,11 @@ Running the Program
 
       1. For iOS devices, type the following into the same window and press Enter::
 
-        openSdkTcpRelay.bat
+          openSdkTcpRelay.bat
 
       2. For Android devices, type the following into the same window and press Enter::
 
-        androidSdkTcpRelay.bat
+          androidSdkTcpRelay.bat
 
         .. important:: Make sure adb (Android Debug Bridge) is installed on your system prior to this step.
 
@@ -409,6 +415,6 @@ Running the Program
 
 4. Type the following into the second Terminal window and then press Enter::
 
-  run-example.bat examples\cubestack.py
+    run-example.bat examples\cubestack.py
 
 5. If done correctly, Cozmo will look around for 30 seconds, then pick up a cube and stack it atop another cube.
