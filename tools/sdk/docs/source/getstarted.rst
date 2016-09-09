@@ -2,6 +2,8 @@
 Getting Started With the Cozmo SDK - OS X / Linux
 =================================================
 
+.. warning:: THIS IS THE ALPHA BUILD OF THE COZMO SDK. All information within this SDK is subject to change without notice.
+
 To make sure you get the best experience possible out of the SDK, please ensure you have followed the steps in the :doc:`Installation Guide </install>`.
 
 -------------------
@@ -12,11 +14,7 @@ Starting Up the SDK
 2. Open the Cozmo app on the phone. Make sure Cozmo is on and connected to the app via WiFi.
 3. On the computer, open two Terminal windows.
 
-  1. In the first window, type the following and press Enter::
-
-      cd SDKDirectory
-
-  where *SDKDirectory* is the name of the directory you extracted the SDK into.
+  1. In the first window, type ``cd SDKDirectory`` where *SDKDirectory* is the name of the directory you extracted the SDK into and press Enter.
 
   2. Next, type the following and press Enter::
 
@@ -36,11 +34,7 @@ Starting Up the SDK
 
   .. warning:: Do NOT close the first Terminal window. Closing the first Terminal window while operating with the SDK will close communications with the Cozmo robot and cause errors within the program.
 
-4. In the *second* Terminal window, type the following and press Enter::
-
-    cd SDKDirectory
-
-where SDKDirectory is the name of the directory you extracted the SDK into.
+4. In the *second* Terminal window, type cd SDKDirectory where *SDKDirectory* is the name of the directory you extracted the SDK into and press Enter.
 
 The second Terminal window is the one where you will execute programs for Cozmo to run.
 
@@ -63,11 +57,15 @@ The Program
 
 .. warning:: If Cozmo does not perform as expected, look at the first Terminal window and make sure no error messages appeared. If you continue to have issues, please seek help in the Forums.
 
-The code for the Hello World program is::
+The code for the Hello World program is:
+
+.. code-block:: python
+  :linenos:
 
   import cozmo
 
-  '''Simplest "Hello World" Cozmo example program'''
+  '''Simplest "Hello World" Cozmo example program
+  '''
 
   def run(coz_conn):
     coz = coz_conn.wait_for_robot()
@@ -83,13 +81,11 @@ We can edit this code to make Cozmo say something new. Let's write our first pro
 Next Steps - "Night-Night"
 --------------------------
 
-1. Open a new document in a source code editor or plain-text editor.
-
-.. information:: Free source code editors, such as `Atom <https://atom.io>`, `Sublime <https://www.sublimetext.com>`, `TextWrangler <http://www.barebones.com/products/textwrangler/>` or `Notepad++ <http://notepad-plus-plus.org>`, can be found online. Anki does not provide tech support for third-party source code editors.
+1. Open a new document in a source code editor or plain-text editor. Free source code editors, such as `Atom <https://atom.io>`_ , `Sublime <https://www.sublimetext.com>`_ , or `TextWrangler <http://www.barebones.com/products/textwrangler/>`_ can be found online. Anki does not provide tech support for third-party source code editors.
 
 2. Copy the code from the Hello World program and paste it into the new document.
-3. Each line in the program relates to a specific function. To learn more, see :ref: `tutorial-beginner`.
-4. Move to line x in the program.
+3. Each line in the program relates to a specific function. To learn more, see :doc:`the Beginner's Tutorial </tutorial-beginner>`.
+4. Move to line 8 in the program.
 
   1. Select the phrase "Hello World". Do NOT select the parentheses or quotation marks around the phrase; those are necessary for Python to properly parse the command.
   2. Type in the new phrase you would like Cozmo to say. In this example, Cozmo will say "Night Night"::
