@@ -565,7 +565,7 @@ static void endWrite(const NVResult writeResult)
 
 Result Update()
 {
-  if (isBusy() && !isReadBlocked())
+  if (isBusy() && !isReadBlocked() && !nv.waitingForGC)
   { // If we have anything to do
     static NVEntryHeader header;
     SpiFlashOpResult flashResult;

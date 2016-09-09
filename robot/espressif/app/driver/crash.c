@@ -114,12 +114,21 @@ void crash_handler(int exccause, ex_regs_esp regs) {
 }
 extern void* _xtos_set_exception_handler(int exno, void (*exhandler)());
 
+static struct initStatus {
+  uint32_t addr;
+  uint32_t code;
+  uint8_t  n_rec;
+  uint8_t  n_rep;
+} initResult;
+
 // Register crash handler with XTOS - must be called before 
 void ICACHE_FLASH_ATTR crashHandlerInit(void)
 {
   int reportedRecords = 0;
   int recordNumber;
   nextCrashRecordSlot = -1; // Invalid
+  initResult.addr = 0;
+  initResult.code = 0;
   
   // Find how many records we have written and how many we have reported
   for (recordNumber=0; recordNumber<MAX_CRASH_LOGS; ++recordNumber)
@@ -129,7 +138,8 @@ void ICACHE_FLASH_ATTR crashHandlerInit(void)
     const SpiFlashOpResult rslt = spi_flash_read(recordAddress, (uint32*)&rec, CRASH_RECORD_SIZE);
     if (rslt != SPI_FLASH_RESULT_OK)
     {
-      os_printf("crashHandlerInit: Couldn't read existing records at 0x%x, %d\r\n", recordAddress, rslt);
+      initResult.addr = recordAddress;
+      initResult.code = rslt;
       break;
     }
     else
@@ -148,18 +158,20 @@ void ICACHE_FLASH_ATTR crashHandlerInit(void)
   
   if ((recordNumber > 0) && (reportedRecords == recordNumber)) // Have records but all reported
   {
+    initResult.addr = CRASH_DUMP_SECTOR;
     SpiFlashOpResult rslt = spi_flash_erase_sector(CRASH_DUMP_SECTOR);
     if (rslt != SPI_FLASH_RESULT_OK)
     {
-      os_printf("crashHandlerInit: Couldn't erase reported records in sector 0x%x, %d\r\n", CRASH_DUMP_SECTOR, rslt);
+      initResult.code = rslt;
     }
     else
     {
       nextCrashRecordSlot = 0;
     }
   }
-  
-  if (nextCrashRecordSlot < 0) os_printf("crashHandlerInit: No slots available for new records\r\n");
+
+  initResult.n_rec = recordNumber;
+  initResult.n_rep = reportedRecords;
   
   // See lx106 datasheet for details - NOTE: ALL XTENSA CORES USE DIFFERENT EXCEPTION NUMBERS
   _xtos_set_exception_handler(0, crash_handler);    // Bad instruction  
@@ -170,10 +182,37 @@ void ICACHE_FLASH_ATTR crashHandlerInit(void)
   _xtos_set_exception_handler(29, crash_handler);   // Bad store address
 }
 
+void crashHandlerShowStatus(){
+  os_printf("Found %d crash logs, %d were reported\r\n",
+            initResult.n_rec, initResult.n_rep);
+  if (initResult.addr == CRASH_DUMP_SECTOR) {
+    if (initResult.code != SPI_FLASH_RESULT_OK)
+    {
+      os_printf("crashHandlerInit: Couldn't erase reported records in sector 0x%x, %d\r\n", CRASH_DUMP_SECTOR, initResult.code);
+    }
+    else
+    {
+      os_printf("crashHandlerInit: Erased Crash Flash");
+    }
+  }
+  else if (initResult.code != 0) {
+    os_printf("crashHandlerInit: Couldn't read existing records at 0x%x, %d\r\n",
+              initResult.addr, initResult.code);
+  }
+  else if (initResult.n_rec == MAX_CRASH_LOGS) {
+     os_printf("crashHandlerInit: No slots available for new records\r\n");
+  }
+}
+
+
 int ICACHE_FLASH_ATTR crashHandlerGetReport(const int index, CrashRecord* record)
 {
   if (index < 0 || index >= MAX_CRASH_LOGS) return -1;
-  if (record == NULL) return -2;
+  if (record == NULL)
+  {
+    os_printf("crashHandlerGetReport: NULL record ptr\r\n");
+    return -2;
+  }
   const uint32 recordAddr = (CRASH_DUMP_SECTOR * SECTOR_SIZE) + (CRASH_RECORD_SIZE * index);
   const SpiFlashOpResult rslt = spi_flash_read(recordAddr, (uint32*)record, CRASH_RECORD_SIZE);
   if (rslt == SPI_FLASH_RESULT_OK) return 0;

@@ -36,4 +36,6 @@ int crashHandlerPutReport(CrashRecord* record);
  */
 int crashHandlerMarkReported(const int index);
 
+void crashHandlerShowStatus(void);
+
 #endif

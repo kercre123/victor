@@ -128,7 +128,6 @@ void RadioConnectionStateMachineUpdate()
       }
       case 6:
       {
-        CrashReporter::StartSending();
         doRTConnectPhase = 0; // Done
         break;
       }
@@ -362,7 +361,7 @@ extern "C" bool i2spiSynchronizedCallback(uint32 param)
 {
   os_printf("I2SPI Synchronized at offset %d\r\n", param);
   Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_entry);
-  Anki::Cozmo::CrashReporter::StartQuerry();
+  Anki::Cozmo::CrashReporter::StartQuery();
   return false;
 }
 
