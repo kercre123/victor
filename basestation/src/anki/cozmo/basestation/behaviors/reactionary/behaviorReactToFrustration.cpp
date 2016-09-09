@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -25,12 +26,17 @@
 
 // TODO:(bn) this entire behavior could be generic for any type of emotion.... but that's too much effort
 
-namespace {
-static const char* kReactionConfigKey = "reactions";
-}
-
 namespace Anki {
 namespace Cozmo {
+
+namespace {
+static const char* kReactionConfigKey = "reactions";
+
+static const DrivingAnimationHandler::DrivingAnimations kFrustratedDrivingAnims { AnimationTrigger::DriveStartAngry,  
+                                                                                  AnimationTrigger::DriveLoopAngry,
+                                                                                  AnimationTrigger::DriveEndAngry };
+
+}
 
 BehaviorReactToFrustration::BehaviorReactToFrustration(Robot& robot, const Json::Value& config)
   : IReactionaryBehavior(robot, config)
@@ -54,6 +60,10 @@ bool BehaviorReactToFrustration::ShouldComputationallySwitch(const Robot& robot)
 
 Result BehaviorReactToFrustration::InitInternalReactionary(Robot& robot)
 {
+
+  // push driving animations in case we decide to drive
+  robot.GetDrivingAnimationHandler().PushDrivingAnimations(kFrustratedDrivingAnims);
+  
   auto reactionIt = GetReaction(robot);
   if( reactionIt != _possibleReactions.end() ) {
     TransitionToReaction(robot, *reactionIt);
@@ -64,6 +74,11 @@ Result BehaviorReactToFrustration::InitInternalReactionary(Robot& robot)
                         "We decided to run the reaction, but there is no valid one. this is a bug");
     return Result::RESULT_FAIL;
   }    
+}
+
+void BehaviorReactToFrustration::StopInternalReactionary(Robot& robot)
+{
+  robot.GetDrivingAnimationHandler().PopDrivingAnimations();
 }
 
 void BehaviorReactToFrustration::TransitionToReaction(Robot& robot, FrustrationReaction& reaction)
