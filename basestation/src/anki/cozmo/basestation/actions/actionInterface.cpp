@@ -88,6 +88,7 @@ namespace Anki {
       switch(type)
       {
         case RobotActionType::ALIGN_WITH_OBJECT:
+        case RobotActionType::DRIVE_TO_OBJECT:
         case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
         case RobotActionType::PICKUP_OBJECT_HIGH:
         case RobotActionType::PICKUP_OBJECT_LOW:
@@ -137,7 +138,6 @@ namespace Anki {
         case RobotActionType::CROSS_BRIDGE:
         case RobotActionType::DRIVE_STRAIGHT:
         case RobotActionType::DRIVE_TO_FLIP_BLOCK_POSE:
-        case RobotActionType::DRIVE_TO_OBJECT:
         case RobotActionType::DRIVE_TO_PLACE_CARRIED_OBJECT:
         case RobotActionType::DRIVE_TO_POSE:
         case RobotActionType::FLIP_BLOCK:

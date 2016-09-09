@@ -277,11 +277,7 @@ namespace Anki {
                                                                     preActionPoseAngleTolerance);
       }
       
-      // The overloaded operators of the Point class check that all of the elements of the point
-      // cause the expression to evaluate to true. In this case we care if either of the elements in
-      // closestPoint are greater than the threshold so we need to do !<
-      const bool closestPointExceedsThresh = !(closestPoint < preActionPoseDistThresh);
-      if(preActionPoseDistThresh > 0.f && closestPointExceedsThresh) {
+      if(preActionPoseDistThresh > 0.f && closestPoint.AnyGT(preActionPoseDistThresh)) {
         PRINT_NAMED_INFO("IsCloseEnoughToPreActionPose.TooFarFromGoal",
                          "Robot is too far from pre-action pose (%.1fmm, %.1fmm).",
                          closestPoint.x(), closestPoint.y());
