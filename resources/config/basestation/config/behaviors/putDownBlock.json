@@ -11,6 +11,7 @@
     "SparksStackBlock",
     "SparksPickUpCube",
     "SparksPopAWheelie",
+    "SparksPounceOnMotion",
     "SparksKnockOverCubes",
     "SparksBuildPyramid"
   ]
