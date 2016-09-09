@@ -260,8 +260,8 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 35.5, y: -175}
-  m_SizeDelta: {x: -71, y: 25}
+  m_AnchoredPosition: {x: -0.000019073, y: -373}
+  m_SizeDelta: {x: -30, y: 422}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &735345286
 MonoBehaviour:
@@ -285,7 +285,7 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-    m_FontSize: 50
+    m_FontSize: 64
     m_FontStyle: 1
     m_BestFit: 0
     m_MinSize: 0
@@ -851,9 +851,9 @@ MonoBehaviour:
   _FilledForegroundImage: {fileID: 1252896920}
   _UseEndCap: 0
   _EndCap: {fileID: 0}
-  _NormalColor: {r: 0.027450982, g: 0.5568628, b: 0.8745099, a: 1}
+  _NormalColor: {r: 1, g: 0.74509805, b: 0, a: 1}
   _DecreasingColor: {r: 1, g: 0, b: 0, a: 1}
-  _IncreasingColor: {r: 0.027450982, g: 0.5568628, b: 0.8745099, a: 1}
+  _IncreasingColor: {r: 1, g: 0.74509805, b: 0, a: 1}
 --- !u!1 &1362318233
 GameObject:
   m_ObjectHideFlags: 0

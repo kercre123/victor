@@ -186,37 +186,29 @@ void Update()
         }
         break;
       }
-      case RobotInterface::FTM_Sleepy:
-      {
-        if ((now - lastExecTime) < (30*60*1000000)) // 30 minutes
-        {
-          using namespace Anki::Cozmo::Face;
-          // Display WiFi password, alternate rows about every 2 minutes
-          const int y = ((now/30000000) % 2) ? 0 : 32;
-          u64 frame[COLS];
-          Draw::Clear(frame);
-          Draw::Copy(frame, PASSWORD_IMG, sizeof(PASSWORD_IMG)/sizeof(PASSWORD_IMG[0]), 0, y);
-          Draw::Print(frame, wifiPsk + 0, 4,  2, y+16);
-          Draw::Print(frame, wifiPsk + 4, 4, 44, y+16);
-          Draw::Print(frame, wifiPsk + 8, 4, 86, y+16);
-          Draw::Flip(frame);
-        }
-        else
-        {
-          SetMode(RobotInterface::FTM_Off);
-        }
-        break;
-      }
       case RobotInterface::FTM_SSID:
       {
         using namespace Anki::Cozmo::Face;
-        // Display WiFi password, alternate rows about every 2 minutes
         u64 frame[COLS];
-        char ssidNumStr[8];
-        os_sprintf(ssidNumStr, "%06X", getSSIDNumber());
-        Draw::Copy(frame, SSID_IMG);
-        Draw::Print(frame, ssidNumStr, 6, 68, 34);
+        const bool odd = ((now/30000000) % 2);
+        const int y = 8 + (1-odd)*28;
+                
+        Draw::Clear(frame);
+        Draw::Copy(frame, WIFI_COZMO_IMG, sizeof(WIFI_COZMO_IMG)/sizeof(WIFI_COZMO_IMG[0]), odd*64, 0);
+        Draw::NumberTiny(frame, 6, getSSIDNumber(), 35 + 64*odd, 0);
+        Draw::Copy(frame, WIFI_PASSWORD_IMG, sizeof(WIFI_PASSWORD_IMG)/sizeof(WIFI_PASSWORD_IMG[0]), 0, y);
+        Draw::Print(frame, wifiPsk + 0, 4,  2, 16 + y);
+        Draw::Print(frame, wifiPsk + 4, 4, 44, 16 + y);
+        Draw::Print(frame, wifiPsk + 8, 4, 86, 16 + y);
         Draw::Flip(frame);
+        // Explicit fall through to next case to keep power off
+      }
+      case RobotInterface::FTM_Sleepy:
+      {
+        if ((now - lastExecTime) > (30*60*1000000)) // 30 minutes
+        {
+          SetMode(RobotInterface::FTM_Off);
+        }
         break;
       }
       case RobotInterface::FTM_Off:
@@ -295,7 +287,7 @@ void Process_TestState(const RobotInterface::TestState& state)
       if ((state.positionsFixed[2] - maxPositions[2]) < -50000)
       {
         lastExecTime = now;
-        modeTimeout = now + 10000000;
+        modeTimeout = 0xFFFFffff;
         resetPositions(state.positionsFixed);
         SetMode(RobotInterface::FTM_SSID);
       }
@@ -465,6 +457,11 @@ void SetMode(const RobotInterface::FactoryTestMode newMode, const int param)
       msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableTestStateMessage;
       msg.enableTestStateMessage.enable = false;
       Anki::Cozmo::RTIP::SendMessage(msg);
+      break;
+    }
+    case RobotInterface::FTM_Sleepy:
+    {
+      Face::Clear();
       break;
     }
     case RobotInterface::FTM_Off:

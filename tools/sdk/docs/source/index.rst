@@ -5,6 +5,8 @@
 
 .. image:: cozmo_sdk_preview.jpg
 
+.. warning:: THIS IS THE ALPHA BUILD OF THE COZMO SDK. All information within this SDK is subject to change without notice.
+
 =======================================
 Welcome to the Cozmo SDK alpha version!
 =======================================
@@ -28,6 +30,12 @@ Welcome to the Cozmo SDK alpha version!
 
     tutorial-beginner.rst
     tutorial-beginner-windows.rst
+
+.. toctree::
+    :maxdepth: 2
+    :caption: Advanced Tutorial
+
+    tutorial-advanced.rst
 
 .. toctree::
     :maxdepth: 2

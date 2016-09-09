@@ -61,6 +61,7 @@ CozmoBot {
 }
 BuildServerTestController {
   controllerArgs "%COZMO_SIM_TEST%"
+# controllerArgs "CST_VariableHeightHigh"
 }
 CozmoVizDisplay {
 }

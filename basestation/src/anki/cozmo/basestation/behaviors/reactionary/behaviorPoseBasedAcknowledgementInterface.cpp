@@ -45,6 +45,10 @@ IBehaviorPoseBasedAcknowledgement::IBehaviorPoseBasedAcknowledgement(Robot& robo
 : super(robot, config)
 {
   LoadConfig(config);
+  
+  SubscribeToTags({
+    EngineToGameTag::RobotDelocalized
+  });
 }
 
 void IBehaviorPoseBasedAcknowledgement::LoadConfig(const Json::Value& config)
@@ -134,11 +138,6 @@ void IBehaviorPoseBasedAcknowledgement::HandleNewObservation(s32 id,
       .lastSeenTime_ms     = timestamp,
       .lastReactionTime_ms = 0,
     };
-    
-    // set a pose just outside the distThreshold (hence + 1) so that we have a pose to
-    // compare against to check for frame of reference changes
-    reaction.lastReactionPose = Pose3d(0, Z_AXIS_3D(), {_params.samePoseDistThreshold_mm + 1, 0.f,0.f}, &reaction.lastPose).GetWithRespectToOrigin();
-
 
     // if the reactionary behavior is disabled, that means we don't want to react, so fake it to look like we
     // just reacted
@@ -162,15 +161,6 @@ void IBehaviorPoseBasedAcknowledgement::HandleNewObservation(s32 id,
   else {
     reactionIt->second.lastPose = pose;
     reactionIt->second.lastSeenTime_ms = timestamp;
-    
-    // if the robot's frame of reference has changed, react to next block seen
-    const Pose3d& lastReactionRef = reactionIt->second.lastReactionPose;
-    const Pose3d& lastReactionOrigin = lastReactionRef.IsOrigin() ? lastReactionRef : lastReactionRef.FindOrigin();
-    const Pose3d& newPoseOrigin = pose.IsOrigin() ? pose : pose.FindOrigin();
-    if(!newPoseOrigin.IsSameAs(lastReactionOrigin, 0, 0)){
-      reactionIt->second.lastReactionTime_ms = 0;
-    }
-    
     
     if( ! reactionEnabled ) {
       // same as above, fake reacting it now, so it won't try to react once we re-enable
@@ -379,6 +369,24 @@ void IBehaviorPoseBasedAcknowledgement::RobotReactedToId(const Robot& robot, s32
   }
 }
 
+void IBehaviorPoseBasedAcknowledgement::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
+{
+  switch(event.GetData().GetTag())
+  {
+    case EngineToGameTag::RobotDelocalized: {
+      // only update target blocks if we are running
+      for(auto reaction : _reactionData){
+        reaction.second.lastReactionTime_ms = 0;
+      }
+      break;
+    }
+      
+    default:
+      break;
+  }
+  
+  AlwaysHandlePoseBasedInternal(event, robot);
+}
 
 
 } // namespace Cozmo

@@ -23,7 +23,7 @@ MonoBehaviour:
   DescriptionKey: unlockable.DroneMode.Description
   TitleKey: unlockable.DroneMode.Title
   UpgradeCostItemId: TestHexItem0
-  UpgradeCostAmountNeeded: 10
+  UpgradeCostAmountNeeded: 8
   RequestTrickCostItemId: treat
   RequestTrickCostAmountCurve:
     serializedVersion: 2

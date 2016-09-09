@@ -35,11 +35,7 @@ public class StartupManager : MonoBehaviour {
   [SerializeField]
   private Anki.UI.AnkiTextLabel _LoadingBarLabel;
 
-  [SerializeField]
-  private float _AddDotSeconds = 0.25f;
-
   private float _CurrentProgress;
-  private int _CurrentNumDots;
 
   [SerializeField]
   private string[] _AssetBundlesToLoad;
@@ -95,8 +91,6 @@ public class StartupManager : MonoBehaviour {
     // Start loading bar at close to 0
     _CurrentProgress = 0.05f;
     _LoadingBar.SetProgress(_CurrentProgress);
-    _CurrentNumDots = 0;
-    StartCoroutine(UpdateLoadingDots());
 
     // set up progress bar updater for resource extraction
     float startingProgress = _CurrentProgress;
@@ -426,18 +420,6 @@ public class StartupManager : MonoBehaviour {
       assetBundleManager.LoadSceneAsync(_MainSceneAssetBundleName, _MainSceneName, loadAdditively: false, callback: null);
     }
 #endif
-  }
-
-  private IEnumerator UpdateLoadingDots() {
-    while (true) {
-      string loadingText = "";
-      for (int i = 0; i < _CurrentNumDots; i++) {
-        loadingText += ".";
-      }
-      _CurrentNumDots = (_CurrentNumDots + 1) % 4;
-      _LoadingBarLabel.text = loadingText;
-      yield return new WaitForSeconds(_AddDotSeconds);
-    }
   }
 
   private void AddLoadingBarProgress(float amount) {
