@@ -25,7 +25,7 @@ void foregroundTaskTask(os_event_t *event)
     const bool repost = subTask(event->par);
     if (repost)
     {
-      if (system_os_post(foregroundTask_PRIO, (uint32)subTask, event->par) == false)
+      if (system_os_post(foregroundTask_PRIO, event->sig, event->par) == false)
       {
         os_printf("Couldn't repost foregroundTask 0x%x\r\n", event->sig);
       }
@@ -33,7 +33,7 @@ void foregroundTaskTask(os_event_t *event)
   }
 }
 
-int8_t foregroundTaskInit(void)
+int8_t ICACHE_FLASH_ATTR foregroundTaskInit(void)
 {
   //os_printf("foregroundTask init\r\n");
   if (system_os_task(foregroundTaskTask, foregroundTask_PRIO, foregroundTaskQueue, foregroundTaskQueueLen) == false)
@@ -45,9 +45,4 @@ int8_t foregroundTaskInit(void)
   {
     return 0;
   }
-}
-
-bool inline foregroundTaskPost(foregroundTask task, uint32_t param)
-{
-  return system_os_post(foregroundTask_PRIO, (uint32)task, param);
 }

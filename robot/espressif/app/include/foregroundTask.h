@@ -23,9 +23,11 @@ typedef bool (*foregroundTask)(uint32_t param);
  * The task 1 queue is a FIFO with no prioritization, tasks will be executed in the order they are received when there
  * is no other code which needs to execute. They will not be pre-empted once started except by interrupts so they must
  * return quickly (optionally re-posting themselves) lest other tasks not be serviced or the watch-dog bites.
+ * @note foregroundTaskPost needs to be a macro no a function to ensure system_os_post isn't wrapped in additional
+ * layers.
  * @param task a Pointer to the function to queue
  * @param param An argument to be passed along to the function when called.
  */
-bool foregroundTaskPost(foregroundTask task, uint32_t param);
+#define foregroundTaskPost(task, param) system_os_post(foregroundTask_PRIO, (uint32)(task), (param))
 
 #endif
