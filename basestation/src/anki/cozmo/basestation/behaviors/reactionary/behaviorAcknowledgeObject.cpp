@@ -225,7 +225,7 @@ bool BehaviorAcknowledgeObject::IsRunnableInternalReactionary(const Robot& robot
     !robot.IsOnChargerPlatform();
 }
 
-void BehaviorAcknowledgeObject::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
+void BehaviorAcknowledgeObject::AlwaysHandlePoseBasedInternal(const EngineToGameEvent& event, const Robot& robot)
 {
   switch(event.GetData().GetTag())
   {

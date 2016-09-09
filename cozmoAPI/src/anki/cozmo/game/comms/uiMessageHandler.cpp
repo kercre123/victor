@@ -669,6 +669,27 @@ namespace Anki {
           DeliverToGame(message, (DestinationId)UiConnectionType::UI);
         }
       }
+      else
+      {
+      #if ANKI_DEV_CHEATS
+        static bool sWasSdkCommsAlwaysEnabled = kEnableSdkCommsAlways;
+        const bool wasAlwaysEnabledToggled = (sWasSdkCommsAlwaysEnabled != kEnableSdkCommsAlways);
+        if (wasAlwaysEnabledToggled)
+        {
+          sWasSdkCommsAlwaysEnabled = kEnableSdkCommsAlways;
+          UpdateIsSdkCommunicationEnabled();
+        }
+        if (IsSdkCommunicationEnabled() || wasAlwaysEnabledToggled)
+        {
+          const ISocketComms* sdkSocketComms = GetSdkSocketComms();
+        
+          if (sdkSocketComms)
+          {
+            _sdkStatus.UpdateConnectionStatus(sdkSocketComms);
+          }
+        }
+      #endif // ANKI_DEV_CHEATS
+      }
     }
     
     
