@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/types/nvStorage.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -26,10 +27,19 @@
 #include <unordered_map>
 #include <set>
 
+
 namespace Anki {
+
+namespace Util {
+  namespace Data {
+    class DataPlatform;
+  }
+}
+
 namespace Cozmo {
   
 class Robot;
+class CozmoContext;
   
 class RobotDataBackupManager
 {
@@ -45,23 +55,33 @@ public:
   void QueueDataToWrite(const Tag tag, const std::vector<u8> data);
   
   // Writes the queued data for this tag to file
-  void WriteDataForTag(const Tag forTag, const NVStorage::NVResult res);
+  void WriteDataForTag(const Tag forTag, const NVStorage::NVResult res, const bool writeNotErase);
   
   // Template for all events we subscribe to
   template<typename T>
   void HandleMessage(const T& msg);
+
+  // Reads the unlock data from the backup file and sends it to game
+  // This is a static method so it can be called before connecting to a robot (This class is a memeber of robot)
+  static void HandleRequestUnlockDataFromBackup(const ExternalInterface::RequestUnlockDataFromBackup& msg,
+                                                const CozmoContext* context);
+  
+  static inline const std::string GetBackupFolder() { return "robotBackups/"; }
   
 private:
   // Writes the data in _dataOnRobot to file as long as the robot has completed onboarding
   void WriteBackupFile();
   
   // Reads and parses the specified backup file and puts the data in dataInBackup
-  bool ParseBackupFile(const std::string fileName,
-                       std::unordered_map<u32, NVStorage::NVStorageBlob>& dataInBackup);
+  static bool ParseBackupFile(const std::string& fileName,
+                              const std::string& pathToFile,
+                              std::unordered_map<u32, NVStorage::NVStorageBlob>& dataInBackup);
   
   // Determines which backup file to use (currently selects the backup file corresponding to the robot that
   // has been connected to the most)
-  bool GetFileToUseForBackup(std::string& file);
+  static bool GetFileToUseForBackup(std::string& file,
+                                    const std::string& pathToFile,
+                                    Util::Data::DataPlatform* dp);
   
   // Handles increasing the connection count on robot connection
   void RobotConnected(const AnkiEvent<RobotInterface::RobotToEngine>& msg);
@@ -84,18 +104,8 @@ private:
   // Set of tags we are backing up (loaded from backup_config.json)
   std::set<u32> _tagsToBackup;
   
-  // Filename for keeping track of relevent stats for determining which file to use for restoring
-  const std::string kStatsForBackupFile = "statsForBackup.json";
-  const std::string kConnectionCountKey = "ConnectionCount";
-  
-  // Config file containing the tags that we want to backup
-  const std::string kBackupConfig = "config/basestation/config/backup_config.json";
-  
   // Path to the robotBackups folder
   const std::string kPathToFile;
-  
-  // File name of the backup file for the currently connected robot
-  std::string _fileName = "";
   
   // Whether or not the current restore or wipe was successful
   bool _restoreOrWipeFailed = false;

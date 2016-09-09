@@ -48,7 +48,7 @@ public:
   template<typename T>
   void HandleMessage(const T& msg);
   
-  const std::set<UnlockId>& GetDefaultUnlocks() const { return _defaultUnlocks; }
+  static const std::set<UnlockId>& GetDefaultUnlocks();
 
 private:
 
@@ -59,8 +59,6 @@ private:
   bool IsUnlockIdValid(UnlockId id);
 
   Robot& _robot;
-
-  std::set<UnlockId> _defaultUnlocks;
 
   // eventually this will be stored on the robot
   std::set<UnlockId> _currentUnlocks;
