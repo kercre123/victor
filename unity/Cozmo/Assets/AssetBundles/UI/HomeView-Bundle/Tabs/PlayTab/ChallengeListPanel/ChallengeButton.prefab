@@ -80,6 +80,7 @@ GameObject:
   - 224: {fileID: 22481620}
   - 222: {fileID: 22250766}
   - 114: {fileID: 11448468}
+  - 114: {fileID: 11403668}
   m_Layer: 5
   m_Name: LockedAffordable
   m_TagString: Untagged
@@ -155,6 +156,18 @@ MonoBehaviour:
   _UnavailableContainer: {fileID: 175112}
   _AffordableIndicator: {fileID: 180176}
   _NewUnlockIndicator: {fileID: 164376}
+--- !u!114 &11403668
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 180176}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a41bbe99256a64d469e220319b895431, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _MaskImage: {fileID: 11448468}
 --- !u!114 &11420562
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -321,7 +334,7 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_Sprite: {fileID: 21300000, guid: 5a1d2333464c546a585f51d49beeaa15, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
