@@ -204,6 +204,27 @@ namespace Face {
     {0x0000, 0x0f03, 0x0f83, 0x0dc3, 0x0ce3, 0x0c73, 0x0c3b, 0x0c1f, 0x0c0f, 0x0000}, // X
   };
 
+  #define TINY_DIGIT_WIDTH 4
+
+  static const u32 TINY_DIGITS[16] ICACHE_RODATA_ATTR STORE_ATTR = {
+    0x1e29251e, // 0
+    0x003f0200, // 1
+    0x26292932, // 2
+    0x1a252112, // 3
+    0x3f040407, // 4
+    0x19252527, // 5
+    0x1825251e, // 6
+    0x030d3101, // 7
+    0x1a25251a, // 8
+    0x0e152502, // 9
+    0x3e09093e, // A
+    0x1a25253f, // B
+    0x1221211e, // C
+    0x1e21213f, // D
+    0x2125253f, // E
+    0x0105053f, // F
+  };
+
   u64 m_frame[FRAME_ALLOC_COLS];
 
   ScreenRect STORE_ATTR m_rects[WORKING_RECTS]; // Extra rect for working
@@ -413,41 +434,13 @@ namespace Face {
   {
     // Build the result into the framebuffer
     u64 frame[COLS];
-    int x = 0, y = 0;
-    char* cptr = buffer;
     memset(frame, 0, sizeof(frame));
 
-    // Go character by character until we hit the end
-    while (*cptr)
-    {
-      // Wrap to next row, and bail out past bottom row
-      int c = *cptr++;
-      if (c == '\n' || x >= COLS / (CHAR_WIDTH+1))
-      {
-        x = 0;
-        y++;
-      }
-      if (y >= ROWS / CHAR_HEIGHT)
-        break;
-
-      // Skip unrecognized chars
-      if (c < CHAR_START || c > CHAR_END)
-        continue;
-
-      // Copy the character from the font buffer to the display buffer
-      const u32* fptr = FONT + (c - CHAR_START) * CHAR_WIDTH;
-      u8* gptr = (u8*)(frame) + y + x * (CHAR_WIDTH + 1) * (ROWS / CHAR_HEIGHT);
-
-      for (int i = 0; i < CHAR_WIDTH; i++)
-      {
-        *gptr = *fptr++;
-        gptr += ROWS / CHAR_HEIGHT;
-      }
-      x++;
-    }
+    Draw::PrintSmall(frame, buffer, os_strlen(buffer), 0, 0);
     
     if (m_mode & inverted)
     {
+      int y;
       for (y=0; y<COLS; ++y) frame[y] = ~frame[y];
     }
 
@@ -530,6 +523,31 @@ namespace Face {
       return true;
     }
     
+    bool NumberTiny(u64* frame, int digits, u32 value, int x, int y)
+    {
+      const int number_width = (digits * (TINY_DIGIT_WIDTH + 1)) - 1;
+      
+      if (x + number_width > COLS)
+      {
+        AnkiWarn( 375, "Face.Draw.NumberTiny.TooWide", 520, "%d + %d > %d", 3, x, number_width, COLS);
+        return false;
+      }
+      
+      u64* pixels = &frame[x];
+      for (int c = 0; c < digits; c++) {
+        const u8 ch = (value >> ((digits - 1 - c) * 4)) & 0xF;
+        const u32 digitPixels = TINY_DIGITS[ch]; // Aligned fetch from flash
+        const u8* dpxarr = (u8*)&digitPixels; // Recast as array
+        for (u8 cx = 0; cx < TINY_DIGIT_WIDTH; cx++) {
+          const u64 line = dpxarr[cx];
+          *(pixels++) |= line << y;
+        }
+        pixels++; // Add white space between characters
+      }
+      
+      return true;
+    }
+    
     bool Print(u64* frame, const char* text, const int characters, const int x, const int y)
     {
       const int text_len   = (characters == 0) ? os_strlen(text) : characters;
@@ -562,6 +580,43 @@ namespace Face {
           frame[frameCol] |= line << y;
           frameCol++;
         }
+      }
+      
+      return true;
+    }
+
+    bool PrintSmall(u64* frame, const char* text, const int characters, int x, int y)
+    {
+      const char* cptr = text;
+      int characterCount = 0;
+      
+      // Go character by character until we hit the end
+      while (*cptr && (characterCount++ < characters))
+      {
+        // Wrap to next row, and bail out past bottom row
+        int c = *cptr++;
+        if (c == '\n' || (x + CHAR_WIDTH + 1) >= COLS)
+        {
+          x = 0;
+          y += CHAR_HEIGHT;
+        }
+        if (y >= ROWS)
+          break;
+
+        // Skip unrecognized chars
+        if (c < CHAR_START || c > CHAR_END)
+          continue;
+
+        // Copy the character from the font buffer to the display buffer
+        const u32* fptr = FONT + (c - CHAR_START) * CHAR_WIDTH;
+        u8* gptr = (u8*)(frame) + (y/CHAR_HEIGHT) + (x + 1) * (ROWS / CHAR_HEIGHT);
+
+        for (int i = 0; i < CHAR_WIDTH; i++)
+        {
+          *gptr = *fptr++;
+          gptr += ROWS / CHAR_HEIGHT;
+        }
+        x += CHAR_WIDTH + 1;
       }
       
       return true;

@@ -168,7 +168,8 @@ namespace Cozmo.HomeHub {
     public bool HomeViewCurrentlyOccupied {
       get {
         return (_RequestDialog != null || _LootViewInstance != null || _BadLightDialog != null ||
-                _HomeHubInstance.IsChallengeDetailsActive || RewardSequenceActive);
+                _HelpViewInstance != null || _HomeHubInstance.IsChallengeDetailsActive ||
+                RewardSequenceActive || PauseManager.Instance.IsAnyDialogOpen);
       }
     }
     public Transform TabButtonContainer {
@@ -637,8 +638,11 @@ namespace Cozmo.HomeHub {
 
 
     private void HandleAskForMinigame(object messageObject) {
-      if (HomeViewCurrentlyOccupied) {
-        // Avoid dupes
+      if (HomeViewCurrentlyOccupied || _CurrentTab == HomeTab.Settings) {
+        // Avoid dupes or conflicting popups
+        // Don't request games in Settings tab to avoid
+        // being disruptive to SDK users and those changing
+        // settings.
         return;
       }
 
