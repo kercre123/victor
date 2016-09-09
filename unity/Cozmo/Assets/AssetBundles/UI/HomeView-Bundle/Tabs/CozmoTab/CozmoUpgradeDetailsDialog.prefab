@@ -42,7 +42,7 @@ GameObject:
   - 224: {fileID: 22484660}
   - 114: {fileID: 11499144}
   m_Layer: 5
-  m_Name: FragmentCountLabelContainer (1)
+  m_Name: FragmentCountContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -618,7 +618,7 @@ GameObject:
   - 222: {fileID: 22235754}
   - 114: {fileID: 11492546}
   m_Layer: 5
-  m_Name: FragmentCountLabel(Proxy)
+  m_Name: FragmentCountLabel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -833,7 +833,10 @@ MonoBehaviour:
   - ObjectPath: 
     FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:a
     JsonValue: 0.784
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../../
+    FieldName: CoreUpgradeDetailsDialog:_OptionalCloseDialogButton
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11417062
 MonoBehaviour:
@@ -991,7 +994,10 @@ MonoBehaviour:
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"Paragraph Text"'
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../../../
+    FieldName: CoreUpgradeDetailsDialog:_UnlockableDescriptionLabel
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11434118
 MonoBehaviour:
@@ -1045,7 +1051,10 @@ MonoBehaviour:
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"Use 3 Bits to Unlock"'
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../../../
+    FieldName: CoreUpgradeDetailsDialog:_AvailablePromptCost
+    ReferencePath: 
   ModifiedGlobalReferences:
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Font
@@ -1130,7 +1139,7 @@ MonoBehaviour:
   _AvailablePromptCost: {fileID: 0}
   _ButtonCostLabel: {fileID: 11402262}
   _RequestTrickButtonLabel: {fileID: 0}
-  _RequestTrickButtonIcon: {fileID: 0}
+  _RequestTrickButtonIcon: {fileID: 11479604}
   _UnlockableIcon: {fileID: 11459738}
   _CubesRequiredLabel: {fileID: 11442860}
   _UnlockUpgradeButtonContainer: {fileID: 104356}
@@ -1141,7 +1150,7 @@ MonoBehaviour:
   _RequestTrickButton: {fileID: 0}
   _SparksInventoryLabel: {fileID: 11470876}
   _SparksInventoryContainer: {fileID: 125226}
-  _SparkSpinner: {fileID: 0}
+  _SparkSpinner: {fileID: 145974}
   _UpgradeTween_sec: 0.6
   _SparkImagePrefab: {fileID: 125416, guid: 47ed3a7685be94660ba7911964778bfa, type: 2}
   _DimmerPrefab: {fileID: 177414, guid: 624443755833e44aa9939d4b069a9f3c, type: 2}
@@ -1391,7 +1400,10 @@ MonoBehaviour:
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"Available:"'
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../../../
+    FieldName: CoreUpgradeDetailsDialog:_AvailablePromptLabel
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11472824
 MonoBehaviour:
@@ -1418,7 +1430,10 @@ MonoBehaviour:
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"Knock Over Stacks"'
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../../../
+    FieldName: CoreUpgradeDetailsDialog:_UnlockableNameLabel
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11474646
 MonoBehaviour:
@@ -1433,7 +1448,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
   ModifiedValues: []
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../../../../
+    FieldName: CoreUpgradeDetailsDialog:_UnlockUpgradeButton
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11477634
 MonoBehaviour:
@@ -1672,7 +1690,13 @@ MonoBehaviour:
   - ObjectPath: 
     FieldName: Cozmo.UI.CozmoButton:TextEnabledColor:r
     JsonValue: 1.0
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../../../../
+    FieldName: CoreUpgradeDetailsDialog:_RequestTrickButton
+    ReferencePath: 
+  - ObjectPath: ../../../../
+    FieldName: CoreUpgradeDetailsDialog:_RequestTrickButtonLabel
+    ReferencePath: ButtonText
   ModifiedGlobalReferences:
   - ObjectPath: ButtonBackground
     FieldName: UnityEngine.UI.Image:m_Sprite
