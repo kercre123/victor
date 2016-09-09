@@ -527,7 +527,7 @@ namespace Anki {
 
     void ExecutePointTurn(f32 angularVel, f32 angularAccel)
     {
-      AnkiDebug( 371, "SteeringController.ExecutePointTurn_2.Params", 608, "%d: vel %f, accel %f", 3,
+      AnkiDebug( 374, "SteeringController.ExecutePointTurn_2.Params", 610, "%d: vel %f, accel %f", 3,
                 HAL::GetTimeStamp(), RAD_TO_DEG_F32(angularVel), RAD_TO_DEG_F32(angularAccel));
       
       if (fabsf(angularVel) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
