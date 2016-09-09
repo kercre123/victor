@@ -55,6 +55,8 @@ public class ChestRewardManager {
     }
   }
 
+  private Dictionary<string, int> _PendingDeductions = new Dictionary<string, int>();
+
   private ChestData GetChestData() {
     return ChestData.Instance;
   }
@@ -107,22 +109,18 @@ public class ChestRewardManager {
     return value;
   }
 
-  private void HandleItemValueChanged(string itemId, int delta, int newCount) {
-    if (itemId != GetChestData().RequirementLadder.ItemId) {
-      return;
-    }
-
-    // Deregister Events so this won't trigger itself with Items granted
-    Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-    DeregisterEvents(playerInventory);
+  // checks if we need to populate the chest with rewards
+  public void TryPopulateChestRewards() {
+    string itemId = GetChestData().RequirementLadder.ItemId;
+    int itemCount = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.GetItemAmount(itemId);
 
     LadderLevel[] requirementLadderLevels = GetChestData().RequirementLadder.LadderLevels;
     int currentLadderMax = GetCurrentLadderValue(requirementLadderLevels);
-    while (newCount >= currentLadderMax) {
+
+    while (itemCount >= currentLadderMax) {
       int rewardAmount = 0;
       foreach (Ladder ladder in GetChestData().RewardLadders) {
         rewardAmount = GetCurrentLadderValue(ladder.LadderLevels);
-        playerInventory.AddItemAmount(ladder.ItemId, rewardAmount);
         if (PendingChestRewards.ContainsKey(ladder.ItemId)) {
           PendingChestRewards[ladder.ItemId] += rewardAmount;
         }
@@ -136,31 +134,50 @@ public class ChestRewardManager {
         ChestGained();
       }
 
-      newCount -= currentLadderMax;
+      if (_PendingDeductions.ContainsKey(itemId)) {
+        _PendingDeductions[itemId] += currentLadderMax;
+      }
+      else {
+        _PendingDeductions.Add(itemId, currentLadderMax);
+      }
+
+      itemCount -= currentLadderMax;
+
       currentLadderMax = GetCurrentLadderValue(requirementLadderLevels);
     }
 
-    playerInventory.SetItemAmount(itemId, newCount);
-
     if (ChestRequirementsGained != null) {
-      ChestRequirementsGained(newCount, currentLadderMax);
+      ChestRequirementsGained(itemCount, currentLadderMax);
     }
 
-    RegisterEvents(playerInventory);
+  }
 
-    DataPersistenceManager.Instance.Save();
+  private void HandleItemValueChanged(string itemId, int delta, int newCount) {
+    if (itemId == GetChestData().RequirementLadder.ItemId) {
+      // see if we need to populate the chest every time we get value updates from the
+      // requirement ladder item type.
+      TryPopulateChestRewards();
+    }
+  }
+
+  public void ApplyChestRewards() {
+    Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+    foreach (KeyValuePair<string, int> kvp in PendingChestRewards) {
+      playerInventory.AddItemAmount(kvp.Key, kvp.Value);
+    }
+    PendingChestRewards.Clear();
+
+    foreach (KeyValuePair<string, int> kvp in _PendingDeductions) {
+      playerInventory.RemoveItemAmount(kvp.Key, kvp.Value);
+    }
+    _PendingDeductions.Clear();
+    DataPersistence.DataPersistenceManager.Instance.Save();
   }
 
   private void RegisterEvents(Cozmo.Inventory inventory) {
     inventory.ItemAdded += HandleItemValueChanged;
     inventory.ItemRemoved += HandleItemValueChanged;
     inventory.ItemCountSet += HandleItemValueChanged;
-  }
-
-  private void DeregisterEvents(Cozmo.Inventory inventory) {
-    inventory.ItemAdded -= HandleItemValueChanged;
-    inventory.ItemRemoved -= HandleItemValueChanged;
-    inventory.ItemCountSet -= HandleItemValueChanged;
   }
 
 }

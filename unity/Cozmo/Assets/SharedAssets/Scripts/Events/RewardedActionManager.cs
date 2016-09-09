@@ -142,6 +142,7 @@ public class RewardedActionManager : MonoBehaviour {
   }
 
   void OnDestroy() {
+    SendPendingRewardsToInventory();
     DeregisterEvents();
   }
 
@@ -229,6 +230,7 @@ public class RewardedActionManager : MonoBehaviour {
     foreach (RewardedActionData reward in PendingActionRewards.Keys) {
       DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount(reward.Reward.ItemID, reward.Reward.Amount);
     }
+    DataPersistenceManager.Instance.Save();
     ResetPendingRewards();
   }
 
@@ -271,7 +273,7 @@ public class RewardedActionManager : MonoBehaviour {
     return best;
   }
 
-  public void ResetPendingRewards() {
+  private void ResetPendingRewards() {
     PendingActionRewards.Clear();
     NewDifficultyUnlock = -1;
     NewSkillChange = 0;
