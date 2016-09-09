@@ -706,6 +706,7 @@ message SetBackpackLEDs {
   uint_32  offPeriod_ms[5],
   uint_32  transitionOnPeriod_ms[5],
   uint_32  transitionOffPeriod_ms[5],
+  int_32   offset[5],
   uint_8   robotID
 }
 

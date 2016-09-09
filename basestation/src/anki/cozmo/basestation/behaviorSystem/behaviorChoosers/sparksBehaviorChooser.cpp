@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
+#include "anki/cozmo/basestation/components/lightsComponent.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -105,6 +106,17 @@ void SparksBehaviorChooser::OnSelected()
     _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::SparkIdle);
     _idleAnimationsSet = true;
   }
+
+  static const BackpackLights kLoopingSparkLights = {
+    .onColor                = {{NamedColors::BLACK, NamedColors::WHITE, NamedColors::WHITE, NamedColors::WHITE, NamedColors::BLACK}},
+    .offColor               = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
+    .onPeriod_ms            = {{0,360,360,360,0}},
+    .offPeriod_ms           = {{0,1110,1110,1110,0}},
+    .transitionOnPeriod_ms  = {{0,0,0,0,0}},
+    .transitionOffPeriod_ms = {{0,0,0,0,0}},
+    .offset                 = {{0,0,120,240,0}}
+  };
+  _robot.GetLightsComponent().StartLoopingBackpackLights(kLoopingSparkLights);
   
   // Turn off reactionary behaviors that could interrupt the spark
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeFace, false);
@@ -119,6 +131,8 @@ void SparksBehaviorChooser::OnDeselected()
     _robot.GetAnimationStreamer().PopIdleAnimation();
     _idleAnimationsSet = false;
   }
+  
+  _robot.GetLightsComponent().StopLoopingBackpackLights();
   
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeFace, true);
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCubeMoved, true);
@@ -163,7 +177,6 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
       _behaviorPlayAnimation->SetAnimationTrigger(introAnim, 1);
       bestBehavior = _behaviorPlayAnimation;
       _state = ChooserState::PlayingSparksIntro;
-      
       break;
     }
     case ChooserState::PlayingSparksIntro:
@@ -185,7 +198,6 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
     }
     case ChooserState::WaitingForCurrentBehaviorToStop:
     {
-
       if(currentRunningBehavior != nullptr
          && currentRunningBehavior->IsRunning()){
         // wait for the current behavior to end

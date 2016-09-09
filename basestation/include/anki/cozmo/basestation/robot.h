@@ -47,6 +47,7 @@
 #include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
+#include "anki/cozmo/basestation/components/lightsComponent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "anki/cozmo/basestation/tracePrinter.h"
@@ -599,22 +600,12 @@ public:
   // Remove a previously-added callback using the iterator returned by
   // AddReactionCallback above.
   void RemoveReactionCallback(const Vision::Marker::Code code, ReactionCallbackIter callbackToRemove);
-    
+  
   // ========= Lights ==========
 
-  // TODO:(bn) move all of this into lights component (and don't expose raw settings like this directly)
-    
-  // Color specified as RGBA, where A(lpha) will be ignored
-  void SetDefaultLights(const u32 color);
-    
-  void SetBackpackLights(const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& onColor,
-                         const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& offColor,
-                         const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& onPeriod_ms,
-                         const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& offPeriod_ms,
-                         const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
-                         const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOffPeriod_ms);
-   
-  void SetHeadlight(bool on);
+  Result SetObjectLights(const ObjectID& objectID, const ObjectLights& lights) { return GetLightsComponent().SetObjectLights(objectID, lights); }
+  Result SetBackpackLights(const BackpackLights& lights) { return GetLightsComponent().SetBackpackLights(lights); }
+  void SetHeadlight(bool on) { GetLightsComponent().SetHeadlight(on); }
   
   // =========  Block messages  ============
 
@@ -631,33 +622,6 @@ public:
 
   // Set whether or not to broadcast to game which objects are available for connection
   void BroadcastAvailableObjects(bool enable);
-  
-  // Set the LED colors/flashrates individually (ordered by BlockLEDPosition)
-  Result SetObjectLights(const ObjectID& objectID,
-                         const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& onColor,
-                         const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offColor,
-                         const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& onPeriod_ms,
-                         const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offPeriod_ms,
-                         const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOnPeriod_ms,
-                         const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOffPeriod_ms,
-                         const std::array<s32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offset,
-                         const MakeRelativeMode makeRelative,
-                         const Point2f& relativeToPoint,
-                         const u32 rotationPeriod_ms);
-    
-  // Set all LEDs of the specified block to the same color/flashrate
-  Result SetObjectLights(const ObjectID& objectID,
-                         const WhichCubeLEDs whichLEDs,
-                         const u32 onColor, const u32 offColor,
-                         const u32 onPeriod_ms, const u32 offPeriod_ms,
-                         const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
-                         const bool turnOffUnspecifiedLEDs,
-                         const MakeRelativeMode makeRelative,
-                         const Point2f& relativeToPoint,
-                         const u32 rotationPeriod_ms);
-    
-  // Shorthand for turning off all lights on an object
-  Result TurnOffObjectLights(const ObjectID& objectID);
     
   // =========  Other State  ============
   f32 GetBatteryVoltage() const { return _battVoltage; }
@@ -1155,11 +1119,6 @@ inline bool Robot::IsAnimating() const {
 
 inline bool Robot::IsIdleAnimating() const {
   return _animationTag == 255;
-}
-
-inline Result Robot::TurnOffObjectLights(const ObjectID& objectID) {
-  return SetObjectLights(objectID, WhichCubeLEDs::ALL, 0, 0, 10000, 10000, 0, 0,
-                         false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {0.f,0.f}, 0);
 }
 
 inline s32 Robot::GetNumAnimationBytesPlayed() const {

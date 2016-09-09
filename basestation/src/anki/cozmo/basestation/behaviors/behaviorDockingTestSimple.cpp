@@ -52,20 +52,25 @@ namespace Anki {
     CONSOLE_VAR(bool, kRollInsteadOfPickup,        "DockingTest", false);
     CONSOLE_VAR(bool, kDoDeepRoll,                 "DockingTest", false);
     
-    static const size_t NUM_LIGHTS = (size_t)LEDId::NUM_BACKPACK_LEDS;
-    static const std::array<u32,NUM_LIGHTS> pass_onColor{{NamedColors::BLACK,NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN,NamedColors::BLACK}};
-    static const std::array<u32,NUM_LIGHTS> pass_offColor{{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}};
-    static const std::array<u32,NUM_LIGHTS> pass_onPeriod_ms{{1000,1000,1000,1000,1000}};
-    static const std::array<u32,NUM_LIGHTS> pass_offPeriod_ms{{100,100,100,100,100}};
-    static const std::array<u32,NUM_LIGHTS> pass_transitionOnPeriod_ms{{450,450,450,450,450}};
-    static const std::array<u32,NUM_LIGHTS> pass_transitionOffPeriod_ms{{450,450,450,450,450}};
+    static const BackpackLights passLights = {
+      .onColor                = {{NamedColors::BLACK,NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN,NamedColors::BLACK}},
+      .offColor               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
+      .onPeriod_ms            = {{1000,1000,1000,1000,1000}},
+      .offPeriod_ms           = {{100,100,100,100,100}},
+      .transitionOnPeriod_ms  = {{450,450,450,450,450}},
+      .transitionOffPeriod_ms = {{450,450,450,450,450}},
+      .offset                 = {{0,0,0,0,0}}
+    };
     
-    static const std::array<u32,NUM_LIGHTS> fail_onColor{{NamedColors::BLACK,NamedColors::RED,NamedColors::RED,NamedColors::RED,NamedColors::BLACK}};
-    static const std::array<u32,NUM_LIGHTS> fail_offColor{{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}};
-    static const std::array<u32,NUM_LIGHTS> fail_onPeriod_ms{{500,500,500,500,500}};
-    static const std::array<u32,NUM_LIGHTS> fail_offPeriod_ms{{500,500,500,500,500}};
-    static const std::array<u32,NUM_LIGHTS> fail_transitionOnPeriod_ms{};
-    static const std::array<u32,NUM_LIGHTS> fail_transitionOffPeriod_ms{};
+    static const BackpackLights failLights = {
+      .onColor                = {{NamedColors::BLACK,NamedColors::RED,NamedColors::RED,NamedColors::RED,NamedColors::BLACK}},
+      .offColor               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
+      .onPeriod_ms            = {{500,500,500,500,500}},
+      .offPeriod_ms           = {{500,500,500,500,500}},
+      .transitionOnPeriod_ms  = {{0,0,0,0,0}},
+      .transitionOffPeriod_ms = {{0,0,0,0,0}},
+      .offset                 = {{0,0,0,0,0}}
+    };
     
     BehaviorDockingTestSimple::BehaviorDockingTestSimple(Robot& robot, const Json::Value& config)
     : IBehavior(robot, config)
@@ -194,9 +199,7 @@ namespace Anki {
           }
           
           // Turn off backpack lights in case we needed to be manually reset
-          robot.SetBackpackLights(fail_offColor, fail_offColor,
-                                  fail_onPeriod_ms, fail_offPeriod_ms,
-                                  fail_transitionOnPeriod_ms, fail_transitionOffPeriod_ms);
+          robot.SetBackpackLights(failLights);
           
           _blockObjectIDPickup.UnSet();
           
@@ -576,15 +579,11 @@ namespace Anki {
     {
       if(_yellForHelp)
       {
-        robot.SetBackpackLights(fail_onColor, fail_offColor,
-                                fail_onPeriod_ms, fail_offPeriod_ms,
-                                fail_transitionOnPeriod_ms, fail_transitionOffPeriod_ms);
+        robot.SetBackpackLights(failLights);
       }
       else if(_yellForCompletion)
       {
-        robot.SetBackpackLights(pass_onColor, pass_offColor,
-                                pass_onPeriod_ms, pass_offPeriod_ms,
-                                pass_transitionOnPeriod_ms, pass_transitionOffPeriod_ms);
+        robot.SetBackpackLights(passLights);
       }
       SetCurrState(s);
     }

@@ -14,8 +14,10 @@
 #define __Anki_Cozmo_Basestation_Components_LightsComponent_H__
 
 #include "anki/common/basestation/objectIDs.h"
+#include "anki/common/basestation/math/point.h"
 #include "anki/common/types.h"
 #include "clad/types/activeObjectTypes.h"
+#include "clad/types/ledTypes.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "json/json.h"
@@ -27,6 +29,31 @@ namespace Anki {
 namespace Cozmo {
 
 class Robot;
+
+typedef std::array<u32, (size_t)ActiveObjectConstants::NUM_CUBE_LEDS> ObjectLEDArray;
+struct ObjectLights {
+  ObjectLEDArray onColors;
+  ObjectLEDArray offColors;
+  ObjectLEDArray onPeriod_ms;
+  ObjectLEDArray offPeriod_ms;
+  ObjectLEDArray transitionOnPeriod_ms;
+  ObjectLEDArray transitionOffPeriod_ms;
+  std::array<s32, (size_t)ActiveObjectConstants::NUM_CUBE_LEDS> offset;
+  u32 rotationPeriod_ms;
+  MakeRelativeMode makeRelative;
+  Point2f relativePoint;
+};
+
+typedef std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS> BackpackLEDArray;
+struct BackpackLights {
+  BackpackLEDArray onColor;
+  BackpackLEDArray offColor;
+  BackpackLEDArray onPeriod_ms;
+  BackpackLEDArray offPeriod_ms;
+  BackpackLEDArray transitionOnPeriod_ms;
+  BackpackLEDArray transitionOffPeriod_ms;
+  std::array<s32,(size_t)LEDId::NUM_BACKPACK_LEDS> offset;
+};
 
 class LightsComponent : private Util::noncopyable
 {
@@ -47,22 +74,34 @@ public:
   void SetInteractionObject(ObjectID objectID);
   void UnSetInteractionObject(ObjectID objectID);
   
+  Result SetObjectLights(const ObjectID& objectID, const ObjectLights& lights);
+  Result SetObjectLights(const ObjectID& objectID,
+                         const WhichCubeLEDs whichLEDs,
+                         const u32 onColor,
+                         const u32 offColor,
+                         const u32 onPeriod_ms,
+                         const u32 offPeriod_ms,
+                         const u32 transitionOnPeriod_ms,
+                         const u32 transitionOffPeriod_ms,
+                         const bool turnOffUnspecifiedLEDs,
+                         const MakeRelativeMode makeRelative,
+                         const Point2f& relativeToPoint,
+                         const u32 rotationPeriod_ms);
+  
+  Result SetBackpackLights(const BackpackLights& lights);
+  
+  void SetHeadlight(bool on);
+  
+  void StartLoopingBackpackLights(const BackpackLights& lights);
+  void StopLoopingBackpackLights();
+  
+  Result TurnOffObjectLights(const ObjectID& objectID);
+  Result TurnOffBackpackLights();
+  
   template<typename T>
   void HandleMessage(const T& msg);
   
 private:
-  
-  typedef std::array<u32, (size_t)ActiveObjectConstants::NUM_CUBE_LEDS> LEDArray;
-  struct LightValues {
-    LEDArray onColors;
-    LEDArray offColors;
-    LEDArray onPeriod_ms;
-    LEDArray offPeriod_ms;
-    LEDArray transitionOnPeriod_ms;
-    LEDArray transitionOffPeriod_ms;
-    std::array<s32, (size_t)ActiveObjectConstants::NUM_CUBE_LEDS> offset;
-    u32 rotationPeriod_ms;
-  };
 
   // The various states cube lights can be in
   enum class CubeLightsState {
@@ -78,7 +117,7 @@ private:
   };
   
   // Maps light states to actual light values for that state
-  std::map<CubeLightsState, LightValues> _stateToValues;
+  std::map<CubeLightsState, ObjectLights> _stateToValues;
 
   struct ObjectInfo {
     ObjectInfo();
@@ -116,8 +155,8 @@ private:
                    std::pair<CubeLightsState, CubeLightsState>& fadeFromTo);
   
   void AddLightStateValues(CubeLightsState state, const Json::Value& data);
-  LEDArray JsonColorValueToArray(const Json::Value& value);
-  LEDArray JsonValueToU32Array(const Json::Value& value);
+  ObjectLEDArray JsonColorValueToArray(const Json::Value& value);
+  ObjectLEDArray JsonValueToU32Array(const Json::Value& value);
   std::array<s32, (size_t)ActiveObjectConstants::NUM_CUBE_LEDS> JsonValueToS32Array(const Json::Value& value);
   
   void RestorePrevStates();
@@ -126,7 +165,25 @@ private:
   
   // Send a mesage to game to let them know the objects current light values
   // Will only send if _sendTransitionMessages is true
-  void SendTransitionMessage(const ObjectID& objectID, const LightValues& values);
+  void SendTransitionMessage(const ObjectID& objectID, const ObjectLights& values);
+  
+  bool CanSetObjectLights(const ObjectID& objectID);
+  
+  Result SetObjectLightsInternal(const ObjectID& objectID, const ObjectLights& values);
+  Result SetObjectLightsInternal(const ObjectID& objectID,
+                                 const WhichCubeLEDs whichLEDs,
+                                 const u32 onColor,
+                                 const u32 offColor,
+                                 const u32 onPeriod_ms,
+                                 const u32 offPeriod_ms,
+                                 const u32 transitionOnPeriod_ms,
+                                 const u32 transitionOffPeriod_ms,
+                                 const bool turnOffUnspecifiedLEDs,
+                                 const MakeRelativeMode makeRelative,
+                                 const Point2f& relativeToPoint,
+                                 const u32 rotationPeriod_ms);
+  
+  Result SetBackpackLightsInternal(const BackpackLights& lights);
 
   Robot& _robot;
   
@@ -139,13 +196,17 @@ private:
   u32 _sleepTime_ms     = 0;
   
   // Variables for making the cubes flash
-  LEDArray _flashColor  = {{0,0,0,0}};
+  ObjectLEDArray _flashColor  = {{0,0,0,0}};
   u32 _flashPeriod_ms   = 0;
   u32 _flashTimes       = 0;
   
   
   bool _allCubesEnabled = true;
   
+  bool _loopingBackpackLights = false;
+  BackpackLights _currentLoopingBackpackLights;
+  BackpackLights _currentBackpackLights;
+
   bool _sendTransitionMessages = false;
   
 }; // class LightsComponent

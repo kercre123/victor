@@ -44,7 +44,8 @@ namespace Anki {
       // Set the parameters of an LED for a specified layer.
       // EnableLayer() must be called to actually apply changes.
       void SetParams(const BackpackLightLayer layer, const LEDId whichLED, const u16 onColor, const u16 offColor,
-                     const u8 onFrames, const u8 offFrames, const u8 transitionOnFrames, const u8 transitionOffFrames);
+                     const u8 onFrames, const u8 offFrames, const u8 transitionOnFrames, const u8 transitionOffFrames,
+                     const s16 offset);
 
     } // namespace BackpackLightController
   } // namespace Anki

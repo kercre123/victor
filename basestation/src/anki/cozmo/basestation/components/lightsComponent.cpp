@@ -23,11 +23,38 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 
+#define DEBUG_BLOCK_LIGHTS 0
+#define DEBUG_BACKPACK_LIGHTS 0
+
 namespace Anki {
 namespace Cozmo {
 
+static const BackpackLights kBackpackLightsOff = {
+  .onColor                = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
+  .offColor               = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
+  .onPeriod_ms            = {{0,0,0,0,0}},
+  .offPeriod_ms           = {{0,0,0,0,0}},
+  .transitionOnPeriod_ms  = {{0,0,0,0,0}},
+  .transitionOffPeriod_ms = {{0,0,0,0,0}},
+  .offset                 = {{0,0,0,0,0}}
+};
+
+static const ObjectLights kCubeLightsOff = {
+  .onColors               = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
+  .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
+  .onPeriod_ms            = {{0,0,0,0}},
+  .offPeriod_ms           = {{0,0,0,0}},
+  .transitionOnPeriod_ms  = {{0,0,0,0}},
+  .transitionOffPeriod_ms = {{0,0,0,0}},
+  .offset                 = {{0,0,0,0}},
+  .rotationPeriod_ms      = 0,
+  .makeRelative           = MakeRelativeMode::RELATIVE_LED_MODE_OFF,
+  .relativePoint          = {0,0}
+};
+
 LightsComponent::LightsComponent(Robot& robot)
-  : _robot(robot)
+  : _robot(robot),
+  _currentBackpackLights(kBackpackLightsOff)
 {
   if( _robot.HasExternalInterface() ) {
     auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _eventHandles);
@@ -35,6 +62,11 @@ LightsComponent::LightsComponent(Robot& robot)
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedObject>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectMoved>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectConnectionState>();
+    
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetActiveObjectLEDs>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetAllActiveObjectLEDs>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBackpackLEDs>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetHeadlight>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableLightStates>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableCubeSleep>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableCubeLightsStateTransitionMessages>();
@@ -71,7 +103,7 @@ LightsComponent::LightsComponent(Robot& robot)
 
 void LightsComponent::AddLightStateValues(CubeLightsState state, const Json::Value& data)
 {
-  LightValues values = {
+  ObjectLights values = {
     .onColors               = JsonColorValueToArray(data["onColors"]),
     .offColors              = JsonColorValueToArray(data["offColors"]),
     .onPeriod_ms            = JsonValueToU32Array(data["onPeriod_ms"]),
@@ -79,14 +111,16 @@ void LightsComponent::AddLightStateValues(CubeLightsState state, const Json::Val
     .transitionOnPeriod_ms  = JsonValueToU32Array(data["transitionOnPeriod_ms"]),
     .transitionOffPeriod_ms = JsonValueToU32Array(data["transitionOffPeriod_ms"]),
     .offset                 = JsonValueToS32Array(data["offset"]),
-    .rotationPeriod_ms      = data["rotationPeriod_ms"].asUInt()
+    .rotationPeriod_ms      = data["rotationPeriod_ms"].asUInt(),
+    .makeRelative           = MakeRelativeMode::RELATIVE_LED_MODE_OFF,
+    .relativePoint          = {0,0}
   };
   _stateToValues.emplace(state, values);
 }
 
 std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS> LightsComponent::JsonValueToU32Array(const Json::Value& value)
 {
-  LEDArray arr;
+  ObjectLEDArray arr;
   for(u8 i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i)
   {
     arr[i] = value[i].asUInt();
@@ -106,7 +140,7 @@ std::array<s32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS> LightsComponent::Js
 
 std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS> LightsComponent::JsonColorValueToArray(const Json::Value& value)
 {
-  LEDArray arr;
+  ObjectLEDArray arr;
   for(u8 i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i)
   {
     
@@ -278,7 +312,7 @@ bool LightsComponent::FadeBetween(CubeLightsState from, CubeLightsState to,
     
     // Values for dynamic fade
     // offPeriod is multiplied by 2 to ensure the fade lights don't loop before we transition out of fade
-    LightValues fadeValues = {
+    ObjectLights fadeValues = {
       .onColors               = _stateToValues[from].onColors,
       .offColors              = _stateToValues[to].onColors,
       .onPeriod_ms            = {{_fadePeriod_ms,_fadePeriod_ms,_fadePeriod_ms,_fadePeriod_ms}},
@@ -286,7 +320,9 @@ bool LightsComponent::FadeBetween(CubeLightsState from, CubeLightsState to,
       .transitionOnPeriod_ms  = {{0,0,0,0}},
       .transitionOffPeriod_ms = {{_fadeTime_ms,_fadeTime_ms,_fadeTime_ms,_fadeTime_ms}},
       .offset                 = {{0,0,0,0}},
-      .rotationPeriod_ms      = 0
+      .rotationPeriod_ms      = 0,
+      .makeRelative           = MakeRelativeMode::RELATIVE_LED_MODE_OFF,
+      .relativePoint          = {0,0}
     };
     _stateToValues[CubeLightsState::Fade] = fadeValues;
     
@@ -398,14 +434,8 @@ void LightsComponent::SetLights(ObjectID object, CubeLightsState state, bool for
                    object.GetValue(),
                    state);
   
-  const LightValues& values = _stateToValues[state];
-  _robot.SetObjectLights(object,
-                         values.onColors, values.offColors,
-                         values.onPeriod_ms, values.offPeriod_ms,
-                         values.transitionOnPeriod_ms, values.transitionOffPeriod_ms,
-                         values.offset,
-                         MakeRelativeMode::RELATIVE_LED_MODE_OFF,
-                         Point2f{0,0}, values.rotationPeriod_ms);
+  const ObjectLights& values = _stateToValues[state];
+  SetObjectLightsInternal(object, values);
   
   SendTransitionMessage(object, values);
 }
@@ -552,15 +582,346 @@ void LightsComponent::HandleMessage(const ExternalInterface::FlashCurrentLightsS
   }
   
   cube->second.flashStartTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  _robot.SetObjectLights(msg.objectID,
-                         _flashColor,
-                         _stateToValues[cube->second.currState].onColors,
-                         {{_flashPeriod_ms, _flashPeriod_ms, _flashPeriod_ms, _flashPeriod_ms}},
-                         {{_flashPeriod_ms, _flashPeriod_ms, _flashPeriod_ms, _flashPeriod_ms}},
-                         {{0,0,0,0}},
-                         {{0,0,0,0}},
-                         {{0,0,0,0}},
-                         MakeRelativeMode::RELATIVE_LED_MODE_OFF, {0,0}, 0);
+  
+  const ObjectLights flashLights = {
+    .onColors               = _flashColor,
+    .offColors              = _stateToValues[cube->second.currState].onColors,
+    .onPeriod_ms            = {{_flashPeriod_ms, _flashPeriod_ms, _flashPeriod_ms, _flashPeriod_ms}},
+    .offPeriod_ms           = {{_flashPeriod_ms, _flashPeriod_ms, _flashPeriod_ms, _flashPeriod_ms}},
+    .transitionOnPeriod_ms  = {{0,0,0,0}},
+    .transitionOffPeriod_ms = {{0,0,0,0}},
+    .offset                 = {{0,0,0,0}},
+    .rotationPeriod_ms      = 0,
+    .makeRelative           = MakeRelativeMode::RELATIVE_LED_MODE_OFF,
+    .relativePoint          = {0,0}
+  };
+  
+  SetObjectLightsInternal(msg.objectID, flashLights);
+}
+
+template<>
+void LightsComponent::HandleMessage(const ExternalInterface::SetAllActiveObjectLEDs& msg)
+{
+  const ObjectLights lights {
+    .onColors               = msg.onColor,
+    .offColors              = msg.offColor,
+    .onPeriod_ms            = msg.onPeriod_ms,
+    .offPeriod_ms           = msg.offPeriod_ms,
+    .transitionOnPeriod_ms  = msg.transitionOnPeriod_ms,
+    .transitionOffPeriod_ms = msg.transitionOffPeriod_ms,
+    .offset                 = msg.offset,
+    .rotationPeriod_ms      = msg.rotationPeriod_ms,
+    .makeRelative           = msg.makeRelative,
+    .relativePoint          = {msg.relativeToX,msg.relativeToY}
+  };
+
+  SetObjectLights(msg.objectID, lights);
+}
+
+template<>
+void LightsComponent::HandleMessage(const ExternalInterface::SetActiveObjectLEDs& msg)
+{
+  SetObjectLights(msg.objectID,
+                  msg.whichLEDs,
+                  msg.onColor,
+                  msg.offColor,
+                  msg.onPeriod_ms,
+                  msg.offPeriod_ms,
+                  msg.transitionOnPeriod_ms,
+                  msg.transitionOffPeriod_ms,
+                  msg.turnOffUnspecifiedLEDs,
+                  msg.makeRelative,
+                  {msg.relativeToX, msg.relativeToY},
+                  msg.rotationPeriod_ms);
+}
+
+template<>
+void LightsComponent::HandleMessage(const ExternalInterface::SetBackpackLEDs& msg)
+{
+  const BackpackLights lights = {
+    .onColor                = msg.onColor,
+    .offColor               = msg.offColor,
+    .onPeriod_ms            = msg.onPeriod_ms,
+    .offPeriod_ms           = msg.offPeriod_ms,
+    .transitionOnPeriod_ms  = msg.transitionOnPeriod_ms,
+    .transitionOffPeriod_ms = msg.transitionOffPeriod_ms,
+    .offset                 = msg.offset
+  };
+  
+  SetBackpackLights(lights);
+}
+
+template<>
+void LightsComponent::HandleMessage(const ExternalInterface::SetHeadlight& msg)
+{
+  SetHeadlight(msg.enable);
+}
+
+bool LightsComponent::CanSetObjectLights(const ObjectID& objectID)
+{
+  if(IsCubeEnabled(objectID))
+  {
+    PRINT_NAMED_INFO("LightsComponent.CanSetCubeLights.LightsComponentEnabled",
+                     "Not setting lights while cube lights for object %d are enabled by engine", objectID.GetValue());
+    return false;
+  }
+  return true;
+}
+
+Result LightsComponent::SetObjectLights(const ObjectID& objectID, const ObjectLights& lights)
+{
+  if(CanSetObjectLights(objectID))
+  {
+    return SetObjectLightsInternal(objectID, lights);
+  }
+  return RESULT_FAIL;
+}
+
+Result LightsComponent::SetObjectLights(const ObjectID& objectID,
+                                        const WhichCubeLEDs whichLEDs,
+                                        const u32 onColor,
+                                        const u32 offColor,
+                                        const u32 onPeriod_ms,
+                                        const u32 offPeriod_ms,
+                                        const u32 transitionOnPeriod_ms,
+                                        const u32 transitionOffPeriod_ms,
+                                        const bool turnOffUnspecifiedLEDs,
+                                        const MakeRelativeMode makeRelative,
+                                        const Point2f& relativeToPoint,
+                                        const u32 rotationPeriod_ms)
+{
+  if(CanSetObjectLights(objectID))
+  {
+    return SetObjectLightsInternal(objectID,
+                                   whichLEDs,
+                                   onColor,
+                                   offColor,
+                                   onPeriod_ms,
+                                   offPeriod_ms,
+                                   transitionOnPeriod_ms,
+                                   transitionOffPeriod_ms,
+                                   turnOffUnspecifiedLEDs,
+                                   makeRelative,
+                                   relativeToPoint,
+                                   rotationPeriod_ms);
+  }
+  return RESULT_FAIL;
+}
+
+Result LightsComponent::SetBackpackLights(const BackpackLights& lights)
+{
+  _currentBackpackLights = lights;
+
+  // If we are looping backpack lights don't actually set the lights but keep track of
+  // what they were trying to be set to so we can set them to it when the looping stops
+  if(_loopingBackpackLights)
+  {
+    return RESULT_OK;
+  }
+  
+  return SetBackpackLightsInternal(lights);
+}
+
+
+ActiveObject* GetActiveObjectInAnyFrame(BlockWorld& blockWorld, const ObjectID& objectID)
+{
+  BlockWorldFilter filter;
+  filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+  filter.SetFilterFcn(&BlockWorldFilter::ActiveObjectsFilter);
+  filter.AddAllowedID(objectID);
+  ActiveObject* activeObject = dynamic_cast<ActiveObject*>(blockWorld.FindMatchingObject(filter));
+  
+  return activeObject;
+}
+
+Result LightsComponent::SetObjectLightsInternal(const ObjectID& objectID, const ObjectLights& values)
+{
+  ActiveObject* activeObject = GetActiveObjectInAnyFrame(_robot.GetBlockWorld(), objectID);
+  
+  if(activeObject == nullptr) {
+    PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.");
+    return RESULT_FAIL_INVALID_OBJECT;
+  } else {
+    
+    activeObject->SetLEDs(values.onColors,
+                          values.offColors,
+                          values.onPeriod_ms,
+                          values.offPeriod_ms,
+                          values.transitionOnPeriod_ms,
+                          values.transitionOffPeriod_ms,
+                          values.offset);
+    
+    
+    ActiveCube* activeCube = dynamic_cast<ActiveCube*>(activeObject);
+    if(activeCube != nullptr) {
+      // NOTE: if make relative mode is "off", this call doesn't do anything:
+      activeCube->MakeStateRelativeToXY(values.relativePoint, values.makeRelative);
+    } else if (values.makeRelative != MakeRelativeMode::RELATIVE_LED_MODE_OFF) {
+      PRINT_NAMED_WARNING("Robot.SetObjectLights.MakeRelativeOnNonCube", "");
+      return RESULT_FAIL;
+    }
+    
+    std::array<Anki::Cozmo::LightState, 4> lights;
+    ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
+    for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
+      const ActiveObject::LEDstate& ledState = activeObject->GetLEDState(i);
+      lights[i].onColor  = ENCODED_COLOR(ledState.onColor);
+      lights[i].offColor = ENCODED_COLOR(ledState.offColor);
+      lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
+      lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
+      lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
+      lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
+      lights[i].offset = MS_TO_LED_FRAMES(ledState.offset);
+      
+      if(DEBUG_BLOCK_LIGHTS)
+      {
+         PRINT_NAMED_DEBUG("SetObjectLights(2)",
+                           "LED %u, onColor 0x%x (0x%x), offColor 0x%x (0x%x), onFrames 0x%x (%ums), "
+                           "offFrames 0x%x (%ums), transOnFrames 0x%x (%ums), transOffFrames 0x%x (%ums), offset 0x%x (%ums)",
+                           i, lights[i].onColor, ledState.onColor.AsRGBA(),
+                           lights[i].offColor, ledState.offColor.AsRGBA(),
+                           lights[i].onFrames, ledState.onPeriod_ms,
+                           lights[i].offFrames, ledState.offPeriod_ms,
+                           lights[i].transitionOnFrames, ledState.transitionOnPeriod_ms,
+                           lights[i].transitionOffFrames, ledState.transitionOffPeriod_ms,
+                           lights[i].offset, ledState.offset);
+      }
+      
+    }
+    
+    if( DEBUG_BLOCK_LIGHTS ) {
+      PRINT_NAMED_DEBUG("Robot.SetObjectLights.Set2",
+                        "Setting lights for object %d (activeID %d)",
+                        objectID.GetValue(), activeObject->GetActiveID());
+    }
+    
+    _robot.SendMessage(RobotInterface::EngineToRobot(SetCubeGamma(activeObject->GetLEDGamma())));
+    _robot.SendMessage(RobotInterface::EngineToRobot(CubeID((uint32_t)activeObject->GetActiveID(),
+                                                            MS_TO_LED_FRAMES(values.rotationPeriod_ms))));
+    return _robot.SendMessage(RobotInterface::EngineToRobot(CubeLights(lights)));
+  }
+  
+}
+
+Result LightsComponent::SetObjectLightsInternal(const ObjectID& objectID,
+                                                const WhichCubeLEDs whichLEDs,
+                                                const u32 onColor,
+                                                const u32 offColor,
+                                                const u32 onPeriod_ms,
+                                                const u32 offPeriod_ms,
+                                                const u32 transitionOnPeriod_ms,
+                                                const u32 transitionOffPeriod_ms,
+                                                const bool turnOffUnspecifiedLEDs,
+                                                const MakeRelativeMode makeRelative,
+                                                const Point2f& relativeToPoint,
+                                                const u32 rotationPeriod_ms)
+{
+  ActiveObject* activeObject = GetActiveObjectInAnyFrame(_robot.GetBlockWorld(), objectID);
+  
+  if(activeObject == nullptr) {
+    PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.");
+    return RESULT_FAIL_INVALID_OBJECT;
+  } else {
+    
+    WhichCubeLEDs rotatedWhichLEDs = whichLEDs;
+    
+    ActiveCube* activeCube = dynamic_cast<ActiveCube*>(activeObject);
+    if(activeCube != nullptr) {
+      // NOTE: if make relative mode is "off", this call doesn't do anything:
+      rotatedWhichLEDs = activeCube->MakeWhichLEDsRelativeToXY(whichLEDs, relativeToPoint, makeRelative);
+    } else if (makeRelative != MakeRelativeMode::RELATIVE_LED_MODE_OFF) {
+      PRINT_NAMED_WARNING("Robot.SetObjectLights.MakeRelativeOnNonCube", "");
+      return RESULT_FAIL;
+    }
+    
+    
+    activeObject->SetLEDs(rotatedWhichLEDs, onColor, offColor, onPeriod_ms, offPeriod_ms,
+                          transitionOnPeriod_ms, transitionOffPeriod_ms, 0,
+                          turnOffUnspecifiedLEDs);
+    
+    std::array<Anki::Cozmo::LightState, 4> lights;
+    ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
+    for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
+      const ActiveObject::LEDstate& ledState = activeObject->GetLEDState(i);
+      lights[i].onColor  = ENCODED_COLOR(ledState.onColor);
+      lights[i].offColor = ENCODED_COLOR(ledState.offColor);
+      lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
+      lights[i].offFrames = MS_TO_LED_FRAMES(ledState.offPeriod_ms);
+      lights[i].transitionOnFrames  = MS_TO_LED_FRAMES(ledState.transitionOnPeriod_ms);
+      lights[i].transitionOffFrames = MS_TO_LED_FRAMES(ledState.transitionOffPeriod_ms);
+      lights[i].offset = MS_TO_LED_FRAMES(ledState.offset);
+      
+      if(DEBUG_BLOCK_LIGHTS)
+      {
+         PRINT_NAMED_DEBUG("SetObjectLights(1)",
+                           "LED %u, onColor 0x%x (0x%x), offColor 0x%x (0x%x)",
+                           i,
+                           lights[i].onColor,
+                           ledState.onColor.AsRGBA(),
+                           lights[i].offColor,
+                           ledState.offColor.AsRGBA());
+      }
+    }
+    
+    if( DEBUG_BLOCK_LIGHTS ) {
+      PRINT_NAMED_DEBUG("Robot.SetObjectLights.Set1",
+                        "Setting lights for object %d (activeID %d)",
+                        objectID.GetValue(), activeObject->GetActiveID());
+    }
+    
+    _robot.SendMessage(RobotInterface::EngineToRobot(SetCubeGamma(activeObject->GetLEDGamma())));
+    _robot.SendMessage(RobotInterface::EngineToRobot(CubeID((uint32_t)activeObject->GetActiveID(),
+                                                            MS_TO_LED_FRAMES(rotationPeriod_ms))));
+    return _robot.SendMessage(RobotInterface::EngineToRobot(CubeLights(lights)));
+  }
+}
+
+Result LightsComponent::SetBackpackLightsInternal(const BackpackLights& lights)
+{
+  std::array<Anki::Cozmo::LightState, 2> turnSignals;
+  u8 turnCount = 0;
+  std::array<Anki::Cozmo::LightState, 3> middleLights;
+  u8 middleCount = 0;
+  for (int i = 0; i < (int)LEDId::NUM_BACKPACK_LEDS; ++i) {
+    if(i == (int)LEDId::LED_BACKPACK_RIGHT || i == (int)LEDId::LED_BACKPACK_LEFT)
+    {
+      turnSignals[turnCount].onColor  = ENCODED_COLOR(lights.onColor[i]);
+      turnSignals[turnCount].offColor = ENCODED_COLOR(lights.offColor[i]);
+      turnSignals[turnCount].onFrames  = MS_TO_LED_FRAMES(lights.onPeriod_ms[i]);
+      turnSignals[turnCount].offFrames = MS_TO_LED_FRAMES(lights.offPeriod_ms[i]);
+      turnSignals[turnCount].transitionOnFrames  = MS_TO_LED_FRAMES(lights.transitionOnPeriod_ms[i]);
+      turnSignals[turnCount].transitionOffFrames = MS_TO_LED_FRAMES(lights.transitionOffPeriod_ms[i]);
+      turnSignals[turnCount].offset = MS_TO_LED_FRAMES(lights.offset[i]);
+      ++turnCount;
+    }
+    else
+    {
+      middleLights[middleCount].onColor  = ENCODED_COLOR(lights.onColor[i]);
+      middleLights[middleCount].offColor = ENCODED_COLOR(lights.offColor[i]);
+      middleLights[middleCount].onFrames  = MS_TO_LED_FRAMES(lights.onPeriod_ms[i]);
+      middleLights[middleCount].offFrames = MS_TO_LED_FRAMES(lights.offPeriod_ms[i]);
+      middleLights[middleCount].transitionOnFrames  = MS_TO_LED_FRAMES(lights.transitionOnPeriod_ms[i]);
+      middleLights[middleCount].transitionOffFrames = MS_TO_LED_FRAMES(lights.transitionOffPeriod_ms[i]);
+      middleLights[middleCount].offset = MS_TO_LED_FRAMES(lights.offset[i]);
+      ++middleCount;
+    }
+    
+    if(DEBUG_BACKPACK_LIGHTS)
+    {
+      PRINT_NAMED_DEBUG("BackpackLights",
+                       "0x%x 0x%x %u %u %u %u %d",
+                       ENCODED_COLOR(lights.onColor[i]),
+                       ENCODED_COLOR(lights.offColor[i]),
+                       MS_TO_LED_FRAMES(lights.onPeriod_ms[i]),
+                       MS_TO_LED_FRAMES(lights.offPeriod_ms[i]),
+                       MS_TO_LED_FRAMES(lights.transitionOnPeriod_ms[i]),
+                       MS_TO_LED_FRAMES(lights.transitionOffPeriod_ms[i]),
+                       MS_TO_LED_FRAMES(lights.offset[i]));
+    }
+  }
+  
+  _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLightsTurnSignals(turnSignals)));
+  return _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLightsMiddle(middleLights)));
 }
 
 void LightsComponent::RestorePrevStates()
@@ -590,7 +951,41 @@ void LightsComponent::RestorePrevState(const ObjectID objectID)
   }
 }
 
-void LightsComponent::SendTransitionMessage(const ObjectID& objectID, const LightValues& values)
+void LightsComponent::StartLoopingBackpackLights(const BackpackLights& lights)
+{
+  if(_loopingBackpackLights)
+  {
+    PRINT_NAMED_INFO("LightsComponent.StartLoopingBackpackLights",
+                     "Already looping backpack lights will override current lights");
+  }
+
+  _loopingBackpackLights = true;
+  _currentLoopingBackpackLights = lights;
+  SetBackpackLightsInternal(lights);
+}
+
+void LightsComponent::StopLoopingBackpackLights()
+{
+  if(_loopingBackpackLights)
+  {
+    _loopingBackpackLights = false;
+    PRINT_NAMED_INFO("LightsComponent.StopLoopingBackpackLights",
+                     "Stopping looping backpack lights returning to previous pattern");
+    SetBackpackLightsInternal(_currentBackpackLights);
+  }
+}
+
+Result LightsComponent::TurnOffObjectLights(const ObjectID& objectID)
+{
+  return SetObjectLights(objectID, kCubeLightsOff);
+}
+
+Result LightsComponent::TurnOffBackpackLights()
+{
+  return SetBackpackLights(kBackpackLightsOff);
+}
+
+void LightsComponent::SendTransitionMessage(const ObjectID& objectID, const ObjectLights& values)
 {
   const auto cube = _cubeInfo.find(objectID);
   if(cube == _cubeInfo.end())
@@ -631,6 +1026,11 @@ void LightsComponent::SendTransitionMessage(const ObjectID& objectID, const Ligh
     
     _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
   }
+}
+
+void LightsComponent::SetHeadlight(bool on)
+{
+  _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::SetHeadlight(on)));
 }
 
 LightsComponent::ObjectInfo::ObjectInfo()
