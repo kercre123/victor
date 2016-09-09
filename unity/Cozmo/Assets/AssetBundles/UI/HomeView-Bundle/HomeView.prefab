@@ -3374,10 +3374,11 @@ MonoBehaviour:
       _EnumValue: 10
     _AssetDataName: LootView
   RewardSequenceActive: 0
-  _EnergyDooberPrefab: {fileID: 125416, guid: c146a460a04b54d96920707c6edba121, type: 2}
-  _EnergyDooberStart_PlayTab: {fileID: 22438686}
-  _EnergyDooberStart_CozmoTab: {fileID: 22498212}
-  _EnergyDooberEnd: {fileID: 22451224}
+  _EnergyRewardParticlePrefab: {fileID: 125416, guid: c146a460a04b54d96920707c6edba121,
+    type: 2}
+  _EnergyRewardStart_PlayTab: {fileID: 22438686}
+  _EnergyRewardStart_CozmoTab: {fileID: 22498212}
+  _EnergyRewardTarget: {fileID: 22451224}
   _DailyGoalsCompletionTexts:
   - {fileID: 11412828}
   - {fileID: 11433096}

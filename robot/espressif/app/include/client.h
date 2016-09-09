@@ -47,4 +47,7 @@ bool clientConnected(void);
 /// Retrieve the approximate number of bytes available in the transmit queue
 sint16 clientQueueAvailable(void);
 
+/// Gets the count of send attempts that the client has dropped
+uint32 clientDropCount(void);
+
 #endif

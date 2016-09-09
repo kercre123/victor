@@ -226,13 +226,27 @@ void Exec(os_event_t *event)
     }
     case 4:
     {
-      static uint32_t lastPEC = 0;
-      const uint32_t pec = i2spiGetPhaseErrorCount();
-      if (pec > lastPEC)
       {
-        AnkiWarn( 185, "I2SPI.TooMuchDrift", 486, "TMD=%d\tintegral=%d", 2, pec, i2spiGetIntegralDrift());
+        static uint32_t lastPEC = 0;
+        const uint32_t pec = i2spiGetPhaseErrorCount();
+        if (pec > lastPEC)
+        {
+          AnkiWarn( 185, "I2SPI.TooMuchDrift", 486, "TMD=%d\tintegral=%d", 2, pec, i2spiGetIntegralDrift());
+        }
+        lastPEC = pec;
       }
-      lastPEC = pec;
+      {
+        static uint32_t lastDropCount = 0;
+        const uint32_t dc = clientDropCount();
+        if ((dc > lastDropCount) && clientQueueAvailable() > LOW_PRIORITY_BUFFER_ROOM)
+        {
+          RobotInterface::RobotErrorReport rer;
+          rer.error = RobotInterface::REC_ReliableTransport;
+          rer.fatal = false;
+          if (RobotInterface::SendMessage(rer)) lastDropCount = dc;
+          AnkiWarn( 370, "client.reliable_message_dropped", 607, "count = %d", 1, dc);
+        }
+      }
       break;
     }
     case 5:
@@ -360,5 +374,5 @@ extern "C" void i2spiResyncCallback(void)
   rer.fatal = false;
   SendMessage(rer);
   Anki::Cozmo::Face::ResetScreen();
-  AnkiWarn( 370, "I2SPI.Resync", 607, "I2SPI resynchronizing", 0);
+  AnkiWarn( 371, "I2SPI.Resync", 608, "I2SPI resynchronizing", 0);
 }

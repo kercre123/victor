@@ -46,10 +46,38 @@ namespace Cozmo {
       }
 
       [SerializeField]
+      private Color _EnergyTextColor;
+
+      public static Color EnergyTextColor {
+        get { return Instance._EnergyTextColor; }
+      }
+
+      [SerializeField]
       private Color _NeutralTextColor;
 
       public static Color NeutralTextColor {
         get { return Instance._NeutralTextColor; }
+      }
+
+      [SerializeField]
+      private Color _SetupTextColor;
+
+      public static Color SetupTextColor {
+        get { return Instance._SetupTextColor; }
+      }
+
+      [SerializeField]
+      private Color _MinigameTextColor;
+
+      public static Color MinigameTextColor {
+        get { return Instance._MinigameTextColor; }
+      }
+
+      [SerializeField]
+      private Color _SelectedTextColor;
+
+      public static Color SelectedTextColor {
+        get { return Instance._SelectedTextColor; }
       }
 
       [SerializeField]

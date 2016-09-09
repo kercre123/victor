@@ -300,7 +300,7 @@ GameObject:
   m_Component:
   - 224: {fileID: 22409394}
   m_Layer: 5
-  m_Name: Doobstart
+  m_Name: RewardStartPosition
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -498,7 +498,7 @@ GameObject:
   m_Component:
   - 224: {fileID: 22486736}
   m_Layer: 5
-  m_Name: OnboardingDoobStart
+  m_Name: OnboardingRewardStart
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -714,12 +714,13 @@ MonoBehaviour:
   - {fileID: 22489430}
   - {fileID: 22445366}
   - {fileID: 22473282}
-  _DooberStart: {fileID: 22409394}
+  _RewardStartPosition: {fileID: 22409394}
   _FinalBitsTarget: {fileID: 22469918}
   _FinalSparkTarget: {fileID: 22410096}
   _BoxSource: {fileID: 22412946}
   _BannerContainer: {fileID: 22405272}
-  _RewardDooberPrefab: {fileID: 125416, guid: da949a90c3ec547bfb567d613a9396a5, type: 2}
+  _RewardParticlePrefab: {fileID: 125416, guid: da949a90c3ec547bfb567d613a9396a5,
+    type: 2}
   _TronLightPrefab: {fileID: 125416, guid: caf6fbd6142764036aebf4e7ba5cec3a, type: 2}
   _BurstParticles: {fileID: 19823308, guid: 1882952d39275477f8ca3cfef4827c74, type: 2}
   _BannerPrefab: {fileID: 11461144, guid: dce7dd2a487f34d82bfde4e18a754998, type: 2}
@@ -739,7 +740,7 @@ MonoBehaviour:
   - {fileID: 22464094}
   - {fileID: 22425080}
   - {fileID: 22405386}
-  _OnboardingDooberStart: {fileID: 22486736}
+  _OnboardingRewardStart: {fileID: 22486736}
   _ContinueButtonInstance: {fileID: 0}
 --- !u!114 &11457488
 MonoBehaviour:
