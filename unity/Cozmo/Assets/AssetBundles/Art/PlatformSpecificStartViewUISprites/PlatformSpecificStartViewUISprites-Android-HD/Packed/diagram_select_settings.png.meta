@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: 4aa9bba78c24242a0883b47756286147
-timeCreated: 1473454342
+guid: f28977792bb2847aaa619693a6dc3365
+timeCreated: 1473454780
 licenseType: Pro
 TextureImporter:
   fileIDToRecycleName: {}
@@ -44,7 +44,7 @@ TextureImporter:
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
-  spritePixelsToUnits: 25
+  spritePixelsToUnits: 50
   alphaIsTransparency: 1
   textureType: 8
   buildTargetSettings: []
@@ -52,7 +52,7 @@ TextureImporter:
     serializedVersion: 2
     sprites: []
     outline: []
-  spritePackingTag: PlatformSpecificStartViewUISpritesAndroidSDAtlas
+  spritePackingTag: PlatformSpecificStartViewUISpritesAndroidHDAtlas
   userData: 
   assetBundleName: 
   assetBundleVariant: 
