@@ -51,6 +51,8 @@ enum uint_32 Music
   Minigame__Setup = 1317044071,
   Onboarding = 3360093794,
   Onboarding__Core_Upgrades = 102695299,
+  Onboarding__Meet_Cozmo = 4195748652,
+  Onboarding__Meet_Cozmo_Say_Name = 3775866302,
   Onboarding__Play_Tab = 2360281734,
   Onboarding__Show_Cube = 3253479049,
   Pause = 3092587493,
