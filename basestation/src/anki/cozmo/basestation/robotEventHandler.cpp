@@ -129,10 +129,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestUnlockDataFromBackup>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveCalibrationImage>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SendAvailableObjects>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetActiveObjectLEDs>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetAllActiveObjectLEDs>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBackpackLEDs>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetHeadlight>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotCarryingObject>();
     
     // EngineToGame: (in alphabetical order)
@@ -1517,24 +1513,6 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::EnableRobotPickup
 }
 
 template<>
-void RobotEventHandler::HandleMessage(const ExternalInterface::SetBackpackLEDs& msg)
-{
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
-  
-  // We need a robot
-  if (nullptr == robot)
-  {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleSetBackpackLEDs.InvalidRobotID", "Failed to find robot.");
-  }
-  else
-  {
-    robot->SetBackpackLights(msg.onColor, msg.offColor,
-                             msg.onPeriod_ms, msg.offPeriod_ms,
-                             msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms);
-  }
-}
-
-template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::ExecuteTestPlan& msg)
 {
   Robot* robot = _context->GetRobotManager()->GetFirstRobot();
@@ -1608,65 +1586,6 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::AbortAll& msg)
   }
 }
 
-template<>
-void RobotEventHandler::HandleMessage(const ExternalInterface::SetActiveObjectLEDs& msg)
-{
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
-  
-  // We need a robot
-  if (nullptr == robot)
-  {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleSetActiveObjectLEDs.InvalidRobotID", "Failed to find robot.");
-  }
-  else if(robot->GetLightsComponent().IsCubeEnabled(msg.objectID))
-  {
-    PRINT_NAMED_INFO("RobotEventHandler.HandleSetActiveObjectLEDS.LightsComponentEnabled",
-                     "Not setting lights while cube lights for object %d are enabled by engine", msg.objectID);
-  }
-  else
-  {
-    assert(msg.objectID <= s32_MAX);
-    robot->SetObjectLights(msg.objectID,
-                           msg.whichLEDs,
-                           msg.onColor, msg.offColor,
-                           msg.onPeriod_ms, msg.offPeriod_ms,
-                           msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms,
-                           msg.turnOffUnspecifiedLEDs,
-                           msg.makeRelative,
-                           Point2f(msg.relativeToX, msg.relativeToY),
-                           msg.rotationPeriod_ms);
-  }
-}
-
-template<>
-void RobotEventHandler::HandleMessage(const ExternalInterface::SetAllActiveObjectLEDs& msg)
-{
-  //const RobotID_t robotID = msg.robotID; This message contains garbage robot id. Requires fix.
-  
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
-  
-  // We need a robot
-  if (nullptr == robot)
-  {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleSetAllActiveObjectLEDs.InvalidRobotID", "Failed to find robot.");
-  }
-  else if(robot->GetLightsComponent().IsCubeEnabled(msg.objectID))
-  {
-    PRINT_NAMED_INFO("RobotEventHandler.HandleSetActiveObjectLEDS.LightsComponentEnabled",
-                     "Not setting lights while cube lights for object %d are enabled by engine", msg.objectID);
-  }
-  else
-  {
-    assert(msg.objectID <= s32_MAX);
-    robot->SetObjectLights(msg.objectID,
-                           msg.onColor, msg.offColor,
-                           msg.onPeriod_ms, msg.offPeriod_ms,
-                           msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms,
-                           msg.offset,
-                           msg.makeRelative, Point2f(msg.relativeToX, msg.relativeToY),
-                           msg.rotationPeriod_ms);
-  }
-}
 
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::RequestUnlockDataFromBackup& msg)

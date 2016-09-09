@@ -106,7 +106,18 @@ void RadioConnectionStateMachineUpdate()
       case 4:
       {
         SetBodyRadioMode bMsg;
+
+        struct softap_config ap_config;
+        if (wifi_softap_get_config(&ap_config) == false)
+        {
+          bMsg.wifiChannel = 0;
+        }
+        else {
+          bMsg.wifiChannel = ap_config.channel;
+        }
+
         bMsg.radioMode = BODY_ACCESSORY_OPERATING_MODE;
+        
         if (RobotInterface::SendMessage(bMsg)) doRTConnectPhase++;
         // Body will initiate motor calibration after entering accessory mode
         break;
@@ -128,7 +139,6 @@ void RadioConnectionStateMachineUpdate()
       }
       case 6:
       {
-        CrashReporter::StartSending();
         doRTConnectPhase = 0; // Done
         break;
       }
@@ -362,7 +372,7 @@ extern "C" bool i2spiSynchronizedCallback(uint32 param)
 {
   os_printf("I2SPI Synchronized at offset %d\r\n", param);
   Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_entry);
-  Anki::Cozmo::CrashReporter::StartQuerry();
+  Anki::Cozmo::CrashReporter::StartQuery();
   return false;
 }
 

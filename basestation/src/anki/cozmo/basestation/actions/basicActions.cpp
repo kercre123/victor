@@ -1445,7 +1445,7 @@ namespace Anki {
     void TurnTowardsFaceAction::SetSayNameAnimationTrigger(AnimationTrigger trigger)
     {
       if( ! _sayName ) {
-        PRINT_NAMED_WARNING("TurnTowardsFaceAction.SetSayNameTriggerWithoutSayingName",
+        PRINT_NAMED_DEBUG("TurnTowardsFaceAction.SetSayNameTriggerWithoutSayingName",
                             "setting say name trigger, but we aren't going to say the name. This is useless");
       }
       _nameAnimTrigger = trigger;
@@ -1454,7 +1454,7 @@ namespace Anki {
     void TurnTowardsFaceAction::SetNoNameAnimationTrigger(AnimationTrigger trigger)
     {
       if( ! _sayName ) {
-        PRINT_NAMED_WARNING("TurnTowardsFaceAction.SetNoNameTriggerWithoutSayingName",
+        PRINT_NAMED_DEBUG("TurnTowardsFaceAction.SetNoNameTriggerWithoutSayingName",
                             "setting anim trigger for unnamed faces, but we aren't going to say the name.");
       }
       _noNameAnimTrigger = trigger;

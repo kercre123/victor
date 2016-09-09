@@ -50,9 +50,7 @@ static const CubeFirmware* ValidPerfs[] = {
   (const CubeFirmware*) NULL
 };
 
-#ifdef CUBE_HOP
-static const int wifiChannel = 1;
-#endif
+static int wifiChannel = 1;
 
 static const uesb_address_desc_t PairingAddress = {
   ADV_CHANNEL,
@@ -141,6 +139,12 @@ void Radio::advertise(void) {
   NVIC_EnableIRQ(RTC0_IRQn);
 
   NRF_RTC0->TASKS_START = 1;
+}
+
+void Radio::setWifiChannel(int8_t channel) {
+  if (channel > 0) {
+    wifiChannel = channel;
+  }
 }
 
 void Radio::setLightGamma(uint8_t gamma) {
@@ -371,7 +375,8 @@ void uesb_event_handler(uint32_t flags)
       }
 
       // Note: This is inaccurate, requires nathan to be here with his magic cube to fix
-      int ticks_to_next = (target_slot * SCHEDULE_PERIOD) - NRF_RTC0->COUNTER + SILENCE_PERIOD;
+      int clocks_remaining = (int)((NRF_RTC0->CC[RESUME_COMPARE] << 8) - (NRF_RTC0->COUNTER << 8)) >> 8;
+      int ticks_to_next = (target_slot * SCHEDULE_PERIOD) - clocks_remaining;
 
       if (clocks < SCHEDULE_PERIOD) {
         clocks += RADIO_TOTAL_PERIOD;

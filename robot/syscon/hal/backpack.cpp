@@ -149,7 +149,7 @@ void Backpack::setLayer(BackpackLayer layer) {
 }
 
 void Backpack::setLights(BackpackLayer layer, const LightState* update) {
-  memcpy(lightState[layer], update, sizeof(LightState)*4);
+  memcpy(lightState[layer], update, sizeof(LightState)*BACKPACK_LIGHTS);
 
   if (currentLayer == layer) {
     updateLights(lightState[layer]);

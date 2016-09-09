@@ -615,7 +615,7 @@ namespace AnimationController {
               #else
                 for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {
                   u16 color = msg.animBackpackLights.colors[iLED];
-                  BackpackLightController::SetParams(BackpackLightController::BPL_ANIM, iLED, color, color, 0xff, 0, 0, 0);
+                  BackpackLightController::SetParams(BackpackLightController::BPL_ANIM, iLED, color, color, 0xff, 0, 0, 0, 0);
                 }
                 BackpackLightController::EnableLayer(BackpackLightController::BPL_ANIM, true);
               #endif

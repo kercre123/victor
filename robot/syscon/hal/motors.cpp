@@ -51,8 +51,6 @@ struct MotorInfo
 // 16 MHz timer with PWM running at 20kHz
 const s16 TIMER_TICKS_END = (16000000 / 20000) - 1;
 
-const s16 PWM_DIVISOR = SHRT_MAX / TIMER_TICKS_END;
-
 // Encoder scaling reworked for Cozmo 4.0
 
 // Given a gear ratio of 161.5:1 and 94mm wheel circumference and 2 ticks * 4 teeth
@@ -404,75 +402,61 @@ void Motors::init()
   }
 }
 
-static s16 limitPower(u8 motorID, const int speed_scale[], const int base_speed[]) {
+// This is what is considered a 'safe' level
+static const s16 POWER_THRESHOLD[] = {
+  (s16)(TIMER_TICKS_END * 0.50f),
+  (s16)(TIMER_TICKS_END * 0.50f),
+  (s16)(TIMER_TICKS_END * 0.25f),
+  (s16)(TIMER_TICKS_END * 0.50f)
+};
+
+static const int MAX_DRIVE_TIME[] = {
+  200, // 1s
+  200, // 1s
+  200, // 1s
+  200  // 1s
+};
+
+static const int DRIVE_MINIMUM_SPEED[] ={
+  2,
+  2,
+  RADIANS_PER_LIFT_TICK * 2,
+  RADIANS_PER_HEAD_TICK * 2
+};
+
+static s16 limitPower(u8 motorID) {
   MotorInfo* motorInfo = &m_motors[motorID];
 
+  static int temp_count[MOTOR_COUNT];
+  static bool limit[MOTOR_COUNT];
+
   int current_speed = ABS((int)motorInfo->position - (int)motorInfo->lastPosition);
-  int64_t speed_offset = (int64_t)current_speed *  (int64_t)speed_scale[motorID];
-  int inst_speed = base_speed[motorID] + (int)(speed_offset >> 16);
+  bool danger = (current_speed < DRIVE_MINIMUM_SPEED[motorID]) && (motorInfo->oldPWM > POWER_THRESHOLD[motorID]);
 
-  // Clamp max power to a rational value (fix underflow)
-  if (inst_speed > 0x7FFF || inst_speed < 0) { inst_speed = 0x7FFF; }
+  temp_count[motorID] += danger ? 1 : -1;
 
-  return inst_speed;
+  if (temp_count[motorID] > MAX_DRIVE_TIME[motorID]) {
+    limit[motorID] = true;
+  } else if (temp_count[motorID] <= 0) {
+    limit[motorID] = false;
+    temp_count[motorID] = 0;
+  }
+
+  return limit[motorID] ? POWER_THRESHOLD[motorID] : SHRT_MAX;
 }
 
 void Motors::setPower(u8 motorID, s16 power)
 {
+  // Scale from [0, SHRT_MAX] to [0, TIMER_TICKS_END-1]
+  power = power * TIMER_TICKS_END / SHRT_MAX;
+
   // Setup burnout protection
-  static s16 avg_max_power[MOTOR_COUNT];
-  int inst_speed;
-  
-  if (Battery::onContacts) {
-    // Eventually we should do a current draw calculation across all motors
-    // to allow animations driving slower to work better
-    
-    static const int base_speed[MOTOR_COUNT] = {
-      0x2000, // 0x1000,
-      0x2000, // 0x1000,
-      0x2000, // 0x800,
-      0x2000, // 0x1000,
-    };
-
-    static const int speed_scale[MOTOR_COUNT] = {
-      TO_FIXED(0x4000),
-      TO_FIXED(0x4000),
-      TO_FIXED(0x4000),
-      TO_FIXED(0x2000)
-    };
-
-    inst_speed = limitPower(motorID, speed_scale, base_speed);
-  } else {
-    /*
-    static const int base_speed[MOTOR_COUNT] = { 
-      0x3FFF, 
-      0x3FFF,
-      0x1FFF,
-      0x7FFF
-    };
-    static const int speed_scale[MOTOR_COUNT] = { 
-      TO_FIXED(0x4000),
-      TO_FIXED(0x4000),
-      TO_FIXED(0x2000),
-      0
-    };
-
-    inst_speed = limitPower(motorID, speed_scale, base_speed);
-    */
-    inst_speed = 0x7FFF;
-  }
-
-  avg_max_power[motorID] = (s16)((inst_speed + avg_max_power[motorID] * 15) / 16);
-  
-  s16 max_power = avg_max_power[motorID];
+  s16 max_power = limitPower(motorID);
     
   // Don't let power exceed safe value
   if (ABS(power) > max_power) {
     power = (power > 0) ? max_power : -max_power;
   }
-
-  // Scale from [0, SHRT_MAX] to [0, TIMER_TICKS_END-1]
-  power /= PWM_DIVISOR;
 
   // Clamp the PWM power
   if (power >= TIMER_TICKS_END)

@@ -35,6 +35,7 @@ public:
 
 protected:
   virtual Result InitInternalReactionary(Robot& robot) override;
+  virtual void StopInternalReactionary(Robot& robot) override;
 
 private:
 

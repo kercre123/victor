@@ -70,14 +70,16 @@ namespace Cozmo {
   {
     if(kUseBackpackLights)
     {
-      std::array<u32, (size_t)LEDId::NUM_BACKPACK_LEDS> onColor, offColor, onPeriod, offPeriod, transitionOnPeriod, transitionOffPeriod;
-      onColor.fill(color);
-      offColor.fill(NamedColors::BLACK);
-      onPeriod.fill(500);
-      offPeriod.fill(100);
-      transitionOnPeriod.fill(250);
-      transitionOffPeriod.fill(250);
-      robot.SetBackpackLights(onColor, offColor, onPeriod, offPeriod, transitionOnPeriod, transitionOffPeriod);
+      const BackpackLights lights = {
+        .onColor                = {{color,color,color,color,color}},
+        .offColor               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
+        .onPeriod_ms            = {{500,500,500,500,500}},
+        .offPeriod_ms           = {{100,100,100,100,100}},
+        .transitionOnPeriod_ms  = {{250,250,250,250,250}},
+        .transitionOffPeriod_ms = {{250,250,250,250,250}},
+        .offset                 = {{0,0,0,0,0}}
+      };
+      robot.SetBackpackLights(lights);
     }
   }
   

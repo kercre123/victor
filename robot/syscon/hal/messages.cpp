@@ -82,6 +82,10 @@ static void Process_bodyRestart(const RobotInterface::OTA::BodyRestart& msg) {
 }
 
 static void Process_setBodyRadioMode(const SetBodyRadioMode& msg) {
+  if (msg.radioMode == BODY_ACCESSORY_OPERATING_MODE) {
+    Radio::setWifiChannel(msg.wifiChannel);
+  }
+  
   Battery::setOperatingMode(msg.radioMode);
 }
 

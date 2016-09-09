@@ -14,6 +14,7 @@ extern "C"
 {
   #include "mem.h"
   #include "driver/crash.h"
+  #include "client.h"
 }
 
 #define DEBUG_CR 0
@@ -60,13 +61,18 @@ bool Init()
   return true;
 }
 
-void StartSending()
+void TriggerLogSend(u8 index)
 {
-  reportIndex = 0;
+  if (reportIndex == MAX_CRASH_LOGS && index < MAX_CRASH_LOGS)
+  {
+    reportIndex = index;
+  }
+  debug("TriggerLogSend: %d\r\n", reportIndex);
 }
 
-void StartQuerry()
+void StartQuery()
 {
+  crashHandlerShowStatus(); //report what we found at startup
   rtipCrashReadState = RBS_read;
 }
 
@@ -166,6 +172,7 @@ void Update()
       }
     }
     bodyCrashReadState = RBS_erase;
+    
     os_free(bodyCrashLog);
     bodyCrashLog = NULL;
   }
@@ -187,6 +194,7 @@ void Update()
     crashHandlerGetReport(reportIndex, &record);
     if (record.nWritten == 0 && record.nReported != 0)
     {
+      os_printf("Sending crash report %d\r\n",reportIndex);
       RobotInterface::CrashReport report;
       STACK_LEFT(DEBUG_CR);
       report.errorCode = record.errorCode;
@@ -222,15 +230,32 @@ void Update()
       {
         report.dump_length = 0;
       }
-      if (RobotInterface::SendMessage(report))
+      if (clientQueueAvailable() > report.dump_length + LOW_PRIORITY_BUFFER_ROOM)
       {
-        crashHandlerMarkReported(reportIndex);
-        reportIndex++;
+        if (RobotInterface::SendMessage(report))
+        {
+          crashHandlerMarkReported(reportIndex);
+          reportIndex = MAX_CRASH_LOGS;
+        }
+        else
+        {
+          AnkiDebug( 207, "CrashReporter.FailedToSend", 514, "Couldn't send crash report, will retry.", 0);
+          debug("Couldn't send crash report %d, will retry.\r\n", reportIndex);
+        }
       }
-      else
-      {
-        AnkiDebug( 207, "CrashReporter.FailedToSend", 514, "Couldn't send crash report, will retry.", 0);
+      else {
+        debug("No Room for dump:  %d > %d\r\n", report.dump_length, clientQueueAvailable());
       }
+    }
+    else  //not present, or already reported
+    {
+      debug("Skipping Crash record %d: written=%d, unreported=%d\r\n", reportIndex, record.nWritten, record.nReported);
+      RobotInterface::CrashReport report;
+      report.errorCode = 0;
+      report.dump_length = 0;
+      report.which = 0;
+      RobotInterface::SendMessage(report);
+      reportIndex = MAX_CRASH_LOGS;
     }
   } // End sending crash reports to engine
 }

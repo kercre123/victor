@@ -813,7 +813,7 @@ namespace Anki {
       {
         for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {
           u16 color = msg.colors[iLED];
-          BackpackLightController::SetParams(BackpackLightController::BPL_ANIM, iLED, color, color, 0xff, 0, 0, 0);
+          BackpackLightController::SetParams(BackpackLightController::BPL_ANIM, iLED, color, color, 0xff, 0, 0, 0, 0);
         }
         BackpackLightController::EnableLayer(BackpackLightController::BPL_ANIM, true);
       }
@@ -899,13 +899,13 @@ namespace Anki {
         BackpackLightController::SetParams(BackpackLightController::BPL_USER, (LEDId)led,
                                              msg.lights[0].onColor, msg.lights[0].offColor,
                                              msg.lights[0].onFrames, msg.lights[0].offFrames,
-                                             msg.lights[0].transitionOnFrames, msg.lights[0].transitionOffFrames);
+                                             msg.lights[0].transitionOnFrames, msg.lights[0].transitionOffFrames, msg.lights[0].offset);
         
         led = LED_BACKPACK_RIGHT;
         BackpackLightController::SetParams(BackpackLightController::BPL_USER, (LEDId)led,
                                            msg.lights[1].onColor, msg.lights[1].offColor,
                                            msg.lights[1].onFrames, msg.lights[1].offFrames,
-                                           msg.lights[1].transitionOnFrames, msg.lights[1].transitionOffFrames);
+                                           msg.lights[1].transitionOnFrames, msg.lights[1].transitionOffFrames, msg.lights[1].offset);
         
         BackpackLightController::EnableLayer(BackpackLightController::BPL_USER, true);
       }
@@ -916,18 +916,18 @@ namespace Anki {
         BackpackLightController::SetParams(BackpackLightController::BPL_USER, (LEDId)led,
                                            msg.lights[0].onColor, msg.lights[0].offColor,
                                            msg.lights[0].onFrames, msg.lights[0].offFrames,
-                                           msg.lights[0].transitionOnFrames, msg.lights[0].transitionOffFrames);
+                                           msg.lights[0].transitionOnFrames, msg.lights[0].transitionOffFrames, msg.lights[0].offset);
         
         led = LED_BACKPACK_MIDDLE;
         BackpackLightController::SetParams(BackpackLightController::BPL_USER, (LEDId)led,
                                            msg.lights[1].onColor, msg.lights[1].offColor,
                                            msg.lights[1].onFrames, msg.lights[1].offFrames,
-                                           msg.lights[1].transitionOnFrames, msg.lights[1].transitionOffFrames);
+                                           msg.lights[1].transitionOnFrames, msg.lights[1].transitionOffFrames, msg.lights[1].offset);
         led = LED_BACKPACK_BACK;
         BackpackLightController::SetParams(BackpackLightController::BPL_USER, (LEDId)led,
                                            msg.lights[2].onColor, msg.lights[2].offColor,
                                            msg.lights[2].onFrames, msg.lights[2].offFrames,
-                                           msg.lights[2].transitionOnFrames, msg.lights[2].transitionOffFrames);
+                                           msg.lights[2].transitionOnFrames, msg.lights[2].transitionOffFrames, msg.lights[2].offset);
 
         BackpackLightController::EnableLayer(BackpackLightController::BPL_USER, true);
       }

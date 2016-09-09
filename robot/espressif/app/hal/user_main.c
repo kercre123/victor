@@ -40,7 +40,7 @@ static void ICACHE_FLASH_ATTR nv_init_done(const int8_t result)
   // Enable I2SPI start only after clientInit and checkAndClearBootloaderConfig
   i2spiInit();
 
-  os_printf("Application Firmware Init Complete\r\n");
+  os_printf("Application Firmware Init Complete %d\r\n", result);
 }
 
 /** Callback after all the chip system initalization is done.
