@@ -99,7 +99,8 @@ enum int_8 BodyRadioMode
 
 message SetBodyRadioMode
 {
-  BodyRadioMode radioMode
+  BodyRadioMode radioMode,
+  uint_8        wifiChannel = 0
 }
 
 structure PowerState

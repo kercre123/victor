@@ -65,6 +65,7 @@ namespace Radio {
   void setPropLights(const Anki::Cozmo::LightState *state);
   void assignProp(unsigned int slot, uint32_t accessory);
   void setLightGamma(uint8_t gamma);
+  void setWifiChannel(int8_t wifiChannel);
 }
 
 #endif

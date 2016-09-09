@@ -106,7 +106,18 @@ void RadioConnectionStateMachineUpdate()
       case 4:
       {
         SetBodyRadioMode bMsg;
+
+        struct softap_config ap_config;
+        if (wifi_softap_get_config(&ap_config) == false)
+        {
+          bMsg.wifiChannel = 0;
+        }
+        else {
+          bMsg.wifiChannel = ap_config.channel;
+        }
+
         bMsg.radioMode = BODY_ACCESSORY_OPERATING_MODE;
+        
         if (RobotInterface::SendMessage(bMsg)) doRTConnectPhase++;
         // Body will initiate motor calibration after entering accessory mode
         break;
