@@ -15,6 +15,7 @@
 #define COZMO_LIFT_CONTROLLER_H_
 
 #include "anki/types.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -38,33 +39,25 @@ namespace Anki {
       
       // Puts motor in uncalibrated state
       void ClearCalibration();
-
-      // Specifies max velocity and acceleration that SetDesiredHeight() uses.
-      void SetMaxSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2);
-      void GetMaxSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2);
-      
-      // Specify max velocity/acceleration in terms of linear movement instead
-      // of angular adjustment
-      void SetMaxLinearSpeedAndAccel(const f32 max_speed_mm_per_sec, const f32 accel_mm_per_sec2);
       
       f32 GetAngularVelocity();
       
       // TODO: Get rid of SetAngularVelocty?
-      void SetAngularVelocity(const f32 rad_per_sec);
-      
-      // Set speed in terms of height change instead of angular change.
-      void SetLinearVelocity(const f32 mm_per_sec);
+      void SetAngularVelocity(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2 = MAX_LIFT_ACCEL_RAD_PER_S2);
       
       // Command the desired height of the lift
       // If useVPG, the commanded position profile considers current velocity and honors max velocity/acceleration.
       // If not useVPG, desired height_mm is commanded instantaneously.
-      void SetDesiredHeight(f32 height_mm, bool useVPG = true);
+      void SetDesiredHeight(f32 height_mm,
+                            f32 speed_rad_per_sec = MAX_LIFT_SPEED_RAD_PER_S,
+                            f32 accel_rad_per_sec2 = MAX_LIFT_ACCEL_RAD_PER_S2,
+                            bool useVPG = true);
       
       // Command the desired height of the lift
       // duration_seconds:  The time it should take for it to reach the desired height
       // acc_start_frac:    The fraction of duration that it should be accelerating at the start
       // acc_end_frac:      The fraction of duration that it should be slowing down to a stop at the end
-      void SetDesiredHeight(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds);
+      void SetDesiredHeightByDuration(f32 height_mm, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds);
       
       f32 GetDesiredHeight();
       bool IsInPosition();

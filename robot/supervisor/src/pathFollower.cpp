@@ -453,7 +453,7 @@ namespace Anki
         }
 
 #if(DEBUG_PATH_FOLLOWER)
-        AnkiDebug( 351, "PathFollower.Update.DistToPath", 592, "%f mm, %f deg, segRes %d, segType %d, currSeg %d", 5, distToPath_mm_, RAD_TO_DEG(radToPath_), segRes, path_[currPathSegment_].GetType(), currPathSegment_);
+        AnkiDebug( 351, "PathFollower.Update.DistToPath", 592, "%f mm, %f deg, segRes %d, segType %d, currSeg %d", 5, distToPath_mm_, RAD_TO_DEG_F32(radToPath_), segRes, path_[currPathSegment_].GetType(), currPathSegment_);
 #endif
 
         // Go to next path segment if no longer in range of the current one

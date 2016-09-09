@@ -218,7 +218,7 @@ namespace Anki
                  seg.x,
                  seg.y,
                  seg.targetAngle,
-                 RAD_TO_DEG( seg.angleTolerance ),
+                 RAD_TO_DEG_F32( seg.angleTolerance ),
                  GetTargetSpeed(),
                  GetAccel(),
                  GetDecel());

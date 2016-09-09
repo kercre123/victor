@@ -305,7 +305,7 @@ void BehaviorLookInPlaceMemoryMap::CheckIfSectorNeedsVisit(const Robot& robot, i
   
   // calculate offset for index
   const float relativeAngle_deg = GetRelativeAngleOfSectorInDegrees(index);
-  const float centerAngle_deg = RAD_TO_DEG(_startingBodyFacing_rad.ToFloat()) + relativeAngle_deg;
+  const float centerAngle_deg = _startingBodyFacing_rad.getDegrees() + relativeAngle_deg;
   
   const Vec3f& kFwdVector = X_AXIS_3D();
   const Vec3f& kUpVector = Z_AXIS_3D();
@@ -330,7 +330,7 @@ void BehaviorLookInPlaceMemoryMap::CheckIfSectorNeedsVisit(const Robot& robot, i
   
   // log result
   PRINT_CH_INFO("Behaviors", (GetName()).c_str(), "Checked sector %d (at %.2fdeg from %.2f = abs %.2f) [%s]",
-    index, relativeAngle_deg, RAD_TO_DEG(_startingBodyFacing_rad.ToFloat()), centerAngle_deg,
+    index, relativeAngle_deg, _startingBodyFacing_rad.getDegrees(), centerAngle_deg,
     needsVisit ? "YES VISIT" : "NO VISIT" );
 
   // debug render
@@ -370,11 +370,11 @@ void BehaviorLookInPlaceMemoryMap::VisitSector(Robot& robot, const int16_t index
 
   // calculate offset
   const float relativeAngle_deg = GetRelativeAngleOfSectorInDegrees(index);
-  const float bodyTargetAngle_deg = RAD_TO_DEG(_startingBodyFacing_rad.ToFloat()) + relativeAngle_deg;
+  const float bodyTargetAngle_deg = _startingBodyFacing_rad.getDegrees() + relativeAngle_deg;
 
   // log visit
   PRINT_CH_INFO("Behaviors", (GetName()).c_str(), "Visiting sector %d (at %.2fdeg from %.2f = abs %.2f)",
-    index, relativeAngle_deg, RAD_TO_DEG(_startingBodyFacing_rad.ToFloat()), bodyTargetAngle_deg );
+    index, relativeAngle_deg, _startingBodyFacing_rad.getDegrees(), bodyTargetAngle_deg );
   
   // create action and run
   CompoundActionSequential* fullVisitAction = new CompoundActionSequential(robot);

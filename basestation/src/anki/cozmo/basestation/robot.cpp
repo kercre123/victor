@@ -1568,7 +1568,7 @@ void Robot::SetHeadAngle(const f32& angle)
   if (!IsValidHeadAngle(angle, &_currentHeadAngle)) {
     PRINT_NAMED_WARNING("Robot.GetCameraHeadPose.HeadAngleOOB",
                         "Angle %.3frad / %.1f (TODO: Send correction or just recalibrate?)\n",
-                        angle, RAD_TO_DEG(angle));
+                        angle, RAD_TO_DEG_F32(angle));
   }
       
   _visionComponentPtr->GetCamera().SetPose(GetCameraPose(_currentHeadAngle));

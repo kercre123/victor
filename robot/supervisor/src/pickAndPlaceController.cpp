@@ -254,42 +254,41 @@ namespace Anki {
             AnkiDebug( 14, "PAP", 120, "SETTING LIFT PREDOCK (action %d)", 1, action_);
 #endif
             mode_ = MOVING_LIFT_PREDOCK;
-            LiftController::SetMaxSpeedAndAccel(DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
             switch(action_) {
               case DA_PICKUP_LOW:
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
                 dockOffsetDistX_ = ORIGIN_TO_LOW_LIFT_DIST_MM;
                 break;
               case DA_PICKUP_HIGH:
                 // This action starts by lowering the lift and tracking the high block
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
                 dockOffsetDistX_ = ORIGIN_TO_HIGH_LIFT_DIST_MM;
                 break;
               case DA_PLACE_LOW:
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
                 dockOffsetDistX_ += ORIGIN_TO_LOW_LIFT_DIST_MM;
                 break;
               case DA_PLACE_LOW_BLIND:
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
                 break;
               case DA_PLACE_HIGH:
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
                 dockOffsetDistX_ += ORIGIN_TO_HIGH_PLACEMENT_DIST_MM;
                 break;
               case DA_ROLL_LOW:
               case DA_DEEP_ROLL_LOW:
               case DA_POP_A_WHEELIE:
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
                 dockOffsetDistX_ = ORIGIN_TO_LOW_ROLL_DIST_MM;
                 break;
               case DA_ALIGN:
                 break;
               case DA_RAMP_ASCEND:
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
                 dockOffsetDistX_ = 0;
                 break;
               case DA_RAMP_DESCEND:
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
                 dockOffsetDistX_ = 30; // can't wait until we are actually on top of the marker to say we're done!
                 break;
               case DA_CROSS_BRIDGE:
@@ -482,14 +481,14 @@ namespace Anki {
               case DA_PLACE_LOW:
               case DA_PLACE_LOW_BLIND:
               {
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
                 transitionTime_ = HAL::GetTimeStamp() + START_BACKOUT_PLACE_LOW_TIMEOUT_MS;
                 break;
               }
               case DA_PICKUP_LOW:
               case DA_PICKUP_HIGH:
               {
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
                 
                 // When a block is picked up we want an "animation" to play where Cozmo moves forwards and backwards
                 // a little bit while picking up the block, gives a sense of momentum
@@ -514,7 +513,7 @@ namespace Anki {
               }
               case DA_PLACE_HIGH:
               {
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK);
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_HIGHDOCK, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
                 transitionTime_ = HAL::GetTimeStamp() + START_BACKOUT_PLACE_HIGH_TIMEOUT_MS;
                 break;
               }
@@ -524,16 +523,18 @@ namespace Anki {
                 ProxSensors::EnableCliffDetector(false);
                 IMUFilter::EnablePickupDetect(false);
 
+                // TODO: Can these be replaced with DEFAULT_LIFT_SPEED_RAD_PER_SEC and DEFAULT_LIFT_ACCEL_RAD_PER_SEC2?
+                const f32 LIFT_SPEED_FOR_ROLL = 0.75f;
+                const f32 LIFT_ACCEL_FOR_ROLL = 100.f;
+                
                 if (action_ == DA_DEEP_ROLL_LOW) {
-                  LiftController::SetMaxSpeedAndAccel(0.75, 100);
-                  LiftController::SetDesiredHeight(_rollLiftHeight_mm);
+                  LiftController::SetDesiredHeight(_rollLiftHeight_mm, LIFT_SPEED_FOR_ROLL, LIFT_ACCEL_FOR_ROLL);
                   SteeringController::ExecuteDirectDrive(_rollDriveSpeed_mmps, _rollDriveSpeed_mmps,
                                                          _rollDriveAccel_mmps2, _rollDriveAccel_mmps2);
                   transitionTime_ = HAL::GetTimeStamp() + _rollDriveDuration_ms;
                   mode_ = MOVING_LIFT_FOR_DEEP_ROLL;
                 } else {
-                  LiftController::SetMaxSpeedAndAccel(0.75, 100);
-                  LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+                  LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK, LIFT_SPEED_FOR_ROLL, LIFT_ACCEL_FOR_ROLL);
                   mode_ = MOVING_LIFT_FOR_ROLL;
                 }
                 break;
@@ -541,8 +542,7 @@ namespace Anki {
               case DA_POP_A_WHEELIE:
                 // Move lift down fast and drive forward fast
                 ProxSensors::EnableCliffDetector(false);
-                LiftController::SetMaxSpeedAndAccel(10, 200);         // TODO: Restore these afterwards?
-                LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK, 10, 200);
                 SpeedController::SetUserCommandedAcceleration(100);   // TODO: Restore this accel afterwards?
                 SteeringController::ExecuteDirectDrive(150, 150);
                 transitionTime_ = HAL::GetTimeStamp() + 1000;
@@ -575,8 +575,8 @@ namespace Anki {
               // Thinking this helps the lift scooch forward a bit more to make sure
               // it catches the lip of the corner.
               SteeringController::ExecuteDirectDrive(0, 0);
-              LiftController::SetMaxSpeedAndAccel(_kRollLiftScoochSpeed_rad_per_sec, _kRollLiftScoochAccel_rad_per_sec_2);
-              LiftController::SetDesiredHeight(_rollLiftHeight_mm + _kRollLiftHeightScoochOffset_mm);
+              LiftController::SetDesiredHeight(_rollLiftHeight_mm + _kRollLiftHeightScoochOffset_mm,
+                                               _kRollLiftScoochSpeed_rad_per_sec, _kRollLiftScoochAccel_rad_per_sec_2);
               transitionTime_ = HAL::GetTimeStamp() + _kRollLiftScoochDuration_ms;
               mode_ = MOVING_LIFT_POSTDOCK;
             }
@@ -609,7 +609,7 @@ namespace Anki {
                 case DA_DEEP_ROLL_LOW:
                 case DA_ROLL_LOW:
                 {
-                  LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+                  LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
                 
                   #ifdef SIMULATOR
                   // Prevents lift from attaching to block right after a roll
@@ -633,8 +633,6 @@ namespace Anki {
               // Switch to BACKOUT
               StartBackingOut();
               
-              LiftController::SetMaxSpeedAndAccel(DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
-
             } // if (LiftController::IsInPosition())
             break;
 
@@ -731,7 +729,7 @@ namespace Anki {
           case ROTATE_FOR_CHARGER_APPROACH:
             if (SteeringController::GetMode() != SteeringController::SM_POINT_TURN) {
               // Move lift up, otherwise it drags on the ground when the robot gets on the ramp
-              LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK + 15);
+              LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK + 15, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
 
               // Start backing into charger
               SteeringController::ExecuteDirectDrive(-30, -30);

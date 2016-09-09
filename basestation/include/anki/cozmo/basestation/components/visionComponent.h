@@ -384,8 +384,8 @@ struct DockingErrorSignal;
   inline void VisionComponent::GetMarkerDetectionTurnSpeedThresholds(f32& bodyTurnSpeedThresh_degPerSec,
                                                                      f32& headTurnSpeedThresh_degPerSec) const
   {
-    bodyTurnSpeedThresh_degPerSec = RAD_TO_DEG(_markerDetectionBodyTurnSpeedThreshold_radPerSec);
-    headTurnSpeedThresh_degPerSec = RAD_TO_DEG(_markerDetectionHeadTurnSpeedThreshold_radPerSec);
+    bodyTurnSpeedThresh_degPerSec = RAD_TO_DEG_F32(_markerDetectionBodyTurnSpeedThreshold_radPerSec);
+    headTurnSpeedThresh_degPerSec = RAD_TO_DEG_F32(_markerDetectionHeadTurnSpeedThreshold_radPerSec);
   }
   
   inline void VisionComponent::StoreNextImageForCameraCalibration() {

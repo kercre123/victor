@@ -627,7 +627,7 @@ namespace Cozmo {
         _groundPlaneHomographyLUT[headAngle_rad] = H;
       } else {
         PRINT_CH_INFO("VisionComponent", "PopulateGroundPlaneHomographyLUT.MaxHeadAngleReached",
-                         "Stopping at %.1fdeg", RAD_TO_DEG(headAngle_rad));
+                         "Stopping at %.1fdeg", RAD_TO_DEG_F32(headAngle_rad));
         break;
       }
     }
@@ -646,7 +646,7 @@ namespace Cozmo {
     if(iter == _groundPlaneHomographyLUT.end()) {
       PRINT_NAMED_WARNING("VisionComponent.LookupGroundPlaneHomography.KeyNotFound",
                           "Failed to find homogrphay using headangle of %.2frad (%.1fdeg) as lower bound",
-                          atHeadAngle, RAD_TO_DEG(atHeadAngle));
+                          atHeadAngle, RAD_TO_DEG_F32(atHeadAngle));
       --iter;
     } else {
       auto nextIter = iter; ++nextIter;

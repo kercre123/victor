@@ -671,7 +671,7 @@ namespace Anki {
                        _goalPoses.back().GetTranslation().x(),
                        _goalPoses.back().GetTranslation().y(),
                        _goalPoses.back().GetTranslation().z(),
-                       RAD_TO_DEG(_goalPoses.back().GetRotationAngle<'Z'>().ToFloat()));
+                       _goalPoses.back().GetRotationAngle<'Z'>().getDegrees());
       
       _isGoalSet = true;
       

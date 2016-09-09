@@ -23,6 +23,7 @@
 #define COZMO_HEAD_CONTROLLER_H_
 
 #include "anki/types.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -43,20 +44,21 @@ namespace Anki {
       void Disable();
       
       // TODO: Do we want to keep SetAngularVelocity?
-      void SetAngularVelocity(const f32 rad_per_sec);
-
-      // Specifies max velocity and acceleration that SetDesiredAngle() uses.
-      void SetMaxSpeedAndAccel(const f32 max_speed_rad_per_sec, const f32 accel_rad_per_sec2);
-      void GetMaxSpeedAndAccel(f32 &max_speed_rad_per_sec, f32 &accel_rad_per_sec2);
+      void SetAngularVelocity(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2 = MAX_HEAD_ACCEL_RAD_PER_S2);
       
       // Set the desired angle of head
-      void SetDesiredAngle(f32 angle);
+      // If useVPG, the commanded position profile considers current velocity and honors max velocity/acceleration.
+      // If not useVPG, desired angle is commanded instantaneously.
+      void SetDesiredAngle(f32 angle_rad,
+                           f32 speed_rad_per_sec = MAX_HEAD_SPEED_RAD_PER_S,
+                           f32 accel_rad_per_sec2 = MAX_HEAD_ACCEL_RAD_PER_S2,
+                           bool useVPG = true);
       
       // Set the desired angle of head
       // duration_seconds:  The time it should take for it to reach the desired angle
       // acc_start_frac:    The fraction of duration that it should be accelerating at the start
       // acc_end_frac:      The fraction of duration that it should be slowing down to a stop at the end
-      void SetDesiredAngle(f32 angle, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds);
+      void SetDesiredAngleByDuration(f32 angle_rad, f32 acc_start_frac, f32 acc_end_frac, f32 duration_seconds);
       
       f32 GetAngularVelocity();
       

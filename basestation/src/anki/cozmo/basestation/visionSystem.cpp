@@ -1882,7 +1882,7 @@ namespace Cozmo {
           } else if(temp.z() <= 0.f) {
             PRINT_NAMED_WARNING("VisionSystem.DetectMotion.BadProjectedZ",
                                 "z<=0 (%f) when projecting motion centroid to ground. Bad homography at head angle %.3fdeg?",
-                                temp.z(), RAD_TO_DEG(_poseData.poseStamp.GetHeadAngle()));
+                                temp.z(), RAD_TO_DEG_F32(_poseData.poseStamp.GetHeadAngle()));
             // Don't report this centroid
             groundRegionArea = 0.f;
             groundPlaneCentroid = 0.f;
