@@ -745,7 +745,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   static int setBodyModeTicDelay = 3;
   if (!_isBodyInAccessoryMode && ++setBodyModeTicDelay >= 3) {
     PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.SettingBodyModeHack", "Shouldn't need to do this, but for some reason body's not in the correct mode");
-    SendMessage(RobotInterface::EngineToRobot(SetBodyRadioMode(BodyRadioMode::BODY_ACCESSORY_OPERATING_MODE)));
+    SendMessage(RobotInterface::EngineToRobot(SetBodyRadioMode(BodyRadioMode::BODY_ACCESSORY_OPERATING_MODE, 0)));
     setBodyModeTicDelay = 0;
   }
   // ==========================================================================
