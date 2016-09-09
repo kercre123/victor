@@ -42,11 +42,11 @@
     },
     {
       "CladEvent": "CubeMovedSense",
-      "AnimName": "ag_reacttocliff_huh_01"
+      "AnimName": "ag_reacttoblock_blockpickup_01"
     },
     {
       "CladEvent": "CubeMovedUpset",
-      "AnimName": "ag_reacttocliff_pickup"
+      "AnimName": "ag_reacttoblock_blockgone_01"
     },
     {
       "CladEvent": "CubePounceFake",

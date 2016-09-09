@@ -34,6 +34,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <float.h>
+
 
 namespace Anki {
 namespace Cozmo {
@@ -53,6 +55,8 @@ namespace ExternalInterface {
 class BehaviorManagerMessageUnion;
 }
 
+static const f32 kIgnoreDefaultHeandAndLiftState = FLT_MAX;
+  
 class BehaviorManager
 {
 public:
@@ -179,6 +183,10 @@ private:
   void SendDasTransitionMessage(IBehavior* oldBehavior, IBehavior* newBehavior);
   
   void AddReactionaryBehavior(IReactionaryBehavior* behavior);
+  
+  // Allow unity to set head angles and lift heights to preserve after reactionary behaviors
+  void SetDefaultHeadAndLiftState(bool enable, f32 headAngle, f32 liftHeight);
+  bool AreDefaultHeandAndLiftStateSet() { return _defaultHeadAngle != kIgnoreDefaultHeandAndLiftState;}
 
   // check if there is a matching reactionary behavior which wants to run for the given event, and switch to
   // it if so
@@ -193,6 +201,10 @@ private:
   bool _isInitialized = false;
     
   Robot& _robot;
+  
+  // Set by unity to preserve the heand and lift angle after reactionary behaviors
+  f32 _defaultHeadAngle;
+  f32 _defaultLiftHeight;
   
   // - - - - - - - - - - - - - - -
   // current running behavior

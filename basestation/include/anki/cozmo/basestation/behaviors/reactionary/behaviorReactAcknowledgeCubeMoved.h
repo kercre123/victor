@@ -47,6 +47,9 @@ protected:
   virtual void StopInternalReactionary(Robot& robot) override;
   virtual Result InitInternalReactionary(Robot& robot) override;
   
+  // allows the reaction to interrupt itself
+  virtual IBehavior::Status UpdateInternal(Robot& robot) override;
+  
   
 private:
   enum class State {

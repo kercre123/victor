@@ -308,6 +308,14 @@ public class MockRobot : IRobot {
     QueueCallback(0.1f, callback);
   }
 
+
+  public void SetDefaultHeadAndLiftState(bool enable, float headAngleFactor, float liftHeight) {
+    if (enable) {
+      HeadAngle = headAngleFactor;
+      LiftHeight = liftHeight;
+    }
+  }
+
   private float _RobotVolume = 0f;
 
   public void SetRobotVolume(float volume) {

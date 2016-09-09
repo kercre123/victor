@@ -54,6 +54,10 @@ BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Val
   
 bool BehaviorReactToOnCharger::IsRunnableInternalReactionary(const Robot& robot) const
 {
+  // assumes it's not possible to be OnCharger without being OnChargerPlatform
+  ASSERT_NAMED(robot.IsOnChargerPlatform() || !robot.IsOnCharger(),
+               "BehaviorDriveOffCharger.IsRunnableInternal.InconsistentChargerFlags");
+  
   return _isOnCharger;
 }
 

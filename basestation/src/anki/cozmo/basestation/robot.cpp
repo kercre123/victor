@@ -1108,6 +1108,24 @@ Result Robot::Update(bool ignoreVisionModes)
       
   // update the memory map based on the current's robot pose
   _blockWorld.UpdateRobotPoseInMemoryMap();
+  
+  
+  
+  // Update ChargerPlatform - this has to happen before the behaviors which might need this information
+  ObservableObject* charger = GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger);
+  if( charger && charger->IsPoseStateKnown() && _offTreadsState == OffTreadsState::OnTreads)
+  {
+    // This state is useful for knowing not to play a cliff react when just driving off the charger.
+    bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());
+    if( isOnChargerPlatform != _isOnChargerPlatform)
+    {
+      _isOnChargerPlatform = isOnChargerPlatform;
+      Broadcast(
+         ExternalInterface::MessageEngineToGame(
+           ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform))
+                );
+    }
+  }
       
   ///////// Update the behavior manager ///////////
       
@@ -1428,21 +1446,6 @@ Result Robot::Update(bool ignoreVisionModes)
   {
     SendDebugString(buffer);
     _lastDebugStringHash = curr_hash;
-  }
-      
-  // Update ChargerPlatform
-  ObservableObject* charger = GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger);
-  if( nullptr != charger && charger->IsPoseStateKnown() && _offTreadsState == OffTreadsState::OnTreads)
-  {
-    // This state is useful for knowing not to play a cliff react when just driving off the charger.
-    bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());
-    if( isOnChargerPlatform != _isOnChargerPlatform)
-    {
-      _isOnChargerPlatform = isOnChargerPlatform;
-      Broadcast(
-        ExternalInterface::MessageEngineToGame(
-          ExternalInterface::RobotOnChargerPlatformEvent(_isOnChargerPlatform)));
-    }
   }
 
   _lightsComponent->Update();

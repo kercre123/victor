@@ -53,9 +53,7 @@ namespace FaceEnrollment {
 
     protected override void InitializeGame(MinigameConfigBase minigameConfig) {
       // make cozmo look up
-      CurrentRobot.SetHeadAngle(CozmoUtil.kIdealFaceViewHeadValue);
-      CurrentRobot.SetLiftHeight(0.0f);
-      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotOffTreadsStateChanged>(HandleOffTredsStateChanged);
+      CurrentRobot.SetDefaultHeadAndLiftState(true, CozmoUtil.kIdealFaceViewHeadValue, 0.0f);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(HandleEnrolledFace);
       CurrentRobot.OnEnrolledFaceRemoved += HandleEraseEnrolledFace;
@@ -89,13 +87,6 @@ namespace FaceEnrollment {
         if (_FixedFaceID == message.oldID) {
           _FixedFaceID = message.newID;
         }
-      }
-    }
-
-    private void HandleOffTredsStateChanged(Anki.Cozmo.ExternalInterface.RobotOffTreadsStateChanged message) {
-      if (message.treadsState == Anki.Cozmo.OffTreadsState.OnTreads) {
-        // make cozmo look up after response to back
-        CurrentRobot.SetHeadAngle(CozmoUtil.kIdealFaceViewHeadValue);
       }
     }
 
@@ -416,8 +407,9 @@ namespace FaceEnrollment {
 
     protected override void CleanUpOnDestroy() {
       SharedMinigameView.HideGameStateSlide();
+      // turn the default head and lift state off
+      CurrentRobot.SetDefaultHeadAndLiftState(false, 0.0f, 0.0f);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(HandleEnrolledFace);
-      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotOffTreadsStateChanged>(HandleOffTredsStateChanged);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
       if (CurrentRobot != null) {
         CurrentRobot.OnEnrolledFaceRemoved -= HandleEraseEnrolledFace;
