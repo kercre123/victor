@@ -33,7 +33,7 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
     _ShowMeButton.Initialize(HandleShowMeButton, "show_me_button", "search_for_cozmo_failed_screen");
     _GetACozmoButton.Initialize(HandleGetACozmoButton, "get_a_cozmo_button", "search_for_cozmo_failed_screen");
 
-    Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Fail);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Fail);
 
     var persistence = DataPersistence.DataPersistenceManager.Instance;
     var lastCozmoSerial = persistence.Data.DeviceSettings.LastCozmoSerial;
