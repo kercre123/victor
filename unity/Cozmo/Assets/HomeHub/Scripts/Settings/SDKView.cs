@@ -66,9 +66,9 @@ namespace Cozmo.Settings {
 
     private void HandleSDKMessageReceived(Anki.Cozmo.ExternalInterface.SdkStatus message) {
 
-      _SDKMessageOutput.text = Localization.GetWithArgs(LocalizationKeys.kSettingsSdkPanelModeDuration,
+      _SDKMessageOutput.text = Localization.GetWithArgs(LocalizationKeys.kSettingsSdkPanelModeDurationText,
                                                            SecondsToDateTimeString(message.timeInSdkMode_s)) + "\n";
-      _SDKMessageOutput.text += Localization.GetWithArgs(LocalizationKeys.kSettingsSdkPanelProgramsRun,
+      _SDKMessageOutput.text += Localization.GetWithArgs(LocalizationKeys.kSettingsSdkPanelProgramsRunText,
                                                            message.numTimesConnected) + "\n\n";
 
       if (message.timeSinceLastSdkMessage_s >= 0.0f) {
@@ -83,9 +83,9 @@ namespace Cozmo.Settings {
       if (message.connectionStatus.isConnected) {
         _ConnectionStatusLabel.text = Localization.Get(LocalizationKeys.kSettingsSdkPanelSdkConnectedText);
 
-        _SDKMessageOutput.text += Localization.GetWithArgs(LocalizationKeys.kSettingsSdkPanelConnectionDuration,
+        _SDKMessageOutput.text += Localization.GetWithArgs(LocalizationKeys.kSettingsSdkPanelConnectionDurationText,
                                                            SecondsToDateTimeString(message.connectionStatus.timeInCurrentConnection_s)) + "\n";
-        _SDKMessageOutput.text += Localization.GetWithArgs(LocalizationKeys.kSettingsSdkPanelConnectionCommandCount,
+        _SDKMessageOutput.text += Localization.GetWithArgs(LocalizationKeys.kSettingsSdkPanelConnectionCommandCountText,
                                                            message.connectionStatus.numCommands) + "\n";
 
         if (message.timeSinceLastSdkCommand_s >= 0.0f) {
@@ -110,7 +110,7 @@ namespace Cozmo.Settings {
       else {
         _ConnectionStatusLabel.text = Localization.Get(LocalizationKeys.kSettingsSdkPanelSdkNotConnectedText);
         if (message.connectionStatus.isWrongSdkVersion) {
-          _SDKMessageOutput.text += Localization.Get(LocalizationKeys.kSettingsSdkPanelWrongVersion) + "\n";
+          _SDKMessageOutput.text += Localization.Get(LocalizationKeys.kSettingsSdkPanelWrongVersionText) + "\n";
         }
       }
 

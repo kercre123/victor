@@ -108,6 +108,12 @@
   "onboarding.Slide0a": {
     "translation": "Put Cozmo on a clean, open table in a well lit room"
   },
+  "onboarding.GreatPlaySpace2Header": {
+    "translation": "Keep Cozmo Safe"
+  },
+  "onboarding.GreatPlaySpace2Footer": {
+    "translation": "Cozmo will try to avoid falling, but just like a pet, he might need your help."
+  },
   "onboarding.OldRobotSkip": {
     "translation": "This Cozmo has already been through the Tutorial. Would you like to Skip it, or Start it again?"
   },
