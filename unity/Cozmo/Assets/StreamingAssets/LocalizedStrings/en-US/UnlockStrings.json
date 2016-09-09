@@ -126,17 +126,14 @@
   "sparks.Sparked": {
     "translation": "COZMO IS SPARKED: {0}"
   },
-  "sparks.PressAndHold": {
-    "translation": "Press and hold to ask Cozmo to do this."
+  "sparks.Press": {
+    "translation": "Press to ask Cozmo to do this."
   },
   "sparks.Spark": {
     "translation": "Feed Sparks"
   },
   "unlockable.Unavailable.Description": {
     "translation": "Unlock more upgrades before you can unlock {0}."
-  },
-  "sparks.Spark.Cost": {
-    "translation": "Use {0} {1} to Spark Cozmo"
   },
   "sparks.Spark.ConfirmQuit": {
     "translation": "Are you sure?"

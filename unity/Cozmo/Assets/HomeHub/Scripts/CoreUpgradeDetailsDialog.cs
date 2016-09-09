@@ -130,7 +130,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
         _RequestTrickButtonContainer.gameObject.SetActive(true);
         _FragmentInventoryContainer.gameObject.SetActive(false);
         _SparksInventoryContainer.gameObject.SetActive(true);
-        UpdateAvailableCostLabels(unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksSpark, LocalizationKeys.kSparksSparkCost);
+        UpdateAvailableCostLabels(unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksSpark, LocalizationKeys.kSparksPress);
         SetupButton(_RequestTrickButton, StartSparkUnlock, "request_trick_button",
                     unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, _SparksInventoryLabel, true);
         RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.SparkEnded>(HandleSparkEnded);
@@ -227,7 +227,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
       if (UnlockablesManager.Instance.IsUnlocked(_UnlockInfo.Id.Value)) {
         _RequestTrickButton.Interactable = playerInventory.CanRemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
-        UpdateAvailableCostLabels(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksSpark, LocalizationKeys.kSparksSparkCost);
+        UpdateAvailableCostLabels(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksSpark, LocalizationKeys.kSparksPress);
       }
       else if (UnlockablesManager.Instance.IsUnlockableAvailable(_UnlockInfo.Id.Value)) {
         _UnlockUpgradeButton.Interactable = playerInventory.CanRemoveItemAmount(_UnlockInfo.UpgradeCostItemId, _UnlockInfo.UpgradeCostAmountNeeded);
