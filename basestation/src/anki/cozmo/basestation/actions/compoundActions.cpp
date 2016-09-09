@@ -53,6 +53,17 @@ namespace Anki {
     
     void ICompoundAction::AddAction(IActionRunner* action, bool ignoreFailure, bool emitCompletionSignal)
     {
+      ShouldIgnoreFailureFcn fcn = nullptr;
+      if(ignoreFailure)
+      {
+        fcn = [](ActionResult, const IActionRunner*) -> bool { return true; };
+      }
+      
+      AddAction(action, fcn, emitCompletionSignal);
+    }
+    
+    void ICompoundAction::AddAction(IActionRunner* action, ShouldIgnoreFailureFcn fcn, bool emitCompletionSignal)
+    {
       std::string name = GetName();
       if(_actions.empty()) {
         name = "["; // initialize with opening bracket for first action
@@ -77,8 +88,8 @@ namespace Anki {
       
       SetName(name);
       
-      if(ignoreFailure) {
-        _ignoreFailure.insert(action);
+      if(fcn != nullptr) {
+        _ignoreFailure[action] = fcn;
       }
     }
     
@@ -156,10 +167,19 @@ namespace Anki {
     }
 
     
-    bool ICompoundAction::ShouldIgnoreFailure(IActionRunner* action) const
+    bool ICompoundAction::ShouldIgnoreFailure(ActionResult result, const IActionRunner* action) const
     {
       // We should ignore this action's failure if it's in our ignore set
-      return _ignoreFailure.find(action) != _ignoreFailure.end();
+      auto fcnIter = _ignoreFailure.find(action);
+      if(fcnIter == _ignoreFailure.end())
+      {
+        // There's no ignore function, so assume we should _not_ ignore failures
+        return false;
+      }
+      else
+      {
+        return fcnIter->second(result, action);
+      }
     }
     
     void ICompoundAction::SetProxyTag(u32 tag)
@@ -349,7 +369,7 @@ namespace Anki {
               if(USE_ACTION_CALLBACKS) {
                 RunCallbacks(subResult);
               }
-              if(ShouldIgnoreFailure(*_currentAction)) {
+              if(ShouldIgnoreFailure(subResult, *_currentAction)) {
                 // We are ignoring this action's failures, so just move to next action
                 PRINT_NAMED_INFO("CompoundActionSequential.UpdateInternal",
                                  "Ignoring failure for %s[%d] moving to next action",
@@ -448,7 +468,7 @@ namespace Anki {
             if(USE_ACTION_CALLBACKS) {
               RunCallbacks(subResult);
             }
-            if(ShouldIgnoreFailure(*currentAction)) {
+            if(ShouldIgnoreFailure(subResult, *currentAction)) {
               // Ignore the fact that this action failed and just delete it
               (*currentAction)->PrepForCompletion(); // Just in case we were cancelled
               StoreUnionAndDelete(currentAction);

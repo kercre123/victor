@@ -155,6 +155,8 @@ namespace Anki {
                                     std::vector<Pose3d>& possiblePoses,
                                     bool& alreadyInPosition);
       
+      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
+      
     protected:
       
       virtual ActionResult Init() override;
@@ -177,11 +179,13 @@ namespace Anki {
       bool                       _doPositionCheckOnPathCompletion;
       
       PathMotionProfile          _pathMotionProfile;
-      bool _hasMotionProfile = false;
+      bool                       _hasMotionProfile = false;
       
     private:
       GetPossiblePosesFunc _getPossiblePosesFunc;
       bool _lightsSet = false;
+      ObjectInteractionResult _interactionResult = ObjectInteractionResult::UNKNOWN_PROBLEM;
+      
     }; // DriveToObjectAction
 
   

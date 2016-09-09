@@ -70,6 +70,11 @@ namespace Cozmo {
         if (_TransitionAnimation != null) {
           _TransitionAnimation.Kill();
         }
+
+        // make sure we re-enable touch events in case this gets killed before animation finish callbacks are invoked.
+        if (UIManager.Instance != null) {
+          UIManager.EnableTouchEvents();
+        }
       }
 
       private bool _UserClosedView = false;

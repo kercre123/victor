@@ -51,7 +51,9 @@ namespace Anki {
         void Mask(u64* frame, const u64 mask);
         void Invert(u64* frame);
         bool Number(u64* frame, int digits, u32 value, int x, int y);
+        bool NumberTiny(u64* frame, int digits, u32 value, int x, int y);
         bool Print(u64* frame, const char* text, const int characters, const int x, const int y);
+        bool PrintSmall(u64* frame, const char* text, const int characters, int x, int y);
         void Flip(u64* frame);
       }
 

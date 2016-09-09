@@ -91,6 +91,11 @@ protected:
   // time the object was observed
   void RobotReactedToId(const Robot& robot, s32 id);
   
+  // handle delocalized message
+  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override final;
+  virtual void AlwaysHandlePoseBasedInternal(const EngineToGameEvent& event, const Robot& robot) {};
+
+  
 private:
 
   using super = IReactionaryBehavior;

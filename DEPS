@@ -18,7 +18,7 @@
             },
             "cozmosoundbanks": {
                 "package_name": "GeneratedSoundBanks.tar.gz",
-                "version": "79"
+                "version": "80"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"
@@ -33,18 +33,18 @@
                 "version": "151"
             },
             "firmware": {
+                "build_id": "25239",
+                "build_type_id": "CozmoOne_Experiments_CollectFirmware",
+                "extension": "tar.gz",
+                "package_name": "firmware",
+                "version": "503"
+            },
+            "old_firmware": {
                 "build_id": "25120",
                 "build_type_id": "CozmoOne_Experiments_CollectFirmware",
                 "extension": "tar.gz",
                 "package_name": "firmware",
                 "version": "496"
-            },
-            "old_firmware": {
-                "build_id": "25105",
-                "build_type_id": "CozmoOne_Experiments_CollectFirmware",
-                "extension": "tar.gz",
-                "package_name": "firmware",
-                "version": "494"
             }
         },
         "default_usr": "puller_cozmo",

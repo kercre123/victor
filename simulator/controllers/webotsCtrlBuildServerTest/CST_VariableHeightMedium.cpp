@@ -89,8 +89,10 @@ namespace Anki {
             m.position = QueueActionPosition::NOW;
             m.idTag = 1;
             m.numRetries = 3;
-            // Pickup object 0
-            m.action.Set_pickupObject(ExternalInterface::PickupObject(1, motionProfile6, 0, false, true, false));
+            // Pickup object with type LIGHTCUBE2
+            auto objectsWithType = GetAllObjectIDsByFamilyAndType(ObjectFamily::LightCube, ObjectType::Block_LIGHTCUBE2);
+            CST_ASSERT(objectsWithType.size()==1, "Expecting 1 object of type LIGHTCUBE2");
+            m.action.Set_pickupObject(ExternalInterface::PickupObject(objectsWithType.front(), motionProfile6, 0, false, true, false));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);

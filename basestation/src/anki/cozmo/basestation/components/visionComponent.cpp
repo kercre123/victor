@@ -1289,7 +1289,7 @@ namespace Cozmo {
   
   Result VisionComponent::UpdateImageQuality(const VisionProcessingResult& procResult)
   {
-    if(procResult.imageQuality == ImageQuality::Unchecked)
+    if(!_robot.IsPhysical() || procResult.imageQuality == ImageQuality::Unchecked)
     {
       // Nothing to do
       return RESULT_OK;

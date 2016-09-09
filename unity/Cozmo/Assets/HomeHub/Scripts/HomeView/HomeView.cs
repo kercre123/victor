@@ -168,7 +168,8 @@ namespace Cozmo.HomeHub {
     public bool HomeViewCurrentlyOccupied {
       get {
         return (_RequestDialog != null || _LootViewInstance != null || _BadLightDialog != null ||
-                _HomeHubInstance.IsChallengeDetailsActive || RewardSequenceActive);
+                _HelpViewInstance != null || _HomeHubInstance.IsChallengeDetailsActive ||
+                RewardSequenceActive || PauseManager.Instance.IsAnyDialogOpen);
       }
     }
     public Transform TabButtonContainer {
@@ -450,6 +451,7 @@ namespace Cozmo.HomeHub {
       if (RewardedActionManager.Instance.RewardPending || DailyGoalManager.Instance.GoalsPending) {
         // If Rewards are pending, set sequence to active, shut down input until everything is done
         StartCoroutine(BurstEnergyAfterInit());
+        UIManager.DisableTouchEvents();
       }
       else {
         // Otherwise set minigame need and update chest progress bar to whatever it should be at as
@@ -606,6 +608,7 @@ namespace Cozmo.HomeHub {
       else {
         HandleChestGained();
       }
+      UIManager.EnableTouchEvents();
     }
     // If we earned a chest, have the progress bar reflect the previous requirement level at full.
     private void HandleChestGained() {
@@ -635,8 +638,11 @@ namespace Cozmo.HomeHub {
 
 
     private void HandleAskForMinigame(object messageObject) {
-      if (HomeViewCurrentlyOccupied) {
-        // Avoid dupes
+      if (HomeViewCurrentlyOccupied || _CurrentTab == HomeTab.Settings) {
+        // Avoid dupes or conflicting popups
+        // Don't request games in Settings tab to avoid
+        // being disruptive to SDK users and those changing
+        // settings.
         return;
       }
 

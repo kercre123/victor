@@ -53,7 +53,7 @@ protected:
 
   virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
 
-  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
+  virtual void AlwaysHandlePoseBasedInternal(const EngineToGameEvent& event, const Robot& robot) override;
   
 private:
   

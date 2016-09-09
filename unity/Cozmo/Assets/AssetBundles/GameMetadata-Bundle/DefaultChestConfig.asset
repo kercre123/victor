@@ -26,4 +26,4 @@ MonoBehaviour:
   - ItemId: treat
     LadderLevels:
     - Level: 0
-      Value: 5
+      Value: 10
