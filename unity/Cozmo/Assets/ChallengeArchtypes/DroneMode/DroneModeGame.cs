@@ -38,6 +38,8 @@ namespace Cozmo {
 
           // for some reason this became a reactionary behavior but isn't named like one...
           _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.KnockOverCubes);
+          // this one too!
+          _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.CantHandleTallStack);
         }
 
         private void InitializeStateMachine() {

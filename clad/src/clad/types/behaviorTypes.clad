@@ -61,6 +61,7 @@ enum uint_8 BehaviorType {
   DrivePath,
   ReactToUnexpectedMovement,
   PickUpCube,
+  CantHandleTallStack,
   OnboardingShowCube,
 
   Count

@@ -50,6 +50,7 @@
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnFace.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnSide.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToUnexpectedMovement.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorCantHandleTallStack.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramid.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorKnockOverCubes.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorLookAround.h"
@@ -298,6 +299,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::ReactToFrustration:
     {
       newBehavior = new BehaviorReactToFrustration(robot, config);
+      break;
+    }
+    case BehaviorType::CantHandleTallStack:
+    {
+      newBehavior = new BehaviorCantHandleTallStack(robot, config);
       break;
     }
     case BehaviorType::OnboardingShowCube:

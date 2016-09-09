@@ -370,6 +370,7 @@ void BehaviorOnboardingShowCube::EnableSpecificReactionaryBehavior(Robot& robot,
   robot.GetBehaviorManager().RequestEnableReactionaryBehavior("onboarding", BehaviorType::ReactToCubeMoved, enable);
   robot.GetBehaviorManager().RequestEnableReactionaryBehavior("onboarding", BehaviorType::ReactToFrustration, enable);
   robot.GetBehaviorManager().RequestEnableReactionaryBehavior("onboarding", BehaviorType::KnockOverCubes, enable);
+  robot.GetBehaviorManager().RequestEnableReactionaryBehavior("onboarding", BehaviorType::CantHandleTallStack, enable);
 }
 
   
