@@ -86,6 +86,7 @@ public class DifficultySelectOption : MonoBehaviour {
     _Button.gameObject.name = _Data.DifficultyName + "_Button";
     // TODO Change color based on activity vs game
     _Button.PressedTintColor = Cozmo.UI.UIColorPalette.GameToggleColor;
+    _Button.TextPressedColor = Cozmo.UI.UIColorPalette.SelectedTextColor;
 
     _DisabledIcon.gameObject.SetActive(_IsLocked);
   }

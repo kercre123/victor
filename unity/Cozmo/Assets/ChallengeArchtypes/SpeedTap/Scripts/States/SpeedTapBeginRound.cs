@@ -12,7 +12,6 @@ namespace SpeedTap {
       // with the state machine paused.
       // Ben wants to use the same sound for player tap and for Cozmo tap
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Cube_Cozmo_Tap);
-      ContextManager.Instance.AppHoldStart(anticipation: true);
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
 
       // Show wide slide
@@ -28,16 +27,10 @@ namespace SpeedTap {
     }
 
     private void HandleBannerAnimationEnd() {
-      ContextManager.Instance.AppHoldEnd();
       _SpeedTapGame.SharedMinigameView.HideGameStateSlide();
       _SpeedTapGame.ResetScore();
-      ContextManager.Instance.ShowForeground();
       _StateMachine.SetNextState(new SpeedTapHandCubesOff());
     }
 
-    public override void Exit() {
-      base.Exit();
-      _SpeedTapGame.SharedMinigameView.ShowShelf();
-    }
   }
 }

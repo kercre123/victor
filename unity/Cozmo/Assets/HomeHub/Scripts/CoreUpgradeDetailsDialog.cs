@@ -335,7 +335,6 @@ public class CoreUpgradeDetailsDialog : BaseView {
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Spark_Launch);
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Spark);
     RobotEngineManager.Instance.CurrentRobot.EnableSparkUnlock(_UnlockInfo.Id.Value);
-    ContextManager.Instance.AppHoldStart(false);
     UpdateState();
     DataPersistenceManager.Instance.Save();
   }
@@ -345,7 +344,6 @@ public class CoreUpgradeDetailsDialog : BaseView {
     if (RobotEngineManager.Instance.CurrentRobot.IsSparked) {
       RobotEngineManager.Instance.CurrentRobot.StopSparkUnlock();
     }
-    ContextManager.Instance.AppHoldEnd();
     UpdateState();
 
     if (UnlockablesManager.Instance.OnSparkComplete != null) {

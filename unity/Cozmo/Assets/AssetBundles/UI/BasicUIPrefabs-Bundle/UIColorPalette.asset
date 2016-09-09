@@ -12,7 +12,11 @@ MonoBehaviour:
   m_Name: UIColorPalette
   m_EditorClassIdentifier: 
   _CompleteTextColor: {r: 0.38039216, g: 0.6862745, b: 0.019607844, a: 1}
+  _EnergyTextColor: {r: 0.627451, g: 0.9372549, b: 0.23529412, a: 1}
   _NeutralTextColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
+  _SetupTextColor: {r: 0.03137255, g: 0.27058825, b: 0.5372549, a: 1}
+  _MinigameTextColor: {r: 1, g: 1, b: 1, a: 1}
+  _SelectedTextColor: {r: 1, g: 1, b: 1, a: 1}
   _LockedDifficultyBackgroundColor: {r: 0.49411768, g: 0.48627454, b: 0.43529415,
     a: 1}
   _GameSetupColor: {r: 1, g: 1, b: 1, a: 1}

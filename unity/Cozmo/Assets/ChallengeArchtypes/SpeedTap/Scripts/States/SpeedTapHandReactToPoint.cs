@@ -66,6 +66,8 @@ namespace SpeedTap {
         GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Round_End);
 
         _SpeedTapGame.EndCurrentRound();
+        // Hide Current Round in between rounds
+        _SpeedTapGame.SharedMinigameView.InfoTitleText = string.Empty;
 
         if (_SpeedTapGame.IsGameComplete()) {
           UpdateBlockLights(_CurrentWinner, wasMistakeMade: false);

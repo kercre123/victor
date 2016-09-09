@@ -40,7 +40,7 @@ namespace ArtistCozmo {
       string fileName = DateTime.Now.ToString().Replace('/', '-').Replace(' ', '_') + ".jpg";
       File.WriteAllBytes(Path.Combine(folder, fileName), jpg);
 
-      game.StartPointlessGameEnd(true);
+      game.StartBaseGameEnd(true);
     }
 
 

@@ -74,7 +74,7 @@ namespace Minesweeper {
     }
 
     private void WinAnimationComplete(bool success) {
-      _Game.StartPointlessGameEnd(true);
+      _Game.StartBaseGameEnd(true);
     }
 
 
@@ -175,7 +175,7 @@ namespace Minesweeper {
     }
 
     private void LoseAnimationComplete(bool success) {
-      _Game.StartPointlessGameEnd(false);
+      _Game.StartBaseGameEnd(false);
     }
   }
 }

@@ -14,6 +14,7 @@ namespace Cozmo.Minigame.CubePounce {
       _CubePounceGame.SharedMinigameView.HideContinueButton();
       _CubePounceGame.UpdateScoreboard();
       _CubePounceGame.SelectCubeTarget();
+      _CubePounceGame.SharedMinigameView.HideShelf();
 
       _CubePounceGame.SharedMinigameView.HideHowToPlayButton();
 

@@ -141,7 +141,7 @@ public class ContextManager : MonoBehaviour {
     _AppHoldCallbackList.Clear();
   }
 
-  public void ShowForeground(bool disableTouch = false) {
+  public void ShowForeground() {
     if (_ForegroundTweener != null) {
       _ForegroundTweener.Kill();
     }
@@ -149,9 +149,6 @@ public class ContextManager : MonoBehaviour {
     _OverlayForeground.color = transparentDimColor;
     _ForegroundTweener.Append(_OverlayForeground.DOFade(_DefaultSettings.ContextDimAlpha, _DefaultSettings.ContextFlashDuration));
     _ForegroundTweener.Play();
-    if (disableTouch) {
-      UIManager.DisableTouchEvents();
-    }
   }
 
   public void HideForeground() {
@@ -160,7 +157,6 @@ public class ContextManager : MonoBehaviour {
     }
     _ForegroundTweener.Append(_OverlayForeground.DOFade(0.0f, _DefaultSettings.ContextFlashDuration));
     _ForegroundTweener.Play();
-    UIManager.EnableTouchEvents();
   }
 
   // Only Call this during Free Play
