@@ -17,6 +17,9 @@ public class IntroManager : MonoBehaviour {
   private GameObject _FirstTimeConnectDialogInstance;
 
   [SerializeField]
+  private AssetBundleNames _PlatformSpecificAssetBundleName;
+
+  [SerializeField]
   private GameObjectDataLink _CheckInDialogPrefabData;
   private GameObject _CheckInDialogInstance;
 
