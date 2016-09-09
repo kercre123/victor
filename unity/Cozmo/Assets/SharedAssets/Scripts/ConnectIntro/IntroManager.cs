@@ -17,6 +17,9 @@ public class IntroManager : MonoBehaviour {
   private GameObject _FirstTimeConnectDialogInstance;
 
   [SerializeField]
+  private AssetBundleNames _PlatformSpecificAssetBundleName;
+
+  [SerializeField]
   private GameObjectDataLink _CheckInDialogPrefabData;
   private GameObject _CheckInDialogInstance;
 
@@ -125,12 +128,14 @@ public class IntroManager : MonoBehaviour {
   }
 
   private void LoadConnectView(bool assetBundleSuccess) {
-    _FirstTimeConnectDialogPrefabData.LoadAssetData((GameObject connectViewPrefab) => {
-      if (_FirstTimeConnectDialogInstance == null && connectViewPrefab != null) {
-        _FirstTimeConnectDialogInstance = UIManager.CreateUIElement(connectViewPrefab.gameObject);
-        _FirstTimeConnectDialogInstance.GetComponent<FirstTimeConnectDialog>().ConnectionFlowComplete += HandleFirstTimeConnectionFlowComplete;
-        _FirstTimeConnectDialogInstance.GetComponent<FirstTimeConnectDialog>().ConnectionFlowQuit += HandleFirstTimeConnectFlowQuit;
-      }
+    AssetBundleManager.Instance.LoadAssetBundleAsync(_PlatformSpecificAssetBundleName.ToString(), (obj) => {
+      _FirstTimeConnectDialogPrefabData.LoadAssetData((GameObject connectViewPrefab) => {
+        if (_FirstTimeConnectDialogInstance == null && connectViewPrefab != null) {
+          _FirstTimeConnectDialogInstance = UIManager.CreateUIElement(connectViewPrefab.gameObject);
+          _FirstTimeConnectDialogInstance.GetComponent<FirstTimeConnectDialog>().ConnectionFlowComplete += HandleFirstTimeConnectionFlowComplete;
+          _FirstTimeConnectDialogInstance.GetComponent<FirstTimeConnectDialog>().ConnectionFlowQuit += HandleFirstTimeConnectFlowQuit;
+        }
+      });
     });
   }
 

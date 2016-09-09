@@ -21,6 +21,9 @@ public class StartupManager : MonoBehaviour {
   private const string _kHDVariant = "hd";
   private const string _kSDVariant = "sd";
 
+  private const string _kiOSVariant = "ios";
+  private const string _kAndroidVariant = "android";
+
   private const int _kMaxHDWidth = 1920;
   private const int _kMaxHDHeight = 1080;
   private const int _kMaxSDWidth = 1136;
@@ -136,7 +139,9 @@ public class StartupManager : MonoBehaviour {
     // _IsDebugBuild = Debug.isDebugBuild;
     _IsDebugBuild = true;
 
-    assetBundleManager.AddActiveVariant(GetVariantBasedOnScreenResolution());
+    string resolutionVariant = GetVariantBasedOnScreenResolution();
+    assetBundleManager.AddActiveVariant(resolutionVariant);
+    assetBundleManager.AddActiveVariant(GetVariantBasedOnPlatform() + "-" + resolutionVariant);
 
     yield return LoadDebugAssetBundle(assetBundleManager, _IsDebugBuild);
 
@@ -273,6 +278,16 @@ public class StartupManager : MonoBehaviour {
 
 
     return variant;
+  }
+
+  private string GetVariantBasedOnPlatform() {
+#if UNITY_IOS
+    return _kiOSVariant;
+#elif UNITY_ANDROID
+    return _kAndroidVariant;
+#else
+    return "";
+#endif
   }
 
   private IEnumerator LoadAssetBundles(AssetBundleManager assetBundleManager) {
