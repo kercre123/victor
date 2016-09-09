@@ -15,10 +15,12 @@
 
 #include "util/helpers/noncopyable.h"
 #include <json/json.h>
+#include <atomic>
 #include <functional>
 #include <memory>
 #include <mutex>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -43,12 +45,19 @@ public:
   RobotDataLoader(const CozmoContext* context);
   ~RobotDataLoader();
 
-  // loads all data
-  void LoadData();
+  // loads all data excluding configs, using DispatchWorker to parallelize.
+  // Blocks until the data is loaded.
+  void LoadNonConfigData();
+  
+  // Starts a thread to handle loading non-config data if it hasn't been done yet.
+  // Can be repeatedly called to get an updated loading complete ratio. Returns
+  // false if loading is ongoing, otherwise returns true
+  bool DoNonConfigDataLoading(float& loadingCompleteRatio_out);
 
   // refresh individual data pieces after initial load
   void LoadAnimations();
   void LoadFaceAnimations();
+  void LoadRobotConfigs();
 
   using FileJsonMap = std::unordered_map<std::string, const Json::Value>;
   const FileJsonMap& GetEmotionEventJsons() const { return _emotionEvents; }
@@ -70,7 +79,7 @@ private:
   void LoadAnimationGroups();
   void LoadAnimationGroupFile(const std::string& path);
   void LoadAnimationTriggerResponses();
-  void LoadRobotConfigs();
+  void AddToLoadingRatio(float delta);
 
   using TimestampMap = std::unordered_map<std::string, time_t>;
   void WalkAnimationDir(const std::string& animationDir, TimestampMap& timestamps,
@@ -103,7 +112,13 @@ private:
   Json::Value _robotBehaviorConfig;
   Json::Value _robotVisionConfig;
   
-  std::mutex  _parallelLoadingMutex;
+  bool                  _isNonConfigDataLoaded = false;
+  std::mutex            _parallelLoadingMutex;
+  std::atomic<float>    _loadingCompleteRatio{0};
+  std::thread           _dataLoadingThread;
+  
+  // This gets set when we start loading animations and know the total number
+  float _perAnimationLoadingRatio = 0.0f;
 };
 
 }

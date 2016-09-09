@@ -134,7 +134,6 @@ namespace Anki {
       if(iter != _robots.end()) {
         PRINT_NAMED_INFO("RobotManager.RemoveRobot", "Removing robot with ID=%d\n", withID);
         
-        _robotDisconnectedSignal.emit(withID);
         // ask initial connection tracker if it's handling this
         bool handledDisconnect = false;
         auto initialIter = _initialConnections.find(withID);

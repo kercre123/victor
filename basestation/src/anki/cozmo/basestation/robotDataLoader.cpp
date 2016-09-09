@@ -24,6 +24,7 @@
 #include "util/dispatchWorker/dispatchWorker.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
+#include "util/math/numericCast.h"
 #include <json/json.h>
 #include <string>
 #include <sys/stat.h>
@@ -44,7 +45,7 @@ namespace Cozmo {
 
 RobotDataLoader::RobotDataLoader(const CozmoContext* context)
 : _context(context)
-, _platform(nullptr)
+, _platform(_context->GetDataPlatform())
 , _cannedAnimations(new CannedAnimationContainer())
 , _animationGroups(new AnimationGroupContainer())
 , _animationTriggerResponses(new AnimationTriggerResponsesContainer())
@@ -52,16 +53,22 @@ RobotDataLoader::RobotDataLoader(const CozmoContext* context)
 }
 
 RobotDataLoader::~RobotDataLoader() = default;
+  
+// We report some loading data info so the UI can inform the user. Ratio of time taken per section is approximate,
+// based on recent profiling. Some sections below are called out specifically, the rest makes up the remainder.
+// These should add up to be less than or equal to 1.0!
+static constexpr float _kAnimationsLoadingRatio = 0.7f;
+static constexpr float _kFaceAnimationsLoadingRatio = 0.2f;
 
-void RobotDataLoader::LoadData()
+void RobotDataLoader::LoadNonConfigData()
 {
-  _platform = _context->GetDataPlatform();
   if (_platform == nullptr) {
     return;
   }
-  
-  ANKI_CPU_TICK_ONE_TIME("RobotDataLoader::LoadData");
 
+  // Uncomment this line to enable the profiling of loading data
+  //ANKI_CPU_TICK_ONE_TIME("RobotDataLoader::LoadNonConfigData");
+  
   {
     ANKI_CPU_PROFILE("RobotDataLoader::CollectFiles");
     CollectJsonFiles();
@@ -70,6 +77,7 @@ void RobotDataLoader::LoadData()
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimations");
     LoadAnimationsInternal();
+    // The threaded animation loading workers each add to the loading ratio
   }
 
   {
@@ -80,6 +88,7 @@ void RobotDataLoader::LoadData()
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadFaceAnimations");
     LoadFaceAnimations();
+    AddToLoadingRatio(_kFaceAnimationsLoadingRatio);
   }
 
   {
@@ -97,15 +106,20 @@ void RobotDataLoader::LoadData()
     LoadAnimationTriggerResponses();
   }
 
-  {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadRobotConfigs");
-    LoadRobotConfigs();
-  }
-
   // this map doesn't need to be persistent
   _jsonFiles.clear();
+  
+  // we're done
+  _loadingCompleteRatio.store(1.0f);
 }
-
+  
+void RobotDataLoader::AddToLoadingRatio(float delta)
+{
+  // Allows for a thread to repeatedly try to update the loading ratio until it gets access
+  auto current = _loadingCompleteRatio.load();
+  while (!_loadingCompleteRatio.compare_exchange_weak(current, current + delta));
+}
+  
 void RobotDataLoader::CollectJsonFiles()
 {
   // animations
@@ -156,7 +170,7 @@ void RobotDataLoader::LoadAnimationsInternal()
     myWorker.PushJob(fileList[i]);
     //PRINT_NAMED_DEBUG("RobotDataLoader.LoadAnimations", "loaded regular anim %d of %zu", i, size);
   }
-  
+  _perAnimationLoadingRatio = _kAnimationsLoadingRatio * 1.0f / Util::numeric_cast<float>(size);
   myWorker.Process();
 
 #if USE_USB_TUNNEL
@@ -234,6 +248,7 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
                           "filename '%s'", animationId.c_str(), path.c_str());
     }
   }
+  AddToLoadingRatio(_perAnimationLoadingRatio);
 }
 
 void RobotDataLoader::LoadAnimationGroupFile(const std::string& path)
@@ -319,6 +334,11 @@ void RobotDataLoader::LoadAnimationTriggerResponses()
 
 void RobotDataLoader::LoadRobotConfigs()
 {
+  if (_platform == nullptr) {
+    return;
+  }
+  
+  ANKI_CPU_TICK_ONE_TIME("RobotDataLoader::LoadRobotConfigs");
   // mood config
   {
     std::string jsonFilename = "config/basestation/config/mood_config.json";
@@ -362,6 +382,37 @@ void RobotDataLoader::LoadRobotConfigs()
     const std::string fileContents{Util::FileUtils::ReadFile(filename)};
     _context->GetFeatureGate()->Init(fileContents);
   }
+}
+  
+bool RobotDataLoader::DoNonConfigDataLoading(float& loadingCompleteRatio_out)
+{
+  loadingCompleteRatio_out = _loadingCompleteRatio.load();
+  
+  if (_isNonConfigDataLoaded)
+  {
+    return true;
+  }
+  
+  // loading hasn't started
+  if (!_dataLoadingThread.joinable())
+  {
+    // start loading
+    _dataLoadingThread = std::thread(&RobotDataLoader::LoadNonConfigData, this);
+    return false;
+  }
+  
+  // loading has started but isn't complete
+  if (loadingCompleteRatio_out < 1.0f)
+  {
+    return false;
+  }
+  
+  // loading is now done so lets clean up
+  _dataLoadingThread.join();
+  _dataLoadingThread = std::thread();
+  _isNonConfigDataLoaded = true;
+  
+  return true;
 }
 
 }

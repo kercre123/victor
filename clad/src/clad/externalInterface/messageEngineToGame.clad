@@ -106,6 +106,10 @@ message FeatureToggles {
 message GoingToSleep {
 }
 
+message EngineLoadingDataStatus {
+  float_32 ratioComplete = 0.0
+}
+
 
 /*
 message Bogus {

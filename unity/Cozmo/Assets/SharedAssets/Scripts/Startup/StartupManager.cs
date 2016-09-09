@@ -75,6 +75,8 @@ public class StartupManager : MonoBehaviour {
     StartCoroutine(LoadCoroutine());
   }
 
+  private float _EngineLoadingProgress = 0.0f;
+
   private IEnumerator LoadCoroutine() {
     // Initialize DAS first so we can have error messages during intialization
 #if ANIMATION_TOOL
@@ -118,6 +120,7 @@ public class StartupManager : MonoBehaviour {
 
     if (RobotEngineManager.Instance.RobotConnectionType != RobotEngineManager.ConnectionType.Mock) {
       RobotEngineManager.Instance.ConnectedToClient += HandleConnectedToEngine;
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.EngineLoadingDataStatus>(HandleDataLoaded);
       ConnectToEngine();
     }
 
@@ -157,9 +160,26 @@ public class StartupManager : MonoBehaviour {
 
     if (RobotEngineManager.Instance.RobotConnectionType != RobotEngineManager.ConnectionType.Mock) {
       yield return CheckForEngineConnection();
+      SetupEngine();
+    }
+
+    // As soon as we're done connecting to the engine, start up some music
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connectivity);
+
+    if (RobotEngineManager.Instance.RobotConnectionType != RobotEngineManager.ConnectionType.Mock) {
+      float progressBeforeEngineLoading = _CurrentProgress;
+      while (_EngineLoadingProgress < 1.0f) {
+        float progressToAdd = _EngineLoadingProgress * (1.0f - progressBeforeEngineLoading);
+        _LoadingBar.SetProgress(progressBeforeEngineLoading + progressToAdd);
+        yield return 0;
+      }
     }
 
     _LoadingBar.SetProgress(1.0f);
+
+    if (RobotEngineManager.Instance.RobotConnectionType != RobotEngineManager.ConnectionType.Mock) {
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.EngineLoadingDataStatus>(HandleDataLoaded);
+    }
 
     // Stop loading dots coroutine
     StopAllCoroutines();
@@ -188,6 +208,16 @@ public class StartupManager : MonoBehaviour {
       // TODO: SOS logger is super old and rotten, commenting it out until someone actually has time to fix this
       //ConsoleLogManager.Instance.EnableSOSLogs(true);
     }
+  }
+
+  private void HandleDataLoaded(Anki.Cozmo.ExternalInterface.EngineLoadingDataStatus message) {
+    _EngineLoadingProgress = message.ratioComplete;
+  }
+
+  private void SetupEngine() {
+    RobotEngineManager.Instance.StartEngine();
+    // Set initial volumes
+    Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues();
   }
 
   private IEnumerator LoadDebugAssetBundle(AssetBundleManager assetBundleManager, bool isDebugBuild) {

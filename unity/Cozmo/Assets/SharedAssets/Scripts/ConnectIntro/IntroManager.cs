@@ -43,7 +43,6 @@ public class IntroManager : MonoBehaviour {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(OnRobotDisconnect);
 
     StartFlow();
-    SetupEngine();
 
     // If SDK Only, force flag to true, this build flag is also used to hide any options to disable SDK mode
 #if SDK_ONLY
@@ -66,12 +65,6 @@ public class IntroManager : MonoBehaviour {
     else {
       ShowCheckInFlow();
     }
-  }
-
-  private void SetupEngine() {
-    RobotEngineManager.Instance.StartEngine();
-    // Set initial volumes
-    Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues();
   }
 
   public void ForceBoot() {

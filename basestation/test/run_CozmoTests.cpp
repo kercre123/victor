@@ -1077,8 +1077,9 @@ int main(int argc, char ** argv)
   //LEAKING HERE
   Anki::Util::Data::DataPlatform* dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcePath);
   cozmoContext = new Anki::Cozmo::CozmoContext(dataPlatform, nullptr);
-
-  cozmoContext->GetDataLoader()->LoadData();
+  
+  cozmoContext->GetDataLoader()->LoadRobotConfigs();
+  cozmoContext->GetDataLoader()->LoadNonConfigData();
   
   //// should we do this here? clean previously dirty folders?
   //std::string cache = dataPlatform->pathToResource(Anki::Cozmo::Data::Scope::Cache, "");

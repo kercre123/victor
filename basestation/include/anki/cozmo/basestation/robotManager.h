@@ -95,10 +95,6 @@ public:
   // Return the number of availale robots
   size_t GetNumRobots() const;
 
-  // Events
-  using RobotDisconnectedSignal = Signal::Signal<void (RobotID_t)>;
-  RobotDisconnectedSignal& OnRobotDisconnected() { return _robotDisconnectedSignal; }
-
   CannedAnimationContainer& GetCannedAnimations() { return *_cannedAnimations; }
   AnimationGroupContainer& GetAnimationGroups() { return *_animationGroups; }
   
@@ -129,7 +125,6 @@ public:
   bool ShouldFilterMessage(RobotID_t robotId, RobotInterface::EngineToRobotTag msgType) const;
 
 protected:
-  RobotDisconnectedSignal _robotDisconnectedSignal;
   RobotMap _robots;
   std::vector<RobotID_t>     _IDs;
   const CozmoContext* _context;

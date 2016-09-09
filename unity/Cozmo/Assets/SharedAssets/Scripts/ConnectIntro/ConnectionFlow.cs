@@ -368,23 +368,10 @@ public class ConnectionFlow : MonoBehaviour {
   private void ConnectToRobot() {
     DAS.Info("ConnectionFlow.ConnectToRobot", "Trying to connect to robot " + _CurrentRobotIP);
     RobotEngineManager.Instance.ConnectToRobot(kRobotID, _CurrentRobotIP);
-    // Silent if you've never done it before...
-    if (!OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Home)) {
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connectivity);
-    }
-    else {
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
-    }
   }
 
   private void Disconnected(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {
     DAS.Error("ConnectionFlow.Disconnected", "Robot Disconnected");
-  }
-
-  private void SetupEngine() {
-    RobotEngineManager.Instance.StartEngine();
-    // Set initial volumes
-    Anki.Cozmo.Audio.GameAudioClient.SetPersistenceVolumeValues();
   }
 
   private void RobotConnectionResponse(Anki.Cozmo.ExternalInterface.RobotConnectionResponse message) {

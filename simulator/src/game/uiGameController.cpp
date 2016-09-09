@@ -385,6 +385,10 @@ namespace Anki {
       return (tag & 0x7fff0000) > 0;
     }
 
+    void UiGameController::HandleEngineLoadingStatusBase(const ExternalInterface::EngineLoadingDataStatus& msg)
+    {
+      _engineLoadedRatio = msg.ratioComplete;
+    }
     
     // ===== End of message handler callbacks ====
     
@@ -539,6 +543,9 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGameTag::EngineErrorCodeMessage:
             HandleEngineErrorCodeBase(message.Get_EngineErrorCodeMessage());
             break;
+          case ExternalInterface::MessageEngineToGameTag::EngineLoadingDataStatus:
+            HandleEngineLoadingStatusBase(message.Get_EngineLoadingDataStatus());
+            break;
           default:
             // ignore
             break;
@@ -630,6 +637,17 @@ namespace Anki {
             // TODO: don't hardcode ID here
             _msgHandler.SendMessage(1, ExternalInterface::MessageGameToEngine(ExternalInterface::StartEngine{}));
             
+            _uiState = UI_WAITING_FOR_ENGINE_LOAD;
+          }
+          break;
+        }
+          
+        case UI_WAITING_FOR_ENGINE_LOAD:
+        {
+          _msgHandler.ProcessMessages();
+          
+          if (_engineLoadedRatio >= 1.0f)
+          {
             bool didForceAdd = ForceAddRobotIfSpecified();
             
             if(didForceAdd) {
@@ -649,8 +667,9 @@ namespace Anki {
           
           _msgHandler.ProcessMessages();
           
-          // TODO: Better way to wait for ready. Ready message to game?
-          if (_supervisor.getTime() > TIME_UNTIL_READY_SEC) {
+          // Allow a little time for the Robot to get set up in the engine, since we just told it to be added
+          static const double startTime = _supervisor.getTime();
+          if ((_supervisor.getTime() - startTime) > TIME_UNTIL_READY_SEC) {
             
             // Initialize the block pool to detect cubes automatically. Ideally we would put this in
             // InitIniternal but it is called before engine can receive messages

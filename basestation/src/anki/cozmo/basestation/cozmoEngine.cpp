@@ -207,7 +207,7 @@ Result CozmoEngine::Init(const Json::Value& config) {
   
   _isInitialized = true;
 
-  _context->GetDataLoader()->LoadData();
+  _context->GetDataLoader()->LoadRobotConfigs();
   _context->GetRobotManager()->Init(_config);
 
   return RESULT_OK;
@@ -344,10 +344,20 @@ Result CozmoEngine::Update(const float currTime_sec)
     case EngineState::WaitingForUIDevices:
     {
       if (_uiMsgHandler->HasDesiredNumUiDevices()) {
-        _context->GetRobotManager()->BroadcastAvailableAnimations();
         SendSupportInfo();
+        SetEngineState(EngineState::LoadingData);
+      }
+      break;
+    }
+    case EngineState::LoadingData:
+    {
+      float currentLoadingDone = 0.0f;
+      if (_context->GetDataLoader()->DoNonConfigDataLoading(currentLoadingDone))
+      {
+        _context->GetRobotManager()->BroadcastAvailableAnimations();
         SetEngineState(EngineState::Running);
       }
+      _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::EngineLoadingDataStatus>(currentLoadingDone);
       break;
     }
     case EngineState::Running:
