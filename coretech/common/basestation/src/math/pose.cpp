@@ -399,7 +399,10 @@ namespace Anki {
     
     Pose3d P_other;
     
-    if(&P_other_in == this->GetParent())
+    if(&P_other_in == this){
+      return true;
+    }
+    else if(&P_other_in == this->GetParent())
     {
       // Other pose is this pose's parent, leave otherPose as default
       // identity transformation and hook up parent connection.
