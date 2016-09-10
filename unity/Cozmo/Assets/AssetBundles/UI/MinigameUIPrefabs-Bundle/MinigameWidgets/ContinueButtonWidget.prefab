@@ -76,13 +76,13 @@ MonoBehaviour:
   ModifiedValues:
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Color:b
-    JsonValue: 0.235294119
+    JsonValue: 1.0
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Color:g
-    JsonValue: 0.9372549
+    JsonValue: 1.0
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Color:r
-    JsonValue: 0.627451
+    JsonValue: 1.0
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
     JsonValue: 1
