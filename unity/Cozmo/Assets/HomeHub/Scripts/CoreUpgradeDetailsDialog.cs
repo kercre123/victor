@@ -234,11 +234,28 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
       if (UnlockablesManager.Instance.IsUnlocked(_UnlockInfo.Id.Value)) {
         _RequestTrickButton.Interactable = playerInventory.CanRemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
-        UpdateAvailableCostLabels(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksSpark, LocalizationKeys.kSparksPress);
+
+        if (_RequestTrickButton.Interactable) {
+          _SparkButtonCostLabel.color = _RequestTrickButton.TextEnabledColor;
+          UpdateAvailableCostLabels(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksSpark, LocalizationKeys.kSparksPress);
+        }
+        else {
+          _SparkButtonCostLabel.color = _RequestTrickButton.TextDisabledColor;
+          UpdateAvailableCostLabels(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksNotEnoughSparksTitle, LocalizationKeys.kSparksNotEnoughSparksDesc);
+        }
+
       }
       else if (UnlockablesManager.Instance.IsUnlockableAvailable(_UnlockInfo.Id.Value)) {
         _UnlockUpgradeButton.Interactable = playerInventory.CanRemoveItemAmount(_UnlockInfo.UpgradeCostItemId, _UnlockInfo.UpgradeCostAmountNeeded);
-        UpdateAvailableCostLabels(_UnlockInfo.UpgradeCostItemId, _UnlockInfo.UpgradeCostAmountNeeded, LocalizationKeys.kUnlockableAvailable, LocalizationKeys.kUnlockableBitsRequiredDescription);
+        if (_UnlockUpgradeButton.Interactable) {
+          _UnlockButtonCostLabel.color = _UnlockUpgradeButton.TextEnabledColor;
+          UpdateAvailableCostLabels(_UnlockInfo.UpgradeCostItemId, _UnlockInfo.UpgradeCostAmountNeeded, LocalizationKeys.kUnlockableAvailable, LocalizationKeys.kUnlockableBitsRequiredDescription);
+        }
+        else {
+          _UnlockButtonCostLabel.color = _UnlockUpgradeButton.TextDisabledColor;
+          UpdateAvailableCostLabels(_UnlockInfo.UpgradeCostItemId, _UnlockInfo.UpgradeCostAmountNeeded, "", LocalizationKeys.kUnlockableBitsRequiredDescription);
+        }
+
       }
     }
 
@@ -276,9 +293,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
   }
 
   private void UpdateAvailableCostLabels(string itemID, int cost, string promptLabelKey, string costLabelKey) {
-    Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
     _AvailablePromptContainer.SetActive(true);
-    _AvailablePromptLabel.gameObject.SetActive(playerInventory.CanRemoveItemAmount(itemID, cost));
     _AvailablePromptLabel.text = Localization.Get(promptLabelKey);
     _AvailablePromptCost.gameObject.SetActive(true);
     ItemData itemData = ItemDataConfig.GetData(itemID);

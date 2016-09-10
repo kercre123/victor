@@ -604,6 +604,8 @@ public static class LocalizationKeys {
   public const string kUnlockableUnavailableDescription = "unlockable.Unavailable.Description";
   public const string kSparksSparkConfirmQuit = "sparks.Spark.ConfirmQuit";
   public const string kSparksSparkConfirmQuitDescription = "sparks.Spark.ConfirmQuit.Description";
+  public const string kSparksNotEnoughSparksTitle = "sparks.NotEnoughSparks.Title";
+  public const string kSparksNotEnoughSparksDesc = "sparks.NotEnoughSparks.Desc";
 
   #endregion
 

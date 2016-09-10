@@ -140,5 +140,11 @@
   },
   "sparks.Spark.ConfirmQuit.Description": {
     "translation": "You will lose your sparks and stop Cozmo's sparking"
+  },
+  "sparks.NotEnoughSparks.Title": {
+    "translation": "Not enough Sparks"
+  },
+  "sparks.NotEnoughSparks.Desc": {
+    "translation": "Earn more by completing Daily Goals"
   }
 }
