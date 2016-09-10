@@ -150,6 +150,21 @@ public abstract class GameBase : MonoBehaviour {
     _DifficultyOptions = _ChallengeData.DifficultyOptions;
     _WonChallenge = false;
 
+    if (CurrentRobot != null) {
+
+      // this is done to prevent entering a game while robot is trying to finish get out seqeuences as part
+      // of RobotResetState.
+      CurrentRobot.CancelAllCallbacks();
+      CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
+
+      CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
+      if ((CurrentRobot.RobotStatus & RobotStatusFlag.IS_CARRYING_BLOCK) != 0) {
+        CurrentRobot.PlaceObjectOnGroundHere();
+      }
+      CurrentRobot.SetEnableFreeplayLightStates(false);
+      CurrentRobot.SendAnimationTrigger(_ChallengeData.GetInAnimTrigger.Value);
+    }
+
     if (playGameSpecificMusic) {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());
     }
@@ -168,19 +183,6 @@ public abstract class GameBase : MonoBehaviour {
 
     LoadMinigameUIAssetBundle();
 
-    if (CurrentRobot != null) {
-
-      // this is done to prevent entering a game while robot is trying to finish get out seqeuences as part
-      // of RobotResetState.
-      CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
-      CurrentRobot.CancelAllCallbacks();
-      CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
-      if ((CurrentRobot.RobotStatus & RobotStatusFlag.IS_CARRYING_BLOCK) != 0) {
-        CurrentRobot.PlaceObjectOnGroundHere();
-      }
-      CurrentRobot.SetEnableFreeplayLightStates(false);
-      CurrentRobot.SendAnimationTrigger(_ChallengeData.GetInAnimTrigger.Value);
-    }
   }
 
   private void LoadMinigameUIAssetBundle() {
