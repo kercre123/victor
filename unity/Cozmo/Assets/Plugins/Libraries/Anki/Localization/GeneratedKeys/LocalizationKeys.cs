@@ -1,5 +1,4 @@
-public static class LocalizationKeys
-{
+public static class LocalizationKeys {
 
   #region ChallengeTitleStrings
 
@@ -600,12 +599,13 @@ public static class LocalizationKeys
   public const string kSkillsLevelUpDescription = "skills.LevelUp.Description";
   public const string kSkillsLevelUpTitle = "skills.LevelUp.Title";
   public const string kSparksSparked = "sparks.Sparked";
-  public const string kSparksPressAndHold = "sparks.PressAndHold";
+  public const string kSparksPress = "sparks.Press";
   public const string kSparksSpark = "sparks.Spark";
   public const string kUnlockableUnavailableDescription = "unlockable.Unavailable.Description";
-  public const string kSparksSparkCost = "sparks.Spark.Cost";
   public const string kSparksSparkConfirmQuit = "sparks.Spark.ConfirmQuit";
   public const string kSparksSparkConfirmQuitDescription = "sparks.Spark.ConfirmQuit.Description";
+  public const string kSparksNotEnoughSparksTitle = "sparks.NotEnoughSparks.Title";
+  public const string kSparksNotEnoughSparksDesc = "sparks.NotEnoughSparks.Desc";
 
   #endregion
 

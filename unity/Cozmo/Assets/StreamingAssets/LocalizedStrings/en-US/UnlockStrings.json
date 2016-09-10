@@ -124,10 +124,10 @@
     "translation": "Level Up"
   },
   "sparks.Sparked": {
-    "translation": "COZMO IS SPARKED: {0}"
+    "translation": "Cozmo is sparked..."
   },
-  "sparks.PressAndHold": {
-    "translation": "Press and hold to ask Cozmo to do this."
+  "sparks.Press": {
+    "translation": "Press to ask Cozmo to do this."
   },
   "sparks.Spark": {
     "translation": "Feed Sparks"
@@ -135,13 +135,16 @@
   "unlockable.Unavailable.Description": {
     "translation": "Unlock more upgrades before you can unlock {0}."
   },
-  "sparks.Spark.Cost": {
-    "translation": "Use {0} {1} to Spark Cozmo"
-  },
   "sparks.Spark.ConfirmQuit": {
     "translation": "Are you sure?"
   },
   "sparks.Spark.ConfirmQuit.Description": {
     "translation": "You will lose your sparks and stop Cozmo's sparking"
+  },
+  "sparks.NotEnoughSparks.Title": {
+    "translation": "Not enough Sparks"
+  },
+  "sparks.NotEnoughSparks.Desc": {
+    "translation": "Earn more by completing Daily Goals"
   }
 }
