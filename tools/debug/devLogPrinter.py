@@ -31,6 +31,8 @@ def readMessage(f, types):
         print "invalid size %d for message" % size
         return False
 
+    timestamp = struct.unpack('<1I', timestamp)[0]
+
     # read remaining message data
     size = size - 8
     data = f.read(size)
@@ -49,11 +51,12 @@ def readMessage(f, types):
     # split data into groups of 16 for pretty formatting
     dataChunks = [data[i:i+16] for i in range(0,len(data),16)]
 
-    # print message type and first line of data, then subsequent lines if there's >1 chunk
-    print 'type %0.2x data %s' % (msgType, getDataString(dataChunks[0]) if len(dataChunks) > 0 else '')
+    # print message time, type and first line of data, then subsequent lines if there's >1 chunk
+    print '%0.8d sz %.5d type %0.2x data %s' \
+      %  (timestamp, size, msgType, getDataString(dataChunks[0]) if len(dataChunks) > 0 else '')
     for chunk in dataChunks[1:]:
-        #      type 00 data
-        print '             %s' % getDataString(chunk)
+        #      12345678 sz 12345 type 00 data
+        print '                               %s' % getDataString(chunk)
 
     return True
 
