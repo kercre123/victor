@@ -38,7 +38,10 @@ public class CoreUpgradeDetailsDialog : BaseView {
   private AnkiTextLabel _AvailablePromptCost;
 
   [SerializeField]
-  private Text _ButtonCostLabel;
+  private Text _SparkButtonCostLabel;
+
+  [SerializeField]
+  private Text _UnlockButtonCostLabel;
 
   [SerializeField]
   private AnkiTextLabel _RequestTrickButtonLabel;
@@ -133,6 +136,8 @@ public class CoreUpgradeDetailsDialog : BaseView {
         UpdateAvailableCostLabels(unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksSpark, LocalizationKeys.kSparksPress);
         SetupButton(_RequestTrickButton, StartSparkUnlock, "request_trick_button",
                     unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, _SparksInventoryLabel, true);
+
+        _SparkButtonCostLabel.text = string.Format("{0}", unlockInfo.RequestTrickCostAmountNeeded);
         RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.SparkEnded>(HandleSparkEnded);
       }
     }
@@ -143,6 +148,8 @@ public class CoreUpgradeDetailsDialog : BaseView {
       UpdateAvailableCostLabels(unlockInfo.UpgradeCostItemId, unlockInfo.UpgradeCostAmountNeeded, LocalizationKeys.kUnlockableAvailable, LocalizationKeys.kUnlockableBitsRequiredDescription);
       SetupButton(_UnlockUpgradeButton, OnUpgradeClicked, "request_upgrade_button",
                   unlockInfo.UpgradeCostItemId, unlockInfo.UpgradeCostAmountNeeded, _FragmentInventoryLabel, false);
+
+      _UnlockButtonCostLabel.text = string.Format("{0}", unlockInfo.UpgradeCostAmountNeeded);
       _UnlockableIcon.color = Color.gray;
     }
 
@@ -172,7 +179,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
     else {
       button.Text = Localization.Get(LocalizationKeys.kUnlockableUnlock);
     }
-    _ButtonCostLabel.text = string.Format("{0}", costAmount);
+
     inventoryLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelTotalCount,
       itemData.GetPluralName(),
       playerInventory.GetItemAmount(costItemId));
@@ -277,7 +284,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
     ItemData itemData = ItemDataConfig.GetData(itemID);
     string costName = Localization.Get(itemData.GetAmountName(cost));
     _AvailablePromptCost.text = Localization.GetWithArgs(costLabelKey, new object[] { cost, costName });
-    _ButtonCostLabel.text = string.Format("{0}", cost);
+    _SparkButtonCostLabel.text = string.Format("{0}", cost);
   }
 
   protected override void Update() {
@@ -291,7 +298,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
     if (robot != null) {
       _SparkSpinner.gameObject.SetActive(robot.IsSparked);
-      _ButtonCostLabel.gameObject.SetActive(!robot.IsSparked);
+      _SparkButtonCostLabel.gameObject.SetActive(!robot.IsSparked);
       _RequestTrickButtonLabel.gameObject.SetActive(!robot.IsSparked && _RequestTrickButton.IsActive());
       _RequestTrickButtonIcons.SetActive(!robot.IsSparked && _RequestTrickButton.IsActive());
     }
