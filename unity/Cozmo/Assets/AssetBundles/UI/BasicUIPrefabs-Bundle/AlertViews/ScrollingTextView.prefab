@@ -169,7 +169,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _DASEventViewName: 
   _DASEventViewType: 1
-  _CloseDialogOnTapOutside: 1
+  _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 1
   DimBackgroundPrefabOverride: {fileID: 0}
