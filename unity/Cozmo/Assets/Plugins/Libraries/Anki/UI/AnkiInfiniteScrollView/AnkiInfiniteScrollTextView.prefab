@@ -93,7 +93,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _ContentContainer: {fileID: 22472784}
-  _AnkiInfiniteScrollTextCellPrefab: {fileID: 11424726, guid: 664e804ab4d8a4a09bcdb25643b6cf7d,
+  _AnkiInfiniteScrollTextCellPrefab: {fileID: 11452812, guid: 664e804ab4d8a4a09bcdb25643b6cf7d,
     type: 2}
 --- !u!114 &11419620
 MonoBehaviour:

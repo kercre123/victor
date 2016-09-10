@@ -1,5 +1,4 @@
-public static class LocalizationKeys
-{
+public static class LocalizationKeys {
 
   #region ChallengeTitleStrings
 
@@ -401,6 +400,7 @@ public static class LocalizationKeys
 
   #region PrivacyPolicyStrings
 
+  public const string kPrivacyPolicyTitle = "privacyPolicy.title";
   public const string kPrivacyPolicyText = "privacyPolicy.text";
 
   #endregion
@@ -556,6 +556,7 @@ public static class LocalizationKeys
   public const string kErrorBadLightBottom = "error.badLight.Bottom";
   public const string kLabelCozmoSerial = "label.cozmo.serial";
   public const string kLabelDeviceid = "label.deviceid";
+  public const string kLabelPrivacyPolicy = "label.privacyPolicy";
 
   #endregion
 

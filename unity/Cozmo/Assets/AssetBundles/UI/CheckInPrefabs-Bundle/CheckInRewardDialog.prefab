@@ -1131,7 +1131,7 @@ MonoBehaviour:
   _FinalCoinTarget: {fileID: 22463848}
   _FinalSparkTarget: {fileID: 22409264}
   _GoalsCollectTarget: {fileID: 22429652}
-  _PrivacyPolicyViewPrefab: {fileID: 11416028, guid: 268b06920a76240d7a77e9f3dddd1937,
+  _PrivacyPolicyViewPrefab: {fileID: 11422892, guid: a9bae51dad15b4085b12a1640c774477,
     type: 2}
   _PrivacyPolicyButton: {fileID: 11416342}
   _EnvelopeShrinkDuration: 0.5
@@ -4498,8 +4498,8 @@ RectTransform:
   m_RootOrder: 6
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 350, y: 128}
-  m_SizeDelta: {x: 700, y: 256}
+  m_AnchoredPosition: {x: 350, y: 75}
+  m_SizeDelta: {x: 700, y: 150}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22432782
 RectTransform:

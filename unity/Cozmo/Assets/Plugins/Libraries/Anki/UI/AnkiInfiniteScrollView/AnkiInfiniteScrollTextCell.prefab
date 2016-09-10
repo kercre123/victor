@@ -9,8 +9,8 @@ GameObject:
   m_Component:
   - 224: {fileID: 22414586}
   - 222: {fileID: 22265860}
-  - 114: {fileID: 11424726}
   - 114: {fileID: 11471816}
+  - 114: {fileID: 11452812}
   m_Layer: 5
   m_Name: AnkiInfiniteScrollTextCell
   m_TagString: Untagged
@@ -18,7 +18,7 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &11424726
+--- !u!114 &11452812
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -26,11 +26,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 140952}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 708705254, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.007843138, g: 0.24313726, b: 0.42745098, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -39,79 +39,20 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 12800000, guid: 6ef5f80c68ce34039a34f24769e5dc26, type: 3}
-    m_FontSize: 70
+    m_FontSize: 80
     m_FontStyle: 0
     m_BestFit: 0
-    m_MinSize: 1
-    m_MaxSize: 100
+    m_MinSize: 0
+    m_MaxSize: 84
     m_Alignment: 0
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
+    m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: "THIS PRIVACY POLICY GOVERNS YOUR USE OF THE WEBSITES AND MOBILE SOFTWARE
-    APPLICATIONS (COLLECTIVELY, THE \"SITE\") OFFERED BY ANKI, INC. AND/OR ITS SUBSIDIARIES
-    AND AFFILIATES (REFERRED TO AS \"ANKI\", \"WE\", \"OUR\", OR \"US\").\nFor our
-    policies regarding children users, please click here\nAnki, Inc. (\"Anki,\" \"we,\"
-    or \"us\") continually strives to improve the experience of using our products
-    and this is the primary goal in collecting information from our customers and
-    web and mobile application users (\"you\"). This policy describes how we collect,
-    maintain, protect, use, and disclose information we receive from you when you
-    use our website(s) (the \"Website(s)\" or \"Site(s)\") www.anki.com, the Anki
-    DRIVE or Anki OVERDRIVE mobile applications (\u201Cthe Apps\") and via email to
-    us. This Privacy Policy does not apply to information collected by us offline
-    or through any other means; or by any third party, including through any application
-    or content (including advertising) that may link to or be accessible from or on
-    the Website.\nThis Privacy Policy may be updated from time to time for any reason.
-    We will notify you of any changes to our Privacy Policy by posting the new Privacy
-    Policy here or, if the changes are material with regard to information collected
-    from you or your child, by posting a prominent notice on the Website or mobile
-    application or by sending an email to the email address you provide to us prior
-    to the change becoming effective. If required, we may also seek your prior consent
-    or the consent of a parent or legal guardian. You should consult this Privacy
-    Policy regularly for any changes.\nTHIS PRIVACY POLICY GOVERNS YOUR USE OF THE
-    WEBSITES AND MOBILE SOFTWARE APPLICATIONS (COLLECTIVELY, THE \"SITE\") OFFERED
-    BY ANKI, INC. AND/OR ITS SUBSIDIARIES AND AFFILIATES (REFERRED TO AS \"ANKI\",
-    \"WE\", \"OUR\", OR \"US\").\nFor our policies regarding children users, please
-    click here\nAnki, Inc. (\"Anki,\" \"we,\" or \"us\") continually strives to improve
-    the experience of using our products and this is the primary goal in collecting
-    information from our customers and web and mobile application users (\"you\").
-    This policy describes how we collect, maintain, protect, use, and disclose information
-    we receive from you when you use our website(s) (the \"Website(s)\" or \"Site(s)\")
-    www.anki.com, the Anki DRIVE or Anki OVERDRIVE mobile applications (\u201Cthe
-    Apps\") and via email to us. This Privacy Policy does not apply to information
-    collected by us offline or through any other means; or by any third party, including
-    through any application or content (including advertising) that may link to or
-    be accessible from or on the Website.\nThis Privacy Policy may be updated from
-    time to time for any reason. We will notify you of any changes to our Privacy
-    Policy by posting the new Privacy Policy here or, if the changes are material
-    with regard to information collected from you or your child, by posting a prominent
-    notice on the Website or mobile application or by sending an email to the email
-    address you provide to us prior to the change becoming effective. If required,
-    we may also seek your prior consent or the consent of a parent or legal guardian.
-    You should consult this Privacy Policy regularly for any changes.\nTHIS PRIVACY
-    POLICY GOVERNS YOUR USE OF THE WEBSITES AND MOBILE SOFTWARE APPLICATIONS (COLLECTIVELY,
-    THE \"SITE\") OFFERED BY ANKI, INC. AND/OR ITS SUBSIDIARIES AND AFFILIATES (REFERRED
-    TO AS \"ANKI\", \"WE\", \"OUR\", OR \"US\").\nFor our policies regarding children
-    users, please click here\nAnki, Inc. (\"Anki,\" \"we,\" or \"us\") continually
-    strives to improve the experience of using our products and this is the primary
-    goal in collecting information from our customers and web and mobile application
-    users (\"you\"). This policy describes how we collect, maintain, protect, use,
-    and disclose information we receive from you when you use our website(s) (the
-    \"Website(s)\" or \"Site(s)\") www.anki.com, the Anki DRIVE or Anki OVERDRIVE
-    mobile applications (\u201Cthe Apps\") and via email to us. This Privacy Policy
-    does not apply to information collected by us offline or through any other means;
-    or by any third party, including through any application or content (including
-    advertising) that may link to or be accessible from or on the Website.\nThis Privacy
-    Policy may be updated from time to time for any reason. We will notify you of
-    any changes to our Privacy Policy by posting the new Privacy Policy here or, if
-    the changes are material with regard to information collected from you or your
-    child, by posting a prominent notice on the Website or mobile application or by
-    sending an email to the email address you provide to us prior to the change becoming
-    effective. If required, we may also seek your prior consent or the consent of
-    a parent or legal guardian. You should consult this Privacy Policy regularly for
-    any changes."
+  m_Text: Text
+  _AllUppercase: 0
+  GlowText: 0
 --- !u!114 &11471816
 MonoBehaviour:
   m_ObjectHideFlags: 1

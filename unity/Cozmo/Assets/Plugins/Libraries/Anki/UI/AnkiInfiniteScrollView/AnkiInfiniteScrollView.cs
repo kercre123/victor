@@ -10,7 +10,7 @@ public class AnkiInfiniteScrollView : MonoBehaviour {
   private RectTransform _ContentContainer;
 
   [SerializeField]
-  private UnityEngine.UI.Text _AnkiInfiniteScrollTextCellPrefab;
+  private Anki.UI.AnkiTextLabel _AnkiInfiniteScrollTextCellPrefab;
 
   public void SetString(string longString) {
     ClearContainer();

@@ -84,7 +84,7 @@ public class CheckInFlow : MonoBehaviour {
   private Transform _GoalsCollectTarget;
 
   [SerializeField]
-  private PrivacyPolicyView _PrivacyPolicyViewPrefab;
+  private ScrollingTextView _PrivacyPolicyViewPrefab;
 
   [SerializeField]
   private Cozmo.UI.CozmoButton _PrivacyPolicyButton;
@@ -107,7 +107,8 @@ public class CheckInFlow : MonoBehaviour {
     }
 
     _PrivacyPolicyButton.Initialize(() => {
-      UIManager.OpenView(_PrivacyPolicyViewPrefab);
+      ScrollingTextView view = UIManager.OpenView<ScrollingTextView>(_PrivacyPolicyViewPrefab, (ScrollingTextView v) => { v.DASEventViewName = "privacy_policy_view"; });
+      view.Initialize(LocalizationKeys.kPrivacyPolicyTitle, LocalizationKeys.kPrivacyPolicyText);
     }, "privacy_policy_button", "checkin_dialog");
 
 

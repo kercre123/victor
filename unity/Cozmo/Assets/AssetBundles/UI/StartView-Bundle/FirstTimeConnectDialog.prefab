@@ -282,7 +282,7 @@ MonoBehaviour:
     type: 2}
   _ProfileCreationViewPrefab: {fileID: 11497974, guid: d5a4eca7cb81e477e860e932642ff654,
     type: 2}
-  _PrivacyPolicyViewPrefab: {fileID: 11416028, guid: 268b06920a76240d7a77e9f3dddd1937,
+  _PrivacyPolicyViewPrefab: {fileID: 11422892, guid: a9bae51dad15b4085b12a1640c774477,
     type: 2}
   _PrivacyPolicyButton: {fileID: 11407926}
 --- !u!114 &11440264
@@ -485,8 +485,8 @@ RectTransform:
   m_RootOrder: 4
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 350, y: 128}
-  m_SizeDelta: {x: 700, y: 256}
+  m_AnchoredPosition: {x: 350, y: 75}
+  m_SizeDelta: {x: 700, y: 150}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22463296
 RectTransform:
