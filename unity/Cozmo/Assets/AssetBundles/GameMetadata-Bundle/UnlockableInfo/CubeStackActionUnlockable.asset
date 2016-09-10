@@ -19,7 +19,8 @@ MonoBehaviour:
   - _EnumValueAsString: PickupCube
     _EnumValue: 6
   AnyPrereqUnlock: 0
-  NeverAvailable: 0
+  _ComingSoon: 0
+  _HideInUI: 0
   DescriptionKey: unlockable.CubeStackAction.Description
   TitleKey: unlockable.CubeStackAction.Title
   UpgradeCostItemId: TestHexItem0

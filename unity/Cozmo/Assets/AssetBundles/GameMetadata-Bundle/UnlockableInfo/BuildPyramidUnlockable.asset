@@ -19,7 +19,8 @@ MonoBehaviour:
   - _EnumValueAsString: KnockOverThreeCubeStack
     _EnumValue: 5
   AnyPrereqUnlock: 0
-  NeverAvailable: 1
+  _ComingSoon: 1
+  _HideInUI: 0
   DescriptionKey: unlockable.BuildPyramid.Description
   TitleKey: unlockable.BuildPyramid.Title
   UpgradeCostItemId: TestHexItem0

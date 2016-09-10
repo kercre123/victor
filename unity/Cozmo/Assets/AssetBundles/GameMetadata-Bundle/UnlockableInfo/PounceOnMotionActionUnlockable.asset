@@ -19,7 +19,8 @@ MonoBehaviour:
   - _EnumValueAsString: RollCube
     _EnumValue: 9
   AnyPrereqUnlock: 0
-  NeverAvailable: 0
+  _ComingSoon: 0
+  _HideInUI: 0
   DescriptionKey: unlockable.PounceOnMotionAction.Description
   TitleKey: unlockable.PounceOnMotionAction.Title
   UpgradeCostItemId: TestHexItem0

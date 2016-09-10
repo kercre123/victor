@@ -19,7 +19,8 @@ MonoBehaviour:
   - _EnumValueAsString: MeetCozmoGame
     _EnumValue: 16
   AnyPrereqUnlock: 0
-  NeverAvailable: 0
+  _ComingSoon: 0
+  _HideInUI: 0
   DescriptionKey: unlockable.SpeedTap.Description
   TitleKey: unlockable.SpeedTap.Title
   UpgradeCostItemId: TestHexItem0

@@ -17,7 +17,8 @@ MonoBehaviour:
   UnlockableType: 1
   Prerequisites: []
   AnyPrereqUnlock: 0
-  NeverAvailable: 0
+  _ComingSoon: 0
+  _HideInUI: 0
   DescriptionKey: unlockable.PickupCube.Description
   TitleKey: unlockable.PickupCube.Title
   UpgradeCostItemId: TestHexItem0

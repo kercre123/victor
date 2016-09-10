@@ -172,15 +172,15 @@ public class UnlockablesManager : MonoBehaviour {
     return unavailable;
   }
 
-  public List<UnlockableInfo> GetNeverAvailable() {
-    List<UnlockableInfo> comingSoon = new List<UnlockableInfo>();
+  public List<UnlockableInfo> GetComingSoon() {
+    List<UnlockableInfo> comingSoonList = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
-      bool neverAvailable = _UnlockableInfoList.UnlockableInfoData[i].NeverAvailable;
-      if (neverAvailable) {
-        comingSoon.Add(_UnlockableInfoList.UnlockableInfoData[i]);
+      bool comingSoon = _UnlockableInfoList.UnlockableInfoData[i].ComingSoon;
+      if (comingSoon) {
+        comingSoonList.Add(_UnlockableInfoList.UnlockableInfoData[i]);
       }
     }
-    return comingSoon;
+    return comingSoonList;
   }
 
   public UnlockableInfo GetUnlockableInfo(Anki.Cozmo.UnlockId id) {
@@ -263,13 +263,19 @@ public class UnlockablesManager : MonoBehaviour {
   }
 
   private void HandleOnUnlockRequestSuccess(Anki.Cozmo.ExternalInterface.RequestSetUnlockResult resultMessage) {
+    UnlockableInfo unlockData = GetUnlockableInfo(resultMessage.unlockID);
+    if (unlockData == null) {
+      DAS.Warn("UnlockablesManager.HandleOnUnlockRequestSuccess.UnlockIdNotFound", "Could not find data for id=" + resultMessage.unlockID);
+      return;
+    }
+
     _UnlockablesState[resultMessage.unlockID] = resultMessage.unlocked;
     if (resultMessage.unlocked) {
       GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnUnlockableEarned, resultMessage.unlockID));
       _NewUnlocks.Add(resultMessage.unlockID);
 
       // Trigger soft spark in the engine if the unlock was an action
-      if (GetUnlockableInfo(resultMessage.unlockID).UnlockableType == UnlockableType.Action) {
+      if (unlockData.UnlockableType == UnlockableType.Action) {
         RobotEngineManager.Instance.Message.BehaviorManagerMessage =
         Singleton<BehaviorManagerMessage>.Instance.Initialize(
           Convert.ToByte(RobotEngineManager.Instance.CurrentRobotID),

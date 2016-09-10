@@ -80,7 +80,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     List<UnlockableInfo> unlockedUnlockData = UnlockablesManager.Instance.GetUnlocked();
     List<UnlockableInfo> unlockableUnlockData = UnlockablesManager.Instance.GetAvailableAndLocked();
     List<UnlockableInfo> lockedUnlockData = UnlockablesManager.Instance.GetUnavailable();
-    List<UnlockableInfo> comingSoonUnlockData = UnlockablesManager.Instance.GetNeverAvailable();
+    List<UnlockableInfo> comingSoonUnlockData = UnlockablesManager.Instance.GetComingSoon();
 
     // Sort within themselves on "SortOrder" since locked doesn't show anything, no need to sort.
     unlockedUnlockData.Sort();

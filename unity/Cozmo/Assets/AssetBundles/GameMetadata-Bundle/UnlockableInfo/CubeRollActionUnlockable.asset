@@ -19,7 +19,8 @@ MonoBehaviour:
   - _EnumValueAsString: QuickTapGame
     _EnumValue: 18
   AnyPrereqUnlock: 0
-  NeverAvailable: 0
+  _ComingSoon: 0
+  _HideInUI: 0
   DescriptionKey: unlockable.CubeRollAction.Description
   TitleKey: unlockable.CubeRollAction.Title
   UpgradeCostItemId: TestHexItem0

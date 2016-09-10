@@ -19,7 +19,8 @@ MonoBehaviour:
   - _EnumValueAsString: KnockOverThreeCubeStack
     _EnumValue: 5
   AnyPrereqUnlock: 0
-  NeverAvailable: 0
+  _ComingSoon: 0
+  _HideInUI: 0
   DescriptionKey: unlockable.PopAWheelieAction.Description
   TitleKey: unlockable.PopAWheelieAction.Title
   UpgradeCostItemId: TestHexItem0

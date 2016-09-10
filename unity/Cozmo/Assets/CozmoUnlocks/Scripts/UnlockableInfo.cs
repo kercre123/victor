@@ -20,8 +20,14 @@ public class UnlockableInfo : ScriptableObject, IComparable {
   [Tooltip("If true, any prereq filled will make this unlock available. If false, all prereqs must be filled to make this unlock available.")]
   public bool AnyPrereqUnlock;
 
-  [Tooltip("Will never leave the 'locked' state")]
-  public bool NeverAvailable;
+  [SerializeField, Tooltip("Will never leave the 'locked' state and shows a 'Coming Soon' graphic")]
+  private bool _ComingSoon;
+  public bool ComingSoon { get { return _ComingSoon; } }
+
+  [SerializeField, Tooltip("Will never leave the 'locked' state and is never shown in the UI")]
+  private bool _HideInUI;
+
+  public bool NeverAvailable { get { return _ComingSoon || _HideInUI; } }
 
   public string DescriptionKey;
 
