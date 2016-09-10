@@ -213,7 +213,7 @@ public class ConnectionFlow : MonoBehaviour {
     }
 
     GameObject.Destroy(_UpdateFirmwareScreenInstance.gameObject);
-    ReplaceCozmoOnCharger();
+    ReturnToSearch();
 
   }
 
