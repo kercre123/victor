@@ -30,7 +30,6 @@ GameObject:
   - 222: {fileID: 22271552}
   - 114: {fileID: 11492342}
   - 114: {fileID: 11435120}
-  - 225: {fileID: 22518494}
   m_Layer: 5
   m_Name: AnkiInfiniteScrollTextView
   m_TagString: Untagged
@@ -174,7 +173,7 @@ MonoBehaviour:
   DimBackground: 1
   DimBackgroundPrefabOverride: {fileID: 0}
   _AlphaController: {fileID: 22592498}
-  _ScrollRectCanvasGroup: {fileID: 22518494}
+  _ScrollRectCanvasGroup: {fileID: 22592498}
   _TitleTextLabel: {fileID: 0}
   _DescriptionTextLabel: {fileID: 11435120}
 --- !u!114 &11431168
@@ -503,17 +502,6 @@ RectTransform:
   m_AnchoredPosition: {x: 162, y: -163}
   m_SizeDelta: {x: 175, y: 175}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!225 &22518494
-CanvasGroup:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 119846}
-  m_Enabled: 1
-  m_Alpha: 1
-  m_Interactable: 1
-  m_BlocksRaycasts: 1
-  m_IgnoreParentGroups: 0
 --- !u!225 &22565878
 CanvasGroup:
   m_ObjectHideFlags: 1
@@ -534,7 +522,7 @@ CanvasGroup:
   m_Enabled: 1
   m_Alpha: 1
   m_Interactable: 1
-  m_BlocksRaycasts: 0
+  m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
 --- !u!1001 &100100000
 Prefab:

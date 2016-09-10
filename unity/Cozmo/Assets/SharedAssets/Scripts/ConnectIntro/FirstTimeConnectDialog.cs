@@ -27,9 +27,6 @@ public class FirstTimeConnectDialog : MonoBehaviour {
   private ProfileCreationView _ProfileCreationViewInstance;
 
   [SerializeField]
-  private Cozmo.UI.ScrollingTextView _PrivacyPolicyViewPrefab;
-
-  [SerializeField]
   private Cozmo.UI.CozmoButton _PrivacyPolicyButton;
 
   private void Awake() {
@@ -42,7 +39,7 @@ public class FirstTimeConnectDialog : MonoBehaviour {
     }
 
     _PrivacyPolicyButton.Initialize(() => {
-      ScrollingTextView view = UIManager.OpenView<ScrollingTextView>(_PrivacyPolicyViewPrefab, (ScrollingTextView v) => { v.DASEventViewName = "privacy_policy_view"; });
+      ScrollingTextView view = UIManager.OpenView<ScrollingTextView>(AlertViewLoader.Instance.ScrollingTextViewPrefab, (ScrollingTextView v) => { v.DASEventViewName = "privacy_policy_view"; });
       view.Initialize(LocalizationKeys.kPrivacyPolicyTitle, LocalizationKeys.kPrivacyPolicyText);
     }, "privacy_policy_button", "first_time_connect_dialog");
 
