@@ -407,7 +407,11 @@ TrackObjectAction::TrackObjectAction(Robot& robot, const ObjectID& objectID, boo
 , _objectID(objectID)
 , _trackByType(trackByType)
 {
-
+  if(_trackByType) {
+    SetName("TrackObject" + std::string(EnumToString(_objectType)));
+  } else {
+    SetName("TrackObject" + std::to_string(_objectID));
+  }
 }
   
 TrackObjectAction::~TrackObjectAction()
@@ -431,12 +435,6 @@ ActionResult TrackObjectAction::InitInternal()
   
   _objectType = object->GetType();
   _lastTrackToPose = object->GetPose();
-  
-  if(_trackByType) {
-    SetName("TrackObject" + std::string(EnumToString(_objectType)));
-  } else {
-    SetName("TrackObject" + std::to_string(_objectID));
-  }
   
   _robot.GetMoveComponent().SetTrackToObject(_objectID);
   
@@ -551,7 +549,7 @@ TrackFaceAction::TrackFaceAction(Robot& robot, FaceID faceID)
                  RobotActionType::TRACK_FACE)
   , _faceID(faceID)
 {
-  
+   SetName("TrackFace" + std::to_string(_faceID));
 }
 
 TrackFaceAction::~TrackFaceAction()
@@ -585,7 +583,6 @@ ActionResult TrackFaceAction::InitInternal()
   
   _signalHandle = _robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotChangedObservedFaceID, HandleFaceChangedID);
   
-  SetName("TrackFace" + std::to_string(_faceID));
   _robot.GetMoveComponent().SetTrackToFace(_faceID);
   _lastFaceUpdate = 0;
   

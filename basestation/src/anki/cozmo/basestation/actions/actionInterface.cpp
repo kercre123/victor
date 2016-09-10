@@ -196,7 +196,7 @@ namespace Anki {
                          _name.c_str(),
                          _idTag);
 #       endif
-        _robot.GetMoveComponent().UnlockTracks(_tracks);
+        _robot.GetMoveComponent().UnlockTracks(_tracks, GetTag());
       }
     }
 
@@ -248,7 +248,7 @@ namespace Anki {
                            _idTag);
 #         endif
 
-          _robot.GetMoveComponent().UnlockTracks(tracks);
+          _robot.GetMoveComponent().UnlockTracks(tracks, GetTag());
         }
         Reset(false);
         _state = ActionResult::INTERRUPTED;
@@ -274,11 +274,12 @@ namespace Anki {
             if(_robot.GetMoveComponent().AreAnyTracksLocked(tracksToLock))
             {
               PRINT_NAMED_WARNING("IActionRunner.Update",
-                                  "Action %s [%d] not running because required tracks (0x%x) %s are locked",
+                                  "Action %s [%d] not running because required tracks (0x%x) %s are locked: %s",
                                   GetName().c_str(),
                                   GetTag(),
                                   tracksToLock,
-                                  AnimTrackFlagToString((AnimTrackFlag)tracksToLock));
+                                  AnimTrackFlagToString((AnimTrackFlag)tracksToLock),
+                                  _robot.GetMoveComponent().WhoIsLocking(tracksToLock).c_str());
               _state = ActionResult::FAILURE_TRACKS_LOCKED;
               return ActionResult::FAILURE_TRACKS_LOCKED;
             }
@@ -291,7 +292,7 @@ namespace Anki {
                              GetTag());
 #           endif
             
-            _robot.GetMoveComponent().LockTracks(tracksToLock);
+            _robot.GetMoveComponent().LockTracks(tracksToLock, GetTag(), GetName());
           }
           
           if( DEBUG_ACTION_RUNNING && _displayMessages )
@@ -392,7 +393,7 @@ namespace Anki {
                          _name.c_str(),
                          _idTag);
 #         endif
-        _robot.GetMoveComponent().UnlockTracks(tracks);
+        _robot.GetMoveComponent().UnlockTracks(tracks, GetTag());
       }
     }
     

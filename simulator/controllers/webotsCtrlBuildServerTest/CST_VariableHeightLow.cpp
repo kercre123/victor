@@ -57,6 +57,8 @@ namespace Anki {
       virtual s32 UpdateSimInternal() override;
       
       TestState _testState = TestState::Init;
+      
+      ObjectID _id;
     };
     
     // Register class with factory
@@ -93,7 +95,8 @@ namespace Anki {
             // Pickup object with type LIGHTCUBE1, whatever its ID happens to be
             auto objectsWithType = GetAllObjectIDsByFamilyAndType(ObjectFamily::LightCube, ObjectType::Block_LIGHTCUBE1);
             CST_ASSERT(objectsWithType.size()==1, "Expecting 1 object of type LIGHTCUBE1");
-            m.action.Set_pickupObject(ExternalInterface::PickupObject(objectsWithType.front(), motionProfile5, 0, false, true, false));
+            _id = objectsWithType.front();
+            m.action.Set_pickupObject(ExternalInterface::PickupObject(_id, motionProfile5, 0, false, true, false));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -104,7 +107,7 @@ namespace Anki {
         case TestState::TestDone:
         {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           GetCarryingObjectID() == 0, 20)
+                                           GetCarryingObjectID() == _id, 20)
           {
             StopMovie();
             CST_EXIT();

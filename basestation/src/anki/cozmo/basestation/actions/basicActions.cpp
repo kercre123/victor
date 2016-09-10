@@ -423,6 +423,9 @@ namespace Anki {
         ASSERT_NAMED(_speed_mmps >= 0.f, "DriveStraightAction.Constructor.NegativeSpeed");
         _speed_mmps = -_speed_mmps;
       }
+      
+      SetName("DriveStraight" + std::to_string(_dist_mm) + "mm@" +
+              std::to_string(_speed_mmps) + "mmps");
     }
 
     DriveStraightAction::~DriveStraightAction()
@@ -459,9 +462,6 @@ namespace Anki {
         return ActionResult::FAILURE_ABORT;
       }
       
-      SetName("DriveStraight" + std::to_string(_dist_mm) + "mm@" +
-               std::to_string(_speed_mmps) + "mmps");
-      
       _hasStarted = false;
       
       // Tell robot to execute this simple path
@@ -488,7 +488,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "DriveStraightAction.CheckIfDone.WaitingForPathStart", "");
         _hasStarted = _robot.IsTraversingPath();
         if( _hasStarted && _shouldPlayDrivingAnimation) {
-          _robot.GetDrivingAnimationHandler().PlayStartAnim(GetTracksToLock());
+          _robot.GetDrivingAnimationHandler().PlayStartAnim(GetTracksToLock(), GetTag(), IsSuppressingTrackLocking());
         }
       } else if(/*hasStarted AND*/ !_robot.IsTraversingPath() && _shouldPlayDrivingAnimation) {
         if( _robot.GetDrivingAnimationHandler().PlayEndAnim()) {
@@ -855,7 +855,9 @@ namespace Anki {
     , _isPanAbsolute(isPanAbsolute)
     , _isTiltAbsolute(isTiltAbsolute)
     {
-
+      // Put the angles in the name for debugging
+      SetName("Pan" + std::to_string(std::round(_bodyPanAngle.getDegrees())) +
+              "AndTilt" + std::to_string(std::round(_headTiltAngle.getDegrees())));
     }
     
     PanAndTiltAction::~PanAndTiltAction()
@@ -963,10 +965,6 @@ namespace Anki {
       headAction->SetAccel(_tiltAccel_radPerSec2);
       headAction->SetMoveEyes(_moveEyes);
       _compoundAction.AddAction(headAction);
-      
-      // Put the angles in the name for debugging
-      SetName("Pan" + std::to_string(std::round(_bodyPanAngle.getDegrees())) +
-               "AndTilt" + std::to_string(std::round(_headTiltAngle.getDegrees())));
       
       // Prevent the compound action from signaling completion
       _compoundAction.ShouldEmitCompletionSignal(false);
@@ -1438,7 +1436,8 @@ namespace Anki {
       // In case we got interrupted and didn't get a chance to do this
       if(_tracksLocked) {
         _robot.GetMoveComponent().UnlockTracks((u8)AnimTrackFlag::HEAD_TRACK |
-                                               (u8)AnimTrackFlag::BODY_TRACK);
+                                               (u8)AnimTrackFlag::BODY_TRACK,
+                                               GetTag());
       }
     }
 
@@ -1498,7 +1497,9 @@ namespace Anki {
         
         _state = State::Turning;
         _robot.GetMoveComponent().LockTracks((u8)AnimTrackFlag::HEAD_TRACK |
-                                             (u8)AnimTrackFlag::BODY_TRACK);
+                                             (u8)AnimTrackFlag::BODY_TRACK,
+                                             GetTag(),
+                                             GetName());
         _tracksLocked = true;
         
         return TurnTowardsPoseAction::Init();
@@ -1608,7 +1609,8 @@ namespace Anki {
           result = TurnTowardsPoseAction::CheckIfDone();
           if(ActionResult::RUNNING != result) {
             _robot.GetMoveComponent().UnlockTracks((u8)AnimTrackFlag::HEAD_TRACK |
-                                                   (u8)AnimTrackFlag::BODY_TRACK);
+                                                   (u8)AnimTrackFlag::BODY_TRACK,
+                                                   GetTag());
             _tracksLocked = false;
           }
           

@@ -58,8 +58,14 @@ public:
   // Returns true if all of the specified tracks are locked
   bool AreAllTracksLocked(u8 tracks) const;
   
-  void LockTracks(u8 tracks);
-  void UnlockTracks(u8 tracks);
+  // The string 'who' indicates who is locking the tracks
+  // In order to unlock tracks, the unlock 'who' needs to match the 'who' that did the locking
+  void LockTracks(u8 tracks, const std::string& who, const std::string& debugName);
+  void UnlockTracks(u8 tracks, const std::string& who);
+  
+  // Converts int who to a string (used to easily allow actions to lock tracks with their tag)
+  void LockTracks(u8 tracks, const int who, const std::string& debugName) { LockTracks(tracks, std::to_string(who), debugName); }
+  void UnlockTracks(u8 tracks, const int who) { UnlockTracks(tracks, std::to_string(who)); }
   
   // Completely unlocks all tracks to have an lock count of 0 as opposed to UnlockTracks(ALL_TRACKS)
   // which will only decrement each track lock count by 1
@@ -105,6 +111,9 @@ public:
   
   void PrintLockState() const;
   
+  // Returns a string of who is locking each of the specified tracks
+  std::string WhoIsLocking(u8 tracks) const;
+  
   void IgnoreDirectDriveMessages(bool ignore) { _ignoreDirectDrive = ignore; }
   
   bool IsDirectDriving() const { return ((_drivingWheels || _drivingHead || _drivingLift) && !_ignoreDirectDrive); }
@@ -117,7 +126,7 @@ private:
   
   // Checks if the speed is near zero and if it is sets flag to false and unlocks tracks
   // otherwise it will set flag to true and lock the tracks if they are not locked
-  void DirectDriveCheckSpeedAndLockTracks(f32 speed, bool& flag, u8 tracks);
+  void DirectDriveCheckSpeedAndLockTracks(f32 speed, bool& flag, u8 tracks, const std::string& who);
   
   Robot& _robot;
   
@@ -134,7 +143,23 @@ private:
   
   //bool _trackWithHeadOnly = false;
   
-  std::array<int, (size_t)AnimConstants::NUM_TRACKS> _trackLockCount;
+  struct LockInfo
+  {
+    std::string who;
+    std::string debugName;
+    
+    inline const bool operator<(const LockInfo& other) const
+    {
+      return who < other.who;
+    }
+    
+    inline const bool operator==(const LockInfo& other) const
+    {
+      return who == other.who;
+    }
+  };
+  
+  std::array<std::multiset<LockInfo>, (size_t)AnimConstants::NUM_TRACKS> _trackLockCount;
   
   struct FaceLayerToRemove {
     TimeStamp_t duration_ms;
@@ -172,9 +197,15 @@ private:
   const f32 kExpectedVsActualGyroTol_radps = 0.2;
   
   // Flags for whether or not we are currently directly driving the following motors
+
   bool _drivingWheels     = false;
   bool _drivingHead       = false;
   bool _drivingLift       = false;
+  const char* kDrivingWheelsStr = "DirectDriveWheels";
+  const char* kDrivingHeadStr   = "DirectDriveHead";
+  const char* kDrivingLiftStr   = "DirectDriveLift";
+  const char* kDrivingArcStr    = "DirectDriveArc";
+  const char* kDrivingTurnStr   = "DirectDriveTurnInPlace";
   bool _ignoreDirectDrive = false;
   
 }; // class MovementComponent

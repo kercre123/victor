@@ -43,7 +43,6 @@ MovementComponent::MovementComponent(Robot& robot)
   {
     InitEventHandlers(*(_robot.GetExternalInterface()));
   }
-  _trackLockCount.fill(0);
 }
   
 void MovementComponent::InitEventHandlers(IExternalInterface& interface)
@@ -86,19 +85,19 @@ void MovementComponent::Update(const Cozmo::RobotState& robotState)
     if( isRobotHeadTrackLocked != AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) )
     {
       PRINT_NAMED_WARNING("MovementComponent.Update.HeadLockUnmatched",
-                          "TrackRobot:%d, TrackEngineCount:%d",_robot.GetEnabledAnimationTracks(),_trackLockCount[GetFlagIndex((u8)AnimTrackFlag::HEAD_TRACK)]);
+                          "TrackRobot:%d, TrackEngineCount:%zu",_robot.GetEnabledAnimationTracks(),_trackLockCount[GetFlagIndex((u8)AnimTrackFlag::HEAD_TRACK)].size());
     }
     const bool isRobotLiftTrackLocked = (robotLockedTracks & (u8)AnimTrackFlag::LIFT_TRACK) != 0;
     if( isRobotLiftTrackLocked != AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK) )
     {
       PRINT_NAMED_WARNING("MovementComponent.Update.LiftLockUnmatched",
-                       "TrackRobot:%d, TrackEngineCount:%d",_robot.GetEnabledAnimationTracks(),_trackLockCount[GetFlagIndex((u8)AnimTrackFlag::LIFT_TRACK)]);
+                       "TrackRobot:%d, TrackEngineCount:%zu",_robot.GetEnabledAnimationTracks(),_trackLockCount[GetFlagIndex((u8)AnimTrackFlag::LIFT_TRACK)].size());
     }
     const bool isRobotBodyTrackLocked = (robotLockedTracks & (u8)AnimTrackFlag::BODY_TRACK) != 0;
     if( isRobotBodyTrackLocked != AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK) )
     {
       PRINT_NAMED_WARNING("MovementComponent.Update.BodyLockUnmatched",
-                          "TrackRobot:%d, TrackEngineCount:%d",_robot.GetEnabledAnimationTracks(),_trackLockCount[GetFlagIndex((u8)AnimTrackFlag::BODY_TRACK)]);
+                          "TrackRobot:%d, TrackEngineCount:%zu",_robot.GetEnabledAnimationTracks(),_trackLockCount[GetFlagIndex((u8)AnimTrackFlag::BODY_TRACK)].size());
     }
   }
   
@@ -355,7 +354,8 @@ void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
   } else {
     DirectDriveCheckSpeedAndLockTracks(ABS(msg.lwheel_speed_mmps) + ABS(msg.rwheel_speed_mmps),
                                        _drivingWheels,
-                                       (u8)AnimTrackFlag::BODY_TRACK);
+                                       (u8)AnimTrackFlag::BODY_TRACK,
+                                       kDrivingWheelsStr);
     _robot.SendRobotMessage<RobotInterface::DriveWheels>(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps,
                                                          msg.lwheel_accel_mmps2, msg.rwheel_accel_mmps2);
   }
@@ -382,7 +382,10 @@ void MovementComponent::HandleMessage(const ExternalInterface::TurnInPlaceAtSpee
                           RAD_TO_DEG_F32(turnSpeed), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
       turnSpeed = std::copysign(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC, turnSpeed);
     }
-    DirectDriveCheckSpeedAndLockTracks(turnSpeed, _drivingWheels, (u8)AnimTrackFlag::BODY_TRACK);
+    DirectDriveCheckSpeedAndLockTracks(turnSpeed,
+                                       _drivingWheels,
+                                       (u8)AnimTrackFlag::BODY_TRACK,
+                                       kDrivingTurnStr);
     _robot.SendRobotMessage<RobotInterface::TurnInPlaceAtSpeed>(turnSpeed, msg.accel_rad_per_sec2);
   }
 }
@@ -401,7 +404,10 @@ void MovementComponent::HandleMessage(const ExternalInterface::MoveHead& msg)
     PRINT_NAMED_INFO("MovementComponent.EventHandler.MoveHead.HeadLocked",
                      "Ignoring ExternalInterface::MoveHead while head is locked.");
   } else {
-    DirectDriveCheckSpeedAndLockTracks(msg.speed_rad_per_sec, _drivingHead, (u8)AnimTrackFlag::HEAD_TRACK);
+    DirectDriveCheckSpeedAndLockTracks(msg.speed_rad_per_sec,
+                                       _drivingHead,
+                                       (u8)AnimTrackFlag::HEAD_TRACK,
+                                       kDrivingHeadStr);
     _robot.SendRobotMessage<RobotInterface::MoveHead>(msg.speed_rad_per_sec);
   }
 }
@@ -420,7 +426,10 @@ void MovementComponent::HandleMessage(const ExternalInterface::MoveLift& msg)
     PRINT_NAMED_INFO("MovementComponent.EventHandler.MoveLift.LiftLocked",
                      "Ignoring ExternalInterface::MoveLift while lift is locked.");
   } else {
-    DirectDriveCheckSpeedAndLockTracks(msg.speed_rad_per_sec, _drivingLift, (u8)AnimTrackFlag::LIFT_TRACK);
+    DirectDriveCheckSpeedAndLockTracks(msg.speed_rad_per_sec,
+                                       _drivingLift,
+                                       (u8)AnimTrackFlag::LIFT_TRACK,
+                                       kDrivingLiftStr);
     _robot.SendRobotMessage<RobotInterface::MoveLift>(msg.speed_rad_per_sec);
   }
 }
@@ -441,7 +450,8 @@ void MovementComponent::HandleMessage(const ExternalInterface::DriveArc& msg)
   } else {
     DirectDriveCheckSpeedAndLockTracks(msg.speed_mmps,
                                        _drivingWheels,
-                                       (u8)AnimTrackFlag::BODY_TRACK);
+                                       (u8)AnimTrackFlag::BODY_TRACK,
+                                       kDrivingArcStr);
     _robot.SendRobotMessage<RobotInterface::DriveWheelsCurvature>(msg.speed_mmps,
                                                                   DEFAULT_PATH_MOTION_PROFILE.accel_mmps2,
                                                                   DEFAULT_PATH_MOTION_PROFILE.decel_mmps2,
@@ -455,14 +465,14 @@ void MovementComponent::HandleMessage(const ExternalInterface::StopAllMotors& ms
   StopAllMotors();
 }
 
-void MovementComponent::DirectDriveCheckSpeedAndLockTracks(f32 speed, bool& flag, u8 tracks)
+void MovementComponent::DirectDriveCheckSpeedAndLockTracks(f32 speed, bool& flag, u8 tracks, const std::string& who)
 {
   if(NEAR_ZERO(speed))
   {
     flag = false;
     if(AreAllTracksLocked(tracks))
     {
-      UnlockTracks(tracks);
+      UnlockTracks(tracks, who);
     }
   }
   else
@@ -470,7 +480,7 @@ void MovementComponent::DirectDriveCheckSpeedAndLockTracks(f32 speed, bool& flag
     flag = true;
     if(!AreAllTracksLocked(tracks))
     {
-      LockTracks(tracks);
+      LockTracks(tracks, who, who);
     }
   }
 }
@@ -512,9 +522,11 @@ Result MovementComponent::StopAllMotors()
   // If we are direct driving then make sure to unlock tracks and set flags appropriately
   if(IsDirectDriving())
   {
-    DirectDriveCheckSpeedAndLockTracks(0, _drivingHead,   (u8)AnimTrackFlag::HEAD_TRACK);
-    DirectDriveCheckSpeedAndLockTracks(0, _drivingLift,   (u8)AnimTrackFlag::LIFT_TRACK);
-    DirectDriveCheckSpeedAndLockTracks(0, _drivingWheels, (u8)AnimTrackFlag::BODY_TRACK);
+    DirectDriveCheckSpeedAndLockTracks(0, _drivingHead,   (u8)AnimTrackFlag::HEAD_TRACK, kDrivingHeadStr);
+    DirectDriveCheckSpeedAndLockTracks(0, _drivingLift,   (u8)AnimTrackFlag::LIFT_TRACK, kDrivingLiftStr);
+    DirectDriveCheckSpeedAndLockTracks(0, _drivingWheels, (u8)AnimTrackFlag::BODY_TRACK, kDrivingWheelsStr);
+    DirectDriveCheckSpeedAndLockTracks(0, _drivingWheels, (u8)AnimTrackFlag::BODY_TRACK, kDrivingArcStr);
+    DirectDriveCheckSpeedAndLockTracks(0, _drivingWheels, (u8)AnimTrackFlag::BODY_TRACK, kDrivingTurnStr);
   }
   
   return _robot.SendRobotMessage<RobotInterface::StopAllMotors>();
@@ -540,7 +552,7 @@ bool MovementComponent::AreAnyTracksLocked(u8 tracks) const
 {
   for(int i = 0; i < (int)AnimConstants::NUM_TRACKS; i++)
   {
-    if((tracks & 1) && (_trackLockCount[i] > 0))
+    if((tracks & 1) && (_trackLockCount[i].size() > 0))
     {
       return true;
     }
@@ -558,7 +570,7 @@ bool MovementComponent::AreAllTracksLocked(u8 tracks) const
   }
   for(int i = 0; i < (int)AnimConstants::NUM_TRACKS; i++)
   {
-    if((tracks & 1) && (_trackLockCount[i] == 0))
+    if((tracks & 1) && (_trackLockCount[i].size() == 0))
     {
       return false;
     }
@@ -571,68 +583,77 @@ void MovementComponent::CompletelyUnlockAllTracks()
 {
   for(int i = 0; i < (int)AnimConstants::NUM_TRACKS; i++)
   {
-    // Repeatedly unlock the track until its lock count is zero 
-    while(_trackLockCount[i] > 0)
+    if(_trackLockCount.size() > 0)
     {
       PRINT_NAMED_INFO("MovementComponent.UnlockAllTracks",
                        "Unlocking track %s",
                        EnumToString(GetFlagFromIndex(i)));
-      UnlockTracks((u8)GetFlagFromIndex(i));
+      _trackLockCount[i].clear();
+      
+      _robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::EnableAnimTracks(i)));
     }
   }
 }
 
-void MovementComponent::LockTracks(uint8_t tracks)
+void MovementComponent::LockTracks(uint8_t tracks, const std::string& who, const std::string& debugName)
 {
   for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
   {
     uint8_t curTrack = (1 << i);
     if ((tracks & curTrack) == curTrack)
     {
-      ++_trackLockCount[i];
+      _trackLockCount[i].insert({who, debugName});
       
       // If we just went from not locked to locked, inform the robot
-      if (_trackLockCount[i] == 1)
+      if (_trackLockCount[i].size() == 1)
       {
         _robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::DisableAnimTracks(curTrack)));
       }
     }
   }
   if(DEBUG_ANIMATION_LOCKING) {
-    PRINT_NAMED_INFO("MovementComponent.LockTracks", "locked: (0x%x) %s, result:",
+    PRINT_NAMED_INFO("MovementComponent.LockTracks", "locked: (0x%x) %s by %s[%s], result:",
                      tracks,
-                     AnimTrackHelpers::AnimTrackFlagsToString(tracks).c_str());
+                     AnimTrackHelpers::AnimTrackFlagsToString(tracks).c_str(),
+                     debugName.c_str(),
+                     who.c_str());
     PrintLockState();
   }
 }
 
-void MovementComponent::UnlockTracks(uint8_t tracks)
+void MovementComponent::UnlockTracks(uint8_t tracks, const std::string& who)
 {
   for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
   {
     uint8_t curTrack = (1 << i);
     if ((tracks & curTrack) == curTrack)
     {
-      --_trackLockCount[i];
-
-      // If we just went from locked to not locked, inform the robot
-      if (_trackLockCount[i] == 0)
+      auto iter = _trackLockCount[i].find({who, ""});
+      if(iter != _trackLockCount[i].end())
       {
-        _robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::EnableAnimTracks(curTrack)));
+        _trackLockCount[i].erase(iter);
+      }
+      else
+      {
+        PRINT_NAMED_INFO("MovementComponent.UnlockTracks",
+                         "Tracks 0x%x are not currently locked by %s",
+                         tracks,
+                         who.c_str());
+        PrintLockState();
       }
 
-      // It doesn't matter if there are more unlocks than locks
-      if(_trackLockCount[i] < 0)
+      // If we just went from locked to not locked, inform the robot
+      if (_trackLockCount[i].size() == 0)
       {
-        PRINT_NAMED_WARNING("MovementComponent.UnlockTracks", "Track locks and unlocks do not match");
-        _trackLockCount[i] = 0;
+        _robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::EnableAnimTracks(curTrack)));
       }
     }
   }
   if(DEBUG_ANIMATION_LOCKING) {
-    PRINT_NAMED_INFO("MovementComponent.UnlockTracks", "unlocked: (0x%x) %s, result:",
+    PRINT_NAMED_INFO("MovementComponent.UnlockTracks", "unlocked: (0x%x) %s by %s, result:",
                      tracks,
-                     AnimTrackHelpers::AnimTrackFlagsToString(tracks).c_str());
+                     AnimTrackHelpers::AnimTrackFlagsToString(tracks).c_str(),
+                     who.c_str());
     PrintLockState();
   }
 }
@@ -641,13 +662,40 @@ void MovementComponent::PrintLockState() const
 {
   std::stringstream ss;
   for( int trackNum = 0; trackNum < (int)AnimConstants::NUM_TRACKS; ++trackNum ) {
-    if( _trackLockCount[trackNum] > 0 ) {
+    if( _trackLockCount[trackNum].size() > 0 ) {
       uint8_t trackEnumVal = 1 << trackNum;
-      ss << AnimTrackHelpers::AnimTrackFlagsToString(trackEnumVal) << ":" << _trackLockCount[trackNum] << ' ';
+      ss << AnimTrackHelpers::AnimTrackFlagsToString(trackEnumVal) << ":" << _trackLockCount[trackNum].size() << ' ';
+      for(auto iter : _trackLockCount[trackNum])
+      {
+        ss << iter.debugName << "[" << iter.who << "] ";
+      }
+      ss << '\n';
     }
   }
 
-  PRINT_NAMED_DEBUG("MovementComponent.Locks", "%s", ss.str().c_str());
+  PRINT_NAMED_DEBUG("MovementComponent.LockState", "%s", ss.str().c_str());
+}
+
+std::string MovementComponent::WhoIsLocking(u8 tracks) const
+{
+  std::stringstream ss;
+  for(int i = 0; i < (int)AnimConstants::NUM_TRACKS; i++)
+  {
+    if((tracks & 1) && (_trackLockCount[i].size() > 0))
+    {
+      u8 thisTrack = (i > 0) << i;
+      ss << "Track " << AnimTrackHelpers::AnimTrackFlagsToString(thisTrack);
+      ss << "[0x" << std::hex << static_cast<u32>(thisTrack) << "]";
+      ss << " locked by: ";
+      for(const auto& lockInfo : _trackLockCount[i])
+      {
+        ss << lockInfo.debugName << "[" << lockInfo.who << "] ";
+      }
+      ss << "  ";
+    }
+    tracks = tracks >> 1;
+  }
+  return ss.str();
 }
   
 #pragma mark -

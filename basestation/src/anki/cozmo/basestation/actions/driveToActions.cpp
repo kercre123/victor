@@ -892,7 +892,7 @@ namespace Anki {
         
           // If we are following a path start playing driving animations
           // Won't do anything if DrivingAnimationHandler has already been inited
-          _robot.GetDrivingAnimationHandler().PlayStartAnim(GetTracksToLock());
+          _robot.GetDrivingAnimationHandler().PlayStartAnim(GetTracksToLock(), GetTag(), IsSuppressingTrackLocking());
         
           // clear abort timing, since we got a path
           _timeToAbortPlanning = -1.0f;

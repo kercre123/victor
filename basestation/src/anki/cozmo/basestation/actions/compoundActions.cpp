@@ -113,7 +113,7 @@ namespace Anki {
           if((*iter)->GetState() != ActionResult::FAILURE_NOT_STARTED &&
              !(*iter)->IsSuppressingTrackLocking())
           {
-            _robot.GetMoveComponent().LockTracks((*iter)->GetTracksToLock());
+            _robot.GetMoveComponent().LockTracks((*iter)->GetTracksToLock(), (*iter)->GetTag(), (*iter)->GetName());
           }
         }
         assert((*iter) != nullptr);
@@ -161,7 +161,7 @@ namespace Anki {
       {
         // If we aren't deleting actions when they complete we need to unlock their tracks so
         // subsequent actions can run
-        _robot.GetMoveComponent().UnlockTracks((*currentAction)->GetTracksToLock());
+        _robot.GetMoveComponent().UnlockTracks((*currentAction)->GetTracksToLock(), (*currentAction)->GetTag());
         ++currentAction;
       }
     }

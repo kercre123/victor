@@ -134,7 +134,10 @@ namespace Anki {
         {
           // Unlock our tracks so that endAnim can use them
           // This should be safe since we have finished driving
-          _robot.GetMoveComponent().UnlockTracks(_tracksToUnlock);
+          if(_isActionLockingTracks)
+          {
+            _robot.GetMoveComponent().UnlockTracks(_tracksToUnlock, _actionTag);
+          }
           
           PlayDrivingEndAnim();
           _endAnimStarted = true;
@@ -147,7 +150,10 @@ namespace Anki {
         _startedPlayingAnimation = false;
         
         // Relock tracks like nothing ever happend
-        _robot.GetMoveComponent().LockTracks(_tracksToUnlock);
+        if(_isActionLockingTracks)
+        {
+          _robot.GetMoveComponent().LockTracks(_tracksToUnlock, _actionTag, "DrivingAnimations");
+        }
       }
     }
     
@@ -160,7 +166,7 @@ namespace Anki {
       _robot.GetActionList().Cancel(_drivingEndAnimTag);
     }
     
-    void DrivingAnimationHandler::PlayStartAnim(u8 tracksToUnlock)
+    void DrivingAnimationHandler::PlayStartAnim(u8 tracksToUnlock, const u32 tag, bool isActionSuppressingLockingTracks)
     {
       if (!kEnableDrivingAnimations) {
         return;
@@ -180,6 +186,8 @@ namespace Anki {
       _drivingLoopAnimTag = ActionConstants::INVALID_TAG;
       _drivingEndAnimTag = ActionConstants::INVALID_TAG;
       _tracksToUnlock = tracksToUnlock;
+      _actionTag = tag;
+      _isActionLockingTracks = !isActionSuppressingLockingTracks;
       
       if(_currDrivingAnimations.drivingLoopAnim != AnimationTrigger::Count)
       {
@@ -206,7 +214,10 @@ namespace Anki {
       {
         // Unlock our tracks so that endAnim can use them
         // This should be safe since we have finished driving
-        _robot.GetMoveComponent().UnlockTracks(_tracksToUnlock);
+        if(_isActionLockingTracks)
+        {
+          _robot.GetMoveComponent().UnlockTracks(_tracksToUnlock, _actionTag);
+        }
         
         PlayDrivingEndAnim();
         _endAnimStarted = true;

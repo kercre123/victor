@@ -51,7 +51,8 @@ namespace Anki {
         bool IsPlayingEndAnim() const { return _endAnimStarted && !_endAnimCompleted; }
       
         // Starts playing drivingStart or drivingLoop if drivingStart isn't specified
-        void PlayStartAnim(u8 tracksToUnlock);
+        // Also needs the tag of the action that is calling this and whether or not it is suppressing track locking
+        void PlayStartAnim(u8 tracksToUnlock, const u32 tag, bool isActionSuppressingLockingTracks);
       
         // Cancels drivingStart and drivingLoop animations and starts playing drivingEnd animation
         bool PlayEndAnim();
@@ -84,7 +85,9 @@ namespace Anki {
       
         bool _startedPlayingAnimation = false;
       
+        u32 _actionTag;
         u8 _tracksToUnlock = (u8)AnimTrackFlag::NO_TRACKS;
+        bool _isActionLockingTracks = true;
       
         std::vector<Signal::SmartHandle> _signalHandles;
         bool _endAnimStarted = false;
