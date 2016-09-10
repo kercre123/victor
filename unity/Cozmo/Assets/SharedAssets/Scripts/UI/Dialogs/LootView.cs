@@ -518,6 +518,7 @@ namespace Cozmo.UI {
 
     // Finish open animation, enable LootButton, create initial shake and flourish
     private void HandleBoxFinished() {
+      UIManager.EnableTouchEvents();
       _LootButton.onClick.AddListener(HandleButtonTap);
       _ShakeRotationTweener = _LootBox.DOShakeRotation(_ShakeDuration, new Vector3(0, 0, _ShakeRotationMaxAngle), _ShakeRotationVibrato, _ShakeRotationRandomness);
       _ShakePositionTweener = _LootBox.DOShakePosition(_ShakeDuration, _ShakePositionMax, _ShakePositionVibrato, _ShakePositionRandomness);

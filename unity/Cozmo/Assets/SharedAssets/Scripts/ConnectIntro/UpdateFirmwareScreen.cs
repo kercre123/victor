@@ -12,6 +12,7 @@ public class UpdateFirmwareScreen : MonoBehaviour {
   private float _DoneUpdateDelay = 10.0f;
 
   public bool DoneUpdateDelayInProgress = false;
+  private float _StartDelayTime = 0.0f;
 
   private void Start() {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete>(FirmwareUpdateComplete);
@@ -28,18 +29,24 @@ public class UpdateFirmwareScreen : MonoBehaviour {
     // ignore the other substate progression messages
     if (message.subStage == Anki.Cozmo.FirmwareUpdateSubStage.Flash) {
       DAS.Debug("UpdateFirmwareScreen.HandleFirmwareProgress", message.percentComplete.ToString());
-      _ProgressBar.SetProgress(message.percentComplete / 100.0f);
+      _ProgressBar.SetProgress((message.percentComplete / 100.0f) * 0.9f);
     }
   }
 
   private void FirmwareUpdateComplete(Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete message) {
     DoneUpdateDelayInProgress = true;
+    _StartDelayTime = Time.time;
     StartCoroutine(NotifyFirmwareComplete(message));
   }
 
   private IEnumerator NotifyFirmwareComplete(Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete message) {
+    while (Time.time - _StartDelayTime < _DoneUpdateDelay) {
+      float delayPercentage = ((Time.time - _StartDelayTime) / _DoneUpdateDelay);
+      _ProgressBar.SetProgress(0.9f + delayPercentage * 0.1f);
+      yield return null;
+    }
 
-    yield return new WaitForSeconds(_DoneUpdateDelay);
+    _ProgressBar.SetProgress(1.0f);
 
     if (FirmwareUpdateDone != null) {
       if (message.result == Anki.Cozmo.FirmwareUpdateResult.Success) {
