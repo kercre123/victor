@@ -193,7 +193,8 @@ namespace FaceEnrollment {
 
     private void HandleRobotRenamedEnrolledFace(int faceId, string faceName) {
       CurrentRobot.OnEnrolledFaceRenamed -= HandleRobotRenamedEnrolledFace;
-      CurrentRobot.SayTextWithEvent(faceName, Anki.Cozmo.AnimationTrigger.MeetCozmoRenameFaceSayName, callback: EditOrEnrollFaceComplete);
+      CurrentRobot.SayTextWithEvent(faceName, Anki.Cozmo.AnimationTrigger.MeetCozmoRenameFaceSayName);
+      EditOrEnrollFaceComplete(true);
     }
 
     private void HandleInstructionsSlideEntered() {
