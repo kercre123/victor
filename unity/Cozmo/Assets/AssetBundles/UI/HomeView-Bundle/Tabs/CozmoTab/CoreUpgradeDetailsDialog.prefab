@@ -309,6 +309,23 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &149324
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22496218}
+  - 222: {fileID: 22254474}
+  - 114: {fileID: 11411018}
+  m_Layer: 5
+  m_Name: SparkButtonIcon2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &149416
 GameObject:
   m_ObjectHideFlags: 1
@@ -502,7 +519,7 @@ GameObject:
   - 114: {fileID: 11454172}
   - 225: {fileID: 22516724}
   m_Layer: 5
-  m_Name: CozmoUpgradeDetailsDialog
+  m_Name: CoreUpgradeDetailsDialog
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -569,7 +586,7 @@ GameObject:
   - 222: {fileID: 22208790}
   - 114: {fileID: 11402262}
   m_Layer: 5
-  m_Name: ButtonCostLabel
+  m_Name: UnlockButtonCostLabel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -587,6 +604,23 @@ GameObject:
   - 114: {fileID: 11471790}
   m_Layer: 5
   m_Name: DescBackGradient
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!1 &181446
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22424176}
+  - 222: {fileID: 22273482}
+  - 114: {fileID: 11405450}
+  m_Layer: 5
+  m_Name: SparkButtonCostLabel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -667,9 +701,8 @@ GameObject:
   m_Component:
   - 224: {fileID: 22401344}
   - 222: {fileID: 22263146}
-  - 114: {fileID: 11411018}
   m_Layer: 5
-  m_Name: SparkButtonIcon2
+  m_Name: SparkIcons
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -687,7 +720,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.4, g: 0.4, b: 0.4, a: 1}
   m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -721,6 +754,39 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _ImageToSpin: {fileID: 11423784}
   _SpinSpeed: -300
+--- !u!114 &11405450
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 181446}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 708705254, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+  m_FontData:
+    m_Font: {fileID: 12800000, guid: 01314919a94634a228a0ccc4039bcf62, type: 3}
+    m_FontSize: 100
+    m_FontStyle: 0
+    m_BestFit: 0
+    m_MinSize: 1
+    m_MaxSize: 100
+    m_Alignment: 5
+    m_AlignByGeometry: 0
+    m_RichText: 1
+    m_HorizontalOverflow: 0
+    m_VerticalOverflow: 0
+    m_LineSpacing: 1
+  m_Text: 5
 --- !u!114 &11406586
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -753,7 +819,7 @@ MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 195662}
+  m_GameObject: {fileID: 149324}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
@@ -1137,9 +1203,10 @@ MonoBehaviour:
   _AffordableHighlightContainer: {fileID: 150868}
   _AvailablePromptLabel: {fileID: 0}
   _AvailablePromptCost: {fileID: 0}
-  _ButtonCostLabel: {fileID: 11402262}
+  _SparkButtonCostLabel: {fileID: 11405450}
+  _UnlockButtonCostLabel: {fileID: 11402262}
   _RequestTrickButtonLabel: {fileID: 0}
-  _RequestTrickButtonIcon: {fileID: 11479604}
+  _RequestTrickButtonIcons: {fileID: 195662}
   _UnlockableIcon: {fileID: 11459738}
   _CubesRequiredLabel: {fileID: 11442860}
   _UnlockUpgradeButtonContainer: {fileID: 104356}
@@ -1835,6 +1902,12 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 179732}
+--- !u!222 &22254474
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 149324}
 --- !u!222 &22263146
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -1859,6 +1932,12 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 149416}
+--- !u!222 &22273482
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 181446}
 --- !u!222 &22280972
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -1884,6 +1963,7 @@ RectTransform:
   m_Children:
   - {fileID: 22464954}
   - {fileID: 22449026}
+  - {fileID: 22495898}
   m_Father: {fileID: 22440950}
   m_RootOrder: 0
   m_AnchorMin: {x: 1, y: 0}
@@ -1901,12 +1981,14 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_Children: []
+  m_Children:
+  - {fileID: 22496218}
+  - {fileID: 22431624}
   m_Father: {fileID: 22408966}
   m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -61, y: 131.2}
+  m_AnchoredPosition: {x: -60.99954, y: 131.19965}
   m_SizeDelta: {x: 246, y: 160}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22403378
@@ -1958,7 +2040,7 @@ RectTransform:
   m_Children:
   - {fileID: 22495650}
   - {fileID: 22401344}
-  - {fileID: 22431624}
+  - {fileID: 22424176}
   m_Father: {fileID: 22440950}
   m_RootOrder: 1
   m_AnchorMin: {x: 1, y: 0}
@@ -2061,6 +2143,24 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 1, y: 0.5}
+--- !u!224 &22424176
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 181446}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 22408966}
+  m_RootOrder: 2
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: -966, y: -10.499985}
+  m_SizeDelta: {x: 187, y: 192.5}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22431624
 RectTransform:
   m_ObjectHideFlags: 1
@@ -2072,11 +2172,11 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
-  m_Father: {fileID: 22408966}
-  m_RootOrder: 2
+  m_Father: {fileID: 22401344}
+  m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 26, y: 136}
+  m_AnchoredPosition: {x: 86.99949, y: 4.8003693}
   m_SizeDelta: {x: 246, y: 212}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22432298
@@ -2204,7 +2304,6 @@ RectTransform:
   m_Children:
   - {fileID: 22400090}
   - {fileID: 22408966}
-  - {fileID: 22495898}
   - {fileID: 22480132}
   m_Father: {fileID: 22499570}
   m_RootOrder: 2
@@ -2488,7 +2587,7 @@ RectTransform:
   - {fileID: 22470452}
   - {fileID: 22452054}
   m_Father: {fileID: 22440950}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: -140}
@@ -2617,12 +2716,30 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
-  m_Father: {fileID: 22440950}
+  m_Father: {fileID: 22400090}
   m_RootOrder: 2
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -966, y: -162}
+  m_AnchoredPosition: {x: -965.99994, y: -10.499725}
   m_SizeDelta: {x: 187, y: 192.5}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!224 &22496218
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 149324}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 22401344}
+  m_RootOrder: 0
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -0.0004386902, y: 0.00033569336}
+  m_SizeDelta: {x: 246, y: 160}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22499570
 RectTransform:
