@@ -57,8 +57,9 @@ BehaviorDriveOffCharger::BehaviorDriveOffCharger(Robot& robot, const Json::Value
 bool BehaviorDriveOffCharger::IsRunnableInternal(const Robot& robot) const
 {
   // assumes it's not possible to be OnCharger without being OnChargerPlatform
-  //ASSERT_NAMED(robot.IsOnChargerPlatform() || !robot.IsOnCharger(),
-  //             "BehaviorDriveOffCharger.IsRunnableInternal.InconsistentChargerFlags");
+  const ObservableObject* charger = robot.GetBlockWorld().GetObjectByID(robot.GetCharger(), ObjectFamily::Charger);
+  ASSERT_NAMED((charger == nullptr) || robot.IsOnChargerPlatform() || !robot.IsOnCharger(),
+               "BehaviorDriveOffCharger.IsRunnableInternal.InconsistentChargerFlags");
   
   // can run any time we are on a platform
   const bool onChargerPlatform = robot.IsOnChargerPlatform();
