@@ -25,14 +25,24 @@ public class FirstTimeConnectDialog : MonoBehaviour {
   private ProfileCreationView _ProfileCreationViewPrefab;
   private ProfileCreationView _ProfileCreationViewInstance;
 
+  [SerializeField]
+  private PrivacyPolicyView _PrivacyPolicyViewPrefab;
+
+  [SerializeField]
+  private Cozmo.UI.CozmoButton _PrivacyPolicyButton;
+
   private void Awake() {
 
     if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
-      _StartButton.Initialize(HandleMockButton, "start_button", "simple_connect_dialog");
+      _StartButton.Initialize(HandleMockButton, "start_button", "first_time_connect_dialog");
     }
     else {
-      _StartButton.Initialize(HandleStartButton, "start_button", "simple_connect_dialog");
+      _StartButton.Initialize(HandleStartButton, "start_button", "first_time_connect_dialog");
     }
+
+    _PrivacyPolicyButton.Initialize(() => {
+      UIManager.OpenView(_PrivacyPolicyViewPrefab);
+    }, "privacy_policy_button", "first_time_connect_dialog");
 
     _StartButton.Text = Localization.Get(LocalizationKeys.kLabelStart);
     UIManager.Instance.BackgroundColorController.SetBackgroundColor(Cozmo.UI.BackgroundColorController.BackgroundColor.Yellow);

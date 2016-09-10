@@ -399,6 +399,12 @@ public static class LocalizationKeys
 
   #endregion
 
+  #region PrivacyPolicyStrings
+
+  public const string kPrivacyPolicyText = "privacyPolicy.text";
+
+  #endregion
+
   #region RewardedActionStrings
 
   public const string kRewardDescriptionMissing = "reward.description.Missing";

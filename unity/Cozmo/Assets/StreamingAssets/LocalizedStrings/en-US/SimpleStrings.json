@@ -218,5 +218,8 @@
   },
   "label.deviceid": {
     "translation": "Device ID: {0}"
+  },
+  "label.privacyPolicy": {
+    "translation": "Privacy Policy"
   }
 }

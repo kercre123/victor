@@ -83,6 +83,12 @@ public class CheckInFlow : MonoBehaviour {
   [SerializeField]
   private Transform _GoalsCollectTarget;
 
+  [SerializeField]
+  private PrivacyPolicyView _PrivacyPolicyViewPrefab;
+
+  [SerializeField]
+  private Cozmo.UI.CozmoButton _PrivacyPolicyButton;
+
   private List<Transform> _ActiveNewGoalTransforms = new List<Transform>();
   private List<Transform> _ActiveExpTransforms = new List<Transform>();
   private List<Transform> _ActiveSparksTransforms = new List<Transform>();
@@ -99,6 +105,11 @@ public class CheckInFlow : MonoBehaviour {
     else {
       _ConnectButton.Initialize(HandleConnectButton, "connect_button", "checkin_dialog");
     }
+
+    _PrivacyPolicyButton.Initialize(() => {
+      UIManager.OpenView(_PrivacyPolicyViewPrefab);
+    }, "privacy_policy_button", "checkin_dialog");
+
 
     _EnvelopeButton.Initialize(HandleEnvelopeButton, "envelope_button", "checkin_dialog");
     _EnvelopeButton.Text = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName;
