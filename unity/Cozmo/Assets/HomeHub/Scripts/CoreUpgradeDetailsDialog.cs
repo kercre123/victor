@@ -308,7 +308,8 @@ public class CoreUpgradeDetailsDialog : BaseView {
     IRobot robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null && robot.IsSparked && robot.SparkUnlockId == _UnlockInfo.Id.Value) {
       _AvailablePromptCost.gameObject.SetActive(false);
-      _AvailablePromptLabel.gameObject.SetActive(false);
+      _AvailablePromptLabel.gameObject.SetActive(true);
+      _AvailablePromptLabel.text = Localization.Get(LocalizationKeys.kSparksSparked);
     }
 
     if (robot != null) {
