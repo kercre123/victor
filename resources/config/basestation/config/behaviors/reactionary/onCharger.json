@@ -4,6 +4,6 @@
     "Reactionary"
   ],
   "disableByDefault": true,
-  "timeTilSleepAnimation_s": 20.0,
-  "timeTilDisconnection_s": 45.0
+  "timeTilSleepAnimation_s": 300.0,
+  "timeTilDisconnection_s": 330.0
 }
