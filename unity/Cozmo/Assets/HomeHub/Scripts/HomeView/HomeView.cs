@@ -604,11 +604,12 @@ namespace Cozmo.HomeHub {
           RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.All);
         }
         UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
+        UIManager.EnableTouchEvents();
       }
       else {
         HandleChestGained();
       }
-      UIManager.EnableTouchEvents();
+
     }
     // If we earned a chest, have the progress bar reflect the previous requirement level at full.
     private void HandleChestGained() {
