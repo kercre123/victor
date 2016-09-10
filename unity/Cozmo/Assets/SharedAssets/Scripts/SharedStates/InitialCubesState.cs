@@ -47,6 +47,10 @@ public class InitialCubesState : State {
 
   public override void Pause(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
     // Do nothing
+    UpdateUI(0);
+    foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
+      lightCube.Value.SetLEDsOff();
+    }
   }
 
   public override void Resume(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
