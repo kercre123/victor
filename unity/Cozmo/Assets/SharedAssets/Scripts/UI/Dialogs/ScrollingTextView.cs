@@ -15,14 +15,11 @@ namespace Cozmo.UI {
     private AnkiTextLabel _TitleTextLabel;
 
     [SerializeField]
-    private AnkiTextLabel _DescriptionTextLabel;
-
-    [SerializeField]
-    private RectTransform _ScrollMask;
+    private AnkiInfiniteScrollView _DescriptionTextLabel;
 
     public void Initialize(string titleLocKey, string descriptionLocKey) {
       _TitleTextLabel.text = Localization.Get(titleLocKey);
-      _DescriptionTextLabel.text = Localization.Get(descriptionLocKey);
+      _DescriptionTextLabel.SetString(Localization.Get(descriptionLocKey));
 
       _AlphaController.interactable = true;
       _AlphaController.blocksRaycasts = false;
@@ -48,7 +45,6 @@ namespace Cozmo.UI {
 
     protected override void ConstructCloseAnimation(Sequence closeAnimation) {
       _ScrollRectCanvasGroup.ignoreParentGroups = false;
-      _ScrollMask.gameObject.SetActive(false);
       UIDefaultTransitionSettings settings = UIDefaultTransitionSettings.Instance;
       closeAnimation.Append(transform.DOLocalMoveY(
         -50, 0.15f).SetEase(settings.MoveCloseEase).SetRelative());

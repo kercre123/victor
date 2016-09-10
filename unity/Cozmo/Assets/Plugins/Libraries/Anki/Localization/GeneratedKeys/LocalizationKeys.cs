@@ -398,6 +398,13 @@ public static class LocalizationKeys {
 
   #endregion
 
+  #region PrivacyPolicyStrings
+
+  public const string kPrivacyPolicyTitle = "privacyPolicy.title";
+  public const string kPrivacyPolicyText = "privacyPolicy.text";
+
+  #endregion
+
   #region RewardedActionStrings
 
   public const string kRewardDescriptionMissing = "reward.description.Missing";
@@ -549,6 +556,7 @@ public static class LocalizationKeys {
   public const string kErrorBadLightBottom = "error.badLight.Bottom";
   public const string kLabelCozmoSerial = "label.cozmo.serial";
   public const string kLabelDeviceid = "label.deviceid";
+  public const string kLabelPrivacyPolicy = "label.privacyPolicy";
 
   #endregion
 
