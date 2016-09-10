@@ -130,10 +130,12 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
   }
 
   protected override void CleanUp() {
-    // Reenable freeplay light states
+    // Turn off cube lights
     IRobot robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {
-      robot.SetEnableFreeplayLightStates(true);
+      foreach (KeyValuePair<int, LightCube> kvp in robot.LightCubes) {
+        kvp.Value.SetLEDsOff();
+      }
     }
   }
 }

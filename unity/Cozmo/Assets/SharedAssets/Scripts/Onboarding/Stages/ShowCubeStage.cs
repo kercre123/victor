@@ -42,6 +42,9 @@ namespace Onboarding {
       _StartTime = Time.time;
 
       _ContinueButtonInstance.Initialize(HandleContinueClicked, "Onboarding." + name, "Onboarding");
+
+      RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayLightStates(true);
+
       RobotEngineManager.Instance.CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
 
       RobotEngineManager.Instance.AddCallback<OnboardingState>(HandleUpdateOnboardingState);
