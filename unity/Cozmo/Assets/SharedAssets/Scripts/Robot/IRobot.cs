@@ -106,6 +106,8 @@ public interface IRobot : IDisposable {
 
   string CurrentBehaviorString { get; set; }
 
+  BehaviorType CurrentBehaviorType { get; set; }
+
   string CurrentDebugAnimationString { get; set; }
 
   uint FirmwareVersion { get; set; }

@@ -1,0 +1,114 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "behavior.BringCubeToBeacon": {
+    "translation": "Collecting his Cubes"
+  },
+  "behavior.ExploreCliff": {
+    "translation": "Exploring his surroundings"
+  },
+  "behavior.LookAround": {
+    "translation": "Exploring his surroundings"
+  },
+  "behavior.ExploreVisitPossibleMarker": {
+    "translation": "Exploring his surroundings"
+  },
+  "behavior.ExploreMarkedCube": {
+    "translation": "Exploring his surroundings"
+  },
+  "behavior.LookInPlaceMemoryMap": {
+    "translation": "Exploring his surroundings"
+  },
+  "behavior.ExploreLookAroundInPlace": {
+    "translation": "Exploring his surroundings"
+  },
+  "behavior.ThinkAboutBeacons": {
+    "translation": "Exploring his surroundings"
+  },
+  "behavior.VisitInterestingEdge": {
+    "translation": "Exploring his surroundings"
+  },
+  "behavior.BuildPyramid": {
+    "translation": "Building a Pyramid"
+  },
+  "behavior.KnockOverCubes": {
+    "translation": "Knocking over cubes"
+  },
+  "behavior.PopAWheelie": {
+    "translation": "Popping a wheelie"
+  },
+  "behavior.PounceOnMotion": {
+    "translation": "Pouncing on motion"
+  },
+  "behavior.RollBlock": {
+    "translation": "Rolling a Cube"
+  },
+  "behavior.StackCube": {
+    "translation": "Stacking a Cube"
+  },
+  "behavior.LookingForFaces": {
+    "translation": "Looking for faces"
+  },
+  "behavior.FindFaces": {
+    "translation": "Looking for faces"
+  },
+  "behavior.InteractWithFaces": {
+    "translation": "Looking for faces"
+  },
+  "behavior.Bored": {
+    "translation": "Bored"
+  },
+  "behavior.ReactToCliff": {
+    "translation": ""
+  },
+  "behavior.ReactToFrustration": {
+    "translation": "Upset"
+  },
+  "behavior.ReactToOnCharger": {
+    "translation": "Going To Sleep"
+  },
+  "behavior.ReactToPickup": {
+    "translation": "Asking to be put down"
+  },
+  "behavior.ReactToOnSide": {
+    "translation": "Asking to be put upright"
+  },
+  "behavior.RequestToPlay": {
+    "translation": "Asking to play"
+  },
+  "behavior.AcknowledgeObject": {
+    "translation": ""
+  },
+  "behavior.ReactToOnBack": {
+    "translation": ""
+  },
+  "behavior.ReactToOnFace": {
+    "translation": ""
+  },
+  "behavior.ReactToOnTreads": {
+    "translation": ""
+  },
+  "behavior.ReactToUnexpectedMovement": {
+    "translation": ""
+  },
+  "behavior.DriveOffCharger": {
+    "translation": "Cozmo is waking up"
+  }
+}

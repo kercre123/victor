@@ -30,7 +30,7 @@ public class OnboardingManager : MonoBehaviour {
   private Transform _OnboardingTransform;
 
   [SerializeField]
-  private int _NumStagesHome = 7;
+  private int _NumStagesHome = 8;
   [SerializeField]
   private int _NumStagesLoot = 2;
   [SerializeField]

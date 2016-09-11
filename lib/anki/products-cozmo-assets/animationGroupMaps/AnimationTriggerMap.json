@@ -573,6 +573,10 @@
       "AnimName": "ag_launch_lifteffortplacelow"
     },
     {
+      "CladEvent": "OnboardingGetOut",
+      "AnimName": "ag_launch_reacttonextscreen"
+    },
+    {
       "CladEvent": "PlacedOnCharger",
       "AnimName": "ag_reactToCharger"
     },

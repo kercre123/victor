@@ -105,6 +105,12 @@
   "onboarding.Phase5.Body3": {
     "translation": "Cozmo Apps are games & activities you can play with Cozmo\n\nYour first Goal is to Meet Cozmo\n\nTry it now!"
   },
+  "onboarding.Phase5.Body4": {
+    "translation": "When you're not in an app, you and Cozmo can hang out together, play with his Cubes and explore the world.\n\nYou can see what's on his mind here."
+  },
+  "onboarding.Phase5.FinalButton": {
+    "translation": "Play With Cozmo"
+  },
   "onboarding.Slide0a": {
     "translation": "Put Cozmo on a clean, open table in a well lit room"
   },
@@ -116,6 +122,9 @@
   },
   "onboarding.OldRobotSkip": {
     "translation": "This Cozmo has already been through the Tutorial. Would you like to Skip it, or Start it again?"
+  },
+  "onboarding.FreeplayStringFakeOnboarding": {
+    "translation": "Cozmo is ready and waiting to play"
   },
   "onboarding.BirthWait": {
     "translation": "Watch Cozmo come to life"

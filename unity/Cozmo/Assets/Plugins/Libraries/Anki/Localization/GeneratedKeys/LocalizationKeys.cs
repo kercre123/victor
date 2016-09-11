@@ -1,5 +1,41 @@
 public static class LocalizationKeys {
 
+  #region BehaviorStrings
+
+  public const string kBehaviorBringCubeToBeacon = "behavior.BringCubeToBeacon";
+  public const string kBehaviorExploreCliff = "behavior.ExploreCliff";
+  public const string kBehaviorLookAround = "behavior.LookAround";
+  public const string kBehaviorExploreVisitPossibleMarker = "behavior.ExploreVisitPossibleMarker";
+  public const string kBehaviorExploreMarkedCube = "behavior.ExploreMarkedCube";
+  public const string kBehaviorLookInPlaceMemoryMap = "behavior.LookInPlaceMemoryMap";
+  public const string kBehaviorExploreLookAroundInPlace = "behavior.ExploreLookAroundInPlace";
+  public const string kBehaviorThinkAboutBeacons = "behavior.ThinkAboutBeacons";
+  public const string kBehaviorVisitInterestingEdge = "behavior.VisitInterestingEdge";
+  public const string kBehaviorBuildPyramid = "behavior.BuildPyramid";
+  public const string kBehaviorKnockOverCubes = "behavior.KnockOverCubes";
+  public const string kBehaviorPopAWheelie = "behavior.PopAWheelie";
+  public const string kBehaviorPounceOnMotion = "behavior.PounceOnMotion";
+  public const string kBehaviorRollBlock = "behavior.RollBlock";
+  public const string kBehaviorStackCube = "behavior.StackCube";
+  public const string kBehaviorLookingForFaces = "behavior.LookingForFaces";
+  public const string kBehaviorFindFaces = "behavior.FindFaces";
+  public const string kBehaviorInteractWithFaces = "behavior.InteractWithFaces";
+  public const string kBehaviorBored = "behavior.Bored";
+  public const string kBehaviorReactToCliff = "behavior.ReactToCliff";
+  public const string kBehaviorReactToFrustration = "behavior.ReactToFrustration";
+  public const string kBehaviorReactToOnCharger = "behavior.ReactToOnCharger";
+  public const string kBehaviorReactToPickup = "behavior.ReactToPickup";
+  public const string kBehaviorReactToOnSide = "behavior.ReactToOnSide";
+  public const string kBehaviorRequestToPlay = "behavior.RequestToPlay";
+  public const string kBehaviorAcknowledgeObject = "behavior.AcknowledgeObject";
+  public const string kBehaviorReactToOnBack = "behavior.ReactToOnBack";
+  public const string kBehaviorReactToOnFace = "behavior.ReactToOnFace";
+  public const string kBehaviorReactToOnTreads = "behavior.ReactToOnTreads";
+  public const string kBehaviorReactToUnexpectedMovement = "behavior.ReactToUnexpectedMovement";
+  public const string kBehaviorDriveOffCharger = "behavior.DriveOffCharger";
+
+  #endregion
+
   #region ChallengeTitleStrings
 
   public const string kChallengeDetailsLabelRequires = "challengeDetails.label.requires";
@@ -376,10 +412,13 @@ public static class LocalizationKeys {
   public const string kOnboardingPhase5Body1 = "onboarding.Phase5.Body1";
   public const string kOnboardingPhase5Body2 = "onboarding.Phase5.Body2";
   public const string kOnboardingPhase5Body3 = "onboarding.Phase5.Body3";
+  public const string kOnboardingPhase5Body4 = "onboarding.Phase5.Body4";
+  public const string kOnboardingPhase5FinalButton = "onboarding.Phase5.FinalButton";
   public const string kOnboardingSlide0a = "onboarding.Slide0a";
   public const string kOnboardingGreatPlaySpace2Header = "onboarding.GreatPlaySpace2Header";
   public const string kOnboardingGreatPlaySpace2Footer = "onboarding.GreatPlaySpace2Footer";
   public const string kOnboardingOldRobotSkip = "onboarding.OldRobotSkip";
+  public const string kOnboardingFreeplayStringFakeOnboarding = "onboarding.FreeplayStringFakeOnboarding";
   public const string kOnboardingBirthWait = "onboarding.BirthWait";
 
   #endregion

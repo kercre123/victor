@@ -812,6 +812,8 @@ public class MockRobot : IRobot {
     set;
   }
 
+  public BehaviorType CurrentBehaviorType { get; set; }
+
   public string CurrentDebugAnimationString {
     get;
     set;

@@ -275,6 +275,8 @@ public class Robot : IRobot {
 
   public string CurrentBehaviorString { get; set; }
 
+  public BehaviorType CurrentBehaviorType { get; set; }
+
   public string CurrentDebugAnimationString { get; set; }
 
   public uint FirmwareVersion { get; set; }
@@ -369,6 +371,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotErasedEnrolledFace>(HandleRobotErasedEnrolledFace);
     RobotEngineManager.Instance.AddCallback<Anki.Vision.RobotRenamedEnrolledFace>(HandleRobotRenamedEnrolledFace);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.BehaviorTransition>(HandleBehaviorTransition);
 
     ObservedObject.AnyInFieldOfViewStateChanged += HandleInFieldOfViewStateChanged;
     RobotEngineManager.Instance.AddCallback<Anki.Vision.LoadedKnownFace>(HandleLoadedKnownFace);
@@ -397,6 +400,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotErasedEnrolledFace>(HandleRobotErasedEnrolledFace);
     RobotEngineManager.Instance.RemoveCallback<Anki.Vision.RobotRenamedEnrolledFace>(HandleRobotRenamedEnrolledFace);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.BehaviorTransition>(HandleBehaviorTransition);
 
     ObservedObject.AnyInFieldOfViewStateChanged -= HandleInFieldOfViewStateChanged;
   }
@@ -418,6 +422,10 @@ public class Robot : IRobot {
 
   private void HandleDebugString(Anki.Cozmo.ExternalInterface.DebugString message) {
     CurrentBehaviorString = message.text;
+  }
+
+  private void HandleBehaviorTransition(Anki.Cozmo.ExternalInterface.BehaviorTransition message) {
+    CurrentBehaviorType = message.newBehaviorType;
   }
 
   private void HandleDebugAnimationString(Anki.Cozmo.ExternalInterface.DebugAnimationString message) {
@@ -580,6 +588,7 @@ public class Robot : IRobot {
     LiftHeight = float.MaxValue;
     BatteryVoltage = float.MaxValue;
     _LastProcessedVisionFrameEngineTimestamp = 0;
+    CurrentBehaviorType = BehaviorType.NoneBehavior;
 
     for (int i = 0; i < BackpackLights.Length; ++i) {
       BackpackLights[i].ClearData();
@@ -817,7 +826,7 @@ public class Robot : IRobot {
   private void HandleChangedObservedFaceID(Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID message) {
     for (int i = 0; i < Faces.Count; i++) {
       // remove the old face we saw, new face will be added by RobotObservedFace
-      if (Faces[i].ID == message.oldID){
+      if (Faces[i].ID == message.oldID) {
         if (OnFaceRemoved != null) {
           OnFaceRemoved(Faces[i]);
         }
@@ -1228,8 +1237,8 @@ public class Robot : IRobot {
 
     float radians = AngleFactorToRadians(headAngleFactor, true);
 
-    RobotEngineManager.Instance.Message.SetDefaultHeadAndLiftState = 
-    Singleton<SetDefaultHeadAndLiftState>.Instance.Initialize (
+    RobotEngineManager.Instance.Message.SetDefaultHeadAndLiftState =
+    Singleton<SetDefaultHeadAndLiftState>.Instance.Initialize(
       enable,
       radians,
       liftHeight

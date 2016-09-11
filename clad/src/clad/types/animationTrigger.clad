@@ -157,6 +157,7 @@ enum int_32 AnimationTrigger
   OnboardingReactToFace,
   OnboardingSoundOnlyLiftEffortPickup,
   OnboardingSoundOnlyLiftEffortPlaceLow,
+  OnboardingGetOut,
   PlacedOnCharger,
   PopAWheelieInitial,
   PopAWheeliePreActionNamedFace,

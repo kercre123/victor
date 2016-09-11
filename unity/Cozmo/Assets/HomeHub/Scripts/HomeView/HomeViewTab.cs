@@ -1,8 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
-using Anki.UI;
-using Cozmo.UI;
 
 namespace Cozmo.HomeHub {
   public class HomeViewTab : MonoBehaviour {
@@ -12,10 +9,15 @@ namespace Cozmo.HomeHub {
 
     private List<TabPanel> _TabPanelsList = new List<TabPanel>();
 
-    public void Initialize(HomeView homeViewInstance) {
+    [SerializeField]
+    private Transform _Container;
 
+    public void Initialize(HomeView homeViewInstance) {
+      if (_Container == null) {
+        _Container = transform;
+      }
       for (int i = 0; i < _TabViewPanelPrefabs.Length; ++i) {
-        TabPanel newTabPanel = UIManager.CreateUIElement(_TabViewPanelPrefabs[i].gameObject, this.transform).GetComponent<TabPanel>();
+        TabPanel newTabPanel = UIManager.CreateUIElement(_TabViewPanelPrefabs[i].gameObject, _Container).GetComponent<TabPanel>();
         newTabPanel.Initialize(homeViewInstance);
         _TabPanelsList.Add(newTabPanel);
       }
