@@ -7,7 +7,7 @@ PROTO WebotsKeyboardController [
   # Animation to send
   field SFString animationToSendName "ANIM_TEST"
   field SFInt32  animationNumLoops 1
-  field SFString idleAnimationName "_LIVE_"
+  field SFString idleAnimationName "ProceduralLive"
 
   # Test Animations to send
   field SFString DEV_AnimationName "ANIM_NAME"

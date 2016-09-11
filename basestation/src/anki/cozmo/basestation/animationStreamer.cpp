@@ -35,7 +35,7 @@ namespace Cozmo {
   
   CONSOLE_VAR(bool, kFullAnimationAbortOnAudioTimeout, "AnimationStreamer", false);
   CONSOLE_VAR(u32, kAnimationAudioAllowedBufferTime_ms, "AnimationStreamer", 250);
-  
+  CONSOLE_VAR(f32, kMaxBlinkSpacingTimeForScreenProtection_ms, "AnimationStreamer", 30000);
   
   AnimationStreamer::AnimationStreamer(const CozmoContext* context,
                                        Audio::RobotAudioClient& audioClient)
@@ -707,12 +707,30 @@ namespace Cozmo {
   {
     if(LiveIdleAnimationParameter::EnableKeepFaceAlive == whichParam && (bool)newValue==false)
     {
+      if(!ANKI_DEV_CHEATS)
+      {
+        PRINT_NAMED_WARNING("AnimationStreamer.SetParam.CannotDisableKeepFaceAlive",
+                            "KeepFaceAlive is required to protect against screen burn-in");
+        return;
+      }
+      
       // Get rid of any existint eye dart in case we are disabling keep face alive
       RemovePersistentFaceLayer(_eyeDartTag, IKeyFrame::SAMPLE_LENGTH_MS);
       _eyeDartTag = NotAnimatingTag;
       
       // NOTE: we can't remove an in-progress blink. It's not persistent and has
       // to complete so we don't leave the eyes in a weird state.
+    }
+    else if(LiveIdleAnimationParameter::BlinkSpacingMaxTime_ms == whichParam)
+    {
+      if( newValue > kMaxBlinkSpacingTimeForScreenProtection_ms)
+      {
+        PRINT_NAMED_WARNING("AnimationStreamer.SetParam.MaxBlinkSpacingTooLong",
+                            "Clamping max blink spacing to %.1fms to avoid screen burn-in",
+                            kMaxBlinkSpacingTimeForScreenProtection_ms);
+        
+        newValue = kMaxBlinkSpacingTimeForScreenProtection_ms;
+      }
     }
     
     // Call base class SetParam()
@@ -801,8 +819,18 @@ namespace Cozmo {
         AddFaceLayer("Blink", std::move(faceTrack));
       } // DEBUG_ANIMATION_STREAMING
       
-      _nextBlink_ms = _rng.RandIntInRange(GetParam<s32>(Param::BlinkSpacingMinTime_ms),
-                                          GetParam<s32>(Param::BlinkSpacingMaxTime_ms));
+      s32 blinkSpaceMin_ms = GetParam<s32>(Param::BlinkSpacingMinTime_ms);
+      s32 blinkSpaceMax_ms = GetParam<s32>(Param::BlinkSpacingMaxTime_ms);
+      if(blinkSpaceMax_ms <= blinkSpaceMin_ms)
+      {
+        PRINT_NAMED_WARNING("AnimationStreamer.KeepFaceAlive.BadBlinkSpacingParams",
+                            "Max (%d) must be greater than min (%d)",
+                            blinkSpaceMax_ms, blinkSpaceMin_ms);
+        blinkSpaceMin_ms = kMaxBlinkSpacingTimeForScreenProtection_ms * .25f;
+        blinkSpaceMax_ms = kMaxBlinkSpacingTimeForScreenProtection_ms;
+      }
+      _nextBlink_ms = _rng.RandIntInRange(blinkSpaceMin_ms, blinkSpaceMax_ms);
+      
     }
     
   } // KeepFaceAlive()
