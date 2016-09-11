@@ -1,14 +1,31 @@
-import logging
+import logging as _logging
 
 #: The general purpose logger logs high level information about cozmo events
-logger = logging.getLogger('cozmo.general')
+logger = _logging.getLogger('cozmo.general')
 
 #: The protocol logger logs low level messages that are sent back and forth to Cozmo
-logger_protocol = logging.getLogger('cozmo.protocol')
+logger_protocol = _logging.getLogger('cozmo.protocol')
 
-from .run import *
+del _logging
+
+from . import action
+from . import anim
+from . import behavior
+from . import conn
+from . import event
+from . import exceptions
+from . import lights
+from . import objects
+from . import robot
+from . import run
+from . import util
+from . import world
+
 from .exceptions import *
+from .run import *
 
 
 __all__ = ['logger', 'logger_protocol'] + \
+    ['action', 'anim', 'behavior', 'conn', 'event', 'exceptions', 'lights'] + \
+    ['objects', 'robot', 'run', 'util', 'world'] + \
         (run.__all__ + exceptions.__all__)
