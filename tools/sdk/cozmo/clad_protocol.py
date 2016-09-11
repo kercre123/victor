@@ -3,10 +3,15 @@ __all__ = []
 
 import asyncio
 import struct
+import sys
 
 from . import logger_protocol
 
 LOG_ALL = 'all'
+
+if sys.byteorder != 'little':
+    raise ImportError("Cozmo SDK doesn't support byte order '%s' - contact Anki support to request this", sys.byteorder)
+
 
 class CLADProtocol(asyncio.Protocol):
     '''Low level CLAD codec'''
@@ -23,6 +28,9 @@ class CLADProtocol(asyncio.Protocol):
     def connection_made(self, transport):
         self.transport = transport
         logger_protocol.debug('Connected to transport')
+
+    def connection_lost(self, exc):
+        logger_protocol.debug("Connnection to transport lost: %s" % exc)
 
     def data_received(self, data):
         self._buf.extend(data)
@@ -55,9 +63,11 @@ class CLADProtocol(asyncio.Protocol):
             logger_protocol.warn("Failed to decode CLAD message for buflen=%d: %s", len(buf), e)
 
     def eof_received(self):
-        logger_protocol.info("Connection lost")
+        logger_protocol.info("EOF received on connection")
 
     def send_msg(self, msg, **params):
+        if self.transport.is_closing():
+            return
         name = msg.__class__.__name__
         msg = self.clad_encode_union(**{name: msg})
         msg_buf = msg.pack()

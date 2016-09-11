@@ -42,7 +42,7 @@ class GoToPose(action.Action):
         return "pose=%s" % (self.pose)
 
     def _encode(self):
-        return _clad_to_engine_iface.GotoPose(x_mm=self.pose.position.x, y_mm=self.pose.position.y, 
+        return _clad_to_engine_iface.GotoPose(x_mm=self.pose.position.x, y_mm=self.pose.position.y,
                                               rad=self.pose.rotation.angle_z.radians)
 
 class PickupObject(action.Action):
@@ -312,7 +312,7 @@ class Cozmo(event.Dispatcher):
             A :class:`cozmo.util.Pose` object.
         """
         return self._pose
-    
+
 
 
     #### Private Event Handlers ####
@@ -385,7 +385,7 @@ class Cozmo(event.Dispatcher):
         Args:
             l_wheel_velocity (float): Velocity of the left tread
             r_wheel_velocity (float): Velocity of the right tread
-            l_wheel_acc (float): Acceleration of left tread, 
+            l_wheel_acc (float): Acceleration of left tread,
             None value defaults this to the same as l_wheel_velocity
             r_wheel_acc (float): Acceleration of right tread
             None value defaults this to the same as r_wheel_velocity
@@ -458,7 +458,7 @@ class Cozmo(event.Dispatcher):
 
     def set_backpack_lights(self, light1, light2, light3, light4, light5):
         '''Set the lights on cozmo's back.
-        
+
         Args:
             light1-5 (class:'cozmo.lights.light'): The lights for Cozmo's backpack
         '''
@@ -471,7 +471,7 @@ class Cozmo(event.Dispatcher):
 
     def set_all_backpack_lights(self, light):
         '''Set the lights on cozmo's back to the same color.
-        
+
         Args:
             light (class:'cozmo.lights.light'): The lights for Cozmo's backpack
         '''
@@ -604,7 +604,7 @@ class Cozmo(event.Dispatcher):
             obj (:class:`cozmo.objects.ObservableObject`): The target object to pick up
             where obj.pickupable is true
             use_pre_dock_pose (bool): whether or not to try to immediately pick up an object or
-            relocate and then try 
+            relocate and then try
         Returns:
             A :class:`cozmo.robot.PickupObject` action object which can be queried to see when it is complete
         Raises:
@@ -626,9 +626,9 @@ class Cozmo(event.Dispatcher):
 
         Args:
             obj (:class:`cozmo.objects.ObservableObject`): The target object to place current held
-            object on, where obj.place_objects_on_this is true 
+            object on, where obj.place_objects_on_this is true
             use_pre_dock_pose (bool): Whether or not to try to immediately place on the object or
-            relocate and then try 
+            relocate and then try
         Returns:
             A :class:`cozmo.robot.PlaceOnObject` action object which can be queried to see when it is complete
         Raises:
@@ -685,7 +685,7 @@ class Cozmo(event.Dispatcher):
         If relative_to_robot is set to true, the given pose will assume the robot's pose
         as it's origin.
         Since Cozmo understands position by monitoring his tread movement, he does not
-        understand movment in the z axis. This means that the only applicable elements of 
+        understand movment in the z axis. This means that the only applicable elements of
         pose in this situation are position.x position.y and rotation.angle_z.
 
         Args:

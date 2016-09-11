@@ -5,6 +5,12 @@ __all__ = ['CozmoSDKException', 'AnimationsNotLoaded', 'StopPropogation',
 class CozmoSDKException(Exception):
     '''Base class of all Cozmo SDK exceptions.'''
 
+class ConnectionAborted(CozmoSDKException):
+    '''Raised if the connection to the device is unexpectedly lost.'''
+
+class SDKVersionMismatch(CozmoSDKException):
+    '''Raised if the Cozmo SDK version is not compatible with the software running on the device.'''
+
 class StopPropogation(CozmoSDKException):
     '''Raised by event handlers to prevent further handlers from being triggered.'''
 

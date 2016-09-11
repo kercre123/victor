@@ -38,13 +38,12 @@ class Base(metaclass=_MetaBase):
     '''
 
     # used by SyncFatory
-    _is_sync = False
     _sync_thread_id = None
     _sync_abort_future = None
 
     def __init__(self, _sync_thread_id=None, _sync_abort_future=None, **kw):
         # machinery for SyncFactory
-        if _sync_thread_id is None and self._is_sync:
+        if _sync_abort_future is not None:
             self._sync_thread_id = threading.get_ident()
         else:
             self._sync_thread_id = _sync_thread_id
@@ -55,7 +54,7 @@ class Base(metaclass=_MetaBase):
 class _Factory:
     '''Descriptor to wraps an object factory method.
 
-    If the factory is called while the program is running in _is_sync mode
+    If the factory is called while the program is running in synchronous mode
     then the objects returned by the factory will be wrapped by a _SyncProxy
     object, which translates asynchronous responses to synchronous ones
     when made outside of the thread the top level object's event loop is running on.

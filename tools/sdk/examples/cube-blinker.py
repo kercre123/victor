@@ -61,4 +61,4 @@ async def run(coz_conn):
 
 if __name__ == '__main__':
     cozmo.setup_basic_logging()
-    cozmo.connect_async(run)
+    cozmo.connect(run)
