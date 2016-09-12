@@ -306,7 +306,7 @@ namespace FaceEnrollment {
 
       RobotActionUnion[] actions = {
         // 0. get out animation
-        new RobotActionUnion().Initialize(Singleton<PlayAnimationTrigger>.Instance.Initialize(CurrentRobot.ID, 1, Anki.Cozmo.AnimationTrigger.MeetCozmoLookFaceGetOut, true)),
+        new RobotActionUnion().Initialize(new PlayAnimationTrigger().Initialize(CurrentRobot.ID, 1, Anki.Cozmo.AnimationTrigger.MeetCozmoLookFaceGetOut, true)),
         // 1. say name once
         new RobotActionUnion().Initialize(new SayTextWithIntent().Initialize(
           _NameForFace,
@@ -318,7 +318,7 @@ namespace FaceEnrollment {
           Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentRepeatName,
           Anki.Cozmo.SayTextIntent.Name_FirstIntroduction_2)),
         // 3. final celebration (no name said)                
-        new RobotActionUnion().Initialize(Singleton<PlayAnimationTrigger>.Instance.Initialize(CurrentRobot.ID, 1, Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentCelebration, true))
+        new RobotActionUnion().Initialize(new PlayAnimationTrigger().Initialize(CurrentRobot.ID, 1, Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentCelebration, true))
       };
 
       CurrentRobot.SendQueueCompoundAction(actions, HandleEnrollFaceAnimationSequenceComplete);
@@ -329,7 +329,7 @@ namespace FaceEnrollment {
 
       RobotActionUnion[] actions = {
         // 0. get out animation
-        new RobotActionUnion().Initialize(Singleton<PlayAnimationTrigger>.Instance.Initialize(CurrentRobot.ID, 1, Anki.Cozmo.AnimationTrigger.MeetCozmoLookFaceGetOut, true)),
+        new RobotActionUnion().Initialize(new PlayAnimationTrigger().Initialize(CurrentRobot.ID, 1, Anki.Cozmo.AnimationTrigger.MeetCozmoLookFaceGetOut, true)),
         // 1. say name once
         new RobotActionUnion().Initialize(new SayTextWithIntent().Initialize(
           _NameForFace,
