@@ -68,9 +68,6 @@ public class ChallengeDetailsDialog : BaseView {
   private GameObject _UnlockedContainer;
 
   [SerializeField]
-  private GameObject _UnavailableContainer;
-
-  [SerializeField]
   private Cozmo.UI.CozmoButton _UnlockButton;
 
   [SerializeField]
@@ -93,7 +90,6 @@ public class ChallengeDetailsDialog : BaseView {
     _ChallengeData = challengeData;
     _ChallengeIcon.SetIcon(challengeData.ChallengeIcon);
     _AvailableContainer.SetActive(true);
-    _UnavailableContainer.SetActive(false);
     _AffordableIcon.SetActive(false);
     if (UnlockablesManager.Instance.IsUnlocked(challengeData.UnlockId.Value)) {
       // If Ready and Unlocked
@@ -130,30 +126,6 @@ public class ChallengeDetailsDialog : BaseView {
           _CurrentCostLabel.text = Localization.GetWithArgs(LocalizationKeys.kUnlockableBitsRequiredDescription, new object[] { cost, costName });
           _CurrentCostLabel.color = _UnavailableColor;
           _UnlockButton.Interactable = false;
-        }
-      }
-      // If Unavailable
-      else {
-
-        for (int i = 0; i < unlockInfo.Prerequisites.Length; i++) {
-          // if available but we haven't unlocked it yet, then it is the upgrade that is blocking us
-          if (UnlockablesManager.Instance.IsUnlockableAvailable(unlockInfo.Prerequisites[i].Value) && !UnlockablesManager.Instance.IsUnlocked(unlockInfo.Prerequisites[i].Value)) {
-            unlockInfo = UnlockablesManager.Instance.GetUnlockableInfo(unlockInfo.Prerequisites[i].Value);
-          }
-        }
-        // Must Unlock X First - Hide everything show PreReq container
-        _AvailableContainer.SetActive(false);
-        _UnavailableContainer.SetActive(true);
-
-        string uName = unlockInfo.TitleKey;
-        if (unlockInfo.Id.Value == challengeData.UnlockId.Value) {
-          // If no available prereqs, display completly unavailable text
-          _DescriptionTextLabel.text = Localization.GetWithArgs(LocalizationKeys.kUnlockableUnavailableDescription, new object[] { Localization.Get(uName) });
-        }
-        else {
-          // Change Description to "You need to earn [Prereq] first!
-          // View Upgrade button to take you to necessary Cozmo or Play Tab and fire the appropriate dialog
-          _DescriptionTextLabel.text = Localization.GetWithArgs(LocalizationKeys.kUnlockablePreReqNeededDescription, new object[] { Localization.Get(uName) });
         }
       }
     }

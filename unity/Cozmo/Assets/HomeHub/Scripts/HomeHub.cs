@@ -5,6 +5,7 @@ using DataPersistence;
 using Cozmo.Util;
 using Anki.Assets;
 using Anki.Cozmo;
+using Cozmo.UI;
 
 namespace Cozmo.HomeHub {
   public class HomeHub : HubWorldBase {
@@ -175,18 +176,32 @@ namespace Cozmo.HomeHub {
 
     private void OpenChallengeDetailsDialog(string challenge, Transform buttonTransform) {
       if (_ChallengeDetailsDialogInstance == null) {
-        // Throttle Multitouch bug potential
-        _HomeViewInstance.OnUnlockedChallengeClicked -= HandleUnlockedChallengeClicked;
-        _ChallengeDetailsPrefabData.LoadAssetData((GameObject challengeDetailsPrefab) => {
-          _ChallengeDetailsDialogInstance = UIManager.OpenView(challengeDetailsPrefab.GetComponent<ChallengeDetailsDialog>(),
-            newView => {
-              newView.Initialize(_ChallengeStatesById[challenge].Data);
-            });
+        bool available = UnlockablesManager.Instance.IsUnlockableAvailable(_ChallengeStatesById[challenge].Data.UnlockId.Value);
+        UnlockableInfo unlockInfo = UnlockablesManager.Instance.GetUnlockableInfo(_ChallengeStatesById[challenge].Data.UnlockId.Value);
+        if (!available) {
+          // Create alert view with Icon
+          AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: true);
+          alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
+          alertView.TitleLocKey = unlockInfo.TitleKey;
+          alertView.DescriptionLocKey = LocalizationKeys.kUnlockableUnavailableDescription;
+          alertView.SetMessageArgs(new object[] { Localization.Get(unlockInfo.TitleKey) });
+        }
+        else {
+          // Throttle Multitouch bug potential
+          _HomeViewInstance.OnUnlockedChallengeClicked -= HandleUnlockedChallengeClicked;
 
-          _HomeViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
-          // React to when we should start the challenge.
-          _ChallengeDetailsDialogInstance.ChallengeStarted += HandleStartChallengeClicked;
-        });
+          _ChallengeDetailsPrefabData.LoadAssetData((GameObject challengeDetailsPrefab) => {
+            _ChallengeDetailsDialogInstance = UIManager.OpenView(challengeDetailsPrefab.GetComponent<ChallengeDetailsDialog>(),
+              newView => {
+                newView.Initialize(_ChallengeStatesById[challenge].Data);
+              });
+
+            _HomeViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
+            // React to when we should start the challenge.
+            _ChallengeDetailsDialogInstance.ChallengeStarted += HandleStartChallengeClicked;
+          });
+        }
+
       }
     }
 
