@@ -57,15 +57,18 @@ public:
   bool AreAnyTracksLocked(u8 tracks) const;
   // Returns true if all of the specified tracks are locked
   bool AreAllTracksLocked(u8 tracks) const;
+  // Returns true if all the specified tracks are locked by 'who'
+  bool AreAllTracksLockedBy(u8 tracks, const std::string& who) const;
   
   // The string 'who' indicates who is locking the tracks
   // In order to unlock tracks, the unlock 'who' needs to match the 'who' that did the locking
   void LockTracks(u8 tracks, const std::string& who, const std::string& debugName);
-  void UnlockTracks(u8 tracks, const std::string& who);
+  // Returns true if there are any locks on tracks after unlocking tracks locked by 'who'
+  bool UnlockTracks(u8 tracks, const std::string& who);
   
   // Converts int who to a string (used to easily allow actions to lock tracks with their tag)
   void LockTracks(u8 tracks, const int who, const std::string& debugName) { LockTracks(tracks, std::to_string(who), debugName); }
-  void UnlockTracks(u8 tracks, const int who) { UnlockTracks(tracks, std::to_string(who)); }
+  bool UnlockTracks(u8 tracks, const int who) { return UnlockTracks(tracks, std::to_string(who)); }
   
   // Completely unlocks all tracks to have an lock count of 0 as opposed to UnlockTracks(ALL_TRACKS)
   // which will only decrement each track lock count by 1
@@ -126,7 +129,8 @@ private:
   
   // Checks if the speed is near zero and if it is sets flag to false and unlocks tracks
   // otherwise it will set flag to true and lock the tracks if they are not locked
-  void DirectDriveCheckSpeedAndLockTracks(f32 speed, bool& flag, u8 tracks, const std::string& who);
+  void DirectDriveCheckSpeedAndLockTracks(f32 speed, bool& flag, u8 tracks, const std::string& who,
+                                          const std::string& debugName);
   
   Robot& _robot;
   
