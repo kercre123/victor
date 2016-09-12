@@ -36,8 +36,6 @@ enum uint_8 BehaviorType {
   PlayArbitraryAnim,
   PounceOnMotion,
   FindFaces,
-  ExploreMarkedCube,
-  ExploreCliff,
   BringCubeToBeacon,
   ExploreLookAroundInPlace,
   ExploreVisitPossibleMarker,

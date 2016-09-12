@@ -17,17 +17,18 @@
 #include <map>
 #include <vector>
 
+#include "anki/cozmo/basestation/activeCube.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/blockWorldFilter.h"
+#include "anki/cozmo/basestation/mat.h"
+#include "anki/cozmo/basestation/namedColors/namedColors.h"
+#include "anki/cozmo/basestation/overheadEdge.h"
 #include "anki/common/types.h"
 #include "anki/common/basestation/exceptions.h"
 
 #include "anki/vision/basestation/observableObjectLibrary.h"
-#include "anki/cozmo/basestation/namedColors/namedColors.h"
-#include "anki/cozmo/basestation/activeCube.h"
-#include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/basestation/overheadEdge.h"
-#include "anki/cozmo/basestation/mat.h"
-#include "anki/cozmo/basestation/blockWorldFilter.h"
-#include "anki/cozmo/basestation/ankiEventUtil.h"
+
 #include "clad/types/actionTypes.h"
 
 #include <vector>
@@ -314,6 +315,9 @@ namespace Anki
       
       // flags any interesting edges in the given quad as not interesting anymore. Quad should be passed wrt current origin
       void FlagQuadAsNotInterestingEdges(const Quad2f& quadWRTOrigin);
+      
+      // flags all current interesting edges as too small to give useful information
+      void FlagInterestingEdgesAsUseless();
 
       // create a new memory map from current robot frame of reference. The pointer is used as an identifier
       void CreateLocalizedMemoryMap(const Pose3d* worldOriginPtr);

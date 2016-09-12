@@ -740,7 +740,7 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
                        planIdx, validOldPlan.Size());
     }
 
-    PRINT_STREAM_INFO("", "currentRobotState:"<<currentRobotState);
+    PRINT_STREAM_INFO("LatticePlanner", "currentRobotState:"<<currentRobotState);
 
     // uncomment to print debugging info
     // impl_->env_.FindClosestPlanSegmentToPose(impl_->totalPlan_, currentRobotState, true);

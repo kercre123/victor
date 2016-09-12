@@ -1373,7 +1373,7 @@ namespace Cozmo {
       ImuDataHistory::ImuData prev, next;
       if(!_imuHistory.GetImuDataBeforeAndAfter(t, prev, next))
       {
-        PRINT_NAMED_WARNING("VisionComponent.WasHeadMovingTooFast.NoIMUData",
+        PRINT_CH_INFO("VisionComponent", "VisionComponent.WasHeadMovingTooFast.NoIMUData",
                             "Could not get next/previous imu data for timestamp %u", t);
         return true;
       }
@@ -1405,8 +1405,8 @@ namespace Cozmo {
       ImuDataHistory::ImuData prev, next;
       if(!_imuHistory.GetImuDataBeforeAndAfter(t, prev, next))
       {
-        PRINT_NAMED_WARNING("VisionComponent.WasBodyMovingTooFast",
-                            "Could not get next/previous imu data for timestamp %u", t);
+        PRINT_CH_INFO("VisionComponent", "VisionComponent.WasBodyMovingTooFast",
+                      "Could not get next/previous imu data for timestamp %u", t);
         return true;
       }
       

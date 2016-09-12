@@ -21,16 +21,10 @@
   "behavior.BringCubeToBeacon": {
     "translation": "Collecting his Cubes"
   },
-  "behavior.ExploreCliff": {
-    "translation": "Exploring his surroundings"
-  },
   "behavior.LookAround": {
     "translation": "Exploring his surroundings"
   },
   "behavior.ExploreVisitPossibleMarker": {
-    "translation": "Exploring his surroundings"
-  },
-  "behavior.ExploreMarkedCube": {
     "translation": "Exploring his surroundings"
   },
   "behavior.LookInPlaceMemoryMap": {

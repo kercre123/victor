@@ -106,11 +106,32 @@ void NavMemoryMapQuadTree::FillBorderInternal(EContentType typeToReplace, const 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMemoryMapQuadTree::ReplaceContentInternal(EContentType typeToReplace, EContentType newTypeSet)
+{
+  // convert into node types and emtpy (no extra info) node content
+  using namespace NavMeshQuadTreeTypes;
+  const ENodeContentType nodeTypeToReplace = ConvertContentType(typeToReplace);
+  const ENodeContentType newNodeTypeSet = ConvertContentType(newTypeSet);
+  NodeContent emptyNewNodeContent(newNodeTypeSet);
+
+  // ask the processor
+  _navMesh.GetProcessor().ReplaceContent(nodeTypeToReplace, emptyNewNodeContent);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 double NavMemoryMapQuadTree::GetExploredRegionAreaM2() const
 {
   // delegate on processor
   const double area = _navMesh.GetProcessor().GetExploredRegionAreaM2();
   return area;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float NavMemoryMapQuadTree::GetContentPrecisionMM() const
+{
+  // ask the navmesh
+  const float precision = _navMesh.GetContentPrecisionMM();
+  return precision;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -126,7 +147,7 @@ bool NavMemoryMapQuadTree::HasBorders(EContentType innerType, const FullContentA
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMemoryMapQuadTree::CalculateBorders(EContentType innerType, const FullContentArray& outerTypes, BorderVector& outBorders)
+void NavMemoryMapQuadTree::CalculateBorders(EContentType innerType, const FullContentArray& outerTypes, BorderRegionVector& outBorders)
 {
   using namespace NavMeshQuadTreeTypes;
   const ENodeContentType innerNodeType = ConvertContentType(innerType);
@@ -223,6 +244,24 @@ void NavMemoryMapQuadTree::AddTriangleInternal(const Triangle2f& tri, const INav
   nodeContent.data.reset( content.Clone() );
 
   _navMesh.AddTriangle(tri, nodeContent);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMemoryMapQuadTree::AddPointInternal(const Point2f& point, EContentType type)
+{
+  const NavMeshQuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(type);
+  NodeContent nodeContent(nodeContentType);
+  _navMesh.AddPoint(point, nodeContent);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMemoryMapQuadTree::AddPointInternal(const Point2f& point, const INavMemoryMapQuadData& content)
+{
+  const NavMeshQuadTreeTypes::ENodeContentType nodeContentType = ConvertContentType(content.type);
+  NodeContent nodeContent(nodeContentType);
+  nodeContent.data.reset( content.Clone() );
+
+  _navMesh.AddPoint(point, nodeContent);
 }
 
 } // namespace Cozmo

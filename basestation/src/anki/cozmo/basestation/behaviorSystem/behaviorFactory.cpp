@@ -16,9 +16,7 @@
 
 // Behaviors:
 #include "../behaviors/exploration/behaviorExploreBringCubeToBeacon.h"
-#include "../behaviors/exploration/behaviorExploreCliff.h"
 #include "../behaviors/exploration/behaviorExploreLookAroundInPlace.h"
-#include "../behaviors/exploration/behaviorExploreMarkedCube.h"
 #include "../behaviors/exploration/behaviorExploreVisitPossibleMarker.h"
 #include "../behaviors/exploration/behaviorLookInPlaceMemoryMap.h"
 #include "../behaviors/exploration/behaviorThinkAboutBeacons.h"
@@ -139,16 +137,6 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::FindFaces:
     {
       newBehavior = new BehaviorFindFaces(robot, config);
-      break;
-    }
-    case BehaviorType::ExploreMarkedCube:
-    {
-      newBehavior = new BehaviorExploreMarkedCube(robot, config);
-      break;
-    }
-    case BehaviorType::ExploreCliff:
-    {
-      newBehavior = new BehaviorExploreCliff(robot, config);
       break;
     }
     case BehaviorType::RequestGameSimple:

@@ -22,9 +22,20 @@
     
     // vantage point generation
     "allowGoalsBehindOtherEdges": false,
-    "distanceFromLookAtPointMin_mm": 45.0,
-    "distanceFromLookAtPointMax_mm": 50.0,
+    
+    // note on distanceFromLookAtPointMin_mm
+    // smallest quad is 6.25 half side. For 45 degree border on a leaf quad, there's a chance that
+    // we would be colliding with our own quad within a few pixels. Mathematically we can see that it's x/2,
+    // where x is the diagonal of the square of side 6.25.
+    // pix = x/2 = sqrt(6.25*6.25+6.25*6.25)/2 = 4.42 mm approx
+    // Instead of letting code handle this, I trusted data to configure a min distance that would prevent that issue.
+    // The closest we can get then is min = ROBOT_FRONT + distanceInsideGoalToLookAt_mm + 4.42
+    // = 32.1f + (15 atm) + 4.42 = 51.52 mm. Anything beyond that is separation betwen Cozmo and the goal.
+    // note that quads lose precission, so the actual border will be a little inside the quad
+    "distanceFromLookAtPointMin_mm": 55.0,
+    "distanceFromLookAtPointMax_mm": 65.0,
     "distanceInsideGoalToLookAt_mm" : 15.0,
+    
     "additionalClearanceInFront_mm": 0.0,
     "additionalClearanceBehind_mm": 10.0, // for backpack
     

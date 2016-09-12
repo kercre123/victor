@@ -47,8 +47,15 @@ public:
   // change the content type from typeToReplace into newTypeSet if there's a border from any of the typesToFillFrom towards typeToReplace
   virtual void FillBorderInternal(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet) override;
   
+  // change the content type from typeToReplace into newTypeSet
+  virtual void ReplaceContentInternal(EContentType typeToReplace, EContentType newTypeSet) override;
+  
   // return the size of the area currently explored
   virtual double GetExploredRegionAreaM2() const override;
+  
+  // returns the precision of content data in the memory map. For example, if you add a point, and later query for it,
+  // the region that the point generated to store the point could have an error of up to this length.
+  virtual float GetContentPrecisionMM() const override;
   
   // check whether the given content types would have any borders at the moment. This method is expected to
   // be faster than CalculateBorders for the same innerType/outerType combination, since it only queries
@@ -58,7 +65,7 @@ public:
   // retrieve the borders currently found in the map between the given types. This query is not const
   // so that the memory map can calculate and cache values upon being requested, rather than when
   // the map is modified. Function is expected to clear the vector before returning the new borders
-  virtual void CalculateBorders(EContentType innerType, const FullContentArray& outerTypes, BorderVector& outBorders) override;
+  virtual void CalculateBorders(EContentType innerType, const FullContentArray& outerTypes, BorderRegionVector& outBorders) override;
   
   // checks if the given ray collides with the given type (any quad with that type)
   virtual bool HasCollisionRayWithTypes(const Point2f& rayFrom, const Point2f& rayTo, const FullContentArray& types) const override;
@@ -87,6 +94,10 @@ protected:
   // add a triangle with the specified content
   virtual void AddTriangleInternal(const Triangle2f& tri, EContentType type) override;
   virtual void AddTriangleInternal(const Triangle2f& tri, const INavMemoryMapQuadData& content) override;
+  
+  // add a point with the specified content
+  virtual void AddPointInternal(const Point2f& point, EContentType type) override;
+  virtual void AddPointInternal(const Point2f& point, const INavMemoryMapQuadData& content) override;
 
 private:
 

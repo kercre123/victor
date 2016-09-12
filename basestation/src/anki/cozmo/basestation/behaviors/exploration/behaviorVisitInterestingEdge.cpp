@@ -94,11 +94,32 @@ constexpr NavMemoryMapTypes::FullContentArray typesThatInvalidateVantagePoints =
 };
 static_assert(NavMemoryMapTypes::ContentValueEntry::IsValidArray(typesThatInvalidateVantagePoints),
   "This array does not define all types once and only once.");
-  
+
+// kMinUsefulRegionUnits: number of units in the memory map (eg: quads in a quad tree) that boundaries have to have
+// in order for the region to be considered useful
+static const uint32_t kMinUsefulRegionUnits = 2;
+
 };
 
-static const char* kConfigParamsKey = "params";
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// BehaviorVisitInterestingEdge::BorderRegionScore
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorVisitInterestingEdge::BorderRegionScore::Set(const BorderRegion& r, const size_t idx, float dSQ)
+{
+  borderRegion = r;
+  idxClosestSegmentInRegion = idx;
+  distanceSQ = dSQ;
+  ASSERT_NAMED(idxClosestSegmentInRegion<borderRegion.segments.size(), "BorderRegionScore.Set.InvalidIndex");
+}
 
+const NavMemoryMapTypes::BorderSegment& BehaviorVisitInterestingEdge::BorderRegionScore::GetSegment() const
+{
+  ASSERT_NAMED(IsValid(), "BorderRegionScore.Set.InvalidRegion"); // can't call if invalid!
+  return borderRegion.segments[idxClosestSegmentInRegion];
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// BehaviorVisitInterestingEdge
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorVisitInterestingEdge::BehaviorVisitInterestingEdge(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
@@ -108,7 +129,7 @@ BehaviorVisitInterestingEdge::BehaviorVisitInterestingEdge(Robot& robot, const J
   SetDefaultName("BehaviorVisitInterestingEdge");
   
   // load parameters from json
-  LoadConfig(config[kConfigParamsKey]);
+  LoadConfig(config["params"]);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -131,23 +152,59 @@ bool BehaviorVisitInterestingEdge::IsRunnableInternal(const Robot& robot) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorVisitInterestingEdge::InitInternal(Robot& robot)
 {
-  // select borders we want to visit
-  BorderScore selectedGoal;
-  PickBestGoal(robot, selectedGoal);
+  // select border we want to visit
+  bool anyGoalsAvailable = false;
+  BorderRegionScore selectedGoal;
+  PickBestGoal(robot, selectedGoal, anyGoalsAvailable);
   
-  if ( !selectedGoal.IsValid() ) {
-    PRINT_NAMED_ERROR("BehaviorVisitInterestingEdge.InitInternal", "'%s' is runnable, but no goals were found",
+  // if we didn't pick a goal
+  if ( !selectedGoal.IsValid() )
+  {
+    // if there were some available it means that they were not selectable as potential goals,
+    // in that case, discard them all
+    if ( anyGoalsAvailable )
+    {
+      PRINT_CH_INFO("Behaviors", (GetName() + ".InitInternal.SmallGoals").c_str(),
+        "All available goals are too small, discarding them all." );
+    
+      // flag all interesting content as too small to be considered as a goal
+      DiscardAllInterestingContent(robot);
+      
+      // simulate that he is thinking and calculating stuff, since that's what he is doing
+      const AnimationTrigger trigger = _configParams.goalDiscardedAnimTrigger;
+      if ( trigger != AnimationTrigger::Count )
+      {
+        // play the animation that let's us know he is thinking and discarding goals
+        IAction* discardedGoalAnimAction = new TriggerLiftSafeAnimationAction(robot, trigger);
+        StartActing( discardedGoalAnimAction );
+      }
+
+      // we are going to discard goals
+      _operatingState = EOperatingState::DiscardingGoals;
+    
+      // discarding goals doesn't have other states
+      SetDebugStateName("DiscardingGoals_AllSmall");
+      
+      // this is ok, we are going to play the animation and discard all remaining goals
+      return RESULT_OK;
+    }
+    
+    // there were no goals available, we shouldn't have validated as runnable, this is an error!
+    PRINT_NAMED_ERROR("BehaviorVisitInterestingEdge.InitInternal",
+      "'%s' is runnable, but no goals were found",
       GetName().c_str());
+    
     return RESULT_FAIL;
   }
   
+  // we did pick a goal
   // validate whether the goal is reachable
   bool isGoalValid = true;
   // this is in place of the planner not getting us there (TODO)
   const bool allowGoalsBehindOthers = _configParams.allowGoalsBehindOtherEdges;
   if ( !allowGoalsBehindOthers )
   {
-    const Vec3f& goalPoint = selectedGoal.borderInfo.GetCenter();
+    const Vec3f& goalPoint = selectedGoal.GetSegment().GetCenter();
     isGoalValid = CheckGoalReachable(robot, goalPoint);
   }
   
@@ -156,8 +213,8 @@ Result BehaviorVisitInterestingEdge::InitInternal(Robot& robot)
   if ( isGoalValid )
   {
     // pick the lookAtPoint and vantage points for it
-    const Vec3f& insideGoalDir = (-selectedGoal.borderInfo.normal);
-    const Vec3f& lookAtPoint = selectedGoal.borderInfo.GetCenter() + (insideGoalDir * _configParams.distanceInsideGoalToLookAt_mm);
+    const Vec3f& insideGoalDir = (-selectedGoal.GetSegment().normal);
+    const Vec3f& lookAtPoint = selectedGoal.GetSegment().GetCenter() + (insideGoalDir * _configParams.distanceInsideGoalToLookAt_mm);
     _lookAtPoint = lookAtPoint;
 
     // pick a vantage point from where to look at the goal. Those are the points we will feed the planner
@@ -170,8 +227,8 @@ Result BehaviorVisitInterestingEdge::InitInternal(Robot& robot)
     // flag this goal as not intereseting so that we don't try to visit it again
     const float noVantageGoalHalfQuadSideSize_mm = _configParams.noVantageGoalHalfQuadSideSize_mm;
     // grab goal's point and direction
-    const Point3f& goalPoint  = selectedGoal.borderInfo.GetCenter();
-    const Point3f& goalNormal = selectedGoal.borderInfo.normal;
+    const Point3f& goalPoint  = selectedGoal.GetSegment().GetCenter();
+    const Point3f& goalNormal = selectedGoal.GetSegment().normal;
     // flag as not good to visit
     FlagQuadAroundGoalAsNotInteresting(robot, goalPoint, goalNormal, noVantageGoalHalfQuadSideSize_mm);
     
@@ -193,7 +250,7 @@ Result BehaviorVisitInterestingEdge::InitInternal(Robot& robot)
     _operatingState = EOperatingState::DiscardingGoals;
     
     // discarding goals doesn't have other states
-    SetDebugStateName("DiscardingGoals");
+    SetDebugStateName("DiscardingGoals_FirstNotReachable");
   }
   else
   {
@@ -230,46 +287,88 @@ BehaviorVisitInterestingEdge::BaseClass::Status BehaviorVisitInterestingEdge::Up
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVisitInterestingEdge::PickBestGoal(Robot& robot, BorderScore& bestGoal) const
+void BehaviorVisitInterestingEdge::PickBestGoal(Robot& robot, BorderRegionScore& bestGoal, bool& hasGoalsAvaiable) const
 {
   bestGoal.Reset();
 
   // grab borders
-  INavMemoryMap::BorderVector borders;
+  INavMemoryMap::BorderRegionVector borderRegions;
   INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
-  memoryMap->CalculateBorders(NavMemoryMapTypes::EContentType::InterestingEdge, typesToExploreFrom, borders);
-  if ( !borders.empty() )
+  memoryMap->CalculateBorders(NavMemoryMapTypes::EContentType::InterestingEdge, typesToExploreFrom, borderRegions);
+  hasGoalsAvaiable = !borderRegions.empty();
+  if ( hasGoalsAvaiable )
   {
     const Vec3f& robotLoc = robot.GetPose().GetWithRespectToOrigin().GetTranslation();
+
+    // define what a small region is in order to discard them as noise
+    const float memMapPrecision_mm = memoryMap->GetContentPrecisionMM();
+    const float memMapPrecision_m  = MM_TO_M(memMapPrecision_mm);
+    const float kMinRegionArea_m2 = kMinUsefulRegionUnits*(memMapPrecision_m*memMapPrecision_m);
   
-    for ( const auto& border : borders )
+    // iterate all regions
+    for ( const auto& region : borderRegions )
     {
-      // debugging all borders
-      if ( kVieDrawDebugInfo )
-      {
-        robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
-        border.from, border.to, Anki::NamedColors::YELLOW, false, 35.0f);
-      }
       
-      // compare goal to best so far
-      const float curDistSQ = (border.GetCenter() - robotLoc).LengthSq();
-      const bool isBetter = FLT_LT(curDistSQ, bestGoal.distanceSQ);
-      if ( isBetter ) {
-        // this is the new best
-        bestGoal.Set(border, curDistSQ);
+      // if the region is too small, ignore it
+      if ( FLT_LE(region.area_m2, kMinRegionArea_m2) ) {
+        
+        // render the region differently so that we see that it was discarded
+        #if ANKI_DEV_CHEATS
+        {
+          if ( kVieDrawDebugInfo )
+          {
+            for( size_t idx=0; idx<region.segments.size(); ++idx )
+            {
+              const NavMemoryMapTypes::BorderSegment& candidateSegment = region.segments[idx];
+              robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
+                candidateSegment.from, candidateSegment.to, Anki::NamedColors::RED, false, 35.0f);
+            }
+          }
+        }
+        #endif
+      
+        // continue to next region
+        continue;
+      }
+    
+      for( size_t idx=0; idx<region.segments.size(); ++idx )
+      {
+        const NavMemoryMapTypes::BorderSegment& candidateSegment = region.segments[idx];
+        // debugging all borders
+        if ( kVieDrawDebugInfo )
+        {
+          robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
+            candidateSegment.from, candidateSegment.to, Anki::NamedColors::YELLOW, false, 35.0f);
+        }
+        
+        // if the segment is too small, ignore it
+        const float kMinSegmentLenSQ = memMapPrecision_mm*memMapPrecision_mm;
+        const float segmentLenSQ = (candidateSegment.from - candidateSegment.to).LengthSq();
+        if ( FLT_LE(segmentLenSQ, kMinSegmentLenSQ) ) {
+          continue;
+        }
+      
+        // TODO it should do distance to segment, not distance to center
+        // compare segment to best so far
+        const float curDistSQ = (candidateSegment.GetCenter() - robotLoc).LengthSq();
+        const bool isBetter = FLT_LT(curDistSQ, bestGoal.distanceSQ);
+        if ( isBetter ) {
+          // this is the new best
+          bestGoal.Set(region, idx, curDistSQ);
+        }
       }
     }
   }
   
-  // debugging
-  if ( kVieDrawDebugInfo )
+  // debugging best goal
+  if ( kVieDrawDebugInfo && bestGoal.IsValid() )
   {
-    const NavMemoryMapTypes::Border& b = bestGoal.borderInfo;
+    const NavMemoryMapTypes::BorderSegment& b = bestGoal.borderRegion.segments[bestGoal.idxClosestSegmentInRegion];
     robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
-      b.from, b.to, Anki::NamedColors::DARKGREEN, false, 15.0f);
+      b.from, b.to, Anki::NamedColors::CYAN, false, 38.0f);
     Vec3f centerLine = (b.from + b.to)*0.5f;
     robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
-      centerLine, centerLine+b.normal*15.0f, Anki::NamedColors::YELLOW, false, 45.0f);
+      centerLine, centerLine+b.normal*15.0f, Anki::NamedColors::CYAN, false, 38.0f);
   }
 }
 
@@ -305,7 +404,7 @@ bool BehaviorVisitInterestingEdge::CheckGoalReachable(const Robot& robot, const 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorVisitInterestingEdge::GenerateVantagePoints(Robot& robot, const BorderScore& goal, const Vec3f& lookAtPoint, VantagePointVector& outVantagePoints) const
+void BehaviorVisitInterestingEdge::GenerateVantagePoints(Robot& robot, const BorderRegionScore& goal, const Vec3f& lookAtPoint, VantagePointVector& outVantagePoints) const
 {
   const Vec3f& kFwdVector = X_AXIS_3D();
   const Vec3f& kRightVector = -Y_AXIS_3D();
@@ -325,7 +424,7 @@ void BehaviorVisitInterestingEdge::GenerateVantagePoints(Robot& robot, const Bor
       const float rotationOffset_deg = (offsetIndex * _configParams.vantagePointAngleOffsetPerTry_deg) * offsetSign;
       ASSERT_NAMED((rayIndex==0) || !FLT_NEAR(rotationOffset_deg, 0.0f), "BehaviorVisitInterestingEdge.GenerateVantagePoints.BadRayOffset");
       
-      Vec3f normalFromLookAtTowardsVantage = goal.borderInfo.normal;
+      Vec3f normalFromLookAtTowardsVantage = goal.GetSegment().normal;
       // rotate by the offset of this try
       const bool hasRotation = (rayIndex != 0); // we assert that rayIndex!=0 has a valid offset_def
       if ( hasRotation ) {
@@ -337,7 +436,7 @@ void BehaviorVisitInterestingEdge::GenerateVantagePoints(Robot& robot, const Bor
       // randomize distance for this ray
       const float distanceFromLookAtToVantage = Util::numeric_cast<float>( GetRNG().RandDblInRange(
         _configParams.distanceFromLookAtPointMin_mm, _configParams.distanceFromLookAtPointMax_mm));
-      const Point3f vantagePointPos = lookAtPoint + (normalFromLookAtTowardsVantage * distanceFromLookAtToVantage);
+      const Point3f& vantagePointPos = lookAtPoint + (normalFromLookAtTowardsVantage * distanceFromLookAtToVantage);
       
       // check for collisions in the memory map from the goal, not from the lookAt point, since the lookAt
       // point is inside the border
@@ -350,7 +449,7 @@ void BehaviorVisitInterestingEdge::GenerateVantagePoints(Robot& robot, const Bor
         // actual check. However that requires knowledge of how the memory map is divided into quads.
         // Fortunately we have a minimum distance away from the goal, and we would have to account for the front of the
         // robot to not step on edges, so we can cast the point from the front of the robot with a little offset
-        // to give it jiggle room in case it needs to turn.
+        // to give it wiggle room in case it needs to turn.
         
         // Alternatively, note that the the Border information provides From and To points, as well as the normal.
         // With that information, it should be trivial to calculate the corner of the quad (since From and To will have
@@ -382,9 +481,13 @@ void BehaviorVisitInterestingEdge::GenerateVantagePoints(Robot& robot, const Bor
           const float kUpLine_mm = 10.0f;
           const ColorRGBA& color = isValidVantagePoint ? Anki::NamedColors::GREEN : Anki::NamedColors::RED;
           robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
-            fromPoint, toPoint, color, false, 20.0f);
+            fromPoint, toPoint, color, false, 15.0f);
           robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
-            vantagePointPos-Vec3f{0,0,kUpLine_mm}, vantagePointPos+Vec3f{0,0,kUpLine_mm}, color, false, 20.0f);
+            vantagePointPos-Vec3f{0,0,kUpLine_mm}, vantagePointPos+Vec3f{0,0,kUpLine_mm}, color, false, 15.0f);
+          robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
+            fromPoint-Vec3f{0,0,kUpLine_mm}, fromPoint+Vec3f{0,0,kUpLine_mm}, color, false, 15.0f);
+          robot.GetContext()->GetVizManager()->DrawSegment("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
+            toPoint-Vec3f{0,0,kUpLine_mm}, toPoint+Vec3f{0,0,kUpLine_mm}, color, false, 15.0f);
         }
       }
       
@@ -509,14 +612,29 @@ bool BehaviorVisitInterestingEdge::DiscardNextUnreachableGoal(Robot& robot) cons
 
   // select the next potential goal (note that we would have already flagged the first one as not interesting,
   // so searching here again will return a different one)
-  BorderScore potentialGoal;
-  PickBestGoal(robot, potentialGoal);
+  bool anyGoalsLeft = false;
+  BorderRegionScore potentialGoal;
+  PickBestGoal(robot, potentialGoal, anyGoalsLeft);
   
+  // if we didn't pick a goal to check
   if ( !potentialGoal.IsValid() )
   {
-    // log - no more goals available
-    PRINT_CH_INFO("Behaviors", (GetName() + ".DiscardNextUnreachableGoal").c_str(),
-      "No more goals available, done discarding" );
+    // if there were some available it means that they were not selectable as potential candidates,
+    // in that case, discard them all
+    if ( anyGoalsLeft )
+    {
+      // flag all interesting content as too small to be considered as a goal
+      PRINT_CH_INFO("Behaviors", (GetName() + ".DiscardNextUnreachableGoal.SmallGoals").c_str(),
+        "The remaining goals are small, discarding them all" );
+      DiscardAllInterestingContent(robot);
+    }
+    else
+    {
+      // log - no more goals available
+      PRINT_CH_INFO("Behaviors", (GetName() + ".DiscardNextUnreachableGoal.NoMoreGoals").c_str(),
+        "No more goals available, done discarding" );
+    }
+  
     return false;
   }
   
@@ -526,7 +644,7 @@ bool BehaviorVisitInterestingEdge::DiscardNextUnreachableGoal(Robot& robot) cons
   const bool allowGoalsBehindOthers = _configParams.allowGoalsBehindOtherEdges;
   if ( !allowGoalsBehindOthers )
   {
-    const Vec3f& goalPoint = potentialGoal.borderInfo.GetCenter();
+    const Vec3f& goalPoint = potentialGoal.GetSegment().GetCenter();
     isGoalReachable = CheckGoalReachable(robot, goalPoint);
   }
   
@@ -535,8 +653,8 @@ bool BehaviorVisitInterestingEdge::DiscardNextUnreachableGoal(Robot& robot) cons
   if ( isGoalReachable )
   {
     // pick the lookAtPoint and vantage points for it
-    const Vec3f& insideGoalDir = (-potentialGoal.borderInfo.normal);
-    const Vec3f& potentialLookAtPoint = potentialGoal.borderInfo.GetCenter() + (insideGoalDir * _configParams.distanceInsideGoalToLookAt_mm);
+    const Vec3f& insideGoalDir = (-potentialGoal.GetSegment().normal);
+    const Vec3f& potentialLookAtPoint = potentialGoal.GetSegment().GetCenter() + (insideGoalDir * _configParams.distanceInsideGoalToLookAt_mm);
 
     // pick a vantage point from where to look at the goal. Those are the points we will feed the planner
     GenerateVantagePoints(robot, potentialGoal, potentialLookAtPoint, potentialVantagePoints);
@@ -548,8 +666,8 @@ bool BehaviorVisitInterestingEdge::DiscardNextUnreachableGoal(Robot& robot) cons
     // also flag this goal as not interesting
     const float noVantageGoalHalfQuadSideSize_mm = _configParams.noVantageGoalHalfQuadSideSize_mm;
     // grab goal's point and direction
-    const Point3f& goalPoint  = potentialGoal.borderInfo.GetCenter();
-    const Point3f& goalNormal = potentialGoal.borderInfo.normal;
+    const Point3f& goalPoint  = potentialGoal.GetSegment().GetCenter();
+    const Point3f& goalNormal = potentialGoal.GetSegment().normal;
     // flag as not good to visit
     FlagQuadAroundGoalAsNotInteresting(robot, goalPoint, goalNormal, noVantageGoalHalfQuadSideSize_mm);
     
@@ -616,6 +734,13 @@ void BehaviorVisitInterestingEdge::FlagQuadAroundGoalAsNotInteresting(Robot& rob
     robot.GetContext()->GetVizManager()->DrawQuadAsSegments("BehaviorVisitInterestingEdge.kVieDrawDebugInfo",
       quadAroundGoal, 32.0f, Anki::NamedColors::BLUE, true);
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorVisitInterestingEdge::DiscardAllInterestingContent(Robot& robot)
+{
+  // ask the world to flag all interesting edges as useless
+  robot.GetBlockWorld().FlagInterestingEdgesAsUseless();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -45,12 +45,14 @@ enum class EContentType : uint8_t {
 // this function returns true if the given content type expects additional data (iNavMemoryMapQuadData), false otherwise
 bool ExpectsAdditionalData(EContentType type);
 
-// struct that defines a border
-struct Border
+// each segment in a border region
+struct BorderSegment
 {
   using DataType = std::shared_ptr<const INavMemoryMapQuadData>;
-  Border() : from{}, to{}, normal{}, extraData(nullptr) {}
-  Border(const Point3f& f, const Point3f& t, const Vec3f& n, const DataType& data) : from(f), to(t), normal(n), extraData(data) {}
+  BorderSegment() : from{}, to{}, normal{}, extraData(nullptr) {}
+  BorderSegment(const Point3f& f, const Point3f& t, const Vec3f& n, const DataType& data) :
+    from(f), to(t), normal(n), extraData(data) {}
+  
   // -- attributes
   Point3f from;
   Point3f to;
@@ -62,7 +64,25 @@ struct Border
   // calculate segment center point
   inline Point3f GetCenter() const { return (from + to) * 0.5f; }
 };
-using BorderVector = std::vector<Border>;
+
+// each region detected between content types
+struct BorderRegion {
+  using BorderSegmentList = std::vector<BorderSegment>;
+  BorderRegion() : area_m2(-1.0f) {}
+
+  // when a region is finished (no more segments) we need to specify the area
+  void Finish(float area) { area_m2 = area; };
+  // deduct if the region is finished by checking the area
+  bool IsFinished() const { return area_m2 >= 0.0f; }
+  
+  // -- attributes
+  // area of the region in square meters
+  float area_m2;
+  // all the segments that define the given region (do not necessarily define a closed region)
+  BorderSegmentList segments;
+};
+
+using BorderRegionVector = std::vector<BorderRegion>;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // ContentValueEntry: struct that allows providing an API with type check for algorithms that require combinations

@@ -67,7 +67,7 @@ public:
   bool HasBorders(ENodeContentType innerType, ENodeContentTypePackedType outerTypes) const;
 
   // retrieve the borders for the given combination of content types
-  void GetBorders(ENodeContentType innerType, ENodeContentTypePackedType outerTypes, NavMemoryMapTypes::BorderVector& outBorders);
+  void GetBorders(ENodeContentType innerType, ENodeContentTypePackedType outerTypes, NavMemoryMapTypes::BorderRegionVector& outBorders);
   
   // returns true if the given ray collides with the given type (any quads of the given type)
   bool HasCollisionRayWithTypes(const Point2f& rayFrom, const Point2f& rayTo, ENodeContentTypePackedType types) const;
@@ -75,6 +75,9 @@ public:
   // fills content regions of filledType that have borders with any content in fillingTypeFlags, converting the filledType
   // region to the content type given (newContent)
   void FillBorder(ENodeContentType filledType, ENodeContentTypePackedType fillingTypeFlags, const NodeContent& newContent);
+  
+  // replaces the given content with the new one to set
+  void ReplaceContent(ENodeContentType typeToReplace, const NodeContent& newContent);
   
   // returns true if there are any nodes of the given type, false otherwise
   bool HasContentType(ENodeContentType type) const;
@@ -133,11 +136,11 @@ private:
   // given a border waypoint, calculate its center in 3D
   static Vec3f CalculateBorderWaypointCenter(const BorderWaypoint& waypoint);
 
-  // given 3d points and their neighbor directions, calculate a 3D border definition (line + normal)
-  static NavMemoryMapTypes::Border MakeBorder(const Point3f& origin, const Point3f& dest,
-                                              const NavMemoryMapTypes::Border::DataType& data,
-                                              EDirection firstEDirection,
-                                              EDirection lastEDirection);
+  // given 3d points and their neighbor directions, calculate a 3D border segment definition (line + normal)
+  static NavMemoryMapTypes::BorderSegment MakeBorderSegment(const Point3f& origin, const Point3f& dest,
+                                                            const NavMemoryMapTypes::BorderSegment::DataType& data,
+                                                            EDirection firstEDirection,
+                                                            EDirection lastEDirection);
   
   // returns true if the given contentType is contained within the set of types defined in the packedTypes
   static bool IsInENodeContentTypePackedType(ENodeContentType contentType, ENodeContentTypePackedType contentPackedTypes);

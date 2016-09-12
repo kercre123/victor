@@ -119,6 +119,14 @@ void NavMeshQuadTree::ClearDraw() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float NavMeshQuadTree::GetContentPrecisionMM() const
+{
+  // return the length of the smallest quad allowed
+  const float minSide_mm = kQuadTreeInitialRootSideLength / (1 << kQuadTreeInitialMaxDepth); // 1 << x = pow(2,x)
+  return minSide_mm;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTree::AddQuad(const Quad2f& quad, const NodeContent& nodeContent)
 {
   ANKI_CPU_PROFILE("NavMeshQuadTree::AddQuad");
@@ -238,6 +246,21 @@ void NavMeshQuadTree::AddTriangle(const Triangle2f& tri, const NodeContent& node
 
   // add triangle now
   _gfxDirty = _root.AddContentTriangle(tri, nodeContent, _processor) || _gfxDirty;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTree::AddPoint(const Point2f& point, const NodeContent& nodeContent)
+{
+  ANKI_CPU_PROFILE("NavMeshQuadTree::AddPoint");
+  
+  // if the root does not contain the point, we need to expand in that direction
+  if ( !_root.Contains( point ) )
+  {
+    Expand( point );
+  }
+  
+  // add point now
+  _gfxDirty = _root.AddContentPoint(point, nodeContent, _processor) || _gfxDirty;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

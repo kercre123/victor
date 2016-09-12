@@ -72,17 +72,11 @@ public class BehaviorDisplay : MonoBehaviour {
     case BehaviorType.BringCubeToBeacon:
       ret = Localization.Get(LocalizationKeys.kBehaviorBringCubeToBeacon);
       break;
-    case BehaviorType.ExploreCliff:
-      ret = Localization.Get(LocalizationKeys.kBehaviorExploreCliff);
-      break;
     case BehaviorType.LookAround:
       ret = Localization.Get(LocalizationKeys.kBehaviorLookAround);
       break;
     case BehaviorType.ExploreVisitPossibleMarker:
       ret = Localization.Get(LocalizationKeys.kBehaviorExploreVisitPossibleMarker);
-      break;
-    case BehaviorType.ExploreMarkedCube:
-      ret = Localization.Get(LocalizationKeys.kBehaviorExploreMarkedCube);
       break;
     case BehaviorType.LookInPlaceMemoryMap:
       ret = Localization.Get(LocalizationKeys.kBehaviorLookInPlaceMemoryMap);

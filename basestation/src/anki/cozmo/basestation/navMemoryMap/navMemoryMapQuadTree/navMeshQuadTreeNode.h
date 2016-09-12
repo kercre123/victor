@@ -143,6 +143,9 @@ public:
   
   // processes the given triangle within the tree and appropriately stores the content in the quad tree where the line collides
   bool AddContentTriangle(const Triangle2f& tri, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
+  
+  // processes the given point within the tree and appropriately stores the content in the quad tree where the point resides
+  bool AddContentPoint(const Point2f& point, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
 
   // Convert this node into a parent of its level, delegating its children to the new child that substitutes it
   // In order for a quadtree to be valid, the only way this could work without further operations is calling this
@@ -194,6 +197,9 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // checks if the given point is contained in the quad, and properly acts, delegating on children if needed
+  bool AddPoint_Recursive(const Point2f& point, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
 
   // setup precomputes common variables that the recursive method is going to use
   bool AddTriangle_Setup(const Triangle2f& quad,

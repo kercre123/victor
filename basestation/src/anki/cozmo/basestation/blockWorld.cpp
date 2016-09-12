@@ -149,6 +149,8 @@ CONSOLE_VAR(float, kOverheadEdgeCloseMaxLenForTriangle_mm, "BlockWorld.MemoryMap
 CONSOLE_VAR(float, kOverheadEdgeFarMaxLenForLine_mm, "BlockWorld.MemoryMap", 15.0f);
 // kOverheadEdgeFarMinLenForLine_mm: minimum length of the far edge to even report the line
 CONSOLE_VAR(float, kOverheadEdgeFarMinLenForClearReport_mm, "BlockWorld.MemoryMap", 3.0f); // tested 5 and was too big
+// kOverheadEdgeSegmentNoiseLen_mm: segments whose length is smaller than this will be considered noise
+CONSOLE_VAR(float, kOverheadEdgeSegmentNoiseLen_mm, "BlockWorld.MemoryMap", 6.0f);
 
 // kDebugRenderOverheadEdges: enables/disables debug render of points reported from vision
 CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MemoryMap", false);
@@ -882,10 +884,22 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
   void BlockWorld::FlagQuadAsNotInterestingEdges(const Quad2f& quadWRTOrigin)
   {
     INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
-    if( currentNavMemoryMap )
-    {
-      currentNavMemoryMap->AddQuad(quadWRTOrigin, INavMemoryMap::EContentType::NotInterestingEdge);
-    }
+    ASSERT_NAMED(currentNavMemoryMap, "BlockWorld.FlagQuadAsNotInterestingEdges.NullMap");
+    currentNavMemoryMap->AddQuad(quadWRTOrigin, INavMemoryMap::EContentType::NotInterestingEdge);
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::FlagInterestingEdgesAsUseless()
+  {
+    // flag all content as Unknown: ideally we would add a new type (SmallInterestingEdge), so that we know
+    // we detected something, but we discarded it because it didn't have enough info; however that increases
+    // complexity when raycasting, finding boundaries, readding edges, etc. By flagging Unknown we simply say
+    // "there was something here, but we are not sure what it was", which can be good to re-explore the area
+  
+    INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+    ASSERT_NAMED(currentNavMemoryMap, "BlockWorld.FlagInterestingEdgesAsUseless.NullMap");
+    const INavMemoryMap::EContentType newType = INavMemoryMap::EContentType::Unknown;
+    currentNavMemoryMap->ReplaceContent(INavMemoryMap::EContentType::InterestingEdge, newType);
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3375,16 +3389,22 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
           const bool isValidSegment = hasValidSegmentStart && hasValidSegmentEnd;
           if ( isValidSegment )
           {
-            // we have a valid segment add clear from camera to segment
-            Quad2f clearQuad = { segmentStart, cameraOrigin, segmentEnd, cameraOrigin }; // TL, BL, TR, BR
-            bool success = GroundPlaneROI::ClampQuad(clearQuad, nearPlaneLeft, nearPlaneRight);
-            ASSERT_NAMED(success, "AddVisionOverheadEdges.FailedQuadClamp");
-            if ( success ) {
-              visionQuadsClear.emplace_back(clearQuad);
-            }
-            // if it's a detected border, add the segment
-            if ( chain.isBorder ) {
-              visionSegmentsWithInterestingBorders.emplace_back(segmentStart, segmentEnd);
+            // min length of the segment so that we can discard noise
+            const float segLenSQ_mm = (segmentStart - segmentEnd).LengthSq();
+            const float isLongSegment = FLT_GT(segLenSQ_mm, kOverheadEdgeSegmentNoiseLen_mm);
+            if ( isLongSegment )
+            {
+              // we have a valid and long segment add clear from camera to segment
+              Quad2f clearQuad = { segmentStart, cameraOrigin, segmentEnd, cameraOrigin }; // TL, BL, TR, BR
+              bool success = GroundPlaneROI::ClampQuad(clearQuad, nearPlaneLeft, nearPlaneRight);
+              ASSERT_NAMED(success, "AddVisionOverheadEdges.FailedQuadClamp");
+              if ( success ) {
+                visionQuadsClear.emplace_back(clearQuad);
+              }
+              // if it's a detected border, add the segment
+              if ( chain.isBorder ) {
+                visionSegmentsWithInterestingBorders.emplace_back(segmentStart, segmentEnd);
+              }
             }
           }
           // else { not enough points in the segment to send. That's ok, just do not send }

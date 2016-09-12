@@ -36,6 +36,7 @@ CONSOLE_VAR(bool , kRenderBordersFrom  , "NavMeshQuadTreeProcessor", false); // 
 CONSOLE_VAR(bool , kRenderBordersToDot , "NavMeshQuadTreeProcessor", false); // renders detected borders (border center) as dots
 CONSOLE_VAR(bool , kRenderBordersToQuad, "NavMeshQuadTreeProcessor", false); // renders detected borders (destination quad)
 CONSOLE_VAR(bool , kRenderBorder3DLines, "NavMeshQuadTreeProcessor", false); // renders borders returned as 3D lines (instead of quads)
+CONSOLE_VAR(bool , kRenderBorderRegions, "NavMeshQuadTreeProcessor", false); // renders borders returned as quads per region (instead of quads)
 CONSOLE_VAR(float, kRenderZOffset      , "NavMeshQuadTreeProcessor", 20.0f); // adds Z offset to all quads
 CONSOLE_VAR(bool , kDebugFindBorders   , "NavMeshQuadTreeProcessor", false); // prints debug information in console
 
@@ -183,8 +184,15 @@ bool NavMeshQuadTreeProcessor::HasBorders(ENodeContentType innerType, ENodeConte
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeContentTypePackedType outerTypes, NavMemoryMapTypes::BorderVector& outBorders)
+void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeContentTypePackedType outerTypes, NavMemoryMapTypes::BorderRegionVector& outBorders)
 {
+  #if ANKI_DEV_CHEATS
+  // container for debug quads
+  VizManager::SimpleQuadVector allRegionQuads;
+  static size_t curColorIdx = 0;
+  curColorIdx=0; // reset so that regions have same color as previous calculation (useful when I call this per frame)
+  #endif
+
   // grab the border combination info
   const BorderCombination& borderCombination = RefreshBorderCombination(innerType, outerTypes);
 
@@ -192,7 +200,10 @@ void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeConte
   if ( !borderCombination.waypoints.empty() )
   {
     // -- convert from borderCombination info to borderVector
-  
+    
+    // container to calculate area of a region by checking which nodes belong to this region
+    std::unordered_set<const NavMeshQuadTreeNode*> nodesInCurrentRegion;
+
     // epsilon to merge waypoints into the same line
     const float kDotBorderEpsilon = 0.9848f; // cos(10deg) = 0.984807...
     EDirection firstNeighborDir = borderCombination.waypoints[0].direction;
@@ -209,7 +220,10 @@ void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeConte
     {
       const bool isEnd = (borderCombination.waypoints[idx].isEnd);
       bool canMergeIntoPreviousLine = false;
-
+      
+      // add from node to region
+      nodesInCurrentRegion.insert( borderCombination.waypoints[idx].from );
+      
       // get border center for this waypoint
       Point3f borderCenter  = CalculateBorderWaypointCenter( borderCombination.waypoints[idx] );
     
@@ -251,9 +265,13 @@ void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeConte
       
       if ( !canMergeIntoPreviousLine )
       {
-        // add border
+        // add segment to the current region, add region if there's no current one
         const EDirection lastNeighborDir = borderCombination.waypoints[idx-1].direction;
-        outBorders.emplace_back( MakeBorder(curOrigin, curDest, curBorderContentPtr->data, firstNeighborDir, lastNeighborDir) );
+        if ( outBorders.empty() || outBorders.back().IsFinished() ) {
+          outBorders.emplace_back();
+        }
+        NavMemoryMapTypes::BorderRegion& curRegion = outBorders.back();
+        curRegion.segments.emplace_back( MakeBorderSegment(curOrigin, curDest, curBorderContentPtr->data, firstNeighborDir, lastNeighborDir) );
         
         // origin <- dest
         curOrigin = curDest;
@@ -267,7 +285,48 @@ void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeConte
       {
         // add border
         const EDirection lastNeighborDir = borderCombination.waypoints[idx].direction;
-        outBorders.emplace_back( MakeBorder(curOrigin, curDest, curBorderContentPtr->data, firstNeighborDir, lastNeighborDir) );
+        if ( outBorders.empty() || outBorders.back().IsFinished() ) {
+          outBorders.emplace_back();
+        }
+        NavMemoryMapTypes::BorderRegion& curRegion = outBorders.back();
+        curRegion.segments.emplace_back( MakeBorderSegment(curOrigin, curDest, curBorderContentPtr->data, firstNeighborDir, lastNeighborDir) );
+        
+        // calculate the area of the border by adding all node's area
+        float totalArea_m2 = 0.0f;
+        for ( const auto& nodeInBorder : nodesInCurrentRegion )
+        {
+          const float side_m = MM_TO_M(nodeInBorder->GetSideLen());
+          const float area_m2 = side_m*side_m;
+          totalArea_m2 += area_m2;
+          
+          #if ANKI_DEV_CHEATS
+          {
+            if ( kRenderBorderRegions ) {
+              // colors per region (to change colors and see them better)
+              constexpr size_t colorCount = 9;
+              ColorRGBA regionColors[colorCount] =
+              { NamedColors::RED, NamedColors::GREEN, NamedColors::BLUE,
+                NamedColors::YELLOW, NamedColors::CYAN, NamedColors::ORANGE,
+                NamedColors::MAGENTA, NamedColors::WHITE, NamedColors::BLACK };
+              // add quad
+              const ColorRGBA& regionColor = regionColors[curColorIdx%colorCount];
+              Vec3f center = nodeInBorder->GetCenter();
+              center.z() += 50.f; // z offset to render
+              allRegionQuads.emplace_back(VizManager::MakeSimpleQuad(regionColor, center, nodeInBorder->GetSideLen()));
+            }
+          }
+          #endif
+        }
+        
+        #if ANKI_DEV_CHEATS
+        ++curColorIdx;
+        #endif
+        
+        // clear nodes since we'll start a new region
+        nodesInCurrentRegion.clear();
+        
+        // finish the region
+        curRegion.Finish(totalArea_m2);
         
         // if there are more waypoints, reset current data so that the next waypoint doesn't start on us
         const size_t nextIdx = idx+1;
@@ -284,19 +343,32 @@ void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeConte
     
   } // has waypoints
   
-  // debug render of lines returned to systems quering for borders
-  if ( kRenderBorder3DLines )
+  // debug render all quads
+  #if ANKI_DEV_CHEATS
   {
-    _vizManager->EraseSegments("NavMeshQuadTreeProcessorBorderSegments");
-    for ( const auto& b : outBorders )
+    // debug render of lines returned to systems quering for borders
+    if ( kRenderBorder3DLines )
     {
-      Vec3f centerLine = (b.from + b.to)*0.5f;
-      _vizManager->DrawSegment("NavMeshQuadTreeProcessorBorderSegments",
-        b.from, b.to, Anki::NamedColors::YELLOW, false, 50.0f);
-      _vizManager->DrawSegment("NavMeshQuadTreeProcessorBorderSegments",
-        centerLine, centerLine+b.normal*5.0f, Anki::NamedColors::BLUE, false, 50.0f);
+      _vizManager->EraseSegments("NavMeshQuadTreeProcessorBorderSegments");
+      for ( const auto& region : outBorders )
+      {
+        for( const auto& segment : region.segments )
+        {
+          Vec3f centerLine = (segment.from + segment.to)*0.5f;
+          _vizManager->DrawSegment("NavMeshQuadTreeProcessorBorderSegments",
+            segment.from, segment.to, Anki::NamedColors::YELLOW, false, 50.0f);
+          _vizManager->DrawSegment("NavMeshQuadTreeProcessorBorderSegments",
+            centerLine, centerLine+segment.normal*5.0f, Anki::NamedColors::BLUE, false, 50.0f);
+        }
+      }
+    }
+    
+    if ( kRenderBorderRegions ) {
+      _vizManager->DrawQuadVector("NavMeshQuadTreeProcessorBorderSegments", allRegionQuads);
     }
   }
+  #endif
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -355,6 +427,8 @@ bool NavMeshQuadTreeProcessor::HasCollisionRayWithTypes(const NavMeshQuadTreeNod
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTreeProcessor::FillBorder(ENodeContentType filledType, ENodeContentTypePackedType fillingTypeFlags, const NodeContent& newContent)
 {
+  ANKI_CPU_PROFILE("NavMeshQuadTreeProcessor.FillBorder");
+
   ASSERT_NAMED_EVENT(IsCached(filledType),
     "NavMeshQuadTreeProcessor.FillBorder.FilledTypeNotCached",
     "%s is not cached, which is needed for fast processing operations", ENodeContentTypeToString(filledType));
@@ -362,19 +436,19 @@ void NavMeshQuadTreeProcessor::FillBorder(ENodeContentType filledType, ENodeCont
   // should this timer be a member variable? It's normally desired to time all processors
   // together, but beware when merging stats from different maps (always current is the only one processing)
   static Vision::Profiler timer;
-  // timer.SetPrintChannelName("DebugNow");
+  // timer.SetPrintChannelName("Unfiltered");
   timer.SetPrintFrequency(5000);
-  timer.Tic("NavMeshQuadTreeProcessor.MergeContinuousContent");
+  timer.Tic("NavMeshQuadTreeProcessor.FillBorder");
 
-  // calculate quads being flooded directly. Note that we are not going to cause filled nodes to flood forward
+  // calculate nodes being flooded directly. Note that we are not going to cause filled nodes to flood forward
   // into others. A second call to FillBorder would be required for that (consider for local fills when we have them,
   // since they'll be significally faster).
   
-  // The reason why we cache quads instead of nodes is because adding a quad can cause change and destruction of nodes,
+  // The reason why we cache points instead of nodes is because adding a point can cause change and destruction of nodes,
   // for example through automerges in parents whose children all become the new content. To prevent having to
-  // update an iterator from this::OnNodeX events, cache quads and apply. The result algorithm should be
+  // update an iterator from this::OnNodeX events, cache centers and apply. The result algorithm should be
   // slightly slower, but much simpler to understand, debug and profile
-  std::vector<Quad2f> floodedQuads;
+  std::vector<Point2f> floodedQuadCenters;
   std::unordered_set<const NavMeshQuadTreeNode*> doneQuads;
 
   // grab borders
@@ -384,16 +458,60 @@ void NavMeshQuadTreeProcessor::FillBorder(ENodeContentType filledType, ENodeCont
     const auto& retPair = doneQuads.emplace(waypoint.from);
     const bool isNew = retPair.second;
     if ( isNew ) {
-      floodedQuads.emplace_back(waypoint.from->MakeQuadXY()); // note we could provide a padding here
+      floodedQuadCenters.emplace_back(waypoint.from->GetCenter());
     }
   }
   
-  // add flooded quads to the tree (not this does not cause flood filling)
-  for( const auto& q : floodedQuads ) {
-    _root->AddContentQuad(q, newContent, *this);
+  // add flooded centers to the tree (not this does not cause flood filling)
+  for( const auto& center : floodedQuadCenters ) {
+    _root->AddContentPoint(center, newContent, *this);
   }
   
-  timer.Toc("NavMeshQuadTreeProcessor.MergeContinuousContent");
+  timer.Toc("NavMeshQuadTreeProcessor.FillBorder");
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTreeProcessor::ReplaceContent(ENodeContentType typeToReplace, const NodeContent& newContent)
+{
+  ASSERT_NAMED_EVENT(IsCached(typeToReplace),
+    "NavMeshQuadTreeProcessor.ReplaceContent", "%s is not cached", ENodeContentTypeToString(typeToReplace) );
+  
+  // note: NavMeshQuadTreeProcessor.FillBorder uses quads instead of nodes, and re-adds those quads as detected
+  // content in order to change the memory map. That approach is a good way of having the processor not modify
+  // nodes directly, but allow QuadTreeNodes to change their content and automerge parents properly. It
+  // however can be slow, since it adds every quad without any other spatial information, having to start
+  // from the root and explore down
+  // Additionally, content override requirements may not meet, which I'm not sure it's a good or a bad thing:
+  // did the caller of ReplaceContent actually mean "replace" or "tenative set"? At this moment I consider it
+  // an actual replace, regardless of regular requirements for content overriding, which means we should bypass
+  // the QTNodes' checks
+  // For now, I am going to try the same approach but using AddPoint, which should be the 2nd fastest way of doing this,
+  // since directly changing nodes would be faster, but probably the fastest one providing automerge without becoming
+  // difficult to understand
+  
+  auto nodeSetMatch = _nodeSets.find(typeToReplace);
+  if (nodeSetMatch != _nodeSets.end())
+  {
+    const NodeSet& nodesToReplaceSet = nodeSetMatch->second;
+    if ( !nodesToReplaceSet.empty() )
+    {
+      // when we change the content type, nodeSet for that type changes (erases nodes). Instead of caching iterators
+      // in different functions, grab their center and readd content
+      std::vector<Point2f> affectedNodeCenters;
+      affectedNodeCenters.reserve( nodesToReplaceSet.size() );
+      
+      // iterate all nodes adding centers
+      for( const auto& node : nodesToReplaceSet )
+      {
+        affectedNodeCenters.emplace_back( node->GetCenter() );
+      }
+      
+      // re-add all centers with the new type
+      for( const Point2f& point : affectedNodeCenters ) {
+        _root->AddContentPoint(point, newContent, *this);
+      }
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -576,10 +694,10 @@ Vec3f NavMeshQuadTreeProcessor::CalculateBorderWaypointCenter(const BorderWaypoi
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NavMemoryMapTypes::Border NavMeshQuadTreeProcessor::MakeBorder(const Point3f& origin, const Point3f& dest,
-                                              const NavMemoryMapTypes::Border::DataType& data,
-                                              EDirection firstEDirection,
-                                              EDirection lastEDirection)
+NavMemoryMapTypes::BorderSegment NavMeshQuadTreeProcessor::MakeBorderSegment(const Point3f& origin, const Point3f& dest,
+  const NavMemoryMapTypes::BorderSegment::DataType& data,
+  EDirection firstEDirection,
+  EDirection lastEDirection)
 {
   // Border.from   = origin
   // Border.to     = dest
@@ -611,7 +729,7 @@ NavMemoryMapTypes::Border NavMeshQuadTreeProcessor::MakeBorder(const Point3f& or
     }
   }
 
-  NavMemoryMapTypes::Border ret{origin, dest, perpendicular, data};
+  NavMemoryMapTypes::BorderSegment ret{origin, dest, perpendicular, data};
   return ret;
 }
 

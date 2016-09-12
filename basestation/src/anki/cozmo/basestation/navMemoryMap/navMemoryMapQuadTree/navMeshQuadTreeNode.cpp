@@ -115,6 +115,16 @@ const std::unique_ptr<NavMeshQuadTreeNode>& NavMeshQuadTreeNode::GetChildAt(size
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool NavMeshQuadTreeNode::AddContentPoint(const Point2f& point, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor)
+{
+  ANKI_CPU_PROFILE("NavMeshQuadTreeNode::AddContentPoint");
+  
+  // set up optimized triangle checks
+  bool changed = AddPoint_Recursive(point, detectedContent, processor);
+  return changed;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NavMeshQuadTreeNode::AddContentTriangle(const Triangle2f& tri, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor)
 {
   ANKI_CPU_PROFILE("NavMeshQuadTreeNode::AddContentTriangle");
@@ -215,7 +225,9 @@ bool NavMeshQuadTreeNode::AddQuad_OldRecursive(const Quad2f& quad, const NodeCon
         }
         
         // try to automerge (if it does, our content type will change from subdivided to the merged type)
-        TryAutoMerge(processor);
+        if ( childChanged ) {
+          TryAutoMerge(processor);
+        }
       }
       else
       {
@@ -433,19 +445,6 @@ bool NavMeshQuadTreeNode::CanOverrideSelfWithContent(ENodeContentType newContent
   {
     // NotInterestingEdge can only override interesting edges
     if ( _content.type != ENodeContentType::InterestingEdge ) {
-      return false;
-    }
-  }
-  else if ( _content.type == ENodeContentType::NotInterestingEdge )
-  {
-    // NotInterestingEdge should not be overriden by clearOfObstacle or interesting edge. This is probably conservative,
-    // but the way interesting edges are currently added to the map would totally destroy non-interesting ones
-    // rsam: an improved versino could be to chek that it's a total overlap for ClearOfObstacle. Behaviors could
-    // also check that one interesting border very close to not interesting ones should probably be considered not
-    // interesting. This is probably necessary anyway due to the errors in visualization/localization
-    if ( (newContentType == ENodeContentType::InterestingEdge) ||
-         (newContentType == ENodeContentType::ClearOfObstacle) )
-    {
       return false;
     }
   }
@@ -876,12 +875,26 @@ bool IsPointInNonAAQuad(const Quad2f& nonAAQuad, const Point2f& pt)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// This function is a little helper for 1 point, but do not call several times if you ahve a set of points, since it can
+// be slightly slower than callin Contains directly with cached aaMin/aaMax
+inline bool IsPointInAAQuad(const Quad2f& aaQuad, const Point2f& pt)
+{
+  assert(IsStandardAA(aaQuad));
+  
+  // get aa bbox and check against point
+  const Point2f& aaMax = aaQuad.GetTopLeft();
+  const Point2f& aaMin = aaQuad.GetBottomRight();
+  const bool isInside = Contains(aaMin, aaMax, pt);
+  return isInside;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // intersection check that is optimized when one quad is axis aligned. In the case that there is intersection,
 // it also stores in isAAQuadContainedInNonAAQuad whether the axisAligned quad is fully inside the nonAA one.
 __attribute__ ((used))
 inline bool OverlapsOrContains(const Quad2f& axisAlignedQuad, const Quad2f& nonAAQuad,
-const NavMeshQuadTreeNode::QuadSegmentArray& nonAAQuadSegments,
-bool& isAAQuadContainedInNonAAQuad)
+  const NavMeshQuadTreeNode::QuadSegmentArray& nonAAQuadSegments,
+  bool& isAAQuadContainedInNonAAQuad)
 {
   ANKI_CPU_PROFILE("NewQuadCheck::OverlapsOrContainsQuad");
   assert(IsStandardAA(axisAlignedQuad));
@@ -997,8 +1010,11 @@ inline bool OverlapsOrContains(const Quad2f& axisAlignedQuad,
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // intersection check for line that is optimized when the quad is axis aligned
+// doesLineCrossQuad: true if the line crosses the quad (two intersections), false if one end stays inside the quad
 __attribute__ ((used))
-inline bool OverlapsOrContains(const Quad2f& axisAlignedQuad, const NavMeshQuadTreeNode::SegmentLineEquation& line)
+inline bool OverlapsOrContains(const Quad2f& axisAlignedQuad,
+  const NavMeshQuadTreeNode::SegmentLineEquation& line,
+  bool& doesLineCrossQuad)
 {
   ANKI_CPU_PROFILE("NewQuadCheck::OverlapsOrContainsLine");
   assert(IsStandardAA(axisAlignedQuad));
@@ -1010,7 +1026,8 @@ inline bool OverlapsOrContains(const Quad2f& axisAlignedQuad, const NavMeshQuadT
     Contains(aaMin, aaMax, line.from ) ||
     Contains(aaMin, aaMax, line.to   );
   if ( aaContainsSomePoint ) {
-    // however they do overlap
+    // at least one end is inside the quad
+    doesLineCrossQuad = false;
     return true;
   }
   
@@ -1021,11 +1038,13 @@ inline bool OverlapsOrContains(const Quad2f& axisAlignedQuad, const NavMeshQuadT
     IntersectsY(aaMin.y(), aaMin.x(), aaMax.x(), line) ||
     IntersectsY(aaMax.y(), aaMin.x(), aaMax.x(), line);
   if ( segmentIntersects ) {
-    // they intersect
+    // they intersect, and since the line points are not inside the quad, the line crossed the quad
+    doesLineCrossQuad = true;
     return true;
   }
 
   // does not contain or intersect with the segment
+  doesLineCrossQuad = false;
   return false;
 }
 
@@ -1070,13 +1089,11 @@ bool NavMeshQuadTreeNode::AddQuad_NewRecursive(const Quad2f& quad,
   const bool quadsOverlap = OverlapsOrContains(myQuad, quad, nonAAQuadSegments, isMyQuadContained);
   if ( quadsOverlap )
   {
-    EContentOverlap overlap = EContentOverlap::Partial; // default value may change later
+    const EContentOverlap overlap = isMyQuadContained ? EContentOverlap::Total : EContentOverlap::Partial;
   
     // am I fully contained within the quad?
     if ( isMyQuadContained )
     {
-      overlap = EContentOverlap::Total;
-      
       // if subdivided
       if ( IsSubdivided() )
       {
@@ -1173,13 +1190,11 @@ bool NavMeshQuadTreeNode::AddTriangle_Recursive(const Triangle2f& triangle,
   const bool quadsOverlap = OverlapsOrContains(myQuad, triangle, triangleSegments, isMyQuadContained);
   if ( quadsOverlap )
   {
-    EContentOverlap overlap = EContentOverlap::Partial; // default value may change later
+    const EContentOverlap overlap = isMyQuadContained ? EContentOverlap::Total : EContentOverlap::Partial;
   
     // am I fully contained within the quad?
     if ( isMyQuadContained )
     {
-      overlap = EContentOverlap::Total;
-      
       // if subdivided
       if ( IsSubdivided() )
       {
@@ -1223,7 +1238,9 @@ bool NavMeshQuadTreeNode::AddTriangle_Recursive(const Triangle2f& triangle,
         }
         
         // try to automerge (if it does, our content type will change from subdivided to the merged type)
-        TryAutoMerge(processor);
+        if ( childChanged ) {
+          TryAutoMerge(processor);
+        }
       }
       else
       {
@@ -1253,14 +1270,27 @@ bool NavMeshQuadTreeNode::AddLine_Recursive(const SegmentLineEquation& segmentLi
   bool childChanged = false;
 
   // check if the line affects us
+  bool doesLineCrossQuad = false;
   const Quad2f& myQuad = MakeQuadXY();
-  const bool isQuadAffected = OverlapsOrContains(myQuad, segmentLine);
+  const bool isQuadAffected = OverlapsOrContains(myQuad, segmentLine, doesLineCrossQuad);
   if ( isQuadAffected )
   {
     // for any given node, unless the line crosses the exact center of my quad, at least a child won't be affected.
     // In the general case this won't happen, so instead of checking whether lines cross centers, simply try to
     // subdivide. If it turned out to cross it, the children will automerge after checking themselves.
-    EContentOverlap overlap = EContentOverlap::Partial; // default value may change later
+    // For content override, consider that if the line fully crosses the quad, the overlap is total,
+    // but if the line stays in, the overlap is partial (this can prevent removing some borders at the edge of
+    // the line, while fully crossing a quad means that the new detected border is beyond)
+    // const EContentOverlap overlap = doesLineCrossQuad ? EContentOverlap::Total : EContentOverlap::Partial;
+    
+    // rsam 09/11/2016 note: the comment above is not always right. What I intended was to clear interesting edges
+    // that are created from far away with a bad estimation of the ground plane distance. By getting closer and
+    // detecting the proper edge, we would be able to clear the previous misleading information. Unfortunately,
+    // this can destroy information in other cases by not seeing a partial border in a quad, and allowing a line
+    // to clear it just because it's passing by a corner of the quad to a border we detected behind (also would happen
+    // with curves). For that reason and until I find a better way to represent this (or to trust timestamps, distance
+    // to detected content, etc, as a measurement of trust), I am going to revert lines to being partial
+    const EContentOverlap overlap = EContentOverlap::Partial;
   
     // see if we can subdivide
     const bool wasSubdivided = IsSubdivided();
@@ -1276,11 +1306,82 @@ bool NavMeshQuadTreeNode::AddLine_Recursive(const SegmentLineEquation& segmentLi
     {
       // ask children to add quad
       for( auto& childPtr : _childrenPtr ) {
-        childChanged = childChanged = childPtr->AddLine_Recursive(segmentLine, detectedContent, processor) || childChanged;
+        childChanged = childPtr->AddLine_Recursive(segmentLine, detectedContent, processor) || childChanged;
       }
       
       // try to automerge (if it does, our content type will change from subdivided to the merged type)
-      TryAutoMerge(processor);
+      if ( childChanged ) {
+        TryAutoMerge(processor);
+      }
+    }
+    else
+    {
+      TrySetDetectedContentType(detectedContent, overlap, processor);
+    }
+  }
+  
+  const bool ret = (_content != previousContent) || childChanged;
+  return ret;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool NavMeshQuadTreeNode::AddPoint_Recursive(const Point2f& point,
+  const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor)
+{
+  // ANKI_CPU_PROFILE("NavMeshQuadTreeNode::AddPoint_Recursive"); // recursive functions don't properly show averages
+  
+  // if we won't gain any new info, no need to process
+  const bool isSameInfo = _content == detectedContent;
+  if ( isSameInfo ) {
+    return false;
+  }
+
+  // if we won't be overriding any types, there's no reason to process down anymore
+  // todo optimization: I could be checking this in all recursive functions, not just on recursive calls. It earlies
+  // out if the given content won't have any effect on the children. The problem however is that
+  // CanOverrideSelfAndChildrenWithContent currently returns if it can override ALL children, whereas here I want to
+  // know if it can override ANY of them. While it can be trivial to implement, it is not trivial to understand
+  // whether it's an optimization. Note that I would have to go down to the lowest level every time, checking if it can
+  // be overridden. For the positive cases, this means at least N-1 explorations at level N, O(n^2) superflous checks.
+  //  const bool canOverride = CanOverrideSelfAndChildrenWithContent(detectedContent.type, EContentOverlap::Partial);
+  //  if ( !canOverride ) {
+  //    return false;
+  //  }
+  
+  // to check for changes
+  NodeContent previousContent = _content;
+  bool childChanged = false;
+
+  // check if the point is in this quad
+  const Quad2f& myQuad = MakeQuadXY();
+  const bool quadContainsPoint = IsPointInAAQuad(myQuad, point);
+  if ( quadContainsPoint )
+  {
+    const EContentOverlap overlap = EContentOverlap::Partial; // makes sense
+  
+    // for any given node, a point can only be in one of their children, so we should always subdivide, since potentially
+    // only one of the children will inherit the type
+    // see if we can subdivide
+    const bool wasSubdivided = IsSubdivided();
+    if ( !wasSubdivided && CanSubdivide() )
+    {
+      // do now
+      Subdivide( processor );
+    }
+    
+    // if we have children, delegate on them
+    const bool isSubdivided = IsSubdivided();
+    if ( isSubdivided )
+    {
+      // ask children to add quad
+      for( auto& childPtr : _childrenPtr ) {
+        childChanged = childChanged = childPtr->AddPoint_Recursive(point, detectedContent, processor) || childChanged;
+      }
+      
+      // try to automerge (if it does, our content type will change from subdivided to the merged type)
+      if ( childChanged ) {
+        TryAutoMerge(processor);
+      }
     }
     else
     {

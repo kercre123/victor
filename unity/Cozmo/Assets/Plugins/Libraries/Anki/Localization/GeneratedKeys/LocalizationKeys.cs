@@ -3,10 +3,8 @@ public static class LocalizationKeys {
   #region BehaviorStrings
 
   public const string kBehaviorBringCubeToBeacon = "behavior.BringCubeToBeacon";
-  public const string kBehaviorExploreCliff = "behavior.ExploreCliff";
   public const string kBehaviorLookAround = "behavior.LookAround";
   public const string kBehaviorExploreVisitPossibleMarker = "behavior.ExploreVisitPossibleMarker";
-  public const string kBehaviorExploreMarkedCube = "behavior.ExploreMarkedCube";
   public const string kBehaviorLookInPlaceMemoryMap = "behavior.LookInPlaceMemoryMap";
   public const string kBehaviorExploreLookAroundInPlace = "behavior.ExploreLookAroundInPlace";
   public const string kBehaviorThinkAboutBeacons = "behavior.ThinkAboutBeacons";

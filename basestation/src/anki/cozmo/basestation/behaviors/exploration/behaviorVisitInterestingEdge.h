@@ -110,23 +110,27 @@ private:
     VisitingGoal      // Cozmo is interested in a goal, and is moving there to visit it
   };
   
-  // score/distance associated with a border
-  struct BorderScore {
-    BorderScore() : borderInfo(), distanceSQ(FLT_MAX) {}
-    // clear info and distance
+  // score/distance associated with a border region
+  struct BorderRegionScore {
+    using BorderRegion  = NavMemoryMapTypes::BorderRegion;
+    using BorderSegment = NavMemoryMapTypes::BorderSegment;
+    BorderRegionScore() { Reset(); }
+    // clear info
     inline void Reset() {
-      borderInfo = NavMemoryMapTypes::Border();
+      borderRegion = BorderRegion();
+      idxClosestSegmentInRegion = 0;
       distanceSQ = FLT_MAX;
     }
-    // set info and distance
-    void Set(const NavMemoryMapTypes::Border& b, float dSQ) {
-      borderInfo = b;
-      distanceSQ = dSQ;
-    }
-    inline bool IsValid() const { return !FLT_NEAR(distanceSQ, FLT_MAX); }
+    // set info
+    void Set(const BorderRegion& r, const size_t idx, float dSQ);
+    // is valid if any field is set (we trust all are valid when set)
+    inline bool IsValid() const { return !borderRegion.segments.empty(); }
+    // get selected segment
+    const BorderSegment& GetSegment() const;
     // attributes
-    NavMemoryMapTypes::Border borderInfo;
-    float distanceSQ;
+    NavMemoryMapTypes::BorderRegion borderRegion;  // region information
+    size_t idxClosestSegmentInRegion;              // index of the closest segment (to the robot) in the region
+    float distanceSQ; // distance to closest segment (used as score for the region)
   };
   
   using VantagePointVector = std::vector<Pose3d>;
@@ -136,13 +140,13 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // select the best goal that we would want to visit (based on euclidean distance or other scoring)
-  void PickBestGoal(Robot& robot, BorderScore& bestGoal) const;
+  void PickBestGoal(Robot& robot, BorderRegionScore& bestGoal, bool& hasGoalsAvaiable) const;
   
   // returns true if the goal position appears to be reachable from the current position by raycasting in the memory map
   bool CheckGoalReachable(const Robot& robot, const Vec3f& goalPosition) const;
 
   // given a set of border goals, generate the vantage points for the robot to observe/clear those borders
-  void GenerateVantagePoints(Robot& robot, const BorderScore& goal, const Vec3f& lookAtPoint, VantagePointVector& outVantagePoints) const;
+  void GenerateVantagePoints(Robot& robot, const BorderRegionScore& goal, const Vec3f& lookAtPoint, VantagePointVector& outVantagePoints) const;
   
   // flags a quad in front of the robot as not interesting. The quad is defined from robot pose to the look at point, plus
   // an additional distance from the lookAt point. Each plane (at robot and at lookAt+dist) has a width defined in parameters
@@ -165,6 +169,9 @@ private:
   // create a quad around a goal that is not interesting anymore (note it's around the goal, not around the lookAt point)
   // The quad is aligned with the given normal
   static void FlagQuadAroundGoalAsNotInteresting(Robot& robot, const Vec3f& goalPoint, const Vec3f& goalNormal, float halfQuadSideSize_mm);
+  
+  // notify that all interesting content is too small to be usable
+  static void DiscardAllInterestingContent(Robot& robot);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Init

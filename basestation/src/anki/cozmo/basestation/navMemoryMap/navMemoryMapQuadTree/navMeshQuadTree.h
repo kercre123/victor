@@ -49,19 +49,29 @@ public:
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+  // returns the precision of content data in the memory map. For example, if you add a point, and later query for it,
+  // the region that the point generated to store the point could have an error of up to this length.
+  float GetContentPrecisionMM() const;
+
+  // return the Processor associated to this QuadTree for queries
+  NavMeshQuadTreeProcessor& GetProcessor() { return _processor; }
+  const NavMeshQuadTreeProcessor& GetProcessor() const { return _processor; }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Operations
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   // notify the navmesh that the given quad has the specified content
   void AddQuad(const Quad2f& quad, const NodeContent& nodeContent);
   // notify the navmesh that the given line has the specified content
   void AddLine(const Point2f& from, const Point2f& to, const NodeContent& nodeContent);
   // notify the navmesh that the given triangle has the specified content
   void AddTriangle(const Triangle2f& tri, const NodeContent& nodeContent);
+  // notify the navmesh that the given point has the specified content
+  void AddPoint(const Point2f& point, const NodeContent& nodeContent);
   
   // merge the given quadtree into this quad tree, applying to the quads from other the given transform
   void Merge(const NavMeshQuadTree& other, const Pose3d& transform);
-  
-  // return the Processor associated to this QuadTree for queries
-  NavMeshQuadTreeProcessor& GetProcessor() { return _processor; }
-  const NavMeshQuadTreeProcessor& GetProcessor() const { return _processor; }
   
 private:
 
