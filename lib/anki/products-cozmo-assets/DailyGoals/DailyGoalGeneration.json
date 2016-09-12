@@ -65,21 +65,21 @@
       ],
       "ProgressConditions": [
         {
-          "$type": "Anki.Cozmo.UnlockIDCondition, Assembly-CSharp",
-          "Unlocked": "QuickTapGame",
-          "Label": {
-            "text": "Unlock ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
           "$type": "Anki.Cozmo.ChallengeAccuracyCondition, Assembly-CSharp",
           "IsPlayer": true,
           "TargetAcc": 0.5,
           "compareType": "GREATER_INCLUSIVE",
           "Label": {
             "text": "Challenge Accuracy Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SpeedTapGame",
+          "Label": {
+            "text": "Challenge ID Condition",
             "image": null,
             "tooltip": ""
           }
@@ -556,21 +556,21 @@
       ],
       "ProgressConditions": [
         {
-          "$type": "Anki.Cozmo.UnlockIDCondition, Assembly-CSharp",
-          "Unlocked": "QuickTapGame",
-          "Label": {
-            "text": "Unlock ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
           "$type": "Anki.Cozmo.ChallengeAccuracyCondition, Assembly-CSharp",
           "IsPlayer": true,
           "TargetAcc": 0.75,
           "compareType": "GREATER_INCLUSIVE",
           "Label": {
             "text": "Challenge Accuracy Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SpeedTapGame",
+          "Label": {
+            "text": "Challenge ID Condition",
             "image": null,
             "tooltip": ""
           }
@@ -600,21 +600,21 @@
       ],
       "ProgressConditions": [
         {
-          "$type": "Anki.Cozmo.UnlockIDCondition, Assembly-CSharp",
-          "Unlocked": "QuickTapGame",
-          "Label": {
-            "text": "Unlock ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
           "$type": "Anki.Cozmo.ChallengeAccuracyCondition, Assembly-CSharp",
           "IsPlayer": true,
           "TargetAcc": 1.0,
           "compareType": "GREATER_INCLUSIVE",
           "Label": {
             "text": "Challenge Accuracy Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SpeedTapGame",
+          "Label": {
+            "text": "Challenge ID Condition",
             "image": null,
             "tooltip": ""
           }
