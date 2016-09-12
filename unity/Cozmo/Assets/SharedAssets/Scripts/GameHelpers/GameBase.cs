@@ -854,7 +854,13 @@ public abstract class GameBase : MonoBehaviour {
     StopBlinkLight(cubeID);
 
     // Set colors
-    LightCube cube = CurrentRobot.LightCubes[cubeID];
+    LightCube cube;
+
+    if (!CurrentRobot.LightCubes.TryGetValue(cubeID, out cube)) {
+      DAS.Warn("GameBase.StartCycleCubeInternal", "No lightcube with ID " + cubeID + " cube probably disconnected");
+      return;
+    }
+
     cube.SetLEDs(lightColorsCounterclockwise);
     if (isSingleColor) {
       cube.rotationPeriodMs = 0f;
