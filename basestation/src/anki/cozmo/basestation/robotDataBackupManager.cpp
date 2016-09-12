@@ -169,7 +169,7 @@ void RobotDataBackupManager::ReadAllBackupDataFromRobot()
                                         [this, tag, count, tagsToBackupSize](u8* data, size_t size, NVStorage::NVResult res)
                                         {
                                           --_numPendingRequests;
-                                          if(res != NVStorage::NVResult::NV_OKAY)
+                                          if(res < NVStorage::NVResult::NV_OKAY)
                                           {
                                             PRINT_NAMED_WARNING("RobotDataBackupManager.ReadAllDataFromRobot",
                                                                 "Reading tag %s failed",
@@ -234,7 +234,7 @@ void RobotDataBackupManager::WriteDataForTag(const Tag forTag, const NVStorage::
   
   // If the write to robot failed then the data for this tag wasn't actually written so erase it
   // Or this was an erase (no data is empty in _tagDataMap)
-  if(res != NVStorage::NVResult::NV_OKAY || !writeNotErase)
+  if(res < NVStorage::NVResult::NV_OKAY || !writeNotErase)
   {
     _tagDataMap.erase(iter);
     return;
@@ -328,7 +328,7 @@ void RobotDataBackupManager::HandleMessage(const ExternalInterface::RestoreRobot
                                          [this, tag, count, dataOnRobotSize](NVStorage::NVResult res)
                                          {
                                            --_numPendingRequests;
-                                           if(res != NVStorage::NVResult::NV_OKAY)
+                                           if(res < NVStorage::NVResult::NV_OKAY)
                                            {
                                              PRINT_NAMED_WARNING("RobotDataBackupManager.RestoreFromBackup",
                                                                  "Writing to tag %s failed with %s",
@@ -439,7 +439,7 @@ void RobotDataBackupManager::HandleMessage(const ExternalInterface::WipeRobotGam
                                          [this, tag, count, tagsToBackupSize](NVStorage::NVResult res)
                                          {
                                            --_numPendingRequests;
-                                           if(res != NVStorage::NVResult::NV_OKAY)
+                                           if(res < NVStorage::NVResult::NV_OKAY)
                                            {
                                              PRINT_NAMED_WARNING("RobotDataBackupManager.WipeRobotGameData",
                                                                  "Erase of tag %s failed with %s",
