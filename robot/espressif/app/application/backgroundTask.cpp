@@ -239,11 +239,22 @@ void Exec(os_event_t *event)
       {
         static uint32_t lastPEC = 0;
         const uint32_t pec = i2spiGetPhaseErrorCount();
-        if (pec > lastPEC)
+        if (lastPEC == 0xFFFFffff) system_deep_sleep(0); // Reported fatal error, now shutdown
+        else
         {
-          AnkiWarn( 185, "I2SPI.TooMuchDrift", 486, "TMD=%d\tintegral=%d", 2, pec, i2spiGetIntegralDrift());
+          if (pec > lastPEC) 
+          {
+            AnkiWarn( 185, "I2SPI.TooMuchDrift", 486, "TMD=%d\tintegral=%d", 2, pec, i2spiGetIntegralDrift());
+            if (pec > 2)
+            {
+              RobotInterface::RobotErrorReport rer;
+              rer.error = RobotInterface::REC_I2SPI_TMD;
+              rer.fatal = true;
+              if (RobotInterface::SendMessage(rer)) lastPEC = 0xFFFFffff; // Mark reported
+            }
+          }
+          lastPEC = pec;
         }
-        lastPEC = pec;
       }
       {
         static uint32_t lastDropCount = 0;
