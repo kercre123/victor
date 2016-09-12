@@ -11,13 +11,13 @@ public static class DictionaryExtensions {
   // Keeps the type of 'this', which must be default-instantiable.
   // Example:
   //   result = map.MergeLeft(other1, other2, ...)
-  public static T MergeLeft<T,K,V>(this T me, params IDictionary<K,V>[] others)
-    where T : IDictionary<K,V>, new() {
+  public static T MergeLeft<T, K, V>(this T me, params IDictionary<K, V>[] others)
+    where T : IDictionary<K, V>, new() {
     T newMap = new T();
-    foreach (IDictionary<K,V> src in
-      (new List<IDictionary<K,V>> { me }).Concat(others)) {
+    foreach (IDictionary<K, V> src in
+      (new List<IDictionary<K, V>> { me }).Concat(others)) {
       // ^-- echk. Not quite there type-system.
-      foreach (KeyValuePair<K,V> p in src) {
+      foreach (KeyValuePair<K, V> p in src) {
         newMap[p.Key] = p.Value;
       }
     }
@@ -33,7 +33,7 @@ namespace Anki.AppResources {
       _StringMap = new Dictionary<string, string>();
     }
 
-    public StringTable(Dictionary<string,string> stringMap) {
+    public StringTable(Dictionary<string, string> stringMap) {
       _StringMap = stringMap;
     }
 
@@ -80,6 +80,8 @@ namespace Anki.AppResources {
         string s = entry.GetField("translation").str;
         // handle new lines
         s = s.Replace("\\n", "\n");
+        // fix escape quotes
+        s = s.Replace("\\\"", "\"");
         stringMap[k] = s;
       }
 
