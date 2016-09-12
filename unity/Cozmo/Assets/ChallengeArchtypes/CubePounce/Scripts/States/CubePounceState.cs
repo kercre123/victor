@@ -17,5 +17,13 @@ namespace Cozmo.Minigame.CubePounce {
 
       _CubePounceGame.UpdateCubeVisibility();
     }
+
+    public override void Pause(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
+      // Do nothing
+    }
+
+    public override void Resume(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
+      // Do nothing
+    }
   }
 }

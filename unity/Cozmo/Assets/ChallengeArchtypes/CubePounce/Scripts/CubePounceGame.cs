@@ -53,7 +53,6 @@ namespace Cozmo.Minigame.CubePounce {
       CozmoRoundsWon = 0;
       _CurrentTarget = null;
       InitializeMinigameObjects(GameConfig.NumCubesRequired());
-      CurrentRobot.SetEnableCliffSensor(false);
       LightCube.OnMovedAction += HandleCubeMoved;
       LightCube.OnStoppedAction += HandleCubeStopped;
     }
@@ -66,7 +65,7 @@ namespace Cozmo.Minigame.CubePounce {
 
     protected override void CleanUpOnDestroy() {
       if (null != CurrentRobot) {
-        CurrentRobot.SetEnableCliffSensor(true);
+        CurrentRobot.EnableReactionaryBehaviors(true);
         CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetOut, null);
         CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.Count);
       }
@@ -208,6 +207,14 @@ namespace Cozmo.Minigame.CubePounce {
         return true;
       }
       return false;
+    }
+
+    protected override void AddDisabledReactionaryBehaviors() {
+      base.AddDisabledReactionaryBehaviors();
+
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToCliff);
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToPickup);
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement);
     }
   }
 }
