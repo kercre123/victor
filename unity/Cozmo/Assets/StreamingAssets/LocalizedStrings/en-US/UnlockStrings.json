@@ -30,6 +30,9 @@
   "unlockable.PreReqNeeded.Description": {
     "translation": "You need to unlock {0} first!"
   },
+  "unlockable.BitsRequired.Title": {
+    "translation": "Not Enough Bits"
+  },
   "unlockable.BitsRequired.Description": {
     "translation": "Use {0} {1} to Unlock"
   },

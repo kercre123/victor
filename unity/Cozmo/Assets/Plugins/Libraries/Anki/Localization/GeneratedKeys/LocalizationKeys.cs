@@ -631,6 +631,7 @@ public static class LocalizationKeys {
   public const string kUnlockableAvailable = "unlockable.Available";
   public const string kUnlockableViewPreReq = "unlockable.ViewPreReq";
   public const string kUnlockablePreReqNeededDescription = "unlockable.PreReqNeeded.Description";
+  public const string kUnlockableBitsRequiredTitle = "unlockable.BitsRequired.Title";
   public const string kUnlockableBitsRequiredDescription = "unlockable.BitsRequired.Description";
   public const string kUnlockableCubePounceTitle = "unlockable.CubePounce.Title";
   public const string kUnlockableCubePounceDescription = "unlockable.CubePounce.Description";

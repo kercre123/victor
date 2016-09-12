@@ -26,16 +26,16 @@ public class CoreUpgradeDetailsDialog : BaseView {
   private AnkiTextLabel _UnlockableDescriptionLabel;
 
   [SerializeField]
-  private GameObject _AvailablePromptContainer;
+  private GameObject _ButtonPromptContainer;
 
   [SerializeField]
   private GameObject _AffordableHighlightContainer;
 
   [SerializeField]
-  private AnkiTextLabel _AvailablePromptLabel;
+  private AnkiTextLabel _ButtonPromptTitle;
 
   [SerializeField]
-  private AnkiTextLabel _AvailablePromptCost;
+  private AnkiTextLabel _ButtonPromptDescription;
 
   [SerializeField]
   private Text _SparkButtonCostLabel;
@@ -99,13 +99,20 @@ public class CoreUpgradeDetailsDialog : BaseView {
   private Sequence _UpgradeTween;
   private bool _ConfirmedQuit = false;
 
+  [SerializeField]
+  private Color _UpgradeAvailableColor;
+  [SerializeField]
+  private Color _SparkAvailableColor;
+  [SerializeField]
+  private Color _UnavailableColor;
+
   public void Initialize(UnlockableInfo unlockInfo, CozmoUnlocksPanel.CozmoUnlockState unlockState, CoreUpgradeRequestedHandler buttonCostPaidCallback) {
     _UnlockInfo = unlockInfo;
     _ButtonCostPaidSuccessCallback = buttonCostPaidCallback;
 
     _UnlockUpgradeButtonContainer.gameObject.SetActive(false);
     _RequestTrickButtonContainer.gameObject.SetActive(false);
-    _AvailablePromptContainer.SetActive(false);
+    _ButtonPromptContainer.SetActive(false);
     _AffordableHighlightContainer.gameObject.SetActive(false);
     // QA testing jumps around during stages. As a failsafe just give the amount needed since they can't exist.
     Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
@@ -133,7 +140,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
         _RequestTrickButtonContainer.gameObject.SetActive(true);
         _FragmentInventoryContainer.gameObject.SetActive(false);
         _SparksInventoryContainer.gameObject.SetActive(true);
-        UpdateAvailableCostLabels(unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksSpark, LocalizationKeys.kSparksPress);
+        UpdateAvailableCostLabels(unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksSparkCozmo, LocalizationKeys.kSparksPress);
         SetupButton(_RequestTrickButton, StartSparkUnlock, "request_trick_button",
                     unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, _SparksInventoryLabel, true);
 
@@ -237,10 +244,12 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
         if (_RequestTrickButton.Interactable) {
           _SparkButtonCostLabel.color = _RequestTrickButton.TextEnabledColor;
-          UpdateAvailableCostLabels(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksSpark, LocalizationKeys.kSparksPress);
+          _ButtonPromptTitle.color = _SparkAvailableColor;
+          UpdateAvailableCostLabels(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksSparkCozmo, LocalizationKeys.kSparksPress);
         }
         else {
           _SparkButtonCostLabel.color = _RequestTrickButton.TextDisabledColor;
+          _ButtonPromptTitle.color = _UnavailableColor;
           UpdateAvailableCostLabels(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksNotEnoughSparksTitle, LocalizationKeys.kSparksNotEnoughSparksDesc);
         }
 
@@ -249,11 +258,13 @@ public class CoreUpgradeDetailsDialog : BaseView {
         _UnlockUpgradeButton.Interactable = playerInventory.CanRemoveItemAmount(_UnlockInfo.UpgradeCostItemId, _UnlockInfo.UpgradeCostAmountNeeded);
         if (_UnlockUpgradeButton.Interactable) {
           _UnlockButtonCostLabel.color = _UnlockUpgradeButton.TextEnabledColor;
+          _ButtonPromptTitle.color = _UpgradeAvailableColor;
           UpdateAvailableCostLabels(_UnlockInfo.UpgradeCostItemId, _UnlockInfo.UpgradeCostAmountNeeded, LocalizationKeys.kUnlockableAvailable, LocalizationKeys.kUnlockableBitsRequiredDescription);
         }
         else {
           _UnlockButtonCostLabel.color = _UnlockUpgradeButton.TextDisabledColor;
-          UpdateAvailableCostLabels(_UnlockInfo.UpgradeCostItemId, _UnlockInfo.UpgradeCostAmountNeeded, "", LocalizationKeys.kUnlockableBitsRequiredDescription);
+          _ButtonPromptTitle.color = _UnavailableColor;
+          UpdateAvailableCostLabels(_UnlockInfo.UpgradeCostItemId, _UnlockInfo.UpgradeCostAmountNeeded, LocalizationKeys.kUnlockableBitsRequiredTitle, LocalizationKeys.kUnlockableBitsRequiredDescription);
         }
 
       }
@@ -293,12 +304,12 @@ public class CoreUpgradeDetailsDialog : BaseView {
   }
 
   private void UpdateAvailableCostLabels(string itemID, int cost, string promptLabelKey, string costLabelKey) {
-    _AvailablePromptContainer.SetActive(true);
-    _AvailablePromptLabel.text = Localization.Get(promptLabelKey);
-    _AvailablePromptCost.gameObject.SetActive(true);
+    _ButtonPromptContainer.SetActive(true);
+    _ButtonPromptTitle.text = Localization.Get(promptLabelKey);
+    _ButtonPromptDescription.gameObject.SetActive(true);
     ItemData itemData = ItemDataConfig.GetData(itemID);
     string costName = Localization.Get(itemData.GetAmountName(cost));
-    _AvailablePromptCost.text = Localization.GetWithArgs(costLabelKey, new object[] { cost, costName });
+    _ButtonPromptDescription.text = Localization.GetWithArgs(costLabelKey, new object[] { cost, costName });
     _SparkButtonCostLabel.text = string.Format("{0}", cost);
   }
 
@@ -307,9 +318,9 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
     IRobot robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null && robot.IsSparked && robot.SparkUnlockId == _UnlockInfo.Id.Value) {
-      _AvailablePromptCost.gameObject.SetActive(false);
-      _AvailablePromptLabel.gameObject.SetActive(true);
-      _AvailablePromptLabel.text = Localization.Get(LocalizationKeys.kSparksSparked);
+      _ButtonPromptDescription.gameObject.SetActive(false);
+      _ButtonPromptTitle.gameObject.SetActive(true);
+      _ButtonPromptTitle.text = Localization.Get(LocalizationKeys.kSparksSparked);
     }
 
     if (robot != null) {
