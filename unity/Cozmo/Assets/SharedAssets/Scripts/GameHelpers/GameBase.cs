@@ -853,6 +853,11 @@ public abstract class GameBase : MonoBehaviour {
     // Remove from blink lights if it exists there
     StopBlinkLight(cubeID);
 
+    if (CurrentRobot.LightCubes.ContainsKey(cubeID) == false) {
+      DAS.Warn("GameBase.StartCycleCubeInternal", "No lightcube with ID " + cubeID + " cube probably disconnected");
+      return;
+    }
+
     // Set colors
     LightCube cube = CurrentRobot.LightCubes[cubeID];
     cube.SetLEDs(lightColorsCounterclockwise);
