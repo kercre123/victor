@@ -56,6 +56,7 @@ namespace Cozmo {
     private void Start() {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.GoingToSleep>(HandleGoingToSleep);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnection);
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleReactionaryBehavior);
     }
 
     private void Update() {
@@ -77,6 +78,7 @@ namespace Cozmo {
     private void OnDestroy() {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.GoingToSleep>(HandleGoingToSleep);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnection);
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleReactionaryBehavior);
     }
 
     private void OnApplicationFocus(bool focusStatus) {
@@ -86,6 +88,15 @@ namespace Cozmo {
     private void OnApplicationPause(bool bPause) {
       DAS.Debug("PauseManager.OnApplicationPause", "Application pause: " + bPause);
       HandleApplicationPause(bPause);
+    }
+
+    private void HandleReactionaryBehavior(Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition message) {
+      if (IsGoToSleepDialogOpen || IsConfirmSleepDialogOpen) {
+        StopIdleTimeout();
+        _IsOnChargerToSleep = false;
+        CloseGoToSleepDialog();
+        CloseConfirmSleepDialog();
+      }
     }
 
     private void HandleApplicationPause(bool shouldBePaused) {
@@ -191,6 +202,11 @@ namespace Cozmo {
     }
 
     public void OpenConfirmSleepCozmoDialog(bool handleOnChargerSleepCancel) {
+      if (IsGoToSleepDialogOpen) {
+        // already going to sleep, so do nothing.
+        return;
+      }
+
       CloseLowBatteryDialog();
       if (!IsConfirmSleepDialogOpen) {
         _SleepCozmoConfirmDialog = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab, preInitFunc: null,
