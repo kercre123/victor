@@ -71,10 +71,10 @@ public class ChestRewardManager {
     if (DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault() != null) {
       ladderLevel = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault().ChestsGained;
     }
-    int value = ladderLevels.Last().Value; // default to max value
+    int value = ladderLevels.Last().MinValue; // default to max value
     for (int i = 0; i < ladderLevels.Length - 1; ++i) {
       if (ladderLevel >= ladderLevels[i].Level && ladderLevel < ladderLevels[i + 1].Level) {
-        value = ladderLevels[i].Value;
+        value = Random.Range(ladderLevels[i].MinValue, ladderLevels[i].MaxValue);
         break;
       }
     }
@@ -95,10 +95,10 @@ public class ChestRewardManager {
     if (DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault() != null) {
       ladderLevel = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault().ChestsGained;
     }
-    int value = ladderLevels.First().Value; // default to first value
+    int value = ladderLevels.First().MinValue; // default to first value
     for (int i = 0; i < ladderLevels.Length; ++i) {
       if ((ladderLevel - 1) == ladderLevels[i].Level) {
-        value = ladderLevels[i].Value;
+        value = ladderLevels[i].MinValue;
         break;
       }
     }

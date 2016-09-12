@@ -28,5 +28,7 @@ public class Ladder {
 [Serializable]
 public class LadderLevel {
   public int Level;
-  public int Value;
+  [Tooltip("MinValue should match MaxValue for Requirement Ladders")]
+  public int MinValue;
+  public int MaxValue;
 }

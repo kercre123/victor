@@ -90,13 +90,12 @@ namespace Cozmo.UI {
     [SerializeField]
     private int _TronBurstAlmost = 8;
 
-    // Particle Burst settings for tap burst
+    // Particle Burst Settings for when the box lands in place and is ready
+    // as well as when it finally bursts open
     [SerializeField]
-    private int _MinParticleBurst = 4;
+    private int _OpenChestBurst = 45;
     [SerializeField]
-    private int _MaxParticleBurst = 10;
-    [SerializeField]
-    private int _OpenChestBurst = 15;
+    private int _ReadyChestBurst = 10;
 
     [SerializeField, Tooltip("Charge % where TronBurst and Text go to Midtier")]
     private float _LootMidThreshold = 0.3f;
@@ -120,7 +119,7 @@ namespace Cozmo.UI {
 
     #endregion
 
-    private float _currentCharge = 0.0f;
+    private float _currentBoxCharge = 0.0f;
     private float _recentTapCharge = 0.0f;
     private int _tronBurst = 1;
     private float _UpdateTimeStamp = -1;
@@ -182,7 +181,10 @@ namespace Cozmo.UI {
     private Image _LootGlow;
 
     [SerializeField]
-    private Image _BoxGlow;
+    private Image _LootFlash;
+
+    [SerializeField]
+    private Transform _OpenBox;
 
     private Tweener _ShakeRotationTweener;
     private Tweener _ShakePositionTweener;
@@ -211,6 +213,9 @@ namespace Cozmo.UI {
 
     private void Awake() {
       _OnboardingRewardStart.gameObject.SetActive(false);
+      _ContinueButtonInstance.gameObject.SetActive(false);
+      PauseManager.Instance.OnPauseDialogOpen += CloseViewImmediately;
+      _OpenBox.gameObject.SetActive(false);
       Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_EmotionChipWindowOpenSoundEvent);
       _TronPool = new SimpleObjectPool<TronLight>(CreateTronLight, ResetTronLight, 0);
       _ActiveBitsTransforms = new List<Transform>();
@@ -265,22 +270,25 @@ namespace Cozmo.UI {
 
     // Handle each tap
     private void HandleButtonTap() {
-      if (_BoxOpened == false) {
-        if (_currentCharge >= 1.0f) {
+      if (!_BoxOpened) {
+        if (_currentBoxCharge >= 1.0f) {
           _BoxOpened = true;
 
           StopTweens();
           _LootBox.gameObject.SetActive(false);
+          _OpenBox.gameObject.SetActive(true);
+          _currentBoxCharge = 0.0f;
+          _recentTapCharge = 1.0f;
           RewardLoot();
         }
         else {
-          _currentCharge += _ChargePerTap;
+          _currentBoxCharge += _ChargePerTap;
           _recentTapCharge = 1.0f;
           StopTweens();
 
-          float currShake = Mathf.Lerp(_ShakeRotationMinAngle, _ShakeRotationMaxAngle, _currentCharge);
+          float currShake = Mathf.Lerp(_ShakeRotationMinAngle, _ShakeRotationMaxAngle, _currentBoxCharge);
           _ShakeRotationTweener = _LootBox.DOShakeRotation(_ShakeDuration, new Vector3(0, 0, currShake), _ShakeRotationVibrato, _ShakeRotationRandomness);
-          currShake = Mathf.Lerp(_ShakePositionMin, _ShakePositionMax, _currentCharge);
+          currShake = Mathf.Lerp(_ShakePositionMin, _ShakePositionMax, _currentBoxCharge);
           _ShakePositionTweener = _LootBox.DOShakePosition(_ShakeDuration, currShake, _ShakePositionVibrato, _ShakePositionRandomness);
           Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_TapSoundEvent);
         }
@@ -289,31 +297,39 @@ namespace Cozmo.UI {
 
     protected override void Update() {
       base.Update();
-      // Decay charge if the box hasn't been opened yet, update the progressbar.
-      if (_BoxOpened == false) {
-        if (_currentCharge > 0.0f) {
-          _currentCharge -= _ChargeDecayRate;
-          if (Time.time - _UpdateTimeStamp > _ChargeVFXUpdateInterval) {
-            _UpdateTimeStamp = Time.time;
-            float toBurst = Mathf.Lerp(_MinParticleBurst, _MaxParticleBurst, _currentCharge);
-            _BurstParticles.Emit((int)toBurst);
-            TronLineBurst(_tronBurst);
-          }
-          if (_currentCharge <= 0.0f) {
-            _currentCharge = 0.0f;
-          }
+
+      // Handle Recent Tap Decay
+      if (_recentTapCharge > 0.0f) {
+        _recentTapCharge -= _TapDecayRate;
+        _recentTapCharge = Mathf.Max(_recentTapCharge, 0.0f);
+      }
+
+      // Handle Current Charge Decay
+      if (_currentBoxCharge > 0.0f) {
+        _currentBoxCharge -= _ChargeDecayRate;
+        _currentBoxCharge = Mathf.Max(_currentBoxCharge, 0.0f);
+        // If charge is not depleted, periodically fire Tronlines
+        // at a predetermined interval
+        if (Time.time - _UpdateTimeStamp > _ChargeVFXUpdateInterval) {
+          _UpdateTimeStamp = Time.time;
+          TronLineBurst(_tronBurst);
         }
-        if (_recentTapCharge > 0.0f) {
-          _recentTapCharge -= _TapDecayRate;
-          if (_recentTapCharge <= 0.0f) {
-            _recentTapCharge = 0.0f;
-          }
+      }
+
+      // Update Loot Glows/Flash based on if the box is opened or not
+      if (_recentTapCharge > 0.0f) {
+        // Fade out LootFlash when the box is opened
+        if (_BoxOpened) {
+          _LootFlash.color = new Color(_LootFlash.color.r, _LootFlash.color.g, _LootFlash.color.b, _recentTapCharge);
+        }
+        // Adjust scale and fade out LootGlow when the box is closed
+        else {
           _LootGlow.color = new Color(_LootGlow.color.r, _LootGlow.color.g, _LootGlow.color.b, _recentTapCharge);
           float newScale = Mathf.Lerp(_MinBoxScale, _MaxBoxScale, _recentTapCharge);
           _LootBox.localScale = new Vector3(newScale, newScale, 1.0f);
-          _BoxGlow.color = _LootGlow.color;
         }
       }
+
       UpdateLootText();
     }
 
@@ -326,11 +342,11 @@ namespace Cozmo.UI {
         _LootTextInstructions1.gameObject.SetActive(false);
         _LootTextInstructions2.gameObject.SetActive(false);
       }
-      else if (_currentCharge >= _LootAlmostThreshold) {
+      else if (_currentBoxCharge >= _LootAlmostThreshold) {
         LootText = _LootAlmostKey;
         _tronBurst = _TronBurstAlmost;
       }
-      else if (_currentCharge >= _LootMidThreshold) {
+      else if (_currentBoxCharge >= _LootMidThreshold) {
         LootText = _LootMidKey;
         _tronBurst = _TronBurstMid;
       }
@@ -437,12 +453,15 @@ namespace Cozmo.UI {
         numSparks = LootBoxRewards[RewardedActionManager.Instance.SparkID];
       }
       DAS.Event("onboarding.emotion_chip.open", numBits.ToString(), DASUtil.FormatExtraData(numSparks.ToString()));
+
+      _ContinueButtonInstance.gameObject.SetActive(true);
       _ContinueButtonInstance.Initialize(HandleOnboardingRewardsContinueButton, "onboarding.button.loot", "Onboarding");
 
     }
 
     private void HandleOnboardingRewardsContinueButton() {
       _OnboardingRewardStart.gameObject.SetActive(false);
+      _ContinueButtonInstance.gameObject.SetActive(false);
       ContextManager.Instance.CozmoHoldFreeplayEnd();
       CloseView();
     }
@@ -470,6 +489,7 @@ namespace Cozmo.UI {
     }
 
     protected override void CleanUp() {
+      PauseManager.Instance.OnPauseDialogOpen -= CloseViewImmediately;
       ChestRewardManager.Instance.ApplyChestRewards();
       RewardedActionManager.Instance.SendPendingRewardsToInventory();
       _LootButton.onClick.RemoveAllListeners();
@@ -497,18 +517,16 @@ namespace Cozmo.UI {
       }
 
       openAnimation.OnComplete(() => {
-        _BannerInstance.PlayBannerAnimation(Localization.Get(LocalizationKeys.kLootAnnounce), StartBoxAnimation);
+        _BannerInstance.PlayBannerAnimation(Localization.Get(LocalizationKeys.kLootAnnounce),
+      _BoxSequence.TogglePause);
       });
-    }
-
-    public void StartBoxAnimation() {
-      _BoxSequence.TogglePause();
     }
 
     public void CreateBoxAnimation() {
       Sequence boxSequence = DOTween.Sequence();
       boxSequence.Append(_LootBox.DOScale(_BoxIntroStartScale, _BoxIntroTweenDuration).From().SetEase(Ease.InExpo));
       boxSequence.Join(_LootBox.DOMove(_BoxSource.position, _BoxIntroTweenDuration).From());
+      boxSequence.Append(_LootBox.DOScale(_MaxBoxScale, _BoxIntroSettleDuration));
       boxSequence.Append(_LootBox.DOScale(_MinBoxScale, _BoxIntroSettleDuration).SetEase(Ease.InExpo));
       boxSequence.OnComplete(HandleBoxFinished);
       boxSequence.Play();
@@ -522,8 +540,7 @@ namespace Cozmo.UI {
       _LootButton.onClick.AddListener(HandleButtonTap);
       _ShakeRotationTweener = _LootBox.DOShakeRotation(_ShakeDuration, new Vector3(0, 0, _ShakeRotationMaxAngle), _ShakeRotationVibrato, _ShakeRotationRandomness);
       _ShakePositionTweener = _LootBox.DOShakePosition(_ShakeDuration, _ShakePositionMax, _ShakePositionVibrato, _ShakePositionRandomness);
-      _BurstParticles.Emit(_OpenChestBurst);
-      TronLineBurst(_OpenChestBurst);
+      TronLineBurst(_ReadyChestBurst);
       _LootText.gameObject.SetActive(true);
       if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Loot)) {
         _LootTextInstructions1.gameObject.SetActive(true);
