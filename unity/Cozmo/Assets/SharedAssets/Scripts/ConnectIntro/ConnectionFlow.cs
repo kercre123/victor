@@ -113,6 +113,7 @@ public class ConnectionFlow : MonoBehaviour {
       _CurrentRobotIP = RobotEngineManager.kRobotIP;
     }
 
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Scan_Loop);
     CreateConnectionFlowBackground();
     ShowSearchForCozmo();
   }
@@ -260,6 +261,8 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   private void HandleSecuringConnectionScreenDone() {
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Scan_Loop_Stop);
+
     _SecuringConnectionScreenInstance.OnScreenComplete -= HandleSecuringConnectionScreenDone;
     GameObject.Destroy(_SecuringConnectionScreenInstance.gameObject);
 
