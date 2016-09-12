@@ -180,7 +180,11 @@ void Update()
     {
       case RobotInterface::FTM_entry:
       {
-        if (NVStorage::Read(NVStorage::NVEntry_BirthCertificate, BirthCertificateReadCallback) == NVStorage::NV_SCHEDULED)
+        if (clientConnected())
+        {
+          SetMode(RobotInterface::FTM_None);
+        }
+        else if (NVStorage::Read(NVStorage::NVEntry_BirthCertificate, BirthCertificateReadCallback) == NVStorage::NV_SCHEDULED)
         {
           SetMode(RobotInterface::FTM_WaitNV);
         }

@@ -19,73 +19,73 @@
     ]
   },
   "behavior.BringCubeToBeacon": {
-    "translation": "Collecting his Cubes"
+    "translation": "Cozmo is collecting his Cubes"
   },
   "behavior.LookAround": {
-    "translation": "Exploring his surroundings"
+    "translation": "Cozmo is exploring his surroundings"
   },
   "behavior.ExploreVisitPossibleMarker": {
-    "translation": "Exploring his surroundings"
+    "translation": "Cozmo is exploring his surroundings"
   },
   "behavior.LookInPlaceMemoryMap": {
-    "translation": "Exploring his surroundings"
+    "translation": "Cozmo is exploring his surroundings"
   },
   "behavior.ExploreLookAroundInPlace": {
-    "translation": "Exploring his surroundings"
+    "translation": "Cozmo is exploring his surroundings"
   },
   "behavior.ThinkAboutBeacons": {
-    "translation": "Exploring his surroundings"
+    "translation": "Cozmo is exploring his surroundings"
   },
   "behavior.VisitInterestingEdge": {
-    "translation": "Exploring his surroundings"
+    "translation": "Cozmo is exploring his surroundings"
   },
   "behavior.BuildPyramid": {
-    "translation": "Building a Pyramid"
+    "translation": "Cozmo is building a Pyramid"
   },
   "behavior.KnockOverCubes": {
-    "translation": "Knocking over cubes"
+    "translation": "Cozmo is knocking over cubes"
   },
   "behavior.PopAWheelie": {
-    "translation": "Popping a wheelie"
+    "translation": "Cozmo is popping a wheelie"
   },
   "behavior.PounceOnMotion": {
-    "translation": "Pouncing on motion"
+    "translation": "Cozmo wants to pounce on your finger"
   },
   "behavior.RollBlock": {
-    "translation": "Rolling a Cube"
+    "translation": ""
   },
   "behavior.StackCube": {
-    "translation": "Stacking a Cube"
+    "translation": "Cozmo is creating a stack of Cubes"
   },
   "behavior.LookingForFaces": {
-    "translation": "Looking for faces"
+    "translation": "Cozmo is looking around"
   },
   "behavior.FindFaces": {
-    "translation": "Looking for faces"
+    "translation": "Cozmo is looking around"
   },
   "behavior.InteractWithFaces": {
-    "translation": "Looking for faces"
+    "translation": "Cozmo is looking around"
   },
   "behavior.Bored": {
-    "translation": "Bored"
+    "translation": "Cozmo is bored"
   },
   "behavior.ReactToCliff": {
     "translation": ""
   },
   "behavior.ReactToFrustration": {
-    "translation": "Upset"
+    "translation": "Cozmo is upset"
   },
   "behavior.ReactToOnCharger": {
-    "translation": "Going To Sleep"
+    "translation": "Cozmo is going To Sleep"
   },
   "behavior.ReactToPickup": {
-    "translation": "Asking to be put down"
+    "translation": "Cozmo wants to be put down"
   },
   "behavior.ReactToOnSide": {
-    "translation": "Asking to be put upright"
+    "translation": "Cozmo wants to be put upright"
   },
   "behavior.RequestToPlay": {
-    "translation": "Asking to play"
+    "translation": "Cozmo wants to play"
   },
   "behavior.AcknowledgeObject": {
     "translation": ""
