@@ -662,6 +662,7 @@ MonoBehaviour:
   _AvailableContainer: {fileID: 120528}
   _UnlockedContainer: {fileID: 144682}
   _UnavailableContainer: {fileID: 171670}
+  _CostContainer: {fileID: 168040}
   _UnlockButton: {fileID: 0}
   _StartChallengeButton: {fileID: 0}
   _ViewPreReqButton: {fileID: 0}

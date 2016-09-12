@@ -71,6 +71,9 @@ public class ChallengeDetailsDialog : BaseView {
   private GameObject _UnavailableContainer;
 
   [SerializeField]
+  private GameObject _CostContainer;
+
+  [SerializeField]
   private Cozmo.UI.CozmoButton _UnlockButton;
 
   [SerializeField]
@@ -178,6 +181,7 @@ public class ChallengeDetailsDialog : BaseView {
     if (playerInventory.CanRemoveItemAmount(hexPieceId, unlockCost)) {
       playerInventory.RemoveItemAmount(hexPieceId, unlockCost);
       _UnlockButton.gameObject.SetActive(false);
+      _CostContainer.gameObject.SetActive(false);
       UnlockablesManager.Instance.TrySetUnlocked(unlockInfo.Id.Value, true);
 
       _UnlockButton.Interactable = false;
