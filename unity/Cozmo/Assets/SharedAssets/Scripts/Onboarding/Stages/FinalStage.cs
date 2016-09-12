@@ -17,6 +17,11 @@ namespace Onboarding {
       }
     }
 
+    protected override void HandleContinueClicked() {
+      base.HandleContinueClicked();
+      OnboardingManager.Instance.ShowOutlineRegion(false);
+    }
+
   }
 
 }

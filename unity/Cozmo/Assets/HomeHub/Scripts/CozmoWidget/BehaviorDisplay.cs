@@ -14,13 +14,24 @@ public class BehaviorDisplay : MonoBehaviour {
   [SerializeField]
   private float _FadeTime_Sec = 0.3f;
 
+  private Tween _FadeTween = null;
   private string _OverrideString = null;
 
   private float _StateChangeTimeStamp = -1.0f;
   private string _CurrString = "";
 
+
   private void Start() {
     SetOverrideString(null);
+  }
+
+  private void OnDestroy() {
+    CleanupTween();
+  }
+  private void CleanupTween() {
+    if (_FadeTween != null) {
+      _FadeTween.Kill();
+    }
   }
 
   private void Update() {
@@ -47,12 +58,14 @@ public class BehaviorDisplay : MonoBehaviour {
 
   private void StartFadeTo(string nextString) {
     _CurrString = nextString;
-    _BehaviorLabel.DOFade(0.0F, _FadeTime_Sec).OnComplete(HandleFadeEnd);
+    CleanupTween();
+    _FadeTween = _BehaviorLabel.DOFade(0.0F, _FadeTime_Sec).OnComplete(HandleFadeEnd);
   }
   private void HandleFadeEnd() {
     // Fade our new string back up
     _BehaviorLabel.text = "> " + _CurrString;
-    _BehaviorLabel.DOFade(1.0F, _FadeTime_Sec);
+    CleanupTween();
+    _FadeTween = _BehaviorLabel.DOFade(1.0F, _FadeTime_Sec);
   }
 
   // Mostly for onboarding
