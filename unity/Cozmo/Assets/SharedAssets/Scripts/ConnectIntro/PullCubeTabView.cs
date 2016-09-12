@@ -116,6 +116,7 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
                                                             kConnectedOnPeriod_ms, kConnectedOffPeriod_ms,
                                                             kConnectedOnTransition_ms, kConnectedOffTransition_ms,
                                                             kConnectedOffset);
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect);
         }
         _NewlyConnectedObject = Anki.Cozmo.ObjectType.Invalid;
       }
