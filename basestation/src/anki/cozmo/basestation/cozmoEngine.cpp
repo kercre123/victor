@@ -113,6 +113,7 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   helper.SubscribeGameToEngine<MessageGameToEngineTag::UpdateFirmware>();
 
   _debugConsoleManager.Init(_context->GetExternalInterface());
+  _dasToSdkHandler.Init(_context->GetExternalInterface());
 
   #if VIZ_ON_DEVICE
   _context->GetVizManager()->SetMessagePort(vizMessagePort);

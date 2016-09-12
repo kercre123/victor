@@ -45,6 +45,7 @@ int DAS_AssertionEnabled = 0;
 
 static bool DASNeedsInit = true;
 static std::string sGameLogDir;
+static std::string sLogDir;
 
 static DASLogLevel sLocalMinLogLevel = DASLogLevel_Info;
 static DASLogLevel sRemoteMinLogLevel = DASLogLevel_Event;
@@ -207,6 +208,9 @@ void DASConfigure(const char* configurationJsonFilePath,
   if (nullptr != gameLogDirPath && '\0' != *gameLogDirPath) {
     sGameLogDir = gameLogDirPath;
   }
+  if (nullptr != logDirPath && '\0' != *logDirPath) {
+    sLogDir = logDirPath;
+  }
 
   if (!DASNeedsInit) {
     DASClose();
@@ -243,7 +247,7 @@ void DASConfigure(const char* configurationJsonFilePath,
         {
           flush_interval = root["dasConfig"].get("flushInterval", DASClient::Json::uintValue).asUInt();
         }
-        sRemoteAppender = new Anki::Das::DasAppender(logDirPath, url,flush_interval);
+        sRemoteAppender = new Anki::Das::DasAppender(sLogDir, url,flush_interval);
       }
     } else {
       LOGD("Failed to parse configuration: %s", reader.getFormattedErrorMessages().c_str());
@@ -256,6 +260,11 @@ void DASConfigure(const char* configurationJsonFilePath,
     (void) pthread_key_create(&sDASThreadIdKey, _freeDASThreadId);
   }
   DASNeedsInit = false;
+}
+
+const char* DASGetLogDir()
+{
+  return sLogDir.c_str();
 }
 
 void _DAS_DestroyGameLogAppender() {

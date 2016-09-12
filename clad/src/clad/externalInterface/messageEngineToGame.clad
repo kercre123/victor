@@ -461,6 +461,15 @@ message InitDebugConsoleVarMessage {
   DebugConsoleVar varData[uint_16]
 }
 
+message JsonDasLogMessage {
+  string fileName,
+  string[uint_16] jsonData
+}
+
+message JsonDasLogAllSentMessage {
+  uint_8 filesSent
+}
+
 message VerifyDebugConsoleFuncMessage {
   string funcName,
   string statusMessage,

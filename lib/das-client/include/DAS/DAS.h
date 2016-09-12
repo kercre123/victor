@@ -173,6 +173,7 @@ extern "C" {
 #endif
 // Run this as soon as possible, passing in the json config file and the paths for the logs and game lobs
 void DASConfigure(const char* configurationJsonFilePath, const char* logDirPath, const char* gameLogDirPath) __attribute__((visibility("default")));
+const char* DASGetLogDir() __attribute__((visibility("default")));
 void DASClose() __attribute__((visibility("default")));
 void DASEnableNetwork(DASDisableNetworkReason reason) __attribute__((visibility("default")));
 void DASDisableNetwork(DASDisableNetworkReason reason) __attribute__((visibility("default")));

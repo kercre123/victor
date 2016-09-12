@@ -64,9 +64,6 @@ void DasAppender::append(DASLogLevel level, const char* eventName, const char* e
                          const std::map<std::string,std::string>* globals,
                          const std::map<std::string,std::string>& data) {
 
-  if (DASNetworkingDisabled) { // reject logs if we've disabled DAS networking.
-    return;
-  }
   uint32_t curSequence = sDasSequenceNumber++;
 
   auto* eventDictionaryPtr = new std::map<std::string, std::string>{*globals};
@@ -86,7 +83,9 @@ void DasAppender::append(DASLogLevel level, const char* eventName, const char* e
 
     if (logData.size() <= _maxLogLength) {
       _logFileAppender->WriteDataToCurrentLogfile(logData);
-      SetTimedFlush();
+      if (!DASNetworkingDisabled) {
+        SetTimedFlush();
+      }
     } else {
       LOGD("Error! Dropping message of length %zd", logData.size());
     }
@@ -140,6 +139,9 @@ void DasAppender::Flush()
 
 bool DasAppender::ConsumeALogFile(const std::string& logFilePath, bool *stop)
 {
+  if (DASNetworkingDisabled) {
+    return false;
+  }
   std::string logFileData = AnkiUtil::StringFromContentsOfFile(logFilePath);
   size_t logFileLength = logFileData.length();
   LOGV("Attempting to post a log file of size %zd", logFileLength);

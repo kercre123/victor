@@ -836,6 +836,9 @@ message GetDebugConsoleVarMessage {
 message GetAllDebugConsoleVarMessage {
 }
 
+message GetJsonDasLogsMessage {
+}
+
 message SetEnableSOSLogging {
   bool enabled
 }

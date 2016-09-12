@@ -35,6 +35,7 @@
 #include "clad/types/imageTypes.h"
 #include "clad/types/engineState.h"
 #include "anki/cozmo/basestation/debug/debugConsoleManager.h"
+#include "anki/cozmo/basestation/debug/dasToSdkHandler.h"
 #include "util/global/globalDefinitions.h"
 
 #include <memory>
@@ -118,6 +119,7 @@ protected:
   std::unique_ptr<BLESystem>                                _bleSystem;
   std::unique_ptr<DeviceDataManager>                        _deviceDataManager;
   Anki::Cozmo::DebugConsoleManager                          _debugConsoleManager;
+  Anki::Cozmo::DasToSdkHandler                              _dasToSdkHandler;
   bool                                                      _isGamePaused = false;
 
   virtual Result InitInternal();
