@@ -104,8 +104,6 @@ namespace Cozmo {
       if (!_IsPaused && shouldBePaused) {
         DAS.Debug("PauseManager.HandleApplicationPause", "Application being paused");
         _IsPaused = true;
-        CloseLowBatteryDialog();
-        CloseConfirmSleepDialog();
 
         Cozmo.HomeHub.HomeHub hub = Cozmo.HomeHub.HomeHub.Instance;
         if (null != hub) {
