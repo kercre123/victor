@@ -274,10 +274,16 @@ class Cozmo(event.Dispatcher):
         async def _init():
             # TODO: reset the robot state
             self.enable_reactionary_behaviors(False)
+
+            # Ensure the SDK has full control of cube lights
+            self._set_cube_light_state(False)
+
             await self.world.delete_all_custom_objects()
             self._reset_behavior_state()
+
             # wait for animations to load
             await self.conn.anim_names.wait_for_loaded()
+
             self._is_ready = True
             logger.info("Robot initialized OK")
             self.dispatch_event(EvtRobotReady, robot=self)
@@ -286,6 +292,10 @@ class Cozmo(event.Dispatcher):
     def _reset_behavior_state(self):
         msg = _clad_to_engine_iface.ExecuteBehavior(
                 behaviorType=_clad_to_engine_cozmo.BehaviorType.NoneBehavior)
+        self.conn.send_msg(msg)
+
+    def _set_cube_light_state(self, enable):
+        msg = _clad_to_engine_iface.EnableLightStates(enable=enable, objectID=-1)
         self.conn.send_msg(msg)
 
     #### Properties ####
