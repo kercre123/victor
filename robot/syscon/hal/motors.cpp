@@ -418,8 +418,8 @@ static const int MAX_DRIVE_TIME[] = {
 };
 
 static const int DRIVE_MINIMUM_SPEED[] ={
-  2,
-  2,
+  1,
+  1,
   RADIANS_PER_LIFT_TICK * 2,
   RADIANS_PER_HEAD_TICK * 2
 };
