@@ -52,6 +52,12 @@ private:
   // For checking computational switch
   ObjectID _lastObservedObject;
   
+  // loaded in from json
+  float _lookingInitialWait_s;
+  float _lookingDownWait_s;
+  float _lookingTopWait_s;
+  float _minBlockMovedThreshold_mm_sqr;
+  
   enum class DebugState {
     ReactingToStack,
     LookingAtStack,

@@ -29,6 +29,10 @@
       "AnimName": "blockReact"
     },
     {
+      "CladEvent": "CantHandleTallStack",
+      "AnimName": "ag_reacttoblock_3blocktower_upset"
+    },
+    {
       "CladEvent": "CodeBreakerNewIdea",
       "AnimName": "ag_CodeBreakerNewIdea"
     },

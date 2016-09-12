@@ -23,10 +23,15 @@
 
 const int kMinStackHeight = 3;
 
-const float kLookingWait_s = 1;
+
+
+static const char* kLookingWaitInitial = "lookingInitialWait_s";
+static const char* kLookingDownWait = "lookingDownWait_s";
+static const char* kLookingUpWait = "lookingUpWait_s";
+static const char* kMinBlockMovedThreshold = "minBlockMovedThreshold_mm_sqr";
+
 const float kLookingDown_rad = DEG_TO_RAD(-25);
 const float kLookingUp_rad = DEG_TO_RAD(45);
-const float kMinBlockMovedThreshold_mm_sqr = 100;
 
 namespace Anki {
 namespace Cozmo {
@@ -45,6 +50,12 @@ BehaviorCantHandleTallStack::BehaviorCantHandleTallStack(Robot& robot, const Jso
     EngineToGameTag::RobotObservedObject,
     EngineToGameTag::RobotDelocalized
   }});
+  
+  _lookingInitialWait_s = config.get(kLookingWaitInitial, 3).asFloat();
+  _lookingDownWait_s = config.get(kLookingDownWait, 3).asFloat();
+  _lookingTopWait_s = config.get(kLookingUpWait, 3).asFloat();
+  _minBlockMovedThreshold_mm_sqr = config.get(kMinBlockMovedThreshold, 3).asFloat();
+  
 }
   
 bool BehaviorCantHandleTallStack::IsRunnableInternalReactionary(const Robot& robot) const
@@ -80,7 +91,7 @@ bool BehaviorCantHandleTallStack::ShouldComputationallySwitch(const Robot& robot
         f32 distSquared = 0.0;
         bool couldCompare = (!_baseBlockPoseValid) || ComputeDistanceSQBetween(basePose, _lastReactionBasePose, distSquared);
         if(!_baseBlockPoseValid ||
-           (couldCompare && distSquared > kMinBlockMovedThreshold_mm_sqr)){
+           (couldCompare && distSquared > _minBlockMovedThreshold_mm_sqr)){
           baseBlockMovedEnough = true;
           _lastReactionBasePose = basePose;
           _baseBlockPoseValid = true;
@@ -121,11 +132,11 @@ void BehaviorCantHandleTallStack::TransitionToLookingUpAndDown(Robot& robot)
   DEBUG_SET_STATE(DebugState::LookingUpAndDown);
   
   StartActing(new CompoundActionSequential(robot, {
-                new WaitAction(robot, kLookingWait_s),
+                new WaitAction(robot, _lookingInitialWait_s),
                 new MoveHeadToAngleAction(robot, kLookingDown_rad),
-                new WaitAction(robot, kLookingWait_s),
+                new WaitAction(robot, _lookingDownWait_s),
                 new MoveHeadToAngleAction(robot, kLookingUp_rad),
-                new WaitAction(robot, kLookingWait_s)
+                new WaitAction(robot, _lookingTopWait_s)
               }),
               &BehaviorCantHandleTallStack::TransitionToDisapointment);
   
@@ -135,7 +146,7 @@ void BehaviorCantHandleTallStack::TransitionToDisapointment(Robot& robot)
 {
   DEBUG_SET_STATE(DebugState::Disapiontment);
   
-  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::RequestGameKeepAwayDeny1));
+  StartActing(new TriggerAnimationAction(robot, AnimationTrigger::CantHandleTallStack));
 }
   
 void BehaviorCantHandleTallStack::ResetBehavior()

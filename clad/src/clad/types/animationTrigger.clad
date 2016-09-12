@@ -21,6 +21,7 @@ enum int_32 AnimationTrigger
   AskToBeRightedRight,
   BlockReact,
   BuildPyramidSuccess,
+  CantHandleTallStack,
   CodeBreakerNewIdea,
   CodeBreakerThinking,
   ConnectWakeUp,

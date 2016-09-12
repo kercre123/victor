@@ -3,5 +3,10 @@
   "behaviorGroups": [
     "Reactionary"
   ],
-  "disableByDefault": false
+  "disableByDefault": false,
+  "lookingInitialWait_s": 1.0,
+  "lookingDownWait_s": 1.0,
+  "lookingUpWait_s": 1.0,
+  "minBlockMovedThreshold_mm_sqr": 100.0
+  
 }
