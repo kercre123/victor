@@ -34,10 +34,6 @@ namespace Cozmo.Settings {
     private float _DefaultMasterVolume = 1f;
     public float DefaultMasterVolumeLevel { get { return _DefaultMasterVolume; } }
 
-    [SerializeField]
-    private string _SdkUrl = "https://developer.anki.com/en-us";
-    public string SdkUrl { get { return _SdkUrl; } }
-
     [SerializeField, Range(-1f, 120f)]
     public float _AppBackground_TimeTilSleep_sec = 20f;
     public float AppBackground_TimeTilSleep_sec { get { return _AppBackground_TimeTilSleep_sec; } }

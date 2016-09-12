@@ -20,3 +20,5 @@ MonoBehaviour:
     type: 2}
   _ScrollingTextViewPrefab: {fileID: 11422892, guid: a9bae51dad15b4085b12a1640c774477,
     type: 2}
+  _LongConfirmationViewPrefab: {fileID: 11440366, guid: 4fca36139bdf345bcaccade90aaac395,
+    type: 2}

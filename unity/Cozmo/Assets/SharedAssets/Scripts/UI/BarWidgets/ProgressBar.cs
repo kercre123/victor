@@ -35,6 +35,8 @@ namespace Cozmo {
 
       private float _StartProgress = 0f;
       private float _TargetProgress = 0f;
+      public float CurrentTargetProgress { get { return _TargetProgress; } }
+
       private float _TimePassedSeconds = 0f;
       private bool _ProgressUpdating = false;
 
@@ -60,22 +62,13 @@ namespace Cozmo {
           if (_TimePassedSeconds > kTweenDuration) {
             _TimePassedSeconds = kTweenDuration;
           }
-          _FilledForegroundImage.fillAmount = EaseOutQuad(_TimePassedSeconds, _StartProgress, 
+          _FilledForegroundImage.fillAmount = EaseOutQuad(_TimePassedSeconds, _StartProgress,
             _TargetProgress - _StartProgress, kTweenDuration);
-          
+
           // If Endcap is enabled and != null, update position based on the width and fill amount
           // of the Foreground Image.
           if (_UseEndCap) {
-            float capPos = 0.0f;
-            capPos = _FilledForegroundImage.fillAmount * _FilledForegroundImage.rectTransform.rect.width;
-
-            if (capPos < _EndCap.sprite.rect.width || (_FilledForegroundImage.fillAmount >= 1.0f)) {
-              _EndCap.gameObject.SetActive(false);
-            }
-            else {
-              _EndCap.gameObject.SetActive(true);
-              _EndCap.rectTransform.localPosition = new Vector3(capPos, _EndCap.rectTransform.localPosition.y);
-            }
+            PositionEndCap();
           }
 
           if (_TargetProgress > _FilledForegroundImage.fillAmount) {
@@ -128,17 +121,21 @@ namespace Cozmo {
         if (instant) {
           _FilledForegroundImage.fillAmount = _TargetProgress;
           if (_UseEndCap) {
-            float capPos = 0.0f;
-            capPos = _FilledForegroundImage.fillAmount * _FilledForegroundImage.rectTransform.rect.width;
-
-            if (capPos < _EndCap.rectTransform.rect.width || (_FilledForegroundImage.fillAmount >= 1.0f)) {
-              _EndCap.gameObject.SetActive(false);
-            }
-            else {
-              _EndCap.gameObject.SetActive(true);
-              _EndCap.rectTransform.localPosition = new Vector3(capPos, _EndCap.rectTransform.localPosition.y);
-            }
+            PositionEndCap();
           }
+        }
+      }
+
+      private void PositionEndCap() {
+        float capPos = 0.0f;
+        capPos = _FilledForegroundImage.fillAmount * _FilledForegroundImage.rectTransform.rect.width;
+
+        if (capPos < _EndCap.rectTransform.rect.width || (_FilledForegroundImage.fillAmount >= 1.0f)) {
+          _EndCap.gameObject.SetActive(false);
+        }
+        else {
+          _EndCap.gameObject.SetActive(true);
+          _EndCap.rectTransform.localPosition = new Vector3(capPos, _EndCap.rectTransform.localPosition.y);
         }
       }
     }

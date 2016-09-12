@@ -65,7 +65,9 @@ namespace Onboarding {
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Onboarding__Play_Tab);
 
-      RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByName("NoneBehavior");
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByName("NoneBehavior");
+      }
     }
 
     protected void HandleContinueClicked() {

@@ -509,11 +509,26 @@ public static class LocalizationKeys {
   public const string kSettingsSleepCozmoPanelConfirmationModalTitle = "settings.sleepCozmoPanel.confirmationModal.title";
   public const string kSettingsSleepCozmoPanelConfirmModalDescription = "settings.sleepCozmoPanel.confirmModal.description";
   public const string kSettingsSleepCozmoPanelConfirmModalButtonConfirm = "settings.sleepCozmoPanel.confirmModal.button.confirm";
+  public const string kSettingsSupportViewButtonRestoreCozmo = "settings.supportView.button.restoreCozmo";
+  public const string kSettingsSupportViewLabelDirections = "settings.supportView.label.directions";
+  public const string kSettingsSupportViewLabelRestoreCozmoClarification = "settings.supportView.label.restoreCozmoClarification";
+  public const string kSettingsSupportViewLabelTitle = "settings.supportView.label.title";
+  public const string kSettingsSupportViewLabelUrl = "settings.supportView.label.url";
+  public const string kSettingsSupportViewRestoreCozmoModalRestoreCozmoConfirmButton = "settings.supportView.restoreCozmoModal.restoreCozmoConfirmButton";
+  public const string kSettingsSupportViewRestoreCozmoModalRestoreCozmoErrorLabel = "settings.supportView.restoreCozmoModal.restoreCozmoErrorLabel";
+  public const string kSettingsSupportViewRestoreCozmoModalRestoreCozmoInProgressLabel = "settings.supportView.restoreCozmoModal.restoreCozmoInProgressLabel";
+  public const string kSettingsSupportViewRestoreCozmoModalRestoreCozmoTitle = "settings.supportView.restoreCozmoModal.restoreCozmoTitle";
+  public const string kSettingsSupportViewRestoreCozmoModalRestoreCozmoWarningLabel = "settings.supportView.restoreCozmoModal.restoreCozmoWarningLabel";
   public const string kSettingsVersionPanelAcknowledgementsModalDescription = "settings.versionPanel.acknowledgementsModal.description";
   public const string kSettingsVersionPanelAcknowledgementsModalTitle = "settings.versionPanel.acknowledgementsModal.title";
   public const string kSettingsVersionPanelButtonAcknowledgementsLink = "settings.versionPanel.button.acknowledgementsLink";
   public const string kSettingsVersionPanelButtonEraseCozmo = "settings.versionPanel.button.eraseCozmo";
   public const string kSettingsVersionPanelButtonSupport = "settings.versionPanel.button.support";
+  public const string kSettingsVersionPanelEraseCozmoModalEraseCozmoConfirmButton = "settings.versionPanel.eraseCozmoModal.eraseCozmoConfirmButton";
+  public const string kSettingsVersionPanelEraseCozmoModalEraseCozmoErrorLabel = "settings.versionPanel.eraseCozmoModal.eraseCozmoErrorLabel";
+  public const string kSettingsVersionPanelEraseCozmoModalEraseCozmoInProgressLabel = "settings.versionPanel.eraseCozmoModal.eraseCozmoInProgressLabel";
+  public const string kSettingsVersionPanelEraseCozmoModalEraseCozmoTitle = "settings.versionPanel.eraseCozmoModal.eraseCozmoTitle";
+  public const string kSettingsVersionPanelEraseCozmoModalEraseCozmoWarningLabel = "settings.versionPanel.eraseCozmoModal.eraseCozmoWarningLabel";
   public const string kSettingsVersionPanelLabelAppRun = "settings.versionPanel.label.appRun";
   public const string kSettingsVersionPanelLabelAppVersion = "settings.versionPanel.label.appVersion";
   public const string kSettingsVersionPanelLabelCozmoVersion = "settings.versionPanel.label.cozmoVersion";
@@ -597,6 +612,7 @@ public static class LocalizationKeys {
   public const string kLabelCozmoSerial = "label.cozmo.serial";
   public const string kLabelDeviceid = "label.deviceid";
   public const string kLabelPrivacyPolicy = "label.privacyPolicy";
+  public const string kLabelPressAndHoldInstruction = "label.pressAndHoldInstruction";
 
   #endregion
 

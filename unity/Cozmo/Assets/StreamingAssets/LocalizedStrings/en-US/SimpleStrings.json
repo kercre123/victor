@@ -227,5 +227,8 @@
   },
   "label.privacyPolicy": {
     "translation": "Privacy Policy"
+  },
+  "label.pressAndHoldInstruction":{
+    "translation": "Press and hold {0} to confirm"
   }
 }

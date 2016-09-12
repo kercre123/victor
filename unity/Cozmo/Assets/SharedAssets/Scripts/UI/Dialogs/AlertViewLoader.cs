@@ -49,6 +49,13 @@ namespace Cozmo {
       public ScrollingTextView ScrollingTextViewPrefab {
         get { return _ScrollingTextViewPrefab; }
       }
+
+      [SerializeField]
+      private LongConfirmationView _LongConfirmationViewPrefab;
+
+      public LongConfirmationView LongConfirmationViewPrefab {
+        get { return _LongConfirmationViewPrefab; }
+      }
     }
   }
 }

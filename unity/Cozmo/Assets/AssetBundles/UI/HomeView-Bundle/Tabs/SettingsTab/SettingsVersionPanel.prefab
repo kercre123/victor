@@ -26,7 +26,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22495716}
-  - 114: {fileID: 11483032}
+  - 114: {fileID: 11421862}
   m_Layer: 5
   m_Name: ResetCozmoButton
   m_TagString: Untagged
@@ -161,7 +161,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &180544
 GameObject:
   m_ObjectHideFlags: 1
@@ -212,6 +212,32 @@ MonoBehaviour:
   _DeviceIDLabel: {fileID: 0}
   _AppRunLabel: {fileID: 0}
   _AcknowledgementsLinkButton: {fileID: 11460766}
+  _SupportButton: {fileID: 0}
+  _SupportInfoViewPrefab: {fileID: 11410082, guid: 950243296d8654fdba91f31eabdad971,
+    type: 2}
+  _EraseCozmoButton: {fileID: 0}
+  _SecondsToConfirmEraseCozmo: 5
+--- !u!114 &11421862
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 117618}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Prefab: {fileID: 184674, guid: 26848cf14046a4e3ba741e5da54ae400, type: 2}
+  ModifiedValues:
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    JsonValue: '"#settings.versionPanel.button.eraseCozmo"'
+  ModifiedLocalReferences:
+  - ObjectPath: ../../
+    FieldName: Cozmo.Settings.SettingsVersionsPanel:_EraseCozmoButton
+    ReferencePath: 
+  ModifiedGlobalReferences: []
 --- !u!114 &11422638
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -316,8 +342,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
-  ModifiedValues: []
-  ModifiedLocalReferences: []
+  ModifiedValues:
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    JsonValue: '"#settings.versionPanel.button.support"'
+  ModifiedLocalReferences:
+  - ObjectPath: ../../
+    FieldName: Cozmo.Settings.SettingsVersionsPanel:_SupportButton
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11448928
 MonoBehaviour:
@@ -477,21 +509,6 @@ MonoBehaviour:
   - ObjectPath: ../../
     FieldName: Cozmo.Settings.SettingsVersionsPanel:_AppRunLabel
     ReferencePath: 
-  ModifiedGlobalReferences: []
---- !u!114 &11483032
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 117618}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
-  ModifiedValues: []
-  ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
 --- !u!222 &22282120
 CanvasRenderer:
