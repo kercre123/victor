@@ -20,6 +20,7 @@
 @interface CozmoAppController : UnityAppController
 {
   UIBackgroundTaskIdentifier bgTask;
+  bool _receivedWillResign;
 }
 
 - (BOOL)application:(UIApplication*)application didFinishLaunchingWithOptions:(NSDictionary*)launchOptions;
@@ -102,11 +103,14 @@ bool checkInternetAvailable()
   completionHandler(UIBackgroundFetchResultNewData);
 }
 
-
 - (void)applicationDidEnterBackground:(UIApplication*)application
 {
+  if (_receivedWillResign) {
+    [super applicationWillResignActive:application];
+    _receivedWillResign = false;
+  }
   [super applicationDidEnterBackground:application];
-  
+
   // Set up a task to throw onto the end of the main queue as a means of allowing whatevers in there a chance to complete
   if (self->bgTask == UIBackgroundTaskInvalid) {
     bgTask = [application beginBackgroundTaskWithExpirationHandler: ^{
@@ -116,6 +120,11 @@ bool checkInternetAvailable()
       });
     }];
   }
+}
+
+- (void)applicationWillResignActive:(UIApplication*)application
+{
+  _receivedWillResign = true;
 }
 
 @end
