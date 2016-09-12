@@ -66,7 +66,7 @@ class UdpConnection(INetConnection):
         "Internal implementation for sending bytes over the connection to destAddress"
         lenMessageBytes = len(messageBytes)
         if lenMessageBytes > self.MAX_MESSAGE_SIZE:
-            raise ValueError("Max message size for UdpConnection is %d, given %d" % (self.MAX_MESSAGE_SIZE, len(message)))
+            raise ValueError("Max message size for UdpConnection is %d, given %d" % (self.MAX_MESSAGE_SIZE, len(messageBytes)))
         else:
             self.socket.sendto(messageBytes, destAddress)
 
@@ -75,7 +75,7 @@ class UdpConnection(INetConnection):
         try:
             sendRes = self._SendData(self.engDest, messageBytes)
             return sendRes
-        except:
+        except Exception as e:
             sys.stderr.write("[UdpConnection.SendMessage] Exception sending data: " + str(e) + os.linesep)
             return False
 

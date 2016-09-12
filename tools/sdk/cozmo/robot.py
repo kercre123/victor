@@ -446,7 +446,7 @@ class Cozmo(event.Dispatcher):
             duration_scalar (float): Adjust the relative duration of the generated text to speech audio
             voice_pitch (float): Adjust the pitch of cozmo's robot voice [-1.0, 1.0]
         Returns:
-            A class:'cozmo.robot.SayText' instance to track the action in progress.
+            A :class:`cozmo.robot.SayText` action object which can be queried to see when it is complete
         '''
 
         action = self.say_text_factory(text=text, play_excited_animation=play_excited_animation,
@@ -488,7 +488,7 @@ class Cozmo(event.Dispatcher):
         Args:
             angle (float): desired angle for Cozmo's head. (-25 to 44.5 degrees - clamped in engine to this range)
         Returns:
-            A class:'cozmo.robot.SetHeadAngle' instance to track the action in progress.
+            A :class:`cozmo.robot.SetHeadAngle` action object which can be queried to see when it is complete
         '''
         action = self.set_head_angle_factory(angle=angle, max_speed=max_speed, accel=accel, duration=duration, conn=self.conn, robot=self, dispatch_parent=self)
 
@@ -500,7 +500,7 @@ class Cozmo(event.Dispatcher):
         Args:
             height (float): desired height for Cozmo's lift 0.0 (bottom) to 1.0 (top) (we clamp it to this range internally)
         Returns:
-            A class:'cozmo.robot.SetLiftHeight' instance to track the action in progress.
+            A :class:`cozmo.robot.SetLiftHeight` action object which can be queried to see when it is complete
         '''
         action = self.set_lift_height_factory(height=height, max_speed=max_speed, accel=accel, duration=duration, conn=self.conn, robot=self, dispatch_parent=self)
         self._action_dispatcher._send_single_action(action)
@@ -520,7 +520,7 @@ class Cozmo(event.Dispatcher):
             name (str): The name of the animation to play
             loop_count (int): Number of times to play the animation
         Returns:
-            :class:`cozmo.anim.Animation`
+            A :class:`cozmo.anim.Animation` action object which can be queried to see when it is complete
         Raises:
             :class:`ValueError` if supplied an invalid animation name.
         '''
@@ -542,7 +542,7 @@ class Cozmo(event.Dispatcher):
             trigger (object): An attribute of the :class:`cozmo.anim.Triggers` class
             loop_count (int): Number of times to play the animation
         Returns:
-            :class:`cozmo.anim.AnimationTrigger`
+            A :class:`cozmo.anim.AnimationTrigger` action object which can be queried to see when it is complete
         Raises:
             :class:`ValueError` if supplied an invalid animation trigger.
         """
@@ -606,8 +606,7 @@ class Cozmo(event.Dispatcher):
             use_pre_dock_pose (bool): whether or not to try to immediately pick up an object or
             relocate and then try 
         Returns:
-            A :class:`cozmo.robot.PickupObject` instance which can be
-            observed to wait for the pickup to complete.
+            A :class:`cozmo.robot.PickupObject` action object which can be queried to see when it is complete
         Raises:
             :class:`cozmo.exceptions.RobotBusy` if another action is already running
             :class:`cozmo.exceptions.NotPickupable` if object type can't be picked up
@@ -631,8 +630,7 @@ class Cozmo(event.Dispatcher):
             use_pre_dock_pose (bool): Whether or not to try to immediately place on the object or
             relocate and then try 
         Returns:
-            A :class:`cozmo.robot.PlaceOnObject` instance which can be observed
-            to wait for the place on object to complete.
+            A :class:`cozmo.robot.PlaceOnObject` action object which can be queried to see when it is complete
         Raises:
             :class:`cozmo.exceptions.RobotBusy` if another action is already running
             :class:`cozmo.exceptions.CannotPlaceObjectsOnThis` if the object cannot have objects
@@ -652,8 +650,7 @@ class Cozmo(event.Dispatcher):
         '''Ask Cozmo to place the object its carrying on the ground at the current location.
 
         Returns:
-            A :class:`cozmo.robot.PlaceObjectOnGroundHere` instance which can be
-            observed to wait for the pickup to complete.
+            A :class:`cozmo.robot.PlaceObjectOnGroundHere` action object which can be queried to see when it is complete
         Raises:
             :class:`cozmo.exceptions.RobotBusy` if another action is already running
         '''
@@ -672,7 +669,7 @@ class Cozmo(event.Dispatcher):
         Args:
             face: (:class:`cozmo.faces.Face`): The face Cozmo will turn towards
         Returns:
-            A :class:`cozmo.robot.TurnTowardsFace` action object
+            A :class:`cozmo.robot.TurnTowardsFace` action object which can be queried to see when it is complete
         '''
         action = self.turn_towards_face_factory(face=face,
                 conn=self.conn, robot=self, dispatch_parent=self)
@@ -695,7 +692,7 @@ class Cozmo(event.Dispatcher):
             pose: (:class:`cozmo.util.Pose`): The destination pose
             relative_to_robot (bool): Whether the given pose is relative to the robot's pose.
         Returns:
-            A :class:`cozmo.robot.GoToPose` action object
+            A :class:`cozmo.robot.GoToPose` action object which can be queried to see when it is complete
         '''
         if relative_to_robot:
             pose = self.pose.define_pose_relative_this(pose)
@@ -710,7 +707,7 @@ class Cozmo(event.Dispatcher):
         Args:
             angle: (:class:`cozmo.util.Angle`) - The angle to turn
         Returns:
-            A :class:`cozmo.robot.TurnInPlace` action object
+            A :class:`cozmo.robot.TurnInPlace` action object which can be queried to see when it is complete
         '''
         # TODO: add support for absolute vs relative positioning, speed & accel options
         action = self.turn_in_place_factory(angle=angle,
