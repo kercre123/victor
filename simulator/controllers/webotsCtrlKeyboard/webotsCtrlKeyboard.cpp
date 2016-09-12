@@ -956,7 +956,7 @@ namespace Anki {
                   ExternalInterface::QueueSingleAction msg;
                   msg.robotID = 1;
                   msg.position = QueueActionPosition::NOW;
-                  msg.action.Set_searchSideToSide(ExternalInterface::SearchSideToSide(msg.robotID));
+                  msg.action.Set_searchForNearbyObject(ExternalInterface::SearchForNearbyObject(-1));
 
                   ExternalInterface::MessageGameToEngine message;
                   message.Set_QueueSingleAction(msg);

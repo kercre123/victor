@@ -297,18 +297,19 @@ namespace Anki {
       return result;
     }
 
-#pragma mark ---- SearchSideToSideAction ----
+#pragma mark ---- SearchForNearbyObjectAction ----
 
-    SearchSideToSideAction::SearchSideToSideAction(Robot& robot)
+    SearchForNearbyObjectAction::SearchForNearbyObjectAction(Robot& robot, int32_t desiredObjectID)
       : IAction(robot,
-                "SearchSideToSideAction",
-                RobotActionType::SEARCH_SIDE_TO_SIDE,
+                "SearchForNearbyObjectAction",
+                RobotActionType::SEARCH_FOR_NEARBY_OBJECT,
                 (u8)AnimTrackFlag::BODY_TRACK)
       , _compoundAction(robot)
+      , _desiredObjectID(desiredObjectID)
     {
     }
 
-    SearchSideToSideAction::~SearchSideToSideAction()
+    SearchForNearbyObjectAction::~SearchForNearbyObjectAction()
     {
       if( _shouldPopIdle ) {
         _robot.GetAnimationStreamer().PopIdleAnimation();
@@ -317,19 +318,19 @@ namespace Anki {
       _compoundAction.PrepForCompletion();
     }
   
-    void SearchSideToSideAction::SetSearchAngle(f32 minSearchAngle_rads, f32 maxSearchAngle_rads)
+    void SearchForNearbyObjectAction::SetSearchAngle(f32 minSearchAngle_rads, f32 maxSearchAngle_rads)
     {
       _minSearchAngle_rads = minSearchAngle_rads;
       _maxSearchAngle_rads = maxSearchAngle_rads;
     }
   
-    void SearchSideToSideAction::SetSearchWaitTime(f32 minWaitTime_s, f32 maxWaitTime_s)
+    void SearchForNearbyObjectAction::SetSearchWaitTime(f32 minWaitTime_s, f32 maxWaitTime_s)
     {
       _minWaitTime_s = minWaitTime_s;
       _maxWaitTime_s = maxWaitTime_s;
     }
 
-    ActionResult SearchSideToSideAction::Init()
+    ActionResult SearchForNearbyObjectAction::Init()
     {
       // Incase we are re-running this action
       _compoundAction.ClearActions();
@@ -337,6 +338,9 @@ namespace Anki {
 
       float initialWait_s = GetRNG().RandDblInRange(_minWaitTime_s, _maxWaitTime_s);
 
+      const float backup_mm = -20;
+      const float backup_speed_mms = 100;
+      
       float firstTurnDir = GetRNG().RandDbl() > 0.5f ? 1.0f : -1.0f;      
       float firstAngle_rads = firstTurnDir * GetRNG().RandDblInRange(_minSearchAngle_rads, _maxSearchAngle_rads);
       float afterFirstTurnWait_s = GetRNG().RandDblInRange(_minWaitTime_s, _maxWaitTime_s);
@@ -345,7 +349,7 @@ namespace Anki {
         - firstTurnDir * GetRNG().RandDblInRange(_minSearchAngle_rads, _maxSearchAngle_rads);
       float afterSecondTurnWait_s = GetRNG().RandDblInRange(_minWaitTime_s, _maxWaitTime_s);
 
-      PRINT_NAMED_DEBUG("SearchSideToSideAction.Init",
+      PRINT_NAMED_DEBUG("SearchForNearbyObjectAction.Init",
                         "Action will wait %f, turn %fdeg, wait %f, turn %fdeg, wait %f",
                         initialWait_s,
                         RAD_TO_DEG_F32(firstAngle_rads),
@@ -353,6 +357,10 @@ namespace Anki {
                         RAD_TO_DEG_F32(secondAngle_rads),
                         afterSecondTurnWait_s);
 
+      _compoundAction.AddAction(new WaitAction(_robot, initialWait_s));
+      
+      _compoundAction.AddAction(new DriveStraightAction(_robot, backup_mm, backup_speed_mms));
+      
       _compoundAction.AddAction(new WaitAction(_robot, initialWait_s));
 
       TurnInPlaceAction* turn0 = new TurnInPlaceAction(_robot, firstAngle_rads, false);
@@ -366,7 +374,7 @@ namespace Anki {
       _compoundAction.AddAction(turn1);
 
       _compoundAction.AddAction(new WaitAction(_robot, afterSecondTurnWait_s));
-
+      
       // Prevent the compound action from signaling completion
       _compoundAction.ShouldEmitCompletionSignal(false);
       
@@ -392,9 +400,23 @@ namespace Anki {
       }
     }
 
-    ActionResult SearchSideToSideAction::CheckIfDone()
+    ActionResult SearchForNearbyObjectAction::CheckIfDone()
     {
-      return _compoundAction.Update();
+      ActionResult internalResult = _compoundAction.Update();
+      const ObservableObject* desiredObject = _desiredObjectID >= 0 ? _robot.GetBlockWorld().GetObjectByID(_desiredObjectID) : nullptr;
+      
+      // check if the object has been located
+      if(_desiredObjectID >= 0
+         && desiredObject != nullptr && desiredObject->IsPoseStateKnown())
+      {
+        return ActionResult::SUCCESS;
+      }
+      // unsuccessful in finding the object
+      else if(internalResult == ActionResult::SUCCESS && _desiredObjectID >= 0){
+        return ActionResult::FAILURE_ABORT;
+      }
+      
+      return internalResult;
     }
   
 #pragma mark ---- DriveStraightAction ----

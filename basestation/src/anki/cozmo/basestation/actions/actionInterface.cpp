@@ -147,8 +147,7 @@ namespace Anki {
         case RobotActionType::MOVE_LIFT_TO_HEIGHT:
         case RobotActionType::PAN_AND_TILT:
         case RobotActionType::SAY_TEXT:
-        case RobotActionType::SEARCH_FOR_OBJECT:
-        case RobotActionType::SEARCH_SIDE_TO_SIDE:
+        case RobotActionType::SEARCH_FOR_NEARBY_OBJECT:
         case RobotActionType::TRACK_MOTION:
         case RobotActionType::TRACK_OBJECT:
         case RobotActionType::TRAVERSE_OBJECT:

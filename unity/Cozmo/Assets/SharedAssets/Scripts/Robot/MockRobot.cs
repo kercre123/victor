@@ -472,7 +472,7 @@ public class MockRobot : IRobot {
     QueueCallback(3f, callback);
   }
 
-  public void SearchForObject(ObjectFamily objectFamily, int objectId, bool matchAnyObject, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void SearchForNearbyObject(int objectId, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     QueueCallback(3f, callback);
   }
 

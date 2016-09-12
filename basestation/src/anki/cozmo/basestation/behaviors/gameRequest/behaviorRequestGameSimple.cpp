@@ -363,7 +363,10 @@ void BehaviorRequestGameSimple::TransitionToSearchingForBlock(Robot& robot)
     turnTowardsPoseAction->SetPanTolerance(DEG_TO_RAD(5));
     searchAction->AddAction(turnTowardsPoseAction);
 
-    searchAction->AddAction(new SearchSideToSideAction(robot));
+    // passes either the vaild id which will return as soon as its seen, or an invalid ID so
+    // the search will complete fully
+    const ObjectID blockID = GetRobotsBlockID(robot);
+    searchAction->AddAction(new SearchForNearbyObjectAction(robot, blockID));
     
     StartActing(searchAction,
                 [this, &robot](ActionResult result) {

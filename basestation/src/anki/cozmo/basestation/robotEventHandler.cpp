@@ -27,7 +27,6 @@
 #include "anki/cozmo/basestation/actions/enrollNamedFaceAction.h"
 #include "anki/cozmo/basestation/actions/flipBlockAction.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
-#include "anki/cozmo/basestation/actions/searchForObjectAction.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
 
@@ -82,7 +81,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       MessageGameToEngineTag::RollObject,
       MessageGameToEngineTag::SayText,
       MessageGameToEngineTag::SayTextWithIntent,
-      MessageGameToEngineTag::SearchForObject,
+      MessageGameToEngineTag::SearchForNearbyObject,
       MessageGameToEngineTag::SetHeadAngle,
       MessageGameToEngineTag::SetLiftHeight,
       MessageGameToEngineTag::TrackToFace,
@@ -651,13 +650,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetLiftHeight& ms
   }
 }
 
-
-IActionRunner* CreateSearchForObjectAction(Robot& robot, const ExternalInterface::SearchForObject& msg)
-{
-  SearchForObjectAction* newAction = new SearchForObjectAction(robot, msg.desiredObjectFamily, msg.desiredObjectID, msg.matchAnyObject );
-  return newAction;
-}
-
+  
 IActionRunner* CreateVisuallyVerifyFaceAction(Robot& robot, const ExternalInterface::VisuallyVerifyFace& msg)
 {
   VisuallyVerifyFaceAction* action = new VisuallyVerifyFaceAction(robot, msg.faceID);
@@ -772,11 +765,8 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionUnionTag::turnTowardsLastFacePose:
       return GetTurnTowardsLastFacePoseActionHelper(robot, actionUnion.Get_turnTowardsLastFacePose());
       
-    case RobotActionUnionTag::searchSideToSide:
-      return new SearchSideToSideAction(robot);
-      
-    case RobotActionUnionTag::searchForObject:
-      return CreateSearchForObjectAction(robot, actionUnion.Get_searchForObject());
+    case RobotActionUnionTag::searchForNearbyObject:
+      return new SearchForNearbyObjectAction(robot, actionUnion.Get_searchForNearbyObject().desiredObjectID);
       
     case RobotActionUnionTag::readToolCode:
       return new ReadToolCodeAction(robot);
@@ -930,11 +920,6 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
       else {
         newAction = new TriggerAnimationAction(robotRef, msg.trigger, msg.numLoops);
       }
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::SearchForObject:
-    {
-      newAction = CreateSearchForObjectAction(robotRef, event.GetData().Get_SearchForObject());
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::TurnTowardsObject:

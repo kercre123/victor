@@ -1518,15 +1518,15 @@ public class Robot : IRobot {
   }
 
   public void SearchForCube(LightCube cube, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-    SearchForObject(cube.Family, cube.ID, false, callback, queueActionPosition);
+    SearchForNearbyObject(cube.ID, callback, queueActionPosition);
   }
 
-  public void SearchForObject(ObjectFamily objectFamily, int objectId, bool matchAnyObject, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  // If an objectID is passed in, the action will complete successfully as soon as the object is seen
+  // otherwise, cozmo will complete a full look around nearby before completing
+  public void SearchForNearbyObject(int objectId = -1, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     SendQueueSingleAction(
-      Singleton<SearchForObject>.Instance.Initialize(
-        desiredObjectFamily: objectFamily,
-        desiredObjectID: objectId,
-        matchAnyObject: matchAnyObject
+      Singleton<SearchForNearbyObject>.Instance.Initialize(
+        desiredObjectID: objectId
       ),
       callback,
       queueActionPosition);

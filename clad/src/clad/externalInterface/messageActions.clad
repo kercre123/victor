@@ -231,16 +231,9 @@ message SayTextWithIntent {
   SayTextIntent       intent        // Intents have predefined values for the voice style and duration scalar
 }
 
-// SearchSideToSide
-message SearchSideToSide {
-    uint_8 robotID
-}
-
-// SearchForObject
-message SearchForObject {
-  ObjectFamily  desiredObjectFamily,
-  int_32        desiredObjectID,
-  bool          matchAnyObject = 0,
+// SearchForNearbyObject
+message SearchForNearbyObject {
+    int_32        desiredObjectID = -1,
 }
 
 // SetHeadAngle
@@ -438,8 +431,7 @@ union RobotActionUnion {
   RollObject                rollObject,
   SayText                   sayText,
   SayTextWithIntent         sayTextWithIntent,
-  SearchSideToSide          searchSideToSide,
-  SearchForObject           searchForObject,
+  SearchForNearbyObject     searchForNearbyObject,
   SetHeadAngle              setHeadAngle,
   SetLiftHeight             setLiftHeight,
   TrackToFace               trackFace,

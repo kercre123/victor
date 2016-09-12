@@ -1032,7 +1032,7 @@ public abstract class GameBase : MonoBehaviour {
     ShowInterruptionQuitGameView(LocalizationKeys.kMinigameDontMoveCozmoTitle, LocalizationKeys.kMinigameDontMoveCozmoDescription);
   }
 
-  protected void ShowInterruptionQuitGameView(string titleKey, string descriptionKey) {
+  public void ShowInterruptionQuitGameView(string titleKey, string descriptionKey) {
     SoftEndGameRobotReset();
     _SharedMinigameViewInstance.HideQuitButton();
     // Don't set everything on fire if its already on fire, that's a waste of perfectly good fire

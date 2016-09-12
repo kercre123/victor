@@ -263,7 +263,7 @@ void BehaviorLookAround::TransitionToLookingAtPossibleObject(Robot& robot)
   }
 
   // add a search action after driving / facing, in case we don't see the object
-  action->AddAction(new SearchSideToSideAction(robot));
+  action->AddAction(new SearchForNearbyObjectAction(robot));
   
   // Note that in the positive case, this drive to action is likely to get canceled
   // because we discover it is a real object

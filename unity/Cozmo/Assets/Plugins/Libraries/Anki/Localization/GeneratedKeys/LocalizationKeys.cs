@@ -1,5 +1,4 @@
 public static class LocalizationKeys {
-
   #region BehaviorStrings
 
   public const string kBehaviorBringCubeToBeacon = "behavior.BringCubeToBeacon";
@@ -320,6 +319,8 @@ public static class LocalizationKeys {
   public const string kSpeedTapTapBlockForRound = "speedTap.tapBlockForRound";
   public const string kMinigameDontMoveCozmoTitle = "minigame.dontMoveCozmo.title";
   public const string kMinigameDontMoveCozmoDescription = "minigame.dontMoveCozmo.description";
+  public const string kMinigameLostTrackOfBlockTitle = "minigame.lostTrackOfBlock.title";
+  public const string kMinigameLostTrackOfBlockDescription = "minigame.lostTrackOfBlock.description";
   public const string kSpeedTapDontMoveBlockTitle = "speedTap.dontMoveBlock.title";
   public const string kSpeedTapDontMoveBlockDescription = "speedTap.dontMoveBlock.description";
   public const string kTreasureHuntTitle = "treasureHunt.title";

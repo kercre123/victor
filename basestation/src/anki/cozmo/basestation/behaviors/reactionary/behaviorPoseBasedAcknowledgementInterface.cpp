@@ -373,7 +373,8 @@ void IBehaviorPoseBasedAcknowledgement::AlwaysHandleInternal(const EngineToGameE
 {
   switch(event.GetData().GetTag())
   {
-    case EngineToGameTag::RobotDelocalized: {
+    case EngineToGameTag::RobotDelocalized:
+    {
       // only update target blocks if we are running
       for(auto reaction : _reactionData){
         reaction.second.lastReactionTime_ms = 0;

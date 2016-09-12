@@ -69,7 +69,9 @@ namespace SpeedTap {
         HandleFoundCube(_ForceRaiseLift);
       }
       else {
-        TryDrivingToCube(_ForceRaiseLift);
+        // unable to find cube - bail out
+        _SpeedTapGame.ShowInterruptionQuitGameView(LocalizationKeys.kMinigameLostTrackOfBlockTitle,
+          LocalizationKeys.kMinigameLostTrackOfBlockDescription);
       }
     }
 

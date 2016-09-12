@@ -247,7 +247,7 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
                 {
                   PRINT_NAMED_INFO("BehaviorRollBlock.FailedAbort",
                                    "Failed to verify roll, searching for block");
-                  StartActing(new SearchSideToSideAction(robot),
+                  StartActing(new SearchForNearbyObjectAction(robot, _targetBlock),
                               [this](Robot& robot) {
                                 if( IsRunnable(robot) ) {
                                   TransitionToPerformingAction(robot);

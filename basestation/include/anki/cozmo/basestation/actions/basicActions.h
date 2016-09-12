@@ -82,15 +82,15 @@ namespace Cozmo {
       
     }; // class TurnInPlaceAction
 
-    // A simple compound action which stops for a while, looks one way, waits a while, then looks the other
-    // way, and waits a while longer. Useful for "searching" for a cube when it may be just out of the field
-    // of view. Note that this action does not move the head. This action disabled live idle while it's
-    // running
-    class SearchSideToSideAction : public IAction
+    // A simple compound action which is useful for identifying blocks that are close
+    // to Cozmo's current frame of view.  Cozmo drives backwards slightly, looks left and right
+    // and up and down slightly to identify blocks that may be slightly outside the camera
+    // optionally an objectID can be passed in for the action to complete immediately on finding the object
+    class SearchForNearbyObjectAction : public IAction
     {
     public:
-      SearchSideToSideAction(Robot& robot);
-      virtual ~SearchSideToSideAction();
+      SearchForNearbyObjectAction(Robot& robot, int32_t desiredObjectID = -1);
+      virtual ~SearchForNearbyObjectAction();
 
       void SetSearchAngle(f32 minSearchAngle_rads, f32 maxSearchAngle_rads);
       void SetSearchWaitTime(f32 minWaitTime_s, f32 maxWaitTime_s);
@@ -101,6 +101,7 @@ namespace Cozmo {
 
     private:
       CompoundActionSequential _compoundAction;
+      int32_t _desiredObjectID;
 
       f32 _minWaitTime_s = 0.8f;
       f32 _maxWaitTime_s = 1.2f;

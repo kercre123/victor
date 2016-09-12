@@ -234,6 +234,13 @@ void BehaviorAcknowledgeObject::AlwaysHandlePoseBasedInternal(const EngineToGame
       HandleObjectObserved(robot, event.GetData().Get_RobotObservedObject());
       break;
     }
+      
+    case EngineToGameTag::RobotDelocalized:
+    {
+      // this is passed through from the parent class - it's valid to be receiving this
+      // we just currently don't use it for anything.  Case exists so we don't print errors.
+      break;
+    }
 
     default:
       PRINT_NAMED_ERROR("BehaviorAcknowledgeObject.HandleWhileNotRunning.InvalidTag",
