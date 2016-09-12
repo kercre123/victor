@@ -268,9 +268,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _DASEventViewName: drone_mode-how_to_play
   _DASEventViewType: 0
-  _CloseDialogOnTapOutside: 1
+  _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 1
+  DimBackgroundPrefabOverride: {fileID: 0}
   _AlphaController: {fileID: 22574814}
 --- !u!114 &11492378
 MonoBehaviour:
