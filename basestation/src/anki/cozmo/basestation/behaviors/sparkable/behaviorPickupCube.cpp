@@ -65,7 +65,7 @@ bool BehaviorPickUpCube::IsRunnableInternal(const Robot& robot) const
   return _targetBlock.IsSet();
 }
 
-void BehaviorPickUpCube::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+void BehaviorPickUpCube::HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot)
 {
   switch(event.GetData().GetTag())
   {
@@ -79,9 +79,9 @@ void BehaviorPickUpCube::AlwaysHandle(const EngineToGameEvent& event, const Robo
 
 void BehaviorPickUpCube::HandleObjectObserved(const Robot& robot, const ExternalInterface::RobotObservedObject& msg)
 {
-  const ObservableObject* cube = robot.GetBlockWorld().GetObjectByID(msg.objectID);
+  const ObservableObject* observedObject = robot.GetBlockWorld().GetObjectByID(msg.objectID);
   
-  if(nullptr == cube)
+  if(nullptr == observedObject)
   {
     PRINT_NAMED_WARNING("BehaviorPickUpCube.HandleObjectObserved.NullObservedObject",
                         "Object %d observed, but NULL returned from BlockWorld",
@@ -89,9 +89,28 @@ void BehaviorPickUpCube::HandleObjectObserved(const Robot& robot, const External
     return;
   }
   
-  if( !_targetBlock.IsSet() && robot.CanPickUpObject(*cube) )
+  BlockWorldFilter filter;
+  filter.SetAllowedFamilies({ObjectFamily::LightCube});
+  filter.SetFilterFcn([&robot](const ObservableObject* object)
+                      {
+                        return robot.CanPickUpObject(*object);
+                      });
+  
+  const ObservableObject* closestObject = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(), filter);
+  
+  if(closestObject != nullptr)
   {
+    _targetBlock = closestObject->GetID();
+  }
+  else if(robot.CanPickUpObject(*observedObject))
+  {
+    PRINT_NAMED_ERROR("BehaviorPickupCube.HandleObservedObject",
+                      "Observing object but unable to find closest object, using observed object as closest");
     _targetBlock = msg.objectID;
+  }
+  else
+  {
+    _targetBlock.UnSet();
   }
 }
   

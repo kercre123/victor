@@ -42,7 +42,7 @@ protected:
   virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual bool CarryingObjectHandledInternally() const override { return true;}
 
-  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
+  virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
   
 private:
   
