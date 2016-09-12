@@ -201,6 +201,9 @@
   "button.createNew": {
     "translation": "Create New"
   },
+  "button.addPerson": {
+    "translation": "Add Person"
+  },
   "label.update": {
     "translation": "Update"
   },

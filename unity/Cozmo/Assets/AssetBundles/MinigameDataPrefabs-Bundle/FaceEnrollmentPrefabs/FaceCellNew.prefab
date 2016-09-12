@@ -84,7 +84,7 @@ MonoBehaviour:
   ModifiedValues:
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"#button.createNew"'
+    JsonValue: '"#button.addPerson"'
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: FaceEnrollmentNewCell:_CreateNewButton

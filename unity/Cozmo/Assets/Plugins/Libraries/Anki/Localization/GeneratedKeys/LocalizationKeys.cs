@@ -589,6 +589,7 @@ public static class LocalizationKeys {
   public const string kLabelTo = "label.to";
   public const string kButtonSkip = "button.skip";
   public const string kButtonCreateNew = "button.createNew";
+  public const string kButtonAddPerson = "button.addPerson";
   public const string kLabelUpdate = "label.update";
   public const string kButtonUnlock = "button.unlock";
   public const string kSoundcheckDescriptionConfirm = "soundcheck.description.confirm";
