@@ -37,73 +37,73 @@
     "translation": "Keepaway"
   },
   "unlockable.CubePounce.Description": {
-    "translation": "With this upgrade, Cozmo learns how to play Keepaway, a game of reflexes and reaction time."
+    "translation": "With this Upgrade, Cozmo learns how to play Keepaway, a game of reflexes and reaction time."
   },
   "unlockable.FaceEnrollment.Title": {
     "translation": "Meet Cozmo"
   },
   "unlockable.FaceEnrollment.Description": {
-    "translation": "With this upgrade, Cozmo learns to remember faces and speak names.\n\nFind this in the Meet Cozmo activity."
+    "translation": "With this Upgrade, Cozmo learns to remember faces and speak names.\n\nFind this in the Meet Cozmo activity."
   },
   "unlockable.Simon.Title": {
     "translation": "Memory Match"
   },
   "unlockable.Simon.Description": {
-    "translation": "With this upgrade, Cozmo learns how to play the Memory Match game."
+    "translation": "With this Upgrade, Cozmo learns how to play the Memory Match game."
   },
   "unlockable.SpeedTap.Title": {
     "translation": "Quick Tap"
   },
   "unlockable.SpeedTap.Description": {
-    "translation": "With this upgrade, Cozmo learns how to play the game Quick Tap. Over time, his skills will improve!"
+    "translation": "With this Upgrade, Cozmo learns how to play the game Quick Tap. Over time, his skills will improve!"
   },
   "unlockable.CubeRollAction.Title": {
     "translation": "Roll a Cube"
   },
   "unlockable.CubeRollAction.Description": {
-    "translation": "With this upgrade, Cozmo gains the ability to roll Power Cubes if he sees one on its side."
+    "translation": "Cozmo prefers Cubes to be right side up. This Upgrade allows him to roll Cubes when they are on their side."
   },
   "unlockable.DroneMode.Title": {
     "translation": "Explorer Mode"
   },
   "unlockable.DroneMode.Description": {
-    "translation": "With this upgrade, Cozmo will allow you to pilot him in Explorer Mode."
+    "translation": "With this Upgrade, Cozmo will allow you to pilot him in Explorer Mode."
   },
   "unlockable.CubeStackAction.Title": {
     "translation": "Stack Cubes"
   },
   "unlockable.CubeStackAction.Description": {
-    "translation": "With this upgrade, Cozmo gains the ability to stack a Power Cube ontop of another."
+    "translation": "With this Upgrade, Cozmo gains the ability to create a stack of two Power Cubes."
   },
   "unlockable.PounceOnMotionAction.Title": {
-    "translation": "Pounce On Motion"
+    "translation": "Pounce On Fingers"
   },
   "unlockable.PounceOnMotionAction.Description": {
-    "translation": "With this upgrade, Cozmo gains the ability to detect nearby motion and pounce on it."
+    "translation": "With this Upgrade, when Cozmo sees movement on the ground in front of him, such as a finger, he will playfully pounce on it!"
    },
   "unlockable.BuildPyramid.Title": {
     "translation": "Build a Pyramid"
   },
   "unlockable.BuildPyramid.Description": {
-    "translation": "With this upgrade, Cozmo gains the ability to build a pyramid out of three Power Cubes."
+    "translation": "With this Upgrade, Cozmo gains the ability to build a pyramid out of three Power Cubes."
   },
   "unlockable.PopAWheelieAction.Title": {
-    "translation": "Pop A Wheelie"
+    "translation": "Pop a Wheelie"
   },
   "unlockable.PopAWheelieAction.Description": {
-    "translation": "With this upgrade, Cozmo gains the ability to pop a wheelie."
+    "translation": "Cozmo gains a new trick! With this Upgrade he can use a Cube to boost himself up, and pop a wheelie."
   },
   "unlockable.KnockOverThreeCubeStack.Title": {
     "translation": "Knock Over Stacks"
   },
   "unlockable.KnockOverThreeCubeStack.Description": {
-    "translation": "With this upgrade, Cozmo gains the ability to knock over stacks of Power Cubes."
+    "translation": "With this Upgrade, any time Cozmo sees a stack of Power Cubes, he may decide to knock them over."
   },
   "unlockable.PickupCube.Title": {
-    "translation": "Pick up Cube"
+    "translation": "Pick Up Cube"
   },
   "unlockable.PickupCube.Description": {
-    "translation": "With this upgrade, Cozmo gains the ability to pick up Power Cubes."
+    "translation": "With this Upgrade, Cozmo gains the ability to pick up Power Cubes and carry them around."
   },
   "unlockable.ComingSoon.Title": {
     "translation": "Coming Soon"
@@ -127,19 +127,22 @@
     "translation": "Cozmo is sparked..."
   },
   "sparks.Press": {
-    "translation": "Press to ask Cozmo to do this."
+    "translation": "Tap to ask Cozmo to do this"
+  },
+  "sparks.SparkCozmo": {
+    "translation": "Spark Cozmo"
   },
   "sparks.Spark": {
-    "translation": "Feed Sparks"
+    "translation": "Spark"
   },
   "unlockable.Unavailable.Description": {
     "translation": "Unlock more upgrades before you can unlock {0}."
   },
   "sparks.Spark.ConfirmQuit": {
-    "translation": "Are you sure?"
+    "translation": "Cozmo is Sparked!"
   },
   "sparks.Spark.ConfirmQuit.Description": {
-    "translation": "You will lose your sparks and stop Cozmo's sparking"
+    "translation": "If you leave before he is done, Cozmo will no longer be Sparked."
   },
   "sparks.NotEnoughSparks.Title": {
     "translation": "Not enough Sparks"

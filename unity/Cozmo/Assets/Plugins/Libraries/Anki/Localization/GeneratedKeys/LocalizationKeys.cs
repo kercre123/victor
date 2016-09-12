@@ -565,6 +565,7 @@ public static class LocalizationKeys {
   public const string kLabelLoading = "label.loading";
   public const string kButtonSave = "button.save";
   public const string kCozmoTabTitle = "cozmoTab.title";
+  public const string kCozmoTabSubTitle = "cozmoTab.subTitle";
   public const string kCozmoTabHexCount = "cozmoTab.hexCount";
   public const string kCoreUpgradeDetailsDialogTitleLabel = "coreUpgradeDetailsDialog.titleLabel";
   public const string kCoreUpgradeDetailsDialogCubesNeeded = "coreUpgradeDetailsDialog.cubesNeeded";
@@ -647,6 +648,7 @@ public static class LocalizationKeys {
   public const string kSkillsLevelUpTitle = "skills.LevelUp.Title";
   public const string kSparksSparked = "sparks.Sparked";
   public const string kSparksPress = "sparks.Press";
+  public const string kSparksSparkCozmo = "sparks.SparkCozmo";
   public const string kSparksSpark = "sparks.Spark";
   public const string kUnlockableUnavailableDescription = "unlockable.Unavailable.Description";
   public const string kSparksSparkConfirmQuit = "sparks.Spark.ConfirmQuit";

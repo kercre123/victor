@@ -129,6 +129,9 @@
   "cozmoTab.title": {
     "translation": "Upgrades"
   },
+  "cozmoTab.subTitle": {
+    "translation": ": Expand Cozmo's abilities"
+  },
   "cozmoTab.hexCount": {
     "translation": "Code Fragments: {0}"
   },
