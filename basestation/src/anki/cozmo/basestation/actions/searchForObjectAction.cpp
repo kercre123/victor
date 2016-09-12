@@ -167,7 +167,7 @@ namespace Cozmo {
       {
         const ExternalInterface::RobotObservedObject& msg = outerMsg.Get_RobotObservedObject();
         
-        if (msg.markersVisible && (msg.objectFamily == _desiredObjectFamily))
+        if (msg.objectFamily == _desiredObjectFamily)
         {
           if (_matchAnyObjectId || (msg.objectID == _desiredObjectId))
           {

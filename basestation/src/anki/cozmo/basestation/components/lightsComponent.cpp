@@ -447,28 +447,26 @@ void LightsComponent::HandleMessage(const ExternalInterface::RobotObservedObject
   if( msg.objectFamily != ObjectFamily::LightCube ) {
     return;
   }
-
-  if( msg.markersVisible  ) {
-    // Safe to do automatic insertion into map since we know we are observing a cube
-    _cubeInfo[msg.objectID].lastObservedTime_ms = msg.timestamp;
+  
+  // Safe to do automatic insertion into map since we know we are observing a cube
+  _cubeInfo[msg.objectID].lastObservedTime_ms = msg.timestamp;
+  
+  // If all cubes have been disabled then make sure to also disable new cubes that we connect to
+  if(!_allCubesEnabled)
+  {
+    _cubeInfo[msg.objectID].enabled = false;
+  }
+  
+  if( ShouldOverrideState( _cubeInfo[msg.objectID].desiredState, CubeLightsState::Visible ) ) {
     
-    // If all cubes have been disabled then make sure to also disable new cubes that we connect to
-    if(!_allCubesEnabled)
+    // Update our prevState if we are disabled so if we are moved while disabled our state will
+    // be properly restored
+    if(!_cubeInfo[msg.objectID].enabled)
     {
-      _cubeInfo[msg.objectID].enabled = false;
+      _cubeInfo[msg.objectID].prevState = CubeLightsState::Visible;
     }
     
-    if( ShouldOverrideState( _cubeInfo[msg.objectID].desiredState, CubeLightsState::Visible ) ) {
-      
-      // Update our prevState if we are disabled so if we are moved while disabled our state will
-      // be properly restored
-      if(!_cubeInfo[msg.objectID].enabled)
-      {
-        _cubeInfo[msg.objectID].prevState = CubeLightsState::Visible;
-      }
-    
-      _cubeInfo[msg.objectID].desiredState = CubeLightsState::Visible;
-    }
+    _cubeInfo[msg.objectID].desiredState = CubeLightsState::Visible;
   }
 }
 

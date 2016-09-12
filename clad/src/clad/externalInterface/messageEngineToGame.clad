@@ -225,15 +225,24 @@ message RobotObservedObject {
     float_32 img_height,     //     "
     PoseStruct3d pose,
     float_32 topFaceOrientation_rad, // absolute orienation of top face, iff isActive==true
-    uint_8   markersVisible, // Observed via markers vs. "should" be visible based on previous observation
     uint_8   isActive
 }
 
 // Message for the robot observing a possible object (existence hasn't been confirmed yet)
 message RobotObservedPossibleObject {
     // objectID will always be -1
-    // markersVisible will always be true
     RobotObservedObject possibleObject
+}
+
+message ObjectProjectsIntoFOV {
+    uint_32       timestamp,
+    ObjectFamily  objectFamily,
+    ObjectType    objectType,
+    int_32        objectID,
+    float_32      img_topLeft_x,   // position in image coords
+    float_32      img_topLeft_y,   //     "
+    float_32      img_width,       //     "
+    float_32      img_height       //     "
 }
 
 // RobotObservedFace
@@ -308,7 +317,7 @@ message RobotMarkedObjectPoseUnknown {
     uint_32 objectID
 }
 
-message KnownObject {
+structure AvailableObject {
     uint_32      objectID,
     uint_32      lastObservedTimestamp,
     ObjectFamily objectFamily,
@@ -318,9 +327,10 @@ message KnownObject {
     bool         isConnected,
 }
 
-message EndOfKnownObjects {
-
+message AvailableObjects {
+    AvailableObject objects[uint_8]
 }
+
 
 // RobotReadToolCode
 message RobotReadToolCode {

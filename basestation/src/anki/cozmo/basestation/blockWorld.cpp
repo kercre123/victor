@@ -301,7 +301,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
     helper.SubscribeGameToEngine<MessageGameToEngineTag::CreateFixedCustomObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::DefineCustomObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetMemoryMapRenderEnabled>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestKnownObjects>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestAvailableObjects>();
   }
 
   BlockWorld::~BlockWorld()
@@ -379,9 +379,9 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
   };
 
   template<>
-  void BlockWorld::HandleMessage(const ExternalInterface::RequestKnownObjects& msg)
+  void BlockWorld::HandleMessage(const ExternalInterface::RequestAvailableObjects& msg)
   {
-    BroadcastKnownObjects(msg.connectedObjectsOnly);
+    BroadcastAvailableObjects(msg.connectedObjectsOnly, nullptr);
   };
 
   
@@ -535,104 +535,105 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
     FindMatchingObjects(GetIntersectingObjectsFilter(quad, padding_mm, filterIn), intersectingExistingObjects);
   }
   
-  Result BlockWorld::BroadcastObjectObservation(const ObservableObject* observedObject,
-                                                bool markersVisible)
-  {    
-    if(_robot->HasExternalInterface())
-    {
-      if(!observedObject->IsPoseStateUnknown() || markersVisible)
+  Result BlockWorld::BroadcastObjectObservation(const ObservableObject* observedObject) const
+  {
+    // Project the observed object into the robot's camera to get the bounding box
+    // within the image
+    std::vector<Point2f> projectedCorners;
+    f32 observationDistance = 0;
+    _robot->GetVisionComponent().GetCamera().ProjectObject(*observedObject, projectedCorners, observationDistance);
+    const Rectangle<f32> boundingBox(projectedCorners);
+    
+    // Compute the orientation of the top marker
+    Radians topMarkerOrientation(0);
+    if(observedObject->IsActive()) {
+      if (observedObject->GetFamily() == ObjectFamily::LightCube)
       {
-        // Project the observed object into the robot's camera, using its new pose
-        std::vector<Point2f> projectedCorners;
-        f32 observationDistance = 0;
-        _robot->GetVisionComponent().GetCamera().ProjectObject(*observedObject, projectedCorners, observationDistance);
+        const ActiveCube* activeCube = dynamic_cast<const ActiveCube*>(observedObject);
         
-        Rectangle<f32> boundingBox(projectedCorners);
-        
-        Radians topMarkerOrientation(0);
-        if(observedObject->IsActive()) {
-          if (observedObject->GetFamily() == ObjectFamily::LightCube) {
-            const ActiveCube* activeCube = dynamic_cast<const ActiveCube*>(observedObject);
-            if(activeCube == nullptr) {
-              PRINT_NAMED_ERROR("BlockWorld.BroadcastObjectObservation",
-                                "ObservedObject %d with IsActive()==true could not be cast to ActiveCube.",
-                                observedObject->GetID().GetValue());
-              return RESULT_FAIL;
-            } else {
-              topMarkerOrientation = activeCube->GetTopMarkerOrientation();
-              
-              //PRINT_INFO("Object %d's rotation around Z = %.1fdeg\n", obsID.GetValue(),
-              //           topMarkerOrientation.getDegrees());
-            }
-          }
+        if(activeCube == nullptr) {
+          PRINT_NAMED_ERROR("BlockWorld.BroadcastObjectObservation.NullActiveCube",
+                            "ObservedObject %d with IsActive()==true could not be cast to ActiveCube.",
+                            observedObject->GetID().GetValue());
+          return RESULT_FAIL;
         }
         
-        using namespace ExternalInterface;
-        
-        RobotObservedObject observation(_robot->GetID(),
-                                        observedObject->GetLastObservedTime(),
-                                        observedObject->GetFamily(),
-                                        observedObject->GetType(),
-                                        observedObject->GetID(),
-                                        boundingBox.GetX(),
-                                        boundingBox.GetY(),
-                                        boundingBox.GetWidth(),
-                                        boundingBox.GetHeight(),
-                                        observedObject->GetPose().ToPoseStruct3d(_robot->GetPoseOriginList()),
-                                        topMarkerOrientation.ToFloat(),
-                                        markersVisible,
-                                        observedObject->IsActive());
-        
-        if( !observedObject->IsPoseStateUnknown() ) {
-          _robot->Broadcast(MessageEngineToGame(std::move(observation)));
-        }
-        else if( markersVisible ) {
-          // clear the object ID, since it isn't reliable until the existence is confirmed
-          observation.objectID = -1;
-          _robot->Broadcast(MessageEngineToGame(RobotObservedPossibleObject(std::move(observation))));
-        }
+        topMarkerOrientation = activeCube->GetTopMarkerOrientation();
       }
-    } // if(_robot->HasExternalInterface())
+    }
+    
+    using namespace ExternalInterface;
+    
+    RobotObservedObject observation(_robot->GetID(),
+                                    observedObject->GetLastObservedTime(),
+                                    observedObject->GetFamily(),
+                                    observedObject->GetType(),
+                                    observedObject->GetID(),
+                                    boundingBox.GetX(),
+                                    boundingBox.GetY(),
+                                    boundingBox.GetWidth(),
+                                    boundingBox.GetHeight(),
+                                    observedObject->GetPose().ToPoseStruct3d(_robot->GetPoseOriginList()),
+                                    topMarkerOrientation.ToFloat(),
+                                    observedObject->IsActive());
+    
+    if( observedObject->IsPoseStateUnknown() )
+    {
+      // clear the object ID, since it isn't reliable until the existence is confirmed
+      observation.objectID = -1;
+      _robot->Broadcast(MessageEngineToGame(RobotObservedPossibleObject(std::move(observation))));
+    }
+    else
+    {
+      _robot->Broadcast(MessageEngineToGame(std::move(observation)));
+    }
     
     return RESULT_OK;
     
   } // BroadcastObjectObservation()
   
   
-  void BlockWorld::BroadcastKnownObjects(bool connectedObjectsOnly)
+  void BlockWorld::BroadcastAvailableObjects(bool connectedObjectsOnly, const Pose3d* inOrigin)
   {
-    if(_robot->HasExternalInterface())
+    using namespace ExternalInterface;
+    
+    // Create filter
+    BlockWorldFilter filter;
+    if(nullptr == inOrigin)
     {
-      using namespace ExternalInterface;
-      
-      std::vector<ObservableObject*> objects;
-      
-      // Create filter
-      BlockWorldFilter filter;
       filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-      filter.SetFilterFcn(nullptr);  // To search for objects of all pose states
-      if (connectedObjectsOnly) {
-        filter.SetFilterFcn([](const ObservableObject* object) {
-          return (object->GetActiveID() >= 0);
-        });
-      }
-      
-      FindMatchingObjects(filter, objects);
-      
-      for (auto obj : objects) {
-        KnownObject objMsg(obj->GetID(),
-                           obj->GetLastObservedTime(),
-                           obj->GetFamily(),
-                           obj->GetType(),
-                           obj->GetPose().ToPoseStruct3d(_robot->GetPoseOriginList()),
-                           obj->GetPoseState(),
-                           true);
-      
-        _robot->Broadcast(MessageEngineToGame(KnownObject(std::move(objMsg))));
-      }
-      
-      _robot->Broadcast(MessageEngineToGame(EndOfKnownObjects()));
     }
+    else
+    {
+      filter.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
+      filter.AddAllowedOrigin(inOrigin);
+    }
+    
+    AvailableObjects availableObjects;
+    
+    filter.SetFilterFcn([this,&availableObjects,connectedObjectsOnly](const ObservableObject* obj)
+                        {
+                          const bool isConnected = obj->GetActiveID() >= 0;
+                          if(isConnected || !connectedObjectsOnly)
+                          {
+                            AvailableObject availableObject(obj->GetID(),
+                                                            obj->GetLastObservedTime(),
+                                                            obj->GetFamily(),
+                                                            obj->GetType(),
+                                                            obj->GetPose().ToPoseStruct3d(_robot->GetPoseOriginList()),
+                                                            obj->GetPoseState(),
+                                                            isConnected);
+                            
+                            availableObjects.objects.push_back(std::move(availableObject));
+                            return true;
+                          }
+                          return false;
+                        });
+    
+    // Iterate over all objects and add them to the available objects list if they pass the filter
+    FindObjectHelper(filter, nullptr, false);
+    
+    _robot->Broadcast(MessageEngineToGame(std::move(availableObjects)));
   }
   
   
@@ -715,8 +716,6 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
           // controls which map the object gets added to
           AddNewObject(std::shared_ptr<ObservableObject>(newObject));
         }
-        
-        BroadcastObjectObservation(newObject, false);
       }
     };
     
@@ -743,6 +742,12 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
     };
     
     FindObjectHelper(filterNew, addToPoseConfirmer, false);
+    
+    // Notify the world about the objects in the new coordinate frame, in case
+    // we added any based on rejiggering (not observation). Include unconnected
+    // ones as well.
+    const bool broadCastConnectedOnly = false;
+    BroadcastAvailableObjects(broadCastConnectedOnly, newOrigin);
     
     // if memory maps are enabled, we can merge old into new
     if ( kEnableMemoryMap )
@@ -1273,7 +1278,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
       //      }
       
       // Tell the world about the observed object. NOTE: it is guaranteed to be in the current frame.
-      BroadcastObjectObservation(observedObject, true);
+      BroadcastObjectObservation(observedObject);
       
       _didObjectsChange = true;
       _currentObservedObjects.push_back(observedObject);
@@ -1672,9 +1677,22 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
           if(distance > 0.f) { // in front of camera?
             for(auto & corner : projectedCorners) {
               
-              if(camera.IsWithinFieldOfView(corner)) {
+              if(camera.IsWithinFieldOfView(corner))
+              {
+                using namespace ExternalInterface;
+                const Rectangle<f32> boundingBox(projectedCorners);
                 
-                BroadcastObjectObservation(unobserved.object, false);
+                ObjectProjectsIntoFOV message(unobserved.object->GetLastObservedTime(),
+                                              unobserved.object->GetFamily(),
+                                              unobserved.object->GetType(),
+                                              unobserved.object->GetID().GetValue(),
+                                              boundingBox.GetX(),
+                                              boundingBox.GetY(),
+                                              boundingBox.GetWidth(),
+                                              boundingBox.GetHeight());
+                
+                _robot->Broadcast(MessageEngineToGame(std::move(message)));
+                
                 ++numVisibleObjects;
                 
               } // if(IsWithinFieldOfView)

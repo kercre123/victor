@@ -41,6 +41,25 @@ namespace Anki {
       
     // TODO: Update these not to need robotID
     
+    void UiGameController::AddOrUpdateObject(s32 objID, ObjectType objType, ObjectFamily objFamily,
+                                             const PoseStruct3d& poseStruct)
+    {
+      // If an object with the same ID already exists in the map, make sure that it's type hasn't changed
+      auto it = _objectIDToFamilyTypeMap.find(objID);
+      if (it != _objectIDToFamilyTypeMap.end()) {
+        if (it->second.first != objFamily || it->second.second != objType) {
+          PRINT_NAMED_WARNING("UiGameController.HandleRobotObservedObjectBase.ObjectChangedFamilyOrType", "");
+        }
+      } else {
+        // Insert new object into maps
+        _objectIDToFamilyTypeMap.insert(std::make_pair(objID, std::make_pair(objFamily, objType)));
+        _objectFamilyToTypeToIDMap[objFamily][objType].push_back(objID);
+      }
+      
+      // Update pose
+      _objectIDToPoseMap[objID] = CreatePoseHelper(poseStruct);
+    }
+    
     Pose3d UiGameController::CreatePoseHelper(const PoseStruct3d& poseStruct)
     {
       if(!_poseOriginList.ContainsOriginID( poseStruct.originID ))
@@ -79,36 +98,15 @@ namespace Anki {
 
     void UiGameController::HandleRobotObservedObjectBase(ExternalInterface::RobotObservedObject const& msg)
     {
-      // Get object info
-      s32 objID = msg.objectID;
-      ObjectFamily objFamily = msg.objectFamily;
-      ObjectType objType = msg.objectType;
-      
-      // If an object with the same ID already exists in the map, make sure that it's type hasn't changed
-      auto it = _objectIDToFamilyTypeMap.find(objID);
-      if (it != _objectIDToFamilyTypeMap.end()) {
-        if (it->second.first != objFamily || it->second.second != objType) {
-          PRINT_NAMED_WARNING("UiGameController.HandleRobotObservedObjectBase.ObjectChangedFamilyOrType", "");
-        }
-      } else {
-        // Insert new object into maps
-        _objectIDToFamilyTypeMap.insert(std::make_pair(objID, std::make_pair(objFamily, objType)));
-        _objectFamilyToTypeToIDMap[objFamily][objType].push_back(objID);
-      }
-      
-      // Update pose
-      _objectIDToPoseMap[objID] = CreatePoseHelper(msg.pose);
+      AddOrUpdateObject(msg.objectID, msg.objectType, msg.objectFamily, msg.pose);
       
       // TODO: Move this to WebotsKeyboardController?
-      if (msg.markersVisible) {
         const f32 area = msg.img_width * msg.img_height;
-        _lastObservedObject.family = msg.objectFamily;
-        _lastObservedObject.type   = msg.objectType;
-        _lastObservedObject.id     = msg.objectID;
-        _lastObservedObject.isActive = msg.isActive;
-        _lastObservedObject.area   = area;
-      }
-
+      _lastObservedObject.family = msg.objectFamily;
+      _lastObservedObject.type   = msg.objectType;
+      _lastObservedObject.id     = msg.objectID;
+      _lastObservedObject.isActive = msg.isActive;
+      _lastObservedObject.area   = area;
       
       HandleRobotObservedObject(msg);
     }
@@ -265,19 +263,23 @@ namespace Anki {
       HandleActiveObjectTapped(msg);
     }
     
-    void UiGameController::HandleKnownObjectBase(ExternalInterface::KnownObject const& msg)
+    void UiGameController::HandleAvailableObjectsBase(ExternalInterface::AvailableObjects const& msg)
     {
-      PRINT_NAMED_INFO("HandleKnownObject", "Received message about known object %d (type: %s, poseState: %hhu)",
-                       msg.objectID, EnumToString(msg.objectType), msg.poseState);
+      for(auto & availableObject : msg.objects)
+      {
+        PRINT_NAMED_INFO("HandleAvailableObjects",
+                         "Received message about known object %d (type: %s, poseState: %hhu)",
+                         availableObject.objectID,
+                         EnumToString(availableObject.objectType),
+                         availableObject.poseState);
+        
+        AddOrUpdateObject(availableObject.objectID,
+                          availableObject.objectType,
+                          availableObject.objectFamily,
+                          availableObject.pose);
+      }
       
-      HandleKnownObject(msg);
-    }
-    
-    void UiGameController::HandleEndOfKnownObjectsBase(ExternalInterface::EndOfKnownObjects const& msg)
-    {
-      PRINT_NAMED_INFO("HandleEndOfKnownObjects", "");
-      
-      HandleEndOfKnownObjects(msg);
+      HandleAvailableObjects(msg);
     }
 
     void UiGameController::HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg)
@@ -501,11 +503,8 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGame::Tag::ObjectTapped:
             HandleActiveObjectTappedBase(message.Get_ObjectTapped());
             break;
-          case ExternalInterface::MessageEngineToGame::Tag::KnownObject:
-            HandleKnownObjectBase(message.Get_KnownObject());
-            break;
-          case ExternalInterface::MessageEngineToGame::Tag::EndOfKnownObjects:
-            HandleEndOfKnownObjectsBase(message.Get_EndOfKnownObjects());
+          case ExternalInterface::MessageEngineToGame::Tag::AvailableObjects:
+            HandleAvailableObjectsBase(message.Get_AvailableObjects());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::AnimationAvailable:
             HandleAnimationAvailableBase(message.Get_AnimationAvailable());

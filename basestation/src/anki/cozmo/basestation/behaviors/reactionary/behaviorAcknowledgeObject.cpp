@@ -253,12 +253,7 @@ void BehaviorAcknowledgeObject::HandleObjectObserved(const Robot& robot,
     // this let's us react as soon as e.g. we come off the charger
     return;
   }
-
-  // Only objects whose marker we actually see are valid
-  if( ! msg.markersVisible ) {
-    return;
-  }
-    
+  
   // Object must be in one of the families this behavior cares about
   const bool hasValidFamily = _objectFamilies.count(msg.objectFamily) > 0;
   if(!hasValidFamily) {

@@ -116,7 +116,7 @@ ActionResult VisuallyVerifyObjectAction::InitInternal()
     const auto& objectObservation = event.GetData().Get_RobotObservedObject();
     // ID has to match and we have to actually have seen a marker (not just
     // saying part of the object is in FOV due to assumed projection)
-    if(!_objectSeen && objectObservation.objectID == _objectID && objectObservation.markersVisible)
+    if(!_objectSeen && objectObservation.objectID == _objectID)
     {
       _objectSeen = true;
     }

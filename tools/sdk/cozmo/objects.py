@@ -20,7 +20,6 @@ class EvtObjectObserved(event.Event):
     obj = 'The object that was observed'
     updated = 'A set of field names that have changed'
     image_box = 'A comzo.util.ImageBox defining where the object is within Cozmo\'s camera view'
-    markers_visible = 'True if the robot can actually see the markers on the object right now.'
 
 class EvtObjectTapped(event.Event):
     'Triggered when an active object is tapped.'
@@ -99,10 +98,6 @@ class ObservableObject(event.Dispatcher):
             self.dispatch_event(EvtObjectConnectChanged, obj=self, connected=self.connected)
 
     def _recv_msg_robot_observed_object(self, evt, *, msg):
-        if not msg.markersVisible:
-            # Don't trigger a user-visible update if the markers haven't been
-            # confirmed visible to avoid false positives
-            return
         changed_fields = {'last_observed_time', 'last_event_time', 'pose'}
         self._pose = util.Pose(msg.pose.x, msg.pose.y, msg.pose.z,
                                q0=msg.pose.q0, q1=msg.pose.q1,
@@ -112,7 +107,6 @@ class ObservableObject(event.Dispatcher):
         self.last_event_time = msg.timestamp
         image_box = util.ImageBox(msg.img_topLeft_x, msg.img_topLeft_y, msg.img_width, msg.img_height)
         self.dispatch_event(EvtObjectObserved, obj=self,
-                markers_visible=msg.markersVisible,
                 updated=changed_fields, image_box=image_box)
 
     #### Public Event Handlers ####

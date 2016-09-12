@@ -162,14 +162,12 @@ namespace Simon {
       LightCube cube = null;
       foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
         cube = lightCube.Value;
-
-        if (cube.MarkersVisible) {
-          if (!_Game.CubeIdsForGame.Contains(cube.ID)) {
-            if (_Game.CubeIdsForGame.Count < _CubesRequired) {
-              _Game.CubeIdsForGame.Add(cube.ID);
-              _SetupCubeState.Add(cube.ID, ScannedSetupCubeState.Unknown);
-              cube.SetLEDs(Cozmo.UI.CubePalette.Instance.InViewColor.lightColor);
-            }
+       
+        if (!_Game.CubeIdsForGame.Contains(cube.ID)) {
+          if (_Game.CubeIdsForGame.Count < _CubesRequired) {
+            _Game.CubeIdsForGame.Add(cube.ID);
+            _SetupCubeState.Add(cube.ID, ScannedSetupCubeState.Unknown);
+            cube.SetLEDs(Cozmo.UI.CubePalette.Instance.InViewColor.lightColor);
           }
         }
 

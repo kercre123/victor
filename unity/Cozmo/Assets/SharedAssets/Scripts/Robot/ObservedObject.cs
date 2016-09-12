@@ -62,11 +62,7 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
 
   public uint FactoryID { get; set; }
 
-  public bool MarkersVisible { get; private set; }
-
   public bool IsInFieldOfView { get { return CurrentInFieldOfViewState == InFieldOfViewState.Visible; } }
-
-  public bool IsLooselyInFieldOfView { get { return CurrentInFieldOfViewState != InFieldOfViewState.NotVisible; } }
 
   public event VizRectChangedHandler OnVizRectChanged;
   private Rect _VizRect;
@@ -204,7 +200,6 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
 
     CurrentPoseState = PoseState.Unknown;
     _CurrentInFieldOfViewState = InFieldOfViewState.NotVisible;
-    MarkersVisible = false;
 
     LastSeenEngineTimestamp = 0;
     LastMovementMessageEngineTimestamp = 0;
@@ -263,17 +258,8 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
     // isActive corresponds to whether or not the object has lights
     HasLights = message.isActive > 0;
 
-    // Mark Visible or PartiallyVisible depending on if the markersVisible is true
-    // (recieving this message means that it's at least partially in view)
-    if (message.markersVisible > 0) {
-      CurrentInFieldOfViewState = InFieldOfViewState.Visible;
-      MarkersVisible = true;
-    }
-    else {
-      CurrentInFieldOfViewState = InFieldOfViewState.PartiallyVisible;
-      MarkersVisible = false;
-    }
-
+    CurrentInFieldOfViewState = InFieldOfViewState.Visible;
+    
     // Mark pose known
     CurrentPoseState = PoseState.Known;
     IsMoving = false;
@@ -284,7 +270,6 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
     _ConsecutiveVisionFramesNotSeen++;
     if (_ConsecutiveVisionFramesNotSeen > _kFindCubesTimeoutFrames) {
       CurrentInFieldOfViewState = InFieldOfViewState.NotVisible;
-      MarkersVisible = false;
     }
   }
 
