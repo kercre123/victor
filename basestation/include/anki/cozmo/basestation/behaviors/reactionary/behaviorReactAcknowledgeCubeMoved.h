@@ -55,7 +55,8 @@ private:
   enum class State {
     PlayingSenseReaction,
     TurningToLastLocationOfBlock,
-    ReactingToBlockAbsence
+    ReactingToBlockAbsence,
+    ReactingToBlockPresence
   };
   
   typedef std::vector<ReactionObjectData>::iterator Reaction_iter;
@@ -64,6 +65,9 @@ private:
   ObjectID _activeObjectID; //Most recent move - object to turn towards
   ObjectID _switchObjectID; //Allow one cube moved to interupt another
   std::vector<ReactionObjectData> _reactionObjects; //Tracking for all active objects
+  
+  //  active object observed - play acknowledge reaction
+  bool _activeObjectSeen;
   
   void TransitionToPlayingSenseReaction(Robot& robot);
   void TransitionToTurningToLastLocationOfBlock(Robot& robot);
@@ -75,6 +79,8 @@ private:
   void HandleObjectUpAxisChanged(const Robot& robot, const ObjectUpAxisChanged& msg);
   void HandleObservedObject(const Robot& robot, const ExternalInterface::RobotObservedObject& msg);
   Reaction_iter GetReactionaryIterator(ObjectID objectID);
+  void SetState_internal(State state, const std::string& stateName);
+
   
 }; // class BehaviorReactAcknowledgeCubeMoved
 
