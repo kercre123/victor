@@ -134,6 +134,10 @@ void CheckMotor(u8 motor, u8 power, int min, int max)
 {
   int errbase = ERROR_MOTOR_LEFT + motor*10;
 
+  // For packout, scale limits to 80%
+  if (g_fixtureType == FIXTURE_PACKOUT_TEST)
+    min = (min * 13) >> 4;
+  
   // Move lift/head out of the way before test
   if (motor >= 2)
   {
@@ -239,7 +243,7 @@ void JamTest(void)
 void HeadLimits(void)
 {
   // Check max limit for head only on ROBOT2 and above (head is installed)
-  if (g_fixtureType < FIXTURE_ROBOT2_TEST)
+  if (g_fixtureType < FIXTURE_ROBOT2_TEST || g_fixtureType == FIXTURE_PACKOUT_TEST)
     return;
   
   const int MOTOR_RUNTIME = 2000 * 1000;  // Need about 2 seconds for normal variation
@@ -395,6 +399,8 @@ TestFunction* GetPackoutTestFunctions(void)
   static TestFunction functions[] =
   {
     InfoTest,
+    FastMotors,
+    RobotFixtureDropSensor,
     SpeakerTest,            // Must be last
     NULL
   };
@@ -407,7 +413,7 @@ TestFunction* GetJamTestFunctions(void)
   static TestFunction functions[] =
   {
     InfoTest,
-    JamTest,
+//    JamTest,              // Ruled unsafe
     NULL
   };
 

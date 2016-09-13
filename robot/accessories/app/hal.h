@@ -2,7 +2,7 @@
 #ifndef HAL_H__
 #define HAL_H__
 
-#define DEBUG    // Uncomment this for debug prints on 2m baud UART on P1.0
+// #define DEBUG    // Uncomment this for debug prints on 2m baud UART on P1.0
 
 #include "reg31512.h"
 #include "portable.h"

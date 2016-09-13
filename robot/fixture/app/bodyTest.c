@@ -165,7 +165,7 @@ void DropLeakage(void)
   int onoff[2];
   SendCommand(TEST_DROP, 0, sizeof(onoff), (u8*)onoff);
   ConsolePrintf("drop,%d,%d\r\n", onoff[0], onoff[1]);
-  if (onoff[0] > DROP_LIMIT || onoff[1] > DROP_LIMIT)
+  if (onoff[0]-onoff[1] > DROP_LIMIT || onoff[1] > DROP_LIMIT)
     throw ERROR_DROP_LEAKAGE;
 }
 
