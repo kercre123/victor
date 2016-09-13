@@ -355,6 +355,11 @@ MonoBehaviour:
   _CloseDialogOnTapOutside: 1
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 1
+  DimBackgroundPrefabOverride: {fileID: 0}
+  _OpenAudioEvent:
+    _Event: Play__Ui__Window_Open
+    _EventType: Ui
+    _GameObjectType: 0
   _AlertTitleText: {fileID: 11411324}
   _AlertMessageText: {fileID: 11464646}
   _PrimaryButton: {fileID: 0}

@@ -444,6 +444,10 @@ MonoBehaviour:
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 1
   DimBackgroundPrefabOverride: {fileID: 0}
+  _OpenAudioEvent:
+    _Event: Play__Ui__Window_Open
+    _EventType: Ui
+    _GameObjectType: 0
   _TitleTextLabel: {fileID: 0}
   _WarningTextLabel: {fileID: 0}
   _InstructionTextContainer: {fileID: 22430230}

@@ -63,6 +63,15 @@ namespace Cozmo {
 
       private Sequence _TransitionAnimation;
 
+      // The UI event that should play when this view opens
+      [SerializeField]
+      private Anki.Cozmo.Audio.AudioEventParameter _OpenAudioEvent = Anki.Cozmo.Audio.AudioEventParameter.InvalidEvent;
+
+      public Anki.Cozmo.Audio.AudioEventParameter OpenAudioEvent {
+        get { return _OpenAudioEvent; }
+        set { _OpenAudioEvent = value; }
+      }
+
       void OnDestroy() {
         if (_ClosingAnimationPlaying) {
           DAS.Warn("BaseView.OnDestroy", "BaseView being destroyed when close animation has not finished: " + _DASEventViewName);
@@ -93,6 +102,8 @@ namespace Cozmo {
         CheckDASEventName();
 
         RaiseViewOpened(this);
+
+        PlayOpenSound();
 
         PlayOpenAnimations();
       }
@@ -171,6 +182,13 @@ namespace Cozmo {
 
         // Close dialog without playing animations
         OnCloseAnimationsFinished();
+      }
+
+      // Play a sound when the view is shown (on calling Initialize)
+      private void PlayOpenSound() {
+        if (!OpenAudioEvent.IsInvalid()) {
+          Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(OpenAudioEvent);
+        }
       }
 
       private void PlayOpenAnimations() {

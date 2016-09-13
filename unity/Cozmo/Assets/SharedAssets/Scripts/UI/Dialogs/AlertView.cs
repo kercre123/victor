@@ -63,8 +63,6 @@ namespace Cozmo {
       }
 
       private void Awake() {
-        Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Window_Open);
-
         string viewName = GenerateDasName();
 
         if (_OptionalCloseDialogButton != null) {

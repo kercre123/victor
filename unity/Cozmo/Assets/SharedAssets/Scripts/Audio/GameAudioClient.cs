@@ -22,30 +22,19 @@ namespace Anki {
       [System.Serializable]
       public struct AudioEventParameter {
 
+        public static AudioEventParameter InvalidEvent = new AudioEventParameter(GameEvent.GenericEvent.Invalid, 
+                                                                                 GameEvent.EventGroupType.GenericEvent);
+
         public static AudioEventParameter DefaultClick = new AudioEventParameter(
                                                            GameEvent.GenericEvent.Play__Ui__Click_General,
-                                                           GameEvent.EventGroupType.Ui,
-                                                           GameObjectType.UI);
+                                                           GameEvent.EventGroupType.Ui);
 
         public static AudioEventParameter UIEvent(GameEvent.Ui ui) {
-          return new AudioEventParameter(
-            (GameEvent.GenericEvent)ui,
-            GameEvent.EventGroupType.Ui,
-            GameObjectType.UI);
-        }
-
-        public static AudioEventParameter VOEvent(GameEvent.GenericEvent evt) {
-          return new AudioEventParameter(
-            evt,
-            GameEvent.EventGroupType.GenericEvent,
-            GameObjectType.Aria);
+          return new AudioEventParameter((GameEvent.GenericEvent)ui, GameEvent.EventGroupType.Ui);
         }
 
         public static AudioEventParameter SFXEvent(GameEvent.Sfx sfx) {
-          return new AudioEventParameter(
-            (GameEvent.GenericEvent)sfx,
-            GameEvent.EventGroupType.Sfx,
-            GameObjectType.SFX);
+          return new AudioEventParameter((GameEvent.GenericEvent)sfx, GameEvent.EventGroupType.Sfx);
         }
 
         // Unity doesn't like uints for some reason
@@ -55,17 +44,18 @@ namespace Anki {
         [SerializeField]
         private string _EventType;
 
-        [SerializeField]
-        private int _GameObjectType;
-
-        private AudioEventParameter(GameEvent.GenericEvent evt, GameEvent.EventGroupType evtType, GameObjectType gameObjectType) {
+        private AudioEventParameter(GameEvent.GenericEvent evt, GameEvent.EventGroupType evtType) {
           _Event = evt.ToString();
           _EventType = evtType.ToString();
-          _GameObjectType = (int)(uint)gameObjectType;
         }
 
         public GameEvent.GenericEvent Event {
           get {
+            // if we used the default, return invalid
+            if (string.IsNullOrEmpty(_Event)) {
+              return GameEvent.GenericEvent.Invalid;
+            }
+
             return (GameEvent.GenericEvent)Enum.Parse(typeof(GameEvent.GenericEvent), _Event);
           }
           set {
@@ -75,6 +65,11 @@ namespace Anki {
 
         public GameEvent.EventGroupType EventType {
           get {
+            // if we used the default, return generic
+            if (string.IsNullOrEmpty(_EventType)) {
+              return GameEvent.EventGroupType.GenericEvent;
+            }
+
             return (GameEvent.EventGroupType)Enum.Parse(typeof(GameEvent.EventGroupType), _EventType);
           }
           set {
@@ -82,17 +77,31 @@ namespace Anki {
           }
         }
 
-        public GameObjectType GameObjectType {
-          get {
-            return (GameObjectType)(uint)_GameObjectType;
-          }
-          set {
-            _GameObjectType = (int)(uint)value;
+        public GameObjectType GetGameObjectType() {
+          var eventType = EventType;
+
+          switch (eventType) {
+          case Anki.Cozmo.Audio.GameEvent.EventGroupType.Sfx:
+            return GameObjectType.SFX;
+
+          case Anki.Cozmo.Audio.GameEvent.EventGroupType.Ui:
+            return GameObjectType.UI;
+
+          // Only SFX and UI are valid for the time being
+          case Anki.Cozmo.Audio.GameEvent.EventGroupType.Coz_App:
+          case Anki.Cozmo.Audio.GameEvent.EventGroupType.Dev_Device:
+          case Anki.Cozmo.Audio.GameEvent.EventGroupType.Dev_Robot:
+          case Anki.Cozmo.Audio.GameEvent.EventGroupType.GenericEvent:
+          case Anki.Cozmo.Audio.GameEvent.EventGroupType.Music:
+          case Anki.Cozmo.Audio.GameEvent.EventGroupType.Robot_Sfx:
+          case Anki.Cozmo.Audio.GameEvent.EventGroupType.Robot_Vo:
+          default:
+            return GameObjectType.Invalid;
           }
         }
 
         public bool IsInvalid() {
-          return GameObjectType == GameObjectType.Invalid;
+          return GameObjectType.Invalid == GetGameObjectType();
         }
       }
 
@@ -106,7 +115,7 @@ namespace Anki {
                                             Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                             CallbackHandler handler = null) {
           UnityAudioClient client = UnityAudioClient.Instance;
-          return client.PostEvent(parameter.Event, parameter.GameObjectType, callbackFlag, handler);
+          return client.PostEvent(parameter.Event, parameter.GetGameObjectType(), callbackFlag, handler);
         }
 
         static public ushort PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui audioEvent,

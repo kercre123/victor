@@ -172,6 +172,10 @@ MonoBehaviour:
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 1
   DimBackgroundPrefabOverride: {fileID: 0}
+  _OpenAudioEvent:
+    _Event: Play__Ui__Window_Open
+    _EventType: Ui
+    _GameObjectType: 0
   _AlphaController: {fileID: 22592498}
   _ScrollRectCanvasGroup: {fileID: 22592498}
   _TitleTextLabel: {fileID: 0}
