@@ -103,7 +103,10 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction(Robot& robot)
 {
   DEBUG_SET_STATE(PlayingCliffReaction);
   
-  if( _gotCliff || ALWAYS_PLAY_REACT_TO_CLIFF) {
+  if(_shouldStreamline){
+    TransitionToBackingUp(robot);
+  }
+  else if( _gotCliff || ALWAYS_PLAY_REACT_TO_CLIFF) {
     Anki::Util::sEvent("robot.cliff_detected", {}, "");
     StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToCliff),
                 &BehaviorReactToCliff::TransitionToBackingUp);
