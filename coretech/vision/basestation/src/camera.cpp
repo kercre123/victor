@@ -310,11 +310,13 @@ namespace Anki {
     bool Camera::Project3dPoint(const Point3f& objPoint,
                                 Point2f&       imgPoint) const
     {
-      if(this->IsCalibrated() == false) {
-        CORETECH_THROW("Camera::Project3dPoint() called before calibration set.");
-      }
-      
       const f32 BEHIND_OR_OCCLUDED = std::numeric_limits<f32>::quiet_NaN();
+      
+      if(this->IsCalibrated() == false) {
+        PRINT_NAMED_WARNING("Camera.Project3dPoint.NoCalibration", "Called before calibration set");
+        imgPoint = BEHIND_OR_OCCLUDED;
+        return false;
+      }
       
       if(objPoint.z() <= 0.f)
       {

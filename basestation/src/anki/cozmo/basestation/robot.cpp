@@ -1847,17 +1847,17 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
 {
   Result lastResult = RESULT_OK;
   
+  if(existingObject == nullptr) {
+    PRINT_NAMED_ERROR("Robot.LocalizeToObject.ExistingObjectPieceNullPointer", "");
+    return RESULT_FAIL;
+  }
+  
   if(existingObject->GetID() != GetLocalizedTo())
   {
     PRINT_NAMED_DEBUG("Robot.LocalizeToObject",
                       "Robot attempting to localize to %s object %d",
                       EnumToString(existingObject->GetType()),
                       existingObject->GetID().GetValue());
-  }
-  
-  if(existingObject == nullptr) {
-    PRINT_NAMED_ERROR("Robot.LocalizeToObject.ExistingObjectPieceNullPointer", "");
-    return RESULT_FAIL;
   }
       
   if(!existingObject->CanBeUsedForLocalization()) {
