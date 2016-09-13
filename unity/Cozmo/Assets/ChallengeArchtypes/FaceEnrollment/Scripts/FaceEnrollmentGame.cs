@@ -409,7 +409,10 @@ namespace FaceEnrollment {
     protected override void CleanUpOnDestroy() {
       SharedMinigameView.HideGameStateSlide();
       // turn the default head and lift state off
-      CurrentRobot.SetDefaultHeadAndLiftState(false, 0.0f, 0.0f);
+      if (CurrentRobot != null) {
+        CurrentRobot.SetDefaultHeadAndLiftState(false, 0.0f, 0.0f);
+      }
+
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(HandleEnrolledFace);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
       if (CurrentRobot != null) {
