@@ -431,12 +431,13 @@ static s16 limitPower(u8 motorID) {
   static bool limit[MOTOR_COUNT];
 
   int current_speed = ABS((int)motorInfo->position - (int)motorInfo->lastPosition);
-  bool danger = (current_speed < DRIVE_MINIMUM_SPEED[motorID]) && (motorInfo->oldPWM > POWER_THRESHOLD[motorID]);
+  bool danger = (current_speed < DRIVE_MINIMUM_SPEED[motorID]) && (ABS(motorInfo->oldPWM) > POWER_THRESHOLD[motorID]);
 
   temp_count[motorID] += danger ? 1 : -1;
 
-  if (temp_count[motorID] > MAX_DRIVE_TIME[motorID]) {
+  if (temp_count[motorID] >= MAX_DRIVE_TIME[motorID]) {
     limit[motorID] = true;
+    temp_count[motorID] = MAX_DRIVE_TIME[motorID];
   } else if (temp_count[motorID] <= 0) {
     limit[motorID] = false;
     temp_count[motorID] = 0;
