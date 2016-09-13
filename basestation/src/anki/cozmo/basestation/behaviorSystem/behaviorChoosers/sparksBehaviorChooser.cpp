@@ -98,15 +98,6 @@ void SparksBehaviorChooser::OnSelected()
   _idleAnimationsSet = false;
   
 
-  if(_robot.GetBehaviorManager().IsRequestedSparkSoft()){
-    // Set the idle driving animations to sparks driving anims
-    _robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::SparkDrivingStart,
-                                                               AnimationTrigger::SparkDrivingLoop,
-                                                               AnimationTrigger::SparkDrivingStop});
-    _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::SparkIdle);
-    _idleAnimationsSet = true;
-  }
-
   static const BackpackLights kLoopingSparkLights = {
     .onColor                = {{NamedColors::BLACK, NamedColors::WHITE, NamedColors::WHITE, NamedColors::WHITE, NamedColors::BLACK}},
     .offColor               = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
@@ -116,7 +107,18 @@ void SparksBehaviorChooser::OnSelected()
     .transitionOffPeriod_ms = {{0,0,0,0,0}},
     .offset                 = {{0,0,120,240,0}}
   };
-  _robot.GetLightsComponent().StartLoopingBackpackLights(kLoopingSparkLights);
+  
+  
+  if(_robot.GetBehaviorManager().IsRequestedSparkSoft()){
+    // Set the idle driving animations to sparks driving anims
+    _robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::SparkDrivingStart,
+                                                               AnimationTrigger::SparkDrivingLoop,
+                                                               AnimationTrigger::SparkDrivingStop});
+    _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::SparkIdle);
+    _robot.GetLightsComponent().StartLoopingBackpackLights(kLoopingSparkLights);
+
+    _idleAnimationsSet = true;
+  }
   
   // Turn off reactionary behaviors that could interrupt the spark
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeFace, false);
@@ -130,9 +132,9 @@ void SparksBehaviorChooser::OnDeselected()
     _robot.GetDrivingAnimationHandler().PopDrivingAnimations();
     _robot.GetAnimationStreamer().PopIdleAnimation();
     _idleAnimationsSet = false;
+    
+    _robot.GetLightsComponent().StopLoopingBackpackLights();
   }
-  
-  _robot.GetLightsComponent().StopLoopingBackpackLights();
   
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeFace, true);
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCubeMoved, true);

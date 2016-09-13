@@ -67,11 +67,7 @@ Result BehaviorRollBlock::InitInternal(Robot& robot)
   }
   else
   {
-    if(!_shouldStreamline){
-      TransitionToReactingToBlock(robot);
-    }else{
-      TransitionToPerformingAction(robot);
-    }
+    TransitionToPerformingAction(robot);
   }
   return Result::RESULT_OK;
 }
@@ -123,7 +119,7 @@ void BehaviorRollBlock::TransitionToSettingDownBlock(Robot& robot)
     IActionRunner* actionsToDo = new CompoundActionSequential(robot, {
       new DriveStraightAction(robot, -kAmountToReverse_mm, DEFAULT_PATH_MOTION_PROFILE.speed_mmps),
       new PlaceObjectOnGroundAction(robot)});
-    StartActing(actionsToDo, &BehaviorRollBlock::TransitionToReactingToBlock);
+    StartActing(actionsToDo, [this](Robot& robot){TransitionToPerformingAction(robot);});
   }
   else {
     StartActing(new TriggerAnimationAction(robot, _putDownAnimTrigger),
@@ -141,31 +137,10 @@ void BehaviorRollBlock::TransitionToSettingDownBlock(Robot& robot)
                                                       "Forcibly setting carried objects as unattached (See COZMO-2192)");
                                   robot.SetCarriedObjectAsUnattached();
                                 }
-                                TransitionToReactingToBlock(robot);
+                                TransitionToPerformingAction(robot);
                               });
                 });
   }
-}
-
-  
-  
-void BehaviorRollBlock::TransitionToReactingToBlock(Robot& robot)
-{
-  DEBUG_SET_STATE(ReactingToBlock);
-  
-  if( robot.IsCarryingObject() ) {
-    PRINT_NAMED_ERROR("BehaviorRollBlock.ReactWhileHolding",
-                      "block should be put down at this point. Bailing from behavior");
-    _targetBlock.UnSet();
-    return;
-  }
-  
-  // Turn towards the object and then react to it before performing the roll action
-  StartActing(new CompoundActionSequential(robot, {
-                new TurnTowardsObjectAction(robot, _targetBlock, PI_F),
-    new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::RollBlockInitial),
-              }),
-              [this,&robot]{ this->TransitionToPerformingAction(robot); });
 }
 
 void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
