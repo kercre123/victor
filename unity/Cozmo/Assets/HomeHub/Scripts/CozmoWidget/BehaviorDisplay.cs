@@ -22,6 +22,7 @@ public class BehaviorDisplay : MonoBehaviour {
 
 
   private void Start() {
+    _BehaviorLabel.text = "";
     SetOverrideString(null);
   }
 

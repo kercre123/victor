@@ -442,7 +442,12 @@ message RequestSetUnlockResult {
 message UnlockStatus {
   UnlockId unlocks[uint_8],
   bool fromBackup = 0
-}  
+}
+
+// Only called the first time so UI can show correct "new" badges on default unlocks
+message UnlockedDefaults {
+  UnlockId defaultUnlocks[uint_8]
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
