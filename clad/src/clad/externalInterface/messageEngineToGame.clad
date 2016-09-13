@@ -135,7 +135,7 @@ message RobotState {
     int_32   headTrackingObjectID,  // will be -1 if head is not tracking to any object
     int_32   localizedToObjectID,   // Will be -1 if not localized to any object
     uint_32  lastImageTimeStamp,    // Last image processed by the vision system
-    uint_16  status,                // See RobotStatusFlag in cozmoTypes.h
+    uint_32  status,                // See RobotStatusFlag in robotStatusAndActions.clad
     uint_8   gameStatus,            // See GameStatusFlag in cozmoTypes.h
     uint_8   robotID
 }

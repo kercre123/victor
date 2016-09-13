@@ -86,8 +86,6 @@
 #define MAX_DISTANCE_TO_PREDOCK_POSE 20.0f
 #define MIN_DISTANCE_FOR_MINANGLE_PLANNER 1.0f
 
-#define DEBUG_BLOCK_LIGHTS 0
-
 #define BUILD_NEW_ANIMATION_CODE 0
 
 #define IS_STATUS_FLAG_SET(x) ((msg.status & (uint32_t)RobotStatusFlag::x) != 0)
@@ -727,7 +725,9 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   //robot->SetCarryingBlock( isCarryingObject ); // Still needed?
   SetPickingOrPlacing(IS_STATUS_FLAG_SET(IS_PICKING_OR_PLACING));
   SetOnCharger(IS_STATUS_FLAG_SET(IS_ON_CHARGER));
+  SetIsCharging(IS_STATUS_FLAG_SET(IS_CHARGING));
   _isCliffSensorOn = IS_STATUS_FLAG_SET(CLIFF_DETECTED);
+  _chargerOOS = IS_STATUS_FLAG_SET(IS_CHARGER_OOS);
 
   if (_isBodyInAccessoryMode && !IS_STATUS_FLAG_SET(IS_BODY_ACC_MODE)) {
     // This shouldn't happen. This is a firmware bug.
@@ -3748,7 +3748,8 @@ ExternalInterface::RobotState Robot::GetRobotState()
   if(!GetActionList().IsEmpty()) {
     msg.status |= (uint32_t)RobotStatusFlag::IS_PATHING;
   }
-      
+  if(_chargerOOS) { msg.status |= (uint32_t)RobotStatusFlag::IS_CHARGER_OOS; }
+  
   msg.gameStatus = 0;
   if (IsLocalized() && _offTreadsState == OffTreadsState::OnTreads) { msg.gameStatus |= (uint8_t)GameStatusFlag::IsLocalized; }
       

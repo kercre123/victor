@@ -73,6 +73,7 @@ namespace Anki {
         float vExt_;
         bool onCharger_;
         bool isCharging_;
+        bool chargerOOS_;
         BodyRadioMode bodyRadioMode_ = BODY_IDLE_OPERATING_MODE;
         
 #ifdef SIMULATOR
@@ -245,6 +246,7 @@ namespace Anki {
         robotState_.status |= HAL::IsCliffDetected() ? CLIFF_DETECTED : 0;
         robotState_.status |= IMUFilter::IsFalling() ? IS_FALLING : 0;
         robotState_.status |= bodyRadioMode_ == BODY_ACCESSORY_OPERATING_MODE ? IS_BODY_ACC_MODE : 0;
+        robotState_.status |= HAL::BatteryIsChargerOOS() ? IS_CHARGER_OOS : 0;
 #ifdef  SIMULATOR
         robotState_.batteryVoltage = HAL::BatteryGetVoltage();
         if(isForcedDelocalizing_)
@@ -830,6 +832,7 @@ namespace Anki {
         vExt_ = static_cast<float>(msg.VExtFixed)/65536.0f;
         onCharger_  = msg.onCharger;
         isCharging_ = msg.isCharging;
+        chargerOOS_ = msg.chargerOOS;
 
         if (bodyRadioMode_ != msg.operatingMode) {
           bodyRadioMode_ = msg.operatingMode;
@@ -1235,6 +1238,10 @@ namespace Anki {
       bool BatteryIsOnCharger()
       {
         return Messages::onCharger_;
+      }
+      bool BatteryIsChargerOOS()
+      {
+        return Messages::chargerOOS_;
       }
 #else
       bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)

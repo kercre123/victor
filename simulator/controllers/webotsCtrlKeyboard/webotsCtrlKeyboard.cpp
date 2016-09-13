@@ -986,6 +986,7 @@ namespace Anki {
                     msg.offPeriod_ms[i] = 2000;
                     msg.transitionOnPeriod_ms[i] = 500;
                     msg.transitionOffPeriod_ms[i] = 500;
+                    msg.offset[i] = 0;
                   }
                 
                   if(!backpackLightsOn) {

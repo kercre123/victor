@@ -76,5 +76,39 @@
   
     "flashColor" : [[1,1,1,1], [1,1,1,1], [1,1,1,1], [1,1,1,1]],
     "flashPeriod_ms" : 100,
-    "flashTimes" : 3
+    "flashTimes" : 3,
+  
+  
+  
+    "backpack" : {
+        "charging" : {
+            "onColors"                : [[0, 0, 0, 1], [0, 0.5, 0, 1], [0, 0.5, 0, 1], [0, 0.5, 0, 1], [0, 0, 0, 1]],
+            "offColors"               : [[0, 0, 0, 1], [0, 0, 0, 1], [0, 0, 0, 1], [0, 0.5, 0, 1], [0, 0, 0, 1]],
+            "onPeriod_ms"             : [0,300,900,0,0],
+            "offPeriod_ms"            : [0,900,300,0,0],
+            "transitionOnPeriod_ms"   : [0,300,300,300,0],
+            "transitionOffPeriod_ms"  : [0,300,300,300,0],
+            "offset"                  : [0,-900,-300,0,0]
+        },
+      
+        "charged" : {
+            "onColors"                : [[0, 0, 0, 1], [0, 0.5, 0, 1], [0, 0.5, 0, 1], [0, 0.5, 0, 1], [0, 0, 0, 1]],
+            "offColors"               : [[0, 0, 0, 1], [0, 0.5, 0, 1], [0, 0.5, 0, 1], [0, 0.5, 0, 1], [0, 0, 0, 1]],
+            "onPeriod_ms"             : [0,0,0,0,0],
+            "offPeriod_ms"            : [0,0,0,0,0],
+            "transitionOnPeriod_ms"   : [0,0,0,0,0],
+            "transitionOffPeriod_ms"  : [0,0,0,0,0],
+            "offset"                  : [0,0,0,0,0]
+        },
+      
+        "badCharger" : {
+            "onColors"                : [[0, 0, 0, 1], [0, 0, 0, 1], [0, 0, 0, 1], [1, 0, 0, 1], [0, 0, 0, 1]],
+            "offColors"               : [[0, 0, 0, 1], [0, 0, 0, 1], [0, 0, 0, 1], [0, 0, 0, 1], [0, 0, 0, 1]],
+            "onPeriod_ms"             : [0,0,0,600,0],
+            "offPeriod_ms"            : [0,0,0,600,0],
+            "transitionOnPeriod_ms"   : [0,0,0,300,0],
+            "transitionOffPeriod_ms"  : [0,0,0,300,0],
+            "offset"                  : [0,0,0,0,0]
+        }
+    }
 }

@@ -53,8 +53,8 @@ namespace Anki {
     CONSOLE_VAR(bool, kDoDeepRoll,                 "DockingTest", false);
     
     static const BackpackLights passLights = {
-      .onColor                = {{NamedColors::BLACK,NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN,NamedColors::BLACK}},
-      .offColor               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
+      .onColors               = {{NamedColors::BLACK,NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN,NamedColors::BLACK}},
+      .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
       .onPeriod_ms            = {{1000,1000,1000,1000,1000}},
       .offPeriod_ms           = {{100,100,100,100,100}},
       .transitionOnPeriod_ms  = {{450,450,450,450,450}},
@@ -63,8 +63,8 @@ namespace Anki {
     };
     
     static const BackpackLights failLights = {
-      .onColor                = {{NamedColors::BLACK,NamedColors::RED,NamedColors::RED,NamedColors::RED,NamedColors::BLACK}},
-      .offColor               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
+      .onColors               = {{NamedColors::BLACK,NamedColors::RED,NamedColors::RED,NamedColors::RED,NamedColors::BLACK}},
+      .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
       .onPeriod_ms            = {{500,500,500,500,500}},
       .offPeriod_ms           = {{500,500,500,500,500}},
       .transitionOnPeriod_ms  = {{0,0,0,0,0}},

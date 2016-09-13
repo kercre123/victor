@@ -415,6 +415,8 @@ namespace Anki
 
       // Return whether or not the robot is connected to a charger
       bool BatteryIsOnCharger();
+      
+      bool BatteryIsChargerOOS();
 
 // #pragma mark --- UI LEDS ---
       /////////////////////////////////////////////////////////////////////

@@ -1152,6 +1152,11 @@ namespace Anki {
       //return false; // XXX On Cozmo 3, head is off if robot is charging
       return (chargeContact_->getPresence() == 1);
     }
+    
+    bool HAL::BatteryIsChargerOOS()
+    {
+      return false;
+    }
 
     extern "C" {
     void EnableIRQ() {}

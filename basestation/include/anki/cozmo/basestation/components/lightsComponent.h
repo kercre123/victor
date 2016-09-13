@@ -46,8 +46,8 @@ struct ObjectLights {
 
 typedef std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS> BackpackLEDArray;
 struct BackpackLights {
-  BackpackLEDArray onColor;
-  BackpackLEDArray offColor;
+  BackpackLEDArray onColors;
+  BackpackLEDArray offColors;
   BackpackLEDArray onPeriod_ms;
   BackpackLEDArray offPeriod_ms;
   BackpackLEDArray transitionOnPeriod_ms;
@@ -118,6 +118,16 @@ private:
   
   // Maps light states to actual light values for that state
   std::map<CubeLightsState, ObjectLights> _stateToValues;
+  
+  enum class BackpackLightsState {
+    OffCharger,
+    Charging,
+    Charged,
+    BadCharger,
+  };
+  
+  std::map<BackpackLightsState, BackpackLights> _backpackStateToValues;
+  BackpackLightsState _curBackpackState = BackpackLightsState::OffCharger;
 
   struct ObjectInfo {
     ObjectInfo();
@@ -146,6 +156,8 @@ private:
   void UpdateToDesiredLights(const bool force = false);
   void UpdateToDesiredLights(const ObjectID objectID, const bool force = false);
   void SetLights(ObjectID object, CubeLightsState state, bool forceSet = false);
+  
+  void UpdateBackpackLights();
 
   // Returns true if we should change the lights from currState to nextState
   bool ShouldOverrideState(CubeLightsState currState, CubeLightsState nextState);
@@ -155,9 +167,13 @@ private:
                    std::pair<CubeLightsState, CubeLightsState>& fadeFromTo);
   
   void AddLightStateValues(CubeLightsState state, const Json::Value& data);
-  ObjectLEDArray JsonColorValueToArray(const Json::Value& value);
-  ObjectLEDArray JsonValueToU32Array(const Json::Value& value);
-  std::array<s32, (size_t)ActiveObjectConstants::NUM_CUBE_LEDS> JsonValueToS32Array(const Json::Value& value);
+  void AddBackpackLightStateValues(BackpackLightsState state, const Json::Value& data);
+  template<class T>
+  T JsonColorValueToArray(const Json::Value& value);
+  template<class T>
+  T JsonValueToU32Array(const Json::Value& value);
+  template<class T>
+  T JsonValueToS32Array(const Json::Value& value);
   
   void RestorePrevStates();
   void RestorePrevState(const ObjectID objectID);

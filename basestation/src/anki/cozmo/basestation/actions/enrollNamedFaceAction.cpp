@@ -71,8 +71,8 @@ namespace Cozmo {
     if(kUseBackpackLights)
     {
       const BackpackLights lights = {
-        .onColor                = {{color,color,color,color,color}},
-        .offColor               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
+        .onColors               = {{color,color,color,color,color}},
+        .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
         .onPeriod_ms            = {{500,500,500,500,500}},
         .offPeriod_ms           = {{100,100,100,100,100}},
         .transitionOnPeriod_ms  = {{250,250,250,250,250}},

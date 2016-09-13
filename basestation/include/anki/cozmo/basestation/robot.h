@@ -211,7 +211,10 @@ public:
   bool   IsOnCharger() const { return _isOnCharger; }
   // True if we know we're on a connected charger, but not the contacts
   bool   IsOnChargerPlatform() const { return _isOnChargerPlatform; }
-  
+  // True if robot is charging
+  bool   IsCharging() const { return _isCharging; }
+  // True if charger is out of spec
+  bool   IsChargerOOS() const { return _chargerOOS; }
   // Updates pose to be on charger
   Result SetPoseOnCharger();
   
@@ -881,6 +884,8 @@ protected:
   // State
   bool             _isPickingOrPlacing    = false;
   bool             _isOnCharger           = false;
+  bool             _isCharging            = false;
+  bool             _chargerOOS            = false;
   f32              _battVoltage           = 5;
   ImageSendMode    _imageSendMode         = ImageSendMode::Off;
   bool             _enableCliffSensor     = true;
@@ -953,6 +958,7 @@ protected:
   void SetLastRecvdPathID(u16 path_id)    {_lastRecvdPathID = path_id;}
   void SetPickingOrPlacing(bool t)        {_isPickingOrPlacing = t;}
   void SetOnCharger(bool onCharger);
+  void SetIsCharging(bool isCharging)     {_isCharging = isCharging;}
   
   // returns whether the tread state was updated or not
   bool CheckAndUpdateTreadsState(const RobotState& msg);

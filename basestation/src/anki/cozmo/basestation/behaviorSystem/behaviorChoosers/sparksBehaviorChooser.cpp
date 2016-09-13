@@ -99,8 +99,8 @@ void SparksBehaviorChooser::OnSelected()
   
 
   static const BackpackLights kLoopingSparkLights = {
-    .onColor                = {{NamedColors::BLACK, NamedColors::WHITE, NamedColors::WHITE, NamedColors::WHITE, NamedColors::BLACK}},
-    .offColor               = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
+    .onColors               = {{NamedColors::BLACK, NamedColors::WHITE, NamedColors::WHITE, NamedColors::WHITE, NamedColors::BLACK}},
+    .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
     .onPeriod_ms            = {{0,360,360,360,0}},
     .offPeriod_ms           = {{0,1110,1110,1110,0}},
     .transitionOnPeriod_ms  = {{0,0,0,0,0}},

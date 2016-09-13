@@ -30,8 +30,8 @@ namespace Anki {
 namespace Cozmo {
 
 static const BackpackLights kBackpackLightsOff = {
-  .onColor                = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
-  .offColor               = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
+  .onColors               = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
+  .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
   .onPeriod_ms            = {{0,0,0,0,0}},
   .offPeriod_ms           = {{0,0,0,0,0}},
   .transitionOnPeriod_ms  = {{0,0,0,0,0}},
@@ -93,9 +93,14 @@ LightsComponent::LightsComponent(Robot& robot)
         _fadeTime_ms      = json["fadeTransitionTime_ms"].asUInt();
         _sleepTime_ms     = json["sleepDuration_ms"].asUInt();
         
-        _flashColor     = JsonColorValueToArray(json["flashColor"]);
+        _flashColor     = JsonColorValueToArray<ObjectLEDArray>(json["flashColor"]);
         _flashPeriod_ms = json["flashPeriod_ms"].asUInt();
         _flashTimes     = json["flashTimes"].asUInt();
+        
+        _backpackStateToValues.emplace(BackpackLightsState::OffCharger, kBackpackLightsOff);
+        AddBackpackLightStateValues(BackpackLightsState::Charging,   json["backpack"]["charging"]);
+        AddBackpackLightStateValues(BackpackLightsState::Charged,    json["backpack"]["charged"]);
+        AddBackpackLightStateValues(BackpackLightsState::BadCharger, json["backpack"]["badCharger"]);
       }
     }
   }
@@ -104,13 +109,13 @@ LightsComponent::LightsComponent(Robot& robot)
 void LightsComponent::AddLightStateValues(CubeLightsState state, const Json::Value& data)
 {
   ObjectLights values = {
-    .onColors               = JsonColorValueToArray(data["onColors"]),
-    .offColors              = JsonColorValueToArray(data["offColors"]),
-    .onPeriod_ms            = JsonValueToU32Array(data["onPeriod_ms"]),
-    .offPeriod_ms           = JsonValueToU32Array(data["offPeriod_ms"]),
-    .transitionOnPeriod_ms  = JsonValueToU32Array(data["transitionOnPeriod_ms"]),
-    .transitionOffPeriod_ms = JsonValueToU32Array(data["transitionOffPeriod_ms"]),
-    .offset                 = JsonValueToS32Array(data["offset"]),
+    .onColors               = JsonColorValueToArray<ObjectLEDArray>(data["onColors"]),
+    .offColors              = JsonColorValueToArray<ObjectLEDArray>(data["offColors"]),
+    .onPeriod_ms            = JsonValueToU32Array<ObjectLEDArray>(data["onPeriod_ms"]),
+    .offPeriod_ms           = JsonValueToU32Array<ObjectLEDArray>(data["offPeriod_ms"]),
+    .transitionOnPeriod_ms  = JsonValueToU32Array<ObjectLEDArray>(data["transitionOnPeriod_ms"]),
+    .transitionOffPeriod_ms = JsonValueToU32Array<ObjectLEDArray>(data["transitionOffPeriod_ms"]),
+    .offset                 = JsonValueToS32Array<std::array<s32, (size_t)ActiveObjectConstants::NUM_CUBE_LEDS>>(data["offset"]),
     .rotationPeriod_ms      = data["rotationPeriod_ms"].asUInt(),
     .makeRelative           = MakeRelativeMode::RELATIVE_LED_MODE_OFF,
     .relativePoint          = {0,0}
@@ -118,30 +123,47 @@ void LightsComponent::AddLightStateValues(CubeLightsState state, const Json::Val
   _stateToValues.emplace(state, values);
 }
 
-std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS> LightsComponent::JsonValueToU32Array(const Json::Value& value)
+void LightsComponent::AddBackpackLightStateValues(BackpackLightsState state, const Json::Value& data)
 {
-  ObjectLEDArray arr;
-  for(u8 i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i)
+  BackpackLights values = {
+    .onColors               = JsonColorValueToArray<BackpackLEDArray>(data["onColors"]),
+    .offColors              = JsonColorValueToArray<BackpackLEDArray>(data["offColors"]),
+    .onPeriod_ms            = JsonValueToU32Array<BackpackLEDArray>(data["onPeriod_ms"]),
+    .offPeriod_ms           = JsonValueToU32Array<BackpackLEDArray>(data["offPeriod_ms"]),
+    .transitionOnPeriod_ms  = JsonValueToU32Array<BackpackLEDArray>(data["transitionOnPeriod_ms"]),
+    .transitionOffPeriod_ms = JsonValueToU32Array<BackpackLEDArray>(data["transitionOffPeriod_ms"]),
+    .offset                 = JsonValueToS32Array<std::array<s32, (size_t)LEDId::NUM_BACKPACK_LEDS>>(data["offset"]),
+  };
+  _backpackStateToValues.emplace(state, values);
+}
+
+template<class T>
+T LightsComponent::JsonValueToU32Array(const Json::Value& value)
+{
+  T arr;
+  for(u8 i = 0; i < (int)arr.size(); ++i)
   {
     arr[i] = value[i].asUInt();
   }
   return arr;
 }
 
-std::array<s32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS> LightsComponent::JsonValueToS32Array(const Json::Value& value)
+template<class T>
+T LightsComponent::JsonValueToS32Array(const Json::Value& value)
 {
-  std::array<s32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS> arr;
-  for(u8 i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i)
+  T arr;
+  for(u8 i = 0; i < arr.size(); ++i)
   {
     arr[i] = value[i].asInt();
   }
   return arr;
 }
 
-std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS> LightsComponent::JsonColorValueToArray(const Json::Value& value)
+template <class T>
+T LightsComponent::JsonColorValueToArray(const Json::Value& value)
 {
-  ObjectLEDArray arr;
-  for(u8 i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i)
+  T arr;
+  for(u8 i = 0; i < (int)arr.size(); ++i)
   {
     
     ColorRGBA color(value[i][0].asFloat(),
@@ -246,6 +268,8 @@ void LightsComponent::Update()
       UpdateToDesiredLights(cubeInfoPair.first, doForceLightUpdate);
     }
   }
+  
+  UpdateBackpackLights();
 }
 
 void LightsComponent::UpdateToDesiredLights(const ObjectID objectID, const bool force)
@@ -266,6 +290,41 @@ void LightsComponent::UpdateToDesiredLights(const bool force)
   for( const auto& cubeInfoPair : _cubeInfo ) {
     if( cubeInfoPair.second.currState != cubeInfoPair.second.desiredState || force) {
       SetLights( cubeInfoPair.first, cubeInfoPair.second.desiredState, force );
+    }
+  }
+}
+
+void LightsComponent::UpdateBackpackLights()
+{
+  BackpackLightsState state = BackpackLightsState::OffCharger;
+  if(_robot.IsOnCharger())
+  {
+    if(_robot.IsChargerOOS())
+    {
+      state = BackpackLightsState::BadCharger;
+    }
+    else if(_robot.IsCharging())
+    {
+      state = BackpackLightsState::Charging;
+    }
+    else
+    {
+      state = BackpackLightsState::Charged;
+    }
+  }
+  
+  if(state != _curBackpackState)
+  {
+    _curBackpackState = state;
+    
+    // If we are going to the off state go back to what the lights were before
+    if(state == BackpackLightsState::OffCharger)
+    {
+      SetBackpackLightsInternal(_currentBackpackLights);
+    }
+    else
+    {
+      SetBackpackLightsInternal(_backpackStateToValues[state]);
     }
   }
 }
@@ -637,8 +696,8 @@ template<>
 void LightsComponent::HandleMessage(const ExternalInterface::SetBackpackLEDs& msg)
 {
   const BackpackLights lights = {
-    .onColor                = msg.onColor,
-    .offColor               = msg.offColor,
+    .onColors               = msg.onColor,
+    .offColors              = msg.offColor,
     .onPeriod_ms            = msg.onPeriod_ms,
     .offPeriod_ms           = msg.offPeriod_ms,
     .transitionOnPeriod_ms  = msg.transitionOnPeriod_ms,
@@ -710,9 +769,10 @@ Result LightsComponent::SetBackpackLights(const BackpackLights& lights)
 {
   _currentBackpackLights = lights;
 
-  // If we are looping backpack lights don't actually set the lights but keep track of
-  // what they were trying to be set to so we can set them to it when the looping stops
-  if(_loopingBackpackLights)
+  // If we are looping backpack lights or our current backpack light state is not off
+  // don't actually set the lights but keep track of what they were trying to be set
+  // to so we can set them to it when the looping stops
+  if(_loopingBackpackLights || _curBackpackState != BackpackLightsState::OffCharger)
   {
     return RESULT_OK;
   }
@@ -883,8 +943,8 @@ Result LightsComponent::SetBackpackLightsInternal(const BackpackLights& lights)
   for (int i = 0; i < (int)LEDId::NUM_BACKPACK_LEDS; ++i) {
     if(i == (int)LEDId::LED_BACKPACK_RIGHT || i == (int)LEDId::LED_BACKPACK_LEFT)
     {
-      turnSignals[turnCount].onColor  = ENCODED_COLOR(lights.onColor[i]);
-      turnSignals[turnCount].offColor = ENCODED_COLOR(lights.offColor[i]);
+      turnSignals[turnCount].onColor  = ENCODED_COLOR(lights.onColors[i]);
+      turnSignals[turnCount].offColor = ENCODED_COLOR(lights.offColors[i]);
       turnSignals[turnCount].onFrames  = MS_TO_LED_FRAMES(lights.onPeriod_ms[i]);
       turnSignals[turnCount].offFrames = MS_TO_LED_FRAMES(lights.offPeriod_ms[i]);
       turnSignals[turnCount].transitionOnFrames  = MS_TO_LED_FRAMES(lights.transitionOnPeriod_ms[i]);
@@ -894,8 +954,8 @@ Result LightsComponent::SetBackpackLightsInternal(const BackpackLights& lights)
     }
     else
     {
-      middleLights[middleCount].onColor  = ENCODED_COLOR(lights.onColor[i]);
-      middleLights[middleCount].offColor = ENCODED_COLOR(lights.offColor[i]);
+      middleLights[middleCount].onColor  = ENCODED_COLOR(lights.onColors[i]);
+      middleLights[middleCount].offColor = ENCODED_COLOR(lights.offColors[i]);
       middleLights[middleCount].onFrames  = MS_TO_LED_FRAMES(lights.onPeriod_ms[i]);
       middleLights[middleCount].offFrames = MS_TO_LED_FRAMES(lights.offPeriod_ms[i]);
       middleLights[middleCount].transitionOnFrames  = MS_TO_LED_FRAMES(lights.transitionOnPeriod_ms[i]);
@@ -908,8 +968,8 @@ Result LightsComponent::SetBackpackLightsInternal(const BackpackLights& lights)
     {
       PRINT_NAMED_DEBUG("BackpackLights",
                        "0x%x 0x%x %u %u %u %u %d",
-                       ENCODED_COLOR(lights.onColor[i]),
-                       ENCODED_COLOR(lights.offColor[i]),
+                       ENCODED_COLOR(lights.onColors[i]),
+                       ENCODED_COLOR(lights.offColors[i]),
                        MS_TO_LED_FRAMES(lights.onPeriod_ms[i]),
                        MS_TO_LED_FRAMES(lights.offPeriod_ms[i]),
                        MS_TO_LED_FRAMES(lights.transitionOnPeriod_ms[i]),
@@ -918,8 +978,8 @@ Result LightsComponent::SetBackpackLightsInternal(const BackpackLights& lights)
     }
   }
   
-  _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLightsTurnSignals(turnSignals)));
-  return _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLightsMiddle(middleLights)));
+  _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLightsMiddle(middleLights)));
+  return _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLightsTurnSignals(turnSignals)));
 }
 
 void LightsComponent::RestorePrevStates()

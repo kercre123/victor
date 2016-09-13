@@ -33,8 +33,8 @@ namespace Cozmo {
 
   // Backpack lights
   static const BackpackLights passLights = {
-    .onColor                = {{NamedColors::BLACK,NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN,NamedColors::BLACK}},
-    .offColor               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
+    .onColors               = {{NamedColors::BLACK,NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN,NamedColors::BLACK}},
+    .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
     .onPeriod_ms            = {{1000,1000,1000,1000,1000}},
     .offPeriod_ms           = {{100,100,100,100,100}},
     .transitionOnPeriod_ms  = {{450,450,450,450,450}},
@@ -43,8 +43,8 @@ namespace Cozmo {
   };
   
   static BackpackLights failLights = {
-    .onColor                = {{NamedColors::BLACK,NamedColors::RED,NamedColors::RED,NamedColors::RED,NamedColors::BLACK}},
-    .offColor               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
+    .onColors               = {{NamedColors::BLACK,NamedColors::RED,NamedColors::RED,NamedColors::RED,NamedColors::BLACK}},
+    .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
     .onPeriod_ms            = {{500,500,500,500,500}},
     .offPeriod_ms           = {{500,500,500,500,500}},
     .transitionOnPeriod_ms  = {{0,0,0,0,0}},
@@ -142,7 +142,7 @@ namespace Cozmo {
                   else
                   {
                     PRINT_NAMED_WARNING("BehaviorFactoryCentroidExtractor.MoveHead", "Moving head to 0 degrees failed");
-                    failLights.onColor = fail_onColorMagenta;
+                    failLights.onColors = fail_onColorMagenta;
                     robot.SetBackpackLights(failLights);
                   }
                 });
@@ -158,7 +158,7 @@ namespace Cozmo {
       {
         PRINT_NAMED_WARNING("BehaviorFactoryCentroidExtractor.DotTestFailed",
                             "Failed to find all 4 dots");
-        failLights.onColor = fail_onColorRed;
+        failLights.onColors = fail_onColorRed;
         robot.SetBackpackLights(failLights);
       }
       else
@@ -167,7 +167,7 @@ namespace Cozmo {
         {
           PRINT_NAMED_WARNING("BehaviorFactoryCentroidExtractor.DidNotComputeCameraPose",
                               "Failed to compute camPose camera is not calibrated");
-          failLights.onColor = fail_onColorOrange;
+          failLights.onColors = fail_onColorOrange;
           robot.SetBackpackLights(failLights);
         }
         else
@@ -214,7 +214,7 @@ namespace Cozmo {
         
           if(doThresholdCheck && exceedsThresh)
           {
-            failLights.onColor = fail_onColorBlue;
+            failLights.onColors = fail_onColorBlue;
             robot.SetBackpackLights(failLights);
           }
           else

@@ -54,6 +54,8 @@ static int ContactTime = 0;
 static Anki::Cozmo::BodyRadioMode current_operating_mode = -1;
 static Anki::Cozmo::BodyRadioMode active_operating_mode = -1;
 
+static CurrentChargeState charge_state = CHARGE_OFF_CHARGER;
+
 // Which pin is currently being used in the ADC mux
 AnalogInput m_pinIndex;
 
@@ -114,6 +116,7 @@ static inline void sendPowerStateUpdate()
   msg.batteryLevel = Battery::getLevel();
   msg.onCharger  = ContactTime > MinContactTime;
   msg.isCharging = isCharging;
+  msg.chargerOOS = charge_state == CHARGE_CHARGER_OUT_OF_SPEC;
   RobotInterface::SendMessage(msg);
 }
 
@@ -295,8 +298,6 @@ void Battery::powerOff()
   nrf_gpio_pin_clear(PIN_PWR_EN);
   MicroWait(10000);
 }
-
-static CurrentChargeState charge_state = CHARGE_OFF_CHARGER;
 
 static void setChargeState(CurrentChargeState state) {
   if (state == charge_state) {
