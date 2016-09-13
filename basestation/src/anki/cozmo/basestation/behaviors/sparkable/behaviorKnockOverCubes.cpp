@@ -36,7 +36,7 @@ static const char* const kMinimumStackHeight = "minimumStackHeight";
 static const char* const kIsReactionaryConfigFlag = "isReactionary";
 
 const int kMaxNumRetries = 1;
-const int kMinThresholdRealign = 40;
+const int kMinThresholdRealign = 10;
 const int kMinBlocksForSuccess = 1;
 const float kWaitForBlockUpAxisChangeSecs = 0.5f;
 const f32 kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad = RAD_TO_DEG_F32(90.f);
@@ -110,6 +110,8 @@ bool BehaviorKnockOverCubes::IsReactionary() const
   
 Result BehaviorKnockOverCubes::InitInternalReactionary(Robot& robot)
 {
+  SmartDisableReactionaryBehavior(BehaviorType::ReactToCubeMoved);
+
   if(!_shouldStreamline){
     TransitionToReachingForBlock(robot);
   }else{
@@ -232,11 +234,10 @@ void BehaviorKnockOverCubes::TransitionToPlayingReaction(Robot& robot)
     animationTrigger = _knockOverSuccessTrigger;
   }
   
+  // play a reaction if not streamlined
   if(!_shouldStreamline){
-    
     StartActing(new TriggerLiftSafeAnimationAction(robot, animationTrigger));
   }
-  
 }
   
 void BehaviorKnockOverCubes::InitializeMemberVars()

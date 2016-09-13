@@ -800,8 +800,8 @@ namespace Anki {
     
     void UiMessageHandler::OnExitSdkMode(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
     {
-      // Restore reactionary behaviors?
-      
+      // Note: Robot's message handler also handles this event, and that disconnects the robot
+      //       (that's how we ensure that we restore the robot to a safe default state)
       _sdkStatus.ExitMode();
       UpdateIsSdkCommunicationEnabled();
     }

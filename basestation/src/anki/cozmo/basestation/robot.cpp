@@ -1050,6 +1050,10 @@ Result Robot::Update(bool ignoreVisionModes)
 {
   ANKI_CPU_PROFILE("Robot::Update");
   
+  const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  
+  _robotIdleTimeoutComponent->Update(currentTime);
+  
   if (!_gotStateMsgAfterTimeSync)
   {
     PRINT_NAMED_DEBUG("Robot.Update", "Waiting for first full robot state to be handled");
@@ -1131,10 +1135,6 @@ Result Robot::Update(bool ignoreVisionModes)
   // TODO: This object encompasses, for the time-being, what some higher level
   // module(s) would do.  e.g. Some combination of game state, build planner,
   // personality planner, etc.
-      
-  const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  
-  _robotIdleTimeoutComponent->Update(currentTime);
       
   _moodManager->Update(currentTime);
       
@@ -3829,6 +3829,89 @@ BehaviorFactory& Robot::GetBehaviorFactory()
 {
   return _behaviorMgr->GetBehaviorFactory();
 }
+  
+Result Robot::ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, f32 yTolFrac) const
+{
+  Pose3d poseWrtNeck;
+  const bool success = pose.GetWithRespectTo(_neckPose, poseWrtNeck);
+  if(!success)
+  {
+    PRINT_NAMED_WARNING("Robot.ComputeHeadAngleToSeePose.OriginMismatch", "");
+    return RESULT_FAIL_ORIGIN_MISMATCH;
+  }
+  
+  // Assume the given point is in the XZ plane in front of the camera (i.e. so
+  // if we were to turn and face it with the robot's body, we then just need to
+  // find the right head angle)
+  const Point3f pointWrtNeck(Point2f(poseWrtNeck.GetTranslation()).Length(), // Drop z and get length in XY plane
+                             0.f,
+                             poseWrtNeck.GetTranslation().z());
+  
+  Vision::Camera camera(_visionComponentPtr->GetCamera());
+  
+  const Vision::CameraCalibration* calib = camera.GetCalibration();
+  if(nullptr == calib)
+  {
+    PRINT_NAMED_ERROR("Robot.ComputeHeadAngleToSeePose.NullCamera", "");
+    return RESULT_FAIL;
+  }
+  
+  const f32 dampening = 0.8f;
+  const f32 kYTol = yTolFrac * calib->GetNrows();
+  
+  f32 searchAngle_rad = 0.f;
+  s32 iteration = 0;
+  const s32 kMaxIterations = 25;
+  
+# define DEBUG_HEAD_ANGLE_ITERATIONS 0
+  while(iteration++ < kMaxIterations)
+  {
+    if(DEBUG_HEAD_ANGLE_ITERATIONS) {
+      PRINT_NAMED_DEBUG("ComputeHeadAngle", "%d: %.1fdeg", iteration, RAD_TO_DEG_F32(searchAngle_rad));
+    }
     
+    // Get point w.r.t. camera at current search angle
+    const Pose3d& cameraPoseWrtNeck = GetCameraPose(searchAngle_rad);
+    const Point3f& pointWrtCam = cameraPoseWrtNeck.GetInverse() * pointWrtNeck;
+    
+    // Project point into the camera
+    // Note: not using camera's Project3dPoint() method because it does special handling
+    //  for points not in the image limits, which we don't want here. We also don't need
+    //  to add ycen, because we'll just subtract it right back off to see how far from
+    //  centered we are. And we're only using y, so we'll just special-case this here.
+    if(Util::IsFltLE(pointWrtCam.z(), 0.f))
+    {
+      PRINT_NAMED_WARNING("Robot.ComputeHeadAngleToSeePose.BadProjectedZ", "");
+      return RESULT_FAIL;
+    }
+    const f32 y = calib->GetFocalLength_y() * (pointWrtCam.y() / pointWrtCam.z());
+    
+    // See if the projection is close enough to center
+    if(Util::IsFltLE(std::abs(y), kYTol))
+    {
+      if(DEBUG_HEAD_ANGLE_ITERATIONS) {
+        PRINT_NAMED_DEBUG("ComputeHeadAngle", "CONVERGED: %.1fdeg", RAD_TO_DEG_F32(searchAngle_rad));
+      }
+      
+      headAngle = searchAngle_rad;
+      break;
+    }
+    
+    // Nope: keep searching. Adjust angle proportionally to how far off we are.
+    const f32 angleInc = std::atan2f(y, calib->GetFocalLength_y());
+    searchAngle_rad -= dampening*angleInc;
+  }
+
+  if(iteration == kMaxIterations)
+  {
+    PRINT_NAMED_WARNING("Robot.ComputeHeadAngleToSeePose.MaxIterations", "");
+    return RESULT_FAIL;
+  }
+  
+  headAngle = Util::Clamp(headAngle.ToFloat(), MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
+  
+  return RESULT_OK;
+}
+  
 } // namespace Cozmo
 } // namespace Anki

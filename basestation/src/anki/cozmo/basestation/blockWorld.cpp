@@ -689,7 +689,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
           
           addNewObject = true;
         
-          PRINT_CH_INFO("BlockWorld", "UpdateObjectOrigins.NoMatchingObjectInNewFrame",
+          PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigins.NoMatchingObjectInNewFrame",
                         "Adding %s object with ID %d to new origin %s (%p)",
                         EnumToString(newObject->GetType()),
                         newObject->GetID().GetValue(),
@@ -699,7 +699,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
         }
         else
         {
-          PRINT_CH_INFO("BlockWorld", "UpdateObjectOrigins.ObjectOriginChanged",
+          PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigins.ObjectOriginChanged",
                         "Updating object %d's origin from %s to %s. "
                         "T_old=(%.1f,%.1f,%.1f), T_new=(%.1f,%.1f,%.1f)",
                         oldObject->GetID().GetValue(),
@@ -787,7 +787,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
   {
     // current map (if any) must match current robot origin
     ASSERT_NAMED( (_currentNavMemoryMapOrigin == nullptr) || (_robot->GetWorldOrigin() == _currentNavMemoryMapOrigin),
-      "BlockWorld.GetNavMemoryMap.BadOrigin");
+                 "BlockWorld.GetNavMemoryMap.BadOrigin");
     
     const INavMemoryMap* curMap = nullptr;
     if ( nullptr != _currentNavMemoryMapOrigin ) {
@@ -1020,7 +1020,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
     
     existingFamily[object->GetType()][object->GetID()] = object;
 
-    PRINT_CH_INFO("BlockWorld", "AddNewObject",
+    PRINT_CH_INFO("BlockWorld", "BlockWorld.AddNewObject",
                   "Adding new %s%s object and ID=%d ActID=%d FacID=0x%x at (%.1f, %.1f, %.1f), in frame %s.",
                   object->IsActive() ? "active " : "",
                   EnumToString(object->GetType()),
@@ -1119,7 +1119,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
               {
                 // Otherwise, it must've been moved off the lift so unset its carry state
                 // and update it as normal
-                PRINT_CH_INFO("BlockWorld", "AddAndUpdateObjects.SeeingCarryingObjectNotOnLift",
+                PRINT_CH_INFO("BlockWorld", "BlockWorld.AddAndUpdateObjects.SeeingCarryingObjectNotOnLift",
                               "Thought we were carrying object %d but seeing it in non-carry pose",
                               _robot->GetCarryingObject().GetValue());
                 _robot->UnSetCarryObject(objectFound->GetID());
@@ -1494,7 +1494,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
               // just delete it, but only if this is a non-active object or radio
               // connection has not been established yet
               if (!object->IsActive() || object->GetActiveID() < 0) {
-                PRINT_CH_INFO("BlockWorld", "CheckForUnobservedObjects.DeleteObject",
+                PRINT_CH_INFO("BlockWorld", "BlockWorld.CheckForUnobservedObjects.DeleteObject",
                               "Deleting %s object %d with unknown pose state.",
                               ObjectTypeToString(object->GetType()),
                               object->GetID().GetValue());
@@ -1512,7 +1512,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
               // delete it if radio connection has not been established yet.
               // Otherwise, retry identification.
               if (object->GetActiveID() < 0) {
-                PRINT_CH_INFO("BlockWorld", "CheckForUnobservedObjects.IdentifyTimedOut",
+                PRINT_CH_INFO("BlockWorld", "BlockWorld.CheckForUnobservedObjects.IdentifyTimedOut",
                               "Deleting unobserved %s active object %d that has "
                               "not completed identification in %dms",
                               EnumToString(object->GetType()),
@@ -1595,7 +1595,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
         
         if(!matchingActiveIdFound) {
           // We "should" have seen the object! Clear it.
-          PRINT_CH_INFO("BlockWorld", "CheckForUnobservedObjects.MarkingUnobservedObject",
+          PRINT_CH_INFO("BlockWorld", "BlockWorld.CheckForUnobservedObjects.MarkingUnobservedObject",
                         "Marking object %d unobserved, which should have been seen, but wasn't. "
                         "(shouldBeVisible:%d hasNothingBehind:%d isDirty:%d",
                         unobserved.object->GetID().GetValue(),
@@ -1978,7 +1978,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
         if(std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) &&                // There's any rotation to speak of
            !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(45)))  // That rotation's axis more than 45 degrees from vertical
         {
-          PRINT_CH_INFO("BlockWorld", "UpdateRobotPose",
+          PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateRobotPose",
                         "Refusing to localize to %s mat with rotation %.1f degrees around (%.1f,%.1f,%.1f) axis.",
                         ObjectTypeToString(mat->GetType()),
                         rotAngle.getDegrees(),
@@ -2209,7 +2209,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
           if(std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) &&                // There's any rotation to speak of
              !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(45)))  // That rotation's axis more than 45 degrees from vertical
           {
-            PRINT_CH_INFO("BlockWorld", "UpdateRobotPose",
+            PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateRobotPose",
                           "Ignoring observation of %s mat with rotation %.1f degrees around (%.1f,%.1f,%.1f) axis.",
                           ObjectTypeToString(matSeen->GetType()),
                           rotAngle.getDegrees(),
@@ -2232,7 +2232,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
             newMatPiece->SetLastObservedTime(matSeen->GetLastObservedTime());
             newMatPiece->UpdateMarkerObservationTimes(*matSeen);
             
-            PRINT_CH_INFO("BlockWorld", "UpdateRobotPose",
+            PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateRobotPose",
                           "Adding new %s mat with ID=%d at (%.1f, %.1f, %.1f)",
                           ObjectTypeToString(newMatPiece->GetType()),
                           newMatPiece->GetID().GetValue(),
@@ -2307,7 +2307,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
       // seen between that marker and the robot
       for(auto obsMarker : observedMarkers) {
         /*
-        PRINT_CH_INFO("BlockWorld", "UpdateRobotPose.AddingMatMarkerOccluder",
+        PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateRobotPose.AddingMatMarkerOccluder",
                          "Adding mat marker '%s' as an occluder for robot %d.",
                          Vision::MarkerTypeStrings[obsMarker->GetCode()],
                          robot->GetID());
@@ -2320,7 +2320,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
       // we may have seen things while de-localized whose locations can now be
       // snapped into place.
       if(!wasLocalized && robot->IsLocalized()) {
-        PRINT_CH_INFO("BlockWorld", "UpdateRobotPose.RobotRelocalized",
+        PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateRobotPose.RobotRelocalized",
                          "Robot %d just localized after being de-localized.", robot->GetID());
         DrawAllObjects();
       }
@@ -2544,7 +2544,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
     
     if (activeID < 0)
     {
-      PRINT_CH_INFO("BlockWorld", "AddActiveObject",
+      PRINT_CH_INFO("BlockWorld", "BlockWorld.AddActiveObject",
                     "Adding object with negative ActiveID %d FactoryID %d",
                     activeID, factoryID);
     }
@@ -2579,7 +2579,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
           if (sameTypeObject->GetActiveID() < 0) {
             sameTypeObject->SetActiveID(activeID);
             sameTypeObject->SetFactoryID(factoryID);
-            PRINT_CH_INFO("BlockWorld", "AddActiveObject.FoundMatchingObjectWithNoActiveID",
+            PRINT_CH_INFO("BlockWorld", "BlockWorld.AddActiveObject.FoundMatchingObjectWithNoActiveID",
                           "objectID %d, activeID %d, type %s",
                           sameTypeObject->GetID().GetValue(), sameTypeObject->GetActiveID(), objTypeStr);
           } else {
@@ -2602,7 +2602,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
                 sameTypeObject->SetFactoryID(factoryID);
               }
             } else {
-              PRINT_CH_INFO("BlockWorld", "AddActiveObject.FoundIdenticalObjectOnDifferentSlot",
+              PRINT_CH_INFO("BlockWorld", "BlockWorld.AddActiveObject.FoundIdenticalObjectOnDifferentSlot",
                             "Updating activeID of block with factoryID 0x%x from %d to %d",
                             sameTypeObject->GetFactoryID(), sameTypeObject->GetActiveID(), activeID);
               sameTypeObject->SetActiveID(activeID);
@@ -2641,7 +2641,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
 
       // A match was found but does it have the same factory ID?
       if(matchingObject->GetFactoryID() == factoryID) {
-        PRINT_CH_INFO("BlockWorld", "AddActiveObject.FoundMatchingActiveObject",
+        PRINT_CH_INFO("BlockWorld", "BlockWorld.AddActiveObject.FoundMatchingActiveObject",
                       "objectID %d, activeID %d, type %s, factoryID 0x%x",
                       matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), objTypeStr, matchingObject->GetFactoryID());
         return matchingObject->GetID();
@@ -2718,7 +2718,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
     newObject->InitPose(newObjectPose, PoseState::Unknown);
     
     AddNewObject(newObject);
-    PRINT_CH_INFO("BlockWorld", "AddActiveObject.AddedNewObject",
+    PRINT_CH_INFO("BlockWorld", "BlockWorld.AddActiveObject.AddedNewObject",
                   "objectID %d, type %s, activeID %d, factoryID 0x%x",
                   newObject->GetID().GetValue(), objTypeStr, newObject->GetActiveID(), newObject->GetFactoryID());
     
@@ -2739,7 +2739,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
     const ObservableObject* object = GetObjectByID(objectID, family);
     if ( nullptr == object )
     {
-      PRINT_CH_INFO("BlockWorld", "OnObjectPoseChanged.NotAnObject",
+      PRINT_CH_INFO("BlockWorld", "BlockWorld.OnObjectPoseChanged.NotAnObject",
                     "Could not find object ID '%d' in BlockWorld", objectID.GetValue() );
       return;
     }
@@ -2795,7 +2795,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
     if ( addType == NavMemoryMapTypes::EContentType::Unknown )
     {
       // this is ok, this obstacle family is not tracked in the memory map
-      PRINT_CH_INFO("BlockWorld", "BlockWorld.RemoveObjectReportFromMemMap.InvalidRemovalType",
+      PRINT_CH_INFO("BlockWorld", "BlockWorld.BlockWorld.RemoveObjectReportFromMemMap.InvalidRemovalType",
                     "Family '%s' is not known in memory map",
                     ObjectFamilyToString(objectFam) );
       return;
@@ -2934,7 +2934,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
       const ObservableObject* object = GetObjectByID(pairIdToPoseInfoByOrigin.first);
       if ( nullptr == object )
       {
-        PRINT_CH_INFO("BlockWorld", "BlockWorld::UpdateObjectsReportedInMepMap.NotAnObject",
+        PRINT_CH_INFO("BlockWorld", "BlockWorld.BlockWorld::UpdateObjectsReportedInMepMap.NotAnObject",
                       "Could not find object ID '%d' in BlockWorld updating their quads", pairIdToPoseInfoByOrigin.first );
         continue;
       }
@@ -3127,7 +3127,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
     // for the edges we just received is from before delocalizing, so we should discard it.
     Pose3d observedPose;
     if ( !p->GetPose().GetWithRespectTo( *_robot->GetWorldOrigin(), observedPose) ) {
-      PRINT_CH_INFO("BlockWorld", "AddVisionOverheadEdges.NotInThisWorld",
+      PRINT_CH_INFO("BlockWorld", "BlockWorld.AddVisionOverheadEdges.NotInThisWorld",
                     "Received timestamp %d, but could not translate that timestamp into current origin.", frameInfo.timestamp);
       return RESULT_OK;
     }
@@ -3646,7 +3646,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
           }
           
           if(marker2isInsideMarker1) {
-            PRINT_CH_INFO("BlockWorld", "Update",
+            PRINT_CH_INFO("BlockWorld", "BlockWorld.Update",
                           "Removing %s marker completely contained within %s marker.\n",
                           marker2.GetCodeName(), marker1.GetCodeName());
             // Note: erase does increment of iterator for us
@@ -3789,7 +3789,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
       numUnusedMarkers += currentObsMarkers.size();
       
       for(auto & unusedMarker : currentObsMarkers) {
-        PRINT_CH_INFO("BlockWorld", "Update.UnusedMarker",
+        PRINT_CH_INFO("BlockWorld", "BlockWorld.Update.UnusedMarker",
                       "An observed %s marker went unused.",
                       unusedMarker.second.GetCodeName());
       }
@@ -3825,7 +3825,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
       dispOcc.Display("Occluders");
     }
     
-    //PRINT_CH_INFO("BlockWorld", "Update.NumBlocksObserved", "Saw %d blocks", numBlocksObserved);
+    //PRINT_CH_INFO("BlockWorld", "BlockWorld.Update.NumBlocksObserved", "Saw %d blocks", numBlocksObserved);
     
     auto originIter = _existingObjects.find(_robot->GetWorldOrigin());
     
@@ -3903,7 +3903,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
                   
                   if( inSamePlane && bboxIntersects )
                   {
-                    PRINT_CH_INFO("BlockWorld", "Update",
+                    PRINT_CH_INFO("BlockWorld", "BlockWorld.Update",
                                   "Marking object %d as 'dirty', because it intersects robot %d's bounding quad.",
                                   object->GetID().GetValue(), _robot->GetID());
                     
@@ -4081,7 +4081,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
       // Check to see if this object is the one the robot is localized to.
       // If so, the robot needs to be marked as localized to nothing.
       if(_robot->GetLocalizedTo() == object->GetID()) {
-        PRINT_CH_INFO("BlockWorld", "ClearObjectHelper.LocalizeRobotToNothing",
+        PRINT_CH_INFO("BlockWorld", "BlockWorld.ClearObjectHelper.LocalizeRobotToNothing",
                       "Setting robot %d as localized to no object, because it "
                       "is currently localized to %s object with ID=%d, which is "
                       "about to be cleared.",
@@ -4094,7 +4094,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
       
       // Check to see if this object is the one the robot is carrying.
       if(_robot->GetCarryingObject() == object->GetID()) {
-        PRINT_CH_INFO("BlockWorld", "ClearObjectHelper.ClearingCarriedObject",
+        PRINT_CH_INFO("BlockWorld", "BlockWorld.ClearObjectHelper.ClearingCarriedObject",
                       "Clearing %s object %d which robot %d thinks it is carrying.",
                       ObjectTypeToString(object->GetType()),
                       object->GetID().GetValue(),
@@ -4103,7 +4103,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
       }
       
       if(_selectedObject == object->GetID()) {
-        PRINT_CH_INFO("BlockWorld", "ClearObjectHelper.ClearingSelectedObject",
+        PRINT_CH_INFO("BlockWorld", "BlockWorld.ClearObjectHelper.ClearingSelectedObject",
                       "Clearing %s object %d which is currently selected.",
                       ObjectTypeToString(object->GetType()),
                       object->GetID().GetValue());

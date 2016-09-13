@@ -86,6 +86,13 @@ bool ProgressionUnlockComponent::IsUnlockIdValid(UnlockId id)
   }
   return true;
 }
+  
+void ProgressionUnlockComponent::NotifyGameDefaultUnlocksSet()
+{
+  // Let unity know what the default unlocks were.
+  _robot.GetExternalInterface()->Broadcast( ExternalInterface::MessageEngineToGame(
+                                               ExternalInterface::UnlockedDefaults(std::vector<UnlockId>(_defaultUnlocks.begin(), _defaultUnlocks.end()))));
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ProgressionUnlockComponent::SetUnlock(UnlockId unlock, bool unlocked)
@@ -111,6 +118,7 @@ bool ProgressionUnlockComponent::SetUnlock(UnlockId unlock, bool unlocked)
         SetUnlock((UnlockId)i, (_defaultUnlocks.find((UnlockId)i) != _defaultUnlocks.end()));
       }
     }
+    NotifyGameDefaultUnlocksSet();
   }
   else if(IsUnlockIdValid(unlock))
   {
@@ -265,6 +273,8 @@ void ProgressionUnlockComponent::ReadCurrentUnlocksFromRobot()
                                                 _currentUnlocks = _defaultUnlocks;
                                                 
                                                 SendUnlockStatus();
+                                                NotifyGameDefaultUnlocksSet();
+                                                
                                               }
                                               // Otherwise something went wrong with reading from the robot so try again
                                               else

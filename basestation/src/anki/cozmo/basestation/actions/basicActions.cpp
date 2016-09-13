@@ -1096,9 +1096,31 @@ namespace Anki {
       
       Pose3d objectPoseWrtRobot;
       if(_whichCode == Vision::Marker::ANY_CODE) {
-        if(false == _objectPtr->GetPose().GetWithRespectTo(_robot.GetPose(), objectPoseWrtRobot)) {
-          PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.ObjectPoseOriginProblem",
-                            "Could not get pose of object %d w.r.t. robot pose.",
+
+        // if ANY_CODE is specified, find the closest marker face to the robot and use that pose. We don't
+        // want to consider the "top" or "bottom" faces (based on current rotation)
+
+        // Solution: project all points into 2D and pick the closest. The top and bottom faces will never be
+        // closer than the closest side face (unless we are inside the cube)
+
+        float bestDistSq = FLT_MAX;
+        bool gotPose = false;
+        
+        for( const auto& marker : _objectPtr->GetMarkers() ) {
+          Pose3d markerWrtRobot;
+          if( marker.GetPose().GetWithRespectTo(_robot.GetPose(), markerWrtRobot) ) {
+            const float distSq = Point2f(markerWrtRobot.GetTranslation()).LengthSq();
+            if( distSq < bestDistSq ) {
+              bestDistSq = distSq;
+              objectPoseWrtRobot = markerWrtRobot;
+              gotPose = true;
+            }
+          }
+        }
+
+        if( ! gotPose ) {
+          PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.NoValidPose",
+                            "Could not get a valid marker pose of object %d",
                             _objectID.GetValue());
           return ActionResult::FAILURE_ABORT;
         }
@@ -1408,7 +1430,21 @@ namespace Anki {
       }
       
       // Compute the required head angle to face the object
-      Radians headAngle = GetAbsoluteHeadAngleToLookAtPose(_poseWrtRobot.GetTranslation());
+      Radians headAngle;
+      const f32 kYTolFrac = 0.01f; // Fraction of image height
+      Result result = _robot.ComputeHeadAngleToSeePose(_poseWrtRobot, headAngle, kYTolFrac);
+      if(RESULT_OK != result)
+      {
+        PRINT_NAMED_WARNING("TurnTowardsPoseAction.Init.FailedToComputedHeadAngle",
+                            "PoseWrtRobot translation=(%f,%f,%f)",
+                            _poseWrtRobot.GetTranslation().x(),
+                            _poseWrtRobot.GetTranslation().y(),
+                            _poseWrtRobot.GetTranslation().z());
+        
+        // Fall back on old approximate method to compute head angle
+        headAngle = GetAbsoluteHeadAngleToLookAtPose(_poseWrtRobot.GetTranslation());
+      }
+      
       SetHeadTiltAngle(headAngle);
       
       // Proceed with base class's Init()

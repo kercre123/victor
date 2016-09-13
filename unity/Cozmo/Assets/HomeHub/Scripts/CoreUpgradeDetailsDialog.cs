@@ -140,7 +140,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
         _RequestTrickButtonContainer.gameObject.SetActive(true);
         _FragmentInventoryContainer.gameObject.SetActive(false);
         _SparksInventoryContainer.gameObject.SetActive(true);
-        UpdateAvailableCostLabels(unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksSparkCozmo, LocalizationKeys.kSparksPress);
+        UpdateAvailableCostLabels(unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksSparkCozmo, unlockInfo.SparkButtonDescription);
         SetupButton(_RequestTrickButton, StartSparkUnlock, "request_trick_button",
                     unlockInfo.RequestTrickCostItemId, unlockInfo.RequestTrickCostAmountNeeded, _SparksInventoryLabel, true);
 
@@ -152,12 +152,12 @@ public class CoreUpgradeDetailsDialog : BaseView {
       _UnlockUpgradeButtonContainer.gameObject.SetActive(true);
       _FragmentInventoryContainer.gameObject.SetActive(true);
       _SparksInventoryContainer.gameObject.SetActive(false);
-      UpdateAvailableCostLabels(unlockInfo.UpgradeCostItemId, unlockInfo.UpgradeCostAmountNeeded, LocalizationKeys.kUnlockableAvailable, LocalizationKeys.kUnlockableBitsRequiredDescription);
+      UpdateAvailableCostLabels(unlockInfo.UpgradeCostItemId, unlockInfo.UpgradeCostAmountNeeded, LocalizationKeys.kUnlockableAvailable, LocalizationKeys.kUnlockableBitsRequiredEarnMore);
       SetupButton(_UnlockUpgradeButton, OnUpgradeClicked, "request_upgrade_button",
                   unlockInfo.UpgradeCostItemId, unlockInfo.UpgradeCostAmountNeeded, _FragmentInventoryLabel, false);
 
       _UnlockButtonCostLabel.text = string.Format("{0}", unlockInfo.UpgradeCostAmountNeeded);
-      _UnlockableIcon.color = Color.gray;
+      _UnlockableIcon.color = new Color(1.0F, 1.0F, 1.0F, 0.5F);
     }
 
     _UnlockableNameLabel.text = Localization.Get(unlockInfo.TitleKey);
@@ -181,7 +181,11 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
     ItemData itemData = ItemDataConfig.GetData(costItemId);
     if (spark) {
-      button.Text = Localization.Get(LocalizationKeys.kSparksSpark);
+      if (costAmount == 1) {
+        button.Text = Localization.Get (LocalizationKeys.kSparksSpark);
+      } else {
+        button.Text = Localization.Get (LocalizationKeys.kSparksSparkPlural);
+      }
     }
     else {
       button.Text = Localization.Get(LocalizationKeys.kUnlockableUnlock);
@@ -245,7 +249,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
         if (_RequestTrickButton.Interactable) {
           _SparkButtonCostLabel.color = _RequestTrickButton.TextEnabledColor;
           _ButtonPromptTitle.color = _SparkAvailableColor;
-          UpdateAvailableCostLabels(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksSparkCozmo, LocalizationKeys.kSparksPress);
+          UpdateAvailableCostLabels(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded, LocalizationKeys.kSparksSparkCozmo, _UnlockInfo.SparkButtonDescription);
         }
         else {
           _SparkButtonCostLabel.color = _RequestTrickButton.TextDisabledColor;
@@ -264,7 +268,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
         else {
           _UnlockButtonCostLabel.color = _UnlockUpgradeButton.TextDisabledColor;
           _ButtonPromptTitle.color = _UnavailableColor;
-          UpdateAvailableCostLabels(_UnlockInfo.UpgradeCostItemId, _UnlockInfo.UpgradeCostAmountNeeded, LocalizationKeys.kUnlockableBitsRequiredTitle, LocalizationKeys.kUnlockableBitsRequiredDescription);
+          UpdateAvailableCostLabels(_UnlockInfo.UpgradeCostItemId, _UnlockInfo.UpgradeCostAmountNeeded, LocalizationKeys.kUnlockableBitsRequiredTitle, LocalizationKeys.kUnlockableBitsRequiredEarnMore);
         }
 
       }

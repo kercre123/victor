@@ -346,7 +346,7 @@ void LightsComponent::SetEnableCubeLights(const ObjectID objectID, const bool en
     auto cube = _cubeInfo.find(id);
     if(cube == _cubeInfo.end())
     {
-      PRINT_NAMED_WARNING("LightsComponent.SetEnableCubeLights",
+      PRINT_NAMED_WARNING("LightsComponent.SetEnableCubeLights.CubeNotFound",
                           "No object with id %d in _cubeInfo map",
                           id.GetValue());
       return;
@@ -407,7 +407,7 @@ void LightsComponent::SetLights(ObjectID object, CubeLightsState state, bool for
   auto cube = _cubeInfo.find(object);
   if(cube == _cubeInfo.end())
   {
-    PRINT_NAMED_WARNING("LightsComponent.SetLights",
+    PRINT_NAMED_WARNING("LightsComponent.SetLights.CubeNotFound",
                         "Trying to set lights for object %d but no object found in _cubeInfo map",
                         object.GetValue());
     return;
@@ -429,7 +429,7 @@ void LightsComponent::SetLights(ObjectID object, CubeLightsState state, bool for
   
   cube->second.currState = state;
   
-  PRINT_NAMED_INFO("LightsComponent.SetLights",
+  PRINT_NAMED_INFO("LightsComponent.SetLights.ChangeState",
                    "Setting object %d to state %d",
                    object.GetValue(),
                    state);
@@ -988,7 +988,7 @@ void LightsComponent::SendTransitionMessage(const ObjectID& objectID, const Obje
   const auto cube = _cubeInfo.find(objectID);
   if(cube == _cubeInfo.end())
   {
-    PRINT_NAMED_WARNING("LightsComponent.SendTransitionMessage", "No cube in _cubeInfo with id %d", objectID.GetValue());
+    PRINT_NAMED_WARNING("LightsComponent.SendTransitionMessage.CubeNotFound", "No cube in _cubeInfo with id %d", objectID.GetValue());
     return;
   }
   
@@ -997,7 +997,7 @@ void LightsComponent::SendTransitionMessage(const ObjectID& objectID, const Obje
     ObservableObject* obj = _robot.GetBlockWorld().GetObjectByID(objectID);
     if(obj == nullptr)
     {
-      PRINT_NAMED_WARNING("LightsComponent.SendTransitionMessage",
+      PRINT_NAMED_WARNING("LightsComponent.SendTransitionMessage.NullObject",
                           "Got null object using id %d",
                           objectID.GetValue());
       return;

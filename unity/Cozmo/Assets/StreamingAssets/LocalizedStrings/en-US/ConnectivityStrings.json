@@ -64,7 +64,7 @@
     "translation": "This step is required when connecting from a new device"
   },
   "connectivity.cozmoSleepTitle": {
-    "translation": "Sleep"
+    "translation": "Going to Sleep"
   },
   "connectivity.cozmoSleepDesc": {
     "translation": "Cozmo is going to sleep and will disconnect soon"

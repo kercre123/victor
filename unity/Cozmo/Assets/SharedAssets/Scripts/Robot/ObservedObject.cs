@@ -1,7 +1,4 @@
 ﻿using UnityEngine;
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using Anki.Cozmo;
 using G2U = Anki.Cozmo.ExternalInterface;
 using U2G = Anki.Cozmo.ExternalInterface;
@@ -10,7 +7,7 @@ using U2G = Anki.Cozmo.ExternalInterface;
 /// all objects that cozmo sees are transmitted across to unity and represented here as ObservedObjects
 ///   so far, we only both handling three types of cubes and a charger
 /// </summary>
-public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPosition
+public class ObservedObject : IVisibleInCamera {
 
   public class Light : Robot.Light {
     public static new float MessageDelay = 0f;
@@ -31,6 +28,7 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
     }
   }
 
+  public const int kInvalidObjectID = -1;
   private const uint _kFindCubesTimeoutFrames = 1;
 
   public enum PoseState {
@@ -51,6 +49,13 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
   public static event InFieldOfViewStateChangedHandler AnyInFieldOfViewStateChanged;
 
   public event InFieldOfViewStateChangedHandler InFieldOfViewStateChanged;
+
+  public delegate void LightChangedHandler();
+
+  /// <summary>
+  /// Sent at most once per frame when any values of any lights on this object changes.
+  /// </summary>
+  public event LightChangedHandler OnLightsChanged;
 
   public uint RobotID { get; private set; }
 
@@ -230,7 +235,7 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
 
   public static implicit operator int(ObservedObject observedObject) {
     if (observedObject == null)
-      return -1;
+      return kInvalidObjectID;
 
     return observedObject.ID;
   }
@@ -319,6 +324,10 @@ public class ObservedObject : IVisibleInCamera { // TODO Implement IHaveCameraPo
 
     RobotEngineManager.Instance.Message.SetAllActiveObjectLEDs = SetAllActiveObjectLEDsMessage;
     RobotEngineManager.Instance.SendMessage();
+
+    if (OnLightsChanged != null) {
+      OnLightsChanged();
+    }
 
     SetLastLEDs();
   }

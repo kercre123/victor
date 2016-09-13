@@ -54,12 +54,10 @@ private:
   
   enum class DebugState {
     SettingDownBlock,
-    ReactingToBlock,
     PerformingAction
   };
 
   void TransitionToSettingDownBlock(Robot& robot);
-  void TransitionToReactingToBlock(Robot& robot);
   void TransitionToPerformingAction(Robot& robot, bool isRetry = false);
 
   void SetupRetryAction(Robot& robot, const ExternalInterface::RobotCompletedAction& msg);

@@ -35,27 +35,19 @@ public class UnlockablesManager : MonoBehaviour {
   [SerializeField]
   private UnlockableInfoList _UnlockableInfoList;
 
-  private List<Anki.Cozmo.UnlockId> _NewUnlocks = new List<UnlockId>();
-
   // index is the face slot, value is the unlockID;
   [SerializeField]
   private int[] _FaceSlotUnlockMap;
 
   public bool IsNewUnlock(Anki.Cozmo.UnlockId uID) {
-    return _NewUnlocks.Contains(uID);
-  }
-
-  /// <summary>
-  /// Resolves the new unlocks. Currently just clears the list, but in the future will also save relevant
-  /// information regarding actually seeing an unlock or not.
-  /// </summary>
-  public void ResolveNewUnlocks() {
-    _NewUnlocks.Clear();
+    return DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.NewUnlocks.Contains(uID);
   }
 
   private void OnDestroy() {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleOnUnlockRequestSuccess);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.UnlockStatus>(HandleUnlockStatus);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.UnlockedDefaults>(HandleUnlockDefaultsSet);
+    GameEventManager.Instance.OnGameEvent -= HandleGameEvent;
   }
 
   // should be called when connected to the robot and loaded unlock info from the physical robot.
@@ -118,6 +110,8 @@ public class UnlockablesManager : MonoBehaviour {
     }
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleOnUnlockRequestSuccess);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.UnlockStatus>(HandleUnlockStatus);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.UnlockedDefaults>(HandleUnlockDefaultsSet);
+    GameEventManager.Instance.OnGameEvent += HandleGameEvent;
     RobotEngineManager.Instance.SendRequestUnlockDataFromBackup();
   }
 
@@ -262,6 +256,14 @@ public class UnlockablesManager : MonoBehaviour {
     OnConnectLoad(loadedUnlockables);
   }
 
+  private void HandleUnlockDefaultsSet(Anki.Cozmo.ExternalInterface.UnlockedDefaults message) {
+    // This is a new robot, init our "default" unlocks
+    DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.NewUnlocks.Clear();
+    for (int i = 0; i < message.defaultUnlocks.Length; ++i) {
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.NewUnlocks.Add(message.defaultUnlocks[i]);
+    }
+  }
+
   private void HandleOnUnlockRequestSuccess(Anki.Cozmo.ExternalInterface.RequestSetUnlockResult resultMessage) {
     UnlockableInfo unlockData = GetUnlockableInfo(resultMessage.unlockID);
     if (unlockData == null) {
@@ -272,7 +274,7 @@ public class UnlockablesManager : MonoBehaviour {
     _UnlockablesState[resultMessage.unlockID] = resultMessage.unlocked;
     if (resultMessage.unlocked) {
       GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnUnlockableEarned, resultMessage.unlockID));
-      _NewUnlocks.Add(resultMessage.unlockID);
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.NewUnlocks.Add(resultMessage.unlockID);
 
       // Trigger soft spark in the engine if the unlock was an action
       if (unlockData.UnlockableType == UnlockableType.Action) {
@@ -286,6 +288,29 @@ public class UnlockablesManager : MonoBehaviour {
 
       if (OnUnlockComplete != null) {
         OnUnlockComplete(resultMessage.unlockID);
+      }
+    }
+  }
+
+  // Do not clear unlock slots until they have been played once.
+  private void HandleGameEvent(GameEventWrapper gameEvent) {
+    ChallengeData currGameData = null;
+    if (ChallengeDataList.Instance != null && gameEvent.GameEventEnum == GameEvent.OnChallengeComplete && gameEvent is MinigameGameEvent) {
+      string currGameID = (gameEvent as MinigameGameEvent).GameID;
+      currGameData = Array.Find(ChallengeDataList.Instance.ChallengeData, (obj) => obj.ChallengeID == currGameID);
+    }
+    if (currGameData != null) {
+      // Extremely special "Onboarding" case where we don't want to clear if they backed out.
+      // it is new until a face is enrolled rather than played, also since it's unlocked by default it isn't on the list
+      bool wantsRemove = true;
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null && currGameData.UnlockId.Value == UnlockId.MeetCozmoGame) {
+        if (robot.EnrolledFaces.Count == 0) {
+          wantsRemove = false;
+        }
+      }
+      if (wantsRemove) {
+        DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.NewUnlocks.Remove(currGameData.UnlockId.Value);
       }
     }
   }

@@ -45,6 +45,7 @@ namespace Onboarding {
 
       RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayLightStates(true);
 
+      RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(AnimationTrigger.OnWaitForCubesMinigameSetup);
       RobotEngineManager.Instance.CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
 
       RobotEngineManager.Instance.AddCallback<OnboardingState>(HandleUpdateOnboardingState);
@@ -62,7 +63,7 @@ namespace Onboarding {
     public override void OnDestroy() {
       base.OnDestroy();
       RobotEngineManager.Instance.RemoveCallback<OnboardingState>(HandleUpdateOnboardingState);
-
+      RobotEngineManager.Instance.CurrentRobot.PopIdleAnimation();
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Onboarding__Play_Tab);
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {

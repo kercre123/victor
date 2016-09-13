@@ -633,6 +633,7 @@ public static class LocalizationKeys {
   public const string kUnlockablePreReqNeededDescription = "unlockable.PreReqNeeded.Description";
   public const string kUnlockableBitsRequiredTitle = "unlockable.BitsRequired.Title";
   public const string kUnlockableBitsRequiredDescription = "unlockable.BitsRequired.Description";
+  public const string kUnlockableBitsRequiredEarnMore = "unlockable.BitsRequired.EarnMore";
   public const string kUnlockableCubePounceTitle = "unlockable.CubePounce.Title";
   public const string kUnlockableCubePounceDescription = "unlockable.CubePounce.Description";
   public const string kUnlockableFaceEnrollmentTitle = "unlockable.FaceEnrollment.Title";
@@ -667,6 +668,7 @@ public static class LocalizationKeys {
   public const string kSparksPress = "sparks.Press";
   public const string kSparksSparkCozmo = "sparks.SparkCozmo";
   public const string kSparksSpark = "sparks.Spark";
+  public const string kSparksSparkPlural = "sparks.Spark.plural";
   public const string kUnlockableUnavailableDescription = "unlockable.Unavailable.Description";
   public const string kSparksSparkConfirmQuit = "sparks.Spark.ConfirmQuit";
   public const string kSparksSparkConfirmQuitDescription = "sparks.Spark.ConfirmQuit.Description";

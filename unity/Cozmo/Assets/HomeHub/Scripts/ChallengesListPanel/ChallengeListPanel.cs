@@ -22,7 +22,6 @@ namespace Cozmo.HomeHub {
     public override void Initialize(HomeView homeViewInstance) {
       base.Initialize(homeViewInstance);
       LoadTiles();
-      UnlockablesManager.Instance.ResolveNewUnlocks();
       UnlockablesManager.Instance.OnUnlockComplete += HandleUnlockCompleted;
     }
 

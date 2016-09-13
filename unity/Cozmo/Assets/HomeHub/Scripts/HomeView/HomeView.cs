@@ -505,6 +505,7 @@ namespace Cozmo.HomeHub {
         // then the callback from Onboarding will open the loot view.
         if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Loot)) {
           OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.Loot);
+          UIManager.EnableTouchEvents();
           OnboardingManager.Instance.OnOnboardingStageStarted += HandleOnboardingLootStarted;
         }
         else {

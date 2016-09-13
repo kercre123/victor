@@ -341,6 +341,10 @@ public interface IRobot : IDisposable {
 
   void EnableCubeSleep(bool enable);
 
+  void EnableCubeLightsStateTransitionMessages(bool enable);
+
+  void FlashCurrentLightsState(uint objectId);
+
   void EnableLift(bool enable);
 
   void EnterSDKMode();

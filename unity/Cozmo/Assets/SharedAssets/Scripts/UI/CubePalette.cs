@@ -46,6 +46,10 @@ namespace Cozmo {
       private CubeCycleColors _TapMeColor;
       public CubeCycleColors TapMeColor { get { return _TapMeColor; } }
 
+      [SerializeField]
+      private LightCubeSprite _LightCubeSpritePrefab;
+      public LightCubeSprite LightCubeSpritePrefab { get { return _LightCubeSpritePrefab; } }
+
       [System.Serializable]
       public class CubeColor {
         // TODO: Use generic sprites from mock tray or write a shader instead of

@@ -361,7 +361,8 @@ namespace Cozmo {
     }
     
     if (!_enabled) {
-      PRINT_CH_INFO("VisionComponent", "VisionComponent.SetNextImage", "Set next image but not enabled, t=%u(%d)",
+      PRINT_CH_INFO("VisionComponent",
+                    "VisionComponent.VisionComponent.SetNextImage", "Set next image but not enabled, t=%u(%d)",
                     encodedImage.GetTimeStamp(), encodedImage.GetTimeStamp());
       return RESULT_OK;
     }
@@ -552,7 +553,8 @@ namespace Cozmo {
             const bool isDroppingFrame = !_nextImg.IsEmpty();
             if(isDroppingFrame)
             {
-              PRINT_CH_INFO("VisionComponent", "SetNextImage.DroppedFrame",
+              PRINT_CH_INFO("VisionComponent",
+                            "VisionComponent.SetNextImage.DroppedFrame",
                             "Setting next image with t=%u, but existing next image from t=%u not yet processed (currently on t=%u).",
                             encodedImage.GetTimeStamp(),
                             _nextImg.GetTimeStamp(),
@@ -626,8 +628,9 @@ namespace Cozmo {
         // Only store this homography if the ROI still projects into the image
         _groundPlaneHomographyLUT[headAngle_rad] = H;
       } else {
-        PRINT_CH_INFO("VisionComponent", "PopulateGroundPlaneHomographyLUT.MaxHeadAngleReached",
-                         "Stopping at %.1fdeg", RAD_TO_DEG_F32(headAngle_rad));
+        PRINT_CH_INFO("VisionComponent",
+                      "VisionComponent.PopulateGroundPlaneHomographyLUT.MaxHeadAngleReached",
+                      "Stopping at %.1fdeg", RAD_TO_DEG_F32(headAngle_rad));
         break;
       }
     }
@@ -1333,7 +1336,8 @@ namespace Cozmo {
         
         PRINT_NAMED_EVENT("robot.vision.image_quality", "%s", EnumToString(errorCode));
         
-        PRINT_CH_DEBUG("VisionComponent", "UpdateImageQuality.BroadcastingImageQualityChange",
+        PRINT_CH_DEBUG("VisionComponent",
+                       "VisionComponent.UpdateImageQuality.BroadcastingImageQualityChange",
                        "Seeing %s for more than %u > %ums, broadcasting %s",
                        EnumToString(procResult.imageQuality), timeWithThisQuality_ms,
                        _waitForNextAlert_ms, EnumToString(errorCode));
@@ -1373,8 +1377,9 @@ namespace Cozmo {
       ImuDataHistory::ImuData prev, next;
       if(!_imuHistory.GetImuDataBeforeAndAfter(t, prev, next))
       {
-        PRINT_CH_INFO("VisionComponent", "VisionComponent.WasHeadMovingTooFast.NoIMUData",
-                            "Could not get next/previous imu data for timestamp %u", t);
+        PRINT_CH_INFO("VisionComponent",
+                      "VisionComponent.VisionComponent.WasHeadMovingTooFast.NoIMUData",
+                      "Could not get next/previous imu data for timestamp %u", t);
         return true;
       }
       
@@ -1405,7 +1410,7 @@ namespace Cozmo {
       ImuDataHistory::ImuData prev, next;
       if(!_imuHistory.GetImuDataBeforeAndAfter(t, prev, next))
       {
-        PRINT_CH_INFO("VisionComponent", "VisionComponent.WasBodyMovingTooFast",
+        PRINT_CH_INFO("VisionComponent", "VisionComponent.VisionComponent.WasBodyMovingTooFast",
                       "Could not get next/previous imu data for timestamp %u", t);
         return true;
       }
@@ -1438,7 +1443,8 @@ namespace Cozmo {
     if(RESULT_FAIL_ORIGIN_MISMATCH == result)
     {
       // Not a warning, this can legitimately happen
-      PRINT_CH_INFO("VisionComponent", "VisionComponent.AddLiftOccluder.PoseHistoryOriginMismatch",
+      PRINT_CH_INFO("VisionComponent",
+                    "VisionComponent.VisionComponent.AddLiftOccluder.PoseHistoryOriginMismatch",
                     "Cound not get pose at t=%u due to origin change. Skipping.", t_request);
       return;
     }

@@ -442,7 +442,12 @@ message RequestSetUnlockResult {
 message UnlockStatus {
   UnlockId unlocks[uint_8],
   bool fromBackup = 0
-}  
+}
+
+// Only called the first time so UI can show correct "new" badges on default unlocks
+message UnlockedDefaults {
+  UnlockId defaultUnlocks[uint_8]
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -540,11 +545,11 @@ message CubeLightsStateTransition {
 ///////////////////////////////////////////////////////////////////////////////
 
 structure BlockPoolBlockData {
-  uint_32 factory_id,
+  uint_32 factoryID,
   ObjectType objectType
 }
 
-message InitBlockPoolMessage {
+message BlockPoolDataMessage {
   uint_8              blockPoolEnabled,
   BlockPoolBlockData  blockData[uint_8]
 }

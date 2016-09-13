@@ -57,6 +57,8 @@ private:
   void ReadCurrentUnlocksFromRobot();
   
   bool IsUnlockIdValid(UnlockId id);
+  
+  void NotifyGameDefaultUnlocksSet();
 
   Robot& _robot;
 

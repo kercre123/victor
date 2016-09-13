@@ -728,6 +728,11 @@ public class Robot : IRobot {
   #endregion
 
   public void DeleteObservedObject(int id) {
+    if (id < 0) {
+      // Negative object ids are invalid
+      return;
+    }
+
     bool removedObject = false;
 
     if (Charger != null && Charger.ID == id) {
@@ -738,16 +743,15 @@ public class Robot : IRobot {
       LightCube removedLightCube;
       LightCubes.TryGetValue(id, out removedLightCube);
       removedObject = LightCubes.Remove(id);
-      if (OnLightCubeRemoved != null) {
-        OnLightCubeRemoved(removedLightCube);
+      if (removedObject) {
+        DAS.Debug("Robot.DeleteObservedObject", "Deleted ID " + id);
+        if (OnLightCubeRemoved != null) {
+          OnLightCubeRemoved(removedLightCube);
+        }        
+      } 
+      else {
+        DAS.Debug("Robot.DeleteObservedObject", "Tried to delete object with ID " + id + " but failed.");
       }
-    }
-
-    if (removedObject) {
-      DAS.Debug("Robot.DeleteObservedObject", "Deleted ID " + id);
-    }
-    else {
-      DAS.Debug("Robot.DeleteObservedObject", "Tried to delete object with ID " + id + " but failed.");
     }
   }
 
@@ -791,15 +795,17 @@ public class Robot : IRobot {
   }
 
   private void HandleBlockDataConnectionChanged(BlockPoolData blockData) {
-    DAS.Debug("Robot.HandleObjectConnectionState", (blockData.IsConnected ? "Connected " : "Disconnected ")
-              + "object of type " + blockData.ObjectType + " with ID " + blockData.ObjectID
-              + " and factoryId " + blockData.FactoryID.ToString("X"));
+//    DAS.Debug("Robot.HandleObjectConnectionState", (blockData.IsConnected ? "Connected " : "Disconnected ")
+//              + "object of type " + blockData.ObjectType + " with ID " + blockData.ObjectID
+//              + " and factoryId " + blockData.FactoryID.ToString("X"));
 
-    if (blockData.IsConnected) {
-      AddObservedObject((int)blockData.ObjectID, blockData.FactoryID, blockData.ObjectType);
-    }
-    else {
-      DeleteObservedObject((int)blockData.ObjectID);
+    if (blockData.ConnectionState == BlockConnectionState.Unavailable || blockData.ConnectionState == BlockConnectionState.Connected) {
+      if (blockData.IsConnected) {
+        AddObservedObject((int)blockData.ObjectID, blockData.FactoryID, blockData.ObjectType);
+      }
+      else {
+        DeleteObservedObject((int)blockData.ObjectID);
+      }
     }
   }
 
@@ -965,7 +971,6 @@ public class Robot : IRobot {
   private ObservedObject AddObservedObject(int id, uint factoryId, ObjectType objectType) {
     if (id < 0) {
       // Negative object ids are invalid
-      DAS.Warn("Robot.AddObservedObject", "Tried to add an object with an invalid object id! id=" + id + " objectType=" + objectType);
       return null;
     }
 
@@ -1943,6 +1948,16 @@ public class Robot : IRobot {
 
   public void EnableCubeSleep(bool enable) {
     RobotEngineManager.Instance.Message.EnableCubeSleep = Singleton<EnableCubeSleep>.Instance.Initialize(enable);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void EnableCubeLightsStateTransitionMessages(bool enable) {
+    RobotEngineManager.Instance.Message.EnableCubeLightsStateTransitionMessages = Singleton<EnableCubeLightsStateTransitionMessages>.Instance.Initialize(enable);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void FlashCurrentLightsState(uint objectId) {
+    RobotEngineManager.Instance.Message.FlashCurrentLightsState = Singleton<FlashCurrentLightsState>.Instance.Initialize(objectId);
     RobotEngineManager.Instance.SendMessage();
   }
 

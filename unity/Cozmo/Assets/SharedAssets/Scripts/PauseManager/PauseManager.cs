@@ -104,8 +104,6 @@ namespace Cozmo {
       if (!_IsPaused && shouldBePaused) {
         DAS.Debug("PauseManager.HandleApplicationPause", "Application being paused");
         _IsPaused = true;
-        CloseLowBatteryDialog();
-        CloseConfirmSleepDialog();
 
         Cozmo.HomeHub.HomeHub hub = Cozmo.HomeHub.HomeHub.Instance;
         if (null != hub) {
@@ -250,6 +248,8 @@ namespace Cozmo {
         alertView.TitleLocKey = LocalizationKeys.kConnectivityCozmoSleepTitle;
         alertView.DescriptionLocKey = LocalizationKeys.kConnectivityCozmoSleepDesc;
         _GoToSleepDialog = alertView;
+        // Set Music State
+        Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Sleep);
         if (OnPauseDialogOpen != null) {
           OnPauseDialogOpen.Invoke();
         }

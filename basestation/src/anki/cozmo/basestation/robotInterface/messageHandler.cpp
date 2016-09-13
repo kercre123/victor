@@ -65,6 +65,7 @@ void MessageHandler::Init(const Json::Value& config, RobotManager* robotMgr, con
     auto helper = MakeAnkiEventUtil(*context->GetExternalInterface(), *this, _signalHandles);
     using namespace ExternalInterface;
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ReliableTransportRunMode>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::ExitSdkMode>();
   }
 }
 
@@ -224,6 +225,13 @@ template<>
 void MessageHandler::HandleMessage(const ExternalInterface::ReliableTransportRunMode& msg)
 {
   _robotConnectionManager->SetReliableTransportRunMode(msg.isSync);
+}
+  
+template<>
+void MessageHandler::HandleMessage(const ExternalInterface::ExitSdkMode& msg)
+{
+  // Force robot to disconnect when leaving the sdk - ensures they will be in a default initialized state for main app
+  Disconnect();
 }
   
 } // end namespace RobotInterface

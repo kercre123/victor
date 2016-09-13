@@ -23,6 +23,7 @@ MonoBehaviour:
   _HideInUI: 0
   DescriptionKey: unlockable.PounceOnMotionAction.Description
   TitleKey: unlockable.PounceOnMotionAction.Title
+  SparkButtonDescription: unlockable.PounceOnMotionAction.SparkButtonDescription
   UpgradeCostItemId: TestHexItem0
   UpgradeCostAmountNeeded: 5
   RequestTrickCostItemId: treat

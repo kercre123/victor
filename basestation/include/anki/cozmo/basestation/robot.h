@@ -254,6 +254,11 @@ public:
   Pose3d                 GetCameraPose(f32 atAngle) const;
   Pose3d                 GetLiftPoseWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const;
   
+  // Figure out the head angle to look at the given pose. Orientaiton of pose is
+  // ignored. All that matters is its distance from the robot (in any direction)
+  // and height.
+  Result ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, f32 yTolFrac) const;
+  
   const PoseOriginList&  GetPoseOriginList() const { return _poseOriginList; }
   
   ObjectPoseConfirmer& GetObjectPoseConfirmer() { assert(_objectPoseConfirmerPtr); return *_objectPoseConfirmerPtr; }
@@ -739,6 +744,8 @@ public:
   const u32 GetSerialNumber() const { return _serialNumber; }
   void SetSerialNumber(const u32 num) { _serialNumber = num; }
   void SetModelNumber(const u32 num) { _modelNumber = num; }
+  
+  bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterTimeSync; }
   
 protected:
   

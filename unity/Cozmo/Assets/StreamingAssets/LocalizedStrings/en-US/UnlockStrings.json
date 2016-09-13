@@ -36,6 +36,9 @@
   "unlockable.BitsRequired.Description": {
     "translation": "Use {0} {1} to Unlock"
   },
+  "unlockable.BitsRequired.EarnMore": {
+    "translation": "Earn more by completing Daily Goals"
+  },
   "unlockable.CubePounce.Title": {
     "translation": "Keepaway"
   },
@@ -66,6 +69,9 @@
   "unlockable.CubeRollAction.Description": {
     "translation": "Cozmo prefers Cubes to be right side up. This Upgrade allows him to roll Cubes when they are on their side."
   },
+  "unlockable.CubeRollAction.SparkButtonDescription": {
+    "translation": "Tap to ask Cozmo to roll a Cube"
+  },
   "unlockable.DroneMode.Title": {
     "translation": "Explorer Mode"
   },
@@ -78,17 +84,26 @@
   "unlockable.CubeStackAction.Description": {
     "translation": "With this Upgrade, Cozmo gains the ability to create a stack of two Power Cubes."
   },
+  "unlockable.CubeStackAction.SparkButtonDescription": {
+    "translation": "Tap to ask Cozmo to stack two Cubes"
+  },
   "unlockable.PounceOnMotionAction.Title": {
     "translation": "Pounce On Fingers"
   },
   "unlockable.PounceOnMotionAction.Description": {
     "translation": "With this Upgrade, when Cozmo sees movement on the ground in front of him, such as a finger, he will playfully pounce on it!"
-   },
+  },
+  "unlockable.PounceOnMotionAction.SparkButtonDescription": {
+    "translation": "Tap to ask Cozmo to pounce on fingers"
+  },
   "unlockable.BuildPyramid.Title": {
     "translation": "Build a Pyramid"
   },
   "unlockable.BuildPyramid.Description": {
     "translation": "With this Upgrade, Cozmo gains the ability to build a pyramid out of three Power Cubes."
+  },
+  "unlockable.BuildPyramid.SparkButtonDescription": {
+    "translation": "Tap to ask Cozmo to build a pyramid"
   },
   "unlockable.PopAWheelieAction.Title": {
     "translation": "Pop a Wheelie"
@@ -96,17 +111,26 @@
   "unlockable.PopAWheelieAction.Description": {
     "translation": "Cozmo gains a new trick! With this Upgrade he can use a Cube to boost himself up, and pop a wheelie."
   },
+  "unlockable.PopAWheelieAction.SparkButtonDescription": {
+    "translation": "Tap to ask Cozmo to pop a wheelie"
+  },
   "unlockable.KnockOverThreeCubeStack.Title": {
     "translation": "Knock Over Stacks"
   },
   "unlockable.KnockOverThreeCubeStack.Description": {
     "translation": "With this Upgrade, any time Cozmo sees a stack of Power Cubes, he may decide to knock them over."
   },
+  "unlockable.KnockOverThreeCubeStack.SparkButtonDescription": {
+    "translation": "Tap to ask Cozmo to knock over a stack"
+  },
   "unlockable.PickupCube.Title": {
     "translation": "Pick Up Cube"
   },
   "unlockable.PickupCube.Description": {
     "translation": "With this Upgrade, Cozmo gains the ability to pick up Power Cubes and carry them around."
+  },
+  "unlockable.PickupCube.SparkButtonDescription": {
+    "translation": "Tap to ask Cozmo to pick up a Cube"
   },
   "unlockable.ComingSoon.Title": {
     "translation": "Coming Soon"
@@ -137,6 +161,9 @@
   },
   "sparks.Spark": {
     "translation": "Spark"
+  },
+  "sparks.Spark.plural": {
+    "translation": "Sparks"
   },
   "unlockable.Unavailable.Description": {
     "translation": "Unlock more upgrades before you can unlock {0}."
