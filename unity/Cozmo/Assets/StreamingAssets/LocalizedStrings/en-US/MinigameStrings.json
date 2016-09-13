@@ -19,7 +19,7 @@
     ]
   },
   "connect.label.showCubes": {
-    "translation": "Put {0} cubes in front of Cozmo."
+    "translation": "Put {0} Cubes in front of Cozmo."
   },
   "minigame.text.playerWins": {
     "translation": "Player\nWins!"
@@ -49,22 +49,22 @@
     "translation": "Cozmo Score"
   },
   "minigame.label.showCubes.singular": {
-    "translation": "Put {0} cube in front of Cozmo. It will turn white when he can see it."
+    "translation": "Put {0} Cube in front of Cozmo. It will turn white when he can see it."
   },
   "minigame.label.showCubes.plural": {
-    "translation": "Put {0} cubes in front of Cozmo. They'll turn white when he can see them."
+    "translation": "Put {0} Cubes in front of Cozmo. They'll turn white when he can see them."
   },
   "minigame.label.waitingForCubes.singular": {
-    "translation": "Waiting for cube..."
+    "translation": "Waiting for Cube..."
   },
   "minigame.label.waitingForCubes.plural": {
-    "translation": "Waiting for cubes..."
+    "translation": "Waiting for Cubes..."
   },
   "minigame.label.cubesReady.singular": {
-    "translation": "{0} cube ready!"
+    "translation": "{0} Cube ready!"
   },
   "minigame.label.cubesReady.plural": {
-    "translation": "{0} cubes ready!"
+    "translation": "{0} Cubes ready!"
   },
   "minigame.label.readyToPlay": {
     "translation": "Ready to Play?"
@@ -166,13 +166,13 @@
     "translation": "solo"
   },
   "simonGame.text.howToPlay": {
-    "translation": "Take turns with Cozmo to make patterns. When Cozmo makes a pattern, watch closely and  try to copy him by tapping the cubes in the same order. When It's your turn, tap the cubes to make a pattern for Cozmo to copy! The game ends when someone messes up. Try for a high score!"
+    "translation": "Take turns with Cozmo to make patterns. When Cozmo makes a pattern, watch closely and  try to copy him by tapping the Cubes in the same order. When It's your turn, tap the Cubes to make a pattern for Cozmo to copy! The game ends when someone messes up. Try for a high score!"
   },
   "simonGame.label.placeCenter": {
     "translation": "Put 1 Cube in front of Cozmo, and two others on either side.\n\nLeave space in-between."
   },
   "simonGame.label.waitingForCubes.placeCenter": {
-    "translation": "Waiting to see center cube..."
+    "translation": "Waiting to see center Cube..."
   },
   "simonGame.label.cubeReady": {
     "translation": "Cube ready!"
@@ -181,17 +181,17 @@
     "translation": "Move cubes further apart."
   },
   "simonGame.label.waitingForCubes.scanning": {
-    "translation": "Cozmo is checking the cubes..."
+    "translation": "Cozmo is checking the Cubes..."
   },
 
   "speedTap.roundsText": {
     "translation": "Round {0:N0}"
   },
   "speedTap.tapBlock": {
-    "translation": "Tap a flashing cube\nto play with!\n\nCubes should be separated."
+    "translation": "Tap a flashing Cube\nto play with!\n\nCubes should be separated."
   },
   "speedTap.tapBlockForRound": {
-    "translation": "Tap your cube to begin the next round."
+    "translation": "Tap your Cube to begin the next round."
   },
   "minigame.dontMoveCozmo.title": {
     "translation": "Cozmo has moved!"
@@ -200,17 +200,17 @@
     "translation": "Cozmo has moved and can't continue the game."
   },
   "minigame.lostTrackOfBlock.title": {
-    "translation": "Where'd the block go?"
+    "translation": "Where'd the Cube go?"
   },
   "minigame.lostTrackOfBlock.description": {
-    "translation": "Cozmo lost track of the block and can't continue the game."
+    "translation": "Cozmo lost track of the Cube and can't continue the game."
   },
 
   "speedTap.dontMoveBlock.title": {
-    "translation": "Cozmo's cube has moved!"
+    "translation": "Cozmo's Cube has moved!"
   },
   "speedTap.dontMoveBlock.description": {
-    "translation": "Cozmo can't find his cube! He can't keep playing."
+    "translation": "Cozmo can't find his Cube! He can't keep playing."
   },
   "treasureHunt.title": {
     "translation": "Treasure Hunt"
@@ -246,13 +246,13 @@
     "translation": "Guesses Left: {0}"
   },
   "codeBreaker.text.howToPlayShort": {
-    "translation": "Tap Cube: Change color.\n        'Guess Code' will be green when the cubes are lined up.\n\n        BACKPACK LIGHTS: \n        Green = A Cube is the correct color AND Position\n        Blue = A Cube is in the correct color, but the WRONG Position\n        Red = A Cube is in the WRONG color AND the WRONG Position"
+    "translation": "Tap Cube: Change color.\n        'Guess Code' will be green when the Cubes are lined up.\n\n        BACKPACK LIGHTS: \n        Green = A Cube is the correct color AND Position\n        Blue = A Cube is in the correct color, but the WRONG Position\n        Red = A Cube is in the WRONG color AND the WRONG Position"
   },
   "codeBreaker.text.howToPlayLong": {
-    "translation": "Guess Cozmo's Code before you run out of guesses!\n        The Code is a number of cubes of different colors, arranged horizontally in a line in front of Cozmo.\n        1. Cozmo will pick a code.\n        2. Tap a Cube to change the Cube's color.\n        3. Arrange the cubes in a line in front of Cozmo.\n        4. Tap 'Guess Code' when you're ready to guess.\n        5. Cozmo will display lights on his back to let you know correctness:\n        Green = A Cube is the correct color AND Position\n        Blue = A Cube is in the correct color, but the WRONG Position\n        Red = A Cube is in the WRONG color AND the WRONG Position"
+    "translation": "Guess Cozmo's Code before you run out of guesses!\n        The Code is a number of Cubes of different colors, arranged horizontally in a line in front of Cozmo.\n        1. Cozmo will pick a code.\n        2. Tap a Cube to change the Cube's color.\n        3. Arrange the Cubes in a line in front of Cozmo.\n        4. Tap 'Guess Code' when you're ready to guess.\n        5. Cozmo will display lights on his back to let you know correctness:\n        Green = A Cube is the correct color AND Position\n        Blue = A Cube is in the correct color, but the WRONG Position\n        Red = A Cube is in the WRONG color AND the WRONG Position"
   },
   "cubeSlap.text.howToPlay": {
-    "translation": "Cozmo will try to slap the cube after it turns green! Pull the cube away just as Cozmo trys to slap it. Be careful, if you move it too early you'll lose a life."
+    "translation": "Cozmo will try to slap the Cube after it turns green! Pull the Cube away just as Cozmo trys to slap it. Be careful, if you move it too early you'll lose a life."
   },
   "cubePounce.info.cozmoWinEarly": {
     "translation": "Cozmo wins! You moved the Cube too early!"
@@ -261,7 +261,7 @@
     "translation": "You Win! You were too fast for Cozmo!"
   },
   "cubePounce.info.waitForPounce": {
-    "translation": "Wait for Cozmo to pounce, then yank the cube away before they slap it!"
+    "translation": "Wait for Cozmo to pounce, then yank the Cube away before they slap it!"
   },
   "cubePounce.info.cozmoWinPoint": {
     "translation": "Cozmo wins! They slapped the Cube!"
