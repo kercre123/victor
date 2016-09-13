@@ -40,10 +40,10 @@
     "translation": "Cozmo is exploring his surroundings"
   },
   "behavior.BuildPyramid": {
-    "translation": "Cozmo is building a Pyramid"
+    "translation": ""
   },
   "behavior.KnockOverCubes": {
-    "translation": "Cozmo is knocking over cubes"
+    "translation": "Cozmo is knocking over Cubes"
   },
   "behavior.PopAWheelie": {
     "translation": "Cozmo is popping a wheelie"
@@ -76,7 +76,7 @@
     "translation": "Cozmo is upset"
   },
   "behavior.ReactToOnCharger": {
-    "translation": "Cozmo is going To Sleep"
+    "translation": "Cozmo is going to sleep"
   },
   "behavior.ReactToPickup": {
     "translation": "Cozmo wants to be put down"
@@ -85,7 +85,7 @@
     "translation": "Cozmo wants to be put upright"
   },
   "behavior.RequestToPlay": {
-    "translation": "Cozmo wants to play"
+    "translation": "Cozmo wants to play a game"
   },
   "behavior.AcknowledgeObject": {
     "translation": ""
