@@ -114,14 +114,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.09019608, g: 0.23529412, b: 0.34901962, a: 0.9411765}
+  m_Color: {r: 0.10294117, g: 0.26203206, b: 0.41176468, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: cd72f19e0e4cc4e36ad63b3195fe1df3, type: 3}
+  m_Sprite: {fileID: 21300000, guid: cd8652dcb3b244500a6bf0e4a70cb22a, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -221,10 +221,7 @@ MonoBehaviour:
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#button.continue"'
-  ModifiedLocalReferences:
-  - ObjectPath: ../../../
-    FieldName: Onboarding.ShowContinueStage:_ContinueButtonInstance
-    ReferencePath: 
+  ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
 --- !u!114 &11491018
 MonoBehaviour:
@@ -342,8 +339,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 17, y: 125}
-  m_SizeDelta: {x: 1114, y: 680}
+  m_AnchoredPosition: {x: 3.199974, y: 139}
+  m_SizeDelta: {x: 1086, y: 574}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22461814
 RectTransform:
@@ -381,8 +378,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 625, y: 150}
-  m_SizeDelta: {x: 1482, y: 1138}
+  m_AnchoredPosition: {x: 621, y: 148}
+  m_SizeDelta: {x: 1339, y: 1026}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22493250
 RectTransform:
