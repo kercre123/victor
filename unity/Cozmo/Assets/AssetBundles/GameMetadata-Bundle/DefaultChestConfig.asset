@@ -24,10 +24,10 @@ MonoBehaviour:
   - ItemId: TestHexItem0
     LadderLevels:
     - Level: 0
-      MinValue: 2
-      MaxValue: 4
+      MinValue: 4
+      MaxValue: 6
   - ItemId: treat
     LadderLevels:
     - Level: 0
-      MinValue: 2
-      MaxValue: 4
+      MinValue: 7
+      MaxValue: 13
