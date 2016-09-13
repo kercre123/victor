@@ -70,7 +70,7 @@
     "translation": "Cozmo is going to sleep and will disconnect soon"
   },
   "connectivity.cozmoLowBatteryTitle": {
-    "translation": "Low Battery"
+    "translation": "Cozmo is Low on Battery"
   },
   "connectivity.cozmoLowBatteryDesc": {
     "translation": "Please place Cozmo on his charger"

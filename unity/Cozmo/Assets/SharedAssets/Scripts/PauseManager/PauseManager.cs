@@ -6,6 +6,20 @@ using System.Collections;
 namespace Cozmo {
   public class PauseManager : MonoBehaviour {
 
+#if ENABLE_DEBUG_PANEL
+    public void FakeBatteryAlert() {
+      if (!ListeningForBatteryLevel) {
+        DAS.Warn("robot.low_battery", "blocked bad fake battery alert");
+        return;
+      }
+      if (!sLowBatteryEventLogged) {
+        sLowBatteryEventLogged = true;
+        DAS.Event("robot.low_battery", "");
+      }
+      OpenLowBatteryDialog();
+    }
+#endif
+
     private static PauseManager _Instance;
     public Action OnPauseDialogOpen;
     private bool _IsPaused = false;
@@ -18,7 +32,8 @@ namespace Cozmo {
     private float _LowPassFilteredVoltage = _kMaxValidBatteryVoltage;
     private bool _LowBatteryAlertTriggered = false;
     private AlertView _LowBatteryDialog = null;
-    public static bool _LowBatteryEventLogged = false;
+    public bool ListeningForBatteryLevel = false;
+    public static bool sLowBatteryEventLogged = false;
 
     private AlertView _SleepCozmoConfirmDialog;
 
@@ -55,19 +70,22 @@ namespace Cozmo {
 
     private void Start() {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.GoingToSleep>(HandleGoingToSleep);
-      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnection);
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnectionMessage);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleReactionaryBehavior);
     }
 
     private void Update() {
+      if (!ListeningForBatteryLevel) {
+        return;
+      }
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       // Battery voltage gets initialized to the float maxvalue, so ignore it until it's valid 
       if (null != robot && robot.BatteryVoltage <= _kMaxValidBatteryVoltage) {
         _LowPassFilteredVoltage = _LowPassFilteredVoltage * Settings.FilterSmoothingWeight + (1.0f - Settings.FilterSmoothingWeight) * robot.BatteryVoltage;
 
         if (!_IsPaused && !IsConfirmSleepDialogOpen && !IsGoToSleepDialogOpen && _LowPassFilteredVoltage < Settings.LowBatteryVoltageValue && !_LowBatteryAlertTriggered) {
-          if (!_LowBatteryEventLogged) {
-            _LowBatteryEventLogged = true;
+          if (!sLowBatteryEventLogged) {
+            sLowBatteryEventLogged = true;
             DAS.Event("robot.low_battery", "");
           }
           OpenLowBatteryDialog();
@@ -77,7 +95,7 @@ namespace Cozmo {
 
     private void OnDestroy() {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.GoingToSleep>(HandleGoingToSleep);
-      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnection);
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnectionMessage);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleReactionaryBehavior);
     }
 
@@ -167,6 +185,12 @@ namespace Cozmo {
         hub.StartFreeplay(robot);
         robot.EnableCubeSleep(false);
       }
+      else {
+        // If this is fired because we are returning from backgrounding the app
+        // but Cozmo has disconnected, CloseAllDialogs and handle it like a disconnect
+        PauseManager.Instance.PauseManagerReset();
+        IntroManager.Instance.ForceBoot();
+      }
     }
 
     // Handles message sent from engine when the player puts cozmo on the charger.
@@ -177,8 +201,13 @@ namespace Cozmo {
       OpenConfirmSleepCozmoDialog(handleOnChargerSleepCancel: true);
     }
 
-    private void HandleDisconnection(Anki.Cozmo.ExternalInterface.RobotDisconnected msg) {
+    private void HandleDisconnectionMessage(Anki.Cozmo.ExternalInterface.RobotDisconnected msg) {
+      PauseManagerReset();
+    }
+
+    private void PauseManagerReset() {
       CloseAllDialogs();
+      ListeningForBatteryLevel = false;
       _StartedIdleTimeout = false;
       _IsOnChargerToSleep = false;
       _LowPassFilteredVoltage = _kMaxValidBatteryVoltage;
@@ -258,9 +287,9 @@ namespace Cozmo {
 
     private void OpenLowBatteryDialog() {
       if (!IsLowBatteryDialogOpen) {
-        Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab);
+        Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_LowBattery);
         alertView.SetCloseButtonEnabled(true);
-        alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
+        alertView.DimBackground = true;
         alertView.TitleLocKey = LocalizationKeys.kConnectivityCozmoLowBatteryTitle;
         alertView.DescriptionLocKey = LocalizationKeys.kConnectivityCozmoLowBatteryDesc;
         _LowBatteryDialog = alertView;
@@ -270,11 +299,6 @@ namespace Cozmo {
           OnPauseDialogOpen.Invoke();
         }
       }
-    }
-
-    // returns true if the specified view is created by the pause manager
-    private bool IsPauseManagerView(BaseView view) {
-      return (view == _GoToSleepDialog || view == _SleepCozmoConfirmDialog || view == _IsOnChargerToSleep);
     }
 
     private void CloseAllDialogs() {

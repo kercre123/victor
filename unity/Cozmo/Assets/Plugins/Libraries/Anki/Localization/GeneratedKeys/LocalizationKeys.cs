@@ -1,4 +1,5 @@
 public static class LocalizationKeys {
+
   #region BehaviorStrings
 
   public const string kBehaviorBringCubeToBeacon = "behavior.BringCubeToBeacon";

@@ -18,6 +18,8 @@ MonoBehaviour:
     type: 2}
   _AlertViewPrefab_BadLight: {fileID: 11497196, guid: c0f4aad8d980c4533bc2aa6874374a65,
     type: 2}
+  _AlertViewPrefab_LowBattery: {fileID: 11497196, guid: 585c3cec3fa734ad99af4d59195a2742,
+    type: 2}
   _ScrollingTextViewPrefab: {fileID: 11422892, guid: a9bae51dad15b4085b12a1640c774477,
     type: 2}
   _LongConfirmationViewPrefab: {fileID: 11440366, guid: 4fca36139bdf345bcaccade90aaac395,

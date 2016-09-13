@@ -56,15 +56,14 @@ namespace Cozmo.HomeHub {
 
     private AnimationTrigger _MinigameGetOutAnimTrigger = AnimationTrigger.Count;
 
-    public override bool LoadHubWorld() {
+    public override void LoadHubWorld() {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(RefreshChallengeUnlockInfo);
       _Instance = this;
       LoadChallengeData(_ChallengeDataList, out _ChallengeStatesById);
       StartLoadHomeView();
-      return true;
     }
 
-    public override bool DestroyHubWorld() {
+    public override void DestroyHubWorld() {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(RefreshChallengeUnlockInfo);
       CloseMiniGameImmediately();
       if (_ChallengeDetailsDialogInstance != null) {
@@ -76,8 +75,8 @@ namespace Cozmo.HomeHub {
         DeregisterDialogEvents();
         _HomeViewInstance.CloseViewImmediately();
       }
-
-      return true;
+      // Kill yourself HomeHub
+      GameObject.Destroy(this.gameObject);
     }
 
     private void RefreshChallengeUnlockInfo(object message) {

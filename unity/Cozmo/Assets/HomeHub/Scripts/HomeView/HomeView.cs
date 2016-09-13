@@ -229,6 +229,8 @@ namespace Cozmo.HomeHub {
       UpdatePuzzlePieceCount();
 
       ChestRewardManager.Instance.ChestGained += HandleChestGained;
+      // Start listening for Battery Level popups now that HomeView is fully initialized
+      PauseManager.Instance.ListeningForBatteryLevel = true;
     }
 
     private void InitializeButtons(CozmoButton[] buttons, UnityEngine.Events.UnityAction callback, string dasButtonName) {
@@ -374,6 +376,7 @@ namespace Cozmo.HomeHub {
       _CozmoSelectedTabs.gameObject.SetActive(currentTab == HomeTab.Cozmo);
       _PlaySelectedTabs.gameObject.SetActive(currentTab == HomeTab.Play);
       _ProfileSelectedTabs.gameObject.SetActive(currentTab == HomeTab.Profile);
+      CheckIfUnlockablesAffordableAndUpdateBadge();
     }
 
     public Dictionary<string, ChallengeStatePacket> GetChallengeStates() {
@@ -441,7 +444,7 @@ namespace Cozmo.HomeHub {
           break;
         }
       }
-      _AnyUpgradeAffordableIndicator.SetActive(canAfford);
+      _AnyUpgradeAffordableIndicator.SetActive(canAfford && _CurrentTab != HomeTab.Cozmo);
     }
 
     #region Reward Sequence and Lootview
@@ -466,20 +469,24 @@ namespace Cozmo.HomeHub {
     private IEnumerator BurstEnergyAfterInit() {
       yield return new WaitForFixedUpdate();
       _RewardSequence = DOTween.Sequence();
+      int currPoints = ChestRewardManager.Instance.GetCurrentRequirementPoints();
+      int targetPoints = ChestRewardManager.Instance.GetNextRequirementPoints();
       // Only handle goal rewards 
       if (_CurrentTab == HomeTab.Play && DailyGoalManager.Instance.GoalsPending) {
-        int goalPointOffset = 0;
+        int incomingGoalPoints = 0;
         for (int i = 0; i < DailyGoalManager.Instance.PendingDailyGoals.Count; i++) {
           DailyGoal currGoal = DailyGoalManager.Instance.PendingDailyGoals[i];
           _RewardSequence = EnergyRewardsBurst(currGoal.PointsRewarded, GetGoalSource(currGoal), _RewardSequence);
-          goalPointOffset += currGoal.PointsRewarded;
+          incomingGoalPoints += currGoal.PointsRewarded;
         }
-        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints() - goalPointOffset, ChestRewardManager.Instance.GetNextRequirementPoints(), true);
+        int pointsToNext = targetPoints - currPoints;
+        int pointsToOffset = Mathf.Min(pointsToNext, incomingGoalPoints);
+        UpdateChestProgressBar(currPoints - pointsToOffset, targetPoints, true);
         DailyGoalManager.Instance.ResolveDailyGoalsEarned();
       }
       else {
         // Only do the offset for goal points since those are rewarded when the goal is completed
-        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
+        UpdateChestProgressBar(currPoints, targetPoints, true);
       }
       Transform source = _EnergyRewardStart_PlayTab;
       if (_CurrentTab == HomeTab.Cozmo) {

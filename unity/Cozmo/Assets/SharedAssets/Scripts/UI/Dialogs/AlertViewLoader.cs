@@ -44,6 +44,13 @@ namespace Cozmo {
       }
 
       [SerializeField]
+      private AlertView _AlertViewPrefab_LowBattery;
+
+      public AlertView AlertViewPrefab_LowBattery {
+        get { return _AlertViewPrefab_LowBattery; }
+      }
+
+      [SerializeField]
       private ScrollingTextView _ScrollingTextViewPrefab;
 
       public ScrollingTextView ScrollingTextViewPrefab {

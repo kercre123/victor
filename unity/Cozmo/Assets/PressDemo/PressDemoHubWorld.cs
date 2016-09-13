@@ -50,7 +50,7 @@ public class PressDemoHubWorld : HubWorldBase {
     DataPersistence.DataPersistenceManager.Instance.Save();
   }
 
-  public override bool LoadHubWorld() {
+  public override void LoadHubWorld() {
     DebugMenuManager.Instance.EnableLatencyPopup(false);
     LoadPressDemoView();
 
@@ -65,16 +65,15 @@ public class PressDemoHubWorld : HubWorldBase {
 
     RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.StartSleeping, HandleSleepAnimationComplete);
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Sleep);
-    return true;
   }
 
-  public override bool DestroyHubWorld() {
+  public override void DestroyHubWorld() {
     GameObject.Destroy(_PressDemoViewInstance.gameObject);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleRequestSpeedTap);
     RobotEngineManager.Instance.RemoveCallback<RequestEnrollFace>(HandleRequestEnrollFace);
     RobotEngineManager.Instance.RemoveCallback<DemoState>(HandleDemoState);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
-    return true;
+    GameObject.Destroy(this.gameObject);
   }
 
   private void LoadPressDemoView() {
