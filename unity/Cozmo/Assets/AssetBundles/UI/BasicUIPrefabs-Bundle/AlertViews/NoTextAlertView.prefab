@@ -196,7 +196,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
   ModifiedValues: []
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../../../
+    FieldName: Cozmo.UI.AlertView:_OptionalCloseDialogButton
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11435156
 MonoBehaviour:
