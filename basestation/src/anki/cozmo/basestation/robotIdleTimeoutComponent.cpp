@@ -68,7 +68,8 @@ template<>
 void RobotIdleTimeoutComponent::HandleMessage(const ExternalInterface::StartIdleTimeout& msg)
 {
   const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if (ShouldUpdateTimeoutHelper(currentTime, _faceOffTimeout_s, msg.faceOffTime_s))
+  // We need to have received our first state message from the robot (indicating successful communication) to send animations
+  if (_robot.HasReceivedFirstStateMessage() && ShouldUpdateTimeoutHelper(currentTime, _faceOffTimeout_s, msg.faceOffTime_s))
   {
     _faceOffTimeout_s = currentTime + msg.faceOffTime_s;
   }

@@ -119,6 +119,7 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   private void ReturnToTitle() {
+    IntroManager.Instance.ForceBoot();
     if (_ConnectionFlowBackgroundInstance != null) {
       _ConnectionFlowBackgroundInstance.ViewClosed += QuitConnectionFlow;
       UIManager.CloseView(_ConnectionFlowBackgroundInstance);
@@ -436,6 +437,12 @@ public class ConnectionFlow : MonoBehaviour {
   public void HandleRobotDisconnect() {
     if (_ReplaceCozmoOnChargerViewInstance != null) {
       // don't try to go through the search flow if the replace cozmo on charger view is up.
+      return;
+    }
+
+    // If we're showing the update app view, the user will need to get a new version, so don't do anything when
+    // the robot disconnects
+    if (_UpdateAppViewInstance != null) {
       return;
     }
 

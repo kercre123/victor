@@ -740,6 +740,8 @@ public:
   void SetSerialNumber(const u32 num) { _serialNumber = num; }
   void SetModelNumber(const u32 num) { _modelNumber = num; }
   
+  bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterTimeSync; }
+  
 protected:
   
   const CozmoContext* _context;

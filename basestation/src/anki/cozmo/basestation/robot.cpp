@@ -1050,6 +1050,10 @@ Result Robot::Update(bool ignoreVisionModes)
 {
   ANKI_CPU_PROFILE("Robot::Update");
   
+  const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  
+  _robotIdleTimeoutComponent->Update(currentTime);
+  
   if (!_gotStateMsgAfterTimeSync)
   {
     PRINT_NAMED_DEBUG("Robot.Update", "Waiting for first full robot state to be handled");
@@ -1131,10 +1135,6 @@ Result Robot::Update(bool ignoreVisionModes)
   // TODO: This object encompasses, for the time-being, what some higher level
   // module(s) would do.  e.g. Some combination of game state, build planner,
   // personality planner, etc.
-      
-  const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  
-  _robotIdleTimeoutComponent->Update(currentTime);
       
   _moodManager->Update(currentTime);
       
