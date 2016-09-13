@@ -105,6 +105,9 @@ namespace Anki {
     
     // Default distance from marker for predock pose
     const f32 DEFAULT_PREDOCK_POSE_DISTANCE_MM = 120.f;
+
+    // Closer distance to use for docking as well (in case we are already close to the cube)
+    const f32 CLOSE_PREDOCK_POSE_DISTANCE_MM = 60.0f;
     
     // Default distance to block for flip preDock pose
     const f32 DEFAULT_FLIP_PREDOCK_POSE_DISTAMCE_MM = 80.f;

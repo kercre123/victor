@@ -38,7 +38,8 @@ namespace Cozmo {
   // angle: angle about z-axis (which runs vertically along marker)
   //     x: distance along marker horizontal
   //     y: distance along marker normal
-  const Pose2d BLOCK_PREDOCK_POSE_OFFSETS[] = {{0, 0, DEFAULT_PREDOCK_POSE_DISTANCE_MM}
+  const Pose2d BLOCK_PREDOCK_POSE_OFFSETS[] = {{0, 0, DEFAULT_PREDOCK_POSE_DISTANCE_MM},
+                                               {0, 0, CLOSE_PREDOCK_POSE_DISTANCE_MM}
                                                //,{0, 0, 0.8f * DEFAULT_PREDOCK_POSE_DISTANCE_MM}
                                                //,{0, 0, 0.6f * DEFAULT_PREDOCK_POSE_DISTANCE_MM}
                                                //,{0.2f, 12, DEFAULT_PREDOCK_POSE_DISTANCE_MM}

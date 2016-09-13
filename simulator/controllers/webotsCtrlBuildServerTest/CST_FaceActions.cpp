@@ -73,10 +73,11 @@ namespace Anki {
         case TestState::TurnAwayFromFace:
         {
           // Verify robot has turned and has seen the face
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotHeadAngle_rad(), MAX_HEAD_ANGLE, HEAD_ANGLE_TOL) &&
-                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -90, 10) &&
-                                           _faceSeenTime != 0, DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetRobotHeadAngle_rad(), MAX_HEAD_ANGLE, HEAD_ANGLE_TOL),
+                                                NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -90, 10),
+                                                _faceSeenTime != 0)
           {
             SendMoveHeadToAngle(0, 20, 20);
             
@@ -95,10 +96,11 @@ namespace Anki {
         case TestState::TurnBackToFace:
         {
           // Verify robot has turned away from face
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL) &&
-                                           (NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -180, 10) ||
-                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 180, 10)), DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL),
+                                                (NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -180, 10) ||
+                                                 NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 180, 10)))
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -116,11 +118,12 @@ namespace Anki {
         case TestState::TestDone:
         {
           // Verify robot has turned back towards the face
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotHeadAngle_rad(), DEG_TO_RAD(45), DEG_TO_RAD(2)) &&
-                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -90, 10) &&
-                                           _prevFaceSeenTime < _faceSeenTime &&
-                                           _prevFaceSeenTime != 0, DEFAULT_TIMEOUT)
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetRobotHeadAngle_rad(), DEG_TO_RAD(42.5), DEG_TO_RAD(5)),
+                                                NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -90, 10),
+                                                _prevFaceSeenTime < _faceSeenTime,
+                                                _prevFaceSeenTime != 0)
           {
             CST_EXIT();
           }
