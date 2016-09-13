@@ -838,7 +838,8 @@ namespace Cozmo {
                  quad.corners[i].y < 0)
               {
                 quad = crntMarker.corners;
-                PRINT_CH_INFO("VisionSystem", "DetectMarkers", "Reiniting tracker and warping quad put it off the image using unwarped quad");
+                PRINT_CH_INFO("VisionSystem", "VisionSystem.DetectMarkers.WarpedQuadOOB",
+                              "Reiniting tracker and warping quad put it off the image using unwarped quad");
                 break;
               }
             }
@@ -868,14 +869,14 @@ namespace Cozmo {
     if(mean < kImageMeanTooDarkLowThreshold ||
        (mean < kImageMeanTooDarkHighThreshold && stddev < kImageStddevTooDarkThreshold))
     {
-      PRINT_CH_INFO("VisionSystem", "CheckImageQuality.TooDark",
+      PRINT_CH_INFO("VisionSystem", "VisionSystem.CheckImageQuality.TooDark",
                     "Mean:%u Stddev:%u", mean, stddev);
       _currentResult.imageQuality = ImageQuality::TooDark;
     }
     else if(mean > kImageMeanTooBrightHighThreshold ||
             (mean > kImageMeanTooBrightLowThreshold && stddev < kImageStddevTooBrightThreshold))
     {
-      PRINT_CH_INFO("VisionSystem", "CheckImageQuality.TooBright",
+      PRINT_CH_INFO("VisionSystem", "VisionSystem.CheckImageQuality.TooBright",
                     "Mean:%u Stddev:%u", mean, stddev);
       _currentResult.imageQuality = ImageQuality::TooBright;
     }
@@ -1911,7 +1912,7 @@ namespace Cozmo {
       {
         if(DEBUG_MOTION_DETECTION)
         {
-          PRINT_CH_INFO("VisionSystem", "DetectMotion.FoundCentroid",
+          PRINT_CH_INFO("VisionSystem", "VisionSystem.DetectMotion.FoundCentroid",
                          "Found motion centroid for %.1f-pixel area region at (%.1f,%.1f) "
                          "-- %.1f%% of ground area at (%.1f,%.1f)",
                          imgRegionArea, centroid.x(), centroid.y(),

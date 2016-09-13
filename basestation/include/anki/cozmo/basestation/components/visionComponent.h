@@ -344,7 +344,7 @@ struct DockingErrorSignal;
   }; // class VisionComponent
   
   inline void VisionComponent::Pause(bool isPaused) {
-    PRINT_CH_INFO("VisionComponent", "Pause.Set", "Setting Paused from %d to %d",
+    PRINT_CH_INFO("VisionComponent", "VisionComponent.Pause.Set", "Setting Paused from %d to %d",
                   _paused, isPaused);
     _paused = isPaused;
   }
