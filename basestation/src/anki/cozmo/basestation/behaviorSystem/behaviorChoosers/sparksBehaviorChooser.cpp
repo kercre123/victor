@@ -42,7 +42,7 @@ SparksBehaviorChooser::SparksBehaviorChooser(Robot& robot, const Json::Value& co
   , _minTimeSecs(-1.f)
   , _maxTimeSecs(-1.f)
   , _numberOfRepetitions(-1)
-  , _switchingSoftToHardSpark(false)
+  , _switchingToHardSpark(false)
   , _idleAnimationsSet(false)
 {
   ReloadFromConfig(robot, config);
@@ -93,7 +93,7 @@ void SparksBehaviorChooser::OnSelected()
   _timeChooserStarted = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _currentObjectiveCompletedCount = 0;
   _state = ChooserState::ChooserSelected;
-  _switchingSoftToHardSpark = false;
+  _switchingToHardSpark = false;
   _timePlayingOutroStarted = 0;
   _idleAnimationsSet = false;
   
@@ -109,7 +109,7 @@ void SparksBehaviorChooser::OnSelected()
   };
   
   
-  if(_robot.GetBehaviorManager().IsRequestedSparkSoft()){
+  if(!_robot.GetBehaviorManager().IsRequestedSparkSoft()){
     // Set the idle driving animations to sparks driving anims
     _robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::SparkDrivingStart,
                                                                AnimationTrigger::SparkDrivingLoop,
@@ -160,7 +160,8 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
   
   // This is checked first to ensure we switch over to the new
   // chooser state during the same tick and avoid another behavior starting
-  if(_state == ChooserState::UsingSimpleBehaviorChooser){
+  if(_state == ChooserState::UsingSimpleBehaviorChooser
+     || _state == ChooserState::WaitingForCurrentBehaviorToStop ){
     CheckIfSparkShouldEnd(robot);
   }
   
@@ -230,15 +231,15 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
     {
       bestBehavior = _behaviorPlayAnimation;
       if(currentRunningBehavior == nullptr || !currentRunningBehavior->IsRunning()){
-        // Notify the game that the spark is over unless the UI has already updated for a soft->hard spark switch
-        if(!_switchingSoftToHardSpark){
+        // Notify the game that the spark is over unless the UI has already updated for a hard spark
+        if(!_switchingToHardSpark){
           robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::SparkEnded>();
         }
         
         //Allow new goal to be chosen if we haven't recieved any updates from the user or switching to same spark
         if(robot.GetBehaviorManager().GetActiveSpark() == robot.GetBehaviorManager().GetRequestedSpark()
            && !robot.GetBehaviorManager().DidGameRequestSparkEnd()
-           && !_switchingSoftToHardSpark){
+           && !_switchingToHardSpark){
           robot.GetBehaviorManager().SetRequestedSpark(UnlockId::Count, false);
         }
         
@@ -276,7 +277,8 @@ void SparksBehaviorChooser::CheckIfSparkShouldEnd(Robot& robot)
   const bool gameRequestedSparkEnd = mngr.DidGameRequestSparkEnd();
   
   // Transitioning out of spark to freeplay  - end current spark elegantly
-  if(minTimeAndRepetitions || maxTimeout || gameRequestedSparkEnd)
+  if(_state == ChooserState::UsingSimpleBehaviorChooser
+     && (minTimeAndRepetitions || maxTimeout || gameRequestedSparkEnd))
   {
     robot.GetBehaviorManager().RequestCurrentBehaviorEndOnNextActionComplete();
     _state = ChooserState::WaitingForCurrentBehaviorToStop;
@@ -288,7 +290,7 @@ void SparksBehaviorChooser::CheckIfSparkShouldEnd(Robot& robot)
       
       if(softSparkToSoftSpark || softSparkToHardSpark){
         robot.GetBehaviorManager().RequestCurrentBehaviorEndImmediately("Sparks transition soft spark to soft spark");
-        _switchingSoftToHardSpark = true;
+        _switchingToHardSpark = true;
         _state = ChooserState::PlayingSparksOutro;
       }
     } // end (mngr.GetRequestedSpark() != UnlockID::Count)

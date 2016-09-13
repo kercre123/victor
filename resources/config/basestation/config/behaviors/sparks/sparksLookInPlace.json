@@ -25,17 +25,17 @@
     
     "s0_MainTurnCWChance": 0.5,
     
-    "s1_BodyAngleRangeMin_deg":  10.0,
-    "s1_BodyAngleRangeMax_deg":  30.0,
-    "s1_HeadAngleRangeMin_deg": -15.0,
-    "s1_HeadAngleRangeMax_deg":  -5.0,
+    "s1_BodyAngleRangeMin_deg":  20.0,
+    "s1_BodyAngleRangeMax_deg":  35.0,
+    "s1_HeadAngleRangeMin_deg": -5.0,
+    "s1_HeadAngleRangeMax_deg":  5.0,
     
     "s2_WaitMin_sec": 0.50,
     "s2_WaitMax_sec": 1.25,
     "s2_WaitAnimTrigger": "LookInPlaceForFacesBodyPause",
     
-    "s3_BodyAngleRangeMin_deg":  5.0,
-    "s3_BodyAngleRangeMax_deg": 25.0,
+    "s3_BodyAngleRangeMin_deg":  20.0,
+    "s3_BodyAngleRangeMax_deg": 35.0,
     "s3_HeadAngleRangeMin_deg": -5.0,
     "s3_HeadAngleRangeMax_deg":  5.0,
     
