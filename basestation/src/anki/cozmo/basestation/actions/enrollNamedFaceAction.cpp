@@ -216,7 +216,12 @@ namespace Cozmo {
       action = new TurnTowardsLastFacePoseAction(robot, DEG_TO_RAD_F32(45.f));
     }
     
-    return action;
+    CompoundActionParallel* liftAndTurnTowardsAction = new CompoundActionParallel(robot, {
+      new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK),
+      action
+    });
+    
+    return liftAndTurnTowardsAction;
   }
   
   IActionRunner* EnrollNamedFaceAction::CreateLookAroundAction()

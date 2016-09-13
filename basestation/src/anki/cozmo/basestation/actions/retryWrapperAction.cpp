@@ -131,7 +131,7 @@ namespace Cozmo {
         
         _animationAction = new TriggerLiftSafeAnimationAction(_robot, animTrigger);
         
-        _subAction->Reset(false);
+        _subAction->Reset(true);
       }
       else
       {

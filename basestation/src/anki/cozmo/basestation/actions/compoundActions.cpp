@@ -108,10 +108,11 @@ namespace Anki {
         // Because we need to unlock tracks when we would have normally deleted the action
         // (which unlocks the tracks) we now need to relock the tracks so that they can be unlocked
         // normally by the action destructor
+        // Also, only lock tracks if they aren't already locked as we will get only one unlock from the action destructor
         if(!_deleteActionOnCompletion)
         {
           if((*iter)->GetState() != ActionResult::FAILURE_NOT_STARTED &&
-             !(*iter)->IsSuppressingTrackLocking())
+             !(*iter)->IsSuppressingTrackLocking() &&  !_robot.GetMoveComponent().AreAllTracksLockedBy((*iter)->GetTracksToLock(), std::to_string((*iter)->GetTag())))
           {
             _robot.GetMoveComponent().LockTracks((*iter)->GetTracksToLock(), (*iter)->GetTag(), (*iter)->GetName());
           }
