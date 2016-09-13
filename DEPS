@@ -18,7 +18,7 @@
             },
             "cozmosoundbanks": {
                 "package_name": "GeneratedSoundBanks.tar.gz",
-                "version": "81"
+                "version": "82"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"
