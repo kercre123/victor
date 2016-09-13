@@ -248,6 +248,8 @@ namespace Cozmo {
         alertView.TitleLocKey = LocalizationKeys.kConnectivityCozmoSleepTitle;
         alertView.DescriptionLocKey = LocalizationKeys.kConnectivityCozmoSleepDesc;
         _GoToSleepDialog = alertView;
+        // Set Music State
+        Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Sleep);
         if (OnPauseDialogOpen != null) {
           OnPauseDialogOpen.Invoke();
         }

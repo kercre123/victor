@@ -89,7 +89,7 @@ public class IntroManager : MonoBehaviour {
       _CheckInDialogInstance.GetComponent<CheckInFlow>().HandleRobotDisconnect();
       return;
     }
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connectivity);
     UIManager.CloseAllViewsImmediately();
     UIManager.EnableTouchEvents();
     StartFlow();
