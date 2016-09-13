@@ -95,7 +95,9 @@ void BehaviorReactToRobotOnSide::HoldingLoop(Robot& robot)
       new WaitAction(robot, kWaitTimeBeforeRepeatAnim_s),
       // note: NothingToDoBored anims can move the robot, so Intro/Outro may not work here well, should
       // we be playing a specific loop here?
-      new TriggerAnimationAction(robot, AnimationTrigger::NothingToDoBoredEvent)
+      new TriggerAnimationAction(robot, AnimationTrigger::NothingToDoBoredIntro),
+      new TriggerAnimationAction(robot, AnimationTrigger::NothingToDoBoredEvent),
+      new TriggerAnimationAction(robot, AnimationTrigger::NothingToDoBoredOutro)
     }),  &BehaviorReactToRobotOnSide::HoldingLoop);
   }
 }
