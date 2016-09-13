@@ -97,7 +97,7 @@ def main(cli_args):
     "--configFile", GENERATED_CFG_NAME,
     "--numRuns", str(options.numRuns),
     "--password", options.password,
-    "--timeout", 30,
+    "--timeout", '30',
     "--numRetries", 0  # Don't retry any animations since the whole point of this is to catch intermittent aborts
   ]
 
