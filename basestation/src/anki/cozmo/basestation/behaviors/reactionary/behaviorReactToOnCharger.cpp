@@ -55,9 +55,8 @@ BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Val
 bool BehaviorReactToOnCharger::IsRunnableInternalReactionary(const Robot& robot) const
 {
   // assumes it's not possible to be OnCharger without being OnChargerPlatform
-  const ObservableObject* charger = robot.GetBlockWorld().GetObjectByID(robot.GetCharger(), ObjectFamily::Charger);
-  ASSERT_NAMED((charger == nullptr) || robot.IsOnChargerPlatform() || !robot.IsOnCharger(),
-               "BehaviorReactToOnCharger.IsRunnableInternal.InconsistentChargerFlags");
+  //ASSERT_NAMED(robot.IsOnChargerPlatform() || !robot.IsOnCharger(),
+  //             "BehaviorDriveOffCharger.IsRunnableInternal.InconsistentChargerFlags");
   
   return _isOnCharger;
 }
