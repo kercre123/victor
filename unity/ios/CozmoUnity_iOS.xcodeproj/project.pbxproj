@@ -136,7 +136,6 @@
 		83B2574F0E63025400468741 /* libiconv.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 83B2574E0E63025400468741 /* libiconv.2.dylib */; };
 		840D146DB5E8DF800E7FA9E0 /* Bulk_Generics_9.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 64B958AC6BD87F99753A4E26 /* Bulk_Generics_9.cpp */; };
 		85065E851BF1904400DBAF35 /* libDriveAudioEngine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 85065E841BF1904400DBAF35 /* libDriveAudioEngine.a */; };
-		85D6352F1CC9A92700A5FB8A /* libBLECozmo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 85D6352E1CC9A92700A5FB8A /* libBLECozmo.a */; };
 		85DD01461CD2A17300F2EAD5 /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 85DD01451CD2A17300F2EAD5 /* CoreBluetooth.framework */; };
 		85DEB8FF1C652A3C00202214 /* libDAS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 85DEB8FE1C652A3C00202214 /* libDAS.a */; };
 		85DF60091CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig in Resources */ = {isa = PBXBuildFile; fileRef = 85DF60081CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig */; };
@@ -477,7 +476,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				85DD01461CD2A17300F2EAD5 /* CoreBluetooth.framework in Frameworks */,
-				85D6352F1CC9A92700A5FB8A /* libBLECozmo.a in Frameworks */,
 				6F54323B1C8928C4006D3724 /* QuickLook.framework in Frameworks */,
 				6F5432391C8928AF006D3724 /* MobileCoreServices.framework in Frameworks */,
 				6F5432371C89288F006D3724 /* AssetsLibrary.framework in Frameworks */,
