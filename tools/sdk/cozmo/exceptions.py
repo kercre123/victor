@@ -8,6 +8,9 @@ class CozmoSDKException(Exception):
 class ConnectionAborted(CozmoSDKException):
     '''Raised if the connection to the device is unexpectedly lost.'''
 
+class SDKShutdown(CozmoSDKException):
+    '''Raised when the SDK is being shut down'''
+
 class SDKVersionMismatch(CozmoSDKException):
     '''Raised if the Cozmo SDK version is not compatible with the software running on the device.'''
 

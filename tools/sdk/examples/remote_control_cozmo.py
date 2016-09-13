@@ -6,7 +6,6 @@ import sys
 '''
 
 import flask_helpers
-import old_sdk_image_manager # until we have the new system
 
 
 try:
@@ -56,9 +55,8 @@ def remap_to_range(x, x_min, x_max, out_min, out_max):
 
 class RemoteControlCozmo:
 
-    def __init__(self, coz, image_manager):
+    def __init__(self, coz):
         self.cozmo = coz
-        self.image_manager = image_manager
 
         self.drive_forwards = 0
         self.drive_back = 0
@@ -544,9 +542,9 @@ def handle_updateCozmo():
 def handle_cozmoImage():
     '''Called very frequently from Javascript to request the latest camera image'''
     if remote_control_cozmo:
-        image = remote_control_cozmo.image_manager.GetImage()
+        image = remote_control_cozmo.cozmo.world.latest_image
         if image:
-            return flask_helpers.serve_pil_image( image )
+            return flask_helpers.serve_pil_image( image.raw_image )
     return flask_helpers.serve_pil_image( _default_camera_image )
 
 
@@ -633,15 +631,11 @@ def handle_getDebugInfo():
 def run(coz_conn):
     coz = coz_conn.wait_for_robot()
 
-    # Use old sdk's image manager for now:
-    image_manager = old_sdk_image_manager.OldSdkImageManager(cozmo._clad._clad_to_game_cozmo,
-                                                             cozmo._clad._clad_to_engine_cozmo)
-    coz_conn.add_image_chunk_handler(image_manager.ImageChunk)
-
     global remote_control_cozmo
-    remote_control_cozmo = RemoteControlCozmo(coz, image_manager)
+    remote_control_cozmo = RemoteControlCozmo(coz)
 
-    coz.set_robot_image_send_mode()  # image chunks aren't sent over by default
+    # Turn on image receiving by the camera
+    coz.camera.image_stream_enabled = True
 
     flask_helpers.run_flask(flask_app)
 

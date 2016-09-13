@@ -10,6 +10,7 @@ from . import logger, logger_protocol
 from . import action
 from . import anim
 from . import behavior
+from . import camera
 from . import conn
 from . import event
 from . import lights
@@ -64,6 +65,7 @@ class PickupObject(action.Action):
     def _encode(self):
         return _clad_to_engine_iface.PickupObject(objectID=self.obj.object_id, usePreDockPose=self.use_pre_dock_pose)
 
+
 class PlaceOnObject(action.Action):
     '''Tracks the state of the "place on object" action.
 
@@ -83,6 +85,7 @@ class PlaceOnObject(action.Action):
     def _encode(self):
         return _clad_to_engine_iface.PlaceOnObject(objectID=self.obj.object_id, usePreDockPose=self.use_pre_dock_pose)
 
+
 class PlaceObjectOnGroundHere(action.Action):
     '''Tracks the state of the "place object on ground here" action.
 
@@ -99,6 +102,7 @@ class PlaceObjectOnGroundHere(action.Action):
 
     def _encode(self):
         return _clad_to_engine_iface.PlaceObjectOnGroundHere()
+
 
 class SayText(action.Action):
     '''Tracks the progress of a say text robot action.
@@ -197,6 +201,7 @@ class TurnInPlace(action.Action):
             angle_rad = self.angle.radians,
             isAbsolute = 0)
 
+
 class TurnTowardsFace(action.Action):
     '''Tracks the progress of a turn towards face robot action.
 
@@ -215,12 +220,17 @@ class TurnTowardsFace(action.Action):
         return _clad_to_engine_iface.TurnTowardsFace(
             faceID=self.face.face_id)
 
+
 class Cozmo(event.Dispatcher):
     """The interface to a Cozmo robot.
 
     A robot has access to:
 
-    * A World object, which tracks the state of the world the robot knows about
+    * A :class:`~cozmo.world.World` object (:attr:`cozmo.robot.Cozmo.world`), 
+        which tracks the state of the world the robot knows about
+
+    * A :class:`~cozmo.camera.Camera` object (:attr:`cozmo.robot.Cozmo.camera`), 
+        which provides access to Cozmo's camera
 
     * An Animations object, controlling the playing of animations on the robot
 
@@ -247,6 +257,7 @@ class Cozmo(event.Dispatcher):
     animation_factory = anim.Animation
     animation_trigger_factory = anim.AnimationTrigger
     behavior_factory = behavior.Behavior
+    camera_factory = camera.Camera
     world_factory = world.World
 
 
@@ -258,7 +269,12 @@ class Cozmo(event.Dispatcher):
         self._pose = None
         self.is_primary = is_primary
 
+        #: :class:`cozmo.camera.Camera` Provides access to the robot's camera
+        self.camera = self.camera_factory(self, dispatch_parent=self)
+
+        #: :class:`cozmo.world.World` Tracks state information about Cozmo's world.
         self.world = self.world_factory(self.conn, self, dispatch_parent=self)
+
         self._action_dispatcher = self._action_dispatcher_factory(self)
 
         # send all received events to the world and action dispatcher
@@ -337,6 +353,9 @@ class Cozmo(event.Dispatcher):
     def _recv_msg_processed_image(self, _, *, msg):
         pass
 
+    def _recv_msg_image_chunk(self, evt, *, msg):
+        self.camera.dispatch_event(evt)
+
     def _recv_msg_robot_state(self, evt, *, msg):
         #TODO flesh out the rest of the params in the robotState message
         self._pose = util.Pose(x=msg.pose.x, y=msg.pose.y, z=msg.pose.z,
@@ -373,18 +392,6 @@ class Cozmo(event.Dispatcher):
         msg = _clad_to_engine_iface.EnableReactionaryBehaviors(enabled=should_enable)
         self.conn.send_msg(msg)
 
-    def set_robot_image_send_mode(self, enable_stream=True):
-        '''Send this message when you want to enable Cozmo streaming images to the SDK.'''
-        if enable_stream:
-            image_send_mode = _clad_to_engine_cozmo.ImageSendMode.Stream
-        else:
-            image_send_mode = _clad_to_engine_cozmo.ImageSendMode.Off
-
-        image_resolution = _clad_to_engine_cozmo.ImageResolution.QVGA
-
-        msg = _clad_to_engine_iface.SetRobotImageSendMode(
-                robotID=self.robot_id, mode=image_send_mode, resolution=image_resolution)
-        self.conn.send_msg(msg)
 
     ### Low-Level Commands ###
 

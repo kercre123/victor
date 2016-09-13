@@ -1,14 +1,15 @@
-__all__ = ['connect',  'connect_on_loop', 'setup_basic_logging']
+__all__ = ['connect',  'connect_with_tkviewer', 'connect_on_loop',
+           'setup_basic_logging']
 
 import threading
 
 import asyncio
 import concurrent.futures
 import functools
+import inspect
 import logging
 import os
 import queue
-import signal
 import sys
 
 from . import logger, logger_protocol
@@ -16,6 +17,13 @@ from . import logger, logger_protocol
 from . import clad_protocol
 from . import base
 from . import conn
+from . import event
+from . import exceptions
+
+try:
+    from . import tkview
+except ImportError:
+    tkview = None
 
 
 
@@ -37,6 +45,7 @@ class _LoopThread:
         self.abort_future = abort_future
         self.conn_factory = conn_factory
         self.thread = None
+        self._running = False
 
     def start(self):
         q = queue.Queue()
@@ -52,9 +61,8 @@ class _LoopThread:
                 return
 
             if self.f:
-                self.loop.run_until_complete(self.f(coz_conn))
-            else:
-                self.loop.run_forever()
+                asyncio.ensure_future(self.f(coz_conn))
+            self.loop.run_forever()
 
         self.thread = threading.Thread(target=run_loop)
         self.thread.start()
@@ -64,14 +72,28 @@ class _LoopThread:
             raise TimeoutError("Timed out waiting for connection to device")
         if isinstance(coz_conn, Exception):
             raise coz_conn
+        self.coz_conn = coz_conn
+        self._running = True
         return coz_conn
 
-    async def _stop(self):
-        self.loop.call_soon(lambda: self.loop.stop())
 
     def stop(self):
-        asyncio.run_coroutine_threadsafe(self._stop(), self.loop).result()
-        self.thread.join()
+        if self._running:
+            async def _stop():
+                await self.coz_conn.shutdown()
+                #asyncio.run_coroutine_threadsafe(lt.coz_conn.shutdown(), loop).result()
+                self.loop.call_soon(lambda: self.loop.stop())
+            asyncio.run_coroutine_threadsafe(_stop(), self.loop).result()
+            self.thread.join()
+            self._running = False
+
+    def abort(self, exc):
+        if self._running:
+            async def _abort(exc):
+                self.coz_conn.abort(exc)
+            asyncio.run_coroutine_threadsafe(_abort(exc), self.loop).result()
+            self.stop()
+
 
 
 def _connect_async(f, conn_factory=conn.CozmoConnection):
@@ -94,25 +116,10 @@ def _connect_sync(f, conn_factory=conn.CozmoConnection):
 
     coz_conn = lt.start()
 
-    def _sighandler(signum, frame):
-        abort_future.set_exception(Exception("SIGINT"))
-
-    async def _abort(exc):
-        coz_conn.abort(exc)
-
-    orgsig = signal.signal(signal.SIGINT, _sighandler)
-
     try:
         f(base._SyncProxy(coz_conn))
-    except Exception as exc:
-        asyncio.run_coroutine_threadsafe(_abort(exc), loop).result()
-        lt.stop()
-        raise
-    else:
-        asyncio.run_coroutine_threadsafe(coz_conn.shutdown(), loop).result()
-        lt.stop()
     finally:
-        signal.signal(signal.SIGINT, orgsig)
+        lt.stop()
 
 
 def connect_on_loop(loop, conn_factory=conn.CozmoConnection):
@@ -145,16 +152,16 @@ def connect_on_loop(loop, conn_factory=conn.CozmoConnection):
 
 
 def connect(f, conn_factory=conn.CozmoConnection):
-    '''Connects to the Cozmo Engine on the mobile device and executes an asynchronous function.
+    '''Connects to the Cozmo Engine on the mobile device and supplies the connection to a function.
 
-    Accepts a function, f, that is given a :class:`cozmo.CozmoConnection` object as
+    Accepts a function, f, that is given a :class:`cozmo.conn.CozmoConnection` object as
     a parameter.
 
     The supplied function may be either an asynchronous coroutine function
-    (normally defined using "async def") or a regular synchronous function.
+    (normally defined using ``async def``) or a regular synchronous function.
 
     If an asynchronous function is supplied it will be run on the same thread
-    as the Cozmo event loop and must use the "await" keyword to yield control
+    as the Cozmo event loop and must use the ``await`` keyword to yield control
     back to the loop.
 
     If a synchronous function is supplied then it will run on the main thread
@@ -173,6 +180,52 @@ def connect(f, conn_factory=conn.CozmoConnection):
     if asyncio.iscoroutinefunction(f):
         return _connect_async(f, conn_factory)
     return _connect_sync(f, conn_factory)
+
+
+def connect_with_tkviewer(f, conn_factory=conn.CozmoConnection):
+    '''Setup a connection to a device and run a user function while displaying Cozmo's camera.
+
+    This display a Tk window on the screen showing a view of Cozmo's camera.
+    It will return an error if the current system does not support Tk.
+
+    The function may be either synchronous or asynchronous (defined
+    used ``async def``).
+
+    The function must accept a :class:`cozmo.CozmoConnection` object as
+    its only argument.
+    This call will block until the supplied function completes.
+    '''
+    if tkview is None:
+        raise NotImplementedError('tkviewer not available on this platform; '
+            'make sure tkinter and pillow libraries are installed')
+
+    viewer = tkview.TkImageViewer()
+
+    loop = asyncio.new_event_loop()
+    abort_future = concurrent.futures.Future()
+
+    async def view_connector(coz_conn):
+        await viewer.connect(coz_conn)
+
+        try:
+            if inspect.iscoroutinefunction(f):
+                await f(coz_conn)
+            else:
+                await coz_conn._loop.run_in_executor(None, f, base._SyncProxy(coz_conn))
+        finally:
+            viewer.disconnect()
+
+    try:
+        if not inspect.iscoroutinefunction(f):
+            conn_factory = functools.partial(conn_factory, _sync_abort_future=abort_future)
+        lt = _LoopThread(loop, f=view_connector, conn_factory=conn_factory)
+        lt.start()
+        viewer.mainloop()
+    except BaseException as e:
+        abort_future.set_exception(exceptions.SDKShutdown(repr(e)))
+        raise
+    finally:
+        lt.stop()
 
 
 def setup_basic_logging(general_log_level=None, protocol_log_level=None,

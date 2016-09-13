@@ -68,10 +68,6 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
 
         #: An anim.AnimationNames object that references all available animation names
         self.anim_names = self.anim_names_factory(self)
-        self._image_chunk_handlers = []
-
-    def add_image_chunk_handler(self, image_handler):
-        self._image_chunk_handlers.append( image_handler )
 
     def connection_made(self, transport):
         super().connection_made(transport)
@@ -92,14 +88,7 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
         if self._running and self._is_connected:
             logger.info("Shutting down connection")
             self._running = False
-            self._stop_dispatcher()
-            self.transport.close()
-
-    def abort(self, exc):
-        '''Triggers an abort of the connection.'''
-        if self._running:
-            self._running = False
-            event._abort_futures(exc)
+            event._abort_futures(exceptions.SDKShutdown())
             self._stop_dispatcher()
             self.transport.close()
 
@@ -156,6 +145,7 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
             robot._initialize()
 
         robot.dispatch_event(evttype, msg=msg)
+
 
 
     #### Properties ####
@@ -248,16 +238,16 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
             except AttributeError:
                 pass
             exc = exceptions.SDKVersionMismatch("SDK library does not match software running on device")
-            self.abort(exc)
+            self.shutdown()
             raise exc
 
         self.dispatch_event(EvtConnected, conn=self)
         self.anim_names.refresh()
         logger.info("UI device connected")
 
-    def _recv_msg_image_chunk(self, _, *, msg):
-        for image_chunk_handler in self._image_chunk_handlers:
-            image_chunk_handler(msg)
+    def _recv_msg_image_chunk(self, evt, *, msg):
+        if self._primary_robot:
+            self._primary_robot.dispatch_event(evt)
 
 
     #### Public Event Handlers ####

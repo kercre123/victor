@@ -10,6 +10,7 @@ The API
     cozmo.anim
     cozmo.action
     cozmo.behavior
+    cozmo.camera
     cozmo.conn
     cozmo.event
     cozmo.exceptions
