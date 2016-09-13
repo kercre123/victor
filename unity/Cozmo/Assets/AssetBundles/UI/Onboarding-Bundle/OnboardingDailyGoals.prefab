@@ -221,7 +221,10 @@ MonoBehaviour:
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#button.continue"'
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../../../
+    FieldName: Onboarding.ShowContinueStage:_ContinueButtonInstance
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11491018
 MonoBehaviour:
