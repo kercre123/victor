@@ -30,6 +30,9 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
   private const int _kMaxTextureSize = 2048;
   private const int _kAnisoLevel = 16;
 
+  private const float _kHDScaleFactor = 0.5f;
+  private const float _kSDScaleFactor = 0.35f;
+
   static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths) {
     // TODO handle materials
   }
@@ -87,10 +90,10 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
   private float GetPixelsPerUnit() {
     float ppu = _kSpritePixelsPerUnit;
     if (IsSDAsset()) {
-      ppu *= 0.25f;
+      ppu *= _kSDScaleFactor;
     }
     else if (IsHDAsset()) {
-      ppu *= 0.5f;
+      ppu *= _kHDScaleFactor;
     }
     return ppu;
   }
@@ -101,11 +104,11 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
     float borderScale = 1f;
     if (IsHDAsset()) {
       uhdAssetPath = assetPath.Replace(_kHDBundleTag, _kUHDBundleTag);
-      borderScale = 0.5f;
+      borderScale = _kHDScaleFactor;
     }
     else if (IsSDAsset()) {
       uhdAssetPath = assetPath.Replace(_kSDBundleTag, _kUHDBundleTag);
-      borderScale = 0.25f;
+      borderScale = _kSDScaleFactor;
     }
 
     if (!string.IsNullOrEmpty(uhdAssetPath)) {
@@ -138,8 +141,8 @@ public class SpriteAssetPostProcessor : AssetPostprocessor {
     if (IsUISprite() || IsTexture() || IsRepeatTexture()) {
       if (IsUHDAsset()) {
         Debug.Log("Detected UHD texture import at " + assetPath + ". Creating smaller versions in HD and SD folders.");
-        CreateCopyOfTexture(texture, 0.5f, _kHDBundleTag);
-        CreateCopyOfTexture(texture, 0.25f, _kSDBundleTag);
+        CreateCopyOfTexture(texture, _kHDScaleFactor, _kHDBundleTag);
+        CreateCopyOfTexture(texture, _kSDScaleFactor, _kSDBundleTag);
         AssetDatabase.Refresh();
       }
     }
