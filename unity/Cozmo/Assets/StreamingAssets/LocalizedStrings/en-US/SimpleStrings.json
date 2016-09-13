@@ -228,6 +228,9 @@
   "label.privacyPolicy": {
     "translation": "Privacy Policy"
   },
+  "button.openEnvelope": {
+    "translation": "TAP TO OPEN"
+  },
   "label.pressAndHoldInstruction":{
     "translation": "Press and hold {0} to confirm"
   }

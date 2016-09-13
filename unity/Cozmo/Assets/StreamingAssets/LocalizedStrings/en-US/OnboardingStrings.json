@@ -85,10 +85,10 @@
     "translation": "When the chip is fully charged..."
   },
   "onboarding.Phase4.Body2b": {
-    "translation": "...open it to get more <color=#ffcc00ff>Bits</color> & <color=#11a2f0ff>Sparks</color>!"
+    "translation": "...open it to get more <color=#fe8f00ff>Bits</color> & <color=#11a2f0ff>Sparks</color>!"
   },
   "onboarding.Phase4.Body3bits": {
-    "translation": "Use <color=#ffcc00ff>Bits</color> to unlock new Upgrades"
+    "translation": "Use <color=#fe8f00ff>Bits</color> to unlock new Upgrades"
   },
   "onboarding.Phase4.Body3sparks": {
     "translation": "Use <color=#11a2f0ff>Sparks</color> to ask Cozmo to perform tricks"

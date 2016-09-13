@@ -172,7 +172,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.4, g: 0.4, b: 0.4, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -186,14 +186,14 @@ MonoBehaviour:
     m_BestFit: 0
     m_MinSize: 0
     m_MaxSize: 300
-    m_Alignment: 2
+    m_Alignment: 5
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: '#helpTipsStrings.viewTitle'
-  _AllUppercase: 1
+  _AllUppercase: 0
   GlowText: 0
 --- !u!114 &11476324
 MonoBehaviour:
@@ -238,6 +238,7 @@ MonoBehaviour:
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 1
+  DimBackgroundPrefabOverride: {fileID: 0}
 --- !u!114 &11496762
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -387,9 +388,9 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -100, y: -110}
-  m_SizeDelta: {x: 2055, y: 150}
-  m_Pivot: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -799, y: -178}
+  m_SizeDelta: {x: 1319, y: 216}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22493182
 RectTransform:
   m_ObjectHideFlags: 1
