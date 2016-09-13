@@ -1,5 +1,5 @@
-__ALL__ = ['Angle', 'degrees', 'radians', 
-           'Pose', 'pose_quaternion', 'pose_angle_z', 
+__ALL__ = ['Angle', 'degrees', 'radians',
+           'Pose', 'pose_quaternion', 'pose_angle_z',
            'Position', 'position_x_y_z',
            'Rotation', 'rotation_quaternion', 'rotation_z_angle']
 
@@ -82,7 +82,7 @@ class Pose:
     Use the :func:'pose_angle_z' to return pose in the form of
     position and rotation defined by rotation about the z axis
     '''
-        
+
     __slots__ = ('_position', '_rotation', '_origin_id')
 
     def __init__(self, x, y, z, q0=None, q1=None, q2=None, q3=None, angle_z=None, origin_id=0):
@@ -109,14 +109,14 @@ class Pose:
 
     def __mul__(self, other):
         if not isinstance(other, (int, float)):
-            raise TypeError("Unsupported operand for * expected number")  
+            raise TypeError("Unsupported operand for * expected number")
         pos = self.position * other
         rot = self.rotation * other
         return pose_quaternion(pos.x, pos.y, pos.z, rot.q0, rot.q1, rot.q2, rot.q3)
 
     def __truediv__(self, other):
         if not isinstance(other, (int, float)):
-            raise TypeError("Unsupported operand for / expected number")  
+            raise TypeError("Unsupported operand for / expected number")
         pos = self.position / other
         rot = self.rotation / other
         return pose_quaternion(pos.x, pos.y, pos.z, rot.q0, rot.q1, rot.q2, rot.q3)
@@ -273,7 +273,7 @@ def angle_z_to_quaternion(angle_z):
     '''This function converts an angle in the z axis (eueler angler z component) to a quaternion.
 
     Args:
-        angle_z (:class:`cozmo.util.Angle`): The z axis angle. 
+        angle_z (:class:`cozmo.util.Angle`): The z axis angle.
 
     Returns:
         q0,q1,q2,q3 (foat, float, float, float): A tuple with all the members of a quaternion defined by angle_z.
@@ -290,13 +290,13 @@ def angle_z_to_quaternion(angle_z):
     # q3 = cos(x/2)*cos(y/2)*sin(z/2) - sin(x/2)*sin(y/2)*cos(z/2)
     q3 = math.sin(angle_z.radians/2)
     return q0,q1,q2,q3
-    
+
 class Position:
     '''Represents the rotation of an object in the world. Can be generated with
     quaternion to define it's rotation in 3d space, or with only a z axis rotation
     for simple rotation of things like cozmo.
     '''
-    
+
     __slots__ = ('_x', '_y', '_z')
 
     def __init__(self, x, y, z):
@@ -308,12 +308,12 @@ class Position:
     def x(self):
         '''The x value of this position in mm.'''
         return self._x
-    
+
     @property
     def y(self):
         '''The y value of this position in mm.'''
         return self._y
-    
+
     @property
     def z(self):
         '''The z value of this position in mm.'''
@@ -323,7 +323,7 @@ class Position:
     def x_y_z(self):
         '''A tuple containing all elements of the position (x,y,z)'''
         return self._x,self._y,self._z
-    
+
     def __repr__(self):
         return "<%s x: %.2f y: %.2f z: %.2f>" % (self.__class__.__name__, self.x, self.y, self.z)
 

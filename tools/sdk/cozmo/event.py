@@ -322,7 +322,7 @@ class Dispatcher(base.Base):
         Args:
             event (:class:`Event`): The event class, or an instance thereof,
                 used with register_event_handler.
-            f (callable): The callable object that was passed as a handler to 
+            f (callable): The callable object that was passed as a handler to
                 register_event_handler, or a Handler instance
         Raises:
             ValueError: No matching handler found

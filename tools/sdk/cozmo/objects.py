@@ -34,7 +34,6 @@ class EvtObjectConnectChanged(event.Event):
 
 
 
-
 class ObservableObject(event.Dispatcher):
     '''The base type for objects in Cozmo's world.'''
 
@@ -163,7 +162,7 @@ class LightCube(ObservableObject):
 
 
     #### Properties ####
-    
+
     #### Private Event Handlers ####
     def _recv_msg_object_tapped(self, evt, *, msg):
         changed_fields = {'last_event_time', 'last_tapped_time'}
@@ -216,7 +215,7 @@ class CustomObject(ObservableObject):
     object are also defined. We get an :class:`cozmo.objects.EvtObjectObserved` message when the robot sees these markers.
     '''
 
-    def __init__(self, conn, world, object_type, 
+    def __init__(self, conn, world, object_type,
                  x_size_mm, y_size_mm, z_size_mm,
                  marker_width_mm, marker_height_mm, **kw):
         super().__init__(conn, world, **kw)
@@ -241,27 +240,27 @@ class CustomObject(ObservableObject):
     def x_size_mm(self):
         '''Size of this object in its X axis.'''
         return self._x_size_mm
-    
+
     @property
     def y_size_mm(self):
         '''Size of this object in its Y axis.'''
         return self._y_size_mm
-    
+
     @property
     def z_size_mm(self):
         '''Size of this object in its Z axis.'''
         return self._z_size_mm
-    
+
     @property
     def marker_width_mm(self):
         '''Width of the marker on this object.'''
         return self._marker_width_mm
-    
+
     @property
     def marker_height_mm(self):
         '''Height of the marker on this object.'''
         return self._marker_height_mm
-    
+
 
     #### Private Event Handlers ####
 
@@ -285,11 +284,11 @@ for (_name, _id) in _clad_to_engine_cozmo.ObjectType.__dict__.items():
 
 
 class FixedCustomObject():
-    '''A fixed object defined by the SDK. It is given a pose and x,y,z sizes. 
+    '''A fixed object defined by the SDK. It is given a pose and x,y,z sizes.
 
     This object can not be observed by the robot so its pose never changes.
     Their position is static in Cozmo's world view, once instantiated, these objects
-    never move. This could be used to make Cozmo aware of objects and know to path around them 
+    never move. This could be used to make Cozmo aware of objects and know to path around them
     even when they don't have any markers.
     '''
 
@@ -326,24 +325,23 @@ class FixedCustomObject():
     def pose(self):
         '''The :class:`cozmo.util.Pose` of the object, where it is in the world.'''
         return self._pose
-    
+
     @property
     def x_size_mm(self):
         '''The length of the object in its X axis.'''
         return self._x_size_mm
-    
+
     @property
     def y_size_mm(self):
         '''The length of the object in its Y axis.'''
         return self._y_size_mm
-    
+
     @property
     def z_size_mm(self):
         '''The length of the object in its Z axis.'''
         return self._z_size_mm
-    
+
 
     #### Private Event Handlers ####
     #### Public Event Handlers ####
     #### Commands ####
-
