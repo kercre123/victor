@@ -23,6 +23,7 @@ MonoBehaviour:
   _HideInUI: 0
   DescriptionKey: unlockable.CubeRollAction.Description
   TitleKey: unlockable.CubeRollAction.Title
+  SparkButtonDescription: unlockable.CubeRollAction.SparkButtonDescription
   UpgradeCostItemId: TestHexItem0
   UpgradeCostAmountNeeded: 5
   RequestTrickCostItemId: treat
