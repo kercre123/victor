@@ -64,7 +64,7 @@ private:
   };
   
   static constexpr double kConnectivityCheckDelay = 1.0f; // How often do we check for connectivity changes in seconds
-  static constexpr double kMaxWaitForPooledObjects = 10.f; // How long do we wait for the blockpooled objects before looking for another one of the same type
+  static constexpr double kMaxWaitForPooledObjects = 5.0f; // How long do we wait for the discovered objects to connect before looking for another one of the same type
   
   static constexpr uint8_t kMaxRSSI = 150;
   
@@ -82,7 +82,7 @@ private:
   bool AddObjectToPersistentPool(FactoryID factoryID, ObjectType objectType);
   bool RemoveObjectFromPersistentPool(FactoryID factoryID);
   void CopyPersistentPoolToRuntimePool();
-
+  
   void Load();
   void Save() const;
   
@@ -92,6 +92,8 @@ private:
   
   void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   
+  void SendBlockPoolData() const;
+  
   using ObjectInfoArray = std::array<ObjectInfo, (size_t)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS>;
   using ObjectInfoMap = std::map<ObjectType, ObjectInfo>;
   
@@ -100,8 +102,9 @@ private:
   ObjectInfoArray     _runtimePool;								// The current session pool list
   ObjectInfoMap       _discoveryPool;             // Selected set of objects until the discovery phase is over
   std::string         _path;											// Path where we are saving/loading the list of objects
-  double              _maxDiscoveryTime;             // Time we'll spend looking for objects before pooling
+  double              _maxDiscoveryTime;          // Time we'll spend looking for objects before pooling
   double              _enabledTime;								// Time when the block pool was enabled
+  double              _discoveredCompletedTime;   // Time when the last discovery period was done
   double              _lastConnectivityCheckTime; // Used to check for connectivity every once in a while
   bool                _enabled;                   // True if the automatic pool is enabled
   

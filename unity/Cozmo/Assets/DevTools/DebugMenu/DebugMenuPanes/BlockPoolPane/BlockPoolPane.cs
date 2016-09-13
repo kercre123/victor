@@ -38,11 +38,9 @@ namespace Cozmo.BlockPool {
 
       _BlockPoolTracker = RobotEngineManager.Instance.BlockPoolTracker;
 
-      // Might stomp game setup but hopefully people are using this debug menu before playing.
+      // Disable free play lights
       if (RobotEngineManager.Instance.CurrentRobot != null) {
-        foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
-          kvp.Value.SetLEDs(0, 0, 0, 0);
-        }
+        RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayLightStates(false);
       }
 
       // Gets the previous ones enabled...
@@ -52,10 +50,10 @@ namespace Cozmo.BlockPool {
       foreach (Transform child in _AvailableScrollView) {
         Destroy(child);
       }
-
+        
       // Spawn buttons for existing block pool objects
-      for (int i = 0; i < _BlockPoolTracker.BlockStates.Count; i++) {
-        AddOrUpdateButtonInternal(_BlockPoolTracker.BlockStates[i], true);
+      for (int i = 0; i < _BlockPoolTracker.Blocks.Count; i++) {
+        AddOrUpdateButtonInternal(_BlockPoolTracker.Blocks[i], true);
       }
 
       // Listen for any changes
@@ -85,10 +83,10 @@ namespace Cozmo.BlockPool {
       // being destroyed
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
+        robot.SetEnableFreeplayLightStates(true);
+
         foreach (KeyValuePair<int, LightCube> kvp in robot.LightCubes) {
           kvp.Value.SetLEDs(0, 0, 0, 0);
-          kvp.Value.SetAllLEDs();
-          robot.SetEnableFreeplayLightStates(true, kvp.Value.ID);
         }
 
         if (robot.GetCharger() != null) {
@@ -106,11 +104,11 @@ namespace Cozmo.BlockPool {
         return;
       }
 
-      foreach (BlockPoolData data in _BlockPoolTracker.BlockStates) {
-        // Don't filter out enabled objects
-        bool active = data.IsConnected || data.RSSI <= _FilterRSSI;
+      foreach (BlockPoolData data in _BlockPoolTracker.Blocks) {
         Button button;
         if (_FactoryIDToButton.TryGetValue(data.FactoryID, out button)) {
+          // Don't filter out persistent or connected objects
+          bool active = data.IsPersistent || data.IsConnected || data.RSSI <= _FilterRSSI;
           button.gameObject.SetActive(active);
         }
       }
@@ -122,65 +120,66 @@ namespace Cozmo.BlockPool {
 
     private void HandleResetButtonClick() {
       _BlockPoolTracker.ResetBlockPool();
-
-      // Disable all the buttons
-      foreach (BlockPoolData data in _BlockPoolTracker.BlockStates) {
-        if (data.IsConnected) {
-          EnableButton(data.FactoryID, Color.white);
-          UpdateButtonParent(data);
-        }
-      }
     }
 
     private void HandleButtonClick(uint factoryID) {
-      BlockPoolData data = _BlockPoolTracker.ToggleObjectInPool(factoryID);
+      BlockPoolData data = _BlockPoolTracker.GetObject(factoryID);
       if (data != null) {
-        Button button;
-        if (_FactoryIDToButton.TryGetValue(factoryID, out button)) {
-          // Turn the button to a different color to signal we are trying to connect/disconnect from/to the object
-          // Unless the button is already grey meaning we not hearing from the cube
-          Color newColor = (button.image.color != Color.grey) ? Color.yellow : Color.grey;
-          DisableButton(data.FactoryID, newColor);
+        bool canToggleButton = true;
+        if (!data.IsPersistent) {
+          // If we are trying to pool a new object, make sure we haven't pooled one of the same type already
+          bool pooledObjectOfSameType = false;
+          _BlockPoolTracker.ForEachObjectOfType(data.ObjectType, (BlockPoolData objectData) => {
+            if (objectData.IsPersistent && (data.ObjectType == objectData.ObjectType)) {
+              pooledObjectOfSameType = true;
+            }
+          });
 
-          UpdateButtonParent(data);
+          canToggleButton = !pooledObjectOfSameType;
+        }  
+
+        if (canToggleButton) {
+          _BlockPoolTracker.SetObjectInPool(data.FactoryID, !data.IsPersistent);
+
+          Button button;
+          if (_FactoryIDToButton.TryGetValue(factoryID, out button)) {
+            DisableButton(data.FactoryID, GetButtonColor(data));
+            UpdateButtonParent(data);
+          }
         }
       }
     }
 
     private void HandleBlockDataConnectionChanged(BlockPoolData data) {
       bool isConnected = data.IsConnected;
-      ObservedObject charger = RobotEngineManager.Instance.CurrentRobot.GetCharger();
-      if ((data.ObjectType == ObjectType.Charger_Basic) && (charger != null)) {
-        uint onColor = isConnected ? Color.blue.ToUInt() : 0;
-        uint offColor = isConnected ? Color.cyan.ToUInt() : 0;
-        uint period_ms = isConnected ? (uint)500 : 0;
-        charger.SetLEDs(onColor, offColor, period_ms);
-      }
+      uint color = GetObjectColor(data);
 
-      LightCube cube = RobotEngineManager.Instance.CurrentRobot.GetLightCubeWithFactoryID(data.FactoryID);
-      if (cube != null) {
-        uint onColor = isConnected ? Color.blue.ToUInt() : 0;
-        uint offColor = isConnected ? Color.cyan.ToUInt() : 0;
-        uint period_ms = isConnected ? (uint)500 : 0;
-        cube.SetLEDs(onColor, offColor, period_ms);
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        ObservedObject charger = robot.GetCharger();
+        if ((data.ObjectType == ObjectType.Charger_Basic) && (charger != null) && (charger.FactoryID == data.FactoryID)) {
+          uint period_ms = isConnected ? (uint)500 : 0;
+          charger.SetLEDs(color, color, period_ms);
+        }
+
+        LightCube cube = robot.GetLightCubeWithFactoryID(data.FactoryID);
+        if (cube != null) {
+          uint period_ms = isConnected ? (uint)500 : 0;
+          cube.SetLEDs(color, color, period_ms);
+        }
       }
 
       UpdateButton(data);
       UpdateButtonParent(data);
-      if (data.IsConnected) {
-        EnableButton(data.FactoryID, Color.cyan);
-      }
-      else {
-        EnableButton(data.FactoryID, Color.white);
-      }
+      EnableButton(data.FactoryID, GetButtonColor(data));
     }
 
     private void HandleBlockDataUnavailable(BlockPoolData data) {
-      if (data.IsConnected) {
-        EnableButton(data.FactoryID, Color.grey);
+      if (data.IsPersistent) {
+        EnableButton(data.FactoryID, GetButtonColor(data));
       }
       else {
-        DisableButton(data.FactoryID, Color.grey);
+        DisableButton(data.FactoryID, GetButtonColor(data));
       }
     }
 
@@ -196,47 +195,42 @@ namespace Cozmo.BlockPool {
     private void AddOrUpdateButtonInternal(BlockPoolData data, bool wasCreated) {
       if (wasCreated) {
         AddButton(data);
+
+        IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+        if (robot != null) {
+          LightCube cube = robot.GetLightCubeWithFactoryID(data.FactoryID);
+          if (cube != null) {
+            EnableButton(data.FactoryID, GetButtonColor(data));
+
+            // Turn on the lights so we can see what is currently connected
+            uint color = GetObjectColor(data);
+            cube.SetLEDs(color, color);
+          }
+          else {
+            ObservedObject observedObject = robot.GetObservedObjectWithFactoryID(data.FactoryID);
+            if (observedObject != null) {
+              EnableButton(data.FactoryID, GetButtonColor(data));
+
+              // Turn on the lights to show that we are connected
+              if (observedObject.ObjectType == ObjectType.Charger_Basic) {
+                uint color = GetObjectColor(data);
+                observedObject.SetLEDs(color, color);
+              }
+            }
+            else {
+              // Disable the button until we hear from the object if not enabled
+              EnableButton(data.FactoryID, GetButtonColor(data));
+            }
+          }
+        }
       }
 
       UpdateButton(data);
-
-      // TODO Fix this part
-      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
-      if (robot != null) {
-        LightCube cube = robot.GetLightCubeWithFactoryID(data.FactoryID);
-        if (cube != null) {
-          EnableButton(data.FactoryID, (data.IsConnected ? Color.cyan : Color.white));
-
-          // Show all our enabled lights to blue so we can see what is currently connected
-          robot.SetEnableFreeplayLightStates(false, cube.ID);
-          cube.SetLEDs(Color.blue.ToUInt(), Color.cyan.ToUInt());
-        }
-        else {
-          ObservedObject observedObject = robot.GetObservedObjectWithFactoryID(data.FactoryID);
-          if (observedObject != null) {
-            EnableButton(data.FactoryID, (data.IsConnected ? Color.cyan : Color.white));
-
-            // Turn on the lights to show that we are connected
-            if (observedObject.ObjectType == ObjectType.Charger_Basic) {
-              observedObject.SetLEDs(Color.blue.ToUInt(), Color.cyan.ToUInt());
-            }
-          }
-          else {
-            // Disable the button until we hear from the object if not enabled
-            if (data.IsConnected) {
-              EnableButton(data.FactoryID, Color.grey);
-            }
-            else {
-              EnableButton(data.FactoryID, Color.white);
-            }
-          }
-        }
-      }
     }
 
     private void AddButton(BlockPoolData data) {
       if (!_FactoryIDToButton.ContainsKey(data.FactoryID)) {
-        RectTransform parentTransform = data.IsConnected ? _EnabledScrollView : _AvailableScrollView;
+        RectTransform parentTransform = data.IsPersistent ? _EnabledScrollView : _AvailableScrollView;
         GameObject newButton = UIManager.CreateUIElement(_ButtonPrefab, parentTransform);
         newButton.name = "object_" + data.FactoryID.ToString("X");
 
@@ -247,11 +241,10 @@ namespace Cozmo.BlockPool {
     }
 
     private void UpdateButton(BlockPoolData data) {
-      // Don't filter out enabled objects
-      bool active = data.IsConnected || data.RSSI <= _FilterRSSI;
-
       Button button;
       if (_FactoryIDToButton.TryGetValue(data.FactoryID, out button)) {
+        // Don't filter out enabled or persistent objects
+        bool active = data.IsConnected || data.IsPersistent || data.RSSI <= _FilterRSSI;
         button.gameObject.SetActive(active);
 
         Text txt = button.GetComponentInChildren<Text>();
@@ -286,27 +279,57 @@ namespace Cozmo.BlockPool {
       // Now reorder the UI elements. We can't reorder a transform's children but every child can be told its index
       BlockPoolData data;
       Button button;
-      for (int i = 0; i < _BlockPoolTracker.BlockStates.Count; i++) {
-        data = _BlockPoolTracker.BlockStates[i];
+      for (int i = 0; i < _BlockPoolTracker.Blocks.Count; i++) {
+        data = _BlockPoolTracker.Blocks[i];
         if (_FactoryIDToButton.TryGetValue(data.FactoryID, out button)) {
           // Don't reorder enabled objects
-          if (!data.IsConnected) {
+          if (!data.IsPersistent) {
             button.gameObject.transform.SetSiblingIndex(i);
           }
         }
       }
     }
 
-    void UpdateButtonParent(BlockPoolData data) {
+    private void UpdateButtonParent(BlockPoolData data) {
       Button button;
       if (_FactoryIDToButton.TryGetValue(data.FactoryID, out button)) {
         // Move the button to the correct list depending on whether it is enabled or not
-        if (data.IsConnected && (button.transform.parent != _EnabledScrollView)) {
+        if (data.IsPersistent && (button.transform.parent != _EnabledScrollView)) {
           button.transform.SetParent(_EnabledScrollView);
         }
-        else if (!data.IsConnected && (button.transform.parent != _AvailableScrollView)) {
+        else if (!data.IsPersistent && (button.transform.parent != _AvailableScrollView)) {
           button.transform.SetParent(_AvailableScrollView);
         }
+      }
+    }
+
+    private Color GetButtonColor(BlockPoolData data) {
+      switch (data.ConnectionState)
+      {
+      case BlockConnectionState.Connected:
+        return data.IsPersistent ? Color.cyan : Color.green;
+
+      case BlockConnectionState.ConnectInProgress:
+      case BlockConnectionState.DisconnectInProgress:
+        return Color.yellow;
+
+      case BlockConnectionState.Available:
+        return Color.white;
+
+      case BlockConnectionState.Unavailable:
+        return Color.grey;
+
+      default:
+        return Color.red;
+      }
+    }
+
+    private uint GetObjectColor(BlockPoolData data) {
+      if (data.IsConnected) {
+        return data.IsPersistent ? Color.cyan.ToUInt() : Color.green.ToUInt();
+      }
+      else {
+        return 0; 
       }
     }
   }

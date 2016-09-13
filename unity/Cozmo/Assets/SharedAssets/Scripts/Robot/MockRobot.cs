@@ -940,6 +940,12 @@ public class MockRobot : IRobot {
   public void EnableCubeSleep(bool enable) {
   }
 
+  public void EnableCubeLightsStateTransitionMessages(bool enable) {
+  }
+
+  public void FlashCurrentLightsState(uint objectId) {
+  }
+
   public void EnableLift(bool enable) {
   }
 

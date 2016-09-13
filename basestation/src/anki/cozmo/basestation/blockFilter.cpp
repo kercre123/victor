@@ -38,6 +38,7 @@ BlockFilter::BlockFilter(Robot* inRobot, IExternalInterface* externalInterface)
   , _path()
   , _maxDiscoveryTime(0)
   , _enabledTime(0)
+  , _discoveredCompletedTime(0)
   , _lastConnectivityCheckTime(0)
   , _enabled(false)
   , _externalInterface(externalInterface)
@@ -75,8 +76,8 @@ void BlockFilter::Update()
     return;
   }
   
-    UpdateDiscovering();
-    UpdateConnecting();
+  UpdateDiscovering();
+  UpdateConnecting();
   
   _lastConnectivityCheckTime = currentTime;
 }
@@ -102,7 +103,8 @@ void BlockFilter::UpdateDiscovering()
   }
 
   // If the discovery phase is over, then connect to the objects we found
-  if ((BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() >= (_enabledTime + _maxDiscoveryTime)) && (_discoveryPool.size() > 0))
+  double time = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if ((time >= (_enabledTime + _maxDiscoveryTime)) && (_discoveryPool.size() > 0))
   {
     PRINT_CH_INFO("BlockPool", "BlockFilter.UpdateDiscovering", "Connecting to discovered objects");
     // Save the new pool and connect to the discovered objects
@@ -113,13 +115,15 @@ void BlockFilter::UpdateDiscovering()
     _discoveryPool.clear();
     CopyPersistentPoolToRuntimePool();
     ConnectToObjects();
+    SendBlockPoolData();
+    _discoveredCompletedTime = time;
   }
 }
 
 void BlockFilter::UpdateConnecting()
 {
   // Check if any of the objects in the runtime pool is still not connected after the initial waiting period
-  if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() < _enabledTime + kMaxWaitForPooledObjects)
+  if (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() < _discoveredCompletedTime + kMaxWaitForPooledObjects)
   {
     return;
   }
@@ -168,6 +172,8 @@ bool BlockFilter::AddObjectToPersistentPool(FactoryID factoryID, ObjectType obje
   }
   
   if (it != _persistentPool.end()) {
+    PRINT_CH_INFO("BlockPool", "BlockFilter.AddObjectToPersistentPool", "Adding object 0x%x of type %s to the persistent pool", factoryID, EnumToString(objectType));
+
     it->Reset();
     it->factoryID = factoryID;
     it->objectType = objectType;
@@ -187,12 +193,14 @@ bool BlockFilter::RemoveObjectFromPersistentPool(FactoryID factoryID)
   });
   
   if (it != _persistentPool.end()) {
+    PRINT_CH_INFO("BlockPool", "BlockFilter.RemoveObjectFromPersistentPool", "Removing object 0x%x of type %s from persistent pool", factoryID, EnumToString(it->objectType));
+
     it->Reset();
     
     Save();
     return true;
   } else {
-    PRINT_NAMED_ERROR("BlockFilter.RemoveFactoryId", "Coudn't find factory ID %#08x", factoryID);
+    PRINT_CH_INFO("BlockPool", "BlockFilter.RemoveObjectFromPersistentPool", "Object 0x%x not found in persistent pool", factoryID);
     return false;
   }
 }
@@ -341,23 +349,7 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
     // Debug menu tab just opened, asking for the current state of things
     case ExternalInterface::MessageGameToEngineTag::GetBlockPoolMessage:
     {
-      ExternalInterface::InitBlockPoolMessage msg;
-      msg.blockPoolEnabled = _enabled;
-      
-      std::vector<ExternalInterface::BlockPoolBlockData> allBlocks;
-      for (const ObjectInfo &objectInfo : _persistentPool ) {
-        if (objectInfo.factoryID != ActiveObject::InvalidFactoryID) {
-          ExternalInterface::BlockPoolBlockData blockData;
-          blockData.factory_id = objectInfo.factoryID;
-          blockData.objectType = objectInfo.objectType;
-          allBlocks.push_back(blockData);
-        }
-      }
-      // TODO: push in all discovered by robot but unlisted blocks here as well.
-      
-      msg.blockData = allBlocks;
-      
-      _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+      SendBlockPoolData();
       break;
     }
       
@@ -365,10 +357,19 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
     {
       const Anki::Cozmo::ExternalInterface::BlockPoolEnabledMessage& msg = event.GetData().Get_BlockPoolEnabledMessage();
       
-      PRINT_CH_INFO("BlockPool", "BlockFilter.HandleGameEvents", "Enabling automatic block pool with a discovery time of %f seconds", msg.discoveryTimeSecs);
+      if (msg.enabled)
+      {
+        PRINT_CH_INFO("BlockPool", "BlockFilter.HandleGameEvents", "Enabling automatic block pool with a discovery time of %f seconds", msg.discoveryTimeSecs);
+      }
+      else
+      {
+        PRINT_CH_INFO("BlockPool", "BlockFilter.HandleGameEvents", "Disabling automatic block pool");
+      }
+
       _maxDiscoveryTime = msg.discoveryTimeSecs;
       _enabled = msg.enabled;
       _enabledTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      _discoveredCompletedTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       
       break;
     }
@@ -382,14 +383,17 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
         {
           CopyPersistentPoolToRuntimePool();
           ConnectToObjects();
+          SendBlockPoolData();
         }
       }
       else
       {
         if (RemoveObjectFromPersistentPool(msg.factoryId))
         {
+          // Object has been removed from the persistent pool, disconnect from it
           CopyPersistentPoolToRuntimePool();
           ConnectToObjects();
+          SendBlockPoolData();
         }
       }
       break;
@@ -397,6 +401,8 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
       
     case ExternalInterface::MessageGameToEngineTag::BlockPoolResetMessage:
     {
+      PRINT_CH_INFO("BlockPool", "BlockFilter.HandleGameEvents", "Reseting the blockpool");
+      
       // Reset the runtime and persistent pools, disconnect from all the objects, and then save to disk
       std::for_each(_runtimePool.begin(), _runtimePool.end(), [](ObjectInfo& objectInfo) {
         objectInfo.Reset();
@@ -417,6 +423,31 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
       PRINT_NAMED_ERROR("BlockFilter::HandleGameEvents unexpected message","%hhu",event.GetData().GetTag());
     }
   }
+}
+
+void BlockFilter::SendBlockPoolData() const
+{
+  PRINT_CH_INFO("BlockPool", "BlockFilter.HandleGameEvents", "Sending blockpool data");
+
+  ExternalInterface::BlockPoolDataMessage msg;
+  msg.blockPoolEnabled = _enabled;
+  
+  // Add information about the persistent pool
+  std::vector<ExternalInterface::BlockPoolBlockData> persistentPool;
+  for (const ObjectInfo &objectInfo : _persistentPool)
+  {
+    if (objectInfo.factoryID != ActiveObject::InvalidFactoryID)
+    {
+        ExternalInterface::BlockPoolBlockData blockData;
+        blockData.factoryID = objectInfo.factoryID;
+        blockData.objectType = objectInfo.objectType;
+
+        persistentPool.push_back(blockData);
+    }
+  }
+
+  msg.blockData = persistentPool;
+  _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
 }
 
 } // namespace Cozmo

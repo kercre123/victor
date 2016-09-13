@@ -540,11 +540,11 @@ message CubeLightsStateTransition {
 ///////////////////////////////////////////////////////////////////////////////
 
 structure BlockPoolBlockData {
-  uint_32 factory_id,
+  uint_32 factoryID,
   ObjectType objectType
 }
 
-message InitBlockPoolMessage {
+message BlockPoolDataMessage {
   uint_8              blockPoolEnabled,
   BlockPoolBlockData  blockData[uint_8]
 }

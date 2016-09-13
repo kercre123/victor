@@ -33,3 +33,5 @@ MonoBehaviour:
     - {r: 0, g: 0, b: 1, a: 1}
     - {r: 1, g: 1, b: 0, a: 1}
     cycleIntervalSeconds: 0.25
+  _LightCubeSpritePrefab: {fileID: 11498570, guid: 811ec6786e21a4cb7bbb384a7c802f08,
+    type: 2}
