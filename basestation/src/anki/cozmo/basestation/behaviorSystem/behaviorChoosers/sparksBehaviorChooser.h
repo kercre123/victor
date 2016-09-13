@@ -94,7 +94,7 @@ private:
   
   // Special re-start indicator
   TimeStamp_t _timePlayingOutroStarted;
-  bool _switchingSoftToHardSpark;
+  bool _switchingToHardSpark;
   
   // Track if idle animations swapped out
   bool _idleAnimationsSet;
