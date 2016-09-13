@@ -141,8 +141,6 @@ public class ConnectionFlow : MonoBehaviour {
   private void ReturnToSearch() {
     _ConnectionFlowBackgroundInstance.ResetAllProgress();
     ShowSearchForCozmo();
-    // Start Scan loop sound for connection phase
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Scan_Loop);
   }
 
   private void CreateConnectionFlowBackground() {
@@ -154,6 +152,8 @@ public class ConnectionFlow : MonoBehaviour {
     _SearchForCozmoScreenInstance = UIManager.CreateUIElement(_SearchForCozmoScreenPrefab.gameObject, _ConnectionFlowBackgroundInstance.transform).GetComponent<SearchForCozmoScreen>();
     _SearchForCozmoScreenInstance.Initialize(_PingStatus);
     _SearchForCozmoScreenInstance.OnScreenComplete += HandleSearchForCozmoScreenDone;
+    // Start Scan loop sound for connection phase
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent (Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Scan_Loop);
   }
 
   private void HandleSearchForCozmoScreenDone(bool success) {
