@@ -2,8 +2,6 @@
 using UnityEngine;
 using System.Collections;
 
-// Audio Note: Cozmo_Connect_Scan_Loop/_Stop can be called multiple times, audio will play appropriately.
-
 public class ConnectionFlow : MonoBehaviour {
 
   public System.Action ConnectionFlowComplete;
@@ -65,6 +63,8 @@ public class ConnectionFlow : MonoBehaviour {
   private const int kRobotID = 1;
 
   private string _CurrentRobotIP;
+
+  private bool _scanLoopPlaying = false;
 
   private void Start() {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Disconnected);
@@ -129,7 +129,7 @@ public class ConnectionFlow : MonoBehaviour {
       QuitConnectionFlow();
     }
     // Always Stop Loop sounds when leaving view
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Scan_Loop_Stop);
+    PlayScanLoopAudio(false);
   }
 
   private void QuitConnectionFlow() {
@@ -153,7 +153,7 @@ public class ConnectionFlow : MonoBehaviour {
     _SearchForCozmoScreenInstance.Initialize(_PingStatus);
     _SearchForCozmoScreenInstance.OnScreenComplete += HandleSearchForCozmoScreenDone;
     // Start Scan loop sound for connection phase
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent (Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Scan_Loop);
+    PlayScanLoopAudio(true);
   }
 
   private void HandleSearchForCozmoScreenDone(bool success) {
@@ -171,7 +171,7 @@ public class ConnectionFlow : MonoBehaviour {
       _SearchForCozmoFailedScreenInstance.Initialize(_PingStatus);
       _ConnectionFlowBackgroundInstance.SetStateFailed(0);
       // Stop scan loop when failed to connect
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Scan_Loop_Stop);
+      PlayScanLoopAudio(false);
     }
   }
 
@@ -190,7 +190,7 @@ public class ConnectionFlow : MonoBehaviour {
     _ConnectionFlowBackgroundInstance.SetStateComplete(0);
     ShowConnectingToCozmoScreen();
     // Restart Scan loop sound
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Scan_Loop);
+    PlayScanLoopAudio(true);
   }
 
   private void ShowConnectingToCozmoScreen() {
@@ -270,7 +270,7 @@ public class ConnectionFlow : MonoBehaviour {
 
   private void HandleSecuringConnectionScreenDone() {
     // Stop scan loop sound connection phase is completed
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Scan_Loop_Stop);
+    PlayScanLoopAudio(false);
 
     _SecuringConnectionScreenInstance.OnScreenComplete -= HandleSecuringConnectionScreenDone;
     GameObject.Destroy(_SecuringConnectionScreenInstance.gameObject);
@@ -409,29 +409,29 @@ public class ConnectionFlow : MonoBehaviour {
       break;
 
     case RobotConnectionResult.OutdatedApp:
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Scan_Loop_Stop);
+      PlayScanLoopAudio(false);
       UpdateAppScreen();
       break;
 
     case RobotConnectionResult.OutdatedFirmware:
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Scan_Loop_Stop);
+      PlayScanLoopAudio(false);
       UpdateFirmware();
       break;
 
     case RobotConnectionResult.NeedsPin:
       GameObject.Destroy(_ConnectingToCozmoScreenInstance);
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Scan_Loop_Stop);
+      PlayScanLoopAudio(false);
       ShowPinScreen();
       break;
 
     case RobotConnectionResult.InvalidPin:
       GameObject.Destroy(_ConnectingToCozmoScreenInstance);
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Scan_Loop_Stop);
+      PlayScanLoopAudio(false);
       ShowInvalidPinScreen();
       break;
 
     case RobotConnectionResult.PinMaxAttemptsReached:
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Scan_Loop_Stop);
+      PlayScanLoopAudio(false);
       ReplaceCozmoOnCharger();
       break;
     }
@@ -476,5 +476,16 @@ public class ConnectionFlow : MonoBehaviour {
     Cleanup();
     CreateConnectionFlowBackground();
     ShowSearchForCozmo();
+  }
+
+  // Debounce Audio Loop events
+  private void PlayScanLoopAudio(bool play) {
+    if (_scanLoopPlaying == play) {
+      // Do Nothing
+      return;
+    }
+    _scanLoopPlaying = play;
+    Anki.Cozmo.Audio.GameEvent.Sfx sfxEvent = _scanLoopPlaying ? Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Scan_Loop : Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Scan_Loop_Stop;
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(sfxEvent);
   }
 }
