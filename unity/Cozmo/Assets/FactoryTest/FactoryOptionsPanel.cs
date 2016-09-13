@@ -84,7 +84,7 @@ public class FactoryOptionsPanel : MonoBehaviour {
       _SimToggle.gameObject.SetActive(false);
       _LogFilterInput.gameObject.SetActive(false);
 
-      _EnableNVStorageWrites.gameObject.SetActive(false);
+      //_EnableNVStorageWrites.gameObject.SetActive(false);
       _CheckPreviousResults.gameObject.SetActive(false);
       //_WipeNVStorageAtStart.gameObject.SetActive(false);
       _SkipBlockPickup.gameObject.SetActive(false);
