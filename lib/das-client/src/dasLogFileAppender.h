@@ -38,10 +38,10 @@ public:
   void Flush();
   void ConsumeLogFiles(DASLogFileConsumptionBlock ConsumptionBlock);
 
-  static const size_t kDefaultMaxLogLength = 40 * 1024;
+  static const size_t kDefaultMaxLogLength = 100 * 1024;
   static constexpr const char* kDasLogFileExtension = "das";
   static constexpr const char* kDasInProgressExtension = "das_inprogress";
-  static const int kDasMaxLogFiles = 100;
+  static const int kDasMaxLogFiles = 400;
 
 private:
   bool CreateNewLogFile() const;
