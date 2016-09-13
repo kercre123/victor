@@ -520,13 +520,13 @@ MonoBehaviour:
     JsonValue: 1.0
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MaxSize
-    JsonValue: 140
-  - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MinSize
-    JsonValue: 80
+    JsonValue: 120
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_BestFit
     JsonValue: true
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    JsonValue: 120
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"PLAYER\nWINS!"'
@@ -534,7 +534,10 @@ MonoBehaviour:
   - ObjectPath: ../../../../
     FieldName: Cozmo.MinigameWidgets.SharedMinigameView:_InfoTitleTextLabel
     ReferencePath: 
-  ModifiedGlobalReferences: []
+  ModifiedGlobalReferences:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Font
+    Reference: {fileID: 12800000, guid: 6ef5f80c68ce34039a34f24769e5dc26, type: 3}
 --- !u!114 &11492476
 MonoBehaviour:
   m_ObjectHideFlags: 1
