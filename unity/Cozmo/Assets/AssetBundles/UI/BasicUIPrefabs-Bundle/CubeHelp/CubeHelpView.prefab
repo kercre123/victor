@@ -120,6 +120,9 @@ MonoBehaviour:
   - ObjectPath: ButtonIcon
     FieldName: UnityEngine.UI.Image:m_Color:a
     JsonValue: 1.0
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
+    JsonValue: '"Play__Ui__Click_Back"'
   ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
 --- !u!114 &11452052

@@ -251,7 +251,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
-  ModifiedValues: []
+  ModifiedValues:
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
+    JsonValue: '"Play__Ui__Click_Back"'
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: FaceEnrollmentInstructionsView:_OptionalCloseDialogButton
@@ -544,6 +547,7 @@ MonoBehaviour:
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 0
+  DimBackgroundPrefabOverride: {fileID: 0}
   _FaceNameLabel: {fileID: 11472424}
 --- !u!222 &22200494
 CanvasRenderer:

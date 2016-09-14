@@ -465,7 +465,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
-  ModifiedValues: []
+  ModifiedValues:
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
+    JsonValue: '"Play__Ui__Click_Back"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../
     FieldName: ChallengeDetailsDialog:_OptionalCloseDialogButton
@@ -602,7 +605,6 @@ MonoBehaviour:
   _LockedContainer: {fileID: 169464}
   _AvailableContainer: {fileID: 120528}
   _UnlockedContainer: {fileID: 144682}
-  _UnavailableContainer: {fileID: 0}
   _CostContainer: {fileID: 168040}
   _UnlockButton: {fileID: 0}
   _StartChallengeButton: {fileID: 0}
