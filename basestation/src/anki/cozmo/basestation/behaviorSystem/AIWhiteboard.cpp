@@ -497,7 +497,7 @@ Vision::FaceID_t AIWhiteboard::GetBestFaceToTrack(const std::set< Vision::FaceID
   }
 
   // add a large penalty to any face without a name, if we are preferring named faces
-  static const f32 kUnnamedFacePenalty = preferNamedFaces ? 1000.0f : 0.0f;
+  const f32 unnamedFacePenalty = preferNamedFaces ? 1000.0f : 0.0f;
   
   float bestCost = std::numeric_limits<float>::max();
   Vision::FaceID_t bestFace = Vision::UnknownFaceID;
@@ -521,7 +521,7 @@ Vision::FaceID_t AIWhiteboard::GetBestFaceToTrack(const std::set< Vision::FaceID
 
     const float headTurnCost = kFaceTracking_HeadAngleDistFactor * relHeadTurnAngle.getAbsoluteVal().ToFloat();
     const float bodyTurnCost = kFaceTracking_BodyAngleDistFactor * relBodyTurnAngle.getAbsoluteVal().ToFloat();
-    const float penalty = face->HasName() ? 0.0f : kUnnamedFacePenalty;
+    const float penalty = face->HasName() ? 0.0f : unnamedFacePenalty;
     
     const float cost = headTurnCost + bodyTurnCost + penalty;      
 

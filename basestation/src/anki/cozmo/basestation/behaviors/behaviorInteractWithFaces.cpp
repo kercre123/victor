@@ -99,7 +99,6 @@ Result BehaviorInteractWithFaces::InitInternal(Robot& robot)
   // reset the time to stop tracking (in the tracking state)
   _trackFaceUntilTime_s = -1.0f;
 
-  SelectFaceToTrack(robot);
   if( _targetFace != Vision::UnknownFaceID ) {
     TransitionToInitialReaction(robot);
     return RESULT_OK;
@@ -129,9 +128,10 @@ IBehavior::Status BehaviorInteractWithFaces::UpdateInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorInteractWithFaces::IsRunnableInternal(const Robot& robot) const
 {
-  // we can run if we've seen any valid faces since the last time we stopped running
-  const bool considerTrackingOnlyFaces = false;
-  return robot.GetFaceWorld().HasKnownFaces(_lastImageTimestampWhileRunning, considerTrackingOnlyFaces);
+  _targetFace = Vision::UnknownFaceID;
+  SelectFaceToTrack(robot);
+
+  return _targetFace != Vision::UnknownFaceID;
 }
 
   
@@ -314,8 +314,8 @@ void BehaviorInteractWithFaces::TransitionToTriggerEmotionEvent(Robot& robot)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorInteractWithFaces::SelectFaceToTrack(const Robot& robot)
-{
+void BehaviorInteractWithFaces::SelectFaceToTrack(const Robot& robot) const
+{  
   const bool considerTrackingOnlyFaces = false;
   std::set< FaceID_t > faces = robot.GetFaceWorld().GetKnownFaceIDsObservedSince(_lastImageTimestampWhileRunning,
                                                                                  considerTrackingOnlyFaces);
