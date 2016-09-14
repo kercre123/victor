@@ -42,7 +42,7 @@ public class FaceEnrollmentUnlockView : Cozmo.UI.BaseView {
       _UnlockCostText.color = _UnlockButton.TextDisabledColor;
     }
 
-    _UnlockCostText.text = Localization.GetWithArgs(LocalizationKeys.kLabelXCount, unlockCost);
+    _UnlockCostText.text = Localization.GetWithArgs(LocalizationKeys.kLabelEmptyWithArg, unlockCost);
   }
 
   private void HandleOnUnlockButton() {

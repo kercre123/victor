@@ -287,13 +287,13 @@ MonoBehaviour:
     m_BestFit: 0
     m_MinSize: 7
     m_MaxSize: 80
-    m_Alignment: 4
+    m_Alignment: 5
     m_AlignByGeometry: 0
     m_RichText: 0
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 2x
+  m_Text: 2
   _AllUppercase: 0
   GlowText: 0
 --- !u!114 &11422432
@@ -367,7 +367,10 @@ MonoBehaviour:
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 1
   DimBackgroundPrefabOverride: {fileID: 0}
-  _AvailableColor: {r: 0.627451, g: 0.9372549, b: 0.23529412, a: 1}
+  _OpenAudioEvent:
+    _Event: Invalid
+    _EventType: GenericEvent
+  _AvailableColor: {r: 0.5647059, g: 0.78431374, b: 0.101960786, a: 1}
   _UnavailableColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
   _UnlockButton: {fileID: 11464456}
   _AvailabilityText: {fileID: 11481200}
@@ -407,7 +410,6 @@ MonoBehaviour:
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11464460
 MonoBehaviour:
@@ -811,8 +813,8 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 507, y: -0.000082969666}
-  m_SizeDelta: {x: 150, y: 150}
+  m_AnchoredPosition: {x: 514, y: -0.000082969666}
+  m_SizeDelta: {x: 100, y: 150}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22447914
 RectTransform:

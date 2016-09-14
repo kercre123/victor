@@ -115,7 +115,7 @@ public class ChallengeDetailsDialog : BaseView {
         _LockedContainer.SetActive(true);
         _LockedIcon.SetActive(true);
         _UnlockedContainer.SetActive(false);
-        _CostButtonLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelXCount, cost);
+        _CostButtonLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelEmptyWithArg, cost);
         if (affordable) {
           // Can Currently Unlock but not afford
           _CurrentCostLabel.text = Localization.Get(LocalizationKeys.kLabelAvailable);
