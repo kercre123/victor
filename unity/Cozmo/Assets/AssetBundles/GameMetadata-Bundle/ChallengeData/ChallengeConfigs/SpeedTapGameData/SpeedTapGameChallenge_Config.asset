@@ -80,16 +80,16 @@ MonoBehaviour:
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: -340344697
-      SecondsBetweenHands: 1.75
-      SecondsHandDisplayed: 1.75
+      SecondsBetweenHands: 1.6
+      SecondsHandDisplayed: 1.6
     - _MidRoundMusic:
         _Music: -340344700
-      SecondsBetweenHands: 1.55
-      SecondsHandDisplayed: 1.55
+      SecondsBetweenHands: 1.6
+      SecondsHandDisplayed: 1.6
     - _MidRoundMusic:
         _Music: -340344699
-      SecondsBetweenHands: 1.4
-      SecondsHandDisplayed: 1.4
+      SecondsBetweenHands: 1.6
+      SecondsHandDisplayed: 1.6
   - DifficultyID: 1
     Colors:
     - {r: 1, g: 1, b: 0, a: 1}
@@ -99,12 +99,12 @@ MonoBehaviour:
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: -340344697
-      SecondsBetweenHands: 1.75
-      SecondsHandDisplayed: 1.75
+      SecondsBetweenHands: 1.6
+      SecondsHandDisplayed: 1.6
     - _MidRoundMusic:
         _Music: -340344700
-      SecondsBetweenHands: 1.55
-      SecondsHandDisplayed: 1.55
+      SecondsBetweenHands: 1.6
+      SecondsHandDisplayed: 1.6
     - _MidRoundMusic:
         _Music: -340344699
       SecondsBetweenHands: 1.4
@@ -137,13 +137,13 @@ MonoBehaviour:
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: -340344697
-      SecondsBetweenHands: 1.25
-      SecondsHandDisplayed: 1.25
+      SecondsBetweenHands: 1.1
+      SecondsHandDisplayed: 1.1
     - _MidRoundMusic:
         _Music: -340344700
-      SecondsBetweenHands: 1.15
-      SecondsHandDisplayed: 1.15
+      SecondsBetweenHands: 1
+      SecondsHandDisplayed: 1
     - _MidRoundMusic:
         _Music: -340344699
-      SecondsBetweenHands: 1
+      SecondsBetweenHands: 0.75
       SecondsHandDisplayed: 1

@@ -55,7 +55,7 @@ MonoBehaviour:
       _AssetDataName: SpeedTapHowToPlayHardAnimation
   GetInAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 249
+    _EnumValue: 260
   GetOutAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 249
+    _EnumValue: 260
