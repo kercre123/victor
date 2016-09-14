@@ -11,7 +11,6 @@ namespace Cozmo.Minigame.CubePounce {
     private bool _TurnInProgress = false;
     private bool _BackupInProgress = false;
     private bool _GetUnreadyInProgress = false;
-    private bool _IsPaused = false;
     private float _GetUnreadyStartAngle_deg;
 
     public override void Enter() {
@@ -73,7 +72,7 @@ namespace Cozmo.Minigame.CubePounce {
     private void HandleGetUnreadyDone(bool success) {
       _GetUnreadyInProgress = false;
 
-      if (!_IsPaused && _CubePounceGame.PitchIndicatesPounceSuccess(_GetUnreadyStartAngle_deg)) {
+      if (_CubePounceGame.PitchIndicatesPounceSuccess(_GetUnreadyStartAngle_deg)) {
         DoBackupReaction();
       }
     }
@@ -92,7 +91,7 @@ namespace Cozmo.Minigame.CubePounce {
     public override void Update() {
       base.Update();
 
-      if (_BackupInProgress || _GetUnreadyInProgress || _IsPaused) {
+      if (_BackupInProgress || _GetUnreadyInProgress) {
         return;
       }
 
@@ -168,14 +167,6 @@ namespace Cozmo.Minigame.CubePounce {
         _CurrentRobot.CancelCallback(HandleGetUnreadyDone);
         _CurrentRobot.CancelCallback(HandleBackupComplete);
       }
-    }
-
-    public override void Pause(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
-      _IsPaused = true;
-    }
-
-    public override void Resume(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
-      _IsPaused = false;
     }
   }
 }
