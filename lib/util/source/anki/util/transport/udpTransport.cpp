@@ -512,7 +512,6 @@ bool UDPTransport::CloseSocket()
   }
 
   _socketId = -1;
-  _port     = -1;
 
   return (closeResult >= 0);
 }
@@ -756,11 +755,29 @@ bool UDPTransport::TryToReadMessage()
   }
   else
   {
-    if (errno != EWOULDBLOCK) // EWOULDBLOCK just means there's nothing in there
+    if (EWOULDBLOCK != errno) // EWOULDBLOCK just means there's nothing in there
     {
-      PRINT_NAMED_WARNING("UDPTransport.ReadFailed",
-                        "Error: recvmsg(_socketId = %d) returned %zd, errno = %d '%s'",
-                        _socketId, bytesReceived, errno, strerror(errno));
+      PRINT_NAMED_ERROR("UDPTransport.ReadFailed",
+                        "Error: recvmsg(_socketId = %d _port = %d) returned %zd, errno = %d '%s'",
+                        _socketId, _port, bytesReceived, errno, strerror(errno));
+    }
+    
+    if (ENOTCONN == errno)
+    {
+      const bool closeSocketSuccess = CloseSocket();
+      if (!closeSocketSuccess)
+      {
+        PRINT_NAMED_ERROR("UDPTransport.ReadFailed.CloseSocketFailed",
+                          "Error: Closing unconnected socket failed. errno = %d '%s'",
+                          errno, strerror(errno));
+      }
+      
+      if (closeSocketSuccess && !OpenSocket(_port))
+      {
+        PRINT_NAMED_ERROR("UDPTransport.ReadFailed.ReopenSocketFailed",
+                          "Error: Reopening closed socket failed. errno = %d '%s'",
+                          errno, strerror(errno));
+      }
     }
     
     return false;

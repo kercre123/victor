@@ -93,6 +93,7 @@ void RobotConnectionManager::Connect(const Util::TransportAddress& address)
   _currentConnectionData->Clear();
   
   _currentConnectionData->SetAddress(address);
+  _reliableTransport->Disconnect(address);
   _reliableTransport->Connect(address);
 }
   
