@@ -533,6 +533,10 @@
       "AnimName": "ag_launch_endDriving"
     },
     {
+      "CladEvent": "OnboardingEyesOn",
+      "AnimName": "ag_launch_eyeson"
+    },
+    {
       "CladEvent": "OnboardingIdle",
       "AnimName": "ag_launch_idle_01"
     },
