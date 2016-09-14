@@ -226,6 +226,12 @@ namespace Anki {
 
     ActionResult TriggerAnimationAction::Init()
     {
+      // If animGroupName is empty we will already print a warning in the constructor so we can just fail immediately
+      if(_animGroupName.empty())
+      {
+        return ActionResult::FAILURE_ABORT;
+      }
+      
       _animName = _robot.GetAnimationStreamer().GetAnimationNameFromGroup(_animGroupName, _robot);
       if( _animName.empty() ) {
         return ActionResult::FAILURE_ABORT;
