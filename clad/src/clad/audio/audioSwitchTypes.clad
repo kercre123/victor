@@ -26,6 +26,16 @@ enum uint_32 Freeplay_Mood
   Sleep = 3671647190,
 }
 
+enum uint_32 Gameplay_Round
+{
+  Invalid = 0,
+  Round_01 = 4039654995,
+  Round_02 = 4039654992,
+  Round_03 = 4039654993,
+  Round_04 = 4039654998,
+  Round_05 = 4039654999,
+}
+
 enum uint_32 GenericSwitch
 {
   Invalid = 0,
@@ -51,6 +61,7 @@ enum uint_32 SwitchGroupType
 {
   External = 1442075084,
   Freeplay_Mood = 2205807877,
+  Gameplay_Round = 2536359484,
   Invalid = 0,
   Mood = 3128647864,
   Relationship = 3723222599,
