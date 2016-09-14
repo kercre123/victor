@@ -289,6 +289,7 @@ class Cozmo(event.Dispatcher):
         # an EvtRobotReady event when complete.
         async def _init():
             # TODO: reset the robot state
+            self.stop_all_motors()
             self.enable_reactionary_behaviors(False)
 
             # Ensure the SDK has full control of cube lights
