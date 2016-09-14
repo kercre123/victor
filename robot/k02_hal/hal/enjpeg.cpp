@@ -156,12 +156,12 @@ static void unrowB2()
 {
   // These macros load the coefficients and run the outer loop for each row
   #define ROW(r) \
-    /*dct = state.dct + BLOCK_SKIP*DCT_SIZE;*/ \
-    /*do*/ { \
+    dct = state.dct + BLOCK_SKIP*DCT_SIZE; \
+    do { \
     int d0=CTa(0,r),d1=CTa(1,r),d2=CTa(2,r),d3=CTa(3,r), d4=CTb(0,r),d5=CTb(1,r),d6=CTb(2,r),d7=CTb(3,r);      \
     BINK();
 //#define ENDROW } while ((dct += DCT_SIZE) < state.dct + BLOCKS_LINE*DCT_SIZE)// Sane version
-  #define ENDROW } // while ((intptr_t)(dct += DCT_SIZE) & 1024)                  // "Clever" version
+  #define ENDROW } while ((intptr_t)(dct += DCT_SIZE) & 1024)                  // "Clever" version
     
   // Coefficients are loaded relative to dct to save a register and a lot of spilling
   #define CTa(x,r) *(int16_t*)(state.coeff + (dct-state.dct) + r*8 + x*2)
@@ -174,11 +174,9 @@ static void unrowB2()
   // JPEG uses signed pixels, we use unsigned - this removes the offset
   #define DC_START 64     // 128 (our offset) * 64 pixels * sqrt(8) (DCT scale) / 16 (Q50 quant)
 
-  s8* dct = state.dct + BLOCK_SKIP*DCT_SIZE;
+  s8* dct;
   
   // Unrolled loops with JPEG-standard zig-zag and Q50 quantizers (16.16 reciprocal Q50 * row/col Bink scalers)
-  // TODO:  K02 cache is too slow - should DMA-copy one ROW()/loop into RAM at a time
-  do {
   ROW(0) ZZQ( 0,d0,0x400) ZZQ( 1,d1,0x6c8) ZZQ( 5,d2,0x6b9) ZZQ( 6,d3,0x34c) ZZQ(14,d4,0x2ab) ZZQ(15,d5,0x152) ZZQ(27,d6,0x151) ZZQ(28,d7,0x139) ENDROW;
   ROW(1) ZZQ( 2,d0,0x637) ZZQ( 4,d1,0x73f) ZZQ( 7,d2,0x599) ZZQ(13,d3,0x33c) ZZQ(16,d4,0x2de) ZZQ(26,d5,0x10f) ZZQ(29,d6,0x14e) ZZQ(42,d7,0x195) ENDROW;
   ROW(2) ZZQ( 3,d0,0x4cd) ZZQ( 8,d1,0x607) ZZQ(12,d2,0x46a) ZZQ(17,d3,0x24f) ZZQ(25,d4,0x1ae) ZZQ(30,d5,0x0f9) ZZQ(41,d6,0x106) ZZQ(43,d7,0x166) ENDROW;
@@ -187,7 +185,6 @@ static void unrowB2()
   ROW(5) ZZQ(20,d0,0x233) ZZQ(22,d1,0x1c2) ZZQ(33,d2,0x102) ZZQ(38,d3,0x0ae) ZZQ(46,d4,0x0a7) ZZQ(51,d5,0x06b) ZZQ(55,d6,0x07e) ZZQ(60,d7,0x0ab) ENDROW;
   ROW(6) ZZQ(21,d0,0x15f) ZZQ(34,d1,0x139) ZZQ(37,d2,0x0e8) ZZQ(47,d3,0x0a3) ZZQ(50,d4,0x0a7) ZZQ(56,d5,0x075) ZZQ(59,d6,0x097) ZZQ(61,d7,0x0c7) ENDROW;
   ROW(7) ZZQ(35,d0,0x109) ZZQ(36,d1,0x0f2) ZZQ(48,d2,0x0d3) ZZQ(49,d3,0x0a1) ZZQ(57,d4,0x0aa) ZZQ(58,d5,0x09d) ZZQ(62,d6,0x0c3) ENDROW;
-  } while ((intptr_t)(dct += DCT_SIZE) & 1024);
 }
   
 // This uses DMA to de-interleave Y data to the left side of the buffer
@@ -244,7 +241,7 @@ const uint32_t YHT[17*8] = {
 // The input is our (still-full-size) frequency-domain image, but quantized to zeros and small integers
 // To compress it, we skip runs of zeros as fast as we can, then shrink small integers with Huffman coding
 // To save time and eliminate a special case with EOBs, I skip the least-important 63rd AC coefficient
-CODERAM uint8_t* emit(__packed uint8_t* outp)
+static uint8_t* emit(__packed uint8_t* outp)
 {
   // This is a C version of the assembly routine to aid testing/development
   // gotos and variable (register) reuse are meant to duplicate the structure of that routine

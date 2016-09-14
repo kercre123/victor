@@ -2,11 +2,9 @@
 #define m_text_start                   0x00001000
 #define m_text_size                    (0x10000 - m_text_start)
 
-; 8KB - 768 bytes for camera - 1.5KB for stack, 256 bytes for vectors
-#define m_vector_start                 0x1FFFE600
-#define m_vector_size                  0x00000100
-#define m_data_start                   0x1FFFE700
-#define m_data_size                    0x00001600
+; 8KB - 768 bytes for camera - 1.5KB for stack
+#define m_data_start                   0x1FFFE600
+#define m_data_size                    0x00001700
 
 ; 8KB + 768 bytes
 #define m_data_2_start                 0x1FFFFD00
@@ -20,10 +18,6 @@ LR_m_text m_text_start m_text_size {   ; load region size_region
     * (HEADER,+FIRST)
     * (InRoot$$Sections)
     .ANY (+RO)
-  }
-  
-  RW_VECTORS m_vector_start m_vector_size { ; Interrupt vectors
-    *(VECTORS)
   }
   
   RW_DATA m_data_start m_data_size { ; RW data
