@@ -42,6 +42,9 @@
   "connectivity.updatingFirmwareSubTitle": {
     "translation": "Please keep Cozmo on his charger"
   },
+  "connectivity.updatingFirmwareFooter": {
+    "translation": "You will need to reconnect to Cozmo's WiFi after the update completes"
+  },
   "connectivity.pairingPinTitle": {
     "translation": "Enter the pin shown on your Cozmo"
   },
@@ -76,6 +79,6 @@
     "translation": "Please place Cozmo on his charger"
   },
   "connectivity.keepCozmoOnCharger": {
-    "translation": "Please keep Cozmo on his charger during Setup"
+    "translation": "Please leave Cozmo on his charger during Setup"
   }
 }

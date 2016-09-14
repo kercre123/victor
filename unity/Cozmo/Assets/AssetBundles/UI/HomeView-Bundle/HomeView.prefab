@@ -1903,8 +1903,17 @@ MonoBehaviour:
   Prefab: {fileID: 182954, guid: fc282e36b09c149278262224999a7104, type: 2}
   ModifiedValues:
   - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
+    JsonValue: 1
+  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
     JsonValue: 6
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MaxSize
+    JsonValue: 77
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    JsonValue: 77
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#label.emptyWithArg"'
@@ -2598,7 +2607,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: 28565cca262e9481280b50c6ba7e3892, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 9bd8a3a2889f1416f9880580da8c4785, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -2652,7 +2661,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: 2f4324a29fe314be49c316f342f04557, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 4339f0f71fd3c4d0ab886f898d633a5d, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -2786,8 +2795,17 @@ MonoBehaviour:
   Prefab: {fileID: 182954, guid: fc282e36b09c149278262224999a7104, type: 2}
   ModifiedValues:
   - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
+    JsonValue: 1
+  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
     JsonValue: 6
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MaxSize
+    JsonValue: 77
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    JsonValue: 77
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#label.emptyWithArg"'
@@ -3598,7 +3616,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _CountLabel: {fileID: 0}
-  _ItemIcon: {fileID: 11435452}
+  _ItemIcon: {fileID: 0}
   _ItemId: TestHexItem0
   _CountOnly: 1
 --- !u!114 &11485164
@@ -3613,7 +3631,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _CountLabel: {fileID: 0}
-  _ItemIcon: {fileID: 11436146}
+  _ItemIcon: {fileID: 0}
   _ItemId: treat
   _CountOnly: 1
 --- !u!114 &11487632
@@ -6424,10 +6442,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22434856}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 2, y: -8}
-  m_SizeDelta: {x: 200, y: 212}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22424566
 RectTransform:
@@ -6444,8 +6462,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -100}
-  m_SizeDelta: {x: 150, y: 124}
+  m_AnchoredPosition: {x: 0, y: -89.99997}
+  m_SizeDelta: {x: 150, y: 180}
   m_Pivot: {x: 0, y: 0}
 --- !u!224 &22424634
 RectTransform:
@@ -6579,8 +6597,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 132, y: -100}
-  m_SizeDelta: {x: 200, y: 200}
+  m_AnchoredPosition: {x: 60, y: -100.12}
+  m_SizeDelta: {x: 180, y: 180}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22434346
 RectTransform:
@@ -6595,10 +6613,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22433786}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -6, y: -10}
-  m_SizeDelta: {x: 134, y: 132}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22434452
 RectTransform:
@@ -6635,8 +6653,8 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 438, y: -100}
-  m_SizeDelta: {x: 200, y: 200}
+  m_AnchoredPosition: {x: 399, y: -100.12}
+  m_SizeDelta: {x: 180, y: 180}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22435600
 RectTransform:
@@ -7592,7 +7610,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 150, y: 124}
+  m_SizeDelta: {x: 150, y: 180}
   m_Pivot: {x: 0, y: 0}
 --- !u!224 &22492086
 RectTransform:

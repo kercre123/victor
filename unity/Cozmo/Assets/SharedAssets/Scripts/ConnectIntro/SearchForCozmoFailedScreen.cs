@@ -61,7 +61,7 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
   }
 
   private void HandleGetACozmoButton() {
-    Application.OpenURL("https://www.anki.com");
+    Application.OpenURL(Cozmo.Settings.DefaultSettingsValuesConfig.Instance.GetACozmoURL);
   }
 
   private void Update() {

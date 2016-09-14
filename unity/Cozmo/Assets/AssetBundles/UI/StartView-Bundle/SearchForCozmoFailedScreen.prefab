@@ -296,7 +296,7 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 12800000, guid: 01314919a94634a228a0ccc4039bcf62, type: 3}
-    m_FontSize: 140
+    m_FontSize: 130
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 0
@@ -459,7 +459,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 800, y: 200}
+  m_SizeDelta: {x: 800, y: 153}
   m_Pivot: {x: 0, y: 0}
 --- !u!224 &22448706
 RectTransform:
@@ -499,7 +499,7 @@ RectTransform:
   m_RootOrder: 3
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -679, y: 75}
+  m_AnchoredPosition: {x: -678.5, y: 165.49994}
   m_SizeDelta: {x: 1300, y: 89}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22461808
@@ -590,8 +590,8 @@ RectTransform:
   m_RootOrder: 4
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -861, y: 155.5}
-  m_SizeDelta: {x: 1665, y: 89}
+  m_AnchoredPosition: {x: -678.49994, y: 76.49994}
+  m_SizeDelta: {x: 1300, y: 89}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &100100000
 Prefab:

@@ -65,5 +65,9 @@ namespace Cozmo.Settings {
     [SerializeField]
     private int _CharactersOfAppInfoToShow = 15;
     public int CharactersOfAppInfoToShow { get { return _CharactersOfAppInfoToShow; } }
+
+    [SerializeField]
+    private string _GetACozmoURL;
+    public string GetACozmoURL { get { return _GetACozmoURL; } }
   }
 }

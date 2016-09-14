@@ -156,6 +156,7 @@ MonoBehaviour:
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 0
+  DimBackgroundPrefabOverride: {fileID: 0}
   _ConnectButton: {fileID: 0}
 --- !u!114 &11442814
 MonoBehaviour:
@@ -178,7 +179,7 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_Sprite: {fileID: 21300000, guid: 17bdb17c4442440b6912d9e46ccc7aa6, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
@@ -250,8 +251,8 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: -672, y: -746}
-  m_SizeDelta: {x: 1200, y: 800}
+  m_AnchoredPosition: {x: -546, y: -752.82}
+  m_SizeDelta: {x: 1422, y: 800}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22419088
 RectTransform:
@@ -304,7 +305,7 @@ RectTransform:
   m_RootOrder: 3
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 702, y: 15}
+  m_AnchoredPosition: {x: 733, y: 14.997}
   m_SizeDelta: {x: 1010, y: 692}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22431628

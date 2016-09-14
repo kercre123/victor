@@ -61,7 +61,7 @@
     "translation": "SDK Connected"
   },
   "settings.sdkPanel.sdkUrl.label": {
-    "translation": "developer.anki.com/cozmo"
+    "translation": "go.anki.com/cozmo-app-sdk"
   },
   "settings.sdkPanel.sdkNotConnected.text": {
     "translation": "SDK Not Connected"

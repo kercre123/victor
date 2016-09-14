@@ -15,10 +15,12 @@ MonoBehaviour:
   _MediumRobotVolume: 0.6
   _HighRobotVolume: 1
   _DefaultMasterVolume: 1
-  _SdkUrl: https://developer.anki.com/en-us
   _AppBackground_TimeTilSleep_sec: 20
   _AppBackground_TimeTilDisconnect_sec: 45
+  _AppBackground_SleepAnimGetInBuffer_sec: 3
   _PlayerSleepCozmo_TimeTilSleep_sec: 0
   _PlayerSleepCozmo_TimeTilDisconnect_sec: 20
   _FilterSmoothingWeight: 0.99
   _LowBatteryVoltageValue: 3.5
+  _CharactersOfAppInfoToShow: 15
+  _GetACozmoURL: http://go.anki.com/cozmo-app-pdp
