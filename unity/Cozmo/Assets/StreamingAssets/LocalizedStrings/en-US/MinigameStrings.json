@@ -200,12 +200,11 @@
     "translation": "Cozmo has moved and can't continue the game."
   },
   "minigame.lostTrackOfBlock.title": {
-    "translation": "Where'd the Cube go?"
+    "translation": "Cube Missing"
   },
   "minigame.lostTrackOfBlock.description": {
-    "translation": "Cozmo lost track of the Cube and can't continue the game."
+    "translation": "Cozmo lost track of his Cube and can't continue the game."
   },
-
   "speedTap.dontMoveBlock.title": {
     "translation": "Cozmo's Cube has moved!"
   },

@@ -82,7 +82,7 @@
     "translation": "Sleep Cozmo?"
   },
   "settings.sleepCozmoPanel.confirmModal.description":{
-    "translation": "Tap Sleep to disconnect from your robot or leave Cozmo on his charger to boost his battery"
+    "translation": "Leave Cozmo on his charger to boost his battery or tap Sleep to disconnect"
   },
   "settings.sleepCozmoPanel.confirmModal.button.confirm":{
     "translation": "Sleep"
