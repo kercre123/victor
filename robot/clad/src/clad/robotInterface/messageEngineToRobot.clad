@@ -342,6 +342,11 @@ message RequestCrashReports
   int_32 index
 }
 
+message ShutdownRobot
+{
+  uint_32 reserved[8]
+}
+
 enum uint_32 ToRobotAddressSpace
 {
   GLOBAL_INVALID_TAG = 0,
@@ -481,6 +486,7 @@ union EngineToRobot
   DisplayNumber                 oledDisplayNumber           = 0xA3,
   BodyStorageContents           bodyStorageContents         = 0xA4,
 
+  ShutdownRobot                 shutdownRobot               = 0xA9,
   OTA::Write                    otaWrite                    = 0xAF,
 
   AppConnectConfigString        appConCfgString             = 0xAA,

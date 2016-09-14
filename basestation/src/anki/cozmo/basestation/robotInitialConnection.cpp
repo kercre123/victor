@@ -83,6 +83,7 @@ bool RobotInitialConnection::ShouldFilterMessage(EngineToRobotTag messageTag) co
   switch (messageTag) {
       // these messages are ok on outdated firmware
     case EngineToRobotTag::otaWrite:
+    case EngineToRobotTag::shutdownRobot:
       return false;
 
     default:

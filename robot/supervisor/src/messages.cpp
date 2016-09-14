@@ -1048,6 +1048,7 @@ namespace Anki {
       
       // Stubbed for both simulator and K02
       void Process_requestCrashReports(const Anki::Cozmo::RobotInterface::RequestCrashReports& msg) {}
+      void Process_shutdownRobot(const Anki::Cozmo::RobotInterface::ShutdownRobot& msg) {}
 
 // ----------- Send messages -----------------
 
