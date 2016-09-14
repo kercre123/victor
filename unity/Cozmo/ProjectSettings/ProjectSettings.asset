@@ -404,7 +404,10 @@ PlayerSettings:
   psp2UseDebugIl2cppLibs: 0
   psmSplashimage: {fileID: 0}
   spritePackerPolicy: DefaultPackerPolicy
-  scriptingDefineSymbols: {}
+  scriptingDefineSymbols:
+    1: ENABLE_DEBUG_PANEL;ANKI_DEVELOPER_CODE;ANKI_DEV_CHEATS;ANKI_NO_PRIVACY_GUARD;DEBUG
+    4: ENABLE_DEBUG_PANEL;ANKI_DEVELOPER_CODE;ANKI_DEV_CHEATS;ANKI_NO_PRIVACY_GUARD;DEBUG
+    7: ENABLE_DEBUG_PANEL;ANKI_DEVELOPER_CODE;ANKI_DEV_CHEATS;ANKI_NO_PRIVACY_GUARD;DEBUG
   metroPackageName: CozmoRefactor
   metroPackageVersion: 
   metroCertificatePath: 

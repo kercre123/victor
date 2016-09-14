@@ -197,6 +197,18 @@
             ]
           ],
         },
+        'Shipping': {
+            'cflags': ['-Os'],
+            'cflags_cc': ['-Os'],
+            'xcode_settings': {
+              'OTHER_CFLAGS': ['-Os'],
+              'OTHER_CPLUSPLUSFLAGS': ['-Os'],
+             },
+            'defines': [
+              'NDEBUG=1',
+              'SHIPPING=1',
+            ],
+        },
       }},
       {
         'configurations': {

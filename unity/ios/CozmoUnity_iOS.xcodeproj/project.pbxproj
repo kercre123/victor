@@ -1270,6 +1270,86 @@
 			};
 			name = Release;
 		};
+		ADE4E84C1D84C23D00A46885 /* Shipping */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */;
+			buildSettings = {
+				ARCHS = armv7;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_BITCODE = NO;
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_ENABLE_CPP_RTTI = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = NO;
+				GCC_THUMB_SUPPORT = NO;
+				GCC_USE_INDIRECT_FUNCTION_CALLS = NO;
+				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = iphoneos;
+			};
+			name = Shipping;
+		};
+		ADE4E84D1D84C23D00A46885 /* Shipping */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = armv7;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = YES;
+				ENABLE_BITCODE = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/opencv",
+					"$(SRCROOT)/HockeyApp",
+				);
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = UnityBuild/Classes/Prefix.pch;
+				HEADER_SEARCH_PATHS = (
+					"\"$(SRCROOT)/UnityBuild/Classes\"",
+					"\"$(SRCROOT)\"",
+					"$(SRCROOT)/UnityBuild/Classes/Native",
+					"$(SRCROOT)/UnityBuild/Libraries/bdwgc/include",
+					"$(SRCROOT)/UnityBuild/Libraries/libil2cpp/include",
+					"$(SRCROOT)/../../cozmoAPI/include",
+				);
+				INFOPLIST_FILE = Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/opencv",
+					"$(ANKI_BUILD_UNITY_XCODE_BUILD_DIR)/Libraries",
+					"$(SRCROOT)/HockeyApp",
+				);
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "-DINIT_SCRIPTING_BACKEND=1";
+				OTHER_LDFLAGS = (
+					"-weak_framework",
+					CoreMotion,
+					"-weak-lSystem",
+					"-force_load",
+					"$(CORETECH_EXTERNAL_DIR)/routing_http_server/generated/ios/DerivedData/Release-iphoneos/librouting_http_server.a",
+				);
+				PRODUCT_NAME = cozmo;
+				PROVISIONING_PROFILE = "";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				UNITY_RUNTIME_VERSION = 5.2.2f1;
+				UNITY_SCRIPTING_BACKEND = il2cpp;
+			};
+			name = Shipping;
+		};
 		C01FCF4F08A954540054247B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */;
@@ -1320,6 +1400,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1D6058950D05DD3E006BFB54 /* Release */,
+				ADE4E84D1D84C23D00A46885 /* Shipping */,
 				1D6058940D05DD3E006BFB54 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -1329,6 +1410,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C01FCF5008A954540054247B /* Release */,
+				ADE4E84C1D84C23D00A46885 /* Shipping */,
 				C01FCF4F08A954540054247B /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;

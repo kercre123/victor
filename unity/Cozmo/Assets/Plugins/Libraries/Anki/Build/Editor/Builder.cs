@@ -343,18 +343,22 @@ namespace Anki {
         ScriptCallOptimizationLevel saveIOSScriptLevel = PlayerSettings.iOS.scriptCallOptimization;
 
         BuildTarget buildTarget = BuildTarget.StandaloneOSXIntel64;
+        BuildTargetGroup buildTargetGroup = BuildTargetGroup.Standalone;
         switch (platform.ToLower()) {
         case "android": {
             buildTarget = BuildTarget.Android;
+            buildTargetGroup = BuildTargetGroup.Android;
             break;
           }
         case "mac":
         case "osx": {
             buildTarget = BuildTarget.StandaloneOSXIntel64;
+            buildTargetGroup = BuildTargetGroup.Standalone;
             break;
           }
         case "ios": {
             buildTarget = BuildTarget.iOS;
+            buildTargetGroup = BuildTargetGroup.iOS;
             if (sdk == "iphoneos") {
               PlayerSettings.iOS.sdkVersion = iOSSdkVersion.DeviceSDK;
             }
@@ -369,13 +373,16 @@ namespace Anki {
           buildType = "PlayerAndAssets";
         }
 
+        // save script defines
+        string savePoundDefines = PlayerSettings.GetScriptingDefineSymbolsForGroup(buildTargetGroup);
+
         // Later on use this to switch between building for different targets
         // EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.Android);
 
         bool isDebugBuild = config.ToLower() == "debug";
         BuildOptions buildOptions = GetBuildOptions(buildTarget, isDebugBuild, enableDebugging, connectWithProfiler);
 
-        ConfigurePlayerSettings(buildTarget, config);
+        ConfigurePlayerSettings(buildTarget, buildTargetGroup, config);
 
         // Stop playing
         EditorApplication.isPlaying = false;
@@ -393,6 +400,9 @@ namespace Anki {
         // Build and copy asset bundles. If there is an error building bundles, then abort the build
         result = BuildAssetBundlesInternal(buildTarget);
         if (!string.IsNullOrEmpty(result)) {
+          PlayerSettings.iOS.sdkVersion = saveIOSSDKVersion;
+          PlayerSettings.iOS.scriptCallOptimization = saveIOSScriptLevel;
+          PlayerSettings.SetScriptingDefineSymbolsForGroup(buildTargetGroup, savePoundDefines);
           return result;
         }
 
@@ -414,6 +424,7 @@ namespace Anki {
         // restore player settings
         PlayerSettings.iOS.sdkVersion = saveIOSSDKVersion;
         PlayerSettings.iOS.scriptCallOptimization = saveIOSScriptLevel;
+        PlayerSettings.SetScriptingDefineSymbolsForGroup(buildTargetGroup, savePoundDefines);
 
         return result;
       }
@@ -476,29 +487,47 @@ namespace Anki {
       // In an ideal world, we would never have to change the player settings.
       // However, on iOS this is necessary to get appropriate debug symbols & C# exception behavior
       // for optimal debugging.
-      private static void ConfigurePlayerSettings(BuildTarget target, string config) {
+      private static void ConfigurePlayerSettings(BuildTarget target, BuildTargetGroup buildTargetGroup, string config) {
         // We currently only need to set custom options for iOS
         if (target != BuildTarget.iOS) {
           return;
         }
 
+        // unity keeps this list from last execution. so we will not build on it. we will instead start fresh each time
+        //string poundDefines = PlayerSettings.GetScriptingDefineSymbolsForGroup(buildTargetGroup);
+        string poundDefines = "";
+
         switch (config) {
         case "debug":
         case "Debug": {
             PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.SlowAndSafe;
+            poundDefines += "ENABLE_DEBUG_PANEL;ANKI_DEVELOPER_CODE;ANKI_DEV_CHEATS;ANKI_NO_PRIVACY_GUARD;DEBUG";
+          }
+          break;
+        case "shipping":
+        case "Shipping": {
+            PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.SlowAndSafe;
+            poundDefines += "SHIPPING;NDEBUG";
           }
           break;
         case "profile":
-        case "Profile":
+        case "Profile": {
+            PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.SlowAndSafe;
+            poundDefines += "PROFILE;NDEBUG";
+          }
+          break;
         case "release":
         case "Release": {
             // TODO: BRC - Remove me after Founder Demo
             // Disable FastNoExceptions mode until we know what is causing the exception
             // in the DOTween library.
             PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.SlowAndSafe;
+            poundDefines += "ENABLE_DEBUG_PANEL;ANKI_DEVELOPER_CODE;ANKI_DEV_CHEATS;ANKI_NO_PRIVACY_GUARD;RELEASE;NDEBUG";
           }
           break;
         }
+
+        PlayerSettings.SetScriptingDefineSymbolsForGroup(buildTargetGroup, poundDefines);
       }
 
       // Copies the asset bundles to the target folder

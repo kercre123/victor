@@ -390,6 +390,44 @@
             'RELEASE=1',
           ],
       },
+      'Shipping': {
+          'conditions': [
+            ['OS=="ios"', {
+              'xcode_settings': {
+                'LIBRARY_SEARCH_PATHS': [
+                    '<@(cte_lib_search_path_ios_release)',
+                    '<@(opencv_lib_search_path_release)',
+                    '<(webots_path)/lib/',
+                    '<@(flite_lib_search_path_ios)',
+                ],
+                 'FRAMEWORK_SEARCH_PATHS': [
+                  '../../lib/HockeySDK-iOS/HockeySDK.framework',
+                ],
+             },
+            }],
+            ['OS=="mac"', {
+              'xcode_settings': {
+                'LIBRARY_SEARCH_PATHS': [
+                    '<@(cte_lib_search_path_mac_release)',
+                    '<@(opencv_lib_search_path_release)',
+                    '<(webots_path)/lib/',
+                    '<@(flite_lib_search_path_mac)',
+                ],
+              },
+            }],
+          ],
+          'cflags': ['-Os'],
+          'cflags_cc': ['-Os'],
+          'xcode_settings': {
+            'OTHER_CFLAGS': ['-Os'],
+            'OTHER_CPLUSPLUSFLAGS': ['-Os'],
+            'OTHER_LDFLAGS': ['<@(linker_flags)'],
+          },
+          'defines': [
+            'NDEBUG=1',
+            'SHIPPING=1',
+          ],
+      },
     },
     'conditions': [    
       [

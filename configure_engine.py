@@ -205,7 +205,7 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_postprocess_callback(postprocess_output_directory)
     
     def add_configuration_arguments(self):
-        configurations = ['Debug', 'Release', 'Profile']
+        configurations = ['Debug', 'Release', 'Profile', 'Shipping']
         default_configuration = 'Debug'
         group = self.add_mutually_exclusive_group(required=False)
         group.add_argument(

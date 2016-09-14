@@ -380,7 +380,7 @@ class GamePlatformConfiguration(object):
         #writes to smcs file based on feature flags
         unityAssetsPath = os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME, 'Assets');
         smcsFile = open(os.path.join(unityAssetsPath, 'smcs.rsp'), 'w')
-        smcsSettings = "-warnaserror+\n" + "-define:ENABLE_DEBUG_PANEL\n";
+        smcsSettings = "-warnaserror\n";
 
         if self.options.features != None and 'factoryTest' in self.options.features[0]:
             smcsSettings = smcsSettings + "-define:FACTORY_TEST"

@@ -164,7 +164,7 @@ void CpuProfiler::RemoveThreadProfiler(CpuThreadId threadId)
 // ================================================================================
 // Console Functions for configuring profiling
 
-  
+#if REMOTE_CONSOLE_ENABLED  
 static const char* kCpuProfilerSection = "CpuProfiler";
 
   
@@ -280,7 +280,8 @@ static void ListProfiledThreads( ConsoleFunctionContextRef context )
   }
 }
 CONSOLE_FUNC( ListProfiledThreads, kCpuProfilerSection );
-  
+
+#endif // REMOTE_CONSOLE_ENABLED
   
 } // end namespace Util
 } // end namespace Anki
