@@ -18,6 +18,9 @@
       "/{*}"
     ]
   },
+  "settings.cubeStatusPanel.button.cubeHelp": {
+    "translation": "Cube Help"
+  },
   "settings.sdkPanel.activateSDKalert.text": {
     "translation": "Activate SDK Mode?"
   },

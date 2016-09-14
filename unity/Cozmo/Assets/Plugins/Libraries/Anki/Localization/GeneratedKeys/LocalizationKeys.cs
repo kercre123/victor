@@ -497,6 +497,7 @@ public static class LocalizationKeys {
 
   #region SettingsStrings
 
+  public const string kSettingsCubeStatusPanelButtonCubeHelp = "settings.cubeStatusPanel.button.cubeHelp";
   public const string kSettingsSdkPanelActivateSDKalertText = "settings.sdkPanel.activateSDKalert.text";
   public const string kSettingsSdkPanelDisableButtonText = "settings.sdkPanel.disableButton.text";
   public const string kSettingsSdkPanelEnableButtonText = "settings.sdkPanel.enableButton.text";

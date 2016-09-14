@@ -123,7 +123,10 @@ MonoBehaviour:
   - ObjectPath: 
     FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
     JsonValue: '"Play__Ui__Click_Back"'
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../
+    FieldName: Cozmo.UI.BaseView:_OptionalCloseDialogButton
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11452052
 MonoBehaviour:
@@ -181,6 +184,9 @@ MonoBehaviour:
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 1
   DimBackgroundPrefabOverride: {fileID: 0}
+  _OpenAudioEvent:
+    _Event: Invalid
+    _EventType: GenericEvent
 --- !u!114 &11496762
 MonoBehaviour:
   m_ObjectHideFlags: 1
