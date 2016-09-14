@@ -2,6 +2,7 @@ Type,AudioCategory,WWiseIdKey,WWiseIdValue,GourpName,AliasName,Comment
 Event,,Play__Coz_App__Enter_Background,2017190380,Coz_App,Enter_Background,
 Event,,Play__Coz_App__Enter_Foreground,1225777195,Coz_App,Enter_Foreground,
 Event,,Play__Dev_Device__External_Source,3462246304,Dev_Device,External_Source,
+Event,,Play__Dev_Device__Tone_Generator,2415524415,Dev_Device,Tone_Generator,
 Event,,Play__Dev_Robot__External_Source,2539447680,Dev_Robot,External_Source,
 Event,,Play__Dev_Robot__Freq_Sweep,2028515806,Dev_Robot,Freq_Sweep,
 Event,,Play__Dev_Robot__Pink_1Sec,3980968688,Dev_Robot,Pink_1Sec,
