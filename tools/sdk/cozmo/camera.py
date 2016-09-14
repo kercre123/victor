@@ -106,13 +106,13 @@ class Camera(event.Dispatcher):
             return
         if self._partial_image_id is not None and msg.chunkId == 0:
             if not self._partial_invalid:
-                logger.warn("Lost final chunk of image; discarding")
+                logger.debug("Lost final chunk of image; discarding")
             self._partial_image_id = None
 
         if self._partial_image_id is None:
             if msg.chunkId != 0:
                 if not self._partial_invalid:
-                    logger.warn("Received chunk of broken image")
+                    logger.debug("Received chunk of broken image")
                 self._partial_invalid = True
                 return
             # discard any previous in-progress image
@@ -122,11 +122,11 @@ class Camera(event.Dispatcher):
 
             max_size = msg.imageChunkCount * _clad_to_game_cozmo.ImageConstants.IMAGE_CHUNK_SIZE
             width, height = RESOLUTIONS[msg.resolution]
-            max_size = width * height * 3
+            max_size = width * height * 3 # 3 bytes (RGB) per pixel
             self._partial_data = np.empty(max_size, dtype=np.uint8)
 
         if msg.chunkId != (self._last_chunk_id + 1) or msg.imageId != self._partial_image_id:
-            logger.warn("Image missing chunks; discarding (last_chunk_id=%d partial_image_id=%s)",
+            logger.debug("Image missing chunks; discarding (last_chunk_id=%d partial_image_id=%s)",
                     self._last_chunk_id, self._partial_image_id)
             self._reset_partial_state()
             self._partial_invalid = True
@@ -145,7 +145,7 @@ class Camera(event.Dispatcher):
         data = self._partial_data[0:self._partial_size]
         if self._partial_metadata.imageEncoding ==  _clad_to_game_cozmo.ImageEncoding.JPEGMinimizedGray:
             width, height = RESOLUTIONS[self._partial_metadata.resolution]
-            data = minigray_to_jpeg(data, width, height)
+            data = _minigray_to_jpeg(data, width, height)
         image = PIL.Image.open(io.BytesIO(data)).convert('RGB')
         self._latest_image = image
         self.dispatch_event(EvtNewRawCameraImage, image=image)
@@ -154,7 +154,7 @@ class Camera(event.Dispatcher):
     #### Public Event Handlers ####
 
 
-def minigray_to_jpeg(minigray,  width, height):
+def _minigray_to_jpeg(minigray,  width, height):
         "Converts miniGrayToJpeg format to normal jpeg format"
         # Does not work correctly yet
         bufferIn = minigray.tolist()

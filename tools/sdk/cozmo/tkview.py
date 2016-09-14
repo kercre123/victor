@@ -68,13 +68,9 @@ class TkImageViewer(Frame, TkThreadable):
         self._img_queue.append(image.raw_image)
 
     def _delete_window(self):
-        # this is not thread safe :-(
-        #self._handler.disable()
-
         self.tk_root.destroy()
         self.quit()
         self._isRunning = False
-        sys.exit()
 
     def _draw_frame(self):
         try:
