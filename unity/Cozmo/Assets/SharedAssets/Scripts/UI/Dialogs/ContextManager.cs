@@ -66,7 +66,7 @@ public class ContextManager : MonoBehaviour {
       _ForegroundTweener.Kill();
     }
     if (playChime) {
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
+      Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Attention_Device);
     }
     Color transparentFlashColor = new Color(_DefaultSettings.ContextFlashColor.r, _DefaultSettings.ContextFlashColor.g, _DefaultSettings.ContextFlashColor.b, 0);
     _OverlayForeground.color = transparentFlashColor;

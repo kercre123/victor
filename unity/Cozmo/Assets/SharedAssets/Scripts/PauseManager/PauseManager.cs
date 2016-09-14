@@ -255,7 +255,7 @@ namespace Cozmo {
 
       CloseLowBatteryDialog();
       if (!IsConfirmSleepDialogOpen) {
-        Anki.Cozmo.Audio.AudioEventParameter openEvt = Anki.Cozmo.Audio.AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
+        Anki.Cozmo.Audio.AudioEventParameter openEvt = Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Attention_Device);
 
         _SleepCozmoConfirmDialog = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab,
                                                       preInitFunc: (AlertView alertView) => {
@@ -266,7 +266,7 @@ namespace Cozmo {
         _SleepCozmoConfirmDialog.SetCloseButtonEnabled(false);
         _SleepCozmoConfirmDialog.SetPrimaryButton(LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalButtonConfirm,
                                                   HandleConfirmSleepCozmoButtonTapped,
-                                                  Anki.Cozmo.Audio.AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Disconnect));
+                                                  Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Disconnect));
 
         if (handleOnChargerSleepCancel) {
           _SleepCozmoConfirmDialog.SetSecondaryButton(LocalizationKeys.kButtonCancel, HandleOnChargerSleepCancel);
