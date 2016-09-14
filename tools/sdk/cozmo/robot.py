@@ -10,6 +10,7 @@ from . import logger, logger_protocol
 from . import action
 from . import anim
 from . import behavior
+from . import camera
 from . import conn
 from . import event
 from . import lights
@@ -42,7 +43,7 @@ class GoToPose(action.Action):
         return "pose=%s" % (self.pose)
 
     def _encode(self):
-        return _clad_to_engine_iface.GotoPose(x_mm=self.pose.position.x, y_mm=self.pose.position.y, 
+        return _clad_to_engine_iface.GotoPose(x_mm=self.pose.position.x, y_mm=self.pose.position.y,
                                               rad=self.pose.rotation.angle_z.radians)
 
 class PickupObject(action.Action):
@@ -64,6 +65,7 @@ class PickupObject(action.Action):
     def _encode(self):
         return _clad_to_engine_iface.PickupObject(objectID=self.obj.object_id, usePreDockPose=self.use_pre_dock_pose)
 
+
 class PlaceOnObject(action.Action):
     '''Tracks the state of the "place on object" action.
 
@@ -83,6 +85,7 @@ class PlaceOnObject(action.Action):
     def _encode(self):
         return _clad_to_engine_iface.PlaceOnObject(objectID=self.obj.object_id, usePreDockPose=self.use_pre_dock_pose)
 
+
 class PlaceObjectOnGroundHere(action.Action):
     '''Tracks the state of the "place object on ground here" action.
 
@@ -99,6 +102,7 @@ class PlaceObjectOnGroundHere(action.Action):
 
     def _encode(self):
         return _clad_to_engine_iface.PlaceObjectOnGroundHere()
+
 
 class SayText(action.Action):
     '''Tracks the progress of a say text robot action.
@@ -197,6 +201,7 @@ class TurnInPlace(action.Action):
             angle_rad = self.angle.radians,
             isAbsolute = 0)
 
+
 class TurnTowardsFace(action.Action):
     '''Tracks the progress of a turn towards face robot action.
 
@@ -215,12 +220,17 @@ class TurnTowardsFace(action.Action):
         return _clad_to_engine_iface.TurnTowardsFace(
             faceID=self.face.face_id)
 
+
 class Cozmo(event.Dispatcher):
     """The interface to a Cozmo robot.
 
     A robot has access to:
 
-    * A World object, which tracks the state of the world the robot knows about
+    * A :class:`~cozmo.world.World` object (:attr:`cozmo.robot.Cozmo.world`), 
+        which tracks the state of the world the robot knows about
+
+    * A :class:`~cozmo.camera.Camera` object (:attr:`cozmo.robot.Cozmo.camera`), 
+        which provides access to Cozmo's camera
 
     * An Animations object, controlling the playing of animations on the robot
 
@@ -247,6 +257,7 @@ class Cozmo(event.Dispatcher):
     animation_factory = anim.Animation
     animation_trigger_factory = anim.AnimationTrigger
     behavior_factory = behavior.Behavior
+    camera_factory = camera.Camera
     world_factory = world.World
 
 
@@ -258,7 +269,12 @@ class Cozmo(event.Dispatcher):
         self._pose = None
         self.is_primary = is_primary
 
+        #: :class:`cozmo.camera.Camera` Provides access to the robot's camera
+        self.camera = self.camera_factory(self, dispatch_parent=self)
+
+        #: :class:`cozmo.world.World` Tracks state information about Cozmo's world.
         self.world = self.world_factory(self.conn, self, dispatch_parent=self)
+
         self._action_dispatcher = self._action_dispatcher_factory(self)
 
         # send all received events to the world and action dispatcher
@@ -274,10 +290,16 @@ class Cozmo(event.Dispatcher):
         async def _init():
             # TODO: reset the robot state
             self.enable_reactionary_behaviors(False)
+
+            # Ensure the SDK has full control of cube lights
+            self._set_cube_light_state(False)
+
             await self.world.delete_all_custom_objects()
             self._reset_behavior_state()
+
             # wait for animations to load
             await self.conn.anim_names.wait_for_loaded()
+
             self._is_ready = True
             logger.info("Robot initialized OK")
             self.dispatch_event(EvtRobotReady, robot=self)
@@ -286,6 +308,10 @@ class Cozmo(event.Dispatcher):
     def _reset_behavior_state(self):
         msg = _clad_to_engine_iface.ExecuteBehavior(
                 behaviorType=_clad_to_engine_cozmo.BehaviorType.NoneBehavior)
+        self.conn.send_msg(msg)
+
+    def _set_cube_light_state(self, enable):
+        msg = _clad_to_engine_iface.EnableLightStates(enable=enable, objectID=-1)
         self.conn.send_msg(msg)
 
     #### Properties ####
@@ -312,7 +338,7 @@ class Cozmo(event.Dispatcher):
             A :class:`cozmo.util.Pose` object.
         """
         return self._pose
-    
+
 
 
     #### Private Event Handlers ####
@@ -326,6 +352,9 @@ class Cozmo(event.Dispatcher):
 
     def _recv_msg_processed_image(self, _, *, msg):
         pass
+
+    def _recv_msg_image_chunk(self, evt, *, msg):
+        self.camera.dispatch_event(evt)
 
     def _recv_msg_robot_state(self, evt, *, msg):
         #TODO flesh out the rest of the params in the robotState message
@@ -363,18 +392,6 @@ class Cozmo(event.Dispatcher):
         msg = _clad_to_engine_iface.EnableReactionaryBehaviors(enabled=should_enable)
         self.conn.send_msg(msg)
 
-    def set_robot_image_send_mode(self, enable_stream=True):
-        '''Send this message when you want to enable Cozmo streaming images to the SDK.'''
-        if enable_stream:
-            image_send_mode = _clad_to_engine_cozmo.ImageSendMode.Stream
-        else:
-            image_send_mode = _clad_to_engine_cozmo.ImageSendMode.Off
-
-        image_resolution = _clad_to_engine_cozmo.ImageResolution.QVGA
-
-        msg = _clad_to_engine_iface.SetRobotImageSendMode(
-                robotID=self.robot_id, mode=image_send_mode, resolution=image_resolution)
-        self.conn.send_msg(msg)
 
     ### Low-Level Commands ###
 
@@ -385,7 +402,7 @@ class Cozmo(event.Dispatcher):
         Args:
             l_wheel_velocity (float): Velocity of the left tread
             r_wheel_velocity (float): Velocity of the right tread
-            l_wheel_acc (float): Acceleration of left tread, 
+            l_wheel_acc (float): Acceleration of left tread,
             None value defaults this to the same as l_wheel_velocity
             r_wheel_acc (float): Acceleration of right tread
             None value defaults this to the same as r_wheel_velocity
@@ -458,7 +475,7 @@ class Cozmo(event.Dispatcher):
 
     def set_backpack_lights(self, light1, light2, light3, light4, light5):
         '''Set the lights on cozmo's back.
-        
+
         Args:
             light1-5 (class:'cozmo.lights.light'): The lights for Cozmo's backpack
         '''
@@ -471,7 +488,7 @@ class Cozmo(event.Dispatcher):
 
     def set_all_backpack_lights(self, light):
         '''Set the lights on cozmo's back to the same color.
-        
+
         Args:
             light (class:'cozmo.lights.light'): The lights for Cozmo's backpack
         '''
@@ -604,7 +621,7 @@ class Cozmo(event.Dispatcher):
             obj (:class:`cozmo.objects.ObservableObject`): The target object to pick up
             where obj.pickupable is true
             use_pre_dock_pose (bool): whether or not to try to immediately pick up an object or
-            relocate and then try 
+            relocate and then try
         Returns:
             A :class:`cozmo.robot.PickupObject` action object which can be queried to see when it is complete
         Raises:
@@ -626,9 +643,9 @@ class Cozmo(event.Dispatcher):
 
         Args:
             obj (:class:`cozmo.objects.ObservableObject`): The target object to place current held
-            object on, where obj.place_objects_on_this is true 
+            object on, where obj.place_objects_on_this is true
             use_pre_dock_pose (bool): Whether or not to try to immediately place on the object or
-            relocate and then try 
+            relocate and then try
         Returns:
             A :class:`cozmo.robot.PlaceOnObject` action object which can be queried to see when it is complete
         Raises:
@@ -685,7 +702,7 @@ class Cozmo(event.Dispatcher):
         If relative_to_robot is set to true, the given pose will assume the robot's pose
         as it's origin.
         Since Cozmo understands position by monitoring his tread movement, he does not
-        understand movment in the z axis. This means that the only applicable elements of 
+        understand movment in the z axis. This means that the only applicable elements of
         pose in this situation are position.x position.y and rotation.angle_z.
 
         Args:

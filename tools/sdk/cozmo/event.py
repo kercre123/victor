@@ -67,6 +67,7 @@ import asyncio
 import collections
 import inspect
 import re
+import weakref
 
 from . import logger
 
@@ -81,6 +82,8 @@ def _uncamelcase(name):
     return _all_cap_re.sub(r'\1_\2', s1).lower()
 
 registered_events = {}
+
+active_dispatchers = weakref.WeakSet()
 
 class _rprop:
     def __init__(self, value):
@@ -240,19 +243,25 @@ class Handler(collections.namedtuple('Handler', 'obj evt f')):
         return getattr(self.f, '_oneshot_handler', False)
 
 
+class NullHandler(Handler):
+    def disable(self):
+        pass
+
+
 class Dispatcher(base.Base):
     '''Mixin to provide event dispatch handling.'''
 
     def __init__(self, *a, dispatch_parent=None, loop=None, **kw):
         super().__init__(**kw)
+        active_dispatchers.add(self)
         self._dispatch_parent = dispatch_parent
         self._dispatch_children = []
         self._dispatch_handlers = collections.defaultdict(list)
         if not loop:
             raise ValueError("Loop was not supplied to "+self.__class__.__name__)
         self._loop = loop or asyncio.get_event_loop()
-        self._active_dispatch = None
         self._stop_dispatching = False
+        self._dispatcher_running = True
 
     def _set_parent_dispatcher(self, parent):
         self._dispatch_parent = parent
@@ -260,9 +269,9 @@ class Dispatcher(base.Base):
     def _add_child_dispatcher(self, child):
         self._dispatch_children.append(child)
 
-    def stop_dispatching(self):
+    def _stop_dispatcher(self):
         """Stop dispatching events - call before closing the connection to prevent stray dispatched events"""
-        self._stop_dispatching = True
+        self._dispatcher_running = False
 
     def add_event_handler(self, event, f):
         """Register an event handler to be notified when this object receives a type of Event.
@@ -296,6 +305,9 @@ class Dispatcher(base.Base):
         if not issubclass(event, Event):
             raise TypeError("event must be a subclass of Event (not an instance)")
 
+        if not self._dispatcher_running:
+            return NullHandler(self, event, f)
+
         if isinstance(f, asyncio.Future):
             # futures can only be called once.
             f = oneshot(f)
@@ -310,7 +322,7 @@ class Dispatcher(base.Base):
         Args:
             event (:class:`Event`): The event class, or an instance thereof,
                 used with register_event_handler.
-            f (callable): The callable object that was passed as a handler to 
+            f (callable): The callable object that was passed as a handler to
                 register_event_handler, or a Handler instance
         Raises:
             ValueError: No matching handler found
@@ -408,6 +420,25 @@ class Dispatcher(base.Base):
 
         except exceptions.StopPropogation:
             pass
+
+    def _abort_event_futures(self, exc):
+        '''Sets an exception on all pending Future handlers
+
+        This prevents coroutines awaiting a Future from blocking forever
+        should a hard failure occur with the connection.
+        '''
+        if self._stop_dispatching:
+            return
+
+        handlers = set()
+        for evh in self._dispatch_handlers.values():
+            for h in evh:
+                handlers.add(h)
+
+        for handler in handlers:
+            if isinstance(handler.f, asyncio.Future):
+                handler.f.set_exception(exc)
+                handler.disable()
 
     async def wait_for(self, event_or_filter, timeout=30):
         '''Waits for the specified event to be sent to the current object.
@@ -535,3 +566,8 @@ async def wait_for_first(*futures):
     for fut in pending:
         fut.cancel()
     return done.pop()
+
+def _abort_futures(exc):
+    '''Trigger the exception handler for all pending Future handlers.'''
+    for obj in active_dispatchers:
+        obj._abort_event_futures(exc)

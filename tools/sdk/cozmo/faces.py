@@ -58,7 +58,7 @@ class Face(event.Dispatcher):
         self.last_observed_time = None
 
     def __repr__(self):
-        return '<%s face_id=%s, name=%s, pose=%s>' % (self.__class__.__name__, self.face_id, 
+        return '<%s face_id=%s, name=%s, pose=%s>' % (self.__class__.__name__, self.face_id,
                                                       self.name, self.pose)
 
     #### Private Methods ####

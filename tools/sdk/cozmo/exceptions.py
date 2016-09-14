@@ -5,6 +5,15 @@ __all__ = ['CozmoSDKException', 'AnimationsNotLoaded', 'StopPropogation',
 class CozmoSDKException(Exception):
     '''Base class of all Cozmo SDK exceptions.'''
 
+class ConnectionAborted(CozmoSDKException):
+    '''Raised if the connection to the device is unexpectedly lost.'''
+
+class SDKShutdown(CozmoSDKException):
+    '''Raised when the SDK is being shut down'''
+
+class SDKVersionMismatch(CozmoSDKException):
+    '''Raised if the Cozmo SDK version is not compatible with the software running on the device.'''
+
 class StopPropogation(CozmoSDKException):
     '''Raised by event handlers to prevent further handlers from being triggered.'''
 
@@ -22,4 +31,3 @@ class CannotPlaceObjectsOnThis(ActionError):
 
 class RobotBusy(ActionError):
     '''Raised if an attempt is made to perform an action while another action is still running.'''
-

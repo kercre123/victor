@@ -8,6 +8,7 @@ from . import logger
 from . import anim
 from . import clad_protocol
 from . import event
+from . import exceptions
 from . import robot
 
 from . import _clad
@@ -33,6 +34,11 @@ class EvtRobotFound(event.Event):
     '''
     robot = 'The Cozmo object for the robot'
 
+class EvtConnectionClosed(event.Event):
+    '''Triggered when the connection to the controlling device is closed.
+    '''
+    exc = 'The exception that triggered the closure, or None'
+
 
 _seen = set() # XXX debug tool
 def _log_first_seen(tag_name, msg):
@@ -56,26 +62,48 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         self._is_connected = False
+        self._running = True
         self._robots = {}
         self._primary_robot = None
 
         #: An anim.AnimationNames object that references all available animation names
         self.anim_names = self.anim_names_factory(self)
-        self._image_chunk_handlers = []
-
-    def add_image_chunk_handler(self, image_handler):
-        self._image_chunk_handlers.append( image_handler )
 
     def connection_made(self, transport):
         super().connection_made(transport)
         self._is_connected = True
 
+    def connection_lost(self, exc):
+        super().connection_lost(exc)
+        self._is_connected = False
+        if self._running:
+            logger.error("Lost connection to the device: %s" % exc)
+            self.dispatch_event(EvtConnectionClosed, exc=exc)
+            event._abort_futures(exceptions.ConnectionAborted("Lost connection to the device"))
+            self._stop_dispatcher()
+            self._running = False
+
+    async def shutdown(self):
+        '''Close the connection to the device'''
+        if self._running and self._is_connected:
+            logger.info("Shutting down connection")
+            self._running = False
+            event._abort_futures(exceptions.SDKShutdown())
+            self._stop_dispatcher()
+            self.transport.close()
+
     def msg_received(self, msg):
         '''Receives low level communication messages from the engine.'''
         tag_name = msg.tag_name
+
         if tag_name == 'Ping':
             # short circuit to avoid unnecessary event overhead
             return self._handle_ping(msg._data)
+
+        elif tag_name == 'UiDeviceConnected':
+            # handle outside of event dispatch for quick abort in case
+            # of a version mismatch problem.
+            return self._handle_ui_device_connected(msg._data)
 
         msg = msg._data
         robot_id = getattr(msg, 'robotID', None)
@@ -93,11 +121,6 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
             return self._process_robot_msg(robot_id, evttype, msg)
 
         self.dispatch_event(evttype, msg=msg)
-
-    def eof_received(self):
-        logger.error('Lost connection while talking to device; aborting message loop')
-        #Note: Raising an error here causes the error to spam for the rest of the program's execution
-        #raise RuntimeError("Lost connection to Cozmo")
 
     def _process_robot_msg(self, robot_id, evttype, msg):
         if robot_id > 1:
@@ -122,6 +145,7 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
             robot._initialize()
 
         robot.dispatch_event(evttype, msg=msg)
+
 
 
     #### Properties ####
@@ -176,8 +200,7 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
         #logger.info("%s: CLAD Hashes Match (%s == %s))", name, pyHash, msgHash)
         return True
 
-    def _recv_msg_ui_device_connected(self, _, *, msg):
-
+    def _handle_ui_device_connected(self, msg):
         if msg.connectionType != _clad_to_engine_cozmo.UiConnectionType.SdkOverTcp:
             # This isn't for us
             return
@@ -204,23 +227,27 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
         else:
             logger.error('Your Python and C++ CLAD versions do not match - connection refused')
 
-            wrong_version_msg = _clad_to_engine_iface.UiDeviceConnectionWrongVersion(
-                reserved=0,
-                connectionType=msg.connectionType,
-                deviceID = msg.deviceID,
-                buildVersion = _build_version + "_" + str(_sdk_version))
+            try:
+                wrong_version_msg = _clad_to_engine_iface.UiDeviceConnectionWrongVersion(
+                    reserved=0,
+                    connectionType=msg.connectionType,
+                    deviceID = msg.deviceID,
+                    buildVersion = _build_version + "_" + str(_sdk_version))
 
-            self.send_msg(wrong_version_msg)
-
-            return
+                self.send_msg(wrong_version_msg)
+            except AttributeError:
+                pass
+            exc = exceptions.SDKVersionMismatch("SDK library does not match software running on device")
+            self.shutdown()
+            raise exc
 
         self.dispatch_event(EvtConnected, conn=self)
         self.anim_names.refresh()
         logger.info("UI device connected")
 
-    def _recv_msg_image_chunk(self, _, *, msg):
-        for image_chunk_handler in self._image_chunk_handlers:
-            image_chunk_handler(msg)
+    def _recv_msg_image_chunk(self, evt, *, msg):
+        if self._primary_robot:
+            self._primary_robot.dispatch_event(evt)
 
 
     #### Public Event Handlers ####

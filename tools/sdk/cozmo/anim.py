@@ -90,6 +90,11 @@ class AnimationNames(event.Dispatcher, set):
             raise exceptions.AnimationsNotLoaded("Animations not yet received from engine")
         return super().__contains__(key)
 
+    def __hash__(self):
+        # We want to compare AnimationName instances rather than the
+        # names they contain
+        return id(self)
+
     def refresh(self):
         '''Causes the list of animation name to be re-requested from the engine.
 

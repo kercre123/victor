@@ -1,15 +1,23 @@
 __all__ = ['World']
 
 import asyncio
+import time
 
 from . import logger
 
 from . import event
 from . import faces
 from . import objects
+from . import world
 
 from . import _clad
 from ._clad import _clad_to_engine_iface, _clad_to_game_cozmo
+
+
+
+class EvtNewCameraImage(event.Event):
+    '''Dispatched when a new camera image is received and processed from the robot's camrea.'''
+    image = 'A :class:`CameraImage` object'
 
 
 class World(event.Dispatcher):
@@ -22,10 +30,19 @@ class World(event.Dispatcher):
 
     def __init__(self, conn, robot, **kw):
         super().__init__(**kw)
+        #: The active :class:`cozmo.conn.CozmoConnection`
         self.conn = conn
+
+        #: The primary robot :class:`cozmo.robot.Cozmo`
         self.robot = robot
-        self.light_cubes = {}
+
         self.custom_objects = {}
+
+        #: The latest :class:`CameraImage` received, or None
+        self.latest_image = None
+        self.light_cubes = {}
+
+        self._last_image_number = -1
         self._objects = {}
         self._faces = {}
         self._active_behavior = None
@@ -62,10 +79,10 @@ class World(event.Dispatcher):
             # unique object_id we see of this custom object type.
             obj = self.custom_objects.get(msg.objectType)
             if not obj:
-                logger.error('Received a custom object type: %s that has not been defined yet. Msg=%s' % 
+                logger.error('Received a custom object type: %s that has not been defined yet. Msg=%s' %
                                                                                 (msg.objectType, msg))
                 return
-            custom_object = self.custom_object_factory(self.conn, self, obj.object_type, 
+            custom_object = self.custom_object_factory(self.conn, self, obj.object_type,
                                                        obj.x_size_mm, obj.y_size_mm, obj.z_size_mm,
                                                        obj.marker_width_mm, obj.marker_height_mm,
                                                        dispatch_parent=self)
@@ -121,6 +138,7 @@ class World(event.Dispatcher):
         obj.dispatch_event(evt)
 
 
+
     #### Public Event Handlers ####
 
     def recv_evt_object_tapped(self, event, *, obj, tap_count, tap_duration, **kw):
@@ -137,6 +155,12 @@ class World(event.Dispatcher):
 
     def recv_evt_action_completed(self, evt, *, action, **kw):
         self._active_action = None
+
+    def recv_evt_new_raw_camera_image(self, evt, *, image, **kw):
+        self._last_image_number += 1
+        processed_image = CameraImage(image, self._last_image_number)
+        self.latest_image = processed_image
+        self.dispatch_event(EvtNewCameraImage, image=processed_image)
 
 
     #### Event Wrappers ####
@@ -174,12 +198,12 @@ class World(event.Dispatcher):
         The timeout is for the time in between each object. So theoretically if num=3,
         and timeout=10, the max timeout would be ~30 seconds. TODO fix this.
 
-        Args: 
+        Args:
             num (float): The number of unique objects to wait for.
             object_type (class:`cozmo.objects.ObservableObject`): If provided this will filter observed objects.
             timeout (float): Time waited in between each object seen.
         Returns:
-            A list of length <= num in order of the unique objects class:`cozmo.objects.ObservableObject` 
+            A list of length <= num in order of the unique objects class:`cozmo.objects.ObservableObject`
             observed during this wait.
         '''
         #Filter by object type if provided
@@ -239,7 +263,7 @@ class World(event.Dispatcher):
         object_observed message when they are seen. The markers must be placed in the center
         of their respective sides. The markers must be placed in the same order as given in the diagram.
         TODO MAKE THE DIAGRAM
-        
+
         Args:
             object_type (:class:`cozmo.objects.CustomObjectTypes`): the object type we are binding this custom object to
             x_size_mm (float): size of the object in the x axis.
@@ -249,12 +273,12 @@ class World(event.Dispatcher):
             maker_height_mm (float): height of the printed marker.
 
         Returns:
-            A :class:`cozmo.object.CustomObject` instance with the specified dimensions. 
+            A :class:`cozmo.object.CustomObject` instance with the specified dimensions.
                                                  This is not included in the world until it has been seen.
         '''
         if not isinstance(object_type, objects._CustomObjectType):
             raise TypeError("Unsupported object_type, requires CustomObjectType")
-        custom_object_base = self.custom_object_factory(object_type, 
+        custom_object_base = self.custom_object_factory(object_type,
                                                         x_size_mm, y_size_mm, z_size_mm,
                                                         marker_width_mm, marker_height_mm,
                                                         self.conn, self, dispatch_parent=self)
@@ -266,7 +290,7 @@ class World(event.Dispatcher):
         await self.wait_for(_clad._MsgDefinedCustomObject)
         return custom_object_base
 
-    async def create_custom_fixed_object(self, pose, x_size_mm, y_size_mm, z_size_mm, 
+    async def create_custom_fixed_object(self, pose, x_size_mm, y_size_mm, z_size_mm,
                                          relative_to_robot=False, use_robot_origin=True):
         '''Defines a cuboid of custom size and places it in the world. It cannot be observed.
 
@@ -283,13 +307,13 @@ class World(event.Dispatcher):
             A :class:`cozmo.object.FixedCustomObject` instance with the specified dimensions and pose.
         '''
         # Override the origin of the pose to be the same as the robot's. This will make sure they are in
-        # the same space in the engine every time. 
+        # the same space in the engine every time.
         if use_robot_origin:
             pose.origin_id = self.robot.pose.origin_id
         # In this case define the given pose to be with respect to the robot's pose as it's origin.
         if relative_to_robot:
             pose = self.robot.pose.define_pose_relative_this(pose)
-        msg = _clad_to_engine_iface.CreateFixedCustomObject(pose=pose.encode_pose(), 
+        msg = _clad_to_engine_iface.CreateFixedCustomObject(pose=pose.encode_pose(),
                                                             xSize_mm=x_size_mm, ySize_mm=y_size_mm, zSize_mm=z_size_mm)
         self.conn.send_msg(msg)
         response = await self.wait_for(_clad._MsgCreatedFixedCustomObject)
@@ -297,3 +321,13 @@ class World(event.Dispatcher):
         self._objects[fixed_custom_object.object_id] = fixed_custom_object
         return fixed_custom_object
 
+
+class CameraImage:
+    def __init__(self, raw_image, image_number=0):
+        self.raw_image = raw_image
+        self.image_number = image_number
+        self.image_recv_time = time.time()
+
+    @property
+    def annotated_image(self):
+        return self.raw_image
