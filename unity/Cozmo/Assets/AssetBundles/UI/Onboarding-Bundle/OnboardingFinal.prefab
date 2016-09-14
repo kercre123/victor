@@ -239,7 +239,7 @@ MonoBehaviour:
   ModifiedValues:
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"#button.begin"'
+    JsonValue: '"#button.continue"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
     FieldName: Onboarding.FinalStage:_ContinueButtonInstance
