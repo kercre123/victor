@@ -296,9 +296,6 @@ public class RobotEngineManager : MonoBehaviour {
     case Anki.Cozmo.ExternalInterface.MessageEngineToGame.Tag.AnimationAvailable:
       SetAvailableAnimationNames(message.AnimationAvailable);
       break;
-    case Anki.Cozmo.ExternalInterface.MessageEngineToGame.Tag.RobotSerialNumber:
-      SetSerialNumber(message.RobotSerialNumber);
-      break;
     case Anki.Cozmo.ExternalInterface.MessageEngineToGame.Tag.SupportInfo:
       ProcessSupportInfo(message.SupportInfo);
       break;
@@ -340,6 +337,16 @@ public class RobotEngineManager : MonoBehaviour {
       CurrentRobot.FirmwareVersion = message.fwVersion;
       DasTracker.Instance.OnRobotConnected();
     }
+
+    if (CurrentRobot != null) {
+      CurrentRobot.SerialNumber = message.serialNumber;
+    }
+    var persistence = DataPersistence.DataPersistenceManager.Instance;
+    var currentSerial = persistence.Data.DeviceSettings.LastCozmoSerial;
+    if (message.serialNumber != currentSerial) {
+      persistence.Data.DeviceSettings.LastCozmoSerial = message.serialNumber;
+      persistence.Save();
+    }
   }
 
   private void ProcessRobotDisconnected(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {
@@ -365,19 +372,6 @@ public class RobotEngineManager : MonoBehaviour {
   private void SetAvailableAnimationNames(Anki.Cozmo.ExternalInterface.AnimationAvailable message) {
     if (!_RobotAnimationNames.Contains(message.animName))
       _RobotAnimationNames.Add(message.animName);
-  }
-
-  private void SetSerialNumber(Anki.Cozmo.ExternalInterface.RobotSerialNumber message) {
-    var robot = CurrentRobot;
-    if (robot != null) {
-      robot.SerialNumber = message.serial;
-    }
-    var persistence = DataPersistence.DataPersistenceManager.Instance;
-    var currentSerial = persistence.Data.DeviceSettings.LastCozmoSerial;
-    if (message.serial != currentSerial) {
-      persistence.Data.DeviceSettings.LastCozmoSerial = message.serial;
-      persistence.Save();
-    }
   }
 
   private void ProcessSupportInfo(Anki.Cozmo.ExternalInterface.SupportInfo message) {
