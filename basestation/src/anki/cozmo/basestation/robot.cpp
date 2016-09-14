@@ -180,6 +180,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _speedChooser(new SpeedChooser(*this))
   , _blockFilter(new BlockFilter(this, context->GetExternalInterface()))
   , _tapFilterComponent(new BlockTapFilterComponent(*this))
+  , _lastDiconnectedCheckTime(0)
   , _robotToEngineImplMessaging(new RobotToEngineImplMessaging(this))
   , _robotIdleTimeoutComponent(new RobotIdleTimeoutComponent(*this))
 {
@@ -3356,7 +3357,7 @@ bool Robot::IsConnectedToObject(FactoryID factoryID) const
   {
     if (objectInfo.factoryID == factoryID)
     {
-      return objectInfo.connectionState == ActiveObjectInfo::ConnectionState::Connected;
+      return true;
     }
   }
   
@@ -3396,6 +3397,7 @@ void Robot::HandleConnectedToObject(uint32_t activeID, FactoryID factoryID, Obje
   RemoveDiscoveredObjects(factoryID);
   
   _connectedObjects[activeID].connectionState = ActiveObjectInfo::ConnectionState::Connected;
+  _connectedObjects[activeID].lastDisconnectionTime = 0;
 }
 
 void Robot::HandleDisconnectedFromObject(uint32_t activeID, FactoryID factoryID, ObjectType objectType)
@@ -3436,6 +3438,7 @@ void Robot::HandleDisconnectedFromObject(uint32_t activeID, FactoryID factoryID,
   {
     // We have disconnected without requesting it. Anotate that we are in that state
     objectInfo.connectionState = ActiveObjectInfo::ConnectionState::Disconnected;
+    objectInfo.lastDisconnectionTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   }
 }
 
@@ -3541,7 +3544,26 @@ void Robot::ConnectToRequestedObjects()
 
   return;
 }
+  
+void Robot::CheckDisconnectedObjects()
+{
+  // Check for objects that have been disconnected long enough to consider them gone. Note the object has to be in
+  // the Disconnected state which is the state we get when the disconnection wasn't requested.
+  double time = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if ((_lastDiconnectedCheckTime <= 0) || (time >= (_lastDiconnectedCheckTime + kDiconnectedCheckDelay)))
+  {
+    for (ActiveObjectInfo& objectInfo : _connectedObjects)
+    {
+      if ((objectInfo.connectionState == ActiveObjectInfo::ConnectionState::Disconnected) && (time > (objectInfo.lastDisconnectionTime + kDisconnectedDelay)))
+      {
+        objectInfo.Reset();
+      }
+    }
     
+    _lastDiconnectedCheckTime = time;
+  }
+}
+
 void Robot::BroadcastAvailableObjects(bool enable)
 {
   _enableDiscoveredObjectsBroadcasting = enable;

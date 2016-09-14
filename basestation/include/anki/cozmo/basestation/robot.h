@@ -1009,6 +1009,7 @@ protected:
     ConnectionState connectionState;
     uint8_t         rssi;
     TimeStamp_t     lastDiscoveredTimeStamp;
+    double          lastDisconnectionTime;
       
     ActiveObjectInfo() {
       Reset();
@@ -1020,6 +1021,7 @@ protected:
       connectionState = ConnectionState::Invalid;
       rssi = 0;
       lastDiscoveredTimeStamp = 0;
+      lastDisconnectionTime = 0;
     }
   };
   std::unordered_map<FactoryID, ActiveObjectInfo> _discoveredObjects;
@@ -1027,10 +1029,18 @@ protected:
 
   // Vector of currently connected objects by active slot index
   std::array<ActiveObjectInfo, (size_t)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS> _connectedObjects;
+  
+  double _lastDiconnectedCheckTime;
+  constexpr static double kDiconnectedCheckDelay = 2.0f;  // How often do we check for disconnected objects
+  constexpr static double kDisconnectedDelay = 2.0f;      // How long must be the object disconnected before we really remove it from the list of connected objects
 
   // Called in Update(), checks if there are objectsToConnectTo that
   // have been discovered and should be connected to
   void ConnectToRequestedObjects();
+  
+  // Called during Update(), it checks if objects we have received disconnected messages from should really
+  // be considered disconnected.
+  void CheckDisconnectedObjects();
 
   std::unique_ptr<RobotToEngineImplMessaging> _robotToEngineImplMessaging;
   std::unique_ptr<RobotIdleTimeoutComponent>  _robotIdleTimeoutComponent;
