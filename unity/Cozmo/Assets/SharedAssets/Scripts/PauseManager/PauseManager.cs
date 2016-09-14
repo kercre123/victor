@@ -249,13 +249,13 @@ namespace Cozmo {
 
       CloseLowBatteryDialog();
       if (!IsConfirmSleepDialogOpen) {
-        Anki.Cozmo.Audio.AudioEventParameter openEvt = Anki.Cozmo.Audio.AudioEventParameter.SFXEvent (Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
+        Anki.Cozmo.Audio.AudioEventParameter openEvt = Anki.Cozmo.Audio.AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
 
-        _SleepCozmoConfirmDialog = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab, 
-                                                      preInitFunc: (AlertView alertView) => { 
+        _SleepCozmoConfirmDialog = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab,
+                                                      preInitFunc: (AlertView alertView) => {
                                                         alertView.OpenAudioEvent = openEvt;
                                                       },
-                                                      overrideBackgroundDim: null, 
+                                                      overrideBackgroundDim: null,
                                                       overrideCloseOnTouchOutside: false);
         _SleepCozmoConfirmDialog.SetCloseButtonEnabled(false);
         _SleepCozmoConfirmDialog.SetPrimaryButton(LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalButtonConfirm,
@@ -286,7 +286,11 @@ namespace Cozmo {
       CloseLowBatteryDialog();
       CloseConfirmSleepDialog();
       if (!IsGoToSleepDialogOpen) {
-        Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
+        Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab,
+                                                          preInitFunc: (AlertView view) => {
+                                                            view.OpenAudioEvent = Anki.Cozmo.Audio.AudioEventParameter.InvalidEvent;
+                                                          },
+                                                          overrideCloseOnTouchOutside: false);
         alertView.SetCloseButtonEnabled(false);
         alertView.TitleLocKey = LocalizationKeys.kConnectivityCozmoSleepTitle;
         alertView.DescriptionLocKey = LocalizationKeys.kConnectivityCozmoSleepDesc;
