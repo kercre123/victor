@@ -166,7 +166,7 @@ public class ChallengeDetailsDialog : BaseView {
     _UnlockTween = DOTween.Sequence();
     _UnlockTween.Join(_ChallengeIcon.IconImage.DOColor(Color.white, _UnlockTween_sec));
     _UnlockTween.AppendCallback(HandleUpgradeAnimationPlayed);
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Win_Shared);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Upgrade);
   }
 
   //Reinitialize with new state if unlocked
