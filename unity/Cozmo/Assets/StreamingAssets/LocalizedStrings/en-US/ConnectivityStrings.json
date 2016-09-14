@@ -80,5 +80,11 @@
   },
   "connectivity.keepCozmoOnCharger": {
     "translation": "Please leave Cozmo on his charger during Setup"
+  },
+  "label.getHelp": {
+    "translation": "Get Help"
+  },
+  "label.cubesNotWorking": {
+    "translation": "Cubes not working?"
   }
 }
