@@ -3738,6 +3738,7 @@ ExternalInterface::RobotState Robot::GetRobotState()
   if(_offTreadsState != OffTreadsState::Falling)  { msg.status |= (uint32_t)RobotStatusFlag::IS_FALLING; }
   if(IsAnimating())        { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING; }
   if(IsIdleAnimating())    { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING_IDLE; }
+  if( IsOnCharger() )      { msg.status |= (uint32_t)RobotStatusFlag::IS_ON_CHARGER; }
   if(IsCarryingObject())   {
     msg.status |= (uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK;
     msg.carryingObjectID = GetCarryingObject();

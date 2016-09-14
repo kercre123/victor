@@ -228,8 +228,13 @@ public static class LocalizationKeys {
   public const string kHelpTipsStringsSlide1Body = "helpTipsStrings.Slide1.body";
   public const string kHelpTipsStringsSlide2Title = "helpTipsStrings.Slide2.title";
   public const string kHelpTipsStringsSlide2Body = "helpTipsStrings.Slide2.body";
+  public const string kHelpTipsStringsSlide2BodyUpgrade = "helpTipsStrings.Slide2.bodyUpgrade";
+  public const string kHelpTipsStringsSlide2BodyApp = "helpTipsStrings.Slide2.bodyApp";
   public const string kHelpTipsStringsSlide3Title = "helpTipsStrings.Slide3.title";
   public const string kHelpTipsStringsSlide3Body = "helpTipsStrings.Slide3.body";
+  public const string kHelpTipsStringsSlide3BodyEnergy = "helpTipsStrings.Slide3.bodyEnergy";
+  public const string kHelpTipsStringsSlide3BodyBits = "helpTipsStrings.Slide3.bodyBits";
+  public const string kHelpTipsStringsSlide3BodySparks = "helpTipsStrings.Slide3.bodySparks";
   public const string kHelpTipsStringsSlide4Title = "helpTipsStrings.Slide4.title";
   public const string kHelpTipsStringsSlide4Body = "helpTipsStrings.Slide4.body";
   public const string kHelpTipsStringsSlide5Title = "helpTipsStrings.Slide5.title";
@@ -383,6 +388,10 @@ public static class LocalizationKeys {
 
   #region OnboardingStrings
 
+  public const string kOnboardingCozmoNeedsChargeTitle = "onboarding.CozmoNeedsCharge.Title";
+  public const string kOnboardingCozmoNeedsChargeSecondsLeft = "onboarding.CozmoNeedsCharge.SecondsLeft";
+  public const string kOnboardingCozmoNeedsChargeKeepOnCharger = "onboarding.CozmoNeedsCharge.KeepOnCharger";
+  public const string kOnboardingCozmoNeedsChargeCozmoIsReady = "onboarding.CozmoNeedsCharge.CozmoIsReady";
   public const string kOnboardingSlide0 = "onboarding.Slide0";
   public const string kOnboardingSlide1 = "onboarding.Slide1";
   public const string kOnboardingSlide2Header = "onboarding.Slide2Header";
@@ -613,6 +622,7 @@ public static class LocalizationKeys {
   public const string kLabelCozmoSerial = "label.cozmo.serial";
   public const string kLabelDeviceid = "label.deviceid";
   public const string kLabelPrivacyPolicy = "label.privacyPolicy";
+  public const string kButtonOpenEnvelope = "button.openEnvelope";
   public const string kLabelPressAndHoldInstruction = "label.pressAndHoldInstruction";
 
   #endregion

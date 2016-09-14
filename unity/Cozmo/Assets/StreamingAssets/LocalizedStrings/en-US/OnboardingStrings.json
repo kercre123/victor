@@ -18,6 +18,18 @@
       "/{*}"
     ]
   },
+  "onboarding.CozmoNeedsCharge.Title": {
+    "translation": "Cozmo needs to charge"
+  },
+  "onboarding.CozmoNeedsCharge.SecondsLeft": {
+    "translation": "Seconds left..."
+  },
+  "onboarding.CozmoNeedsCharge.KeepOnCharger": {
+    "translation": "Keep him on the charger"
+  },
+  "onboarding.CozmoNeedsCharge.CozmoIsReady": {
+    "translation": "Cozmo is ready!"
+  },
   "onboarding.Slide0": {
     "translation": "Create a <b>great</b> play space "
   },

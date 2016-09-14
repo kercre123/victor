@@ -295,6 +295,7 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   private void CheckForRestoreRobotFlow() {
+    OnboardingManager.Instance.FirstTime = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow;
     // we've never connected before so still have setup
     if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
       // we are done with first time user flow..

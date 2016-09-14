@@ -23,6 +23,8 @@ public class OnboardingManager : MonoBehaviour {
 
   public Action<OnboardingPhases, int> OnOnboardingStageStarted;
 
+  public bool FirstTime { get; set; }
+
   private OnboardingPhases _CurrPhase = OnboardingPhases.None;
 
   private GameObject _CurrStageInst = null;
@@ -30,7 +32,7 @@ public class OnboardingManager : MonoBehaviour {
   private Transform _OnboardingTransform;
 
   [SerializeField]
-  private int _NumStagesHome = 8;
+  private int _NumStagesHome = 9;
   [SerializeField]
   private int _NumStagesLoot = 2;
   [SerializeField]
@@ -161,10 +163,19 @@ public class OnboardingManager : MonoBehaviour {
     if (_CurrPhase != OnboardingPhases.None) {
       SetSpecificStage(GetMaxStageInPhase(_CurrPhase));
     }
+    int startStage = 0;
     _CurrPhase = phase;
     if (_CurrPhase == OnboardingPhases.Home) {
       RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(AnimationTrigger.OnboardingIdle);
       DAS.Event("onboarding.start", "");
+      // in the event they've ever booted the app before, or it's an old robot.
+      // Skip the holding on charger phase because it is the worst and only should be a problem
+      // for fresh from factory robots
+      bool isOldRobot = UnlockablesManager.Instance.IsUnlocked(UnlockId.StackTwoCubes);
+      if (!FirstTime || isOldRobot) {
+        startStage = 1;
+      }
+
       // This is safe because you can't spend currency in the first phase of onboarding
       Cozmo.ItemData itemData = Cozmo.ItemDataConfig.GetHexData();
       int currAmt = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.GetItemAmount(RewardedActionManager.Instance.CoinID);
@@ -185,9 +196,10 @@ public class OnboardingManager : MonoBehaviour {
       RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.NoGame);
     }
 
-    // If assets are already loaded, go otherwise this will wait for callback
+    // If assets are already loaded, go otherwise this will wait for callback.
+    // It should always be loaded now
     if (PreloadOnboarding()) {
-      SetSpecificStage(0);
+      SetSpecificStage(startStage);
     }
   }
   public void CompletePhase(OnboardingPhases phase) {
