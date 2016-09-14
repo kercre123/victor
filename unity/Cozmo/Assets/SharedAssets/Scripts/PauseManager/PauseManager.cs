@@ -72,6 +72,7 @@ namespace Cozmo {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.GoingToSleep>(HandleGoingToSleep);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnectionMessage);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleReactionaryBehavior);
+      DasTracker.Instance.OnAppStartup();
     }
 
     private void Update() {
@@ -108,6 +109,10 @@ namespace Cozmo {
       HandleApplicationPause(bPause);
     }
 
+    private void OnApplicationQuit() {
+      DasTracker.Instance.OnAppQuit();
+    }
+
     private void HandleReactionaryBehavior(Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition message) {
       if (IsGoToSleepDialogOpen || IsConfirmSleepDialogOpen) {
         StopIdleTimeout();
@@ -138,12 +143,16 @@ namespace Cozmo {
         // Let the engine know that we're being paused
         RobotEngineManager.Instance.SendGameBeingPaused(true);
 
+        DasTracker.Instance.OnAppBackgrounded();
+
         RobotEngineManager.Instance.FlushChannelMessages();
       }
       // When unpausing, put the robot back into freeplay
       else if (_IsPaused && !shouldBePaused) {
         DAS.Debug("PauseManager.HandleApplicationPause", "Application unpaused");
         _IsPaused = false;
+
+        DasTracker.Instance.OnAppResumed();
 
         // Let the engine know that we're being unpaused
         RobotEngineManager.Instance.SendGameBeingPaused(false);
