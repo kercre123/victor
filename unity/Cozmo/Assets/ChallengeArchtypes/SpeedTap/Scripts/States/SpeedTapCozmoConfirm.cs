@@ -14,7 +14,9 @@ namespace SpeedTap {
     }
 
     public override void Exit() {
-      RobotEngineManager.Instance.CurrentRobot.SetEnableCliffSensor(false);
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.SetEnableCliffSensor(false);
+      }
     }
 
     private void HandleTapDone(bool success) {

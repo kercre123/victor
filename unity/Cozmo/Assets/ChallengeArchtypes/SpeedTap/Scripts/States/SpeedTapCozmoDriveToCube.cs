@@ -41,9 +41,11 @@ namespace SpeedTap {
 
     public override void Exit() {
       base.Exit();
-      _CurrentRobot.PopDrivingAnimations();
-      _SpeedTapGame.SharedMinigameView.HideSpinnerWidget();
-      _CurrentRobot.CancelAllCallbacks();
+      if (_CurrentRobot != null) {
+        _CurrentRobot.PopDrivingAnimations();
+        _SpeedTapGame.SharedMinigameView.HideSpinnerWidget();
+        _CurrentRobot.CancelAllCallbacks();
+      }
     }
 
     public override void Pause(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {

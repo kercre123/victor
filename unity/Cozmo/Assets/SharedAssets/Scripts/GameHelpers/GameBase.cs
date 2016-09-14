@@ -252,6 +252,9 @@ public abstract class GameBase : MonoBehaviour {
 
   private void PrepRobotForGame() {
     IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
+    if (currentRobot == null) {
+      return;
+    }
     if (currentRobot.RobotStatus == RobotStatusFlag.IS_PICKING_OR_PLACING) {
       StartCoroutine(WaitForPickingUpOrPlacingFinish(currentRobot, Time.time));
     }
@@ -583,8 +586,10 @@ public abstract class GameBase : MonoBehaviour {
     _SharedMinigameViewInstance.ViewCloseAnimationFinished += QuitMinigameAnimationFinished;
     _SharedMinigameViewInstance.CloseView();
 
-    // cancels any queed up actions or co-routines
-    CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
+    // cancels any queued up actions or co-routines
+    if (CurrentRobot != null) {
+      CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
+    }
     StopAllCoroutines();
   }
 
@@ -856,7 +861,7 @@ public abstract class GameBase : MonoBehaviour {
     // Set colors
     LightCube cube;
 
-    if (!CurrentRobot.LightCubes.TryGetValue(cubeID, out cube)) {
+    if (CurrentRobot == null || !CurrentRobot.LightCubes.TryGetValue(cubeID, out cube)) {
       DAS.Warn("GameBase.StartCycleCubeInternal", "No lightcube with ID " + cubeID + " cube probably disconnected");
       return;
     }
@@ -911,6 +916,9 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void CycleLightsSingleColor(CycleData data) {
+    if (CurrentRobot == null) {
+      return;
+    }
     LightCube cube = CurrentRobot.LightCubes[data.cubeID];
     data.colorIndex++;
     data.colorIndex %= cube.Lights.Length;
