@@ -14,10 +14,12 @@
 #include "driver/sdio_slv.h"
 #include "driver/i2spi.h" 
 #include "driver/i2s_ets.h"
+#include "driver/crash.h"
 #include "backgroundTask.h"
 #include "foregroundTask.h"
 #include "imageSender.h"
-
+#include "driver/crash.h"
+#include "anki/cozmo/robot/crashLogs.h"
 
 #define I2SPI_DEBUG 0
 #if I2SPI_DEBUG
@@ -292,13 +294,19 @@ void resetState(void)
   os_memset(rxBufs, 0xff, DMA_BUF_COUNT*DMA_BUF_SIZE);
 }
 
-bool beginResync(uint32_t param)
+bool task_beginResync(uint32_t param)
 {
   resetState();
   i2spiSwitchMode(I2SPI_SYNC);
   i2spiResyncCallback();
   return false;
 }
+
+void i2spiStartResync(void){
+   i2spiSwitchMode(I2SPI_NULL);
+   foregroundTaskPost(task_beginResync, 0);
+}
+
 
 /// Prep an sdio_queue structure (DMA descriptor) for (re)use
 void prepSdioQueue(struct sdio_queue* desc, uint8 eof)
@@ -410,6 +418,7 @@ inline void processDrop(DropToWiFi* drop)
 
 
 
+
 ct_assert(DMA_BUF_SIZE == 512); // We assume that the DMA buff size is 128 32bit words in a lot of logic below.
 #define DRIFT_MARGIN 2
 
@@ -439,8 +448,7 @@ inline void receiveCompleteHandler(void)
             dbpc('!'); dbpc('T'); dbpc('M'); dbpc('D'); dbph(drift, 4);
             if (drift > DRIFT_MARGIN*2)
             {
-              i2spiSwitchMode(I2SPI_NULL);
-              foregroundTaskPost(beginResync, 0);
+               i2spiStartResync();
             }
             isrProfEnd(I2SPI_ISR_PROFILE_TMD);
           }
@@ -996,6 +1004,25 @@ bool i2spiSwitchMode(const I2SPIMode mode)
   }
   // Invalid state
   return false;
+}
+
+void i2spiLogDesync(const u8* buffer, int buffer_bytes)
+{
+   
+   CrashRecord record;
+   CrashLog_I2Spi* pCrash = (CrashLog_I2Spi*)record.dump;
+   buffer_bytes = min(buffer_bytes, 512);
+   
+   record.reporter = 4; //I2SpiCrash from robotErrors.clad
+   record.errorCode = 0;  //to force the dump data to be sent.
+   pCrash->dropPhase = self.dropPhase;
+   pCrash->integralDrift = self.integralDrift;
+   pCrash->phaseErrorCount = self.phaseErrorCount;
+   pCrash->rxOverflowCount = self.rxOverflowCount;
+   pCrash->txOverflowCount = self.txOverflowCount;
+   pCrash->bufferSz = buffer_bytes;
+   os_memcpy(pCrash->lastDmaBuffer, buffer, buffer_bytes);
+   crashHandlerPutReport(&record);
 }
 
 uint32_t i2spiGetTxOverflowCount(void) { return self.txOverflowCount; }

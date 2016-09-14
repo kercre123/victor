@@ -114,4 +114,12 @@ uint32_t i2spiGetPhaseErrorCount(void);
 /// Count the integral drift in the I2SPI system
 int32_t i2spiGetIntegralDrift(void);
 
+///trigger a resynchronization
+void i2spiStartResync(void);
+
+///log info about a desynch.
+void i2spiLogDesync(const u8* buffer, int buffer_bytes);
+
+
+
 #endif

@@ -13,6 +13,7 @@ extern "C" {
 #include "anki/cozmo/robot/logging.h"
 #include "rtip.h"
 #include "anki/cozmo/robot/esp.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -57,15 +58,25 @@ bool SendMessage(RobotInterface::EngineToRobot& msg)
 
 void Update()
 {
+  static u8 sent=1;
   RobotInterface::EngineToRobot msg;
   i2spiUpdateRtipQueueEstimate();
   u8* buffer = msg.GetBuffer();
   int size = i2spiGetCladMessage(buffer);
   while (size > 0)
   {
-    if (msg.tag < RobotInterface::TO_WIFI_START)
+    if (msg.tag < RobotInterface::TO_WIFI_START  || (!!sent && (((msg.tag & 0xC0) == 0xC0) || msg.tag == 0xd3)))
     {
+      sent = 1;
+      os_printf("bound below %d\r\n", msg.tag);
       AnkiError( 50, "RTIP.AcceptRTIPMessage", 376, "WiFi received message from RTIP, %x[%d] that seems bound below (< 0x%x)", 3, msg.tag, size, (int)RobotInterface::TO_WIFI_START);
+      {  // This most likely means we are completely out of sync on the I2SPI bus, and it is probably impossible to recover.
+        RobotInterface::RobotErrorReport rer;
+        rer.error = RobotInterface::REC_I2SPI_Sync;
+        rer.fatal = true;
+        Anki::Cozmo::RobotInterface::SendMessage(rer);
+        i2spiLogDesync(buffer, msg.Size());
+      }
     }
     else if (msg.tag <= RobotInterface::TO_WIFI_END) // This message is for us
     {
