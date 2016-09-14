@@ -119,7 +119,6 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   private void ReturnToTitle() {
-    IntroManager.Instance.ForceBoot();
     if (_ConnectionFlowBackgroundInstance != null) {
       _ConnectionFlowBackgroundInstance.ViewClosed += QuitConnectionFlow;
       UIManager.CloseView(_ConnectionFlowBackgroundInstance);
