@@ -109,6 +109,8 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
+  private bool _ResultsViewReached = false;
+
   #region Initialization
 
   private const string _kReactionaryBehaviorOwnerId = "unity_game";
@@ -149,7 +151,7 @@ public abstract class GameBase : MonoBehaviour {
     _ChallengeData = challengeData;
     _DifficultyOptions = _ChallengeData.DifficultyOptions;
     _WonChallenge = false;
-
+    _ResultsViewReached = false;
     if (CurrentRobot != null) {
 
       // this is done to prevent entering a game while robot is trying to finish get out seqeuences as part
@@ -674,8 +676,9 @@ public abstract class GameBase : MonoBehaviour {
 
   protected void RaiseMiniGameQuit() {
     _StateMachine.Stop();
-
-    RewardedActionManager.Instance.SendPendingRewardsToInventory();
+    if (!_ResultsViewReached) {
+      RewardedActionManager.Instance.SendPendingRewardsToInventory();
+    }
     DAS.Event(DASConstants.Game.kQuit, null);
     SendCustomEndGameDasEvents();
 
@@ -732,7 +735,7 @@ public abstract class GameBase : MonoBehaviour {
 
   protected virtual void ShowWinnerState() {
     SoftEndGameRobotReset();
-
+    _ResultsViewReached = true;
     ContextManager.Instance.AppFlash(playChime: true);
     string winnerText = _WonChallenge ? Localization.Get(LocalizationKeys.kMinigameTextPlayerWins) : Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
     SharedMinigameView.InfoTitleText = winnerText;

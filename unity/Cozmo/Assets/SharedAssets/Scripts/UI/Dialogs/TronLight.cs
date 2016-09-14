@@ -69,11 +69,17 @@ namespace Cozmo {
 
       public void OnPool() {
         if (_CurrTween != null) {
-          _CurrTween.Kill(false);
+          _CurrTween.Kill();
         }
         _Trail.Clear();
         _Trail.enabled = false;
         transform.position = transform.parent.position;
+      }
+
+      public void OnDestroy() {
+        if (_CurrTween != null) {
+          _CurrTween.Kill();
+        }
       }
 
       private void FinishEffect() {

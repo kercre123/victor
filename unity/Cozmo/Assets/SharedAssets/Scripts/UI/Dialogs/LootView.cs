@@ -27,6 +27,7 @@ namespace Cozmo.UI {
     [SerializeField]
     private float _ShakeDuration = 1.0f;
     // Rotation Shake Settings
+
     [SerializeField]
     private float _ShakeRotationMinAngle = 15.0f;
     [SerializeField]
@@ -189,6 +190,7 @@ namespace Cozmo.UI {
     private Tweener _ShakeRotationTweener;
     private Tweener _ShakePositionTweener;
     private Sequence _BoxSequence;
+    private Sequence _RewardSequence;
 
     [SerializeField]
     private CanvasGroup _AlphaController;
@@ -214,7 +216,7 @@ namespace Cozmo.UI {
     private void Awake() {
       _OnboardingRewardStart.gameObject.SetActive(false);
       _ContinueButtonInstance.gameObject.SetActive(false);
-      PauseManager.Instance.OnPauseDialogOpen += CloseViewImmediately;
+      PauseManager.Instance.OnPauseDialogOpen += CloseView;
       _OpenBox.gameObject.SetActive(false);
       Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_EmotionChipWindowOpenSoundEvent);
       _TronPool = new SimpleObjectPool<TronLight>(CreateTronLight, ResetTronLight, 0);
@@ -291,6 +293,7 @@ namespace Cozmo.UI {
           currShake = Mathf.Lerp(_ShakePositionMin, _ShakePositionMax, _currentBoxCharge);
           _ShakePositionTweener = _LootBox.DOShakePosition(_ShakeDuration, currShake, _ShakePositionVibrato, _ShakePositionRandomness);
           Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_TapSoundEvent);
+
         }
       }
     }
@@ -418,6 +421,7 @@ namespace Cozmo.UI {
         CloseView();
       });
       rewardSequence.Play();
+      _RewardSequence = rewardSequence;
 
       ContextManager.Instance.CozmoHoldFreeplayEnd();
     }
@@ -489,7 +493,10 @@ namespace Cozmo.UI {
     }
 
     protected override void CleanUp() {
-      PauseManager.Instance.OnPauseDialogOpen -= CloseViewImmediately;
+      if (_RewardSequence != null) {
+        _RewardSequence.Kill();
+      }
+      PauseManager.Instance.OnPauseDialogOpen -= CloseView;
       ChestRewardManager.Instance.ApplyChestRewards();
       RewardedActionManager.Instance.SendPendingRewardsToInventory();
       _LootButton.onClick.RemoveAllListeners();
@@ -503,10 +510,13 @@ namespace Cozmo.UI {
 
     private void StopTweens() {
       if (_ShakePositionTweener != null) {
-        _ShakePositionTweener.Complete();
+        _ShakePositionTweener.Kill();
       }
       if (_ShakeRotationTweener != null) {
-        _ShakeRotationTweener.Complete();
+        _ShakeRotationTweener.Kill();
+      }
+      if (_BoxSequence != null) {
+        _BoxSequence.Kill();
       }
     }
 
@@ -515,7 +525,6 @@ namespace Cozmo.UI {
         _AlphaController.alpha = 0;
         openAnimation.Join(_AlphaController.DOFade(1, 0.25f).SetEase(Ease.OutQuad));
       }
-
       openAnimation.OnComplete(() => {
         _BannerInstance.PlayBannerAnimation(Localization.Get(LocalizationKeys.kLootAnnounce),
       _BoxSequence.TogglePause);
@@ -552,7 +561,6 @@ namespace Cozmo.UI {
       if (_AlphaController != null) {
         closeAnimation.Join(_AlphaController.DOFade(0, 0.25f));
       }
-
       AnimateRewardsToTarget(closeAnimation);
     }
   }

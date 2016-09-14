@@ -458,6 +458,7 @@ public class CheckInFlow : MonoBehaviour {
         _ActiveNewGoalTransforms[i].gameObject.SetActive(false);
       }
       _TimelineReviewContainer.SetActive(false);
+      UpdateProgBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
     });
     goalSequence.Play();
   }
