@@ -316,6 +316,7 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
         case ObjectInteractionResult::INCOMPLETE:
         {
           // Smaller reaction if we just didn't get to the pre-action pose
+          // This is the intended animation trigger for now - don't change without consulting Mooly
           animTrigger = AnimationTrigger::RollBlockRealign;
           break;
         }

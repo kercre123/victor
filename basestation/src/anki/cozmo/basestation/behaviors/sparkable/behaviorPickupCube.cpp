@@ -143,6 +143,7 @@ void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
                                                                          const u8 retryCount,
                                                                          AnimationTrigger& retryAnimTrigger)
   {
+    // This is the intended animation trigger for now - don't change without consulting Mooly
     retryAnimTrigger = AnimationTrigger::RollBlockRealign;
     
     // Use a different preAction pose if we are retrying because we weren't seeing the object
