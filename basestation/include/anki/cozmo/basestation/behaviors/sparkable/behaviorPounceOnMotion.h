@@ -51,18 +51,23 @@ protected:
 
   float _lastPoseDist = 0.0f;
   
+  // used for tracking total turn angle
+  Radians _searchAmplitude_rad = DEG_TO_RAD(90);
+  Radians _cumulativeTurn_rad;
+  
   // Overwritten by config.
   float _maxTimeSinceNoMotion_running_sec = 30.0;
   float _maxTimeSinceNoMotion_notRunning_sec = 30.0;
   float _boredomMultiplier = 0.8f;
   float _maxTimeBeforeRotate = 5.f;
+  float _oddsOfPouncingOnTurn = 0.0f;
   
   
 private:
 
   enum class State {
     Inactive,
-    InitialAnim,
+    InitialPounce,
     BringingHeadDown,
     RotateToWatchingNewArea,
     WaitingForMotion,
@@ -86,16 +91,18 @@ private:
   float _lastMotionTime;
   State _state = State::Inactive;
   
-  bool  _cliffReactEnabled = true;
   float _backUpDistance = 0.f;
   float GetDriveDistance();
-  void  EnableCliffReacts(bool enable,Robot& robot);
+  
+  // modeled off of startActing callbacks
+  template<typename T>
+  void PounceOnMotionWithCallback(Robot& robot, void(T::*callback)(Robot&), IActionRunner* intermittentAction = nullptr);
 
   // reset everything for when the behavior is finished
   void Cleanup(Robot& robot);
   
   void SetState_internal(State state, const std::string& stateName);
-  void TransitionToInitialWarningAnim(Robot& robot);
+  void TransitionToInitialPounce(Robot& robot);
   void TransitionToBringingHeadDown(Robot& robot);
   void TransitionToRotateToWatchingNewArea(Robot& robot);
   void TransitionToWaitForMotion(Robot& robot);
@@ -103,7 +110,6 @@ private:
   void TransitionToTurnToMotion(Robot& robot, int16_t motion_img_x, int16_t motion_img_y);
   void TransitionToCreepForward(Robot& robot);
   void TransitionToPounce(Robot& robot);
-  void TransitionToRelaxLift(Robot& robot);
   void TransitionToResultAnim(Robot& robot);
   void TransitionToBackUp(Robot& robot);
   void TransitionToGetOutBored(Robot& robot);

@@ -8,7 +8,9 @@
   
   "flatScore": 0.0, // chosen directly by chooser
 
-  "maxNoGroundMotionBeforeBored_running_Sec": 6.0,
+  "maxNoGroundMotionBeforeBored_running_Sec": 20.0,
   "maxNoGroundMotionBeforeBored_notRunning_Sec": 3.0,
-  "backUpDistance": -50.0
+  "backUpDistance": -50.0,
+  "TimeBeforeRotate_Sec": 6.0,
+  "searchAmplitudeDeg": 90.0
 }

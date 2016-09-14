@@ -34,12 +34,15 @@ namespace Anki {
 namespace Cozmo {
 
 using namespace ExternalInterface;
-  
+
+namespace {
+
 static const char* kMaxNoMotionBeforeBored_running_Sec    = "maxNoGroundMotionBeforeBored_running_Sec";
 static const char* kMaxNoMotionBeforeBored_notRunning_Sec = "maxNoGroundMotionBeforeBored_notRunning_Sec";
 static const char* kTimeBeforeRotate_Sec                  = "TimeBeforeRotate_Sec";
+static const char* kOddsOfPouncingOnTurn                  = "oddsOfPouncingOnTurn";
 static const char* kBoredomMultiplier                     = "boredomMultiplier";
-
+static const char* kSearchAmplitudeDeg                    = "searchAmplitudeDeg";
 static float kBoredomMultiplierDefault = 0.8f;
 
 // combination of offset between lift and robot orign and motion built into animation
@@ -47,12 +50,22 @@ static constexpr float kDriveForwardUntilDist = 50.f;
 // Anything below this basically all looks the same, so just play the animation and possibly miss
 static constexpr float kVisionMinDistMM = 65.f;
 // How long to wait before re-calling
-static const float kWaitForMotionInterval_s = 2.0f;
+static constexpr float kWaitForMotionInterval_s = 2.0f;
+
+// how far to randomly turn the body
+static constexpr float kRandomPanMin_Deg = 20;
+static constexpr float kRandomPanMax_Deg = 45;
+} 
+  
+// Cozmo's low head angle for watching for fingers
+static const Radians tiltRads(MIN_HEAD_ANGLE);
 
 BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
+  , _cumulativeTurn_rad(0)
   , _observedX(0)
   , _observedY(0)
+  , _lastTimeRotate(0)
 {
   SetDefaultName("PounceOnMotion");
 
@@ -66,7 +79,9 @@ BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& 
                                                     _maxTimeSinceNoMotion_notRunning_sec).asFloat();
   _boredomMultiplier = config.get(kBoredomMultiplier, kBoredomMultiplierDefault).asFloat();
   _maxTimeBeforeRotate = config.get(kTimeBeforeRotate_Sec, _maxTimeBeforeRotate).asFloat();
-  
+  _oddsOfPouncingOnTurn = config.get(kOddsOfPouncingOnTurn, 0.0).asFloat();
+  _searchAmplitude_rad = Radians(DEG_TO_RAD(config.get(kSearchAmplitudeDeg, 45).asFloat()));
+
   SET_STATE(Inactive);
   _lastMotionTime = -1000.f;
 }
@@ -107,7 +122,7 @@ Result BehaviorPounceOnMotion::InitInternal(Robot& robot)
   }
   
   if(!_shouldStreamline){
-    TransitionToInitialWarningAnim(robot);
+    TransitionToInitialPounce(robot);
   }else{
     TransitionToBringingHeadDown(robot);
   }
@@ -119,42 +134,77 @@ void BehaviorPounceOnMotion::StopInternal(Robot& robot)
 {
   Cleanup(robot);
 }
-
-void BehaviorPounceOnMotion::TransitionToInitialWarningAnim(Robot& robot)
+  
+  
+void BehaviorPounceOnMotion::TransitionToInitialPounce(Robot& robot)
 {
-  PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.TransitionToInitialWarningAnim","BehaviorPounceOnMotion.TransitionToInitialWarningAnim");
-  SET_STATE(InitialAnim);
-  StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PounceInitial),
-              &BehaviorPounceOnMotion::TransitionToBringingHeadDown);
+  SET_STATE(InitialPounce);
+  PounceOnMotionWithCallback(robot, &BehaviorPounceOnMotion::TransitionToBringingHeadDown);
 }
 
 void BehaviorPounceOnMotion::TransitionToBringingHeadDown(Robot& robot)
 {
-  PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.TransitionToBringingHeadDown","BehaviorPounceOnMotion.TransitionToBringingHeadDown");
+  PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.TransitionToBringingHeadDown",
+                    "BehaviorPounceOnMotion.TransitionToBringingHeadDown");
   SET_STATE(BringingHeadDown);
   
-  EnableCliffReacts(true,robot);
+  CompoundActionSequential* fullAction = new CompoundActionSequential(robot);
 
-  Radians tiltRads(MIN_HEAD_ANGLE);
-  StartActing(new PanAndTiltAction(robot, 0, tiltRads, false, true),
-              &BehaviorPounceOnMotion::TransitionToWaitForMotion);
+  float panDirection = 1.0f;
+  {
+    // set pan and tilt
+    Radians panAngle(DEG_TO_RAD(GetRNG().RandDblInRange(kRandomPanMin_Deg,kRandomPanMax_Deg)));
+    // randomize direction
+    if( GetRNG().RandDbl() < 0.5 )
+    {
+      panDirection = -1.0f;
+    }
+    
+    panAngle *= panDirection;
+
+    IActionRunner* panAndTilt = new PanAndTiltAction(robot, panAngle, tiltRads, false, true);
+    fullAction->AddAction(panAndTilt);
+  }
+  
+  // pan another random amount in the other direction (should get us back close to where we started, but not
+  // exactly)
+  {
+    // get new pan angle
+    Radians panAngle(DEG_TO_RAD(GetRNG().RandDblInRange(kRandomPanMin_Deg,kRandomPanMax_Deg)));
+    // opposite direction
+    panAngle *= -panDirection;
+
+    IActionRunner* panAndTilt = new PanAndTiltAction(robot, panAngle, tiltRads, false, true);
+    fullAction->AddAction(panAndTilt);
+  }
+  
+  StartActing(fullAction, &BehaviorPounceOnMotion::TransitionToWaitForMotion);
 }
   
 void BehaviorPounceOnMotion::TransitionToRotateToWatchingNewArea(Robot& robot)
 {
   SET_STATE( RotateToWatchingNewArea );
+  _lastTimeRotate = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
-  constexpr static float kPanMin_Deg = 20;
-  constexpr static float kPanMax_Deg = 60;
-  Radians panAngle(DEG_TO_RAD(GetRNG().RandDblInRange(kPanMin_Deg,kPanMax_Deg)));
-  // other direction half the time
-  if( GetRNG().RandDbl() < 0.5 )
+  Radians panAngle(DEG_TO_RAD(GetRNG().RandDblInRange(kRandomPanMin_Deg,kRandomPanMax_Deg)));
+
+  // other direction weighted based on the cumulative turn rads - constantly pulls robot towards center
+  const double weightedSearchAmplitude = (_searchAmplitude_rad.ToDouble()/(_searchAmplitude_rad.ToDouble() - _cumulativeTurn_rad.ToDouble())) * 0.5;
+  if( GetRNG().RandDbl() < weightedSearchAmplitude)
   {
     panAngle *= -1.f;
   }
-
-  StartActing(new PanAndTiltAction(robot, panAngle, 0, false, false),
-              &BehaviorPounceOnMotion::TransitionToWaitForMotion);
+  _cumulativeTurn_rad += panAngle;
+  
+  IActionRunner* panAction = new PanAndTiltAction(robot, panAngle, tiltRads, false, false);
+  
+  //if we are above the threshold percentage, pounce and pan - otherwise, just pan
+  const float shouldPounceOnTurn = GetRNG().RandDblInRange(0, 1);
+  if(shouldPounceOnTurn < _oddsOfPouncingOnTurn){
+    PounceOnMotionWithCallback(robot, &BehaviorPounceOnMotion::TransitionToWaitForMotion, panAction);
+  }else{
+    StartActing(panAction, &BehaviorPounceOnMotion::TransitionToWaitForMotion);
+  }
 }
   
 void BehaviorPounceOnMotion::TransitionToWaitForMotion(Robot& robot)
@@ -162,7 +212,6 @@ void BehaviorPounceOnMotion::TransitionToWaitForMotion(Robot& robot)
   SET_STATE( WaitingForMotion);
   _numValidPouncePoses = 0;
   _backUpDistance = 0.f;
-  _lastTimeRotate = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _motionObserved = false;
   StartActing(new WaitAction(robot, kWaitForMotionInterval_s), &BehaviorPounceOnMotion::TransitionFromWaitForMotion);
   
@@ -201,7 +250,8 @@ void BehaviorPounceOnMotion::TransitionFromWaitForMotion(Robot& robot)
 void BehaviorPounceOnMotion::TransitionToTurnToMotion(Robot& robot, int16_t motion_img_x, int16_t motion_img_y)
 {
   SET_STATE(TurnToMotion);
-  
+  _lastTimeRotate = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
   const Point2f motionCentroid(motion_img_x, motion_img_y);
   Radians absPanAngle;
   Radians absTiltAngle;
@@ -243,22 +293,8 @@ void BehaviorPounceOnMotion::TransitionToPounce(Robot& robot)
     _backUpDistance = GetDriveDistance();
   }
   
-  IActionRunner* animAction = new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PouncePounce);
-  // when we're driving forward is when cliff reacts are most likely
-  EnableCliffReacts(false,robot);
   
-  StartActing(animAction, &BehaviorPounceOnMotion::TransitionToRelaxLift);
-}
-  
-void BehaviorPounceOnMotion::TransitionToRelaxLift(Robot& robot)
-{
-  robot.GetMoveComponent().EnableLiftPower(false);
-  SET_STATE(RelaxingLift);
-  // We don't get an accurate pitch evaulation if the head is moving during an animation
-  // so hold this for a bit longer
-  const float relaxTime = 0.15f;
-  StartActing(new WaitAction(robot, relaxTime), &BehaviorPounceOnMotion::TransitionToResultAnim);
-  
+  PounceOnMotionWithCallback(robot, &BehaviorPounceOnMotion::TransitionToResultAnim);
 }
 
 void BehaviorPounceOnMotion::TransitionToResultAnim(Robot& robot)
@@ -287,7 +323,12 @@ void BehaviorPounceOnMotion::TransitionToResultAnim(Robot& robot)
     PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.CheckResult.Caught", "got it!");
   }
   else {
-    newAction = new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PounceFail );
+    // currently equivalent to "isSparked" - don't play failure anim when sparked
+    if(!_shouldStreamline){
+      newAction = new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PounceFail );
+    }else{
+      newAction = new TriggerAnimationAction(robot, AnimationTrigger::Count);
+    }
     PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.CheckResult.Miss", "missed...");
   }
   
@@ -297,8 +338,7 @@ void BehaviorPounceOnMotion::TransitionToResultAnim(Robot& robot)
   }
   
   _numValidPouncePoses = 0; // wait until we're seeing motion again
-  robot.GetMoveComponent().EnableLiftPower(true);
-  
+
   StartActing(newAction, callback);
 
   if( caught ) {
@@ -311,7 +351,6 @@ void BehaviorPounceOnMotion::TransitionToBackUp(Robot& robot)
 {
   SET_STATE(BackUp);
   // back up some of the way
-  EnableCliffReacts(true,robot);
   
   StartActing(new DriveStraightAction(robot, -_backUpDistance, DEFAULT_PATH_MOTION_PROFILE.reverseSpeed_mmps),
               &BehaviorPounceOnMotion::TransitionToBringingHeadDown);
@@ -431,21 +470,30 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
   }
 }
   
-void BehaviorPounceOnMotion::EnableCliffReacts(bool enable,Robot& robot)
+template<typename T>
+void BehaviorPounceOnMotion::PounceOnMotionWithCallback(Robot& robot, void(T::*callback)(Robot&),  IActionRunner* intermittentAction)
 {
-  if( _cliffReactEnabled && !enable )
-  {
-    //Disable Cliff Reaction
-    SmartDisableReactionaryBehavior(BehaviorType::ReactToCliff);
-  }
-  else if( !_cliffReactEnabled && enable )
-  {
-    //Enable Cliff Reaction
-    SmartReEnableReactionaryBehavior(BehaviorType::ReactToCliff);
-
+  CompoundActionSequential* compAction = new CompoundActionSequential(robot);
+  
+  if(intermittentAction != nullptr){
+    compAction->AddAction(intermittentAction);
   }
   
-  _cliffReactEnabled = enable;
+  compAction->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PouncePounce));
+
+  StartActing(compAction, [this, callback](Robot& robot){
+    // wait for the lift to relax 
+    robot.GetMoveComponent().EnableLiftPower(false);
+    SET_STATE(RelaxingLift);
+    // We don't get an accurate pitch evaulation if the head is moving during an animation
+    // so hold this for a bit longer
+    const float relaxTime = 0.15f;
+    
+    StartActing(new WaitAction(robot, relaxTime), [this, callback](Robot& robot){
+      robot.GetMoveComponent().EnableLiftPower(true);
+      (this->*callback)(robot);
+    });
+  });
 }
   
 void BehaviorPounceOnMotion::Cleanup(Robot& robot)
@@ -454,8 +502,6 @@ void BehaviorPounceOnMotion::Cleanup(Robot& robot)
   if( _state == State::RelaxingLift) {
     robot.GetMoveComponent().EnableLiftPower(true);
   }
-  
-  EnableCliffReacts(true,robot);
   
   _numValidPouncePoses = 0;
   _lastValidPouncePoseTime = 0.0f;
