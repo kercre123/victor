@@ -335,6 +335,7 @@ public class RobotEngineManager : MonoBehaviour {
       _IsRobotConnected = true;
       AddRobot((byte)message.robotID);
       CurrentRobot.FirmwareVersion = message.fwVersion;
+      PlayTimeManager.Instance.RobotConnected(true);
       DasTracker.Instance.OnRobotConnected();
     }
 
@@ -352,6 +353,7 @@ public class RobotEngineManager : MonoBehaviour {
   private void ProcessRobotDisconnected(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {
     DAS.Error("RobotEngineManager.RobotDisconnected", "Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.");
     RemoveRobot((byte)message.robotID);
+    PlayTimeManager.Instance.RobotConnected(false);
     DasTracker.Instance.OnRobotDisconnected();
   }
 

@@ -106,6 +106,12 @@ namespace Cozmo {
 
     private void OnApplicationPause(bool bPause) {
       DAS.Debug("PauseManager.OnApplicationPause", "Application pause: " + bPause);
+
+      if (bPause && DataPersistence.DataPersistenceManager.Instance != null) {
+        // always save on pause
+        DataPersistence.DataPersistenceManager.Instance.Save();
+      }
+
       HandleApplicationPause(bPause);
     }
 

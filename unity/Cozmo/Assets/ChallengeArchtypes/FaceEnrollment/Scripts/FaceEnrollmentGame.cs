@@ -13,8 +13,8 @@ namespace FaceEnrollment {
     private FaceEnrollmentListSlide _FaceListSlideInstance;
 
     [SerializeField]
-    private FaceEnrollmentEnterNameSlide _EnterNameSlidePrefab;
-    private FaceEnrollmentEnterNameSlide _EnterNameSlideInstance;
+    private EnterNameSlide _EnterNameSlidePrefab;
+    private EnterNameSlide _EnterNameSlideInstance;
 
     [SerializeField]
     private FaceEnrollmentInstructionsView _FaceEnrollmentInstructionsViewPrefab;
@@ -110,7 +110,7 @@ namespace FaceEnrollment {
     }
 
     private void EditExistingName(int faceID, string exisitingName) {
-      _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "edit_name", EditNameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
+      _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "edit_name", EditNameInputSlideInDone).GetComponent<EnterNameSlide>();
       _EnterNameSlideInstance.SetNameInputField(exisitingName);
       _FaceIDToEdit = faceID;
       _FaceOldNameEdit = exisitingName;
@@ -123,7 +123,7 @@ namespace FaceEnrollment {
     }
 
     private void EnterNameForNewFace(string preFilledName) {
-      _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "enter_new_name", NewNameInputSlideInDone).GetComponent<FaceEnrollmentEnterNameSlide>();
+      _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "enter_new_name", NewNameInputSlideInDone).GetComponent<EnterNameSlide>();
 
       if (string.IsNullOrEmpty(preFilledName) == false) {
         _EnterNameSlideInstance.SetNameInputField(preFilledName);

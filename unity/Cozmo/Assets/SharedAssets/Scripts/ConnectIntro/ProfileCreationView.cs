@@ -25,7 +25,6 @@ public class ProfileCreationView : Cozmo.UI.BaseView {
     DAS.Debug("ProfileCreationView.Awake", "Enter Awake");
     _NameDoneButton.Initialize(HandleNameDoneButton, "name_done_button", this.DASEventViewName);
     _ContinueButton.Initialize(HandleBirthdateEntryDone, "continue_button", this.DASEventViewName);
-    _NameField.onValidateInput += ValidateNameField;
 
     _BirthDatePicker.maxYear = System.DateTime.Today.Year + 1;
     _NameDoneButton.Interactable = false;
@@ -42,13 +41,6 @@ public class ProfileCreationView : Cozmo.UI.BaseView {
     _NameField.Select();
     _NameField.ActivateInputField();
     _NameField.onValueChanged.AddListener(HandleNameFieldChange);
-  }
-
-  private char ValidateNameField(string input, int charIndex, char charToValidate) {
-    if (charToValidate >= 'a' && charToValidate <= 'z' || charToValidate >= 'A' && charToValidate <= 'Z') {
-      return charToValidate;
-    }
-    return '\0';
   }
 
   private void HandleNameFieldChange(string input) {

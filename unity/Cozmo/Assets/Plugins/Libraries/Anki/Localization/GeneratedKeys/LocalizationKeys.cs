@@ -626,6 +626,10 @@ public static class LocalizationKeys {
   public const string kLabelPrivacyPolicy = "label.privacyPolicy";
   public const string kButtonOpenEnvelope = "button.openEnvelope";
   public const string kLabelPressAndHoldInstruction = "label.pressAndHoldInstruction";
+  public const string kLabelActivePlayer = "label.activePlayer";
+  public const string kLabelTimeWithCozmo = "label.timeWithCozmo";
+  public const string kLabelGamesPlayed = "label.gamesPlayed";
+  public const string kLabelStreaksCount = "label.streaksCount";
 
   #endregion
 

@@ -40,6 +40,7 @@ namespace DataPersistence {
       DailyGoals = new List<DailyGoal>();
       SparkCount = new Dictionary<Anki.Cozmo.UnlockId, int>();
       TotalWins = new Dictionary<string, int>();
+      PlayTime = 0.0f;
     }
 
     public TimelineEntryData(Date date) : this() {

@@ -29,13 +29,15 @@ public class IntroManager : MonoBehaviour {
 
   private ScriptedSequences.ISimpleAsyncToken _IntroSequenceDoneToken;
 
-  void Start() {
+  void Awake() {
     if (_Instance != null) {
-      Destroy(this);
+      DAS.Error("IntroManager.Awake", "There should only be one IntroManager");
+      return;
     }
-    else {
-      _Instance = this;
-    }
+    _Instance = this;
+  }
+
+  void Start() {
     Application.targetFrameRate = 30;
 
     Screen.sleepTimeout = SleepTimeout.NeverSleep;
