@@ -229,6 +229,9 @@ namespace Cozmo {
           UIManager.EnableTouchEvents();
         }
         _ClosingAnimationPlaying = false;
+        if (_TransitionAnimation != null) {
+          _TransitionAnimation.Kill();
+        }
         CleanUp();
         RaiseViewCloseAnimationFinished(this);
         Destroy(gameObject);

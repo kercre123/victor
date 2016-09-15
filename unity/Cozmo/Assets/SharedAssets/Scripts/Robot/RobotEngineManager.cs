@@ -328,25 +328,23 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ProcessRobotConnectionResponse(Anki.Cozmo.ExternalInterface.RobotConnectionResponse message) {
-
     // Right now we only add one robot. in the future this should be
     // expanded potentially add multiple robots.
     if (!_IsRobotConnected && message.result != RobotConnectionResult.ConnectionFailure) {
       _IsRobotConnected = true;
       AddRobot((byte)message.robotID);
       CurrentRobot.FirmwareVersion = message.fwVersion;
+      CurrentRobot.SerialNumber = message.serialNumber;
+
+      var persistence = DataPersistence.DataPersistenceManager.Instance;
+      var currentSerial = persistence.Data.DeviceSettings.LastCozmoSerial;
+      if (message.serialNumber != currentSerial) {
+        persistence.Data.DeviceSettings.LastCozmoSerial = message.serialNumber;
+        persistence.Save();
+      }
+
       PlayTimeManager.Instance.RobotConnected(true);
       DasTracker.Instance.OnRobotConnected();
-    }
-
-    if (CurrentRobot != null) {
-      CurrentRobot.SerialNumber = message.serialNumber;
-    }
-    var persistence = DataPersistence.DataPersistenceManager.Instance;
-    var currentSerial = persistence.Data.DeviceSettings.LastCozmoSerial;
-    if (message.serialNumber != currentSerial) {
-      persistence.Data.DeviceSettings.LastCozmoSerial = message.serialNumber;
-      persistence.Save();
     }
   }
 

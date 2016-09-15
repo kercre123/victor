@@ -2,8 +2,6 @@
 using System.Collections;
 
 public class SearchForCozmoFailedScreen : MonoBehaviour {
-
-  private const int kDeviceIdLength = 13;
   public System.Action OnEndpointFound;
   public System.Action OnQuitFlow;
 
@@ -46,7 +44,8 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
 
     var deviceId = persistence.DeviceId;
     if (!string.IsNullOrEmpty(deviceId)) {
-      deviceId = deviceId.Substring(0, System.Math.Min(kDeviceIdLength, deviceId.Length)); // 12 chars of device id + one dash in the middle
+      deviceId = deviceId.Substring(0, System.Math.Min(Cozmo.Settings.DefaultSettingsValuesConfig.Instance.CharactersOfAppInfoToShow,
+                                                       deviceId.Length)); // 12 chars of device id + one dash in the middle
       _DeviceIdLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelDeviceid, deviceId);
     }
     else {

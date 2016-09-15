@@ -22,5 +22,5 @@ MonoBehaviour:
   _PlayerSleepCozmo_TimeTilDisconnect_sec: 20
   _FilterSmoothingWeight: 0.99
   _LowBatteryVoltageValue: 3.5
-  _CharactersOfAppInfoToShow: 15
+  _CharactersOfAppInfoToShow: 13
   _GetACozmoURL: http://go.anki.com/cozmo-app-pdp
