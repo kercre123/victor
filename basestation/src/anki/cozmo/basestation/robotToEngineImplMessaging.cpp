@@ -87,8 +87,6 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
     GetSignalHandles().push_back(messageHandler->Subscribe(robotId, tagType, std::bind(handler, this, std::placeholders::_1, robot)));
   };
   
-  Anki::Util::sSetGlobal(DPHYS, "0xbadcode");
-  
   // bind to specific handlers in the robotImplMessaging class
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::printText,                      &RobotToEngineImplMessaging::HandlePrint);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::factoryFirmwareVersion,         &RobotToEngineImplMessaging::HandleFWVersionInfo);
