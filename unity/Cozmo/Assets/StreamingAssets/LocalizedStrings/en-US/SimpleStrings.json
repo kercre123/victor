@@ -85,7 +85,7 @@
     "translation": "{0}: {1}"
   },
   "label.totalCount": {
-    "translation": "Total {0}: {1}"
+    "translation": "Your {0}: {1}"
   },
   "label.fractionCount": {
     "translation": "{0}/{1}"

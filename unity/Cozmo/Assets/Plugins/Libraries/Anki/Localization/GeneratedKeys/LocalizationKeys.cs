@@ -104,6 +104,8 @@ public static class LocalizationKeys {
   public const string kConnectivityCozmoLowBatteryTitle = "connectivity.cozmoLowBatteryTitle";
   public const string kConnectivityCozmoLowBatteryDesc = "connectivity.cozmoLowBatteryDesc";
   public const string kConnectivityKeepCozmoOnCharger = "connectivity.keepCozmoOnCharger";
+  public const string kLabelGetHelp = "label.getHelp";
+  public const string kLabelCubesNotWorking = "label.cubesNotWorking";
 
   #endregion
 
