@@ -58,8 +58,14 @@ namespace Cozmo {
       [SerializeField]
       protected Cozmo.UI.CozmoButton _OptionalCloseDialogButton;
 
+      [SerializeField]
+      private int _LayerPriority = 0;
+
+      public int LayerPriority {
+        get { return _LayerPriority; }
+      }
+
       public bool DimBackground = false;
-      public CanvasGroup DimBackgroundPrefabOverride = null;
 
       private Sequence _TransitionAnimation;
 

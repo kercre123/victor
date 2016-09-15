@@ -216,10 +216,10 @@ namespace Cozmo.HomeHub {
       // If in SDK Mode, immediately open Settings and SDK view instead of PlayTab,
       // otherwise default to opening PlayTab
       if (DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) {
-        HandleSettingsButton();
+        SwitchToTab(HomeTab.Settings);
       }
       else {
-        HandlePlayTabButton();
+        SwitchToTab(HomeTab.Play);
       }
       UpdatePuzzlePieceCount();
 
@@ -286,23 +286,38 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleCozmoTabButton() {
+      // Do not allow changing tabs while receiving chests
+      if (HomeViewCurrentlyOccupied) {
+        return;
+      }
       SwitchToTab(HomeTab.Cozmo);
     }
 
     private void HandlePlayTabButton() {
+      // Do not allow changing tabs while receiving chests
+      if (HomeViewCurrentlyOccupied) {
+        return;
+      }
       SwitchToTab(HomeTab.Play);
     }
 
     private void HandleProfileTabButton() {
+      // Do not allow changing tabs while receiving chests
+      if (HomeViewCurrentlyOccupied) {
+        return;
+      }
       SwitchToTab(HomeTab.Profile);
     }
 
     private void HandleHelpButton() {
+      if (HomeViewCurrentlyOccupied) {
+        return;
+      }
       _HelpViewInstance = UIManager.OpenView(_HelpViewPrefab);
     }
 
     private void HandleSettingsButton() {
-      // Do not allow changing tabs while receiving chests
+      // Don't allow settings button to be clicked when the view is doing other things
       if (HomeViewCurrentlyOccupied) {
         return;
       }
@@ -315,10 +330,6 @@ namespace Cozmo.HomeHub {
     }
 
     private void SwitchToTab(HomeTab tab) {
-      // Do not allow changing tabs while receiving chests
-      if (HomeViewCurrentlyOccupied) {
-        return;
-      }
       if (_CurrentTab != tab) {
         _PreviousTab = _CurrentTab;
       }
