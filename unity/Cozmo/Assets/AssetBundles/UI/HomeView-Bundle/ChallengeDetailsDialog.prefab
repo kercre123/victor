@@ -352,10 +352,10 @@ MonoBehaviour:
     JsonValue: 5
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
-    JsonValue: 90
+    JsonValue: 80
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"#coreUpgradeDetailsDialog.cubesNeeded"'
+    JsonValue: '"#unlockable.BitsRequired.Title"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../../
     FieldName: ChallengeDetailsDialog:_CurrentCostLabel
@@ -531,6 +531,15 @@ MonoBehaviour:
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
     JsonValue: 3
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:b
+    JsonValue: 0.721568644
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:g
+    JsonValue: 0.721568644
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:r
+    JsonValue: 0.721568644
   ModifiedLocalReferences:
   - ObjectPath: ../../../../../
     FieldName: ChallengeDetailsDialog:_UnlockButton

@@ -110,7 +110,7 @@ public class ChallengeDetailsDialog : BaseView {
 
         ItemData itemData = ItemDataConfig.GetData(unlockInfo.UpgradeCostItemId);
         int cost = unlockInfo.UpgradeCostAmountNeeded;
-        string costName = itemData.GetAmountName(cost);
+        string costName = itemData.GetPluralName();
         _UnlockButton.Text = Localization.Get(LocalizationKeys.kUnlockableUnlock);
         _LockedContainer.SetActive(true);
         _LockedIcon.SetActive(true);
@@ -123,12 +123,14 @@ public class ChallengeDetailsDialog : BaseView {
           _LockedIcon.SetActive(false);
           _AffordableIcon.SetActive(true);
           _UnlockButton.Initialize(OnUpgradeClicked, "unlock_button", "challenge_details_dialog");
+          _CostButtonLabel.color = _UnlockButton.TextEnabledColor;
         }
         else {
           // Can Currently Unlock and Afford
-          _CurrentCostLabel.text = Localization.GetWithArgs(LocalizationKeys.kUnlockableBitsRequiredDescription, new object[] { cost, costName });
+          _CurrentCostLabel.text = Localization.GetWithArgs(LocalizationKeys.kUnlockableCurrencyRequired, new object [] { costName });
           _CurrentCostLabel.color = _UnavailableColor;
           _UnlockButton.Interactable = false;
+          _CostButtonLabel.color = _UnlockButton.TextDisabledColor;
         }
       }
     }
@@ -157,6 +159,7 @@ public class ChallengeDetailsDialog : BaseView {
       UnlockablesManager.Instance.TrySetUnlocked(unlockInfo.Id.Value, true);
 
       _UnlockButton.Interactable = false;
+      _CostButtonLabel.color = _UnlockButton.TextDisabledColor;
       UnlockablesManager.Instance.OnUnlockComplete += HandleUnlockFromRobotResponded;
       PlayUpgradeAnimation();
     }
