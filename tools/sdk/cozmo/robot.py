@@ -365,17 +365,18 @@ class Cozmo(event.Dispatcher):
         self.pose_angle = util.radians(msg.poseAngle_rad) # heading in X-Y plane
         self.pose_pitch = util.radians(msg.posePitch_rad)
         self.head_angle = util.radians(msg.headAngle_rad)
-        # self.left_wheel_speed  = msg.leftWheelSpeed_mmps  # add speed (and distance) helper class to convert units?
-        # self.right_wheel_speed = msg.rightWheelSpeed_mmps
-        # self.lift_height = msg.liftHeight_mm # in min_lift_height_mm .. max_lift_height_mm range (not 0..1)
-        # float_32 batteryVoltage
-        # int_32   carryingObjectID,      // will be -1 if not carrying object
-        # int_32   carryingObjectOnTopID, // will be -1 if no object on top of object being carried
-        # int_32   headTrackingObjectID,  // will be -1 if head is not tracking to any object
-        # int_32   localizedToObjectID,   // Will be -1 if not localized to any object
+        self.left_wheel_speed  = util.speed_mmps(msg.leftWheelSpeed_mmps)
+        self.right_wheel_speed = util.speed_mmps(msg.rightWheelSpeed_mmps)
+        self.lift_height = util.distance_mm(msg.liftHeight_mm)
+        self.battery_voltage = msg.batteryVoltage
+        self.carrying_object_id        = msg.carryingObjectID      # int_32 will be -1 if not carrying object
+        self.carrying_object_on_top_id = msg.carryingObjectOnTopID # int_32 will be -1 if no object on top of object being carried
+        self.head_tracking_object_id   = msg.headTrackingObjectID  # int_32 will be -1 if head is not tracking to any object
+        self.localized_to_object_id    = msg.localizedToObjectID   # int_32 Will be -1 if not localized to any object
         self.last_image_time = msg.lastImageTimeStamp
-        # uint_16  status,                // See RobotStatusFlag in cozmoTypes.h
-        # uint_8   gameStatus,            // See GameStatusFlag in cozmoTypes.h
+        self.status      = msg.status     # uint_16 as bitflags - See RobotStatusFlag in robotStatusAndActions.py
+        self.game_status = msg.gameStatus # uint_8  as bitflags - See GameStatusFlag in gameStatusFlag.py
+
         if msg.robotID != self.robot_id:
             logger.error("robot id changed mismatch (msg=%s, self=%s)", msg.robotID, self.robot_id )
 
