@@ -266,6 +266,9 @@ MonoBehaviour:
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 0
   DimBackgroundPrefabOverride: {fileID: 0}
+  _OpenAudioEvent:
+    _Event: Invalid
+    _EventType: GenericEvent
 --- !u!114 &11434132
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -378,10 +381,13 @@ MonoBehaviour:
   ModifiedValues:
   - ObjectPath: ButtonIcon
     FieldName: UnityEngine.UI.Image:m_Color:a
-    JsonValue: 1.0
+    JsonValue: 0.549019635
   - ObjectPath: 
     FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
     JsonValue: '"Play__Ui__Click_Back"'
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:a
+    JsonValue: 0.549019635
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: Cozmo.UI.BaseView:_OptionalCloseDialogButton
