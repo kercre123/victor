@@ -182,6 +182,7 @@ private:
   // Send a mesage to game to let them know the objects current light values
   // Will only send if _sendTransitionMessages is true
   void SendTransitionMessage(const ObjectID& objectID, const ObjectLights& values);
+  void SendTransitionMessage(const ObjectID& objectID, const std::array<Anki::Cozmo::LightState, 4>& lights);
   
   bool CanSetObjectLights(const ObjectID& objectID);
   

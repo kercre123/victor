@@ -495,8 +495,6 @@ void LightsComponent::SetLights(ObjectID object, CubeLightsState state, bool for
   
   const ObjectLights& values = _stateToValues[state];
   SetObjectLightsInternal(object, values);
-  
-  SendTransitionMessage(object, values);
 }
 
 
@@ -853,6 +851,8 @@ Result LightsComponent::SetObjectLightsInternal(const ObjectID& objectID, const 
                         objectID.GetValue(), activeObject->GetActiveID());
     }
     
+    SendTransitionMessage(objectID, values);
+
     _robot.SendMessage(RobotInterface::EngineToRobot(SetCubeGamma(activeObject->GetLEDGamma())));
     _robot.SendMessage(RobotInterface::EngineToRobot(CubeID((uint32_t)activeObject->GetActiveID(),
                                                             MS_TO_LED_FRAMES(values.rotationPeriod_ms))));
@@ -926,6 +926,8 @@ Result LightsComponent::SetObjectLightsInternal(const ObjectID& objectID,
                         "Setting lights for object %d (activeID %d)",
                         objectID.GetValue(), activeObject->GetActiveID());
     }
+    
+    SendTransitionMessage(objectID, lights);
     
     _robot.SendMessage(RobotInterface::EngineToRobot(SetCubeGamma(activeObject->GetLEDGamma())));
     _robot.SendMessage(RobotInterface::EngineToRobot(CubeID((uint32_t)activeObject->GetActiveID(),
@@ -1082,6 +1084,37 @@ void LightsComponent::SendTransitionMessage(const ObjectID& objectID, const Obje
     
     msg.lightRotation_ms = values.rotationPeriod_ms;
     
+    _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+  }
+}
+
+void LightsComponent::SendTransitionMessage(const ObjectID& objectID, const std::array<Anki::Cozmo::LightState, 4>& lights)
+{
+  const auto cube = _cubeInfo.find(objectID);
+  if(cube == _cubeInfo.end())
+  {
+    PRINT_NAMED_WARNING("LightsComponent.SendTransitionMessage.CubeNotFound", "No cube in _cubeInfo with id %d", objectID.GetValue());
+    return;
+  }
+    
+  if(_sendTransitionMessages && cube->second.enabled)
+  {
+    ObservableObject* obj = _robot.GetBlockWorld().GetObjectByID(objectID);
+    if(obj == nullptr)
+    {
+      PRINT_NAMED_WARNING("LightsComponent.SendTransitionMessage.NullObject",
+                          "Got null object using id %d",
+                          objectID.GetValue());
+      return;
+    }
+    
+    ExternalInterface::CubeLightsStateTransition msg;
+    msg.objectID = objectID;
+    msg.factoryID = obj->GetFactoryID();
+    msg.objectType = obj->GetType();
+    msg.lights = lights;
+    msg.lightRotation_ms = 0;
+
     _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
   }
 }
