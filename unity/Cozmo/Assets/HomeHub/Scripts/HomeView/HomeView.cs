@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Anki.UI;
 using Anki.Assets;
+using Anki.Cozmo;
 using Cozmo.UI;
 using DataPersistence;
 using System;
@@ -18,6 +19,9 @@ namespace Cozmo.HomeHub {
       Profile,
       Settings
     }
+
+    private const float kFreeplayIntervalCheck = 30.0f;
+    private float _FreeplayIntervalLastTimestamp = -1;
 
     public System.Action<StatContainer, StatContainer, Transform[]> DailyGoalsSet;
 
@@ -186,6 +190,7 @@ namespace Cozmo.HomeHub {
     private Dictionary<string, ChallengeStatePacket> _ChallengeStates;
 
     public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById, HomeHub homeHubInstance) {
+      _FreeplayIntervalLastTimestamp = -1;
       _HomeHubInstance = homeHubInstance;
 
       DASEventViewName = "home_view";
@@ -452,6 +457,24 @@ namespace Cozmo.HomeHub {
       }
       _AnyUpgradeAffordableIndicator.SetActive(canAfford && _CurrentTab != HomeTab.Cozmo);
     }
+
+    #region Freeplay Related GameEvents
+
+
+    // Every kFreeplayIntervalCheck seconds, fire the FreeplayInterval event for Freeplay time related goals
+    protected override void Update() {
+      base.Update();
+      if (_FreeplayIntervalLastTimestamp < 0.0f) {
+        _FreeplayIntervalLastTimestamp = Time.time;
+      }
+      if (Time.time - _FreeplayIntervalLastTimestamp > kFreeplayIntervalCheck) {
+        _FreeplayIntervalLastTimestamp = Time.time;
+        GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnFreeplayInterval));
+      }
+    }
+
+
+    #endregion
 
     #region Reward Sequence and Lootview
 

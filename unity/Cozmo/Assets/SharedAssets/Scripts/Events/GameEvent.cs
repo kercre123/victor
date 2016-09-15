@@ -38,8 +38,10 @@ namespace Anki {
       // 15
       OnUnlockableSparked,
       // 16
-      Count
+      OnFreeplayInterval,
       // 17
+      Count
+      // 18
 
 
 

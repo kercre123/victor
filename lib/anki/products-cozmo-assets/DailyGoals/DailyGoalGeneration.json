@@ -1,6 +1,18 @@
 {
   "GenList": [
     {
+      "TitleKey": "dailyGoal.title.FreeplayTime.10",
+      "RewardType": "experience",
+      "Tag": "Freeplay",
+      "PointsRewarded": 40,
+      "Target": 20,
+      "Priority": 0,
+      "CladEvent": "OnFreeplayInterval",
+      "GenConditions": [],
+      "ProgressConditions": [],
+      "Id": 43
+    },
+    {
       "TitleKey": "dailyGoal.title.ExplorerMode.Playtime.10",
       "RewardType": "experience",
       "Tag": "ExplorerModeTime",
