@@ -27,6 +27,9 @@
   "wifiStrings.Instructions.Slide0": {
     "translation": "Find and tap your device's Settings icon"
   },
+  "wifiStrings.Instructions.Slide0Android": {
+    "translation": "Pull down your Device's Settings panel"
+  },
   "wifiStrings.Instructions.Slide1": {
     "translation": "Select the WiFi section from your Settings menu"
   },
