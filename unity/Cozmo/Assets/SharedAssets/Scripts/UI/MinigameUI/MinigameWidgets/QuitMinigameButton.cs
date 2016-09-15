@@ -57,23 +57,24 @@ namespace Cozmo {
       }
 
       private void HandleQuitButtonTap() {
-        // Open confirmation dialog instead
-        AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_NoText);
-        // Hook up callbacks
-        alertView.SetCloseButtonEnabled(false);
-        alertView.SetPrimaryButton(LocalizationKeys.kButtonQuit, HandleQuitConfirmed, Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Click_Back));
-        alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel, HandleQuitCancelled);
-        if (_IsMinigame) {
-          alertView.TitleLocKey = LocalizationKeys.kMinigameQuitViewTitle;
-        }
-        else {
-          alertView.TitleLocKey = LocalizationKeys.kMinigameQuitViewTitleActivity;
-        }
-        // Listen for dialog close
+        if (UIManager.Instance.NumberOfOpenDialogues() == 0) {
+          // Open confirmation dialog instead
+          AlertView alertView = UIManager.OpenView (AlertViewLoader.Instance.AlertViewPrefab_NoText);
+          // Hook up callbacks
+          alertView.SetCloseButtonEnabled (false);
+          alertView.SetPrimaryButton (LocalizationKeys.kButtonQuit, HandleQuitConfirmed, Anki.Cozmo.Audio.AudioEventParameter.UIEvent (Anki.Cozmo.Audio.GameEvent.Ui.Click_Back));
+          alertView.SetSecondaryButton (LocalizationKeys.kButtonCancel, HandleQuitCancelled);
+          if (_IsMinigame) {
+            alertView.TitleLocKey = LocalizationKeys.kMinigameQuitViewTitle;
+          } else {
+            alertView.TitleLocKey = LocalizationKeys.kMinigameQuitViewTitleActivity;
+          }
+          // Listen for dialog close
 
-        alertView.ViewCloseAnimationFinished += HandleQuitViewClosed;
-        _QuitPopupInstance = alertView;
-        _ConfimedQuit = false;
+          alertView.ViewCloseAnimationFinished += HandleQuitViewClosed;
+          _QuitPopupInstance = alertView;
+          _ConfimedQuit = false;
+        }
       }
 
       private void HandlePauseDialogOpen() {

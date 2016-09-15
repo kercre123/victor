@@ -68,6 +68,8 @@ public class UIManager : MonoBehaviour {
   public BackgroundColorController BackgroundColorController { get { return _BackgroundColorController; } }
 
   private List<BaseView> _OpenViews;
+  // Account far the fact that there's always a base view open
+  public int NumberOfOpenDialogues(){ return _OpenViews.Count - 1;}
 
   void Awake() {
     Instance = this;
