@@ -3,7 +3,7 @@
 #define ASSERT_CONCAT_(a, b) a##b
 #define ASSERT_CONCAT(a, b) ASSERT_CONCAT_( a, b)
 #ifdef __COUNTER__
-#define ct_assert(e) enum { ASSERT_CONCAT(assert_line_, __COUNTER__) = 1/(!!(e)) }
+#define ct_assert(e) enum { ASSERT_CONCAT(assert_counter_, __COUNTER__) = 1/(!!(e)) }
 #else
 #define ct_assert(e) enum { ASSERT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }
 #endif

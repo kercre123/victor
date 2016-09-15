@@ -58,17 +58,15 @@ bool SendMessage(RobotInterface::EngineToRobot& msg)
 
 void Update()
 {
-  static u8 sent=1;
   RobotInterface::EngineToRobot msg;
   i2spiUpdateRtipQueueEstimate();
   u8* buffer = msg.GetBuffer();
   int size = i2spiGetCladMessage(buffer);
   while (size > 0)
   {
-    if (msg.tag < RobotInterface::TO_WIFI_START  || (!!sent && (((msg.tag & 0xC0) == 0xC0) || msg.tag == 0xd3)))
+    if (msg.tag < RobotInterface::TO_WIFI_START  )
     {
-      sent = 1;
-      os_printf("bound below %d\r\n", msg.tag);
+      os_printf("Wifi rcvd msg bound below %d\r\n", msg.tag);
       AnkiError( 50, "RTIP.AcceptRTIPMessage", 376, "WiFi received message from RTIP, %x[%d] that seems bound below (< 0x%x)", 3, msg.tag, size, (int)RobotInterface::TO_WIFI_START);
       {  // This most likely means we are completely out of sync on the I2SPI bus, and it is probably impossible to recover.
         RobotInterface::RobotErrorReport rer;
