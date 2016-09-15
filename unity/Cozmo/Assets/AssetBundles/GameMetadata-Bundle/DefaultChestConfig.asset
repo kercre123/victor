@@ -11,23 +11,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17823566cff2e44afb8716a55e378104, type: 3}
   m_Name: DefaultChestConfig
   m_EditorClassIdentifier: 
-  RequirementLadder:
+  Requirement:
     ItemId: experience
-    LadderLevels:
-    - Level: 0
-      MinValue: 100
-      MaxValue: 100
-    - Level: 1
-      MinValue: 100
-      MaxValue: 100
-  RewardLadders:
+    TargetPoints: 100
+  RewardList:
   - ItemId: TestHexItem0
-    LadderLevels:
-    - Level: 0
-      MinValue: 4
-      MaxValue: 6
+    MinAmount: 4
+    MaxAmount: 7
   - ItemId: treat
-    LadderLevels:
-    - Level: 0
-      MinValue: 7
-      MaxValue: 13
+    MinAmount: 7
+    MaxAmount: 13

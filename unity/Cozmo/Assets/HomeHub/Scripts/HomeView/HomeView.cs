@@ -203,11 +203,6 @@ namespace Cozmo.HomeHub {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.EngineErrorCodeMessage>(HandleEngineErrorCode);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
 
-      // automatically apply chest rewards that are queued up incase the app is exitied during the middle
-      // of a reward loot view flow.
-      ChestRewardManager.Instance.TryPopulateChestRewards();
-      ChestRewardManager.Instance.ApplyChestRewards();
-
       _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleGreenPointsBarUpdateComplete;
       DailyGoalManager.Instance.OnRefreshDailyGoals += UpdatePlayTabText;
       GameEventManager.Instance.OnGameEvent += HandleDailyGoalCompleted;
@@ -613,7 +608,7 @@ namespace Cozmo.HomeHub {
     }
     // If we earned a chest, have the progress bar reflect the previous requirement level at full.
     private void HandleChestGained() {
-      UpdateChestProgressBar(ChestRewardManager.Instance.GetPreviousRequirementPoints(), ChestRewardManager.Instance.GetPreviousRequirementPoints());
+      UpdateChestProgressBar(ChestRewardManager.Instance.GetNextRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
     }
 
     private Transform GetGoalSource(DailyGoal goal) {
