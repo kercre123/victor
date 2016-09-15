@@ -273,7 +273,14 @@ public class UIManager : MonoBehaviour {
     if (_Instance._DimBackgroundInstance != null) {
       for (int i = _Instance._OpenViews.Count - 1; i >= 0; --i) {
         if (_Instance._OpenViews[i].DimBackground) {
-          _Instance._DimBackgroundInstance.transform.SetSiblingIndex(_Instance._OpenViews[i].transform.GetSiblingIndex());
+          int targetIndex = _Instance._OpenViews[i].transform.GetSiblingIndex();
+          int currentDimmerIndex = _Instance._DimBackgroundInstance.transform.GetSiblingIndex();
+          if (currentDimmerIndex < targetIndex) {
+            _Instance._DimBackgroundInstance.transform.SetSiblingIndex(targetIndex - 1);
+          }
+          else {
+            _Instance._DimBackgroundInstance.transform.SetSiblingIndex(targetIndex);
+          }
         }
       }
     }
