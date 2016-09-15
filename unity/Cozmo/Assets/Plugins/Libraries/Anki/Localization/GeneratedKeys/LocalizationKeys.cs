@@ -581,6 +581,8 @@ public static class LocalizationKeys {
   public const string kLabelTotalCount = "label.totalCount";
   public const string kLabelFractionCount = "label.fractionCount";
   public const string kLabelDayCount = "label.dayCount";
+  public const string kLabelDaysCountPlural = "label.daysCount.plural";
+  public const string kLabelDaysCountSingular = "label.daysCount.singular";
   public const string kDailySummaryTitle = "dailySummary.title";
   public const string kRequestGameTitle = "requestGame.title";
   public const string kRequestGameDescription = "requestGame.description";

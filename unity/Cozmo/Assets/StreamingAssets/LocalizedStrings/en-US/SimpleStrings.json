@@ -93,6 +93,12 @@
   "label.dayCount": {
     "translation": "Day {0}"
   },
+  "label.daysCount.plural": {
+    "translation": "{0} Days"
+  },
+  "label.daysCount.singular": {
+    "translation": "{0} Day"
+  },
   "dailySummary.title": {
     "translation": "Daily Summary for {0}/{1}"
   },
@@ -245,5 +251,8 @@
   },
   "label.streaksCount": {
     "translation": "Streaks: "
+  },
+  "label.goalsCompleted": {
+    "translation": "Goals Completed"
   }
 }

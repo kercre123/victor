@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using Cozmo.UI;
 
 public class ProfileTab : MonoBehaviour {
 
@@ -10,7 +11,7 @@ public class ProfileTab : MonoBehaviour {
   private Anki.UI.AnkiTextLabel _TimeWithCozmoCountValueLabel;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _GamesPlayCountValueLabel;
+  private Anki.UI.AnkiTextLabel _DailyGoalsCompletedCount;
 
   [SerializeField]
   private Anki.UI.AnkiTextLabel _StreaksCountValueLabel;
@@ -26,16 +27,17 @@ public class ProfileTab : MonoBehaviour {
   private void Awake() {
     _PlayerName.text = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName;
 
-    // force compute / update the time
-    PlayTimeManager.Instance.ComputeAndSetPlayTime();
-    System.TimeSpan timeSpan = System.TimeSpan.FromSeconds(GetTotalPlayTimeInSeconds());
+    // TODO: Make localization system have a generic way of handling plurality. We have one for items
+    // but we really need a more generic solution
+    int daysWithCozmo = GetDaysWithCozmo();
+    if (daysWithCozmo == 1) {
+      _TimeWithCozmoCountValueLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelDaysCountSingular, new object[] { daysWithCozmo });
+    }
+    else {
+      _TimeWithCozmoCountValueLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelDaysCountPlural, new object[] { daysWithCozmo });
+    }
 
-    _TimeWithCozmoCountValueLabel.text = string.Format(Localization.GetCultureInfo(), "{0:D2}h:{1:D2}m:{2:D2}s",
-                timeSpan.Hours,
-                timeSpan.Minutes,
-                timeSpan.Seconds);
-
-    _GamesPlayCountValueLabel.text = GetGamesPlayedCount().ToString();
+    _DailyGoalsCompletedCount.text = TotalDailyGoalsCompleted().ToString();
     _StreaksCountValueLabel.text = DataPersistence.DataPersistenceManager.Instance.CurrentStreak.ToString();
 
     _EditNameButton.Initialize(HandleEditNameButton, "edit_name_button", "profile_tab");
@@ -61,19 +63,26 @@ public class ProfileTab : MonoBehaviour {
     }
   }
 
-  private int GetGamesPlayedCount() {
-    int playCount = 0;
-    foreach (KeyValuePair<string, int> kvp in DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed) {
-      playCount += kvp.Value;
+  private int GetDaysWithCozmo() {
+    int daysWithCozmo = 0;
+    foreach (DataPersistence.TimelineEntryData sessionEntry in DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions) {
+      if (sessionEntry.HasConnectedToCozmo) {
+        daysWithCozmo++;
+      }
     }
-    return playCount;
+    return daysWithCozmo;
   }
 
-  private float GetTotalPlayTimeInSeconds() {
-    float totalTime = 0.0f;
+  private int TotalDailyGoalsCompleted() {
+    int dailyGoalsCompleted = 0;
     foreach (DataPersistence.TimelineEntryData sessionEntry in DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions) {
-      totalTime += sessionEntry.PlayTime;
+      foreach (DailyGoal goal in sessionEntry.DailyGoals) {
+        if (goal.GoalComplete) {
+          dailyGoalsCompleted++;
+        }
+      }
     }
-    return totalTime;
+    return dailyGoalsCompleted;
   }
+
 }
