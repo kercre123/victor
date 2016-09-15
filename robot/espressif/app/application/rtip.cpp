@@ -64,7 +64,7 @@ void Update()
   int size = i2spiGetCladMessage(buffer);
   while (size > 0)
   {
-    if (msg.tag < RobotInterface::TO_WIFI_START  )
+    if (msg.tag < RobotInterface::TO_WIFI_START)
     {
       os_printf("Wifi rcvd msg bound below %d\r\n", msg.tag);
       AnkiError( 50, "RTIP.AcceptRTIPMessage", 376, "WiFi received message from RTIP, %x[%d] that seems bound below (< 0x%x)", 3, msg.tag, size, (int)RobotInterface::TO_WIFI_START);

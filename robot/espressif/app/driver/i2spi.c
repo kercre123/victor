@@ -1002,7 +1002,7 @@ bool i2spiSwitchMode(const I2SPIMode mode)
   return false;
 }
 
-void i2spiLogDesync(const u8* buffer, int buffer_bytes)
+void ICACHE_FLASH_ATTR i2spiLogDesync(const u8* buffer, int buffer_bytes)
 {
    CrashRecord record;
    CrashLog_I2Spi* pCrash = (CrashLog_I2Spi*)record.dump;
