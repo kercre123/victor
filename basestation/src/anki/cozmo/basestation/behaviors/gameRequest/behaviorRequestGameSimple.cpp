@@ -514,6 +514,9 @@ void BehaviorRequestGameSimple::TransitionToVerifyingFace(Robot& robot)
 }
 
 void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot) {
+  // Don't interrupt the request process for a cube move
+  SmartDisableReactionaryBehavior(BehaviorType::ReactToCubeMoved);
+
   // always turn back to the face after the animation in case the animation moves the head
   StartActing(new CompoundActionSequential(robot, {
         new TriggerAnimationAction(robot, _activeConfig->requestAnimTrigger),
