@@ -502,7 +502,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
   {
     PRINT_CH_INFO("Behaviors", (GetName() + ".IterationEnd").c_str(), "Done (reached max iterations)");
 
-    if( _configParams.behavior_RecentLocationsMax >= 0 ) {
+    if( _configParams.behavior_RecentLocationsMax > 0 ) {
       // we have finished at this location, note down as recent location (make room if necessary)
       if ( _visitedLocations.size() >= _configParams.behavior_RecentLocationsMax ) {
         assert( !_visitedLocations.empty() ); // otherwise the behavior would run forever
