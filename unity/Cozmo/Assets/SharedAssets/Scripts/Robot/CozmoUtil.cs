@@ -28,7 +28,7 @@ public static class CozmoUtil {
   // Setting this to -0.8 allows the block to be close enough where he
   // can lift it. -0.9 is too far down can can cut off the top of the cube.
   // (great without lift though)
-  public const float kIdealBlockViewHeadValue = -0.7f;
+  public const float kIdealBlockViewHeadValue = -0.65f;
   public const float kIdealBlockViewHeadValueWithoutLift = -0.9f;
 
   // It's hard to look too high for seeing/enrolling a face, so bias way up
