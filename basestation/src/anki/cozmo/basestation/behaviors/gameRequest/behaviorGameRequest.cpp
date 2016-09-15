@@ -142,7 +142,8 @@ bool IBehaviorRequestGame::FilterBlocks( const Robot* robotPtr, const Observable
 
   return upAxisOk &&
     obj->IsPoseStateKnown() && 
-    obj->GetFamily() == ObjectFamily::LightCube;
+    obj->GetFamily() == ObjectFamily::LightCube &&
+    robotPtr->CanPickUpObject(*obj);
 
 }
 
