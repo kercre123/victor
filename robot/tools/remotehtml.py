@@ -10,6 +10,10 @@ from flask import Flask, make_response, send_from_directory, request
 
 import robotInterface, minipegReceiver
 
+import logging
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+
 def Remote():
     global LastCameraImage
 

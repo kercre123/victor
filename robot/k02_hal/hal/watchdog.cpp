@@ -91,5 +91,5 @@ void Anki::Cozmo::HAL::Watchdog::pet() {
 extern "C"
 void WDOG_EWM_IRQHandler(void)
 {
-  Anki::Cozmo::HAL::DAC::Tone(2.0f);
+  // THIS IS A STUB
 }
