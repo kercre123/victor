@@ -141,7 +141,6 @@ namespace Cozmo {
         if (GoalComplete && _Completed == false) {
           // Grant Reward
           DAS.Event(this, string.Format("{0} Completed", Title));
-          DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount(RewardType, PointsRewarded);
           if (OnDailyGoalCompleted != null) {
             OnDailyGoalCompleted.Invoke(this);
           }

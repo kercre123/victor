@@ -49,6 +49,7 @@ public:
 private:
   void HandleFactoryFirmware(const AnkiEvent<RobotInterface::RobotToEngine>&);
   void HandleFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>&);
+  void HandleSerialNumber(const AnkiEvent<RobotInterface::RobotToEngine>&);
   void OnNotified(RobotConnectionResult result, uint32_t robotFwVersion);
 
   RobotID_t _id;
@@ -56,6 +57,7 @@ private:
   IExternalInterface* _externalInterface;
   uint32_t _fwVersion;
   uint32_t _fwTime;
+  uint32_t _serialNumber = 0;
   bool _validFirmware;
 };
 

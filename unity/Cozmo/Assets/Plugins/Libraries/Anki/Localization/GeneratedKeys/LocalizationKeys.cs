@@ -104,6 +104,8 @@ public static class LocalizationKeys {
   public const string kConnectivityCozmoLowBatteryTitle = "connectivity.cozmoLowBatteryTitle";
   public const string kConnectivityCozmoLowBatteryDesc = "connectivity.cozmoLowBatteryDesc";
   public const string kConnectivityKeepCozmoOnCharger = "connectivity.keepCozmoOnCharger";
+  public const string kLabelGetHelp = "label.getHelp";
+  public const string kLabelCubesNotWorking = "label.cubesNotWorking";
 
   #endregion
 
@@ -497,6 +499,7 @@ public static class LocalizationKeys {
 
   #region SettingsStrings
 
+  public const string kSettingsCubeStatusPanelButtonCubeHelp = "settings.cubeStatusPanel.button.cubeHelp";
   public const string kSettingsSdkPanelActivateSDKalertText = "settings.sdkPanel.activateSDKalert.text";
   public const string kSettingsSdkPanelDisableButtonText = "settings.sdkPanel.disableButton.text";
   public const string kSettingsSdkPanelEnableButtonText = "settings.sdkPanel.enableButton.text";
@@ -625,6 +628,10 @@ public static class LocalizationKeys {
   public const string kLabelPrivacyPolicy = "label.privacyPolicy";
   public const string kButtonOpenEnvelope = "button.openEnvelope";
   public const string kLabelPressAndHoldInstruction = "label.pressAndHoldInstruction";
+  public const string kLabelActivePlayer = "label.activePlayer";
+  public const string kLabelTimeWithCozmo = "label.timeWithCozmo";
+  public const string kLabelGamesPlayed = "label.gamesPlayed";
+  public const string kLabelStreaksCount = "label.streaksCount";
 
   #endregion
 
@@ -640,10 +647,13 @@ public static class LocalizationKeys {
   #region UnlockStrings
 
   public const string kUnlockableUnlock = "unlockable.Unlock";
+  public const string kUnlockableApp = "unlockable.App";
+  public const string kUnlockableUpgrade = "unlockable.Upgrade";
   public const string kUnlockableAvailable = "unlockable.Available";
   public const string kUnlockableViewPreReq = "unlockable.ViewPreReq";
   public const string kUnlockablePreReqNeededDescription = "unlockable.PreReqNeeded.Description";
   public const string kUnlockableBitsRequiredTitle = "unlockable.BitsRequired.Title";
+  public const string kUnlockableCurrencyRequired = "unlockable.CurrencyRequired";
   public const string kUnlockableBitsRequiredDescription = "unlockable.BitsRequired.Description";
   public const string kUnlockableBitsRequiredEarnMore = "unlockable.BitsRequired.EarnMore";
   public const string kUnlockableCubePounceTitle = "unlockable.CubePounce.Title";

@@ -664,12 +664,26 @@ namespace Anki {
       // is in the commanded position
       // TODO: Is this really necessary in practice?
       if(_inPosition) {
+      
+        if(_robot.GetMoveComponent().IsHeadMoving())
+        {
+          PRINT_CH_INFO("Actions",
+                        "MoveHeadToAngleAction.CheckIfDone",
+                        "[%d] Head considered in position at %.1fdeg but still moving at %.1fdeg",
+                        GetTag(),
+                        _headAngle.getDegrees(),
+                        RAD_TO_DEG_F32(_robot.GetHeadAngle()));
+        }
+      
         result = _robot.GetMoveComponent().IsHeadMoving() ? ActionResult::RUNNING : ActionResult::SUCCESS;
       } else {
         PRINT_CH_INFO("Actions", "MoveHeadToAngleAction.CheckIfDone",
-                         "[%d] Waiting for head to get in position: %.1fdeg vs. %.1fdeg(+/-%.1f)",
+                         "[%d] Waiting for head to get in position: %.1fdeg vs. %.1fdeg(+/-%.1f) tol:%.1fdeg",
                          GetTag(),
-                         RAD_TO_DEG_F32(_robot.GetHeadAngle()), _headAngle.getDegrees(), _variability.getDegrees());
+                         RAD_TO_DEG_F32(_robot.GetHeadAngle()),
+                         _headAngle.getDegrees(),
+                         _variability.getDegrees(),
+                         _angleTolerance.getDegrees());
         
         if( _motionStarted && ! _robot.GetMoveComponent().IsHeadMoving() ) {
           PRINT_NAMED_WARNING("MoveHeadToAngleAction.StoppedMakingProgress",

@@ -46,11 +46,15 @@ public class SoundCheckView : Cozmo.UI.BaseView {
 
     _PlayButton.Interactable = false;
     _PlayAgainButton.Interactable = false;
+    _SoundsGoodButton.Interactable = false;
   }
 
   private void HandlePlaySoundComplete() {
     _SoundTextConfirm.gameObject.SetActive(true);
+
     _PlayAgainButton.Interactable = true;
+    _SoundsGoodButton.Interactable = true;
+
     if (_PlayedOnce == false) {
       _SoundsGoodButton.Text = Localization.Get(LocalizationKeys.kButtonSoundsGood);
       _PlayAgainButton.Text = Localization.Get(LocalizationKeys.kButtonAgain);

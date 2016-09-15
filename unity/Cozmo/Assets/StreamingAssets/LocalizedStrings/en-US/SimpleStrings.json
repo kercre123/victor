@@ -85,7 +85,7 @@
     "translation": "{0}: {1}"
   },
   "label.totalCount": {
-    "translation": "Total {0}: {1}"
+    "translation": "Your {0}: {1}"
   },
   "label.fractionCount": {
     "translation": "{0}/{1}"
@@ -231,7 +231,19 @@
   "button.openEnvelope": {
     "translation": "TAP TO OPEN"
   },
-  "label.pressAndHoldInstruction":{
+  "label.pressAndHoldInstruction": {
     "translation": "Press and hold {0} to confirm"
+  },
+  "label.activePlayer": {
+    "translation": "Active Player:"
+  },
+  "label.timeWithCozmo": {
+    "translation": "Time With Cozmo: "
+  },
+  "label.gamesPlayed": {
+    "translation": "Games Played: "
+  },
+  "label.streaksCount": {
+    "translation": "Streaks: "
   }
 }

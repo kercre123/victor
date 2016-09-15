@@ -280,6 +280,14 @@ namespace Anki {
             CrashReporter::TriggerLogSend(msg.requestCrashReports.index);
             break;
           }
+          case RobotInterface::EngineToRobot::Tag_shutdownRobot:
+          {
+            RobotInterface::EngineToRobot msgToRTIP;
+            msg.tag = RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
+            msg.setBodyRadioMode.radioMode = BODY_IDLE_OPERATING_MODE;
+            RTIP::SendMessage(msg);
+            break;
+          }
           default:
           {
             AnkiWarn( 137, "WiFi.Messages", 259, "Received message not expected here tag=%02x", 1, msg.tag);

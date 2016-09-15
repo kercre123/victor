@@ -1,6 +1,7 @@
 using Anki.Cozmo.ExternalInterface;
 using UnityEngine;
-using System.Collections;
+using System;
+using Anki.Cozmo.Audio;
 
 namespace Cozmo.Minigame.CubePounce {
   public class CubePounceStateResetPoint : CubePounceState {
@@ -11,13 +12,11 @@ namespace Cozmo.Minigame.CubePounce {
     private bool _TurnInProgress = false;
     private bool _BackupInProgress = false;
     private bool _GetUnreadyInProgress = false;
-    private bool _IsPaused = false;
     private float _GetUnreadyStartAngle_deg;
 
     public override void Enter() {
       base.Enter();
       _CubePounceGame.StopCycleCube(_CubePounceGame.GetCubeTarget().ID);
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Tension);
 
       // If the cube hasn't been seen recently, call the cube missing functionality in cube pounce game
       if (_CubePounceGame.CubeSeenRecently) {
@@ -53,6 +52,12 @@ namespace Cozmo.Minigame.CubePounce {
       //_CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.CubePounceIdleLiftUp);
 
       _GetReadyAnimInProgress = true;
+
+      // Determine what round it is
+      int score = Math.Max(_CubePounceGame.CozmoScoreTotal, _CubePounceGame.PlayerScoreTotal);
+      score = Math.Min(_CubePounceGame.MaxScorePerRound - 1, score); // Last score is game point
+      GameAudioClient.SetMusicRoundState(score + 1); // Offset for Audio Round State
+      GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Tension);
     }
 
     private void ReactToCubeOutOfRange() {
@@ -68,12 +73,14 @@ namespace Cozmo.Minigame.CubePounce {
       _GetReadyAnimCompleted = false;
       _GetUnreadyInProgress = true;
       _GetUnreadyStartAngle_deg = _CurrentRobot.PitchAngle;
+
+      GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Between_Rounds);
     }
 
     private void HandleGetUnreadyDone(bool success) {
       _GetUnreadyInProgress = false;
 
-      if (!_IsPaused && _CubePounceGame.PitchIndicatesPounceSuccess(_GetUnreadyStartAngle_deg)) {
+      if (_CubePounceGame.PitchIndicatesPounceSuccess(_GetUnreadyStartAngle_deg)) {
         DoBackupReaction();
       }
     }
@@ -92,7 +99,7 @@ namespace Cozmo.Minigame.CubePounce {
     public override void Update() {
       base.Update();
 
-      if (_BackupInProgress || _GetUnreadyInProgress || _IsPaused) {
+      if (_BackupInProgress || _GetUnreadyInProgress) {
         return;
       }
 
@@ -168,14 +175,6 @@ namespace Cozmo.Minigame.CubePounce {
         _CurrentRobot.CancelCallback(HandleGetUnreadyDone);
         _CurrentRobot.CancelCallback(HandleBackupComplete);
       }
-    }
-
-    public override void Pause(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
-      _IsPaused = true;
-    }
-
-    public override void Resume(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
-      _IsPaused = false;
     }
   }
 }

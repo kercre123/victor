@@ -258,6 +258,7 @@
   #define ANKI_CPU_PROFILE_START(varName, name)
   #define ANKI_CPU_PROFILE_STOP(varName)
   #define ANKI_CPU_TICK(tickName, maxTickTime_ms, logFreq)
+  #define ANKI_CPU_TICK_ONE_TIME(tickName)
   #define ANKI_CPU_REMOVE_THIS_THREAD()
 
 

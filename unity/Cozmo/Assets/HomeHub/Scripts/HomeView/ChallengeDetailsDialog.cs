@@ -110,12 +110,12 @@ public class ChallengeDetailsDialog : BaseView {
 
         ItemData itemData = ItemDataConfig.GetData(unlockInfo.UpgradeCostItemId);
         int cost = unlockInfo.UpgradeCostAmountNeeded;
-        string costName = itemData.GetAmountName(cost);
+        string costName = itemData.GetPluralName();
         _UnlockButton.Text = Localization.Get(LocalizationKeys.kUnlockableUnlock);
         _LockedContainer.SetActive(true);
         _LockedIcon.SetActive(true);
         _UnlockedContainer.SetActive(false);
-        _CostButtonLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelXCount, cost);
+        _CostButtonLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelEmptyWithArg, cost);
         if (affordable) {
           // Can Currently Unlock but not afford
           _CurrentCostLabel.text = Localization.Get(LocalizationKeys.kLabelAvailable);
@@ -123,12 +123,14 @@ public class ChallengeDetailsDialog : BaseView {
           _LockedIcon.SetActive(false);
           _AffordableIcon.SetActive(true);
           _UnlockButton.Initialize(OnUpgradeClicked, "unlock_button", "challenge_details_dialog");
+          _CostButtonLabel.color = _UnlockButton.TextEnabledColor;
         }
         else {
           // Can Currently Unlock and Afford
-          _CurrentCostLabel.text = Localization.GetWithArgs(LocalizationKeys.kUnlockableBitsRequiredDescription, new object[] { cost, costName });
+          _CurrentCostLabel.text = Localization.GetWithArgs(LocalizationKeys.kUnlockableCurrencyRequired, new object [] { costName });
           _CurrentCostLabel.color = _UnavailableColor;
           _UnlockButton.Interactable = false;
+          _CostButtonLabel.color = _UnlockButton.TextDisabledColor;
         }
       }
     }
@@ -157,6 +159,7 @@ public class ChallengeDetailsDialog : BaseView {
       UnlockablesManager.Instance.TrySetUnlocked(unlockInfo.Id.Value, true);
 
       _UnlockButton.Interactable = false;
+      _CostButtonLabel.color = _UnlockButton.TextDisabledColor;
       UnlockablesManager.Instance.OnUnlockComplete += HandleUnlockFromRobotResponded;
       PlayUpgradeAnimation();
     }
@@ -166,7 +169,7 @@ public class ChallengeDetailsDialog : BaseView {
     _UnlockTween = DOTween.Sequence();
     _UnlockTween.Join(_ChallengeIcon.IconImage.DOColor(Color.white, _UnlockTween_sec));
     _UnlockTween.AppendCallback(HandleUpgradeAnimationPlayed);
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Win_Shared);
+    Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Upgrade);
   }
 
   //Reinitialize with new state if unlocked

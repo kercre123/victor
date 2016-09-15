@@ -1,6 +1,7 @@
 using Cozmo.UI;
 using UnityEngine;
 using System.Collections.Generic;
+using Anki.Cozmo.ExternalInterface;
 
 namespace Onboarding {
 
@@ -23,6 +24,8 @@ namespace Onboarding {
     private Transform[] _OldRobotSecondaryInfo;
     [SerializeField]
     private Transform _OldRobotSpinner;
+
+    private bool _DidSkip = false;
 
     public override void Start() {
       base.Start();
@@ -53,13 +56,29 @@ namespace Onboarding {
       }
       _OldRobotSpinner.gameObject.SetActive(true);
 
-      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.ConnectWakeUp, HandleWakeAnimationComplete);
+      _DidSkip = true;
+      // Using action chaining to try to prevent one frame pop of idle between these
+      IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
+      RobotActionUnion[] actions = {
+        // 0. Transition from eyes off to eyes showing
+        new RobotActionUnion().Initialize(new PlayAnimationTrigger().Initialize(CurrentRobot.ID, 1, Anki.Cozmo.AnimationTrigger.OnboardingEyesOn, true)),
+        // 2. Wake up...           
+        new RobotActionUnion().Initialize(new PlayAnimationTrigger().Initialize(CurrentRobot.ID, 1, Anki.Cozmo.AnimationTrigger.GoToSleepGetOut, true))
+      };
+
+      CurrentRobot.SendQueueCompoundAction(actions, HandleWakeAnimationComplete);
     }
 
     private void HandleWakeAnimationComplete(bool success) {
       // Complete and shut down onboarding current phase.
       OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Home);
       UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, Color.white);
+    }
+
+    protected override void HandleLoopedAnimationComplete(bool success = true) {
+      if (!_DidSkip) {
+        base.HandleLoopedAnimationComplete(success);
+      }
     }
 
   }

@@ -116,10 +116,14 @@ public class CheckInFlow : MonoBehaviour {
     _TimelineReviewContainer.SetActive(false);
     _ConnectContainer.SetActive(false);
     _DailyGoalPanel.gameObject.SetActive(false);
+    // automatically apply chest rewards that are queued up incase the app is exitied during the middle
+    // of a reward loot view flow.
+    ChestRewardManager.Instance.TryPopulateChestRewards();
+    ChestRewardManager.Instance.ApplyChestRewards();
+    UpdateProgBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
     // Do Check in Rewards if we need a new session
     if (DataPersistence.DataPersistenceManager.Instance.IsNewSessionNeeded) {
       _EnvelopeContainer.SetActive(true);
-      UpdateProgBar(0, 100);
     }
     else {
       Sequence rewardSequence = DOTween.Sequence();
@@ -128,7 +132,6 @@ public class CheckInFlow : MonoBehaviour {
       rewardSequence.Join(UIDefaultTransitionSettings.Instance.CreateFadeInTween(_ConnectCanvas, Ease.Unset, _ConnectIntroDuration));
       _DailyGoalPanel.gameObject.SetActive(true);
       _ConnectContainer.SetActive(true);
-      UpdateProgBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
       rewardSequence.Play();
     }
 
@@ -458,6 +461,7 @@ public class CheckInFlow : MonoBehaviour {
         _ActiveNewGoalTransforms[i].gameObject.SetActive(false);
       }
       _TimelineReviewContainer.SetActive(false);
+      UpdateProgBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
     });
     goalSequence.Play();
   }

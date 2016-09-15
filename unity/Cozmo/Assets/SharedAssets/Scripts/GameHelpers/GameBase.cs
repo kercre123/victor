@@ -109,6 +109,8 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
+  private bool _ResultsViewReached = false;
+
   #region Initialization
 
   private const string _kReactionaryBehaviorOwnerId = "unity_game";
@@ -149,7 +151,7 @@ public abstract class GameBase : MonoBehaviour {
     _ChallengeData = challengeData;
     _DifficultyOptions = _ChallengeData.DifficultyOptions;
     _WonChallenge = false;
-
+    _ResultsViewReached = false;
     if (CurrentRobot != null) {
 
       // this is done to prevent entering a game while robot is trying to finish get out seqeuences as part
@@ -252,6 +254,9 @@ public abstract class GameBase : MonoBehaviour {
 
   private void PrepRobotForGame() {
     IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
+    if (currentRobot == null) {
+      return;
+    }
     if (currentRobot.RobotStatus == RobotStatusFlag.IS_PICKING_OR_PLACING) {
       StartCoroutine(WaitForPickingUpOrPlacingFinish(currentRobot, Time.time));
     }
@@ -583,8 +588,10 @@ public abstract class GameBase : MonoBehaviour {
     _SharedMinigameViewInstance.ViewCloseAnimationFinished += QuitMinigameAnimationFinished;
     _SharedMinigameViewInstance.CloseView();
 
-    // cancels any queed up actions or co-routines
-    CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
+    // cancels any queued up actions or co-routines
+    if (CurrentRobot != null) {
+      CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
+    }
     StopAllCoroutines();
   }
 
@@ -669,8 +676,9 @@ public abstract class GameBase : MonoBehaviour {
 
   protected void RaiseMiniGameQuit() {
     _StateMachine.Stop();
-
-    RewardedActionManager.Instance.SendPendingRewardsToInventory();
+    if (!_ResultsViewReached) {
+      RewardedActionManager.Instance.SendPendingRewardsToInventory();
+    }
     DAS.Event(DASConstants.Game.kQuit, null);
     SendCustomEndGameDasEvents();
 
@@ -727,7 +735,7 @@ public abstract class GameBase : MonoBehaviour {
 
   protected virtual void ShowWinnerState() {
     SoftEndGameRobotReset();
-
+    _ResultsViewReached = true;
     ContextManager.Instance.AppFlash(playChime: true);
     string winnerText = _WonChallenge ? Localization.Get(LocalizationKeys.kMinigameTextPlayerWins) : Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
     SharedMinigameView.InfoTitleText = winnerText;
@@ -856,7 +864,7 @@ public abstract class GameBase : MonoBehaviour {
     // Set colors
     LightCube cube;
 
-    if (!CurrentRobot.LightCubes.TryGetValue(cubeID, out cube)) {
+    if (CurrentRobot == null || !CurrentRobot.LightCubes.TryGetValue(cubeID, out cube)) {
       DAS.Warn("GameBase.StartCycleCubeInternal", "No lightcube with ID " + cubeID + " cube probably disconnected");
       return;
     }
@@ -911,6 +919,9 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void CycleLightsSingleColor(CycleData data) {
+    if (CurrentRobot == null) {
+      return;
+    }
     LightCube cube = CurrentRobot.LightCubes[data.cubeID];
     data.colorIndex++;
     data.colorIndex %= cube.Lights.Length;

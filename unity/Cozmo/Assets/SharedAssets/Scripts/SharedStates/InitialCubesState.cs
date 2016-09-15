@@ -133,7 +133,7 @@ public class InitialCubesState : State {
     _ShowCozmoCubesSlide.LightUpCubes(numValidCubes);
 
     if (numValidCubes >= _CubesRequired) {
-      _Game.SharedMinigameView.SetContinueButtonSupplementText(GetCubesReadyText(_CubesRequired), Cozmo.UI.UIColorPalette.EnergyTextColor);
+      _Game.SharedMinigameView.SetContinueButtonSupplementText(GetCubesReadyText(_CubesRequired), Cozmo.UI.UIColorPalette.MinigameTextColor);
 
       _Game.SharedMinigameView.EnableContinueButton(true);
     }

@@ -286,18 +286,25 @@ Result PotentialObjectsForLocalizingTo::LocalizeRobot()
       ObservableObject* observedObj = matchPair.second.observedObject.get();
       ObservableObject* matchedObj  = matchPair.second.matchedObject;
      
-      VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.LocalizeRobot.UsingCrossFrame",
-                          "Localizing using %s %d",
-                          EnumToString(matchedObj->GetType()),
-                          matchedObj->GetID().GetValue());
+      if(matchedObj != nullptr)
+      {
+        VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.LocalizeRobot.UsingCrossFrame",
+                            "Localizing using %s %d",
+                            EnumToString(matchedObj->GetType()),
+                            matchedObj->GetID().GetValue());
+      }
       
       const Result result = _robot.LocalizeToObject(observedObj, matchedObj);
       if(result != RESULT_OK) {
         anyFailures = true;
-        PRINT_NAMED_WARNING("PotentialObjectsForLocalizingTo.LocalizeRobot.CrossFrameLocalizeFailure",
-                            "Failed to localize to %s object %d.",
-                            ObjectTypeToString(matchedObj->GetType()),
-                            matchedObj->GetID().GetValue());
+        
+        if(matchedObj != nullptr)
+        {
+          PRINT_NAMED_WARNING("PotentialObjectsForLocalizingTo.LocalizeRobot.CrossFrameLocalizeFailure",
+                              "Failed to localize to %s object %d.",
+                              ObjectTypeToString(matchedObj->GetType()),
+                              matchedObj->GetID().GetValue());
+        }
       }
     }
     

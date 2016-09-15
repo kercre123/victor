@@ -214,6 +214,7 @@ namespace Cozmo.Minigame.CubePounce {
 
       _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToCliff);
       _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToPickup);
+      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToReturnedToTreads);
       _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement);
     }
   }

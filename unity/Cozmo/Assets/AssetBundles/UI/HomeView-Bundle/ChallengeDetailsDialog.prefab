@@ -351,13 +351,19 @@ MonoBehaviour:
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
     JsonValue: 5
   - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    JsonValue: 80
+  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"#coreUpgradeDetailsDialog.cubesNeeded"'
+    JsonValue: '"#unlockable.BitsRequired.Title"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../../
     FieldName: ChallengeDetailsDialog:_CurrentCostLabel
     ReferencePath: 
-  ModifiedGlobalReferences: []
+  ModifiedGlobalReferences:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Font
+    Reference: {fileID: 12800000, guid: 6ef5f80c68ce34039a34f24769e5dc26, type: 3}
 --- !u!114 &11410946
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -450,7 +456,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '#label.xCount'
+  m_Text: '#label.emptyWithArg'
   _AllUppercase: 0
   GlowText: 0
 --- !u!114 &11433714
@@ -525,6 +531,15 @@ MonoBehaviour:
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
     JsonValue: 3
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:b
+    JsonValue: 0.721568644
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:g
+    JsonValue: 0.721568644
+  - ObjectPath: 
+    FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:r
+    JsonValue: 0.721568644
   ModifiedLocalReferences:
   - ObjectPath: ../../../../../
     FieldName: ChallengeDetailsDialog:_UnlockButton
@@ -592,8 +607,11 @@ MonoBehaviour:
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 1
   DimBackgroundPrefabOverride: {fileID: 0}
+  _OpenAudioEvent:
+    _Event: Invalid
+    _EventType: GenericEvent
   _UnlockTween_sec: 0.6
-  _AvailableColor: {r: 0.627451, g: 0.9372549, b: 0.23529412, a: 1}
+  _AvailableColor: {r: 0.5647059, g: 0.78431374, b: 0.101960786, a: 1}
   _UnavailableColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
   _TitleTextLabel: {fileID: 11438278}
   _DescriptionTextLabel: {fileID: 11410946}
@@ -1016,7 +1034,7 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -35, y: 129}
+  m_AnchoredPosition: {x: -60, y: 115}
   m_SizeDelta: {x: 900, y: 150}
   m_Pivot: {x: 1, y: 0}
 --- !u!224 &22492778

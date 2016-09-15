@@ -45,7 +45,7 @@ public class DebugMenuManager : MonoBehaviour {
   // TODO: Pragma out this code for production
   public void OnDebugMenuButtonTap() {
 #if ENABLE_DEBUG_PANEL
-    if (FakeTouchManager.Instance.IsPlayingTouches == false && FakeTouchManager.Instance.IsSoakingTouches == false) {
+    if (FakeTouchManager.Instance != null && !FakeTouchManager.Instance.IsPlayingTouches && !FakeTouchManager.Instance.IsSoakingTouches) {
       CreateDebugDialog();
     }
 #endif

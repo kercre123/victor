@@ -50,6 +50,9 @@ RobotInitialConnection::RobotInitialConnection(RobotID_t id, MessageHandler* mes
 
   auto handleFirmwareFunc = std::bind(&RobotInitialConnection::HandleFirmwareVersion, this, std::placeholders::_1);
   AddSignalHandle(messageHandler->Subscribe(_id, RobotToEngineTag::firmwareVersion, handleFirmwareFunc));
+  
+  auto handleSerialFunc = std::bind(&RobotInitialConnection::HandleSerialNumber, this, std::placeholders::_1);
+  AddSignalHandle(messageHandler->Subscribe(_id, RobotToEngineTag::robotAvailable, handleSerialFunc));
 }
 
 bool RobotInitialConnection::ShouldFilterMessage(RobotToEngineTag messageTag) const
@@ -80,6 +83,7 @@ bool RobotInitialConnection::ShouldFilterMessage(EngineToRobotTag messageTag) co
   switch (messageTag) {
       // these messages are ok on outdated firmware
     case EngineToRobotTag::otaWrite:
+    case EngineToRobotTag::shutdownRobot:
       return false;
 
     default:
@@ -137,6 +141,14 @@ void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotToEngine
 
   PRINT_NAMED_INFO("RobotInitialConnection.HandleFirmwareVersion", "robot firmware: %d%s%s (app: %d%s)", robotVersion,
     robotHasDevFirmware ? " (dev)" : "", robotIsSimulated ? " (SIM)" : "", _fwVersion, appHasDevFirmware ? " (dev)" : "");
+  
+  if (_serialNumber == 0 && !robotIsSimulated) {
+    PRINT_NAMED_ERROR("RobotInitialConnection.HandleFirmwareVersion",
+                      "Haven't gotten robot available message before firmware version");
+    OnNotified(RobotConnectionResult::ConnectionFailure, 0);
+    _validFirmware = false;
+    return;
+  }
 
   RobotConnectionResult result;
   if (robotIsSimulated || kSkipFirmwareAutoUpdate) {
@@ -161,6 +173,11 @@ void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotToEngine
   OnNotified(result, robotVersion);
 }
 
+void RobotInitialConnection::HandleSerialNumber(const AnkiEvent<RobotToEngine>& message)
+{
+  _serialNumber = message.GetData().Get_robotAvailable().robotID;
+}
+
 void RobotInitialConnection::OnNotified(RobotConnectionResult result, uint32_t robotFwVersion)
 {
   switch (result) {
@@ -175,7 +192,7 @@ void RobotInitialConnection::OnNotified(RobotConnectionResult result, uint32_t r
   _notified = true;
   ClearSignalHandles();
 
-  _externalInterface->Broadcast(MessageEngineToGame{RobotConnectionResponse{_id, result, robotFwVersion}});
+  _externalInterface->Broadcast(MessageEngineToGame{RobotConnectionResponse{_id, result, robotFwVersion, _serialNumber}});
 }
 
 }

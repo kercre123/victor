@@ -106,6 +106,12 @@ namespace Cozmo {
 
     private void OnApplicationPause(bool bPause) {
       DAS.Debug("PauseManager.OnApplicationPause", "Application pause: " + bPause);
+
+      if (bPause && DataPersistence.DataPersistenceManager.Instance != null) {
+        // always save on pause
+        DataPersistence.DataPersistenceManager.Instance.Save();
+      }
+
       HandleApplicationPause(bPause);
     }
 
@@ -249,18 +255,18 @@ namespace Cozmo {
 
       CloseLowBatteryDialog();
       if (!IsConfirmSleepDialogOpen) {
-        Anki.Cozmo.Audio.AudioEventParameter openEvt = Anki.Cozmo.Audio.AudioEventParameter.SFXEvent (Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
+        Anki.Cozmo.Audio.AudioEventParameter openEvt = Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Attention_Device);
 
-        _SleepCozmoConfirmDialog = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab, 
-                                                      preInitFunc: (AlertView alertView) => { 
+        _SleepCozmoConfirmDialog = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab,
+                                                      preInitFunc: (AlertView alertView) => {
                                                         alertView.OpenAudioEvent = openEvt;
                                                       },
-                                                      overrideBackgroundDim: null, 
+                                                      overrideBackgroundDim: null,
                                                       overrideCloseOnTouchOutside: false);
         _SleepCozmoConfirmDialog.SetCloseButtonEnabled(false);
         _SleepCozmoConfirmDialog.SetPrimaryButton(LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalButtonConfirm,
                                                   HandleConfirmSleepCozmoButtonTapped,
-                                                  Anki.Cozmo.Audio.AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Disconnect));
+                                                  Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Disconnect));
 
         if (handleOnChargerSleepCancel) {
           _SleepCozmoConfirmDialog.SetSecondaryButton(LocalizationKeys.kButtonCancel, HandleOnChargerSleepCancel);
@@ -286,7 +292,11 @@ namespace Cozmo {
       CloseLowBatteryDialog();
       CloseConfirmSleepDialog();
       if (!IsGoToSleepDialogOpen) {
-        Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
+        Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab,
+                                                          preInitFunc: (AlertView view) => {
+                                                            view.OpenAudioEvent = Anki.Cozmo.Audio.AudioEventParameter.InvalidEvent;
+                                                          },
+                                                          overrideCloseOnTouchOutside: false);
         alertView.SetCloseButtonEnabled(false);
         alertView.TitleLocKey = LocalizationKeys.kConnectivityCozmoSleepTitle;
         alertView.DescriptionLocKey = LocalizationKeys.kConnectivityCozmoSleepDesc;

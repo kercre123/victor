@@ -935,6 +935,9 @@ public class MockRobot : IRobot {
   }
 
   public void SendQueueCompoundAction(Anki.Cozmo.ExternalInterface.RobotActionUnion[] actions, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool isParallel = false) {
+    if (callback != null) {
+      QueueCallback(0.5f, callback);
+    }
   }
 
   public void EnableCubeSleep(bool enable) {

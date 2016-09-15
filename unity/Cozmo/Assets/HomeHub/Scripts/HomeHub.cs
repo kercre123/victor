@@ -178,12 +178,36 @@ namespace Cozmo.HomeHub {
         bool available = UnlockablesManager.Instance.IsUnlockableAvailable(_ChallengeStatesById[challenge].Data.UnlockId.Value);
         UnlockableInfo unlockInfo = UnlockablesManager.Instance.GetUnlockableInfo(_ChallengeStatesById[challenge].Data.UnlockId.Value);
         if (!available) {
+
+          UnlockableInfo preReqInfo = null;
+          for (int i = 0; i < unlockInfo.Prerequisites.Length; i++) {
+            // if available but we haven't unlocked it yet, then it is the upgrade that is blocking us
+            if (!UnlockablesManager.Instance.IsUnlocked(unlockInfo.Prerequisites[i].Value)) {
+              preReqInfo = UnlockablesManager.Instance.GetUnlockableInfo(unlockInfo.Prerequisites[i].Value);
+            }
+          }
+
           // Create alert view with Icon
           AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: true);
           alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
           alertView.TitleLocKey = unlockInfo.TitleKey;
-          alertView.DescriptionLocKey = LocalizationKeys.kUnlockableUnavailableDescription;
-          alertView.SetMessageArgs(new object[] { Localization.Get(unlockInfo.TitleKey) });
+
+          string preReqTypeKey = "unlockable.Unlock";
+
+          switch (preReqInfo.UnlockableType) {
+          case UnlockableType.Action:
+            preReqTypeKey = LocalizationKeys.kUnlockableUpgrade;
+            break;
+          case UnlockableType.Game:
+            preReqTypeKey = LocalizationKeys.kUnlockableApp;
+            break;
+          default:
+            preReqTypeKey = LocalizationKeys.kUnlockableUnlock;
+            break;
+          }
+
+          alertView.DescriptionLocKey = LocalizationKeys.kUnlockablePreReqNeededDescription;
+          alertView.SetMessageArgs(new object[] { Localization.Get(preReqInfo.TitleKey), Localization.Get(preReqTypeKey) });
         }
         else {
           // Throttle Multitouch bug potential

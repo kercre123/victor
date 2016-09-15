@@ -152,6 +152,22 @@
             'RELEASE=1',
           ],
       },
+      'Shipping': {
+          'cflags': ['-Os'],
+          'cflags_cc': ['-Os'],
+          'xcode_settings': {
+            'OTHER_CFLAGS': ['-Os'],
+            'OTHER_CPLUSPLUSFLAGS': ['-Os'],
+            'LIBRARY_SEARCH_PATHS': [
+              '<@(opencv_lib_search_path_release)',
+              '<(matlabRootDir)/bin/maci64'
+            ],
+           },
+          'defines': [
+            'NDEBUG=1',
+            'SHIPPING=1',
+          ],
+      },
     },
   }, # end target_defaults
 

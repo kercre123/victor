@@ -215,6 +215,13 @@ namespace Anki {
           PerformCallbackHandler(info.PlayId, info);
         }
 
+        // Testing Helpers
+        public static void PostTestTone (float freqencyParameter) {
+          Instance.PostParameter(GameParameter.ParameterType.Dev_Tone_Freq, freqencyParameter, GameObjectType.Default);
+          Instance.PostEvent(GameEvent.GenericEvent.Play__Dev_Device__Tone_Generator, GameObjectType.Default);
+        }
+
+
         // Data Helpers
         private List<GameObjectType> _GameObjects;
         private List<GameEvent.GenericEvent> _Events;

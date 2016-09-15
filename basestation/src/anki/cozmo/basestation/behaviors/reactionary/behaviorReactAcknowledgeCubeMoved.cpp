@@ -80,7 +80,8 @@ BehaviorReactAcknowledgeCubeMoved::BehaviorReactAcknowledgeCubeMoved(Robot& robo
     EngineToGameTag::RobotObservedObject,
     EngineToGameTag::ObjectMoved,
     EngineToGameTag::ObjectStoppedMoving,
-    EngineToGameTag::ObjectUpAxisChanged
+    EngineToGameTag::ObjectUpAxisChanged,
+    EngineToGameTag::RobotDelocalized
   }});
   
 }
@@ -217,6 +218,8 @@ void BehaviorReactAcknowledgeCubeMoved::AlwaysHandleInternal(const EngineToGameE
     case EngineToGameTag::ObjectUpAxisChanged:
       HandleObjectUpAxisChanged(robot, event.GetData().Get_ObjectUpAxisChanged());
       break;
+    case EngineToGameTag::RobotDelocalized:
+      HandleRobotDelocalized();
     default:
       break;
   }
@@ -250,6 +253,16 @@ void BehaviorReactAcknowledgeCubeMoved::HandleObservedObject(const Robot& robot,
   auto iter = GetReactionaryIterator(msg.objectID);
   iter->ObjectObserved(robot);
 }
+  
+void BehaviorReactAcknowledgeCubeMoved::HandleRobotDelocalized()
+{
+  for(auto object : _reactionObjects){
+    object.ResetObject();
+  }
+  
+}
+
+  
   
 BehaviorReactAcknowledgeCubeMoved::Reaction_iter BehaviorReactAcknowledgeCubeMoved::GetReactionaryIterator(ObjectID objectID)
 {

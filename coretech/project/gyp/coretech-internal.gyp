@@ -210,6 +210,7 @@
             'OTHER_CPLUSPLUSFLAGS': ['-O0'],
             'LIBRARY_SEARCH_PATHS': [
                 '<@(opencv_lib_search_path_debug)',
+                '<(face_library_lib_path)'
             ],
            },
           'defines': [
@@ -225,6 +226,7 @@
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
             'LIBRARY_SEARCH_PATHS': [
               '<@(opencv_lib_search_path_release)',
+              '<(face_library_lib_path)'
             ],
            },
           'defines': [
@@ -240,11 +242,28 @@
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
             'LIBRARY_SEARCH_PATHS': [
               '<@(opencv_lib_search_path_release)',
+              '<(face_library_lib_path)'
             ],
            },
           'defines': [
             'NDEBUG=1',
             'RELEASE=1',
+          ],
+      },
+      'Shipping': {
+          'cflags': ['-Os'],
+          'cflags_cc': ['-Os'],
+          'xcode_settings': {
+            'OTHER_CFLAGS': ['-Os'],
+            'OTHER_CPLUSPLUSFLAGS': ['-Os'],
+            'LIBRARY_SEARCH_PATHS': [
+              '<@(opencv_lib_search_path_release)',
+              '<(face_library_lib_path)'
+            ],
+           },
+          'defines': [
+            'NDEBUG=1',
+            'SHIPPING=1',
           ],
       },
     },

@@ -42,6 +42,8 @@ namespace
 // static const char* kSelfConfigKey = "evaluator";
 static const char* kGoalsConfigKey = "goals";
 
+#if REMOTE_CONSOLE_ENABLED
+
 AIGoalEvaluator* defaultGoalEvaluator = nullptr;
 void AIGoalEvaluatorSetDebugGoal(const std::string& name)
 {
@@ -51,6 +53,7 @@ void AIGoalEvaluatorSetDebugGoal(const std::string& name)
     PRINT_NAMED_WARNING("AIGoalEvaluatorCycleGoal", "No default goal evaluator. Can't cycle goals.");
   }
 }
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIGoalSetFPNothingToDo( ConsoleFunctionContextRef context ) {
   AIGoalEvaluatorSetDebugGoal("FP_NothingToDo");
@@ -82,8 +85,10 @@ void AIGoalClearSetting( ConsoleFunctionContextRef context ) {
 }
 CONSOLE_FUNC( AIGoalClearSetting, "AIGoalEvaluator" );
 
-};
+#endif // REMOTE_CONSOLE_ENABLED
 
+};
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIGoalEvaluator::AIGoalEvaluator(Robot& robot, const Json::Value& config)
 : IBehaviorChooser(robot, config)

@@ -27,6 +27,7 @@ namespace Cozmo.UI {
     [SerializeField]
     private float _ShakeDuration = 1.0f;
     // Rotation Shake Settings
+
     [SerializeField]
     private float _ShakeRotationMinAngle = 15.0f;
     [SerializeField]
@@ -69,6 +70,9 @@ namespace Cozmo.UI {
     // How long the Reward animation takes to tween the rewards to their initial positions
     [SerializeField]
     private float _RewardExplosionDuration = 0.5f;
+    // Variance for each Reward exploding from box to stagger them out more.
+    [SerializeField]
+    private float _RewardExplosionVariance = 0.25f;
     // How long the Rewards remain visible before leaving
     [SerializeField]
     private float _RewardExplosionStayDuration = 1.5f;
@@ -79,6 +83,20 @@ namespace Cozmo.UI {
     // less uniform movements
     [SerializeField]
     private float _RewardExplosionFinalVariance = 1.0f;
+
+    [SerializeField]
+    private float _RewardSpreadRadiusMax = 600.0f;
+    [SerializeField]
+    private float _RewardSpreadRadiusMin = 5.0f;
+    // If a reward would be placed within spread proximity of an existing reward, instead attempt to place it in a different random
+    // position to make the loot view look nicer. This dist is based on the last placed reward's sprite.
+    private float _RewardSpreadMinDistance;
+    // To prevent potential infinite loops or extremely inefficient sequences with large numbers of rewards, cap out spread attempts
+    private const int kMaxSpreadAttempts = 6;
+    // Keep track of positions we have already targeted for reward placement to check for spread
+    private List<Vector3> _TargetedPositions = new List<Vector3>();
+
+    #endregion
 
     #region Particle Update Settings
 
@@ -101,8 +119,6 @@ namespace Cozmo.UI {
     private float _LootMidThreshold = 0.3f;
     [SerializeField, Tooltip("Charge % where TronBurst and Text go to almost tier")]
     private float _LootAlmostThreshold = 0.6f;
-
-    #endregion
 
     #endregion
 
@@ -134,8 +150,6 @@ namespace Cozmo.UI {
     private string _LootMidKey;
     [SerializeField]
     private string _LootAlmostKey;
-    [SerializeField]
-    private List<Transform> _MultRewardsTransforms;
     private List<Transform> _ActiveBitsTransforms;
     private List<Transform> _ActiveSparkTransforms;
     [SerializeField]
@@ -189,6 +203,7 @@ namespace Cozmo.UI {
     private Tweener _ShakeRotationTweener;
     private Tweener _ShakePositionTweener;
     private Sequence _BoxSequence;
+    private Sequence _RewardSequence;
 
     [SerializeField]
     private CanvasGroup _AlphaController;
@@ -214,7 +229,7 @@ namespace Cozmo.UI {
     private void Awake() {
       _OnboardingRewardStart.gameObject.SetActive(false);
       _ContinueButtonInstance.gameObject.SetActive(false);
-      PauseManager.Instance.OnPauseDialogOpen += CloseViewImmediately;
+      PauseManager.Instance.OnPauseDialogOpen += CloseView;
       _OpenBox.gameObject.SetActive(false);
       Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_EmotionChipWindowOpenSoundEvent);
       _TronPool = new SimpleObjectPool<TronLight>(CreateTronLight, ResetTronLight, 0);
@@ -291,6 +306,7 @@ namespace Cozmo.UI {
           currShake = Mathf.Lerp(_ShakePositionMin, _ShakePositionMax, _currentBoxCharge);
           _ShakePositionTweener = _LootBox.DOShakePosition(_ShakeDuration, currShake, _ShakePositionVibrato, _ShakePositionRandomness);
           Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_TapSoundEvent);
+
         }
       }
     }
@@ -367,10 +383,50 @@ namespace Cozmo.UI {
       }
     }
 
+    // Attempt to get a Spread Position that is appropriately spaced away from others
+    private Vector3 GetSpreadPos(Vector3 origPos) {
+      Vector3 newPos = new Vector3();
+      int coinFlipX = 1;
+      int coinFlipY = 1;
+      int attempts = 0;
+      while (attempts <= kMaxSpreadAttempts) {
+        if (UnityEngine.Random.Range(0.0f, 1.0f) > 0.5f) {
+          coinFlipX = -1;
+        }
+        if (UnityEngine.Random.Range(0.0f, 1.0f) > 0.5f) {
+          coinFlipY = -1;
+        }
+        newPos = new Vector3(origPos.x + (UnityEngine.Random.Range(_RewardSpreadRadiusMin, _RewardSpreadRadiusMax) * coinFlipX),
+                             origPos.y + (UnityEngine.Random.Range(_RewardSpreadRadiusMin, _RewardSpreadRadiusMax) * coinFlipY), 0.0f);
+        if (IsValidSpreadPos(newPos) || attempts == kMaxSpreadAttempts) {
+          // Only add a position to the list of targeted positions if it is properly placed,
+          // Otherwise it should already be covered by existing targeted positions and will
+          // be a waste to check.
+          _TargetedPositions.Add(newPos);
+          return newPos;
+        }
+        else {
+          attempts++;
+        }
+      }
+      return newPos;
+    }
+
+    // Check through all the existing positions, if any of them are closer to the checkPos
+    // than our desired minimum spread distance, then return false. Otherwise return true.
+    private bool IsValidSpreadPos(Vector3 checkPos) {
+      for (int i = 0; i < _TargetedPositions.Count; i++) {
+        float distSq = (_TargetedPositions[i] - checkPos).sqrMagnitude;
+        if (distSq < _RewardSpreadMinDistance * _RewardSpreadMinDistance) {
+          return false;
+        }
+      }
+      return true;
+    }
+
     private Transform SpawnReward(string rewardID) {
       Transform newReward = UIManager.CreateUIElement(_RewardParticlePrefab.gameObject, _RewardStartPosition).transform;
       Sprite rewardIcon = null;
-      // TODO: Initialize rewards with appropriate values
       ItemData iData = ItemDataConfig.GetData(rewardID);
       if (iData != null) {
         rewardIcon = iData.Icon;
@@ -385,39 +441,30 @@ namespace Cozmo.UI {
       else {
         _ActiveBitsTransforms.Add(newReward);
       }
+      _RewardSpreadMinDistance = Mathf.Max(rewardIcon.rect.width, rewardIcon.rect.height);
       return newReward;
     }
 
     private void SpawnRewards() {
-      List<Transform> rewardTargets = new List<Transform>();
+      Transform rewardSource = _RewardStartPosition;
       int rewardCount = 0;
-      rewardTargets.AddRange(_MultRewardsTransforms);
       Sequence rewardSequence = DOTween.Sequence();
       foreach (string itemID in LootBoxRewards.Keys) {
         rewardCount += LootBoxRewards[itemID];
-        if (rewardCount == 1) {
+        for (int i = 0; i < LootBoxRewards[itemID]; i++) {
           Transform newReward = SpawnReward(itemID);
-          rewardSequence.Join(newReward.DOScale(0.0f, _RewardExplosionDuration).From().SetEase(Ease.OutBack));
-        }
-        else {
-          for (int i = 0; i < LootBoxRewards[itemID]; i++) {
-            if (rewardTargets.Count <= 0) {
-              break;
-            }
-            Transform newReward = SpawnReward(itemID);
-            Transform toRemove = rewardTargets[UnityEngine.Random.Range(0, rewardTargets.Count)];
-            Vector3 rewardTarget = toRemove.position;
-            rewardTargets.Remove(toRemove);
-            rewardSequence.Join(newReward.DOScale(0.0f, _RewardExplosionDuration).From().SetEase(Ease.OutBack));
-            rewardSequence.Join(newReward.DOMove(rewardTarget, _RewardExplosionDuration).SetEase(Ease.OutBack));
-          }
+          Vector3 rewardTarget = GetSpreadPos(rewardSource.position);
+          float stagger = UnityEngine.Random.Range(0.0f, _RewardExplosionVariance);
+          rewardSequence.Insert(stagger, newReward.DOScale(0.0f, _RewardExplosionDuration).From().SetEase(Ease.OutBack));
+          rewardSequence.Join(newReward.DOLocalMove(rewardTarget, _RewardExplosionDuration).SetEase(Ease.OutBack));
         }
       }
 
-      rewardSequence.InsertCallback(_RewardExplosionDuration + _RewardExplosionStayDuration, () => {
+      rewardSequence.InsertCallback(_RewardExplosionDuration + _RewardExplosionVariance + _RewardExplosionStayDuration, () => {
         CloseView();
       });
       rewardSequence.Play();
+      _RewardSequence = rewardSequence;
 
       ContextManager.Instance.CozmoHoldFreeplayEnd();
     }
@@ -489,7 +536,10 @@ namespace Cozmo.UI {
     }
 
     protected override void CleanUp() {
-      PauseManager.Instance.OnPauseDialogOpen -= CloseViewImmediately;
+      if (_RewardSequence != null) {
+        _RewardSequence.Kill();
+      }
+      PauseManager.Instance.OnPauseDialogOpen -= CloseView;
       ChestRewardManager.Instance.ApplyChestRewards();
       RewardedActionManager.Instance.SendPendingRewardsToInventory();
       _LootButton.onClick.RemoveAllListeners();
@@ -503,10 +553,13 @@ namespace Cozmo.UI {
 
     private void StopTweens() {
       if (_ShakePositionTweener != null) {
-        _ShakePositionTweener.Complete();
+        _ShakePositionTweener.Kill();
       }
       if (_ShakeRotationTweener != null) {
-        _ShakeRotationTweener.Complete();
+        _ShakeRotationTweener.Kill();
+      }
+      if (_BoxSequence != null) {
+        _BoxSequence.Kill();
       }
     }
 
@@ -515,7 +568,6 @@ namespace Cozmo.UI {
         _AlphaController.alpha = 0;
         openAnimation.Join(_AlphaController.DOFade(1, 0.25f).SetEase(Ease.OutQuad));
       }
-
       openAnimation.OnComplete(() => {
         _BannerInstance.PlayBannerAnimation(Localization.Get(LocalizationKeys.kLootAnnounce),
       _BoxSequence.TogglePause);
@@ -552,7 +604,6 @@ namespace Cozmo.UI {
       if (_AlphaController != null) {
         closeAnimation.Join(_AlphaController.DOFade(0, 0.25f));
       }
-
       AnimateRewardsToTarget(closeAnimation);
     }
   }

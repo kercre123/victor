@@ -533,6 +533,10 @@
       "AnimName": "ag_launch_endDriving"
     },
     {
+      "CladEvent": "OnboardingEyesOn",
+      "AnimName": "ag_launch_eyeson"
+    },
+    {
       "CladEvent": "OnboardingIdle",
       "AnimName": "ag_launch_idle_01"
     },
@@ -1015,10 +1019,6 @@
     {
       "CladEvent": "Surprise",
       "AnimName": "ag_surprise"
-    },
-    {
-      "CladEvent": "TestFacialPng",
-      "AnimName": "ag_test_facial_png"
     },
     {
       "CladEvent": "TurtleRoll",

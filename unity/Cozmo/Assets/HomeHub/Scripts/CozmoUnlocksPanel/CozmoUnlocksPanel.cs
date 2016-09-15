@@ -181,7 +181,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
       UnlockableInfo preReqInfo = null;
       for (int i = 0; i < unlockInfo.Prerequisites.Length; i++) {
         // if available but we haven't unlocked it yet, then it is the upgrade that is blocking us
-        if (UnlockablesManager.Instance.IsUnlockableAvailable(unlockInfo.Prerequisites[i].Value) && !UnlockablesManager.Instance.IsUnlocked(unlockInfo.Prerequisites[i].Value)) {
+        if (!UnlockablesManager.Instance.IsUnlocked(unlockInfo.Prerequisites[i].Value)) {
           preReqInfo = UnlockablesManager.Instance.GetUnlockableInfo(unlockInfo.Prerequisites[i].Value);
         }
       }
@@ -189,9 +189,6 @@ public class CozmoUnlocksPanel : MonoBehaviour {
       AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: true);
       alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
       alertView.TitleLocKey = unlockInfo.TitleKey;
-      alertView.DescriptionLocKey = LocalizationKeys.kUnlockableUnavailableDescription;
-      alertView.SetMessageArgs(new object[] { Localization.Get(unlockInfo.TitleKey) });
-
 
       if (unlockInfo.NeverAvailable) {
         alertView.DescriptionLocKey = LocalizationKeys.kUnlockableComingSoonDescription;
@@ -201,8 +198,23 @@ public class CozmoUnlocksPanel : MonoBehaviour {
         alertView.SetMessageArgs(new object[] { Localization.Get(unlockInfo.TitleKey) });
       }
       else {
+
+        string preReqTypeKey = "unlockable.Unlock";
+
+        switch (preReqInfo.UnlockableType) {
+        case UnlockableType.Action:
+          preReqTypeKey = LocalizationKeys.kUnlockableUpgrade;
+          break;
+        case UnlockableType.Game:
+          preReqTypeKey = LocalizationKeys.kUnlockableApp;
+          break;
+        default:
+          preReqTypeKey = LocalizationKeys.kUnlockableUnlock;
+          break;
+        }
+
         alertView.DescriptionLocKey = LocalizationKeys.kUnlockablePreReqNeededDescription;
-        alertView.SetMessageArgs(new object[] { Localization.Get(preReqInfo.TitleKey) });
+        alertView.SetMessageArgs(new object[] { Localization.Get(preReqInfo.TitleKey), Localization.Get(preReqTypeKey) });
       }
 
       _CoreUpgradeDetailsViewInstance = alertView;

@@ -11,6 +11,7 @@ GameObject:
   - 222: {fileID: 22280114}
   - 225: {fileID: 22557872}
   - 114: {fileID: 11431490}
+  - 114: {fileID: 11490802}
   m_Layer: 5
   m_Name: FaceEnrollmentEnterNameSlide
   m_TagString: Untagged
@@ -114,7 +115,7 @@ MonoBehaviour:
     JsonValue: '"#button.done"'
   ModifiedLocalReferences:
   - ObjectPath: ../
-    FieldName: FaceEnrollmentEnterNameSlide:_SubmitName
+    FieldName: EnterNameSlide:_SubmitName
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11429310
@@ -137,7 +138,7 @@ MonoBehaviour:
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
-    m_Font: {fileID: 12800000, guid: 6ef5f80c68ce34039a34f24769e5dc26, type: 3}
+    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
     m_FontSize: 100
     m_FontStyle: 0
     m_BestFit: 0
@@ -160,7 +161,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 133816}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cea4e3233ed854fceb7ece07c2742816, type: 3}
+  m_Script: {fileID: 11500000, guid: 48a1baae596b34a829922fd2c173d47b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _SubmitName: {fileID: 0}
@@ -186,7 +187,7 @@ MonoBehaviour:
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
-    m_Font: {fileID: 12800000, guid: 6ef5f80c68ce34039a34f24769e5dc26, type: 3}
+    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
     m_FontSize: 100
     m_FontStyle: 0
     m_BestFit: 0
@@ -199,6 +200,18 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: 
+--- !u!114 &11490802
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 133816}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d8ec3cad6b254b95bb798f561c12dd0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _NameInputField: {fileID: 11493992}
 --- !u!114 &11493992
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -372,8 +385,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -1, y: -12}
-  m_SizeDelta: {x: -98, y: -66}
+  m_AnchoredPosition: {x: 0, y: -0.5}
+  m_SizeDelta: {x: -50, y: -13}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22498164
 RectTransform:
@@ -410,8 +423,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -1, y: -12}
-  m_SizeDelta: {x: -98, y: -66}
+  m_AnchoredPosition: {x: 0, y: -0.5}
+  m_SizeDelta: {x: -20, y: -13}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &22557872
 CanvasGroup:

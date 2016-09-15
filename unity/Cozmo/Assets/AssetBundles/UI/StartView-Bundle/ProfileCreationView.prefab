@@ -343,6 +343,7 @@ GameObject:
   - 224: {fileID: 22464010}
   - 222: {fileID: 22291786}
   - 114: {fileID: 11497974}
+  - 114: {fileID: 11464948}
   m_Layer: 5
   m_Name: ProfileCreationView
   m_TagString: Untagged
@@ -1538,6 +1539,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ItemText: {fileID: 11481994}
+--- !u!114 &11464948
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 188354}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d8ec3cad6b254b95bb798f561c12dd0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _NameInputField: {fileID: 11418394}
 --- !u!114 &11467892
 MonoBehaviour:
   m_ObjectHideFlags: 1

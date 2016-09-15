@@ -41,6 +41,8 @@
 	<string>0.5.0</string>
 	<key>CFBundleVersion</key>
 	<string>0.1</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.entertainment</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -48,6 +50,8 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
 	<key>UIApplicationExitsOnSuspend</key>
@@ -56,6 +60,7 @@
 	<array>
 		<string>fetch</string>
 		<string>remote-notification</string>
+		<string>bluetooth-central</string>
 	</array>
 	<key>UILaunchImages</key>
 	<array>
@@ -138,14 +143,22 @@
 	<array>
 		<string>armv7</string>
 		<string>wifi</string>
+		<string>accelerometer</string>
+		<string>bluetooth-le</string>
 	</array>
 	<key>UIRequiresPersistentWiFi</key>
+	<true/>
+	<key>UIRequiresFullScreen</key>
 	<true/>
 	<key>UIStatusBarHidden</key>
 	<true/>
 	<key>UIStatusBarStyle</key>
 	<string>UIStatusBarStyleDefault</string>
 	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>

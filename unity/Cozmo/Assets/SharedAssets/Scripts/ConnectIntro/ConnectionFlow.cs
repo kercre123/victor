@@ -119,7 +119,6 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   private void ReturnToTitle() {
-    IntroManager.Instance.ForceBoot();
     if (_ConnectionFlowBackgroundInstance != null) {
       _ConnectionFlowBackgroundInstance.ViewClosed += QuitConnectionFlow;
       UIManager.CloseView(_ConnectionFlowBackgroundInstance);
@@ -486,7 +485,7 @@ public class ConnectionFlow : MonoBehaviour {
       return;
     }
     _scanLoopPlaying = play;
-    Anki.Cozmo.Audio.GameEvent.Sfx sfxEvent = _scanLoopPlaying ? Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Scan_Loop : Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Scan_Loop_Stop;
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(sfxEvent);
+    Anki.Cozmo.Audio.GameEvent.Ui evt = _scanLoopPlaying ? Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Connect_Scan_Loop : Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Connect_Scan_Loop_Stop;
+    Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(evt);
   }
 }

@@ -16,6 +16,7 @@ enum uint_32 Dev_Device
 {
   External_Source = 3462246304,
   Invalid = 0,  // Use this to check for Invalid events
+  Tone_Generator = 2415524415,
 }
 
 enum uint_32 Dev_Robot
@@ -50,6 +51,7 @@ enum uint_32 GenericEvent
   Play__Coz_App__Enter_Background = 2017190380,
   Play__Coz_App__Enter_Foreground = 1225777195,
   Play__Dev_Device__External_Source = 3462246304,
+  Play__Dev_Device__Tone_Generator = 2415524415,
   Play__Dev_Robot__External_Source = 2539447680,
   Play__Dev_Robot__Freq_Sweep = 2028515806,
   Play__Dev_Robot__Pink_1Sec = 3980968688,

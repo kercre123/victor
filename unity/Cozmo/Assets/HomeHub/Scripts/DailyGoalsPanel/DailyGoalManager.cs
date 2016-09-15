@@ -245,6 +245,7 @@ public class DailyGoalManager : MonoBehaviour {
   }
 
   void OnDestroy() {
+    ResolveDailyGoalsEarned();
     GameEventManager.Instance.OnGameEvent -= HandleGameEvent;
   }
 
@@ -344,8 +345,17 @@ public class DailyGoalManager : MonoBehaviour {
 
 
   public void ResolveDailyGoalsEarned() {
-    // TODO: Any other logic necessary to resolve a set of pending Daily Goals being "shown" to the player
+    if (PendingDailyGoals == null) {
+      return;
+    }
+    for (int i = 0; i < PendingDailyGoals.Count; i++) {
+      string rewardType = PendingDailyGoals[i].RewardType;
+      int pointsRewarded = PendingDailyGoals[i].PointsRewarded;
+      DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount(rewardType, pointsRewarded);
+    }
+    DataPersistenceManager.Instance.Save();
     PendingDailyGoals.Clear();
+
   }
 
   private void SendDasEventsForGoalGeneration(List<DailyGoal> goals) {

@@ -16,7 +16,7 @@
     "behavior_ResetBodyFacingOnStart": true,
     "behavior_DistanceFromRecentLocationMin_mm": 300.0,
     "behavior_ShouldLowerLift": true,
-    "behavior_RecentLocationsMax": 5,
+    "behavior_RecentLocationsMax": 0,
     "behavior_AngleOfFocus_deg": 0.0,
     
     "sx_BodyTurnSpeed_degPerSec": 120.0,

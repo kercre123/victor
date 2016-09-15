@@ -126,7 +126,10 @@ MonoBehaviour:
   - ObjectPath: 
     FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:a
     JsonValue: 0.549019635
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../
+    FieldName: Cozmo.UI.BaseView:_OptionalCloseDialogButton
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11452052
 MonoBehaviour:

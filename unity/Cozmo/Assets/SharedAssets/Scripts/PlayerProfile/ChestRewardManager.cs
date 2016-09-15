@@ -38,20 +38,16 @@ public class ChestRewardManager {
   }
 
   public int GetCurrentRequirementPoints() {
-    return DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.GetItemAmount(GetChestData().RequirementLadder.ItemId);
+    return DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.GetItemAmount(GetChestData().Requirement.ItemId);
   }
 
   public int GetNextRequirementPoints() {
-    return GetCurrentLadderValue(GetChestData().RequirementLadder.LadderLevels);
-  }
-
-  public int GetPreviousRequirementPoints() {
-    return GetPreviousLadderValue(GetChestData().RequirementLadder.LadderLevels);
+    return GetChestData().Requirement.TargetPoints;
   }
 
   public string ChestRequirementItemID {
     get {
-      return GetChestData().RequirementLadder.ItemId;
+      return GetChestData().Requirement.ItemId;
     }
   }
 
@@ -61,71 +57,24 @@ public class ChestRewardManager {
     return ChestData.Instance;
   }
 
-  /// <summary>
-  /// Gets the points needed to earn the current chest.
-  /// </summary>
-  /// <returns>The current ladder value.</returns>
-  /// <param name="ladderLevels">Ladder levels.</param>
-  private int GetCurrentLadderValue(LadderLevel[] ladderLevels) {
-    int ladderLevel = 0;
-    if (DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault() != null) {
-      ladderLevel = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault().ChestsGained;
-    }
-    int value = ladderLevels.Last().MinValue; // default to max value
-    for (int i = 0; i < ladderLevels.Length - 1; ++i) {
-      if (ladderLevel >= ladderLevels[i].Level && ladderLevel < ladderLevels[i + 1].Level) {
-        value = Random.Range(ladderLevels[i].MinValue, ladderLevels[i].MaxValue);
-        break;
-      }
-    }
-    if (value == 0) {
-      DAS.Error("ChestRewardManager.GetCurrentLadderValue", "LadderValue should never be 0");
-      value = 1;
-    }
-    return value;
-  }
-
-  /// <summary>
-  /// Gets the points needed to earn the previous chest.
-  /// </summary>
-  /// <returns>The current ladder value.</returns>
-  /// <param name="ladderLevels">Ladder levels.</param>
-  private int GetPreviousLadderValue(LadderLevel[] ladderLevels) {
-    int ladderLevel = 0;
-    if (DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault() != null) {
-      ladderLevel = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault().ChestsGained;
-    }
-    int value = ladderLevels.First().MinValue; // default to first value
-    for (int i = 0; i < ladderLevels.Length; ++i) {
-      if ((ladderLevel - 1) == ladderLevels[i].Level) {
-        value = ladderLevels[i].MinValue;
-        break;
-      }
-    }
-    if (value == 0) {
-      DAS.Error("ChestRewardManager.GetPreviousLadderValue", "LadderValue should never be 0");
-      value = 1;
-    }
-    return value;
-  }
-
-  // checks if we need to populate the chest with rewards
+  // checks if we need to populate the chest with rewards, if we have more of the requirement item id in inventory
+  // than the target points, then treat that as a chest earned. If we are earning multiple chests at once, collapse
+  // all their rewards into one uberchest to avoid cludgy user feedback
   public void TryPopulateChestRewards() {
-    string itemId = GetChestData().RequirementLadder.ItemId;
+    string itemId = GetChestData().Requirement.ItemId;
     int itemCount = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.GetItemAmount(itemId);
 
-    LadderLevel[] requirementLadderLevels = GetChestData().RequirementLadder.LadderLevels;
-    int currentLadderMax = GetCurrentLadderValue(requirementLadderLevels);
-
-    while (itemCount >= currentLadderMax) {
+    // If we've earned multiple chests at once through getting an absurd number of points
+    // collapse all rewarded chests and adjust points accordingly.
+    while (itemCount >= GetChestData().Requirement.TargetPoints) {
       int rewardAmount = 0;
-      foreach (Ladder ladder in GetChestData().RewardLadders) {
-        rewardAmount = GetCurrentLadderValue(ladder.LadderLevels);
-        if (PendingChestRewards.ContainsKey(ladder.ItemId)) {
-          PendingChestRewards[ladder.ItemId] += rewardAmount;
+      foreach (ChestRewardData chest in GetChestData().RewardList) {
+        rewardAmount = UnityEngine.Random.Range(chest.MinAmount, chest.MaxAmount);
+        if (PendingChestRewards.ContainsKey(chest.ItemId)) {
+          PendingChestRewards[chest.ItemId] += rewardAmount;
         }
         else {
-          PendingChestRewards.Add(ladder.ItemId, rewardAmount);
+          PendingChestRewards.Add(chest.ItemId, rewardAmount);
         }
       }
 
@@ -135,25 +84,23 @@ public class ChestRewardManager {
       }
 
       if (_PendingDeductions.ContainsKey(itemId)) {
-        _PendingDeductions[itemId] += currentLadderMax;
+        _PendingDeductions[itemId] += GetChestData().Requirement.TargetPoints;
       }
       else {
-        _PendingDeductions.Add(itemId, currentLadderMax);
+        _PendingDeductions.Add(itemId, GetChestData().Requirement.TargetPoints);
       }
 
-      itemCount -= currentLadderMax;
-
-      currentLadderMax = GetCurrentLadderValue(requirementLadderLevels);
+      itemCount -= GetChestData().Requirement.TargetPoints;
     }
 
     if (ChestRequirementsGained != null) {
-      ChestRequirementsGained(itemCount, currentLadderMax);
+      ChestRequirementsGained(itemCount, GetChestData().Requirement.TargetPoints);
     }
 
   }
 
   private void HandleItemValueChanged(string itemId, int delta, int newCount) {
-    if (itemId == GetChestData().RequirementLadder.ItemId) {
+    if (itemId == GetChestData().Requirement.ItemId) {
       // see if we need to populate the chest every time we get value updates from the
       // requirement ladder item type.
       TryPopulateChestRewards();

@@ -1333,22 +1333,6 @@ void RobotEventHandler::HandleMessage(const CameraCalibration& calib)
 }
 
 template<>
-void RobotEventHandler::HandleMessage(const ExternalInterface::SetHeadlight& msg)
-{
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
-  
-  // We need a robot
-  if (nullptr == robot)
-  {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleSetHeadlight.InvalidRobotID", "Failed to find robot.");
-  }
-  else
-  {
-    robot->SetHeadlight(msg.enable);
-  }
-}
-
-template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::AnimationAborted& msg)
 {
   Robot* robot = _context->GetRobotManager()->GetFirstRobot();

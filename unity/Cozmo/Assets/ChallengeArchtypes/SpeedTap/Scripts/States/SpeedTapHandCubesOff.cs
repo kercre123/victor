@@ -41,8 +41,10 @@ namespace SpeedTap {
       base.Exit();
 
       // Cancel animation callbacks if any
-      _SpeedTapGame.CurrentRobot.CancelCallback(HandlePeekAnimationEnd);
-      _SpeedTapGame.CurrentRobot.CancelCallback(HandleAdjustEnd);
+      if (_SpeedTapGame.CurrentRobot != null) {
+        _SpeedTapGame.CurrentRobot.CancelCallback(HandlePeekAnimationEnd);
+        _SpeedTapGame.CurrentRobot.CancelCallback(HandleAdjustEnd);
+      }
     }
 
     private void StartPeekAnimationCycle() {

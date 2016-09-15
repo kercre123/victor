@@ -159,25 +159,7 @@
       }],
     ],
   },
-  
-  'configurations': {
-    'Debug': {
-      'xcode_settings': {
-        'LIBRARY_SEARCH_PATHS': ['<(face_library_lib_path)'],
-      },
-    },
-    'Profile': {
-      'xcode_settings': {
-        'LIBRARY_SEARCH_PATHS': ['<(face_library_lib_path)'],
-      },
-    },
-    'Release': {
-      'xcode_settings': {
-        'LIBRARY_SEARCH_PATHS': ['<(face_library_lib_path)'],
-      },
-    },
-  }, # configurations
-  
+
 } # target_defaults
 
 }

@@ -148,6 +148,7 @@ enum int_32 AnimationTrigger
   OnboardingDriveEnd,
   OnboardingDriveLoop,
   OnboardingDriveStart,
+  OnboardingEyesOn,
   OnboardingHelloPlayer,
   OnboardingHelloWorld,
   OnboardingIdle,
@@ -270,7 +271,6 @@ enum int_32 AnimationTrigger
   StartSleeping,
   SuccessfulWheelie,
   Surprise,
-  TestFacialPng,
   TurtleRoll,
   UnitTestAnim,
 

@@ -54,7 +54,7 @@ namespace Onboarding {
       OnboardingManager.Instance.GoToNextStage();
     }
 
-    private void HandleLoopedAnimationComplete(bool success = true) {
+    protected virtual void HandleLoopedAnimationComplete(bool success = true) {
       RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnboardingPreBirth,
                                                                             HandleLoopedAnimationComplete);
     }

@@ -59,9 +59,12 @@ namespace SpeedTap {
       base.Exit();
       _SpeedTapGame.SharedMinigameView.HideMiddleBackground();
       LightCube.TappedAction -= HandleTap;
-      _CurrentRobot.DriveWheels(0.0f, 0.0f);
-      _SpeedTapGame.CozmoBlock.SetLEDs(Color.black);
-
+      if (_CurrentRobot != null) {
+        _CurrentRobot.DriveWheels(0.0f, 0.0f);
+      }
+      if (_SpeedTapGame.CozmoBlock != null) {
+        _SpeedTapGame.CozmoBlock.SetLEDs(Color.black);
+      }
       if (_SpeedTapGame.PlayerBlock != null) {
         _SpeedTapGame.PlayerBlock.SetLEDs(Color.black);
       }

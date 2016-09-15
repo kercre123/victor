@@ -27,11 +27,11 @@ static constexpr float kEmotionValueMin     = -1.0f;
 static constexpr float kEmotionValueDefault =  0.0f;
 static constexpr float kEmotionValueMax     =  1.0f;
   
-
+#if REMOTE_CONSOLE_ENABLED
 static const char* kEmotionSectionName = "Mood.Emotion";
+#endif // REMOTE_CONSOLE_ENABLED
 CONSOLE_VAR(bool,     kEnableEmotionDecay,       kEmotionSectionName, true);
 CONSOLE_VAR(uint32_t, kMaxEmotionHistorySamples, kEmotionSectionName,  128);
-  
 
 Emotion::Emotion()
   : _history(kMaxEmotionHistorySamples)

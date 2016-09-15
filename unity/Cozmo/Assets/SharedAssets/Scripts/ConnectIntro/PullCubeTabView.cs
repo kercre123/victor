@@ -26,6 +26,13 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
   [SerializeField]
   private GameObject[] _DoneMarks;
 
+  [SerializeField]
+  private Cozmo.UI.BaseView _CubeHelpViewPrefab;
+  private Cozmo.UI.BaseView _CubeHelpViewInstance;
+
+  [SerializeField]
+  private Cozmo.UI.CozmoButton _CubeHelpButton;
+
   private List<Anki.Cozmo.ObjectType> _ObjectConnectedList = new List<Anki.Cozmo.ObjectType>();
   // staging area for newly connected objects so we can add a delay / animation before putting it into
   // the _ObjectConnectedList
@@ -62,6 +69,10 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
 
     // Enable the automatic block pool
     RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(true, _kMaxDiscoveryTime);
+
+    _CubeHelpButton.Initialize(() => {
+      _CubeHelpViewInstance = UIManager.OpenView(_CubeHelpViewPrefab);
+    }, "cube_get_help_button", this.DASEventViewName);
   }
 
   protected override void Update() {
@@ -116,7 +127,7 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
                                                             kConnectedOnPeriod_ms, kConnectedOffPeriod_ms,
                                                             kConnectedOnTransition_ms, kConnectedOffTransition_ms,
                                                             kConnectedOffset);
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect);
+          Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Connect);
         }
         _NewlyConnectedObject = Anki.Cozmo.ObjectType.Invalid;
       }
@@ -131,6 +142,10 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
   }
 
   protected override void CleanUp() {
+    if (_CubeHelpViewInstance != null && !_CubeHelpViewInstance.ClosingAnimationPlaying) {
+      UIManager.CloseView(_CubeHelpViewInstance);
+    }
+
     // Turn off cube lights
     IRobot robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {

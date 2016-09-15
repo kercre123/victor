@@ -203,11 +203,6 @@ namespace Cozmo.HomeHub {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.EngineErrorCodeMessage>(HandleEngineErrorCode);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
 
-      // automatically apply chest rewards that are queued up incase the app is exitied during the middle
-      // of a reward loot view flow.
-      ChestRewardManager.Instance.TryPopulateChestRewards();
-      ChestRewardManager.Instance.ApplyChestRewards();
-
       _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleGreenPointsBarUpdateComplete;
       DailyGoalManager.Instance.OnRefreshDailyGoals += UpdatePlayTabText;
       GameEventManager.Instance.OnGameEvent += HandleDailyGoalCompleted;
@@ -221,10 +216,10 @@ namespace Cozmo.HomeHub {
       // If in SDK Mode, immediately open Settings and SDK view instead of PlayTab,
       // otherwise default to opening PlayTab
       if (DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) {
-        HandleSettingsButton();
+        SwitchToTab(HomeTab.Settings);
       }
       else {
-        HandlePlayTabButton();
+        SwitchToTab(HomeTab.Play);
       }
       UpdatePuzzlePieceCount();
 
@@ -291,23 +286,38 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleCozmoTabButton() {
+      // Do not allow changing tabs while receiving chests
+      if (HomeViewCurrentlyOccupied) {
+        return;
+      }
       SwitchToTab(HomeTab.Cozmo);
     }
 
     private void HandlePlayTabButton() {
+      // Do not allow changing tabs while receiving chests
+      if (HomeViewCurrentlyOccupied) {
+        return;
+      }
       SwitchToTab(HomeTab.Play);
     }
 
     private void HandleProfileTabButton() {
+      // Do not allow changing tabs while receiving chests
+      if (HomeViewCurrentlyOccupied) {
+        return;
+      }
       SwitchToTab(HomeTab.Profile);
     }
 
     private void HandleHelpButton() {
+      if (HomeViewCurrentlyOccupied) {
+        return;
+      }
       _HelpViewInstance = UIManager.OpenView(_HelpViewPrefab);
     }
 
     private void HandleSettingsButton() {
-      // Do not allow changing tabs while receiving chests
+      // Don't allow settings button to be clicked when the view is doing other things
       if (HomeViewCurrentlyOccupied) {
         return;
       }
@@ -320,10 +330,6 @@ namespace Cozmo.HomeHub {
     }
 
     private void SwitchToTab(HomeTab tab) {
-      // Do not allow changing tabs while receiving chests
-      if (HomeViewCurrentlyOccupied) {
-        return;
-      }
       if (_CurrentTab != tab) {
         _PreviousTab = _CurrentTab;
       }
@@ -473,21 +479,13 @@ namespace Cozmo.HomeHub {
       int targetPoints = ChestRewardManager.Instance.GetNextRequirementPoints();
       // Only handle goal rewards 
       if (_CurrentTab == HomeTab.Play && DailyGoalManager.Instance.GoalsPending) {
-        int incomingGoalPoints = 0;
         for (int i = 0; i < DailyGoalManager.Instance.PendingDailyGoals.Count; i++) {
           DailyGoal currGoal = DailyGoalManager.Instance.PendingDailyGoals[i];
           _RewardSequence = EnergyRewardsBurst(currGoal.PointsRewarded, GetGoalSource(currGoal), _RewardSequence);
-          incomingGoalPoints += currGoal.PointsRewarded;
         }
-        int pointsToNext = targetPoints - currPoints;
-        int pointsToOffset = Mathf.Min(pointsToNext, incomingGoalPoints);
-        UpdateChestProgressBar(currPoints - pointsToOffset, targetPoints, true);
         DailyGoalManager.Instance.ResolveDailyGoalsEarned();
       }
-      else {
-        // Only do the offset for goal points since those are rewarded when the goal is completed
-        UpdateChestProgressBar(currPoints, targetPoints, true);
-      }
+      UpdateChestProgressBar(currPoints, targetPoints, true);
       Transform source = _EnergyRewardStart_PlayTab;
       if (_CurrentTab == HomeTab.Cozmo) {
         source = _EnergyRewardStart_CozmoTab;
@@ -621,7 +619,7 @@ namespace Cozmo.HomeHub {
     }
     // If we earned a chest, have the progress bar reflect the previous requirement level at full.
     private void HandleChestGained() {
-      UpdateChestProgressBar(ChestRewardManager.Instance.GetPreviousRequirementPoints(), ChestRewardManager.Instance.GetPreviousRequirementPoints());
+      UpdateChestProgressBar(ChestRewardManager.Instance.GetNextRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
     }
 
     private Transform GetGoalSource(DailyGoal goal) {

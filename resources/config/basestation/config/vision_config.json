@@ -16,7 +16,7 @@
   },
   "ImageQuality" : {
     "TimeBeforeErrorMessage_ms" :       2000, // How long VisionSystem must detect "bad" quality before notifying game
-    "RepeatedErrorMessageInverval_ms" : 5000, // Time between error messages once triggered
+    "RepeatedErrorMessageInverval_ms" : 300000, // Time between error messages once triggered
     
     // NOTE: All threshold values below are in image brightness units: [0,255]
     "TooDarkMeanThreshold_low"  : 15,    // Report "too dark" if mean is below this threshold.

@@ -106,7 +106,9 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     private void HandleHowToPlayClicked() {
-      OpenHowToPlayView();
+      if (UIManager.Instance.NumberOfOpenDialogues() == 0) {
+        OpenHowToPlayView ();
+      }
     }
 
     public void OpenHowToPlayView() {

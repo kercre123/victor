@@ -129,9 +129,26 @@ namespace Cozmo {
           return res;
         }
         
-        _animationAction = new TriggerLiftSafeAnimationAction(_robot, animTrigger);
-        
         _subAction->Reset(true);
+        
+        // If the animationTrigger to play is Count (indicates None/No animation) check retry count
+        // and don't new the animation action
+        if(animTrigger == AnimationTrigger::Count)
+        {
+          PRINT_NAMED_DEBUG("RetryWrapperAction.CheckIfDone.NoAnimation",
+                            "RetryCallback returned AnimationTrigger::Count so not playing animation");
+          if(_retryCount++ >= _numRetries)
+          {
+            PRINT_NAMED_INFO("RetryWrapperAction.CheckIfDone",
+                             "Reached max num retries returning failure");
+            return ActionResult::FAILURE_RETRY;
+          }
+          return ActionResult::RUNNING;
+        }
+        else
+        {
+          _animationAction = new TriggerLiftSafeAnimationAction(_robot, animTrigger);
+        }
       }
       else
       {

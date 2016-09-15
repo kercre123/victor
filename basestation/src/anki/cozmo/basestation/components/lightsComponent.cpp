@@ -62,6 +62,7 @@ LightsComponent::LightsComponent(Robot& robot)
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedObject>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectMoved>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectConnectionState>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotDelocalized>();
     
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetActiveObjectLEDs>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetAllActiveObjectLEDs>();
@@ -181,8 +182,38 @@ void LightsComponent::Update()
   
   const TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   
+  // We are going from delocalized to localized
+  bool doRelocalizedUpdate = false;
+  if(_robotDelocalized && _robot.IsLocalized())
+  {
+    doRelocalizedUpdate = true;
+    _robotDelocalized = false;
+  }
+  
   for( auto& cubeInfoPair : _cubeInfo )
   {
+    // Note this check is done before the "Is cubeInfoPair enabled" check so we can update the
+    // prevState should this cube be disabled
+    if(doRelocalizedUpdate)
+    {
+      // Set the desired state to visible for all cubes with known poses
+      const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(cubeInfoPair.first);
+      if(object != nullptr && !object->IsPoseStateUnknown())
+      {
+        if(ShouldOverrideState(cubeInfoPair.second.desiredState, CubeLightsState::Visible))
+        {
+          // Update our prevState if we are disabled so if we are moved while disabled our state will
+          // be properly restored
+          if(!cubeInfoPair.second.enabled)
+          {
+            cubeInfoPair.second.prevState = CubeLightsState::Visible;
+          }
+          
+          cubeInfoPair.second.desiredState = CubeLightsState::Visible;
+        }
+      }
+    }
+  
     if(!cubeInfoPair.second.enabled)
     {
       continue;
@@ -495,8 +526,6 @@ void LightsComponent::SetLights(ObjectID object, CubeLightsState state, bool for
   
   const ObjectLights& values = _stateToValues[state];
   SetObjectLightsInternal(object, values);
-  
-  SendTransitionMessage(object, values);
 }
 
 
@@ -516,8 +545,8 @@ void LightsComponent::HandleMessage(const ExternalInterface::RobotObservedObject
     _cubeInfo[msg.objectID].enabled = false;
   }
   
-  if( ShouldOverrideState( _cubeInfo[msg.objectID].desiredState, CubeLightsState::Visible ) ) {
-    
+  if(ShouldOverrideState(_cubeInfo[msg.objectID].desiredState, CubeLightsState::Visible))
+  {
     // Update our prevState if we are disabled so if we are moved while disabled our state will
     // be properly restored
     if(!_cubeInfo[msg.objectID].enabled)
@@ -571,6 +600,29 @@ void LightsComponent::HandleMessage(const ObjectConnectionState& msg)
     if(!_allCubesEnabled)
     {
       _cubeInfo[msg.objectID].enabled = false;
+    }
+  }
+}
+  
+  
+template<>
+void LightsComponent::HandleMessage(const ExternalInterface::RobotDelocalized& msg)
+{
+  _robotDelocalized = true;
+  
+  // Set light states back to default since Cozmo has lost track of them
+  for(auto& cube: _cubeInfo)
+  {
+    if( ShouldOverrideState( cube.second.desiredState, CubeLightsState::Connected ) )
+    {
+      // Update our prevState if we are disabled so if we are moved while disabled our state will
+      // be properly restored
+      if(!cube.second.enabled)
+      {
+        cube.second.prevState = CubeLightsState::Connected;
+      }
+      
+      cube.second.desiredState = CubeLightsState::Connected;
     }
   }
 }
@@ -853,6 +905,8 @@ Result LightsComponent::SetObjectLightsInternal(const ObjectID& objectID, const 
                         objectID.GetValue(), activeObject->GetActiveID());
     }
     
+    SendTransitionMessage(objectID, values);
+
     _robot.SendMessage(RobotInterface::EngineToRobot(SetCubeGamma(activeObject->GetLEDGamma())));
     _robot.SendMessage(RobotInterface::EngineToRobot(CubeID((uint32_t)activeObject->GetActiveID(),
                                                             MS_TO_LED_FRAMES(values.rotationPeriod_ms))));
@@ -926,6 +980,8 @@ Result LightsComponent::SetObjectLightsInternal(const ObjectID& objectID,
                         "Setting lights for object %d (activeID %d)",
                         objectID.GetValue(), activeObject->GetActiveID());
     }
+    
+    SendTransitionMessage(objectID, lights);
     
     _robot.SendMessage(RobotInterface::EngineToRobot(SetCubeGamma(activeObject->GetLEDGamma())));
     _robot.SendMessage(RobotInterface::EngineToRobot(CubeID((uint32_t)activeObject->GetActiveID(),
@@ -1082,6 +1138,37 @@ void LightsComponent::SendTransitionMessage(const ObjectID& objectID, const Obje
     
     msg.lightRotation_ms = values.rotationPeriod_ms;
     
+    _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+  }
+}
+
+void LightsComponent::SendTransitionMessage(const ObjectID& objectID, const std::array<Anki::Cozmo::LightState, 4>& lights)
+{
+  const auto cube = _cubeInfo.find(objectID);
+  if(cube == _cubeInfo.end())
+  {
+    PRINT_NAMED_WARNING("LightsComponent.SendTransitionMessage.CubeNotFound", "No cube in _cubeInfo with id %d", objectID.GetValue());
+    return;
+  }
+    
+  if(_sendTransitionMessages && cube->second.enabled)
+  {
+    ObservableObject* obj = _robot.GetBlockWorld().GetObjectByID(objectID);
+    if(obj == nullptr)
+    {
+      PRINT_NAMED_WARNING("LightsComponent.SendTransitionMessage.NullObject",
+                          "Got null object using id %d",
+                          objectID.GetValue());
+      return;
+    }
+    
+    ExternalInterface::CubeLightsStateTransition msg;
+    msg.objectID = objectID;
+    msg.factoryID = obj->GetFactoryID();
+    msg.objectType = obj->GetType();
+    msg.lights = lights;
+    msg.lightRotation_ms = 0;
+
     _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
   }
 }

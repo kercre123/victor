@@ -64,7 +64,7 @@ class Builder(object):
         parser.add_argument('--output-dir', action="store")
         parser.add_argument('--log-file', action="store")
         parser.add_argument('--platform', action="store", choices=('ios', 'android', 'mac'))
-        parser.add_argument('--config', action="store", choices=('debug', 'release'))
+        parser.add_argument('--config', action="store", choices=('debug', 'release', 'shipping'))
         parser.add_argument('--with-basestation', action="store",
                             help="path to basestation source repo")
         parser.add_argument('--with-assets', action="store",

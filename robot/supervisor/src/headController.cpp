@@ -51,7 +51,7 @@ namespace HeadController {
       
       // Motor burnout protection
       u32 potentialBurnoutStartTime_ms_ = 0;
-      const f32 BURNOUT_POWER_THRESH = Ki_ * MAX_ERROR_SUM;
+      const f32 BURNOUT_POWER_THRESH = 0.6f;
       const u32 BURNOUT_TIME_THRESH_MS = 2000.f;
 
       // Current speed

@@ -18,6 +18,9 @@
       "/{*}"
     ]
   },
+  "settings.cubeStatusPanel.button.cubeHelp": {
+    "translation": "Cube Help"
+  },
   "settings.sdkPanel.activateSDKalert.text": {
     "translation": "Activate SDK Mode?"
   },
@@ -127,25 +130,25 @@
     "translation": "Acknowledgments"
   },
   "settings.versionPanel.button.eraseCozmo": {
-    "translation": "Reset Cozmo"
+    "translation": "Erase Cozmo"
   },
   "settings.versionPanel.button.support": {
     "translation": "Support"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoConfirmButton": {
-    "translation": "Reset"
+    "translation": "Erase"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoErrorLabel": {
-    "translation": "<color=#b52c13>Failed to Reset Your Cozmo</color>"
+    "translation": "<color=#b52c13>Failed to Erase Your Cozmo</color>"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoInProgressLabel": {
-    "translation": "Resetting your Cozmo..."
+    "translation": "Erasing your Cozmo..."
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoTitle": {
-    "translation": "Reset Cozmo?"
+    "translation": "Erase Cozmo?"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoWarningLabel": {
-    "translation": "WARNING: Resetting Cozmo will remove all game progress from your robot. Use this only if you wish to start over!"
+    "translation": "WARNING: Erasing Cozmo will remove all game progress from your robot. Use this only if you wish to start over!"
   },
   "settings.versionPanel.label.appRun": {
     "translation": "App Run ID: {0}"

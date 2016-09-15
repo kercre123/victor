@@ -7,14 +7,12 @@ using UnityEngine.UI;
 namespace Cozmo.Settings {
   public class SettingsCubeStatusPanel : MonoBehaviour {
 
-    // TODO - Add Cube help dialog
-    // [SerializeField]
-    // private CozmoButton _ShowCubeHelpButton;
+    [SerializeField]
+    private CozmoButton _ShowCubeHelpButton;
 
-    // TODO - Add Cube help dialog
-    // [SerializeField]
-    // private SettingsCubeHelpDialog _SettingsCubeHelpDialogPrefab;
-    // private SettingsCubeHelpDialog _SettingsCubeHelpDialogInstance;
+    [SerializeField]
+    private BaseView _SettingsCubeHelpDialogPrefab;
+    private BaseView _SettingsCubeHelpDialogInstance;
 
     [SerializeField]
     private HorizontalLayoutGroup _LightCubeButtonLayoutGroup;
@@ -24,9 +22,11 @@ namespace Cozmo.Settings {
 
     private List<ObjectType> _ButtonsRequestDisableBlockPool;
 
+    private const string kDasEventViewController = "settings_cube_status_panel";
+
     // Use this for initialization
     void Start() {
-      // TODO: Hook up ShowCubeHelpButton
+      _ShowCubeHelpButton.Initialize(HandleOpenCubeHelpViewTapped, "show_cube_help_dialog_button", kDasEventViewController);
 
       _ButtonsRequestDisableBlockPool = new List<ObjectType>();
 
@@ -41,6 +41,9 @@ namespace Cozmo.Settings {
     }
 
     void OnDestroy() {
+      if (_SettingsCubeHelpDialogInstance != null) {
+        _SettingsCubeHelpDialogInstance.CloseViewImmediately();
+      }
       RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(true);
       RobotEngineManager.Instance.BlockPoolTracker.SendAvailableObjects(false,
                                                                         (byte)RobotEngineManager.Instance.CurrentRobotID);
@@ -51,7 +54,7 @@ namespace Cozmo.Settings {
       SettingsLightCubeButton settingsLightCubeButton = UIManager.CreateUIElement(_SettingsLightCubeButtonPrefab,
                                                                                   _LightCubeButtonLayoutGroup.transform)
                                                                  .GetComponent<SettingsLightCubeButton>();
-      string dasEventViewControllerName = "settings_cube_status_panel";
+      string dasEventViewControllerName = kDasEventViewController;
       settingsLightCubeButton.Initialize(this, objectType, dasEventViewControllerName);
       return settingsLightCubeButton;
     }
@@ -71,6 +74,12 @@ namespace Cozmo.Settings {
         if (_ButtonsRequestDisableBlockPool.Count == 0) {
           RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(true);
         }
+      }
+    }
+
+    private void HandleOpenCubeHelpViewTapped() {
+      if (_SettingsCubeHelpDialogInstance == null) {
+        _SettingsCubeHelpDialogInstance = UIManager.OpenView(_SettingsCubeHelpDialogPrefab);
       }
     }
   }

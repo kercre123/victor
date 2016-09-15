@@ -29,6 +29,9 @@ BehaviorReactToSparked::BehaviorReactToSparked(Robot& robot, const Json::Value& 
 bool BehaviorReactToSparked::ShouldComputationallySwitch(const Robot& robot)
 {
   const IBehavior* currentBehavior = robot.GetBehaviorManager().GetCurrentBehavior();
+  if(currentBehavior == nullptr){
+    return false;
+  }
   
   const bool cancelCurrentReaction = currentBehavior->IsReactionary()
                                          && robot.GetBehaviorManager().ShouldSwitchToSpark();

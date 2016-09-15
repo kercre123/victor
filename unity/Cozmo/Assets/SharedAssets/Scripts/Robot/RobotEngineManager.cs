@@ -296,9 +296,6 @@ public class RobotEngineManager : MonoBehaviour {
     case Anki.Cozmo.ExternalInterface.MessageEngineToGame.Tag.AnimationAvailable:
       SetAvailableAnimationNames(message.AnimationAvailable);
       break;
-    case Anki.Cozmo.ExternalInterface.MessageEngineToGame.Tag.RobotSerialNumber:
-      SetSerialNumber(message.RobotSerialNumber);
-      break;
     case Anki.Cozmo.ExternalInterface.MessageEngineToGame.Tag.SupportInfo:
       ProcessSupportInfo(message.SupportInfo);
       break;
@@ -331,13 +328,22 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ProcessRobotConnectionResponse(Anki.Cozmo.ExternalInterface.RobotConnectionResponse message) {
-
     // Right now we only add one robot. in the future this should be
     // expanded potentially add multiple robots.
     if (!_IsRobotConnected && message.result != RobotConnectionResult.ConnectionFailure) {
       _IsRobotConnected = true;
       AddRobot((byte)message.robotID);
       CurrentRobot.FirmwareVersion = message.fwVersion;
+      CurrentRobot.SerialNumber = message.serialNumber;
+
+      var persistence = DataPersistence.DataPersistenceManager.Instance;
+      var currentSerial = persistence.Data.DeviceSettings.LastCozmoSerial;
+      if (message.serialNumber != currentSerial) {
+        persistence.Data.DeviceSettings.LastCozmoSerial = message.serialNumber;
+        persistence.Save();
+      }
+
+      PlayTimeManager.Instance.RobotConnected(true);
       DasTracker.Instance.OnRobotConnected();
     }
   }
@@ -345,6 +351,7 @@ public class RobotEngineManager : MonoBehaviour {
   private void ProcessRobotDisconnected(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {
     DAS.Error("RobotEngineManager.RobotDisconnected", "Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.");
     RemoveRobot((byte)message.robotID);
+    PlayTimeManager.Instance.RobotConnected(false);
     DasTracker.Instance.OnRobotDisconnected();
   }
 
@@ -365,19 +372,6 @@ public class RobotEngineManager : MonoBehaviour {
   private void SetAvailableAnimationNames(Anki.Cozmo.ExternalInterface.AnimationAvailable message) {
     if (!_RobotAnimationNames.Contains(message.animName))
       _RobotAnimationNames.Add(message.animName);
-  }
-
-  private void SetSerialNumber(Anki.Cozmo.ExternalInterface.RobotSerialNumber message) {
-    var robot = CurrentRobot;
-    if (robot != null) {
-      robot.SerialNumber = message.serial;
-    }
-    var persistence = DataPersistence.DataPersistenceManager.Instance;
-    var currentSerial = persistence.Data.DeviceSettings.LastCozmoSerial;
-    if (message.serial != currentSerial) {
-      persistence.Data.DeviceSettings.LastCozmoSerial = message.serial;
-      persistence.Save();
-    }
   }
 
   private void ProcessSupportInfo(Anki.Cozmo.ExternalInterface.SupportInfo message) {
