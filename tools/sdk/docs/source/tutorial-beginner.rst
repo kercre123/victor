@@ -37,7 +37,7 @@ The breakdown of each module in the program is as follows:
 1. ``import cozmo`` allows your program to access the information contained within the ``cozmo`` module.
 2. Text sandwiched between three ' marks is a comment. Comments are placed inside code to give information to the user.
 3. The first line of the run function tells Cozmo to connect to the system, and to wait until that connection happens before performing any other actions.
-4. ``coz.say_text("Hello World").wait_for_completed`` is the main module of the program.
+4. ``coz.say_text("Hello World").wait_for_completed`` is the core of the program.
 
   a. ``coz.say_text`` initializes Cozmo's speech engine.
   b. ``("Hello World")`` tells Cozmo what to say.
@@ -60,10 +60,12 @@ Example programs are available in the *examples* directory should you wish to ru
 
 To run a program for Cozmo:
 
-.. important:: iTunes must be installed on any computer system paired with an iPhone before running any programs.
+.. important:: The usbmuxd (USB Multiplexor Daemon) must be installed on any computer system paired with an iOS device before running any programs. Installing `iTunes <http://www.apple.com/itunes/download/>`_ will also install the usbmuxd on those systems. Linux users can install the usbmuxd module through the command line with `sudo apt-get install usbmuxd`.
 
-1. Plug the smartphone containing the Cozmo app into your computer.
-2. Open the Cozmo app on the phone. Make sure Cozmo is on and connected to the app via WiFi.
+.. important:: Make sure adb (Android Debug Bridge) is installed on your system prior to running a program with an Android device. See `the Install page </install>`_ for instructions.
+
+1. Plug the mobile device containing the Cozmo app into your computer.
+2. Open the Cozmo app on the device. Make sure Cozmo is on and connected to the app via WiFi.
 3. On the computer, open two Terminal (iOS/Linux) / Command-line (Windows) windows.
 
   a. In the first window, type ``cd SDKDirectory`` where *SDKDirectory* is the name of the directory you extracted the SDK into and press Enter.
@@ -76,8 +78,6 @@ To run a program for Cozmo:
 
     i. For iOS/Linux systems:
 
-    .. warning:: If switching to an iPhone from Android after running the SDK, type in `./androidSdkRemoveTcpRelay.sh` before proceeding.
-
       a. For iPhone, type the following into the same window and press Enter::
 
           ./iosSdkTcpRelay.sh
@@ -88,21 +88,23 @@ To run a program for Cozmo:
 
     ii. For Windows systems:
 
-    .. warning:: If switching to an iPhone from Android after running the SDK, type in `./androidSdkRemoveTcpRelay.bat` before proceeding.
+.. important:: Communications between iOS devices and a Windows system require `Python 2 <https://www.python.org/downloads/>`_ to be installed. Installing Python 2 will not uninstall Python 3 from the system.
+
+..
 
       a. For iPhone, type the following into the same window and press Enter::
 
           ./iosSdkTcpRelay.bat
 
-      .. important:: Communications between iPhone and a Windows system require `Python 2 <https://www.python.org/downloads/>`_ to be installed. Installing Python 2 will not uninstall Python 3 from the system.
-
       b. For Android devices, type the following into the same window and press Enter::
 
           ./androidSdkAddTcpRelay.bat
 
-  .. important:: Make sure adb (Android Debug Bridge) is installed on your system prior to this step. See `the Beginner's Tutorial </tutorial-beginner>`_ for instructions.
+..
 
-  .. warning:: Do NOT close the first Terminal window. Closing the first Terminal window while operating with the SDK will close communications with the Cozmo robot and cause errors within the program.
+.. warning:: If switching to an iPhone from Android after running the SDK, type in `./androidSdkRemoveTcpRelay.sh` before proceeding.
+
+.. warning:: Do NOT close the first Terminal window. Closing the first Terminal window while operating with the SDK will close communications with the Cozmo robot and cause errors within the program.
 
 4. In the *second* Terminal window, type ``cd SDKDirectory`` where SDKDirectory is the name of the directory you extracted the SDK into and press Enter.
 
