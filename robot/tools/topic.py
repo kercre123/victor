@@ -48,6 +48,7 @@ if __name__ == '__main__':
     parser.add_argument('-a', '--all', action='store_true', help="Print all messages")
     parser.add_argument('--no-sync',   action='store_true', help="Do not send sync time message to robot on startup.")
     parser.add_argument('--sync-time', default=0, type=int, help="Manually specify sync time offset")
+    parser.add_argument('-v', '--image-request', action='store_true', help="Request video from the robot")
     parser.add_argument('-i', '--ip_address', default="172.31.1.1", help="Specify robot's ip address")
     parser.add_argument('-p', '--port', default=5551, type=int, help="Manually specify robot's port")
     parser.add_argument('--state_parse', nargs='*', help="Print just the specified fields from the robot state message")
@@ -66,7 +67,9 @@ if __name__ == '__main__':
         sys.exit()
 
     robotInterface.Init()
-    robotInterface.Connect(dest=(args.ip_address, args.port), syncTime = None if args.no_sync else args.sync_time)
+    robotInterface.Connect(dest=(args.ip_address, args.port),
+                           syncTime = None if args.no_sync else args.sync_time,
+                           imageRequest = args.image_request)
 
     if args.all:
         args.tags = robotInterface.RI.RobotToEngine._tags_by_name.values()

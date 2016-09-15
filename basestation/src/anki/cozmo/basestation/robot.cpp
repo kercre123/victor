@@ -2963,12 +2963,13 @@ Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliabl
 // Sync time with physical robot and trigger it robot to send back camera calibration
 Result Robot::SendSyncTime() const
 {
-
   Result result = SendMessage(RobotInterface::EngineToRobot(
                                 RobotInterface::SyncTime(_ID,
                                                          BaseStationTimer::getInstance()->GetCurrentTimeStamp(),
                                                          DRIVE_CENTER_OFFSET)));
-      
+  if (result == RESULT_OK) {
+    result = SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::InitController()));
+  }
   if(result == RESULT_OK) {
     result = SendMessage(RobotInterface::EngineToRobot(
                            RobotInterface::ImageRequest(ImageSendMode::Stream, ImageResolution::QVGA)));
@@ -2977,10 +2978,12 @@ Result Robot::SendSyncTime() const
     PRINT_NAMED_INFO("Robot.SendSyncTime", "Setting pose to (0,0,0)");
     Pose3d zeroPose(0, Z_AXIS_3D(), {0,0,0}, _worldOrigin);
     return SendAbsLocalizationUpdate(zeroPose, 0, GetPoseFrameID());
-  } else {
+  }
+  
+  if (result != RESULT_OK) {
     PRINT_NAMED_WARNING("Robot.SendSyncTime.FailedToSend","");
   }
-      
+  
   return result;
 }
     

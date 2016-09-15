@@ -226,6 +226,11 @@ namespace Anki {
             AnimationController::EnableTracks(msg.enableAnimTracks.whichTracks);
             break;
           }
+          case RobotInterface::EngineToRobot::Tag_initAnimController:
+          {
+            AnimationController::EngineInit(msg.initAnimController);
+            break;
+          }
           case RobotInterface::EngineToRobot::Tag_oledDisplayNumber:
           {
             using namespace Anki::Cozmo::Face;

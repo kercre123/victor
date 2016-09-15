@@ -293,8 +293,13 @@ namespace Anki {
         
 #ifndef TARGET_K02
         // Reset number of bytes/audio frames played in animation buffer
-        AnimationController::ClearNumBytesPlayed();
-        AnimationController::ClearNumAudioFramesPlayed();
+        AnimationController::EngineDisconnect();
+#else
+        // Put body into accessory mode when the engine is connected
+        SetBodyRadioMode bMsg;
+        bMsg.wifiChannel = 0;
+        bMsg.radioMode = BODY_ACCESSORY_OPERATING_MODE;
+        while (RobotInterface::SendMessage(bMsg) == false);
 #endif
       } // ProcessRobotInit()
 
@@ -545,58 +550,8 @@ namespace Anki {
       void Process_imageRequest(const RobotInterface::ImageRequest& msg)
       {
         AnkiInfo( 110, "Messages.Process_imageRequest.Recvd", 358, "mode: %d, resolution: %d", 2, msg.sendMode, msg.resolution);
-#ifndef TARGET_K02
         HAL::SetImageSendMode(msg.sendMode, msg.resolution);
-/*
-        // Send back camera calibration for this resolution
-        const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
-
-        // TODO: Just store CameraResolution in calibration data instead of height/width?
-
-        if(headCamInfo == NULL) {
-          AnkiWarn( 111, "Messages.Process_imageRequest.CalibNotFound", 359, "NULL HeadCamInfo retrieved from HAL.", 0);
-        }
-        else {
-          HAL::CameraInfo headCamInfoScaled(*headCamInfo);
-          const s32 width  = Vision::CameraResInfo[msg.resolution].width;
-          const s32 height = Vision::CameraResInfo[msg.resolution].height;
-          const f32 xScale = static_cast<f32>(width/headCamInfo->ncols);
-          const f32 yScale = static_cast<f32>(height/headCamInfo->nrows);
-
-          if(xScale != 1.f || yScale != 1.f)
-          {
-            AnkiInfo( 112, "Messages.Process_imageRequest.ScalingCalib", 360, "Scaling [%dx%d] camera calibration by [%.1f %.1f] to match requested resolution.", 4,
-                     headCamInfo->ncols, headCamInfo->nrows, xScale, yScale);
-
-            // Stored calibration info does not requested resolution, so scale it
-            // accordingly and adjust the pointer so we send this scaled info below.
-            headCamInfoScaled.focalLength_x *= xScale;
-            headCamInfoScaled.focalLength_y *= yScale;
-            headCamInfoScaled.center_x      *= xScale;
-            headCamInfoScaled.center_y      *= yScale;
-            headCamInfoScaled.nrows = height;
-            headCamInfoScaled.ncols = width;
-
-            headCamInfo = &headCamInfoScaled;
-          }
-
-          CameraCalibration headCalibMsg = {
-            headCamInfo->focalLength_x,
-            headCamInfo->focalLength_y,
-            headCamInfo->center_x,
-            headCamInfo->center_y,
-            headCamInfo->skew,
-            headCamInfo->nrows,
-            headCamInfo->ncols
-          };
-
-          if(!RobotInterface::SendMessage(headCalibMsg)) {
-            AnkiWarn( 113, "Messages.Process_imageRequest.SendCalibFailed", 361, "Failed to send camera calibration message.", 0);
-          }
-        }
- */
-#endif
-      } // ProcessImageRequestMessage()
+      }
 
       void Process_rollActionParams(const RobotInterface::RollActionParams& msg) {
         PickAndPlaceController::SetRollActionParams(msg.liftHeight_mm,
@@ -676,6 +631,13 @@ namespace Anki {
       {
 #ifndef TARGET_K02
         AnimationController::EnableTracks(msg.whichTracks);
+#endif
+      }
+      
+      void Process_initAnimController(const AnimKeyFrame::InitController& msg)
+      {
+#ifndef TARGET_K02
+        AnimationController::EngineInit(msg);
 #endif
       }
 
@@ -890,8 +852,15 @@ namespace Anki {
       void Process_wifiState(const WiFiState& state)
       {
 #ifndef SIMULATOR
-        if (state.rtCount > 0) HAL::SetImageSendMode(Stream, QVGA);
-        else if (state.rtCount == 0) HAL::SetImageSendMode(Off, QVGA);
+        if (state.rtCount == 0) 
+        {
+          HAL::SetImageSendMode(Off, QVGA);
+          // Put body into bluetooth mode when the engine is connected
+          SetBodyRadioMode bMsg;
+          bMsg.wifiChannel = 0;
+          bMsg.radioMode = BODY_BLUETOOTH_OPERATING_MODE;
+          while (RobotInterface::SendMessage(bMsg) == false);
+        }
 #endif
         HAL::RadioUpdateState(state.rtCount, false);
       }
@@ -1092,9 +1061,6 @@ namespace Anki {
           // Update send history
           robotStateSendHist_[robotStateSendHistIdx_] = m->timestamp;
           if (++robotStateSendHistIdx_ > 1) robotStateSendHistIdx_ = 0;
-          #ifndef TARGET_K02
-            AnimationController::SendAnimStateMessage();
-          #endif
           
           #ifdef SIMULATOR
           {

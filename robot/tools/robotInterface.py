@@ -96,11 +96,12 @@ class _Dispatcher(IDataReceiver):
         if forkTransportThread: self.transport.start()
         self.nameTable, self.formatTable = importTables(ANKI_LOG_STRING_TABLE_LOCAL if os.path.isfile(ANKI_LOG_STRING_TABLE_LOCAL) else ANKI_LOG_STRING_TABLE_GLOBAL)
 
-    def Connect(self, dest=("172.31.1.1", 5551), syncTime=0):
+    def Connect(self, dest=("172.31.1.1", 5551), syncTime=0, imageRequest=False):
         "Initiate reliable Connection"
         self.dest = dest
         self.state = ConnectionState.waitingToConnect
         self.syncTime = syncTime
+        self.imageRequest = imageRequest
         return self.transport.Connect(self.dest)
 
     def Disconnect(self, dest=None):
@@ -129,6 +130,9 @@ class _Dispatcher(IDataReceiver):
         self.state = ConnectionState.connected
         if self.syncTime is not None:
             self.send(RI.EngineToRobot(syncTime=RI.SyncTime(1, self.syncTime)))
+            self.send(RI.EngineToRobot(initAnimController=Anki.Cozmo.AnimKeyFrame.InitController()))
+        if self.imageRequest:
+            self.send(RI.EngineToRobot(imageRequest=RI.ImageRequest(Anki.Cozmo.ImageSendMode.Stream, Anki.Cozmo.ImageResolution.QVGA)))
         for sub in self.OnConnectedSubscribers:
             sub(sourceAddress)
 

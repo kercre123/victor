@@ -27,7 +27,7 @@ extern "C" void FacePrintf(const char *format, ...);
 #include "steeringController.h"
 #include "speedController.h"
 #include "backpackLightController.h"
-static inline u32 system_get_time() { return Anki::Cozmo::HAL::GetTimeStamp(); }
+static inline u32 system_get_time() { return Anki::Cozmo::HAL::GetTimeStamp() * 1000; }
 #endif
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
@@ -52,6 +52,8 @@ namespace AnimationController {
     s32 _numBytesPlayed = 0;
     s32 _numBytesInBuffer = 0;
     s32 _numAudioFramesPlayed = 0;
+    
+    u32 _lastStateSendTime = 0;
 
     u8  _currentTag = 0;
 
@@ -63,8 +65,14 @@ namespace AnimationController {
     s32 _tracksToPlay;
 
     int _tracksInUse = 0;
+    
+    typedef enum {
+      DISABLED,
+      SUSPENDED,
+      ENABLED,
+    } ACOpState;
 
-    bool _disabled;
+    ACOpState _animCtrlState;
 
 #   if DEBUG_ANIMATION_CONTROLLER
     TimeStamp_t _currentTime_ms;
@@ -75,15 +83,38 @@ namespace AnimationController {
   Result Init()
   {
 #   if DEBUG_ANIMATION_CONTROLLER
-    AnkiDebug( 2, "AnimationController", 3, "Initializing", 0);
+    AnkiDebug( 2, "AnimationController.Init", 3, "Initializing", 0);
 #   endif
-
-    _tracksToPlay = ALL_TRACKS;
     
-    _disabled = false;
+    _animCtrlState = DISABLED;
 
-    Clear();
+    return RESULT_OK;
+  }
+  
+  Result EngineInit(const AnimKeyFrame::InitController& msg)
+  {
+    if (_animCtrlState == DISABLED)
+    {
+      _tracksToPlay = ALL_TRACKS;
+      Clear();
+      AnimationController::ClearNumBytesPlayed();
+      AnimationController::ClearNumAudioFramesPlayed();
+      _animCtrlState = ENABLED;
+      return RESULT_OK;
+    }
+    else
+    {
+      AnkiWarn( 376, "AnimationController.engine_init.refused", 611, "Not initalizing animation controller because in state %d", 1, _animCtrlState);
+      return RESULT_FAIL;
+    }
+  }
 
+  Result EngineDisconnect()
+  {
+    if (_animCtrlState == ENABLED)
+    {
+      _animCtrlState = DISABLED;
+    }
     return RESULT_OK;
   }
 
@@ -186,7 +217,7 @@ namespace AnimationController {
   void Clear()
   {
 #   if DEBUG_ANIMATION_CONTROLLER
-    AnkiDebug( 2, "AnimationController", 4, "Clearing", 0);
+    AnkiDebug( 377, "AnimationController.Clear", 4, "Clearing", 0);
 #   endif
     
     SendAnimationEnded();
@@ -287,9 +318,9 @@ namespace AnimationController {
     const s32 numBytesAvailable = GetNumBytesAvailable();
     const s32 numBytesNeeded = bufferSize + 2;
     
-    if (_disabled) 
+    if (_animCtrlState != ENABLED) 
     {
-      AnkiDebug( 2, "AnimationController", 477, "BufferKeyFrame called while disabled", 0);
+      AnkiDebug( 378, "AnimationController.buffer_key_frame.not_animCtrlState", 477, "BufferKeyFrame called while disabled", 0);
       return RESULT_FAIL;
     }
     
@@ -297,14 +328,14 @@ namespace AnimationController {
       // Only print the error message if we haven't already done so this tick,
       // to prevent spamming that could clog reliable UDP
       if(!_bufferFullMessagePrintedThisTick) {
-        AnkiDebug( 2, "AnimationController", 6, "BufferKeyFrame.BufferFull %d bytes available, %d needed.", 2,
+        AnkiDebug( 379, "AnimationController.BufferKeyFrame.BufferFull", 6, "BufferKeyFrame.BufferFull %d bytes available, %d needed.", 2,
                   numBytesAvailable, numBytesNeeded);
         _bufferFullMessagePrintedThisTick = true;
       }
       return RESULT_FAIL;
     }
 #if DEBUG_ANIMATION_CONTROLLER > 1
-    AnkiDebug( 2, "AnimationController", 7, "BufferKeyFrame, %d -> %d (%d)", 3, numBytesNeeded, _lastBufferPos, numBytesAvailable);
+    AnkiDebug( 380, "AnimationController.BufferKeyFrame", 7, "BufferKeyFrame, %d -> %d (%d)", 3, numBytesNeeded, _lastBufferPos, numBytesAvailable);
 #endif
 
     AnkiAssert(numBytesNeeded < KEYFRAME_BUFFER_SIZE, 8);
@@ -415,7 +446,7 @@ namespace AnimationController {
 
   inline bool AdvanceAudio(RobotInterface::EngineToRobot& msg)
   {
-    if (_disabled) return false;
+    if (_animCtrlState != ENABLED) return false;
     else if(IsReadyToPlay()) {
       if (HAL::AudioReady())
       {
@@ -563,7 +594,7 @@ namespace AnimationController {
             GetFromBuffer(&msg);
             if(_tracksToPlay & HEAD_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug( 2, "AnimationController", 18, "[t=%dms(%d)] requesting head angle of %ddeg over %.2fsec", 4,
+              AnkiDebug( 381, "AnimationController.RequestHeadAngle", 18, "[t=%dms(%d)] requesting head angle of %ddeg over %.2fsec", 4,
                     _currentTime_ms, system_get_time(),
                     msg.animHeadAngle.angle_deg, static_cast<f32>(msg.animHeadAngle.time_ms)*.001f);
 #               endif
@@ -583,7 +614,7 @@ namespace AnimationController {
             GetFromBuffer(&msg);
             if(_tracksToPlay & LIFT_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug( 2, "AnimationController", 19, "[t=%dms(%d)] requesting lift height of %dmm over %.2fsec", 4,
+              AnkiDebug( 382, "AnimationController.RequestLiftHeight", 19, "[t=%dms(%d)] requesting lift height of %dmm over %.2fsec", 4,
                     _currentTime_ms, system_get_time(),
                     msg.animLiftHeight.height_mm, static_cast<f32>(msg.animLiftHeight.time_ms)*.001f);
 #               endif
@@ -605,7 +636,7 @@ namespace AnimationController {
 
             if(_tracksToPlay & BACKPACK_LIGHTS_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug( 2, "AnimationController", 20, "[t=%dms(%d)] setting backpack LEDs.", 2,
+              AnkiDebug( 383, "AnimationController.SetBackpackLEDs", 20, "[t=%dms(%d)] setting backpack LEDs.", 2,
                     _currentTime_ms, system_get_time());
 #               endif
 
@@ -630,7 +661,7 @@ namespace AnimationController {
 
             if(_tracksToPlay & FACE_IMAGE_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug( 2, "AnimationController", 21, "[t=%dms(%d)] setting face frame.", 2,
+              AnkiDebug( 384, "AnimationController.SetFaceFrame", 21, "[t=%dms(%d)] setting face frame.", 2,
                     _currentTime_ms, system_get_time());
 #               endif
 
@@ -647,7 +678,7 @@ namespace AnimationController {
 
             if(_tracksToPlay & EVENT_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug( 2, "AnimationController", 456, "[t=%dms(%d)] event %d.", 3,
+              AnkiDebug( 385, "AnimationController.event", 456, "[t=%dms(%d)] event %d.", 3,
                     _currentTime_ms, system_get_time(), msg.tag);
 #               endif
 
@@ -675,7 +706,7 @@ namespace AnimationController {
 
             if(_tracksToPlay & BODY_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug( 2, "AnimationController", 24, "[t=%dms(%d)] setting body motion to radius=%d, speed=%d", 4,
+              AnkiDebug( 386, "AnimationController.SetBodyMotion", 24, "[t=%dms(%d)] setting body motion to radius=%d, speed=%d", 4,
                     _currentTime_ms, system_get_time(), msg.animBodyMotion.curvatureRadius_mm,
                     msg.animBodyMotion.speed);
 #               endif
@@ -711,7 +742,7 @@ namespace AnimationController {
         --_numAudioFramesBuffered;
         ++_numAudioFramesPlayed; // end of anim considered "audio" for counting
 #         if DEBUG_ANIMATION_CONTROLLER
-        AnkiDebug( 2, "AnimationController", 26, "Reached animation %d termination frame (%d frames still buffered, curPos/lastPos = %d/%d).", 4,
+        AnkiDebug( 387, "AnimationController.termination", 26, "Reached animation %d termination frame (%d frames still buffered, curPos/lastPos = %d/%d).", 4,
               _currentTag, _numAudioFramesBuffered, _currentBufferPos, _lastBufferPos);
 #         endif
         _currentTag = 0;
@@ -723,6 +754,18 @@ namespace AnimationController {
 
 
     } // if AdvanceAudio
+
+    if (_animCtrlState == ENABLED)
+    {
+      const u32 now = system_get_time();
+      if ((now - _lastStateSendTime) > ANIM_STATE_INTERVAL_us)
+      {
+        if (AnimationController::SendAnimStateMessage() == RESULT_OK)
+        {
+          _lastStateSendTime = now;
+        }
+      }
+    }
 
     return RESULT_OK;
   } // Update()
@@ -749,7 +792,7 @@ namespace AnimationController {
 
   s32 SuspendAndGetBuffer(u8** buffer)
   {
-    _disabled = true;
+    _animCtrlState = SUSPENDED;
     Clear();
     *buffer = _keyFrameBuffer;
     return KEYFRAME_BUFFER_SIZE;
@@ -757,7 +800,7 @@ namespace AnimationController {
   
   void ResumeAndRestoreBuffer()
   {
-    _disabled = false;
+    _animCtrlState = DISABLED;
   }
 
 } // namespace AnimationController

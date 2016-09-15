@@ -69,7 +69,7 @@ def Remote():
     robotInterface.Init(False)
     imageReceiver = minipegReceiver.MinipegReceiver(receiveImage)
 
-    robotInterface.Connect()
+    robotInterface.Connect(imageRequest=True)
     webbrowser.open("http://127.0.0.1:5000/")
     app.run()
     robotInterface.Send(robotInterface.RI.EngineToRobot(stop=robotInterface.RI.StopAllMotors()))

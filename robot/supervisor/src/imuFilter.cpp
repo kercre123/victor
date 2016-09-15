@@ -759,7 +759,7 @@ namespace Anki {
       void UpdateCameraMotion()
       {
         static u8 cameraMotionDecimationCounter = 0;
-        if (cameraMotionDecimationCounter++ > 3)
+        if (cameraMotionDecimationCounter++ > 3 && HAL::IsVideoEnabled())
         {
           ImageImuData msg;
           HAL::IMUGetCameraTime(&msg.imageId, &msg.line2Number);

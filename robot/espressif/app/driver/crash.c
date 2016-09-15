@@ -182,25 +182,25 @@ void ICACHE_FLASH_ATTR crashHandlerInit(void)
   _xtos_set_exception_handler(29, crash_handler);   // Bad store address
 }
 
-void crashHandlerShowStatus(){
+void ICACHE_FLASH_ATTR crashHandlerShowStatus(){
   os_printf("Found %d crash logs, %d were reported\r\n",
             initResult.n_rec, initResult.n_rep);
   if (initResult.addr == CRASH_DUMP_SECTOR) {
     if (initResult.code != SPI_FLASH_RESULT_OK)
     {
-      os_printf("crashHandlerInit: Couldn't erase reported records in sector 0x%x, %d\r\n", CRASH_DUMP_SECTOR, initResult.code);
+      os_printf("CH: Couldn't erase reported records in sector 0x%x, %d\r\n", CRASH_DUMP_SECTOR, initResult.code);
     }
     else
     {
-      os_printf("crashHandlerInit: Erased Crash Flash");
+      os_printf("CH: Erased Crash Flash");
     }
   }
   else if (initResult.code != 0) {
-    os_printf("crashHandlerInit: Couldn't read existing records at 0x%x, %d\r\n",
+    os_printf("CH: Couldn't read existing records at 0x%x, %d\r\n",
               initResult.addr, initResult.code);
   }
   else if (initResult.n_rec == MAX_CRASH_LOGS) {
-     os_printf("crashHandlerInit: No slots available for new records\r\n");
+     os_printf("CH: No slots available for new records\r\n");
   }
 }
 
