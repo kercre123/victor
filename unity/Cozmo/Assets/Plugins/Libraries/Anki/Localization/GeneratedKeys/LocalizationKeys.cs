@@ -394,6 +394,7 @@ public static class LocalizationKeys {
   public const string kOnboardingCozmoNeedsChargeTitle = "onboarding.CozmoNeedsCharge.Title";
   public const string kOnboardingCozmoNeedsChargeSecondsLeft = "onboarding.CozmoNeedsCharge.SecondsLeft";
   public const string kOnboardingCozmoNeedsChargeKeepOnCharger = "onboarding.CozmoNeedsCharge.KeepOnCharger";
+  public const string kOnboardingCozmoNeedsChargePutBackOnCharger = "onboarding.CozmoNeedsCharge.PutBackOnCharger";
   public const string kOnboardingCozmoNeedsChargeCozmoIsReady = "onboarding.CozmoNeedsCharge.CozmoIsReady";
   public const string kOnboardingSlide0 = "onboarding.Slide0";
   public const string kOnboardingSlide1 = "onboarding.Slide1";
@@ -634,6 +635,7 @@ public static class LocalizationKeys {
   public const string kLabelTimeWithCozmo = "label.timeWithCozmo";
   public const string kLabelGamesPlayed = "label.gamesPlayed";
   public const string kLabelStreaksCount = "label.streaksCount";
+  public const string kLabelGoalsCompleted = "label.goalsCompleted";
 
   #endregion
 

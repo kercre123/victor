@@ -27,6 +27,9 @@
   "onboarding.CozmoNeedsCharge.KeepOnCharger": {
     "translation": "Keep him on the charger"
   },
+    "onboarding.CozmoNeedsCharge.PutBackOnCharger": {
+    "translation": "Please put Cozmo back on the charger"
+  },
   "onboarding.CozmoNeedsCharge.CozmoIsReady": {
     "translation": "Cozmo is ready!"
   },

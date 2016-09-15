@@ -27,6 +27,7 @@ namespace Onboarding {
 
     private System.DateTime _TimeStartUTC;
     private float _TimerPausedTotal_Sec = 0;
+    private bool _WasOnCharger = false;
 
     public override void Start() {
       base.Start();
@@ -42,6 +43,9 @@ namespace Onboarding {
       UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, Color.white);
     }
 
+    private void UpdateStatusText() {
+      _KeepOnChargerText.text = _WasOnCharger ? Localization.Get(LocalizationKeys.kOnboardingCozmoNeedsChargeKeepOnCharger) : Localization.Get(LocalizationKeys.kOnboardingCozmoNeedsChargePutBackOnCharger);
+    }
     public void Update() {
       bool isOnCharger = true;
 
@@ -54,6 +58,10 @@ namespace Onboarding {
       // But should be close enough since we only display seconds.
       if (!isOnCharger) {
         _TimerPausedTotal_Sec += Time.deltaTime;
+      }
+      if (_WasOnCharger != isOnCharger) {
+        _WasOnCharger = isOnCharger;
+        UpdateStatusText();
       }
 
       System.DateTime now = System.DateTime.UtcNow;
