@@ -56,7 +56,7 @@ namespace Cozmo.Settings {
       _CozmoVersionLabel.FormattingArgs = new object[] { ShortenData(robot.FirmwareVersion.ToString()) };
 
       // Fill out Serial number args
-      _SerialNumberLabel.FormattingArgs = new object[] { ShortenData(robot.SerialNumber.ToString()) };
+      _SerialNumberLabel.FormattingArgs = new object[] { ShortenData(robot.SerialNumber.ToString("X6")) };
 
       string dasEventViewName = "settings_version_panel";
       _AcknowledgementsLinkButton.Initialize(HandleAcknowledgementsLinkButtonTapped, "acknowledgements_link", dasEventViewName);
