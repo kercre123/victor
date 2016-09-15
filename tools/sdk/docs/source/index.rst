@@ -29,8 +29,7 @@ Welcome to the Cozmo SDK alpha version!
     :caption: Beginner Tutorial
 
     tutorial-beginner.rst
-    tutorial-beginner-windows.rst
-
+    
 .. toctree::
     :maxdepth: 2
     :caption: Advanced Tutorial
