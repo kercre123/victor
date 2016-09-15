@@ -87,14 +87,12 @@ namespace Cozmo.UI {
     [SerializeField]
     private float _RewardSpreadRadiusMax = 600.0f;
     [SerializeField]
-    private float _RewardSpreadRadiusMin = 20.0f;
+    private float _RewardSpreadRadiusMin = 5.0f;
     // If a reward would be placed within spread proximity of an existing reward, instead attempt to place it in a different random
-    // position to make the loot view look nicer
-    [SerializeField]
-    private float _RewardSpreadMinDistance = 150.0f;
+    // position to make the loot view look nicer. This dist is based on the last placed reward's sprite.
+    private float _RewardSpreadMinDistance;
     // To prevent potential infinite loops or extremely inefficient sequences with large numbers of rewards, cap out spread attempts
-    [SerializeField]
-    private int _MaxSpreadAttempts = 4;
+    private const int kMaxSpreadAttempts = 6;
     // Keep track of positions we have already targeted for reward placement to check for spread
     private List<Vector3> _TargetedPositions = new List<Vector3>();
 
@@ -391,7 +389,7 @@ namespace Cozmo.UI {
       int coinFlipX = 1;
       int coinFlipY = 1;
       int attempts = 0;
-      while (attempts <= _MaxSpreadAttempts) {
+      while (attempts <= kMaxSpreadAttempts) {
         if (UnityEngine.Random.Range(0.0f, 1.0f) > 0.5f) {
           coinFlipX = -1;
         }
@@ -400,7 +398,7 @@ namespace Cozmo.UI {
         }
         newPos = new Vector3(origPos.x + (UnityEngine.Random.Range(_RewardSpreadRadiusMin, _RewardSpreadRadiusMax) * coinFlipX),
                              origPos.y + (UnityEngine.Random.Range(_RewardSpreadRadiusMin, _RewardSpreadRadiusMax) * coinFlipY), 0.0f);
-        if (IsValidSpreadPos(newPos)) {
+        if (IsValidSpreadPos(newPos) || attempts == kMaxSpreadAttempts) {
           // Only add a position to the list of targeted positions if it is properly placed,
           // Otherwise it should already be covered by existing targeted positions and will
           // be a waste to check.
@@ -417,11 +415,9 @@ namespace Cozmo.UI {
     // Check through all the existing positions, if any of them are closer to the checkPos
     // than our desired minimum spread distance, then return false. Otherwise return true.
     private bool IsValidSpreadPos(Vector3 checkPos) {
-      float minDist = 0.0f;
       for (int i = 0; i < _TargetedPositions.Count; i++) {
-        float dist = Vector3.Distance(checkPos, _TargetedPositions[i]);
-        minDist = Mathf.Min(minDist, dist);
-        if (dist < _RewardSpreadMinDistance) {
+        float distSq = (_TargetedPositions[i] - checkPos).sqrMagnitude;
+        if (distSq < _RewardSpreadMinDistance * _RewardSpreadMinDistance) {
           return false;
         }
       }
@@ -445,6 +441,7 @@ namespace Cozmo.UI {
       else {
         _ActiveBitsTransforms.Add(newReward);
       }
+      _RewardSpreadMinDistance = Mathf.Max(rewardIcon.rect.width, rewardIcon.rect.height);
       return newReward;
     }
 

@@ -656,9 +656,7 @@ MonoBehaviour:
   _RewardExplosionFinalDuration: 1.25
   _RewardExplosionFinalVariance: 1
   _RewardSpreadRadiusMax: 600
-  _RewardSpreadRadiusMin: 20
-  _RewardSpreadMinDistance: 150
-  _MaxSpreadAttempts: 4
+  _RewardSpreadRadiusMin: 5
   _TronBurstLow: 3
   _TronBurstMid: 5
   _TronBurstAlmost: 8
