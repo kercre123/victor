@@ -615,6 +615,19 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
                    "ObjectID: %d (Active ID %d), type: %s, axisOfAccel: %s",
                    firstObject->GetID().GetValue(), firstObject->GetActiveID(),
                    EnumToString(firstObject->GetType()), GetAxisString(payload));
+  
+  // Don't notify game about moving objects that are being carried or docked with
+  // (We expect those to move)
+  const bool isDockingObject  = firstObject->GetID() == robot->GetDockObject();
+  const bool isCarryingObject = robot->IsCarryingObject(firstObject->GetID());
+  
+  if(!isCarryingObject && !isDockingObject)
+  {
+    // Update the ID to be the blockworld ID before broadcasting
+    payload.objectID = firstObject->GetID();
+    payload.robotID = robot->GetID();
+    robot->Broadcast(ExternalInterface::MessageEngineToGame(PayloadType(payload)));
+  }
 
   for(ObservableObject* object : matchingObjects)
   {
@@ -669,19 +682,6 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
             robot->SetLocalizedTo(nullptr);
           }
         }
-      }
-      
-      // Don't notify game about moving objects that are being carried or docked with
-      // (We expect those to move)
-      const bool isDockingObject  = object->GetID() == robot->GetDockObject();
-      const bool isCarryingObject = robot->IsCarryingObject(object->GetID());
-      
-      if(!isCarryingObject && !isDockingObject)
-      {
-        // Update the ID to be the blockworld ID before broadcasting
-        payload.objectID = object->GetID();
-        payload.robotID = robot->GetID();
-        robot->Broadcast(ExternalInterface::MessageEngineToGame(PayloadType(payload)));
       }
     }
     else

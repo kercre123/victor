@@ -225,6 +225,7 @@ private:
   BackpackLights _currentBackpackLights;
 
   bool _sendTransitionMessages = false;
+  bool _robotDelocalized = false;
   
 }; // class LightsComponent
 

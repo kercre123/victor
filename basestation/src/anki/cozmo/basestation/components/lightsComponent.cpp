@@ -62,6 +62,7 @@ LightsComponent::LightsComponent(Robot& robot)
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedObject>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectMoved>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectConnectionState>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotDelocalized>();
     
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetActiveObjectLEDs>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetAllActiveObjectLEDs>();
@@ -181,8 +182,38 @@ void LightsComponent::Update()
   
   const TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   
+  // We are going from delocalized to localized
+  bool doRelocalizedUpdate = false;
+  if(_robotDelocalized && _robot.IsLocalized())
+  {
+    doRelocalizedUpdate = true;
+    _robotDelocalized = false;
+  }
+  
   for( auto& cubeInfoPair : _cubeInfo )
   {
+    // Note this check is done before the "Is cubeInfoPair enabled" check so we can update the
+    // prevState should this cube be disabled
+    if(doRelocalizedUpdate)
+    {
+      // Set the desired state to visible for all cubes with known poses
+      const ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(cubeInfoPair.first);
+      if(object != nullptr && !object->IsPoseStateUnknown())
+      {
+        if(ShouldOverrideState(cubeInfoPair.second.desiredState, CubeLightsState::Visible))
+        {
+          // Update our prevState if we are disabled so if we are moved while disabled our state will
+          // be properly restored
+          if(!cubeInfoPair.second.enabled)
+          {
+            cubeInfoPair.second.prevState = CubeLightsState::Visible;
+          }
+          
+          cubeInfoPair.second.desiredState = CubeLightsState::Visible;
+        }
+      }
+    }
+  
     if(!cubeInfoPair.second.enabled)
     {
       continue;
@@ -514,8 +545,8 @@ void LightsComponent::HandleMessage(const ExternalInterface::RobotObservedObject
     _cubeInfo[msg.objectID].enabled = false;
   }
   
-  if( ShouldOverrideState( _cubeInfo[msg.objectID].desiredState, CubeLightsState::Visible ) ) {
-    
+  if(ShouldOverrideState(_cubeInfo[msg.objectID].desiredState, CubeLightsState::Visible))
+  {
     // Update our prevState if we are disabled so if we are moved while disabled our state will
     // be properly restored
     if(!_cubeInfo[msg.objectID].enabled)
@@ -569,6 +600,29 @@ void LightsComponent::HandleMessage(const ObjectConnectionState& msg)
     if(!_allCubesEnabled)
     {
       _cubeInfo[msg.objectID].enabled = false;
+    }
+  }
+}
+  
+  
+template<>
+void LightsComponent::HandleMessage(const ExternalInterface::RobotDelocalized& msg)
+{
+  _robotDelocalized = true;
+  
+  // Set light states back to default since Cozmo has lost track of them
+  for(auto& cube: _cubeInfo)
+  {
+    if( ShouldOverrideState( cube.second.desiredState, CubeLightsState::Connected ) )
+    {
+      // Update our prevState if we are disabled so if we are moved while disabled our state will
+      // be properly restored
+      if(!cube.second.enabled)
+      {
+        cube.second.prevState = CubeLightsState::Connected;
+      }
+      
+      cube.second.desiredState = CubeLightsState::Connected;
     }
   }
 }

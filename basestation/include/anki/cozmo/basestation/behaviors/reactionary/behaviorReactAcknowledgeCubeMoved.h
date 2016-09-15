@@ -78,6 +78,7 @@ private:
   void HandleObjectStopped(const Robot& robot, const ObjectStoppedMoving& msg);
   void HandleObjectUpAxisChanged(const Robot& robot, const ObjectUpAxisChanged& msg);
   void HandleObservedObject(const Robot& robot, const ExternalInterface::RobotObservedObject& msg);
+  void HandleRobotDelocalized();
   Reaction_iter GetReactionaryIterator(ObjectID objectID);
   void SetState_internal(State state, const std::string& stateName);
 
