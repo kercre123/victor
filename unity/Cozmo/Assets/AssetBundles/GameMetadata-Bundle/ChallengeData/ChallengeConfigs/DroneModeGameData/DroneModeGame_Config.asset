@@ -23,9 +23,11 @@ MonoBehaviour:
   _PointTurnSpeed_mmps: 10
   _TurboSpeed_mmps: 160
   _HeadMovementSpeed_radps: 0.25
-  _HeadIdleDelay_s: 4
+  _HeadIdleDelay_s: 30
   _NeutralTiltSizeDegrees: 5
+  _MaxTiltSizeDegrees: 50
   _MaxTurnArcRadius_mm: 255
+  _MinTurnArcRadiusAtMaxSpeed_mm: 60
   _MinTurnArcRadius_mm: 2
   _SlowDownForTurnThreshold: 0.5
   _StartingLiftHeight: 0.25
