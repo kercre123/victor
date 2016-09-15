@@ -11,8 +11,6 @@ namespace Cozmo.Minigame.CubePounce {
     public override void Enter() {
       base.Enter();
 
-      GameAudioClient.SetMusicState(_CubePounceGame.GetDefaultMusicState());
-
       _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderWaitForPounce);
       _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoWaitForPounce);
 
