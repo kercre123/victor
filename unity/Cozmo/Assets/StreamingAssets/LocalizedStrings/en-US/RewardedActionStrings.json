@@ -29,34 +29,34 @@
     "translation": "Spark an Upgrade"
   },
   "reward.description.Freeplay.CompleteBehavior.Stack": {
-    "translation": "Cozmo Completed the “Stack Cubes” behavior successfully"
+    "translation": "Cozmo Completed the 'Stack Cubes' behavior successfully"
   },
   "reward.description.Freeplay.CompleteBehavior.Pounce": {
-    "translation": "Cozmo Completed the “Pounce on Motion” behavior successfully"
+    "translation": "Cozmo Completed the 'Pounce On Fingers' behavior successfully"
   },
   "reward.description.Freeplay.CompleteBehavior.TipOver": {
-    "translation": "Cozmo Completed the “Knock Over Stacks” behavior successfully"
+    "translation": "Cozmo Completed the 'Knock Over Stacks' behavior successfully"
   },
   "reward.description.Freeplay.CompleteBehavior.Pyramid": {
-    "translation": "Cozmo Completed the “Build a Pyramid” behavior successfully"
+    "translation": "Cozmo Completed the 'Build a Pyramid' behavior successfully"
   },
   "reward.description.Freeplay.CompleteBehavior.PopWheelie": {
-    "translation": "Cozmo Completed the “Pop a Wheelie” behavior successfully"
+    "translation": "Cozmo Completed the 'Pop a Wheelie' behavior successfully"
   },
   "reward.description.QuickTap.Played": {
     "translation": "Played a game of Quick Tap"
   },
   "reward.description.QuickTap.WinGame.OneColor": {
-    "translation": "Won a game of Quick Tap in “One color” mode"
+    "translation": "Won a game of Quick Tap in 'One Color' mode"
   },
   "reward.description.QuickTap.WinGame.TwoColor": {
-    "translation": "Won a game of Quick Tap in “Two colors” mode"
+    "translation": "Won a game of Quick Tap in 'Two Colors' mode"
   },
   "reward.description.QuickTap.WinGame.ThreeColor": {
-    "translation": "Won a game of Quick Tap in “Three colors” mode"
+    "translation": "Won a game of Quick Tap in 'Three Colors' mode"
   },
   "reward.description.QuickTap.WinGame.FourColor": {
-    "translation": "Won a game of Quick Tap in “Four colors” mode"
+    "translation": "Won a game of Quick Tap in 'Four Colors' mode"
   },
   "reward.description.QuickTap.Accuracy.50": {
     "translation": "Finished a game of Quick Tap with tap accuracy >50%"
@@ -68,10 +68,10 @@
     "translation": "Finished a game of Quick Tap with 100% tap accuracy!"
   },
   "reward.description.QuickTap.Shutout.SingleRound": {
-    "translation": "Shut out Cozmo in a round of Quick Tap"
+    "translation": "Won a round of Quick Tap 5 to 0"
   },
   "reward.description.QuickTap.Shutout.TwoRounds": {
-    "translation": "Shut out Cozmo in two rounds of Quick Tap"
+    "translation": "Won two rounds of Quick Tap 5 to 0"
   },
   "reward.description.QuickTap.RedCubes.NeverTap": {
     "translation": "Never tapped on a red cube!"
@@ -89,7 +89,7 @@
     "translation": "Won a game of Keepaway"
   },
   "reward.description.Keepaway.Shutout": {
-    "translation": "Won a game of Keepaway in a shutout"
+    "translation": "Won a game of Keepaway 5 to 0"
   },
   "reward.description.Keepaway.NoFakes": {
     "translation": "Finished a game of Keepaway without ever getting faked out."

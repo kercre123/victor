@@ -31,28 +31,28 @@
     "translation": "Win a game of Quick Tap"
   },
   "dailyGoal.title.PlaySpeedTap.Level1": {
-    "translation": "Play a game of Quick Tap in Two Color mode"
+    "translation": "Play a game of Quick Tap in 'Two Color' mode"
   },
   "dailyGoal.title.WinSpeedTap.Level1": {
-    "translation": "Win a game of Quick Tap in Two Color mode"
+    "translation": "Win a game of Quick Tap in 'Two Color' mode"
   },
   "dailyGoal.title.PlaySpeedTap.Level2": {
-    "translation": "Play a game of Quick Tap in Three Color mode"
+    "translation": "Play a game of Quick Tap in 'Three Color' mode"
   },
   "dailyGoal.title.WinSpeedTap.Level2": {
-    "translation": "Win a game of Quick Tap in Three Color mode"
+    "translation": "Win a game of Quick Tap in 'Three Color' mode"
   },
   "dailyGoal.title.PlaySpeedTap.Level3": {
-    "translation": "Play a game of Quick Tap in Four Color mode"
+    "translation": "Play a game of Quick Tap in 'Four Color' mode"
   },
   "dailyGoal.title.WinSpeedTap.Level3": {
-    "translation": "Win a game of Quick Tap in Four Color mode"
+    "translation": "Win a game of Quick Tap in 'Four Color' mode"
   },
   "dailyGoal.title.SpeedTap.Shutout.Round": {
-    "translation": "Shut out Cozmo in a round of Quick Tap"
+    "translation": "Win a round of Quick Tap 5 to 0"
   },
   "dailyGoal.title.SpeedTap.TieBreaker.Round": {
-    "translation": "Win a round of Quick Tap after being tied 4-4"
+    "translation": "Win a round of Quick Tap after being tied 4 to 4"
   },
   "dailyGoal.title.WinSpeedTap.Accuracy.50": {
     "translation": "Win a game of Quick Tap with better than 50% Accuracy"
@@ -73,25 +73,25 @@
     "translation": "Win a game of Keepaway"
   },
   "dailyGoal.title.WinKeepaway.Shutout": {
-    "translation": "Win a game of Keepaway in a shutout"
+    "translation": "Win a game of Keepaway 5 to 0"
   },
   "dailyGoal.title.WinKeepaway.TieBreaker": {
-    "translation": "Win a game of Keepaway after being tied 4-4"
+    "translation": "Win a game of Keepaway after being tied 4 to 4"
   },
   "dailyGoal.completedText": {
     "translation": "{0}/{1} Complete"
   },
   "dailyGoal.title.UnlockMeetCozmo": {
-    "translation": "Unlock the <color='#1100FF'>Meet Cozmo</color> Upgrade"
+    "translation": "Unlock the Meet Cozmo App"
   },
   "dailyGoal.title.MeetNewFace": {
-    "translation": "Teach Cozmo your name with <color='#1100FF'>Meet Cozmo</color>"
+    "translation": "Teach Cozmo your name with the Meet Cozmo App"
   },
   "dailyGoal.title.MeetCozmo.NewFace": {
-    "translation": "Introduce someone new with the Meet Cozmo app"
+    "translation": "Introduce someone new with the Meet Cozmo App"
   },
   "dailyGoal.title.MeetCozmo.UpdateFace": {
-    "translation": "Update {0}'s data in the Meet Cozmo app"
+    "translation": "Update {0}'s data in the Meet Cozmo App"
   },
   "dailyGoal.title.ExplorerMode.Playtime.10": {
     "translation": "Play Explorer Mode for 10 minutes"
@@ -103,52 +103,52 @@
     "translation": "Let Cozmo play uninterrupted for 10 minutes"
   },
   "dailyGoal.title.UnlockUpgradeBuildPyramid": {
-    "translation": "Unlock Cozmo's 'Build a Pyramid' upgrade."
+    "translation": "Unlock Cozmo's 'Build a Pyramid' Upgrade."
   },
   "dailyGoal.title.UnlockUpgradeFlipOntoBack": {
-    "translation": "Unlock Cozmo's 'Pop a Wheelie' upgrade."
+    "translation": "Unlock Cozmo's 'Pop a Wheelie' Upgrade."
   },
   "dailyGoal.title.UnlockUpgradeKnockOverThreeCubeStack": {
-    "translation": "Unlock Cozmo's 'Knock Over Stacks' upgrade."
+    "translation": "Unlock Cozmo's 'Knock Over Stacks' Upgrade."
   },
   "dailyGoal.title.UnlockUpgradePickupCube": {
-    "translation": "Unlock Cozmo's 'Pick up Cube' upgrade."
+    "translation": "Unlock Cozmo's 'Pick up Cube' Upgrade."
   },
   "dailyGoal.title.UnlockUpgradePounceOnMotion": {
-    "translation": "Unlock Cozmo's 'Pounce On Motion' upgrade."
+    "translation": "Unlock Cozmo's 'Pounce On Fingers' Upgrade."
   },
   "dailyGoal.title.UnlockUpgradeReactToSmiles": {
-    "translation": "Unlock Cozmo's 'React To Smiles' upgrade."
+    "translation": "Unlock Cozmo's 'React To Smiles' Upgrade."
   },
   "dailyGoal.title.UnlockUpgradeRecognizePets": {
-    "translation": "Unlock Cozmo's 'Recognize Pets' upgrade."
+    "translation": "Unlock Cozmo's 'Recognize Pets' Upgrade."
   },
   "dailyGoal.title.UnlockUpgradeRollCube": {
-    "translation": "Unlock Cozmo's 'Roll a Cube' upgrade."
+    "translation": "Unlock Cozmo's 'Roll a Cube' Upgrade."
   },
   "dailyGoal.title.UnlockUpgradeStackTwoCubes": {
-    "translation": "Unlock Cozmo's 'Stack Cubes' upgrade."
+    "translation": "Unlock Cozmo's 'Stack Cubes' Upgrade."
   },
   "dailyGoal.title.UnlockUpgradeTakeCubeFromHand": {
-    "translation": "Unlock Cozmo's 'Take Cube From Hand' upgrade."
+    "translation": "Unlock Cozmo's 'Take Cube From Hand' Upgrade."
   },
   "dailyGoal.title.UnlockUpgradePounceOnMotionAction": {
-    "translation": "Unlock Cozmo's 'Pounce On Motion' upgrade."
+    "translation": "Unlock Cozmo's 'Pounce On Fingers' Upgrade."
   },
   "dailyGoal.title.UnlockUpgradePopAWheelieAction": {
-    "translation": "Unlock Cozmo's 'Pop A Wheelie' upgrade."
+    "translation": "Unlock Cozmo's 'Pop A Wheelie' Upgrade."
   },
   "dailyGoal.title.UnlockAppDroneModeGame": {
-    "translation": "Unlock Cozmo's 'Explorer Mode' app."
+    "translation": "Unlock Cozmo's 'Explorer Mode' App."
   },
   "dailyGoal.title.UnlockAppKeepawayGame": {
-    "translation": "Unlock Cozmo's 'Keepaway' app."
+    "translation": "Unlock Cozmo's 'Keepaway' App."
   },
   "dailyGoal.title.UnlockAppMemoryMatchGame": {
-    "translation": "Unlock Cozmo's 'Memory Match' app."
+    "translation": "Unlock Cozmo's 'Memory Match' App."
   },
   "dailyGoal.title.UnlockAppQuickTapGame": {
-    "translation": "Unlock Cozmo's 'Quick Tap' app."
+    "translation": "Unlock Cozmo's 'Quick Tap' App."
   },
   "dailyGoal.title.UnlockQuickTapDifficulty.TwoColor": {
     "translation": "Unlock the 'Two Color' game mode in Quick Tap"
@@ -160,16 +160,16 @@
     "translation": "Unlock the 'Four Color' game mode in Quick Tap"
   },
   "dailyGoal.title.SparkPickupCube": {
-    "translation": "Spark the 'Pick up Cube' Upgrade"
+    "translation": "Spark the 'Pick Up Cube' Upgrade"
   },
   "dailyGoal.title.SparkStackCubes": {
     "translation": "Spark the 'Stack Cubes' Upgrade"
   },
   "dailyGoal.title.SparkRollCubes": {
-    "translation": "Spark the 'Roll Cubes' Upgrade"
+    "translation": "Spark the 'Roll a Cube' Upgrade"
   },
   "dailyGoal.title.SparkPounceOnMotion": {
-    "translation": "Spark the 'Pounce on Motion' Upgrade"
+    "translation": "Spark the 'Pounce On Fingers' Upgrade"
   },
   "dailyGoal.title.SparkKnockOverStacks": {
     "translation": "Spark the 'Knock Over Stacks' Upgrade"
