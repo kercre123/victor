@@ -469,7 +469,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 128000, guid: 21eaa812bf61341d6b38cb96ad3eae79, type: 2}
   ModifiedValues: []
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../../../
+    FieldName: Cozmo.UI.LongConfirmationView:_InstructionTextLabel
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11444792
 MonoBehaviour:
@@ -549,7 +552,10 @@ MonoBehaviour:
   - ObjectPath: HoldCozmoButton
     FieldName: Cozmo.UI.CozmoButton:TextPressedColor:r
     JsonValue: 1.0
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../../../../
+    FieldName: Cozmo.UI.LongConfirmationView:_ConfirmHoldButton
+    ReferencePath: 
   ModifiedGlobalReferences:
   - ObjectPath: HoldCozmoButton/ButtonGlint
     FieldName: UnityEngine.UI.Image:m_Sprite
@@ -641,7 +647,10 @@ MonoBehaviour:
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Color:r
     JsonValue: 0.709803939
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../../
+    FieldName: Cozmo.UI.LongConfirmationView:_WarningTextLabel
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11464220
 MonoBehaviour:
@@ -717,7 +726,10 @@ MonoBehaviour:
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"No"'
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../../../../
+    FieldName: Cozmo.UI.LongConfirmationView:_CancelButton
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11476380
 MonoBehaviour:
@@ -794,7 +806,10 @@ MonoBehaviour:
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
     JsonValue: 120
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../../../
+    FieldName: Cozmo.UI.LongConfirmationView:_TitleTextLabel
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11489484
 MonoBehaviour:
