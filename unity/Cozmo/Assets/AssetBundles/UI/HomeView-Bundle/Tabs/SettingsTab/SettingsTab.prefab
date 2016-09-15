@@ -36,7 +36,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 3
-  m_Spacing: 40
+  m_Spacing: 30
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
 --- !u!114 &11402768
@@ -55,6 +55,7 @@ MonoBehaviour:
   - {fileID: 11473112, guid: a31d80298401e41c1a6acac4b3d1fff2, type: 2}
   - {fileID: 11470202, guid: 182d9475e13e04d56a4fdbb2d4756899, type: 2}
   - {fileID: 11443554, guid: ba0455f156a204d43aa235640d5f8969, type: 2}
+  _Container: {fileID: 0}
 --- !u!114 &11428538
 MonoBehaviour:
   m_ObjectHideFlags: 1
