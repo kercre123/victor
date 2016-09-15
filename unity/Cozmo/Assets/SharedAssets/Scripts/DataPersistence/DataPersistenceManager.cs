@@ -123,33 +123,16 @@ namespace DataPersistence {
     public TimelineEntryData StartNewSession() {
       TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today);
       DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Add(newSession);
-
-      bool needsNewGoals = true;
-      // Onboarding special case, keep repeating goals until completed.
-      if (Data.DefaultProfile.Sessions != null &&
-          Data.DefaultProfile.Sessions.Count > 0 &&
-          OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.DailyGoals)) {
-
-        // Copy the previous days goals and just put in new dates...
-        TimelineEntryData currSession = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault();
-        // this is mostly because people debug mess with their save a lot in onboarding.
-        // In the normal case this phase is completed with a DailyGoalCompleted event.
-        bool allGoalsComplete = currSession.DailyGoals.TrueForAll(x => x.GoalComplete);
-        if (allGoalsComplete) {
-          OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.DailyGoals);
-        }
-        else {
-          needsNewGoals = false;
-          newSession.DailyGoals.AddRange(currSession.DailyGoals);
-        }
+      // Goals have been generated for onboarding, complete this phase so that future sessions will have fresh goals
+      if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.DailyGoals)) {
+        OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.DailyGoals);
       }
 
-      if (needsNewGoals) {
-        newSession.DailyGoals = DailyGoalManager.Instance.GenerateDailyGoals();
-        if (DailyGoalManager.Instance.OnRefreshDailyGoals != null) {
-          DailyGoalManager.Instance.OnRefreshDailyGoals.Invoke();
-        }
+      newSession.DailyGoals = DailyGoalManager.Instance.GenerateDailyGoals();
+      if (DailyGoalManager.Instance.OnRefreshDailyGoals != null) {
+        DailyGoalManager.Instance.OnRefreshDailyGoals.Invoke();
       }
+
       if (CurrentStreak > Data.DefaultProfile.MaximumStreak) {
         Data.DefaultProfile.MaximumStreak = CurrentStreak;
       }

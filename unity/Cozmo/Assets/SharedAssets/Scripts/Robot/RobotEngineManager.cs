@@ -501,8 +501,9 @@ public class RobotEngineManager : MonoBehaviour {
 
     Robots[robotID] = new MockRobot(robotID);
     CurrentRobotID = robotID;
-
-    DataPersistence.DataPersistenceManager.Instance.CurrentSession.HasConnectedToCozmo = true;
+    if (DataPersistence.DataPersistenceManager.Instance.CurrentSession != null) {
+      DataPersistence.DataPersistenceManager.Instance.CurrentSession.HasConnectedToCozmo = true;
+    }
 
     // mock connect message fire.
     Anki.Cozmo.ExternalInterface.RobotConnectionResponse connectedMessage = new Anki.Cozmo.ExternalInterface.RobotConnectionResponse();
