@@ -271,7 +271,6 @@ enum int_32 AnimationTrigger
   StartSleeping,
   SuccessfulWheelie,
   Surprise,
-  TestFacialPng,
   TurtleRoll,
   UnitTestAnim,
 
