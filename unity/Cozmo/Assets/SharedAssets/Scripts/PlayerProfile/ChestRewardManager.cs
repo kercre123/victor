@@ -62,7 +62,9 @@ public class ChestRewardManager {
   // all their rewards into one uberchest to avoid cludgy user feedback
   public void TryPopulateChestRewards() {
     string itemId = GetChestData().Requirement.ItemId;
-    int itemCount = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.GetItemAmount(itemId);
+    int pendingDeductions = 0;
+    _PendingDeductions.TryGetValue(itemId, out pendingDeductions);
+    int itemCount = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.GetItemAmount(itemId) - pendingDeductions;
 
     // If we've earned multiple chests at once through getting an absurd number of points
     // collapse all rewarded chests and adjust points accordingly.
