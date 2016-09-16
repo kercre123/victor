@@ -791,8 +791,9 @@ namespace Anki {
       
       Broadcast( ExternalInterface::MessageGameToEngine(
                                     ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection) ) );
-      // TODO - force behavior to NoneBehavior type / entry
-      
+      Broadcast( ExternalInterface::MessageGameToEngine(
+                                    ExternalInterface::ExecuteBehavior(BehaviorType::NoneBehavior) ) );
+
       _sdkStatus.EnterMode();
       UpdateIsSdkCommunicationEnabled();
     }

@@ -940,6 +940,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveCalibrationImage>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SendAvailableObjects>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotCarryingObject>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnterSdkMode>();
       
     // EngineToGame: (in alphabetical order)
     helper.SubscribeEngineToGame<MessageEngineToGameTag::AnimationAborted>();
@@ -1504,6 +1505,23 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetRobotCarryingO
     } else {
       robot->SetCarryingObject(msg.objectID);
     }
+  }
+}
+  
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::EnterSdkMode& msg)
+{
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  
+  // We need a robot
+  if (nullptr == robot)
+  {
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleEnterSdkMode.InvalidRobotID", "Failed to find robot.");
+  }
+  else
+  {
+    robot->GetActionList().Cancel();
+    robot->GetAnimationStreamer().SetIdleAnimation(AnimationTrigger::Count);
   }
 }
 
