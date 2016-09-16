@@ -6,7 +6,7 @@
 set -e
 set -u
 
-send_slack_message() {
+send_slack_message_and_exit() {
 _payload="{
               \"channel\": \"$SLACK_CHANNEL\",
               \"username\": \"buildbot\",
@@ -22,6 +22,22 @@ _payload="{
     curl -X POST --data-urlencode "payload=$_payload" $SLACK_TOKEN_URL
 
     exit $3
+}
+
+send_slack_message() {
+_payload="{
+              \"channel\": \"$SLACK_CHANNEL\",
+              \"username\": \"buildbot\",
+              \"attachments\": [
+                {
+                  \"text\": \"$1\",
+                  \"fallback\": \"$1\",
+                  \"color\": \"$2\"
+                }
+              ]
+            }"
+
+    curl -X POST --data-urlencode "payload=$_payload" $SLACK_TOKEN_URL
 }
 
 GIT=`which git`
@@ -48,16 +64,19 @@ mkdir -p $_SOUNDBANK_DIR
 svn_rev=$(svn info $_SVN_COZMOSOUNDBANKS_REPO --username $SVN_USERNAME --password $SVN_PASSWORD | grep 'Last Changed Rev' | awk '{ print $4; }')
 
 exit_status=0
-error_output=$(python $_UPDATE_AUDIO_ASSETS_SCRIPT update $svn_rev 2>&1 >/dev/null) || exit_status=$?
+output=$(python $_UPDATE_AUDIO_ASSETS_SCRIPT update $svn_rev) || exit_status=$?
 
 if [ $exit_status -ne 0 ]; then
-    send_slack_message "There was a problem getting r${svn_rev} audio assets.\n${error_output}" "danger" $exit_status
+    send_slack_message_and_exit "There was a problem getting r${svn_rev} audio assets.\n${output}" "danger" $exit_status
+else
+    send_slack_message "UpdateAudioAssets.py update output: ${output}" "warning"
 fi
 
-
-error_output=$(python $_UPDATE_AUDIO_ASSETS_SCRIPT generate 2>&1 >/dev/null) || exit_status=$?
+output=$(python $_UPDATE_AUDIO_ASSETS_SCRIPT generate) || exit_status=$?
 if [ $exit_status -ne 0 ]; then
-    send_slack_message "There was a problem generating CLAD files.\n${error_output}" "danger" $exit_status
+    send_slack_message_and_exit "There was a problem generating CLAD files.\n${output}" "danger" $exit_status
+else
+    send_slack_message "UpdateAudioAssets.py generate: ${output}" "warning"
 fi
 
 pushd $_TOPLEVEL_COZMO
@@ -66,7 +85,7 @@ if [ "$_status" ]; then
 
     _existing_remote_branch=$($GIT ls-remote --heads $_GIT_COZMO_URI $_GIT_BRANCH_NAME)
     if [ "$_existing_remote_branch" ]; then
-        send_slack_message "Remote ${_GIT_BRANCH_NAME} branch exists.\nDelete or master remote branch!" "danger" 1
+        send_slack_message_and_exit "Remote ${_GIT_BRANCH_NAME} branch exists.\nDelete or master remote branch!" "danger" 1
     fi
 
     if [ ! -f ~/.config/hub ]; then
@@ -98,9 +117,9 @@ EOF
     $GIT push origin $_GIT_BRANCH_NAME
     pr_url=$(hub pull-request -m $_GIT_BRANCH_NAME)
 
-    send_slack_message "cozmo-one PR for updated audio assets: $pr_url" "good" 0
+    send_slack_message_and_exit "cozmo-one PR for updated audio assets: $pr_url" "good" 0
 
 else
-    send_slack_message "There are no new changes to commit to cozmo-one!" "warning" 1
+    send_slack_message_and_exit "There are no new changes to commit to cozmo-one!" "warning" 1
 fi
 popd
