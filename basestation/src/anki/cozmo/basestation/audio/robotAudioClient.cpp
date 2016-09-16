@@ -173,6 +173,7 @@ void RobotAudioClient::StopCozmoEvent(GameObjectType gameObjId)
 {
   const auto audioGameObjId = static_cast<AudioEngine::AudioGameObject>( gameObjId );
   _audioController->StopAllAudioEvents(audioGameObjId);
+  _audioController->ProcessAudioQueue();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
