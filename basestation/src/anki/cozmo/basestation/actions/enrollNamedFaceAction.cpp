@@ -752,7 +752,16 @@ namespace Cozmo {
     }
     else
     {
-      info.faceID = _faceID;
+      if(_saveID != Vision::UnknownFaceID)
+      {
+        // We just merged the enrolled ID (faceID) into saveID, so report saveID as
+        // "who" was enrolled
+        info.faceID = _saveID;
+      }
+      else
+      {
+        info.faceID = _faceID;
+      }
       info.name   = _faceName;
       info.neverSawValidFace = false;
     }
