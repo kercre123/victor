@@ -41,6 +41,7 @@ public abstract class GameBase : MonoBehaviour {
   public IRobot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
   private AlertView _InterruptedAlertView = null;
+  private AlertView _CozmoSkillChangeAlertView = null;
 
   private SharedMinigameView _SharedMinigameViewInstance;
 
@@ -636,6 +637,14 @@ public abstract class GameBase : MonoBehaviour {
       CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
     }
 
+    if (_InterruptedAlertView != null) {
+      _InterruptedAlertView.CloseViewImmediately();
+    }
+
+    if (_CozmoSkillChangeAlertView != null) {
+      _CozmoSkillChangeAlertView.CloseViewImmediately();
+    }
+
     // Some CleanUpOnDestroy overrides send a robot animation as well
     CleanUpOnDestroy();
     Destroy(gameObject);
@@ -831,6 +840,7 @@ public abstract class GameBase : MonoBehaviour {
     alertView.TitleLocKey = LocalizationKeys.kSkillsLevelUpTitle;
     alertView.DescriptionLocKey = LocalizationKeys.kSkillsLevelUpDescription;
     alertView.SetMessageArgs(new object[] { newLevel, _ChallengeData.name });
+    _CozmoSkillChangeAlertView = alertView;
   }
 
   #endregion

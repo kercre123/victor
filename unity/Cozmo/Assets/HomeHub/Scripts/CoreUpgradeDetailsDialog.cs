@@ -351,10 +351,10 @@ public class CoreUpgradeDetailsDialog : BaseView {
   private void HandleSparkEnded(object message) {
     // Only fire the game event when we receive the spark ended message, rewards are only applied
     // when COMPLETING a sparked action (or timing out). View includes a warning dialog for exiting.
-    GameEventManager.Instance.FireGameEvent (GameEventWrapperFactory.Create (GameEvent.OnUnlockableSparked, _UnlockInfo.Id.Value));
-    StopSparkUnlock ();
+    GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnUnlockableSparked, _UnlockInfo.Id.Value));
+    StopSparkUnlock();
     if (_QuitViewRef != null) {
-      UIManager.CloseView (_QuitViewRef);
+      UIManager.CloseView(_QuitViewRef);
     }
   }
 
@@ -412,6 +412,9 @@ public class CoreUpgradeDetailsDialog : BaseView {
     }
     if (HomeHub.Instance != null && HomeHub.Instance.HomeViewInstance != null) {
       HomeHub.Instance.HomeViewInstance.CheckForRewardSequence();
+    }
+    if (_QuitViewRef != null) {
+      _QuitViewRef.CloseViewImmediately();
     }
   }
 

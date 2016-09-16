@@ -26,6 +26,8 @@ public class FaceEnrollmentCell : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.Image _UpdateImage;
 
+  private Cozmo.UI.AlertView _ReEnrollAlertView = null;
+
   public void Initialize(int faceID, string faceName, bool needsUpdate) {
     _FaceName = faceName;
     _FaceID = faceID;
@@ -39,6 +41,12 @@ public class FaceEnrollmentCell : MonoBehaviour {
     _ReEnrollFace.Initialize(HandleReEnrollFaceClicked, "reenroll_face_button", "face_enrollment_cell");
   }
 
+  private void OnDestroy() {
+    if (_ReEnrollAlertView != null) {
+      _ReEnrollAlertView.CloseViewImmediately();
+    }
+  }
+
   private void HandleReEnrollFaceClicked() {
     if (OnReEnrollFaceRequested != null) {
 
@@ -50,6 +58,7 @@ public class FaceEnrollmentCell : MonoBehaviour {
       alertView.SetPrimaryButton(LocalizationKeys.kFaceEnrollmentReenrollmentAlertConfirmButton, HandleReEnrollConfirm);
       alertView.SetPrimaryButtonArgs(new object[] { _FaceName });
       alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel);
+      _ReEnrollAlertView = alertView;
 
     }
   }

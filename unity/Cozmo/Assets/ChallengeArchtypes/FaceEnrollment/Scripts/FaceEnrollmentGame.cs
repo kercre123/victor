@@ -40,6 +40,9 @@ namespace FaceEnrollment {
     private bool _EnrollingFace = false;
     private bool _ShowDoneShelf = false;
 
+    private Cozmo.UI.AlertView _ErrorAlertView = null;
+    private Cozmo.UI.AlertView _DeleteConfirmationAlertView = null;
+
     // selects if we should save to the actual robot or only keep faces
     // for this session. used by press demo to not save to the actual robot.
     public void SetSaveToRobot(bool saveToRobot) {
@@ -266,6 +269,7 @@ namespace FaceEnrollment {
             }
           });
           alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel);
+          _ErrorAlertView = alertView;
         }
       }
       else {
@@ -383,6 +387,7 @@ namespace FaceEnrollment {
       alertView.SetPrimaryButton(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmButton, () => HandleDeleteEnrolledFaceConfirmButton(faceID));
       alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel);
       alertView.TitleLocKey = Localization.GetWithArgs(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmTitle, CurrentRobot.EnrolledFaces[faceID]);
+      _DeleteConfirmationAlertView = alertView;
     }
 
     private void HandleDeleteEnrolledFaceConfirmButton(int faceID) {
@@ -422,6 +427,13 @@ namespace FaceEnrollment {
       // turn the default head and lift state off
       if (CurrentRobot != null) {
         CurrentRobot.SetDefaultHeadAndLiftState(false, 0.0f, 0.0f);
+      }
+
+      if (_ErrorAlertView != null) {
+        _ErrorAlertView.CloseViewImmediately();
+      }
+      if (_DeleteConfirmationAlertView != null) {
+        _DeleteConfirmationAlertView.CloseViewImmediately();
       }
 
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(HandleEnrolledFace);
