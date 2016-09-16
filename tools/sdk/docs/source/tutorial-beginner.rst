@@ -66,49 +66,8 @@ To run a program for Cozmo:
 
 1. Plug the mobile device containing the Cozmo app into your computer.
 2. Open the Cozmo app on the device. Make sure Cozmo is on and connected to the app via WiFi.
-3. On the computer, open two Terminal (iOS/Linux) / Command-line (Windows) windows.
-
-  a. In the first window, type ``cd SDKDirectory`` where *SDKDirectory* is the name of the directory you extracted the SDK into and press Enter.
-
-  b. Next, type the following and press Enter::
-
-      cd tcprelay
-
-  c. Now open communications between the robot, the phone, and the computer.
-
-    i. For iOS/Linux systems:
-
-      a. For iPhone, type the following into the same window and press Enter::
-
-          ./iosSdkTcpRelay.sh
-
-      b. For Android devices, type the following into the same window and press Enter::
-
-          ./androidSdkAddTcpRelay.sh
-
-    ii. For Windows systems:
-
-.. important:: Communications between iOS devices and a Windows system require `Python 2 <https://www.python.org/downloads/>`_ to be installed. Installing Python 2 will not uninstall Python 3 from the system.
-
-..
-
-      a. For iPhone, type the following into the same window and press Enter::
-
-          ./iosSdkTcpRelay.bat
-
-      b. For Android devices, type the following into the same window and press Enter::
-
-          ./androidSdkAddTcpRelay.bat
-
-..
-
-.. warning:: If switching to an iOS device from Android after running the SDK, type in `./androidSdkRemoveTcpRelay.sh` before proceeding.
-
-.. warning:: Do NOT close the first Terminal window. Closing the first Terminal window while operating with the SDK will close communications with the Cozmo robot and cause errors within the program.
-
-4. In the *second* Terminal window, type ``cd SDKDirectory`` where SDKDirectory is the name of the directory you extracted the SDK into and press Enter.
-
-5. Now you can run your program.
+3. On the computer, open a Terminal (iOS/Linux) / Command-line (Windows) windows. Type ``cd SDKDirectory`` where *SDKDirectory* is the name of the directory you extracted the SDK into and press Enter.
+4. Now you can run your program.
 
   a. For iOS and Linux systems, type the following into the same window and press **Enter**::
 
@@ -118,7 +77,7 @@ To run a program for Cozmo:
 
       run-example.bat directoryname/program_name.py
 
-6. If done correctly, Cozmo will execute the program.
+5. If done correctly, Cozmo will execute the program.
 
 --------------------------
 Example 1 - Drive Straight
