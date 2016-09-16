@@ -162,6 +162,8 @@
 	<array>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+        <key>UIRequiresFullScreen</key>
+        <string>YES</string>
 	<key>Unity_LoadingActivityIndicatorStyle</key>
 	<integer>-1</integer>
 	<key>com.anki.das.version</key>
