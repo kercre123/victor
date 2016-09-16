@@ -22,17 +22,13 @@ namespace Cozmo.Minigame.CubePounce {
         _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderCozmoWinPoint);
         _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoCozmoWinPoint);
         _CubePounceGame.AddPoint(false);
-        _CubePounceGame.StartCycleCubeSingleColor(_CubePounceGame.GetCubeTarget ().ID, new Color [] { Color.red }, _CubePounceGame.GameConfig.CubeLightFlashInterval_s, Color.black);
-
-        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Lose);
+        _CubePounceGame.StartCycleCubeSingleColor(_CubePounceGame.GetCubeTarget().ID, new Color[] { Color.red }, _CubePounceGame.GameConfig.CubeLightFlashInterval_s, Color.black);
       }
       else {
         _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderPlayerWinPoint);
         _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoPlayerWinPoint);
         _CubePounceGame.AddPoint(true);
         _CubePounceGame.StartCycleCubeSingleColor(_CubePounceGame.GetCubeTarget().ID, new Color[] { Color.green }, _CubePounceGame.GameConfig.CubeLightFlashInterval_s, Color.white);
-
-        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Win);
       }
 
       bool roundIsOver = _CubePounceGame.CheckAndUpdateRoundScore();
@@ -47,6 +43,10 @@ namespace Cozmo.Minigame.CubePounce {
         else {
           _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceLoseHand, HandleEndHandAnimFinish);
         }
+
+        // play the "score" sound, but skip it when the round is over (because we're playing another sound for that)
+        Anki.Cozmo.Audio.GameEvent.Sfx evt = _CozmoWon ? Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Lose : Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Win;
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(evt);
       }
 
       _CubePounceGame.UpdateScoreboard();

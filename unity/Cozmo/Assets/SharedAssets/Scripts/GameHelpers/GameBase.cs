@@ -705,7 +705,6 @@ public abstract class GameBase : MonoBehaviour {
     else {
       DataPersistence.DataPersistenceManager.Instance.CurrentSession.TotalWins.Add(_ChallengeData.ChallengeID, 1);
     }
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Win_Shared);
     if (_ShowScoreboardOnComplete) {
       UpdateScoreboard(didPlayerWin: _WonChallenge);
     }
@@ -716,7 +715,6 @@ public abstract class GameBase : MonoBehaviour {
     _StateMachine.Stop();
     _WonChallenge = false;
 
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Lose_Shared);
     if (_ShowScoreboardOnComplete) {
       UpdateScoreboard(didPlayerWin: _WonChallenge);
     }
