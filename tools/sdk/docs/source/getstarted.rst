@@ -1,6 +1,6 @@
-=================================================
-Getting Started With the Cozmo SDK - OS X / Linux
-=================================================
+==================================
+Getting Started With the Cozmo SDK
+==================================
 
 .. warning:: THIS IS THE ALPHA BUILD OF THE COZMO SDK. All information within this SDK is subject to change without notice.
 
@@ -10,7 +10,7 @@ To make sure you get the best experience possible out of the SDK, please ensure 
 Starting Up the SDK
 -------------------
 
-1. Plug the smartphone containing the Cozmo app into your computer.
+1. Plug the mobile device containing the Cozmo app into your computer.
 2. Open the Cozmo app on the phone. Make sure Cozmo is on and connected to the app via WiFi.
 3. On the computer, open two Terminal windows.
 

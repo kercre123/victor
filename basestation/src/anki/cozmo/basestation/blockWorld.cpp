@@ -177,6 +177,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
   , _lastPlayAreaSizeEventSec(0)
   , _playAreaSizeEventIntervalSec(60)
   , _didObjectsChange(false)
+  , _robotMsgTimeStampAtChange(0)
   , _canDeleteObjects(true)
   , _canAddObjects(true)
   , _currentNavMemoryMapOrigin(nullptr)
@@ -686,6 +687,8 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
         {
           newObject = oldObject->CloneType();
           newObject->CopyID(oldObject);
+          newObject->SetActiveID(oldObject->GetActiveID());
+          newObject->SetFactoryID(oldObject->GetFactoryID());
           
           addNewObject = true;
         
@@ -1099,6 +1102,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
                               objSeen->GetType());
         }
         
+        bool matchedCarryingObject = false;
         for(ObservableObject* objectFound : objectsFound)
         {
           assert(nullptr != objectFound);
@@ -1109,11 +1113,18 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
           {
             if (objectFound->GetID() == _robot->GetCarryingObject())
             {
-              if (objectFound->IsSameAs(*objSeen))
+              if (_robot->GetLiftHeight() >= LIFT_HEIGHT_HIGHDOCK &&
+                  objectFound->IsSameAs(*objSeen))
               {
                 // If this is the object we're carrying observed in the carry position,
                 // do nothing and continue to the next observed object.
-                continue;
+                matchedCarryingObject = true;
+                PRINT_NAMED_WARNING("Blockworld.AddAndUpdateObjects.SeeingCarriedObject",
+                                    "Seeing object %s[%d] on lift at height %fmm",
+                                    EnumToString(objSeen->GetType()),
+                                    objSeen->GetID().GetValue(),
+                                    _robot->GetLiftHeight());
+                break;
               }
               else
               {
@@ -1139,7 +1150,11 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
             matchingObjects[origin] = objectFound;
           }
         } // for each object found
-    
+        
+        if(matchedCarryingObject)
+        {
+          continue;
+        }
       }
       else
       {
@@ -1295,6 +1310,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
       BroadcastObjectObservation(observedObject);
       
       _didObjectsChange = true;
+      _robotMsgTimeStampAtChange = atTimestamp;
       _currentObservedObjects.push_back(observedObject);
       
     } // for each object seen
@@ -1791,6 +1807,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
 
     AddNewObject(markerlessObject);
     _didObjectsChange = true;
+    _robotMsgTimeStampAtChange = lastTimestamp;
     _currentObservedObjects.push_back(markerlessObject.get());
     
     if(kAddMarkerlessObjectsToMemMap)
@@ -1815,6 +1832,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
 
     AddNewObject(customObject);
     _didObjectsChange = true;
+    _robotMsgTimeStampAtChange = _robot->GetLastMsgTimestamp();
     
     // TODO: Remove these (custom fixed objects have no markers and can't be observed
     // (this was just copy/pasted from MarkerlessObject)
@@ -1928,6 +1946,10 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
   
   bool BlockWorld::DidObjectsChange() const {
     return _didObjectsChange;
+  }
+  
+  const TimeStamp_t& BlockWorld::GetTimeOfLastChange() const {
+    return _robotMsgTimeStampAtChange;
   }
 
   
@@ -2496,6 +2518,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
         m->SetLastObservedTime(lastTimestamp);
         AddNewObject(ObjectFamily::MarkerlessObject, m);
         _didObjectsChange = true;
+        _robotMsgTimeStampAtChange = _robot->GetLastMsgTimestamp();
       }
     } // end for all prox sensors
     
@@ -4120,6 +4143,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
       
       // Flag that we removed an object
       _didObjectsChange = true;
+      _robotMsgTimeStampAtChange = _robot->GetLastMsgTimestamp();
     }
   }
   

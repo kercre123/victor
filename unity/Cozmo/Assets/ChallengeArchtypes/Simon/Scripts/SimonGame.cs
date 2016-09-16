@@ -188,7 +188,7 @@ namespace Simon {
 
     public Anki.Cozmo.Audio.AudioEventParameter GetAudioForBlock(int blockId) {
       Anki.Cozmo.Audio.AudioEventParameter audioEvent =
-        Anki.Cozmo.Audio.AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect);
+        Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Connect);
       SimonCube simonCube;
       if (_BlockIdToSound.TryGetValue(blockId, out simonCube)) {
         audioEvent = simonCube.soundName;

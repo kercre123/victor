@@ -96,6 +96,10 @@ namespace AnimKeyFrame {
     uint_8 whichTracks
   }
 
+  message InitController
+  {
+  }
+
   message StartOfAnimation
   {
     uint_8 tag

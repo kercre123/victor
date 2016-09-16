@@ -247,11 +247,15 @@ namespace FaceEnrollment {
         else {
           alertView.TitleLocKey = LocalizationKeys.kFaceEnrollmentErrorsTimeOutTitle;
           alertView.DescriptionLocKey = LocalizationKeys.kFaceEnrollmentErrorsTimeOutDescription;
+
+          bool reEnrolling = _ReEnrollFaceID != 0;
+          int reEnrollingID = _ReEnrollFaceID;
+
           alertView.SetPrimaryButton(LocalizationKeys.kButtonRetry, () => {
             CleanupFaceListSlide();
-            bool reEnrolling = _ReEnrollFaceID != 0;
+
             if (reEnrolling) {
-              RequestReEnrollFace(_ReEnrollFaceID, _NameForFace);
+              RequestReEnrollFace(reEnrollingID, _NameForFace);
             }
             else {
               HandleNewNameEntered(_NameForFace);
@@ -271,16 +275,16 @@ namespace FaceEnrollment {
           ReEnrolledExistingFaceAnimationSequence();
         }
         else {
-          // log to das
-          DAS.Event("robot.face_slots_used", CurrentRobot.EnrolledFaces.Count.ToString(), null,
-            new Dictionary<string, string>() { { "$data", "1" } });
-
           CurrentRobot.EnrolledFaces.Add(message.completionInfo.faceEnrollmentCompleted.faceID, _NameForFace);
           CurrentRobot.EnrolledFacesLastEnrolledTime.Add(message.completionInfo.faceEnrollmentCompleted.faceID, 0);
           CurrentRobot.EnrolledFacesLastSeenTime.Add(message.completionInfo.faceEnrollmentCompleted.faceID, 0);
           GameEventManager.Instance.FireGameEvent(Anki.Cozmo.GameEvent.OnMeetNewPerson);
           DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Enrolled new face: " + _NameForFace);
           EnrolledNewFaceAnimationSequence();
+
+          // log to das
+          DAS.Event("robot.face_slots_used", CurrentRobot.EnrolledFaces.Count.ToString(), null,
+            new Dictionary<string, string>() { { "$data", "1" } });
         }
       }
 
@@ -359,7 +363,10 @@ namespace FaceEnrollment {
 
     private void RetryFaceEnrollmentOnReactionaryBehaviorEnd(Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition message) {
       if (message.behaviorStarted == false) {
-        HandleInstructionsSlideEntered();
+        // only try to re-enroll if we are still in the enrollment instructions view
+        if (_FaceEnrollmentInstructionsViewInstance != null) {
+          HandleInstructionsSlideEntered();
+        }
         RobotEngineManager.Instance.RemoveCallback<ReactionaryBehaviorTransition>(RetryFaceEnrollmentOnReactionaryBehaviorEnd);
       }
     }

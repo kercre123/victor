@@ -228,20 +228,20 @@ The code for the Control Via Tweet example reads as follows.
 1. ``twitter_helpers`` is a wrapper that consolidates a list of Tweepy helpers that integrate certain Twitter functions (OAuth authentication, behavior for posting tweets) and define certain scenarios (tweet from user, receiving data that is not a tweet, etc.). Having a Cozmo wrapper like this means that Tweepy does not have to be imported multiple times.
 2. ``import cozmo_twitter_keys`` imports the Twitter keys and access tokens required for Cozmo to access his Twitter account.
 3. The ``ReactToTweetsStreamListener`` class contains all the different functions that control Cozmo's reactions to tweets sent @Cozmo'sTwitterHandle.
-  1. ``do_drive``
+  a. ``do_drive``
     1. Cozmo drives in a straight line for X number of seconds.
     2. A positive number of seconds drives him forwards; a negative number drives him backwards.
     3. Cozmo will interrupt this action if he detects a cliff or runs into an impassible object such as a wall.
-  2. ``do_turn``
+  b. ``do_turn``
     1. Cozmo turns X number of degrees when given this command.
     2. The valid range of degrees is -360 to 0 to 360.
-  3. ``do_lift``
+  c. ``do_lift``
     1. Cozmo lifts his forklift.
     2. X is the speed at which it moves; valid range is any number between 0 and 1.
-  4. ``do_tilthead``
+  d. ``do_tilthead``
     1. Cozmo tilts his head up.
     2. X is the speed at which it moves; valid range is any number between 0 and 1.
-  5. ``do_say``
+  e. ``do_say``
     1. Cozmo says the word or phrase tweeted at him.
 4. The ``on_tweet_from_user`` function defines how Cozmo behaves in regards to retweets and reply posts from his own account, as well as holds information on error handling.
 

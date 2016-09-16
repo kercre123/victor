@@ -31,6 +31,8 @@ public class FirstTimeConnectDialog : MonoBehaviour {
 
   private void Awake() {
 
+    DasTracker.Instance.OnFirstTimeConnectStarted();
+
     if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
       _StartButton.Initialize(HandleMockButton, "start_button", "first_time_connect_dialog");
     }
@@ -40,7 +42,7 @@ public class FirstTimeConnectDialog : MonoBehaviour {
 
     _PrivacyPolicyButton.Initialize(() => {
       ScrollingTextView view = UIManager.OpenView<ScrollingTextView>(AlertViewLoader.Instance.ScrollingTextViewPrefab, (ScrollingTextView v) => { v.DASEventViewName = "privacy_policy_view"; });
-      view.Initialize(LocalizationKeys.kPrivacyPolicyTitle, LocalizationKeys.kPrivacyPolicyText);
+      view.Initialize(Localization.Get(LocalizationKeys.kPrivacyPolicyTitle), Localization.Get(LocalizationKeys.kPrivacyPolicyText));
     }, "privacy_policy_button", "first_time_connect_dialog");
 
     _StartButton.Text = Localization.Get(LocalizationKeys.kLabelStart);
@@ -55,6 +57,8 @@ public class FirstTimeConnectDialog : MonoBehaviour {
     if (_ConnectionFlowInstance != null) {
       GameObject.Destroy(_ConnectionFlowInstance.gameObject);
     }
+
+    DasTracker.Instance.OnFirstTimeConnectEnded();
   }
 
   private void HandleStartButton() {
@@ -111,9 +115,6 @@ public class FirstTimeConnectDialog : MonoBehaviour {
   }
 
   private void HandleConnectionFlowComplete() {
-    // generate the initial set of daily goals
-    DataPersistence.DataPersistenceManager.Instance.StartNewSession();
-
     if (_ConnectionFlowInstance != null) {
       GameObject.Destroy(_ConnectionFlowInstance.gameObject);
     }

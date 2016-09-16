@@ -107,29 +107,64 @@ AudioController::AudioController( const CozmoContext* context )
     // Add Assets Zips to list.
 
 #ifdef ANDROID
-    // Set andoid asset manager & path
-
-    // get APK location
-    std::string apkPath;
+    // Add to the APK file and OBB file (if it exists) to the list of valid zip files where the audio assets can be
     {
       auto envWrapper = Util::JNIUtils::getJNIEnvWrapper();
       JNIEnv* env = envWrapper->GetEnv();
       JNI_CHECK(env);
 
+      // Get a handle to the activity instance
       Util::JClassHandle contextClass{env->FindClass("android/content/ContextWrapper"), env};
       Util::JObjectHandle activity{Util::JNIUtils::getUnityActivity(env), env};
-      apkPath = Util::JNIUtils::getStringFromObjectMethod(env, contextClass.get(), activity.get(),
-        "getPackageCodePath", "()Ljava/lang/String;");
+
+      // Get a handle to the object representing the OBB folder
+      jmethodID obbDirMethodID = env->GetMethodID(contextClass.get(), "getObbDir", "()Ljava/io/File;");
+      Util::JObjectHandle obbDir{env->CallObjectMethod(activity.get(), obbDirMethodID), env};
+
+      // Get the obb folder path as a string
+      Util::JClassHandle fileClass{env->FindClass("java/io/File"), env};
+      std::string obbDirPath = Util::JNIUtils::getStringFromObjectMethod(env, fileClass.get(), obbDir.get(), "getAbsolutePath", "()Ljava/lang/String;");
+      if (!obbDirPath.empty())
+      {
+        PRINT_CH_INFO(kAudioLogChannelName, "AudioController.AudioController", "obb Dir path: %s", obbDirPath.c_str());
+        
+        // Get the list of files in the folder
+        jmethodID listMethodID = env->GetMethodID(fileClass.get(), "list", "()[Ljava/lang/String;");
+        Util::JObjectArrayHandle filesInOBBDir{(jobjectArray)env->CallObjectMethod(obbDir.get(), listMethodID), env};
+        if (filesInOBBDir != nullptr)
+        {
+          // Get the first file in the folder and add it to to the list of paths
+          if (env->GetArrayLength(filesInOBBDir.get()) > 0)
+          {
+            Util::JObjectHandle obbFileObject{env->GetObjectArrayElement(filesInOBBDir.get(), 0), env};
+            std::string obbFile(env->GetStringUTFChars((jstring)obbFileObject.get(), 0));
+
+            std::string obbZipPath = obbDirPath + "/" + obbFile + "?" + "assets/cozmo_resources/sound/AudioAssets.zip";
+            config.pathToZipFiles.push_back(std::move(obbZipPath));
+            PRINT_CH_INFO(kAudioLogChannelName, "AudioController.AudioController", "OBB file: %s", obbZipPath.c_str());
+          }
+          else 
+          {
+            PRINT_CH_INFO(kAudioLogChannelName, "AudioController.AudioController", "No OBB file in the OBB folder");
+          }
+        }
+        else 
+        {
+          PRINT_CH_INFO(kAudioLogChannelName, "AudioController.AudioController", "No OBB folder");
+        }
+      }
+
+      std::string apkPath = Util::JNIUtils::getStringFromObjectMethod(env, contextClass.get(), activity.get(), "getPackageCodePath", "()Ljava/lang/String;");
+      std::string apkZipPath = apkPath + "?" + "assets/cozmo_resources/sound/AudioAssets.zip";
+      config.pathToZipFiles.push_back(std::move(apkZipPath));
+      PRINT_CH_INFO(kAudioLogChannelName, "AudioController.AudioController", "APK file: %s", apkZipPath.c_str());
     }
-
-    config.pathToZipFiles.push_back(apkPath + "?" + "assets/cozmo_resources/sound/AudioAssets.zip");
-
 #else
     // iOS & Mac Platfroms
     // Note: We only have 1 file at the moment this will change when we brake up assets for RAMS
     std::string zipAssets = assetPath + "AudioAssets.zip";
     if (Util::FileUtils::FileExists(zipAssets)) {
-      config.pathToZipFiles.push_back(zipAssets);
+      config.pathToZipFiles.push_back(std::move(zipAssets));
     }
     else {
       PRINT_NAMED_ERROR("AudioController.AudioController", "Audio Assets not found: '%s'", zipAssets.c_str());

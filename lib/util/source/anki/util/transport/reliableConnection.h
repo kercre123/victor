@@ -15,6 +15,7 @@
 
 
 #include <vector>
+#include "util/global/globalDefinitions.h"
 #include "util/transport/netTimeStamp.h"
 #include "util/transport/pendingMultiPartMessage.h"
 #include "util/transport/reliableMessageTypes.h"
@@ -31,8 +32,12 @@ class ReliableTransport;
 class SrcBufferSet;
 class TransportAddress;
 
-#define ENABLE_RC_PACKET_TIME_DIAGNOSTICS 1
-
+#if ANKI_PROFILING_ENABLED
+  #define ENABLE_RC_PACKET_TIME_DIAGNOSTICS 1
+#else
+  #define ENABLE_RC_PACKET_TIME_DIAGNOSTICS 0
+#endif
+  
 class ReliableConnection
 {
 public:

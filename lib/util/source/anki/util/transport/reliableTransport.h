@@ -14,6 +14,7 @@
 #define __NetworkService_ReliableTransport_H__
 
 #include "util/dispatchQueue/dispatchQueue.h"
+#include "util/global/globalDefinitions.h"
 #include "util/stats/recentStatsAccumulator.h"
 #include "util/transport/iNetTransport.h"
 #include "util/transport/iNetTransportDataReceiver.h"
@@ -26,9 +27,13 @@
 #include <mutex>
 
 
-#define ENABLE_RT_UPDATE_TIME_DIAGNOSTICS 1
-#define ENABLE_RUN_TIME_PROFILING 0
-
+#if ANKI_PROFILING_ENABLED
+  #define ENABLE_RT_UPDATE_TIME_DIAGNOSTICS 1
+  #define ENABLE_RUN_TIME_PROFILING 0
+#else
+  #define ENABLE_RT_UPDATE_TIME_DIAGNOSTICS 0
+  #define ENABLE_RUN_TIME_PROFILING 0
+#endif
 
 namespace Anki {
 namespace Util {

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using System.Collections;
@@ -488,36 +488,33 @@ namespace Anki {
       // However, on iOS this is necessary to get appropriate debug symbols & C# exception behavior
       // for optimal debugging.
       private static void ConfigurePlayerSettings(BuildTarget target, BuildTargetGroup buildTargetGroup, string config) {
-        // We currently only need to set custom options for iOS
-        if (target != BuildTarget.iOS) {
-          return;
-        }
 
         // unity keeps this list from last execution. so we will not build on it. we will instead start fresh each time
         //string poundDefines = PlayerSettings.GetScriptingDefineSymbolsForGroup(buildTargetGroup);
         string poundDefines = "";
 
-        switch (config) {
-        case "debug":
-        case "Debug": {
+        switch (config.ToLower()) {
+        case "debug": {
             PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.SlowAndSafe;
             poundDefines += "ENABLE_DEBUG_PANEL;ANKI_DEVELOPER_CODE;ANKI_DEV_CHEATS;ANKI_NO_PRIVACY_GUARD;DEBUG";
           }
           break;
-        case "shipping":
-        case "Shipping": {
+        case "shipping": {
             PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.SlowAndSafe;
             poundDefines += "SHIPPING;NDEBUG";
           }
           break;
-        case "profile":
-        case "Profile": {
+        case "googleplay": {
+            PlayerSettings.Android.useAPKExpansionFiles = true;
+            poundDefines += "SHIPPING;NDEBUG";
+          }
+          break;
+        case "profile": {
             PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.SlowAndSafe;
             poundDefines += "PROFILE;NDEBUG";
           }
           break;
-        case "release":
-        case "Release": {
+        case "release": {
             // TODO: BRC - Remove me after Founder Demo
             // Disable FastNoExceptions mode until we know what is causing the exception
             // in the DOTween library.

@@ -21,6 +21,12 @@
   "unlockable.Unlock": {
     "translation": "Unlock"
   },
+  "unlockable.App": {
+    "translation": "App"
+  },  
+  "unlockable.Upgrade": {
+    "translation": "Upgrade"
+  },
   "unlockable.Available": {
     "translation": "Available:"
   },
@@ -28,10 +34,13 @@
     "translation": "View Upgrade"
   },
   "unlockable.PreReqNeeded.Description": {
-    "translation": "You need to unlock {0} first!"
+    "translation": "You need to unlock the\n{0} {1} first!"
   },
   "unlockable.BitsRequired.Title": {
     "translation": "Not Enough Bits"
+  },
+  "unlockable.CurrencyRequired": {
+    "translation": "Not Enough {0}"
   },
   "unlockable.BitsRequired.Description": {
     "translation": "Use {0} {1} to Unlock"
@@ -136,7 +145,7 @@
     "translation": "Coming Soon"
   },
   "unlockable.ComingSoon.Description": {
-    "translation": "More Content Coming Soon"
+    "translation": "Coming Soon! Check back for more Upgrades, Apps, and fun Cozmo features"
   },
   "unlockable.Default.Title": {
     "translation": "Unlockable Default Title"

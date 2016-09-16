@@ -56,7 +56,7 @@ void Anki::Cozmo::HAL::DAC::Init(void) {
 
   Mute();
   
-  audioVolume = 0xFFFF;
+  SetVolume(~0); // Default to max volume
 }
 
 void Anki::Cozmo::HAL::DAC::EnableAudio(bool enable) {
@@ -88,42 +88,17 @@ void Anki::Cozmo::HAL::DAC::Sync() {
 }
 
 void Anki::Cozmo::HAL::DAC::Feed(bool enabled, uint8_t* samples) {  
-  #ifdef GENERATE_WHITE_NOISE
-  static uint64_t lsfr = ~0L;
-
-  EnableAudio(true);    
-  for (int length = MAX_AUDIO_BYTES_PER_DROP; length > 0; length--) {
-    DAC_WRITE[write_pointer] = lsfr & 0xFFFF;
-    lsfr = (lsfr >> 1) ^ (lsfr & 1 ? 0x42F0E1EBA9EA3693L : 0);
-  }
-  
-  return ;
-  #else
   EnableAudio(enabled);
 
   for (int length = MAX_AUDIO_BYTES_PER_DROP; length > 0; length--) {
     // Extra bit because of protection
-    DAC_WRITE[write_pointer] = (MuLawDecompress(*(samples++)) * audioVolume) >> 17;
+    DAC_WRITE[write_pointer] = (MuLawDecompress(*(samples++)) * audioVolume) >> 16;
     write_pointer = (write_pointer+1) % DAC_WORDS;
   }
-  #endif
 }
 
 void Anki::Cozmo::HAL::DAC::SetVolume(uint16_t volume) {
-  audioVolume = volume;
-}
-
-// This is temporary
-#include <math.h>
-
-void Anki::Cozmo::HAL::DAC::Tone(const float mult) {
-  static const float MAGNITUDE = 0x200;
-  
-  for (int i = 0; i < DAC_WORDS; i++) {
-    DAC_WRITE[i] = (int)(sinf(M_PI_2 * mult * i / DAC_WORDS) * MAGNITUDE + MAGNITUDE);
-  }
-
-  EnableAudio(true);
+  audioVolume = (3  * (int)volume) / 4;
 }
 
 void Anki::Cozmo::HAL::DAC::Mute(void) {

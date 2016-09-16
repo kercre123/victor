@@ -183,11 +183,21 @@ namespace Cozmo {
       }
     }
 
-    private void HandleConfirmSleepCozmoButtonTapped() {
-      StartPlayerInducedSleep();
+    private void HandleConfirmSleepCozmoOnChargerButtonTapped() {
+      StartPlayerInducedSleep(true);
     }
 
-    public void StartPlayerInducedSleep() {
+    private void HandleConfirmSleepCozmoButtonTapped() {
+      StartPlayerInducedSleep(false);
+    }
+
+    public void StartPlayerInducedSleep(bool fromCharger) {
+      if (!fromCharger) {
+        Robot robot = (Robot)RobotEngineManager.Instance.CurrentRobot;
+        if (null != robot) {
+          robot.EnableReactionaryBehaviors(false);
+        }
+      }
       StartIdleTimeout(Settings.PlayerSleepCozmo_TimeTilSleep_sec, Settings.PlayerSleepCozmo_TimeTilDisconnect_sec);
       OpenGoToSleepDialogAndFreezeUI();
     }
@@ -245,6 +255,11 @@ namespace Cozmo {
     private void StopIdleTimeout() {
       _StartedIdleTimeout = false;
       RobotEngineManager.Instance.CancelIdleTimeout();
+
+      Robot robot = (Robot)RobotEngineManager.Instance.CurrentRobot;
+      if (null != robot) {
+        robot.EnableReactionaryBehaviors(true);
+      }
     }
 
     public void OpenConfirmSleepCozmoDialog(bool handleOnChargerSleepCancel) {
@@ -255,7 +270,7 @@ namespace Cozmo {
 
       CloseLowBatteryDialog();
       if (!IsConfirmSleepDialogOpen) {
-        Anki.Cozmo.Audio.AudioEventParameter openEvt = Anki.Cozmo.Audio.AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
+        Anki.Cozmo.Audio.AudioEventParameter openEvt = Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Attention_Device);
 
         _SleepCozmoConfirmDialog = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab,
                                                       preInitFunc: (AlertView alertView) => {
@@ -264,15 +279,18 @@ namespace Cozmo {
                                                       overrideBackgroundDim: null,
                                                       overrideCloseOnTouchOutside: false);
         _SleepCozmoConfirmDialog.SetCloseButtonEnabled(false);
-        _SleepCozmoConfirmDialog.SetPrimaryButton(LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalButtonConfirm,
-                                                  HandleConfirmSleepCozmoButtonTapped,
-                                                  Anki.Cozmo.Audio.AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Disconnect));
 
         if (handleOnChargerSleepCancel) {
           _SleepCozmoConfirmDialog.SetSecondaryButton(LocalizationKeys.kButtonCancel, HandleOnChargerSleepCancel);
+          _SleepCozmoConfirmDialog.SetPrimaryButton(LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalButtonConfirm,
+                                                    HandleConfirmSleepCozmoOnChargerButtonTapped,
+                                                    Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Disconnect));
         }
         else {
           _SleepCozmoConfirmDialog.SetSecondaryButton(LocalizationKeys.kButtonCancel);
+          _SleepCozmoConfirmDialog.SetPrimaryButton(LocalizationKeys.kSettingsSleepCozmoPanelConfirmModalButtonConfirm,
+                                                    HandleConfirmSleepCozmoButtonTapped,
+                                                    Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Disconnect));
         }
 
         _SleepCozmoConfirmDialog.TitleLocKey = LocalizationKeys.kSettingsSleepCozmoPanelConfirmationModalTitle;

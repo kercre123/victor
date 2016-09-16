@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotIdleTimeoutComponent.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "clad/types/animationTrigger.h"
 
 namespace Anki {
@@ -40,6 +41,9 @@ void RobotIdleTimeoutComponent::Update(double currentTime_s)
   // If it's time to do sleep and face off
   if(_faceOffTimeout_s > 0.0f && _faceOffTimeout_s <= currentTime_s)
   {
+    // When cozmo's going to sleep, there's no stopping him
+    _robot.GetBehaviorManager().SetReactionaryBehaviorsEnabled(false, true);
+    
     _faceOffTimeout_s = 0.0f;
     _robot.GetActionList().QueueActionNow(CreateGoToSleepAnimSequence(_robot));
   }

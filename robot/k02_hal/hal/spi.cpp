@@ -118,6 +118,7 @@ void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, const bool eof, const uint
   DropToWiFi *drop_tx = spi_write_buff;
 
   drop_tx->preamble = TO_WIFI_PREAMBLE;
+  drop_tx->payloadLen = 0;
   
   while (jpeglen & 0x3) drop_tx->payload[jpeglen++] = 0xff;
   if (eof)
@@ -132,7 +133,10 @@ void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, const bool eof, const uint
   uint8_t *drop_addr = drop_tx->payload + jpeglen;
   
   const int remainingSpace = DROP_TO_WIFI_MAX_PAYLOAD - jpeglen;
-  drop_tx->payloadLen = Anki::Cozmo::HAL::WiFi::GetTxData(drop_addr, remainingSpace);
+  if (remainingSpace > 0) {
+    *drop_addr = 0;
+    drop_tx->payloadLen = Anki::Cozmo::HAL::WiFi::GetTxData(drop_addr, remainingSpace);
+  }
 }
 
 // This is Thors hammer.  Forces recovery mode

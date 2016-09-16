@@ -44,10 +44,12 @@ namespace Cozmo.Settings {
       if (_SettingsCubeHelpDialogInstance != null) {
         _SettingsCubeHelpDialogInstance.CloseViewImmediately();
       }
-      RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(true);
-      RobotEngineManager.Instance.BlockPoolTracker.SendAvailableObjects(false,
-                                                                        (byte)RobotEngineManager.Instance.CurrentRobotID);
-      RobotEngineManager.Instance.CurrentRobot.EnableCubeLightsStateTransitionMessages(false);
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(true);
+        RobotEngineManager.Instance.BlockPoolTracker.SendAvailableObjects(false,
+                                                                          (byte)RobotEngineManager.Instance.CurrentRobotID);
+        RobotEngineManager.Instance.CurrentRobot.EnableCubeLightsStateTransitionMessages(false);
+      }
     }
 
     private SettingsLightCubeButton CreateSettingsLightCubeButton(ObjectType objectType) {

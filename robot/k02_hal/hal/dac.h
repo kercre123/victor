@@ -11,7 +11,6 @@ namespace Anki {
         void Feed(bool enable, uint8_t* samples);
         void SetVolume(uint16_t volume);
         void Sync();
-        void Tone(const float mult);
       }
     }
   }

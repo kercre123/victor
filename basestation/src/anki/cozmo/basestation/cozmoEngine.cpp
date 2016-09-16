@@ -61,8 +61,13 @@
 #include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
 #endif
 
-#define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
-#define ENABLE_CE_RUN_TIME_DIAGNOSTICS 1
+#if ANKI_PROFILING_ENABLED
+  #define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
+  #define ENABLE_CE_RUN_TIME_DIAGNOSTICS 1
+#else
+  #define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
+  #define ENABLE_CE_RUN_TIME_DIAGNOSTICS 0
+#endif
 
 #define MIN_NUM_FACTORY_TEST_LOGS_FOR_ARCHIVING 100
 
@@ -308,7 +313,9 @@ Result CozmoEngine::Update(const float currTime_sec)
     return RESULT_FAIL;
   }
   
+#if ENABLE_CE_SLEEP_TIME_DIAGNOSTICS || ENABLE_CE_RUN_TIME_DIAGNOSTICS
   const double startUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+#endif
 #if ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
   {
     static bool firstUpdate = true;

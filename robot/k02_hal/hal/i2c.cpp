@@ -50,28 +50,17 @@ static volatile void* _read_target = NULL;
 static uint8_t* _read_buffer = NULL;
 static volatile int _read_size = 0;
 static volatile int _read_count = 0;
-static volatile i2c_callback _read_callback = NULL;
 
 static void Write_Handler(void);
 static void Read_Handler(void);
 
-static inline int inc_pointer(volatile int& pointer) {
-  int temp = pointer++;
-  if (pointer >= MAX_QUEUE) pointer = 0;
-  return temp;
-}
-
-static inline void write_queue(uint8_t mode, uint8_t data = 0) {
-  i2c_queue[inc_pointer(_fifo_start)] = (mode << 8) | data;
-  if (_fifo_start >= MAX_QUEUE) { _fifo_start = 0; }
-}
-
-static inline void read_queue(uint8_t& mode, uint8_t& data) {
-  uint16_t temp = i2c_queue[inc_pointer(_fifo_end)];
-  
-  mode = temp >> 8;
-  data = temp;
-}
+#define inc_pointer(pointer) (pointer++, pointer %= MAX_QUEUE)
+#define write_queue(mode, data) (i2c_queue[inc_pointer(_fifo_start)] = ((mode) << 8) | (data))
+#define read_queue(mode, data) do { \
+  uint16_t temp = i2c_queue[inc_pointer(_fifo_end)]; \
+  mode = temp >> 8; \
+  data = temp; \
+} while(0)
 
 // Send a stop condition first thing to make sure perfs are not holding the bus
 static inline void SendEmergencyStop(void) {
@@ -174,7 +163,7 @@ void Anki::Cozmo::HAL::I2C::Flush(void) {
 void Anki::Cozmo::HAL::I2C::ForceStop(void) {
   _active_slave = UNUSED_SLAVE;
   _send_reset = false;
-  write_queue(I2C_CTRL_STOP);
+  write_queue(I2C_CTRL_STOP, 0);
 }
 
 // This is a carpet bomb stop on the i2c bus that should not be used inside IRQs
@@ -188,12 +177,12 @@ void Anki::Cozmo::HAL::I2C::FullStop(void) {
   Enable();
 }
 
-void Anki::Cozmo::HAL::I2C::SetupRead(void* target, int size, i2c_callback cb) {
+void Anki::Cozmo::HAL::I2C::SetupRead(void* target, int size) {
   _read_target = target;
   _read_size = size;
-  _read_callback = cb;
 }
 
+__attribute__((section("CODERAM")))
 static void Enqueue(uint8_t slave, const uint8_t *bytes, int len, uint8_t flags) {
   using namespace Anki::Cozmo::HAL::I2C;
   
@@ -206,7 +195,7 @@ static void Enqueue(uint8_t slave, const uint8_t *bytes, int len, uint8_t flags)
     if (_send_reset) {
       write_queue(I2C_CTRL_RST | I2C_CTRL_SEND, slave);
     } else {
-       write_queue(I2C_CTRL_SEND, slave);
+      write_queue(I2C_CTRL_SEND, slave);
     }
   } else if (flags & I2C_OPTIONAL) {
     return ;
@@ -229,12 +218,13 @@ void Anki::Cozmo::HAL::I2C::Read(uint8_t slave, uint8_t flags) {
   
   // Send a nack on first transmission if size is 1
   if (_read_size == 1) {
-    write_queue(I2C_CTRL_READ | I2C_CTRL_NACK);
+    write_queue(I2C_CTRL_READ | I2C_CTRL_NACK, 0);
   } else {
-    write_queue(I2C_CTRL_READ);
+    write_queue(I2C_CTRL_READ, 0);
   }
 }
 
+__attribute__((section("CODERAM")))
 static void Read_Handler(void) {
   using namespace Anki::Cozmo::HAL;
   
@@ -260,9 +250,6 @@ static void Read_Handler(void) {
   *(_read_buffer++) = I2C0_D;
 
   if (complete) {
-    if (_read_callback) {
-      _read_callback((const void*)_read_target);
-    }
     Write_Handler();
   }
 }

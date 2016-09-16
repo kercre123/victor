@@ -22,17 +22,20 @@
 // Use ANKI_PRIVACY_GUARD and HidePersonallyIdentifiableInfo() for anything that should not be present in shipping mode, such as players' names in logs. NOTE: This is a separate flag from DEV_CHEATS to make it easier to find use cases in the code and in case we want to set it differently via other build flags later without changing code.
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #if defined(DEBUG)
-  #define ANKI_DEVELOPER_CODE 1
-  #define ANKI_DEV_CHEATS     1
-  #define ANKI_PRIVACY_GUARD  0 // PII displayed in debug logs!!!
+  #define ANKI_DEVELOPER_CODE     1
+  #define ANKI_DEV_CHEATS         1
+  #define ANKI_PROFILING_ENABLED  1
+  #define ANKI_PRIVACY_GUARD      0 // PII displayed in debug logs!!!
 #elif defined(SHIPPING)
-  #define ANKI_DEVELOPER_CODE 0
-  #define ANKI_DEV_CHEATS     0
-  #define ANKI_PRIVACY_GUARD  1 // PII redacted in shipping logs
+  #define ANKI_DEVELOPER_CODE     0
+  #define ANKI_DEV_CHEATS         0
+  #define ANKI_PROFILING_ENABLED  0
+  #define ANKI_PRIVACY_GUARD      1 // PII redacted in shipping logs
 #else // release
-  #define ANKI_DEVELOPER_CODE 0
-  #define ANKI_DEV_CHEATS     1
-  #define ANKI_PRIVACY_GUARD  0 // PII displayed in non-shipping release logs!!!
+  #define ANKI_DEVELOPER_CODE     0
+  #define ANKI_DEV_CHEATS         1
+  #define ANKI_PROFILING_ENABLED  1
+  #define ANKI_PRIVACY_GUARD      0 // PII displayed in non-shipping release logs!!!
 #endif
 
 #if ANKI_DEVELOPER_CODE

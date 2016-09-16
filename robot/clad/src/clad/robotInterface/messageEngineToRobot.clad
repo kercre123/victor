@@ -342,6 +342,11 @@ message RequestCrashReports
   int_32 index
 }
 
+message ShutdownRobot
+{
+  uint_32 reserved[8]
+}
+
 enum uint_32 ToRobotAddressSpace
 {
   GLOBAL_INVALID_TAG = 0,
@@ -474,13 +479,14 @@ union EngineToRobot
   // Anim future expansion                                  = 0x9C,
   AnimKeyFrame::DisableAnimTracks disableAnimTracks         = 0x9D,
   AnimKeyFrame::EnableAnimTracks enableAnimTracks           = 0x9E,
-  // Anim future expansion                                  = 0x9F,
+  AnimKeyFrame::InitController  initAnimController          = 0x9F,
   //          FREE SLOT!!!                                  = 0xA0,
   TestState                     testState                   = 0xA1,
   EnterFactoryTestMode          enterTestMode               = 0xA2,
   DisplayNumber                 oledDisplayNumber           = 0xA3,
   BodyStorageContents           bodyStorageContents         = 0xA4,
 
+  ShutdownRobot                 shutdownRobot               = 0xA9,
   OTA::Write                    otaWrite                    = 0xAF,
 
   AppConnectConfigString        appConCfgString             = 0xAA,

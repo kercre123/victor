@@ -447,7 +447,6 @@ MonoBehaviour:
   _OpenAudioEvent:
     _Event: Play__Ui__Window_Open
     _EventType: Ui
-    _GameObjectType: 0
   _TitleTextLabel: {fileID: 0}
   _WarningTextLabel: {fileID: 0}
   _InstructionTextContainer: {fileID: 22430230}
@@ -803,7 +802,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 176160, guid: 10f33d59217b548c690367d9dbad1e40, type: 2}
-  ModifiedValues: []
+  ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    JsonValue: 120
   ModifiedLocalReferences:
   - ObjectPath: ../../../
     FieldName: Cozmo.UI.LongConfirmationView:_TitleTextLabel
@@ -1007,7 +1009,7 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: -58, y: 11.2}
   m_SizeDelta: {x: 125, y: 125}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22441876
@@ -1064,7 +1066,7 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -172}
+  m_AnchoredPosition: {x: 0, y: -210}
   m_SizeDelta: {x: -200, y: 197}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22459328
@@ -1141,7 +1143,7 @@ RectTransform:
   m_RootOrder: 3
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -187.99998}
+  m_AnchoredPosition: {x: 0, y: -185}
   m_SizeDelta: {x: -400, y: -1028}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22475596
@@ -1231,7 +1233,7 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.0000487566}
+  m_AnchoredPosition: {x: 45, y: 0.0000487566}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22485716

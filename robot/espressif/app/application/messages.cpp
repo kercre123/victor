@@ -226,6 +226,11 @@ namespace Anki {
             AnimationController::EnableTracks(msg.enableAnimTracks.whichTracks);
             break;
           }
+          case RobotInterface::EngineToRobot::Tag_initAnimController:
+          {
+            AnimationController::EngineInit(msg.initAnimController);
+            break;
+          }
           case RobotInterface::EngineToRobot::Tag_oledDisplayNumber:
           {
             using namespace Anki::Cozmo::Face;
@@ -278,6 +283,14 @@ namespace Anki {
           case RobotInterface::EngineToRobot::Tag_requestCrashReports:
           {
             CrashReporter::TriggerLogSend(msg.requestCrashReports.index);
+            break;
+          }
+          case RobotInterface::EngineToRobot::Tag_shutdownRobot:
+          {
+            RobotInterface::EngineToRobot msgToRTIP;
+            msg.tag = RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
+            msg.setBodyRadioMode.radioMode = BODY_IDLE_OPERATING_MODE;
+            RTIP::SendMessage(msg);
             break;
           }
           default:

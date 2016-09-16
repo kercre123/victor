@@ -2,7 +2,7 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!1 &105096
 GameObject:
-  m_ObjectHideFlags: 1
+  m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -17,7 +17,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &162560
 GameObject:
-  m_ObjectHideFlags: 1
+  m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -111,7 +111,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_IgnoreLayout: 0
-  m_MinWidth: 1650
+  m_MinWidth: 1570
   m_MinHeight: -1
   m_PreferredWidth: -1
   m_PreferredHeight: -1
@@ -134,7 +134,7 @@ MonoBehaviour:
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#settings.cubeStatusPanel.button.cubeHelp"'
   ModifiedLocalReferences:
-  - ObjectPath: ../../../
+  - ObjectPath: ../../
     FieldName: Cozmo.Settings.SettingsCubeStatusPanel:_ShowCubeHelpButton
     ReferencePath: 
   ModifiedGlobalReferences: []
@@ -212,15 +212,13 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_Children:
-  - {fileID: 22457860}
-  - {fileID: 22493614}
+  m_Children: []
   m_Father: {fileID: 22489580}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -8}
-  m_SizeDelta: {x: 0, y: -246}
+  m_AnchoredPosition: {x: 0, y: -50}
+  m_SizeDelta: {x: 0, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22457860
 RectTransform:
@@ -233,12 +231,12 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
-  m_Father: {fileID: 22419472}
-  m_RootOrder: 0
+  m_Father: {fileID: 22489580}
+  m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0.472}
   m_AnchorMax: {x: 1, y: 0.854}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -160, y: 0}
+  m_AnchoredPosition: {x: 14, y: 59.300022}
+  m_SizeDelta: {x: -160, y: 38.200012}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22489580
 RectTransform:
@@ -252,6 +250,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22419472}
+  - {fileID: 22457860}
+  - {fileID: 22493614}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
@@ -271,12 +271,12 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22494090}
-  m_Father: {fileID: 22419472}
-  m_RootOrder: 1
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 0.23400001}
-  m_AnchoredPosition: {x: 0.0028276443, y: -1}
-  m_SizeDelta: {x: 0, y: -4}
+  m_Father: {fileID: 22489580}
+  m_RootOrder: 2
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchoredPosition: {x: 0, y: 226}
+  m_SizeDelta: {x: 1570, y: 452}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22494090
 RectTransform:

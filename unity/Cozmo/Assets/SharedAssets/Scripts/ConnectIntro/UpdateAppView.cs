@@ -11,8 +11,11 @@ public class UpdateAppView : Cozmo.UI.BaseView {
   }
 
   private void HandleUpdateAppButton() {
-    // TODO: replace with App Store / Google Play URL
-    Application.OpenURL("https://www.anki.com/");
+#if UNITY_IOS
+    Application.OpenURL("https://itunes.apple.com/app/cozmo/id1154282030");
+#elif UNITY_ANDROID
+    Application.OpenURL("https://play.google.com/store/apps/details?id=com.anki.cozmo");
+#endif
   }
 
   protected override void CleanUp() {

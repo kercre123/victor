@@ -196,8 +196,10 @@ int cozmo_startup(const char *configuration_data)
     DevLoggingSystem::CreateInstance(dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, ""), appRunId);
   #endif
   
+  Anki::Util::IEventProvider* eventProvider = nullptr;
   #if USE_DAS
     Util::DasLoggerProvider* dasLoggerProvider = new Util::DasLoggerProvider();
+    eventProvider = dasLoggerProvider;
   #endif
   
   Util::IFormattedLoggerProvider* sosLoggerProvider = new Util::SosLoggerProvider();
@@ -211,7 +213,9 @@ int cozmo_startup(const char *configuration_data)
                             Util::FileUtils::FullFilePath( {DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory(), DevLoggingSystem::kPrintName} ))
 #endif
   });
+
   Anki::Util::gLoggerProvider = loggerProvider;
+  Anki::Util::gEventProvider = eventProvider;
   
   // - console filter for logs
   {
@@ -283,8 +287,9 @@ int cozmo_shutdown()
 #if defined(ANKI_PLATFORM_IOS)
     result = Anki::Cozmo::iOSBinding::cozmo_shutdown();
 #endif
-    
+  
   Anki::Util::SafeDelete(engineAPI);
+  Anki::Util::gEventProvider = nullptr;
   Anki::Util::SafeDelete(Anki::Util::gLoggerProvider);
 #if ANKI_DEV_CHEATS
   DevLoggingSystem::DestroyInstance();

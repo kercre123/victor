@@ -83,19 +83,11 @@ void RadioConnectionStateMachineUpdate()
     {
       case 1:
       {
-        AnimationController::Clear();
-        AnimationController::ClearNumBytesPlayed();
-        AnimationController::ClearNumAudioFramesPlayed();
-        doRTConnectPhase++;
-        break;
-      }
-      case 2:
-      {
         Factory::SetMode(RobotInterface::FTM_None);
         doRTConnectPhase++;
         break;
       }
-      case 3:
+      case 2:
       {
         RobotInterface::RobotAvailable idMsg;
         idMsg.robotID = getSerialNumber();
@@ -103,26 +95,7 @@ void RadioConnectionStateMachineUpdate()
         if (RobotInterface::SendMessage(idMsg)) doRTConnectPhase++;
         break;
       }
-      case 4:
-      {
-        SetBodyRadioMode bMsg;
-
-        struct softap_config ap_config;
-        if (wifi_softap_get_config(&ap_config) == false)
-        {
-          bMsg.wifiChannel = 0;
-        }
-        else {
-          bMsg.wifiChannel = ap_config.channel;
-        }
-
-        bMsg.radioMode = BODY_ACCESSORY_OPERATING_MODE;
-        
-        if (RobotInterface::SendMessage(bMsg)) doRTConnectPhase++;
-        // Body will initiate motor calibration after entering accessory mode
-        break;
-      }
-      case 5:
+      case 3:
       {
         RobotInterface::FirmwareVersion versionMsg;
         STACK_LEFT(true);
@@ -137,7 +110,7 @@ void RadioConnectionStateMachineUpdate()
         }
         break;
       }
-      case 6:
+      case 4:
       {
         doRTConnectPhase = 0; // Done
         break;
@@ -150,18 +123,12 @@ void RadioConnectionStateMachineUpdate()
     {
       case 1:
       {
-        SetBodyRadioMode bMsg;
-        bMsg.radioMode = BODY_BLUETOOTH_OPERATING_MODE;
-        if (RobotInterface::SendMessage(bMsg)) doRTDisconnectPhase++;
-        break;
-      }
-      case 2:
-      {
+        AnimationController::EngineDisconnect();
         Anki::Cozmo::UpgradeController::OnDisconnect();
         doRTDisconnectPhase++;
         break;
       }
-      case 3:
+      case 2:
       {
         if (Anki::Cozmo::Factory::GetMode() == Anki::Cozmo::RobotInterface::FTM_None)
         {
@@ -171,7 +138,7 @@ void RadioConnectionStateMachineUpdate()
         doRTDisconnectPhase++;
         break;
       }
-      case 4:
+      case 3:
       {
         sendRadioState = true;
         doRTDisconnectPhase = 0;
@@ -205,18 +172,7 @@ void Exec(os_event_t *event)
   {
     case 0:
     {
-      if (clientConnected())
-      {
-        static u32 lastAnimStateTime = 0;
-        const u32 now = system_get_time();
-        if ((now - lastAnimStateTime) > ANIM_STATE_INTERVAL)
-        {
-          if (AnimationController::SendAnimStateMessage() == RESULT_OK)
-          {
-            lastAnimStateTime = now;
-          }
-        }
-      }
+      RadioConnectionStateMachineUpdate();
       break;
     }
     case 1:
@@ -272,25 +228,15 @@ void Exec(os_event_t *event)
     }
     case 5:
     {
-      RadioConnectionStateMachineUpdate();
+      CrashReporter::Update();
       break;
     }
     case 6:
     {
-      //DiffieHellman::Update();
-      break;
-    }
-    case 7:
-    {
-      CrashReporter::Update();
-      break;
-    }
-    case 8:
-    {
       AnimationController::Update();
       break;
     }
-    case 9:
+    case 7:
     {
       Face::Update();
       break;

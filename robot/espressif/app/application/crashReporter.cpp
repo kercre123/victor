@@ -72,7 +72,7 @@ void TriggerLogSend(u8 index)
 
 void StartQuery()
 {
-  crashHandlerShowStatus(); //report what we found at startup
+  //crashHandlerShowStatus(); //report what we found at startup
   rtipCrashReadState = RBS_read;
 }
 

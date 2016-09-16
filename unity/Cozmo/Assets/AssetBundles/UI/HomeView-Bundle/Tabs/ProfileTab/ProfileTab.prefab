@@ -61,7 +61,7 @@ GameObject:
   - 222: {fileID: 22233374}
   - 114: {fileID: 11405318}
   m_Layer: 5
-  m_Name: TimeWithCozmoLabel
+  m_Name: DaysWithCozmoLabel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -95,7 +95,7 @@ GameObject:
   - 222: {fileID: 22229736}
   - 114: {fileID: 11467648}
   m_Layer: 5
-  m_Name: GamesPlayedValue
+  m_Name: TotalDailyGoalsCompletedValue
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -129,6 +129,7 @@ GameObject:
   - 224: {fileID: 22458874}
   - 222: {fileID: 22279836}
   - 114: {fileID: 11406928}
+  - 114: {fileID: 11469160}
   m_Layer: 5
   m_Name: PlayerNameLabel
   m_TagString: Untagged
@@ -183,7 +184,7 @@ GameObject:
   - 222: {fileID: 22276214}
   - 114: {fileID: 11479468}
   m_Layer: 5
-  m_Name: GamesPlayedLabel
+  m_Name: TotalDailyGoalsCompletedLabel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -267,6 +268,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22410200}
+  - 114: {fileID: 11495698}
   m_Layer: 5
   m_Name: EditButtonContainer
   m_TagString: Untagged
@@ -301,7 +303,7 @@ GameObject:
   - 222: {fileID: 22207374}
   - 114: {fileID: 11435348}
   m_Layer: 5
-  m_Name: TimeWithCozmoValue
+  m_Name: DaysWithCozmoValue
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -317,7 +319,7 @@ GameObject:
   - 224: {fileID: 22417416}
   - 114: {fileID: 11431126}
   m_Layer: 5
-  m_Name: GamesPlayedContainer
+  m_Name: TotalDailyGoalsCompletedContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -333,7 +335,7 @@ GameObject:
   - 224: {fileID: 22459092}
   - 114: {fileID: 11484018}
   m_Layer: 5
-  m_Name: TimeWithCozmoContainer
+  m_Name: DaysWithCozmoContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -442,7 +444,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '#label.timeWithCozmo'
+  m_Text: '#label.daysWithCozmo'
   _AllUppercase: 0
   GlowText: 0
 --- !u!114 &11406928
@@ -466,15 +468,15 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 12800000, guid: 690bf25a268804b5a9391906610cf24b, type: 3}
-    m_FontSize: 156
+    m_FontSize: 150
     m_FontStyle: 0
     m_BestFit: 1
     m_MinSize: 1
-    m_MaxSize: 156
+    m_MaxSize: 150
     m_Alignment: 0
     m_AlignByGeometry: 0
     m_RichText: 1
-    m_HorizontalOverflow: 0
+    m_HorizontalOverflow: 1
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: Charlie
@@ -825,8 +827,8 @@ MonoBehaviour:
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
-  m_ChildAlignment: 0
-  m_Spacing: 0
+  m_ChildAlignment: 3
+  m_Spacing: 20
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 0
 --- !u!114 &11453224
@@ -842,7 +844,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _PlayerName: {fileID: 11406928}
   _TimeWithCozmoCountValueLabel: {fileID: 11435348}
-  _GamesPlayCountValueLabel: {fileID: 11467648}
+  _DailyGoalsCompletedCount: {fileID: 11467648}
   _StreaksCountValueLabel: {fileID: 11417764}
   _EditNameButton: {fileID: 11425086}
   _ProfileEditNameViewPrefab: {fileID: 11429988, guid: 19fdc2f4957464941bbc07c9fbda3c60,
@@ -940,6 +942,24 @@ MonoBehaviour:
   m_Text: 20
   _AllUppercase: 0
   GlowText: 0
+--- !u!114 &11469160
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 143714}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1679637790, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreLayout: 0
+  m_MinWidth: 250
+  m_MinHeight: -1
+  m_PreferredWidth: -1
+  m_PreferredHeight: -1
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
 --- !u!114 &11479468
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -972,7 +992,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '#label.gamesPlayed'
+  m_Text: '#label.goalsCompleted'
   _AllUppercase: 0
   GlowText: 0
 --- !u!114 &11484018
@@ -1022,6 +1042,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01fa14616975747589ddb1eb25154d3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &11495698
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 167944}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1679637790, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreLayout: 0
+  m_MinWidth: 156
+  m_MinHeight: 156
+  m_PreferredWidth: -1
+  m_PreferredHeight: -1
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
 --- !u!114 &11497332
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1299,10 +1337,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22410200}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 3, y: -51}
-  m_SizeDelta: {x: 156, y: 156}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 28}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22448512
 RectTransform:

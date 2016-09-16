@@ -1021,10 +1021,6 @@
       "AnimName": "ag_surprise"
     },
     {
-      "CladEvent": "TestFacialPng",
-      "AnimName": "ag_test_facial_png"
-    },
-    {
       "CladEvent": "TurtleRoll",
       "AnimName": "ag_reacttocliff_turtleroll_01"
     },

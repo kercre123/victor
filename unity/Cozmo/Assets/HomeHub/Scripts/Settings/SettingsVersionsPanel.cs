@@ -27,6 +27,9 @@ namespace Cozmo.Settings {
     private ScrollingTextView _AcknowledgementsDialogInstance;
 
     [SerializeField]
+    private string _AcknowledgementsTextFileName;
+
+    [SerializeField]
     private CozmoButton _SupportButton;
 
     [SerializeField]
@@ -47,8 +50,11 @@ namespace Cozmo.Settings {
 
     private LongConfirmationView _RestoreCozmoDialogInstance;
 
+    private bool _RestoreButtonIsActive = true;
+
     private void Start() {
       RobotEngineManager.Instance.AddCallback<DeviceDataMessage>(HandleDeviceDataMessage);
+      RobotEngineManager.Instance.AddCallback<RestoreRobotOptions>(HandleRestoreRobotOptions);
       RobotEngineManager.Instance.SendRequestDeviceData();
 
       // Fill out Cozmo version args
@@ -56,7 +62,7 @@ namespace Cozmo.Settings {
       _CozmoVersionLabel.FormattingArgs = new object[] { ShortenData(robot.FirmwareVersion.ToString()) };
 
       // Fill out Serial number args
-      _SerialNumberLabel.FormattingArgs = new object[] { ShortenData(robot.SerialNumber.ToString()) };
+      _SerialNumberLabel.FormattingArgs = new object[] { ShortenData(robot.SerialNumber.ToString("X6")) };
 
       string dasEventViewName = "settings_version_panel";
       _AcknowledgementsLinkButton.Initialize(HandleAcknowledgementsLinkButtonTapped, "acknowledgements_link", dasEventViewName);
@@ -64,6 +70,8 @@ namespace Cozmo.Settings {
       _SupportButton.Initialize(HandleOpenSupportViewButtonTapped, "support_button", dasEventViewName);
 
       _EraseCozmoButton.Initialize(HandleOpenEraseCozmoViewButtonTapped, "open_erase_cozmo_view_button", dasEventViewName);
+
+      robot.RequestRobotRestoreData();
     }
 
     private void OnDestroy() {
@@ -128,8 +136,8 @@ namespace Cozmo.Settings {
       if (_AcknowledgementsDialogInstance == null) {
         _AcknowledgementsDialogInstance = UIManager.OpenView(AlertViewLoader.Instance.ScrollingTextViewPrefab,
                                                              (ScrollingTextView view) => { view.DASEventViewName = "acknowledgements_view"; });
-        _AcknowledgementsDialogInstance.Initialize(LocalizationKeys.kSettingsVersionPanelAcknowledgementsModalTitle,
-                                                   LocalizationKeys.kSettingsVersionPanelAcknowledgementsModalDescription);
+        _AcknowledgementsDialogInstance.Initialize(Localization.Get(LocalizationKeys.kSettingsVersionPanelAcknowledgementsModalTitle),
+                                                   Localization.ReadLocalizedTextFromFile(_AcknowledgementsTextFileName));
       }
     }
 
@@ -165,8 +173,17 @@ namespace Cozmo.Settings {
         RobotEngineManager.Instance.RemoveCallback<RestoreRobotStatus>(HandleEraseRobotStatus);
 
         if (robotStatusMsg.success) {
+
+          // Write the onboarding tag to this robot after erasing so robot stays in sync with app in terms of onboarding being completed
+          Anki.Cozmo.OnboardingData data = new Anki.Cozmo.OnboardingData();
+          data.hasCompletedOnboarding = true;
+          byte[] byteArr = new byte[1024];
+          System.IO.MemoryStream ms = new System.IO.MemoryStream(byteArr);
+          data.Pack(ms);
+          RobotEngineManager.Instance.CurrentRobot.NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_OnboardingData, (ushort)data.Size, byteArr);
+
           _EraseCozmoDialogInstance.CloseView();
-          PauseManager.Instance.StartPlayerInducedSleep();
+          PauseManager.Instance.StartPlayerInducedSleep(false);
         }
         else {
           _EraseCozmoDialogInstance.ShowInstructionsLabel(Localization.Get(LocalizationKeys.kSettingsVersionPanelEraseCozmoModalEraseCozmoErrorLabel));
@@ -179,6 +196,7 @@ namespace Cozmo.Settings {
       if (_SupportInfoViewInstance == null) {
         _SupportInfoViewInstance = UIManager.OpenView(_SupportInfoViewPrefab);
         _SupportInfoViewInstance.OnOpenRestoreCozmoViewButtonTapped += HandleOpenRestoreCozmoViewButtonTapped;
+        _SupportInfoViewInstance.HideRestoreButton(_RestoreButtonIsActive);
       }
     }
 
@@ -219,13 +237,18 @@ namespace Cozmo.Settings {
 
         if (robotStatusMsg.success) {
           _RestoreCozmoDialogInstance.CloseView();
-          PauseManager.Instance.StartPlayerInducedSleep();
+          PauseManager.Instance.StartPlayerInducedSleep(false);
         }
         else {
           _RestoreCozmoDialogInstance.ShowInstructionsLabel(Localization.Get(LocalizationKeys.kSettingsSupportViewRestoreCozmoModalRestoreCozmoErrorLabel));
           _RestoreCozmoDialogInstance.EnableButtons(true);
         }
       }
+    }
+
+    private void HandleRestoreRobotOptions(RestoreRobotOptions msg) {
+      // If there is only one backup file then user will not be able to restore
+      _RestoreButtonIsActive = (msg.robotsWithBackupData.Length > 1);
     }
   }
 }

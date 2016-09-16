@@ -304,8 +304,11 @@ MonoBehaviour:
   _DASEventViewType: 2
   _CloseDialogOnTapOutside: 1
   _OptionalCloseDialogButton: {fileID: 0}
+  _LayerPriority: 100
   DimBackground: 1
-  DimBackgroundPrefabOverride: {fileID: 0}
+  _OpenAudioEvent:
+    _Event: Invalid
+    _EventType: GenericEvent
   _AlertTitleText: {fileID: 0}
   _AlertMessageText: {fileID: 0}
   _PrimaryButton: {fileID: 0}

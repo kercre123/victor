@@ -41,6 +41,8 @@ public:
 private:
   uint8_t const * const GetMessage() const;
   s32 UpdateSimInternal() override;
+  
+  void HandleActiveObjectConnectionState(const ObjectConnectionState& msg) override;
 
   TestState _testState = TestState::Init;
   s32 _result = 0;
@@ -55,6 +57,33 @@ private:
     OFF  // LEDs are in the off state
   };
   LEDAnimationState _ledState = LEDAnimationState::OFF;
+  
+  ObjectID _id;
+  
+  const f32 kHeadLookupAngle_rad = DEG_TO_RAD(10);
+  const f32 kHeadAngleTolerance_rad = DEG_TO_RAD(1);
+  const int kRed = 255;
+  const int kGreen = 255;
+  const int kBlue = 255;
+  const int kAlpha = 255;
+  
+  const u32 kRedColor = (kRed << 24) + kAlpha;
+  const u32 kGreenColor = (kGreen << 16) + kAlpha;
+  const u32 kBlueColor = (kBlue << 8) + kAlpha;
+  const u32 kBlackColor = 0x00000000;
+  
+  // We pick 240 for on/off period here because it is a multiple of BS_TIME_STEP (currently 60ms)
+  // which makes it a lot easier to detect the on/off timing correctly
+  const u32 kOnPeriod_ms = 240;
+  const u32 kOffPeriod_ms = 240;
+  const u32 kTransitionOnPeriod_ms = 0;
+  const u32 kTransitionOffPeriod_ms = 0;
+  const int kOffset_ms = 0;
+  const u32 kRotationPeriod_ms = 0;
+  // relative x, y are garbage values since MakeRelativeMode = RELATIVE_LED_MODE_OFF; see COZMO-3049
+  const f32 kRelativeToX = 0;
+  const f32 kRelativeToY = 0;
+  const MakeRelativeMode kMakeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
 };
 
 REGISTER_COZMO_SIM_TEST_CLASS(CST_LEDColor);
@@ -62,33 +91,6 @@ REGISTER_COZMO_SIM_TEST_CLASS(CST_LEDColor);
 CST_LEDColor::CST_LEDColor() {}
 s32 CST_LEDColor::UpdateSimInternal()
 {
-  const f32 kHeadLookupAngle_rad = DEG_TO_RAD(10);
-  const f32 kHeadAngleTolerance_rad = DEG_TO_RAD(1);
-  const int kRed = 255;
-  const int kGreen = 255;
-  const int kBlue = 255;
-  const int kAlpha = 255;
-
-  const u32 kRedColor = (kRed << 24) + kAlpha;
-  const u32 kGreenColor = (kGreen << 16) + kAlpha;
-  const u32 kBlueColor = (kBlue << 8) + kAlpha;
-  const u32 kBlackColor = 0x00000000;
-
-  // --- SetActiveObjectLEDs message parameters ---
-  const u32 kObjectID = GetLastObservedObject().id;
-  // We pick 240 for on/off period here because it is a multiple of BS_TIME_STEP (currently 60ms)
-  // which makes it a lot easier to detect the on/off timing correctly
-  const u32 kOnPeriod_ms = 240;
-  const u32 kOffPeriod_ms = 240;
-  const u32 kTransitionOnPeriod_ms = 0;
-  const u32 kTransitionOffPeriod_ms = 0;
-  const u32 kOffset_ms = 0;
-  const u32 kRotationPeriod_ms = 0;
-  // relative x, y are garbage values since MakeRelativeMode = RELATIVE_LED_MODE_OFF; see COZMO-3049
-  const f32 kRelativeToX = 0;
-  const f32 kRelativeToY = 0;
-  const MakeRelativeMode kMakeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
-
   switch (_testState) {
     case TestState::Init:
     {
@@ -108,9 +110,9 @@ s32 CST_LEDColor::UpdateSimInternal()
 
     case TestState::WaitForHeadUp:
     {
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(kObjectID >=0 && GetLastObservedObject().isActive &&
-                                       NEAR(GetRobotHeadAngle_rad(), kHeadLookupAngle_rad,
-                                            kHeadAngleTolerance_rad), 5) {
+      IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(5, _id >=0,
+                                            NEAR(GetRobotHeadAngle_rad(), kHeadLookupAngle_rad,
+                                                 kHeadAngleTolerance_rad)) {
         _testState = TestState::SetRGB;
       }
       break;
@@ -125,7 +127,7 @@ s32 CST_LEDColor::UpdateSimInternal()
       const std::array<u32, 4> transitionOnPeriod_ms = {{kTransitionOnPeriod_ms, kTransitionOnPeriod_ms, kTransitionOnPeriod_ms, kTransitionOnPeriod_ms}};
       const std::array<u32, 4> transitionOffPeriod_ms = {{kTransitionOffPeriod_ms, kTransitionOffPeriod_ms, kTransitionOffPeriod_ms, kTransitionOffPeriod_ms}};
 
-      SendSetAllActiveObjectLEDs(kObjectID,
+      SendSetAllActiveObjectLEDs(_id,
                                  onColor,
                                  onColor,
                                  onPeriod_ms,
@@ -152,23 +154,23 @@ s32 CST_LEDColor::UpdateSimInternal()
       // We only check if there are any color in each channel at all because there are some post-
       // processing that happens inside engine with the color information sent from game like white
       // balanching which means the LED won't have the exact color that was sent.
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(
-          kLed0Color[0] != 0 &&  // red
-          kLed0Color[1] == 0 &&  // green
-          kLed0Color[2] == 0 &&  // blue
+      IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(5,
+          kLed0Color[0] != 0,  // red
+          kLed0Color[1] == 0,  // green
+          kLed0Color[2] == 0,  // blue
 
-          kLed1Color[0] == 0 &&  // red
-          kLed1Color[1] != 0 &&  // green
-          kLed1Color[2] == 0 &&  // blue
+          kLed1Color[0] == 0,  // red
+          kLed1Color[1] != 0,  // green
+          kLed1Color[2] == 0,  // blue
 
-          kLed2Color[0] == 0 &&  // red
-          kLed2Color[1] == 0 &&  // green
-          kLed2Color[2] != 0 &&  // blue
+          kLed2Color[0] == 0,  // red
+          kLed2Color[1] == 0,  // green
+          kLed2Color[2] != 0,  // blue
 
-          kLed3Color[0] == 0 &&  // red
-          kLed3Color[1] == 0 &&  // green
-          kLed3Color[2] == 0     // blue
-          , 5) {
+          kLed3Color[0] == 0,  // red
+          kLed3Color[1] == 0,  // green
+          kLed3Color[2] == 0)  // blue
+      {
         _testState = TestState::SetLEDAnimation;
       }
       break;
@@ -176,7 +178,7 @@ s32 CST_LEDColor::UpdateSimInternal()
 
     case TestState::SetLEDAnimation:
     {
-      SendSetActiveObjectLEDs(kObjectID,
+      SendSetActiveObjectLEDs(_id,
                               kRedColor,
                               kBlackColor,
                               kOnPeriod_ms,
@@ -252,7 +254,7 @@ s32 CST_LEDColor::UpdateSimInternal()
         }
       }
 
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(_onFramesMatched && _offFramesMatched, 5) {
+      IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(5, _onFramesMatched, _offFramesMatched) {
         _testState = TestState::Exit;
       }
     }
@@ -267,6 +269,14 @@ s32 CST_LEDColor::UpdateSimInternal()
   return _result;
 }
 
+void CST_LEDColor::HandleActiveObjectConnectionState(const ObjectConnectionState& msg)
+{
+  if(msg.connected)
+  {
+    _id = msg.objectID;
+  }
+  
+}
 
 }  // namespace Cozmo
 }  // namespace Anki

@@ -9,6 +9,10 @@ public class DasTracker {
   private DateTime _CurrentSessionStartUtcTime;
   private DateTime _CurrentRobotStartUtcTime;
   private DateTime _AppStartupUtcTime;
+  private DateTime _ConnectFlowStartUtcTime;
+  private DateTime _WifiFlowStartUtcTime;
+  private bool _FirstTimeConnectActive;
+  private bool _ConnectSessionIsFirstTime;
   private double _RunningApprunTime;
   private double _RunningSessionTime;
   private double? _RunningRobotTime = null;
@@ -60,6 +64,7 @@ public class DasTracker {
   }
 
   public void OnRobotConnected() {
+    UpdateRunningTimers(); // otherwise pre-connect time will get included in running robot timer
     _RunningRobotTime = 0.0;
     _CurrentRobotStartUtcTime = DateTime.UtcNow;
 
@@ -81,6 +86,82 @@ public class DasTracker {
     DAS.Event("app.connected_session.end", Convert.ToUInt32(_RunningRobotTime).ToString(), null, dataDict);
 
     _RunningRobotTime = null;
+  }
+
+  public void OnFirstTimeConnectStarted() {
+    _FirstTimeConnectActive = true;
+  }
+
+  public void OnFirstTimeConnectEnded() {
+    _FirstTimeConnectActive = false;
+  }
+
+  public void OnConnectFlowStarted() {
+    // app.connect.start - 0/1 if in out of box experience
+    DAS.Event("app.connect.start", _FirstTimeConnectActive ? "1" : "0");
+
+    _ConnectFlowStartUtcTime = DateTime.UtcNow;
+    _ConnectSessionIsFirstTime = _FirstTimeConnectActive; // in case this is reset before OnFlowEnded()
+  }
+
+  public void OnConnectFlowEnded() {
+    // we're leaving connect flow - do we have a robot connection active?
+    if (_RunningRobotTime != null) {
+      HandleConnectSuccess();
+    }
+
+    {
+      var dataDict = GetDataDictionary("$data", _ConnectSessionIsFirstTime ? "1" : "0");
+      uint secondsInFlow = Convert.ToUInt32((DateTime.UtcNow - _ConnectFlowStartUtcTime).TotalSeconds);
+
+      // app.connect.exit - include:
+      //   - total time in connect flow (seconds)
+      //   - 0/1 if in out of box experience
+      DAS.Event("app.connect.exit", secondsInFlow.ToString(), null, dataDict);
+    }
+  }
+
+  public void OnSearchForCozmoFailed() {
+    var dataDict = GetDataDictionary("$data", _ConnectSessionIsFirstTime ? "1" : "0");
+    uint secondsInFlow = Convert.ToUInt32((DateTime.UtcNow - _ConnectFlowStartUtcTime).TotalSeconds);
+
+    // app.connect.fail - include:
+    //   - total time in connect flow (seconds)
+    //   - 0/1 if in out of box experience
+    DAS.Event("app.connect.fail", secondsInFlow.ToString(), null, dataDict);
+  }
+
+  public void OnWifiInstructionsStarted() {
+    // app.connect.wifi.start - 0/1 if in out of box experience
+    DAS.Event("app.connect.wifi.start", _ConnectSessionIsFirstTime ? "1" : "0");
+
+    _WifiFlowStartUtcTime = DateTime.UtcNow;
+  }
+
+  public void OnWifiInstructionsEnded() {
+    var dataDict = GetDataDictionary("$data", _ConnectSessionIsFirstTime ? "1" : "0");
+    uint secondsInFlow = Convert.ToUInt32((DateTime.UtcNow - _WifiFlowStartUtcTime).TotalSeconds);
+
+    // app.connect.wifi.complete - include:
+    //   - total time in wifi setup portion of flow
+    //   - 0/1 if in out of box experience
+    DAS.Event("app.connect.wifi.complete", secondsInFlow.ToString(), null, dataDict);
+  }
+
+  public void OnWifiInstructionsGetHelp() {
+    // app.connect.wifi.get_help - no extra data
+    DAS.Event("app.connect.wifi.get_help", "");
+  }
+
+  private void HandleConnectSuccess() {
+    // connect flow ends when connection is successfully made
+    var dataDict = GetDataDictionary("$data", _ConnectSessionIsFirstTime ? "1" : "0");
+    uint secondsInFlow = Convert.ToUInt32((DateTime.UtcNow - _ConnectFlowStartUtcTime).TotalSeconds);
+
+    // app.connect.success - include:
+    //   - total time in connect flow (seconds)
+    //   - 0/1 if in out of box experience
+    DAS.Event("app.connect.success", secondsInFlow.ToString(), null, dataDict);
   }
 
   private void HandleSessionStart() {

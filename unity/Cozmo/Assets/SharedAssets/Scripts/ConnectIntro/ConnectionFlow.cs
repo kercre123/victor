@@ -119,7 +119,6 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   private void ReturnToTitle() {
-    IntroManager.Instance.ForceBoot();
     if (_ConnectionFlowBackgroundInstance != null) {
       _ConnectionFlowBackgroundInstance.ViewClosed += QuitConnectionFlow;
       UIManager.CloseView(_ConnectionFlowBackgroundInstance);
@@ -444,6 +443,12 @@ public class ConnectionFlow : MonoBehaviour {
       _ConnectingToCozmoScreenInstance.ConnectionComplete();
     }
 
+    if (DataPersistence.DataPersistenceManager.Instance.IsNewSessionNeeded) {
+      DataPersistence.DataPersistenceManager.Instance.StartNewSession();
+    }
+
+    DataPersistence.DataPersistenceManager.Instance.CurrentSession.HasConnectedToCozmo = true;
+
     // When we are in the first time user flow, we enable the block pool when we get to the Pull Cube Tab screen
     if (!DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
       // Enable the automatic block pool
@@ -486,7 +491,7 @@ public class ConnectionFlow : MonoBehaviour {
       return;
     }
     _scanLoopPlaying = play;
-    Anki.Cozmo.Audio.GameEvent.Sfx sfxEvent = _scanLoopPlaying ? Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Scan_Loop : Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Scan_Loop_Stop;
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(sfxEvent);
+    Anki.Cozmo.Audio.GameEvent.Ui evt = _scanLoopPlaying ? Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Connect_Scan_Loop : Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Connect_Scan_Loop_Stop;
+    Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(evt);
   }
 }

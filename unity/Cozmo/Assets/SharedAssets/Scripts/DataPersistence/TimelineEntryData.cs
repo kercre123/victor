@@ -21,6 +21,8 @@ namespace DataPersistence {
 
     public float PlayTime;
 
+    public bool HasConnectedToCozmo;
+
     public readonly List<CompletedChallengeData> CompletedChallenges;
 
     // The entry is considered complete after the friendship points have been awarded.
@@ -41,6 +43,7 @@ namespace DataPersistence {
       SparkCount = new Dictionary<Anki.Cozmo.UnlockId, int>();
       TotalWins = new Dictionary<string, int>();
       PlayTime = 0.0f;
+      HasConnectedToCozmo = false;
     }
 
     public TimelineEntryData(Date date) : this() {

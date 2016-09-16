@@ -77,7 +77,7 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
 
   protected override void Update() {
     base.Update();
-    if (_AllObjectsConnected || ClosingAnimationPlaying) {
+    if (_AllObjectsConnected || IsClosed) {
       return;
     }
 
@@ -127,7 +127,7 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
                                                             kConnectedOnPeriod_ms, kConnectedOffPeriod_ms,
                                                             kConnectedOnTransition_ms, kConnectedOffTransition_ms,
                                                             kConnectedOffset);
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect);
+          Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Connect);
         }
         _NewlyConnectedObject = Anki.Cozmo.ObjectType.Invalid;
       }
@@ -135,14 +135,11 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
   }
 
   private void HandleContinueButton() {
-    if (ClosingAnimationPlaying) {
-      return;
-    }
     this.CloseView();
   }
 
   protected override void CleanUp() {
-    if (_CubeHelpViewInstance != null && !_CubeHelpViewInstance.ClosingAnimationPlaying) {
+    if (_CubeHelpViewInstance != null) {
       UIManager.CloseView(_CubeHelpViewInstance);
     }
 

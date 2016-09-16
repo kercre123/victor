@@ -32,7 +32,7 @@ namespace Anki
         void FullStop(void);
         void Flush(void);
           
-        void SetupRead(void* target, int size, i2c_callback cb = NULL);
+        void SetupRead(void* target, int size);
         void Write(uint8_t slave, const uint8_t *bytes, int len, uint8_t flags = I2C_NONE) ;
         void Read (uint8_t slave, uint8_t flags = I2C_NONE) ;
 

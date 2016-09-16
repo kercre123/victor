@@ -105,7 +105,7 @@ public class CheckInFlow : MonoBehaviour {
 
     _PrivacyPolicyButton.Initialize(() => {
       ScrollingTextView view = UIManager.OpenView<ScrollingTextView>(AlertViewLoader.Instance.ScrollingTextViewPrefab, (ScrollingTextView v) => { v.DASEventViewName = "privacy_policy_view"; });
-      view.Initialize(LocalizationKeys.kPrivacyPolicyTitle, LocalizationKeys.kPrivacyPolicyText);
+      view.Initialize(Localization.Get(LocalizationKeys.kPrivacyPolicyTitle), Localization.Get(LocalizationKeys.kPrivacyPolicyText));
     }, "privacy_policy_button", "checkin_dialog");
 
 
@@ -116,10 +116,14 @@ public class CheckInFlow : MonoBehaviour {
     _TimelineReviewContainer.SetActive(false);
     _ConnectContainer.SetActive(false);
     _DailyGoalPanel.gameObject.SetActive(false);
+    // automatically apply chest rewards that are queued up incase the app is exitied during the middle
+    // of a reward loot view flow.
+    ChestRewardManager.Instance.TryPopulateChestRewards();
+    ChestRewardManager.Instance.ApplyChestRewards();
+    UpdateProgBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
     // Do Check in Rewards if we need a new session
     if (DataPersistence.DataPersistenceManager.Instance.IsNewSessionNeeded) {
       _EnvelopeContainer.SetActive(true);
-      UpdateProgBar(0, 100);
     }
     else {
       Sequence rewardSequence = DOTween.Sequence();
@@ -128,7 +132,6 @@ public class CheckInFlow : MonoBehaviour {
       rewardSequence.Join(UIDefaultTransitionSettings.Instance.CreateFadeInTween(_ConnectCanvas, Ease.Unset, _ConnectIntroDuration));
       _DailyGoalPanel.gameObject.SetActive(true);
       _ConnectContainer.SetActive(true);
-      UpdateProgBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
       rewardSequence.Play();
     }
 
@@ -299,7 +302,6 @@ public class CheckInFlow : MonoBehaviour {
         }
       }
     }
-    RewardedActionManager.Instance.SendPendingRewardsToInventory();
   }
 
   // Pulls a random transform from the target list, removes it, and
@@ -443,6 +445,8 @@ public class CheckInFlow : MonoBehaviour {
   private float _GoalTweenDelay = 0.05f;
   [SerializeField]
   private float _GoalFadeDuration = 0.5f;
+  [SerializeField]
+  private float _RewardFinalDelay = 0.75f;
 
   private void HandleTimelineAnimEnd() {
     Sequence goalSequence = DOTween.Sequence();
@@ -485,6 +489,8 @@ public class CheckInFlow : MonoBehaviour {
     goalSequence = TweenAllToFinalTarget(goalSequence, _ActiveExpTransforms, _FinalExpTarget);
     goalSequence = TweenAllToFinalTarget(goalSequence, _ActiveCoinsTransforms, _FinalCoinTarget);
     goalSequence = TweenAllToFinalTarget(goalSequence, _ActiveSparksTransforms, _FinalSparkTarget);
+    goalSequence.AppendCallback(RewardedActionManager.Instance.SendPendingRewardsToInventory);
+    goalSequence.AppendInterval(_RewardFinalDelay);
   }
 
   // Handled as a callback in order for us to have the appropriate delay after DailyGoalPanel becomes

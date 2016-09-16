@@ -26,6 +26,12 @@ namespace Anki {
         [SerializeField]
         private PlayEventType _PlayEvent = PlayEventType.Awake;
 
+        [SerializeField]
+        private float _Delay = 0f;
+
+        private bool _WaitingToPlay = false;
+        private float _TimeUntilPlay = 0f;
+
         private void Awake() {
           if (PlayEventType.Awake == _PlayEvent) {
             Play();
@@ -56,7 +62,18 @@ namespace Anki {
             return;
           }
 
-          GameAudioClient.PostAudioEvent(_AudioEventParameter);
+          _WaitingToPlay = true;
+          _TimeUntilPlay = _Delay;
+        }
+
+        private void Update() {
+          if (_WaitingToPlay) {
+            _TimeUntilPlay -= Time.deltaTime;
+            if (_TimeUntilPlay < 0f) {
+              GameAudioClient.PostAudioEvent(_AudioEventParameter);
+              _WaitingToPlay = false;
+            }
+          }
         }
       }
     }

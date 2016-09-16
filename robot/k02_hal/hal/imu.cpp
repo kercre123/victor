@@ -32,7 +32,6 @@ static const float GYRO_RANGE_CONST = (1.0f/65.6f)*(M_PI/180.0f);   //In FS500 m
 static IMUData imu_state;
 static IMUData imu_offsets = {0};
 IMUData Anki::Cozmo::HAL::IMU::IMUState;
-static bool imu_changed = false;
 static bool imu_updated = false;
 
 static const int IMU_UPDATE_FREQUENCY = 200;  // 200hz
@@ -64,15 +63,13 @@ void Anki::Cozmo::HAL::IMU::Init(void) {
   Manage();
 }
 
-static void state_updated(const void*) {
-  // We received our IMU data
-  static uint8_t lastTimestamp = 0x80;
-  imu_changed = ((imu_state.timestamp ^ lastTimestamp) & 0x80) != 0;
-  lastTimestamp = imu_state.timestamp;
-}
-
 void Anki::Cozmo::HAL::IMU::Manage(void) {
   static int update_counter = 0;
+
+  // We received our IMU data
+  static uint8_t lastTimestamp = 0x00;
+  bool imu_changed = ((imu_state.timestamp ^ lastTimestamp) & 0x80) != 0;
+  lastTimestamp = imu_state.timestamp;
 
   // We have a new bundle of IMU data, stuff it into the buffer
   if (imu_changed) {
@@ -85,7 +82,6 @@ void Anki::Cozmo::HAL::IMU::Manage(void) {
 
     memcpy(&IMUState, &imu_state, sizeof(IMUData));
 
-    imu_changed = false;
     imu_updated = true;
 
     #ifdef IMU_DEBUG
@@ -107,7 +103,7 @@ void Anki::Cozmo::HAL::IMU::Manage(void) {
   update_counter += MANAGE_FREQUENCY;
 
   // Configure I2C bus to read IMU data
-  I2C::SetupRead(&imu_state, sizeof(imu_state), state_updated);
+  I2C::SetupRead(&imu_state, sizeof(imu_state));
   
   I2C::Write(SLAVE_WRITE(ADDR_IMU), &DATA_8, sizeof(DATA_8), I2C_FORCE_START);
   I2C::Read(SLAVE_READ(ADDR_IMU));
@@ -160,7 +156,7 @@ bool Anki::Cozmo::HAL::IMUReadData(Anki::Cozmo::HAL::IMU_DataStructure &imuData)
   imuData.rate_y = GYRO_CONVERT(IMU::IMUState.gyro[1] - imu_offsets.gyro[1]);
   imuData.acc_z  = ACC_CONVERT(-IMU::IMUState.acc[0] + imu_offsets.acc[0]);
   imuData.rate_z = GYRO_CONVERT(-IMU::IMUState.gyro[0] + imu_offsets.gyro[0]);
-  
+
   return true;
 }
 

@@ -10,6 +10,10 @@ from flask import Flask, make_response, send_from_directory, request
 
 import robotInterface, minipegReceiver
 
+import logging
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+
 def Remote():
     global LastCameraImage
 
@@ -65,7 +69,7 @@ def Remote():
     robotInterface.Init(False)
     imageReceiver = minipegReceiver.MinipegReceiver(receiveImage)
 
-    robotInterface.Connect()
+    robotInterface.Connect(imageRequest=True)
     webbrowser.open("http://127.0.0.1:5000/")
     app.run()
     robotInterface.Send(robotInterface.RI.EngineToRobot(stop=robotInterface.RI.StopAllMotors()))

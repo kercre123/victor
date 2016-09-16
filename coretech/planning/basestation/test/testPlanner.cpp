@@ -28,6 +28,15 @@ using GoalState_cPairs = std::vector<std::pair<GoalID,State_c>>;
 #define TEST_PRIM_FILE "/planning/matlab/test_mprim.json"
 #define TEST_PRIM_FILE2 "/planning/matlab/test_mprim2.json"
 
+// Convert plan to path and check if that path is safe
+bool CheckPlanAsPathIsSafe(const xythetaPlannerContext& context, xythetaPlan& plan, Path* validPath = nullptr)
+{
+  Path path;
+  context.env.AppendToPath(plan, path, 0);
+  Path wasteValidPath;
+  const float startAngle = context.env.GetTheta_c(plan.start_.theta);
+  return context.env.PathIsSafe(path, startAngle, (nullptr!=validPath) ? *validPath : wasteValidPath);
+}
 
 GTEST_TEST(TestPlanner, PlanOnceEmptyEnv)
 {
@@ -57,6 +66,7 @@ GTEST_TEST(TestPlanner, PlanOnceEmptyEnv)
 
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+  EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 }
 
 GTEST_TEST(TestPlanner, PlanTwiceEmptyEnv)
@@ -84,6 +94,7 @@ GTEST_TEST(TestPlanner, PlanTwiceEmptyEnv)
 
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+  EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 
   printf("first plan:\n");
   context.env.PrintPlan(planner.GetPlan());
@@ -102,6 +113,7 @@ GTEST_TEST(TestPlanner, PlanTwiceEmptyEnv)
 
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+  EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 
   printf("second plan:\n");
   context.env.PrintPlan(planner.GetPlan());
@@ -143,6 +155,7 @@ GTEST_TEST(TestPlanner, PlanOnceMultipleGoalsEmptyEnv)
 
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+  EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
   
   EXPECT_EQ( planner.GetChosenGoalID(), expectedBest );
 }
@@ -172,6 +185,7 @@ GTEST_TEST(TestPlanner, PlanThriceMultipleGoalsEmptyEnv)
 
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+  EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
   
   EXPECT_EQ( planner.GetChosenGoalID(), expectedBest );
 
@@ -192,6 +206,7 @@ GTEST_TEST(TestPlanner, PlanThriceMultipleGoalsEmptyEnv)
   
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+  EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
   
   printf("second plan:\n");
   context.env.PrintPlan(planner.GetPlan());
@@ -212,6 +227,7 @@ GTEST_TEST(TestPlanner, PlanThriceMultipleGoalsEmptyEnv)
 
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+  EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 
   printf("third plan:\n");
   context.env.PrintPlan(planner.GetPlan());
@@ -250,6 +266,7 @@ GTEST_TEST(TestPlanner, PlanWithMaxExps)
 
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+  EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 
   unsigned int firstPlanExps = planner._impl->_expansions;
   printf("first plan completed in %d expansions\n", firstPlanExps);
@@ -267,6 +284,7 @@ GTEST_TEST(TestPlanner, PlanWithMaxExps)
 
   EXPECT_TRUE(planner.Replan(firstPlanExps + 1));
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+  EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 
   unsigned int secondPlanExps = planner._impl->_expansions;
   printf("second plan completed in %d expansions\n", secondPlanExps);
@@ -337,6 +355,7 @@ GTEST_TEST(TestPlanner, PlanAroundBox)
 
   ASSERT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+  EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 }
 
 GTEST_TEST(TestPlanner, PlanAroundBoxDumpAndImportContext)
@@ -366,6 +385,7 @@ GTEST_TEST(TestPlanner, PlanAroundBoxDumpAndImportContext)
 
   ASSERT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+  EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 
   std::stringstream jsonSS;
   Anki::Util::JsonWriter writer(jsonSS);
@@ -389,6 +409,7 @@ GTEST_TEST(TestPlanner, PlanAroundBoxDumpAndImportContext)
 
   ASSERT_TRUE(planner2.Replan());
   EXPECT_TRUE(context2.env.PlanIsSafe(planner2.GetPlan(), 0));
+  EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 
   // now check that the plans match. I'm not doing floating point equality here, so they may be a bit
   // different, but not much
@@ -437,6 +458,7 @@ GTEST_TEST(TestPlanner, PlanAroundBox_soft)
 
   ASSERT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+  EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 
 
   bool hasTurn = false;
@@ -459,6 +481,7 @@ GTEST_TEST(TestPlanner, PlanAroundBox_soft)
   context.forceReplanFromScratch = true;
   ASSERT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+  EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 
   hasTurn = false;
   for(const auto& action : planner.GetPlan().actions_) {
@@ -482,6 +505,7 @@ GTEST_TEST(TestPlanner, PlanAroundBox_soft)
   context.forceReplanFromScratch = true;
   ASSERT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+  EXPECT_FALSE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 
   // context.env.PrintPlan(planner.GetPlan());
   for(const auto& action : planner.GetPlan().actions_) {
@@ -501,6 +525,7 @@ GTEST_TEST(TestPlanner, PlanAroundBox_soft)
   context.forceReplanFromScratch = true;
   ASSERT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+  EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 
   for(const auto& action : planner.GetPlan().actions_) {
     ASSERT_EQ(context.env.GetRawMotionPrimitive(0, action).endStateOffset.theta,0)
@@ -530,6 +555,7 @@ GTEST_TEST(TestPlanner, MultipleGoalsWithSoftPenalty)
   Cost goalPenalties[4] = {FATAL_OBSTACLE_COST,10.0, 0.01f, 0.0f};
   GoalID expectedGoalIDs[4] = {1,1,0,0};
   float planCosts[4] = {FLT_MAX};
+  bool pathClipsObstacle[4] = {false, false, true, false};
   
   for(int i=0; i<4; ++i) {
     stringstream ss;
@@ -546,6 +572,7 @@ GTEST_TEST(TestPlanner, MultipleGoalsWithSoftPenalty)
     
     ASSERT_TRUE(planner.Replan());
     EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+    EXPECT_EQ(CheckPlanAsPathIsSafe(context, planner.GetPlan()), !pathClipsObstacle[i]);
     
     EXPECT_EQ(planner.GetChosenGoalID(), expectedGoalIDs[i]);
     planCosts[i] = planner.GetFinalCost();
@@ -564,6 +591,9 @@ GTEST_TEST(TestPlanner, MultipleGoalsWithSoftPenalty)
   
   bool validGoals[4] = {false,true,true,true};
   bool planFinished[4] = {false,false,true,true};
+  pathClipsObstacle[1] = true;
+  pathClipsObstacle[2] = true;
+  pathClipsObstacle[3] = false;
   for(float& x : planCosts) {
     x = FLT_MAX;
   }
@@ -586,8 +616,10 @@ GTEST_TEST(TestPlanner, MultipleGoalsWithSoftPenalty)
     context.env.PrepareForPlanning();
     
     if(validGoals[i]) {
+      SCOPED_TRACE(i);
       EXPECT_TRUE(planFinished[i] == planner.Replan());
       EXPECT_TRUE(planFinished[i] == context.env.PlanIsSafe(planner.GetPlan(), 0));
+      EXPECT_EQ(CheckPlanAsPathIsSafe(context, planner.GetPlan()), !pathClipsObstacle[i]);
       
       EXPECT_EQ(planner.GetChosenGoalID(), 0);
       planCosts[i] = planner.GetFinalCost();
@@ -626,15 +658,18 @@ GTEST_TEST(TestPlanner, ReplanEasy)
 
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+  EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 
   context.env.AddObstacleAllThetas(Anki::RotatedRectangle(50.0, -100.0, 80.0, -100.0, 20.0));
 
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0)) << "new obstacle should not interfere with plan";
+  EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 
   context.env.PrepareForPlanning();
 
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+  EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 }
 
 
@@ -663,12 +698,14 @@ GTEST_TEST(TestPlanner, ReplanHard)
 
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+  EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 
   context.env.PrintPlan(planner.GetPlan());
 
   context.env.AddObstacleAllThetas(Anki::RotatedRectangle(200.0, -10.0, 230.0, -10.0, 20.0));
 
   EXPECT_FALSE(context.env.PlanIsSafe(planner.GetPlan(), 0)) << "new obstacle should block plan!";
+  EXPECT_FALSE(CheckPlanAsPathIsSafe(context, planner.GetPlan()))  << "new obstacle should block path too!";
 
   State_c newRobotPos(137.9, -1.35, 0.0736);
   ASSERT_FALSE(context.env.IsInCollision(newRobotPos)) << "position "<<newRobotPos<<" should be safe";
@@ -676,6 +713,7 @@ GTEST_TEST(TestPlanner, ReplanHard)
 
   State_c lastSafeState;
   xythetaPlan oldPlan;
+  Path oldPath;
 
   float distFromPlan = 9999.0;
   int currentPlanIdx = static_cast<int>(context.env.FindClosestPlanSegmentToPose(planner.GetPlan(), newRobotPos, distFromPlan));
@@ -685,11 +723,13 @@ GTEST_TEST(TestPlanner, ReplanHard)
   EXPECT_LT(distFromPlan, 15.0) << "too far away from plan";
 
   ASSERT_FALSE(context.env.PlanIsSafe(planner.GetPlan(), 1000.0, currentPlanIdx, lastSafeState, oldPlan));
+  ASSERT_FALSE(CheckPlanAsPathIsSafe(context, planner.GetPlan(), &oldPath));
 
   std::cout<<"safe section of old plan:\n";
   context.env.PrintPlan(oldPlan);
 
   ASSERT_GE(oldPlan.Size(), 1) << "should re-use at least one action from the old plan";
+  ASSERT_EQ(oldPath.GetNumSegments(), 0) << "path is just one line and the whole thing should be invalid";
 
   StateID currID = oldPlan.start_.GetStateID();
   for(const auto& action : oldPlan.actions_) {
@@ -709,6 +749,7 @@ GTEST_TEST(TestPlanner, ReplanHard)
 
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+  EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 
   std::cout<<"final plan:\n";
   context.env.PrintPlan(planner.GetPlan());

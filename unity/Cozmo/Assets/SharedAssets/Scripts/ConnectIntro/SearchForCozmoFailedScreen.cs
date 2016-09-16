@@ -2,8 +2,6 @@
 using System.Collections;
 
 public class SearchForCozmoFailedScreen : MonoBehaviour {
-
-  private const int kDeviceIdLength = 13;
   public System.Action OnEndpointFound;
   public System.Action OnQuitFlow;
 
@@ -33,7 +31,7 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
     _ShowMeButton.Initialize(HandleShowMeButton, "show_me_button", "search_for_cozmo_failed_screen");
     _GetACozmoButton.Initialize(HandleGetACozmoButton, "get_a_cozmo_button", "search_for_cozmo_failed_screen");
 
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Cozmo_Connect_Fail);
+    Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Connect_Fail);
 
     var persistence = DataPersistence.DataPersistenceManager.Instance;
     var lastCozmoSerial = persistence.Data.DeviceSettings.LastCozmoSerial;
@@ -46,12 +44,14 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
 
     var deviceId = persistence.DeviceId;
     if (!string.IsNullOrEmpty(deviceId)) {
-      deviceId = deviceId.Substring(0, System.Math.Min(kDeviceIdLength, deviceId.Length)); // 12 chars of device id + one dash in the middle
+      deviceId = deviceId.Substring(0, System.Math.Min(Cozmo.Settings.DefaultSettingsValuesConfig.Instance.CharactersOfAppInfoToShow,
+                                                       deviceId.Length)); // 12 chars of device id + one dash in the middle
       _DeviceIdLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelDeviceid, deviceId);
     }
     else {
       _DeviceIdLabel.gameObject.SetActive(false);
     }
+    DasTracker.Instance.OnSearchForCozmoFailed();
   }
 
   private void OnDestroy() {

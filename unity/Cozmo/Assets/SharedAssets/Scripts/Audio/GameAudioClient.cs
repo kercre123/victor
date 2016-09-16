@@ -237,6 +237,37 @@ namespace Anki {
           UnityAudioClient client = UnityAudioClient.Instance;
           client.PostMusicState((GameState.GenericState)state, interrupt, minDurationInMilliSeconds);
         }
+
+       
+        // Game Helpers
+        static public void SetMusicRoundState(int round) {
+          SwitchState.Gameplay_Round roundState = SwitchState.Gameplay_Round.Invalid;
+          switch (round) {
+          case 1:
+            roundState = SwitchState.Gameplay_Round.Round_01;
+            break;
+          case 2:
+            roundState = SwitchState.Gameplay_Round.Round_02;
+            break;
+          case 3:
+            roundState = SwitchState.Gameplay_Round.Round_03;
+            break;
+          case 4:
+            roundState = SwitchState.Gameplay_Round.Round_04;
+            break;
+          case 5:
+            roundState = SwitchState.Gameplay_Round.Round_05;
+            break;
+          default:
+            // Set default state
+            roundState = SwitchState.Gameplay_Round.Round_01;
+            DAS.Error("GameAudioClient.SetMusicRoundState", string.Format("Unhandled round value: {0}", round));
+            break;
+          }
+
+          UnityAudioClient client = UnityAudioClient.Instance;
+          client.PostSwitchState (SwitchState.SwitchGroupType.Gameplay_Round, (SwitchState.GenericSwitch)roundState, GameObjectType.Default);
+        }
       }
     }
   }

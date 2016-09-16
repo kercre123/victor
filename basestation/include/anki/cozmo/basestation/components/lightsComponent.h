@@ -18,6 +18,7 @@
 #include "anki/common/types.h"
 #include "clad/types/activeObjectTypes.h"
 #include "clad/types/ledTypes.h"
+#include "clad/types/poseStructs.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "json/json.h"
@@ -101,6 +102,10 @@ public:
   template<typename T>
   void HandleMessage(const T& msg);
   
+  void OnObjectPoseStateChanged(const ObjectID& objectID,
+                                const PoseState oldPoseState,
+                                const PoseState newPoseState);
+  
 private:
 
   // The various states cube lights can be in
@@ -182,6 +187,7 @@ private:
   // Send a mesage to game to let them know the objects current light values
   // Will only send if _sendTransitionMessages is true
   void SendTransitionMessage(const ObjectID& objectID, const ObjectLights& values);
+  void SendTransitionMessage(const ObjectID& objectID, const std::array<Anki::Cozmo::LightState, 4>& lights);
   
   bool CanSetObjectLights(const ObjectID& objectID);
   
@@ -224,6 +230,7 @@ private:
   BackpackLights _currentBackpackLights;
 
   bool _sendTransitionMessages = false;
+  bool _robotDelocalized = false;
   
 }; // class LightsComponent
 

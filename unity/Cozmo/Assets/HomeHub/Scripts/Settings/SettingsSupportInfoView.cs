@@ -1,9 +1,7 @@
-﻿using Anki.Cozmo.ExternalInterface;
-using Anki.UI;
+﻿using Anki.UI;
 using Cozmo.UI;
 using DG.Tweening;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Cozmo.Settings {
   public class SettingsSupportInfoView : BaseView {
@@ -15,11 +13,19 @@ namespace Cozmo.Settings {
     [SerializeField]
     private CozmoButton _OpenRestoreCozmoDialogButton;
 
+    [SerializeField]
+    private AnkiTextLabel _ClarificationText;
+
     private void Start() {
       _OpenRestoreCozmoDialogButton.Initialize(HandleOpenRestoreCozmoViewButtonTapped, "open_restore_cozmo_view_button", this.DASEventViewName);
     }
 
     protected override void CleanUp() {
+    }
+
+    public void HideRestoreButton(bool isActive) {
+      _OpenRestoreCozmoDialogButton.gameObject.SetActive(isActive);
+      _ClarificationText.gameObject.SetActive(isActive);
     }
 
     private void HandleOpenRestoreCozmoViewButtonTapped() {

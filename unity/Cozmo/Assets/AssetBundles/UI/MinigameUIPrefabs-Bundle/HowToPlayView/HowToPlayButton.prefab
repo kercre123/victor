@@ -74,7 +74,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.597}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.54901963}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -112,10 +112,9 @@ MonoBehaviour:
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
   _PressedTintImage: {fileID: 0}
-  _PressedTintColor: {r: 0, g: 0, b: 0, a: 0}
+  _PressedTintColor: {r: 0.4852941, g: 0.4852941, b: 0.4852941, a: 0.54901963}
   _ShowPressedStateOnRelease: 0
 --- !u!222 &22261188
 CanvasRenderer:

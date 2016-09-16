@@ -106,9 +106,9 @@ void RobotConnectionManager::DisconnectCurrent()
 bool RobotConnectionManager::SendData(const uint8_t* buffer, unsigned int size)
 {
   const bool validState = IsValidConnection();
-  ASSERT_NAMED(validState, "RobotConnectionManager.SendData.NotValidState");
   if (!validState)
   {
+    PRINT_NAMED_INFO("RobotConnectionManager.SendData.NotValidState", "");
     return false;
   }
   
@@ -161,7 +161,7 @@ void RobotConnectionManager::HandleDataMessage(RobotConnectionMessageData& nextM
   const bool validState = IsValidConnection();
   if (!validState)
   {
-    PRINT_NAMED_ERROR("RobotConnectionManager.HandleDataMessage.NotValidState", "Connection not yet valid, dropping message");
+    PRINT_NAMED_INFO("RobotConnectionManager.HandleDataMessage.NotValidState", "Connection not yet valid, dropping message");
     return;
   }
   

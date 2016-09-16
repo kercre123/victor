@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Anki.UI;
 using Anki.Assets;
+using Anki.Cozmo;
 using Cozmo.UI;
 using DataPersistence;
 using System;
@@ -18,6 +19,9 @@ namespace Cozmo.HomeHub {
       Profile,
       Settings
     }
+
+    private const float kFreeplayIntervalCheck = 30.0f;
+    private float _FreeplayIntervalLastTimestamp = -1;
 
     public System.Action<StatContainer, StatContainer, Transform[]> DailyGoalsSet;
 
@@ -186,6 +190,7 @@ namespace Cozmo.HomeHub {
     private Dictionary<string, ChallengeStatePacket> _ChallengeStates;
 
     public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById, HomeHub homeHubInstance) {
+      _FreeplayIntervalLastTimestamp = -1;
       _HomeHubInstance = homeHubInstance;
 
       DASEventViewName = "home_view";
@@ -203,11 +208,6 @@ namespace Cozmo.HomeHub {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.EngineErrorCodeMessage>(HandleEngineErrorCode);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
 
-      // automatically apply chest rewards that are queued up incase the app is exitied during the middle
-      // of a reward loot view flow.
-      ChestRewardManager.Instance.TryPopulateChestRewards();
-      ChestRewardManager.Instance.ApplyChestRewards();
-
       _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleGreenPointsBarUpdateComplete;
       DailyGoalManager.Instance.OnRefreshDailyGoals += UpdatePlayTabText;
       GameEventManager.Instance.OnGameEvent += HandleDailyGoalCompleted;
@@ -221,10 +221,10 @@ namespace Cozmo.HomeHub {
       // If in SDK Mode, immediately open Settings and SDK view instead of PlayTab,
       // otherwise default to opening PlayTab
       if (DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) {
-        HandleSettingsButton();
+        SwitchToTab(HomeTab.Settings);
       }
       else {
-        HandlePlayTabButton();
+        SwitchToTab(HomeTab.Play);
       }
       UpdatePuzzlePieceCount();
 
@@ -291,23 +291,38 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleCozmoTabButton() {
+      // Do not allow changing tabs while receiving chests
+      if (HomeViewCurrentlyOccupied) {
+        return;
+      }
       SwitchToTab(HomeTab.Cozmo);
     }
 
     private void HandlePlayTabButton() {
+      // Do not allow changing tabs while receiving chests
+      if (HomeViewCurrentlyOccupied) {
+        return;
+      }
       SwitchToTab(HomeTab.Play);
     }
 
     private void HandleProfileTabButton() {
+      // Do not allow changing tabs while receiving chests
+      if (HomeViewCurrentlyOccupied) {
+        return;
+      }
       SwitchToTab(HomeTab.Profile);
     }
 
     private void HandleHelpButton() {
+      if (HomeViewCurrentlyOccupied) {
+        return;
+      }
       _HelpViewInstance = UIManager.OpenView(_HelpViewPrefab);
     }
 
     private void HandleSettingsButton() {
-      // Do not allow changing tabs while receiving chests
+      // Don't allow settings button to be clicked when the view is doing other things
       if (HomeViewCurrentlyOccupied) {
         return;
       }
@@ -320,10 +335,6 @@ namespace Cozmo.HomeHub {
     }
 
     private void SwitchToTab(HomeTab tab) {
-      // Do not allow changing tabs while receiving chests
-      if (HomeViewCurrentlyOccupied) {
-        return;
-      }
       if (_CurrentTab != tab) {
         _PreviousTab = _CurrentTab;
       }
@@ -446,6 +457,24 @@ namespace Cozmo.HomeHub {
       }
       _AnyUpgradeAffordableIndicator.SetActive(canAfford && _CurrentTab != HomeTab.Cozmo);
     }
+
+    #region Freeplay Related GameEvents
+
+
+    // Every kFreeplayIntervalCheck seconds, fire the FreeplayInterval event for Freeplay time related goals
+    protected override void Update() {
+      base.Update();
+      if (_FreeplayIntervalLastTimestamp < 0.0f) {
+        _FreeplayIntervalLastTimestamp = Time.time;
+      }
+      if (Time.time - _FreeplayIntervalLastTimestamp > kFreeplayIntervalCheck) {
+        _FreeplayIntervalLastTimestamp = Time.time;
+        GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnFreeplayInterval));
+      }
+    }
+
+
+    #endregion
 
     #region Reward Sequence and Lootview
 
@@ -613,7 +642,7 @@ namespace Cozmo.HomeHub {
     }
     // If we earned a chest, have the progress bar reflect the previous requirement level at full.
     private void HandleChestGained() {
-      UpdateChestProgressBar(ChestRewardManager.Instance.GetPreviousRequirementPoints(), ChestRewardManager.Instance.GetPreviousRequirementPoints());
+      UpdateChestProgressBar(ChestRewardManager.Instance.GetNextRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
     }
 
     private Transform GetGoalSource(DailyGoal goal) {

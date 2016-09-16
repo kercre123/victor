@@ -68,6 +68,8 @@ public class UIManager : MonoBehaviour {
   public BackgroundColorController BackgroundColorController { get { return _BackgroundColorController; } }
 
   private List<BaseView> _OpenViews;
+  // Account far the fact that there's always a base view open
+  public int NumberOfOpenDialogues(){ return _OpenViews.Count - 1;}
 
   void Awake() {
     Instance = this;
@@ -134,13 +136,6 @@ public class UIManager : MonoBehaviour {
     T viewScript = newView.GetComponent<T>();
 
     Transform targetCanvas = Instance._HorizontalCanvas.transform;
-    bool shouldDimBackground = overrideBackgroundDim.HasValue ? overrideBackgroundDim.Value : viewScript.DimBackground;
-    if (shouldDimBackground) {
-      Instance.DimBackground(viewScript, targetCanvas);
-    }
-
-    // Set the parent of the dialog after dimmer is created so that it displays
-    // on top of the dimmer
     newView.transform.SetParent(targetCanvas, false);
 
     if (preInitFunc != null) {
@@ -152,6 +147,21 @@ public class UIManager : MonoBehaviour {
     SendDasEventForDialogOpen(viewScript);
 
     Instance._OpenViews.Add(viewScript);
+
+    // find the spot in the transform hierarchy that viewScript belongs in based on layer priority
+    for (int i = 0; i < _Instance._OpenViews.Count; ++i) {
+      if (_Instance._OpenViews[i].LayerPriority > viewScript.LayerPriority) {
+        viewScript.transform.SetSiblingIndex(_Instance._OpenViews[i].transform.GetSiblingIndex());
+        break;
+      }
+    }
+
+    bool shouldDimBackground = overrideBackgroundDim.HasValue ? overrideBackgroundDim.Value : viewScript.DimBackground;
+    if (shouldDimBackground) {
+      Instance.DimBackground(viewScript, targetCanvas);
+    }
+
+    _Instance.PlaceDimmer();
 
     return viewScript;
   }
@@ -208,10 +218,9 @@ public class UIManager : MonoBehaviour {
   }
 
   private void HandleBaseViewCloseAnimationFinished(BaseView view) {
+    _OpenViews.Remove(view);
     TryUnDimBackground(view);
     SendDasEventForDialogClose(view);
-
-    _OpenViews.Remove(view);
   }
 
   private void DimBackground(BaseView view, Transform targetCanvas) {
@@ -225,9 +234,6 @@ public class UIManager : MonoBehaviour {
         // (For instance, onboarding background dimming that wants to avoid
         // covering the entire screen)
         GameObject toInstantiate = Instance._DimBackgroundPrefab.gameObject;
-        if (view.DimBackgroundPrefabOverride != null) {
-          toInstantiate = view.DimBackgroundPrefabOverride.gameObject;
-        }
         _DimBackgroundInstance = Instantiate(toInstantiate).GetComponent<CanvasGroup>();
         _DimBackgroundInstance.transform.SetParent(targetCanvas, false);
         _DimBackgroundInstance.alpha = 0;
@@ -256,6 +262,25 @@ public class UIManager : MonoBehaviour {
           _DimBackgroundTweener.Append(_DimBackgroundInstance.DOFade(0, UIDefaultTransitionSettings.Instance.FadeOutTransitionDurationSeconds)
                                        .SetEase(UIDefaultTransitionSettings.Instance.FadeOutEasing));
           _DimBackgroundTweener.AppendCallback(() => Destroy(_DimBackgroundInstance.gameObject));
+        }
+      }
+    }
+    PlaceDimmer();
+  }
+
+  private void PlaceDimmer() {
+    // find where transform hierarchy the dim background should go
+    if (_Instance._DimBackgroundInstance != null) {
+      for (int i = _Instance._OpenViews.Count - 1; i >= 0; --i) {
+        if (_Instance._OpenViews[i].DimBackground) {
+          int targetIndex = _Instance._OpenViews[i].transform.GetSiblingIndex();
+          int currentDimmerIndex = _Instance._DimBackgroundInstance.transform.GetSiblingIndex();
+          if (currentDimmerIndex < targetIndex) {
+            _Instance._DimBackgroundInstance.transform.SetSiblingIndex(targetIndex - 1);
+          }
+          else {
+            _Instance._DimBackgroundInstance.transform.SetSiblingIndex(targetIndex);
+          }
         }
       }
     }

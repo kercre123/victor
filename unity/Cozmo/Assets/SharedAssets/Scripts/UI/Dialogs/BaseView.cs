@@ -7,6 +7,13 @@ using Anki.UI;
 namespace Cozmo {
   namespace UI {
     public class BaseView : MonoBehaviour {
+      private enum ViewState {
+        Initialized,
+        IsOpening,
+        Open,
+        IsClosing,
+        Closed
+      }
 
       // Static events
       public delegate void BaseViewHandler(BaseView view);
@@ -30,10 +37,10 @@ namespace Cozmo {
       [SerializeField]
       private string _DASEventViewName = "";
 
-      private bool _ClosingAnimationPlaying = false;
+      private ViewState _CurrentViewState = ViewState.Initialized;
 
-      public bool ClosingAnimationPlaying {
-        get { return _ClosingAnimationPlaying; }
+      protected bool IsClosed {
+        get { return _CurrentViewState == ViewState.IsClosing || _CurrentViewState == ViewState.Closed; }
       }
 
       public string DASEventViewName {
@@ -58,8 +65,14 @@ namespace Cozmo {
       [SerializeField]
       protected Cozmo.UI.CozmoButton _OptionalCloseDialogButton;
 
+      [SerializeField]
+      private int _LayerPriority = 0;
+
+      public int LayerPriority {
+        get { return _LayerPriority; }
+      }
+
       public bool DimBackground = false;
-      public CanvasGroup DimBackgroundPrefabOverride = null;
 
       private Sequence _TransitionAnimation;
 
@@ -73,16 +86,12 @@ namespace Cozmo {
       }
 
       void OnDestroy() {
-        if (_ClosingAnimationPlaying) {
-          DAS.Warn("BaseView.OnDestroy", "BaseView being destroyed when close animation has not finished: " + _DASEventViewName);
-        }
-        if (_TransitionAnimation != null) {
-          _TransitionAnimation.Kill();
-        }
+        if (_CurrentViewState != ViewState.Closed) {
+          if (_CurrentViewState != ViewState.IsClosing) {
+            RaiseViewClosed(this);
+          }
 
-        // make sure we re-enable touch events in case this gets killed before animation finish callbacks are invoked.
-        if (UIManager.Instance != null) {
-          UIManager.EnableTouchEvents();
+          BaseViewCleanUpInternal();
         }
       }
 
@@ -101,6 +110,12 @@ namespace Cozmo {
 
         CheckDASEventName();
 
+        // TODO: In the future, separate the initialize and open dialog steps 
+        // for ease of use
+        _CurrentViewState = ViewState.Initialized;
+
+        // TODO: This should be raised after open animation finished
+        // and raise initialize event here instead?
         RaiseViewOpened(this);
 
         PlayOpenSound();
@@ -166,22 +181,22 @@ namespace Cozmo {
       public void CloseView() {
         // if we are already closing the view don't make multiple calls
         // to the callback and don't try to play the close animation again
-        if (_ClosingAnimationPlaying) {
-          return;
+        if (_CurrentViewState != ViewState.IsClosing
+            && _CurrentViewState != ViewState.Closed) {
+          PlayCloseAnimations();
+          RaiseViewClosed(this);
         }
-        RaiseViewClosed(this);
-        PlayCloseAnimations();
       }
 
       public void CloseViewImmediately() {
-        // if we are already closing the view then don't call the view closed callback again,
-        // but do proceed to stop the animation anyway.
-        if (!_ClosingAnimationPlaying) {
-          RaiseViewClosed(this);
-        }
+        if (_CurrentViewState != ViewState.Closed) {
+          if (_CurrentViewState != ViewState.IsClosing) {
+            RaiseViewClosed(this);
+          }
 
-        // Close dialog without playing animations
-        OnCloseAnimationsFinished();
+          BaseViewCleanUpInternal();
+          Destroy(gameObject);
+        }
       }
 
       // Play a sound when the view is shown (on calling Initialize)
@@ -192,18 +207,22 @@ namespace Cozmo {
       }
 
       private void PlayOpenAnimations() {
-        UIManager.DisableTouchEvents();
+        if (_CurrentViewState == ViewState.Initialized) {
+          _CurrentViewState = ViewState.IsOpening;
+          UIManager.DisableTouchEvents();
 
-        // Play some animations
-        if (_TransitionAnimation != null) {
-          _TransitionAnimation.Kill();
+          // Play some animations
+          if (_TransitionAnimation != null) {
+            _TransitionAnimation.Kill();
+          }
+          _TransitionAnimation = DOTween.Sequence();
+          ConstructOpenAnimation(_TransitionAnimation);
+          _TransitionAnimation.AppendCallback(OnOpenAnimationsFinished);
         }
-        _TransitionAnimation = DOTween.Sequence();
-        ConstructOpenAnimation(_TransitionAnimation);
-        _TransitionAnimation.AppendCallback(OnOpenAnimationsFinished);
       }
 
       private void OnOpenAnimationsFinished() {
+        _CurrentViewState = ViewState.Open;
         UIManager.EnableTouchEvents();
 
         // Raise event
@@ -211,8 +230,8 @@ namespace Cozmo {
       }
 
       private void PlayCloseAnimations() {
+        _CurrentViewState = ViewState.IsClosing;
         UIManager.DisableTouchEvents();
-        _ClosingAnimationPlaying = true;
 
         // Play some animations
         if (_TransitionAnimation != null) {
@@ -224,15 +243,22 @@ namespace Cozmo {
       }
 
       private void OnCloseAnimationsFinished() {
-        DAS.Info(this, "OnCloseAnimationsFinished start");
+        if (_CurrentViewState != ViewState.Closed) {
+          BaseViewCleanUpInternal();
+          Destroy(gameObject);
+        }
+      }
+
+      private void BaseViewCleanUpInternal() {
+        _CurrentViewState = ViewState.Closed;
         if (UIManager.Instance != null) {
           UIManager.EnableTouchEvents();
         }
-        _ClosingAnimationPlaying = false;
+        if (_TransitionAnimation != null) {
+          _TransitionAnimation.Kill();
+        }
         CleanUp();
         RaiseViewCloseAnimationFinished(this);
-        Destroy(gameObject);
-        DAS.Info(this, "OnCloseAnimationsFinished finished");
       }
 
       private static void RaiseViewOpened(BaseView view) {
@@ -252,7 +278,6 @@ namespace Cozmo {
           view.ViewOpenAnimationFinished();
         }
       }
-
 
       private static void RaiseViewClosed(BaseView view) {
         if (BaseViewClosed != null) {

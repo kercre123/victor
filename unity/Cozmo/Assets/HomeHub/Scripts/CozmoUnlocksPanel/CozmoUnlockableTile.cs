@@ -59,18 +59,12 @@ public class CozmoUnlockableTile : MonoBehaviour {
     _UnlockedIconSprite.sprite = unlockableData.CoreUpgradeIcon;
     switch (unlockState) {
     case CozmoUnlocksPanel.CozmoUnlockState.Locked:
-      _UnlockedIconSprite.color = new Color(_UnlockedIconSprite.color.r, _UnlockedIconSprite.color.g, _UnlockedIconSprite.color.b, kLockedAlpha);
+      _UnlockedIconSprite.gameObject.SetActive(false);
       break;
     case CozmoUnlocksPanel.CozmoUnlockState.Unlockable:
       bool affordable = playerInventory.CanRemoveItemAmount(unlockableData.UpgradeCostItemId, unlockableData.UpgradeCostAmountNeeded);
       _AffordableIndicator.gameObject.SetActive(affordable);
-      _LockedBackgroundContainer.gameObject.SetActive(!affordable);
-      if (affordable) {
-        _UnlockedIconSprite.color = new Color(_UnlockedIconSprite.color.r, _UnlockedIconSprite.color.g, _UnlockedIconSprite.color.b, 1.0f);
-      }
-      else {
-        _UnlockedIconSprite.color = new Color(_UnlockedIconSprite.color.r, _UnlockedIconSprite.color.g, _UnlockedIconSprite.color.b, kLockedAlpha);
-      }
+      _UnlockedIconSprite.color = new Color(_UnlockedIconSprite.color.r, _UnlockedIconSprite.color.g, _UnlockedIconSprite.color.b, kLockedAlpha);
       break;
     case CozmoUnlocksPanel.CozmoUnlockState.Unlocked:
       _AffordableIndicator.gameObject.SetActive(false);
@@ -78,7 +72,7 @@ public class CozmoUnlockableTile : MonoBehaviour {
       break;
     case CozmoUnlocksPanel.CozmoUnlockState.NeverAvailable:
       _AffordableIndicator.gameObject.SetActive(false);
-      _UnlockedIconSprite.color = new Color(_UnlockedIconSprite.color.r, _UnlockedIconSprite.color.g, _UnlockedIconSprite.color.b, kLockedAlpha);
+      _UnlockedIconSprite.gameObject.SetActive(false);
       _ComingSoonContainer.gameObject.SetActive(true);
       break;
     }

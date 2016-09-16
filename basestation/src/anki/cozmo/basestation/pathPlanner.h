@@ -79,6 +79,14 @@ public:
   virtual void StopPlanning() {}
 
   virtual EPlannerStatus CheckPlanningStatus() const;
+  
+  // Returns true if the path avoids obstacles. Some planners don't know about obstacles, so the default is always true.
+  // If provided, clears and fills validPath to be that portion of path that is below the max obstacle penalty.
+  virtual bool CheckIsPathSafe(const Planning::Path& path, float startAngle) const;
+  virtual bool CheckIsPathSafe(const Planning::Path& path, float startAngle, Planning::Path& validPath) const;
+  
+  // Returns true if this planner checks for fatal obstacle collisions
+  virtual bool ChecksForCollisions() const { return false; }
 
   // returns true if it was able to copy a complete path into the passed in argument. If specified,
   // selectedTargetIndex will be set to the index of the targetPoses that was selected in the original
@@ -93,6 +101,13 @@ public:
                        Planning::Path &path,
                        Planning::GoalID& selectedTargetIndex,
                        const PathMotionProfile* motionProfile = nullptr);
+  
+  // If this planner considers obstacles, it will likely preload those obstacles (if needed)
+  // when computing a path. But if you need to use those obstacles without computing a path,
+  // call this to do whatever importing is needed. If this planner does not consider obstacles,
+  // this should do nothing. Returns true if the planner does something with obstacles (e.g., loads
+  // them or starts them loading in a thread).
+  virtual bool PreloadObstacles() { return false; }
 
   // return a test path
   virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path, const PathMotionProfile* motionProfile = nullptr) {}

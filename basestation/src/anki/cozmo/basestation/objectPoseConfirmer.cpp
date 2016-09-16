@@ -66,6 +66,7 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject* object, const P
   
   // Notify about the change we are about to make from old to new:
   _robot.GetBlockWorld().OnObjectPoseChanged(object->GetID(), object->GetFamily(), newPose, newPoseState);
+  _robot.GetLightsComponent().OnObjectPoseStateChanged(object->GetID(), object->GetPoseState(), newPoseState);
   
   // if state changed from unknown to known or dirty
   if (object->IsPoseStateUnknown() && newPoseState != PoseState::Unknown){

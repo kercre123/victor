@@ -104,6 +104,8 @@ public static class LocalizationKeys {
   public const string kConnectivityCozmoLowBatteryTitle = "connectivity.cozmoLowBatteryTitle";
   public const string kConnectivityCozmoLowBatteryDesc = "connectivity.cozmoLowBatteryDesc";
   public const string kConnectivityKeepCozmoOnCharger = "connectivity.keepCozmoOnCharger";
+  public const string kLabelGetHelp = "label.getHelp";
+  public const string kLabelCubesNotWorking = "label.cubesNotWorking";
 
   #endregion
 
@@ -392,6 +394,7 @@ public static class LocalizationKeys {
   public const string kOnboardingCozmoNeedsChargeTitle = "onboarding.CozmoNeedsCharge.Title";
   public const string kOnboardingCozmoNeedsChargeSecondsLeft = "onboarding.CozmoNeedsCharge.SecondsLeft";
   public const string kOnboardingCozmoNeedsChargeKeepOnCharger = "onboarding.CozmoNeedsCharge.KeepOnCharger";
+  public const string kOnboardingCozmoNeedsChargePutBackOnCharger = "onboarding.CozmoNeedsCharge.PutBackOnCharger";
   public const string kOnboardingCozmoNeedsChargeCozmoIsReady = "onboarding.CozmoNeedsCharge.CozmoIsReady";
   public const string kOnboardingSlide0 = "onboarding.Slide0";
   public const string kOnboardingSlide1 = "onboarding.Slide1";
@@ -531,7 +534,6 @@ public static class LocalizationKeys {
   public const string kSettingsSupportViewRestoreCozmoModalRestoreCozmoInProgressLabel = "settings.supportView.restoreCozmoModal.restoreCozmoInProgressLabel";
   public const string kSettingsSupportViewRestoreCozmoModalRestoreCozmoTitle = "settings.supportView.restoreCozmoModal.restoreCozmoTitle";
   public const string kSettingsSupportViewRestoreCozmoModalRestoreCozmoWarningLabel = "settings.supportView.restoreCozmoModal.restoreCozmoWarningLabel";
-  public const string kSettingsVersionPanelAcknowledgementsModalDescription = "settings.versionPanel.acknowledgementsModal.description";
   public const string kSettingsVersionPanelAcknowledgementsModalTitle = "settings.versionPanel.acknowledgementsModal.title";
   public const string kSettingsVersionPanelButtonAcknowledgementsLink = "settings.versionPanel.button.acknowledgementsLink";
   public const string kSettingsVersionPanelButtonEraseCozmo = "settings.versionPanel.button.eraseCozmo";
@@ -579,6 +581,8 @@ public static class LocalizationKeys {
   public const string kLabelTotalCount = "label.totalCount";
   public const string kLabelFractionCount = "label.fractionCount";
   public const string kLabelDayCount = "label.dayCount";
+  public const string kLabelDaysCountPlural = "label.daysCount.plural";
+  public const string kLabelDaysCountSingular = "label.daysCount.singular";
   public const string kDailySummaryTitle = "dailySummary.title";
   public const string kRequestGameTitle = "requestGame.title";
   public const string kRequestGameDescription = "requestGame.description";
@@ -630,6 +634,7 @@ public static class LocalizationKeys {
   public const string kLabelTimeWithCozmo = "label.timeWithCozmo";
   public const string kLabelGamesPlayed = "label.gamesPlayed";
   public const string kLabelStreaksCount = "label.streaksCount";
+  public const string kLabelGoalsCompleted = "label.goalsCompleted";
 
   #endregion
 
@@ -645,10 +650,13 @@ public static class LocalizationKeys {
   #region UnlockStrings
 
   public const string kUnlockableUnlock = "unlockable.Unlock";
+  public const string kUnlockableApp = "unlockable.App";
+  public const string kUnlockableUpgrade = "unlockable.Upgrade";
   public const string kUnlockableAvailable = "unlockable.Available";
   public const string kUnlockableViewPreReq = "unlockable.ViewPreReq";
   public const string kUnlockablePreReqNeededDescription = "unlockable.PreReqNeeded.Description";
   public const string kUnlockableBitsRequiredTitle = "unlockable.BitsRequired.Title";
+  public const string kUnlockableCurrencyRequired = "unlockable.CurrencyRequired";
   public const string kUnlockableBitsRequiredDescription = "unlockable.BitsRequired.Description";
   public const string kUnlockableBitsRequiredEarnMore = "unlockable.BitsRequired.EarnMore";
   public const string kUnlockableCubePounceTitle = "unlockable.CubePounce.Title";
@@ -706,6 +714,7 @@ public static class LocalizationKeys {
   public const string kWifiStringsInstructionsSlideATitleCopy = "wifiStrings.Instructions.SlideA.titleCopy";
   public const string kWifiStringsInstructionsSlideAAltCopy = "wifiStrings.Instructions.SlideA.altCopy";
   public const string kWifiStringsInstructionsSlide0 = "wifiStrings.Instructions.Slide0";
+  public const string kWifiStringsInstructionsSlide0Android = "wifiStrings.Instructions.Slide0Android";
   public const string kWifiStringsInstructionsSlide1 = "wifiStrings.Instructions.Slide1";
   public const string kWifiStringsInstructionsSlide2 = "wifiStrings.Instructions.Slide2";
   public const string kWifiStringsInstructionsSlide3 = "wifiStrings.Instructions.Slide3";

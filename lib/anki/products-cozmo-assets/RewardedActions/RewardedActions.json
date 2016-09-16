@@ -5,7 +5,7 @@
       "RewardEvent": {
         "Value": "OnUnlockableSparked"
       },
-      "Tag": "Freeplay",
+      "Tag": "NONE",
       "EventConditions": [],
       "Reward": {
         "ItemID": "experience",
@@ -22,7 +22,6 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeAccuracyCondition, Assembly-CSharp",
-          "IsPlayer": true,
           "TargetAcc": 0.75,
           "compareType": "GREATER",
           "Label": {
@@ -374,7 +373,6 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeAccuracyCondition, Assembly-CSharp",
-          "IsPlayer": true,
           "TargetAcc": 0.5,
           "compareType": "GREATER_INCLUSIVE",
           "Label": {
@@ -408,7 +406,6 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeAccuracyCondition, Assembly-CSharp",
-          "IsPlayer": true,
           "TargetAcc": 1.0,
           "compareType": "GREATER_INCLUSIVE",
           "Label": {

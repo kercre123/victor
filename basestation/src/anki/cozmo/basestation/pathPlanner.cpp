@@ -132,6 +132,18 @@ bool IPathPlanner::GetCompletePath(const Pose3d& currentRobotPose,
   return false;
 }
 
+bool IPathPlanner::CheckIsPathSafe(const Planning::Path& path, float startAngle) const
+{
+  Planning::Path waste;
+  return CheckIsPathSafe(path, startAngle, waste);
+}
+
+bool IPathPlanner::CheckIsPathSafe(const Planning::Path& path, float startAngle, Planning::Path& validPath) const
+{
+  validPath = path;
+  return true;
+}
+
   
 bool IPathPlanner::GetCompletePath_Internal(const Pose3d& currentRobotPose,
                                             Planning::Path &path)

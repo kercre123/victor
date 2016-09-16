@@ -120,9 +120,6 @@
   "settings.supportView.restoreCozmoModal.restoreCozmoWarningLabel": {
     "translation": "WARNING: This option will restore Cozmo from a backup and replace the game progress on the robot. Use this option if you replaced your Cozmo with a new one."
   },
-  "settings.versionPanel.acknowledgementsModal.description": {
-    "translation": "Startup ipsum (startupsum.com):\n\nSeries A financing business model canvas scrum project MVP deployment sales twitter A/B testing gen-z technology. Series A financing first mover advantage seed round burn rate seed money traction. Product management MVP release venture. Sales alpha twitter low hanging fruit vesting period iPhone handshake stock entrepreneur interaction design mass market.\n\nMass market infographic A/B testing channels scrum project business-to-business seed money creative venture release partner network prototype crowdfunding. Funding vesting period non-disclosure agreement seed money hackathon virality freemium. Value proposition deployment entrepreneur learning curve business-to-consumer twitter partner network. Product management strategy MVP user experience stealth mass market focus client virality funding.\n\nUser experience supply chain holy grail rockstar funding branding interaction design crowdsource burn rate angel investor handshake stealth. Business-to-consumer gamification strategy accelerator social media. Network effects MVP freemium supply chain infrastructure business-to-consumer social proof infographic rockstar iteration value proposition sales. Holy grail graphical user interface entrepreneur disruptive analytics termsheet startup return on investment marketing technology handshake pivot hypotheses metrics.\n\nBandwidth disruptive customer alpha twitter business-to-consumer handshake termsheet seed money angel investor A/B testing social media. Ramen startup assets early adopters deployment prototype. Gen-z analytics assets traction ecosystem. Agile development infrastructure sales focus hypotheses influencer equity alpha release angel investor traction user experience iteration.\n\nAngel investor holy grail virality deployment entrepreneur startup conversion business-to-business stock channels A/B testing niche market responsive web design. Scrum project iPhone facebook venture metrics ecosystem gamification bootstrapping. Pitch investor user experience equity buzz client analytics niche market release virality growth hacking mass market. Conversion infrastructure agile development hypotheses sales backing iteration."
-  },
   "settings.versionPanel.acknowledgementsModal.title": {
     "translation": "Acknowledgments"
   },
@@ -130,25 +127,25 @@
     "translation": "Acknowledgments"
   },
   "settings.versionPanel.button.eraseCozmo": {
-    "translation": "Reset Cozmo"
+    "translation": "Erase Cozmo"
   },
   "settings.versionPanel.button.support": {
     "translation": "Support"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoConfirmButton": {
-    "translation": "Reset"
+    "translation": "Erase"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoErrorLabel": {
-    "translation": "<color=#b52c13>Failed to Reset Your Cozmo</color>"
+    "translation": "<color=#b52c13>Failed to Erase Your Cozmo</color>"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoInProgressLabel": {
-    "translation": "Resetting your Cozmo..."
+    "translation": "Erasing your Cozmo..."
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoTitle": {
-    "translation": "Reset Cozmo?"
+    "translation": "Erase Cozmo?"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoWarningLabel": {
-    "translation": "WARNING: Resetting Cozmo will remove all game progress from your robot. Use this only if you wish to start over!"
+    "translation": "WARNING: Erasing Cozmo will remove all game progress from your robot. Use this only if you wish to start over!"
   },
   "settings.versionPanel.label.appRun": {
     "translation": "App Run ID: {0}"

@@ -63,10 +63,10 @@ public class ContextManager : MonoBehaviour {
   public void AppFlash(bool playChime = false) {
     if (_ManagerBusy) { return; }
     if (_ForegroundTweener != null) {
-      _ForegroundTweener.Kill();
+      _ForegroundTweener.Kill(true);
     }
     if (playChime) {
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
+      Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Attention_Device);
     }
     Color transparentFlashColor = new Color(_DefaultSettings.ContextFlashColor.r, _DefaultSettings.ContextFlashColor.g, _DefaultSettings.ContextFlashColor.b, 0);
     _OverlayForeground.color = transparentFlashColor;
@@ -99,7 +99,7 @@ public class ContextManager : MonoBehaviour {
   /// <param name="anticipation">If we should play the appropriate background sound as far of the anticipation.</param>
   public void AppHoldStart(bool anticipation) {
     if (_ForegroundTweener != null) {
-      _ForegroundTweener.Kill();
+      _ForegroundTweener.Kill(true);
     }
     if (anticipation) {
       // If we are doing the drumroll sound
@@ -143,7 +143,7 @@ public class ContextManager : MonoBehaviour {
 
   public void ShowForeground() {
     if (_ForegroundTweener != null) {
-      _ForegroundTweener.Kill();
+      _ForegroundTweener.Kill(true);
     }
     Color transparentDimColor = new Color(_DefaultSettings.ContextDimColor.r, _DefaultSettings.ContextDimColor.g, _DefaultSettings.ContextDimColor.b, 0);
     _OverlayForeground.color = transparentDimColor;
@@ -153,7 +153,7 @@ public class ContextManager : MonoBehaviour {
 
   public void HideForeground() {
     if (_ForegroundTweener != null) {
-      _ForegroundTweener.Kill();
+      _ForegroundTweener.Kill(true);
     }
     _ForegroundTweener.Append(_OverlayForeground.DOFade(0.0f, _DefaultSettings.ContextFlashDuration));
     _ForegroundTweener.Play();

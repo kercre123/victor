@@ -71,7 +71,7 @@ static class SceneAutoloader {
         EditorApplication.isPlaying = false;
       }
     }
-    if (EditorApplication.isPlaying && !EditorApplication.isPlayingOrWillChangePlaymode) {
+    if (!EditorApplication.isPlaying && !EditorApplication.isPlayingOrWillChangePlaymode) {
       // User pressed stop -- reload previous scene.
       if (!string.IsNullOrEmpty(PreviousScene)) {
         if (!UnityEditor.SceneManagement.EditorSceneManager.OpenScene(PreviousScene).IsValid()) {

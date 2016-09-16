@@ -16,11 +16,13 @@ enum uint_32 External
 
 enum uint_32 Freeplay_Mood
 {
+  Bored = 2890913445,
   Busy = 1427625958,
   Chill = 4294400669,
   Cubeinteract = 889740396,
   Frustrated = 1309079467,
   Happy = 1427264549,
+  Hiking = 296159617,
   Invalid = 0,
   Neutral = 670611050,
   Sleep = 3671647190,

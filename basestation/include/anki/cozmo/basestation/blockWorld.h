@@ -283,6 +283,8 @@ namespace Anki
       // Returns true if any blocks were moved, added, or deleted on the
       // last call to Update().
       bool DidObjectsChange() const;
+      // Gets the timestamp of the last robot msg when objects changed
+      const TimeStamp_t& GetTimeOfLastChange() const;
       
       // Get/Set currently-selected object
       ObjectID GetSelectedObject() const { return _selectedObject; }
@@ -525,6 +527,7 @@ namespace Anki
       ObjectsByOrigin_t _existingObjects;
       
       bool _didObjectsChange;
+      TimeStamp_t _robotMsgTimeStampAtChange; // time of the last robot msg when objects changed
       bool _canDeleteObjects;
       bool _canAddObjects;
       

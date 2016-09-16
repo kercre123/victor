@@ -85,7 +85,9 @@ static void Process_setBodyRadioMode(const SetBodyRadioMode& msg) {
   if (msg.radioMode == BODY_ACCESSORY_OPERATING_MODE) {
     Radio::setWifiChannel(msg.wifiChannel);
   }
-  
+
+  if (msg.radioMode == BODY_BLUETOOTH_OPERATING_MODE) Battery::setHeadlight(false);
+
   Battery::setOperatingMode(msg.radioMode);
 }
 

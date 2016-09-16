@@ -13,22 +13,24 @@ public class ChestData : ScriptableObject {
     get { return _sInstance; }
   }
 
-  public Ladder RequirementLadder;
-  public Ladder[] RewardLadders;
+  public ChestRequirementData Requirement;
+  public ChestRewardData[] RewardList;
 }
 
+
 [Serializable]
-public class Ladder {
+public class ChestRequirementData {
   [Cozmo.ItemId]
   public string ItemId;
 
-  public LadderLevel[] LadderLevels;
+  public int TargetPoints;
 }
 
 [Serializable]
-public class LadderLevel {
-  public int Level;
-  [Tooltip("MinValue should match MaxValue for Requirement Ladders")]
-  public int MinValue;
-  public int MaxValue;
+public class ChestRewardData {
+  [Cozmo.ItemId]
+  public string ItemId;
+
+  public int MinAmount;
+  public int MaxAmount;
 }

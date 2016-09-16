@@ -110,6 +110,7 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
   const std::string& debugName = GetName() + ".BehaviorExploreLookAroundInPlace.LoadConfig";
 
   _configParams.behavior_DistanceFromRecentLocationMin_mm = ParseFloat(config, "behavior_DistanceFromRecentLocationMin_mm", debugName);
+  _configParams.behavior_CanCarryCube = ParseBool(config, "behavior_CanCarryCube", debugName);
   _configParams.behavior_RecentLocationsMax = ParseUint8(config, "behavior_RecentLocationsMax", debugName);
   _configParams.behavior_ShouldResetTurnDirection = ParseBool(config, "behavior_ShouldResetTurnDirection", debugName);
   _configParams.behavior_ResetBodyFacingOnStart = ParseBool(config, "behavior_ResetBodyFacingOnStart", debugName);
@@ -161,6 +162,7 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
   _configParams.s6_BodyAngleRangeMax_deg = ParseFloat(config, "s6_BodyAngleRangeMax_deg", debugName);
   _configParams.s6_HeadAngleRangeMin_deg = ParseFloat(config, "s6_HeadAngleRangeMin_deg", debugName);
   _configParams.s6_HeadAngleRangeMax_deg = ParseFloat(config, "s6_HeadAngleRangeMax_deg", debugName);
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -184,7 +186,9 @@ Result BehaviorExploreLookAroundInPlace::InitInternal(Robot& robot)
   }
 
   // if we should lower the lift, do that now
-  if( _configParams.behavior_ShouldLowerLift ) {
+  if( _configParams.behavior_ShouldLowerLift
+     && !(_configParams.behavior_CanCarryCube && robot.IsCarryingObject())
+  ){
     IActionRunner* lowerLiftAction = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
     StartActing(lowerLiftAction, &BehaviorExploreLookAroundInPlace::BeginStateMachine);
   }
@@ -502,7 +506,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
   {
     PRINT_CH_INFO("Behaviors", (GetName() + ".IterationEnd").c_str(), "Done (reached max iterations)");
 
-    if( _configParams.behavior_RecentLocationsMax >= 0 ) {
+    if( _configParams.behavior_RecentLocationsMax > 0 ) {
       // we have finished at this location, note down as recent location (make room if necessary)
       if ( _visitedLocations.size() >= _configParams.behavior_RecentLocationsMax ) {
         assert( !_visitedLocations.empty() ); // otherwise the behavior would run forever

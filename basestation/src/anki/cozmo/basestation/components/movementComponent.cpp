@@ -49,12 +49,18 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
 {
   auto helper = MakeAnkiEventUtil(interface, *this, _eventHandles);
   
+  // Game to engine (in alphabetical order)
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::DriveArc>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::DriveWheels>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::TurnInPlaceAtSpeed>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::EnterSdkMode>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::ExitSdkMode>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::MoveHead>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::MoveLift>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::StopAllMotors>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::DriveArc>();
+  helper.SubscribeGameToEngine<MessageGameToEngineTag::TurnInPlaceAtSpeed>();
+  
+  // Engine to game
+  helper.SubscribeEngineToGame<MessageEngineToGameTag::ChargerEvent>();
 }
   
 void MovementComponent::Update(const Cozmo::RobotState& robotState)
@@ -499,6 +505,47 @@ void MovementComponent::DirectDriveCheckSpeedAndLockTracks(f32 speed, bool& flag
     {
       LockTracks(tracks, who, debugName);
     }
+  }
+}
+  
+template<>
+void MovementComponent::HandleMessage(const ExternalInterface::ChargerEvent& msg)
+{
+  if(_robot.GetContext()->IsInSdkMode())
+  {
+    if(msg.onCharger)
+    {
+      if(!AreAllTracksLockedBy(kAllMotorTracks, kOnChargerInSdkStr))
+      {
+        // Just got put on charger while in SDK mode (and not already locked): Lock motors.
+        LockTracks(kAllMotorTracks, kOnChargerInSdkStr, kOnChargerInSdkStr);
+      }
+    }
+    else
+    {
+      // Just came off charger while in SDK mode: Unlock motors.
+      UnlockTracks(kAllMotorTracks, kOnChargerInSdkStr);
+    }
+  }
+}
+  
+template<>
+void MovementComponent::HandleMessage(const ExternalInterface::EnterSdkMode& msg)
+{
+  if(_robot.IsOnCharger() && !AreAllTracksLockedBy(kAllMotorTracks, kOnChargerInSdkStr))
+  {
+    // If SDK mode starts _while_ we are on the charger (and not already locked), lock tracks
+    LockTracks(kAllMotorTracks, kOnChargerInSdkStr, kOnChargerInSdkStr);
+  }
+}
+
+template<>
+void MovementComponent::HandleMessage(const ExternalInterface::ExitSdkMode& msg)
+{
+  if(_robot.IsOnCharger())
+  {
+    // If SDK ends _while_ we are on the charger, make sure to unlock tracks
+    UnlockTracks(kAllMotorTracks, kOnChargerInSdkStr);
   }
 }
   

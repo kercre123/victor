@@ -137,7 +137,7 @@ The completed program should look like this:
 Running the Program
 ^^^^^^^^^^^^^^^^^^^
 
-1. Plug the smartphone containing the Cozmo app into your computer.
+1. Plug the mobile device containing the Cozmo app into your computer.
 2. Open the Cozmo app on the phone. Make sure Cozmo is on and connected to the app via WiFi.
 3. On the computer, open two Command-line windows.
 
@@ -265,7 +265,7 @@ The completed program should look like this:
 Running the Program
 ^^^^^^^^^^^^^^^^^^^
 
-1. Plug the smartphone containing the Cozmo app into your computer.
+1. Plug the mobile device containing the Cozmo app into your computer.
 2. Open the Cozmo app on the phone. Make sure Cozmo is on and connected to the app via WiFi.
 3. On the computer, open two Terminal windows.
 
@@ -393,7 +393,7 @@ Running the Program
 
 .. important:: Cozmo must have two cubes in visual range in order to perform this program. If there are not enough cubes around, or if he does not find both cubes in the thirty-second timeframe, he will not complete the program.
 
-1. Plug the smartphone containing the Cozmo app into your computer.
+1. Plug the mobile device containing the Cozmo app into your computer.
 2. Open the Cozmo app on the phone. Make sure Cozmo is on and connected to the app via WiFi.
 3. On the computer, open two Terminal windows.
 

@@ -19,7 +19,7 @@
 #include <stdint.h>
 
 
-#if ANKI_DEV_CHEATS
+#if ANKI_PROFILING_ENABLED
   #define ANKI_CPU_PROFILER_ENABLED 1
 #else
   #define ANKI_CPU_PROFILER_ENABLED 0

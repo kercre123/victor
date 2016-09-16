@@ -11,8 +11,25 @@ GameObject:
   - 222: {fileID: 22289906}
   - 114: {fileID: 11464760}
   - 114: {fileID: 11460766}
+  - 225: {fileID: 22566930}
   m_Layer: 5
   m_Name: AcknowledgementLinkButton
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!1 &112226
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22419460}
+  - 114: {fileID: 11474174}
+  m_Layer: 5
+  m_Name: AcknowledgementButtonGroup
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -74,6 +91,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22458414}
+  - 114: {fileID: 11496962}
   m_Layer: 5
   m_Name: VersionInfoContainer
   m_TagString: Untagged
@@ -147,6 +165,24 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &167394
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22451922}
+  - 222: {fileID: 22251808}
+  - 114: {fileID: 11448314}
+  - 114: {fileID: 11438028}
+  m_Layer: 5
+  m_Name: LinkUnderline
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &177470
 GameObject:
   m_ObjectHideFlags: 0
@@ -212,11 +248,13 @@ MonoBehaviour:
   _DeviceIDLabel: {fileID: 0}
   _AppRunLabel: {fileID: 0}
   _AcknowledgementsLinkButton: {fileID: 11460766}
+  _AcknowledgementsTextFileName: acknowledgements.txt
   _SupportButton: {fileID: 0}
   _SupportInfoViewPrefab: {fileID: 11410082, guid: 950243296d8654fdba91f31eabdad971,
     type: 2}
   _EraseCozmoButton: {fileID: 0}
   _SecondsToConfirmEraseCozmo: 5
+  _SecondsToConfirmRestoreCozmo: 5
 --- !u!114 &11421862
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -252,11 +290,23 @@ MonoBehaviour:
   Prefab: {fileID: 121144, guid: 252ebc3be28264a6594573b2ce1b2c3f, type: 2}
   ModifiedValues:
   - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    JsonValue: 0.4
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    JsonValue: 0.4
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    JsonValue: 0.4
+  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
     JsonValue: 1
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    JsonValue: 60
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#settings.versionPanel.label.serialNumber"'
@@ -279,11 +329,23 @@ MonoBehaviour:
   Prefab: {fileID: 121144, guid: 252ebc3be28264a6594573b2ce1b2c3f, type: 2}
   ModifiedValues:
   - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    JsonValue: 0.4
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    JsonValue: 0.4
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    JsonValue: 0.4
+  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
     JsonValue: 1
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    JsonValue: 60
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#settings.versionPanel.label.appVersion"'
@@ -306,11 +368,23 @@ MonoBehaviour:
   Prefab: {fileID: 121144, guid: 252ebc3be28264a6594573b2ce1b2c3f, type: 2}
   ModifiedValues:
   - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    JsonValue: 0.4
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    JsonValue: 0.4
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    JsonValue: 0.4
+  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
     JsonValue: 1
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    JsonValue: 60
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#settings.versionPanel.label.deviceId"'
@@ -319,6 +393,19 @@ MonoBehaviour:
     FieldName: Cozmo.Settings.SettingsVersionsPanel:_DeviceIDLabel
     ReferencePath: 
   ModifiedGlobalReferences: []
+--- !u!114 &11438028
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 167394}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1741964061, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_HorizontalFit: 0
+  m_VerticalFit: 0
 --- !u!114 &11443554
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -351,6 +438,33 @@ MonoBehaviour:
     FieldName: Cozmo.Settings.SettingsVersionsPanel:_SupportButton
     ReferencePath: 
   ModifiedGlobalReferences: []
+--- !u!114 &11448314
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 167394}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.4, g: 0.4, b: 0.4, a: 1}
+  m_RaycastTarget: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
 --- !u!114 &11448928
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -363,15 +477,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.31985295, g: 0.85294116, b: 0.47794116, a: 0.591}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 0}
-  m_Type: 0
+  m_Sprite: {fileID: 21300000, guid: 862593067e84b4e2a9bf04cdc2ce5347, type: 3}
+  m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -390,7 +504,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_IgnoreLayout: 0
-  m_MinWidth: 1000
+  m_MinWidth: 1570
   m_MinHeight: -1
   m_PreferredWidth: -1
   m_PreferredHeight: -1
@@ -409,9 +523,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _Interactable: 1
   _TextLabel: {fileID: 11464760}
-  _TextLabelOffset: -5
-  TextEnabledColor: {r: 0, g: 0, b: 1, a: 1}
-  TextPressedColor: {r: 0.43382353, g: 0.43382353, b: 1, a: 1}
+  _TextLabelOffset: 0
+  TextEnabledColor: {r: 0.40000004, g: 0.40000004, b: 0.40000004, a: 1}
+  TextPressedColor: {r: 0.28676468, g: 0.28676468, b: 0.28676468, a: 1}
   TextDisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 0.509}
   _AlphaController: {fileID: 0}
   ButtonGraphics: []
@@ -419,7 +533,6 @@ MonoBehaviour:
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11464760
 MonoBehaviour:
@@ -433,7 +546,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 1, a: 1}
+  m_Color: {r: 0.4, g: 0.4, b: 0.4, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -470,11 +583,23 @@ MonoBehaviour:
   Prefab: {fileID: 121144, guid: 252ebc3be28264a6594573b2ce1b2c3f, type: 2}
   ModifiedValues:
   - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    JsonValue: 0.4
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    JsonValue: 0.4
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    JsonValue: 0.4
+  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
     JsonValue: 1
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    JsonValue: 60
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#settings.versionPanel.label.cozmoVersion"'
@@ -497,11 +622,23 @@ MonoBehaviour:
   Prefab: {fileID: 121144, guid: 252ebc3be28264a6594573b2ce1b2c3f, type: 2}
   ModifiedValues:
   - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    JsonValue: 0.4
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    JsonValue: 0.4
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    JsonValue: 0.4
+  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
     JsonValue: 1
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    JsonValue: 60
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#settings.versionPanel.label.appRun"'
@@ -510,6 +647,50 @@ MonoBehaviour:
     FieldName: Cozmo.Settings.SettingsVersionsPanel:_AppRunLabel
     ReferencePath: 
   ModifiedGlobalReferences: []
+--- !u!114 &11474174
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 112226}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1679637790, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreLayout: 0
+  m_MinWidth: -1
+  m_MinHeight: 72
+  m_PreferredWidth: -1
+  m_PreferredHeight: 72
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
+--- !u!114 &11496962
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 134548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1297475563, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 1
+  m_Spacing: 0
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 1
+--- !u!222 &22251808
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 167394}
 --- !u!222 &22282120
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -535,10 +716,29 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22458414}
   m_RootOrder: 2
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.000015258789, y: 97.109985}
-  m_SizeDelta: {x: 900, y: 100}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 785, y: -220.41666}
+  m_SizeDelta: {x: 1570, y: 88.166664}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!224 &22419460
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 112226}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children:
+  - {fileID: 22494226}
+  m_Father: {fileID: 22458414}
+  m_RootOrder: 5
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 785, y: -484.91666}
+  m_SizeDelta: {x: 1570, y: 88.166664}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22423168
 RectTransform:
@@ -553,10 +753,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22458414}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 287}
-  m_SizeDelta: {x: 900, y: 100}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 785, y: -44.083332}
+  m_SizeDelta: {x: 1570, y: 88.166664}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22423864
 RectTransform:
@@ -571,10 +771,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22458414}
   m_RootOrder: 3
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.000015258789, y: 0.000019073486}
-  m_SizeDelta: {x: 900, y: 100}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 785, y: -308.58334}
+  m_SizeDelta: {x: 1570, y: 88.166664}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22427732
 RectTransform:
@@ -589,10 +789,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22458414}
   m_RootOrder: 4
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.000015258789, y: -99.999985}
-  m_SizeDelta: {x: 900, y: 100}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 785, y: -396.75}
+  m_SizeDelta: {x: 1570, y: 88.166664}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22444452
 RectTransform:
@@ -607,11 +807,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22453354}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 137.11}
-  m_SizeDelta: {x: 900, y: 220}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: -0.00024414062, y: 0}
+  m_SizeDelta: {x: 960, y: 260}
+  m_Pivot: {x: 0.5, y: 1}
 --- !u!224 &22446332
 RectTransform:
   m_ObjectHideFlags: 1
@@ -625,10 +825,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22458414}
   m_RootOrder: 1
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.00087046623, y: 197.11}
-  m_SizeDelta: {x: 900, y: 100}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 785, y: -132.25}
+  m_SizeDelta: {x: 1570, y: 88.166664}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22450484
 RectTransform:
@@ -651,6 +851,24 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!224 &22451922
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 167394}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 22494226}
+  m_RootOrder: 0
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: -28.1}
+  m_SizeDelta: {x: 0, y: 6}
+  m_Pivot: {x: 0.5, y: 0}
 --- !u!224 &22453354
 RectTransform:
   m_ObjectHideFlags: 1
@@ -667,10 +885,10 @@ RectTransform:
   m_Father: {fileID: 22450484}
   m_RootOrder: 2
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 25}
-  m_SizeDelta: {x: 0, y: -150}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 785, y: -94.5}
+  m_SizeDelta: {x: 1570, y: 683.9}
+  m_Pivot: {x: 0.5, y: 0}
 --- !u!224 &22458414
 RectTransform:
   m_ObjectHideFlags: 1
@@ -687,13 +905,13 @@ RectTransform:
   - {fileID: 22404466}
   - {fileID: 22423864}
   - {fileID: 22427732}
-  - {fileID: 22494226}
+  - {fileID: 22419460}
   m_Father: {fileID: 22450484}
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -25}
-  m_SizeDelta: {x: 0, y: -150}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 264.5}
+  m_SizeDelta: {x: 0, y: 529}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22470896
 RectTransform:
@@ -710,8 +928,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: -50}
+  m_SizeDelta: {x: 0, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22494226
 RectTransform:
@@ -723,13 +941,14 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_Children: []
-  m_Father: {fileID: 22458414}
-  m_RootOrder: 5
+  m_Children:
+  - {fileID: 22451922}
+  m_Father: {fileID: 22419460}
+  m_RootOrder: 0
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -197.11}
-  m_SizeDelta: {x: 900, y: 100}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 690, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22495716
 RectTransform:
@@ -744,11 +963,22 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22453354}
   m_RootOrder: 1
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.000010082, y: -137.11}
-  m_SizeDelta: {x: 900, y: 220}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: -0.00023405859, y: -262}
+  m_SizeDelta: {x: 960, y: 260}
+  m_Pivot: {x: 0.5, y: 1}
+--- !u!225 &22566930
+CanvasGroup:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 111152}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

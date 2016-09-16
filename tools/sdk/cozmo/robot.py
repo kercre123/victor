@@ -1,6 +1,6 @@
 __all__ = ['EvtRobotReady',
            'GoToPose', 'PickupObject', 'PlaceOnObject', 'PlaceObjectOnGroundHere', 'SayText', 'SetHeadAngle',
-           'SetLiftHeight', 'TurnInPlace', 'TurnTowardsFace',
+           'SetLiftHeight', 'TurnInPlace', 'TurnTowardsFace', 'DriveOffChargerContacts',
            'Cozmo']
 
 
@@ -45,6 +45,20 @@ class GoToPose(action.Action):
     def _encode(self):
         return _clad_to_engine_iface.GotoPose(x_mm=self.pose.position.x, y_mm=self.pose.position.y,
                                               rad=self.pose.rotation.angle_z.radians)
+                                            
+class DriveOffChargerContacts(action.Action):
+    '''Represents the drive off charger contacts action in progress.
+
+    Returned by :meth:`~cozmo.robot.Cozmo.drive_off_charger_contacts`
+    '''
+    def __init__(self, **kw):
+        super().__init__(**kw)
+
+    def _repr_values(self):
+        return ""
+
+    def _encode(self):
+        return _clad_to_engine_iface.DriveOffChargerContacts()
 
 class PickupObject(action.Action):
     '''Represents the pickup object action in progress.
@@ -252,7 +266,8 @@ class Cozmo(event.Dispatcher):
     say_text_factory = SayText
     set_head_angle_factory = SetHeadAngle
     set_lift_height_factory = SetLiftHeight
-
+    drive_off_charger_contacts_factory = DriveOffChargerContacts
+    
     # other factories
     animation_factory = anim.Animation
     animation_trigger_factory = anim.AnimationTrigger
@@ -365,17 +380,18 @@ class Cozmo(event.Dispatcher):
         self.pose_angle = util.radians(msg.poseAngle_rad) # heading in X-Y plane
         self.pose_pitch = util.radians(msg.posePitch_rad)
         self.head_angle = util.radians(msg.headAngle_rad)
-        # self.left_wheel_speed  = msg.leftWheelSpeed_mmps  # add speed (and distance) helper class to convert units?
-        # self.right_wheel_speed = msg.rightWheelSpeed_mmps
-        # self.lift_height = msg.liftHeight_mm # in min_lift_height_mm .. max_lift_height_mm range (not 0..1)
-        # float_32 batteryVoltage
-        # int_32   carryingObjectID,      // will be -1 if not carrying object
-        # int_32   carryingObjectOnTopID, // will be -1 if no object on top of object being carried
-        # int_32   headTrackingObjectID,  // will be -1 if head is not tracking to any object
-        # int_32   localizedToObjectID,   // Will be -1 if not localized to any object
+        self.left_wheel_speed  = util.speed_mmps(msg.leftWheelSpeed_mmps)
+        self.right_wheel_speed = util.speed_mmps(msg.rightWheelSpeed_mmps)
+        self.lift_height = util.distance_mm(msg.liftHeight_mm)
+        self.battery_voltage = msg.batteryVoltage
+        self.carrying_object_id        = msg.carryingObjectID      # int_32 will be -1 if not carrying object
+        self.carrying_object_on_top_id = msg.carryingObjectOnTopID # int_32 will be -1 if no object on top of object being carried
+        self.head_tracking_object_id   = msg.headTrackingObjectID  # int_32 will be -1 if head is not tracking to any object
+        self.localized_to_object_id    = msg.localizedToObjectID   # int_32 Will be -1 if not localized to any object
         self.last_image_time = msg.lastImageTimeStamp
-        # uint_16  status,                // See RobotStatusFlag in cozmoTypes.h
-        # uint_8   gameStatus,            // See GameStatusFlag in cozmoTypes.h
+        self.status      = msg.status     # uint_16 as bitflags - See RobotStatusFlag in robotStatusAndActions.py
+        self.game_status = msg.gameStatus # uint_8  as bitflags - See GameStatusFlag in gameStatusFlag.py
+
         if msg.robotID != self.robot_id:
             logger.error("robot id changed mismatch (msg=%s, self=%s)", msg.robotID, self.robot_id )
 
@@ -504,7 +520,7 @@ class Cozmo(event.Dispatcher):
     def set_head_angle(self, angle, accel=10.0, max_speed=10.0, duration=0.0):
         '''Tell Cozmo's head to turn to a given angle
         Args:
-            angle (float): desired angle for Cozmo's head. (-25 to 44.5 degrees - clamped in engine to this range)
+            angle: (:class:`cozmo.util.Angle`) - desired angle for Cozmo's head. (-25 to 44.5 degrees - clamped in engine to this range)
         Returns:
             A :class:`cozmo.robot.SetHeadAngle` action object which can be queried to see when it is complete
         '''
@@ -732,3 +748,20 @@ class Cozmo(event.Dispatcher):
                 conn=self.conn, robot=self, dispatch_parent=self)
         self._action_dispatcher._send_single_action(action)
         return action
+        
+    def drive_off_charger_contacts(self):
+        ''' Tells Cozmo to drive forward slightly to get off charge contacts
+        
+        All motor movement is disabled while Cozmo is on the charger to 
+        prevent hardware damage. This command is the one exception and provides
+        a way to drive forward a little to disconnect from the charger contacts
+        and thereby re-enable all other commands.
+        
+        Returns:
+           A :class:`cozmo.robot.DriveOffChargerContacts` action object which can be queried to see when it is complete
+        '''
+        action = self.drive_off_charger_contacts_factory(conn=self.conn, robot=self, dispatch_parent=self)
+        self._action_dispatcher._send_single_action(action)
+        return action
+        
+        

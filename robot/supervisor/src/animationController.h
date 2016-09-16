@@ -26,14 +26,18 @@
 #include "anki/types.h"
 #include "messages.h"
 
-/// Send animation state message every 30ms = 30,000 us
-#define ANIM_STATE_INTERVAL 30000
+/// Send animation state message every 30ms
+#define ANIM_STATE_INTERVAL_us 30000
 
 namespace Anki {
   namespace Cozmo {
     namespace AnimationController {
       
       Result Init();
+
+      Result EngineInit(const AnimKeyFrame::InitController& msg);
+      
+      Result EngineDisconnect();
 
       // Buffer up a new KeyFrame for playing, using a KeyFrame message
       Result BufferKeyFrame(const u8* buffer, const u16 bufferSize);

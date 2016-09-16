@@ -15,6 +15,7 @@
     "behavior_ShouldResetTurnDirection": true,
     "behavior_ResetBodyFacingOnStart": true,
     "behavior_ShouldLowerLift": true,
+    "behavior_CanCarryCube": false,
     "behavior_DistanceFromRecentLocationMin_mm": 100.0,
     "behavior_RecentLocationsMax": 0,
     "behavior_AngleOfFocus_deg": 30.0, // cone will be based on position where the behavior starts

@@ -127,7 +127,7 @@ namespace Onboarding {
           _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3Body4);
           _ShowShelfTextLabel.text = "";
           _ContinueButtonInstance.gameObject.SetActive(true);
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
+          Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Attention_Device);
         }
         break;
       case OnboardingStateEnum.ErrorCubeWrongSideUp: {
@@ -136,7 +136,7 @@ namespace Onboarding {
           _ContinueButtonInstance.gameObject.SetActive(false);
           _CozmoCubeRightSideUpTransform.gameObject.SetActive(true);
           _CozmoImageTransform.gameObject.SetActive(false);
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
+          Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Attention_Device);
           DAS.Event("onboarding.error", "error_cube_lights_up");
         }
         break;
@@ -144,7 +144,7 @@ namespace Onboarding {
           _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCube);
           _ShowShelfTextLabel.text = "";
           _ContinueButtonInstance.gameObject.SetActive(true);
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
+          Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Attention_Device);
           DAS.Event("onboarding.error", "error_cube_moved");
         }
         break;
@@ -154,7 +154,7 @@ namespace Onboarding {
           _CozmoImageTransform.gameObject.SetActive(false);
           _ContinueButtonInstance.gameObject.SetActive(true);
           _CozmoMovedErrorTransform.gameObject.SetActive(true);
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
+          Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Attention_Device);
           DAS.Event("onboarding.error", "error_cozmo_moved");
         }
         break;
@@ -166,7 +166,7 @@ namespace Onboarding {
           _CozmoMovedErrorTransform.gameObject.SetActive(false);
           _CozmoCubeRightSideUpTransform.gameObject.SetActive(false);
           _CozmoImageTransform.gameObject.SetActive(false);
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Attention_Device);
+          Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Attention_Device);
           DAS.Event("onboarding.error", "error_final");
         }
         break;

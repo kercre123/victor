@@ -15,10 +15,10 @@ def run(coz_conn):
     lookaround.stop()
 
     if len(cubes) < 2:
-  	  print("Error: need 2 Cubes but only found", len(cubes), "Cube(s)")
+        print("Error: need 2 Cubes but only found", len(cubes), "Cube(s)")
     else:
-      coz.pickup_object(cubes[0]).wait_for_completed()
-      coz.place_on_object(cubes[1]).wait_for_completed()
+        coz.pickup_object(cubes[0]).wait_for_completed()
+        coz.place_on_object(cubes[1]).wait_for_completed()
 
 if __name__ == '__main__':
     cozmo.setup_basic_logging()

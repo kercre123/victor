@@ -85,13 +85,19 @@
     "translation": "{0}: {1}"
   },
   "label.totalCount": {
-    "translation": "Total {0}: {1}"
+    "translation": "Your {0}: {1}"
   },
   "label.fractionCount": {
     "translation": "{0}/{1}"
   },
   "label.dayCount": {
     "translation": "Day {0}"
+  },
+  "label.daysCount.plural": {
+    "translation": "{0} Days"
+  },
+  "label.daysCount.singular": {
+    "translation": "{0} Day"
   },
   "dailySummary.title": {
     "translation": "Daily Summary for {0}/{1}"
@@ -237,13 +243,16 @@
   "label.activePlayer": {
     "translation": "Active Player:"
   },
-  "label.timeWithCozmo": {
-    "translation": "Time With Cozmo: "
-  },
   "label.gamesPlayed": {
     "translation": "Games Played: "
   },
   "label.streaksCount": {
     "translation": "Streaks: "
+  },
+  "label.goalsCompleted": {
+    "translation": "Goals Completed"
+  },
+  "label.daysWithCozmo": {
+    "translation": "Days Played With Cozmo"
   }
 }

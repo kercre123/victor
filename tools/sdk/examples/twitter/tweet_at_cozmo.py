@@ -10,20 +10,20 @@ from cozmo.util import degrees
 '''
 
 
-def extract_float(args, index=0):
-    if len(args) > index:
+def extract_float(cmd_args, index=0):
+    if len(cmd_args) > index:
         try:
-            float_val = float(args[index])
+            float_val = float(cmd_args[index])
             return float_val
         except ValueError:
             pass
     return None
 
 
-def extract_next_float(args, index=0):
-    for i in range(index, len(args)):
+def extract_next_float(cmd_args, index=0):
+    for i in range(index, len(cmd_args)):
         try:
-            float_val = float(args[index])
+            float_val = float(cmd_args[index])
             return float_val, i
         except ValueError:
             pass
@@ -38,18 +38,18 @@ class ReactToTweetsStreamListener(twitter_helpers.CozmoTweetStreamListener):
 
 
     # Useful during development - an easy way to delete all of Cozmo's tweets
-    # def do_deleteall(self, args):
+    # def do_deleteall(self, cmd_args, kw_args):
     #     cozmo.logger.info('Deleting all of your tweets')
     #     twitter_helpers.delete_all_tweets(self.twitter_api)
     #     return None
 
 
-    def do_drive(self, args):
+    def do_drive(self, cmd_args, kw_args):
         """drive X"""
         usage = "'drive X' where X is number of seconds to drive for"
         error_message = ""
 
-        drive_duration = extract_float(args)
+        drive_duration = extract_float(cmd_args)
 
         if drive_duration is not None:
             drive_speed = 50
@@ -61,17 +61,15 @@ class ReactToTweetsStreamListener(twitter_helpers.CozmoTweetStreamListener):
 
             self.cozmo.drive_wheels(drive_speed, drive_speed, duration=drive_duration)
             return "I drove " + drive_dir + " for " + str(drive_duration) + " seconds!"
-            # except Exception as e:
-            #     error_message = " Exception: " + str(e)
 
         return "Error: usage = " + usage + error_message
 
 
-    def do_turn(self, args):
+    def do_turn(self, cmd_args, kw_args):
 
         usage = "'turn X' where X is a number of degrees to turn"
 
-        drive_angle = extract_float(args)
+        drive_angle = extract_float(cmd_args)
 
         if drive_angle is not None:
             self.cozmo.turn_in_place(degrees(drive_angle)).wait_for_completed()
@@ -80,11 +78,11 @@ class ReactToTweetsStreamListener(twitter_helpers.CozmoTweetStreamListener):
         return "Error: usage = " + usage
 
 
-    def do_lift(self, args):
+    def do_lift(self, cmd_args, kw_args):
 
         usage = "'lift X' where X is desired height for lift"
 
-        lift_height = extract_float(args)
+        lift_height = extract_float(cmd_args)
 
         if lift_height is not None:
             self.cozmo.set_lift_height(height=lift_height).wait_for_completed()
@@ -93,11 +91,11 @@ class ReactToTweetsStreamListener(twitter_helpers.CozmoTweetStreamListener):
         return "Error: usage = " + usage
 
 
-    def do_head(self, args):
+    def do_head(self, cmd_args, kw_args):
 
         usage = "'head X' where X is desired angle for head" #-25 (down) to 45 degrees (up)
 
-        head_angle = extract_float(args)
+        head_angle = extract_float(cmd_args)
 
         if head_angle is not None:
             self.cozmo.set_head_angle(degrees(head_angle)).wait_for_completed()
@@ -106,15 +104,15 @@ class ReactToTweetsStreamListener(twitter_helpers.CozmoTweetStreamListener):
         return "Error: usage = " + usage
 
 
-    def do_say(self, args):
+    def do_say(self, cmd_args, kw_args):
 
         usage = "'say X' where X is any text for cozmo to say"
 
         entire_message = None
-        if len(args) > 0:
+        if len(cmd_args) > 0:
             try:
                 entire_message = ""
-                for s in args:
+                for s in cmd_args:
                     entire_message = entire_message + " " + str(s)
                 entire_message = entire_message.strip()
             except:
@@ -127,8 +125,21 @@ class ReactToTweetsStreamListener(twitter_helpers.CozmoTweetStreamListener):
         return "Error: usage = " + usage
 
 
-    # not yet implemented
-    #def do_photo(self, args):
+    def do_photo(self, cmd_args, kw_args):
+        '''Upload a photo of what Cozmo can currently see (no cmd_args used)'''
+
+        latest_image = self.cozmo.world.latest_image
+        if latest_image is not None:
+            status_text = kw_args["reply_prefix"] + "here's your photo:"
+            reply_id = kw_args.get("tweet_id", None)
+            media_ids = self.upload_images([latest_image.raw_image])
+            posted_image = self.post_tweet(status_text, reply_id=reply_id, media_ids=media_ids)
+            if posted_image:
+                return None # indicate that we don't need to tweet an additional reply
+            else:
+                return "Error: Failed to tweet image"
+        else:
+            return "Error: I have no photos"
 
 
     def get_supported_commands(self):
@@ -151,17 +162,17 @@ class ReactToTweetsStreamListener(twitter_helpers.CozmoTweetStreamListener):
 
 
     def extract_command_from_string(self, in_string):
-        '''Separate inString at each space, loop through until we find a command, return tuple of command and args'''
+        '''Separate inString at each space, loop through until we find a command, return tuple of cmd_func and cmd_args'''
 
         split_string = in_string.split()
 
         for i in range(len(split_string)):
 
-            func = self.get_command(split_string[i])
+            cmd_func = self.get_command(split_string[i])
 
-            if func:
-                command_args = split_string[i + 1:]
-                return func, command_args
+            if cmd_func:
+                cmd_args = split_string[i + 1:]
+                return cmd_func, cmd_args
 
         # No valid command found
         return None, None
@@ -188,11 +199,12 @@ class ReactToTweetsStreamListener(twitter_helpers.CozmoTweetStreamListener):
 
         tweet_id = json_data.get('id_str')
 
-        command_func, command_args = self.extract_command_from_string(tweet_text)
+        cmd_func, cmd_args = self.extract_command_from_string(tweet_text)
 
         reply_prefix = "@" + from_user_name + " "
-        if command_func is not None:
-            result_string = command_func(command_args)
+        if cmd_func is not None:
+            kw_args = {'tweet_id': tweet_id, 'reply_prefix': reply_prefix}
+            result_string = cmd_func(cmd_args, kw_args)
             if result_string:
                 self.post_tweet(reply_prefix + result_string, tweet_id)
         else:
@@ -203,6 +215,9 @@ class ReactToTweetsStreamListener(twitter_helpers.CozmoTweetStreamListener):
 def run(coz_conn):
     coz = coz_conn.wait_for_robot()
 
+    # Turn on image receiving by the camera
+    coz.camera.image_stream_enabled = True
+
     twitter_api, twitter_auth = twitter_helpers.init_twitter(twitter_keys)
     stream_listener = ReactToTweetsStreamListener(coz, twitter_api)
     twitter_stream = twitter_helpers.CozmoStream(twitter_auth, stream_listener)
@@ -211,5 +226,5 @@ def run(coz_conn):
 
 if __name__ == '__main__':
     cozmo.setup_basic_logging()
-    cozmo.connect(run)
+    cozmo.connect_with_tkviewer(run)
 

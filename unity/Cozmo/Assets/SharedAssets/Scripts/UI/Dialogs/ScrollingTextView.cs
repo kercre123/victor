@@ -17,9 +17,9 @@ namespace Cozmo.UI {
     [SerializeField]
     private AnkiInfiniteScrollView _DescriptionTextLabel;
 
-    public void Initialize(string titleLocKey, string descriptionLocKey) {
-      _TitleTextLabel.text = Localization.Get(titleLocKey);
-      _DescriptionTextLabel.SetString(Localization.Get(descriptionLocKey));
+    public void Initialize(string titleText, string descriptionText) {
+      _TitleTextLabel.text = titleText;
+      _DescriptionTextLabel.SetString(descriptionText);
 
       _AlphaController.interactable = true;
       _AlphaController.blocksRaycasts = false;
