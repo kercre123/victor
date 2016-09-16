@@ -155,6 +155,9 @@ public class RewardedActionManager : MonoBehaviour {
           DAS.Info(this, string.Format("{0} rewarded {1} {2}", cozEvent.GameEventEnum, reward.Reward.Amount, reward.Reward.ItemID));
           if (!PendingActionRewards.ContainsKey(reward)) {
             PendingActionRewards.Add(reward, reward.Reward.Amount);
+          }// If not using a valid tag, allow the reward to stack if trigger multiple times
+          else if (!TagConfig.IsValidTag(reward.Tag)) {
+            PendingActionRewards[reward] += reward.Reward.Amount;
           }
         }
       }

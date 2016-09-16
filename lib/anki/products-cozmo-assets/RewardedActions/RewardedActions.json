@@ -5,7 +5,7 @@
       "RewardEvent": {
         "Value": "OnUnlockableSparked"
       },
-      "Tag": "Freeplay",
+      "Tag": "NONE",
       "EventConditions": [],
       "Reward": {
         "ItemID": "experience",
