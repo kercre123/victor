@@ -18,6 +18,15 @@
       "/{*}"
     ]
   },
+  "faceEnrollment.reenrollmentAlert.title": {
+    "translation": "Update {0}?"
+  },
+  "faceEnrollment.reenrollmentAlert.description": {
+    "translation": "Let Cozmo re-scan your face so that he can recognize you more easily"
+  },
+  "faceEnrollment.reenrollmentAlert.confirmButton": {
+    "translation": "Update {0}"
+  },
   "faceEnrollment.instructions": {
     "translation": "Cozmo needs to check you out! Look at Cozmo straight on, and hold still.\n\nWhen he's done, you'll hear a chime."
   },

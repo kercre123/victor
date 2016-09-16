@@ -205,6 +205,9 @@ public static class LocalizationKeys {
 
   #region FaceEnrollmentStrings
 
+  public const string kFaceEnrollmentReenrollmentAlertTitle = "faceEnrollment.reenrollmentAlert.title";
+  public const string kFaceEnrollmentReenrollmentAlertDescription = "faceEnrollment.reenrollmentAlert.description";
+  public const string kFaceEnrollmentReenrollmentAlertConfirmButton = "faceEnrollment.reenrollmentAlert.confirmButton";
   public const string kFaceEnrollmentInstructions = "faceEnrollment.instructions";
   public const string kFaceEnrollmentEnterNameButtonText = "faceEnrollment.enterName.buttonText";
   public const string kFaceEnrollmentEnterNamePlaceholderText = "faceEnrollment.enterName.placeholderText";

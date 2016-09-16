@@ -239,6 +239,12 @@ MonoBehaviour:
   Prefab: {fileID: 130312, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MinSize
+    JsonValue: 50
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_BestFit
+    JsonValue: true
+  - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"Play"'
   ModifiedLocalReferences:
@@ -288,10 +294,10 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 12800000, guid: 690bf25a268804b5a9391906610cf24b, type: 3}
-    m_FontSize: 140
+    m_FontSize: 100
     m_FontStyle: 0
     m_BestFit: 1
-    m_MinSize: 110
+    m_MinSize: 100
     m_MaxSize: 140
     m_Alignment: 7
     m_AlignByGeometry: 0

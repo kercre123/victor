@@ -156,6 +156,10 @@ namespace Cozmo {
         _AlertMessageText.FormattingArgs = args;
       }
 
+      public void SetPrimaryButtonArgs(object[] args) {
+        _PrimaryButton.FormattingArgs = args;
+      }
+
       public void DisableAllButtons() {
         _PrimaryButton.Interactable = false;
         _SecondaryButton.Interactable = false;

@@ -31,7 +31,8 @@ public class FaceEnrollmentCell : MonoBehaviour {
     _FaceID = faceID;
     _NameLabel.text = _FaceName;
 
-    _UpdateImage.gameObject.SetActive(needsUpdate);
+    //Always show the "Update" banner on all enrolled faces until we can make a better user experience around this process.
+    _UpdateImage.gameObject.SetActive(true);
 
     _EditButton.Initialize(HandleEditNameClicked, "edit_button", "face_enrollment_cell");
     _DeleteButton.Initialize(HandleDeleteNameClicked, "delete_button", "face_enrollment_cell");
@@ -40,8 +41,21 @@ public class FaceEnrollmentCell : MonoBehaviour {
 
   private void HandleReEnrollFaceClicked() {
     if (OnReEnrollFaceRequested != null) {
-      OnReEnrollFaceRequested(_FaceID, _FaceName);
+
+      Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab);
+      alertView.SetCloseButtonEnabled(false);
+      alertView.TitleLocKey = LocalizationKeys.kFaceEnrollmentReenrollmentAlertTitle;
+      alertView.SetTitleArgs(new object[] { _FaceName });
+      alertView.DescriptionLocKey = LocalizationKeys.kFaceEnrollmentReenrollmentAlertDescription;
+      alertView.SetPrimaryButton(LocalizationKeys.kFaceEnrollmentReenrollmentAlertConfirmButton, HandleReEnrollConfirm);
+      alertView.SetPrimaryButtonArgs(new object[] { _FaceName });
+      alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel);
+
     }
+  }
+
+  private void HandleReEnrollConfirm() {
+    OnReEnrollFaceRequested(_FaceID, _FaceName);
   }
 
   private void HandleEditNameClicked() {

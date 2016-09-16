@@ -376,7 +376,6 @@ MonoBehaviour:
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11456094
 MonoBehaviour:
@@ -431,7 +430,6 @@ MonoBehaviour:
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11463640
 MonoBehaviour:
@@ -508,7 +506,7 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 12800000, guid: 6ef5f80c68ce34039a34f24769e5dc26, type: 3}
-    m_FontSize: 70
+    m_FontSize: 68
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 0
@@ -687,7 +685,6 @@ MonoBehaviour:
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!222 &22200008
 CanvasRenderer:
@@ -852,8 +849,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -0.00017642975, y: -118}
-  m_SizeDelta: {x: 500, y: 120}
+  m_AnchoredPosition: {x: -0.00018310547, y: -118}
+  m_SizeDelta: {x: 603, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22423014
 RectTransform:
@@ -872,7 +869,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: -105}
-  m_SizeDelta: {x: 800, y: 120}
+  m_SizeDelta: {x: 603, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22424330
 RectTransform:
@@ -911,10 +908,10 @@ RectTransform:
   - {fileID: 22421842}
   m_Father: {fileID: 22433652}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -15}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: -112}
+  m_SizeDelta: {x: 500, y: 500}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22433652
 RectTransform:
