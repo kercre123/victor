@@ -36,6 +36,13 @@ message AlignWithObject {
     AlignmentType alignmentType
 }
 
+// DriveOffChargerContacts
+//  Mostly useful for SDK usage where motors are locked while on the charger.
+//  This action drives forward slightly to get off the charger.
+message DriveOffChargerContacts {
+
+}
+
 // DriveStraight
 //  Drives a straight line forward or backward without using the planner.
 message DriveStraight {
@@ -411,6 +418,7 @@ message WaitForImages {
 // Again: Alphabetical please!
 union RobotActionUnion {
   AlignWithObject           alignWithObject,
+  DriveOffChargerContacts   driveOffChargerContacts,
   DriveStraight             driveStraight,
   EnrollNamedFace           enrollNamedFace,
   FlipBlock                 flipBlock,
@@ -419,10 +427,10 @@ union RobotActionUnion {
   MountCharger              mountCharger,
   PanAndTilt                panAndTilt,
   PickupObject              pickupObject,
-  PlaceOnObject             placeOnObject,
-  PlaceRelObject            placeRelObject,
   PlaceObjectOnGround       placeObjectOnGround,
   PlaceObjectOnGroundHere   placeObjectOnGroundHere,
+  PlaceOnObject             placeOnObject,
+  PlaceRelObject            placeRelObject,
   PlayAnimation             playAnimation,
   PlayAnimationTrigger      playAnimationTrigger,
   PopAWheelie               popAWheelie,
@@ -436,6 +444,7 @@ union RobotActionUnion {
   SetLiftHeight             setLiftHeight,
   TrackToFace               trackFace,
   TrackToObject             trackObject,
+  TraverseObject            traverseObject,
   TurnInPlace               turnInPlace,
   TurnTowardsFace           turnTowardsFace,
   TurnTowardsLastFacePose   turnTowardsLastFacePose,
@@ -444,7 +453,11 @@ union RobotActionUnion {
   VisuallyVerifyFace        visuallyVerifyFace,
   VisuallyVerifyObject      visuallyVerifyObject,
   Wait                      wait,
-  WaitForImages             waitForImages
+  WaitForImages             waitForImages,
+
+  // Bogus member so we can know how many members of this union there are.
+  // Do not remove
+  uint_8                    count
 }
 
 

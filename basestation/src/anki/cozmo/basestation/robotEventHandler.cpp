@@ -23,6 +23,7 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
+#include "anki/cozmo/basestation/actions/driveOffChargerContactsAction.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/enrollNamedFaceAction.h"
 #include "anki/cozmo/basestation/actions/flipBlockAction.h"
@@ -30,7 +31,6 @@
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
 
-#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/common/basestation/math/point_impl.h"
@@ -45,99 +45,26 @@
 namespace Anki {
 namespace Cozmo {
   
-RobotEventHandler::RobotEventHandler(const CozmoContext* context)
-: _context(context)
-{
-  auto externalInterface = _context->GetExternalInterface();
+// =====================================================================================================================
+#pragma mark -
+#pragma mark GetAction() Helpers
   
-  if (externalInterface != nullptr)
-  {
-    using namespace ExternalInterface;
+// Implement a specialization of this method for each action message type
+template<class MessageType>
+static IActionRunner* GetActionHelper(Robot& robot, const MessageType& msg);
     
-    // We'll use this callback for all action events
-    auto actionEventCallback = std::bind(&RobotEventHandler::HandleActionEvents, this, std::placeholders::_1);
-    
-    // These are the all handled action event tags, in alphabetical order
-    // TODO: Can we get all the tags from messageActions.clad programatically?
-    std::vector<MessageGameToEngineTag> actionTagList =
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//IActionRunner* GetPlaceObjectOnGroundHereAction(Robot& robot, const ExternalInterface::PlaceObjectOnGroundHere& msg)
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceObjectOnGroundHere& msg)
     {
-      MessageGameToEngineTag::AlignWithObject,
-      MessageGameToEngineTag::FlipBlock,
-      MessageGameToEngineTag::GotoPose,
-      MessageGameToEngineTag::GotoObject,
-      MessageGameToEngineTag::EnrollNamedFace,
-      MessageGameToEngineTag::MountCharger,
-      MessageGameToEngineTag::PanAndTilt,
-      MessageGameToEngineTag::PickupObject,
-      MessageGameToEngineTag::PlaceObjectOnGround,
-      MessageGameToEngineTag::PlaceObjectOnGroundHere,
-      MessageGameToEngineTag::PlaceOnObject,
-      MessageGameToEngineTag::PlaceRelObject,
-      MessageGameToEngineTag::PlayAnimation,
-      MessageGameToEngineTag::PlayAnimationTrigger,
-      MessageGameToEngineTag::PopAWheelie,
-      MessageGameToEngineTag::ReadToolCode,
-      MessageGameToEngineTag::RealignWithObject,
-      MessageGameToEngineTag::RollObject,
-      MessageGameToEngineTag::SayText,
-      MessageGameToEngineTag::SayTextWithIntent,
-      MessageGameToEngineTag::SearchForNearbyObject,
-      MessageGameToEngineTag::SetHeadAngle,
-      MessageGameToEngineTag::SetLiftHeight,
-      MessageGameToEngineTag::TrackToFace,
-      MessageGameToEngineTag::TrackToObject,
-      MessageGameToEngineTag::TraverseObject,
-      MessageGameToEngineTag::TurnInPlace,
-      MessageGameToEngineTag::TurnTowardsFace,
-      MessageGameToEngineTag::TurnTowardsLastFacePose,
-      MessageGameToEngineTag::TurnTowardsObject,
-      MessageGameToEngineTag::TurnTowardsPose,
-      MessageGameToEngineTag::VisuallyVerifyFace,
-      MessageGameToEngineTag::VisuallyVerifyObject,
-      MessageGameToEngineTag::Wait,
-      MessageGameToEngineTag::WaitForImages,
-    };
-    
-    // Subscribe to all action events
-    for (auto tag : actionTagList)
-    {
-      _signalHandles.push_back(externalInterface->Subscribe(tag, actionEventCallback));
+  return new PlaceObjectOnGroundAction(robot);
     }
     
-    // For all other messages, just use an AnkiEventUtil object:
-    auto helper = MakeAnkiEventUtil(*context->GetExternalInterface(), *this, _signalHandles);
-    
-    // GameToEngine: (in alphabetical order)
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::AbortAll>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::AbortPath>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::BehaviorManagerMessage>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::CameraCalibration>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::CancelAction>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::ClearCalibrationImages>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::ComputeCameraCalibration>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayProceduralFace>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::DrawPoseMarker>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableCliffSensor>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableLiftPower>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableRobotPickupParalysis>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::ExecuteTestPlan>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::ForceDelocalizeRobot>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::IMURequest>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::QueueSingleAction>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::QueueCompoundAction>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestUnlockDataFromBackup>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveCalibrationImage>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::SendAvailableObjects>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotCarryingObject>();
-    
-    // EngineToGame: (in alphabetical order)
-    helper.SubscribeEngineToGame<MessageEngineToGameTag::AnimationAborted>();
-    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotCompletedAction>();
-    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotConnectionResponse>();
-  }
-}
-
-IActionRunner* GetPlaceObjectOnGroundActionHelper(Robot& robot, const ExternalInterface::PlaceObjectOnGround& msg)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//IActionRunner* GetPlaceObjectOnGroundAction(Robot& robot, const ExternalInterface::PlaceObjectOnGround& msg)
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceObjectOnGround& msg)
 {
   // Create an action to drive to specied pose and then put down the carried
   // object.
@@ -151,7 +78,16 @@ IActionRunner* GetPlaceObjectOnGroundActionHelper(Robot& robot, const ExternalIn
                                              msg.checkDestinationFree);
 }
 
-IActionRunner* GetDriveToPoseActionHelper(Robot& robot, const ExternalInterface::GotoPose& msg)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimation& msg)
+{
+  return new PlayAnimationAction(robot, msg.animationName, msg.numLoops);
+}
+ 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::GotoPose& msg)
 {
   // TODO: Add ability to indicate z too!
   // TODO: Better way to specify the target pose's parent
@@ -159,6 +95,7 @@ IActionRunner* GetDriveToPoseActionHelper(Robot& robot, const ExternalInterface:
   targetPose.SetName("GotoPoseTarget");
   
   // TODO: expose whether or not to drive with head down in message?
+  // TODO: hard-code to false instead (shouldn't be necessary with no mat markers to see)
   // (For now it is hard-coded to true)
   const bool driveWithHeadDown = true;
   
@@ -174,8 +111,37 @@ IActionRunner* GetDriveToPoseActionHelper(Robot& robot, const ExternalInterface:
   return action;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::FlipBlock& msg)
+{
+  ObjectID selectedObjectID = msg.objectID;
+  if(selectedObjectID < 0) {
+    selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
+  }
 
-IActionRunner* GetPickupActionHelper(Robot& robot, const ExternalInterface::PickupObject& msg)
+  DriveAndFlipBlockAction* action = new DriveAndFlipBlockAction(robot, selectedObjectID);
+  
+  if(msg.motionProf.isCustom)
+{
+    action->SetMotionProfile(msg.motionProf);
+  }
+  return action;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PanAndTilt& msg)
+{
+  return new PanAndTiltAction(robot, Radians(msg.bodyPan),
+                              Radians(msg.headTilt),
+                              msg.isPanAbsolute,
+                              msg.isTiltAbsolute);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PickupObject& msg)
 {
   ObjectID selectedObjectID;
   if(msg.objectID < 0) {
@@ -205,8 +171,9 @@ IActionRunner* GetPickupActionHelper(Robot& robot, const ExternalInterface::Pick
   }
 }
 
-
-IActionRunner* GetPlaceRelActionHelper(Robot& robot, const ExternalInterface::PlaceRelObject& msg)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceRelObject& msg)
 {
   ObjectID selectedObjectID;
   if(msg.objectID < 0) {
@@ -243,8 +210,9 @@ IActionRunner* GetPlaceRelActionHelper(Robot& robot, const ExternalInterface::Pl
   }
 }
 
-
-IActionRunner* GetPlaceOnActionHelper(Robot& robot, const ExternalInterface::PlaceOnObject& msg)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceOnObject& msg)
 {
   ObjectID selectedObjectID;
   if(msg.objectID < 0) {
@@ -279,7 +247,9 @@ IActionRunner* GetPlaceOnActionHelper(Robot& robot, const ExternalInterface::Pla
   }
 }
 
-IActionRunner* GetDriveToObjectActionHelper(Robot& robot, const ExternalInterface::GotoObject& msg)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::GotoObject& msg)
 {
   ObjectID selectedObjectID;
   if(msg.objectID < 0) {
@@ -309,7 +279,9 @@ IActionRunner* GetDriveToObjectActionHelper(Robot& robot, const ExternalInterfac
   return action;
 }
 
-IActionRunner* GetDriveToAlignWithObjectActionHelper(Robot& robot, const ExternalInterface::AlignWithObject& msg)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::AlignWithObject& msg)
 {
   ObjectID selectedObjectID;
   if(msg.objectID < 0) {
@@ -346,7 +318,23 @@ IActionRunner* GetDriveToAlignWithObjectActionHelper(Robot& robot, const Externa
   }
 }
 
-IActionRunner* GetRollObjectActionHelper(Robot& robot, const ExternalInterface::RollObject& msg)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::DriveStraight& msg)
+{
+  return new DriveStraightAction(robot, msg.dist_mm, msg.speed_mmps, msg.shouldPlayAnimation);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::DriveOffChargerContacts& msg)
+{
+  return new DriveOffChargerContactsAction(robot);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::RollObject& msg)
 {
   ObjectID selectedObjectID;
   if(msg.objectID < 0) {
@@ -379,7 +367,9 @@ IActionRunner* GetRollObjectActionHelper(Robot& robot, const ExternalInterface::
   }
 }
 
-IActionRunner* GetPopAWheelieActionHelper(Robot& robot, const ExternalInterface::PopAWheelie& msg)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PopAWheelie& msg)
 {
   ObjectID selectedObjectID;
   if(msg.objectID < 0) {
@@ -410,7 +400,9 @@ IActionRunner* GetPopAWheelieActionHelper(Robot& robot, const ExternalInterface:
   }
 }
 
-IActionRunner* GetTraverseObjectActionHelper(Robot& robot, const ExternalInterface::TraverseObject& msg)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TraverseObject& msg)
 {
   ObjectID selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
   
@@ -430,7 +422,9 @@ IActionRunner* GetTraverseObjectActionHelper(Robot& robot, const ExternalInterfa
   }
 }
 
-IActionRunner* GetMountChargerActionHelper(Robot& robot, const ExternalInterface::MountCharger& msg)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::MountCharger& msg)
 {
   ObjectID selectedObjectID;
   if(msg.objectID < 0) {
@@ -456,7 +450,9 @@ IActionRunner* GetMountChargerActionHelper(Robot& robot, const ExternalInterface
   }
 }
   
-IActionRunner* GetRealignWithObjectActionHelper(Robot& robot, const ExternalInterface::RealignWithObject& msg)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::RealignWithObject& msg)
 {
   ObjectID selectedObjectID;
   if(msg.objectID < 0) {
@@ -469,7 +465,9 @@ IActionRunner* GetRealignWithObjectActionHelper(Robot& robot, const ExternalInte
   return driveToRealignWithObjectAction;
 }
 
-IActionRunner* GetTurnInPlaceActionHelper(Robot& robot, const ExternalInterface::TurnInPlace& msg)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnInPlace& msg)
 {
   TurnInPlaceAction* action = new TurnInPlaceAction(robot, msg.angle_rad, msg.isAbsolute);
   action->SetMaxSpeed(msg.speed_rad_per_sec);
@@ -477,7 +475,9 @@ IActionRunner* GetTurnInPlaceActionHelper(Robot& robot, const ExternalInterface:
   return action;
 }
 
-IActionRunner* GetTurnTowardsObjectActionHelper(Robot& robot, const ExternalInterface::TurnTowardsObject& msg)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnTowardsObject& msg)
 {
   ObjectID objectID;
   if(msg.objectID == u32_MAX) {
@@ -502,7 +502,9 @@ IActionRunner* GetTurnTowardsObjectActionHelper(Robot& robot, const ExternalInte
   return action;
 }
 
-IActionRunner* GetTurnTowardsPoseActionHelper(Robot& robot, const ExternalInterface::TurnTowardsPose& msg)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnTowardsPose& msg)
 {
   Pose3d pose(0, Z_AXIS_3D(), {msg.world_x, msg.world_y, msg.world_z},
               robot.GetWorldOrigin());
@@ -519,7 +521,9 @@ IActionRunner* GetTurnTowardsPoseActionHelper(Robot& robot, const ExternalInterf
   return action;
 }
 
-IActionRunner* GetTurnTowardsFaceActionHelper(Robot& robot, const ExternalInterface::TurnTowardsFace& msg)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnTowardsFace& msg)
 {
   TurnTowardsFaceAction* action = new TurnTowardsFaceAction(robot, msg.faceID, Radians(msg.maxTurnAngle_rad), msg.sayName);
   
@@ -533,7 +537,9 @@ IActionRunner* GetTurnTowardsFaceActionHelper(Robot& robot, const ExternalInterf
   return action;
 }
 
-IActionRunner* GetTurnTowardsLastFacePoseActionHelper(Robot& robot, const ExternalInterface::TurnTowardsLastFacePose& msg)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnTowardsLastFacePose& msg)
 {
   TurnTowardsLastFacePoseAction* action = new TurnTowardsLastFacePoseAction(robot, Radians(msg.maxTurnAngle_rad), msg.sayName);
   
@@ -547,7 +553,9 @@ IActionRunner* GetTurnTowardsLastFacePoseActionHelper(Robot& robot, const Extern
   return action;
 }
 
-IActionRunner* GetTrackFaceActionHelper(Robot& robot, const ExternalInterface::TrackToFace& trackFace)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TrackToFace& trackFace)
 {
   TrackFaceAction* action = new TrackFaceAction(robot, trackFace.faceID);
   
@@ -559,7 +567,9 @@ IActionRunner* GetTrackFaceActionHelper(Robot& robot, const ExternalInterface::T
   return action;
 }
 
-IActionRunner* GetTrackObjectActionHelper(Robot& robot, const ExternalInterface::TrackToObject& trackObject)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TrackToObject& trackObject)
 {
   TrackObjectAction* action = new TrackObjectAction(robot, trackObject.objectID);
   action->SetMoveEyes(true);
@@ -572,7 +582,9 @@ IActionRunner* GetTrackObjectActionHelper(Robot& robot, const ExternalInterface:
   return action;
 }
 
-IActionRunner* GetMoveHeadToAngleActionHelper(Robot& robot, const ExternalInterface::SetHeadAngle& setHeadAngle)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SetHeadAngle& setHeadAngle)
 {
   MoveHeadToAngleAction* action = new MoveHeadToAngleAction(robot, setHeadAngle.angle_rad);
   action->SetMaxSpeed(setHeadAngle.max_speed_rad_per_sec);
@@ -581,12 +593,9 @@ IActionRunner* GetMoveHeadToAngleActionHelper(Robot& robot, const ExternalInterf
   return action;
 }
 
-/*
- Warning: Hard coding message handling functions who do not have robot id to get first robot in the same way: using robot manager to get first robot.
-          Have also marked the messages who have robot id but value is incorrect and changed them to get first robot using step above.
-*/
-
-IActionRunner* GetEnrollNamedFaceActionHelper(Robot& robot, const ExternalInterface::EnrollNamedFace& enrollNamedFace)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::EnrollNamedFace& enrollNamedFace)
 {
   EnrollNamedFaceAction* enrollAction = new EnrollNamedFaceAction(robot, enrollNamedFace.faceID, enrollNamedFace.name, enrollNamedFace.mergeIntoID);
   enrollAction->SetSequenceType(enrollNamedFace.sequence);
@@ -594,8 +603,10 @@ IActionRunner* GetEnrollNamedFaceActionHelper(Robot& robot, const ExternalInterf
   return enrollAction;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Version for SayText message
-IActionRunner* GetSayTextAction(Robot& robot, const ExternalInterface::SayText& sayText)
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SayText& sayText)
 {
   SayTextAction* sayTextAction = new SayTextAction(robot,
                                                    sayText.text,
@@ -607,459 +618,386 @@ IActionRunner* GetSayTextAction(Robot& robot, const ExternalInterface::SayText& 
 }
   
 // Version for SayTextWithIntent message
-IActionRunner* GetSayTextAction(Robot& robot, const ExternalInterface::SayTextWithIntent& sayTextWithIntent)
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SayTextWithIntent& sayTextWithIntent)
 {
   SayTextAction* sayTextAction = new SayTextAction(robot, sayTextWithIntent.text, sayTextWithIntent.intent);
   sayTextAction->SetAnimationTrigger(sayTextWithIntent.playEvent);
   return sayTextAction;
 }
 
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
-void RobotEventHandler::HandleMessage(const ExternalInterface::SetLiftHeight& msg)
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SetLiftHeight& msg)
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
-  
-  // We need a robot
-  if (nullptr == robot)
+  // Special case if commanding low dock height while carrying a block...
+  if (msg.height_mm == LIFT_HEIGHT_LOWDOCK && robot.IsCarryingObject())
   {
-    return;
+    // ...put the block down right here.
+    IActionRunner* newAction = new PlaceObjectOnGroundAction(robot);
+    return newAction;
   }
-  
-  if(robot->GetMoveComponent().AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK)) {
-    PRINT_NAMED_INFO("RobotEventHandler.HandleSetLiftHeight.LiftLocked",
-                     "Ignoring ExternalInterface::SetLiftHeight while lift is locked.");
-  } else {
-    
-    // Special case if commanding low dock height
-    if (msg.height_mm == LIFT_HEIGHT_LOWDOCK && robot->IsCarryingObject()) {
-      
-      // Put the block down right here
-      IActionRunner* newAction = new PlaceObjectOnGroundAction(*robot);
-      robot->GetActionList().QueueAction(QueueActionPosition::NOW, newAction);
-    }
-    else {
+  else
+  {
       // In the normal case directly set the lift height
-      MoveLiftToHeightAction* action = new MoveLiftToHeightAction(*robot, msg.height_mm);
+    MoveLiftToHeightAction* action = new MoveLiftToHeightAction(robot, msg.height_mm);
       action->SetMaxLiftSpeed(msg.max_speed_rad_per_sec);
       action->SetLiftAccel(msg.accel_rad_per_sec2);
       action->SetDuration(msg.duration_sec);
       
-      robot->GetActionList().QueueAction(QueueActionPosition::NOW, action);
+    return action;
     }
   }
-}
 
-  
-IActionRunner* CreateVisuallyVerifyFaceAction(Robot& robot, const ExternalInterface::VisuallyVerifyFace& msg)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::VisuallyVerifyFace& msg)
 {
   VisuallyVerifyFaceAction* action = new VisuallyVerifyFaceAction(robot, msg.faceID);
   action->SetNumImagesToWaitFor(msg.numImagesToWait);
   return action;
 }
 
-IActionRunner* CreateVisuallyVerifyObjectAction(Robot& robot, const ExternalInterface::VisuallyVerifyObject& msg)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::VisuallyVerifyObject& msg)
 {
   VisuallyVerifyObjectAction* action = new VisuallyVerifyObjectAction(robot, msg.objectID);
   action->SetNumImagesToWaitFor(msg.numImagesToWait);
   return action;
 }
 
-IActionRunner* CreateNewActionByType(Robot& robot,
-                                     const ExternalInterface::RobotActionUnion& actionUnion)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimationTrigger& msg)
 {
-  using namespace ExternalInterface;
+  IActionRunner* newAction = nullptr;
+  if( msg.useLiftSafe ) {
+    newAction = new TriggerLiftSafeAnimationAction(robot, msg.trigger, msg.numLoops);
+  }
+  else {
+    newAction = new TriggerAnimationAction(robot, msg.trigger, msg.numLoops);
+  }
+  return newAction;
+}
   
-  switch(actionUnion.GetTag())
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::ReadToolCode& msg)
   {
-    case RobotActionUnionTag::turnInPlace:
-      return GetTurnInPlaceActionHelper(robot, actionUnion.Get_turnInPlace());
+  return new ReadToolCodeAction(robot);
+}
       
-    case RobotActionUnionTag::playAnimation:
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SearchForNearbyObject& msg)
     {
-      auto & playAnimation = actionUnion.Get_playAnimation();
-      return new PlayAnimationAction(robot, playAnimation.animationName, playAnimation.numLoops);
+  return new SearchForNearbyObjectAction(robot, msg.desiredObjectID);
     }
-    case RobotActionUnionTag::playAnimationTrigger:
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::Wait& msg)
     {
-      auto & playAnimationTrigger = actionUnion.Get_playAnimationTrigger();
-      TriggerAnimationAction* newAction = nullptr;
-      if( playAnimationTrigger.useLiftSafe ) {
-        newAction = new TriggerLiftSafeAnimationAction(robot, playAnimationTrigger.trigger, playAnimationTrigger.numLoops);
-      }
-      else {
-        newAction = new TriggerAnimationAction(robot, playAnimationTrigger.trigger, playAnimationTrigger.numLoops);
+  return new WaitAction(robot, msg.time_s);
       }
 
-      return newAction;
-    }
-    case RobotActionUnionTag::pickupObject:
-      return GetPickupActionHelper(robot, actionUnion.Get_pickupObject());
-      
-    case RobotActionUnionTag::placeOnObject:
-      return GetPlaceOnActionHelper(robot, actionUnion.Get_placeOnObject());
-      
-    case RobotActionUnionTag::placeRelObject:
-      return GetPlaceRelActionHelper(robot, actionUnion.Get_placeRelObject());
-      
-    case RobotActionUnionTag::placeObjectOnGround:
-      return GetPlaceObjectOnGroundActionHelper(robot, actionUnion.Get_placeObjectOnGround());
-      
-    case RobotActionUnionTag::placeObjectOnGroundHere:
-      return new PlaceObjectOnGroundAction(robot);
-      
-    case RobotActionUnionTag::setHeadAngle:
-      return GetMoveHeadToAngleActionHelper(robot, actionUnion.Get_setHeadAngle());
-      
-    case RobotActionUnionTag::setLiftHeight:
-      // TODO: Provide a means to pass in the speed/acceleration values to the action
-      return new MoveLiftToHeightAction(robot, actionUnion.Get_setLiftHeight().height_mm);
-      
-    case RobotActionUnionTag::turnTowardsObject:
-      return GetTurnTowardsObjectActionHelper(robot, actionUnion.Get_turnTowardsObject());
-      
-    case RobotActionUnionTag::turnTowardsPose:
-      return GetTurnTowardsPoseActionHelper(robot, actionUnion.Get_turnTowardsPose());
-      
-    case RobotActionUnionTag::rollObject:
-      return GetRollObjectActionHelper(robot, actionUnion.Get_rollObject());
-      
-    case RobotActionUnionTag::popAWheelie:
-      return GetPopAWheelieActionHelper(robot, actionUnion.Get_popAWheelie());
-      
-    case RobotActionUnionTag::gotoObject:
-      return GetDriveToObjectActionHelper(robot, actionUnion.Get_gotoObject());
-      
-    case RobotActionUnionTag::gotoPose:
-      return GetDriveToPoseActionHelper(robot, actionUnion.Get_gotoPose());
-      
-    case RobotActionUnionTag::alignWithObject:
-      return GetDriveToAlignWithObjectActionHelper(robot, actionUnion.Get_alignWithObject());
-      
-    case RobotActionUnionTag::trackFace:
-      return GetTrackFaceActionHelper(robot, actionUnion.Get_trackFace());
-      
-    case RobotActionUnionTag::trackObject:
-      return GetTrackObjectActionHelper(robot, actionUnion.Get_trackObject());
-      
-    case RobotActionUnionTag::driveStraight:
-      return new DriveStraightAction(robot, actionUnion.Get_driveStraight().dist_mm,
-                                     actionUnion.Get_driveStraight().speed_mmps,
-                                     actionUnion.Get_driveStraight().shouldPlayAnimation);
-      
-    case RobotActionUnionTag::panAndTilt:
-      return new PanAndTiltAction(robot, Radians(actionUnion.Get_panAndTilt().bodyPan),
-                                  Radians(actionUnion.Get_panAndTilt().headTilt),
-                                  actionUnion.Get_panAndTilt().isPanAbsolute,
-                                  actionUnion.Get_panAndTilt().isTiltAbsolute);
-      
-    case RobotActionUnionTag::wait:
-      return new WaitAction(robot, actionUnion.Get_wait().time_s);
-      
-    case RobotActionUnionTag::mountCharger:
-      return GetMountChargerActionHelper(robot, actionUnion.Get_mountCharger());
-      
-    case RobotActionUnionTag::turnTowardsFace:
-      return GetTurnTowardsFaceActionHelper(robot, actionUnion.Get_turnTowardsFace());
-      
-    case RobotActionUnionTag::turnTowardsLastFacePose:
-      return GetTurnTowardsLastFacePoseActionHelper(robot, actionUnion.Get_turnTowardsLastFacePose());
-      
-    case RobotActionUnionTag::searchForNearbyObject:
-      return new SearchForNearbyObjectAction(robot, actionUnion.Get_searchForNearbyObject().desiredObjectID);
-      
-    case RobotActionUnionTag::readToolCode:
-      return new ReadToolCodeAction(robot);
-      
-    case RobotActionUnionTag::realignWithObject:
-      return GetRealignWithObjectActionHelper(robot, actionUnion.Get_realignWithObject());
-      
-    case RobotActionUnionTag::sayText:
-      return GetSayTextAction(robot, actionUnion.Get_sayText());
-      
-    case RobotActionUnionTag::sayTextWithIntent:
-      return GetSayTextAction(robot, actionUnion.Get_sayTextWithIntent());
-      
-    case RobotActionUnionTag::enrollNamedFace:
-      return GetEnrollNamedFaceActionHelper(robot, actionUnion.Get_enrollNamedFace());
-    
-    case RobotActionUnionTag::flipBlock:
-    {
-      ObjectID selectedObjectID = actionUnion.Get_flipBlock().objectID;
-      if(selectedObjectID < 0) {
-        selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
-      }
-      
-      DriveAndFlipBlockAction* action = new DriveAndFlipBlockAction(robot, selectedObjectID);
-      
-      if(actionUnion.Get_flipBlock().motionProf.isCustom)
-      {
-        action->SetMotionProfile(actionUnion.Get_flipBlock().motionProf);
-      }
-      return action;
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::WaitForImages& msg)
+{
+  return new WaitForImagesAction(robot, msg.numImages, msg.visionMode, msg.afterTimeStamp);
     }
       
-    case RobotActionUnionTag::waitForImages:
-    {
-      const ExternalInterface::WaitForImages& waitMsg = actionUnion.Get_waitForImages();
-      return new WaitForImagesAction(robot, waitMsg.numImages, waitMsg.visionMode, waitMsg.afterTimeStamp);
-    }
       
-    case RobotActionUnionTag::visuallyVerifyFace:
-      return CreateVisuallyVerifyFaceAction(robot, actionUnion.Get_visuallyVerifyFace());
+// =====================================================================================================================
+#pragma mark -
+#pragma mark ActionMessageHandler/Entry/Array
       
-    case RobotActionUnionTag::visuallyVerifyObject:
-      return CreateVisuallyVerifyObjectAction(robot, actionUnion.Get_visuallyVerifyObject());
+// This section of helper classes is used to guarantee all RobotActionUnionTags
+// are associated with a GetAction() handler method above, AND that each corresponding
+// MessageGameToEngine for an action (i.e. commanded with no queuing) also call
+// the same method.
       
-    default:
-      PRINT_NAMED_ERROR("RobotEventHandler.CreateNewActionByType.InvalidActionTag",
-                        "Failed to create an action for the given actionTag.");
-      return nullptr;
+template<ExternalInterface::RobotActionUnionTag ActionUnionTag, ExternalInterface::MessageGameToEngineTag GameToEngineTag>
+struct GetActionWrapper
+{
+  static IActionRunner* GetActionUnionFcn(Robot& robot, const ExternalInterface::RobotActionUnion& actionUnion)
+  {
+    return GetActionHelper(robot, actionUnion.Get_<ActionUnionTag>());
   }
+      
+  static IActionRunner* GetGameToEngineFcn(Robot& robot, const ExternalInterface::MessageGameToEngine& msg)
+  {
+    return GetActionHelper(robot, msg.Get_<GameToEngineTag>());
+  }
+};
+      
+struct ActionMessageHandler
+{
+  using ActionUnionTag  = ExternalInterface::RobotActionUnionTag;
+  using GameToEngineTag = ExternalInterface::MessageGameToEngineTag;
+  using ActionUnionFcn  = RobotEventHandler::ActionUnionFcn;
+  using GameToEngineFcn = RobotEventHandler::GameToEngineFcn;
+      
+  const ActionUnionTag     actionUnionTag;
+  const GameToEngineTag    gameToEngineTag;
+  const ActionUnionFcn     getActionFromActionUnion;
+  const GameToEngineFcn    getActionFromMessage;
+  const s32                numRetries;
+      
+  constexpr ActionMessageHandler(const ActionUnionTag&     actionUnionTag,
+                                 const GameToEngineTag&    gameToEngineTag,
+                                 const ActionUnionFcn      getActionFromActionUnion,
+                                 const GameToEngineFcn     getActionFromMessage,
+                                 const s32                 defaultNumRetries)
+  : actionUnionTag(actionUnionTag)
+  , gameToEngineTag(gameToEngineTag)
+  , getActionFromActionUnion(getActionFromActionUnion)
+  , getActionFromMessage(getActionFromMessage)
+  , numRetries(defaultNumRetries)
+  {
+      
+  }
+      
+};
+      
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+struct ActionMessageHandlerEntry;
+const size_t kNumActionUnionTags = Util::EnumToUnderlying(ExternalInterface::RobotActionUnionTag::count);
+using FullActionMessageHandlerArray = ActionMessageHandlerEntry[kNumActionUnionTags];
+      
+struct ActionMessageHandlerEntry
+{
+  // returns true if all indices are valid in the given array
+  static constexpr bool IsValidArray(const FullActionMessageHandlerArray& array);
+      
+  // constexpr constructor
+  constexpr ActionMessageHandlerEntry(ActionMessageHandler entry) : _handler(entry) {}
+      
+  // constexpr accessors
+  constexpr const ActionMessageHandler& GetHandler() const { return _handler; }
+      
+private:
+      
+  // returns true if the given index is valid in the given array (the entry's content matches the index)
+  static constexpr bool IsValidIndex(const FullActionMessageHandlerArray& array, size_t index);
+      
+  // returns true if the given index is valid, and all indices after it
+  static constexpr bool IsValidAllIndicesFrom(const FullActionMessageHandlerArray& array, size_t index);
+      
+  ActionMessageHandler _handler;
+};
+      
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+constexpr bool ActionMessageHandlerEntry::IsValidIndex(const FullActionMessageHandlerArray& array, size_t index)
+{
+  return Util::EnumToUnderlying(array[index]._handler.actionUnionTag) == index;
 }
+      
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+constexpr bool ActionMessageHandlerEntry::IsValidAllIndicesFrom(const FullActionMessageHandlerArray& array, size_t index)
+{
+  return (index == Util::EnumToUnderlying(ExternalInterface::RobotActionUnionTag::count)) ? // if we reach the last one
+                                                                   // true
+  true :
+  // else check this and +1
+  (ActionMessageHandlerEntry::IsValidIndex(array, index) && IsValidAllIndicesFrom(array, index+1));
+}
+      
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+constexpr bool ActionMessageHandlerEntry::IsValidArray(const FullActionMessageHandlerArray& array)
+{
+  return ActionMessageHandlerEntry::IsValidAllIndicesFrom(array, 0);
+}
+      
+      
+// =====================================================================================================================
+#pragma mark -
+#pragma mark RobotEventHandler Methods
+      
+RobotEventHandler::RobotEventHandler(const CozmoContext* context)
+: _context(context)
+{
+  auto externalInterface = _context->GetExternalInterface();
+      
+  if (externalInterface != nullptr)
+    {
+    using namespace ExternalInterface;
+      
+    //
+    // Handle action messages specially
+    //
+      
+    // We'll use this callback for all action events
+    auto actionEventCallback = std::bind(&RobotEventHandler::HandleActionEvents, this, std::placeholders::_1);
+      
+    // This macro makes adding handler defitions less painful/verbose by adding namespaces
+    // and grabbing the right function pointer for the right method in the templated
+    // GetActionWrapper helper struct above.
+#   define DEFINE_HANDLER(__actionTag__, __g2eTag__, __numRetries__) \
+    ActionMessageHandler(RobotActionUnionTag::__actionTag__, MessageGameToEngineTag::__g2eTag__, \
+      &GetActionWrapper<RobotActionUnionTag::__actionTag__, MessageGameToEngineTag::__g2eTag__>::GetActionUnionFcn, \
+      &GetActionWrapper<RobotActionUnionTag::__actionTag__, MessageGameToEngineTag::__g2eTag__>::GetGameToEngineFcn, \
+      __numRetries__)
+      
+    constexpr static const FullActionMessageHandlerArray kActionHandlerArray {
+      
+      //
+      // Create an entry pairing a RobotActionUnionTag with a MessageGameToEngineTag and
+      // associating the template-specialized GetActionHelper() method here.
+      // These should be added in the same order as they are defined in the
+      // RobotActionUnion in messageActions.clad.
+      //
+      // If the order or number is not done correct, you will get a compilation error!
+      //
+      // Usage:
+      //   DEFINE_HANDLER(actionUnionTag, msgGameToEngineTag, defaultNumRetriesa)
+      //
+      // NOTE: numRetries is only used when action is requested vie MessageGameToEngine.
+      //       (Otherwise, the numRetries in the action queueing message is used.)
+      //
+      
+      DEFINE_HANDLER(alignWithObject,          AlignWithObject,          0),
+      DEFINE_HANDLER(driveOffChargerContacts,  DriveOffChargerContacts,  1),
+      DEFINE_HANDLER(driveStraight,            DriveStraight,            0),
+      DEFINE_HANDLER(enrollNamedFace,          EnrollNamedFace,          0),
+      DEFINE_HANDLER(flipBlock,                FlipBlock,                0),
+      DEFINE_HANDLER(gotoObject,               GotoObject,               0),
+      DEFINE_HANDLER(gotoPose,                 GotoPose,                 2),
+      DEFINE_HANDLER(mountCharger,             MountCharger,             1),
+      DEFINE_HANDLER(panAndTilt,               PanAndTilt,               0),
+      DEFINE_HANDLER(pickupObject,             PickupObject,             0),
+      DEFINE_HANDLER(placeObjectOnGround,      PlaceObjectOnGround,      1),
+      DEFINE_HANDLER(placeObjectOnGroundHere,  PlaceObjectOnGroundHere,  0),
+      DEFINE_HANDLER(placeOnObject,            PlaceOnObject,            1),
+      DEFINE_HANDLER(placeRelObject,           PlaceRelObject,           1),
+      DEFINE_HANDLER(playAnimation,            PlayAnimation,            0),
+      DEFINE_HANDLER(playAnimationTrigger,     PlayAnimationTrigger,     0),
+      DEFINE_HANDLER(popAWheelie,              PopAWheelie,              1),
+      DEFINE_HANDLER(readToolCode,             ReadToolCode,             0),
+      DEFINE_HANDLER(realignWithObject,        RealignWithObject,        1),
+      DEFINE_HANDLER(rollObject,               RollObject,               1),
+      DEFINE_HANDLER(sayText,                  SayText,                  0),
+      DEFINE_HANDLER(sayTextWithIntent,        SayTextWithIntent,        0),
+      DEFINE_HANDLER(searchForNearbyObject,    SearchForNearbyObject,    0),
+      DEFINE_HANDLER(setHeadAngle,             SetHeadAngle,             0),
+      DEFINE_HANDLER(setLiftHeight,            SetLiftHeight,            0),
+      DEFINE_HANDLER(trackFace,                TrackToFace,              0),
+      DEFINE_HANDLER(trackObject,              TrackToObject,            0),
+      DEFINE_HANDLER(traverseObject,           TraverseObject,           1),
+      DEFINE_HANDLER(turnInPlace,              TurnInPlace,              0),
+      DEFINE_HANDLER(turnTowardsFace,          TurnTowardsFace,          0),
+      DEFINE_HANDLER(turnTowardsLastFacePose,  TurnTowardsLastFacePose,  0),
+      DEFINE_HANDLER(turnTowardsObject,        TurnTowardsObject,        0),
+      DEFINE_HANDLER(turnTowardsPose,          TurnTowardsPose,          0),
+      DEFINE_HANDLER(visuallyVerifyFace,       VisuallyVerifyFace,       0),
+      DEFINE_HANDLER(visuallyVerifyObject,     VisuallyVerifyObject,     0),
+      DEFINE_HANDLER(wait,                     Wait,                     0),
+      DEFINE_HANDLER(waitForImages,            WaitForImages,            0),
+    };
+
+    static_assert(ActionMessageHandlerEntry::IsValidArray(kActionHandlerArray),
+                  "Missing or out-of-order entries in action handler array.");
+  
+    // Build lookup tables so we don't have to linearly search through the above
+    // array each time we want to find the handler
+    for(auto & entry : kActionHandlerArray)
+  {
+      const ActionMessageHandler& handler = entry.GetHandler();
+  
+      _actionUnionHandlerLUT[handler.actionUnionTag] = handler.getActionFromActionUnion;
+      _gameToEngineHandlerLUT[handler.gameToEngineTag] = std::make_pair(handler.getActionFromMessage, handler.numRetries);
+  
+      // Also subscribe to the event here:
+      _signalHandles.push_back(externalInterface->Subscribe(handler.gameToEngineTag, actionEventCallback));
+    }
+      
+    //
+    // For all other messages, just use an AnkiEventUtil object:
+    //
+    auto helper = MakeAnkiEventUtil(*_context->GetExternalInterface(), *this, _signalHandles);
+      
+    // GameToEngine: (in alphabetical order)
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::AbortAll>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::AbortPath>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::BehaviorManagerMessage>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::CameraCalibration>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::CancelAction>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::ClearCalibrationImages>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::ComputeCameraCalibration>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayProceduralFace>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::DrawPoseMarker>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableCliffSensor>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableLiftPower>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableRobotPickupParalysis>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::ExecuteTestPlan>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::ForceDelocalizeRobot>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::IMURequest>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::QueueSingleAction>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::QueueCompoundAction>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestUnlockDataFromBackup>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveCalibrationImage>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SendAvailableObjects>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotCarryingObject>();
+      
+    // EngineToGame: (in alphabetical order)
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::AnimationAborted>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotCompletedAction>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotConnectionResponse>();
+      }
+      
+      
+} // RobotEventHandler Constructor
+      
+  
+// =====================================================================================================================
+#pragma mark -
+#pragma mark Action Event Handlers
 
 void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
-{
+    {
   Robot* robot = _context->GetRobotManager()->GetFirstRobot();
-  
+      
   // If we don't have a valid robot there's nothing to do
   if (nullptr == robot)
-  {
+    {
     return;
-  }
-  
-  // We'll pass around a reference to the Robot for convenience sake
-  Robot& robotRef = *robot;
+    }
+      
+  // Create the action
+  auto const& msg = event.GetData();
+  auto handlerIter = _gameToEngineHandlerLUT.find(msg.GetTag());
+  if(handlerIter == _gameToEngineHandlerLUT.end())
+    {
+    // This should really never happen because we are supposed to be guaranteed at
+    // compile time that all action tags are inserted.
+    PRINT_NAMED_ERROR("RobotEventHandler.HandleActionEvents.MissingTag",
+                      "%s (%hhu)", MessageGameToEngineTagToString(msg.GetTag()), msg.GetTag());
+      return;
+    }
   
   // Now we fill out our Action and possibly update number of retries:
-  IActionRunner* newAction = nullptr;
-  u8 numRetries = 0;
-  switch (event.GetData().GetTag())
-  {
-    case ExternalInterface::MessageGameToEngineTag::PlaceObjectOnGround:
-    {
-      numRetries = 1;
-      newAction = GetPlaceObjectOnGroundActionHelper(robotRef, event.GetData().Get_PlaceObjectOnGround());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::PlaceObjectOnGroundHere:
-    {
-      newAction = new PlaceObjectOnGroundAction(robotRef);
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::GotoPose:
-    {
-      numRetries = 2;
-      newAction = GetDriveToPoseActionHelper(robotRef, event.GetData().Get_GotoPose());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::GotoObject:
-    {
-      newAction = GetDriveToObjectActionHelper(robotRef, event.GetData().Get_GotoObject());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::AlignWithObject:
-    {
-      newAction = GetDriveToAlignWithObjectActionHelper(robotRef, event.GetData().Get_AlignWithObject());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::PickupObject:
-    {
-      numRetries = 0;
-      newAction = GetPickupActionHelper(robotRef, event.GetData().Get_PickupObject());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::PlaceOnObject:
-    {
-      numRetries = 1;
-      newAction = GetPlaceOnActionHelper(robotRef, event.GetData().Get_PlaceOnObject());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::PlaceRelObject:
-    {
-      numRetries = 1;
-      newAction = GetPlaceRelActionHelper(robotRef, event.GetData().Get_PlaceRelObject());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::RollObject:
-    {
-      numRetries = 1;
-      newAction = GetRollObjectActionHelper(robotRef, event.GetData().Get_RollObject());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::PopAWheelie:
-    {
-      numRetries = 1;
-      newAction = GetPopAWheelieActionHelper(robotRef, event.GetData().Get_PopAWheelie());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::MountCharger:
-    {
-      numRetries = 1;
-      newAction = GetMountChargerActionHelper(robotRef, event.GetData().Get_MountCharger());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::TraverseObject:
-    {
-      numRetries = 1;
-      newAction = GetTraverseObjectActionHelper(robotRef, event.GetData().Get_TraverseObject());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::PlayAnimation:
-    {
-      const ExternalInterface::PlayAnimation& msg = event.GetData().Get_PlayAnimation();
-      newAction = new PlayAnimationAction(robotRef, msg.animationName, msg.numLoops);
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::PlayAnimationTrigger:
-    {
-      const ExternalInterface::PlayAnimationTrigger& msg = event.GetData().Get_PlayAnimationTrigger();
-      if( msg.useLiftSafe ) {
-        newAction = new TriggerLiftSafeAnimationAction(robotRef, msg.trigger, msg.numLoops);
-      }
-      else {
-        newAction = new TriggerAnimationAction(robotRef, msg.trigger, msg.numLoops);
-      }
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::TurnTowardsObject:
-    {
-      newAction = GetTurnTowardsObjectActionHelper(robotRef, event.GetData().Get_TurnTowardsObject());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::TurnTowardsPose:
-    {
-      const ExternalInterface::TurnTowardsPose& facePose = event.GetData().Get_TurnTowardsPose();
-      newAction = GetTurnTowardsPoseActionHelper(robotRef, facePose);
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::TurnInPlace:
-    {
-      newAction = GetTurnInPlaceActionHelper(robotRef, event.GetData().Get_TurnInPlace());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::TrackToFace:
-    {
-      newAction = GetTrackFaceActionHelper(robotRef, event.GetData().Get_TrackToFace());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::TrackToObject:
-    {
-      newAction = GetTrackObjectActionHelper(robotRef, event.GetData().Get_TrackToObject());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::SetHeadAngle:
-    {
-      newAction = GetMoveHeadToAngleActionHelper(robotRef, event.GetData().Get_SetHeadAngle());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::SetLiftHeight:
-    {
-      // Special case: doesn't use queuing below
-      HandleMessage(event.GetData().Get_SetLiftHeight());
-      return;
-    }
-    case ExternalInterface::MessageGameToEngineTag::TurnTowardsFace:
-    {
-      newAction = GetTurnTowardsFaceActionHelper(robotRef, event.GetData().Get_TurnTowardsFace());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::TurnTowardsLastFacePose:
-    {
-      newAction = GetTurnTowardsLastFacePoseActionHelper(robotRef, event.GetData().Get_TurnTowardsLastFacePose());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::ReadToolCode:
-    {
-      newAction = new ReadToolCodeAction(robotRef);
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::RealignWithObject:
-    {
-      numRetries = 1;
-      newAction = GetRealignWithObjectActionHelper(robotRef, event.GetData().Get_RealignWithObject());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::SayText:
-    {
-      newAction = GetSayTextAction(robotRef, event.GetData().Get_SayText());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::SayTextWithIntent:
-    {
-      newAction = GetSayTextAction(robotRef, event.GetData().Get_SayTextWithIntent());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::EnrollNamedFace:
-    {
-      newAction = GetEnrollNamedFaceActionHelper(robotRef, event.GetData().Get_EnrollNamedFace());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::FlipBlock:
-    {
-      auto& flipBlock = event.GetData().Get_FlipBlock();
-      
-      ObjectID selectedObjectID = flipBlock.objectID;
-      if(selectedObjectID < 0) {
-        selectedObjectID = robotRef.GetBlockWorld().GetSelectedObject();
-      }
-      
-      DriveAndFlipBlockAction* action = new DriveAndFlipBlockAction(robotRef, selectedObjectID);
-      
-      if(flipBlock.motionProf.isCustom)
-      {
-        action->SetMotionProfile(flipBlock.motionProf);
-      }
-      newAction = action;
-      break;
-    }
-      
-    case ExternalInterface::MessageGameToEngineTag::Wait:
-      newAction = new WaitAction(robotRef, event.GetData().Get_Wait().time_s);
-      break;
-      
-    case ExternalInterface::MessageGameToEngineTag::WaitForImages:
-    {
-      const ExternalInterface::WaitForImages& waitMsg = event.GetData().Get_WaitForImages();
-      newAction = new WaitForImagesAction(robotRef, waitMsg.numImages, waitMsg.visionMode, waitMsg.afterTimeStamp);
-      break;
-    }
-      
-    case ExternalInterface::MessageGameToEngineTag::VisuallyVerifyFace:
-    {
-      newAction = CreateVisuallyVerifyFaceAction(robotRef, event.GetData().Get_VisuallyVerifyFace());
-      break;
-    }
-      
-    case ExternalInterface::MessageGameToEngineTag::VisuallyVerifyObject:
-    {
-      newAction = CreateVisuallyVerifyObjectAction(robotRef, event.GetData().Get_VisuallyVerifyObject());
-      break;
-    }
-      
-    default:
-    {
-      PRINT_STREAM_ERROR("RobotEventHandler.HandleEvents",
-                         "Subscribed to unhandled event of type "
-                         << ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()) << "!");
-      
-      // We don't know what to do; bail;
-      return;
-    }
-  }
+  IActionRunner* newAction = handlerIter->second.first(*robot, msg);
+  const u8 numRetries = handlerIter->second.second;
   
   if(_ignoreExternalActions)
   {
-    PRINT_NAMED_INFO("RobotEventHandler.GameToEngineEvent",
-                     "Ignoring GameToEngineEvent message while external actions are disabled");
+    PRINT_NAMED_INFO("RobotEventHandler.HandleActionEvents.ExternalActionsDisabled",
+                     "Ignoring %s GameToEngineEvent message for action type %s while external actions are disabled",
+                     ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()),
+                     EnumToString(newAction->GetType()));
+    
     newAction->PrepForCompletion();
     Util::SafeDelete(newAction);
     return;
   }
+  
   // Everything's ok and we have an action, so queue it
-  robotRef.GetActionList().QueueAction(QueueActionPosition::NOW, newAction, numRetries);
+  robot->GetActionList().QueueAction(QueueActionPosition::NOW, newAction, numRetries);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::QueueSingleAction& msg)
 {
@@ -1070,7 +1008,17 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueSingleAction
     return;
   }
   
-  IActionRunner* action = CreateNewActionByType(*robot, msg.action);
+  auto handlerIter = _actionUnionHandlerLUT.find(msg.action.GetTag());
+  if(handlerIter == _actionUnionHandlerLUT.end())
+  {
+    // This should really never happen because we are supposed to be guaranteed at
+    // compile time that all action tags are inserted.
+    PRINT_NAMED_ERROR("RobotEventHandler.HandleQueueSingleAction.MissingActionTag",
+                      "%s (%hhu)", RobotActionUnionTagToString(msg.action.GetTag()), msg.action.GetTag());
+    return;
+  }
+  
+  IActionRunner* action = handlerIter->second(*robot, msg.action);
   
   const bool didSetTag = action->SetTag(msg.idTag);
   
@@ -1097,6 +1045,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueSingleAction
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::QueueCompoundAction& msg)
 {
@@ -1117,9 +1066,22 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueCompoundActi
   
   // Add all the actions in the message to the compound action, according
   // to their type
-  for(size_t iAction=0; iAction < msg.actions.size(); ++iAction) {
+  for(size_t iAction=0; iAction < msg.actions.size(); ++iAction)
+  {
+    auto const& actionUnion = msg.actions[iAction];
     
-    IActionRunner* action = CreateNewActionByType(*robot, msg.actions[iAction]);
+    auto handlerIter = _actionUnionHandlerLUT.find(actionUnion.GetTag());
+    if(handlerIter == _actionUnionHandlerLUT.end())
+    {
+      // This should really never happen because we are supposed to be guaranteed at
+      // compile time that all action tags are inserted.
+      PRINT_NAMED_ERROR("RobotEventHandler.HandleQueueCompoundAction.MissingActionTag",
+                        "Action %zu: %s (%hhu)", iAction,
+                        RobotActionUnionTagToString(actionUnion.GetTag()), actionUnion.GetTag());
+      return;
+    }
+    
+    IActionRunner* action = handlerIter->second(*robot, actionUnion);
     
     compoundAction->AddAction(action);
     
@@ -1150,6 +1112,11 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueCompoundActi
   }
 }
 
+  
+// =====================================================================================================================
+#pragma mark -
+#pragma mark All Other Event Handlers
+
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::EnableLiftPower& msg)
 {
@@ -1169,6 +1136,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::EnableLiftPower& 
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::EnableCliffSensor& msg)
 {
@@ -1181,7 +1149,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::EnableCliffSensor
   }
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::DisplayProceduralFace& msg)
 {
@@ -1196,6 +1164,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::DisplayProcedural
   robot->GetAnimationStreamer().GetLastProceduralFace()->SetFromMessage(msg);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::ForceDelocalizeRobot& msg)
 {
@@ -1217,6 +1186,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ForceDelocalizeRo
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::BehaviorManagerMessage& msg)
 {
@@ -1235,6 +1205,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::BehaviorManagerMe
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::SendAvailableObjects& msg)
 {
@@ -1254,6 +1225,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SendAvailableObje
   
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::SaveCalibrationImage& msg)
 {
@@ -1273,6 +1245,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SaveCalibrationIm
   
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::ClearCalibrationImages& msg)
 {
@@ -1292,6 +1265,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ClearCalibrationI
   
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::ComputeCameraCalibration& msg)
 {
@@ -1310,6 +1284,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ComputeCameraCali
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const CameraCalibration& calib)
 {
@@ -1332,6 +1307,7 @@ void RobotEventHandler::HandleMessage(const CameraCalibration& calib)
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::AnimationAborted& msg)
 {
@@ -1347,6 +1323,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::AnimationAborted&
   }
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::RobotCompletedAction& msg)
 {
@@ -1387,6 +1364,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::RobotCompletedAct
   
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::RobotConnectionResponse& msg)
 {
@@ -1404,6 +1382,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::RobotConnectionRe
   }
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::CancelAction& msg)
 {
@@ -1420,6 +1399,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::CancelAction& msg
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::DrawPoseMarker& msg)
 {
@@ -1448,6 +1428,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::DrawPoseMarker& m
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::IMURequest& msg)
 {
@@ -1464,6 +1445,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::IMURequest& msg)
   }
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::EnableRobotPickupParalysis& msg)
 {
@@ -1481,6 +1463,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::EnableRobotPickup
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::ExecuteTestPlan& msg)
 {
@@ -1502,6 +1485,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ExecuteTestPlan& 
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::SetRobotCarryingObject& msg)
 {
@@ -1523,6 +1507,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetRobotCarryingO
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::AbortPath& msg)
 {
@@ -1539,6 +1524,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::AbortPath& msg)
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::AbortAll& msg)
 {
@@ -1555,7 +1541,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::AbortAll& msg)
   }
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::RequestUnlockDataFromBackup& msg)
 {

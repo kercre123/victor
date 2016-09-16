@@ -136,6 +136,7 @@ namespace Anki {
         case RobotActionType::ASCEND_OR_DESCEND_RAMP:
         case RobotActionType::COMPOUND:
         case RobotActionType::CROSS_BRIDGE:
+        case RobotActionType::DRIVE_OFF_CHARGER_CONTACTS:
         case RobotActionType::DRIVE_STRAIGHT:
         case RobotActionType::DRIVE_TO_FLIP_BLOCK_POSE:
         case RobotActionType::DRIVE_TO_PLACE_CARRIED_OBJECT:
@@ -188,13 +189,14 @@ namespace Anki {
     
       if(!_suppressTrackLocking && _state != ActionResult::FAILURE_NOT_STARTED)
       {
-#       if DEBUG_ANIM_TRACK_LOCKING
-        PRINT_NAMED_INFO("IActionRunner.Destroy.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
-                         _tracks,
-                         AnimTrackFlagToString((AnimTrackFlag)_tracks),
-                         _name.c_str(),
-                         _idTag);
-#       endif
+        if(DEBUG_ANIM_TRACK_LOCKING)
+        {
+          PRINT_NAMED_INFO("IActionRunner.Destroy.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
+                           _tracks,
+                           AnimTrackFlagToString((AnimTrackFlag)_tracks),
+                           _name.c_str(),
+                           _idTag);
+        }
         _robot.GetMoveComponent().UnlockTracks(_tracks, GetTag());
       }
     }
@@ -239,13 +241,14 @@ namespace Anki {
         if(!_suppressTrackLocking && _state == ActionResult::RUNNING)
         {
           u8 tracks = GetTracksToLock();
-#         if DEBUG_ANIM_TRACK_LOCKING
-          PRINT_NAMED_INFO("IActionRunner.Interrupt.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
-                           tracks,
-                           AnimTrackFlagToString((AnimTrackFlag)tracks),
-                           _name.c_str(),
-                           _idTag);
-#         endif
+          if(DEBUG_ANIM_TRACK_LOCKING)
+          {
+            PRINT_NAMED_INFO("IActionRunner.Interrupt.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
+                             tracks,
+                             AnimTrackFlagToString((AnimTrackFlag)tracks),
+                             _name.c_str(),
+                             _idTag);
+          }
 
           _robot.GetMoveComponent().UnlockTracks(tracks, GetTag());
         }
@@ -272,24 +275,33 @@ namespace Anki {
             
             if(_robot.GetMoveComponent().AreAnyTracksLocked(tracksToLock))
             {
-              PRINT_NAMED_WARNING("IActionRunner.Update",
-                                  "Action %s [%d] not running because required tracks (0x%x) %s are locked: %s",
+              // Print special, more helpful message in SDK mode, if on charger
+              if(_robot.GetContext()->IsInSdkMode() && _robot.IsOnCharger())
+              {
+                PRINT_NAMED_INFO("IActionRunner.Update.TracksLockedOnChargerInSDK",
+                                 "Use of head/lift/body motors is limited while on charger in SDK mode");
+              }
+              
+              PRINT_NAMED_WARNING("IActionRunner.Update.TracksLocked",
+                                  "Action %s [%d] not running because required tracks (0x%x) %s are locked by: %s",
                                   GetName().c_str(),
                                   GetTag(),
                                   tracksToLock,
                                   AnimTrackFlagToString((AnimTrackFlag)tracksToLock),
                                   _robot.GetMoveComponent().WhoIsLocking(tracksToLock).c_str());
+              
               _state = ActionResult::FAILURE_TRACKS_LOCKED;
               return ActionResult::FAILURE_TRACKS_LOCKED;
             }
             
-#           if DEBUG_ANIM_TRACK_LOCKING
-            PRINT_NAMED_INFO("IActionRunner.Update.LockTracks", "locked: (0x%x) %s by %s [%d]",
-                             tracksToLock,
-                             AnimTrackFlagToString((AnimTrackFlag)tracksToLock),
-                             GetName().c_str(),
-                             GetTag());
-#           endif
+            if(DEBUG_ANIM_TRACK_LOCKING)
+            {
+              PRINT_NAMED_INFO("IActionRunner.Update.LockTracks", "locked: (0x%x) %s by %s [%d]",
+                               tracksToLock,
+                               AnimTrackFlagToString((AnimTrackFlag)tracksToLock),
+                               GetName().c_str(),
+                               GetTag());
+            }
             
             _robot.GetMoveComponent().LockTracks(tracksToLock, GetTag(), GetName());
           }
@@ -385,13 +397,14 @@ namespace Anki {
       if(!_suppressTrackLocking && _state != ActionResult::FAILURE_NOT_STARTED)
       {
         u8 tracks = GetTracksToLock();
-#         if DEBUG_ANIM_TRACK_LOCKING
-        PRINT_NAMED_INFO("IActionRunner.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
-                         tracks,
-                         AnimTrackFlagToString((AnimTrackFlag)tracks),
-                         _name.c_str(),
-                         _idTag);
-#         endif
+        if(DEBUG_ANIM_TRACK_LOCKING)
+        {
+          PRINT_NAMED_INFO("IActionRunner.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
+                           tracks,
+                           AnimTrackFlagToString((AnimTrackFlag)tracks),
+                           _name.c_str(),
+                           _idTag);
+        }
         _robot.GetMoveComponent().UnlockTracks(tracks, GetTag());
       }
     }

@@ -14,9 +14,12 @@
 #define __Cozmo_Basestation_RobotEventHandler_H__
 
 #include "anki/types.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "clad/externalInterface/messageActions.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "util/helpers/noncopyable.h"
 
+#include <map>
 #include <vector>
 
 namespace Anki {
@@ -28,16 +31,12 @@ class IActionRunner;
 class IPathPlanner;
 class IExternalInterface;
 class RobotManager;
+class Robot;
 class CozmoContext;
 enum class QueueActionPosition : uint8_t;
 
 template <typename Type>
 class AnkiEvent;
-
-namespace ExternalInterface {
-  class MessageGameToEngine;
-  class MessageEngineToGame;
-}
 
 
 class RobotEventHandler : private Util::noncopyable
@@ -54,6 +53,9 @@ public:
   // Use with care: Make sure a call to ignore is eventually followed by a call to unignore
   void IgnoreExternalActions(bool ignore) { _ignoreExternalActions = ignore; }
   
+  using ActionUnionFcn  = IActionRunner* (*)(Robot& robot, const ExternalInterface::RobotActionUnion& actionUnion);
+  using GameToEngineFcn = IActionRunner* (*)(Robot& robot, const ExternalInterface::MessageGameToEngine& msg);
+  
 protected:
   const CozmoContext* _context;
   std::vector<Signal::SmartHandle> _signalHandles;
@@ -65,6 +67,10 @@ protected:
 private:
   // Whether or not to ignore all external action messages
   bool _ignoreExternalActions = false;
+  
+  std::map<ExternalInterface::RobotActionUnionTag,    ActionUnionFcn>                   _actionUnionHandlerLUT;
+  std::map<ExternalInterface::MessageGameToEngineTag, std::pair<GameToEngineFcn,s32> >  _gameToEngineHandlerLUT;
+  
 };
 
   

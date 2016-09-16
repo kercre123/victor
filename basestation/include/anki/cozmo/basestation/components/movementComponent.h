@@ -205,12 +205,17 @@ private:
   bool _drivingWheels     = false;
   bool _drivingHead       = false;
   bool _drivingLift       = false;
-  const char* kDrivingWheelsStr = "DirectDriveWheels";
-  const char* kDrivingHeadStr   = "DirectDriveHead";
-  const char* kDrivingLiftStr   = "DirectDriveLift";
-  const char* kDrivingArcStr    = "DirectDriveArc";
-  const char* kDrivingTurnStr   = "DirectDriveTurnInPlace";
+  const char* kDrivingWheelsStr  = "DirectDriveWheels";
+  const char* kDrivingHeadStr    = "DirectDriveHead";
+  const char* kDrivingLiftStr    = "DirectDriveLift";
+  const char* kDrivingArcStr     = "DirectDriveArc";
+  const char* kDrivingTurnStr    = "DirectDriveTurnInPlace";
+  const char* kOnChargerInSdkStr = "OnChargerInSDK";
   bool _ignoreDirectDrive = false;
+  
+  const u8 kAllMotorTracks = ((u8)AnimTrackFlag::HEAD_TRACK |
+                              (u8)AnimTrackFlag::LIFT_TRACK |
+                              (u8)AnimTrackFlag::BODY_TRACK);
   
 }; // class MovementComponent
   

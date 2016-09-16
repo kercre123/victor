@@ -1,6 +1,6 @@
 __all__ = ['EvtRobotReady',
            'GoToPose', 'PickupObject', 'PlaceOnObject', 'PlaceObjectOnGroundHere', 'SayText', 'SetHeadAngle',
-           'SetLiftHeight', 'TurnInPlace', 'TurnTowardsFace',
+           'SetLiftHeight', 'TurnInPlace', 'TurnTowardsFace', 'DriveOffChargerContacts',
            'Cozmo']
 
 
@@ -45,6 +45,20 @@ class GoToPose(action.Action):
     def _encode(self):
         return _clad_to_engine_iface.GotoPose(x_mm=self.pose.position.x, y_mm=self.pose.position.y,
                                               rad=self.pose.rotation.angle_z.radians)
+                                            
+class DriveOffChargerContacts(action.Action):
+    '''Represents the drive off charger contacts action in progress.
+
+    Returned by :meth:`~cozmo.robot.Cozmo.drive_off_charger_contacts`
+    '''
+    def __init__(self, **kw):
+        super().__init__(**kw)
+
+    def _repr_values(self):
+        return ""
+
+    def _encode(self):
+        return _clad_to_engine_iface.DriveOffChargerContacts()
 
 class PickupObject(action.Action):
     '''Represents the pickup object action in progress.
@@ -252,7 +266,8 @@ class Cozmo(event.Dispatcher):
     say_text_factory = SayText
     set_head_angle_factory = SetHeadAngle
     set_lift_height_factory = SetLiftHeight
-
+    drive_off_charger_contacts_factory = DriveOffChargerContacts
+    
     # other factories
     animation_factory = anim.Animation
     animation_trigger_factory = anim.AnimationTrigger
@@ -733,3 +748,20 @@ class Cozmo(event.Dispatcher):
                 conn=self.conn, robot=self, dispatch_parent=self)
         self._action_dispatcher._send_single_action(action)
         return action
+        
+    def drive_off_charger_contacts(self):
+        ''' Tells Cozmo to drive forward slightly to get off charge contacts
+        
+        All motor movement is disabled while Cozmo is on the charger to 
+        prevent hardware damage. This command is the one exception and provides
+        a way to drive forward a little to disconnect from the charger contacts
+        and thereby re-enable all other commands.
+        
+        Returns:
+           A :class:`cozmo.robot.DriveOffChargerContacts` action object which can be queried to see when it is complete
+        '''
+        action = self.drive_off_charger_contacts_factory(conn=self.conn, robot=self, dispatch_parent=self)
+        self._action_dispatcher._send_single_action(action)
+        return action
+        
+        
