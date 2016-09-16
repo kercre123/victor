@@ -104,7 +104,7 @@ namespace AnimationController {
     }
     else
     {
-      AnkiWarn( 376, "AnimationController.engine_init.refused", 611, "Not initalizing animation controller because in state %d", 1, _animCtrlState);
+      AnkiWarn( 388, "AnimationController.engine_init.refused", 612, "Not initalizing animation controller because in state %d", 1, _animCtrlState);
       return RESULT_FAIL;
     }
   }

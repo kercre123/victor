@@ -1772,7 +1772,7 @@ namespace Anki {
               }
               case (s32)'(':
               {
-                NVStorage::NVEntryTag tag = NVStorage::NVEntryTag::NVEntry_MultiBlobJunk;
+                NVStorage::NVEntryTag tag = NVStorage::NVEntryTag::NVEntry_GameSkillLevels;
                 
                 // NVStorage multiWrite / multiRead test
                 if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
@@ -2412,186 +2412,182 @@ namespace Anki {
         }
       }
     
-      void WebotsKeyboardController::HandleNVStorageData(const ExternalInterface::NVStorageData &msg)
-      {
-        // Could handle single-blob reads here, but for consistency all reads are handled upon
-        // receipt of NVStorageOpResult message below.
-      }
-    
+   
     
       void WebotsKeyboardController::HandleNVStorageOpResult(const ExternalInterface::NVStorageOpResult &msg)
       {
-        if (msg.op != NVStorage::NVOperation::NVOP_READ) {
-          // Do nothing for write/erase acks
-        } else {
+        if (msg.op != NVStorage::NVOperation::NVOP_READ ||
+            msg.result == NVStorage::NVResult::NV_MORE) {
+          // Do nothing for write/erase acks or in-progress reads
+          return;
+        }
 
-          // Check result flag
-          if (msg.result != NVStorage::NVResult::NV_OKAY) {
-            PRINT_NAMED_WARNING("HandleNVStorageOpResult.Read.Failed",
-                                "tag: %s, res: %s",
-                                EnumToString(msg.tag),
-                                EnumToString(msg.result));
-            return;
+        // Check result flag
+        if (msg.result != NVStorage::NVResult::NV_OKAY) {
+          PRINT_NAMED_WARNING("HandleNVStorageOpResult.Read.Failed",
+                              "tag: %s, res: %s",
+                              EnumToString(msg.tag),
+                              EnumToString(msg.result));
+          return;
+        }
+        
+        const std::vector<u8>* recvdData = GetReceivedNVStorageData(msg.tag);
+        if (recvdData == nullptr) {
+          PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.Read.NoDataReceived", "Tag: %s", EnumToString(msg.tag));
+          return;
+        }
+        
+        switch(msg.tag) {
+          case NVStorage::NVEntryTag::NVEntry_IMUInfo:
+          {
+            IMUInfo info;
+            if (recvdData->size() != MakeWordAligned(info.Size())) {
+              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.IMUInfo.UnexpectedSize",
+                            "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
+              break;
+            }
+            info.Unpack(recvdData->data(), info.Size());
+            
+            _factoryTestLogger.Append(info);
+            
+            break;
           }
-          
-          const std::vector<u8>* recvdData = GetReceivedNVStorageData(msg.tag);
-          if (recvdData == nullptr) {
-            PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.Read.NoDataReceived", "Tag: %s", EnumToString(msg.tag));
-            return;
+          case NVStorage::NVEntryTag::NVEntry_CameraCalib:
+          {
+            CameraCalibration calib;
+            if (recvdData->size() != MakeWordAligned(calib.Size())) {
+              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.CamCalibration.UnexpectedSize",
+                            "Expected %zu, got %zu", MakeWordAligned(calib.Size()), recvdData->size());
+              break;
+            }
+            calib.Unpack(recvdData->data(), calib.Size());
+            
+            _factoryTestLogger.Append(calib);
+            
+            break;
           }
-          
-          switch(msg.tag) {
-            case NVStorage::NVEntryTag::NVEntry_IMUInfo:
-            {
-              IMUInfo info;
-              if (recvdData->size() != MakeWordAligned(info.Size())) {
-                PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.IMUInfo.UnexpectedSize",
-                              "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
-                break;
-              }
-              info.Unpack(recvdData->data(), info.Size());
-              
-              _factoryTestLogger.Append(info);
-              
+          case NVStorage::NVEntryTag::NVEntry_CalibMetaInfo:
+          {
+            CalibMetaInfo info;
+            if (recvdData->size() != MakeWordAligned(info.Size())) {
+              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.CalibMetaInfo.UnexpectedSize",
+                            "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
               break;
             }
-            case NVStorage::NVEntryTag::NVEntry_CameraCalib:
-            {
-              CameraCalibration calib;
-              if (recvdData->size() != MakeWordAligned(calib.Size())) {
-                PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.CamCalibration.UnexpectedSize",
-                              "Expected %zu, got %zu", MakeWordAligned(calib.Size()), recvdData->size());
-                break;
-              }
-              calib.Unpack(recvdData->data(), calib.Size());
-              
-              _factoryTestLogger.Append(calib);
-              
+            info.Unpack(recvdData->data(), info.Size());
+            
+            _factoryTestLogger.Append(info);
+            
+            break;
+          }
+          case NVStorage::NVEntryTag::NVEntry_ToolCodeInfo:
+          {
+            ToolCodeInfo info;
+            if (recvdData->size() != MakeWordAligned(info.Size())) {
+              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.ToolCodeInfo.UnexpectedSize",
+                            "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
               break;
             }
-            case NVStorage::NVEntryTag::NVEntry_CalibMetaInfo:
-            {
-              CalibMetaInfo info;
-              if (recvdData->size() != MakeWordAligned(info.Size())) {
-                PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.CalibMetaInfo.UnexpectedSize",
-                              "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
-                break;
-              }
-              info.Unpack(recvdData->data(), info.Size());
-              
-              _factoryTestLogger.Append(info);
-              
+            info.Unpack(recvdData->data(), info.Size());
+            
+            _factoryTestLogger.Append(info);
+            
+            break;
+          }
+          case NVStorage::NVEntryTag::NVEntry_CalibPose:
+          {
+            PoseData info;
+            if (recvdData->size() != MakeWordAligned(info.Size())) {
+              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.CalibPose.UnexpectedSize",
+                            "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
               break;
             }
-            case NVStorage::NVEntryTag::NVEntry_ToolCodeInfo:
-            {
-              ToolCodeInfo info;
-              if (recvdData->size() != MakeWordAligned(info.Size())) {
-                PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.ToolCodeInfo.UnexpectedSize",
-                              "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
-                break;
-              }
-              info.Unpack(recvdData->data(), info.Size());
-              
-              _factoryTestLogger.Append(info);
-              
-              break;
-            }
-            case NVStorage::NVEntryTag::NVEntry_CalibPose:
-            {
-              PoseData info;
-              if (recvdData->size() != MakeWordAligned(info.Size())) {
-                PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.CalibPose.UnexpectedSize",
-                              "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
-                break;
-              }
-              info.Unpack(recvdData->data(), info.Size());
+            info.Unpack(recvdData->data(), info.Size());
 
-              _factoryTestLogger.AppendCalibPose(info);
-              
-              break;
-            }
-            case NVStorage::NVEntryTag::NVEntry_ObservedCubePose:
-            {
-              PoseData info;
-              if (recvdData->size() != MakeWordAligned(info.Size())) {
-                PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.ObservedCubePose.UnexpectedSize",
-                              "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
-                break;
-              }
-              info.Unpack(recvdData->data(), info.Size());
-              
-              _factoryTestLogger.AppendObservedCubePose(info);
-              
-              
-              break;
-            }
-            case NVStorage::NVEntryTag::NVEntry_PlaypenTestResults:
-            {
-              FactoryTestResultEntry result;
-              if (recvdData->size() != MakeWordAligned(result.Size())) {
-                PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.PlaypenTestResults.UnexpectedSize",
-                              "Expected %zu, got %zu", MakeWordAligned(result.Size()), recvdData->size());
-                break;
-              }
-              result.Unpack(recvdData->data(), result.Size());
-              
-              _factoryTestLogger.Append(result);
-              
-              break;
-            }
-            case NVStorage::NVEntryTag::NVEntry_BirthCertificate:
-            {
-              BirthCertificate result;
-              if (recvdData->size() != MakeWordAligned(result.Size())) {
-                PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.BirthCertificate.UnexpectedSize",
-                              "Expected %zu, got %zu", MakeWordAligned(result.Size()), recvdData->size());
-                break;
-              }
-              result.Unpack(recvdData->data(), result.Size());
-              
-              _factoryTestLogger.Append(result);
-              
-              if (_factoryTestLogger.IsOpen()) {
-                _factoryTestLogger.CloseLog();
-              }
-              
-              break;
-            }
-            case NVStorage::NVEntryTag::NVEntry_CalibImage1:
-            case NVStorage::NVEntryTag::NVEntry_CalibImage2:
-            case NVStorage::NVEntryTag::NVEntry_CalibImage3:
-            case NVStorage::NVEntryTag::NVEntry_CalibImage4:
-            case NVStorage::NVEntryTag::NVEntry_CalibImage5:
-            case NVStorage::NVEntryTag::NVEntry_CalibImage6:
-            case NVStorage::NVEntryTag::NVEntry_ToolCodeImageLeft:
-            case NVStorage::NVEntryTag::NVEntry_ToolCodeImageRight:
-            case NVStorage::NVEntryTag::NVEntry_MultiBlobJunk:
-            {
-              char outFile[128];
-              sprintf(outFile,  "nvstorage_output_%s.jpg", EnumToString(msg.tag));
-              _factoryTestLogger.AddFile(outFile, *recvdData);
-              
-              break;
-            }
-            case NVStorage::NVEntryTag::NVEntry_IMUAverages:
-            {
-              PRINT_CH_INFO("Keyboard", "IMUAveragesData", "size: %lu", recvdData->size());
-              PrintBytesHex((char*)(recvdData->data()), (int)recvdData->size());
-              
-              break;
-            }
-            default:
-              PRINT_NAMED_DEBUG("HandleNVStorageOpResult.UnhandledTag", "%s", EnumToString(msg.tag));
-              for(auto data : *recvdData)
-              {
-                printf("%d ", data);
-              }
-              printf("\n");
-              break;
+            _factoryTestLogger.AppendCalibPose(info);
+            
+            break;
           }
+          case NVStorage::NVEntryTag::NVEntry_ObservedCubePose:
+          {
+            PoseData info;
+            if (recvdData->size() != MakeWordAligned(info.Size())) {
+              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.ObservedCubePose.UnexpectedSize",
+                            "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
+              break;
+            }
+            info.Unpack(recvdData->data(), info.Size());
+            
+            _factoryTestLogger.AppendObservedCubePose(info);
+            
+            
+            break;
+          }
+          case NVStorage::NVEntryTag::NVEntry_PlaypenTestResults:
+          {
+            FactoryTestResultEntry result;
+            if (recvdData->size() != MakeWordAligned(result.Size())) {
+              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.PlaypenTestResults.UnexpectedSize",
+                            "Expected %zu, got %zu", MakeWordAligned(result.Size()), recvdData->size());
+              break;
+            }
+            result.Unpack(recvdData->data(), result.Size());
+            
+            _factoryTestLogger.Append(result);
+            
+            break;
+          }
+          case NVStorage::NVEntryTag::NVEntry_BirthCertificate:
+          {
+            BirthCertificate result;
+            if (recvdData->size() != MakeWordAligned(result.Size())) {
+              PRINT_CH_INFO("Keyboard", "HandleNVStorageOpResult.BirthCertificate.UnexpectedSize",
+                            "Expected %zu, got %zu", MakeWordAligned(result.Size()), recvdData->size());
+              break;
+            }
+            result.Unpack(recvdData->data(), result.Size());
+            
+            _factoryTestLogger.Append(result);
+            
+            if (_factoryTestLogger.IsOpen()) {
+              _factoryTestLogger.CloseLog();
+            }
+            
+            break;
+          }
+          case NVStorage::NVEntryTag::NVEntry_CalibImage1:
+          case NVStorage::NVEntryTag::NVEntry_CalibImage2:
+          case NVStorage::NVEntryTag::NVEntry_CalibImage3:
+          case NVStorage::NVEntryTag::NVEntry_CalibImage4:
+          case NVStorage::NVEntryTag::NVEntry_CalibImage5:
+          case NVStorage::NVEntryTag::NVEntry_CalibImage6:
+          case NVStorage::NVEntryTag::NVEntry_ToolCodeImageLeft:
+          case NVStorage::NVEntryTag::NVEntry_ToolCodeImageRight:
+          {
+            char outFile[128];
+            sprintf(outFile,  "nvstorage_output_%s.jpg", EnumToString(msg.tag));
+            _factoryTestLogger.AddFile(outFile, *recvdData);
+            
+            break;
+          }
+          case NVStorage::NVEntryTag::NVEntry_IMUAverages:
+          {
+            PRINT_CH_INFO("Keyboard", "IMUAveragesData", "size: %lu", recvdData->size());
+            PrintBytesHex((char*)(recvdData->data()), (int)recvdData->size());
+            
+            break;
+          }
+          default:
+            PRINT_NAMED_DEBUG("HandleNVStorageOpResult.UnhandledTag", "%s (size: %zu)", EnumToString(msg.tag), recvdData->size());
+            for(auto data : *recvdData)
+            {
+              printf("%d ", data);
+            }
+            printf("\n");
+            break;
         }
       }
+    
 
   } // namespace Cozmo
 } // namespace Anki

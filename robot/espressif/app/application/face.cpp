@@ -529,7 +529,7 @@ namespace Face {
       
       if (x + number_width > COLS)
       {
-        AnkiWarn( 375, "Face.Draw.NumberTiny.TooWide", 520, "%d + %d > %d", 3, x, number_width, COLS);
+        AnkiWarn( 376, "Face.Draw.NumberTiny.TooWide", 520, "%d + %d > %d", 3, x, number_width, COLS);
         return false;
       }
       

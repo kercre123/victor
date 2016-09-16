@@ -5,7 +5,7 @@
 #include "os_type.h"
 #include "user_interface.h"
 #include "user_config.h"
-#include "flash_map.h"
+#include "anki/cozmo/robot/flash_map.h"
 
 extern void Cache_Read_Enable(uint32, uint32, uint32);
 /// Overrides SDK Cache read enable

@@ -63,10 +63,6 @@ namespace Cozmo {
   // EP3 robots in the office however will not have this data so skip this check.
   CONSOLE_VAR(bool, kBFT_CheckPrevFixtureResults, "BehaviorFactoryTest",  false);
   
-  // Whether or not to wipe all nvStorage at start of test.
-  // Since this reboots the robot it will not actually run the test at all.
-  CONSOLE_VAR(bool,  kBFT_WipeNVStorage,          "BehaviorFactoryTest",  false);
-  
   // Save logs on device
   CONSOLE_VAR(bool,  kBFT_SaveLogsOnDevice,       "BehaviorFactoryTest",  true);
 
@@ -628,11 +624,6 @@ namespace Cozmo {
         
         if (robot.IsCliffSensorOn()) {
           END_TEST(FactoryTestResultCode::CLIFF_UNEXPECTED);
-        }
-        
-        if (kBFT_WipeNVStorage) {
-          robot.GetNVStorageComponent().WipeAll(true);
-          END_TEST(FactoryTestResultCode::WIPED_ALL);
         }
         
         // Check pre-playpen fixture test result

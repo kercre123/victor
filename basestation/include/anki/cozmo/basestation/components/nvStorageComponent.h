@@ -22,6 +22,7 @@
 
 #include <vector>
 #include <queue>
+#include <map>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -74,12 +75,7 @@ public:
              bool broadcastResultToGame = false);
   
   // Erases all data from robot flash.
-  // IF includeFactory == true, THE FACTORY PARTITION IS ALSO ERASED
-  // WHICH WIPES CAMERA CALIBRATION AMONG OTHER THINGS.
-  // IF YOU'RE NOT COMPLETELY SURE YOU SHOULD DO IT, THEN YOU ABSOLUTELY SHOULDN'T!!!
-  // NOTE: THIS FUNCTION FORCES A ROBOT REBOOT CAUSING DISCONNECT.
-  bool WipeAll(bool includeFactory = false,
-               NVStorageWriteEraseCallback callback = {},
+  bool WipeAll(NVStorageWriteEraseCallback callback = {},
                bool broadcastResultToGame = false);
   
   // Request data stored on robot under the given tag.
@@ -125,13 +121,30 @@ public:
  
 private:
   
+  static constexpr u32 _kHeaderMagic = 0x435a4d4f; // "CZMO" in hex
+  struct NVStorageHeader {
+    u32 magic = _kHeaderMagic;
+    u32 version = 0;
+    u32 dataSize = 0;
+    u16 dataVersion = 0;
+  };
+  
   // Info about a single write request
   struct WriteDataObject {
+    WriteDataObject()
+    : baseTag(NVStorage::NVEntryTag::NVEntry_NEXT_SLOT)
+    , nextTag(0)
+    , sendIndex(0)
+    , data(nullptr)
+    , sending(false)
+    { }
+    
     WriteDataObject(NVStorage::NVEntryTag tag, std::vector<u8>* dataVec)
     : baseTag(tag)
     , nextTag(static_cast<u32>(tag))
     , sendIndex(0)
     , data(dataVec)
+    , sending(false)
     { }
     
     ~WriteDataObject() {
@@ -142,35 +155,37 @@ private:
     u32 nextTag;
     u32 sendIndex;
     std::vector<u8> *data;
+    bool sending;
   };
   
   // Info on how to handle ACK'd writes/erases
   struct WriteDataAckInfo {
     WriteDataAckInfo()
-    : numTagsLeftToAck(0)
+    : tag(NVStorage::NVEntryTag::NVEntry_NEXT_SLOT)
     , callback({})
-    , writeNotErase(true)
     , broadcastResultToGame(false)
     , timeoutTimeStamp(0)
+    , pending(false)
     { }
-    
-    u32  numTagsLeftToAck;
-    u32  numFailedWrites;
-    
+
+    NVStorage::NVEntryTag tag;
     NVStorageWriteEraseCallback callback;
-    bool writeNotErase;
     bool broadcastResultToGame;
     TimeStamp_t timeoutTimeStamp;
+    bool pending;
   };
   
   // Info on how to handle read-requested data
   struct RecvDataObject {
     RecvDataObject()
-    : data(nullptr)
+    : tag(NVStorage::NVEntryTag::NVEntry_NEXT_SLOT)
+    , data(nullptr)
     , callback({})
     , deleteVectorWhenDone(true)
     , broadcastResultToGame(false)
-    , timeoutTimeStamp(0)    
+    , timeoutTimeStamp(0)
+    , pending(false)
+    , dataSizeKnown(false)
     { }
     
     ~RecvDataObject() {
@@ -179,20 +194,25 @@ private:
       }
     }
     
+    NVStorage::NVEntryTag tag;
     std::vector<u8> *data;
     NVStorageReadCallback callback;
     bool deleteVectorWhenDone;
     bool broadcastResultToGame;
     TimeStamp_t timeoutTimeStamp;
+    bool pending;
+    bool dataSizeKnown;
   };
   
   // Stores blobs of a multi-blob messgage.
-  // When all blobs received remainingIndices
+  // When the first blob of a new tag is received, remainingIndices is populated with
+  // all the indices it expects to receive. Indices are removed as blobs are received.
+  // When all blobs are received remainingIndices should be empty.
   struct PendingWriteData {
-    PendingWriteData() { tag = NVStorage::NVEntryTag::NVEntry_Invalid; }
     NVStorage::NVEntryTag tag;
     std::vector<u8> data;
     std::unordered_set<u8> remainingIndices;
+    bool pending = false;
   };
   
   
@@ -205,7 +225,6 @@ private:
     , tag(tag)
     , writeCallback(callback)
     , data(data)
-    , wipeFactory(false)
     , broadcastResultToGame(broadcastResultToGame)
     {}
     
@@ -214,15 +233,13 @@ private:
     : op(NVStorage::NVOperation::NVOP_ERASE)
     , tag(tag)
     , writeCallback(callback)
-    , wipeFactory(false)
     , broadcastResultToGame(broadcastResultToGame)
     {}
     
     // WipeAll request
-    NVStorageRequest(bool includeFactory, NVStorageWriteEraseCallback callback, bool broadcastResultToGame)
+    NVStorageRequest(NVStorageWriteEraseCallback callback, bool broadcastResultToGame)
     : op(NVStorage::NVOperation::NVOP_WIPEALL)
     , writeCallback(callback)
-    , wipeFactory(includeFactory)
     , broadcastResultToGame(broadcastResultToGame)
     {}
     
@@ -232,7 +249,6 @@ private:
     , tag(tag)
     , readCallback(callback)
     , data(data)
-    , wipeFactory(false)
     , broadcastResultToGame(broadcastResultToGame)
     {}
     
@@ -241,16 +257,35 @@ private:
     NVStorageWriteEraseCallback writeCallback;
     NVStorageReadCallback readCallback;
     std::vector<u8>* data;
-    bool wipeFactory;
     bool broadcastResultToGame;
   };
   
   Robot&       _robot;
   
+  enum class NVSCState {
+    IDLE,
+    SENDING_WRITE_DATA,
+    RECEIVING_DATA,
+  };
+  
+  NVSCState _state;
+  void SetState(NVSCState s);
+  
+  // Map of the max number of bytes that may be written at each entry tag
+  static std::map<NVStorage::NVEntryTag, u32> _maxSizeTable;
+  static std::map<NVStorage::NVEntryTag, u32> _maxFactoryEntrySizeTable;
+  
+  // Initialize _maxSizeTable
+  void InitSizeTable();
+  
+  // Get the maximum number of bytes that can be saved for the given tag
+  u32 GetMaxSizeForEntryTag(NVStorage::NVEntryTag tag);
+  
+  
   // ====== Message retry ========
-  // Last write and read message sent
-  NVStorage::NVStorageWrite _writeMsg;
-  NVStorage::NVStorageRead  _readMsg;
+  NVStorage::NVCommand _lastCommandSent;
+  
+  void SendErase(u32 tag);
   
   // Number of attempted sends of the last write or read message
   u8 _numSendAttempts;
@@ -259,8 +294,7 @@ private:
   const u8 _kMaxNumSendAttempts = 8;
 
   // Returns false if number of allowable retries exceeded
-  bool ResendLastWrite();
-  bool ResendLastRead();
+  bool ResendLastCommand();
 
   
   // ======= Robot event handlers ======
@@ -268,7 +302,7 @@ private:
   void HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   
   
-  void SendRequest(NVStorageRequest req);
+  void ProcessRequest();
   
   // Queues blobs for a multi-blob message from game and sends them to robot when all blobs received.
   bool QueueWriteBlob(const NVStorage::NVEntryTag tag, const u8* data, u16 dataLength, u8 blobIndex, u8 numTotalBlobs);
@@ -276,60 +310,54 @@ private:
   // Clear any data that was received from game (via NVStorageWriteEntry) for writing
   void ClearPendingWriteEntry();
   
-  void BroadcastNVStorageOpResult(NVStorage::NVEntryTag tag, NVStorage::NVResult res, NVStorage::NVOperation op);
+  void BroadcastNVStorageOpResult(NVStorage::NVEntryTag tag, NVStorage::NVResult res, NVStorage::NVOperation op, u8 index = 0, const u8* data = nullptr, u32 data_length = 0);
   
   std::vector<Signal::SmartHandle> _signalHandles;
 
-  // Whether or not this tag is composed of (potentially) multiple blobs
-  bool IsMultiBlobEntryTag(u32 tag) const;
+  // Whether or not this tag is composed of (potentially) multiple blobs.
+  // Only applies to factory entries.
+  bool IsMultiBlobEntryTag(NVStorage::NVEntryTag tag) const;
   
   // Whether or not this is a legal entry tag
-  bool IsValidEntryTag(u32 tag) const;
+  bool IsValidEntryTag(NVStorage::NVEntryTag tag) const;
   
   // Whether or not this is a factory entry tag
-  bool IsFactoryEntryTag(u32 tag) const;
+  bool IsFactoryEntryTag(NVStorage::NVEntryTag tag) const;
+  bool IsPotentialFactoryEntryTag(u32 tag) const;
   
   // Whether or not this tag is in the special 0xc000xxxx partition
   bool IsSpecialEntryTag(u32 tag) const;
   
   // Given any tag, returns the assumed base tag
-  u32 GetBaseEntryTag(u32 tag) const;
-  
-  // Given any tag, returns the assumed end-of-range tag
-  u32 GetTagRangeEnd(u32 startTag) const;
-  
+  NVStorage::NVEntryTag GetBaseEntryTag(u32 tag) const;
+
   // Queue of write/erase/read requests to be sent to robot
   std::queue<NVStorageRequest> _requestQueue;
   
-  // Queue of data to be sent to robot for writing
-  std::queue<WriteDataObject> _writeDataQueue;
+  // Data currently being sent to robot for writing
+  WriteDataObject _writeDataObject;
   
-  // Gating flag to make sure that the previous write was acked before another is sent
-  bool _wasLastWriteAcked;
+  // ACK handling struct for write and erase requests
+  WriteDataAckInfo _writeDataAckInfo;
   
-  // Map of NVEntryTag to ACK handling struct for write and erase requests
-  std::unordered_map<u32, WriteDataAckInfo > _writeDataAckMap;
-  
-  // Map of requested NVEntryTag to received data handling struct
-  std::unordered_map<u32, RecvDataObject> _recvDataMap;
+  // Received data handling struct
+  RecvDataObject _recvDataInfo;
 
   // Storage for in-progress-of-receiving multi-blob data
   // via MessageGameToEngine::NVStorageWriteEntry
   PendingWriteData _pendingWriteData;
+
+  // Size of header that should be at the start of all entries, except factory entries
+  static constexpr u32 _kEntryHeaderSize      = sizeof(NVStorageHeader);
+  static_assert(_kEntryHeaderSize % 4 == 0, "NVStorageHeader must have a 4-byte aligned size");  // Using sizeof should ensure this is true, but checking just in case.
   
   // Maximum size of a single blob
-  static constexpr u32 _kMaxNvStorageBlobSize        = 1024;
-  
-  // Maximum number of blobs allowed in a multi-blob entry
-  static constexpr u32 _kMaxNumBlobsInMultiBlobEntry = 20;
-  
-  // Maximum size of a single multi-blob write entry
-  static constexpr u32 _kMaxNvStorageEntrySize       = _kMaxNvStorageBlobSize * _kMaxNumBlobsInMultiBlobEntry;
-  
+  static constexpr u32 _kMaxNvStorageBlobSize = 1024;
+    
   // Ack timeout
   // If an operation is not acked within this timeout then give up waiting for it.
   // (Average write/read rate is ~10KB/s)
-  static constexpr u32 _kAckTimeout_ms = 12800;
+  static constexpr u32 _kAckTimeout_ms        = 5000;   // TODO: What's an appropriate timeout?
   
   // Manages the robot data backups
   // The backup manager lives here as it needs to update the backup everytime we write new things to the robot

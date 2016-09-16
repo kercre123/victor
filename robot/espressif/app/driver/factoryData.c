@@ -1,7 +1,7 @@
 #include "ets_sys.h"
 #include "osapi.h"
 #include "user_interface.h"
-#include "flash_map.h"
+#include "anki/cozmo/robot/flash_map.h"
 #include "driver/factoryData.h"
 
 #define RANDOM_DATA_OFFSET FACTORY_DATA_SIZE

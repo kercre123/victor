@@ -10,29 +10,6 @@ Anki = robotInterface.Anki
 RI  = Anki.Cozmo.RobotInterface
 NVS = Anki.Cozmo.NVStorage
 
-class StorageStateEstimate:
-    def __init__(self):
-        self.store = {}
-        
-    def append(self, key, value, writeNotErase=True):
-        if key in self.store:
-            self.store[key].append((value, writeNotErase))
-        else:
-            self.store[key] = [(value, writeNotErase)]
-            
-    def get(self, key, index=-1):
-        return self.store[key][index]
-        
-    def gc(self):
-        self.store = {k: v[-1:] for k,v in self.store.items() if v[-1][1]}
-        
-    def calcSize(self):
-        sum = 0
-        for tag in self.store.values():
-            for entry, op in tag:
-                sum += len(entry) + 16 # + 12 for size of NVEntryHeader + 4 for control word
-        return sum
-
 class Testbench:
     TEST_FUNCTION_PREFIX = "test_"
     
@@ -71,95 +48,57 @@ Did gyre and gimble in the wabe;
 All mimsy were the borogoves,
 And the mome raths outgrabe.""".encode()
     
-    def onConnect(self, dest):
-        "Callback when connected to the robot"
-        self.waitingForConnect = False
-        
     def onOpResult(self, msg):
         "Callback when receiving an operation result"
-        tag = msg.report.tag
-        if tag == NVS.NVEntryTag.NVEntry_Invalid:
-            sys.stderr.write("Received nvResult for invalid tag:{linesep}\t{}{linesep}".format(repr(msg.report), linesep=os.linesep))
-        elif tag not in self.pendingOps:
-            sys.stderr.write("Received unexpected nvResult:{linesep}\t{}{linesep}".format(repr(msg.report), linesep=os.linesep))
+        if len(msg.blob) == 0:
+            blob = repr([])
         else:
-            if self.pendingOps[tag][1] == "read":
-                sys.stdout.write("Pending read of {0:x} returned {1}{linesep}".format(tag, repr(msg.report), linesep=os.linesep))
-                if (msg.report.result < 0):
-                    del self.pendingOps[tag]
-            else:
-                sys.stdout.write("Pending {} of {:x} returned {}{linesep}".format(self.pendingOps[tag][1], tag, repr(msg.report), linesep=os.linesep))
-                self.estimate.append(tag, self.pendingOps[tag][0], self.pendingOps[tag][1] == "write")
-                del self.pendingOps[tag]
-        self.lastResult = msg.report.result
-    
-    def onReadData(self, msg):
-        "Callback when receiving read data"
-        tag = msg.blob.tag
-        if tag == NVS.NVEntryTag.NVEntry_Invalid:
-            sys.stderr.write("Recieved nvData for invalid tag:{linesep}\t{}{linesep}".format(repr(msg.blob), linesep=os.linesep))
-        elif tag not in self.pendingOps or self.pendingOps[tag][1] != "read":
-            sys.stderr.write("Received unexpected nvData: tag = {:x} ({:d}){linesep}\t{:s}{linesep}".format(tag, len(msg.blob.blob), bytes(msg.blob.blob).decode(errors="ignore")[:100], linesep=os.linesep))
-        else:
-            sys.stdout.write("Pending read of {:x} returned ({:d}){linesep}\t{:s}{linesep}".format(tag, len(msg.blob.blob), ' '.join(('{:2x}'.format(w) for w in msg.blob.blob)), linesep=os.linesep))
-            if self.pendingOps[tag][2]:
-                open("{:x}.nvstorage".format(tag), 'wb').write(bytes(msg.blob.blob))
-            del self.pendingOps[tag]
+            try:
+                blob = msg.blob.decode()
+            except:
+                blob = " ".join(("{:02x}".format(b) for b in msg.blob))
+        sys.stdout.write("{0.operation!s}: {0.result!s}{ls}\tAddress {0.address:x}{ls}\tOffset {0.offset:x}{ls}\tBlob {1}{ls}".format(msg, blob, ls=os.linesep))
+        if msg.address in self.pendingOps:
+            del self.pendingOps[msg.address]
+        self.lastResult = msg.result
     
     def write(self, tag, blob):
-        robotInterface.Send(RI.EngineToRobot(writeNV=NVS.NVStorageWrite(
-            NVS.NVReportDest.ENGINE,
-            True,
-            True,
-            False,
-            NVS.NVEntryTag.NVEntry_Invalid,
-            NVS.NVStorageBlob(tag, blob)
-        )))
-        self.pendingOps[tag] = (blob, "write")
-    
-    def erase(self, tag, tagEnd=NVS.NVEntryTag.NVEntry_Invalid):
-        robotInterface.Send(RI.EngineToRobot(writeNV=NVS.NVStorageWrite(
-            NVS.NVReportDest.ENGINE,
-            False,
-            True,
-            True,
-            tagEnd,
-            NVS.NVStorageBlob(tag)
-        )))
-        self.pendingOps[tag] = (None, "erase")
-        
-    def read(self, tag, tagEnd=NVS.NVEntryTag.NVEntry_Invalid, record=False):
-        robotInterface.Send(RI.EngineToRobot(readNV=NVS.NVStorageRead(
+        robotInterface.Send(RI.EngineToRobot(commandNV=NVS.NVCommand(
             tag,
-            tagEnd,
-            NVS.NVReportDest.ENGINE
+            0,
+            NVS.NVOperation.NVOP_WRITE,
+            blob = blob
         )))
-        self.pendingOps[tag] = (None, "read", record)
-        if tagEnd != NVS.NVEntryTag.NVEntry_Invalid:
-            self.pendingOps[tagEnd] = (None, "read", False)
+        self.pendingOps[tag] = (blob, NVS.NVOperation.NVOP_WRITE)
+    
+    def erase(self, tag, length):
+        robotInterface.Send(RI.EngineToRobot(commandNV=NVS.NVCommand(
+            tag,
+            length,
+            NVS.NVOperation.NVOP_ERASE
+        )))
+        self.pendingOps[tag] = (None, NVS.NVOperation.NVOP_ERASE)
+        
+    def read(self, tag, length=1, record=False):
+        robotInterface.Send(RI.EngineToRobot(commandNV=NVS.NVCommand(
+            tag,
+            length,
+            NVS.NVOperation.NVOP_READ
+        )))
+        self.pendingOps[tag] = (None, NVS.NVOperation.NVOP_READ, record)
+        if length > 1:
+            self.pendingOps[tag + length] = (None, NVS.NVOperation.NVOP_READ, False)
     
     @property
     def done(self):
         return len(self.pendingOps) == 0 and self.testInProgress is False
-        
-    def __init__(self, load=None, save=None, gc=False):
+    
+    def __init__(self):
         "Store the specified parameters into the robot"
-        if load is None:
-            self.estimate = StorageStateEstimate()
-            if gc: self.estimate.gc()
-        else:
-            self.estimate = pickle.load(open(load, "rb"))
-        self.save = save
         self.pendingOps = {}
         self.lastResult = None
         self.testInProgress = False
-        self.waitingForConnect = True
-        robotInterface.Init()
-        robotInterface.SubscribeToConnect(self.onConnect)
-        robotInterface.SubscribeToTag(RI.RobotToEngine.Tag.nvResult, self.onOpResult)
-        robotInterface.SubscribeToTag(RI.RobotToEngine.Tag.nvData,   self.onReadData)
-        robotInterface.Connect()
-        while self.waitingForConnect: time.sleep(0.05)
+        robotInterface.SubscribeToTag(RI.RobotToEngine.Tag.nvOpResult, self.onOpResult)
         
     def __del__(self):
         if self.save is not None:
@@ -183,7 +122,20 @@ And the mome raths outgrabe.""".encode()
     
     @property
     def randomTag(self):
-        return int(random.uniform(1, 2**31))
+        return int(random.uniform(NVS.NVEntryTag.NVConst_MIN_ADDRESS, NVS.NVEntryTag.NVConst_MAX_ADDRESS-4096)/4)*4
+    
+    def test_erwr(self):
+        tag = self.randomTag
+        sector = tag & 0x1FF000
+        print("Erasing", hex(sector))
+        self.erase(sector, 4096)
+        self.waitForPending()
+        print("Writing", hex(tag))
+        self.write(tag, self.BIG_BLOB)
+        self.waitForPending()
+        print("Reading", hex(tag))
+        self.read(tag, 4096)
+        self.waitForPending()
     
     def test_write(self):
         tag = self.randomTag
@@ -280,7 +232,7 @@ And the mome raths outgrabe.""".encode()
         self.waitForPending()
         
     def test_readAllFixture(self):
-        self.read(0xC0000000, 0xC000000F)
+        self.read(0xC0000000, 16)
         self.waitForPending()
         
     def test_writeBirthCertificate(self):
@@ -298,14 +250,14 @@ And the mome raths outgrabe.""".encode()
 if __name__ == "__main__":
     print("NVStorage Testbench")
     parser = argparse.ArgumentParser(prog="NVStorage Testbench", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-s", "--save", default=None, help="File to store expected NVStorage state to")
-    parser.add_argument("-l", "--load", default=None, help="File to load expected NVStorage state from")
-    parser.add_argument("-g", "--gc",   default=False, action="store_true", help="Whether we should update the estimated state with a garbage collection")
     parser.add_argument("test", nargs="+", choices=Testbench.GetTestNames(), help="Which tests to run")
     args = parser.parse_args()
     
-    t = Testbench(args.load, args.save, args.gc)
-    time.sleep(1.0)
+    robotInterface.Init()
+    t = Testbench()
+    robotInterface.Connect()
+    while robotInterface.GetConnected() is False:
+        time.sleep(0.1)
     try:
         for test in args.test:
             t.runTest(test)
@@ -314,5 +266,5 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         pass
     robotInterface.Disconnect()
-    time.sleep(0.015)
+    time.sleep(0.1)
     sys.exit()

@@ -6,7 +6,7 @@
 #ifndef __ESPRESSIF_DRIVER_CRASH_H_
 #define __ESPRESSIF_DRIVER_CRASH_H_
 
-#include "flash_map.h"
+#include "anki/cozmo/robot/flash_map.h"
 #include "anki/cozmo/robot/crashLogs.h"
 
 #define MAX_CRASH_LOGS (SECTOR_SIZE / CRASH_RECORD_SIZE)

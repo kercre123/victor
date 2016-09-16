@@ -15,7 +15,7 @@
 #include "backgroundTask.h"
 #include "foregroundTask.h"
 #include "user_config.h"
-#include "flash_map.h"
+#include "anki/cozmo/robot/flash_map.h"
 
 /** System calls this method before initalizing the radio.
  * This method is only nessisary to call system_phy_set_rfoption which may only be called here.
@@ -29,19 +29,6 @@ void user_rf_pre_init(void)
 
 char wifiPsk[WIFI_PSK_LEN];
 uint8_t connectedMac[MAC_ADDR_BYTES];
-
-/// Forward declarations
-typedef void (*NVInitDoneCB)(const int8_t);
-int8_t NVInit(const bool garbageCollect, NVInitDoneCB finishedCallback);
-void NVWipeAll(void);
-
-static void ICACHE_FLASH_ATTR nv_init_done(const int8_t result)
-{
-  // Enable I2SPI start only after clientInit and checkAndClearBootloaderConfig
-  i2spiInit();
-
-  os_printf("Application Firmware Init Complete %d\r\n", result);
-}
 
 /** Callback after all the chip system initalization is done.
  * We shouldn't do any networking until after this is done.
@@ -57,9 +44,7 @@ static void system_init_done(void)
   // Set up shared foreground tasks
   foregroundTaskInit();
 
-  // Check the file system integrity
-  // Must be called after backgroundTaskInit and foregroundTaskInit
-  NVInit(true, nv_init_done);
+  i2spiInit();
 }
 
 static bool wifi_monitor_connection_status(uint32_t param)

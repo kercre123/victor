@@ -8,55 +8,43 @@ namespace Anki {
 namespace Cozmo {
 namespace NVStorage {
 
+  enum uint_32 NVConst
+  {
+    NVConst_MIN_ADDRESS      = 0x180000,
+    NVConst_MAX_ADDRESS      = 0x1fc000,
+
+    NVConst_FACTORY_DATA_BIT = 0x80000000,  // aka playpen tags
+    NVConst_FIXTURE_DATA_BIT = 0xC0000000,  // aka pre-playpen tags
+  }
+
   enum uint_32 NVEntryTag
   {
+    NVEntry_Invalid = 0xFFFFffff,
     // ===== Non-factory entries ======
-
-    // Single blob entries start here
-    // Upper 16 bits must be zero
-
-    // Reserved tags (i.e. nothing may actually be written to these slots)
-    // All tags >= 0xF0000000 are reserved for these special uses
-    NVEntry_Invalid           = 0xFFFFffff,
-    NVEntry_WipeAll           = 0xFFFE0000,  // Can't actually send this with NVStorageWrite,
-                                             // but it will come back as the tag in the NVOpResult
-                                             // when NVWipeAll is sent.
-
-    //NVEntry_EraseAll          = 0x0,  // The only operation that can be done on this tag is erase
-                                      // and doing so ERASES ALL non-factory entries.
-    //NVEntry_ReallyEraseAll    = 0x1,  // Erase everything including factory entries.
-                                      // NOTE: Not sure we want to expose these to game/SDK
-
+    // Valid addresses are NVConst_MIN_ADDRESS through NVConst_MAX_ADDRESS (507904)
+    // Destinct entries must occure on 4kb (0x1000) boundaries or else repacking and rewriting will have to be done
     // NOTE: If you want a tag to be backed-up by engine make sure to add it to backup_config.json
+    NVEntry_GameSkillLevels = 0x180000,
+    NVEntry_OnboardingData  = 0x181000,
 
-    NVEntry_GameSkillLevels = 0x2,
+    NVEntry_GameUnlocks     = 0x182000, /// 1 4k block is enough for 1024 unlocks stored as uint32s
+    NVEntry_FaceEnrollData  = 0x183000, /// 1 4k block should be enough for names etc.
+    NVEntry_FaceAlbumData   = 0x184000, /// 96k long
 
-    NVEntry_OnboardingData = 0x3,
-
-
-    NVEntry_Junk = 0xFFFF,
-
-    // Multi-blob entries start here
-    // Upper 16 bits must be non-zero and the bottom 16 bits must all be zero
-    // The number of blobs that can be associated with a multi-blob tag is 0xffff
-    // (e.g. The NVEntryTag 0x10000 reserves tags 0x10000 through 0x1ffff)
-    // though this value is actually lower because it is limited in NVStorageComponent.
-
-    // Storing game unlocks in a multiblob tag in case we add a lot of them
-    // With UnlockId as a u16 we can only store 512 of them in on tag so this is just
-    // for future proofing
-    NVEntry_GameUnlocks     = 0x00010000,
-
-    NVEntry_FaceAlbumData   = 0x00FA0000,
-    NVEntry_FaceEnrollData  = 0x00FE0000,
-
-    NVEntry_MultiBlobJunk   = 0x7FFF0000,
-
+    NVEntry_NEXT_SLOT       = 0x19C000, /// ADD NEW ENTRIES HERE
+                                        /// The value of NVEntry_NEXT_SLOT defines the size alloted to the previous tag.
+                                        /// Add new entries at its current value and then update NVEntry_NEXT_SLOT to be
+                                        /// X more where X is the number of bytes you want to allocate to the new tag.
+                                        ///
+                                        /// DON'T FORGET to also add the new tag to NVStorageComponent::_maxSizeTable!
+    
     // ====== Factory entries ========
     // Same rules as regarding single and multi-blob entries
     // except that the MSB is 1 for potential special treatment during
     // garbage collection in the future.
     // The exception is tags that start with 0xC000. See below.
+
+    // NEW ENTRIES: Must also be added to NVStorageComponent::_maxFactoryEntrySizeTable
 
 
     // Single blob manufacturing entries start here
@@ -96,6 +84,7 @@ namespace NVStorage {
     NV_OKAY = 0,
     NV_SCHEDULED =  1, // Scheduled for opertation
     NV_NO_DO     =  2, // Nothing to do
+    NV_MORE      =  3, // More to come after this
     NV_NOT_FOUND = -1,
     NV_NO_ROOM   = -2,
     NV_ERROR     = -3,
@@ -103,6 +92,7 @@ namespace NVStorage {
     NV_BUSY      = -5, // Operations pending. try again later
     NV_BAD_ARGS  = -6, // Invalid arguments to call
     NV_NO_MEM    = -7,
+    NV_LOOP      = -8, // Looped too long without exiting
   }
 
   enum uint_8 NVOperation {

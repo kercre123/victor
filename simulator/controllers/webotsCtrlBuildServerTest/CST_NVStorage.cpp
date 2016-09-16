@@ -38,9 +38,6 @@ namespace Anki {
       WriteData,
       WipeAll,
       
-      WriteWipeAll,
-      ReadWipeAll,
-      
       Final
     };
     
@@ -51,7 +48,7 @@ namespace Anki {
       
     private:
     
-      void RandomData(int length, uint8_t* data);
+      void AppendRandomData(int length, std::vector<uint8_t>& data);
       
       bool IsDataSame(const uint8_t* d1, const uint8_t* d2, int length);
       
@@ -66,8 +63,8 @@ namespace Anki {
     
       Util::RandomGenerator r;
       
-      const Tag singleBlobTag = (Tag)100;
-      const Tag multiBlobTag = (Tag)65536;
+      const Tag singleBlobTag = NVStorage::NVEntryTag::NVEntry_GameUnlocks;
+      const Tag multiBlobTag = NVStorage::NVEntryTag::NVEntry_FaceAlbumData;
       const static int numMultiBlobs = 5;
       
       uint8_t _dataWritten[numMultiBlobs][1024];
@@ -85,12 +82,12 @@ namespace Anki {
     REGISTER_COZMO_SIM_TEST_CLASS(CST_NVStorage);
     
     
-    void CST_NVStorage::RandomData(int length, uint8_t* data)
+    void CST_NVStorage::AppendRandomData(int length, std::vector<uint8_t>& data)
     {
       for(int i=0;i<length;i++)
       {
         int n = r.RandInt(256);
-        data[i] = (uint8_t)n;
+        data.push_back((uint8_t)n);
       }
     }
     
@@ -116,10 +113,9 @@ namespace Anki {
         case TestState::WriteSingleBlob:
         {
           ExternalInterface::NVStorageWriteEntry msg;
-          RandomData(5, msg.data.data());
+          AppendRandomData(5, msg.data);
           memcpy(_dataWritten[0], msg.data.data(), 5);
           msg.tag = singleBlobTag;
-          msg.data_length = 5;
           msg.index = 0;
           msg.numTotalBlobs = 1;
           
@@ -168,10 +164,9 @@ namespace Anki {
           for(int i = 0; i < numMultiBlobs; i++)
           {
             ExternalInterface::NVStorageWriteEntry msg;
-            RandomData(1024, msg.data.data());
+            AppendRandomData(1024, msg.data);
             memcpy(_dataWritten[i], msg.data.data(), 1024);
             msg.tag = multiBlobTag; // First multiblob tag
-            msg.data_length = 1024;
             msg.index = i;
             msg.numTotalBlobs = numMultiBlobs;
             
@@ -292,9 +287,8 @@ namespace Anki {
         case TestState::WritingToInvalidMultiTag:
         {
           ExternalInterface::NVStorageWriteEntry msg;
-          RandomData(1024, msg.data.data());
+          AppendRandomData(1024, msg.data);
           msg.tag = (Tag)((uint32_t)multiBlobTag + 1); // Invalid multiblob tag
-          msg.data_length = 1024;
           msg.index = 0;
           msg.numTotalBlobs = 1;
           
@@ -308,14 +302,13 @@ namespace Anki {
         case TestState::WriteData:
         {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(_writeAckd &&
-                                           _lastResult == NVStorage::NVResult::NV_ERROR, DEFAULT_TIMEOUT)
+                                           _lastResult == NVStorage::NVResult::NV_BAD_ARGS, DEFAULT_TIMEOUT)
           {
             ClearAcks();
             
             ExternalInterface::NVStorageWriteEntry msg;
-            RandomData(5, msg.data.data());
+            AppendRandomData(5, msg.data);
             msg.tag = singleBlobTag;
-            msg.data_length = 5;
             msg.index = 0;
             msg.numTotalBlobs = 1;
             
@@ -326,10 +319,9 @@ namespace Anki {
             for(int i = 0; i < numMultiBlobs; i++)
             {
               ExternalInterface::NVStorageWriteEntry msg;
-              RandomData(1024, msg.data.data());
+              AppendRandomData(1024, msg.data);
               memcpy(_dataWritten[i], msg.data.data(), 1024);
               msg.tag = multiBlobTag; // First multiblob tag
-              msg.data_length = 1024;
               msg.index = i;
               msg.numTotalBlobs = numMultiBlobs;
               
@@ -344,16 +336,16 @@ namespace Anki {
         }
         case TestState::WipeAll:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(_numWrites == numMultiBlobs + 1, 20)
+          // Wait for acks from the singleBlob write and the multi-blob write.
+          IF_CONDITION_WITH_TIMEOUT_ASSERT(_numWrites == 2, 20)
           {
             ClearAcks();
             
             // Erase all
-            ExternalInterface::NVStorageEraseEntry msg1;
-            msg1.tag = NVStorage::NVEntryTag::NVEntry_WipeAll;
+            ExternalInterface::NVStorageWipeAll msg1;
             
             ExternalInterface::MessageGameToEngine message1;
-            message1.Set_NVStorageEraseEntry(msg1);
+            message1.Set_NVStorageWipeAll(msg1);
             SendMessage(message1);
             
             // Try to read
@@ -364,53 +356,13 @@ namespace Anki {
             message.Set_NVStorageReadEntry(msg);
             SendMessage(message);
             
-            _testState = TestState::ReadWipeAll;
-          }
-          break;
-        }
-        case TestState::ReadWipeAll:
-        {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(_readAckd && _eraseAckd && _lastResult == NVStorage::NVResult::NV_NOT_FOUND, DEFAULT_TIMEOUT)
-          {
-            ClearAcks();
-            
-            _lastResult = NVStorage::NVResult::NV_OKAY;
-            
-            ExternalInterface::NVStorageReadEntry msg;
-            msg.tag = NVStorage::NVEntryTag::NVEntry_WipeAll;
-            
-            ExternalInterface::MessageGameToEngine message;
-            message.Set_NVStorageReadEntry(msg);
-            SendMessage(message);
-            
-            _testState = TestState::WriteWipeAll;
-          }
-          break;
-        }
-        case TestState::WriteWipeAll:
-        {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(_readAckd && _lastResult == NVStorage::NVResult::NV_ERROR, DEFAULT_TIMEOUT)
-          {
-            ClearAcks();
-            
-            ExternalInterface::NVStorageWriteEntry msg;
-            RandomData(5, msg.data.data());
-            msg.tag = NVStorage::NVEntryTag::NVEntry_WipeAll;
-            msg.data_length = 5;
-            msg.index = 0;
-            msg.numTotalBlobs = 1;
-            
-            ExternalInterface::MessageGameToEngine message;
-            message.Set_NVStorageWriteEntry(msg);
-            SendMessage(message);
-            
             _testState = TestState::Final;
           }
           break;
         }
         case TestState::Final:
         {
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(_writeAckd && _lastResult == NVStorage::NVResult::NV_ERROR, DEFAULT_TIMEOUT)
+          IF_CONDITION_WITH_TIMEOUT_ASSERT(_eraseAckd && _readAckd && _lastResult == NVStorage::NVResult::NV_NOT_FOUND, DEFAULT_TIMEOUT)
           {
             CST_EXIT();
           }

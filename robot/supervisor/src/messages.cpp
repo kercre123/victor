@@ -11,7 +11,7 @@
 #include "anki/cozmo/transport/IReceiver.h"
 #include "anki/cozmo/transport/reliableTransport.h"
 #include "anki/vision/CameraSettings.h"
-#include "../sim_hal/sim_nvStorage.h"
+#include "nvStorage.h"
 #endif
 #include <string.h>
 
@@ -91,41 +91,6 @@ namespace Anki {
 #ifndef TARGET_K02
         ReliableTransport_Init();
         ReliableConnection_Init(&connection, NULL); // We only have one connection so dest pointer is superfluous
-        
-        
-        // Store camera calibration in nvStorage
-        const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
-        if(headCamInfo == NULL) {
-          AnkiWarn( 163, "Messages.Init.CalibNotFound", 359, "NULL HeadCamInfo retrieved from HAL.", 0);
-        }
-        else {
-
-          CameraCalibration headCalib{
-            headCamInfo->focalLength_x,
-            headCamInfo->focalLength_y,
-            headCamInfo->center_x,
-            headCamInfo->center_y,
-            headCamInfo->skew,
-            headCamInfo->nrows,
-            headCamInfo->ncols
-          };
-          
-          for(s32 iCoeff=0; iCoeff<NUM_RADIAL_DISTORTION_COEFFS; ++iCoeff) {
-            headCalib.distCoeffs[iCoeff] = headCamInfo->distortionCoeffs[iCoeff];
-          }
-          
-          NVStorage::NVStorageWrite nvWrite;
-          nvWrite.entry.tag = NVStorage::NVEntry_CameraCalib;
-          nvWrite.entry.blob_length = headCalib.Size();
-          memcpy(nvWrite.entry.blob, headCalib.GetBuffer(), headCalib.Size());
-          nvWrite.reportDone = false;
-          nvWrite.reportEach = false;
-          nvWrite.rangeEnd = NVStorage::NVEntry_Invalid;
-          nvWrite.writeNotErase = true;
-          nvWrite.reportTo = NVStorage::RTIP;
-          SimNVStorageSpace::Write(nvWrite);
-          
-        }
         
         // In sim we don't expect to get the PowerState message which normally sets this
         bodyRadioMode_ = BODY_ACCESSORY_OPERATING_MODE;
@@ -911,17 +876,12 @@ namespace Anki {
         
       }
       /// Stub message handlers to satisfy simulator build
-      void Process_writeNV(Anki::Cozmo::NVStorage::NVStorageWrite const& msg)
+      void Process_commandNV(NVStorage::NVCommand const& msg)
       {
-        SimNVStorageSpace::Write(msg);
-      }
-      void Process_readNV(Anki::Cozmo::NVStorage::NVStorageRead const& msg)
-      {
-        SimNVStorageSpace::Read(msg);
-      }
-      void Process_wipeAllNV(Anki::Cozmo::NVStorage::NVWipeAll const& msg)
-      {
-        SimNVStorageSpace::WipeAll(msg);
+        auto callback = [](NVStorage::NVOpResult& res) {
+          RobotInterface::SendMessage(res);
+        };
+        NVStorage::Command(msg, callback);
       }
       void Process_setHeadlight(RobotInterface::SetHeadlight const&)
       {
@@ -944,14 +904,6 @@ namespace Anki {
         // Nothing to do here
       }
       void Process_helloPhoneMessage(Anki::Cozmo::HelloPhone const&)
-      {
-        // Nothing to do here
-      }
-      void Process_nvReadToBody(Anki::Cozmo::RobotInterface::NVReadResultToBody const&)
-      {
-        // Nothing to do here
-      }
-      void Process_nvOpResultToBody(Anki::Cozmo::RobotInterface::NVOpResultToBody const&)
       {
         // Nothing to do here
       }
@@ -1302,4 +1254,10 @@ void Receiver_OnDisconnect(ReliableConnection* connection)
   ReliableConnection_Init(connection, NULL); // Reset the connection
   Anki::Cozmo::HAL::RadioUpdateState(0, 0);
 }
+
+int Anki::Cozmo::HAL::RadioQueueAvailable()
+{
+  return ReliableConnection_GetReliableQueueAvailable(&Anki::Cozmo::connection);
+}
+
 #endif

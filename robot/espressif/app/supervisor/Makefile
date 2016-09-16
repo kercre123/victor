@@ -28,7 +28,7 @@ ESP_SRC_DIR:=../../../supervisor/src
 
 vpath %.cpp $(ESP_SRC_DIR)
 
-CXXSRCS:=animationController.cpp
+CXXSRCS:=animationController.cpp nvStorage.cpp
 
 #############################################################
 # Recursion Magic - Don't touch this!!

@@ -317,16 +317,6 @@ message DisplayNumber
   uint_8  y
 }
 
-message NVReadResultToBody
-{
-  NVStorage::NVStorageBlob entry
-}
-
-message NVOpResultToBody
-{
-  NVStorage::NVOpResult report
-}
-
 message EnableStopOnCliff
 {
   bool enable
@@ -380,20 +370,23 @@ union EngineToRobot
 
   // 0x01 to 0x27: Messages to the body / test fixture
   // 0x28 to 0x2f: Allocated to BLE response messages
+  //          FREE SLOT!!!                                  = 0x01,
+  //          FREE SLOT!!!                                  = 0x02,
   BackpackLightsMiddle          setBackpackLightsMiddle     = 0x03,
   CubeLights                    setCubeLights               = 0x04,
   SetPropSlot                   setPropSlot                 = 0x05,
   KillBodyCode                  killBodyCode                = 0x06,
   SetBodyRadioMode              setBodyRadioMode            = 0x07,
-  NVReadResultToBody            nvReadToBody                = 0x08,
-  NVOpResultToBody              nvOpResultToBody            = 0x09,
+  //          FREE SLOT!!!                                  = 0x08,
+  //          FREE SLOT!!!                                  = 0x09,
+  //          FREE SLOT!!!                                  = 0x0A,
   SetHeadlight                  setHeadlight                = 0x0B,
   SetCubeGamma                  setCubeGamma                = 0x0C,
   OTA::BodyRestart              bodyRestart                 = 0x0D,
   ReadBodyStorage               readBodyStorage             = 0x0E,
   WriteBodyStorage              writeBodyStorage            = 0x0F,
   CubeID                        setCubeID                   = 0x10,
-  BackpackLightsTurnSignals     setBackpackLightsTurnSignals = 0x11,
+  BackpackLightsTurnSignals    setBackpackLightsTurnSignals = 0x11,
 
   DiffieHellmanResults          diffieHellmanResults        = 0x26,
   EnterPairing                  enterPairing                = 0x27,
@@ -456,13 +449,13 @@ union EngineToRobot
   
   // 0x80 to 0xAF: To WiFi
   RequestCrashReports           requestCrashReports         = 0x80,
-  // Available for future use                               = 0x81,
+  NVStorage::NVCommand          commandNV                   = 0x81,
   CalculateDiffieHellman        calculateDiffieHellman      = 0x82,
-  NVStorage::NVStorageWrite     writeNV                     = 0x83,
-  NVStorage::NVStorageRead      readNV                      = 0x84,
-  NVStorage::NVWipeAll          wipeAllNV                   = 0x85,
-  // Available for future use                               = 0x86,
-  // Available for future use                               = 0x87,
+  //          FREE SLOT!!!                                  = 0x83,
+  //          FREE SLOT!!!                                  = 0x84,
+  //          FREE SLOT!!!                                  = 0x85,
+  //          FREE SLOT!!!                                  = 0x86,
+  //          FREE SLOT!!!                                  = 0x87,
   DebugSetRTTO                  setRTTO                     = 0x89,
   AbortAnimation                abortAnimation              = 0x90,
   AnimKeyFrame::AudioSample     animAudioSample             = 0x91,

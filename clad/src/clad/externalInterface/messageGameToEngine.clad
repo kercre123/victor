@@ -941,20 +941,19 @@ message NVStorageWipeAll {
   string key            // This must be "Yes I really want to do this!" otherwise the operation will fail.
 }
 
-// Multi-blob messages (determined by tag) are queued on engine
+// Multi-blob messages (numTotalBlobs > 1) are queued on engine
 // and sent out all at once only when all blobs have been received.
 // (This also means that writes won't be ackd with NVStorageOpResult until all
 // blobs have been sent to engine, unless there's a problem found before all the blobs
 // have been received in which case engine will send an NVStorageOpResult failure for
 // each problematic NVStorageWriteEntry received.)
-// This is to help make it harder to write junk to the robot.'
-// Single-blob messages are sent to robot immediately.
+// This is to help make it harder to write junk to the robot.
+// Single-blob messages (numTotalBlobs == 1) are sent to robot immediately.
 message NVStorageWriteEntry {
   NVStorage::NVEntryTag tag,
-  uint_16 data_length,
-  uint_8  data[1024],
-  uint_8  index,         // If tag is a multi-blob entry, this is the blob index starting at 0 for the first blob.
-  uint_8  numTotalBlobs  // If tag is a multi-blob entry, this is the total number of blobs expected.
+  uint_8  data[uint_16],
+  uint_8  index,         // Starts at 0
+  uint_8  numTotalBlobs  // Total number of blobs expected
 }
 
 // Clears any queued data received by engine for a multi-blob entry via NVStorageWriteEntry.

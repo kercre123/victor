@@ -37,6 +37,7 @@
 #include "clad/types/imageTypes.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/motorTypes.h"
+#include "clad/types/nvStorageTypes.h"
 #include "clad/robotInterface/messageToActiveObject.h"
 
 // Set to 0 if you want to read printf output in a terminal and you're not
@@ -239,9 +240,25 @@ namespace Anki
       // FLASH MEMORY
       //
 
-      const u32 FLASH_PAGE_SIZE = 4 * 1024;
-      void FlashWrite(u32 page, u8 data[FLASH_PAGE_SIZE]);
-      void FlashRead(u32 page, u8 data[FLASH_PAGE_SIZE]);
+      /** Write to flash
+       * @param address The flash address to start writing at
+       * @param data Pointer to the data to write
+       * @param length How many bytes of data to write
+       * @return NV_OKAY on success or other on error.
+       */
+      NVStorage::NVResult FlashWrite(u32 address, u32* data, u32 length);
+      /** Read from flash
+       * @param address The flash address to start reading from
+       * @param data Pointer to buffer to read into, must have at least length bytes available
+       * @param length How many bytes of data to read.
+       * @return NV_OKAY on success or other on error.
+       */
+      NVStorage::NVResult FlashRead (u32 address, u32* data, u32 length);
+      /** Erase a sector of flash.
+       * @param address The address of the start of the sector to erase.
+       * @return NV_OKAY on success or other on failure.
+       */
+      NVStorage::NVResult FlashErase(u32 address);
 
 // #pragma mark --- IMU ---
       /////////////////////////////////////////////////////////////////////
@@ -467,6 +484,8 @@ namespace Anki
       bool RadioIsConnected();
 
       void RadioUpdateState(u8 wifi, u8 blue);
+
+      int RadioQueueAvailable();
 
       void DisconnectRadio();
 

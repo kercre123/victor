@@ -20,8 +20,6 @@ void ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds);
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
-static Anki::Cozmo::NVStorage::NVReportDest nvOpReportTo;
-
 namespace Anki {
   namespace Cozmo {
     namespace Messages {
@@ -31,103 +29,9 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      static void SendNVOpResult(const NVStorage::NVOpResult* report, const NVStorage::NVReportDest dest)
+      static void NVOpCallback(NVStorage::NVOpResult& msg)
       {
-        switch (dest)
-        {
-          case NVStorage::ENGINE:
-          {
-            RobotInterface::NVOpResultToEngine msg;
-            msg.robotAddress = getSerialNumber();
-            os_memcpy(&msg.report, report, sizeof(NVStorage::NVOpResult));
-            RobotInterface::SendMessage(msg);
-            break;
-          }
-          case NVStorage::BODY:
-          {
-            RobotInterface::NVOpResultToBody msg;
-            os_memcpy(&msg.report, report, sizeof(NVStorage::NVOpResult));
-            RobotInterface::SendMessage(msg);
-            break;
-          }
-          default:
-          {
-            AnkiError( 151, "Messages.SendNVOpResult", 450, "Unhandled report destination %d", 1, dest);
-          }
-        }
-      }
-      
-      static void NVWriteDoneCallback(const NVStorage::NVStorageBlob* entry, const NVStorage::NVResult result)
-      {
-        NVStorage::NVOpResult msg;
-        msg.tag    = entry->tag;
-        msg.result = result;
-        msg.write  = true;
-        SendNVOpResult(&msg, nvOpReportTo);
-      }
-      
-      static void NVEraseDoneCallback(const NVStorage::NVEntryTag tag, const NVStorage::NVResult result)
-      {
-        NVStorage::NVOpResult msg;
-        msg.tag = tag;
-        msg.result = result;
-        msg.write = true;
-        SendNVOpResult(&msg, nvOpReportTo);
-      }
-
-      static void NVReadDoneCB(NVStorage::NVStorageBlob* entry, const NVStorage::NVResult result)
-      {
-        if (result != NVStorage::NV_OKAY) // Failed read
-        {
-          NVStorage::NVOpResult msg;
-          msg.tag = ((entry == NULL) ? NVStorage::NVEntry_Invalid : entry->tag);
-          msg.result = result;
-          msg.write = false;
-          SendNVOpResult(&msg, nvOpReportTo);
-        }
-        else // Successful read, send data
-        {
-          switch(nvOpReportTo)
-          {
-            case NVStorage::ENGINE:
-            {
-              RobotInterface::NVReadResultToEngine msg;
-              msg.robotAddress = getSerialNumber();
-              os_memcpy(&msg.blob, entry, sizeof(NVStorage::NVStorageBlob));
-              RobotInterface::SendMessage(msg);
-              break;
-            }
-            case NVStorage::BODY:
-            {
-              RobotInterface::NVReadResultToBody msg;
-              os_memcpy(&msg.entry, entry, sizeof(NVStorage::NVStorageBlob));
-              RobotInterface::SendMessage(msg);
-              break;
-            }
-            default:
-            {
-              AnkiError( 152, "Messages.NVReadDoneCB", 450, "Unhandled report destination %d", 1, nvOpReportTo);
-            }
-          }
-        }
-      }
-
-      static void NVMultiEraseDoneCB(const u32 tag, const NVStorage::NVResult result)
-      {
-        NVStorage::NVOpResult msg;
-        msg.tag    = tag;
-        msg.result = result;
-        msg.write  = true;
-        SendNVOpResult(&msg, nvOpReportTo);
-      }
-      
-      static void NVMultiReadDoneCB(const u32 tag, const NVStorage::NVResult result)
-      {
-        NVStorage::NVOpResult msg;
-        msg.tag    = tag;
-        msg.result = result;
-        msg.write  = false;
-        SendNVOpResult(&msg, nvOpReportTo);
+        RobotInterface::SendMessage(msg);
       }
       
       void ProcessMessage(RobotInterface::EngineToRobot& msg)
@@ -139,64 +43,18 @@ namespace Anki {
             UpgradeController::Write(msg.otaWrite);
             break;
           }
-          case RobotInterface::EngineToRobot::Tag_writeNV:
+          case RobotInterface::EngineToRobot::Tag_commandNV:
           {
-            NVStorage::NVOpResult result;
-            result.tag    = msg.writeNV.entry.tag;
-            result.write  = true;
-            if (msg.writeNV.writeNotErase)
+            const NVStorage::NVResult rslt = NVStorage::Command(msg.commandNV, NVOpCallback);
+            if (rslt != NVStorage::NV_SCHEDULED)
             {
-              result.result = NVStorage::Write(&msg.writeNV.entry,
-                                (msg.writeNV.reportEach || msg.writeNV.reportDone) ? NVWriteDoneCallback : 0);
-            }
-            else if (msg.writeNV.rangeEnd == NVStorage::NVEntry_Invalid)
-            {
-              result.result = NVStorage::Erase(msg.writeNV.entry.tag,
-                                (msg.writeNV.reportEach || msg.writeNV.reportDone) ? NVEraseDoneCallback : 0);
-            }
-            else
-            {
-              result.result = NVStorage::EraseRange(msg.writeNV.entry.tag, msg.writeNV.rangeEnd,
-                                                    msg.writeNV.reportEach ? NVEraseDoneCallback : 0,
-                                                    msg.writeNV.reportDone ? NVMultiEraseDoneCB  : 0);
-            }
-            if (result.result >= 0) nvOpReportTo = msg.writeNV.reportTo;
-            else SendNVOpResult(&result, msg.writeNV.reportTo);
-            break;
-          }
-          case RobotInterface::EngineToRobot::Tag_readNV:
-          {
-            NVStorage::NVOpResult result;
-            result.tag    = msg.readNV.tag;
-            result.write  = false;
-            if (msg.readNV.tagRangeEnd == NVStorage::NVEntry_Invalid)
-            {
-              result.result = NVStorage::Read(msg.readNV.tag, NVReadDoneCB);
-            }
-            else
-            {
-              result.result = NVStorage::ReadRange(msg.readNV.tag, msg.readNV.tagRangeEnd,
-                                                   NVReadDoneCB, NVMultiReadDoneCB);
-            }
-            if (result.result >= 0) nvOpReportTo = msg.readNV.to;
-            else SendNVOpResult(&result, msg.readNV.to);
-            break;
-          }
-          case RobotInterface::EngineToRobot::Tag_wipeAllNV:
-          {
-            NVStorage::NVOpResult result;
-            result.tag = NVStorage::NVEntry_WipeAll;
-            result.write = true;
-            if (os_strncmp(msg.wipeAllNV.key, "Yes I really want to do this!", msg.wipeAllNV.key_length) != 0)
-            {
-              result.result = NVStorage::NV_BAD_ARGS;
-              SendNVOpResult(&result, msg.wipeAllNV.to);
-            }
-            else
-            {
-              result.result = NVStorage::WipeAll(msg.wipeAllNV.doSegments, msg.wipeAllNV.includeFactory, NVEraseDoneCallback, true, msg.wipeAllNV.reboot);
-              if (result.result >= 0) nvOpReportTo = msg.wipeAllNV.to;
-              else SendNVOpResult(&result, msg.wipeAllNV.to);
+              NVStorage::NVOpResult resp;
+              resp.address = msg.commandNV.address;
+              resp.offset  = 0;
+              resp.operation = msg.commandNV.operation;
+              resp.result = rslt;
+              resp.blob_length = 0;
+              RobotInterface::SendMessage(resp);
             }
             break;
           }

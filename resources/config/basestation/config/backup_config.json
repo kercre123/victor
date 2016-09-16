@@ -1,9 +1,9 @@
 {
   "tagsToBackup": {
-    "NVEntry_GameSkillLevels" : 2,        //"0x00000002"
-    "NVEntry_Onboarding"      : 3,        //"0x00000003"
-    "NVEntry_GameUnlocks"     : 65536,    //"0x00010000"
-    "NVEntry_FaceAlbumData"   : 16384000, //"0x00FA0000"
-    "NVEntry_FaceEnrollData"  : 16646144  //"0x00FE0000"
+    "NVEntry_GameSkillLevels" : 1572864,
+    "NVEntry_Onboarding"      : 1576960,
+    "NVEntry_GameUnlocks"     : 1581056,
+    "NVEntry_FaceEnrollData"  : 1585152,
+    "NVEntry_FaceAlbumData"   : 1589248
   }
 }

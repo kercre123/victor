@@ -197,6 +197,26 @@ class _Dispatcher(IDataReceiver):
                             'formatted': formatTrace(self.formatTable[msg.trace.stringId][0], msg.trace.value)
                     }
                     sys.stdout.write("{base} ({level:d}) {name}: {formatted}{linesep}".format(**kwds))
+            elif msg.tag == msg.Tag.firmwareVersion:
+                jsonBytes = bytes(msg.firmwareVersion.json)
+                try:
+                    jsonString = jsonBytes.decode()
+                except:
+                    sys.stderr.write("FAILED TO DECODE FIRMWARE VERSION INFO FROM ROBOT:{ls}{0}{ls}{ls}".format(jsonBytes, ls=os.linesep))
+                else:
+                    try:
+                        fwInfo = json.loads(jsonString)
+                    except:
+                        sys.stderr.write("FAILED TO PARSE FIRMWARE VERSION INFO FROM ROBOT:{ls}{0}{ls}{ls}".format(jsonString, ls=os.linesep))
+                    else:
+                        sys.stdout.write("Firmware version:")
+                        sys.stdout.write(os.linesep)
+                        for i in fwInfo.items():
+                            sys.stdout.write("{0:>25}: {1}{ls}".format(*i, ls=os.linesep))
+            elif msg.tag == msg.Tag.factoryFirmwareVersion:
+                sys.stdout.write("FACTORY Firmware version:")
+                sys.stdout.write(os.linesep)
+                sys.stdout.write("{0:>25}: {vi.wifiVersion}{ls}{1:>25}: {vi.rtipVersion}{ls}{2:>25}: {vi.bodyVersion}{ls}{3:>25}: {vi.toRobotCLADHash}{ls}{4:>25}: {vi.toEngineCLADHash}{ls}".format("WiFi Version", "RTIP Version", "Body Version", "To robot CLAD hash", "To engine CLAD hash", vi=msg.factoryFirmwareVersion, ls=os.linesep))
             elif msg.tag == msg.Tag.mainCycleTimeError:
                 sys.stdout.write(repr(msg.mainCycleTimeError))
                 sys.stdout.write(os.linesep)

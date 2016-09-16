@@ -21,7 +21,7 @@
 #include "driver/crash.h"
 #include "anki/cozmo/robot/crashLogs.h"
 
-#define I2SPI_DEBUG 1
+#define I2SPI_DEBUG 0
 #if I2SPI_DEBUG
 #define debug(...) os_printf(__VA_ARGS__)
 #define dbpc(char) os_put_char(char)
@@ -46,7 +46,7 @@
 #define I2SPI_ISR_PROFILE_TMD  7
 
 #if I2SPI_DEBUG
-#define I2SPI_ISR_PROFILING I2SPI_ISR_PROFILE_NONE
+#define I2SPI_ISR_PROFILING I2SPI_ISR_PROFILE_TMD
 #else
 #define I2SPI_ISR_PROFILING I2SPI_ISR_PROFILE_NONE
 #endif
@@ -440,11 +440,11 @@ inline void receiveCompleteHandler(void)
           {
             self.phaseErrorCount++;
             isrProfStart(I2SPI_ISR_PROFILE_TMD);
-            dbpc('!'); dbpc('T'); dbpc('M'); dbpc('D'); dbph(drift, 4); dbnl();
-            if (drift > DRIFT_MARGIN*2)
+            if (drift > DRIFT_MARGIN*4)
             {
-               i2spiSwitchMode(I2SPI_NULL);
-               foregroundTaskPost(beginResync, 0);
+              dbpc('!'); dbpc('T'); dbpc('M'); dbpc('D'); dbph(drift, 4); dbnl();
+              i2spiSwitchMode(I2SPI_NULL);
+              foregroundTaskPost(beginResync, 0);
             }
             isrProfEnd(I2SPI_ISR_PROFILE_TMD);
           }

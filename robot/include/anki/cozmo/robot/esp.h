@@ -27,6 +27,8 @@ uint16_t getModelNumber(void);
 
 #define memset os_memset
 #define memcpy os_memcpy
+#define malloc os_zalloc
+#define free   os_free
 #define vsnprintf ets_vsnprintf
 
 /** PRINT macro direction */

@@ -333,7 +333,7 @@ public interface IRobot : IDisposable {
 
   void RequestRobotRestoreData();
 
-  void NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag tag, ushort size, byte[] data, byte index = 0, byte numTotalBlobs = 1);
+  void NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag tag, byte[] data, byte index = 0, byte numTotalBlobs = 1);
 
   uint SendQueueSingleAction<T>(T action, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 

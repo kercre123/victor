@@ -193,7 +193,7 @@ HardFault_PreHandler\
                 PROC
                 IMPORT  HardFault_Handler
                 IMPORT  CRASHLOG_POINTER
-
+                B .
                 PUSH    {r4-r7}
                 MOV     r4, r8
                 MOV     r5, r9

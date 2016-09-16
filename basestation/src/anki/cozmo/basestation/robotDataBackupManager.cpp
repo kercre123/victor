@@ -94,10 +94,17 @@ void RobotDataBackupManager::WriteBackupFile()
   std::vector<uint8_t> contents;
   for(auto iter = _dataOnRobot.begin(); iter != _dataOnRobot.end(); ++iter)
   {
-    size_t size = iter->second.Size();
-    uint8_t blob[size];
-    iter->second.Pack(blob, size);
-    contents.insert(contents.end(), blob, blob + size);
+    // Insert tag as u32
+    const u8* tagPtr = reinterpret_cast<const u8*>(&iter->first);
+    contents.insert(contents.end(), tagPtr, tagPtr + sizeof(iter->first));
+    
+    // Insert size as u32
+    u32 size = static_cast<u32>(iter->second.size());
+    u8* sizePtr = reinterpret_cast<u8*>(&size);
+    contents.insert(contents.end(), sizePtr, sizePtr + sizeof(size));
+    
+    // Insert data
+    contents.insert(contents.end(), iter->second.begin(), iter->second.begin() + size);
   }
   
   if(_fileName == "")
@@ -177,11 +184,7 @@ void RobotDataBackupManager::ReadAllBackupDataFromRobot()
                                           }
                                           else
                                           {
-                                            NVStorage::NVStorageBlob blob;
-                                            blob.blob = std::vector<u8>(data, data + size);
-                                            blob.tag = tag;
-                                            
-                                            _dataOnRobot[tag] = blob;
+                                            _dataOnRobot[tag].assign(data, data + size);
                                             
                                             // If this is the onboarding tag then set _hasCompletedOnboarding
                                             // This used to determine if we should be writing backup files for this
@@ -212,10 +215,7 @@ void RobotDataBackupManager::QueueDataToWrite(const Tag tag, const std::vector<u
     return;
   }
   
-  NVStorage::NVStorageBlob blob;
-  blob.blob = data;
-  blob.tag = static_cast<u32>(tag);
-  _tagDataMap[static_cast<u32>(tag)].push_back(blob);
+  _tagDataMap[static_cast<u32>(tag)].emplace_back(data.begin(), data.end());
 }
 
 void RobotDataBackupManager::WriteDataForTag(const Tag forTag, const NVStorage::NVResult res, const bool writeNotErase)
@@ -249,10 +249,10 @@ void RobotDataBackupManager::WriteDataForTag(const Tag forTag, const NVStorage::
   // Special case for if we are writting to the onboarding tag then we need to update _hasCompletedOnboarding
   if(forTag == NVStorage::NVEntryTag::NVEntry_OnboardingData)
   {
-    if(_dataOnRobot[tag].blob.size() != 0)
+    if(_dataOnRobot[tag].size() != 0)
     {
       OnboardingData data;
-      data.Unpack(_dataOnRobot[tag].blob.data(), _dataOnRobot[tag].blob.size());
+      data.Unpack(_dataOnRobot[tag].data(), _dataOnRobot[tag].size());
       _hasCompletedOnboarding = data.hasCompletedOnboarding;
     }
   }
@@ -260,6 +260,14 @@ void RobotDataBackupManager::WriteDataForTag(const Tag forTag, const NVStorage::
   WriteBackupFile();
 }
 
+void RobotDataBackupManager::WipeAll()
+{
+  _tagDataMap.clear();
+  _dataOnRobot.clear();
+  
+  WriteBackupFile();
+}
+  
 // Restores the connected robot using the data in a backup file
 // If robotToRestoreFrom is 0 (default) then the file will be automatically selected using
 // GetFileToUseForBackup otherwise the file corresponding to the id in robotToRestoreFrom will be used
@@ -321,10 +329,10 @@ void RobotDataBackupManager::HandleMessage(const ExternalInterface::RestoreRobot
   for(auto iter : _dataOnRobot)
   {
     NVStorage::NVEntryTag tag = static_cast<NVStorage::NVEntryTag>(iter.first);
-    const u8* data = iter.second.blob.data();
+    const u8* data = iter.second.data();
     ++count;
     ++_numPendingRequests;
-    _robot.GetNVStorageComponent().Write(tag, data, iter.second.blob.size(),
+    _robot.GetNVStorageComponent().Write(tag, data, iter.second.size(),
                                          [this, tag, count, dataOnRobotSize](NVStorage::NVResult res)
                                          {
                                            --_numPendingRequests;
@@ -513,7 +521,7 @@ void RobotDataBackupManager::HandleRequestUnlockDataFromBackup(const ExternalInt
     return;
   }
 
-  std::unordered_map<u32, NVStorage::NVStorageBlob> dataInBackup;
+  TagDataMap dataInBackup;
   std::string file;
   const std::string pathToFile = context->GetDataPlatform()->pathToResource(Util::Data::Scope::Persistent, GetBackupFolder());
   if(GetFileToUseForBackup(file, pathToFile, context->GetDataPlatform()))
@@ -525,7 +533,7 @@ void RobotDataBackupManager::HandleRequestUnlockDataFromBackup(const ExternalInt
       if(unlocks != dataInBackup.end())
       {
         UnlockedIdsList unlockList;
-        unlockList.Unpack(unlocks->second.blob.data(), unlocks->second.blob.size());
+        unlockList.Unpack(unlocks->second.data(), unlocks->second.size());
         
         std::vector<UnlockId> vec;
         for(const UnlockId& unlock : unlockList.unlockedIds)
@@ -558,7 +566,7 @@ void RobotDataBackupManager::HandleRequestUnlockDataFromBackup(const ExternalInt
 
 bool RobotDataBackupManager::ParseBackupFile(const std::string& fileName,
                                              const std::string& pathToFile,
-                                             std::unordered_map<u32, NVStorage::NVStorageBlob>& dataInBackup)
+                                             TagDataMap& dataInBackup)
 {
   std::string file = Util::FileUtils::ReadFile(pathToFile + fileName);
   
@@ -591,14 +599,9 @@ bool RobotDataBackupManager::ParseBackupFile(const std::string& fileName,
     
     sectionStart += 4;
     
-    NVStorage::NVStorageBlob b;
-    b.tag = tag;
-    std::vector<u8> temp(fileContents+sectionStart, fileContents+sectionStart+blob_length);
-    b.blob.swap(temp);
+    dataInBackup[tag].assign(fileContents+sectionStart, fileContents+sectionStart+blob_length);
     
     sectionStart += blob_length;
-    
-    dataInBackup[b.tag] = b;
     
     if(sectionStart >= file.length())
     {

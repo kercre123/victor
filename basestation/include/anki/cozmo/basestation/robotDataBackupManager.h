@@ -40,6 +40,7 @@ namespace Cozmo {
   
 class Robot;
 class CozmoContext;
+  class NVStorageComponent;
   
 class RobotDataBackupManager
 {
@@ -50,12 +51,6 @@ public:
   
   // Reads all tags in backup_config.json and writes the data to file
   void ReadAllBackupDataFromRobot();
-  
-  // Queues the data for this tag to be written to backup
-  void QueueDataToWrite(const Tag tag, const std::vector<u8> data);
-  
-  // Writes the queued data for this tag to file
-  void WriteDataForTag(const Tag forTag, const NVStorage::NVResult res, const bool writeNotErase);
   
   // Template for all events we subscribe to
   template<typename T>
@@ -69,13 +64,29 @@ public:
   static inline const std::string GetBackupFolder() { return "robotBackups/"; }
   
 private:
+  
+  // ====== NVStorageComponent is a friend and should only be calling these private functions ======
+  friend NVStorageComponent;
+  
+  // Queues the data for this tag to be written to backup
+  void QueueDataToWrite(const Tag tag, const std::vector<u8> data);
+  
+  // Writes the queued data for this tag to file
+  void WriteDataForTag(const Tag forTag, const NVStorage::NVResult res, const bool writeNotErase);
+  
+  // Erases all data in backup
+  void WipeAll();
+  // ===============================================================================================
+  
+  
   // Writes the data in _dataOnRobot to file as long as the robot has completed onboarding
   void WriteBackupFile();
   
   // Reads and parses the specified backup file and puts the data in dataInBackup
+  using TagDataMap = std::unordered_map<u32, std::vector<u8> >;
   static bool ParseBackupFile(const std::string& fileName,
                               const std::string& pathToFile,
-                              std::unordered_map<u32, NVStorage::NVStorageBlob>& dataInBackup);
+                              TagDataMap& dataInBackup);
   
   // Determines which backup file to use (currently selects the backup file corresponding to the robot that
   // has been connected to the most)
@@ -96,10 +107,11 @@ private:
   std::vector<Signal::SmartHandle> _signalHandles;
   
   // Holds data that has been queued to be written to robot or data we are waiting on getting a write result for
-  std::unordered_map<u32, std::vector<NVStorage::NVStorageBlob>> _tagDataMap;
+  using PendingWriteDataMap = std::unordered_map<u32, std::vector<std::vector<u8> > >;
+  PendingWriteDataMap _tagDataMap;
   
   // Mirrors the data stored on robot and is updated as we write to the robot
-  std::unordered_map<u32, NVStorage::NVStorageBlob> _dataOnRobot;
+  TagDataMap _dataOnRobot;
   
   // Set of tags we are backing up (loaded from backup_config.json)
   std::set<u32> _tagsToBackup;

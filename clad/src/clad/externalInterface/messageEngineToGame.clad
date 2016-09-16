@@ -555,22 +555,17 @@ message BlockPoolDataMessage {
 // Robot flash (non-volatile storage)
 ///////////////////////////////////////////////////////////////////////////////
 
-// Data that is returned from robot in response to a NVStorageReadEntry request.
-// If tag corresponds to a multi-blob message (see NVEntryTag definition)
-// the index indicates the blob order. Yes, blobs can come back out of order.
-message NVStorageData {
-  NVStorage::NVEntryTag tag,
-  uint_16 data_length,
-  uint_8  data[1024],
-  uint_8  index
-}
-
 // Returned in response to NVStorageWriteEntry, NVStorageReadEntry, and NVStorageEraseEntry
 // to confirm success/failure of operation.
+// The index indicates the blob order if this is one of the messages received in response to
+// a NVStorageReadEntry and data contains data. You'll know when you get the last message of
+// a read when result != NV_MORE.
 message NVStorageOpResult {
   NVStorage::NVEntryTag  tag,
   NVStorage::NVResult    result,
-  NVStorage::NVOperation op
+  NVStorage::NVOperation op,
+  uint_8  index,
+  uint_8  data[uint_16],
 }
 
 

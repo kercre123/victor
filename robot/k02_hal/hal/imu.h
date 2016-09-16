@@ -116,6 +116,7 @@ namespace Anki
         extern u32 frameNumberStamp;
         extern u16 scanLineStamp;
         void Init(void);
+        void Setup(void);
         void Manage(void);
         uint8_t ReadID(void);
       }

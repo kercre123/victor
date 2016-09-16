@@ -55,19 +55,6 @@ message AnimationEvent
   AnimEvent event_id
 }
 
-message NVReadResultToEngine
-{
-  uint_32 robotAddress,
-  NVStorage::NVStorageBlob blob,
-}
-
-message NVOpResultToEngine
-{
-  uint_32 robotAddress,
-  NVStorage::NVOpResult report
-}
-
-
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from robot to engine.
@@ -105,8 +92,8 @@ union RobotToEngine {
   RobotAvailable             robotAvailable         = 0xC9,
   AnimationStarted           animStarted            = 0xCA,
   AnimationEnded             animEnded              = 0xCB,
-  NVReadResultToEngine       nvData                 = 0xCD,
-  NVOpResultToEngine         nvResult               = 0xCE,
+  NVStorage::NVOpResult      nvOpResult             = 0xCD,
+  // FREE SLOT                                      = 0xCE,
   CrashReport                crashReport            = 0xCF,
   ObjectConnectionState activeObjectConnectionState = 0xD0,
   MotorCalibration           motorCalibration       = 0xD1,

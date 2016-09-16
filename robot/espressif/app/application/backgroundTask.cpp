@@ -313,6 +313,11 @@ extern "C" int8_t backgroundTaskInit(void)
     os_printf("\tCouldn't initalize CrashReporter\r\n");
     return -8;
   }
+  else if (Anki::Cozmo::NVStorage::Init() == false)
+  {
+    os_printf("\tCouldn't initalize NVStorage\r\n");
+    return -9;
+  }
   // Upgrade controller should be initalized last
   else if (Anki::Cozmo::UpgradeController::Init() == false)
   {

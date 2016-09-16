@@ -184,7 +184,7 @@ void DMA2_IRQHandler(void) {
   }
 
   //DAC::Tone(1.0f);
-  UART::DebugPutc(0);
+  //UART::DebugPutc(0);
 
   // Check for silence in the 
   static const int MaximumSilence = 32;

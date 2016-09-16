@@ -119,15 +119,15 @@ static u8 getCurrentMenuItems(const FTMenuItem** items)
 }
 
 
-static void IMUCalibrationReadCallback(NVStorage::NVStorageBlob* blob, const NVStorage::NVResult result)
+static void IMUCalibrationReadCallback(NVStorage::NVOpResult& rslt)
 {
-  if (result != NVStorage::NV_OKAY)
+  if (rslt.result != NVStorage::NV_OKAY)
   {
     AnkiDebug( 200, "IMUCalibration.Read.NotFound", 501, "No IMU calibration data available", 0);
   }
   else
   {
-    RobotInterface::IMUCalibrationData* calD = reinterpret_cast<RobotInterface::IMUCalibrationData*>(blob->blob);
+    RobotInterface::IMUCalibrationData* calD = reinterpret_cast<RobotInterface::IMUCalibrationData*>(rslt.blob);
     for (int run = (1024/sizeof(RobotInterface::IMUCalibrationData)) - 1; run >= 0; --run)
     {
       uint8_t* bytes = reinterpret_cast<uint8_t*>(&calD[run]);
@@ -148,7 +148,11 @@ static void IMUCalibrationReadCallback(NVStorage::NVStorageBlob* blob, const NVS
 
 static bool requestIMUCal(uint32_t param)
 {
-  if (NVStorage::Read(NVStorage::NVEntry_IMUAverages, IMUCalibrationReadCallback) != NVStorage::NV_SCHEDULED)
+  NVStorage::NVCommand nvc;
+  nvc.address = NVStorage::NVEntry_IMUAverages;
+  nvc.length  = 1;
+  nvc.operation = NVStorage::NVOP_READ;
+  if (NVStorage::Command(nvc, IMUCalibrationReadCallback) != NVStorage::NV_SCHEDULED)
   {
     os_printf("Failed to request imu calibration data\r\n");
     return true;
@@ -156,9 +160,9 @@ static bool requestIMUCal(uint32_t param)
   return false;
 }
 
-static void BirthCertificateReadCallback(NVStorage::NVStorageBlob* entry, const NVStorage::NVResult result)
+static void BirthCertificateReadCallback(NVStorage::NVOpResult& rslt)
 {
-  if (result == NVStorage::NV_OKAY) memcpy(&birthCert, entry->blob, sizeof(BirthCertificate));
+  if (rslt.result == NVStorage::NV_OKAY) memcpy(&birthCert, rslt.blob, sizeof(BirthCertificate));
   SetMode(RobotInterface::FTM_Sleepy);
   clientAccept(true);
   foregroundTaskPost(requestIMUCal, 0);
@@ -184,9 +188,16 @@ void Update()
         {
           SetMode(RobotInterface::FTM_None);
         }
-        else if (NVStorage::Read(NVStorage::NVEntry_BirthCertificate, BirthCertificateReadCallback) == NVStorage::NV_SCHEDULED)
+        else
         {
-          SetMode(RobotInterface::FTM_WaitNV);
+          NVStorage::NVCommand nvc;
+          nvc.address = NVStorage::NVEntry_BirthCertificate;
+          nvc.length  = 1;
+          nvc.operation = NVStorage::NVOP_READ;
+          if (NVStorage::Command(nvc, BirthCertificateReadCallback) == NVStorage::NV_SCHEDULED)
+          {
+            SetMode(RobotInterface::FTM_WaitNV);
+          }
         }
         break;
       }

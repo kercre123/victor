@@ -306,10 +306,10 @@ public class ConnectionFlow : MonoBehaviour {
       // passed to the NVStorageWrite message
       Anki.Cozmo.OnboardingData data = new Anki.Cozmo.OnboardingData();
       data.hasCompletedOnboarding = true;
-      byte[] byteArr = new byte[1024];
+      byte[] byteArr = new byte[data.Size];
       System.IO.MemoryStream ms = new System.IO.MemoryStream(byteArr);
       data.Pack(ms);
-      RobotEngineManager.Instance.CurrentRobot.NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_OnboardingData, (ushort)data.Size, byteArr);
+      RobotEngineManager.Instance.CurrentRobot.NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_OnboardingData, byteArr);
 
       FinishConnectionFlow();
     }

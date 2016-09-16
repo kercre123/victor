@@ -36,6 +36,10 @@ namespace Anki {
           return clientSendMessage((u8*)buffer, size, msgID, realID < RobotInterface::TO_ENG_UNREL, false);
         }
       }
+      
+      bool RadioIsConnected() { return clientConnected(); }
+      
+      int RadioQueueAvailable() { return clientQueueAvailable(); }
     }
 
     /** Task for sending image data

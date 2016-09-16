@@ -177,10 +177,10 @@ namespace Cozmo.Settings {
           // Write the onboarding tag to this robot after erasing so robot stays in sync with app in terms of onboarding being completed
           Anki.Cozmo.OnboardingData data = new Anki.Cozmo.OnboardingData();
           data.hasCompletedOnboarding = true;
-          byte[] byteArr = new byte[1024];
+          byte[] byteArr = new byte[data.Size];
           System.IO.MemoryStream ms = new System.IO.MemoryStream(byteArr);
           data.Pack(ms);
-          RobotEngineManager.Instance.CurrentRobot.NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_OnboardingData, (ushort)data.Size, byteArr);
+          RobotEngineManager.Instance.CurrentRobot.NVStorageWrite(Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_OnboardingData, byteArr);
 
           _EraseCozmoDialogInstance.CloseView();
           PauseManager.Instance.StartPlayerInducedSleep(false);

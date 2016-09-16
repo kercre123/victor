@@ -49,6 +49,7 @@ namespace Anki
       void HALInit(void) {
         UART::Init();
         DAC::Sync();
+        IMU::Setup();
       }
       
       // This method is called at 7.5KHz (once per scan line)
@@ -59,9 +60,13 @@ namespace Anki
         I2C::Enable();
         SPI::ManageDrop();
         UART::Transmit();
-        IMU::Manage();
         Watchdog::kick(WDOG_HAL_EXEC);
         Watchdog::pet();
+      }
+      
+      void HALSafe(void)
+      {
+        IMU::Manage();
       }
     }
   }

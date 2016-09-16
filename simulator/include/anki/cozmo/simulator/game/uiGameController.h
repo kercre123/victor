@@ -110,7 +110,6 @@ protected:
   virtual void HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg){};
   virtual void HandleAnimationAborted(ExternalInterface::AnimationAborted const& msg){};
   virtual void HandleDebugString(ExternalInterface::DebugString const& msg){};
-  virtual void HandleNVStorageData(ExternalInterface::NVStorageData const& msg){};
   virtual void HandleNVStorageOpResult(ExternalInterface::NVStorageOpResult const& msg){};
   virtual void HandleFactoryTestResultEntry(FactoryTestResultEntry const& msg){};
   virtual void HandleRobotErasedAllEnrolledFaces(const ExternalInterface::RobotErasedAllEnrolledFaces& msg){};
@@ -433,7 +432,6 @@ private:
   void HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg);
   void HandleAnimationAbortedBase(ExternalInterface::AnimationAborted const& msg);
   void HandleDebugStringBase(ExternalInterface::DebugString const& msg);
-  void HandleNVStorageDataBase(ExternalInterface::NVStorageData const& msg);
   void HandleNVStorageOpResultBase(ExternalInterface::NVStorageOpResult const& msg);
   void HandleBehaviorTransitionBase(ExternalInterface::BehaviorTransition const& msg);
   void HandleEnabledBehaviorListBase(ExternalInterface::RespondEnabledBehaviorList const& msg);

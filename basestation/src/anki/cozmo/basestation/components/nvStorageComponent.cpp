@@ -5,6 +5,36 @@
  * Date:   3/28/2016
  *
  * Description: Interface for storing and retrieving data from robot's non-volatile storage
+ *         
+ *              Writes
+ *              =========
+ *              - Prepends an Erase command (See 'Erases' below). Flash blocks must be erased before they can be written.
+ *              - When erase completes, sends NVCommand for each 1K blob of data to send, prepending a NVStorageHeader to the first blob.
+ *              - ACKs each blob before sending the next. Retries sending individual blobs as necessary.
+ *              - Complete when all blobs have been sent and ACK'd.
+ *
+ *              Erases
+ *              ==========
+ *              - Sends a NVCommand to erase the maximum possible size allocated for the given tag.
+ *                (For tags with large allocation, like NVEntry_FaceAlbumData, this is not that efficient.
+ *                We may consider first reading the amount of data in the tag and then erasing only that amount,
+ *                but that makes things a little more complicated.
+ *              - Completed when ACK'd
+ *
+ *              Reads
+ *              ==========
+ *              - Sends a NVCommand to read 1K for the given tag.
+ *              - When the 1K is received, it parses the NVStorageHeader to see how much data there is in total.
+ *                If the amount of data is already contained in the 1K that was retrieved, the request is complete.
+ *              - If it is not, re-requests data for this tag for the proper amount.
+ *              - NVOpResult messages containing data will continue arriving with result NV_MORE until the last one
+ *                which should have NV_OKAY.
+ *
+ *
+ *              Factory Entry tags
+ *              ==================
+ *              - These tags are read-only
+ *              - When reading, the NVCommand.length param is the total number of tags to read instead of the number of bytes.
  *
  * Copyright: Anki, Inc. 2016
  **/
@@ -23,16 +53,60 @@
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
 
-#define DEBUG_NVSTORAGE_COMPONENT 0
-
 namespace Anki {
 namespace Cozmo {
+
+using namespace NVStorage;
+
+// This map must be poulated with all the non-factory tags that you want to be able to access.
+// See nvStorageTypes.clad
+std::map<NVEntryTag, u32> NVStorageComponent::_maxSizeTable = {
+                                                          {NVEntryTag::NVEntry_GameSkillLevels, 0},
+                                                          {NVEntryTag::NVEntry_OnboardingData,  0},
+                                                          {NVEntryTag::NVEntry_GameUnlocks,     0},
+                                                          {NVEntryTag::NVEntry_FaceEnrollData,  0},
+                                                          {NVEntryTag::NVEntry_FaceAlbumData,   0},
+                                                          {NVEntryTag::NVEntry_NEXT_SLOT,       0} };
+
+// This map must be poulated with all the factory tags that you want to be able to read from.
+// See nvStorageTypes.clad
+std::map<NVEntryTag, u32> NVStorageComponent::_maxFactoryEntrySizeTable = {
+                                                          // Single blob manufacturing entries start here
+                                                          {NVEntryTag::NVEntry_BirthCertificate,   0},
+                                                          {NVEntryTag::NVEntry_CameraCalib,        0},
+                                                          {NVEntryTag::NVEntry_ToolCodeInfo,       0},
+                                                          {NVEntryTag::NVEntry_CalibPose,          0},
+                                                          {NVEntryTag::NVEntry_CalibMetaInfo,      0},
+                                                          {NVEntryTag::NVEntry_ObservedCubePose,   0},
+                                                          {NVEntryTag::NVEntry_IMUInfo,            0},
+                                                          {NVEntryTag::NVEntry_CliffValOnDrop,     0},
+                                                          {NVEntryTag::NVEntry_CliffValOnGround,   0},
+                                                          {NVEntryTag::NVEntry_PlaypenTestResults, 0},
+                                                          {NVEntryTag::NVEntry_FactoryLock,        0},
+                                                          
+                                                          // Multi-blob manufacturing entires start here
+                                                          {NVEntryTag::NVEntry_CalibImage1,        0},
+                                                          {NVEntryTag::NVEntry_CalibImage2,        0},
+                                                          {NVEntryTag::NVEntry_CalibImage3,        0},
+                                                          {NVEntryTag::NVEntry_CalibImage4,        0},
+                                                          {NVEntryTag::NVEntry_CalibImage5,        0},
+                                                          {NVEntryTag::NVEntry_CalibImage6,        0},
+                                                          
+                                                          {NVEntryTag::NVEntry_ToolCodeImageLeft,  0},
+                                                          {NVEntryTag::NVEntry_ToolCodeImageRight, 0},
+                                                          
+                                                          // Pre-playpen tags
+                                                          {NVEntryTag::NVEntry_PrePlaypenResults,   0},
+                                                          {NVEntryTag::NVEntry_PrePlaypenCentroids, 0},
+                                                          {NVEntryTag::NVEntry_IMUAverages,         0} };
+
   
 NVStorageComponent::NVStorageComponent(Robot& inRobot, const CozmoContext* context)
   : _robot(inRobot)
   , _backupManager(inRobot)
 {
-
+  SetState(NVSCState::IDLE);
+  
   if (context) {
     // Setup game message handlers
     IExternalInterface *extInterface = context->GetExternalInterface();
@@ -60,8 +134,9 @@ NVStorageComponent::NVStorageComponent(Robot& inRobot, const CozmoContext* conte
     };
     
     // bind to specific handlers in the NVStorage class
-    doRobotSubscribe(RobotInterface::RobotToEngineTag::nvData,          &NVStorageComponent::HandleNVData);
-    doRobotSubscribe(RobotInterface::RobotToEngineTag::nvResult,        &NVStorageComponent::HandleNVOpResult);
+    doRobotSubscribe(RobotInterface::RobotToEngineTag::nvOpResult,        &NVStorageComponent::HandleNVOpResult);
+    
+    InitSizeTable();
     
   } else {
     PRINT_NAMED_WARNING("NVStorageComponent.nullContext", "");
@@ -69,306 +144,431 @@ NVStorageComponent::NVStorageComponent(Robot& inRobot, const CozmoContext* conte
 
 }
 
-bool NVStorageComponent::IsMultiBlobEntryTag(u32 tag) const {
-  return (tag & 0x7fff0000) > 0 && !IsSpecialEntryTag(tag);
-}
-
-bool NVStorageComponent::IsValidEntryTag(u32 tag) const {
-  // If multi-blob tag, lower 16-bits must be zero.
-  // If single-blob tag, it can't be NVEntry_Invalid.
-  if (IsMultiBlobEntryTag(tag)) {
-    return (tag & 0xffff) == 0;
-  } else {
-    return tag != static_cast<u32>(NVStorage::NVEntryTag::NVEntry_Invalid);
+void NVStorageComponent::InitSizeTable() {
+  
+  // Compute sizes for non-factory entries
+  for (auto currIt = _maxSizeTable.begin(); currIt != _maxSizeTable.end(); ++currIt) {
+    auto nextIt = currIt;
+    nextIt++;
+    if (nextIt != _maxSizeTable.end()) {
+      ASSERT_NAMED_EVENT(IsValidEntryTag(currIt->first),
+                         "NVStorageComponent.InitSizeTable.InvalidTag", "0x%x",
+                         currIt->first);
+      
+      currIt->second = static_cast<u32>(nextIt->first) - static_cast<u32>(currIt->first);
+      PRINT_CH_INFO("NVStorage", "NVStorageComponent.InitSizeTable",
+                    "Max size of 0x%x: %u",
+                    currIt->first, currIt->second);
+    } else if (currIt->first == NVEntryTag::NVEntry_NEXT_SLOT) {
+      currIt->second = static_cast<u32>(NVConst::NVConst_MAX_ADDRESS) - static_cast<u32>(currIt->first);
+    } else {
+      PRINT_NAMED_ERROR("NVStorageComponent.InitSizeTable.TooLargeTagFound", "0x%x", currIt->first);
+    }
   }
+  
+  // Compute lengths for factory entries
+  for (auto it = _maxFactoryEntrySizeTable.begin(); it != _maxFactoryEntrySizeTable.end(); ) {
+    u32 tag = static_cast<u32>(it->first);
+    if (IsPotentialFactoryEntryTag(tag)) {
+      if (IsMultiBlobEntryTag(it->first)) {
+        it->second = 0xffff;
+      } else {
+        it->second = 1;
+      }
+      it++;
+    } else {
+      PRINT_NAMED_WARNING("NVStorageComponent.InitSizeTable.FactoryTagExpected", "0x%x", tag);
+      it = _maxFactoryEntrySizeTable.erase(it);
+    }
+  }
+  
 }
  
-bool NVStorageComponent::IsFactoryEntryTag(u32 tag) const
+u32 NVStorageComponent::GetMaxSizeForEntryTag(NVEntryTag tag)
 {
-  return (tag & 0x80000000) > 0;
+  auto it = _maxSizeTable.find(tag);
+  if (it == _maxSizeTable.end() || it->first == NVEntryTag::NVEntry_NEXT_SLOT) {
+    PRINT_NAMED_ERROR("NVStorageComponent.GetMaxSizeForEntryTag.InvalidTag", "0x%x", tag);
+    return 0;
+  }
+  
+  return it->second;
+}
+  
+bool NVStorageComponent::IsMultiBlobEntryTag(NVEntryTag tag) const {
+  u32 t = static_cast<u32>(tag);
+  return (t & 0x7fff0000) > 0 && !IsSpecialEntryTag(t) && IsFactoryEntryTag(tag);
+}
+  
+bool NVStorageComponent::IsValidEntryTag(NVEntryTag tag) const {
+  u32 t = static_cast<u32>(tag);
+  bool isValidNonFactoryTag = (t >= static_cast<u32>(NVConst::NVConst_MIN_ADDRESS)) &&
+                              (t <  static_cast<u32>(NVConst::NVConst_MAX_ADDRESS)) &&
+                              ((t & 0x0fff) == 0) &&    // Address must be 4K multiple
+                              (tag != NVEntryTag::NVEntry_NEXT_SLOT) &&
+                              (_maxSizeTable.find(tag) != _maxSizeTable.end());
+  
+  return isValidNonFactoryTag || IsFactoryEntryTag(tag);
+}
+ 
+bool NVStorageComponent::IsFactoryEntryTag(NVEntryTag tag) const
+{
+  return _maxFactoryEntrySizeTable.find(tag) != _maxFactoryEntrySizeTable.end();
+}
+  
+bool NVStorageComponent::IsPotentialFactoryEntryTag(u32 tag) const
+{
+  return (tag & static_cast<u32>(NVConst::NVConst_FACTORY_DATA_BIT)) > 0;
 }
   
   
 bool NVStorageComponent::IsSpecialEntryTag(u32 tag) const
 {
-  return (tag & 0xffff0000) == 0xc0000000;
+  return (tag & 0xffff0000) == static_cast<u32>(NVConst::NVConst_FIXTURE_DATA_BIT);
 }
   
 // Returns the base (i.e. lowest) tag of the multi-blob entry range
 // in which the given tag falls.
 // See NVEntryTag definition for more details.
-u32 NVStorageComponent::GetBaseEntryTag(u32 tag) const {
-  u32 baseTag = tag & 0x7fff0000;
-  if (baseTag == 0 || IsSpecialEntryTag(tag)) {
-    // For single blob message, the base tag is the same as tag
-    return tag;
-  }
-  return tag & 0xffff0000;
-}
+NVEntryTag NVStorageComponent::GetBaseEntryTag(u32 tag) const {
   
-// Returns the end (i.e. highest) tag of the multi-blob entry range
-// in which the given tag falls.
-// See NVEntryTag definition for more details.
-u32 NVStorageComponent::GetTagRangeEnd(u32 startTag) const {
-  if (IsMultiBlobEntryTag(startTag)) {
-    return startTag | 0xffff;
-  } else {
-    return startTag;
+  // Possible factory tag?
+  if (IsPotentialFactoryEntryTag(tag)) {
+
+    for(auto it : _maxFactoryEntrySizeTable) {
+      u32 potentialBaseTag = static_cast<u32>(it.first);
+      if ((tag == potentialBaseTag) ||
+          (((tag & 0x7fff0000) > 0) && ((tag & 0xffff0000) == potentialBaseTag) && !IsSpecialEntryTag(tag)))
+      {
+        return it.first;
+      }
+    }
+    
+    PRINT_NAMED_WARNING("NVStorageComponent.GetBaseEntryTag.FactoryTagNotFound", "0x%x", tag);
+    return NVEntryTag::NVEntry_NEXT_SLOT;
   }
+  
+  
+  // If this is a non-factory address, query the maxSizeTable to figure out what the baseTag is
+  NVEntryTag baseTag = NVEntryTag::NVEntry_NEXT_SLOT;
+  if (tag < static_cast<u32>(baseTag)) {
+    for (auto it = _maxSizeTable.rbegin(); it != _maxSizeTable.rend(); ++it) {
+      if (tag >= static_cast<u32>(it->first)) {
+        return it->first;
+      }
+    }
+  }
+  
+  if (baseTag == NVEntryTag::NVEntry_NEXT_SLOT) {
+    PRINT_NAMED_WARNING("NVStorageComponent.GetBaseEntryTag.TagIsTooSmall", "0x%x", tag);
+  }
+  
+  return baseTag;
 }
 
-bool NVStorageComponent::Write(NVStorage::NVEntryTag tag,
+
+bool NVStorageComponent::Write(NVEntryTag tag,
                                const std::vector<u8>* data,
                                NVStorageWriteEraseCallback callback,
                                bool broadcastResultToGame)
 {
   // Check for null data
   if (data == nullptr) {
-    PRINT_NAMED_INFO("NVStorageComponent.Write.NullData", "%s", EnumToString(tag));
+    PRINT_CH_INFO("NVStorage", "NVStorageComponent.Write.NullData", "%s", EnumToString(tag));
     return false;
   }
   
   return Write(tag, data->data(), data->size(), callback, broadcastResultToGame);
 }
   
-bool NVStorageComponent::Write(NVStorage::NVEntryTag tag,
+bool NVStorageComponent::Write(NVEntryTag tag,
                                const u8* data, size_t size,
                                NVStorageWriteEraseCallback callback,
                                bool broadcastResultToGame)
 {
+  bool validArgs = true;
+  
   // Check for invalid tags
-  if (!IsValidEntryTag(static_cast<u32>(tag)) ||
-      tag == NVStorage::NVEntryTag::NVEntry_WipeAll) {
+  if (!IsValidEntryTag(tag)) {
     PRINT_NAMED_WARNING("NVStorageComponent.Write.InvalidTag",
-                        "Tag: 0x%x", static_cast<u32>(tag));
-    return false;
+                        "Tag: %s (0x%x)", EnumToString(tag), tag);
+    validArgs = false;
+  }
+  
+  if (IsFactoryEntryTag(tag)) {
+    PRINT_NAMED_WARNING("NVStorageComponent.Write.FactoryTagNotAllowed",
+                        "Tag: %s (0x%x)", EnumToString(tag), tag);
+    validArgs = false;
   }
   
   // Check for null data
   if (data == nullptr) {
     PRINT_NAMED_WARNING("NVStorageComponent.Write.NullData", "%s", EnumToString(tag));
-    return false;
+    validArgs = false;
   }
   
+  // All data writes must be word-aligned
+  size = MakeWordAligned(size);
+  
   // Sanity check on size
-  if (size > _kMaxNvStorageEntrySize || size <= 0) {
+  u32 allowedSize = GetMaxSizeForEntryTag(tag);
+  if ((size > (allowedSize - _kEntryHeaderSize)) || size <= 0) {
     PRINT_NAMED_WARNING("NVStorageComponent.Write.InvalidSize",
                         "Tag: %s, %zu bytes (limit %d bytes)",
-                        EnumToString(tag), size, _kMaxNvStorageEntrySize);
+                        EnumToString(tag), size, allowedSize - _kEntryHeaderSize);
+    validArgs = false;
+  }
+
+  // Fail immediately if invalid args found
+  if (!validArgs) {
+    if (broadcastResultToGame) {
+      BroadcastNVStorageOpResult(tag, NVResult::NV_BAD_ARGS, NVOperation::NVOP_WRITE);
+    }
+    if (callback) {
+      callback(NVResult::NV_BAD_ARGS);
+    }
     return false;
   }
 
+  PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.Write.PreceedingWriteWithErase",
+                 "Tag: %s", EnumToString(tag));
   
-  // If this is a multi-blob write...
-  if (IsMultiBlobEntryTag(static_cast<u32>(tag))) {
-    
-    if (!IsFactoryEntryTag(static_cast<u32>(tag))) {
-      // Queue an erase first in case this write has fewer blobs
-      // than what is already stored in the robot.
-      PRINT_NAMED_DEBUG("NVStorageComponent.Write.PreceedingMultiBlobWriteWithErase",
-                        "Tag: %s", EnumToString(tag));
-      
-      _requestQueue.emplace(tag, NVStorageWriteEraseCallback(), false);
-      
-      _backupManager.QueueDataToWrite(tag, std::vector<u8>());
-    }
-  }
-  
-  // If this is a single blob write
-  // check that is has no more than one blob's worth of data
-  else if (size > _kMaxNvStorageBlobSize) {
-    PRINT_NAMED_WARNING("NVStorageComponent.Write.SingleBlobEntryHasTooMuchData",
-                        "Tag: %s, size: %zu",
-                        EnumToString(tag), size);
-    return false;
-  }
+  _requestQueue.emplace(tag, NVStorageWriteEraseCallback(), false);
+
   
   // Queue write request
   _requestQueue.emplace(tag, callback, new std::vector<u8>(data,data+size), broadcastResultToGame);
-  
-  // Let the backup manager know this tag and data have been queued to be written
-  _backupManager.QueueDataToWrite(tag, std::vector<u8>(data, data+size));
-  
-  if (DEBUG_NVSTORAGE_COMPONENT) {
-    PRINT_NAMED_DEBUG("NVStorageComponent.Write.DataQueued",
-                      "%s - numBytes: %zu",
-                      EnumToString(tag),
-                      size);
-  }
+
+  PRINT_CH_DEBUG("NVStorageComponent.Write.DataQueued",
+                 "%s - numBytes: %zu",
+                 EnumToString(tag),
+                 size);
   
   return true;
 }
   
-bool NVStorageComponent::Erase(NVStorage::NVEntryTag tag,
+bool NVStorageComponent::Erase(NVEntryTag tag,
                                NVStorageWriteEraseCallback callback,
                                bool broadcastResultToGame)
 {
+  bool validArgs = true;
+  
   // Check if it's a legal tag (in case someone did some casting craziness)
-  if (!IsValidEntryTag(static_cast<u32>(tag))) {
+  if (!IsValidEntryTag(tag)) {
     PRINT_NAMED_WARNING("NVStorageComponent.Erase.InvalidEntryTag",
-                        "Tag: 0x%x", static_cast<u32>(tag));
-    return false;
+                        "Tag: %s (0x%x)", EnumToString(tag), tag);
+    validArgs = false;
   }
   
-  // Converting to WipeAll command for convenience
-  if (tag == NVStorage::NVEntryTag::NVEntry_WipeAll) {
-    return WipeAll(false, callback, broadcastResultToGame);
+  if (IsFactoryEntryTag(tag)) {
+    PRINT_NAMED_WARNING("NVStorageComponent.Write.FactoryTagNotAllowed",
+                        "Tag: %s (0x%x)", EnumToString(tag), tag);
+    validArgs = false;
+  }
+  
+  // Fail immediately if invalid args found
+  if (!validArgs) {
+    if (broadcastResultToGame) {
+      BroadcastNVStorageOpResult(tag, NVResult::NV_BAD_ARGS, NVOperation::NVOP_ERASE);
+    }
+    if (callback) {
+      callback(NVResult::NV_BAD_ARGS);
+    }
+    return false;
   }
   
   _requestQueue.emplace(tag, callback, broadcastResultToGame);
   
-  _backupManager.QueueDataToWrite(tag, std::vector<u8>());
-  
-  if (DEBUG_NVSTORAGE_COMPONENT) {
-    PRINT_NAMED_DEBUG("NVStorageComponent.Erase.Queued",
-                      "%s", EnumToString(tag));
-  }
+  PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.Erase.Queued",
+                 "%s", EnumToString(tag));
 
   return true;
 }
   
   
-bool NVStorageComponent::WipeAll(bool includeFactory,
-                                 NVStorageWriteEraseCallback callback,
+bool NVStorageComponent::WipeAll(NVStorageWriteEraseCallback callback,
                                  bool broadcastResultToGame)
 {
-  _requestQueue.emplace(includeFactory, callback, broadcastResultToGame);
+  _requestQueue.emplace(callback, broadcastResultToGame);
   
-  if (DEBUG_NVSTORAGE_COMPONENT) {
-    PRINT_NAMED_DEBUG("NVStorageComponent.WipeAll.Queued", "includeFactory: %d", includeFactory);
-  }
+  PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.WipeAll.Queued", "");
   
   return true;
 }
   
-bool NVStorageComponent::Read(NVStorage::NVEntryTag tag,
+bool NVStorageComponent::Read(NVEntryTag tag,
                               NVStorageReadCallback callback,
                               std::vector<u8>* data,
                               bool broadcastResultToGame)
 {
+  bool validArgs = true;
+  
   // Check for invalid tags
-  if (!IsValidEntryTag(static_cast<u32>(tag)) ||
-      tag == NVStorage::NVEntryTag::NVEntry_WipeAll) {
+  if (!IsValidEntryTag(tag)) {
     PRINT_NAMED_WARNING("NVStorageComponent.Read.InvalidTag",
-                        "Tag: 0x%x", static_cast<u32>(tag));
+                        "Tag: 0x%x", tag);
+    validArgs = false;
+  }
+  
+  // Fail immediately if invalid args found
+  if (!validArgs) {
+    if (broadcastResultToGame) {
+      BroadcastNVStorageOpResult(tag, NVResult::NV_BAD_ARGS, NVOperation::NVOP_READ);
+    }
+    if (callback) {
+      callback(nullptr, 0, NVResult::NV_BAD_ARGS);
+    }
     return false;
   }
   
-  PRINT_NAMED_INFO("NVStorageComponent.Read.QueueingReadRequest", "%s", EnumToString(tag));
+  PRINT_CH_INFO("NVStorage", "NVStorageComponent.Read.QueueingReadRequest", "%s", EnumToString(tag));
   _requestQueue.emplace(tag, callback, data, broadcastResultToGame);
   
   return true;
 }
 
-  
-void NVStorageComponent::SendRequest(NVStorageRequest req)
+void NVStorageComponent::SetState(NVSCState s)
 {
+  PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.SetState", "PrevState: %d, NewState: %d", _state, s);
+  if (s == NVSCState::IDLE) {
+    _writeDataObject.sending  = false;
+    _writeDataAckInfo.pending = false;
+    _recvDataInfo.pending     = false;
+  }
+  _state = s;
+}
+  
+void NVStorageComponent::ProcessRequest()
+{
+  if (_requestQueue.empty()) {
+    return;
+  }
+  NVStorageRequest& req = _requestQueue.front();
+  
   u32 entryTag = static_cast<u32>(req.tag);
   
   switch(req.op) {
-    case NVStorage::NVOperation::NVOP_WRITE:
+    case NVOperation::NVOP_WRITE:
     {
       // Copy data locally and break up into as many messages as needed
-      _writeDataQueue.emplace(req.tag, req.data);
+      _writeDataObject.baseTag   = req.tag;
+      _writeDataObject.nextTag   = entryTag;
+      _writeDataObject.data      = req.data;
+      _writeDataObject.sendIndex = 0;      
+      _writeDataObject.sending   = true;
+      
+      ASSERT_NAMED_EVENT(!_writeDataAckInfo.pending, "NVStorageComponent.ProcessRequest.UnexpectedWritePending1", "0x%x", _writeDataAckInfo.tag);
       
       // Set associated ack info
-      u32 t = static_cast<u32>(req.tag);
-      _writeDataAckMap[t].timeoutTimeStamp = _robot.GetLastMsgTimestamp() + _kAckTimeout_ms;
-      _writeDataAckMap[t].broadcastResultToGame = req.broadcastResultToGame;
-      _writeDataAckMap[t].writeNotErase = true;
-      _writeDataAckMap[t].numTagsLeftToAck = static_cast<u32>(ceilf(static_cast<f32>(req.data->size()) / _kMaxNvStorageBlobSize));
-      _writeDataAckMap[t].numFailedWrites = 0;
-      _writeDataAckMap[t].callback = req.writeCallback;
-      
-      _wasLastWriteAcked = true;
+      _writeDataAckInfo.tag                   = req.tag;
+      _writeDataAckInfo.timeoutTimeStamp      = _robot.GetLastMsgTimestamp() + _kAckTimeout_ms;
+      _writeDataAckInfo.broadcastResultToGame = req.broadcastResultToGame;
+      _writeDataAckInfo.callback              = req.writeCallback;
+      _writeDataAckInfo.pending               = false;
 
-      if (DEBUG_NVSTORAGE_COMPONENT) {
-        PRINT_NAMED_DEBUG("NVStorageComponent.SendRequest.SendingWrite",
-                          "StartTag: 0x%x, timeoutTime: %d, currTime: %d",
-                          req.tag, _writeDataAckMap[t].timeoutTimeStamp, _robot.GetLastMsgTimestamp() );
-      }
+      
+      // Let the backup manager know this tag and data have been queued to be written
+      _backupManager.QueueDataToWrite(req.tag, *req.data);
+
+      PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.ProcessRequest.SendingWrite",
+                     "StartTag: 0x%x (%s), timeoutTime: %d, currTime: %d",
+                     entryTag, EnumToString(req.tag), _writeDataAckInfo.timeoutTimeStamp, _robot.GetLastMsgTimestamp() );
+      
+      SetState(NVSCState::SENDING_WRITE_DATA);
       
       break;
     }
-    case NVStorage::NVOperation::NVOP_ERASE:
+    case NVOperation::NVOP_ERASE:
     {
+      ASSERT_NAMED_EVENT(!_writeDataAckInfo.pending, "NVStorageComponent.ProcessRequest.UnexpectedWritePending2", "0x%x", _writeDataAckInfo.tag);
+
+      _writeDataObject.sending = false;
+      
       // Set associated ack info
-      u32 t = static_cast<u32>(req.tag);
-      _writeDataAckMap[t].timeoutTimeStamp = _robot.GetLastMsgTimestamp() + _kAckTimeout_ms;
-      _writeDataAckMap[t].broadcastResultToGame = req.broadcastResultToGame;
-      _writeDataAckMap[t].writeNotErase = false;
-      _writeDataAckMap[t].callback = req.writeCallback;
-      _writeDataAckMap[t].numTagsLeftToAck = 1;
-      _writeDataAckMap[t].numFailedWrites = 0;
+      _writeDataAckInfo.tag                   = req.tag;
+      _writeDataAckInfo.timeoutTimeStamp      = _robot.GetLastMsgTimestamp() + _kAckTimeout_ms;
+      _writeDataAckInfo.broadcastResultToGame = req.broadcastResultToGame;
+      _writeDataAckInfo.callback              = req.writeCallback;
+      _writeDataAckInfo.pending               = true;
       
       // Start constructing erase message
-      _writeMsg.reportTo = NVStorage::NVReportDest::ENGINE;
-      _writeMsg.writeNotErase = false;
-      _writeMsg.reportEach = !IsMultiBlobEntryTag(t);
-      _writeMsg.reportDone = true;
-      _writeMsg.entry.tag = static_cast<u32>(req.tag);
+      PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.ProcessRequest.SendingErase", "%s (Tag: 0x%x)", EnumToString(req.tag), entryTag );
+      _lastCommandSent.operation = NVOperation::NVOP_ERASE;
+      _lastCommandSent.address = entryTag;
+      _lastCommandSent.length = GetMaxSizeForEntryTag(req.tag);
+      _robot.SendMessage(RobotInterface::EngineToRobot(NVCommand(_lastCommandSent)));
       
-      // Set tag range
-      PRINT_NAMED_DEBUG("NVStorageComponent.SendRequest.SendingErase", "%s (Tag: 0x%x)", EnumToString(req.tag), t );
-      _writeMsg.rangeEnd = GetTagRangeEnd(static_cast<u32>(req.tag));
+      // Let the backup manager know this tag and data have been queued to be written
+      _backupManager.QueueDataToWrite(req.tag, std::vector<u8>());
       
-      _robot.SendMessage(RobotInterface::EngineToRobot(NVStorage::NVStorageWrite(_writeMsg)));
-      
-      break;
-    }
-    case NVStorage::NVOperation::NVOP_WIPEALL:
-    {
-      PRINT_NAMED_DEBUG("NVStoageComponent.SendRequest.SendingWipeAll", "");
-      
-      u32 t = static_cast<u32>(NVStorage::NVEntryTag::NVEntry_WipeAll);
-      _writeDataAckMap[t].timeoutTimeStamp = _robot.GetLastMsgTimestamp() + _kAckTimeout_ms;
-      _writeDataAckMap[t].broadcastResultToGame = req.broadcastResultToGame;
-      _writeDataAckMap[t].writeNotErase = false;
-      _writeDataAckMap[t].callback = req.writeCallback;
-      _writeDataAckMap[t].numTagsLeftToAck = 1;
-      _writeDataAckMap[t].numFailedWrites = 0;
-      
-      NVStorage::NVWipeAll wipeMsg;
-      wipeMsg.key = "Yes I really want to do this!";
-      wipeMsg.includeFactory = req.wipeFactory;
-      _robot.SendMessage(RobotInterface::EngineToRobot(std::move(wipeMsg)));
+      SetState(NVSCState::SENDING_WRITE_DATA);
       
       break;
     }
-    case NVStorage::NVOperation::NVOP_READ:
+    case NVOperation::NVOP_WIPEALL:
     {
-      // Request message from tag to to endTag
-      _readMsg.tag = entryTag;
-      _readMsg.tagRangeEnd = GetTagRangeEnd(entryTag);
-      _readMsg.to = NVStorage::NVReportDest::ENGINE;
-      _robot.SendMessage(RobotInterface::EngineToRobot(NVStorage::NVStorageRead(_readMsg)));
+      PRINT_CH_DEBUG("NVStorage", "NVStoageComponent.ProcessRequest.SendingWipeAll", "");
       
+      _writeDataObject.sending = false;
       
-      if (DEBUG_NVSTORAGE_COMPONENT) {
-        PRINT_NAMED_DEBUG("NVStorageComponent.SendRequest.SendingRead",
-                          "StartTag: 0x%x, EndTag: 0x%x",
-                          _readMsg.tag,
-                          _readMsg.tagRangeEnd);
-      }
+      _writeDataAckInfo.tag                   = NVEntryTag::NVEntry_NEXT_SLOT;
+      _writeDataAckInfo.timeoutTimeStamp      = _robot.GetLastMsgTimestamp() + _kAckTimeout_ms;
+      _writeDataAckInfo.broadcastResultToGame = req.broadcastResultToGame;
+      _writeDataAckInfo.callback              = req.writeCallback;
+      _writeDataAckInfo.pending               = true;
+      
+      _lastCommandSent.address                = 0;
+      _lastCommandSent.operation              = NVOperation::NVOP_WIPEALL;
+      
+      _robot.SendMessage(RobotInterface::EngineToRobot(NVCommand(_lastCommandSent)));
+      
+      SetState(NVSCState::SENDING_WRITE_DATA);
+      
+      break;
+    }
+    case NVOperation::NVOP_READ:
+    {
+      
+      ASSERT_NAMED_EVENT(!_recvDataInfo.pending, "NVStorageComponent.ProcessRequest.UnexpectedReadPending", "0x%x", _recvDataInfo.tag);
+      
+      // If factory tag, request entire range
+      _lastCommandSent.address   = entryTag;
+      _lastCommandSent.operation = NVOperation::NVOP_READ;
+      _lastCommandSent.length    = IsFactoryEntryTag(req.tag) ? _maxFactoryEntrySizeTable[req.tag] : _kMaxNvStorageBlobSize;
+      _robot.SendMessage(RobotInterface::EngineToRobot(NVCommand(_lastCommandSent)));
+
+      PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.ProcessRequest.SendingRead",
+                    "StartTag: 0x%x, Length: %u",
+                    _lastCommandSent.address,
+                    _lastCommandSent.length);
+
       
       // Create RecvDataObject
+      _recvDataInfo.tag                   = req.tag;
+      _recvDataInfo.pending               = true;
+      _recvDataInfo.dataSizeKnown         = false;
+      _recvDataInfo.callback              = req.readCallback;
+      _recvDataInfo.broadcastResultToGame = req.broadcastResultToGame;
+      _recvDataInfo.timeoutTimeStamp      = _robot.GetLastMsgTimestamp() + _kAckTimeout_ms;
       if (nullptr == req.data) {
-        _recvDataMap[entryTag].data = new std::vector<u8>();
-        _recvDataMap[entryTag].deleteVectorWhenDone = true;
+        _recvDataInfo.data                 = new std::vector<u8>();
+        _recvDataInfo.deleteVectorWhenDone = true;
       } else {
-        _recvDataMap[entryTag].data = req.data;
-        _recvDataMap[entryTag].deleteVectorWhenDone = false;
+        _recvDataInfo.data                 = req.data;
+        _recvDataInfo.data->clear();
+        _recvDataInfo.deleteVectorWhenDone = false;
       }
-      _recvDataMap[entryTag].callback = req.readCallback;
-      _recvDataMap[entryTag].broadcastResultToGame = req.broadcastResultToGame;
-      _recvDataMap[entryTag].timeoutTimeStamp = _robot.GetLastMsgTimestamp() + _kAckTimeout_ms;
 
+      SetState(NVSCState::RECEIVING_DATA);
+      
       break;
     }
     default:
-      PRINT_NAMED_WARNING("NVStorageComponent.SendRequest.UnsupportOperation", "%s", EnumToString(req.op));
+      PRINT_NAMED_WARNING("NVStorageComponent.ProcessRequest.UnsupportOperation", "%s", EnumToString(req.op));
       break;
   }
+  
+  _requestQueue.pop();
   
   // Retry send attempt counter
   _numSendAttempts = 0;
@@ -377,405 +577,486 @@ void NVStorageComponent::SendRequest(NVStorageRequest req)
   
 bool NVStorageComponent::HasPendingRequests()
 {
-  return !_requestQueue.empty() || !_recvDataMap.empty() || !_writeDataAckMap.empty();
+  return !_requestQueue.empty() || _recvDataInfo.pending || _writeDataAckInfo.pending;
 }
   
 void NVStorageComponent::Update()
 {
   ANKI_CPU_PROFILE("NVStorageComponent::Update");
   
-  // If expecting read data to arrive, check timeout.
-  if (!_recvDataMap.empty()) {
-    if (_recvDataMap.size() > 1) {
-      PRINT_NAMED_WARNING("NVStorageComponent.Update.ExpectingMoreThanOneRead",
-                          "Num reads waiting to be ackd: %zu", _recvDataMap.size());
+  switch(_state) {
+    case NVSCState::IDLE:
+    {
+      // Send requests if there are any in the queue
+      ProcessRequest();
+      break;
     }
-    
-    if (_robot.GetLastMsgTimestamp() > _recvDataMap.begin()->second.timeoutTimeStamp) {
-      PRINT_NAMED_WARNING("NVStorageComponent.Update.ReadTimeout",
-                          "Tag: 0x%x", _recvDataMap.begin()->first);
-      
-      if(_recvDataMap.begin()->second.callback) {
-        _recvDataMap.begin()->second.callback(nullptr, 0, NVStorage::NVResult::NV_TIMEOUT);
+    case NVSCState::SENDING_WRITE_DATA:
+    {
+      // If expecting write/erase ack, check timeout.
+      if (_writeDataAckInfo.pending) {
+        if (_robot.GetLastMsgTimestamp() > _writeDataAckInfo.timeoutTimeStamp) {
+          PRINT_NAMED_WARNING("NVStorageComponent.Update.WriteTimeout",
+                              "Tag: 0x%x", _writeDataAckInfo.tag);
+          
+          if(_writeDataAckInfo.callback) {
+            _writeDataAckInfo.callback(NVResult::NV_TIMEOUT);
+          }
+          SetState(NVSCState::IDLE);
+        }
       }
-      _recvDataMap.erase(_recvDataMap.begin());
+      
+      // If there are writes to send, send them.
+      // Send up to one blob per Update() call.
+      else if (_writeDataObject.sending) {
+        WriteDataObject* sendData = &_writeDataObject;
+        
+        // Fill out write message
+        _lastCommandSent.operation = NVOperation::NVOP_WRITE;
+        _lastCommandSent.address = sendData->nextTag;
+        
+        
+        // Send the next blob of data to send for this multi-blob message
+        u32 bytesLeftToSend = static_cast<u32>(sendData->data->size()) - sendData->sendIndex;
+        u32 bytesToSend = MIN(bytesLeftToSend, _kMaxNvStorageBlobSize);
+        ASSERT_NAMED(bytesToSend > 0, "NVStorageComponent.Update.ExpectedPositiveNumBytesToSend");
+        
+        // If this is the first blob, prepend header
+        _lastCommandSent.blob.clear();
+        if (sendData->sendIndex == 0) {
+
+          NVStorageHeader header;
+          header.dataSize = static_cast<u32>(sendData->data->size());
+          
+          auto const headerPtr = reinterpret_cast<u8*>(&header);
+          _lastCommandSent.blob.insert(_lastCommandSent.blob.end(), headerPtr , headerPtr + _kEntryHeaderSize);
+          
+          bytesToSend = MIN(_kMaxNvStorageBlobSize - _kEntryHeaderSize, bytesToSend);
+        }
+
+        _lastCommandSent.blob.insert(_lastCommandSent.blob.end(),
+                                     sendData->data->begin() + sendData->sendIndex,
+                                     sendData->data->begin() + sendData->sendIndex + bytesToSend);
+
+        
+        sendData->sendIndex += bytesToSend;
+
+        if (IsFactoryEntryTag(sendData->baseTag)) {
+          ++sendData->nextTag;
+        } else {
+          sendData->nextTag += _kMaxNvStorageBlobSize;
+        }
+
+        PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.Update.SendingWriteMsg",
+                       "BaseTag: %s, tag: 0x%x, bytesSent: %d",
+                       EnumToString(sendData->baseTag),
+                       _lastCommandSent.address,
+                       bytesToSend);
+
+        // Send data
+        _lastCommandSent.length = static_cast<u32>(_lastCommandSent.blob.size());
+        _robot.SendMessage(RobotInterface::EngineToRobot(NVCommand(_lastCommandSent)));
+        _writeDataAckInfo.pending = true;
+        _numSendAttempts = 0;
+
+        // Sent last blob?
+        if (sendData->sendIndex >= sendData->data->size()) {
+          sendData->sending = false;
+        }
+        
+      } else {
+        PRINT_NAMED_WARNING("NVStorageComponent.Update.NoDataToWrite", "");
+        SetState(NVSCState::IDLE);
+      }
+      break;
     }
-    return;
+      
+    case NVSCState::RECEIVING_DATA:
+    {
+      // If expecting read data to arrive, check timeout.
+      if (_recvDataInfo.pending) {
+        
+        if (_robot.GetLastMsgTimestamp() > _recvDataInfo.timeoutTimeStamp) {
+          PRINT_NAMED_WARNING("NVStorageComponent.Update.ReadTimeout",
+                              "Tag: 0x%x", _recvDataInfo.tag);
+          
+          if(_recvDataInfo.callback) {
+            _recvDataInfo.callback(nullptr, 0, NVResult::NV_TIMEOUT);
+          }
+          SetState(NVSCState::IDLE);
+        }
+      } else {
+        PRINT_NAMED_WARNING("NVStorageComponent.Update.NoReadPending", "");
+        SetState(NVSCState::IDLE);
+      }
+      break;
+    }
+      
+    default:
+      PRINT_NAMED_ERROR("NVStorageComponent.Update.InvalidState", "%d", _state);
+      SetState(NVSCState::IDLE);
+      break;
   }
   
-  // If expecting write/erase ack, check timeout.
-  if (!_writeDataAckMap.empty()) {
-    if (_writeDataAckMap.size() > 1) {
-      PRINT_NAMED_WARNING("NVStorageComponent.Update.ExpectingMoreThanOneWrite",
-                          "Num write entries waiting to be ackd: %zu", _recvDataMap.size());
-    }
-    
-    if (_robot.GetLastMsgTimestamp() > _writeDataAckMap.begin()->second.timeoutTimeStamp) {
-      PRINT_NAMED_WARNING("NVStorageComponent.Update.WriteTimeout",
-                          "Tag: 0x%x", _writeDataAckMap.begin()->first);
-      _writeDataAckMap.erase(_writeDataAckMap.begin());
-      _wasLastWriteAcked = true;
-    }
-    // Fall through because we still potentially need to send multi-blob data
-  }
-
-  
-  // Send requests if there are any in the queue and we're not currently processing a write
-  if (_writeDataQueue.empty() && _writeDataAckMap.empty() && !_requestQueue.empty()) {
-    SendRequest(_requestQueue.front());
-    _requestQueue.pop();
-  }
-  
-  
-  // If there are writes to send, send them.
-  // Send up to one blob per Update() call.
-  if (!_writeDataQueue.empty() && _wasLastWriteAcked) {
-    _wasLastWriteAcked = false;
-    WriteDataObject* sendData = &_writeDataQueue.front();
-
-    // Fill out write message
-    _writeMsg.reportTo = NVStorage::NVReportDest::ENGINE;
-    _writeMsg.writeNotErase = true;
-    _writeMsg.reportEach = true;  // Note: Write is ackd (with NVOpResult) if reportEach || reportDone.
-    _writeMsg.reportDone = true;  //       Erase is acked iff reportEach.
-                                 //       MultiErase is acked per blob if reportEach and at the end if reportDone.
-    _writeMsg.rangeEnd = GetTagRangeEnd(static_cast<u32>(sendData->baseTag));
-    _writeMsg.entry.tag = sendData->nextTag;
-    
-
-    // Send the next blob of data to send for this multi-blob message
-    u32 bytesLeftToSend = static_cast<u32>(sendData->data->size()) - sendData->sendIndex;
-    u32 bytesToSend = MIN(bytesLeftToSend, _kMaxNvStorageBlobSize);
-    ASSERT_NAMED(bytesToSend > 0, "NVStorageComponent.Update.ExpectedPositiveNumBytesToSend");
-    
-    _writeMsg.entry.blob = std::vector<u8>(sendData->data->begin() + sendData->sendIndex,
-                                               sendData->data->begin() + sendData->sendIndex + bytesToSend);
-
-    ++sendData->nextTag;
-    sendData->sendIndex += bytesToSend;
-    
-    if (DEBUG_NVSTORAGE_COMPONENT) {
-      PRINT_NAMED_DEBUG("NVStorageComponent.Update.SendingWriteMsg",
-                        "BaseTag: %s, tag: 0x%x, write: %d, bytesSent: %d",
-                        EnumToString(sendData->baseTag),
-                        _writeMsg.entry.tag,
-                        _writeMsg.writeNotErase,
-                        bytesToSend);
-    }
-    
-    // Sent last blob?
-    if (sendData->sendIndex >= sendData->data->size()) {
-      _writeDataQueue.pop();
-    }
-    
-    _robot.SendMessage(RobotInterface::EngineToRobot(NVStorage::NVStorageWrite(_writeMsg)));
-    _numSendAttempts = 0;
-  }
   
 }
   
-bool NVStorageComponent::ResendLastWrite()
+bool NVStorageComponent::ResendLastCommand()
 {
   if (++_numSendAttempts >= _kMaxNumSendAttempts) {
-    PRINT_NAMED_WARNING("NVStorageComponent.ResendLastWrite.NumRetriesExceeded",
-                        "Tag: 0x%x, writeNotErase: %d, Attempts: %d",
-                        _writeMsg.entry.tag, _writeMsg.writeNotErase, _kMaxNumSendAttempts );
+    PRINT_NAMED_WARNING("NVStorageComponent.ResendLastCommand.NumRetriesExceeded",
+                        "Tag: 0x%x, Op: %s, Attempts: %d",
+                        _lastCommandSent.address, EnumToString(_lastCommandSent.operation), _kMaxNumSendAttempts );
     return false;
   }
   
-  PRINT_NAMED_INFO("NVStorageComponent.ResendLastWrite.Retry",
-                   "Tag: 0x%x, retryNum: %d", _writeMsg.entry.tag, _numSendAttempts);
-  _robot.SendMessage(RobotInterface::EngineToRobot(NVStorage::NVStorageWrite(_writeMsg)));
+  PRINT_CH_INFO("NVStorage", "NVStorageComponent.ResendLastCommand.Retry",
+                "Tag: 0x%x, Op: %s, Attempt: %d",
+                _lastCommandSent.address, EnumToString(_lastCommandSent.operation), _numSendAttempts);
+  _robot.SendMessage(RobotInterface::EngineToRobot(NVCommand(_lastCommandSent)));
   return true;
 }
   
-bool NVStorageComponent::ResendLastRead()
-{
-  if (++_numSendAttempts >= _kMaxNumSendAttempts) {
-    PRINT_NAMED_WARNING("NVStorageComponent.ResendLastRead.NumRetriesExceeded",
-                        "Tag: 0x%x, Attempts: %d",
-                        _readMsg.tag, _kMaxNumSendAttempts );
-    return false;
-  }
-  
-  PRINT_NAMED_INFO("NVStorageComponent.ResendLastRead.Retry",
-                   "Tag: 0x%x, retryNum: %d", _readMsg.tag, _numSendAttempts);
-  _robot.SendMessage(RobotInterface::EngineToRobot(NVStorage::NVStorageRead(_readMsg)));
-  return true;
-}
-
-void NVStorageComponent::HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message)
-{
-  RobotInterface::NVReadResultToEngine nvReadResult = message.GetData().Get_nvData();
-  NVStorage::NVStorageBlob& nvBlob = nvReadResult.blob;
-
-  
-  // Check that this was actually requested data
-  u32 baseTag = GetBaseEntryTag(nvBlob.tag);
-  if (_recvDataMap.find(baseTag) == _recvDataMap.end()) {
-    PRINT_NAMED_WARNING("NVStorageComponent.HandleNVData.TagNotRequested", "tag 0x%x", nvBlob.tag);
-    return;
-  }
-
-  u32 blobSize = static_cast<u32>(nvBlob.blob.size());
-  
-  // Broadcast msg up to game
-  if (_recvDataMap[baseTag].broadcastResultToGame) {
-    ExternalInterface::NVStorageData msg;
-    msg.tag = static_cast<NVStorage::NVEntryTag>(baseTag);
-    msg.index = nvBlob.tag - baseTag;
-    msg.data_length = blobSize;
-    memcpy(msg.data.data(), nvBlob.blob.data(), blobSize);
-    _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
-  }
-  
-  if (IsMultiBlobEntryTag(nvBlob.tag)) {
-    u32 blobIndex = nvBlob.tag - baseTag;
-    u32 startWriteIndex = blobIndex *_kMaxNvStorageBlobSize;
-    u32 newTotalEntrySize = startWriteIndex + blobSize;
-
-    // Make sure receive vector is large enough to hold data
-    std::vector<u8>* vec = _recvDataMap[baseTag].data;
-    if (vec->size() < newTotalEntrySize) {
-      vec->resize(newTotalEntrySize);
-    }
-    
-    // Store data at appropriate in receive vector
-    std::copy(nvBlob.blob.begin(), nvBlob.blob.end(), vec->begin() + startWriteIndex);
-    
-    // Bump timeout
-    _recvDataMap[baseTag].timeoutTimeStamp = _robot.GetLastMsgTimestamp() + _kAckTimeout_ms;
-    
-    if (DEBUG_NVSTORAGE_COMPONENT) {
-      PRINT_NAMED_DEBUG("NVStorageComponent.HandelNVData.ReceivedBlob",
-                        "BaseEntryTag: 0x%x, Tag: 0x%x, BlobSize %d, StartWriteIndex: %d",
-                        baseTag, nvBlob.tag, blobSize, startWriteIndex);
-    }
-    
-  } else {
-    
-    // If this is not a multiblob message, execute callback now.
-    PRINT_NAMED_INFO("NVStorageComponent.HandleNVData.MsgRecvd",
-                     "BaseTag: %s, Tag: 0x%x, size: %u",
-                     EnumToString(static_cast<NVStorage::NVEntryTag>(baseTag)), nvBlob.tag, blobSize);
-    if (_recvDataMap[baseTag].callback) {
-      PRINT_NAMED_INFO("NVStorageComponent.HandleNVData.ExecutingCallback",
-                       "BaseTag: %s, Tag: 0x%x",
-                       EnumToString(static_cast<NVStorage::NVEntryTag>(baseTag)), nvBlob.tag);
-      _recvDataMap[baseTag].callback(nvBlob.blob.data(), nvBlob.blob.size(), NVStorage::NVResult::NV_OKAY);
-    }
-
-    // Sending a result message since the robot doesn't actually send one back
-    // for successful single-blob reads.
-    if (_recvDataMap[baseTag].broadcastResultToGame) {
-      BroadcastNVStorageOpResult(static_cast<NVStorage::NVEntryTag>(baseTag), NVStorage::NVResult::NV_OKAY, NVStorage::NVOperation::NVOP_READ);
-    }
-
-    _recvDataMap.erase(baseTag);
-  }
-}
 
 void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   ANKI_CPU_PROFILE("Robot::HandleNVOpResult");
   
-  RobotInterface::NVOpResultToEngine payload = message.GetData().Get_nvResult();
-  if (DEBUG_NVSTORAGE_COMPONENT) {
-    PRINT_NAMED_DEBUG("NVStorageComponent.HandleNVOpResult.Recvd",
-                      "RobotAddr: %u, Tag: 0x%x, Result: %s, write: %d",
-                      payload.robotAddress,
-                      payload.report.tag,
-                      EnumToString(payload.report.result),
-                      payload.report.write);
-  }
-  
-  u32 tag = payload.report.tag;
-  if (tag == static_cast<u32>(NVStorage::NVEntryTag::NVEntry_Invalid)) {
-    PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.InvalidTag", "");
-    return;
-  }
-  
-  
-  u32 baseTag = GetBaseEntryTag(tag);
-  const char* baseTagStr = EnumToString(static_cast<NVStorage::NVEntryTag>(baseTag));
-  if (payload.report.write) {
-    
-    // Check that this was actually written data
-    if (_writeDataAckMap.find(baseTag) == _writeDataAckMap.end()) {
-      PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.AckdTagBaseTagWasNeverSent",
-                          "BaseTag: 0x%x, tag 0x%x", baseTag, tag);
-      return;
-    }
-    
-    AnkiAssert(_writeDataAckMap[baseTag].numTagsLeftToAck > 0);
-   
-    // Possibly increment the failed write count based on the result
-    // Negative results == bad
-    if (static_cast<s8>(payload.report.result) < 0) {
-      
-      // Under these cases, attempt to resend the failed write message.
-      // If the allowed number of retries fails
-      if (payload.report.result == NVStorage::NVResult::NV_NO_MEM ||
-          payload.report.result == NVStorage::NVResult::NV_BUSY   ||
-          payload.report.result == NVStorage::NVResult::NV_TIMEOUT) {
-        if (ResendLastWrite()) {
-          PRINT_NAMED_INFO("NVStorageComponent.HandleNVOpResult.ResentFailedWrite",
-                           "Tag 0x%x resent due to %s", tag, EnumToString(payload.report.result));
-          return;
-        }
-      }
+  NVOpResult payload = message.GetData().Get_nvOpResult();
 
-      PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.WriteOpFailed",
-                          "Tag: 0x%x, writeNotErase: %d, result: %s, numWriteFails: %u",
-                          tag, _writeDataAckMap[baseTag].writeNotErase, EnumToString(payload.report.result), _writeDataAckMap[baseTag].numFailedWrites);
-      ++_writeDataAckMap[baseTag].numFailedWrites;
-    }
+  PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.HandleNVOpResult.Recvd",
+                 "Tag: 0x%x, Op: %s, Result: %s",
+                 payload.address,
+                 EnumToString(payload.operation),
+                 EnumToString(payload.result));
 
-    // On writes, count each one.
-    // On erases, only count the ones that match the base tag since we don't know how many
-    // to expect in total. We only know that there'll be one for the baseTag if it's a single erase
-    // or two if it's multiErase.
-    if (_writeDataAckMap[baseTag].writeNotErase || baseTag == tag) {
-      --_writeDataAckMap[baseTag].numTagsLeftToAck;
-      _wasLastWriteAcked = true;
-      
-      // If any not okay results come back as a result of an erase (like if the tag doesn't exist),
-      // don't expect anything more to come.
-      if (payload.report.result != NVStorage::NVResult::NV_OKAY && !_writeDataAckMap[baseTag].writeNotErase) {
-        _writeDataAckMap[baseTag].numTagsLeftToAck = 0;
-      }
-      
-      
-      // Check if this should be forwarded on to game.
-      // For multi-erase, only forward the final (i.e. 2nd) result
-      if (_writeDataAckMap[baseTag].broadcastResultToGame &&
-          (_writeDataAckMap[baseTag].writeNotErase || _writeDataAckMap[baseTag].numTagsLeftToAck == 0)) {
-        BroadcastNVStorageOpResult(static_cast<NVStorage::NVEntryTag>(baseTag),
-                                   payload.report.result,
-                                   _writeDataAckMap[baseTag].writeNotErase ? NVStorage::NVOperation::NVOP_WRITE : NVStorage::NVOperation::NVOP_ERASE);
-      }
-    }
-          
-    // Check if all writes have been confirmed for this write request
-    if (_writeDataAckMap[baseTag].numTagsLeftToAck == 0) {
-      
-      // If this is a multiblob write, modify the final result based on the number of failures
-      if (IsMultiBlobEntryTag(baseTag)) {
-        payload.report.result = _writeDataAckMap[baseTag].numFailedWrites > 0 ? NVStorage::NVResult::NV_ERROR : NVStorage::NVResult::NV_OKAY;
-      }
-      
-      // Print result
-      if (payload.report.result == NVStorage::NVResult::NV_OKAY) {
-        PRINT_NAMED_INFO("NVStorageComponent.HandleNVOpResult.MsgWriteConfirmed",
-                         "BaseTag: %s, lastTag: 0x%x, writeNotErase: %d, numWriteFails: %u, result: %s",
-                         baseTagStr, tag, _writeDataAckMap[baseTag].writeNotErase, _writeDataAckMap[baseTag].numFailedWrites, EnumToString(payload.report.result));
-      } else {
-        PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.MsgWriteFailed",
-                            "BaseTag: %s, lastTag: 0x%x, writeNotErase: %d, numWriteFails: %u, result: %s",
-                            baseTagStr, tag, _writeDataAckMap[baseTag].writeNotErase, _writeDataAckMap[baseTag].numFailedWrites, EnumToString(payload.report.result));
-      }
-      
-      // Execute write complete callback
-      if (_writeDataAckMap[baseTag].callback) {
-        PRINT_NAMED_DEBUG("NVStorageComponent.HandleNVOpResult.ExecutingWriteCallback", "%s", baseTagStr);
-        _writeDataAckMap[baseTag].callback(payload.report.result);
-      }
-      
-      // Let the backup manager know that the write for this tag has completed
-      _backupManager.WriteDataForTag(static_cast<NVStorage::NVEntryTag>(baseTag),
-                                     payload.report.result,
-                                     _writeDataAckMap[baseTag].writeNotErase);
-      
-      _writeDataAckMap.erase(baseTag);
-    }
+  
+  u32 tag = payload.address;
+  NVEntryTag baseTag = NVEntryTag::NVEntry_NEXT_SLOT;
 
-    
+  // Setting a fake tag to allow the rest of the NVOP_WRITE logic work to work for NVOP_WIPEALL
+  if (payload.operation == NVOperation::NVOP_WIPEALL) {
+    tag = static_cast<u32>(NVEntryTag::NVEntry_NEXT_SLOT);
   } else {
-    // Check that this was actually requested data
-    if (_recvDataMap.find(baseTag) == _recvDataMap.end()) {
-      PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.AckdTagNeverRequested", "tag 0x%x", tag);
-      return;
-    }
+    baseTag = GetBaseEntryTag(tag);
+  }
 
-    // Check if this should be forwarded on to game
-    if (_recvDataMap[baseTag].broadcastResultToGame) {
-      BroadcastNVStorageOpResult(static_cast<NVStorage::NVEntryTag>(baseTag),
-                                 payload.report.result,
-                                 NVStorage::NVOperation::NVOP_READ);
-    }
-
-    // If read was not successful, possibly retry.
-    if (static_cast<s8>(payload.report.result) < 0) {
+  const char* baseTagStr = EnumToString(static_cast<NVEntryTag>(baseTag));
+  
+  switch(payload.operation) {
+    case NVOperation::NVOP_WRITE:
+    case NVOperation::NVOP_ERASE:
+    case NVOperation::NVOP_WIPEALL:
+    {
       
-      // Under these cases, attempt to resend the failed read message
-      if (payload.report.result == NVStorage::NVResult::NV_NO_MEM ||
-          payload.report.result == NVStorage::NVResult::NV_BUSY   ||
-          payload.report.result == NVStorage::NVResult::NV_TIMEOUT) {
-        if (ResendLastRead()) {
-          PRINT_NAMED_INFO("NVStorageComponent.HandleNVOpResult.ResentFailedRead",
-                           "Tag 0x%x resent due to %s", tag, EnumToString(payload.report.result));
-          return;
+      // Check that this was actually written data
+      if (!_writeDataAckInfo.pending || _writeDataAckInfo.tag != baseTag) {
+        PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.AckdTagBaseTagWasNeverSent",
+                            "BaseTag: 0x%x, Tag: 0x%x", baseTag, tag);
+        return;
+      }
+     
+      // Possibly increment the failed write count based on the result
+      // Negative results == bad
+      if (static_cast<s8>(payload.result) < 0) {
+        
+        // Under these cases, attempt to resend the failed write message.
+        // If the allowed number of retries fails
+        if (payload.result == NVResult::NV_NO_MEM ||
+            payload.result == NVResult::NV_BUSY   ||
+            payload.result == NVResult::NV_TIMEOUT) {
+          if (ResendLastCommand()) {
+            PRINT_CH_INFO("NVStorage", "NVStorageComponent.HandleNVOpResult.ResentFailedWrite",
+                             "Tag 0x%x resent due to %s, op: %s", tag, EnumToString(payload.result), EnumToString(payload.operation));
+            return;
+          }
         }
+
+        PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.WriteOpFailed",
+                            "Tag: 0x%x, op: %s, result: %s",
+                            tag, EnumToString(payload.operation), EnumToString(payload.result));
+
+        // Abort entire write / erase operation
+        _writeDataObject.sending = false;
+        
+        // TODO: Erase the stuff that did write successfully?
+        // ...
+        
       }
 
-      // If the entry doesn't exist, it shouldn't be a warning
-      if (payload.report.result == NVStorage::NVResult::NV_NOT_FOUND) {
-        PRINT_NAMED_INFO("NVStorageComponent.HandleNVOpResult.ReadEntryNotFound",
-                         "BaseTag: %s, Tag: 0x%x, write: %d, result: %s",
-                         baseTagStr, tag, payload.report.write, EnumToString(payload.report.result));
-      } else {
+      // ACK the write
+      _writeDataAckInfo.pending = false;
+        
+      
+      // Check if all writes have been sent and thus ACK'd for this tag
+      if (!_writeDataObject.sending) {
+        
+        // Print result
+        if (payload.result == NVResult::NV_OKAY) {
+          PRINT_CH_INFO("NVStorage", "NVStorageComponent.HandleNVOpResult.WriteSuccess",
+                           "BaseTag: %s, lastTag: 0x%x, op: %s, result: %s",
+                           baseTagStr, tag, EnumToString(payload.operation), EnumToString(payload.result));
+        } else {
+          PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.WriteFailed",
+                              "BaseTag: %s, lastTag: 0x%x, op: %s, result: %s",
+                              baseTagStr, tag, EnumToString(payload.operation), EnumToString(payload.result));
+        }
+        
+        // Check if this should be forwarded on to game.
+        if (_writeDataAckInfo.broadcastResultToGame) {
+          BroadcastNVStorageOpResult(baseTag,
+                                     payload.result,
+                                     payload.operation);
+        }
+
+        
+        // Execute write complete callback
+        if (_writeDataAckInfo.callback) {
+          PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.HandleNVOpResult.ExecutingWriteCallback", "%s", baseTagStr);
+          _writeDataAckInfo.callback(payload.result);
+        }
+        
+        // Let the backup manager know that the write for this tag has completed
+        if (payload.operation == NVOperation::NVOP_WIPEALL) {
+          _backupManager.WipeAll();
+        } else {
+          _backupManager.WriteDataForTag(baseTag,
+                                         payload.result,
+                                         payload.operation == NVOperation::NVOP_WRITE);
+        }
+        
+        SetState(NVSCState::IDLE);
+      }
+      break;
+    }
+    case NVOperation::NVOP_READ:
+    {
+      u32 blobSize = static_cast<u32>(payload.blob.size());
+      bool shouldHaveHeader = !IsFactoryEntryTag(baseTag) && (payload.offset == 0);
+      
+      // Check that this was actually requested data
+      if (!_recvDataInfo.pending || _recvDataInfo.tag != baseTag) {
+        PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.AckdTagNeverRequested",
+                            "Tag recvd: 0x%x, BaseTag: 0x%x, ExpectedBaseTag: 0x%x (pending %d), BlobSize: %u, result: %s",
+                            tag, baseTag, _recvDataInfo.tag, _recvDataInfo.pending, blobSize, EnumToString(payload.result));
+        return;
+      }
+
+      // If read was not successful, possibly retry.
+      if (static_cast<s8>(payload.result) < 0) {
+        
+        // Under these cases, attempt to resend the failed read message
+        if (payload.result == NVResult::NV_NO_MEM ||
+            payload.result == NVResult::NV_BUSY   ||
+            payload.result == NVResult::NV_TIMEOUT) {
+          if (ResendLastCommand()) {
+            PRINT_CH_INFO("NVStorage", "NVStorageComponent.HandleNVOpResult.ResentFailedRead",
+                          "Tag 0x%x resent due to %s", tag, EnumToString(payload.result));
+            return;
+          }
+        }
+
         PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.ReadOpFailed",
-                            "BaseTag: %s, Tag: 0x%x, write: %d, result: %s",
-                            baseTagStr, tag, payload.report.write, EnumToString(payload.report.result));
-      }
-    }
+                            "Tag: 0x%x, op: %s, result: %s",
+                            tag, EnumToString(payload.operation), EnumToString(payload.result));
+      } else {
+        
+        // Get header if this is the first blob of the read
+        if (shouldHaveHeader && !_recvDataInfo.dataSizeKnown) {
+          
+          // This is the first 1K. Get the header.
+          if (blobSize >= _kEntryHeaderSize) {
+            
+            // Copy header
+            NVStorageHeader header;
+            memcpy(&header, payload.blob.data(), _kEntryHeaderSize);
+            
+            
+            // Check header validity
+            u32 maxAllowedSize = GetMaxSizeForEntryTag(baseTag);
+            if (header.magic != _kHeaderMagic) {
+              PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.HandleNVOpResult.InvalidHeader",
+                             "Tag: 0x%x, Got 0x%x, Expected 0x%x", tag, header.magic, _kHeaderMagic);
+              payload.result = NVResult::NV_NOT_FOUND;
+              
+            } else if (header.dataSize > maxAllowedSize - _kEntryHeaderSize) {
+              PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.InvalidDataSize",
+                                  "Tag 0x%x, size %u, maxSizeAllowed %u", tag, header.dataSize, maxAllowedSize);
+              payload.result = NVResult::NV_NOT_FOUND;
+              
+            } else {
+              
+              _recvDataInfo.dataSizeKnown = true;
+              
+              if (_writeDataAckInfo.pending) {
+                
+                PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.UnhandledReadForWriteErase", "");
+                // TODO: This was the retrieval of data prior to a write just to retrieve the header so that we can know how many bytes to erase.
+                // ...
+                
+                
+              } else {
+                
+                // Request the appropriate amount of data.
+                // If we already have the appropriate amount of data, then fall through.
+                if (header.dataSize <= blobSize - _kEntryHeaderSize) {
+                  PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.HandleNVOpResult.ResizeBlobToValidData", "Tag: 0x%x, TotalSize: %u", tag, header.dataSize);
+                  payload.blob.resize(_kEntryHeaderSize + header.dataSize);
+                  blobSize = static_cast<u32>(payload.blob.size());
+                } else {
+                  PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.HandleNVOpResult.ReadingRestOfData", "Tag: 0x%x, TotalSize: %u", tag, header.dataSize);
+                  _lastCommandSent.address   = tag;
+                  _lastCommandSent.length    = header.dataSize + _kEntryHeaderSize;
+                  _lastCommandSent.operation = NVOperation::NVOP_READ;
+                  _robot.SendMessage(RobotInterface::EngineToRobot(NVCommand(_lastCommandSent)));
+                  return;
+                }
+              }
+            }
+            
+          } else {
+            // The only other time you should get a result with the baseTag is if it is the last OpResult of the read which should have blob length of 0.
+            // Otherwise something is wrong!
+            PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.TooLittleReadData", "Tag 0x%x, Got %u, Expected %u", tag, blobSize, _kMaxNvStorageBlobSize);
+            
+            // Clear what incomplete data might be in received data buffer and change result to error
+            _recvDataInfo.data->clear();
+            payload.result = NVResult::NV_ERROR;
+          }
+        }
 
-    
-    // Execute callback
-    if ( _recvDataMap[baseTag].callback ) {
-      PRINT_NAMED_DEBUG("NVStorageComponent.HandleNVOpResult.ExecutingReadCallback", "%s", baseTagStr);
-      _recvDataMap[baseTag].callback(_recvDataMap[baseTag].data->data(),
-                                     _recvDataMap[baseTag].data->size(),
-                                     payload.report.result);
+      }
+      
+      
+      // Process the blob data. As long as size > 0, it must contain data.
+      if (blobSize > 0 && payload.result >= NVResult::NV_OKAY) {
+        u32 payloadOffset = shouldHaveHeader ? _kEntryHeaderSize : 0;
+        u32 startWriteIndex = (payload.offset * _kMaxNvStorageBlobSize) - (((payload.offset > 0) && !IsFactoryEntryTag(baseTag)) ? _kEntryHeaderSize : 0);
+        u32 newTotalEntrySize = startWriteIndex + blobSize - payloadOffset;
+        
+        // Make sure receive vector is large enough to hold data
+        std::vector<u8>* vec = _recvDataInfo.data;
+        if (vec->size() < newTotalEntrySize) {
+          vec->resize(newTotalEntrySize);
+        }
+        
+
+        // Store data at appropriate location in receive vector
+        std::copy(payload.blob.begin() + payloadOffset, payload.blob.end(), vec->begin() + startWriteIndex);
+        
+        // Bump timeout
+        _recvDataInfo.timeoutTimeStamp = _robot.GetLastMsgTimestamp() + _kAckTimeout_ms;
+        
+        PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.HandelNVData.ReceivedBlob",
+                       "BaseEntryTag: 0x%x, Tag: 0x%x, BlobSize %d, offset %d, StartWriteIndex: %d",
+                       baseTag, payload.address, blobSize, payload.offset, startWriteIndex);
+      }
+      
+      
+      // Operation has failed or succeeded
+      if (payload.result != NVResult::NV_MORE) {
+        
+        if (payload.result == NVResult::NV_NOT_FOUND) {
+          PRINT_CH_INFO("NVStorage", "NVStorageComponent.HandleNVOpResult.ReadEntryNotFound",
+                        "BaseTag: %s, Tag: 0x%x, result: %s",
+                        baseTagStr, tag, EnumToString(payload.result));
+        }
+        else if (payload.result == NVResult::NV_OKAY) {
+          PRINT_CH_INFO("NVStorage", "NVStorageComponent.HandleNVOpResult.ReadSuccess",
+                        "BaseTag: %s, result: %s",
+                        baseTagStr, EnumToString(payload.result));
+        } else {
+          PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.ReadFailed",
+                              "BaseTag: %s, result: %s",
+                              baseTagStr, EnumToString(payload.result));
+        }
+        
+        if (_recvDataInfo.callback ) {
+          PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.HandleNVOpResult.ExecutingReadCallback", "%s", baseTagStr);
+          _recvDataInfo.callback(_recvDataInfo.data->data(),
+                                 _recvDataInfo.data->size(),
+                                 payload.result);
+        }
+        
+        // Check if this should be forwarded on to game.
+        if (_recvDataInfo.broadcastResultToGame) {
+          
+          // Send data up to game if result was NV_OKAY
+          if (payload.result >= NVResult::NV_OKAY) {
+            u32 bytesRemaining = static_cast<u32>(_recvDataInfo.data->size());
+            u8* dataPtr = _recvDataInfo.data->data();
+            u8 index = 0;
+            BOUNDED_WHILE(1000, bytesRemaining > 0) {
+              
+              u32 data_length = MIN(bytesRemaining, _kMaxNvStorageBlobSize);
+              
+              BroadcastNVStorageOpResult(static_cast<NVEntryTag>(baseTag),
+                                         bytesRemaining > data_length ? NVResult::NV_MORE : payload.result,
+                                         NVOperation::NVOP_READ,
+                                         index,
+                                         dataPtr, data_length);
+                                         
+              bytesRemaining -= data_length;
+              dataPtr += data_length;
+              index++;
+            }
+          } else {
+            BroadcastNVStorageOpResult(static_cast<NVEntryTag>(baseTag),
+                                       payload.result,
+                                       NVOperation::NVOP_READ);
+          }
+        }
+        
+        SetState(NVSCState::IDLE);
+        
+      }
+      
+      break;
     }
-    
-    // Delete recvData object
-    _recvDataMap.erase(baseTag);
+    default:
+      PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.UnhandledOperation", "%s", EnumToString(payload.operation));
+      break;
   }
 }
   
-void NVStorageComponent::BroadcastNVStorageOpResult(NVStorage::NVEntryTag tag, NVStorage::NVResult res, NVStorage::NVOperation op)
+void NVStorageComponent::BroadcastNVStorageOpResult(NVEntryTag tag, NVResult res, NVOperation op, u8 index, const u8* data, u32 data_length)
 {
+  ASSERT_NAMED_EVENT(data_length <= _kMaxNvStorageBlobSize,
+                     "NVStorageComponent.BroadcastNVStorageOpResult.DataLengthTooLarge", "%u", data_length);
+  
   ExternalInterface::NVStorageOpResult msg;
   msg.tag = tag;
   msg.result = res;
   msg.op = op;
+  msg.index = index;
+  if (nullptr != data) {
+    msg.data.assign(data, data + data_length);
+  }
   _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
 }
 
-bool NVStorageComponent::QueueWriteBlob(const NVStorage::NVEntryTag tag,
+bool NVStorageComponent::QueueWriteBlob(const NVEntryTag tag,
                                         const u8* data, u16 dataLength,
                                         u8 blobIndex, u8 numTotalBlobs)
 {
-  AnkiAssert(IsMultiBlobEntryTag(static_cast<u32>(tag)));
- 
   // Check for invalid tags
-  if (!IsValidEntryTag(static_cast<u32>(tag))) {
+  if (!IsValidEntryTag(tag)) {
     PRINT_NAMED_WARNING("NVStorageComponent.QueueWriteBlob.InvalidTag",
                         "Tag: 0x%x", static_cast<u32>(tag));
     return false;
   }
   
-  if (numTotalBlobs > _kMaxNumBlobsInMultiBlobEntry) {
+  u32 maxNumAllowedBlobs = GetMaxSizeForEntryTag(tag) / _kMaxNvStorageBlobSize;
+  if (numTotalBlobs > maxNumAllowedBlobs) {
     PRINT_NAMED_WARNING("NVStorageComponent.QueueWriteBlob.TooManyBlobs",
                         "Num total blobs %d exceeds max of %d",
-                        numTotalBlobs, _kMaxNumBlobsInMultiBlobEntry);
+                        numTotalBlobs, maxNumAllowedBlobs);
     return false;
   }
   
-  if (_pendingWriteData.tag != tag) {
-    if (_pendingWriteData.tag == NVStorage::NVEntryTag::NVEntry_Invalid) {
-      PRINT_NAMED_DEBUG("NVStorageComponent.QueueWriteBlob.FirstBlobRecvd", "Tag: %s", EnumToString(tag));
+  if (_pendingWriteData.tag != tag || !_pendingWriteData.pending) {
+    if (!_pendingWriteData.pending) {
+      PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.QueueWriteBlob.FirstBlobRecvd", "Tag: %s", EnumToString(tag));
     } else {
       PRINT_NAMED_WARNING("NVStorageComponent.QueueWriteBlob.UnexpectedTag",
                           "Deleting old data for %s and starting %s",
@@ -787,6 +1068,7 @@ bool NVStorageComponent::QueueWriteBlob(const NVStorage::NVEntryTag tag,
     _pendingWriteData.tag = tag;
     _pendingWriteData.data.resize(numTotalBlobs * _kMaxNvStorageBlobSize);
     _pendingWriteData.data.shrink_to_fit();
+    _pendingWriteData.pending = true;
 
     for (u8 i=0; i<numTotalBlobs; ++i) {
       _pendingWriteData.remainingIndices.insert(i);
@@ -835,10 +1117,10 @@ bool NVStorageComponent::QueueWriteBlob(const NVStorage::NVEntryTag tag,
   // Ready to send to robot?
   bool res = true;
   if (_pendingWriteData.remainingIndices.empty()) {
-    PRINT_NAMED_INFO("NVStorageComponent.QueueWriteBlob.SendingToRobot",
-                     "Tag: %s, Bytes: %zu",
-                     EnumToString(tag),
-                     _pendingWriteData.data.size());
+    PRINT_CH_INFO("NVStorage", "NVStorageComponent.QueueWriteBlob.SendingToRobot",
+                 "Tag: %s, Bytes: %zu",
+                 EnumToString(tag),
+                 _pendingWriteData.data.size());
     res = Write(tag, _pendingWriteData.data.data(), _pendingWriteData.data.size(), {}, true);
     
     // Clear pending write data for next message
@@ -853,65 +1135,44 @@ bool NVStorageComponent::QueueWriteBlob(const NVStorage::NVEntryTag tag,
 template<>
 void NVStorageComponent::HandleMessage(const ExternalInterface::NVStorageWriteEntry& msg)
 {
-  PRINT_NAMED_INFO("NVStorageComponent.HandleNVStorageWriteEntry.Recvd",
-                   "Tag: %s, size %u",
-                   EnumToString(msg.tag), msg.data_length);
+  PRINT_CH_INFO("NVStorage", "NVStorageComponent.HandleNVStorageWriteEntry.Recvd",
+                "Tag: %s, size %zu",
+                EnumToString(msg.tag), msg.data.size());
 
-  bool res = true;
-  if (IsMultiBlobEntryTag(static_cast<u32>(msg.tag))) {
-    res = QueueWriteBlob(msg.tag,
-                         msg.data.data(), msg.data_length,
-                         msg.index, msg.numTotalBlobs);
+  if (msg.numTotalBlobs > 1) {
+    if (!QueueWriteBlob(msg.tag,
+                        msg.data.data(), msg.data.size(),
+                        msg.index, msg.numTotalBlobs)) {
+      PRINT_NAMED_WARNING("NVStorageComponent.HandleNVStorageWriteEntry.FailedToQueue",
+                          "Tag: %s, size: %zu, blobIndex: %d, numTotalBlobs: %d",
+                          EnumToString(msg.tag), msg.data.size(), msg.index, msg.numTotalBlobs);
+      BroadcastNVStorageOpResult(msg.tag, NVResult::NV_ERROR, NVOperation::NVOP_WRITE);
+    }
   } else {
-    res = Write(msg.tag, msg.data.data(), msg.data_length, {}, true);
+    Write(msg.tag, msg.data.data(), msg.data.size(), {}, true);
   }
   
-  // If failed before request is even sent to robot, then send OpResult now.
-  if (!res) {
-    PRINT_NAMED_WARNING("NVStorageComponent.HandleNVStorageWriteEntry.FailedToQueueOrSend",
-                        "Tag: %s, size: %d, blobIndex: %d, numTotalBlobs: %d",
-                        EnumToString(msg.tag), msg.data_length, msg.index, msg.numTotalBlobs);
-    BroadcastNVStorageOpResult(msg.tag, NVStorage::NVResult::NV_ERROR, NVStorage::NVOperation::NVOP_WRITE);
-  }
 }
 
 template<>
 void NVStorageComponent::HandleMessage(const ExternalInterface::NVStorageReadEntry& msg)
 {
-  PRINT_NAMED_INFO("NVStorageComponent.HandleNVStorageReadEntry.Recvd", "Tag: %s", EnumToString(msg.tag));
-  
-  if (!Read(msg.tag, {}, nullptr, true)) {
-    // If failed before request is even sent to robot, then send OpResult now.
-    PRINT_NAMED_WARNING("NVStorageComponent.HandleNVStorageReadEntry.FailedToQueueOrSend",
-                        "Tag: %s", EnumToString(msg.tag));
-    BroadcastNVStorageOpResult(msg.tag, NVStorage::NVResult::NV_ERROR, NVStorage::NVOperation::NVOP_READ);
-  }
+  PRINT_CH_INFO("NVStorage", "NVStorageComponent.HandleNVStorageReadEntry.Recvd", "Tag: %s", EnumToString(msg.tag));
+  Read(msg.tag, {}, nullptr, true);
 }
 
 template<>
 void NVStorageComponent::HandleMessage(const ExternalInterface::NVStorageEraseEntry& msg)
 {
-  PRINT_NAMED_INFO("NVStorageComponent.HandleNVStorageEraseEntry.Recvd", "Tag: %s", EnumToString(msg.tag));
-
-  if (!Erase(msg.tag, {}, true)) {
-    // If failed before request is even sent to robot, then send OpResult now.
-    PRINT_NAMED_WARNING("NVStorageComponent.HandleNVStorageEraseEntry.FailedToQueueOrSend",
-                        "Tag: %s", EnumToString(msg.tag));
-    BroadcastNVStorageOpResult(msg.tag, NVStorage::NVResult::NV_ERROR, NVStorage::NVOperation::NVOP_ERASE);
-  }
+  PRINT_CH_INFO("NVStorage", "NVStorageComponent.HandleNVStorageEraseEntry.Recvd", "Tag: %s", EnumToString(msg.tag));
+  Erase(msg.tag, {}, true);
 }
 
 template<>
 void NVStorageComponent::HandleMessage(const ExternalInterface::NVStorageWipeAll& msg)
 {
-  PRINT_NAMED_INFO("NVStorageComponent.HandleNVStorageWipeAll.Recvd", "key: %s", msg.key.c_str());
-  
-  // Note: Not allowing factory wipes from game
-  if (!WipeAll(false, {}, true)) {
-    // If failed before request is even sent to robot, then send OpResult now.
-    PRINT_NAMED_WARNING("NVStorageComponent.HandleNVStorageWipeAll.FailedToQueueOrSend", "");
-    BroadcastNVStorageOpResult(NVStorage::NVEntryTag::NVEntry_WipeAll, NVStorage::NVResult::NV_ERROR, NVStorage::NVOperation::NVOP_WIPEALL);
-  }
+  PRINT_CH_INFO("NVStorage", "NVStorageComponent.HandleNVStorageWipeAll.Recvd", "key: %s", msg.key.c_str());
+  WipeAll({}, true);
 }
   
 template<>
@@ -921,7 +1182,7 @@ void NVStorageComponent::HandleMessage(const ExternalInterface::NVStorageClearPa
 }
 
 void NVStorageComponent::ClearPendingWriteEntry() {
-  _pendingWriteData.tag = NVStorage::NVEntryTag::NVEntry_Invalid;
+  _pendingWriteData.pending = false;
   _pendingWriteData.remainingIndices.clear();
 }
   
@@ -937,12 +1198,9 @@ size_t NVStorageComponent::MakeWordAligned(size_t size) {
 void NVStorageComponent::Test()
 {
   // For development only
-  if (!ANKI_DEVELOPER_CODE) {
-    return;
-  }
-  
-  
-  NVStorage::NVEntryTag testMultiBlobTag = NVStorage::NVEntryTag::NVEntry_MultiBlobJunk;
+#if (ANKI_DEVELOPER_CODE)
+
+  NVEntryTag testMultiBlobTag = NVEntryTag::NVEntry_FaceAlbumData;
   
 
   static u8 nvAction = 0;
@@ -957,7 +1215,7 @@ void NVStorageComponent::Test()
       PRINT_NAMED_DEBUG("NVStorageComponent.Test.Writing", "tag: %s, size: %u",
                         EnumToString(testMultiBlobTag), BUFSIZE);
       Write(testMultiBlobTag, d, BUFSIZE,
-            [](NVStorage::NVResult res) {
+            [](NVResult res) {
             PRINT_NAMED_DEBUG("NVStorageComponent.Test.WriteResult", "%s", EnumToString(res));
             });
       break;
@@ -967,8 +1225,8 @@ void NVStorageComponent::Test()
     {
       PRINT_NAMED_DEBUG("NVStorageComponent.Test.Read", "tag: %s", EnumToString(testMultiBlobTag));
       Read(testMultiBlobTag,
-           [](u8* data, size_t size, NVStorage::NVResult res) {
-             if (res == NVStorage::NVResult::NV_OKAY) {
+           [](u8* data, size_t size, NVResult res) {
+             if (res == NVResult::NV_OKAY) {
                PRINT_NAMED_DEBUG("NVStorageComponent.Test.ReadSUCCESS",
                                  "size: %zu, data[0]: %d, data[1023]: %d, data[1024]: %d, data[1034]: %d",
                                  size, data[0], data[1023], data[1024], data[1034]);
@@ -982,7 +1240,7 @@ void NVStorageComponent::Test()
     {
       PRINT_NAMED_DEBUG("NVStorageComponent.Test.Erase", "tag: %s", EnumToString(testMultiBlobTag));
       Erase(testMultiBlobTag,
-            [](NVStorage::NVResult res) {
+            [](NVResult res) {
               PRINT_NAMED_DEBUG("NVStorageComponent.Test.EraseResult", "%s", EnumToString(res));
             });
       break;
@@ -1014,7 +1272,7 @@ void NVStorageComponent::Test()
   } else {
     PRINT_NAMED_DEBUG("NVStorageComponent.Test.ReadingTestImage", "");
     Read(testMultiBlobTag,
-         [](u8* data, size_t size, NVStorage::NVResult res) {
+         [](u8* data, size_t size, NVResult res) {
            
            PRINT_NAMED_DEBUG("NVStorageComponent.Test.TestImageRecvd", "size: %zu", size);
    
@@ -1031,6 +1289,7 @@ void NVStorageComponent::Test()
   write = !write;
   */
 
+#endif // (ANKI_DEVELOPER_CODE)
 }
   
   

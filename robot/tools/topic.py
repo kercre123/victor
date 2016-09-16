@@ -80,5 +80,4 @@ if __name__ == '__main__':
             sys.stdout.flush()
             time.sleep(0.03)
     except KeyboardInterrupt:
-        robotInterface.Disconnect()
-        sys.exit()
+        robotInterface.Die()

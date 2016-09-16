@@ -9,54 +9,24 @@ namespace Anki {
 namespace Cozmo {
 namespace NVStorage {
 
-  /// Used to store a retrieve serialized NV storage structures without caring whats in them
-  structure NVStorageBlob
+  message NVCommand
   {
-    uint_32 tag,
-    uint_8  blob[uint_32:1024], // Index has to be uint_32 to keep blob data 4 byte aligned for firmware requirements
+    uint_32 address,           // Address to erase, write or read
+    uint_32 length,            // Length of erase or read (number of 1K segments for factory, number of bytes for non-factory), not used for write
+    NVOperation operation,     // Operation to perform
+    int_8  PADDING = 0,        // blob data below must fall on 32 bit boundary so add padding here.
+    uint_8 blob[uint_16:1024], // Note this blob has to start on 32 bit boundary
   }
 
-  enum int_8 NVReportDest
+  message NVOpResult
   {
-    ENGINE,
-    WIFI,
-    RTIP,
-    BODY,
+    uint_32 address,          // Address commanded
+    uint_32 offset,           // Offset from address of this data. e.g. Offset of 2 means data retrieved from (address + 2 * 1K)
+    NVOperation operation,    // Operation commanded
+    NVResult result,          // Result of command
+    uint_8 blob[uint_16:1024] // Data returned if it was a read
   }
 
-  message NVStorageRead
-  {
-    uint_32 tag,
-    uint_32 tagRangeEnd,
-    NVReportDest to,
-  }
-
-  message NVStorageWrite
-  {
-    NVReportDest reportTo, // Where we send reports
-    bool writeNotErase,    // If true this is a write, if false erase
-    bool reportEach,       // Report each operation completed
-    bool reportDone,       // Report when final operation is done
-    uint_32 rangeEnd,   // If erasing a range, the end of the range, start is the entry tag
-    NVStorageBlob entry
-  }
-
-  structure NVOpResult {
-    uint_32 tag,
-    NVResult   result,
-    bool       write,
-  }
-
-  message NVWipeAll
-  {
-    NVReportDest to,
-    uint_8 doSegments = 2,
-    bool includeFactory = 1,
-    bool reboot = 1,
-    string key, // Key must be "Yes I really want to do this!"
-  }
-
-}
-
-}
-}
+} // namespace NVStorage
+} // namespace Cozmo
+} // namespace Anki

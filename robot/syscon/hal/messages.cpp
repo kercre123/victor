@@ -101,14 +101,6 @@ static void Process_setHeadlight(const RobotInterface::SetHeadlight& msg)
   Battery::setHeadlight(msg.enable);
 }
 
-static void Process_nvReadToBody(const RobotInterface::NVReadResultToBody& msg)
-{
-}
-
-static void Process_nvOpResultToBody(const RobotInterface::NVOpResultToBody& msg)
-{
-}
-
 static void Process_readBodyStorage(const ReadBodyStorage& msg) {
   const uint8_t* data;
   int length;

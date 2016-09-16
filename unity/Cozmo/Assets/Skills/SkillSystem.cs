@@ -214,11 +214,11 @@ public class SkillSystem {
 
                 // Extra checking since we're seeing an error here
                 if (_ChallengeIndex < 0 || _ChallengeIndex >= _CozmoHighestLevels.Length) {
-                  DAS.Error("SkillSystem.HandleGameEvent", "GameEvent " + cozEvent.GameEventEnum + 
+                  DAS.Error("SkillSystem.HandleGameEvent", "GameEvent " + cozEvent.GameEventEnum +
                     " can't be handled with _ChallengeIndex " + _ChallengeIndex +
                     " and _CozmoHighestLevels.Length " + _CozmoHighestLevels.Length);
                 }
-                  
+
                 if (_CozmoHighestLevels[_ChallengeIndex] < currSkillData.LastLevel) {
                   _CozmoHighestLevels[_ChallengeIndex]++;
                 }
@@ -253,7 +253,6 @@ public class SkillSystem {
     GameEventManager.Instance.OnGameEvent -= HandleGameEvent;
 
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(HandleRobotConnected);
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.NVStorageData>(HandleNVStorageRead);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.NVStorageOpResult>(HandleNVStorageOpResult);
   }
 
@@ -261,7 +260,6 @@ public class SkillSystem {
     GameEventManager.Instance.OnGameEvent += HandleGameEvent;
 
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(HandleRobotConnected);
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.NVStorageData>(HandleNVStorageRead);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.NVStorageOpResult>(HandleNVStorageOpResult);
 
     _ChallengeIndex = -1;
@@ -280,18 +278,14 @@ public class SkillSystem {
   private void HandleNVStorageOpResult(G2U.NVStorageOpResult opResult) {
     if (opResult.op == NVOperation.NVOP_READ &&
         opResult.tag == NVEntryTag.NVEntry_GameSkillLevels) {
-      if (opResult.result != NVResult.NV_OKAY &&
-          opResult.result != NVResult.NV_SCHEDULED) {
+      if (opResult.result == NVResult.NV_OKAY) {
+        SetCozmoHighestLevelsReached(opResult.data, opResult.data.Length);
+      }
+      else {
         // write out defaults so we have some 0s for next time,
         // This was likely the first time and was just a "not found"
         UpdateHighestSkillsOnRobot();
       }
-    }
-  }
-
-  private void HandleNVStorageRead(G2U.NVStorageData robotData) {
-    if (robotData.tag == NVEntryTag.NVEntry_GameSkillLevels) {
-      SetCozmoHighestLevelsReached(robotData.data, robotData.data_length);
     }
   }
 
@@ -326,9 +320,8 @@ public class SkillSystem {
     // Write to updated array...
     RobotEngineManager.Instance.Message.NVStorageWriteEntry = new G2U.NVStorageWriteEntry();
     RobotEngineManager.Instance.Message.NVStorageWriteEntry.tag = Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_GameSkillLevels;
+    RobotEngineManager.Instance.Message.NVStorageWriteEntry.data = new byte[_CozmoHighestLevels.Length];
     System.Array.Copy(_CozmoHighestLevels, RobotEngineManager.Instance.Message.NVStorageWriteEntry.data, _CozmoHighestLevels.Length);
-
-    RobotEngineManager.Instance.Message.NVStorageWriteEntry.data_length = (ushort)_CozmoHighestLevels.Length;
     RobotEngineManager.Instance.SendMessage();
   }
 

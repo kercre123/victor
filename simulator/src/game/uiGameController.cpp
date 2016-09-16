@@ -302,30 +302,22 @@ namespace Anki {
       HandleDebugString(msg);
     }
     
-    void UiGameController::HandleNVStorageDataBase(ExternalInterface::NVStorageData const& msg)
+    void UiGameController::HandleNVStorageOpResultBase(ExternalInterface::NVStorageOpResult const& msg)
     {
-      PRINT_NAMED_INFO("HandleNVStorageData",
-                       "%s - index: %d, size %d",
-                       EnumToString(msg.tag), msg.index, msg.data_length);
-      
+      PRINT_NAMED_INFO("HandleNVStorageOpResult",
+                       "%s - res: %s,  operation: %s, index: %d, size %zu",
+                       EnumToString(msg.tag), EnumToString(msg.result), EnumToString(msg.op), msg.index, msg.data.size());
+
       // Compute new max size of the data we expect to receive and resize if necessary
+      const u32 BLOB_SIZE = 1024;
       size_t currSize = _recvdNVStorageData[msg.tag].size();
-      size_t potentialNewSize = msg.index * msg.data.size() + msg.data_length;
+      size_t potentialNewSize = msg.index * BLOB_SIZE + msg.data.size();
       if (potentialNewSize > currSize) {
         _recvdNVStorageData[msg.tag].resize(potentialNewSize);
       }
       
       // Copy into appropriate place in receive data vector
-      std::copy(msg.data.begin(), msg.data.begin() + msg.data_length, _recvdNVStorageData[msg.tag].begin() + msg.index * msg.data.size());
-      
-      HandleNVStorageData(msg);
-    }
-    
-    void UiGameController::HandleNVStorageOpResultBase(ExternalInterface::NVStorageOpResult const& msg)
-    {
-      PRINT_NAMED_INFO("HandleNVStorageOpResult",
-                       "%s - res: %s,  operation: %s",
-                       EnumToString(msg.tag), EnumToString(msg.result), EnumToString(msg.op));
+      std::copy(msg.data.begin(), msg.data.end(), _recvdNVStorageData[msg.tag].begin() + msg.index * BLOB_SIZE);
       
       HandleNVStorageOpResult(msg);
     }
@@ -381,10 +373,6 @@ namespace Anki {
     void UiGameController::ClearReceivedNVStorageData(NVStorage::NVEntryTag tag)
     {
       _recvdNVStorageData.erase(tag);
-    }
-    
-    bool UiGameController::IsMultiBlobEntryTag(u32 tag) const {
-      return (tag & 0x7fff0000) > 0;
     }
 
     void UiGameController::HandleEngineLoadingStatusBase(const ExternalInterface::EngineLoadingDataStatus& msg)
@@ -511,9 +499,6 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGame::Tag::DebugString:
             HandleDebugStringBase(message.Get_DebugString());
-            break;
-          case ExternalInterface::MessageEngineToGame::Tag::NVStorageData:
-            HandleNVStorageDataBase(message.Get_NVStorageData());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::NVStorageOpResult:
             HandleNVStorageOpResultBase(message.Get_NVStorageOpResult());
@@ -1610,10 +1595,9 @@ namespace Anki {
       
       ExternalInterface::NVStorageWriteEntry msg;
       msg.tag = tag;
-      msg.data_length = size;
       msg.index = blobIndex;
       msg.numTotalBlobs = numTotalBlobs;
-      std::copy(data, data+size,msg.data.begin());
+      msg.data.assign(data, data+size);
       
       ExternalInterface::MessageGameToEngine message;
       message.Set_NVStorageWriteEntry(msg);

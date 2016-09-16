@@ -10,8 +10,10 @@ extern "C" {
 #include "client.h"
 #include "driver/i2spi.h"
 #include "sha1.h"
-#include "flash_map.h"
+#include "anki/cozmo/robot/espAppImageHeader.h"
 }
+#include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/flash_map.h"
 #include "upgradeController.h"
 #include "anki/cozmo/robot/esp.h"
 #include "anki/cozmo/robot/logging.h"
@@ -291,6 +293,7 @@ namespace UpgradeController {
   void Update()
   {
     using namespace RobotInterface::OTA;
+    using namespace NVStorage;
     Ack ack;
     ack.bytesProcessed = bytesProcessed;
     ack.packetNumber   = acceptedPacketNumber;
@@ -332,16 +335,15 @@ namespace UpgradeController {
       {
         if (counter < ESP_FW_MAX_SIZE)
         {
-          const uint32 sector = ((fwWriteAddress + counter) / SECTOR_SIZE);
           #if DEBUG_OTA
-          os_printf("Erase sector 0x%x\r\n", sector);
+          os_printf("Erase sector 0x%x\r\n", fwWriteAddress + counter);
           #endif
-          const SpiFlashOpResult rslt = spi_flash_erase_sector(sector);
-          if (rslt != SPI_FLASH_RESULT_OK)
+          const NVResult rslt = HAL::FlashErase(fwWriteAddress + counter);
+          if (rslt != NV_OKAY)
           {
             if (retries-- <= 0)
             {
-              ack.result = rslt == SPI_FLASH_RESULT_ERR ? ERR_ERASE_ERROR : ERR_ERASE_TIMEOUT;
+              ack.result = rslt;
               RobotInterface::SendMessage(ack);
               Reset();
             }
@@ -613,15 +615,15 @@ namespace UpgradeController {
               Reset();
               return;
             }
-            const SpiFlashOpResult rslt = spi_flash_write(destAddr, fwb->flashBlock, TRANSMIT_BLOCK_SIZE);
-            if (rslt != SPI_FLASH_RESULT_OK)
+            const NVResult rslt = HAL::FlashWrite(destAddr, fwb->flashBlock, TRANSMIT_BLOCK_SIZE);
+            if (rslt != NV_OKAY)
             {
               if (retries-- <= 0)
               {
                 #if DEBUG_OTA
                 os_printf("\tRan out of retries writing to Espressif flash\r\n");
                 #endif
-                ack.result = rslt == SPI_FLASH_RESULT_ERR ? ERR_WRITE_ERROR : ERR_WRITE_TIMEOUT;
+                ack.result = rslt;
                 RobotInterface::SendMessage(ack);
                 Reset();
               }
@@ -816,19 +818,19 @@ namespace UpgradeController {
       }
       case OTAT_Apply_WiFi:
       {
-        SpiFlashOpResult rslt = SPI_FLASH_RESULT_OK;
+        NVResult rslt = NV_OKAY;
         if (didWiFi)
         {
           uint32_t headerUpdate[2];
           headerUpdate[0] = nextImageNumber; // Image number
           headerUpdate[1] = 0; // Evil
-          rslt = spi_flash_write(fwWriteAddress + APP_IMAGE_HEADER_OFFSET + 4, headerUpdate, 8);
+          rslt = HAL::FlashWrite(fwWriteAddress + APP_IMAGE_HEADER_OFFSET + 4, headerUpdate, 8);
         }
-        if (rslt != SPI_FLASH_RESULT_OK)
+        if (rslt != NV_OKAY)
         {
           if (retries-- <= 0)
           {
-            ack.result = rslt == SPI_FLASH_RESULT_ERR ? ERR_WRITE_ERROR : ERR_WRITE_TIMEOUT;
+            ack.result = rslt;
             RobotInterface::SendMessage(ack);
             Reset();
           }
@@ -939,7 +941,7 @@ namespace UpgradeController {
       case OTATR_Set_Evil_A:
       {
         uint32_t invalidNumber = 0;
-        if (spi_flash_write(APPLICATION_A_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET + 4, &invalidNumber, 4) == SPI_FLASH_RESULT_OK)
+        if (HAL::FlashWrite(APPLICATION_A_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET + 4, &invalidNumber, 4) == NV_OKAY)
         {
           phase = OTATR_Set_Evil_B;
         }
@@ -948,7 +950,7 @@ namespace UpgradeController {
       case OTATR_Set_Evil_B:
       {
         uint32_t invalidNumber = 0;
-        if (spi_flash_write(APPLICATION_B_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET + 4, &invalidNumber, 4) == SPI_FLASH_RESULT_OK)
+        if (HAL::FlashWrite(APPLICATION_B_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET + 4, &invalidNumber, 4) == NV_OKAY)
         {
           timer = system_get_time() + 1000000; // 1s second delay
           phase = OTATR_Delay;
@@ -962,7 +964,7 @@ namespace UpgradeController {
       }
       case OTATR_Get_Size:
       {
-        if (spi_flash_read(FACTORY_RTIP_BODY_FW_SECTOR * SECTOR_SIZE, reinterpret_cast<uint32_t*>(&counter), 4) == SPI_FLASH_RESULT_OK)
+        if (HAL::FlashRead(FACTORY_RTIP_BODY_FW_SECTOR * SECTOR_SIZE, reinterpret_cast<uint32_t*>(&counter), 4) == NV_OKAY)
         {
           if (counter < (int)sizeof(FirmwareBlock))
           {
@@ -982,8 +984,8 @@ namespace UpgradeController {
       case OTATR_Read:
       {
         const uint32 readPos = (FACTORY_RTIP_BODY_FW_SECTOR * SECTOR_SIZE) + counter + 4 - sizeof(FirmwareBlock);
-        const SpiFlashOpResult rslt = spi_flash_read(readPos, reinterpret_cast<uint32*>(buffer), sizeof(FirmwareBlock));
-        if (rslt != SPI_FLASH_RESULT_OK)
+        const NVResult rslt = HAL::FlashRead(readPos, reinterpret_cast<uint32*>(buffer), sizeof(FirmwareBlock));
+        if (rslt != NV_OKAY)
         {
           os_printf("Trouble reading recovery firmware from %x, %d\r\n", readPos, rslt);
         }

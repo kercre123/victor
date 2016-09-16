@@ -40,7 +40,9 @@ typedef unsigned int uint32_t;
 typedef unsigned char uint8;
 typedef unsigned char uint8_t;
 
-#include "flash_map.h"
+#include "sha1.h"
+#include "anki/cozmo/robot/flash_map.h"
+#include "anki/cozmo/robot/espAppImageHeader.h"
 
 #define NOINLINE __attribute__ ((noinline))
 

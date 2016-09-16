@@ -120,6 +120,7 @@ namespace Anki
       volatile u8 eof_ = 0;
 
       void HALExec(void);
+      void HALSafe(void);
       void HALInit(void);
 
       u8* const dmaBuff_ = (u8*)0x20000000;       // Start of RAM buffer
@@ -328,6 +329,7 @@ void DMA0_IRQHandler(void)
   timingSynced_ = true;
   NVIC_EnableIRQ(FTM2_IRQn);
   NVIC_SetPriority(FTM2_IRQn, 1);
+  NVIC_SetPriority(PendSV_IRQn, 0xFF);  // Lowest possible priority
   HALInit();
 }
 
@@ -346,6 +348,8 @@ void FTM2_IRQHandler(void)
   // Enable SPI DMA, Clear flag
   if (~FTM2_SC & FTM_SC_TOF_MASK) return ;
   */
+
+  DMA_CR = DMA_CR_CLM_MASK | DMA_CR_CX_MASK;  // Cancel camera DMA (in case it's out of sync).
 
   // QVGA subsample - TODO: Make dynamic
   if (line & 1) {
@@ -380,6 +384,19 @@ void FTM2_IRQHandler(void)
 
   // Don't touch registers or dmabuff_ after this point!
   
+  // Kick-off the JPEG encoder at a lower priority
+  SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
+}
+
+// Run JPEG encoder at a lower priority
+// If the JPEG encoder runs long, an entire line will be dropped from the image
+extern "C"
+void PendSV_Handler(void)
+{
+  using namespace Anki::Cozmo::HAL;
+
+  SCB->ICSR |= SCB_ICSR_PENDSVCLR_Msk;  // Acknowledge the interrupt
+
   // Run the JPEG encoder for all of the remaining time
   int eof = 0, buflen;   
 #if defined(ENABLE_JPEG)
@@ -428,7 +445,11 @@ void FTM2_IRQHandler(void)
   #endif  
   #endif
 #endif
-  
+
+  // These are HAL functions that do not access registers, and are therefor safe
+  // to run after the JPEG encoder
+  HALSafe();
+
   // Advance line pointer
   line++;
 }

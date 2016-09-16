@@ -27,7 +27,7 @@
 
 #ifdef SIMULATOR
 #include "anki/vision/CameraSettings.h"
-#include "../sim_hal/sim_nvStorage.h"
+#include "nvStorage.h"
 #include <math.h>
 #endif
 
@@ -204,7 +204,7 @@ namespace Anki {
         // Simulated NVStorage
         //////////////////////////////////////////////////////////////
 #if SIMULATOR
-        SimNVStorageSpace::Update();
+        NVStorage::Update();
 #endif
 
         //////////////////////////////////////////////////////////////
