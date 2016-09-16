@@ -442,8 +442,10 @@ void LightsComponent::SetEnableCubeLights(const ObjectID objectID, const bool en
       return;
     }
     
-    if(cube->second.enabled && !enable)
+    if(!enable)
     {
+      // Always force desiredState to off (even if currently disabled) otherwise UpdateToDesiredLights()
+      // will force the light back on
       cube->second.desiredState = CubeLightsState::Off;
     }
     else if(!cube->second.enabled && enable)
