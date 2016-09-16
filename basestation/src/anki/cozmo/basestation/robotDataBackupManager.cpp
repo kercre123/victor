@@ -490,10 +490,10 @@ void RobotDataBackupManager::HandleMessage(const ExternalInterface::RequestRobot
     
     PRINT_NAMED_INFO("RobotDataBackupManager.RobotConnected.AllBackups", "Have backup for %llu", std::stoull(file));
     restoreOptions.robotsWithBackupData.push_back((u32)std::stoull(file));
-    
-    // We should only prompt for restore if there exists a backup and this robot has not completed onboarding
-    restoreOptions.shouldPromptForRestore = !_hasCompletedOnboarding;
   }
+  
+  // We should only prompt for restore if there exists a backup and this robot has not completed onboarding
+  restoreOptions.shouldPromptForRestore = !_hasCompletedOnboarding;
   
   PRINT_NAMED_INFO("RobotDataBackupManager.HandleRequestRobotRestoreData",
                    "Will prompt for restore %s",
