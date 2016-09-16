@@ -14,10 +14,12 @@
 #include "driver/sdio_slv.h"
 #include "driver/i2spi.h" 
 #include "driver/i2s_ets.h"
+#include "driver/crash.h"
 #include "backgroundTask.h"
 #include "foregroundTask.h"
 #include "imageSender.h"
-
+#include "driver/crash.h"
+#include "anki/cozmo/robot/crashLogs.h"
 
 #define I2SPI_DEBUG 1
 #if I2SPI_DEBUG
@@ -300,6 +302,8 @@ bool beginResync(uint32_t param)
   return false;
 }
 
+
+
 /// Prep an sdio_queue structure (DMA descriptor) for (re)use
 void prepSdioQueue(struct sdio_queue* desc, uint8 eof)
 {
@@ -439,8 +443,8 @@ inline void receiveCompleteHandler(void)
             dbpc('!'); dbpc('T'); dbpc('M'); dbpc('D'); dbph(drift, 4); dbnl();
             if (drift > DRIFT_MARGIN*2)
             {
-              i2spiSwitchMode(I2SPI_NULL);
-              foregroundTaskPost(beginResync, 0);
+               i2spiSwitchMode(I2SPI_NULL);
+               foregroundTaskPost(beginResync, 0);
             }
             isrProfEnd(I2SPI_ISR_PROFILE_TMD);
           }
@@ -996,6 +1000,24 @@ bool i2spiSwitchMode(const I2SPIMode mode)
   }
   // Invalid state
   return false;
+}
+
+void ICACHE_FLASH_ATTR i2spiLogDesync(const u8* buffer, int buffer_bytes)
+{
+   CrashRecord record;
+   CrashLog_I2Spi* pCrash = (CrashLog_I2Spi*)record.dump;
+   buffer_bytes = min(buffer_bytes, 512);
+   
+  record.reporter = 4; //I2SpiCrash from robotErrors.clad
+  record.errorCode = 0;  //to force the dump data to be sent.
+  pCrash->integralDrift = self.integralDrift;
+  pCrash->phaseErrorCount = self.phaseErrorCount;
+  pCrash->rxOverflowCount = self.rxOverflowCount;
+  pCrash->txOverflowCount = self.txOverflowCount;
+  pCrash->relayWriteInd  = self.rtipBufferWind;
+  pCrash->relayReadInd = self.rtipBufferRind;
+  os_memcpy(pCrash->lastRelayBuffer, relayBuffer, RELAY_BUFFER_SIZE);
+  crashHandlerPutReport(&record);
 }
 
 uint32_t i2spiGetTxOverflowCount(void) { return self.txOverflowCount; }

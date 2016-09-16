@@ -106,4 +106,17 @@ typedef struct {
 
 ct_assert(sizeof(CrashLog_ESP) <= CRASH_RECORD_PAYLOAD_SIZE);
 
+typedef struct {
+  uint8_t integralDrift;
+  uint8_t phaseErrorCount;
+  uint8_t rxOverflowCount;
+  uint8_t txOverflowCount;
+  uint8_t relayWriteInd;
+  uint8_t relayReadInd;
+  uint8_t lastRelayBuffer[512]; //RELAY_BUFFER_SIZE from i2spi.c
+} CrashLog_I2Spi;
+  
+ct_assert(sizeof(CrashLog_I2Spi) <= CRASH_RECORD_PAYLOAD_SIZE);
+   
+
 #endif

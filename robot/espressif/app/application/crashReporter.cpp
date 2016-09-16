@@ -194,7 +194,6 @@ void Update()
     crashHandlerGetReport(reportIndex, &record);
     if (record.nWritten == 0 && record.nReported != 0)
     {
-      os_printf("Sending crash report %d\r\n",reportIndex);
       RobotInterface::CrashReport report;
       STACK_LEFT(DEBUG_CR);
       report.errorCode = record.errorCode;
@@ -218,6 +217,10 @@ void Update()
             report.dump_length = sizeof(CrashLog_NRF)/sizeof(uint32_t);
             break;
           }
+          case RobotInterface::I2SpiCrash:
+          {
+            report.dump_length = sizeof(CrashLog_I2Spi)/sizeof(uint32_t);
+          }
           default:
           {
             AnkiWarn( 206, "CrashReporter.UnknownReporter", 513, "Reporter = %d", 1, record.reporter);
@@ -234,6 +237,7 @@ void Update()
       {
         if (RobotInterface::SendMessage(report))
         {
+          os_printf("Sent crash report %d\r\n",reportIndex);
           crashHandlerMarkReported(reportIndex);
           reportIndex = MAX_CRASH_LOGS;
         }
