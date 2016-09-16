@@ -16,7 +16,7 @@ MonoBehaviour:
     TargetPoints: 100
   RewardList:
   - ItemId: TestHexItem0
-    MinAmount: 4
+    MinAmount: 5
     MaxAmount: 7
   - ItemId: treat
     MinAmount: 7
