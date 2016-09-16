@@ -359,7 +359,14 @@ namespace Anki {
 
       _compoundAction.AddAction(new WaitAction(_robot, initialWait_s));
       
-      _compoundAction.AddAction(new DriveStraightAction(_robot, backup_mm, backup_speed_mms));
+      const Radians headAngle_rad(DEG_TO_RAD(-5));
+      IActionRunner* driveAndLook = new CompoundActionParallel(_robot, {
+        new DriveStraightAction(_robot, backup_mm, backup_speed_mms),
+        new MoveHeadToAngleAction(_robot,headAngle_rad)
+      });
+      
+      
+      _compoundAction.AddAction(driveAndLook);
       
       _compoundAction.AddAction(new WaitAction(_robot, initialWait_s));
 

@@ -64,6 +64,9 @@ namespace SpeedTap {
     }
 
     private void PlayReactToRoundAnimationAndSendEvent() {
+      // Don't listen to pickup in case cozmo lifts himself on top of the cube for an animation
+      _CurrentRobot.RequestEnableReactionaryBehavior("speed_tap_anim", BehaviorType.ReactToPickup, false);
+
       AnimationTrigger animEvent = AnimationTrigger.Count;
       bool highIntensity = _SpeedTapGame.IsHighIntensityRound();
       if (_CurrentWinner == PointWinner.Player) {
@@ -97,6 +100,9 @@ namespace SpeedTap {
     }
 
     private void MoveToNextState() {
+      // re-enable react to pickup during the next round
+      _CurrentRobot.RequestEnableReactionaryBehavior("speed_tap_anim", BehaviorType.ReactToPickup, true);
+
       _SpeedTapGame.SharedMinigameView.HideGameStateSlide();
 
       _SpeedTapGame.ClearWinningLightPatterns();
