@@ -50,8 +50,12 @@ AudioFrameData* RobotAudioFrameStream::PopRobotAudioFrame()
 {
   std::lock_guard<std::mutex> lock( _lock );
   ASSERT_NAMED( !_audioFrameQueue.empty(), "Do Not call this methods if Key Frame Queue is empty" );
-  AudioFrameData* audioFrame = _audioFrameQueue.front();
-  _audioFrameQueue.pop();
+  AudioFrameData* audioFrame = nullptr;
+  if (!_audioFrameQueue.empty())
+  {
+    audioFrame = _audioFrameQueue.front();
+    _audioFrameQueue.pop();
+  }
   
   return audioFrame;
 }

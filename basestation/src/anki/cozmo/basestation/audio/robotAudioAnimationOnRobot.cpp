@@ -317,38 +317,40 @@ void RobotAudioAnimationOnRobot::PopRobotAudioMessage( RobotInterface::EngineToR
   if ( HasCurrentBufferStream() ) {
     
     AudioFrameData* audioFrame = _currentBufferStream->PopRobotAudioFrame();
-    
-    // TEMP: Convert audio frame into correct robot output, this will done in the Mixing Console at some point
-    // Create Audio Frame
-    AnimKeyFrame::AudioSample keyFrame;
-    ASSERT_NAMED(static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) <= keyFrame.Size(),
-                 "Block size must be less or equal to audioSameple size");
-    // Convert audio format to robot format
-    for ( size_t idx = 0; idx < audioFrame->sampleCount; ++idx ) {
-      keyFrame.sample[idx] = encodeMuLaw( audioFrame->samples[idx] );
-    }
-    
-    // Pad the back of the buffer with 0s
-    // This should only apply to the last frame
-    if (audioFrame->sampleCount < static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE )) {
-      std::fill( keyFrame.sample.begin() + audioFrame->sampleCount, keyFrame.sample.end(), 0 );
-    }
-
-    // After adding audio data to robot audio keyframe delete frame
-    Util::SafeDelete( audioFrame );
-    // Create Audio message
-    RobotInterface::EngineToRobot* audioMsg = new RobotInterface::EngineToRobot( std::move( keyFrame ) );
-    out_RobotAudioMessagePtr = audioMsg;
-    
-    // Ignore any animation events that belong to this frame
-    while ( GetEventIndex() < _animationEvents.size() ) {
-      AnimationEvent* currentEvent = &_animationEvents[GetEventIndex()];
-      if ( currentEvent->time_ms < relevantTime_ms ) {
-        IncrementEventIndex();
+    if (nullptr != audioFrame)
+    {
+      // TEMP: Convert audio frame into correct robot output, this will done in the Mixing Console at some point
+      // Create Audio Frame
+      AnimKeyFrame::AudioSample keyFrame;
+      ASSERT_NAMED(static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) <= keyFrame.Size(),
+                   "Block size must be less or equal to audioSameple size");
+      // Convert audio format to robot format
+      for ( size_t idx = 0; idx < audioFrame->sampleCount; ++idx ) {
+        keyFrame.sample[idx] = encodeMuLaw( audioFrame->samples[idx] );
       }
-      else {
-        // Too early to play next Event
-        break;
+      
+      // Pad the back of the buffer with 0s
+      // This should only apply to the last frame
+      if (audioFrame->sampleCount < static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE )) {
+        std::fill( keyFrame.sample.begin() + audioFrame->sampleCount, keyFrame.sample.end(), 0 );
+      }
+      
+      // After adding audio data to robot audio keyframe delete frame
+      Util::SafeDelete( audioFrame );
+      // Create Audio message
+      RobotInterface::EngineToRobot* audioMsg = new RobotInterface::EngineToRobot( std::move( keyFrame ) );
+      out_RobotAudioMessagePtr = audioMsg;
+      
+      // Ignore any animation events that belong to this frame
+      while ( GetEventIndex() < _animationEvents.size() ) {
+        AnimationEvent* currentEvent = &_animationEvents[GetEventIndex()];
+        if ( currentEvent->time_ms < relevantTime_ms ) {
+          IncrementEventIndex();
+        }
+        else {
+          // Too early to play next Event
+          break;
+        }
       }
     }
   }
