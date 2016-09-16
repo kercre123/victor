@@ -15,6 +15,7 @@
 
 #include <stddef.h>
 #include "anki/planning/shared/goalDefs.h"
+#include "anki/planning/shared/path.h"
 #include "xythetaPlanner_definitions.h"
 #include <utility>
 
@@ -49,6 +50,10 @@ public:
 
   // Check if the start (from context) is valid
   bool StartIsValid() const;
+  
+  // Compares against context's env, returns true if segments in path comprise a safe and complete plan
+  // Clears and fills in a list of path segments whose cumulative penalty doesnt exceed the max penalty
+  bool PathIsSafe(const Path& path, float startAngle, Path& validPath) const;
 
   // Computes a path from start to goal. Returns true if path found, false otherwise. Note that replanning may
   // or may not actually trigger the planner. E.g. if the environment hasn't changed (much), it may just use

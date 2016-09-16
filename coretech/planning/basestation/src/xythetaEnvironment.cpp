@@ -274,6 +274,108 @@ Cost xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID, b
   return penalty;
 }
 
+Cost xythetaEnvironment::ApplyPathSegment(const PathSegment& pathSegment,
+                                          State_c& state_c,
+                                          bool checkCollisions,
+                                          float maxPenalty) const
+{
+  Cost penalty = 0.0f;
+  
+  float endX, endY, endAngle;
+  pathSegment.GetEndPose(endX, endY, endAngle);
+  State_c endState_c = State_c(endX, endY, endAngle);
+  
+  if( !checkCollisions ) {
+    state_c = endState_c;
+    return penalty;
+  }
+  
+  const PathSegmentDef& segmentDef = pathSegment.GetDef();
+  const PathSegmentType& segmentType = pathSegment.GetType();
+  
+  float start_x = state_c.x_mm;
+  float start_y = state_c.y_mm;
+  float start_theta = state_c.theta;
+  
+  // intermediate state to move along path
+  State_c intermediate_c = state_c;
+
+  // figure out increments to path
+  
+  // since mprim.json uses an intermediate step size of 0.25 in positon, and PI/32 in orientation,
+  // find a step size that matches the smaller of those
+  const float kPrimPositionStepSizeRecip = 4.0f;
+  const float kPrimAngleStepSizeRecip = 32/PI;
+  const size_t numPointsPosition = std::ceil(1 + pathSegment.GetLength() * kPrimPositionStepSizeRecip);
+  const size_t numPointsAngle
+    = std::ceil(Anki::Util::Abs(Radians(segmentDef.turn.targetAngle - start_theta).ToFloat()) * kPrimAngleStepSizeRecip);
+  // number of points, including start and end
+  const size_t numIntermediatePoints = Anki::Util::Max((size_t)2, Anki::Util::Max(numPointsAngle, numPointsPosition));
+  ASSERT_NAMED(numIntermediatePoints>1,"Number of intermediate points for ApplyPathSegments must be >= 2");
+  
+  float dx = 0.0f;
+  float dy = 0.0f;
+  float dtheta = 0.0f;
+  const float step = 1.0f/(numIntermediatePoints-1);
+  const float oneOverDistFromLastPosition = (PST_POINT_TURN == segmentType)
+                                            ? (numIntermediatePoints-1) / segmentDef.arc.sweepRad
+                                            : (numIntermediatePoints-1) / pathSegment.GetLength();
+  
+  switch( segmentType ) {
+    case PST_POINT_TURN:
+    {
+      dtheta = step*Radians(segmentDef.turn.targetAngle - start_theta).ToFloat();
+      break;
+    }
+    case PST_LINE:
+    {
+      dx = step*(segmentDef.line.endPt_x - segmentDef.line.startPt_x);
+      dy = step*(segmentDef.line.endPt_y - segmentDef.line.startPt_y);
+      break;
+    }
+    case PST_ARC:
+    {
+      // dont use dx and dy here, instead compute x and y in the loop below
+      dtheta = step*segmentDef.arc.sweepRad;
+      break;
+    }
+    default:
+      PRINT_NAMED_ERROR("xythetaEnvironment.ApplyPathSegment","Undefined segment %d\n", segmentType);
+      assert(false);
+      return MAX_OBSTACLE_COST;
+  }
+
+  StateTheta intermediateTheta = GetTheta(intermediate_c.theta);
+  for(size_t i=1; i < numIntermediatePoints; ++i) {
+    if( segmentType == PST_POINT_TURN ) {
+      intermediate_c.theta = start_theta + dtheta*i;
+      intermediateTheta = GetTheta(intermediate_c.theta);
+    } else if( segmentType == PST_LINE ) {
+      intermediate_c.x_mm = start_x + dx*i;
+      intermediate_c.y_mm = start_y + dy*i;
+    } else if( segmentType == PST_ARC ) {
+      intermediate_c.x_mm = segmentDef.arc.centerPt_x + segmentDef.arc.radius * cosf(segmentDef.arc.startRad + dtheta*i);
+      intermediate_c.y_mm = segmentDef.arc.centerPt_y + segmentDef.arc.radius * sinf(segmentDef.arc.startRad + dtheta*i);
+      intermediate_c.theta = start_theta + dtheta*i;
+      intermediateTheta = GetTheta(intermediate_c.theta);
+    }
+    
+    size_t endObs = obstaclesPerAngle_[intermediateTheta].size();
+    for(size_t obs=0; obs<endObs; ++obs) {
+      if( obstaclesPerAngle_[intermediateTheta][obs].first.Contains(intermediate_c.x_mm, intermediate_c.y_mm) ) {
+        penalty += obstaclesPerAngle_[intermediateTheta][obs].second * oneOverDistFromLastPosition;
+        if( penalty >= maxPenalty) {
+          return penalty;
+        }
+      }
+    }
+  }
+  
+  // no fatal cost, so update state
+  state_c = endState_c;
+  return penalty;
+}
+
 
 bool xythetaEnvironment::PlanIsSafe(const xythetaPlan& plan,
                                     const float maxDistancetoFollowOldPlan_mm,
@@ -350,6 +452,48 @@ bool xythetaEnvironment::PlanIsSafe(const xythetaPlan& plan,
   }
 
   // if we get here, we successfully applied every action in the plan
+  return true;
+}
+
+bool xythetaEnvironment::PathIsSafe(const Planning::Path& path, float startAngle, Planning::Path& validPath) const
+{
+  size_t numSegments = path.GetNumSegments();
+  // choose the penalty for now so that ANY obstacle invalidates the path
+  const float maxPenalty = Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE;
+  
+  if(numSegments == 0) {
+    return false;
+  }
+
+  validPath.Clear();
+  float totalPenalty = 0.0f;
+  
+  float startX, startY;
+  path.GetSegmentConstRef(0).GetStartPoint(startX, startY);
+  
+  State_c currState_c(startX, startY, startAngle);
+  
+  for(size_t i = 0; i < numSegments; ++i) {
+    const PathSegment& currSegment = path.GetSegmentConstRef(i);
+    
+    // check for collisions and possibly update curr
+    Cost penalty = ApplyPathSegment(currSegment, currState_c, true, maxPenalty);
+    totalPenalty += penalty;
+    
+    if(totalPenalty > maxPenalty) {
+      PRINT_NAMED_INFO("xythetaEnvironment.PathIsSafe",
+                       "Collision along path segment %lu with penalty %f, total penalty %f\n",
+                       (unsigned long) i,
+                       penalty,
+                       totalPenalty);
+      // there was a collision trying to follow action i, so we are done
+      return false;
+    }
+    
+    validPath.AppendSegment(currSegment);
+  }
+
+  // if we get here, we successfully applied every action in the path
   return true;
 }
 

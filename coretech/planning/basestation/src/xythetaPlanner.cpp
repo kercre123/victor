@@ -65,6 +65,11 @@ bool xythetaPlanner::StartIsValid() const
 {
   return _impl->StartIsValid();
 }
+  
+bool xythetaPlanner::PathIsSafe(const Planning::Path& path, float startAngle, Planning::Path& validPath) const
+{
+  return _impl->PathIsSafe(path, startAngle, validPath);
+}
 
 bool xythetaPlanner::Replan(unsigned int maxExpansions, bool* runPlan)
 {
@@ -310,6 +315,11 @@ bool xythetaPlannerImpl::NeedsReplan() const
   // too far out of the way, in case the new plan differs from old
   const float default_maxDistanceToReUse_mm = 40.0f;
   return ! _context.env.PlanIsSafe( _plan, default_maxDistanceToReUse_mm );
+}
+
+bool xythetaPlannerImpl::PathIsSafe(const Planning::Path& path, float startAngle, Planning::Path& validPath) const
+{
+  return _context.env.PathIsSafe(path, startAngle, validPath);
 }
 
 bool xythetaPlannerImpl::InitializeHeuristic()

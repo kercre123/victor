@@ -177,6 +177,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
   , _lastPlayAreaSizeEventSec(0)
   , _playAreaSizeEventIntervalSec(60)
   , _didObjectsChange(false)
+  , _robotMsgTimeStampAtChange(0)
   , _canDeleteObjects(true)
   , _canAddObjects(true)
   , _currentNavMemoryMapOrigin(nullptr)
@@ -1295,6 +1296,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
       BroadcastObjectObservation(observedObject);
       
       _didObjectsChange = true;
+      _robotMsgTimeStampAtChange = atTimestamp;
       _currentObservedObjects.push_back(observedObject);
       
     } // for each object seen
@@ -1791,6 +1793,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
 
     AddNewObject(markerlessObject);
     _didObjectsChange = true;
+    _robotMsgTimeStampAtChange = lastTimestamp;
     _currentObservedObjects.push_back(markerlessObject.get());
     
     if(kAddMarkerlessObjectsToMemMap)
@@ -1815,6 +1818,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
 
     AddNewObject(customObject);
     _didObjectsChange = true;
+    _robotMsgTimeStampAtChange = _robot->GetLastMsgTimestamp();
     
     // TODO: Remove these (custom fixed objects have no markers and can't be observed
     // (this was just copy/pasted from MarkerlessObject)
@@ -1928,6 +1932,10 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
   
   bool BlockWorld::DidObjectsChange() const {
     return _didObjectsChange;
+  }
+  
+  const TimeStamp_t& BlockWorld::GetTimeOfLastChange() const {
+    return _robotMsgTimeStampAtChange;
   }
 
   
@@ -2496,6 +2504,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
         m->SetLastObservedTime(lastTimestamp);
         AddNewObject(ObjectFamily::MarkerlessObject, m);
         _didObjectsChange = true;
+        _robotMsgTimeStampAtChange = _robot->GetLastMsgTimestamp();
       }
     } // end for all prox sensors
     
@@ -4120,6 +4129,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
       
       // Flag that we removed an object
       _didObjectsChange = true;
+      _robotMsgTimeStampAtChange = _robot->GetLastMsgTimestamp();
     }
   }
   

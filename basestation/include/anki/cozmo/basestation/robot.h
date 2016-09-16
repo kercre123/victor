@@ -339,6 +339,15 @@ public:
   // This function checks the planning / path following status of the robot. See the enum definition for
   // details
   ERobotDriveToPoseStatus CheckDriveToPoseStatus() const;
+  
+  // Starts the selected planner with ComputePath, returns true if the selected planner or its fallback
+  // does not result in an error. The path may still contain obstacles if the selected planner didnt
+  // consider obstacles in its search.
+  bool StartPlanner(); // calls one of the following based on cached start and target poses
+  bool StartPlanner(const Pose3d& driveCenterPose, const Pose3d& targetDriveCenterPose);
+  bool StartPlanner(const Pose3d& driveCenterPose, const std::vector<Pose3d>& targetDriveCenterPoses);
+  // Replans with ComputeNewPathIfNeeded
+  void RestartPlannerIfNeeded(bool forceReplan);
     
   bool IsTraversingPath()      const {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
     
@@ -808,13 +817,14 @@ protected:
   // Hash to not spam debug messages
   size_t            _lastDebugStringHash;
 
-  // Path Following. There are two planners, only one of which can
-  // be selected at a time
+  // Path Following. There are multiple planners, only one of which can
+  // be selected at a time. Some of these might point to the same planner.
   Pose3d                   _currentPlannerGoal;
   IPathPlanner*            _selectedPathPlanner          = nullptr;
   IPathPlanner*            _longPathPlanner              = nullptr;
   IPathPlanner*            _shortPathPlanner             = nullptr;
   IPathPlanner*            _shortMinAnglePathPlanner     = nullptr;
+  IPathPlanner*            _fallbackPathPlanner          = nullptr;
   Planning::GoalID*        _plannerSelectedPoseIndexPtr  = nullptr;
   int                      _numPlansStarted              = 0;
   int                      _numPlansFinished             = 0;
@@ -826,6 +836,9 @@ protected:
   bool                     _usingManualPathSpeed         = false;
   PathDolerOuter*          _pdo                          = nullptr;
   PathMotionProfile        _pathMotionProfile            = DEFAULT_PATH_MOTION_PROFILE;
+  bool                     _fallbackShouldForceReplan    = false;
+  Pose3d                   _fallbackPlannerDriveCenterPose;
+  std::vector<Pose3d>      _fallbackPlannerTargetPoses;
   
   // This functions sets _selectedPathPlanner to the appropriate planner
   void SelectPlanner(const Pose3d& targetPose);

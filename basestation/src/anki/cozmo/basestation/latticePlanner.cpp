@@ -95,6 +95,7 @@ public:
     , _parent(parent)
     , _multiGoalPlanning(LATTICE_PLANNER_MULTIPLE_GOALS)
     , _selectedGoalID(0)
+    , _timeOfLastObjectsImport(0)
   {
     if( dataPlatform == nullptr ) {
       PRINT_NAMED_ERROR("LatticePlanner.InvalidDataPlatform",
@@ -152,7 +153,7 @@ public:
   }
 
   // imports and pads obstacles
-  void ImportBlockworldObstacles(const bool isReplanning, const ColorRGBA* vizColor = nullptr);
+  void ImportBlockworldObstaclesIfNeeded(const bool isReplanning, const ColorRGBA* vizColor = nullptr);
 
   EComputePathStatus StartPlanning(const Pose3d& startPose,
                                    bool forceReplanFromScratch);
@@ -160,6 +161,10 @@ public:
   EPlannerStatus CheckPlanningStatus() const;
 
   bool GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path, Planning::GoalID& selectedTargetIndex);
+  
+  // Compares against context's env, returns true if segments in path comprise a safe plan.
+  // Clears and fills in a list of path segments whose cumulative penalty doesnt exceed the max penalty
+  bool CheckIsPathSafe(const Planning::Path& path, float startAngle, Planning::Path& validPath) const;
 
   void StopPlanning();
 
@@ -200,6 +205,9 @@ public:
   
   // the chosen best goal out of _targetPoses_orig
   GoalID _selectedGoalID;
+  
+  // the last timestamp at which blockworld objects were imported
+  TimeStamp_t _timeOfLastObjectsImport;
 };
 
 //////////////////////////////////////////////////////////////////////////////// 
@@ -269,7 +277,7 @@ EComputePathStatus LatticePlanner::ComputePathHelper(const Pose3d& startPose,
   // Save original target pose
   _impl->_targetPoses_orig = targetPoses;
   
-  _impl->ImportBlockworldObstacles(false);
+  _impl->ImportBlockworldObstaclesIfNeeded(false);
 
   // Clear plan whenever we attempt to set goal
   _impl->_totalPlan.Clear();
@@ -333,7 +341,7 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
 
   std::lock_guard<std::recursive_mutex> lg( _impl->_contextMutex, std::adopt_lock);
 
-  _impl->ImportBlockworldObstacles(false, &NamedColors::BLOCK_BOUNDING_QUAD);
+  _impl->ImportBlockworldObstaclesIfNeeded(false, &NamedColors::BLOCK_BOUNDING_QUAD);
 
   // either search among all goals or just one
   
@@ -408,6 +416,17 @@ EComputePathStatus LatticePlanner::ComputeNewPathIfNeeded(const Pose3d& startPos
   }
 
   return ret;
+}
+
+bool LatticePlanner::PreloadObstacles()
+{
+  _impl->ImportBlockworldObstaclesIfNeeded(false);
+  return true;
+}
+  
+bool LatticePlanner::CheckIsPathSafe(const Planning::Path& path, float startAngle, Planning::Path& validPath) const
+{
+  return _impl->CheckIsPathSafe(path, startAngle, validPath);
 }
 
 void LatticePlanner::GetTestPath(const Pose3d& startPose, Planning::Path &path, const PathMotionProfile* motionProfile)
@@ -566,12 +585,12 @@ EPlannerStatus LatticePlannerImpl::CheckPlanningStatus() const
 }
 
 
-void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, const ColorRGBA* vizColor)
+void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanning, const ColorRGBA* vizColor)
 {
 
   if( ! _contextMutex.try_lock() ) {
     // thread is already running.
-    PRINT_NAMED_WARNING("LatticePlanner.ImportBlockworldObstacles.alreadyRunning",
+    PRINT_NAMED_WARNING("LatticePlanner.ImportBlockworldObstaclesIfNeeded.alreadyRunning",
                         "Tried to compute a new path, but the planner is already running!");
     return;
   }
@@ -588,11 +607,13 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
     robotPadding -= LATTICE_PLANNER_RPLAN_PADDING_SUBTRACT;
   }
 
-  const bool didObjecsChange = _robot->GetBlockWorld().DidObjectsChange();
+  const TimeStamp_t timeOfLastChange = _robot->GetBlockWorld().GetTimeOfLastChange();
+  const bool didObjectsChange = (_timeOfLastObjectsImport < timeOfLastChange);
   
-  if(!isReplanning ||  // if not replanning, this must be a fresh, new plan, so we always should get obstacles
-     didObjecsChange)
+  if(!isReplanning ||  // get obstacles if theyve changed or we're not replanning
+     didObjectsChange)
   {
+    _timeOfLastObjectsImport = timeOfLastChange;
     std::vector<std::pair<Quad2f,ObjectID> > boundingBoxes;
 
     _robot->GetBlockWorld().GetObstacles(boundingBoxes, obstaclePadding);
@@ -650,23 +671,23 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
       }
 
       // if(theta == 0) {
-      //   PRINT_NAMED_INFO("LatticePlannerImpl.ImportBlockworldObstacles.ImportedObstacles",
+      //   PRINT_NAMED_INFO("LatticePlannerImpl.ImportBlockworldObstaclesIfNeeded.ImportedObstacles",
       //                    "imported %d obstacles form blockworld",
       //                    numAdded);
       // }
     }
 
-    // PRINT_NAMED_INFO("LatticePlannerImpl.ImportBlockworldObstacles.ImportedAngles",
+    // PRINT_NAMED_INFO("LatticePlannerImpl.ImportBlockworldObstaclesIfNeeded.ImportedAngles",
     //                  "imported %d total obstacles for %d angles",
     //                  numAdded,
     //                  numAngles);
   }
   else {
-    PRINT_NAMED_INFO("LatticePlanner.ImportBlockworldObstacles.NoUpdateNeeded",
+    PRINT_NAMED_INFO("LatticePlanner.ImportBlockworldObstaclesIfNeeded.NoUpdateNeeded",
                      "robot padding %f, obstacle padding %f , didBlocksChange %d",
                      robotPadding,
                      obstaclePadding,
-                     didObjecsChange);
+                     didObjectsChange);
   }
 }
 
@@ -699,7 +720,7 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
 
   //_robot->GetContext()->GetVizManager()->EraseAllQuads();
   if( ! _context.forceReplanFromScratch ) {
-    ImportBlockworldObstacles(true, &NamedColors::REPLAN_BLOCK_BOUNDING_QUAD);
+    ImportBlockworldObstaclesIfNeeded(true, &NamedColors::REPLAN_BLOCK_BOUNDING_QUAD);
 
     // planIdx is the number of plan actions to execute before getting to the starting point closest to start
     float offsetFromPlan = 0.0;
@@ -765,7 +786,7 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
     }
     else {
       // use real padding for re-plan
-      ImportBlockworldObstacles(false, &NamedColors::BLOCK_BOUNDING_QUAD);
+      ImportBlockworldObstaclesIfNeeded(false, &NamedColors::BLOCK_BOUNDING_QUAD);
 
       std::stringstream ss;
       ss <<  "from (" << lastSafeState.x_mm << ", " << lastSafeState.y_mm << ", " << lastSafeState.theta << ") to ";
@@ -917,6 +938,12 @@ bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
   }
 
   return true;  
+}
+
+
+bool LatticePlannerImpl::CheckIsPathSafe(const Planning::Path& path, float startAngle, Planning::Path& validPath) const
+{
+  return _planner.PathIsSafe(path, startAngle, validPath);
 }
 
 

@@ -50,6 +50,12 @@ public:
 
   virtual EComputePathStatus ComputeNewPathIfNeeded(const Pose3d& startPose,
                                                     bool forceReplanFromScratch = false) override;
+  
+  virtual bool PreloadObstacles() override;
+  
+  virtual bool CheckIsPathSafe(const Planning::Path& path, float startAngle, Planning::Path& validPath) const override;
+  
+  virtual bool ChecksForCollisions() const override { return true; }
 
   virtual void StopPlanning() override;
 

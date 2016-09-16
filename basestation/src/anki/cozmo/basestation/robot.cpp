@@ -257,6 +257,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   _shortPathPlanner = new FaceAndApproachPlanner;
   _shortMinAnglePathPlanner = new MinimalAnglePlanner;
   _selectedPathPlanner = _longPathPlanner;
+  _fallbackPathPlanner = nullptr;
       
   if (nullptr != _context->GetDataPlatform())
   {
@@ -298,6 +299,7 @@ Robot::~Robot()
   Util::SafeDelete(_speedChooser);
 
   _selectedPathPlanner = nullptr;
+  _fallbackPathPlanner = nullptr;
       
 }
     
@@ -1258,23 +1260,8 @@ Result Robot::Update(bool ignoreVisionModes)
           {
             // we didn't need to adjust origins
             // see if we need to replan, but only bother checking if the world objects changed
-            switch( _selectedPathPlanner->ComputeNewPathIfNeeded( GetDriveCenterPose(), forceReplan ) ) {
-              case EComputePathStatus::Error:
-                _driveToPoseStatus = ERobotDriveToPoseStatus::Error;
-                AbortDrivingToPose();
-                PRINT_NAMED_INFO("Robot.Update.Replan.Fail", "ComputeNewPathIfNeeded returned failure!");
-                break;
-
-              case EComputePathStatus::Running:
-                _numPlansStarted++;
-                PRINT_NAMED_INFO("Robot.Update.Replan.Running", "ComputeNewPathIfNeeded running");
-                _driveToPoseStatus = ERobotDriveToPoseStatus::Replanning;
-                break;
-
-              case EComputePathStatus::NoPlanNeeded:
-                // leave status as following, don't update plan attempts since no new planning is needed
-                break;
-            }
+            _fallbackShouldForceReplan = forceReplan;
+            RestartPlannerIfNeeded(forceReplan);
           }
         }
       }
@@ -1287,10 +1274,25 @@ Result Robot::Update(bool ignoreVisionModes)
       // TODO:(bn) timeout logic might fit well here?
       switch( _selectedPathPlanner->CheckPlanningStatus() ) {
         case EPlannerStatus::Error:
-          _driveToPoseStatus =  ERobotDriveToPoseStatus::Error;
-          PRINT_NAMED_INFO("Robot.Update.Planner.Error", "Running planner returned error status");
-          AbortDrivingToPose();
-          _numPlansFinished = _numPlansStarted;
+          if( nullptr != _fallbackPathPlanner ) {
+            _selectedPathPlanner = _fallbackPathPlanner;
+            _fallbackPathPlanner = nullptr;
+            _numPlansFinished = _numPlansStarted;
+            PRINT_NAMED_INFO("Robot.Update.Planner.Error",
+                             "Running planner returned error status, using fallback planner instead");
+            if( !StartPlanner() ) {
+              _driveToPoseStatus =  ERobotDriveToPoseStatus::Error;
+              AbortDrivingToPose();
+              _numPlansFinished = _numPlansStarted;
+            } else {
+              _numPlansStarted++;
+            }
+          } else {
+            _driveToPoseStatus =  ERobotDriveToPoseStatus::Error;
+            PRINT_NAMED_INFO("Robot.Update.Planner.Error", "Running planner returned error status");
+            AbortDrivingToPose();
+            _numPlansFinished = _numPlansStarted;
+          }
           break;
 
         case EPlannerStatus::Running:
@@ -1304,26 +1306,67 @@ Result Robot::Update(bool ignoreVisionModes)
           break;
 
         case EPlannerStatus::CompleteWithPlan: {
-          PRINT_NAMED_INFO("Robot.Update.Planner.CompleteWithPlan", "Running planner complete with a plan");
-
-          _driveToPoseStatus = ERobotDriveToPoseStatus::FollowingPath;
-          _numPlansFinished = _numPlansStarted;
-
+          // get the path
           Planning::GoalID selectedPoseIdx;
           Planning::Path newPath;
 
           _selectedPathPlanner->GetCompletePath(GetDriveCenterPose(), newPath, selectedPoseIdx, &_pathMotionProfile);
-          ExecutePath(newPath, _usingManualPathSpeed);
+          
+          // check for collisions
+          bool collisionsAcceptable = _selectedPathPlanner->ChecksForCollisions();
+          // Some children of IPathPlanner may return a path that hasn't been checked for obstacles.
+          // Here, check if the planner used to compute that path considers obstacles. If it doesnt,
+          // check for an obstacle penalty. If there is one, re-run with the lattice planner,
+          // which considers obstacles in its search.
+          if( (!collisionsAcceptable) && (nullptr != _longPathPlanner) ) {
+            const float startPoseAngle = GetPose().GetRotationAngle<'Z'>().ToFloat();
+            const bool __attribute__((unused)) obstaclesLoaded = _longPathPlanner->PreloadObstacles();
+            ASSERT_NAMED(obstaclesLoaded, "Lattice planner didnt preload obstacles.");
+            if( !_longPathPlanner->CheckIsPathSafe(newPath, startPoseAngle) ) {
+              // bad path. try with the fallback planner if possible
+              if( nullptr != _fallbackPathPlanner ) {
+                _selectedPathPlanner = _fallbackPathPlanner;
+                _fallbackPathPlanner = nullptr;
+                _numPlansFinished = _numPlansStarted;
+                PRINT_NAMED_INFO("Robot.Update.Planner.Collisions",
+                                 "Planner returned a path with obstacles, using fallback planner instead");
+                if( !StartPlanner() ) {
+                  _driveToPoseStatus =  ERobotDriveToPoseStatus::Error;
+                  AbortDrivingToPose();
+                  _numPlansFinished = _numPlansStarted;
+                } else {
+                  _numPlansStarted++;
+                }
+              } else {
+                // we only have a path with collisions, abort
+                PRINT_NAMED_INFO("Robot.Update.Planner.CompleteNoCollisionFreePlan", "A plan was found, but it contains collisions");
+                _driveToPoseStatus = ERobotDriveToPoseStatus::Waiting;
+                _numPlansFinished = _numPlansStarted;
+              }
+            } else {
+              collisionsAcceptable = true;
+            }
+          }
+          
+          if( collisionsAcceptable ) {
+            PRINT_NAMED_INFO("Robot.Update.Planner.CompleteWithPlan", "Running planner complete with a plan");
 
-          if( _plannerSelectedPoseIndexPtr != nullptr ) {
-            // When someone called StartDrivingToPose with multiple possible poses, they had an option to pass
-            // in a pointer to be set when we know which pose was selected by the planner. If that pointer is
-            // non-null, set it now, then clear the pointer so we won't set it again
+            _driveToPoseStatus = ERobotDriveToPoseStatus::FollowingPath;
+            _numPlansFinished = _numPlansStarted;
 
-            // TODO:(bn) think about re-planning, here, what if replanning wanted to switch targets? For now,
-            // replanning will always chose the same target pose, which should be OK for now
-            *_plannerSelectedPoseIndexPtr = selectedPoseIdx;
-            _plannerSelectedPoseIndexPtr = nullptr;
+            
+            ExecutePath(newPath, _usingManualPathSpeed);
+
+            if( _plannerSelectedPoseIndexPtr != nullptr ) {
+              // When someone called StartDrivingToPose with multiple possible poses, they had an option to pass
+              // in a pointer to be set when we know which pose was selected by the planner. If that pointer is
+              // non-null, set it now, then clear the pointer so we won't set it again
+
+              // TODO:(bn) think about re-planning, here, what if replanning wanted to switch targets? For now,
+              // replanning will always chose the same target pose, which should be OK for now
+              *_plannerSelectedPoseIndexPtr = selectedPoseIdx;
+              _plannerSelectedPoseIndexPtr = nullptr;
+            }
           }
           break;
         }
@@ -1656,6 +1699,12 @@ void Robot::SelectPlanner(const Pose3d& targetPose)
     PRINT_NAMED_INFO("Robot.SelectPlanner.Long", "distance^2 is %f, selecting long planner", distSquared);
     _selectedPathPlanner = _longPathPlanner;
   }
+  
+  if( _selectedPathPlanner != _longPathPlanner ) {
+    _fallbackPathPlanner = _longPathPlanner;
+  } else {
+    _fallbackPathPlanner = nullptr;
+  }
 }
 
 void Robot::SelectPlanner(const std::vector<Pose3d>& targetPoses)
@@ -1686,9 +1735,8 @@ Result Robot::StartDrivingToPose(const Pose3d& targetPose,
   Pose3d targetDriveCenterPose;
   ComputeDriveCenterPose(targetPoseWrtOrigin, targetDriveCenterPose);
 
-  // Compute drive center pose for start pose
-  EComputePathStatus status = _selectedPathPlanner->ComputePath(GetDriveCenterPose(), targetDriveCenterPose);
-  if( status == EComputePathStatus::Error ) {
+  const bool somePlannerSucceeded = StartPlanner(GetDriveCenterPose(), targetDriveCenterPose);
+  if( !somePlannerSucceeded ) {
     _driveToPoseStatus = ERobotDriveToPoseStatus::Error;
     return RESULT_FAIL;
   }
@@ -1723,10 +1771,9 @@ Result Robot::StartDrivingToPose(const std::vector<Pose3d>& poses,
     ComputeDriveCenterPose(poses[i], targetDriveCenterPoses[i]);
   }
 
-  EComputePathStatus status = _selectedPathPlanner->ComputePath(GetDriveCenterPose(), targetDriveCenterPoses);
-  if( status == EComputePathStatus::Error ) {
+  const bool somePlannerSucceeded = StartPlanner(GetDriveCenterPose(), targetDriveCenterPoses);
+  if( !somePlannerSucceeded ) {
     _driveToPoseStatus = ERobotDriveToPoseStatus::Error;
-
     return RESULT_FAIL;
   }
 
@@ -1748,7 +1795,86 @@ ERobotDriveToPoseStatus Robot::CheckDriveToPoseStatus() const
 {
   return _driveToPoseStatus;
 }
-    
+
+bool Robot::StartPlanner()
+{
+  if( _fallbackPlannerTargetPoses.size() == 1 ) {
+    return StartPlanner(_fallbackPlannerDriveCenterPose, _fallbackPlannerTargetPoses.back());
+  } else if ( _fallbackPlannerTargetPoses.size() > 1 ){
+    return StartPlanner(_fallbackPlannerDriveCenterPose, _fallbackPlannerTargetPoses);
+  } else { // treat it as an error
+    PRINT_NAMED_ERROR("Robot.Update.Planner.Error", "Could not restart planner, missing target poses");
+    return false;
+  }
+}
+  
+bool Robot::StartPlanner(const Pose3d& driveCenterPose, const std::vector<Pose3d>& targetDriveCenterPoses)
+{
+  // save start and target poses in case this run fails and we need to try again
+  _fallbackPlannerDriveCenterPose = driveCenterPose;
+  _fallbackPlannerTargetPoses = targetDriveCenterPoses;
+  
+  EComputePathStatus status = _selectedPathPlanner->ComputePath(driveCenterPose, targetDriveCenterPoses);
+  if( status == EComputePathStatus::Error ) {
+    // try again with the fallback, if it exists
+    if( nullptr != _fallbackPathPlanner ) {
+      _selectedPathPlanner = _fallbackPathPlanner;
+      _fallbackPathPlanner = nullptr;
+      if( EComputePathStatus::Error != _selectedPathPlanner->ComputePath(driveCenterPose, targetDriveCenterPoses) ) {
+        return true;
+      }
+    }
+    return false;
+  }
+  return true;
+}
+  
+bool Robot::StartPlanner(const Pose3d& driveCenterPose, const Pose3d& targetDriveCenterPose)
+{
+  // save start and target poses in case this run fails and we need to try again
+  _fallbackPlannerDriveCenterPose = driveCenterPose;
+  _fallbackPlannerTargetPoses.clear();
+  _fallbackPlannerTargetPoses.push_back(targetDriveCenterPose);
+  
+  EComputePathStatus status = _selectedPathPlanner->ComputePath(driveCenterPose, targetDriveCenterPose);
+  if( status == EComputePathStatus::Error ) {
+    // try again with the fallback, if it hasnt been used already
+    if( nullptr != _fallbackPathPlanner ) {
+      _selectedPathPlanner = _fallbackPathPlanner;
+      _fallbackPathPlanner = nullptr;
+      if( EComputePathStatus::Error != _selectedPathPlanner->ComputePath(driveCenterPose, targetDriveCenterPose) ) {
+        return true;
+      }
+    }
+    return false;
+  }
+  return true;
+}
+
+void Robot::RestartPlannerIfNeeded(bool forceReplan)
+{
+  assert(nullptr != _selectedPathPlanner);
+  assert(_numPlansStarted == _numPlansFinished);
+  
+  switch( _selectedPathPlanner->ComputeNewPathIfNeeded( GetDriveCenterPose(), forceReplan ) ) {
+    case EComputePathStatus::Error:
+      _driveToPoseStatus = ERobotDriveToPoseStatus::Error;
+      AbortDrivingToPose();
+      PRINT_NAMED_INFO("Robot.Update.Replan.Fail", "ComputeNewPathIfNeeded returned failure!");
+      break;
+      
+    case EComputePathStatus::Running:
+      _numPlansStarted++;
+      PRINT_NAMED_INFO("Robot.Update.Replan.Running", "ComputeNewPathIfNeeded running");
+      _driveToPoseStatus = ERobotDriveToPoseStatus::Replanning;
+      break;
+      
+    case EComputePathStatus::NoPlanNeeded:
+      // leave status as following, don't update plan attempts since no new planning is needed
+      break;
+  }
+}
+  
 Result Robot::PlaceObjectOnGround(const bool useManualSpeed)
 {
   if(!IsCarryingObject()) {

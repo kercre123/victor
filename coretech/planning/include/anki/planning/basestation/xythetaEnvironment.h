@@ -8,6 +8,7 @@
 #include "anki/planning/shared/path.h"
 #include "json/json-forwards.h"
 #include "xythetaPlanner_definitions.h"
+#include "util/math/constantsAndMacros.h"
 #include <assert.h>
 #include <cmath>
 #include <cfloat>
@@ -359,6 +360,12 @@ public:
   // obstacle penalties). If the action finishes without a fatal
   // penalty, stateID will be updated to the successor state
   Cost ApplyAction(const ActionID& action, StateID& stateID, bool checkCollisions = true) const;
+  
+  // Continuous version of ApplyAction for path segments
+  Cost ApplyPathSegment(const PathSegment& pathSegment,
+                        State_c& state_c,
+                        bool checkCollisions = true,
+                        float maxPenalty = FLOATING_POINT_COMPARISON_TOLERANCE) const;
 
   // Returns the state at the end of the given plan (e.g. following
   // along the plans start and executing every action). No collision
@@ -408,6 +415,10 @@ public:
                   int currentPathIndex,
                   State_c& lastSafeState,
                   xythetaPlan& validPlan) const;
+  // Returns true if segments in path comprise a safe and complete plan. Clears and fills in a list of
+  // path segments whose cumulative penalty doesnt exceed the max penalty. Unlike PlanIsSafe, does
+  // not include action penalties along the path, because Path doesnt have that whereas a plan does
+  bool PathIsSafe(const Planning::Path& path, float startAngle, Planning::Path& validPath) const;
 
   // If we are going to be doing a full planner cycle, this function
   // will be called to prepare the environment, including

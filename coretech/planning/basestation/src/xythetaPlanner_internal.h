@@ -53,6 +53,10 @@ struct xythetaPlannerImpl
 
   // checks if we need to replan from scratch
   bool NeedsReplan() const;
+  
+  // Compares against context's env, returns true if segments in path comprise a safe and complete plan
+  // Clears and fills in a list of path segments whose cumulative penalty doesnt exceed the max penalty
+  bool PathIsSafe(const Planning::Path& path, float startAngle, Planning::Path& validPath) const;
 
   void GetTestPlan(xythetaPlan& plan);
 
