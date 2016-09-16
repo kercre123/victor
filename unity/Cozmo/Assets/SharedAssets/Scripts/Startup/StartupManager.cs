@@ -317,8 +317,6 @@ public class StartupManager : MonoBehaviour {
 
   private void AddComponents() {
     // Add managers to this object here
-    // gameObject.AddComponent<ManagerTypeName>();
-    gameObject.AddComponent<ExceptionReportManager>();
     gameObject.AddComponent<ObjectTagRegistryManager>();
 
     // Initialize persistance manager

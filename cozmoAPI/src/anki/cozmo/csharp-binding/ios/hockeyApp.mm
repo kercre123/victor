@@ -8,6 +8,7 @@
 #import <Foundation/Foundation.h>
 #import "hockeyApp.h"
 
+#import "util/logging/logging.h"
 #import <DAS/DAS.h>
 #import <DAS/DASPlatform.h>
 #import <HockeySDK/HockeySDK.h>
@@ -68,7 +69,7 @@ BOOL gWaitingForCrashUpload = NO;
                             sourceApplication:sourceApplication   
                                    annotation:annotation];
   if (handled) {
-    DASEvent("HockeyApp.ios.handleOpenURL", "URL:%s sourceApp:%s", url.absoluteString.UTF8String, sourceApplication.UTF8String);
+    PRINT_NAMED_EVENT("HockeyApp.ios.handleOpenURL", "URL:%s sourceApp:%s", url.absoluteString.UTF8String, sourceApplication.UTF8String);
   }
   return handled;
 }
@@ -83,17 +84,16 @@ BOOL gWaitingForCrashUpload = NO;
   NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
   BOOL disableReporting = [defaults boolForKey:@"ReportingDisabled"];
   if (disableReporting) {
-    DASEvent("HockeyApp.ios.opt_out", "");
+    PRINT_NAMED_EVENT("HockeyApp.ios.opt_out", "");
     return;
   }
 
   NSString *hockeyAppId = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"com.anki.hockeyapp.appid"];
   if(!hockeyAppId || hockeyAppId.length == 0) {
-    DASEvent("HockeyApp.ios.disabled", "");
+    PRINT_NAMED_EVENT("HockeyApp.ios.disabled", "");
     return;
   }
-
-  DASEvent("HockeyApp.ios.checkin", "%s", hockeyAppId.UTF8String);
+  PRINT_NAMED_INFO("HockeyApp.ios.checkin", "%s", hockeyAppId.UTF8String);
 
   [[BITHockeyManager sharedHockeyManager] configureWithBetaIdentifier:hockeyAppId
                                                        liveIdentifier:hockeyAppId
@@ -114,6 +114,48 @@ BOOL gWaitingForCrashUpload = NO;
     // do normal initialization
     [self setupApplication];
   }
+  
+  
+  
+  // Logging unity exceptions, UnitySendMessage function to unity it only supports one string param.
+  std::string comma_string(hockeyAppId.UTF8String);
+  NSString *versionCode = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
+  comma_string += ",";
+  if( versionCode )
+  {
+    comma_string += [versionCode UTF8String];
+  }
+  NSString *versionName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
+  comma_string += ",";
+  if( versionName )
+  {
+    comma_string += [versionName UTF8String];
+  }
+  NSString *bundleIdentifier = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleIdentifier"];
+  comma_string += ",";
+  if( bundleIdentifier )
+  {
+    comma_string += [bundleIdentifier UTF8String];
+  }
+  comma_string += ",";
+  const DAS::IDASPlatform* platform = DASGetPlatform();
+  // DAS data like apprun
+  if( platform )
+  {
+    comma_string += platform->GetDeviceId();
+  }
+  comma_string += ",";
+  comma_string += ",";
+  NSString* sdkVersion =  [[BITHockeyManager sharedHockeyManager] version];
+  if( sdkVersion )
+  {
+    comma_string += [sdkVersion UTF8String];
+  }
+  
+  // SDK Name... that is apparently not defined in the SDK according to the example source
+  comma_string += ",HockeySDK";
+  UnitySendMessage("StartupManager", "UploadUnityCrashInfoIOS", comma_string.c_str());
+  
 }
 
 -(void)setupApplication {
