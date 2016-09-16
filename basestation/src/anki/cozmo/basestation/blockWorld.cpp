@@ -687,6 +687,8 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
         {
           newObject = oldObject->CloneType();
           newObject->CopyID(oldObject);
+          newObject->SetActiveID(oldObject->GetActiveID());
+          newObject->SetFactoryID(oldObject->GetFactoryID());
           
           addNewObject = true;
         
@@ -1100,6 +1102,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
                               objSeen->GetType());
         }
         
+        bool matchedCarryingObject = false;
         for(ObservableObject* objectFound : objectsFound)
         {
           assert(nullptr != objectFound);
@@ -1110,11 +1113,18 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
           {
             if (objectFound->GetID() == _robot->GetCarryingObject())
             {
-              if (objectFound->IsSameAs(*objSeen))
+              if (_robot->GetLiftHeight() >= LIFT_HEIGHT_HIGHDOCK &&
+                  objectFound->IsSameAs(*objSeen))
               {
                 // If this is the object we're carrying observed in the carry position,
                 // do nothing and continue to the next observed object.
-                continue;
+                matchedCarryingObject = true;
+                PRINT_NAMED_WARNING("Blockworld.AddAndUpdateObjects.SeeingCarriedObject",
+                                    "Seeing object %s[%d] on lift at height %fmm",
+                                    EnumToString(objSeen->GetType()),
+                                    objSeen->GetID().GetValue(),
+                                    _robot->GetLiftHeight());
+                break;
               }
               else
               {
@@ -1140,7 +1150,11 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
             matchingObjects[origin] = objectFound;
           }
         } // for each object found
-    
+        
+        if(matchedCarryingObject)
+        {
+          continue;
+        }
       }
       else
       {
