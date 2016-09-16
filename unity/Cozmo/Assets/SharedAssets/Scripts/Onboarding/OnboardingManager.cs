@@ -159,6 +159,9 @@ public class OnboardingManager : MonoBehaviour {
   }
 
   public void StartPhase(OnboardingPhases phase) {
+#if SDK_ONLY
+    return;
+#else
     // End any previous phase, can only highlight one thing at once
     if (_CurrPhase != OnboardingPhases.None) {
       SetSpecificStage(GetMaxStageInPhase(_CurrPhase));
@@ -201,6 +204,7 @@ public class OnboardingManager : MonoBehaviour {
     if (PreloadOnboarding()) {
       SetSpecificStage(startStage);
     }
+#endif
   }
   public void CompletePhase(OnboardingPhases phase) {
     // If it's the current phase clean up UI.
