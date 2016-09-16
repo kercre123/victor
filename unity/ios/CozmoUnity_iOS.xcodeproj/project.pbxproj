@@ -1337,8 +1337,6 @@
 					"-weak_framework",
 					CoreMotion,
 					"-weak-lSystem",
-					"-force_load",
-					"$(CORETECH_EXTERNAL_DIR)/routing_http_server/generated/ios/DerivedData/Release-iphoneos/librouting_http_server.a",
 				);
 				PRODUCT_NAME = cozmo;
 				PROVISIONING_PROFILE = "";
