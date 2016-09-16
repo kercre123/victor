@@ -56,7 +56,7 @@ void Anki::Cozmo::HAL::DAC::Init(void) {
 
   Mute();
   
-  audioVolume = 0xFFFF;
+  SetVolume(~0); // Default to max volume
 }
 
 void Anki::Cozmo::HAL::DAC::EnableAudio(bool enable) {
@@ -92,13 +92,13 @@ void Anki::Cozmo::HAL::DAC::Feed(bool enabled, uint8_t* samples) {
 
   for (int length = MAX_AUDIO_BYTES_PER_DROP; length > 0; length--) {
     // Extra bit because of protection
-    DAC_WRITE[write_pointer] = (MuLawDecompress(*(samples++)) * audioVolume) >> 17;
+    DAC_WRITE[write_pointer] = (MuLawDecompress(*(samples++)) * audioVolume) >> 16;
     write_pointer = (write_pointer+1) % DAC_WORDS;
   }
 }
 
 void Anki::Cozmo::HAL::DAC::SetVolume(uint16_t volume) {
-  audioVolume = volume;
+  audioVolume = (3  * (int)volume) / 4;
 }
 
 void Anki::Cozmo::HAL::DAC::Mute(void) {
