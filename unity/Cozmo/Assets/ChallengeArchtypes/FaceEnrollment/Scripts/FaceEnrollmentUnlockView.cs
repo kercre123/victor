@@ -35,9 +35,7 @@ public class FaceEnrollmentUnlockView : Cozmo.UI.BaseView {
       _UnlockCostText.color = _UnlockButton.TextEnabledColor;
     }
     else {
-      Cozmo.ItemData itemData = Cozmo.ItemDataConfig.GetData(itemId);
-      string costName = itemData.GetAmountName(unlockCost);
-      _AvailabilityText.text = Localization.GetWithArgs(LocalizationKeys.kUnlockableBitsRequiredDescription, new object[] { unlockCost, costName });
+      _AvailabilityText.text = Localization.Get(LocalizationKeys.kUnlockableBitsRequiredTitle);
       _AvailabilityText.color = _UnavailableColor;
       _UnlockCostText.color = _UnlockButton.TextDisabledColor;
     }
