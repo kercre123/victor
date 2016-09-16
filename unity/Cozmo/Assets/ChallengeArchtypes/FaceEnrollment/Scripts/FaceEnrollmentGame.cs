@@ -156,6 +156,7 @@ namespace FaceEnrollment {
 
     private void HandleNewNameEntered(string faceName) {
       _NameForFace = faceName;
+      _EnterNameSlideInstance.OnNameEntered -= HandleNewNameEntered;
 
       ShowInstructions(() => {
         EnterNameForNewFace(faceName);
@@ -187,6 +188,7 @@ namespace FaceEnrollment {
     }
 
     private void HandleUpdatedNameEntered(string newName) {
+      _EnterNameSlideInstance.OnNameEntered -= HandleUpdatedNameEntered;
       CurrentRobot.OnEnrolledFaceRenamed += HandleRobotRenamedEnrolledFace;
       CurrentRobot.UpdateEnrolledFaceByID(_FaceIDToEdit, _FaceOldNameEdit, newName);
     }
