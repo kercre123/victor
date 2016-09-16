@@ -35,7 +35,7 @@ namespace Onboarding {
       DAS.Info("onboarding.stage.started", name);
 
       // Early idle states need to loop the loading animation.
-      if (_PlayIdle) {
+      if (_PlayIdle && RobotEngineManager.Instance.CurrentRobot != null) {
         // Really doesn't show a one frame pop to default idle between states
         RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.OnboardingPreBirth);
         HandleLoopedAnimationComplete();
@@ -43,7 +43,7 @@ namespace Onboarding {
     }
 
     public virtual void OnDestroy() {
-      if (_PlayIdle) {
+      if (_PlayIdle && RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.PopIdleAnimation();
         RobotEngineManager.Instance.CurrentRobot.CancelCallback(HandleLoopedAnimationComplete);
       }

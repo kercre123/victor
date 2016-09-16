@@ -26,6 +26,7 @@ namespace Cozmo {
     private AlertView _GoToSleepDialog = null;
     private bool _IsOnChargerToSleep = false;
     private bool _StartedIdleTimeout = false;
+    private bool _IdleTimeOutEnabled = true;
     private float _ShouldPlayWakeupTimestamp = -1;
 
     private const float _kMaxValidBatteryVoltage = 4.2f;
@@ -46,6 +47,10 @@ namespace Cozmo {
     public bool IsConfirmSleepDialogOpen { get { return (null != _SleepCozmoConfirmDialog); } }
     public bool IsGoToSleepDialogOpen { get { return (null != _GoToSleepDialog); } }
     public bool IsLowBatteryDialogOpen { get { return (null != _LowBatteryDialog); } }
+    public bool IsIdleTimeOutEnabled {
+      get { return _IdleTimeOutEnabled; }
+      set { _IdleTimeOutEnabled = value; }
+    }
 
     public static PauseManager Instance {
       get {
@@ -141,7 +146,7 @@ namespace Cozmo {
         }
 
         _ShouldPlayWakeupTimestamp = -1;
-        if (!_IsOnChargerToSleep) {
+        if (!_IsOnChargerToSleep && _IdleTimeOutEnabled) {
           StartIdleTimeout(Settings.AppBackground_TimeTilSleep_sec, Settings.AppBackground_TimeTilDisconnect_sec);
           // Set up a timer so that if we unpause after starting the goToSleep, we'll do the wakeup (using a little buffer past beginning of sleep)
           _ShouldPlayWakeupTimestamp = Time.realtimeSinceStartup + Settings.AppBackground_TimeTilSleep_sec + Settings.AppBackground_SleepAnimGetInBuffer_sec;
@@ -165,7 +170,7 @@ namespace Cozmo {
         RobotEngineManager.Instance.SendGameBeingPaused(false);
 
         bool shouldPlayWakeup = false;
-        if (!_IsOnChargerToSleep) {
+        if (!_IsOnChargerToSleep && _IdleTimeOutEnabled) {
           StopIdleTimeout();
           if (_ShouldPlayWakeupTimestamp > 0 && Time.realtimeSinceStartup >= _ShouldPlayWakeupTimestamp) {
             shouldPlayWakeup = true;

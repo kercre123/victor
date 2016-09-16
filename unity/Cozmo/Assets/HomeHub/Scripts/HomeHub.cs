@@ -138,7 +138,10 @@ namespace Cozmo.HomeHub {
       ResetRobotToFreeplaySettings();
 
       var robot = RobotEngineManager.Instance.CurrentRobot;
-      if (robot != null) {
+
+      OnboardingManager.Instance.InitHomeHubOnboarding(_HomeViewInstance);
+
+      if (robot != null && !OnboardingManager.Instance.IsAnyOnboardingActive()) {
         // Display Cozmo's default face
         robot.DisplayProceduralFace(
           0,
@@ -155,8 +158,6 @@ namespace Cozmo.HomeHub {
         });
       }
 
-      // Checks if any stages are required, needs to be after ResetRobotState.
-      OnboardingManager.Instance.InitHomeHubOnboarding(_HomeViewInstance);
     }
 
     public void StartFreeplay(IRobot robot) {

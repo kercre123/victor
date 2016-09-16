@@ -136,6 +136,9 @@ public class OnboardingManager : MonoBehaviour {
   public bool IsOnboardingRequired(OnboardingPhases phase) {
     return GetCurrStageInPhase(phase) < GetMaxStageInPhase(phase);
   }
+  public bool IsAnyOnboardingActive() {
+    return _CurrPhase != OnboardingPhases.None;
+  }
 
   public void InitHomeHubOnboarding(HomeView homeview) {
     _HomeView = homeview;
@@ -170,6 +173,7 @@ public class OnboardingManager : MonoBehaviour {
     _CurrPhase = phase;
     if (_CurrPhase == OnboardingPhases.Home) {
       RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(AnimationTrigger.OnboardingIdle);
+      Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = false;
       DAS.Event("onboarding.start", "");
       // in the event they've ever booted the app before, or it's an old robot.
       // Skip the holding on charger phase because it is the worst and only should be a problem
@@ -221,6 +225,7 @@ public class OnboardingManager : MonoBehaviour {
   private void PhaseCompletedInternal() {
     if (_CurrPhase == OnboardingPhases.Home) {
       RobotEngineManager.Instance.CurrentRobot.PopIdleAnimation();
+      Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = true;
     }
     if (RobotEngineManager.Instance.CurrentRobot != null) {
       RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.All);
