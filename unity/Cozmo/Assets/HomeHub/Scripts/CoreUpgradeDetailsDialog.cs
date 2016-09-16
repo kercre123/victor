@@ -182,9 +182,10 @@ public class CoreUpgradeDetailsDialog : BaseView {
     ItemData itemData = ItemDataConfig.GetData(costItemId);
     if (spark) {
       if (costAmount == 1) {
-        button.Text = Localization.Get (LocalizationKeys.kSparksSpark);
-      } else {
-        button.Text = Localization.Get (LocalizationKeys.kSparksSparkPlural);
+        button.Text = Localization.Get(LocalizationKeys.kSparksSpark);
+      }
+      else {
+        button.Text = Localization.Get(LocalizationKeys.kSparksSparkPlural);
       }
     }
     else {
@@ -379,8 +380,8 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
   private void StopSparkUnlock() {
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
-    if (RobotEngineManager.Instance.CurrentRobot != null){
-      if (RobotEngineManager.Instance.CurrentRobot.IsSparked){
+    if (RobotEngineManager.Instance.CurrentRobot != null) {
+      if (RobotEngineManager.Instance.CurrentRobot.IsSparked) {
         RobotEngineManager.Instance.CurrentRobot.StopSparkUnlock();
       }
 
@@ -403,7 +404,9 @@ public class CoreUpgradeDetailsDialog : BaseView {
     if (_UpgradeTween != null) {
       _UpgradeTween.Kill();
     }
-    HomeHub.Instance.HomeViewInstance.CheckForRewardSequence();
+    if (HomeHub.Instance != null && HomeHub.Instance.HomeViewInstance != null) {
+      HomeHub.Instance.HomeViewInstance.CheckForRewardSequence();
+    }
   }
 
   protected override void ConstructOpenAnimation(Sequence openAnimation) {
