@@ -505,7 +505,7 @@ class Cozmo(event.Dispatcher):
     def set_head_angle(self, angle, accel=10.0, max_speed=10.0, duration=0.0):
         '''Tell Cozmo's head to turn to a given angle
         Args:
-            angle (float): desired angle for Cozmo's head. (-25 to 44.5 degrees - clamped in engine to this range)
+            angle: (:class:`cozmo.util.Angle`) - desired angle for Cozmo's head. (-25 to 44.5 degrees - clamped in engine to this range)
         Returns:
             A :class:`cozmo.robot.SetHeadAngle` action object which can be queried to see when it is complete
         '''
