@@ -46,7 +46,7 @@ protected:
   
 private:
   
-  void HandleObjectObserved(const Robot& robot, const ExternalInterface::RobotObservedObject& msg);
+  void CheckForNearbyObject(const Robot& robot) const;
   
   enum class DebugState
   {
@@ -64,7 +64,11 @@ private:
   void TransitionToPutDownCube(Robot& robot);
   void TransitionToDoingFinalReaction(Robot& robot);
 
-  ObjectID    _targetBlock;
+  mutable ObjectID    _targetBlock;
+  mutable TimeStamp_t _lastBlockWorldCheck_s;
+  
+  // loaded in from config
+  bool _shouldPutCubeBackDown;
   
 
 }; // class BehaviorPickUpCube

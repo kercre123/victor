@@ -41,6 +41,7 @@
     "behavior_ShouldResetTurnDirection": false,
     "behavior_ResetBodyFacingOnStart": true,
     "behavior_ShouldLowerLift": true,
+    "behavior_CanCarryCube": false,
     "behavior_DistanceFromRecentLocationMin_mm": 200.0,
     "behavior_RecentLocationsMax": 1,
     "behavior_AngleOfFocus_deg": 0.0,

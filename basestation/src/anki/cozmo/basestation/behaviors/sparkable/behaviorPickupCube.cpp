@@ -28,15 +28,21 @@
 namespace Anki {
 namespace Cozmo {
 
+static const char* kShouldPutCubeBackDown = "shouldPutCubeBackDown";
+static const float kSecondsBetweenBlockWorldChecks = 3;
   
 BehaviorPickUpCube::BehaviorPickUpCube(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
+  , _lastBlockWorldCheck_s(0)
+  , _shouldPutCubeBackDown(true)
 {
   SetDefaultName("BehaviorPickUpCube");
 
   SubscribeToTags({
     EngineToGameTag::RobotObservedObject,
   });
+  
+  _shouldPutCubeBackDown = config.get(kShouldPutCubeBackDown, true).asBool();
 
 }
 
@@ -62,6 +68,16 @@ void BehaviorPickUpCube::StopInternal(Robot& robot)
 
 bool BehaviorPickUpCube::IsRunnableInternal(const Robot& robot) const
 {
+  // check even if we haven't seen a block so that we can pickup blocks we know of
+  // that are outside FOV
+  TimeStamp_t currentTime_s = robot.GetLastMsgTimestamp()/1000;
+  if( !IsRunning()
+     && currentTime_s > _lastBlockWorldCheck_s + kSecondsBetweenBlockWorldChecks)
+  {
+    _lastBlockWorldCheck_s = currentTime_s;
+    CheckForNearbyObject(robot);
+  }
+  
   return _targetBlock.IsSet();
 }
 
@@ -70,25 +86,15 @@ void BehaviorPickUpCube::HandleWhileNotRunning(const EngineToGameEvent& event, c
   switch(event.GetData().GetTag())
   {
     case EngineToGameTag::RobotObservedObject:
-      HandleObjectObserved(robot, event.GetData().Get_RobotObservedObject());
+      CheckForNearbyObject(robot);
       break;
     default:
       break;
   }
 }
 
-void BehaviorPickUpCube::HandleObjectObserved(const Robot& robot, const ExternalInterface::RobotObservedObject& msg)
+void BehaviorPickUpCube::CheckForNearbyObject(const Robot& robot) const
 {
-  const ObservableObject* observedObject = robot.GetBlockWorld().GetObjectByID(msg.objectID);
-  
-  if(nullptr == observedObject)
-  {
-    PRINT_NAMED_WARNING("BehaviorPickUpCube.HandleObjectObserved.NullObservedObject",
-                        "Object %d observed, but NULL returned from BlockWorld",
-                        msg.objectID);
-    return;
-  }
-  
   BlockWorldFilter filter;
   filter.SetAllowedFamilies({ObjectFamily::LightCube});
   filter.SetFilterFcn([&robot](const ObservableObject* object)
@@ -101,12 +107,6 @@ void BehaviorPickUpCube::HandleObjectObserved(const Robot& robot, const External
   if(closestObject != nullptr)
   {
     _targetBlock = closestObject->GetID();
-  }
-  else if(robot.CanPickUpObject(*observedObject))
-  {
-    PRINT_NAMED_ERROR("BehaviorPickupCube.HandleObservedObject",
-                      "Observing object but unable to find closest object, using observed object as closest");
-    _targetBlock = msg.objectID;
   }
   else
   {
@@ -123,7 +123,9 @@ void BehaviorPickUpCube::TransitionToDoingInitialReaction(Robot& robot)
   // this compound action will fail and we will not contionue this behavior.
   CompoundActionSequential* action = new CompoundActionSequential(robot);
   action->AddAction(new TurnTowardsObjectAction(robot, _targetBlock, Radians(PI_F), true));
-  action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::SparkPickupInitialCubeReaction));
+  if(!_shouldStreamline){
+    action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::SparkPickupInitialCubeReaction));
+  }
   StartActing(action,
               [this,&robot](ActionResult res) {
                 if(ActionResult::SUCCESS != res) {
@@ -180,6 +182,10 @@ void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
 void BehaviorPickUpCube::TransitionToDriveWithCube(Robot& robot)
 {
   DEBUG_SET_STATE(DriveWithCube);
+  
+  if(!_shouldPutCubeBackDown){
+    return;
+  }
   
   double turn_rad = robot.GetRNG().RandDblInRange(M_PI_4 ,PI_F);
   if( robot.GetRNG().RandDbl() < 0.5 )

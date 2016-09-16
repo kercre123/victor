@@ -59,7 +59,7 @@ public:
   
   // todo: document. Is this behavior alway runnable, or we won't look around in an area we already know everything?
   virtual bool IsRunnableInternal(const Robot& robot) const override;
-  virtual bool CarryingObjectHandledInternally() const override { return false;}
+  virtual bool CarryingObjectHandledInternally() const override { return _configParams.behavior_CanCarryCube;}
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
@@ -126,6 +126,7 @@ protected:
   struct Configuration
   {
     float   behavior_DistanceFromRecentLocationMin_mm;
+    bool    behavior_CanCarryCube;
     uint8_t behavior_RecentLocationsMax;
     bool    behavior_ShouldResetTurnDirection; // if true, a new clock direction is picked every run, otherwise picked once and locked
     bool    behavior_ResetBodyFacingOnStart; // this is required for general usage, but demo behaviors do it only on putDown
