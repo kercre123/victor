@@ -77,7 +77,7 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
 
   protected override void Update() {
     base.Update();
-    if (_AllObjectsConnected || ClosingAnimationPlaying) {
+    if (_AllObjectsConnected || IsClosed) {
       return;
     }
 
@@ -135,14 +135,11 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
   }
 
   private void HandleContinueButton() {
-    if (ClosingAnimationPlaying) {
-      return;
-    }
     this.CloseView();
   }
 
   protected override void CleanUp() {
-    if (_CubeHelpViewInstance != null && !_CubeHelpViewInstance.ClosingAnimationPlaying) {
+    if (_CubeHelpViewInstance != null) {
       UIManager.CloseView(_CubeHelpViewInstance);
     }
 

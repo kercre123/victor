@@ -852,7 +852,10 @@ MonoBehaviour:
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#button.continue"'
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../
+    FieldName: PullCubeTabView:_ContinueButton
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11416868
 MonoBehaviour:
