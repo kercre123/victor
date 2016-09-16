@@ -302,7 +302,6 @@ public class CheckInFlow : MonoBehaviour {
         }
       }
     }
-    RewardedActionManager.Instance.SendPendingRewardsToInventory();
   }
 
   // Pulls a random transform from the target list, removes it, and
@@ -446,6 +445,8 @@ public class CheckInFlow : MonoBehaviour {
   private float _GoalTweenDelay = 0.05f;
   [SerializeField]
   private float _GoalFadeDuration = 0.5f;
+  [SerializeField]
+  private float _RewardFinalDelay = 0.75f;
 
   private void HandleTimelineAnimEnd() {
     Sequence goalSequence = DOTween.Sequence();
@@ -488,6 +489,8 @@ public class CheckInFlow : MonoBehaviour {
     goalSequence = TweenAllToFinalTarget(goalSequence, _ActiveExpTransforms, _FinalExpTarget);
     goalSequence = TweenAllToFinalTarget(goalSequence, _ActiveCoinsTransforms, _FinalCoinTarget);
     goalSequence = TweenAllToFinalTarget(goalSequence, _ActiveSparksTransforms, _FinalSparkTarget);
+    goalSequence.AppendCallback(RewardedActionManager.Instance.SendPendingRewardsToInventory);
+    goalSequence.AppendInterval(_RewardFinalDelay);
   }
 
   // Handled as a callback in order for us to have the appropriate delay after DailyGoalPanel becomes
