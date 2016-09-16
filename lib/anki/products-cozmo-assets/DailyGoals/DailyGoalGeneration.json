@@ -563,6 +563,19 @@
             "image": null,
             "tooltip": ""
           }
+        },
+        {
+          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
+          "ChallengeID": "SpeedTapGame",
+          "UseMinDiff": true,
+          "MinDiff": 1,
+          "UseMaxDiff": false,
+          "MaxDiff": 0,
+          "Label": {
+            "text": "Current Difficulty Unlocked Condition",
+            "image": null,
+            "tooltip": ""
+          }
         }
       ],
       "ProgressConditions": [
@@ -603,6 +616,19 @@
           "State": "Unlocked",
           "Label": {
             "text": "Current Unlock Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.CurrentDifficultyUnlockedCondition, Assembly-CSharp",
+          "ChallengeID": "SpeedTapGame",
+          "UseMinDiff": true,
+          "MinDiff": 2,
+          "UseMaxDiff": false,
+          "MaxDiff": 0,
+          "Label": {
+            "text": "Current Difficulty Unlocked Condition",
             "image": null,
             "tooltip": ""
           }
