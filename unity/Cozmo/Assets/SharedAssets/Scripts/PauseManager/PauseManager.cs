@@ -120,6 +120,7 @@ namespace Cozmo {
     }
 
     private void HandleReactionaryBehavior(Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition message) {
+      if (DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) { return; }
       if (IsGoToSleepDialogOpen || IsConfirmSleepDialogOpen) {
         StopIdleTimeout();
         _IsOnChargerToSleep = false;
@@ -220,6 +221,7 @@ namespace Cozmo {
 
     // Handles message sent from engine when the player puts cozmo on the charger.
     private void HandleGoingToSleep(Anki.Cozmo.ExternalInterface.GoingToSleep msg) {
+      if (DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) { return; }
       CloseLowBatteryDialog();
       CloseConfirmSleepDialog();
       _IsOnChargerToSleep = true;
@@ -263,6 +265,7 @@ namespace Cozmo {
     }
 
     public void OpenConfirmSleepCozmoDialog(bool handleOnChargerSleepCancel) {
+      if (DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) { return; }
       if (IsGoToSleepDialogOpen) {
         // already going to sleep, so do nothing.
         return;
