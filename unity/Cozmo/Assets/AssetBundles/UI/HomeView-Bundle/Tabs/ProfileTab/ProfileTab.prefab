@@ -61,7 +61,7 @@ GameObject:
   - 222: {fileID: 22233374}
   - 114: {fileID: 11405318}
   m_Layer: 5
-  m_Name: TimeWithCozmoLabel
+  m_Name: DaysWithCozmoLabel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -303,7 +303,7 @@ GameObject:
   - 222: {fileID: 22207374}
   - 114: {fileID: 11435348}
   m_Layer: 5
-  m_Name: TimeWithCozmoValue
+  m_Name: DaysWithCozmoValue
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -335,7 +335,7 @@ GameObject:
   - 224: {fileID: 22459092}
   - 114: {fileID: 11484018}
   m_Layer: 5
-  m_Name: TimeWithCozmoContainer
+  m_Name: DaysWithCozmoContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -444,7 +444,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '#label.timeWithCozmo'
+  m_Text: '#label.daysWithCozmo'
   _AllUppercase: 0
   GlowText: 0
 --- !u!114 &11406928

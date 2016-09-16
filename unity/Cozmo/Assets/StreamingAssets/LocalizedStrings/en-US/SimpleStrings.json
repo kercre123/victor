@@ -243,9 +243,6 @@
   "label.activePlayer": {
     "translation": "Active Player:"
   },
-  "label.timeWithCozmo": {
-    "translation": "Time With Cozmo: "
-  },
   "label.gamesPlayed": {
     "translation": "Games Played: "
   },
@@ -254,5 +251,8 @@
   },
   "label.goalsCompleted": {
     "translation": "Goals Completed"
+  },
+  "label.daysWithCozmo": {
+    "translation": "Days Played With Cozmo"
   }
 }
