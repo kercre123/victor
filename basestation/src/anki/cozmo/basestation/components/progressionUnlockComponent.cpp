@@ -80,7 +80,8 @@ bool ProgressionUnlockComponent::IsUnlockIdValid(UnlockId id)
   if(id == UnlockId::All ||
      id == UnlockId::Defaults ||
      id <= UnlockId::Invalid ||
-     id >= UnlockId::Count)
+     id >= UnlockId::Count ||
+     EnumToString(id) == nullptr)
   {
     return false;
   }
