@@ -1,6 +1,6 @@
-=================================================
-Getting Started With the Cozmo SDK - OS X / Linux
-=================================================
+==================================
+Getting Started With the Cozmo SDK
+==================================
 
 .. warning:: THIS IS THE ALPHA BUILD OF THE COZMO SDK. All information within this SDK is subject to change without notice.
 

@@ -102,7 +102,7 @@ To run a program for Cozmo:
 
 ..
 
-.. warning:: If switching to an iPhone from Android after running the SDK, type in `./androidSdkRemoveTcpRelay.sh` before proceeding.
+.. warning:: If switching to an iOS device from Android after running the SDK, type in `./androidSdkRemoveTcpRelay.sh` before proceeding.
 
 .. warning:: Do NOT close the first Terminal window. Closing the first Terminal window while operating with the SDK will close communications with the Cozmo robot and cause errors within the program.
 

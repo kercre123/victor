@@ -71,24 +71,24 @@ Install
 To install the SDK, unzip the *cozmosdk.zip* file to the desired directory on your system.
 
 
-^^^^^^^^^^^^^^^^^^^^
+--------------------
 Android Debug Bridge
-^^^^^^^^^^^^^^^^^^^^
+--------------------
 
-**To install Android Debug Bridge on Windows:**
+**To install Android Debug Bridge (adb) on Windows:**
 
 1. Open your internet browser and go to `the Android developer website <https://developer.android.com/studio/index.html#Other>`_ .
 2. Scroll down to *Get just the command line tools*. Download the SDK tools package.
 3. If you downloaded the ``.zip`` file instead of the ``.exe`` file, unzip it into your chosen directory.
 4. Run the installer to start the Android SDK Tools Setup Wizard.
 5. The Setup Wizard will direct you to install the Java Development Kit (JDK) if you do not have it installed.
-6. Complete installation of the Android SDK Tools. Take note of the directory it was installed to (e.g. C:\Program Files (x86)\Android).
+6. Complete installation of the Android SDK Tools. Take note of the directory it was installed to (e.g. *C:\Program Files (x86)\Android*).
 7. In the Android SDK Tools location, run the SDK Manager as Administrator.
 
   a. Deselect everything except for *Android SDK Platform - tools*.
   b. Nexus phone users should also keep the *Google USB Driver* option selected in order to download Google USB drivers.
   c. Click **Install** once finished.
-  d. Android Debug Bridge (adb) should now be installed to *platform-tools*.
+  d. adb should now be installed to *platform-tools*.
 
 8. Enable USB Debugging on your phone.
 
