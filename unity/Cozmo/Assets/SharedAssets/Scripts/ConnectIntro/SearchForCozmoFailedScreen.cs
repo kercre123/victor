@@ -51,6 +51,7 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
     else {
       _DeviceIdLabel.gameObject.SetActive(false);
     }
+    DasTracker.Instance.OnSearchForCozmoFailed();
   }
 
   private void OnDestroy() {

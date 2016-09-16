@@ -30,6 +30,7 @@ public class ConnectionFlowBackground : Cozmo.UI.BaseView {
   private int _CurrentState = 0;
 
   private void Start() {
+    DasTracker.Instance.OnConnectFlowStarted();
     ResetAllProgress();
   }
 
@@ -93,6 +94,6 @@ public class ConnectionFlowBackground : Cozmo.UI.BaseView {
   }
 
   protected override void CleanUp() {
-
+    DasTracker.Instance.OnConnectFlowEnded();
   }
 }
