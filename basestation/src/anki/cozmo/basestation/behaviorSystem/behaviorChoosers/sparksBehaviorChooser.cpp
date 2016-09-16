@@ -211,12 +211,19 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
         
         // Set the animation behavior either to play the outro or with a placeholder for this tick
         if(!isSoftSpark && !robot.GetBehaviorManager().DidGameRequestSparkEnd()){
+          
+          std::vector<AnimationTrigger> getOutAnims;
           // Play different animations based on whether cozmo timed out or completed his desired reps
           if(_currentObjectiveCompletedCount >= _numberOfRepetitions){
-            _behaviorPlayAnimation->SetAnimationTrigger(AnimationTrigger::SparkGetOutSuccess, 1);
+            getOutAnims.push_back(AnimationTrigger::SparkSuccess);
           }else{
-            _behaviorPlayAnimation->SetAnimationTrigger(AnimationTrigger::SparkGetOutFailure, 1);
+            getOutAnims.push_back(AnimationTrigger::SparkFailure);
           }
+          // then play standard get out
+          getOutAnims.push_back(AnimationTrigger::SparkGetOut);
+          
+          const int numLoops = 1;
+          _behaviorPlayAnimation->SetAnimationTriggers(getOutAnims, numLoops);
           
         }else{
           _behaviorPlayAnimation->SetAnimationTrigger(AnimationTrigger::Count, 1);

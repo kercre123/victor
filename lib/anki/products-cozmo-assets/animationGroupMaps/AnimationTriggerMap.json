@@ -957,16 +957,16 @@
       "AnimName": "ag_sparking_driving_stop"
     },
     {
+      "CladEvent": "SparkFailure",
+      "AnimName": "ag_sparking_fail"
+    },
+    {
       "CladEvent": "SparkGetIn",
       "AnimName": "ag_sparking_getin"
     },
     {
-      "CladEvent": "SparkGetOutFailure",
-      "AnimName": "ag_sparking_fail"
-    },
-    {
-      "CladEvent": "SparkGetOutSuccess",
-      "AnimName": "ag_sparking_success"
+      "CladEvent": "SparkGetOut",
+      "AnimName": "ag_sparking_getout"
     },
     {
       "CladEvent": "SparkIdle",
@@ -979,6 +979,10 @@
     {
       "CladEvent": "SparkPickupFinalCubeReaction",
       "AnimName": "ag_pickUpCube_success"
+    },
+    {
+      "CladEvent": "SparkSuccess",
+      "AnimName": "ag_sparking_success"
     },
     {
       "CladEvent": "SpeedTapDrivingEnd",
