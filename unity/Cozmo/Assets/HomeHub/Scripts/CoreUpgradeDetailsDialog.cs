@@ -106,6 +106,8 @@ public class CoreUpgradeDetailsDialog : BaseView {
   [SerializeField]
   private Color _UnavailableColor;
 
+  private AlertView _QuitViewRef;
+
   public void Initialize(UnlockableInfo unlockInfo, CozmoUnlocksPanel.CozmoUnlockState unlockState, CoreUpgradeRequestedHandler buttonCostPaidCallback) {
     _UnlockInfo = unlockInfo;
     _ButtonCostPaidSuccessCallback = buttonCostPaidCallback;
@@ -218,6 +220,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
     alertView.DescriptionLocKey = LocalizationKeys.kSparksSparkConfirmQuitDescription;
     // Listen for dialog close
     alertView.ViewCloseAnimationFinished += HandleQuitViewClosed;
+    _QuitViewRef = alertView;
     _ConfirmedQuit = false;
   }
 
@@ -348,8 +351,11 @@ public class CoreUpgradeDetailsDialog : BaseView {
   private void HandleSparkEnded(object message) {
     // Only fire the game event when we receive the spark ended message, rewards are only applied
     // when COMPLETING a sparked action (or timing out). View includes a warning dialog for exiting.
-    GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnUnlockableSparked, _UnlockInfo.Id.Value));
-    StopSparkUnlock();
+    GameEventManager.Instance.FireGameEvent (GameEventWrapperFactory.Create (GameEvent.OnUnlockableSparked, _UnlockInfo.Id.Value));
+    StopSparkUnlock ();
+    if (_QuitViewRef != null) {
+      UIManager.CloseView (_QuitViewRef);
+    }
   }
 
   private void StartSparkUnlock() {
