@@ -114,6 +114,10 @@ void AIGoal::Enter(Robot& robot)
   _lastTimeGoalStartedSecs = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _behaviorChooserPtr->OnSelected();
   
+  // Update Ai Goal state to change music theme
+  // Note: This only applies to freeplay goals, spark goals do nothing
+  robot.GetRobotAudioClient()->UpdateAiGoalMusicState(_name);
+  
   // set driving animations for this goal if specified in config
   const bool hasDrivingAnims = HasDrivingAnimTriggers();
   if ( hasDrivingAnims ) {

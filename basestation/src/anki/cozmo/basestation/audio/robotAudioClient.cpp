@@ -425,6 +425,39 @@ Util::RandomGenerator& RobotAudioClient::GetRandomGenerator() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioClient::UpdateAiGoalMusicState(const std::string& aiGoalName)
+{
+  // Ai Goals from behavior_config.json
+  // FP_Hiking          - when Cozmo is exploring its surroundings on his own
+  // FP_PlayWithHumans  - when Cozmo requests games to play with the player
+  // FP_PlayAlone       - when Cozmo does stuff in place on his own, showing off, playing with cubes, ..
+  // FP_Socialize       - when Cozmo wants to interact with faces and players, but without playing games
+  // FP_NothingToDo     - fallback when Cozmo can't do anything else
+  
+  PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
+                "RobotAudioClient.SetFreeplayMusic",
+                "AiGoalName '%s'", aiGoalName.c_str());
+  
+  static const std::unordered_map<std::string, SwitchState::Freeplay_Mood> freeplayStateMap
+  {
+    { "FP_Hiking",          SwitchState::Freeplay_Mood::Hiking },
+    { "FP_PlayWithHumans",  SwitchState::Freeplay_Mood::Neutral },
+    { "FP_PlayAlone",       SwitchState::Freeplay_Mood::Neutral },
+    { "FP_Socialize",       SwitchState::Freeplay_Mood::Neutral },
+    { "FP_NothingToDo",     SwitchState::Freeplay_Mood::Bored }
+  };
+  
+  // Search for freeplay goal state
+  const auto it = freeplayStateMap.find(aiGoalName);
+  if ( it != freeplayStateMap.end() ) {
+    // Found State, update audio
+    PostSwitchState(SwitchState::SwitchGroupType::Freeplay_Mood,
+                    static_cast<const SwitchState::GenericSwitch>(it->second),
+                    GameObjectType::Default);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioBuffer* RobotAudioClient::RegisterRobotAudioBuffer(GameObjectType gameObject,
                                                              PluginId_t pluginId,
                                                              Bus::BusType audioBus)

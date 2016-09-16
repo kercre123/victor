@@ -50,28 +50,28 @@ public:
   
   // Perform event
   // Provide a callback lambda to get all event callbacks; Duration, Marker, Complete & Error.
-  CallbackIdType PostEvent( GameEvent::GenericEvent event,
-                            GameObjectType gameObject = GameObjectType::Default,
-                            CallbackFunc callback = nullptr );
+  CallbackIdType PostEvent( const GameEvent::GenericEvent event,
+                            const GameObjectType gameObject = GameObjectType::Default,
+                            const CallbackFunc callback = nullptr );
   
-  void StopAllEvents( GameObjectType gameObject = GameObjectType::Invalid );
+  void StopAllEvents( const GameObjectType gameObject = GameObjectType::Invalid );
 
-  void PostGameState( GameState::StateGroupType gameStateGroup,
-                      GameState::GenericState gameState );
+  void PostGameState( const GameState::StateGroupType gameStateGroup,
+                      const GameState::GenericState gameState );
   
-  void PostSwitchState( SwitchState::SwitchGroupType switchGroup,
-                        SwitchState::GenericSwitch switchState,
-                        GameObjectType gameObject = GameObjectType::Default );
+  void PostSwitchState( const SwitchState::SwitchGroupType switchGroup,
+                        const SwitchState::GenericSwitch switchState,
+                        const GameObjectType gameObject = GameObjectType::Default );
   
-  void PostParameter( GameParameter::ParameterType parameter,
-                      float parameterValue,
-                      GameObjectType gameObject = GameObjectType::Default,
-                      int32_t timeInMilliSeconds = 0,
-                      CurveType curve = CurveType::Linear ) const;
+  void PostParameter( const GameParameter::ParameterType parameter,
+                      const float parameterValue,
+                      const GameObjectType gameObject = GameObjectType::Default,
+                      const int32_t timeInMilliSeconds = 0,
+                      const CurveType curve = CurveType::Linear ) const;
   
-  void PostMusicState( GameState::GenericState musicState,
-                       bool interrupt,
-                       uint32_t minDuration_ms );
+  void PostMusicState( const GameState::GenericState musicState,
+                       const bool interrupt,
+                       const uint32_t minDuration_ms );
 
 protected:
   

@@ -36,9 +36,9 @@ void AudioEngineClient::SetMessageHandler( AudioEngineMessageHandler* messageHan
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  AudioEngineClient::CallbackIdType AudioEngineClient::PostEvent( GameEvent::GenericEvent event,
-                                                                  GameObjectType gameObject,
-                                                                  CallbackFunc callback )
+  AudioEngineClient::CallbackIdType AudioEngineClient::PostEvent( const GameEvent::GenericEvent event,
+                                                                  const GameObjectType gameObject,
+                                                                  const CallbackFunc callback )
 {
   if ( nullptr != _messageHandler ) {
     const CallbackIdType callbackId = nullptr != callback ? GetNewCallbackId() : kInvalidCallbackId;
@@ -59,7 +59,7 @@ void AudioEngineClient::SetMessageHandler( AudioEngineMessageHandler* messageHan
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::StopAllEvents( GameObjectType gameObject )
+void AudioEngineClient::StopAllEvents( const GameObjectType gameObject )
 {
   if ( nullptr != _messageHandler ) {
     const MessageAudioClient msg( (StopAllAudioEvents( gameObject )) );
@@ -71,7 +71,8 @@ void AudioEngineClient::StopAllEvents( GameObjectType gameObject )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::PostGameState( GameState::StateGroupType gameStateGroup, GameState::GenericState gameState )
+void AudioEngineClient::PostGameState( const GameState::StateGroupType gameStateGroup,
+                                       const GameState::GenericState gameState )
 {
   if ( nullptr != _messageHandler ) {
     const MessageAudioClient msg( (PostAudioGameState( gameStateGroup, gameState )) );
@@ -83,9 +84,9 @@ void AudioEngineClient::PostGameState( GameState::StateGroupType gameStateGroup,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::PostSwitchState( SwitchState::SwitchGroupType switchGroup,
-                                         SwitchState::GenericSwitch switchState,
-                                         GameObjectType gameObject )
+void AudioEngineClient::PostSwitchState( const SwitchState::SwitchGroupType switchGroup,
+                                         const SwitchState::GenericSwitch switchState,
+                                         const GameObjectType gameObject )
 {
   if ( nullptr != _messageHandler ) {
     const MessageAudioClient msg( PostAudioSwitchState( switchGroup, switchState, gameObject ) );
@@ -97,11 +98,11 @@ void AudioEngineClient::PostSwitchState( SwitchState::SwitchGroupType switchGrou
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::PostParameter( GameParameter::ParameterType parameter,
-                                       float parameterValue,
-                                       GameObjectType gameObject,
-                                       int32_t timeInMilliSeconds,
-                                       CurveType curve ) const
+void AudioEngineClient::PostParameter( const GameParameter::ParameterType parameter,
+                                       const float parameterValue,
+                                       const GameObjectType gameObject,
+                                       const int32_t timeInMilliSeconds,
+                                       const CurveType curve ) const
 {
   if ( nullptr != _messageHandler ) {
     const MessageAudioClient msg( PostAudioParameter( parameter, parameterValue, gameObject, timeInMilliSeconds, curve ) );
@@ -113,7 +114,9 @@ void AudioEngineClient::PostParameter( GameParameter::ParameterType parameter,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::PostMusicState( GameState::GenericState musicState, bool interrupt, uint32_t minDuration_ms )
+void AudioEngineClient::PostMusicState( const GameState::GenericState musicState,
+                                        const bool interrupt,
+                                        const uint32_t minDuration_ms )
 {
   if ( nullptr != _messageHandler ) {
     const MessageAudioClient msg( PostAudioMusicState( musicState, interrupt, minDuration_ms ) );
