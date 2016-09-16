@@ -1,4 +1,5 @@
 import cozmo
+from io import BytesIO
 import json
 import sys
 try:
@@ -28,16 +29,42 @@ class CozmoTweetStreamListener(tweepy.StreamListener):
             tweet_text = tweet_text[0:(max_tweet_length-len(concatenated_suffix))] + concatenated_suffix
         return tweet_text
 
-    def post_tweet(self, tweet_text, reply_id=None):
+    def upload_images(self, images, use_jpeg=False, jpeg_quality=70):
+        """
+        Args:
+            images (list of PIL.Image): images to upload
+            use_jpeg (bool):
+            jpeg_quality (int): quality used for compressing jpegs (if use_jpeg == True)
+
+        Returns:
+            list of media_id
+        """
+
+        media_ids = []
+        for image in images:
+            img_io = BytesIO()
+
+            if use_jpeg:
+                image.save(img_io, 'JPEG', quality=jpeg_quality)
+                filename = "temp.jpeg"
+                img_io.seek(0)
+            else:
+                image.save(img_io, 'PNG')
+                filename = "temp.png"
+                img_io.seek(0)
+
+            upload_res = self.twitter_api.media_upload(filename, file=img_io)
+            media_ids.append(upload_res.media_id)
+
+        return media_ids
+
+    def post_tweet(self, tweet_text, reply_id=None, media_ids=None):
         ''''post a tweet to the timeline, trims tweet if appropriate
             reply_id is optional, nests the tweet as reply to that tweet (use id_str element from a tweet)
         '''
         tweet_text = self.trim_tweet_text(tweet_text)
         try:
-            if reply_id:
-                self.twitter_api.update_status(tweet_text, reply_id)
-            else:
-                self.twitter_api.update_status(tweet_text)
+            self.twitter_api.update_status(tweet_text, reply_id, media_ids=media_ids)
             return True
         except tweepy.error.TweepError as e:
             cozmo.logger.error("post_tweet Error: " + str(e))
@@ -86,7 +113,8 @@ def has_default_twitter_keys(twitter_keys):
 def auth_twitter(twitter_keys):
     '''Perform OAuth authentication with twitter, using the keys provided'''
     if has_default_twitter_keys(twitter_keys):
-        sys.exit("Error: You need to configure your twitter_keys")
+        cozmo.logger.error("You need to configure your twitter_keys")
+
     auth = tweepy.OAuthHandler(twitter_keys.consumer_key, twitter_keys.consumer_secret)
     auth.set_access_token(twitter_keys.access_token, twitter_keys.access_token_secret)
     return auth
