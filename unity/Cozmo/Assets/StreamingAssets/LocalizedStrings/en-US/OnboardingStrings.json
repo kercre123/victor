@@ -19,7 +19,7 @@
     ]
   },
   "onboarding.CozmoNeedsCharge.Title": {
-    "translation": "Cozmo needs to charge"
+    "translation": "Cozmo is Charging"
   },
   "onboarding.CozmoNeedsCharge.SecondsLeft": {
     "translation": "Seconds left..."

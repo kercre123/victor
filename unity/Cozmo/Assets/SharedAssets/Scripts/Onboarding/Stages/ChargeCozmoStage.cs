@@ -23,7 +23,7 @@ namespace Onboarding {
     private GameObject _ChargingCompleteContainer;
 
     [SerializeField]
-    private int _TimeBeforeContinue_Sec = 120;
+    private int _TimeBeforeContinue_Sec = 180;
 
     private System.DateTime _TimeStartUTC;
     private float _TimerPausedTotal_Sec = 0;
@@ -52,7 +52,6 @@ namespace Onboarding {
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         isOnCharger = RobotEngineManager.Instance.CurrentRobot.Status(Anki.Cozmo.RobotStatusFlag.IS_ON_CHARGER);
       }
-      _KeepOnChargerText.gameObject.SetActive(!isOnCharger);
 
       // This isn't going to be an exact match, since we don't get Status messages every frame.
       // But should be close enough since we only display seconds.
@@ -68,7 +67,14 @@ namespace Onboarding {
       System.TimeSpan timeInState = now - _TimeStartUTC;
       float timeInStateSec = (float)timeInState.TotalSeconds - _TimerPausedTotal_Sec;
 
-      _CounterLabel.text = Mathf.CeilToInt(_TimeBeforeContinue_Sec - timeInStateSec).ToString();
+      float displayTime = Mathf.CeilToInt (_TimeBeforeContinue_Sec - timeInStateSec);
+
+      if (displayTime >= 0.0f) {
+        _CounterLabel.text = displayTime.ToString ();
+      } else {
+        _CounterLabel.text = "0";
+      }
+
       _ChargingCompleteContainer.gameObject.SetActive(timeInStateSec > _TimeBeforeContinue_Sec);
       _ChargingProgressContainer.gameObject.SetActive(timeInStateSec <= _TimeBeforeContinue_Sec);
     }
