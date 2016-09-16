@@ -310,6 +310,9 @@ enum uint_32 GenericEvent
   Play__Robot_Vo__Word_Keepaway_Request = 3460255911,
   Play__Robot_Vo__Word_Keepaway_Sad = 2098273712,
   Play__Robot_Vo__Word_Quick_Tap = 444948971,
+  Play__Robot_Vo__Word_Speedtap_Excited = 2751243663,
+  Play__Robot_Vo__Word_Speedtap_Request = 919083726,
+  Play__Sfx__Banner_Wipe = 3247701492,
   Play__Sfx__Code_Fragment_Collected = 2587766166,
   Play__Sfx__Code_Fragment_Released = 1918333736,
   Play__Sfx__Context_Switch_Loop_Play = 285232462,
@@ -648,10 +651,13 @@ enum uint_32 Robot_Vo
   Word_Keepaway_Request = 3460255911,
   Word_Keepaway_Sad = 2098273712,
   Word_Quick_Tap = 444948971,
+  Word_Speedtap_Excited = 2751243663,
+  Word_Speedtap_Request = 919083726,
 }
 
 enum uint_32 Sfx
 {
+  Banner_Wipe = 3247701492,
   Code_Fragment_Collected = 2587766166,
   Code_Fragment_Released = 1918333736,
   Context_Switch_Loop_Play = 285232462,
