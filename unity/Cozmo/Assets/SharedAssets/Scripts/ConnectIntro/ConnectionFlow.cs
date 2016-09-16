@@ -443,6 +443,10 @@ public class ConnectionFlow : MonoBehaviour {
       _ConnectingToCozmoScreenInstance.ConnectionComplete();
     }
 
+    if (DataPersistence.DataPersistenceManager.Instance.IsNewSessionNeeded) {
+      DataPersistence.DataPersistenceManager.Instance.StartNewSession();
+    }
+
     DataPersistence.DataPersistenceManager.Instance.CurrentSession.HasConnectedToCozmo = true;
 
     // When we are in the first time user flow, we enable the block pool when we get to the Pull Cube Tab screen

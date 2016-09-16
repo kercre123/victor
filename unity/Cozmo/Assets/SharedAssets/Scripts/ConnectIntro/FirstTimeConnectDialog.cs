@@ -111,9 +111,6 @@ public class FirstTimeConnectDialog : MonoBehaviour {
   }
 
   private void HandleConnectionFlowComplete() {
-    // generate the initial set of daily goals
-    DataPersistence.DataPersistenceManager.Instance.StartNewSession();
-
     if (_ConnectionFlowInstance != null) {
       GameObject.Destroy(_ConnectionFlowInstance.gameObject);
     }
