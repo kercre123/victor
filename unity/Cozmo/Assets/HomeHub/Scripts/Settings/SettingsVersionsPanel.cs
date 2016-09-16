@@ -27,6 +27,9 @@ namespace Cozmo.Settings {
     private ScrollingTextView _AcknowledgementsDialogInstance;
 
     [SerializeField]
+    private string _AcknowledgementsTextFileName;
+
+    [SerializeField]
     private CozmoButton _SupportButton;
 
     [SerializeField]
@@ -133,8 +136,8 @@ namespace Cozmo.Settings {
       if (_AcknowledgementsDialogInstance == null) {
         _AcknowledgementsDialogInstance = UIManager.OpenView(AlertViewLoader.Instance.ScrollingTextViewPrefab,
                                                              (ScrollingTextView view) => { view.DASEventViewName = "acknowledgements_view"; });
-        _AcknowledgementsDialogInstance.Initialize(LocalizationKeys.kSettingsVersionPanelAcknowledgementsModalTitle,
-                                                   LocalizationKeys.kSettingsVersionPanelAcknowledgementsModalDescription);
+        _AcknowledgementsDialogInstance.Initialize(Localization.Get(LocalizationKeys.kSettingsVersionPanelAcknowledgementsModalTitle),
+                                                   Localization.ReadLocalizedTextFromFile(_AcknowledgementsTextFileName));
       }
     }
 

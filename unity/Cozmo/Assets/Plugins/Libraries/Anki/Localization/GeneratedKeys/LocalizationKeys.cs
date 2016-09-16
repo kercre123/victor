@@ -534,7 +534,6 @@ public static class LocalizationKeys {
   public const string kSettingsSupportViewRestoreCozmoModalRestoreCozmoInProgressLabel = "settings.supportView.restoreCozmoModal.restoreCozmoInProgressLabel";
   public const string kSettingsSupportViewRestoreCozmoModalRestoreCozmoTitle = "settings.supportView.restoreCozmoModal.restoreCozmoTitle";
   public const string kSettingsSupportViewRestoreCozmoModalRestoreCozmoWarningLabel = "settings.supportView.restoreCozmoModal.restoreCozmoWarningLabel";
-  public const string kSettingsVersionPanelAcknowledgementsModalDescription = "settings.versionPanel.acknowledgementsModal.description";
   public const string kSettingsVersionPanelAcknowledgementsModalTitle = "settings.versionPanel.acknowledgementsModal.title";
   public const string kSettingsVersionPanelButtonAcknowledgementsLink = "settings.versionPanel.button.acknowledgementsLink";
   public const string kSettingsVersionPanelButtonEraseCozmo = "settings.versionPanel.button.eraseCozmo";

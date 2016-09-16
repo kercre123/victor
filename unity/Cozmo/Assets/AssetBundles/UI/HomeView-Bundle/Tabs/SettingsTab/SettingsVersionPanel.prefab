@@ -248,6 +248,7 @@ MonoBehaviour:
   _DeviceIDLabel: {fileID: 0}
   _AppRunLabel: {fileID: 0}
   _AcknowledgementsLinkButton: {fileID: 11460766}
+  _AcknowledgementsTextFileName: acknowledgements.txt
   _SupportButton: {fileID: 0}
   _SupportInfoViewPrefab: {fileID: 11410082, guid: 950243296d8654fdba91f31eabdad971,
     type: 2}
@@ -715,10 +716,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22458414}
   m_RootOrder: 2
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 785, y: -220.41666}
+  m_SizeDelta: {x: 1570, y: 88.166664}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22419460
 RectTransform:
@@ -734,10 +735,10 @@ RectTransform:
   - {fileID: 22494226}
   m_Father: {fileID: 22458414}
   m_RootOrder: 5
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 785, y: -484.91666}
+  m_SizeDelta: {x: 1570, y: 88.166664}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22423168
 RectTransform:
@@ -752,10 +753,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22458414}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 785, y: -44.083332}
+  m_SizeDelta: {x: 1570, y: 88.166664}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22423864
 RectTransform:
@@ -770,10 +771,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22458414}
   m_RootOrder: 3
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 785, y: -308.58334}
+  m_SizeDelta: {x: 1570, y: 88.166664}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22427732
 RectTransform:
@@ -788,10 +789,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22458414}
   m_RootOrder: 4
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 785, y: -396.75}
+  m_SizeDelta: {x: 1570, y: 88.166664}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22444452
 RectTransform:
@@ -824,10 +825,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22458414}
   m_RootOrder: 1
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 785, y: -132.25}
+  m_SizeDelta: {x: 1570, y: 88.166664}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22450484
 RectTransform:

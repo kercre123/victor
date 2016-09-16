@@ -105,7 +105,7 @@ public class CheckInFlow : MonoBehaviour {
 
     _PrivacyPolicyButton.Initialize(() => {
       ScrollingTextView view = UIManager.OpenView<ScrollingTextView>(AlertViewLoader.Instance.ScrollingTextViewPrefab, (ScrollingTextView v) => { v.DASEventViewName = "privacy_policy_view"; });
-      view.Initialize(LocalizationKeys.kPrivacyPolicyTitle, LocalizationKeys.kPrivacyPolicyText);
+      view.Initialize(Localization.Get(LocalizationKeys.kPrivacyPolicyTitle), Localization.Get(LocalizationKeys.kPrivacyPolicyText));
     }, "privacy_policy_button", "checkin_dialog");
 
 

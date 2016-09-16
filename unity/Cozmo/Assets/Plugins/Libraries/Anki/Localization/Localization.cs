@@ -119,4 +119,10 @@ public static class Localization {
     string languageJson = File.ReadAllText(localizationFilePath);
     return new JSONObject(languageJson);
   }
+
+  public static string ReadLocalizedTextFromFile(string fileName) {
+    string currentLocale = GetStringsLocale();
+    string filePath = Application.streamingAssetsPath + kLocalizationStreamingAssetsFolderPath + currentLocale + "/" + fileName;
+    return File.ReadAllText(filePath);
+  }
 }
