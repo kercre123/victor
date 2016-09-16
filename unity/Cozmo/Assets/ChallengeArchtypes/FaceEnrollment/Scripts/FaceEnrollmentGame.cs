@@ -170,16 +170,18 @@ namespace FaceEnrollment {
         if (_EnrollingFace) {
           CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.ENROLL_NAMED_FACE);
           _UserCancelledEnrollment = true;
+          if (handleInstructionsDone != null) {
+            handleInstructionsDone();
+          }
         }
         else {
           // not enrolling face probably means we are playing say name animations, let's
           // clear the queue and don't listen to any callback responses
           CurrentRobot.CancelAllCallbacks();
           CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.UNKNOWN);
+          ShowFaceListSlide(SharedMinigameView);
         }
-        if (handleInstructionsDone != null) {
-          handleInstructionsDone();
-        }
+
       };
       if (string.IsNullOrEmpty(faceName) == false) {
         _FaceEnrollmentInstructionsViewInstance.SetFaceName(faceName);
