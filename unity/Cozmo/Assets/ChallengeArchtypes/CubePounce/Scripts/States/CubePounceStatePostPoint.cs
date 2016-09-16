@@ -11,6 +11,8 @@ namespace Cozmo.Minigame.CubePounce {
       _CozmoWon = cozmoWon;
     }
 
+    private Anki.Cozmo.Audio.GameState.Music _nextMusicState = Anki.Cozmo.Audio.GameState.Music.Invalid;
+
     public override void Enter() {
       base.Enter();
 
@@ -36,7 +38,7 @@ namespace Cozmo.Minigame.CubePounce {
         DoRoundEndLogic();
       }
       else {
-        GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Between_Rounds);
+        _nextMusicState = Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Between_Rounds;
         if (_CozmoWon) {
           _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceWinHand, HandleEndHandAnimFinish);
         }
@@ -54,7 +56,7 @@ namespace Cozmo.Minigame.CubePounce {
 
     private void DoRoundEndLogic() {
       if (_CubePounceGame.AllRoundsCompleted) {
-        GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Setup);
+        _nextMusicState = Anki.Cozmo.Audio.GameState.Music.Minigame__Setup;
         GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Game_End);
 
         if (_CubePounceGame.CozmoRoundsWon > _CubePounceGame.PlayerRoundsWon) {
@@ -65,7 +67,7 @@ namespace Cozmo.Minigame.CubePounce {
         }
       }
       else {
-        GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Between_Rounds);
+        _nextMusicState = Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Between_Rounds;
         GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Round_End);
 
         if (_CubePounceGame.CozmoScore > _CubePounceGame.PlayerScore) {
@@ -92,6 +94,12 @@ namespace Cozmo.Minigame.CubePounce {
 
     public override void Exit() {
       base.Exit();
+      // Update next music state
+      if (Anki.Cozmo.Audio.GameState.Music.Invalid != _nextMusicState) {
+        GameAudioClient.SetMusicState(_nextMusicState);
+        _nextMusicState = Anki.Cozmo.Audio.GameState.Music.Invalid;
+      }
+
       _CurrentRobot.CancelCallback(HandleEndHandAnimFinish);
       _CurrentRobot.CancelCallback(HandleEndRoundAnimFinish);
       _CurrentRobot.CancelCallback(HandleEndGameAnimFinish);
