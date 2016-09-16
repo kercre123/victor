@@ -127,7 +127,7 @@ public class ChallengeDetailsDialog : BaseView {
         }
         else {
           // Can Currently Unlock and Afford
-          _CurrentCostLabel.text = Localization.GetWithArgs(LocalizationKeys.kUnlockableCurrencyRequired, new object [] { costName });
+          _CurrentCostLabel.text = Localization.GetWithArgs(LocalizationKeys.kUnlockableCurrencyRequired, new object[] { costName });
           _CurrentCostLabel.color = _UnavailableColor;
           _UnlockButton.Interactable = false;
           _CostButtonLabel.color = _UnlockButton.TextDisabledColor;
@@ -156,6 +156,8 @@ public class ChallengeDetailsDialog : BaseView {
       playerInventory.RemoveItemAmount(hexPieceId, unlockCost);
       _UnlockButton.gameObject.SetActive(false);
       _CostContainer.gameObject.SetActive(false);
+      _LockedContainer.gameObject.SetActive(false);
+
       UnlockablesManager.Instance.TrySetUnlocked(unlockInfo.Id.Value, true);
 
       _UnlockButton.Interactable = false;
