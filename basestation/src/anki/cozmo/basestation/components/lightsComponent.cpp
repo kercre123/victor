@@ -1180,6 +1180,34 @@ void LightsComponent::SetHeadlight(bool on)
   _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::SetHeadlight(on)));
 }
 
+void LightsComponent::OnObjectPoseStateChanged(const ObjectID& objectID,
+                                               const PoseState oldPoseState,
+                                               const PoseState newPoseState)
+{
+  // Known -> Dirty | Dirty -> Unknown | Known -> Unknown change to Connected state
+  // Works based on the ordering of the PoseState enum
+  static_assert(PoseState::Known < PoseState::Dirty &&
+                PoseState::Dirty < PoseState::Unknown,
+                "PoseState enum in unexpected order");
+  if(oldPoseState < newPoseState)
+  {
+    auto cube = _cubeInfo.find(objectID);
+    if(cube != _cubeInfo.end())
+    {
+      cube->second.desiredState = CubeLightsState::Connected;
+    }
+  }
+  // If going to Known change to Visible
+  else if(newPoseState == PoseState::Known)
+  {
+    auto cube = _cubeInfo.find(objectID);
+    if(cube != _cubeInfo.end())
+    {
+      cube->second.desiredState = CubeLightsState::Visible;
+    }
+  }
+}
+
 LightsComponent::ObjectInfo::ObjectInfo()
   : enabled(true)
   , desiredState( LightsComponent::CubeLightsState::Off )

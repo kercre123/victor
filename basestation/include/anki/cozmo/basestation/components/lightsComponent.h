@@ -18,6 +18,7 @@
 #include "anki/common/types.h"
 #include "clad/types/activeObjectTypes.h"
 #include "clad/types/ledTypes.h"
+#include "clad/types/poseStructs.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "json/json.h"
@@ -100,6 +101,10 @@ public:
   
   template<typename T>
   void HandleMessage(const T& msg);
+  
+  void OnObjectPoseStateChanged(const ObjectID& objectID,
+                                const PoseState oldPoseState,
+                                const PoseState newPoseState);
   
 private:
 
