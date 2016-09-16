@@ -126,7 +126,8 @@ namespace Cozmo {
 
     private void HandleReactionaryBehavior(Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition message) {
       if (DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) { return; }
-      if (IsGoToSleepDialogOpen || IsConfirmSleepDialogOpen) {
+      if ((IsGoToSleepDialogOpen && message.reactionaryBehaviorType != Anki.Cozmo.BehaviorType.ReactToOnCharger)
+          || IsConfirmSleepDialogOpen) {
         StopIdleTimeout();
         _IsOnChargerToSleep = false;
         CloseGoToSleepDialog();
