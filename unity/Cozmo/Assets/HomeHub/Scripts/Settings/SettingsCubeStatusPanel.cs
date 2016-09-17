@@ -8,6 +8,9 @@ namespace Cozmo.Settings {
   public class SettingsCubeStatusPanel : MonoBehaviour {
 
     [SerializeField]
+    private CozmoButton _RefreshBlockPoolButton;
+
+    [SerializeField]
     private CozmoButton _ShowCubeHelpButton;
 
     [SerializeField]
@@ -20,35 +23,28 @@ namespace Cozmo.Settings {
     [SerializeField]
     private SettingsLightCubeButton _SettingsLightCubeButtonPrefab;
 
-    private List<ObjectType> _ButtonsRequestDisableBlockPool;
+    private AlertView _ConfirmBlockPoolRefreshView;
 
     private const string kDasEventViewController = "settings_cube_status_panel";
 
     // Use this for initialization
     void Start() {
+      _RefreshBlockPoolButton.Initialize(HandleRefreshBlockPoolTapped, "refresh_blockpool_button", kDasEventViewController);
       _ShowCubeHelpButton.Initialize(HandleOpenCubeHelpViewTapped, "show_cube_help_dialog_button", kDasEventViewController);
-
-      _ButtonsRequestDisableBlockPool = new List<ObjectType>();
 
       // Create buttons in layout group, one for each ObjectType
       CreateSettingsLightCubeButton(ObjectType.Block_LIGHTCUBE1);
       CreateSettingsLightCubeButton(ObjectType.Block_LIGHTCUBE2);
       CreateSettingsLightCubeButton(ObjectType.Block_LIGHTCUBE3);
-
-      RobotEngineManager.Instance.BlockPoolTracker.SendAvailableObjects(true,
-                                                                        (byte)RobotEngineManager.Instance.CurrentRobotID);
-      RobotEngineManager.Instance.CurrentRobot.EnableCubeLightsStateTransitionMessages(true);
     }
 
     void OnDestroy() {
       if (_SettingsCubeHelpDialogInstance != null) {
         _SettingsCubeHelpDialogInstance.CloseViewImmediately();
       }
-      if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(true);
-        RobotEngineManager.Instance.BlockPoolTracker.SendAvailableObjects(false,
-                                                                          (byte)RobotEngineManager.Instance.CurrentRobotID);
-        RobotEngineManager.Instance.CurrentRobot.EnableCubeLightsStateTransitionMessages(false);
+
+      if (_ConfirmBlockPoolRefreshView != null) {
+        _ConfirmBlockPoolRefreshView.CloseViewImmediately();
       }
     }
 
@@ -57,26 +53,24 @@ namespace Cozmo.Settings {
                                                                                   _LightCubeButtonLayoutGroup.transform)
                                                                  .GetComponent<SettingsLightCubeButton>();
       string dasEventViewControllerName = kDasEventViewController;
-      settingsLightCubeButton.Initialize(this, objectType, dasEventViewControllerName);
+      settingsLightCubeButton.Initialize(objectType, dasEventViewControllerName);
       return settingsLightCubeButton;
     }
 
-    public void DisableAutomaticBlockPool(ObjectType buttonRequesting) {
-      if (!_ButtonsRequestDisableBlockPool.Contains(buttonRequesting)) {
-        _ButtonsRequestDisableBlockPool.Add(buttonRequesting);
-        if (_ButtonsRequestDisableBlockPool.Count == 1) {
-          RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(false);
-        }
-      }
+    private void HandleRefreshBlockPoolTapped() {
+      AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
+      // Hook up callbacks
+      alertView.SetCloseButtonEnabled(false);
+      alertView.SetPrimaryButton(LocalizationKeys.kButtonRefresh, HandleRefreshBlockPool);
+      alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel, null);
+      alertView.TitleLocKey = LocalizationKeys.kSettingsCubeStatusPanelButtonCubeRefresh;
+      alertView.DescriptionLocKey = LocalizationKeys.kRefreshCubesPromptDescription;
+
+      _ConfirmBlockPoolRefreshView = alertView;
     }
 
-    public void EnableAutomaticBlockPool(ObjectType buttonRequesting) {
-      if (_ButtonsRequestDisableBlockPool.Contains(buttonRequesting)) {
-        _ButtonsRequestDisableBlockPool.Remove(buttonRequesting);
-        if (_ButtonsRequestDisableBlockPool.Count == 0) {
-          RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(true);
-        }
-      }
+    private void HandleRefreshBlockPool() {
+      RobotEngineManager.Instance.BlockPoolTracker.ResetBlockPool();
     }
 
     private void HandleOpenCubeHelpViewTapped() {

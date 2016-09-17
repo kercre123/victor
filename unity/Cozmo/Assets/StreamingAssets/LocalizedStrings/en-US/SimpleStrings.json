@@ -51,6 +51,9 @@
   "button.ready": {
     "translation": "Ready"
   },
+  "button.refresh": {
+    "translation": "Refresh"
+  },
   "button.close": {
     "translation": "Close"
   },
@@ -191,6 +194,9 @@
   },
   "soundcheck.description": {
     "translation": "Please make sure your device's sound is turned on"
+  },
+  "refreshCubesPrompt.description": {
+    "translation": "Put one of each Cube next to Cozmo and tap 'Refresh'. Cozmo will Connect to the 3 that he thinks are closest."
   },
   "label.available": {
     "translation": "Available!"

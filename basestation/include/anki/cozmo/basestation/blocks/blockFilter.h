@@ -63,7 +63,7 @@ private:
     ObjectType 			objectType;
   };
   
-  static constexpr double kConnectivityCheckDelay = 1.0f; // How often do we check for connectivity changes in seconds
+  static constexpr double kConnectivityCheckDelay = 2.0f; // How often do we check for connectivity changes in seconds
   static constexpr double kMaxWaitForPooledObjects = 5.0f; // How long do we wait for the discovered objects to connect before looking for another one of the same type
   
   static constexpr uint8_t kMaxRSSI = 150;

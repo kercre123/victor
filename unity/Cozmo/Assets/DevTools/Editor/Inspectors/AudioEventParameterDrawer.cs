@@ -51,14 +51,20 @@ namespace Anki.Cozmo.Audio {
 
       var eventType = (EventGroupType)Enum.Parse(typeof(EventGroupType), eventTypeProp.stringValue);
 
-      var type = _EventTypeDictionary[eventType];
+      Type type = null;
+      _EventTypeDictionary.TryGetValue(eventType, out type);
 
-      var options = Enum.GetNames(type);
-      var values = Enum.GetValues(type).Cast<Enum>().Select(x => (int)(uint)(object)x).ToArray();
-      position.y += position.height;
+      if (type != null) {
+        var options = Enum.GetNames(type);
+        var values = Enum.GetValues(type).Cast<Enum>().Select(x => (int)(uint)(object)x).ToArray();
+        position.y += position.height;
 
-      int intEnumValue = EditorGUI.IntPopup(position, (int)(uint)Enum.Parse(typeof(GameEvent.GenericEvent), eventProp.stringValue), options, values);
-      eventProp.stringValue = ((GameEvent.GenericEvent)intEnumValue).ToString();
+        int intEnumValue = EditorGUI.IntPopup(position, (int)(uint)Enum.Parse(typeof(GameEvent.GenericEvent), eventProp.stringValue), options, values);
+        eventProp.stringValue = ((GameEvent.GenericEvent)intEnumValue).ToString();
+      } else {
+        int intEnumValue = EditorGUI.IntPopup(position, (int)(uint)GameEvent.GenericEvent.Invalid, new string[] {}, new int[] {});
+        eventProp.stringValue = ((GameEvent.GenericEvent)intEnumValue).ToString();
+      }
 
       EditorGUI.EndProperty();
     }

@@ -415,6 +415,11 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
       ConnectToObjects();
       
       Save();
+      
+      // Reset the connectivity check time so we give some time to the cubes to disconnect and
+      // advertise again. Otherwise they won't be in the list of discovered objects if we do
+      // the discovery phase right away.
+      _lastConnectivityCheckTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       break;
     }
       

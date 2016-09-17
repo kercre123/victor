@@ -503,7 +503,8 @@ public static class LocalizationKeys {
 
   #region SettingsStrings
 
-  public const string kSettingsCubeStatusPanelButtonCubeHelp = "settings.cubeStatusPanel.button.cubeHelp";
+  public const string kSettingsCubeStatusPanelButtonCubeRefresh = "settings.cubeStatusPanel.button.cubeRefresh";
+  public const string kSettingsCubeStatusPanelLocateText = "settings.cubeStatusPanel.locateText";
   public const string kSettingsSdkPanelActivateSDKalertText = "settings.sdkPanel.activateSDKalert.text";
   public const string kSettingsSdkPanelDisableButtonText = "settings.sdkPanel.disableButton.text";
   public const string kSettingsSdkPanelEnableButtonText = "settings.sdkPanel.enableButton.text";
@@ -570,6 +571,7 @@ public static class LocalizationKeys {
   public const string kButtonContinue = "button.continue";
   public const string kButtonAgain = "button.again";
   public const string kButtonReady = "button.ready";
+  public const string kButtonRefresh = "button.refresh";
   public const string kButtonClose = "button.close";
   public const string kButtonDone = "button.done";
   public const string kButtonPlay = "button.play";
@@ -617,6 +619,7 @@ public static class LocalizationKeys {
   public const string kButtonStart = "button.start";
   public const string kButtonBegin = "button.begin";
   public const string kSoundcheckDescription = "soundcheck.description";
+  public const string kRefreshCubesPromptDescription = "refreshCubesPrompt.description";
   public const string kLabelAvailable = "label.available";
   public const string kButtonReplay = "button.replay";
   public const string kLabelTo = "label.to";
@@ -634,10 +637,10 @@ public static class LocalizationKeys {
   public const string kButtonOpenEnvelope = "button.openEnvelope";
   public const string kLabelPressAndHoldInstruction = "label.pressAndHoldInstruction";
   public const string kLabelActivePlayer = "label.activePlayer";
-  public const string kLabelTimeWithCozmo = "label.timeWithCozmo";
   public const string kLabelGamesPlayed = "label.gamesPlayed";
   public const string kLabelStreaksCount = "label.streaksCount";
   public const string kLabelGoalsCompleted = "label.goalsCompleted";
+  public const string kLabelDaysWithCozmo = "label.daysWithCozmo";
 
   #endregion
 

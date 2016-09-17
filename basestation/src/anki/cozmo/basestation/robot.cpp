@@ -1416,6 +1416,9 @@ Result Robot::Update(bool ignoreVisionModes)
   // Update the block filter before trying to connect to objects
   _blockFilter->Update();
 
+  // Update object connectivity
+  CheckDisconnectedObjects();
+  
   // Connect to objects requested via ConnectToObjects
   ConnectToRequestedObjects();
       

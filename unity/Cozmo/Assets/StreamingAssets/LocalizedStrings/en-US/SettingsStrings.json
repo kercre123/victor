@@ -18,8 +18,11 @@
       "/{*}"
     ]
   },
-  "settings.cubeStatusPanel.button.cubeHelp": {
-    "translation": "Cube Help"
+  "settings.cubeStatusPanel.button.cubeRefresh": {
+    "translation": "Refresh Cubes"
+  },
+  "settings.cubeStatusPanel.locateText": {
+    "translation": "(Tap to locate Cubes)"
   },
   "settings.sdkPanel.activateSDKalert.text": {
     "translation": "Activate SDK Mode?"
@@ -75,34 +78,34 @@
   "settings.sdkPanel.wrongVersion.text": {
     "translation": "Incompatible SDK Version"
   },
-  "settings.sleepCozmoPanel.button.returnToTitle":{
+  "settings.sleepCozmoPanel.button.returnToTitle": {
     "translation": "(Return To Title)"
   },
-  "settings.sleepCozmoPanel.button.sleepCozmo":{
+  "settings.sleepCozmoPanel.button.sleepCozmo": {
     "translation": "Sleep Cozmo"
   },
-  "settings.sleepCozmoPanel.confirmationModal.title":{
+  "settings.sleepCozmoPanel.confirmationModal.title": {
     "translation": "Sleep Cozmo?"
   },
-  "settings.sleepCozmoPanel.confirmModal.description":{
+  "settings.sleepCozmoPanel.confirmModal.description": {
     "translation": "Leave Cozmo on his charger to boost his battery or tap Sleep to disconnect"
   },
-  "settings.sleepCozmoPanel.confirmModal.button.confirm":{
+  "settings.sleepCozmoPanel.confirmModal.button.confirm": {
     "translation": "Sleep"
   },
-  "settings.supportView.button.restoreCozmo":{
+  "settings.supportView.button.restoreCozmo": {
     "translation": "Restore Cozmo"
   },
-  "settings.supportView.label.directions":{
+  "settings.supportView.label.directions": {
     "translation": "Disconnect from Cozmo and Navigate to:"
   },
-  "settings.supportView.label.restoreCozmoClarification":{
+  "settings.supportView.label.restoreCozmoClarification": {
     "translation": "(Re-applies unlocks from this profile to your Cozmo)"
   },
-  "settings.supportView.label.title":{
+  "settings.supportView.label.title": {
     "translation": "Contact Support"
   },
-  "settings.supportView.label.url":{
+  "settings.supportView.label.url": {
     "translation": "support.anki.com"
   },
   "settings.supportView.restoreCozmoModal.restoreCozmoConfirmButton": {
