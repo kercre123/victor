@@ -542,9 +542,9 @@ public class HockeyApp : MonoBehaviour {
         }
         file.WriteLine(log);
       }
-string appRun = null;
+      string appRun = null;
 #if(!UNITY_EDITOR)
-  appRun = CozmoBinding.AppRunId.ToString();
+      appRun = CozmoBinding.AppRunId.ToString();
 #endif 
       if( appRun != null ) {
         using (StreamWriter File = new StreamWriter(logPrefix + ".description", true)) {
@@ -604,6 +604,8 @@ string appRun = null;
   protected virtual void HandleException(string logString, string stackTrace) {
 #if (!UNITY_EDITOR)
     WriteLogToDisk(logString, stackTrace);
+    // Just print to the log, don't upload in production, thats what Hockeyapp is for.
+    DAS.Info("exception.devlog", logString + " Stack: " + stackTrace);
 #endif
   }
 

@@ -586,14 +586,20 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void QuitMinigame() {
-    _SharedMinigameViewInstance.ViewCloseAnimationFinished += QuitMinigameAnimationFinished;
-    _SharedMinigameViewInstance.CloseView();
+    try {
+      _SharedMinigameViewInstance.ViewCloseAnimationFinished += QuitMinigameAnimationFinished;
+      _SharedMinigameViewInstance.CloseView();
 
-    // cancels any queued up actions or co-routines
-    if (CurrentRobot != null) {
-      CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
+      // cancels any queued up actions or co-routines
+      if (CurrentRobot != null) {
+        CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
+      }
+      StopAllCoroutines();
     }
-    StopAllCoroutines();
+    catch (System.Exception e) {
+      // This is happening sometimes when disconnecting from robot when a dialog is up.
+      DAS.Info("StopAllCoroutines null ref internally sometimes", e.StackTrace);
+    }
   }
 
   private void QuitMinigameAnimationFinished() {
