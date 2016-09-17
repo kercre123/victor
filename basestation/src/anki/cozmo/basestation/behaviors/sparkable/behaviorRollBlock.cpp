@@ -158,6 +158,8 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
   DriveToRollObjectAction* rollAction = new DriveToRollObjectAction(robot, _targetBlock,
                                                                     false, 0, false,
                                                                     maxTurnToFaceAngle);
+  // always roll to upright, even if orientation isn't important (always prefer it to end upright, even if we
+  // will run without it being upright, e.g. Sparks)
   rollAction->RollToUpright();
   rollAction->SetSayNameAnimationTrigger(AnimationTrigger::RollBlockPreActionNamedFace);
   rollAction->SetNoNameAnimationTrigger(AnimationTrigger::RollBlockPreActionUnnamedFace);

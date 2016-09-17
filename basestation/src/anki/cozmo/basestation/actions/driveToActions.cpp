@@ -1149,10 +1149,10 @@ namespace Anki {
       }
 
       if(nullptr != _driveToObjectAction) {
-        PRINT_NAMED_INFO("IDriveToInteractWithObject.SetApproachingAngle",
-                         "[%d] %f rad",
-                         GetTag(),
-                         angle_rad);
+        PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.SetApproachingAngle",
+                      "[%d] %f rad",
+                      GetTag(),
+                      angle_rad);
         
         _driveToObjectAction->SetApproachAngle(angle_rad);
       } else {
@@ -1370,12 +1370,15 @@ namespace Anki {
     {
       if( GetState() != ActionResult::FAILURE_NOT_STARTED ) {
         PRINT_NAMED_WARNING("DriveToRollObjectAction.RollToUpright.AlreadyRunning",
-                            "Tried to set the approach angle, but action has already started");
+                            "[%d] Tried to set the approach angle, but action has already started",
+                            GetTag());
         return;
       }
 
       if( ! _objectID.IsSet() ) {
-        PRINT_NAMED_WARNING("DriveToRollObjectAction.NoObject", "invalid object id");
+        PRINT_NAMED_WARNING("DriveToRollObjectAction.RollToUpright.NoObject",
+                            "[%d] invalid object id",
+                            GetTag());
         return;
       }
 
@@ -1386,40 +1389,75 @@ namespace Anki {
       // Compute approach angle so that rolling rights the block, using docking
       ObservableObject* observableObject = _robot.GetBlockWorld().GetObjectByID(_objectID);
       if( nullptr == observableObject ) {
-        PRINT_NAMED_WARNING("DriveToRollObjectAction.NullObject", "invalid object id");
+        PRINT_NAMED_WARNING("DriveToRollObjectAction.RollToUpright.NullObject",
+                            "[%d] invalid object id %d",
+                            GetTag(),
+                            _objectID.GetValue());
         return;
       }
 
-      ActionableObject* obj = dynamic_cast<ActionableObject*>(observableObject);
-      if( nullptr == obj ) {
-        PRINT_NAMED_WARNING("DriveToRollObjectAction.NonActionableObject", "");
+      if( observableObject->GetFamily() != ObjectFamily::LightCube &&
+          observableObject->GetFamily() != ObjectFamily::Block ) {
+        PRINT_CH_INFO("Actions", "DriveToRollObjectAction.RollToUpright.WrongFamily",
+                      "[%d] Can only use this function on blocks or light cubes, ignoring call",
+                      GetTag());
         return;
       }
+
+      // unfortunately this needs to be a dynamic cast because Block inherits from observable object virtually
+      Block* block = dynamic_cast<Block*>(observableObject);
+      if( block == nullptr ) {
+        PRINT_NAMED_ERROR("DriveToRollObjectAction.RollToUpright.NotABlock",
+                          "[%d] object %d exists, but can't be cast to a Block. This is a bug",
+                          GetTag(),
+                          _objectID.GetValue());
+        return;
+      }
+
       
       std::vector<PreActionPose> preActionPoses;
-      obj->GetCurrentPreActionPoses(preActionPoses,
-                                    {PreActionPose::DOCKING},
-                                    std::set<Vision::Marker::Code>(),
-                                    obstacles);
+      block->GetCurrentPreActionPoses(preActionPoses,
+                                      {PreActionPose::ROLLING},
+                                      std::set<Vision::Marker::Code>(),
+                                      obstacles);
 
       if( preActionPoses.empty() ) {
-        PRINT_NAMED_INFO("DriveToRollObjectAction.RollToUpright",
-                         "[%d] No valid pre-dock poses will upright object %d, not restricting pose",
-                         GetTag(),
-                         _objectID.GetValue());
-        // NOTE: this will make it so we *might* get lucky and roll the cube into a state where we can roll it
-        // again to upright it, although there is no guarantee. A real solution would need a high-level
-        // planner to solve this. By doing nothing here, we don't limit the approach angle at all
+        PRINT_CH_INFO("Actions", "DriveToRollObjectAction.RollToUpright.WillNotUpright.NoPoses",
+                      "[%d] No valid pre-dock poses to roll object %d, not restricting pose",
+                      GetTag(),
+                      _objectID.GetValue());
+        return;
       }
-        
-      // set approach angle for roll
-      if (preActionPoses.size() == 1) {
-        Vec3f approachVec = ComputeVectorBetween(obj->GetPose(), preActionPoses[0].GetPose());
-        f32 approachAngle_rad = atan2f(approachVec.y(), approachVec.x());
-        SetApproachAngle(approachAngle_rad);
-      }
-      // else, Block must be upside down, so don't limit approach angle, or there are no poses
 
+      // if we have any valid predock poses which approach the bottom face, use those
+
+      const Vision::KnownMarker& bottomMarker = block->GetMarker( Block::FaceName::BOTTOM_FACE );
+
+      for( const auto& preActionPose : preActionPoses ) {
+        const Vision::KnownMarker* marker = preActionPose.GetMarker();
+        if( nullptr != marker && marker->GetCode() == bottomMarker.GetCode() ) {
+          // found at least one valid pre-action pose using the bottom marker, so limit the approach angle so
+          // we will roll the block to upright
+          Vec3f approachVec = ComputeVectorBetween(block->GetPose(), preActionPose.GetPose());
+          f32 approachAngle_rad = atan2f(approachVec.y(), approachVec.x());
+          SetApproachAngle(approachAngle_rad);
+          PRINT_CH_INFO("Actions", "DriveToRollObjectAction.RollToUpright.WillUpright",
+                        "[%d] Found a predock pose that should upright cube %d",
+                        GetTag(),
+                        _objectID.GetValue());
+          return;
+        }
+      }
+
+      // if we got here, that means none of the predock poses (if there are any) will roll from the bottom. In
+      // this case, don't limit the predock poses at all. This will make it so we *might* get lucky and roll
+      // the cube into a state where we can roll it again to upright it, although there is no guarantee. A
+      // real solution would need a high-level planner to solve this. By doing nothing here, we don't limit
+      // the approach angle at all
+      PRINT_CH_INFO("Actions", "DriveToRollObjectAction.RollToUpright.WillNotUpright.NoBottomPose",
+                    "[%d] none of the %zu actions will upright the cube, allowing any",
+                    GetTag(),
+                    preActionPoses.size());
     }
     
     Result DriveToRollObjectAction::EnableDeepRoll(bool enable)
