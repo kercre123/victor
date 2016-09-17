@@ -130,7 +130,7 @@ public class DailyGoalPane : MonoBehaviour {
 
   private void HandleClearGoalsClicked() {
     DataPersistenceManager.Instance.CurrentSession.DailyGoals.Clear();
-    RefreshGoals();
+    RefreshOptions();
   }
 
   private void HandleGenSpecificGoalClicked() {

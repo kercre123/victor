@@ -87,6 +87,7 @@ public class CheckInFlow : MonoBehaviour {
   private Cozmo.UI.CozmoButton _PrivacyPolicyButton;
 
   private List<Transform> _ActiveNewGoalTransforms = new List<Transform>();
+  private List<Transform> _ActiveNewGoalTargets = new List<Transform>();
   private List<Transform> _ActiveExpTransforms = new List<Transform>();
   private List<Transform> _ActiveSparksTransforms = new List<Transform>();
   private List<Transform> _ActiveCoinsTransforms = new List<Transform>();
@@ -115,7 +116,8 @@ public class CheckInFlow : MonoBehaviour {
     _EnvelopeContainer.SetActive(false);
     _TimelineReviewContainer.SetActive(false);
     _ConnectContainer.SetActive(false);
-    _DailyGoalPanel.gameObject.SetActive(false);
+    _DailyGoalPanel.gameObject.SetActive(true);
+    _DailyGoalPanel.alpha = 0.0f;
     // automatically apply chest rewards that are queued up incase the app is exitied during the middle
     // of a reward loot view flow.
     ChestRewardManager.Instance.TryPopulateChestRewards();
@@ -130,7 +132,6 @@ public class CheckInFlow : MonoBehaviour {
       _CurrentSequence = rewardSequence;
       rewardSequence.Join(UIDefaultTransitionSettings.Instance.CreateFadeInTween(_DailyGoalPanel, Ease.Unset, _ConnectIntroDuration));
       rewardSequence.Join(UIDefaultTransitionSettings.Instance.CreateFadeInTween(_ConnectCanvas, Ease.Unset, _ConnectIntroDuration));
-      _DailyGoalPanel.gameObject.SetActive(true);
       _ConnectContainer.SetActive(true);
       rewardSequence.Play();
     }
@@ -271,6 +272,7 @@ public class CheckInFlow : MonoBehaviour {
     // SpawnDailyGoalRewards here for each of the newly generated goals
     for (int i = 0; i < DataPersistenceManager.Instance.CurrentSession.DailyGoals.Count; i++) {
       newReward = SpawnDailyGoalReward();
+      _ActiveNewGoalTargets.Add(DailyGoalManager.Instance.GoalPanelInstance.GetGoalSource(DataPersistenceManager.Instance.CurrentSession.DailyGoals[i]));
       rewardTarget = GetRandomTarget();
       rewardSequence.Join(newReward.DOScale(0.0f, _TimelineRewardPopDuration).From().SetEase(Ease.OutBack));
       rewardSequence.Join(newReward.DOLocalMove(rewardTarget, _TimelineRewardPopDuration).SetEase(Ease.OutBack));
@@ -457,7 +459,6 @@ public class CheckInFlow : MonoBehaviour {
     _TimelineSequence = goalSequence;
     goalSequence.Join(UIDefaultTransitionSettings.Instance.CreateFadeInTween(_DailyGoalPanel, Ease.Unset, _ConnectIntroDuration));
     goalSequence.Join(UIDefaultTransitionSettings.Instance.CreateFadeInTween(_ConnectCanvas, Ease.Unset, _ConnectIntroDuration));
-    _DailyGoalPanel.gameObject.SetActive(true);
     MoveRewardsToCollectZone(goalSequence);
     _ConnectContainer.SetActive(true);
     goalSequence.InsertCallback(_GoalTweenDelay, HandleDailyGoalTweens);
@@ -506,7 +507,7 @@ public class CheckInFlow : MonoBehaviour {
       float stagger = UnityEngine.Random.Range(0, _RewardSendoffVariance);
       // Since Goal reward particles are made based on daily goal count, these lists should always be the same size and correspond
       // 1 to 1
-      Transform finalTarget = DailyGoalManager.Instance.GoalPanelInstance.GetGoalSource(DataPersistenceManager.Instance.CurrentSession.DailyGoals[i]);
+      Transform finalTarget = _ActiveNewGoalTargets[i];
       _CurrentSequence.Insert(stagger, currTransform.DOMove(finalTarget.position, _RewardSendoffDuration).SetEase(Ease.InBack));
       Image goalIcon = currTransform.GetComponent<Image>();
       if (goalIcon != null) {
