@@ -75,8 +75,9 @@ private:
   
   using Face = Vision::TrackedFace;
   using FaceID_t = Vision::FaceID_t;
-    
-  void SelectFaceToTrack(const Robot& robot);
+
+  // sets the mutbale _targetFace to the face we want to interact with
+  void SelectFaceToTrack(const Robot& robot) const;
 
   void TransitionToInitialReaction(Robot& robot);
   void TransitionToGlancingDown(Robot& robot);
@@ -91,7 +92,7 @@ private:
   ////////////////////////////////////////////////////////////////////////////////
 
   // ID of face we are currently interested in
-  FaceID_t _targetFace = Vision::UnknownFaceID;
+  mutable FaceID_t _targetFace = Vision::UnknownFaceID;
 
   // We only want to run for faces we've seen since the last time we ran, so keep track of the final timestamp
   // when the behavior finishes
