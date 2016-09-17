@@ -78,10 +78,19 @@ class Camera(event.Dispatcher):
     @property
     def image_stream_enabled(self):
         '''bool: Set to true to receive camera images from the robot.'''
+        if np is None:
+            return False
+
         return self._image_stream_enabled
 
     @image_stream_enabled.setter
     def image_stream_enabled(self, enabled):
+        if enabled and np is None:
+            print('numpy or pillow packages not installed; camera image processing disabled.')
+            return
+        elif np is None:
+            return
+
         if self._image_stream_enabled == enabled:
             return
 
