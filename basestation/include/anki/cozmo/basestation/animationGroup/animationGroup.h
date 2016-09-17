@@ -44,8 +44,13 @@ namespace Anki {
       // Retrieve an animation based on the mood manager
       const std::string& GetAnimationName(const MoodManager& moodManager, AnimationGroupContainer& animationGroupContainer, float headAngleRad=0.f) const;
 
+      // Just retrieve first animation from the group
+      const std::string& GetFirstAnimationName() const;
+      
       // An animation group is empty if it has no animations
       bool IsEmpty() const;
+      
+      size_t GetNumAnimations() const { return _animations.size(); }
       
       const std::string& GetName() const { return _name; }
       

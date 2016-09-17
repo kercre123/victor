@@ -397,6 +397,10 @@
       "AnimName" : "ag_meetcozmo_reenrollment_sayname"
     },
     {
+      "CladEvent": "NeutralFace",
+      "AnimName" : "ag_neutral_face"
+    },
+    {
       "CladEvent": "NothingToDoBoredIdle",
       "AnimName": "ag_hiking_lookAround"
     },

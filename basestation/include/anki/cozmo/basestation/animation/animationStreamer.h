@@ -49,7 +49,7 @@ namespace Cozmo {
   {
   public:
     using Tag = u8;
-    static const std::string   NeutralFaceAnimName;
+    static const AnimationTrigger NeutralFaceTrigger;
     
     static const Tag  NotAnimatingTag  = 0;
     static const Tag  IdleAnimationTag = 255;
@@ -165,6 +165,7 @@ namespace Cozmo {
     
     Animation*  _idleAnimation = nullptr;
     Animation*  _streamingAnimation = nullptr;
+    Animation*  _neutralFaceAnimation = nullptr;
     TimeStamp_t _timeSpentIdling_ms = 0;
     std::vector<AnimationTrigger> _idleAnimationNameStack;
 

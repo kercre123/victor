@@ -26,7 +26,7 @@
 namespace Anki {
 namespace Cozmo {
   
-  const std::string AnimationStreamer::NeutralFaceAnimName = "anim_neutral_eyes_01";
+  const AnimationTrigger AnimationStreamer::NeutralFaceTrigger = AnimationTrigger::NeutralFace;
 
   const s32 AnimationStreamer::MAX_BYTES_FOR_RELIABLE_TRANSPORT = (1000/2) * BS_TIME_STEP; // Don't send more than 1000 bytes every 2ms
 
@@ -46,7 +46,7 @@ namespace Cozmo {
   , _rng(*_context->GetRandom())
   , _liveAnimation(EnumToString(AnimationTrigger::ProceduralLive))
   , _audioClient( audioClient )
-  , _lastProceduralFace(new ProceduralFace)
+  , _lastProceduralFace(new ProceduralFace())
   {
     _liveAnimation.SetIsLive(true);
     
@@ -59,17 +59,36 @@ namespace Cozmo {
     SetupHandlers(_context->GetExternalInterface());
     
     // Set up the neutral face to use when resetting procedural animations
-    Animation* neutralFaceAnim = _animationContainer.GetAnimation(NeutralFaceAnimName);
-    if (nullptr != neutralFaceAnim)
-    {
-      auto frame = neutralFaceAnim->GetTrack<ProceduralFaceKeyFrame>().GetFirstKeyFrame();
-      ProceduralFace::SetResetData(frame->GetFace());
+    const std::string neutralFaceAnimGroupName = _context->GetRobotManager()->GetAnimationForTrigger(NeutralFaceTrigger);
+    const AnimationGroup* group = _animationGroups.GetAnimationGroup(neutralFaceAnimGroupName);
+    if(group == nullptr || group->IsEmpty()) {
+      PRINT_NAMED_ERROR("AnimationStreamer.Constructor.BadNeutralAnimGroup",
+                        "Neutral animation group %s for trigger %s is empty or null",
+                        neutralFaceAnimGroupName.c_str(), EnumToString(NeutralFaceTrigger));
     }
     else
     {
-      PRINT_NAMED_WARNING("AnimationStreamer.Constructor.NeutralFaceDataNotFound",
+      if(group->GetNumAnimations() > 1)
+      {
+        PRINT_NAMED_WARNING("AnimationStreamer.Constructor.MultipleNeutralFaceAnimations",
+                            "Neutral face animation group %s has %zu animations instead of one. "
+                            "Using first.", neutralFaceAnimGroupName.c_str(),
+                            group->GetNumAnimations());
+      }
+      
+      const std::string neutralFaceAnimName = group->GetFirstAnimationName();
+      _neutralFaceAnimation = _animationContainer.GetAnimation(neutralFaceAnimName);
+      if (nullptr != _neutralFaceAnimation)
+      {
+        auto frame = _neutralFaceAnimation->GetTrack<ProceduralFaceKeyFrame>().GetFirstKeyFrame();
+        ProceduralFace::SetResetData(frame->GetFace());
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("AnimationStreamer.Constructor.NeutralFaceDataNotFound",
                           "Could not find expected neutral face animation file called %s",
-                          NeutralFaceAnimName.c_str());
+                          neutralFaceAnimName.c_str());
+      }
     }
     
     // Do this after the ProceduralFace class has set to use the right neutral face
@@ -321,7 +340,7 @@ namespace Cozmo {
       // the face in a weird spot, so stream the neutral face, just in case
       if(_idleAnimation != nullptr && _streamingAnimation == nullptr) {
         // Send the neutral face
-        SetStreamingAnimation(NeutralFaceAnimName);
+        SetStreamingAnimation(_neutralFaceAnimation);
       }
 
       _idleAnimation = nullptr;
@@ -745,7 +764,7 @@ namespace Cozmo {
     // conditions to even be in this function, then we should make sure we've
     // got neutral face back on the screen
     if(_wasAnimationInterruptedWithNothing) {
-      SetStreamingAnimation(NeutralFaceAnimName);
+      SetStreamingAnimation(_neutralFaceAnimation);
       _wasAnimationInterruptedWithNothing = false;
     }
     

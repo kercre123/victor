@@ -89,7 +89,21 @@ const std::string& AnimationGroup::GetAnimationName(const MoodManager& moodManag
 {
   return GetAnimationName(moodManager.GetSimpleMood(), moodManager.GetLastUpdateTime(), animationGroupContainer,headAngleRad);
 }
-    
+  
+const std::string& AnimationGroup::GetFirstAnimationName() const
+{
+  if(_animations.empty())
+  {
+    PRINT_NAMED_WARNING("AnimationGroup.GetFirstAnimationName.EmptyGroup",
+                        "No animations in group %s, returning empty string",
+                        GetName().c_str());
+    static const std::string empty = "";
+    return empty;
+  }
+  
+  return _animations.front().GetName();
+}
+  
 const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood,
                                                     float currentTime_s,
                                                     AnimationGroupContainer& animationGroupContainer,
