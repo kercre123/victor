@@ -100,6 +100,9 @@ namespace Cozmo {
     }
 
     private void OnDestroy() {
+      if (_LowBatteryDialog != null) {
+        _LowBatteryDialog.ViewClosed -= ResetEngineFromLowBattery;
+      }
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.GoingToSleep>(HandleGoingToSleep);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnectionMessage);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleReactionaryBehavior);
@@ -126,7 +129,8 @@ namespace Cozmo {
 
     private void HandleReactionaryBehavior(Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition message) {
       if (DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) { return; }
-      if (IsGoToSleepDialogOpen || IsConfirmSleepDialogOpen) {
+      if ((IsGoToSleepDialogOpen && message.reactionaryBehaviorType != Anki.Cozmo.BehaviorType.ReactToOnCharger)
+          || IsConfirmSleepDialogOpen) {
         StopIdleTimeout();
         _IsOnChargerToSleep = false;
         CloseGoToSleepDialog();
@@ -344,11 +348,29 @@ namespace Cozmo {
         alertView.DescriptionLocKey = LocalizationKeys.kConnectivityCozmoLowBatteryDesc;
         _LowBatteryDialog = alertView;
         _LowBatteryAlertTriggered = true;
-        RobotEngineManager.Instance.TurnOffReactionaryBehavior();
+
+        PrepEngineForLowBattery();
+        _LowBatteryDialog.ViewClosed += ResetEngineFromLowBattery;
+
         if (OnPauseDialogOpen != null) {
           OnPauseDialogOpen.Invoke();
         }
       }
+    }
+
+    private void PrepEngineForLowBattery() {
+      // Engine seems to turn off freeplay on its own
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null) {
+        robot.ResetRobotState();
+      }
+      RobotEngineManager.Instance.SetEnableReactionaryBehaviors(false);
+    }
+
+    private void ResetEngineFromLowBattery() {
+      _LowBatteryDialog.ViewClosed -= ResetEngineFromLowBattery;
+      RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
+      RobotEngineManager.Instance.SetEnableReactionaryBehaviors(true);
     }
 
     private void CloseAllDialogs() {
@@ -373,7 +395,6 @@ namespace Cozmo {
 
     private void CloseLowBatteryDialog() {
       if (null != _LowBatteryDialog) {
-        RobotEngineManager.Instance.SetEnableReactionaryBehaviors(true);
         _LowBatteryDialog.CloseView();
         _LowBatteryDialog = null;
       }
