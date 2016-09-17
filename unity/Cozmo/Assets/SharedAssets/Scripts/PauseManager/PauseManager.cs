@@ -364,13 +364,11 @@ namespace Cozmo {
       if (robot != null) {
         robot.ResetRobotState();
       }
-      RobotEngineManager.Instance.SetEnableReactionaryBehaviors(false);
     }
 
     private void ResetEngineFromLowBattery() {
       _LowBatteryDialog.ViewClosed -= ResetEngineFromLowBattery;
       RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
-      RobotEngineManager.Instance.SetEnableReactionaryBehaviors(true);
     }
 
     private void CloseAllDialogs() {
