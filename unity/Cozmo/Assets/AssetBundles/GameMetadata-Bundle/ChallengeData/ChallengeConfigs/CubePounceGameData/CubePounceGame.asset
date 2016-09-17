@@ -27,11 +27,11 @@ MonoBehaviour:
     _Music: 1317044071
   MinigameConfig: {fileID: 11400000, guid: b28cb45ddbc134621ae9ee104ea2944e, type: 2}
   IsMinigame: 1
-  InstructionVideoPath: Videos/htp_Keepaway_iphone_24fps.mp4
+  InstructionVideoPath: Videos/Cozmo_Howto_Keepaway_handbrake.mp4
   DifficultyOptions: []
   GetInAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 260
+    _EnumValue: 261
   GetOutAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 260
+    _EnumValue: 261
