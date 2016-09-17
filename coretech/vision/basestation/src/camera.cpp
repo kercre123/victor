@@ -295,7 +295,12 @@ namespace Anki {
                                      const u16 xBorderPad,
                                      const u16 yBorderPad) const
     {
-      CORETECH_THROW_IF(this->IsCalibrated() == false);
+      if(!IsCalibrated())
+      {
+        // Can't check if within FOV if camera is not calibrated
+        PRINT_NAMED_WARNING("Camera.IsWithinFieldOfView.NotCalibrated", "");
+        return false;
+      }
       
       return (not std::isnan(projectedPoint.x()) &&
               not std::isnan(projectedPoint.y()) &&

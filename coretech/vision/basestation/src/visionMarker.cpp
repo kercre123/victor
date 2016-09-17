@@ -175,6 +175,14 @@ namespace Anki {
       
       reason = NotVisibleReason::IS_VISIBLE;
       
+      if(!camera.IsCalibrated())
+      {
+        // Can't check visibility with an uncalibrated camera
+        PRINT_NAMED_WARNING("KnownMarker.IsVisibleFrom.CameraNotCalibrated", "");
+        reason = NotVisibleReason::CAMERA_NOT_CALIBRATED;
+        return false;
+      }
+      
       // Get the marker's pose relative to the camera
       Pose3d markerPoseWrtCamera;
       if(_pose.GetWithRespectTo(camera.GetPose(), markerPoseWrtCamera) == false) {
@@ -331,6 +339,7 @@ namespace Anki {
     {
       switch(reason) {
         case KnownMarker::NotVisibleReason::IS_VISIBLE: return "IS_VISIBLE";
+        case KnownMarker::NotVisibleReason::CAMERA_NOT_CALIBRATED: return "CAMERA_NOT_CALIBRATED";
         case KnownMarker::NotVisibleReason::POSE_PROBLEM: return "POSE_PROBLEM";
         case KnownMarker::NotVisibleReason::BEHIND_CAMERA: return "BEHIND_CAMERA";
         case KnownMarker::NotVisibleReason::NORMAL_NOT_ALIGNED: return "NORMAL_NOT_ALIGNED";

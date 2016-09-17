@@ -47,6 +47,13 @@ namespace Vision {
                                        const u16     xBorderPad,
                                        const u16     yBorderPad) const
   {
+    if(!camera.IsCalibrated())
+    {
+      // Can't do visibility checks with an uncalibrated camera
+      PRINT_NAMED_WARNING("ObservableObject.IsVisibleFrom.CameraNotCalibrated", "");
+      return false;
+    }
+ 
     // Return true if any of this object's markers are visible from the
     // given camera
     for(auto const& marker : _markers) {
@@ -67,7 +74,7 @@ namespace Vision {
                           NotVisibleReasonToString(reason));
       }
     }
-  
+    
     return false;
     
   } // ObservableObject::IsObservableBy()

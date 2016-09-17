@@ -120,6 +120,7 @@ namespace Anki {
       // returned, then none of the earlier ones are true. 
       enum class NotVisibleReason : u8 {
         IS_VISIBLE = 0, // if IsVisibleFrom() == true
+        CAMERA_NOT_CALIBRATED,
         POSE_PROBLEM,
         BEHIND_CAMERA,
         NORMAL_NOT_ALIGNED,
