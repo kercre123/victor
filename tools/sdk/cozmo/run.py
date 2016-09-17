@@ -1,5 +1,6 @@
 __all__ = ['connect',  'connect_with_tkviewer', 'connect_on_loop',
-           'setup_basic_logging']
+           'setup_basic_logging',
+           'DeviceConnector', 'IOSConnector', 'AndroidConnector']
 
 import threading
 
@@ -9,21 +10,264 @@ import functools
 import inspect
 import logging
 import os
+import os.path
 import queue
+import subprocess
 import sys
 
 from . import logger, logger_protocol
 
-from . import clad_protocol
 from . import base
+from . import clad_protocol
 from . import conn
 from . import event
 from . import exceptions
+from . import usbmux
 
 try:
     from . import tkview
 except ImportError:
     tkview = None
+
+
+COZMO_PORT = 5106
+
+if sys.platform in ('win32', 'cygwin'):
+    DEFAULT_ADB_CMD = 'adb.exe'
+else:
+    DEFAULT_ADB_CMD = 'adb'
+
+
+class DeviceConnector:
+    '''Base class for objects that setup the physical connection to a device.'''
+    def __init__(self, cozmo_port=COZMO_PORT, enable_env_vars=True):
+        self.cozmo_port = cozmo_port
+        if enable_env_vars:
+            self.parse_env_vars()
+
+    async def connect(self, loop, protocol_factory):
+        '''Connect attempts to open a connection transport to the Cozmo app on a device.
+
+        On opening a transport it will create a protocol from the supplied
+        factory and connect it to the transport, returning a (transport, protocol)
+        tuple - See :meth:`asyncio.BaseEventLoop.create_connection`
+        '''
+        raise NotImplemented()
+
+    def parse_env_vars(self):
+        try:
+            self.cozmo_port = int(os.environ['COZMO_PORT'])
+        except (KeyError, ValueError):
+            pass
+
+
+class IOSConnector(DeviceConnector):
+    '''Connects to an attached iOS device over USB.
+
+    Opens a connection to the first iOS device that's found to be running
+    the Cozmo app in SDK mode.
+
+    iTunes (or another service providing usbmuxd) must be installed in order
+    for this connector to be able to open a connection to a device.
+
+    An instance of this class can be passed to the ``connect_`` prefixed
+    functions in this module.
+    '''
+    def __init__(self, **kw):
+        super().__init__(**kw)
+        self.usbmux = None
+
+    async def connect(self, loop, protocol_factory, conn_check):
+        if not self.usbmux:
+            self.usbmux = await usbmux.connect_to_usbmux(loop=loop)
+        transport, proto = await self.usbmux.connect_to_first_device(protocol_factory, self.cozmo_port)
+        if conn_check is not None:
+            await conn_check(proto)
+        logger.info('Connected to iOS device')
+        return transport, proto
+
+
+class AndroidConnector(DeviceConnector):
+    '''Connects to an attached Android device over USB.
+
+    This requires the Android Studio command line tools to be installed,
+    specifically `adb`.
+
+    By default the connector will attempt to locate `adb` (or `adb.exe`
+    on Windows) in common locations, but it may also be supplied by setting
+    the ``ANDROID_ADB_PATH`` environment variable, or by passing it
+    to the constructor.
+
+    An instance of this class can be passed to the ``connect_`` prefixed
+    functions in this module.
+    '''
+    def __init__(self, adb_cmd=None, **kw):
+        self._adb_cmd = None
+        super().__init__(**kw)
+
+        self.portspec = 'tcp:' + str(self.cozmo_port)
+        if adb_cmd:
+            self._adb_cmd = adb_cmd
+
+    def parse_env_vars(self):
+        super().parse_env_vars()
+
+        self._adb_cmd = os.environ.get('ANDROID_ADB_PATH')
+
+    @property
+    def adb_cmd(self):
+        if self._adb_cmd is not None:
+            return self._adb_cmd
+
+        if sys.platform != 'win32':
+            return DEFAULT_ADB_CMD
+
+        # C:\Users\IEUser\AppData\Local\Android\android-sdk
+        # C:\Program Files (x86)\Android\android-sdk
+        try_paths = []
+        for path in [os.environ[key] for key in ('LOCALAPPDATA', 'ProgramFiles', 'ProgramFiles(x86)') if key in os.environ]:
+            try_paths.append(os.path.join(path, 'Android', 'android-sdk'))
+
+        for path in try_paths:
+            adb_path = os.path.join(path, 'platform-tools', 'adb.exe')
+            if os.path.exists(adb_path):
+                self._adb_cmd = adb_path
+                logger.debug('Found adb.exe at %s', adb_path)
+                return adb_path
+
+        raise ValueError('Could not find Android development tools')
+
+    def _exec(self, *args):
+        try:
+            result = subprocess.run([self.adb_cmd] + list(args),
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=5)
+        except Exception as e:
+            raise ValueError('Failed to execute adb command %s: %s' % (self.adb_cmd, e))
+        if result.returncode != 0:
+            raise ValueError('Failed to execute adb command %s: %s' % (result.args, result.stderr))
+        return result.stdout.split(b'\n')
+
+    def _devices(self):
+        for line in self._exec('devices'):
+            line = line.split()
+            if len(line) != 2 or line[1] != b'device':
+                continue
+            yield line[0].decode('ascii') # device serial #
+
+    def _add_forward(self, serial):
+        self._exec('-s', serial, 'forward', self.portspec, self.portspec)
+
+    def _remove_forward(self, serial):
+        self._exec('-s', serial, 'forward', '--remove', self.portspec)
+
+    async def connect(self, loop, protocol_factory, conn_check):
+        for serial in self._devices():
+            logger.debug('Checking connection to Android device: %s', serial)
+            try:
+                self._remove_forward(serial)
+            except:
+                pass
+            self._add_forward(serial)
+            try:
+                transport, proto = await loop.create_connection(protocol_factory, '127.0.0.1', self.cozmo_port)
+                if conn_check:
+                    # Check that we have a good connection before returning
+                    try:
+                        await conn_check(proto)
+                    except Exception as e:
+                        logger.debug('Failed connection check: %s', e)
+                        raise
+
+                logger.info('Connected to Android device: %s', serial)
+                return transport, proto
+            except:
+                pass
+            self._remove_forward(serial)
+        raise ValueError("No connected Android devices running Cozmo in SDK mode")
+
+
+class TCPConnector(DeviceConnector):
+    '''Connects to the Cozmo app directly via TCP.
+
+    Generally only used for testing and debugging.
+
+    Requires that a SDK_TCP_PORT environment variable be set to the port
+    number to connect to.
+    '''
+    def __init__(self, tcp_port=None, **kw):
+        super().__init__(**kw)
+
+        if tcp_port is not None:
+            # override SDK_TCP_PORT environment variable
+            self.tcp_port = tcp_port
+
+    def parse_env_vars(self):
+        super().parse_env_vars()
+
+        self.tcp_port = None
+        try:
+            self.tcp_port = int(os.environ['SDK_TCP_PORT'])
+        except (KeyError, ValueError):
+            pass
+
+    @property
+    def enabled(self):
+        return self.tcp_port is not None
+
+    async def connect(self, loop, protocol_factory, conn_check):
+        try:
+            transport, proto = await loop.create_connection(protocol_factory, '127.0.0.1', self.tcp_port)
+            if conn_check:
+                try:
+                    await conn_check(proto)
+                except Exception as e:
+                    logger.debug('Failed connection check: %s', e)
+                    raise
+            logger.info("Connected to device on TCP port %d" % self.tcp_port)
+            return transport, proto
+        except Exception as e:
+            raise ValueError("No connected device running Cozmo in SDK mode on port %d" % self.tcp_port)
+
+
+class FirstAvailableConnector(DeviceConnector):
+    '''Connects to the first Android or iOS device running the Cozmo app in SDK mode.
+
+    This class creates an :class:`AndroidConnector` or :class:`IOSConnector`
+    instance and returns the first successful connection.
+
+    This is the default connector used by ``connect_`` functions.
+    '''
+    def __init__(self):
+        pass
+
+    async def _do_connect(self, connector,loop, protocol_factory, conn_check):
+        connect = connector.connect(loop, protocol_factory, conn_check)
+        result = await asyncio.gather(connect, loop=loop, return_exceptions=True)
+        return result[0]
+
+    async def connect(self, loop, protocol_factory, conn_check):
+        conn_args = (loop, protocol_factory, conn_check)
+
+        tcp = TCPConnector()
+        if tcp.enabled:
+            result = await self._do_connect(tcp, *conn_args)
+            if not isinstance(result, BaseException):
+                return result
+            logger.warn('No TCP connection found running Cozmo: %s' % result)
+
+        android = AndroidConnector()
+        result = await self._do_connect(android, *conn_args)
+        if not isinstance(result, BaseException):
+            return result
+        logger.warn('No Android device found running Cozmo: %s' % result)
+
+        ios = IOSConnector()
+        result = await self._do_connect(ios, *conn_args)
+        if not isinstance(result, BaseException):
+            return result
+        logger.warn('No iOS device found running Cozmo: %s' % result)
+
+        raise ValueError('No devices connected running Cozmo in SDK mode')
 
 
 
@@ -37,13 +281,14 @@ def _sync_exception_handler(abort_future, loop, context):
 
 
 class _LoopThread:
-    def __init__(self, loop, f=None, conn_factory=conn.CozmoConnection, abort_future=None):
+    def __init__(self, loop, f=None, conn_factory=conn.CozmoConnection, connector=None, abort_future=None):
         self.loop = loop
         self.f = f
         if not abort_future:
             abort_future = concurrent.futures.Future()
         self.abort_future = abort_future
         self.conn_factory = conn_factory
+        self.connector = connector
         self.thread = None
         self._running = False
 
@@ -53,7 +298,7 @@ class _LoopThread:
         def run_loop():
             asyncio.set_event_loop(self.loop)
             try:
-                coz_conn = connect_on_loop(self.loop, self.conn_factory)
+                coz_conn = connect_on_loop(self.loop, self.conn_factory, self.connector)
                 q.put(coz_conn)
             except Exception as e:
                 self.abort_future.set_exception(e)
@@ -96,9 +341,9 @@ class _LoopThread:
 
 
 
-def _connect_async(f, conn_factory=conn.CozmoConnection):
+def _connect_async(f, conn_factory=conn.CozmoConnection, connector=None):
     loop = asyncio.new_event_loop()
-    coz_conn = connect_on_loop(loop, conn_factory)
+    coz_conn = connect_on_loop(loop, conn_factory, connector)
     try:
         loop.run_until_complete(f(coz_conn))
     finally:
@@ -107,11 +352,11 @@ def _connect_async(f, conn_factory=conn.CozmoConnection):
         loop.run_forever()
 
 
-def _connect_sync(f, conn_factory=conn.CozmoConnection):
+def _connect_sync(f, conn_factory=conn.CozmoConnection, connector=None):
     loop = asyncio.new_event_loop()
     abort_future = concurrent.futures.Future()
     conn_factory = functools.partial(conn_factory, _sync_abort_future=abort_future)
-    lt = _LoopThread(loop, conn_factory=conn_factory, abort_future=abort_future)
+    lt = _LoopThread(loop, conn_factory=conn_factory, connector=connector, abort_future=abort_future)
     loop.set_exception_handler(functools.partial(_sync_exception_handler, abort_future))
 
     coz_conn = lt.start()
@@ -122,7 +367,7 @@ def _connect_sync(f, conn_factory=conn.CozmoConnection):
         lt.stop()
 
 
-def connect_on_loop(loop, conn_factory=conn.CozmoConnection):
+def connect_on_loop(loop, conn_factory=conn.CozmoConnection, connector=None):
     '''Uses the supplied event loop to connect to a device.
 
     Will run the event loop in the current thread until the
@@ -137,21 +382,30 @@ def connect_on_loop(loop, conn_factory=conn.CozmoConnection):
             connect to Cozmo.
         conn_factory (callable): Override the factory function to generate a
             :class:`cozmo.conn.CozmoConnection` (or subclass) instance.
+        connector (:class:`DeviceConnector`): Optional instance of a DeviceConnector
+            subclass that handles opening the USB connection to a device.
+            By default it will connect to the first Android or iOS device that
+            has the Cozmo app running in SDK mode.
 
     Returns:
         A :class:`cozmo.conn.CozmoConnection` instance.
     '''
-    async def connect():
-        await loop.create_connection(lambda: coz_conn, '127.0.0.1', 5106)
-        # wait until the connected CLAD message is received from the engine.
-        await coz_conn.wait_for(conn.EvtConnected)
+    if connector is None:
+        connector = FirstAvailableConnector()
 
-    coz_conn = conn_factory(loop=loop)
-    loop.run_until_complete(connect())
+    factory = functools.partial(conn_factory, loop=loop)
+
+    async def conn_check(coz_conn):
+        await coz_conn.wait_for(conn.EvtConnected, timeout=5)
+
+    async def connect():
+        return await connector.connect(loop, factory, conn_check)
+
+    transport, coz_conn = loop.run_until_complete(connect())
     return coz_conn
 
 
-def connect(f, conn_factory=conn.CozmoConnection):
+def connect(f, conn_factory=conn.CozmoConnection, connector=None):
     '''Connects to the Cozmo Engine on the mobile device and supplies the connection to a function.
 
     Accepts a function, f, that is given a :class:`cozmo.conn.CozmoConnection` object as
@@ -176,13 +430,18 @@ def connect(f, conn_factory=conn.CozmoConnection):
         f (callable): The function to execute
         conn_factory (callable): Override the factory function to generate a
             :class:`cozmo.conn.CozmoConnection` (or subclass) instance.
+        connector (:class:`DeviceConnector`): Optional instance of a DeviceConnector
+            subclass that handles opening the USB connection to a device.
+            By default it will connect to the first Android or iOS device that
+            has the Cozmo app running in SDK mode.
+
     '''
     if asyncio.iscoroutinefunction(f):
-        return _connect_async(f, conn_factory)
-    return _connect_sync(f, conn_factory)
+        return _connect_async(f, conn_factory, connector)
+    return _connect_sync(f, conn_factory, connector)
 
 
-def connect_with_tkviewer(f, conn_factory=conn.CozmoConnection):
+def connect_with_tkviewer(f, conn_factory=conn.CozmoConnection, connector=None):
     '''Setup a connection to a device and run a user function while displaying Cozmo's camera.
 
     This display a Tk window on the screen showing a view of Cozmo's camera.
@@ -194,6 +453,15 @@ def connect_with_tkviewer(f, conn_factory=conn.CozmoConnection):
     The function must accept a :class:`cozmo.CozmoConnection` object as
     its only argument.
     This call will block until the supplied function completes.
+
+    Args:
+        f (callable): The function to execute
+        conn_factory (callable): Override the factory function to generate a
+            :class:`cozmo.conn.CozmoConnection` (or subclass) instance.
+        connector (:class:`DeviceConnector`): Optional instance of a DeviceConnector
+            subclass that handles opening the USB connection to a device.
+            By default it will connect to the first Android or iOS device that
+            has the Cozmo app running in SDK mode.
     '''
     if tkview is None:
         raise NotImplementedError('tkviewer not available on this platform; '
@@ -218,7 +486,7 @@ def connect_with_tkviewer(f, conn_factory=conn.CozmoConnection):
     try:
         if not inspect.iscoroutinefunction(f):
             conn_factory = functools.partial(conn_factory, _sync_abort_future=abort_future)
-        lt = _LoopThread(loop, f=view_connector, conn_factory=conn_factory)
+        lt = _LoopThread(loop, f=view_connector, conn_factory=conn_factory, connector=connector)
         lt.start()
         viewer.mainloop()
     except BaseException as e:
@@ -276,4 +544,3 @@ def setup_basic_logging(general_log_level=None, protocol_log_level=None,
     if protocol_log_level is not None:
         logger_protocol.addHandler(h)
         logger_protocol.setLevel(protocol_log_level)
-

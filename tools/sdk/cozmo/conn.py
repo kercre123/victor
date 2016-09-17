@@ -62,6 +62,7 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         self._is_connected = False
+        self._is_ui_connected = False
         self._running = True
         self._robots = {}
         self._primary_robot = None
@@ -241,6 +242,7 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
             self.shutdown()
             raise exc
 
+        self._is_ui_connected = True
         self.dispatch_event(EvtConnected, conn=self)
         self.anim_names.refresh()
         logger.info("UI device connected")
