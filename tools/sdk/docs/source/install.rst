@@ -60,9 +60,6 @@ Download the `executable file from Python.org <https://www.python.org/downloads/
 
 .. important:: Android Debug Bridge (adb) MUST be installed on your computer and USB debugging MUST be enabled in order to use the SDK on an Android device.
 
-To install Android Debug Bridge on OSX, type the following into a Terminal window (requires Homebrew to be installed)::
-
-    brew install android-platform-tools
 
 """""""
 Install
@@ -74,6 +71,14 @@ To install the SDK, unzip the *cozmosdk.zip* file to the desired directory on yo
 --------------------
 Android Debug Bridge
 --------------------
+
+**To install Android Debug Bridge on OSX:**
+
+Type the following into a Terminal window (requires Homebrew to be installed)::
+
+    brew install android-platform-tools
+
+..
 
 **To install Android Debug Bridge (adb) on Windows:**
 
