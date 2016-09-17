@@ -46,7 +46,7 @@ namespace Cozmo {
   namespace {
     // Use backpack lights to help debug when enrollment is occurring or not.
     CONSOLE_VAR(bool,              kUseBackpackLights,                   "Actions.EnrollNamedFace", false);
-    CONSOLE_VAR(TimeStamp_t,       kTimeoutForBackpackLights_ms,         "Actions.EnrollNamedFace", 250);
+    CONSOLE_VAR(TimeStamp_t,       kTimeoutForReLookForFace_ms,          "Actions.EnrollNamedFace", 1500);
     
     // Thresholds for when to update face ID based on pose
     CONSOLE_VAR(f32,               kUpdateFacePositionThreshold_mm,      "Actions.EnrollNamedFace", 100.f);
@@ -54,6 +54,11 @@ namespace Cozmo {
     
     // Default timeout for this action (vs. the one inherited from IAction)
     CONSOLE_VAR(f32,               kFaceEnrollmentTimeout_sec,           "Actions.EnrollNamedFace", 15.f);
+    CONSOLE_VAR(f32,               kFaceEnrollmentTimeoutMax_sec,        "Actions.EnrollNamedFace", 35.f);
+    
+    // Amount of "extra" time to add each time we re-start actually enrolling, in case we lose the face
+    // mid way or take a while to initially find the face, up to the max timeout
+    CONSOLE_VAR(f32,               kFaceEnrollmentTimeoutExtraTime_sec,  "Actions.EnrollNamedFace", 8.f);
     
     // Amount to drive forward once face is found to signify intent
     CONSOLE_VAR(f32,               kDriveForwardIntentDist_mm,           "Actions.EnrollNamedFace", 14.f);
@@ -92,6 +97,7 @@ namespace Cozmo {
   , _faceID(faceID)
   , _saveID(saveID)
   , _faceName(name)
+  , _timeout_sec(kFaceEnrollmentTimeout_sec)
   {
     PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.Constructor", "Original ID=%d with name='%s'",
                   _faceID, Util::HidePersonallyIdentifiableInfo(_faceName.c_str()));
@@ -466,15 +472,34 @@ namespace Cozmo {
     ASSERT_NAMED(!_enrollSequence.empty(), "EnrollNamedFaceAction.Init.EmptyEnrollSequence");
     
     // First thing we want to do is turn towards the face and make sure we see it
+    TransitionToLookingForFace();
+    
+    // Start with this timeout (do this here in addition to using the constructor's
+    // initializaion list in case there's a Reset)
+    _timeout_sec = kFaceEnrollmentTimeout_sec;
+    
+    return ActionResult::SUCCESS;
+  } // Init()
+  
+  void EnrollNamedFaceAction::TransitionToLookingForFace()
+  {
+    // In case we were enrolling and lost face, cancel tracking action
+    SetAction(nullptr);
+    
     _state = State::LookForFace;
     _action = new CompoundActionSequential(_robot, {
       CreateTurnTowardsFaceAction(_robot, _faceID, _saveID),
       new WaitForImagesAction(_robot, _kNumImagesToWait, VisionMode::DetectingFaces),
     });
     
-    return ActionResult::SUCCESS;
-  } // Init()
-  
+    // If we are going _back_ to looking for a face after having been enrolling
+    // (and lost the face), we were in scanning idle and need to pop it here
+    if(!_idlePopped)
+    {
+      _robot.GetAnimationStreamer().PopIdleAnimation();
+      _idlePopped = true;
+    }
+  }
   
   ActionResult EnrollNamedFaceAction::CheckIfDone()
   {
@@ -504,6 +529,14 @@ namespace Cozmo {
             SetAction(nullptr);
             _seqIter = _enrollSequence.begin();
             _lastModeChangeTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+            
+            // Give ourselves a little more time to finish now that we've seen a face, but
+            // don't go over the max timeout
+            _timeout_sec = std::min(kFaceEnrollmentTimeoutMax_sec, _timeout_sec + kFaceEnrollmentTimeoutExtraTime_sec);
+            
+            PRINT_NAMED_INFO("EnrollNamedFaceAction.CheckIfDone.FaceSeen",
+                             "Found face %d to enroll. Timeout set to %.1fsec",
+                             _faceID, _timeout_sec);
             
             Result stepInitResult = InitCurrentStep(); // Transitions us to PreActing
             if(RESULT_OK != stepInitResult) {
@@ -586,12 +619,20 @@ namespace Cozmo {
           }
         }
         
-        // Make the backpack lights turn off if we can't see the person
+        // If we haven't seen the person in too long, go back to looking for them
         auto lastImageTime = _robot.GetLastImageTimeStamp();
-        if(lastImageTime - _lastFaceSeen_ms > kTimeoutForBackpackLights_ms)
+        if(lastImageTime - _lastFaceSeen_ms > kTimeoutForReLookForFace_ms)
         {
           _lastFaceSeen_ms = 0;
           SetBackpackLightsHelper(_robot, NamedColors::BLACK);
+          
+          // Go back to looking for face
+          PRINT_NAMED_INFO("EnrollNamedFaceAction.CheckIfDone.NoLongerSeeingFace",
+                           "Have not seen face %d in %dms, going back to LookForFace state",
+                           _faceID, kTimeoutForReLookForFace_ms);
+          
+          TransitionToLookingForFace();
+          break;
         }
         
         // Just waiting for enrollments to come in...
@@ -752,7 +793,16 @@ namespace Cozmo {
     }
     else
     {
-      info.faceID = _faceID;
+      if(_saveID != Vision::UnknownFaceID)
+      {
+        // We just merged the enrolled ID (faceID) into saveID, so report saveID as
+        // "who" was enrolled
+        info.faceID = _saveID;
+      }
+      else
+      {
+        info.faceID = _faceID;
+      }
       info.name   = _faceName;
       info.neverSawValidFace = false;
     }
@@ -771,8 +821,7 @@ namespace Cozmo {
       return 2.f*IAction::GetTimeoutInSeconds();
     }
   
-    // Regular timeout, as determined by console var:
-    return kFaceEnrollmentTimeout_sec;
+    return _timeout_sec;
   }
   
 #pragma mark -

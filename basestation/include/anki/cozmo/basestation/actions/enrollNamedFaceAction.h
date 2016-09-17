@@ -91,6 +91,7 @@ namespace Cozmo {
     const f32                 _kMinBackup_mm = 5.f;  // In a single try
     const f32                 _kMaxBackup_mm = 15.f; //     "
     const f32                 _kMaxTotalBackup_mm = 50.f;
+    f32                       _timeout_sec;
     bool                      _enrollmentCountReached = false;
     bool                      _saveToRobot = true;
     bool                      _idlePopped = true;
@@ -113,6 +114,7 @@ namespace Cozmo {
     Result InitCurrentStep();
     void SetAction(IActionRunner* action);
     IActionRunner* CreateLookAroundAction();
+    void TransitionToLookingForFace();
     
   }; // class EnrollNamedFaceAction
 
