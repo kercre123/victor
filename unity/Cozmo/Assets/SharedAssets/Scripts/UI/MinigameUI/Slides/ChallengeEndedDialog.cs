@@ -1,147 +1,142 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
-using System.Collections;
-using System.Collections.Generic;
-using Cozmo;
-using Cozmo.UI;
 using Anki.UI;
-using Anki.Cozmo;
 
-public class ChallengeEndedDialog : MonoBehaviour {
+namespace Cozmo.UI {
+  public class ChallengeEndedDialog : MonoBehaviour {
 
-  [SerializeField]
-  private AnkiTextLabel _AdditionalInfoLabel;
+    [SerializeField]
+    private AnkiTextLabel _AdditionalInfoLabel;
 
-  [SerializeField]
-  private GameObject _AdditionalInfoLabelContainer;
+    [SerializeField]
+    private GameObject _AdditionalInfoLabelContainer;
 
-  [SerializeField]
-  private Transform _CenterContainer;
+    [SerializeField]
+    private Transform _CenterContainer;
 
-  [SerializeField]
-  private Transform _LeftContainer;
+    [SerializeField]
+    private Transform _LeftContainer;
 
-  [SerializeField]
-  private Transform _RightContainer;
+    [SerializeField]
+    private Transform _RightContainer;
 
-  private Transform _DifficultyUnlockContainer;
-  private Transform _EnergyEarnedContainer;
+    private Transform _DifficultyUnlockContainer;
+    private Transform _EnergyEarnedContainer;
 
-  [SerializeField]
-  private Transform _DualContainer;
+    [SerializeField]
+    private Transform _DualContainer;
 
-  [SerializeField]
-  private IconTextLabel _RewardIconPrefab;
+    [SerializeField]
+    private IconTextLabel _RewardIconPrefab;
 
-  [SerializeField]
-  private IconTextLabel _UnlockIconPrefab;
+    [SerializeField]
+    private ChallengeDetailsUnlock _UnlockIconPrefab;
 
-  private bool _DualLists = false;
+    private bool _DualLists = false;
 
-  private ChallengeData _ChallengeConfig;
+    private ChallengeData _ChallengeConfig;
 
-  public void SetupDialog(string subtitleText, ChallengeData config) {
-    _ChallengeConfig = config;
-    if (_DualContainer != null) {
-      _DualContainer.gameObject.SetActive(false);
-    }
-    if (_CenterContainer != null) {
-      _CenterContainer.gameObject.SetActive(false);
-    }
-
-    if (!string.IsNullOrEmpty(subtitleText)) {
-      if (_AdditionalInfoLabelContainer != null) {
-        _AdditionalInfoLabelContainer.SetActive(true);
+    public void SetupDialog(string subtitleText, ChallengeData config) {
+      _ChallengeConfig = config;
+      if (_DualContainer != null) {
+        _DualContainer.gameObject.SetActive(false);
       }
-      _AdditionalInfoLabel.text = subtitleText;
+      if (_CenterContainer != null) {
+        _CenterContainer.gameObject.SetActive(false);
+      }
+
+      if (!string.IsNullOrEmpty(subtitleText)) {
+        if (_AdditionalInfoLabelContainer != null) {
+          _AdditionalInfoLabelContainer.SetActive(true);
+        }
+        _AdditionalInfoLabel.text = subtitleText;
+      }
+      else {
+        if (_AdditionalInfoLabelContainer != null) {
+          _AdditionalInfoLabelContainer.SetActive(false);
+        }
+      }
     }
-    else {
+
+    /// <summary>
+    /// Hide subtitle and display the reward lists.
+    /// </summary>
+    public void DisplayRewards() {
       if (_AdditionalInfoLabelContainer != null) {
         _AdditionalInfoLabelContainer.SetActive(false);
       }
-    }
-  }
-
-  /// <summary>
-  /// Hide subtitle and display the reward lists.
-  /// </summary>
-  public void DisplayRewards() {
-    if (_AdditionalInfoLabelContainer != null) {
-      _AdditionalInfoLabelContainer.SetActive(false);
-    }
-    // Determine which LayoutGroup(s) to use based on if both Pending Upgrades and Pending Rewards or Just one
-    // If (DualLists == false) - Use Single Vert Layout Group
-    // If (DualLists == true)  - Use two Vert Layout Groups nesting in Horiz Layout Group 
-    // (Unlocks to the left of me, Rewards to the Right, and here I am stuck in the middle with you)
-    _DualLists = (RewardedActionManager.Instance.RewardPending && (RewardedActionManager.Instance.NewDifficultyPending || RewardedActionManager.Instance.NewSkillChangePending));
-    if (_DualLists) {
-      _DualContainer.gameObject.SetActive(true);
-      _DifficultyUnlockContainer = _LeftContainer;
-      _EnergyEarnedContainer = _RightContainer;
-    }
-    else {
-      _CenterContainer.gameObject.SetActive(true);
-      _DifficultyUnlockContainer = _CenterContainer;
-      _EnergyEarnedContainer = _CenterContainer;
-    }
-
-    if (RewardedActionManager.Instance.NewDifficultyPending) {
-      AddDifficultyUnlock(RewardedActionManager.Instance.NewDifficultyUnlock);
-    }
-
-    if (RewardedActionManager.Instance.NewSkillChangePending) {
-      AddSkillChange(RewardedActionManager.Instance.NewSkillChange);
-    }
-    foreach (RewardedActionData earnedReward in RewardedActionManager.Instance.PendingActionRewards.Keys) {
-
-      int count = 0;
-      if (RewardedActionManager.Instance.PendingActionRewards.TryGetValue(earnedReward, out count)) {
-        AddEnergyReward(earnedReward, count);
+      // Determine which LayoutGroup(s) to use based on if both Pending Upgrades and Pending Rewards or Just one
+      // If (DualLists == false) - Use Single Vert Layout Group
+      // If (DualLists == true)  - Use two Vert Layout Groups nesting in Horiz Layout Group 
+      // (Unlocks to the left of me, Rewards to the Right, and here I am stuck in the middle with you)
+      _DualLists = (RewardedActionManager.Instance.RewardPending && (RewardedActionManager.Instance.NewDifficultyPending || RewardedActionManager.Instance.NewSkillChangePending));
+      if (_DualLists) {
+        _DualContainer.gameObject.SetActive(true);
+        _DifficultyUnlockContainer = _LeftContainer;
+        _EnergyEarnedContainer = _RightContainer;
       }
-    }
-    RewardedActionManager.Instance.NewDifficultyUnlock = -1;
-    RewardedActionManager.Instance.NewSkillChange = 0;
+      else {
+        _CenterContainer.gameObject.SetActive(true);
+        _DifficultyUnlockContainer = _CenterContainer;
+        _EnergyEarnedContainer = _CenterContainer;
+      }
 
-  }
+      if (RewardedActionManager.Instance.NewDifficultyPending) {
+        AddDifficultyUnlock(RewardedActionManager.Instance.NewDifficultyUnlock);
+      }
 
-  public void AddEnergyReward(RewardedActionData reward, int count) {
-    if (_EnergyEarnedContainer != null) {
-      _EnergyEarnedContainer.gameObject.SetActive(true);
-    }
-    IconTextLabel iconTextLabel = UIManager.CreateUIElement(_RewardIconPrefab,
-                                    _EnergyEarnedContainer).GetComponent<IconTextLabel>();
-    // TextLabel for amount earned
-    iconTextLabel.SetText(count.ToString());
+      if (RewardedActionManager.Instance.NewSkillChangePending) {
+        AddSkillChange(RewardedActionManager.Instance.NewSkillChange);
+      }
+      foreach (RewardedActionData earnedReward in RewardedActionManager.Instance.PendingActionRewards.Keys) {
 
-    iconTextLabel.SetDesc(Localization.Get(reward.Reward.DescriptionKey));
-  }
+        int count = 0;
+        if (RewardedActionManager.Instance.PendingActionRewards.TryGetValue(earnedReward, out count)) {
+          AddEnergyReward(earnedReward, count);
+        }
+      }
+      RewardedActionManager.Instance.NewDifficultyUnlock = -1;
+      RewardedActionManager.Instance.NewSkillChange = 0;
 
-  public void AddDifficultyUnlock(int newLevel) {
-    if (_DifficultyUnlockContainer != null) {
-      _DifficultyUnlockContainer.gameObject.SetActive(true);
-    }
-
-    IconTextLabel iconTextLabel = UIManager.CreateUIElement(_UnlockIconPrefab,
-                                    _DifficultyUnlockContainer).GetComponent<IconTextLabel>();
-
-    iconTextLabel.SetText("");
-    iconTextLabel.SetDesc(Localization.GetWithArgs(LocalizationKeys.kRewardDescriptionNewDifficulty,
-                                                   new object[] { _ChallengeConfig.DifficultyOptions[newLevel].DifficultyName, Localization.Get(_ChallengeConfig.ChallengeTitleLocKey) }));
-
-    iconTextLabel.SetIcon(_ChallengeConfig.ChallengeIcon);
-
-  }
-
-  public void AddSkillChange(int newLevel) {
-    if (_DifficultyUnlockContainer != null) {
-      _DifficultyUnlockContainer.gameObject.SetActive(true);
     }
 
-    IconTextLabel iconTextLabel = UIManager.CreateUIElement(_UnlockIconPrefab,
-                                    _DifficultyUnlockContainer).GetComponent<IconTextLabel>();
+    public void AddEnergyReward(RewardedActionData reward, int count) {
+      if (_EnergyEarnedContainer != null) {
+        _EnergyEarnedContainer.gameObject.SetActive(true);
+      }
+      IconTextLabel iconTextLabel = UIManager.CreateUIElement(_RewardIconPrefab,
+                                      _EnergyEarnedContainer).GetComponent<IconTextLabel>();
+      // TextLabel for amount earned
+      iconTextLabel.SetText(count.ToString());
 
-    iconTextLabel.SetText("");
-    string descKey = LocalizationKeys.kRewardDescriptionSkillUp;
-    iconTextLabel.SetDesc(Localization.GetWithArgs(descKey, Localization.Get(_ChallengeConfig.ChallengeTitleLocKey)));
+      iconTextLabel.SetDesc(Localization.Get(reward.Reward.DescriptionKey));
+    }
+
+    public void AddDifficultyUnlock(int newLevel) {
+      if (_DifficultyUnlockContainer != null) {
+        _DifficultyUnlockContainer.gameObject.SetActive(true);
+      }
+
+      ChallengeDetailsUnlock unlockCell = UIManager.CreateUIElement(_UnlockIconPrefab,
+                                                              _DifficultyUnlockContainer).GetComponent<ChallengeDetailsUnlock>();
+
+      unlockCell.Text = (Localization.GetWithArgs(LocalizationKeys.kRewardDescriptionNewDifficulty,
+                                                     new object[] { _ChallengeConfig.DifficultyOptions[newLevel].DifficultyName, Localization.Get(_ChallengeConfig.ChallengeTitleLocKey) }));
+      unlockCell.UnlockGameContainerEnabled = true;
+      unlockCell.UnlockSkillContainerEnabled = false;
+    }
+
+    public void AddSkillChange(int newLevel) {
+      if (_DifficultyUnlockContainer != null) {
+        _DifficultyUnlockContainer.gameObject.SetActive(true);
+      }
+
+      ChallengeDetailsUnlock unlockCell = UIManager.CreateUIElement(_UnlockIconPrefab,
+                                      _DifficultyUnlockContainer).GetComponent<ChallengeDetailsUnlock>();
+
+      string descKey = LocalizationKeys.kRewardDescriptionSkillUp;
+      unlockCell.Text = (Localization.GetWithArgs(descKey, Localization.Get(_ChallengeConfig.ChallengeTitleLocKey)));
+      unlockCell.UnlockGameContainerEnabled = false;
+      unlockCell.UnlockSkillContainerEnabled = true;
+    }
   }
 }
