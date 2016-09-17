@@ -360,14 +360,18 @@ public class CheckInFlow : MonoBehaviour {
     }
 
 
+    // Always try to push EXP rewards to the front and coin/spark rewards to the back
     if (rewardID == RewardedActionManager.Instance.CoinID) {
       _ActiveCoinsTransforms.Add(newReward);
+      newReward.SetAsFirstSibling();
     }
     else if (rewardID == RewardedActionManager.Instance.SparkID) {
       _ActiveSparksTransforms.Add(newReward);
+      newReward.SetAsFirstSibling();
     }
     else {
       _ActiveExpTransforms.Add(newReward);
+      newReward.SetAsLastSibling();
     }
 
     return newReward;
