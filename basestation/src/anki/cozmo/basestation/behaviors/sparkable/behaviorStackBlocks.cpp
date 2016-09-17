@@ -384,7 +384,7 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
                     BehaviorObjectiveAchieved(BehaviorObjective::StackedBlock);
                   }
                   else if( res == ActionResult::FAILURE_RETRY ) {
-                    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::StackBlocksRetry),
+                    StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::StackBlocksRetry),
                                 &BehaviorStackBlocks::TransitionToStackingBlock);
                   }
                   else if( res == ActionResult::FAILURE_ABORT ) {
