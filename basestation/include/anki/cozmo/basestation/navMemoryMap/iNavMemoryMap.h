@@ -111,10 +111,16 @@ public:
     ASSERT_NAMED(!NavMemoryMapTypes::ExpectsAdditionalData(newTypeSet), "INavMemoryMap.FillBorder.CantFillExtraInfo");
     FillBorderInternal(typeToReplace, neighborsToFillFrom, newTypeSet);
   }
+
+  // replaces the given content type with the given new type, within the given quad
+  void ReplaceContent(const Quad2f& quad, EContentType typeToReplace, EContentType newTypeSet) {
+    ASSERT_NAMED(!NavMemoryMapTypes::ExpectsAdditionalData(newTypeSet), "INavMemoryMap.ReplaceContent.CantFillExtraInfo");
+    ReplaceContentInternal(quad, typeToReplace, newTypeSet);
+  }
   
   // replaces the given content type with the given new type
   void ReplaceContent(EContentType typeToReplace, EContentType newTypeSet) {
-    ASSERT_NAMED(!NavMemoryMapTypes::ExpectsAdditionalData(newTypeSet), "INavMemoryMap.FillContent.CantFillExtraInfo");
+    ASSERT_NAMED(!NavMemoryMapTypes::ExpectsAdditionalData(newTypeSet), "INavMemoryMap.ReplaceContent.CantFillExtraInfo");
     ReplaceContentInternal(typeToReplace, newTypeSet);
   }
   
@@ -124,6 +130,8 @@ public:
   
   // return the size of the area currently explored
   virtual double GetExploredRegionAreaM2() const = 0;
+  // return the size of the area currently flagged as interesting edges
+  virtual double GetInterestingEdgeAreaM2() const = 0;
   
   // returns the precision of content data in the memory map. For example, if you add a point, and later query for it,
   // the region that the point generated to store the point could have an error of up to this length.
@@ -178,7 +186,10 @@ protected:
   // change the content type from typeToReplace into newTypeSet if there's a border from any of the typesToFillFrom towards typeToReplace
   virtual void FillBorderInternal(EContentType typeToReplace, const NavMemoryMapTypes::FullContentArray& neighborsToFillFrom, EContentType newTypeSet) = 0;
 
-  // change the content type from typeToReplace into newTypeSet
+  // change the content type from typeToReplace into newTypeSet within the given quad
+  virtual void ReplaceContentInternal(const Quad2f& inQuad, EContentType typeToReplace, EContentType newTypeSet) = 0;
+
+  // change the content type from typeToReplace into newTypeSet in all known space
   virtual void ReplaceContentInternal(EContentType typeToReplace, EContentType newTypeSet) = 0;
   
 }; // class

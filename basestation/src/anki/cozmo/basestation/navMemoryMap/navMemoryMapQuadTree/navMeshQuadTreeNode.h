@@ -193,6 +193,13 @@ private:
   
   // type of overlap for quads
   enum class EContentOverlap { Partial, Total };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Collision checks
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // returns true if the quad contains this node, this node contains the quad, or if they overlap
+  bool ContainsOrOverlapsQuad(const Quad2f& inQuad) const;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query

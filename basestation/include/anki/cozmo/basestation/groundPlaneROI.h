@@ -44,7 +44,7 @@ public:
   static f32 GetLength()     { return _length; }
   
   // Full, fixed ground quad, as illustrated above, at the specified z height
-  Quad3f GetGroundQuad(f32 z=0.f) const;
+  static Quad3f GetGroundQuad(f32 z=0.f);
   
   // Get just the portion of the ground quad that is visible in the image.
   // Returns whether the ground quad projected into the image intersected the

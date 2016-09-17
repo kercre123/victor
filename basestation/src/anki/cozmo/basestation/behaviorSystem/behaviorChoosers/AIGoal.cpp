@@ -11,6 +11,7 @@
  **/
 #include "AIGoal.h"
 
+#include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalStrategyFactory.h"
@@ -90,6 +91,13 @@ bool AIGoal::Init(Robot& robot, const Json::Value& config)
                                  (_driveEndAnimTrigger   != AnimationTrigger::Count);
   ASSERT_NAMED(hasAllDrivingAnim || !hasAnyDrivingAnim, "AIGoal.Init.InvalidDrivingAnimTriggers_AllOrNothing");
   
+  // information analyzer process
+  std::string inanProcessStr;
+  JsonTools::GetValueOptional(config, "infoAnalyzerProccess", inanProcessStr);
+  _infoAnalysisProcess = inanProcessStr.empty() ?
+    AIInformationAnalysis::EProcess::Invalid :
+    AIInformationAnalysis::EProcessFromString(inanProcessStr.c_str());
+  
   // configure chooser and set in out pointer
   const Json::Value& chooserConfig = config[kBehaviorChooserConfigKey];
   IBehaviorChooser* newChooser = BehaviorChooserFactory::CreateBehaviorChooser(robot, chooserConfig);
@@ -126,6 +134,11 @@ void AIGoal::Enter(Robot& robot)
                                                                _driveEndAnimTrigger} );
   }
   
+  // request analyzer process
+  if ( _infoAnalysisProcess != AIInformationAnalysis::EProcess::Invalid ) {
+    robot.GetAIInformationAnalyzer().AddEnableRequest(_infoAnalysisProcess, GetName());
+  }
+  
   // log event to das
   Util::sEventF("robot.freeplay_goal_started", {}, "%s", _name.c_str());
 }
@@ -140,6 +153,11 @@ void AIGoal::Exit(Robot& robot)
   const bool hasDrivingAnims = HasDrivingAnimTriggers();
   if ( hasDrivingAnims ) {
     robot.GetDrivingAnimationHandler().PopDrivingAnimations();
+  }
+  
+  // (un)request analyzer process
+  if ( _infoAnalysisProcess != AIInformationAnalysis::EProcess::Invalid ) {
+    robot.GetAIInformationAnalyzer().RemoveEnableRequest(_infoAnalysisProcess, GetName());
   }
 
   // log event to das

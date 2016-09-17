@@ -88,6 +88,8 @@ size_t GetObjectFailureListMaxSize(AIWhiteboard::ObjectUseAction action)
 AIWhiteboard::AIWhiteboard(Robot& robot)
 : _robot(robot)
 , _gotOffChargerAtTime_sec(-1.0f)
+, _edgeInfoTime_sec(-1.0f)
+, _edgeInfoClosestEdge_mm(-1.0f)
 {
 }
 

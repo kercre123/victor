@@ -199,10 +199,20 @@ namespace Cozmo {
     class MoveHeadToAngleAction : public IAction
     {
     public:
+      enum class Preset : u8 {
+        GROUND_PLANE_VISIBLE      // at this head angle, the whole ground plane (or the max amount) will be visible
+      };
+    
       MoveHeadToAngleAction(Robot& robot,
                             const Radians& headAngle,
                             const Radians& tolerance = HEAD_ANGLE_TOL,
                             const Radians& variability = 0);
+
+      MoveHeadToAngleAction(Robot& robot,
+                            const Preset preset,
+                            const Radians& tolerance = HEAD_ANGLE_TOL,
+                            const Radians& variability = 0);
+      
       virtual ~MoveHeadToAngleAction();
       
       // Modify default parameters (must be called before Init() to have an effect)
@@ -221,6 +231,9 @@ namespace Cozmo {
       virtual ActionResult CheckIfDone() override;
       
     private:
+    
+      static f32 GetPresetHeadAngle(Preset preset);
+      static const char* GetPresetName(Preset preset);
       
       bool IsHeadInPosition() const;
       

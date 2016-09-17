@@ -86,6 +86,9 @@ enum int_32 AnimationTrigger
   HikingReactToEdge,            // when Cozmo sees an interesting edge while looking for cubes
   HikingReactToNewArea,         // when Cozmo discovers a new area / beacon
   HikingReactToPossibleMarker,  // when Cozmo sees a cube from far away (this may be used for discovering edges)
+  HikingSquintEnd,              // when Cozmo is focusing on stuff (normally edges) - end
+  HikingSquintLoop,             // when Cozmo is focusing on stuff (normally edges) - loop
+  HikingSquintStart,            // when Cozmo is focusing on stuff (normally edges) - start
   HikingWakeUpOffCharger,       // when Cozmo wakes up directly into hiking. This may not be needed for final product
   IdleOnCharger,
   InteractWithFaceTrackingIdle,

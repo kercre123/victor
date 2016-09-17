@@ -315,6 +315,10 @@ namespace Anki
       // update memory map with the current robot pose if needed (objects use other notification methods)
       void UpdateRobotPoseInMemoryMap();
       
+      // flag all interesting edges in front of the robot (using ground plane ROI) as uncertain, meaning we want
+      // the robot to grab new edges since we don't trust the ones we currently have in front of us
+      void FlagGroundPlaneROIInterestingEdgesAsUncertain();
+      
       // flags any interesting edges in the given quad as not interesting anymore. Quad should be passed wrt current origin
       void FlagQuadAsNotInterestingEdges(const Quad2f& quadWRTOrigin);
       

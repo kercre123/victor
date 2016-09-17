@@ -230,6 +230,7 @@
         "driveStartAnimTrigger" : "HikingDrivingStart",
         "driveLoopAnimTrigger" : "HikingDrivingLoop",
         "driveEndAnimTrigger" : "HikingDrivingEnd",
+        "infoAnalyzerProccess": "CalculateInterestingRegions", // update interesting regions during hiking
         "behaviorChooser" :
         {
           "type" : "simple",

@@ -14,6 +14,7 @@
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/cozmo/basestation/actions/actionContainers.h"
+#include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupFlags.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 #include "anki/cozmo/basestation/moodSystem/emotionScorer.h"
@@ -185,6 +186,8 @@ public:
                                              std::vector<Pose3d>& possiblePoses,
                                              bool& alreadyInPosition);
 
+  // returns required process
+  AIInformationAnalysis::EProcess GetRequiredProcess() const { return _requiredProcess; }
     
 protected:
   
@@ -343,6 +346,9 @@ protected:
   //Can be set in json (for sparks) or programatically
   bool _shouldStreamline;
   
+  // this process might be enabled/disabled automatically by a behavior chooser based
+  // behavior specify it in code because it's a code requirement (not data driven)
+  AIInformationAnalysis::EProcess _requiredProcess;
   
 private:
             

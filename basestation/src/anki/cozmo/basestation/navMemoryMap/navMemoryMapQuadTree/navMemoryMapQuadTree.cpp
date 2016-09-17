@@ -103,6 +103,30 @@ void NavMemoryMapQuadTree::FillBorderInternal(EContentType typeToReplace, const 
 
   // ask the processor to do it
   _navMesh.GetProcessor().FillBorder(nodeTypeToReplace, nodeNeighborsToFillFrom, emptyNewNodeContent);
+  _navMesh.ForceRedraw();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMemoryMapQuadTree::ReplaceContentInternal(const Quad2f& inQuad, EContentType typeToReplace, EContentType newTypeSet)
+{
+  // convert into node types and emtpy (no extra info) node content
+  using namespace NavMeshQuadTreeTypes;
+  const ENodeContentType nodeTypeToReplace = ConvertContentType(typeToReplace);
+  const ENodeContentType newNodeTypeSet = ConvertContentType(newTypeSet);
+  NodeContent emptyNewNodeContent(newNodeTypeSet);
+
+  // Implementation note: since we define a quad, we should be directly asking the navMesh to do this. Currently
+  // however I do not have a way to do this in AddQuad, and I think it would be slightly more difficult to
+  // do in AddQuad (since we have to pass the typeToReplace around and change the logic based on whether a typeToReplace
+  // has been specified). Additionally, if I add this to AddQuad, I would also have to add it to AddLine and AddPoint,
+  // so the change is bigger than asking the processor to do this.
+  // The issue with the processor is that the processor provides fast access to nodes of a given type, but regardless
+  // of location (which is exaclty what the quadTree provides), so it may be more or less efficient depending on
+  // the number of nodes currently with the given type versus the number of quads that fall within the quad. Since
+  // I do not have that metric at the moment for the use cases, I am going with a simpler implementation, unless
+  // profile shows that it's not adequate
+  _navMesh.GetProcessor().ReplaceContent(inQuad, nodeTypeToReplace, emptyNewNodeContent);
+  _navMesh.ForceRedraw();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -116,6 +140,7 @@ void NavMemoryMapQuadTree::ReplaceContentInternal(EContentType typeToReplace, EC
 
   // ask the processor
   _navMesh.GetProcessor().ReplaceContent(nodeTypeToReplace, emptyNewNodeContent);
+  _navMesh.ForceRedraw();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -123,6 +148,14 @@ double NavMemoryMapQuadTree::GetExploredRegionAreaM2() const
 {
   // delegate on processor
   const double area = _navMesh.GetProcessor().GetExploredRegionAreaM2();
+  return area;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+double NavMemoryMapQuadTree::GetInterestingEdgeAreaM2() const
+{
+  // delegate on processor
+  const double area = _navMesh.GetProcessor().GetInterestingEdgeAreaM2();
   return area;
 }
 

@@ -12,6 +12,8 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_AIGoal_H__
 #define __Cozmo_Basestation_BehaviorSystem_AIGoal_H__
 
+#include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
+
 #include "json/json-forwards.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/unlockTypes.h"
@@ -117,6 +119,9 @@ private:
   AnimationTrigger _driveStartAnimTrigger;
   AnimationTrigger _driveLoopAnimTrigger;
   AnimationTrigger _driveEndAnimTrigger;
+  
+  // optional AIInformationAnalyzer process
+  AIInformationAnalysis::EProcess _infoAnalysisProcess;
   
   // spark required for this goal
   UnlockId _requiredSpark;

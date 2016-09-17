@@ -61,6 +61,8 @@ public:
 
   // return the size of the area currently explored
   inline double GetExploredRegionAreaM2() const { return _totalExploredArea_m2; }
+  // return the size of the area currently flagged as interesting edges
+  inline double GetInterestingEdgeAreaM2() const { return _totalInterestingEdgeArea_m2; }
 
   // returns true if we have borders detected of the given type, or we think we do without having to actually calculate
   // them at this moment (which is slightly more costly and requires non-const access)
@@ -76,6 +78,9 @@ public:
   // region to the content type given (newContent)
   void FillBorder(ENodeContentType filledType, ENodeContentTypePackedType fillingTypeFlags, const NodeContent& newContent);
   
+  // replaces the given content with the new one to set
+  void ReplaceContent(const Quad2f& inQuad, ENodeContentType typeToReplace, const NodeContent& newContent);
+
   // replaces the given content with the new one to set
   void ReplaceContent(ENodeContentType typeToReplace, const NodeContent& newContent);
   
@@ -215,6 +220,9 @@ private:
   
   // area of all quads that have been explored
   double _totalExploredArea_m2;
+  
+  // area of all quads that are currently interesting edges
+  double _totalInterestingEdgeArea_m2;
   
   VizManager* _vizManager;
   

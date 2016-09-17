@@ -320,9 +320,9 @@ void NavMeshQuadTreeNode::AddQuadsToDraw(VizManager::SimpleQuadVector& quadVecto
       case ENodeContentType::ClearOfObstacle        : { color = Anki::NamedColors::GREEN;    color.SetAlpha(0.5f); break; }
       case ENodeContentType::ClearOfCliff           : { color = Anki::NamedColors::DARKGREEN;color.SetAlpha(0.8f); break; }
       case ENodeContentType::ObstacleCube           : { color = Anki::NamedColors::RED;      color.SetAlpha(0.5f); break; }
-      case ENodeContentType::ObstacleCubeRemoved    : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; } // we actually don't store this type, it clears ObstacleCube
+      case ENodeContentType::ObstacleCubeRemoved    : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; } // not stored, it clears ObstacleCube
       case ENodeContentType::ObstacleCharger        : { color = Anki::NamedColors::ORANGE;   color.SetAlpha(0.5f); break; }
-      case ENodeContentType::ObstacleChargerRemoved : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; } // we actually don't store this type, it clears ObstacleCharger
+      case ENodeContentType::ObstacleChargerRemoved : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; } // not stored, it clears ObstacleCharger
       case ENodeContentType::ObstacleUnrecognized   : { color = Anki::NamedColors::MAGENTA;  color.SetAlpha(0.5f); break; }
       case ENodeContentType::Cliff                  : { color = Anki::NamedColors::BLACK;    color.SetAlpha(0.8f); break; }
       case ENodeContentType::InterestingEdge        : { color = Anki::NamedColors::BLUE;     color.SetAlpha(0.5f); break; }
@@ -1049,6 +1049,25 @@ inline bool OverlapsOrContains(const Quad2f& axisAlignedQuad,
 }
 
 };
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool NavMeshQuadTreeNode::ContainsOrOverlapsQuad(const Quad2f& inQuad) const
+{
+  // get my quad
+  const Quad2f& myQuad = MakeQuadXY();
+  
+  // break the quad into segments to fast-compute m and b for them
+  QuadSegmentArray nonAAQuadSegments = {
+    SegmentLineEquation(inQuad.GetTopLeft(), inQuad.GetTopRight()),
+    SegmentLineEquation(inQuad.GetTopRight(), inQuad.GetBottomRight()),
+    SegmentLineEquation(inQuad.GetBottomRight(), inQuad.GetBottomLeft()),
+    SegmentLineEquation(inQuad.GetBottomLeft(), inQuad.GetTopLeft()) };
+  
+  // call optimized version of addquad
+  bool containmentFlag;
+  const bool ret = OverlapsOrContains(myQuad, inQuad, nonAAQuadSegments, containmentFlag);
+  return ret;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NavMeshQuadTreeNode::AddQuad_NewSetup(const Quad2f &quad, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor)

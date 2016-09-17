@@ -12,6 +12,7 @@
 
 #include "selectionBehaviorChooser.h"
 
+#include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorLookAround.h"
 #include "anki/cozmo/basestation/behaviors/behaviorNone.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
@@ -114,6 +115,13 @@ void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInt
                         "got a tag we didn't subscribe to");
       break;
   }
+  
+  // if the behavior changes, check processes
+  if ( _selectedBehavior != selectedBehavior ) {
+    SetProcessEnabled(_selectedBehavior, false);  // disable previous process
+    SetProcessEnabled(selectedBehavior, true);    // enable new process
+  }
+  
     
   _selectedBehavior = selectedBehavior;
 }
@@ -134,6 +142,38 @@ IBehavior* SelectionBehaviorChooser::AddNewBehavior(BehaviorType newType)
   }
   
   return newBehavior;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SelectionBehaviorChooser::OnSelected()
+{
+  // enable process for selected behavior
+  SetProcessEnabled(_selectedBehavior, true);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SelectionBehaviorChooser::OnDeselected()
+{
+  // disable process for selected behavior
+  SetProcessEnabled(_selectedBehavior, false);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SelectionBehaviorChooser::SetProcessEnabled(const IBehavior* behavior, bool newValue)
+{
+  if ( nullptr != behavior )
+  {
+    // notify the information analyzer when our behavior has a required process
+    AIInformationAnalysis::EProcess process = behavior->GetRequiredProcess();
+    if ( process != AIInformationAnalysis::EProcess::Invalid )
+    {
+      if( newValue ) {
+        _robot.GetAIInformationAnalyzer().AddEnableRequest(process, GetName());
+      } else {
+        _robot.GetAIInformationAnalyzer().RemoveEnableRequest(process, GetName());
+      }
+    }
+  }
 }
 
 } // namespace Cozmo

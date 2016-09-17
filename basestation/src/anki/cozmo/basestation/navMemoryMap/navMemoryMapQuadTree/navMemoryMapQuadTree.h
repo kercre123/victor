@@ -47,11 +47,16 @@ public:
   // change the content type from typeToReplace into newTypeSet if there's a border from any of the typesToFillFrom towards typeToReplace
   virtual void FillBorderInternal(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet) override;
   
-  // change the content type from typeToReplace into newTypeSet
+  // change the content type from typeToReplace into newTypeSet within the given quad
+  virtual void ReplaceContentInternal(const Quad2f& inQuad, EContentType typeToReplace, EContentType newTypeSet) override;
+  
+  // change the content type from typeToReplace into newTypeSet in all known space
   virtual void ReplaceContentInternal(EContentType typeToReplace, EContentType newTypeSet) override;
   
   // return the size of the area currently explored
   virtual double GetExploredRegionAreaM2() const override;
+  // return the size of the area currently flagged as interesting edges
+  virtual double GetInterestingEdgeAreaM2() const override;
   
   // returns the precision of content data in the memory map. For example, if you add a point, and later query for it,
   // the region that the point generated to store the point could have an error of up to this length.

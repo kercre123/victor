@@ -27,6 +27,7 @@
       { "channel": "Actions",         "enabled": false },
       { "channel": "Behaviors",       "enabled": false },
       { "channel": "AIWhiteboard",    "enabled": false },
+      { "channel": "AIInfoAnalysis",  "enabled": false },     
       { "channel": "Audio",           "enabled": false },
       { "channel": "FaceRecognizer",  "enabled": false },
       { "channel": "UiComms",         "enabled": false },

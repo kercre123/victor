@@ -161,9 +161,14 @@ public:
   // current origin. Note this causes a calculation WRT origin (consider caching in the future if need to optimize)
   void GetPossibleObjectsWRTOrigin(PossibleObjectVector& possibleObjects) const;
 
-  // return time at which Cozmo got off the charger by himself
+  // set/return time at which Cozmo got off the charger by himself
   void GotOffChargerAtTime(const float time_sec) { _gotOffChargerAtTime_sec = time_sec; }
   float GetTimeAtWhichRobotGotOffCharger() const { return _gotOffChargerAtTime_sec; }
+  
+  // set/return time at which engine processed information regarding edges
+  inline void SetLastEdgeInformation(const float time_sec, const float closestEdgeDist_mm);
+  float GetLastEdgeInformationTime() const { return _edgeInfoTime_sec; }
+  float GetLastEdgeClosestDistance() const { return _edgeInfoClosestEdge_mm; }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Events
@@ -241,14 +246,26 @@ private:
   
   // time at which the robot got off the charger by itself. Negative value means never
   float _gotOffChargerAtTime_sec;
+  
+  // time at which the engine processed edge information coming from vision
+  float _edgeInfoTime_sec;
+  float _edgeInfoClosestEdge_mm;
  
   // list of markers/objects we have not checked out yet
   PossibleObjectList _possibleObjects;
   
   // container of beacons currently defined (high level AI concept)
   BeaconList _beacons;
-
 };
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Inline
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::SetLastEdgeInformation(const float time_sec, const float closestEdgeDist_mm)
+{
+  _edgeInfoTime_sec = time_sec;
+  _edgeInfoClosestEdge_mm = closestEdgeDist_mm;
+}
   
 
 } // namespace Cozmo

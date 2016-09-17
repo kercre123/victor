@@ -556,7 +556,9 @@ Result BehaviorManager::Update()
 void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
 {
   if( _currentChooserPtr == newChooser ) {
-    PRINT_CH_INFO("Behaviors", "BehaviorManager.SetBehaviorChooser", "Null behavior chooser. Ignoring set (previous will continue)");
+    PRINT_CH_INFO("Behaviors", "BehaviorManager.SetBehaviorChooser",
+      "BehaviorChooser '%s' already set",
+      newChooser ? newChooser->GetName() : "null");
     return;
   }
   

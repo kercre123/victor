@@ -285,6 +285,18 @@
       "AnimName": "ag_hiking_rtnewarea"
     },
     {
+      "CladEvent": "HikingSquintEnd",
+      "AnimName": "ag_hiking_edgesquintgetout"
+    },
+    {
+      "CladEvent": "HikingSquintLoop",
+      "AnimName": "ag_hiking_edgesquintloop"
+    },
+    {
+      "CladEvent": "HikingSquintStart",
+      "AnimName": "ag_hiking_edgesquintgetin"
+    },
+    {
       "CladEvent": "HikingReactToPossibleMarker",
       "AnimName": "ag_hiking_rtpmarker"
     },

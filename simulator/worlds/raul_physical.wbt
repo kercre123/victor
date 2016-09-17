@@ -33,6 +33,8 @@ CozmoVizDisplay {
   filterLogs TRUE
 }
 WebotsKeyboardController {
+  robotVolume 0
+  behaviorName "Hiking_VisitInterestingEdge"
   filterLogs TRUE
   forcedRobotIP "172.31.1.1"
   forcedRobotIsSimulated FALSE

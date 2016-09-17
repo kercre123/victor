@@ -569,6 +569,30 @@ namespace Anki {
       }
     }
     
+    MoveHeadToAngleAction::MoveHeadToAngleAction(Robot& robot, const Preset preset, const Radians& tolerance, const Radians& variability)
+      : MoveHeadToAngleAction(robot, GetPresetHeadAngle(preset), tolerance, variability)
+    {
+      SetName(std::string("MoveHeadTo_") + GetPresetName(preset));
+    }
+    
+    f32 MoveHeadToAngleAction::GetPresetHeadAngle(Preset preset)
+    {
+      switch(preset) {
+        case Preset::GROUND_PLANE_VISIBLE: { return DEG_TO_RAD(-15.0f); }
+      }
+      ASSERT_NAMED(false, "MoveHeadToAngleAction.NotAPreset");
+      return -1.0f;
+    }
+    
+    const char* MoveHeadToAngleAction::GetPresetName(Preset preset)
+    {
+      switch(preset) {
+        case Preset::GROUND_PLANE_VISIBLE: { return "GroundPlaneVisible"; }
+      }
+      ASSERT_NAMED(false, "MoveHeadToAngleAction.NotAPreset");
+      return "ERROR";
+    }
+    
     MoveHeadToAngleAction::~MoveHeadToAngleAction()
     {
       if(AnimationStreamer::NotAnimatingTag != _eyeShiftTag)

@@ -117,6 +117,7 @@ class LightsComponent;
 class RobotToEngineImplMessaging;
 class ActionList;
 class BehaviorManager;
+class AIInformationAnalyzer;
 class RobotIdleTimeoutComponent;
 class ObjectPoseConfirmer;
 
@@ -704,6 +705,9 @@ public:
 
   const BehaviorManager& GetBehaviorManager() const { return *_behaviorMgr; }
   BehaviorManager& GetBehaviorManager() { return *_behaviorMgr; }
+  
+  const AIInformationAnalyzer& GetAIInformationAnalyzer() const { return *_aiInformationAnalyzer; }
+  AIInformationAnalyzer& GetAIInformationAnalyzer() { return *_aiInformationAnalyzer; }
 
   const BehaviorFactory& GetBehaviorFactory() const;
   BehaviorFactory& GetBehaviorFactory();
@@ -783,7 +787,8 @@ protected:
   // A container for faces/people the robot knows about
   FaceWorld         _faceWorld;
   
-  std::unique_ptr<BehaviorManager>   _behaviorMgr;
+  std::unique_ptr<BehaviorManager>       _behaviorMgr;
+  std::unique_ptr<AIInformationAnalyzer> _aiInformationAnalyzer;
   
   ///////// Audio /////////
   std::unique_ptr<Audio::RobotAudioClient> _audioClient;

@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
@@ -53,7 +54,8 @@ static const char* kRequiredParentSwitchKey      = "requiredRecentSwitchToParent
 static const char* kDisableReactionaryDefault    = "disableByDefault";
   
 IBehavior::IBehavior(Robot& robot, const Json::Value& config)
-  : _behaviorType(BehaviorType::NoneBehavior)
+  : _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
+  , _behaviorType(BehaviorType::NoneBehavior)
   , _requiredUnlockId( UnlockId::Count )
   , _requiredRecentDriveOffCharger_sec(-1.0f)
   , _requiredRecentSwitchToParent_sec(-1.0f)
@@ -315,12 +317,16 @@ Result IBehavior::Init()
 Result IBehavior::Resume()
 {
   PRINT_CH_INFO("Behaviors", (GetName() + ".Resume").c_str(), "Resuming...");
+  ASSERT_NAMED(!_isRunning, "IBehavior.Resume.ShouldNotBeRunningIfWeTryToResume");
   
-  _isRunning = true;
   _startedRunningTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   Result initResult = ResumeInternal(_robot);
   if ( initResult != RESULT_OK ) {
     _isRunning = false;
+  } else {
+    // default implementation if ResumeInternal also sets it to true, but behaviors that override it
+    // might not set it
+    _isRunning = true;
   }
   
   // Disable Acknowledge object if this behavior is the sparked version
@@ -371,6 +377,27 @@ void IBehavior::StopOnNextActionComplete()
 
 bool IBehavior::IsRunnable(const Robot& robot) const
 {
+  // should not call IsRunnable for running behavior (or we should return true here), otherwise it can
+  // destroy info cached by the running behavior
+  ASSERT_NAMED(!IsRunning(), "IBehavior.IsRunnableCalledOnRunningBehavior");
+  if( IsRunning() ) {
+    // if it ever happened in production, we better not destroy info in the running behavior
+    return true;
+  }
+  
+  // check if required processes are running
+  if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid )
+  {
+    const bool isProcessOn = robot.GetAIInformationAnalyzer().IsProcessRunning(_requiredProcess);
+    if ( !isProcessOn ) {
+      PRINT_NAMED_ERROR("IBehavior.IsRunnable.RequiredProcessNotFound",
+        "Required process '%s' is not enabled for '%s'",
+        AIInformationAnalysis::StringFromEProcess(_requiredProcess),
+        GetName().c_str());
+      return false;
+    }
+  }
+
   // first check the unlock
   if ( _requiredUnlockId != UnlockId::Count )
   {
@@ -465,6 +492,7 @@ Result IBehavior::ResumeInternal(Robot& robot)
   // by default, if we are runnable again, initialize and start over
   Result resumeResult = RESULT_FAIL;
   if ( IsRunnable(robot) ) {
+    _isRunning = true;
     resumeResult = InitInternal(robot);
   }
   return resumeResult;
@@ -516,7 +544,7 @@ float IBehavior::EvaluateRunningPenalty() const
   
 float IBehavior::EvaluateScore(const Robot& robot) const
 {
-  if (IsRunnable(robot) || IsRunning())
+  if (IsRunning() || IsRunnable(robot))
   {
     const bool isRunning = IsRunning();
                 

@@ -882,7 +882,23 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
       _navMapReportedRobotPose = robotPoseWrtOrigin;
     }
   }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::FlagGroundPlaneROIInterestingEdgesAsUncertain()
+  {
+    // get quad wrt robot
+    const Pose3d& curRobotPose = _robot->GetPose().GetWithRespectToOrigin();
+    Quad3f groundPlaneWrtRobot;
+    curRobotPose.ApplyTo(GroundPlaneROI::GetGroundQuad(), groundPlaneWrtRobot);
     
+    // ask memory map to clear
+    INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+    ASSERT_NAMED(currentNavMemoryMap, "BlockWorld.FlagQuadAsNotInterestingEdges.NullMap");
+    const INavMemoryMap::EContentType typeInteresting = INavMemoryMap::EContentType::InterestingEdge;
+    const INavMemoryMap::EContentType typeUnknown = INavMemoryMap::EContentType::Unknown;
+    currentNavMemoryMap->ReplaceContent(groundPlaneWrtRobot, typeInteresting, typeUnknown);
+  }
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::FlagQuadAsNotInterestingEdges(const Quad2f& quadWRTOrigin)
   {
@@ -3072,9 +3088,12 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::ReviewInterestingEdges(const Quad2f& withinQuad)
   {
-    // Note: Not using withinQuad, but should. I plan on using once the memory map allows local queries and
+    // Note1: Not using withinQuad, but should. I plan on using once the memory map allows local queries and
     // modifications. Leave here for legacy purposes. We surely enable it soon, because performance needs
-    // improvement
+    // improvement.
+    // Note2: Actually FindBorder is very fast compared to having to check each node against the quad, depending
+    // on how many nodes of each type there are (interesting vs quads within 'withinQuad'), so it can potentially
+    // be faster depending on the case. Unless profiling shows up for this, no need to listen to Note1
 
     // check if merge is enabled
     if ( !kReviewInterestingEdges ) {
@@ -3181,6 +3200,9 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
       Point2f to;
     };
     std::vector<Segment> visionSegmentsWithInterestingBorders;
+    
+    // we store the closest detected edge every time in the whiteboard
+    float closestPointDist_mm2 = std::numeric_limits<float>::quiet_NaN();
     
     // iterate every chain finding contiguous segments
     for( const auto& chain : frameInfo.chains )
@@ -3399,6 +3421,19 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
             {
               // it can't merge into the previous segment, set the flag that we want a new segment
               shouldCreateNewSegment = true;
+            }
+          }
+          
+          // store distance to valid points that belong to a detected border for behaviors quick access
+          if ( chain.isBorder )
+          {
+            // compute distance from current robot position to the candidate3D, because whiteboard likes to know
+            // the closest border at all times
+            const Pose3d& currentRobotPose = _robot->GetPose();
+            const float candidateDist_mm2 = (currentRobotPose.GetTranslation() - candidate3D).LengthSq();
+            if ( std::isnan(closestPointDist_mm2) || FLT_LT(candidateDist_mm2, closestPointDist_mm2) )
+            {
+              closestPointDist_mm2 = candidateDist_mm2;
             }
           }
         }
@@ -3639,6 +3674,11 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
       Quad2f groundPlaneWRTOrigin(wrtOrigin2DTL, wrtOrigin2DBL, wrtOrigin2DTR, wrtOrigin2DBR);
       ReviewInterestingEdges(groundPlaneWRTOrigin);
     }
+    
+    // notify the whiteboard we just processed edge information from a frame
+    const float closestPointDist_mm = std::isnan(closestPointDist_mm2) ?
+      std::numeric_limits<float>::quiet_NaN() : sqrt(closestPointDist_mm2);
+    _robot->GetBehaviorManager().GetWhiteboard().SetLastEdgeInformation(frameInfo.timestamp, closestPointDist_mm);
     
     return RESULT_OK;
   }

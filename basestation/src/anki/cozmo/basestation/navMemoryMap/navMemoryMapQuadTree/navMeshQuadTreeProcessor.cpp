@@ -52,6 +52,7 @@ NavMeshQuadTreeProcessor::NavMeshQuadTreeProcessor(VizManager* vizManager)
 , _contentGfxDirty(false)
 , _borderGfxDirty(false)
 , _totalExploredArea_m2(0.0)
+, _totalInterestingEdgeArea_m2(0.0)
 , _vizManager(vizManager)
 {
 
@@ -101,6 +102,26 @@ void NavMeshQuadTreeProcessor::OnNodeContentTypeChanged(const NavMeshQuadTreeNod
       const float side_m = MM_TO_M(node->GetSideLen());
       const float area_m2 = side_m*side_m;
       _totalExploredArea_m2 += area_m2;
+    }
+  }
+
+  // update interesting edge
+  {
+    const bool shouldBeCountedOld = (oldContent == ENodeContentType::InterestingEdge);
+    const bool shouldBeCountedNew = (newContent == ENodeContentType::InterestingEdge);
+    const bool needsToRemove =  shouldBeCountedOld && !shouldBeCountedNew;
+    const bool needsToAdd    = !shouldBeCountedOld &&  shouldBeCountedNew;
+    if ( needsToRemove )
+    {
+      const float side_m = MM_TO_M(node->GetSideLen());
+      const float area_m2 = side_m*side_m;
+      _totalInterestingEdgeArea_m2 -= area_m2;
+    }
+    else if ( needsToAdd )
+    {
+      const float side_m = MM_TO_M(node->GetSideLen());
+      const float area_m2 = side_m*side_m;
+      _totalInterestingEdgeArea_m2 += area_m2;
     }
   }
 
@@ -156,6 +177,18 @@ void NavMeshQuadTreeProcessor::OnNodeDestroyed(const NavMeshQuadTreeNode* node)
       const float side_m = MM_TO_M(node->GetSideLen());
       const float area_m2 = side_m*side_m;
       _totalExploredArea_m2 -= area_m2;
+    }
+  }
+  
+  // remove interesting edge area if it was counted before
+  {
+    const bool shouldBeCountedOld = (oldContent == ENodeContentType::InterestingEdge);
+    const bool needsToRemove =  shouldBeCountedOld;
+    if ( needsToRemove )
+    {
+      const float side_m = MM_TO_M(node->GetSideLen());
+      const float area_m2 = side_m*side_m;
+      _totalInterestingEdgeArea_m2 -= area_m2;
     }
   }
   
@@ -468,6 +501,42 @@ void NavMeshQuadTreeProcessor::FillBorder(ENodeContentType filledType, ENodeCont
   }
   
   timer.Toc("NavMeshQuadTreeProcessor.FillBorder");
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTreeProcessor::ReplaceContent(const Quad2f& inQuad, ENodeContentType typeToReplace, const NodeContent& newContent)
+{
+  ASSERT_NAMED_EVENT(IsCached(typeToReplace),
+    "NavMeshQuadTreeProcessor.ReplaceContent", "%s is not cached", ENodeContentTypeToString(typeToReplace) );
+  
+  auto nodeSetMatch = _nodeSets.find(typeToReplace);
+  if (nodeSetMatch != _nodeSets.end())
+  {
+    const NodeSet& nodesToReplaceSet = nodeSetMatch->second;
+    if ( !nodesToReplaceSet.empty() )
+    {
+      // when we change the content type, nodeSet for that type changes (erases nodes). Instead of caching iterators
+      // in different functions, grab their center and readd content
+      std::vector<Point2f> affectedNodeCenters;
+      affectedNodeCenters.reserve( nodesToReplaceSet.size() );
+      
+      // iterate all nodes adding centers
+      for( const auto& node : nodesToReplaceSet )
+      {
+        // check if the node and the quad overlap. In some cases this will cause this implementation to be slower. In
+        // others it will be faster (depends on number of quads in inQuad, vs number of nodes with typeToReplace content)
+        const bool isAffected = node->ContainsOrOverlapsQuad(inQuad);
+        if ( isAffected ) {
+          affectedNodeCenters.emplace_back( node->GetCenter() );
+        }
+      }
+      
+      // re-add all centers with the new type
+      for( const Point2f& point : affectedNodeCenters ) {
+        _root->AddContentPoint(point, newContent, *this);
+      }
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -893,6 +962,7 @@ bool CheckedInfo::AreAllDirectionsComplete() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTreeProcessor::FindBorders(ENodeContentType innerType, ENodeContentTypePackedType outerTypes)
 {
+  ANKI_CPU_PROFILE("NavMeshQuadTreeProcessor.FindBorders");
   using namespace FindBordersHelpers;
   
   DEBUG_FIND_BORDER("------------------------------------------------------");

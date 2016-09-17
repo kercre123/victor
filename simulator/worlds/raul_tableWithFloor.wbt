@@ -65,7 +65,7 @@ DEF Cozmo_1 CozmoBot {
   filterLogs TRUE
 }
 WebotsKeyboardController {
-  behaviorName "NoneBehavior"
+  behaviorName "Hiking_VisitInterestingEdge"
   filterLogs TRUE
 }
 CozmoVizDisplay {

@@ -46,7 +46,7 @@ const Vision::Image& GroundPlaneROI::GetOverheadMask() const
   return _overheadMask;
 }
 
-Quad3f GroundPlaneROI::GetGroundQuad(f32 zHeight) const
+Quad3f GroundPlaneROI::GetGroundQuad(f32 zHeight)
 {
   return Quad3f{
     {_dist + _length   ,  0.5f*_widthFar   , zHeight},

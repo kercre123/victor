@@ -9,6 +9,7 @@
 
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/animations/engineAnimationController.h"
+#include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/pathPlanner.h"
@@ -153,6 +154,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _blockWorld(this)
   , _faceWorld(*this)
   , _behaviorMgr(new BehaviorManager(*this))
+  , _aiInformationAnalyzer(new AIInformationAnalyzer())
   , _audioClient(new Audio::RobotAudioClient(this))
   , _animationStreamer(_context, *_audioClient)
   , _drivingAnimationHandler(new DrivingAnimationHandler(*this))
@@ -1144,6 +1146,9 @@ Result Robot::Update(bool ignoreVisionModes)
   _progressionUnlockComponent->Update();
   
   _tapFilterComponent->Update();
+  
+  // information analyzer should run before behaviors so that they can feed off its findings
+  _aiInformationAnalyzer->Update(*this);
       
   const char* behaviorChooserName = "";
   std::string behaviorDebugStr("<disabled>");

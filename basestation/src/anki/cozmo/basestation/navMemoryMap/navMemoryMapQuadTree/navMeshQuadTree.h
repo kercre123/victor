@@ -45,6 +45,10 @@ public:
   // Stop rendering navmesh
   void ClearDraw() const;
   
+  // Forces redrawing even if Mesh thinks content hasn't changed. This is because QTProcessor now can modify
+  // content, and navmesh has no other way of knowing that it happened
+  void ForceRedraw() { _gfxDirty = true; }
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
