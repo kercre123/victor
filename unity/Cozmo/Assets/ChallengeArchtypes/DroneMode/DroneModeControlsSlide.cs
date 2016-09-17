@@ -103,11 +103,14 @@ namespace Cozmo.Minigame.DroneMode {
     private void OnDestroy() {
       _SpeedThrottle.onValueChanged.RemoveListener(HandleSpeedThrottleValueChanged);
       _HeadTiltThrottle.onValueChanged.RemoveListener(HandleTiltThrottleValueChanged);
+      if (_HowToPlayViewInstance != null) {
+        _HowToPlayViewInstance.CloseViewImmediately();
+      }
     }
 
     private void HandleHowToPlayClicked() {
       if (UIManager.Instance.NumberOfOpenDialogues() == 0) {
-        OpenHowToPlayView ();
+        OpenHowToPlayView();
       }
     }
 

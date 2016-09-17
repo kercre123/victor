@@ -436,6 +436,10 @@ namespace FaceEnrollment {
         _DeleteConfirmationAlertView.CloseViewImmediately();
       }
 
+      if (_FaceEnrollmentInstructionsViewInstance != null) {
+        _FaceEnrollmentInstructionsViewInstance.CloseViewImmediately();
+      }
+
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(HandleEnrolledFace);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
       if (CurrentRobot != null) {
