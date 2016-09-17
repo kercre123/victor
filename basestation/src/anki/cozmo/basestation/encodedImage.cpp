@@ -51,6 +51,15 @@ namespace Cozmo {
     if (chunk.imageId != _imgID)
     {
       _imgID           = chunk.imageId;
+      
+      if(chunk.resolution != ImageResolution::QVGA)
+      {
+        PRINT_NAMED_WARNING("EncodedImage.AddChunk.BadResolution",
+                            "Expecting QVGA resolution, got %s",
+                            EnumToString(chunk.resolution));
+        return false;
+      }
+      
       const Vision::ImageDims& imageDims = Vision::CameraResInfo[(int)chunk.resolution];
       _imgWidth        = imageDims.width;;
       _imgHeight       = imageDims.height;
