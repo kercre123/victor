@@ -108,7 +108,7 @@ namespace Onboarding {
           _ImageCubeLights.gameObject.SetActive(true);
           if (_CubesFoundTimes == 0) {
             float timeToFindCube = Time.time - _StartTime;
-            DAS.Event("onboarding.upgrade", timeToFindCube.ToString());
+            DAS.Event("onboarding.show_cube", timeToFindCube.ToString());
           }
           _CubesFoundTimes++;
         }
@@ -178,7 +178,7 @@ namespace Onboarding {
         DAS.Warn("onboarding.unhandledcase", nextState.ToString());
         break;
       }
-      DAS.Info("onboarding.statechange", "prev: " + _State + " next: " + nextState);
+      DAS.Info("DEV onboarding statechange", "prev: " + _State + " next: " + nextState);
       _State = nextState;
     }
   }

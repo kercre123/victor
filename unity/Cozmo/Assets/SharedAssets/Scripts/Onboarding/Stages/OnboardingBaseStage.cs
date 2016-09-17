@@ -32,7 +32,7 @@ namespace Onboarding {
     protected int _DASPhaseID = 0;
 
     public virtual void Start() {
-      DAS.Info("onboarding.stage.started", name);
+      DAS.Info("DEV onboarding stage.started", name);
 
       // Early idle states need to loop the loading animation.
       if (_PlayIdle && RobotEngineManager.Instance.CurrentRobot != null) {
@@ -47,7 +47,7 @@ namespace Onboarding {
         RobotEngineManager.Instance.CurrentRobot.PopIdleAnimation();
         RobotEngineManager.Instance.CurrentRobot.CancelCallback(HandleLoopedAnimationComplete);
       }
-      DAS.Info("onboarding.stage.ended", name);
+      DAS.Info("DEV onboarding stage.ended", name);
     }
 
     public virtual void SkipPressed() {
@@ -55,8 +55,10 @@ namespace Onboarding {
     }
 
     protected virtual void HandleLoopedAnimationComplete(bool success = true) {
-      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnboardingPreBirth,
-                                                                            HandleLoopedAnimationComplete);
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnboardingPreBirth,
+                                                                              HandleLoopedAnimationComplete);
+      }
     }
   }
 

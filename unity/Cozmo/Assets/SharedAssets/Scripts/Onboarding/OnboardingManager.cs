@@ -173,12 +173,13 @@ public class OnboardingManager : MonoBehaviour {
     _CurrPhase = phase;
     if (_CurrPhase == OnboardingPhases.Home) {
       RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(AnimationTrigger.OnboardingIdle);
+      bool isOldRobot = UnlockablesManager.Instance.IsUnlocked(UnlockId.StackTwoCubes);
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = false;
-      DAS.Event("onboarding.start", "");
+
+      DAS.Event("onboarding.start", isOldRobot ? "1" : "0");
       // in the event they've ever booted the app before, or it's an old robot.
       // Skip the holding on charger phase because it is the worst and only should be a problem
       // for fresh from factory robots
-      bool isOldRobot = UnlockablesManager.Instance.IsUnlocked(UnlockId.StackTwoCubes);
       if (!FirstTime || isOldRobot) {
         startStage = 1;
       }
@@ -301,7 +302,7 @@ public class OnboardingManager : MonoBehaviour {
       // Not first time, record a transition out
       if (_CurrDASPhaseID != -1) {
         float timeSinceLastPhase = Time.time - _CurrDASPhaseStartTime;
-        DAS.Event("onboarding.phase_time", _CurrDASPhaseID.ToString(), DASUtil.FormatExtraData(timeSinceLastPhase.ToString()));
+        DAS.Event("onboarding.phase_time", _CurrDASPhaseID.ToString(), null, DASUtil.FormatExtraData(timeSinceLastPhase.ToString()));
       }
 
       // start recording the next one...
