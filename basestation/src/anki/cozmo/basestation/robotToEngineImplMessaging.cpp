@@ -274,7 +274,12 @@ void RobotToEngineImplMessaging::HandleFirmwareVersion(const AnkiEvent<RobotInte
   std::string jsonString{fwData.begin(), fwData.end()};
   Json::Reader reader;
   Json::Value headerData;
-  reader.parse(jsonString, headerData);
+  if(!reader.parse(jsonString, headerData))
+  {
+    PRINT_NAMED_ERROR("RobotToEngineImpleMessaging.HandleFirmwareVersion.ParseJson",
+                      "Failed to parse header data from robot: %s", jsonString.c_str());
+    return;
+  }
   
   // simulated robot will have special tag in json
   const bool robotIsPhysical = headerData["sim"].isNull();

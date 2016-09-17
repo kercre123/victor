@@ -126,7 +126,15 @@ void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotToEngine
   std::string jsonString{fwData.begin(), fwData.end()};
   Json::Reader reader;
   Json::Value headerData;
-  reader.parse(jsonString, headerData);
+  if(!reader.parse(jsonString, headerData))
+  {
+    PRINT_NAMED_ERROR("RobotInitialConnection.HandleFirmwareVersion.ParseJson",
+                      "Failed to parse header data from robot: %s", jsonString.c_str());
+    // If parsing failed than report outdatedfirmware so the firmware gets updated to hopefully fix
+    // what could be a malformed header
+    OnNotified(RobotConnectionResult::OutdatedFirmware, 0);
+    return;
+  }
 
   uint32_t robotVersion = headerData[FirmwareUpdater::kFirmwareVersionKey].asUInt();
   uint32_t robotTime = headerData[FirmwareUpdater::kFirmwareTimeKey].asUInt();
