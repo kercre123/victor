@@ -93,13 +93,18 @@ class ReactToTweetsStreamListener(twitter_helpers.CozmoTweetStreamListener):
 
     def do_head(self, cmd_args, kw_args):
 
-        usage = "'head X' where X is desired angle for head" #-25 (down) to 45 degrees (up)
+        usage = "'head X' where X is desired angle for head" #-25 (down) to 44.5 degrees (up)
 
         head_angle = extract_float(cmd_args)
 
         if head_angle is not None:
-            self.cozmo.set_head_angle(degrees(head_angle)).wait_for_completed()
-            return "I moved head to " + str(head_angle)
+            head_angle_action = self.cozmo.set_head_angle(degrees(head_angle))
+            clamped_head_angle = head_angle_action.angle.degrees
+            head_angle_action.wait_for_completed()
+            resultString = "I moved head to " + "{0:.1f}".format(clamped_head_angle)
+            if abs(head_angle - clamped_head_angle) > 0.01:
+                resultString += " (clamped to range)"
+            return resultString
 
         return "Error: usage = " + usage
 
@@ -226,5 +231,5 @@ def run(coz_conn):
 
 if __name__ == '__main__':
     cozmo.setup_basic_logging()
-    cozmo.connect_with_tkviewer(run)
+    cozmo.connect(run)
 

@@ -158,7 +158,18 @@ class SetHeadAngle(action.Action):
 
     def __init__(self, angle, max_speed, accel, duration, **kw):
         super().__init__(**kw)
-        self.angle = angle
+
+        min_head_angle = util.degrees(-25)
+        max_head_angle = util.degrees(44.5)
+        if angle < min_head_angle:
+            logger.info("Clamping head angle from %s to min %s" % (angle, min_head_angle))
+            self.angle = min_head_angle
+        elif angle > max_head_angle:
+            logger.info("Clamping head angle from %s to max %s" % (angle, max_head_angle))
+            self.angle = max_head_angle
+        else:
+            self.angle = angle
+
         self.max_speed = max_speed
         self.accel = accel
         self.duration = duration

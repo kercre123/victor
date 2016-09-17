@@ -54,6 +54,29 @@ class Angle:
             raise TypeError("Unsupported operand for / expected number")
         return radians(self.radians / other)
 
+    def _cmp_int(self, other):
+        if not isinstance(other, Angle):
+            raise TypeError("Unsupported operand for < expected Angle")
+        return (self.radians > other.radians) - (self.radians < other.radians)
+
+    def __eq__(self, other):
+        return self._cmp_int(other) == 0
+
+    def __ne__(self, other):
+        return self._cmp_int(other) != 0
+
+    def __gt__(self, other):
+        return self._cmp_int(other) > 0
+
+    def __lt__(self, other):
+        return self._cmp_int(other) < 0
+
+    def __ge__(self, other):
+        return self._cmp_int(other) >= 0
+
+    def __le__(self, other):
+        return self._cmp_int(other) <= 0
+
     @property
     def radians(self):
         '''The angle in radians.'''
