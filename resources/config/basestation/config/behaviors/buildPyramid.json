@@ -3,7 +3,6 @@
   "name": "buildPyramid",
   "requiredUnlockId": "BuildPyramid",
   "behaviorGroups": [
-      "FP_PlayAlone"
   ],
   "flatScore": 0.9
 }
