@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
@@ -35,6 +36,8 @@ CONSOLE_VAR(f32, kBSB_SamePreactionPoseDistThresh_mm, "Behavior.StackBlocks", 30
 CONSOLE_VAR(f32, kBSB_SamePreactionPoseAngleThresh_deg, "Behavior.StackBlocks", 45.f);
 
 static const char* const kStackInAnyOrientationKey = "stackInAnyOrientation";
+static const float kSecondsObjectInvalidAfterFailure = 120.f;
+static const float kObjectInvalidAfterFailureRadius_mm = 60.f;
   
 BehaviorStackBlocks::BehaviorStackBlocks(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -150,6 +153,8 @@ bool BehaviorStackBlocks::FilterBlocksHelper(const ObservableObject* obj) const
 {
   const bool upAxisOk = ! _robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::RollCube) ||
     obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
+  
+
 
   return (obj->GetFamily() == ObjectFamily::LightCube &&
           !obj->IsPoseStateUnknown() &&
@@ -158,11 +163,17 @@ bool BehaviorStackBlocks::FilterBlocksHelper(const ObservableObject* obj) const
 
 bool BehaviorStackBlocks::FilterBlocksForTop(const ObservableObject* obj) const
 {
-  return FilterBlocksHelper(obj) && _robot.CanPickUpObject(*obj);
+  const bool hasFailedRecently = _robot.GetBehaviorManager().GetWhiteboard().
+                                   DidFailToUse(obj->GetID(), AIWhiteboard::ObjectUseAction::PickUpObject, kSecondsObjectInvalidAfterFailure,
+                                                obj->GetPose(), kObjectInvalidAfterFailureRadius_mm, 2*M_PI);
+  
+  return FilterBlocksHelper(obj) && _robot.CanPickUpObject(*obj)  && !hasFailedRecently;
 }
 
 bool BehaviorStackBlocks::FilterBlocksForBottom(const ObservableObject* obj) const
 {
+
+  
   // top gets picked first, so can't pick top here
   return obj->GetID() != _targetBlockTop && FilterBlocksHelper(obj) && _robot.CanStackOnTopOfObject( *obj );
 }
@@ -285,7 +296,7 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
   action->SetNoNameAnimationTrigger(AnimationTrigger::StackBlocksPreActionUnnamedFace);
 
   
-  RetryWrapperAction::RetryCallback retryCallback = [this, action](const ExternalInterface::RobotCompletedAction& completion, const u8 retryCount, AnimationTrigger& animTrigger)
+  RetryWrapperAction::RetryCallback retryCallback = [this, action, &robot](const ExternalInterface::RobotCompletedAction& completion, const u8 retryCount, AnimationTrigger& animTrigger)
   {
     animTrigger = AnimationTrigger::Count;
     
@@ -318,6 +329,15 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
           // Smaller reaction if we just didn't get to the pre-action pose
           // This is the intended animation trigger for now - don't change without consulting Mooly
           animTrigger = AnimationTrigger::RollBlockRealign;
+          break;
+        }
+          
+        case ObjectInteractionResult::NO_PREACTION_POSES:
+        {
+          // Don't retry stack with this block if there were no pre-action poses
+          animTrigger = AnimationTrigger::RollBlockRealign;
+          const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlockTop);
+          robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PickUpObject, failedObject->GetPose());
           break;
         }
           

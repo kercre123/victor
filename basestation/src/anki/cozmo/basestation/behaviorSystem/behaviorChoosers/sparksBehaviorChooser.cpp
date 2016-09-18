@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/components/lightsComponent.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/common/basestation/jsonTools.h"
@@ -123,6 +124,8 @@ void SparksBehaviorChooser::OnSelected()
   // Turn off reactionary behaviors that could interrupt the spark
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeFace, false);
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCubeMoved, false);
+  _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToFrustration, false);
+
 }
   
 void SparksBehaviorChooser::OnDeselected()
@@ -138,6 +141,8 @@ void SparksBehaviorChooser::OnDeselected()
   
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeFace, true);
   _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCubeMoved, true);
+  _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToFrustration, true);
+
 }
 
 
@@ -216,6 +221,10 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
           // Play different animations based on whether cozmo timed out or completed his desired reps
           if(_currentObjectiveCompletedCount >= _numberOfRepetitions){
             getOutAnims.push_back(AnimationTrigger::SparkSuccess);
+            
+            // make sure we don't immediately play frustration upon ending a spark successfully
+            _robot.GetMoodManager().TriggerEmotionEvent("SuccessfulSpark", MoodManager::GetCurrentTimeInSeconds());
+            
           }else{
             getOutAnims.push_back(AnimationTrigger::SparkFailure);
           }

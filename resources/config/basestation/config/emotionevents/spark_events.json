@@ -1,0 +1,14 @@
+{
+  "emotionEvents": [
+    {
+      "name": "SuccessfulSpark",
+      "emotionAffectors": [										  
+         {
+            "emotionType": "Confident",
+            "value": 1.0
+         }
+      ]
+    }
+  ]
+}
+

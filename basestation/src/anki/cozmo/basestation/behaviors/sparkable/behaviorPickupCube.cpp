@@ -13,13 +13,15 @@
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorPickupCube.h"
 
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
-#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageFromActiveObject.h"
@@ -30,6 +32,7 @@ namespace Cozmo {
 
 static const char* kShouldPutCubeBackDown = "shouldPutCubeBackDown";
 static const float kSecondsBetweenBlockWorldChecks = 3;
+static const float kSecondsObjectInvalidAfterFailure = 10.f;
   
 BehaviorPickUpCube::BehaviorPickUpCube(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -78,7 +81,7 @@ bool BehaviorPickUpCube::IsRunnableInternal(const Robot& robot) const
     CheckForNearbyObject(robot);
   }
   
-  return _targetBlock.IsSet();
+  return !robot.IsCarryingObject() &&  _targetBlockID.IsSet();
 }
 
 void BehaviorPickUpCube::HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot)
@@ -99,18 +102,19 @@ void BehaviorPickUpCube::CheckForNearbyObject(const Robot& robot) const
   filter.SetAllowedFamilies({ObjectFamily::LightCube});
   filter.SetFilterFcn([&robot](const ObservableObject* object)
                       {
-                        return robot.CanPickUpObject(*object);
+                        bool recentlyFailed = robot.GetBehaviorManager().GetWhiteboard().DidFailToUse(object->GetID(), AIWhiteboard::ObjectUseAction::PickUpObject, kSecondsObjectInvalidAfterFailure);
+                        return !recentlyFailed && robot.CanPickUpObject(*object) ;
                       });
   
   const ObservableObject* closestObject = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(), filter);
   
   if(closestObject != nullptr)
   {
-    _targetBlock = closestObject->GetID();
+    _targetBlockID = closestObject->GetID();
   }
   else
   {
-    _targetBlock.UnSet();
+    _targetBlockID.UnSet();
   }
 }
   
@@ -122,14 +126,14 @@ void BehaviorPickUpCube::TransitionToDoingInitialReaction(Robot& robot)
   // Note: visually verify is true, so if we don't see the object anymore
   // this compound action will fail and we will not contionue this behavior.
   CompoundActionSequential* action = new CompoundActionSequential(robot);
-  action->AddAction(new TurnTowardsObjectAction(robot, _targetBlock, Radians(PI_F), true));
+  action->AddAction(new TurnTowardsObjectAction(robot, _targetBlockID, Radians(PI_F), true));
   if(!_shouldStreamline){
     action->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::SparkPickupInitialCubeReaction));
   }
   StartActing(action,
               [this,&robot](ActionResult res) {
                 if(ActionResult::SUCCESS != res) {
-                  _targetBlock.UnSet();
+                  FailedToPickupObject(robot);
                 } else {
                   TransitionToPickingUpCube(robot);
                 }
@@ -139,7 +143,7 @@ void BehaviorPickUpCube::TransitionToDoingInitialReaction(Robot& robot)
 void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
 {
   DEBUG_SET_STATE(PickingUpCube);
-  DriveToPickupObjectAction* pickupAction = new DriveToPickupObjectAction(robot, _targetBlock, false, 0, false,0, true);
+  DriveToPickupObjectAction* pickupAction = new DriveToPickupObjectAction(robot, _targetBlockID, false, 0, false,0, true);
   
   RetryWrapperAction::RetryCallback retryCallback = [this, pickupAction](const ExternalInterface::RobotCompletedAction& completion,
                                                                          const u8 retryCount,
@@ -171,7 +175,7 @@ void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
   StartActing(action,
               [this,&robot](ActionResult res) {
                 if(ActionResult::SUCCESS != res) {
-                  _targetBlock.UnSet();
+                  FailedToPickupObject(robot);
                 } else {
                   StartActing(new TriggerAnimationAction(robot, AnimationTrigger::ReactToBlockPickupSuccess),
                               &BehaviorPickUpCube::TransitionToDriveWithCube);
@@ -196,7 +200,7 @@ void BehaviorPickUpCube::TransitionToDriveWithCube(Robot& robot)
   StartActing(new TurnInPlaceAction(robot,Radians(turn_rad),false),
               [this,&robot](ActionResult res) {
                 if(ActionResult::SUCCESS != res) {
-                  _targetBlock.UnSet();
+                  FailedToPickupObject(robot);
                 } else {
                   TransitionToPutDownCube(robot);
                 }
@@ -236,13 +240,23 @@ void BehaviorPickUpCube::TransitionToDoingFinalReaction(Robot& robot)
     StartActing(new TriggerAnimationAction(robot, AnimationTrigger::SparkPickupFinalCubeReaction),
                 [this,&robot](ActionResult res) {
                     // Will no longer be runnable
-                    _targetBlock.UnSet();
+                    _targetBlockID.UnSet();
                     BehaviorObjectiveAchieved(BehaviorObjective::PickedupBlock);
                 });
   }else{
     BehaviorObjectiveAchieved(BehaviorObjective::PickedupBlock);
   }
 }
+  
+void BehaviorPickUpCube::FailedToPickupObject(Robot& robot)
+{
+  // mark this as failed to pickup so that we don't retry
+  const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlockID);
+  robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PickUpObject);
+  _targetBlockID.UnSet();
+  
+}
+
 
 
 } // namespace Cozmo

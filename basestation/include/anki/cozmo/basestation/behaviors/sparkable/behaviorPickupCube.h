@@ -57,6 +57,7 @@ private:
     DoingFinalReaction,
   };
   
+  void FailedToPickupObject(Robot& robot);
   
   void TransitionToDoingInitialReaction(Robot& robot);
   void TransitionToPickingUpCube(Robot& robot);
@@ -64,7 +65,7 @@ private:
   void TransitionToPutDownCube(Robot& robot);
   void TransitionToDoingFinalReaction(Robot& robot);
 
-  mutable ObjectID    _targetBlock;
+  mutable ObjectID    _targetBlockID;
   mutable TimeStamp_t _lastBlockWorldCheck_s;
   
   // loaded in from config
