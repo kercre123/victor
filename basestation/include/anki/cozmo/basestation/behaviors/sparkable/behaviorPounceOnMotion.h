@@ -33,7 +33,7 @@ public:
   virtual bool CarryingObjectHandledInternally() const override {return false;}
 
 protected:
-
+  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
   virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
 
@@ -93,6 +93,9 @@ private:
   
   float _backUpDistance = 0.f;
   float GetDriveDistance();
+  
+  // ensures we don't get stuck in an infinite pounce loop
+  float _lastCliffEvent_sec;
   
   // modeled off of startActing callbacks
   template<typename T>

@@ -55,6 +55,10 @@ static constexpr float kWaitForMotionInterval_s = 2.0f;
 // how far to randomly turn the body
 static constexpr float kRandomPanMin_Deg = 20;
 static constexpr float kRandomPanMax_Deg = 45;
+  
+  
+// how long ago to consider a cliff currently in front of us for an initial pounce
+static constexpr float kMinCliffInFrontWait_sec = 10.f;
 } 
   
 // Cozmo's low head angle for watching for fingers
@@ -66,12 +70,15 @@ BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& 
   , _observedX(0)
   , _observedY(0)
   , _lastTimeRotate(0)
+  , _lastCliffEvent_sec(0)
 {
   SetDefaultName("PounceOnMotion");
 
-  SubscribeToTags({
-    EngineToGameTag::RobotObservedMotion
-  });
+  SubscribeToTags({{
+    EngineToGameTag::RobotObservedMotion,
+    EngineToGameTag::CliffEvent,
+    EngineToGameTag::RobotOffTreadsStateChanged
+  }});
 
   _maxTimeSinceNoMotion_running_sec = config.get(kMaxNoMotionBeforeBored_running_Sec,
                                                  _maxTimeSinceNoMotion_running_sec).asFloat();
@@ -139,7 +146,21 @@ void BehaviorPounceOnMotion::StopInternal(Robot& robot)
 void BehaviorPounceOnMotion::TransitionToInitialPounce(Robot& robot)
 {
   SET_STATE(InitialPounce);
-  PounceOnMotionWithCallback(robot, &BehaviorPounceOnMotion::TransitionToBringingHeadDown);
+  
+  // Determine if there is a cliff in front of us so we don't pounce off an edge
+  IActionRunner* potentialCliffSafetyTurn = nullptr;
+  const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const bool cliffInFront = currentTime_sec - _lastCliffEvent_sec < kMinCliffInFrontWait_sec;
+  
+  if(cliffInFront){
+    // This initial turn means that if Cozmo hits a cliff during an initial pounce
+    // he won't get stuck in an infinite loop
+    const Radians bodyPan(DEG_TO_RAD(90));
+    const Radians headTilt(0);
+    potentialCliffSafetyTurn = new PanAndTiltAction(robot, bodyPan, headTilt, false, false);
+  }
+  
+  PounceOnMotionWithCallback(robot, &BehaviorPounceOnMotion::TransitionToBringingHeadDown, potentialCliffSafetyTurn);
 }
 
 void BehaviorPounceOnMotion::TransitionToBringingHeadDown(Robot& robot)
@@ -161,7 +182,7 @@ void BehaviorPounceOnMotion::TransitionToBringingHeadDown(Robot& robot)
     }
     
     panAngle *= panDirection;
-
+    
     IActionRunner* panAndTilt = new PanAndTiltAction(robot, panAngle, tiltRads, false, true);
     fullAction->AddAction(panAndTilt);
   }
@@ -361,7 +382,37 @@ void BehaviorPounceOnMotion::TransitionToGetOutBored(Robot& robot)
   SET_STATE(GetOutBored);
   StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::PounceGetOut));
 }
+
   
+void BehaviorPounceOnMotion::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+{
+  switch (event.GetData().GetTag())
+  {
+    case MessageEngineToGameTag::RobotObservedMotion: {
+      // handled differently based on running/not running
+      break;
+    }
+      
+    case MessageEngineToGameTag::CliffEvent:{
+      if(event.GetData().Get_CliffEvent().detected){
+        _lastCliffEvent_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      }
+      break;
+    }
+      
+    case EngineToGameTag::RobotOffTreadsStateChanged:{
+      _lastCliffEvent_sec = 0;
+      break;
+    }
+      
+    default: {
+      PRINT_NAMED_ERROR("BehaviorPounceOnMotion.AlwaysHandle.InvalidEvent", "");
+      break;
+    }
+  }
+  
+}
+
 
 void BehaviorPounceOnMotion::HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot)
 {
@@ -386,7 +437,10 @@ void BehaviorPounceOnMotion::HandleWhileNotRunning(const EngineToGameEvent& even
       break;
     }
       
-    case MessageEngineToGameTag::RobotCompletedAction: {
+    case MessageEngineToGameTag::CliffEvent:
+    case MessageEngineToGameTag::RobotOffTreadsStateChanged:
+    {
+      // handled in always handle
       break;
     }
       
@@ -460,6 +514,13 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
           }
         }
       }
+      break;
+    }
+      
+    case MessageEngineToGameTag::CliffEvent:
+    case MessageEngineToGameTag::RobotOffTreadsStateChanged:
+    {
+      // handled in always handle
       break;
     }
       
