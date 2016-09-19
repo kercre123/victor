@@ -150,8 +150,6 @@ def build(
     if platform == 'ios':
         if simulator:
             arguments += ['-sdk', 'iphonesimulator']
-        else:
-            arguments += ['-sdk', 'iphoneos', 'ARCHS=armv7', 'ONLY_ACTIVE_ARCH=NO']
     
     arguments += ['-parallelizeTargets']
     

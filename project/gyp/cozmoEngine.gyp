@@ -365,7 +365,7 @@
                  'FRAMEWORK_SEARCH_PATHS': [
                   '../../lib/HockeySDK-iOS/HockeySDK.framework',
                 ],
-             },
+              },
             }],
             ['OS=="mac"', {
               'xcode_settings': {
