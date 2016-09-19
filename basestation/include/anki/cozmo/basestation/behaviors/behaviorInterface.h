@@ -130,9 +130,12 @@ public:
   // Abstract methods to be overloaded:
   //
     
-  // Returns true iff the state of the world/robot is sufficient for this
-  // behavior to be executed
-  bool IsRunnable(const Robot& robot) const;
+  // Returns true if the state of the world/robot is sufficient for this behavior to be executed
+  // allowWhileRunning: currently some behaviors can cache calculations when IsRunnable is called. This is a bad pattern
+  // that we have adopted, and we should change it as soon as we can. In the meantime though, we check here that
+  // behaviors that are running can't call IsRunnable unless specifically setting allowWhileRunning to true. This
+  // guarantees that behavior choosers or other paths don't accidentally override these mutable caches.
+  bool IsRunnable(const Robot& robot, bool allowWhileRunning=false) const;
   
   const std::string& GetName() const { return _name; }
   const std::string& GetDebugStateName() const { return _debugStateName;}

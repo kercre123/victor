@@ -375,14 +375,17 @@ void IBehavior::StopOnNextActionComplete()
 }
 
 
-bool IBehavior::IsRunnable(const Robot& robot) const
+bool IBehavior::IsRunnable(const Robot& robot, bool allowWhileRunning) const
 {
-  // should not call IsRunnable for running behavior (or we should return true here), otherwise it can
-  // destroy info cached by the running behavior
-  ASSERT_NAMED(!IsRunning(), "IBehavior.IsRunnableCalledOnRunningBehavior");
-  if( IsRunning() ) {
-    // if it ever happened in production, we better not destroy info in the running behavior
-    return true;
+  if ( !allowWhileRunning )
+  {
+    // should not call IsRunnable for running behavior (or we should return true here), otherwise it can
+    // destroy info cached by the running behavior
+    ASSERT_NAMED(!IsRunning(), "IBehavior.IsRunnableCalledOnRunningBehavior");
+    if( IsRunning() ) {
+      // if it ever happened in production, we better not destroy info in the running behavior
+      return true;
+    }
   }
   
   // check if required processes are running

@@ -267,7 +267,7 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
   if( ! AreBlocksAreStillValid(robot) ) {
     // uh oh, blocks are no good, see if we can pick new ones
     UpdateTargetBlocks(robot);
-    if( IsRunnable(robot) ) {
+    if( IsRunnable(robot, true) ) {
       // ok, found some new blocks, use those
       PRINT_NAMED_INFO("BehaviorStackBlocks.Picking.RestartWithNewBlocks",
                        "had to change blocks, re-starting behavior");
@@ -376,7 +376,7 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
   if( ! AreBlocksAreStillValid(robot) ) {
     // uh oh, blocks are no good, see if we can pick new ones
     UpdateTargetBlocks(robot);
-    if( IsRunnable(robot) ) {
+    if( IsRunnable(robot, true) ) {
       // ok, found some new blocks, use those
       PRINT_NAMED_INFO("BehaviorStackBlocks.Stacking.RestartWithNewBlocks.",
                        "had to change blocks, re-starting behavior");
