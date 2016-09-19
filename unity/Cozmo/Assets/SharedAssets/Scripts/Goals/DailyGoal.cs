@@ -29,14 +29,15 @@ namespace Cozmo {
       public int PointsRewarded;
       public int Priority = 0;
 
-      private bool _Completed = false;
-
+      private bool _GoalComplete;
       public bool GoalComplete {
         get {
-          return (Progress >= Target);
+          return _GoalComplete;
+        }
+        set {
+          _GoalComplete = value;
         }
       }
-
 
       // Action that fires when this Daily Goal is updated, passes through the DailyGoal itself so listeners can handle it.
       [JsonIgnore]
@@ -58,7 +59,7 @@ namespace Cozmo {
         PointsRewarded = reward;
         Target = target;
         Progress = currProg;
-        _Completed = GoalComplete;
+        _GoalComplete = IsGoalComplete();
         RewardType = rewardType;
         ProgConditions = triggerCon;
         GenConditions = genConds;
@@ -73,7 +74,7 @@ namespace Cozmo {
         PointsRewarded = goalData.PointsRewarded;
         Target = goalData.Target;
         Progress = 0;
-        _Completed = GoalComplete;
+        _GoalComplete = false;
         RewardType = goalData.RewardType;
         ProgConditions = goalData.ProgressConditions;
         Priority = goalData.Priority;
@@ -97,12 +98,7 @@ namespace Cozmo {
 
       public void DebugSetGoalProgress(int prog) {
         Progress = prog;
-        if (!GoalComplete && _Completed) {
-          _Completed = false;
-        }
-        else if (_Completed == false) {
-          CheckIfComplete();
-        }
+        CheckIfComplete();
         if (OnDailyGoalUpdated != null) {
           OnDailyGoalUpdated.Invoke(this);
         }
@@ -112,9 +108,7 @@ namespace Cozmo {
       public void DebugUndoGoalProgress() {
         if (Progress > 0) {
           Progress--;
-          if (!GoalComplete && _Completed) {
-            _Completed = false;
-          }
+          _GoalComplete = IsGoalComplete();
           if (OnDailyGoalUpdated != null) {
             OnDailyGoalUpdated.Invoke(this);
           }
@@ -124,9 +118,7 @@ namespace Cozmo {
 
       public void DebugResetGoalProgress() {
         Progress = 0;
-        if (_Completed) {
-          _Completed = false;
-        }
+        _GoalComplete = false;
         if (OnDailyGoalUpdated != null) {
           OnDailyGoalUpdated.Invoke(this);
         }
@@ -138,14 +130,14 @@ namespace Cozmo {
       /// a goal is completed.
       /// </summary>
       public void CheckIfComplete() {
-        if (GoalComplete && _Completed == false) {
+        if (IsGoalComplete() && !GoalComplete) {
           // Grant Reward
           DAS.Event(this, string.Format("{0} Completed", Title));
           if (OnDailyGoalCompleted != null) {
             OnDailyGoalCompleted.Invoke(this);
           }
           GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnDailyGoalCompleted, this));
-          _Completed = true;
+          _GoalComplete = true;
         }
       }
 
@@ -216,6 +208,10 @@ namespace Cozmo {
           }
         }
         return true;
+      }
+
+      private bool IsGoalComplete() {
+        return Progress >= Target;
       }
     }
   }
