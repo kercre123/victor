@@ -210,7 +210,7 @@ namespace Cozmo.HomeHub {
 
       _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleGreenPointsBarUpdateComplete;
       DailyGoalManager.Instance.OnRefreshDailyGoals += UpdatePlayTabText;
-      GameEventManager.Instance.OnGameEvent += HandleDailyGoalCompleted;
+      GameEventManager.Instance.OnGameEvent += HandleGameEvents;
       UpdatePlayTabText();
 
       Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
@@ -404,12 +404,15 @@ namespace Cozmo.HomeHub {
       }
     }
 
-    private void HandleDailyGoalCompleted(GameEventWrapper gameEvent) {
+    private void HandleGameEvents(GameEventWrapper gameEvent) {
       if (gameEvent.GameEventEnum == Anki.Cozmo.GameEvent.OnDailyGoalCompleted) {
         UpdatePlayTabText();
         if (_CurrentTab == HomeTab.Play) {
           CheckForRewardSequence();
         }
+      }
+      else if (gameEvent.GameEventEnum == Anki.Cozmo.GameEvent.OnUnlockableEarned) {
+        CheckIfUnlockablesAffordableAndUpdateBadge();
       }
     }
 
@@ -447,15 +450,18 @@ namespace Cozmo.HomeHub {
       Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
       List<UnlockableInfo> unlockableUnlockData = UnlockablesManager.Instance.GetAvailableAndLocked();
 
-      bool canAfford = false;
+      bool canAffordCozmoUpgrade = false;
       for (int i = 0; i < unlockableUnlockData.Count; ++i) {
-        if (playerInventory.CanRemoveItemAmount(unlockableUnlockData[i].UpgradeCostItemId,
-              unlockableUnlockData[i].UpgradeCostAmountNeeded)) {
-          canAfford = true;
-          break;
+        // Only check for unlockable actions
+        if (unlockableUnlockData[i].UnlockableType == UnlockableType.Action) {
+          if (playerInventory.CanRemoveItemAmount(unlockableUnlockData[i].UpgradeCostItemId,
+                unlockableUnlockData[i].UpgradeCostAmountNeeded)) {
+            canAffordCozmoUpgrade = true;
+            break;
+          }
         }
       }
-      _AnyUpgradeAffordableIndicator.SetActive(canAfford && _CurrentTab != HomeTab.Cozmo);
+      _AnyUpgradeAffordableIndicator.SetActive(canAffordCozmoUpgrade && _CurrentTab != HomeTab.Cozmo);
     }
 
     #region Freeplay Related GameEvents
@@ -774,7 +780,7 @@ namespace Cozmo.HomeHub {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.EngineErrorCodeMessage>(HandleEngineErrorCode);
       ChestRewardManager.Instance.ChestGained -= HandleChestGained;
       _RequirementPointsProgressBar.ProgressUpdateCompleted -= HandleGreenPointsBarUpdateComplete;
-      GameEventManager.Instance.OnGameEvent -= HandleDailyGoalCompleted;
+      GameEventManager.Instance.OnGameEvent -= HandleGameEvents;
       DailyGoalManager.Instance.OnRefreshDailyGoals -= UpdatePlayTabText;
 
       if (_HelpViewInstance != null) {
