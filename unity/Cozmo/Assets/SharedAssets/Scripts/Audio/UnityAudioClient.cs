@@ -115,8 +115,8 @@ namespace Anki {
                                   Anki.Cozmo.Audio.CurveType curve = CurveType.Linear) {
           DAS.Ch_Info(kAudioLogChannelName,
                       "UnityAudioClient.PostAudioParameter",
-                      string.Format("Parameter: {0} Id: {1}",
-                                    parameter, (uint)parameter));
+                      string.Format("Parameter: {0} Id: {1} val: {2}",
+                                    parameter, (uint)parameter, parameterValue));
           PostAudioParameter msg = new PostAudioParameter(parameter, parameterValue, gameObject, timeInMilliSeconds, curve);
           _RobotEngineManager.Message.PostAudioParameter = msg;
           _RobotEngineManager.SendMessage();
