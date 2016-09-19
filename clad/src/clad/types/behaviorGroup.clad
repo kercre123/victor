@@ -39,6 +39,8 @@ enum uint_8 BehaviorGroup {
     SparksKnockOverCubes,
     SparksBuildPyramid,
 
+    MeetCozmo_Socialize,
+
     Count
 }
 

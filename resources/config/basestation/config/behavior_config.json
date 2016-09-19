@@ -39,6 +39,11 @@
       ]
     }
   },
+  "meetCozmoBehaviorChooserConfig" : 
+  {
+    "type" : "simple",
+    "behaviorGroups" : [ "MeetCozmo_Socialize" ]
+  },
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Regular play / goals

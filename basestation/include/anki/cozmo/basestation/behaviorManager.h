@@ -243,6 +243,9 @@ private:
   // Behavior chooser for freeplay mode, it also includes games and sparks if needed
   IBehaviorChooser* _freeplayChooser = nullptr;
   
+  // behavior chooser for meet cozmo activity
+  IBehaviorChooser* _meetCozmoChooser = nullptr;
+  
   // list of behaviors that fire automatically as reactions to events
   std::vector<IReactionaryBehavior*> _reactionaryBehaviors;
   bool                               _reactionsEnabled = true;
