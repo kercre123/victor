@@ -367,7 +367,7 @@ namespace Cozmo.HomeHub {
 
     private void ClearCurrentTab() {
       if (_CurrentTabInstance != null) {
-        Destroy(_CurrentTabInstance.gameObject);
+        DestroyImmediate(_CurrentTabInstance.gameObject);
       }
     }
 
