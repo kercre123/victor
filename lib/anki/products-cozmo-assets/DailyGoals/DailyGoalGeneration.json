@@ -34,20 +34,20 @@
       ],
       "ProgressConditions": [
         {
-          "$type": "Anki.Cozmo.UnlockIDCondition, Assembly-CSharp",
-          "Unlocked": "DroneModeGame",
-          "Label": {
-            "text": "Unlock ID Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
           "$type": "Anki.Cozmo.ChallengeTimePlayedCondition, Assembly-CSharp",
           "TargetTime": 600.0,
           "compareType": "GREATER_INCLUSIVE",
           "Label": {
             "text": "Challenge Time Played Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "DroneModeGame",
+          "Label": {
+            "text": "Challenge ID Condition",
             "image": null,
             "tooltip": ""
           }
