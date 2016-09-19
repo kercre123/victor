@@ -299,16 +299,17 @@ namespace Anki {
 
 #pragma mark ---- SearchForNearbyObjectAction ----
 
-    SearchForNearbyObjectAction::SearchForNearbyObjectAction(Robot& robot, int32_t desiredObjectID)
-      : IAction(robot,
-                "SearchForNearbyObjectAction",
-                RobotActionType::SEARCH_FOR_NEARBY_OBJECT,
-                (u8)AnimTrackFlag::BODY_TRACK)
-      , _compoundAction(robot)
-      , _desiredObjectID(desiredObjectID)
+    SearchForNearbyObjectAction::SearchForNearbyObjectAction(Robot& robot, const ObjectID& desiredObjectID)
+    : IAction(robot,
+              "SearchForNearbyObjectAction",
+              RobotActionType::SEARCH_FOR_NEARBY_OBJECT,
+              (u8)AnimTrackFlag::BODY_TRACK)
+    , _compoundAction(robot)
+    , _desiredObjectID(desiredObjectID)
     {
-    }
 
+    }
+  
     SearchForNearbyObjectAction::~SearchForNearbyObjectAction()
     {
       if( _shouldPopIdle ) {
@@ -410,16 +411,15 @@ namespace Anki {
     ActionResult SearchForNearbyObjectAction::CheckIfDone()
     {
       ActionResult internalResult = _compoundAction.Update();
-      const ObservableObject* desiredObject = _desiredObjectID >= 0 ? _robot.GetBlockWorld().GetObjectByID(_desiredObjectID) : nullptr;
+      const ObservableObject* desiredObject = _desiredObjectID.IsSet() ? _robot.GetBlockWorld().GetObjectByID(_desiredObjectID) : nullptr;
       
       // check if the object has been located
-      if(_desiredObjectID >= 0
-         && desiredObject != nullptr && desiredObject->IsPoseStateKnown())
+      if(desiredObject != nullptr && desiredObject->IsPoseStateKnown())
       {
         return ActionResult::SUCCESS;
       }
       // unsuccessful in finding the object
-      else if(internalResult == ActionResult::SUCCESS && _desiredObjectID >= 0){
+      else if(internalResult == ActionResult::SUCCESS && _desiredObjectID.IsSet()){
         return ActionResult::FAILURE_ABORT;
       }
       

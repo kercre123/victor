@@ -314,9 +314,13 @@ void Robot::SetOnCharger(bool onCharger)
     // If we don't actually have a charger, add an unconnected one now
     if (nullptr == charger)
     {
-      ObjectID newObj = AddUnconnectedCharger();
-      charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByID(newObj));
-      ASSERT_NAMED(nullptr != charger, "Robot.SetOnCharger.FailedToAddUnconnectedCharger");
+      ObjectID newObjID = AddUnconnectedCharger();
+      charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByID(newObjID));
+      if(nullptr == charger)
+      {
+        PRINT_NAMED_ERROR("Robot.SetOnCharger.FailedToAddUnconnectedCharger", "NewID=%d",
+                          newObjID.GetValue());
+      }
     }
           
     PRINT_NAMED_EVENT("robot.on_charger", "");
@@ -1124,7 +1128,7 @@ Result Robot::Update(bool ignoreVisionModes)
   
   // Update ChargerPlatform - this has to happen before the behaviors which might need this information
   ObservableObject* charger = GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger);
-  if( charger && charger->IsPoseStateKnown() && _offTreadsState == OffTreadsState::OnTreads)
+  if( nullptr != charger && charger->IsPoseStateKnown() && _offTreadsState == OffTreadsState::OnTreads)
   {
     // This state is useful for knowing not to play a cliff react when just driving off the charger.
     bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());
@@ -2719,7 +2723,7 @@ void Robot::SetCarryingObject(ObjectID carryObjectID)
 {
   ObservableObject* object = _blockWorld.GetObjectByID(carryObjectID);
   if(object == nullptr) {
-    PRINT_NAMED_ERROR("Robot.SetCarryingObject",
+    PRINT_NAMED_ERROR("Robot.SetCarryingObject.NullCarryObject",
                       "Object %d no longer exists in the world. Can't set it as robot's carried object.",
                       carryObjectID.GetValue());
   } else {
@@ -2768,7 +2772,7 @@ void Robot::UnSetCarryingObjects(bool topOnly)
         
     ObservableObject* object = _blockWorld.GetObjectByID(objID);
     if(object == nullptr) {
-      PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects",
+      PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects.NullObject",
                         "Object %d robot %d thought it was carrying no longer exists in the world.",
                         objID.GetValue(), GetID());
     } else {

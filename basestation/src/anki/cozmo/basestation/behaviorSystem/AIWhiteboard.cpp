@@ -190,7 +190,9 @@ bool AIWhiteboard::FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) co
       } else {
         // this can be blocking under certain scenarios, since we can think we are carrying a cube, but it is not in
         // the blockworld
-        PRINT_NAMED_ERROR("AIWhiteboard.FindUsableCubesOutOfBeacons", "Could not get carrying object pointer");
+        PRINT_NAMED_ERROR("AIWhiteboard.FindUsableCubesOutOfBeacons.NullCarryingObject",
+                          "Could not get carrying object pointer (ID=%d)",
+                          _robot.GetCarryingObject().GetValue());
       }
     }
     else

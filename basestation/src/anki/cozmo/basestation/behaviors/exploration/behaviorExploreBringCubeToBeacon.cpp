@@ -445,7 +445,7 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(Robot& robot, const ObjectID
     // failed to stack on the bottom object, notify the whiteboard
     if ( stackOnCubeFinalFail ) {
       const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID( bottomCubeID );
-      if ( failedObject ) {
+      if ( nullptr != failedObject ) {
         robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::StackOnObject);
       }
       
@@ -519,7 +519,7 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(Robot& robot, const Pose3d& 
     // failed to place this cube at this location
     if ( placeAtCubeFinalFail ) {
       const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID( _selectedObjectID );
-      if ( failedObject ) {
+      if ( nullptr != failedObject ) {
         robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PlaceObjectAt, pose);
       }
 
