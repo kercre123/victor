@@ -750,9 +750,6 @@ MonoBehaviour:
   _LootReleasedSoundEvent:
     _Event: Play__Sfx__Code_Fragment_Released
     _EventType: Sfx
-  _LootCollectSoundEvent:
-    _Event: Play__Sfx__Code_Fragment_Collected
-    _EventType: Sfx
   _LootStartKey: loot.Start
   _LootMidKey: loot.Mid
   _LootAlmostKey: loot.Almost
@@ -4659,8 +4656,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -105}
-  m_SizeDelta: {x: 0, y: -211}
+  m_AnchoredPosition: {x: 6, y: -170}
+  m_SizeDelta: {x: 293, y: -81}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22464094
 RectTransform:
