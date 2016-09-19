@@ -19,6 +19,7 @@ MonoBehaviour:
   _SelectedTextColor: {r: 1, g: 1, b: 1, a: 1}
   _LockedDifficultyBackgroundColor: {r: 0.49411768, g: 0.48627454, b: 0.43529415,
     a: 1}
+  _LockedDifficultyCaratColor: {r: 0.3647059, g: 0.3647059, b: 0.3647059, a: 1}
   _GameSetupColor: {r: 1, g: 1, b: 1, a: 1}
   _GameBackgroundColor: {r: 0.37254903, g: 0.77254903, b: 0.92941177, a: 1}
   _GameToggleColor: {r: 0.03137255, g: 0.27058825, b: 0.5372549, a: 1}
