@@ -29,9 +29,9 @@ namespace NVStorage {
 
     NVEntry_GameUnlocks     = 0x182000, /// 1 4k block is enough for 1024 unlocks stored as uint32s
     NVEntry_FaceEnrollData  = 0x183000, /// 1 4k block should be enough for names etc.
-    NVEntry_FaceAlbumData   = 0x184000, /// 96k long
+    NVEntry_FaceAlbumData   = 0x184000, /// 64k long
 
-    NVEntry_NEXT_SLOT       = 0x19C000, /// ADD NEW ENTRIES HERE
+    NVEntry_NEXT_SLOT       = 0x194000, /// ADD NEW ENTRIES HERE
                                         /// The value of NVEntry_NEXT_SLOT defines the size alloted to the previous tag.
                                         /// Add new entries at its current value and then update NVEntry_NEXT_SLOT to be
                                         /// X more where X is the number of bytes you want to allocate to the new tag.

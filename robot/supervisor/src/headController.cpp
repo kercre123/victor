@@ -4,6 +4,7 @@
 #include "velocityProfileGenerator.h"
 #include "anki/cozmo/robot/logging.h"
 #include "messages.h"
+#include "imuFilter.h"
 #include <math.h>
 
 #define DEBUG_HEAD_CONTROLLER 0
@@ -87,6 +88,13 @@ namespace HeadController {
 
       bool enable_ = false;
 
+      // If disabled, lift motor is automatically re-enabled at this time if non-zero.
+      u32 enableAtTime_ms_ = 0;
+      
+      // If enableAtTime_ms_ is non-zero, this is the time beyond current time
+      // that the motor will be re-enabled if the lift is not moving.
+      const u32 REENABLE_TIMEOUT_MS = 2000;
+      
       // Bracing for impact
       // Lowers head quickly and then disables
       // Prevents any new angles from being commanded
@@ -99,12 +107,13 @@ namespace HeadController {
     {
       if (!enable_) {
         enable_ = true;
+        enableAtTime_ms_ = 0;  // Reset auto-enable trigger time
         power_ = 0;
         HAL::MotorSetPower(MOTOR_HEAD, power_);
       }
     }
 
-    void Disable()
+    void Disable(bool autoReEnable)
     {
       if(enable_) {
         enable_ = false;
@@ -118,6 +127,10 @@ namespace HeadController {
         
         power_ = 0;
         HAL::MotorSetPower(MOTOR_HEAD, power_);
+        
+        if (autoReEnable) {
+          enableAtTime_ms_ = HAL::GetTimeStamp() + REENABLE_TIMEOUT_MS;
+        }
       }
     }
 
@@ -440,8 +453,15 @@ namespace HeadController {
       if (potentialBurnoutStartTime_ms_ == 0) {
         potentialBurnoutStartTime_ms_ = HAL::GetTimeStamp();
       } else if (HAL::GetTimeStamp() - potentialBurnoutStartTime_ms_ > BURNOUT_TIME_THRESH_MS) {
-        AnkiWarn( 54, "HeadController.MotorBurnoutProtection", 299, "Recalibrating (power = %f)", 1, power_);
-        StartCalibrationRoutine(true);
+        if (IsInPosition() || IMUFilter::IsPickedUp() || HAL::IsCliffDetected()) {
+          // Stop messing with the head! Going limp until you do!
+          Messages::SendMotorAutoEnabledMsg(MOTOR_HEAD, false);
+          Disable(true);
+        } else {
+          // Burnout protection triggered. Recalibrating.
+          AnkiWarn( 54, "HeadController.MotorBurnoutProtection", 299, "Recalibrating (power = %f)", 1, power_);
+          StartCalibrationRoutine(true);
+        }
         return true;
       }
       return false;
@@ -462,8 +482,27 @@ namespace HeadController {
       CalibrationUpdate();
 
       PoseAndSpeedFilterUpdate();
+      
+      // If disabled, do not activate motors
+      if(!enable_) {
+        if (enableAtTime_ms_ == 0) {
+          return RESULT_OK;
+        }
+        
+        // Auto-enable check
+        if (IsMoving()) {
+          enableAtTime_ms_ = HAL::GetTimeStamp() + REENABLE_TIMEOUT_MS;
+          return RESULT_OK;
+        } else if (HAL::GetTimeStamp() >= enableAtTime_ms_) {
+          Messages::SendMotorAutoEnabledMsg(MOTOR_HEAD, true);
+          Enable();
+        } else {
+          return RESULT_OK;
+        }
+      }
 
-      if (!enable_ || !IsCalibrated() || MotorBurnoutProtection()) {
+
+      if (!IsCalibrated() || MotorBurnoutProtection()) {
         return RESULT_OK;
       }
       

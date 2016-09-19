@@ -41,7 +41,7 @@ namespace Anki {
       
       // Enable/Disable HAL commands to head motor
       void Enable();
-      void Disable();
+      void Disable(bool autoReEnable = false);
       
       // TODO: Do we want to keep SetAngularVelocity?
       void SetAngularVelocity(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2 = MAX_HEAD_ACCEL_RAD_PER_S2);

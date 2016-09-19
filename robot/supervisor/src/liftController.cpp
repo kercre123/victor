@@ -72,6 +72,15 @@ namespace Anki {
         // Constant power bias to counter gravity
         const f32 ANTI_GRAVITY_POWER_BIAS = 0.15f;
 #endif
+        
+        // Amount by which angleErrorSum decays to MAX_ANGLE_ERROR_SUM_IN_POSITION
+        const f32 ANGLE_ERROR_SUM_DECAY_STEP = 0.02f;
+        
+        // If it exceeds this value, applied power should decay to this value when in position.
+        // This value should match the motor burnout protection threshold (POWER_THRESHOLD[]) in syscon's motors.cpp.
+        const f32 MAX_POWER_IN_POSITION = 0.25;
+        
+        
         // Angle of the main lift arm.
         // On the real robot, this is the angle between the lower lift joint on the robot body
         // and the lower lift joint on the forklift assembly.
@@ -489,7 +498,7 @@ namespace Anki {
         if (potentialBurnoutStartTime_ms_ == 0) {
           potentialBurnoutStartTime_ms_ = HAL::GetTimeStamp();
         } else if (HAL::GetTimeStamp() - potentialBurnoutStartTime_ms_ > BURNOUT_TIME_THRESH_MS) {
-          if (IsInPosition() || IMUFilter::IsPickedUp()) {
+          if (IsInPosition() || IMUFilter::IsPickedUp() || HAL::IsCliffDetected()) {
             // Stop messing with the lift! Going limp until you do!
             Messages::SendMotorAutoEnabledMsg(MOTOR_LIFT, false);
             Disable(true);
@@ -590,6 +599,12 @@ namespace Anki {
           // Keep angleErrorSum from accumulating once we're in position
           angleErrorSum_ -= angleError;
           
+          // Decay angleErrorSum as long as power exceeds MAX_POWER_IN_POSITION
+          if (ABS(angleErrorSum_) > MAX_POWER_IN_POSITION) {
+            f32 decay = ANGLE_ERROR_SUM_DECAY_STEP * (angleErrorSum_ > 0 ? 1.f : -1.f);
+            angleErrorSum_ -= decay;
+          }
+          
           if (lastInPositionTime_ms_ == 0) {
             lastInPositionTime_ms_ = HAL::GetTimeStamp();
           } else if (HAL::GetTimeStamp() - lastInPositionTime_ms_ > IN_POSITION_TIME_MS) {
@@ -605,16 +620,19 @@ namespace Anki {
 
 
 #if(DEBUG_LIFT_CONTROLLER)
-        PERIODIC_PRINT(100, "LIFT: currA %f, curDesA %f, currVel %f, desA %f, err %f, errSum %f, inPos %d, pwr %f\n",
-                       currentAngle_.ToFloat(),
-                       currDesiredAngle_,
-                       radSpeed_,
-                       desiredAngle_.ToFloat(),
-                       angleError,
-                       angleErrorSum_,
-                       inPosition_ ? 1 : 0,
-                       power_);
-        PERIODIC_PRINT(100, "  POWER terms: %f  %f\n", (Kp_ * angleError_), (Ki_ * angleErrorSum_))
+        AnkiDebugPeriodic(50, 389, "LiftController.Update.Values", 613, "LIFT: currA %f, curDesA %f, currVel %f, desA %f, err %f, errSum %f, inPos %d", 7,
+                          currentAngle_.ToFloat(),
+                          currDesiredAngle_,
+                          radSpeed_,
+                          desiredAngle_.ToFloat(),
+                          angleError,
+                          angleErrorSum_,
+                          inPosition_ ? 1 : 0);
+        AnkiDebugPeriodic(50, 390, "LiftController.Update.Power", 614, "P: %f, I: %f, D: %f, total: %f", 4,
+                          (Kp_ * angleError),
+                          (Ki_ * angleErrorSum_),
+                          (Kd_ * (angleError - prevAngleError_) * CONTROL_DT),
+                          power_);
 #endif
 
         power_ = CLIP(power_, -1.0, 1.0);
