@@ -85,11 +85,11 @@ private:
   int16_t _observedX;
   int16_t _observedY;
   bool _motionObserved = false;
-  
 
   float _lastTimeRotate;
   float _lastMotionTime;
   State _state = State::Inactive;
+  bool  _relaxedLift = false;
   
   float _backUpDistance = 0.f;
   float GetDriveDistance();

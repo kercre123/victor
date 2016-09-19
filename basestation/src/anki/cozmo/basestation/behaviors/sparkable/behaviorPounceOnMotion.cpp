@@ -546,12 +546,14 @@ void BehaviorPounceOnMotion::PounceOnMotionWithCallback(Robot& robot, void(T::*c
     // wait for the lift to relax 
     robot.GetMoveComponent().EnableLiftPower(false);
     SET_STATE(RelaxingLift);
+    _relaxedLift = true;
     // We don't get an accurate pitch evaulation if the head is moving during an animation
     // so hold this for a bit longer
     const float relaxTime = 0.15f;
     
     StartActing(new WaitAction(robot, relaxTime), [this, callback](Robot& robot){
       robot.GetMoveComponent().EnableLiftPower(true);
+      _relaxedLift = false;
       (this->*callback)(robot);
     });
   });
@@ -560,8 +562,9 @@ void BehaviorPounceOnMotion::PounceOnMotionWithCallback(Robot& robot, void(T::*c
 void BehaviorPounceOnMotion::Cleanup(Robot& robot)
 {
   SET_STATE(Complete);
-  if( _state == State::RelaxingLift) {
+  if( _relaxedLift ) {
     robot.GetMoveComponent().EnableLiftPower(true);
+    _relaxedLift = false;
   }
   
   _numValidPouncePoses = 0;
