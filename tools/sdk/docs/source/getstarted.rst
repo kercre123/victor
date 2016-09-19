@@ -12,31 +12,8 @@ Starting Up the SDK
 
 1. Plug the mobile device containing the Cozmo app into your computer.
 2. Open the Cozmo app on the phone. Make sure Cozmo is on and connected to the app via WiFi.
-3. On the computer, open two Terminal windows.
-
-  1. In the first window, type ``cd SDKDirectory`` where *SDKDirectory* is the name of the directory you extracted the SDK into and press Enter.
-
-  2. Next, type the following and press Enter::
-
-      cd tcprelay
-
-  3. Now open communications between the robot and the computer.
-
-    1. For iOS devices, type the following into the same window and press Enter::
-
-        ./iosSdkTcpRelay.sh
-
-    2. For Android devices, type the following into the same window and press Enter::
-
-        ./androidSdkTcpRelay.sh
-
-    .. important:: Make sure adb (Android Debug Bridge) is installed on your system prior to this step.
-
-  .. warning:: Do NOT close the first Terminal window. Closing the first Terminal window while operating with the SDK will close communications with the Cozmo robot and cause errors within the program.
-
-4. In the *second* Terminal window, type ``cd SDKDirectory`` where *SDKDirectory* is the name of the directory you extracted the SDK into and press Enter.
-
-The second Terminal window is the one where you will execute programs for Cozmo to run.
+3. On the computer, open a Terminal (iOS/Linux) / Command-line (Windows) window. Type ``cd SDKDirectory`` where *SDKDirectory* is the name of the directory you extracted the SDK into and press Enter.
+4. Now you can run your program.
 
 ---------------------------
 First Steps - "Hello World"
