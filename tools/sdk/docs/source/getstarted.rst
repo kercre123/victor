@@ -25,12 +25,17 @@ Let's test your new setup by running a very simple program. This program instruc
 The Program
 ^^^^^^^^^^^
 
-1. Make sure the two Terminal windows are still open.
-2. Type the following into the second Terminal window and then press Enter::
+1. To run the program, using the same Terminal (iOS/Linux) / Command-line (Windows) window mentioned above:
 
-    ./run-example.sh examples/hello_world.py
+    a. For iOS and Linux systems, type the following and press **Enter**::
 
-3. If done correctly, Cozmo will say "Hello, World!"
+        ./run-example.sh examples/hello_world.py
+
+    b. For Windows systems, type the following and press **Enter**::
+
+        run-example.bat examples/hello_world.py
+
+2. If done correctly, Cozmo will say "Hello, World!"
 
 .. warning:: If Cozmo does not perform as expected, look at the first Terminal window and make sure no error messages appeared. If you continue to have issues, please seek help in the Forums.
 
@@ -70,8 +75,14 @@ Next Steps - "Night-Night"
       coz.say_text("Night Night").wait_for_completed()
 
 5. At the top of the screen, select *File -> Save As*, and save the program in the *examples* directory as ``nightnight.py``.
-6. Now you can run your program. Open the second Terminal window, type in the following, and press Enter::
+6. Now you can run your program:
 
-    ./run-example.sh examples/nightnight.py
+        a. For iOS and Linux systems, type the following into the same window and press **Enter**::
+
+            ./run-example.sh examples/nightnight.py
+
+        b. For Windows systems, type the following into the same window and press **Enter**::
+
+            run-example.bat examples/nightnight.py
 
 7. If done correctly, Cozmo will say the new phrase.
