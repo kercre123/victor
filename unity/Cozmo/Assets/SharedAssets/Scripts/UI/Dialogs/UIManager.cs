@@ -69,7 +69,7 @@ public class UIManager : MonoBehaviour {
 
   private List<BaseView> _OpenViews;
   // Account far the fact that there's always a base view open
-  public int NumberOfOpenDialogues(){ return _OpenViews.Count - 1;}
+  public int NumberOfOpenDialogues() { return _OpenViews.Count - 1; }
 
   void Awake() {
     Instance = this;
@@ -210,11 +210,15 @@ public class UIManager : MonoBehaviour {
   }
 
   public static void DisableTouchEvents() {
-    _Instance.EventSystemScript.gameObject.SetActive(false);
+    if (_Instance != null && _Instance.EventSystemScript != null) {
+      _Instance.EventSystemScript.gameObject.SetActive(false);
+    }
   }
 
   public static void EnableTouchEvents() {
-    _Instance.EventSystemScript.gameObject.SetActive(true);
+    if (_Instance != null && _Instance.EventSystemScript != null) {
+      _Instance.EventSystemScript.gameObject.SetActive(true);
+    }
   }
 
   private void HandleBaseViewCloseAnimationFinished(BaseView view) {
