@@ -132,6 +132,8 @@ namespace Cozmo.UI {
     private Anki.Cozmo.Audio.AudioEventParameter _EmotionChipWindowOpenSoundEvent = Anki.Cozmo.Audio.AudioEventParameter.DefaultClick;
     [SerializeField]
     private Anki.Cozmo.Audio.AudioEventParameter _LootReleasedSoundEvent = Anki.Cozmo.Audio.AudioEventParameter.DefaultClick;
+    [SerializeField]
+    private Anki.Cozmo.Audio.AudioEventParameter _LootCollectSoundEvent = Anki.Cozmo.Audio.AudioEventParameter.InvalidEvent;
 
     #endregion
 
@@ -522,6 +524,10 @@ namespace Cozmo.UI {
     private void AnimateRewardsToTarget(Sequence closeAnimation) {
       SendTransformsToFinalTarget(closeAnimation, _ActiveBitsTransforms, _FinalBitsTarget);
       SendTransformsToFinalTarget(closeAnimation, _ActiveSparkTransforms, _FinalSparkTarget);
+
+      if (!_LootCollectSoundEvent.IsInvalid ()) {
+        Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_LootCollectSoundEvent);
+      }
     }
 
     private void SendTransformsToFinalTarget(Sequence currSequence, List<Transform> transList, Transform target) {
