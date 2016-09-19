@@ -770,12 +770,13 @@ namespace Cozmo {
     }
     else if(RESULT_OK != lastResult)
     {
-      PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker.HistoricalPoseNotFound",
-                          "Time: %u, hist: %u to %u",
-                          markerOrig.GetTimeStamp(),
-                          _robot.GetPoseHistory()->GetOldestTimeStamp(),
-                          _robot.GetPoseHistory()->GetNewestTimeStamp());
-      return lastResult;
+      // this can happen if we missed a robot status update message
+      PRINT_CH_INFO("VisionComponent", "VisionComponent.QueueObservedMarker.HistoricalPoseNotFound",
+                    "Time: %u, hist: %u to %u",
+                    markerOrig.GetTimeStamp(),
+                    _robot.GetPoseHistory()->GetOldestTimeStamp(),
+                    _robot.GetPoseHistory()->GetNewestTimeStamp());
+      return RESULT_OK;
     }
     
     if(&p->GetPose().FindOrigin() != _robot.GetWorldOrigin()) {
