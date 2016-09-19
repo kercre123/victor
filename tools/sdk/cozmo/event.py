@@ -437,7 +437,8 @@ class Dispatcher(base.Base):
 
         for handler in handlers:
             if isinstance(handler.f, asyncio.Future):
-                handler.f.set_exception(exc)
+                if not handler.f.done():
+                    handler.f.set_exception(exc)
                 handler.disable()
 
     async def wait_for(self, event_or_filter, timeout=30):
