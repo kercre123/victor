@@ -74,13 +74,6 @@ namespace Cozmo {
       }
 
       [SerializeField]
-      private Color _SelectedTextColor;
-
-      public static Color SelectedTextColor {
-        get { return Instance._SelectedTextColor; }
-      }
-
-      [SerializeField]
       private Color _LockedDifficultyBackgroundColor;
 
       public static Color LockedDifficultyBackgroundColor {
@@ -107,13 +100,6 @@ namespace Cozmo {
 
       public static Color GameBackgroundColor {
         get { return Instance._GameBackgroundColor; }
-      }
-
-      [SerializeField]
-      private Color _GameToggleColor;
-
-      public static Color GameToggleColor {
-        get { return Instance._GameToggleColor; }
       }
 
       [SerializeField]
