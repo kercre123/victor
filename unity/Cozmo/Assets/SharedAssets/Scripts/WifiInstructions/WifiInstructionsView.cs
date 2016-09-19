@@ -12,9 +12,9 @@ public class WifiInstructionsView : Cozmo.UI.BaseView {
   private void Awake() {
     _HelpButton.Initialize(() => {
       _GetHelpViewInstance = UIManager.OpenView(_GetHelpViewPrefab);
-      DasTracker.Instance.OnWifiInstructionsGetHelp();
+      DasTracker.Instance.TrackWifiInstructionsGetHelp();
     }, "help_button", this.DASEventViewName);
-    DasTracker.Instance.OnWifiInstructionsStarted();
+    DasTracker.Instance.TrackWifiInstructionsStarted();
   }
 
   protected override void CleanUp() {
@@ -25,6 +25,6 @@ public class WifiInstructionsView : Cozmo.UI.BaseView {
 
   void OnDisable() {
     // this can go in CleanUp() but that is currently called twice
-    DasTracker.Instance.OnWifiInstructionsEnded();
+    DasTracker.Instance.TrackWifiInstructionsEnded();
   }
 }

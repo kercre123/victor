@@ -77,7 +77,7 @@ namespace Cozmo {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.GoingToSleep>(HandleGoingToSleep);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnectionMessage);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleReactionaryBehavior);
-      DasTracker.Instance.OnAppStartup();
+      DasTracker.Instance.TrackAppStartup();
     }
 
     private void Update() {
@@ -124,7 +124,7 @@ namespace Cozmo {
     }
 
     private void OnApplicationQuit() {
-      DasTracker.Instance.OnAppQuit();
+      DasTracker.Instance.TrackAppQuit();
     }
 
     private void HandleReactionaryBehavior(Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition message) {
@@ -159,7 +159,7 @@ namespace Cozmo {
         // Let the engine know that we're being paused
         RobotEngineManager.Instance.SendGameBeingPaused(true);
 
-        DasTracker.Instance.OnAppBackgrounded();
+        DasTracker.Instance.TrackAppBackgrounded();
 
         RobotEngineManager.Instance.FlushChannelMessages();
       }
@@ -168,7 +168,7 @@ namespace Cozmo {
         DAS.Debug("PauseManager.HandleApplicationPause", "Application unpaused");
         _IsPaused = false;
 
-        DasTracker.Instance.OnAppResumed();
+        DasTracker.Instance.TrackAppResumed();
 
         // Let the engine know that we're being unpaused
         RobotEngineManager.Instance.SendGameBeingPaused(false);

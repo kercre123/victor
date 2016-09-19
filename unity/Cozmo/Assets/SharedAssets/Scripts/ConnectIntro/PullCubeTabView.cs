@@ -73,6 +73,8 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
     _CubeHelpButton.Initialize(() => {
       _CubeHelpViewInstance = UIManager.OpenView(_CubeHelpViewPrefab);
     }, "cube_get_help_button", this.DASEventViewName);
+
+    DasTracker.Instance.TrackCubePromptEntered();
   }
 
   protected override void Update() {
