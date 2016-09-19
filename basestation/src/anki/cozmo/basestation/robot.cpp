@@ -661,7 +661,10 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
   _localizedToID = object->GetID();
   _hasMovedSinceLocalization = false;
   _isLocalized = true;
-      
+  
+  // notify behavior whiteboard
+  _behaviorMgr->GetWhiteboard().OnRobotRelocalized();
+  
   // Update VizText
   GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
                                          "LocalizedTo: %s_%d",

@@ -39,7 +39,7 @@ namespace Cozmo {
 // kVie_MoveActionRetries: should probably not be in json, since it's not subject to gameplay tweaks
 CONSOLE_VAR(uint8_t, kVie_MoveActionRetries, "BehaviorVisitInterestingEdge", 3);
 // kVieDrawDebugInfo: Debug. If set to true the behavior renders debug privimitives
-CONSOLE_VAR(bool, kVieDrawDebugInfo, "BehaviorVisitInterestingEdge", true);
+CONSOLE_VAR(bool, kVieDrawDebugInfo, "BehaviorVisitInterestingEdge", false);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace {

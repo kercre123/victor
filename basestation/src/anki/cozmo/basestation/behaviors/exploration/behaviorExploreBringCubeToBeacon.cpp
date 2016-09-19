@@ -690,7 +690,7 @@ bool BehaviorExploreBringCubeToBeacon::FindFreePoseInBeacon(const ObservableObje
   Rotation3d beaconDirectionality(0.0f, kUpVector);
   {
     // TODO rsam put this utility somewhere: create Rotation3d from vector in XY plane
-    Vec3f beaconNormal = (beacon->GetPose().GetTranslation() - robot.GetPose().GetTranslation());
+    Vec3f beaconNormal = (beacon->GetPose().GetWithRespectToOrigin().GetTranslation() - robot.GetPose().GetTranslation());
     beaconNormal.z() = 0.0f;
     float distance = beaconNormal.MakeUnitLength();
     
@@ -709,7 +709,7 @@ bool BehaviorExploreBringCubeToBeacon::FindFreePoseInBeacon(const ObservableObje
     }
   }
   
-  const Vec3f& beaconCenter = beacon->GetPose().GetTranslation();
+  const Vec3f& beaconCenter = beacon->GetPose().GetWithRespectToOrigin().GetTranslation();
   LocationCalculator locCalc(object, beaconCenter, beaconDirectionality, beacon->GetRadius(), robot);
 
   const int kMaxRow = beacon->GetRadius() / locCalc.GetLocationOffset();
