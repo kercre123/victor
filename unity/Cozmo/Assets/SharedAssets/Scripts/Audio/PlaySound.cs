@@ -17,7 +17,8 @@ namespace Anki {
           Awake,
           Start,
           OnEnable,
-          OnDisable
+          OnDisable,
+          Manual
         }
 
         [SerializeField]
@@ -31,6 +32,16 @@ namespace Anki {
 
         private bool _WaitingToPlay = false;
         private float _TimeUntilPlay = 0f;
+
+        public void Play() {
+          if (_AudioEventParameter.IsInvalid()) {
+            DAS.Warn("PlaySound.Play", "_AudioEventParameter is invalid.");
+            return;
+          }
+
+          _WaitingToPlay = true;
+          _TimeUntilPlay = _Delay;
+        }
 
         private void Awake() {
           if (PlayEventType.Awake == _PlayEvent) {
@@ -55,17 +66,7 @@ namespace Anki {
             Play();
           }
         }
-
-        private void Play() {
-          if (_AudioEventParameter.IsInvalid()) {
-            DAS.Warn("PlaySound.Play", "_AudioEventParameter is invalid.");
-            return;
-          }
-
-          _WaitingToPlay = true;
-          _TimeUntilPlay = _Delay;
-        }
-
+          
         private void Update() {
           if (_WaitingToPlay) {
             _TimeUntilPlay -= Time.deltaTime;
