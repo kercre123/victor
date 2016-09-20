@@ -36,11 +36,9 @@ public static class LocalizationKeys {
 
   #region ChallengeTitleStrings
 
-  public const string kChallengeDetailsLabelRequires = "challengeDetails.label.requires";
-  public const string kChallengeDetailsLabelPlayersAndCubesNeeded = "challengeDetails.label.playersAndCubesNeeded";
-  public const string kChallengeDetailsLabelPlayerAndCubesNeeded = "challengeDetails.label.playerAndCubesNeeded";
-  public const string kChallengeDetailsLabelPlayersAndCubeNeeded = "challengeDetails.label.playersAndCubeNeeded";
-  public const string kChallengeDetailsLabelPlayerAndCubeNeeded = "challengeDetails.label.playerAndCubeNeeded";
+  public const string kChallengeDetailsNeedsMoreCubesModalTitle = "challengeDetails.needsMoreCubesModal.title";
+  public const string kChallengeDetailsNeedsMoreCubesModalDescription = "challengeDetails.needsMoreCubesModal.description";
+  public const string kChallengeDetailsNeedsMoreCubesModalButton = "challengeDetails.needsMoreCubesModal.button";
   public const string kChallengeEndedLabelReward = "challengeEnded.label.reward";
   public const string kArtistCozmoTitle = "artistCozmo.title";
   public const string kArtistCozmoDescription = "artistCozmo.description";

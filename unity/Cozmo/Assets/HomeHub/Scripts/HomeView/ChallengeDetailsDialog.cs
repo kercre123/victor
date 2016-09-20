@@ -87,6 +87,8 @@ public class ChallengeDetailsDialog : BaseView {
   [SerializeField]
   private CanvasGroup _AlphaController;
 
+  private int _CubesRequired;
+
   public void Initialize(ChallengeData challengeData) {
     _TitleTextLabel.text = Localization.Get(challengeData.ChallengeTitleLocKey);
     _DescriptionTextLabel.text = Localization.Get(challengeData.ChallengeDescriptionLocKey);
@@ -94,6 +96,7 @@ public class ChallengeDetailsDialog : BaseView {
     _ChallengeIcon.SetIcon(challengeData.ChallengeIcon);
     _AvailableContainer.SetActive(true);
     _AffordableIcon.SetActive(false);
+    _CubesRequired = challengeData.MinigameConfig.NumCubesRequired();
     if (UnlockablesManager.Instance.IsUnlocked(challengeData.UnlockId.Value)) {
       // If Ready and Unlocked
       _LockedContainer.SetActive(false);
@@ -139,12 +142,46 @@ public class ChallengeDetailsDialog : BaseView {
   }
 
   private void HandleStartButtonClicked() {
-    // Don't attempt to refresh home view if we are already destroying it to start a game
-    if (ChallengeStarted != null) {
-      ChallengeStarted(_ChallengeId);
+    IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+    if (robot != null) {
+      int currentNumCubes = robot.LightCubes.Count;
+      if (currentNumCubes >= _CubesRequired) {
+        // Don't attempt to refresh home view if we are already destroying it to start a game
+        if (ChallengeStarted != null) {
+          ChallengeStarted(_ChallengeId);
+        }
+      }
+      else {
+        OpenNeedCubesAlert(currentNumCubes, _CubesRequired);
+      }
+    }
+    else {
+      this.CloseView();
     }
   }
 
+  private void OpenNeedCubesAlert(int currentCubes, int neededCubes) {
+    AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
+    // Hook up callbacks
+    alertView.SetCloseButtonEnabled(true);
+    alertView.SetPrimaryButton(LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalButton,
+      () => {
+        UIManager.OpenView(AlertViewLoader.Instance.CubeHelpViewPrefab);
+      }
+    );
+
+    alertView.TitleLocKey = LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalTitle;
+
+    int differenceCubes = neededCubes - currentCubes;
+    alertView.SetMessageArgs(new object[] {
+      differenceCubes,
+      ItemDataConfig.GetCubeData().GetAmountName(differenceCubes),
+      Localization.Get(_ChallengeData.ChallengeTitleLocKey)
+    });
+    alertView.DescriptionLocKey = LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalDescription;
+
+    this.CloseView();
+  }
 
   private void OnUpgradeClicked() {
     UnlockableInfo unlockInfo = UnlockablesManager.Instance.GetUnlockableInfo(_ChallengeData.UnlockId.Value);

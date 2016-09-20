@@ -63,6 +63,12 @@ namespace Cozmo {
       public LongConfirmationView LongConfirmationViewPrefab {
         get { return _LongConfirmationViewPrefab; }
       }
+
+      [SerializeField]
+      private BaseView _CubeHelpViewPrefab;
+      public BaseView CubeHelpViewPrefab {
+        get { return _CubeHelpViewPrefab; }
+      }
     }
   }
 }

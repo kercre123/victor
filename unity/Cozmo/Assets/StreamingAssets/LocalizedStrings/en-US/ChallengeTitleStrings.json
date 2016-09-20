@@ -18,20 +18,14 @@
       "/{*}"
     ]
   },
-  "challengeDetails.label.requires": {
-    "translation": "Requires:"
+  "challengeDetails.needsMoreCubesModal.title": {
+    "translation": "Not Enough Cubes"
   },
-  "challengeDetails.label.playersAndCubesNeeded": {
-    "translation": "{0} Players, {1} Power Cubes"
+  "challengeDetails.needsMoreCubesModal.description":{
+    "translation": "Cozmo needs {0} more {1} to start {2}."
   },
-  "challengeDetails.label.playerAndCubesNeeded": {
-    "translation": "{0} Player, {1} Power Cubes"
-  },
-  "challengeDetails.label.playersAndCubeNeeded": {
-    "translation": "{0} Players, {1} Power Cube"
-  },
-  "challengeDetails.label.playerAndCubeNeeded": {
-    "translation": "{0} Player, {1} Power Cube"
+  "challengeDetails.needsMoreCubesModal.button": {
+    "translation": "Show Me How"
   },
   "challengeEnded.label.reward": {
     "translation": "Rewards:"

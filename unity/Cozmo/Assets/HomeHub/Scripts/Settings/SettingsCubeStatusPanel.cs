@@ -13,8 +13,6 @@ namespace Cozmo.Settings {
     [SerializeField]
     private CozmoButton _ShowCubeHelpButton;
 
-    [SerializeField]
-    private BaseView _SettingsCubeHelpDialogPrefab;
     private BaseView _SettingsCubeHelpDialogInstance;
 
     [SerializeField]
@@ -75,7 +73,7 @@ namespace Cozmo.Settings {
 
     private void HandleOpenCubeHelpViewTapped() {
       if (_SettingsCubeHelpDialogInstance == null) {
-        _SettingsCubeHelpDialogInstance = UIManager.OpenView(_SettingsCubeHelpDialogPrefab);
+        _SettingsCubeHelpDialogInstance = UIManager.OpenView(AlertViewLoader.Instance.CubeHelpViewPrefab);
       }
     }
   }

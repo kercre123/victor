@@ -26,8 +26,6 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
   [SerializeField]
   private GameObject[] _DoneMarks;
 
-  [SerializeField]
-  private Cozmo.UI.BaseView _CubeHelpViewPrefab;
   private Cozmo.UI.BaseView _CubeHelpViewInstance;
 
   [SerializeField]
@@ -71,7 +69,7 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
     RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(true, _kMaxDiscoveryTime);
 
     _CubeHelpButton.Initialize(() => {
-      _CubeHelpViewInstance = UIManager.OpenView(_CubeHelpViewPrefab);
+      _CubeHelpViewInstance = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.CubeHelpViewPrefab);
     }, "cube_get_help_button", this.DASEventViewName);
 
     DasTracker.Instance.TrackCubePromptEntered();
