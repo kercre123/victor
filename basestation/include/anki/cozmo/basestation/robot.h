@@ -273,6 +273,8 @@ public:
   void SetHeadAngle(const f32& angle);
   void SetLiftAngle(const f32& angle);
 
+  void SetHeadCalibrated(bool isCalibrated);
+  
   // #notImplemented
   //    // Get 3D bounding box of the robot at its current pose or a given pose
   //    void GetBoundingBox(std::array<Point3f, 8>& bbox3d, const Point3f& padding_mm) const;
@@ -557,7 +559,8 @@ public:
   Result SyncTime();
   
   // This is just for unit tests to fake a syncTimeAck message from the robot
-  void FakeSyncTimeAck() { _timeSynced = true;}
+  // and force the head into calibrated state.
+  void FakeSyncTimeAck() { _timeSynced = true; _isHeadCalibrated = true; }
   
   Result RequestIMU(const u32 length_ms) const;
 
@@ -888,6 +891,8 @@ protected:
   
   f32              _leftWheelSpeed_mmps;
   f32              _rightWheelSpeed_mmps;
+  
+  bool             _isHeadCalibrated = false;
     
   // Ramping
   bool             _onRamp = false;
@@ -911,11 +916,12 @@ protected:
   u8               _enabledAnimTracks     = (u8)AnimTrackFlag::ALL_TRACKS;
   bool             _isCliffDetected       = false;
   bool             _isCliffSensorOn       = false;
-    u16              _cliffDataRaw       = u16_MAX;
+  u16              _cliffDataRaw          = u16_MAX;
   u16              _forwardSensorValue_mm = 0;
   bool             _isOnChargerPlatform   = false;
   bool             _isCliffReactionDisabled = false;
   bool             _isBodyInAccessoryMode = true;
+  u8               _setBodyModeTicDelay   = 0;
   bool             _gotStateMsgAfterTimeSync = false;
 
   OffTreadsState    _offTreadsState  = OffTreadsState::OnTreads;

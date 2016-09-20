@@ -259,6 +259,11 @@ namespace Anki {
 #ifndef TARGET_K02
         // Reset number of bytes/audio frames played in animation buffer
         AnimationController::EngineDisconnect();
+        
+        // In sim, there's no body to put into accessory mode which in turn
+        // triggers motor calibration, so we just do motor calibration here.
+        LiftController::StartCalibrationRoutine();
+        HeadController::StartCalibrationRoutine();
 #else
         // Put body into accessory mode when the engine is connected
         SetBodyRadioMode bMsg;

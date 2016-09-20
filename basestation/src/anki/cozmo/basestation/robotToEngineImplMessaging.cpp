@@ -222,6 +222,11 @@ void RobotToEngineImplMessaging::HandleMotorCalibration(const AnkiEvent<RobotInt
     // if this was a lift calibration, we are no longer holding a cube
     robot->UnSetCarryObject( robot->GetCarryingObject() );
   }
+  
+  if (payload.motorID == MotorID::MOTOR_HEAD) {
+    robot->SetHeadCalibrated(!payload.calibStarted);
+  }
+  
   robot->Broadcast(ExternalInterface::MessageEngineToGame(MotorCalibration(payload)));
 }
   
