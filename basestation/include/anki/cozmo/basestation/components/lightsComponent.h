@@ -106,8 +106,6 @@ public:
                                 const PoseState oldPoseState,
                                 const PoseState newPoseState);
   
-private:
-
   // The various states cube lights can be in
   enum class CubeLightsState {
     Invalid,
@@ -120,6 +118,9 @@ private:
     Sleep,
     Fade,
   };
+  ObjectLights GetLightsForState(CubeLightsState state) { return _stateToValues[state]; };
+  
+private:
   
   // Maps light states to actual light values for that state
   std::map<CubeLightsState, ObjectLights> _stateToValues;

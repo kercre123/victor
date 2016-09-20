@@ -48,6 +48,7 @@ namespace Onboarding {
       RobotEngineManager.Instance.CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
 
       RobotEngineManager.Instance.AddCallback<OnboardingState>(HandleUpdateOnboardingState);
+      RobotEngineManager.Instance.AddCallback<BehaviorTransition>(HandleBehaviorTransition);
 
       UIManager.Instance.BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.TintMe, Color.white);
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Onboarding__Show_Cube);
@@ -62,10 +63,18 @@ namespace Onboarding {
     public override void OnDestroy() {
       base.OnDestroy();
       RobotEngineManager.Instance.RemoveCallback<OnboardingState>(HandleUpdateOnboardingState);
+      RobotEngineManager.Instance.RemoveCallback<BehaviorTransition>(HandleBehaviorTransition);
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Onboarding__Play_Tab);
 
       if (RobotEngineManager.Instance.CurrentRobot != null) {
         RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByName("NoneBehavior");
+      }
+    }
+
+    private void HandleBehaviorTransition(BehaviorTransition msg) {
+      if (_State == OnboardingStateEnum.ErrorCozmo) {
+        // We're returning to this behavior.
+        _ContinueButtonInstance.Interactable = msg.newBehaviorType == BehaviorType.OnboardingShowCube;
       }
     }
 
@@ -100,6 +109,7 @@ namespace Onboarding {
           _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3Body2);
           _ShowShelfTextLabel.text = "";
           _ContinueButtonInstance.gameObject.SetActive(true);
+          _ContinueButtonInstance.Interactable = true;
           // Wait for the animation to be done before playing the context switch sound.
           RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(AnimationTrigger.OnboardingDiscoverCube,
                     (bool success) => {
@@ -126,7 +136,10 @@ namespace Onboarding {
       case OnboardingStateEnum.WaitForFinalContinue: {
           _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3Body4);
           _ShowShelfTextLabel.text = "";
+          _CozmoMovedErrorTransform.gameObject.SetActive(false);
+          _CozmoImageTransform.gameObject.SetActive(true);
           _ContinueButtonInstance.gameObject.SetActive(true);
+          _ContinueButtonInstance.Interactable = true;
           Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Attention_Device);
         }
         break;
@@ -144,6 +157,7 @@ namespace Onboarding {
           _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCube);
           _ShowShelfTextLabel.text = "";
           _ContinueButtonInstance.gameObject.SetActive(true);
+          _ContinueButtonInstance.Interactable = true;
           Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Attention_Device);
           DAS.Event("onboarding.error", "error_cube_moved");
         }
@@ -153,6 +167,8 @@ namespace Onboarding {
           _ShowShelfTextLabel.text = "";
           _CozmoImageTransform.gameObject.SetActive(false);
           _ContinueButtonInstance.gameObject.SetActive(true);
+          // Becomes interactable again when we are done with the reactionary behavior.
+          _ContinueButtonInstance.Interactable = false;
           _CozmoMovedErrorTransform.gameObject.SetActive(true);
           Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Attention_Device);
           DAS.Event("onboarding.error", "error_cozmo_moved");

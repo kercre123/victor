@@ -70,7 +70,7 @@ Result BehaviorOnboardingShowCube::InitInternal(Robot& robot)
   robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::OnboardingDriveStart,
     AnimationTrigger::OnboardingDriveLoop,
     AnimationTrigger::OnboardingDriveEnd});
-  
+  _lightsNeedReEnable = false;
   EnableSpecificReactionaryBehavior(robot,false);
   // Some reactionary behaviors don't trigger resume like cliff react followed by "react to on back"
   // So just handle init doesn't always reset to "inactive"
@@ -78,6 +78,7 @@ Result BehaviorOnboardingShowCube::InitInternal(Robot& robot)
   if( _state != State::ErrorCozmo && _state != State::ErrorFinal )
   {
     _numErrors = 0;
+    _timesPickedUpCube = 0;
     SET_STATE(WaitForShowCube,robot);
   }
   
@@ -88,6 +89,10 @@ void BehaviorOnboardingShowCube::StopInternal(Robot& robot)
 {
   robot.GetDrivingAnimationHandler().PopDrivingAnimations();
   EnableSpecificReactionaryBehavior(robot, true);
+  if( _lightsNeedReEnable )
+  {
+    robot.GetLightsComponent().SetEnableComponent(true);
+  }
   PRINT_CH_INFO("Behaviors","BehaviorOnboardingShowCube::StopInternal", " %hhu ",_state);
 }
 
@@ -97,7 +102,7 @@ void BehaviorOnboardingShowCube::AlwaysHandle(const EngineToGameEvent& event, co
   {
     // Only react when the behavior is running ( not inactive )
     const ExternalInterface::ReactionaryBehaviorTransition& msg = event.GetData().Get_ReactionaryBehaviorTransition();
-    if( msg.behaviorStarted &&  _state != State::ErrorCozmo && !IsSequenceComplete())
+    if( msg.behaviorStarted &&  _state != State::ErrorCozmo && _state != State::Inactive && _state != State::ErrorFinal)
     {
       switch (msg.reactionaryBehaviorType)
       {
@@ -246,6 +251,15 @@ void BehaviorOnboardingShowCube::TransitionToNextState(Robot& robot)
       SET_STATE(Inactive,robot);
     break;
     case State::ErrorCozmo:
+      if( _timesPickedUpCube > 0 )
+      {
+        SET_STATE(WaitForFinalContinue,robot);
+      }
+      else
+      {
+        SET_STATE(WaitForShowCube,robot);
+      }
+      break;
     case State::ErrorCubeMoved:
       SET_STATE(WaitForShowCube,robot);
       break;
@@ -274,11 +288,16 @@ void BehaviorOnboardingShowCube::TransitionToWaitToInspectCube(Robot& robot)
                   StartSubStatePickUpBlock(robot);
                 }
               });
-  
 }
   
 void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(Robot& robot)
 {
+  // Because only actions set lights and onboarding is a behavior, we want the illusion of him thinking about the lights
+  // so just manually set up to green
+  _lightsNeedReEnable = true;
+  robot.GetLightsComponent().SetEnableComponent(false);
+  robot.GetLightsComponent().SetObjectLights(_targetBlock, robot.GetLightsComponent().GetLightsForState(LightsComponent::CubeLightsState::Interacting));
+  
   DriveToPickupObjectAction* driveAndPickupAction = new DriveToPickupObjectAction(robot, _targetBlock);
   driveAndPickupAction->SetPostDockLiftMovingAnimation(AnimationTrigger::OnboardingSoundOnlyLiftEffortPickup);
   RetryWrapperAction::RetryCallback retryCallback = [this, driveAndPickupAction](const ExternalInterface::RobotCompletedAction& completion, const u8 retryCount, AnimationTrigger& animTrigger)
@@ -299,6 +318,7 @@ void BehaviorOnboardingShowCube::StartSubStatePickUpBlock(Robot& robot)
               {
                 if(msg.result == ActionResult::SUCCESS)
                 {
+                  _timesPickedUpCube++;
                   StartSubStateCelebratePickup(robot);
                 }
                 else
@@ -329,6 +349,8 @@ void BehaviorOnboardingShowCube::StartSubStateCelebratePickup(Robot& robot)
   StartActing(action,
               [this,&robot](const ExternalInterface::RobotCompletedAction& msg)
               {
+                _lightsNeedReEnable = false;
+                robot.GetLightsComponent().SetEnableComponent(true);
                 SET_STATE(WaitForFinalContinue,robot);
               });
 }

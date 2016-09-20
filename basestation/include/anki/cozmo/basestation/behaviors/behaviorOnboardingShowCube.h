@@ -61,6 +61,8 @@ private:
   using State = ExternalInterface::OnboardingStateEnum;
   State _state = State::Inactive;
   uint8_t     _numErrors = 0;
+  uint8_t     _timesPickedUpCube = 0;
+  bool        _lightsNeedReEnable = false;
   ObjectID    _targetBlock;
   
   void EnableSpecificReactionaryBehavior(Robot& robot, bool enable);
