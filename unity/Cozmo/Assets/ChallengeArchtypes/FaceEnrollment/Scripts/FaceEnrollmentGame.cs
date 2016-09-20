@@ -84,7 +84,13 @@ namespace FaceEnrollment {
 
     protected override void SetupViewAfterCozmoReady(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
       base.SetupViewAfterCozmoReady(newView, data);
-      ShowFaceListSlide(newView);
+      if (RobotEngineManager.Instance.CurrentRobot.EnrolledFaces.Count == 0) {
+        EnterNameForNewFace(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName);
+      }
+      else {
+        ShowFaceListSlide(newView);
+      }
+
     }
 
     private void HandleChangedObservedFaceID(Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID message) {
@@ -109,10 +115,13 @@ namespace FaceEnrollment {
     }
 
     private void CleanupFaceListSlide() {
-      _FaceListSlideInstance.OnEnrollNewFaceRequested -= EnterNameForNewFace;
-      _FaceListSlideInstance.OnEditNameRequested -= EditExistingName;
-      _FaceListSlideInstance.OnDeleteEnrolledFace -= RequestDeleteEnrolledFace;
-      _FaceListSlideInstance.OnReEnrollFaceRequested -= RequestReEnrollFace;
+      if (_FaceListSlideInstance != null) {
+        _FaceListSlideInstance.OnEnrollNewFaceRequested -= EnterNameForNewFace;
+        _FaceListSlideInstance.OnEditNameRequested -= EditExistingName;
+        _FaceListSlideInstance.OnDeleteEnrolledFace -= RequestDeleteEnrolledFace;
+        _FaceListSlideInstance.OnReEnrollFaceRequested -= RequestReEnrollFace;
+      }
+
       SharedMinigameView.HideShelf();
       CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
       CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
