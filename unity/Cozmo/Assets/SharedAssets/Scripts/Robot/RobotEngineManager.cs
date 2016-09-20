@@ -317,7 +317,6 @@ public class RobotEngineManager : MonoBehaviour {
   private IEnumerator MockDelayedCallback(MessageEngineToGame message, float delay) {
     yield return new WaitForSeconds(delay);
     object messageData = typeof(Anki.Cozmo.ExternalInterface.MessageEngineToGame).GetProperty(message.GetTag().ToString()).GetValue(message, null);
-    Debug.LogError(message.GetTag().ToString());
     _CallbackManager.MessageReceived(messageData);
   }
 

@@ -27,15 +27,38 @@ public class ProfileTab : MonoBehaviour {
   private void Awake() {
     _PlayerName.text = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName;
 
-    // TODO: Make localization system have a generic way of handling plurality. We have one for items
-    // but we really need a more generic solution
     int daysWithCozmo = GetDaysWithCozmo();
     _TimeWithCozmoCountValueLabel.text = daysWithCozmo.ToString();
 
     _DailyGoalsCompletedCount.text = TotalDailyGoalsCompleted().ToString();
-    _StreaksCountValueLabel.text = DataPersistence.DataPersistenceManager.Instance.CurrentStreak.ToString();
+    _StreaksCountValueLabel.text = GetLongestStreak().ToString();
 
     _EditNameButton.Initialize(HandleEditNameButton, "edit_name_button", "profile_tab");
+  }
+
+  private int GetLongestStreak() {
+    int longestStreak = 1;
+    int streakCounter = 1;
+    for (int i = 1; i < DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Count; ++i) {
+      int prevIndex = i - 1;
+      int currIndex = i;
+      DataPersistence.Date prevDate = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions[prevIndex].Date;
+      DataPersistence.Date currDate = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions[currIndex].Date;
+
+      if (prevDate.AddDays(1) == currDate) {
+        // we have a streak!
+        streakCounter++;
+        if (streakCounter > longestStreak) {
+          longestStreak = streakCounter;
+        }
+      }
+      else {
+        // we lost a streak...
+        streakCounter = 1;
+      }
+
+    }
+    return longestStreak;
   }
 
   private void HandleEditNameButton() {
