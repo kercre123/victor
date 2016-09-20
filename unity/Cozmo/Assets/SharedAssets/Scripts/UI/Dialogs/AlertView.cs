@@ -30,6 +30,12 @@ namespace Cozmo {
       [SerializeField]
       private IconProxy _Icon;
 
+      private string _DasEventName;
+
+      public void SetDasEventName(string dasEventName) {
+        _DasEventName = dasEventName;
+      }
+
       public void SetIcon(Sprite icon) {
         if (_Icon != null) {
           _Icon.gameObject.SetActive(true);
@@ -172,12 +178,20 @@ namespace Cozmo {
           button.gameObject.SetActive(true);
           button.Text = title;
 
+          string dasEventName;
+          if (string.IsNullOrEmpty(_DasEventName)) {
+            dasEventName = title;
+          }
+          else {
+            dasEventName = _DasEventName;
+          }
+
           button.Initialize(() => {
             if (action != null) {
               action();
             }
             CloseView();
-          }, string.Format("{0}_button", title), "alert_view");
+          }, string.Format("{0}_button", dasEventName), "alert_view");
 
           if (!audioParam.IsInvalid()) {
             button.SoundEvent = audioParam;

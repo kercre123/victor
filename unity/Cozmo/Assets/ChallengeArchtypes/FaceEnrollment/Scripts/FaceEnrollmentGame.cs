@@ -393,10 +393,12 @@ namespace FaceEnrollment {
     private void RequestDeleteEnrolledFace(int faceID) {
       Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_NoText);
 
+      alertView.SetDasEventName("delete_enrolled_face_confirm");
       alertView.SetCloseButtonEnabled(false);
       alertView.SetPrimaryButton(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmButton, () => HandleDeleteEnrolledFaceConfirmButton(faceID));
       alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel);
-      alertView.TitleLocKey = Localization.GetWithArgs(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmTitle, CurrentRobot.EnrolledFaces[faceID]);
+      alertView.TitleLocKey = LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmTitle;
+      alertView.SetTitleArgs(new object[] { CurrentRobot.EnrolledFaces[faceID] });
       _DeleteConfirmationAlertView = alertView;
     }
 
