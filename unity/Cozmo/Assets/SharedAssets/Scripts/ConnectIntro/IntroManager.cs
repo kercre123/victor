@@ -27,8 +27,6 @@ public class IntroManager : MonoBehaviour {
   private HubWorldBase _HubWorldPrefab;
   private HubWorldBase _HubWorldInstance;
 
-  private ScriptedSequences.ISimpleAsyncToken _IntroSequenceDoneToken;
-
   void Awake() {
     if (_Instance != null) {
       DAS.Error("IntroManager.Awake", "There should only be one IntroManager");
