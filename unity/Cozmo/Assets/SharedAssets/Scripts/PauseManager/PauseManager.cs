@@ -100,9 +100,6 @@ namespace Cozmo {
     }
 
     private void OnDestroy() {
-      if (_LowBatteryDialog != null) {
-        _LowBatteryDialog.ViewClosed -= ResetEngineFromLowBattery;
-      }
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.GoingToSleep>(HandleGoingToSleep);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleDisconnectionMessage);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleReactionaryBehavior);
@@ -349,27 +346,12 @@ namespace Cozmo {
         _LowBatteryDialog = alertView;
         _LowBatteryAlertTriggered = true;
 
-        PrepEngineForLowBattery();
-        _LowBatteryDialog.ViewClosed += ResetEngineFromLowBattery;
-
         if (OnPauseDialogOpen != null) {
           OnPauseDialogOpen.Invoke();
         }
       }
     }
 
-    private void PrepEngineForLowBattery() {
-      // Engine seems to turn off freeplay on its own
-      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
-      if (robot != null) {
-        robot.ResetRobotState();
-      }
-    }
-
-    private void ResetEngineFromLowBattery() {
-      _LowBatteryDialog.ViewClosed -= ResetEngineFromLowBattery;
-      RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
-    }
 
     private void CloseAllDialogs() {
       CloseConfirmSleepDialog();
