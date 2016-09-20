@@ -310,6 +310,17 @@ public class RobotEngineManager : MonoBehaviour {
     _CallbackManager.MessageReceived(messageData);
   }
 
+  public void MockCallback(MessageEngineToGame message, float delay = 0.0f) {
+    StartCoroutine(MockDelayedCallback(message, delay));
+  }
+
+  private IEnumerator MockDelayedCallback(MessageEngineToGame message, float delay) {
+    yield return new WaitForSeconds(delay);
+    object messageData = typeof(Anki.Cozmo.ExternalInterface.MessageEngineToGame).GetProperty(message.GetTag().ToString()).GetValue(message, null);
+    Debug.LogError(message.GetTag().ToString());
+    _CallbackManager.MessageReceived(messageData);
+  }
+
   private void ProcessPingResponse(Anki.Cozmo.ExternalInterface.Ping message) {
     if (message.isResponse) {
       DAS.Warn("Unity.ReceivedResponsePing", "Unity receiving response pings is unsupported");

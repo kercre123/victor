@@ -22,7 +22,7 @@ public class MockRobot : IRobot {
     Rotation = Quaternion.identity;
     Dictionary<Anki.Cozmo.UnlockId, bool> defaultValues = new Dictionary<UnlockId, bool>();
     for (int i = 0; i < (int)Anki.Cozmo.UnlockId.Count; ++i) {
-      defaultValues.Add((Anki.Cozmo.UnlockId)i, true);
+      defaultValues.Add((Anki.Cozmo.UnlockId)i, false);
     }
     UnlockablesManager.Instance.OnConnectLoad(defaultValues);
     _EnrolledFaces.Add(1, "Alice");
@@ -513,7 +513,15 @@ public class MockRobot : IRobot {
   }
 
   public void RequestSetUnlock(Anki.Cozmo.UnlockId unlockID, bool unlocked) {
+    MessageEngineToGame message = new MessageEngineToGame();
 
+    Anki.Cozmo.ExternalInterface.RequestSetUnlockResult resultMsg = new RequestSetUnlockResult();
+    resultMsg.unlockID = unlockID;
+    resultMsg.unlocked = unlocked;
+
+    message.RequestSetUnlockResult = resultMsg;
+
+    RobotEngineManager.Instance.MockCallback(message, 0.5f);
   }
 
   public void ExecuteBehavior(Anki.Cozmo.BehaviorType type) {
