@@ -128,13 +128,16 @@ Result BehaviorPounceOnMotion::InitInternal(Robot& robot)
       AnimationTrigger::PounceDriveEnd});
   }
   
-  if(!_shouldStreamline){
-    TransitionToInitialPounce(robot);
-  }else{
-    TransitionToBringingHeadDown(robot);
-  }
+  TransitionToInitialPounce(robot);
   
   return Result::RESULT_OK;
+}
+  
+  
+Result BehaviorPounceOnMotion::ResumeInternal(Robot& robot)
+{
+  _motionObserved = false;
+  return InitInternal(robot);
 }
 
 void BehaviorPounceOnMotion::StopInternal(Robot& robot)

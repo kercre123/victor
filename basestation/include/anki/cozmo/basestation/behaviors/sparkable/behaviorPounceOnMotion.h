@@ -38,6 +38,7 @@ protected:
   virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
 
   virtual Result InitInternal(Robot& robot) override;
+  virtual Result ResumeInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
 
   float _maxPounceDist = 120.0f;
