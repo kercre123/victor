@@ -131,10 +131,12 @@ namespace Cozmo {
     // Turn backpack off:
     SetBackpackLightsHelper(_robot, NamedColors::BLACK);
     
-    // Go back to previous idle if we haven't already
-    if(!_idlePopped) {
-      _robot.GetAnimationStreamer().PopIdleAnimation();
-    }
+    // NOTE: we are potentially leaving the scanning idle in place here, for Unity to pop
+    //  This grossness should go away when we make this action into a behavior (COZMO-4138)
+    //    // Go back to previous idle if we haven't already
+    //    if(!_idlePopped) {
+    //      _robot.GetAnimationStreamer().PopIdleAnimation();
+    //    }
   
     _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeFace, true);
     _robot.GetBehaviorManager().RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToUnexpectedMovement, true);
@@ -293,18 +295,22 @@ namespace Cozmo {
           },
           .duringFcn = [this]() {
             SetAction( CreateTrackAction(_robot, _faceID) );
-            _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::MeetCozmoScanningIdle);
+            if(!_idlePopped) {
+              PRINT_NAMED_WARNING("EnrollNamedFaceAction.SimpleStepOneDuring.IdleNotPopped", "");
+            } else {
+              _robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::MeetCozmoScanningIdle);
+            }
             _idlePopped = false;
             return RESULT_OK;
           },
           .stopFcn = [this]() {
             PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.SimpleStepOneStop", "");
             SetBackpackLightsHelper(_robot, NamedColors::BLACK);
-            if(!_idlePopped)
-            {
-              _robot.GetAnimationStreamer().PopIdleAnimation();
-              _idlePopped = true;
-            }
+            // if(!_idlePopped)
+            // {
+            //  _robot.GetAnimationStreamer().PopIdleAnimation();
+            //  _idlePopped = true;
+            // }
             return RESULT_OK;
           },
         });
@@ -699,6 +705,15 @@ namespace Cozmo {
               // Play success animation which says player's name
               // TODO: this should probably all be handled by Unity on successful completion of this action
               
+              if(!_idlePopped)
+              {
+                _robot.GetAnimationStreamer().PopIdleAnimation();
+                _idlePopped = true;
+              }
+              
+              // Get out of the scanning face
+              TriggerAnimationAction* getOutAction = new TriggerAnimationAction(_robot, AnimationTrigger::MeetCozmoLookFaceGetOut);
+              
               IActionRunner* finalAnimation = nullptr;
               if(_saveID == Vision::UnknownFaceID)
               {
@@ -719,7 +734,7 @@ namespace Cozmo {
                 // 3. Big celebrate (no name being said)
                 TriggerAnimationAction* celebrateAction = new TriggerAnimationAction(_robot, AnimationTrigger::MeetCozmoFirstEnrollmentCelebration);
                 
-                finalAnimation = new CompoundActionSequential(_robot, {sayNameAction1, sayNameAction2, celebrateAction});
+                finalAnimation = new CompoundActionSequential(_robot, {getOutAction, sayNameAction1, sayNameAction2, celebrateAction});
               }
               else
               {
@@ -727,7 +742,7 @@ namespace Cozmo {
                 SayTextAction* sayNameAction = new SayTextAction(_robot, _faceName, SayTextIntent::Name_Normal);
                 sayNameAction->SetAnimationTrigger(AnimationTrigger::MeetCozmoReEnrollmentSayName);
                 
-                finalAnimation = sayNameAction;
+                finalAnimation = new CompoundActionSequential(_robot, {getOutAction, sayNameAction});
               }
               
               SetAction( finalAnimation );
@@ -806,7 +821,13 @@ namespace Cozmo {
       info.name   = _faceName;
       info.neverSawValidFace = false;
     }
-    info.saidName = _sayNameWhenDone; // Assumes name was said (invalid if action does not complete succesfully)
+    
+    info.saidName = (_sayNameWhenDone && _state == State::Finishing && _action==nullptr);
+    
+    // Let the caller know if we left the face "scanning" or not.
+    // TODO: This should not be necessary once this is a behavior (COZMO-4138)
+    info.isFaceScanning = !_idlePopped;
+    
     completionUnion.Set_faceEnrollmentCompleted(std::move( info ));
   }
   

@@ -140,7 +140,9 @@ structure FaceEnrollmentCompleted {
   int_32 faceID,
   string name,
   bool   neverSawValidFace,  // If true, faceID and name containt the (invalid, unenrollable) face we observed
-  bool   saidName // Indicates whether the action played the say name animation at end (iff action completed successfully)
+  bool   saidName,           // Indicates whether the action played the say name animation at end (iff action completed successfully)
+  bool   isFaceScanning      // Indicates whether Cozmo was still "scanning" when action completed
+                             // (and thus idle needs to be popped and GetOut animation needs to be called). Fix with COZMO-4138
 }
 
 // Used by actions that don't have extra info on completion

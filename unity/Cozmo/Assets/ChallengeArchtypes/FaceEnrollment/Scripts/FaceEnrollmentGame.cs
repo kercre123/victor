@@ -256,6 +256,9 @@ namespace FaceEnrollment {
       if (message.result == Anki.Cozmo.ActionResult.CANCELLED || message.result == Anki.Cozmo.ActionResult.FAILURE_NOT_STARTED) {
         // start listening for when the reactionary behavior is done so we can try again
         RobotEngineManager.Instance.AddCallback<ReactionaryBehaviorTransition>(RetryFaceEnrollmentOnReactionaryBehaviorEnd);
+        if (message.completionInfo.faceEnrollmentCompleted.isFaceScanning) {
+          HandleSetIdleAndGetOutAnim();
+        }
         return;
       }
 
@@ -290,10 +293,17 @@ namespace FaceEnrollment {
           alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel);
           _ErrorAlertView = alertView;
         }
+
+        if (message.completionInfo.faceEnrollmentCompleted.isFaceScanning) {
+          HandleSetIdleAndGetOutAnim();
+        }
       }
       else {
-        // log to das
+        // log success to das
         DAS.Event("robot.face_enrollment", message.completionInfo.faceEnrollmentCompleted.faceID.ToString());
+
+        // since we succeeded we have to reset the idle
+        CurrentRobot.PopIdleAnimation();
 
         if (CurrentRobot.EnrolledFaces.ContainsKey(message.completionInfo.faceEnrollmentCompleted.faceID)) {
           DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Re-enrolled existing face: " + _NameForFace);
@@ -309,7 +319,7 @@ namespace FaceEnrollment {
           DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Enrolled new face: " + _NameForFace);
           EnrolledNewFaceAnimationSequence();
 
-          // log to das
+          // log using up another face slot to das
           DAS.Event("robot.face_slots_used", CurrentRobot.EnrolledFaces.Count.ToString(), null,
             new Dictionary<string, string>() { { "$data", "1" } });
         }
@@ -329,6 +339,11 @@ namespace FaceEnrollment {
         ContextManager.Instance.AppFlash(playChime: true);
         UIManager.CloseView(_FaceEnrollmentInstructionsViewInstance);
       }
+    }
+
+    private void HandleSetIdleAndGetOutAnim() {
+      CurrentRobot.PopIdleAnimation();
+      CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.MeetCozmoLookFaceGetOut);
     }
 
     private void EnrolledNewFaceAnimationSequence() {
