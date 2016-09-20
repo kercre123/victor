@@ -406,7 +406,8 @@ bool IBehavior::IsRunnable(const Robot& robot, bool allowWhileRunning) const
   {
     // ask progression component if the unlockId is currently unlocked
     const ProgressionUnlockComponent& progressionComp = robot.GetProgressionUnlockComponent();
-    const bool isUnlocked = progressionComp.IsUnlocked( _requiredUnlockId );
+    const bool forFreeplay = true;
+    const bool isUnlocked = progressionComp.IsUnlocked( _requiredUnlockId, forFreeplay );
     if ( !isUnlocked ) {
       return false;
     }

@@ -184,7 +184,10 @@ MonoBehaviour:
   ModifiedValues:
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
-    JsonValue: 8
+    JsonValue: 5
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    JsonValue: 110
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: Cozmo.UI.ScrollingTextView:_TitleTextLabel
@@ -218,12 +221,11 @@ MonoBehaviour:
   _DASEventViewType: 1
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
+  _LayerPriority: 0
   DimBackground: 1
-  DimBackgroundPrefabOverride: {fileID: 0}
   _OpenAudioEvent:
     _Event: Play__Ui__Window_Open
     _EventType: Ui
-    _GameObjectType: 0
   _AlphaController: {fileID: 22592498}
   _ScrollRectCanvasGroup: {fileID: 22592498}
   _TitleTextLabel: {fileID: 0}
@@ -314,7 +316,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 11474040}
   m_HandleRect: {fileID: 22493328}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -406,7 +408,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.39215687}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -465,7 +467,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.39215687}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -518,10 +520,10 @@ RectTransform:
   - {fileID: 22480806}
   m_Father: {fileID: 22481918}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -97, y: 0}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: -1217.5, y: -0.000061035156}
+  m_SizeDelta: {x: 2435, y: 45.5}
   m_Pivot: {x: 0, y: 1}
 --- !u!224 &22419486
 RectTransform:
@@ -539,8 +541,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -50, y: 0}
-  m_SizeDelta: {x: 100, y: 0}
+  m_AnchoredPosition: {x: -30.5, y: 7.4998846}
+  m_SizeDelta: {x: 36, y: -15}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22420686
 RectTransform:
@@ -616,8 +618,8 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 1466.7, y: -182}
-  m_SizeDelta: {x: 2330.5, y: 212}
+  m_AnchoredPosition: {x: 1458, y: -182}
+  m_SizeDelta: {x: 2313, y: 212}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22480806
 RectTransform:
@@ -634,7 +636,7 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: -0.000061035156}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!224 &22481918
@@ -690,8 +692,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 20, y: 20}
+  m_AnchoredPosition: {x: 2.999998, y: 0}
+  m_SizeDelta: {x: 26.000004, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &22565878
 CanvasGroup:

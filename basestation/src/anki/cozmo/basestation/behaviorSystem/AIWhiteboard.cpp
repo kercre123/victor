@@ -123,6 +123,15 @@ void AIWhiteboard::OnRobotDelocalized()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::OnRobotRelocalized()
+{
+  // just need to update render, otherwise they render wrt old origin
+  UpdatePossibleObjectRender();
+  
+  UpdateBeaconRender();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::ProcessClearQuad(const Quad2f& quad)
 {
   const Pose3d* worldOriginPtr = _robot.GetWorldOrigin();
@@ -181,7 +190,9 @@ bool AIWhiteboard::FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) co
       } else {
         // this can be blocking under certain scenarios, since we can think we are carrying a cube, but it is not in
         // the blockworld
-        PRINT_NAMED_ERROR("AIWhiteboard.FindUsableCubesOutOfBeacons", "Could not get carrying object pointer");
+        PRINT_NAMED_ERROR("AIWhiteboard.FindUsableCubesOutOfBeacons.NullCarryingObject",
+                          "Could not get carrying object pointer (ID=%d)",
+                          _robot.GetCarryingObject().GetValue());
       }
     }
     else
@@ -872,7 +883,7 @@ void AIWhiteboard::UpdateBeaconRender()
       // note that since we don't know what timeout behaviors use, we can only say that it ever failed
       ColorRGBA color = NEAR_ZERO(beacon.GetLastTimeFailedToFindLocation()) ? NamedColors::DARKGREEN : NamedColors::ORANGE;
       
-      Vec3f center = beacon.GetPose().GetTranslation();
+      Vec3f center = beacon.GetPose().GetWithRespectToOrigin().GetTranslation();
       center.z() += kBW_DebugRenderBeaconZ;
       _robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments("AIWhiteboard.UpdateBeaconRender",
           center, beacon.GetRadius(), color, false);

@@ -12,7 +12,7 @@ namespace DataPersistence {
     [SerializeField]
     private Button _ResetSaveDataButton;
     [SerializeField]
-    private Button _ResetRobotDataButton;
+    private Button _ResetEverythingButton;
 
     [SerializeField]
     private Button _StartNewSessionButton;
@@ -39,6 +39,10 @@ namespace DataPersistence {
     [SerializeField]
     private Button _SubmitSkillsButton;
 
+    [SerializeField]
+    private Text _LblStatus;
+    private bool _IsResettingEverything = false;
+
     private HomeHub GetHomeHub() {
       var go = GameObject.Find("HomeHub(Clone)");
       if (go != null) {
@@ -60,10 +64,16 @@ namespace DataPersistence {
 
       _SubmitSaveButton.onClick.AddListener(SubmitSaveButtonClicked);
       _SubmitSkillsButton.onClick.AddListener(SubmitSkillsButtonClicked);
-      _ResetRobotDataButton.onClick.AddListener(SubmitResetRobotData);
-
+      _ResetEverythingButton.onClick.AddListener(SubmitResetEverythingData);
+      _LblStatus.text = "";
       _SaveStringInput.text = DataPersistenceManager.Instance.GetSaveJSON();
       InitSkills();
+
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RestoreRobotStatus>(HandleRestoreStatus);
+    }
+
+    private void OnDestroy() {
+      RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RestoreRobotStatus>(HandleRestoreStatus);
     }
 
     private void HandleResetSaveDataButtonClicked() {
@@ -117,8 +127,33 @@ namespace DataPersistence {
         int.Parse(_SkillProfileHighLevel.text), int.Parse(_SkillRobotHighLevel.text));
     }
 
-    private void SubmitResetRobotData() {
-      Anki.Debug.DebugConsoleData.Instance.UnityData.HandleResetRobot("DataPersistancePane");
+    private void SubmitResetEverythingData() {
+      if (!_IsResettingEverything) {
+        _IsResettingEverything = true;
+        if (RobotEngineManager.Instance.CurrentRobot == null) {
+          _LblStatus.text = "Error: Not connected to the robot!";
+          _LblStatus.color = Color.red;
+        }
+        else {
+          _LblStatus.text = "THINKING. Stop touching things.";
+          _LblStatus.color = Color.blue;
+          RobotEngineManager.Instance.CurrentRobot.WipeRobotGameData();
+        }
+      }
+    }
+
+    private void HandleRestoreStatus(Anki.Cozmo.ExternalInterface.RestoreRobotStatus status) {
+      if (status.didWipe) {
+        _IsResettingEverything = false;
+        if (status.success) {
+          HandleResetSaveDataButtonClicked();
+          DebugMenuManager.Instance.CloseDebugMenuDialog();
+        }
+        else {
+          _LblStatus.text = "Error: Robot Data clear failed!";
+          _LblStatus.color = Color.red;
+        }
+      }
     }
 
   }

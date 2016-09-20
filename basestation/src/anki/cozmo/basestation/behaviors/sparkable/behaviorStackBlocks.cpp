@@ -98,7 +98,9 @@ void BehaviorStackBlocks::UpdateTargetBlocks(const Robot& robot) const
     const ObservableObject* carriedObject = robot.GetBlockWorld().GetObjectByID( robot.GetCarryingObject() );
 
     if( nullptr != carriedObject ) {
-      const bool upAxisOk = ! robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::RollCube) ||
+      const bool forFreeplay = true;
+      const bool isRollingUnlocked = robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::RollCube, forFreeplay);
+      const bool upAxisOk = ! isRollingUnlocked ||
         carriedObject->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
 
       if( upAxisOk ) {
@@ -151,7 +153,9 @@ void BehaviorStackBlocks::UpdateTargetBlocks(const Robot& robot) const
 
 bool BehaviorStackBlocks::FilterBlocksHelper(const ObservableObject* obj) const
 {
-  const bool upAxisOk = ! _robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::RollCube) ||
+  const bool forFreeplay = true;
+  const bool isRollingUnlocked = _robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::RollCube, forFreeplay);
+  const bool upAxisOk = ! isRollingUnlocked ||
     obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
   
 

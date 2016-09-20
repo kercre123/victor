@@ -315,12 +315,13 @@ namespace Anki {
       
       if(dockObject == nullptr)
       {
-        PRINT_NAMED_WARNING("IDockAction.NullDockObject", "Dock object in null returning failure");
+        PRINT_NAMED_WARNING("IDockAction.Init.NullDockObject", "Dock object in null returning failure (DockObjectID=%d)",
+                            _dockObjectID.GetValue());
         return ActionResult::FAILURE_ABORT;
       }
       
       if(SelectDockAction(dockObject) != RESULT_OK) {
-        PRINT_NAMED_WARNING("IDockAction.CheckPreconditions.DockActionSelectionFailure",
+        PRINT_NAMED_WARNING("IDockAction.Init.DockActionSelectionFailure",
                             "");
         // NOTE: SelectDockAction should set _interactionResult on failure
         return ActionResult::FAILURE_ABORT;
@@ -1205,7 +1206,7 @@ namespace Anki {
           // TODO: Be able to fill in more objects in the stack
           ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_dockObjectID);
           if(object == nullptr) {
-            PRINT_NAMED_WARNING("PlaceRelObjectAction.EmitCompletionSignal",
+            PRINT_NAMED_WARNING("PlaceRelObjectAction.EmitCompletionSignal.NullObject",
                                 "Docking object %d not found in world after placing.",
                                 _dockObjectID.GetValue());
           } else {

@@ -338,6 +338,13 @@ void BehaviorOnboardingShowCube::HandleObjectObserved(Robot& robot, const Extern
 {
   const ObservableObject* block = robot.GetBlockWorld().GetObjectByID(msg.objectID);
 
+  if(nullptr == block)
+  {
+    PRINT_NAMED_WARNING("BehaviorOnboardingShowCube.HandleObjectObserved.NullObject",
+                        "ObjectID=%d", msg.objectID);
+    return;
+  }
+  
   // In this state it's okay to change blocks. After this Cozmo will be trying to drive too it so it's too late.
   // after generic fails we loop back to this state so they can try again.
   if( ( _state == State::WaitForShowCube || _state == State::WaitForOKCubeDiscovered) && robot.CanPickUpObjectFromGround(*block) )

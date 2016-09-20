@@ -78,6 +78,7 @@ public class IntroManager : MonoBehaviour {
   }
 
   private void OnRobotDisconnect(object message) {
+    DasTracker.Instance.TrackIntroManagerRobotDisconnect(UIManager.GetTopViewName());
     if (null != _HubWorldInstance) {
       _HubWorldInstance.DestroyHubWorld();
     }

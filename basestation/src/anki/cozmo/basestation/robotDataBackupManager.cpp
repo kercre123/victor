@@ -176,11 +176,15 @@ void RobotDataBackupManager::ReadAllBackupDataFromRobot()
                                         [this, tag, count, tagsToBackupSize](u8* data, size_t size, NVStorage::NVResult res)
                                         {
                                           --_numPendingRequests;
-                                          if(res < NVStorage::NVResult::NV_OKAY)
+                                          if(res == NVStorage::NVResult::NV_NOT_FOUND)
                                           {
-                                            PRINT_NAMED_WARNING("RobotDataBackupManager.ReadAllDataFromRobot",
-                                                                "Reading tag %s failed",
-                                                                EnumToString(static_cast<Tag>(tag)));
+                                            PRINT_NAMED_INFO("RobotDataBackupManager.ReadAllDataFromRobot.TagNotFound",
+                                                             "%s", EnumToString(static_cast<Tag>(tag)));
+                                          }
+                                          else if(res < NVStorage::NVResult::NV_OKAY)
+                                          {
+                                            PRINT_NAMED_WARNING("RobotDataBackupManager.ReadAllDataFromRobot.ReadFailed",
+                                                                "%s", EnumToString(static_cast<Tag>(tag)));
                                           }
                                           else
                                           {

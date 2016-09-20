@@ -242,8 +242,11 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   LoadBehaviors();
 
   _behaviorMgr->InitConfiguration(_context->GetDataLoader()->GetRobotBehaviorConfig());
-      
-  SetHeadAngle(_currentHeadAngle);
+  
+  // Setting camera pose according to current head angle.
+  // (Not using SetHeadAngle() because _isHeadCalibrated is initially false making the function do nothing.)
+  _visionComponentPtr->GetCamera().SetPose(GetCameraPose(_currentHeadAngle));
+  
   _pdo = new PathDolerOuter(_context->GetRobotManager()->GetMsgHandler(), robotID);
 
   if (nullptr != _context->GetDataPlatform()) {
@@ -314,9 +317,13 @@ void Robot::SetOnCharger(bool onCharger)
     // If we don't actually have a charger, add an unconnected one now
     if (nullptr == charger)
     {
-      ObjectID newObj = AddUnconnectedCharger();
-      charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByID(newObj));
-      ASSERT_NAMED(nullptr != charger, "Robot.SetOnCharger.FailedToAddUnconnectedCharger");
+      ObjectID newObjID = AddUnconnectedCharger();
+      charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByID(newObjID));
+      if(nullptr == charger)
+      {
+        PRINT_NAMED_ERROR("Robot.SetOnCharger.FailedToAddUnconnectedCharger", "NewID=%d",
+                          newObjID.GetValue());
+      }
     }
           
     PRINT_NAMED_EVENT("robot.on_charger", "");
@@ -661,7 +668,10 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
   _localizedToID = object->GetID();
   _hasMovedSinceLocalization = false;
   _isLocalized = true;
-      
+  
+  // notify behavior whiteboard
+  _behaviorMgr->GetWhiteboard().OnRobotRelocalized();
+  
   // Update VizText
   GetContext()->GetVizManager()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
                                          "LocalizedTo: %s_%d",
@@ -733,27 +743,16 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   SetIsCharging(IS_STATUS_FLAG_SET(IS_CHARGING));
   _isCliffSensorOn = IS_STATUS_FLAG_SET(CLIFF_DETECTED);
   _chargerOOS = IS_STATUS_FLAG_SET(IS_CHARGER_OOS);
+  _isBodyInAccessoryMode = IS_STATUS_FLAG_SET(IS_BODY_ACC_MODE);
 
-  if (_isBodyInAccessoryMode && !IS_STATUS_FLAG_SET(IS_BODY_ACC_MODE)) {
-    // This shouldn't happen. This is a firmware bug.
-    PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.BodyNotInAccessoryMode","* * * * Firmware bug (Vandiver knows already) * * * *");
-    _isBodyInAccessoryMode = false;
-    
-  } else if (!_isBodyInAccessoryMode && IS_STATUS_FLAG_SET(IS_BODY_ACC_MODE)) {
-    // This is not by itself a bad thing, but it should only happen if IS_BODY_ACC_MODE was ever false...
-    // which should never happen.
-    PRINT_NAMED_EVENT("Robot.UpdateFullRobotState.BodyInAccessoryMode","");
-    _isBodyInAccessoryMode = true;
-  }
-  
-  // ==== HACK: Workaround for robot not getting itself into accessory mode ===
-  static int setBodyModeTicDelay = 3;
-  if (!_isBodyInAccessoryMode && ++setBodyModeTicDelay >= 3) {
-    PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.SettingBodyModeHack", "Shouldn't need to do this, but for some reason body's not in the correct mode");
+  // If robot is not in accessary mode for some reason, send message to force it.
+  // This shouldn't ever happen!
+  if (!_isBodyInAccessoryMode && ++_setBodyModeTicDelay >= 16) {  // Triggers ~960ms (16 x 60ms engine tic) after syncTimeAck.
+    PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.BodyNotInAccessoryMode", "");
     SendMessage(RobotInterface::EngineToRobot(SetBodyRadioMode(BodyRadioMode::BODY_ACCESSORY_OPERATING_MODE, 0)));
-    setBodyModeTicDelay = 0;
+    _setBodyModeTicDelay = 0;
   }
-  // ==========================================================================
+
 
 
   GetMoveComponent().Update(msg);
@@ -1121,7 +1120,7 @@ Result Robot::Update(bool ignoreVisionModes)
   
   // Update ChargerPlatform - this has to happen before the behaviors which might need this information
   ObservableObject* charger = GetBlockWorld().GetObjectByID(_chargerID, ObjectFamily::Charger);
-  if( charger && charger->IsPoseStateKnown() && _offTreadsState == OffTreadsState::OnTreads)
+  if( nullptr != charger && charger->IsPoseStateKnown() && _offTreadsState == OffTreadsState::OnTreads)
   {
     // This state is useful for knowing not to play a cliff react when just driving off the charger.
     bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());
@@ -1619,17 +1618,24 @@ Pose3d Robot::GetCameraPose(f32 atAngle) const
     
 void Robot::SetHeadAngle(const f32& angle)
 {
-  if (!IsValidHeadAngle(angle, &_currentHeadAngle)) {
-    PRINT_NAMED_WARNING("Robot.GetCameraHeadPose.HeadAngleOOB",
-                        "Angle %.3frad / %.1f (TODO: Send correction or just recalibrate?)\n",
-                        angle, RAD_TO_DEG_F32(angle));
+  if (_isHeadCalibrated) {
+    if (!IsValidHeadAngle(angle, &_currentHeadAngle)) {
+      PRINT_NAMED_WARNING("Robot.GetCameraHeadPose.HeadAngleOOB",
+                          "Angle %.3frad / %.1f (TODO: Send correction or just recalibrate?)\n",
+                          angle, RAD_TO_DEG_F32(angle));
+    }
+        
+    _visionComponentPtr->GetCamera().SetPose(GetCameraPose(_currentHeadAngle));
   }
-      
-  _visionComponentPtr->GetCamera().SetPose(GetCameraPose(_currentHeadAngle));
-      
+  
 } // SetHeadAngle()
     
-    
+
+void Robot::SetHeadCalibrated(bool isCalibrated)
+{
+  _isHeadCalibrated = isCalibrated;
+}
+  
 
 void Robot::ComputeLiftPose(const f32 atAngle, Pose3d& liftPose)
 {
@@ -2716,7 +2722,7 @@ void Robot::SetCarryingObject(ObjectID carryObjectID)
 {
   ObservableObject* object = _blockWorld.GetObjectByID(carryObjectID);
   if(object == nullptr) {
-    PRINT_NAMED_ERROR("Robot.SetCarryingObject",
+    PRINT_NAMED_ERROR("Robot.SetCarryingObject.NullCarryObject",
                       "Object %d no longer exists in the world. Can't set it as robot's carried object.",
                       carryObjectID.GetValue());
   } else {
@@ -2765,7 +2771,7 @@ void Robot::UnSetCarryingObjects(bool topOnly)
         
     ObservableObject* object = _blockWorld.GetObjectByID(objID);
     if(object == nullptr) {
-      PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects",
+      PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects.NullObject",
                         "Object %d robot %d thought it was carrying no longer exists in the world.",
                         objID.GetValue(), GetID());
     } else {

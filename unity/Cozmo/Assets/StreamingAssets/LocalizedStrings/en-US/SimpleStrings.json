@@ -253,12 +253,12 @@
     "translation": "Games Played: "
   },
   "label.streaksCount": {
-    "translation": "Streaks: "
+    "translation": "Longest Daily Streak:"
   },
   "label.goalsCompleted": {
-    "translation": "Goals Completed"
+    "translation": "Goals Completed:"
   },
   "label.daysWithCozmo": {
-    "translation": "Days Played With Cozmo"
+    "translation": "Days Played With Cozmo:"
   }
 }

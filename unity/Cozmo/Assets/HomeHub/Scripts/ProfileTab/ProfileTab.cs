@@ -30,12 +30,7 @@ public class ProfileTab : MonoBehaviour {
     // TODO: Make localization system have a generic way of handling plurality. We have one for items
     // but we really need a more generic solution
     int daysWithCozmo = GetDaysWithCozmo();
-    if (daysWithCozmo == 1) {
-      _TimeWithCozmoCountValueLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelDaysCountSingular, new object[] { daysWithCozmo });
-    }
-    else {
-      _TimeWithCozmoCountValueLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelDaysCountPlural, new object[] { daysWithCozmo });
-    }
+    _TimeWithCozmoCountValueLabel.text = daysWithCozmo.ToString();
 
     _DailyGoalsCompletedCount.text = TotalDailyGoalsCompleted().ToString();
     _StreaksCountValueLabel.text = DataPersistence.DataPersistenceManager.Instance.CurrentStreak.ToString();

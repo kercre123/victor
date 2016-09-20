@@ -5,5 +5,10 @@
     "FaceEnrollmentSlot0",
     "FaceEnrollmentSlot1",
     "FaceEnrollmentSlot2"
+  ],
+
+  "freeplayOverrides": [
+    "StackTwoCubes",
+    "RollCube"
   ]
 }

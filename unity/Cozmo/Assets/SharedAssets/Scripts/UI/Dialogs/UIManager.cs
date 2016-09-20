@@ -221,6 +221,12 @@ public class UIManager : MonoBehaviour {
     }
   }
 
+  public static string GetTopViewName() {
+    var views = _Instance._OpenViews;
+    var topView = views.Count > 0 ? views[views.Count - 1] : null;
+    return topView != null ? topView.name : string.Empty;
+  }
+
   private void HandleBaseViewCloseAnimationFinished(BaseView view) {
     _OpenViews.Remove(view);
     TryUnDimBackground(view);

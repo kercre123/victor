@@ -28,6 +28,7 @@ namespace Cozmo {
 static std::set<UnlockId> _defaultUnlocks;
 
 static const char* kDefaultUnlockIdsConfigKey = "defaultUnlocks";
+static const char* kFreeplayOverridesKey = "freeplayOverrides";
 
 CONSOLE_VAR(u32, kNumAttemptsToWrite, "ProgressionUnlockComponent", 5);
 
@@ -45,19 +46,48 @@ void ProgressionUnlockComponent::Init(const Json::Value &config)
   if( !config.isNull() && config[kDefaultUnlockIdsConfigKey].isArray() ) {
     for( const auto& unlockIdJson : config[kDefaultUnlockIdsConfigKey] ) {
       if( ! unlockIdJson.isString() ) {
-        PRINT_NAMED_ERROR("ProgressionUnlockComponent.InvalidData",
+        PRINT_NAMED_ERROR("ProgressionUnlockComponent.Init.InvalidDefaultData",
                           "invalid element in unlock id's list (not a string)");
         continue;
       }
       
       UnlockId uid = UnlockIdsFromString(unlockIdJson.asString());
       _defaultUnlocks.insert(uid);
+
+      PRINT_CH_INFO("UnlockComponent", "ProgressionUnlockComponent.DefaultValue",
+                    "%s defaults to true",
+                    UnlockIdToString(uid));
     }
   }
   else {
-    PRINT_NAMED_WARNING("ProgressionUnlockComponent.MissingDefaults",
-                        "missing key '%s'",
-                        kDefaultUnlockIdsConfigKey);
+    PRINT_NAMED_ERROR("ProgressionUnlockComponent.Init.MissingDefaults",
+                      "missing key '%s'",
+                      kDefaultUnlockIdsConfigKey);
+  }
+
+  _freeplayOverrides.clear();
+
+  // load freeplay overrides from json
+  if( !config.isNull() && config[kFreeplayOverridesKey].isArray() ) {
+    for( const auto& unlockIdJson : config[kFreeplayOverridesKey] ) {
+      if( ! unlockIdJson.isString() ) {
+        PRINT_NAMED_ERROR("ProgressionUnlockComponent.Init.InvalidOverrideData",
+                          "invalid element in unlock id's list (not a string)");
+        continue;
+      }
+      
+      UnlockId uid = UnlockIdsFromString(unlockIdJson.asString());
+      _freeplayOverrides.insert(uid);
+
+      PRINT_CH_INFO("UnlockComponent", "ProgressionUnlockComponent.Override",
+                    "%s will be overridden in freeplay to true",
+                    UnlockIdToString(uid));
+    }
+  }
+  else {
+    PRINT_NAMED_ERROR("ProgressionUnlockComponent.Init.MissingOverrides",
+                      "missing key '%s'",
+                      kFreeplayOverridesKey);
   }
 
   ReadCurrentUnlocksFromRobot();
@@ -175,13 +205,23 @@ bool ProgressionUnlockComponent::SetUnlock(UnlockId unlock, bool unlocked)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ProgressionUnlockComponent::IsUnlocked(UnlockId unlock) const
+bool ProgressionUnlockComponent::IsUnlocked(UnlockId unlock, bool forFreeplay) const
 {
   if (_robot.GetContext()->IsInSdkMode())
   {
     // Progression is irrelevant in sdk mode - just force everything unlocked
     return true;
   }
+
+  if( forFreeplay ) {
+    // check overrides to see if we should lie about this unlock
+    const auto overrideIt = _freeplayOverrides.find(unlock);
+    const bool overrideReturnTrue = (overrideIt != _freeplayOverrides.end());
+    if( overrideReturnTrue ) {
+      return true;
+    }
+  }
+  
   const auto matchIt = _currentUnlocks.find(unlock);
   const bool isUnlocked = (matchIt != _currentUnlocks.end());
   return isUnlocked;

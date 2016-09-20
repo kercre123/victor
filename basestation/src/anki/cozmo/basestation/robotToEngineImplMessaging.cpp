@@ -222,6 +222,11 @@ void RobotToEngineImplMessaging::HandleMotorCalibration(const AnkiEvent<RobotInt
     // if this was a lift calibration, we are no longer holding a cube
     robot->UnSetCarryObject( robot->GetCarryingObject() );
   }
+  
+  if (payload.motorID == MotorID::MOTOR_HEAD) {
+    robot->SetHeadCalibrated(!payload.calibStarted);
+  }
+  
   robot->Broadcast(ExternalInterface::MessageEngineToGame(MotorCalibration(payload)));
 }
   
@@ -483,7 +488,7 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
         if( robot->IsOnCharger() )
         {
           Charger* charger = dynamic_cast<Charger*>(robot->GetBlockWorld().GetObjectByID(objID, ObjectFamily::Charger));
-          if( charger )
+          if( nullptr != charger )
           {
             charger->SetPoseRelativeToRobot(*robot);
           }

@@ -305,6 +305,11 @@ public class DailyGoalManager : MonoBehaviour {
   private void HandleGameEvent(GameEventWrapper gameEvent) {
     if (gameEvent.GameEventEnum == Anki.Cozmo.GameEvent.OnDailyGoalCompleted) {
       DailyGoalCompleteGameEvent goalEvent = gameEvent as DailyGoalCompleteGameEvent;
+
+      if (PendingDailyGoals == null) {
+        DAS.Error("DailyGoalManager.HandleGameEvent.NullCheck", "PendingDailyGoals null");
+      }
+
       // Only add to Pending Goals if it is unique, fire Warning otherwise since
       // that suggests dupe goals or some other funny business I certainly don't
       // approve of.
@@ -316,10 +321,25 @@ public class DailyGoalManager : MonoBehaviour {
       }
     }
     else {
-      List<DailyGoal> goals = DataPersistenceManager.Instance.CurrentSession.DailyGoals;
-      for (int i = 0; i < goals.Count; i++) {
-        GoalProgCheck(goals[i], gameEvent);
+      if (DataPersistenceManager.Instance == null) {
+        DAS.Error("DailyGoalManager.HandleGameEvent.NullCheck", "Data persistence manager is null");
       }
+
+      if (DataPersistenceManager.Instance.CurrentSession == null) {
+        DAS.Error("DailyGoalManager.HandleGameEvent.NullCheck", "CurrentSession is null");
+      }
+
+      List<DailyGoal> goals = DataPersistenceManager.Instance.CurrentSession.DailyGoals;
+
+      if (goals != null) {
+        for (int i = 0; i < goals.Count; i++) {
+          GoalProgCheck(goals[i], gameEvent);
+        }
+      }
+      else {
+        DAS.Error("DailyGoalManager.HandleGameEvent.NullCheck", "CurrentSession.DailyGoals is null");
+      }
+
     }
   }
 

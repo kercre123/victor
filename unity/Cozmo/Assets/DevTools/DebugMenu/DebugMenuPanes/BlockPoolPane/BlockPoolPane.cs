@@ -73,15 +73,20 @@ namespace Cozmo.BlockPool {
     }
 
     private void OnDestroy() {
-      _BlockPoolTracker.OnAutoBlockPoolEnabledChanged -= HandleAutoBlockPoolEnabledChanged;
-      _BlockPoolTracker.OnBlockDataUpdated -= HandleBlockDataUpdated;
-      _BlockPoolTracker.OnBlockDataUnavailable -= HandleBlockDataUnavailable;
-      _BlockPoolTracker.OnBlockDataConnectionChanged -= HandleBlockDataConnectionChanged;
-      _BlockPoolTracker.SendAvailableObjects(false, (byte)RobotEngineManager.Instance.CurrentRobotID);
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+      if (_BlockPoolTracker != null) {
+        _BlockPoolTracker.OnAutoBlockPoolEnabledChanged -= HandleAutoBlockPoolEnabledChanged;
+        _BlockPoolTracker.OnBlockDataUpdated -= HandleBlockDataUpdated;
+        _BlockPoolTracker.OnBlockDataUnavailable -= HandleBlockDataUnavailable;
+        _BlockPoolTracker.OnBlockDataConnectionChanged -= HandleBlockDataConnectionChanged;
+
+        if (robot != null) {
+          _BlockPoolTracker.SendAvailableObjects(false, (byte)RobotEngineManager.Instance.CurrentRobotID);
+        }
+      }
 
       // clear the lights we've turned blue to show connections. Force the values right away since we are
       // being destroyed
-      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
         robot.SetEnableFreeplayLightStates(true);
 
@@ -90,7 +95,7 @@ namespace Cozmo.BlockPool {
         }
 
         if (robot.GetCharger() != null) {
-          RobotEngineManager.Instance.CurrentRobot.GetCharger().SetLEDs(0, 0, 0, 0);
+          robot.GetCharger().SetLEDs(0, 0, 0, 0);
         }
       }
     }

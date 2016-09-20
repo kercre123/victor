@@ -2004,6 +2004,8 @@ namespace Cozmo {
                               "Failed setting %zu-byte album data and %zu-byte enroll data",
                               _albumData.size(), _enrollData.size());
         }
+      } else if (result == NVStorage::NVResult::NV_NOT_FOUND) {
+        PRINT_NAMED_INFO("VisionComponent.LoadFaceAlbumFromRobot.ReadFaceEnrollDataNotFound", "");
       } else {
         PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbumFromRobot.ReadFaceEnrollDataFail",
                             "NVResult = %s", EnumToString(result));

@@ -89,9 +89,9 @@ public class ProfileCreationView : Cozmo.UI.BaseView {
 
   private void HandleBirthdateEntryDone() {
     DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Birthdate = _BirthDatePicker.date;
-    DAS.Event("app.age_gate.age", _BirthDatePicker.date.ToShortDateString());
     DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileCreated = true;
     DataPersistence.DataPersistenceManager.Instance.Save();
+    DasTracker.Instance.TrackBirthDateEntered(_BirthDatePicker.date);
     ProfileCreationDone();
   }
 

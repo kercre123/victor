@@ -1,10 +1,19 @@
+import cozmo
 import collections
 import functools
 import queue
+import platform
 
 import tkinter
 from tkinter import *
-from PIL import ImageTk
+
+try:
+    from PIL import ImageTk as ImageTk
+except ImportError:
+    ImageTk = None 
+    if platform.system() == 'Linux':
+        cozmo.logger.error('Cannot import ImageTk; TkInter viewer disabled.\nDo `sudo apt-get update` and `sudo apt-get install python3-pil.imagetk` to install ImageTk')
+
 from PIL import Image, ImageDraw
 import threading
 
@@ -73,6 +82,9 @@ class TkImageViewer(Frame, TkThreadable):
         self._isRunning = False
 
     def _draw_frame(self):
+        if ImageTk is None:
+            return
+
         try:
             image = self._img_queue.popleft()
         except IndexError:
