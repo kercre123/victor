@@ -60,7 +60,7 @@ FPSocializeBehaviorChooser::FPSocializeBehaviorChooser(Robot& robot, const Json:
   _interactWithFacesBehavior = robot.GetBehaviorFactory().FindBehaviorByName("interactWithFaces");
   ASSERT_NAMED( nullptr != _interactWithFacesBehavior, "FPSocializeBehaviorChooser.MissingBehavior.InteractWithFaces" );
   
-  _pounceOnMotionBehavior = robot.GetBehaviorFactory().FindBehaviorByName("fp_PounceOnMotion");
+  _pounceOnMotionBehavior = robot.GetBehaviorFactory().FindBehaviorByName("pounceOnMotion_socialize");
   ASSERT_NAMED( nullptr != _pounceOnMotionBehavior, "FPSocializeBehaviorChooser.MissingBehavior.PounceOnMotion" );
 
   // defaults to 0 to mean allow infinite iterations
