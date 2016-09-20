@@ -52,7 +52,7 @@
     "translation": "Cozmo wants to pounce on your finger"
   },
   "behavior.RollBlock": {
-    "translation": ""
+    "translation": "Cozmo is rolling a Cube"
   },
   "behavior.StackCube": {
     "translation": "Cozmo is creating a stack of Cubes"
