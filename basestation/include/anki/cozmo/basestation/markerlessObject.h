@@ -44,6 +44,11 @@ namespace Anki {
       
       virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
       
+      // Projects the box in its current 3D pose (or a given 3D pose) onto the
+      // XY plane and returns the corresponding 2D quadrilateral. Pads the
+      // quadrilateral (around its center) by the optional padding if desired.
+      virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const override;
+      
       virtual void Visualize(const ColorRGBA& color) const override;
       virtual void EraseVisualization() const override;
       

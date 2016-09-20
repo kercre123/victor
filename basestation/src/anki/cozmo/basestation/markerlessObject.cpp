@@ -110,6 +110,39 @@ namespace Anki {
       }
     }
     
+    Quad2f MarkerlessObject::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm) const
+    {
+      const std::vector<Point3f>& canonicalCorners = GetCanonicalCorners();
+      
+      const Pose3d& atPoseWrtOrigin = atPose.GetWithRespectToOrigin();
+      const Rotation3d& R = atPoseWrtOrigin.GetRotation();
+
+      Point3f paddedSize(_size);
+      paddedSize += 2.f*padding_mm;
+      
+      std::vector<Point2f> points;
+      points.reserve(canonicalCorners.size());
+      for(auto corner : canonicalCorners) {
+        // Scale canonical point to correct (padded) size
+        corner *= paddedSize;
+        
+        // Rotate to given pose
+        corner = R*corner;
+        
+        // Project onto XY plane, i.e. just drop the Z coordinate
+        points.emplace_back(corner.x(), corner.y());
+      }
+      
+      Quad2f boundingQuad = GetBoundingQuad(points);
+      
+      // Re-center
+      Point2f center(atPoseWrtOrigin.GetTranslation().x(), atPoseWrtOrigin.GetTranslation().y());
+      boundingQuad += center;
+      
+      return boundingQuad;
+      
+    } // GetBoundingBoxXY()
+      
   } // namespace Cozmo
   
 } // namespace Anki

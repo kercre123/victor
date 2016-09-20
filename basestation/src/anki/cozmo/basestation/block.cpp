@@ -254,7 +254,7 @@ namespace Cozmo {
     const std::vector<Point3f>& canonicalCorners = GetCanonicalCorners();
     
     const Pose3d atPoseWrtOrigin = atPose.GetWithRespectToOrigin();
-    const RotationMatrix3d& R = atPoseWrtOrigin.GetRotationMatrix();
+    const Rotation3d& R = atPoseWrtOrigin.GetRotation();
 
     Point3f paddedSize(_size);
     paddedSize += 2.f*padding_mm;

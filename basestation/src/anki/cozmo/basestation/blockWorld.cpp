@@ -168,8 +168,8 @@ CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
 // How long to wait until deleting non-cliff Markerless objects
 CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
   
-// Whehter or not to put markerless objects like collision/prox obstacles and cliffs into the memory map
-CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
+// Whether or not to put unrecognized markerless objects like collision/prox obstacles and cliffs into the memory map
+CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   BlockWorld::BlockWorld(Robot* robot)
@@ -840,7 +840,7 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
     if ( addAgain )
     {
       INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
-      ASSERT_NAMED(currentNavMemoryMap, "BlockWorld.OnRobotPoseChanged.NoMemoryMap");
+      ASSERT_NAMED(currentNavMemoryMap, "BlockWorld.UpdateRobotPoseInMemoryMap.NoMemoryMap");
       // cliff quad: clear or cliff
       {
         // TODO configure this size somethere else
@@ -1826,7 +1826,24 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
     _robotMsgTimeStampAtChange = lastTimestamp;
     _currentObservedObjects.push_back(markerlessObject.get());
     
-    if(kAddMarkerlessObjectsToMemMap)
+    // add cliffs to memory map, or other objects if feature is enabled
+    if ( type == ObjectType::CliffDetection )
+    {
+      // cliffs currently have extra data (for directionality)
+      const Pose3d& robotPose = _robot->GetPose();
+      const Pose3d& robotPoseWrtOrigin = robotPose.GetWithRespectToOrigin();
+      NavMemoryMapQuadData_Cliff cliffData;
+      Vec3f rotatedFwdVector = robotPoseWrtOrigin.GetRotation() * X_AXIS_3D();
+      cliffData.directionality = Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()};
+      
+      // calculate cliff quad where it's being placed (wrt origin since memory map is 2d wrt current origin)
+      const Quad2f& cliffQuad = markerlessObject->GetBoundingQuadXY( p.GetWithRespectToOrigin() );
+    
+      INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+      ASSERT_NAMED(currentNavMemoryMap, "BlockWorld.OnRobotPoseChanged.NoMemoryMap");
+      currentNavMemoryMap->AddQuad(cliffQuad, cliffData);
+    }
+    else if ( kAddUnrecognizedMarkerlessObjectsToMemMap )
     {
       // Add as obstacle in the memory map
       AddObjectReportToMemMap(*markerlessObject.get(), obsPose);
