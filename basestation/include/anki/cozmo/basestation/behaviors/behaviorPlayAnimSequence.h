@@ -38,6 +38,9 @@ protected:
   
   virtual Result InitInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override { }
+
+  // don't allow resume
+  virtual Result ResumeInternal(Robot& robot) override { return RESULT_FAIL; }
   
   // queues actions to play all the animations specified in _animTriggers
   void StartSequenceLoop(Robot& robot);

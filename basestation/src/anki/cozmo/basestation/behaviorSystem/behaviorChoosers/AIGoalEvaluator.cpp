@@ -239,8 +239,9 @@ bool AIGoalEvaluator::PickNewGoalForSpark(Robot& robot, UnlockId spark, bool isC
         else
         {
           // it's not running, check if we want to start
+          const float lastTimeStarted = goal->GetLastTimeStartedSecs();
           const float lastTimeFinished = goal->GetLastTimeStoppedSecs();
-          const bool wantsToStart = selectionStrategy.WantsToStart(robot, lastTimeFinished);
+          const bool wantsToStart = selectionStrategy.WantsToStart(robot, lastTimeFinished, lastTimeStarted);
           if ( !wantsToStart ) {
             continue;
           }
@@ -259,6 +260,9 @@ bool AIGoalEvaluator::PickNewGoalForSpark(Robot& robot, UnlockId spark, bool isC
       // TODO consider a different cooldown for isCurrentAllowedToBePicked==false
       // Since the goal could not pick a valid behavior, but did want to run. Kicking it out now will trigger
       // regular cooldowns, while we might want to set a smaller cooldown due to failure
+
+      // BN: NOTE: I implemented a version of this by checking the time the goal ran and using a different
+      // cooldown if it ran for a very short period
     
       // DAS
       PRINT_NAMED_EVENT("AIGoalEvaluator.NewGoalSelected",

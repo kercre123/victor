@@ -26,6 +26,7 @@ namespace Cozmo {
 
 namespace {
 CONSOLE_VAR(float, kDefaultGoalMaxDurationSecs, "IAIGoalStrategy", 60.0f);
+CONSOLE_VAR(float, kShortFailureCooldownSecs, "IAIGoalStrategy", 3.0f);
 static const char* kStartMoodScorerConfigKey = "startMoodScorer";
 static const char* kGoalCanEndConfigKey = "goalCanEndDurationSecs";
 static const char* kGoalShouldEndConfigKey = "goalShouldEndDurationSecs";
@@ -83,14 +84,25 @@ IAIGoalStrategy::~IAIGoalStrategy()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IAIGoalStrategy::WantsToStart(const Robot& robot, float lastTimeGoalRanSec) const
+bool IAIGoalStrategy::WantsToStart(const Robot& robot, float lastTimeGoalRanSec, float lastTimeGoalStartedSec) const
 {
   // check cooldown if set, and if the goal ever ran
   if ( FLT_GT(_cooldownSecs, 0.0f) && FLT_GT(lastTimeGoalRanSec, 0.0f) )
   {
-    const float inCooldownUntilSecs = lastTimeGoalRanSec + _cooldownSecs;
+
+    // if the last time the goal ran it only lasted a couple ticks, give it a short cooldown. This will
+    // prevent it from thrashing back and forth failing (when there are no behaviors to run) over and over,
+    // but also won't trigger the potentially much longer normal cooldown for when the goal actually runs
+    const float lastGoalRanDurationSecs = lastTimeGoalRanSec - lastTimeGoalStartedSec;
+    const float twoTicsSecs = 2*BaseStationTimer::getInstance()->GetTimeSinceLastTickInSeconds();
+    const bool lastRunWasVeryShort = lastGoalRanDurationSecs <= twoTicsSecs;
+    
+    const float cooldownSecs = lastRunWasVeryShort ? kShortFailureCooldownSecs : _cooldownSecs;
+    
+    const float inCooldownUntilSecs = lastTimeGoalRanSec + cooldownSecs;
     const float curTimeSecs = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     const bool isCoolingDown = curTimeSecs < inCooldownUntilSecs;
+    
     if ( isCoolingDown ) {
       return false;
     }

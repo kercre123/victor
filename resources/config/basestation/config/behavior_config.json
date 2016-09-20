@@ -273,26 +273,7 @@
           "type" : "FP_PlayAlone",
           // future: it might be a good idea to check how many behaviors are available to tune the duration based on that
           "goalShouldEndDurationSecs" : 25.0,
-          "cooldownSecs" : 30.0,
-          // require a minimum playful score
-          "requiredMinStartMoodScore" : 0.5,
-          "startMoodScorer" :
-          [
-            {
-              // intended meaning: show that Cozmo is playful emotionally. Note this can be tweaked differently
-              // from PlayWithHumans.
-              "emotionType" : "WantToPlay",
-              "scoreGraph" : {
-                "nodes" : [
-                  { "x" : -1.0, "y" : 0.0 },
-                  { "x" :  0.5, "y" : 0.0 },  // if WantToPlay is below X, score low
-                  { "x" :  0.5, "y" : 1.0 },  // if WantToPlay is above X, score high
-                  { "x" :  1.0, "y" : 1.0 }
-                ]
-              },
-              "trackDelta" : false
-            }
-          ]
+          "cooldownSecs" : 30.0
         }
       },
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

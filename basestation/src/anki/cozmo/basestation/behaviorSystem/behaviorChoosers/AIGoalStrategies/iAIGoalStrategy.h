@@ -35,7 +35,7 @@ public:
   virtual ~IAIGoalStrategy();
 
   // true when this goal would be happy to start, false if it doens't want to be fired now
-  bool WantsToStart(const Robot& robot, float lastTimeGoalRanSec) const;
+  bool WantsToStart(const Robot& robot, float lastTimeGoalRanSec, float lastTimeGoalStartedSec) const;
 
   // true when this goal wants to finish, false if it would rather continue
   bool WantsToEnd(const Robot& robot, float lastTimeGoalStartedSec) const;
