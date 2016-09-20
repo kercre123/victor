@@ -23,6 +23,7 @@ public class UpdateFirmwareScreen : MonoBehaviour {
   private void OnDestroy() {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete>(FirmwareUpdateComplete);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress>(HandleFirmwareProgress);
+    StopAllCoroutines();
   }
 
   private void HandleFirmwareProgress(Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress message) {
@@ -34,6 +35,18 @@ public class UpdateFirmwareScreen : MonoBehaviour {
   }
 
   private void FirmwareUpdateComplete(Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete message) {
+    if (DoneUpdateDelayInProgress) {
+      return;
+    }
+    if (message.result != Anki.Cozmo.FirmwareUpdateResult.Success) {
+      DAS.Error("UpdateFirmwareScreen.FirmwareUpdateComplete", "Firmware Update Failed: " + message.result);
+      if (FirmwareUpdateDone != null) {
+        FirmwareUpdateDone(false);
+      }
+      return;
+    }
+
+    // successful so lets add the delay reboot
     DoneUpdateDelayInProgress = true;
     _StartDelayTime = Time.time;
     StartCoroutine(NotifyFirmwareComplete(message));
@@ -49,13 +62,7 @@ public class UpdateFirmwareScreen : MonoBehaviour {
     _ProgressBar.SetProgress(1.0f);
 
     if (FirmwareUpdateDone != null) {
-      if (message.result == Anki.Cozmo.FirmwareUpdateResult.Success) {
-        FirmwareUpdateDone(true);
-      }
-      else {
-        DAS.Error("UpdateFirmwareScreen.FirmwareUpdateComplete", "Firmware Update Failed: " + message.result);
-        FirmwareUpdateDone(false);
-      }
+      FirmwareUpdateDone(true);
     }
 
     DoneUpdateDelayInProgress = false;
