@@ -96,13 +96,20 @@ with open(args.filename, 'rb') as infile:
     entry = 0;
         
     while offset < len(content):
-        wasWritten,wasReported,reporter,errcode = struct.unpack("<IIII", content[offset:offset+16])
-#        print(wasWritten,wasReported,reporter,errcode)
+        if not args.das:
+            wasWritten,wasReported,reporter,errcode = struct.unpack("<IIII", content[offset:offset+16])
+            offset +=16
+        else:
+            wasWritten,wasReported = (0,0)
+#            reporter = #extract from filename
+            reporter,errcode = (0,0)
+        
+        print(args.das,wasWritten,wasReported,reporter,errcode)
         if wasWritten == 0:
             print("entry {}. {} crashed w/error {}, reported={}\n".format(
                 entry, Names.get(reporter, "????"), errcode, hex(wasReported)))
             if (errcode == 0):
-                print_regs(reporter, content[offset+16:offset+CRASH_RECORD_SIZE])
+                print_regs(reporter, content[offset:offset+CRASH_RECORD_SIZE])
         elif wasWritten == 0xFFFFFFFF:
             print("entry {}. EMPTY\n".format(entry))
         else:

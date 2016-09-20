@@ -17,7 +17,7 @@
   #include "../sim_hal/sim_nvStorage.h"
 #endif
 
-#define DEBUG_NVS 1
+#define DEBUG_NVS 0
 
 #if DEBUG_NVS > 0
   #ifdef TARGET_ESPRESSIF

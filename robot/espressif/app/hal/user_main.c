@@ -9,6 +9,7 @@
 #include "client.h"
 #include "driver/uart.h"
 #include "driver/i2spi.h"
+#include "driver/rtc.h"
 #include "driver/crash.h"
 #include "driver/factoryData.h"
 #include "gpio.h"
@@ -16,6 +17,11 @@
 #include "foregroundTask.h"
 #include "user_config.h"
 #include "anki/cozmo/robot/flash_map.h"
+
+
+// Forward declarations
+bool SetFirmwareNote(const u32 offset, u32 note);
+u32  GetFirmwareNote(const u32 offset);
 
 /** System calls this method before initalizing the radio.
  * This method is only nessisary to call system_phy_set_rfoption which may only be called here.
@@ -28,7 +34,7 @@ void user_rf_pre_init(void)
 }
 
 char wifiPsk[WIFI_PSK_LEN];
-uint8_t connectedMac[MAC_ADDR_BYTES];
+struct connection_record connections[AP_MAX_CONNECTIONS];
 
 /** Callback after all the chip system initalization is done.
  * We shouldn't do any networking until after this is done.
@@ -45,21 +51,29 @@ static void system_init_done(void)
   foregroundTaskInit();
 
   i2spiInit();
+  
+  clientAccept(true);
 }
 
 static bool wifi_monitor_connection_status(uint32_t param)
 {
   u8 numConnected = wifi_softap_get_station_num();
+  u8 numRecorded = 0;
   if (numConnected > 0)
   {
-    u8 i;
-    for (i=0; i<MAC_ADDR_BYTES; i++)
-    {
-      if (connectedMac[i] != 0) { break; }
+    int n;
+    for (n=0;n<AP_MAX_CONNECTIONS;n++) {
+      u8 i;
+      for (i=0; i<MAC_ADDR_BYTES; i++)
+      {
+        if (connections[n].mac[i] != 0) {
+          numRecorded++;
+          break; }
+      }
     }
-    if (i == MAC_ADDR_BYTES)  //All zeros: something's wrong
+    if (numConnected > numRecorded)
     {
-      os_printf("WIFI has connected station but no MAC. Resetting\r\f");
+      os_printf("WIFI has connected station(s) without MAC. Resetting\r\n");
       wifi_set_opmode_current(NULL_MODE);  //off
       wifi_set_opmode_current(SOFTAP_MODE); //ap-mode back on.
     }
@@ -73,15 +87,53 @@ static void wifi_event_callback(System_Event_t *evt)
   {
     case EVENT_SOFTAPMODE_STACONNECTED:
     {
-      os_memcpy(connectedMac, evt->event_info.sta_connected.mac, MAC_ADDR_BYTES);
+      uint8 index = evt->event_info.sta_connected.aid - 1;
+      os_memcpy(connections[index].mac, evt->event_info.sta_connected.mac, MAC_ADDR_BYTES);
       break;
     }
     case EVENT_SOFTAPMODE_STADISCONNECTED:
     {
-      os_memset(connectedMac, 0x00, MAC_ADDR_BYTES);
+      uint8 index = evt->event_info.sta_disconnected.aid - 1;
+      os_memset(connections[index].mac, 0x00, MAC_ADDR_BYTES);
       foregroundTaskPost(wifi_monitor_connection_status, 0);
       break;
     }
+  }
+}
+
+
+static void  get_next_dhcp_block(struct dhcps_lease *dhcpInfo)
+{
+  const uint32_t DHCP_MARKER_BLOCK_ADDR = (DHCP_MARKER_SECTOR*SECTOR_SIZE);
+  uint32_t dhcp_block_available[DHCP_MARKER_BLOCK_SZ];
+
+  const SpiFlashOpResult result = spi_flash_read(DHCP_MARKER_BLOCK_ADDR, dhcp_block_available, DHCP_MARKER_BLOCK_SZ * sizeof(uint32_t));
+  int i = 0;
+  if (result == SPI_FLASH_RESULT_OK)
+  {
+    for (i=0;i<DHCP_MARKER_BLOCK_SZ;i++)
+    {
+      if (dhcp_block_available[i]) { break; }
+    }
+  }
+  //else just use the beginning of the range
+
+  dhcpInfo->start_ip.addr  = ipaddr_addr(DHCP_START);
+  dhcpInfo->end_ip.addr = dhcpInfo->start_ip.addr;
+ 
+  ip4_addr4(&(dhcpInfo->start_ip.addr)) += i * AP_MAX_CONNECTIONS;
+  ip4_addr4(&(dhcpInfo->end_ip.addr)) += i * AP_MAX_CONNECTIONS + (AP_MAX_CONNECTIONS-1);
+  
+  os_printf("Now issuing leases in section %d: " IPSTR " - " IPSTR " range\r\n", i, IP2STR(&dhcpInfo->start_ip.addr), IP2STR(&dhcpInfo->end_ip.addr));
+ 
+  if (i == DHCP_MARKER_BLOCK_SZ)
+  { // all used, reset
+    spi_flash_erase_sector(DHCP_MARKER_SECTOR);
+  }
+  else
+  { // zero this word
+    dhcp_block_available[0] = 0; // zero word
+    spi_flash_write(DHCP_MARKER_BLOCK_ADDR+(sizeof(uint32_t)*i), dhcp_block_available, sizeof(uint32_t));
   }
 }
 
@@ -147,16 +199,41 @@ void user_init(void)
   }
   ap_config.password[WIFI_PSK_LEN] = 0; // Null terminate
   ap_config.ssid_len = 0;
-  ap_config.channel = (macaddr[5] % 11) + 1;
   ap_config.authmode = AUTH_WPA2_PSK;
   ap_config.max_connection = AP_MAX_CONNECTIONS;
   ap_config.ssid_hidden = 0; // No hidden SSIDs, they create security problems
-  ap_config.beacon_interval = 33; // Must be 50 or lower for iOS devices to connect
+  ap_config.beacon_interval = 100; // Must be 50 or lower for iOS devices to connect
+
+  uint8_t channel = GetStoredWiFiChannel();
+  if (channel != 0) // This is a reboot between application firmware versions, keep channel from RTC
+  {
+    os_printf("Restoring wifi channel from RTC\r\n");
+    ap_config.channel = channel;
+    SetFirmwareNote(0, 0);
+  }
+  else
+  {
+    if (GetFirmwareNote(0) != 0)
+    { // This is a boot from factory firmware into this fersion
+      // Leave the channel what was stored in flash by factory
+      os_printf("Restoring factory wifi channel from flash\r\n");
+      if ((ap_config.channel < 1) || (ap_config.channel > 11)) ap_config.channel = 1; // Just in case
+      SetFirmwareNote(0, 0);
+    }
+    else
+    {
+      os_get_random(&channel, 1);
+      ap_config.channel = ((channel % 3) * 5) + 1;
+    }
+  }
+  
+  // Store wifi channel for next hot boot
+  SetStoredWiFiChannel(ap_config.channel);
 
   // Setup ESP module to AP mode and apply settings
   wifi_set_event_handler_cb(wifi_event_callback);
   wifi_set_opmode(SOFTAP_MODE);
-  wifi_softap_set_config(&ap_config);
+  wifi_softap_set_config_current(&ap_config);
   wifi_set_phy_mode(PHY_MODE_11G);
   // Disable radio sleep
   //wifi_set_sleep_type(NONE_SLEEP_T);
@@ -184,8 +261,7 @@ void user_init(void)
 
   // Configure the DHCP server
   struct dhcps_lease dhcpInfo;
-  dhcpInfo.start_ip.addr = ipaddr_addr(DHCP_START);
-  dhcpInfo.end_ip.addr   = ipaddr_addr(DHCP_END);
+  get_next_dhcp_block(&dhcpInfo);
   err = wifi_softap_set_dhcps_lease(&dhcpInfo);
   if (err == false)
   {

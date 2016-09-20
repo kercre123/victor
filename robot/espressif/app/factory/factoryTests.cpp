@@ -164,7 +164,6 @@ static void BirthCertificateReadCallback(NVStorage::NVOpResult& rslt)
 {
   if (rslt.result == NVStorage::NV_OKAY) memcpy(&birthCert, rslt.blob, sizeof(BirthCertificate));
   SetMode(RobotInterface::FTM_Sleepy);
-  clientAccept(true);
   foregroundTaskPost(requestIMUCal, 0);
 }
 
@@ -375,12 +374,12 @@ void Process_TestState(const RobotInterface::TestState& state)
     {
       char menuBuf[256]="";
       unsigned int bufIndex = 0;
-      u8 numConnected = wifi_softap_get_station_num();
-      bufIndex += ets_snprintf(menuBuf + bufIndex, sizeof(menuBuf) - bufIndex, "%d connections\n", numConnected);
-      if (numConnected > 0)
+      u8 nc = wifi_softap_get_station_num();
+      bufIndex += ets_snprintf(menuBuf + bufIndex, sizeof(menuBuf) - bufIndex, "%d connections\n", nc);
+      for (nc = 0;nc < AP_MAX_CONNECTIONS;nc++)
       {
         bufIndex += ets_snprintf(menuBuf + bufIndex, sizeof(menuBuf) - bufIndex,
-                                 MACSTR "\n", MAC2STR(connectedMac));
+                                 MACSTR "\n", MAC2STR(connections[nc].mac));
       }
       Face::FacePrintf(menuBuf);
       break;

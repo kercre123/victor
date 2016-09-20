@@ -30,7 +30,6 @@ enum TRANSMIT_MODE {
   TRANSMIT_UNKNOWN,
   TRANSMIT_SEND,
   TRANSMIT_RECEIVE,
-  TRANSMIT_CHARGER_RX,
 };
 
 static int txRxIndex;
@@ -125,16 +124,6 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
       NRF_UART0->TASKS_STARTRX = 1;
 
       break ;
-    case TRANSMIT_CHARGER_RX:
-      nrf_gpio_cfg_input(PIN_TX_VEXT, NRF_GPIO_PIN_PULLUP);
-
-      NRF_UART0->PSELTXD = 0xFFFFFFFF;
-      NRF_UART0->PSELRXD = PIN_TX_VEXT;
-      NRF_UART0->BAUDRATE = NRF_BAUD(charger_baud_rate);
-
-      NRF_UART0->TASKS_STARTRX = 1;
-      break ;
-
     default:
       break ;
   }
@@ -147,15 +136,6 @@ static inline void transmitByte() {
 }
 
 void Head::manage() {
-  if (*FIXTURE_HOOK == 0xDEADFACE) {
-    nrf_gpio_pin_set(PIN_TX_VEXT);
-    nrf_gpio_cfg_output(PIN_TX_VEXT);
-    MicroWait(15);
-    setTransmitMode(TRANSMIT_CHARGER_RX);
-    
-    return ;
-  }
-
   // Head has powered off: Ignore lack of comms
   if (lowPowerMode && !Head::spokenTo) {
     Watchdog::kick(WDOG_UART);
@@ -182,8 +162,7 @@ void UART0_IRQHandler()
 
     uint8_t data = NRF_UART0->RXD;
 
-    switch (uart_mode) {
-      case TRANSMIT_RECEIVE:
+    if (TRANSMIT_RECEIVE == uart_mode) {
           // Re-sync to header
         if (txRxIndex < 4) {
           header_shift = (header_shift >> 8) | (data << 24);
@@ -204,7 +183,7 @@ void UART0_IRQHandler()
             Storage::set(STORAGE_CRASH_LOG_K02, txRxBuffer, SPINE_CRASH_LOG_SIZE);
             NVIC_SystemReset();
           }
-          break ;
+          return ;
         }
         
         // We received a full packet
@@ -217,40 +196,7 @@ void UART0_IRQHandler()
           Head::synced = true;
           Head::spokenTo = true;
           Watchdog::kick(WDOG_UART);
-
-          setTransmitMode(TRANSMIT_CHARGER_RX);
-        } else if (txRxIndex + 1 == sizeof(GlobalDataToBody)) {
-          // Let our fixture know we are almost ready to receive data
-          nrf_gpio_pin_set(PIN_TX_VEXT);
-          nrf_gpio_cfg_output(PIN_TX_VEXT);
         }
-
-        break ;
-      case TRANSMIT_CHARGER_RX:
-        static const uint32_t PREFIX = 0x57746600;
-        static const uint32_t MASK = 0xFFFFFF00;
-        static uint32_t fixture_data = 0;
-        
-        fixture_data = (fixture_data << 8) | data;
-      
-        if ((fixture_data & MASK) == PREFIX) {
-          using namespace Anki::Cozmo;
-          uint8_t mode = fixture_data & ~MASK;
-          
-          switch (mode) {
-          default:
-            RobotInterface::EnterFactoryTestMode msg;
-            msg.mode = mode;
-            RobotInterface::SendMessage(msg);
-            break;
-          }
-
-          fixture_data = 0;
-        }
-
-        break ;
-      default:
-        break ;
     }
   }
 
@@ -258,18 +204,14 @@ void UART0_IRQHandler()
   if (NRF_UART0->EVENTS_TXDRDY) {
     NRF_UART0->EVENTS_TXDRDY = 0;
 
-    switch(uart_mode) {
-      case TRANSMIT_SEND:
+    if (TRANSMIT_SEND == uart_mode) {
         // We are in regular head transmission mode
         if (txRxIndex >= sizeof(GlobalDataToHead)) {
           setTransmitMode(TRANSMIT_RECEIVE);
           header_shift = 0;
         } else {
-          transmitByte();
+          NRF_UART0->TXD = txRxBuffer[txRxIndex++];
         }
-        break ;
-      default:
-        break ;
     }
   }
 }

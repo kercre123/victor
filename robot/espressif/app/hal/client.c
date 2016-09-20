@@ -9,6 +9,7 @@
 #include "ets_sys.h"
 #include "osapi.h"
 #include "backgroundTask.h"
+#include "user_interface.h"
 #include "driver/uart.h"
 #include "anki/cozmo/transport/IReceiver.h"
 #include "anki/cozmo/transport/reliableTransport.h"
@@ -25,6 +26,8 @@ static uint32_t clientConnectionId;
 static uint32_t dropCount;
 static bool accept;
 static bool sendHoldoff;
+static uint32_t reliable_disconnect_timestamp;
+static const uint32_t kWifiReconnect_timeout_us = 30000000;  //30 sec
 
 bool clientConnected(void)
 {
@@ -55,6 +58,17 @@ void clientUpdate(void)
     {
       Receiver_OnDisconnect(clientConnection);
       printf("Client reliable transport timed out\r\n");
+    }
+  }
+  else if (reliable_disconnect_timestamp) //we were connected but now are not.
+  {
+    uint32_t currentTime = system_get_time();
+    if ((currentTime - reliable_disconnect_timestamp) > kWifiReconnect_timeout_us)
+    {
+      os_printf("WIFI is connected but RT droppped. Resetting\r\f");
+      wifi_set_opmode_current(NULL_MODE);  //off
+      wifi_set_opmode_current(SOFTAP_MODE); //ap-mode back on.
+      reliable_disconnect_timestamp = 0; //only once
     }
   }
 }
@@ -233,6 +247,7 @@ void Receiver_OnConnectionRequest(ReliableConnection* conn)
 void Receiver_OnConnected(ReliableConnection* conn)
 {
   printf("Reliable transport connection completed\r\n");
+  reliable_disconnect_timestamp = 0; //we are connected;
 }
 
 void Receiver_OnDisconnect(ReliableConnection* conn)
@@ -244,6 +259,10 @@ void Receiver_OnDisconnect(ReliableConnection* conn)
   }
   else
   {
+    if (conn != NULL)
+    {
+      reliable_disconnect_timestamp = system_get_time()|1;  //make sure it is always non-zero if we are timing
+    }
     clientConnection = NULL;
     clientConnectionId = 0;
   }

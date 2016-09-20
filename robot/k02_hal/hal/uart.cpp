@@ -8,6 +8,7 @@
 #include "uart.h"
 #include "spine.h"
 #include "watchdog.h"
+#include "hardware.h"
 
 #include <string.h>
 #include <stdint.h>
@@ -64,8 +65,8 @@ void Anki::Cozmo::HAL::UART::Init() {
   UART0_PFIFO = UART_PFIFO_TXFE_MASK | UART_PFIFO_TXFIFOSIZE(2) | UART_PFIFO_RXFE_MASK | UART_PFIFO_RXFIFOSIZE(2) ;
   UART0_CFIFO = UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK ;
 
-  PORTD_PCR6 = PORT_PCR_MUX(3);
-  PORTD_PCR7 = PORT_PCR_MUX(3);
+  SOURCE_SETUP(GPIO_BODY_UART_RX, SOURCE_BODY_UART_RX, SourceAlt3);
+  SOURCE_SETUP(GPIO_BODY_UART_TX, SOURCE_BODY_UART_TX, SourceAlt3 | SourcePullDown);
 
   crashLogBytes = 0;
 

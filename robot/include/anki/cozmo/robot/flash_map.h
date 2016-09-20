@@ -17,6 +17,10 @@ extern "C" {
 /// A mask to check that an address is the start of a sector
 #define SECTOR_MASK (SECTOR_SIZE-1)
 
+#define ESP_FW_MAX_SIZE  (0x07c000) // Defined in factory firmware, can't change this for compatibility
+#define ESP_FW_ADDR_MASK (0x07FFFF)
+#define ESP_FW_NOTE_SIZE (0x400)
+
 /// Map of the sectors of flash where various things are stored
 typedef enum {
   BOOTLOADER_SECTOR           = 0x000, ///< Where the boot loader (this code) lives.
@@ -28,6 +32,9 @@ typedef enum {
   FACTORY_RTIP_BODY_FW_SECTOR = 0x0c5, ///< Where the image for the RTIP and Body firmware is stored
   FACTORY_NV_STORAGE_SECTOR   = 0x0de, ///< A region used for storing large factory test data
   FIXTURE_STORAGE_SECTOR      = 0x0fc, ///< 16KB for fixture data
+  DHCP_MARKER_SECTOR          = 0x100, ///< Reserved for DHCP server
+  RESERVED_STORAGE_SECTOR_1   = 0x101, ///< Reserved for future hardware use
+  RESERVED_STORAGE_SECTOR_2   = 0x102, ///< Reserved for future hardware use
   NV_STORAGE_SECTOR           = 0x180, ///< Start of NV Storage region
   ESP_INIT_DATA_SECTOR        = 0x1fc, ///< Where the Espressif OS keeps it's init data, two sectors long
   ESP_WIFI_CFG_SECTOR         = 0x1fe, ///< Where the Espressif OS keeps it's wifi configuration data, two sectors long
@@ -36,6 +43,7 @@ typedef enum {
 /// Map of data stored in the RTC
 typedef enum {
   RTC_SYSTEM_RESERVED = 0x00,
+  RTC_WIFI_CHANNEL    = 0xbe,
   RTC_IMAGE_SELECTION = 0xbf,
 } RTCMemAddress;
 
@@ -43,6 +51,7 @@ typedef enum {
 // Use complex bit pattern to make error rejection easier
 // Use amusing bit pattern because we are moving the code around
 typedef enum {
+  FW_IMAGE_INVALID = 0,
   FW_IMAGE_FACTORY = 0x0000C0DE,
   FW_IMAGE_A       = 0x00C0DE00,
   FW_IMAGE_B       = 0xC0DE0000,

@@ -9,6 +9,7 @@ extern "C" {
 #include "mem.h"
 #include "client.h"
 #include "driver/i2spi.h"
+#include "driver/rtc.h"
 #include "sha1.h"
 #include "anki/cozmo/robot/espAppImageHeader.h"
 }
@@ -32,9 +33,6 @@ extern "C" {
 #include "bignum.h"
 #include "rsa_pss.h"
 #include "publickeys.h"
-
-#define ESP_FW_MAX_SIZE  (0x07c000) // Defined in factory firmware, can't change this for compatibility
-#define ESP_FW_ADDR_MASK (0x07FFFF)
 
 #define WRITE_DATA_SIZE (1024)
 
@@ -132,9 +130,10 @@ namespace UpgradeController {
     // No matter which of the three images we're loading, we can get a header here
     const AppImageHeader* const ourHeader = (const AppImageHeader* const)(FLASH_MEMORY_MAP + APPLICATION_A_SECTOR * SECTOR_SIZE + APP_IMAGE_HEADER_OFFSET);
     
-    uint32 selectedImage;
-    system_rtc_mem_read(RTC_IMAGE_SELECTION, &selectedImage, 4);
+    
+    FWImageSelection selectedImage = GetImageSelection();
     nextImageNumber = ourHeader->imageNumber + 1;
+    
     switch (selectedImage)
     {
       case FW_IMAGE_A:
@@ -1130,6 +1129,58 @@ namespace UpgradeController {
   
   /// Retrieve the numerical (epoch) build timestamp
   extern "C" u32 GetBuildTime() { return COZMO_BUILD_DATE; }
+  
+  extern "C" bool SetFirmwareNote(const u32 offset, u32 note)
+  {
+    if (offset >= (ESP_FW_NOTE_SIZE/sizeof(u32)))
+    {
+      os_printf("SetFirmwareNote: Offset %x out of range\r\n", offset);
+      return false;
+    }
+    else if (GetFirmwareNote(offset) != 0xFFFFFFFF)
+    {
+      //os_printf("SetFirmwareNote: Note already written\r\n");
+      return false;
+    }
+    else
+    {
+      u32 noteAddr = ESP_FW_MAX_SIZE - ESP_FW_NOTE_SIZE + (offset * sizeof(u32));
+      switch (GetImageSelection())
+      {
+        case FW_IMAGE_A:
+        {
+          noteAddr += APPLICATION_A_SECTOR * SECTOR_SIZE;
+          break;
+        }
+        case FW_IMAGE_B:
+        {
+          noteAddr += APPLICATION_B_SECTOR * SECTOR_SIZE;
+          break;
+        }
+        default:
+        {
+          os_printf("SetFirmwareNote: Couldn't determine where to store note!\r\n");
+          return false;
+        }
+      }
+      
+      return HAL::FlashWrite(noteAddr, &note, sizeof(u32)) == NVStorage::NV_OKAY;
+    }
+  }
+  
+  u32 GetFirmwareNote(const u32 offset)
+  {
+    if (offset >= (ESP_FW_NOTE_SIZE/sizeof(u32)))
+    {
+      os_printf("GetFirmwareNote: Offset %x out of range\r\n", offset);
+      return 0xFFFFFFFF;
+    }
+    else
+    {
+      const uint32_t NOTE_BASE_ATTR = (APPLICATION_A_SECTOR * SECTOR_SIZE) + ESP_FW_MAX_SIZE - ESP_FW_NOTE_SIZE; // Memory offset of notes info for both apps
+      return *(FLASH_CACHE_POINTER + (NOTE_BASE_ATTR/4) + offset);
+    }
+  }
 
 }
 }

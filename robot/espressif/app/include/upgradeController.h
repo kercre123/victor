@@ -35,6 +35,12 @@ namespace Anki {
         
         /// Retrieve the numerical (epoch) build timestamp
         u32 GetBuildTime();
+        
+        /// One time (per firmware upgrade) write of firmware note
+        bool SetFirmwareNote(const u32 offset, u32 note);
+        
+        /// Return the one time write note stored at the end of firmware
+        u32 GetFirmwareNote(const u32 offset);
       }
     }
   }

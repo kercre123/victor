@@ -103,6 +103,9 @@ int main (void)
   RCM_RPFC = RCM_RPFC_RSTFLTSS_MASK | RCM_RPFC_RSTFLTSRW(2);
   RCM_RPFW = 16;
 
+  // Workaround a hardware bug (missing pull-down) until UARTInit gets called much later
+  SOURCE_SETUP(GPIO_BODY_UART_TX, SOURCE_BODY_UART_TX, SourceGPIO | SourcePullDown);
+  
   Watchdog::init();
   Power::enableEspressif();
 

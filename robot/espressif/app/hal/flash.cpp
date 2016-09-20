@@ -9,6 +9,7 @@
 extern "C" {
   #include "user_interface.h"
   #include "osapi.h"
+  #include "driver/rtc.h"
 }
 
 static bool writeOkay(const u32 address, const u32 length)
@@ -17,20 +18,22 @@ static bool writeOkay(const u32 address, const u32 length)
   if ((address >= (NV_STORAGE_SECTOR * SECTOR_SIZE)) && ((address + length) <= (ESP_INIT_DATA_SECTOR * SECTOR_SIZE))) return true;
   else // App image regions also okay if for other image
   {
-    uint32 selectedImage;
-    system_rtc_mem_read(RTC_IMAGE_SELECTION, &selectedImage, 4);
-    switch (selectedImage)
+    switch (GetImageSelection())
     {
       case FW_IMAGE_A:
       { // Am image A so writing to B okay
         if ((address >= (APPLICATION_B_SECTOR * SECTOR_SIZE)) && ((address + length) <= (NV_STORAGE_SECTOR * SECTOR_SIZE))) return true;
-        break;
+        else if ((address >= (APPLICATION_A_SECTOR * SECTOR_SIZE + ESP_FW_MAX_SIZE - ESP_FW_NOTE_SIZE)) && ((address + length) <= (FACTORY_WIFI_FW_SECTOR * SECTOR_SIZE))) return true;
+        else break;
       }
       case FW_IMAGE_B:
       { // Am image B so writing to A okay
         if ((address >= (APPLICATION_A_SECTOR * SECTOR_SIZE)) && ((address + length) <= (FACTORY_WIFI_FW_SECTOR * SECTOR_SIZE))) return true;
-        break;
+        else if ((address >= APPLICATION_B_SECTOR * SECTOR_SIZE + ESP_FW_MAX_SIZE - ESP_FW_NOTE_SIZE) && ((address + length) <= (NV_STORAGE_SECTOR * SECTOR_SIZE))) return true;
+        else break;
       }
+      default:
+        break;
     }
     os_printf("FLASH %x[%x] not allowed\r\n", address, length);
     return false;
