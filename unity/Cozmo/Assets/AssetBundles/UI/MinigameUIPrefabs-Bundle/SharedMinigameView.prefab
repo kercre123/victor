@@ -561,6 +561,8 @@ MonoBehaviour:
   _BottomWidgetContainer: {fileID: 22499356}
   _MiddleWidgetContainer: {fileID: 22483326}
   _OverlayWidgetContainer: {fileID: 22494750}
+  _NormalBackgroundCaratColor: {r: 1, g: 1, b: 1, a: 1}
+  _LockedBackgroundCaratColor: {r: 0.28235295, g: 0.2784314, b: 0.21960786, a: 1}
   _LockedBackgroundImage: {fileID: 11418214}
   _BackgroundGradient: {fileID: 11444978}
   _MiddleBackgroundImage: {fileID: 11429892}

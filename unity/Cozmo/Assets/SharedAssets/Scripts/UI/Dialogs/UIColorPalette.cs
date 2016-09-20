@@ -74,46 +74,17 @@ namespace Cozmo {
       }
 
       [SerializeField]
-      private Color _SelectedTextColor;
-
-      public static Color SelectedTextColor {
-        get { return Instance._SelectedTextColor; }
-      }
-
-      [SerializeField]
-      private Color _LockedDifficultyBackgroundColor;
-
-      public static Color LockedDifficultyBackgroundColor {
-        get { return Instance._LockedDifficultyBackgroundColor; }
-      }
-
-      [SerializeField]
-      private Color _LockedDifficultyCaratColor;
-
-      public static Color LockedDifficultyCaratColor {
-        get { return Instance._LockedDifficultyCaratColor; }
-      }
-
-      [SerializeField]
       private Color _GameSetupColor;
 
       public static Color GameSetupColor {
         get { return Instance._GameSetupColor; }
       }
 
-
       [SerializeField]
       private Color _GameBackgroundColor;
 
       public static Color GameBackgroundColor {
         get { return Instance._GameBackgroundColor; }
-      }
-
-      [SerializeField]
-      private Color _GameToggleColor;
-
-      public static Color GameToggleColor {
-        get { return Instance._GameToggleColor; }
       }
 
       [SerializeField]

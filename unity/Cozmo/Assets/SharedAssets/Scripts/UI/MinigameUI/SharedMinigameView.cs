@@ -30,6 +30,12 @@ namespace Cozmo {
       #region Backgrounds
 
       [SerializeField]
+      private Color _NormalBackgroundCaratColor;
+
+      [SerializeField]
+      private Color _LockedBackgroundCaratColor;
+
+      [SerializeField]
       private Image _LockedBackgroundImage;
 
       private bool _IsShowingLocked = false;
@@ -408,10 +414,16 @@ namespace Cozmo {
       }
 
       public void ShowLockedBackground() {
+        if (_ShelfWidgetInstance != null) {
+          _ShelfWidgetInstance.CaratColor = _LockedBackgroundCaratColor;
+        }
         ShowBackground(ref _IsShowingLocked, ref _LockedBackgroundTween, _LockedBackgroundImage);
       }
 
       public void HideLockedBackground() {
+        if (_ShelfWidgetInstance != null) {
+          _ShelfWidgetInstance.CaratColor = _NormalBackgroundCaratColor;
+        }
         HideBackground(ref _IsShowingLocked, ref _LockedBackgroundTween, _LockedBackgroundImage);
       }
 

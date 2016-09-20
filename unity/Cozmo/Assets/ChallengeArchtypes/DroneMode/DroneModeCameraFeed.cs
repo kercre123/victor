@@ -245,7 +245,7 @@ namespace Cozmo.Minigame.DroneMode {
 
       }
       else {
-        _smoothingReticleMap.Add(reticleFocus, new List<Rect> {newVizRect});
+        _smoothingReticleMap.Add(reticleFocus, new List<Rect> { newVizRect });
       }
 
       return averagedVizRect;
@@ -286,6 +286,9 @@ namespace Cozmo.Minigame.DroneMode {
     private void ShowTextForReticle(IVisibleInCamera reticleFocus, DroneModeCameraReticle reticle) {
       if (reticle != null) {
         if (!string.IsNullOrEmpty(reticleFocus.ReticleLabelLocKey)) {
+          // Never show text on the reticle itself
+          reticle.ShowReticleLabelText(false);
+
           string text = "";
           if (!string.IsNullOrEmpty(reticleFocus.ReticleLabelStringArg)) {
             text = Localization.GetWithArgs(reticleFocus.ReticleLabelLocKey, reticleFocus.ReticleLabelStringArg);
@@ -295,12 +298,9 @@ namespace Cozmo.Minigame.DroneMode {
           }
           _FocusedObjectFrameContainer.gameObject.SetActive(true);
           _FocusedObjectTextLabel.text = text;
-          reticle.ReticleLabel = text;
-          reticle.ShowReticleLabelText(false);
         }
         else {
           _FocusedObjectFrameContainer.gameObject.SetActive(false);
-          reticle.ShowReticleLabelText(false);
         }
       }
       else {

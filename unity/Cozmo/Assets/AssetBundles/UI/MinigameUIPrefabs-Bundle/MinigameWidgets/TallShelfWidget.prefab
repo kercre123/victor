@@ -160,6 +160,7 @@ MonoBehaviour:
   _StartYLocalPos: -475
   _GrowTweenDurationSeconds: 0.3
   _CaratContainer: {fileID: 22443070}
+  _CaratImage: {fileID: 11476672}
   _CaratTweenDurationSeconds: 0.5
   _CaratExitTweenDurationSeconds: 0.3
   _CaratLeftOffscreenLocalXPos: -1500

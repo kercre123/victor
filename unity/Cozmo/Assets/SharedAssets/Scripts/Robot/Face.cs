@@ -62,7 +62,7 @@ public class Face : IVisibleInCamera { // TODO Implement IHaveCameraPosition
   }
   public string ReticleLabelStringArg {
     get {
-      return this.Name ?? this.ID.ToString();
+      return this.Name;
     }
   }
 
@@ -88,6 +88,8 @@ public class Face : IVisibleInCamera { // TODO Implement IHaveCameraPosition
   public void UpdateInfo(G2U.RobotObservedFace message) {
     RobotID = message.robotID;
     ID = message.faceID;
+
+    Name = message.name;
 
     Vector3 newPos = new Vector3(message.pose.x, message.pose.y, message.pose.z);
 
