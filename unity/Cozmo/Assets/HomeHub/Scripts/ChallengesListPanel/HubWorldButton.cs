@@ -66,11 +66,13 @@ namespace Cozmo.HubWorld {
     }
 
     private void HandlePointerDown() {
-      _IconContainer.localScale = new Vector3(0.9f, 0.9f, 1.0f);
+      _AvailableContainer.transform.localScale = new Vector3(0.9f, 0.9f, 1.0f);
+      _UnavailableContainer.transform.localScale = new Vector3(0.9f, 0.9f, 1.0f);
     }
 
     private void HandlePointerUp() {
-      _IconContainer.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+      _AvailableContainer.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+      _UnavailableContainer.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
     }
 
     private void Update() {

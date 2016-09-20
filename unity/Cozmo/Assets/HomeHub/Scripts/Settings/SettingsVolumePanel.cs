@@ -17,29 +17,24 @@ namespace Cozmo.Settings {
     [SerializeField]
     private CozmoToggleButton _HighRobotVolumeToggle;
 
+    // Music volume slider
     [SerializeField]
     private Slider _DeviceVolumeSlider;
 
     private void Start() {
       Dictionary<VolumeType, float> currentVolumePrefs = DataPersistenceManager.Instance.Data.DeviceSettings.VolumePreferences;
-      float sumVolume = 0f;
-      int numVolumeSettings = 0;
-      float robotVolume = 1f;
-      foreach (var volumeSetting in currentVolumePrefs) {
-        if (volumeSetting.Key == VolumeType.Robot) {
-          robotVolume = volumeSetting.Value;
-        }
-        else {
-          sumVolume += volumeSetting.Value;
-          numVolumeSettings++;
-        }
+
+      float robotVolume = 0.0f;
+      if (!currentVolumePrefs.TryGetValue(VolumeType.Robot, out robotVolume)) {
+        robotVolume = DefaultSettingsValuesConfig.Instance.DefaultRobotVolumeLevelValue;
       }
-      float masterVolume = 1f;
-      if (numVolumeSettings != 0) {
-        masterVolume = sumVolume / numVolumeSettings;
+
+      float musicVolume = 0.0f;
+      if (!currentVolumePrefs.TryGetValue(VolumeType.Music, out musicVolume)) {
+        musicVolume = DefaultSettingsValuesConfig.Instance.DefaultMusicVolumeLevel;
       }
-      _DeviceVolumeSlider.value = masterVolume;
-      _DeviceVolumeSlider.onValueChanged.AddListener(HandleMasterVolumeValueChanged);
+      _DeviceVolumeSlider.value = musicVolume;
+      _DeviceVolumeSlider.onValueChanged.AddListener(HandleMusicVolumeValueChanged);
 
       _LowRobotVolumeToggle.Initialize(HandleLowRobotVolumeTogglePressed, "settings_low_robot_volume", "settings_panel");
       _MediumRobotVolumeToggle.Initialize(HandleMediumRobotVolumeTogglePressed, "settings_medium_robot_volume", "settings_panel");
@@ -56,11 +51,8 @@ namespace Cozmo.Settings {
       }
     }
 
-    private void HandleMasterVolumeValueChanged(float volume) {
-      GameAudioClient.SetVolumeValue(VolumeType.VO, volume);
+    private void HandleMusicVolumeValueChanged(float volume) {
       GameAudioClient.SetVolumeValue(VolumeType.Music, volume);
-      GameAudioClient.SetVolumeValue(VolumeType.SFX, volume);
-      GameAudioClient.SetVolumeValue(VolumeType.UI, volume);
     }
 
     private void HandleLowRobotVolumeTogglePressed() {

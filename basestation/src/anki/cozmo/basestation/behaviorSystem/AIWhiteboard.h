@@ -84,6 +84,8 @@ public:
   
   // what to do when the robot is delocalized
   void OnRobotDelocalized();
+  // what to do when the robot relocalizes to a cube
+  void OnRobotRelocalized();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Possible Objects

@@ -14,7 +14,7 @@
                     "animationGroups",
                     "faceAnimations"
                 ],
-                "version": "1247"
+                "version": "1256"
             },
             "cozmosoundbanks": {
                 "package_name": "GeneratedSoundBanks.tar.gz",
@@ -26,11 +26,11 @@
     "teamcity": {
         "builds": {
             "coretech_external": {
-                "build_id": "13365",
+                "build_id": "28351",
                 "build_type_id": "Cte_Master",
                 "extension": "tar.gz",
                 "package_name": "Cte",
-                "version": "151"
+                "version": "153"
             },
             "firmware": {
                 "build_id": "28174",

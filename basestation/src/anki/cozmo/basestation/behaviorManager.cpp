@@ -59,6 +59,7 @@ namespace Cozmo {
 static const char* kDemoChooserConfigKey = "demoBehaviorChooserConfig";
 static const char* kSelectionChooserConfigKey = "selectionBehaviorChooserConfig";
 static const char* kFreeplayChooserConfigKey = "freeplayBehaviorChooserConfig";
+static const char* kMeetCozmoChooserConfigKey = "meetCozmoBehaviorChooserConfig";
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -110,6 +111,10 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
     const Json::Value& freeplayChooserConfigJson = config[kFreeplayChooserConfigKey];
     _freeplayChooser = BehaviorChooserFactory::CreateBehaviorChooser(_robot, freeplayChooserConfigJson);
 
+    // meetCozmo chooser
+    const Json::Value& meetCozmoChooserConfigJson = config[kMeetCozmoChooserConfigKey];
+    _meetCozmoChooser = BehaviorChooserFactory::CreateBehaviorChooser(_robot, meetCozmoChooserConfigJson);
+    
     // start with selection that defaults to NoneBehavior
     SetBehaviorChooser( _selectionChooser );
 
@@ -171,6 +176,11 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
                                    {
                                      SetBehaviorChooser(_demoChooser);
                                      _robot.GetLightsComponent().SetEnableComponent(true);
+                                     break;
+                                   }
+                                   case BehaviorChooserType::MeetCozmoFindFaces:
+                                   {
+                                     SetBehaviorChooser(_meetCozmoChooser);
                                      break;
                                    }
                                    default:

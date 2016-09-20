@@ -605,7 +605,7 @@ public class HockeyApp : MonoBehaviour {
 #if (!UNITY_EDITOR)
     WriteLogToDisk(logString, stackTrace);
     // Just print to the log, don't upload in production, thats what Hockeyapp is for.
-    DAS.Info("exception.devlog", logString + " Stack: " + stackTrace);
+    DAS.Warn("unity.exception", logString, null, DASUtil.FormatExtraData(stackTrace));
 #endif
   }
 

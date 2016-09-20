@@ -17,7 +17,7 @@ public class DasTracker {
   private double _RunningSessionTime;
   private double? _RunningRobotTime = null;
 
-  public void OnAppBackgrounded() {
+  public void TrackAppBackgrounded() {
     UpdateRunningTimers();
     _LastBackgroundUtcTime = DateTime.UtcNow;
 
@@ -27,7 +27,7 @@ public class DasTracker {
     HandleSessionEnd();
   }
 
-  public void OnAppResumed() {
+  public void TrackAppResumed() {
     _LastResumeUtcTime = DateTime.UtcNow;
     _LastTimerUpdateUtcTime = DateTime.UtcNow;
     {
@@ -44,13 +44,13 @@ public class DasTracker {
     }
   }
 
-  public void OnAppStartup() {
+  public void TrackAppStartup() {
     _AppStartupUtcTime = DateTime.UtcNow;
     _LastTimerUpdateUtcTime = DateTime.UtcNow;
     HandleSessionStart();
   }
 
-  public void OnAppQuit() {
+  public void TrackAppQuit() {
     UpdateRunningTimers();
     if (_LastBackgroundUtcTime > _AppStartupUtcTime && _LastBackgroundUtcTime > _LastResumeUtcTime) {
       // if app has been backgrounded more recently than resumed, session has already ended
@@ -63,7 +63,7 @@ public class DasTracker {
     DAS.Event("app.apprun.length", Convert.ToUInt32(_RunningApprunTime).ToString());
   }
 
-  public void OnRobotConnected() {
+  public void TrackRobotConnected() {
     UpdateRunningTimers(); // otherwise pre-connect time will get included in running robot timer
     _RunningRobotTime = 0.0;
     _CurrentRobotStartUtcTime = DateTime.UtcNow;
@@ -72,31 +72,45 @@ public class DasTracker {
     DAS.Event("app.connected_session.start", "");
   }
 
-  public void OnRobotDisconnected() {
+  public void TrackRobotDisconnected(byte robotId) {
     if (_RunningRobotTime == null) {
       return;
     }
     UpdateRunningTimers();
-    uint totalConnectedTime = Convert.ToUInt32((DateTime.UtcNow - _CurrentRobotStartUtcTime).TotalSeconds);
-    var dataDict = GetDataDictionary("$data", totalConnectedTime.ToString());
 
-    // app.connected_session.end - include:
-    //   - time spent in session (w/o backgrounding)
-    //   - $data = time spent in session including backgrounding
-    DAS.Event("app.connected_session.end", Convert.ToUInt32(_RunningRobotTime).ToString(), null, dataDict);
+    {
+      uint totalConnectedTime = Convert.ToUInt32((DateTime.UtcNow - _CurrentRobotStartUtcTime).TotalSeconds);
+      var dataDict = GetDataDictionary("$data", totalConnectedTime.ToString());
+
+      // app.connected_session.end - include:
+      //   - time spent in session (w/o backgrounding)
+      //   - $data = time spent in session including backgrounding
+      DAS.Event("app.connected_session.end", Convert.ToUInt32(_RunningRobotTime).ToString(), null, dataDict);
+    }
+    {
+      var robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot.ID == robotId) {
+        var dataDict = GetDataDictionary("$phys", robot.SerialNumber.ToString("X8"));
+
+        // app.connection_lost - included:
+        //   - reason for connection loss
+        //   - $phys
+        DAS.Event("app.connection_lost", "disconnected", null, dataDict);
+      }
+    }
 
     _RunningRobotTime = null;
   }
 
-  public void OnFirstTimeConnectStarted() {
+  public void TrackFirstTimeConnectStarted() {
     _FirstTimeConnectActive = true;
   }
 
-  public void OnFirstTimeConnectEnded() {
+  public void TrackFirstTimeConnectEnded() {
     _FirstTimeConnectActive = false;
   }
 
-  public void OnConnectFlowStarted() {
+  public void TrackConnectFlowStarted() {
     // app.connect.start - 0/1 if in out of box experience
     DAS.Event("app.connect.start", _FirstTimeConnectActive ? "1" : "0");
 
@@ -104,7 +118,7 @@ public class DasTracker {
     _ConnectSessionIsFirstTime = _FirstTimeConnectActive; // in case this is reset before OnFlowEnded()
   }
 
-  public void OnConnectFlowEnded() {
+  public void TrackConnectFlowEnded() {
     // we're leaving connect flow - do we have a robot connection active?
     if (_RunningRobotTime != null) {
       HandleConnectSuccess();
@@ -121,7 +135,7 @@ public class DasTracker {
     }
   }
 
-  public void OnSearchForCozmoFailed() {
+  public void TrackSearchForCozmoFailed() {
     var dataDict = GetDataDictionary("$data", _ConnectSessionIsFirstTime ? "1" : "0");
     uint secondsInFlow = Convert.ToUInt32((DateTime.UtcNow - _ConnectFlowStartUtcTime).TotalSeconds);
 
@@ -131,14 +145,14 @@ public class DasTracker {
     DAS.Event("app.connect.fail", secondsInFlow.ToString(), null, dataDict);
   }
 
-  public void OnWifiInstructionsStarted() {
+  public void TrackWifiInstructionsStarted() {
     // app.connect.wifi.start - 0/1 if in out of box experience
     DAS.Event("app.connect.wifi.start", _ConnectSessionIsFirstTime ? "1" : "0");
 
     _WifiFlowStartUtcTime = DateTime.UtcNow;
   }
 
-  public void OnWifiInstructionsEnded() {
+  public void TrackWifiInstructionsEnded() {
     var dataDict = GetDataDictionary("$data", _ConnectSessionIsFirstTime ? "1" : "0");
     uint secondsInFlow = Convert.ToUInt32((DateTime.UtcNow - _WifiFlowStartUtcTime).TotalSeconds);
 
@@ -148,9 +162,48 @@ public class DasTracker {
     DAS.Event("app.connect.wifi.complete", secondsInFlow.ToString(), null, dataDict);
   }
 
-  public void OnWifiInstructionsGetHelp() {
+  public void TrackWifiInstructionsGetHelp() {
     // app.connect.wifi.get_help - no extra data
     DAS.Event("app.connect.wifi.get_help", "");
+  }
+
+  public void TrackChargerPromptEntered() {
+    // app.connect.charger_prompt - no extra data
+    DAS.Event("app.connect.charger_prompt", "");
+  }
+
+  public void TrackChargerPromptConnect() {
+    // app.connect.charger_prompt.connect - no extra data
+    DAS.Event("app.connect.charger_prompt.connect", "");
+  }
+
+  public void TrackBirthDateEntered(DateTime date) {
+    // DateTime doesn't give us years so we have to do this instead, so dumb
+    // stackoverflow suggested something like this
+    date = date.AddYears(1);
+    var now = System.DateTime.Now;
+    int age = 0;
+    while (date < now && age < 200) {
+      date = date.AddYears(1);
+      age++;
+    }
+
+    // app.age_gate.age - entered age
+    DAS.Event("app.age_gate.age", age.ToString());
+  }
+
+  public void TrackCubePromptEntered() {
+    // app.connect.cubes_prompt - no extra data
+    DAS.Event("app.connect.cubes_prompt", "");
+  }
+
+  public void TrackIntroManagerRobotDisconnect(string viewName) {
+    if (string.IsNullOrEmpty(viewName)) {
+      return;
+    }
+
+    // app.connect.abort_to_title - view aborted from
+    DAS.Event("app.connect.abort_to_title", viewName);
   }
 
   private void HandleConnectSuccess() {

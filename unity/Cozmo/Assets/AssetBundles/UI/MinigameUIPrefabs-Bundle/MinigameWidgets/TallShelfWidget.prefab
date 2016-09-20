@@ -167,9 +167,6 @@ MonoBehaviour:
   _ContentContainer: {fileID: 22568676}
   _ContentFadeTweenDurationSeconds: 0.2
   _ContentTweenXOffset: -100
-  _BannerContainer: {fileID: 22466956}
-  _BannerWidgetPrefab: {fileID: 11461144, guid: dce7dd2a487f34d82bfde4e18a754998,
-    type: 2}
   _GameDoneButton: {fileID: 0}
   _ShelfText: {fileID: 11466064}
 --- !u!114 &11439268
@@ -247,7 +244,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: 56df56397851e4aa9ad046273744acb9, type: 3}
+  m_Sprite: {fileID: 21300000, guid: cff51a56a6ecf463dbe9b0310cf01acb, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

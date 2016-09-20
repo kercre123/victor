@@ -80,11 +80,11 @@ public class CozmoUnlockableTile : MonoBehaviour {
   }
 
   private void HandlePointerDown() {
-    transform.localScale = new Vector3(0.9f, 0.9f, 1.0f);
+    _TileButton.transform.localScale = new Vector3(0.9f, 0.9f, 1.0f);
   }
 
   private void HandlePointerUp() {
-    transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+    _TileButton.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
   }
 
   private void HandleButtonTapped() {

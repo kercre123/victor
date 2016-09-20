@@ -31,7 +31,7 @@ public class FirstTimeConnectDialog : MonoBehaviour {
 
   private void Awake() {
 
-    DasTracker.Instance.OnFirstTimeConnectStarted();
+    DasTracker.Instance.TrackFirstTimeConnectStarted();
 
     if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
       _StartButton.Initialize(HandleMockButton, "start_button", "first_time_connect_dialog");
@@ -58,7 +58,7 @@ public class FirstTimeConnectDialog : MonoBehaviour {
       GameObject.Destroy(_ConnectionFlowInstance.gameObject);
     }
 
-    DasTracker.Instance.OnFirstTimeConnectEnded();
+    DasTracker.Instance.TrackFirstTimeConnectEnded();
   }
 
   private void HandleStartButton() {

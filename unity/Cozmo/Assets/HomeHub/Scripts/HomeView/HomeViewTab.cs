@@ -7,6 +7,9 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private TabPanel[] _TabViewPanelPrefabs;
 
+    [SerializeField]
+    private bool _DisableGameRequestsWhenOpen;
+
     private List<TabPanel> _TabPanelsList = new List<TabPanel>();
 
     [SerializeField]
@@ -22,7 +25,15 @@ namespace Cozmo.HomeHub {
         _TabPanelsList.Add(newTabPanel);
       }
 
+      if (_DisableGameRequestsWhenOpen && (RobotEngineManager.Instance.CurrentRobot != null)) {
+        RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.NoGame);
+      }
     }
 
+    void OnDestroy() {
+      if (_DisableGameRequestsWhenOpen && (RobotEngineManager.Instance.CurrentRobot != null)) {
+        RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.All);
+      }
+    }
   }
 }

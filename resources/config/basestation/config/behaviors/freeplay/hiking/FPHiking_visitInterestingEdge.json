@@ -13,6 +13,15 @@
   "behaviorGroups": [
     "FP_Hiking"
   ],
+
+  "runningPenalty": {
+    "nodes": [
+      {
+        "x": 0.0,
+        "y": 3.0
+      }
+    ]
+  },
   
   "params": {
   

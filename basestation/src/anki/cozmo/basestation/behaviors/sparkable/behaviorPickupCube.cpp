@@ -252,7 +252,9 @@ void BehaviorPickUpCube::FailedToPickupObject(Robot& robot)
 {
   // mark this as failed to pickup so that we don't retry
   const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlockID);
-  robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PickUpObject);
+  if(failedObject != nullptr){
+    robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PickUpObject);
+  }
   _targetBlockID.UnSet();
   
 }

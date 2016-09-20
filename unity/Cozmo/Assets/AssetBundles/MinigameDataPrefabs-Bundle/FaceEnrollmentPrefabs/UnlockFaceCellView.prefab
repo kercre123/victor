@@ -365,8 +365,8 @@ MonoBehaviour:
   _DASEventViewType: 0
   _CloseDialogOnTapOutside: 1
   _OptionalCloseDialogButton: {fileID: 0}
+  _LayerPriority: 0
   DimBackground: 1
-  DimBackgroundPrefabOverride: {fileID: 0}
   _OpenAudioEvent:
     _Event: Invalid
     _EventType: GenericEvent
@@ -408,7 +408,7 @@ MonoBehaviour:
     disabledColor: {r: 1, g: 1, b: 1, a: 0}
   _GlintAnimator: {fileID: 11489122}
   _UISoundEvent:
-    _Event: Play__Ui__Click_General
+    _Event: Play__Ui__Cozmo_Upgrade
     _EventType: Ui
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11464460

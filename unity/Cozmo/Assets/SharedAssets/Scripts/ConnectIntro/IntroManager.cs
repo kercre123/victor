@@ -27,8 +27,6 @@ public class IntroManager : MonoBehaviour {
   private HubWorldBase _HubWorldPrefab;
   private HubWorldBase _HubWorldInstance;
 
-  private ScriptedSequences.ISimpleAsyncToken _IntroSequenceDoneToken;
-
   void Awake() {
     if (_Instance != null) {
       DAS.Error("IntroManager.Awake", "There should only be one IntroManager");
@@ -78,6 +76,7 @@ public class IntroManager : MonoBehaviour {
   }
 
   private void OnRobotDisconnect(object message) {
+    DasTracker.Instance.TrackIntroManagerRobotDisconnect(UIManager.GetTopViewName());
     if (null != _HubWorldInstance) {
       _HubWorldInstance.DestroyHubWorld();
     }

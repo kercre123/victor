@@ -467,6 +467,12 @@ namespace Anki {
           yield break;
         }
 
+        if (loadedAssetBundle.AssetBundle == null) {
+          Log(LogType.Error, "Couldn't load asset " + assetName + " from asset bundle " + assetBundleName + ". The asset bundle is null");
+          CallCallback(callback, null);
+          yield break;
+        }
+
         AssetBundleRequest request = loadedAssetBundle.AssetBundle.LoadAssetAsync<AssetType>(assetName);
         yield return request;
 

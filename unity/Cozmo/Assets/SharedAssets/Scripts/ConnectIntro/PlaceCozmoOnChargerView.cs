@@ -17,10 +17,12 @@ public class PlaceCozmoOnChargerView : Cozmo.UI.BaseView {
       _KeepCozmoOnChargerConnectViewInstance = UIManager.OpenView(_KeepCozmoOnChargerConnectViewPrefab);
       _KeepCozmoOnChargerConnectViewInstance.OnConnectButton += HandleConnectButton;
     }, "continue_button", this.DASEventViewName);
+    DasTracker.Instance.TrackChargerPromptEntered();
   }
 
   private void HandleConnectButton() {
     if (OnConnectButton != null) {
+      DasTracker.Instance.TrackChargerPromptConnect();
       OnConnectButton();
     }
   }

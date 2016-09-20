@@ -186,7 +186,7 @@ namespace Anki {
           }
 
           // Get stored volume parameters
-          System.Collections.Generic.Dictionary<VolumeParameters.VolumeType, float> volumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.VolumePreferences;
+          Dictionary<VolumeParameters.VolumeType, float> volumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.VolumePreferences;
           // Set each parameters
           foreach (VolumeParameters.VolumeType aParameter in volumeParamList) {
             float aValue;
@@ -199,7 +199,7 @@ namespace Anki {
         }
 
         // Define default volume values
-        static private float GetDefaultVolume(VolumeParameters.VolumeType volType) {
+        static public float GetDefaultVolume(VolumeParameters.VolumeType volType) {
           float value = 1.0f;
           switch (volType) {
           case Anki.Cozmo.Audio.VolumeParameters.VolumeType.Music:

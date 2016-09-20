@@ -55,8 +55,6 @@ namespace FaceEnrollment {
     }
 
     protected override void InitializeGame(MinigameConfigBase minigameConfig) {
-      // make cozmo look up
-      CurrentRobot.SetDefaultHeadAndLiftState(true, CozmoUtil.kIdealFaceViewHeadValue, 0.0f);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID>(HandleChangedObservedFaceID);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(HandleEnrolledFace);
       CurrentRobot.OnEnrolledFaceRemoved += HandleEraseEnrolledFace;
@@ -68,21 +66,31 @@ namespace FaceEnrollment {
     }
 
     protected override void AddDisabledReactionaryBehaviors() {
-      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.AcknowledgeFace);
-      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.AcknowledgeObject);
-      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToCubeMoved);
-      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToCliff);
-      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToPickup);
-      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement);
-      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToFrustration);
+      // meet cozmo has special logic for this stuff
+    }
 
-      // for some reason this became a reactionary behavior but isn't named like one...
-      _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.KnockOverCubes);
+    private void SetReactionaryBehaviors(bool enable) {
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.AcknowledgeFace, enable);
+        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.AcknowledgeObject, enable);
+        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToCubeMoved, enable);
+        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToCliff, enable);
+        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToPickup, enable);
+        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement, enable);
+        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.ReactToFrustration, enable);
+        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior(_kReactionaryBehaviorOwnerId, Anki.Cozmo.BehaviorType.KnockOverCubes, enable);
+      }
     }
 
     protected override void SetupViewAfterCozmoReady(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
       base.SetupViewAfterCozmoReady(newView, data);
-      ShowFaceListSlide(newView);
+      if (RobotEngineManager.Instance.CurrentRobot.EnrolledFaces.Count == 0) {
+        EnterNameForNewFace(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName);
+      }
+      else {
+        ShowFaceListSlide(newView);
+      }
+
     }
 
     private void HandleChangedObservedFaceID(Anki.Cozmo.ExternalInterface.RobotChangedObservedFaceID message) {
@@ -102,14 +110,22 @@ namespace FaceEnrollment {
       _FaceListSlideInstance.OnDeleteEnrolledFace += RequestDeleteEnrolledFace;
       _FaceListSlideInstance.OnReEnrollFaceRequested += RequestReEnrollFace;
       newView.ShowQuitButton();
+      CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.MeetCozmoFindFaces);
+      SetReactionaryBehaviors(true);
     }
 
     private void CleanupFaceListSlide() {
-      _FaceListSlideInstance.OnEnrollNewFaceRequested -= EnterNameForNewFace;
-      _FaceListSlideInstance.OnEditNameRequested -= EditExistingName;
-      _FaceListSlideInstance.OnDeleteEnrolledFace -= RequestDeleteEnrolledFace;
-      _FaceListSlideInstance.OnReEnrollFaceRequested -= RequestReEnrollFace;
+      if (_FaceListSlideInstance != null) {
+        _FaceListSlideInstance.OnEnrollNewFaceRequested -= EnterNameForNewFace;
+        _FaceListSlideInstance.OnEditNameRequested -= EditExistingName;
+        _FaceListSlideInstance.OnDeleteEnrolledFace -= RequestDeleteEnrolledFace;
+        _FaceListSlideInstance.OnReEnrollFaceRequested -= RequestReEnrollFace;
+      }
+
       SharedMinigameView.HideShelf();
+      CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
+      CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+      SetReactionaryBehaviors(false);
     }
 
     private void EditExistingName(int faceID, string exisitingName) {
@@ -149,6 +165,7 @@ namespace FaceEnrollment {
     }
 
     private void RequestReEnrollFace(int faceId, string faceName) {
+      CleanupFaceListSlide();
       _ReEnrollFaceID = faceId;
       _NameForFace = faceName;
 
@@ -200,8 +217,10 @@ namespace FaceEnrollment {
 
     private void HandleRobotRenamedEnrolledFace(int faceId, string faceName) {
       CurrentRobot.OnEnrolledFaceRenamed -= HandleRobotRenamedEnrolledFace;
-      CurrentRobot.SayTextWithEvent(faceName, Anki.Cozmo.AnimationTrigger.MeetCozmoRenameFaceSayName);
-      EditOrEnrollFaceComplete(true);
+      SharedMinigameView.HideBackButton();
+      CurrentRobot.SayTextWithEvent(faceName, Anki.Cozmo.AnimationTrigger.MeetCozmoRenameFaceSayName, callback: (success) => {
+        EditOrEnrollFaceComplete(true);
+      });
     }
 
     private void HandleInstructionsSlideEntered() {
@@ -237,6 +256,9 @@ namespace FaceEnrollment {
       if (message.result == Anki.Cozmo.ActionResult.CANCELLED || message.result == Anki.Cozmo.ActionResult.FAILURE_NOT_STARTED) {
         // start listening for when the reactionary behavior is done so we can try again
         RobotEngineManager.Instance.AddCallback<ReactionaryBehaviorTransition>(RetryFaceEnrollmentOnReactionaryBehaviorEnd);
+        if (message.completionInfo.faceEnrollmentCompleted.isFaceScanning) {
+          HandleSetIdleAndGetOutAnim();
+        }
         return;
       }
 
@@ -271,10 +293,17 @@ namespace FaceEnrollment {
           alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel);
           _ErrorAlertView = alertView;
         }
+
+        if (message.completionInfo.faceEnrollmentCompleted.isFaceScanning) {
+          HandleSetIdleAndGetOutAnim();
+        }
       }
       else {
-        // log to das
+        // log success to das
         DAS.Event("robot.face_enrollment", message.completionInfo.faceEnrollmentCompleted.faceID.ToString());
+
+        // since we succeeded we have to reset the idle
+        CurrentRobot.PopIdleAnimation();
 
         if (CurrentRobot.EnrolledFaces.ContainsKey(message.completionInfo.faceEnrollmentCompleted.faceID)) {
           DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Re-enrolled existing face: " + _NameForFace);
@@ -290,7 +319,7 @@ namespace FaceEnrollment {
           DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Enrolled new face: " + _NameForFace);
           EnrolledNewFaceAnimationSequence();
 
-          // log to das
+          // log using up another face slot to das
           DAS.Event("robot.face_slots_used", CurrentRobot.EnrolledFaces.Count.ToString(), null,
             new Dictionary<string, string>() { { "$data", "1" } });
         }
@@ -310,6 +339,11 @@ namespace FaceEnrollment {
         ContextManager.Instance.AppFlash(playChime: true);
         UIManager.CloseView(_FaceEnrollmentInstructionsViewInstance);
       }
+    }
+
+    private void HandleSetIdleAndGetOutAnim() {
+      CurrentRobot.PopIdleAnimation();
+      CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.MeetCozmoLookFaceGetOut);
     }
 
     private void EnrolledNewFaceAnimationSequence() {
@@ -383,10 +417,12 @@ namespace FaceEnrollment {
     private void RequestDeleteEnrolledFace(int faceID) {
       Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_NoText);
 
+      alertView.SetDasEventName("delete_enrolled_face_confirm");
       alertView.SetCloseButtonEnabled(false);
       alertView.SetPrimaryButton(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmButton, () => HandleDeleteEnrolledFaceConfirmButton(faceID));
       alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel);
-      alertView.TitleLocKey = Localization.GetWithArgs(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmTitle, CurrentRobot.EnrolledFaces[faceID]);
+      alertView.TitleLocKey = LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDeleteConfirmTitle;
+      alertView.SetTitleArgs(new object[] { CurrentRobot.EnrolledFaces[faceID] });
       _DeleteConfirmationAlertView = alertView;
     }
 
@@ -423,6 +459,9 @@ namespace FaceEnrollment {
     }
 
     protected override void CleanUpOnDestroy() {
+
+      SetReactionaryBehaviors(true);
+
       SharedMinigameView.HideGameStateSlide();
       // turn the default head and lift state off
       if (CurrentRobot != null) {

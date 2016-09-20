@@ -128,6 +128,10 @@ namespace Cozmo {
         PlayCaratTween(xWorldPos, _CaratTweenDurationSeconds, isWorldPos: true);
       }
 
+      public void TintCarat(Color tint) {
+        _CaratContainer.GetComponentInChildren<Image>().color = tint;
+      }
+
       private void PlayCaratTween(float targetPos, float duration, bool isWorldPos) {
         ResetTween(_CaratTween);
         if (isWorldPos) {

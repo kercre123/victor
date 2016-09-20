@@ -63,11 +63,12 @@ public class OnboardingManager : MonoBehaviour {
   }
   #endregion
 
-#if ENABLE_DEBUG_PANEL
+#if UNITY_EDITOR
   private bool _DebugDisplayOn = true;
 #else
   private bool _DebugDisplayOn = false;
 #endif
+
   private void OnEnable() {
     if (Instance != null && Instance != this) {
       SetSpecificStage(-1);
@@ -78,6 +79,7 @@ public class OnboardingManager : MonoBehaviour {
       Instance = this;
       GameEventManager.Instance.OnGameEvent += HandleDailyGoalCompleted;
       Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("Toggle Onboarding Debug Display", "Onboarding", ToggleOnboardingDebugDisplay);
+      Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("Complete All Onboarding", "Onboarding", DebugCompleteAllOnboarding);
     }
   }
 
@@ -336,6 +338,13 @@ public class OnboardingManager : MonoBehaviour {
         Instance._OnboardingUIInstance.RemoveDebugButtons();
       }
     }
+  }
+
+  public void DebugCompleteAllOnboarding(string param) {
+    OnboardingManager.Instance.CompletePhase(OnboardingPhases.Home);
+    OnboardingManager.Instance.CompletePhase(OnboardingPhases.DailyGoals);
+    OnboardingManager.Instance.CompletePhase(OnboardingPhases.Loot);
+    OnboardingManager.Instance.CompletePhase(OnboardingPhases.Upgrades);
   }
 
   public void DebugSkipOne() {

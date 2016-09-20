@@ -3161,8 +3161,13 @@ CONSOLE_VAR(bool, kAddMarkerlessObjectsToMemMap, "BlockWorld.MemoryMap", false);
     
     const bool poseIsGood = ( RESULT_OK == poseRet ) && (p != nullptr);
     if ( !poseIsGood ) {
-      PRINT_NAMED_ERROR("BlockWorld.AddVisionOverheadEdges.PoseNotGood", "Pose not good for timestamp %d", frameInfo.timestamp);
-      return RESULT_FAIL;
+      // this can happen if robot status messages are lost
+      PRINT_CH_INFO("BlockWorld", "BlockWorld.AddVisionOverheadEdges.HistoricalPoseNotFound",
+                    "Pose not found for timestamp %u (hist: %u to %u). Edges ignored for this timestamp.",
+                    frameInfo.timestamp,
+                    _robot->GetPoseHistory()->GetOldestTimeStamp(),
+                    _robot->GetPoseHistory()->GetNewestTimeStamp());
+      return RESULT_OK;
     }
     
     // If we can't transfor the observedPose to the current origin, it's ok, that means that the timestamp

@@ -51,6 +51,7 @@ public class FaceEnrollmentCell : MonoBehaviour {
     if (OnReEnrollFaceRequested != null) {
 
       Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab);
+      alertView.SetDasEventName("reenroll_face_confirm");
       alertView.SetCloseButtonEnabled(false);
       alertView.TitleLocKey = LocalizationKeys.kFaceEnrollmentReenrollmentAlertTitle;
       alertView.SetTitleArgs(new object[] { _FaceName });

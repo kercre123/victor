@@ -8,6 +8,24 @@ namespace Cozmo.Settings {
       HIGH
     }
 
+    public float GetRobotVolumeValue(RobotVolumeLevels level) {
+      float volValue = 0.0f;
+      switch (level) {
+      case RobotVolumeLevels.LOW:
+        volValue = LowRobotVolume;
+        break;
+
+      case RobotVolumeLevels.MEDIUM:
+        volValue = MediumRobotVolume;
+        break;
+
+      case RobotVolumeLevels.HIGH:
+        volValue = HighRobotVolume;
+        break;
+      }
+      return volValue;
+    }
+
     private static DefaultSettingsValuesConfig _sInstance;
     public static DefaultSettingsValuesConfig Instance { get { return _sInstance; } }
 
@@ -29,10 +47,11 @@ namespace Cozmo.Settings {
 
     private RobotVolumeLevels _DefaultRobotVolumeLevel = RobotVolumeLevels.HIGH;
     public RobotVolumeLevels DefaultRobotVolumeLevel { get { return _DefaultRobotVolumeLevel; } }
+    public float DefaultRobotVolumeLevelValue { get { return GetRobotVolumeValue(DefaultRobotVolumeLevel); } }
 
     [SerializeField, Range(0f, 1f)]
-    private float _DefaultMasterVolume = 1f;
-    public float DefaultMasterVolumeLevel { get { return _DefaultMasterVolume; } }
+    private float _DefaultMusicVolume = 1f;
+    public float DefaultMusicVolumeLevel { get { return _DefaultMusicVolume; } }
 
     [SerializeField, Range(-1f, 120f)]
     public float _AppBackground_TimeTilSleep_sec = 20f;

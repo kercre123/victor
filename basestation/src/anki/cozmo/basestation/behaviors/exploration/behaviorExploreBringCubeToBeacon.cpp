@@ -445,7 +445,7 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(Robot& robot, const ObjectID
     // failed to stack on the bottom object, notify the whiteboard
     if ( stackOnCubeFinalFail ) {
       const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID( bottomCubeID );
-      if ( failedObject ) {
+      if ( nullptr != failedObject ) {
         robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::StackOnObject);
       }
       
@@ -519,7 +519,7 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(Robot& robot, const Pose3d& 
     // failed to place this cube at this location
     if ( placeAtCubeFinalFail ) {
       const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID( _selectedObjectID );
-      if ( failedObject ) {
+      if ( nullptr != failedObject ) {
         robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PlaceObjectAt, pose);
       }
 
@@ -621,7 +621,8 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
   const AIBeacon* beacon, const Robot& robot) const
 {
   // here we would check if stacking is (un)locked
-  const bool canStackCubes = robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::StackTwoCubes);
+  const bool forFreeplay = true;
+  const bool canStackCubes = robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::StackTwoCubes, forFreeplay);
   if ( !canStackCubes ) {
     return nullptr;
   }
@@ -690,7 +691,7 @@ bool BehaviorExploreBringCubeToBeacon::FindFreePoseInBeacon(const ObservableObje
   Rotation3d beaconDirectionality(0.0f, kUpVector);
   {
     // TODO rsam put this utility somewhere: create Rotation3d from vector in XY plane
-    Vec3f beaconNormal = (beacon->GetPose().GetTranslation() - robot.GetPose().GetTranslation());
+    Vec3f beaconNormal = (beacon->GetPose().GetWithRespectToOrigin().GetTranslation() - robot.GetPose().GetTranslation());
     beaconNormal.z() = 0.0f;
     float distance = beaconNormal.MakeUnitLength();
     
@@ -709,7 +710,7 @@ bool BehaviorExploreBringCubeToBeacon::FindFreePoseInBeacon(const ObservableObje
     }
   }
   
-  const Vec3f& beaconCenter = beacon->GetPose().GetTranslation();
+  const Vec3f& beaconCenter = beacon->GetPose().GetWithRespectToOrigin().GetTranslation();
   LocationCalculator locCalc(object, beaconCenter, beaconDirectionality, beacon->GetRadius(), robot);
 
   const int kMaxRow = beacon->GetRadius() / locCalc.GetLocationOffset();

@@ -391,6 +391,8 @@ namespace Cozmo {
       return ClassName;
     }
     
+    void SetDuration(s32 duration_ms) { _durationTime_ms = duration_ms; }
+    
     virtual bool IsDone() override;
     
   protected:

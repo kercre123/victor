@@ -226,7 +226,7 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
                                    "Failed to verify roll, searching for block");
                   StartActing(new SearchForNearbyObjectAction(robot, _targetBlock),
                               [this](Robot& robot) {
-                                if( IsRunnable(robot) ) {
+                                if( IsRunnable(robot, true) ) {
                                   TransitionToPerformingAction(robot);
                                 }
                                 // TODO:(bn) if we actually succeeded here, we should play the success anim,

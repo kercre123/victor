@@ -288,10 +288,10 @@ MonoBehaviour:
     JsonValue: '"Playername Wins!"'
   ModifiedLocalReferences:
   - ObjectPath: ../
-    FieldName: ChallengeEndedDialog:_AdditionalInfoLabelContainer
+    FieldName: Cozmo.UI.ChallengeEndedDialog:_AdditionalInfoLabelContainer
     ReferencePath: 
   - ObjectPath: ../
-    FieldName: ChallengeEndedDialog:_AdditionalInfoLabel
+    FieldName: Cozmo.UI.ChallengeEndedDialog:_AdditionalInfoLabel
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11426434
@@ -447,7 +447,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _AdditionalInfoLabel: {fileID: 0}
-  _AdditionalInfoLabelContainer: {fileID: 0}
+  _AdditionalInfoLabelContainer: {fileID: 130496}
   _CenterContainer: {fileID: 22494148}
   _LeftContainer: {fileID: 22456518}
   _RightContainer: {fileID: 22461322}

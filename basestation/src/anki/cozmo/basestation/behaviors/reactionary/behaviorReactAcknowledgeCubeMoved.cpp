@@ -182,8 +182,9 @@ void BehaviorReactAcknowledgeCubeMoved::TransitionToTurningToLastLocationOfBlock
   const ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_activeObjectID );
   if(obj == nullptr)
   {
-    PRINT_NAMED_WARNING("BehaviorReactAcknowledgeCubeMoved.TransitionToTurningToLastLocationOfBlock",
-                        "The robot's context has changed and the block's location is no longer valid.");
+    PRINT_NAMED_WARNING("BehaviorReactAcknowledgeCubeMoved.TransitionToTurningToLastLocationOfBlock.NullObject",
+                        "The robot's context has changed and the block's location is no longer valid. (ObjectID=%d)",
+                        _activeObjectID.GetValue());
     return;
   }
   const Pose3d& blockPose = obj->GetPose();

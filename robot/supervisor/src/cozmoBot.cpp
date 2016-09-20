@@ -146,9 +146,6 @@ namespace Anki {
 #ifndef TARGET_K02
         lastResult = AnimationController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 227, "CozmoBot.InitFail.AnimationController", 305, "", 0);
-        
-        LiftController::StartCalibrationRoutine();
-        HeadController::StartCalibrationRoutine();
 #endif
 
         robotStateMessageCounter_ = 0;

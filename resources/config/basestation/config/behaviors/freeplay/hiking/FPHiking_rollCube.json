@@ -1,14 +1,11 @@
 {
   "behaviorType": "RollBlock",
-  "name": "RollBlockOnSide",
+  "name": "Hiking_RollCube",
   "requiredUnlockId": "RollCube",
   "behaviorGroups": [
-    "FP_PlayWithHumans",
-    "FP_Socialize",
-    "FP_PlayAlone"
-
+    "FP_Hiking"
   ],
   
-  "flatScore": 1.0,
+  "flatScore": 8.5,
   "put_down_animation_group": "RollBlockPutDown"
 }

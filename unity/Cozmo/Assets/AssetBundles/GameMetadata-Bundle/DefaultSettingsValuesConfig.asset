@@ -14,7 +14,7 @@ MonoBehaviour:
   _LowRobotVolume: 0.2
   _MediumRobotVolume: 0.6
   _HighRobotVolume: 1
-  _DefaultMasterVolume: 1
+  _DefaultMusicVolume: 1
   _AppBackground_TimeTilSleep_sec: 20
   _AppBackground_TimeTilDisconnect_sec: 45
   _AppBackground_SleepAnimGetInBuffer_sec: 3

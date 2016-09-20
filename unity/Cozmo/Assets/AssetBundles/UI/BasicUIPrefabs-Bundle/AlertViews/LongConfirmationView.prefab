@@ -442,8 +442,8 @@ MonoBehaviour:
   _DASEventViewType: 1
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
+  _LayerPriority: 0
   DimBackground: 1
-  DimBackgroundPrefabOverride: {fileID: 0}
   _OpenAudioEvent:
     _Event: Play__Ui__Window_Open
     _EventType: Ui
@@ -557,9 +557,6 @@ MonoBehaviour:
     FieldName: Cozmo.UI.LongConfirmationView:_ConfirmHoldButton
     ReferencePath: 
   ModifiedGlobalReferences:
-  - ObjectPath: HoldCozmoButton/ButtonGlint
-    FieldName: UnityEngine.UI.Image:m_Sprite
-    Reference: {fileID: 21300000, guid: 5c87a7d642dec440e9f1b9f5ed7bb12e, type: 3}
   - ObjectPath: HoldCozmoButton/ButtonBackground
     FieldName: UnityEngine.UI.Image:m_Sprite
     Reference: {fileID: 21300000, guid: 5c87a7d642dec440e9f1b9f5ed7bb12e, type: 3}

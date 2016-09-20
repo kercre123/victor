@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-public class CallbackManager
-{
+public class CallbackManager {
   private Dictionary<Type, CallbackBase> _Callbacks = new Dictionary<Type, CallbackBase>();
 
   public void AddCallback<T>(Action<T> callback) {

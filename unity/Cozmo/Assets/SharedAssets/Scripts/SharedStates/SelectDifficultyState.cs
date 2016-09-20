@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+using Cozmo.UI;
 
 public class SelectDifficultyState : State {
 
@@ -60,6 +63,7 @@ public class SelectDifficultyState : State {
     if (isUnlocked) {
       _Game.SharedMinigameView.HideLockedBackground();
       _Game.SharedMinigameView.ShowMiddleBackground();
+      _Game.SharedMinigameView.ShelfWidget.TintCarat(UIColorPalette.GameSetupColor);
       _SelectedDifficultyData.LoadAnimationPrefabData((UnityEngine.GameObject animationPrefab) => {
 
         // guards against async issue where two buttons were pressed right after each other.
@@ -70,6 +74,7 @@ public class SelectDifficultyState : State {
       });
     }
     else {
+      _Game.SharedMinigameView.ShelfWidget.TintCarat(UIColorPalette.LockedDifficultyCaratColor);
       _Game.SharedMinigameView.ShowWideSlideWithText(data.LockedDifficultyDescription.Key, null);
       _Game.SharedMinigameView.HideMiddleBackground();
       _Game.SharedMinigameView.ShowLockedBackground();

@@ -89,7 +89,7 @@ namespace Cozmo {
     class SearchForNearbyObjectAction : public IAction
     {
     public:
-      SearchForNearbyObjectAction(Robot& robot, int32_t desiredObjectID = -1);
+      SearchForNearbyObjectAction(Robot& robot, const ObjectID& desiredObjectID = ObjectID());
       virtual ~SearchForNearbyObjectAction();
 
       void SetSearchAngle(f32 minSearchAngle_rads, f32 maxSearchAngle_rads);
@@ -101,7 +101,7 @@ namespace Cozmo {
 
     private:
       CompoundActionSequential _compoundAction;
-      int32_t _desiredObjectID;
+      ObjectID _desiredObjectID;
 
       f32 _minWaitTime_s = 0.8f;
       f32 _maxWaitTime_s = 1.2f;

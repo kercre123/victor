@@ -26,6 +26,7 @@ GameObject:
   m_Component:
   - 224: {fileID: 22402478}
   - 114: {fileID: 11461144}
+  - 114: {fileID: 11432714}
   m_Layer: 5
   m_Name: BannerWidget
   m_TagString: Untagged
@@ -100,6 +101,22 @@ MonoBehaviour:
   m_Text: 
   _AllUppercase: 0
   GlowText: 0
+--- !u!114 &11432714
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 186396}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ebf6efdce762a43dbb74b1d03cc04273, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _AudioEventParameter:
+    _Event: Play__Sfx__Banner_Wipe
+    _EventType: Sfx
+  _PlayEvent: 4
+  _Delay: 0.25
 --- !u!114 &11461144
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -118,6 +135,7 @@ MonoBehaviour:
   _BannerLeftOffscreenLocalXPos: -3000
   _BannerRightOffscreenLocalXPos: 3000
   _BannerSlowDistance: 100
+  _PlaySound: {fileID: 11432714}
 --- !u!114 &11475574
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -166,6 +184,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22444370}
   m_Father: {fileID: 0}
@@ -184,6 +203,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22444370}
   m_RootOrder: 0
@@ -201,6 +221,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22409314}
   - {fileID: 22461268}
@@ -220,6 +241,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22444370}
   m_RootOrder: 1

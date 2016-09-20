@@ -1169,7 +1169,8 @@ namespace Cozmo {
             PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.FailedToCastObservableObjectToActionableObject", "");
           }
         } else {
-          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.FailedToFindCubeObject", "");
+          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.FailedToFindCubeObject", "BlockObjectID=%d",
+                              _blockObjectID.GetValue());
         }
         
         // Zero predock pose height

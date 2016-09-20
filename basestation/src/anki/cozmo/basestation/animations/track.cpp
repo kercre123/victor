@@ -72,6 +72,42 @@ namespace Animations {
     
     return result;
   }
+
+  // Specialization for backpack lights:
+  // We only care about the last keyframe's duration so that the animation doesn't
+  // report that it's finished before the backpack track has finished. For all other
+  // keyframes, there's no need to check duration because the lights will naturally
+  // stay in whatever state the keyframe leaves them until the next one changes them.
+  // So for any "previous" keyframe, we know there's another one coming and we can
+  // just set its duration to 0. This avoids introducing delay when a keyframe
+  // finishes at the same time the next one should trigger.
+  template<>
+  Result Track<BackpackLightsKeyFrame>::AddKeyFrameToBack(const BackpackLightsKeyFrame &keyFrame)
+  {
+    BackpackLightsKeyFrame* prevKeyFrame = nullptr;
+    Result result = AddKeyFrameToBackHelper(keyFrame, prevKeyFrame);
+    if(RESULT_OK == result && nullptr != prevKeyFrame)
+    {
+      prevKeyFrame->SetDuration(0);
+    }
+    
+    return result;
+  }
+  
+  template<>
+  Result Track<BackpackLightsKeyFrame>::AddKeyFrameByTime(const BackpackLightsKeyFrame &keyFrame)
+  {
+    BackpackLightsKeyFrame* prevKeyFrame = nullptr;
+    Result result = AddKeyFrameByTimeHelper(keyFrame, prevKeyFrame);
+    if(RESULT_OK == result && nullptr != prevKeyFrame)
+    {
+      prevKeyFrame->SetDuration(0);
+    }
+    
+    return result;
+  }
+  
+  
   
 } // end namespace Animations
 } // end namespace Cozmo

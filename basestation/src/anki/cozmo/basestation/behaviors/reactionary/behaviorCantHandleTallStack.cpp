@@ -60,7 +60,8 @@ BehaviorCantHandleTallStack::BehaviorCantHandleTallStack(Robot& robot, const Jso
   
 bool BehaviorCantHandleTallStack::IsRunnableInternalReactionary(const Robot& robot) const
 {
-  return !robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::KnockOverThreeCubeStack);
+  const bool forFreeplay = true;
+  return !robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::KnockOverThreeCubeStack, forFreeplay);
 }
 
   

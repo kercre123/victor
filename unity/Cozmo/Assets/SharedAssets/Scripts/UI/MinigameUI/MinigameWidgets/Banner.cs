@@ -33,6 +33,9 @@ namespace Cozmo {
       [SerializeField]
       private float _BannerSlowDistance = 100f;
 
+      [SerializeField, Tooltip("PlaySound component to trigger on play (optional)")]
+      private Anki.Cozmo.Audio.PlaySound _PlaySound;
+
       private Sequence _BannerTween = null;
 
       private void Start() {
@@ -70,6 +73,11 @@ namespace Cozmo {
         _BannerTween.AppendCallback(HandleBannerAnimationEnd);
         if (animationEndCallback != null) {
           _BannerTween.AppendCallback(animationEndCallback);
+        }
+
+        // if there's a sound attached, play it
+        if (_PlaySound != null) {
+          _PlaySound.Play();
         }
       }
 

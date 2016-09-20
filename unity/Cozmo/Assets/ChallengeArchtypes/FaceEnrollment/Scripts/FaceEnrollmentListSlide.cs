@@ -89,6 +89,9 @@ public class FaceEnrollmentListSlide : MonoBehaviour {
 
   private void OnDestroy() {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleUnlockResults);
+    if (_UnlockFaceCellViewInstance != null) {
+      _UnlockFaceCellViewInstance.CloseViewImmediately();
+    }
   }
 
   private bool NeedsUpdate(int faceID, long seenThreshold, long enrolledThreshold) {

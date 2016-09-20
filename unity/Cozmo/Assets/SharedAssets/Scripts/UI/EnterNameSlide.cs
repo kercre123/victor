@@ -57,6 +57,8 @@ public class EnterNameSlide : MonoBehaviour {
   }
 
   private void HandleSubmitNameButton() {
+    _NameInputField.onValueChanged.RemoveListener(HandleInputFieldChange);
+    _SubmitName.Interactable = false;
     if (OnNameEntered != null) {
       OnNameEntered(_NameInputField.text);
     }

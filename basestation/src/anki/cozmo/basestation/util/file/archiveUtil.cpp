@@ -10,17 +10,23 @@
  *
  */
 #include "anki/cozmo/basestation/util/file/archiveUtil.h"
+#include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
 
+
+#if ANKI_DEV_CHEATS
 #include "archive.h"
 #include "archive_entry.h"
 
 #include <sys/stat.h>
 #include <fstream>
+#endif
 
 namespace Anki {
 namespace Cozmo {
 
+  
+#if ANKI_DEV_CHEATS
 bool ArchiveUtil::CreateArchiveFromFiles(const std::string& outputPath,
                                          const std::string& filenameBase,
                                          const std::vector<std::string>& filenames)
@@ -143,6 +149,25 @@ const char* ArchiveUtil::GetArchiveErrorString(int errorCode)
     default: return "UNKNOWN";
   }
 }
+  
+#else // #if ANKI_DEV_CHEATS
+  
+bool ArchiveUtil::CreateArchiveFromFiles(const std::string& outputPath, const std::string& filenameBase, const std::vector<std::string>& filenames)
+{
+  return false;
+}
+
+std::string ArchiveUtil::RemoveFilenameBase(const std::string& filenameBase, const std::string& filename)
+{
+  return "";
+}
+
+const char* ArchiveUtil::GetArchiveErrorString(int errorCode)
+{
+  return nullptr;
+}
+
+#endif
 
 } // end namespace Cozmo
 } // end namespace Anki

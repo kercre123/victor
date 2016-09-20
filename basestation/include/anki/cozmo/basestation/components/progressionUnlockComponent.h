@@ -34,7 +34,10 @@ public:
 
   void Init(const Json::Value &config);
 
-  bool IsUnlocked(UnlockId unlock) const;
+  // By default, this checks if the given unlock is _actually_ unlocked. if forFreeplay=true, then first it
+  // will check the freeplay overrides in json. If there is a corresponding entry there, this will return
+  // true, even if the unlock is technically locked on the robot.
+  bool IsUnlocked(UnlockId unlock, bool forFreeplay = false) const;
 
   // returns false if there was an error, true otherwise. Note that this function returning true does not
   // guarantee that the robot is storing the value.
@@ -64,6 +67,10 @@ private:
 
   // eventually this will be stored on the robot
   std::set<UnlockId> _currentUnlocks;
+
+  // if the unlock is in here, always return true for IsUnlocked if asking from freeplay. This is a hack to
+  // make Cozmo seem smarter out of the box, while some items are still locked.
+  std::set<UnlockId> _freeplayOverrides;
 
   std::vector<Signal::SmartHandle> _signalHandles;
 
