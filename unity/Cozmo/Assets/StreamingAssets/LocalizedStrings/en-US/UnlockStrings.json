@@ -21,6 +21,9 @@
   "unlockable.Unlock": {
     "translation": "Unlock"
   },
+  "unlockable.Locked": {
+    "translation": "Locked"
+  },
   "unlockable.App": {
     "translation": "App"
   },  
@@ -34,7 +37,7 @@
     "translation": "View Upgrade"
   },
   "unlockable.PreReqNeeded.Description": {
-    "translation": "You need to unlock the\n{0} {1} first!"
+    "translation": "You need to unlock the {0} {1} first!"
   },
   "unlockable.BitsRequired.Title": {
     "translation": "Not Enough Bits"

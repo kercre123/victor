@@ -38,6 +38,15 @@ public class CoreUpgradeDetailsDialog : BaseView {
   private AnkiTextLabel _ButtonPromptDescription;
 
   [SerializeField]
+  private GameObject _LockedPromptContainer;
+
+  [SerializeField]
+  private AnkiTextLabel _LockedPromptTitle;
+
+  [SerializeField]
+  private AnkiTextLabel _LockedPromptDescription;
+
+  [SerializeField]
   private Text _SparkButtonCostLabel;
 
   [SerializeField]
@@ -105,6 +114,8 @@ public class CoreUpgradeDetailsDialog : BaseView {
   private Color _SparkAvailableColor;
   [SerializeField]
   private Color _UnavailableColor;
+  [SerializeField]
+  private Color _UpgradeLockedColor;
 
   private AlertView _QuitViewRef;
 
@@ -115,6 +126,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
     _UnlockUpgradeButtonContainer.gameObject.SetActive(false);
     _RequestTrickButtonContainer.gameObject.SetActive(false);
     _ButtonPromptContainer.SetActive(false);
+    _LockedPromptContainer.SetActive(false);
     _AffordableHighlightContainer.gameObject.SetActive(false);
     // QA testing jumps around during stages. As a failsafe just give the amount needed since they can't exist.
     Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
@@ -159,6 +171,50 @@ public class CoreUpgradeDetailsDialog : BaseView {
                   unlockInfo.UpgradeCostItemId, unlockInfo.UpgradeCostAmountNeeded, _FragmentInventoryLabel, false);
 
       _UnlockButtonCostLabel.text = string.Format("{0}", unlockInfo.UpgradeCostAmountNeeded);
+      _UnlockableIcon.color = new Color(1.0F, 1.0F, 1.0F, 0.5F);
+    }
+    else if (unlockState == CozmoUnlocksPanel.CozmoUnlockState.Locked) {
+      _FragmentInventoryContainer.gameObject.SetActive(true);
+
+      ItemData itemData = ItemDataConfig.GetData(unlockInfo.UpgradeCostItemId);
+      _FragmentInventoryLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelTotalCount, itemData.GetPluralName(), playerInventory.GetItemAmount(unlockInfo.UpgradeCostItemId));
+
+      _SparksInventoryContainer.gameObject.SetActive(false);
+      _LockedPromptContainer.SetActive(true);
+      _LockedPromptTitle.text = Localization.Get(LocalizationKeys.kUnlockableLocked);
+      _LockedPromptTitle.color = _UpgradeLockedColor;
+
+      _LockedPromptDescription.gameObject.SetActive(true);
+
+      UnlockableInfo preReqInfo = null;
+      for (int i = 0; i < unlockInfo.Prerequisites.Length; i++) {
+        // if available but we haven't unlocked it yet, then it is the upgrade that is blocking us
+        if (!UnlockablesManager.Instance.IsUnlocked(unlockInfo.Prerequisites[i].Value)) {
+          preReqInfo = UnlockablesManager.Instance.GetUnlockableInfo(unlockInfo.Prerequisites[i].Value);
+        }
+      }
+
+      string preReqTypeKey = "unlockable.Unlock";
+
+      if (preReqInfo == null) {
+        _LockedPromptDescription.text = Localization.Get(LocalizationKeys.kUnlockableUnavailableDescription);
+      }
+      else {
+        switch (preReqInfo.UnlockableType) {
+        case UnlockableType.Action:
+          preReqTypeKey = LocalizationKeys.kUnlockableUpgrade;
+          break;
+        case UnlockableType.Game:
+          preReqTypeKey = LocalizationKeys.kUnlockableApp;
+          break;
+        default:
+          preReqTypeKey = LocalizationKeys.kUnlockableUnlock;
+          break;
+        }
+
+        _LockedPromptDescription.text = Localization.GetWithArgs(LocalizationKeys.kUnlockablePreReqNeededDescription, new object[] { Localization.Get(preReqInfo.TitleKey), Localization.Get(preReqTypeKey) });
+      }
+
       _UnlockableIcon.color = new Color(1.0F, 1.0F, 1.0F, 0.5F);
     }
 

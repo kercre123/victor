@@ -123,7 +123,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
         tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
         unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
         unlockableTile.Initialize(lockedUnlockData[i], CozmoUnlockState.Locked, viewControllerName);
-        unlockableTile.OnTapped += HandleTappedUnavailable;
+        unlockableTile.OnTapped += HandleTappedLocked;
         _LockedTiles.Add(unlockableTile);
         numTilesMade++;
       }
@@ -178,6 +178,16 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     if (_CoreUpgradeDetailsViewInstance == null && !HomeHub.Instance.HomeViewInstance.HomeViewCurrentlyOccupied) {
       CoreUpgradeDetailsDialog detailView = UIManager.OpenView<CoreUpgradeDetailsDialog>(_CoreUpgradeDetailsViewPrefab);
       detailView.Initialize(unlockInfo, CozmoUnlockState.Unlockable, HandleUnlockableUpgradeUnlocked);
+      _CoreUpgradeDetailsViewInstance = detailView;
+    }
+  }
+
+
+  private void HandleTappedLocked(UnlockableInfo unlockInfo) {
+    DAS.Debug(this, "Tapped available: " + unlockInfo.Id);
+    if (_CoreUpgradeDetailsViewInstance == null && !HomeHub.Instance.HomeViewInstance.HomeViewCurrentlyOccupied) {
+      CoreUpgradeDetailsDialog detailView = UIManager.OpenView<CoreUpgradeDetailsDialog>(_CoreUpgradeDetailsViewPrefab);
+      detailView.Initialize(unlockInfo, CozmoUnlockState.Locked, HandleUnlockableUpgradeUnlocked);
       _CoreUpgradeDetailsViewInstance = detailView;
     }
   }

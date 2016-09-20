@@ -654,6 +654,7 @@ public static class LocalizationKeys {
   #region UnlockStrings
 
   public const string kUnlockableUnlock = "unlockable.Unlock";
+  public const string kUnlockableLocked = "unlockable.Locked";
   public const string kUnlockableApp = "unlockable.App";
   public const string kUnlockableUpgrade = "unlockable.Upgrade";
   public const string kUnlockableAvailable = "unlockable.Available";

@@ -17,6 +17,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &102922
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22494836}
+  - 114: {fileID: 11452158}
+  m_Layer: 5
+  m_Name: ButtonPromptTitle
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &104356
 GameObject:
   m_ObjectHideFlags: 1
@@ -58,7 +74,7 @@ GameObject:
   - 224: {fileID: 22417998}
   - 114: {fileID: 11472206}
   m_Layer: 5
-  m_Name: ButtonPromptTitle
+  m_Name: LockedPromptTitle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -239,7 +255,7 @@ GameObject:
   - 224: {fileID: 22435332}
   - 114: {fileID: 11440694}
   m_Layer: 5
-  m_Name: ButtonPromptDescription
+  m_Name: LockedPromptDescription
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -322,6 +338,22 @@ GameObject:
   - 114: {fileID: 11479604}
   m_Layer: 5
   m_Name: SparkButtonIcon
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!1 &149556
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22408936}
+  - 114: {fileID: 11423256}
+  m_Layer: 5
+  m_Name: ButtonPromptContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -492,6 +524,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &167080
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22473690}
+  - 114: {fileID: 11465430}
+  m_Layer: 5
+  m_Name: ButtonPromptDescription
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &168466
 GameObject:
   m_ObjectHideFlags: 0
@@ -535,7 +583,7 @@ GameObject:
   - 224: {fileID: 22454500}
   - 114: {fileID: 11485828}
   m_Layer: 5
-  m_Name: ButtonPromptContainer
+  m_Name: LockedPromptContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -963,6 +1011,26 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &11423256
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 149556}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1297475563, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 5
+  m_Spacing: -30
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 1
 --- !u!114 &11423784
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1106,7 +1174,7 @@ MonoBehaviour:
     JsonValue: '"Use 3 Bits to Unlock"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../
-    FieldName: CoreUpgradeDetailsDialog:_ButtonPromptDescription
+    FieldName: CoreUpgradeDetailsDialog:_LockedPromptDescription
     ReferencePath: 
   ModifiedGlobalReferences:
   - ObjectPath: 
@@ -1165,6 +1233,48 @@ MonoBehaviour:
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
+--- !u!114 &11452158
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 102922}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Prefab: {fileID: 194676, guid: c70aa1a8748ed4243b6c6e28fe4e5223, type: 2}
+  ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    JsonValue: 0.8313726
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    JsonValue: 0.5686275
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    JsonValue: 0.117647067
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    JsonValue: 5
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MaxSize
+    JsonValue: 100
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MinSize
+    JsonValue: 1
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    JsonValue: 100
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    JsonValue: '"Available:"'
+  ModifiedLocalReferences:
+  - ObjectPath: ../../../
+    FieldName: CoreUpgradeDetailsDialog:_ButtonPromptTitle
+    ReferencePath: 
+  ModifiedGlobalReferences: []
 --- !u!114 &11454172
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1189,10 +1299,13 @@ MonoBehaviour:
   _ContentContainer: {fileID: 166184}
   _UnlockableNameLabel: {fileID: 0}
   _UnlockableDescriptionLabel: {fileID: 0}
-  _ButtonPromptContainer: {fileID: 172766}
+  _ButtonPromptContainer: {fileID: 149556}
   _AffordableHighlightContainer: {fileID: 150868}
   _ButtonPromptTitle: {fileID: 0}
   _ButtonPromptDescription: {fileID: 0}
+  _LockedPromptContainer: {fileID: 172766}
+  _LockedPromptTitle: {fileID: 0}
+  _LockedPromptDescription: {fileID: 0}
   _SparkButtonCostLabel: {fileID: 11405450}
   _UnlockButtonCostLabel: {fileID: 11402262}
   _RequestTrickButtonLabel: {fileID: 0}
@@ -1215,6 +1328,7 @@ MonoBehaviour:
   _UpgradeAvailableColor: {r: 0.486, g: 0.682, b: 0.152, a: 1}
   _SparkAvailableColor: {r: 0.117, g: 0.568, b: 0.831, a: 1}
   _UnavailableColor: {r: 0.411, g: 0.411, b: 0.349, a: 1}
+  _UpgradeLockedColor: {r: 0.88235295, g: 0.101960786, b: 0, a: 1}
 --- !u!114 &11455274
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1343,6 +1457,39 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &11465430
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 167080}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Prefab: {fileID: 176534, guid: 499f749270bfb4a5a8665a125ff61430, type: 2}
+  ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
+    JsonValue: 5
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MinSize
+    JsonValue: 0
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
+    JsonValue: 66
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Text
+    JsonValue: '"Use 3 Bits to Unlock"'
+  ModifiedLocalReferences:
+  - ObjectPath: ../../../
+    FieldName: CoreUpgradeDetailsDialog:_ButtonPromptDescription
+    ReferencePath: 
+  ModifiedGlobalReferences:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Font
+    Reference: {fileID: 12800000, guid: 690bf25a268804b5a9391906610cf24b, type: 3}
 --- !u!114 &11469206
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1438,13 +1585,13 @@ MonoBehaviour:
   ModifiedValues:
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Color:b
-    JsonValue: 0.8313726
+    JsonValue: 0.0
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Color:g
-    JsonValue: 0.5686275
+    JsonValue: 0.101960786
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Color:r
-    JsonValue: 0.117647067
+    JsonValue: 0.882352948
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
     JsonValue: 5
@@ -1462,7 +1609,7 @@ MonoBehaviour:
     JsonValue: '"Available:"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../
-    FieldName: CoreUpgradeDetailsDialog:_ButtonPromptTitle
+    FieldName: CoreUpgradeDetailsDialog:_LockedPromptTitle
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11472824
@@ -2002,6 +2149,26 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!224 &22408936
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 149556}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children:
+  - {fileID: 22494836}
+  - {fileID: 22473690}
+  m_Father: {fileID: 22499570}
+  m_RootOrder: 1
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchoredPosition: {x: 182, y: 477}
+  m_SizeDelta: {x: 1480, y: 233.5}
+  m_Pivot: {x: 1, y: 0.5}
 --- !u!224 &22408966
 RectTransform:
   m_ObjectHideFlags: 1
@@ -2076,7 +2243,7 @@ RectTransform:
   - {fileID: 22412682}
   - {fileID: 22484660}
   m_Father: {fileID: 22499570}
-  m_RootOrder: 5
+  m_RootOrder: 6
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
   m_AnchoredPosition: {x: 0, y: 150}
@@ -2262,7 +2429,7 @@ RectTransform:
   - {fileID: 22408966}
   - {fileID: 22480132}
   m_Father: {fileID: 22499570}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: -50, y: 400}
@@ -2283,7 +2450,7 @@ RectTransform:
   - {fileID: 22403378}
   - {fileID: 22412412}
   m_Father: {fileID: 22499570}
-  m_RootOrder: 6
+  m_RootOrder: 7
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: -1107, y: -180}
@@ -2357,11 +2524,11 @@ RectTransform:
   - {fileID: 22417998}
   - {fileID: 22435332}
   m_Father: {fileID: 22499570}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 182, y: 477}
-  m_SizeDelta: {x: 1480, y: 233.5}
+  m_AnchoredPosition: {x: 1303, y: 477.00043}
+  m_SizeDelta: {x: 2601, y: 234}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!224 &22458810
 RectTransform:
@@ -2431,7 +2598,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22499570}
-  m_RootOrder: 4
+  m_RootOrder: 5
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 126.6, y: -129.4}
@@ -2492,6 +2659,24 @@ RectTransform:
   m_AnchoredPosition: {x: -0.0014491081, y: -0.002034068}
   m_SizeDelta: {x: 0, y: -1}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!224 &22473690
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 167080}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 22408936}
+  m_RootOrder: 1
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 1, y: 0.5}
 --- !u!224 &22474250
 RectTransform:
   m_ObjectHideFlags: 1
@@ -2600,7 +2785,7 @@ RectTransform:
   m_Children:
   - {fileID: 22493264}
   m_Father: {fileID: 22499570}
-  m_RootOrder: 3
+  m_RootOrder: 4
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 550, y: 520}
@@ -2643,6 +2828,24 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!224 &22494836
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 102922}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 22408936}
+  m_RootOrder: 0
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 1, y: 0.5}
 --- !u!224 &22495650
 RectTransform:
   m_ObjectHideFlags: 1
@@ -2709,6 +2912,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22432750}
+  - {fileID: 22408936}
   - {fileID: 22454500}
   - {fileID: 22440950}
   - {fileID: 22492454}
