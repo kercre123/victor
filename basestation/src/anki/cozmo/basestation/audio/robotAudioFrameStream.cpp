@@ -46,7 +46,7 @@ void RobotAudioFrameStream::PushRobotAudioFrame( AudioFrameData* audioFrame )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioFrameData* RobotAudioFrameStream::PopRobotAudioFrame()
+const AudioFrameData* RobotAudioFrameStream::PopRobotAudioFrame()
 {
   std::lock_guard<std::mutex> lock( _lock );
   ASSERT_NAMED( !_audioFrameQueue.empty(), "Do Not call this methods if Key Frame Queue is empty" );

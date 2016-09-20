@@ -30,13 +30,13 @@ namespace Audio {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioBuffer::PrepareAudioBuffer()
 {
+  std::lock_guard<std::mutex> lock( _lock );
   if ( DEBUG_ROBOT_AUDIO_BUFFER_LOG ) {
     PRINT_NAMED_ERROR( "RobotAudioBuffer.PrepareAudioBuffer", "TimeStamp_s %f",
                        Util::Time::UniversalTime::GetCurrentTimeInSeconds() );
   }
   
   // Prep new Continuous Stream Buffer
-  std::lock_guard<std::mutex> lock( _lock );
   _streamQueue.emplace( Util::Time::UniversalTime::GetCurrentTimeInMilliseconds() );
   _isActive = true;
 }
@@ -44,6 +44,7 @@ void RobotAudioBuffer::PrepareAudioBuffer()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioBuffer::UpdateBuffer( const AudioSample* samples, const size_t sampleCount )
 {
+  std::lock_guard<std::mutex> lock( _lock );
   if ( DEBUG_ROBOT_AUDIO_BUFFER_LOG ) {
     PRINT_NAMED_ERROR( "RobotAudioBuffer.UpdateBuffer", "isWaitingForRest %s  TimeStamp_s %f",
                        _isWaitingForReset ? "Y" : "N",
@@ -57,11 +58,9 @@ void RobotAudioBuffer::UpdateBuffer( const AudioSample* samples, const size_t sa
     }
     return;
   }
-  std::lock_guard<std::mutex> lock( _lock );
   
   ASSERT_NAMED(!_streamQueue.empty(), "RobotAudioBuffer.UpdateBuffer._streamQueue.IsEmpty");
-  if (_streamQueue.empty())
-  {
+  if (_streamQueue.empty()) {
     return;
   }
   
@@ -74,6 +73,7 @@ void RobotAudioBuffer::UpdateBuffer( const AudioSample* samples, const size_t sa
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioBuffer::CloseAudioBuffer()
 {
+  std::lock_guard<std::mutex> lock( _lock );
   if ( DEBUG_ROBOT_AUDIO_BUFFER_LOG ) {
     PRINT_NAMED_ERROR( "RobotAudioBuffer.CloseAudioBuffer", "TimeStamp_s %f",
                        Util::Time::UniversalTime::GetCurrentTimeInSeconds() );
@@ -84,11 +84,9 @@ void RobotAudioBuffer::CloseAudioBuffer()
   }
   
   // No more samples to cache, create final Audio Message
-  std::lock_guard<std::mutex> lock( _lock );
   if ( !_isWaitingForReset ) {
     ASSERT_NAMED(!_streamQueue.empty(), "RobotAudioBuffer.CloseAudioBuffer._streamQueue.IsEmpty");
-    if (_streamQueue.empty())
-    {
+    if (_streamQueue.empty()) {
       return;
     }
     _streamQueue.back().SetIsComplete();
@@ -97,13 +95,19 @@ void RobotAudioBuffer::CloseAudioBuffer()
   _isWaitingForReset = false;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool RobotAudioBuffer::HasAudioBufferStream() const
+{
+  std::lock_guard<std::mutex> lock( _lock );
+  return !_streamQueue.empty();
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
 RobotAudioFrameStream* RobotAudioBuffer::GetFrontAudioBufferStream()
 {
   std::lock_guard<std::mutex> lock( _lock );
   ASSERT_NAMED( !_streamQueue.empty(), "Must check if a Robot Audio Buffer Stream is in Queue befor calling this method") ;
-  if (_streamQueue.empty())
-  {
+  if (_streamQueue.empty()) {
     return nullptr;
   }
   return &_streamQueue.front();
@@ -112,14 +116,14 @@ RobotAudioFrameStream* RobotAudioBuffer::GetFrontAudioBufferStream()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioBuffer::PopAudioBufferStream()
 {
+  std::lock_guard<std::mutex> lock( _lock );
   if ( DEBUG_ROBOT_AUDIO_BUFFER_LOG ) {
     PRINT_NAMED_ERROR( "RobotAudioBuffer.PopAudioBufferStream", "_StreamQueue Size: %lu  TimeStamp_s %f",
                        (unsigned long)_streamQueue.size(),
                        Util::Time::UniversalTime::GetCurrentTimeInSeconds() );
   }
-  std::lock_guard<std::mutex> lock( _lock );
-  if (_streamQueue.empty())
-  {
+  
+  if (_streamQueue.empty()) {
     PRINT_NAMED_ERROR("RobotAudioBuffer.PopAudioBufferStream.EmptyQueue", "Tried to pop from an empty stream queue.");
     return;
   }
@@ -131,13 +135,13 @@ void RobotAudioBuffer::PopAudioBufferStream()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioBuffer::ClearBufferStreams()
 {
+  std::lock_guard<std::mutex> lock( _lock );
   if ( DEBUG_ROBOT_AUDIO_BUFFER_LOG ) {
     PRINT_NAMED_ERROR( "RobotAudioBuffer.ClearBufferStreams", "_StreamQueue Size: %lu  TimeStamp_s %f",
                        (unsigned long)_streamQueue.size(),
                        Util::Time::UniversalTime::GetCurrentTimeInSeconds() );
   }
   
-  std::lock_guard<std::mutex> lock( _lock );
   while ( !_streamQueue.empty() ) {
     _streamQueue.pop();
   }
@@ -146,22 +150,19 @@ void RobotAudioBuffer::ClearBufferStreams()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioBuffer::ResetAudioBuffer()
 {
+  std::lock_guard<std::mutex> lock( _lock );
   if ( DEBUG_ROBOT_AUDIO_BUFFER_LOG ) {
     PRINT_NAMED_ERROR( "RobotAudioBuffer.ResetAudioBuffer", "_isActive: %c  TimeStamp_s %f",
                        _isActive ? 'Y' : 'N',
                        Util::Time::UniversalTime::GetCurrentTimeInSeconds() );
   }
   
+  
   if ( _isActive ) {
     _isWaitingForReset = true;
   }
 }
 
-bool RobotAudioBuffer::HasAudioBufferStream()
-{
-  std::lock_guard<std::mutex> lock( _lock );
-  return !_streamQueue.empty();
-}
   
 } // Audio
 } // Cozmo

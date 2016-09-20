@@ -316,7 +316,7 @@ void RobotAudioAnimationOnRobot::PopRobotAudioMessage( RobotInterface::EngineToR
   // Get data from stream
   if ( HasCurrentBufferStream() ) {
     
-    AudioFrameData* audioFrame = _currentBufferStream->PopRobotAudioFrame();
+    const AudioFrameData* audioFrame = _currentBufferStream->PopRobotAudioFrame();
     if (nullptr != audioFrame)
     {
       // TEMP: Convert audio frame into correct robot output, this will done in the Mixing Console at some point
@@ -441,8 +441,8 @@ void RobotAudioAnimationOnRobot::BeginBufferingAudioOnRobotMode()
         
         PRINT_CH_INFO(RobotAudioClient::kRobotAudioLogChannelName,
                       "RobotAudioAnimationOnRobot.PostEvent",
-                      "Anim: '%s' EventId: %u",
-                      GetAnimationName().c_str(), animationEvent->audioEvent);
+                      "Anim: '%s' EventId: %u TimeMs: %u",
+                      GetAnimationName().c_str(), animationEvent->audioEvent, animationEvent->time_ms);
         
         const PlayId playId = _audioClient->PostCozmoEvent( animationEvent->audioEvent,
                                                             _gameObj,

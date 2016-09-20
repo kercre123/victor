@@ -55,7 +55,7 @@ public:
   void PushRobotAudioFrame( AudioFrameData* audioFrame );
   
   //  Pop Robot Audio Message out of buffer stream, this will release relinquished of message's memory to caller.
-  AudioFrameData* PopRobotAudioFrame();
+  const AudioFrameData* PopRobotAudioFrame();
 
 
 private:

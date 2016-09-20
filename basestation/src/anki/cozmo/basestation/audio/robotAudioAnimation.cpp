@@ -74,13 +74,13 @@ void RobotAudioAnimation::AbortAnimation()
     Util::Dispatch::Stop(_postEventTimerQueue );
   }
   
-  // Stop all animation audio events being played
-  _audioClient->StopCozmoEvent( _gameObj );
-  
   // Notify buffer
   if (nullptr != _audioBuffer) {
     _audioBuffer->ResetAudioBuffer();
   }
+  
+  // Stop all animation audio events being played
+  _audioClient->StopCozmoEvent( _gameObj );
     
   SetAnimationState( AnimationState::AnimationAbort );
 }

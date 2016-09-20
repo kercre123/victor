@@ -95,7 +95,6 @@ void StreamingAnimation::Update()
     case BufferState::Completed:
       // Done!!! Do something?
       break;
-
   }
 }
 
@@ -108,7 +107,7 @@ void AddKeyframeNonNullToList(const IKeyFrame* keyframe, KeyframeList& out_keyfr
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void StreamingAnimation::TickPlayhead(KeyframeList& out_keyframeList, Audio::AudioFrameData*& out_audioFrame)
+void StreamingAnimation::TickPlayhead(KeyframeList& out_keyframeList, const Audio::AudioFrameData*& out_audioFrame)
 {
   // Don't advance past next frame
   ASSERT_NAMED(CanPlayNextFrame(), "StreamingAnimation.TickPlayhead.NextFrameIsNotReady");
@@ -342,7 +341,7 @@ void StreamingAnimation::GenerateDeviceAudioEvents(Audio::RobotAudioClient* audi
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void StreamingAnimation::PushFrameIntoBuffer(Audio::AudioFrameData* frame)
+void StreamingAnimation::PushFrameIntoBuffer(const Audio::AudioFrameData* frame)
 {
   _audioFrames.push_back(frame);
   ++_audioBufferedFrameCount;

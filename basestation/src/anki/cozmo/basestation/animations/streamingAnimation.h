@@ -80,7 +80,7 @@ public:
   // Return false if there are no audio data frames to tick frame, check state to deturmine why (either still buffering
   // or complete)
   // Note: Next frame must be ready before ticking
-  void TickPlayhead(KeyframeList& out_keyframeList, Audio::AudioFrameData*& out_audioFrame);
+  void TickPlayhead(KeyframeList& out_keyframeList, const Audio::AudioFrameData*& out_audioFrame);
   
   // Once started must be ticked with every frame until completed
   bool DidStartPlaying() const { return _playheadTime_ms > 0; }
@@ -159,8 +159,8 @@ private:
   
   // Add audio frame data to animation
   // NOTE: Takes owner ship of frame
-  void PushFrameIntoBuffer(Audio::AudioFrameData* frame);
-  using AudioFrameList = std::list<Audio::AudioFrameData*>;
+  void PushFrameIntoBuffer(const Audio::AudioFrameData* frame);
+  using AudioFrameList = std::list<const Audio::AudioFrameData*>;
   AudioFrameList            _audioFrames;
   
   // Buffer & Playback Info

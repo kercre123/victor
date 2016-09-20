@@ -57,9 +57,14 @@ public:
    * Audio Client methods
    */
 
+  // Check if the buffer is currently active
   bool IsActive() const { return _isActive; }
-  
-  bool HasAudioBufferStream();
+
+  // Check if the buffer is in the reset audio buffer state
+  bool IsWaitingForReset() const { return _isWaitingForReset; }
+
+  // Check if buffer stream has an audio streams
+  bool HasAudioBufferStream() const;
   
   // Get the front / top Audio Buffer stream in the queue
   RobotAudioFrameStream* GetFrontAudioBufferStream();
@@ -74,9 +79,6 @@ public:
   // to clear cache
   void ResetAudioBuffer();
   
-  // Check if the buffer is in the reset audio buffer state
-  bool IsWaitingForReset() const { return _isWaitingForReset; }
-
 
 protected:
   
@@ -87,7 +89,7 @@ protected:
   std::queue< RobotAudioFrameStream > _streamQueue;
   
   // Stream queue mutex
-  std::mutex _lock;
+  mutable std::mutex _lock;
   
   // Track if the Audio Engine is providing data to stream
   bool _isActive = false;
