@@ -5,12 +5,6 @@ namespace Cozmo.UI {
   public class ChallengeEndedDialog : MonoBehaviour {
 
     [SerializeField]
-    private AnkiTextLabel _AdditionalInfoLabel;
-
-    [SerializeField]
-    private GameObject _AdditionalInfoLabelContainer;
-
-    [SerializeField]
     private Transform _CenterContainer;
 
     [SerializeField]
@@ -35,7 +29,7 @@ namespace Cozmo.UI {
 
     private ChallengeData _ChallengeConfig;
 
-    public void SetupDialog(string subtitleText, ChallengeData config) {
+    public void SetupDialog(ChallengeData config) {
       _ChallengeConfig = config;
       if (_DualContainer != null) {
         _DualContainer.gameObject.SetActive(false);
@@ -43,27 +37,12 @@ namespace Cozmo.UI {
       if (_CenterContainer != null) {
         _CenterContainer.gameObject.SetActive(false);
       }
-
-      if (!string.IsNullOrEmpty(subtitleText)) {
-        if (_AdditionalInfoLabelContainer != null) {
-          _AdditionalInfoLabelContainer.SetActive(true);
-        }
-        _AdditionalInfoLabel.text = subtitleText;
-      }
-      else {
-        if (_AdditionalInfoLabelContainer != null) {
-          _AdditionalInfoLabelContainer.SetActive(false);
-        }
-      }
     }
 
     /// <summary>
     /// Hide subtitle and display the reward lists.
     /// </summary>
     public void DisplayRewards() {
-      if (_AdditionalInfoLabelContainer != null) {
-        _AdditionalInfoLabelContainer.SetActive(false);
-      }
       // Determine which LayoutGroup(s) to use based on if both Pending Upgrades and Pending Rewards or Just one
       // If (DualLists == false) - Use Single Vert Layout Group
       // If (DualLists == true)  - Use two Vert Layout Groups nesting in Horiz Layout Group 

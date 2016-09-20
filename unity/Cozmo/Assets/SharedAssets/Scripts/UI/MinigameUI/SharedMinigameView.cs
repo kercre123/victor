@@ -708,11 +708,11 @@ namespace Cozmo {
         return cubeSlide;
       }
 
-      public ChallengeEndedDialog ShowChallengeEndedSlide(string subtitleText, ChallengeData data) {
+      public ChallengeEndedDialog ShowChallengeEndedSlide(ChallengeData data) {
         GameObject challengeEndSlide = ShowNarrowGameStateSlide(
           _ChallengeEndViewPrefab.gameObject, "challenge_end_slide");
         ChallengeEndedDialog challengeEndSlideScript = challengeEndSlide.GetComponent<ChallengeEndedDialog>();
-        challengeEndSlideScript.SetupDialog(subtitleText, data);
+        challengeEndSlideScript.SetupDialog(data);
         return challengeEndSlideScript;
       }
 

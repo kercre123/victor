@@ -750,7 +750,8 @@ public abstract class GameBase : MonoBehaviour {
     SoftEndGameRobotReset();
     _ResultsViewReached = true;
     ContextManager.Instance.AppFlash(playChime: true);
-    string winnerText = _WonChallenge ? Localization.Get(LocalizationKeys.kMinigameTextPlayerWins) : Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
+    string winnerText = _WonChallenge ? Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWins, new object[] { DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName })
+                                                    : Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
     SharedMinigameView.InfoTitleText = winnerText;
     _AutoAdvanceTimestamp = Time.time;
   }
@@ -774,8 +775,7 @@ public abstract class GameBase : MonoBehaviour {
         Localization.Get(LocalizationKeys.kRewardCollectInstruction),
         UIColorPalette.EnergyTextColor,
         "game_results_continue_button");
-      string subtitleText = _WonChallenge ? Localization.Get(LocalizationKeys.kMinigameTextPlayerWins) : Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
-      _ChallengeEndViewInstance = _SharedMinigameViewInstance.ShowChallengeEndedSlide(subtitleText, _ChallengeData);
+      _ChallengeEndViewInstance = _SharedMinigameViewInstance.ShowChallengeEndedSlide(_ChallengeData);
       _ChallengeEndViewInstance.DisplayRewards();
     }
     else {
