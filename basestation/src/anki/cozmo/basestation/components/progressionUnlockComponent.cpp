@@ -167,10 +167,9 @@ bool ProgressionUnlockComponent::SetUnlock(UnlockId unlock, bool unlocked)
                           "Unlocked '%s' (%d)",
                           UnlockIdToString(unlock), (int)unlock);
       } else {
-        // already unlocked
-        PRINT_NAMED_WARNING("ProgressionUnlockComponent.SetUnlock.DuplicatedUnlock",
-                            "Tried to unlock '%s' (%d), but it's already unlocked",
-                            UnlockIdToString(unlock), (int)unlock);
+        PRINT_CH_INFO("UnlockComponent", "ProgressionUnlockComponent.SetUnlock.DuplicatedUnlock",
+                      "Tried to unlock '%s' (%d), but it's already unlocked (dev button?)",
+                      UnlockIdToString(unlock), (int)unlock);
       }
     }
     else
@@ -188,10 +187,9 @@ bool ProgressionUnlockComponent::SetUnlock(UnlockId unlock, bool unlocked)
       }
       else
       {
-        // already locked
-        PRINT_NAMED_ERROR("ProgressionUnlockComponent.SetUnlock.MissingUnlock",
-                          "Tried to lock '%s' (%d), but it was already locked",
-                          UnlockIdToString(unlock), (int)unlock);
+        PRINT_CH_INFO("UnlockComponent", "ProgressionUnlockComponent.SetUnlock.MissingUnlock",
+                      "Tried to lock '%s' (%d), but it was already locked (dev button?)",
+                      UnlockIdToString(unlock), (int)unlock);
       }
     }
   }
