@@ -51,6 +51,18 @@
   "unlockable.BitsRequired.EarnMore": {
     "translation": "Earn more by completing Daily Goals"
   },
+  "unlockable.Mystery.Title": {
+    "translation": "????"
+  },
+  "unlockable.Mystery.Description": {
+    "translation": "More great Upgrades coming soon!"
+  },
+  "unlockable.Workout.Title": {
+    "translation": "Workout with Cubes"
+  },
+  "unlockable.Workout.Description": {
+    "translation": "Even robots need exercise!  Upgrade Cozmo with a number of workouts he can perform using his cubes to stay in top shape."
+  },
   "unlockable.CubePounce.Title": {
     "translation": "Keepaway"
   },
@@ -145,10 +157,10 @@
     "translation": "Tap to ask Cozmo to pick up a Cube"
   },
   "unlockable.ComingSoon.Title": {
-    "translation": "Coming Soon"
+    "translation": "Coming Soon!"
   },
   "unlockable.ComingSoon.Description": {
-    "translation": "Coming Soon! Check back for more Upgrades, Apps, and fun Cozmo features"
+    "translation": "Check back for more great Upgrades, Apps, and fun Cozmo features"
   },
   "unlockable.Default.Title": {
     "translation": "Unlockable Default Title"

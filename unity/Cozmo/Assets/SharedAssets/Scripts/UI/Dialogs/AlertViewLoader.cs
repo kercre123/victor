@@ -51,6 +51,13 @@ namespace Cozmo {
       }
 
       [SerializeField]
+      private AlertView _AlertViewPrefab_ComingSoon;
+
+      public AlertView AlertViewPrefab_ComingSoon {
+        get { return _AlertViewPrefab_ComingSoon; }
+      }
+
+      [SerializeField]
       private ScrollingTextView _ScrollingTextViewPrefab;
 
       public ScrollingTextView ScrollingTextViewPrefab {

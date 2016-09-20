@@ -45,6 +45,13 @@ enum int_32 UnlockId
   FaceEnrollmentSlot8     = 27,
   FaceEnrollmentSlot9     = 28,
 
+  Workout                 = 29,
+
+  MysteryUnlock1          = 30,
+  MysteryUnlock2          = 31,
+  MysteryUnlock3          = 32,
+  MysteryUnlock4          = 33,
+
   // ADD NEW UNLOCKS HERE
 
   Count

@@ -204,12 +204,14 @@ public class CozmoUnlocksPanel : MonoBehaviour {
         }
       }
       // Create alert view with Icon
-      AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: true);
+      AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_ComingSoon, overrideCloseOnTouchOutside: true);
       alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
       alertView.TitleLocKey = unlockInfo.TitleKey;
+      alertView.SetIcon(unlockInfo.CoreUpgradeIcon);
 
       if (unlockInfo.NeverAvailable) {
-        alertView.DescriptionLocKey = LocalizationKeys.kUnlockableComingSoonDescription;
+        alertView.TitleLocKey = LocalizationKeys.kUnlockableComingSoonTitle;
+        alertView.DescriptionLocKey = unlockInfo.DescriptionKey;
       }
       else if (preReqInfo == null) {
         alertView.DescriptionLocKey = LocalizationKeys.kUnlockableUnavailableDescription;
