@@ -432,7 +432,6 @@ public class CoreUpgradeDetailsDialog : BaseView {
       sess.SparkCount.Add(_UnlockInfo.Id.Value, 1);
     }
 
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Spark_Button_Loop_Stop);
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Spark_Launch);
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Spark);
     RobotEngineManager.Instance.CurrentRobot.EnableSparkUnlock(_UnlockInfo.Id.Value);
@@ -457,7 +456,6 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
   protected override void CleanUp() {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.SparkEnded>(HandleSparkEnded);
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Spark_Button_Loop_Stop);
     StopSparkUnlock();
     // Because of a bug within DOTween Fades don't release even after being killed, so clean up
     if (_DimBackgroundInstance != null) {
