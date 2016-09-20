@@ -24,6 +24,8 @@ from . import world
 from .exceptions import *
 from .run import *
 
+from .version import __version__
+
 
 __all__ = ['logger', 'logger_protocol'] + \
     ['action', 'anim', 'behavior', 'conn', 'event', 'exceptions', 'lights'] + \

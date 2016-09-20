@@ -1,3 +1,10 @@
+.DS_Store
 *.sw?
 __pycache__
 *.pyc
+dist
+*.tox
+*.egg
+*.egg-info
+.cache
+build
