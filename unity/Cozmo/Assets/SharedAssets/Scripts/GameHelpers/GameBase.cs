@@ -41,7 +41,6 @@ public abstract class GameBase : MonoBehaviour {
   public IRobot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
   private AlertView _InterruptedAlertView = null;
-  private AlertView _CozmoSkillChangeAlertView = null;
 
   private SharedMinigameView _SharedMinigameViewInstance;
 
@@ -178,7 +177,6 @@ public abstract class GameBase : MonoBehaviour {
     SkillSystem.Instance.StartGame(_ChallengeData);
     // Clear Pending Rewards and Unlocks so ChallengeEndedDialog only displays things earned during this game
     RewardedActionManager.Instance.SendPendingRewardsToInventory();
-    //SkillSystem.Instance.OnLevelUp += HandleCozmoSkillLevelUp;
 
     InitializeReactionaryBehaviorsForGameStart();
 
@@ -572,7 +570,6 @@ public abstract class GameBase : MonoBehaviour {
     }
     DAS.Info(this, "Finished GameBase On Destroy");
     SkillSystem.Instance.EndGame();
-    //SkillSystem.Instance.OnLevelUp -= HandleCozmoSkillLevelUp;
 
     DeregisterRobotReactionaryBehaviorEvents();
 
@@ -645,10 +642,6 @@ public abstract class GameBase : MonoBehaviour {
 
     if (_InterruptedAlertView != null) {
       _InterruptedAlertView.CloseViewImmediately();
-    }
-
-    if (_CozmoSkillChangeAlertView != null) {
-      _CozmoSkillChangeAlertView.CloseViewImmediately();
     }
 
     // Some CleanUpOnDestroy overrides send a robot animation as well
@@ -831,22 +824,6 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   protected virtual void OnDifficultySet(int difficulty) {
-  }
-
-  /// <summary>
-  /// TODO: Replace this with better handling for notifying Results view that a level up occoured during
-  /// game instead of creating a popup. Create an appropriate results cell with the same info.
-  /// </summary>
-  /// <param name="newLevel">New level.</param>
-  protected void HandleCozmoSkillLevelUp(int newLevel) {
-    AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
-    // Hook up callbacks
-    alertView.SetCloseButtonEnabled(true);
-    alertView.SetPrimaryButton(LocalizationKeys.kButtonContinue);
-    alertView.TitleLocKey = LocalizationKeys.kSkillsLevelUpTitle;
-    alertView.DescriptionLocKey = LocalizationKeys.kSkillsLevelUpDescription;
-    alertView.SetMessageArgs(new object[] { newLevel, _ChallengeData.name });
-    _CozmoSkillChangeAlertView = alertView;
   }
 
   #endregion

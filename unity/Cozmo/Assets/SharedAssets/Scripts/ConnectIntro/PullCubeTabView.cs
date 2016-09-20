@@ -73,6 +73,10 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
     }, "cube_get_help_button", this.DASEventViewName);
 
     DasTracker.Instance.TrackCubePromptEntered();
+
+    if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Sim) {
+      _ContinueButton.gameObject.SetActive(true);
+    }
   }
 
   protected override void Update() {
