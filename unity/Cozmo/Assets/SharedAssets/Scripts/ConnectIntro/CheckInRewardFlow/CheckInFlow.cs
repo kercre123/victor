@@ -86,6 +86,18 @@ public class CheckInFlow : MonoBehaviour {
   [SerializeField]
   private Cozmo.UI.CozmoButton _PrivacyPolicyButton;
 
+  // Audio Config
+  [SerializeField]
+  private Anki.Cozmo.Audio.AudioEventParameter _EnvelopeOpenSound = Anki.Cozmo.Audio.AudioEventParameter.InvalidEvent;
+  [SerializeField]
+  private Anki.Cozmo.Audio.AudioEventParameter _EnvelopeDisappearSound = Anki.Cozmo.Audio.AudioEventParameter.InvalidEvent;
+  [SerializeField]
+  private Anki.Cozmo.Audio.AudioEventParameter _CalendarDisappearSound = Anki.Cozmo.Audio.AudioEventParameter.InvalidEvent;
+  [SerializeField]
+  private Anki.Cozmo.Audio.AudioEventParameter _GoalCollectSound = Anki.Cozmo.Audio.AudioEventParameter.InvalidEvent;
+  [SerializeField]
+  private Anki.Cozmo.Audio.AudioEventParameter _RewardCollectSound = Anki.Cozmo.Audio.AudioEventParameter.InvalidEvent;
+
   private List<Transform> _ActiveNewGoalTransforms = new List<Transform>();
   private List<Transform> _ActiveNewGoalTargets = new List<Transform>();
   private List<Transform> _ActiveExpTransforms = new List<Transform>();
@@ -177,7 +189,10 @@ public class CheckInFlow : MonoBehaviour {
     _CurrentSequence = envelopeSequence;
     envelopeSequence.Join(_TapToOpenText.DOFade(0.0f, _EnvelopeShrinkDuration));
     envelopeSequence.Join(envelope.DOScaleY(_EnvelopeOpenStartScale, _EnvelopeShrinkDuration));
-    envelopeSequence.Append(envelope.DOScaleY(_EnvelopeOpenMaxScale, _EnvelopeOpenDuration));
+    envelopeSequence.Append(envelope.DOScaleY(_EnvelopeOpenMaxScale, _EnvelopeOpenDuration).OnPlay(() => {
+      // play the envelope open sound
+      Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_EnvelopeOpenSound);
+    }));
     envelopeSequence.AppendCallback(StartCurrentStreakSequence);
     envelopeSequence.Play();
   }
@@ -242,7 +257,10 @@ public class CheckInFlow : MonoBehaviour {
     rewardSequence.Join(UIDefaultTransitionSettings.Instance.CreateFadeInTween(_TimelineCanvas, Ease.Unset, _TimelineSettleDuration));
     // Prepare all TimelineCells and get our envelope Target for the main envelope
     PrepareStreakTimeline(rewardSequence);
-    rewardSequence.Join(_OpenEnvelope.transform.DOMove(_FinalEnvelopeTarget.position, _TimelineSettleDuration));
+    rewardSequence.Join(_OpenEnvelope.transform.DOMove(_FinalEnvelopeTarget.position, _TimelineSettleDuration).OnPlay(() => {
+      // play the envelope disappear sound
+      Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_EnvelopeDisappearSound);
+    }));
     rewardSequence.Join(_EnvelopeShadow.DOFade(0.0f, _TimelineSettleDuration));
     rewardSequence.Play();
     _TimelineSequence = rewardSequence;
@@ -259,7 +277,10 @@ public class CheckInFlow : MonoBehaviour {
     // Fill up each Bar Segment and make the Checkmarks Pop/fade in
     // Fade out and slide out the timeline, send rewards to targets (Energy to EnergyBar at top, Hexes/Sparks to Counters at top, DailyGoal Panel into position)
     // Rewards are independent from Containers
-    rewardSequence.Append(_TimelineCanvas.transform.DOLocalMoveY(_TimelineCanvasYOffset, _TimelineOutroDuration));
+    rewardSequence.Append(_TimelineCanvas.transform.DOLocalMoveY(_TimelineCanvasYOffset, _TimelineOutroDuration).OnStart(() => {
+      // play the sound for the timeline disappearing
+      Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_CalendarDisappearSound);
+    }));
     rewardSequence.Join(UIDefaultTransitionSettings.Instance.CreateFadeOutTween(_TimelineCanvas, Ease.Unset, _TimelineOutroDuration));
     rewardSequence.AppendCallback(HandleTimelineAnimEnd);
     rewardSequence.Play();
@@ -502,6 +523,10 @@ public class CheckInFlow : MonoBehaviour {
   // active for Start to fire.
   private void HandleDailyGoalTweens() {
     _CurrentSequence = DOTween.Sequence();
+    // play the sound for the goals animating toward the goal panel
+    _CurrentSequence.InsertCallback (0f, () => {
+      Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_GoalCollectSound);
+    });
     for (int i = 0; i < _ActiveNewGoalTransforms.Count; i++) {
       Transform currTransform = _ActiveNewGoalTransforms[i];
       float stagger = UnityEngine.Random.Range(0, _RewardSendoffVariance);
@@ -544,6 +569,10 @@ public class CheckInFlow : MonoBehaviour {
     else {
       _ConnectButton.Interactable = false;
       Sequence collectSequence = DOTween.Sequence();
+      // play collect sound
+      collectSequence.InsertCallback(0, () => {
+        Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_RewardCollectSound);
+      });
       AnimateRewardsToTarget(collectSequence);
       collectSequence.AppendInterval(_RewardSendoffVariance);
       collectSequence.AppendCallback(StartConnectionFlow);

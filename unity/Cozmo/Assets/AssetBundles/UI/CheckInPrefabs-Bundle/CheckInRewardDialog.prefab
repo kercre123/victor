@@ -1132,6 +1132,21 @@ MonoBehaviour:
   _FinalSparkTarget: {fileID: 22409264}
   _GoalsCollectTarget: {fileID: 22429652}
   _PrivacyPolicyButton: {fileID: 11416342}
+  _EnvelopeOpenSound:
+    _Event: Play__Sfx__Daily_Reward_Open
+    _EventType: Sfx
+  _EnvelopeDisappearSound:
+    _Event: Play__Sfx__Daily_Reward_Disappear
+    _EventType: Sfx
+  _CalendarDisappearSound:
+    _Event: Play__Sfx__Daily_Reward_Calendar_Disappear
+    _EventType: Sfx
+  _GoalCollectSound:
+    _Event: Play__Sfx__Daily_Reward_Goal_Collect
+    _EventType: Sfx
+  _RewardCollectSound:
+    _Event: Play__Sfx__Daily_Reward_Collect
+    _EventType: Sfx
   _EnvelopeShrinkDuration: 0.5
   _EnvelopeOpenDuration: 0.15
   _EnvelopeOpenStartScale: 0.9
@@ -1150,6 +1165,7 @@ MonoBehaviour:
   _RewardCollectZoneVariance: 0.25
   _GoalTweenDelay: 0.05
   _GoalFadeDuration: 0.5
+  _RewardFinalDelay: 0.75
 --- !u!114 &11406180
 MonoBehaviour:
   m_ObjectHideFlags: 1

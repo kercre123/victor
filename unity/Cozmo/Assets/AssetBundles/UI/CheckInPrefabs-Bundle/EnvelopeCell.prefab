@@ -137,6 +137,9 @@ MonoBehaviour:
   _CheckMark: {fileID: 11466652}
   _Text: {fileID: 11432354}
   ProgBar: {fileID: 0}
+  _CheckSound:
+    _Event: Play__Sfx__Daily_Reward_Status
+    _EventType: Sfx
   IsFinalCell: 0
 --- !u!114 &11415362
 MonoBehaviour:
