@@ -269,6 +269,10 @@ message BackpackLightsTurnSignals
   LightState lights[2],
 }
 
+message GetManufacturingInfo
+{
+}
+
 message AbortAnimation
 {
 }
@@ -388,6 +392,7 @@ union EngineToRobot
   CubeID                        setCubeID                   = 0x10,
   BackpackLightsTurnSignals    setBackpackLightsTurnSignals = 0x11,
 
+  GetManufacturingInfo          getMfgInfo                  = 0x25,
   DiffieHellmanResults          diffieHellmanResults        = 0x26,
   EnterPairing                  enterPairing                = 0x27,
 
