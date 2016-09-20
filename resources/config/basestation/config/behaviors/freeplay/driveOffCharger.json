@@ -7,6 +7,13 @@
     "FP_Socialize",
     "FP_PlayWithHumans",
     "FP_PlayAlone",
-    "FP_NothingToDo"
+    "FP_NothingToDo",
+    "SparksRollBlock",
+    "SparksPopAWheelie",
+    "SparksPounceOnMotion",
+    "SparksKnockOverCubes",
+    "SparksBuildPyramid",
+    "SparksStackBlock",
+    "SparksPickUpCube"
   ]
 }
