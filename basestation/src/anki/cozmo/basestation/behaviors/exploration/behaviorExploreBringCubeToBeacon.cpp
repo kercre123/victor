@@ -621,7 +621,8 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
   const AIBeacon* beacon, const Robot& robot) const
 {
   // here we would check if stacking is (un)locked
-  const bool canStackCubes = robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::StackTwoCubes);
+  const bool forFreeplay = true;
+  const bool canStackCubes = robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::StackTwoCubes, forFreeplay);
   if ( !canStackCubes ) {
     return nullptr;
   }

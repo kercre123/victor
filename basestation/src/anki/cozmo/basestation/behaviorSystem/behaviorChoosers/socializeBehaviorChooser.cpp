@@ -274,7 +274,7 @@ void FPSocializeBehaviorChooser::PopulateRequiredObjectives()
   for( const auto& reqPtr : _objectiveRequirements ) {
     // first, check if the requirement is valid (based on unlock)
     if( reqPtr->requiredUnlock != UnlockId::Count &&
-        ! _robot.GetProgressionUnlockComponent().IsUnlocked( reqPtr->requiredUnlock ) ) {
+        ! _robot.GetProgressionUnlockComponent().IsUnlocked( reqPtr->requiredUnlock, true ) ) {
       
       PRINT_CH_INFO("Behaviors", "FPSocialize.Start.RequiredObjectiveLocked",
                     "objective %s requires %s, ignoring",
