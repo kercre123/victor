@@ -32,7 +32,14 @@ static const float kInitialDriveAccel = 40.0f;
 
 static const char* const kExtraDriveDistKey = "extraDistanceToDrive_mm";
 
-
+static const std::set<BehaviorType> kBehaviorsToDisable = {BehaviorType::ReactToCliff,
+                                                           BehaviorType::ReactToUnexpectedMovement,
+                                                           BehaviorType::AcknowledgeObject,
+                                                           BehaviorType::AcknowledgeFace,
+                                                           BehaviorType::ReactToCubeMoved,
+                                                           BehaviorType::KnockOverCubes};
+  
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDriveOffCharger::BehaviorDriveOffCharger(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -72,7 +79,8 @@ Result BehaviorDriveOffCharger::InitInternal(Robot& robot)
   _timesResumed = 0;
   
   //Disable Cliff Reaction during behavior
-  SmartDisableReactionaryBehavior(BehaviorType::ReactToCliff);
+  SmartDisableReactionaryBehavior(kBehaviorsToDisable);
+
   return Result::RESULT_OK;
 }
   
