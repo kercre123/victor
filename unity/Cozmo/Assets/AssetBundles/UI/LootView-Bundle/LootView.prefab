@@ -750,6 +750,9 @@ MonoBehaviour:
   _LootReleasedSoundEvent:
     _Event: Play__Sfx__Code_Fragment_Released
     _EventType: Sfx
+  _LootCollectSoundEvent:
+    _Event: Play__Sfx__Code_Fragment_Collected
+    _EventType: Sfx
   _LootStartKey: loot.Start
   _LootMidKey: loot.Mid
   _LootAlmostKey: loot.Almost
