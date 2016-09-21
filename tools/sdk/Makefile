@@ -1,8 +1,8 @@
 .PHONY: copy-clad license sdist wheel examples dist
 
 copy-clad:
-	rm -rf src/cozmo/_internal/clad
-	rm -rf src/cozmo/_internal/msgbuffers
+	rm -rf src/cozmo/_internal/clad/*
+	rm -rf src/cozmo/_internal/msgbuffers/*
 	cp -r ../../generated/cladPython/clad src/cozmo/_internal/
 	cp -r ../message-buffers/support/python/msgbuffers src/cozmo/_internal/
 
@@ -17,10 +17,10 @@ $(license_targets): LICENSE.txt
 	done
 
 sdist:
-	python setup.py sdist
+	python3 setup.py sdist
 
 wheel:
-	python setup.py bdist_wheel
+	python3 setup.py bdist_wheel
 
 dist/sdk-examples.zip: license examples/*.py
 	rm -f dist/sdk-examples.zip
