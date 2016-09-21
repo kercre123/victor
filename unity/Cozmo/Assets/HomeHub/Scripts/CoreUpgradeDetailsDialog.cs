@@ -256,8 +256,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
   }
 
   protected override void HandleUserClose() {
-
-    if (RobotEngineManager.Instance.CurrentRobot.IsSparked) {
+    if (RobotEngineManager.Instance.CurrentRobot != null && RobotEngineManager.Instance.CurrentRobot.IsSparked) {
       CreateConfirmQuitAlert();
     }
     else {

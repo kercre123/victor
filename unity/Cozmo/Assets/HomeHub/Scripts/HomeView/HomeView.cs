@@ -487,6 +487,12 @@ namespace Cozmo.HomeHub {
     #region Reward Sequence and Lootview
 
     public void CheckForRewardSequence() {
+      // Don't start coroutines if not active; this can happen in CleanUp steps
+      // See https://ankiinc.atlassian.net/browse/COZMO-5212
+      if (!this.enabled || this.gameObject == null || !this.gameObject.activeInHierarchy) {
+        return;
+      }
+
       DailyGoalManager.Instance.ValidateExistingGoals();
       if (RewardedActionManager.Instance.RewardPending || DailyGoalManager.Instance.GoalsPending) {
         // If Rewards are pending, set sequence to active, shut down input until everything is done
