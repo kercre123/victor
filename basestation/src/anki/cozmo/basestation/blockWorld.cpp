@@ -756,8 +756,8 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     // if memory maps are enabled, we can merge old into new
     if ( kEnableMemoryMap )
     {
-      // oldOrigin is the pointer/id of the current map
-      // worldOrigin is the pointer/id of the map we can merge into/from
+      // oldOrigin is the pointer/id of the map that is staying, it's the one we rejiggered to
+      // newOrigin is the pointer/id of the map we were just building, and it's going away
       ASSERT_NAMED( _navMemoryMaps.find(oldOrigin) != _navMemoryMaps.end(), "BlockWorld.UpdateObjectOrigins.missingMapOriginOld");
       ASSERT_NAMED( _navMemoryMaps.find(newOrigin) != _navMemoryMaps.end(), "BlockWorld.UpdateObjectOrigins.missingMapOriginNew");
       ASSERT_NAMED( oldOrigin == _currentNavMemoryMapOrigin, "BlockWorld.UpdateObjectOrigins.updatingMapNotCurrent");

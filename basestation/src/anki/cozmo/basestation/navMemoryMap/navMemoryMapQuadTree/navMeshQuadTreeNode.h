@@ -90,8 +90,8 @@ public:
   // Note: Destructor should call processor.OnNodeDestroyed for any processor the node has been registered to.
   // However, by design, we don't do this (no need to store processor pointers, etc). We can do it because of the
   // assumption that the processor(s) will be destroyed at the same time than nodes are, except in the case of
-  // nodes that are merged into their parents, in which case we do notify the processor.
-  // Alternatively processors would store weak_ptr, but no need for the moment given the above assumption
+  // nodes that are merged into their parents, or when we shift the root, in which cases we do notify the processor.
+  // Alternatively processors would store weak_ptr, but no need for the moment given the above assumption.
   // ~NavMeshQuadTreeNode();
   
   // with noncopyable this is not needed, but xcode insist on showing static_asserts in cpp as errors for a while,
@@ -147,12 +147,17 @@ public:
   // processes the given point within the tree and appropriately stores the content in the quad tree where the point resides
   bool AddContentPoint(const Point2f& point, const NodeContent& detectedContent, NavMeshQuadTreeProcessor& processor);
 
+  // moves this node's center towards the required points, so that they can be included in this node
+  // returns true if the root shifts, false if it can't shift to accomodate all points or the points are already contained
+  bool ShiftRoot(const std::vector<Point2f>& requiredPoints, NavMeshQuadTreeProcessor& processor);
+
   // Convert this node into a parent of its level, delegating its children to the new child that substitutes it
   // In order for a quadtree to be valid, the only way this could work without further operations is calling this
   // on a root node. Such responsibility lies in the caller, not in this node
   // Returns true if successfully expanded, false otherwise
-  bool UpgradeRootLevel(const Point2f& direction, NavMeshQuadTreeProcessor& processor);
-  
+  // maxRootLevel: it won't upgrade if the root is already higher level than the specified
+  bool UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel, NavMeshQuadTreeProcessor& processor);
+ 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Exploration
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -193,6 +198,9 @@ private:
   
   // type of overlap for quads
   enum class EContentOverlap { Partial, Total };
+  
+  // container for each node's children
+  using ChildrenVector = std::vector< std::unique_ptr<NavMeshQuadTreeNode> >;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Collision checks
@@ -272,6 +280,12 @@ private:
   
   // sets a new parent to this node. Used on expansions
   void ChangeParent(const NavMeshQuadTreeNode* newParent) { _parent = newParent; }
+  
+  // swaps children and content with 'otherNode', updating the children's parent pointer
+  void SwapChildrenAndContent(NavMeshQuadTreeNode* otherNode, NavMeshQuadTreeProcessor& processor);
+  
+  // read the note in destructor on why we manually destroy nodes when they are removed
+  static void DestroyNodes(ChildrenVector& nodes, NavMeshQuadTreeProcessor& processor);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Exploration
