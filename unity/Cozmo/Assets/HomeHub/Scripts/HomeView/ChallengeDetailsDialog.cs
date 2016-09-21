@@ -246,6 +246,10 @@ public class ChallengeDetailsDialog : BaseView {
 
   protected override void CleanUp() {
     _StartChallengeButton.onClick.RemoveAllListeners();
+
+    if (_UnlockTween != null) {
+      _UnlockTween.Kill();
+    }
   }
 
   protected override void ConstructOpenAnimation(Sequence openAnimation) {

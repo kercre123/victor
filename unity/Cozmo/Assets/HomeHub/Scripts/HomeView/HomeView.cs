@@ -784,6 +784,10 @@ namespace Cozmo.HomeHub {
         UIManager.CloseView(_HelpViewInstance);
       }
 
+      if (_RewardSequence != null) {
+        _RewardSequence.Kill();
+      }
+
       Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
       playerInventory.ItemAdded -= HandleItemValueChanged;
       playerInventory.ItemRemoved -= HandleItemValueChanged;

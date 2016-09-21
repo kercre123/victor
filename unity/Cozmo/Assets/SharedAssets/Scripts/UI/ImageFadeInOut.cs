@@ -18,7 +18,9 @@ public class ImageFadeInOut : MonoBehaviour {
   }
 
   private void OnDestroy() {
-    _Tween.Kill();
+    if (_Tween != null) {
+      _Tween.Kill();
+    }
   }
 
   private void FadeIn() {

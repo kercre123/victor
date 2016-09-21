@@ -83,6 +83,12 @@ public class UIManager : MonoBehaviour {
     BackgroundColorController.SetBackgroundColor(BackgroundColorController.BackgroundColor.Yellow);
   }
 
+  private void OnDestroy() {
+    if (_DimBackgroundTweener != null) {
+      _DimBackgroundTweener.Kill();
+    }
+  }
+
   /// <summary>
   /// Creates a UI element using a script/prefab that extends from MonoBehavior. 
   /// For BaseViews, use OpenView instead.

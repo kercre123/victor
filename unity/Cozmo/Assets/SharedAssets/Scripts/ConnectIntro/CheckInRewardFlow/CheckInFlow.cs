@@ -141,6 +141,9 @@ public class CheckInFlow : MonoBehaviour {
     }
     else {
       Sequence rewardSequence = DOTween.Sequence();
+      if (_CurrentSequence != null) {
+        _CurrentSequence.Kill();
+      }
       _CurrentSequence = rewardSequence;
       rewardSequence.Join(UIDefaultTransitionSettings.Instance.CreateFadeInTween(_DailyGoalPanel, Ease.Unset, _ConnectIntroDuration));
       rewardSequence.Join(UIDefaultTransitionSettings.Instance.CreateFadeInTween(_ConnectCanvas, Ease.Unset, _ConnectIntroDuration));
@@ -190,6 +193,9 @@ public class CheckInFlow : MonoBehaviour {
   private void HandleEnvelopeButton() {
     Transform envelope = _EnvelopeButton.transform;
     Sequence envelopeSequence = DOTween.Sequence();
+    if (_CurrentSequence != null) {
+      _CurrentSequence.Kill();
+    }
     _CurrentSequence = envelopeSequence;
     envelopeSequence.Join(_TapToOpenText.DOFade(0.0f, _EnvelopeShrinkDuration));
     envelopeSequence.Join(envelope.DOScaleY(_EnvelopeOpenStartScale, _EnvelopeShrinkDuration));
@@ -251,7 +257,6 @@ public class CheckInFlow : MonoBehaviour {
     DataPersistence.DataPersistenceManager.Instance.StartNewSession();
     _QuickConnect = false;
     Sequence rewardSequence = DOTween.Sequence();
-    _TimelineSequence = rewardSequence;
     // Create the new session here to minimize risk of cheating/weird timing bugs allowing you to harvest
     // streak rewards by quitting out mid animation
     AnimateRewardIcons(rewardSequence);
@@ -267,6 +272,10 @@ public class CheckInFlow : MonoBehaviour {
     }));
     rewardSequence.Join(_EnvelopeShadow.DOFade(0.0f, _TimelineSettleDuration));
     rewardSequence.Play();
+
+    if (_TimelineSequence != null) {
+      _TimelineSequence.Kill();
+    }
     _TimelineSequence = rewardSequence;
     // If not using Timeline Animations, add HandleTimelineAnimEnd as a callback instead of using the Streak Timeline
     if (DataPersistence.DataPersistenceManager.Instance.CurrentStreak <= 1) {
@@ -277,6 +286,10 @@ public class CheckInFlow : MonoBehaviour {
 
   private void HandleStreakFillEnd() {
     Sequence rewardSequence = DOTween.Sequence();
+
+    if (_CurrentSequence != null) {
+      _CurrentSequence.Kill();
+    }
     _CurrentSequence = rewardSequence;
     // Fill up each Bar Segment and make the Checkmarks Pop/fade in
     // Fade out and slide out the timeline, send rewards to targets (Energy to EnergyBar at top, Hexes/Sparks to Counters at top, DailyGoal Panel into position)
@@ -481,6 +494,9 @@ public class CheckInFlow : MonoBehaviour {
 
   private void HandleTimelineAnimEnd() {
     Sequence goalSequence = DOTween.Sequence();
+    if (_TimelineSequence != null) {
+      _TimelineSequence.Kill();
+    }
     _TimelineSequence = goalSequence;
     goalSequence.Join(UIDefaultTransitionSettings.Instance.CreateFadeInTween(_DailyGoalPanel, Ease.Unset, _ConnectIntroDuration));
     goalSequence.Join(UIDefaultTransitionSettings.Instance.CreateFadeInTween(_ConnectCanvas, Ease.Unset, _ConnectIntroDuration));
@@ -531,9 +547,12 @@ public class CheckInFlow : MonoBehaviour {
   // Handled as a callback in order for us to have the appropriate delay after DailyGoalPanel becomes
   // active for Start to fire.
   private void HandleDailyGoalTweens() {
+    if (_CurrentSequence != null) {
+      _CurrentSequence.Kill();
+    }
     _CurrentSequence = DOTween.Sequence();
     // play the sound for the goals animating toward the goal panel
-    _CurrentSequence.InsertCallback (0f, () => {
+    _CurrentSequence.InsertCallback(0f, () => {
       Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_GoalCollectSound);
     });
     for (int i = 0; i < _ActiveNewGoalTransforms.Count; i++) {
@@ -571,6 +590,10 @@ public class CheckInFlow : MonoBehaviour {
       AnimateRewardsToTarget(collectSequence);
       collectSequence.AppendInterval(_RewardSendoffVariance);
       collectSequence.AppendCallback(HandleMockConnect);
+      if (_CurrentSequence != null) {
+        _CurrentSequence.Kill();
+      }
+      _CurrentSequence = collectSequence;
     }
   }
 
@@ -598,6 +621,11 @@ public class CheckInFlow : MonoBehaviour {
       AnimateRewardsToTarget(collectSequence);
       collectSequence.AppendInterval(_RewardSendoffVariance);
       collectSequence.AppendCallback(StartConnectionFlow);
+
+      if (_CurrentSequence != null) {
+        _CurrentSequence.Kill();
+      }
+      _CurrentSequence = collectSequence;
     }
   }
 
