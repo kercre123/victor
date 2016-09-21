@@ -94,7 +94,7 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private GameObjectDataLink _LootViewPrefabData;
 
-    private LootView _LootViewInstance = null;
+    private bool _LootSequenceActive = false;
     private System.Diagnostics.Stopwatch _Stopwatch = null;
     private string _CurrentChallengeId = null;
 
@@ -171,7 +171,7 @@ namespace Cozmo.HomeHub {
     }
     public bool HomeViewCurrentlyOccupied {
       get {
-        return (_RequestDialog != null || _LootViewInstance != null || _BadLightDialog != null ||
+        return (_RequestDialog != null || _LootSequenceActive || _BadLightDialog != null ||
                 _HelpViewInstance != null || _HomeHubInstance.IsChallengeDetailsActive ||
                 RewardSequenceActive || PauseManager.Instance.IsAnyDialogOpen);
       }
@@ -538,7 +538,7 @@ namespace Cozmo.HomeHub {
     // If we have a Chest Pending, open the loot view once the progress bar finishes filling.
     // If there are Rewards Pending, do this when the Energy Sequence ends.
     private void HandleGreenPointsBarUpdateComplete() {
-      if (ChestRewardManager.Instance.ChestPending && _LootViewInstance == null
+      if (ChestRewardManager.Instance.ChestPending && !_LootSequenceActive
           && RewardedActionManager.Instance.RewardPending == false) {
         // phase Loot onboarding is two stages, the first one is just an explination pointing to your meter,
         // then the callback from Onboarding will open the loot view.
@@ -563,18 +563,22 @@ namespace Cozmo.HomeHub {
     private void OpenLootView() {
       if (HomeViewCurrentlyOccupied && RewardSequenceActive == false) {
         // Avoid dupes but fail gracefully
-        DAS.Warn("HomeView.OpenLootView", "HomeViewCurrentlyOccupied with non reward stuff when we tried to open LootView");
+        DAS.Warn("homeView.openLootView", "LootView Blocked by non-reward sequence");
         HandleLootViewCloseAnimationFinished();
         return;
       }
+      if (_LootSequenceActive) {
+        DAS.Warn("homeView.openLootview", "Attempted to Load LootView Twice");
+        return;
+      }
+      _LootSequenceActive = true;
       _EmotionChipTag.gameObject.SetActive(false);
 
       AssetBundleManager.Instance.LoadAssetBundleAsync(_LootViewPrefabData.AssetBundle, (bool success) => {
         _LootViewPrefabData.LoadAssetData((GameObject prefabObject) => {
-          LootView alertView = UIManager.OpenView(prefabObject.GetComponent<LootView>());
-          alertView.LootBoxRewards = ChestRewardManager.Instance.PendingChestRewards;
-          _LootViewInstance = alertView;
-          _LootViewInstance.ViewCloseAnimationFinished += (() => {
+          LootView lootView = UIManager.OpenView(prefabObject.GetComponent<LootView>());
+          lootView.LootBoxRewards = ChestRewardManager.Instance.PendingChestRewards;
+          lootView.ViewCloseAnimationFinished += (() => {
             HandleLootViewCloseAnimationFinished();
             // Only unload the asset bundle if we actually loaded it before
             AssetBundleManager.Instance.UnloadAssetBundle(_LootViewPrefabData.AssetBundle);
@@ -593,7 +597,7 @@ namespace Cozmo.HomeHub {
     private void HandleLootViewCloseAnimationFinished() {
       _EmotionChipTag.gameObject.SetActive(true);
       RewardSequenceActive = false;
-      _LootViewInstance = null;
+      _LootSequenceActive = false;
       CheckIfUnlockablesAffordableAndUpdateBadge();
       // Snap to zero, then tween to current progress
       UpdateChestProgressBar(0, ChestRewardManager.Instance.GetNextRequirementPoints(), true);
