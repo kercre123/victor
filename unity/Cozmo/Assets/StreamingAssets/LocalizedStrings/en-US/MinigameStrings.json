@@ -188,7 +188,10 @@
     "translation": "Round {0:N0}"
   },
   "speedTap.tapBlock": {
-    "translation": "Tap a flashing Cube\nto play with!\n\nCubes should be separated."
+    "translation": "Tap a flashing Cube you\nwant to play with"
+  },
+  "speedTap.separateBlocks": {
+    "translation": "Cubes should be separated"
   },
   "speedTap.tapBlockForRound": {
     "translation": "Tap your Cube to begin the next round."

@@ -326,6 +326,7 @@ public static class LocalizationKeys {
   public const string kSimonGameLabelWaitingForCubesScanning = "simonGame.label.waitingForCubes.scanning";
   public const string kSpeedTapRoundsText = "speedTap.roundsText";
   public const string kSpeedTapTapBlock = "speedTap.tapBlock";
+  public const string kSpeedTapSeparateBlocks = "speedTap.separateBlocks";
   public const string kSpeedTapTapBlockForRound = "speedTap.tapBlockForRound";
   public const string kMinigameDontMoveCozmoTitle = "minigame.dontMoveCozmo.title";
   public const string kMinigameDontMoveCozmoDescription = "minigame.dontMoveCozmo.description";
@@ -664,6 +665,10 @@ public static class LocalizationKeys {
   public const string kUnlockableCurrencyRequired = "unlockable.CurrencyRequired";
   public const string kUnlockableBitsRequiredDescription = "unlockable.BitsRequired.Description";
   public const string kUnlockableBitsRequiredEarnMore = "unlockable.BitsRequired.EarnMore";
+  public const string kUnlockableMysteryTitle = "unlockable.Mystery.Title";
+  public const string kUnlockableMysteryDescription = "unlockable.Mystery.Description";
+  public const string kUnlockableWorkoutTitle = "unlockable.Workout.Title";
+  public const string kUnlockableWorkoutDescription = "unlockable.Workout.Description";
   public const string kUnlockableCubePounceTitle = "unlockable.CubePounce.Title";
   public const string kUnlockableCubePounceDescription = "unlockable.CubePounce.Description";
   public const string kUnlockableFaceEnrollmentTitle = "unlockable.FaceEnrollment.Title";
