@@ -1917,13 +1917,7 @@ MonoBehaviour:
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#label.emptyWithArg"'
-  ModifiedLocalReferences:
-  - ObjectPath: ../
-    FieldName: Cozmo.UI.ItemDataLabel:_CountLabel
-    ReferencePath: 
-  - ObjectPath: ../../../
-    FieldName: Cozmo.HomeHub.HomeView:_HexLabel
-    ReferencePath: 
+  ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
 --- !u!114 &11412828
 MonoBehaviour:
@@ -2273,7 +2267,6 @@ MonoBehaviour:
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11426574
 MonoBehaviour:
@@ -2385,7 +2378,6 @@ MonoBehaviour:
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11429702
 MonoBehaviour:
@@ -2586,7 +2578,6 @@ MonoBehaviour:
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11435452
 MonoBehaviour:
@@ -2698,7 +2689,6 @@ MonoBehaviour:
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11441452
 MonoBehaviour:
@@ -2809,10 +2799,7 @@ MonoBehaviour:
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#label.emptyWithArg"'
-  ModifiedLocalReferences:
-  - ObjectPath: ../
-    FieldName: Cozmo.UI.ItemDataLabel:_CountLabel
-    ReferencePath: 
+  ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
 --- !u!114 &11450284
 MonoBehaviour:
@@ -2843,7 +2830,6 @@ MonoBehaviour:
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11450686
 MonoBehaviour:
@@ -2901,7 +2887,6 @@ MonoBehaviour:
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11452140
 MonoBehaviour:
@@ -3040,7 +3025,6 @@ MonoBehaviour:
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11454982
 MonoBehaviour:
@@ -3071,7 +3055,6 @@ MonoBehaviour:
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11457386
 MonoBehaviour:
@@ -3334,7 +3317,6 @@ MonoBehaviour:
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11474562
 MonoBehaviour:
@@ -3351,8 +3333,11 @@ MonoBehaviour:
   _DASEventViewType: 0
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
+  _LayerPriority: 0
   DimBackground: 0
-  DimBackgroundPrefabOverride: {fileID: 0}
+  _OpenAudioEvent:
+    _Event: Invalid
+    _EventType: GenericEvent
   _CozmoTabPrefab: {fileID: 11439446, guid: f0483806736fc4eea837be77327845c6, type: 2}
   _PlayTabPrefab: {fileID: 11407746, guid: 937a732b630ed4fa4bcfc2599fa4b53a, type: 2}
   _ProfileTabPrefab: {fileID: 11439446, guid: 3b0f016aa99134a7e8bea0e9b1135956, type: 2}
@@ -3717,7 +3702,6 @@ MonoBehaviour:
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11491632
 MonoBehaviour:
@@ -3775,7 +3759,6 @@ MonoBehaviour:
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11496354
 MonoBehaviour:
@@ -6310,7 +6293,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: 0, y: -50}
-  m_SizeDelta: {x: 106, y: 102}
+  m_SizeDelta: {x: 90, y: 90}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!224 &22416946
 RectTransform:
