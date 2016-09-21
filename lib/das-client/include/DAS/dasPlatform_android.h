@@ -22,7 +22,10 @@ namespace DAS {
 class __attribute__((visibility("default"))) DASPlatform_Android : public IDASPlatform
 {
 public:
-  DASPlatform_Android(std::string appRunId) : IDASPlatform(std::move(appRunId)) {}
+  DASPlatform_Android(std::string appRunId, std::string deviceUUIDPath) 
+  : IDASPlatform(std::move(appRunId)) 
+  , _deviceUUIDPath(std::move(deviceUUIDPath)) 
+  {}
 
   // initialize with an instance of an android.content.Context Java object
   void Init(jobject appContext);
@@ -62,6 +65,7 @@ private:
   std::string _totalDiskSpace;
   std::string _batteryLevel;
   std::string _batteryState;
+  std::string _deviceUUIDPath;
   std::map<std::string, std::string> _miscInfo;
   void Init(JNIEnv* env, jobject context);
 

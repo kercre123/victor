@@ -256,7 +256,7 @@ int cozmo_startup(const char *configuration_data)
     // init DAS among other things
     result = Anki::Cozmo::iOSBinding::cozmo_startup(dataPlatform, appRunId);
 #elif defined(ANKI_PLATFORM_ANDROID) && USE_DAS
-    std::unique_ptr<DAS::DASPlatform_Android> dasPlatform{new DAS::DASPlatform_Android(appRunId)};
+    std::unique_ptr<DAS::DASPlatform_Android> dasPlatform{new DAS::DASPlatform_Android(appRunId, dataPlatform->pathToResource(Anki::Util::Data::Scope::Persistent, "uniqueDeviceID.dat"))};
     dasPlatform->InitForUnityPlayer();
     DASNativeInit(std::move(dasPlatform), "cozmo");
 #endif

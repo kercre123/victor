@@ -122,7 +122,7 @@ void DASPlatform_Android::Init(JNIEnv* env, jobject context)
   jclass dasClass = env->FindClass("com/anki/daslib/DAS");
   VALIDATE(dasClass);
 
-  jmethodID deviceIdMethod = env->GetStaticMethodID(dasClass, "getDeviceID", "(" JCONTEXT ")" JSTR);
+  jmethodID deviceIdMethod = env->GetStaticMethodID(dasClass, "getDeviceID", "(" JSTR ")" JSTR);
   jmethodID combinedSystemVersionMethod = env->GetStaticMethodID(dasClass, "getCombinedSystemVersion", "()" JSTR);
   jmethodID deviceModelMethod = env->GetStaticMethodID(dasClass, "getModel", "()" JSTR);
   jmethodID osVersionMethod = env->GetStaticMethodID(dasClass, "getOsVersion", "()" JSTR);
@@ -143,7 +143,10 @@ void DASPlatform_Android::Init(JNIEnv* env, jobject context)
   VALIDATE(batteryStateMethod);
   VALIDATE(appVersionMethod);
 
-  _deviceId = StringFromJString(env, env->CallStaticObjectMethod(dasClass, deviceIdMethod, context));
+  jstring jString = env->NewStringUTF(_deviceUUIDPath.c_str());
+  _deviceId = StringFromJString(env, env->CallStaticObjectMethod(dasClass, deviceIdMethod, jString));
+  env->DeleteLocalRef(jString);
+
   _deviceModel = StringFromJString(env, env->CallStaticObjectMethod(dasClass, deviceModelMethod));
   _osVersion = StringFromJString(env, env->CallStaticObjectMethod(dasClass, osVersionMethod));
   _combinedSystemVersion = StringFromJString(env, env->CallStaticObjectMethod(dasClass, combinedSystemVersionMethod));

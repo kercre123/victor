@@ -27,10 +27,17 @@ import android.telephony.TelephonyManager;
 import android.util.Base64;
 import android.util.Log;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.UnsupportedEncodingException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.lang.SecurityException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -216,26 +223,48 @@ public class DAS {
         return s;
     }
 
-    public static String getDeviceID(Context context) {
-        final TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+    public static String getDeviceID(String path) {
+        String uniqueID = null;
 
-        String tmDevice, tmSerial;
+        File uuidFile = new File(path);
+        if (uuidFile.exists()) {
+            BufferedReader reader = null;
+            try {
+                reader = new BufferedReader(new FileReader(uuidFile));
+                uniqueID = reader.readLine();
+            } catch (IOException e) { 
+            } finally {
+                if (reader != null) {
+                    try {
+                        reader.close();
+                    } catch (IOException ioe) { }
+                }
+            }
+        }
+
+        if (uniqueID != null)
+        {
+            return uniqueID;
+        }
+
+        // Otherwise time to create a new UUID and store to file
+        uniqueID = UUID.randomUUID().toString();
         try {
-            tmDevice = "" + tm.getDeviceId();
-            tmSerial = "" + tm.getSimSerialNumber();
-        }
-        catch (java.lang.SecurityException se) {
-            // User apparently didn't grant permission to telephone data
-            tmDevice = "";
-            tmSerial = "";
-        }
-        final String androidId = "" + android.provider.Settings.Secure.getString(context.getContentResolver(),
-                android.provider.Settings.Secure.ANDROID_ID);
+            uuidFile.getParentFile().mkdirs();
+            PrintWriter writer = null;
+            try {
+                writer = new PrintWriter(uuidFile);
+                writer.println(uniqueID);
+            } catch (FileNotFoundException fe) {
+            } finally {
+                if (writer != null) {
+                    writer.close();
+                }
+            }
 
-        UUID deviceUuid = new UUID(androidId.hashCode(), ((long) tmDevice.hashCode() << 32) | tmSerial.hashCode());
-        String deviceId = deviceUuid.toString();
+        } catch (SecurityException se) { }
 
-        return deviceId;
+        return uniqueID;
     }
 
     public static String getFreeDiskSpace() {
