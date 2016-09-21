@@ -685,8 +685,12 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         {
           newObject = oldObject->CloneType();
           newObject->CopyID(oldObject);
-          newObject->SetActiveID(oldObject->GetActiveID());
-          newObject->SetFactoryID(oldObject->GetFactoryID());
+          
+          if(newObject->IsActive())
+          {
+            newObject->SetActiveID(oldObject->GetActiveID());
+            newObject->SetFactoryID(oldObject->GetFactoryID());
+          }
           
           addNewObject = true;
         
@@ -1210,8 +1214,12 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
           // NOTE: This kinda breaks the whole point of the ObjectID class that only one object can
           //  exist with each ID :-/
           objSeen->CopyID(matchingObjects.begin()->second);
-          objSeen->SetActiveID(matchingObjects.begin()->second->GetActiveID()); // NOTE: also marks as "identified"
-          objSeen->SetFactoryID(matchingObjects.begin()->second->GetFactoryID());
+          
+          if(objSeen->IsActive())
+          {
+            objSeen->SetActiveID(matchingObjects.begin()->second->GetActiveID()); // NOTE: also marks as "identified"
+            objSeen->SetFactoryID(matchingObjects.begin()->second->GetFactoryID());
+          }
         }
         
         // Add the object in the current coordinate frame, initially with Known pose
