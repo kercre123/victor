@@ -107,6 +107,9 @@ public class CheckInFlow : MonoBehaviour {
   private Sequence _TimelineSequence;
   private Sequence _CurrentSequence;
 
+  [SerializeField]
+  private string _PrivacyPolicyFileName;
+
   private void Awake() {
 
     if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
@@ -118,7 +121,7 @@ public class CheckInFlow : MonoBehaviour {
 
     _PrivacyPolicyButton.Initialize(() => {
       ScrollingTextView view = UIManager.OpenView<ScrollingTextView>(AlertViewLoader.Instance.ScrollingTextViewPrefab, (ScrollingTextView v) => { v.DASEventViewName = "privacy_policy_view"; });
-      view.Initialize(Localization.Get(LocalizationKeys.kPrivacyPolicyTitle), Localization.Get(LocalizationKeys.kPrivacyPolicyText));
+      view.Initialize(Localization.Get(LocalizationKeys.kPrivacyPolicyTitle), Localization.ReadLocalizedTextFromFile(_PrivacyPolicyFileName));
     }, "privacy_policy_button", "checkin_dialog");
 
 
