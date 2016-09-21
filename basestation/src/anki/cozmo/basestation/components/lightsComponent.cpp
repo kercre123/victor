@@ -1184,6 +1184,11 @@ void LightsComponent::OnObjectPoseStateChanged(const ObjectID& objectID,
                                                const PoseState oldPoseState,
                                                const PoseState newPoseState)
 {
+  if(oldPoseState == newPoseState)
+  {
+    return;
+  }
+  
   // Known -> Dirty | Dirty -> Unknown | Known -> Unknown change to Connected state
   // Works based on the ordering of the PoseState enum
   static_assert(PoseState::Known < PoseState::Dirty &&
