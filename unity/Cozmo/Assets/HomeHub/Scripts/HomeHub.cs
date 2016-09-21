@@ -259,7 +259,7 @@ namespace Cozmo.HomeHub {
             }
           }
           if (rc != null) {
-            RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(rc.RequestAcceptedAnimationTrigger);
+            RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(rc.RequestAcceptedAnimationTrigger.Value);
           }
         }
       }

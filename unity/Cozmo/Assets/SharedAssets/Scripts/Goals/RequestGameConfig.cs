@@ -6,5 +6,5 @@ public class RequestGameConfig : ScriptableObject {
   [ChallengeId]
   public string ChallengeID;
   public BehaviorGameFlag RequestBehaviorGameFlag;
-  public AnimationTrigger RequestAcceptedAnimationTrigger;
+  public SerializableAnimationTrigger RequestAcceptedAnimationTrigger;
 }
