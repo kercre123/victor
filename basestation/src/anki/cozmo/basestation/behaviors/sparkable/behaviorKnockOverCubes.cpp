@@ -212,8 +212,12 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(Robot& robot)
                                                                        const u8 retryCount,
                                                                        AnimationTrigger& retryAnimTrigger)
   {
-    retryAnimTrigger = _knockOverFailureTrigger;
-    
+    if(_shouldStreamline){
+      retryAnimTrigger = AnimationTrigger::Count;
+    }else{
+      retryAnimTrigger = _knockOverFailureTrigger;
+    }
+      
     flipAction->SetMaxTurnTowardsFaceAngle(0);
 
     // Use a different preAction pose if we are retrying

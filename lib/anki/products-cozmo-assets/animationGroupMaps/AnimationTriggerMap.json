@@ -326,7 +326,7 @@
     },
     {
       "CladEvent": "KnockOverFailure",
-      "AnimName": "ag_explorer_drvback_start"
+      "AnimName": "ag_reacttoblock_3blocktower_upset"
     },
     {
       "CladEvent": "KnockOverGrabAttempt",
