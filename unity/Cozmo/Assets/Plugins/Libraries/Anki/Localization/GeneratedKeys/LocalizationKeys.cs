@@ -398,6 +398,12 @@ public static class LocalizationKeys {
   public const string kOnboardingCozmoNeedsChargeKeepOnCharger = "onboarding.CozmoNeedsCharge.KeepOnCharger";
   public const string kOnboardingCozmoNeedsChargePutBackOnCharger = "onboarding.CozmoNeedsCharge.PutBackOnCharger";
   public const string kOnboardingCozmoNeedsChargeCozmoIsReady = "onboarding.CozmoNeedsCharge.CozmoIsReady";
+  public const string kOnboardingCozmoNeedsChargeMessage1 = "onboarding.CozmoNeedsCharge.message1";
+  public const string kOnboardingCozmoNeedsChargeMessage2 = "onboarding.CozmoNeedsCharge.message2";
+  public const string kOnboardingCozmoNeedsChargeMessage3 = "onboarding.CozmoNeedsCharge.message3";
+  public const string kOnboardingCozmoNeedsChargeMessage4 = "onboarding.CozmoNeedsCharge.message4";
+  public const string kOnboardingCozmoNeedsChargeMessage5 = "onboarding.CozmoNeedsCharge.message5";
+  public const string kOnboardingCozmoNeedsChargeFinalMessage = "onboarding.CozmoNeedsCharge.finalMessage";
   public const string kOnboardingSlide0 = "onboarding.Slide0";
   public const string kOnboardingSlide1 = "onboarding.Slide1";
   public const string kOnboardingSlide2Header = "onboarding.Slide2Header";
