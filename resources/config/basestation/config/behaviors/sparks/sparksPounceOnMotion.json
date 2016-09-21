@@ -4,7 +4,7 @@
   "behaviorGroups": [
     "SparksPounceOnMotion"
   ],
-  "flatScore" : 5.0,
+  "flatScore" : 3.0,
   
   "maxNoGroundMotionBeforeBored_running_Sec": 60.0,
   "maxNoGroundMotionBeforeBored_notRunning_Sec": 60.0,

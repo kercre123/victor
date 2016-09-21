@@ -86,6 +86,18 @@ public class CheckInFlow : MonoBehaviour {
   [SerializeField]
   private Cozmo.UI.CozmoButton _PrivacyPolicyButton;
 
+  // Audio Config
+  [SerializeField]
+  private Anki.Cozmo.Audio.AudioEventParameter _EnvelopeOpenSound = Anki.Cozmo.Audio.AudioEventParameter.InvalidEvent;
+  [SerializeField]
+  private Anki.Cozmo.Audio.AudioEventParameter _EnvelopeDisappearSound = Anki.Cozmo.Audio.AudioEventParameter.InvalidEvent;
+  [SerializeField]
+  private Anki.Cozmo.Audio.AudioEventParameter _CalendarDisappearSound = Anki.Cozmo.Audio.AudioEventParameter.InvalidEvent;
+  [SerializeField]
+  private Anki.Cozmo.Audio.AudioEventParameter _GoalCollectSound = Anki.Cozmo.Audio.AudioEventParameter.InvalidEvent;
+  [SerializeField]
+  private Anki.Cozmo.Audio.AudioEventParameter _RewardCollectSound = Anki.Cozmo.Audio.AudioEventParameter.InvalidEvent;
+
   private List<Transform> _ActiveNewGoalTransforms = new List<Transform>();
   private List<Transform> _ActiveNewGoalTargets = new List<Transform>();
   private List<Transform> _ActiveExpTransforms = new List<Transform>();
@@ -122,7 +134,7 @@ public class CheckInFlow : MonoBehaviour {
     // of a reward loot view flow.
     ChestRewardManager.Instance.TryPopulateChestRewards();
     ChestRewardManager.Instance.ApplyChestRewards();
-    UpdateProgBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
+    UpdateProgBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
     // Do Check in Rewards if we need a new session
     if (DataPersistence.DataPersistenceManager.Instance.IsNewSessionNeeded) {
       _EnvelopeContainer.SetActive(true);
@@ -152,9 +164,13 @@ public class CheckInFlow : MonoBehaviour {
     }
   }
 
-  private void UpdateProgBar(int currPoints, int reqPoints) {
+  private void UpdateProgBar(int currPoints, int reqPoints, bool instant) {
+    // If we've closed out of CheckInFlow midway through a tween, avoid potential null ref
+    if (_GoalProgressBar == null) {
+      return;
+    }
     float prog = ((float)currPoints / (float)reqPoints);
-    _GoalProgressBar.SetProgress(prog, true);
+    _GoalProgressBar.SetProgress(prog, instant);
     _GoalProgressText.text = string.Format("{0}", currPoints);
   }
 
@@ -177,7 +193,10 @@ public class CheckInFlow : MonoBehaviour {
     _CurrentSequence = envelopeSequence;
     envelopeSequence.Join(_TapToOpenText.DOFade(0.0f, _EnvelopeShrinkDuration));
     envelopeSequence.Join(envelope.DOScaleY(_EnvelopeOpenStartScale, _EnvelopeShrinkDuration));
-    envelopeSequence.Append(envelope.DOScaleY(_EnvelopeOpenMaxScale, _EnvelopeOpenDuration));
+    envelopeSequence.Append(envelope.DOScaleY(_EnvelopeOpenMaxScale, _EnvelopeOpenDuration).OnPlay(() => {
+      // play the envelope open sound
+      Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_EnvelopeOpenSound);
+    }));
     envelopeSequence.AppendCallback(StartCurrentStreakSequence);
     envelopeSequence.Play();
   }
@@ -242,7 +261,10 @@ public class CheckInFlow : MonoBehaviour {
     rewardSequence.Join(UIDefaultTransitionSettings.Instance.CreateFadeInTween(_TimelineCanvas, Ease.Unset, _TimelineSettleDuration));
     // Prepare all TimelineCells and get our envelope Target for the main envelope
     PrepareStreakTimeline(rewardSequence);
-    rewardSequence.Join(_OpenEnvelope.transform.DOMove(_FinalEnvelopeTarget.position, _TimelineSettleDuration));
+    rewardSequence.Join(_OpenEnvelope.transform.DOMove(_FinalEnvelopeTarget.position, _TimelineSettleDuration).OnPlay(() => {
+      // play the envelope disappear sound
+      Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_EnvelopeDisappearSound);
+    }));
     rewardSequence.Join(_EnvelopeShadow.DOFade(0.0f, _TimelineSettleDuration));
     rewardSequence.Play();
     _TimelineSequence = rewardSequence;
@@ -259,7 +281,10 @@ public class CheckInFlow : MonoBehaviour {
     // Fill up each Bar Segment and make the Checkmarks Pop/fade in
     // Fade out and slide out the timeline, send rewards to targets (Energy to EnergyBar at top, Hexes/Sparks to Counters at top, DailyGoal Panel into position)
     // Rewards are independent from Containers
-    rewardSequence.Append(_TimelineCanvas.transform.DOLocalMoveY(_TimelineCanvasYOffset, _TimelineOutroDuration));
+    rewardSequence.Append(_TimelineCanvas.transform.DOLocalMoveY(_TimelineCanvasYOffset, _TimelineOutroDuration).OnStart(() => {
+      // play the sound for the timeline disappearing
+      Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_CalendarDisappearSound);
+    }));
     rewardSequence.Join(UIDefaultTransitionSettings.Instance.CreateFadeOutTween(_TimelineCanvas, Ease.Unset, _TimelineOutroDuration));
     rewardSequence.AppendCallback(HandleTimelineAnimEnd);
     rewardSequence.Play();
@@ -440,7 +465,7 @@ public class CheckInFlow : MonoBehaviour {
   [SerializeField]
   private float _ConnectIntroDuration = 1.5f;
   [SerializeField]
-  private float _RewardSendoffDuration = 0.5f;
+  private float _RewardSendoffDuration = 0.25f;
   [SerializeField]
   private float _RewardSendoffVariance = 0.15f;
   [SerializeField]
@@ -467,7 +492,7 @@ public class CheckInFlow : MonoBehaviour {
         _ActiveNewGoalTransforms[i].gameObject.SetActive(false);
       }
       _TimelineReviewContainer.SetActive(false);
-      UpdateProgBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
+      UpdateProgBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
     });
     goalSequence.Play();
   }
@@ -491,10 +516,15 @@ public class CheckInFlow : MonoBehaviour {
   }
 
   private void AnimateRewardsToTarget(Sequence goalSequence) {
+    goalSequence.AppendCallback(RewardedActionManager.Instance.SendPendingRewardsToInventory);
     goalSequence = TweenAllToFinalTarget(goalSequence, _ActiveExpTransforms, _FinalExpTarget);
     goalSequence = TweenAllToFinalTarget(goalSequence, _ActiveCoinsTransforms, _FinalCoinTarget);
     goalSequence = TweenAllToFinalTarget(goalSequence, _ActiveSparksTransforms, _FinalSparkTarget);
-    goalSequence.AppendCallback(RewardedActionManager.Instance.SendPendingRewardsToInventory);
+    goalSequence.AppendCallback(() => {
+      int finalCheckInTarget = ChestRewardManager.Instance.GetNextRequirementPoints();
+      int finalCheckInPoints = Mathf.Min(ChestRewardManager.Instance.GetCurrentRequirementPoints(), finalCheckInTarget);
+      UpdateProgBar(finalCheckInPoints, finalCheckInTarget, false);
+    });
     goalSequence.AppendInterval(_RewardFinalDelay);
   }
 
@@ -502,6 +532,10 @@ public class CheckInFlow : MonoBehaviour {
   // active for Start to fire.
   private void HandleDailyGoalTweens() {
     _CurrentSequence = DOTween.Sequence();
+    // play the sound for the goals animating toward the goal panel
+    _CurrentSequence.InsertCallback (0f, () => {
+      Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_GoalCollectSound);
+    });
     for (int i = 0; i < _ActiveNewGoalTransforms.Count; i++) {
       Transform currTransform = _ActiveNewGoalTransforms[i];
       float stagger = UnityEngine.Random.Range(0, _RewardSendoffVariance);
@@ -528,6 +562,19 @@ public class CheckInFlow : MonoBehaviour {
   }
 
   private void HandleMockButton() {
+    if (_QuickConnect) {
+      HandleMockConnect();
+    }
+    else {
+      _ConnectButton.Interactable = false;
+      Sequence collectSequence = DOTween.Sequence();
+      AnimateRewardsToTarget(collectSequence);
+      collectSequence.AppendInterval(_RewardSendoffVariance);
+      collectSequence.AppendCallback(HandleMockConnect);
+    }
+  }
+
+  private void HandleMockConnect() {
     RobotEngineManager.Instance.MockConnect();
     if (DataPersistence.DataPersistenceManager.Instance.IsNewSessionNeeded) {
       DataPersistence.DataPersistenceManager.Instance.StartNewSession();
@@ -544,6 +591,10 @@ public class CheckInFlow : MonoBehaviour {
     else {
       _ConnectButton.Interactable = false;
       Sequence collectSequence = DOTween.Sequence();
+      // play collect sound
+      collectSequence.InsertCallback(0, () => {
+        Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_RewardCollectSound);
+      });
       AnimateRewardsToTarget(collectSequence);
       collectSequence.AppendInterval(_RewardSendoffVariance);
       collectSequence.AppendCallback(StartConnectionFlow);

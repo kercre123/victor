@@ -289,6 +289,7 @@ void RobotDataBackupManager::HandleMessage(const ExternalInterface::RestoreRobot
   if(false == Util::FileUtils::CreateDirectory(kPathToFile, false, true))
   {
     PRINT_NAMED_INFO("RobotDataBackupManager.RestoreFromBackup.NoDir", "Failed to create backup dir");
+    _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RestoreRobotStatus(false, false)));
     return;
   }
   
@@ -302,6 +303,7 @@ void RobotDataBackupManager::HandleMessage(const ExternalInterface::RestoreRobot
     if(!GetFileToUseForBackup(fileName, kPathToFile, _robot.GetContextDataPlatform()))
     {
       PRINT_NAMED_ERROR("RobotDataBackupManager.RestoreFromBackup.NoBackup", "No backup to restore from");
+      _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RestoreRobotStatus(false, false)));
       return;
     }
   }
@@ -316,6 +318,7 @@ void RobotDataBackupManager::HandleMessage(const ExternalInterface::RestoreRobot
   // _dataOnRobot will get cleared by this call so only _tagDataMap will need to be cleared
   if(!ParseBackupFile(fileName, kPathToFile, _dataOnRobot))
   {
+    _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RestoreRobotStatus(false, false)));
     return;
   }
   _tagDataMap.clear();
@@ -369,23 +372,14 @@ void RobotDataBackupManager::HandleMessage(const ExternalInterface::RestoreRobot
 bool RobotDataBackupManager::GetFileToUseForBackup(std::string& file,
                                                    const std::string& pathToFile,
                                                    Util::Data::DataPlatform* dp)
-{
-  // Check to see if we have a backup for the robot
-  if(Util::FileUtils::FileExists(pathToFile + _fileName))
-  {
-    PRINT_NAMED_INFO("RobotDataBackupManager.GetFileToUseForBackup",
-                     "Have existing backup for current robot using it to restore");
-    file = _fileName;
-    return true;
-  }
-  
+{  
   if(dp == nullptr)
   {
     PRINT_NAMED_ERROR("RobotDataBackupManager.GetFileToUseForBackup.NullDataPlatform", "");
     return false;
   }
 
-  // We don't have an existing backup so read the connection counts in statsForBackup.json
+  // Read the connection counts in statsForBackup.json
   // and find the robot that we have connected the most to
   Json::Value stats;
   if(Util::FileUtils::FileExists(pathToFile + kStatsForBackupFile))
@@ -399,15 +393,24 @@ bool RobotDataBackupManager::GetFileToUseForBackup(std::string& file,
     }
     else
     {
+     file = "";
+
       u32 highestConnectionCount = 0;
       for(auto member : stats[kConnectionCountKey].getMemberNames())
       {
         u32 count = stats[kConnectionCountKey][member].asUInt();
-        if( count > highestConnectionCount)
+        if(count > highestConnectionCount)
         {
           highestConnectionCount = count;
           file = member;
         }
+      }
+      
+      if(file.empty())
+      {
+        PRINT_NAMED_ERROR("RobotDataBackupManager.GetFileToUseForBackup.NoFile",
+                          "Could not find a backup file to use from statsForBackup.json");
+        return false;
       }
       
       file += ".backup";
@@ -429,7 +432,7 @@ void RobotDataBackupManager::HandleMessage(const ExternalInterface::WipeRobotGam
   {
     PRINT_NAMED_WARNING("RobotDataBackupManager.WipeRobotGameData",
                         "Have pending requests so not wiping");
-    _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RestoreRobotStatus(false, false)));
+    _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RestoreRobotStatus(true, false)));
     return;
   }
 
@@ -528,6 +531,7 @@ void RobotDataBackupManager::HandleRequestUnlockDataFromBackup(const ExternalInt
   TagDataMap dataInBackup;
   std::string file;
   const std::string pathToFile = context->GetDataPlatform()->pathToResource(Util::Data::Scope::Persistent, GetBackupFolder());
+
   if(GetFileToUseForBackup(file, pathToFile, context->GetDataPlatform()))
   {
     if(ParseBackupFile(file, pathToFile, dataInBackup))
@@ -549,23 +553,36 @@ void RobotDataBackupManager::HandleRequestUnlockDataFromBackup(const ExternalInt
           vec.push_back(unlock);
         }
         
+        PRINT_NAMED_INFO("RobotDataBackupManager.HandleRequestUnlockDataFromBackup.UnlockData",
+                         "Found unlock data in backup file %s",
+                         file.c_str());
+        
         // Send to game telling them this unlock data is from the backup not the actual robot
         context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UnlockStatus(std::vector<UnlockId>(vec.begin(), vec.end()), true)));
+        return;
       }
       else
       {
-        PRINT_NAMED_INFO("RobotDataBackupManager.HandleRequestUnlockDataFromBackup",
-                         "No unlock data in backup sending default unlock data");
-        
-        const auto& defaultUnlocks = ProgressionUnlockComponent::GetDefaultUnlocks();
-        
-        // Send to game telling them this unlock data is from the backup not the actual robot
-        context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UnlockStatus(std::vector<UnlockId>(defaultUnlocks.begin(), defaultUnlocks.end()), true)));
+        PRINT_NAMED_INFO("RobotDataBackupManager.HandleRequestUnlockDataFromBackup.NoUnlockData",
+                         "No unlock data in backup, sending default unlock data");
       }
-      
-      
+    }
+    else
+    {
+      PRINT_NAMED_INFO("RobotDataBackupManager.HandleRequestUnlockDataFromBackup.FailedToParseBackup",
+                       "Failed to parse backup, sending default unlock data");
     }
   }
+  else
+  {
+    PRINT_NAMED_INFO("RobotDataBackupManager.HandleRequestUnlockDataFromBackup.NoBackup",
+                     "No backup, sending default unlock data");
+  }
+  
+  const auto& defaultUnlocks = ProgressionUnlockComponent::GetDefaultUnlocks();
+  
+  // Send to game telling them this unlock data is from the backup not the actual robot
+  context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UnlockStatus(std::vector<UnlockId>(defaultUnlocks.begin(), defaultUnlocks.end()), true)));
 }
 
 bool RobotDataBackupManager::ParseBackupFile(const std::string& fileName,

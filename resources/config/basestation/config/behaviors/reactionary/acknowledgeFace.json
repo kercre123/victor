@@ -7,5 +7,6 @@
   "ReactionAnimGroup": "ReactToNewBlockSmall",
   "disableByDefault": false,
   "SamePoseDistThresh_mm": 300,
+  "SamePoseDistThresh_sparked_mm": 300,
   "NumImagesToWaitFor": 4
 }

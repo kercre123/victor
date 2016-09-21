@@ -137,7 +137,12 @@ public class ChallengeDetailsDialog : BaseView {
         }
       }
     }
-    _StartChallengeButton.Initialize(HandleStartButtonClicked, string.Format("{0}_start_button", challengeData.ChallengeID), DASEventViewName);
+    // If we are initializing basedon an unlock refresh instead of a typical initialize, don't add additional callbacks to StartChallenge
+    // TODO : Post Launch, investigate change to AnkiButton Initialize that assumes Initialize is creating a "fresh" button that wipes all
+    // existing callbacks so it matches more clearly with expected functionality and usage patterns.
+    if (!_UnlockFromRobotResponded) {
+      _StartChallengeButton.Initialize(HandleStartButtonClicked, string.Format("{0}_start_button", challengeData.ChallengeID), DASEventViewName);
+    }
     _ChallengeId = challengeData.ChallengeID;
   }
 

@@ -70,6 +70,7 @@ namespace Anki {
       inline const Camera&     GetSeenBy()        const;
       inline UserHandle        GetUserHandle()    const;
       
+      inline void SetSeenBy(const Camera& camera);
       
       inline void MarkUsed(bool used);
       inline bool IsUsed();
@@ -193,6 +194,10 @@ namespace Anki {
     
     inline Camera const& ObservedMarker::GetSeenBy() const {
       return _seenByCam;
+    }
+    
+    inline void ObservedMarker::SetSeenBy(const Camera& camera) {
+      _seenByCam = camera;
     }
     
     inline void ObservedMarker::MarkUsed(bool used) {

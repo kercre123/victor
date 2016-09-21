@@ -133,11 +133,11 @@ namespace Cozmo {
         if (IsGoalComplete() && !GoalComplete) {
           // Grant Reward
           DAS.Event(this, string.Format("{0} Completed", Title));
+          _GoalComplete = true;
           if (OnDailyGoalCompleted != null) {
             OnDailyGoalCompleted.Invoke(this);
           }
           GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnDailyGoalCompleted, this));
-          _GoalComplete = true;
         }
       }
 

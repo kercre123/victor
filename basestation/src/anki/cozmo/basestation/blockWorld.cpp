@@ -77,7 +77,6 @@ namespace Anki {
 namespace Cozmo {
 
 const float kOnGroundStackTolerence = ON_GROUND_HEIGHT_TOL_MM;
-const float kOnCubeStackHeightTolerence = 2 * STACKED_HEIGHT_TOL_MM;
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper namespace
@@ -182,7 +181,6 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
   , _canAddObjects(true)
   , _currentNavMemoryMapOrigin(nullptr)
   , _isNavMemoryMapRenderEnabled(true)
-  , _enableDraw(false)
   {
     CORETECH_ASSERT(_robot != nullptr);
     
@@ -757,8 +755,8 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     // if memory maps are enabled, we can merge old into new
     if ( kEnableMemoryMap )
     {
-      // oldOrigin is the pointer/id of the current map
-      // worldOrigin is the pointer/id of the map we can merge into/from
+      // oldOrigin is the pointer/id of the map that is staying, it's the one we rejiggered to
+      // newOrigin is the pointer/id of the map we were just building, and it's going away
       ASSERT_NAMED( _navMemoryMaps.find(oldOrigin) != _navMemoryMaps.end(), "BlockWorld.UpdateObjectOrigins.missingMapOriginOld");
       ASSERT_NAMED( _navMemoryMaps.find(newOrigin) != _navMemoryMaps.end(), "BlockWorld.UpdateObjectOrigins.missingMapOriginNew");
       ASSERT_NAMED( oldOrigin == _currentNavMemoryMapOrigin, "BlockWorld.UpdateObjectOrigins.updatingMapNotCurrent");
@@ -1752,24 +1750,14 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     return numVisibleObjects;
   } // CheckForUnobservedObjects()
   
-  void BlockWorld::GetObsMarkerList(const PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap,
-                                    std::list<Vision::ObservedMarker*>& lst)
+  void BlockWorld::RemoveUsedMarkers(std::list<Vision::ObservedMarker>& observedMarkers)
   {
-    lst.clear();
-    for(auto & poseKeyMarkerPair : poseKeyObsMarkerMap)
+    for(auto markerIter = observedMarkers.begin(); markerIter != observedMarkers.end();)
     {
-      lst.push_back((Vision::ObservedMarker*)(&(poseKeyMarkerPair.second)));
-    }
-  }
-
-  void BlockWorld::RemoveUsedMarkers(PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap)
-  {
-    for(auto poseKeyMarkerPair = poseKeyObsMarkerMap.begin(); poseKeyMarkerPair != poseKeyObsMarkerMap.end();)
-    {
-      if (poseKeyMarkerPair->second.IsUsed()) {
-        poseKeyMarkerPair = poseKeyObsMarkerMap.erase(poseKeyMarkerPair);
+      if (markerIter->IsUsed()) {
+        markerIter = observedMarkers.erase(markerIter);
       } else {
-        ++poseKeyMarkerPair;
+        ++markerIter;
       }
     }
   }
@@ -1986,21 +1974,17 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
   }
 
   
-  bool BlockWorld::UpdateRobotPose(PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp, const TimeStamp_t atTimestamp)
+  bool BlockWorld::UpdateRobotPose(std::list<Vision::ObservedMarker>& observedMarkers, const TimeStamp_t atTimestamp)
   {
     bool wasPoseUpdated = false;
     
-    // Extract only observed markers from obsMarkersAtTimestamp
-    std::list<Vision::ObservedMarker*> obsMarkersListAtTimestamp;
-    GetObsMarkerList(obsMarkersAtTimestamp, obsMarkersListAtTimestamp);
-    
     // Get all mat objects *seen by this robot's camera*
     std::multimap<f32, ObservableObject*> matsSeen;
-    _objectLibrary[ObjectFamily::Mat].CreateObjectsFromMarkers(obsMarkersListAtTimestamp, matsSeen,
-                                                                (_robot->GetVisionComponent().GetCamera().GetID()));
+    _objectLibrary[ObjectFamily::Mat].CreateObjectsFromMarkers(observedMarkers, matsSeen,
+                                                               (_robot->GetVisionComponent().GetCamera().GetID()));
 
     // Remove used markers from map container
-    RemoveUsedMarkers(obsMarkersAtTimestamp);
+    RemoveUsedMarkers(observedMarkers);
     
     if(not matsSeen.empty()) {
       /*
@@ -2391,7 +2375,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     
   } // UpdateRobotPose()
   
-  Result BlockWorld::UpdateObjectPoses(PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp,
+  Result BlockWorld::UpdateObjectPoses(std::list<Vision::ObservedMarker>& obsMarkers,
                                        const ObjectFamily& inFamily,
                                        const TimeStamp_t atTimestamp)
   {
@@ -2414,16 +2398,13 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     // Don't bother with this update at all if we didn't see at least one
     // marker (which is our indication we got an update from the robot's
     // vision system
-    if(not _obsMarkers.empty()) {
-      
+    if(!obsMarkers.empty())
+    {
       // Extract only observed markers from obsMarkersAtTimestamp
-      std::list<Vision::ObservedMarker*> obsMarkersListAtTimestamp;
-      GetObsMarkerList(obsMarkersAtTimestamp, obsMarkersListAtTimestamp);
-      
-      objectLibrary.CreateObjectsFromMarkers(obsMarkersListAtTimestamp, objectsSeen);
+      objectLibrary.CreateObjectsFromMarkers(obsMarkers, objectsSeen);
       
       // Remove used markers from map
-      RemoveUsedMarkers(obsMarkersAtTimestamp);
+      RemoveUsedMarkers(obsMarkers);
     
       for(const auto& objectPair : objectsSeen) {
         Vision::ObservableObject* object = objectPair.second;
@@ -3706,20 +3687,27 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::RemoveMarkersWithinMarkers(PoseKeyObsMarkerMap_t& currentObsMarkers)
+  void BlockWorld::RemoveMarkersWithinMarkers(std::list<Vision::ObservedMarker>& currentObsMarkers)
   {
     for(auto markerIter1 = currentObsMarkers.begin(); markerIter1 != currentObsMarkers.end(); ++markerIter1)
     {
-      const Vision::ObservedMarker& marker1    = markerIter1->second;
-      const TimeStamp_t             timestamp1 = markerIter1->first;
+      const Vision::ObservedMarker& marker1 = *markerIter1;
       
       for(auto markerIter2 = currentObsMarkers.begin(); markerIter2 != currentObsMarkers.end(); /* incrementing decided in loop */ )
       {
-        const Vision::ObservedMarker& marker2    = markerIter2->second;
-        const TimeStamp_t             timestamp2 = markerIter2->first;
+        const Vision::ObservedMarker& marker2 = *markerIter2;
+        
+        if(marker1.GetTimeStamp() != marker2.GetTimeStamp())
+        {
+          PRINT_NAMED_WARNING("BlockWorld.RemoveMarkersWithinMarkers.MismatchedTimestamps",
+                              "Marker1 t=%u vs. Marker2 t=%u",
+                              marker1.GetTimeStamp(), marker2.GetTimeStamp());
+          ++markerIter2;
+          continue;
+        }
         
         // These two markers must be different and observed at the same time
-        if(markerIter1 != markerIter2 && timestamp1 == timestamp2) {
+        if(markerIter1 != markerIter2) {
           
           // See if #2 is inside #1
           bool marker2isInsideMarker1 = true;
@@ -3731,8 +3719,8 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
           }
           
           if(marker2isInsideMarker1) {
-            PRINT_CH_INFO("BlockWorld", "BlockWorld.Update",
-                          "Removing %s marker completely contained within %s marker.\n",
+            PRINT_CH_INFO("BlockWorld", "BlockWorld.RemoveMarkersWithinMarkers",
+                          "Removing %s marker completely contained within %s marker.",
                           marker2.GetCodeName(), marker1.GetCodeName());
             // Note: erase does increment of iterator for us
             markerIter2 = currentObsMarkers.erase(markerIter2);
@@ -3750,7 +3738,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
   } // RemoveMarkersWithinMarkers()
 
 
-  Result BlockWorld::Update()
+  Result BlockWorld::Update(std::list<Vision::ObservedMarker>& currentObsMarkers)
   {
     ANKI_CPU_PROFILE("BlockWorld::Update");
 
@@ -3766,44 +3754,31 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     //_obsProjectedObjects.clear();
     //_currentObservedObjectIDs.clear();
     
-    static TimeStamp_t lastObsMarkerTime = 0;
-    
     _currentObservedObjects.clear();
     
-    // Now we're going to process all the observed messages, grouped by
-    // timestamp
-    size_t numUnusedMarkers = 0;
-    for(auto obsMarkerListMapIter = _obsMarkers.begin();
-        obsMarkerListMapIter != _obsMarkers.end();
-        ++obsMarkerListMapIter)
+    if(!currentObsMarkers.empty())
     {
-      PoseKeyObsMarkerMap_t& currentObsMarkers = obsMarkerListMapIter->second;
-      const TimeStamp_t atTimestamp = obsMarkerListMapIter->first;
+      const TimeStamp_t atTimestamp = currentObsMarkers.front().GetTimeStamp();
       
-      lastObsMarkerTime = std::max(lastObsMarkerTime, atTimestamp);
-      
-      // New timestep, new set of occluders.  Get rid of anything registered as
-      // an occluder with the robot's camera
-      _robot->GetVisionComponent().GetCamera().ClearOccluders();
-      _robot->GetVisionComponent().AddLiftOccluder(atTimestamp);
-      
-      //
-      // Localize robots using mat observations
-      //
-      
-      // Remove observed markers whose historical poses have become invalid.
-      // This shouldn't happen! If it does, robotStateMsgs may be buffering up somewhere.
-      // Increasing history time window would fix this, but it's not really a solution.
-      for(auto poseKeyMarkerPair = currentObsMarkers.begin(); poseKeyMarkerPair != currentObsMarkers.end();) {
-        if ((poseKeyMarkerPair->second.GetSeenBy().GetID() == _robot->GetVisionComponent().GetCamera().GetID()) &&
-            !_robot->IsValidPoseKey(poseKeyMarkerPair->first)) {
-          PRINT_NAMED_WARNING("BlockWorld.Update.InvalidHistPoseKey", "key=%d", poseKeyMarkerPair->first);
-          poseKeyMarkerPair = currentObsMarkers.erase(poseKeyMarkerPair);
-        } else {
-          ++poseKeyMarkerPair;
+      // Sanity check
+      if(ANKI_DEVELOPER_CODE)
+      {
+        for(auto const& marker : currentObsMarkers)
+        {
+          if(marker.GetTimeStamp() != atTimestamp)
+          {
+            PRINT_NAMED_ERROR("BlockWorld.Update.MisMatchedTimestamps", "Expected t=%u, Got t=%u",
+                              atTimestamp, marker.GetTimeStamp());
+            return RESULT_FAIL;
+          }
         }
       }
       
+      // New timestep, new set of occluders. Get rid of anything registered as
+      // an occluder with the robot's camera
+      _robot->GetVisionComponent().GetCamera().ClearOccluders();
+      _robot->GetVisionComponent().AddLiftOccluder(atTimestamp);
+    
       // Optional: don't allow markers seen enclosed in other markers
       //RemoveMarkersWithinMarkers(currentObsMarkers);
       
@@ -3866,32 +3841,24 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       if(updateResult != RESULT_OK) {
         return updateResult;
       }
-
-      // TODO: Deal with unknown markers?
-      
-      // Keep track of how many markers went unused by either robot or block
-      // pose updating processes above
-      numUnusedMarkers += currentObsMarkers.size();
-      
-      for(auto & unusedMarker : currentObsMarkers) {
-        PRINT_CH_INFO("BlockWorld", "BlockWorld.Update.UnusedMarker",
-                      "An observed %s marker went unused.",
-                      unusedMarker.second.GetCodeName());
-      }
-      
+  
       // Delete any objects that should have been observed but weren't,
       // visualize objects that were observed:
       CheckForUnobservedObjects(atTimestamp);
       
-    } // for element in _obsMarkers
-    
-    if(_obsMarkers.empty()) {
-      // Even if there were no markers observed, check to see if there are
-      // any previously-observed objects that are partially visible (some part
-      // of them projects into the image even if none of their markers fully do)
-      _robot->GetVisionComponent().GetCamera().ClearOccluders();
-      _robot->GetVisionComponent().AddLiftOccluder(_robot->GetLastImageTimeStamp());
-      CheckForUnobservedObjects(_robot->GetLastImageTimeStamp());
+    }
+    else
+    {
+      const TimeStamp_t lastImgTimestamp = _robot->GetLastImageTimeStamp();
+      if(lastImgTimestamp > 0) // Avoid warning on first Update()
+      {
+        // Even if there were no markers observed, check to see if there are
+        // any previously-observed objects that are partially visible (some part
+        // of them projects into the image even if none of their markers fully do)
+        _robot->GetVisionComponent().GetCamera().ClearOccluders();
+        _robot->GetVisionComponent().AddLiftOccluder(lastImgTimestamp);
+        CheckForUnobservedObjects(lastImgTimestamp);
+      }
     }
     
 #   define DISPLAY_ALL_OCCLUDERS 0
@@ -4016,6 +3983,18 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       } // for each object family
     } // if robot is not picking or placing
     
+    // TODO: Deal with unknown markers?
+    
+    // Keep track of how many markers went unused by either robot or block
+    // pose updating processes above
+    const size_t numUnusedMarkers = currentObsMarkers.size();
+    
+    for(auto & unusedMarker : currentObsMarkers) {
+      PRINT_CH_INFO("BlockWorld", "BlockWorld.Update.UnusedMarker",
+                    "An observed %s marker went unused.",
+                    unusedMarker.GetCodeName());
+    }
+
     if(numUnusedMarkers > 0) {
       if (!_robot->IsPhysical() || !SKIP_PHYS_ROBOT_LOCALIZATION) {
         PRINT_NAMED_WARNING("BlockWorld.Update.UnusedMarkers",
@@ -4023,9 +4002,6 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
                             numUnusedMarkers);
       }
     }
-   
-    // Toss any remaining markers?
-    ClearAllObservedMarkers();      
     
     Result lastResult = UpdateMarkerlessObjects(_robot->GetLastImageTimeStamp());
     
@@ -4105,23 +4081,6 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     return RESULT_OK;
   }
   
-  
-  Result BlockWorld::QueueObservedMarker(HistPoseKey& poseKey, Vision::ObservedMarker& marker)
-  {
-    Result lastResult = RESULT_OK;
-    
-    // Finally actually queue the marker
-    _obsMarkers[marker.GetTimeStamp()].emplace(poseKey, marker);
-          
-    
-    return lastResult;
-    
-  } // QueueObservedMarker()
-  
-  void BlockWorld::ClearAllObservedMarkers()
-  {
-    _obsMarkers.clear();
-  }
   
   void BlockWorld::ClearAllExistingObjects()
   {
@@ -4807,45 +4766,6 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     }
 
   } // CycleSelectedObject()
-  
-  
-  void BlockWorld::EnableDraw(bool on)
-  {
-    _enableDraw = on;
-  }
-  
-  void BlockWorld::DrawObsMarkers() const
-  {
-    if (_enableDraw) {
-      for (const auto& poseKeyMarkerMapAtTimestamp : _obsMarkers) {
-        for (const auto& poseKeyMarkerMap : poseKeyMarkerMapAtTimestamp.second) {
-          const Quad2f& q = poseKeyMarkerMap.second.GetImageCorners();
-          f32 scaleF = 1.0f;
-          switch(IMG_STREAM_RES) {
-            case ImageResolution::CVGA:
-            case ImageResolution::QVGA:
-              break;
-            case ImageResolution::QQVGA:
-              scaleF *= 0.5;
-              break;
-            case ImageResolution::QQQVGA:
-              scaleF *= 0.25;
-              break;
-            case ImageResolution::QQQQVGA:
-              scaleF *= 0.125;
-              break;
-            default:
-              printf("WARNING (DrawObsMarkers): Unsupported streaming res %d\n", (int)IMG_STREAM_RES);
-              break;
-          }
-          _robot->GetContext()->GetVizManager()->SendTrackerQuad(q[Quad::TopLeft].x()*scaleF,     q[Quad::TopLeft].y()*scaleF,
-                                                                 q[Quad::TopRight].x()*scaleF,    q[Quad::TopRight].y()*scaleF,
-                                                                 q[Quad::BottomRight].x()*scaleF, q[Quad::BottomRight].y()*scaleF,
-                                                                 q[Quad::BottomLeft].x()*scaleF,  q[Quad::BottomLeft].y()*scaleF);
-        }
-      }
-    }
-  }
   
   void BlockWorld::DrawAllObjects() const
   {

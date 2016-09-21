@@ -143,7 +143,7 @@ namespace DataPersistence {
     }
 
     private void HandleRestoreStatus(Anki.Cozmo.ExternalInterface.RestoreRobotStatus status) {
-      if (status.didWipe) {
+      if (status.isWipe) {
         _IsResettingEverything = false;
         if (status.success) {
           HandleResetSaveDataButtonClicked();

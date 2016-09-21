@@ -37,7 +37,7 @@ namespace Cozmo {
     
     FaceWorld(Robot& robot);
     
-    Result Update();
+    Result Update(std::list<Vision::TrackedFace>& observedFaces);
     Result AddOrUpdateFace(Vision::TrackedFace& face);
   
     Result ChangeFaceID(Vision::FaceID_t oldID,

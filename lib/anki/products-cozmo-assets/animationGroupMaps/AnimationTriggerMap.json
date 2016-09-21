@@ -178,7 +178,7 @@
     },
     {
       "CladEvent": "DroneModeCliffEvent",
-      "AnimName": "ag_reactToStop"
+      "AnimName": "ag_explorer_huh"
     },
     {
       "CladEvent": "DroneModeForwardDrivingEnd",

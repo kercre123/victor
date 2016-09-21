@@ -19,6 +19,15 @@
       ]
     },
     {
+      "name": "TooManyResumesCliffOrMovement",
+      "emotionAffectors": [
+          {
+            "emotionType": "Confident",
+            "value": -1.0
+          }
+        ]
+    },
+    {
       "name": "ReactToUnexpectedMovement",
       "emotionAffectors": [
          {

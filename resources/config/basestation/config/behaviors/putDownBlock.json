@@ -7,12 +7,6 @@
     "FP_PlayWithHumans",
     "FP_Socialize",
     "FP_Hiking", // if no beacons are available we want Cozmo to put cubes down
-    "SparksRollBlock",
-    "SparksPickUpCube",
-    "SparksPopAWheelie",
-    "SparksPounceOnMotion",
-    "SparksKnockOverCubes",
-    "SparksBuildPyramid",
     "MeetCozmo_Socialize"
   ]
 }

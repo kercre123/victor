@@ -1050,7 +1050,7 @@ void Robot::ActiveObjectLightTest(const ObjectID& objectID) {
 }
     
     
-Result Robot::Update(bool ignoreVisionModes)
+Result Robot::Update()
 {
   ANKI_CPU_PROFILE("Robot::Update");
   
@@ -1084,24 +1084,12 @@ Result Robot::Update(bool ignoreVisionModes)
       
   if(_visionComponentPtr->GetCamera().IsCalibrated())
   {
-    VisionProcessingResult procResult;
-    Result visionResult = _visionComponentPtr->UpdateAllResults(procResult);
+    // NOTE: Also updates BlockWorld and FaceWorld using markers/faces that were detected
+    Result visionResult = _visionComponentPtr->UpdateAllResults();
     if(RESULT_OK != visionResult) {
       PRINT_NAMED_WARNING("Robot.Update.VisionComponentUpdateFail", "");
       return visionResult;
     }
-        
-    // Update Block and Face Worlds
-    if((ignoreVisionModes || procResult.modesProcessed.IsBitFlagSet(VisionMode::DetectingMarkers)) &&
-       RESULT_OK != _blockWorld.Update()) {
-      PRINT_NAMED_WARNING("Robot.Update.BlockWorldUpdateFailed", "");
-    }
-        
-    if((ignoreVisionModes || procResult.modesProcessed.IsBitFlagSet(VisionMode::DetectingFaces)) &&
-       RESULT_OK != _faceWorld.Update()) {
-      PRINT_NAMED_WARNING("Robot.Update.FaceWorldUpdateFailed", "");
-    }
-        
   } // if (GetCamera().IsCalibrated())
   
   // If anything in updating block world caused a localization update, notify
@@ -1422,9 +1410,6 @@ Result Robot::Update(bool ignoreVisionModes)
   ConnectToRequestedObjects();
       
   /////////// Update visualization ////////////
-      
-  // Draw observed markers, but only if images are being streamed
-  _blockWorld.DrawObsMarkers();
       
   // Draw All Objects by calling their Visualize() methods.
   _blockWorld.DrawAllObjects();

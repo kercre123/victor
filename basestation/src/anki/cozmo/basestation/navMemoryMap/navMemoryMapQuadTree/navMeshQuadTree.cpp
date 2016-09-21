@@ -32,8 +32,13 @@ CONSOLE_VAR(bool, kRenderLastAddedQuad           , "NavMeshQuadTree", false);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace {
-constexpr float kQuadTreeInitialRootSideLength = 200.0f;
+// rsam note: I tweaked this to Initial=160mm, maxDepth=8 to get 256cm max area. With old the 200 I had to choose
+// between 160cm (too small) or 320cm (too big). Incidentally we have gained 2mm per leaf node. I think performance-wise
+// it will barely impact even slowest devices, but we need to keep an eye an all these numbers as we get data from
+// real users
+constexpr float kQuadTreeInitialRootSideLength = 160.0f;
 constexpr uint8_t kQuadTreeInitialMaxDepth = 4;
+constexpr uint8_t kQuadTreeMaxRootDepth = 8;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -266,11 +271,23 @@ void NavMeshQuadTree::AddPoint(const Point2f& point, const NodeContent& nodeCont
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTree::Merge(const NavMeshQuadTree& other, const Pose3d& transform)
 {
+  // TODO rsam for the future, when we merge with transform, poses or directions stored as extra info are invalid
+  // since they were wrt a previous origin!
   Pose2d transform2d(transform);
 
   // obtain all leaf nodes from the map we are merging from
   NavMeshQuadTreeNode::NodeCPtrVector leafNodes;
   other._root.AddSmallestDescendantsDepthFirst(leafNodes);
+  
+  // note regarding quad size limit: when we mege one map into another, this map can expand or shift the root
+  // to accomodate the information that we are receiving from 'other'. 'other' is considered to have more up to
+  // date information than 'this', so it should be ok to let it destroy as much info as it needs by shifting the root
+  // towards them. In an ideal world, it would probably come to a compromise to include as much information as possible.
+  // This I expect to happen naturally, since it's likely that 'other' won't be fully expanded in the opposite direction.
+  // It can however happen in Cozmo during explorer mode, and it's debatable which information is more relevant.
+  // A simple idea would be to limit leafNodes that we add back to 'this' by some distance, for example, half the max
+  // root length. That would allow 'this' to keep at least half a root worth of information with respect the new one
+  // we are bringing in.
   
   // iterate all those leaf nodes, adding them to this tree
   for( const auto& nodeInOther : leafNodes ) {
@@ -314,7 +331,17 @@ void NavMeshQuadTree::Expand(const Quad2f& quadToCover)
 
     // Find in which direction we are expanding and upgrade root level in that direction
     const Vec2f& direction = quadToCover.ComputeCentroid() - Point2f{_root.GetCenter().x(), _root.GetCenter().y()};
-    expanded = _root.UpgradeRootLevel(direction, _processor);
+    expanded = _root.UpgradeRootLevel(direction, kQuadTreeMaxRootDepth, _processor);
+    
+    // if we didn't expand, see if we can shift the root to cover the quad, by removing other nodes in the map
+    if ( !expanded ) {
+      std::vector<Point2f> requiredPoints;
+      requiredPoints.reserve(4);
+      for( const Point2f& p : quadToCover ) {
+        requiredPoints.emplace_back(p);
+      }
+      _root.ShiftRoot(requiredPoints, _processor);
+    }
     
     // check if the quad now fits in the expanded root
     quadFitsInMap = _root.Contains(quadToCover);
@@ -346,7 +373,15 @@ void NavMeshQuadTree::Expand(const Point2f& pointToInclude)
 
     // Find in which direction we are expanding and upgrade root level in that direction
     const Vec2f& direction = pointToInclude - Point2f{_root.GetCenter().x(), _root.GetCenter().y()};
-    expanded = _root.UpgradeRootLevel(direction, _processor);
+    expanded = _root.UpgradeRootLevel(direction, kQuadTreeMaxRootDepth, _processor);
+    
+    // if we didn't expand, see if we can shift the root to cover the point, by removing other nodes in the map
+    if ( !expanded ) {
+      std::vector<Point2f> requiredPoints;
+      requiredPoints.reserve(1);
+      requiredPoints.emplace_back(pointToInclude);
+      _root.ShiftRoot(requiredPoints, _processor);
+    }
     
     // check if the point now fits in the expanded root
     pointInMap = _root.Contains(pointToInclude);
@@ -378,7 +413,17 @@ void NavMeshQuadTree::Expand(const Triangle2f& triangleToCover)
 
     // Find in which direction we are expanding and upgrade root level in that direction
     const Vec2f& direction = triangleToCover.GetCentroid() - Point2f{_root.GetCenter().x(), _root.GetCenter().y()};
-    expanded = _root.UpgradeRootLevel(direction, _processor);
+    expanded = _root.UpgradeRootLevel(direction, kQuadTreeMaxRootDepth, _processor);
+    
+    // if we didn't expand, see if we can shift the root to cover the triangle, by removing other nodes in the map
+    if ( !expanded ) {
+      std::vector<Point2f> requiredPoints;
+      requiredPoints.reserve(3);
+      for( const Point2f& p : triangleToCover ) {
+        requiredPoints.emplace_back(p);
+      }
+      _root.ShiftRoot(requiredPoints, _processor);
+    }
     
     // check if the point now fits in the expanded root
     triangleInMap = _root.Contains(triangleToCover);

@@ -961,6 +961,10 @@ namespace Anki {
       {
         // Nothing to do here
       }
+      void Process_getMfgInfo(const RobotInterface::GetManufacturingInfo& msg)
+      {
+        // Nothing to do here
+      }
       
       // These are stubbed out just to get things compiling
       void Process_robotIpInfo(const Anki::Cozmo::RobotInterface::AppConnectRobotIP& msg) {}

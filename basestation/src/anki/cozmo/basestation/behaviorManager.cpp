@@ -425,7 +425,11 @@ void BehaviorManager::TryToResumeBehavior()
     if ( _shouldResumeBehaviorAfterReaction )
     {
       StopCurrentBehavior();
-      const Result resumeResult = _behaviorToResume->Resume();
+      BehaviorType resumingFromType = BehaviorType::NoneBehavior;
+      if(nullptr != _currentBehavior){
+        resumingFromType = _currentBehavior->GetType();
+      }
+      const Result resumeResult = _behaviorToResume->Resume(resumingFromType);
       if( resumeResult == RESULT_OK )
       {
         PRINT_CH_INFO("Behaviors", "BehaviorManager.ResumeBehavior", "Successfully resumed '%s'",

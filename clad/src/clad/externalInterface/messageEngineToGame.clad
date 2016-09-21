@@ -174,7 +174,7 @@ message UnexpectedMovement {
 
 // Whether or not the restore was successful
 message RestoreRobotStatus {
-  bool didWipe,
+  bool isWipe,
   bool success
 }
 

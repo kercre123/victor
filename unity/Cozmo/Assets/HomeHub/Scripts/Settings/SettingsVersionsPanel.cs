@@ -169,7 +169,7 @@ namespace Cozmo.Settings {
     }
 
     private void HandleEraseRobotStatus(RestoreRobotStatus robotStatusMsg) {
-      if (robotStatusMsg.didWipe) {
+      if (robotStatusMsg.isWipe) {
         RobotEngineManager.Instance.RemoveCallback<RestoreRobotStatus>(HandleEraseRobotStatus);
 
         if (robotStatusMsg.success) {
@@ -232,7 +232,7 @@ namespace Cozmo.Settings {
     }
 
     private void HandleRestoreRobotStatus(RestoreRobotStatus robotStatusMsg) {
-      if (!robotStatusMsg.didWipe) {
+      if (!robotStatusMsg.isWipe) {
         RobotEngineManager.Instance.RemoveCallback<RestoreRobotStatus>(HandleRestoreRobotStatus);
 
         if (robotStatusMsg.success) {

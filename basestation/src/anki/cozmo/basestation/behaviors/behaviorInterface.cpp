@@ -53,6 +53,9 @@ static const char* kRequiredDriveOffChargerKey   = "requiredRecentDriveOffCharge
 static const char* kRequiredParentSwitchKey      = "requiredRecentSwitchToParent_sec";
 static const char* kDisableReactionaryDefault    = "disableByDefault";
   
+static const int kMaxResumesFromCliff            = 2;
+static const float kCooldownFromCliffResumes_sec     = 15.0;
+
 IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   : _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
   , _behaviorType(BehaviorType::NoneBehavior)
@@ -302,6 +305,7 @@ Result IBehavior::Init()
   }
   else {
     _startCount++;
+    _timesResumedFromPossibleInfiniteLoop = 0;
   }
   
   // Disable Acknowledge object if this behavior is the sparked version
@@ -314,10 +318,23 @@ Result IBehavior::Init()
   return initResult;
 }
 
-Result IBehavior::Resume()
+Result IBehavior::Resume(BehaviorType resumingFromType)
 {
   PRINT_CH_INFO("Behaviors", (GetName() + ".Resume").c_str(), "Resuming...");
   ASSERT_NAMED(!_isRunning, "IBehavior.Resume.ShouldNotBeRunningIfWeTryToResume");
+  
+  // Check and update the number of times we've resumed from cliff or unexpected movement
+  if(resumingFromType == BehaviorType::ReactToCliff
+     || resumingFromType == BehaviorType::ReactToUnexpectedMovement)
+  {
+    _timesResumedFromPossibleInfiniteLoop++;
+    if(_timesResumedFromPossibleInfiniteLoop >= kMaxResumesFromCliff){
+      const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      _timeCanRunAfterPossibleInfiniteLoopCooldown_sec = currTime + kCooldownFromCliffResumes_sec;
+      _robot.GetMoodManager().TriggerEmotionEvent("TooManyResumesCliffOrMovement", currTime);
+      return Result::RESULT_FAIL;
+    }
+  }
   
   _startedRunningTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   Result initResult = ResumeInternal(_robot);
@@ -401,6 +418,12 @@ bool IBehavior::IsRunnable(const Robot& robot, bool allowWhileRunning) const
     }
   }
 
+  const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  // check to see if we're on a cliff cooldown
+  if(curTime < _timeCanRunAfterPossibleInfiniteLoopCooldown_sec){
+    return false;
+  }
+
   // first check the unlock
   if ( _requiredUnlockId != UnlockId::Count )
   {
@@ -424,7 +447,6 @@ bool IBehavior::IsRunnable(const Robot& robot, bool allowWhileRunning) const
       return false;
     }
     
-    const float curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     const bool isRecent = FLT_LE(curTime, (lastDriveOff+_requiredRecentDriveOffCharger_sec));
     if ( !isRecent ) {
       // driven off, but not recently enough

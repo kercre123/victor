@@ -266,7 +266,7 @@ void FlipBlockAction::SetShouldCheckPreActionPose(bool shouldCheck)
 ActionResult FlipBlockAction::Init()
 {
   ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_objectID);
-  if(nullptr == object)
+  if(nullptr == object ||!object->IsPoseStateKnown())
   {
     PRINT_NAMED_WARNING("FlipBlockAction.Init.NullObject", "ObjectID=%d", _objectID.GetValue());
     return ActionResult::FAILURE_ABORT;

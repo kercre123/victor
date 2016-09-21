@@ -38,7 +38,7 @@ MonoBehaviour:
   m_ChildAlignment: 3
   m_Spacing: 30
   m_ChildForceExpandWidth: 1
-  m_ChildForceExpandHeight: 1
+  m_ChildForceExpandHeight: 0
 --- !u!114 &11402768
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -80,7 +80,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_HorizontalFit: 1
-  m_VerticalFit: 0
+  m_VerticalFit: 1
 --- !u!224 &22428334
 RectTransform:
   m_ObjectHideFlags: 1

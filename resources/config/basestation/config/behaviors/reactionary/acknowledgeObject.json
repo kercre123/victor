@@ -6,7 +6,8 @@
   ],
   "ReactionAnimGroup": "AcknowledgeObject",
   "disableByDefault": false,
-  "SamePoseDistThresh_mm": 80, 
+  "SamePoseDistThresh_mm": 80,
+  "SamePoseDistThresh_sparked_mm": 30,
   "CoolDownDuration_ms": 600000,
   "NumImagesToWaitFor": 2
 }

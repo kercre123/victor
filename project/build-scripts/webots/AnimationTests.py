@@ -1,5 +1,12 @@
 #!/usr/local/bin/python3
 
+
+# Sep 20, 2016: (daria.jerjomina@anki.com) Added a temporary fix in order to exclude
+# text-to-speech clips
+# It looks through json files in animations directory and finds all audioName keys that have
+# External as part of their name.
+
+
 import os
 import re
 import json
@@ -10,6 +17,9 @@ import webotsTest
 WBT_FILE_NAME = "get_animations.wbt"
 GENERATED_CFG_NAME = "__GENERATED_ANIMATIONS_TEST__.cfg"
 ANIMATION_TEST_NAME_PLACEHOLDER = "%ANIMATION_TEST_NAME%"
+ANIMATIONS = os.path.join(webotsTest.COZMO_ENGINE_ROOT, "EXTERNALS", "cozmo-assets", "animations")
+AUDIO_EVENT_KEY = "audioName"
+EXTERNAL_EVENT_TOKEN = "_External_"
 
 def main(cli_args):
   """Fetches available animations and generates all the needed files to run tests for all animations.
@@ -61,10 +71,19 @@ def main(cli_args):
   (options, _) = parser.parse_known_args(cli_args)
 
   if not options.animationList:
-    available_animations = fetch_all_available_animations(password=options.password)
+    all_animations = fetch_all_available_animations(password=options.password)
   else:
     animation_list_file = webotsTest.get_subpath("project/build-scripts/webots", options.animationList)
-    available_animations = fetch_animations_from_list(animation_list_file)
+    all_animations = fetch_animations_from_list(animation_list_file)
+
+  # Hack to exclude animations with external audio before jordan introduces a fix.
+  available_animations = []
+  external_audio_animations = fetch_animations_with_external_audio()
+  for animation in all_animations:
+    if animation not in external_audio_animations:
+        available_animations.append(animation)
+    else:
+        print ("%s has external audio and will be skipped" %(animation))
 
   # Open an exisiting .wbt file so that it can be used to generate a wbt file with all the available
   # animations
@@ -151,6 +170,44 @@ def fetch_all_available_animations(password = "", build_type = "Debug"):
 def fetch_animations_from_list(animation_list_file):
   with open(animation_list_file, 'r') as f:
     return json.loads(f.read())
+
+# Hack to exclude animations with external audio before jordan introduces a fix.
+# (Can later use, if need to exclude based on something else)
+
+def fetch_clip_paths():
+    clip_paths = []
+    for clip_path in os.listdir(ANIMATIONS):
+        if os.path.splitext(clip_path)[1] == ".json":
+            clip_paths.append(os.path.join(ANIMATIONS, clip_path))
+    return clip_paths
+
+def fetch_animations_with_external_audio():
+    external_audio_animations = []
+    clip_paths = fetch_clip_paths()
+    for clip_path in clip_paths:
+        if is_external_audio(clip_path):
+            clip_name = os.path.splitext(os.path.basename(clip_path))[0]
+            external_audio_animations.append(clip_name)
+    return external_audio_animations
+
+def is_external_audio(clip_path):
+    with open(clip_path) as data_file:
+        data = json.load(data_file)
+    clip_name = os.path.splitext(os.path.basename(clip_path))[0]
+    try:
+        keyframes = data[clip_name]
+    except KeyError:
+        print("Mismatch between animation name and file name, assuming external audio")
+        print (clip_name)
+        return True
+    for keyframe in keyframes:
+        try:
+            audio_event_name = keyframe[AUDIO_EVENT_KEY][0]
+        except KeyError:
+            continue
+        if EXTERNAL_EVENT_TOKEN in audio_event_name:
+            return True
+    return False
 
 if __name__ == '__main__':
   args = sys.argv

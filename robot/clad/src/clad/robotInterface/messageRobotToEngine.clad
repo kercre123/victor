@@ -55,6 +55,12 @@ message AnimationEvent
   AnimEvent event_id
 }
 
+message ManufacturingID
+{ // See definitions in syscon/hal/hardware.h
+  uint_32 esn,
+  int_32  hw_version,
+}
+
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from robot to engine.
@@ -106,6 +112,7 @@ union RobotToEngine {
   MotorAutoEnabled           motorAutoEnabled       = 0xD8,
   RobotErrorReport           robotError             = 0xD9,
 
+  ManufacturingID            mfgId                  = 0xED,
   FirmwareVersion            firmwareVersion        = 0xEE,
   OTA::Ack                   otaAck                 = 0xEF,
 

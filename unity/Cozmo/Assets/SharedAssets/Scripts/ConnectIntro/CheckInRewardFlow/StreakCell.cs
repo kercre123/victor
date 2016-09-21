@@ -29,6 +29,9 @@ public class StreakCell : MonoBehaviour {
   private Text _Text;
   public ProgressBar ProgBar;
 
+  [SerializeField]
+  private Anki.Cozmo.Audio.AudioEventParameter _CheckSound = Anki.Cozmo.Audio.AudioEventParameter.InvalidEvent;
+
   private int _Index = 0;
   public bool IsFinalCell = false;
   /// <summary>
@@ -65,7 +68,9 @@ public class StreakCell : MonoBehaviour {
   public void BeginCheckSequence() {
     _CheckMark.gameObject.SetActive(true);
     Sequence checkSequence = DOTween.Sequence();
-    checkSequence.Join(_CheckMark.transform.DOScale(_CheckMarkMaxScale, _CheckMarkPopDuration));
+    checkSequence.Join(_CheckMark.transform.DOScale(_CheckMarkMaxScale, _CheckMarkPopDuration).OnStart(() => {
+      Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_CheckSound);
+    }));
     checkSequence.Append(_CheckMark.transform.DOScale(1.0f, _CheckMarkSettleDuration));
     checkSequence.AppendCallback(HandleCheckMarkComplete);
   }
