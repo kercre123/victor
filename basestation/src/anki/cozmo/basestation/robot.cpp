@@ -3885,7 +3885,7 @@ ExternalInterface::RobotState Robot::GetRobotState()
   if(GetMoveComponent().IsMoving()) { msg.status |= (uint32_t)RobotStatusFlag::IS_MOVING; }
   if(IsPickingOrPlacing()) { msg.status |= (uint32_t)RobotStatusFlag::IS_PICKING_OR_PLACING; }
   if(_offTreadsState != OffTreadsState::OnTreads) { msg.status |= (uint32_t)RobotStatusFlag::IS_PICKED_UP; }
-  if(_offTreadsState != OffTreadsState::Falling)  { msg.status |= (uint32_t)RobotStatusFlag::IS_FALLING; }
+  if(_offTreadsState == OffTreadsState::Falling)  { msg.status |= (uint32_t)RobotStatusFlag::IS_FALLING; }
   if(IsAnimating())        { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING; }
   if(IsIdleAnimating())    { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING_IDLE; }
   if( IsOnCharger() )      { msg.status |= (uint32_t)RobotStatusFlag::IS_ON_CHARGER; }

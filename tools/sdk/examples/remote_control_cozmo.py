@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
+
 import cozmo
 import json
 import sys
@@ -79,34 +82,34 @@ class RemoteControlCozmo:
 
         # temp workaround - remove any of the animations known to misbehave
         bad_anim_names = [
-            "skip bad anim ANIMATION_TEST",
-            "skip bad anim ID_AlignToObject_Content_Drive",
-            "skip bad anim ID_AlignToObject_Content_Start",
-            "skip bad anim ID_AlignToObject_Content_Stop",
-            "skip bad anim ID_AlignToObject_Frustrated_Drive",
-            "skip bad anim ID_AlignToObject_Frustrated_Start",
-            "skip bad anim ID_AlignToObject_Frustrated_Stop",
-            "skip bad anim ID_catch_start",
-            "skip bad anim ID_end",
-            "skip bad anim ID_reactTppl_Surprise",
-            "skip bad anim ID_test",
-            "skip bad anim ID_wake_openEyes",
-            "skip bad anim ID_wake_sleeping",
-            "skip bad anim LiftEffortPickup",
-            "skip bad anim LiftEffortPlaceHigh",
-            "skip bad anim LiftEffortPlaceLow",
-            "skip bad anim LiftEffortRoll",
-            "skip bad anim soundTestAnim",
-            "skip bad anim testSound"]
+            "ANIMATION_TEST",
+            "ID_AlignToObject_Content_Drive",
+            "ID_AlignToObject_Content_Start",
+            "ID_AlignToObject_Content_Stop",
+            "ID_AlignToObject_Frustrated_Drive",
+            "ID_AlignToObject_Frustrated_Start",
+            "ID_AlignToObject_Frustrated_Stop",
+            "ID_catch_start",
+            "ID_end",
+            "ID_reactTppl_Surprise",
+            "ID_test",
+            "ID_wake_openEyes",
+            "ID_wake_sleeping",
+            "LiftEffortPickup",
+            "LiftEffortPlaceHigh",
+            "LiftEffortPlaceLow",
+            "LiftEffortRoll",
+            "soundTestAnim",
+            "testSound"]
 
         for anim_name in all_anim_names:
             if anim_name not in bad_anim_names:
                 self.anim_names.append(anim_name)
 
-        default_anims_for_keys = [  "ID_catCatch_happyB", # 0
-                                    "ID_head_test", #1
-                                    "Happy_turnInPlace_react", #2
-                                    "ID_pokedB",  # 3
+        default_anims_for_keys = [  "anim_bored_01", # 0
+                                    "anim_freeplay_falloffcliff", # 1
+                                    "id_poked_giggle", # 2
+                                    "anim_pounce_success_02", # 3
                                     "anim_bored_event_02",  # 4
                                     "anim_bored_event_03",  # 5
                                     "id_react2face_disgust",  # 6
@@ -118,7 +121,11 @@ class RemoteControlCozmo:
         self.anim_index_for_key = [0] * 10
         kI = 0
         for default_key in default_anims_for_keys:
-            anim_idx = self.anim_names.index(default_key)
+            try:
+                anim_idx = self.anim_names.index(default_key)
+            except ValueError:
+                print("Error: default_anim %s is not in the list of animations" % default_key )
+                anim_idx = kI;
             self.anim_index_for_key[kI] = anim_idx
             kI += 1
 
@@ -317,6 +324,15 @@ class RemoteControlCozmo:
 
     def update_driving(self):
         drive_dir = (self.drive_forwards - self.drive_back)
+
+        if (drive_dir > 0.1) and self.cozmo.is_on_charger:
+            # cozmo is stuck on the charger, and user is trying to drive off - issue an explicit drive off action
+            try:
+                self.cozmo.drive_off_charger_contacts().wait_for_completed()
+            except cozmo.exceptions.RobotBusy:
+                # Robot is busy doing another action - try again next time we get a drive impulse
+                pass
+
         turn_dir = (self.turn_right - self.turn_left) + self.mouse_dir
 
         if drive_dir < 0:
