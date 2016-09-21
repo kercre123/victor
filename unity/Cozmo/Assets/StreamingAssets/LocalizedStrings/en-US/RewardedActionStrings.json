@@ -47,16 +47,16 @@
     "translation": "Played a game of Quick Tap"
   },
   "reward.description.QuickTap.WinGame.OneColor": {
-    "translation": "Won a game of Quick Tap in 'One Color' mode"
+    "translation": "Won a game of Quick Tap in Beginner Mode"
   },
   "reward.description.QuickTap.WinGame.TwoColor": {
-    "translation": "Won a game of Quick Tap in 'Two Colors' mode"
+    "translation": "Won a game of Quick Tap in Intermediate Mode"
   },
   "reward.description.QuickTap.WinGame.ThreeColor": {
-    "translation": "Won a game of Quick Tap in 'Three Colors' mode"
+    "translation": "Won a game of Quick Tap in Advanced Mode"
   },
   "reward.description.QuickTap.WinGame.FourColor": {
-    "translation": "Won a game of Quick Tap in 'Four Colors' mode"
+    "translation": "Won a game of Quick Tap in Expert Mode"
   },
   "reward.description.QuickTap.Accuracy.50": {
     "translation": "Finished a game of Quick Tap with tap accuracy >50%"
