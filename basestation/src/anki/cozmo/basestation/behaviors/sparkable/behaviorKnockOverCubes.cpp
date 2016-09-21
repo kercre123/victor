@@ -99,7 +99,7 @@ bool BehaviorKnockOverCubes::IsRunnableInternalReactionary(const Robot& robot) c
 
 bool BehaviorKnockOverCubes::CheckIfRunnable() const
 {
-  return _baseBlockID.IsSet() && (_stackHeight >= _minStackHeight) ;
+  return _baseBlockID.IsSet() && (_stackHeight >= _minStackHeight);
 }
   
 bool BehaviorKnockOverCubes::IsReactionary() const
@@ -110,6 +110,24 @@ bool BehaviorKnockOverCubes::IsReactionary() const
   
 Result BehaviorKnockOverCubes::InitInternalReactionary(Robot& robot)
 {
+  // determine the cubes actually in the stack
+  _objectsInStack.clear();
+  BlockWorldFilter blocksOnlyFilter;
+  blocksOnlyFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+
+  ASSERT_NAMED_EVENT(_baseBlockID.IsSet(), "BehaviorKnockOverCubes.InitInternalReactionary", "BaseBlockIDNotSet");
+  _objectsInStack.insert(_baseBlockID);
+  auto currentBlock = robot.GetBlockWorld().GetObjectByID(_baseBlockID);
+  if(currentBlock){
+    auto nextBlock = currentBlock;
+    BOUNDED_WHILE(10,(nextBlock = robot.GetBlockWorld().FindObjectOnTopOf(*currentBlock, BlockWorld::kOnCubeStackHeightTolerence, blocksOnlyFilter))){
+      _objectsInStack.insert(nextBlock->GetID());
+      currentBlock = nextBlock;
+    }
+  }else{
+    return Result::RESULT_FAIL;
+  }
+  
   SmartDisableReactionaryBehavior(BehaviorType::ReactToCubeMoved);
 
   if(!_shouldStreamline){
@@ -219,7 +237,9 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(Robot& robot)
   }
 
   flipAndWaitAction->AddAction(new WaitAction(robot, kWaitForBlockUpAxisChangeSecs));
-  
+
+  // make sure we only account for blocks flipped during the actual knock over action
+  _objectsFlipped.clear();
   StartActing(flipAndWaitAction, flipCallback);
 }
 
@@ -260,7 +280,9 @@ void BehaviorKnockOverCubes::UpdateTargetStack(const Robot& robot) const
 
 void BehaviorKnockOverCubes::HandleObjectUpAxisChanged(const ObjectUpAxisChanged& msg, Robot& robot)
 {
-  _objectsFlipped.insert(msg.objectID);
+  if(_objectsInStack.find(msg.objectID) != _objectsInStack.end()){
+    _objectsFlipped.insert(msg.objectID);
+  }
 }
   
 void BehaviorKnockOverCubes::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)

@@ -5,7 +5,7 @@
   "behaviorGroups": [
     "SparksPopAWheelie"
   ],
-  "flatScore": 10,
+  "flatScore": 5.0,
   "shouldHandleConfirmedObject": false,
   "shouldHandlePossibleObject": false,
   "repetitionPenalty": {

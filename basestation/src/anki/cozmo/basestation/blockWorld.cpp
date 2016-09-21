@@ -77,7 +77,6 @@ namespace Anki {
 namespace Cozmo {
 
 const float kOnGroundStackTolerence = ON_GROUND_HEIGHT_TOL_MM;
-const float kOnCubeStackHeightTolerence = 2 * STACKED_HEIGHT_TOL_MM;
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper namespace

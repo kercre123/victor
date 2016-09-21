@@ -47,6 +47,7 @@ protected:
     Radians     tiltTolerance_rad          = DEG_TO_RAD_F32(5.f);
     TimeStamp_t coolDownDuration_ms        = 600000; // time since last seen (in same pose) before re-reaction
     float       samePoseDistThreshold_mm   = 80.f;
+    float       samePoseDistThreshold_sparked_mm   = 30.f;
     s32         numImagesToWaitFor         = 2; // After turning before playing animation, 0 means don't verify
   } _params;
   

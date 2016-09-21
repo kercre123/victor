@@ -1,7 +1,7 @@
 {
   "behaviorType": "ExploreLookAroundInPlace",
   "name": "SparkedLookAroundInPlace",
-  "flatScore" : 3.0,
+  "flatScore" : 2.0,
   "behaviorGroups": [
       "SparksRollBlock",
       "SparksStackBlock",

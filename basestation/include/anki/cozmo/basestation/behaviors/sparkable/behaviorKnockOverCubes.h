@@ -74,6 +74,7 @@ private:
 
   int _numRetries;
   std::set<ObjectID> _objectsFlipped;
+  std::set<ObjectID> _objectsInStack;
   
   //Values loaded in from JSON
   AnimationTrigger _reachForBlockTrigger = AnimationTrigger::Count;

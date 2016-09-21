@@ -26,14 +26,15 @@ CONSOLE_VAR(f32, kHeadAngleDistFactor, "AcknowledgementBehaviors", 1.0);
 CONSOLE_VAR(f32, kBodyAngleDistFactor, "AcknowledgementBehaviors", 3.0);
 }
 
-static const char * const kReactionAnimGroupKey = "ReactionAnimGroup";
-static const char * const kMaxTurnAngleKey      = "MaxTurnAngle_deg";
-static const char * const kCoolDownDurationKey  = "CoolDownDuration_ms";
-static const char * const kSamePoseDistKey      = "SamePoseDistThresh_mm";
-static const char * const kSamePoseAngleKey     = "SamePoseAngleThresh_deg";
-static const char * const kPanToleranceKey      = "PanTolerance_deg";
-static const char * const kTiltToleranceKey     = "TiltTolerance_deg";
-static const char * const kNumImagesToWaitForKey= "NumImagesToWaitFor";
+static const char * const kReactionAnimGroupKey   = "ReactionAnimGroup";
+static const char * const kMaxTurnAngleKey        = "MaxTurnAngle_deg";
+static const char * const kCoolDownDurationKey    = "CoolDownDuration_ms";
+static const char * const kSamePoseDistKey        = "SamePoseDistThresh_mm";
+static const char * const kSamePoseDistSparkedKey = "SamePoseDistThresh_sparked_mm";
+static const char * const kSamePoseAngleKey       = "SamePoseAngleThresh_deg";
+static const char * const kPanToleranceKey        = "PanTolerance_deg";
+static const char * const kTiltToleranceKey       = "TiltTolerance_deg";
+static const char * const kNumImagesToWaitForKey  = "NumImagesToWaitFor";
 
 void IBehaviorPoseBasedAcknowledgement::ReactionData::FakeReaction()
 {
@@ -71,6 +72,12 @@ void IBehaviorPoseBasedAcknowledgement::LoadConfig(const Json::Value& config)
     PRINT_NAMED_DEBUG("IBehaviorPoseBasedAcknowledgement.LoadConfig.SetPoseDistThresh",
                       "%.1f", _params.samePoseDistThreshold_mm);
   }
+  
+  if(GetValueOptional(config, kSamePoseDistSparkedKey, _params.samePoseDistThreshold_sparked_mm)) {
+    PRINT_NAMED_DEBUG("IBehaviorPoseBasedAcknowledgement.LoadConfig.SetPoseDistThreshSparked",
+                      "%.1f", _params.samePoseDistThreshold_sparked_mm);
+  }
+  
   
   if(GetAngleOptional(config, kSamePoseAngleKey, _params.samePoseAngleThreshold_rad, true)) {
     PRINT_NAMED_DEBUG("IBehaviorPoseBasedAcknowledgement.LoadConfig.SetPoseAngleThresh",
@@ -180,9 +187,14 @@ bool IBehaviorPoseBasedAcknowledgement::ShouldReactToTarget_poseHelper(const Pos
     // poses aren't in the same frame, so don't react (assume we moved, not the cube)
     return false;
   }
-    
+  
+  float distThreshold = _params.samePoseDistThreshold_mm;
+  if(_shouldStreamline){
+    distThreshold = _params.samePoseDistThreshold_sparked_mm;
+  }
+  
   const bool thisPoseIsSame = thisPose.IsSameAs(otherPoseWrtThis,
-                                                _params.samePoseDistThreshold_mm,
+                                                distThreshold,
                                                 _params.samePoseAngleThreshold_rad);
 
   // we want to react if the pose is not the same

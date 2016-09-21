@@ -1,0 +1,12 @@
+{
+  "behaviorType": "PutDownBlock",
+  "name": "PutDownBlock",
+  "flatScore": 3.0,
+  "behaviorGroups": [
+    "SparksRollBlock",
+    "SparksPopAWheelie",
+    "SparksPounceOnMotion",
+    "SparksKnockOverCubes",
+    "SparksBuildPyramid"
+  ]
+}
