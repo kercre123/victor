@@ -1159,7 +1159,7 @@ MonoBehaviour:
   _TimelineSettleDuration: 1.5
   _TimelineOutroDuration: 1.5
   _ConnectIntroDuration: 1.5
-  _RewardSendoffDuration: 0.5
+  _RewardSendoffDuration: 0.25
   _RewardSendoffVariance: 0.25
   _RewardCollectZoneDuration: 0.75
   _RewardCollectZoneVariance: 0.25

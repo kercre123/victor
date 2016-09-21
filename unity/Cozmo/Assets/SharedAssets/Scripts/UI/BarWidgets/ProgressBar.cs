@@ -119,9 +119,13 @@ namespace Cozmo {
         }
         // If set to instant, immediately set progress bar to new value, don't fire events.
         if (instant) {
+          _StartProgress = _TargetProgress;
           _FilledForegroundImage.fillAmount = _TargetProgress;
           if (_UseEndCap) {
             PositionEndCap();
+          }
+          if (ProgressUpdateCompleted != null) {
+            ProgressUpdateCompleted.Invoke();
           }
         }
       }

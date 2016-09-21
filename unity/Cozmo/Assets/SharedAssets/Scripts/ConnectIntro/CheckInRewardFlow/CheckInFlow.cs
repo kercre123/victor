@@ -134,7 +134,7 @@ public class CheckInFlow : MonoBehaviour {
     // of a reward loot view flow.
     ChestRewardManager.Instance.TryPopulateChestRewards();
     ChestRewardManager.Instance.ApplyChestRewards();
-    UpdateProgBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
+    UpdateProgBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
     // Do Check in Rewards if we need a new session
     if (DataPersistence.DataPersistenceManager.Instance.IsNewSessionNeeded) {
       _EnvelopeContainer.SetActive(true);
@@ -164,9 +164,13 @@ public class CheckInFlow : MonoBehaviour {
     }
   }
 
-  private void UpdateProgBar(int currPoints, int reqPoints) {
+  private void UpdateProgBar(int currPoints, int reqPoints, bool instant) {
+    // If we've closed out of CheckInFlow midway through a tween, avoid potential null ref
+    if (_GoalProgressBar == null) {
+      return;
+    }
     float prog = ((float)currPoints / (float)reqPoints);
-    _GoalProgressBar.SetProgress(prog, true);
+    _GoalProgressBar.SetProgress(prog, instant);
     _GoalProgressText.text = string.Format("{0}", currPoints);
   }
 
@@ -461,7 +465,7 @@ public class CheckInFlow : MonoBehaviour {
   [SerializeField]
   private float _ConnectIntroDuration = 1.5f;
   [SerializeField]
-  private float _RewardSendoffDuration = 0.5f;
+  private float _RewardSendoffDuration = 0.25f;
   [SerializeField]
   private float _RewardSendoffVariance = 0.15f;
   [SerializeField]
@@ -488,7 +492,7 @@ public class CheckInFlow : MonoBehaviour {
         _ActiveNewGoalTransforms[i].gameObject.SetActive(false);
       }
       _TimelineReviewContainer.SetActive(false);
-      UpdateProgBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
+      UpdateProgBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
     });
     goalSequence.Play();
   }
@@ -512,10 +516,15 @@ public class CheckInFlow : MonoBehaviour {
   }
 
   private void AnimateRewardsToTarget(Sequence goalSequence) {
+    goalSequence.AppendCallback(RewardedActionManager.Instance.SendPendingRewardsToInventory);
     goalSequence = TweenAllToFinalTarget(goalSequence, _ActiveExpTransforms, _FinalExpTarget);
     goalSequence = TweenAllToFinalTarget(goalSequence, _ActiveCoinsTransforms, _FinalCoinTarget);
     goalSequence = TweenAllToFinalTarget(goalSequence, _ActiveSparksTransforms, _FinalSparkTarget);
-    goalSequence.AppendCallback(RewardedActionManager.Instance.SendPendingRewardsToInventory);
+    goalSequence.AppendCallback(() => {
+      int finalCheckInTarget = ChestRewardManager.Instance.GetNextRequirementPoints();
+      int finalCheckInPoints = Mathf.Min(ChestRewardManager.Instance.GetCurrentRequirementPoints(), finalCheckInTarget);
+      UpdateProgBar(finalCheckInPoints, finalCheckInTarget, false);
+    });
     goalSequence.AppendInterval(_RewardFinalDelay);
   }
 
@@ -553,6 +562,19 @@ public class CheckInFlow : MonoBehaviour {
   }
 
   private void HandleMockButton() {
+    if (_QuickConnect) {
+      HandleMockConnect();
+    }
+    else {
+      _ConnectButton.Interactable = false;
+      Sequence collectSequence = DOTween.Sequence();
+      AnimateRewardsToTarget(collectSequence);
+      collectSequence.AppendInterval(_RewardSendoffVariance);
+      collectSequence.AppendCallback(HandleMockConnect);
+    }
+  }
+
+  private void HandleMockConnect() {
     RobotEngineManager.Instance.MockConnect();
     if (DataPersistence.DataPersistenceManager.Instance.IsNewSessionNeeded) {
       DataPersistence.DataPersistenceManager.Instance.StartNewSession();

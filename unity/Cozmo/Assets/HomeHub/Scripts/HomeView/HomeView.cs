@@ -190,6 +190,7 @@ namespace Cozmo.HomeHub {
     private Dictionary<string, ChallengeStatePacket> _ChallengeStates;
 
     public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById, HomeHub homeHubInstance) {
+      ChestRewardManager.Instance.TryPopulateChestRewards();
       _FreeplayIntervalLastTimestamp = -1;
       _HomeHubInstance = homeHubInstance;
 
@@ -228,7 +229,6 @@ namespace Cozmo.HomeHub {
       }
       UpdatePuzzlePieceCount();
 
-      ChestRewardManager.Instance.ChestGained += HandleChestGained;
       // Start listening for Battery Level popups now that HomeView is fully initialized
       PauseManager.Instance.ListeningForBatteryLevel = true;
     }
@@ -262,6 +262,7 @@ namespace Cozmo.HomeHub {
     }
 
     private void UpdateChestProgressBar(int currentPoints, int numPointsNeeded, bool instant = false) {
+      currentPoints = Mathf.Min(currentPoints, numPointsNeeded);
       float progress = ((float)currentPoints / (float)numPointsNeeded);
       _RequirementPointsProgressBar.SetProgress(progress, instant);
       _CurrentRequirementPointsLabel.text = currentPoints.ToString();
@@ -504,8 +505,6 @@ namespace Cozmo.HomeHub {
     private IEnumerator BurstEnergyAfterInit() {
       yield return new WaitForFixedUpdate();
       _RewardSequence = DOTween.Sequence();
-      int currPoints = ChestRewardManager.Instance.GetCurrentRequirementPoints();
-      int targetPoints = ChestRewardManager.Instance.GetNextRequirementPoints();
       // Only handle goal rewards 
       if (_CurrentTab == HomeTab.Play && DailyGoalManager.Instance.GoalsPending) {
         for (int i = 0; i < DailyGoalManager.Instance.PendingDailyGoals.Count; i++) {
@@ -514,7 +513,6 @@ namespace Cozmo.HomeHub {
         }
         DailyGoalManager.Instance.ResolveDailyGoalsEarned();
       }
-      UpdateChestProgressBar(currPoints, targetPoints, true);
       Transform source = _EnergyRewardStart_PlayTab;
       if (_CurrentTab == HomeTab.Cozmo) {
         source = _EnergyRewardStart_CozmoTab;
@@ -590,6 +588,7 @@ namespace Cozmo.HomeHub {
       RewardSequenceActive = false;
       _LootViewInstance = null;
       CheckIfUnlockablesAffordableAndUpdateBadge();
+      // Snap to zero, then tween to current progress
       UpdateChestProgressBar(0, ChestRewardManager.Instance.GetNextRequirementPoints(), true);
       UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
     }
@@ -638,17 +637,9 @@ namespace Cozmo.HomeHub {
         if (RobotEngineManager.Instance.CurrentRobot != null) {
           RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.All);
         }
-        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
         UIManager.EnableTouchEvents();
       }
-      else {
-        HandleChestGained();
-      }
-
-    }
-    // If we earned a chest, have the progress bar reflect the previous requirement level at full.
-    private void HandleChestGained() {
-      UpdateChestProgressBar(ChestRewardManager.Instance.GetNextRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
+      UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
     }
 
     private Transform GetGoalSource(DailyGoal goal) {
@@ -778,7 +769,6 @@ namespace Cozmo.HomeHub {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.EngineErrorCodeMessage>(HandleEngineErrorCode);
-      ChestRewardManager.Instance.ChestGained -= HandleChestGained;
       _RequirementPointsProgressBar.ProgressUpdateCompleted -= HandleGreenPointsBarUpdateComplete;
       GameEventManager.Instance.OnGameEvent -= HandleGameEvents;
       DailyGoalManager.Instance.OnRefreshDailyGoals -= UpdatePlayTabText;
