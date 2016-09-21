@@ -53,7 +53,7 @@ public class RobotRestorePane : MonoBehaviour {
   }
 
   private void HandleRestoreStatus(Anki.Cozmo.ExternalInterface.RestoreRobotStatus status) {
-    if (status.didWipe) {
+    if (status.isWipe) {
       if (status.success) {
         SetStatusText("Success! Robot Data cleared", Color.green);
       }
