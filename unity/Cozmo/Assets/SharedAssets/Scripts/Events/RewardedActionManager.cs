@@ -152,7 +152,7 @@ public class RewardedActionManager : MonoBehaviour {
       for (int i = 0; i < rewardList.Count; i++) {
         RewardedActionData reward = rewardList[i];
         if (RewardConditionsMet(reward, cozEvent)) {
-          DAS.Info(this, string.Format("{0} rewarded {1} {2}", cozEvent.GameEventEnum, reward.Reward.Amount, reward.Reward.ItemID));
+          DAS.Event("meta.energy_reward", cozEvent.GameEventEnum.ToString(), DASUtil.FormatExtraData(reward.Reward.Amount.ToString ()));
           if (!PendingActionRewards.ContainsKey(reward)) {
             PendingActionRewards.Add(reward, reward.Reward.Amount);
           }// If not using a valid tag, allow the reward to stack if trigger multiple times

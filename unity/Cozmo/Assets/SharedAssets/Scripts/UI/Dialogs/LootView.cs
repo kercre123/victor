@@ -251,6 +251,7 @@ namespace Cozmo.UI {
 
       GameObject banner = UIManager.CreateUIElement(_BannerPrefab.gameObject, _BannerContainer);
       _BannerInstance = banner.GetComponent<Banner>();
+      DAS.Event("meta.emotion_chip.charged", "");
     }
 
     private IEnumerator InitializeBox() {

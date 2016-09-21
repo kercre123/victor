@@ -716,10 +716,8 @@ namespace Cozmo.HomeHub {
         _Stopwatch.Stop();
         elapsedSec = _Stopwatch.ElapsedMilliseconds / 1000.0f;
       }
-      DAS.Event("robot.request_app", _CurrentChallengeId,
-        new Dictionary<string, string>() { { "$data", "fail" } });
-      DAS.Event("robot.request_app_time", _CurrentChallengeId,
-        new Dictionary<string, string>() { { "$data", elapsedSec.ToString() } });
+      DAS.Event("robot.request_app", _CurrentChallengeId, DASUtil.FormatExtraData("fail"));
+      DAS.Event("robot.request_app_time", _CurrentChallengeId, DASUtil.FormatExtraData(elapsedSec.ToString()));
       _CurrentChallengeId = null;
 
       RobotEngineManager.Instance.SendDenyGameStart();
@@ -731,10 +729,8 @@ namespace Cozmo.HomeHub {
         _Stopwatch.Stop();
         elapsedSec = _Stopwatch.ElapsedMilliseconds / 1000.0f;
       }
-      DAS.Event("robot.request_app", _CurrentChallengeId,
-        new Dictionary<string, string>() { { "$data", "success" } });
-      DAS.Event("robot.request_app_time", _CurrentChallengeId,
-        new Dictionary<string, string>() { { "$data", elapsedSec.ToString() } });
+      DAS.Event("robot.request_app", _CurrentChallengeId, DASUtil.FormatExtraData("success"));
+      DAS.Event("robot.request_app_time", _CurrentChallengeId, DASUtil.FormatExtraData(elapsedSec.ToString()));
       _CurrentChallengeId = null;
 
       if (_RequestDialog != null) {
@@ -756,10 +752,8 @@ namespace Cozmo.HomeHub {
         _Stopwatch.Stop();
         elapsedSec = _Stopwatch.ElapsedMilliseconds / 1000.0f;
       }
-      DAS.Event("robot.request_app", _CurrentChallengeId,
-        new Dictionary<string, string>() { { "$data", "robot_canceled" } });
-      DAS.Event("robot.request_app_time", _CurrentChallengeId,
-        new Dictionary<string, string>() { { "$data", elapsedSec.ToString() } });
+      DAS.Event("robot.request_app", _CurrentChallengeId, DASUtil.FormatExtraData("robot_canceled"));
+      DAS.Event("robot.request_app_time", _CurrentChallengeId, DASUtil.FormatExtraData(elapsedSec.ToString()));
 
       if (_RequestDialog != null) {
         _RequestDialog.CloseView();

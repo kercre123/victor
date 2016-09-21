@@ -46,6 +46,8 @@ namespace Cozmo {
         _ItemIdToCount.Add(itemId, count);
       }
 
+      DAS.Event("meta.inventory.change", itemId, DASUtil.FormatExtraData(count.ToString()));
+      DAS.Event("meta.inventory.balance", itemId, DASUtil.FormatExtraData(_ItemIdToCount[itemId].ToString()));
       if (ItemAdded != null) {
         ItemAdded(itemId, count, _ItemIdToCount[itemId]);
       }
@@ -96,6 +98,9 @@ namespace Cozmo {
       if (ItemRemoved != null) {
         ItemRemoved(itemId, count, _ItemIdToCount[itemId]);
       }
+      int delta = -count;
+      DAS.Event("meta.inventory.change", itemId, DASUtil.FormatExtraData(delta.ToString()));
+      DAS.Event("meta.inventory.balance", itemId, DASUtil.FormatExtraData(_ItemIdToCount[itemId].ToString()));
       DataPersistence.DataPersistenceManager.Instance.Save();
     }
 

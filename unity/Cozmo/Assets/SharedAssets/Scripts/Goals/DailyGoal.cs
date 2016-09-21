@@ -87,7 +87,7 @@ namespace Cozmo {
         Progress++;
         GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnDailyGoalProgress, this));
 
-        DAS.Event(this, string.Format("{0} Progressed to {1}", Title, Progress));
+        DAS.Event("meta.daily_goal.progress", Title.Key, DASUtil.FormatExtraData(Progress.ToString()));
         // Check if Completed
         CheckIfComplete();
         if (OnDailyGoalUpdated != null) {
@@ -132,7 +132,12 @@ namespace Cozmo {
       public void CheckIfComplete() {
         if (IsGoalComplete() && !GoalComplete) {
           // Grant Reward
-          DAS.Event(this, string.Format("{0} Completed", Title));
+          int numDays = 0;
+          if (DataPersistenceManager.Instance.Data.DefaultProfile.Sessions != null) {
+            numDays = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Count;
+          }
+          DAS.Event("meta.daily_goal_completed", numDays.ToString(), DASUtil.FormatExtraData(Title.Key));
+          DAS.Event("meta.daily_goal_reward", PointsRewarded.ToString());
           _GoalComplete = true;
           if (OnDailyGoalCompleted != null) {
             OnDailyGoalCompleted.Invoke(this);

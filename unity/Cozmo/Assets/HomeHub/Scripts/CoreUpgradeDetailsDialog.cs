@@ -344,9 +344,18 @@ public class CoreUpgradeDetailsDialog : BaseView {
       playerInventory.RemoveItemAmount(hexPieceId, unlockCost);
       _UnlockUpgradeButtonContainer.gameObject.SetActive(false);
 
+      // this requests item to be unlocked on the engine side
       if (_ButtonCostPaidSuccessCallback != null) {
         _ButtonCostPaidSuccessCallback(_UnlockInfo);
       }
+      DAS.Event("meta.upgrade_unlock", _UnlockInfo.TitleKey, DASUtil.FormatExtraData(unlockCost.ToString()));
+
+      int unlockedCount = 0;
+      List<UnlockableInfo> unlockedItems = UnlockablesManager.Instance.GetUnlocked();
+      if (unlockedItems != null) {
+        unlockedCount = unlockedItems.Count + 1;
+      }
+      DAS.Event("meta.upgrade_unlock_count", unlockedCount.ToString());
 
       _UnlockUpgradeButton.Interactable = false;
       PlayUpgradeAnimation();
@@ -431,6 +440,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
       sess.SparkCount.Add(_UnlockInfo.Id.Value, 1);
     }
 
+    DAS.Event("meta.upgrade_replay", _UnlockInfo.TitleKey, DASUtil.FormatExtraData(_UnlockInfo.RequestTrickCostAmountNeeded.ToString()));
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Spark_Launch);
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Spark);
     RobotEngineManager.Instance.CurrentRobot.EnableSparkUnlock(_UnlockInfo.Id.Value);

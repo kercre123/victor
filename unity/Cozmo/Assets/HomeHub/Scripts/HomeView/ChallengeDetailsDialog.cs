@@ -201,7 +201,7 @@ public class ChallengeDetailsDialog : BaseView {
       _LockedContainer.gameObject.SetActive(false);
 
       UnlockablesManager.Instance.TrySetUnlocked(unlockInfo.Id.Value, true);
-
+      DAS.Event("meta.app_unlock", unlockInfo.Id.Value.ToString(), DASUtil.FormatExtraData(unlockCost.ToString()));
       _UnlockButton.Interactable = false;
       _CostButtonLabel.color = _UnlockButton.TextDisabledColor;
       UnlockablesManager.Instance.OnUnlockComplete += HandleUnlockFromRobotResponded;

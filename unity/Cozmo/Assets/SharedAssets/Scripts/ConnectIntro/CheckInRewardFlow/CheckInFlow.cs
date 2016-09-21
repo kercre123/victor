@@ -194,6 +194,11 @@ public class CheckInFlow : MonoBehaviour {
   // On tap play animation (crunch down slightly, then pop up and switch to open sprite)
   // On open, release rewards and transition to TimelineReviewContainer.
   private void HandleEnvelopeButton() {
+    int numDays = 0;
+    if (DataPersistenceManager.Instance.Data.DefaultProfile.Sessions != null) {
+      numDays = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Count;
+    }
+    DAS.Event("meta.open_goal_envelope", numDays.ToString());
     Transform envelope = _EnvelopeButton.transform;
     Sequence envelopeSequence = DOTween.Sequence();
     if (_CurrentSequence != null) {
@@ -324,6 +329,7 @@ public class CheckInFlow : MonoBehaviour {
       itemID = reward.Reward.ItemID;
       newReward = null;
       rewardTarget = GetRandomTarget();
+      DAS.Event("meta.open_goal_envelope_reward", itemID, DASUtil.FormatExtraData(reward.Reward.Amount.ToString()));
       // should only be Vector3.zero if out of valid targets
       if (rewardTarget == Vector3.zero) {
         break;
@@ -633,6 +639,16 @@ public class CheckInFlow : MonoBehaviour {
   }
 
   private void StartConnectionFlow() {
+    int daysWithCozmo = 0;
+    foreach (DataPersistence.TimelineEntryData sessionEntry in DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions) {
+      if (sessionEntry.HasConnectedToCozmo) {
+        daysWithCozmo++;
+      }
+    }
+    DAS.Event("meta.time_with_cozmo", daysWithCozmo.ToString());
+    DAS.Event("meta.games_played", DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TotalGamesPlayed.Count.ToString());
+    DAS.Event("meta.current_streak", DataPersistence.DataPersistenceManager.Instance.CurrentStreak.ToString());
+
     _ConnectionFlowInstance = GameObject.Instantiate(_ConnectionFlowPrefab.gameObject).GetComponent<ConnectionFlow>();
     _ConnectionFlowInstance.ConnectionFlowComplete += HandleConnectionFlowComplete;
     _ConnectionFlowInstance.ConnectionFlowQuit += HandleConnectionFlowQuit;

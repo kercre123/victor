@@ -110,12 +110,8 @@ public class DailyGoalPanel : MonoBehaviour {
 
     if (timelineEntry.DailyGoals.Count > 0) {
       for (int i = 0; i < timelineEntry.DailyGoals.Count; i++) {
-        DAS.Event(DASConstants.Goal.kProgressSummary, DASUtil.FormatDate(timelineEntry.Date),
-          new Dictionary<string, string> { {
-              "$data",
-              DASUtil.FormatGoal(timelineEntry.DailyGoals[i])
-            }
-          });
+        DAS.Event(DASConstants.Goal.kProgressSummary, DASUtil.FormatDate(timelineEntry.Date), 
+          DASUtil.FormatExtraData(DASUtil.FormatGoal(timelineEntry.DailyGoals[i])));
       }
     }
 

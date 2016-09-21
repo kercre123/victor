@@ -355,7 +355,7 @@ public class DailyGoalManager : MonoBehaviour {
     goal.Progress++;
     GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnDailyGoalProgress, this));
 
-    DAS.Event(this, string.Format("{0} Progressed to {1}", goal.Title, goal.Progress));
+    DAS.Event("meta.goal.progressed", goal.Title.Key, DASUtil.FormatExtraData(goal.Progress.ToString()));
     // Check if Completed
     goal.CheckIfComplete();
     if (goal.OnDailyGoalUpdated != null) {
@@ -381,12 +381,8 @@ public class DailyGoalManager : MonoBehaviour {
   private void SendDasEventsForGoalGeneration(List<DailyGoal> goals) {
     if (goals.Count > 0) {
       for (int i = 0; i < goals.Count; i++) {
-        DAS.Event(DASConstants.Goal.kGeneration, DASUtil.FormatDate(DataPersistenceManager.Today),
-          new Dictionary<string, string> { {
-              "$data",
-              DASUtil.FormatGoal(goals[i])
-            }
-          });
+        DAS.Event(DASConstants.Goal.kGeneration, DASUtil.FormatDate(DataPersistenceManager.Today), 
+          DASUtil.FormatExtraData(DASUtil.FormatGoal(goals[i])));
       }
     }
   }
