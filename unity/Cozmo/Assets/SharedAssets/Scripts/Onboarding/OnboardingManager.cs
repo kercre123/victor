@@ -304,7 +304,7 @@ public class OnboardingManager : MonoBehaviour {
       // Not first time, record a transition out
       if (_CurrDASPhaseID != -1) {
         float timeSinceLastPhase = Time.time - _CurrDASPhaseStartTime;
-        DAS.Event("onboarding.phase_time", _CurrDASPhaseID.ToString(), null, DASUtil.FormatExtraData(timeSinceLastPhase.ToString()));
+        DAS.Event("onboarding.phase_time", _CurrDASPhaseID.ToString(), DASUtil.FormatExtraData(timeSinceLastPhase.ToString()));
       }
 
       // start recording the next one...

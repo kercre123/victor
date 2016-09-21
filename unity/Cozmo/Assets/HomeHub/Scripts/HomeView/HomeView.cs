@@ -705,9 +705,9 @@ namespace Cozmo.HomeHub {
         _Stopwatch.Stop();
         elapsedSec = _Stopwatch.ElapsedMilliseconds / 1000.0f;
       }
-      DAS.Event("robot.request_app", _CurrentChallengeId, null,
+      DAS.Event("robot.request_app", _CurrentChallengeId,
         new Dictionary<string, string>() { { "$data", "fail" } });
-      DAS.Event("robot.request_app_time", _CurrentChallengeId, null,
+      DAS.Event("robot.request_app_time", _CurrentChallengeId,
         new Dictionary<string, string>() { { "$data", elapsedSec.ToString() } });
       _CurrentChallengeId = null;
 
@@ -720,9 +720,9 @@ namespace Cozmo.HomeHub {
         _Stopwatch.Stop();
         elapsedSec = _Stopwatch.ElapsedMilliseconds / 1000.0f;
       }
-      DAS.Event("robot.request_app", _CurrentChallengeId, null,
+      DAS.Event("robot.request_app", _CurrentChallengeId,
         new Dictionary<string, string>() { { "$data", "success" } });
-      DAS.Event("robot.request_app_time", _CurrentChallengeId, null,
+      DAS.Event("robot.request_app_time", _CurrentChallengeId,
         new Dictionary<string, string>() { { "$data", elapsedSec.ToString() } });
       _CurrentChallengeId = null;
 
@@ -745,9 +745,9 @@ namespace Cozmo.HomeHub {
         _Stopwatch.Stop();
         elapsedSec = _Stopwatch.ElapsedMilliseconds / 1000.0f;
       }
-      DAS.Event("robot.request_app", _CurrentChallengeId, null,
+      DAS.Event("robot.request_app", _CurrentChallengeId,
         new Dictionary<string, string>() { { "$data", "robot_canceled" } });
-      DAS.Event("robot.request_app_time", _CurrentChallengeId, null,
+      DAS.Event("robot.request_app_time", _CurrentChallengeId,
         new Dictionary<string, string>() { { "$data", elapsedSec.ToString() } });
 
       if (_RequestDialog != null) {

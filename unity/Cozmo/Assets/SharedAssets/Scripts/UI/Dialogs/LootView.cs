@@ -501,7 +501,7 @@ namespace Cozmo.UI {
       if (LootBoxRewards.ContainsKey(RewardedActionManager.Instance.SparkID)) {
         numSparks = LootBoxRewards[RewardedActionManager.Instance.SparkID];
       }
-      DAS.Event("onboarding.emotion_chip.open", numBits.ToString(), null, DASUtil.FormatExtraData(numSparks.ToString()));
+      DAS.Event("onboarding.emotion_chip.open", numBits.ToString(), DASUtil.FormatExtraData(numSparks.ToString()));
 
       _ContinueButtonInstance.gameObject.SetActive(true);
       _ContinueButtonInstance.Initialize(HandleOnboardingRewardsContinueButton, "onboarding.button.loot", "Onboarding");

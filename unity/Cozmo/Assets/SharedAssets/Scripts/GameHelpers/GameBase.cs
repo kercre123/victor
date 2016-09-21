@@ -1025,7 +1025,7 @@ public abstract class GameBase : MonoBehaviour {
     if (currState != null) {
       currentStateString = currState.GetType().ToString();
     }
-    DAS.Event("robot.interrupt", currentStateString, null,
+    DAS.Event("robot.interrupt", currentStateString,
       new Dictionary<string, string>() { { "$data", behaviorTransition.reactionaryBehaviorType.ToString() } });
 
     if (behaviorTransition.behaviorStarted) {

@@ -224,7 +224,7 @@ public class SkillSystem {
                 }
                 UpdateHighestSkillsOnRobot();
 
-                DAS.Event("game.cozmoskill.levelup", _CurrChallengeData.ChallengeID, null,
+                DAS.Event("game.cozmoskill.levelup", _CurrChallengeData.ChallengeID,
                   DASUtil.FormatExtraData(cozmoSkillLevel.ToString() + "," + currSkillData.HighestLevel.ToString()));
 
                 if (OnLevelUp != null && newHighestLevel) {
@@ -238,7 +238,7 @@ public class SkillSystem {
               currSkillData.ChangeLevel(currSkillData.LastLevel - 1);
               RewardedActionManager.Instance.NewSkillChange -= 1;
               // cozmosHighestRobotLevel never levels down
-              DAS.Event("game.cozmoskill.leveldown", _CurrChallengeData.ChallengeID, null,
+              DAS.Event("game.cozmoskill.leveldown", _CurrChallengeData.ChallengeID,
                 DASUtil.FormatExtraData(currSkillData.LastLevel.ToString() + "," + currSkillData.HighestLevel.ToString()));
             }
             else {

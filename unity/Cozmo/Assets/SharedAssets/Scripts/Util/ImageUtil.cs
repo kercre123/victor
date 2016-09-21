@@ -87,7 +87,7 @@ public static class ImageUtil {
       header = _Header80;
       break;
     default:
-      DAS.Error("MinimizedGrayToJpeg", "No header for quality of %d", quality);
+      DAS.Error("MinimizedGrayToJpeg", "No header for quality of " + quality);
       return;
     }
 

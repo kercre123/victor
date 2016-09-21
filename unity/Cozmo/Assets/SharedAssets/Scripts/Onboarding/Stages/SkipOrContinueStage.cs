@@ -43,14 +43,14 @@ namespace Onboarding {
     protected override void HandleContinueClicked() {
       base.HandleContinueClicked();
       // is skip available, Did they skip.
-      DAS.Event("onboarding.skip_status", _OldRobotViewInstance.activeInHierarchy ? "1" : "0", null, DASUtil.FormatExtraData("0"));
+      DAS.Event("onboarding.skip_status", _OldRobotViewInstance.activeInHierarchy ? "1" : "0", DASUtil.FormatExtraData("0"));
     }
 
     protected void HandleSkipClicked() {
       // No tutorials needed for the next few phases either
       OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.DailyGoals);
       OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Upgrades);
-      DAS.Event("onboarding.skip_status", "1", null, DASUtil.FormatExtraData("1"));
+      DAS.Event("onboarding.skip_status", "1", DASUtil.FormatExtraData("1"));
       for (int i = 0; i < _OldRobotSecondaryInfo.Length; ++i) {
         _OldRobotSecondaryInfo[i].gameObject.SetActive(false);
       }

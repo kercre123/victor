@@ -10,7 +10,7 @@ using System.Linq;
 
 public class EngineDasTarget : IDASTarget {
 
-  public void Event(string eventName, string eventValue, object context = null, Dictionary<string, string> keyValues = null) {
+  public void Event(string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
     #if USE_ENGINE_TARGET
     if (keyValues != null) {
       Unity_DAS_Event(eventName, eventValue, keyValues.Keys.ToArray(), keyValues.Values.ToArray(), (uint)keyValues.Count);
@@ -20,7 +20,7 @@ public class EngineDasTarget : IDASTarget {
     #endif
   }
 
-  public void Error(string eventName, string eventValue, object context = null, Dictionary<string, string> keyValues = null) {
+  public void Error(string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
 
 #if USE_ENGINE_TARGET
     if (keyValues != null) {
@@ -31,7 +31,7 @@ public class EngineDasTarget : IDASTarget {
 #endif
   }
 
-  public void Warn(string eventName, string eventValue, object context = null, Dictionary<string, string> keyValues = null) {
+  public void Warn(string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
 
 #if USE_ENGINE_TARGET
     if (keyValues != null) {
@@ -42,7 +42,7 @@ public class EngineDasTarget : IDASTarget {
 #endif
   }
 
-  public void Info(string eventName, string eventValue, object context = null, Dictionary<string, string> keyValues = null) {
+  public void Info(string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
 
 #if USE_ENGINE_TARGET
     if (keyValues != null) {
@@ -53,7 +53,7 @@ public class EngineDasTarget : IDASTarget {
 #endif
   }
 
-  public void Debug(string eventName, string eventValue, object context = null, Dictionary<string, string> keyValues = null) {
+  public void Debug(string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
     
 #if USE_ENGINE_TARGET
     if (keyValues != null) {
@@ -64,7 +64,7 @@ public class EngineDasTarget : IDASTarget {
 #endif
   }
 
-  public void Ch_Info(string channelName, string eventName, string eventValue, object context = null, Dictionary<string, string> keyValues = null)
+  public void Ch_Info(string channelName, string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null)
   {
 #if USE_ENGINE_TARGET
     if (keyValues != null) {
@@ -75,7 +75,7 @@ public class EngineDasTarget : IDASTarget {
 #endif
   }
 
-  public void Ch_Debug(string channelName, string eventName, string eventValue, object context = null, Dictionary<string, string> keyValues = null)
+  public void Ch_Debug(string channelName, string eventName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null)
   {
 #if USE_ENGINE_TARGET
     if (keyValues != null) {
