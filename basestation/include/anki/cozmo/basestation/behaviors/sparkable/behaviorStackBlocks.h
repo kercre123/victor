@@ -72,7 +72,7 @@ private:
   bool FilterBlocksForBottom(const ObservableObject* obj) const;
   bool FilterBlocksHelper(const ObservableObject* obj) const;
 
-  bool AreBlocksAreStillValid(const Robot& robot);
+  bool AreBlocksStillValid(const Robot& robot);
   
   void UpdateTargetBlocks(const Robot& robot) const;
 

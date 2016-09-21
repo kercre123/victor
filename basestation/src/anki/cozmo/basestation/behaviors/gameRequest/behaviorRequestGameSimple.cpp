@@ -10,6 +10,7 @@
  *
  **/
 
+
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
@@ -20,9 +21,10 @@
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
+#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/pathMotionProfileHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -305,8 +307,9 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
   ObjectID targetBlockID = GetRobotsBlockID(robot);
   DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot, targetBlockID);
   action->SetMotionProfile(_driveToPickupProfile);
+  
   StartActing(action,
-              [this, &robot](const ExternalInterface::RobotCompletedAction& resultMsg) {                
+              [this, targetBlockID, &robot](const ExternalInterface::RobotCompletedAction& resultMsg) {
                 if ( resultMsg.result == ActionResult::SUCCESS ) {
                   ComputeFaceInteractionPose(robot);
                   TransitionToDrivingToFace(robot);
@@ -334,6 +337,12 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
                   StartActing(animAction, &BehaviorRequestGameSimple::TransitionToPickingUpBlock);
                 }
                 else {
+                  // mark the block as unable to pickup
+                  const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(targetBlockID);
+                  if(failedObject){
+                    robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PickUpObject);
+                  }
+                  
                   // couldn't pick up this block. If we have another, try that. Otherwise, fail
                   if( SwitchRobotsBlock(robot) ) {
                     TransitionToPickingUpBlock(robot);

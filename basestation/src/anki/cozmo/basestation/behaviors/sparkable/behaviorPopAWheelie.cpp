@@ -21,6 +21,7 @@
 #include "anki/cozmo/basestation/blockWorldFilter.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/vision/basestation/observableObject.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "util/console/consoleInterface.h"
 
 
@@ -80,7 +81,11 @@ void BehaviorPopAWheelie::UpdateTargetBlock(const Robot& robot) const
 
 bool BehaviorPopAWheelie::FilterBlocks(const ObservableObject* obj) const
 {
+  const bool hasFailedToPopAWheelie = _robot.GetBehaviorManager().GetWhiteboard().DidFailToUse(obj->GetID(), AIWhiteboard::ObjectUseAction::RollOrPopAWheelie,
+                                                                                  kTimeObjectInvalidAfterFailure_sec, obj->GetPose(), kObjectInvalidAfterFailureRadius_mm, kAngleToleranceAfterFailure_radians);
+
   return (!obj->IsPoseStateUnknown() &&
+          !hasFailedToPopAWheelie &&
           _robot.CanPickUpObjectFromGround(*obj));
 }
 
@@ -135,7 +140,6 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
   //Disable on the back reaction
   SmartDisableReactionaryBehavior(BehaviorType::ReactToRobotOnBack);
   SmartDisableReactionaryBehavior(BehaviorType::ReactToPickup);
-
   StartActing(goPopAWheelie,
               [&,this](const ExternalInterface::RobotCompletedAction& msg) {
                 if(msg.result != ActionResult::SUCCESS){
@@ -145,11 +149,13 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
                 switch(msg.result)
                 {
                   case ActionResult::SUCCESS:
+                  {
                     StartActing(new TriggerAnimationAction(robot, AnimationTrigger::SuccessfulWheelie));
                     BehaviorObjectiveAchieved(BehaviorObjective::PoppedWheelie);
                     break;
-                    
+                  }
                   case ActionResult::FAILURE_RETRY:
+                  {
                     if(_numPopAWheelieActionRetries < kBPW_MaxRetries)
                     {
                       SetupRetryAction(robot, msg);
@@ -157,19 +163,28 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
                     }
                     
                     // else: too many retries, fall through to failure abort
-                    
+                  }
                   case ActionResult::FAILURE_ABORT:
+                  {
                     // assume that failure is because we didn't visually verify (although it could be due to an
                     // error)
                     PRINT_NAMED_INFO("BehaviorPopAWheelie.FailedAbort",
                                      "Failed to verify pop, searching for block");
-                    break;
                     
+                    // mark the block as inaccessible
+                    const ObservableObject* failedObject = failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlock);
+                    if(failedObject){
+                      robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::RollOrPopAWheelie);
+                    }
+                    break;
+                  }
                   default:
+                  {
                     // other failure, just end
                     PRINT_NAMED_INFO("BehaviorPopAWheelie.FailedPopAction",
                                      "action failed with %s, behavior ending",
                                      EnumToString(msg.result));
+                  }
                 } // switch(msg.result)
 
               });

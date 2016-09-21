@@ -23,6 +23,7 @@
 #include "json/json-forwards.h"
 #include <set>
 
+
 #include "clad/externalInterface/messageEngineToGameTag.h"
 #include "clad/externalInterface/messageGameToEngineTag.h"
 #include "clad/robotInterface/messageRobotToEngineTag.h"
@@ -68,7 +69,11 @@ template<typename TYPE> class AnkiEvent;
 class IBehavior
 {
 protected:
-    
+  // consts for failed to interact whiteboard
+  constexpr static const float kTimeObjectInvalidAfterFailure_sec = 30.f;
+  constexpr static const float kObjectInvalidAfterFailureRadius_mm = 60.f;
+  constexpr static const float kAngleToleranceAfterFailure_radians = M_PI;
+  
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
 
