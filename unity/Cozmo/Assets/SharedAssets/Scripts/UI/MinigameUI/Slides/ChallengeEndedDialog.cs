@@ -99,7 +99,7 @@ namespace Cozmo.UI {
                                                               _DifficultyUnlockContainer).GetComponent<ChallengeDetailsUnlock>();
 
       unlockCell.Text = (Localization.GetWithArgs(LocalizationKeys.kRewardDescriptionNewDifficulty,
-                                                     new object[] { _ChallengeConfig.DifficultyOptions[newLevel].DifficultyName, Localization.Get(_ChallengeConfig.ChallengeTitleLocKey) }));
+                                                     new object[] { _ChallengeConfig.DifficultyOptions[newLevel].DifficultyName }));
       unlockCell.UnlockGameContainerEnabled = true;
       unlockCell.UnlockSkillContainerEnabled = false;
     }
