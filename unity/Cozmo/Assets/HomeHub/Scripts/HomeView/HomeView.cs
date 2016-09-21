@@ -219,6 +219,7 @@ namespace Cozmo.HomeHub {
       playerInventory.ItemRemoved += HandleItemValueChanged;
       CheckIfUnlockablesAffordableAndUpdateBadge();
 
+      UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
       // If in SDK Mode, immediately open Settings and SDK view instead of PlayTab,
       // otherwise default to opening PlayTab
       if (DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) {
