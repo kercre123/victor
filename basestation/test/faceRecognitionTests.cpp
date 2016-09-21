@@ -66,10 +66,8 @@ static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& fac
     ASSERT_TRUE(RESULT_OK == lastResult);
   }
   
-# if SHOW_IMAGES
   Vision::ImageRGB dispImg(img);
-# endif
-  
+
   std::list<Vision::TrackedFace> faces;
   std::list<Vision::UpdatedFaceID> updatedIDs;
   lastResult = faceTracker.Update(img, faces, updatedIDs);
@@ -81,48 +79,37 @@ static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& fac
     Result changeResult = robot.GetFaceWorld().ChangeFaceID(updateID.oldID, updateID.newID);
     ASSERT_EQ(changeResult, RESULT_OK);
   }
-  
-  for(auto & face : faces) {
-    //PRINT_NAMED_INFO("FaceRecognition.PairwiseComparison.Recognize",
-    //                 "FaceTracker observed face ID %llu at t=%d",
-    //                 face.GetID(), img.GetTimestamp());
-    
-    // Do some bogus pose parent setting to keep face world from complaining
-    Pose3d headPose = face.GetHeadPose();
-    headPose.SetParent(robot.GetWorldOrigin());
-    face.SetHeadPose(headPose);
-    
-    lastResult = robot.GetFaceWorld().AddOrUpdateFace(face);
-    ASSERT_TRUE(RESULT_OK == lastResult);
-    
-#   if SHOW_IMAGES
-    const ColorRGBA& drawColor = ((shouldBeOwner && face.GetID()==1) || (!shouldBeOwner && face.GetID()!=1) ?
-                                  NamedColors::GREEN : NamedColors::RED);
-    dispImg.DrawRect(face.GetRect(), drawColor, 2);
-    Point2f leftEye, rightEye;
-    if(face.GetEyeCenters(leftEye, rightEye)) {
-      dispImg.DrawPoint(leftEye,  drawColor, 2);
-      dispImg.DrawPoint(rightEye, drawColor, 2);
+
+  if(SHOW_IMAGES)
+  {
+    for(auto & face : faces) {
+      //PRINT_NAMED_INFO("FaceRecognition.PairwiseComparison.Recognize",
+      //                 "FaceTracker observed face ID %llu at t=%d",
+      //                 face.GetID(), img.GetTimestamp());
+      
+      
+      const ColorRGBA& drawColor = ((shouldBeOwner && face.GetID()==1) || (!shouldBeOwner && face.GetID()!=1) ?
+                                    NamedColors::GREEN : NamedColors::RED);
+      dispImg.DrawRect(face.GetRect(), drawColor, 2);
+      Point2f leftEye, rightEye;
+      if(face.GetEyeCenters(leftEye, rightEye)) {
+        dispImg.DrawPoint(leftEye,  drawColor, 2);
+        dispImg.DrawPoint(rightEye, drawColor, 2);
+      }
+      
+      std::string label = face.GetName();
+      if(label.empty()) {
+        label = std::to_string(face.GetID());
+      }
+      if(face.IsBeingTracked()) {
+        label += "*";
+      }
+      dispImg.DrawText(face.GetRect().GetTopLeft(), label, drawColor, 1.25f);
     }
-    
-    std::string label = face.GetName();
-    if(label.empty()) {
-      label = std::to_string(face.GetID());
-    }
-    if(face.IsBeingTracked()) {
-      label += "*";
-    }
-    dispImg.DrawText(face.GetRect().GetTopLeft(), label, drawColor, 1.25f);
-#   endif
-  }
   
-# if SHOW_IMAGES
-  if(nullptr != dispName) {
-    dispImg.Display(dispName, 30);
-  }
-# endif
+  } // if(SHOW_IMAGES)
   
-  lastResult = robot.GetFaceWorld().Update();
+  lastResult = robot.GetFaceWorld().Update(faces);
   ASSERT_TRUE(RESULT_OK == lastResult);
 } // Recognize()
 

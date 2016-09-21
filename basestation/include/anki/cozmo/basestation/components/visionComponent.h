@@ -108,15 +108,14 @@ struct DockingErrorSignal;
                           const f32                    postOffsetY_mm = 0,
                           const f32                    postOffsetAngle_rad = 0);
     
-    // Queue an observed vision marker for processing with the robot's BlockWorld,
-    // if the robot wasn't moving too much while it was observed
-    Result QueueObservedMarker(const Vision::ObservedMarker& marker);
-    
     // Set whether or not markers queued while robot is "moving" (meaning it is
     // turning too fast or head is moving too fast) will be considered
     void   EnableVisionWhileMovingFast(bool enable);
     
-    Result UpdateAllResults(VisionProcessingResult& procResult_out);
+    // Looks through all results available from the VisionSystem and processes them.
+    // This updates the Robot's BlockWorld and FaceWorld using those results.
+    Result UpdateAllResults();
+    
     Result UpdateOverheadMap(const Vision::ImageRGB& image,
                              const VisionPoseData& poseData);
 
@@ -334,6 +333,8 @@ struct DockingErrorSignal;
     Result UpdateComputedCalibration(const VisionProcessingResult& result);
     
     Result UpdateImageQuality(const VisionProcessingResult& procResult);
+    
+    void VisualizeObservedMarkerIn3D(const Vision::ObservedMarker& marker) const;
     
     // Factory centroid finder: returns the centroids of the 4 factory test dots,
     // computes camera pose w.r.t. the target and broadcasts a RobotCompletedFactoryDotTest

@@ -152,7 +152,7 @@ public:
   Robot(const Robot&) = delete;
   Robot& operator=(const Robot&) = delete;
   
-  Result Update(bool ignoreVisionModes = false); // the parameter ignoreVisionModes is for unit testing
+  Result Update();
     
   Result UpdateFullRobotState(const RobotState& msg);
     
@@ -1070,8 +1070,8 @@ protected:
   std::unique_ptr<RobotIdleTimeoutComponent>  _robotIdleTimeoutComponent;
 
   Result SendAbsLocalizationUpdate(const Pose3d&        pose,
-                                     const TimeStamp_t&   t,
-                                     const PoseFrameID_t& frameId) const;
+                                   const TimeStamp_t&   t,
+                                   const PoseFrameID_t& frameId) const;
 
   Result ClearPath();
 

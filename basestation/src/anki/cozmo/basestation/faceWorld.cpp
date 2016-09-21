@@ -178,8 +178,18 @@ namespace Cozmo {
 
     // Head pose is stored w.r.t. historical world origin, but needs its parent
     // set up to be the robot's world origin here:
-    Pose3d headPose = face.GetHeadPose();
-    headPose.SetParent(_robot.GetWorldOrigin());
+    Pose3d headPose;
+    const bool success = face.GetHeadPose().GetWithRespectTo(*_robot.GetWorldOrigin(), headPose);
+    if(!success)
+    {
+      PRINT_NAMED_INFO("FaceWorld.AddOrUpdateFace.MismatchedOrigins",
+                       "Receveid observation of face %d from different origin (%s) than robot (%s). Ignoring",
+                       face.GetID(), face.GetHeadPose().FindOrigin().GetName().c_str(),
+                       _robot.GetWorldOrigin()->GetName().c_str());
+      
+      return RESULT_FAIL_ORIGIN_MISMATCH;
+    }
+    
     face.SetHeadPose(headPose);
 
     /*
@@ -425,9 +435,19 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  Result FaceWorld::Update()
+  Result FaceWorld::Update(std::list<Vision::TrackedFace>& observedFaces)
   {
     ANKI_CPU_PROFILE("FaceWorld::Update");
+    
+    for(auto & obsFace : observedFaces)
+    {
+      Result result = AddOrUpdateFace(obsFace);
+      if(RESULT_OK != result)
+      {
+        PRINT_NAMED_WARNING("FaceWorld.Update.AddOrUpdateFaceFailed",
+                            "ObservedFace ID=%d", obsFace.GetID());
+      }
+    }
     
     const TimeStamp_t lastProcImageTime = _robot.GetVisionComponent().GetLastProcessedImageTimeStamp();
     

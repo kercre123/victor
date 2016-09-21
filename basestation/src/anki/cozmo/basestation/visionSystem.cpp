@@ -3057,6 +3057,11 @@ namespace Cozmo {
     // We've computed everything from this image that we're gonna compute.
     // Push it onto the queue of results all together.
     _mutex.lock();
+    PRINT_CH_DEBUG("VisionSystem", "VisionSystem.Update.QueueResult",
+                   "t=%u with %zu markers and %zu faces",
+                   _currentResult.timestamp,
+                   _currentResult.observedMarkers.size(),
+                   _currentResult.faces.size());
     _results.push(_currentResult);
     _mutex.unlock();
     

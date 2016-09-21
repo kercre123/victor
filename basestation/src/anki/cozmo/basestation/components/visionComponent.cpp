@@ -63,6 +63,11 @@ namespace Cozmo {
   // (in order to provide a little breathing room for main thread)
   CONSOLE_VAR_RANGED(u8, kVision_MinSleepTime_ms, "Vision.General", 2, 1, 10);
   
+  // Set to a value greater than 0 to randomly drop that fraction of frames, for testing
+  CONSOLE_VAR_RANGED(f32, kSimulateDroppedFrameFraction, "Vision.General", 0.f, 0.f, 1.f); // DO NOT COMMIT > 0!
+  
+  CONSOLE_VAR(bool, kVisualizeObservedMarkersIn3D, "Vision.General", false);
+  
   namespace JsonKey
   {
     const char * const ImageQualityGroup = "ImageQuality";
@@ -550,7 +555,8 @@ namespace Cozmo {
             ANKI_CPU_PROFILE("VC::SetNextImage.LockedSwap");
             Lock();
 
-            const bool isDroppingFrame = !_nextImg.IsEmpty();
+            const bool isDroppingFrame = !_nextImg.IsEmpty() || (kSimulateDroppedFrameFraction > 0.f &&
+                                                                 _robot.GetContext()->GetRandom()->RandDbl() < kSimulateDroppedFrameFraction);
             if(isDroppingFrame)
             {
               PRINT_CH_INFO("VisionComponent",
@@ -750,152 +756,55 @@ namespace Cozmo {
   } // Processor()
   
   
-  Result VisionComponent::QueueObservedMarker(const Vision::ObservedMarker& markerOrig)
+  void VisionComponent::VisualizeObservedMarkerIn3D(const Vision::ObservedMarker& marker) const
   {
-    Result lastResult = RESULT_OK;
+    // Note that this incurs extra computation to compute the 3D pose of
+    // each observed marker so that we can draw in the 3D world, but this is
+    // purely for debug / visualization
+    u32 quadID = 0;
     
-    // Get historical robot pose at specified timestamp to get
-    // head angle and to attach as parent of the camera pose.
-    TimeStamp_t t;
-    RobotPoseStamp* p = nullptr;
-    HistPoseKey poseKey;
-
-    lastResult = _robot.GetPoseHistory()->ComputeAndInsertPoseAt(markerOrig.GetTimeStamp(), t, &p, &poseKey, true);
-
-    if(RESULT_FAIL_ORIGIN_MISMATCH == lastResult)
+    // Block Markers
+    BlockWorldFilter filter;
+    filter.SetAllowedFamilies(std::set<ObjectFamily>{
+      ObjectFamily::Block, ObjectFamily::Mat, ObjectFamily::LightCube, ObjectFamily::Charger
+    });
+    
+    filter.AddFilterFcn([&marker,&quadID,this](const ObservableObject* object)
     {
-      // Not finding pose information due to an origin mismatch is a normal thing
-      // if we just delocalized, so just report everything's cool
-      return RESULT_OK;
-    }
-    else if(RESULT_OK != lastResult)
-    {
-      // this can happen if we missed a robot status update message
-      PRINT_CH_INFO("VisionComponent", "VisionComponent.QueueObservedMarker.HistoricalPoseNotFound",
-                    "Time: %u, hist: %u to %u",
-                    markerOrig.GetTimeStamp(),
-                    _robot.GetPoseHistory()->GetOldestTimeStamp(),
-                    _robot.GetPoseHistory()->GetNewestTimeStamp());
-      return RESULT_OK;
-    }
-    
-    if(&p->GetPose().FindOrigin() != _robot.GetWorldOrigin()) {
-      PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker.OldOrigin",
-                          "Ignoring observed marker from origin %s (robot origin is %s)",
-                          p->GetPose().FindOrigin().GetName().c_str(),
-                          _robot.GetWorldOrigin()->GetName().c_str());
-      return RESULT_OK;
-    }
-    
-    // If we get here, ComputeAndInsertPoseIntoHistory() should have succeeded
-    // and this should be true
-    assert(markerOrig.GetTimeStamp() == t);
-    
-    // If we were moving too fast at timestamp t and we aren't doing rolling shutter correction
-    // then don't queue this marker otherwise don't queue if only the head was moving too fast
-    if(WasMovingTooFast(t, DEG_TO_RAD_F32(kBodyTurnSpeedThreshBlock_degs), DEG_TO_RAD_F32(kHeadTurnSpeedThreshBlock_degs)))
-    {
-      return RESULT_OK;
-    }
-    
-    // Update the marker's camera to use a pose from pose history, and
-    // create a new marker with the updated camera
-    assert(nullptr != p);
-    Vision::ObservedMarker marker(markerOrig.GetTimeStamp(), markerOrig.GetCode(),
-                                  markerOrig.GetImageCorners(),
-                                  _robot.GetHistoricalCamera(*p, markerOrig.GetTimeStamp()),
-                                  markerOrig.GetUserHandle());
-    
-    // Queue the marker for processing by the blockWorld
-    _robot.GetBlockWorld().QueueObservedMarker(poseKey, marker);
-    
-    /*
-    // React to the marker if there is a callback for it
-    auto reactionIter = _reactionCallbacks.find(marker.GetCode());
-    if(reactionIter != _reactionCallbacks.end()) {
-      // Run each reaction for this code, in order:
-      for(auto & reactionCallback : reactionIter->second) {
-        lastResult = reactionCallback(this, &marker);
-        if(lastResult != RESULT_OK) {
-          PRINT_NAMED_WARNING("Robot.Update.ReactionCallbackFailed",
-                              "Reaction callback failed for robot %d observing marker with code %d.\n",
-                              robot.GetID(), marker.GetCode());
-        }
-      }
-    }
-     */
-    
-    // Visualize the marker in 3D
-    if(ANKI_DEVELOPER_CODE)
-    {
-      // Note that this incurs extra computation to compute the 3D pose of
-      // each observed marker so that we can draw in the 3D world, but this is
-      // purely for debug / visualization
-      u32 quadID = 0;
-      
       // When requesting the markers' 3D corners below, we want them
       // not to be relative to the object the marker is part of, so we
       // will request them at a "canonical" pose (no rotation/translation)
       const Pose3d canonicalPose;
       
-      
-      // Block Markers
-      std::set<const ObservableObject*> const& blocks = _robot.GetBlockWorld().GetObjectLibrary(ObjectFamily::Block).GetObjectsWithMarker(marker);
-      for(auto block : blocks) {
-        std::vector<Vision::KnownMarker*> const& blockMarkers = block->GetMarkersWithCode(marker.GetCode());
-        
-        for(auto blockMarker : blockMarkers) {
-          
-          Pose3d markerPose;
-          Result poseResult = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
-                                                                   blockMarker->Get3dCorners(canonicalPose),
-                                                                   markerPose);
-          if(poseResult != RESULT_OK) {
-            PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker",
-                                "Could not estimate pose of block marker. Not visualizing.");
+      const auto markersWithCode = object->GetMarkersWithCode(marker.GetCode());
+      for(auto& blockMarker : markersWithCode)
+      {
+        Pose3d markerPose;
+        Result poseResult = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
+                                                                 blockMarker->Get3dCorners(canonicalPose),
+                                                                 markerPose);
+        if(poseResult != RESULT_OK) {
+          PRINT_NAMED_WARNING("VisionComponent.VisualizeObservedMarkerIn3D.BadPose",
+                              "Could not estimate pose of marker. Not visualizing.");
+        } else {
+          if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
+            _robot.GetContext()->GetVizManager()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
           } else {
-            if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
-              _robot.GetContext()->GetVizManager()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
-            } else {
-              PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
-                                  "Cannot visualize a Block marker whose pose origin is not the camera's origin that saw it.");
-            }
+            PRINT_NAMED_WARNING("VisionComponent.VisualizeObservedMarkerIn3D.MarkerOriginNotCameraOrigin",
+                                "Cannot visualize a marker whose pose origin is not the camera's origin that saw it.");
           }
         }
       }
       
-      
-      // Mat Markers
-      std::set<const ObservableObject*> const& mats = _robot.GetBlockWorld().GetObjectLibrary(ObjectFamily::Mat).GetObjectsWithMarker(marker);
-      for(auto mat : mats) {
-        std::vector<Vision::KnownMarker*> const& matMarkers = mat->GetMarkersWithCode(marker.GetCode());
-        
-        for(auto matMarker : matMarkers) {
-          Pose3d markerPose;
-          Result poseResult = marker.GetSeenBy().ComputeObjectPose(marker.GetImageCorners(),
-                                                                   matMarker->Get3dCorners(canonicalPose),
-                                                                   markerPose);
-          if(poseResult != RESULT_OK) {
-            PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker",
-                                "Could not estimate pose of mat marker. Not visualizing.");
-          } else {
-            if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
-              _robot.GetContext()->GetVizManager()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), NamedColors::RED);
-            } else {
-              PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
-                                  "Cannot visualize a Mat marker whose pose origin is not the camera's origin that saw it.");
-            }
-          }
-        }
-      }
-      
-    } // 3D marker visualization
+      return true;
+    });
     
-    return lastResult;
+    _robot.GetBlockWorld().FindMatchingObject(filter);
     
-  } // QueueObservedMarker()
+  } // VisualizeObservedMarkerIn3D()
   
-  Result VisionComponent::UpdateAllResults(VisionProcessingResult& procResult_out)
+  
+  Result VisionComponent::UpdateAllResults()
   {
     ANKI_CPU_PROFILE("VC::UpdateAllResults");
     
@@ -924,7 +833,12 @@ namespace Cozmo {
           }
         };
         
+        // NOTE: UpdateVisionMarkers will also update BlockWorld (which broadcasts
+        //  object observations and should be done before sending RobotProcessedImage below!)
         tryAndReport(&VisionComponent::UpdateVisionMarkers,       VisionMode::DetectingMarkers);
+        
+        // NOTE: UpdateFaces will also update FaceWorld (which broadcasts face observations
+        //  and should be done before sending RobotProcessedImage below!)
         tryAndReport(&VisionComponent::UpdateFaces,               VisionMode::DetectingFaces);
         
         // Note: tracking mode has two associated update calls:
@@ -960,8 +874,6 @@ namespace Cozmo {
           }
         }
         
-        procResult_out = result;
-        
         // Send the processed image message last
         _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotProcessedImage(result.timestamp, std::move(visionModesList))));
       }
@@ -979,32 +891,115 @@ namespace Cozmo {
   {
     Result lastResult = RESULT_OK;
     
-    for(auto & visionMarker : procResult.observedMarkers)
+    
+    std::list<Vision::ObservedMarker> observedMarkers;
+    
+    if(!procResult.observedMarkers.empty())
     {
-      lastResult = QueueObservedMarker(visionMarker);
-      if(lastResult != RESULT_OK) {
-        PRINT_NAMED_WARNING("VisionComponent.Update.FailedToQueueVisionMarker",
-                            "Got VisionMarker message from vision processing thread but failed to queue it.");
-        return lastResult;
-      }
+      // Get historical robot pose at this processing result's timestamp to get
+      // head angle and to attach as parent of the camera pose.
+      TimeStamp_t t;
+      RobotPoseStamp* p = nullptr;
+      HistPoseKey poseKey;
       
-      const Quad2f& corners = visionMarker.GetImageCorners();
-      const ColorRGBA& drawColor = (visionMarker.GetCode() == Vision::MARKER_UNKNOWN ?
-                                    NamedColors::BLUE : NamedColors::RED);
-      _vizManager->DrawCameraQuad(corners, drawColor, NamedColors::GREEN);
+      lastResult = _robot.GetPoseHistory()->ComputeAndInsertPoseAt(procResult.timestamp, t, &p, &poseKey, true);
       
-      const bool drawMarkerNames = false;
-      if(drawMarkerNames)
+      if(RESULT_FAIL_ORIGIN_MISMATCH == lastResult)
       {
-        Rectangle<f32> boundingRect(corners);
-        std::string markerName(visionMarker.GetCodeName());
-        _vizManager->DrawCameraText(boundingRect.GetTopLeft(),
-                                    markerName.substr(strlen("MARKER_"),std::string::npos),
-                                    drawColor);
+        // Not finding pose information due to an origin mismatch is a normal thing
+        // if we just delocalized, so just report everything's cool
+        return RESULT_OK;
       }
-    }
+      else if(RESULT_OK != lastResult)
+      {
+        // this can happen if we missed a robot status update message
+        PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateVisionMarkers.HistoricalPoseNotFound",
+                      "Time: %u, hist: %u to %u",
+                      procResult.timestamp,
+                      _robot.GetPoseHistory()->GetOldestTimeStamp(),
+                      _robot.GetPoseHistory()->GetNewestTimeStamp());
+        return RESULT_OK;
+      }
+      
+      if(&p->GetPose().FindOrigin() != _robot.GetWorldOrigin()) {
+        PRINT_NAMED_WARNING("VisionComponent.UpdateVisionMarkers.OldOrigin",
+                            "Ignoring observed marker from origin %s (robot origin is %s)",
+                            p->GetPose().FindOrigin().GetName().c_str(),
+                            _robot.GetWorldOrigin()->GetName().c_str());
+        return RESULT_OK;
+      }
+      
+      // If we get here, ComputeAndInsertPoseIntoHistory() should have succeeded
+      // and this should be true
+      assert(procResult.timestamp == t);
+      
+      // If we were moving too fast at timestamp t and we aren't doing rolling shutter correction
+      // then don't queue this marker otherwise don't queue if only the head was moving too fast
+      if(WasMovingTooFast(t, DEG_TO_RAD_F32(kBodyTurnSpeedThreshBlock_degs), DEG_TO_RAD_F32(kHeadTurnSpeedThreshBlock_degs)))
+      {
+        return RESULT_OK;
+      }
+      
+      Vision::Camera histCamera = _robot.GetHistoricalCamera(*p, procResult.timestamp);
+      
+      // Note: we deliberately make a copy of the vision markers in observedMarkers
+      // as we loop over them here, because procResult is const but we want to modify
+      // each marker to hook up its camera to pose history
+      for(auto visionMarker : procResult.observedMarkers)
+      {
+        if(visionMarker.GetTimeStamp() != procResult.timestamp)
+        {
+          PRINT_NAMED_ERROR("VisionComponent.UpdateVisionMarkers.MismatchedTimestamps",
+                            "Marker t=%u vs. ProcResult t=%u",
+                            visionMarker.GetTimeStamp(), procResult.timestamp);
+          continue;
+        }
+        
+        // Remove observed markers whose historical poses have become invalid.
+        // This shouldn't happen! If it does, robotStateMsgs may be buffering up somewhere.
+        // Increasing history time window would fix this, but it's not really a solution.
+        if ((visionMarker.GetSeenBy().GetID() == GetCamera().GetID()) && !_robot.IsValidPoseKey(poseKey))
+        {
+          PRINT_NAMED_WARNING("VisionComponent.Update.InvalidHistPoseKey", "key=%d", poseKey);
+          continue;
+        }
+        
+        // Update the marker's camera to use a pose from pose history, and
+        // create a new marker with the updated camera
+        visionMarker.SetSeenBy(histCamera);
+        
+        const Quad2f& corners = visionMarker.GetImageCorners();
+        const ColorRGBA& drawColor = (visionMarker.GetCode() == Vision::MARKER_UNKNOWN ?
+                                      NamedColors::BLUE : NamedColors::RED);
+        _vizManager->DrawCameraQuad(corners, drawColor, NamedColors::GREEN);
+        
+        const bool drawMarkerNames = false;
+        if(drawMarkerNames)
+        {
+          Rectangle<f32> boundingRect(corners);
+          std::string markerName(visionMarker.GetCodeName());
+          _vizManager->DrawCameraText(boundingRect.GetTopLeft(),
+                                      markerName.substr(strlen("MARKER_"),std::string::npos),
+                                      drawColor);
+        }
+        
+        if(kVisualizeObservedMarkersIn3D)
+        {
+          VisualizeObservedMarkerIn3D(visionMarker);
+        }
+        
+        observedMarkers.push_back(std::move(visionMarker));
+      }
+    } // if(!procResult.observedMarkers.empty())
 
+    lastResult = _robot.GetBlockWorld().Update(observedMarkers);
+    if(RESULT_OK != lastResult)
+    {
+      PRINT_NAMED_WARNING("VisionComponent.UpdateVisionResults.BlockWorldUpdateFailed", "");
+    }
+    
     return lastResult;
+    
   } // UpdateVisionMarkers()
   
   Result VisionComponent::UpdateFaces(const VisionProcessingResult& procResult)
@@ -1015,8 +1010,10 @@ namespace Cozmo {
     {
       _robot.GetFaceWorld().ChangeFaceID(updatedID.oldID, updatedID.newID);
     }
-
-    for(auto faceDetection : procResult.faces)
+    
+    std::list<Vision::TrackedFace> facesToUpdate;
+    
+    for(auto & faceDetection : procResult.faces)
     {
       /*
        PRINT_NAMED_INFO("VisionComponent.Update",
@@ -1044,25 +1041,6 @@ namespace Cozmo {
         _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(enrollCountMsg)));
       }
       
-      // Get historical robot pose at specified timestamp to get
-      // head angle and to attach as parent of the camera pose.
-      TimeStamp_t t;
-      RobotPoseStamp* p = nullptr;
-      HistPoseKey poseKey;
-      
-      lastResult = _robot.GetPoseHistory()->ComputeAndInsertPoseAt(faceDetection.GetTimeStamp(), t, &p, &poseKey, true);
-      if(RESULT_FAIL_ORIGIN_MISMATCH == lastResult)
-      {
-        // This failure can easily happen and not indicate a problem, so just report
-        // everything is ok to the caller but don't continue
-        PRINT_NAMED_DEBUG("VisionComponent.UpdateFaces.SkippingDueToMismatchedOrigins", "");
-        return RESULT_OK;
-      }
-      else if(lastResult != RESULT_OK)
-      {
-        return lastResult;
-      }
-      
       // If we were moving too fast at the timestamp the face was detected then don't update it
       // If the detected face is being tracked than we should look farther back in imu data history
       // else we will just look at the previous and next imu data
@@ -1071,17 +1049,17 @@ namespace Cozmo {
                           DEG_TO_RAD_F32(kHeadTurnSpeedThreshFace_degs),
                           (faceDetection.IsBeingTracked() ? kNumImuDataToLookBack : 0)))
       {
-        return RESULT_OK;
+        // Skip this face
+        continue;
       }
       
-      // Use the faceDetection to update FaceWorld:
-      lastResult = _robot.GetFaceWorld().AddOrUpdateFace(faceDetection);
-      if(lastResult != RESULT_OK) {
-        PRINT_NAMED_ERROR("VisionComponent.UpdateFaces.FailedToUpdateFace",
-                          "Got FaceDetection from vision processing but failed to update it.");
-        return lastResult;
-      }
-      
+      facesToUpdate.emplace_back(faceDetection);
+    }
+    
+    lastResult = _robot.GetFaceWorld().Update(facesToUpdate);
+    if(RESULT_OK != lastResult)
+    {
+      PRINT_NAMED_WARNING("VisionComponent.UpdateFaces.FaceWorldUpdateFailed", "");
     }
     
     return lastResult;

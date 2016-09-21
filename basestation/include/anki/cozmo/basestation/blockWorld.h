@@ -59,13 +59,8 @@ namespace Anki
       
       // Update the BlockWorld's state by processing all queued ObservedMarkers
       // and updating robots' poses and blocks' poses from them.
-      Result Update();
+      Result Update(std::list<Vision::ObservedMarker>& observedMarkers);
       
-      // Empties the queue of all observed markers
-      void ClearAllObservedMarkers();
-      
-      Result QueueObservedMarker(HistPoseKey& poseKey, Vision::ObservedMarker& marker);
-
       // Adds a proximity obstacle (like random objects detected in front of the robot with the IR sensor) at the given pose.
       Result AddProxObstacle(const Pose3d& p);
       
@@ -336,11 +331,6 @@ namespace Anki
       // Visualization
       //
 
-      void EnableDraw(bool on);
-
-      // Visualize markers in image display
-      void DrawObsMarkers() const;
-      
       // Call every existing object's Visualize() method and call the
       // VisualizePreActionPoses() on the currently-selected ActionableObject.
       void DrawAllObjects() const;
@@ -360,12 +350,6 @@ namespace Anki
       using ObjectsMapByType_t   = std::map<ObjectType, ObjectsMapByID_t >;
       using ObjectsMapByFamily_t = std::map<ObjectFamily, ObjectsMapByType_t>;
       
-      // Typedefs / Aliases
-      //using ObsMarkerContainer_t = std::multiset<Vision::ObservedMarker, Vision::ObservedMarker::Sorter()>;
-      //using ObsMarkerList_t = std::list<Vision::ObservedMarker>;
-      using PoseKeyObsMarkerMap_t = std::multimap<HistPoseKey, Vision::ObservedMarker>;
-      using ObsMarkerListMap_t = std::map<TimeStamp_t, PoseKeyObsMarkerMap_t>;
-      
       //
       // Member Methods
       //
@@ -374,9 +358,9 @@ namespace Anki
       ObservableObject* GetObjectByIdHelper(const ObjectID& objectID, ObjectFamily inFamily) const;
       ActiveObject* GetActiveObjectByIdHelper(const ObjectID& objectID, ObjectFamily inFamily) const;
       
-      bool UpdateRobotPose(PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
+      bool UpdateRobotPose(std::list<Vision::ObservedMarker>& obsMarkers, const TimeStamp_t atTimestamp);
       
-      Result UpdateObjectPoses(PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp,
+      Result UpdateObjectPoses(std::list<Vision::ObservedMarker>& obsMarkers,
                                const ObjectFamily& inFamily,
                                const TimeStamp_t atTimestamp);
       
@@ -404,7 +388,7 @@ namespace Anki
                                   std::vector<ObservableObject*>& overlappingSeenObjects) const;
       
       // Helper for removing markers that are inside other detected markers
-      static void RemoveMarkersWithinMarkers(PoseKeyObsMarkerMap_t& currentObsMarkers);
+      static void RemoveMarkersWithinMarkers(std::list<Vision::ObservedMarker>& currentObsMarkers);
       
       // 1. Looks for objects that should have been seen (markers should have been visible
       //    but something was seen through/behind their last known location) and delete
@@ -434,17 +418,12 @@ namespace Anki
       
       
       // Remove all posekey-marker pairs from the map if marker is marked used
-      void RemoveUsedMarkers(PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap);
+      void RemoveUsedMarkers(std::list<Vision::ObservedMarker>& poseKeyObsMarkerMap);
 
       // adds a markerless object at the given pose
       Result AddMarkerlessObject(const Pose3d& pose, ObjectType type);
       
       ObjectID CreateFixedCustomObject(const Pose3d& p, const f32 xSize_mm, const f32 ySize_mm, const f32 zSize_mm);
-      
-      // Generates a list of ObservedMarker pointers that reference the actual ObservedMarkers
-      // stored in poseKeyObsMarkerMap
-      void GetObsMarkerList(const PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap,
-                            std::list<Vision::ObservedMarker*>& lst);
       
       void ClearObjectHelper(ObservableObject* object);
       
@@ -510,7 +489,6 @@ namespace Anki
       
       Robot*             _robot;
       
-      ObsMarkerListMap_t _obsMarkers;
       f32 _lastPlayAreaSizeEventSec;
       const f32 _playAreaSizeEventIntervalSec;
       
@@ -558,9 +536,6 @@ namespace Anki
       using ObjectIdToPosesPerOrigin = std::map<int, OriginToPoseInMapInfo>;
       ObjectIdToPosesPerOrigin _navMapReportedPoses;
       Pose3d _navMapReportedRobotPose;
-      
-      // For allowing the calling of VizManager draw functions
-      bool _enableDraw;
       
       std::set<ObjectID> _unidentifiedActiveObjects;
       

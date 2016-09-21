@@ -135,25 +135,28 @@ TEST(BlockWorld, AddAndRemoveObject)
   corners[Quad::BottomLeft] = {xcen - markerHalfSize, ycen + markerHalfSize};
   corners[Quad::TopRight]   = {xcen + markerHalfSize, ycen - markerHalfSize};
   corners[Quad::BottomRight]= {xcen + markerHalfSize, ycen + markerHalfSize};
-  Vision::ObservedMarker marker(1, testCode, corners, robot.GetVisionComponent().GetCamera());
+  TimeStamp_t fakeTime = 1;
+  Vision::ObservedMarker marker(fakeTime, testCode, corners, robot.GetVisionComponent().GetCamera());
   
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
   robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
   
-  lastResult = robot.GetVisionComponent().QueueObservedMarker(marker);
-  ASSERT_EQ(lastResult, RESULT_OK);
+  // Queue the marker in VisionComponent, which will in turn queue it for processing
+  // by BlockWorld
   
-  // Tick the robot, which will tick the BlockWorld, which will use the queued marker
-  lastResult = robot.Update(true);
+  // Tick BlockWorld, which will use the queued marker
+  std::list<Vision::ObservedMarker> markers{marker};
+  lastResult = robot.GetBlockWorld().Update(markers);
   ASSERT_EQ(lastResult, RESULT_OK);
+  ASSERT_EQ(0, markers.size()); // all markers will get used up
   
   // There should now be an object of the right type, with the right ID in BlockWorld
   objects.clear();
   filter.SetFilterFcn(nullptr);
   filter.SetAllowedTypes({testType});
   blockWorld.FindMatchingObjects(filter, objects);
-  ASSERT_EQ(objects.size(), 1);
+  ASSERT_EQ(1, objects.size());
   auto objByIdIter = objects.begin();
   ASSERT_NE(objByIdIter, objects.end());
   ASSERT_NE(*objByIdIter, nullptr);
@@ -173,14 +176,12 @@ TEST(BlockWorld, AddAndRemoveObject)
   
   // After seeing three times, should be Known
   const s32 kNumObservations = 3;
-  TimeStamp_t fakeTime = 1;
   for(s32 i=0; i<kNumObservations; ++i, fakeTime+=10)
   {
-    lastResult = robot.GetVisionComponent().QueueObservedMarker(marker);
-    ASSERT_EQ(lastResult, RESULT_OK);
-    
     // Tick the robot, which will tick the BlockWorld, which will use the queued marker
-    lastResult = robot.Update(true);
+    Vision::ObservedMarker marker(fakeTime, testCode, corners, robot.GetVisionComponent().GetCamera());
+    std::list<Vision::ObservedMarker> markers{marker};
+    lastResult = robot.GetBlockWorld().Update(markers);
     ASSERT_EQ(lastResult, RESULT_OK);
   }
   
@@ -204,10 +205,11 @@ TEST(BlockWorld, AddAndRemoveObject)
 
   // After NOT seeing the object three times, it should still be known
   // because we don't yet have evidence that actually isn't there
+  std::list<Vision::ObservedMarker> emptyMarkersList;
   for(s32 i=0; i<kNumObservations; ++i, fakeTime+=10)
   {
     robot.GetVisionComponent().FakeImageProcessed(fakeTime);
-    lastResult = robot.Update(true);
+    lastResult = robot.GetBlockWorld().Update(emptyMarkersList);
     ASSERT_EQ(lastResult, RESULT_OK);
   }
   
@@ -222,7 +224,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   for(s32 i=0; i<kNumObservations; ++i, fakeTime+=10)
   {
     robot.GetVisionComponent().FakeImageProcessed(fakeTime);
-    lastResult = robot.Update(true);
+    lastResult = robot.GetBlockWorld().Update(emptyMarkersList);
     ASSERT_EQ(lastResult, RESULT_OK);
   }
   
@@ -231,15 +233,13 @@ TEST(BlockWorld, AddAndRemoveObject)
   // See the object again, but from "far" away, which after a few ticks should make it
   // Dirty again.
   corners.Scale(0.15f);
-  Vision::ObservedMarker markerFar(1, testCode, corners, robot.GetVisionComponent().GetCamera());
   
   for(s32 i=0; i<kNumObservations; ++i, fakeTime+=10)
   {
-    lastResult = robot.GetVisionComponent().QueueObservedMarker(markerFar);
-    ASSERT_EQ(lastResult, RESULT_OK);
-    
     // Tick the robot, which will tick the BlockWorld, which will use the queued marker
-    lastResult = robot.Update(true);
+    Vision::ObservedMarker markerFar(fakeTime, testCode, corners, robot.GetVisionComponent().GetCamera());
+    std::list<Vision::ObservedMarker> markersFar{markerFar};
+    lastResult = robot.GetBlockWorld().Update(markersFar);
     ASSERT_EQ(lastResult, RESULT_OK);
   }
   
@@ -606,8 +606,9 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
     
     // Process all the markers we've queued
     //uint32_t numObjectsObserved = 0;
-    //blockWorld.Update(numObjectsObserved);
-    robot.Update(true);
+    std::list<Vision::ObservedMarker> emptyMarkersList;
+    Result result = robot.GetBlockWorld().Update(emptyMarkersList);
+    ASSERT_EQ(RESULT_OK, result);
     
     if(checkRobotPose) {
       // TODO: loop over all robots

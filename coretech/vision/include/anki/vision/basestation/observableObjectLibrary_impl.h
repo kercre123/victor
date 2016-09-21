@@ -81,22 +81,22 @@ namespace Vision {
   }
   
   template<class ObsObjectType>
-  Result ObservableObjectLibrary<ObsObjectType>::CreateObjectsFromMarkers(const std::list<ObservedMarker*>& markers,
+  Result ObservableObjectLibrary<ObsObjectType>::CreateObjectsFromMarkers(std::list<ObservedMarker>& markers,
                                                                           std::multimap<f32, ObsObjectType*>& objectsSeen,
                                                                           const CameraID_t seenOnlyBy) const
   {
     std::map<const ObsObjectType*, std::vector<const ObservedMarker*>> markersByLibObject;
     
-    for(auto marker : markers) {
+    for(auto &marker : markers) {
       
-      marker->MarkUsed(false);
+      marker.MarkUsed(false);
       
       // If seenOnlyBy was specified, make sure this marker was seen by that
       // camera
-      if(seenOnlyBy == ANY_CAMERA || marker->GetSeenBy().GetID() == seenOnlyBy)
+      if(seenOnlyBy == ANY_CAMERA || marker.GetSeenBy().GetID() == seenOnlyBy)
       {
         // Find all objects which use this marker...
-        std::set<const ObsObjectType*> const& objectsWithMarker = GetObjectsWithMarker(*marker);
+        std::set<const ObsObjectType*> const& objectsWithMarker = GetObjectsWithMarker(marker);
         
         // ...if there are any, add this marker to the list of observed markers
         // that corresponds to this object type.
@@ -105,12 +105,12 @@ namespace Vision {
             PRINT_NAMED_ERROR("ObservableObjectLibrary.CreateObjectFromMarkers.MultipleLibObjectsWithMarker",
                               "Having multiple objects in the library with the "
                               "same marker ('%s') is not supported.",
-                              marker->GetCodeName());
+                              marker.GetCodeName());
             return RESULT_FAIL;
           }
-          markersByLibObject[*objectsWithMarker.begin()].push_back(marker);
+          markersByLibObject[*objectsWithMarker.begin()].push_back(&marker);
           
-          marker->MarkUsed(true);
+          marker.MarkUsed(true);
         } // IF objectsWithMarker != NULL
       } // IF seenOnlyBy
       
