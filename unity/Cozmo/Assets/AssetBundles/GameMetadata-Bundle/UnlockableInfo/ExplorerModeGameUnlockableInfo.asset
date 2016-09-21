@@ -23,8 +23,9 @@ MonoBehaviour:
   _HideInUI: 0
   DescriptionKey: unlockable.DroneMode.Description
   TitleKey: unlockable.DroneMode.Title
+  SparkButtonDescription: 
   UpgradeCostItemId: TestHexItem0
-  UpgradeCostAmountNeeded: 8
+  UpgradeCostAmountNeeded: 6
   RequestTrickCostItemId: treat
   RequestTrickCostAmountCurve:
     serializedVersion: 2

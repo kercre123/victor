@@ -24,7 +24,7 @@ MonoBehaviour:
     _ItemId: genericHex
     _LocKey: item.genericHex
     _ItemIcon: {fileID: 21300000, guid: 28565cca262e9481280b50c6ba7e3892, type: 3}
-    _StartingAmount: 8
+    _StartingAmount: 10
   _GenericCubeItemData:
     _ItemId: genericCube
     _LocKey: item.cube
