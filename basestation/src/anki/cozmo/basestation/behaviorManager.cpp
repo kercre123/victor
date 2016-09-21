@@ -594,6 +594,10 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
   }
   
   _behaviorToResume = nullptr;
+  
+  // ensure spraks are re-set when the chooser changes
+  _activeSpark = UnlockId::Count;
+  _lastRequestedSpark = UnlockId::Count;
 
   // channeled log and event
   PRINT_NAMED_EVENT("BehaviorManager.SetBehaviorChooser",
