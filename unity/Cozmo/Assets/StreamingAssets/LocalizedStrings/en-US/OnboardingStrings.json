@@ -37,19 +37,19 @@
     "translation": "You're connected to your Cozmo, and he's almost ready!\nHe just needs a moment to charge."
   },
   "onboarding.CozmoNeedsCharge.message2": {
-    "translation": "Your device should remember Cozmo's wifi,\nso connecting will be easy next time."
+    "translation": "Once he's done charging, let Cozmo come to life\nand learn about his new home."
   },
   "onboarding.CozmoNeedsCharge.message3": {
-    "translation": "Cozmo loves to explore the world,\ninteract with Cubes, and just hang out!"
+    "translation": "Cozmo comes with Upgrades that you can unlock.\nEach one gives him a new ability that he'll do on his own."
   },
   "onboarding.CozmoNeedsCharge.message4": {
-    "translation": "Cozmo will need a moment to learn about his new home\nand come to life slowly."
+    "translation": "You can pick up Cozmo if you need to,\nbut he's happiest when he can drive on his own."
   },
   "onboarding.CozmoNeedsCharge.message5": {
-    "translation": "The Cozmo App has important information on how to\nhave the most fun. First, we'll help you learn the basics."
+    "translation": "When you're not playing games with Cozmo,\nit's great to sit back and watch him explore the world."
   },
   "onboarding.CozmoNeedsCharge.finalMessage": {
-    "translation": "Cozmo is ready to play. To make sure he has a full battery, you can keep him on the charger a bit longer."
+    "translation": "Cozmo is ready to play. To completely charge his battery,\nyou can keep him on the charger for another 7 minutes."
   },
   "onboarding.Slide0": {
     "translation": "Create a <b>great</b> play space "
