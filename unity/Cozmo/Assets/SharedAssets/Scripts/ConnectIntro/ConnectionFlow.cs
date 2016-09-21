@@ -67,6 +67,7 @@ public class ConnectionFlow : MonoBehaviour {
   private bool _scanLoopPlaying = false;
 
   private void Start() {
+    Cozmo.PauseManager.Instance.gameObject.SetActive(false);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Disconnected);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(RobotConnectionResponse);
   }
@@ -76,6 +77,9 @@ public class ConnectionFlow : MonoBehaviour {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(RobotConnectionResponse);
 
     Cleanup();
+    if (Cozmo.PauseManager.Instance != null) {
+      Cozmo.PauseManager.Instance.gameObject.SetActive(true);
+    }
   }
 
   private void Cleanup() {
@@ -148,6 +152,12 @@ public class ConnectionFlow : MonoBehaviour {
 
   private void ShowSearchForCozmo() {
     _ConnectionFlowBackgroundInstance.SetStateInProgress(0);
+
+    if (_SearchForCozmoScreenInstance != null) {
+      DAS.Error("ConnectionFlow.SearchForCozmo", "Search screen still exist! Don't create duplicate search screens");
+      return;
+    }
+
     _SearchForCozmoScreenInstance = UIManager.CreateUIElement(_SearchForCozmoScreenPrefab.gameObject, _ConnectionFlowBackgroundInstance.transform).GetComponent<SearchForCozmoScreen>();
     _SearchForCozmoScreenInstance.Initialize(_PingStatus);
     _SearchForCozmoScreenInstance.OnScreenComplete += HandleSearchForCozmoScreenDone;
