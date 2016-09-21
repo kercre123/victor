@@ -1859,7 +1859,6 @@ namespace Anki {
                 using namespace ExternalInterface;
                 using Param = ProceduralEyeParameter;
                 DisplayProceduralFace msg;
-                msg.robotID = 1;
                 msg.leftEye.resize(static_cast<size_t>(Param::NumParameters),  0);
                 msg.rightEye.resize(static_cast<size_t>(Param::NumParameters), 0);
                 
@@ -1885,7 +1884,7 @@ namespace Anki {
                     msg.rightEye[radiusIndex] = 0.25f;
                   }
                   
-                  msg.faceAngle = 0;
+                  msg.faceAngle_deg = 0;
                   msg.faceScaleX = 1.f;
                   msg.faceScaleY = 1.f;
                   msg.faceCenX  = 0;
@@ -1936,7 +1935,7 @@ namespace Anki {
                   msg.rightEye[static_cast<s32>(Param::UpperLidAngle)] = rng.RandIntInRange(-20, 20);
                   msg.rightEye[static_cast<s32>(Param::UpperLidBend)]  = rng.RandDblInRange(0, 0.2);
                   
-                  msg.faceAngle = 0; //rng.RandIntInRange(-10, 10);
+                  msg.faceAngle_deg = 0; //rng.RandIntInRange(-10, 10);
                   msg.faceScaleX = 1.f;//rng.RandDblInRange(0.9, 1.1);
                   msg.faceScaleY = 1.f;//rng.RandDblInRange(0.9, 1.1);
                   msg.faceCenX  = 0; //rng.RandIntInRange(-5, 5);

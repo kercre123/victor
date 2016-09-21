@@ -693,6 +693,121 @@ class Cozmo(event.Dispatcher):
         self._action_dispatcher._send_single_action(action)
         return action
 
+    # Cozmo's Face animation commands
+
+    def display_face_image(self, face_data, duration_ms):
+        "128x64"
+
+        msg = _clad_to_engine_iface.DisplayFaceImage(faceData=face_data, duration_ms=duration_ms)
+        self.conn.send_msg(msg)
+
+    def set_procedural_face_anim_params(self, disable_eye_darts=True):
+        ''' Set the procedural face animation paramaters (Currently just allows eye-darts to be enabled/disabled)
+        Args:
+            disable_eye_darts (bool): whether to disable procedural eye-darts or not
+        '''
+        params = _clad_to_engine_cozmo.LiveIdleAnimationParameter # to save typing
+        param_names = []
+        param_values = []
+        if disable_eye_darts:
+            for i in range(params.EyeDartSpacingMinTime_ms, params.NumParameters):
+                param_names.append(i)
+                param_values.append(0.0)
+        use_defaults = True
+        msg = _clad_to_engine_iface.SetLiveIdleAnimationParameters(paramNames=param_names, paramValues=param_values,
+                                                                   robotID=self.robot_id, setUnspecifiedToDefault=use_defaults)
+        self.conn.send_msg(msg)
+
+    def display_procedural_face(self, face_cen_x=0.0, face_cen_y=0.0, face_angle=0.0,
+                                    l_eye_cen_x=10.0, l_eye_cen_y=-10.0,
+                                    l_eye_scale_x=1.0, l_eye_scale_y=1.0,
+                                    r_eye_cen_x=10.0, r_eye_cen_y=-10.0,
+                                    r_eye_scale_x=1.0, r_eye_scale_y=1.0,
+                                    duration_ms=33):
+        ''' Control the eye position and scale etc. for everything on Cozmo's face
+
+        Note: Left eye is technically Cozmo's right eye, but if you think of Cozmo's
+              Face like a TV screen then the left eye is on the left of the screen from the viewer's perspective
+        Args:
+            face_cen_x (float): pixel coordinates for x-coordinate of center of face
+            face_cen_y (float): pixel coordinates for y-coordinate of center of face
+            face_angle (float): angle of the face
+            l_eye_cen_x (float): pixel coordinates for x-coordinate of center of left eye
+            l_eye_cen_y (float): pixel coordinates for y-coordinate of center of left eye
+            l_eye_scale_x (float): scalar for size of left eye in x dimension
+            l_eye_scale_y (float): scalar for size of left eye in y dimension
+            r_eye_cen_x (float): pixel coordinates for x-coordinate of center of right eye
+            r_eye_cen_y (float): pixel coordinates for y-coordinate of center of right eye
+            r_eye_scale_x (float): scalar for size of right eye in x dimension
+            r_eye_scale_y (float): scalar for size of right eye in y dimension
+
+        Returns:
+
+        '''
+
+        l_eye_angle = 0.0
+        l_eye_lower_inner_radius_x = 0.185
+        l_eye_lower_inner_radius_y = 0.185
+        l_eye_upper_inner_radius_x = 0.173
+        l_eye_upper_inner_radius_y = 0.173
+
+        l_eye_lower_outer_radius_x = 0.2537
+        l_eye_lower_outer_radius_y = 0.253
+        l_eye_upper_outer_radius_x = 0.185
+        l_eye_upper_outer_radius_y = 0.185
+
+        l_eye_upper_lid_y = 0.0
+        l_eye_upper_lid_angle = 0.0
+        l_eye_upper_lid_bend = 0.0
+
+        l_eye_lower_lid_y = 0.0
+        l_eye_lower_lid_angle = 0.0
+        l_eye_lower_lid_bend = 0.0
+
+        left_eye = [l_eye_cen_x, l_eye_cen_y, l_eye_scale_x, l_eye_scale_y, l_eye_angle,
+                    l_eye_lower_inner_radius_x, l_eye_lower_inner_radius_y,
+                    l_eye_upper_inner_radius_x, l_eye_upper_inner_radius_y,
+                    l_eye_lower_outer_radius_x, l_eye_lower_outer_radius_y,
+                    l_eye_upper_outer_radius_x, l_eye_upper_outer_radius_y,
+                    l_eye_upper_lid_y, l_eye_upper_lid_angle, l_eye_upper_lid_bend,
+                    l_eye_lower_lid_y, l_eye_lower_lid_angle, l_eye_lower_lid_bend]
+
+        r_eye_angle = 0.0
+        r_eye_lower_inner_radius_x = 0.185
+        r_eye_lower_inner_radius_y = 0.185
+        r_eye_upper_inner_radius_x = 0.173
+        r_eye_upper_inner_radius_y = 0.173
+
+        r_eye_lower_outer_radius_x = 0.2537
+        r_eye_lower_outer_radius_y = 0.253
+        r_eye_upper_outer_radius_x = 0.185
+        r_eye_upper_outer_radius_y = 0.185
+
+        r_eye_upper_lid_y = 0.0
+        r_eye_upper_lid_angle = 0.0
+        r_eye_upper_lid_bend = 0.0
+
+        r_eye_lower_lid_y = 0.0
+        r_eye_lower_lid_angle = 0.0
+        r_eye_lower_lid_bend = 0.0
+
+        right_eye = [r_eye_cen_x, r_eye_cen_y, r_eye_scale_x, r_eye_scale_y, r_eye_angle,
+                    r_eye_lower_inner_radius_x, r_eye_lower_inner_radius_y,
+                    r_eye_upper_inner_radius_x, r_eye_upper_inner_radius_y,
+                    r_eye_lower_outer_radius_x, r_eye_lower_outer_radius_y,
+                    r_eye_upper_outer_radius_x, r_eye_upper_outer_radius_y,
+                    r_eye_upper_lid_y, r_eye_upper_lid_angle, r_eye_upper_lid_bend,
+                    r_eye_lower_lid_y, r_eye_lower_lid_angle, r_eye_lower_lid_bend]
+
+        face_scale_x = 1.0
+        face_scale_y = 1.0
+
+        msg = _clad_to_engine_iface.DisplayProceduralFace(faceAngle_deg=face_angle, faceCenX=face_cen_x, faceCenY=face_cen_y,
+                                                          faceScaleX=face_scale_x, faceScaleY=face_scale_y,
+                                                          leftEye=left_eye, rightEye=right_eye, duration_ms=duration_ms)
+        self.conn.send_msg(msg)
+
+
     ## Behavior Commands ##
 
     def start_behavior(self, behavior_type):
@@ -800,7 +915,7 @@ class Cozmo(event.Dispatcher):
         self._action_dispatcher._send_single_action(action)
         return action
 
-    ## Face Commands ##
+    ## Interact with seen Face Commands ##
 
     def turn_towards_face(self, face):
         '''Tells Cozmo to turn towards this face.

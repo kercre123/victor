@@ -1034,14 +1034,14 @@ public class Robot : IRobot {
 
     RobotEngineManager.Instance.Message.DisplayProceduralFace =
       Singleton<DisplayProceduralFace>.Instance.Initialize(
-      robotID: ID,
-      faceAngle: faceAngle,
+      faceAngle_deg: faceAngle,
       faceCenX: faceCenter.x,
       faceCenY: faceCenter.y,
       faceScaleX: faceScale.x,
       faceScaleY: faceScale.y,
       leftEye: leftEyeParams,
-      rightEye: rightEyeParams
+      rightEye: rightEyeParams,
+      duration_ms: 1000
     );
     RobotEngineManager.Instance.SendMessage();
 

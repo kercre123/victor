@@ -1215,13 +1215,12 @@ namespace Cozmo {
         DEBUG_STREAM_KEYFRAME_MESSAGE("Event");
       }
       
-      bool streamedFaceAnimImage = false;
       if(BufferMessageToSend(faceAnimTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
-        streamedFaceAnimImage = true;
         DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
       }
-      
-      UpdateFace(robot, anim, storeFace);
+      else if(!faceAnimTrack.HasFramesLeft()) {
+        UpdateFace(robot, anim, storeFace);
+      }
       
       if(BufferMessageToSend(backpackLedTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
         DEBUG_STREAM_KEYFRAME_MESSAGE("BackpackLights");

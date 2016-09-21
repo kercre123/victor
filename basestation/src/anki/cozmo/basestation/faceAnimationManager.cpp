@@ -14,6 +14,7 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/data/dataScope.h"
 #include "anki/common/basestation/array2d_impl.h"
+#include "anki/cozmo/basestation/keyframe.h"
 #include "anki/cozmo/robot/faceDisplayDecode.h"
 #include "clad/types/animationKeyFrames.h"
 #include "util/dispatchWorker/dispatchWorker.h"
@@ -265,7 +266,7 @@ namespace Cozmo {
     }
   }
   
-  Result FaceAnimationManager::AddImage(const std::string& animName, const Vision::Image& faceImg)
+  Result FaceAnimationManager::AddImage(const std::string& animName, const Vision::Image& faceImg, u32 holdTime_ms)
   {
     AvailableAnim* anim = GetAnimationByName(animName);
     if(nullptr == anim) {
@@ -277,6 +278,15 @@ namespace Cozmo {
     AddScanlinesHelper(faceImg.Threshold(128), compressedScanlinedPair);
     
     anim->rleFrames.push_back(std::move(compressedScanlinedPair));
+    
+    if(holdTime_ms > IKeyFrame::SAMPLE_LENGTH_MS)
+    {
+      const s32 numFramesToAdd = holdTime_ms / IKeyFrame::SAMPLE_LENGTH_MS - 1;
+      for(s32 i=0; i<numFramesToAdd; ++i)
+      {
+        anim->rleFrames.push_back({});
+      }
+    }
 
     return RESULT_OK;
   }

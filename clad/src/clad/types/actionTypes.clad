@@ -23,53 +23,57 @@ enum no_cpp_class uint_32 ActionConstants {
   LAST_ENGINE_TAG  = 4294967295
 }
 
+// Keep these alphabetized!
 // TODO: Convert to uint_8 or int_16
 enum int_32 RobotActionType {
     COMPOUND = -2,
     UNKNOWN = -1,
-    DRIVE_TO_POSE,
-    DRIVE_TO_OBJECT,
-    DRIVE_TO_PLACE_CARRIED_OBJECT,
-    TURN_IN_PLACE,
-    SEARCH_FOR_NEARBY_OBJECT,
-    MOVE_HEAD_TO_ANGLE,
+
     ALIGN_WITH_OBJECT,
+    ASCEND_OR_DESCEND_RAMP,
+    CROSS_BRIDGE,
+    DEVICE_AUDIO,              // This calls audio from WWise
+    DISPLAY_FACE_IMAGE,
+    DISPLAY_PROCEDURAL_FACE,
+    DRIVE_OFF_CHARGER_CONTACTS,
+    DRIVE_STRAIGHT,
+    DRIVE_TO_FLIP_BLOCK_POSE,
+    DRIVE_TO_OBJECT,
+    DRIVE_PATH,
+    DRIVE_TO_POSE,
+    DRIVE_TO_PLACE_CARRIED_OBJECT,
+    ENROLL_NAMED_FACE,
+    FLIP_BLOCK,
+    HANG,
+    MOUNT_CHARGER,
+    MOVE_HEAD_TO_ANGLE,
+    MOVE_LIFT_TO_HEIGHT,
+    PAN_AND_TILT,
+    PICK_AND_PLACE_INCOMPLETE, // type for PickAndPlaceAction if fail before SelectDockAction ()
     PICKUP_OBJECT_LOW,         // Possible sub-type of PickAndPlaceAction
     PICKUP_OBJECT_HIGH,        //   "
     PLACE_OBJECT_LOW,          //   "
     PLACE_OBJECT_HIGH,         //   "
-    ROLL_OBJECT_LOW,           //   "
+    PLAY_ANIMATION,
     POP_A_WHEELIE,
-    PICK_AND_PLACE_INCOMPLETE, // type for PickAndPlaceAction if fail before SelectDockAction ()
-    CROSS_BRIDGE,
-    ASCEND_OR_DESCEND_RAMP,
-    MOUNT_CHARGER,
+    READ_TOOL_CODE,
+    ROLL_OBJECT_LOW,           // Possible sub-type of PickAndPlaceAction
+    SAY_TEXT,
+    SEARCH_FOR_NEARBY_OBJECT,
+    TRACK_OBJECT,
+    TRACK_FACE,
+    TRACK_MOTION,
     TRAVERSE_OBJECT,
+    TURN_IN_PLACE,
+    TURN_TOWARDS_FACE,
+    TURN_TOWARDS_LAST_FACE_POSE,
     TURN_TOWARDS_OBJECT,
     TURN_TOWARDS_POSE,
     VISUALLY_VERIFY_OBJECT,
     VISUALLY_VERIFY_FACE,
-    PLAY_ANIMATION,
-    DEVICE_AUDIO,              // This calls audio from WWise
     WAIT,
-    HANG,
-    WAIT_FOR_LAMBDA,
-    MOVE_LIFT_TO_HEIGHT,
-    PAN_AND_TILT,
-    DRIVE_STRAIGHT,
-    DRIVE_OFF_CHARGER_CONTACTS,
-    TRACK_OBJECT,
-    TRACK_FACE,
-    TRACK_MOTION,
-    TURN_TOWARDS_FACE,
-    TURN_TOWARDS_LAST_FACE_POSE,
-    READ_TOOL_CODE,
-    SAY_TEXT, 
-    ENROLL_NAMED_FACE,
-    FLIP_BLOCK,
-    DRIVE_PATH,
-    DRIVE_TO_FLIP_BLOCK_POSE,
-    WAIT_FOR_IMAGES
+    WAIT_FOR_IMAGES,
+    WAIT_FOR_LAMBDA
 }
 
 

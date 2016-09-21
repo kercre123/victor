@@ -109,7 +109,7 @@ void ProceduralFace::SetFromJson(const Json::Value &jsonRoot)
   
 void ProceduralFace::SetFromMessage(const ExternalInterface::DisplayProceduralFace& msg)
 {
-  SetFaceAngle(msg.faceAngle);
+  SetFaceAngle(msg.faceAngle_deg);
   SetFacePosition({msg.faceCenX, msg.faceCenY});
   SetFaceScale({msg.faceScaleX, msg.faceScaleY});
   SetEyeArrayHelper(WhichEye::Left, msg.leftEye);
@@ -300,7 +300,7 @@ ProceduralFace& ProceduralFace::Combine(const ProceduralFace& otherFace)
   CombineEyeParams(_eyeParams[(int)WhichEye::Left], otherFace.GetParameters(WhichEye::Left));
   CombineEyeParams(_eyeParams[(int)WhichEye::Right], otherFace.GetParameters(WhichEye::Right));
   
-  _faceAngle += otherFace.GetFaceAngle();
+  _faceAngle_deg += otherFace.GetFaceAngle();
   _faceScale *= otherFace.GetFaceScale();
   _faceCenter += otherFace.GetFacePosition();
 
