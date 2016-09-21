@@ -31,4 +31,17 @@ dist/sdk-examples.tar.gz: license examples/*.py
 
 examples: dist/sdk-examples.tar.gz dist/sdk-examples.zip
 
-dist: sdist wheel examples
+dist/vagrant-bundle.tar.gz:
+	cd dist ; tar -cvf vagrant-bundle.tar sdk-examples.tar.gz cozmo*.tar.gz
+	cd ../
+	cd vagrant ; tar -rvf ../dist/vagrant-bundle.tar Vagrantfile setup-vm.sh
+	cd ../
+	gzip dist/vagrant-bundle.tar
+
+dist/vagrant-bundle.zip:
+	zip -rj dist/vagrant-bundle.zip dist/sdk-examples.tar.gz dist/cozmo*.tar.gz
+	zip -urj dist/vagrant-bundle.zip vagrant/Vagrantfile vagrant/setup-vm.sh
+
+vagrant: dist/vagrant-bundle.tar.gz dist/vagrant-bundle.zip
+
+dist: sdist wheel examples vagrant
