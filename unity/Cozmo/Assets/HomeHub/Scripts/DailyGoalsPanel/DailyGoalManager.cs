@@ -95,7 +95,8 @@ public class DailyGoalManager : MonoBehaviour {
     List<DailyGoalGenerationData.GoalEntry> goalList = new List<DailyGoalGenerationData.GoalEntry>();
     // Look at a list of exclusively goals that have their conditions met
     for (int i = 0; i < _CurrentGenData.GenList.Count; i++) {
-      if (_CurrentGenData.GenList[i].CanGen()) {
+      if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.DailyGoals) ||
+                                                          _CurrentGenData.GenList[i].CanGen()) {
         goalList.Add(_CurrentGenData.GenList[i]);
       }
     }

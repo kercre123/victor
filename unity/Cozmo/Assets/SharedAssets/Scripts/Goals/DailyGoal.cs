@@ -96,8 +96,9 @@ namespace Cozmo {
 
       }
 
-      public void DebugSetGoalProgress(int prog) {
+      public void DebugSetGoalProgress(int prog, bool fireRewards = true) {
         Progress = prog;
+        _GoalComplete = !fireRewards;
         CheckIfComplete();
         if (OnDailyGoalUpdated != null) {
           OnDailyGoalUpdated.Invoke(this);
@@ -160,13 +161,13 @@ namespace Cozmo {
               // Check for Unlockables progress
               if (GenConditions[i] is CurrentUnlockCondition) {
                 if (ValidateUnlockIdGenCondition(GenConditions[i] as CurrentUnlockCondition)) {
-                  DebugSetGoalProgress(Target);
+                  DebugSetGoalProgress(Target, false);
                   return;
                 }
               }// Check for Difficulty Level Progress
               else if (GenConditions[i] is CurrentDifficultyUnlockedCondition) {
                 if (ValidateDifficultyGenCondtion(GenConditions[i] as CurrentDifficultyUnlockedCondition)) {
-                  DebugSetGoalProgress(Target);
+                  DebugSetGoalProgress(Target, false);
                   return;
                 }
               }
