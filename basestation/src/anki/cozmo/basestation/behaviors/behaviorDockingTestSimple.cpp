@@ -51,6 +51,7 @@ namespace Anki {
     CONSOLE_VAR(bool, kDriveToAndPickupBlock,      "DockingTest", true);
     CONSOLE_VAR(bool, kRollInsteadOfPickup,        "DockingTest", false);
     CONSOLE_VAR(bool, kDoDeepRoll,                 "DockingTest", false);
+    CONSOLE_VAR(bool, kUseClosePreActionPose,      "DockingTest", false);
     
     static const BackpackLights passLights = {
       .onColors               = {{NamedColors::BLACK,NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN,NamedColors::BLACK}},
@@ -425,7 +426,7 @@ namespace Anki {
                                             obstacles,
                                             nullptr);
           
-          if(preActionPoses.size() != 1)
+          if(preActionPoses.size() != 2)
           {
             PRINT_NAMED_INFO("BehaviorDockingTest.Reset", "Found %i preActionPoses for marker %s",
                              (int)preActionPoses.size(),
@@ -441,7 +442,7 @@ namespace Anki {
                                                 obstacles,
                                                 nullptr);
               
-              if(preActionPoses.size() != 1)
+              if(preActionPoses.size() != 2)
               {
                 PRINT_NAMED_INFO("BehaviorDockingTest.Reset", "Found %i preActionPoses for marker %s",
                                  (int)preActionPoses.size(),
@@ -455,7 +456,8 @@ namespace Anki {
             }
           }
           
-          Pose3d preActionPose = preActionPoses.front().GetPose();
+          // The closer preaction pose is the second on in the vector
+          Pose3d preActionPose = (kUseClosePreActionPose ? preActionPoses.back().GetPose() : preActionPoses.front().GetPose());
           f32 x = preActionPose.GetTranslation().x();
           f32 y = preActionPose.GetTranslation().y();
           f32 angle = preActionPose.GetRotation().GetAngleAroundZaxis().ToFloat();

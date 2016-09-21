@@ -4682,8 +4682,8 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       
       return true;
     } else {
-      PRINT_STREAM_WARNING("BlockWorld.SelectObject.InvalidID",
-                          "Object with ID=" << objectID.GetValue() << " not found. Not updating selected object.");
+      PRINT_STREAM_INFO("BlockWorld.SelectObject.InvalidID",
+                        "Object with ID=" << objectID.GetValue() << " not found. Not updating selected object.");
       return false;
     }
   } // SelectObject()

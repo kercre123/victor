@@ -1429,7 +1429,9 @@ namespace Anki {
     
     ActionResult TurnTowardsPoseAction::Init()
     {
-      _nothingToDo = false; // in case of re-run
+      // in case of re-run
+      _nothingToDo = false;
+      SetBodyPanAngle(0);
       
       if(!_isPoseSet) {
         PRINT_NAMED_ERROR("TurnTowardsPoseAction.Init.PoseNotSet", "");
