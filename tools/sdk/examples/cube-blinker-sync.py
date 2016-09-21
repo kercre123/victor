@@ -53,10 +53,12 @@ def run(coz_conn):
         print("Waiting for cube to be tapped")
         cube.wait_for_tap(timeout=10)
         print("Cube tapped")
+    except asyncio.TimeoutError:
+        print("No-one tapped our cube :-(")
     finally:
         cube.stop_light_chaser()
         cube.set_lights_off()
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.WARN)
+    cozmo.setup_basic_logging()
     cozmo.connect(run)
