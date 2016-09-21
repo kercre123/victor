@@ -1,0 +1,7 @@
+android_library(
+  name = 'DASJavaLib',
+  srcs = glob(['src/**/*.java']),
+  source = '1.6',
+  target = '1.6',
+  visibility = ['PUBLIC'],
+)
