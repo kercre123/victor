@@ -105,7 +105,7 @@ public:
   // be implemented by children to do specific resume behavior (e.g. start at a specific state). If this
   // function returns anything other than RESULT_OK, the behavior will not be resumed (but may still be Init'd
   // later)
-  Result Resume();  
+  Result Resume(BehaviorType resumingFromType);  
 
   // Step through the behavior and deliver rewards to the robot along the way
   // This calls the protected virtual UpdateInternal() method, which each
@@ -415,10 +415,15 @@ private:
   bool _enableRepetitionPenalty;
   bool _enableRunningPenalty;
   
+  // Keep track of the number of times resumed from
+  int _timesResumedFromPossibleInfiniteLoop = 0;
+  float _timeCanRunAfterPossibleInfiniteLoopCooldown_sec = 0;
+  
+  
   const f32 kSamePreactionPoseDistThresh_mm = 30.f;
   const f32 kSamePreactionPoseAngleThresh_deg = 45.f;
-
   
+
   // A list of reactions that have been disabled at some point during the behavior
   // these will be automatically re-enabled during IBehavior::Stop using the current behavior's name
   // populated by SmartDisableReactionaryBehavior and SmartReEnableReactionaryBehavior
