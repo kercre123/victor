@@ -85,7 +85,7 @@
     "translation": "Cozmo wants to be put upright"
   },
   "behavior.RequestToPlay": {
-    "translation": "Cozmo wants to play a game"
+    "translation": "Cozmo is setting up a game"
   },
   "behavior.AcknowledgeObject": {
     "translation": ""
