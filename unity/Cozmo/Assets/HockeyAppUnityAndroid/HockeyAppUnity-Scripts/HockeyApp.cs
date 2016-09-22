@@ -118,17 +118,22 @@ public class HockeyApp : MonoBehaviour {
   protected void StartCrashManager(string urlString, string secret, int authType, bool updateManagerEnabled, bool userMetricsEnabled, bool autoSendEnabled) {
     // For iOS because there is no concept of NativeCrashManager we start in HockeyApp.mm, and then call into the unity class using UploadUnityCrashInfoIOS
 #if (UNITY_ANDROID && !UNITY_EDITOR)
-    // get Unity activity
-    AndroidJavaObject currentActivity = CozmoBinding.GetCurrentActivity();
-
     // get DAS (for device ID)
     AndroidJavaClass dasClass = new AndroidJavaClass("com.anki.daslib.DAS");
-    _DeviceId = dasClass.CallStatic<string>("getDeviceID", currentActivity);
+
+    // This is a horrible HACK to make sure that both Unity and Engine get the DeviceID from the same place on Android
+    // COZMO-5283 captures the tech debt to do this right
+    string deviceIDFilePath = Application.persistentDataPath + "/output/uniqueDeviceID.dat";
+
+    _DeviceId = dasClass.CallStatic<string>("getDeviceID", deviceIDFilePath);
 
     // if hockeyapp ID is empty, this is a debug/local build and we don't care about crash reporting
     if (_HockeyAppId.Length == 0) {
       return;
     }
+
+    // get Unity activity
+    AndroidJavaObject currentActivity = CozmoBinding.GetCurrentActivity();
 
     // initialize HockeyApp.Constants
     AndroidJavaClass hockeyAppConstants = new AndroidJavaClass("net.hockeyapp.android.Constants");
