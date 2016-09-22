@@ -1277,6 +1277,12 @@ Result Robot::Update()
               AbortDrivingToPose();
               _numPlansFinished = _numPlansStarted;
             } else {
+              if( IsTraversingPath() ) {
+                _driveToPoseStatus = ERobotDriveToPoseStatus::FollowingPath;
+              }
+              else {
+                _driveToPoseStatus = ERobotDriveToPoseStatus::ComputingPath;
+              }
               _numPlansStarted++;
             }
           } else {
@@ -1327,6 +1333,12 @@ Result Robot::Update()
                   AbortDrivingToPose();
                   _numPlansFinished = _numPlansStarted;
                 } else {
+                   if( IsTraversingPath() ) {
+                     _driveToPoseStatus = ERobotDriveToPoseStatus::FollowingPath;
+                   }
+                   else {
+                     _driveToPoseStatus = ERobotDriveToPoseStatus::ComputingPath;
+                   }
                   _numPlansStarted++;
                 }
               } else {
