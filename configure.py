@@ -215,6 +215,12 @@ def parse_game_arguments():
             help='Set the Android build number')
 
     parser.add_argument(
+            '--google-play',
+            action='store_true',
+            dest='google_play',
+            help='Generate binaries for google-play store. (build obb files)')
+
+    parser.add_argument(
             '--use-keychain',
             metavar='string',
             default=None,
@@ -574,11 +580,14 @@ class GamePlatformConfiguration(object):
         args += ['-projectPath', self.unity_project_root]
         args += ['-executeMethod', 'CommandLineBuild.Build']
         args += ['--platform', self.platform]
-        args += ['--config', self.options.configuration]
         args += ['--build-number', self.options.set_build_number]
         args += ['--build-path', os.path.join(self.options.build_dir, self.platform)]
         args += ['--build-type', 'PlayerAndAssets']
         args += ['--asset-path', 'Assets/StreamingAssets/cozmo_resources']
+        if self.options.google_play:
+            args += ['--config', "googleplay"]
+        else:
+            args += ['--config', self.options.configuration]
         ankibuild.util.File.execute(args)
         # TODO: Modify unity.py to handle this logic.  Problem is that unity.py is too coupled to xcode.
         # example of what this function should look like.
