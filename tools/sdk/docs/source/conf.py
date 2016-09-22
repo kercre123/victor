@@ -20,8 +20,8 @@
 import os
 import subprocess
 import sys
-#sys.path.insert(0, os.path.abspath('../..'), os.path.abspath('..'))
-sys.path.extend([os.path.abspath('../src'), os.path.abspath('..')])
+
+sys.path.extend([os.path.abspath('../../src'), os.path.abspath('..')])
 
 
 version = "dev"
