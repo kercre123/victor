@@ -293,16 +293,16 @@
     "translation": "How To Play:"
   },
   "minigame.difficulty.easy": {
-    "translation": "Beginner"
+    "translation": "One Color"
   },
   "minigame.difficulty.medium": {
-    "translation": "Intermediate"
+    "translation": "Two Colors"
   },
   "minigame.difficulty.hard": {
-    "translation": "Advanced"
+    "translation": "Three Colors"
   },
   "minigame.difficulty.expert": {
-    "translation": "Expert"
+    "translation": "Four Colors"
   },
  "speedTap.difficulty.easyDescription": {
    "translation": "Be the first to tap your Cube when the colors match, but never tap on red!"
@@ -326,13 +326,13 @@
     "translation": "Unlock by unlocking Quick Tap."
   },
   "speedTap.difficulty.mediumDescription.locked": {
-    "translation": "Intermediate Mode is Locked:\nUnlock by winning Quick Tap in Beginner Mode."
+    "translation": "Two Color Mode is Locked\nUnlock by winning Quick Tap in One Color Mode."
   },
   "speedTap.difficulty.hardDescription.locked": {
-    "translation": "Advanced Mode is Locked:\nUnlock by winning Quick Tap in Intermediate Mode."
+    "translation": "Three Color Mode is Locked\nUnlock by winning Quick Tap in Two Color Mode."
   },
   "speedTap.difficulty.expertDescription.locked": {
-    "translation": "Expert Mode is Locked:\nUnlock by winning Quick Tap in Advanced Mode."
+    "translation": "Four Color Mode is Locked\nUnlock by winning Quick Tap in Three Color Mode."
   }, 
   "speedTap.text.getReady": {
     "translation": "Get Ready!"
