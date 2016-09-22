@@ -66,6 +66,13 @@ namespace Cozmo {
           _BannerTween.Kill();
         }
         _BannerTween = DOTween.Sequence();
+        // Play Audio
+        _BannerTween.OnStart (() => {
+          if (_PlaySound != null) {
+            _PlaySound.Play ();
+          }
+        });
+        // Animate banner movement
         float midpoint = (_BannerRightOffscreenLocalXPos + _BannerLeftOffscreenLocalXPos) * 0.5f;
         _BannerTween.Append(_BannerContainer.DOLocalMoveX(midpoint - _BannerSlowDistance, _BannerInOutAnimationDurationSeconds).SetEase(Ease.OutQuad));
         _BannerTween.Append(_BannerContainer.DOLocalMoveX(midpoint, slowDuration));
@@ -74,17 +81,11 @@ namespace Cozmo {
         if (animationEndCallback != null) {
           _BannerTween.AppendCallback(animationEndCallback);
         }
-
-        // if there's a sound attached, play it
-        if (_PlaySound != null) {
-          _PlaySound.Play();
-        }
       }
 
       private void HandleBannerAnimationEnd() {
         _BannerContainer.gameObject.SetActive(false);
       }
-
     }
   }
 }

@@ -31,6 +31,12 @@ DropToWiFi* spi_write_buff = &spi_backbuff[0];
 
 transmissionWord spi_rx_buff[RX_SIZE];
 
+// is_write_buff_final is a mutex protecting spi_tx_buff/spi_write_buff
+// When true, write_buff belongs to foreground ISR - only foreground ISR sets it false
+// When false, write_buff belongs to background ISR (which finalizes write_buff) - only background ISR sets it true
+// In case of a race, the other side will skip one whole drop without touching write_buff
+static volatile bool is_write_buff_final = false;
+
 static bool audioUpdated = false;
 static uint8_t AudioBackBuffer[MAX_AUDIO_BYTES_PER_DROP];
 
@@ -103,6 +109,21 @@ static bool ProcessDrop(void) {
 void Anki::Cozmo::HAL::SPI::StartDMA(void) {
   // Start sending out junk
   SPI0_MCR |= SPI_MCR_CLR_RXF_MASK;
+  
+  // Special case:  If write_buff is not finalized, resend the old drop (tx_buff) as an empty drop
+  if (!is_write_buff_final)
+  {
+    spi_tx_buff->payloadLen = spi_tx_buff->droplet = 0;   // Mark it empty
+    
+    do  // Per erratum e8011: Repeat writes to SADDR, DADDR, or NBYTES until they stick
+      DMA_TCD3_SADDR = (uint32_t)spi_tx_buff;
+    while (DMA_TCD3_SADDR != (uint32_t)spi_tx_buff);
+    DMA_ERQ |= DMA_ERQ_ERQ2_MASK | DMA_ERQ_ERQ3_MASK;
+    
+    // Do NOT swap buffers, since we could interrupt a FinalizeDrop() already in progress
+    return;
+  }
+  
   do  // Per erratum e8011: Repeat writes to SADDR, DADDR, or NBYTES until they stick
     DMA_TCD3_SADDR = (uint32_t)spi_write_buff;
   while (DMA_TCD3_SADDR != (uint32_t)spi_write_buff);
@@ -112,9 +133,15 @@ void Anki::Cozmo::HAL::SPI::StartDMA(void) {
   DropToWiFi *tmp = spi_write_buff;
   spi_write_buff = spi_tx_buff;
   spi_tx_buff = tmp;    // write_buff from last time is being sent right now
+  is_write_buff_final = false;  // New write_buffer is not final yet
 }
 
 void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, const bool eof, const uint32_t frameNumber) { 
+  // If write_buff is already finalized, just give up!
+  // This could drop JPEG data (scrambling it) or lose a JPEG EOF, but at least no CLAD messages are lost
+  if (is_write_buff_final)
+    return;
+  
   DropToWiFi *drop_tx = spi_write_buff;
 
   drop_tx->preamble = TO_WIFI_PREAMBLE;
@@ -137,6 +164,8 @@ void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, const bool eof, const uint
     *drop_addr = 0;
     drop_tx->payloadLen = Anki::Cozmo::HAL::WiFi::GetTxData(drop_addr, remainingSpace);
   }
+
+  is_write_buff_final = true;  // Drop is now final, safe to send!
 }
 
 // This is Thors hammer.  Forces recovery mode

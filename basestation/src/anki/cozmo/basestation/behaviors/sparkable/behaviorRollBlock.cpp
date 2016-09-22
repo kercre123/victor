@@ -18,6 +18,8 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPutDownBlock.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -105,8 +107,13 @@ void BehaviorRollBlock::UpdateTargetBlock(const Robot& robot) const
 
 bool BehaviorRollBlock::FilterBlocks(const ObservableObject* obj) const
 {
+  
+  const bool hasFailedToRoll = _robot.GetBehaviorManager().GetWhiteboard().DidFailToUse(obj->GetID(), AIWhiteboard::ObjectUseAction::RollOrPopAWheelie,
+                                                                                  kTimeObjectInvalidAfterFailure_sec, obj->GetPose(), kObjectInvalidAfterFailureRadius_mm, kAngleToleranceAfterFailure_radians);
+
   return (!obj->IsPoseStateUnknown() &&
           _robot.CanPickUpObjectFromGround(*obj) &&
+          !hasFailedToRoll &&
           (!_isBlockRotationImportant || obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS));
 }
 
@@ -222,16 +229,12 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
                 }
                 else
                 {
-                  PRINT_NAMED_INFO("BehaviorRollBlock.FailedAbort",
-                                   "Failed to verify roll, searching for block");
-                  StartActing(new SearchForNearbyObjectAction(robot, _targetBlock),
-                              [this](Robot& robot) {
-                                if( IsRunnable(robot, true) ) {
-                                  TransitionToPerformingAction(robot);
-                                }
-                                // TODO:(bn) if we actually succeeded here, we should play the success anim,
-                                // or at least a recognition anim
-                              });
+                  PRINT_NAMED_INFO("BehaviorRollBlock.FailedAbort", "Failed to verify roll");
+                  
+                  const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlock);
+                  if(failedObject){
+                    robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::RollOrPopAWheelie);
+                  }
                 }
               });
   IncreaseScoreWhileActing( kBRB_ScoreIncreaseForAction );

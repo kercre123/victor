@@ -32,7 +32,6 @@ namespace Cozmo {
 
 static const char* kShouldPutCubeBackDown = "shouldPutCubeBackDown";
 static const float kSecondsBetweenBlockWorldChecks = 3;
-static const float kSecondsObjectInvalidAfterFailure = 10.f;
   
 BehaviorPickUpCube::BehaviorPickUpCube(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -102,8 +101,9 @@ void BehaviorPickUpCube::CheckForNearbyObject(const Robot& robot) const
   filter.SetAllowedFamilies({ObjectFamily::LightCube});
   filter.SetFilterFcn([&robot](const ObservableObject* object)
                       {
-                        bool recentlyFailed = robot.GetBehaviorManager().GetWhiteboard().DidFailToUse(object->GetID(), AIWhiteboard::ObjectUseAction::PickUpObject, kSecondsObjectInvalidAfterFailure);
-                        return !recentlyFailed && robot.CanPickUpObject(*object) ;
+                        const bool recentlyFailedPickup = robot.GetBehaviorManager().GetWhiteboard().DidFailToUse(object->GetID(), AIWhiteboard::ObjectUseAction::PickUpObject, kTimeObjectInvalidAfterFailure_sec);
+                        const bool recentlyFailedRoll =  robot.GetBehaviorManager().GetWhiteboard().DidFailToUse(object->GetID(), AIWhiteboard::ObjectUseAction::RollOrPopAWheelie, kTimeObjectInvalidAfterFailure_sec);
+                        return !recentlyFailedPickup && !recentlyFailedRoll && robot.CanPickUpObject(*object) ;
                       });
   
   const ObservableObject* closestObject = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(), filter);
@@ -252,7 +252,7 @@ void BehaviorPickUpCube::FailedToPickupObject(Robot& robot)
 {
   // mark this as failed to pickup so that we don't retry
   const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlockID);
-  if(failedObject != nullptr){
+  if(failedObject){
     robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PickUpObject);
   }
   _targetBlockID.UnSet();

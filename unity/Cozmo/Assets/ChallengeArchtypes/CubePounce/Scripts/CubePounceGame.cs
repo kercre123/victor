@@ -168,8 +168,8 @@ namespace Cozmo.Minigame.CubePounce {
       quitGameScoreKeyValues.Add("CozmoScore", CozmoScore.ToString());
       quitGameRoundsWonKeyValues.Add("CozmoRoundsWon", CozmoRoundsWon.ToString());
 
-      DAS.Event(DASConstants.Game.kQuitGameScore, PlayerScore.ToString(), null, quitGameScoreKeyValues);
-      DAS.Event(DASConstants.Game.kQuitGameRoundsWon, PlayerRoundsWon.ToString(), null, quitGameRoundsWonKeyValues);
+      DAS.Event(DASConstants.Game.kQuitGameScore, PlayerScore.ToString(), quitGameScoreKeyValues);
+      DAS.Event(DASConstants.Game.kQuitGameRoundsWon, PlayerRoundsWon.ToString(), quitGameRoundsWonKeyValues);
     }
 
     private void HandleCubeMoved(int id, float accX, float accY, float aaZ) {

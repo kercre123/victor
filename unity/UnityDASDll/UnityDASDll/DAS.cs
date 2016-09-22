@@ -3,21 +3,21 @@ using System.Runtime.InteropServices;
 using System.Collections.Generic;
 
 public interface IDAS {
-  void Event(string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null);
+  void Event(string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null);
 
-  void Error(string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null);
+  void Error(string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null);
 
-  void Error(Exception eventValue, System.Object context = null, Dictionary<string, string> keyValues = null);
+  void Error(Exception eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null);
 
-  void Warn(string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null);
+  void Warn(string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null);
 
-  void Info(string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null);
+  void Info(string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null);
 
-  void Debug(string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null);
+  void Debug(string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null);
 
-  void Ch_Info(string channelName, string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null);
+  void Ch_Info(string channelName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null);
 
-  void Ch_Debug(string channelName, string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null);
+  void Ch_Debug(string channelName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null);
 
   void SetGlobal(string key, string value);
 }
@@ -38,65 +38,65 @@ public static partial class DAS {
     _Targets.Clear();
   }
 
-  public static void Event(object eventObject, string eventValue, object context = null, Dictionary<string, string> keyValues = null) {
+  public static void Event(object eventObject, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
     string eventName = GetEventName(eventObject);
 
     for (int i = 0, len = _Targets.Count; i < len; i++) {
-      _Targets[i].Event(eventName, eventValue, context, keyValues);
+      _Targets[i].Event(eventName, eventValue, keyValues, context);
     }
   }
 
-  public static void Error(object eventObject, string eventValue, object context = null, Dictionary<string, string> keyValues = null) {
+  public static void Error(object eventObject, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
     string eventName = GetEventName(eventObject);
 
     for (int i = 0, len = _Targets.Count; i < len; i++) {
-      _Targets[i].Error(eventName, eventValue, context, keyValues);
+      _Targets[i].Error(eventName, eventValue, keyValues, context);
     }
   }
 
-  public static void Error(object eventObject, Exception eventValue, object context = null, Dictionary<string, string> keyValues = null) {
+  public static void Error(object eventObject, Exception eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
     string eventName = GetEventName(eventObject);
 
     for (int i = 0, len = _Targets.Count; i < len; i++) {
-      _Targets[i].Error(eventName, eventValue.Message + "\n" + eventValue.StackTrace, context, keyValues);
+      _Targets[i].Error(eventName, eventValue.Message + "\n" + eventValue.StackTrace, keyValues, context);
     }
   }
 
-  public static void Warn(object eventObject, string eventValue, object context = null, Dictionary<string, string> keyValues = null) {
+  public static void Warn(object eventObject, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
     string eventName = GetEventName(eventObject);
 
     for (int i = 0, len = _Targets.Count; i < len; i++) {
-      _Targets[i].Warn(eventName, eventValue, context, keyValues);
+      _Targets[i].Warn(eventName, eventValue, keyValues, context);
     }
   }
 
-  public static void Info(object eventObject, string eventValue, object context = null, Dictionary<string, string> keyValues = null) {
+  public static void Info(object eventObject, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
     string eventName = GetEventName(eventObject);
 
     for (int i = 0, len = _Targets.Count; i < len; i++) {
-      _Targets[i].Info(eventName, eventValue, context, keyValues);
+      _Targets[i].Info(eventName, eventValue, keyValues, context);
     }
   }
 
-  public static void Debug(object eventObject, string eventValue, object context = null, Dictionary<string, string> keyValues = null) {
+  public static void Debug(object eventObject, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
     string eventName = GetEventName(eventObject);
 
     for (int i = 0, len = _Targets.Count; i < len; i++) {
-      _Targets[i].Debug(eventName, eventValue, context, keyValues);
+      _Targets[i].Debug(eventName, eventValue, keyValues, context);
     }
   }
 
-  public static void Ch_Info(string channelName, object eventObject, string eventValue, object context = null, Dictionary<string, string> keyValues = null) {
+  public static void Ch_Info(string channelName, object eventObject, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
     string eventName = GetEventName (eventObject);
     for (int i = 0, len = _Targets.Count; i < len; i++) {
-      _Targets[i].Ch_Info(channelName, eventName, eventValue, context, keyValues);
+      _Targets[i].Ch_Info(channelName, eventName, eventValue, keyValues, context);
     }
   }
 
-  public static void Ch_Debug(string channelName, object eventObject, string eventValue, object context = null, Dictionary<string, string> keyValues = null) {
+  public static void Ch_Debug(string channelName, object eventObject, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
     string eventName = GetEventName (eventObject);
     for (int i = 0, len = _Targets.Count; i < len; i++) {
-      _Targets[i].Ch_Debug(channelName, eventName, eventValue, context, keyValues);
+      _Targets[i].Ch_Debug(channelName, eventName, eventValue, keyValues, context);
     }
   }
 
@@ -136,36 +136,36 @@ public static partial class DAS {
       _EventName = type.Name;
     }
 
-    public void Event(string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null) {
-      DAS.Event(_EventName, eventValue, context, keyValues);
+    public void Event(string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
+      DAS.Event(_EventName, eventValue, keyValues, context);
     }
 
-    public void Error(string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null) {
-      DAS.Error(_EventName, eventValue, context, keyValues);      
+    public void Error(string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
+      DAS.Error(_EventName, eventValue, keyValues, context);      
     }
 
-    public void Error(Exception eventValue, System.Object context = null, Dictionary<string, string> keyValues = null) {
-      DAS.Error(_EventName, eventValue, context, keyValues);      
+    public void Error(Exception eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
+      DAS.Error(_EventName, eventValue, keyValues, context);      
     }
 
-    public void Warn(string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null) {
-      DAS.Warn(_EventName, eventValue, context, keyValues);      
+    public void Warn(string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
+      DAS.Warn(_EventName, eventValue, keyValues, context);      
     }
 
-    public void Info(string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null) {
-      DAS.Info(_EventName, eventValue, context, keyValues);      
+    public void Info(string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
+      DAS.Info(_EventName, eventValue, keyValues, context);      
     }
 
-    public void Debug(string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null) {
-      DAS.Debug(_EventName, eventValue, context, keyValues);            
+    public void Debug(string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
+      DAS.Debug(_EventName, eventValue, keyValues, context);            
     }
 
-    public void Ch_Info(string channelName, string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null) {
-      DAS.Ch_Info(channelName, _EventName, eventValue, context, keyValues);
+    public void Ch_Info(string channelName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
+      DAS.Ch_Info(channelName, _EventName, eventValue, keyValues, context);
     }
     
-    public void Ch_Debug(string channelName, string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null) {
-      DAS.Ch_Debug(channelName, _EventName, eventValue, context, keyValues);
+    public void Ch_Debug(string channelName, string eventValue, Dictionary<string, string> keyValues = null, UnityEngine.Object context = null) {
+      DAS.Ch_Debug(channelName, _EventName, eventValue, keyValues, context);
     }
 
     public void SetGlobal(string key, string value) {

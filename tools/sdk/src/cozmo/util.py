@@ -1,3 +1,5 @@
+# Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
+
 __ALL__ = ['Angle', 'degrees', 'radians',
            'Pose', 'pose_quaternion', 'pose_angle_z',
            'Position', 'position_x_y_z',

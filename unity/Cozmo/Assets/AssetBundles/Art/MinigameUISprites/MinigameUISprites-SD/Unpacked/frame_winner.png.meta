@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: eb1a0f6165b1d47b182fd23bbefb74ca
-timeCreated: 1467169192
+guid: 3e323b259893548fa9bb2cc49cc5199e
+timeCreated: 1474419484
 licenseType: Pro
 TextureImporter:
   fileIDToRecycleName: {}
@@ -52,7 +52,7 @@ TextureImporter:
     serializedVersion: 2
     sprites: []
     outline: []
-  spritePackingTag: MinigameUISpritesSDAtlas
+  spritePackingTag: 
   userData: 
   assetBundleName: 
   assetBundleVariant: 

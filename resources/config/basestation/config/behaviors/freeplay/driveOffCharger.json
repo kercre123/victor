@@ -1,7 +1,7 @@
 {
   "behaviorType": "DriveOffCharger",
   "name": "DriveOffCharger",
-  "flatScore" : 3.0,  
+  "flatScore" : 0.0, // score is modified by behavior
   "extraDistanceToDrive_mm": 60.0,
   "behaviorGroups": [
     "FP_Socialize",

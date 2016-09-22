@@ -1,3 +1,5 @@
+# Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
+
 __all__ = ['EvtRobotReady',
            'GoToPose', 'PickupObject', 'PlaceOnObject', 'PlaceObjectOnGroundHere', 'SayText', 'SetHeadAngle',
            'SetLiftHeight', 'TurnInPlace', 'TurnTowardsFace', 'DriveOffChargerContacts',
@@ -18,7 +20,7 @@ from . import objects
 from . import util
 from . import world
 
-from ._clad import _clad_to_engine_iface, _clad_to_engine_cozmo
+from ._clad import _clad_to_engine_iface, _clad_to_engine_cozmo, _clad_to_game_cozmo
 
 
 #### Events
@@ -133,8 +135,8 @@ class SayText(action.Action):
         if play_excited_animation:
             self.play_event = _clad_to_engine_cozmo.AnimationTrigger.OnSawNewNamedFace
         else:
-            # Count = No animation - will replace with SdkTextToSpeech when that works with text-to-speech
-            self.play_event = _clad_to_engine_cozmo.AnimationTrigger.Count
+            # Alternatively using AnimationTrigger.Count will force no animation at all
+            self.play_event = _clad_to_engine_cozmo.AnimationTrigger.SdkTextToSpeech
 
         if use_cozmo_voice:
             self.say_style = _clad_to_engine_cozmo.SayTextVoiceStyle.CozmoProcessing
@@ -366,7 +368,100 @@ class Cozmo(event.Dispatcher):
         """
         return self._pose
 
+    @property
+    def is_moving(self):
+        ''':bool: Is Cozmo currently moving anything (head, lift or wheels/treads)'''
+        return (self._robot_status_flags & _clad_to_game_cozmo.RobotStatusFlag.IS_MOVING) != 0
 
+    @property
+    def is_carrying_block(self):
+        ''':bool: Is Cozmo currently carrying a block'''
+        return (self._robot_status_flags & _clad_to_game_cozmo.RobotStatusFlag.IS_CARRYING_BLOCK) != 0
+
+    @property
+    def is_picking_or_placing(self):
+        ''':bool: Is Cozmo picking or placing something'''
+        return (self._robot_status_flags & _clad_to_game_cozmo.RobotStatusFlag.IS_PICKING_OR_PLACING) != 0
+
+    @property
+    def is_picked_up(self):
+        ''':bool: Is Cozmo currently picked up (in the air)'''
+        return (self._robot_status_flags & _clad_to_game_cozmo.RobotStatusFlag.IS_PICKED_UP) != 0
+
+    @property
+    def is_falling(self):
+        ''':bool: Is Cozmo currently falling'''
+        return (self._robot_status_flags & _clad_to_game_cozmo.RobotStatusFlag.IS_FALLING) != 0
+
+    @property
+    def is_animating(self):
+        ''':bool: Is Cozmo currently playing an animation'''
+        return (self._robot_status_flags & _clad_to_game_cozmo.RobotStatusFlag.IS_ANIMATING) != 0
+
+    @property
+    def is_animating_idle(self):
+        ''':bool: Is Cozmo currently playing an idle animation'''
+        return (self._robot_status_flags & _clad_to_game_cozmo.RobotStatusFlag.IS_ANIMATING_IDLE) != 0
+
+    @property
+    def is_pathing(self):
+        ''':bool: Is Cozmo currently traversing a path'''
+        return (self._robot_status_flags & _clad_to_game_cozmo.RobotStatusFlag.IS_PATHING) != 0
+
+    @property
+    def is_lift_in_pos(self):
+        ''':bool: Is Cozmo's lift in the desired position (False if still trying to move there)'''
+        return (self._robot_status_flags & _clad_to_game_cozmo.RobotStatusFlag.LIFT_IN_POS) != 0
+
+    @property
+    def is_head_in_pos(self):
+        ''':bool: Is Cozmo's head in the desired position (False if still trying to move there)'''
+        return (self._robot_status_flags & _clad_to_game_cozmo.RobotStatusFlag.HEAD_IN_POS) != 0
+
+    @property
+    def is_anim_buffer_full(self):
+        ''':bool: Is Cozmo's animation buffer full (on robot)'''
+        return (self._robot_status_flags & _clad_to_game_cozmo.RobotStatusFlag.IS_ANIM_BUFFER_FULL) != 0
+
+    @property
+    def is_on_charger(self):
+        ''':bool: Is Cozmo currently on the charger'''
+        return (self._robot_status_flags & _clad_to_game_cozmo.RobotStatusFlag.IS_ON_CHARGER) != 0
+
+    @property
+    def is_charging(self):
+        ''':bool: Is Cozmo currently charging'''
+        return (self._robot_status_flags & _clad_to_game_cozmo.RobotStatusFlag.IS_CHARGING) != 0
+
+    @property
+    def is_cliff_detected(self):
+        ''':bool: Has Cozmo detected a cliff (in front)'''
+        return (self._robot_status_flags & _clad_to_game_cozmo.RobotStatusFlag.CLIFF_DETECTED) != 0
+
+    @property
+    def are_wheels_moving(self):
+        ''':bool: Are Cozmo's wheels/treads currently moving'''
+        return (self._robot_status_flags & _clad_to_game_cozmo.RobotStatusFlag.ARE_WHEELS_MOVING) != 0
+
+    @property
+    def is_localized(self):
+        ''':bool: Is Cozmo Localized (i.e. knows where he is, and has both treads on the ground)'''
+        return (self._game_status_flags & _clad_to_game_cozmo.GameStatusFlag.IsLocalized) != 0
+
+    @property
+    def pose_angle(self):
+        ''':class:`cozmo.util.Angle` Cozmo's pose angle (heading in X-Y plane)'''
+        return self._pose_angle
+
+    @property
+    def pose_pitch(self):
+        ''':class:`cozmo.util.Angle` Cozmo's pose pitch (angle up/down)'''
+        return self._pose_pitch
+
+    @property
+    def head_angle(self):
+        ''':class:`cozmo.util.Angle` Cozmo's head angle (up/down)'''
+        return self._head_angle
 
     #### Private Event Handlers ####
 
@@ -384,24 +479,23 @@ class Cozmo(event.Dispatcher):
         self.camera.dispatch_event(evt)
 
     def _recv_msg_robot_state(self, evt, *, msg):
-        #TODO flesh out the rest of the params in the robotState message
         self._pose = util.Pose(x=msg.pose.x, y=msg.pose.y, z=msg.pose.z,
                                q0=msg.pose.q0, q1=msg.pose.q1,
                                q2=msg.pose.q2, q3=msg.pose.q3)
-        self.pose_angle = util.radians(msg.poseAngle_rad) # heading in X-Y plane
-        self.pose_pitch = util.radians(msg.posePitch_rad)
-        self.head_angle = util.radians(msg.headAngle_rad)
+        self._pose_angle = util.radians(msg.poseAngle_rad) # heading in X-Y plane
+        self._pose_pitch = util.radians(msg.posePitch_rad)
+        self._head_angle = util.radians(msg.headAngle_rad)
         self.left_wheel_speed  = util.speed_mmps(msg.leftWheelSpeed_mmps)
         self.right_wheel_speed = util.speed_mmps(msg.rightWheelSpeed_mmps)
-        self.lift_height = util.distance_mm(msg.liftHeight_mm)
-        self.battery_voltage = msg.batteryVoltage
+        self.lift_height       = util.distance_mm(msg.liftHeight_mm)
+        self.battery_voltage           = msg.batteryVoltage
         self.carrying_object_id        = msg.carryingObjectID      # int_32 will be -1 if not carrying object
         self.carrying_object_on_top_id = msg.carryingObjectOnTopID # int_32 will be -1 if no object on top of object being carried
         self.head_tracking_object_id   = msg.headTrackingObjectID  # int_32 will be -1 if head is not tracking to any object
         self.localized_to_object_id    = msg.localizedToObjectID   # int_32 Will be -1 if not localized to any object
-        self.last_image_time = msg.lastImageTimeStamp
-        self.status      = msg.status     # uint_16 as bitflags - See RobotStatusFlag in robotStatusAndActions.py
-        self.game_status = msg.gameStatus # uint_8  as bitflags - See GameStatusFlag in gameStatusFlag.py
+        self.last_image_time           = msg.lastImageTimeStamp
+        self._robot_status_flags       = msg.status     # uint_16 as bitflags - See _clad_to_game_cozmo.RobotStatusFlag
+        self._game_status_flags        = msg.gameStatus # uint_8  as bitflags - See _clad_to_game_cozmo.GameStatusFlag
 
         if msg.robotID != self.robot_id:
             logger.error("robot id changed mismatch (msg=%s, self=%s)", msg.robotID, self.robot_id )
@@ -599,6 +693,121 @@ class Cozmo(event.Dispatcher):
         self._action_dispatcher._send_single_action(action)
         return action
 
+    # Cozmo's Face animation commands
+
+    def display_face_image(self, face_data, duration_ms):
+        "128x64"
+
+        msg = _clad_to_engine_iface.DisplayFaceImage(faceData=face_data, duration_ms=duration_ms)
+        self.conn.send_msg(msg)
+
+    def set_procedural_face_anim_params(self, disable_eye_darts=True):
+        ''' Set the procedural face animation paramaters (Currently just allows eye-darts to be enabled/disabled)
+        Args:
+            disable_eye_darts (bool): whether to disable procedural eye-darts or not
+        '''
+        params = _clad_to_engine_cozmo.LiveIdleAnimationParameter # to save typing
+        param_names = []
+        param_values = []
+        if disable_eye_darts:
+            for i in range(params.EyeDartSpacingMinTime_ms, params.NumParameters):
+                param_names.append(i)
+                param_values.append(0.0)
+        use_defaults = True
+        msg = _clad_to_engine_iface.SetLiveIdleAnimationParameters(paramNames=param_names, paramValues=param_values,
+                                                                   robotID=self.robot_id, setUnspecifiedToDefault=use_defaults)
+        self.conn.send_msg(msg)
+
+    def display_procedural_face(self, face_cen_x=0.0, face_cen_y=0.0, face_angle=0.0,
+                                    l_eye_cen_x=10.0, l_eye_cen_y=-10.0,
+                                    l_eye_scale_x=1.0, l_eye_scale_y=1.0,
+                                    r_eye_cen_x=10.0, r_eye_cen_y=-10.0,
+                                    r_eye_scale_x=1.0, r_eye_scale_y=1.0,
+                                    duration_ms=33):
+        ''' Control the eye position and scale etc. for everything on Cozmo's face
+
+        Note: Left eye is technically Cozmo's right eye, but if you think of Cozmo's
+              Face like a TV screen then the left eye is on the left of the screen from the viewer's perspective
+        Args:
+            face_cen_x (float): pixel coordinates for x-coordinate of center of face
+            face_cen_y (float): pixel coordinates for y-coordinate of center of face
+            face_angle (float): angle of the face
+            l_eye_cen_x (float): pixel coordinates for x-coordinate of center of left eye
+            l_eye_cen_y (float): pixel coordinates for y-coordinate of center of left eye
+            l_eye_scale_x (float): scalar for size of left eye in x dimension
+            l_eye_scale_y (float): scalar for size of left eye in y dimension
+            r_eye_cen_x (float): pixel coordinates for x-coordinate of center of right eye
+            r_eye_cen_y (float): pixel coordinates for y-coordinate of center of right eye
+            r_eye_scale_x (float): scalar for size of right eye in x dimension
+            r_eye_scale_y (float): scalar for size of right eye in y dimension
+
+        Returns:
+
+        '''
+
+        l_eye_angle = 0.0
+        l_eye_lower_inner_radius_x = 0.185
+        l_eye_lower_inner_radius_y = 0.185
+        l_eye_upper_inner_radius_x = 0.173
+        l_eye_upper_inner_radius_y = 0.173
+
+        l_eye_lower_outer_radius_x = 0.2537
+        l_eye_lower_outer_radius_y = 0.253
+        l_eye_upper_outer_radius_x = 0.185
+        l_eye_upper_outer_radius_y = 0.185
+
+        l_eye_upper_lid_y = 0.0
+        l_eye_upper_lid_angle = 0.0
+        l_eye_upper_lid_bend = 0.0
+
+        l_eye_lower_lid_y = 0.0
+        l_eye_lower_lid_angle = 0.0
+        l_eye_lower_lid_bend = 0.0
+
+        left_eye = [l_eye_cen_x, l_eye_cen_y, l_eye_scale_x, l_eye_scale_y, l_eye_angle,
+                    l_eye_lower_inner_radius_x, l_eye_lower_inner_radius_y,
+                    l_eye_upper_inner_radius_x, l_eye_upper_inner_radius_y,
+                    l_eye_lower_outer_radius_x, l_eye_lower_outer_radius_y,
+                    l_eye_upper_outer_radius_x, l_eye_upper_outer_radius_y,
+                    l_eye_upper_lid_y, l_eye_upper_lid_angle, l_eye_upper_lid_bend,
+                    l_eye_lower_lid_y, l_eye_lower_lid_angle, l_eye_lower_lid_bend]
+
+        r_eye_angle = 0.0
+        r_eye_lower_inner_radius_x = 0.185
+        r_eye_lower_inner_radius_y = 0.185
+        r_eye_upper_inner_radius_x = 0.173
+        r_eye_upper_inner_radius_y = 0.173
+
+        r_eye_lower_outer_radius_x = 0.2537
+        r_eye_lower_outer_radius_y = 0.253
+        r_eye_upper_outer_radius_x = 0.185
+        r_eye_upper_outer_radius_y = 0.185
+
+        r_eye_upper_lid_y = 0.0
+        r_eye_upper_lid_angle = 0.0
+        r_eye_upper_lid_bend = 0.0
+
+        r_eye_lower_lid_y = 0.0
+        r_eye_lower_lid_angle = 0.0
+        r_eye_lower_lid_bend = 0.0
+
+        right_eye = [r_eye_cen_x, r_eye_cen_y, r_eye_scale_x, r_eye_scale_y, r_eye_angle,
+                    r_eye_lower_inner_radius_x, r_eye_lower_inner_radius_y,
+                    r_eye_upper_inner_radius_x, r_eye_upper_inner_radius_y,
+                    r_eye_lower_outer_radius_x, r_eye_lower_outer_radius_y,
+                    r_eye_upper_outer_radius_x, r_eye_upper_outer_radius_y,
+                    r_eye_upper_lid_y, r_eye_upper_lid_angle, r_eye_upper_lid_bend,
+                    r_eye_lower_lid_y, r_eye_lower_lid_angle, r_eye_lower_lid_bend]
+
+        face_scale_x = 1.0
+        face_scale_y = 1.0
+
+        msg = _clad_to_engine_iface.DisplayProceduralFace(faceAngle_deg=face_angle, faceCenX=face_cen_x, faceCenY=face_cen_y,
+                                                          faceScaleX=face_scale_x, faceScaleY=face_scale_y,
+                                                          leftEye=left_eye, rightEye=right_eye, duration_ms=duration_ms)
+        self.conn.send_msg(msg)
+
+
     ## Behavior Commands ##
 
     def start_behavior(self, behavior_type):
@@ -706,7 +915,7 @@ class Cozmo(event.Dispatcher):
         self._action_dispatcher._send_single_action(action)
         return action
 
-    ## Face Commands ##
+    ## Interact with seen Face Commands ##
 
     def turn_towards_face(self, face):
         '''Tells Cozmo to turn towards this face.
@@ -774,5 +983,15 @@ class Cozmo(event.Dispatcher):
         action = self.drive_off_charger_contacts_factory(conn=self.conn, robot=self, dispatch_parent=self)
         self._action_dispatcher._send_single_action(action)
         return action
+
+    def set_robot_volume(self, robot_volume):
+        '''Set the volume for the speaker in the robot
+
+        Args:
+            robot_volume: (:float:) - The new volume (0.0 = mute, 1.0 = max)
+        '''
+        msg = _clad_to_engine_iface.SetRobotVolume(robotId=self.robot_id, volume=robot_volume)
+        self.conn.send_msg(msg)
+
         
         

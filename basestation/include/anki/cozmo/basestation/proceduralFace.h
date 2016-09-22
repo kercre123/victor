@@ -131,7 +131,7 @@ private:
   
   std::array<EyeParamArray, 2> _eyeParams{{}};
   
-  Value           _faceAngle = 0.0f;
+  Value           _faceAngle_deg = 0.0f;
   Point<2,Value>  _faceScale = 1.0f;
   Point<2,Value>  _faceCenter = 0.0f;
   
@@ -169,12 +169,12 @@ inline void ProceduralFace::SetParameterBothEyes(Parameter param, Value value)
 }
   
 inline ProceduralFace::Value ProceduralFace::GetFaceAngle() const {
-  return _faceAngle;
+  return _faceAngle_deg;
 }
 
-inline void ProceduralFace::SetFaceAngle(Value angle) {
+inline void ProceduralFace::SetFaceAngle(Value angle_deg) {
   // TODO: Define face angle limits?
-  _faceAngle = angle;
+  _faceAngle_deg = angle_deg;
 }
 
 inline Point<2,ProceduralFace::Value> const& ProceduralFace::GetFacePosition() const {

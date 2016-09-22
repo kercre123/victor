@@ -187,7 +187,13 @@ public class UnlockablesManager : MonoBehaviour {
   }
 
   public void TrySetUnlocked(Anki.Cozmo.UnlockId id, bool unlocked) {
-    RobotEngineManager.Instance.CurrentRobot.RequestSetUnlock(id, unlocked);
+    if (RobotEngineManager.Instance.CurrentRobot != null) {
+      RobotEngineManager.Instance.CurrentRobot.RequestSetUnlock(id, unlocked);
+    }
+    else {
+      DAS.Error("UnlockablesManager.TrySetUnlocked.NullRobotError",
+                "Tried to request an unlock but robot was null! id=" + id + " unlocked=" + unlocked);
+    }
   }
 
   public bool IsUnlocked(Anki.Cozmo.UnlockId id) {

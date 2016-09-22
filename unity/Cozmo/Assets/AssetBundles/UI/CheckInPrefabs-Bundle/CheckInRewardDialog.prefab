@@ -1147,6 +1147,7 @@ MonoBehaviour:
   _RewardCollectSound:
     _Event: Play__Sfx__Daily_Reward_Collect
     _EventType: Sfx
+  _PrivacyPolicyFileName: PrivacyPolicy.txt
   _EnvelopeShrinkDuration: 0.5
   _EnvelopeOpenDuration: 0.15
   _EnvelopeOpenStartScale: 0.9

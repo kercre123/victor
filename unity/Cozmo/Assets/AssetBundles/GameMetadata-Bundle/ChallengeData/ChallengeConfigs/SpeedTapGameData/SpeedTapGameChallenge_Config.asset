@@ -26,9 +26,18 @@ MonoBehaviour:
     _Levels:
     - SkillsArray:
       - name: TapDelayMin
+        val: 0.4
+      - name: TapDelayMax
+        val: 0.7
+      - name: WrongTapChance
+        val: 0.3
+      UpperBoundThreshold: 0.6
+      LowerBoundThreshold: 0.4
+    - SkillsArray:
+      - name: TapDelayMin
         val: 0.2
       - name: TapDelayMax
-        val: 0.5
+        val: 0.6
       - name: WrongTapChance
         val: 0.1
       UpperBoundThreshold: 0.6
@@ -37,7 +46,7 @@ MonoBehaviour:
       - name: TapDelayMin
         val: 0.15
       - name: TapDelayMax
-        val: 0.4
+        val: 0.5
       - name: WrongTapChance
         val: 0.075
       UpperBoundThreshold: 0.6
@@ -132,8 +141,9 @@ MonoBehaviour:
     Colors:
     - {r: 1, g: 1, b: 0, a: 1}
     - {r: 0, g: 1, b: 0, a: 1}
-    - {r: 0, g: 0, b: 1, a: 1}
+    - {r: 0, g: 0, b: 0.9411765, a: 1}
     - {r: 1, g: 0, b: 1, a: 1}
+    - {r: 0, g: 1, b: 1, a: 1}
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: -340344697

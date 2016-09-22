@@ -15,6 +15,8 @@ from tcpConnection import TcpConnection
 from udpConnection import UdpConnection
 from verboseLevel import VerboseLevel
 from messageMaker import MessageMaker
+import numpy as np
+from PIL import Image
 
 try:
     from clad.externalInterface.messageEngineToGame import Anki
@@ -209,14 +211,14 @@ class CozmoInterface:
         Lock()
         return True
 
-    def PlayAnimationTrigger(self, trigger, robotID = 1, numLoops = 1):
+    def PlayAnimationTrigger(self, trigger, robotID = 1, numLoops = 1, waitForComplete = True):
         try:
             animTrigger = eval("GToE.AnimationTrigger."+trigger)
         except:
             print("Not a valid AnimationTrigger, AnimationTrigger lookup unsuccessful")
             return False
         self.QueueMessage(self.messageMaker.PlayAnimationTrigger(gIdTag, animTrigger, robotID, numLoops))
-        Lock()
+        if waitForComplete: Lock()
         return True
 
     def MoveHead(self, velocity):
@@ -409,6 +411,33 @@ class CozmoInterface:
         self.QueueMessage(self.messageMaker.DefineCustomObject(type, xSize_mm, ySize_mm, zSize_mm,
                                                                markerWidth_mm, markerHeight_mm))
         Lock(LockTypes.definedCustomObject)
+
+    def DisplayFaceImage(self, face):
+        gray = face.convert('L')
+        bw = gray.point(lambda x: 1 if x < 200 else 0, '1')
+        data = list(bw.getdata())
+        data = list(zip(*[iter(data)]*8))
+        resList = []
+        counter = 0
+        for l in data:
+            newInt = 0
+            for bit in l:
+                newInt = newInt << 1
+                newInt += bit
+                counter += 1
+            resList.append(newInt)
+        self.QueueMessage(self.messageMaker.DisplayFaceImage(resList))
+
+    def DisplayProceduralFace(self,faceCenX = 0, faceCenY = 0, faceAngle = 0,
+                                    lEyeCenX = 10, lEyeCenY = -10,
+                                    lEyeScaleX = 1.5, lEyeScaleY = 1,
+                                    rEyeCenX = 10, rEyeCenY = -10,
+                                    rEyeScaleX = 1.5, rEyeScaleY = 1):
+        self.QueueMessage(self.messageMaker.DisplayProceduralFace(faceCenX, faceCenY, faceAngle,
+                                                                  lEyeCenX, lEyeCenY,
+                                                                  lEyeScaleX, lEyeScaleY,
+                                                                  rEyeCenX, rEyeCenY,
+                                                                  rEyeScaleX, rEyeScaleY))
 
 class _EngineInterfaceImpl:
     "Internal interface for talking to cozmo-engine"
@@ -801,3 +830,4 @@ class LockTypes():
     robotDeletedAllCustomObjects = 3
     createdFixedCustomObject = 4
     definedCustomObject = 5
+

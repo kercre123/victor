@@ -36,6 +36,27 @@ message AlignWithObject {
     AlignmentType alignmentType
 }
 
+// DisplayFaceImage
+message DisplayFaceImage {
+    uint_32  duration_ms,
+    uint_8   faceData[1024]          // Bit-image: one bit for each of 128x64 pixels
+}
+
+// DisplayProceduralFace
+message DisplayProceduralFace {
+    float_32 faceAngle_deg,        // Degrees
+    float_32 faceCenX,
+    float_32 faceCenY,
+    float_32 faceScaleX,
+    float_32 faceScaleY,
+
+    // Vector of values for each ProceduralEyeParameter for each eye:
+    float_32 leftEye[uint_8],      // TODO: make this fixed length = ProceduralEyeParameter::NumParameters
+    float_32 rightEye[uint_8],     //
+
+    uint_32  duration_ms
+}
+
 // DriveOffChargerContacts
 //  Mostly useful for SDK usage where motors are locked while on the charger.
 //  This action drives forward slightly to get off the charger.
@@ -418,6 +439,8 @@ message WaitForImages {
 // Again: Alphabetical please!
 union RobotActionUnion {
   AlignWithObject           alignWithObject,
+  DisplayFaceImage          displayFaceImage,
+  DisplayProceduralFace     displayProceduralFace,
   DriveOffChargerContacts   driveOffChargerContacts,
   DriveStraight             driveStraight,
   EnrollNamedFace           enrollNamedFace,

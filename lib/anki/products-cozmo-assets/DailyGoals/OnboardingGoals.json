@@ -8,7 +8,18 @@
       "Target": 1,
       "Priority": 1,
       "CladEvent": "OnUnlockableEarned",
-      "GenConditions": [],
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentUnlockCondition, Assembly-CSharp",
+          "Unlocked": "QuickTapGame",
+          "State": "Available",
+          "Label": {
+            "text": "Current Unlock Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
       "ProgressConditions": [
         {
           "$type": "Anki.Cozmo.UnlockIDCondition, Assembly-CSharp",

@@ -136,6 +136,8 @@ namespace Anki {
         case RobotActionType::ASCEND_OR_DESCEND_RAMP:
         case RobotActionType::COMPOUND:
         case RobotActionType::CROSS_BRIDGE:
+        case RobotActionType::DISPLAY_FACE_IMAGE:
+        case RobotActionType::DISPLAY_PROCEDURAL_FACE:
         case RobotActionType::DRIVE_OFF_CHARGER_CONTACTS:
         case RobotActionType::DRIVE_STRAIGHT:
         case RobotActionType::DRIVE_TO_FLIP_BLOCK_POSE:

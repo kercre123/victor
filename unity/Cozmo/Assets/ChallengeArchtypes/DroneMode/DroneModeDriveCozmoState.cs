@@ -143,7 +143,7 @@ namespace Cozmo {
           // Is the user telling us to point turn?
           if (IsUserPointTurning(_TargetDriveSpeed_mmps, _TargetTurnDirection)) {
             // Send a new message only if there is a change
-            if (!_TargetTurnDirection.IsNear(_CurrentTurnDirection, _kTurnDirectionChangeThreshold)) {
+            if (!_TargetTurnDirection.IsNear(_CurrentTurnDirection, _kTurnDirectionChangeThreshold) || !_CurrentDriveSpeed_mmps.IsNear(_TargetDriveSpeed_mmps, _kDriveSpeedChangeThreshold_mmps)) {
               _CurrentDriveSpeed_mmps = PointTurnRobotWheels(_TargetTurnDirection);
               _CurrentTurnDirection = _TargetTurnDirection;
             }

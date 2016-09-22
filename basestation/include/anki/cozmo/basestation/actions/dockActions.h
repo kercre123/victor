@@ -91,40 +91,64 @@ namespace Anki {
       // By default this is false (the action is looking for a specific marker)
       void SetShouldVisuallyVerifyObjectOnly(const bool b) { _visuallyVerifyObjectOnly = b; }
       
-      struct PreActionPoseInfo
+      struct PreActionPoseInput
       {
         // Inputs
-        ObjectID objectID;
+        ActionableObject* object;
         PreActionPose::ActionType preActionPoseType;
         bool doNearPreDockPoseCheck;
         f32 preActionPoseAngleTolerance;
         f32 preDockPoseDistOffsetX_mm;
+        bool useApproachAngle;
+        f32 approachAngle_rad;
         
-        // Outputs
+        PreActionPoseInput(ActionableObject* object,
+                          PreActionPose::ActionType preActionPoseType,
+                          bool doNearPreDockPoseCheck,
+                          f32 preDockPoseDistOffsetX_mm,
+                          f32 preActionPoseAngleTolerance,
+                          bool useApproachAngle,
+                          f32 approachAngle_rad)
+        : object(object)
+        , preActionPoseType(preActionPoseType)
+        , doNearPreDockPoseCheck(doNearPreDockPoseCheck)
+        , preActionPoseAngleTolerance(preActionPoseAngleTolerance)
+        , preDockPoseDistOffsetX_mm(preDockPoseDistOffsetX_mm)
+        , useApproachAngle(useApproachAngle)
+        , approachAngle_rad(approachAngle_rad)
+        {
+          
+        }
+      };
+      
+      struct PreActionPoseOutput
+      {
         ActionResult actionResult;
         ObjectInteractionResult interactionResult;
         std::vector<PreActionPose> preActionPoses;
         size_t closestIndex;
         Point2f closestPoint;
+        bool robotAtClosestPreActionPose;
+        f32 distThresholdUsed;
         
-        PreActionPoseInfo(ObjectID objectID,
-                          PreActionPose::ActionType preActionPoseType,
-                          bool doNearPreDockPoseCheck,
-                          f32 preDockPoseDistOffsetX_mm,
-                          f32 preActionPoseAngleTolerance)
-        : objectID(objectID)
-        , preActionPoseType(preActionPoseType)
-        , doNearPreDockPoseCheck(doNearPreDockPoseCheck)
-        , preActionPoseAngleTolerance(preActionPoseAngleTolerance)
-        , preDockPoseDistOffsetX_mm(preDockPoseDistOffsetX_mm)
-        , actionResult(ActionResult::FAILURE_NOT_STARTED)
+        PreActionPoseOutput()
+        : actionResult(ActionResult::FAILURE_NOT_STARTED)
         , interactionResult(ObjectInteractionResult::INCOMPLETE)
         , closestIndex(-1)
+        , robotAtClosestPreActionPose(false)
+        , distThresholdUsed(-1)
         {
           
         }
       };
-      static void IsCloseEnoughToPreActionPose(Robot& robot, PreActionPoseInfo& preActionPoseInfo);
+      
+      // Computes that angle (wrt world) at which the robot would have to approach the given pose
+      // such that it places the carried object at the given pose
+      static Result ComputePlacementApproachAngle(const Robot& robot,
+                                                  const Pose3d& placementPose,
+                                                  f32& approachAngle_rad);
+      
+      static void GetPreActionPoses(Robot& robot, const PreActionPoseInput& input, PreActionPoseOutput& output);
       
     protected:
       

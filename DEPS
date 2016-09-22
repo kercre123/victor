@@ -14,7 +14,7 @@
                     "animationGroups",
                     "faceAnimations"
                 ],
-                "version": "1256"
+                "version": "1286"
             },
             "cozmosoundbanks": {
                 "package_name": "GeneratedSoundBanks.tar.gz",
@@ -33,18 +33,18 @@
                 "version": "153"
             },
             "firmware": {
+                "build_id": "29518",
+                "build_type_id": "CozmoOne_Experiments_CollectFirmware",
+                "extension": "tar.gz",
+                "package_name": "firmware",
+                "version": "742"
+            },
+            "old_firmware": {
                 "build_id": "29064",
                 "build_type_id": "CozmoOne_Experiments_CollectFirmware",
                 "extension": "tar.gz",
                 "package_name": "firmware",
                 "version": "729"
-            },
-            "old_firmware": {
-                "build_id": "28174",
-                "build_type_id": "CozmoOne_Experiments_CollectFirmware",
-                "extension": "tar.gz",
-                "package_name": "firmware",
-                "version": "697"
             }
         },
         "default_usr": "puller_cozmo",

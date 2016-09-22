@@ -6,7 +6,7 @@
     "FP_Hiking"
   ],
 
-  "flatScore": 2.1, // can interrupt general hiking
+  "flatScore": 3.1, // intended to interrupt lookInPlace behaviors but not be interrupted by bringCubeToBeacon
   "boredomMultiplier": 0.0, // never run in hiking unless we see motion
   "repetitionPenalty": {
     "nodes": [

@@ -186,16 +186,18 @@ public class Robot : IRobot {
     get { return _Charger; }
     private set {
       if (value != null) {
+        _Charger = value;
         if (OnChargerAdded != null) {
           OnChargerAdded(_Charger);
         }
       }
       else {
-        if (OnChargerRemoved != null) {
-          OnChargerRemoved(_Charger);
+        ObservedObject oldCharger = _Charger;
+        _Charger = null;
+        if (oldCharger != null && OnChargerRemoved != null) {
+          OnChargerRemoved(oldCharger);
         }
       }
-      _Charger = value;
     }
   }
 
@@ -747,8 +749,8 @@ public class Robot : IRobot {
         DAS.Debug("Robot.DeleteObservedObject", "Deleted ID " + id);
         if (OnLightCubeRemoved != null) {
           OnLightCubeRemoved(removedLightCube);
-        }        
-      } 
+        }
+      }
       else {
         DAS.Debug("Robot.DeleteObservedObject", "Tried to delete object with ID " + id + " but failed.");
       }
@@ -795,9 +797,9 @@ public class Robot : IRobot {
   }
 
   private void HandleBlockDataConnectionChanged(BlockPoolData blockData) {
-//    DAS.Debug("Robot.HandleObjectConnectionState", (blockData.IsConnected ? "Connected " : "Disconnected ")
-//              + "object of type " + blockData.ObjectType + " with ID " + blockData.ObjectID
-//              + " and factoryId " + blockData.FactoryID.ToString("X"));
+    //    DAS.Debug("Robot.HandleObjectConnectionState", (blockData.IsConnected ? "Connected " : "Disconnected ")
+    //              + "object of type " + blockData.ObjectType + " with ID " + blockData.ObjectID
+    //              + " and factoryId " + blockData.FactoryID.ToString("X"));
 
     if (blockData.ConnectionState == BlockConnectionState.Unavailable || blockData.ConnectionState == BlockConnectionState.Connected) {
       if (blockData.IsConnected) {
@@ -1032,14 +1034,14 @@ public class Robot : IRobot {
 
     RobotEngineManager.Instance.Message.DisplayProceduralFace =
       Singleton<DisplayProceduralFace>.Instance.Initialize(
-      robotID: ID,
-      faceAngle: faceAngle,
+      faceAngle_deg: faceAngle,
       faceCenX: faceCenter.x,
       faceCenY: faceCenter.y,
       faceScaleX: faceScale.x,
       faceScaleY: faceScale.y,
       leftEye: leftEyeParams,
-      rightEye: rightEyeParams
+      rightEye: rightEyeParams,
+      duration_ms: 1000
     );
     RobotEngineManager.Instance.SendMessage();
 

@@ -31,8 +31,6 @@ namespace Cozmo {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace {
 
-// kDistanceTresholdForLocations_mm: how far a location needs to be considered different for full locations
-CONSOLE_VAR(float, kDistanceTresholdForLocations_mm, "BehaviorLookInPlaceMemoryMap", 180.0f);
 // kSectorsPerLocation: how many sectors we divide 360 into. Each sector implies 1 memoryMap raycast
 // this could be in json, but don't wanna tweak much since it could have performance implications
 //CONSOLE_VAR(uint8_t, kSectorsPerLocation, "BehaviorLookInPlaceMemoryMap", 8);
@@ -95,12 +93,13 @@ bool BehaviorLookInPlaceMemoryMap::IsRunnableInternal(const Robot& robot) const
   // I'm going to validate as long as we have not failed previously at this location, and always as long
   // as we have borders to process
   float distanceSQ;
-  const float closeDistSQ = kDistanceTresholdForLocations_mm*kDistanceTresholdForLocations_mm;
+  const float distThreshold = _configParams.distanceThresholdForLocations_mm;
+  const float closeDistSQ = distThreshold*distThreshold;
   const Pose3d& currentPose = robot.GetPose();
-  for( const auto& recentFullLocation : _recentFullLocations )
+  for( const auto& previousFullLocation : _previousFullLocations )
   {
-    // try to grab distance between robot pose and recentFullLocation (if comparable)
-    if ( ComputeDistanceSQBetween(recentFullLocation, currentPose, distanceSQ) )
+    // try to grab distance between robot pose and previousFullLocation (if comparable)
+    if ( ComputeDistanceSQBetween(previousFullLocation, currentPose, distanceSQ) )
     {
       // comparable, check distance
       const bool isLocationClose = FLT_LE(distanceSQ, closeDistSQ);
@@ -127,6 +126,10 @@ void BehaviorLookInPlaceMemoryMap::LoadConfig(const Json::Value& config)
   _configParams.t1_headAngleAbsRangeMax_deg = ParseFloat(config, "t1_headAngleAbsRangeMax_deg", debugName);
   _configParams.t2_headAngleAbsRangeMin_deg = ParseFloat(config, "t2_headAngleAbsRangeMin_deg", debugName);
   _configParams.t2_headAngleAbsRangeMax_deg = ParseFloat(config, "t2_headAngleAbsRangeMax_deg", debugName);
+  _configParams.prioritySectorCount = ParseUint8(config, "prioritySectorCount", debugName);
+  _configParams.lowPriorityScoreReduction = ParseFloat(config, "lowPriorityScoreReduction", debugName);
+  _configParams.distanceThresholdForLocations_mm = ParseFloat(config, "distanceThresholdForLocations_mm", debugName);
+  _configParams.maxPreviousLocationCount = ParseUint8(config, "maxPreviousLocationCount", debugName);
   
   // anim triggers
   std::string lookInPlaceAnimTriggerStr = ParseString(config, "lookInPlaceAnimTrigger", debugName);
@@ -162,6 +165,8 @@ Result BehaviorLookInPlaceMemoryMap::InitInternal(Robot& robot)
   // recasting if we get interrupted (after all, interruptions will probably cause other behaviors to kick in
   // and move us away from the current pose)
   
+  _visitedSectorCount = 0; // note that doing this here will be reset if we Resume (should consider different ResumeInternal)
+  
   _startingBodyFacing_rad = robot.GetPose().GetWithRespectToOrigin().GetRotationAngle<'Z'>();
   
   // restart all sectors
@@ -181,6 +186,18 @@ void BehaviorLookInPlaceMemoryMap::StopInternal(Robot& robot)
     robot.GetContext()->GetVizManager()->EraseSegments("BehaviorLookInPlaceMemoryMap.kDrawDebugInfo");
     robot.GetContext()->GetVizManager()->EraseSegments("BehaviorLookInPlaceMemoryMap.kDrawDebugInfo.UpdateSectorRender");
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float BehaviorLookInPlaceMemoryMap::EvaluateRunningScoreInternal(const Robot& robot) const
+{
+  float baseScore = BaseClass::EvaluateRunningScoreInternal(robot);
+  
+  // if we have visited the priority count, apply the score reduction now
+  if ( _visitedSectorCount >= _configParams.prioritySectorCount ) {
+    baseScore -= _configParams.lowPriorityScoreReduction;
+  }
+  return baseScore;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -288,7 +305,7 @@ void BehaviorLookInPlaceMemoryMap::FindAndVisitClosestVisitableSector(Robot& rob
   #endif
   
   // no more sectors to visit
-  FinishedWithoutInterruption(robot);
+  FinishedAllSectorsAtLocation(robot);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -348,23 +365,27 @@ void BehaviorLookInPlaceMemoryMap::VisitSector(Robot& robot, const int16_t index
   {
     // What should we do on failure? Should we bail? Currently we just pretend we visited the sector.
     // It's not the worst thing, unless we have actually become stuck, eval in the future
+    PRINT_CH_INFO("Behaviors", (GetName()).c_str(), "Done visiting sector %d (priority=%s)",
+      index, ( _visitedSectorCount < _configParams.prioritySectorCount ) ? "regular" : "low" ); // print priority before updating count
     
     // flag sector as finally visited
     _sectors[index] = SectorStatus::Visited;
+    ++_visitedSectorCount;
   
     // The current index (we just visited) should match either both next indices (meaning we finished), or should
     // not match either, since next* should really point to new indices to explore
     ASSERT_NAMED((index != nextLeft)==(index != nextRight), "BehaviorLookInPlaceMemoryMap.VisitSector.MatchAllOrNone");
     // we should check next if either one is not the one we just did
     const bool shouldCheckNext = ( index != nextLeft || index != nextRight );
-    if ( shouldCheckNext ) {
+    if ( shouldCheckNext )
+    {
       // continue checking next sector
       this->FindAndVisitClosestVisitableSector(robot, index, nextLeft, nextRight);
     }
     else
     {
-      // this means we checked the last of sectors
-      this->FinishedWithoutInterruption(robot);
+      // this means we checked all sectors at this location
+      this->FinishedAllSectorsAtLocation(robot);
     }
   };
 
@@ -373,7 +394,7 @@ void BehaviorLookInPlaceMemoryMap::VisitSector(Robot& robot, const int16_t index
   const float bodyTargetAngle_deg = _startingBodyFacing_rad.getDegrees() + relativeAngle_deg;
 
   // log visit
-  PRINT_CH_INFO("Behaviors", (GetName()).c_str(), "Visiting sector %d (at %.2fdeg from %.2f = abs %.2f)",
+  PRINT_CH_INFO("Behaviors", (GetName()).c_str(), "Going to visit sector %d (at %.2fdeg from %.2f = abs %.2f)",
     index, relativeAngle_deg, _startingBodyFacing_rad.getDegrees(), bodyTargetAngle_deg );
   
   // create action and run
@@ -422,12 +443,20 @@ void BehaviorLookInPlaceMemoryMap::VisitSector(Robot& robot, const int16_t index
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookInPlaceMemoryMap::FinishedWithoutInterruption(Robot& robot)
+void BehaviorLookInPlaceMemoryMap::FinishedAllSectorsAtLocation(Robot& robot)
 {
-  PRINT_CH_INFO("Behaviors", (GetName()).c_str(), "Finished without interruption. Flagging location");
+  PRINT_CH_INFO("Behaviors", (GetName()).c_str(), "Finished all sectors without interruption. Flagging location");
   
-  // if we compelted the loop ourselves, flag this location so that we don't try again soon
-  _recentFullLocations.emplace_back( robot.GetPose() );
+  // if we completed the loop ourselves, flag this location so that we don't try again soon
+  if ( _configParams.maxPreviousLocationCount > 0 )
+  {
+    // if we have reached the max amount of locations, remove the front one
+    if ( _previousFullLocations.size() >= _configParams.maxPreviousLocationCount ) {
+      _previousFullLocations.pop_front();
+    }
+    // add this new one
+    _previousFullLocations.emplace_back( robot.GetPose() );
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

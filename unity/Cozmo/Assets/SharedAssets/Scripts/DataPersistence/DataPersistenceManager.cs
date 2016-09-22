@@ -122,13 +122,39 @@ namespace DataPersistence {
 
     public TimelineEntryData StartNewSession() {
       TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today);
+      int numDays = 0;
+      TimelineEntryData lastSession = null;
+      if (DataPersistenceManager.Instance.Data.DefaultProfile.Sessions != null) {
+        numDays = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Count;
+        if (numDays > 0) {
+          lastSession = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions[numDays - 1];
+        }
+      }
       DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Add(newSession);
       // Goals have been generated for onboarding, complete this phase so that future sessions will have fresh goals
       if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.DailyGoals)) {
         OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.DailyGoals);
       }
 
+      if (lastSession != null && !lastSession.GoalsFinished) {
+        Cozmo.UI.DailyGoal goal = lastSession.DailyGoals.FirstOrDefault();
+        string goalName = "";
+        if (goal != null) {
+          goalName = goal.Title.Key;
+        }
+        DAS.Event("meta.goal_expired", numDays.ToString (), DASUtil.FormatExtraData(goalName));
+        foreach (Cozmo.UI.DailyGoal dailyGoal in lastSession.DailyGoals) {
+          DAS.Event("meta.goal_expired_progress", dailyGoal.Title.Key, DASUtil.FormatExtraData( 
+            string.Format("{0}/{1}", dailyGoal.Progress, dailyGoal.Target) ) );
+        }
+
+      }
+
       newSession.DailyGoals = DailyGoalManager.Instance.GenerateDailyGoals();
+      // log daily goals
+      foreach (Cozmo.UI.DailyGoal dailyGoal in newSession.DailyGoals) {
+        DAS.Event("meta.daily_goals", numDays.ToString(), DASUtil.FormatExtraData(dailyGoal.Title.Key));
+      }
       if (DailyGoalManager.Instance.OnRefreshDailyGoals != null) {
         DailyGoalManager.Instance.OnRefreshDailyGoals.Invoke();
       }

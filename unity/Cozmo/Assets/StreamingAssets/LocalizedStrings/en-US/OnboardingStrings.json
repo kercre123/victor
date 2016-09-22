@@ -33,6 +33,24 @@
   "onboarding.CozmoNeedsCharge.CozmoIsReady": {
     "translation": "Cozmo is ready!"
   },
+  "onboarding.CozmoNeedsCharge.message1": {
+    "translation": "You're connected to your Cozmo, and he's almost ready!\nHe just needs a moment to charge."
+  },
+  "onboarding.CozmoNeedsCharge.message2": {
+    "translation": "Once he's done charging, let Cozmo come to life\nand learn about his new home."
+  },
+  "onboarding.CozmoNeedsCharge.message3": {
+    "translation": "Cozmo comes with Upgrades that you can unlock.\nEach one gives him a new ability that he'll do on his own."
+  },
+  "onboarding.CozmoNeedsCharge.message4": {
+    "translation": "You can pick up Cozmo if you need to,\nbut he's happiest when he can drive on his own."
+  },
+  "onboarding.CozmoNeedsCharge.message5": {
+    "translation": "When you're not playing games with Cozmo,\nit's great to sit back and watch him explore the world."
+  },
+  "onboarding.CozmoNeedsCharge.finalMessage": {
+    "translation": "Cozmo is ready to play. To completely charge his battery,\nyou can keep him on the charger for another 7 minutes."
+  },
   "onboarding.Slide0": {
     "translation": "Create a <b>great</b> play space "
   },

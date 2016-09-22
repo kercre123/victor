@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: 992b0c42e467e4fddaa4ca4bd6a8dd10
-timeCreated: 1467169185
+guid: a0c43fab4ccad47618022bc1f4e9715e
+timeCreated: 1474493278
 licenseType: Pro
 TextureImporter:
   fileIDToRecycleName: {}
@@ -44,7 +44,7 @@ TextureImporter:
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
-  spritePixelsToUnits: 50
+  spritePixelsToUnits: 100
   alphaIsTransparency: 1
   textureType: 8
   buildTargetSettings: []
@@ -52,7 +52,7 @@ TextureImporter:
     serializedVersion: 2
     sprites: []
     outline: []
-  spritePackingTag: MinigameUISpritesHDAtlas
+  spritePackingTag: HomeViewUISpritesUHDAtlas
   userData: 
   assetBundleName: 
   assetBundleVariant: 

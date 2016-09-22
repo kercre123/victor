@@ -85,7 +85,7 @@ public class DasTracker {
       // app.connected_session.end - include:
       //   - time spent in session (w/o backgrounding)
       //   - $data = time spent in session including backgrounding
-      DAS.Event("app.connected_session.end", Convert.ToUInt32(_RunningRobotTime).ToString(), null, dataDict);
+      DAS.Event("app.connected_session.end", Convert.ToUInt32(_RunningRobotTime).ToString(), dataDict);
     }
     {
       var robot = RobotEngineManager.Instance.CurrentRobot;
@@ -95,7 +95,7 @@ public class DasTracker {
         // app.connection_lost - included:
         //   - reason for connection loss
         //   - $phys
-        DAS.Event("app.connection_lost", "disconnected", null, dataDict);
+        DAS.Event("app.connection_lost", "disconnected", dataDict);
       }
     }
 
@@ -131,7 +131,7 @@ public class DasTracker {
       // app.connect.exit - include:
       //   - total time in connect flow (seconds)
       //   - 0/1 if in out of box experience
-      DAS.Event("app.connect.exit", secondsInFlow.ToString(), null, dataDict);
+      DAS.Event("app.connect.exit", secondsInFlow.ToString(), dataDict);
     }
   }
 
@@ -142,7 +142,7 @@ public class DasTracker {
     // app.connect.fail - include:
     //   - total time in connect flow (seconds)
     //   - 0/1 if in out of box experience
-    DAS.Event("app.connect.fail", secondsInFlow.ToString(), null, dataDict);
+    DAS.Event("app.connect.fail", secondsInFlow.ToString(), dataDict);
   }
 
   public void TrackWifiInstructionsStarted() {
@@ -159,7 +159,7 @@ public class DasTracker {
     // app.connect.wifi.complete - include:
     //   - total time in wifi setup portion of flow
     //   - 0/1 if in out of box experience
-    DAS.Event("app.connect.wifi.complete", secondsInFlow.ToString(), null, dataDict);
+    DAS.Event("app.connect.wifi.complete", secondsInFlow.ToString(), dataDict);
   }
 
   public void TrackWifiInstructionsGetHelp() {
@@ -214,7 +214,7 @@ public class DasTracker {
     // app.connect.success - include:
     //   - total time in connect flow (seconds)
     //   - 0/1 if in out of box experience
-    DAS.Event("app.connect.success", secondsInFlow.ToString(), null, dataDict);
+    DAS.Event("app.connect.success", secondsInFlow.ToString(), dataDict);
   }
 
   private void HandleSessionStart() {
@@ -233,7 +233,7 @@ public class DasTracker {
     // app.session.end - include:
     //   - time spent in session (w/o backgrounding)
     //   - $data = time spent in session including backgrounding
-    DAS.Event("app.session.end", Convert.ToUInt32(_RunningSessionTime).ToString(), null, dataDict);
+    DAS.Event("app.session.end", Convert.ToUInt32(_RunningSessionTime).ToString(), dataDict);
 
     _RunningSessionTime = 0.0;
   }

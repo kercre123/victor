@@ -256,7 +256,7 @@ return RESULT_FAIL; \
       // Note the dynamic check for num frames, since (in the case of streaming
       // procedural animations) the number of keyframes could be increasing
       // while we're playing and thus isn't known up front.
-      return _curFrame >= FaceAnimationManager::getInstance()->GetNumFrames(_animName);
+      return !_isSingleFrame && (_curFrame >= FaceAnimationManager::getInstance()->GetNumFrames(_animName));
     }
     
     RobotInterface::EngineToRobot* FaceAnimationKeyFrame::GetStreamMessage()
@@ -265,7 +265,13 @@ return RESULT_FAIL; \
       
       if(!IsDone()) 
       {
-        const std::vector<u8>* rleFrame = FaceAnimationManager::getInstance()->GetFrame(_animName, _curFrame);
+        const std::vector<u8>* rleFrame;
+        if (_isSingleFrame) {
+          rleFrame = &_faceImageMsg.image;
+        }
+        else {
+          rleFrame = FaceAnimationManager::getInstance()->GetFrame(_animName, _curFrame);
+        }
         
         if(rleFrame == nullptr) {
           PRINT_NAMED_ERROR("FaceAnimationKeyFrame.GetStreamMesssage",

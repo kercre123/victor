@@ -9,7 +9,7 @@
   "name": "Hiking_BringCubeToBeacon",
 
   "behaviorType": "BringCubeToBeacon",
-  "flatScore": 2.9, // intended to interrupt general hiking
+  "flatScore": 4, // intended to interrupt lookInPlace behaviors
   "behaviorGroups": [
     "FP_Hiking"
   ]

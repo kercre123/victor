@@ -210,11 +210,16 @@ bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const Robot& robot) co
       if ( nullptr != objPtr )
       {
         const Pose3d& currentPose = objPtr->GetPose();
-        const bool recentFail = whiteboard.DidFailToUse(objectInfo.id,
+        const bool recentFailPickup = whiteboard.DidFailToUse(objectInfo.id,
           AIWhiteboard::ObjectUseAction::PickUpObject,
           kRecentFailure_sec,
           currentPose, kCubeFailureDist_mm, kCubeFailureRot_rad);
-        if ( !recentFail )
+        const bool recentFailRollOrWheelie = whiteboard.DidFailToUse(objectInfo.id,
+          AIWhiteboard::ObjectUseAction::RollOrPopAWheelie,
+          kRecentFailure_sec,
+          currentPose, kCubeFailureDist_mm, kCubeFailureRot_rad);
+        
+        if ( !recentFailPickup && ! recentFailRollOrWheelie )
         {
           // this object should be ok to be picked up
           _candidateObjects.emplace_back(objectInfo);
@@ -445,7 +450,7 @@ void BehaviorExploreBringCubeToBeacon::TryToStackOn(Robot& robot, const ObjectID
     // failed to stack on the bottom object, notify the whiteboard
     if ( stackOnCubeFinalFail ) {
       const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID( bottomCubeID );
-      if ( nullptr != failedObject ) {
+      if (failedObject) {
         robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::StackOnObject);
       }
       
@@ -519,7 +524,7 @@ void BehaviorExploreBringCubeToBeacon::TryToPlaceAt(Robot& robot, const Pose3d& 
     // failed to place this cube at this location
     if ( placeAtCubeFinalFail ) {
       const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID( _selectedObjectID );
-      if ( nullptr != failedObject ) {
+      if (failedObject) {
         robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectUseAction::PlaceObjectAt, pose);
       }
 
@@ -650,6 +655,8 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
       AIWhiteboard::ObjectUseAction::StackOnObject,
       kRecentFailure_sec,
       currentPose, kCubeFailureDist_mm, kCubeFailureRot_rad);
+    
+    
     if ( recentFail )
     {
       return false;

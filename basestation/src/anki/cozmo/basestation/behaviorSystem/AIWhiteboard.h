@@ -69,7 +69,8 @@ public:
   enum class ObjectUseAction {
     PickUpObject,   // pick up object from location
     StackOnObject,  // stack on top of object
-    PlaceObjectAt   // place object at location
+    PlaceObjectAt,   // place object at location
+    RollOrPopAWheelie // roll or pop a wheelie on a block
   };
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -118,9 +119,10 @@ public:
   // returns true if all active cubes are known to be in beacons
   bool AreAllCubesInBeacons() const;
   
-  // notify the whiteboard that we just failed to use this object. If no location is specified, the
-  // object's current location is used
+  // notify the whiteboard that we just failed to use this object.
+  // uses object's current location
   void SetFailedToUse(const ObservableObject& object, ObjectUseAction action);
+  // specify location manually - should only be used for PlaceObjectAt
   void SetFailedToUse(const ObservableObject& object, ObjectUseAction action, const Pose3d& atLocation);
 
   // returns true if someone reported a failure to use the given object (by ID), less than the specified seconds ago
@@ -245,6 +247,7 @@ private:
   ObjectFailureTable _pickUpFailures;
   ObjectFailureTable _stackOnFailures;
   ObjectFailureTable _placeAtFailures;
+  ObjectFailureTable _rollOrPopFailures;
   
   // time at which the robot got off the charger by itself. Negative value means never
   float _gotOffChargerAtTime_sec;

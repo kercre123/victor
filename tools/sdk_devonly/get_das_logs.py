@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
+
 import cozmo
 import time
 import os, json

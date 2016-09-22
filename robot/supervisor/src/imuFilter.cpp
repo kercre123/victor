@@ -49,13 +49,8 @@ namespace Anki {
         f32 rot_ = 0;   // radians
         f32 rotSpeed_ = 0; // rad/s
 
-        // Pitch angle: Approaches angle of accelerometer wrt gravity horizontal
-        f32 pitch_                      = 0;
-        const f32 PITCH_FILT_COEFF      = 0.97f;  // Filter to combine gyro and accel for smooth pitch estimation
-                                                  // The higher this value, the slower it approaches accel-based pitch,
-                                                  // but the less noisy it is.
-        const f32 UNINIT_HEAD_ANGLE     = 10000;  // Just has to be some not physically possible value
-        f32 prevHeadAngle_              = UNINIT_HEAD_ANGLE;
+        // Angle of accelerometer wrt gravity horizontal
+        f32 pitch_ = 0;
 
         f32 gyro_robot_frame[3]         = {0};    // Unfiltered gyro measurements in robot frame
         f32 gyro_robot_frame_filt[3]    = {0};    // Filtered gyro measurements in robot frame
@@ -368,8 +363,6 @@ namespace Anki {
         rotSpeed_ = 0;
         pitch_ = 0;
         imu_data_.Reset();
-        
-        prevHeadAngle_ = UNINIT_HEAD_ANGLE;
         
         ResetPickupVars();
       }
@@ -738,22 +731,27 @@ namespace Anki {
         
       }
 
-      // This pitch measurement isn't precise to begin with, but it's extra imprecise when the head is moving
-      // so be careful relying on it when the head is moving!
       void UpdatePitch()
       {
+        static f32 lastHeadAngle = 10000;
         f32 headAngle = HeadController::GetAngleRad();
 
-        if (prevHeadAngle_ != UNINIT_HEAD_ANGLE) {
-          const f32 accelBasedPitch = atan2(accel_filt[0], accel_filt[2]) - headAngle;
-          const f32 gyroBasedPitch = pitch_ - (gyro_robot_frame[1] * CONTROL_DT) - (headAngle - prevHeadAngle_);
+        // If not moving then reset pitch angle with accelerometer.
+        // Otherwise, update it with gyro.
+        if (!MotionDetected()) {
+          pitch_ = atan2(accel_filt[0], accel_filt[2]) - headAngle;
           
-          // Complementary filter to mostly trust gyro integration for current pitch in the short term
-          // but always approach accelerometer-based pitch in the "long" term.
-          pitch_ = (PITCH_FILT_COEFF * gyroBasedPitch) + ((1.f - PITCH_FILT_COEFF) * accelBasedPitch);
+        // Was originally only updating pitch if head wasn't moving in order to avoid noisy pitch measurements,
+        // that was causing some problems with pounce success detection so now updating pitch all the time.
+        // NB: This pitch measurement isn't precise to begin with, but it's extra imprecise when the head is moving
+        // so be careful relying on it when the head is moving.
+        //} else if (HeadController::IsInPosition() && !HeadController::IsMoving()) {
+        } else if (lastHeadAngle != 10000) {
+          f32 dAngle = -gyro_robot_frame_filt[1] * CONTROL_DT;
+          pitch_ += dAngle - (headAngle - lastHeadAngle);
         }
         
-        prevHeadAngle_ = headAngle;
+        lastHeadAngle = headAngle;
 
         //AnkiDebugPeriodic(50, 182, "RobotPitch", 483, "%f deg (motion %d, gyro %f)", 3, RAD_TO_DEG_F32(pitch_), MotionDetected(), gyro_robot_frame_filt[1]);
       }
@@ -810,8 +808,8 @@ namespace Anki {
         // D(r,p,y) = |  0       cos(r)           -sin(r)     |
         //            |  0    sin(r)/cos(p)    cos(r)/cos(p)  |
         //
-        // Rotation in robot frame = D * [dr/dt, dp/dt, dy/dt] where the latter vector is given by gyro readings.
-        // In our case, we only care about yaw. In other words, it's always true that r = 0.
+        // Rotation in robot frame = D * [dr/dt, dp/dt, dy,dt] where the latter vector is given by gyro readings.
+        // In our case, we only care about yaw. In other words, it's always true that r = y = 0.
         // (NOTE: This is true as long as we don't start turning on ramps!!!)
         // So the result simplifies to...
         gyro_robot_frame[0] = gyro[0] + gyro[2] * tanf(headAngle);

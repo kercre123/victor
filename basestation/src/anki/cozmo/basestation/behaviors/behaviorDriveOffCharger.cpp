@@ -32,7 +32,14 @@ static const float kInitialDriveAccel = 40.0f;
 
 static const char* const kExtraDriveDistKey = "extraDistanceToDrive_mm";
 
-
+static const std::set<BehaviorType> kBehaviorsToDisable = {BehaviorType::ReactToCliff,
+                                                           BehaviorType::ReactToUnexpectedMovement,
+                                                           BehaviorType::AcknowledgeObject,
+                                                           BehaviorType::AcknowledgeFace,
+                                                           BehaviorType::ReactToCubeMoved,
+                                                           BehaviorType::KnockOverCubes};
+  
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDriveOffCharger::BehaviorDriveOffCharger(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -60,9 +67,12 @@ bool BehaviorDriveOffCharger::IsRunnableInternal(const Robot& robot) const
   //ASSERT_NAMED(robot.IsOnChargerPlatform() || !robot.IsOnCharger(),
   //             "BehaviorDriveOffCharger.IsRunnableInternal.InconsistentChargerFlags");
   
-  // can run any time we are on a platform
-  const bool onChargerPlatform = robot.IsOnChargerPlatform();
-  return onChargerPlatform;
+  // can run any time we are on the charger
+  // rsam: the reason why I changed from platform to onCharger is that because Cozmo can run onto the platform
+  // accidentaly while driving around in freeplay. This was causing him to sprint forward for no apparent reason
+  // since this behavior has high priority
+  const bool onCharger = robot.IsOnCharger();
+  return onCharger;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -72,7 +82,8 @@ Result BehaviorDriveOffCharger::InitInternal(Robot& robot)
   _timesResumed = 0;
   
   //Disable Cliff Reaction during behavior
-  SmartDisableReactionaryBehavior(BehaviorType::ReactToCliff);
+  SmartDisableReactionaryBehavior(kBehaviorsToDisable);
+
   return Result::RESULT_OK;
 }
   

@@ -1,3 +1,5 @@
+# Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
+
 __all__ = ['connect',  'connect_with_tkviewer', 'connect_on_loop',
            'setup_basic_logging',
            'DeviceConnector', 'IOSConnector', 'AndroidConnector']

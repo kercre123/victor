@@ -272,9 +272,10 @@ namespace Cozmo {
   {
   public:
     FaceAnimationKeyFrame(const std::string& faceAnimName = "") : _animName(faceAnimName) { }
-    FaceAnimationKeyFrame(const AnimKeyFrame::FaceImage& faceImageMsg, const std::string& faceAnimName = "")
+    FaceAnimationKeyFrame(const AnimKeyFrame::FaceImage& faceImageMsg, const std::string& faceAnimName = "", const bool isSingleFrame = false)
     : _animName(faceAnimName)
     , _faceImageMsg(faceImageMsg)
+    , _isSingleFrame(isSingleFrame)
     { }
     
     virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
@@ -294,10 +295,10 @@ namespace Cozmo {
     
   private:
     std::string  _animName;
-    
-    s32 _curFrame;
-    
     AnimKeyFrame::FaceImage _faceImageMsg;
+    
+    s32   _curFrame = 0;
+    bool  _isSingleFrame = false;
     
   }; // class FaceAnimationKeyFrame
   

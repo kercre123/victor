@@ -148,39 +148,39 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     }
   }
 
-  void IDASTarget.Info(string eventName, string eventValue, object context, Dictionary<string, string> keyValues) {
-    SaveLogPacket(LogPacket.ELogKind.Info, eventName, eventValue, context, keyValues);
+  void IDASTarget.Info(string eventName, string eventValue, Dictionary<string, string> keyValues, UnityEngine.Object context) {
+    SaveLogPacket(LogPacket.ELogKind.Info, eventName, eventValue, keyValues, context);
   }
 
-  void IDASTarget.Error(string eventName, string eventValue, object context, Dictionary<string, string> keyValues) {
-    SaveLogPacket(LogPacket.ELogKind.Error, eventName, eventValue, context, keyValues);
+  void IDASTarget.Error(string eventName, string eventValue, Dictionary<string, string> keyValues, UnityEngine.Object context) {
+    SaveLogPacket(LogPacket.ELogKind.Error, eventName, eventValue, keyValues, context);
   }
 
-  void IDASTarget.Warn(string eventName, string eventValue, object context, Dictionary<string, string> keyValues) {
-    SaveLogPacket(LogPacket.ELogKind.Warning, eventName, eventValue, context, keyValues);
+  void IDASTarget.Warn(string eventName, string eventValue, Dictionary<string, string> keyValues, UnityEngine.Object context) {
+    SaveLogPacket(LogPacket.ELogKind.Warning, eventName, eventValue, keyValues, context);
   }
 
-  void IDASTarget.Event(string eventName, string eventValue, object context, Dictionary<string, string> keyValues) {
-    SaveLogPacket(LogPacket.ELogKind.Event, eventName, eventValue, context, keyValues);
+  void IDASTarget.Event(string eventName, string eventValue, Dictionary<string, string> keyValues, UnityEngine.Object context) {
+    SaveLogPacket(LogPacket.ELogKind.Event, eventName, eventValue, keyValues, context);
   }
 
-  void IDASTarget.Debug(string eventName, string eventValue, object context, Dictionary<string, string> keyValues) {
-    SaveLogPacket(LogPacket.ELogKind.Debug, eventName, eventValue, context, keyValues);
+  void IDASTarget.Debug(string eventName, string eventValue, Dictionary<string, string> keyValues, UnityEngine.Object context) {
+    SaveLogPacket(LogPacket.ELogKind.Debug, eventName, eventValue, keyValues, context);
   }
 
-  void IDASTarget.Ch_Info(string channelName, string eventName, string eventValue, object context, Dictionary<string, string> keyValues) {
-    SaveLogPacket(LogPacket.ELogKind.Info, channelName + "-" + eventName, eventValue, context, keyValues);
+  void IDASTarget.Ch_Info(string channelName, string eventName, string eventValue, Dictionary<string, string> keyValues, UnityEngine.Object context) {
+    SaveLogPacket(LogPacket.ELogKind.Info, channelName + "-" + eventName, eventValue, keyValues, context);
   }
 
-  void IDASTarget.Ch_Debug(string channelName, string eventName, string eventValue, object context, Dictionary<string, string> keyValues) {
-    SaveLogPacket(LogPacket.ELogKind.Debug, channelName + "-" + eventName, eventValue, context, keyValues);
+  void IDASTarget.Ch_Debug(string channelName, string eventName, string eventValue, Dictionary<string, string> keyValues, UnityEngine.Object context) {
+    SaveLogPacket(LogPacket.ELogKind.Debug, channelName + "-" + eventName, eventValue, keyValues, context);
   }
 
   void IDASTarget.SetGlobal(string eventName, string eventValue) {
     SaveLogPacket(LogPacket.ELogKind.Global, eventName, eventValue, null, null);
   }
 
-  private void SaveLogPacket(LogPacket.ELogKind logKind, string eventName, string eventValue, object context, Dictionary<string, string> keyValues) {
+  private void SaveLogPacket(LogPacket.ELogKind logKind, string eventName, string eventValue, Dictionary<string, string> keyValues, UnityEngine.Object context) {
     LogPacket newPacket = new LogPacket(logKind, eventName, eventValue, context, keyValues);
 
     // This can be called from multiple threads while the main one is processing the received packets so we have to lock

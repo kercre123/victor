@@ -94,7 +94,7 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private GameObjectDataLink _LootViewPrefabData;
 
-    private LootView _LootViewInstance = null;
+    private bool _LootSequenceActive = false;
     private System.Diagnostics.Stopwatch _Stopwatch = null;
     private string _CurrentChallengeId = null;
 
@@ -171,7 +171,7 @@ namespace Cozmo.HomeHub {
     }
     public bool HomeViewCurrentlyOccupied {
       get {
-        return (_RequestDialog != null || _LootViewInstance != null || _BadLightDialog != null ||
+        return (_RequestDialog != null || _LootSequenceActive || _BadLightDialog != null ||
                 _HelpViewInstance != null || _HomeHubInstance.IsChallengeDetailsActive ||
                 RewardSequenceActive || PauseManager.Instance.IsAnyDialogOpen);
       }
@@ -219,6 +219,7 @@ namespace Cozmo.HomeHub {
       playerInventory.ItemRemoved += HandleItemValueChanged;
       CheckIfUnlockablesAffordableAndUpdateBadge();
 
+      UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
       // If in SDK Mode, immediately open Settings and SDK view instead of PlayTab,
       // otherwise default to opening PlayTab
       if (DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) {
@@ -486,6 +487,12 @@ namespace Cozmo.HomeHub {
     #region Reward Sequence and Lootview
 
     public void CheckForRewardSequence() {
+      // Don't start coroutines if not active; this can happen in CleanUp steps
+      // See https://ankiinc.atlassian.net/browse/COZMO-5212
+      if (!this.enabled || this.gameObject == null || !this.gameObject.activeInHierarchy) {
+        return;
+      }
+
       DailyGoalManager.Instance.ValidateExistingGoals();
       if (RewardedActionManager.Instance.RewardPending || DailyGoalManager.Instance.GoalsPending) {
         // If Rewards are pending, set sequence to active, shut down input until everything is done
@@ -531,7 +538,7 @@ namespace Cozmo.HomeHub {
     // If we have a Chest Pending, open the loot view once the progress bar finishes filling.
     // If there are Rewards Pending, do this when the Energy Sequence ends.
     private void HandleGreenPointsBarUpdateComplete() {
-      if (ChestRewardManager.Instance.ChestPending && _LootViewInstance == null
+      if (ChestRewardManager.Instance.ChestPending && !_LootSequenceActive
           && RewardedActionManager.Instance.RewardPending == false) {
         // phase Loot onboarding is two stages, the first one is just an explination pointing to your meter,
         // then the callback from Onboarding will open the loot view.
@@ -556,18 +563,22 @@ namespace Cozmo.HomeHub {
     private void OpenLootView() {
       if (HomeViewCurrentlyOccupied && RewardSequenceActive == false) {
         // Avoid dupes but fail gracefully
-        DAS.Warn("HomeView.OpenLootView", "HomeViewCurrentlyOccupied with non reward stuff when we tried to open LootView");
+        DAS.Warn("homeView.openLootView", "LootView Blocked by non-reward sequence");
         HandleLootViewCloseAnimationFinished();
         return;
       }
+      if (_LootSequenceActive) {
+        DAS.Warn("homeView.openLootview", "Attempted to Load LootView Twice");
+        return;
+      }
+      _LootSequenceActive = true;
       _EmotionChipTag.gameObject.SetActive(false);
 
       AssetBundleManager.Instance.LoadAssetBundleAsync(_LootViewPrefabData.AssetBundle, (bool success) => {
         _LootViewPrefabData.LoadAssetData((GameObject prefabObject) => {
-          LootView alertView = UIManager.OpenView(prefabObject.GetComponent<LootView>());
-          alertView.LootBoxRewards = ChestRewardManager.Instance.PendingChestRewards;
-          _LootViewInstance = alertView;
-          _LootViewInstance.ViewCloseAnimationFinished += (() => {
+          LootView lootView = UIManager.OpenView(prefabObject.GetComponent<LootView>());
+          lootView.LootBoxRewards = ChestRewardManager.Instance.PendingChestRewards;
+          lootView.ViewCloseAnimationFinished += (() => {
             HandleLootViewCloseAnimationFinished();
             // Only unload the asset bundle if we actually loaded it before
             AssetBundleManager.Instance.UnloadAssetBundle(_LootViewPrefabData.AssetBundle);
@@ -586,7 +597,7 @@ namespace Cozmo.HomeHub {
     private void HandleLootViewCloseAnimationFinished() {
       _EmotionChipTag.gameObject.SetActive(true);
       RewardSequenceActive = false;
-      _LootViewInstance = null;
+      _LootSequenceActive = false;
       CheckIfUnlockablesAffordableAndUpdateBadge();
       // Snap to zero, then tween to current progress
       UpdateChestProgressBar(0, ChestRewardManager.Instance.GetNextRequirementPoints(), true);
@@ -620,6 +631,12 @@ namespace Cozmo.HomeHub {
         // Use non local move to properly tween to target end transform position
         rewardSeqeuence.Insert(exitTime, newRewardParticles.DOMove(_EnergyRewardTarget.position, rc.ExpParticleLeave).SetEase(Ease.InBack).OnComplete(() => {
           CleanUpRewardParticles(newRewardParticles);
+        }).OnStart(() => {
+          // play the reward sound
+          var playSound = newRewardParticles.GetComponent<Anki.Cozmo.Audio.PlaySound>();
+          if (playSound != null) {
+            playSound.Play();
+          }
         }));
       }
       return rewardSeqeuence;
@@ -705,10 +722,8 @@ namespace Cozmo.HomeHub {
         _Stopwatch.Stop();
         elapsedSec = _Stopwatch.ElapsedMilliseconds / 1000.0f;
       }
-      DAS.Event("robot.request_app", _CurrentChallengeId, null,
-        new Dictionary<string, string>() { { "$data", "fail" } });
-      DAS.Event("robot.request_app_time", _CurrentChallengeId, null,
-        new Dictionary<string, string>() { { "$data", elapsedSec.ToString() } });
+      DAS.Event("robot.request_app", _CurrentChallengeId, DASUtil.FormatExtraData("fail"));
+      DAS.Event("robot.request_app_time", _CurrentChallengeId, DASUtil.FormatExtraData(elapsedSec.ToString()));
       _CurrentChallengeId = null;
 
       RobotEngineManager.Instance.SendDenyGameStart();
@@ -720,10 +735,8 @@ namespace Cozmo.HomeHub {
         _Stopwatch.Stop();
         elapsedSec = _Stopwatch.ElapsedMilliseconds / 1000.0f;
       }
-      DAS.Event("robot.request_app", _CurrentChallengeId, null,
-        new Dictionary<string, string>() { { "$data", "success" } });
-      DAS.Event("robot.request_app_time", _CurrentChallengeId, null,
-        new Dictionary<string, string>() { { "$data", elapsedSec.ToString() } });
+      DAS.Event("robot.request_app", _CurrentChallengeId, DASUtil.FormatExtraData("success"));
+      DAS.Event("robot.request_app_time", _CurrentChallengeId, DASUtil.FormatExtraData(elapsedSec.ToString()));
       _CurrentChallengeId = null;
 
       if (_RequestDialog != null) {
@@ -745,10 +758,8 @@ namespace Cozmo.HomeHub {
         _Stopwatch.Stop();
         elapsedSec = _Stopwatch.ElapsedMilliseconds / 1000.0f;
       }
-      DAS.Event("robot.request_app", _CurrentChallengeId, null,
-        new Dictionary<string, string>() { { "$data", "robot_canceled" } });
-      DAS.Event("robot.request_app_time", _CurrentChallengeId, null,
-        new Dictionary<string, string>() { { "$data", elapsedSec.ToString() } });
+      DAS.Event("robot.request_app", _CurrentChallengeId, DASUtil.FormatExtraData("robot_canceled"));
+      DAS.Event("robot.request_app_time", _CurrentChallengeId, DASUtil.FormatExtraData(elapsedSec.ToString()));
 
       if (_RequestDialog != null) {
         _RequestDialog.CloseView();
@@ -775,6 +786,10 @@ namespace Cozmo.HomeHub {
 
       if (_HelpViewInstance != null) {
         UIManager.CloseView(_HelpViewInstance);
+      }
+
+      if (_RewardSequence != null) {
+        _RewardSequence.Kill();
       }
 
       Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;

@@ -25,9 +25,6 @@ namespace DataPersistence {
 
     public readonly List<CompletedChallengeData> CompletedChallenges;
 
-    // The entry is considered complete after the friendship points have been awarded.
-    public bool Complete;
-
     // Is true once all daily goals have been completed
     public bool GoalsFinished;
 

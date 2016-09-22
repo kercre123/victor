@@ -158,7 +158,6 @@ MonoBehaviour:
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11415318
 MonoBehaviour:
@@ -283,6 +282,7 @@ MonoBehaviour:
   _ProfileCreationViewPrefab: {fileID: 11497974, guid: d5a4eca7cb81e477e860e932642ff654,
     type: 2}
   _PrivacyPolicyButton: {fileID: 11407926}
+  _PrivacyPolicyFileName: PrivacyPolicy.txt
 --- !u!114 &11440264
 MonoBehaviour:
   m_ObjectHideFlags: 1

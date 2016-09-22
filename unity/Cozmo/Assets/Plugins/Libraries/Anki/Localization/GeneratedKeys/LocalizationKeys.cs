@@ -326,6 +326,7 @@ public static class LocalizationKeys {
   public const string kSimonGameLabelWaitingForCubesScanning = "simonGame.label.waitingForCubes.scanning";
   public const string kSpeedTapRoundsText = "speedTap.roundsText";
   public const string kSpeedTapTapBlock = "speedTap.tapBlock";
+  public const string kSpeedTapSeparateBlocks = "speedTap.separateBlocks";
   public const string kSpeedTapTapBlockForRound = "speedTap.tapBlockForRound";
   public const string kMinigameDontMoveCozmoTitle = "minigame.dontMoveCozmo.title";
   public const string kMinigameDontMoveCozmoDescription = "minigame.dontMoveCozmo.description";
@@ -397,6 +398,12 @@ public static class LocalizationKeys {
   public const string kOnboardingCozmoNeedsChargeKeepOnCharger = "onboarding.CozmoNeedsCharge.KeepOnCharger";
   public const string kOnboardingCozmoNeedsChargePutBackOnCharger = "onboarding.CozmoNeedsCharge.PutBackOnCharger";
   public const string kOnboardingCozmoNeedsChargeCozmoIsReady = "onboarding.CozmoNeedsCharge.CozmoIsReady";
+  public const string kOnboardingCozmoNeedsChargeMessage1 = "onboarding.CozmoNeedsCharge.message1";
+  public const string kOnboardingCozmoNeedsChargeMessage2 = "onboarding.CozmoNeedsCharge.message2";
+  public const string kOnboardingCozmoNeedsChargeMessage3 = "onboarding.CozmoNeedsCharge.message3";
+  public const string kOnboardingCozmoNeedsChargeMessage4 = "onboarding.CozmoNeedsCharge.message4";
+  public const string kOnboardingCozmoNeedsChargeMessage5 = "onboarding.CozmoNeedsCharge.message5";
+  public const string kOnboardingCozmoNeedsChargeFinalMessage = "onboarding.CozmoNeedsCharge.finalMessage";
   public const string kOnboardingSlide0 = "onboarding.Slide0";
   public const string kOnboardingSlide1 = "onboarding.Slide1";
   public const string kOnboardingSlide2Header = "onboarding.Slide2Header";
@@ -664,6 +671,10 @@ public static class LocalizationKeys {
   public const string kUnlockableCurrencyRequired = "unlockable.CurrencyRequired";
   public const string kUnlockableBitsRequiredDescription = "unlockable.BitsRequired.Description";
   public const string kUnlockableBitsRequiredEarnMore = "unlockable.BitsRequired.EarnMore";
+  public const string kUnlockableMysteryTitle = "unlockable.Mystery.Title";
+  public const string kUnlockableMysteryDescription = "unlockable.Mystery.Description";
+  public const string kUnlockableWorkoutTitle = "unlockable.Workout.Title";
+  public const string kUnlockableWorkoutDescription = "unlockable.Workout.Description";
   public const string kUnlockableCubePounceTitle = "unlockable.CubePounce.Title";
   public const string kUnlockableCubePounceDescription = "unlockable.CubePounce.Description";
   public const string kUnlockableFaceEnrollmentTitle = "unlockable.FaceEnrollment.Title";

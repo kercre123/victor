@@ -1,3 +1,5 @@
+# Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
+
 __all__ = ['EvtRobotFound', 'CozmoConnection']
 
 
@@ -256,7 +258,7 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
 
     #### Commands ####
 
-    async def wait_for_robot(self, timeout=None):
+    async def _wait_for_robot(self, timeout=None):
         '''Wait for a Cozmo robot to connect and complete initialization.
 
         Args:
@@ -270,3 +272,19 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
             return self._primary_robot
         await self._primary_robot.wait_for(robot.EvtRobotReady, timeout=timeout)
         return self._primary_robot
+
+    async def wait_for_robot(self, timeout=None, ensure_off_charger=True):
+        '''Wait for a Cozmo robot to connect and complete initialization.
+
+        Args:
+            timeout (float): Maximum length of time to wait for a robot to be ready
+            ensure_off_charger (bool): Wait for Cozmo to drive clear of the charger contacts too
+                                        (most motor-based commands are ignored whilst on charger)
+        Returns:
+            A :class:`cozmo.robot.Cozmo` instance that's ready to use.
+        '''
+        robot = await self._wait_for_robot(timeout)
+        if robot and ensure_off_charger:
+            await robot.drive_off_charger_contacts().wait_for_completed()
+        return robot
+    

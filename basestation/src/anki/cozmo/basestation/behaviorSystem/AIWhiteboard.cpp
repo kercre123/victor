@@ -57,6 +57,7 @@ const char* ObjectUseActionToString(AIWhiteboard::ObjectUseAction action)
     case ObjectUseAction::PickUpObject : { return "PickUp";  }
     case ObjectUseAction::StackOnObject: { return "StackOn"; }
     case ObjectUseAction::PlaceObjectAt: { return "PlaceAt"; }
+    case ObjectUseAction::RollOrPopAWheelie: { return "RollOrPop";}
   };
 
   // should never get here, assert if it does (programmer error specifying action enum class)
@@ -73,6 +74,7 @@ size_t GetObjectFailureListMaxSize(AIWhiteboard::ObjectUseAction action)
     case ObjectUseAction::PickUpObject : { return 1; }
     case ObjectUseAction::StackOnObject: { return 1; }
     case ObjectUseAction::PlaceObjectAt: { return 10; } // this can affect behaviorExploreBringCubeToBeacon's kLocationFailureDist_mm (read note there)
+    case ObjectUseAction::RollOrPopAWheelie: { return 1;}
   };
 
   // should never get here, assert if it does (programmer error specifying action enum class)
@@ -470,6 +472,7 @@ const AIWhiteboard::ObjectFailureTable& AIWhiteboard::GetObjectFailureTable(Obje
     case ObjectUseAction::PickUpObject : { return _pickUpFailures;  }
     case ObjectUseAction::StackOnObject: { return _stackOnFailures; }
     case ObjectUseAction::PlaceObjectAt: { return _placeAtFailures; }
+    case ObjectUseAction::RollOrPopAWheelie: { return _rollOrPopFailures;}
   }
 
   // should never get here, assert if it does (programmer error specifying action enum class)
@@ -487,6 +490,7 @@ AIWhiteboard::ObjectFailureTable& AIWhiteboard::GetObjectFailureTable(ObjectUseA
     case ObjectUseAction::PickUpObject : { return _pickUpFailures;  }
     case ObjectUseAction::StackOnObject: { return _stackOnFailures; }
     case ObjectUseAction::PlaceObjectAt: { return _placeAtFailures; }
+    case ObjectUseAction::RollOrPopAWheelie: { return _rollOrPopFailures;}
   }
 
   // should never get here, assert if it does (programmer error specifying action enum class)

@@ -103,6 +103,7 @@ public class ChestRewardManager {
 
   private void HandleItemValueChanged(string itemId, int delta, int newCount) {
     if (itemId == GetChestData().Requirement.ItemId) {
+      DAS.Event("meta.emotion_chip.state", delta.ToString(), DASUtil.FormatExtraData(newCount.ToString()));
       // see if we need to populate the chest every time we get value updates from the
       // requirement ladder item type.
       TryPopulateChestRewards();
@@ -112,6 +113,7 @@ public class ChestRewardManager {
   public void ApplyChestRewards() {
     Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
     foreach (KeyValuePair<string, int> kvp in PendingChestRewards) {
+      DAS.Event("meta.emotion_chip.open", kvp.Key, DASUtil.FormatExtraData(kvp.Value.ToString()));
       playerInventory.AddItemAmount(kvp.Key, kvp.Value);
     }
     PendingChestRewards.Clear();

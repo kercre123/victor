@@ -64,8 +64,8 @@ MonoBehaviour:
   _AudioEventParameter:
     _Event: Play__Sfx__Relationship_Gain_Collect
     _EventType: Sfx
-  _PlayEvent: 1
-  _Delay: 0.5
+  _PlayEvent: 4
+  _Delay: 0
 --- !u!198 &19812968
 ParticleSystem:
   m_ObjectHideFlags: 1

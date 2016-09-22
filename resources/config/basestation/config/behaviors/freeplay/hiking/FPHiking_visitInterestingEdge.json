@@ -9,7 +9,7 @@
   "name": "Hiking_VisitInterestingEdge",
 
   "behaviorType": "VisitInterestingEdge",
-  "flatScore": 0.5,
+  "flatScore": 1.25,
   "behaviorGroups": [
     "FP_Hiking"
   ],
@@ -18,7 +18,7 @@
     "nodes": [
       {
         "x": 0.0,
-        "y": 3.0
+        "y": 2.0
       }
     ]
   },

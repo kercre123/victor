@@ -1,3 +1,5 @@
+# Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
+
 '''Event dispatch system.
 
 The SDK is based around the dispatch and observation of events.

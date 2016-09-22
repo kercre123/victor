@@ -56,7 +56,7 @@ namespace Cozmo {
     u32  GetNumFrames(const std::string& animName);
     
     // Ability to add keyframes at runtime, for procedural face streaming
-    Result AddImage(const std::string& animName, const Vision::Image& faceImg);
+    Result AddImage(const std::string& animName, const Vision::Image& faceImg, u32 holdTime_ms = 0);
     
     // Remove all frames from an existing animation
     Result ClearAnimation(const std::string& animName);

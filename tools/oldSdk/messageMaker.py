@@ -402,3 +402,47 @@ class MessageMaker:
 
         return toEngMessage
 
+    def DisplayFaceImage(self, data):
+        faceMsg = self.GToEI.DisplayFaceImage()
+        # print("Facedata:" , data)
+        faceMsg.faceData = data
+
+        toEngMessage = self.GToEM(DisplayFaceImage = faceMsg)
+
+        return toEngMessage
+
+    def DisplayProceduralFace(self, faceCenX, faceCenY, faceAngle,
+                                    lEyeCenX, lEyeCenY,
+                                    lEyeScaleX, lEyeScaleY,
+                                    rEyeCenX, rEyeCenY,
+                                    rEyeScaleX, rEyeScaleY):
+
+        leftEye = [7.13,0.0,1.48,0.97,
+                   0.0,0.185,0.185,0.173,
+                   0.173,0.2537,0.253,
+                   0.185,0.185,0.0,0.0,0.0,0.0,0.0,0.0]
+        rightEye = [-9.138,0.0,1.505,0.970,
+                    0.0,0.1853,0.1853,0.1733,
+                    0.173,0.253,0.253,
+                    0.185,0.185,0.0,0.0,0.0,0.0,0.0,0.0]
+        faceMsg = self.GToEI.DisplayProceduralFace()
+
+        faceMsg.faceAngle = faceAngle
+        faceMsg.faceScaleX = 1
+        faceMsg.faceScaleY = 1
+        faceMsg.robotID = 1
+
+        faceMsg.faceCenX = faceCenX
+        faceMsg.faceCenY = faceCenY
+
+        leftEye[0] = lEyeCenX;leftEye[1] = lEyeCenY
+        leftEye[2] = lEyeScaleX;leftEye[3] = lEyeScaleY
+        rightEye[0] = rEyeCenX;rightEye[1] = rEyeCenY
+        rightEye[2] = rEyeScaleX;rightEye[3] = rEyeScaleY
+        faceMsg.leftEye = leftEye
+        faceMsg.rightEye = rightEye
+
+        toEngMessage = self.GToEM(DisplayProceduralFace=faceMsg)
+
+        return toEngMessage
+

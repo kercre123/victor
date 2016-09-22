@@ -341,7 +341,7 @@ Result IBehavior::Resume(BehaviorType resumingFromType)
   if ( initResult != RESULT_OK ) {
     _isRunning = false;
   } else {
-    // default implementation if ResumeInternal also sets it to true, but behaviors that override it
+    // default implementation of ResumeInternal also sets it to true, but behaviors that override it
     // might not set it
     _isRunning = true;
   }

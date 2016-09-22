@@ -1,3 +1,5 @@
+# Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
+
 """Secret Twitter keys for the user that you want cozmo_reads_tweets.py to work with
    To generate these you need to setup a twitter account with developer keys:
    1) Log into your twitter account in your web browser (or create a new account if you prefer)

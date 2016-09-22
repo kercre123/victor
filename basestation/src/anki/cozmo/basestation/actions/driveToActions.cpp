@@ -21,60 +21,12 @@
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
+#include "util/math/math.h"
 #include "driveToActions.h"
 
 namespace Anki {
   
   namespace Cozmo {
-    
-    // Computes that angle (wrt world) at which the robot would have to approach the given pose
-    // such that it places the carried object at the given pose
-    Result ComputePlacementApproachAngle(const Robot& robot, const Pose3d& placementPose, f32& approachAngle_rad)
-    {
-      // Get carried object
-      ObjectID objectID = robot.GetCarryingObject();
-      if (objectID.GetValue() < 0) {
-        PRINT_NAMED_INFO("ComputePlacementApproachAngle.NoCarriedObject", "");
-        return RESULT_FAIL;
-      }
-      
-      const ObservableObject* object = robot.GetBlockWorld().GetObjectByID(objectID);
-      if(nullptr == object)
-      {
-        PRINT_NAMED_WARNING("DriveToActions.ComputePlacementApproachAngle.NullObject",
-                            "ObjectID=%d", objectID.GetValue());
-        return RESULT_FAIL;
-      }
-      
-      // Check that up axis of carried object and the desired placementPose are the same.
-      // Otherwise, it's impossible for the robot to place it there!
-      AxisName targetUpAxis = placementPose.GetRotationMatrix().GetRotatedParentAxis<'Z'>();
-      AxisName currentUpAxis = object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>();
-      if (currentUpAxis != targetUpAxis) {
-        PRINT_NAMED_WARNING("ComputePlacementApproachAngle.MismatchedUpAxes",
-                            "Carried up axis: %d , target up axis: %d",
-                            currentUpAxis, targetUpAxis);
-        return RESULT_FAIL;
-      }
-      
-      // Get pose of carried object wrt robot
-      Pose3d poseObjectWrtRobot;
-      if (!object->GetPose().GetWithRespectTo(robot.GetPose(), poseObjectWrtRobot)) {
-        PRINT_NAMED_WARNING("ComputePlacementApproachAngle.FailedToComputeObjectWrtRobotPose", "");
-        return RESULT_FAIL;
-      }
-      
-      // Get pose of robot if the carried object were aligned with the placementPose and the robot was still carrying it
-      Pose3d poseRobotIfPlacingObject(poseObjectWrtRobot.Invert());
-      poseRobotIfPlacingObject.PreComposeWith(placementPose);
-      
-      // Extra confirmation that the robot is upright in this pose
-      assert(poseRobotIfPlacingObject.GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS);
-      
-      approachAngle_rad = poseRobotIfPlacingObject.GetRotationMatrix().GetAngleAroundParentAxis<'Z'>().ToFloat();
-      
-      return RESULT_OK;
-    }
     
 #pragma mark ---- DriveToObjectAction ----
     
@@ -171,128 +123,57 @@ namespace Anki {
                                                        std::vector<Pose3d>& possiblePoses,
                                                        bool& alreadyInPosition)
     {
-      ActionResult result = ActionResult::SUCCESS;
+      const IDockAction::PreActionPoseInput preActionPoseInput(object,
+                                                               _actionType,
+                                                               false,
+                                                               _predockOffsetDistX_mm,
+                                                               DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE,
+                                                               _useApproachAngle,
+                                                               _approachAngle_rad.ToFloat());
+      IDockAction::PreActionPoseOutput preActionPoseOutput;
+    
+      IDockAction::GetPreActionPoses(_robot, preActionPoseInput, preActionPoseOutput);
       
-      alreadyInPosition = false;
-      possiblePoses.clear();
-      
-      std::vector<PreActionPose> possiblePreActionPoses;
-      std::vector<std::pair<Quad2f,ObjectID> > obstacles;
-      _robot.GetBlockWorld().GetObstacles(obstacles);
-      object->GetCurrentPreActionPoses(possiblePreActionPoses, {_actionType},
-                                       std::set<Vision::Marker::Code>(),
-                                       obstacles,
-                                       &_robot.GetPose(),
-                                       _predockOffsetDistX_mm);
-      
-      // Filter out all but the preActionPose that is closest to the specified approachAngle
-      if (_useApproachAngle) {
-        bool bestPreActionPoseFound = false;
-        for(auto & preActionPose : possiblePreActionPoses)
-        {
-          Pose3d preActionPoseWrtWorld;
-          preActionPose.GetPose().GetWithRespectTo(*_robot.GetWorldOrigin(), preActionPoseWrtWorld);
-          
-          Radians headingDiff = preActionPoseWrtWorld.GetRotationAngle<'Z'>() - _approachAngle_rad;
-          if (std::abs(headingDiff.ToFloat()) < 0.5f * PIDIV2_F) {
-            // Found the preAction pose that is most aligned with the desired approach angle
-            PreActionPose p(preActionPose);
-            possiblePreActionPoses.clear();
-            possiblePreActionPoses.push_back(p);
-            bestPreActionPoseFound = true;
-            break;
-          }
-        }
-        
-        if (!bestPreActionPoseFound) {
-          PRINT_NAMED_INFO("DriveToObjectAction.GetPossiblePoses.NoPreActionPosesAtApproachAngleExist", "");
-          _interactionResult = ObjectInteractionResult::NO_PREACTION_POSES;
-          return ActionResult::FAILURE_ABORT;
-        }
+      if(preActionPoseOutput.actionResult != ActionResult::SUCCESS)
+      {
+        _interactionResult = preActionPoseOutput.interactionResult;
+        return preActionPoseOutput.actionResult;
       }
       
-      if(possiblePreActionPoses.empty()) {
+      if(preActionPoseOutput.preActionPoses.empty())
+      {
         PRINT_NAMED_WARNING("DriveToObjectAction.CheckPreconditions.NoPreActionPoses",
                             "ActionableObject %d did not return any pre-action poses with action type %d.",
                             _objectID.GetValue(), _actionType);
         _interactionResult = ObjectInteractionResult::NO_PREACTION_POSES;
         return ActionResult::FAILURE_ABORT;
       }
-      else
+      
+      alreadyInPosition = preActionPoseOutput.robotAtClosestPreActionPose;
+      possiblePoses.clear();
+      
+      if(alreadyInPosition)
       {
-        // Check to see if we already close enough to a pre-action pose that we can
-        // just skip path planning. In case multiple pre-action poses are close
-        // enough, keep the closest one.
-        // Also make a vector of just poses (not preaction poses) for call to
-        // Robot::ExecutePathToPose() below
-        // TODO: Prettier way to handling making the separate vector of Pose3ds?
-        const PreActionPose* closestPreActionPose = nullptr;
-        f32 closestPoseDist = std::numeric_limits<f32>::max();
-        Radians closestPoseAngle = M_PI;
-        
-        Point3f preActionPoseDistThresh = ComputePreActionPoseDistThreshold(_robot.GetPose(), object,
-                                                                            DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
-        
-        preActionPoseDistThresh.z() = REACHABLE_PREDOCK_POSE_Z_THRESH_MM;
-        for(auto & preActionPose : possiblePreActionPoses)
-        {
-          Pose3d possiblePose;
-          if(preActionPose.GetPose().GetWithRespectTo(*_robot.GetWorldOrigin(), possiblePose) == false) {
-            PRINT_NAMED_WARNING("DriveToObjectAction.CheckPreconditions.PreActionPoseOriginProblem",
-                                "Could not get pre-action pose w.r.t. robot origin.");
-            
-          } else {
-            possiblePoses.emplace_back(possiblePose);
-            
-            if(preActionPoseDistThresh > 0.f) {
-              // Keep track of closest possible pose, in case we are already close
-              // enough to it to not bother planning a path at all.
-              Vec3f Tdiff;
-              Radians angleDiff;
-              if(possiblePose.IsSameAs(_robot.GetPose(), preActionPoseDistThresh,
-                                       DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE, Tdiff, angleDiff))
-              {
-                const f32 currentDist = Tdiff.Length();
-                if(currentDist < closestPoseDist &&
-                   std::abs(angleDiff.ToFloat()) < std::abs(closestPoseAngle.ToFloat()))
-                {
-                  closestPoseDist = currentDist;
-                  closestPoseAngle = angleDiff;
-                  closestPreActionPose = &preActionPose;
-                }
-              }
-              
-              PRINT_NAMED_DEBUG("DriveToObjectAction.GetPossiblePoses.ConsideringPose",
-                                "Considering (%f, %f, %f), dist = %f",
-                                possiblePose.GetTranslation().x(),
-                                possiblePose.GetTranslation().y(),
-                                possiblePose.GetTranslation().z(),
-                                Tdiff.Length());
-            }
-          }
-        }
-        
-        if(possiblePoses.empty()) {
-          PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoPossiblePoses",
-                            "No pre-action poses survived as possible docking poses.");
-          _interactionResult = ObjectInteractionResult::NO_PREACTION_POSES;
-          result = ActionResult::FAILURE_ABORT;
-        }
-        else if (closestPreActionPose != nullptr) {
-          PRINT_NAMED_INFO("DriveToObjectAction.InitHelper",
-                           "Robot's current pose (%f,%f,%f) is close enough (%f) to a pre-action pose. "
-                           "Just using current pose as the goal.",
-                           closestPreActionPose->GetPose().GetTranslation().x(),
-                           closestPreActionPose->GetPose().GetTranslation().y(),
-                           closestPreActionPose->GetPose().GetTranslation().z(),
-                           closestPoseDist);
-          
-          alreadyInPosition = true;
-          result = ActionResult::SUCCESS;
-        }
+        Pose3d p = preActionPoseOutput.preActionPoses[preActionPoseOutput.closestIndex].GetPose();
+        PRINT_NAMED_INFO("DriveToObjectAction.GetPossiblePoses.UseRobotPose",
+                         "Robot's current pose (x:%f y:%f a:%f) is close enough to preAction pose (x:%f y:%f a:%f)"
+                         " with threshold %f, using current robot pose as goal",
+                         _robot.GetPose().GetTranslation().x(),
+                         _robot.GetPose().GetTranslation().y(),
+                         _robot.GetPose().GetRotation().GetAngleAroundZaxis().getDegrees(),
+                         p.GetTranslation().x(),
+                         p.GetTranslation().y(),
+                         p.GetRotation().GetAngleAroundZaxis().getDegrees(),
+                         preActionPoseOutput.distThresholdUsed);
       }
       
-      return result;
+      for(auto preActionPose : preActionPoseOutput.preActionPoses)
+      {
+        possiblePoses.push_back(preActionPose.GetPose());
+      }
+      
+      _interactionResult = ObjectInteractionResult::SUCCESS;
+      return ActionResult::SUCCESS;
     } // GetPossiblePoses()
     
     ActionResult DriveToObjectAction::InitHelper(ActionableObject* object)
@@ -542,7 +423,7 @@ namespace Anki {
           // Compute the approach angle given the desired placement pose of the carried block
           if (_useExactRotation) {
             f32 approachAngle_rad;
-            if (ComputePlacementApproachAngle(_robot, _placementPose, approachAngle_rad) != RESULT_OK) {
+            if (IDockAction::ComputePlacementApproachAngle(_robot, _placementPose, approachAngle_rad) != RESULT_OK) {
               PRINT_NAMED_WARNING("DriveToPlaceCarriedObjectAction.Init.FailedToComputeApproachAngle", "");
               return ActionResult::FAILURE_ABORT;
             }

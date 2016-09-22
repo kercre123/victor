@@ -59,6 +59,7 @@ protected:
   // Overwritten by config.
   float _maxTimeSinceNoMotion_running_sec = 30.0;
   float _maxTimeSinceNoMotion_notRunning_sec = 30.0;
+  float _maxTimeBehaviorTimeout_sec = 30.0;
   float _boredomMultiplier = 0.8f;
   float _maxTimeBeforeRotate = 5.f;
   float _oddsOfPouncingOnTurn = 0.0f;
@@ -89,6 +90,7 @@ private:
 
   float _lastTimeRotate;
   float _lastMotionTime;
+  float _startedBehaviorTime_sec = 0;
   State _state = State::Inactive;
   bool  _relaxedLift = false;
   

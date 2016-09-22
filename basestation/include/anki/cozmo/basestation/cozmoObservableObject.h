@@ -80,10 +80,10 @@ namespace Cozmo {
     
     void SetVizManager(VizManager* vizManager) { _vizManager = vizManager; }
     
-    void         SetActiveID(ActiveID activeID) ;
+    void         SetActiveID(ActiveID activeID);
     ActiveID     GetActiveID()                  const   { return _activeID; }
     virtual bool IsActive()                     const   { return false; }
-    void         SetFactoryID(FactoryID factoryID)      { assert(IsActive()); _factoryID = factoryID; }
+    void         SetFactoryID(FactoryID factoryID);
     FactoryID    GetFactoryID()                 const   { return _factoryID; }
 
     // Override in derived classes to allow them to exist co-located with robot
@@ -175,13 +175,26 @@ namespace Cozmo {
   
   inline void ObservableObject::SetActiveID(ActiveID activeID)
   {
-    assert(IsActive());
+    if(!IsActive()) {
+      PRINT_NAMED_WARNING("ObservableObject.SetActiveID.NotActive", "ID: %d", GetID().GetValue());
+      return;
+    }
     
     _activeID = activeID;
     
     if (_activeID >= 0) {
       _identityState = ActiveIdentityState::Identified;
     }
+  }
+  
+  inline void ObservableObject::SetFactoryID(FactoryID factoryID)
+  {
+    if(!IsActive()) {
+      PRINT_NAMED_WARNING("ObservableObject.SetFactoryID.NotActive", "ID: %d", GetID().GetValue());
+      return;
+    }
+    
+    _factoryID = factoryID;
   }
   
   

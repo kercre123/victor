@@ -320,8 +320,8 @@ namespace FaceEnrollment {
           EnrolledNewFaceAnimationSequence();
 
           // log using up another face slot to das
-          DAS.Event("robot.face_slots_used", CurrentRobot.EnrolledFaces.Count.ToString(), null,
-            new Dictionary<string, string>() { { "$data", "1" } });
+          DAS.Event("robot.face_slots_used", CurrentRobot.EnrolledFaces.Count.ToString(), 
+            DASUtil.FormatExtraData("1"));
         }
       }
 
@@ -437,8 +437,8 @@ namespace FaceEnrollment {
       // calling this explicitly to show the conditional shelf after erasing a face
       ShowShelf(SharedMinigameView);
       // log to das
-      DAS.Event("robot.face_slots_used", CurrentRobot.EnrolledFaces.Count.ToString(), null,
-        new Dictionary<string, string>() { { "$data", "-1" } });
+      DAS.Event("robot.face_slots_used", CurrentRobot.EnrolledFaces.Count.ToString(), 
+        DASUtil.FormatExtraData("-1"));
 
     }
 

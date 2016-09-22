@@ -290,7 +290,7 @@ public abstract class GameBase : MonoBehaviour {
     _SharedMinigameViewInstance.ShowMiddleBackground();
     _SharedMinigameViewInstance.HideSpinnerWidget();
 
-    DAS.SetGlobal(DASConstants.Game.kGlobal, GetDasGameName());
+    DAS.SetGlobal(DASConstants.Game.kGlobal, GetGameUUID());
     DAS.Event(DASConstants.Game.kStart, GetGameUUID());
     DAS.Event(DASConstants.Game.kType, GetDasGameName());
 
@@ -1025,8 +1025,7 @@ public abstract class GameBase : MonoBehaviour {
     if (currState != null) {
       currentStateString = currState.GetType().ToString();
     }
-    DAS.Event("robot.interrupt", currentStateString, null,
-      new Dictionary<string, string>() { { "$data", behaviorTransition.reactionaryBehaviorType.ToString() } });
+    DAS.Event("robot.interrupt", currentStateString, DASUtil.FormatExtraData(behaviorTransition.reactionaryBehaviorType.ToString()));
 
     if (behaviorTransition.behaviorStarted) {
       PauseStateMachine(State.PauseReason.ENGINE_MESSAGE, behaviorTransition.reactionaryBehaviorType);

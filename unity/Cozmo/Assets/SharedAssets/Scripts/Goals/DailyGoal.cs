@@ -87,7 +87,7 @@ namespace Cozmo {
         Progress++;
         GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnDailyGoalProgress, this));
 
-        DAS.Event(this, string.Format("{0} Progressed to {1}", Title, Progress));
+        DAS.Event("meta.daily_goal.progress", Title.Key, DASUtil.FormatExtraData(Progress.ToString()));
         // Check if Completed
         CheckIfComplete();
         if (OnDailyGoalUpdated != null) {
@@ -96,8 +96,9 @@ namespace Cozmo {
 
       }
 
-      public void DebugSetGoalProgress(int prog) {
+      public void DebugSetGoalProgress(int prog, bool fireRewards = true) {
         Progress = prog;
+        _GoalComplete = !fireRewards;
         CheckIfComplete();
         if (OnDailyGoalUpdated != null) {
           OnDailyGoalUpdated.Invoke(this);
@@ -132,7 +133,12 @@ namespace Cozmo {
       public void CheckIfComplete() {
         if (IsGoalComplete() && !GoalComplete) {
           // Grant Reward
-          DAS.Event(this, string.Format("{0} Completed", Title));
+          int numDays = 0;
+          if (DataPersistenceManager.Instance.Data.DefaultProfile.Sessions != null) {
+            numDays = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Count;
+          }
+          DAS.Event("meta.daily_goal_completed", numDays.ToString(), DASUtil.FormatExtraData(Title.Key));
+          DAS.Event("meta.daily_goal_reward", PointsRewarded.ToString());
           _GoalComplete = true;
           if (OnDailyGoalCompleted != null) {
             OnDailyGoalCompleted.Invoke(this);
@@ -155,13 +161,13 @@ namespace Cozmo {
               // Check for Unlockables progress
               if (GenConditions[i] is CurrentUnlockCondition) {
                 if (ValidateUnlockIdGenCondition(GenConditions[i] as CurrentUnlockCondition)) {
-                  DebugSetGoalProgress(Target);
+                  DebugSetGoalProgress(Target, false);
                   return;
                 }
               }// Check for Difficulty Level Progress
               else if (GenConditions[i] is CurrentDifficultyUnlockedCondition) {
                 if (ValidateDifficultyGenCondtion(GenConditions[i] as CurrentDifficultyUnlockedCondition)) {
-                  DebugSetGoalProgress(Target);
+                  DebugSetGoalProgress(Target, false);
                   return;
                 }
               }
