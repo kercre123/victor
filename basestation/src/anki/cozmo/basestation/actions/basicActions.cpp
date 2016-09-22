@@ -193,7 +193,7 @@ namespace Anki {
     {
       currentAngle = _robot.GetPose().GetRotation().GetAngleAroundZaxis();
       const bool inPosition = NEAR((currentAngle-_currentTargetAngle).ToFloat(), 0.f, _angleTolerance.ToFloat() + FLOATING_POINT_COMPARISON_TOLERANCE);
-      return inPosition;
+      return inPosition && !_robot.GetMoveComponent().AreWheelsMoving();
     }
     
     ActionResult TurnInPlaceAction::CheckIfDone()
@@ -265,7 +265,7 @@ namespace Anki {
       // is in the commanded position
       // TODO: Is this really necessary in practice?
       if(_inPosition) {
-        result = _robot.GetMoveComponent().AreWheelsMoving() ? ActionResult::RUNNING : ActionResult::SUCCESS;
+        result = ActionResult::SUCCESS;
         PRINT_CH_INFO("Actions", "TurnInPlaceAction.CheckIfDone",
                          "[%d] Reached angle: %.1fdeg vs. %.1fdeg(+/-%.1f) (tol: %f) (pfid: %d). WheelsMoving=%s",
                          GetTag(),
