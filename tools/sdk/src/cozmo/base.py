@@ -51,6 +51,12 @@ class Base(metaclass=_MetaBase):
         self._sync_abort_future = _sync_abort_future
         super().__init__(**kw)
 
+    @property
+    def loop(self):
+        '''Returns the :class:`asyncio.BaseEventLoop` loop instance that this object is registered with.'''
+        return getattr(self, '_loop', None)
+
+
 
 class _Factory:
     '''Descriptor to wraps an object factory method.
