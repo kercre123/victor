@@ -9,21 +9,30 @@
   "name": "Hiking_LookingInPlaceForUnknown",
 
   "behaviorType": "LookInPlaceMemoryMap",
-  "flatScore": 1.0,
+  "flatScore": 1.1,
   "behaviorGroups": [
     "FP_Hiking"
   ],
   
   "params":
   {
-    "bodyTurnSpeed_degPerSec": 130,
-    "headTurnSpeed_degPerSec":  60,
+    "bodyTurnSpeed_degPerSec": 180,
+    "headTurnSpeed_degPerSec":  90,
     "bodyAngleFromSectorCenterRangeMin_deg": 0.0,
     "bodyAngleFromSectorCenterRangeMax_deg": 5.0,
     "t1_headAngleAbsRangeMin_deg": -15.0,
-    "t1_headAngleAbsRangeMax_deg":  -5.0,
+    "t1_headAngleAbsRangeMax_deg": -10.0,
     "t2_headAngleAbsRangeMin_deg":  -5.0,
     "t2_headAngleAbsRangeMax_deg":   5.0,
+    
+    // we want to visit at least this many, but then we can give up for something else
+    "prioritySectorCount": 3,
+    "lowPriorityScoreReduction" : 1.0, // this is to counter the +1 that the goal gives us while running
+    
+    // previous location config
+    "distanceThresholdForLocations_mm" : 30.0,
+    "maxPreviousLocationCount" : 3,
+    
     "lookInPlaceAnimTrigger": "HikingLookAround"
   }
 }

@@ -67,9 +67,12 @@ bool BehaviorDriveOffCharger::IsRunnableInternal(const Robot& robot) const
   //ASSERT_NAMED(robot.IsOnChargerPlatform() || !robot.IsOnCharger(),
   //             "BehaviorDriveOffCharger.IsRunnableInternal.InconsistentChargerFlags");
   
-  // can run any time we are on a platform
-  const bool onChargerPlatform = robot.IsOnChargerPlatform();
-  return onChargerPlatform;
+  // can run any time we are on the charger
+  // rsam: the reason why I changed from platform to onCharger is that because Cozmo can run onto the platform
+  // accidentaly while driving around in freeplay. This was causing him to sprint forward for no apparent reason
+  // since this behavior has high priority
+  const bool onCharger = robot.IsOnCharger();
+  return onCharger;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

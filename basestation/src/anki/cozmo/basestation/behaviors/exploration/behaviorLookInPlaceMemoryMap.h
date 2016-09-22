@@ -34,6 +34,8 @@ class BehaviorLookInPlaceMemoryMap : public IBehavior
 {
 private:
   
+  using BaseClass = IBehavior;
+  
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorLookInPlaceMemoryMap(Robot& robot, const Json::Value& config);
@@ -72,6 +74,9 @@ protected:
   virtual Result InitInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
   
+  // override score to apply low priority reduction
+  virtual float EvaluateRunningScoreInternal(const Robot& robot) const override;
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State transitions
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -95,6 +100,12 @@ private:
     float t1_headAngleAbsRangeMax_deg;  // max head angle at the first stop inside a sector
     float t2_headAngleAbsRangeMin_deg;  // min head angle at the second stop inside a sector
     float t2_headAngleAbsRangeMax_deg;  // max head angle at the second stop inside a sector
+    // sectors
+    uint8_t prioritySectorCount;     // number of sectors to visit with regular scoring
+    float lowPriorityScoreReduction; // score reduction applied after visiting the prioritySectorCount
+    // previous locations
+    float distanceThresholdForLocations_mm; // distance Cozmo has to move to explore again a location it already explored
+    uint8_t maxPreviousLocationCount; // how many locations we can keep track of
     // anims
     AnimationTrigger lookInPlaceAnimTrigger;
     // std::string seeNewInterestingEdgesAnimTrigger;  //
@@ -123,9 +134,9 @@ private:
   
   // turn towards the given sector to clear its memory map, the continue onto the closest next sector
   void VisitSector(Robot& robot, int16_t index, const int16_t nextLeft, const int16_t nextRight);
-  
+
   // we visited all the sectors and are done turning in place
-  void FinishedWithoutInterruption(Robot& robot);
+  void FinishedAllSectorsAtLocation(Robot& robot);
   
   // returns true if the given sector (by index) needs to be checked, false otherwise. Asserts it's only called in non-visited (to ensure algorithm completion)
   inline bool NeedsChecking(int16_t index) const;
@@ -160,13 +171,16 @@ private:
   using SectorList = std::vector<SectorStatus>;
   SectorList _sectors;
   
-  // list of poses we have checked "recently" and there were not unknown
+  // sectors we have visited this run
+  uint8_t _visitedSectorCount;
+  
+  // list of poses we have checked previously
   // at the moment we don't clear them based on timestamp or anything. This would have to be in sync with
   // memory map decay time, or we could simply have a timestamp here so that at least we check for new
   // borders. However with current map implementation the map won't have unknowns, so this behavior won't
   // know which angles to visit. Use full 360 behavior for that case
   using PoseList = std::list<Pose3d>;
-  PoseList _recentFullLocations;
+  PoseList _previousFullLocations;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

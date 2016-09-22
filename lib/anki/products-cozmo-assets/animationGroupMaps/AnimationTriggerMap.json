@@ -302,7 +302,7 @@
     },
     {
       "CladEvent": "HikingWakeUpOffCharger",
-      "AnimName": "ag_hiking_wakeup"
+      "AnimName": "ag_hiking_getin"
     },
     {
       "CladEvent": "IdleOnCharger",
