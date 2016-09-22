@@ -296,10 +296,13 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
   private void UpdateState() {
     IRobot robot = RobotEngineManager.Instance.CurrentRobot;
-    if (robot.IsSparked && robot.SparkUnlockId == _UnlockInfo.Id.Value) {
+    if (robot != null && robot.IsSparked && robot.SparkUnlockId == _UnlockInfo.Id.Value) {
       _RequestTrickButton.Interactable = false;
     }
     else {
+      if (robot == null) {
+        DAS.Error("ChallengeUpgradeDetailsDialog.UpdateState", "Current Robot is NULL, cannot update state to sparked");
+      }
       Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
 
       if (UnlockablesManager.Instance.IsUnlocked(_UnlockInfo.Id.Value)) {
@@ -377,11 +380,20 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
   private void UpdateAvailableCostLabels(string itemID, int cost, string promptLabelKey, string costLabelKey) {
     _ButtonPromptContainer.SetActive(true);
+
     _ButtonPromptTitle.text = Localization.Get(promptLabelKey);
+
     _ButtonPromptDescription.gameObject.SetActive(true);
     ItemData itemData = ItemDataConfig.GetData(itemID);
-    string costName = Localization.Get(itemData.GetAmountName(cost));
+    string costName = "";
+    if (itemData != null) {
+      costName = Localization.Get(itemData.GetAmountName(cost));
+    }
+    else {
+      DAS.Error("CoreUpgradeDetailsDialog.UpdateAvailableCostLables", string.Format("ItemData for {0} is NULL", itemID));
+    }
     _ButtonPromptDescription.text = Localization.GetWithArgs(costLabelKey, new object[] { cost, costName });
+
     _SparkButtonCostLabel.text = string.Format("{0}", cost);
   }
 
@@ -443,7 +455,9 @@ public class CoreUpgradeDetailsDialog : BaseView {
     DAS.Event("meta.upgrade_replay", _UnlockInfo.TitleKey, DASUtil.FormatExtraData(_UnlockInfo.RequestTrickCostAmountNeeded.ToString()));
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Spark_Launch);
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Spark);
-    RobotEngineManager.Instance.CurrentRobot.EnableSparkUnlock(_UnlockInfo.Id.Value);
+    if (RobotEngineManager.Instance.CurrentRobot != null) {
+      RobotEngineManager.Instance.CurrentRobot.EnableSparkUnlock(_UnlockInfo.Id.Value);
+    }
     UpdateState();
     DataPersistenceManager.Instance.Save();
   }
