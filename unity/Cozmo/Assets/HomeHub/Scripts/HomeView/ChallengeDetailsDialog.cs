@@ -97,6 +97,7 @@ public class ChallengeDetailsDialog : BaseView {
     _AvailableContainer.SetActive(true);
     _AffordableIcon.SetActive(false);
     _CubesRequired = challengeData.MinigameConfig.NumCubesRequired();
+    GameEventManager.Instance.OnGameEvent += HandleGameEvent;
     if (UnlockablesManager.Instance.IsUnlocked(challengeData.UnlockId.Value)) {
       // If Ready and Unlocked
       _LockedContainer.SetActive(false);
@@ -144,6 +145,14 @@ public class ChallengeDetailsDialog : BaseView {
       _StartChallengeButton.Initialize(HandleStartButtonClicked, string.Format("{0}_start_button", challengeData.ChallengeID), DASEventViewName);
     }
     _ChallengeId = challengeData.ChallengeID;
+  }
+
+  // When we unlock something new or trigger a free play goal, if this would cause a loot view sequence to trigger,
+  // then close the view for the sequence to run instead of refreshing it.
+  private void HandleGameEvent(GameEventWrapper gameEvent) {
+    if (gameEvent.GameEventEnum == Anki.Cozmo.GameEvent.OnDailyGoalCompleted) {
+      CloseViewImmediately();
+    }
   }
 
   private void HandleStartButtonClicked() {
@@ -240,12 +249,14 @@ public class ChallengeDetailsDialog : BaseView {
   private void HandleUpgradeUnlocked() {
     Initialize(_ChallengeData);
 
+
     _UpgradeAnimationPlayed = false;
     _UnlockFromRobotResponded = false;
   }
 
   protected override void CleanUp() {
     _StartChallengeButton.onClick.RemoveAllListeners();
+    GameEventManager.Instance.OnGameEvent -= HandleGameEvent;
 
     if (_UnlockTween != null) {
       _UnlockTween.Kill();
