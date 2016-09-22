@@ -122,7 +122,11 @@ public static class Localization {
 
   public static string ReadLocalizedTextFromFile(string fileName) {
     string currentLocale = GetStringsLocale();
+#if UNITY_EDITOR || UNITY_IOS
     string filePath = Application.streamingAssetsPath + kLocalizationStreamingAssetsFolderPath + currentLocale + "/" + fileName;
+#elif UNITY_ANDROID
+    string filePath = PlatformUtil.GetResourcesBaseFolder() + kLocalizationStreamingAssetsFolderPath + currentLocale + "/" + fileName;
+#endif
     return File.ReadAllText(filePath);
   }
 }
