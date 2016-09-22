@@ -116,7 +116,7 @@ MonoBehaviour:
     _Event: Play__Sfx__Banner_Wipe
     _EventType: Sfx
   _PlayEvent: 4
-  _Delay: 0.25
+  _Delay: 0.6
 --- !u!114 &11461144
 MonoBehaviour:
   m_ObjectHideFlags: 1
