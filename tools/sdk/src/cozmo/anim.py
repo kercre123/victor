@@ -1,3 +1,4 @@
+# Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
 '''
 Animation related classes, functions, events and values.
 '''

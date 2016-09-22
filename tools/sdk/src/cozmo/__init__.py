@@ -1,3 +1,5 @@
+# Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
+
 import logging as _logging
 
 #: The general purpose logger logs high level information about cozmo events

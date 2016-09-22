@@ -1,3 +1,5 @@
+# Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
+
 __all__ = ['EvtObjectTapped', 'EvtObjectObserved', 'EvtObjectConnectChanged',
     'ObservableObject', 'LightCube', 'CustomObject', 'FixedCustomObject']
 
