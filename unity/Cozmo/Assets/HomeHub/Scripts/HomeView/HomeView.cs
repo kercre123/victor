@@ -631,6 +631,12 @@ namespace Cozmo.HomeHub {
         // Use non local move to properly tween to target end transform position
         rewardSeqeuence.Insert(exitTime, newRewardParticles.DOMove(_EnergyRewardTarget.position, rc.ExpParticleLeave).SetEase(Ease.InBack).OnComplete(() => {
           CleanUpRewardParticles(newRewardParticles);
+        }).OnStart(() => {
+          // play the reward sound
+          var playSound = newRewardParticles.GetComponent<Anki.Cozmo.Audio.PlaySound>();
+          if (playSound != null) {
+            playSound.Play();
+          }
         }));
       }
       return rewardSeqeuence;
