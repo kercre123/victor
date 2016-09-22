@@ -344,7 +344,21 @@ class _LoopThread:
 
 
 def _connect_async(f, conn_factory=conn.CozmoConnection, connector=None):
-    loop = asyncio.new_event_loop()
+    # use the default loop, if one is available for the current thread,
+    # if not create  a new loop and make it the default.
+    #
+    # the expectation is that if the user wants explicit control over which
+    # loop the code is executed on, they'll just use connect_on_loop directly.
+    loop = None
+    try:
+        loop = asyncio.get_event_loop()
+    except:
+        pass
+
+    if loop is None:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
     coz_conn = connect_on_loop(loop, conn_factory, connector)
     try:
         loop.run_until_complete(f(coz_conn))
