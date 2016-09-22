@@ -39,6 +39,7 @@ namespace {
 
 static const char* kMaxNoMotionBeforeBored_running_Sec    = "maxNoGroundMotionBeforeBored_running_Sec";
 static const char* kMaxNoMotionBeforeBored_notRunning_Sec = "maxNoGroundMotionBeforeBored_notRunning_Sec";
+static const char* kMaxTimeBehaviorTimeout_Sec            = "maxTimeBehaviorTimeout_Sec";
 static const char* kTimeBeforeRotate_Sec                  = "TimeBeforeRotate_Sec";
 static const char* kOddsOfPouncingOnTurn                  = "oddsOfPouncingOnTurn";
 static const char* kBoredomMultiplier                     = "boredomMultiplier";
@@ -84,6 +85,8 @@ BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& 
                                                  _maxTimeSinceNoMotion_running_sec).asFloat();
   _maxTimeSinceNoMotion_notRunning_sec = config.get(kMaxNoMotionBeforeBored_notRunning_Sec,
                                                     _maxTimeSinceNoMotion_notRunning_sec).asFloat();
+  _maxTimeBehaviorTimeout_sec = config.get(kMaxTimeBehaviorTimeout_Sec,
+                                                    _maxTimeBehaviorTimeout_sec).asFloat();
   _boredomMultiplier = config.get(kBoredomMultiplier, kBoredomMultiplierDefault).asFloat();
   _maxTimeBeforeRotate = config.get(kTimeBeforeRotate_Sec, _maxTimeBeforeRotate).asFloat();
   _oddsOfPouncingOnTurn = config.get(kOddsOfPouncingOnTurn, 0.0).asFloat();
@@ -117,6 +120,7 @@ float BehaviorPounceOnMotion::EvaluateScoreInternal(const Robot& robot) const
 Result BehaviorPounceOnMotion::InitInternal(Robot& robot)
 {
   double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _startedBehaviorTime_sec = currentTime_sec;
   _lastMotionTime = (float)currentTime_sec;
   
   // Don't override sparks idle animation
@@ -265,6 +269,8 @@ void BehaviorPounceOnMotion::TransitionFromWaitForMotion(Robot& robot)
   {
     //Set the exit state information and then cancel the hang action
     TransitionToRotateToWatchingNewArea(robot);
+  }else if(_startedBehaviorTime_sec + _maxTimeBehaviorTimeout_sec < currentTime_sec){
+    TransitionToGetOutBored(robot);
   }else{
     TransitionToWaitForMotion(robot);
   }

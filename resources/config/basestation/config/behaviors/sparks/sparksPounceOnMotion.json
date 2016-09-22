@@ -8,6 +8,7 @@
   
   "maxNoGroundMotionBeforeBored_running_Sec": 60.0,
   "maxNoGroundMotionBeforeBored_notRunning_Sec": 60.0,
+  "maxTimeBehaviorTimeout_Sec": 60.0,
   "TimeBeforeRotate_Sec": 3.0,
   "searchAmplitudeDeg": 90.0,
   "oddsOfPouncingOnTurn": 0.35,
