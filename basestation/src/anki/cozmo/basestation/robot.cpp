@@ -3500,7 +3500,7 @@ void Robot::HandleConnectedToObject(uint32_t activeID, FactoryID factoryID, Obje
   {
     PRINT_CH_INFO("BlockPool",
                   "Robot.HandleConnectedToObject",
-                  "Ignoring connection to object 0x%x [%s] with active ID %d because expecting connection to 0x%x [%s]",
+                  "Ignoring connection to object 0x%x of type %s with active ID %d because expecting connection to 0x%x of type %s",
                   factoryID,
                   EnumToString(objectType),
                   activeID,
@@ -3536,7 +3536,7 @@ void Robot::HandleDisconnectedFromObject(uint32_t activeID, FactoryID factoryID,
   {
     PRINT_CH_INFO("BlockPool",
                   "Robot.HandleDisconnectedFromObject",
-                  "Ignoring disconnection from object 0x%x [%s] with active ID %d because expecting connection to 0x%x [%s]",
+                  "Ignoring disconnection from object 0x%x of type %s with active ID %d because expecting connection to 0x%x of type %s",
                   factoryID,
                   EnumToString(objectType),
                   activeID,
@@ -3680,10 +3680,14 @@ void Robot::CheckDisconnectedObjects()
   double time = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if ((_lastDiconnectedCheckTime <= 0) || (time >= (_lastDiconnectedCheckTime + kDiconnectedCheckDelay)))
   {
-    for (ActiveObjectInfo& objectInfo : _connectedObjects)
+    for (int i = 0; i < _connectedObjects.size(); ++i)
     {
+      ActiveObjectInfo& objectInfo = _connectedObjects[i];
       if ((objectInfo.connectionState == ActiveObjectInfo::ConnectionState::Disconnected) && (time > (objectInfo.lastDisconnectionTime + kDisconnectedDelay)))
       {
+        PRINT_CH_INFO("BlockPool", "Robot.CheckDisconnectedObjects",
+                      "Resetting slot %d with factory ID 0x%x, connection state %d. Object disconnected at %f, current time is %f with max delay %f seconds",
+                      i, objectInfo.factoryID, objectInfo.connectionState, objectInfo.lastDisconnectionTime, time, kDisconnectedDelay);
         objectInfo.Reset();
       }
     }
