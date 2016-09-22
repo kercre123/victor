@@ -25,6 +25,8 @@ if [ -z ${u_OS+x} ]; then u_OS=`echo ${BUILD_OS} | awk '{print toupper($0)}'`; f
 if [ -z ${ANKI_REPO_ROOT+x} ]; then ANKI_REPO_ROOT=${TOPLEVEL}; fi
 if [ -z ${ANKI_BUILD_TOOLS_ROOT+x} ]; then ANKI_BUILD_TOOLS_ROOT="${TOPLEVEL}/project/build-scripts"; fi
 if [ -z ${ANKI_BUILD_ROOT+x} ]; then ANKI_BUILD_ROOT="${ANKI_REPO_ROOT}/build"; fi
+if [ -z ${ANKI_SDK_ROOT+x} ]; then ANKI_SDK_ROOT="${ANKI_REPO_ROOT}/tools/sdk"; fi
+if [ -z ${ANKI_SDK_DEV_ROOT+x} ]; then ANKI_SDK_DEV_ROOT="${ANKI_REPO_ROOT}/tools/sdk_devonly"; fi
 
 if [ -z ${ANKI_BUILD_CONFIGURATION+x} ]; then ANKI_BUILD_CONFIGURATION="release"; fi
 if [ -z ${ANKI_BUILD_KEYCHAIN+x} ]; then ANKI_BUILD_KEYCHAIN="${HOME}/Library/Keychains/login.keychain"; fi
@@ -47,7 +49,7 @@ PLIST_BUDDY="/usr/libexec/PlistBuddy"
 XC_WORKSPACE_NAME=`basename "${ANKI_BUILD_XCWORKSPACE}" .xcworkspace`
 
 
-GENERATED_DD_FOLDER=`find . -type d -name "${XC_WORKSPACE_NAME}-*" | xargs basename`
+GENERATED_DD_FOLDER=`find ${ANKI_REPO_ROOT} -type d -name "${XC_WORKSPACE_NAME}-*" | xargs basename`
 echo ${GENERATED_DD_FOLDER}
 DERIVED_DATA_PATH=${ANKI_BUILD_ROOT}/${l_OS}/derived-data/${GENERATED_DD_FOLDER}
 

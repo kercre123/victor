@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import cozmo
 import time
 import os, json

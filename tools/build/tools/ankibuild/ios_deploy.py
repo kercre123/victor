@@ -36,3 +36,6 @@ def debug(app_path):
 def noninteractive(app_path):
     _run('--noninteractive', '--debug', '--bundle', app_path)
 
+def justlaunch(app_path):
+    _run('--justlaunch', '--debug', '--bundle', app_path)
+
