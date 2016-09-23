@@ -29,6 +29,8 @@ namespace Anki {
           GameBase miniGameInstance = HomeHub.Instance.MiniGameInstance;
           if (miniGameInstance == null) { return false; }
           int toCheck = miniGameInstance.PlayerScoreTotal;
+          // if the player didn't score any points, they shouldn't be rewarded
+          if (toCheck <= 0) { return false; }
           int mistakes = miniGameInstance.PlayerMistakeCount;
           float acc = ((float)toCheck / (float)(toCheck + mistakes));
           isMet = CompareConditionValues(acc, TargetAcc, compareType);
