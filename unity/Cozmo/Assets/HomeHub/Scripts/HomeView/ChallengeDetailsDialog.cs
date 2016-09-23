@@ -219,6 +219,9 @@ public class ChallengeDetailsDialog : BaseView {
   }
 
   private void PlayUpgradeAnimation() {
+    if (_UnlockTween != null) {
+      _UnlockTween.Kill();
+    }
     _UnlockTween = DOTween.Sequence();
     _UnlockTween.Join(_ChallengeIcon.IconImage.DOColor(Color.white, _UnlockTween_sec));
     _UnlockTween.AppendCallback(HandleUpgradeAnimationPlayed);
