@@ -59,14 +59,9 @@ namespace Onboarding {
       _DidSkip = true;
       // Using action chaining to try to prevent one frame pop of idle between these
       IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
-      RobotActionUnion[] actions = {
-        // 0. Transition from eyes off to eyes showing
-        new RobotActionUnion().Initialize(new PlayAnimationTrigger().Initialize(CurrentRobot.ID, 1, Anki.Cozmo.AnimationTrigger.OnboardingEyesOn, true)),
-        // 2. Wake up...           
-        new RobotActionUnion().Initialize(new PlayAnimationTrigger().Initialize(CurrentRobot.ID, 1, Anki.Cozmo.AnimationTrigger.GoToSleepGetOut, true))
-      };
-
-      CurrentRobot.SendQueueCompoundAction(actions, HandleWakeAnimationComplete);
+      if (CurrentRobot != null) {
+        CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.ConnectWakeUp, HandleWakeAnimationComplete);
+      }
     }
 
     private void HandleWakeAnimationComplete(bool success) {
