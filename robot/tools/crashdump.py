@@ -3,10 +3,14 @@
 Tool for inspecting crash records located in complete espressif flash dump
 """
 
+import subprocess
 import argparse
 import struct
 import sys
 import os
+
+def output_is_redirected():
+    return os.fstat(0) != os.fstat(1)
 
 def print_raw(data):
     for offset in range(0, len(data), 4):
@@ -40,6 +44,8 @@ def print_K2(data):
                      "bfar", "cfsr", "hfsr", "dfsr", "afsr", "shcsr"])
 
 def print_ESP(data):
+    ESP_S_filename = "espressif/bin/upgrade/user1.2048.new.3.S"
+    
     regs = ["epc1", "ps", "sar", "xx1", "a0", "a2", "a3", "a4",
             "a5", "a6", "a7", "a8", "a9", "a10", "a11", "a12",
             "a13", "a14", "a15", "exccause", "sp", "excvaddr", "depc", "stack_depth"]
@@ -63,6 +69,11 @@ def print_ESP(data):
         stack_addrs = ["\t{:08x}".format(regset["sp"]+i*4) for i in range(stack_size)]
         print_registers(data[stack_data_start:], stack_addrs)
     print("cause = ",EspCauses[regset["exccause"]])
+
+    colorarg = "never" if output_is_redirected() else "always"
+    searchcmd = "grep -C5 --color={} {:08x} {}".format(colorarg, regset["epc1"], ESP_S_filename)
+    r  = subprocess.check_output(searchcmd, shell=True)
+    print("\n"+r.decode('ascii'))
 
     
 def print_regs(reporter, data):

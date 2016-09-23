@@ -9,6 +9,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
+#include "util/helpers/base64.h"
 #include "debug/devLoggingSystem.h"
 #include <stdlib.h>
 #include <stdarg.h>
@@ -17,6 +18,8 @@
 namespace Anki {
 namespace Cozmo {
 
+using KVV = std::vector<std::pair<const char*, const char*>>;
+  
 const std::string TracePrinter::_kUnknownTraceName   = "UnknownTraceName";
 const std::string TracePrinter::_kUnknownTraceFormat = "Unknown trace format [%d] with %d parameters";
 const std::string TracePrinter::_kRobotNamePrefix    = "RobotFirmware.";
@@ -86,6 +89,13 @@ void TracePrinter::HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& m
   ANKI_CPU_PROFILE("TracePrinter::HandleTrace");
   const RobotInterface::PrintTrace& trace = message.GetData().Get_trace();
   if (trace.level >= _printThreshold) {
+    KVV keyValuePairs;
+    if (trace.value.size() == 1)
+    {
+      std::pair<const char*, const char*> kvp = {DDATA, TO_DDATA_STR(trace.value[0])};
+
+      keyValuePairs.push_back(kvp);
+    }
     const std::string name = _kRobotNamePrefix + GetName(trace.name);
     const std::string mesg = GetFormatted(trace);
     switch (trace.level)
@@ -93,28 +103,27 @@ void TracePrinter::HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& m
       case RobotInterface::LogLevel::ANKI_LOG_LEVEL_DEBUG:
       case RobotInterface::LogLevel::ANKI_LOG_LEVEL_PRINT:
       {
-        PRINT_NAMED_DEBUG(name.c_str(), "%s", mesg.c_str()); //< Nessisary because format must be a string literal
+        Util::sChanneledDebugF(DEFAULT_CHANNEL_NAME, name.c_str(), keyValuePairs, "%s", mesg.c_str()); //< Necessary because format must be a string literal
         break;
       }
       case RobotInterface::LogLevel::ANKI_LOG_LEVEL_INFO:
       {
-        PRINT_NAMED_INFO(name.c_str(), "%s", mesg.c_str());
+        Util::sChanneledInfoF(DEFAULT_CHANNEL_NAME, name.c_str(), keyValuePairs, "%s", mesg.c_str());
         break;
       }
       case RobotInterface::LogLevel::ANKI_LOG_LEVEL_EVENT:
       {
-        PRINT_NAMED_EVENT(name.c_str(), "%s", mesg.c_str());
+        Util::sEventF(name.c_str(), keyValuePairs, "%s", mesg.c_str());
         break;
       }
       case RobotInterface::LogLevel::ANKI_LOG_LEVEL_WARN:
       {
-        PRINT_NAMED_WARNING(name.c_str(), "%s", mesg.c_str());
-        break;
+        Util::sWarningF(name.c_str(), keyValuePairs, "%s", mesg.c_str());
       }
       case RobotInterface::LogLevel::ANKI_LOG_LEVEL_ASSERT:
       case RobotInterface::LogLevel::ANKI_LOG_LEVEL_ERROR:
       {
-        PRINT_NAMED_ERROR(name.c_str(), "%s", mesg.c_str());
+        Util::sErrorF(name.c_str(), keyValuePairs, "%s", mesg.c_str());
         break;
       }
     }
@@ -125,7 +134,7 @@ void TracePrinter::HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngi
   ANKI_CPU_PROFILE("TracePrinter::HandleCrashReport");
   const RobotInterface::CrashReport& report = message.GetData().Get_crashReport();
   if (report.errorCode || report.dump.size()) {
-    PRINT_NAMED_EVENT("RobotFirmware.CrashReport", "Firmware crash report received: %d, %x", (int)report.which, report.errorCode);
+    PRINT_NAMED_EVENT("RobotFirmware.CrashReport", "Firmware crash report received: %s, %x", CrashSourceToString(report.which), report.errorCode);
     if (DevLoggingSystem::GetInstance() != NULL) {
       char dumpFileName[64];
       snprintf(dumpFileName, sizeof(dumpFileName), "crash_%d_%x_%lld.log", // Only .log files are archived and transmitted
@@ -153,6 +162,13 @@ void TracePrinter::HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngi
       {
         PRINT_NAMED_ERROR("RobotFirmware.CrashReport.FailedToWrite", "Couldn't write report to file \"%s\"", dumpFileName);
       }
+    }
+    if (report.errorCode == 0 && report.dump.size() > 0) {
+      const unsigned char* const dump_bytes = reinterpret_cast<const unsigned char* const>(report.dump.data());
+      const size_t dumpSize = report.dump.size() * sizeof(report.dump[0]);
+      std::string base64Crash = Util::base64_encode(dump_bytes, dumpSize);
+      Util::sErrorF("RobotFirmware.CrashReport.Data", {{DDATA, base64Crash.c_str()}},
+                    "Crash Dump Type %s", CrashSourceToString(report.which));
     }
   }
   if (_lastLogRequested < kMaxCrashLogs)
