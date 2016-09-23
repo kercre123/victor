@@ -1,3 +1,5 @@
+# Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
+
 __all__ = ['CozmoSDKException', 'AnimationsNotLoaded', 'StopPropogation',
         'AnimationsNotLoaded', 'ActionError', 'NotPickupable', 'RobotBusy']
 

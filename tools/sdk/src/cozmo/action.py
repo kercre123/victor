@@ -1,3 +1,4 @@
+# Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
 '''
 Actions encapsulate specific high-level tasks that the Cozmo robot can perform.
 They have a definite beginning and end.

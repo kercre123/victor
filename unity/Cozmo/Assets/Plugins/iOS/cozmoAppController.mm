@@ -127,6 +127,12 @@ bool checkInternetAvailable()
   _receivedWillResign = true;
 }
 
+- (void)applicationDidReceiveMemoryWarning:(UIApplication*)application
+{
+  Unity_DAS_Event("ios.memory_warning", "", nullptr, nullptr, 0);
+  [super applicationDidReceiveMemoryWarning:application];
+}
+
 @end
 
 IMPL_APP_CONTROLLER_SUBCLASS(CozmoAppController);

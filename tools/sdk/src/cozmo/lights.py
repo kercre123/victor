@@ -1,3 +1,5 @@
+# Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
+
 __all__ = ['Color', 'Light',
     'green', 'red', 'blue', 'white', 'off',
     'green_light', 'red_light', 'blue_light', 'white_light', 'off_light']

@@ -1,3 +1,4 @@
+# Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
 '''
 Behaviors represent a task that the Cozmo robot may perform for an
 indefinite amount of time.

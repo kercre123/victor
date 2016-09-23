@@ -15,7 +15,7 @@ First install [brew](http://brew.sh/). Then use brew to install the following de
 
 ### Unity
 
-We are using [Unity 5.3.1p3](https://unity3d.com/unity/qa/patch-releases/5.3.1p3). Make sure you also install the iOS and Android components.
+We are using [Unity 5.3.5p8](https://unity3d.com/unity/qa/patch-releases/5.3.5p8). Make sure you also install the iOS and Android components.
 
 Right now we use one scene and load assets by code. The main scene is located here
 
