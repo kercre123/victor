@@ -350,9 +350,6 @@ private:
   // Size of header that should be at the start of all entries, except factory entries
   static constexpr u32 _kEntryHeaderSize      = sizeof(NVStorageHeader);
   static_assert(_kEntryHeaderSize % 4 == 0, "NVStorageHeader must have a 4-byte aligned size");  // Using sizeof should ensure this is true, but checking just in case.
-  
-  // Maximum size of a single blob
-  static constexpr u32 _kMaxNvStorageBlobSize = 1024;
     
   // Ack timeout
   // If an operation is not acked within this timeout then give up waiting for it.

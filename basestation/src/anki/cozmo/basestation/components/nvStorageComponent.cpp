@@ -52,6 +52,14 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
+#include "util/console/consoleInterface.h"
+
+CONSOLE_VAR(bool, kNoWriteToRobot, "NVStorageComponent", false);
+
+// For some inexplicable reason this needs to be here in the cpp instead of in the header
+// because we are including consoleInterface.h
+// Maximum size of a single blob
+static constexpr u32 _kMaxNvStorageBlobSize = 1024;
 
 namespace Anki {
 namespace Cozmo {
@@ -329,6 +337,20 @@ bool NVStorageComponent::Write(NVEntryTag tag,
     }
     return false;
   }
+  
+  // If we aren't writing to the robot then call the callback immediately
+  if(kNoWriteToRobot)
+  {
+    if(broadcastResultToGame)
+    {
+      BroadcastNVStorageOpResult(tag, NVResult::NV_OKAY, NVOperation::NVOP_WRITE);
+    }
+    if(callback)
+    {
+      callback(NVResult::NV_OKAY);
+    }
+    return true;
+  }
 
   PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.Write.PreceedingWriteWithErase",
                  "Tag: %s", EnumToString(tag));
@@ -377,6 +399,20 @@ bool NVStorageComponent::Erase(NVEntryTag tag,
     return false;
   }
   
+  // If we aren't writing to the robot then call the callback immediately
+  if(kNoWriteToRobot)
+  {
+    if(broadcastResultToGame)
+    {
+      BroadcastNVStorageOpResult(tag, NVResult::NV_OKAY, NVOperation::NVOP_ERASE);
+    }
+    if(callback)
+    {
+      callback(NVResult::NV_OKAY);
+    }
+    return true;
+  }
+  
   _requestQueue.emplace(tag, callback, broadcastResultToGame);
   
   PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.Erase.Queued",
@@ -389,6 +425,20 @@ bool NVStorageComponent::Erase(NVEntryTag tag,
 bool NVStorageComponent::WipeAll(NVStorageWriteEraseCallback callback,
                                  bool broadcastResultToGame)
 {
+  // If we aren't writing to the robot then call the callback immediately
+  if(kNoWriteToRobot)
+  {
+    if(broadcastResultToGame)
+    {
+      BroadcastNVStorageOpResult(NVEntryTag::NVEntry_NEXT_SLOT, NVResult::NV_OKAY, NVOperation::NVOP_WIPEALL);
+    }
+    if(callback)
+    {
+      callback(NVResult::NV_OKAY);
+    }
+    return true;
+  }
+
   _requestQueue.emplace(callback, broadcastResultToGame);
   
   PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.WipeAll.Queued", "");
