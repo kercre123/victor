@@ -791,7 +791,7 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
       std::stringstream ss;
       ss <<  "from (" << lastSafeState.x_mm << ", " << lastSafeState.y_mm << ", " << lastSafeState.theta << ") to ";
       for(const auto& goalPair : _context.goals_c) {
-        ss << goalPair.first
+        ss << (int)goalPair.first
            << ":(" << goalPair.second.x_mm
            << ", " << goalPair.second.y_mm
            << ", " << goalPair.second.theta
