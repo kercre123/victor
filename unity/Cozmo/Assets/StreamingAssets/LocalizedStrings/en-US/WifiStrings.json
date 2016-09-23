@@ -27,8 +27,11 @@
   "wifiStrings.Instructions.Slide0": {
     "translation": "Find and tap your device's Settings icon"
   },
+  "wifiStrings.Instructions.Slide0altCopy": {
+    "translation": "Press the Home button to exit the Cozmo app"
+  },
   "wifiStrings.Instructions.Slide0Android": {
-    "translation": "Pull down your Device's Settings panel"
+    "translation": "Pull down your device's Settings panel"
   },
   "wifiStrings.Instructions.Slide1": {
     "translation": "Select the WiFi section from your Settings menu"
@@ -45,10 +48,16 @@
   "wifiStrings.Instructions.Slide3altCopy2": {
     "translation": "Use ALL CAPS with no spaces"
   },
+  "wifiStrings.Instructions.Slide3.5": {
+    "translation": "Cozmo does not provide an Internet connection"
+  },
+  "wifiStrings.Instructions.Slide3.5altCopy": {
+    "translation": "Tap OK to stay connected to Cozmo's WiFi"
+  },
   "wifiStrings.Instructions.Slide4": {
     "translation": "Exit Settings and return to the Cozmo App"
   },
-    "wifiStrings.Instructions.Slide4altCopy": {
+  "wifiStrings.Instructions.Slide4altCopy": {
     "translation": "The App will know when Cozmo is connected"
   },
   "wifiStrings.Instructions.Slide0.viewAll": {
