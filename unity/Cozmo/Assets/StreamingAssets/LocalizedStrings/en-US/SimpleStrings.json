@@ -229,7 +229,7 @@
     "translation": "Cozmo is having trouble seeing"
   },
   "error.badLight.Bottom": {
-    "translation": "Cozmo works best indoors in a well lit space"
+    "translation": "Avoid bright lights and dimly lit spaces"
   },
   "label.cozmo.serial": {
     "translation": "Cozmo ID: {0}"
