@@ -14,7 +14,7 @@
 #include "anki/cozmo/transport/IReceiver.h"
 #include "anki/cozmo/transport/reliableTransport.h"
 
-//#define DEBUG_CLIENT
+//#define DEBUG_CLIENT 1
 
 #define printf os_printf
 
@@ -78,40 +78,36 @@ static void socketRecvCB(void *arg, char *usrdata, unsigned short len)
 {
   struct espconn* src = (struct espconn*)arg;
   static esp_udp s_dest;
-
+  remot_info *remote = NULL;
   ISR_STACK_LEFT('C');
 
   sendHoldoff = false;
+
+  sint8 err;
+  err = espconn_get_connection_info(src,&remote,0);
+  if (err != ESPCONN_OK)
+  {
+     os_printf("ERROR, couldn't get remote info for connection! %d\r\n", err);
+     return;
+  }
   
   if (unlikely(!clientConnected()))
   {
-    remot_info *remote = NULL;
-    sint8 err;
-    err = espconn_get_connection_info(src,&remote,0);
-    if (err != ESPCONN_OK)
-    {
-      os_printf("ERROR, couldn't get remote info for connection! %d\r\n", err);
-      return;
-    }
     
 #ifdef DEBUG_CLIENT
     printf("Initalizing new connection from  %d.%d.%d.%d:%d\r\n", remote->remote_ip[0], remote->remote_ip[1], remote->remote_ip[2], remote->remote_ip[3], remote->remote_port);
 #endif    
     esp_udp* dest    = &s_dest;
     clientConnection = &g_conn;
-    if (unlikely(clientConnection == NULL || dest == NULL))
-    {
-      os_printf("DIE! Couldn't allocate memory for reliable connection!\r\n");
-      return;
-    }
     os_memcpy(dest->remote_ip, remote->remote_ip, 4);
     dest->remote_port = remote->remote_port;
     ReliableConnection_Init(clientConnection, dest);
+    
   }
-  else if (unlikely(!destsEqual(src->proto.udp, (esp_udp*)clientConnection->dest)))
+  else if (unlikely(!destsEqual(remote, (esp_udp*)clientConnection->dest)))
   {
 #ifdef DEBUG_CLIENT
-    printf("Ignoring UDP traffic from unconnected source at  %d.%d.%d.%d:%d\r\n", src->proto.udp->remote_ip[0], src->proto.udp->remote_ip[1], src->proto.udp->remote_ip[2], src->proto.udp->remote_ip[3], src->proto.udp->remote_port);
+    printf("Ignoring UDP traffic from unconnected source at  %d.%d.%d.%d:%d\r\n", remote->remote_ip[0], remote->remote_ip[1], remote->remote_ip[2], remote->remote_ip[3], remote->remote_port);
 #endif
     return;
   }
