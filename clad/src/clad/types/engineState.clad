@@ -19,6 +19,7 @@ enum uint_8 EngineState {
 enum uint_8 RobotConnectionResult {
   Success,
   ConnectionFailure,
+  ConnectionRejected,
   OutdatedFirmware,
   OutdatedApp,
   NeedsPin,

@@ -28,6 +28,7 @@ public:
   enum class State
   {
     Disconnected,
+    Waiting,
     Connected
   };
   
