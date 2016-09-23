@@ -3,7 +3,7 @@ using System.Collections;
 
 // useful for setting long bodies of text (like privacy policy).
 // this is necessary because unity's text rendering is garbage and
-// have a small cap (~65k characters)
+// have a small cap (~16k characters)
 public class AnkiInfiniteScrollView : MonoBehaviour {
 
   [SerializeField]
@@ -13,35 +13,53 @@ public class AnkiInfiniteScrollView : MonoBehaviour {
   private Anki.UI.AnkiTextLabel _AnkiInfiniteScrollTextCellPrefab;
 
   private string[] _StringsToDisplay;
-  private int _CurrentString;
   private Coroutine _CurrentRoutine;
 
   private const int _kStringsToProcessPerFrame = 10;
+  private const int _kCharactersPerString = 16000; // See http://forum.unity3d.com/threads/apparent-string-length-limit.30874/
 
   public void SetString(string longString) {
     ClearContainer();
-    _StringsToDisplay = longString.Split('\n');
-    _CurrentString = 0;
+
+    // Equivalent to Math.Ceiling(longString.Length / _kCharactersPerString) but without the int <-> double conversions
+    int numberOfStrings = (longString.Length + _kCharactersPerString - 1) / _kCharactersPerString; 
+    _StringsToDisplay = new string[numberOfStrings];
 
     if (_CurrentRoutine != null) {
       StopCoroutine(_CurrentRoutine);
     }
-    _CurrentRoutine = StartCoroutine(CreateTextLabels());
+    _CurrentRoutine = StartCoroutine(CreateTextLabels(longString));
   }
 
-  private IEnumerator CreateTextLabels() {
-    int targetIndex;
-    Anki.UI.AnkiTextLabel scrollTextCell;
-    while (_CurrentString < _StringsToDisplay.Length) {
-      targetIndex = _CurrentString + _kStringsToProcessPerFrame;
-      if (targetIndex > _StringsToDisplay.Length) {
-        targetIndex = _StringsToDisplay.Length;
-      }
-      while (_CurrentString < targetIndex) {
-        scrollTextCell = GameObject.Instantiate(_AnkiInfiniteScrollTextCellPrefab.gameObject).GetComponent<Anki.UI.AnkiTextLabel>();
-        scrollTextCell.text = _StringsToDisplay[_CurrentString];
+  private IEnumerator CreateTextLabels(string longString) {
+    int currentSubString = 0;
+    int subStringStartIndex = 0;
+
+    while (currentSubString < _StringsToDisplay.Length) {
+      int targetIndex = System.Math.Min(currentSubString + _kStringsToProcessPerFrame, _StringsToDisplay.Length);
+
+      while (currentSubString < targetIndex) {
+        Anki.UI.AnkiTextLabel scrollTextCell = GameObject.Instantiate(_AnkiInfiniteScrollTextCellPrefab.gameObject).GetComponent<Anki.UI.AnkiTextLabel>();
         scrollTextCell.transform.SetParent(_ContentContainer, false);
-        _CurrentString++;
+
+        // Calculate start and length of the substring
+        int remainingCharacters = longString.Length - subStringStartIndex;
+        if (remainingCharacters <= _kCharactersPerString) {
+          // Last page, copy the rest of the text
+          scrollTextCell.text = longString.Substring(subStringStartIndex, remainingCharacters);
+        }
+        else {
+          // Avoid breaking in the middle of a word
+          int subStringLength = _kCharactersPerString;
+          while (!char.IsWhiteSpace(longString[subStringStartIndex + subStringLength - 1]) && (subStringLength > 0)) {
+            subStringLength--;
+          }
+
+          scrollTextCell.text = longString.Substring(subStringStartIndex, subStringLength);
+          subStringStartIndex += subStringLength;
+        }
+
+        currentSubString++;
       }
       yield return 0;
     }
