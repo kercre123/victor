@@ -128,13 +128,13 @@ namespace DataPersistence {
         numDays = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Count;
         if (numDays > 0) {
           lastSession = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions[numDays - 1];
+          // If this is not the first day, consider onboarding complete so we generate new goals
+          if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.DailyGoals)) {
+            OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.DailyGoals);
+          }
         }
       }
       DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Add(newSession);
-      // Goals have been generated for onboarding, complete this phase so that future sessions will have fresh goals
-      if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.DailyGoals)) {
-        OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.DailyGoals);
-      }
 
       if (lastSession != null && !lastSession.GoalsFinished) {
         Cozmo.UI.DailyGoal goal = lastSession.DailyGoals.FirstOrDefault();
@@ -142,10 +142,10 @@ namespace DataPersistence {
         if (goal != null) {
           goalName = goal.Title.Key;
         }
-        DAS.Event("meta.goal_expired", numDays.ToString (), DASUtil.FormatExtraData(goalName));
+        DAS.Event("meta.goal_expired", numDays.ToString(), DASUtil.FormatExtraData(goalName));
         foreach (Cozmo.UI.DailyGoal dailyGoal in lastSession.DailyGoals) {
-          DAS.Event("meta.goal_expired_progress", dailyGoal.Title.Key, DASUtil.FormatExtraData( 
-            string.Format("{0}/{1}", dailyGoal.Progress, dailyGoal.Target) ) );
+          DAS.Event("meta.goal_expired_progress", dailyGoal.Title.Key, DASUtil.FormatExtraData(
+            string.Format("{0}/{1}", dailyGoal.Progress, dailyGoal.Target)));
         }
 
       }
