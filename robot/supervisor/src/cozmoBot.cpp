@@ -117,10 +117,8 @@ namespace Anki {
         lastResult = HAL::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 219, "CozmoBot.InitFail.HAL", 305, "", 0);
 #endif
-#ifndef TARGET_K02
         lastResult = Messages::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 220, "CozmoBot.InitFail.Messages", 305, "", 0);
-#endif
 
         lastResult = Localization::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 221, "CozmoBot.InitFail.Localization", 305, "", 0);
@@ -347,8 +345,9 @@ namespace Anki {
         Messages::UpdateRobotStateMsg();
 #if(!STREAM_DEBUG_IMAGES)
         ++robotStateMessageCounter_;
-        if(robotStateMessageCounter_ >= STATE_MESSAGE_FREQUENCY && !waitForFirstMotorCalibAfterConnect_) {
-          Messages::SendRobotStateMsg();
+        if(robotStateMessageCounter_ >= STATE_MESSAGE_FREQUENCY) {
+          if (!waitForFirstMotorCalibAfterConnect_) Messages::SendRobotStateMsg();
+          Messages::SendTestStateMsg();
           robotStateMessageCounter_ = 0;
         }
 #endif

@@ -68,6 +68,8 @@ namespace Anki {
       // Sends robot state message, either the one passed in or the one
       // stored internally that is updated by UpdateRobotStateMsg().
       Result SendRobotStateMsg(const RobotState* msg = NULL);
+      
+      void SendTestStateMsg();
 
       Result SendMotorCalibrationMsg(MotorID motor, bool calibStarted, bool autoStarted = false);
       

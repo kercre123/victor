@@ -65,7 +65,7 @@ namespace Anki {
         TimeStamp_t robotStateSendHist_[2];
         u8 robotStateSendHistIdx_ = 0;
 
-        bool sendTestStateMessages = false;
+        bool sendTestStateMessages;
 
         // Flag for receipt of Init message
         bool initReceived_ = false;
@@ -94,7 +94,8 @@ namespace Anki {
         
         // In sim we don't expect to get the PowerState message which normally sets this
         bodyRadioMode_ = BODY_ACCESSORY_OPERATING_MODE;
-
+#else
+        sendTestStateMessages = true;
 #endif
         return RESULT_OK;
       }
@@ -982,8 +983,7 @@ namespace Anki {
 
 // ----------- Send messages -----------------
 
-
-      Result SendRobotStateMsg(const RobotState* msg)
+      void SendTestStateMsg()
       {
 #ifdef TARGET_K02
         if (sendTestStateMessages)
@@ -1000,7 +1000,10 @@ namespace Anki {
           RobotInterface::SendMessage(tsm);
         }
 #endif
-        
+      }
+
+      Result SendRobotStateMsg(const RobotState* msg)
+      {        
         // Don't send robot state updates unless the init message was received
         if (!initReceived_) {
           return RESULT_FAIL;
