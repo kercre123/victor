@@ -461,7 +461,7 @@ namespace Anki {
 
       private IEnumerator LoadAssetAsyncInternal<AssetType>(string assetBundleName, string assetName, Action<AssetType> callback) where AssetType : UnityEngine.Object {
         LoadedAssetBundle loadedAssetBundle = null;
-        if (!_LoadedAssetBundles.TryGetValue(assetBundleName, out loadedAssetBundle)) {
+        if (!_LoadedAssetBundles.TryGetValue(assetBundleName, out loadedAssetBundle) || (loadedAssetBundle == null)) {
           Log(LogType.Error, "Couldn't load asset " + assetName + " from asset bundle " + assetBundleName + ". The asset bundle is not loaded");
           CallCallback(callback, null);
           yield break;
@@ -474,10 +474,17 @@ namespace Anki {
         }
 
         AssetBundleRequest request = loadedAssetBundle.AssetBundle.LoadAssetAsync<AssetType>(assetName);
+        if (request == null) {
+          Log(LogType.Error, "Couldn't load asset " + assetName + " from asset bundle " + assetBundleName + ". Request to load failed");
+          CallCallback(callback, null);
+          yield break;
+        }
         yield return request;
 
         if (request.asset == null) {
-          Log(LogType.Error, "Couldn't load asset " + assetName + " from asset bundle " + assetBundleName);
+          Log(LogType.Error, "Couldn't load asset " + assetName + " from asset bundle " + assetBundleName + ". The request returned a null asset");
+          CallCallback(callback, null);
+          yield break;
         }
 
         CallCallback(callback, request.asset as AssetType);

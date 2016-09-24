@@ -114,9 +114,19 @@ namespace Cozmo.HomeHub {
     }
 
     private void LoadHomeView(bool assetBundleSuccess) {
-      _HomeViewPrefabData.LoadAssetData((GameObject homeViewPrefab) => {
-        StartCoroutine(ShowHomeViewAfterOtherViewClosed(homeViewPrefab));
-      });
+      if (assetBundleSuccess) {
+        _HomeViewPrefabData.LoadAssetData((GameObject homeViewPrefab) => {
+          if (homeViewPrefab != null) {
+            StartCoroutine(ShowHomeViewAfterOtherViewClosed(homeViewPrefab));
+          }
+          else {
+            DAS.Error("HomeHub.LoadHomeView", "HomeViewPrefab is null");
+          }
+        });
+      }
+      else {
+        DAS.Error("HomeHub.LoadHomeView", "Failed to load asset bundle " + _HomeViewPrefabData.AssetBundle);
+      }
     }
 
     private IEnumerator ShowHomeViewAfterOtherViewClosed(GameObject homeViewPrefab) {
@@ -283,7 +293,7 @@ namespace Cozmo.HomeHub {
         }
         else {
           // TODO show error dialog and boot to home
-          DAS.Error("HomeHub.HandleHomeViewCloseAnimationFinished", "mini game prefab load failed");
+          DAS.Error("HomeHub.HandleHomeViewCloseAnimationFinished", "Failed to load asset bundle " + _MinigameDataPrefabAssetBundle.Value.ToString());
         }
       });
     }

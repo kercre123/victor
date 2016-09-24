@@ -190,32 +190,41 @@ public abstract class GameBase : MonoBehaviour {
     string minigameAssetBundleName = AssetBundleNames.minigame_ui_prefabs.ToString();
     AssetBundleManager.Instance.LoadAssetBundleAsync(
       minigameAssetBundleName, (bool success) => {
-        LoadSharedMinigameView(minigameAssetBundleName);
+        if (success) {
+          LoadSharedMinigameView(minigameAssetBundleName);
+        }
+        else {
+          DAS.Error("GameBase.LoadMinigameUIAssetBundle", "Failed to load asset bundle " + minigameAssetBundleName);
+        }
       });
   }
 
   private void LoadSharedMinigameView(string minigameAssetBundleName) {
     MinigameUIPrefabHolder.LoadSharedMinigameViewPrefab(minigameAssetBundleName, (GameObject viewPrefab) => {
-      SharedMinigameView prefabScript = viewPrefab.GetComponent<SharedMinigameView>();
-      _SharedMinigameViewInstance = UIManager.OpenView(prefabScript, newView => {
-        newView.Initialize(_ChallengeData);
-        InitializeMinigameView(newView, _ChallengeData);
+      if (viewPrefab != null) {
+        SharedMinigameView prefabScript = viewPrefab.GetComponent<SharedMinigameView>();
+        _SharedMinigameViewInstance = UIManager.OpenView(prefabScript, newView => {
+          newView.Initialize(_ChallengeData);
+          InitializeMinigameView(newView, _ChallengeData);
 
-        if (OnSharedMinigameViewInitialized != null) {
-          OnSharedMinigameViewInitialized(newView);
+          if (OnSharedMinigameViewInitialized != null) {
+            OnSharedMinigameViewInitialized(newView);
+          }
+        });
+
+        bool videoPlayedAlready = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.ContainsKey(_ChallengeData.ChallengeID);
+        bool noInstructionVideo = string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath);
+
+        if (videoPlayedAlready || noInstructionVideo) {
+          FinishedInstructionalVideo();
         }
-      });
-
-      bool videoPlayedAlready = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameInstructionalVideoPlayed.ContainsKey(_ChallengeData.ChallengeID);
-      bool noInstructionVideo = string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath);
-
-      if (videoPlayedAlready || noInstructionVideo) {
-        FinishedInstructionalVideo();
+        else {
+          SharedMinigameView.PlayVideo(_ChallengeData.InstructionVideoPath, FinishedInstructionalVideo);
+        }
       }
       else {
-        SharedMinigameView.PlayVideo(_ChallengeData.InstructionVideoPath, FinishedInstructionalVideo);
+        DAS.Error("GameBase.LoadSharedMinigameView", "Failed to shared minigame view");
       }
-
     });
   }
 

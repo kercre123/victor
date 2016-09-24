@@ -563,27 +563,37 @@ namespace Cozmo.HomeHub {
     private void OpenLootView() {
       if (HomeViewCurrentlyOccupied && RewardSequenceActive == false) {
         // Avoid dupes but fail gracefully
-        DAS.Warn("homeView.openLootView", "LootView Blocked by non-reward sequence");
+        DAS.Warn("HomeView.OpenLootView", "LootView Blocked by non-reward sequence");
         HandleLootViewCloseAnimationFinished();
         return;
       }
       if (_LootSequenceActive) {
-        DAS.Warn("homeView.openLootview", "Attempted to Load LootView Twice");
+        DAS.Warn("HomeView.OpenLootview", "Attempted to Load LootView Twice");
         return;
       }
       _LootSequenceActive = true;
       _EmotionChipTag.gameObject.SetActive(false);
 
       AssetBundleManager.Instance.LoadAssetBundleAsync(_LootViewPrefabData.AssetBundle, (bool success) => {
-        _LootViewPrefabData.LoadAssetData((GameObject prefabObject) => {
-          LootView lootView = UIManager.OpenView(prefabObject.GetComponent<LootView>());
-          lootView.LootBoxRewards = ChestRewardManager.Instance.PendingChestRewards;
-          lootView.ViewCloseAnimationFinished += (() => {
-            HandleLootViewCloseAnimationFinished();
-            // Only unload the asset bundle if we actually loaded it before
-            AssetBundleManager.Instance.UnloadAssetBundle(_LootViewPrefabData.AssetBundle);
+        if (success) {
+          _LootViewPrefabData.LoadAssetData((GameObject prefabObject) => {
+            if (prefabObject != null) {
+              LootView lootView = UIManager.OpenView(prefabObject.GetComponent<LootView>());
+              lootView.LootBoxRewards = ChestRewardManager.Instance.PendingChestRewards;
+              lootView.ViewCloseAnimationFinished += (() => {
+                HandleLootViewCloseAnimationFinished();
+                // Only unload the asset bundle if we actually loaded it before
+                AssetBundleManager.Instance.UnloadAssetBundle(_LootViewPrefabData.AssetBundle);
+              });
+            }
+            else {
+              DAS.Error("HomeView.OpenLootView", "Error loading LootViewPrefabData");
+            }
           });
-        });
+        }
+        else {
+          DAS.Error("HomeView.OpenLootView", "Failed to load asset bundle " + _LootViewPrefabData.AssetBundle);
+        }
       });
     }
 

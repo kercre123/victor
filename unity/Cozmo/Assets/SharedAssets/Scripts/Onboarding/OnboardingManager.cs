@@ -244,15 +244,20 @@ public class OnboardingManager : MonoBehaviour {
     return true;
   }
   private void LoadOnboardingAssetsCallback(bool assetBundleSuccess) {
-    _OnboardingUIPrefabData.LoadAssetData((GameObject onboardingUIWrapperPrefab) => {
-      if (_OnboardingUIInstance == null && onboardingUIWrapperPrefab != null) {
-        GameObject wrapper = UIManager.CreateUIElement(onboardingUIWrapperPrefab.gameObject);
-        _OnboardingUIInstance = wrapper.GetComponent<OnboardingUIWrapper>();
-        if (_CurrPhase != OnboardingPhases.None) {
-          SetSpecificStage(0);
+    if (assetBundleSuccess) {
+      _OnboardingUIPrefabData.LoadAssetData((GameObject onboardingUIWrapperPrefab) => {
+        if (_OnboardingUIInstance == null && onboardingUIWrapperPrefab != null) {
+          GameObject wrapper = UIManager.CreateUIElement(onboardingUIWrapperPrefab.gameObject);
+          _OnboardingUIInstance = wrapper.GetComponent<OnboardingUIWrapper>();
+          if (_CurrPhase != OnboardingPhases.None) {
+            SetSpecificStage(0);
+          }
         }
-      }
-    });
+      });
+    }
+    else {
+      DAS.Error("OnboardingManager.LoadOnboardingAssetsCallback", "Failed to load asset bundle " + _OnboardingUIPrefabData.AssetBundle);
+    }
   }
   private void UnloadIfDoneWithAllPhases() {
     if (!IsOnboardingRequired(OnboardingPhases.Home) &&

@@ -196,19 +196,29 @@ public class PressDemoHubWorld : HubWorldBase {
 
     Anki.Assets.AssetBundleManager.Instance.LoadAssetBundleAsync(
       challengeData.PrefabDataAssetBundle, (bool success) => {
-        challengeData.LoadPrefabData((ChallengePrefabData prefabData) => {
-          GameObject newMiniGameObject = Instantiate(prefabData.MinigamePrefab);
-          _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
-          _MiniGameInstance.InitializeMinigame(challengeData, playGameSpecificMusic);
-          _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
-          _MiniGameInstance.OnMiniGameWin += HandleMinigameOver;
-          _MiniGameInstance.OnMiniGameLose += HandleMinigameOver;
-          _MiniGameInstance.OnShowEndGameDialog += HandleEndGameDialog;
+        if (success) {
+          challengeData.LoadPrefabData((ChallengePrefabData prefabData) => {
+            if (prefabData != null) {
+              GameObject newMiniGameObject = Instantiate(prefabData.MinigamePrefab);
+              _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
+              _MiniGameInstance.InitializeMinigame(challengeData, playGameSpecificMusic);
+              _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
+              _MiniGameInstance.OnMiniGameWin += HandleMinigameOver;
+              _MiniGameInstance.OnMiniGameLose += HandleMinigameOver;
+              _MiniGameInstance.OnShowEndGameDialog += HandleEndGameDialog;
 
-          if (gameFinishedLoadingCallback != null) {
-            gameFinishedLoadingCallback(_MiniGameInstance);
-          }
-        });
+              if (gameFinishedLoadingCallback != null) {
+                gameFinishedLoadingCallback(_MiniGameInstance);
+              }
+            }
+            else {
+              DAS.Error("PressDemoHubWorld.PlayMinigame", "Failed to load CallengePrefabData");
+            }
+          });
+        }
+        else {
+          DAS.Error("PressDemoHubWorld.PlayMinigame", "Failed to load asset bundle " + challengeData.PrefabDataAssetBundle);
+        }
       });
   }
 

@@ -129,13 +129,18 @@ public class IntroManager : MonoBehaviour {
   }
 
   private void LoadConnectView(bool assetBundleSuccess) {
-    _FirstTimeConnectDialogPrefabData.LoadAssetData((GameObject connectViewPrefab) => {
-      if (_FirstTimeConnectDialogInstance == null && connectViewPrefab != null) {
-        _FirstTimeConnectDialogInstance = UIManager.CreateUIElement(connectViewPrefab.gameObject);
-        _FirstTimeConnectDialogInstance.GetComponent<FirstTimeConnectDialog>().ConnectionFlowComplete += HandleFirstTimeConnectionFlowComplete;
-        _FirstTimeConnectDialogInstance.GetComponent<FirstTimeConnectDialog>().ConnectionFlowQuit += HandleFirstTimeConnectFlowQuit;
-      }
-    });
+    if (assetBundleSuccess) {
+      _FirstTimeConnectDialogPrefabData.LoadAssetData((GameObject connectViewPrefab) => {
+        if (_FirstTimeConnectDialogInstance == null && connectViewPrefab != null) {
+          _FirstTimeConnectDialogInstance = UIManager.CreateUIElement(connectViewPrefab.gameObject);
+          _FirstTimeConnectDialogInstance.GetComponent<FirstTimeConnectDialog>().ConnectionFlowComplete += HandleFirstTimeConnectionFlowComplete;
+          _FirstTimeConnectDialogInstance.GetComponent<FirstTimeConnectDialog>().ConnectionFlowQuit += HandleFirstTimeConnectFlowQuit;
+        }
+      });
+    }
+    else {
+      DAS.Error("IntroManager.LoadConnectView", "Failed to load asset bundle" + _FirstTimeConnectDialogPrefabData.AssetBundle);
+    }
   }
 
   private void HideFirstTimeConnectDialog() {
@@ -160,13 +165,18 @@ public class IntroManager : MonoBehaviour {
   }
 
   private void LoadCheckInView(bool assetBundleSuccess) {
-    _CheckInDialogPrefabData.LoadAssetData((GameObject checkInViewPrefab) => {
-      if (_CheckInDialogInstance == null && checkInViewPrefab != null) {
-        _CheckInDialogInstance = UIManager.CreateUIElement(checkInViewPrefab.gameObject);
-        _CheckInDialogInstance.GetComponent<CheckInFlow>().ConnectionFlowComplete += HandleCheckinFlowComplete;
-        _CheckInDialogInstance.GetComponent<CheckInFlow>().CheckInFlowQuit += HandleCheckInFlowQuit;
-      }
-    });
+    if (assetBundleSuccess) {
+      _CheckInDialogPrefabData.LoadAssetData((GameObject checkInViewPrefab) => {
+        if (_CheckInDialogInstance == null && checkInViewPrefab != null) {
+          _CheckInDialogInstance = UIManager.CreateUIElement(checkInViewPrefab.gameObject);
+          _CheckInDialogInstance.GetComponent<CheckInFlow>().ConnectionFlowComplete += HandleCheckinFlowComplete;
+          _CheckInDialogInstance.GetComponent<CheckInFlow>().CheckInFlowQuit += HandleCheckInFlowQuit;
+        }
+      });
+    }
+    else {
+      DAS.Error("IntroManager.LoadCheckInView", "Failed to load asset bundle " + _CheckInDialogPrefabData.AssetBundle);
+    }
   }
 
   private void HideCheckInFlow() {

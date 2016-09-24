@@ -10,7 +10,13 @@ namespace Cozmo {
       public static void LoadSharedMinigameViewPrefab(string assetBundleName, System.Action<GameObject> dataLoadedCallback) {
         AssetBundleManager.Instance.LoadAssetAsync(
           assetBundleName, "MinigameUIPrefabHolder", (MinigameUIPrefabHolder prefabHolder) => {
-            prefabHolder._SharedMinigameViewPrefabData.LoadAssetData(dataLoadedCallback);
+            if (prefabHolder != null) {
+              prefabHolder._SharedMinigameViewPrefabData.LoadAssetData(dataLoadedCallback);
+            }
+            else {
+              DAS.Error("MinigameUIPrefabHolder.LoadSharedMinigameViewPrefab", "Failed to load MinigameUIPrefabHolder");
+              dataLoadedCallback(null);
+            }
           });
       }
     }
