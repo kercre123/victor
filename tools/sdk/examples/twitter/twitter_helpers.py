@@ -1,16 +1,17 @@
 # Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
+'''Twitter helper functions
 
-import cozmo
+Wrapper functions for integrating Cozmo with Twitter using Tweepy.
+'''
+
 from io import BytesIO
 import json
 import sys
+import cozmo
 try:
     import tweepy
 except ImportError:
     sys.exit("Cannot import tweepy: Do `pip3 install tweepy` to install")
-
-
-'''Helpers for integrating Cozmo with Twitter using Tweepy'''
 
 
 class CozmoTweetStreamListener(tweepy.StreamListener):
@@ -32,7 +33,7 @@ class CozmoTweetStreamListener(tweepy.StreamListener):
         return tweet_text
 
     def upload_images(self, images, use_jpeg=False, jpeg_quality=70):
-        """
+        '''
         Args:
             images (list of PIL.Image): images to upload
             use_jpeg (bool):
@@ -40,7 +41,7 @@ class CozmoTweetStreamListener(tweepy.StreamListener):
 
         Returns:
             list of media_id
-        """
+        '''
 
         media_ids = []
         for image in images:
@@ -92,7 +93,7 @@ class CozmoTweetStreamListener(tweepy.StreamListener):
 
         # is this a tweet?
         tweet_text = json_data.get('text')
-        from_user  = json_data.get('user')
+        from_user = json_data.get('user')
         is_retweet = json_data.get('retweeted')
         is_tweet = (tweet_text is not None) and (from_user is not None) and (is_retweet is not None)
 
@@ -109,16 +110,16 @@ class CozmoStream(tweepy.Stream):
 
 def has_default_twitter_keys(twitter_keys):
     default_key = 'XXXXXXXXXX'
-    return (twitter_keys.consumer_key == default_key) and (twitter_keys.consumer_secret == default_key) and \
-           (twitter_keys.access_token == default_key) and (twitter_keys.access_token_secret == default_key)
+    return (twitter_keys.CONSUMER_KEY == default_key) and (twitter_keys.CONSUMER_SECRET == default_key) and \
+           (twitter_keys.ACCESS_TOKEN == default_key) and (twitter_keys.ACCESS_TOKEN_SECRET == default_key)
 
 def auth_twitter(twitter_keys):
     '''Perform OAuth authentication with twitter, using the keys provided'''
     if has_default_twitter_keys(twitter_keys):
         cozmo.logger.error("You need to configure your twitter_keys")
 
-    auth = tweepy.OAuthHandler(twitter_keys.consumer_key, twitter_keys.consumer_secret)
-    auth.set_access_token(twitter_keys.access_token, twitter_keys.access_token_secret)
+    auth = tweepy.OAuthHandler(twitter_keys.CONSUMER_KEY, twitter_keys.CONSUMER_SECRET)
+    auth.set_ACCESS_TOKEN(twitter_keys.ACCESS_TOKEN, twitter_keys.ACCESS_TOKEN_SECRET)
     return auth
 
 
@@ -136,4 +137,3 @@ def init_twitter(twitter_keys):
     auth = auth_twitter(twitter_keys)
     twitter_api = tweepy.API(auth)
     return twitter_api, auth
-

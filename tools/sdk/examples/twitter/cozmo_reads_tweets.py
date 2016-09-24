@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
+'''Cozmo reads tweets
+
+Example for integrating Cozmo with Twitter
+Cozmo will read aloud each new tweet as it appears on your Twitter stream
+See user_twitter_keys.py for details on how to setup a Twitter account and get access keys
+'''
 
 import cozmo
 import twitter_helpers
 import user_twitter_keys as twitter_keys
-
-
-'''Example for integrating Cozmo with Twitter
-   Cozmo will read aloud each new tweet as it appears on your twitter stream
-   See user_twitter_keys.py for details on how to setup a twitter account and get access keys
-'''
 
 
 class CozmoReadsTweetsStreamListener(twitter_helpers.CozmoTweetStreamListener):
@@ -40,6 +40,7 @@ class CozmoReadsTweetsStreamListener(twitter_helpers.CozmoTweetStreamListener):
 
 
 def run(coz_conn):
+    '''The run method runs once Cozmo is connected.'''
     coz = coz_conn.wait_for_robot()
 
     twitter_api, twitter_auth = twitter_helpers.init_twitter(twitter_keys)
@@ -51,4 +52,3 @@ def run(coz_conn):
 if __name__ == '__main__':
     cozmo.setup_basic_logging()
     cozmo.connect(run)
-
