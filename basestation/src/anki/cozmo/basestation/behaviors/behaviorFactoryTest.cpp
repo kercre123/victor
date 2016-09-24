@@ -268,7 +268,7 @@ namespace Cozmo {
     // Setup logging to device
     if (kBFT_SaveLogsOnDevice) {
       std::stringstream serialNumString;
-      serialNumString << std::hex << robot.GetSerialNumber();
+      serialNumString << std::hex << robot.GetHeadSerialNumber();
       _factoryTestLogger.StartLog( serialNumString.str(), true, robot.GetContextDataPlatform());
       PRINT_NAMED_INFO("BehaviorFactoryTest.WillLogToDevice",
                        "Log name: %s",

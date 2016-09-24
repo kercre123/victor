@@ -760,9 +760,13 @@ public:
   
   RobotToEngineImplMessaging& GetRobotToEngineImplMessaging() { return *_robotToEngineImplMessaging; }
   
-  const u32 GetSerialNumber() const { return _serialNumber; }
-  void SetSerialNumber(const u32 num) { _serialNumber = num; }
+  const u32 GetHeadSerialNumber() const { return _serialNumberHead; }
+  void SetHeadSerialNumber(const u32 num) { _serialNumberHead = num; }
+  const u32 GetBodySerialNumber() const { return _serialNumberBody; }
+  void SetBodySerialNumber(const u32 num) { _serialNumberBody = num; }
+  
   void SetModelNumber(const u32 num) { _modelNumber = num; }
+  void SetHWVersion(const s32 num) { _hwVersion = num; }
   
   bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterTimeSync; }
   
@@ -773,9 +777,11 @@ protected:
   RobotWorldOriginChangedSignal _robotWorldOriginChangedSignal;
   // The robot's identifier
   RobotID_t         _ID;
-  bool              _isPhysical = false;
-  u32               _serialNumber = 0;
-  u32               _modelNumber  = 0;
+  bool              _isPhysical       = false;
+  u32               _serialNumberHead = 0;
+  u32               _serialNumberBody = 0;
+  u32               _modelNumber      = 0;
+  s32               _hwVersion        = 0;
   
   // Whether or not sync time was acknowledged by physical robot
   bool              _timeSynced = false;
