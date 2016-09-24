@@ -278,134 +278,138 @@ bool NavMeshQuadTreeNode::ShiftRoot(const std::vector<Point2f>& requiredPoints, 
     PRINT_NAMED_ERROR("NavMeshQuadTreeNode.ShiftRoot.AllPointsIn", "We don't need to shift");
     return false;
   }
-  
-  // save my old children so that we can swap them with the new ones
-  std::vector< std::unique_ptr<NavMeshQuadTreeNode> > oldChildren;
-  std::swap(oldChildren, _childrenPtr);
-  
+
   // the new center will be shifted in one or both axes, depending on xyIncrease
   // for example, if we left the root through the right, only the right side will expand, and the left will collapse,
   // but top and bottom will remain the same
   _center.x() = _center.x() + (xShift ? (xPlusAxisReq ? rootHalfLen : -rootHalfLen) : 0.0f);
   _center.y() = _center.y() + (yShift ? (yPlusAxisReq ? rootHalfLen : -rootHalfLen) : 0.0f);
   
-  // create new children
-  const float chHalfLen = rootHalfLen*0.5f;
-  _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopLeft , this) ); // up L
-  _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopRight, this) ); // up R
-  _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotLeft , this) ); // lo L
-  _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotRight, this) ); // lo R
+  // if the root has children, update them, otherwise no further changes are necessary
+  if ( !_childrenPtr.empty() )
+  {
+    // save my old children so that we can swap them with the new ones
+    std::vector< std::unique_ptr<NavMeshQuadTreeNode> > oldChildren;
+    std::swap(oldChildren, _childrenPtr);
+    
+    // create new children
+    const float chHalfLen = rootHalfLen*0.5f;
+    _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopLeft , this) ); // up L
+    _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopRight, this) ); // up R
+    _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotLeft , this) ); // lo L
+    _childrenPtr.emplace_back( new NavMeshQuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotRight, this) ); // lo R
 
-  // typedef to cast quadrant enum to the underlaying type (that can be assigned to size_t)
-  using Q2N = std::underlying_type<EQuadrant>::type; // Q2N stands for "Quadrant To Number", it makes code below easier to read
-  static_assert( sizeof(Q2N) < sizeof(size_t), "UnderlyingTypeIsBiggerThanSizeType");
-  
-  /* 
-    Example of shift along both axes +x,+y
-  
-                    ^                                           ^ +y
-                    | +y                                        |---- ----
-                                                                |    | TL |
-                ---- ----                                        ---- ----
-      -x       | BL | TL |     +x               -x              | BR |    |  +x
-     < ---      ---- ----      --->              < ---           ---- ----  --->
-               | BR | TR |
-                ---- ----
-   
-                    | -y                                        | -y
-                    v                                           v
-   
-     Since the root can't expand anymore, we move it in the direction we would want to expand. Note in the example
-     how TopLeft becomes BottomRight in the new root. We want to preserve the children of that direct child (old TL), but
-     we need to hook them to a different child (new BR). That's essentially what the rest of this method does.
-   
-  */
-  
-  // this content is set to the children that don't inherit old children
-  NodeContent emptyUnknownContent(ENodeContentType::Unknown);
-  
-  // calculate which children are brought over from the old ones
-  if ( xShift && yShift )
-  {
-    // double move, only one child is preserved, which is the one in the same direction top the expansion one
-    if ( xPlusAxisReq ) {
-      if ( yPlusAxisReq ) {
-        // we are moving along +x +y axes, top left becomes bottom right of the new root
+    // typedef to cast quadrant enum to the underlaying type (that can be assigned to size_t)
+    using Q2N = std::underlying_type<EQuadrant>::type; // Q2N stands for "Quadrant To Number", it makes code below easier to read
+    static_assert( sizeof(Q2N) < sizeof(size_t), "UnderlyingTypeIsBiggerThanSizeType");
+    
+    /* 
+      Example of shift along both axes +x,+y
+    
+                      ^                                           ^ +y
+                      | +y                                        |---- ----
+                                                                  |    | TL |
+                  ---- ----                                        ---- ----
+        -x       | BL | TL |     +x               -x              | BR |    |  +x
+       < ---      ---- ----      --->              < ---           ---- ----  --->
+                 | BR | TR |
+                  ---- ----
+     
+                      | -y                                        | -y
+                      v                                           v
+     
+       Since the root can't expand anymore, we move it in the direction we would want to expand. Note in the example
+       how TopLeft becomes BottomRight in the new root. We want to preserve the children of that direct child (old TL), but
+       we need to hook them to a different child (new BR). That's essentially what the rest of this method does.
+     
+    */
+    
+    // this content is set to the children that don't inherit old children
+    NodeContent emptyUnknownContent(ENodeContentType::Unknown);
+    
+    // calculate which children are brought over from the old ones
+    if ( xShift && yShift )
+    {
+      // double move, only one child is preserved, which is the one in the same direction top the expansion one
+      if ( xPlusAxisReq ) {
+        if ( yPlusAxisReq ) {
+          // we are moving along +x +y axes, top left becomes bottom right of the new root
+          _childrenPtr[(Q2N)EQuadrant::TopLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
+          _childrenPtr[(Q2N)EQuadrant::TopRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
+          _childrenPtr[(Q2N)EQuadrant::BotLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
+          _childrenPtr[(Q2N)EQuadrant::BotRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopLeft].get(), processor);
+        } else {
+          // we are moving along +x -y axes, top right becomes bottom left of the new root
+          _childrenPtr[(Q2N)EQuadrant::TopLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
+          _childrenPtr[(Q2N)EQuadrant::TopRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
+          _childrenPtr[(Q2N)EQuadrant::BotLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopRight].get(), processor);
+          _childrenPtr[(Q2N)EQuadrant::BotRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
+        }
+      }
+      else
+      {
+        if ( yPlusAxisReq ) {
+          // we are moving along -x +y axes, bottom left becomes top right of the new root
+          _childrenPtr[(Q2N)EQuadrant::TopLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
+          _childrenPtr[(Q2N)EQuadrant::TopRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotLeft].get(), processor);
+          _childrenPtr[(Q2N)EQuadrant::BotLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
+          _childrenPtr[(Q2N)EQuadrant::BotRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
+        } else {
+          // we are moving along -x -y axes, bottom right becomes top left of the new root
+          _childrenPtr[(Q2N)EQuadrant::TopLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotRight].get(), processor);
+          _childrenPtr[(Q2N)EQuadrant::TopRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
+          _childrenPtr[(Q2N)EQuadrant::BotLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
+          _childrenPtr[(Q2N)EQuadrant::BotRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
+        }
+      }
+    }
+    else if ( xShift )
+    {
+      // move only in one axis, two children are preserved, top or bottom
+      if ( xPlusAxisReq )
+      {
+        // we are moving along +x axis, top children are preserved, but they become the bottom ones
         _childrenPtr[(Q2N)EQuadrant::TopLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
         _childrenPtr[(Q2N)EQuadrant::TopRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
+        _childrenPtr[(Q2N)EQuadrant::BotLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopLeft].get(), processor );
+        _childrenPtr[(Q2N)EQuadrant::BotRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopRight].get(), processor);
+      }
+      else
+      {
+        // we are moving along -x axis, bottom children are preserved, but they become the top ones
+        _childrenPtr[(Q2N)EQuadrant::TopLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotLeft].get(), processor);
+        _childrenPtr[(Q2N)EQuadrant::TopRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotRight].get(), processor);
         _childrenPtr[(Q2N)EQuadrant::BotLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-        _childrenPtr[(Q2N)EQuadrant::BotRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopLeft].get(), processor);
-      } else {
-        // we are moving along +x -y axes, top right becomes bottom left of the new root
-        _childrenPtr[(Q2N)EQuadrant::TopLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-        _childrenPtr[(Q2N)EQuadrant::TopRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-        _childrenPtr[(Q2N)EQuadrant::BotLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopRight].get(), processor);
         _childrenPtr[(Q2N)EQuadrant::BotRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
       }
     }
-    else
+    else if ( yShift )
     {
-      if ( yPlusAxisReq ) {
-        // we are moving along -x +y axes, bottom left becomes top right of the new root
+      // move only in one axis, two children are preserved, left or right
+      if ( yPlusAxisReq )
+      {
+        // we are moving along +y axis, left children are preserved, but they become the right ones
         _childrenPtr[(Q2N)EQuadrant::TopLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-        _childrenPtr[(Q2N)EQuadrant::TopRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotLeft].get(), processor);
+        _childrenPtr[(Q2N)EQuadrant::TopRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopLeft].get(), processor);
         _childrenPtr[(Q2N)EQuadrant::BotLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-        _childrenPtr[(Q2N)EQuadrant::BotRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-      } else {
-        // we are moving along -x -y axes, bottom right becomes top left of the new root
-        _childrenPtr[(Q2N)EQuadrant::TopLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotRight].get(), processor);
+        _childrenPtr[(Q2N)EQuadrant::BotRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotLeft].get(), processor);
+      }
+      else
+      {
+        // we are moving along -y axis, right children are preserved, but they become the left ones
+        _childrenPtr[(Q2N)EQuadrant::TopLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopRight].get(), processor);
         _childrenPtr[(Q2N)EQuadrant::TopRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-        _childrenPtr[(Q2N)EQuadrant::BotLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
+        _childrenPtr[(Q2N)EQuadrant::BotLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotRight].get(), processor);
         _childrenPtr[(Q2N)EQuadrant::BotRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
       }
     }
-  }
-  else if ( xShift )
-  {
-    // move only in one axis, two children are preserved, top or bottom
-    if ( xPlusAxisReq )
-    {
-      // we are moving along +x axis, top children are preserved, but they become the bottom ones
-      _childrenPtr[(Q2N)EQuadrant::TopLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-      _childrenPtr[(Q2N)EQuadrant::TopRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-      _childrenPtr[(Q2N)EQuadrant::BotLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopLeft].get(), processor );
-      _childrenPtr[(Q2N)EQuadrant::BotRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopRight].get(), processor);
-    }
-    else
-    {
-      // we are moving along -x axis, bottom children are preserved, but they become the top ones
-      _childrenPtr[(Q2N)EQuadrant::TopLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotLeft].get(), processor);
-      _childrenPtr[(Q2N)EQuadrant::TopRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotRight].get(), processor);
-      _childrenPtr[(Q2N)EQuadrant::BotLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-      _childrenPtr[(Q2N)EQuadrant::BotRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-    }
-  }
-  else if ( yShift )
-  {
-    // move only in one axis, two children are preserved, left or right
-    if ( yPlusAxisReq )
-    {
-      // we are moving along +y axis, left children are preserved, but they become the right ones
-      _childrenPtr[(Q2N)EQuadrant::TopLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-      _childrenPtr[(Q2N)EQuadrant::TopRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopLeft].get(), processor);
-      _childrenPtr[(Q2N)EQuadrant::BotLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-      _childrenPtr[(Q2N)EQuadrant::BotRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotLeft].get(), processor);
-    }
-    else
-    {
-      // we are moving along -y axis, right children are preserved, but they become the left ones
-      _childrenPtr[(Q2N)EQuadrant::TopLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopRight].get(), processor);
-      _childrenPtr[(Q2N)EQuadrant::TopRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-      _childrenPtr[(Q2N)EQuadrant::BotLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotRight].get(), processor);
-      _childrenPtr[(Q2N)EQuadrant::BotRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-    }
+    
+    // destroy the nodes that are going away because we shifted away from them
+    DestroyNodes(oldChildren, processor);
   }
   
   // log
   PRINT_CH_INFO("QuadTree", "QuadTree.ShiftRoot", "Root level is still %u, root shifted. Allowing %.2fm", _level, MM_TO_M(_sideLen));
-  
-  // destroy the nodes that are going away because we shifted away from them
-  DestroyNodes(oldChildren, processor);
   
   // successful shift
   return true;
