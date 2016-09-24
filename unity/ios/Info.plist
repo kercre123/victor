@@ -10,7 +10,7 @@
 				<string>cozmoApp</string>
 			</array>
 			<key>CFBundleURLName</key>
-			<string>com.anki.cozmo</string>
+			<string>com.anki.cozmo.beta</string>
 		</dict>
 	</array>
 	<key>CFBundleDevelopmentRegion</key>
