@@ -92,7 +92,7 @@ namespace Cozmo.UI {
     // position to make the loot view look nicer. This dist is based on the last placed reward's sprite.
     private float _RewardSpreadMinDistance;
     // To prevent potential infinite loops or extremely inefficient sequences with large numbers of rewards, cap out spread attempts
-    private const int kMaxSpreadAttempts = 6;
+    private const int kMaxSpreadAttempts = 20;
     // Keep track of positions we have already targeted for reward placement to check for spread
     private List<Vector3> _TargetedPositions = new List<Vector3>();
 
@@ -197,7 +197,7 @@ namespace Cozmo.UI {
     private Image _LootGlow;
 
     [SerializeField]
-    private Image _LootFlash;
+    private CanvasGroup _LootFlash;
 
     [SerializeField]
     private Transform _OpenBox;
@@ -339,7 +339,7 @@ namespace Cozmo.UI {
       if (_recentTapCharge > 0.0f) {
         // Fade out LootFlash when the box is opened
         if (_BoxOpened) {
-          _LootFlash.color = new Color(_LootFlash.color.r, _LootFlash.color.g, _LootFlash.color.b, _recentTapCharge);
+          _LootFlash.alpha = _recentTapCharge;
         }
         // Adjust scale and fade out LootGlow when the box is closed
         else {
@@ -389,16 +389,26 @@ namespace Cozmo.UI {
     // Attempt to get a Spread Position that is appropriately spaced away from others
     private Vector3 GetSpreadPos(Vector3 origPos) {
       Vector3 newPos = new Vector3();
+      // Set initial "flip" to a pure random, but then alternate quadrants with each attempt
       int coinFlipX = 1;
+      if (UnityEngine.Random.Range(0.0f, 1.0f) > 0.5f) {
+        coinFlipX = -1;
+      }
       int coinFlipY = 1;
+      if (UnityEngine.Random.Range(0.0f, 1.0f) > 0.5f) {
+        coinFlipY = -1;
+      }
       int attempts = 0;
       while (attempts <= kMaxSpreadAttempts) {
-        if (UnityEngine.Random.Range(0.0f, 1.0f) > 0.5f) {
-          coinFlipX = -1;
+        // Modify coinflip values procedurally to check a different random quadrant in sequence, prevents
+        // the spread from being pure random and hopefully improves likelihood of finding good placement positions
+        if (coinFlipX == coinFlipY) {
+          coinFlipX *= -1;
         }
-        if (UnityEngine.Random.Range(0.0f, 1.0f) > 0.5f) {
-          coinFlipY = -1;
+        else {
+          coinFlipY *= -1;
         }
+
         newPos = new Vector3(origPos.x + (UnityEngine.Random.Range(_RewardSpreadRadiusMin, _RewardSpreadRadiusMax) * coinFlipX),
                              origPos.y + (UnityEngine.Random.Range(_RewardSpreadRadiusMin, _RewardSpreadRadiusMax) * coinFlipY), 0.0f);
         if (IsValidSpreadPos(newPos) || attempts == kMaxSpreadAttempts) {
@@ -488,6 +498,12 @@ namespace Cozmo.UI {
           Vector3 rewardTarget = possibleSpots[i % possibleSpots.Count].position;
           rewardSequence.Join(newReward.DOScale(0.0f, _RewardExplosionDuration).From().SetEase(Ease.OutBack));
           rewardSequence.Join(newReward.DOMove(rewardTarget, _RewardExplosionDuration).SetEase(Ease.OutBack));
+          // Cut off if we exhaust all possible spots to prevent visual bugs during onboarding
+          // we can't programatically place onboarding loot rewards because they need to be spaced out
+          // with other onboarding assets in mind -R.A.
+          if (i >= possibleSpots.Count) {
+            break;
+          }
         }
         whichItem++;
       }
@@ -526,7 +542,7 @@ namespace Cozmo.UI {
       SendTransformsToFinalTarget(closeAnimation, _ActiveBitsTransforms, _FinalBitsTarget);
       SendTransformsToFinalTarget(closeAnimation, _ActiveSparkTransforms, _FinalSparkTarget);
 
-      if (!_LootCollectSoundEvent.IsInvalid ()) {
+      if (!_LootCollectSoundEvent.IsInvalid()) {
         Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_LootCollectSoundEvent);
       }
     }
