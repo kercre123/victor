@@ -108,7 +108,7 @@ public static partial class DAS {
 
   private static string GetEventName(object eventObject) {
     if (eventObject == null) {
-      return string.Empty;
+      return "null";
     }
     var eventString = eventObject as string;
     if (eventString != null) {

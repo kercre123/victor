@@ -320,10 +320,14 @@ void _DAS_LogInternal(DASLogLevel level, const char* eventName, const char* even
   // Scream if the client passes a null or empty event name and replace it with "noname"
   // If a "noname" event is seen on the server, open a bug
   if (nullptr == eventName || '\0' == *eventName) {
-    LOGD("%s", "DAS ERROR: EVENT WITH A NULL OR BLANK NAME PASSED");
+    LOGD("DAS ERROR: EVENT WITH A NULL OR BLANK NAME PASSED (value=%s file=%s funct=%s line=%d)", 
+      (eventValue ? eventValue : ""), 
+      (file ? file : ""), 
+      (funct ? funct : ""), 
+      line);
     eventName = "noname";
   }
-
+  
   std::string logLevel;
   getDASLogLevelName(level, logLevel);
   data[Anki::Das::kMessageLevelGlobalKey] = logLevel;
@@ -337,28 +341,28 @@ void _DAS_LogInternal(DASLogLevel level, const char* eventName, const char* even
     data[Anki::Das::kTimeStampGlobalKey] = ts;
   }
 
-  {
-    if (level >= _DAS_GetLevel(eventName, sLocalMinLogLevel)) {
-      std::string trimmedEventValue = eventValue;
-      AnkiUtil::StringTrimWhitespaceFromEnd(trimmedEventValue);
-      std::string globalsAndData;
-      if (sPrintGlobalsAndData) {
-        getDASGlobalsAndDataString(globals, data, globalsAndData);
-      }
-      sLocalAppender.append(level, eventName, trimmedEventValue.c_str(),
-                            threadId, file, funct, line, globals, data, globalsAndData.c_str());
+  if (level >= _DAS_GetLevel(eventName, sLocalMinLogLevel)) {
+    std::string trimmedEventValue = eventValue;
+    AnkiUtil::StringTrimWhitespaceFromEnd(trimmedEventValue);
+    std::string globalsAndData;
+    if (sPrintGlobalsAndData) {
+      getDASGlobalsAndDataString(globals, data, globalsAndData);
     }
+    sLocalAppender.append(level, eventName, trimmedEventValue.c_str(),
+                            threadId, file, funct, line, globals, data, globalsAndData.c_str());
   }
-  {
+  
+  if (level >= sRemoteMinLogLevel) {
     std::lock_guard<std::mutex> lock(sRemoteAppenderMutex);
-    if (level >= sRemoteMinLogLevel && (nullptr != sRemoteAppender)) {
+    if (nullptr != sRemoteAppender) {
       sRemoteAppender->append(level, eventName, eventValue, threadId, file, funct, line,
                               globals, data);
     }
   }
-  {
+  
+  if (level >= sGameMinLogLevel) {
     std::lock_guard<std::mutex> lock(sGameLogAppenderMutex);
-    if (level >= sGameMinLogLevel && (nullptr != sGameLogAppender)) {
+    if (nullptr != sGameLogAppender) {
       sGameLogAppender->append(level, eventName, eventValue, threadId, file, funct, line,
                                globals, data);
     }
