@@ -23,13 +23,6 @@ namespace DataPersistence {
     [SerializeField]
     private ChallengeDataList _ChallengeDataList;
 
-
-    [SerializeField]
-    private InputField _SaveStringInput;
-
-    [SerializeField]
-    private Button _SubmitSaveButton;
-
     [SerializeField]
     private InputField _SkillProfileCurrentLevel;
     [SerializeField]
@@ -62,11 +55,9 @@ namespace DataPersistence {
       _ResetSaveDataButton.onClick.AddListener(HandleResetSaveDataButtonClicked);
       _StartNewSessionButton.onClick.AddListener(StartNewSessionButtonClicked);
 
-      _SubmitSaveButton.onClick.AddListener(SubmitSaveButtonClicked);
       _SubmitSkillsButton.onClick.AddListener(SubmitSkillsButtonClicked);
       _ResetEverythingButton.onClick.AddListener(SubmitResetEverythingData);
       _LblStatus.text = "";
-      _SaveStringInput.text = DataPersistenceManager.Instance.GetSaveJSON();
       InitSkills();
 
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RestoreRobotStatus>(HandleRestoreStatus);
@@ -104,12 +95,6 @@ namespace DataPersistence {
       }
 
       IntroManager.Instance.ForceBoot();
-    }
-
-
-    private void SubmitSaveButtonClicked() {
-      DataPersistenceManager.Instance.DebugSave(_SaveStringInput.text);
-      TryReloadHomeHub();
     }
 
     private void InitSkills() {
