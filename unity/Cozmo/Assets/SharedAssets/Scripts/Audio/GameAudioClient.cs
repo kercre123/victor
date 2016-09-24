@@ -198,6 +198,16 @@ namespace Anki {
           }
         }
 
+        // Get the stored or default volume for the volume type
+        static public float GetVolume(VolumeParameters.VolumeType volType) {
+          var volumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.VolumePreferences;
+          float value;
+          if (!volumePrefs.TryGetValue(volType, out value)) {
+            value = GetDefaultVolume(volType);
+          }
+          return value;
+        }
+
         // Define default volume values
         static public float GetDefaultVolume(VolumeParameters.VolumeType volType) {
           float value = 1.0f;

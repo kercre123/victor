@@ -25,6 +25,12 @@ public class ShowCozmoVideo : MonoBehaviour {
   [SerializeField]
   private Cozmo.UI.CozmoButton _SkipButton;
 
+  [SerializeField, Range(0f, 1f), Tooltip("Volume level (linear scalar) to which music should fade when video plays")]
+  private float _MusicDuckingLevel = 0.5f; // 0.5 volume scalar is about -6dBFS
+
+  [SerializeField, Range(0f, 2f), Tooltip("Time in seconds it should take for music to fade down/up")]
+  private float _MusicDuckingFadeTime = 1f;
+
   private string _Filename;
   #if ENABLE_DEBUG_PANEL
   private uint _TapCount;
@@ -51,6 +57,7 @@ public class ShowCozmoVideo : MonoBehaviour {
     _MediaPlayerCtrl.OnReady += () => {
       _RawImage.enabled = true;
       _MediaPlayerCtrl.Play();
+      DuckMusic();
     };
 
     // Register a function to enable the buttons once the video is finished
@@ -59,6 +66,7 @@ public class ShowCozmoVideo : MonoBehaviour {
       _TapCount = 0;
       #endif
       HandleVideoFinished();
+      UnDuckMusic();
     };
 #endif
   }
@@ -84,6 +92,28 @@ public class ShowCozmoVideo : MonoBehaviour {
 #endif
   }
 
+  private void DuckMusic() {
+    var volType = Anki.Cozmo.Audio.VolumeParameters.VolumeType.Music;
+    float vol = Anki.Cozmo.Audio.GameAudioClient.GetVolume(volType);
+    if (vol > _MusicDuckingLevel) {
+      Anki.Cozmo.Audio.GameAudioClient.SetVolumeValue(volType, 
+                                                      _MusicDuckingLevel, 
+                                                      timeInMS:(int)(_MusicDuckingFadeTime * 1000), 
+                                                      storeValue:false); 
+    }        
+  }
+
+  private void UnDuckMusic() {
+    var volType = Anki.Cozmo.Audio.VolumeParameters.VolumeType.Music;
+    float vol = Anki.Cozmo.Audio.GameAudioClient.GetVolume(volType);
+    if (vol > _MusicDuckingLevel) {
+      Anki.Cozmo.Audio.GameAudioClient.SetVolumeValue(volType, 
+                                                      vol, 
+                                                      timeInMS:(int)(_MusicDuckingFadeTime * 1000), 
+                                                      storeValue:false);
+    }
+  }
+
   private void HandleVideoFinished() {
     _ReplayButton.gameObject.SetActive(true);
     _ContinueButton.gameObject.SetActive(true);
@@ -106,6 +136,8 @@ public class ShowCozmoVideo : MonoBehaviour {
     if (OnContinueButton != null) {
       OnContinueButton();
     }
+
+    UnDuckMusic();
   }
 
   private void HandleReplayButton() {
@@ -166,6 +198,15 @@ public class ShowCozmoVideo : MonoBehaviour {
     // Set the texture to the RawImage's texture so the video is shown on screen and play it
     _RawImage.texture = fileWWW.movie;
     fileWWW.movie.Play();
+
+    // duck the music while playing, then bring it back up when the movie is done
+    DuckMusic();
+
+    while (fileWWW.movie.isPlaying) {
+      yield return null;
+    }
+
+    UnDuckMusic();
 
     _PlayCoroutine = null;
   }
