@@ -162,6 +162,9 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22495566}
+  - 114: {fileID: 11450314}
+  - 222: {fileID: 22246182}
+  - 114: {fileID: 11441218}
   m_Layer: 5
   m_Name: Viewport
   m_TagString: Untagged
@@ -335,6 +338,33 @@ MonoBehaviour:
   m_Spacing: 10
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 0
+--- !u!114 &11441218
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 186210}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+  m_Sprite: {fileID: 10917, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 1
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
 --- !u!114 &11443918
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -382,6 +412,18 @@ MonoBehaviour:
   m_Spacing: 40
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 0
+--- !u!114 &11450314
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 186210}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1200242548, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_ShowMaskGraphic: 0
 --- !u!114 &11461512
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -406,8 +448,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51bdc3d8bf6e945bdbd122c25c45fc42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _AdditionalInfoLabel: {fileID: 0}
-  _AdditionalInfoLabelContainer: {fileID: 0}
   _CenterContainer: {fileID: 22494148}
   _LeftContainer: {fileID: 22456518}
   _RightContainer: {fileID: 22461322}
@@ -488,6 +528,12 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 185202}
+--- !u!222 &22246182
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 186210}
 --- !u!222 &22257872
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -519,7 +565,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 1050}
+  m_SizeDelta: {x: 0, y: 900}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22419218
 RectTransform:

@@ -16,21 +16,27 @@ public class RobotRestorePane : MonoBehaviour {
   private UnityEngine.UI.Text _LblStatus;
 
   private void Start() {
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RestoreRobotOptions>(HandleRestoreRobotOptions);
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RestoreRobotStatus>(HandleRestoreStatus);
-    _RestoreButton.onClick.AddListener(OnHandleRestoreButtonClicked);
-    _WipeButton.onClick.AddListener(OnHandleWipeButtonClicked);
-    if (RobotEngineManager.Instance.CurrentRobot != null) {
-      RobotEngineManager.Instance.CurrentRobot.RequestRobotRestoreData();
-      _LblStatus.text = "";
-    }
-    else {
-      SetStatusText("Error: Disconnected from robot! Can't set anything", Color.red);
+    RobotEngineManager rem = RobotEngineManager.Instance;
+    if (rem != null) {
+      rem.AddCallback<Anki.Cozmo.ExternalInterface.RestoreRobotOptions>(HandleRestoreRobotOptions);
+      rem.AddCallback<Anki.Cozmo.ExternalInterface.RestoreRobotStatus>(HandleRestoreStatus);
+      _RestoreButton.onClick.AddListener(OnHandleRestoreButtonClicked);
+      _WipeButton.onClick.AddListener(OnHandleWipeButtonClicked);
+      if (rem.CurrentRobot != null) {
+        rem.CurrentRobot.RequestRobotRestoreData();
+        _LblStatus.text = "";
+      }
+      else {
+        SetStatusText("Error: Disconnected from robot! Can't set anything", Color.red);
+      }
     }
   }
   private void OnDestroy() {
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RestoreRobotOptions>(HandleRestoreRobotOptions);
-    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RestoreRobotStatus>(HandleRestoreStatus);
+    RobotEngineManager rem = RobotEngineManager.Instance;
+    if (rem != null) {
+      rem.RemoveCallback<Anki.Cozmo.ExternalInterface.RestoreRobotOptions>(HandleRestoreRobotOptions);
+      rem.RemoveCallback<Anki.Cozmo.ExternalInterface.RestoreRobotStatus>(HandleRestoreStatus);
+    }
   }
 
   private void HandleRestoreRobotOptions(Anki.Cozmo.ExternalInterface.RestoreRobotOptions message) {

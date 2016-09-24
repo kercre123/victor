@@ -461,7 +461,6 @@ public static class LocalizationKeys {
   #region PrivacyPolicyStrings
 
   public const string kPrivacyPolicyTitle = "privacyPolicy.title";
-  public const string kPrivacyPolicyText = "privacyPolicy.text";
 
   #endregion
 
@@ -730,12 +729,15 @@ public static class LocalizationKeys {
   public const string kWifiStringsInstructionsSlideATitleCopy = "wifiStrings.Instructions.SlideA.titleCopy";
   public const string kWifiStringsInstructionsSlideAAltCopy = "wifiStrings.Instructions.SlideA.altCopy";
   public const string kWifiStringsInstructionsSlide0 = "wifiStrings.Instructions.Slide0";
+  public const string kWifiStringsInstructionsSlide0altCopy = "wifiStrings.Instructions.Slide0altCopy";
   public const string kWifiStringsInstructionsSlide0Android = "wifiStrings.Instructions.Slide0Android";
   public const string kWifiStringsInstructionsSlide1 = "wifiStrings.Instructions.Slide1";
   public const string kWifiStringsInstructionsSlide2 = "wifiStrings.Instructions.Slide2";
   public const string kWifiStringsInstructionsSlide3 = "wifiStrings.Instructions.Slide3";
   public const string kWifiStringsInstructionsSlide3AltCopy = "wifiStrings.Instructions.Slide3.altCopy";
   public const string kWifiStringsInstructionsSlide3altCopy2 = "wifiStrings.Instructions.Slide3altCopy2";
+  public const string kWifiStringsInstructionsSlide35 = "wifiStrings.Instructions.Slide3.5";
+  public const string kWifiStringsInstructionsSlide35altCopy = "wifiStrings.Instructions.Slide3.5altCopy";
   public const string kWifiStringsInstructionsSlide4 = "wifiStrings.Instructions.Slide4";
   public const string kWifiStringsInstructionsSlide4altCopy = "wifiStrings.Instructions.Slide4altCopy";
   public const string kWifiStringsInstructionsSlide0ViewAll = "wifiStrings.Instructions.Slide0.viewAll";

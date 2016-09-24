@@ -128,7 +128,7 @@ namespace Anki {
       }
     }
     
-    void RobotManager::RemoveRobot(const RobotID_t withID)
+    void RobotManager::RemoveRobot(const RobotID_t withID, bool robotRejectedConnection)
     {
       auto iter = _robots.find(withID);
       if(iter != _robots.end()) {
@@ -138,7 +138,8 @@ namespace Anki {
         bool handledDisconnect = false;
         auto initialIter = _initialConnections.find(withID);
         if (initialIter != _initialConnections.end()) {
-          handledDisconnect = initialIter->second.HandleDisconnect();
+          const auto result = robotRejectedConnection ? RobotConnectionResult::ConnectionRejected : RobotConnectionResult::ConnectionFailure;
+          handledDisconnect = initialIter->second.HandleDisconnect(result);
         }
         if (!handledDisconnect) {
           _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(withID, 0.0f)));
@@ -236,7 +237,8 @@ namespace Anki {
             PRINT_NAMED_WARNING("RobotManager.UpdateAllRobots.FailIOTimeout", "Signaling robot disconnect\n");
             const RobotID_t robotIdToRemove = r->first;
             ++r;
-            RemoveRobot(robotIdToRemove);
+            const bool robotRejectedConnection = false;
+            RemoveRobot(robotIdToRemove, robotRejectedConnection);
             
             break;
           }

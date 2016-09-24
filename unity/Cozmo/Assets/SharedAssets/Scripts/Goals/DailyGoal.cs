@@ -81,6 +81,19 @@ namespace Cozmo {
         GenConditions = goalData.GenConditions;
       }
 
+      // For goals that require you to unlock things you already have unlocked,
+      // silently "complete" the goal without rewarding and tell daily goal manager to refresh
+      private void SetGoalAlreadyCompleted() {
+        Progress = Target;
+        _GoalComplete = true;
+        if (OnDailyGoalUpdated != null) {
+          OnDailyGoalUpdated.Invoke(this);
+        }
+        if (DailyGoalManager.Instance.OnRefreshDailyGoals != null) {
+          DailyGoalManager.Instance.OnRefreshDailyGoals.Invoke();
+        }
+      }
+
 
       public void DebugAddGoalProgress() {
         // Progress Goal
@@ -96,14 +109,12 @@ namespace Cozmo {
 
       }
 
-      public void DebugSetGoalProgress(int prog, bool fireRewards = true) {
+      public void DebugSetGoalProgress(int prog) {
         Progress = prog;
-        _GoalComplete = !fireRewards;
         CheckIfComplete();
         if (OnDailyGoalUpdated != null) {
           OnDailyGoalUpdated.Invoke(this);
         }
-
       }
 
       public void DebugUndoGoalProgress() {
@@ -161,13 +172,13 @@ namespace Cozmo {
               // Check for Unlockables progress
               if (GenConditions[i] is CurrentUnlockCondition) {
                 if (ValidateUnlockIdGenCondition(GenConditions[i] as CurrentUnlockCondition)) {
-                  DebugSetGoalProgress(Target, false);
+                  SetGoalAlreadyCompleted();
                   return;
                 }
               }// Check for Difficulty Level Progress
               else if (GenConditions[i] is CurrentDifficultyUnlockedCondition) {
                 if (ValidateDifficultyGenCondtion(GenConditions[i] as CurrentDifficultyUnlockedCondition)) {
-                  DebugSetGoalProgress(Target, false);
+                  SetGoalAlreadyCompleted();
                   return;
                 }
               }

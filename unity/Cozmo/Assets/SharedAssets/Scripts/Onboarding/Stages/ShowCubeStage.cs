@@ -24,9 +24,6 @@ namespace Onboarding {
 
     [SerializeField]
     private RectTransform _CozmoMovedErrorTransform;
-
-    [SerializeField]
-    private RectTransform _ImageVisionCone;
     [SerializeField]
     private RectTransform _ImageCubeLights;
 
@@ -130,7 +127,6 @@ namespace Onboarding {
           _CozmoCubeRightSideUpTransform.gameObject.SetActive(false);
           _CozmoImageTransform.gameObject.SetActive(true);
           _ImageCubeLights.gameObject.SetActive(true);
-          _ImageVisionCone.gameObject.SetActive(true);
         }
         break;
       case OnboardingStateEnum.WaitForFinalContinue: {

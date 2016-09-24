@@ -43,11 +43,6 @@ public class DailyGoalPane : MonoBehaviour {
 
   void Start() {
     _CurrentSession = DataPersistenceManager.Instance.CurrentSession;
-    if (_CurrentSession == null) {
-      Debug.LogError("No Current Session for DailyGoal Debug");
-      _CurrentSession = null;
-    }
-
     _ResetGoalButton.onClick.AddListener(HandleResetGoalClicked);
     _ProgressGoalButton.onClick.AddListener(HandleProgressGoalClicked);
     _UndoProgressGoalButton.onClick.AddListener(HandleUndoProgressGoalClicked);
@@ -70,6 +65,11 @@ public class DailyGoalPane : MonoBehaviour {
     UpdateCurrentGen(0);
     _GenGoalsDropdown.onValueChanged.AddListener(UpdateCurrentGen);
     DailyGoalManager.Instance.OnRefreshDailyGoals += RefreshOptions;
+    // Make the DailyGoalPane yell at you if you are using it without a session.
+    if (_CurrentSession == null) {
+      _GenGoalsDropdown.captionText.text = "NO SESSION, ENTER APP BEFORE USING THIS PANE";
+      _GoalListDropdown.captionText.text = "NO SESSION, ENTER APP BEFORE USING THIS PANE";
+    }
   }
 
   void Destroy() {

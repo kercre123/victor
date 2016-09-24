@@ -95,6 +95,7 @@ void RobotConnectionManager::Connect(const Util::TransportAddress& address)
   _currentConnectionData->SetAddress(address);
   _reliableTransport->Disconnect(address);
   _reliableTransport->Connect(address);
+  _currentConnectionData->SetState(RobotConnectionData::State::Waiting);
 }
   
 void RobotConnectionManager::DisconnectCurrent()
@@ -180,7 +181,7 @@ void RobotConnectionManager::HandleDataMessage(RobotConnectionMessageData& nextM
 
 void RobotConnectionManager::HandleConnectionResponseMessage(RobotConnectionMessageData& nextMessage)
 {
-  const bool isWaitingState = _currentConnectionData->GetState() == RobotConnectionData::State::Disconnected;
+  const bool isWaitingState = _currentConnectionData->GetState() == RobotConnectionData::State::Waiting;
   if (!isWaitingState)
   {
     PRINT_NAMED_ERROR("RobotConnectionManager.HandleConnectionResponseMessage.NotWaitingForConnection", "Got connection response at unexpected time");
@@ -192,6 +193,8 @@ void RobotConnectionManager::HandleConnectionResponseMessage(RobotConnectionMess
 
 void RobotConnectionManager::HandleDisconnectMessage(RobotConnectionMessageData& nextMessage)
 {
+  const bool connectionWasInWaitingState = (RobotConnectionData::State::Waiting == _currentConnectionData->GetState());
+  
   // This connection is no longer valid.
   // Note not calling DisconnectCurrent because this message means reliableTransport is already deleting this connection data
   _currentConnectionData->Clear();
@@ -200,7 +203,8 @@ void RobotConnectionManager::HandleDisconnectMessage(RobotConnectionMessageData&
   Robot* robot =  _robotManager->GetFirstRobot();
   if (nullptr != robot)
   {
-    _robotManager->RemoveRobot(robot->GetID());
+    // If the connection is waiting when we handle this disconnect message, report it as a robot rejection
+    _robotManager->RemoveRobot(robot->GetID(), connectionWasInWaitingState);
   }
 }
 

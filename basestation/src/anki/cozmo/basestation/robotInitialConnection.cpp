@@ -91,16 +91,15 @@ bool RobotInitialConnection::ShouldFilterMessage(EngineToRobotTag messageTag) co
   }
 }
 
-bool RobotInitialConnection::HandleDisconnect()
+bool RobotInitialConnection::HandleDisconnect(RobotConnectionResult connectionResult)
 {
   if (_notified || _externalInterface == nullptr) {
     return false;
   }
 
-  PRINT_NAMED_INFO("RobotInitialConnection.HandleDisconnect", "robot connection failed");
+  PRINT_NAMED_INFO("RobotInitialConnection.HandleDisconnect", "robot connection failed due to %s", RobotConnectionResultToString(connectionResult));
 
-  const auto result = RobotConnectionResult::ConnectionFailure;
-  OnNotified(result, 0);
+  OnNotified(connectionResult, 0);
   return true;
 }
 

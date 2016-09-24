@@ -766,11 +766,11 @@
     },
     {
       "CladEvent": "RequestGameSpeedTapAccept0",
-      "AnimName": "ag_rtpkeepaway_playeryes"
+      "AnimName": "requestGame_Confirm"
     },
     {
       "CladEvent": "RequestGameSpeedTapAccept1",
-      "AnimName": "ag_rtpkeepaway_playeryes"
+      "AnimName": "requestGame_Confirm"
     },
     {
       "CladEvent": "RequestGameKeepAwayInitial0",

@@ -257,9 +257,11 @@ namespace Cozmo {
         }
         if (_CurrentSlide != null) {
           Destroy(_CurrentSlide.gameObject);
+          _CurrentSlide = null;
         }
         if (_TransitionOutSlide != null) {
           Destroy(_TransitionOutSlide.gameObject);
+          _TransitionOutSlide = null;
         }
 
         if (_LockedBackgroundTween != null) {

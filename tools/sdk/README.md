@@ -20,7 +20,7 @@ Alternatively if you're running a build of the app from this repo, run
 Install all of the dependencies for the library and make the cozmo
 directory available on the python path:
 
-`pip install -e '.[camera,test]'`
+`pip3 install -e '.[camera,test]'`
 
 This causes pip to install numpy and Pillow require for image processing,
 along wtih tox and pytest required for running unit tests.
@@ -37,6 +37,6 @@ Alternatively run `pytest` by itself to test in your current environment.
 # Build the docs
 
 ````bash
-pip install sphinx
+pip3 install sphinx
 cd docs && make html
 ````

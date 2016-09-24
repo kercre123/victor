@@ -508,7 +508,7 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: ASDGAE
   _AllUppercase: 1
-  GlowText: 1
+  GlowText: 0
 --- !u!114 &11446144
 MonoBehaviour:
   m_ObjectHideFlags: 1

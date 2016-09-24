@@ -1,5 +1,22 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &107298
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22486700}
+  - 222: {fileID: 22291124}
+  - 114: {fileID: 11495702}
+  m_Layer: 5
+  m_Name: IOSInstructionsText
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &109280
 GameObject:
   m_ObjectHideFlags: 0
@@ -79,7 +96,7 @@ GameObject:
   - 222: {fileID: 22229536}
   - 114: {fileID: 11449458}
   m_Layer: 5
-  m_Name: InstructionsText
+  m_Name: UniversalinstructionText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -243,13 +260,13 @@ MonoBehaviour:
     m_BestFit: 0
     m_MinSize: 1
     m_MaxSize: 150
-    m_Alignment: 3
+    m_Alignment: 0
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '#wifiStrings.Instructions.Slide0'
+  m_Text: '#wifiStrings.Instructions.Slide0altCopy'
   _AllUppercase: 0
   GlowText: 0
 --- !u!114 &11457058
@@ -263,9 +280,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3d94be4cebd494b76a4434656e39b92b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _iOSInstructionText: {fileID: 11449458}
+  _iOSInstructionText: {fileID: 11495702}
   _AndroidInstructionText: {fileID: 11414854}
   _iOSSettingsIcon: {fileID: 11411510}
+--- !u!114 &11495702
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 107298}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.11764706, g: 0.5058824, b: 0.78431374, a: 1}
+  m_RaycastTarget: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+  m_FontData:
+    m_Font: {fileID: 12800000, guid: 690bf25a268804b5a9391906610cf24b, type: 3}
+    m_FontSize: 110
+    m_FontStyle: 0
+    m_BestFit: 0
+    m_MinSize: 1
+    m_MaxSize: 150
+    m_Alignment: 3
+    m_AlignByGeometry: 0
+    m_RichText: 1
+    m_HorizontalOverflow: 0
+    m_VerticalOverflow: 0
+    m_LineSpacing: 1
+  m_Text: '#wifiStrings.Instructions.Slide0'
+  _AllUppercase: 0
+  GlowText: 0
 --- !u!222 &22229536
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -296,6 +348,12 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 156346}
+--- !u!222 &22291124
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 107298}
 --- !u!224 &22409672
 RectTransform:
   m_ObjectHideFlags: 1
@@ -311,8 +369,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -525, y: 0}
-  m_SizeDelta: {x: 1331, y: 640}
+  m_AnchoredPosition: {x: -583, y: 197}
+  m_SizeDelta: {x: 1214, y: 320}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22435176
 RectTransform:
@@ -326,7 +384,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22478418}
-  m_RootOrder: 3
+  m_RootOrder: 4
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
   m_AnchoredPosition: {x: 740, y: 741}
@@ -344,7 +402,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22478418}
-  m_RootOrder: 4
+  m_RootOrder: 5
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
   m_AnchoredPosition: {x: 1055, y: 877}
@@ -362,11 +420,11 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22478418}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -525.003, y: 0}
-  m_SizeDelta: {x: 1331, y: 640}
+  m_AnchoredPosition: {x: -525, y: -223}
+  m_SizeDelta: {x: 1331, y: 348}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22478418
 RectTransform:
@@ -380,6 +438,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 22409672}
+  - {fileID: 22486700}
   - {fileID: 22465962}
   - {fileID: 22480352}
   - {fileID: 22435176}
@@ -403,11 +462,29 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22478418}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
   m_AnchoredPosition: {x: 740, y: 741}
   m_SizeDelta: {x: 1084, y: 1146}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!224 &22486700
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 107298}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 22478418}
+  m_RootOrder: 1
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -525, y: -223}
+  m_SizeDelta: {x: 1331, y: 348}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &100100000
 Prefab:

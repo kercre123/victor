@@ -122,6 +122,14 @@ public class DailyGoalManager : MonoBehaviour {
 
   public ChallengeData PickMiniGameToRequest() {
     List<RequestGameConfig> unlockedList = new List<RequestGameConfig>();
+    if (_RequestMinigameConfig == null) {
+      DAS.Error("DailyGoalManager.PickMiniGameToRequest", "Request minigame config is NULL");
+      return null;
+    }
+    if (_ChallengeList == null) {
+      DAS.Error("DailyGoalManager.PickMiniGameToRequest", "Challenge List is NULL");
+      return null;
+    }
 
     for (int i = 0; i < _RequestMinigameConfig.RequestList.Length; ++i) {
       UnlockId unlockid = UnlockId.Count;
@@ -150,7 +158,9 @@ public class DailyGoalManager : MonoBehaviour {
           return null;
         }
         DisableRequestGameBehaviorGroups();
-        RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(bGame);
+        if (RobotEngineManager.Instance.CurrentRobot != null) {
+          RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(bGame);
+        }
         return _LastChallengeData;
       }
     }
@@ -192,7 +202,9 @@ public class DailyGoalManager : MonoBehaviour {
     if (data == null) {
       prog = 0;
     }
-    RobotEngineManager.Instance.CurrentRobot.SetEmotion(EmotionType.WantToPlay, prog);
+    if (RobotEngineManager.Instance.CurrentRobot != null) {
+      RobotEngineManager.Instance.CurrentRobot.SetEmotion(EmotionType.WantToPlay, prog);
+    }
   }
 
   #endregion

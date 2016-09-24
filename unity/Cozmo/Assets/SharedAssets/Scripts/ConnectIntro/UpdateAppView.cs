@@ -19,6 +19,9 @@ public class UpdateAppView : Cozmo.UI.BaseView {
   }
 
   protected override void CleanUp() {
-
+    base.CleanUp();
+    // force a disconnect so we can reconnect to the robot.
+    // we are doing this after the screen closes purely for QA to have a way to downgrade robots
+    RobotEngineManager.Instance.StartIdleTimeout(0f, 0f);
   }
 }

@@ -39,7 +39,7 @@ public:
 
   // called when getting a disconnect message from robot
   // returns true if robot was in the process of connecting and we broadcasted a connection failed message
-  bool HandleDisconnect();
+  bool HandleDisconnect(RobotConnectionResult connectionResult);
 
   // returns if we should filter out (not deliver) a given message type to/from this robot
   // if firmware doesn't match, we'll do this to almost every message

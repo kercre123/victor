@@ -527,12 +527,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
         SetLocalizedTo(nullptr); // marks us as localized to odometry only
       }
     }
-    
-    // If the robot was carrying a block we don't know what happened to it
-    if(IsCarryingObject() && _offTreadsState != OffTreadsState::OnTreads){
-      UnSetCarryingObjects();
-    }
-    
+
     // if the robot was on the charging platform and its state changes it's not on the platform anymore
     if(_isOnChargerPlatform && _offTreadsState != OffTreadsState::OnTreads)
     {
@@ -556,6 +551,12 @@ void Robot::Delocalize(bool isCarryingObject)
   // NOTE: no longer doing this here because Delocalize() can be called by
   //  BlockWorld::ClearAllExistingObjects, resulting in a weird loop...
   //_blockWorld.ClearAllExistingObjects();
+  
+  // If the robot was carrying a block we don't know what happened to it, but, most importantly, it shouldn't be attached
+  // to the lift since the lift is about to be in a new origin, and the cube can't come with us unless we rejigger
+  if( IsCarryingObject() ) {
+    SetCarriedObjectAsUnattached();
+  }
       
   // TODO rsam:
   // origins are no longer destroyed to prevent children from having to rejigger as cubes do. This however
@@ -1277,6 +1278,12 @@ Result Robot::Update()
               AbortDrivingToPose();
               _numPlansFinished = _numPlansStarted;
             } else {
+              if( IsTraversingPath() ) {
+                _driveToPoseStatus = ERobotDriveToPoseStatus::FollowingPath;
+              }
+              else {
+                _driveToPoseStatus = ERobotDriveToPoseStatus::ComputingPath;
+              }
               _numPlansStarted++;
             }
           } else {
@@ -1327,6 +1334,12 @@ Result Robot::Update()
                   AbortDrivingToPose();
                   _numPlansFinished = _numPlansStarted;
                 } else {
+                   if( IsTraversingPath() ) {
+                     _driveToPoseStatus = ERobotDriveToPoseStatus::FollowingPath;
+                   }
+                   else {
+                     _driveToPoseStatus = ERobotDriveToPoseStatus::ComputingPath;
+                   }
                   _numPlansStarted++;
                 }
               } else {
@@ -2772,6 +2785,18 @@ void Robot::UnSetCarryingObjects(bool topOnly)
                             "does not think it is being carried.", GetID(), objID.GetValue());
             
       } else {
+        if ( carriedObject->GetPose().GetParent() == &_liftPose) {
+          // if the carried object is still attached to the lift it can cause issues. We had a bug
+          // in which we delocalized and unset as carrying, but would not dettach from lift, causing
+          // the cube to accidentally inherit the new origin via its parent, the lift, since the robot is always
+          // in the current origin. It would still be the a copy in the old origin in blockworld, but its pose
+          // would be pointing to the current one, which caused issues with relocalization.
+          // It's a warning because I think there are legit cases (like ClearObject), where it would be fine to
+          // ignore the current pose, since it won't be used again.
+          PRINT_NAMED_WARNING("Robot.UnSetCarryingObjects.StillAttached",
+            "Setting carried object '%d' as not being carried, but the pose is still attached to the lift", objID.GetValue());
+        }
+      
         carriedObject->SetBeingCarried(false);
       }
     }
