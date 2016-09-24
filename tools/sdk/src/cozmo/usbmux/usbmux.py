@@ -205,16 +205,18 @@ class USBMux(PlistProto):
                 self._waiter.set_exception(ConnectionFailed())
 
         elif mt == 'Attached':
-            self.attached[msg['DeviceID']] = msg['Properties']
-            self.device_attached(msg['DeviceID'], msg['Properties'])
+            device_id = msg['Properties']['DeviceID']
+            self.attached[device_id] = msg['Properties']
+            self.device_attached(device_id, msg['Properties'])
             for fut in self._attach_waiters:
-                fut.set_result(msg['DeviceID'])
+                fut.set_result(device_id)
             self._attach_waiters.clear()
 
         elif mt == 'Detached':
-            if msg['DeviceID'] in self.attached:
-                del(self.attached[msg['DeviceID']])
-            self.device_detached(msg['DeviceID'])
+            device_id = msg['DeviceID']
+            if device_id in self.attached:
+                del(self.attached[device_id])
+            self.device_detached(device_id)
 
     async def connect_to_device(self, protocol_factory, device_id, port):
         '''Open a TCP connection to a port on a device.
