@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 # Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
+'''Make Cozmo drive in a square.
 
-import asyncio
+This script is designed to show off the 'simple robot capabilites' of Cozmo.
+He will drive in a square by going forward and turning (left) 4 times.
+'''
+
 import cozmo
 from cozmo.util import degrees
 
-'''This script is designed to show off the 'simple robot capabilites' of Cozmo
-He will drive in a square by going forward and turning (left) 4 times.'''
-
 def run(coz_conn):
+    '''The run method runs once Cozmo is connected.'''
     coz = coz_conn.wait_for_robot()
 
-    for i in range(4):
+    for _ in range(4):
         coz.drive_wheels(50, 50, duration=3)
         coz.turn_in_place(degrees(90)).wait_for_completed()
 

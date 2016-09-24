@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 # Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
+'''Make Cozmo look around for a cube.
+
+Cozmo looks around, reacts, and picks up and puts down a cube if found.
+'''
 
 import asyncio
 
@@ -8,6 +12,7 @@ from cozmo.util import degrees
 
 
 def run(coz_conn):
+    '''The run method runs once Cozmo is connected.'''
     coz = coz_conn.wait_for_robot()
 
     look_around = coz.start_behavior(cozmo.behavior.BehaviorTypes.LookAround)

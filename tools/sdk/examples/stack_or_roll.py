@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 # Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
+'''Make Cozmo perform different actions based on the number of Cubes he finds.
 
-import asyncio
-import cozmo
-
-'''This script shows off simple decision making.
-It tells cozmo to look around, and then wait until he sees a certain amount of objects.
+This script shows off simple decision making.
+It tells Cozmo to look around, and then wait until he sees a certain amount of objects.
 Based on how many object he sees before he times out, he will do different actions.
 0-> be angry
 1-> roll block (the block must not be face up)
 2-> stack blocks (the blocks must all be face up)
 '''
 
+import cozmo
+
+
 def run(coz_conn):
+    '''The run method runs once Cozmo is connected.'''
     coz = coz_conn.wait_for_robot()
 
     lookaround = coz.start_behavior(cozmo.behavior.BehaviorTypes.LookAround)
@@ -20,7 +22,7 @@ def run(coz_conn):
     cubes = coz.world.wait_until_observe_num_objects(num=2, object_type=cozmo.objects.LightCube, timeout=10)
 
     print(cubes)
-    
+
     lookaround.stop()
 
     if len(cubes) == 0:
