@@ -866,7 +866,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
   auto externalInterface = _context->GetExternalInterface();
       
   if (externalInterface != nullptr)
-    {
+  {
     using namespace ExternalInterface;
       
     //
@@ -949,7 +949,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     // Build lookup tables so we don't have to linearly search through the above
     // array each time we want to find the handler
     for(auto & entry : kActionHandlerArray)
-  {
+    {
       const ActionMessageHandler& handler = entry.GetHandler();
   
       _actionUnionHandlerLUT[handler.actionUnionTag] = handler.getActionFromActionUnion;
@@ -991,8 +991,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeEngineToGame<MessageEngineToGameTag::AnimationAborted>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotCompletedAction>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotConnectionResponse>();
-      }
-      
+  }
       
 } // RobotEventHandler Constructor
       
@@ -1408,6 +1407,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::RobotConnectionRe
     else
     {
       robot->SyncTime();
+      robot->SendRobotMessage<RobotInterface::GetManufacturingInfo>();
       PRINT_NAMED_INFO("RobotEventHandler.HandleRobotConnectionResponse.SendingSyncTime", "");
     }
   }

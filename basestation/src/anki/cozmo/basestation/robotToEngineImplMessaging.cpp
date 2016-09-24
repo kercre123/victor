@@ -107,11 +107,12 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imuRawDataChunk,                &RobotToEngineImplMessaging::HandleImuRawData);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::syncTimeAck,                    &RobotToEngineImplMessaging::HandleSyncTimeAck);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::robotPoked,                     &RobotToEngineImplMessaging::HandleRobotPoked);
-  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::robotAvailable,                 &RobotToEngineImplMessaging::HandleRobotSetID);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::robotAvailable,                 &RobotToEngineImplMessaging::HandleRobotSetHeadID);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::firmwareVersion,                 &RobotToEngineImplMessaging::HandleFirmwareVersion);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::motorCalibration,               &RobotToEngineImplMessaging::HandleMotorCalibration);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::motorAutoEnabled,               &RobotToEngineImplMessaging::HandleMotorAutoEnabled);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::dockingStatus,                             &RobotToEngineImplMessaging::HandleDockingStatus);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::mfgId,                          &RobotToEngineImplMessaging::HandleRobotSetBodyID);
   
   
   // lambda wrapper to call internal handler
@@ -254,23 +255,44 @@ void RobotToEngineImplMessaging::HandleMotorAutoEnabled(const AnkiEvent<RobotInt
   robot->Broadcast(ExternalInterface::MessageEngineToGame(MotorAutoEnabled(payload)));
 }
 
-void RobotToEngineImplMessaging::HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+void RobotToEngineImplMessaging::HandleRobotSetHeadID(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
-  ANKI_CPU_PROFILE("Robot::HandleRobotSetID");
+  ANKI_CPU_PROFILE("Robot::HandleRobotSetHeadID");
   
   const RobotInterface::RobotAvailable& payload = message.GetData().Get_robotAvailable();
+  const auto model = payload.modelID;
+  const auto headID = payload.robotID;
+  
   // Set DAS Global on all messages
-  char string_id[32] = {0};
-  snprintf(string_id, sizeof(string_id), "0xbeef%04x%08x", payload.modelID,payload.robotID);
-  Anki::Util::sSetGlobal(DPHYS, string_id);
+  char string_id[32] = {};
+  snprintf(string_id, sizeof(string_id), "0xbeef%04x%08x", model, headID);
+  Anki::Util::sSetGlobal(DGROUP, string_id);
   
   // This should be definition always have a phys ID
-  Anki::Util::sEvent("robot.handleRobotSetID",{},string_id);
+  Anki::Util::sEvent("robot.handle_robot_set_head_id", {{DDATA,string_id}}, string_id);
   
-  robot->SetSerialNumber(payload.robotID);
-  robot->SetModelNumber(payload.modelID);
+  robot->SetHeadSerialNumber(headID);
+  robot->SetModelNumber(model);
 }
   
+void RobotToEngineImplMessaging::HandleRobotSetBodyID(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+{
+  ANKI_CPU_PROFILE("Robot::HandleRobotSetBodyID");
+  
+  const RobotInterface::ManufacturingID& payload = message.GetData().Get_mfgId();
+  const auto hwVersion = payload.hw_version;
+  const auto bodyID = payload.esn;
+  
+  // Set DAS Global on all messages
+  char string_id[32] = {};
+  snprintf(string_id, sizeof(string_id), "0xbeef%08x%08x", hwVersion, bodyID);
+  
+  Anki::Util::sSetGlobal(DPHYS, string_id);
+  Anki::Util::sEvent("robot.handle_robot_set_body_id", {{DDATA,string_id}}, string_id);
+  
+  robot->SetBodySerialNumber(bodyID);
+  robot->SetHWVersion(hwVersion);
+}
   
 void RobotToEngineImplMessaging::HandleFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
