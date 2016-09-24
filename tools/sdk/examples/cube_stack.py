@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 # Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
+'''Make Cozmo stack Cubes.
 
-import asyncio
+This script is meant to show off how easy it is to do high level robot actions.
+Cozmo will wait until he sees two Cubes, and then will pick up one and place it on the other.
+He will pick up the first one he sees, and place it on the second one.
+'''
+
 import cozmo
 
-'''This script is meant to show off how easy it is to high level robot actions.
-Cozmo will wait until he sees two cubes, and then will pick up one and place it on the other.
-He will pick up the first one he sees, and place it on the second one.'''
-
 def run(coz_conn):
+    '''The run method runs once Cozmo is connected.'''
     coz = coz_conn.wait_for_robot()
 
     lookaround = coz.start_behavior(cozmo.behavior.BehaviorTypes.LookAround)

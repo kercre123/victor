@@ -1,6 +1,10 @@
 # Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
+'''Wrappers and helpers for using Flask with Cozmo.
 
-import cozmo
+Flask is a Python web framework. remote_control_cozmo.py and other scripts may use
+these utility functions to interact with a web browser.
+'''
+
 import logging
 import sys
 from threading import Thread
@@ -13,14 +17,13 @@ except ImportError:
     sys.exit("Cannot import from flask: Do `pip3 install flask` to install")
 
 
-'''Wrappers and helpers for using Flask with Cozmo
-'''
-
 
 def _delayed_open_web_browser(url, delay, new=0, autoraise=True, specific_browser=None):
-    '''Spawn a thread and call sleep_and_open_web_browser from within it so that main thread can keep executing at the
-       same time. Insert a small sleep before opening a web-browser
-       this gives Flask a chance to start running before the browser starts requesting data from Flask'''
+    '''
+    Spawn a thread and call sleep_and_open_web_browser from within it so that main thread can keep executing at the
+    same time. Insert a small sleep before opening a web-browser
+    this gives Flask a chance to start running before the browser starts requesting data from Flask.
+    '''
 
     def _sleep_and_open_web_browser(url, delay, new, autoraise, specific_browser):
         sleep(delay)
@@ -41,8 +44,9 @@ def _delayed_open_web_browser(url, delay, new=0, autoraise=True, specific_browse
 
 def run_flask(flask_app, host_ip="127.0.0.1", host_port=5000, enable_flask_logging=False,
               open_page=True, open_page_delay=1.0):
-    '''Run the Flask webserver on specified host and port
-       optionally also open that same host:port page in your browser to connect
+    '''
+    Run the Flask webserver on specified host and port
+    optionally also open that same host:port page in your browser to connect
     '''
 
     if not enable_flask_logging:
@@ -75,9 +79,8 @@ def serve_pil_image(pil_img, serve_as_jpeg=False, jpeg_quality=70):
     if serve_as_jpeg:
         pil_img.save(img_io, 'JPEG', quality=jpeg_quality)
         img_io.seek(0)
-        return make_uncached_response( send_file(img_io, mimetype='image/jpeg') )
+        return make_uncached_response(send_file(img_io, mimetype='image/jpeg'))
     else:
         pil_img.save(img_io, 'PNG')
         img_io.seek(0)
-        return make_uncached_response( send_file(img_io, mimetype='image/png') )
-
+        return make_uncached_response(send_file(img_io, mimetype='image/png'))

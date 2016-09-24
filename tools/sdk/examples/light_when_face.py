@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 # Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
+'''Wait for Cozmo to see a face, and then turn on his backpack light.
 
-import asyncio
-import time
-import cozmo
-
-'''This is a script to show off faces, and how they are easy to use.
+This is a script to show off faces, and how they are easy to use.
 It waits for a face, and then will light up his backpack when that face is visible.
 '''
 
+import time
+import cozmo
+
+
 def run(coz_conn):
+    '''The run method runs once Cozmo is connected.'''
     coz = coz_conn.wait_for_robot()
-    
+
     face = coz.world.wait_for_observed_face(timeout=30)
-    
+
     while True:
         if face.is_face_visible():
             coz.set_all_backpack_lights(cozmo.lights.blue_light)

@@ -937,9 +937,9 @@ class Cozmo(event.Dispatcher):
         '''Tells Cozmo to drive to the specified pose and orientation.
 
         If relative_to_robot is set to true, the given pose will assume the robot's pose
-        as it's origin.
+        as its origin.
         Since Cozmo understands position by monitoring his tread movement, he does not
-        understand movment in the z axis. This means that the only applicable elements of
+        understand movement in the z axis. This means that the only applicable elements of
         pose in this situation are position.x position.y and rotation.angle_z.
 
         Args:

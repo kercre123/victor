@@ -5,7 +5,9 @@ import cozmo
 import json
 import sys
 
-'''Example lets you control Cozmo by Remote Control, using a webpage served by Flask
+'''Control Cozmo using a webpage on your computer.
+
+This example lets you control Cozmo by Remote Control, using a webpage served by Flask.
 '''
 
 import flask_helpers
