@@ -294,10 +294,10 @@ namespace SpeedTap {
         return new NoRedSpeedTapRules();
       case SpeedTapRuleSet.TwoColor:
         return new TwoColorSpeedTapRules();
+      case SpeedTapRuleSet.LightCountThreeColor:
+        return new LightCountThreeColorSpeedTapRules();
       case SpeedTapRuleSet.LightCountMultiColor:
         return new LightCountMultiColorSpeedTapRules();
-      case SpeedTapRuleSet.LightCountTwoColor:
-        return new LightCountTwoColorSpeedTapRules();
       default:
         return new NoRedSpeedTapRules();
       }

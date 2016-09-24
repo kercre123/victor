@@ -5,7 +5,7 @@ namespace SpeedTap {
   public enum SpeedTapRuleSet {
     NoRed,
     TwoColor,
-    LightCountTwoColor,
+    LightCountThreeColor,
     LightCountMultiColor
   }
 

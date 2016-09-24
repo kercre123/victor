@@ -3,18 +3,19 @@ using System.Collections;
 
 namespace SpeedTap {
   /// <summary>
-  /// Show one-two colors on each cube. Pattern can be ABBB or AABB or ABAB.
+  /// Show one-three colors on each cube.
   /// Colors on the same cube are allowed to match.
   /// When player's cube and cozmo's are meant to NOT match, colors between
-  /// the two cubes are allowed to be the same.
+  /// the two cubes are allowed to be the same as long as at least one
+  /// is exclusive.
   /// </summary>
-  public class LightCountTwoColorSpeedTapRules : SpeedTapRulesBase {
+  public class LightCountThreeColorSpeedTapRules : SpeedTapRulesBase {
 
     public override void SetLights(bool shouldMatch, SpeedTapGame game) {
       if (shouldMatch) {
         // Pick two base colors; they can be the same.
         // By design / Sean: randColorIndex and randColorIndex2 are allowed to match
-        int[] randColors = new int[2];
+        int[] randColors = new int[3];
         for (int i = 0; i < randColors.Length; i++) {
           randColors[i] = PickRandomColor();
         }
