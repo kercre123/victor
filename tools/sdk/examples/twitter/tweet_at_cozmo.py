@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
+'''Control Cozmo with tweets
+
+Example for integrating Cozmo with Twitter
+Lets you tweet at your Cozmo to control the robot
+See cozmo_twitter_keys.py for details on how to setup a Twitter account for your Cozmo and get access keys
+'''
 
 import cozmo
+from cozmo.util import degrees
 import twitter_helpers
 import cozmo_twitter_keys as twitter_keys
-from cozmo.util import degrees
-
-
-'''Example for integrating Cozmo with Twitter
-   Lets you tweet at your Cozmo to control the robot
-   See cozmo_twitter_keys.py for details on how to setup a twitter account for your Cozmo and get access keys
-'''
 
 
 def extract_float(cmd_args, index=0):
@@ -57,7 +57,7 @@ class ReactToTweetsStreamListener(twitter_helpers.CozmoTweetStreamListener):
         if drive_duration is not None:
             drive_speed = 50
             drive_dir = "forwards"
-            if (drive_duration < 0):
+            if drive_duration < 0:
                 drive_speed = -drive_speed
                 drive_duration = -drive_duration
                 drive_dir = "backwards"
@@ -69,7 +69,6 @@ class ReactToTweetsStreamListener(twitter_helpers.CozmoTweetStreamListener):
 
 
     def do_turn(self, cmd_args, kw_args):
-
         usage = "'turn X' where X is a number of degrees to turn"
 
         drive_angle = extract_float(cmd_args)
@@ -82,7 +81,6 @@ class ReactToTweetsStreamListener(twitter_helpers.CozmoTweetStreamListener):
 
 
     def do_lift(self, cmd_args, kw_args):
-
         usage = "'lift X' where X is desired height for lift"
 
         lift_height = extract_float(cmd_args)
@@ -95,7 +93,6 @@ class ReactToTweetsStreamListener(twitter_helpers.CozmoTweetStreamListener):
 
 
     def do_head(self, cmd_args, kw_args):
-
         usage = "'head X' where X is desired angle for head" #-25 (down) to 44.5 degrees (up)
 
         head_angle = extract_float(cmd_args)
@@ -113,7 +110,6 @@ class ReactToTweetsStreamListener(twitter_helpers.CozmoTweetStreamListener):
 
 
     def do_say(self, cmd_args, kw_args):
-
         usage = "'say X' where X is any text for cozmo to say"
 
         entire_message = None
@@ -135,7 +131,6 @@ class ReactToTweetsStreamListener(twitter_helpers.CozmoTweetStreamListener):
 
     def do_photo(self, cmd_args, kw_args):
         '''Upload a photo of what Cozmo can currently see (no cmd_args used)'''
-
         latest_image = self.cozmo.world.latest_image
         if latest_image is not None:
             status_text = kw_args["reply_prefix"] + "here's your photo:"
@@ -157,7 +152,7 @@ class ReactToTweetsStreamListener(twitter_helpers.CozmoTweetStreamListener):
         supported_commands = []
         for func_name in dir(self.__class__):
             if func_name.startswith(prefix_str):
-                supported_commands.append( func_name[prefix_len:] )
+                supported_commands.append(func_name[prefix_len:])
         return supported_commands
 
 
@@ -221,6 +216,7 @@ class ReactToTweetsStreamListener(twitter_helpers.CozmoTweetStreamListener):
 
 
 def run(coz_conn):
+    '''The run method runs once Cozmo is connected.'''
     coz = coz_conn.wait_for_robot()
 
     # Turn on image receiving by the camera
@@ -235,4 +231,3 @@ def run(coz_conn):
 if __name__ == '__main__':
     cozmo.setup_basic_logging()
     cozmo.connect(run)
-
