@@ -34,7 +34,7 @@ enum class TestState {
   TestDone
 };
 
-static const char* kBehaviorName = "RollBlock";
+static const char* kBehaviorName = "RollBlockOnSide";
 
 class CST_RollBlockBehavior : public CozmoSimTestController {
 private:
