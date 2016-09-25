@@ -65,7 +65,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
 
   void OnDestroy() {
     if (_CoreUpgradeDetailsViewInstance != null) {
-      _CoreUpgradeDetailsViewInstance.CloseView();
+      _CoreUpgradeDetailsViewInstance.CloseViewImmediately();
     }
 
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleRequestSetUnlockResult);
