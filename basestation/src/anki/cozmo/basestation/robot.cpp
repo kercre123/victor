@@ -136,6 +136,11 @@ static const float kPitchAngleOnFacePlantMax_rads = DEG_TO_RAD(-110.f);
 static const float kPitchAngleOnFacePlantMin_sim_rads = DEG_TO_RAD(110.f); //This has not been tested
 static const float kPitchAngleOnFacePlantMax_sim_rads = DEG_TO_RAD(-110.f); //This has not been tested
 
+// For gyro drift check
+static const float kDriftCheckMaxRate_rad_per_sec = DEG_TO_RAD_F32(10.f);
+static const float kDriftCheckPeriod_ms = 5000.f;
+static const float kDriftCheckGyroZMotionThresh_rad_per_sec = DEG_TO_RAD_F32(1.f);
+static const float kDriftCheckMaxHeadAngleChange_rad_per_sec = DEG_TO_RAD_F32(0.1f);
 
 // For tool code reading
 // 4-degree look down: (Make sure to update cozmoBot.proto to match!)
@@ -176,6 +181,10 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
                   {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_pose, "RobotLiftBase")
   , _liftPose(0.f, Y_AXIS_3D(), {LIFT_ARM_LENGTH, 0.f, 0.f}, &_liftBasePose, "RobotLift")
   , _currentHeadAngle(MIN_HEAD_ANGLE)
+  , _gyroDriftReported(false)
+  , _driftCheckStartAngle_rad(0)
+  , _driftCheckStartGyroZ_rad_per_sec(0)
+  , _driftCheckStartTime_ms(0)
   , _poseHistory(nullptr)
   , _moodManager(new MoodManager(this))
   , _progressionUnlockComponent(new ProgressionUnlockComponent(*this))
@@ -686,7 +695,51 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
       
 } // SetLocalizedTo()
     
+
+void Robot::DetectGyroDrift(const RobotState& msg)
+{
+  if (!_gyroDriftReported) {
     
+    // Reset gyro drift detector if
+    // 1) Wheels are moving
+    // 2) Raw gyro reading exceeds possible drift value
+    // 3) Drift detector started but the raw gyro and accel readings deviated too much from starting values, indicating motion.
+    if (GetMoveComponent().IsMoving() ||
+        (std::fabsf(msg.rawGyroZ) > kDriftCheckMaxRate_rad_per_sec) ||
+        
+        ((_driftCheckStartTime_ms != 0) &&
+         (std::fabsf(_driftCheckStartGyroZ_rad_per_sec - msg.rawGyroZ) > kDriftCheckGyroZMotionThresh_rad_per_sec))
+        
+        ) {
+      _driftCheckStartTime_ms = 0;
+    }
+    
+    // Robot's not moving. Initialize drift detection.
+    else if (_driftCheckStartTime_ms == 0) {
+      _driftCheckStartAngle_rad = GetPose().GetRotation().GetAngleAroundZaxis();
+      _driftCheckStartGyroZ_rad_per_sec = msg.rawGyroZ;
+      _driftCheckStartTime_ms = msg.timestamp;
+    }
+    
+    // If gyro readings have been accumulating for long enough...
+    else if (msg.timestamp - _driftCheckStartTime_ms > kDriftCheckPeriod_ms) {
+      
+      // ...check if there was a sufficient change in heading angle. Otherwise, reset detector.
+      f32 headingAngleChange = std::fabsf((_driftCheckStartAngle_rad - GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat());
+      if (headingAngleChange > (kDriftCheckMaxHeadAngleChange_rad_per_sec * MILIS_TO_SEC(kDriftCheckPeriod_ms))) {
+        // Report drift detected just one time during a session
+        Util::sWarningF("robot.detect_gyro_drift.detected",
+                        {{DDATA, TO_DDATA_STR(RAD_TO_DEG_F32(msg.pose.pitch_angle))}},
+                        "%f", RAD_TO_DEG_F32(_driftCheckStartGyroZ_rad_per_sec));
+        _gyroDriftReported = true;
+      } else {
+        _driftCheckStartTime_ms = 0;
+      }
+    }
+  }
+}
+  
+  
 Result Robot::UpdateFullRobotState(const RobotState& msg)
 {
   
@@ -764,7 +817,9 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
       
   _hasMovedSinceLocalization |= GetMoveComponent().IsMoving() || _offTreadsState != OffTreadsState::OnTreads;
-      
+  
+  DetectGyroDrift(msg);
+  
   if ( isDelocalizing )
   {
     Delocalize(isCarryingObject);

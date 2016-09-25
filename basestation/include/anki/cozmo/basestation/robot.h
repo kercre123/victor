@@ -935,6 +935,15 @@ protected:
   TimeStamp_t      _timeOffTreadStateChanged_ms = 0;
   TimeStamp_t      _fallingStartedTime_ms = 0;
   
+  // Gyro drift check
+  bool        _gyroDriftReported;
+  Radians     _driftCheckStartAngle_rad;
+  f32         _driftCheckStartGyroZ_rad_per_sec;
+  TimeStamp_t _driftCheckStartTime_ms;
+  
+  void DetectGyroDrift(const RobotState& msg);
+  
+  
   // Sets robot pose but does not update the pose on the robot.
   // Unless you know what you're doing you probably want to use
   // the public function SetNewPose()
