@@ -80,6 +80,16 @@ public class PerformancePane : MonoBehaviour {
 
 
   private void Update() {
-    _BatteryVoltage.text = RobotEngineManager.Instance.CurrentRobot.BatteryVoltage.ToString();
+    if (_BatteryVoltage != null) {
+      string batteryVoltageStr = "Battery Voltage Not Available";
+      RobotEngineManager rem = RobotEngineManager.Instance;
+      if (rem != null) {
+        IRobot robot = rem.CurrentRobot;
+        if (robot != null) {
+          batteryVoltageStr = robot.BatteryVoltage.ToString();
+        }
+      }
+      _BatteryVoltage.text = batteryVoltageStr;
+    }
   }
 }
