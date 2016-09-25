@@ -1,25 +1,24 @@
 #!/usr/bin/env python3
 # Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
-
-import cozmo
-import json
-import sys
-
 '''Control Cozmo using a webpage on your computer.
 
 This example lets you control Cozmo by Remote Control, using a webpage served by Flask.
 '''
 
+import json
+import sys
+
 import flask_helpers
+import cozmo
 
 
 try:
-    from flask import Flask, request, jsonify
+    from flask import Flask, request
 except ImportError:
     sys.exit("Cannot import from flask: Do `pip3 install flask` to install")
 
 try:
-    from PIL import Image, ImageDraw
+    from PIL import Image
 except ImportError:
     sys.exit("Cannot import from PIL: Do `pip3 install Pillow` to install")
 
@@ -32,7 +31,7 @@ def create_default_image(image_width, image_height, do_gradient=False):
         i = 0
         for y in range(image_height):
             for x in range(image_width):
-                image_bytes[i]   = int(255.0 * (x / image_width))   # R
+                image_bytes[i] = int(255.0 * (x / image_width))   # R
                 image_bytes[i+1] = int(255.0 * (y / image_height))  # G
                 image_bytes[i+2] = 0                                # B
                 i += 3
@@ -108,17 +107,17 @@ class RemoteControlCozmo:
             if anim_name not in bad_anim_names:
                 self.anim_names.append(anim_name)
 
-        default_anims_for_keys = [  "anim_bored_01", # 0
-                                    "anim_freeplay_falloffcliff", # 1
-                                    "id_poked_giggle", # 2
-                                    "anim_pounce_success_02", # 3
-                                    "anim_bored_event_02",  # 4
-                                    "anim_bored_event_03",  # 5
-                                    "id_react2face_disgust",  # 6
-                                    "loco_dockadjust_01",  # 7
-                                    "practice",  # 8
-                                    "shocked"  # 9
-                                    ]
+        default_anims_for_keys = ["anim_bored_01", # 0
+                                  "anim_freeplay_falloffcliff", # 1
+                                  "id_poked_giggle", # 2
+                                  "anim_pounce_success_02", # 3
+                                  "anim_bored_event_02",  # 4
+                                  "anim_bored_event_03",  # 5
+                                  "id_react2face_disgust",  # 6
+                                  "loco_dockadjust_01",  # 7
+                                  "practice",  # 8
+                                  "shocked"  # 9
+                                 ]
 
         self.anim_index_for_key = [0] * 10
         kI = 0
@@ -126,8 +125,8 @@ class RemoteControlCozmo:
             try:
                 anim_idx = self.anim_names.index(default_key)
             except ValueError:
-                print("Error: default_anim %s is not in the list of animations" % default_key )
-                anim_idx = kI;
+                print("Error: default_anim %s is not in the list of animations" % default_key)
+                anim_idx = kI
             self.anim_index_for_key[kI] = anim_idx
             kI += 1
 
@@ -227,9 +226,9 @@ class RemoteControlCozmo:
         if not is_key_down:
             if (key_code >= ord('0')) and (key_code <= ord('9')):
                 anim_name = self.key_code_to_anim_name(key_code)
-                self.play_animation( anim_name )
-            elif (key_code == ord(' ')):
-                self.say_text( self.text_to_say )
+                self.play_animation(anim_name)
+            elif key_code == ord(' '):
+                self.say_text(self.text_to_say)
 
 
     def key_code_to_anim_name(self, key_code):
@@ -272,7 +271,7 @@ class RemoteControlCozmo:
         try:
             self.cozmo.say_text(text_to_say)
             return True
-        except cozmo.exceptions.RobotBusy as e:
+        except cozmo.exceptions.RobotBusy:
             return False
 
 
@@ -280,17 +279,17 @@ class RemoteControlCozmo:
         try:
             self.cozmo.play_anim(name=anim_name)
             return True
-        except cozmo.exceptions.RobotBusy as e:
+        except cozmo.exceptions.RobotBusy:
             return False
 
 
     def say_text(self, text_to_say):
-        self.queue_action( (self.try_say_text, text_to_say) )
+        self.queue_action((self.try_say_text, text_to_say))
         self.update()
 
 
     def play_animation(self, anim_name):
-        self.queue_action( (self.try_play_anim, anim_name) )
+        self.queue_action((self.try_play_anim, anim_name))
         self.update()
 
 
@@ -342,12 +341,12 @@ class RemoteControlCozmo:
             turn_dir = -turn_dir
 
         forward_vel = self.pick_speed(150, 75, 50)
-        turn_vel    = self.pick_speed(100, 50, 30)
+        turn_vel = self.pick_speed(100, 50, 30)
 
         l_wheel_velocity = (drive_dir * forward_vel) + (turn_vel * turn_dir)
         r_wheel_velocity = (drive_dir * forward_vel) - (turn_vel * turn_dir)
 
-        self.cozmo.drive_wheels(l_wheel_velocity, r_wheel_velocity, l_wheel_velocity*4, r_wheel_velocity*4 )
+        self.cozmo.drive_wheels(l_wheel_velocity, r_wheel_velocity, l_wheel_velocity*4, r_wheel_velocity*4)
 
 
 def get_anim_sel_drop_down(selectorIndex):
@@ -562,12 +561,12 @@ def handle_cozmoImage():
     if remote_control_cozmo:
         image = remote_control_cozmo.cozmo.world.latest_image
         if image:
-            return flask_helpers.serve_pil_image( image.raw_image )
-    return flask_helpers.serve_pil_image( _default_camera_image )
+            return flask_helpers.serve_pil_image(image.raw_image)
+    return flask_helpers.serve_pil_image(_default_camera_image)
 
 
-def handle_key_event(request, is_key_down):
-    message = json.loads(request.data.decode("utf-8"))
+def handle_key_event(key_request, is_key_down):
+    message = json.loads(key_request.data.decode("utf-8"))
     if remote_control_cozmo:
         remote_control_cozmo.handle_key(key_code=(message['keyCode']), is_shift_down=message['hasShift'],
                                         is_ctrl_down=message['hasCtrl'], is_alt_down=message['hasAlt'],
@@ -616,7 +615,7 @@ def handle_dropDownSelect():
     item_name = message['itemName']
 
     if remote_control_cozmo and item_name.startswith(item_name_prefix):
-        item_name_index = int( item_name[len(item_name_prefix):] )
+        item_name_index = int(item_name[len(item_name_prefix):])
         remote_control_cozmo.set_anim(item_name_index, message['selectedIndex'])
 
     return ""
@@ -633,7 +632,6 @@ def handle_sayText():
 
 @flask_app.route('/getDebugInfo', methods=['POST'])
 def handle_getDebugInfo():
-    '''   '''
     if remote_control_cozmo:
         action_queue_text = ""
         i = 1
@@ -660,9 +658,3 @@ def run(coz_conn):
 if __name__ == '__main__':
     cozmo.setup_basic_logging()
     cozmo.connect(run)
-
-
-
-
-
-
