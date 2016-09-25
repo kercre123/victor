@@ -1312,7 +1312,8 @@ Result Robot::Update()
           _selectedPathPlanner->GetCompletePath(GetDriveCenterPose(), newPath, selectedPoseIdx, &_pathMotionProfile);
           
           // check for collisions
-          bool collisionsAcceptable = _selectedPathPlanner->ChecksForCollisions();
+          bool collisionsAcceptable = _selectedPathPlanner->ChecksForCollisions()
+                                      || (newPath.GetNumSegments()==0);
           // Some children of IPathPlanner may return a path that hasn't been checked for obstacles.
           // Here, check if the planner used to compute that path considers obstacles. If it doesnt,
           // check for an obstacle penalty. If there is one, re-run with the lattice planner,
@@ -1354,23 +1355,26 @@ Result Robot::Update()
           }
           
           if( collisionsAcceptable ) {
-            PRINT_NAMED_INFO("Robot.Update.Planner.CompleteWithPlan", "Running planner complete with a plan");
-
-            _driveToPoseStatus = ERobotDriveToPoseStatus::FollowingPath;
             _numPlansFinished = _numPlansStarted;
-
+            if( newPath.GetNumSegments()==0 ) {
+              _driveToPoseStatus = ERobotDriveToPoseStatus::Waiting;
+              PRINT_NAMED_INFO("Robot.Update.Planner.CompleteWithPlan.EmptyPlan", "Planner completed but with an empty plan");
+            } else {
+              _driveToPoseStatus = ERobotDriveToPoseStatus::FollowingPath;
+              PRINT_NAMED_INFO("Robot.Update.Planner.CompleteWithPlan", "Running planner complete with a plan");
             
-            ExecutePath(newPath, _usingManualPathSpeed);
+              ExecutePath(newPath, _usingManualPathSpeed);
 
-            if( _plannerSelectedPoseIndexPtr != nullptr ) {
-              // When someone called StartDrivingToPose with multiple possible poses, they had an option to pass
-              // in a pointer to be set when we know which pose was selected by the planner. If that pointer is
-              // non-null, set it now, then clear the pointer so we won't set it again
+              if( _plannerSelectedPoseIndexPtr != nullptr ) {
+                // When someone called StartDrivingToPose with multiple possible poses, they had an option to pass
+                // in a pointer to be set when we know which pose was selected by the planner. If that pointer is
+                // non-null, set it now, then clear the pointer so we won't set it again
 
-              // TODO:(bn) think about re-planning, here, what if replanning wanted to switch targets? For now,
-              // replanning will always chose the same target pose, which should be OK for now
-              *_plannerSelectedPoseIndexPtr = selectedPoseIdx;
-              _plannerSelectedPoseIndexPtr = nullptr;
+                // TODO:(bn) think about re-planning, here, what if replanning wanted to switch targets? For now,
+                // replanning will always chose the same target pose, which should be OK for now
+                *_plannerSelectedPoseIndexPtr = selectedPoseIdx;
+                _plannerSelectedPoseIndexPtr = nullptr;
+              }
             }
           }
           break;
