@@ -42,7 +42,7 @@ CONSOLE_VAR(float, kBebctb_PaddingBetweenCubes_mm, "BehaviorExploreBringCubeToBe
 CONSOLE_VAR(float, kBebctb_DebugRenderAll, "BehaviorExploreBringCubeToBeacon", true);
 
 // number of attempts to do an action before flagging as failure
-const int kMaxAttempts = 2; // 1 + retries
+const int kMaxAttempts = 3; // 1 + retries (actions seem to fail fairly often for no apparent reason)
 // how long we care about recent failures. Cozmo normally shouldn't forget when things happen, but since
 // we don't have ways to reliable detect when conditions change, this has to be a sweet tweak between "not too often"
 // and "not forever"
