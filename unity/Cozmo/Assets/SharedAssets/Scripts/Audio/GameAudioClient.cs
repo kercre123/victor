@@ -212,11 +212,11 @@ namespace Anki {
         static public float GetDefaultVolume(VolumeParameters.VolumeType volType) {
           float value = 1.0f;
           switch (volType) {
-          case Anki.Cozmo.Audio.VolumeParameters.VolumeType.Music:
-            value = 1.0f;
+          case VolumeParameters.VolumeType.Music:
+            value = 0.8f;
             break;
 
-          case Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot: {
+          case VolumeParameters.VolumeType.Robot: {
 #if UNITY_EDITOR
               value = 0.6f;
 #else
@@ -225,15 +225,15 @@ namespace Anki {
             }
             break;
 
-          case Anki.Cozmo.Audio.VolumeParameters.VolumeType.SFX:
+          case VolumeParameters.VolumeType.SFX:
             value = 1.0f;
             break;
 
-          case Anki.Cozmo.Audio.VolumeParameters.VolumeType.UI:
+          case VolumeParameters.VolumeType.UI:
             value = 1.0f;
             break;
 
-          case Anki.Cozmo.Audio.VolumeParameters.VolumeType.VO:
+          case VolumeParameters.VolumeType.VO:
             value = 1.0f;
             break;
           }

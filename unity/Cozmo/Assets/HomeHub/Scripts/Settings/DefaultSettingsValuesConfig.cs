@@ -50,7 +50,7 @@ namespace Cozmo.Settings {
     public float DefaultRobotVolumeLevelValue { get { return GetRobotVolumeValue(DefaultRobotVolumeLevel); } }
 
     [SerializeField, Range(0f, 1f)]
-    private float _DefaultMusicVolume = 1f;
+    private float _DefaultMusicVolume = 0.8f;
     public float DefaultMusicVolumeLevel { get { return _DefaultMusicVolume; } }
 
     [SerializeField, Range(-1f, 120f)]
