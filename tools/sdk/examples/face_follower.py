@@ -6,14 +6,20 @@ This script shows off the turn_towards_face action. It will wait for a face
 and then constantly turn towards it to keep it in frame.
 '''
 
+import asyncio
 import time
+
 import cozmo
 
 def run(coz_conn):
     '''The run method runs once Cozmo is connected.'''
     coz = coz_conn.wait_for_robot()
 
-    face = coz.world.wait_for_observed_face(timeout=30)
+    try:
+    	face = coz.world.wait_for_observed_face(timeout=30)
+    except asyncio.TimeoutError:
+	    print("Didn't find a face.")
+	    return
 
     while True:
         coz.turn_towards_face(face).wait_for_completed()

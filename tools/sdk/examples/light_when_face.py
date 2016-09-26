@@ -6,7 +6,9 @@ This is a script to show off faces, and how they are easy to use.
 It waits for a face, and then will light up his backpack when that face is visible.
 '''
 
+import asyncio
 import time
+
 import cozmo
 
 
@@ -14,7 +16,11 @@ def run(coz_conn):
     '''The run method runs once Cozmo is connected.'''
     coz = coz_conn.wait_for_robot()
 
-    face = coz.world.wait_for_observed_face(timeout=30)
+    try:
+        face = coz.world.wait_for_observed_face(timeout=30)
+    except asyncio.TimeoutError:
+        print("Didn't find a face.")
+        return
 
     while True:
         if face.is_face_visible():
