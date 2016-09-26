@@ -391,7 +391,9 @@ public class OnboardingManager : MonoBehaviour {
       _HomeView.TabContentContainer.gameObject.SetActive(showContent);
       _HomeView.TabButtonContainer.gameObject.SetActive(showButtons);
     }
-    RobotEngineManager.Instance.CurrentRobot.EnableReactionaryBehaviors(reactionsEnabled);
+    if (RobotEngineManager.Instance.CurrentRobot != null) {
+      RobotEngineManager.Instance.CurrentRobot.EnableReactionaryBehaviors(reactionsEnabled);
+    }
   }
 
 }
