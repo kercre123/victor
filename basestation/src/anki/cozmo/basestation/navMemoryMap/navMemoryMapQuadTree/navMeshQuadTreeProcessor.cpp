@@ -429,7 +429,8 @@ bool NavMeshQuadTreeProcessor::HasCollisionRayWithTypes(const NavMeshQuadTreeNod
 
   // if a quad contains any of the points, or the ray intersects with the quad, then the quad is relevant
   const Quad2f& curQuad = node->MakeQuadXY();
-  bool isQuadRelevant = curQuad.Contains(rayFrom) || curQuad.Contains(rayTo) || curQuad.Intersects(rayFrom, rayTo);
+  bool doesLineCrossQuad = false;
+  const bool isQuadRelevant = QTOptimizations::OverlapsOrContains(curQuad, NavMeshQuadTreeNode::SegmentLineEquation(rayFrom, rayTo), doesLineCrossQuad);
   if ( isQuadRelevant )
   {
     // the quad is relevant, let's check type

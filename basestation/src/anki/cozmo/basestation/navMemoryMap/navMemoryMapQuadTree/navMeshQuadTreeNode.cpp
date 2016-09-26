@@ -940,7 +940,7 @@ void NavMeshQuadTreeNode::AddSmallestDescendantsDepthFirst(NodeCPtrVector& desce
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Optimizations
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-namespace {
+namespace QTOptimizations {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // This function was useful when Contains was slow for nonAAQuads, but now that is faster it doesn't gain much in the
@@ -1264,6 +1264,8 @@ inline bool OverlapsOrContains(const Quad2f& axisAlignedQuad,
 }
 
 };
+  
+using namespace QTOptimizations;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NavMeshQuadTreeNode::ContainsOrOverlapsQuad(const Quad2f& inQuad) const

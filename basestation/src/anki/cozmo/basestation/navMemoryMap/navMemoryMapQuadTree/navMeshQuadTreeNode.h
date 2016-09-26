@@ -328,6 +328,14 @@ private:
     
 }; // class
   
+namespace QTOptimizations{
+  bool OverlapsOrContains(const Quad2f& axisAlignedQuad,
+                          const NavMeshQuadTreeNode::SegmentLineEquation& line,
+                          bool& doesLineCrossQuad);
+  
+  
+} // namespace QTOptimizations
+  
 } // namespace
 } // namespace
 
