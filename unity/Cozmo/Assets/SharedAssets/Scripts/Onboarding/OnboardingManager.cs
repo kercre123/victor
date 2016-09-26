@@ -171,10 +171,16 @@ public class OnboardingManager : MonoBehaviour {
     if (_CurrPhase != OnboardingPhases.None) {
       SetSpecificStage(GetMaxStageInPhase(_CurrPhase));
     }
+    // Going to disconnect soon and won't be able to clean up a lot of onboarding stuff without a robot
+    IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
+    if (CurrentRobot == null) {
+      return;
+    }
     int startStage = 0;
     _CurrPhase = phase;
     if (_CurrPhase == OnboardingPhases.Home) {
-      RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(AnimationTrigger.OnboardingIdle);
+      CurrentRobot.PushIdleAnimation(AnimationTrigger.OnboardingIdle);
+      CurrentRobot.RequestEnableReactionaryBehavior("onboardingHome", BehaviorType.ReactToOnCharger, false);
       bool isOldRobot = UnlockablesManager.Instance.IsUnlocked(UnlockId.StackTwoCubes);
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = false;
 
@@ -201,10 +207,8 @@ public class OnboardingManager : MonoBehaviour {
           DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.SetItemAmount(itemData.ID, itemData.StartingAmount);
         }
       }
-    }
-    if (RobotEngineManager.Instance.CurrentRobot != null) {
-      RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.NoGame);
-    }
+    } // end first phase complete
+    CurrentRobot.SetAvailableGames(BehaviorGameFlag.NoGame);
 
     // If assets are already loaded, go otherwise this will wait for callback.
     // It should always be loaded now
@@ -227,7 +231,10 @@ public class OnboardingManager : MonoBehaviour {
 
   private void PhaseCompletedInternal() {
     if (_CurrPhase == OnboardingPhases.Home) {
-      RobotEngineManager.Instance.CurrentRobot.PopIdleAnimation();
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("onboardingHome", BehaviorType.ReactToOnCharger, true);
+        RobotEngineManager.Instance.CurrentRobot.PopIdleAnimation();
+      }
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = true;
     }
     if (RobotEngineManager.Instance.CurrentRobot != null) {
