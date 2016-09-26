@@ -343,7 +343,7 @@ void RobotToEngineImplMessaging::HandleFWVersionInfo(const AnkiEvent<RobotInterf
     robotEngineToRobotStr = Anki::Util::ConvertMessageBufferToString(_factoryFirmwareVersion.toRobotCLADHash.data(), static_cast<uint32_t>(_factoryFirmwareVersion.toRobotCLADHash.size()), Anki::Util::EBytesToTextType::eBTTT_Hex);
     engineEngineToRobotStr = Anki::Util::ConvertMessageBufferToString(messageEngineToRobotHash, sizeof(messageEngineToRobotHash), Anki::Util::EBytesToTextType::eBTTT_Hex);
     
-    PRINT_NAMED_WARNING("RobotFirmware.VersionMissmatch", "Engine to Robot CLAD version hash mismatch. Robot's EngineToRobot hash = %s. Engine's EngineToRobot hash = %s.", robotEngineToRobotStr.c_str(), engineEngineToRobotStr.c_str());
+    PRINT_NAMED_WARNING("RobotFirmware.VersionMismatch", "Engine to Robot CLAD version hash mismatch. Robot's EngineToRobot hash = %s. Engine's EngineToRobot hash = %s.", robotEngineToRobotStr.c_str(), engineEngineToRobotStr.c_str());
     
     _hasMismatchedEngineToRobotCLAD = true;
   }
@@ -357,7 +357,7 @@ void RobotToEngineImplMessaging::HandleFWVersionInfo(const AnkiEvent<RobotInterf
     
     engineRobotToEngineStr = Anki::Util::ConvertMessageBufferToString(messageRobotToEngineHash, sizeof(messageRobotToEngineHash), Anki::Util::EBytesToTextType::eBTTT_Hex);
     
-    PRINT_NAMED_WARNING("RobotFirmware.VersionMissmatch", "Robot to Engine CLAD version hash mismatch. Robot's RobotToEngine hash = %s. Engine's RobotToEngine hash = %s.", robotRobotToEngineStr.c_str(), engineRobotToEngineStr.c_str());
+    PRINT_NAMED_WARNING("RobotFirmware.VersionMismatch", "Robot to Engine CLAD version hash mismatch. Robot's RobotToEngine hash = %s. Engine's RobotToEngine hash = %s.", robotRobotToEngineStr.c_str(), engineRobotToEngineStr.c_str());
     
     _hasMismatchedRobotToEngineCLAD = true;
   }
@@ -695,7 +695,7 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
         if(robot->GetLocalizedTo() == object->GetID())
         {
           ASSERT_NAMED(robot->IsLocalized(), MAKE_EVENT_NAME("BadIsLocalizedCheck"));
-          PRINT_NAMED_INFO(MAKE_EVENT_NAME("UnsetLocalzedToID"),
+          PRINT_NAMED_INFO(MAKE_EVENT_NAME("UnsetLocalizedToID"),
                            "Unsetting %s %d, which moved/stopped, as robot %d's localization object.",
                            ObjectTypeToString(object->GetType()), object->GetID().GetValue(), robot->GetID());
           robot->SetLocalizedTo(nullptr);
