@@ -77,7 +77,7 @@ public:
   
   // Begin reseting the audio buffer. The buffer will ignore update buffer calls and wait for the audio controller
   // to clear cache
-  void ResetAudioBuffer();
+  void ResetAudioBufferAnimationCompleted( bool completed );
   
 
 protected:

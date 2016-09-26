@@ -13,6 +13,7 @@
  * Copyright: Anki, Inc. 2016
  */
 
+// TODO: Add console var to control if random event feature is on/off
 
 #include "anki/cozmo/basestation/audio/robotAudioAnimation.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
@@ -76,7 +77,9 @@ void RobotAudioAnimation::AbortAnimation()
   
   // Notify buffer
   if (nullptr != _audioBuffer) {
-    _audioBuffer->ResetAudioBuffer();
+    // Check if all posted events have been completed
+    const bool isComplete = ( GetPostedEventCount() <= GetCompletedEventCount() );
+    _audioBuffer->ResetAudioBufferAnimationCompleted(isComplete);
   }
   
   // Stop all animation audio events being played

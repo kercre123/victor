@@ -288,14 +288,6 @@ void StreamingAnimation::GenerateAudioData(Audio::RobotAudioClient* audioClient)
         return ;
       }
       
-      // TODO: Check if animation has been aborted?
-      
-      // Set Audio Event State
-      {
-        std::lock_guard<std::mutex> lock(_animationEventLock);
-        animationEvent->state = AnimationEvent::AnimationEventState::Posted;
-      }
-      
       // Prepare next event
       using namespace AudioEngine;
       using PlayId = Audio::RobotAudioClient::CozmoPlayId;
@@ -307,6 +299,13 @@ void StreamingAnimation::GenerateAudioData(Audio::RobotAudioClient* audioClient)
         }
       };
       
+      // Ready to post event update state
+      {
+        std::lock_guard<std::mutex> lock(_animationEventLock);
+        animationEvent->state = AnimationEvent::AnimationEventState::Posted;
+        IncrementPostedEventCount();
+      }
+      
       // Post Event
       const PlayId playId = _audioClient->PostCozmoEvent(animationEvent->audioEvent,
                                                          _gameObj,
@@ -317,9 +316,9 @@ void StreamingAnimation::GenerateAudioData(Audio::RobotAudioClient* audioClient)
         _audioClient->SetCozmoEventParameter(playId,
                                              Audio::GameParameter::ParameterType::Event_Volume,
                                              animationEvent->volume);
-        
-        // TODO: Add method to process Wwise after posting cozmo event
       }
+      // Processes event NOW, minimize buffering latency
+      _audioClient->ProcessEvents();
     };
     
     // Perform Audio Event

@@ -82,15 +82,12 @@ void RobotAudioBuffer::CloseAudioBuffer()
   if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
     PRINT_NAMED_WARNING("RobotAudioBuffer.ClearCache", "CLEAR!");
   }
-  
-  // No more samples to cache, create final Audio Message
-  if ( !_isWaitingForReset ) {
-    ASSERT_NAMED(!_streamQueue.empty(), "RobotAudioBuffer.CloseAudioBuffer._streamQueue.IsEmpty");
-    if (_streamQueue.empty()) {
-      return;
-    }
+
+  // Mark the last stream in the queue completed
+  if (!_streamQueue.empty()) {
     _streamQueue.back().SetIsComplete();
   }
+  
   _isActive = false;
   _isWaitingForReset = false;
 }
@@ -148,18 +145,17 @@ void RobotAudioBuffer::ClearBufferStreams()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioBuffer::ResetAudioBuffer()
+void RobotAudioBuffer::ResetAudioBufferAnimationCompleted( bool completed )
 {
   std::lock_guard<std::mutex> lock( _lock );
+  
+  _isWaitingForReset = ( _isActive || !completed );
+  
   if ( DEBUG_ROBOT_AUDIO_BUFFER_LOG ) {
-    PRINT_NAMED_ERROR( "RobotAudioBuffer.ResetAudioBuffer", "_isActive: %c  TimeStamp_s %f",
-                       _isActive ? 'Y' : 'N',
+    PRINT_NAMED_ERROR( "RobotAudioBuffer.ResetAudioBufferAnimationCompleted",
+                       "_isActive: %c completed: %c reset: %c TimeStamp_s %f",
+                       _isActive ? 'Y' : 'N', completed ? 'Y' : 'N', _isWaitingForReset ? 'Y' : 'N',
                        Util::Time::UniversalTime::GetCurrentTimeInSeconds() );
-  }
-  
-  
-  if ( _isActive ) {
-    _isWaitingForReset = true;
   }
 }
 

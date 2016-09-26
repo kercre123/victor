@@ -145,11 +145,18 @@ protected:
   // Return null if there are no more events
   const AnimationEvent* GetNextEvent();
   
-  // Track the current Event in the _animationEvents vector
-  int GetEventIndex() const { return _eventIndex; }
-  void IncrementEventIndex() { ++_eventIndex; }
   // Guard against event errors on different threads
   std::mutex _animationEventLock;
+  
+  // Track the current Event in the _animationEvents vector
+  // Note: This is not thread safe, be sure to properly lock when using
+  int GetEventIndex() const { return _eventIndex; }
+  void IncrementEventIndex() { ++_eventIndex; }
+  
+  // Track how many events have been request to play
+  // Note: This is not thread safe, be sure to properly lock when using
+  int GetPostedEventCount() const { return _postedEventCount; }
+  void IncrementPostedEventCount() { ++_postedEventCount; }
   
   // Track how many events have completed playback to track animation completion state
   int GetCompletedEventCount() const { return _completedEventCount; }
@@ -173,6 +180,7 @@ protected:
 
   // Track what game obj to use for animation
   GameObjectType _gameObj = GameObjectType::Invalid;
+
   
 private:
 
@@ -182,8 +190,10 @@ private:
   AnimationState _state = AnimationState::Preparing;
   bool _hasAlts = false; // Audio Event has alternate audio playback
   
-  // Track current event
+  // Track current event to sync with animation keyframes
   int _eventIndex = 0;
+  // Track number of events that have been requested to play
+  int _postedEventCount = 0;
   // Track number of events that have completed
   int _completedEventCount = 0;
   // Completed Event Count is updated on a different thread

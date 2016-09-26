@@ -115,13 +115,11 @@ void RobotAudioAnimationOnDevice::PopRobotAudioMessage( RobotInterface::EngineTo
                            [this, animationEvent, isAliveWeakPtr] ()
                           {
                             // Trigger events
-                            if ( isAliveWeakPtr.expired() ) { return; }
-                            
-                            {
-                              std::lock_guard<std::mutex> lock( _animationEventLock );
-                              animationEvent->state = AnimationEvent::AnimationEventState::Posted;
+                            if ( isAliveWeakPtr.expired() ) {
+                              return;
                             }
-                            // FIXME: Change to Robot Playing Frame Callback keyframe
+                            
+                            // FIXME: Change to Robot Playing Frame Callback keyframe, maybe might be too much latency
                             using namespace AudioEngine;
                             using PlayId = RobotAudioClient::CozmoPlayId;
                             const RobotAudioClient::CozmoEventCallbackFunc callbackFunc = [this, animationEvent, isAliveWeakPtr]
@@ -136,6 +134,14 @@ void RobotAudioAnimationOnDevice::PopRobotAudioMessage( RobotInterface::EngineTo
                                           "RobotAudioAnimationOnDevice.PostEvent",
                                           "Anim: '%s' EventId: %u",
                                           GetAnimationName().c_str(), animationEvent->audioEvent);
+                            
+                            // Ready to post event update state
+                            {
+                              std::lock_guard<std::mutex> lock( _animationEventLock );
+                              animationEvent->state = AnimationEvent::AnimationEventState::Posted;
+                              IncrementPostedEventCount();
+                            }
+                            
                             const PlayId playId = _audioClient->PostCozmoEvent( animationEvent->audioEvent,
                                                                                 _gameObj,
                                                                                 callbackFunc );

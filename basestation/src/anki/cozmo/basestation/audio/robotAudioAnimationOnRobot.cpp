@@ -423,11 +423,6 @@ void RobotAudioAnimationOnRobot::BeginBufferingAudioOnRobotMode()
           return;
         }
         
-        {
-          std::lock_guard<std::mutex> lock( _animationEventLock );
-          animationEvent->state = AnimationEvent::AnimationEventState::Posted;
-        }
-        
         // Post Event
         using namespace AudioEngine;
         using PlayId = RobotAudioClient::CozmoPlayId;
@@ -443,6 +438,13 @@ void RobotAudioAnimationOnRobot::BeginBufferingAudioOnRobotMode()
                       "RobotAudioAnimationOnRobot.PostEvent",
                       "Anim: '%s' EventId: %u TimeMs: %u",
                       GetAnimationName().c_str(), animationEvent->audioEvent, animationEvent->time_ms);
+        
+        // Ready to post event update state
+        {
+          std::lock_guard<std::mutex> lock( _animationEventLock );
+          animationEvent->state = AnimationEvent::AnimationEventState::Posted;
+          IncrementPostedEventCount();
+        }
         
         const PlayId playId = _audioClient->PostCozmoEvent( animationEvent->audioEvent,
                                                             _gameObj,

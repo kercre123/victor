@@ -170,6 +170,9 @@ private:
   uint32_t _playheadTime_ms = 0;
   AudioFrameList::iterator  _audioPlayheadIt;
   
+  // Guard against event errors on different threads
+  std::mutex _animationEventLock;
+  
   // List of playable audio events
   using AudioEventList = std::vector<AnimationEvent>;
   AudioEventList _animationAudioEvents;
@@ -183,18 +186,22 @@ private:
   const AnimationEvent* GetNextEvent() const;
   
   // Track the current Event in the _animationAudioEvents vector
+  // Note: This is not thread safe, be sure to properly lock when using
   int GetEventIndex() const { return _eventIndex; }
   void IncrementEventIndex() { ++_eventIndex; }
-  // Track current event
   int _eventIndex = 0;
-  // Guard against event errors on different threads
-  std::mutex _animationEventLock;
+  
+  // Track number of events that have been requested to play
+  // Note: This is not thread safe, be sure to properly lock when using
+  int GetPostedEventCount() const { return _postedEventCount; }
+  void IncrementPostedEventCount() { ++_postedEventCount; }
+  int _postedEventCount = 0;
   
   // Track how many events have completed playback to track animation completion state
   int GetCompletedEventCount() const { return _completedEventCount; }
   void IncrementCompletedEventCount() { std::lock_guard<std::mutex> lock(_completedEventLock);  ++_completedEventCount; }
-  // Number of events that have completed
   int _completedEventCount = 0;
+  
   // Completed Event Count is updated on a different thread
   std::mutex _completedEventLock;
   
