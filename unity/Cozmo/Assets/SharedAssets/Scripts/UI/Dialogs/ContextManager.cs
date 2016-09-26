@@ -30,8 +30,6 @@ public class ContextManager : MonoBehaviour {
     }
   }
 
-  private bool _AnticipationAudioPlaying = false;
-  private ushort _AnticipationAudioID;
   private bool _ManagerBusy = false;
   public bool ManagerBusy {
     get {
@@ -103,9 +101,7 @@ public class ContextManager : MonoBehaviour {
     }
     if (anticipation) {
       // If we are doing the drumroll sound
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Context_Switch_Loop_Play);
-
-      _AnticipationAudioPlaying = true;
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Banner_Wipe);
     }
 
     if (OnAppHoldStart != null) {
@@ -124,14 +120,10 @@ public class ContextManager : MonoBehaviour {
   }
 
   public void AppHoldEnd() {
-    if (_AnticipationAudioPlaying) {
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Context_Switch_Loop_Stop);
-    }
     if (OnAppHoldEnd != null) {
       OnAppHoldEnd.Invoke();
     }
     HideForeground();
-    _AnticipationAudioPlaying = false;
     _ManagerBusy = false;
     _StartHoldTimestamp = -1;
     _CurrentHoldDuration = -1;
