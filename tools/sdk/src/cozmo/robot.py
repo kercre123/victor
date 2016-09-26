@@ -1,8 +1,10 @@
 # Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
 
 __all__ = ['EvtRobotReady',
-           'GoToPose', 'PickupObject', 'PlaceOnObject', 'PlaceObjectOnGroundHere', 'SayText', 'SetHeadAngle',
-           'SetLiftHeight', 'TurnInPlace', 'TurnTowardsFace', 'DriveOffChargerContacts',
+           'GoToPose', 'DriveOffChargerContacts', 'PickupObject',
+           'PlaceOnObject', 'PlaceObjectOnGroundHere', 'SayText', 'SetHeadAngle',
+           'SetLiftHeight', 'TurnInPlace', 'TurnTowardsFace',
+           'MIN_HEAD_ANGLE', 'MAX_HEAD_ANGLE',
            'Cozmo']
 
 
@@ -28,6 +30,13 @@ from ._clad import _clad_to_engine_iface, _clad_to_engine_cozmo, _clad_to_game_c
 class EvtRobotReady(event.Event):
     '''Generated when the robot has been initialized and is ready for commands'''
     robot = "Cozmo object representing the robot to command"
+
+
+#### Constants
+
+
+MIN_HEAD_ANGLE = util.degrees(-25)
+MAX_HEAD_ANGLE = util.degrees(44.5)
 
 
 #### Actions
@@ -161,14 +170,12 @@ class SetHeadAngle(action.Action):
     def __init__(self, angle, max_speed, accel, duration, **kw):
         super().__init__(**kw)
 
-        min_head_angle = util.degrees(-25)
-        max_head_angle = util.degrees(44.5)
-        if angle < min_head_angle:
-            logger.info("Clamping head angle from %s to min %s" % (angle, min_head_angle))
-            self.angle = min_head_angle
-        elif angle > max_head_angle:
-            logger.info("Clamping head angle from %s to max %s" % (angle, max_head_angle))
-            self.angle = max_head_angle
+        if angle < MIN_HEAD_ANGLE:
+            logger.info("Clamping head angle from %s to min %s" % (angle, MIN_HEAD_ANGLE))
+            self.angle = MIN_HEAD_ANGLE
+        elif angle > MAX_HEAD_ANGLE:
+            logger.info("Clamping head angle from %s to max %s" % (angle, MAX_HEAD_ANGLE))
+            self.angle = MAX_HEAD_ANGLE
         else:
             self.angle = angle
 
@@ -287,6 +294,9 @@ class Cozmo(event.Dispatcher):
     behavior_factory = behavior.Behavior
     camera_factory = camera.Camera
     world_factory = world.World
+
+    # other attributes
+    drive_off_charger_on_connect = True  # Required for most movement actions
 
 
     def __init__(self, conn, robot_id, is_primary, **kw):
@@ -625,7 +635,7 @@ class Cozmo(event.Dispatcher):
     def set_head_angle(self, angle, accel=10.0, max_speed=10.0, duration=0.0):
         '''Tell Cozmo's head to turn to a given angle
         Args:
-            angle: (:class:`cozmo.util.Angle`) - desired angle for Cozmo's head. (-25 to 44.5 degrees - clamped in engine to this range)
+            angle: (:class:`cozmo.util.Angle`) - desired angle for Cozmo's head. (MIN_HEAD_ANGLE to MAX_HEAD_ANGLE)
         Returns:
             A :class:`cozmo.robot.SetHeadAngle` action object which can be queried to see when it is complete
         '''
@@ -695,118 +705,15 @@ class Cozmo(event.Dispatcher):
 
     # Cozmo's Face animation commands
 
-    def display_face_image(self, face_data, duration_ms):
-        "128x64"
+    def display_lcd_face_image(self, screen_data, duration_ms):
+        ''' Display a bitmap image on cozmo's lcd face screen
 
-        msg = _clad_to_engine_iface.DisplayFaceImage(faceData=face_data, duration_ms=duration_ms)
-        self.conn.send_msg(msg)
-
-    def set_procedural_face_anim_params(self, disable_eye_darts=True):
-        ''' Set the procedural face animation paramaters (Currently just allows eye-darts to be enabled/disabled)
         Args:
-            disable_eye_darts (bool): whether to disable procedural eye-darts or not
+            screen_data (:class:`bytes`): a sequence of pixels (8 pixels per byte) (from e.g. :func:`cozmo.lcd_face.convert_pixels_to_screen_data`)
+            duration_ms (float): time to keep displaying this image on Cozmo's face (clamped to 30 seconds in engine)
         '''
-        params = _clad_to_engine_cozmo.LiveIdleAnimationParameter # to save typing
-        param_names = []
-        param_values = []
-        if disable_eye_darts:
-            for i in range(params.EyeDartSpacingMinTime_ms, params.NumParameters):
-                param_names.append(i)
-                param_values.append(0.0)
-        use_defaults = True
-        msg = _clad_to_engine_iface.SetLiveIdleAnimationParameters(paramNames=param_names, paramValues=param_values,
-                                                                   robotID=self.robot_id, setUnspecifiedToDefault=use_defaults)
+        msg = _clad_to_engine_iface.DisplayFaceImage(faceData=screen_data, duration_ms=duration_ms)
         self.conn.send_msg(msg)
-
-    def display_procedural_face(self, face_cen_x=0.0, face_cen_y=0.0, face_angle=0.0,
-                                    l_eye_cen_x=10.0, l_eye_cen_y=-10.0,
-                                    l_eye_scale_x=1.0, l_eye_scale_y=1.0,
-                                    r_eye_cen_x=10.0, r_eye_cen_y=-10.0,
-                                    r_eye_scale_x=1.0, r_eye_scale_y=1.0,
-                                    duration_ms=33):
-        ''' Control the eye position and scale etc. for everything on Cozmo's face
-
-        Note: Left eye is technically Cozmo's right eye, but if you think of Cozmo's
-              Face like a TV screen then the left eye is on the left of the screen from the viewer's perspective
-        Args:
-            face_cen_x (float): pixel coordinates for x-coordinate of center of face
-            face_cen_y (float): pixel coordinates for y-coordinate of center of face
-            face_angle (float): angle of the face
-            l_eye_cen_x (float): pixel coordinates for x-coordinate of center of left eye
-            l_eye_cen_y (float): pixel coordinates for y-coordinate of center of left eye
-            l_eye_scale_x (float): scalar for size of left eye in x dimension
-            l_eye_scale_y (float): scalar for size of left eye in y dimension
-            r_eye_cen_x (float): pixel coordinates for x-coordinate of center of right eye
-            r_eye_cen_y (float): pixel coordinates for y-coordinate of center of right eye
-            r_eye_scale_x (float): scalar for size of right eye in x dimension
-            r_eye_scale_y (float): scalar for size of right eye in y dimension
-
-        Returns:
-
-        '''
-
-        l_eye_angle = 0.0
-        l_eye_lower_inner_radius_x = 0.185
-        l_eye_lower_inner_radius_y = 0.185
-        l_eye_upper_inner_radius_x = 0.173
-        l_eye_upper_inner_radius_y = 0.173
-
-        l_eye_lower_outer_radius_x = 0.2537
-        l_eye_lower_outer_radius_y = 0.253
-        l_eye_upper_outer_radius_x = 0.185
-        l_eye_upper_outer_radius_y = 0.185
-
-        l_eye_upper_lid_y = 0.0
-        l_eye_upper_lid_angle = 0.0
-        l_eye_upper_lid_bend = 0.0
-
-        l_eye_lower_lid_y = 0.0
-        l_eye_lower_lid_angle = 0.0
-        l_eye_lower_lid_bend = 0.0
-
-        left_eye = [l_eye_cen_x, l_eye_cen_y, l_eye_scale_x, l_eye_scale_y, l_eye_angle,
-                    l_eye_lower_inner_radius_x, l_eye_lower_inner_radius_y,
-                    l_eye_upper_inner_radius_x, l_eye_upper_inner_radius_y,
-                    l_eye_lower_outer_radius_x, l_eye_lower_outer_radius_y,
-                    l_eye_upper_outer_radius_x, l_eye_upper_outer_radius_y,
-                    l_eye_upper_lid_y, l_eye_upper_lid_angle, l_eye_upper_lid_bend,
-                    l_eye_lower_lid_y, l_eye_lower_lid_angle, l_eye_lower_lid_bend]
-
-        r_eye_angle = 0.0
-        r_eye_lower_inner_radius_x = 0.185
-        r_eye_lower_inner_radius_y = 0.185
-        r_eye_upper_inner_radius_x = 0.173
-        r_eye_upper_inner_radius_y = 0.173
-
-        r_eye_lower_outer_radius_x = 0.2537
-        r_eye_lower_outer_radius_y = 0.253
-        r_eye_upper_outer_radius_x = 0.185
-        r_eye_upper_outer_radius_y = 0.185
-
-        r_eye_upper_lid_y = 0.0
-        r_eye_upper_lid_angle = 0.0
-        r_eye_upper_lid_bend = 0.0
-
-        r_eye_lower_lid_y = 0.0
-        r_eye_lower_lid_angle = 0.0
-        r_eye_lower_lid_bend = 0.0
-
-        right_eye = [r_eye_cen_x, r_eye_cen_y, r_eye_scale_x, r_eye_scale_y, r_eye_angle,
-                    r_eye_lower_inner_radius_x, r_eye_lower_inner_radius_y,
-                    r_eye_upper_inner_radius_x, r_eye_upper_inner_radius_y,
-                    r_eye_lower_outer_radius_x, r_eye_lower_outer_radius_y,
-                    r_eye_upper_outer_radius_x, r_eye_upper_outer_radius_y,
-                    r_eye_upper_lid_y, r_eye_upper_lid_angle, r_eye_upper_lid_bend,
-                    r_eye_lower_lid_y, r_eye_lower_lid_angle, r_eye_lower_lid_bend]
-
-        face_scale_x = 1.0
-        face_scale_y = 1.0
-
-        msg = _clad_to_engine_iface.DisplayProceduralFace(faceAngle_deg=face_angle, faceCenX=face_cen_x, faceCenY=face_cen_y,
-                                                          faceScaleX=face_scale_x, faceScaleY=face_scale_y,
-                                                          leftEye=left_eye, rightEye=right_eye, duration_ms=duration_ms)
-        self.conn.send_msg(msg)
-
 
     ## Behavior Commands ##
 
