@@ -30,7 +30,6 @@ static const float ACC_RANGE_CONST  = (1.0f/16384.0f)*9810.0f;      //In 2g mode
 static const float GYRO_RANGE_CONST = (1.0f/65.6f)*(M_PI/180.0f);   //In FS500 mode, 65.6 deg/s / LSB
 
 static IMUData imu_state;
-static IMUData imu_offsets = {0};
 IMUData Anki::Cozmo::HAL::IMU::IMUState;
 static bool imu_updated = false;
 
@@ -111,17 +110,6 @@ void Anki::Cozmo::HAL::IMU::Manage(void) {
   I2C::Read(SLAVE_READ(ADDR_IMU));
 }
 
-void Anki::Cozmo::HAL::IMUSetCalibrationOffsets(const int16_t* accel, const int16_t* gyro) {
-  // TODO: Accelerometer offsets were acquired with head in the down position.
-  //       Need to do some math to make use of this, but ignoring for now.
-  imu_offsets.acc[0] = 0; //accel[0];  
-  imu_offsets.acc[1] = 0; //accel[1];  
-  imu_offsets.acc[2] = 0; //accel[2];  
-  imu_offsets.gyro[0] = gyro[0];
-  imu_offsets.gyro[1] = gyro[1];
-  imu_offsets.gyro[2] = gyro[2];  
-}
-
 uint8_t Anki::Cozmo::HAL::IMU::ReadID(void) {
   return I2C::ReadReg(ADDR_IMU, 0);
 }
@@ -152,12 +140,12 @@ bool Anki::Cozmo::HAL::IMUReadData(Anki::Cozmo::HAL::IMU_DataStructure &imuData)
   #define ACC_CONVERT(raw)  (ACC_RANGE_CONST  * (raw))
   #define GYRO_CONVERT(raw) (GYRO_RANGE_CONST * (raw))
 
-  imuData.acc_x  = ACC_CONVERT(IMU::IMUState.acc[2] - imu_offsets.acc[2]);
-  imuData.rate_x = GYRO_CONVERT(IMU::IMUState.gyro[2] - imu_offsets.gyro[2]);
-  imuData.acc_y  = ACC_CONVERT(IMU::IMUState.acc[1] - imu_offsets.acc[1]);
-  imuData.rate_y = GYRO_CONVERT(IMU::IMUState.gyro[1] - imu_offsets.gyro[1]);
-  imuData.acc_z  = ACC_CONVERT(-IMU::IMUState.acc[0] + imu_offsets.acc[0]);
-  imuData.rate_z = GYRO_CONVERT(-IMU::IMUState.gyro[0] + imu_offsets.gyro[0]);
+  imuData.acc_x  = ACC_CONVERT(IMU::IMUState.acc[2]);
+  imuData.rate_x = GYRO_CONVERT(IMU::IMUState.gyro[2]);
+  imuData.acc_y  = ACC_CONVERT(IMU::IMUState.acc[1]);
+  imuData.rate_y = GYRO_CONVERT(IMU::IMUState.gyro[1]);
+  imuData.acc_z  = ACC_CONVERT(-IMU::IMUState.acc[0]);
+  imuData.rate_z = GYRO_CONVERT(-IMU::IMUState.gyro[0]);
 
   return true;
 }

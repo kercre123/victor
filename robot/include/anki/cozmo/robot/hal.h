@@ -291,10 +291,6 @@ namespace Anki
 
       // Calculate the camera relative time of the latest sample
       void IMUGetCameraTime(uint32_t* const frameNumber, uint8_t* const line2Number);
-
-      // Set the raw IMU data calibration offsets.
-      // These are sent up from body on power up.
-      void IMUSetCalibrationOffsets(const int16_t* accel, const int16_t* gyro);
       
 // #pragma mark --- UART/Wifi ---
       /////////////////////////////////////////////////////////////////////

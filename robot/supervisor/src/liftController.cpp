@@ -119,7 +119,7 @@ namespace Anki {
 
         LiftCalibState calState_ = LCS_IDLE;
 
-        bool isCalibrated_ = true;
+        bool isCalibrated_ = false;
         u32 lastLiftMovedTime_ms = 0;
 
 

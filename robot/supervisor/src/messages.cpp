@@ -69,6 +69,8 @@ namespace Anki {
 
         // Flag for receipt of Init message
         bool initReceived_ = false;
+        bool syncTimeAckSent_ = false;
+        
         // Cache for power state information
         float vExt_;
         bool onCharger_;
@@ -239,11 +241,8 @@ namespace Anki {
       {
         AnkiInfo( 100, "Messages.Process_syncTime.Recvd", 305, "", 0);
 
-        RobotInterface::SyncTimeAck syncTimeAckMsg;
-        if (!RobotInterface::SendMessage(syncTimeAckMsg)) {
-          AnkiWarn( 102, "Messages.Process_syncTime.AckFailed", 352, "Failed to send syncTimeAckMsg", 0);
-        }
-
+        // Set SyncTime received flag
+        // Acknowledge in Update()
         initReceived_ = true;
 
         // TODO: Compare message ID to robot ID as a handshake?
@@ -318,8 +317,24 @@ namespace Anki {
         DockingController::SetDockingErrorSignalMessage(msg);
       }
 
-      void ProcessBTLEMessages()
+      void Update()
       {
+        // Send syncTimeAck
+        if (!syncTimeAckSent_ && initReceived_ && IMUFilter::IsBiasFilterComplete()) {
+          RobotInterface::SyncTimeAck syncTimeAckMsg;
+          while (RobotInterface::SendMessage(syncTimeAckMsg) == false);
+          syncTimeAckSent_ = true;
+          
+          // Send up gyro calibration
+          // Since the bias is typically calibrate before the robot is even connected,
+          // this is the time when the data can actually be sent up to engine.
+          AnkiEvent( 394, "Messages.Update.GyroCalibrated", 579, "%f %f %f", 3,
+                    RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[0]),
+                    RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[1]),
+                    RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[2]));
+        }
+        
+        // Process incoming messages
 #ifndef TARGET_K02
         u32 dataLen;
 
@@ -495,11 +510,6 @@ namespace Anki {
       void Process_imuRequest(const Anki::Cozmo::RobotInterface::ImuRequest& msg)
       {
         IMUFilter::RecordAndSend(msg.length_ms);
-      }
-      
-      void Process_setIMUCalibration(const Anki::Cozmo::RobotInterface::IMUCalibrationData& msg)
-      {
-        HAL::IMUSetCalibrationOffsets(msg.acc, msg.gyro);
       }
 
       void Process_turnInPlaceAtSpeed(const RobotInterface::TurnInPlaceAtSpeed& msg) {
@@ -1110,6 +1120,7 @@ namespace Anki {
       void ResetInit()
       {
         initReceived_ = false;
+        syncTimeAckSent_ = false;
 #ifndef TARGET_K02
         HAL::SetImageSendMode(Stream, QVGA);
 #endif

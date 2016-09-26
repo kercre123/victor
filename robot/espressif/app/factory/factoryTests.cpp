@@ -119,52 +119,11 @@ static u8 getCurrentMenuItems(const FTMenuItem** items)
 }
 
 
-static void IMUCalibrationReadCallback(NVStorage::NVOpResult& rslt)
-{
-  if (rslt.result != NVStorage::NV_OKAY)
-  {
-    AnkiDebug( 200, "IMUCalibration.Read.NotFound", 501, "No IMU calibration data available", 0);
-  }
-  else
-  {
-    RobotInterface::IMUCalibrationData* calD = reinterpret_cast<RobotInterface::IMUCalibrationData*>(rslt.blob);
-    for (int run = (1024/sizeof(RobotInterface::IMUCalibrationData)) - 1; run >= 0; --run)
-    {
-      uint8_t* bytes = reinterpret_cast<uint8_t*>(&calD[run]);
-      for(unsigned int b=0; b<sizeof(RobotInterface::IMUCalibrationData); ++b)
-      {
-        if (bytes[b] != 0xFF)
-        {
-          AnkiDebug( 201, "IMUCalibrationData.Read.Success", 502, "Got calibration data: gyro={%d, %d, %d}, acc={%d, %d, %d}", 6, calD[run].gyro[0], calD[run].gyro[1], calD[run].gyro[2],
-                        calD[run].acc[0], calD[run].acc[1], calD[run].acc[2]);
-          RobotInterface::SendMessage(calD[run]);
-          return;
-        }
-      }
-    }
-    AnkiDebug( 202, "IMUCalibrationData.Read.NotFound", 503, "No IMU calibration data written", 0);
-  }
-}
-
-static bool requestIMUCal(uint32_t param)
-{
-  NVStorage::NVCommand nvc;
-  nvc.address = NVStorage::NVEntry_IMUAverages;
-  nvc.length  = 1;
-  nvc.operation = NVStorage::NVOP_READ;
-  if (NVStorage::Command(nvc, IMUCalibrationReadCallback) != NVStorage::NV_SCHEDULED)
-  {
-    os_printf("Failed to request imu calibration data\r\n");
-    return true;
-  }
-  return false;
-}
 
 static void BirthCertificateReadCallback(NVStorage::NVOpResult& rslt)
 {
   if (rslt.result == NVStorage::NV_OKAY) memcpy(&birthCert, rslt.blob, sizeof(BirthCertificate));
   SetMode(RobotInterface::FTM_Sleepy);
-  foregroundTaskPost(requestIMUCal, 0);
 }
 
 
