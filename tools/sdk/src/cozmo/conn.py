@@ -1,6 +1,6 @@
 # Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
 
-__all__ = ['EvtRobotFound', 'CozmoConnection']
+__all__ = ['EvtRobotFound', 'CozmoConnection', 'requires_cozmo_off_charger']
 
 
 import asyncio
@@ -273,7 +273,7 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
         await self._primary_robot.wait_for(robot.EvtRobotReady, timeout=timeout)
         return self._primary_robot
 
-    async def wait_for_robot(self, timeout=None, ensure_off_charger=True):
+    async def wait_for_robot(self, timeout=None):
         '''Wait for a Cozmo robot to connect and complete initialization.
 
         Args:
@@ -284,7 +284,7 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
             A :class:`cozmo.robot.Cozmo` instance that's ready to use.
         '''
         robot = await self._wait_for_robot(timeout)
-        if robot and ensure_off_charger:
+        if robot and robot.drive_off_charger_on_connect:
             await robot.drive_off_charger_contacts().wait_for_completed()
         return robot
     

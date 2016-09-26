@@ -16,6 +16,7 @@ from . import behavior
 from . import conn
 from . import event
 from . import exceptions
+from . import lcd_face
 from . import lights
 from . import objects
 from . import robot
@@ -30,6 +31,6 @@ from .version import __version__
 
 
 __all__ = ['logger', 'logger_protocol'] + \
-    ['action', 'anim', 'behavior', 'conn', 'event', 'exceptions', 'lights'] + \
-    ['objects', 'robot', 'run', 'util', 'world'] + \
+    ['action', 'anim', 'behavior', 'conn', 'event', 'exceptions', 'lcd_face'] + \
+    ['lights', 'objects', 'robot', 'run', 'util', 'world'] + \
         (run.__all__ + exceptions.__all__)
