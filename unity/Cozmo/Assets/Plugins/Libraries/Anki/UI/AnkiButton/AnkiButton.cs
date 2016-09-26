@@ -322,13 +322,19 @@ namespace Anki {
       protected virtual void ShowEnabledState() {
         if (ButtonGraphics != null) {
           foreach (AnkiButtonImage graphic in ButtonGraphics) {
-            if (graphic.targetImage != null && graphic.enabledSprite != null) {
-              SetGraphic(graphic, graphic.enabledSprite, graphic.enabledColor, graphic.ignoreSprite);
+            if (graphic != null) {
+              if (graphic.targetImage != null && graphic.enabledSprite != null) {
+                SetGraphic(graphic, graphic.enabledSprite, graphic.enabledColor, graphic.ignoreSprite);
+              }
+              else {
+                DAS.Error(this, "Found null graphic data in button! gameObject.name=" + gameObject.name
+                          + " targetImage=" + graphic.targetImage + " sprite="
+                          + graphic.enabledSprite + ". Have you initialized this button?");
+              }
             }
             else {
-              DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name
-                        + " targetImage=" + graphic.targetImage + " sprite="
-                        + graphic.enabledSprite + ". Have you initialized this button?");
+              DAS.Error(this, "Found null graphic data in button! gameObject.name=" + gameObject.name +
+                        ". Please check prefab hook-ups.");
             }
           }
         }
