@@ -468,6 +468,8 @@ namespace Anki {
   
     ActionResult DriveStraightAction::Init()
     {
+      _robot.GetDrivingAnimationHandler().Init(GetTracksToLock(), GetTag(), IsSuppressingTrackLocking());
+      
       if(_dist_mm == 0.f) {
         // special case
         _hasStarted = true;
@@ -518,7 +520,7 @@ namespace Anki {
         PRINT_CH_INFO("Actions", "DriveStraightAction.CheckIfDone.WaitingForPathStart", "");
         _hasStarted = _robot.IsTraversingPath();
         if( _hasStarted && _shouldPlayDrivingAnimation) {
-          _robot.GetDrivingAnimationHandler().PlayStartAnim(GetTracksToLock(), GetTag(), IsSuppressingTrackLocking());
+          _robot.GetDrivingAnimationHandler().PlayStartAnim();
         }
       } else if(/*hasStarted AND*/ !_robot.IsTraversingPath() && _shouldPlayDrivingAnimation) {
         if( _robot.GetDrivingAnimationHandler().PlayEndAnim()) {

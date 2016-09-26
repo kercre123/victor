@@ -628,6 +628,8 @@ namespace Anki {
     
     ActionResult DriveToPoseAction::Init()
     {
+      _robot.GetDrivingAnimationHandler().Init(GetTracksToLock(), GetTag(), IsSuppressingTrackLocking());
+    
       ActionResult result = ActionResult::SUCCESS;
       
       _timeToAbortPlanning = -1.0f;
@@ -773,7 +775,7 @@ namespace Anki {
         
           // If we are following a path start playing driving animations
           // Won't do anything if DrivingAnimationHandler has already been inited
-          _robot.GetDrivingAnimationHandler().PlayStartAnim(GetTracksToLock(), GetTag(), IsSuppressingTrackLocking());
+          _robot.GetDrivingAnimationHandler().PlayStartAnim();
         
           // clear abort timing, since we got a path
           _timeToAbortPlanning = -1.0f;

@@ -5,6 +5,9 @@
  * Date:   5/6/2016
  *
  * Description: Handles playing animations while driving
+ *              Whatever tracks are locked by the action will stay locked while the start and loop
+ *              animations but the tracks will be unlocked while the end animation plays
+ *              The end animation will always play and will cancel the start/loop animations if needed
  *
  *
  * Copyright: Anki, Inc. 2016
@@ -48,19 +51,19 @@ namespace Anki {
         void ClearAllDrivingAnimations();
       
         // Returns true if the drivingEnd animation is playing
-        bool IsPlayingEndAnim() const { return _endAnimStarted && !_endAnimCompleted; }
+        bool IsPlayingEndAnim() const { return _state == AnimState::PlayingEnd; }
+      
+        // Takes in the tag of the action that is calling this and whether or not it is suppressing track locking
+        void Init(const u8 tracksToUnlock, const u32 tag, const bool isActionSuppressingLockingTracks);
       
         // Starts playing drivingStart or drivingLoop if drivingStart isn't specified
-        // Also needs the tag of the action that is calling this and whether or not it is suppressing track locking
-        void PlayStartAnim(u8 tracksToUnlock, const u32 tag, bool isActionSuppressingLockingTracks);
+        void PlayStartAnim();
       
         // Cancels drivingStart and drivingLoop animations and starts playing drivingEnd animation
         bool PlayEndAnim();
       
         // Called when the Driving action is being destroyed
         void ActionIsBeingDestroyed();
-      
-        bool IsCurrentlyPlayingAnimation() const { return (_startedPlayingAnimation || _endAnimStarted); }
       
       private:
       
@@ -74,6 +77,20 @@ namespace Anki {
         void PlayDrivingLoopAnim();
         void PlayDrivingEndAnim();
       
+        enum class AnimState
+        {
+          Waiting,         // State after Init() has been called
+          PlayingStart,    // Currently playing the start anim
+          PlayingLoop,     // Currently playing the loop anim
+          PlayingEnd,      // Currently playing the end anim
+          FinishedEnd,     // End anim has finished but the action hasn't been destroyed yet
+          ActionDestroyed, // The action has been destroyed so we are waiting for Init() to be called
+        };
+      
+        // What state of playing driving animations we are in
+        // Start in ActionDestroyed so that Init() needs to be called
+        AnimState _state = AnimState::ActionDestroyed;
+      
         Robot& _robot;
       
         std::vector<DrivingAnimations> _drivingAnimationStack;
@@ -82,16 +99,12 @@ namespace Anki {
         const DrivingAnimations kDefaultDrivingAnimations;
         const DrivingAnimations kAngryDrivingAnimations;
       
-      
-        bool _startedPlayingAnimation = false;
-      
         u32 _actionTag;
         u8 _tracksToUnlock = (u8)AnimTrackFlag::NO_TRACKS;
         bool _isActionLockingTracks = true;
       
         std::vector<Signal::SmartHandle> _signalHandles;
-        bool _endAnimStarted = false;
-        bool _endAnimCompleted = false;
+
         u32 _drivingStartAnimTag = ActionConstants::INVALID_TAG;
         u32 _drivingLoopAnimTag = ActionConstants::INVALID_TAG;
         u32 _drivingEndAnimTag = ActionConstants::INVALID_TAG;
