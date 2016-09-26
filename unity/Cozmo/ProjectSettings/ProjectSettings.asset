@@ -92,7 +92,7 @@ PlayerSettings:
     16:9: 1
     Others: 1
   bundleIdentifier: com.anki.cozmo
-  bundleVersion: 0.6.0
+  bundleVersion: 0.7.0
   preloadedAssets: []
   metroEnableIndependentInputSource: 0
   metroEnableLowLatencyPresentationAPI: 0
