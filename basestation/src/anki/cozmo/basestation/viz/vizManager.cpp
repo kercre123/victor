@@ -171,8 +171,9 @@ namespace Anki {
     VizManager::Handle_t VizManager::DrawRobot(const u32 robotID, const Pose3d& pose, const ColorRGBA& color)
     {
       if(robotID >= _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_ROBOT]) {
-        PRINT_NAMED_ERROR("VizManager.DrawRobot.IDtooLarge", "Specified robot ID=%d larger than maxID=%d",
-          robotID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_ROBOT]);
+        PRINT_NAMED_WARNING("VizManager.DrawRobot.IDtooLarge",
+                            "Specified robot ID=%d larger than maxID=%d",
+                            robotID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_ROBOT]);
         return INVALID_HANDLE;
       }
       
@@ -189,8 +190,9 @@ namespace Anki {
                                                 const ColorRGBA& color)
     {
       if(blockID >= _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_CUBOID]) {
-        PRINT_NAMED_ERROR("VizManager.DrawCuboid.IDtooLarge", "Specified block ID=%d larger than maxID=%d",
-          blockID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_CUBOID]);
+        PRINT_NAMED_WARNING("VizManager.DrawCuboid.IDtooLarge",
+                            "Specified block ID=%d larger than maxID=%d",
+                            blockID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_CUBOID]);
         return INVALID_HANDLE;
       }
       
@@ -202,8 +204,9 @@ namespace Anki {
     VizManager::Handle_t VizManager::DrawPreDockPose(const u32 preDockPoseID, const Pose3d& pose, const ColorRGBA& color)
     {
       if(preDockPoseID >= _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_PREDOCKPOSE]) {
-        PRINT_NAMED_ERROR("VizManager.DrawPreDockPose.IDtooLarge", "Specified robot ID=%d larger than maxID=%d",
-          preDockPoseID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_PREDOCKPOSE]);
+        PRINT_NAMED_WARNING("VizManager.DrawPreDockPose.IDtooLarge",
+                            "Specified PreDockPose ID=%d larger than maxID=%d",
+                            preDockPoseID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_PREDOCKPOSE]);
         return INVALID_HANDLE;
       }
       
@@ -218,8 +221,9 @@ namespace Anki {
       const f32 width, const f32 height, const Pose3d& pose, const ColorRGBA& color)
     {
       if (rampID >= _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_RAMP]) {
-        PRINT_NAMED_ERROR("VizManager.DrawRamp.IDtooLarge", "Specified ramp ID=%d larger than maxID=%d",
-          rampID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_RAMP]);
+        PRINT_NAMED_WARNING("VizManager.DrawRamp.IDtooLarge",
+                            "Specified ramp ID=%d larger than maxID=%d",
+                            rampID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_RAMP]);
         return INVALID_HANDLE;
       }
       
@@ -239,8 +243,9 @@ namespace Anki {
       const f32 width, const f32 height, const Pose3d& pose, const ColorRGBA& color)
     {
       if (chargerID >= _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_CHARGER]) {
-        PRINT_NAMED_ERROR("VizManager.DrawCharger.IDtooLarge", "Specified charger ID=%d larger than maxID=%d",
-          chargerID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_CHARGER]);
+        PRINT_NAMED_WARNING("VizManager.DrawCharger.IDtooLarge",
+                            "Specified charger ID=%d larger than maxID=%d",
+                            chargerID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_CHARGER]);
         return INVALID_HANDLE;
       }
       
@@ -260,8 +265,9 @@ namespace Anki {
     VizManager::Handle_t VizManager::DrawHumanHead(const s32 headID, const Point3f& size, const Pose3d& pose, const ColorRGBA& color)
     {
       if (std::abs(headID) >= _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD]) {
-        PRINT_NAMED_ERROR("VizManager.DrawHumanHead.IDtooLarge", "Specified head ID=%d larger than maxID=%d",
-          headID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD]);
+        PRINT_NAMED_WARNING("VizManager.DrawHumanHead.IDtooLarge",
+                            "Specified head ID=%d larger than maxID=%d",
+                            headID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD]);
         return INVALID_HANDLE;
 
       }

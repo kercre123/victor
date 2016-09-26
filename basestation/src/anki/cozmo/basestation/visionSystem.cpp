@@ -153,6 +153,8 @@ namespace Cozmo {
     u8 kImageStddevTooBrightThreshold;
   }
   
+  static const char * const kLogChannelName = "VisionSystem";
+  
   using namespace Embedded;
   
   VisionSystem::VisionSystem(const std::string& dataPath, VizManager* vizMan)
@@ -174,8 +176,8 @@ namespace Cozmo {
     
 #   if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
     // Force the NN library to load _now_, not on first use
-    PRINT_NAMED_INFO("VisionSystem.Constructor.LoadNearestNeighborLibrary",
-                     "Markers generated on %s", Vision::MarkerDefinitionVersionString);
+    PRINT_CH_INFO(kLogChannelName, "VisionSystem.Constructor.LoadNearestNeighborLibrary",
+                  "Markers generated on %s", Vision::MarkerDefinitionVersionString);
     VisionMarker::GetNearestNeighborLibrary();
 #   endif
     
@@ -240,15 +242,16 @@ namespace Cozmo {
       GET_JSON_PARAMETER(performanceConfig, "TimeBetweenProfilerInfoPrints_sec", timeBetweenProfilerInfoPrints_sec);
       GET_JSON_PARAMETER(performanceConfig, "TimeBetweenProfilerDasLogs_sec",    timeBetweenProfilerDasLogs_sec);
       
-      Profiler::SetProfileGroupName("VisionSystem");
+      Profiler::SetProfileGroupName("VisionSystem.Profiler");
+      Profiler::SetPrintChannelName(kLogChannelName);
       Profiler::SetPrintFrequency(SEC_TO_MILIS(timeBetweenProfilerInfoPrints_sec));
       Profiler::SetDasLogFrequency(SEC_TO_MILIS(timeBetweenProfilerDasLogs_sec));
     }
     
-    PRINT_NAMED_INFO("VisionSystem.Constructor.InstantiatingFaceTracker",
-                     "With model path %s.", _dataPath.c_str());
+    PRINT_CH_INFO(kLogChannelName, "VisionSystem.Constructor.InstantiatingFaceTracker",
+                  "With model path %s.", _dataPath.c_str());
     _faceTracker = new Vision::FaceTracker(_dataPath, config);
-    PRINT_NAMED_INFO("VisionSystem.Constructor.DoneInstantiatingFaceTracker", "");
+    PRINT_CH_INFO(kLogChannelName, "VisionSystem.Constructor.DoneInstantiatingFaceTracker", "");
     
     _markerToTrack.Clear();
     _newMarkerToTrack.Clear();
@@ -427,8 +430,8 @@ namespace Cozmo {
     } else if(whichMode == VisionMode::Idle) {
       if(enabled) {
         // "Enabling" idle means to turn everything off
-        PRINT_NAMED_INFO("VisionSystem.EnableMode.Idle",
-                         "Disabling all vision modes");
+        PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnableMode.Idle",
+                      "Disabling all vision modes");
         _mode.ClearFlags();
         _mode.SetBitFlag(whichMode, true);
       } else {
@@ -438,10 +441,10 @@ namespace Cozmo {
       if(enabled) {
         const bool modeAlreadyEnabled = _mode.IsBitFlagSet(whichMode);
         if(!modeAlreadyEnabled) {
-          PRINT_NAMED_INFO("VisionSystem.EnablingMode",
-                           "Adding mode %s to current mode %s.",
-                           EnumToString(whichMode),
-                           VisionSystem::GetModeName(_mode).c_str());
+          PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnablingMode",
+                        "Adding mode %s to current mode %s.",
+                        EnumToString(whichMode),
+                        VisionSystem::GetModeName(_mode).c_str());
           
           _mode.SetBitFlag(VisionMode::Idle, false);
           _mode.SetBitFlag(whichMode, true);
@@ -449,10 +452,10 @@ namespace Cozmo {
       } else {
         const bool modeAlreadyDisabled = !_mode.IsBitFlagSet(whichMode);
         if(!modeAlreadyDisabled) {
-          PRINT_NAMED_INFO("VisionSystem.DisablingMode",
-                           "Removing mode %s from current mode %s.",
-                           EnumToString(whichMode),
-                           VisionSystem::GetModeName(_mode).c_str());
+          PRINT_CH_INFO(kLogChannelName, "VisionSystem.DisablingMode",
+                        "Removing mode %s from current mode %s.",
+                        EnumToString(whichMode),
+                        VisionSystem::GetModeName(_mode).c_str());
           _mode.SetBitFlag(whichMode, false);
           if (!_mode.AreAnyFlagsSet())
           {
@@ -838,7 +841,7 @@ namespace Cozmo {
                  quad.corners[i].y < 0)
               {
                 quad = crntMarker.corners;
-                PRINT_CH_INFO("VisionSystem", "VisionSystem.DetectMarkers.WarpedQuadOOB",
+                PRINT_CH_INFO(kLogChannelName, "VisionSystem.DetectMarkers.WarpedQuadOOB",
                               "Reiniting tracker and warping quad put it off the image using unwarped quad");
                 break;
               }
@@ -869,14 +872,14 @@ namespace Cozmo {
     if(mean < kImageMeanTooDarkLowThreshold ||
        (mean < kImageMeanTooDarkHighThreshold && stddev < kImageStddevTooDarkThreshold))
     {
-      PRINT_CH_INFO("VisionSystem", "VisionSystem.CheckImageQuality.TooDark",
+      PRINT_CH_INFO(kLogChannelName, "VisionSystem.CheckImageQuality.TooDark",
                     "Mean:%u Stddev:%u", mean, stddev);
       _currentResult.imageQuality = ImageQuality::TooDark;
     }
     else if(mean > kImageMeanTooBrightHighThreshold ||
             (mean > kImageMeanTooBrightLowThreshold && stddev < kImageStddevTooBrightThreshold))
     {
-      PRINT_CH_INFO("VisionSystem", "VisionSystem.CheckImageQuality.TooBright",
+      PRINT_CH_INFO(kLogChannelName, "VisionSystem.CheckImageQuality.TooBright",
                     "Mean:%u Stddev:%u", mean, stddev);
       _currentResult.imageQuality = ImageQuality::TooBright;
     }
@@ -1360,9 +1363,9 @@ namespace Cozmo {
       
       if(_numTrackFailures == MAX_TRACKING_FAILURES)
       {
-        PRINT_NAMED_INFO("VisionSystem.Update", "Reached max number of tracking "
-                         "failures (%d). Switching back to looking for markers.\n",
-                         MAX_TRACKING_FAILURES);
+        PRINT_CH_INFO(kLogChannelName, "VisionSystem.Update", "Reached max number of tracking "
+                      "failures (%d). Switching back to looking for markers.\n",
+                      MAX_TRACKING_FAILURES);
         
         // This resets docking, puttings us back in VISION_MODE_DETECTING_MARKERS mode
         SetMarkerToTrack(_markerToTrack.type,
@@ -1616,7 +1619,7 @@ namespace Cozmo {
     size_t largestRegion = 0;
     
     for(auto & region : regionPoints) {
-      //PRINT_NAMED_INFO("VisionSystem.Update.FoundMotionRegion",
+      //PRINT_CH_INFO(kLogChannelName, "VisionSystem.Update.FoundMotionRegion",
       //                 "Area=%lu", (unsigned long)region.size());
       if(region.size() > minArea && region.size() > largestRegion) {
         centroid = 0.f;
@@ -1912,11 +1915,11 @@ namespace Cozmo {
       {
         if(DEBUG_MOTION_DETECTION)
         {
-          PRINT_CH_INFO("VisionSystem", "VisionSystem.DetectMotion.FoundCentroid",
-                         "Found motion centroid for %.1f-pixel area region at (%.1f,%.1f) "
-                         "-- %.1f%% of ground area at (%.1f,%.1f)",
-                         imgRegionArea, centroid.x(), centroid.y(),
-                         groundRegionArea*100.f, groundPlaneCentroid.x(), groundPlaneCentroid.y());
+          PRINT_CH_INFO(kLogChannelName, "VisionSystem.DetectMotion.FoundCentroid",
+                        "Found motion centroid for %.1f-pixel area region at (%.1f,%.1f) "
+                        "-- %.1f%% of ground area at (%.1f,%.1f)",
+                        imgRegionArea, centroid.x(), centroid.y(),
+                        groundRegionArea*100.f, groundPlaneCentroid.x(), groundPlaneCentroid.y());
         }
         
         _lastMotionTime = image.GetTimestamp();
@@ -2704,22 +2707,22 @@ namespace Cozmo {
   Result VisionSystem::AddCalibrationImage(const Vision::Image& calibImg, const Anki::Rectangle<s32>& targetROI)
   {
     if(_isCalibrating) {
-      PRINT_NAMED_INFO("VisionSystem.AddCalibrationImage.AlreadyCalibrating",
-                       "Cannot add calibration image while already in the middle of doing calibration.");
+      PRINT_CH_INFO(kLogChannelName, "VisionSystem.AddCalibrationImage.AlreadyCalibrating",
+                    "Cannot add calibration image while already in the middle of doing calibration.");
       return RESULT_FAIL;
     }
     
     _calibImages.push_back({.img = calibImg, .roiRect = targetROI, .dotsFound = false});
-    PRINT_NAMED_INFO("VisionSystem.AddCalibrationImage",
-                     "Num images including this: %u", (u32)_calibImages.size());
+    PRINT_CH_INFO(kLogChannelName, "VisionSystem.AddCalibrationImage",
+                  "Num images including this: %u", (u32)_calibImages.size());
     return RESULT_OK;
   } // AddCalibrationImage()
   
   Result VisionSystem::ClearCalibrationImages()
   {
     if(_isCalibrating) {
-      PRINT_NAMED_INFO("VisionSystem.ClearCalibrationImages.AlreadyCalibrating",
-                       "Cannot clear calibration images while already in the middle of doing calibration.");
+      PRINT_CH_INFO(kLogChannelName, "VisionSystem.ClearCalibrationImages.AlreadyCalibrating",
+                    "Cannot clear calibration images while already in the middle of doing calibration.");
       return RESULT_FAIL;
     }
     
@@ -2730,8 +2733,8 @@ namespace Cozmo {
   Result VisionSystem::ClearToolCodeImages()
   {
     if(_isReadingToolCode) {
-      PRINT_NAMED_INFO("VisionSystem.ClearToolCodeImages.AlreadyReadingToolCode",
-                       "Cannot clear tool code images while already in the middle of reading tool codes.");
+      PRINT_CH_INFO(kLogChannelName, "VisionSystem.ClearToolCodeImages.AlreadyReadingToolCode",
+                    "Cannot clear tool code images while already in the middle of reading tool codes.");
       return RESULT_FAIL;
     }
     
@@ -3057,11 +3060,6 @@ namespace Cozmo {
     // We've computed everything from this image that we're gonna compute.
     // Push it onto the queue of results all together.
     _mutex.lock();
-    PRINT_CH_DEBUG("VisionSystem", "VisionSystem.Update.QueueResult",
-                   "t=%u with %zu markers and %zu faces",
-                   _currentResult.timestamp,
-                   _currentResult.observedMarkers.size(),
-                   _currentResult.faces.size());
     _results.push(_currentResult);
     _mutex.unlock();
     
@@ -3119,14 +3117,16 @@ namespace Cozmo {
     _autoExposure_highValue = highValue;
     _autoExposure_percentileToMakeHigh = percentileToMakeHigh;
     
-    PRINT_NAMED_INFO("VisionSystem.SetParams", "Changed VisionSystem params: autoExposureOn %d exposureTime %f integerCountsInc %d, minExpTime %f, maxExpTime %f, highVal %d, percToMakeHigh %f\n",
-               _autoExposure_enabled,
-               _exposureTime,
-               _autoExposure_integerCountsIncrement,
-               _autoExposure_minExposureTime,
-               _autoExposure_maxExposureTime,
-               _autoExposure_highValue,
-               _autoExposure_percentileToMakeHigh);
+    PRINT_CH_INFO(kLogChannelName, "VisionSystem.SetParams",
+                  "Changed VisionSystem params: autoExposureOn %d exposureTime %f integerCountsInc %d, "
+                  "minExpTime %f, maxExpTime %f, highVal %d, percToMakeHigh %f",
+                  _autoExposure_enabled,
+                  _exposureTime,
+                  _autoExposure_integerCountsIncrement,
+                  _autoExposure_minExposureTime,
+                  _autoExposure_maxExposureTime,
+                  _autoExposure_highValue,
+                  _autoExposure_percentileToMakeHigh);
   }
   
   Result VisionSystem::ReadToolCode(const Vision::Image& image)
@@ -3151,7 +3151,7 @@ namespace Cozmo {
       this->EnableMode(VisionMode::ReadingToolCode, false);
       this->_firstReadToolCodeTime_ms = 0;
       this->_isReadingToolCode = false;
-      PRINT_NAMED_INFO("VisionSystem.ReadToolCode.DisabledReadingToolCode", "");
+      PRINT_CH_INFO(kLogChannelName, "VisionSystem.ReadToolCode.DisabledReadingToolCode", "");
     };
     
     if(_firstReadToolCodeTime_ms == 0) {
@@ -3178,9 +3178,9 @@ namespace Cozmo {
     // hasn't done their job and got us into position
     if(headMoving || liftMoving || !headDown || !liftDown)
     {
-      PRINT_NAMED_INFO("VisionSystem.ReadToolCode.NotInPosition",
-                       "Waiting for head / lift (headMoving %d, lifMoving %d, headDown %d, liftDown %d",
-                       headMoving, liftMoving, headDown, liftDown);
+      PRINT_CH_INFO(kLogChannelName, "VisionSystem.ReadToolCode.NotInPosition",
+                    "Waiting for head / lift (headMoving %d, lifMoving %d, headDown %d, liftDown %d",
+                    headMoving, liftMoving, headDown, liftDown);
       return RESULT_OK;
     }
     
@@ -3432,14 +3432,14 @@ namespace Cozmo {
                   dotLabel = iComp;
                   distToCenterSq = distSq;
                 } else if(!enoughContrast) {
-                  PRINT_NAMED_INFO("VisionSystem.ReadToolCode.BadContrast",
-                                   "Dot %lu: Contrast for comp %d = %f",
-                                   (unsigned long)iDot, iComp, (f32)avgHoleBrightness / (f32)avgDotBrightness);
+                  PRINT_CH_INFO(kLogChannelName, "VisionSystem.ReadToolCode.BadContrast",
+                                "Dot %lu: Contrast for comp %d = %f",
+                                (unsigned long)iDot, iComp, (f32)avgHoleBrightness / (f32)avgDotBrightness);
                 } else if(!holeSmallEnough) {
-                  PRINT_NAMED_INFO("VisionSystem.ReadToolCode.HoleTooLarge",
-                                   "Dot %lu: hole too large %d > %f*%d (=%f)",
-                                   (unsigned long)iDot, holeArea, kMaxHoleAreaFrac, compArea,
-                                   kMaxHoleAreaFrac*compArea);
+                  PRINT_CH_INFO(kLogChannelName, "VisionSystem.ReadToolCode.HoleTooLarge",
+                                "Dot %lu: hole too large %d > %f*%d (=%f)",
+                                (unsigned long)iDot, holeArea, kMaxHoleAreaFrac, compArea,
+                                kMaxHoleAreaFrac*compArea);
                 }
               }
             }
@@ -3625,15 +3625,15 @@ namespace Cozmo {
         } // if sanity checking the new calibration
         
         // Update the camera calibration
-        PRINT_NAMED_INFO("VisionSystem.ReadToolCode.CameraCalibUpdated",
-                         "OldCen=(%f,%f), NewCen=(%f,%f), OldF=(%f,%f), NewF=(%f,%f), t=%dms",
-                         _camera.GetCalibration()->GetCenter_x(),
-                         _camera.GetCalibration()->GetCenter_y(),
-                         camCen.x(), camCen.y(),
-                         _camera.GetCalibration()->GetFocalLength_x(),
-                         _camera.GetCalibration()->GetFocalLength_y(),
-                         f, f,
-                         image.GetTimestamp());
+        PRINT_CH_INFO(kLogChannelName, "VisionSystem.ReadToolCode.CameraCalibUpdated",
+                      "OldCen=(%f,%f), NewCen=(%f,%f), OldF=(%f,%f), NewF=(%f,%f), t=%dms",
+                      _camera.GetCalibration()->GetCenter_x(),
+                      _camera.GetCalibration()->GetCenter_y(),
+                      camCen.x(), camCen.y(),
+                      _camera.GetCalibration()->GetFocalLength_x(),
+                      _camera.GetCalibration()->GetFocalLength_y(),
+                      f, f,
+                      image.GetTimestamp());
         
         _camera.GetCalibration()->SetCenter(camCen);
         _camera.GetCalibration()->SetFocalLength(f, f);
@@ -3683,10 +3683,11 @@ namespace Cozmo {
     
     // Check that there are enough images
     if (_calibImages.size() < _kMinNumCalibImagesRequired) {
-      PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.NotEnoughImages", "Got %u. Need %u.", (u32)_calibImages.size(), _kMinNumCalibImagesRequired);
+      PRINT_CH_INFO(kLogChannelName, "VisionSystem.ComputeCalibration.NotEnoughImages",
+                    "Got %u. Need %u.", (u32)_calibImages.size(), _kMinNumCalibImagesRequired);
       return RESULT_FAIL;
     }
-    PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.NumImages", "%u.", (u32)_calibImages.size());
+    PRINT_CH_INFO(kLogChannelName, "VisionSystem.ComputeCalibration.NumImages", "%u.", (u32)_calibImages.size());
     
     
     // Description of asymmetric circles calibration target
@@ -3720,10 +3721,10 @@ namespace Cozmo {
       calibImage.dotsFound = cv::findCirclesGrid(img.get_CvMat_(), boardSize, pointBuf, findCirclesFlags, blobDetector);
 
       if (calibImage.dotsFound) {
-        PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.FoundPoints", "");
+        PRINT_CH_INFO(kLogChannelName, "VisionSystem.ComputeCalibration.FoundPoints", "");
         imagePoints.push_back(pointBuf);
       } else {
-        PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.NoPointsFound", "");
+        PRINT_CH_INFO(kLogChannelName, "VisionSystem.ComputeCalibration.NoPointsFound", "");
       }
       
       
@@ -3741,9 +3742,9 @@ namespace Cozmo {
     
     // Were points found in enough of the images?
     if (imagePoints.size() < _kMinNumCalibImagesRequired) {
-      PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.InsufficientImagesWithPoints",
-                       "Points detected in only %u images. Need %u.",
-                       (u32)imagePoints.size(), _kMinNumCalibImagesRequired);
+      PRINT_CH_INFO(kLogChannelName, "VisionSystem.ComputeCalibration.InsufficientImagesWithPoints",
+                    "Points detected in only %u images. Need %u.",
+                    (u32)imagePoints.size(), _kMinNumCalibImagesRequired);
       return RESULT_FAIL;
     }
     
@@ -3787,17 +3788,17 @@ namespace Cozmo {
       _calibPoses.emplace_back(Pose3d(R, T));
     }
 
-    PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.CalibValues",
-                     "fx: %f, fy: %f, cx: %f, cy: %f (rms %f)",
-                     calibration.GetFocalLength_x(), calibration.GetFocalLength_y(),
-                     calibration.GetCenter_x(), calibration.GetCenter_y(), rms);
+    PRINT_CH_INFO(kLogChannelName, "VisionSystem.ComputeCalibration.CalibValues",
+                  "fx: %f, fy: %f, cx: %f, cy: %f (rms %f)",
+                  calibration.GetFocalLength_x(), calibration.GetFocalLength_y(),
+                  calibration.GetCenter_x(), calibration.GetCenter_y(), rms);
     
                           
     // Check if average reprojection error is too high
     const f64 reprojErrThresh_pix = 0.5;
     if (rms > reprojErrThresh_pix) {
-      PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.ReprojectionErrorTooHigh",
-                       "%f > %f", rms, reprojErrThresh_pix);
+      PRINT_CH_INFO(kLogChannelName, "VisionSystem.ComputeCalibration.ReprojectionErrorTooHigh",
+                    "%f > %f", rms, reprojErrThresh_pix);
       return RESULT_FAIL;
     }
     

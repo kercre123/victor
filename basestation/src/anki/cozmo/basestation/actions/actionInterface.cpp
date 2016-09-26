@@ -37,6 +37,7 @@ namespace Anki {
     static_assert(ActionConstants::LAST_SDK_TAG     > ActionConstants::FIRST_SDK_TAG,    "Bad Sdk Tag Range");
     static_assert(ActionConstants::LAST_ENGINE_TAG  > ActionConstants::FIRST_ENGINE_TAG, "Bad Engine Tag Range");
     
+    static const char * const kLogChannelName = "Actions";
   
     u32 IActionRunner::sTagCounter = ActionConstants::FIRST_ENGINE_TAG;
     std::set<u32> IActionRunner::sInUseTagSet;
@@ -193,11 +194,12 @@ namespace Anki {
       {
         if(DEBUG_ANIM_TRACK_LOCKING)
         {
-          PRINT_NAMED_INFO("IActionRunner.Destroy.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
-                           _tracks,
-                           AnimTrackFlagToString((AnimTrackFlag)_tracks),
-                           _name.c_str(),
-                           _idTag);
+          PRINT_CH_INFO(kLogChannelName, "IActionRunner.Destroy.UnlockTracks",
+                        "unlocked: (0x%x) %s by %s [%d]",
+                        _tracks,
+                        AnimTrackFlagToString((AnimTrackFlag)_tracks),
+                        _name.c_str(),
+                        _idTag);
         }
         _robot.GetMoveComponent().UnlockTracks(_tracks, GetTag());
       }
@@ -245,11 +247,12 @@ namespace Anki {
           u8 tracks = GetTracksToLock();
           if(DEBUG_ANIM_TRACK_LOCKING)
           {
-            PRINT_NAMED_INFO("IActionRunner.Interrupt.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
-                             tracks,
-                             AnimTrackFlagToString((AnimTrackFlag)tracks),
-                             _name.c_str(),
-                             _idTag);
+            PRINT_CH_INFO(kLogChannelName, "IActionRunner.Interrupt.UnlockTracks",
+                          "unlocked: (0x%x) %s by %s [%d]",
+                          tracks,
+                          AnimTrackFlagToString((AnimTrackFlag)tracks),
+                          _name.c_str(),
+                          _idTag);
           }
 
           _robot.GetMoveComponent().UnlockTracks(tracks, GetTag());
@@ -280,8 +283,8 @@ namespace Anki {
               // Print special, more helpful message in SDK mode, if on charger
               if(_robot.GetContext()->IsInSdkMode() && _robot.IsOnCharger())
               {
-                PRINT_NAMED_INFO("IActionRunner.Update.TracksLockedOnChargerInSDK",
-                                 "Use of head/lift/body motors is limited while on charger in SDK mode");
+                PRINT_CH_INFO(kLogChannelName, "IActionRunner.Update.TracksLockedOnChargerInSDK",
+                              "Use of head/lift/body motors is limited while on charger in SDK mode");
               }
               
               PRINT_NAMED_WARNING("IActionRunner.Update.TracksLocked",
@@ -298,11 +301,12 @@ namespace Anki {
             
             if(DEBUG_ANIM_TRACK_LOCKING)
             {
-              PRINT_NAMED_INFO("IActionRunner.Update.LockTracks", "locked: (0x%x) %s by %s [%d]",
-                               tracksToLock,
-                               AnimTrackFlagToString((AnimTrackFlag)tracksToLock),
-                               GetName().c_str(),
-                               GetTag());
+              PRINT_CH_INFO(kLogChannelName, "IActionRunner.Update.LockTracks",
+                            "locked: (0x%x) %s by %s [%d]",
+                            tracksToLock,
+                            AnimTrackFlagToString((AnimTrackFlag)tracksToLock),
+                            GetName().c_str(),
+                            GetTag());
             }
             
             _robot.GetMoveComponent().LockTracks(tracksToLock, GetTag(), GetName());
@@ -310,9 +314,10 @@ namespace Anki {
           
           if( DEBUG_ACTION_RUNNING && _displayMessages )
           {
-            PRINT_NAMED_DEBUG("IActionRunner.Update.IsRunning", "Action [%d] %s running",
-                              GetTag(),
-                              GetName().c_str());
+            PRINT_CH_DEBUG(kLogChannelName, "IActionRunner.Update.IsRunning",
+                           "Action [%d] %s running",
+                           GetTag(),
+                           GetName().c_str());
           }
         }
         case ActionResult::RUNNING:
@@ -332,20 +337,21 @@ namespace Anki {
         default:
         {
           if(_displayMessages) {
-            PRINT_NAMED_INFO("IActionRunner.Update.ActionCompleted",
-                             "%s [%d] %s with state %s.", GetName().c_str(),
-                             GetTag(),
-                             (_state==ActionResult::SUCCESS ? "succeeded" :
-                              _state==ActionResult::CANCELLED ? "was cancelled" : "failed"),
-                              EnumToString(_state));
+            PRINT_CH_INFO(kLogChannelName, "IActionRunner.Update.ActionCompleted",
+                          "%s [%d] %s with state %s.", GetName().c_str(),
+                          GetTag(),
+                          (_state==ActionResult::SUCCESS ? "succeeded" :
+                           _state==ActionResult::CANCELLED ? "was cancelled" : "failed"),
+                          EnumToString(_state));
           }
           
           PrepForCompletion();
           
           if( DEBUG_ACTION_RUNNING && _displayMessages ) {
-            PRINT_NAMED_DEBUG("IActionRunner.Update.IsRunning", "Action [%d] %s NOT running",
-                              GetTag(),
-                              GetName().c_str());
+            PRINT_CH_DEBUG(kLogChannelName, "IActionRunner.Update.IsRunning",
+                           "Action [%d] %s NOT running",
+                           GetTag(),
+                           GetName().c_str());
           }
         }
       }
@@ -364,7 +370,8 @@ namespace Anki {
         GetCompletionUnion(_completionUnion);
         _preppedForCompletion = true;
       } else {
-        PRINT_NAMED_DEBUG("IActionRunner.PrepForCompletion.AlreadyPrepped", "%s [%d]", _name.c_str(), GetTag());
+        PRINT_CH_DEBUG(kLogChannelName, "IActionRunner.PrepForCompletion.AlreadyPrepped",
+                       "%s [%d]", _name.c_str(), GetTag());
       }
     }
     
@@ -401,11 +408,12 @@ namespace Anki {
         u8 tracks = GetTracksToLock();
         if(DEBUG_ANIM_TRACK_LOCKING)
         {
-          PRINT_NAMED_INFO("IActionRunner.UnlockTracks", "unlocked: (0x%x) %s by %s [%d]",
-                           tracks,
-                           AnimTrackFlagToString((AnimTrackFlag)tracks),
-                           _name.c_str(),
-                           _idTag);
+          PRINT_CH_INFO(kLogChannelName, "IActionRunner.UnlockTracks",
+                        "unlocked: (0x%x) %s by %s [%d]",
+                        tracks,
+                        AnimTrackFlagToString((AnimTrackFlag)tracks),
+                        _name.c_str(),
+                        _idTag);
         }
         _robot.GetMoveComponent().UnlockTracks(tracks, GetTag());
       }
@@ -427,9 +435,9 @@ namespace Anki {
     {
       if(_state != ActionResult::FAILURE_NOT_STARTED)
       {
-        PRINT_NAMED_INFO("IActionRunner.Cancel",
-                         "Cancelling action %s[%d]",
-                         _name.c_str(), _idTag);
+        PRINT_CH_INFO(kLogChannelName, "IActionRunner.Cancel",
+                      "Cancelling action %s[%d]",
+                      _name.c_str(), _idTag);
         _state = ActionResult::CANCELLED;
       }
     }
@@ -487,9 +495,9 @@ namespace Anki {
       // Fail if we have exceeded timeout time
       if(currentTimeInSeconds >= timeoutTime) {
         if(IsMessageDisplayEnabled()) {
-          PRINT_NAMED_INFO("IAction.Update.TimedOut",
-                           "%s timed out after %.1f seconds.",
-                           GetName().c_str(), GetTimeoutInSeconds());
+          PRINT_CH_INFO(kLogChannelName, "IAction.Update.TimedOut",
+                        "%s timed out after %.1f seconds.",
+                        GetName().c_str(), GetTimeoutInSeconds());
         }
         result = ActionResult::FAILURE_TIMEOUT;
       }
@@ -498,7 +506,7 @@ namespace Anki {
       else if(currentTimeInSeconds >= waitUntilTime)
       {
         if(!_preconditionsMet) {
-          //PRINT_NAMED_INFO("IAction.Update", "Updating %s: checking preconditions.", GetName().c_str());
+          //PRINT_CH_INFO(kLogChannelName, "IAction.Update", "Updating %s: checking preconditions.", GetName().c_str());
           SetStatus(GetName() + ": check preconditions");
 
           // Note that derived classes will define what to do when pre-conditions
@@ -509,10 +517,10 @@ namespace Anki {
 
           if(result == ActionResult::SUCCESS) {
             if(IsMessageDisplayEnabled()) {
-              PRINT_NAMED_INFO("IAction.Update.PreconditionsMet",
-                               "Preconditions for %s [%d] successfully met.",
-                               GetName().c_str(),
-                               GetTag());
+              PRINT_CH_DEBUG(kLogChannelName, "IAction.Update.PreconditionsMet",
+                             "Preconditions for %s [%d] successfully met.",
+                             GetName().c_str(),
+                             GetTag());
             }
             
             // If preconditions were successfully met, switch result to RUNNING
@@ -526,7 +534,7 @@ namespace Anki {
 
         // Re-check if preconditions are met, since they could have _just_ been met
         if(_preconditionsMet && currentTimeInSeconds >= waitUntilTime) {
-          //PRINT_NAMED_INFO("IAction.Update", "Updating %s: checking if done.", GetName().c_str());
+          //PRINT_CH_INFO(kLogChannelName, "IAction.Update", "Updating %s: checking if done.", GetName().c_str());
           SetStatus(GetName() + ": check if done");
           
           // Pre-conditions already met, just run until done
@@ -536,9 +544,9 @@ namespace Anki {
       
       if(result == ActionResult::FAILURE_RETRY && RetriesRemain()) {
         if(IsMessageDisplayEnabled()) {
-          PRINT_NAMED_INFO("IAction.Update.CurrentActionFailedRetrying",
-                           "Robot %d failed running action %s. Retrying.",
-                           _robot.GetID(), GetName().c_str());
+          PRINT_CH_INFO(kLogChannelName, "IAction.Update.CurrentActionFailedRetrying",
+                        "Robot %d failed running action %s. Retrying.",
+                        _robot.GetID(), GetName().c_str());
         }
         
         // Don't unlock the tracks if retrying

@@ -114,6 +114,26 @@ void sSetGlobal(const char* key, const char* value);
 #define PRINT_CH_INFO(channel, name, format, ...) do{::Anki::Util::sChanneledInfoF(channel, name, {}, format, ##__VA_ARGS__);}while(0)
 #define PRINT_CH_DEBUG(channel, name, format, ...) do{::Anki::Util::sChanneledDebugF(channel, name, {}, format, ##__VA_ARGS__);}while(0)
 
+//
+// Periodic logging with channels
+//
+
+// Helper used by debug/info versions below
+#define PRINT_PERIODIC_CH_HELPER(channel_func, num_calls_between_prints, channel, name, format, ...) \
+{ static u16 cnt = num_calls_between_prints;                              \
+  if (++cnt > num_calls_between_prints) {                                 \
+    ::Anki::Util::channel_func(channel, name, {}, format, ##__VA_ARGS__); \
+    cnt = 0;                                                              \
+  }                                                                       \
+}
+
+// Actually use these in your code (not the helper above)
+#define PRINT_PERIODIC_CH_INFO(num_calls_between_prints, channel, name, format, ...) \
+PRINT_PERIODIC_CH_HELPER(sChanneledInfoF, num_calls_between_prints, channel, name, format, ##__VA_ARGS__)
+
+#define PRINT_PERIODIC_CH_DEBUG(num_calls_between_prints, channel, name, format, ...) \
+PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, num_calls_between_prints, channel, name, format, ##__VA_ARGS__)
+
 // Streams
 #define PRINT_STREAM_ERROR(eventName, args) do{         \
       std::stringstream ss; ss<<args;                   \

@@ -207,7 +207,7 @@ namespace Anki {
         if(!_targetPose.GetWithRespectTo(*_robot.GetWorldOrigin(), _targetPose))
         {
           PRINT_CH_INFO("Actions", "TurnInPlaceAction.CheckIfDone.WorldOriginUpdateFail",
-                           "Could not get target pose w.r.t. current world origin");
+                        "Could not get target pose w.r.t. current world origin");
           return ActionResult::FAILURE_RETRY;
         }
         
@@ -236,7 +236,7 @@ namespace Anki {
         }
         
         PRINT_CH_INFO("Actions", "TurnInPlaceAction.CheckIfDone.WorldOriginChanged",
-                         "New target angle = %.1fdeg", _currentTargetAngle.getDegrees());
+                      "New target angle = %.1fdeg", _currentTargetAngle.getDegrees());
       }
       
       if(!_inPosition) {
@@ -248,10 +248,10 @@ namespace Anki {
       if(AnimationStreamer::NotAnimatingTag != _eyeShiftTag) {
         if(_inPosition || NEAR((_currentAngle-_currentTargetAngle).ToFloat(), 0.f, _halfAngle.ToFloat()))
         {
-          PRINT_CH_INFO("Actions", "TurnInPlaceAction.CheckIfDone.RemovingEyeShift",
-                           "Currently at %.1fdeg, on the way to %.1fdeg, within "
-                           "half angle of %.1fdeg", _currentAngle.getDegrees(),
-                           _currentTargetAngle.getDegrees(), _halfAngle.getDegrees());
+          PRINT_CH_DEBUG("Actions", "TurnInPlaceAction.CheckIfDone.RemovingEyeShift",
+                         "Currently at %.1fdeg, on the way to %.1fdeg, within "
+                         "half angle of %.1fdeg", _currentAngle.getDegrees(),
+                         _currentTargetAngle.getDegrees(), _halfAngle.getDegrees());
           _robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag, 3*IKeyFrame::SAMPLE_LENGTH_MS);
           _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
         }
@@ -266,24 +266,25 @@ namespace Anki {
       // TODO: Is this really necessary in practice?
       if(_inPosition) {
         result = ActionResult::SUCCESS;
-        PRINT_CH_INFO("Actions", "TurnInPlaceAction.CheckIfDone",
-                         "[%d] Reached angle: %.1fdeg vs. %.1fdeg(+/-%.1f) (tol: %f) (pfid: %d). WheelsMoving=%s",
-                         GetTag(),
-                         _currentAngle.getDegrees(),
-                         _currentTargetAngle.getDegrees(),
-                         _variability.getDegrees(),
-                         _angleTolerance.getDegrees(),
-                         _robot.GetPoseFrameID(),
-                         (_robot.GetMoveComponent().AreWheelsMoving() ? "Yes" : "No"));
+        PRINT_CH_INFO("Actions", "TurnInPlaceAction.CheckIfDone.ReachedAngle",
+                      "[%d] Reached angle: %.1fdeg vs. %.1fdeg(+/-%.1f) (tol: %f) (pfid: %d). WheelsMoving=%s",
+                      GetTag(),
+                      _currentAngle.getDegrees(),
+                      _currentTargetAngle.getDegrees(),
+                      _variability.getDegrees(),
+                      _angleTolerance.getDegrees(),
+                      _robot.GetPoseFrameID(),
+                      (_robot.GetMoveComponent().AreWheelsMoving() ? "Yes" : "No"));
       } else {
-        PRINT_CH_INFO("Actions", "TurnInPlaceAction.CheckIfDone",
-                         "[%d] Waiting for body to reach angle: %.1fdeg vs. %.1fdeg(+/-%.1f) (tol: %f) (pfid: %d)",
-                         GetTag(),
-                         _currentAngle.getDegrees(),
-                         _currentTargetAngle.getDegrees(),
-                         _variability.getDegrees(),
-                         _angleTolerance.getDegrees(),
-                         _robot.GetPoseFrameID());
+        // Don't spam "in position" messages
+        PRINT_PERIODIC_CH_DEBUG(10, "Actions", "TurnInPlaceAction.CheckIfDone.AngleNotReached",
+                                "[%d] Waiting for body to reach angle: %.1fdeg vs. %.1fdeg(+/-%.1f) (tol: %f) (pfid: %d)",
+                                GetTag(),
+                                _currentAngle.getDegrees(),
+                                _currentTargetAngle.getDegrees(),
+                                _variability.getDegrees(),
+                                _angleTolerance.getDegrees(),
+                                _robot.GetPoseFrameID());
         
 
         if( _turnStarted && !_robot.GetMoveComponent().AreWheelsMoving()) {
@@ -674,13 +675,13 @@ namespace Anki {
         // to "hold" the eyes, then remove eye shift
         if(_inPosition || NEAR(Radians(_robot.GetHeadAngle()) - _headAngle, 0.f, _halfAngle))
         {
-          PRINT_CH_INFO("Actions", "MoveHeadToAngleAction.CheckIfDone.RemovingEyeShift",
-                           "[%d] Currently at %.1fdeg, on the way to %.1fdeg, within "
-                           "half angle of %.1fdeg",
-                           GetTag(),
-                           RAD_TO_DEG_F32(_robot.GetHeadAngle()),
-                           _headAngle.getDegrees(),
-                           _halfAngle.getDegrees());
+          PRINT_CH_DEBUG("Actions", "MoveHeadToAngleAction.CheckIfDone.RemovingEyeShift",
+                         "[%d] Currently at %.1fdeg, on the way to %.1fdeg, within "
+                         "half angle of %.1fdeg",
+                         GetTag(),
+                         RAD_TO_DEG_F32(_robot.GetHeadAngle()),
+                         _headAngle.getDegrees(),
+                         _halfAngle.getDegrees());
           
           _robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag, 3*IKeyFrame::SAMPLE_LENGTH_MS);
           _eyeShiftTag = AnimationStreamer::NotAnimatingTag;
@@ -699,7 +700,7 @@ namespace Anki {
         if(_robot.GetMoveComponent().IsHeadMoving())
         {
           PRINT_CH_INFO("Actions",
-                        "MoveHeadToAngleAction.CheckIfDone",
+                        "MoveHeadToAngleAction.CheckIfDone.HeadMovingInPosition",
                         "[%d] Head considered in position at %.1fdeg but still moving at %.1fdeg",
                         GetTag(),
                         _headAngle.getDegrees(),
@@ -708,16 +709,17 @@ namespace Anki {
       
         result = _robot.GetMoveComponent().IsHeadMoving() ? ActionResult::RUNNING : ActionResult::SUCCESS;
       } else {
-        PRINT_CH_INFO("Actions", "MoveHeadToAngleAction.CheckIfDone",
-                         "[%d] Waiting for head to get in position: %.1fdeg vs. %.1fdeg(+/-%.1f) tol:%.1fdeg",
-                         GetTag(),
-                         RAD_TO_DEG_F32(_robot.GetHeadAngle()),
-                         _headAngle.getDegrees(),
-                         _variability.getDegrees(),
-                         _angleTolerance.getDegrees());
+        // Don't spam "not in position messages"
+        PRINT_PERIODIC_CH_DEBUG(10, "Actions", "MoveHeadToAngleAction.CheckIfDone.NotInPosition",
+                                "[%d] Waiting for head to get in position: %.1fdeg vs. %.1fdeg(+/-%.1f) tol:%.1fdeg",
+                                GetTag(),
+                                RAD_TO_DEG_F32(_robot.GetHeadAngle()),
+                                _headAngle.getDegrees(),
+                                _variability.getDegrees(),
+                                _angleTolerance.getDegrees());
         
         if( _motionStarted && ! _robot.GetMoveComponent().IsHeadMoving() ) {
-          PRINT_NAMED_WARNING("MoveHeadToAngleAction.StoppedMakingProgress",
+          PRINT_NAMED_WARNING("MoveHeadToAngleAction.CheckIfDone.StoppedMakingProgress",
                               "[%d] giving up since we stopped moving",
                               GetTag());
           result = ActionResult::FAILURE_RETRY;
@@ -892,13 +894,13 @@ namespace Anki {
       if(_inPosition) {
         result = _robot.GetMoveComponent().IsLiftMoving() ? ActionResult::RUNNING : ActionResult::SUCCESS;
       } else {
-        PRINT_CH_INFO("Actions", "MoveLiftToHeightAction.CheckIfDone",
-                         "[%d] Waiting for lift to get in position: %.1fmm vs. %.1fmm (tol: %f)",
-                         GetTag(),
-                         _robot.GetLiftHeight(), _heightWithVariation, _heightTolerance);
+        PRINT_PERIODIC_CH_DEBUG(10, "Actions", "MoveLiftToHeightAction.CheckIfDone.NotInPosition",
+                                "[%d] Waiting for lift to get in position: %.1fmm vs. %.1fmm (tol: %f)",
+                                GetTag(),
+                                _robot.GetLiftHeight(), _heightWithVariation, _heightTolerance);
         
         if( _motionStarted && ! _robot.GetMoveComponent().IsLiftMoving() ) {
-          PRINT_NAMED_WARNING("MoveLiftToHeightAction.StoppedMakingProgress",
+          PRINT_NAMED_WARNING("MoveLiftToHeightAction.CheckIfDone.StoppedMakingProgress",
                               "[%d] giving up since we stopped moving",
                               GetTag());
           result = ActionResult::FAILURE_RETRY;
@@ -967,7 +969,7 @@ namespace Anki {
       
       // NOTE: can't be lower than what is used internally on the robot
       if( _panAngleTol.ToFloat() < POINT_TURN_ANGLE_TOL ) {
-        PRINT_NAMED_WARNING("PanAndTiltAction.InvalidTolerance",
+        PRINT_NAMED_WARNING("PanAndTiltAction.SetPanTolerance.InvalidTolerance",
                             "Tried to set tolerance of %fdeg, min is %f",
                             _panAngleTol.getDegrees(),
                             RAD_TO_DEG_F32(POINT_TURN_ANGLE_TOL));
@@ -1005,7 +1007,7 @@ namespace Anki {
       
       // NOTE: can't be lower than what is used internally on the robot
       if( _tiltAngleTol.ToFloat() < HEAD_ANGLE_TOL ) {
-        PRINT_NAMED_WARNING("PanAndTiltAction.InvalidTolerance",
+        PRINT_NAMED_WARNING("PanAndTiltAction.SetTiltTolerance.InvalidTolerance",
                             "Tried to set tolerance of %fdeg, min is %f",
                             _tiltAngleTol.getDegrees(),
                             RAD_TO_DEG_F32(HEAD_ANGLE_TOL));
@@ -1135,7 +1137,8 @@ namespace Anki {
       // valid at this point. This note is just here so no one tries to add an assert against like that (like
       // I did the first time)
       if( nullptr == _objectPtr ) {
-        PRINT_CH_INFO("Actions", "TurnTowardsPoseAction.NullObject", "don't have a valid object ptr or ID");
+        PRINT_CH_INFO("Actions", "TurnTowardsPoseAction.Init.NullObject",
+                      "No valid object ptr or ID");
         return ActionResult::FAILURE_ABORT;
       }
       
@@ -1325,7 +1328,7 @@ namespace Anki {
       if(_chosenAction == nullptr) {
         ActionableObject* object = dynamic_cast<ActionableObject*>(_robot.GetBlockWorld().GetObjectByID(_objectID));
         if(object == nullptr) {
-          PRINT_NAMED_ERROR("TraverseObjectAction.Init.ObjectNotFound",
+          PRINT_NAMED_ERROR("TraverseObjectAction.UpdateInternal.ObjectNotFound",
                             "Could not get actionable object with ID = %d from world.", _objectID.GetValue());
           return ActionResult::FAILURE_ABORT;
         }
@@ -1345,7 +1348,7 @@ namespace Anki {
           _chosenAction = rampAction;
         }
         else {
-          PRINT_NAMED_ERROR("TraverseObjectAction.Init.CannotTraverseObjectType",
+          PRINT_NAMED_ERROR("TraverseObjectAction.UpdateInternal.CannotTraverseObjectType",
                             "Robot %d was asked to traverse object ID=%d of type %s, but "
                             "that traversal is not defined.", _robot.GetID(),
                             object->GetID().GetValue(), ObjectTypeToString(object->GetType()));
@@ -1439,7 +1442,7 @@ namespace Anki {
       }
       
       if(_poseWrtRobot.GetParent() == nullptr) {
-        PRINT_CH_INFO("Actions", "TurnTowardsPoseAction.SetPose.AssumingRobotOriginAsParent", "");
+        PRINT_CH_INFO("Actions", "TurnTowardsPoseAction.Init.AssumingRobotOriginAsParent", "");
         _poseWrtRobot.SetParent(_robot.GetWorldOrigin());
       }
       else if(false == _poseWrtRobot.GetWithRespectTo(_robot.GetPose(), _poseWrtRobot))

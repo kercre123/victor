@@ -57,7 +57,7 @@ namespace Vision {
                           "Did not find 'FaceDetection' field in config");
     }
     
-    Profiler::SetProfileGroupName("FaceTracker");
+    Profiler::SetProfileGroupName("FaceTracker.Profiler");
     
     Result initResult = Init();
     if(initResult != RESULT_OK) {

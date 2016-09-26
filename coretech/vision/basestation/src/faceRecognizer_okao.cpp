@@ -161,7 +161,7 @@ namespace Vision {
     Profiler::SetPrintFrequency(SEC_TO_MILIS(timeBetweenProfilerInfoPrints_sec));
     Profiler::SetDasLogFrequency(SEC_TO_MILIS(timeBetweenProfilerDasLogs_sec));
     Profiler::SetPrintChannelName("FaceRecognizer");
-    Profiler::SetProfileGroupName("FaceRecognizer");
+    Profiler::SetProfileGroupName("FaceRecognizer.Profiler");
   }
   
   FaceRecognizer::~FaceRecognizer()
