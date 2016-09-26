@@ -72,6 +72,7 @@ IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   , _lastRunTime_s(0.0)
   , _extraRunningScore(0.0f)
   , _isRunning(false)
+  , _isResuming(false)
   , _isOwnedByFactory(false)
   , _enableRepetitionPenalty(true)
   , _enableRunningPenalty(true)
@@ -345,8 +346,11 @@ Result IBehavior::Resume(BehaviorType resumingFromType)
     }
   }
   
+  _isResuming = true;
   _startedRunningTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   Result initResult = ResumeInternal(_robot);
+  _isResuming = false;
+  
   if ( initResult != RESULT_OK ) {
     _isRunning = false;
   } else {
@@ -621,7 +625,7 @@ bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback 
     return false;
   }
   
-  if( ! IsRunning() ) {
+  if( !IsResuming() && !IsRunning() ) {
     PRINT_NAMED_WARNING("IBehavior.StartActing.Failure.NotRunning",
                         "Behavior '%s' can't start acting because it is not running",
                         GetName().c_str());

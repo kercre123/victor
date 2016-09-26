@@ -218,6 +218,7 @@ protected:
   virtual Result InitInternal(Robot& robot) = 0;
   virtual Result ResumeInternal(Robot& robot);
   virtual bool IsRunnableInternal(const Robot& robot) const = 0;
+  bool IsResuming() { return _isResuming;}
 
   // EvaluateScoreInternal is used to score each behavior for behavior selection - it uses mood scorer or
   // flat score depending on configuration. If the behavior is running, it uses the Running score to decide if it should
@@ -418,6 +419,8 @@ private:
   BehaviorGroupFlags  _behaviorGroups;
 
   bool _isRunning;
+  // should only be used to allow StartActing to start while a behavior is resuming
+  bool _isResuming;
   bool _isOwnedByFactory;
   
   bool _enableRepetitionPenalty;

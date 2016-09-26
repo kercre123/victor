@@ -119,6 +119,22 @@ float BehaviorPounceOnMotion::EvaluateScoreInternal(const Robot& robot) const
 
 Result BehaviorPounceOnMotion::InitInternal(Robot& robot)
 {
+  InitHelper(robot);
+  TransitionToInitialPounce(robot);
+  return Result::RESULT_OK;
+}
+  
+  
+Result BehaviorPounceOnMotion::ResumeInternal(Robot& robot)
+{
+  _motionObserved = false;
+  InitHelper(robot);
+  TransitionToBringingHeadDown(robot);
+  return Result::RESULT_OK;
+}
+  
+void BehaviorPounceOnMotion::InitHelper(Robot& robot)
+{
   double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _startedBehaviorTime_sec = currentTime_sec;
   _lastMotionTime = (float)currentTime_sec;
@@ -132,17 +148,8 @@ Result BehaviorPounceOnMotion::InitInternal(Robot& robot)
       AnimationTrigger::PounceDriveEnd});
   }
   
-  TransitionToInitialPounce(robot);
-  
-  return Result::RESULT_OK;
 }
-  
-  
-Result BehaviorPounceOnMotion::ResumeInternal(Robot& robot)
-{
-  _motionObserved = false;
-  return InitInternal(robot);
-}
+
 
 void BehaviorPounceOnMotion::StopInternal(Robot& robot)
 {
@@ -167,17 +174,18 @@ void BehaviorPounceOnMotion::TransitionToInitialPounce(Robot& robot)
     potentialCliffSafetyTurn = new PanAndTiltAction(robot, bodyPan, headTilt, false, false);
   }
   
-  PounceOnMotionWithCallback(robot, &BehaviorPounceOnMotion::TransitionToBringingHeadDown, potentialCliffSafetyTurn);
+  PounceOnMotionWithCallback(robot, &BehaviorPounceOnMotion::TransitionToInitialSearch, potentialCliffSafetyTurn);
 }
-
-void BehaviorPounceOnMotion::TransitionToBringingHeadDown(Robot& robot)
+  
+  
+void BehaviorPounceOnMotion::TransitionToInitialSearch(Robot& robot)
 {
-  PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.TransitionToBringingHeadDown",
-                    "BehaviorPounceOnMotion.TransitionToBringingHeadDown");
-  SET_STATE(BringingHeadDown);
+  PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.TransitionToInitialSearch",
+                    "BehaviorPounceOnMotion.TransitionToInitialSearch");
+  SET_STATE(InitialSearch);
   
   CompoundActionSequential* fullAction = new CompoundActionSequential(robot);
-
+  
   float panDirection = 1.0f;
   {
     // set pan and tilt
@@ -201,12 +209,23 @@ void BehaviorPounceOnMotion::TransitionToBringingHeadDown(Robot& robot)
     Radians panAngle(DEG_TO_RAD(GetRNG().RandDblInRange(kRandomPanMin_Deg,kRandomPanMax_Deg)));
     // opposite direction
     panAngle *= -panDirection;
-
+    
     IActionRunner* panAndTilt = new PanAndTiltAction(robot, panAngle, tiltRads, false, true);
     fullAction->AddAction(panAndTilt);
   }
   
   StartActing(fullAction, &BehaviorPounceOnMotion::TransitionToWaitForMotion);
+}
+
+
+void BehaviorPounceOnMotion::TransitionToBringingHeadDown(Robot& robot)
+{
+  PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.TransitionToBringingHeadDown","BehaviorPounceOnMotion.TransitionToBringingHeadDown");
+  SET_STATE(BringingHeadDown);
+  
+  Radians tiltRads(MIN_HEAD_ANGLE);
+  StartActing(new MoveHeadToAngleAction(robot, tiltRads),
+              &BehaviorPounceOnMotion::TransitionToWaitForMotion);
 }
   
 void BehaviorPounceOnMotion::TransitionToRotateToWatchingNewArea(Robot& robot)
@@ -283,16 +302,16 @@ void BehaviorPounceOnMotion::TransitionToTurnToMotion(Robot& robot, int16_t moti
   _lastTimeRotate = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
   const Point2f motionCentroid(motion_img_x, motion_img_y);
-  Radians absPanAngle;
-  Radians absTiltAngle;
-  robot.GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, absPanAngle, absTiltAngle);
+  Radians relPanAngle;
+  Radians relTiltAngle;
+  robot.GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, relPanAngle, relTiltAngle);
   
   auto callback = &BehaviorPounceOnMotion::TransitionToPounce;
   if(_lastPoseDist > kVisionMinDistMM){
     callback = &BehaviorPounceOnMotion::TransitionToCreepForward;
   }
   
-  StartActing(new PanAndTiltAction(robot, absPanAngle, 0, true, false),
+  StartActing(new PanAndTiltAction(robot, relPanAngle, 0, false, false),
               callback);
 }
 
@@ -578,6 +597,8 @@ void BehaviorPounceOnMotion::Cleanup(Robot& robot)
   
   _numValidPouncePoses = 0;
   _lastValidPouncePoseTime = 0.0f;
+  _observedX = 0;
+  _observedY = 0;
   
   // Only pop animations if set within this behavior
   if(!_shouldStreamline){
