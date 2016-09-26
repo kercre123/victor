@@ -145,6 +145,7 @@ public:
   const std::string& GetName() const { return _name; }
   const std::string& GetDebugStateName() const { return _debugStateName;}
   const BehaviorType GetType() const { return _behaviorType; }
+  ExecutableBehaviorType GetExecutableType() const { return _executableType; }
   virtual bool IsReactionary() const { return false;}
   virtual bool ShouldRunWhileOffTreads() const { return false;}
     
@@ -212,6 +213,7 @@ protected:
                   GetName().c_str(), _debugStateName.c_str());
   }
   inline void SetBehaviorType(BehaviorType type) {if(_behaviorType == BehaviorType::NoneBehavior){ _behaviorType = type;}};
+  inline void SetExecutableType(ExecutableBehaviorType type) { _executableType = type; }
     
   virtual Result InitInternal(Robot& robot) = 0;
   virtual Result ResumeInternal(Robot& robot);
@@ -380,6 +382,7 @@ private:
   std::string _name;
   std::string _debugStateName = "";
   BehaviorType _behaviorType;
+  ExecutableBehaviorType _executableType;
   
   // if an unlockId is set, the behavior won't be runnable unless the unlockId is unlocked in the progression component
   UnlockId _requiredUnlockId;

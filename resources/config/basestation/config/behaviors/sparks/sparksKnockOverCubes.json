@@ -1,5 +1,6 @@
 {
   "behaviorType": "KnockOverCubes",
+  "executableBehaviorType": "KnockOverCubes",
   "name": "sparksKnockOverCubes",
   "requiredUnlockId": "KnockOverThreeCubeStack",
   "behaviorGroups": [

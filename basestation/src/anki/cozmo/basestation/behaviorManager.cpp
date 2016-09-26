@@ -119,11 +119,25 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
     SetBehaviorChooser( _selectionChooser );
 
     BehaviorFactory& behaviorFactory = GetBehaviorFactory();
+    
+    uint8_t numEntriesOfExecutableType[(size_t)ExecutableBehaviorType::Count] = {0};
 
     for( const auto& it : behaviorFactory.GetBehaviorMap() ) {
       const auto& behaviorName = it.first;
       const auto& behaviorPtr = it.second;
       
+      {
+        const ExecutableBehaviorType executableBehaviorType = behaviorPtr->GetExecutableType();
+        const size_t eBT = (size_t)executableBehaviorType;
+        if (eBT < (size_t)ExecutableBehaviorType::Count)
+        {
+          ASSERT_NAMED_EVENT((numEntriesOfExecutableType[eBT] == 0), "ExecutableBehaviorType.NotUnique",
+                             "Multiple behaviors marked as %s including '%s'",
+                             EnumToString(executableBehaviorType), behaviorName.c_str());
+          ++numEntriesOfExecutableType[eBT];
+        }
+      }
+    
       if( behaviorPtr->IsBehaviorGroup( BehaviorGroup::Reactionary ) ) {
         PRINT_NAMED_DEBUG("BehaviorManager.EnableReactionaryBehavior",
                           "Adding behavior '%s' as reactionary",
@@ -139,6 +153,15 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
         AddReactionaryBehavior(reactionaryBehavior);
       }
     }
+    
+    for( size_t i = 0; i < (size_t)ExecutableBehaviorType::Count; ++i)
+    {
+      const ExecutableBehaviorType executableBehaviorType = (ExecutableBehaviorType)i;
+      ASSERT_NAMED_EVENT((numEntriesOfExecutableType[i] == 1), "ExecutableBehaviorType.NotExactlyOne",
+                         "Should be exactly 1 behavior marked as %s but found %u",
+                         EnumToString(executableBehaviorType), numEntriesOfExecutableType[i]);
+    }
+    
   }
   
   // initialize whiteboard

@@ -1,5 +1,6 @@
 {
   "behaviorType": "StackBlocks",
+  "executableBehaviorType": "StackBlocks",
   "name": "StackBlocks",
   "requiredUnlockId": "StackTwoCubes",
   "behaviorGroups": [

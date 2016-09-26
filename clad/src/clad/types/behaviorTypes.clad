@@ -66,5 +66,20 @@ enum uint_8 BehaviorType {
   Count
 }
 
+
+// Each of these should map to exactly 1 instance of a behavior at runtime
+// Only needs to include behaviors that make sense for e.g. SDK to request directly
+enum uint_8 ExecutableBehaviorType {
+  NoneBehavior,
+  FindFaces,
+  KnockOverCubes,
+  LookAroundInPlace,
+  PounceOnMotion,
+  RollBlock,
+  StackBlocks,
+  Count
+}
+
+
 } // namespace Cozmo
 } // namespace Anki

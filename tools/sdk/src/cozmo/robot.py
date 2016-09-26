@@ -734,7 +734,7 @@ class Cozmo(event.Dispatcher):
         if not isinstance(behavior_type, behavior._BehaviorType):
             raise TypeError('Invalid behavior supplied')
         b = self.behavior_factory(self, behavior_type, is_active=True, dispatch_parent=self)
-        msg = _clad_to_engine_iface.ExecuteBehavior(
+        msg = _clad_to_engine_iface.ExecuteBehaviorByExecutableType(
                 behaviorType=behavior_type.id)
         self.conn.send_msg(msg)
         return b

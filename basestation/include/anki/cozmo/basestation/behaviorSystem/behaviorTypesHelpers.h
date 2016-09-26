@@ -23,7 +23,7 @@
 namespace Anki {
 namespace Cozmo {
 
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 DECLARE_ENUM_INCREMENT_OPERATORS(BehaviorType);
 
 BehaviorType BehaviorTypeFromString(const char* inString);
@@ -31,6 +31,16 @@ BehaviorType BehaviorTypeFromString(const char* inString);
 inline BehaviorType BehaviorTypeFromString(const std::string& inString)
 {
   return BehaviorTypeFromString(inString.c_str());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+DECLARE_ENUM_INCREMENT_OPERATORS(ExecutableBehaviorType);
+  
+ExecutableBehaviorType ExecutableBehaviorTypeFromString(const char* inString);
+  
+inline ExecutableBehaviorType ExecutableBehaviorTypeFromString(const std::string& inString)
+{
+  return ExecutableBehaviorTypeFromString(inString.c_str());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

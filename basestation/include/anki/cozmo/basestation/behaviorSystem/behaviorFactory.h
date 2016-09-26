@@ -58,6 +58,7 @@ public:
   
   IBehavior* FindBehaviorByName(const std::string& inName);
   IBehavior* FindBehaviorByType(const BehaviorType& type);
+  IBehavior* FindBehaviorByExecutableType(ExecutableBehaviorType type);
   
   const NameToBehaviorMap& GetBehaviorMap() const { return _nameToBehaviorMap; }
   

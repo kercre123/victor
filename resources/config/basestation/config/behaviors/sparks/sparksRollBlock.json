@@ -1,5 +1,6 @@
 {
   "behaviorType": "RollBlock",
+  "executableBehaviorType": "RollBlock",
   "name": "sparksRollBlock",
   "requiredUnlockId": "RollCube",
   "behaviorGroups": [

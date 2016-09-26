@@ -3,8 +3,8 @@
 Behaviors represent a task that the Cozmo robot may perform for an
 indefinite amount of time.
 
-For example, the "LookAround" behavior causes Cozmo to start exploring
-the space around him, which will cause events such as
+For example, the "LookAroundInPlace" behavior causes Cozmo to start looking
+around him (without driving), which will cause events such as
 :class:`cozmo.objects.EvtObjectObserved` to be generated as he comes across
 objects.
 
@@ -64,8 +64,8 @@ class Behavior(event.Dispatcher):
     def stop(self):
         if not self._is_active:
             return
-        msg = _clad_to_engine_iface.ExecuteBehavior(
-                behaviorType=_clad_to_engine_cozmo.BehaviorType.NoneBehavior)
+        msg = _clad_to_engine_iface.ExecuteBehaviorByExecutableType(
+                behaviorType=_clad_to_engine_cozmo.ExecutableBehaviorType.NoneBehavior)
         self.robot.conn.send_msg(msg)
         self._is_active = False
         self.dispatch_event(EvtBehaviorStopped, behavior=self, behavior_type_name=self.type.name)
@@ -86,7 +86,7 @@ class BehaviorTypes:
 
 _BehaviorType = collections.namedtuple('_BehaviorType', 'name id')
 
-for (_name, _id) in _clad_to_engine_cozmo.BehaviorType.__dict__.items():
+for (_name, _id) in _clad_to_engine_cozmo.ExecutableBehaviorType.__dict__.items():
     if not _name.startswith('_') and _id > 0:
         # don't index NoneBehavior
         setattr(BehaviorTypes, _name, _BehaviorType(_name, _id))

@@ -49,10 +49,10 @@ async def run(coz_conn):
     coz = await coz_conn.wait_for_robot()
     print("Got initialized Cozmo")
 
-    look_around = coz.start_behavior(cozmo.behavior.BehaviorTypes.LookAround)
+    look_around = coz.start_behavior(cozmo.behavior.BehaviorTypes.LookAroundInPlace)
 
     try:
-        cube = await coz.world.wait_for_observed_light_cube(timeout=30)
+        cube = await coz.world.wait_for_observed_light_cube(timeout=60)
     except asyncio.TimeoutError:
         print("Didn't find a cube :-(")
         return

@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -52,6 +53,7 @@ static const char* kRequiredUnlockKey            = "requiredUnlockId";
 static const char* kRequiredDriveOffChargerKey   = "requiredRecentDriveOffCharger_sec";
 static const char* kRequiredParentSwitchKey      = "requiredRecentSwitchToParent_sec";
 static const char* kDisableReactionaryDefault    = "disableByDefault";
+static const char* kExecutableBehaviorTypeKey    = "executableBehaviorType";
   
 static const int kMaxResumesFromCliff            = 2;
 static const float kCooldownFromCliffResumes_sec     = 15.0;
@@ -59,6 +61,7 @@ static const float kCooldownFromCliffResumes_sec     = 15.0;
 IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   : _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
   , _behaviorType(BehaviorType::NoneBehavior)
+  , _executableType(ExecutableBehaviorType::Count)
   , _requiredUnlockId( UnlockId::Count )
   , _requiredRecentDriveOffCharger_sec(-1.0f)
   , _requiredRecentSwitchToParent_sec(-1.0f)
@@ -232,6 +235,12 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
     }
   }
     
+  const Json::Value& executableBehaviorTypeJson = config[kExecutableBehaviorTypeKey];
+  if (executableBehaviorTypeJson.isString())
+  {
+    _executableType = ExecutableBehaviorTypeFromString(executableBehaviorTypeJson.asCString());
+  }
+  
   return true;
 }
 
