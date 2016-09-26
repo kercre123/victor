@@ -51,12 +51,16 @@ public class BehaviorPane : MonoBehaviour {
   }
 
   private void OnChooserButton() {
-    Anki.Cozmo.BehaviorChooserType chooserType = (Anki.Cozmo.BehaviorChooserType)System.Enum.Parse(typeof(Anki.Cozmo.BehaviorChooserType), _ChooserDropdown.options[_ChooserDropdown.value].text);
-    RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(chooserType);
+    if (RobotEngineManager.Instance.CurrentRobot != null) {
+      Anki.Cozmo.BehaviorChooserType chooserType = (Anki.Cozmo.BehaviorChooserType)System.Enum.Parse(typeof(Anki.Cozmo.BehaviorChooserType), _ChooserDropdown.options[_ChooserDropdown.value].text);
+      RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(chooserType);
+    }
   }
 
   private void OnBehaviorButton() {
-    Anki.Cozmo.BehaviorType behaviorType = (Anki.Cozmo.BehaviorType)System.Enum.Parse(typeof(Anki.Cozmo.BehaviorType), _BehaviorDropdown.options[_BehaviorDropdown.value].text);
-    RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(behaviorType);
+    if (RobotEngineManager.Instance.CurrentRobot != null) {
+      Anki.Cozmo.BehaviorType behaviorType = (Anki.Cozmo.BehaviorType)System.Enum.Parse(typeof(Anki.Cozmo.BehaviorType), _BehaviorDropdown.options[_BehaviorDropdown.value].text);
+      RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(behaviorType);
+    }
   }
 }
