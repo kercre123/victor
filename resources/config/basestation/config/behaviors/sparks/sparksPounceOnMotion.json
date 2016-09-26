@@ -1,5 +1,6 @@
 {
   "behaviorType": "PounceOnMotion",
+  "executableBehaviorType": "PounceOnMotion",
   "name": "sparksPounceOnMotion",
   "behaviorGroups": [
     "SparksPounceOnMotion"

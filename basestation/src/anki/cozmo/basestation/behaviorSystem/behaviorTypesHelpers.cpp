@@ -18,9 +18,8 @@
 namespace Anki {
 namespace Cozmo {
 
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IMPLEMENT_ENUM_INCREMENT_OPERATORS(BehaviorType);
-
 
 // One global instance, created at static initialization on app launch
 static Anki::Util::StringToEnumMapper<BehaviorType> gStringToBehaviorTypeMapper;
@@ -28,6 +27,17 @@ static Anki::Util::StringToEnumMapper<BehaviorType> gStringToBehaviorTypeMapper;
 BehaviorType BehaviorTypeFromString(const char* inString)
 {
   return gStringToBehaviorTypeMapper.GetTypeFromString(inString);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IMPLEMENT_ENUM_INCREMENT_OPERATORS(ExecutableBehaviorType);
+  
+// One global instance, created at static initialization on app launch
+static Anki::Util::StringToEnumMapper<ExecutableBehaviorType> gStringToExecutableBehaviorTypeMapper;
+
+ExecutableBehaviorType ExecutableBehaviorTypeFromString(const char* inString)
+{
+  return gStringToExecutableBehaviorTypeMapper.GetTypeFromString(inString);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

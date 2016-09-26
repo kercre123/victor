@@ -41,6 +41,11 @@ SelectionBehaviorChooser::SelectionBehaviorChooser(Robot& robot, const Json::Val
                                ExternalInterface::MessageGameToEngineTag::ExecuteBehavior,
                                std::bind(&SelectionBehaviorChooser::HandleExecuteBehavior,
                                          this, std::placeholders::_1)));
+    
+    _eventHandlers.push_back(_robot.GetExternalInterface()->Subscribe(
+                               ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByExecutableType,
+                               std::bind(&SelectionBehaviorChooser::HandleExecuteBehavior,
+                                         this, std::placeholders::_1)));
   }
   
   // Setup None Behavior now since it's always the fallback
@@ -104,6 +109,23 @@ void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInt
       } else {
         PRINT_NAMED_WARNING("SelectionBehaviorChooser.HandleExecuteBehaviorByType.UnknownBehavior",
                             "Unknown behavior %s",
+                            EnumToString(msg.behaviorType));
+      }
+      
+      break;
+    }
+      
+    case ExternalInterface::MessageGameToEngineTag::ExecuteBehaviorByExecutableType:
+    {
+      const ExternalInterface::ExecuteBehaviorByExecutableType& msg = event.GetData().Get_ExecuteBehaviorByExecutableType();
+      selectedBehavior = _robot.GetBehaviorFactory().FindBehaviorByExecutableType( msg.behaviorType );
+      
+      if( selectedBehavior != nullptr ) {
+        PRINT_NAMED_INFO("SelectionBehaviorChooser.ExecuteBehaviorByExecutableType.SelectBehavior",
+                         "selecting behavior '%s' exec type '%s'", selectedBehavior->GetName().c_str(), EnumToString(msg.behaviorType) );
+      } else {
+        PRINT_NAMED_WARNING("SelectionBehaviorChooser.ExecuteBehaviorByExecutableType.NoBehavior",
+                            "No behavior for exec type %s",
                             EnumToString(msg.behaviorType));
       }
       

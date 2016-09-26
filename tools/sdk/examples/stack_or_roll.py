@@ -17,7 +17,7 @@ def run(coz_conn):
     '''The run method runs once Cozmo is connected.'''
     coz = coz_conn.wait_for_robot()
 
-    lookaround = coz.start_behavior(cozmo.behavior.BehaviorTypes.LookAround)
+    lookaround = coz.start_behavior(cozmo.behavior.BehaviorTypes.LookAroundInPlace)
 
     cubes = coz.world.wait_until_observe_num_objects(num=2, object_type=cozmo.objects.LightCube, timeout=10)
 

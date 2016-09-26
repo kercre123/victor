@@ -473,11 +473,25 @@ IBehavior* BehaviorFactory::FindBehaviorByName(const std::string& inName)
   return foundBehavior;
 }
 
+  
 IBehavior* BehaviorFactory::FindBehaviorByType(const BehaviorType& type)
 {
   for(const auto behavior : _nameToBehaviorMap)
   {
     if(behavior.second->GetType() == type)
+    {
+      return behavior.second;
+    }
+  }
+  return nullptr;
+}
+  
+  
+IBehavior* BehaviorFactory::FindBehaviorByExecutableType(ExecutableBehaviorType type)
+{
+  for(const auto behavior : _nameToBehaviorMap)
+  {
+    if(behavior.second->GetExecutableType() == type)
     {
       return behavior.second;
     }

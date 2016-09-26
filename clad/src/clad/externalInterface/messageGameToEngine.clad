@@ -466,6 +466,11 @@ message ExecuteBehavior {
   BehaviorType behaviorType
 }
 
+// ExecuteBehavior
+message ExecuteBehaviorByExecutableType {
+  ExecutableBehaviorType behaviorType
+}
+
 message ExecuteBehaviorByName {
   string behaviorName
 }

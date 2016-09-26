@@ -15,7 +15,7 @@ def run(coz_conn):
     '''The run method runs once Cozmo is connected.'''
     coz = coz_conn.wait_for_robot()
 
-    look_around = coz.start_behavior(cozmo.behavior.BehaviorTypes.LookAround)
+    look_around = coz.start_behavior(cozmo.behavior.BehaviorTypes.LookAroundInPlace)
 
     # try to find a block
     cube = None
