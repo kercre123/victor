@@ -55,8 +55,13 @@ namespace SpeedTap {
 
       _SpeedTapGame.AddPoint(_CurrentWinner == PointWinner.Player);
       // Count towards player mistake if cozmo wins a point off of the player tapping wrong.
-      if (_WasMistakeMade && _CurrentWinner == PointWinner.Cozmo) {
-        _SpeedTapGame.PlayerMistake();
+      if (_WasMistakeMade) {
+        if (_CurrentWinner == PointWinner.Player) {
+          _SpeedTapGame.CozmoMistake();
+        }
+        else {
+          _SpeedTapGame.PlayerMistake();
+        }
       }
       // Depends on points being scored first
       _SpeedTapGame.UpdateUI();
