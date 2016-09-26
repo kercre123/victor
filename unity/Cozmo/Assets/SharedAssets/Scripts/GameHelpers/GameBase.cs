@@ -383,12 +383,41 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
+  // Number of Errors made by cozmo, error being a cozmo
+  // mistake that gives the player points.
+  private int _CozmoMistakeCount;
+  public int CozmoMistakeCount {
+    get {
+      return _CozmoMistakeCount;
+    }
+  }
+
+  // The accuracy of the player's attempts to score points
+  public float PlayerAccuracy {
+    get {
+      // If the player didn't score any points without cozmo making a mistake
+      // then they have 0 % accuracy.
+      if (PlayerScoreTotal - _CozmoMistakeCount <= 0) {
+        return 0.0f;
+      }
+      // If the player has scored points intentionally, then their accuracy is
+      // equal to their total points scored out of their attempts to score
+      // points.
+      float acc = ((float)PlayerScoreTotal / (float)(PlayerScoreTotal + _PlayerMistakeCount));
+      return acc;
+    }
+  }
+
   // Points needed to win Round
   [HideInInspector]
   public int MaxScorePerRound;
 
   public virtual void PlayerMistake() {
     _PlayerMistakeCount++;
+  }
+
+  public virtual void CozmoMistake() {
+    _CozmoMistakeCount++;
   }
 
   public void ResetScore() {
