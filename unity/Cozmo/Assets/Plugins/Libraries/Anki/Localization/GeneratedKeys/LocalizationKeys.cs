@@ -508,6 +508,7 @@ public static class LocalizationKeys {
   #region SettingsStrings
 
   public const string kSettingsCubeStatusPanelButtonCubeRefresh = "settings.cubeStatusPanel.button.cubeRefresh";
+  public const string kSettingsCubeStatusPanelButtonTitle = "settings.cubeStatusPanel.button.title";
   public const string kSettingsCubeStatusPanelLocateText = "settings.cubeStatusPanel.locateText";
   public const string kSettingsSdkPanelActivateSDKalertText = "settings.sdkPanel.activateSDKalert.text";
   public const string kSettingsSdkPanelDisableButtonText = "settings.sdkPanel.disableButton.text";
@@ -542,6 +543,7 @@ public static class LocalizationKeys {
   public const string kSettingsSupportViewRestoreCozmoModalRestoreCozmoInProgressLabel = "settings.supportView.restoreCozmoModal.restoreCozmoInProgressLabel";
   public const string kSettingsSupportViewRestoreCozmoModalRestoreCozmoTitle = "settings.supportView.restoreCozmoModal.restoreCozmoTitle";
   public const string kSettingsSupportViewRestoreCozmoModalRestoreCozmoWarningLabel = "settings.supportView.restoreCozmoModal.restoreCozmoWarningLabel";
+  public const string kSettingsVersionPanelTitle = "settings.versionPanel.title";
   public const string kSettingsVersionPanelAcknowledgementsModalTitle = "settings.versionPanel.acknowledgementsModal.title";
   public const string kSettingsVersionPanelButtonAcknowledgementsLink = "settings.versionPanel.button.acknowledgementsLink";
   public const string kSettingsVersionPanelButtonEraseCozmo = "settings.versionPanel.button.eraseCozmo";
@@ -556,6 +558,7 @@ public static class LocalizationKeys {
   public const string kSettingsVersionPanelLabelCozmoVersion = "settings.versionPanel.label.cozmoVersion";
   public const string kSettingsVersionPanelLabelDeviceId = "settings.versionPanel.label.deviceId";
   public const string kSettingsVersionPanelLabelSerialNumber = "settings.versionPanel.label.serialNumber";
+  public const string kSettingsVolumePanelTitle = "settings.volumePanel.title";
   public const string kSettingsVolumePanelRobotToggleLow = "settings.volumePanel.robotToggle.low";
   public const string kSettingsVolumePanelRobotToggleHigh = "settings.volumePanel.robotToggle.high";
   public const string kSettingsVolumePanelRobotToggleMedium = "settings.volumePanel.robotToggle.medium";

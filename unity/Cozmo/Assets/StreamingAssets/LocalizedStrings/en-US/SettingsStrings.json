@@ -21,6 +21,9 @@
   "settings.cubeStatusPanel.button.cubeRefresh": {
     "translation": "Refresh Cubes"
   },
+  "settings.cubeStatusPanel.button.title": {
+    "translation": "Cube Status"
+  },
   "settings.cubeStatusPanel.locateText": {
     "translation": "(Tap to locate Cubes)"
   },
@@ -67,7 +70,7 @@
     "translation": "SDK Connected"
   },
   "settings.sdkPanel.sdkUrl.label": {
-    "translation": "go.anki.com/cozmo-app-sdk"
+    "translation": "To learn about the Cozmo SDK visit:\n\ngo.anki.com/cozmo-app-sdk"
   },
   "settings.sdkPanel.sdkNotConnected.text": {
     "translation": "SDK Not Connected"
@@ -123,6 +126,9 @@
   "settings.supportView.restoreCozmoModal.restoreCozmoWarningLabel": {
     "translation": "WARNING: This option will restore Cozmo from a backup and replace the game progress on the robot. Use this option if you replaced your Cozmo with a new one."
   },
+  "settings.versionPanel.title": {
+    "translation": "About"
+  },
   "settings.versionPanel.acknowledgementsModal.title": {
     "translation": "Acknowledgments"
   },
@@ -164,6 +170,9 @@
   },
   "settings.versionPanel.label.serialNumber": {
     "translation": "Cozmo ID: {0}"
+  },
+  "settings.volumePanel.title": {
+    "translation": "Volume & General"
   },
   "settings.volumePanel.robotToggle.low": {
     "translation": "Low"
