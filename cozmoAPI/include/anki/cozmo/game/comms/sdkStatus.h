@@ -26,6 +26,8 @@ namespace Anki {
 namespace Cozmo {
 
   
+class IExternalInterface;
+
 namespace ExternalInterface
 {
   class MessageGameToEngine;
@@ -43,7 +45,7 @@ class SdkStatus
 {
 public:
   
-  SdkStatus();
+  SdkStatus(IExternalInterface* externalInterface);
   ~SdkStatus() {}
   
   static double GetCurrentTime_s();
@@ -54,6 +56,7 @@ public:
   void OnConnectionSuccess(const ExternalInterface::UiDeviceConnectionSuccess& message);
   void OnWrongVersion(const ExternalInterface::UiDeviceConnectionWrongVersion& message);
   void OnDisconnect();
+  void SetStopRobotOnDisconnect(bool newVal);
   
   void OnRecvMessage(const ExternalInterface::MessageGameToEngine& message, size_t messageSize);
   
@@ -91,13 +94,19 @@ public:
     assert(idx < (uint32_t)SdkStatusType::Count);
     return _sdkStatusStrings[idx];
   }
+  
+  bool WillStopRobotOnDisconnect() const { return _stopRobotOnDisconnect; }
 
 private:
+  
+  void StopRobotDoingAnything();
   
   Util::CircularBuffer<ExternalInterface::MessageGameToEngineTag>  _recentCommands;
 
   std::string   _connectedSdkBuildVersion;
   std::string   _sdkStatusStrings[(uint32_t)SdkStatusType::Count];
+  
+  IExternalInterface* _externalInterface = nullptr;
   
   double    _enterSdkModeTime_s    = kInvalidTime_s;
   double    _connectionStartTime_s = kInvalidTime_s;
@@ -109,6 +118,7 @@ private:
   bool      _isConnected = false;
   bool      _isInSdkMode = false;
   bool      _isWrongSdkVersion = false;
+  bool      _stopRobotOnDisconnect = true;
 };
   
   

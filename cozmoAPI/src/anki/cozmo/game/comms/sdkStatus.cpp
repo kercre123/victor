@@ -11,6 +11,7 @@
  **/
 
 
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/game/comms/sdkStatus.h"
 #include "anki/cozmo/game/comms/iSocketComms.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -22,9 +23,11 @@ namespace Anki {
 namespace Cozmo {
 
   
-SdkStatus::SdkStatus()
+SdkStatus::SdkStatus(IExternalInterface* externalInterface)
   : _recentCommands(10)
+  , _externalInterface(externalInterface)
 {
+  assert(_externalInterface);
 }
 
   
@@ -48,10 +51,28 @@ inline double GetTimeBetween_s(double startTime_s, double endTime_s)
 }
 
 
+void SdkStatus::StopRobotDoingAnything()
+{
+  // Clear Behaviors
+  _externalInterface->Broadcast( ExternalInterface::MessageGameToEngine(
+                                        ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection) ) );
+  _externalInterface->Broadcast( ExternalInterface::MessageGameToEngine(
+                                        ExternalInterface::ExecuteBehavior(BehaviorType::NoneBehavior) ) );
+  
+  // Turn off all Cube Lights
+  _externalInterface->Broadcast( ExternalInterface::MessageGameToEngine( ExternalInterface::EnableLightStates(false, -1) ) );
+  
+  // Stop everything else
+  _externalInterface->Broadcast( ExternalInterface::MessageGameToEngine( ExternalInterface::StopRobotForSdk() ) );
+}
+
+
 void SdkStatus::EnterMode()
 {
   ASSERT_NAMED_EVENT(!_isInSdkMode, "SdkStatus.EnterMode.AlreadyInMode", "");
   Util::sEventF("robot.sdk_mode_on", {}, "");
+  
+  StopRobotDoingAnything();
   
   _isInSdkMode = true;
   _enterSdkModeTime_s = GetCurrentTime_s();
@@ -81,6 +102,7 @@ void SdkStatus::OnConnectionSuccess(const ExternalInterface::UiDeviceConnectionS
     _connectionStartTime_s = GetCurrentTime_s();
     _isWrongSdkVersion = false;
     _connectedSdkBuildVersion = message.buildVersion;
+    _stopRobotOnDisconnect = true; // Always stop unless explictely requested by this program run
   }
   else
   {
@@ -105,7 +127,25 @@ void SdkStatus::OnDisconnect()
     Util::sEventF("robot.sdk_connection_ended", {{DDATA, std::to_string(TimeInCurrentConnection_s(GetCurrentTime_s(), true)).c_str()}},
                   "%u", _numCommandsSentOverConnection);
     
+    if (_stopRobotOnDisconnect)
+    {
+      StopRobotDoingAnything();
+    }
+    
     _isConnected = false;
+  }
+}
+  
+  
+void SdkStatus::SetStopRobotOnDisconnect(bool newVal)
+{
+  if (_isConnected)
+  {
+    _stopRobotOnDisconnect = newVal;
+  }
+  else
+  {
+    PRINT_NAMED_ERROR("SdkStatus.OnRequestNoRobotResetOnSdkDisconnect.NotConnected", "");
   }
 }
 

@@ -985,7 +985,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveCalibrationImage>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SendAvailableObjects>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotCarryingObject>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnterSdkMode>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::StopRobotForSdk>();
       
     // EngineToGame: (in alphabetical order)
     helper.SubscribeEngineToGame<MessageEngineToGameTag::AnimationAborted>();
@@ -1538,20 +1538,22 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::SetRobotCarryingO
   }
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
-void RobotEventHandler::HandleMessage(const ExternalInterface::EnterSdkMode& msg)
+void RobotEventHandler::HandleMessage(const ExternalInterface::StopRobotForSdk& msg)
 {
   Robot* robot = _context->GetRobotManager()->GetFirstRobot();
   
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleEnterSdkMode.InvalidRobotID", "Failed to find robot.");
+    PRINT_NAMED_WARNING("RobotEventHandler.StopRobotForSdk.InvalidRobotID", "Failed to find robot.");
   }
   else
   {
     robot->GetActionList().Cancel();
     robot->GetAnimationStreamer().SetIdleAnimation(AnimationTrigger::Count);
+    robot->GetMoveComponent().StopAllMotors();
   }
 }
 

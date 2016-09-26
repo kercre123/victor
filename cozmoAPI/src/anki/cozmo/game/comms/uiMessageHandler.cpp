@@ -139,7 +139,8 @@ namespace Anki {
     
 
     UiMessageHandler::UiMessageHandler(u32 hostUiDeviceID, GameMessagePort* gameMessagePort)
-      : _hostUiDeviceID(hostUiDeviceID)
+      : _sdkStatus(this)
+      , _hostUiDeviceID(hostUiDeviceID)
     {
       const bool isSdkCommunicationEnabled = IsSdkCommunicationEnabled();
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
@@ -183,6 +184,7 @@ namespace Anki {
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::DisconnectFromUiDevice, commonCallback));
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::UiDeviceConnectionWrongVersion, commonCallback));
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::UiDeviceConnectionSuccess, commonCallback));
+      _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::SetStopRobotOnSdkDisconnect, commonCallback));
       
       _signalHandles.push_back(Subscribe(ExternalInterface::MessageGameToEngineTag::EnterSdkMode,
                                          std::bind(&UiMessageHandler::OnEnterSdkMode, this, std::placeholders::_1)));
@@ -731,6 +733,11 @@ namespace Anki {
           if (IsSdkConnection(msg.connectionType))
           {
             _sdkStatus.OnWrongVersion(msg);
+            ISocketComms* socketComms = GetSocketComms(msg.connectionType);
+            if (socketComms)
+            {
+              socketComms->DisconnectDeviceByID(msg.deviceID);
+            }
           }
           break;
         }
@@ -775,6 +782,12 @@ namespace Anki {
 
           break;
         }
+        case ExternalInterface::MessageGameToEngineTag::SetStopRobotOnSdkDisconnect:
+        {
+          const ExternalInterface::SetStopRobotOnSdkDisconnect& msg = event.GetData().Get_SetStopRobotOnSdkDisconnect();
+          _sdkStatus.SetStopRobotOnDisconnect(msg.doStop);
+          break;
+        }
         default:
         {
           PRINT_STREAM_ERROR("UiMessageHandler.HandleEvents",
@@ -787,13 +800,6 @@ namespace Anki {
     
     void UiMessageHandler::OnEnterSdkMode(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
     {
-      // Clear Behaviors etc.
-      
-      Broadcast( ExternalInterface::MessageGameToEngine(
-                                    ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection) ) );
-      Broadcast( ExternalInterface::MessageGameToEngine(
-                                    ExternalInterface::ExecuteBehavior(BehaviorType::NoneBehavior) ) );
-
       _sdkStatus.EnterMode();
       UpdateIsSdkCommunicationEnabled();
     }
