@@ -170,22 +170,24 @@ namespace Cozmo {
         // Let the engine know that we're being unpaused
         RobotEngineManager.Instance.SendGameBeingPaused(false);
 
-        bool shouldPlayWakeup = false;
-        if (!_IsOnChargerToSleep && _IdleTimeOutEnabled) {
-          StopIdleTimeout();
-          if (_ShouldPlayWakeupTimestamp > 0 && Time.realtimeSinceStartup >= _ShouldPlayWakeupTimestamp) {
-            shouldPlayWakeup = true;
+        // If the go to sleep dialog is open, the user has selected sleep and there's no turning back, so don't wake up Cozmo
+        if (!IsGoToSleepDialogOpen) {
+          bool shouldPlayWakeup = false;
+          if (!_IsOnChargerToSleep && _IdleTimeOutEnabled) {
+            StopIdleTimeout();
+            if (_ShouldPlayWakeupTimestamp > 0 && Time.realtimeSinceStartup >= _ShouldPlayWakeupTimestamp) {
+              shouldPlayWakeup = true;
+            }
           }
-        }
 
-        if (shouldPlayWakeup) {
-          IRobot robot = RobotEngineManager.Instance.CurrentRobot;
-          if (null != robot) {
-            robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.GoToSleepGetOut, HandleFinishedWakeup);
+          if (shouldPlayWakeup) {
+            IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+            if (null != robot) {
+              robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.GoToSleepGetOut, HandleFinishedWakeup);
+            }
+          } else {
+            HandleFinishedWakeup(true);
           }
-        }
-        else {
-          HandleFinishedWakeup(true);
         }
       }
     }
