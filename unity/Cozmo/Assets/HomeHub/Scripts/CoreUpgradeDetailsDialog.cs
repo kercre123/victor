@@ -497,8 +497,10 @@ public class CoreUpgradeDetailsDialog : BaseView {
   }
 
   protected override void ConstructOpenAnimation(Sequence openAnimation) {
-    openAnimation.Append(_ContentContainer.transform.DOLocalMoveY(
-      50, 0.15f).From().SetEase(Ease.OutQuad).SetRelative());
+    if (_ContentContainer != null) {
+      openAnimation.Append(_ContentContainer.transform.DOLocalMoveY(
+        50, 0.15f).From().SetEase(Ease.OutQuad).SetRelative());
+    }
     if (_AlphaController != null) {
       _AlphaController.alpha = 0;
       openAnimation.Join(_AlphaController.DOFade(1, 0.25f).SetEase(Ease.OutQuad));
@@ -506,8 +508,10 @@ public class CoreUpgradeDetailsDialog : BaseView {
   }
 
   protected override void ConstructCloseAnimation(Sequence closeAnimation) {
-    closeAnimation.Append(_ContentContainer.transform.DOLocalMoveY(
-      -50, 0.15f).SetEase(Ease.OutQuad).SetRelative());
+    if (_ContentContainer != null) {
+      closeAnimation.Append(_ContentContainer.transform.DOLocalMoveY(
+        -50, 0.15f).SetEase(Ease.OutQuad).SetRelative());
+    }
     if (_AlphaController != null) {
       closeAnimation.Join(_AlphaController.DOFade(0, 0.25f));
     }
