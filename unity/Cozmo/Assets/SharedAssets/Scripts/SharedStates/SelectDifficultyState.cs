@@ -63,12 +63,18 @@ public class SelectDifficultyState : State {
     if (isUnlocked) {
       _Game.SharedMinigameView.HideLockedBackground();
       _Game.SharedMinigameView.ShowMiddleBackground();
-      _SelectedDifficultyData.LoadAnimationPrefabData((UnityEngine.GameObject animationPrefab) => {
 
+      DifficultySelectOptionData unlockedSelection = data;
+      _SelectedDifficultyData.LoadAnimationPrefabData((UnityEngine.GameObject animationPrefab) => {
         // guards against async issue where two buttons were pressed right after each other.
         if (_DifficultySelectLockState) {
-          _Game.SharedMinigameView.ShowWideAnimationSlide(_SelectedDifficultyData.DifficultyDescription.Key, data.DifficultyName.Key + "_description",
-                                                animationPrefab, null, LocalizationKeys.kMinigameTextHowToPlayHeader);
+          if (unlockedSelection != null) {
+            _Game.SharedMinigameView.ShowWideAnimationSlide(unlockedSelection.DifficultyDescription.Key, unlockedSelection.DifficultyName.Key + "_description",
+                                                  animationPrefab, null, LocalizationKeys.kMinigameTextHowToPlayHeader);
+          }
+          else {
+            DAS.Info("SelectDifficultyState.HandleDifficultySelected", "unlockedSelection is null");
+          }
         }
       });
     }
