@@ -36,7 +36,7 @@ static const char* const kMinimumStackHeight = "minimumStackHeight";
 static const char* const kIsReactionaryConfigFlag = "isReactionary";
 
 const int kMaxNumRetries = 1;
-const int kMinThresholdRealign = 10;
+const float kMinThresholdRealign = 3.f;
 const int kMinBlocksForSuccess = 1;
 const float kWaitForBlockUpAxisChangeSecs = 0.5f;
 const f32 kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad = RAD_TO_DEG_F32(90.f);
@@ -174,6 +174,8 @@ void BehaviorKnockOverCubes::TransitionToReachingForBlock(Robot& robot)
   
   CompoundActionSequential* action = new CompoundActionSequential(robot);
   
+  action->AddAction(new TurnTowardsObjectAction(robot,_baseBlockID, M_PI));
+  
   Pose3d poseWrtRobot;
   if(lastObj->GetPose().GetWithRespectTo(robot.GetPose(), poseWrtRobot) ) {
     const float fudgeFactor = 10.0f;
@@ -232,6 +234,9 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(Robot& robot)
     };
 
   CompoundActionSequential* flipAndWaitAction = new CompoundActionSequential(robot);
+  
+  flipAndWaitAction->AddAction(new TurnTowardsObjectAction(robot,_baseBlockID, M_PI));
+  
 
   {
     RetryWrapperAction* action = new RetryWrapperAction(robot, flipAction, retryCallback, kMaxNumRetries);
