@@ -76,6 +76,7 @@ namespace Cozmo.UI {
       RewardedActionManager.Instance.NewDifficultyUnlock = -1;
       RewardedActionManager.Instance.NewSkillChange = 0;
 
+      Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Window_Vertical_Wipe);
     }
 
     public void AddEnergyReward(RewardedActionData reward, int count) {
