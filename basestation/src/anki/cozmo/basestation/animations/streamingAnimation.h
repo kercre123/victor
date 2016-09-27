@@ -198,12 +198,10 @@ private:
   int _postedEventCount = 0;
   
   // Track how many events have completed playback to track animation completion state
+  // Note: This is not thread safe, be sure to properly lock when using
   int GetCompletedEventCount() const { return _completedEventCount; }
-  void IncrementCompletedEventCount() { std::lock_guard<std::mutex> lock(_completedEventLock);  ++_completedEventCount; }
+  void IncrementCompletedEventCount() { ++_completedEventCount; }
   int _completedEventCount = 0;
-  
-  // Completed Event Count is updated on a different thread
-  std::mutex _completedEventLock;
   
   // Get last non audio keyframe time_ms
   uint32_t GetLastKeyframeTime_ms();

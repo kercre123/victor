@@ -126,6 +126,7 @@ void RobotAudioAnimationOnDevice::PopRobotAudioMessage( RobotInterface::EngineTo
                             ( const AudioEngine::AudioCallbackInfo& callbackInfo )
                             {
                               if ( !isAliveWeakPtr.expired() ) {
+                                std::lock_guard<std::mutex> lock(_animationEventLock);
                                 HandleCozmoEventCallback( animationEvent, callbackInfo );
                               }
                               

@@ -160,7 +160,7 @@ protected:
   
   // Track how many events have completed playback to track animation completion state
   int GetCompletedEventCount() const { return _completedEventCount; }
-  void IncrementCompletedEventCount() { std::lock_guard<std::mutex> lock(_completedEventLock);  ++_completedEventCount; }
+  void IncrementCompletedEventCount() { ++_completedEventCount; }
   
   // Hold on to the current stream frames are being pulled from
   RobotAudioFrameStream* _currentBufferStream = nullptr;
@@ -196,8 +196,6 @@ private:
   int _postedEventCount = 0;
   // Track number of events that have completed
   int _completedEventCount = 0;
-  // Completed Event Count is updated on a different thread
-  std::mutex _completedEventLock;
   
 };
 

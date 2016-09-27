@@ -295,6 +295,7 @@ void StreamingAnimation::GenerateAudioData(Audio::RobotAudioClient* audioClient)
       (const AudioEngine::AudioCallbackInfo& callbackInfo)
       {
         if (!isAliveWeakPtr.expired()) {
+          std::lock_guard<std::mutex> lock(_animationEventLock);
           HandleCozmoEventCallback(animationEvent, callbackInfo);
         }
       };
@@ -440,7 +441,6 @@ void StreamingAnimation::HandleCozmoEventCallback(AnimationEvent* animationEvent
                           callbackInfo.GetDescription().c_str());
 
       IncrementCompletedEventCount();
-      std::lock_guard<std::mutex> lock(_animationEventLock);
       animationEvent->state = AnimationEvent::AnimationEventState::Error;
     }
       break;
@@ -448,7 +448,6 @@ void StreamingAnimation::HandleCozmoEventCallback(AnimationEvent* animationEvent
     case AudioEngine::AudioCallbackType::Complete:
     {
       IncrementCompletedEventCount();
-      std::lock_guard<std::mutex> lock(_animationEventLock);
       animationEvent->state = AnimationEvent::AnimationEventState::Completed;
     }
       break;

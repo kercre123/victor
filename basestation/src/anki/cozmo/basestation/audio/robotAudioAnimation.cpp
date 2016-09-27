@@ -250,7 +250,6 @@ void RobotAudioAnimation::HandleCozmoEventCallback( AnimationEvent* animationEve
                     "Error: %s",
                     callbackInfo.GetDescription().c_str());
       IncrementCompletedEventCount();
-      std::lock_guard<std::mutex> lock(_animationEventLock);
       animationEvent->state = AnimationEvent::AnimationEventState::Error;
     }
       break;
@@ -258,7 +257,6 @@ void RobotAudioAnimation::HandleCozmoEventCallback( AnimationEvent* animationEve
     case AudioEngine::AudioCallbackType::Complete:
     {
       IncrementCompletedEventCount();
-      std::lock_guard<std::mutex> lock(_animationEventLock);
       animationEvent->state = AnimationEvent::AnimationEventState::Completed;
     }
       break;
