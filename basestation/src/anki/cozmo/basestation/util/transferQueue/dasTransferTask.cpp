@@ -14,6 +14,7 @@
 #include "util/dispatchQueue/dispatchQueue.h"
 
 #if USE_DAS
+#include "util/logging/logging.h"
 #include <DAS/DAS.h>
 #endif
 
@@ -23,7 +24,11 @@ namespace Util {
 void DasTransferTask::OnTransferReady(Dispatch::Queue* queue, const TransferQueueMgr::TaskCompleteFunc& completionFunc)
 {
   #if USE_DAS
-  DASForceFlushWithCallback(completionFunc);
+  auto callbackWrapper = [completionFunc] (bool success) {
+    PRINT_NAMED_EVENT(success ? "das.upload" : "das.upload.fail", "background");
+    completionFunc();
+  };
+  DASForceFlushWithCallback(callbackWrapper);
   #else
   completionFunc();
   #endif

@@ -113,12 +113,12 @@ void DasAppender::ForceFlush()
   ForceFlushWithCallback({});
 }
 
-void DasAppender::ForceFlushWithCallback(const std::function<void()>& callback)
+void DasAppender::ForceFlushWithCallback(const DASFlushCallback& callback)
 {
   _syncQueue.Wake([this, callback] {
     Flush();
     if (callback) {
-      callback();
+      callback(!_lastFlushFailed);
     }
   });
 }

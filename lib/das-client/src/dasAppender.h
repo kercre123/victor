@@ -39,7 +39,7 @@ public:
               const std::map<std::string,std::string>& data);
   
   void ForceFlush();
-  void ForceFlushWithCallback(const std::function<void()>& completionBlock);
+  void ForceFlushWithCallback(const DASFlushCallback& completionBlock);
   
 private:
   void SetTimedFlush();

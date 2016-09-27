@@ -292,12 +292,12 @@ void DASForceFlushNow() {
   }
 }
 
-void DASForceFlushWithCallback(const std::function<void()>& callback) {
+void DASForceFlushWithCallback(const DASFlushCallback& callback) {
   if (nullptr != sRemoteAppender) {
     sRemoteAppender->ForceFlushWithCallback(callback);
   }
   else if (callback) {
-    callback();
+    callback(false);
   }
 }
 

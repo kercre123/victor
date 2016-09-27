@@ -182,7 +182,9 @@ void DASForceFlushNow() __attribute__((visibility("default")));
 #ifdef __cplusplus
 void DASNativeInit(std::unique_ptr<const DAS::IDASPlatform> platform, const char* product) __attribute__((visibility("default")));
 const DAS::IDASPlatform* DASGetPlatform() __attribute__((visibility("default")));
-void DASForceFlushWithCallback(const std::function<void()>& callback) __attribute((visibility("default")));
+
+using DASFlushCallback = std::function<void(bool)>; // passes in success/fail
+void DASForceFlushWithCallback(const DASFlushCallback& callback) __attribute((visibility("default")));
 #endif
   
 #ifdef __cplusplus
