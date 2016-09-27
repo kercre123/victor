@@ -34,6 +34,7 @@ static const char* const kExtraDriveDistKey = "extraDistanceToDrive_mm";
 
 static const std::set<BehaviorType> kBehaviorsToDisable = {BehaviorType::ReactToCliff,
                                                            BehaviorType::ReactToUnexpectedMovement,
+                                                           BehaviorType::ReactToOnCharger,
                                                            BehaviorType::AcknowledgeObject,
                                                            BehaviorType::AcknowledgeFace,
                                                            BehaviorType::ReactToCubeMoved,

@@ -46,6 +46,9 @@ private:
   float _timeTilSleepAnimation_s = -1.0;
   float _timeTilDisconnect_s = 0.0;
   
+  // prevent Cozmo from asking to go to sleep for a period of time after connection
+  mutable float _dontRunUntilTime_sec;
+  
 }; // class BehaviorReactToOnCharger
   
 

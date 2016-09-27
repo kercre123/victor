@@ -12,6 +12,7 @@
 
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToOnCharger.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -24,12 +25,16 @@ namespace Anki {
 namespace Cozmo {
   
 using namespace ExternalInterface;
-  
+
+namespace {
 static const char* kTimeTilSleepAnimationKey = "timeTilSleepAnimation_s";
 static const char* kTimeTilDisconnectionKey = "timeTilDisconnection_s";
+const float kDisableReactionForInitialTime_sec = 20.f;
+}
 
 BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Value& config)
 : IReactionaryBehavior(robot, config)
+  , _dontRunUntilTime_sec(-1.f)
 {
   SetDefaultName("ReactToOnCharger");
   // These are the tags that should trigger this behavior to be switched to immediately
@@ -58,11 +63,25 @@ bool BehaviorReactToOnCharger::IsRunnableInternalReactionary(const Robot& robot)
   //ASSERT_NAMED(robot.IsOnChargerPlatform() || !robot.IsOnCharger(),
   //             "BehaviorDriveOffCharger.IsRunnableInternal.InconsistentChargerFlags");
   
+  const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if(_dontRunUntilTime_sec < 0){
+    _dontRunUntilTime_sec =  currentTime_sec + kDisableReactionForInitialTime_sec;
+  }
+  
   return _isOnCharger;
 }
 
 Result BehaviorReactToOnCharger::InitInternalReactionary(Robot& robot)
 {
+  // This is a hack - in order to have Cozmo drive off the charger if he accidentally roles back
+  // onto the contacts because he saw an edge this reaction needs to start to cancel the cliff
+  // detection reaction, and then return complete on the first update so that the DriveOffChargerBehavior can run
+  const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if(_dontRunUntilTime_sec > currentTime_sec){
+    _isOnCharger = false;
+    return Result::RESULT_OK;
+  }
+  
   robot.GetBehaviorManager().SetReactionaryBehaviorsEnabled(false);
   robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::GoingToSleep>();
   
