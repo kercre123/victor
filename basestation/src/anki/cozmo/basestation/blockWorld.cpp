@@ -4528,15 +4528,35 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
 
   void BlockWorld::DeleteObjectsByOrigin(const Pose3d* origin, bool clearFirst)
   {
-    if(_canDeleteObjects) {
+    if(_canDeleteObjects)
+    {
       auto originIter = _existingObjects.find(origin);
-      if(originIter != _existingObjects.end()) {
-        if(clearFirst)
+      if(originIter != _existingObjects.end())
+      {
+        if(clearFirst || ANKI_DEVELOPER_CODE)
         {
           for(auto & objectsByFamily : originIter->second) {
             for(auto & objectsByType : objectsByFamily.second) {
-              for(auto & objectsByID : objectsByType.second) {
-                ClearObjectHelper(objectsByID.second.get());
+              //for(auto & objectsByID : objectsByType.second) {
+              auto objectIter = objectsByType.second.begin();
+              while(objectIter != objectsByType.second.end())
+              {
+                if(clearFirst)
+                {
+                  ClearObjectHelper(objectIter->second.get());
+                }
+                if(ANKI_DEVELOPER_CODE)
+                {
+                  // Full blown nuke of each object's memory to force a crash if
+                  // we ever try to use this object again
+                  ObservableObject* objectPtr = objectIter->second.get();
+                  objectIter = objectsByType.second.erase(objectIter);
+                  memset((void*)objectPtr, 0, sizeof(ObservableObject));
+                }
+                else
+                {
+                  ++objectIter;
+                }
               }
             }
           }

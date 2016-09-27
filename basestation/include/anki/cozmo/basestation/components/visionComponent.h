@@ -116,6 +116,18 @@ struct DockingErrorSignal;
     // This updates the Robot's BlockWorld and FaceWorld using those results.
     Result UpdateAllResults();
     
+    // Individual processing update helpers. These are called individually by
+    // UpdateAllResults() above, but are exposed as public fo Unit Test usage.
+    Result UpdateFaces(const VisionProcessingResult& result);
+    Result UpdateVisionMarkers(const VisionProcessingResult& result);
+    Result UpdateTrackingQuad(const VisionProcessingResult& result);
+    Result UpdateDockingErrorSignal(const VisionProcessingResult& result);
+    Result UpdateMotionCentroid(const VisionProcessingResult& result);
+    Result UpdateOverheadEdges(const VisionProcessingResult& result);
+    Result UpdateToolCode(const VisionProcessingResult& result);
+    Result UpdateComputedCalibration(const VisionProcessingResult& result);
+    Result UpdateImageQuality(const VisionProcessingResult& procResult);
+    
     Result UpdateOverheadMap(const Vision::ImageRGB& image,
                              const VisionPoseData& poseData);
 
@@ -318,21 +330,6 @@ struct DockingErrorSignal;
     
     // Helper for loading face album data from file / robot
     void BroadcastLoadedNamesAndIDs(const std::list<Vision::LoadedKnownFace>& loadedFaces) const;
-    
-    // Individual processing update helpers
-    Result UpdateFaces(const VisionProcessingResult& result);
-    Result UpdateVisionMarkers(const VisionProcessingResult& result);
-    Result UpdateTrackingQuad(const VisionProcessingResult& result);
-    Result UpdateDockingErrorSignal(const VisionProcessingResult& result);
-    Result UpdateMotionCentroid(const VisionProcessingResult& result);
-    Result UpdateOverheadEdges(const VisionProcessingResult& result);
-    
-    // See what tool we have on our lifter and calibrate the camera
-    Result UpdateToolCode(const VisionProcessingResult& result);
-    
-    Result UpdateComputedCalibration(const VisionProcessingResult& result);
-    
-    Result UpdateImageQuality(const VisionProcessingResult& procResult);
     
     void VisualizeObservedMarkerIn3D(const Vision::ObservedMarker& marker) const;
     

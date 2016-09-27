@@ -251,34 +251,38 @@ Result PotentialObjectsForLocalizingTo::LocalizeRobot()
     ASSERT_NAMED(currFrameIter != _pairMap.end(),
                  "PotentialObjectsForLocalizingTo.LocalizeRobot.MustHaveCurrFrameObjectWithCrossFrameOptions");
     
-    bool useCurrentFramePair = true;
-    for(auto const& matchPair : _pairMap)
-    {
-      if(matchPair.first != _currentWorldOrigin &&
-         matchPair.second.matchedObject->GetID() == currFrameIter->second.matchedObject->GetID())
-      {
-        // We found another instance of the object in the current frame, but in a
-        // different frame. In this case, just use the one in the other frame
-        // for localization so that rejiggering this one will destroy the one in
-        // the current frame. And we can't control which happens first thanks to
-        // no guarantee on sort order for the multimap below.
-        useCurrentFramePair = false;
-      }
-    }
-    
-    if(!useCurrentFramePair)
-    {
-      _pairMap.erase(currFrameIter);
-    }
-    
-    // Loop over all cross-frame matches from farthest to closest and perform
-    // localization with each, to rejigger all their frames into one.
-    
-    std::multimap<f32, ObservedAndMatchedPair, std::greater<f32>> pairsToLocalizeToByDist;
+    // sort frames from farthest to closest
+    using DistanceTable = std::multimap<f32, ObservedAndMatchedPair, std::greater<f32>>;
+    DistanceTable pairsToLocalizeToByDist;
     for (auto & matchPair : _pairMap)
     {
-      pairsToLocalizeToByDist.insert(std::make_pair(matchPair.second.distance,  matchPair.second));
+      pairsToLocalizeToByDist.insert(std::make_pair(matchPair.second.distance, matchPair.second));
     }
+    
+    // If the current origin is not the first one we will use for localization, then
+    // we will need to re-look it up by ID while localizing below since it will have
+    // been rejiggered out of the current frame
+    const Pose3d* firstOrigin = &(pairsToLocalizeToByDist.begin()->second.matchedObject->GetPose().FindOrigin());
+    const bool recheckMatchObjectByID = _currentWorldOrigin != firstOrigin;
+    if( recheckMatchObjectByID )
+    {
+      DistanceTable::iterator distanceTableIt = pairsToLocalizeToByDist.begin();
+      while ( distanceTableIt != pairsToLocalizeToByDist.end() ) {
+        const Pose3d* origin = &(distanceTableIt->second.matchedObject->GetPose().FindOrigin());
+        if ( origin == _currentWorldOrigin ) {
+          distanceTableIt->second.matchedID = distanceTableIt->second.matchedObject->GetID();
+          PRINT_CH_INFO("BlockWorld", "PotentialObjectsForLocalizingTo.LocalizeRobot.StoringMatchedObjectID",
+                        "Match in current frame not farthest. Storing ID=%d to recheck when encountered while localizing.",
+                        distanceTableIt->second.matchedID.GetValue());
+          distanceTableIt->second.matchedObject = nullptr; // Mark the fact that we should use the ID instead
+          break;
+        }
+        ++distanceTableIt;
+      }
+    }
+
+    // Loop over all cross-frame matches
+    // localization with each, to rejigger all their frames into one.
     
     bool anyFailures = false;
     for (auto & matchPair : pairsToLocalizeToByDist)
@@ -286,6 +290,20 @@ Result PotentialObjectsForLocalizingTo::LocalizeRobot()
       ObservableObject* observedObj = matchPair.second.observedObject.get();
       ObservableObject* matchedObj  = matchPair.second.matchedObject;
      
+      if(nullptr == matchedObj)
+      {
+        const ObjectID& matchedID = matchPair.second.matchedID;
+        ASSERT_NAMED(matchedID.IsSet(), "PotentialObjectsForLocalizingTo.LocalizeToRobot.NullMatchWithUnsetID");
+        
+        matchedObj = _robot.GetBlockWorld().GetObjectByID(matchedID);
+        if(nullptr == matchedObj)
+        {
+          PRINT_NAMED_WARNING("PotentialObjectsForLocalizingTo.LocalizeToRobot.MissingMatchedObjectInCurrentFrame",
+                              "Matched object %d no longer exists. Skipping match pair.", observedObj->GetID().GetValue());
+          continue;
+        }
+      }
+      
       if(matchedObj != nullptr)
       {
         VERBOSE_DEBUG_PRINT("PotentialObjectsForLocalizingTo.LocalizeRobot.UsingCrossFrame",

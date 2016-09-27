@@ -19,6 +19,7 @@
 
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/poseOrigin.h"
+#include "anki/common/basestation/objectIDs.h"
 
 #include <map>
 
@@ -61,6 +62,7 @@ private:
   struct ObservedAndMatchedPair {
     std::shared_ptr<ObservableObject> observedObject;
     ObservableObject* matchedObject;
+    ObjectID matchedID; // normally left unset, but may be used if matchedObject is set to null
     f32 distance;
   };
   

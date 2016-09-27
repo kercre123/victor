@@ -24,6 +24,7 @@
 
 Anki::Cozmo::CozmoContext* cozmoContext = nullptr; // This is externed and used by tests
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(DataPlatform, ReadWrite)
 {
   ASSERT_TRUE(cozmoContext->GetDataPlatform() != nullptr);
@@ -42,12 +43,13 @@ TEST(DataPlatform, ReadWrite)
   Anki::Util::FileUtils::RemoveDirectory(someRandomFolder);
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(Cozmo, SimpleCozmoTest)
 {
   ASSERT_TRUE(true);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(BlockWorld, AddAndRemoveObject)
 {
   using namespace Anki;
@@ -67,27 +69,26 @@ TEST(BlockWorld, AddAndRemoveObject)
   ASSERT_TRUE(objects.empty());
 
   // Fake a state message update for robot
-  RobotState stateMsg;
-  stateMsg.timestamp = 1; // the robot should not report at 0, since we are after timeSync and 0 is used by the robot constructor to set everything to 0 
-  stateMsg.pose_frame_id = 0;
-  stateMsg.pose_origin_id = 1;
-  stateMsg.pose.x = 0.0f;
-  stateMsg.pose.y = 0.0f;
-  stateMsg.pose.z = 0.0f;
-  stateMsg.pose.angle = 0.0f;
-  stateMsg.pose.pitch_angle = 0.0f;
-  stateMsg.lwheel_speed_mmps = 0.0f;
-  stateMsg.rwheel_speed_mmps = 0.0f;
-  stateMsg.headAngle = 0.0f;
-  stateMsg.liftAngle = 0.0f;
-  stateMsg.liftHeight = 0.0f;
-  stateMsg.rawGyroZ = 0.0f;
-  stateMsg.rawAccelY = 0.0f;
-  stateMsg.status = (u16)RobotStatusFlag::HEAD_IN_POS | (u16)RobotStatusFlag::LIFT_IN_POS;
-  stateMsg.lastPathID = 0;
-  stateMsg.currPathSegment = 0;
-  stateMsg.numFreeSegmentSlots = 0;
-  stateMsg.batteryVoltage = 0.0f;
+  // The robot should not report at t=0, since we are after timeSync and 0 is used by the
+  // robot constructor to set everything to 0
+  RobotState stateMsg(1, // timestamp,
+                      0, // pose_frame_id,
+                      1, // pose_origin_id,
+                      RobotPose(0.f,0.f,0.f,0.f,0.f),
+                      0.f, // lwheel_speed_mmps,
+                      0.f, // rwheel_speed_mmps,
+                      0.f, // headAngle,
+                      0.f, // liftAngle,
+                      0.f, // liftHeight,
+                      0.f, // rawGyroZ,
+                      0.f, // rawAccelY,
+                      0.f, // batteryVoltage,
+                      (u16)RobotStatusFlag::HEAD_IN_POS | (u16)RobotStatusFlag::LIFT_IN_POS, // status,
+                      0, // lastPathID,
+                      0, // cliffDataRaw,
+                      0, // currPathSegment,
+                      0); // numFreeSegmentSlots)
+  
   lastResult = robot.UpdateFullRobotState(stateMsg);
   ASSERT_EQ(lastResult, RESULT_OK);
 
@@ -269,7 +270,220 @@ TEST(BlockWorld, AddAndRemoveObject)
   
 } // BlockWorld.AddAndRemoveObject
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+// Helper method for BlockWorld.UpdateObjectOrigins Test
+static Anki::Result ObserveMarkerHelper(const s32 kNumObservations,
+                                        std::list<std::pair<Anki::Vision::Marker::Code, Anki::Quad2f>>&& codesAndCorners,
+                                        Anki::TimeStamp_t& fakeTime,
+                                        Anki::Cozmo::Robot& robot,
+                                        Anki::Cozmo::RobotState& stateMsg,
+                                        Anki::Cozmo::VisionProcessingResult& procResult)
+{
+  using namespace Anki;
+  
+  for(s32 i=0; i<kNumObservations; ++i, fakeTime+=10)
+  {
+    stateMsg.timestamp = fakeTime;
+    stateMsg.pose_frame_id = robot.GetPoseFrameID();
+    stateMsg.pose_origin_id = robot.GetPoseOriginList().GetOriginID(robot.GetWorldOrigin());
+    Result lastResult = robot.UpdateFullRobotState(stateMsg);
+    if(RESULT_OK != lastResult)
+    {
+      PRINT_NAMED_ERROR("ObservedMarkerHelper.UpdateFullRobotStateFailed", "i=%d fakeTime=%u", i, fakeTime);
+      return lastResult;
+    }
+   
+    procResult.timestamp = fakeTime;
+    procResult.observedMarkers.clear();
+    for(auto & codeAndCorners : codesAndCorners)
+    {
+      procResult.observedMarkers.push_back(Vision::ObservedMarker(fakeTime, codeAndCorners.first, codeAndCorners.second,
+                                                                  robot.GetVisionComponent().GetCamera()));
+    }
+    
+    lastResult = robot.GetVisionComponent().UpdateVisionMarkers(procResult);
+    if(RESULT_OK != lastResult)
+    {
+      PRINT_NAMED_ERROR("ObservedMarkerHelper.UpdateVisionMarkersFailed", "i=%d fakeTime=%u", i, fakeTime);
+      return lastResult;
+    }
+  }
+ 
+  return RESULT_OK;
+}
+
+// Helper method for BlockWorld.UpdateObjectOrigins Test
+static Anki::Result FakeRobotMovement(Anki::Cozmo::Robot& robot,
+                                      Anki::Cozmo::RobotState& stateMsg,
+                                      Anki::TimeStamp_t& fakeTime)
+{
+  using namespace Anki;
+  using namespace Cozmo;
+  
+  stateMsg.timestamp = fakeTime;
+  stateMsg.status |= (u16)RobotStatusFlag::IS_MOVING; // Set moving flag
+  Result lastResult = robot.UpdateFullRobotState(stateMsg);
+  stateMsg.status &= ~(u16)RobotStatusFlag::IS_MOVING; // Unset moving flag
+  fakeTime += 10;
+  
+  return lastResult;
+}
+
+TEST(BlockWorld, UpdateObjectOrigins)
+{
+  using namespace Anki;
+  using namespace Cozmo;
+  
+  Result lastResult;
+  
+  Robot robot(1, cozmoContext);
+  robot.FakeSyncTimeAck();
+  
+  BlockWorld& blockWorld = robot.GetBlockWorld();
+  
+  // There should be nothing in BlockWorld yet
+  BlockWorldFilter filter;
+  std::vector<ObservableObject*> objects;
+  blockWorld.FindMatchingObjects(filter, objects);
+  ASSERT_TRUE(objects.empty());
+  
+  // Fake a state message update for robot
+  RobotState stateMsg(1, // timestamp,
+                      0, // pose_frame_id,
+                      1, // pose_origin_id,
+                      RobotPose(0.f,0.f,0.f,0.f,0.f),
+                      0.f, // lwheel_speed_mmps,
+                      0.f, // rwheel_speed_mmps,
+                      0.f, // headAngle,
+                      0.f, // liftAngle,
+                      0.f, // liftHeight,
+                      0.f, // rawGyroZ,
+                      0.f, // rawAccelY,
+                      0.f, // batteryVoltage,
+                      (u16)RobotStatusFlag::HEAD_IN_POS | (u16)RobotStatusFlag::LIFT_IN_POS, // status,
+                      0, // lastPathID,
+                      0, // cliffDataRaw,
+                      0, // currPathSegment,
+                      0); // numFreeSegmentSlots)
+  
+  lastResult = robot.UpdateFullRobotState(stateMsg);
+  ASSERT_EQ(lastResult, RESULT_OK);
+  
+  // For faking observations of two blocks, one closer, one far
+  const ObjectType farType = ObjectType::Block_LIGHTCUBE1;
+  const ObjectType closeType = ObjectType::Block_LIGHTCUBE2;
+  const Block_Cube1x1 farCube(farType);
+  const Block_Cube1x1 closeCube(closeType);
+  const Vision::Marker::Code farCode   = farCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
+  const Vision::Marker::Code closeCode = closeCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
+  
+  const Quad2f farCorners{
+    Point2f(213,111),  Point2f(214,158),  Point2f(260,111),  Point2f(258,158)
+  };
+  
+  const Quad2f closeCorners{
+    Point2f( 67,117),  Point2f( 70,185),  Point2f(136,116),  Point2f(137,184)
+  };
+  
+  const ObjectID farID = robot.GetBlockWorld().AddActiveObject(0, 0, ActiveObjectType::OBJECT_CUBE1);
+  ASSERT_TRUE(farID.IsSet());
+  
+  const ObjectID closeID = robot.GetBlockWorld().AddActiveObject(1, 1, ActiveObjectType::OBJECT_CUBE2);
+  ASSERT_TRUE(closeID.IsSet());
+  
+  // Camera calibration
+  const u16 HEAD_CAM_CALIB_WIDTH  = 320;
+  const u16 HEAD_CAM_CALIB_HEIGHT = 240;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 290.f;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 290.f;
+  const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
+  const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
+  
+  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  
+  robot.GetVisionComponent().SetCameraCalibration(camCalib);
+  
+  // Enable "vision while moving" so that we don't have to deal with trying to compute
+  // angular velocities, since we don't have real state history to do so.
+  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+
+  VisionProcessingResult procResult;
+  
+  // See far block and localize to it.
+  TimeStamp_t fakeTime = 10;
+  
+  // After seeing three times, should be Known and localizable
+  const s32 kNumObservations = 5;
+  
+  lastResult = ObserveMarkerHelper(kNumObservations, {{farCode, farCorners}},
+                                   fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // Should have a "far" object present in block world now
+  filter.SetAllowedTypes({farType});
+  const ObservableObject* matchingObject = robot.GetBlockWorld().FindMatchingObject(filter);
+  ASSERT_NE(nullptr, matchingObject);
+  
+  const ObjectID obsFarID = matchingObject->GetID();
+  ASSERT_EQ(farID, obsFarID);
+  
+  // Should be localized to "far" object
+  ASSERT_EQ(farID, robot.GetLocalizedTo());
+  
+  // Delocalize the robot
+  const bool isCarryingObject = false;
+  robot.Delocalize(isCarryingObject);
+  
+  // Now just see the close block by itself
+  lastResult = ObserveMarkerHelper(kNumObservations, {{closeCode, closeCorners}},
+                                   fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // Should have a "close" object present
+  filter.SetAllowedTypes({closeType});
+  matchingObject = robot.GetBlockWorld().FindMatchingObject(filter);
+  ASSERT_NE(nullptr, matchingObject);
+  
+  const ObjectID obsCloseID = matchingObject->GetID();
+  ASSERT_EQ(closeID, obsCloseID);
+  
+  // Should be localized to "close" object
+  ASSERT_EQ(closeID, robot.GetLocalizedTo());
+  
+  // Now let the robot see both objects at the same time
+  lastResult = ObserveMarkerHelper(kNumObservations, {{farCode, farCorners}, {closeCode, closeCorners}},
+                                   fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // Should have both objects
+  filter.SetAllowedTypes({farType, closeType});
+  std::vector<ObservableObject*> matchingObjects;
+  robot.GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
+  ASSERT_EQ(2, matchingObjects.size());
+  
+  // Far object should now be Known pose state
+  matchingObject = robot.GetBlockWorld().GetObjectByID(farID);
+  ASSERT_NE(nullptr, matchingObject);
+  ASSERT_TRUE(matchingObject->IsPoseStateKnown());
+  
+  // "Move" the robot so it will relocalize
+  lastResult = FakeRobotMovement(robot, stateMsg, fakeTime);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // Seeing both objects again, now that we've moved, should relocalize (and not crash!)
+  lastResult = ObserveMarkerHelper(1, {{farCode, farCorners}, {closeCode, closeCorners}},
+                                   fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // Should end up localized to the close object
+  ASSERT_EQ(closeID, robot.GetLocalizedTo());
+  
+} // BlockWorld.UpdateObjectOrigins
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(BlockWorld, CubeStacks)
 {
   using namespace Anki;
@@ -447,6 +661,7 @@ class BlockWorldTest : public ::testing::TestWithParam<const char*>
 
 #define DISPLAY_ERRORS 0
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // This is the parameterized test, instantiated with a list of Json files below
 TEST_P(BlockWorldTest, BlockAndRobotLocalization)
 {
@@ -835,6 +1050,7 @@ const char *visionTestJsonFiles[] = {
   "visionTest_OffTheMat.json"
 };
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(FactoryTest, IdealCameraPose)
 {
   using namespace Anki;
@@ -938,6 +1154,7 @@ TEST(FactoryTest, IdealCameraPose)
   
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(FactoryTest, FindDotsInImages)
 {
   using namespace Anki;
