@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
+using Anki.Cozmo.ExternalInterface;
+
 
 public class SearchForCozmoFailedScreen : MonoBehaviour {
   public System.Action OnEndpointFound;
@@ -18,6 +20,9 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
   private Anki.UI.AnkiTextLabel _DeviceIdLabel;
 
   [SerializeField]
+  private Anki.UI.AnkiTextLabel _AppVerLabel;
+
+  [SerializeField]
   private WifiInstructionsView _WifiInstructionsViewPrefab;
   private WifiInstructionsView _WifiInstructionsViewInstance;
 
@@ -30,6 +35,8 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
   private void Awake() {
     _ShowMeButton.Initialize(HandleShowMeButton, "show_me_button", "search_for_cozmo_failed_screen");
     _GetACozmoButton.Initialize(HandleGetACozmoButton, "get_a_cozmo_button", "search_for_cozmo_failed_screen");
+    RobotEngineManager.Instance.AddCallback<DeviceDataMessage>(HandleDeviceDataMessage);
+    RobotEngineManager.Instance.SendRequestDeviceData();
 
     Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Connect_Fail);
 
@@ -51,13 +58,25 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
     else {
       _DeviceIdLabel.gameObject.SetActive(false);
     }
+
     DasTracker.Instance.TrackSearchForCozmoFailed();
+  }
+
+  // Set up our BuildVersion to be based on the DeviceData received
+  private void HandleDeviceDataMessage(DeviceDataMessage message) {
+    for (int i = 0; i < message.dataList.Length; ++i) {
+      Anki.Cozmo.DeviceDataPair currentPair = message.dataList[i];
+      if (currentPair.dataType == Anki.Cozmo.DeviceDataType.BuildVersion) {
+        _AppVerLabel.FormattingArgs = new object[] { currentPair.dataValue };
+      }
+    }
   }
 
   private void OnDestroy() {
     if (_WifiInstructionsViewInstance != null) {
       UIManager.CloseViewImmediately(_WifiInstructionsViewInstance);
     }
+    RobotEngineManager.Instance.RemoveCallback<DeviceDataMessage>(HandleDeviceDataMessage);
   }
 
   private void HandleGetACozmoButton() {

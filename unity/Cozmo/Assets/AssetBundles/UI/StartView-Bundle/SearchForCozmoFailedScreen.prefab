@@ -28,7 +28,7 @@ GameObject:
   - 222: {fileID: 22258198}
   - 114: {fileID: 11496856}
   m_Layer: 5
-  m_Name: SerialLabel
+  m_Name: AppVerLabel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -46,6 +46,23 @@ GameObject:
   - 114: {fileID: 11437952}
   m_Layer: 5
   m_Name: DeviceIdLabel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!1 &147118
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22443132}
+  - 222: {fileID: 22219760}
+  - 114: {fileID: 11447960}
+  m_Layer: 5
+  m_Name: SerialLabel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -275,6 +292,41 @@ MonoBehaviour:
   m_Text: 'Device ID: CF2DAA25-8353'
   _AllUppercase: 0
   GlowText: 0
+--- !u!114 &11447960
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 147118}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.9803922, g: 0.822, b: 0, a: 1}
+  m_RaycastTarget: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+  m_FontData:
+    m_Font: {fileID: 12800000, guid: 6ef5f80c68ce34039a34f24769e5dc26, type: 3}
+    m_FontSize: 56
+    m_FontStyle: 0
+    m_BestFit: 0
+    m_MinSize: 5
+    m_MaxSize: 64
+    m_Alignment: 5
+    m_AlignByGeometry: 0
+    m_RichText: 1
+    m_HorizontalOverflow: 0
+    m_VerticalOverflow: 0
+    m_LineSpacing: 1
+  m_Text: 'CozmoID: 123456'
+  _AllUppercase: 0
+  GlowText: 0
 --- !u!114 &11455932
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -333,7 +385,6 @@ MonoBehaviour:
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!114 &11473130
 MonoBehaviour:
@@ -348,8 +399,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _ShowMeButton: {fileID: 0}
   _GetACozmoButton: {fileID: 11461732}
-  _LastCozmoLabel: {fileID: 11496856}
+  _LastCozmoLabel: {fileID: 11447960}
   _DeviceIdLabel: {fileID: 11437952}
+  _AppVerLabel: {fileID: 11496856}
   _WifiInstructionsViewPrefab: {fileID: 11483990, guid: a1b31871efbb945608143b5ebf5b66e8,
     type: 2}
 --- !u!114 &11495660
@@ -397,7 +449,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'CozmoID: 123456'
+  m_Text: '#settings.versionPanel.label.appVersion'
   _AllUppercase: 0
   GlowText: 0
 --- !u!222 &22202004
@@ -412,6 +464,12 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 129366}
+--- !u!222 &22219760
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 147118}
 --- !u!222 &22238816
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -442,6 +500,24 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 157048}
+--- !u!224 &22443132
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 147118}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 22448706}
+  m_RootOrder: 4
+  m_AnchorMin: {x: 1, y: 0}
+  m_AnchorMax: {x: 1, y: 0}
+  m_AnchoredPosition: {x: -678.5, y: 165.49994}
+  m_SizeDelta: {x: 1300, y: 89}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22444276
 RectTransform:
   m_ObjectHideFlags: 1
@@ -476,6 +552,7 @@ RectTransform:
   - {fileID: 22461808}
   - {fileID: 22444276}
   - {fileID: 22457250}
+  - {fileID: 22443132}
   - {fileID: 22493888}
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -499,7 +576,7 @@ RectTransform:
   m_RootOrder: 3
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -678.5, y: 165.49994}
+  m_AnchoredPosition: {x: -678.4978, y: 254}
   m_SizeDelta: {x: 1300, y: 89}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22461808
@@ -587,7 +664,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22448706}
-  m_RootOrder: 4
+  m_RootOrder: 5
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: -678.49994, y: 76.49994}
