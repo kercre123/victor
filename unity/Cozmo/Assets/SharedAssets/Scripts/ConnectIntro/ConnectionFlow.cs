@@ -66,7 +66,7 @@ public class ConnectionFlow : MonoBehaviour {
 
   private bool _scanLoopPlaying = false;
 
-  private void Start() {
+  private void Awake() {
     Cozmo.PauseManager.Instance.gameObject.SetActive(false);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(Disconnected);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotConnectionResponse>(RobotConnectionResponse);
@@ -80,6 +80,13 @@ public class ConnectionFlow : MonoBehaviour {
     if (Cozmo.PauseManager.Instance != null) {
       Cozmo.PauseManager.Instance.gameObject.SetActive(true);
     }
+  }
+
+  private void OnApplicationPause(bool bPause) {
+    // manually tell engine we are paused/unpaused because we disabled pause manager.
+    RobotEngineManager.Instance.SendGameBeingPaused(bPause);
+    // flush the message to make sure it is sent
+    RobotEngineManager.Instance.FlushChannelMessages();
   }
 
   private void Cleanup() {
