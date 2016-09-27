@@ -66,7 +66,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State functions
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void TransitionToPickUpObject(Robot& robot);   // state when we are ready to go pick up a cube
+  void TransitionToPickUpObject(Robot& robot, int attempt);   // state when we are ready to go pick up a cube
   void TransitionToObjectPickedUp(Robot& robot); // state when the object is picked up
   
 protected:

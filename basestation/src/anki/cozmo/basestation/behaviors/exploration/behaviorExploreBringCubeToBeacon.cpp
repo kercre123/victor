@@ -253,7 +253,8 @@ Result BehaviorExploreBringCubeToBeacon::InitInternal(Robot& robot)
   else
   {
     // we are not currently carrying one, pick up one
-    TransitionToPickUpObject(robot);
+    const int attemptNumber = 1;
+    TransitionToPickUpObject(robot, attemptNumber);
   }
   
   // this is now a valid situation. We started the behavior but did not find valid poses. It should have flagged
@@ -283,7 +284,7 @@ void BehaviorExploreBringCubeToBeacon::StopInternal(Robot& robot)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(Robot& robot)
+void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(Robot& robot, int attempt)
 {
   if ( !_candidateObjects.empty() )
   {
@@ -332,7 +333,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(Robot& robot)
 
     // fire action with proper callback
     DriveToPickupObjectAction* pickUpAction = new DriveToPickupObjectAction(robot, _selectedObjectID );
-    RobotCompletedActionCallback onPickUpActionResult = [this, &robot, isRetry](const ExternalInterface::RobotCompletedAction& actionRet)
+    RobotCompletedActionCallback onPickUpActionResult = [this, &robot, attempt](const ExternalInterface::RobotCompletedAction& actionRet)
     {
       // arguably here we could check isCarrying regardless of action result. Even if the action failed, as long
       // as we are carrying the object we intended to pick up, we should be good
@@ -352,11 +353,12 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(Robot& robot)
           // not sure what failed on pick up, but we are carrying the object, so continue to next state
           TransitionToObjectPickedUp( robot );
         }
-        else if ( !isRetry )
+        else if ( attempt < kMaxAttempts )
         {
-          PRINT_CH_INFO("Behaviors", (GetName() + ".onPickUpActionResult.RetryMaybe").c_str(), "Let's try to pick up '%d' again", _selectedObjectID.GetValue());
+          PRINT_CH_INFO("Behaviors", (GetName() + ".onPickUpActionResult.RetryMaybe").c_str(), "Let's try to pick up '%d' again (%d tries out of %d)",
+            _selectedObjectID.GetValue(), attempt, kMaxAttempts);
           // something else failed, maybe we failed to align with the cube, try to pick up the cube again
-          TransitionToPickUpObject( robot );
+          TransitionToPickUpObject( robot, attempt+1 );
         }
         else
         {
