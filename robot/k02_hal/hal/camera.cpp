@@ -21,6 +21,8 @@ extern DropToWiFi* spi_write_buff;  // To save RAM, we write directly into spi_w
 static u32 frameNumber = 0;
 static u16 line = 0;
 
+extern volatile bool is_write_buff_final;   // See spi.cpp for details (this deserves a better fix)
+
 namespace Anki
 {
   namespace Cozmo
@@ -383,6 +385,7 @@ void FTM2_IRQHandler(void)
   HALExec();
 
   // Don't touch registers or dmabuff_ after this point!
+  HALSafe();
   
   // Kick-off the JPEG encoder at a lower priority
   SCB->ICSR |= SCB_ICSR_PENDSVSET_Msk;
@@ -397,6 +400,9 @@ void PendSV_Handler(void)
 
   SCB->ICSR |= SCB_ICSR_PENDSVCLR_Msk;  // Acknowledge the interrupt
 
+  // If write buffer is already full, there's no room for JPEG data, so just skip it
+  if (is_write_buff_final)  return;
+  
   // Run the JPEG encoder for all of the remaining time
   int eof = 0, buflen;   
 #if defined(ENABLE_JPEG)
@@ -445,10 +451,6 @@ void PendSV_Handler(void)
   #endif  
   #endif
 #endif
-
-  // These are HAL functions that do not access registers, and are therefor safe
-  // to run after the JPEG encoder
-  HALSafe();
 
   // Advance line pointer
   line++;

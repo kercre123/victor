@@ -35,7 +35,7 @@ transmissionWord spi_rx_buff[RX_SIZE];
 // When true, write_buff belongs to foreground ISR - only foreground ISR sets it false
 // When false, write_buff belongs to background ISR (which finalizes write_buff) - only background ISR sets it true
 // In case of a race, the other side will skip one whole drop without touching write_buff
-static volatile bool is_write_buff_final = false;
+volatile bool is_write_buff_final = false;
 
 static bool audioUpdated = false;
 static uint8_t AudioBackBuffer[MAX_AUDIO_BYTES_PER_DROP];
