@@ -1554,6 +1554,8 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::StopRobotForSdk& 
     robot->GetActionList().Cancel();
     robot->GetAnimationStreamer().SetIdleAnimation(AnimationTrigger::Count);
     robot->GetMoveComponent().StopAllMotors();
+    robot->GetLightsComponent().TurnOffBackpackLights();
+    robot->GetLightsComponent().StopLoopingBackpackLights();
   }
 }
 
