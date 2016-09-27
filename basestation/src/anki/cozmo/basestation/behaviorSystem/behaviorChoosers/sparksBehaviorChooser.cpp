@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPlayArbitraryAnim.h"
 #include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeObject.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/components/lightsComponent.h"
@@ -48,6 +49,12 @@ SparksBehaviorChooser::SparksBehaviorChooser(Robot& robot, const Json::Value& co
 {
   ReloadFromConfig(robot, config);
 
+  // be able to reset the objects that Cozmo has reacted to when a spark starts
+  IBehavior* acknowledgeObjectBehavior = robot.GetBehaviorFactory().FindBehaviorByName("AcknowledgeObject");
+  assert(dynamic_cast< BehaviorAcknowledgeObject* >(acknowledgeObjectBehavior));
+  _behaviorAcknowledgeObject = static_cast< BehaviorAcknowledgeObject* >(acknowledgeObjectBehavior);
+  ASSERT_NAMED( nullptr != _behaviorAcknowledgeObject, "SparksBehaviorChooser.BehaviorAcknowledgeObjectNotFound" );
+  
   // Listen for behavior objective achieved messages for spark repetitions counter
   if(robot.HasExternalInterface()) {
     auto helper = MakeAnkiEventUtil(*robot.GetExternalInterface(), *this, _signalHandles);
@@ -119,6 +126,11 @@ void SparksBehaviorChooser::OnSelected()
     _robot.GetLightsComponent().StartLoopingBackpackLights(kLoopingSparkLights);
 
     _idleAnimationsSet = true;
+  }
+  
+  // Have Cozmo look up after seeing objects for the first time while sparked in case the user is trying to help
+  if(_behaviorAcknowledgeObject != nullptr){
+    _behaviorAcknowledgeObject->ResetReactionData();
   }
   
   // Turn off reactionary behaviors that could interrupt the spark

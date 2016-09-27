@@ -26,6 +26,7 @@ class IBehavior;
 class MoodManager;
 class Robot;
 class BehaviorPlayArbitraryAnim;
+class BehaviorAcknowledgeObject;
 template <typename Type> class AnkiEvent;
   
 // A behavior chooser which handles soft sparking, intro/outro and relies on simple behavior chooser otherwise
@@ -78,6 +79,8 @@ private:
   
   // Created with factory
   BehaviorPlayArbitraryAnim* _behaviorPlayAnimation = nullptr;
+  // To clear objects to be acknowledged when sparked
+  BehaviorAcknowledgeObject* _behaviorAcknowledgeObject = nullptr;
   
   // Re-set each time spark is activated
   TimeStamp_t _timeChooserStarted;

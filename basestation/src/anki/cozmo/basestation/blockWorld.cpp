@@ -76,12 +76,14 @@
 namespace Anki {
 namespace Cozmo {
 
-const float kOnGroundStackTolerence = ON_GROUND_HEIGHT_TOL_MM;
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper namespace
 namespace {
 
+const float kOnGroundTolerenceStackBlockOnly = 2*ON_GROUND_HEIGHT_TOL_MM;
+
+  
 // return the content type we would set in the memory type for each object family
 NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily family, bool isAdding)
 {
@@ -1422,7 +1424,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
                               return false;
                             }
                             
-                            if(!blockPtr->IsRestingAtHeight(0, kOnGroundStackTolerence)){
+                            if(!blockPtr->IsRestingAtHeight(0, kOnGroundTolerenceStackBlockOnly)){
                               return false;
                             }
 

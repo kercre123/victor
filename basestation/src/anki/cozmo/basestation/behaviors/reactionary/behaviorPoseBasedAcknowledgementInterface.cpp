@@ -380,6 +380,13 @@ void IBehaviorPoseBasedAcknowledgement::RobotReactedToId(const Robot& robot, s32
                       id);
   }
 }
+  
+void IBehaviorPoseBasedAcknowledgement::ResetReactionData()
+{
+  for(auto reaction : _reactionData){
+    reaction.second.lastReactionTime_ms = 0;
+  }
+}
 
 void IBehaviorPoseBasedAcknowledgement::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
 {
@@ -387,10 +394,7 @@ void IBehaviorPoseBasedAcknowledgement::AlwaysHandleInternal(const EngineToGameE
   {
     case EngineToGameTag::RobotDelocalized:
     {
-      // only update target blocks if we are running
-      for(auto reaction : _reactionData){
-        reaction.second.lastReactionTime_ms = 0;
-      }
+      ResetReactionData();
       break;
     }
       
