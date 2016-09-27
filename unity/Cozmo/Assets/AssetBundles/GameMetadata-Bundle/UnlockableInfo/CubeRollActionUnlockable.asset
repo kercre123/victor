@@ -16,8 +16,8 @@ MonoBehaviour:
     _EnumValue: 9
   UnlockableType: 1
   Prerequisites:
-  - _EnumValueAsString: QuickTapGame
-    _EnumValue: 18
+  - _EnumValueAsString: PounceOnMotionAction
+    _EnumValue: 12
   AnyPrereqUnlock: 0
   _ComingSoon: 0
   _HideInUI: 0
@@ -51,4 +51,4 @@ MonoBehaviour:
   CoreUpgradeOverlayIcon: {fileID: 21300000, guid: 81cf534c428d445d9bcd1c5adfdd64c0,
     type: 3}
   CubesRequired: 1
-  SortOrder: 300
+  SortOrder: 400
