@@ -399,19 +399,20 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
   protected override void Update() {
     base.Update();
+    if (RobotEngineManager.Instance != null) {
+      IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+      if (robot != null && robot.IsSparked && robot.SparkUnlockId == _UnlockInfo.Id.Value) {
+        _ButtonPromptDescription.gameObject.SetActive(false);
+        _ButtonPromptTitle.gameObject.SetActive(true);
+        _ButtonPromptTitle.text = Localization.Get(LocalizationKeys.kSparksSparked);
+      }
 
-    IRobot robot = RobotEngineManager.Instance.CurrentRobot;
-    if (robot != null && robot.IsSparked && robot.SparkUnlockId == _UnlockInfo.Id.Value) {
-      _ButtonPromptDescription.gameObject.SetActive(false);
-      _ButtonPromptTitle.gameObject.SetActive(true);
-      _ButtonPromptTitle.text = Localization.Get(LocalizationKeys.kSparksSparked);
-    }
-
-    if (robot != null) {
-      _SparkSpinner.gameObject.SetActive(robot.IsSparked);
-      _SparkButtonCostLabel.gameObject.SetActive(!robot.IsSparked);
-      _RequestTrickButtonLabel.gameObject.SetActive(!robot.IsSparked && _RequestTrickButton.IsActive());
-      _RequestTrickButtonIcons.SetActive(!robot.IsSparked && _RequestTrickButton.IsActive());
+      if (robot != null) {
+        _SparkSpinner.gameObject.SetActive(robot.IsSparked);
+        _SparkButtonCostLabel.gameObject.SetActive(!robot.IsSparked);
+        _RequestTrickButtonLabel.gameObject.SetActive(!robot.IsSparked && _RequestTrickButton.IsActive());
+        _RequestTrickButtonIcons.SetActive(!robot.IsSparked && _RequestTrickButton.IsActive());
+      }
     }
 
   }
