@@ -56,7 +56,12 @@ message UiDeviceConnectionWrongVersion {
 message UiDeviceConnectionSuccess {
   UiConnectionType  connectionType,
   uint_32 deviceID,
-  string  buildVersion
+  string  buildVersion,
+  string  sdkModuleVersion,
+  string  pythonVersion,
+  string  pythonImplementation,
+  string  osVersion,
+  string  cpuVersion
 }
 
 message ConnectToRobot {

@@ -94,7 +94,9 @@ void SdkStatus::OnConnectionSuccess(const ExternalInterface::UiDeviceConnectionS
 {
   if (!_isConnected)
   {
-    Util::sEventF("robot.sdk_connection_started", {}, "");
+    Util::sEventF("robot.sdk_connection_started", {{DDATA, message.sdkModuleVersion.c_str()}}, "%s", message.buildVersion.c_str());
+    Util::sEventF("robot.sdk_python_version", {{DDATA, message.pythonVersion.c_str()}}, "%s", message.pythonImplementation.c_str());
+    Util::sEventF("robot.sdk_system_version", {{DDATA, message.osVersion.c_str()}}, "%s", message.cpuVersion.c_str());
     
     _isConnected = true;
     _numCommandsSentOverConnection = 0;

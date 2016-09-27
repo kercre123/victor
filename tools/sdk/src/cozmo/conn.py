@@ -3,8 +3,7 @@
 __all__ = ['EvtRobotFound', 'CozmoConnection', 'requires_cozmo_off_charger']
 
 
-import asyncio
-import re
+import platform
 
 from . import logger
 from . import anim
@@ -12,6 +11,7 @@ from . import clad_protocol
 from . import event
 from . import exceptions
 from . import robot
+from . import version
 
 from . import _clad
 from ._clad import _clad_to_engine_cozmo, _clad_to_engine_iface, _clad_to_game_cozmo, _clad_to_game_iface
@@ -225,7 +225,13 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
             connection_success_msg = _clad_to_engine_iface.UiDeviceConnectionSuccess(
                 connectionType=msg.connectionType,
                 deviceID=msg.deviceID,
-                buildVersion = _build_version + "_" + str(_sdk_version))
+                buildVersion = _build_version + "_" + str(_sdk_version),
+                sdkModuleVersion = version.__version__,
+                pythonVersion = platform.python_version(),
+                pythonImplementation = platform.python_implementation(),
+                osVersion = platform.platform(),
+                cpuVersion = platform.machine())
+
             self.send_msg(connection_success_msg)
         else:
             logger.error('Your Python and C++ CLAD versions do not match - connection refused')
