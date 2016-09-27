@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/actions/flipBlockAction.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -35,11 +36,16 @@ static const char* const kPutDownTrigger = "knockOverPutDownTrigger";
 static const char* const kMinimumStackHeight = "minimumStackHeight";
 static const char* const kIsReactionaryConfigFlag = "isReactionary";
 
+namespace {
 const int kMaxNumRetries = 1;
 const int kMinThresholdRealign = 10;
 const int kMinBlocksForSuccess = 1;
 const float kWaitForBlockUpAxisChangeSecs = 0.5f;
 const f32 kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad = RAD_TO_DEG_F32(90.f);
+const f32 kDelayBetweenSparkPeriodicChecks_sec = 0.25f;
+  
+}
+
 
 CONSOLE_VAR(f32, kBKS_headAngleForKnockOver_deg, "Behavior.AdmireStack", -14.0f);
 CONSOLE_VAR(f32, kBKS_distanceToTryToGrabFrom_mm, "Behavior.AdmireStack", 85.0f);
@@ -52,6 +58,7 @@ namespace Cozmo {
 BehaviorKnockOverCubes::BehaviorKnockOverCubes(Robot& robot, const Json::Value& config)
   : IReactionaryBehavior(robot, config)
   , _objectObservedChanged(false)
+  , _nextCheckForStackSparked_sec(0)
   , _lastObservedObject(-1)
   , _numRetries(0)
   , _isReactionary(true)
@@ -88,7 +95,14 @@ bool BehaviorKnockOverCubes::IsRunnableInternalReactionary(const Robot& robot) c
     return false;
   }
   
-  if(_objectObservedChanged){
+  const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() ;
+  const bool sparkIntervalCheck = _shouldStreamline && _nextCheckForStackSparked_sec < currentTime_sec;
+  
+  if(sparkIntervalCheck){
+    _nextCheckForStackSparked_sec = currentTime_sec + kDelayBetweenSparkPeriodicChecks_sec;
+  }
+  
+  if(_objectObservedChanged || sparkIntervalCheck){
     _objectObservedChanged = false;
     UpdateTargetStack(robot);
     return CheckIfRunnable();

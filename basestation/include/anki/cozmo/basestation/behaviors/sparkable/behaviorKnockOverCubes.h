@@ -54,6 +54,7 @@ private:
   mutable ObjectID _baseBlockID;
   mutable uint8_t _stackHeight;
   mutable bool _objectObservedChanged;
+  mutable float _nextCheckForStackSparked_sec;
   // For checking computational switch
   ObjectID _lastObservedObject;
   
