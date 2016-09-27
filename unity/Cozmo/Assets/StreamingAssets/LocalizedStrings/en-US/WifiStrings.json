@@ -24,6 +24,12 @@
   "wifiStrings.Instructions.SlideA.altCopy": {
     "translation": "READ ALL INSTRUCTIONS FIRST"
   },
+  "wifiStrings.Instructions.SlideB": {
+    "translation": "Let's make sure Cozmo is powered on"
+  },
+  "wifiStrings.Instructions.SlideB.altCopy": {
+    "translation": "Remove then replace him on the charger"
+  },
   "wifiStrings.Instructions.Slide0": {
     "translation": "Find and tap your device's Settings icon"
   },
@@ -73,7 +79,7 @@
     "translation": "Having trouble connecting to Cozmo's WiFi?"
   },
   "wifi.gethelp.description": {
-    "translation": "Try the following:\n\n1. Turn your device's WiFi OFF then back ON\n2. Remove then replace Cozmo on his charger"
+    "translation": "Try the following:\n\n1. Remove then replace Cozmo on his charger\n2. Turn your device's WiFi OFF then back ON"
   },
   "wifi.gethelp.description2": {
     "translation": "If you need to see Cozmo's network info, raise and lower his lift"

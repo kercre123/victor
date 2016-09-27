@@ -731,6 +731,8 @@ public static class LocalizationKeys {
 
   public const string kWifiStringsInstructionsSlideATitleCopy = "wifiStrings.Instructions.SlideA.titleCopy";
   public const string kWifiStringsInstructionsSlideAAltCopy = "wifiStrings.Instructions.SlideA.altCopy";
+  public const string kWifiStringsInstructionsSlideB = "wifiStrings.Instructions.SlideB";
+  public const string kWifiStringsInstructionsSlideBAltCopy = "wifiStrings.Instructions.SlideB.altCopy";
   public const string kWifiStringsInstructionsSlide0 = "wifiStrings.Instructions.Slide0";
   public const string kWifiStringsInstructionsSlide0altCopy = "wifiStrings.Instructions.Slide0altCopy";
   public const string kWifiStringsInstructionsSlide0Android = "wifiStrings.Instructions.Slide0Android";

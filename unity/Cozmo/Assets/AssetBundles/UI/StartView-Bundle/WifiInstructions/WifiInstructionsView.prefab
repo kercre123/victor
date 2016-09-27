@@ -165,6 +165,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _SlidePrefabs:
   - {fileID: 170546, guid: ebc1f016fd99c445d8166d9d656f76f2, type: 2}
+  - {fileID: 170546, guid: 7443fe3018272437987092c20d4b1eb2, type: 2}
   - {fileID: 170546, guid: 9ebd2cd21286543298336f6690c0f4c5, type: 2}
   - {fileID: 166310, guid: 55383874563894ad592ee15798b806df, type: 2}
   - {fileID: 112936, guid: 92d815d3c7aa94d1faf8b5b0fa2c46aa, type: 2}
@@ -386,8 +387,8 @@ MonoBehaviour:
   _DASEventViewType: 0
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
+  _LayerPriority: 0
   DimBackground: 0
-  DimBackgroundPrefabOverride: {fileID: 0}
   _OpenAudioEvent:
     _Event: Invalid
     _EventType: GenericEvent
