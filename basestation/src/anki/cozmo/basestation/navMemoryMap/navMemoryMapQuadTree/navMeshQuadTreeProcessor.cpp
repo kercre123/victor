@@ -407,6 +407,8 @@ void NavMeshQuadTreeProcessor::GetBorders(ENodeContentType innerType, ENodeConte
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NavMeshQuadTreeProcessor::HasCollisionRayWithTypes(const Point2f& rayFrom, const Point2f& rayTo, ENodeContentTypePackedType types) const
 {
+  ANKI_CPU_PROFILE("NavMeshQuadTreeProcessor::HasCollisionRayWithTypesNonRecursive");
+
   // search from root
   const bool ret = HasCollisionRayWithTypes(_root, rayFrom, rayTo, types);
   return ret;
@@ -417,7 +419,7 @@ bool NavMeshQuadTreeProcessor::HasCollisionRayWithTypes(const NavMeshQuadTreeNod
 {
   // this function could be easily optimized by using axis-aligned math available in NavMeshQuadTreeNode. Adding profile
   // here to prove that we need to
-  ANKI_CPU_PROFILE("NavMeshQuadTreeProcessor::HasCollisionRayWithTypes");
+  // ANKI_CPU_PROFILE("NavMeshQuadTreeProcessor::HasCollisionRayWithTypesRecursive"); // recursive functions are not properly tracked. Moving to caller
 
   // does this node match the types we are looking for?
   const ENodeContentType curNodeType = node->GetContentType();
