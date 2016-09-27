@@ -654,7 +654,10 @@ public abstract class GameBase : MonoBehaviour {
 
   public void CloseMinigameImmediately() {
     DAS.Info(this, "Close Minigame Immediately");
-    RewardedActionManager.Instance.SendPendingRewardsToInventory();
+    // If quitting early from a minigame, clear the pending action rewards, they should not be rewarded
+    if (!_ResultsViewReached && _ChallengeData.IsMinigame) {
+      RewardedActionManager.Instance.ResetPendingRewards();
+    }
     _SharedMinigameViewInstance.CloseViewImmediately();
     CleanUp();
   }
@@ -722,9 +725,6 @@ public abstract class GameBase : MonoBehaviour {
 
   protected void RaiseMiniGameQuit() {
     _StateMachine.Stop();
-    if (!_ResultsViewReached) {
-      RewardedActionManager.Instance.SendPendingRewardsToInventory();
-    }
     DAS.Event(DASConstants.Game.kQuit, null);
     SendCustomEndGameDasEvents();
 
@@ -734,7 +734,10 @@ public abstract class GameBase : MonoBehaviour {
       AddToTotalGamesPlayed();
       GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeComplete, _ChallengeData.ChallengeID, _CurrentDifficulty, true, PlayerScore, CozmoScore, IsHighIntensityRound()));
     }
-
+    // If quitting early from a minigame, clear the pending action rewards, they should not be rewarded
+    if (!_ResultsViewReached && _ChallengeData.IsMinigame) {
+      RewardedActionManager.Instance.ResetPendingRewards();
+    }
     QuitMinigame();
   }
 
@@ -800,7 +803,7 @@ public abstract class GameBase : MonoBehaviour {
     if (RewardedActionManager.Instance.RewardPending || RewardedActionManager.Instance.NewDifficultyPending) {
       SharedMinigameView.HidePlayerScoreboard();
       SharedMinigameView.HideCozmoScoreboard();
-      RewardedActionManager.Instance.ResolveTagRewardCollisions();
+      RewardedActionManager.Instance.PendingActionRewards = RewardedActionManager.Instance.ResolveTagRewardCollisions(RewardedActionManager.Instance.PendingActionRewards);
       SharedMinigameView.ShowContinueButtonOffset(HandleChallengeResultViewClosed,
         Localization.GetWithArgs(LocalizationKeys.kRewardCollectCollectEnergy, RewardedActionManager.Instance.TotalPendingEnergy),
         Localization.Get(LocalizationKeys.kRewardCollectInstruction),

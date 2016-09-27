@@ -528,7 +528,7 @@ namespace Cozmo.HomeHub {
         source = _EnergyRewardStart_CozmoTab;
       }
       if (RewardedActionManager.Instance.RewardPending) {
-        RewardedActionManager.Instance.ResolveTagRewardCollisions();
+        RewardedActionManager.Instance.PendingActionRewards = RewardedActionManager.Instance.ResolveTagRewardCollisions(RewardedActionManager.Instance.PendingActionRewards);
         _RewardSequence = EnergyRewardsBurst(RewardedActionManager.Instance.TotalPendingEnergy, source, _RewardSequence);
       }
       // Prevent stray reward particles from being forgotten by dotween bug

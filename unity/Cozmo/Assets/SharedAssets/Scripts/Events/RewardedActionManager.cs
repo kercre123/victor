@@ -152,7 +152,7 @@ public class RewardedActionManager : MonoBehaviour {
       for (int i = 0; i < rewardList.Count; i++) {
         RewardedActionData reward = rewardList[i];
         if (RewardConditionsMet(reward, cozEvent)) {
-          DAS.Event("meta.energy_reward", cozEvent.GameEventEnum.ToString(), DASUtil.FormatExtraData(reward.Reward.Amount.ToString ()));
+          DAS.Event("meta.energy_reward", cozEvent.GameEventEnum.ToString(), DASUtil.FormatExtraData(reward.Reward.Amount.ToString()));
           if (!PendingActionRewards.ContainsKey(reward)) {
             PendingActionRewards.Add(reward, reward.Reward.Amount);
           }// If not using a valid tag, allow the reward to stack if trigger multiple times
@@ -201,58 +201,63 @@ public class RewardedActionManager : MonoBehaviour {
   }
 
   /// <summary>
-  /// Checks the full list for collisions, at this point these should all
-  /// be different Ids that are stacked based on how many times they were
-  /// triggered midgame. Only keep the highest ending value for rewarding.
-  /// Also sorts remaining rewards by value and removes any that aren't
-  /// the top X rewards, where X is the number we intend to display
-  /// </summary>
-  public void ResolveTagRewardCollisions() {
-    List<string> tagList = TagConfig.GetAllTags();
-    List<RewardedActionData> toClear = new List<RewardedActionData>();
-    for (int i = 0; i < tagList.Count; i++) {
-      // Get rewards that match an existing tag
-      if (TryGetRewardsByTag(tagList[i], out toClear)) {
-        // Remove the highest value one from the tag list and then clear all
-        // remaining in the tag list from the PendingActionRewards
-        RewardedActionData safeOne = GetHighestValueReward(toClear);
-        if (safeOne != null) {
-          toClear.Remove(safeOne);
-          for (int j = 0; j < toClear.Count; j++) {
-            PendingActionRewards.Remove(toClear[j]);
-          }
-        }
-      }
-    }
-  }
-
-  /// <summary>
-  /// Sends the pending rewards to inventory.
+  /// Sends the pending rewards to inventory after resolving existing tag collisions.
   /// </summary>
   public void SendPendingRewardsToInventory() {
-    foreach (RewardedActionData reward in PendingActionRewards.Keys) {
-      DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount(reward.Reward.ItemID, reward.Reward.Amount);
+    PendingActionRewards = ResolveTagRewardCollisions(PendingActionRewards);
+    foreach (KeyValuePair<RewardedActionData, int> reward in PendingActionRewards) {
+      DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount(reward.Key.Reward.ItemID, reward.Value);
     }
     DataPersistenceManager.Instance.Save();
     ResetPendingRewards();
   }
 
-  private bool TryGetRewardsByTag(string Tag, out List<RewardedActionData> foundCollisions) {
-    foundCollisions = new List<RewardedActionData>();
+  /// <summary>
+  /// Checks a dict of rewards for collisions,
+  /// Only keep the highest ending value for rewarding things that share a tag.
+  /// Also sorts remaining rewards by value and removes any that aren't
+  /// the top X rewards, where X is the number we intend to display
+  /// </summary>
+  public Dictionary<RewardedActionData, int> ResolveTagRewardCollisions(Dictionary<RewardedActionData, int> rewardsToResolve) {
+    List<string> tagList = TagConfig.GetAllTags();
+    List<KeyValuePair<RewardedActionData, int>> toClear;
+    KeyValuePair<RewardedActionData, int> highestValueRewardPair;
+    for (int i = 0; i < tagList.Count; i++) {
+      // Get rewards that match an existing tag
+      if (TryGetRewardsByTag(rewardsToResolve, tagList[i], out toClear)) {
+        // Remove the highest value one from the tag list and then clear all
+        // remaining in the tag list from the PendingActionRewards
+        if (TryGetHighestValueReward(toClear, out highestValueRewardPair)) {
+          toClear.Remove(highestValueRewardPair);
+          for (int j = 0; j < toClear.Count; j++) {
+            rewardsToResolve.Remove(toClear[j].Key);
+          }
+        }
+      }
+    }
+    return rewardsToResolve;
+  }
+
+  private bool TryGetRewardsByTag(Dictionary<RewardedActionData, int> rewardsToResolve, string Tag, out List<KeyValuePair<RewardedActionData, int>> foundCollisions) {
+    foundCollisions = new List<KeyValuePair<RewardedActionData, int>>();
     // Only bother checking for Valid Tags, if you have blank tag or broken tags ignore tag
     // fire warning if tag is not empty
-    if (!TagConfig.IsValidTag(Tag)) {
+    bool success = false;
+    if (TagConfig.IsValidTag(Tag)) {
+      foreach (KeyValuePair<RewardedActionData, int> reward in rewardsToResolve) {
+        if (reward.Key.Tag == Tag) {
+          foundCollisions.Add(reward);
+        }
+      }
+      success = foundCollisions.Count > 0;
+    }
+    else {
       if (Tag != TagConfig.NoTag && Tag != "") {
         DAS.Warn("RewardedActionManager.TryGetPendingRewardFromTag", "Invalid Tag detected");
       }
-      return false;
+      success = false;
     }
-    foreach (RewardedActionData reward in PendingActionRewards.Keys) {
-      if (reward.Tag == Tag) {
-        foundCollisions.Add(reward);
-      }
-    }
-    return foundCollisions.Count > 0;
+    return success;
   }
 
   /// <summary>
@@ -260,23 +265,27 @@ public class RewardedActionManager : MonoBehaviour {
   /// </summary>
   /// <returns>The highest value reward.</returns>
   /// <param name="rewards">Rewards.</param>
-  private RewardedActionData GetHighestValueReward(List<RewardedActionData> rewards) {
-    if (rewards == null || rewards.Count <= 0) {
-      return null;
-    }
-    RewardedActionData best = rewards[0];
-    for (int i = 0; i < rewards.Count; i++) {
-      int toCompare = 0;
-      if (PendingActionRewards.TryGetValue(rewards[i], out toCompare)) {
-        if (toCompare > PendingActionRewards[best]) {
+  private bool TryGetHighestValueReward(List<KeyValuePair<RewardedActionData, int>> rewards, out KeyValuePair<RewardedActionData, int> best) {
+    best = new KeyValuePair<RewardedActionData, int>();
+    bool success = false;
+    if (rewards != null && rewards.Count > 0) {
+      best = rewards[0];
+      success = true;
+      for (int i = 0; i < rewards.Count; i++) {
+        int toCompare = rewards[i].Value;
+        if (toCompare > best.Value) {
           best = rewards[i];
         }
       }
     }
-    return best;
+    else {
+      DAS.Warn("RewardedActionManager.GetHighestValueReward", "Attempted to get HighestValueReward from empty or NULL rewards list");
+      success = false;
+    }
+    return success;
   }
 
-  private void ResetPendingRewards() {
+  public void ResetPendingRewards() {
     PendingActionRewards.Clear();
     NewDifficultyUnlock = -1;
     NewSkillChange = 0;
