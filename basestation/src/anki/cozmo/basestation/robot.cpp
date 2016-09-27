@@ -621,7 +621,10 @@ void Robot::Delocalize(bool isCarryingObject)
                                          _worldOrigin->GetName().c_str());
   GetContext()->GetVizManager()->EraseAllVizObjects();
   
-      
+  
+  // delete objects that have become useless since we delocalized last time
+  _blockWorld.DeleteObjectsFromZombieOrigins();
+  
   // create a new memory map for this origin
   _blockWorld.CreateLocalizedMemoryMap(_worldOrigin);
   

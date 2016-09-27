@@ -790,6 +790,23 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::DeleteObjectsFromZombieOrigins()
+  {
+    ObjectsByOrigin_t::iterator originIt = _existingObjects.begin();
+    while( originIt != _existingObjects.end() )
+    {
+      const bool isZombie = IsZombiePoseOrigin( originIt->first );
+      if ( isZombie ) {
+        PRINT_CH_INFO("BlockWorld", "DeleteObjectsFromZombieOrigins", "Deleting objects from (%p) because it was zombie", originIt->first);
+        originIt = _existingObjects.erase(originIt);
+      } else {
+        PRINT_CH_DEBUG("BlockWorld", "DeleteObjectsFromZombieOrigins", "Origin (%p) is still good (keeping objects)", originIt->first);
+        ++originIt;
+      }
+    }
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   const INavMemoryMap* BlockWorld::GetNavMemoryMap() const
   {
     // current map (if any) must match current robot origin
