@@ -438,32 +438,35 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleItemValueChanged(string itemId, int delta, int newCount) {
-      if (Cozmo.HexItemList.IsPuzzlePiece(itemId)) {
+      HexItemList hexList = Cozmo.HexItemList.Instance;
+      if (hexList != null && HexItemList.IsPuzzlePiece(itemId)) {
         UpdatePuzzlePieceCount();
       }
       CheckIfUnlockablesAffordableAndUpdateBadge();
     }
 
     private void CheckIfUnlockablesAffordableAndUpdateBadge() {
-      if (ChestRewardManager.Instance.ChestPending) {
+      if (ChestRewardManager.Instance != null && ChestRewardManager.Instance.ChestPending) {
         _AnyUpgradeAffordableIndicator.SetActive(false);
         return;
       }
-      Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-      List<UnlockableInfo> unlockableUnlockData = UnlockablesManager.Instance.GetAvailableAndLocked();
+      if (DataPersistenceManager.Instance != null && UnlockablesManager.Instance != null) {
+        Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+        List<UnlockableInfo> unlockableUnlockData = UnlockablesManager.Instance.GetAvailableAndLocked();
 
-      bool canAffordCozmoUpgrade = false;
-      for (int i = 0; i < unlockableUnlockData.Count; ++i) {
-        // Only check for unlockable actions
-        if (unlockableUnlockData[i].UnlockableType == UnlockableType.Action) {
-          if (playerInventory.CanRemoveItemAmount(unlockableUnlockData[i].UpgradeCostItemId,
-                unlockableUnlockData[i].UpgradeCostAmountNeeded)) {
-            canAffordCozmoUpgrade = true;
-            break;
+        bool canAffordCozmoUpgrade = false;
+        for (int i = 0; i < unlockableUnlockData.Count; ++i) {
+          // Only check for unlockable actions
+          if (unlockableUnlockData[i].UnlockableType == UnlockableType.Action) {
+            if (playerInventory.CanRemoveItemAmount(unlockableUnlockData[i].UpgradeCostItemId,
+                  unlockableUnlockData[i].UpgradeCostAmountNeeded)) {
+              canAffordCozmoUpgrade = true;
+              break;
+            }
           }
         }
+        _AnyUpgradeAffordableIndicator.SetActive(canAffordCozmoUpgrade && _CurrentTab != HomeTab.Cozmo);
       }
-      _AnyUpgradeAffordableIndicator.SetActive(canAffordCozmoUpgrade && _CurrentTab != HomeTab.Cozmo);
     }
 
     #region Freeplay Related GameEvents

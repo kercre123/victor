@@ -102,7 +102,8 @@ public class ChestRewardManager {
   }
 
   private void HandleItemValueChanged(string itemId, int delta, int newCount) {
-    if (itemId == GetChestData().Requirement.ItemId) {
+    ChestData chestData = GetChestData();
+    if (chestData != null && itemId == chestData.Requirement.ItemId) {
       DAS.Event("meta.emotion_chip.state", delta.ToString(), DASUtil.FormatExtraData(newCount.ToString()));
       // see if we need to populate the chest every time we get value updates from the
       // requirement ladder item type.
