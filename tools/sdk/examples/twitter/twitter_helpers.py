@@ -119,7 +119,7 @@ def auth_twitter(twitter_keys):
         cozmo.logger.error("You need to configure your twitter_keys")
 
     auth = tweepy.OAuthHandler(twitter_keys.CONSUMER_KEY, twitter_keys.CONSUMER_SECRET)
-    auth.set_ACCESS_TOKEN(twitter_keys.ACCESS_TOKEN, twitter_keys.ACCESS_TOKEN_SECRET)
+    auth.set_access_token(twitter_keys.ACCESS_TOKEN, twitter_keys.ACCESS_TOKEN_SECRET)
     return auth
 
 
