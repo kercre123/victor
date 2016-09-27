@@ -33,6 +33,7 @@ namespace Onboarding {
     private int _CubesFoundTimes = 0;
     private float _StartTime;
     private OnboardingStateEnum _State = OnboardingStateEnum.Inactive;
+    private BehaviorType _CurrBehavior = BehaviorType.NoneBehavior;
 
     public override void Start() {
       base.Start();
@@ -69,6 +70,7 @@ namespace Onboarding {
     }
 
     private void HandleBehaviorTransition(BehaviorTransition msg) {
+      _CurrBehavior = msg.newBehaviorType;
       if (_State == OnboardingStateEnum.ErrorCozmo) {
         // We're returning to this behavior.
         _ContinueButtonInstance.Interactable = msg.newBehaviorType == BehaviorType.OnboardingShowCube;
@@ -76,8 +78,18 @@ namespace Onboarding {
     }
 
     protected void HandleContinueClicked() {
-      RobotEngineManager.Instance.Message.TransitionToNextOnboardingState = Singleton<TransitionToNextOnboardingState>.Instance;
-      RobotEngineManager.Instance.SendMessage();
+      // If we're in the final error state, then we might have a defective robot that is always doing a reaction
+      // let them continue with just the UI instead of waiting for the engine behavior to send back confirmation
+      // since reactions are preventing the behavior from even running consistently.
+      if (_State == OnboardingStateEnum.ErrorFinal &&
+          _CurrBehavior != BehaviorType.OnboardingShowCube) {
+        OnboardingManager.Instance.GoToNextStage();
+      }
+      else {
+        // Otherwise Engine is in complete control of the next state.
+        RobotEngineManager.Instance.Message.TransitionToNextOnboardingState = Singleton<TransitionToNextOnboardingState>.Instance;
+        RobotEngineManager.Instance.SendMessage();
+      }
     }
 
     private void HandleUpdateOnboardingState(object messageObject) {
