@@ -198,13 +198,7 @@ void BehaviorPickUpCube::TransitionToDriveWithCube(Robot& robot)
   }
   
   StartActing(new TurnInPlaceAction(robot,Radians(turn_rad),false),
-              [this,&robot](ActionResult res) {
-                if(ActionResult::SUCCESS != res) {
-                  FailedToPickupObject(robot);
-                } else {
-                  TransitionToPutDownCube(robot);
-                }
-              });
+                  &BehaviorPickUpCube::TransitionToPutDownCube);
 }
   
 void BehaviorPickUpCube::TransitionToPutDownCube(Robot& robot)
