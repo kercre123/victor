@@ -18,6 +18,8 @@
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "clad/types/animationTrigger.h"
+#include "util/math/constantsAndMacros.h"
+
 
 #include <map>
 
@@ -29,7 +31,9 @@ class IBehaviorPoseBasedAcknowledgement : public IReactionaryBehavior
 public:
 
   virtual bool ShouldResumeLastBehavior() const override { return true; }
-
+  
+  // Allow a behavior chooser to reset reaction data for objects
+  void ResetReactionData();
   
 protected:
   // Note: no public constructor, not directly instantiable, including by BehaviorFactory
