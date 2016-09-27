@@ -362,6 +362,7 @@ enum uint_32 GenericEvent
   Play__Ui__Placeholder = 1840201236,
   Play__Ui__Window_Close = 974187556,
   Play__Ui__Window_Open = 1763539616,
+  Play__Ui__Window_Vertical_Wipe = 931790836,
   Stop__Music__Stop = 148746486,
   Stop__Robot_Sfx__Bpk_Blue_Loop_Stop = 3465206791,
   Stop__Robot_Sfx__Bpk_Green_Loop_Stop = 1179892788,
@@ -721,6 +722,7 @@ enum uint_32 Ui
   Placeholder = 1840201236,
   Window_Close = 974187556,
   Window_Open = 1763539616,
+  Window_Vertical_Wipe = 931790836,
 }
 
 } // GameEvent
