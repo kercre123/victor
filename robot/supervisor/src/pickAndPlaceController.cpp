@@ -153,6 +153,7 @@ namespace Anki {
       {
         mode_ = IDLE;
         DockingController::StopDocking();
+        ProxSensors::EnableCliffDetector(true);
       }
 
       void UpdatePoseSnapshot()
@@ -586,6 +587,7 @@ namespace Anki {
             // Either the robot has pitched up, or timeout
             if (IMUFilter::GetPitch() > 1.2f || HAL::GetTimeStamp() > transitionTime_) {
               SteeringController::ExecuteDirectDrive(0, 0);
+              ProxSensors::EnableCliffDetector(true);
               SendPickAndPlaceResultMessage(true, NO_BLOCK);
               mode_ = IDLE;
             }

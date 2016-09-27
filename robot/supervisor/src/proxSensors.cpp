@@ -177,12 +177,12 @@ namespace Anki {
 
 
       void EnableCliffDetector(bool enable) {
-        AnkiInfo( 340, "ProxSensors.EnableCliffDetector", 347, "%d", 1, enable);
+        AnkiEvent( 340, "ProxSensors.EnableCliffDetector", 347, "%d", 1, enable);
         _enableCliffDetect = enable;
       }
       
       void EnableStopOnCliff(bool enable) {
-        AnkiInfo( 341, "ProxSensors.EnableStopOnCliff", 347, "%d", 1, enable);
+        AnkiEvent( 341, "ProxSensors.EnableStopOnCliff", 347, "%d", 1, enable);
         _stopOnCliff = enable;
       }
 
