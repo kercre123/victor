@@ -477,7 +477,7 @@ public class Robot : IRobot {
 
   private void HandleLoadedKnownFace(Anki.Vision.LoadedKnownFace loadedKnownFaceMessage) {
     if (EnrolledFaces.ContainsKey(loadedKnownFaceMessage.faceID)) {
-      DAS.Error("Robot.HandleLoadedKnownFace", "Attempting to load already exisiting face ID: " + loadedKnownFaceMessage.faceID + " " + loadedKnownFaceMessage.name);
+      DAS.Error("Robot.HandleLoadedKnownFace", "Attempting to load already existing face ID: " + loadedKnownFaceMessage.faceID);
       return;
     }
     EnrolledFaces.Add(loadedKnownFaceMessage.faceID, loadedKnownFaceMessage.name);
