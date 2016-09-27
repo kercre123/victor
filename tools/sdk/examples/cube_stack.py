@@ -7,6 +7,8 @@ Cozmo will wait until he sees two Cubes, and then will pick up one and place it 
 He will pick up the first one he sees, and place it on the second one.
 '''
 
+import sys
+
 import cozmo
 
 def run(coz_conn):
@@ -27,4 +29,7 @@ def run(coz_conn):
 
 if __name__ == '__main__':
     cozmo.setup_basic_logging()
-    cozmo.connect(run)
+    try:
+        cozmo.connect(run)
+    except cozmo.ConnectionError as e:
+        sys.exit("A connection error occurred: %s" % e)

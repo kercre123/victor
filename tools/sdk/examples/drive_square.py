@@ -6,6 +6,8 @@ This script is designed to show off the 'simple robot capabilites' of Cozmo.
 He will drive in a square by going forward and turning (left) 4 times.
 '''
 
+import sys
+
 import cozmo
 from cozmo.util import degrees
 
@@ -19,4 +21,7 @@ def run(coz_conn):
 
 if __name__ == '__main__':
     cozmo.setup_basic_logging()
-    cozmo.connect(run)
+    try:
+        cozmo.connect(run)
+    except cozmo.ConnectionError as e:
+        sys.exit("A connection error occurred: %s" % e)

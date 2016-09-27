@@ -6,6 +6,7 @@ Define a destination pose for Cozmo. If relative_to_robot is set to true,
 the given pose will assume the robot's pose as its origin.
 '''
 
+import sys
 
 import cozmo
 from cozmo.util import degrees, Pose
@@ -19,4 +20,7 @@ def run(coz_conn):
 
 if __name__ == '__main__':
     cozmo.setup_basic_logging()
-    cozmo.connect(run)
+    try:
+        cozmo.connect(run)
+    except cozmo.ConnectionError as e:
+        sys.exit("A connection error occurred: %s" % e)

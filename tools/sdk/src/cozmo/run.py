@@ -224,7 +224,7 @@ class TCPConnector(DeviceConnector):
                     await conn_check(proto)
                 except Exception as e:
                     logger.debug('Failed connection check: %s', e)
-                    raise
+                    raise exceptions.ConnectionCheckFailed('Failed connection check: %s' % e)
             logger.info("Connected to device on TCP port %d" % self.tcp_port)
             return transport, proto
         except Exception as e:
@@ -269,7 +269,7 @@ class FirstAvailableConnector(DeviceConnector):
             return result
         logger.warn('No iOS device found running Cozmo: %s' % result)
 
-        raise ValueError('No devices connected running Cozmo in SDK mode')
+        raise exceptions.NoDevicesFound('No devices connected running Cozmo in SDK mode')
 
 
 

@@ -9,6 +9,8 @@ so you could use that to create an additional wall.
 He will plan a path to drive 200mm in front of himself after these objects are created.
 '''
 
+import sys
+
 import cozmo
 from cozmo.util import degrees, Pose
 
@@ -29,4 +31,7 @@ def run(coz_conn):
 
 if __name__ == '__main__':
     cozmo.setup_basic_logging()
-    cozmo.connect(run)
+    try:
+        cozmo.connect(run)
+    except cozmo.ConnectionError as e:
+        sys.exit("A connection error occurred: %s" % e)

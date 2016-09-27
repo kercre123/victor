@@ -6,6 +6,7 @@ Cozmo looks around, reacts, and picks up and puts down a cube if found.
 '''
 
 import asyncio
+import sys
 
 import cozmo
 from cozmo.util import degrees
@@ -62,4 +63,7 @@ def run(coz_conn):
 
 if __name__ == '__main__':
     cozmo.setup_basic_logging()
-    cozmo.connect(run)
+    try:
+        cozmo.connect(run)
+    except cozmo.ConnectionError as e:
+        sys.exit("A connection error occurred: %s" % e)

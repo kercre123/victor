@@ -121,5 +121,7 @@ def run(coz_conn):
 if __name__ == '__main__':
     cozmo.setup_basic_logging()
     cozmo.robot.Cozmo.drive_off_charger_on_connect = False  # Cozmo can stay on his charger for this example
-    cozmo.connect(run)
-
+    try:
+        cozmo.connect(run)
+    except cozmo.ConnectionError as e:
+        sys.exit("A connection error occurred: %s" % e)
