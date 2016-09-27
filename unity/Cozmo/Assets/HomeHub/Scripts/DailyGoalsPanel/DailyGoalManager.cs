@@ -121,7 +121,6 @@ public class DailyGoalManager : MonoBehaviour {
   }
 
   public ChallengeData PickMiniGameToRequest() {
-    List<RequestGameConfig> unlockedList = new List<RequestGameConfig>();
     if (_RequestMinigameConfig == null) {
       DAS.Error("DailyGoalManager.PickMiniGameToRequest", "Request minigame config is NULL");
       return null;
@@ -130,6 +129,11 @@ public class DailyGoalManager : MonoBehaviour {
       DAS.Error("DailyGoalManager.PickMiniGameToRequest", "Challenge List is NULL");
       return null;
     }
+    if (UnlockablesManager.Instance == null) {
+      DAS.Error("DailyGoalManager.PickMiniGameToRequest", "UnlockablesManager is NULL");
+      return null;
+    }
+    List<RequestGameConfig> unlockedList = new List<RequestGameConfig>();
 
     for (int i = 0; i < _RequestMinigameConfig.RequestList.Length; ++i) {
       UnlockId unlockid = UnlockId.Count;
@@ -153,7 +157,7 @@ public class DailyGoalManager : MonoBehaviour {
       if (_ChallengeList.ChallengeData[i].ChallengeID == config.ChallengeID) {
         _LastChallengeData = _ChallengeList.ChallengeData[i];
         BehaviorGameFlag bGame = GetRequestBehaviorGameFlag(_LastChallengeData.ChallengeID);
-        // Do not reate the minigame message if the behavior group is invalid.
+        // Do not create the minigame message if the behavior group is invalid.
         if (bGame == BehaviorGameFlag.NoGame) {
           return null;
         }
@@ -394,7 +398,7 @@ public class DailyGoalManager : MonoBehaviour {
   private void SendDasEventsForGoalGeneration(List<DailyGoal> goals) {
     if (goals.Count > 0) {
       for (int i = 0; i < goals.Count; i++) {
-        DAS.Event(DASConstants.Goal.kGeneration, DASUtil.FormatDate(DataPersistenceManager.Today), 
+        DAS.Event(DASConstants.Goal.kGeneration, DASUtil.FormatDate(DataPersistenceManager.Today),
           DASUtil.FormatExtraData(DASUtil.FormatGoal(goals[i])));
       }
     }

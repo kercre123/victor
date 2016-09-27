@@ -783,7 +783,9 @@ namespace Cozmo.HomeHub {
       DAS.Info(this, "HandleUnexpectedClose");
       if (_RequestDialog != null) {
         _RequestDialog.ViewClosed -= HandleRequestDialogClose;
-        DailyGoalManager.Instance.SetMinigameNeed();
+        if (RobotEngineManager.Instance.CurrentRobot != null) {
+          DailyGoalManager.Instance.SetMinigameNeed();
+        }
       }
     }
 
