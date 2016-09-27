@@ -53,6 +53,11 @@ namespace Cozmo.Settings {
     private float _DefaultMusicVolume = 0.8f;
     public float DefaultMusicVolumeLevel { get { return _DefaultMusicVolume; } }
 
+    // Volume scaling for in-app videos (such as the "how to" videos)
+    [SerializeField, Range(0f, 1f)]
+    private float _VideoVolume = 1.0f;
+    public float VideoVolume { get { return _VideoVolume; } }
+
     [SerializeField, Range(-1f, 120f)]
     public float _AppBackground_TimeTilSleep_sec = 20f;
     public float AppBackground_TimeTilSleep_sec { get { return _AppBackground_TimeTilSleep_sec; } }

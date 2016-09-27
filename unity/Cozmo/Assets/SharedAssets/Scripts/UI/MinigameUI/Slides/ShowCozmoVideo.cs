@@ -56,6 +56,7 @@ public class ShowCozmoVideo : MonoBehaviour {
     // Register a function to play the video once it has been loaded
     _MediaPlayerCtrl.OnReady += () => {
       _RawImage.enabled = true;
+      _MediaPlayerCtrl.SetVolume(Cozmo.Settings.DefaultSettingsValuesConfig.Instance.VideoVolume);
       _MediaPlayerCtrl.Play();
       DuckMusic();
     };
