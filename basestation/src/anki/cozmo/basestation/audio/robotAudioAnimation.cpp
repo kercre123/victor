@@ -23,6 +23,7 @@
 #include "clad/audio/audioCallbackMessage.h"
 #include "clad/audio/messageAudioClient.h"
 #include "DriveAudioEngine/audioCallback.h"
+#include "util/console/consoleInterface.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
@@ -35,6 +36,8 @@
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
+  
+CONSOLE_VAR(bool, kEnableAudioEventProbability, "RobotAudioAnimation", true);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioAnimation::RobotAudioAnimation( GameObjectType gameObject, Util::RandomGenerator* randomGenerator )
@@ -153,21 +156,21 @@ void RobotAudioAnimation::InitAnimation( Animation* anAnimation, RobotAudioClien
   // Loop through tracks
   // Prep animation audio events
   Animations::Track<RobotAudioKeyFrame>& audioTrack = anAnimation->GetTrack<RobotAudioKeyFrame>();
-  
   AnimationEvent::AnimationEventId eventId = AnimationEvent::kInvalidAnimationEventId;
+  bool playEvent = true;
+  bool allowEventProbability = ( kEnableAudioEventProbability && ( nullptr != _randomGenerator ) );
+  
   while ( audioTrack.HasFramesLeft() ) {
     const RobotAudioKeyFrame& aFrame = audioTrack.GetCurrentKeyFrame();
     const RobotAudioKeyFrame::AudioRef& audioRef = aFrame.GetAudioRef();
     const GameEvent::GenericEvent event = audioRef.audioEvent;
     if ( GameEvent::GenericEvent::Invalid != event ) {
       
-      // Apply random weight
-      bool playEvent = Util::IsFltNear( audioRef.probability, 1.0f );
-      if ( _randomGenerator != nullptr && !playEvent ) {
+      // Apply random weight if event probability is allowed
+      if ( allowEventProbability && !Util::IsFltNear( audioRef.probability, 1.0f ) ) {
         playEvent = audioRef.probability >= _randomGenerator->RandDbl( 1.0 );
       }
       else {
-        // No random generator
         playEvent = true;
       }
       
