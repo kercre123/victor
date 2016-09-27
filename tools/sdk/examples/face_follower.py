@@ -17,10 +17,10 @@ def run(coz_conn):
     coz = coz_conn.wait_for_robot()
 
     try:
-    	face = coz.world.wait_for_observed_face(timeout=30)
+        face = coz.world.wait_for_observed_face(timeout=30)
     except asyncio.TimeoutError:
-	    print("Didn't find a face.")
-	    return
+        print("Didn't find a face.")
+        return
 
     while True:
         coz.turn_towards_face(face).wait_for_completed()
