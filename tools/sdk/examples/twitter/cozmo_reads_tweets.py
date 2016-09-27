@@ -7,6 +7,8 @@ Cozmo will read aloud each new tweet as it appears on your Twitter stream
 See user_twitter_keys.py for details on how to setup a Twitter account and get access keys
 '''
 
+import sys
+
 import cozmo
 import twitter_helpers
 import user_twitter_keys as twitter_keys
@@ -51,4 +53,7 @@ def run(coz_conn):
 
 if __name__ == '__main__':
     cozmo.setup_basic_logging()
-    cozmo.connect(run)
+    try:
+        cozmo.connect(run)
+    except cozmo.ConnectionError as e:
+        sys.exit("A connection error occurred: %s" % e)

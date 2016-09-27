@@ -7,6 +7,8 @@ Lets you tweet at your Cozmo to control the robot
 See cozmo_twitter_keys.py for details on how to setup a Twitter account for your Cozmo and get access keys
 '''
 
+import sys
+
 import cozmo
 from cozmo.util import degrees
 import twitter_helpers
@@ -230,4 +232,7 @@ def run(coz_conn):
 
 if __name__ == '__main__':
     cozmo.setup_basic_logging()
-    cozmo.connect(run)
+    try:
+        cozmo.connect(run)
+    except cozmo.ConnectionError as e:
+        sys.exit("A connection error occurred: %s" % e)

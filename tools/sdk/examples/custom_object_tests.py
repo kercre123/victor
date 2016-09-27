@@ -6,7 +6,9 @@ This script will define two objects in front of cozmo, and let him observe the
 star (Custom_STAR5_Box) marker. The arrow marker (Custom_ARROW_Box) may also be used.
 '''
 
+import sys
 import time
+
 import cozmo
 from cozmo.util import degrees, Pose
 
@@ -26,4 +28,7 @@ def run(coz_conn):
 
 if __name__ == '__main__':
     cozmo.setup_basic_logging()
-    cozmo.connect(run)
+    try:
+        cozmo.connect(run)
+    except cozmo.ConnectionError as e:
+        sys.exit("A connection error occurred: %s" % e)

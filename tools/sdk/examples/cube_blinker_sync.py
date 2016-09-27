@@ -8,6 +8,8 @@ script then waits for the cube to be tapped.
 '''
 
 import asyncio
+import sys
+
 import cozmo
 
 class BlinkyCube(cozmo.objects.LightCube):
@@ -68,4 +70,7 @@ def run(coz_conn):
 
 if __name__ == '__main__':
     cozmo.setup_basic_logging()
-    cozmo.connect(run)
+    try:
+        cozmo.connect(run)
+    except cozmo.ConnectionError as e:
+        sys.exit("A connection error occurred: %s" % e)
