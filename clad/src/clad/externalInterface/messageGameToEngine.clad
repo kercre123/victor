@@ -924,6 +924,20 @@ message SetStopRobotOnSdkDisconnect {
 message StopRobotForSdk {
 }
 
+// Upload animations
+enum uint_8 FileType {
+  Animation,
+  FaceImg,
+}
+
+message TransferFile {
+  uint_8   fileBytes[uint_16],
+  uint_8   filePart,
+  uint_8   numFileParts,
+  string   filename,
+  FileType   fileType
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Robot flash (non-volatile storage)
 ///////////////////////////////////////////////////////////////////////////////

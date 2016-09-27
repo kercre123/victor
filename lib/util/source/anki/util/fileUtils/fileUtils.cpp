@@ -209,11 +209,15 @@ bool FileUtils::WriteFile(const std::string &fileName, const std::string &body)
   return WriteFile(fileName, bytes);
 }
   
-bool FileUtils::WriteFile(const std::string &fileName, const std::vector<uint8_t> &body)
+bool FileUtils::WriteFile(const std::string &fileName, const std::vector<uint8_t> &body, bool append)
 {
   bool success = false;
   std::ofstream fileOut;
-  fileOut.open(fileName, std::ios::out | std::ofstream::binary);
+  std::ios_base::openmode mode = std::ios::out | std::ofstream::binary;
+  if( append ) {
+    mode |= std::ios::app;
+  }
+  fileOut.open(fileName,mode);
   if( fileOut.is_open() ) {
     copy(body.begin(), body.end(), std::ostreambuf_iterator<char>(fileOut));
     fileOut.close();

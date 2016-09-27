@@ -46,8 +46,8 @@ public:
 
   static bool WriteFile(const std::string& fileName, const std::string& body);
   
-  static bool WriteFile(const std::string& fileName, const std::vector<uint8_t>& body);
-
+  static bool WriteFile(const std::string& fileName, const std::vector<uint8_t>& body, bool append = false);
+  
   // Copies srcFileName to dest.
   // If dest is a file, the srcFileName is copied to a file called dest.
   // If dest is a folder, the copy retains the name of the original file and is put in dest.

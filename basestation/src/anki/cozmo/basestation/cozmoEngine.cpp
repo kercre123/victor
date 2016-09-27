@@ -61,6 +61,8 @@
 #include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
 #endif
 
+#include "anki/cozmo/basestation/animations/animationTransfer.h"
+
 #if ANKI_PROFILING_ENABLED
   #define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
   #define ENABLE_CE_RUN_TIME_DIAGNOSTICS 1
@@ -83,6 +85,7 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
 #if ANKI_DEV_CHEATS && !defined(ANDROID)
   , _usbTunnelServerDebug(new USBTunnelServer(_uiMsgHandler.get(),dataPlatform))
 #endif
+  ,_animationTransferHandler(new AnimationTransfer(_uiMsgHandler.get(),dataPlatform))
 {
   ASSERT_NAMED(_context->GetExternalInterface() != nullptr, "Cozmo.Engine.ExternalInterface.nullptr");
   if (Anki::Util::gTickTimeProvider == nullptr) {

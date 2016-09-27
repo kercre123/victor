@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/animationTriggerResponsesContainer.h"
+#include "anki/cozmo/basestation/animations/animationTransfer.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/cozmo/basestation/utils/cozmoFeatureGate.h"
@@ -28,16 +29,6 @@
 #include <json/json.h>
 #include <string>
 #include <sys/stat.h>
-
-#if ANKI_DEV_CHEATS && !defined(ANDROID)
-#define USE_USB_TUNNEL 1
-#else
-#define USE_USB_TUNNEL 0
-#endif
-
-#if USE_USB_TUNNEL
-#include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
-#endif
 
 
 namespace Anki {
@@ -172,10 +163,9 @@ void RobotDataLoader::LoadAnimationsInternal()
   }
   _perAnimationLoadingRatio = _kAnimationsLoadingRatio * 1.0f / Util::numeric_cast<float>(size);
   myWorker.Process();
-
-#if USE_USB_TUNNEL
-  // Only when not shipping use our temp dir
-  std::string test_anim = _platform->pathToResource(Util::Data::Scope::Cache, USBTunnelServer::TempAnimFileName);
+  
+#if ANKI_DEV_CHEATS
+  std::string test_anim = _platform->pathToResource(Util::Data::Scope::Cache, AnimationTransfer::kCacheAnimFileName);
   if (Util::FileUtils::FileExists(test_anim)) {
     LoadAnimationFile(test_anim);
   }
@@ -321,8 +311,7 @@ void RobotDataLoader::LoadBehaviors()
 void RobotDataLoader::LoadFaceAnimations()
 {
   FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_platform);
-#if USE_USB_TUNNEL
-  // Only when not shipping read facial animation from cache
+#if ANKI_DEV_CHEATS
   FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_platform, true);
 #endif
 }

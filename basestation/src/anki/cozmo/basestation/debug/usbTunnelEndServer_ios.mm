@@ -11,6 +11,7 @@
  **/
 
 #include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
+#include "anki/cozmo/basestation/animations/animationTransfer.h"
 
 #if ANKI_DEV_CHEATS
 
@@ -289,8 +290,8 @@ namespace Anki {
       CozmoUSBTunnelHTTPServer* _httpServer = nil;
     };
     
-    const std::string USBTunnelServer::TempAnimFileName("TestAnim.json");
-    const std::string USBTunnelServer::FaceAnimsDir(Anki::Util::FileUtils::FullFilePath({"assets", "faceAnimations"}));
+    const std::string USBTunnelServer::TempAnimFileName(AnimationTransfer::kCacheAnimFileName);
+    const std::string USBTunnelServer::FaceAnimsDir(AnimationTransfer::kCacheFaceAnimsDir);
     
     USBTunnelServer::USBTunnelServer(Anki::Cozmo::IExternalInterface* externalInterface, Anki::Util::Data::DataPlatform* dataPlatform) : _impl(new USBTunnelServerImpl{})
     {
