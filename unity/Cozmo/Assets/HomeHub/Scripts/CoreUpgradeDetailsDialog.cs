@@ -464,6 +464,13 @@ public class CoreUpgradeDetailsDialog : BaseView {
     DataPersistenceManager.Instance.Save();
   }
 
+  private void OnApplicationFocus(bool focusStatus) {
+    DAS.Debug("CoreUpgradeDetailsDialog.OnApplicationFocus", "Application focus: " + focusStatus);
+    if (focusStatus) {
+      StopSparkUnlock();
+    }
+  }
+
   private void StopSparkUnlock() {
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
     if (RobotEngineManager.Instance.CurrentRobot != null) {
