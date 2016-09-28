@@ -44,9 +44,9 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 0
-  RequestTrickCostAmountNeededMin: 2
-  RequestTrickCostAmountNeededMaxTimes: 7
-  RequestTrickCostAmountNeededMax: 6
+  RequestTrickCostAmountNeededMin: 1
+  RequestTrickCostAmountNeededMaxTimes: 6
+  RequestTrickCostAmountNeededMax: 4
   CoreUpgradeTintColorName: upgradeGreen
   CoreUpgradeIcon: {fileID: 21300000, guid: 5a4d4d5c9323648ffbd88c731add0028, type: 3}
   CoreUpgradeOverlayIcon: {fileID: 21300000, guid: 3d82dcb60a5964ab9adfd0732e5f2139,
