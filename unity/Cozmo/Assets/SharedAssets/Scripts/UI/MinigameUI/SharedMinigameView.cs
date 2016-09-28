@@ -221,6 +221,7 @@ namespace Cozmo {
       private Sequence _SlideInTween;
       private CanvasGroup _TransitionOutSlide;
       private Sequence _SlideOutTween;
+      private Sequence _HideWidgetSequence;
 
       private List<MinigameWidget> _ActiveWidgets = new List<MinigameWidget>();
 
@@ -272,6 +273,9 @@ namespace Cozmo {
         }
         if (_OverlayBackgroundTween != null) {
           _OverlayBackgroundTween.Kill();
+        }
+        if (_HideWidgetSequence != null) {
+          _HideWidgetSequence.Kill();
         }
       }
 
@@ -370,6 +374,10 @@ namespace Cozmo {
           }
         });
         close.Play();
+        if (_HideWidgetSequence != null) {
+          _HideWidgetSequence.Complete();
+        }
+        _HideWidgetSequence = close;
       }
 
       private void UpdateButtonDasViewControllerNames(string slideName) {

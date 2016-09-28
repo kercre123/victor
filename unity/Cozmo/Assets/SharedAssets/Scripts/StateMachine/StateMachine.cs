@@ -119,7 +119,7 @@ public class StateMachine {
     }
   }
 
-  public Anki.Cozmo.BehaviorType GetReactionThatPausedGame(){
-	return _reactionThatPausedGame;
+  public Anki.Cozmo.BehaviorType GetReactionThatPausedGame() {
+    return _reactionThatPausedGame;
   }
 }

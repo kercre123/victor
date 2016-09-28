@@ -68,5 +68,18 @@
   },
   "faceEnrollment.condition.allChangesSaved": {
     "translation": "All changes have been saved."
+  },
+  "faceEnrollment.howToPlay.emptySlot": {
+    "translation": "Tap an empty slot to teach Cozmo a new name"
+  },
+  "faceEnrollment.howToPlay.eraseIcon": {
+    "translation": "Tap the erase icon to clear a slot"
+  },
+  "faceEnrollment.howToPlay.existingPerson": {
+
+    "translation": "Tap to Update this slot and let Cozmo re-scan this face"
+  },
+  "faceEnrollment.howToPlay.editName": {
+    "translation": "Tap a name to change how Cozmo says it"
   }
 }

@@ -49,11 +49,13 @@ MonoBehaviour:
   PlayerRoundsWon: 0
   CozmoRoundsWon: 0
   TotalRounds: 0
-  _FaceListSlidePrefab: {fileID: 11480272, guid: a3776657ddf994c64a023cff8cb078f7,
+  _FaceEnrollmentInstructionsViewPrefab: {fileID: 11494650, guid: 608a10a26f4794b2f8cfb371d89d5626,
     type: 2}
   _EnterNameSlidePrefab: {fileID: 11431490, guid: e9fb59d52d3f64ef2825d07f7ed56372,
     type: 2}
-  _FaceEnrollmentInstructionsViewPrefab: {fileID: 11494650, guid: 608a10a26f4794b2f8cfb371d89d5626,
+  _FaceListSlidePrefab: {fileID: 11480272, guid: a3776657ddf994c64a023cff8cb078f7,
+    type: 2}
+  _FaceEnrollmentHowToPlaySlidePrefab: {fileID: 182308, guid: daa6221ad699c4153852efdaf82f4d3e,
     type: 2}
 --- !u!1001 &100100000
 Prefab:

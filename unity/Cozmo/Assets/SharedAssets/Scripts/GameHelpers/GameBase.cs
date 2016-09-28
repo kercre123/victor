@@ -661,6 +661,7 @@ public abstract class GameBase : MonoBehaviour {
     if (!_ResultsViewReached && _ChallengeData.IsMinigame) {
       RewardedActionManager.Instance.ResetPendingRewards();
     }
+    _StateMachine.Stop();
     _SharedMinigameViewInstance.CloseViewImmediately();
     CleanUp();
   }
