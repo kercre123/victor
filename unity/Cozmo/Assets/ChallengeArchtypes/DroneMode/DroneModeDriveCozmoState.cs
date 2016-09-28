@@ -25,9 +25,6 @@ namespace Cozmo {
         private bool _IsDrivingWheels = false;
         private bool _IsDrivingHead = false;
 
-        private float _StoppedDrivingHeadTimestamp;
-        private float _HoldHeadAngle_rad;
-
         private DroneModeTransitionAnimator _RobotAnimator;
 
         public string TiltDrivingDebugText = "";
@@ -35,7 +32,6 @@ namespace Cozmo {
 
         public override void Enter() {
           _LastMessageSentTimestamp = Time.time;
-          _StoppedDrivingHeadTimestamp = -1f;
 
           _DroneModeGame = _StateMachine.GetGame() as DroneModeGame;
 
@@ -64,7 +60,6 @@ namespace Cozmo {
         }
 
         public override void Exit() {
-          _CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.MOVE_HEAD_TO_ANGLE);
           DisableInput();
           _RobotAnimator.CleanUp();
           _CurrentRobot.EnableDroneMode(false);
@@ -180,24 +175,15 @@ namespace Cozmo {
               _CurrentRobot.DriveHead(_TargetDriveHeadSpeed_radps);
               _CurrentDriveHeadSpeed_radps = _TargetDriveHeadSpeed_radps;
             }
-            HeadDrivingDebugText = "\nPlayer driving head   timestamp=" + _StoppedDrivingHeadTimestamp;
-            _StoppedDrivingHeadTimestamp = -1f;
+            HeadDrivingDebugText = "\nPlayer driving head";
             droveHead = true;
           }
           else if (ShouldStopDriveHead(_TargetDriveHeadSpeed_radps)) {
             _TargetDriveHeadSpeed_radps = 0f;
             _CurrentDriveHeadSpeed_radps = 0f;
             _CurrentRobot.DriveHead(0f);
-            _HoldHeadAngle_rad = _CurrentRobot.HeadAngle;
-            _CurrentRobot.SetHeadAngle(_HoldHeadAngle_rad, HandleHoldHeadFinished, useExactAngle: true);
-            _StoppedDrivingHeadTimestamp = Time.time;
-            HeadDrivingDebugText = "\nPlayer stop driving head   timestamp=" + _StoppedDrivingHeadTimestamp;
+            HeadDrivingDebugText = "\nPlayer stop driving head";
             droveHead = true;
-          }
-          else if (ShouldStopHoldHead()) {
-            _StoppedDrivingHeadTimestamp = -1f;
-            HeadDrivingDebugText = "\nCozmo stop holding head   timestamp=" + _StoppedDrivingHeadTimestamp;
-            _CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.MOVE_HEAD_TO_ANGLE);
           }
           return droveHead;
         }
@@ -230,13 +216,7 @@ namespace Cozmo {
 
         private bool ShouldStopDriveHead(float targetHeadSpeed) {
           return targetHeadSpeed.IsNear(0f, _kHeadTiltChangeThreshold_radps)
-                                && !targetHeadSpeed.IsNear(_CurrentDriveHeadSpeed_radps, _kHeadTiltChangeThreshold_radps)
-                                && _StoppedDrivingHeadTimestamp == -1f;
-        }
-
-        private bool ShouldStopHoldHead() {
-          return _StoppedDrivingHeadTimestamp != -1f
-            && ((Time.time - _StoppedDrivingHeadTimestamp) >= _DroneModeGame.DroneModeConfigData.HeadIdleDelay_s);
+                                && !targetHeadSpeed.IsNear(_CurrentDriveHeadSpeed_radps, _kHeadTiltChangeThreshold_radps);
         }
 
         private float DriveRobotWheels(float driveSpeed_mmps, float turnDirection) {
@@ -283,12 +263,6 @@ namespace Cozmo {
           TiltDrivingDebugText = "Drive Arc: \nspeed mmps = " + pointTurnSpeed_mmps + " \nradius mm = " + arcRadius_mm + "\ntilt = " + _TargetTurnDirection;
           _CurrentRobot.DriveArc(pointTurnSpeed_mmps, (int)arcRadius_mm);
           return pointTurnSpeed_mmps;
-        }
-
-        private void HandleHoldHeadFinished(bool success) {
-          if (!ShouldStopHoldHead()) {
-            _CurrentRobot.SetHeadAngle(_HoldHeadAngle_rad, HandleHoldHeadFinished, Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING);
-          }
         }
 
         private void HandleDriveSpeedValueChanged(DroneModeControlsSlide.SpeedSliderSegment newPosition, float newNormalizedValue) {
