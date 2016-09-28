@@ -2,6 +2,12 @@
 
 SSID=Cozmo_$1
 
+if test $# -gt 1; then
+  PSK=$2
+else
+  PSK=QQQQQQQQQQQQ
+fi
+
 networksetup -setairportpower en0 on
 if test -z `system_profiler SPAirPortDataType | grep $SSID`; then
   echo "Scanning for $SSID"
@@ -16,7 +22,7 @@ if test -z `system_profiler SPAirPortDataType | grep $SSID`; then
 fi
 
 echo "Connecting to $SSID"
-if networksetup -setairportnetwork en0 $SSID QQQQQQQQQQQQ; then
+if networksetup -setairportnetwork en0 $SSID $PSK; then
     echo "Waiting for IP address"
     ping -o -q 172.31.1.1
     echo "Connected"
