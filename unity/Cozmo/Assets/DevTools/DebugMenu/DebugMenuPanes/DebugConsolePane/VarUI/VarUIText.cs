@@ -10,24 +10,26 @@ namespace Anki.Debug {
 
     public override void Init(DebugConsoleData.DebugConsoleVarData singleVar, GameObject go) {
       base.Init(singleVar, go);
+      OnValueRefreshed();
+      _StatInputField.onValueChanged.AddListener(HandleValueChanged);
+    }
 
-      switch (singleVar.TagType) {
+    public override void OnValueRefreshed() {
+      switch (_VarData.TagType) {
       case ConsoleVarUnion.Tag.varDouble:
-        _StatInputField.text = singleVar.ValueAsDouble.ToString();
+        _StatInputField.text = _VarData.ValueAsDouble.ToString();
         break;
       case ConsoleVarUnion.Tag.varInt:
-        _StatInputField.text = singleVar.ValueAsInt64.ToString();
+        _StatInputField.text = _VarData.ValueAsInt64.ToString();
         break;
       case ConsoleVarUnion.Tag.varUint:
-        _StatInputField.text = singleVar.ValueAsUInt64.ToString();
+        _StatInputField.text = _VarData.ValueAsUInt64.ToString();
         break;
       }
 
-      if (singleVar.UnityObject != null) {
+      if (_VarData.UnityObject != null) {
         _StatInputField.text = GetUnityValue().ToString();
       }
-
-      _StatInputField.onValueChanged.AddListener(HandleValueChanged);
     }
 
     private void HandleValueChanged(string strValue) {

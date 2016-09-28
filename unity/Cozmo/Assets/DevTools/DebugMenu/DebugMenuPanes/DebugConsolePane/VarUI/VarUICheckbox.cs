@@ -9,12 +9,15 @@ namespace Anki.Debug {
 
     public override void Init(DebugConsoleData.DebugConsoleVarData singleVar, GameObject go) {
       base.Init(singleVar, go);
+      OnValueRefreshed();
+      _Checkbox.onValueChanged.AddListener(HandleValueChanged);
+    }
 
-      _Checkbox.isOn = singleVar.ValueAsUInt64 != 0;
-      if (singleVar.UnityObject != null) {
+    public override void OnValueRefreshed() {
+      _Checkbox.isOn = _VarData.ValueAsUInt64 != 0;
+      if (_VarData.UnityObject != null) {
         _Checkbox.isOn = (bool)GetUnityValue();
       }
-      _Checkbox.onValueChanged.AddListener(HandleValueChanged);
     }
 
     private void HandleValueChanged(bool val) {

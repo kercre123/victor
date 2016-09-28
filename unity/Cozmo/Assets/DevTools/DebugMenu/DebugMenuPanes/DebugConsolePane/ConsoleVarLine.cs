@@ -21,6 +21,10 @@ namespace Anki.Debug {
       _VarData.UIAdded = null;
     }
 
+    // Engine has confirmed an update
+    public virtual void OnValueRefreshed() {
+    }
+
     protected virtual object GetUnityValue() {
       // The debug console can see privates.
       if (_VarData.UnityObject != null) {

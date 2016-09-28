@@ -44,6 +44,31 @@ namespace Anki.Debug {
       public System.Object UnityObject = null;
       public GameObject UIAdded = null;
 
+      // Engine has confirmed an update or init
+      public void SetValue(ConsoleVarUnion varValue) {
+        TagType = varValue.GetTag();
+        switch (TagType) {
+        case ConsoleVarUnion.Tag.varDouble:
+          ValueAsDouble = varValue.varDouble;
+          break;
+        case ConsoleVarUnion.Tag.varInt:
+          ValueAsInt64 = varValue.varInt;
+          break;
+        case ConsoleVarUnion.Tag.varUint:
+          ValueAsUInt64 = varValue.varUint;
+          break;
+        case ConsoleVarUnion.Tag.varBool:
+          ValueAsUInt64 = varValue.varBool;
+          break;
+        }
+        if (UIAdded != null) {
+          ConsoleVarLine uiLine = UIAdded.GetComponent<ConsoleVarLine>();
+          if (uiLine) {
+            uiLine.OnValueRefreshed();
+          }
+        }
+      }
+
       public int CompareTo(object obj) {
         if (obj != null) {
           DebugConsoleVarData otherEntry = obj as DebugConsoleVarData;
@@ -85,6 +110,10 @@ namespace Anki.Debug {
 
     private void HandleVerifyDebugConsoleVar(Anki.Cozmo.ExternalInterface.VerifyDebugConsoleVarMessage message) {
       DebugConsoleData.Instance.SetStatusText(message.statusMessage);
+      DebugConsoleVarData varData = GetExistingLineUI(message.varName);
+      if (varData != null) {
+        varData.SetValue(message.varValue);
+      }
     }
 
     // Only unity vars come through this public api, Engine vars come through above clad messages.
@@ -160,6 +189,20 @@ namespace Anki.Debug {
       }
       return null;
     }
+
+    // Gets instance by name without category
+    private DebugConsoleVarData GetExistingLineUI(string varName) {
+      foreach (KeyValuePair<string, List<DebugConsoleVarData>> entry in _DataByCategory) {
+        // do something with entry.Value or entry.Key
+        List<DebugConsoleVarData> lines = entry.Value;
+        for (int i = 0; i < lines.Count; ++i) {
+          if (lines[i].VarName == varName) {
+            return lines[i];
+          }
+        }
+      }
+      return null;
+    }
     // CSharp can't safely store pointers, so we need a setter delegates
     private void AddConsoleVar(DebugConsoleVar singleVar, DebugConsoleVarEventHandler callback = null, System.Object unityObj = null) {
       _NeedsUIUpdate = true;
@@ -176,21 +219,7 @@ namespace Anki.Debug {
         varData = new DebugConsoleVarData();
         categoryList.Add(varData);
       }
-      varData.TagType = singleVar.varValue.GetTag();
-      switch (varData.TagType) {
-      case ConsoleVarUnion.Tag.varDouble:
-        varData.ValueAsDouble = singleVar.varValue.varDouble;
-        break;
-      case ConsoleVarUnion.Tag.varInt:
-        varData.ValueAsInt64 = singleVar.varValue.varInt;
-        break;
-      case ConsoleVarUnion.Tag.varUint:
-        varData.ValueAsUInt64 = singleVar.varValue.varUint;
-        break;
-      case ConsoleVarUnion.Tag.varBool:
-        varData.ValueAsUInt64 = singleVar.varValue.varBool;
-        break;
-      }
+      varData.SetValue(singleVar.varValue);
       varData.VarName = singleVar.varName;
       varData.Category = singleVar.category;
       varData.MaxValue = singleVar.maxValue;

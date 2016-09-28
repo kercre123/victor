@@ -16,22 +16,26 @@ namespace Anki.Debug {
 
       _Slider.minValue = (float)singleVar.MinValue;
       _Slider.maxValue = (float)singleVar.MaxValue;
-      float setVal = (float)singleVar.ValueAsDouble;
-      switch (singleVar.TagType) {
+      OnValueRefreshed();
+
+      _Slider.onValueChanged.AddListener(HandleValueChanged);
+    }
+
+    public override void OnValueRefreshed() {
+      float setVal = (float)_VarData.ValueAsDouble;
+      switch (_VarData.TagType) {
       case ConsoleVarUnion.Tag.varInt:
-        setVal = (float)singleVar.ValueAsInt64;
+        setVal = (float)_VarData.ValueAsInt64;
         break;
       case ConsoleVarUnion.Tag.varUint:
-        setVal = (float)singleVar.ValueAsUInt64;
+        setVal = (float)_VarData.ValueAsUInt64;
         break;
       }
-      if (singleVar.UnityObject != null) {
+      if (_VarData.UnityObject != null) {
         setVal = (float)GetUnityValue();
       }
       _Slider.value = setVal;
       SetSliderVal(_Slider.value);
-
-      _Slider.onValueChanged.AddListener(HandleValueChanged);
     }
 
     private void HandleValueChanged(float val) {
