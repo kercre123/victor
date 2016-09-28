@@ -480,7 +480,7 @@ namespace Vision {
           result = UpdateRecognitionData(recognizedID, score);
           if(RESULT_OK != result)
           {
-            PRINT_NAMED_ERROR("FaceRecongnizer.GetRecognitionData.UpdateRecognitionDataFailed", "");
+            PRINT_NAMED_ERROR("FaceRecognizer.GetRecognitionData.UpdateRecognitionDataFailed", "");
           }
         }
         else
@@ -900,7 +900,7 @@ namespace Vision {
     auto albumToFaceIter = _albumEntryToFaceID.find(albumEntry);
     ASSERT_NAMED_EVENT(albumToFaceIter != _albumEntryToFaceID.end(),
                        "FaceRecognizer.UpdateExistingUser.MissingAlbumToFaceEntry",
-                       "AlubmEntry:%d", albumEntry);
+                       "AlbumEntry:%d", albumEntry);
     const FaceID_t faceID = albumToFaceIter->second;
     
     auto enrollDataIter = _enrollmentData.find(faceID);
@@ -1277,7 +1277,7 @@ namespace Vision {
       {
         if(iter->second == faceID) {
           PRINT_NAMED_WARNING("FaceRecognizer.RemoveUserHelper.StaleAlbumEntryToFaceID",
-                              "AlbumeEntry %d still maps to FaceID %d",
+                              "AlbumEntry %d still maps to FaceID %d",
                               iter->first, iter->second);
           iter = _albumEntryToFaceID.erase(iter);
         } else {
@@ -2108,7 +2108,8 @@ namespace Vision {
           {
             PRINT_CH_DEBUG("FaceRecognizer", "SetSerializedData.AddedEnrollmentDataEntry",
                            "User '%s' with ID=%d",
-                           entry.second.GetName().c_str(), entry.second.GetFaceID());
+                           Util::HidePersonallyIdentifiableInfo(entry.second.GetName().c_str()),
+                           entry.second.GetFaceID());
             
             loadedFaces.emplace_back(LoadedKnownFace(GetSecondsSince(nowTime, entry.second.GetEnrollmentTime()),
                                                      GetSecondsSince(nowTime, entry.second.GetLastUpdateTime()),
@@ -2559,7 +2560,7 @@ namespace Vision {
   //
   //    for(s32 iComp=0; iComp < combinedEntries.size(); ++iComp)
   //    {
-  //      // Since Okao does not offer a way to do albumEntry to albumeEntry (i.e. "userID" to "userID")
+  //      // Since Okao does not offer a way to do albumEntry to albumEntry (i.e. "userID" to "userID")
   //      // comparisons (??), I'm using the maximum score of any one of entry_i's features
   //      // to entry_j as a proxy. So I have to loop over each data entry in albumEntry i
   //      // and compare it to albumEntry j using the "Verify" function to get a score.

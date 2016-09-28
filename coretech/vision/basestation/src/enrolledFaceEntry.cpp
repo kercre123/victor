@@ -16,6 +16,7 @@
 #include "anki/vision/basestation/enrolledFaceEntry.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
+#include "util/global/globalDefinitions.h"
 
 #include <json/json.h>
 
@@ -273,7 +274,7 @@ void EnrolledFaceEntry::Serialize(std::vector<u8>& buffer) const
   
   PRINT_CH_DEBUG("FaceRecognizer", "EnrolledFaceEntry.Serialize.Success",
                  "Serialized entry for '%s', ID=%d. Added %zu bytes to buffer (total length now %zu)",
-                 _name.c_str(), _faceID, numBytes, buffer.size());
+                 Anki::Util::HidePersonallyIdentifiableInfo(_name.c_str()), _faceID, numBytes, buffer.size());
   
 } // Serialize()
 

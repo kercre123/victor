@@ -7,9 +7,9 @@ namespace Conversations {
     public readonly Dictionary<string, Conversation> Conversations = new Dictionary<string, Conversation>();
 
     public void AddConversation(string conversationKey, Conversation conversation) {
-      Conversation exisitingConversation;
-      if (Conversations.TryGetValue(conversationKey, out exisitingConversation)) {
-        exisitingConversation.AddToConversation(conversation);
+      Conversation existingConversation;
+      if (Conversations.TryGetValue(conversationKey, out existingConversation)) {
+        existingConversation.AddToConversation(conversation);
       }
       else {
         Conversations.Add(conversationKey, conversation);

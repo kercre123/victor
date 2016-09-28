@@ -128,11 +128,11 @@ namespace FaceEnrollment {
       SetReactionaryBehaviors(false);
     }
 
-    private void EditExistingName(int faceID, string exisitingName) {
+    private void EditExistingName(int faceID, string existingName) {
       _EnterNameSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "edit_name", EditNameInputSlideInDone).GetComponent<EnterNameSlide>();
-      _EnterNameSlideInstance.SetNameInputField(exisitingName);
+      _EnterNameSlideInstance.SetNameInputField(existingName);
       _FaceIDToEdit = faceID;
-      _FaceOldNameEdit = exisitingName;
+      _FaceOldNameEdit = existingName;
 
       SharedMinigameView.ShowBackButton(() => {
         SharedMinigameView.ShowQuitButton();
@@ -306,7 +306,7 @@ namespace FaceEnrollment {
         CurrentRobot.PopIdleAnimation();
 
         if (CurrentRobot.EnrolledFaces.ContainsKey(message.completionInfo.faceEnrollmentCompleted.faceID)) {
-          DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Re-enrolled existing face: " + _NameForFace);
+          DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Re-enrolled existing face: " + PrivacyGuard.HidePersonallyIdentifiableInfo(_NameForFace));
           CurrentRobot.EnrolledFaces[message.completionInfo.faceEnrollmentCompleted.faceID] = _NameForFace;
           CurrentRobot.EnrolledFacesLastEnrolledTime[message.completionInfo.faceEnrollmentCompleted.faceID] = Time.time;
           ReEnrolledExistingFaceAnimationSequence();
@@ -316,7 +316,7 @@ namespace FaceEnrollment {
           CurrentRobot.EnrolledFacesLastEnrolledTime.Add(message.completionInfo.faceEnrollmentCompleted.faceID, 0);
           CurrentRobot.EnrolledFacesLastSeenTime.Add(message.completionInfo.faceEnrollmentCompleted.faceID, 0);
           GameEventManager.Instance.FireGameEvent(Anki.Cozmo.GameEvent.OnMeetNewPerson);
-          DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Enrolled new face: " + _NameForFace);
+          DAS.Debug("FaceEnrollmentGame.HandleEnrolledFace", "Enrolled new face: " + PrivacyGuard.HidePersonallyIdentifiableInfo(_NameForFace));
           EnrolledNewFaceAnimationSequence();
 
           // log using up another face slot to das

@@ -496,7 +496,7 @@ namespace Anki {
         switch (config.ToLower()) {
         case "debug": {
             PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.SlowAndSafe;
-            poundDefines += "ENABLE_DEBUG_PANEL;ANKI_DEVELOPER_CODE;ANKI_DEV_CHEATS;ANKI_NO_PRIVACY_GUARD;DEBUG";
+            poundDefines += "ENABLE_DEBUG_PANEL;ANKI_DEVELOPER_CODE;ANKI_DEV_CHEATS;DEBUG";
           }
           break;
         case "shipping": {
@@ -519,7 +519,7 @@ namespace Anki {
             // Disable FastNoExceptions mode until we know what is causing the exception
             // in the DOTween library.
             PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.SlowAndSafe;
-            poundDefines += "ENABLE_DEBUG_PANEL;ANKI_DEVELOPER_CODE;ANKI_DEV_CHEATS;ANKI_NO_PRIVACY_GUARD;RELEASE;NDEBUG";
+            poundDefines += "ENABLE_DEBUG_PANEL;ANKI_DEVELOPER_CODE;ANKI_DEV_CHEATS;RELEASE;NDEBUG";
           }
           break;
         }
