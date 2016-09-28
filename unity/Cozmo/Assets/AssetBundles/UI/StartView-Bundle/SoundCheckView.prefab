@@ -200,13 +200,17 @@ MonoBehaviour:
   _DASEventViewType: 0
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
+  _LayerPriority: 0
   DimBackground: 0
-  DimBackgroundPrefabOverride: {fileID: 0}
+  _OpenAudioEvent:
+    _Event: Invalid
+    _EventType: GenericEvent
   _PlayButton: {fileID: 0}
   _PlayAgainButton: {fileID: 0}
   _SoundsGoodButton: {fileID: 0}
   _SoundImageFill: {fileID: 11421546}
   _SoundTextConfirm: {fileID: 11446252}
+  _SoundCheckAudioDuration: 4.216
 --- !u!114 &11421546
 MonoBehaviour:
   m_ObjectHideFlags: 1

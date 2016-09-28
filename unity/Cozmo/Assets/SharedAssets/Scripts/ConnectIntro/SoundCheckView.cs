@@ -21,6 +21,9 @@ public class SoundCheckView : Cozmo.UI.BaseView {
   [SerializeField]
   private Anki.UI.AnkiTextLabel _SoundTextConfirm;
 
+  [SerializeField]
+  private float _SoundCheckAudioDuration = 4.216f;
+
   private bool _PlayedOnce = false;
 
   private Tween _SoundTween = null;
@@ -47,10 +50,9 @@ public class SoundCheckView : Cozmo.UI.BaseView {
   private void HandlePlayButton() {
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Onboarding_Test_Tone);
     // TODO: use actual audio finish trigger?
-    const float audioDuration = 3.0f;
-    Invoke("HandlePlaySoundComplete", audioDuration);
+    Invoke("HandlePlaySoundComplete", _SoundCheckAudioDuration);
     _SoundImageFill.fillAmount = 0.0f;
-    _SoundTween = DOTween.To(() => _SoundImageFill.fillAmount, x => _SoundImageFill.fillAmount = x, 1.0f, audioDuration);
+    _SoundTween = DOTween.To(() => _SoundImageFill.fillAmount, x => _SoundImageFill.fillAmount = x, 1.0f, _SoundCheckAudioDuration);
 
     _PlayButton.Interactable = false;
     _PlayAgainButton.Interactable = false;
