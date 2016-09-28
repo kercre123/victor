@@ -169,7 +169,7 @@
     "translation": "Device ID: {0}"
   },
   "settings.versionPanel.label.serialNumber": {
-    "translation": "Cozmo ID: {0}"
+    "translation": "Cozmo Serial: {0}"
   },
   "settings.volumePanel.title": {
     "translation": "Volume & General"

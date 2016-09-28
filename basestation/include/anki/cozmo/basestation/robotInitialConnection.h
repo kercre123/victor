@@ -49,16 +49,19 @@ public:
 private:
   void HandleFactoryFirmware(const AnkiEvent<RobotInterface::RobotToEngine>&);
   void HandleFirmwareVersion(const AnkiEvent<RobotInterface::RobotToEngine>&);
-  void HandleSerialNumber(const AnkiEvent<RobotInterface::RobotToEngine>&);
+  void HandleRobotAvailable(const AnkiEvent<RobotInterface::RobotToEngine>&);
   void OnNotified(RobotConnectionResult result, uint32_t robotFwVersion);
+  void SendConnectionResponse(RobotConnectionResult result, uint32_t robotFwVersion);
 
   RobotID_t _id;
   bool _notified;
   IExternalInterface* _externalInterface;
+  RobotInterface::MessageHandler* _robotMessageHandler;
   uint32_t _fwVersion;
   uint32_t _fwTime;
   uint32_t _serialNumber = 0;
   bool _validFirmware;
+  bool _robotIsAvailable;
 };
 
 }

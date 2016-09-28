@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/firmwareUpdater/firmwareUpdater.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include <json/json.h>
@@ -37,22 +38,24 @@ RobotInitialConnection::RobotInitialConnection(RobotID_t id, MessageHandler* mes
 : _id(id)
 , _notified(false)
 , _externalInterface(externalInterface)
+, _robotMessageHandler(messageHandler)
 , _fwVersion(fwVersion)
 , _fwTime(fwTime)
 , _validFirmware(false) // guilty until proven innocent
+, _robotIsAvailable(false)
 {
   if (_externalInterface == nullptr) {
     return;
   }
 
   auto handleFactoryFunc = std::bind(&RobotInitialConnection::HandleFactoryFirmware, this, std::placeholders::_1);
-  AddSignalHandle(messageHandler->Subscribe(_id, RobotToEngineTag::factoryFirmwareVersion, handleFactoryFunc));
+  AddSignalHandle(_robotMessageHandler->Subscribe(_id, RobotToEngineTag::factoryFirmwareVersion, handleFactoryFunc));
 
   auto handleFirmwareFunc = std::bind(&RobotInitialConnection::HandleFirmwareVersion, this, std::placeholders::_1);
-  AddSignalHandle(messageHandler->Subscribe(_id, RobotToEngineTag::firmwareVersion, handleFirmwareFunc));
+  AddSignalHandle(_robotMessageHandler->Subscribe(_id, RobotToEngineTag::firmwareVersion, handleFirmwareFunc));
   
-  auto handleSerialFunc = std::bind(&RobotInitialConnection::HandleSerialNumber, this, std::placeholders::_1);
-  AddSignalHandle(messageHandler->Subscribe(_id, RobotToEngineTag::robotAvailable, handleSerialFunc));
+  auto handleAvailableFunc = std::bind(&RobotInitialConnection::HandleRobotAvailable, this, std::placeholders::_1);
+  AddSignalHandle(_robotMessageHandler->Subscribe(_id, RobotToEngineTag::robotAvailable, handleAvailableFunc));
 }
 
 bool RobotInitialConnection::ShouldFilterMessage(RobotToEngineTag messageTag) const
@@ -150,7 +153,7 @@ void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotToEngine
   PRINT_NAMED_INFO("RobotInitialConnection.HandleFirmwareVersion", "robot firmware: %d%s%s (app: %d%s)", robotVersion,
     robotHasDevFirmware ? " (dev)" : "", robotIsSimulated ? " (SIM)" : "", _fwVersion, appHasDevFirmware ? " (dev)" : "");
 
-  if (_serialNumber == 0 && !robotIsSimulated) {
+  if (!_robotIsAvailable && !robotIsSimulated) {
     PRINT_NAMED_ERROR("RobotInitialConnection.HandleFirmwareVersion",
                       "Haven't gotten robot available message before firmware version");
     OnNotified(RobotConnectionResult::ConnectionFailure, 0);
@@ -181,9 +184,9 @@ void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotToEngine
   OnNotified(result, robotVersion);
 }
 
-void RobotInitialConnection::HandleSerialNumber(const AnkiEvent<RobotToEngine>& message)
+void RobotInitialConnection::HandleRobotAvailable(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  _serialNumber = message.GetData().Get_robotAvailable().robotID;
+  _robotIsAvailable = true;
 }
 
 void RobotInitialConnection::OnNotified(RobotConnectionResult result, uint32_t robotFwVersion)
@@ -197,6 +200,23 @@ void RobotInitialConnection::OnNotified(RobotConnectionResult result, uint32_t r
       _validFirmware = true;
       break;
   }
+
+  // If the connection completed successfully, ask for the robot ID and send the success once we get it
+  if (RobotConnectionResult::Success == result) {
+    AddSignalHandle(_robotMessageHandler->Subscribe(_id, RobotToEngineTag::mfgId, [this, result, robotFwVersion] (const AnkiEvent<RobotToEngine>& message) {
+      _serialNumber = message.GetData().Get_mfgId().esn;
+      SendConnectionResponse(result, robotFwVersion);
+    }));
+    
+    _robotMessageHandler->SendMessage(_id, RobotInterface::EngineToRobot{RobotInterface::GetManufacturingInfo{}});
+  }
+  else {
+    SendConnectionResponse(result, robotFwVersion);
+  }
+}
+  
+void RobotInitialConnection::SendConnectionResponse(RobotConnectionResult result, uint32_t robotFwVersion)
+{
   _notified = true;
   ClearSignalHandles();
 

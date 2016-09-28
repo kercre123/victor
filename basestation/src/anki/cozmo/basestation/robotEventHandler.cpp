@@ -1407,7 +1407,6 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::RobotConnectionRe
     else
     {
       robot->SyncTime();
-      robot->SendRobotMessage<RobotInterface::GetManufacturingInfo>();
       PRINT_NAMED_INFO("RobotEventHandler.HandleRobotConnectionResponse.SendingSyncTime", "");
     }
   }

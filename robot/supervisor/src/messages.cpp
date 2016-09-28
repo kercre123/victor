@@ -974,7 +974,7 @@ namespace Anki {
       }
       void Process_getMfgInfo(const RobotInterface::GetManufacturingInfo& msg)
       {
-        // Nothing to do here
+        RobotInterface::SendMessage(RobotInterface::ManufacturingID());
       }
       
       // These are stubbed out just to get things compiling
@@ -985,7 +985,7 @@ namespace Anki {
       void Process_appConCfgIPInfo(const Anki::Cozmo::RobotInterface::AppConnectConfigIPInfo& msg) {}
       void Process_appConGetRobotIP(const Anki::Cozmo::RobotInterface::AppConnectGetRobotIP& msg) {}
       void Process_wifiOff(const Anki::Cozmo::RobotInterface::WiFiOff& msg) {}
-#endif
+#endif // simulator
       
       // Stubbed for both simulator and K02
       void Process_requestCrashReports(const Anki::Cozmo::RobotInterface::RequestCrashReports& msg) {}
