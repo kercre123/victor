@@ -42,24 +42,23 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     _UnlockedTiles = new List<CozmoUnlockableTile>();
     _UnlockableTiles = new List<CozmoUnlockableTile>();
     _LockedTiles = new List<CozmoUnlockableTile>();
+
+    // Did they already complete this section of onboarding on a different robot?
+    // Needs to be evaluated before we load tiles since thier interactable state depends on this
+    bool isOldRobot = UnlockablesManager.Instance.IsUnlocked(Anki.Cozmo.UnlockId.StackTwoCubes);
+    if (isOldRobot && OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Upgrades)) {
+      OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Upgrades);
+    }
+
     LoadTiles();
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(HandleRequestSetUnlockResult);
 
-    // Show onboarding for this section if it's the first time here.
+    // Now that the tiles have loaded highlight if it's a new robot and kick off.
     if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Upgrades)) {
-      // We've gotten into a state that there is no escape. Due to an old robot -> new app setting.
-      // Just skip onboarding, they've figured it out on a previous phone...
-      bool isOldRobot = UnlockablesManager.Instance.IsUnlocked(Anki.Cozmo.UnlockId.StackTwoCubes);
-      if (!isOldRobot) {
-        if (_UnlockableTiles.Count > 0) {
-          OnboardingManager.Instance.SetOutlineRegion(_UnlockableTiles[0].transform);
-        }
-        OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.Upgrades);
+      if (_UnlockableTiles.Count > 0) {
+        OnboardingManager.Instance.SetOutlineRegion(_UnlockableTiles[0].transform);
       }
-      else {
-        OnboardingManager.Instance.CompletePhase(OnboardingManager.OnboardingPhases.Upgrades);
-      }
-
+      OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.Upgrades);
     }
   }
 
