@@ -845,6 +845,9 @@ public class Robot : IRobot {
   }
 
   private void HandleSeeObservedObject(Anki.Cozmo.ExternalInterface.RobotObservedObject message) {
+
+    DasTracker.Instance.TrackObjectObserved(message);
+
     if (message.objectFamily == Anki.Cozmo.ObjectFamily.Mat) {
       DAS.Warn("Robot.HandleSeeObservedObject", "HandleSeeObservedObject received RobotObservedObject message about the Mat!");
       return;

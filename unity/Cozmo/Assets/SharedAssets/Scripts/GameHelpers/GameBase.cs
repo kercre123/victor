@@ -183,7 +183,7 @@ public abstract class GameBase : MonoBehaviour {
     RegisterRobotReactionaryBehaviorEvents();
 
     LoadMinigameUIAssetBundle();
-
+    DAS.Event("game.launch", GetDasGameName());
   }
 
   private void LoadMinigameUIAssetBundle() {
@@ -302,6 +302,7 @@ public abstract class GameBase : MonoBehaviour {
     DAS.SetGlobal(DASConstants.Game.kGlobal, GetGameUUID());
     DAS.Event(DASConstants.Game.kStart, GetGameUUID());
     DAS.Event(DASConstants.Game.kType, GetDasGameName());
+    DasTracker.Instance.TrackGameStarted();
 
     InitializeGame(_ChallengeData.MinigameConfig);
     if (!string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath)) {
@@ -567,6 +568,7 @@ public abstract class GameBase : MonoBehaviour {
       DataPersistence.DataPersistenceManager.Instance.Save();
       GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeDifficultyUnlock, _ChallengeData.ChallengeID, newDifficultyUnlocked));
       RewardedActionManager.Instance.NewDifficultyUnlock = newDifficultyUnlocked;
+      DasTracker.Instance.TrackDifficultyUnlocked(_ChallengeData.ChallengeID, newDifficultyUnlocked);
     }
   }
 
@@ -602,6 +604,7 @@ public abstract class GameBase : MonoBehaviour {
     ContextManager.Instance.AppHoldEnd();
     DAS.Event(DASConstants.Game.kEnd, GetGameTimeElapsedAsStr());
     DAS.SetGlobal(DASConstants.Game.kGlobal, null);
+    DasTracker.Instance.TrackGameEnded();
     if (_SharedMinigameViewInstance != null) {
       _SharedMinigameViewInstance.CloseViewImmediately();
       _SharedMinigameViewInstance = null;
@@ -838,6 +841,7 @@ public abstract class GameBase : MonoBehaviour {
         OnMiniGameLose();
       }
     }
+    DAS.Event("game.end.score", PlayerRoundsWon.ToString(), DASUtil.FormatExtraData(CozmoRoundsWon.ToString()));
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Game_End);
 

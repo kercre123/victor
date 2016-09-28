@@ -146,9 +146,10 @@ void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotToEngine
   // simulated robot will have special tag in json
   const bool robotIsSimulated = robotVersion == 0 && robotTime == 0 && !headerData["sim"].isNull();
 
+  PRINT_NAMED_EVENT("robot.firmware_version", "%u", robotVersion);
   PRINT_NAMED_INFO("RobotInitialConnection.HandleFirmwareVersion", "robot firmware: %d%s%s (app: %d%s)", robotVersion,
     robotHasDevFirmware ? " (dev)" : "", robotIsSimulated ? " (SIM)" : "", _fwVersion, appHasDevFirmware ? " (dev)" : "");
-  
+
   if (_serialNumber == 0 && !robotIsSimulated) {
     PRINT_NAMED_ERROR("RobotInitialConnection.HandleFirmwareVersion",
                       "Haven't gotten robot available message before firmware version");

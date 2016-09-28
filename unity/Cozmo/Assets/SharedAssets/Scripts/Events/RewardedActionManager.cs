@@ -207,6 +207,7 @@ public class RewardedActionManager : MonoBehaviour {
     PendingActionRewards = ResolveTagRewardCollisions(PendingActionRewards);
     foreach (KeyValuePair<RewardedActionData, int> reward in PendingActionRewards) {
       DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount(reward.Key.Reward.ItemID, reward.Value);
+      DAS.Event("game.end.energy_reward", reward.Key.Reward.ItemID, DASUtil.FormatExtraData(reward.Key.Reward.Amount.ToString()));
     }
     DataPersistenceManager.Instance.Save();
     ResetPendingRewards();

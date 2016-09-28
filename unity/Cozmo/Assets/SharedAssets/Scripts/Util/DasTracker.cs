@@ -206,6 +206,31 @@ public class DasTracker {
     DAS.Event("app.connect.abort_to_title", viewName);
   }
 
+  public void TrackDifficultyUnlocked(string gameId, int difficultyLevel) {
+    // game.end.unlock - unlock name (game name + difficulty)
+    DAS.Event("game.end.unlock", gameId + "_" + difficultyLevel);
+  }
+
+  private HashSet<int> _SeenObjects = new HashSet<int>();
+  private bool _InGame = false;
+  public void TrackGameStarted() {
+    _InGame = true;
+  }
+
+  public void TrackGameEnded() {
+    _InGame = false;
+    _SeenObjects.Clear();
+  }
+
+  public void TrackObjectObserved(Anki.Cozmo.ExternalInterface.RobotObservedObject message) {
+    if (!_InGame || _SeenObjects.Contains(message.objectID)) {
+      return;
+    }
+
+    _SeenObjects.Add(message.objectID);
+    DAS.Event("game.object_recognized", message.objectType.ToString());
+  }
+
   private void HandleConnectSuccess() {
     // connect flow ends when connection is successfully made
     var dataDict = GetDataDictionary("$data", _ConnectSessionIsFirstTime ? "1" : "0");
