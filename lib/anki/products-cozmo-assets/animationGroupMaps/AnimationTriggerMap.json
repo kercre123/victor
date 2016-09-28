@@ -538,15 +538,15 @@
     },
     {
       "CladEvent": "OnboardingDriveStart",
-      "AnimName": "ag_launch_startDriving"
+      "AnimName": "ag_launch_reacttocube_startdriving"
     },
     {
       "CladEvent": "OnboardingDriveLoop",
-      "AnimName": "ag_launch_drivingLoop"
+      "AnimName": "ag_launch_reacttocube_drivingloop"
     },
     {
       "CladEvent": "OnboardingDriveEnd",
-      "AnimName": "ag_launch_endDriving"
+      "AnimName": "ag_launch_reacttocube_enddriving"
     },
     {
       "CladEvent": "OnboardingEyesOn",
