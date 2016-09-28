@@ -936,10 +936,11 @@ protected:
   TimeStamp_t      _fallingStartedTime_ms = 0;
   
   // Gyro drift check
-  bool        _gyroDriftReported;
-  Radians     _driftCheckStartAngle_rad;
-  f32         _driftCheckStartGyroZ_rad_per_sec;
-  TimeStamp_t _driftCheckStartTime_ms;
+  bool          _gyroDriftReported;
+  PoseFrameID_t _driftCheckStartPoseFrameId;
+  Radians       _driftCheckStartAngle_rad;
+  f32           _driftCheckStartGyroZ_rad_per_sec;
+  TimeStamp_t   _driftCheckStartTime_ms;
   
   void DetectGyroDrift(const RobotState& msg);
   

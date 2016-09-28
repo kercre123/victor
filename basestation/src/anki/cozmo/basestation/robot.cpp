@@ -182,6 +182,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _liftPose(0.f, Y_AXIS_3D(), {LIFT_ARM_LENGTH, 0.f, 0.f}, &_liftBasePose, "RobotLift")
   , _currentHeadAngle(MIN_HEAD_ANGLE)
   , _gyroDriftReported(false)
+  , _driftCheckStartPoseFrameId(0)
   , _driftCheckStartAngle_rad(0)
   , _driftCheckStartGyroZ_rad_per_sec(0)
   , _driftCheckStartTime_ms(0)
@@ -708,7 +709,8 @@ void Robot::DetectGyroDrift(const RobotState& msg)
         (std::fabsf(msg.rawGyroZ) > kDriftCheckMaxRate_rad_per_sec) ||
         
         ((_driftCheckStartTime_ms != 0) &&
-         (std::fabsf(_driftCheckStartGyroZ_rad_per_sec - msg.rawGyroZ) > kDriftCheckGyroZMotionThresh_rad_per_sec))
+         ((std::fabsf(_driftCheckStartGyroZ_rad_per_sec - msg.rawGyroZ) > kDriftCheckGyroZMotionThresh_rad_per_sec) ||
+          (_driftCheckStartPoseFrameId != GetPoseFrameID())))
         
         ) {
       _driftCheckStartTime_ms = 0;
@@ -716,6 +718,7 @@ void Robot::DetectGyroDrift(const RobotState& msg)
     
     // Robot's not moving. Initialize drift detection.
     else if (_driftCheckStartTime_ms == 0) {
+      _driftCheckStartPoseFrameId = GetPoseFrameID();
       _driftCheckStartAngle_rad = GetPose().GetRotation().GetAngleAroundZaxis();
       _driftCheckStartGyroZ_rad_per_sec = msg.rawGyroZ;
       _driftCheckStartTime_ms = msg.timestamp;
