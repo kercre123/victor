@@ -116,11 +116,15 @@ namespace Cozmo.HomeHub {
     private void LoadHomeView(bool assetBundleSuccess) {
       if (assetBundleSuccess) {
         _HomeViewPrefabData.LoadAssetData((GameObject homeViewPrefab) => {
-          if (homeViewPrefab != null) {
-            StartCoroutine(ShowHomeViewAfterOtherViewClosed(homeViewPrefab));
-          }
-          else {
-            DAS.Error("HomeHub.LoadHomeView", "HomeViewPrefab is null");
+          // this can be null if, by the time this callback is called, HomeHub has been destroyed.
+          // This seems to be happening in some disconnection cases and a NRE is thrown
+          if (this != null) {
+            if (homeViewPrefab != null) {
+              StartCoroutine(ShowHomeViewAfterOtherViewClosed(homeViewPrefab));
+            }
+            else {
+              DAS.Error("HomeHub.LoadHomeView", "HomeViewPrefab is null");
+            }
           }
         });
       }
