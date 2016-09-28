@@ -32,6 +32,7 @@ static volatile uint8_t rxRind;
 
 static u8 wifiState = 0;
 static u8 blueState = 0;
+static u32 rxDroppedCount = 0;
 
 namespace Anki {
 namespace Cozmo {
@@ -111,7 +112,7 @@ namespace HAL {
       }
       else
       {
-        AnkiError( 132, "WiFi.ReceiveMessage", 398, "No buffer available to receive clad message %x[%d], tick %d, time %d, buffer %x %x %d", 7, data[0], length, HAL::GetTimeStamp(), SysTick->VAL, rxBuf[rind], rxBuf[rind+1], RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK));
+        rxDroppedCount++;
         return false;
       }
     }
@@ -120,6 +121,14 @@ namespace HAL {
     {
       const uint8_t wind = rxWind;
       uint8_t rind = rxRind;
+      
+      if (rxDroppedCount > 0)
+      {
+        AnkiError( 395, "wifi.dropped_incomming_messages", 615, "%d messages dropped, tick %d, time %d, buffer %x %x %d", 6, rxDroppedCount, HAL::GetTimeStamp(), SysTick->VAL, rxBuf[rind], rxBuf[rind+1], RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK));
+        rxDroppedCount = 0;
+      }
+
+      
       if (wind == rind) return RESULT_OK; // Nothing available
       else
       {
