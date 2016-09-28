@@ -792,12 +792,50 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::DeleteObjectsFromZombieOrigins()
   {
+    BlockWorldFilter filter;
+    filter.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
+    filter.SetFilterFcn(&BlockWorldFilter::ActiveObjectsFilter);
+
+    // Get all active objects in current origin
+    filter.SetAllowedOrigins({_robot->GetWorldOrigin()});
+    std::vector<ObservableObject*> objectsInCurrent;
+    FindMatchingObjects(filter, objectsInCurrent);
+    
+    std::set<ObjectType> typesInCurrent;
+    for(const auto& object : objectsInCurrent)
+    {
+      typesInCurrent.insert(object->GetType());
+    }
+  
     ObjectsByOrigin_t::iterator originIt = _existingObjects.begin();
     while( originIt != _existingObjects.end() )
     {
       const bool isZombie = IsZombiePoseOrigin( originIt->first );
       if ( isZombie ) {
         PRINT_CH_INFO("BlockWorld", "DeleteObjectsFromZombieOrigins", "Deleting objects from (%p) because it was zombie", originIt->first);
+        
+        // Get all active objects in zombie origin
+        filter.SetAllowedOrigins({originIt->first});
+        std::vector<ObservableObject*> objectsInZombie;
+        FindMatchingObjects(filter, objectsInZombie);
+        
+        // For all active objects that are in the zombie origin that are not in the current origin
+        // add them to the current origin before deleting the existing origin
+        for(const auto& objectInZombie : objectsInZombie)
+        {
+          // The object in the zombie origin is not in the current origin (works because we can't have
+          // multiple objects of the same type in a given origin)
+          if(typesInCurrent.count(objectInZombie->GetType()) == 0)
+          {
+            typesInCurrent.insert(objectInZombie->GetType());
+            
+            AddActiveObject(objectInZombie->GetActiveID(),
+                            objectInZombie->GetFactoryID(),
+                            ActiveObject::GetActiveObjectTypeFromType(objectInZombie->GetType()),
+                            objectInZombie);
+          }
+        }
+        
         originIt = _existingObjects.erase(originIt);
       } else {
         PRINT_CH_DEBUG("BlockWorld", "DeleteObjectsFromZombieOrigins", "Origin (%p) is still good (keeping objects)", originIt->first);
@@ -2782,14 +2820,16 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     newObject->InitPose(newObjectPose, PoseState::Unknown);
     
     AddNewObject(newObject);
-    PRINT_CH_INFO("BlockWorld", "BlockWorld.AddActiveObject.AddedNewObject",
-                  "objectID %d, type %s, activeID %d, factoryID 0x%x",
-                  newObject->GetID().GetValue(), objTypeStr, newObject->GetActiveID(), newObject->GetFactoryID());
     
     if(objToCopyId != nullptr)
     {
       newObject->CopyID(objToCopyId);
     }
+    
+    PRINT_CH_INFO("BlockWorld", "BlockWorld.AddActiveObject.AddedNewObject",
+                  "objectID %d, type %s, activeID %d, factoryID 0x%x",
+                  newObject->GetID().GetValue(), objTypeStr, newObject->GetActiveID(), newObject->GetFactoryID());
+    
     return newObject->GetID();
   }
 

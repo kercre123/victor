@@ -220,6 +220,28 @@ namespace Anki {
       
       return objType;
     }
+    
+    ActiveObjectType ActiveObject::GetActiveObjectTypeFromType(ObjectType type) {
+      ActiveObjectType objType = ActiveObjectType::OBJECT_UNKNOWN;
+      switch(type) {
+        case ObjectType::Charger_Basic:
+          objType = ActiveObjectType::OBJECT_CHARGER;
+          break;
+        case ObjectType::Block_LIGHTCUBE1:
+          objType = ActiveObjectType::OBJECT_CUBE1;
+          break;
+        case ObjectType::Block_LIGHTCUBE2:
+          objType = ActiveObjectType::OBJECT_CUBE2;
+          break;
+        case ObjectType::Block_LIGHTCUBE3:
+          objType = ActiveObjectType::OBJECT_CUBE3;
+          break;
+        default:
+          break;
+      }
+      
+      return objType;
+    }
 
   } // namespace Cozmo
 } // namespace Anki

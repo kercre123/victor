@@ -652,6 +652,88 @@ TEST(BlockWorld, CubeStacks)
 } // BlockWorld.CubeStacks
 
 
+TEST(BlockWorld, CopyObjectsFromZombieOrigins)
+{
+  using namespace Anki;
+  using namespace Cozmo;
+  
+  Robot robot(1, cozmoContext);
+  robot.FakeSyncTimeAck();
+  
+  BlockWorld& blockWorld = robot.GetBlockWorld();
+  
+  // There should be nothing in BlockWorld yet
+  BlockWorldFilter filter;
+  std::vector<ObservableObject*> objects;
+  blockWorld.FindMatchingObjects(filter, objects);
+  ASSERT_TRUE(objects.empty());
+  ASSERT_EQ(blockWorld.GetNumOrigins(), 0);
+  
+  // Add object
+  ObjectID objID1 = blockWorld.AddActiveObject(0, 0, ActiveObjectType::OBJECT_CUBE1);
+  ObjectID objID2 = blockWorld.AddActiveObject(1, 1, ActiveObjectType::OBJECT_CUBE2);
+  
+  ObservableObject* object1 = blockWorld.GetObjectByID(objID1);
+  ASSERT_NE(nullptr, object1);
+  ASSERT_EQ(object1->GetPoseState(), PoseState::Unknown);
+  ASSERT_EQ(object1->IsActive(), true);
+  
+  ObservableObject* object2 = blockWorld.GetObjectByID(objID2);
+  ASSERT_NE(nullptr, object2);
+  
+  // Make object2 able to be localized to
+  object2->SetPoseState(PoseState::Known);
+  object2->SetIsMoving(false, 0);
+  object2->SetLastObservedTime(10);
+  Pose3d p(0,{0,1,0},{0,0,0});
+  p.SetParent(robot.GetPose().GetParent());
+  robot.GetObjectPoseConfirmer().AddVisualObservation(object2, p, false, 10);
+  robot.GetObjectPoseConfirmer().AddVisualObservation(object2, p, false, 10);
+  ASSERT_EQ(object2->GetPoseState(), PoseState::Known);
+  ASSERT_EQ(object2->IsActive(), true);
+  ASSERT_EQ(object2->CanBeUsedForLocalization(), true);
+  ASSERT_EQ(blockWorld.GetNumOrigins(), 1);
+  
+  // Delocalizing will create a new frame but the old frame will still exist since
+  // object2 is localizable
+  robot.Delocalize(false);
+  
+  // We won't be able to get objects1 and 2 by id since they aren't in the current frame
+  object1 = blockWorld.GetObjectByID(objID1);
+  ASSERT_EQ(nullptr, object1);
+  
+  // Storing this to a new pointer because I use the old object2 pointer later to set poseState
+  ObservableObject* obj2 = blockWorld.GetObjectByID(objID2);
+  ASSERT_EQ(nullptr, obj2);
+  
+  // Add a new object to this currently empty frame
+  ObjectID objID3 = blockWorld.AddActiveObject(2, 2, ActiveObjectType::OBJECT_CUBE3);
+  ObservableObject* object3 = blockWorld.GetObjectByID(objID3);
+  ASSERT_NE(nullptr, object3);
+  ASSERT_EQ(blockWorld.GetNumOrigins(), 2);
+
+  // Mark object2 in previous frame as unknown so that frame will become a zombie
+  object2->SetPoseState(PoseState::Unknown);
+  
+  // Delocalizing will create a new frame and delete our 2 zombie frames
+  // One of the frames has object1 and 2 the other has object3
+  // Since our new frame has no objects in it we will added all objects from all zombie frames to
+  // the new frame
+  robot.Delocalize(false);
+  ASSERT_EQ(blockWorld.GetNumOrigins(), 1);
+  
+  object1 = blockWorld.GetObjectByID(objID1);
+  ASSERT_NE(nullptr, object1);
+  
+  object2 = blockWorld.GetObjectByID(objID2);
+  ASSERT_NE(nullptr, object2);
+  
+  object3 = blockWorld.GetObjectByID(objID3);
+  ASSERT_NE(nullptr, object3);
+  
+} // BlockWorld.CopyObjectsFromZombieOrigins
+
+
 // This test object allows us to reuse the TEST_P below with different
 // Json filenames as a parameter
 class BlockWorldTest : public ::testing::TestWithParam<const char*>
