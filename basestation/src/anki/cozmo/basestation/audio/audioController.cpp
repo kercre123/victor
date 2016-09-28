@@ -273,12 +273,12 @@ AudioEngine::AudioPlayingId AudioController::PostAudioEvent( const std::string& 
   }
 #endif
   
-  PRINT_CH_INFO(kAudioLogChannelName,
-                "AudioController.PostAudioEvent",
-                "Event: '%s' GameObj: %u CallbackFlag: %d PlayId: %d Initialized: %c",
-                eventName.c_str(), static_cast<uint32_t>(gameObjectId),
-                (nullptr != callbackContext) ? callbackContext->GetCallbackFlags() : 0,
-                playingId, _isInitialized ? 'Y' : 'N');
+  PRINT_CH_DEBUG(kAudioLogChannelName,
+                 "AudioController.PostAudioEvent",
+                 "Event: '%s' GameObj: %u CallbackFlag: %d PlayId: %d Initialized: %c",
+                 eventName.c_str(), static_cast<uint32_t>(gameObjectId),
+                 (nullptr != callbackContext) ? callbackContext->GetCallbackFlags() : 0,
+                 playingId, _isInitialized ? 'Y' : 'N');
   
   return playingId;
 }
@@ -319,12 +319,12 @@ AudioEngine::AudioPlayingId AudioController::PostAudioEvent( AudioEngine::AudioE
   }
 #endif
   
-  PRINT_CH_INFO(kAudioLogChannelName,
-                "AudioController.PostAudioEvent",
-                "EventId: %u GameObj: %u CallbackFlag: %d PlayId: %d Initialized: %c",
-                eventId, static_cast<uint32_t>(gameObjectId),
-                (nullptr != callbackContext) ? callbackContext->GetCallbackFlags() : 0,
-                playingId, _isInitialized ? 'Y' : 'N');
+  PRINT_CH_DEBUG(kAudioLogChannelName,
+                 "AudioController.PostAudioEvent",
+                 "EventId: %u GameObj: %u CallbackFlag: %d PlayId: %d Initialized: %c",
+                 eventId, static_cast<uint32_t>(gameObjectId),
+                 (nullptr != callbackContext) ? callbackContext->GetCallbackFlags() : 0,
+                 playingId, _isInitialized ? 'Y' : 'N');
   
   return playingId;
 }
@@ -338,11 +338,11 @@ void AudioController::StopAllAudioEvents( AudioEngine::AudioGameObject gameObjec
   }
 #endif
   
-  PRINT_CH_INFO(kAudioLogChannelName,
-                "AudioController.StopAllAudioEvents",
-                "GameObj: %u Initialized: %c",
-                static_cast<uint32_t>(gameObjectId),
-                _isInitialized ? 'Y' : 'N');
+  PRINT_CH_DEBUG(kAudioLogChannelName,
+                 "AudioController.StopAllAudioEvents",
+                 "GameObj: %u Initialized: %c",
+                 static_cast<uint32_t>(gameObjectId),
+                 _isInitialized ? 'Y' : 'N');
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -356,12 +356,12 @@ bool AudioController::SetState( AudioEngine::AudioStateGroupId stateGroupId,
   }
 #endif
   
-  PRINT_CH_INFO(kAudioLogChannelName,
-                "AudioController.SetState",
-                "StateGroupId: %u StateId: %u Success: %c Initialized: %c",
-                stateGroupId, stateId,
-                success ? 'Y' : 'N',
-                _isInitialized ? 'Y' : 'N');
+  PRINT_CH_DEBUG(kAudioLogChannelName,
+                 "AudioController.SetState",
+                 "StateGroupId: %u StateId: %u Success: %c Initialized: %c",
+                 stateGroupId, stateId,
+                 success ? 'Y' : 'N',
+                 _isInitialized ? 'Y' : 'N');
   
   return success;
 }
@@ -378,13 +378,13 @@ bool AudioController::SetSwitchState( AudioEngine::AudioSwitchGroupId switchGrou
   }
 #endif
   
-  PRINT_CH_INFO(kAudioLogChannelName,
-                "AudioController.SetSwitchState",
-                "SwitchGroupId: %u SwitchStateId: %u GameObj: %u Success: %c Initialized: %c",
-                switchGroupId, switchStateId,
-                static_cast<uint32_t>(gameObjectId),
-                success ? 'Y' : 'N',
-                _isInitialized ? 'Y' : 'N');
+  PRINT_CH_DEBUG(kAudioLogChannelName,
+                 "AudioController.SetSwitchState",
+                 "SwitchGroupId: %u SwitchStateId: %u GameObj: %u Success: %c Initialized: %c",
+                 switchGroupId, switchStateId,
+                 static_cast<uint32_t>(gameObjectId),
+                 success ? 'Y' : 'N',
+                 _isInitialized ? 'Y' : 'N');
   
   return success;
 }
@@ -403,14 +403,14 @@ bool AudioController::SetParameter( AudioEngine::AudioParameterId parameterId,
   }
 #endif
   
-  PRINT_CH_INFO(kAudioLogChannelName,
-                "AudioController.SetParameter",
-                "ParameterId: %u Value: %f GameObj: %u Duration: %d Curve: %hhu Success: %c Initialized: %c",
-                parameterId, rtpcValue,
-                static_cast<uint32_t>(gameObjectId),
-                valueChangeDuration, curve,
-                success ? 'Y' : 'N',
-                _isInitialized ? 'Y' : 'N');
+  PRINT_CH_DEBUG(kAudioLogChannelName,
+                 "AudioController.SetParameter",
+                 "ParameterId: %u Value: %f GameObj: %u Duration: %d Curve: %hhu Success: %c Initialized: %c",
+                 parameterId, rtpcValue,
+                 static_cast<uint32_t>(gameObjectId),
+                 valueChangeDuration, curve,
+                 success ? 'Y' : 'N',
+                 _isInitialized ? 'Y' : 'N');
   
   return success;
 }
@@ -429,13 +429,13 @@ bool AudioController::SetParameterWithPlayingId( AudioEngine::AudioParameterId p
   }
 #endif
   
-  PRINT_CH_INFO(kAudioLogChannelName,
-                "AudioController.SetParameterWithPlayingId",
-                "ParameterId: %u Value: %f PlayingId: %u Duration: %d Curve: %hhu Success: %c Initialized: %c",
-                parameterId, rtpcValue, playingId,
-                valueChangeDuration, curve,
-                success ? 'Y' : 'N',
-                _isInitialized ? 'Y' : 'N');
+  PRINT_CH_DEBUG(kAudioLogChannelName,
+                 "AudioController.SetParameterWithPlayingId",
+                 "ParameterId: %u Value: %f PlayingId: %u Duration: %d Curve: %hhu Success: %c Initialized: %c",
+                 parameterId, rtpcValue, playingId,
+                 valueChangeDuration, curve,
+                 success ? 'Y' : 'N',
+                 _isInitialized ? 'Y' : 'N');
   
   return success;
 }
@@ -674,10 +674,7 @@ void AudioController::MoveCallbackContextToGarbageCollector( const AudioEngine::
 {
   ASSERT_NAMED( nullptr != callbackContext, "AudioController.MoveCallbackContextToGarbageCollector Callback Context is \
                 NULL");
-  PRINT_CH_DEBUG(kAudioLogChannelName,
-                 "AudioController.MoveCallbackContextToGarbageCollector",
-                 "Add PlayId: %d Callback Context to garbagecollector",
-                 callbackContext->GetPlayId());
+  
   // FIXME: Is there a better way of doing this?
   ClearGarbageCollector();
   

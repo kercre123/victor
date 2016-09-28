@@ -106,6 +106,10 @@ void MusicConductor::UpdateMusicState()
     }
   }
   
+  PRINT_CH_INFO(AudioController::kAudioLogChannelName,
+                "MusicConductor.UpdateMusicState",
+                "StateId: %ul", _currentStateId);
+  
   const bool success = _audioController.SetState( _musicStateId, _currentStateId );
   if ( !success ) {
     PRINT_NAMED_ERROR( "MusicConductor.UpdateMusicState", "Failed to set Music State %d", _currentStateId );
