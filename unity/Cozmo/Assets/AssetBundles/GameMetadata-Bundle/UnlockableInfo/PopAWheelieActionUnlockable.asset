@@ -24,6 +24,7 @@ MonoBehaviour:
   DescriptionKey: unlockable.PopAWheelieAction.Description
   TitleKey: unlockable.PopAWheelieAction.Title
   SparkButtonDescription: unlockable.PopAWheelieAction.SparkButtonDescription
+  SparkedStateDescription: unlockable.PopAWheelieAction.SparkedStateDescription
   UpgradeCostItemId: TestHexItem0
   UpgradeCostAmountNeeded: 12
   RequestTrickCostItemId: treat

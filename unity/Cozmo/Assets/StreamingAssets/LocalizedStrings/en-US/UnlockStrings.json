@@ -96,6 +96,9 @@
   "unlockable.CubeRollAction.SparkButtonDescription": {
     "translation": "Tap to ask Cozmo to roll a Cube"
   },
+  "unlockable.CubeRollAction.SparkedStateDescription": {
+    "translation": "Watch Cozmo roll the first Cube he sees"
+  },
   "unlockable.DroneMode.Title": {
     "translation": "Explorer Mode"
   },
@@ -107,6 +110,9 @@
   },
   "unlockable.CubeStackAction.Description": {
     "translation": "With this Upgrade, Cozmo gains the ability to create a stack of two Power Cubes."
+  },
+  "unlockable.CubeStackAction.SparkedStateDescription": {
+    "translation": "Watch Cozmo create stack of Cubes"
   },
   "unlockable.CubeStackAction.SparkButtonDescription": {
     "translation": "Tap to ask Cozmo to stack two Cubes"
@@ -120,6 +126,9 @@
   "unlockable.PounceOnMotionAction.SparkButtonDescription": {
     "translation": "Tap to ask Cozmo to pounce on fingers"
   },
+  "unlockable.PounceOnMotionAction.SparkedStateDescription": {
+    "translation": "Cozmo will pounce on any movement he sees"
+  },
   "unlockable.BuildPyramid.Title": {
     "translation": "Build a Pyramid"
   },
@@ -128,6 +137,9 @@
   },
   "unlockable.BuildPyramid.SparkButtonDescription": {
     "translation": "Tap to ask Cozmo to build a pyramid"
+  },
+  "unlockable.BuildPyramid.SparkedStateDescription": {
+    "translation": "Watch Cozmo build a pyramid out of 3 Cubes"
   },
   "unlockable.PopAWheelieAction.Title": {
     "translation": "Pop a Wheelie"
@@ -138,6 +150,9 @@
   "unlockable.PopAWheelieAction.SparkButtonDescription": {
     "translation": "Tap to ask Cozmo to pop a wheelie"
   },
+  "unlockable.PopAWheelieAction.SparkedStateDescription": {
+    "translation": "Watch Cozmo pop a wheelie off a Cube"
+  },
   "unlockable.KnockOverThreeCubeStack.Title": {
     "translation": "Knock Over Stacks"
   },
@@ -147,6 +162,9 @@
   "unlockable.KnockOverThreeCubeStack.SparkButtonDescription": {
     "translation": "Tap to ask Cozmo to knock over a stack"
   },
+  "unlockable.KnockOverThreeCubeStack.SparkedStateDescription": {
+    "translation": "Build Cozmo a stack of Cubes to tip over"
+  },
   "unlockable.PickupCube.Title": {
     "translation": "Pick Up Cube"
   },
@@ -155,6 +173,9 @@
   },
   "unlockable.PickupCube.SparkButtonDescription": {
     "translation": "Tap to ask Cozmo to pick up a Cube"
+  },
+  "unlockable.PickupCube.SparkedStateDescription": {
+    "translation": "Watch Cozmo pick up a Cube"
   },
   "unlockable.ComingSoon.Title": {
     "translation": "Coming Soon!"
@@ -175,7 +196,7 @@
     "translation": "Level Up"
   },
   "sparks.Sparked": {
-    "translation": "Cozmo is sparked..."
+    "translation": "Cozmo is sparked:"
   },
   "sparks.Press": {
     "translation": "Tap to ask Cozmo to do this"

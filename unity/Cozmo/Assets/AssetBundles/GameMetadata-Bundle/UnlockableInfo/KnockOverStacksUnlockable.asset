@@ -24,6 +24,7 @@ MonoBehaviour:
   DescriptionKey: unlockable.KnockOverThreeCubeStack.Description
   TitleKey: unlockable.KnockOverThreeCubeStack.Title
   SparkButtonDescription: unlockable.KnockOverThreeCubeStack.SparkButtonDescription
+  SparkedStateDescription: unlockable.KnockOverThreeCubeStack.SparkedStateDescription
   UpgradeCostItemId: TestHexItem0
   UpgradeCostAmountNeeded: 8
   RequestTrickCostItemId: treat

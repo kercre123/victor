@@ -24,6 +24,7 @@ MonoBehaviour:
   DescriptionKey: unlockable.PounceOnMotionAction.Description
   TitleKey: unlockable.PounceOnMotionAction.Title
   SparkButtonDescription: unlockable.PounceOnMotionAction.SparkButtonDescription
+  SparkedStateDescription: unlockable.PounceOnMotionAction.SparkedStateDescription
   UpgradeCostItemId: TestHexItem0
   UpgradeCostAmountNeeded: 2
   RequestTrickCostItemId: treat

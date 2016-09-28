@@ -22,6 +22,7 @@ MonoBehaviour:
   DescriptionKey: unlockable.PickupCube.Description
   TitleKey: unlockable.PickupCube.Title
   SparkButtonDescription: unlockable.PickupCube.SparkButtonDescription
+  SparkedStateDescription: unlockable.PickupCube.SparkedStateDescription
   UpgradeCostItemId: TestHexItem0
   UpgradeCostAmountNeeded: 0
   RequestTrickCostItemId: treat
