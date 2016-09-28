@@ -3198,6 +3198,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result BlockWorld::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
   {
+    ANKI_CPU_PROFILE("BlockWorld::AddVisionOverheadEdges");
     _robot->GetContext()->GetVizManager()->EraseSegments("BlockWorld.AddVisionOverheadEdges");
     
     // check conditions to add edges

@@ -987,7 +987,6 @@ inline bool IsStandardAA(const Quad2f& quad)
 // is point within aaBBox
 inline bool Contains(const Point2f& min, const Point2f& max, const Point2f& point)
 {
-  ANKI_CPU_PROFILE("NewQuadCheck::ContainsMinMaxPoint");
   const bool contains =
     FLT_GE(point.x(), min.x()) &&
     FLT_LE(point.x(), max.x()) &&
@@ -1111,7 +1110,6 @@ inline bool OverlapsOrContains(const Quad2f& axisAlignedQuad, const Quad2f& nonA
   const NavMeshQuadTreeNode::QuadSegmentArray& nonAAQuadSegments,
   bool& isAAQuadContainedInNonAAQuad)
 {
-  ANKI_CPU_PROFILE("NewQuadCheck::OverlapsOrContainsQuad");
   assert(IsStandardAA(axisAlignedQuad));
   
   // if any of the corners in the nonAAQuad is inside the quad
@@ -1172,7 +1170,6 @@ inline bool OverlapsOrContains(const Quad2f& axisAlignedQuad,
   const NavMeshQuadTreeNode::TriangleSegmentArray& triSegments,
   bool& isQuadContainedInTriangle)
 {
-  ANKI_CPU_PROFILE("NewQuadCheck::OverlapsOrContainsTriangle");
   assert(IsStandardAA(axisAlignedQuad));
   
   // if any of the corners in the nonAAQuad is inside the quad
@@ -1231,7 +1228,6 @@ inline bool OverlapsOrContains(const Quad2f& axisAlignedQuad,
   const NavMeshQuadTreeNode::SegmentLineEquation& line,
   bool& doesLineCrossQuad)
 {
-  ANKI_CPU_PROFILE("NewQuadCheck::OverlapsOrContainsLine");
   assert(IsStandardAA(axisAlignedQuad));
   
   // if any of the points from the line is inside the aaQuad
