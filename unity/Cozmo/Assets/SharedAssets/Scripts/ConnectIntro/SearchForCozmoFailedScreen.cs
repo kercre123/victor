@@ -7,6 +7,8 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
   public System.Action OnEndpointFound;
   public System.Action OnQuitFlow;
 
+  private const int kAppVerCharsToDisplay = 5;
+
   [SerializeField]
   private Cozmo.UI.CozmoButton _ShowMeButton;
 
@@ -67,9 +69,14 @@ public class SearchForCozmoFailedScreen : MonoBehaviour {
     for (int i = 0; i < message.dataList.Length; ++i) {
       Anki.Cozmo.DeviceDataPair currentPair = message.dataList[i];
       if (currentPair.dataType == Anki.Cozmo.DeviceDataType.BuildVersion) {
-        _AppVerLabel.FormattingArgs = new object[] { currentPair.dataValue };
+        string appVer = currentPair.dataValue;
+        if (appVer.Length > kAppVerCharsToDisplay) {
+          appVer = appVer.Substring(0, kAppVerCharsToDisplay);
+        }
+        _AppVerLabel.FormattingArgs = new object[] { appVer };
       }
     }
+
   }
 
   private void OnDestroy() {
