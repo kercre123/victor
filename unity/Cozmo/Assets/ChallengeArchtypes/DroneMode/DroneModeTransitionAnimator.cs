@@ -47,9 +47,13 @@ namespace Cozmo.Minigame.DroneMode {
     public void PlayTransitionAnimation(DroneModeControlsSlide.SpeedSliderSegment newSliderSegment) {
       UpdateDebugStringAndSendDAS("PlayTransitionAnimation");
       _TargetDriveSpeedSegment = newSliderSegment;
-      if (_CurrentAnimationState == TransitionAnimationState.NONE
-          && _CurrentDriveSpeedSegment != _TargetDriveSpeedSegment) {
-        PlayOutAnimation(_CurrentDriveSpeedSegment, _TargetDriveSpeedSegment);
+      if (_CurrentDriveSpeedSegment != _TargetDriveSpeedSegment) {
+        if (_TargetDriveSpeedSegment == DroneModeControlsSlide.SpeedSliderSegment.Neutral) {
+          PlayOutAnimation(_CurrentDriveSpeedSegment, _TargetDriveSpeedSegment);
+        }
+        else {
+          PlayInAnimation(_TargetDriveSpeedSegment);
+        }
       }
     }
 
@@ -63,18 +67,18 @@ namespace Cozmo.Minigame.DroneMode {
           HandleOutAnimationFinished(true);
         }
         else {
-          _RobotToAnimate.SendAnimationTrigger(AnimationTrigger.DroneModeForwardDrivingEnd, HandleOutAnimationFinished, QueueActionPosition.AT_END);
+          _RobotToAnimate.SendAnimationTrigger(AnimationTrigger.DroneModeForwardDrivingEnd, HandleOutAnimationFinished, QueueActionPosition.NOW_AND_CLEAR_REMAINING);
         }
         break;
       case DroneModeControlsSlide.SpeedSliderSegment.Neutral:
         PlayInAnimation(speedToEnter);
         break;
       case DroneModeControlsSlide.SpeedSliderSegment.Reverse:
-        _RobotToAnimate.SendAnimationTrigger(AnimationTrigger.DroneModeBackwardDrivingEnd, HandleOutAnimationFinished, QueueActionPosition.AT_END);
+        _RobotToAnimate.SendAnimationTrigger(AnimationTrigger.DroneModeBackwardDrivingEnd, HandleOutAnimationFinished, QueueActionPosition.NOW_AND_CLEAR_REMAINING);
         break;
       case DroneModeControlsSlide.SpeedSliderSegment.Turbo:
         if (speedToEnter == DroneModeControlsSlide.SpeedSliderSegment.Neutral || speedToEnter == DroneModeControlsSlide.SpeedSliderSegment.Reverse) {
-          _RobotToAnimate.SendAnimationTrigger(AnimationTrigger.DroneModeForwardDrivingEnd, HandleOutAnimationFinished, QueueActionPosition.AT_END);
+          _RobotToAnimate.SendAnimationTrigger(AnimationTrigger.DroneModeForwardDrivingEnd, HandleOutAnimationFinished, QueueActionPosition.NOW_AND_CLEAR_REMAINING);
         }
         // else play turbo out? No plans for it yet
         break;
@@ -87,30 +91,26 @@ namespace Cozmo.Minigame.DroneMode {
 
     private void HandleOutAnimationFinished(bool success) {
       UpdateDebugStringAndSendDAS("HandleOutAnimationFinished");
-      // Pop current driving animation if not neutral
-      PopRobotIdleAnimation();
-
       PlayInAnimation(_TargetDriveSpeedSegment);
-
-      // Check for success = false?
     }
 
     private void PlayInAnimation(DroneModeControlsSlide.SpeedSliderSegment speedToEnter) {
       _CurrentDriveSpeedSegment = speedToEnter;
       UpdateDebugStringAndSendDAS("PlayInAnimation");
       _CurrentAnimationState = TransitionAnimationState.IN;
+      SetDrivingAnimation(_CurrentDriveSpeedSegment);
       switch (speedToEnter) {
       case DroneModeControlsSlide.SpeedSliderSegment.Forward:
-        _RobotToAnimate.SendAnimationTrigger(AnimationTrigger.DroneModeForwardDrivingStart, HandleInAnimationFinished, QueueActionPosition.AT_END);
+        _RobotToAnimate.SendAnimationTrigger(AnimationTrigger.DroneModeForwardDrivingStart, HandleInAnimationFinished, QueueActionPosition.NOW_AND_CLEAR_REMAINING);
         break;
       case DroneModeControlsSlide.SpeedSliderSegment.Neutral:
         HandleInAnimationFinished(true);
         break;
       case DroneModeControlsSlide.SpeedSliderSegment.Reverse:
-        _RobotToAnimate.SendAnimationTrigger(AnimationTrigger.DroneModeBackwardDrivingStart, HandleInAnimationFinished, QueueActionPosition.AT_END);
+        _RobotToAnimate.SendAnimationTrigger(AnimationTrigger.DroneModeBackwardDrivingStart, HandleInAnimationFinished, QueueActionPosition.NOW_AND_CLEAR_REMAINING);
         break;
       case DroneModeControlsSlide.SpeedSliderSegment.Turbo:
-        _RobotToAnimate.SendAnimationTrigger(AnimationTrigger.DroneModeTurboDrivingStart, HandleInAnimationFinished, QueueActionPosition.AT_END);
+        _RobotToAnimate.SendAnimationTrigger(AnimationTrigger.DroneModeTurboDrivingStart, HandleInAnimationFinished, QueueActionPosition.NOW_AND_CLEAR_REMAINING);
         break;
       default:
         // We should never get here.
@@ -120,8 +120,6 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     private void HandleInAnimationFinished(bool success) {
-      SetDrivingAnimation();
-
       if (_CurrentDriveSpeedSegment == _TargetDriveSpeedSegment) {
         _CurrentAnimationState = TransitionAnimationState.NONE;
       }
@@ -132,22 +130,19 @@ namespace Cozmo.Minigame.DroneMode {
       UpdateDebugStringAndSendDAS("HandleInAnimationFinished");
     }
 
-    private void SetDrivingAnimation() {
+    private void SetDrivingAnimation(DroneModeControlsSlide.SpeedSliderSegment currentDriveType) {
       UpdateDebugStringAndSendDAS("SetDrivingAnimation");
+      // Pop animations until we only have an idle
+      while (_IdleAnimationStack.Count > 0) {
+        PopRobotIdleAnimation();
+      }
       // Push current driving animation if not neutral
-      switch (_CurrentDriveSpeedSegment) {
+      switch (currentDriveType) {
       case DroneModeControlsSlide.SpeedSliderSegment.Forward:
         PushRobotIdleAnimation(AnimationTrigger.DroneModeForwardDrivingLoop);
         break;
       case DroneModeControlsSlide.SpeedSliderSegment.Neutral:
-        // Pop animations until we only have an idle
-        while (_IdleAnimationStack.Count > 0) {
-          PopRobotIdleAnimation();
-        }
-
-        if (_IdleAnimationStack.Count <= 0) {
-          PushRobotIdleAnimation(AnimationTrigger.DroneModeIdle);
-        }
+        PushRobotIdleAnimation(AnimationTrigger.DroneModeIdle);
         break;
       case DroneModeControlsSlide.SpeedSliderSegment.Reverse:
         PushRobotIdleAnimation(AnimationTrigger.DroneModeBackwardDrivingLoop);
@@ -177,16 +172,6 @@ namespace Cozmo.Minigame.DroneMode {
                "State: " + _CurrentAnimationState + "   Current:" + _CurrentDriveSpeedSegment + "   Target:" + _TargetDriveSpeedSegment);
       _DebugString = "DroneModeTransitionAnimator." + methodTag
         + "\nState: " + _CurrentAnimationState + "\nCurrent:" + _CurrentDriveSpeedSegment + "\nTarget:" + _TargetDriveSpeedSegment;
-    }
-
-    public void PushHeadStill() {
-      PushRobotIdleAnimation (Anki.Cozmo.AnimationTrigger.Count);
-    }
-
-    public void PopHeadStill() {
-      if(_IdleAnimationStack.Peek() == Anki.Cozmo.AnimationTrigger.Count) {
-        PopRobotIdleAnimation();
-      }
     }
   }
 }
