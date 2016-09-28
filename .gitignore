@@ -480,3 +480,5 @@ coretech/generated
 **.buckd
 **/buck-out
 
+# DAS
+unity/Cozmo/Assets/StreamingAssets/DASConfig.json

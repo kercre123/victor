@@ -468,6 +468,14 @@ class GamePlatformConfiguration(object):
             ankibuild.util.File.mkdir_p(self.derived_data_dir)
             workspace.generate(self.workspace_path, self.derived_data_dir)
 
+        DASSource = os.path.join(GAME_ROOT, 'unity', 'Common', 'DASConfig', self.options.configuration, 'DASConfig.json')
+        DASTarget = os.path.join(self.unity_project_root, 'Assets', 'StreamingAssets', 'DASConfig.json')
+        ankibuild.util.File.rm(DASTarget)
+        ankibuild.util.File.cp(DASSource, DASTarget)
+
+        if self.options.verbose:
+            print_status('Moved {0} to {1}'.format(DASSource, DASTarget))
+
     def build(self):
         if self.options.command == 'clean':
             buildaction = 'clean'
