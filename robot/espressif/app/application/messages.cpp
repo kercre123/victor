@@ -24,8 +24,11 @@ namespace Anki {
   namespace Cozmo {
     namespace Messages {
 
+      static u16 missedLogs_;
+
       Result Init()
       {
+        ResetMissedLogCount();
         return RESULT_OK;
       }
       
@@ -182,6 +185,10 @@ namespace Anki {
         }
       } 
 
+      void ResetMissedLogCount()
+      {
+        missedLogs_ = 0;
+      }
 
       int SendText(const char *format, ...)
       {
@@ -218,15 +225,14 @@ namespace Anki {
     namespace RobotInterface {
       int SendLog(const LogLevel level, const uint16_t name, const uint16_t formatId, const uint8_t numArgs, ...)
       {
-        static u32 missedMessages = 0;
         PrintTrace m;
-        if (missedMessages > 0)
+        if (Messages::missedLogs_ > 0)
         {
-          m.level = ANKI_LOG_LEVEL_WARN;
+          m.level = ANKI_LOG_LEVEL_EVENT;
           m.name  = 1;
-          m.stringId = 2;
+          m.stringId = 1;
           m.value_length = 1;
-          m.value[0] = missedMessages + 1;
+          m.value[0] = Messages::missedLogs_ + 1; // +1 for the message we are dropping in thie call to SendLog
         }
         else
         {
@@ -243,11 +249,11 @@ namespace Anki {
         }
         if (SendMessage(m))
         {
-          missedMessages = 0;
+          Messages::ResetMissedLogCount();
         }
         else
         {
-          missedMessages++;
+          Messages::missedLogs_++;
         }
         return 0;
       }

@@ -4,18 +4,24 @@
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "anki/cozmo/robot/logging.h"
 
+static u16 missedLogs;
+
+void ResetMissedLogCount()
+{
+  missedLogs = 0;
+}
+
 int Anki::Cozmo::RobotInterface::SendLog(const LogLevel level, const uint16_t name, const uint16_t formatId, const uint8_t numArgs, ...)
 {
   using namespace Anki::Cozmo::RobotInterface;
-  static u32 missedMessages = 0;
   PrintTrace m;
-  if (missedMessages > 0)
+  if (missedLogs > 0)
   {
-    m.level = ANKI_LOG_LEVEL_WARN;
-    m.name  = 1;
+    m.level = ANKI_LOG_LEVEL_EVENT;
+    m.name  = 3;
     m.stringId = 1;
     m.value_length = 1;
-    m.value[0] = missedMessages + 1;
+    m.value[0] = missedLogs + 1; // +1 for the message we are dropping in thie call to SendLog
   }
   else
   {
@@ -32,11 +38,11 @@ int Anki::Cozmo::RobotInterface::SendLog(const LogLevel level, const uint16_t na
   }
   if (SendMessage(m))
   {
-    missedMessages = 0;
+    ResetMissedLogCount();
   }
   else
   {
-    missedMessages++;
+    missedLogs++;
   }
   return 0;
 }

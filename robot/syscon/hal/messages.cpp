@@ -20,6 +20,8 @@
 
 extern void enterOperatingMode(Anki::Cozmo::BodyRadioMode mode);
 
+extern void ResetMissedLogCount();
+
 extern GlobalDataToBody g_dataToBody;
 
 using namespace Anki::Cozmo;
@@ -96,7 +98,11 @@ static void Process_setBodyRadioMode(const SetBodyRadioMode& msg) {
     Radio::setWifiChannel(msg.wifiChannel);
   }
 
-  if (msg.radioMode == BODY_BLUETOOTH_OPERATING_MODE) Battery::setHeadlight(false);
+  if (msg.radioMode == BODY_BLUETOOTH_OPERATING_MODE) 
+  {
+    Battery::setHeadlight(false);
+    ResetMissedLogCount();
+  }
 
   Battery::setOperatingMode(msg.radioMode);
 }

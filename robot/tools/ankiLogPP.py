@@ -349,8 +349,8 @@ class ParseData:
                         except Exception as e:
                             sys.exit("Error parsing file \"{}\":{linesep}\t{}{linesep}".format(file, str(e), linesep=os.linesep))
                         fh.close()
-            self.nameTable  = {ASSERT_NAME_ID: "ASSERT", 1: "Messages"}
-            self.fmtTable   = {0: ("Invalid format ID", 0), 1: ("RTIP missed %d traces", 1), 2: ("WiFi missed %d traces", 1)}
+            self.nameTable  = {ASSERT_NAME_ID: "ASSERT", 1: "wifi.dropped_traces", 2: "rtip.dropped_traces", 3: "body.dropped_traces"}
+            self.fmtTable   = {0: ("Invalid format ID", 0), 1: ("dropped %d traces", 1)}
             self.dirtyFiles = set()
 
     MACROS = {

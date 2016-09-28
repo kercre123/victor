@@ -58,6 +58,8 @@ namespace Anki {
         RobotInterface::EngineToRobot::Tag lookForID_ = RobotInterface::EngineToRobot::INVALID;
         u32 lookingStartTime_ = 0;
 
+        static u16 missedLogs_ = 0;
+
         static RobotState robotState_;
 
         // History of the last 2 RobotState messages that were sent to the basestation.
@@ -99,6 +101,7 @@ namespace Anki {
 #else
         sendTestStateMessages = true;
 #endif
+        ResetMissedLogCount();
         return RESULT_OK;
       }
 
@@ -836,6 +839,7 @@ namespace Anki {
         if (state.rtCount == 0) 
         {
           HAL::SetImageSendMode(Off, QVGA);
+          ResetMissedLogCount();
           // Put body into bluetooth mode when the engine is connected
           SetBodyRadioMode bMsg;
           bMsg.wifiChannel = 0;
@@ -1066,6 +1070,10 @@ namespace Anki {
         return RobotInterface::SendMessage(m) ? RESULT_OK : RESULT_FAIL;
       }
       
+      void ResetMissedLogCount()
+      {
+        missedLogs_ = 0;
+      }
       
 #ifndef TARGET_K02
       int SendText(const char *format, ...)
@@ -1132,15 +1140,14 @@ namespace Anki {
     namespace RobotInterface {
       int SendLog(const LogLevel level, const uint16_t name, const uint16_t formatId, const uint8_t numArgs, ...)
       {
-        static u32 missedMessages = 0;
         PrintTrace m;
-        if (missedMessages > 0)
+        if (Messages::missedLogs_ > 0)
         {
-          m.level = ANKI_LOG_LEVEL_WARN;
-          m.name  = 1;
+          m.level = ANKI_LOG_LEVEL_EVENT;
+          m.name  = 2;
           m.stringId = 1;
           m.value_length = 1;
-          m.value[0] = missedMessages + 1;
+          m.value[0] = Messages::missedLogs_ + 1; // +1 for the message we are dropping in thie call to SendLog
         }
         else
         {
@@ -1157,11 +1164,11 @@ namespace Anki {
         }
         if (SendMessage(m))
         {
-          missedMessages = 0;
+          Messages::ResetMissedLogCount();
         }
         else
         {
-          missedMessages++;
+          Messages::missedLogs_++;
         }
         return 0;
       }

@@ -83,7 +83,7 @@ namespace AnimationController {
   Result Init()
   {
 #   if DEBUG_ANIMATION_CONTROLLER
-    AnkiDebug( 2, "AnimationController.Init", 3, "Initializing", 0);
+    AnkiDebug( 395, "AnimationController.Init", 3, "Initializing", 0);
 #   endif
     
     _animCtrlState = DISABLED;

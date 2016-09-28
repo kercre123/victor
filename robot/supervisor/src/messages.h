@@ -74,6 +74,8 @@ namespace Anki {
       
       Result SendMotorAutoEnabledMsg(MotorID motor, bool calibStarted);
       
+      void ResetMissedLogCount();
+      
 #ifndef TARGET_K02
       // For sending text message to basestation
       int SendText(const char *format, ...);

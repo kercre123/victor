@@ -124,7 +124,7 @@ namespace HAL {
       
       if (rxDroppedCount > 0)
       {
-        AnkiError( 395, "wifi.dropped_incomming_messages", 615, "%d messages dropped, tick %d, time %d, buffer %x %x %d", 6, rxDroppedCount, HAL::GetTimeStamp(), SysTick->VAL, rxBuf[rind], rxBuf[rind+1], RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK));
+        AnkiError( 398, "wifi.dropped_incomming_messages", 615, "%d messages dropped, tick %d, time %d, buffer %x %x %d", 6, rxDroppedCount, HAL::GetTimeStamp(), SysTick->VAL, rxBuf[rind], rxBuf[rind+1], RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK));
         rxDroppedCount = 0;
       }
 

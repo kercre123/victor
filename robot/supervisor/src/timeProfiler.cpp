@@ -91,7 +91,7 @@ namespace Cozmo {
 
   const char* TimeProfiler::GetProfName(u32 index)
   {
-    AnkiConditionalWarnAndReturnValue((!isProfiling_), NULL, 3, "TimeProfiler", 27, "GetProfName called in middle of profile. Ignoring.", 0);
+    AnkiConditionalWarnAndReturnValue((!isProfiling_), NULL, 396, "timeprofiler.getprofname_while_busy", 27, "GetProfName called in middle of profile. Ignoring.", 0);
 
     if (index < timeProfIdx_) {
       return (const char*)&timeProfName_[index];
@@ -101,7 +101,7 @@ namespace Cozmo {
   }
 
   u32 TimeProfiler::ComputeStats(u32 *avgTimes[], u32 *maxTimes[]) {
-    AnkiConditionalWarnAndReturnValue((!isProfiling_), 0, 3, "TimeProfiler", 28, "ComputeStats called in middle of profile. Ignoring.", 0);
+    AnkiConditionalWarnAndReturnValue((!isProfiling_), 0, 397, "timeprofiler.computestats_while_busy", 28, "ComputeStats called in middle of profile. Ignoring.", 0);
 
     // Compute average time
     for(u8 i=0; i<timeProfIdx_; ++i) {
