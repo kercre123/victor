@@ -603,6 +603,7 @@ message RequestEnrollFace {
 }
 
 message SparkEnded {
+  bool success
 }
 
 message SdkConnectionStatus

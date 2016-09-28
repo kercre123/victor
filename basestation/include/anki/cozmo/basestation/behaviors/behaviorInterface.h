@@ -197,7 +197,10 @@ public:
 
   // returns required process
   AIInformationAnalysis::EProcess GetRequiredProcess() const { return _requiredProcess; }
-    
+  
+  // returns the required unlockID for the behavior
+  const UnlockId GetRequiredUnlockID() const {  return _requiredUnlockId;}
+  
 protected:
   
   void ClearBehaviorGroups() { _behaviorGroups.ClearFlags(); }

@@ -179,7 +179,7 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
   // chooser state during the same tick and avoid another behavior starting
   if(_state == ChooserState::UsingSimpleBehaviorChooser
      || _state == ChooserState::WaitingForCurrentBehaviorToStop ){
-    CheckIfSparkShouldEnd(robot);
+    CheckIfSparkShouldEnd(robot, currentRunningBehavior);
   }
   
   // Handle behavior selection based on current state
@@ -261,7 +261,12 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
       if(currentRunningBehavior == nullptr || !currentRunningBehavior->IsRunning()){
         // Notify the game that the spark is over unless the UI has already updated for a hard spark
         if(!_switchingToHardSpark){
-          robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::SparkEnded>();
+          ExternalInterface::SparkEnded sparkEnded;
+          sparkEnded.success = false;
+          if(_numberOfRepetitions == 0 || _currentObjectiveCompletedCount >= _numberOfRepetitions){
+            sparkEnded.success = true;
+          }
+          robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::SparkEnded>(sparkEnded);
         }
         
         //Allow new goal to be chosen if we haven't recieved any updates from the user or switching to same spark
@@ -292,7 +297,7 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
 }
   
   
-void SparksBehaviorChooser::CheckIfSparkShouldEnd(Robot& robot)
+void SparksBehaviorChooser::CheckIfSparkShouldEnd(Robot& robot, const IBehavior* currentRunningBehavior)
 {
   
   TimeStamp_t currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -301,7 +306,8 @@ void SparksBehaviorChooser::CheckIfSparkShouldEnd(Robot& robot)
   // Behaviors with _numberOfRepetions == 0 will always wait until max time and then play success outro
   const bool minTimeAndRepetitions = FLT_GE(currentTime, _timeChooserStarted + _minTimeSecs)
                                                 && (_numberOfRepetitions != 0 && _currentObjectiveCompletedCount >= _numberOfRepetitions);
-  const bool maxTimeout = FLT_GE(currentTime, _timeChooserStarted + _maxTimeSecs);
+  const bool maxTimeout = FLT_GE(currentTime, _timeChooserStarted + _maxTimeSecs)
+                            && currentRunningBehavior != nullptr && currentRunningBehavior->GetRequiredUnlockID() != robot.GetBehaviorManager().GetActiveSpark() ;
   const bool gameRequestedSparkEnd = mngr.DidGameRequestSparkEnd();
   
   // Transitioning out of spark to freeplay  - end current spark elegantly

@@ -64,7 +64,7 @@ protected:
 
 private:
   
-  void CheckIfSparkShouldEnd(Robot& robot);
+  void CheckIfSparkShouldEnd(Robot& robot, const IBehavior* currentRunningBehavior);
   
   enum class ChooserState{
     ChooserSelected,
