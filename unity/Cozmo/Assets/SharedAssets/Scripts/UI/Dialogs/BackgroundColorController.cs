@@ -53,23 +53,29 @@ namespace Cozmo.UI {
     }
 
     public void SetBackgroundColor(BackgroundColor baseColor, Color tintColor) {
-      CleanUpTransitionTween();
+      if (this != null) {
+        CleanUpTransitionTween();
 
-      _FromBackgroundImage.gameObject.SetActive(true);
-      _FromBackgroundImage.sprite = _ToBackgroundImage.sprite;
-      _FromBackgroundImage.color = _TargetTintColor;
+        _FromBackgroundImage.gameObject.SetActive(true);
+        _FromBackgroundImage.sprite = _ToBackgroundImage.sprite;
+        _FromBackgroundImage.color = _TargetTintColor;
 
-      Sprite newBackgroundSprite = GetSpriteBasedOnColor(baseColor);
-      _ToBackgroundImage.sprite = newBackgroundSprite;
+        Sprite newBackgroundSprite = GetSpriteBasedOnColor(baseColor);
+        _ToBackgroundImage.sprite = newBackgroundSprite;
 
-      Color transparentTint = new Color(tintColor.r, tintColor.g, tintColor.b, 0);
-      _ToBackgroundImage.color = transparentTint;
+        Color transparentTint = new Color(tintColor.r, tintColor.g, tintColor.b, 0);
+        _ToBackgroundImage.color = transparentTint;
 
-      _TargetTintColor = tintColor;
-      _TransitionTween = _ToBackgroundImage.DOFade(1, _BackgroundColorTransition_sec)
-                                           .SetEase(UIDefaultTransitionSettings.Instance.FadeInEasing)
-                                           .OnComplete(() => _FromBackgroundImage.gameObject.SetActive(false));
-      _TransitionTween.Play();
+        _TargetTintColor = tintColor;
+        _TransitionTween = _ToBackgroundImage.DOFade(1, _BackgroundColorTransition_sec)
+                                             .SetEase(UIDefaultTransitionSettings.Instance.FadeInEasing)
+                                             .OnComplete(() => {
+                                               if (_FromBackgroundImage != null) {
+                                                 _FromBackgroundImage.gameObject.SetActive(false);
+                                               }
+                                             });
+        _TransitionTween.Play();
+      }
     }
 
     private Sprite GetSpriteBasedOnColor(BackgroundColor desiredSprite) {
