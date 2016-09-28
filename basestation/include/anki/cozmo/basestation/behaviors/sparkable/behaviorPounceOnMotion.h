@@ -101,6 +101,9 @@ private:
   // ensures we don't get stuck in an infinite pounce loop
   float _lastCliffEvent_sec;
   
+  // running count of the number of times we've observed motion without pouncing
+  int _motionObservedNoPounceCount;
+  
   // modeled off of startActing callbacks
   template<typename T>
   void PounceOnMotionWithCallback(Robot& robot, void(T::*callback)(Robot&), IActionRunner* intermittentAction = nullptr);

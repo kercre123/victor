@@ -60,6 +60,10 @@ static constexpr float kRandomPanMax_Deg = 45;
   
 // how long ago to consider a cliff currently in front of us for an initial pounce
 static constexpr float kMinCliffInFrontWait_sec = 10.f;
+  
+// count of creep forwards/turns cozmo should do on motion before pouncing
+static constexpr int kMotionObservedCountBeforePossiblePounce = 2;
+
 } 
   
 // Cozmo's low head angle for watching for fingers
@@ -72,6 +76,7 @@ BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& 
   , _observedY(0)
   , _lastTimeRotate(0)
   , _lastCliffEvent_sec(0)
+  , _motionObservedNoPounceCount(0)
 {
   SetDefaultName("PounceOnMotion");
 
@@ -138,6 +143,7 @@ void BehaviorPounceOnMotion::InitHelper(Robot& robot)
   double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _startedBehaviorTime_sec = currentTime_sec;
   _lastMotionTime = (float)currentTime_sec;
+  _motionObservedNoPounceCount = 0;
   
   // Don't override sparks idle animation
   if(!_shouldStreamline){
@@ -306,9 +312,15 @@ void BehaviorPounceOnMotion::TransitionToTurnToMotion(Robot& robot, int16_t moti
   Radians relTiltAngle;
   robot.GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, relPanAngle, relTiltAngle);
   
-  auto callback = &BehaviorPounceOnMotion::TransitionToPounce;
-  if(_lastPoseDist > kVisionMinDistMM){
-    callback = &BehaviorPounceOnMotion::TransitionToCreepForward;
+  auto callback = &BehaviorPounceOnMotion::TransitionToCreepForward;
+  // steadily increase the chance we'll pounce if we haven't pounced while seeing motion in a while
+  const bool shouldPounceNoMatterWhat = _motionObservedNoPounceCount > kMotionObservedCountBeforePossiblePounce &&
+                                           (_motionObservedNoPounceCount * .2) > GetRNG().RandDblInRange(0, 1);
+  
+  if(_lastPoseDist <= kVisionMinDistMM || shouldPounceNoMatterWhat){
+    callback = &BehaviorPounceOnMotion::TransitionToPounce;
+  }else{
+    _motionObservedNoPounceCount++;
   }
   
   StartActing(new PanAndTiltAction(robot, relPanAngle, 0, false, false),
@@ -585,6 +597,9 @@ void BehaviorPounceOnMotion::PounceOnMotionWithCallback(Robot& robot, void(T::*c
       (this->*callback)(robot);
     });
   });
+  
+  // re-set count
+  _motionObservedNoPounceCount = 0;
 }
   
 void BehaviorPounceOnMotion::Cleanup(Robot& robot)
