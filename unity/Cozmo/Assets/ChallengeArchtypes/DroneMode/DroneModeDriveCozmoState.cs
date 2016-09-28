@@ -60,9 +60,12 @@ namespace Cozmo {
         }
 
         public override void Exit() {
+          if (_CurrentRobot != null) {
+            _CurrentRobot.StopAllMotors();
+            _CurrentRobot.EnableDroneMode(false);
+          }
           DisableInput();
           _RobotAnimator.CleanUp();
-          _CurrentRobot.EnableDroneMode(false);
         }
 
         public override void Update() {
@@ -158,7 +161,6 @@ namespace Cozmo {
             _CurrentDriveSpeed_mmps = 0f;
             _TargetTurnDirection = 0f;
             _CurrentTurnDirection = 0f;
-            _CurrentRobot.DriveArc(0f, 0);
             _CurrentRobot.DriveWheels(0f, 0f);
             TiltDrivingDebugText = "Drive Arc: \nspeed mmps = " + 0 + " \nradius mm = N/A";
           }

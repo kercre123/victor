@@ -1085,6 +1085,11 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
+  public void StopAllMotors() {
+    RobotEngineManager.Instance.Message.StopAllMotors = Singleton<StopAllMotors>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
   public void PlaceObjectOnGroundHere(RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     DAS.Debug(this, "Place Object " + CarryingObject + " On Ground Here");
 
@@ -1143,7 +1148,7 @@ public class Robot : IRobot {
 
   public void EnrollNamedFace(int faceID, int mergeIntoID, string name, Anki.Cozmo.FaceEnrollmentSequence seq = Anki.Cozmo.FaceEnrollmentSequence.Default, bool saveToRobot = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
-    DAS.Debug(this, "Sending EnrollNamedFace for ID=" + faceID 
+    DAS.Debug(this, "Sending EnrollNamedFace for ID=" + faceID
       + " with name=" + PrivacyGuard.HidePersonallyIdentifiableInfo(name)
       + " to be merged into ID=" + mergeIntoID);
     SendQueueSingleAction(Singleton<EnrollNamedFace>.Instance.Initialize(faceID, mergeIntoID, name, seq, saveToRobot), callback, queueActionPosition);

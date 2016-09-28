@@ -161,6 +161,11 @@ public class MockRobot : IRobot {
   public void DriveArc(float wheelSpeedMmps, int curveRadiusMm) {
   }
 
+  public void StopAllMotors() {
+    LeftWheelSpeed = 0;
+    RightWheelSpeed = 0;
+  }
+
   private void QueueCallback(float delay, RobotCallback callback) {
     _Callbacks.Add(new CallbackWrapper() { CallbackTime = Time.time + delay, Callback = callback });
   }
