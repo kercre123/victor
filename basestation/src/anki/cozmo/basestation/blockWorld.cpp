@@ -805,7 +805,15 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     std::set<ObjectType> typesInCurrent;
     for(const auto& object : objectsInCurrent)
     {
-      typesInCurrent.insert(object->GetType());
+      auto result = typesInCurrent.insert(object->GetType());
+      
+      const bool typeInserted = result.second;
+      if(!typeInserted)
+      {
+        PRINT_NAMED_WARNING("BlockWorld.DeleteObjectsFromZombieOrigins.DuplicateObjectsWithSameType",
+                            "Found duplicate %s object in current origin (%p)",
+                            EnumToString(object->GetType()), _robot->GetWorldOrigin());
+      }
     }
   
     ObjectsByOrigin_t::iterator originIt = _existingObjects.begin();
@@ -813,7 +821,8 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     {
       const bool isZombie = IsZombiePoseOrigin( originIt->first );
       if ( isZombie ) {
-        PRINT_CH_INFO("BlockWorld", "DeleteObjectsFromZombieOrigins", "Deleting objects from (%p) because it was zombie", originIt->first);
+        PRINT_CH_INFO("BlockWorld", "BlockWorld.DeleteObjectsFromZombieOrigins.DeletingOrigin", 
+                      "Deleting objects from (%p) because it was zombie", originIt->first);
         
         // Get all active objects in zombie origin
         filter.SetAllowedOrigins({originIt->first});
@@ -821,13 +830,18 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         FindMatchingObjects(filter, objectsInZombie);
         
         // For all active objects that are in the zombie origin that are not in the current origin
-        // add them to the current origin before deleting the existing origin
+        // add them to the current origin before deleting the zombie origin
         for(const auto& objectInZombie : objectsInZombie)
         {
           // The object in the zombie origin is not in the current origin (works because we can't have
           // multiple objects of the same type in a given origin)
           if(typesInCurrent.count(objectInZombie->GetType()) == 0)
           {
+            PRINT_CH_DEBUG("BlockWorld", "BlockWorld.DeleteObjectsFromZombieOrigins.AddActiveObjectToCurrentOrigin",
+                           "Adding %s %d to current origin before deleting zombie (%p)",
+                           EnumToString(objectInZombie->GetType()),
+                           objectInZombie->GetID().GetValue(), originIt->first);
+            
             typesInCurrent.insert(objectInZombie->GetType());
             
             AddActiveObject(objectInZombie->GetActiveID(),
@@ -839,7 +853,8 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         
         originIt = _existingObjects.erase(originIt);
       } else {
-        PRINT_CH_DEBUG("BlockWorld", "DeleteObjectsFromZombieOrigins", "Origin (%p) is still good (keeping objects)", originIt->first);
+        PRINT_CH_DEBUG("BlockWorld", "BlockWorld.DeleteObjectsFromZombieOrigins.KeepingOrigin", 
+                       "Origin (%p) is still good (keeping objects)", originIt->first);
         ++originIt;
       }
     }
@@ -4188,7 +4203,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     
     for(ObservableObject* object : intersectingAndOldObjects)
     {
-      DeleteObject(object);
+      DeleteObject(object->GetID());
     }
     
     return RESULT_OK;
@@ -4619,35 +4634,64 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       auto originIter = _existingObjects.find(origin);
       if(originIter != _existingObjects.end())
       {
-        if(clearFirst || ANKI_DEVELOPER_CODE)
+        // Using a separate set instead of the vector since ObservableObject pointers might not
+        // be valid since we are deleting the origin the objects are in
+        std::set<ObjectID> objectsInOrigin;
+        
+        for(auto & objectsByFamily : originIter->second)
         {
-          for(auto & objectsByFamily : originIter->second) {
-            for(auto & objectsByType : objectsByFamily.second) {
-              //for(auto & objectsByID : objectsByType.second) {
-              auto objectIter = objectsByType.second.begin();
-              while(objectIter != objectsByType.second.end())
+          for(auto & objectsByType : objectsByFamily.second)
+          {
+            auto objectIter = objectsByType.second.begin();
+            while(objectIter != objectsByType.second.end())
+            {
+              objectsInOrigin.insert(objectIter->second->GetID());
+              
+              if(clearFirst)
               {
-                if(clearFirst)
-                {
-                  ClearObjectHelper(objectIter->second.get());
-                }
-                if(ANKI_DEVELOPER_CODE)
-                {
-                  // Full blown nuke of each object's memory to force a crash if
-                  // we ever try to use this object again
-                  ObservableObject* objectPtr = objectIter->second.get();
-                  objectIter = objectsByType.second.erase(objectIter);
-                  memset((void*)objectPtr, 0, sizeof(ObservableObject));
-                }
-                else
-                {
-                  ++objectIter;
-                }
+                ClearObjectHelper(objectIter->second.get());
+              }
+              if(ANKI_DEVELOPER_CODE)
+              {
+                // Full blown nuke of each object's memory to force a crash if
+                // we ever try to use this object again
+                ObservableObject* objectPtr = objectIter->second.get();
+                objectIter = objectsByType.second.erase(objectIter);
+                memset((void*)objectPtr, 0, sizeof(ObservableObject));
+              }
+              else
+              {
+                ++objectIter;
               }
             }
           }
         }
         _existingObjects.erase(originIter);
+        
+        // Find all objects in all _other_ origins and remove their IDs from the
+        // set of object IDs we found in _this_ origin. If anything is left in the
+        // set, then that object ID did not exist in any other frame and thus its
+        // deletion should be broadcast below. Note that we can search all origins
+        // now because we just erased "origin".
+        BlockWorldFilter filter;
+        filter.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
+        filter.SetFilterFcn([&objectsInOrigin](const ObservableObject* object)
+                            {
+                              objectsInOrigin.erase(object->GetID());
+                              return true;
+                            });
+        
+        FilterObjects(filter);
+        
+        for(const ObjectID& objectID : objectsInOrigin)
+        {
+          PRINT_CH_DEBUG("BlockWorld", "BlockWorld.DeleteObjectsByOrigin.RemovedObjectFromAllFrames",
+                         "Broadcasting deletion of object %d, which no longer exists in any frame",
+                         objectID.GetValue());
+          
+          _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(_robot->GetID(),
+                                                                                                         objectID)));
+        }
       }
     } else {
       PRINT_NAMED_WARNING("BlockWorld.DeleteObjectsByOrigin.DeleteDisabled",
@@ -4659,16 +4703,23 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
   void BlockWorld::DeleteObjectsByFamily(const ObjectFamily family)
   {
     if(_canDeleteObjects) {
+      std::set<ObjectID> idsToBroadcast;
       for(auto & objectsByOrigin : _existingObjects) {
         auto familyIter = objectsByOrigin.second.find(family);
         if(familyIter != objectsByOrigin.second.end()) {
           for(auto & objectsByType : familyIter->second) {
             for(auto & objectsByID : objectsByType.second) {
+              idsToBroadcast.insert(objectsByID.first);
               ClearObjectHelper(objectsByID.second.get());
             }
           }
           objectsByOrigin.second.erase(familyIter);
         }
+      }
+      
+      for(auto id : idsToBroadcast) {
+        _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(_robot->GetID(),
+                                                                                                       id)));
       }
     } else {
       PRINT_NAMED_WARNING("BlockWorld.DeleteObjectsByFamily.DeleteDisabled",
@@ -4679,11 +4730,13 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
   
   void BlockWorld::DeleteObjectsByType(const ObjectType type) {
     if(_canDeleteObjects) {
+      std::set<ObjectID> idsToBroadcast;
       for(auto & objectsByOrigin : _existingObjects) {
         for(auto & objectsByFamily : objectsByOrigin.second) {
           auto typeIter = objectsByFamily.second.find(type);
           if(typeIter != objectsByFamily.second.end()) {
             for(auto & objectsByID : typeIter->second) {
+              idsToBroadcast.insert(objectsByID.first);
               ClearObjectHelper(objectsByID.second.get());
             }
             
@@ -4693,6 +4746,11 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
             return;
           }
         }
+      }
+      
+      for(auto id : idsToBroadcast) {
+        _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(_robot->GetID(),
+                                                                                                       id)));
       }
     } else {
       PRINT_NAMED_WARNING("BlockWorld.DeleteObjectsByType.DeleteDisabled",
@@ -4704,14 +4762,16 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
 
   bool BlockWorld::DeleteObject(const ObjectID& withID)
   {
-    ObservableObject* object = GetObjectByID(withID);
+    BlockWorldFilter filter;
+    filter.SetAllowedIDs({withID});
+    filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
     
-    return DeleteObject(object);
-  }
+    std::vector<ObservableObject*> objects;
+    FindMatchingObjects(filter, objects);
 
-  bool BlockWorld::DeleteObject(ObservableObject* object)
-  {
     bool retval = false;
+    for(auto object : objects)
+  {
     if(nullptr != object)
     {
       // Inform caller that we found the requested ID:
@@ -4730,6 +4790,10 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       //       the container will delete it if nothing else is referring to it
       _existingObjects.at(origin).at(inFamily).at(withType).erase(object->GetID());
     }
+    }
+    
+    _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(_robot->GetID(), withID)));
+    
     return retval;
   } // DeleteObject()
 

@@ -988,6 +988,7 @@ public class Robot : IRobot {
       if (!LightCubes.TryGetValue(id, out lightCube)) {
         DAS.Debug("Robot.AddObservedObject", "Registered LightCube: id=" + id + " factoryId = " + factoryId.ToString("X") + " objectType=" + objectType);
         lightCube = new LightCube(id, factoryId, ObjectFamily.LightCube, objectType);
+
         LightCubes.Add(id, lightCube);
         if (OnLightCubeAdded != null) {
           OnLightCubeAdded(lightCube);
