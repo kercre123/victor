@@ -15,5 +15,6 @@ s32 MonitorGetCurrent(void);
 s32 MonitorGetVoltage(void);
 s32 BatGetCurrent(void);
 s32 ChargerGetCurrent(void);
+void MonitorSetDoubleSpeed(void);
 
 #endif

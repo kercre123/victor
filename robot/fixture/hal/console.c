@@ -409,6 +409,16 @@ void SetMotor(void)
   MotorMV(test);
 }  
 
+// Set the cube test threshold in milliamps (usually 5-15)
+void SetCubeCurrent(int deltaMA);
+void SetCubeTest(void)
+{
+  int test = 0;
+  char* arg = GetArgument(1);  
+  sscanf(arg, "%i", &test);
+  SetCubeCurrent(test);
+}  
+
 // Re-run a test
 void Again(void)
 {
@@ -438,6 +448,7 @@ static CommandFunction m_functions[] =
   {"HeadESP", HeadESP, FALSE},
   {"SetMotor", SetMotor, FALSE},
   {"SetRadio", SetRadio, FALSE},
+  {"SetCubeTest", SetCubeTest, FALSE},
 };
 
 static void ParseCommand(void)

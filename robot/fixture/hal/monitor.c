@@ -1,3 +1,4 @@
+// Driver for INA220AIDGST
 // Based on Drive Testfix, updated for Cozmo EP1 Testfix
 #include "hal/monitor.h"
 #include "hal/timers.h"
@@ -12,7 +13,7 @@
 
 #define READ                    1
 
-#define CLOCK_WAIT              1
+static int CLOCK_WAIT = 1;  // 1=250KHz (2uS per edge), 0=500KHz
 
 #define GPIOB_SCL               8
 #define GPIOB_SDA               9
@@ -202,4 +203,9 @@ s32 MonitorGetVoltage(void)
   I2C_Send8(CHARGE_CONTACT_ADDRESS, 2);
   s16 value = I2C_Receive16(CHARGE_CONTACT_ADDRESS);
   return (s32)value;
+}
+
+void MonitorSetDoubleSpeed(void)
+{
+  CLOCK_WAIT = 0;
 }
