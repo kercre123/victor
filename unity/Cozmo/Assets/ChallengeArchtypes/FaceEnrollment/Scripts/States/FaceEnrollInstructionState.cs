@@ -72,9 +72,10 @@ namespace FaceEnrollment {
     }
 
 
-    private void HandleSetIdleAndGetOutAnim(System.Action lookOutAnimDone = null) {
+    private void HandleInterruptSetIdleAndGetOutAnim(System.Action lookOutAnimDone = null) {
       _CurrentRobot.PopIdleAnimation();
-      _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.MeetCozmoLookFaceGetOut, (bool success) => {
+      // plays the version of the getout animation without the chime
+      _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.MeetCozmoLookFaceInterrupt, (bool success) => {
         if (lookOutAnimDone != null) {
           lookOutAnimDone();
         }
@@ -102,7 +103,7 @@ namespace FaceEnrollment {
         // start listening for when the reactionary behavior is done so we can try again
         RobotEngineManager.Instance.AddCallback<ReactionaryBehaviorTransition>(RetryFaceEnrollmentOnReactionaryBehaviorEnd);
         if (message.completionInfo.faceEnrollmentCompleted.isFaceScanning) {
-          HandleSetIdleAndGetOutAnim();
+          HandleInterruptSetIdleAndGetOutAnim();
         }
       }
       else if (knownEnrollmentFailure) {
@@ -115,7 +116,7 @@ namespace FaceEnrollment {
 
     private void HandleUserCancelledEnrollment(bool isFaceScanning) {
       if (isFaceScanning) {
-        HandleSetIdleAndGetOutAnim(_OnUserCancel);
+        HandleInterruptSetIdleAndGetOutAnim(_OnUserCancel);
       }
       else {
         if (_OnUserCancel != null) {
@@ -146,7 +147,7 @@ namespace FaceEnrollment {
       _ErrorAlertView = alertView;
 
       if (faceEnrollmentCompleted.isFaceScanning) {
-        HandleSetIdleAndGetOutAnim();
+        HandleInterruptSetIdleAndGetOutAnim();
       }
     }
 

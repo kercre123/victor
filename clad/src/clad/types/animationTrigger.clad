@@ -113,6 +113,7 @@ enum int_32 AnimationTrigger
   MeetCozmoFirstEnrollmentCelebration,  // 5. First-time enrollment, big special celebration for new name
   MeetCozmoReEnrollmentSayName,         // 3b. Re-enrollment, say player's name
   MeetCozmoRenameFaceSayName,           // Say player's new name when rename occurs
+  MeetCozmoLookFaceInterrupt,           // Triggered when the scanning is interrupted
   NeutralFace,
   NothingToDoBoredEvent,             // Cozmo doesn't have anything to do in freeplay - bored game in the middle
   NothingToDoBoredIdle,              // Cozmo doesn't have anything to do in freeplay - idling (not playing game sequence)
