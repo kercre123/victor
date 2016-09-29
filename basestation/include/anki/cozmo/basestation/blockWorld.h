@@ -416,11 +416,8 @@ namespace Anki
                                  const TimeStamp_t atTimestamp);
       
       // Updates poses of stacks of objects by finding the difference between old object
-      // poses and applying that to the new observed poses. Used when an object's
-      // pose is updated to correct anything stacked on top of it to match.
-      void UpdateRotationOfObjectsStackedOn(const ObservableObject* existingObjectOnBottom,
-                                            ObservableObject* objSeen);
-      
+      // poses and applying that to the new observed poses
+      void UpdatePoseOfStackedObjects();
       
       // Remove all posekey-marker pairs from the map if marker is marked used
       void RemoveUsedMarkers(std::list<Vision::ObservedMarker>& poseKeyObsMarkerMap);
@@ -541,6 +538,17 @@ namespace Anki
       using ObjectIdToPosesPerOrigin = std::map<int, OriginToPoseInMapInfo>;
       ObjectIdToPosesPerOrigin _navMapReportedPoses;
       Pose3d _navMapReportedRobotPose;
+
+      // changes in poses in the current frame to keep stacks aligned
+      struct PoseChange {
+        PoseChange(const ObjectID& id, const Pose3d& oldPose, const PoseState oldPoseState) :
+          _id(id), _oldPose(oldPose), _oldPoseState(oldPoseState) {}
+        const ObjectID _id;
+        const Pose3d _oldPose;
+        const PoseState _oldPoseState;
+      };
+      std::list<PoseChange> _objectPoseChangeList;  // changes registered (within an update tick)
+      bool _trackPoseChanges;               // whether we want to register pose changes
       
       std::set<ObjectID> _unidentifiedActiveObjects;
       

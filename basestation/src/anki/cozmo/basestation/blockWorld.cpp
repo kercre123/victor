@@ -183,6 +183,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
   , _canAddObjects(true)
   , _currentNavMemoryMapOrigin(nullptr)
   , _isNavMemoryMapRenderEnabled(true)
+  , _trackPoseChanges(false)
   {
     CORETECH_ASSERT(_robot != nullptr);
     
@@ -1293,16 +1294,6 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         // We found a match in the current frame, so update it:
         ObservableObject* matchingObject = currFrameMatchIter->second;
         
-        // Check if there are objects on top of this object that need to be moved since the
-        // object it's resting on has moved. This only works if the robot is sitting still
-        // since we can then attribute any perceived change in (relative) position to the objects.
-        // Use IsMoving and WasMoving to be extra conservative.
-        if(!_robot->GetMoveComponent().IsMoving() &&
-           !_robot->GetVisionComponent().WasMovingTooFast(objSeen->GetLastObservedTime()))
-        {
-          UpdateRotationOfObjectsStackedOn(matchingObject, objSeen.get());
-        }
-        
         // TODO: Do the same adjustment for blocks that are _below_ observed blocks? Does this make sense?
         
         // Update lastObserved times of this object
@@ -1402,59 +1393,85 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     
   } // AddAndUpdateObjects()
   
-  
-  void BlockWorld::UpdateRotationOfObjectsStackedOn(const ObservableObject* existingObjectOnBottom,
-                                                    ObservableObject* objSeen)
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::UpdatePoseOfStackedObjects()
   {
-    // Updates poses of stacks of objects by finding the difference between old object poses and applying that
-    // to the new observed poses. Has to use the old object to find the object on top
-    ObservableObject* objectOnTop = FindObjectOnTopOf(*existingObjectOnBottom, STACKED_HEIGHT_TOL_MM);
-    ObservableObject* newObjectOnBottom = objSeen;
-    ObservableObject* oldObjectOnBottom = existingObjectOnBottom->CloneType();
-    oldObjectOnBottom->InitPose(existingObjectOnBottom->GetPose(), existingObjectOnBottom->GetPoseState());
+    ASSERT_NAMED(_trackPoseChanges, "BlockWorld.UpdatePoseOfStackedObjects.CanRunOnlyWhileTrackingPoseChanges");
     
-    // If the object was already updated this timestamp then don't bother doing this.
-    while(objectOnTop != nullptr && objectOnTop->GetLastObservedTime() != objSeen->GetLastObservedTime())
+    // iterate all changed objects updating any objects we think are on top of them
+    auto changedObjectIt = _objectPoseChangeList.begin();
+    while ( changedObjectIt != _objectPoseChangeList.end() )
     {
-      if(_robot->IsCarryingObject(objectOnTop->GetID()))
+      // grab the object whose pose we changed (we can't trust caching pointers in case we rejigger)
+      ObservableObject* changedObjectPtr = GetObjectByID( changedObjectIt->_id );
+      if ( changedObjectPtr )
       {
-        // Don't update a carried object that we are holding above another object
-        break;
+        // find the object that is currently on top of the old position
+        
+        // TODO COZMO-5591
+        // change FindObjectOnTopOf to FindObjectsOnTopOf and return a vector. Potentially we could have more
+        // than object directly on top of us, or a moved object could have ended up on top of our old pose, which
+        // would then trump the object that used to be our old top. This could be solved by returning all
+        // current objects on top of our old pose, and then discarding those that have changed their poses, allowing
+        // us to fix both issues. For the moment, because we need to ship I am supporting only one (old code
+        // was supporting one anyway)
+        ObservableObject* myOldCopy = changedObjectPtr->CloneType();
+        myOldCopy->CopyID(changedObjectPtr);
+        myOldCopy->InitPose(changedObjectIt->_oldPose, changedObjectIt->_oldPoseState);
+
+        // find object
+        ObservableObject* objectOnTopOfOldPose = FindObjectOnTopOf(*myOldCopy, STACKED_HEIGHT_TOL_MM);
+        if ( objectOnTopOfOldPose )
+        {
+          // we found an object currently on top of our old pose
+          const ObjectID& topID = objectOnTopOfOldPose->GetID();
+          
+          // if this is not an object we are carrying
+          if ( !_robot->IsCarryingObject(topID) )
+          {
+            // check if it used to be there too or we have already moved it this udpate
+            auto matchIDlambda = [&topID](const PoseChange& a) { return a._id == topID; };
+            const bool alreadyChanged = std::find_if(_objectPoseChangeList.begin(), _objectPoseChangeList.end(), matchIDlambda) != _objectPoseChangeList.end();
+            if ( !alreadyChanged )
+            {
+              // we haven't changed it this frame, we want to modify it based on the change we made to the bottom one
+              Pose3d topPose = objectOnTopOfOldPose->GetPose();
+              if(topPose.GetWithRespectTo(myOldCopy->GetPose(), topPose))
+              {
+                // P_top_wrt_origin = P_newBtm_wrt_origin * P_top_wrt_oldBtm:
+                topPose.PreComposeWith(changedObjectPtr->GetPose());
+                topPose.SetParent(changedObjectPtr->GetPose().GetParent());
+                
+                // update its pose based on the stack dependency. We expect this observation to add the entry for this
+                // object in objectPoseUpdates, and thus naturally iterating our way up stacks of more than 2 objects
+                Result result = _robot->GetObjectPoseConfirmer().AddObjectRelativeObservation(objectOnTopOfOldPose, topPose, changedObjectPtr);
+                if(RESULT_OK != result)
+                {
+                  PRINT_NAMED_WARNING("BlockWorld.UpdateRotationOfObjectsStackedOn.AddRelativeObservationFailed",
+                                      "Giving up on rest of stack");
+                }
+              }
+              else
+              {
+                PRINT_NAMED_WARNING("BlockWorld.UpdateStacks.OriginMismatch",
+                                    "Can't obtain topPose wrt old, but that's exactly how we found the object in topPose.");
+              }
+            } // else: object already moved
+          } // else: we are carrying the object on top
+        } // else: there are no objects on top
+
+        Util::SafeDelete(myOldCopy);
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("BlockWorld.UpdateStacks", "'%d' does not exist in current frame! Ignoring change.",
+          changedObjectIt->_id.GetValue() );
       }
       
-      // Get difference in position between top object's pose and the previous pose of the observed bottom object.
-      // Apply difference to the new observed bottom pose to get the new top object pose.
-      Pose3d topPose = objectOnTop->GetPose();
-      if(false == topPose.GetWithRespectTo(oldObjectOnBottom->GetPose(), topPose))
-      {
-        PRINT_NAMED_WARNING("BlockWorld.UpdateRotationOfObjectsStackedOn.OriginMismatch", "");
-        break;
-      }
-      
-      // P_top_wrt_origin = P_newBtm_wrt_origin * P_top_wrt_oldBtm:
-      topPose.PreComposeWith(newObjectOnBottom->GetPose());
-      topPose.SetParent(newObjectOnBottom->GetPose().GetParent());
-      
-      Util::SafeDelete(oldObjectOnBottom);
-      oldObjectOnBottom = objectOnTop->CloneType();
-      oldObjectOnBottom->InitPose(objectOnTop->GetPose(), objectOnTop->GetPoseState());
-      
-      Result result = _robot->GetObjectPoseConfirmer().AddObjectRelativeObservation(objectOnTop, topPose, existingObjectOnBottom);
-      if(RESULT_OK != result)
-      {
-        PRINT_NAMED_WARNING("BlockWorld.UpdateRotationOfObjectsStackedOn.AddRelativeObservationFailed",
-                            "Giving up on rest of stack");
-        break;
-      }
-      
-      // See if there's an object above this object
-      newObjectOnBottom = objectOnTop;
-      objectOnTop = FindObjectOnTopOf(*oldObjectOnBottom, STACKED_HEIGHT_TOL_MM);
+      // continue to next object
+      ++changedObjectIt;
     }
-    
-    Util::SafeDelete(oldObjectOnBottom);
-    
-  } // UpdateRotationOfObjectsStackedOn()
+  } // UpdatePoseOfStackedObjects()
   
   //Returns the height of the tallest stack of blocks in block world
   //and sets the bottom blockbottom block
@@ -1671,8 +1688,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       {
         _robot->GetObjectPoseConfirmer().MarkObjectUnobserved(unobserved.object);
       }
-      
-      if(shouldBeVisible || unobserved.object->IsPoseStateUnknown())
+      else if(shouldBeVisible || unobserved.object->IsPoseStateUnknown())
       {
         // Make sure there are no currently-observed, (just-)identified objects
         // with the same active ID present. (If there are, we'll reassign IDs
@@ -2847,6 +2863,26 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
                     "Could not find object ID '%d' in BlockWorld", objectID.GetValue() );
       return;
     }
+    
+    // - - update the container that keeps track of changes per Update
+    if ( _trackPoseChanges )
+    {
+      // find this object in the list of changes
+      auto matchIDlambda = [&objectID](const PoseChange& a) { return a._id == objectID; };
+      auto const matchIter = std::find_if(_objectPoseChangeList.begin(), _objectPoseChangeList.end(), matchIDlambda);
+      const bool alreadyChanged = (matchIter != _objectPoseChangeList.end());
+      if ( alreadyChanged ) {
+        // if it's already there, warn about it because we don't think it should be possible
+        PRINT_NAMED_WARNING("BlockWorld.OnObjectPoseChanged.MultipleChanges",
+                            "Object '%d' is changing its pose again this tick!", objectID.GetValue());
+        // do not update old pose, conserve the original pose it had when it changed the first time
+      }
+      else
+      {
+        // add an entry at the end (this does not invalidate iterators or references to the current elements)
+        _objectPoseChangeList.emplace_back( objectID, object->GetPose(), object->GetPoseState() );
+      }
+    }
 
     // find the info for this object in the same origin as the new pose
     const int objectIdInt = objectID.GetValue();
@@ -3824,6 +3860,10 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     
     _currentObservedObjects.clear();
     
+    // clear the change list and start tracking them
+    _objectPoseChangeList.clear();
+    _trackPoseChanges = true;
+    
     if(!currentObsMarkers.empty())
     {
       const TimeStamp_t atTimestamp = currentObsMarkers.front().GetTimeStamp();
@@ -3914,6 +3954,8 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       // visualize objects that were observed:
       CheckForUnobservedObjects(atTimestamp);
       
+      // update stacks
+      UpdatePoseOfStackedObjects();
     }
     else
     {
@@ -3928,6 +3970,9 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         CheckForUnobservedObjects(lastImgTimestamp);
       }
     }
+    
+    // do not track changes anymore, since we only use them to update stacks
+    _trackPoseChanges = false;
     
 #   define DISPLAY_ALL_OCCLUDERS 0
     if(DISPLAY_ALL_OCCLUDERS)
