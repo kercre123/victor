@@ -16,7 +16,7 @@ namespace Anki {
 namespace Cozmo {
 
   
-constexpr const char* const kBuildVersion = "00000.00007.00000";
+constexpr const char* const kBuildVersion = "00000.00006.00001";
 
   
 } // namespace Cozmo
