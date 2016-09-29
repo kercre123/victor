@@ -115,7 +115,6 @@ namespace Anki {
         // Clear queued cliff events if pickedup
         if (IMUFilter::IsPickedUp() && !_wasPickedup) {
           _pendingCliffEvent = 0;
-          _pendingUncliffEvent = 0;
           _wasPickedup = true;
         }
         _wasPickedup = IMUFilter::IsPickedUp();
