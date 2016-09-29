@@ -192,6 +192,9 @@ namespace Cozmo {
     }
     
     _streamingAnimation = anim;
+#if ANKI_DEV_CHEATS
+    _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::DebugAnimationString>(anim == nullptr ? "NONE" : anim->GetName());
+#endif
     
     if(_streamingAnimation == nullptr) {
       // Set flag if we are interrupting a streaming animation with nothing.

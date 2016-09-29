@@ -56,7 +56,26 @@
       { "channel": "Unity"  ,         "enabled": false },
       { "channel": "Audio",           "enabled": false },
       { "channel": "Unfiltered",      "enabled": true  }, // things the are required always (like callstack dump on assert)
-      { "channel": "CpuProfiler",     "enabled": true  }
+      { "channel": "CpuProfiler",     "enabled": true  },
+      { "channel": "Network",         "enabled": false },
+      { "channel": "Profiler",        "enabled": false },
+      { "channel": "Unity"   ,        "enabled": false },
+      { "channel": "VisionComponent", "enabled": false },
+      { "channel": "VisionSystem",    "enabled": false },
+      { "channel": "UnlockComponent", "enabled": false },
+      { "channel": "Actions",         "enabled": false },
+      { "channel": "Behaviors",       "enabled": false },
+      { "channel": "AIWhiteboard",    "enabled": false },
+      { "channel": "AIInfoAnalysis",  "enabled": false },
+      { "channel": "Audio",           "enabled": false },
+      { "channel": "FaceRecognizer",  "enabled": false },
+      { "channel": "UiComms",         "enabled": false },
+      { "channel": "Mood",            "enabled": false },
+      { "channel": "PoseConfirmer",   "enabled": false },
+      { "channel": "BlockWorld",      "enabled": false },
+      { "channel": "BlockPool",       "enabled": false },
+      { "channel": "NVStorage",       "enabled": false },
+      { "channel": "Animations",      "enabled": false }
     ],
     "levels":
     [
@@ -76,7 +95,26 @@
       { "channel": "Unity"  ,         "enabled": false },
       { "channel": "Audio",           "enabled": false },
       { "channel": "Unfiltered",      "enabled": true  }, // things the are required always (like callstack dump on assert)
-      { "channel": "CpuProfiler",     "enabled": true  }
+      { "channel": "CpuProfiler",     "enabled": true  },
+      { "channel": "Network",         "enabled": false },
+      { "channel": "Profiler",        "enabled": false },
+      { "channel": "Unity"   ,        "enabled": false },
+      { "channel": "VisionComponent", "enabled": false },
+      { "channel": "VisionSystem",    "enabled": false },
+      { "channel": "UnlockComponent", "enabled": false },
+      { "channel": "Actions",         "enabled": false },
+      { "channel": "Behaviors",       "enabled": false },
+      { "channel": "AIWhiteboard",    "enabled": false },
+      { "channel": "AIInfoAnalysis",  "enabled": false },
+      { "channel": "Audio",           "enabled": false },
+      { "channel": "FaceRecognizer",  "enabled": false },
+      { "channel": "UiComms",         "enabled": false },
+      { "channel": "Mood",            "enabled": false },
+      { "channel": "PoseConfirmer",   "enabled": false },
+      { "channel": "BlockWorld",      "enabled": false },
+      { "channel": "BlockPool",       "enabled": false },
+      { "channel": "NVStorage",       "enabled": false },
+      { "channel": "Animations",      "enabled": false }
     ],
     "levels":
     [

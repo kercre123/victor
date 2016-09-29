@@ -88,8 +88,6 @@ namespace Anki {
       }
       
       _animTag = _robot.GetAnimationStreamer().SetStreamingAnimation(_animPointer, _numLoopsRemaining, _interruptRunning);
-      _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::DebugAnimationString>(_animName);
-      
       
       if(_animTag == AnimationStreamer::NotAnimatingTag) {
         _wasAborted = true;
