@@ -4,9 +4,9 @@ using System.Collections;
 
 public class ShowCozmoVideo : MonoBehaviour {
 
-  #if ENABLE_DEBUG_PANEL
+#if ENABLE_DEBUG_PANEL
   private const uint kDevSkipVideoTapCount = 3;
-  #endif
+#endif
 
   public System.Action OnContinueButton;
 
@@ -32,9 +32,9 @@ public class ShowCozmoVideo : MonoBehaviour {
   private float _MusicDuckingFadeTime = 1f;
 
   private string _Filename;
-  #if ENABLE_DEBUG_PANEL
+#if ENABLE_DEBUG_PANEL
   private uint _TapCount;
-  #endif
+#endif
 
 #if UNITY_EDITOR
   // The plugin only works in iOS and Android. In the editor we use Unity's video player functionality.
@@ -63,9 +63,9 @@ public class ShowCozmoVideo : MonoBehaviour {
 
     // Register a function to enable the buttons once the video is finished
     _MediaPlayerCtrl.OnEnd += () => {
-      #if ENABLE_DEBUG_PANEL
+#if ENABLE_DEBUG_PANEL
       _TapCount = 0;
-      #endif
+#endif
       HandleVideoFinished();
       UnDuckMusic();
     };
@@ -97,21 +97,21 @@ public class ShowCozmoVideo : MonoBehaviour {
     var volType = Anki.Cozmo.Audio.VolumeParameters.VolumeType.Music;
     float vol = Anki.Cozmo.Audio.GameAudioClient.GetVolume(volType);
     if (vol > _MusicDuckingLevel) {
-      Anki.Cozmo.Audio.GameAudioClient.SetVolumeValue(volType, 
-                                                      _MusicDuckingLevel, 
-                                                      timeInMS:(int)(_MusicDuckingFadeTime * 1000), 
-                                                      storeValue:false); 
-    }        
+      Anki.Cozmo.Audio.GameAudioClient.SetVolumeValue(volType,
+                                                      _MusicDuckingLevel,
+                                                      timeInMS: (int)(_MusicDuckingFadeTime * 1000),
+                                                      storeValue: false);
+    }
   }
 
   private void UnDuckMusic() {
     var volType = Anki.Cozmo.Audio.VolumeParameters.VolumeType.Music;
     float vol = Anki.Cozmo.Audio.GameAudioClient.GetVolume(volType);
     if (vol > _MusicDuckingLevel) {
-      Anki.Cozmo.Audio.GameAudioClient.SetVolumeValue(volType, 
-                                                      vol, 
-                                                      timeInMS:(int)(_MusicDuckingFadeTime * 1000), 
-                                                      storeValue:false);
+      Anki.Cozmo.Audio.GameAudioClient.SetVolumeValue(volType,
+                                                      vol,
+                                                      timeInMS: (int)(_MusicDuckingFadeTime * 1000),
+                                                      storeValue: false);
     }
   }
 
@@ -121,13 +121,13 @@ public class ShowCozmoVideo : MonoBehaviour {
     ShowSkipButton(false);
   }
 
-  #if ENABLE_DEBUG_PANEL
+#if ENABLE_DEBUG_PANEL
   protected void Update() {
     if (Input.GetMouseButtonDown(0)) {
       OnTapVideo();
     }
   }
-  #endif
+#endif
 
   public void ShowSkipButton(bool show) {
     _SkipButton.gameObject.SetActive(show);
@@ -153,7 +153,7 @@ public class ShowCozmoVideo : MonoBehaviour {
     }
   }
 
-  #if ENABLE_DEBUG_PANEL
+#if ENABLE_DEBUG_PANEL
   private void OnTapVideo() {
     if (_MediaPlayerCtrl.GetCurrentState() != MediaPlayerCtrl.MEDIAPLAYER_STATE.PLAYING) {
       return;
@@ -165,7 +165,7 @@ public class ShowCozmoVideo : MonoBehaviour {
       _MediaPlayerCtrl.SeekTo(_MediaPlayerCtrl.GetDuration());
     }
   }
-  #endif
+#endif
 
 #if UNITY_EDITOR
   private IEnumerator LoadAndPlayCoroutine(string filename) {
@@ -206,6 +206,12 @@ public class ShowCozmoVideo : MonoBehaviour {
     while (fileWWW.movie.isPlaying) {
       yield return null;
     }
+
+    // HACK: manually set the background color to match the last frame 
+    // to account for the video lib sometimes showing a black background or ending
+    // on a frame that is not the last frame of the video.
+    _RawImage.texture = null;
+    _RawImage.color = new Color(0.11372549f, 0.53333333333f, 0.82352941176f);
 
     UnDuckMusic();
 
