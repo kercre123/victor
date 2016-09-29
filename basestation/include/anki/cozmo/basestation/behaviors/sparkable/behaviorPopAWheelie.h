@@ -45,6 +45,8 @@ namespace Anki {
       
       s32 _numPopAWheelieActionRetries = 0;
       
+      bool _hasDisabledcliff = false;
+
       std::unique_ptr<BlockWorldFilter>  _blockworldFilter;
       
       const Robot& _robot;

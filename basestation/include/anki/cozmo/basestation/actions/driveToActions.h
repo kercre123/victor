@@ -265,6 +265,11 @@ namespace Anki {
       // if sayName is true (this is because we are trying to use an animation to say the name, but if we
       // don't have a name, we want to use this animation instead)
       void SetNoNameAnimationTrigger(AnimationTrigger trigger);
+
+      // Pass in a callback which will get called when the robot switches from driving to it's predock pose to
+      // the actual docking action
+      using PreDockCallback = std::function<void(Robot&)>;
+      void SetPreDockCallback(PreDockCallback callback) { _preDockCallback = callback; }
       
       const bool GetUseApproachAngle() const;
       
@@ -283,6 +288,7 @@ namespace Anki {
       ObjectID _objectID;
       bool     _lightsSet = false;
       f32      _preDockPoseDistOffsetX_mm = 0;
+      PreDockCallback _preDockCallback;
       
     }; // class IDriveToInteractWithObject
         

@@ -965,6 +965,20 @@ namespace Anki {
     
     void IDriveToInteractWithObject::AddDockAction(IDockAction* dockAction, bool ignoreFailure)
     {
+      // right before the dock action, we want to call the PreDock callback (if one was specified). TO achieve
+      // this, we use a WaitForLambda action which always completes immediately.
+      // TODO:(bn) this could be done much more elegantly as part of CompoundActionSequential
+      {
+        auto lambdaToWaitFor = [this](Robot& robot) {
+          if( _preDockCallback ) {
+            _preDockCallback(robot);
+          }
+          // immediately finish the action
+          return true;
+        };
+        AddAction( new WaitForLambdaAction(_robot, lambdaToWaitFor) );
+      }
+      
       dockAction->SetPreDockPoseDistOffset(_preDockPoseDistOffsetX_mm);
       AddAction(dockAction, ignoreFailure);
     }

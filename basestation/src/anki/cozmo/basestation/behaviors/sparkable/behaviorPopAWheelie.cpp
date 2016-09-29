@@ -136,10 +136,24 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(Robot& robot, bool isRetr
   goPopAWheelie->SetSayNameAnimationTrigger(AnimationTrigger::PopAWheeliePreActionNamedFace);
   goPopAWheelie->SetNoNameAnimationTrigger(AnimationTrigger::PopAWheeliePreActionUnnamedFace);
 
+  // once we get to the predock pose, before docking, disable the cliff sensor and associated reactions so
+  // that we play the correct animation instead of getting interrupted)  
+  auto disableCliff = [this](Robot& robot) {
+    // disable reactions we don't want
+    SmartDisableReactionaryBehavior(BehaviorType::ReactToCliff);
+    SmartDisableReactionaryBehavior(BehaviorType::ReactToPickup);
+    SmartDisableReactionaryBehavior(BehaviorType::ReactToRobotOnBack);
+    SmartDisableReactionaryBehavior(BehaviorType::ReactToCubeMoved);
+    SmartDisableReactionaryBehavior(BehaviorType::ReactToUnexpectedMovement);
+    SmartDisableReactionaryBehavior(BehaviorType::ReactToReturnedToTreads);
 
-  //Disable on the back reaction
-  SmartDisableReactionaryBehavior(BehaviorType::ReactToRobotOnBack);
-  SmartDisableReactionaryBehavior(BehaviorType::ReactToPickup);
+    // tell the robot not to stop the current action / animation if the cliff sensor fires
+    _hasDisabledcliff = true;
+    robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(false)));
+  };    
+  goPopAWheelie->SetPreDockCallback(disableCliff);
+
+
   StartActing(goPopAWheelie,
               [&,this](const ExternalInterface::RobotCompletedAction& msg) {
                 if(msg.result != ActionResult::SUCCESS){
@@ -231,6 +245,14 @@ void BehaviorPopAWheelie::SetupRetryAction(Robot& robot, const ExternalInterface
 void BehaviorPopAWheelie::ResetBehavior(Robot& robot)
 {
   _targetBlock.UnSet();
+
+  if( _hasDisabledcliff ) {
+    _hasDisabledcliff = false;
+    // NOTE: assumes that we want the cliff to be re-enabled when we leave this behavior. If it was disabled
+    // before this behavior started, it will be enabled anyway. If this becomes a problem, then we need to
+    // count / track the requests to enable and disable like we do with track locking or reactionary behaviors
+    robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(true)));
+  }
 }
 
 }
