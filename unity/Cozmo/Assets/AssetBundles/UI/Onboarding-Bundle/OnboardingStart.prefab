@@ -67,7 +67,7 @@ GameObject:
   m_IsActive: 1
 --- !u!1 &154878
 GameObject:
-  m_ObjectHideFlags: 1
+  m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
@@ -330,7 +330,7 @@ MonoBehaviour:
     m_BestFit: 0
     m_MinSize: 1
     m_MaxSize: 100
-    m_Alignment: 1
+    m_Alignment: 7
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
@@ -413,6 +413,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _ActiveTopBar: 0
+  _ActiveBotBar: 0
   _ActiveTabButtons: 0
   _ActiveMenuContent: 0
   _ReactionsEnabled: 0
@@ -493,12 +494,12 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
-  m_Father: {fileID: 22435690}
-  m_RootOrder: 3
+  m_Father: {fileID: 22461814}
+  m_RootOrder: 2
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0, y: -1464}
-  m_SizeDelta: {x: 1300, y: 201}
+  m_AnchoredPosition: {x: 0, y: 52.64}
+  m_SizeDelta: {x: 1300, y: 200}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!224 &22404680
 RectTransform:
@@ -550,7 +551,6 @@ RectTransform:
   - {fileID: 22462584}
   - {fileID: 22461168}
   - {fileID: 22496024}
-  - {fileID: 22402440}
   m_Father: {fileID: 22461814}
   m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -607,6 +607,7 @@ RectTransform:
   m_Children:
   - {fileID: 22492746}
   - {fileID: 22435690}
+  - {fileID: 22402440}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
