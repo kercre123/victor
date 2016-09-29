@@ -135,7 +135,7 @@ void DasLocalAppender::append(DASLogLevel level, const char* _eventName, const c
 #if defined(ANKI_IOS_9_OR_LESS)
     asl_log(NULL, NULL, priority, "%s", logMsg.c_str());
 #else
-    os_log_with_type(logger, priority, "%s", logMsg.c_str());
+    os_log_with_type(logger, priority, "%{public}s", logMsg.c_str());
 #endif
   });
 }

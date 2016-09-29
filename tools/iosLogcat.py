@@ -41,8 +41,10 @@ def shouldLog(system, logLevel):
         return True
 
     # apple system names are given in a format like OverDrive[123]
+    # or OverDrive(libsystem_network.dylib)[281]
     # We need to grab just the OverDrive string
-    systemName = system.split('[')[0]
+    systemNameFull = system.split('[')[0]
+    systemName = systemNameFull.split('(')[0]
     if (systemName.lower() in logSystems):
         # log levels are given in the format <Warning>:
         # We need to grab the first character
