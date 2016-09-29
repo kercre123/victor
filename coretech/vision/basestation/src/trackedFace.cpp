@@ -19,6 +19,10 @@ namespace Vision {
   
   static const f32 DistanceBetweenEyes_mm = 62.f;
   
+  // Assuming a max face detection of 3m, focal length of 300 and distanceBetweenEyes_mm of 62
+  // then the smallest distance between eyes in pixels will be ~6
+  static const f32 MinDistBetweenEyes_pixels = 6;
+  
   TrackedFace::TrackedFace()
   : _headPose(M_PI_2, X_AXIS_3D(), {0.f, 0.f, 0.f})
   {
@@ -27,18 +31,35 @@ namespace Vision {
   
   f32 TrackedFace::GetIntraEyeDistance() const
   {
-    const f32 imageDist = (_leftEyeCen - _rightEyeCen).Length();
+    f32 imageDist = (_leftEyeCen - _rightEyeCen).Length();
+
+    f32 yaw  = std::cos(GetHeadYaw().ToFloat());
     
-    const f32 roll = GetHeadRoll().ToFloat();
-    const f32 yaw  = GetHeadYaw().ToFloat();
+    if(NEAR_ZERO(yaw))
+    {
+      yaw = 1;
+    }
     
-    return imageDist / std::cos(roll) / std::cos(yaw);
+    if(NEAR_ZERO(imageDist))
+    {
+      PRINT_NAMED_WARNING("TrackedFace.GetIntraEyeDistance.ZeroEyeDist",
+                          "LeftEyeCen (%f %f) RightEyeCen (%f %f) Dist %f",
+                          _leftEyeCen.x(),
+                          _leftEyeCen.y(),
+                          _rightEyeCen.x(),
+                          _rightEyeCen.y(),
+                          imageDist);
+      imageDist = MinDistBetweenEyes_pixels;
+    }
+    
+    return imageDist / yaw;
   }
   
   bool TrackedFace::UpdateTranslation(const Vision::Camera& camera)
   {
     bool usedRealCenters = true;
     Point2f leftEye, rightEye;
+    f32 intraEyeDistance = 0;
     if(!GetEyeCenters(leftEye, rightEye))
     {
       // No eyes set: Use fake eye centers
@@ -49,7 +70,14 @@ namespace Vision {
                        GetRect().GetYmid() - .125f*GetRect().GetHeight());
 
       usedRealCenters = false;
+      intraEyeDistance = std::max((rightEye - leftEye).Length(), MinDistBetweenEyes_pixels);
     }
+    else
+    {
+      intraEyeDistance = GetIntraEyeDistance();
+    }
+    
+    ASSERT_NAMED(!NEAR_ZERO(intraEyeDistance), "IntraEyeDistance is near zero");
       
     // Get unit vector along camera ray from the point between the eyes in the image
     Point2f eyeMidPoint(leftEye);
@@ -61,7 +89,7 @@ namespace Vision {
     ray = camera.GetCalibration()->GetInvCalibrationMatrix() * ray;
     ray.MakeUnitLength();
     
-    ray *= camera.GetCalibration()->GetFocalLength_x() * DistanceBetweenEyes_mm / GetIntraEyeDistance();
+    ray *= camera.GetCalibration()->GetFocalLength_x() * DistanceBetweenEyes_mm / intraEyeDistance;
     
     _headPose.SetTranslation(ray);
     _headPose.SetParent(&camera.GetPose());
