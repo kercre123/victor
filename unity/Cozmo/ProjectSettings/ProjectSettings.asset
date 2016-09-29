@@ -127,16 +127,25 @@ PlayerSettings:
   uIStatusBarHidden: 1
   uIExitOnSuspend: 0
   uIStatusBarStyle: 0
-  iPhoneSplashScreen: {fileID: 0}
-  iPhoneHighResSplashScreen: {fileID: 0}
-  iPhoneTallHighResSplashScreen: {fileID: 0}
-  iPhone47inSplashScreen: {fileID: 0}
-  iPhone55inPortraitSplashScreen: {fileID: 0}
-  iPhone55inLandscapeSplashScreen: {fileID: 0}
-  iPadPortraitSplashScreen: {fileID: 0}
-  iPadHighResPortraitSplashScreen: {fileID: 0}
-  iPadLandscapeSplashScreen: {fileID: 0}
-  iPadHighResLandscapeSplashScreen: {fileID: 0}
+  iPhoneSplashScreen: {fileID: 2800000, guid: f5b7feb40d4d24e178dc06fda0a2223e, type: 3}
+  iPhoneHighResSplashScreen: {fileID: 2800000, guid: 22ef9ca8968214647b919a938ae7397d,
+    type: 3}
+  iPhoneTallHighResSplashScreen: {fileID: 2800000, guid: f542e85f59e8e42f19e7cba3875739e2,
+    type: 3}
+  iPhone47inSplashScreen: {fileID: 2800000, guid: f542e85f59e8e42f19e7cba3875739e2,
+    type: 3}
+  iPhone55inPortraitSplashScreen: {fileID: 2800000, guid: f542e85f59e8e42f19e7cba3875739e2,
+    type: 3}
+  iPhone55inLandscapeSplashScreen: {fileID: 2800000, guid: f542e85f59e8e42f19e7cba3875739e2,
+    type: 3}
+  iPadPortraitSplashScreen: {fileID: 2800000, guid: f5b7feb40d4d24e178dc06fda0a2223e,
+    type: 3}
+  iPadHighResPortraitSplashScreen: {fileID: 2800000, guid: f5b7feb40d4d24e178dc06fda0a2223e,
+    type: 3}
+  iPadLandscapeSplashScreen: {fileID: 2800000, guid: f5b7feb40d4d24e178dc06fda0a2223e,
+    type: 3}
+  iPadHighResLandscapeSplashScreen: {fileID: 2800000, guid: f5b7feb40d4d24e178dc06fda0a2223e,
+    type: 3}
   appleTVSplashScreen: {fileID: 0}
   tvOSSmallIconLayers: []
   tvOSLargeIconLayers: []
@@ -160,8 +169,8 @@ PlayerSettings:
   iOSLaunchScreeniPadCustomXibPath: 
   iOSDeviceRequirements: []
   AndroidTargetDevice: 0
-  AndroidSplashScreenScale: 0
-  androidSplashScreen: {fileID: 0}
+  AndroidSplashScreenScale: 2
+  androidSplashScreen: {fileID: 2800000, guid: f5b7feb40d4d24e178dc06fda0a2223e, type: 3}
   AndroidKeystoreName: 
   AndroidKeyaliasName: 
   AndroidTVCompatibility: 1
