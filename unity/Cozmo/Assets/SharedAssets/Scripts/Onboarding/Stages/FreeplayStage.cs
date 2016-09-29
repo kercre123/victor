@@ -8,6 +8,8 @@ namespace Onboarding {
 
     [SerializeField]
     protected GameObject _Container;
+    [SerializeField]
+    protected GameObject _ArrowContainer;
 
     private BehaviorDisplay _BehaviorDisplay;
     public override void Start() {
@@ -21,6 +23,7 @@ namespace Onboarding {
     // Hide but wait for animation to finish before really going into freeplay
     protected override void HandleContinueClicked() {
       _Container.SetActive(false);
+      _ArrowContainer.SetActive(false);
       RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnboardingGetOut, HandleReactionEndAnimationComplete);
       if (_BehaviorDisplay != null) {
         _BehaviorDisplay.SetOverrideString(null);

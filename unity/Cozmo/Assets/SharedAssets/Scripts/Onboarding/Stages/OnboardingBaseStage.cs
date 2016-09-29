@@ -8,6 +8,7 @@ namespace Onboarding {
   public class OnboardingBaseStage : MonoBehaviour {
 
     public bool ActiveTopBar { get { return _ActiveTopBar; } }
+    public bool ActiveBotBar { get { return _ActiveBotBar; } }
     public bool ActiveTabButtons { get { return _ActiveTabButtons; } }
     public bool ActiveMenuContent { get { return _ActiveMenuContent; } }
     public bool ReactionsEnabled { get { return _ReactionsEnabled; } }
@@ -15,6 +16,9 @@ namespace Onboarding {
 
     [SerializeField]
     protected bool _ActiveTopBar = false;
+
+    [SerializeField]
+    protected bool _ActiveBotBar = false;
 
     [SerializeField]
     protected bool _ActiveTabButtons = false;

@@ -29,8 +29,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _ActiveTopBar: 1
+  _ActiveBotBar: 1
   _ActiveTabButtons: 0
   _ActiveMenuContent: 1
+  _ReactionsEnabled: 1
+  _PlayIdle: 0
+  _DASPhaseID: 0
 --- !u!222 &22277488
 CanvasRenderer:
   m_ObjectHideFlags: 1
