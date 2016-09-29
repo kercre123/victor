@@ -284,8 +284,6 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
 
         Args:
             timeout (float): Maximum length of time to wait for a robot to be ready
-            ensure_off_charger (bool): Wait for Cozmo to drive clear of the charger contacts too
-                                        (most motor-based commands are ignored whilst on charger)
         Returns:
             A :class:`cozmo.robot.Cozmo` instance that's ready to use.
         '''

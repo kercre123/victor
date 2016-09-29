@@ -223,7 +223,7 @@ class USBMux(PlistProto):
 
         Args:
             protocol_factory (callable): A callable that returns an asyncio.Protocol implementation
-            port (device_id): The id of the device to connect to
+            device_id (int): The id of the device to connect to
             port (int): The port to connect to on the target device
         Returns:
             (asyncio.Transport, asyncio.Protocol) - The connected transport and protocol

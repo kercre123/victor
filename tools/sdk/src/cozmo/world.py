@@ -167,7 +167,7 @@ class World(event.Dispatcher):
 
     #### Event Wrappers ####
 
-    async def wait_for_observed_light_cube(self, timeout=None, visible_markers=False):
+    async def wait_for_observed_light_cube(self, timeout=None):
         '''Waits for one of the light cubes to be observed by the robot.
 
         Args:

@@ -265,7 +265,7 @@ class Pose:
         '''
 
         if not isinstance(new_pose, Pose):
-                raise TypeError("Unsupported type for new_origin, must be of type Pose")
+            raise TypeError("Unsupported type for new_origin, must be of type Pose")
         x,y,z = self.position.x_y_z
         angle_z = self.rotation.angle_z
         new_x,new_y,new_z = new_pose.position.x_y_z
@@ -366,22 +366,22 @@ class Rotation:
 
     @property
     def q0(self):
-        '''The q0 (w) value of the quaterinon defining this rotation.'''
+        '''The q0 (w) value of the quaternion defining this rotation.'''
         return self._q0
 
     @property
     def q1(self):
-        '''The q1 (i) value of the quaterinon defining this rotation.'''
+        '''The q1 (i) value of the quaternion defining this rotation.'''
         return self._q1
 
     @property
     def q2(self):
-        '''The q2 (j) value of the quaterinon defining this rotation.'''
+        '''The q2 (j) value of the quaternion defining this rotation.'''
         return self._q2
 
     @property
     def q3(self):
-        '''The q3 (k) value of the quaterinon defining this rotation.'''
+        '''The q3 (k) value of the quaternion defining this rotation.'''
         return self._q3
 
     @property
@@ -404,7 +404,7 @@ def rotation_z_angle(angle_z):
     return Rotation(angle_z=angle_z)
 
 def angle_z_to_quaternion(angle_z):
-    '''This function converts an angle in the z axis (eueler angler z component) to a quaternion.
+    '''This function converts an angle in the z axis (euler angler z component) to a quaternion.
 
     Args:
         angle_z (:class:`cozmo.util.Angle`): The z axis angle.

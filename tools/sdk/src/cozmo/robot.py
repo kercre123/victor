@@ -635,7 +635,10 @@ class Cozmo(event.Dispatcher):
     def set_head_angle(self, angle, accel=10.0, max_speed=10.0, duration=0.0):
         '''Tell Cozmo's head to turn to a given angle
         Args:
-            angle: (:class:`cozmo.util.Angle`) - desired angle for Cozmo's head. (MIN_HEAD_ANGLE to MAX_HEAD_ANGLE)
+            angle: (:class:`cozmo.util.Angle`) - desired angle in radians for Cozmo's head. (MIN_HEAD_ANGLE to MAX_HEAD_ANGLE)
+            accel (float): Acceleration of Cozmo's head in radians per second squared
+            max_speed (float): Maximum speed of Cozmo's head in radians per second
+            duration (float): Time for Cozmo's head to turn in seconds
         Returns:
             A :class:`cozmo.robot.SetHeadAngle` action object which can be queried to see when it is complete
         '''
@@ -648,6 +651,9 @@ class Cozmo(event.Dispatcher):
         '''Tell Cozmo's lift to move to a given height
         Args:
             height (float): desired height for Cozmo's lift 0.0 (bottom) to 1.0 (top) (we clamp it to this range internally)
+            accel (float): Acceleration of Cozmo's lift in radians per second squared
+            max_speed (float): Maximum speed of Cozmo's lift in radians per second
+            duration (float): Time for Cozmo's lift to move in seconds
         Returns:
             A :class:`cozmo.robot.SetLiftHeight` action object which can be queried to see when it is complete
         '''

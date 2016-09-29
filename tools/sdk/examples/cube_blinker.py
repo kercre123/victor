@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
-'''Blink each light on a cube until the cube is tapped.
+'''Cube Blinker asynchronous example
 
 Cozmo first looks around for a cube. Once a cube is found,
 the cube's lights blink green in a circular fashion. The
@@ -19,8 +19,7 @@ class BlinkyCube(cozmo.objects.LightCube):
         self._chaser = None
 
     def start_light_chaser(self):
-        '''
-        Cycles the lights around the cube with 1 corner lit up green,
+        '''Cycles the lights around the cube with 1 corner lit up green,
         changing to the next corner every 0.1 seconds.
         '''
         if self._chaser:
@@ -46,7 +45,25 @@ cozmo.world.World.light_cube_factory = BlinkyCube
 
 
 async def run(coz_conn):
-    '''The run method runs once Cozmo is connected.'''
+    '''The run method runs once Cozmo is connected.
+
+    The usage of ``async def`` makes the run method a coroutine. Within
+    a coroutine, ``await`` can be used. With ``await``, the statement
+    blocks until the request being waited for has completed. Meanwhile
+    the event loop continues in the background.
+
+    For instance, the statement
+    ``await coz.world.wait_for_observed_light_cube(timeout=60)``
+    blocks until Cozmo discovers a light cube or the 60 second timeout
+    elapses, whichever occurs first.
+
+    Likewise, the statement ``await cube.wait_for_tap(timeout=10)``
+    blocks until the tap event is received or the 10 second timeout occurs,
+    whichever occurs first.
+
+    For more information, see
+    https://docs.python.org/3/library/asyncio-task.html
+    '''
     cube = None
     coz = await coz_conn.wait_for_robot()
     print("Got initialized Cozmo")

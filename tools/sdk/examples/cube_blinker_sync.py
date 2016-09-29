@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
-'''Blink each light on a cube until the cube is tapped.
+'''Cube Blinker synchronous example
 
 Cozmo first looks around for a cube. Once a cube is found,
 the cube's lights blink green in a circular fashion. The
@@ -19,6 +19,9 @@ class BlinkyCube(cozmo.objects.LightCube):
         self._chaser = None
 
     def start_light_chaser(self):
+        '''Cycles the lights around the cube with 1 corner lit up green,
+        changing to the next corner every 0.1 seconds.
+        '''
         if self._chaser:
             raise ValueError("Light chaser already running")
         async def _chaser():

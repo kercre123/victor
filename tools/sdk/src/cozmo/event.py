@@ -29,7 +29,7 @@ The event can be observed in a number of different ways:
    `recv_default_handler`.
 
 Events are dispatched to a target object (by calling :meth:`dispatch_event`
-on the receiving object).  In line with the above, Upon receiving an event,
+on the receiving object).  In line with the above, upon receiving an event,
 the object will:
 
 #. Dispatch the event to any handlers which have explicitly registered interest
@@ -42,7 +42,7 @@ the object will:
 
 Any handler may raise a :class:`~cozmo.exceptions.StopPropogation` exception
 to prevent the event reaching any subsequent handlers (but generally should
-have no need to).
+have no need to do so).
 
 Child objects receive all events that are sent to the originating object (
 which may have multiple children).
@@ -292,7 +292,7 @@ class Dispatcher(base.Base):
         It's recommended that a **kwargs parameter be included in the definition
         so that future expansion of event parameters do not cause the handler to fail.
 
-        Callbable handlers may raise an events.StopProgation exception to prevent
+        Callable handlers may raise an events.StopProgation exception to prevent
         other handlers listening to the same event from being triggered.
 
         :class:`asyncio.Future` handlers are called with a result set to the event.
@@ -495,7 +495,7 @@ def filter_handler(event, **filters):
 
     Args:
         event (:class:`Event`): The event class to match on
-        filter (dict): Zero or more event parameters to filter on.  values may
+        filters (dict): Zero or more event parameters to filter on.  Values may
             be either strings for exact matches, or functions which accept the
             value as the first argument and return a bool indicating whether
             the value passes the filter.
