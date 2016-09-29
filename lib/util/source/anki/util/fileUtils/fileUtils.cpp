@@ -8,6 +8,7 @@
 
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/includeIostream.h"
+#include "util/math/numericCast.h"
 #include <fstream>
 #include <sys/stat.h>
 #include <cstdio>
@@ -34,6 +35,17 @@ bool FileUtils::DirectoryExists(const std::string &path)
     }
   }
   return exists;
+}
+
+ssize_t FileUtils::GetFileSize(const std::string &path)
+{
+  struct stat info;
+  if( stat(path.c_str(), &info)==0 ) {
+    return numeric_cast<ssize_t>(info.st_size);
+  }
+  else {
+    return -1;
+  }
 }
 
 // -p      Create intermediate directories as required.  If this option is not specified,

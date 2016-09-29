@@ -127,9 +127,9 @@ namespace Util {
       __block HttpRequest localRequestRef = request;
       NSMutableURLRequest* urlRequest = CreateURLRequest(request, httpMethod);
 
-      if (!request.destinationPath.empty()) {
+      if (!request.storageFilePath.empty()) {
         NSString* destinationPath =
-        [NSString stringWithCString:request.destinationPath.c_str()
+        [NSString stringWithCString:request.storageFilePath.c_str()
                            encoding:[NSString defaultCStringEncoding]];
         NSURL* destinationUrl = [NSURL fileURLWithPath:destinationPath];
         task = [_urlSession downloadTaskWithRequest:urlRequest
@@ -172,25 +172,40 @@ namespace Util {
       __block HttpRequest localRequestRef = request;
       NSMutableURLRequest* urlRequest = CreateURLRequest(request, httpMethod);
 
-      NSMutableData* bodyData;
+      NSURLSessionDataTask *task;
 
-      if (localRequestRef.body.empty()){
-        // Generate & Set Parameter Data
-        NSMutableString *bodyString = [NSMutableString string];
-        ConvertParamsToBodyString(localRequestRef, bodyString);
-        bodyData = [[bodyString dataUsingEncoding:NSUTF8StringEncoding] copy];
+      auto completionHandler = ^(NSData* data,
+                                 NSURLResponse* response,
+                                 NSError* error) {
+        DoCallback(queue, std::move(callback), std::move(localRequestRef), data, response, error);
+      };
+
+      const bool emptyBody = localRequestRef.body.empty();
+      const bool isFileRequest = emptyBody && !localRequestRef.storageFilePath.empty();
+
+      if (isFileRequest){
+        NSString* filePath = [NSString stringWithCString:localRequestRef.storageFilePath.c_str()
+                                                encoding:NSUTF8StringEncoding];
+        NSURL* url = [[NSURL alloc] initFileURLWithPath:filePath];
+        task = [_urlSession uploadTaskWithRequest:urlRequest
+                                         fromFile:url
+                                completionHandler:completionHandler];
       }else{
-        bodyData = [[NSMutableData alloc] initWithCapacity:localRequestRef.body.size()];
-        [bodyData appendBytes:localRequestRef.body.data() length:localRequestRef.body.size()];
+        NSMutableData* bodyData;
+        if (emptyBody){
+          // Generate & Set Parameter Data
+          NSMutableString *bodyString = [NSMutableString string];
+          ConvertParamsToBodyString(localRequestRef, bodyString);
+          bodyData = [[bodyString dataUsingEncoding:NSUTF8StringEncoding] copy];
+        }else{
+          bodyData = [[NSMutableData alloc] initWithCapacity:localRequestRef.body.size()];
+          [bodyData appendBytes:localRequestRef.body.data() length:localRequestRef.body.size()];
+        }
+        task = [_urlSession uploadTaskWithRequest:urlRequest
+                                         fromData:bodyData
+                                completionHandler:completionHandler];
       }
 
-      NSURLSessionDataTask *task = [_urlSession uploadTaskWithRequest:urlRequest
-                                                             fromData:bodyData
-                                                    completionHandler:^(NSData* data,
-                                                                        NSURLResponse* response,
-                                                                        NSError* error) {
-        DoCallback(queue, std::move(callback), std::move(localRequestRef), data, response, error);
-      }];
       [task resume];
     }
     catch (const std::exception& e) {

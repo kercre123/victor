@@ -47,10 +47,10 @@ void GameLogTransferTask::OnReady(const StartRequestFunc& requestFunc)
   for (const std::string& filename : filesToUpload) {
     HttpRequest request;
     try {
-      request.body = FileUtils::ReadFileAsBinary(filename);
+      request.storageFilePath = filename;
       request.method = HttpMethodPut;
 
-      bytesQueued += request.body.size();
+      bytesQueued += FileUtils::GetFileSize(filename);
 
       // get filename
       auto filenameStartIndex = filename.find_last_of('/');

@@ -114,7 +114,7 @@ void HttpAdapter::StartRequest(const HttpRequest& request,
   JByteArrayHandle jbodyArray{env->NewByteArray(bodySize), env};
   env->SetByteArrayRegion(jbodyArray.get(), 0, bodySize, (const jbyte*)(request.body.data()));
 
-  JStringHandle destinationPath{env->NewStringUTF(request.destinationPath.c_str()), env};
+  JStringHandle storageFilePath{env->NewStringUTF(request.storageFilePath.c_str()), env};
 
   PRINT_CH_INFO("HTTP", "http_adapter.request", "%s :: %s",
                        HttpMethodToString(request.method),
@@ -122,7 +122,7 @@ void HttpAdapter::StartRequest(const HttpRequest& request,
 
   PRINT_NAMED_DEBUG("http_adapter.start_request.call_java", "");
   env->CallVoidMethod(_javaObject, _startRequestMethodID, hash, uri.get(), headers.get(), params.get(),
-                      jbodyArray.get(), httpMethod, destinationPath.get(), requestTimeout);
+                      jbodyArray.get(), httpMethod, storageFilePath.get(), requestTimeout);
   PRINT_NAMED_DEBUG("http_adapter.start_request.call_java_done", "");
 
   for (jstring& stringRef : stringRefs) {

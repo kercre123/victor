@@ -41,6 +41,8 @@ public class HttpAdapter {
   private static final int HTTP_RESPONSE_ERROR_NETWORK_CONNECTION_LOST = -1005;
   private static final int HTTP_RESPONSE_ERROR_DNS_LOOKUP_FAILED = -1006;
   private static final int HTTP_RESPONSE_ERROR_NOT_CONNECTED_TO_INTERNET = -1009;
+  private static final int HTTP_RESPONSE_ERROR_FILE_NOT_FOUND = -1100;
+  private static final int HTTP_RESPONSE_ERROR_NO_FILE_PERMISSIONS = -1102;
 
   private final Executor executor;
   private HttpAdapterCallbackThread callbackThread;
@@ -54,7 +56,7 @@ public class HttpAdapter {
 
   public void startRequest(final long hash, final String uri, final String[] headers,
                            final String[] params, final byte[] body, final int httpMethod,
-                           final String destinationPath, final int requestTimeout) {
+                           final String storageFilePath, final int requestTimeout) {
     StringBuilder sb = new StringBuilder();
     for (int k=0;k<headers.length;k+=2) {
       sb.append(headers[k]).append("=").append(headers[k+1]).append(" ");
@@ -80,6 +82,8 @@ public class HttpAdapter {
             conn.setRequestProperty(headers[i], headers[i+1]);
           }
 
+          boolean isFileUpload = false;
+
           switch(httpMethod) {
             case HTTP_METHOD_GET:
               conn.setRequestMethod("GET");
@@ -87,10 +91,14 @@ public class HttpAdapter {
             case HTTP_METHOD_POST:
               conn.setRequestMethod("POST");
               conn.setDoOutput(true);
+              conn.setChunkedStreamingMode(0);
+              isFileUpload = storageFilePath.length() > 0 && body.length == 0;
             break;
             case HTTP_METHOD_PUT:
               conn.setRequestMethod("PUT");
               conn.setDoOutput(true);
+              conn.setChunkedStreamingMode(0);
+              isFileUpload = storageFilePath.length() > 0 && body.length == 0;
             break;
             case HTTP_METHOD_DELETE:
               conn.setRequestMethod("DELETE");
@@ -101,16 +109,37 @@ public class HttpAdapter {
           }
 
           // Write params and body json in to request
-          if(body.length > 0 || params.length > 0){
+          if(body.length > 0 || params.length > 0 || isFileUpload){
             OutputStream os = conn.getOutputStream();
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
             writer.write(createQueryStringForParameters(params));
             writer.flush();
-            os.write(body, 0, body.length);
-            os.flush();
+
+            if (!isFileUpload) {
+              os.write(body, 0, body.length);
+              os.flush();
+            }
+            else {
+              OutputStream dataOut = new DataOutputStream(os);
+              FileInputStream fileStream = new FileInputStream(new File(storageFilePath));
+              final int readSize = 64 * 1024;
+              int bufferSize = Math.min(fileStream.available(), readSize);
+              byte[] buffer = new byte[bufferSize];
+              int bytesRead;
+
+              // read file chunks and write to output stream until all done
+              while ((bytesRead = fileStream.read(buffer, 0, bufferSize)) > 0) {
+                dataOut.write(buffer, 0, bytesRead);
+                bufferSize = Math.min(fileStream.available(), readSize);
+              }
+
+              fileStream.close();
+              dataOut.flush();
+              dataOut.close();
+            }
+
             writer.close();
             os.close();
-
             conn.connect();
           }
 
@@ -123,9 +152,9 @@ public class HttpAdapter {
             in = conn.getInputStream();
           }
           boolean writeToFile;
-          if (destinationPath != null && !destinationPath.isEmpty()) {
+          if (!isFileUpload && storageFilePath != null && !storageFilePath.isEmpty()) {
             writeToFile = true;
-            out = new BufferedOutputStream(new FileOutputStream(destinationPath));
+            out = new BufferedOutputStream(new FileOutputStream(storageFilePath));
           } else {
             writeToFile = false;
             if( contentLength != -1 ) {
@@ -175,6 +204,12 @@ public class HttpAdapter {
           } else {
             responseCode = HTTP_RESPONSE_ERROR_NOT_CONNECTED_TO_INTERNET;
           }
+        }catch(java.io.FileNotFoundException e) {
+          Log.v("dasJava", "HttpAdapter caught " + e);
+          responseCode = HTTP_RESPONSE_ERROR_FILE_NOT_FOUND;
+        }catch(java.lang.SecurityException e) {
+          Log.v("dasJava", "HttpAdapter caught " + e);
+          responseCode = HTTP_RESPONSE_ERROR_NO_FILE_PERMISSIONS;
         }catch(Exception e) {
           Log.v("dasJava", "HttpAdapter caught " + e);
           responseCode = HTTP_RESPONSE_ERROR_NETWORK_CONNECTION_LOST;

@@ -57,7 +57,7 @@ public:
 
   std::vector<uint8_t> body;
 
-  std::string destinationPath;
+  std::string storageFilePath;
 
 };
 

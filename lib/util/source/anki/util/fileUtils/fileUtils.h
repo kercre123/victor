@@ -40,6 +40,8 @@ public:
 
   static bool FileExists(const std::string& fileName);
 
+  static ssize_t GetFileSize(const std::string& fileName);
+
   static std::string ReadFile(const std::string& fileName);
 
   static std::vector<uint8_t> ReadFileAsBinary(const std::string& fileName);
