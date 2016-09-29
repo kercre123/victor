@@ -19,8 +19,8 @@ namespace SpeedTap {
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
       _SpeedTapGame.RedMatch = false;
 
-      _SpeedTapGame.CozmoBlock.SetLEDs(0);
-      _SpeedTapGame.PlayerBlock.SetLEDs(0);
+      _SpeedTapGame.SetLEDs(_SpeedTapGame.CozmoBlockID, Color.black);
+      _SpeedTapGame.SetLEDs(_SpeedTapGame.PlayerBlockID, Color.black);
 
       _CubeOffStartTimestamp_sec = Time.time;
       _OffDuration_sec = _SpeedTapGame.GetLightsOffDurationSec();

@@ -140,13 +140,13 @@ namespace SpeedTap {
       LightCube losingBlock;
       if (winner == PointWinner.Player) {
         _WinColors = _SpeedTapGame.PlayerWinColors;
-        _WinningCube = _SpeedTapGame.PlayerBlock;
-        losingBlock = _SpeedTapGame.CozmoBlock;
+        _WinningCube = _SpeedTapGame.GetPlayerBlock();
+        losingBlock = _SpeedTapGame.GetCozmoBlock();
       }
       else {
         _WinColors = _SpeedTapGame.CozmoWinColors;
-        _WinningCube = _SpeedTapGame.CozmoBlock;
-        losingBlock = _SpeedTapGame.PlayerBlock;
+        _WinningCube = _SpeedTapGame.GetCozmoBlock();
+        losingBlock = _SpeedTapGame.GetPlayerBlock();
       }
 
       if (wasMistakeMade) {

@@ -1535,8 +1535,8 @@ public class Robot : IRobot {
     return closest as LightCube;
   }
 
-  public void SearchForCube(LightCube cube, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-    SearchForNearbyObject(cube.ID, callback, queueActionPosition);
+  public void SearchForCube(int cubeID, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    SearchForNearbyObject(cubeID, callback, queueActionPosition);
   }
 
   // If an objectID is passed in, the action will complete successfully as soon as the object is seen

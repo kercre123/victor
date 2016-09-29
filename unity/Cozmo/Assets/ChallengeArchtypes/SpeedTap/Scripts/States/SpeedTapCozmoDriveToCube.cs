@@ -24,7 +24,7 @@ namespace SpeedTap {
         _SpeedTapGame.InitialCubesDone();
       }
 
-      _SpeedTapGame.StartCycleCube(_SpeedTapGame.CozmoBlock,
+      _SpeedTapGame.StartCycleCube(_SpeedTapGame.CozmoBlockID,
                                    CubePalette.Instance.TapMeColor.lightColors,
                                    CubePalette.Instance.TapMeColor.cycleIntervalSeconds);
 
@@ -61,7 +61,7 @@ namespace SpeedTap {
 
     private void TryDrivingToCube(bool forceRaiseLift) {
       _ForceRaiseLift = forceRaiseLift;
-      _CurrentRobot.SearchForCube(_SpeedTapGame.CozmoBlock, HandleSearchForCubeEnd);
+      _CurrentRobot.SearchForCube(_SpeedTapGame.CozmoBlockID, HandleSearchForCubeEnd);
       _CurrentRobot.PushDrivingAnimations(Anki.Cozmo.AnimationTrigger.SpeedTapDrivingStart,
         Anki.Cozmo.AnimationTrigger.SpeedTapDrivingLoop, Anki.Cozmo.AnimationTrigger.Count);
     }
@@ -90,17 +90,17 @@ namespace SpeedTap {
     }
 
     private bool IsFarAwayFromCube() {
-      return (_CurrentRobot.WorldPosition.xy() - _SpeedTapGame.CozmoBlock.WorldPosition.xy()).sqrMagnitude
+      return (_CurrentRobot.WorldPosition.xy() - _SpeedTapGame.GetCozmoBlock().WorldPosition.xy()).sqrMagnitude
       >= (_kPreDockPoseDistanceFromCube_mm * _kPreDockPoseDistanceFromCube_mm);
     }
 
     private bool IsReallyCloseToCube() {
-      return (_CurrentRobot.WorldPosition.xy() - _SpeedTapGame.CozmoBlock.WorldPosition.xy()).sqrMagnitude
+      return (_CurrentRobot.WorldPosition.xy() - _SpeedTapGame.GetCozmoBlock().WorldPosition.xy()).sqrMagnitude
       <= (_kCubeDistanceThreshold_mm * _kCubeDistanceThreshold_mm);
     }
 
     private void DriveToPreDockPose() {
-      _CurrentRobot.GotoObject(_SpeedTapGame.CozmoBlock, _kPreDockPoseDistanceFromCube_mm,
+      _CurrentRobot.GotoObject(_SpeedTapGame.GetCozmoBlock(), _kPreDockPoseDistanceFromCube_mm,
         goToPreDockPose: true, callback: HandleDriveToPreDockPoseComplete);
     }
 
@@ -127,7 +127,7 @@ namespace SpeedTap {
     }
 
     private void DriveToCube() {
-      _CurrentRobot.AlignWithObject(_SpeedTapGame.CozmoBlock, 0.0f, HandleDriveToCubeComplete,
+      _CurrentRobot.AlignWithObject(_SpeedTapGame.GetCozmoBlock(), 0.0f, HandleDriveToCubeComplete,
         useApproachAngle: false, usePreDockPose: false, alignmentType: Anki.Cozmo.AlignmentType.BODY);
     }
 

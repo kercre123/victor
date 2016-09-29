@@ -29,8 +29,8 @@ namespace SpeedTap {
     protected bool TrySetCubesRed(SpeedTapGame game) {
       bool setCubesRed = false;
       if (UnityEngine.Random.Range(0.0f, 1.0f) < _kRedPercentChance) {
-        game.PlayerBlock.SetLEDs(Color.red);
-        game.CozmoBlock.SetLEDs(Color.red);
+        game.SetLEDs(game.CozmoBlockID, Color.red);
+        game.SetLEDs(game.PlayerBlockID, Color.red);
 
         // If someone taps, the winner should be flashing white
         game.PlayerWinColor = Color.white;

@@ -82,11 +82,27 @@ namespace SpeedTap {
     private Quaternion _CozmoRot;
 
     public bool RedMatch = false;
-    public LightCube CozmoBlock;
-    public LightCube PlayerBlock;
+    public int CozmoBlockID = -1;
+    public int PlayerBlockID = -1;
 
     public readonly Color[] PlayerWinColors = new Color[4];
     public readonly Color[] CozmoWinColors = new Color[4];
+
+    public LightCube GetCozmoBlock() {
+      LightCube cube = null;
+      if (CurrentRobot != null) {
+        CurrentRobot.LightCubes.TryGetValue(CozmoBlockID, out cube);
+      }
+      return cube;
+    }
+
+    public LightCube GetPlayerBlock() {
+      LightCube cube = null;
+      if (CurrentRobot != null) {
+        CurrentRobot.LightCubes.TryGetValue(PlayerBlockID, out cube);
+      }
+      return cube;
+    }
 
     public Color PlayerWinColor {
       get {
@@ -231,11 +247,11 @@ namespace SpeedTap {
     }
 
     public void InitialCubesDone() {
-      CozmoBlock = CurrentRobot.LightCubes[CubeIdsForGame[0]];
+      CozmoBlockID = CubeIdsForGame[0];
     }
 
     public void SetPlayerCube(LightCube cube) {
-      PlayerBlock = cube;
+      PlayerBlockID = cube.ID;
       CubeIdsForGame.Add(cube);
     }
 
@@ -270,7 +286,7 @@ namespace SpeedTap {
     /// <param name="tappedTimes">Tapped times.</param>
     /// <param name="timeStamp">Time stamp.</param>
     private void BlockTapped(int blockID, int tappedTimes, float timeStamp) {
-      if (PlayerBlock != null && PlayerBlock.ID == blockID) {
+      if (PlayerBlockID != -1 && PlayerBlockID == blockID) {
         if (_LastPlayerTimeStamp > timeStamp || _LastPlayerTimeStamp == -1) {
           _LastPlayerTimeStamp = timeStamp;
         }
@@ -374,10 +390,13 @@ namespace SpeedTap {
     }
 
     public void ClearWinningLightPatterns() {
-      StopCycleCube(PlayerBlock);
-      PlayerBlock.SetLEDsOff();
-      StopCycleCube(CozmoBlock);
-      CozmoBlock.SetLEDsOff();
+      StopCycleCube(PlayerBlockID);
+      StopCycleCube(CozmoBlockID);
+
+      if (CurrentRobot != null) {
+        CurrentRobot.LightCubes[PlayerBlockID].SetLEDsOff();
+        CurrentRobot.LightCubes[CozmoBlockID].SetLEDsOff();
+      }
     }
   }
 }

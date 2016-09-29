@@ -21,8 +21,8 @@ namespace SpeedTap {
         SetABABLights(game.PlayerWinColors, randColorIndex, randColorIndex2);
         SetABABLights(game.CozmoWinColors, randColorIndex, randColorIndex2);
 
-        game.PlayerBlock.SetLEDs(game.PlayerWinColors);
-        game.CozmoBlock.SetLEDs(game.CozmoWinColors);
+        game.SetLEDs(game.PlayerBlockID, game.PlayerWinColors);
+        game.SetLEDs(game.CozmoBlockID, game.CozmoWinColors);
       }
       else {
         // Do non-match
@@ -46,8 +46,8 @@ namespace SpeedTap {
           SetABABLights(game.PlayerWinColors, playerColorIdx, playerColorIdx2);
           SetABABLights(game.CozmoWinColors, cozmoColorIdx, cozmoColorIdx2);
 
-          game.PlayerBlock.SetLEDs(game.PlayerWinColors);
-          game.CozmoBlock.SetLEDs(game.CozmoWinColors);
+          game.SetLEDs(game.PlayerBlockID, game.PlayerWinColors);
+          game.SetLEDs(game.CozmoBlockID, game.CozmoWinColors);
         }
       }
     }

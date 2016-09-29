@@ -878,6 +878,26 @@ public abstract class GameBase : MonoBehaviour {
 
   #region LightCubes
 
+  public void SetLEDs(int id, Color[] color) {
+    if (CurrentRobot != null) {
+      LightCube cube = null;
+      CurrentRobot.LightCubes.TryGetValue(id, out cube);
+      if (cube != null) {
+        cube.SetLEDs(color);
+      }
+    }
+  }
+
+  public void SetLEDs(int id, Color color) {
+    if (CurrentRobot != null) {
+      LightCube cube = null;
+      CurrentRobot.LightCubes.TryGetValue(id, out cube);
+      if (cube != null) {
+        cube.SetLEDs(color);
+      }
+    }
+  }
+
   public float GetCycleDurationSeconds(int numRotations, float cycleIntervalSeconds) {
     return (numRotations * cycleIntervalSeconds * 4);
   }

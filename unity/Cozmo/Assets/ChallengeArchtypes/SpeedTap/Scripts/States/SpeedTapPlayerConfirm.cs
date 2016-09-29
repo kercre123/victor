@@ -11,9 +11,9 @@ namespace SpeedTap {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
 
-      if (_SpeedTapGame.PlayerBlock == null) {
+      if (_SpeedTapGame.GetPlayerBlock() == null) {
         foreach (var kvp in _CurrentRobot.LightCubes) {
-          if (kvp.Value.ID != _SpeedTapGame.CozmoBlock.ID) {
+          if (kvp.Value.ID != _SpeedTapGame.CozmoBlockID) {
             _SpeedTapGame.StartCycleCube(kvp.Value.ID,
               CubePalette.Instance.TapMeColor.lightColors,
               CubePalette.Instance.TapMeColor.cycleIntervalSeconds);
@@ -22,7 +22,7 @@ namespace SpeedTap {
         _SpeedTapGame.ShowPlayerTapConfirmSlide();
       }
       else {
-        _SpeedTapGame.StartCycleCube(_SpeedTapGame.PlayerBlock.ID,
+        _SpeedTapGame.StartCycleCube(_SpeedTapGame.PlayerBlockID,
           CubePalette.Instance.TapMeColor.lightColors,
           CubePalette.Instance.TapMeColor.cycleIntervalSeconds);
         _SpeedTapGame.ShowPlayerTapNewRoundSlide();
@@ -32,10 +32,10 @@ namespace SpeedTap {
     }
 
     private void HandleTap(int id, int tappedTimes, float timeStamp) {
-      if (_SpeedTapGame.PlayerBlock == null) {
-        if (id != _SpeedTapGame.CozmoBlock.ID) {
+      if (_SpeedTapGame.PlayerBlockID == -1) {
+        if (id != _SpeedTapGame.CozmoBlockID) {
           foreach (var kvp in _CurrentRobot.LightCubes) {
-            if (kvp.Value.ID != _SpeedTapGame.CozmoBlock.ID) {
+            if (kvp.Value.ID != _SpeedTapGame.CozmoBlockID) {
               _SpeedTapGame.StopCycleCube(kvp.Value.ID);
               kvp.Value.SetLEDsOff();
             }
@@ -44,9 +44,9 @@ namespace SpeedTap {
           HandlePlayerCubeTap();
         }
       }
-      else if (_SpeedTapGame.PlayerBlock.ID == id) {
-        _SpeedTapGame.StopCycleCube(_SpeedTapGame.PlayerBlock.ID);
-        _SpeedTapGame.PlayerBlock.SetLEDsOff();
+      else if (_SpeedTapGame.PlayerBlockID == id) {
+        _SpeedTapGame.StopCycleCube(_SpeedTapGame.PlayerBlockID);
+        _CurrentRobot.LightCubes[_SpeedTapGame.PlayerBlockID].SetLEDsOff();
         HandlePlayerCubeTap();
       }
     }
@@ -62,13 +62,9 @@ namespace SpeedTap {
       if (_CurrentRobot != null) {
         _CurrentRobot.DriveWheels(0.0f, 0.0f);
       }
-      if (_SpeedTapGame.CozmoBlock != null) {
-        _SpeedTapGame.CozmoBlock.SetLEDs(Color.black);
-      }
-      if (_SpeedTapGame.PlayerBlock != null) {
-        _SpeedTapGame.PlayerBlock.SetLEDs(Color.black);
-      }
+
+      _SpeedTapGame.SetLEDs(_SpeedTapGame.CozmoBlockID, Color.black);
+      _SpeedTapGame.SetLEDs(_SpeedTapGame.PlayerBlockID, Color.black);
     }
   }
-
 }

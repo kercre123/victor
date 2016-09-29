@@ -473,7 +473,7 @@ public class MockRobot : IRobot {
     return null;
   }
 
-  public void SearchForCube(LightCube cube, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void SearchForCube(int cube, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     QueueCallback(3f, callback);
   }
 
