@@ -259,7 +259,7 @@ class USBMux(PlistProto):
                 seen.add(device_id)
                 try:
                     return await self.connect_to_device(protocol_factory, device_id, port)
-                except USBMuxException as e:
+                except USBMuxError:
                     pass
             ids = set(self.attached.keys()) - seen
 
@@ -269,7 +269,7 @@ class USBMux(PlistProto):
             try:
                 device_id = await self.wait_for_attach(max_wait)
                 return await self.connect_to_device(protocol_factory, device_id, port)
-            except Exception as e:
+            except Exception:
                 pass
             max_wait -= time.time() - start
 

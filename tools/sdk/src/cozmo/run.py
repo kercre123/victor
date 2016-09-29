@@ -14,6 +14,7 @@ import logging
 import os
 import os.path
 import queue
+import shutil
 import subprocess
 import sys
 
@@ -110,6 +111,8 @@ class AndroidConnector(DeviceConnector):
         self.portspec = 'tcp:' + str(self.cozmo_port)
         if adb_cmd:
             self._adb_cmd = adb_cmd
+        else:
+            self._adb_cmd = shutil.which(DEFAULT_ADB_CMD)
 
     def parse_env_vars(self):
         super().parse_env_vars()
