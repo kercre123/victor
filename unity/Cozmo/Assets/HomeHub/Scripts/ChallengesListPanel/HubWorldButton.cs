@@ -21,9 +21,6 @@ namespace Cozmo.HubWorld {
     [SerializeField]
     private Anki.UI.AnkiTextLabel _ChallengeTitle;
 
-    [SerializeField]
-    private GameObject _LockedBadgeContainer;
-
     private string _ChallengeId;
 
     [SerializeField]
@@ -39,7 +36,6 @@ namespace Cozmo.HubWorld {
 
     public virtual void Initialize(ChallengeData challengeData, string dasParentViewName, bool isEnd = false, bool isNew = false, bool isUnlocked = true, bool isAvailable = true) {
       _NewUnlockIndicator.SetActive(isNew);
-      _LockedBadgeContainer.SetActive(!isUnlocked);
       _AffordableIndicator.SetActive(false);
       if (challengeData != null) {
         _ChallengeId = challengeData.ChallengeID;
@@ -51,8 +47,6 @@ namespace Cozmo.HubWorld {
             Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
             bool canAfford = playerInventory.CanRemoveItemAmount(uInfo.UpgradeCostItemId, uInfo.UpgradeCostAmountNeeded);
             _AffordableIndicator.SetActive(canAfford);
-            _LockedBadgeContainer.SetActive(!canAfford);
-
           }
           _IconProxy.SetAlpha(0.4f);
         }

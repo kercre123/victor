@@ -53,9 +53,6 @@ public class ChallengeDetailsDialog : BaseView {
   private IconProxy _ChallengeIcon;
 
   [SerializeField]
-  private GameObject _LockedIcon;
-
-  [SerializeField]
   private GameObject _AffordableIcon;
 
   [SerializeField]
@@ -101,7 +98,6 @@ public class ChallengeDetailsDialog : BaseView {
     if (UnlockablesManager.Instance.IsUnlocked(challengeData.UnlockId.Value)) {
       // If Ready and Unlocked
       _LockedContainer.SetActive(false);
-      _LockedIcon.SetActive(false);
       _UnlockedContainer.SetActive(true);
     }
     else {
@@ -117,14 +113,12 @@ public class ChallengeDetailsDialog : BaseView {
         string costName = itemData.GetPluralName();
         _UnlockButton.Text = Localization.Get(LocalizationKeys.kUnlockableUnlock);
         _LockedContainer.SetActive(true);
-        _LockedIcon.SetActive(true);
         _UnlockedContainer.SetActive(false);
         _CostButtonLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelEmptyWithArg, cost);
         if (affordable) {
           // Can Currently Unlock but not afford
           _CurrentCostLabel.text = Localization.Get(LocalizationKeys.kLabelAvailable);
           _CurrentCostLabel.color = _AvailableColor;
-          _LockedIcon.SetActive(false);
           _AffordableIcon.SetActive(true);
           _UnlockButton.Initialize(OnUpgradeClicked, "unlock_button", "challenge_details_dialog");
           _CostButtonLabel.color = _UnlockButton.TextEnabledColor;
