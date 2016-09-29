@@ -132,6 +132,8 @@ namespace Anki {
         const f32 _kRollLiftHeightScoochOffset_mm = 10;
         const f32 _kRollLiftScoochDuration_ms = 250;
         
+        const u32 _kPopAWheelieTimeout_ms = 500;
+        
       } // "private" namespace
 
 
@@ -546,7 +548,7 @@ namespace Anki {
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK, 10, 200);
                 SpeedController::SetUserCommandedAcceleration(100);   // TODO: Restore this accel afterwards?
                 SteeringController::ExecuteDirectDrive(150, 150);
-                transitionTime_ = HAL::GetTimeStamp() + 1000;
+                transitionTime_ = HAL::GetTimeStamp() + _kPopAWheelieTimeout_ms;
                 mode_ = POPPING_A_WHEELIE;
                 break;
               default:
