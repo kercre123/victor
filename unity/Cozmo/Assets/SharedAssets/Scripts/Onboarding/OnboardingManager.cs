@@ -78,6 +78,7 @@ public class OnboardingManager : MonoBehaviour {
     else {
       Instance = this;
       GameEventManager.Instance.OnGameEvent += HandleDailyGoalCompleted;
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleRobotDisconnected);
       Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("Toggle Onboarding Debug Display", "Onboarding", ToggleOnboardingDebugDisplay);
       Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("Complete All Onboarding", "Onboarding", DebugCompleteAllOnboarding);
     }
@@ -290,6 +291,12 @@ public class OnboardingManager : MonoBehaviour {
     SetCurrStageInPhase(nextStage, _CurrPhase);
     if (nextStage >= 0 && nextStage < GetMaxStageInPhase(_CurrPhase)) {
       OnboardingBaseStage stagePrefab = GetCurrStagePrefab();
+      // likely OnboardingUIWrapper.prefab needs to be updated if this ever happens legit
+      if (stagePrefab == null) {
+        DAS.Error("onboardingmanager.SetSpecificStage", "NO PREFAB SET FOR STAGE " + nextStage + " of phase " + _CurrPhase);
+        _CurrPhase = OnboardingPhases.None;
+        return;
+      }
       nextDASPhaseID = stagePrefab.DASPhaseID;
       _CurrStageInst = UIManager.CreateUIElement(stagePrefab, _OnboardingTransform);
       if (OnOnboardingStageStarted != null) {
@@ -336,6 +343,14 @@ public class OnboardingManager : MonoBehaviour {
           CompletePhase(OnboardingPhases.DailyGoals);
         }
       }
+    }
+  }
+
+  private void HandleRobotDisconnected(Anki.Cozmo.ExternalInterface.RobotDisconnected message) {
+    // The UI is getting torn down and we're resetting, clear whatever happened.
+    _CurrPhase = OnboardingPhases.None;
+    if (_DebugDisplayOn && _OnboardingUIInstance != null) {
+      _OnboardingUIInstance.RemoveDebugButtons();
     }
   }
 
