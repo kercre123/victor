@@ -72,8 +72,8 @@ TEST(VisionSystem, MarkerDetectionTests)
   ASSERT_EQ(RESULT_OK, result);
   
   // Turn on _only_ marker detection
-  visionSystem.EnableMode(Cozmo::VisionMode::Idle, true);
-  visionSystem.EnableMode(Cozmo::VisionMode::DetectingMarkers, true);
+  visionSystem.SetNextMode(Cozmo::VisionMode::Idle, true);
+  visionSystem.SetNextMode(Cozmo::VisionMode::DetectingMarkers, true);
   
   // Grab all the test images from "resources/test/lowLightMarkerDetectionTests"
   const std::string testImageDir = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
@@ -218,8 +218,8 @@ TEST(VisionSystem, ImageQuality)
   ASSERT_EQ(RESULT_OK, result);
   
   // Turn on _only_ image quality check
-  visionSystem.EnableMode(Cozmo::VisionMode::Idle, true);
-  visionSystem.EnableMode(Cozmo::VisionMode::CheckingQuality, true);
+  visionSystem.SetNextMode(Cozmo::VisionMode::Idle, true);
+  visionSystem.SetNextMode(Cozmo::VisionMode::CheckingQuality, true);
   
   const std::string testImageDir = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
                                                                                    "test/imageQualityTests");

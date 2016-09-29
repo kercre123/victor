@@ -167,7 +167,7 @@ namespace Cozmo {
     
     Result UpdateCameraCalibration(Vision::CameraCalibration& camCalib);
     
-    Result EnableMode(VisionMode whichMode, bool enabled);
+    Result SetNextMode(VisionMode mode, bool enable);
     bool   IsModeEnabled(VisionMode whichMode) const { return _mode.IsBitFlagSet(whichMode); }
     
     Result EnableToolCodeCalibration(bool enable);
@@ -377,6 +377,7 @@ namespace Cozmo {
     
     Util::BitFlags16<VisionMode> _mode;
     Util::BitFlags16<VisionMode> _modeBeforeTracking;
+    std::queue<std::pair<VisionMode, bool>> _nextModes;
     
     bool _calibrateFromToolCode = false;
     
@@ -564,6 +565,8 @@ namespace Cozmo {
     void RestoreNonTrackingMode();
     
     bool ShouldProcessVisionMode(VisionMode mode) const;
+    
+    Result EnableMode(VisionMode whichMode, bool enabled);
     
     // Contrast-limited adaptive histogram equalization (CLAHE)
     cv::Ptr<cv::CLAHE> _clahe;

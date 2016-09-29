@@ -330,7 +330,7 @@ namespace Cozmo {
   Result VisionComponent::EnableMode(VisionMode mode, bool enable)
   {
     if(nullptr != _visionSystem) {
-      return _visionSystem->EnableMode(mode, enable);
+      return _visionSystem->SetNextMode(mode, enable);
     } else {
       PRINT_NAMED_ERROR("VisionComponent.EnableMode.NullVisionSystem", "");
       return RESULT_FAIL;

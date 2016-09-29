@@ -405,6 +405,12 @@ namespace Cozmo {
 #if 0
 #pragma mark --- Mode Controls ---
 #endif
+
+  Result VisionSystem::SetNextMode(VisionMode mode, bool enable)
+  {
+    _nextModes.push({mode, enable});
+    return RESULT_OK;
+  }
   
   Result VisionSystem::EnableMode(VisionMode whichMode, bool enabled)
   {
@@ -2908,6 +2914,13 @@ namespace Cozmo {
     
     auto& visionModesProcessed = _currentResult.modesProcessed;
     visionModesProcessed.ClearFlags();
+    
+    while(!_nextModes.empty())
+    {
+      const auto& mode = _nextModes.front();
+      EnableMode(mode.first, mode.second);
+      _nextModes.pop();
+    }
     
     // Lots of the processing below needs a grayscale version of the image:
     Vision::Image inputImageGray = inputImage.ToGray();
