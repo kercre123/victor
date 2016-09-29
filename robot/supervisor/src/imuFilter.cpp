@@ -68,7 +68,7 @@ namespace Anki {
         const f32 GYRO_BIAS_FILT_COEFF_PRECALIB = 0.2f;   // Gyro bias filter coefficient. Relatively fast before calibration.
         f32 gyroBiasCoeff_              = GYRO_BIAS_FILT_COEFF_PRECALIB;
         u16 biasFiltCnt_                = 0;
-        const f32 BIAS_FILT_RESTART_THRESH = 0.002f; // Max difference allowed between bias filter output and gyro input before filter is restarted
+        const f32 BIAS_FILT_RESTART_THRESH = DEG_TO_RAD_F32(0.5f); // Max difference allowed between bias filter output and gyro input before filter is restarted
         const u16 BIAS_FILT_COMPLETE_COUNT = 200;    // Number of consecutive gyro readings required while robot not moving before bias filter switches to slower rate
 
         f32 accel_filt[3]               = {0};    // Filtered accelerometer measurements
