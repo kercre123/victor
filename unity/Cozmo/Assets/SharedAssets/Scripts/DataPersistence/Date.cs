@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEngine;
 using Newtonsoft.Json;
 
 namespace DataPersistence {
@@ -30,7 +31,7 @@ namespace DataPersistence {
 
     public Date(int year, int month, int day) {
       if (month < 1 || month > 12 || day < 1 || day > DaysInTheMonth((Month)month, year)) {
-        var validDate = new Date(year, 1, 1).AddMonths(month - 1).AddDays(day - 1);
+        var validDate = new Date(year, 1, 1).OffsetMonth(month - 1).OffsetDays(day - 1);
         Year = validDate.Year;
         Month = validDate.Month;
         Day = validDate.Day;
@@ -42,36 +43,46 @@ namespace DataPersistence {
       }
     }
 
-    public Date AddYears(int years) {
+    public Date OffsetYear(int years) {
       return new Date(Year + years, Month, Day);
     }
 
-    public Date AddMonths(int months) {
+    /// <summary>
+    /// Returns a date X months from the current date. If the current day is the end of the month
+    /// and you move to a month with fewer days, day is set to the final day of the new month.
+    /// </summary>
+    /// <returns>New Date.</returns>
+    /// <param name="monthsToOffset">Months to offset.</param>
+    public Date OffsetMonth(int monthsToOffset) {
       int newYear = Year;
       int newMonth = Month;
 
-      while (months > 0) {
-        int overflow = months + newMonth - 12;
+      if (monthsToOffset > 0) {
+        return AddMonthsInternal(monthsToOffset);
+      }
+      else if (monthsToOffset < 0) {
+        return SubtractMonthsInternal(monthsToOffset);
+      }
+      return new Date(newYear, newMonth, Day);
+    }
+
+    // Returns a date X months from the future
+    private Date AddMonthsInternal(int monthsToAdd) {
+      int newYear = Year;
+      int newMonth = Month;
+      if (monthsToAdd <= 0) { Debug.LogWarning("Cannot add a negative number of months"); }
+
+      while (monthsToAdd > 0) {
+        // Overflow represents the number of months into the next year the new date is
+        int overflow = monthsToAdd + newMonth - 12;
         if (overflow > 0) {
-          months = overflow;
+          monthsToAdd = overflow;
           newYear++;
           newMonth = 1;
         }
         else {
-          newMonth += months;
-          months = 0;
-        }
-      }
-      while (months < 0) {
-        int undeflow = months + newMonth - 1;
-        if (undeflow < 0) {
-          newYear--;
-          months = undeflow;
-          newMonth = 12;
-        }
-        else {
-          newMonth += months;
-          months = 0;
+          newMonth += monthsToAdd;
+          monthsToAdd = 0;
         }
       }
 
@@ -79,17 +90,62 @@ namespace DataPersistence {
       return new Date(newYear, newMonth, newDay);
     }
 
-    public Date AddDays(int days) {
+    // Returns a date X months into the past
+    private Date SubtractMonthsInternal(int monthsToSubtract) {
+      int newYear = Year;
+      int newMonth = Month;
+      if (monthsToSubtract >= 0) { Debug.LogWarning("Cannot subtract a positive number of months"); }
+
+      while (monthsToSubtract < 0) {
+        // Underflow represents the number of months into the previous year the new date is
+        int undeflow = monthsToSubtract + newMonth - 1;
+        if (undeflow < 0) {
+          newYear--;
+          monthsToSubtract = undeflow;
+          newMonth = 12;
+        }
+        else {
+          newMonth += monthsToSubtract;
+          monthsToSubtract = 0;
+        }
+      }
+
+      int newDay = Math.Min(Day, DaysInTheMonth((Month)newMonth, newYear));
+      return new Date(newYear, newMonth, newDay);
+    }
+
+    /// <summary>
+    /// Returns a date X days from the current date.
+    /// </summary>
+    /// <returns>New Date.</returns>
+    /// <param name="daysToOffset">Days to offset.</param>
+    public Date OffsetDays(int daysToOffset) {
       int newDay = Day;
       int newMonth = Month;
       int newYear = Year;
+      if (daysToOffset > 0) {
+        return AddDaysInternal(daysToOffset);
+      }
+      else if (daysToOffset < 0) {
+        return SubtractDaysInternal(daysToOffset);
+      }
+      return new Date(newYear, newMonth, newDay);
+    }
 
-      while (days > 0) {
+    // Returns date X days into the future
+    private Date AddDaysInternal(int daysToAdd) {
+      int newDay = Day;
+      int newMonth = Month;
+      int newYear = Year;
+      if (daysToAdd <= 0) { Debug.LogWarning("Cannot add a negative number of days"); }
+
+      while (daysToAdd > 0) {
+        // Overflow represents the number of days into the next month the new date is
         int daysInMonth = DaysInTheMonth((DataPersistence.Month)newMonth, newYear);
-        int overflow = days + newDay - daysInMonth;
+        int overflow = daysToAdd + newDay - daysInMonth;
         if (overflow > 0) {
-          days = overflow;
-          newDay = 1;
+          daysToAdd = overflow;
+          newDay = 0;
 
           newMonth++;
           if (newMonth > 12) {
@@ -98,27 +154,40 @@ namespace DataPersistence {
           }
         }
         else {
-          newDay += days;
-          days = 0;
+          newDay += daysToAdd;
+          daysToAdd = 0;
         }
       }
-      while (days < 0) {
-        int underflow = days + newDay - 1;
+
+      return new Date(newYear, newMonth, newDay);
+    }
+
+    // Returns date X days into the past
+    private Date SubtractDaysInternal(int daysToSubtract) {
+      int newDay = Day;
+      int newMonth = Month;
+      int newYear = Year;
+      if (daysToSubtract >= 0) { Debug.LogWarning("Cannot subtract a positive number of days"); }
+
+      while (daysToSubtract < 0) {
+        // Underflow represents the number of days into the previous month the new date is
+        int underflow = daysToSubtract + newDay - 1;
         if (underflow < 0) {
           newMonth--;
           if (newMonth < 1) {
             newMonth = 12;
             newYear--;
           }
-          int daysInMonth = DaysInTheMonth((DataPersistence.Month)newMonth, newYear);
-          days = underflow;
+          int daysInMonth = DaysInTheMonth((DataPersistence.Month)newMonth, newYear) + 1;
+          daysToSubtract = underflow;
           newDay = daysInMonth;
         }
         else {
-          newDay += days;
-          days = 0;
+          newDay += daysToSubtract;
+          daysToSubtract = 0;
         }
       }
+
       return new Date(newYear, newMonth, newDay);
     }
 
@@ -132,7 +201,7 @@ namespace DataPersistence {
       case DataPersistence.Month.February:
         return IsLeapYear(year) ? 29 : 28;
       default:
-        return 31;  
+        return 31;
       }
     }
 
@@ -174,19 +243,19 @@ namespace DataPersistence {
       return Year << 9 | Month << 5 | Day;
     }
 
-    public static System.TimeSpan operator-(Date a, Date b) {
+    public static System.TimeSpan operator -(Date a, Date b) {
       return new System.DateTime(a.Year, a.Month, a.Day) - new System.DateTime(b.Year, b.Month, b.Day);
     }
 
-    public static bool operator==(Date a, Date b) {
+    public static bool operator ==(Date a, Date b) {
       return a.Year == b.Year && a.Month == b.Month && a.Day == b.Day;
     }
 
-    public static bool operator!=(Date a, Date b) {
+    public static bool operator !=(Date a, Date b) {
       return a.Year != b.Year || a.Month != b.Month || a.Day != b.Day;
     }
 
-    public static bool operator<(Date a, Date b) {
+    public static bool operator <(Date a, Date b) {
       if (a.Year == b.Year) {
         if (a.Month == b.Month) {
           return a.Day < b.Day;
@@ -196,7 +265,7 @@ namespace DataPersistence {
       return a.Year < b.Year;
     }
 
-    public static bool operator>(Date a, Date b) {
+    public static bool operator >(Date a, Date b) {
       if (a.Year == b.Year) {
         if (a.Month == b.Month) {
           return a.Day > b.Day;

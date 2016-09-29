@@ -103,7 +103,7 @@ namespace DataPersistence {
           Date currentDate = Data.DefaultProfile.Sessions[currentIndex].Date;
           Date previousDate = Data.DefaultProfile.Sessions[previousIndex].Date;
 
-          if (previousDate.AddDays(1).Equals(currentDate)) {
+          if (previousDate.OffsetDays(1).Equals(currentDate)) {
             streakCount++;
           }
           else {

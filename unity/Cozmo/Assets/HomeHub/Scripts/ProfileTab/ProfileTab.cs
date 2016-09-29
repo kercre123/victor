@@ -45,7 +45,7 @@ public class ProfileTab : MonoBehaviour {
       DataPersistence.Date prevDate = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions[prevIndex].Date;
       DataPersistence.Date currDate = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions[currIndex].Date;
 
-      if (prevDate.AddDays(1) == currDate) {
+      if (prevDate.OffsetDays(1) == currDate) {
         // we have a streak!
         streakCounter++;
         if (streakCounter > longestStreak) {
