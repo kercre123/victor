@@ -321,7 +321,6 @@ enum uint_32 GenericEvent
   Play__Sfx__Banner_Wipe = 3247701492,
   Play__Sfx__Code_Fragment_Collected = 2587766166,
   Play__Sfx__Code_Fragment_Released = 1918333736,
-  Play__Sfx__Context_Switch_Loop_Play = 285232462,
   Play__Sfx__Daily_Goal = 3010549659,
   Play__Sfx__Daily_Reward_Calendar_Disappear = 2897417442,
   Play__Sfx__Daily_Reward_Collect = 878067460,
@@ -378,7 +377,6 @@ enum uint_32 GenericEvent
   Stop__Robot_Vo__Shared_Giggle_Happy_Loop_Stop = 3962033227,
   Stop__Robot_Vo__Shared_Happy_Loop_Stop = 4286366971,
   Stop__Robot_Vo__Shared_Idea_Loop_Stop = 273762158,
-  Stop__Sfx__Context_Switch_Loop_Stop = 1449741558,
 }
 
 enum uint_32 Music
@@ -674,8 +672,6 @@ enum uint_32 Sfx
   Banner_Wipe = 3247701492,
   Code_Fragment_Collected = 2587766166,
   Code_Fragment_Released = 1918333736,
-  Context_Switch_Loop_Play = 285232462,
-  Context_Switch_Loop_Stop = 1449741558,
   Daily_Goal = 3010549659,
   Daily_Reward_Calendar_Disappear = 2897417442,
   Daily_Reward_Collect = 878067460,

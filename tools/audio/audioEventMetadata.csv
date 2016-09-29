@@ -272,7 +272,6 @@ Event,,Play__Robot_Vo__Word_Speedtap_Request,919083726,Robot_Vo,Word_Speedtap_Re
 Event,,Play__Sfx__Banner_Wipe,3247701492,Sfx,Banner_Wipe,
 Event,,Play__Sfx__Code_Fragment_Collected,2587766166,Sfx,Code_Fragment_Collected,
 Event,,Play__Sfx__Code_Fragment_Released,1918333736,Sfx,Code_Fragment_Released,
-Event,,Play__Sfx__Context_Switch_Loop_Play,285232462,Sfx,Context_Switch_Loop_Play,
 Event,,Play__Sfx__Daily_Goal,3010549659,Sfx,Daily_Goal,
 Event,,Play__Sfx__Daily_Reward_Calendar_Disappear,2897417442,Sfx,Daily_Reward_Calendar_Disappear,
 Event,,Play__Sfx__Daily_Reward_Collect,878067460,Sfx,Daily_Reward_Collect,
@@ -329,4 +328,3 @@ Event,,Stop__Robot_Vo__Shared_Fussy_Loop_Stop,3912485995,Robot_Vo,Shared_Fussy_L
 Event,,Stop__Robot_Vo__Shared_Giggle_Happy_Loop_Stop,3962033227,Robot_Vo,Shared_Giggle_Happy_Loop_Stop,
 Event,,Stop__Robot_Vo__Shared_Happy_Loop_Stop,4286366971,Robot_Vo,Shared_Happy_Loop_Stop,
 Event,,Stop__Robot_Vo__Shared_Idea_Loop_Stop,273762158,Robot_Vo,Shared_Idea_Loop_Stop,
-Event,,Stop__Sfx__Context_Switch_Loop_Stop,1449741558,Sfx,Context_Switch_Loop_Stop,
