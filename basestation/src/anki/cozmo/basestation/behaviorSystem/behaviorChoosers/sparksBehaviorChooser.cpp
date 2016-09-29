@@ -258,25 +258,27 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
     case ChooserState::PlayingSparksOutro:
     {
       bestBehavior = _behaviorPlayAnimation;
+
       if(currentRunningBehavior == nullptr || !currentRunningBehavior->IsRunning()){
-        // Notify the game that the spark is over unless the UI has already updated for a hard spark
-        if(!_switchingToHardSpark){
-          ExternalInterface::SparkEnded sparkEnded;
-          sparkEnded.success = false;
-          if(_numberOfRepetitions == 0 || _currentObjectiveCompletedCount >= _numberOfRepetitions){
-            sparkEnded.success = true;
-          }
-          robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::SparkEnded>(sparkEnded);
-        }
-        
-        //Allow new goal to be chosen if we haven't recieved any updates from the user or switching to same spark
-        if(robot.GetBehaviorManager().GetActiveSpark() == robot.GetBehaviorManager().GetRequestedSpark()
-           && !robot.GetBehaviorManager().DidGameRequestSparkEnd()
-           && !_switchingToHardSpark){
-          robot.GetBehaviorManager().SetRequestedSpark(UnlockId::Count, false);
-        }
-        
         bestBehavior = _behaviorNone;
+        
+        // UI updates
+        if(!robot.GetBehaviorManager().DidGameRequestSparkEnd() && !_switchingToHardSpark){
+          //Allow new goal to be chosen if we haven't recieved any updates from the user or switching to same spark
+          if(robot.GetBehaviorManager().GetActiveSpark() == robot.GetBehaviorManager().GetRequestedSpark()){
+            robot.GetBehaviorManager().SetRequestedSpark(UnlockId::Count, false);
+          }
+          
+          if(!robot.GetBehaviorManager().IsActiveSparkSoft()){
+            // Notify the game that the spark ended with some success state
+            ExternalInterface::SparkEnded sparkEnded;
+            sparkEnded.success = false;
+            if(_numberOfRepetitions == 0 || _currentObjectiveCompletedCount >= _numberOfRepetitions){
+              sparkEnded.success = true;
+            }
+            robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::SparkEnded>(sparkEnded);
+          }
+        }
       }
       break;
     }

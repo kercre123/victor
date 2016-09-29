@@ -426,14 +426,35 @@ public class CoreUpgradeDetailsDialog : BaseView {
                                           playerInventory.GetItemAmount(itemId));
   }
 
-  private void HandleSparkEnded(object message) {
+  private void HandleSparkEnded(Anki.Cozmo.ExternalInterface.SparkEnded message) {
     // Only fire the game event when we receive the spark ended message, rewards are only applied
     // when COMPLETING a sparked action (or timing out). View includes a warning dialog for exiting.
+
     GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnUnlockableSparked, _UnlockInfo.Id.Value));
+
+    // Update inventory and spark cost appropriately
+    if (message.success) {
+      // cozmo performed the spark
+      TimelineEntryData sess = DataPersistenceManager.Instance.CurrentSession;
+
+      if (sess.SparkCount.ContainsKey (_UnlockInfo.Id.Value)) {
+        sess.SparkCount [_UnlockInfo.Id.Value]++;
+      } else {
+        sess.SparkCount.Add (_UnlockInfo.Id.Value, 1);
+      }
+    } else {
+      // Cozmo failed to perform the spark
+      Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+      playerInventory.AddItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
+      UpdateInventoryLabel(_UnlockInfo.RequestTrickCostItemId, _SparksInventoryLabel);
+    }
+
     StopSparkUnlock();
     if (_QuitViewRef != null) {
       UIManager.CloseView(_QuitViewRef);
     }
+     
+    DataPersistenceManager.Instance.Save();
   }
 
   private void StartSparkUnlock() {
@@ -441,18 +462,10 @@ public class CoreUpgradeDetailsDialog : BaseView {
       UnlockablesManager.Instance.OnSparkStarted.Invoke(_UnlockInfo.Id.Value);
     }
     Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-    TimelineEntryData sess = DataPersistenceManager.Instance.CurrentSession;
 
     // Inventory valid was already checked when the button was initialized.
     playerInventory.RemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
     UpdateInventoryLabel(_UnlockInfo.RequestTrickCostItemId, _SparksInventoryLabel);
-
-    if (sess.SparkCount.ContainsKey(_UnlockInfo.Id.Value)) {
-      sess.SparkCount[_UnlockInfo.Id.Value]++;
-    }
-    else {
-      sess.SparkCount.Add(_UnlockInfo.Id.Value, 1);
-    }
 
     DAS.Event("meta.upgrade_replay", _UnlockInfo.TitleKey, DASUtil.FormatExtraData(_UnlockInfo.RequestTrickCostAmountNeeded.ToString()));
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Spark_Launch);
