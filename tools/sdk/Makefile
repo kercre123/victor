@@ -24,10 +24,10 @@ wheel:
 
 dist/sdk-examples.zip: license examples/*.py
 	rm -f dist/sdk-examples.zip
-	zip -r dist/sdk-examples.zip examples/*.py examples/*.txt
+	zip -r --exclude='*.git*' dist/sdk-examples.zip examples
 
 dist/sdk-examples.tar.gz: license examples/*.py
-	tar -cvzf dist/sdk-examples.tar.gz examples/*.py examples/*.txt
+	tar -cvzf dist/sdk-examples.tar.gz --exclude '*.git*' examples
 
 examples: dist/sdk-examples.tar.gz dist/sdk-examples.zip
 
