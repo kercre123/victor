@@ -119,6 +119,11 @@ RobotAudioClient::~RobotAudioClient()
   Util::Dispatch::Release(_dispatchQueue);
   
   if (nullptr != _audioController) {
+    if ( _currentAnimation != nullptr ) {
+      _currentAnimation->AbortAnimation();
+      ClearCurrentAnimation();
+    }
+    
     UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_1, 1, Bus::BusType::Robot_Bus_1 );
     UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_2, 2, Bus::BusType::Robot_Bus_2 );
     UnregisterRobotAudioBuffer( GameObjectType::CozmoBus_3, 3, Bus::BusType::Robot_Bus_3 );
