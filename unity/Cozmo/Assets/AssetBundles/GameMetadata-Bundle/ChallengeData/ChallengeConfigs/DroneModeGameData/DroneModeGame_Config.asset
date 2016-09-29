@@ -22,7 +22,7 @@ MonoBehaviour:
   _MaxForwardSpeed_mmps: 120
   _PointTurnSpeed_mmps: 10
   _TurboSpeed_mmps: 160
-  _HeadMovementSpeed_radps: 0.25
+  _HeadMovementSpeed_radps: 0.3
   _HeadIdleDelay_s: 30
   _NeutralTiltSizeDegrees: 5
   _MaxTiltSizeDegrees: 50
