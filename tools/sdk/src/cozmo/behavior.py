@@ -77,16 +77,29 @@ class Behavior(event.Dispatcher):
 
 
 
+_BehaviorType = collections.namedtuple('_BehaviorType', ['name', 'id'])
+
+
 class BehaviorTypes:
-    '''Defines all available robot behaviors.
+    '''Defines all executable robot behaviors.
 
     For use with :meth:`cozmo.robot.Robot.start_behavior`.
     '''
 
+    FindFaces = _BehaviorType("FindFaces", _clad_to_engine_cozmo.ExecutableBehaviorType.FindFaces)
+    '''Turn and move head, but don't drive, with Cozmo's head angled upwards where faces are likely to be'''
 
-_BehaviorType = collections.namedtuple('_BehaviorType', 'name id')
+    KnockOverCubes = _BehaviorType("KnockOverCubes", _clad_to_engine_cozmo.ExecutableBehaviorType.KnockOverCubes)
+    '''Knock over a stack of cubes'''
 
-for (_name, _id) in _clad_to_engine_cozmo.ExecutableBehaviorType.__dict__.items():
-    if not _name.startswith('_') and _id > 0:
-        # don't index NoneBehavior
-        setattr(BehaviorTypes, _name, _BehaviorType(_name, _id))
+    LookAroundInPlace = _BehaviorType("LookAroundInPlace", _clad_to_engine_cozmo.ExecutableBehaviorType.LookAroundInPlace)
+    '''Turn and move head, but don't drive, to see what is around Cozmo'''
+
+    PounceOnMotion = _BehaviorType("PounceOnMotion", _clad_to_engine_cozmo.ExecutableBehaviorType.PounceOnMotion)
+    '''Tries to "Pounce" (drive forward and lower lift) when it detects nearby motion on the ground plane'''
+
+    RollBlock = _BehaviorType("RollBlock", _clad_to_engine_cozmo.ExecutableBehaviorType.RollBlock)
+    '''Roll a Block, regardless of orientation'''
+
+    StackBlocks = _BehaviorType("StackBlocks", _clad_to_engine_cozmo.ExecutableBehaviorType.StackBlocks)
+    '''Pickup one block, and stack it onto another block'''
