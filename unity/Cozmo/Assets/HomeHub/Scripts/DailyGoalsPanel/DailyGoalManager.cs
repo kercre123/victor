@@ -232,6 +232,16 @@ public class DailyGoalManager : MonoBehaviour {
 
   private void Start() {
     Instance = this;
+    LoadDailyGoalGenerationData();
+    GameEventManager.Instance.OnGameEvent += HandleGameEvent;
+  }
+
+  void OnDestroy() {
+    ResolveDailyGoalsEarned();
+    GameEventManager.Instance.OnGameEvent -= HandleGameEvent;
+  }
+
+  public void LoadDailyGoalGenerationData() {
     _CurrentGenData = new DailyGoalGenerationData();
     // Load all Event Map Configs (Can have multiple, so you can create different configs, game only uses one.)
     if (Directory.Exists(sDailyGoalDirectory)) {
@@ -258,12 +268,6 @@ public class DailyGoalManager : MonoBehaviour {
     else {
       DAS.Error(this, string.Format("No DailyGoal Data to load in {0}", sDailyGoalDirectory));
     }
-    GameEventManager.Instance.OnGameEvent += HandleGameEvent;
-  }
-
-  void OnDestroy() {
-    ResolveDailyGoalsEarned();
-    GameEventManager.Instance.OnGameEvent -= HandleGameEvent;
   }
 
   private string GetDailyGoalFileName() {

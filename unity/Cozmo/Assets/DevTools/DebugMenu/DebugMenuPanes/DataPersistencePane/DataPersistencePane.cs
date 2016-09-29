@@ -93,7 +93,7 @@ namespace DataPersistence {
         DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.ForEach(x => x.Date = x.Date.AddDays(-days));
         DataPersistenceManager.Instance.Save();
       }
-
+      DailyGoalManager.Instance.LoadDailyGoalGenerationData();
       IntroManager.Instance.ForceBoot();
     }
 
