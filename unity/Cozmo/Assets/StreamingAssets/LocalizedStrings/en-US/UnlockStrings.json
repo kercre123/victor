@@ -112,7 +112,7 @@
     "translation": "With this Upgrade, Cozmo gains the ability to create a stack of two Power Cubes."
   },
   "unlockable.CubeStackAction.SparkedStateDescription": {
-    "translation": "Watch Cozmo create stack of Cubes"
+    "translation": "Watch Cozmo create a stack of Cubes"
   },
   "unlockable.CubeStackAction.SparkButtonDescription": {
     "translation": "Tap to ask Cozmo to stack two Cubes"
@@ -163,7 +163,7 @@
     "translation": "Tap to ask Cozmo to knock over a stack"
   },
   "unlockable.KnockOverThreeCubeStack.SparkedStateDescription": {
-    "translation": "Build Cozmo a stack of Cubes to tip over"
+    "translation": "Build a stack of Cubes for Cozmo to tip over"
   },
   "unlockable.PickupCube.Title": {
     "translation": "Pick Up Cube"
