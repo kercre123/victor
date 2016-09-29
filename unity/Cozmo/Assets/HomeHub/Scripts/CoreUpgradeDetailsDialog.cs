@@ -351,7 +351,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
       if (_ButtonCostPaidSuccessCallback != null) {
         _ButtonCostPaidSuccessCallback(_UnlockInfo);
       }
-      DAS.Event("meta.upgrade_unlock", _UnlockInfo.TitleKey, DASUtil.FormatExtraData(unlockCost.ToString()));
+      DAS.Event("meta.upgrade_unlock", _UnlockInfo.Id.Value.ToString(), DASUtil.FormatExtraData(unlockCost.ToString()));
 
       int unlockedCount = 0;
       List<UnlockableInfo> unlockedItems = UnlockablesManager.Instance.GetUnlocked();
@@ -467,7 +467,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
     playerInventory.RemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
     UpdateInventoryLabel(_UnlockInfo.RequestTrickCostItemId, _SparksInventoryLabel);
 
-    DAS.Event("meta.upgrade_replay", _UnlockInfo.TitleKey, DASUtil.FormatExtraData(_UnlockInfo.RequestTrickCostAmountNeeded.ToString()));
+    DAS.Event("meta.upgrade_replay", _UnlockInfo.Id.Value.ToString(), DASUtil.FormatExtraData(_UnlockInfo.RequestTrickCostAmountNeeded.ToString()));
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Spark_Launch);
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Spark);
     if (RobotEngineManager.Instance.CurrentRobot != null) {

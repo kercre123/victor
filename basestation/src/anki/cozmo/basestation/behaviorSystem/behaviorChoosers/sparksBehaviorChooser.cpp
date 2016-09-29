@@ -258,9 +258,36 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
     case ChooserState::PlayingSparksOutro:
     {
       bestBehavior = _behaviorPlayAnimation;
-
+            
       if(currentRunningBehavior == nullptr || !currentRunningBehavior->IsRunning()){
         bestBehavior = _behaviorNone;
+
+        const bool completedObjectives = _numberOfRepetitions == 0 ||
+          _currentObjectiveCompletedCount >= _numberOfRepetitions;
+
+        {
+          // Send DAS event with results of spark using different events
+          static constexpr const char* kDasSuccessEvent = "meta.upgrade_replay_success";
+          static constexpr const char* kDasFailEvent    = "meta.upgrade_replay_fail";
+          static constexpr const char* kDasCancelEvent  = "meta.upgrade_replay_cancel";
+
+          const char* eventName = nullptr;
+        
+          if( robot.GetBehaviorManager().DidGameRequestSparkEnd() ) {
+            eventName = kDasCancelEvent;
+          }
+          else if( completedObjectives ) {
+            eventName = kDasSuccessEvent;
+          }
+          else {
+            eventName = kDasFailEvent;
+          }
+
+          Anki::Util::sEvent(eventName,
+                             {{DDATA, robot.GetBehaviorManager().IsActiveSparkSoft() ? "soft" : "hard"}},
+                             UnlockIdToString(robot.GetBehaviorManager().GetActiveSpark()));
+        }
+
         
         // UI updates
         if(!robot.GetBehaviorManager().DidGameRequestSparkEnd() && !_switchingToHardSpark){
@@ -273,13 +300,14 @@ IBehavior* SparksBehaviorChooser::ChooseNextBehavior(Robot& robot, const IBehavi
             // Notify the game that the spark ended with some success state
             ExternalInterface::SparkEnded sparkEnded;
             sparkEnded.success = false;
-            if(_numberOfRepetitions == 0 || _currentObjectiveCompletedCount >= _numberOfRepetitions){
+            if( completedObjectives ){
               sparkEnded.success = true;
             }
             robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::SparkEnded>(sparkEnded);
           }
         }
       }
+
       break;
     }
   } // end switch(_state)
