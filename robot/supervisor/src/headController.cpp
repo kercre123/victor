@@ -394,9 +394,17 @@ namespace HeadController {
                                               MAX_HEAD_ACCEL_RAD_PER_S2,
                                               duration_seconds,
                                               CONTROL_DT);
+        
+        if (!res) {
+          AnkiEvent( 399, "HeadController.SetDesiredAngle.VPGFixedDurationFailed", 616, "startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying VPG without fixed duration.", 6,
+                    startRadSpeed,
+                    startRad,
+                    acc_start_frac,
+                    acc_end_frac,
+                    desiredAngle_.ToFloat(),
+                    duration_seconds);
+        }
 
-        AnkiConditionalWarn(res, 7, "HeadController", 96, "VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f.  Trying VPG without fixed duration.", 6,
-                startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
       }
       if (!res) {
         f32 vpgSpeed = maxSpeedRad_;

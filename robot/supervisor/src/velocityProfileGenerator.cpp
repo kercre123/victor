@@ -284,8 +284,15 @@ namespace Anki {
 
     // If accelerating to a vel_mid of 0 for the acc_start phase actually passes the end_pos,
     // then return false as this is probably not an intended profile.
-    AnkiConditionalWarnAndReturnValue(!(((dist > 0) == (distWhenVelMid0 > 0)) && (fabsf(distWhenVelMid0) > fabsf(dist))),
-                                      false, 233, "VPG.StartProfile_fixedDuration.EndPosReachedDuringStartingAcc", 523, "end_pos reached during starting acc phase. Consider reducing acc_start duration or decreasing vel_start magnitude.", 0);
+    if (((dist > 0) == (distWhenVelMid0 > 0)) && (fabsf(distWhenVelMid0) > fabsf(dist))) {
+      // end_pos reached during starting acc phase. Consider reducing acc_start duration or decreasing vel_start magnitude
+
+      // TODO: Consider shorter acceleration/deceleration periods that could make this profile work?
+      
+      AnkiEvent( 233, "VPG.StartProfile_fixedDuration.EndPosReachedDuringStartingAcc", 305, "", 0);
+      return false;
+    }
+    
 
     float distWhenVelMidIsVelStart = vel_start * (duration - acc_end_duration) + 0.5f*(vel_start * acc_end_duration);
     bool isVelMidGTVelStart = (dist >= distWhenVelMidIsVelStart);

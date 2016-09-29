@@ -434,8 +434,15 @@ namespace Anki {
                                                    duration_seconds,
                                                    CONTROL_DT);
 
-          AnkiConditionalWarn(res, 16, "LiftController", 147, "FAIL: VPG (fixedDuration): startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying VPG without fixed duration.\n", 6,
-                  startRadSpeed, startRad, acc_start_frac, acc_end_frac, desiredAngle_.ToFloat(), duration_seconds);
+          if (!res) {
+            AnkiEvent( 400, "LiftController.SetDesiredHeight.VPGFixedDurationFailed", 616, "startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying VPG without fixed duration.", 6,
+                      startRadSpeed,
+                      startRad,
+                      acc_start_frac,
+                      acc_end_frac,
+                      desiredAngle_.ToFloat(),
+                      duration_seconds);
+          }
         }
         if (!res) {
           f32 vpgSpeed = maxSpeedRad_;
