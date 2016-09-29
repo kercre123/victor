@@ -351,14 +351,14 @@ void Process_TestState(const RobotInterface::TestState& state)
       const u8 numItems = getCurrentMenuItems(&items);
       if ((now - lastExecTime > 1000000) && numItems)
       {
-        if (ABS(state.speedsFixed[0] > 1000))
+        if (ABS(state.speedsFixed[0]) > 1000)
         {
           lastExecTime = now;
           modeTimeout  = now + MENU_TIMEOUT;
           menuIndex += 1;
           if (menuIndex >= numItems) menuIndex = numItems - 1;
         }
-        else if (ABS(state.speedsFixed[1] > 1000))
+        else if (ABS(state.speedsFixed[1]) > 1000)
         {
           lastExecTime = now;
           modeTimeout  = now + MENU_TIMEOUT;
