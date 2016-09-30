@@ -340,13 +340,13 @@ class RemoteControlCozmo:
             # It feels more natural to turn the opposite way when reversing
             turn_dir = -turn_dir
 
-        forward_vel = self.pick_speed(150, 75, 50)
-        turn_vel = self.pick_speed(100, 50, 30)
+        forward_speed = self.pick_speed(150, 75, 50)
+        turn_speed = self.pick_speed(100, 50, 30)
 
-        l_wheel_velocity = (drive_dir * forward_vel) + (turn_vel * turn_dir)
-        r_wheel_velocity = (drive_dir * forward_vel) - (turn_vel * turn_dir)
+        l_wheel_speed = (drive_dir * forward_speed) + (turn_speed * turn_dir)
+        r_wheel_speed = (drive_dir * forward_speed) - (turn_speed * turn_dir)
 
-        self.cozmo.drive_wheels(l_wheel_velocity, r_wheel_velocity, l_wheel_velocity*4, r_wheel_velocity*4)
+        self.cozmo.drive_wheels(l_wheel_speed, r_wheel_speed, l_wheel_speed*4, r_wheel_speed*4)
 
 
 def get_anim_sel_drop_down(selectorIndex):

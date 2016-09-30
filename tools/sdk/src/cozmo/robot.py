@@ -527,27 +527,27 @@ class Cozmo(event.Dispatcher):
 
     ### Low-Level Commands ###
 
-    async def drive_wheels(self, l_wheel_velocity, r_wheel_velocity,
+    async def drive_wheels(self, l_wheel_speed, r_wheel_speed,
                                  l_wheel_acc=None, r_wheel_acc=None, duration=None):
         '''Tell Cozmo to directly move his treads.
 
         Args:
-            l_wheel_velocity (float): Velocity of the left tread (in millimeters per second)
-            r_wheel_velocity (float): Velocity of the right tread (in millimeters per second)
+            l_wheel_speed (float): Speed of the left tread (in millimeters per second)
+            r_wheel_speed (float): Speed of the right tread (in millimeters per second)
             l_wheel_acc (float): Acceleration of left tread (in millimeters per second squared)
-            None value defaults this to the same as l_wheel_velocity
+            None value defaults this to the same as l_wheel_speed
             r_wheel_acc (float): Acceleration of right tread (in millimeters per second squared)
-            None value defaults this to the same as r_wheel_velocity
+            None value defaults this to the same as r_wheel_speed
             duration (float): Time for the robot to drive. Will call :meth:`~cozmo.robot.stop_all_motors`
             after this duration has passed
         '''
         if l_wheel_acc is None:
-            l_wheel_acc = l_wheel_velocity
+            l_wheel_acc = l_wheel_speed
         if r_wheel_acc is None:
-            r_wheel_acc = r_wheel_velocity
+            r_wheel_acc = r_wheel_speed
 
-        msg = _clad_to_engine_iface.DriveWheels(lwheel_speed_mmps=l_wheel_velocity,
-                                                rwheel_speed_mmps=r_wheel_velocity,
+        msg = _clad_to_engine_iface.DriveWheels(lwheel_speed_mmps=l_wheel_speed,
+                                                rwheel_speed_mmps=r_wheel_speed,
                                                 lwheel_accel_mmps2=l_wheel_acc,
                                                 rwheel_accel_mmps2=r_wheel_acc)
 
@@ -562,27 +562,27 @@ class Cozmo(event.Dispatcher):
         self.conn.send_msg(msg)
 
 
-    def move_head(self, velocity):
-        '''Tell Cozmo's head motor to move with a certain velocity.
+    def move_head(self, speed):
+        '''Tell Cozmo's head motor to move with a certain speed.
 
-        Positive velocity for up, negative velocity for down. Measured in radians per second.
+        Positive speed for up, negative speed for down. Measured in radians per second.
 
         Args:
-            velocity (float): Motor velocity for Cozmo's head.
+            speed (float): Motor speed for Cozmo's head.
         '''
-        msg = _clad_to_engine_iface.MoveHead(speed_rad_per_sec=velocity)
+        msg = _clad_to_engine_iface.MoveHead(speed_rad_per_sec=speed)
         self.conn.send_msg(msg)
 
-    def move_lift(self, velocity):
-        '''Tell Cozmo's lift motor to move with a certain velocity.
+    def move_lift(self, speed):
+        '''Tell Cozmo's lift motor to move with a certain speed.
 
-        Positive velocity for up, negative velocity for down.  Measured in radians per second.
+        Positive speed for up, negative speed for down.  Measured in radians per second.
 
         Args:
-            velocity (float): Motor velocity for Cozmo's lift.
+            speed (float): Motor speed for Cozmo's lift.
         '''
         msg = _clad_to_engine_iface.MoveLift()
-        msg = _clad_to_engine_iface.MoveLift(speed_rad_per_sec=velocity)
+        msg = _clad_to_engine_iface.MoveLift(speed_rad_per_sec=speed)
         self.conn.send_msg(msg)
 
     def say_text(self, text, play_excited_animation=False, use_cozmo_voice=True, duration_scalar=1.8, voice_pitch=0.0):
