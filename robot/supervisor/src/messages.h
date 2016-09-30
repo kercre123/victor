@@ -49,7 +49,8 @@ namespace Anki {
       Result Init();
       extern "C" void ProcessMessage(u8* buffer, u16 bufferSize);
 
-      void Update();
+      void ProcessBTLEMessages();
+      void ProcessUARTMessages();
 
       void ProcessMessage(RobotInterface::EngineToRobot& msg);
 

@@ -1091,7 +1091,7 @@ void RobotToEngineImplMessaging::HandleImageImuData(const AnkiEvent<RobotInterfa
 void RobotToEngineImplMessaging::HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
   ANKI_CPU_PROFILE("Robot::HandleSyncTimeAck");
-  PRINT_NAMED_INFO("Robot.HandleSyncTimeAck","");
+  
   robot->SetTimeSynced(true);
 }
 

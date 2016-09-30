@@ -442,7 +442,7 @@ union EngineToRobot
   PropState                     getPropState                = 0x54,
   EnableReadToolCodeMode        enableReadToolCodeMode      = 0x55,
   EnableTestStateMessage        enableTestStateMessage      = 0x56,
-  //          FREE SLOT!!!                                  = 0x57,
+  IMUCalibrationData            setIMUCalibration           = 0x57,
   StartMotorCalibration         startMotorCalibration       = 0x58,
   RollActionParams              rollActionParams            = 0x59,
   EnableStopOnCliff             enableStopOnCliff           = 0x60,

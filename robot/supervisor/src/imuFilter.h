@@ -62,15 +62,7 @@ namespace Anki {
       
       // Enables/Disables the brace reaction when falling is detected
       void EnableBraceWhenFalling(bool enable);
-      
-      // Whether or not we have finished accumulating enough readings of the gyro offset
-      // while the robot is not moving.
-      // SyncTimeAck is blocked until this completes!
-      bool IsBiasFilterComplete();
 
-      // Get pointer to array of gyro biases
-      const f32* GetGyroBias();
-      
     } // namespace IMUFilter
   } // namespace Cozmo
 } // namespace Anki
