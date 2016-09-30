@@ -217,7 +217,7 @@ namespace Cozmo.HomeHub {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.EngineErrorCodeMessage>(HandleEngineErrorCode);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
 
-      _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleGreenPointsBarUpdateComplete;
+      _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleCheckForLootView;
       DailyGoalManager.Instance.OnRefreshDailyGoals += UpdatePlayTabText;
       GameEventManager.Instance.OnGameEvent += HandleGameEvents;
       UpdatePlayTabText();
@@ -511,6 +511,9 @@ namespace Cozmo.HomeHub {
         StartCoroutine(BurstEnergyAfterInit());
         UIManager.DisableTouchEvents();
       }
+      else if (ChestRewardManager.Instance.ChestPending) {
+        HandleCheckForLootView();
+      }
       else {
         // Otherwise set minigame need and update chest progress bar to whatever it should be at as
         // we enter the view.
@@ -549,7 +552,7 @@ namespace Cozmo.HomeHub {
 
     // If we have a Chest Pending, open the loot view once the progress bar finishes filling.
     // If there are Rewards Pending, do this when the Energy Sequence ends.
-    private void HandleGreenPointsBarUpdateComplete() {
+    private void HandleCheckForLootView() {
       if (ChestRewardManager.Instance.ChestPending && !_LootSequenceActive
           && RewardedActionManager.Instance.RewardPending == false) {
         // phase Loot onboarding is two stages, the first one is just an explination pointing to your meter,
@@ -804,7 +807,7 @@ namespace Cozmo.HomeHub {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestGameStart>(HandleAskForMinigame);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.DenyGameStart>(HandleExternalRejection);
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.EngineErrorCodeMessage>(HandleEngineErrorCode);
-      _RequirementPointsProgressBar.ProgressUpdateCompleted -= HandleGreenPointsBarUpdateComplete;
+      _RequirementPointsProgressBar.ProgressUpdateCompleted -= HandleCheckForLootView;
       GameEventManager.Instance.OnGameEvent -= HandleGameEvents;
       DailyGoalManager.Instance.OnRefreshDailyGoals -= UpdatePlayTabText;
 
