@@ -70,7 +70,7 @@ class IOSConnector(DeviceConnector):
     Opens a connection to the first iOS device that's found to be running
     the Cozmo app in SDK mode.
 
-    iTunes (or another service providing *usbmuxd*) must be installed in order
+    iTunes (or another service providing usbmuxd) must be installed in order
     for this connector to be able to open a connection to a device.
 
     An instance of this class can be passed to the ``connect_`` prefixed
@@ -140,7 +140,7 @@ class AndroidConnector(DeviceConnector):
                 logger.debug('Found adb.exe at %s', adb_path)
                 return adb_path
 
-        raise ValueError('Could not find Android development tools.')
+        raise ValueError('Could not find Android development tools')
 
     def _exec(self, *args):
         try:
@@ -188,7 +188,7 @@ class AndroidConnector(DeviceConnector):
             except:
                 pass
             self._remove_forward(serial)
-        raise ValueError("No connected Android devices running Cozmo in SDK mode.")
+        raise ValueError("No connected Android devices running Cozmo in SDK mode")
 
 
 class TCPConnector(DeviceConnector):
@@ -196,7 +196,7 @@ class TCPConnector(DeviceConnector):
 
     Generally only used for testing and debugging.
 
-    Requires that a ``SDK_TCP_PORT`` environment variable be set to the port
+    Requires that a SDK_TCP_PORT environment variable be set to the port
     number to connect to.
     '''
     def __init__(self, tcp_port=None, **kw):
@@ -319,7 +319,7 @@ class _LoopThread:
 
         coz_conn = q.get(10)
         if coz_conn is None:
-            raise TimeoutError("Timed out waiting for connection to device.")
+            raise TimeoutError("Timed out waiting for connection to device")
         if isinstance(coz_conn, Exception):
             raise coz_conn
         self.coz_conn = coz_conn
@@ -397,11 +397,11 @@ def connect_on_loop(loop, conn_factory=conn.CozmoConnection, connector=None):
     a user-supplied function.
 
     Args:
-        *loop* (:class:`asyncio.BaseEventLoop`): The event loop to use to
+        loop (:class:`asyncio.BaseEventLoop`): The event loop to use to
             connect to Cozmo.
-        *conn_factory (callable)*: Override the factory function to generate a
+        conn_factory (callable): Override the factory function to generate a
             :class:`cozmo.conn.CozmoConnection` (or subclass) instance.
-        *connector* (:class:`DeviceConnector`): Optional instance of a DeviceConnector
+        connector (:class:`DeviceConnector`): Optional instance of a DeviceConnector
             subclass that handles opening the USB connection to a device.
             By default, it will connect to the first Android or iOS device that
             has the Cozmo app running in SDK mode.
@@ -427,7 +427,7 @@ def connect_on_loop(loop, conn_factory=conn.CozmoConnection, connector=None):
 def connect(f, conn_factory=conn.CozmoConnection, connector=None):
     '''Connects to the Cozmo Engine on the mobile device and supplies the connection to a function.
 
-    Accepts a function, *f*, that is given a :class:`cozmo.conn.CozmoConnection` object as
+    Accepts a function, f, that is given a :class:`cozmo.conn.CozmoConnection` object as
     a parameter.
 
     The supplied function may be either an asynchronous coroutine function
@@ -446,10 +446,10 @@ def connect(f, conn_factory=conn.CozmoConnection, connector=None):
     as which time it will terminate the connection to the robot.
 
     Args:
-        *f (callable)*: The function to execute
-        *conn_factory (callable)*: Override the factory function to generate a
+        f (callable): The function to execute
+        conn_factory (callable): Override the factory function to generate a
             :class:`cozmo.conn.CozmoConnection` (or subclass) instance.
-        *connector* (:class:`DeviceConnector`): Optional instance of a DeviceConnector
+        connector (:class:`DeviceConnector`): Optional instance of a DeviceConnector
             subclass that handles opening the USB connection to a device.
             By default it will connect to the first Android or iOS device that
             has the Cozmo app running in SDK mode.
@@ -474,10 +474,10 @@ def connect_with_tkviewer(f, conn_factory=conn.CozmoConnection, connector=None):
     This call will block until the supplied function completes.
 
     Args:
-        *f (callable)*: The function to execute.
-        *conn_factory (callable)*: Override the factory function to generate a
+        f (callable): The function to execute
+        conn_factory (callable): Override the factory function to generate a
             :class:`cozmo.conn.CozmoConnection` (or subclass) instance.
-        *connector* (:class:`DeviceConnector`): Optional instance of a DeviceConnector
+        connector (:class:`DeviceConnector`): Optional instance of a DeviceConnector
             subclass that handles opening the USB connection to a device.
             By default it will connect to the first Android or iOS device that
             has the Cozmo app running in SDK mode.
@@ -529,17 +529,17 @@ def setup_basic_logging(general_log_level=None, protocol_log_level=None,
     Generally only :data:`logger` is interesting.
 
     Args:
-        *general_log_level (str)*: 'DEBUG', 'INFO', 'WARN', 'ERROR' or an equivalent
+        general_log_level (str): 'DEBUG', 'INFO', 'WARN', 'ERROR' or an equivalent
             constant from the :mod:`logging` module.  If None then a
             value will be read from the COZMO_LOG_LEVEL environment variable.
-        *protocol_log_level (str)*: as general_log_level.  If None then a
+        protocol_log_level (str): as general_log_level.  If None then a
             value will be read from the COZMO_PROTOCOL_LOG_LEVEL environment
             variable.
-        *protocol_log_messages (list)*: The low level messages that should be
+        protocol_log_messages (list): The low level messages that should be
             logged to the protocol log.  Defaults to all.  Will read from
-            the ``COMZO_PROTOCOL_LOG_MESSAGES`` if available which should be
+            the COMZO_PROTOCOL_LOG_MESSAGES if available which should be
             a comma separated list of message names (case sensitive).
-        *target (object)*: The stream to send the log data to; defaults to stderr
+        target (object): The stream to send the log data to; defaults to stderr
     '''
     if general_log_level is None:
         general_log_level = os.environ.get('COZMO_LOG_LEVEL', logging.INFO)

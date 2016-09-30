@@ -168,10 +168,10 @@ class World(event.Dispatcher):
     #### Event Wrappers ####
 
     async def wait_for_observed_light_cube(self, timeout=None):
-        '''Waits for one of the light cubes to be observed by Cozmo.
+        '''Waits for one of the light cubes to be observed by the robot.
 
         Args:
-            *timeout (float)*: Number of seconds to wait for a cube to be observed, or None for indefinite.
+            timeout (float): Number of seconds to wait for a cube to be observed, or None for indefinite
         Returns:
             The :class:`cozmo.objects.LightCube` object that was observed.
         '''
@@ -181,10 +181,10 @@ class World(event.Dispatcher):
         return evt.obj
 
     async def wait_for_observed_face(self, timeout=None):
-        '''Waits for a face to be observed by Cozmo.
+        '''Waits for a face to be observed by the robot.
 
         Args:
-            *timeout (float)*: Number of seconds to wait for a face to be observed, or None for indefinite.
+            timeout (float): Number of seconds to wait for a face to be observed, or None for indefinite
         Returns:
             The :class:`cozmo.faces.Face` object that was observed.
         '''
@@ -196,14 +196,14 @@ class World(event.Dispatcher):
     async def wait_until_observe_num_objects(self, num, object_type=None, timeout=None):
         '''Waits for a certain number of objects to be seen.
 
-        If ``obj_type`` is provided, Cozmo will wait to observe specific object types.
-        The timeout is for the time in between each object. Theoretically, if num=3,
+        If obj_type is provided, the robot will wait to observe specific object types.
+        The timeout is for the time in between each object. Theoretically if num=3,
         and timeout=10, the max timeout would be ~30 seconds. TODO fix this.
 
         Args:
-            *num (float)*: The number of unique objects to wait for.
-            *object_type* (class:`cozmo.objects.ObservableObject`): If provided this will filter observed objects.
-            *timeout (float)*: Time waited in between each object seen.
+            num (float): The number of unique objects to wait for.
+            object_type (class:`cozmo.objects.ObservableObject`): If provided this will filter observed objects.
+            timeout (float): Time waited in between each object seen.
         Returns:
             A list of length <= num in order of the unique objects class:`cozmo.objects.ObservableObject`
             observed during this wait.
@@ -211,7 +211,7 @@ class World(event.Dispatcher):
         #Filter by object type if provided
         if object_type:
             if not issubclass(object_type, objects.ObservableObject):
-                raise TypeError("Expected object_type to be ObservableObject.")
+                raise TypeError("Expected object_type to be ObservableObject")
             filter = event.Filter(objects.EvtObjectObserved,
                     obj=lambda obj: isinstance(obj, object_type))
         else:
@@ -262,24 +262,24 @@ class World(event.Dispatcher):
         '''Defines a cuboid of custom size and binds it to a specific custom object type.
 
         The engine will now detect the markers associated with this object and send an
-        ``object_observed`` message when they are seen. The markers must be placed in the center
+        object_observed message when they are seen. The markers must be placed in the center
         of their respective sides. The markers must be placed in the same order as given in the diagram.
         TODO MAKE THE DIAGRAM
 
         Args:
-            *object_type* (:class:`cozmo.objects.CustomObjectTypes`): the object type you are binding this custom object to.
-            *x_size_mm (float)*: size of the object (in millimeters) in the *x* axis.
-            *y_size_mm (float)*: size of the object (in millimeters) in the *y* axis.
-            *z_size_mm (float)*: size of the object (in millimeters) in the *z* axis.
-            *marker_width_mm (float)*: width of the printed marker (in millimeters).
-            *maker_height_mm (float)*: height of the printed marker (in millimeters).
+            object_type (:class:`cozmo.objects.CustomObjectTypes`): the object type you are binding this custom object to
+            x_size_mm (float): size of the object (in millimeters) in the x axis.
+            y_size_mm (float): size of the object (in millimeters) in the y axis.
+            z_size_mm (float): size of the object (in millimeters) in the z axis.
+            marker_width_mm (float): width of the printed marker (in millimeters).
+            maker_height_mm (float): height of the printed marker (in millimeters).
 
         Returns:
             A :class:`cozmo.object.CustomObject` instance with the specified dimensions.
                                                  This is not included in the world until it has been seen.
         '''
         if not isinstance(object_type, objects._CustomObjectType):
-            raise TypeError("Unsupported object_type, requires CustomObjectType.")
+            raise TypeError("Unsupported object_type, requires CustomObjectType")
         custom_object_base = self.custom_object_factory(object_type,
                                                         x_size_mm, y_size_mm, z_size_mm,
                                                         marker_width_mm, marker_height_mm,
@@ -297,12 +297,12 @@ class World(event.Dispatcher):
         '''Defines a cuboid of custom size and places it in the world. It cannot be observed.
 
         Args:
-            *pose* (:class:`cozmo.util.Pose`): The pose of the object we are creating.
-            *x_size_mm (float)*: size of the object (in millimeters) in the *x* axis.
-            *y_size_mm (float)*: size of the object (in millimeters) in the *y* axis.
-            *z_size_mm (float)*: size of the object (in millimeters) in the *z* axis.
-            *relative_to_robot (bool)*: whether or not the pose given assumes the robot's pose as it's origin.
-            *use_robot_origin (bool)*: whether or not to override the origin_id in the given pose to be
+            pose (:class:`cozmo.util.Pose`): The pose of the object we are creating.
+            x_size_mm (float): size of the object (in millimeters) in the x axis.
+            y_size_mm (float): size of the object (in millimeters) in the y axis.
+            z_size_mm (float): size of the object (in millimeters) in the z axis.
+            relative_to_robot (bool): whether or not the pose given assumes the robot's pose as its origin.
+            use_robot_origin (bool): whether or not to override the origin_id in the given pose to be
                                       the origin_id of Cozmo.
 
         Returns:
@@ -312,7 +312,7 @@ class World(event.Dispatcher):
         # the same space in the engine every time.
         if use_robot_origin:
             pose.origin_id = self.robot.pose.origin_id
-        # In this case define the given pose to be with respect to the robot's pose as it's origin.
+        # In this case define the given pose to be with respect to the robot's pose as its origin.
         if relative_to_robot:
             pose = self.robot.pose.define_pose_relative_this(pose)
         msg = _clad_to_engine_iface.CreateFixedCustomObject(pose=pose.encode_pose(),
