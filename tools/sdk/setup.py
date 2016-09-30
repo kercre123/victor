@@ -78,7 +78,7 @@ setup(
     },
     install_requires=None,
     extras_require={
-        'camera': ['Pillow>=3', 'numpy'],
+        'camera': ['Pillow>=3.3', 'numpy>=1.11'],
         'test': ['tox', 'pytest'],
     }
 )

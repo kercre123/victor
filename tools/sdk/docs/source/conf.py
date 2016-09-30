@@ -58,7 +58,11 @@ extensions = [
     #'sphinx.ext.napoleon'
 ]
 
-intersphinx_mapping = {'python': ('https://docs.python.org/3.5', None)}
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3.5', None),
+    'numpy': ('http://docs.scipy.org/doc/numpy/', None),
+    'PIL': ('https://pillow.readthedocs.io/en/latest/', None)
+    }
 
 autosummary_generate = True
 autodoc_default_flags = ['members']

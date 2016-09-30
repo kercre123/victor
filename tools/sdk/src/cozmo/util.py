@@ -10,8 +10,11 @@ import math
 import re
 from ._clad import _clad_to_engine_anki
 
-ImageBox = collections.namedtuple('ImageBox', 'top_left_x top_left_y width height')
-ImageBox.__doc__ += ': Defines a bounding box within an image frame.'
+class ImageBox(collections.namedtuple('ImageBox', 'top_left_x top_left_y width height')):
+    ': Defines a bounding box within an image frame.'
+
+    def __mul__(self, other):
+        return ImageBox(self[0] * other, self[1] * other, self[2] * other, self[3] * other)
 
 
 class Angle:

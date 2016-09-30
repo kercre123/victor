@@ -5,14 +5,22 @@ __all__ = ['EvtFaceObserved', 'Face']
 
 import asyncio
 import collections
+import time
 
 from . import logger
 
 from . import action
 from . import event
+from . import objects
 from . import util
 
 from ._clad import _clad_to_engine_iface
+
+
+# Length of time to go without receiving an observed event before
+# assuming that Cozmo can no longer see a face.
+FACE_VISIBILITY_TIMEOUT = objects.OBJECT_VISIBILITY_TIMEOUT
+
 
 class EvtFaceObserved(event.Event):
     '''Triggered whenever an face is identified by the robot'''
@@ -20,6 +28,7 @@ class EvtFaceObserved(event.Event):
     updated = 'A set of field names that have changed'
     image_box = 'A comzo.util.ImageBox defining where the face is within Cozmo\'s camera view'
     name = 'The name associated with the face that was observed'
+
 
 class EnrollNamedFace(action.Action):
     '''Represents the enroll named face action in progress.
@@ -40,6 +49,7 @@ class EnrollNamedFace(action.Action):
     def _encode(self):
         return _clad_to_engine_iface.EnrollNamedFace(faceID=self.face.face_id, name=self.name)
 
+
 class Face(event.Dispatcher):
     '''The type for faces in Cozmo's world.'''
 
@@ -49,19 +59,31 @@ class Face(event.Dispatcher):
         super().__init__(**kw)
         self._face_id = face_id
         self._robot = robot
-        self._name = None
+        self._name = ''
         self._pose = None
         self.conn = conn
         self.world = world
 
-        #: (float) The time the event was received
+        #: (float) The time the event was received.
+        #: ``None`` if no events have yet been received.
         self.last_event_time = None
-        #: (float) The time the face was last observed by the robot
+
+        #: (float) The time the face was last observed by the robot.
+        #: ``None`` if the face has not yet been observed.
         self.last_observed_time = None
 
+        #: (int) The robot's timestamp of the last observed event.
+        #: ``None`` if the face has not yet been observed.
+        self.last_observed_robot_timestamp = None
+
+        #: (:class:`~cozmo.util.ImageBox`) The ImageBox defining where the
+        #: object was last visible within Cozmo's camera view.
+        #: ``None`` if the face has not yet been observed.
+        self.last_observed_image_box = None
+
     def __repr__(self):
-        return '<%s face_id=%s, name=%s, pose=%s>' % (self.__class__.__name__, self.face_id,
-                                                      self.name, self.pose)
+        return '<%s face_id=%s is_visible=%s name=%s pose=%s>' % (self.__class__.__name__, self.face_id,
+                                                      self.is_visible, self.name, self.pose)
 
     #### Private Methods ####
 
@@ -76,12 +98,14 @@ class Face(event.Dispatcher):
 
     @property
     def face_id(self):
-        '''The internal id assigned to the face.'''
+        '''(int) The internal id assigned to the face.
+
+        This value can only be assigned once as it is static in the engine.
+        '''
         return self._face_id
 
     @face_id.setter
     def face_id(self, value):
-        '''This value can only be assigned once as it is static in the engine.'''
         if self._face_id is not None:
             raise ValueError("Cannot change face id once set (from %s to %s)" % (self._face_id, value))
         logger.debug("Updated face_id for %s from %s to %s", self.__class__, self._face_id, value)
@@ -89,26 +113,34 @@ class Face(event.Dispatcher):
 
     @property
     def pose(self):
-        '''The pose of the face in the world.'''
+        ''':class:`cozmo.util.Pose` The pose of the face in the world.'''
         return self._pose
 
     @property
     def name(self):
-        '''The name Cozmo has associated with the face in his memory'''
+        '''(string) The name Cozmo has associated with the face in his memory.
+
+            This string will be empty if the face is not recognized or enrolled.
+        '''
         return self._name
 
     #### Private Event Handlers ####
 
     def _recv_msg_robot_observed_face(self, evt, *, msg):
-        changed_fields = {'last_observed_time', 'last_event_time', 'pose'}
+        changed_fields = {'last_observed_time', 'last_observed_robot_timestamp',
+                'last_event_time', 'last_observed_image_box', 'pose'}
         self._pose = util.Pose(msg.pose.x, msg.pose.y, msg.pose.z,
                                q0=msg.pose.q0, q1=msg.pose.q1,
                                q2=msg.pose.q2, q3=msg.pose.q3,
                                origin_id=msg.pose.originID)
         self._name = msg.name
-        self.last_observed_time = msg.timestamp
-        self.last_event_time = msg.timestamp
+        self.last_observed_time = time.time()
+        self.last_observed_robot_timestamp = msg.timestamp
+        self.last_event_time = time.time()
+
         image_box = util.ImageBox(msg.img_topLeft_x, msg.img_topLeft_y, msg.img_width, msg.img_height)
+        self.last_observed_image_box = image_box
+
         self.dispatch_event(EvtFaceObserved, face=self, name=self._name,
                 updated=changed_fields, image_box=image_box,)
 
@@ -133,11 +165,12 @@ class Face(event.Dispatcher):
         self._robot._action_dispatcher._send_single_action(action)
         return action
 
-    def is_face_visible(self):
-        '''Return if the face is visible in Cozmo's current camera view.
+    @property
+    def is_visible(self):
+        '''(bool) True if the face has been observed recently.
 
-        Returns:
-            A Bool if Cozmo can currently see this face.
+        "recently" is defined as FACE_VISIBILITY_TIMEOUT seconds
         '''
-        # These times are in milliseconds, so return false if it has been over a quarter of a second.
-        return (self._robot.last_image_time - self.last_observed_time) < 250
+        if self.last_observed_time is None:
+            return False
+        return (time.time() - self.last_observed_time) < FACE_VISIBILITY_TIMEOUT

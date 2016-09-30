@@ -12,6 +12,7 @@ del _logging
 
 from . import action
 from . import anim
+from . import annotate
 from . import behavior
 from . import conn
 from . import event
@@ -31,6 +32,6 @@ from .version import __version__
 
 
 __all__ = ['logger', 'logger_protocol'] + \
-    ['action', 'anim', 'behavior', 'conn', 'event', 'exceptions', 'lcd_face'] + \
-    ['lights', 'objects', 'robot', 'run', 'util', 'world'] + \
+    ['action', 'anim', 'annotate', 'behavior', 'conn', 'event', 'exceptions'] + \
+    ['lcd_face', 'lights', 'objects', 'robot', 'run', 'util', 'world'] + \
         (run.__all__ + exceptions.__all__)

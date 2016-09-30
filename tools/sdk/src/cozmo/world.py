@@ -7,14 +7,13 @@ import time
 
 from . import logger
 
+from . import annotate
 from . import event
 from . import faces
 from . import objects
-from . import world
 
 from . import _clad
 from ._clad import _clad_to_engine_iface, _clad_to_game_cozmo
-
 
 
 class EvtNewCameraImage(event.Event):
@@ -29,19 +28,25 @@ class World(event.Dispatcher):
     face_factory = faces.Face
     light_cube_factory = objects.LightCube
     custom_object_factory = objects.CustomObject
+    annotator_factory = annotate.ImageAnnotator
 
     def __init__(self, conn, robot, **kw):
         super().__init__(**kw)
-        #: The active :class:`cozmo.conn.CozmoConnection`
+        #: :class:`cozmo.conn.CozmoConnection`: The underlying connection to a device.
         self.conn = conn
 
-        #: The primary robot :class:`cozmo.robot.Cozmo`
+        #: :class:`cozmo.annotate.ImageAnnotator`: The image annotator used
+        #: to add annotations to the raw camera images.
+        self.image_annotator = self.annotator_factory(self)
+
+        #: :class:`cozmo.robot.Cozmo`: The primary robot
         self.robot = robot
 
         self.custom_objects = {}
 
         #: The latest :class:`CameraImage` received, or None
         self.latest_image = None
+
         self.light_cubes = {}
 
         self._last_image_number = -1
@@ -112,6 +117,30 @@ class World(event.Dispatcher):
         '''A bool of whether or not Cozmo is currently executing an action.'''
         return self._active_action
 
+    @property
+    def visible_objects(self):
+        '''A generator yielding the objects that Cozmo can currently see.
+
+        For faces, see :meth:`visible_faces`
+
+        Returns:
+            A generator yielding :class:`cozmo.objects.BaseObject` instances
+        '''
+        for id, obj in self._objects.items():
+            if obj.is_visible:
+                yield obj
+
+    @property
+    def visible_faces(self):
+        '''A generator yielding the faces that Cozmo can currently see.
+
+        Returns:
+            A generator yielding :class:`cozmo.faces.Face` instances
+        '''
+        for obj in self._faces.values():
+            if obj.is_visible:
+                yield obj
+
 
     #### Private Event Handlers ####
 
@@ -160,7 +189,7 @@ class World(event.Dispatcher):
 
     def recv_evt_new_raw_camera_image(self, evt, *, image, **kw):
         self._last_image_number += 1
-        processed_image = CameraImage(image, self._last_image_number)
+        processed_image = CameraImage(image, self.image_annotator, self._last_image_number)
         self.latest_image = processed_image
         self.dispatch_event(EvtNewCameraImage, image=processed_image)
 
@@ -278,6 +307,7 @@ class World(event.Dispatcher):
             A :class:`cozmo.object.CustomObject` instance with the specified dimensions.
                                                  This is not included in the world until it has been seen.
         '''
+        # TODO make diagram for above docs!
         if not isinstance(object_type, objects._CustomObjectType):
             raise TypeError("Unsupported object_type, requires CustomObjectType")
         custom_object_base = self.custom_object_factory(object_type,
@@ -325,11 +355,38 @@ class World(event.Dispatcher):
 
 
 class CameraImage:
-    def __init__(self, raw_image, image_number=0):
+    '''A single image from Cozmo's camera.
+
+    This wraps a raw image and provides an :meth:`annotate_image` method
+    that can resize and add dynamic annotations to the image, such as
+    marking up the location of objects and faces.
+    '''
+    def __init__(self, raw_image, image_annotator, image_number=0):
+        #: :class:`PIL.Image.Image`: the raw unprocessed image from the camera
         self.raw_image = raw_image
+
+        #: :class:`cozmo.annotate.ImageAnnotator`: the image annotation object
+        self.image_annotator = image_annotator
+
+        #: int: An image number that increments on every new image received
         self.image_number = image_number
+
+        #: float: The time the image was received and processed by the SDK
         self.image_recv_time = time.time()
 
-    @property
-    def annotated_image(self):
-        return self.raw_image
+    def annotate_image(self, scale=None, fit_size=None):
+        '''Adds any enabled annotations to the image.
+
+        Optionally resizes the image prior to annotations being applied.  The
+        aspect ratio of the resulting image always matches that of the raw image.
+
+        Args:
+            scale (float): If set then the base image will be scaled by the
+                supplied multiplier.  Cannot be combined with fit_size
+            fit_size (tuple of ints (width, height)):  If set, then scale the
+                image to fit inside the supplied dimensions.  The original
+                aspect ratio will be preserved.  Cannot be combined with scale.
+        Returns:
+            :class:`PIL.Image.Image`
+        '''
+        return self.image_annotator.annotate_image(self.raw_image, scale=scale, fit_size=fit_size)

@@ -27,11 +27,6 @@ from . import event
 from . import exceptions
 from . import usbmux
 
-try:
-    from . import tkview
-except ImportError:
-    tkview = None
-
 
 COZMO_PORT = 5106
 
@@ -482,9 +477,14 @@ def connect_with_tkviewer(f, conn_factory=conn.CozmoConnection, connector=None):
             By default it will connect to the first Android or iOS device that
             has the Cozmo app running in SDK mode.
     '''
-    if tkview is None:
+    try:
+        from . import tkview
+    except ImportError as exc:
+        tkview = exc
+
+    if isinstance(tkview, Exception):
         raise NotImplementedError('tkviewer not available on this platform; '
-            'Make sure Tkinter and Pillow libraries are installed.')
+            'make sure Tkinter, NumPy and Pillow packages are installed (%s)' % tkview)
 
     viewer = tkview.TkImageViewer()
 
@@ -492,9 +492,9 @@ def connect_with_tkviewer(f, conn_factory=conn.CozmoConnection, connector=None):
     abort_future = concurrent.futures.Future()
 
     async def view_connector(coz_conn):
-        await viewer.connect(coz_conn)
-
         try:
+            await viewer.connect(coz_conn)
+
             if inspect.iscoroutinefunction(f):
                 await f(coz_conn)
             else:

@@ -291,4 +291,3 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
         if robot and robot.drive_off_charger_on_connect:
             await robot.drive_off_charger_contacts().wait_for_completed()
         return robot
-    

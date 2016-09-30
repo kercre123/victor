@@ -6,6 +6,7 @@ __all__ = ['EvtObjectTapped', 'EvtObjectObserved', 'EvtObjectConnectChanged',
 
 import asyncio
 import collections
+import time
 
 from . import logger
 
@@ -15,6 +16,11 @@ from . import lights
 from . import util
 
 from ._clad import _clad_to_engine_iface, _clad_to_game_cozmo, _clad_to_engine_cozmo
+
+
+# Length of time to go without receiving an observed event before
+# assuming that Cozmo can no longer see an object.
+OBJECT_VISIBILITY_TIMEOUT = 0.2
 
 
 class EvtObjectObserved(event.Event):
@@ -51,15 +57,34 @@ class ObservableObject(event.Dispatcher):
         self.world = world
         self._robot = None # the robot controlling this object (if an active object)
 
-        #: (float) The time the event was received
+        #: (float) The time the last event was received.
+        #: ``None`` if no events have yet been received.
         self.last_event_time = None
-        #: (float) The time the object was last observed by the robot
+
+        #: (float) The time the object was last observed by the robot.
+        #: ``None`` if the object has not yet been observed.
         self.last_observed_time = None
+
+        #: (int) The robot's timestamp of the last observed event.
+        #: ``None`` if the object has not yet been observed.
+        self.last_observed_robot_timestamp = None
+
+        #: (:class:`~cozmo.util.ImageBox`) The ImageBox defining where the
+        #: object was last visible within Cozmo's camera view.
+        #: ``None`` if the object has not yet been observed.
+        self.last_observed_image_box = None
 
 
     def __repr__(self):
-        return '<%s object_id=%s>' % (self.__class__.__name__, self.object_id)
+        extra = self._repr_values()
+        if len(extra) > 0:
+            extra = ' '+extra
 
+        return '<%s is_visible=%s pose=%s%s>' % (self.__class__.__name__,
+                self.is_visible, self.pose, extra)
+
+    def _repr_values(self):
+        return ''
 
     #### Private Methods ####
 
@@ -75,12 +100,14 @@ class ObservableObject(event.Dispatcher):
 
     @property
     def object_id(self):
-        '''The internal id assigned to the object.'''
+        '''(int) The internal id assigned to the object.
+
+        This value can only be assigned once as it is static in the engine.
+        '''
         return self._object_id
 
     @object_id.setter
     def object_id(self, value):
-        '''Only lets you set the object id once, as it is static in the engine.'''
         if self._object_id is not None:
             raise ValueError("Cannot change object id once set (from %s to %s)" % (self._object_id, value))
         logger.debug("Updated object_id for %s from %s to %s", self.__class__, self._object_id, value)
@@ -88,8 +115,19 @@ class ObservableObject(event.Dispatcher):
 
     @property
     def pose(self):
-        '''The :class:`cozmo.util.Pose` of the object, where it is in the world.'''
+        '''(:class:`cozmo.util.Pose`) The pose of this object in the world.'''
         return self._pose
+
+    @property
+    def is_visible(self):
+        '''(bool) True if the object has been observed recently.
+
+        "recently" is defined as OBJECT_VISIBILITY_TIMEOUT seconds.
+        '''
+        if self.last_observed_time is None:
+            return False
+        return (time.time() - self.last_observed_time) < OBJECT_VISIBILITY_TIMEOUT
+
 
     #### Private Event Handlers ####
 
@@ -99,14 +137,19 @@ class ObservableObject(event.Dispatcher):
             self.dispatch_event(EvtObjectConnectChanged, obj=self, connected=self.connected)
 
     def _recv_msg_robot_observed_object(self, evt, *, msg):
-        changed_fields = {'last_observed_time', 'last_event_time', 'pose'}
+        changed_fields = {'last_observed_time', 'last_observed_robot_timestamp',
+                'last_observed_image_box', 'last_event_time', 'pose'}
         self._pose = util.Pose(msg.pose.x, msg.pose.y, msg.pose.z,
                                q0=msg.pose.q0, q1=msg.pose.q1,
                                q2=msg.pose.q2, q3=msg.pose.q3,
                                origin_id=msg.pose.originID)
-        self.last_observed_time = msg.timestamp
-        self.last_event_time = msg.timestamp
+        self.last_observed_time = time.time()
+        self.last_observed_robot_timestamp = msg.timestamp
+        self.last_event_time = time.time()
+
         image_box = util.ImageBox(msg.img_topLeft_x, msg.img_topLeft_y, msg.img_width, msg.img_height)
+        self.last_observed_image_box = image_box
+
         self.dispatch_event(EvtObjectObserved, obj=self,
                 updated=changed_fields, image_box=image_box)
 
@@ -131,11 +174,13 @@ class LightCube(ObservableObject):
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
+
         #: (float) The time the object was last tapped
         self.last_tapped_time = None
 
-    def __repr__(self):
-        return '<%s object_id=%s pose=%s>' % (self.__class__.__name__, self._object_id, self.pose)
+        #: (int) The robot's timestamp of the last tapped event
+        self.last_tapped_robot_timestamp = None
+
 
     #### Private Methods ####
 
@@ -167,10 +212,13 @@ class LightCube(ObservableObject):
 
     #### Private Event Handlers ####
     def _recv_msg_object_tapped(self, evt, *, msg):
-        changed_fields = {'last_event_time', 'last_tapped_time'}
-        self.last_event_time = msg.timestamp
-        self.last_tapped_time = msg.timestamp
-        self.dispatch_event(EvtObjectTapped, obj=self, tap_count=msg.numTaps, tap_duration=msg.tapTime)
+        changed_fields = {'last_event_time', 'last_tapped_time',
+            'last_tapped_robot_timestamp'}
+        self.last_event_time = time.time()
+        self.last_tapped_time = time.time()
+        self.last_tapped_robot_timestamp = msg.timestamp
+        self.dispatch_event(EvtObjectTapped, obj=self,
+            tap_count=msg.numTaps, tap_duration=msg.tapTime)
 
 
     #### Public Event Handlers ####
@@ -230,9 +278,11 @@ class CustomObject(ObservableObject):
         self._marker_height_mm = marker_height_mm
 
 
-    def __repr__(self):
-        return ('<{self.__class__.__name__} object_id={self._object_id:.1f} '+
-                'size_mm={self.x_size_mm:.1f} etc>'.format(self=self))
+    def _repr_values(self):
+        return ('object_type={self.object_type} '
+                'x_size_mm={self.x_size_mm:.1f} '
+                'y_size_mm={self.y_size_mm:.1f} '
+                'z_size_mm={self.z_size_mm:.1f} '.format(self=self))
 
     #### Private Methods ####
 
@@ -294,6 +344,8 @@ class FixedCustomObject():
     even when they don't have any markers.
     '''
 
+    is_visible = False
+
     def __init__(self, pose, x_size_mm, y_size_mm, z_size_mm, object_id, *a, **kw):
         super().__init__(*a, **kw)
         self._pose = pose
@@ -303,7 +355,7 @@ class FixedCustomObject():
         self._z_size_mm = z_size_mm
 
     def __repr__(self):
-        return ('<%s pose =%s object_id=%d x_size_mm=%.1f y_size_mm=%.1f z_size_mm=%.1f=>' %
+        return ('<%s pose=%s object_id=%d x_size_mm=%.1f y_size_mm=%.1f z_size_mm=%.1f=>' %
                                         (self.__class__.__name__, self.pose, self.object_id,
                                          self.x_size_mm, self.y_size_mm, self.z_size_mm))
 
@@ -312,12 +364,14 @@ class FixedCustomObject():
     #### Properties ####
     @property
     def object_id(self):
-        '''The internal id assigned to the object.'''
+        '''(int) The internal id assigned to the object.
+
+        This value can only be assigned once as it is static in the engine.
+        '''
         return self._object_id
 
     @object_id.setter
     def object_id(self, value):
-        '''Lets the object id only be assigned once as it is static in the engine.'''
         if self._object_id is not None:
             raise ValueError("Cannot change object id once set (from %s to %s)" % (self._object_id, value))
         logger.debug("Updated object_id for %s from %s to %s", self.__class__, self._object_id, value)
@@ -325,7 +379,7 @@ class FixedCustomObject():
 
     @property
     def pose(self):
-        '''The :class:`cozmo.util.Pose` of the object, where it is in the world.'''
+        '''(:class:`cozmo.util.Pose`) The pose of the object in the world.'''
         return self._pose
 
     @property

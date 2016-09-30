@@ -260,10 +260,10 @@ class Cozmo(event.Dispatcher):
 
     A robot has access to:
 
-    * A :class:`~cozmo.world.World` object (:attr:`cozmo.robot.Cozmo.world`), 
+    * A :class:`~cozmo.world.World` object (:attr:`cozmo.robot.Cozmo.world`),
         which tracks the state of the world the robot knows about
 
-    * A :class:`~cozmo.camera.Camera` object (:attr:`cozmo.robot.Cozmo.camera`), 
+    * A :class:`~cozmo.camera.Camera` object (:attr:`cozmo.robot.Cozmo.camera`),
         which provides access to Cozmo's camera
 
     * An Animations object, controlling the playing of animations on the robot
@@ -905,6 +905,3 @@ class Cozmo(event.Dispatcher):
         '''
         msg = _clad_to_engine_iface.SetRobotVolume(robotId=self.robot_id, volume=robot_volume)
         self.conn.send_msg(msg)
-
-        
-        

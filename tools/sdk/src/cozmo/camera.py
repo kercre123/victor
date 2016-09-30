@@ -1,18 +1,23 @@
 # Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
 
+import functools
 import io
+
+_img_processing_available = True
 
 try:
     import numpy as np
-    import PIL.Image
-except ImportError:
+    from PIL import Image
+except ImportError as exc:
     np = None
+    _img_processing_available = exc
 
 
 from . import event
 from . import logger
 
 from ._clad import _clad_to_engine_iface, _clad_to_engine_cozmo, _clad_to_game_cozmo
+
 
 _clad_res = _clad_to_game_cozmo.ImageResolution
 RESOLUTIONS = {
@@ -32,10 +37,25 @@ RESOLUTIONS = {
 }
 
 
+# wrap functions/methods that require NumPy or PIL with this
+# decorator to ensure they fail with a useful error if those packages
+# are not loaded.
+def _require_img_processing(f):
+    @functools.wraps(f)
+    def wrapper(*a, **kw):
+        if _img_processing_available is not True:
+            raise ImportError("Camera image processing not available: %s" % _img_processing_available)
+        return f(*a, **kw)
+    return wrapper
+
 
 class EvtNewRawCameraImage(event.Event):
-    '''Dispatched when a new raw image is received from the robot's camera.'''
-    image = 'A PIL.Image instance'
+    '''Dispatched when a new raw image is received from the robot's camera.
+
+    See also :class:`~cozmo.world.EvtNewCameraImage` which provides access
+    to both the raw image and a scaled and annotated version.
+    '''
+    image = 'A PIL.Image.Image object'
 
 
 class Camera(event.Dispatcher):
@@ -53,15 +73,15 @@ class Camera(event.Dispatcher):
         to ``True``
     '''
 
-
     def __init__(self, robot, **kw):
         super().__init__(**kw)
-        if np is None:
-            logger.warn('numpy or pillow packages not installed; camera image processing disabled.')
-            return
         self.robot = robot
         self._image_stream_enabled = None
-        self.image_stream_enabled = False
+        if np is None:
+            logger.warn("Camera image processing not available due to missng NumPy or Pillow packages: %s" % _img_processing_available)
+        else:
+            # set property to ensure clad initialization is sent.
+            self.image_stream_enabled = False
         self._reset_partial_state()
 
 
@@ -78,6 +98,7 @@ class Camera(event.Dispatcher):
     #### Properties ####
 
     @property
+    @_require_img_processing
     def image_stream_enabled(self):
         '''bool: Set to true to receive camera images from the robot.'''
         if np is None:
@@ -86,13 +107,8 @@ class Camera(event.Dispatcher):
         return self._image_stream_enabled
 
     @image_stream_enabled.setter
+    @_require_img_processing
     def image_stream_enabled(self, enabled):
-        if enabled and np is None:
-            print('numpy or pillow packages not installed; camera image processing disabled.')
-            return
-        elif np is None:
-            return
-
         if self._image_stream_enabled == enabled:
             return
 
@@ -156,7 +172,7 @@ class Camera(event.Dispatcher):
         if self._partial_metadata.imageEncoding ==  _clad_to_game_cozmo.ImageEncoding.JPEGMinimizedGray:
             width, height = RESOLUTIONS[self._partial_metadata.resolution]
             data = _minigray_to_jpeg(data, width, height)
-        image = PIL.Image.open(io.BytesIO(data)).convert('RGB')
+        image = Image.open(io.BytesIO(data)).convert('RGB')
         self._latest_image = image
         self.dispatch_event(EvtNewRawCameraImage, image=image)
 
@@ -164,6 +180,7 @@ class Camera(event.Dispatcher):
     #### Public Event Handlers ####
 
 
+@_require_img_processing
 def _minigray_to_jpeg(minigray,  width, height):
         "Converts miniGrayToJpeg format to normal jpeg format"
         # Does not work correctly yet
