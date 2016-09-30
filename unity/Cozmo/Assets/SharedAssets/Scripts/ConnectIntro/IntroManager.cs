@@ -27,6 +27,8 @@ public class IntroManager : MonoBehaviour {
   private HubWorldBase _HubWorldPrefab;
   private HubWorldBase _HubWorldInstance;
 
+  private bool _StartFlowInProgress = false;
+
   void Awake() {
     if (_Instance != null) {
       DAS.Error("IntroManager.Awake", "There should only be one IntroManager");
@@ -61,6 +63,13 @@ public class IntroManager : MonoBehaviour {
   }
 
   private void StartFlow() {
+    if (_StartFlowInProgress) {
+      DAS.Warn("IntroManager.StartFlow", "Start flow already in progress");
+      return;
+    }
+
+    _StartFlowInProgress = true;
+
     if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Home)) {
       OnboardingManager.Instance.PreloadOnboarding();
       ShowFirstTimeFlow();
@@ -93,7 +102,10 @@ public class IntroManager : MonoBehaviour {
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connectivity);
     UIManager.CloseAllViewsImmediately();
     UIManager.EnableTouchEvents();
-    StartFlow();
+
+    if (!_StartFlowInProgress) {
+      StartFlow();
+    }
   }
 
   private void HandleFirstTimeConnectionFlowComplete() {
@@ -154,6 +166,7 @@ public class IntroManager : MonoBehaviour {
   }
 
   private void IntroFlowComplete() {
+    _StartFlowInProgress = false;
     GameObject hubWorldObject = GameObject.Instantiate(_HubWorldPrefab.gameObject);
     hubWorldObject.transform.SetParent(transform, false);
     _HubWorldInstance = hubWorldObject.GetComponent<HubWorldBase>();
