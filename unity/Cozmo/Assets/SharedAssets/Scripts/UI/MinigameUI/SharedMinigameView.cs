@@ -221,7 +221,7 @@ namespace Cozmo {
       private Sequence _SlideInTween;
       private CanvasGroup _TransitionOutSlide;
       private Sequence _SlideOutTween;
-      private Sequence _HideWidgetSequence;
+      private Dictionary<int, Sequence> _HideWidgetSequences = new Dictionary<int, Sequence>();
 
       private List<MinigameWidget> _ActiveWidgets = new List<MinigameWidget>();
 
@@ -274,9 +274,11 @@ namespace Cozmo {
         if (_OverlayBackgroundTween != null) {
           _OverlayBackgroundTween.Kill();
         }
-        if (_HideWidgetSequence != null) {
-          _HideWidgetSequence.Kill();
+
+        foreach (KeyValuePair<int, Sequence> kvp in _HideWidgetSequences) {
+          kvp.Value.Kill();
         }
+        _HideWidgetSequences.Clear();
       }
 
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
@@ -368,16 +370,14 @@ namespace Cozmo {
         _ActiveWidgets.Remove(widgetToHide);
 
         Sequence close = widgetToHide.CreateCloseAnimSequence();
+        int widgetInstanceId = widgetToHide.gameObject.GetInstanceID();
         close.AppendCallback(() => {
+          _HideWidgetSequences.Remove(widgetInstanceId);
           if (widgetToHide != null) {
             widgetToHide.DestroyWidgetImmediately();
           }
         });
         close.Play();
-        if (_HideWidgetSequence != null) {
-          _HideWidgetSequence.Complete();
-        }
-        _HideWidgetSequence = close;
       }
 
       private void UpdateButtonDasViewControllerNames(string slideName) {
