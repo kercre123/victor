@@ -530,6 +530,12 @@ namespace Anki {
       AnkiDebug( 374, "SteeringController.ExecutePointTurn_2.Params", 610, "%d: vel %f, accel %f", 3,
                 HAL::GetTimeStamp(), RAD_TO_DEG_F32(angularVel), RAD_TO_DEG_F32(angularAccel));
       
+      // Check for nan params
+      if (isnan(angularVel) || isnan(angularAccel)) {
+        AnkiWarn( 401, "SteeringController.ExecutePointTurn_2.NanParamFound", 617, "%f, %f", 2, angularVel, angularAccel);
+        return;
+      }
+      
       if (fabsf(angularVel) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
         AnkiWarn( 244, "SteeringController.ExecutePointTurn_2.PointTurnTooFast", 533, "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.", 2,
               RAD_TO_DEG_F32(angularVel), MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
@@ -568,6 +574,17 @@ namespace Anki {
                 RAD_TO_DEG_F32(angularDecel),
                 RAD_TO_DEG_F32(angleTolerance),
                 useShortestDir);
+      
+      // Check for nan params
+      if (isnan(targetAngle)   ||
+          isnan(maxAngularVel) ||
+          isnan(angularAccel)  ||
+          isnan(angularDecel)  ||
+          isnan(angleTolerance)) {
+        AnkiWarn( 402, "SteeringController.ExecutePointTurn.NanParamFound", 618, "%f, %f, %f, %f, %f", 5,
+                 targetAngle, maxAngularVel, angularAccel, angularDecel, angleTolerance);
+        return;
+      }
       
       if (fabsf(maxAngularVel) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC) {
         AnkiWarn( 245, "SteeringController.ExecutePointTurn.PointTurnTooFast", 533, "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.", 2,

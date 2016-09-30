@@ -119,6 +119,7 @@ void TracePrinter::HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& m
       case RobotInterface::LogLevel::ANKI_LOG_LEVEL_WARN:
       {
         Util::sWarningF(name.c_str(), keyValuePairs, "%s", mesg.c_str());
+        break;
       }
       case RobotInterface::LogLevel::ANKI_LOG_LEVEL_ASSERT:
       case RobotInterface::LogLevel::ANKI_LOG_LEVEL_ERROR:
