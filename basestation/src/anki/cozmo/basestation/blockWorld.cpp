@@ -4766,30 +4766,33 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     filter.SetAllowedIDs({withID});
     filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
     
+    // Disable default filter so we consider all objects regardless of poseState
+    filter.SetFilterFcn(nullptr);
+    
     std::vector<ObservableObject*> objects;
     FindMatchingObjects(filter, objects);
 
     bool retval = false;
     for(auto object : objects)
-  {
-    if(nullptr != object)
     {
-      // Inform caller that we found the requested ID:
-      retval = true;
-      
-      // Need to do all the same cleanup as Clear() calls
-      ClearObjectHelper(object);
-      
-      // Actually delete the object we found
-      const Pose3d* origin = &object->GetPose().FindOrigin();
-      ObjectFamily inFamily = object->GetFamily();
-      ObjectType   withType = object->GetType();
-      
-      // And remove it from the container
-      // Note: we're using shared_ptr to store the objects, so erasing from
-      //       the container will delete it if nothing else is referring to it
-      _existingObjects.at(origin).at(inFamily).at(withType).erase(object->GetID());
-    }
+      if(nullptr != object)
+      {
+        // Inform caller that we found the requested ID:
+        retval = true;
+        
+        // Need to do all the same cleanup as Clear() calls
+        ClearObjectHelper(object);
+        
+        // Actually delete the object we found
+        const Pose3d* origin = &object->GetPose().FindOrigin();
+        ObjectFamily inFamily = object->GetFamily();
+        ObjectType   withType = object->GetType();
+        
+        // And remove it from the container
+        // Note: we're using shared_ptr to store the objects, so erasing from
+        //       the container will delete it if nothing else is referring to it
+        _existingObjects.at(origin).at(inFamily).at(withType).erase(object->GetID());
+      }
     }
     
     _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(_robot->GetID(), withID)));
