@@ -34,22 +34,27 @@ namespace Cozmo.HubWorld {
     [SerializeField]
     private GameObject _NewUnlockIndicator;
 
+    private ChallengeData _ChallengeData;
+    private bool _IsUnlocked = true;
+    private bool _IsAvailable = true;
+
     public virtual void Initialize(ChallengeData challengeData, string dasParentViewName, bool isEnd = false, bool isNew = false, bool isUnlocked = true, bool isAvailable = true) {
       _NewUnlockIndicator.SetActive(isNew);
       _AffordableIndicator.SetActive(false);
       if (challengeData != null) {
+        _ChallengeData = challengeData;
         _ChallengeId = challengeData.ChallengeID;
         _IconProxy.SetIcon(challengeData.ChallengeIcon);
         _ChallengeTitle.text = Localization.Get(challengeData.ChallengeTitleLocKey);
-        if (!isUnlocked) {
-          if (isAvailable) {
-            UnlockableInfo uInfo = UnlockablesManager.Instance.GetUnlockableInfo(challengeData.UnlockId.Value);
-            Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-            bool canAfford = playerInventory.CanRemoveItemAmount(uInfo.UpgradeCostItemId, uInfo.UpgradeCostAmountNeeded);
-            _AffordableIndicator.SetActive(canAfford);
-          }
-          _IconProxy.SetAlpha(0.4f);
-        }
+        _IsUnlocked = isUnlocked;
+        _IsAvailable = isAvailable;
+
+        CheckAffordabilityAndSetIndicator();
+
+        Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+        playerInventory.ItemAdded += HandleItemValueChanged;
+        playerInventory.ItemRemoved += HandleItemValueChanged;
+        playerInventory.ItemCountSet += HandleItemValueChanged;
       }
 
       _ButtonScript.Initialize(HandleButtonClicked, string.Format("see_{0}_details_button", _ChallengeId), dasParentViewName);
@@ -57,6 +62,32 @@ namespace Cozmo.HubWorld {
       _ButtonScript.onRelease.AddListener(HandlePointerUp);
       _AvailableContainer.SetActive(isAvailable);
       _UnavailableContainer.SetActive(!isAvailable);
+    }
+
+    private void OnDestroy() {
+      if (DataPersistenceManager.Instance != null) {
+        Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+        playerInventory.ItemAdded -= HandleItemValueChanged;
+        playerInventory.ItemRemoved -= HandleItemValueChanged;
+        playerInventory.ItemCountSet -= HandleItemValueChanged;
+      }
+    }
+
+    private void HandleItemValueChanged(string itemId, int delta, int newCount) {
+      CheckAffordabilityAndSetIndicator();
+    }
+
+    private void CheckAffordabilityAndSetIndicator() {
+      if (!_IsUnlocked) {
+        if (_IsAvailable) {
+          UnlockableInfo uInfo = UnlockablesManager.Instance.GetUnlockableInfo(_ChallengeData.UnlockId.Value);
+          Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+          bool canAfford = playerInventory.CanRemoveItemAmount(uInfo.UpgradeCostItemId, uInfo.UpgradeCostAmountNeeded);
+          _AffordableIndicator.SetActive(canAfford);
+        }
+        _IconProxy.SetAlpha(0.4f);
+      }
+
     }
 
     private void HandlePointerDown() {
@@ -67,13 +98,6 @@ namespace Cozmo.HubWorld {
     private void HandlePointerUp() {
       _AvailableContainer.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
       _UnavailableContainer.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
-    }
-
-    private void Update() {
-      OnUpdate();
-    }
-
-    protected virtual void OnUpdate() {
     }
 
     private void HandleButtonClicked() {

@@ -225,6 +225,7 @@ namespace Cozmo.HomeHub {
       Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
       playerInventory.ItemAdded += HandleItemValueChanged;
       playerInventory.ItemRemoved += HandleItemValueChanged;
+      playerInventory.ItemCountSet += HandleItemValueChanged;
       CheckIfUnlockablesAffordableAndUpdateBadge();
 
       UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
@@ -818,6 +819,7 @@ namespace Cozmo.HomeHub {
       Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
       playerInventory.ItemAdded -= HandleItemValueChanged;
       playerInventory.ItemRemoved -= HandleItemValueChanged;
+      playerInventory.ItemCountSet -= HandleItemValueChanged;
       StopCoroutine(BurstEnergyAfterInit());
     }
 
