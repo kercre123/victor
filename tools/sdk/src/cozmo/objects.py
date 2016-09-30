@@ -240,27 +240,27 @@ class CustomObject(ObservableObject):
     #### Properties ####
     @property
     def x_size_mm(self):
-        '''Size of this object in its X axis.'''
+        '''Size of this object in its X axis, in millimeters.'''
         return self._x_size_mm
 
     @property
     def y_size_mm(self):
-        '''Size of this object in its Y axis.'''
+        '''Size of this object in its Y axis, in millimeters.'''
         return self._y_size_mm
 
     @property
     def z_size_mm(self):
-        '''Size of this object in its Z axis.'''
+        '''Size of this object in its Z axis, in millimeters.'''
         return self._z_size_mm
 
     @property
     def marker_width_mm(self):
-        '''Width of the marker on this object.'''
+        '''Width in millimeters of the marker on this object.'''
         return self._marker_width_mm
 
     @property
     def marker_height_mm(self):
-        '''Height of the marker on this object.'''
+        '''Height in millimeters of the marker on this object.'''
         return self._marker_height_mm
 
 
@@ -288,7 +288,7 @@ for (_name, _id) in _clad_to_engine_cozmo.ObjectType.__dict__.items():
 class FixedCustomObject():
     '''A fixed object defined by the SDK. It is given a pose and x,y,z sizes.
 
-    This object can not be observed by the robot so its pose never changes.
+    This object cannot be observed by the robot so its pose never changes.
     Their position is static in Cozmo's world view, once instantiated, these objects
     never move. This could be used to make Cozmo aware of objects and know to path around them
     even when they don't have any markers.
@@ -330,17 +330,17 @@ class FixedCustomObject():
 
     @property
     def x_size_mm(self):
-        '''The length of the object in its X axis.'''
+        '''The length of the object in its X axis, in millimeters.'''
         return self._x_size_mm
 
     @property
     def y_size_mm(self):
-        '''The length of the object in its Y axis.'''
+        '''The length of the object in its Y axis, in millimeters.'''
         return self._y_size_mm
 
     @property
     def z_size_mm(self):
-        '''The length of the object in its Z axis.'''
+        '''The length of the object in its Z axis, in millimeters.'''
         return self._z_size_mm
 
 

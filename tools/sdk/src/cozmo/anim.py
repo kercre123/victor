@@ -97,7 +97,7 @@ class AnimationNames(event.Dispatcher, set):
         return id(self)
 
     def refresh(self):
-        '''Causes the list of animation name to be re-requested from the engine.
+        '''Causes the list of animation names to be re-requested from the engine.
 
         Attempting to play an animation while the list is refreshing will result
         in an AnimationsNotLoaded exception being raised.

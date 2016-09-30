@@ -1,6 +1,6 @@
 # Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
 '''
-Behaviors represent a task that the Cozmo robot may perform for an
+Behaviors represent a task that Cozmo may perform for an
 indefinite amount of time.
 
 For example, the "LookAroundInPlace" behavior causes Cozmo to start looking
@@ -9,7 +9,7 @@ around him (without driving), which will cause events such as
 objects.
 
 Behaviors must be explicitly stopped before having the robot do something else
-(eg. to pickup the object he just observed).
+(for example, pick up the object he just observed).
 
 Behaviors are started by a call to :meth:`cozmo.robot.Cozmo.start_behavior`,
 which returns a :class:`Behavior` object.  Calling the :meth:`~Behavior.stop`

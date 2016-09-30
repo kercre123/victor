@@ -56,7 +56,7 @@ class GoToPose(action.Action):
     def _encode(self):
         return _clad_to_engine_iface.GotoPose(x_mm=self.pose.position.x, y_mm=self.pose.position.y,
                                               rad=self.pose.rotation.angle_z.radians)
-                                            
+
 class DriveOffChargerContacts(action.Action):
     '''Represents the drive off charger contacts action in progress.
 
@@ -79,9 +79,9 @@ class PickupObject(action.Action):
 
     def __init__(self, obj, use_pre_dock_pose=True, **kw):
         super().__init__(**kw)
-        #: The object (eg. an instance of :class:`cozmo.objects.LightCube`) that was picked up
+        #: The object (e.g. an instance of :class:`cozmo.objects.LightCube`) that was picked up
         self.obj = obj
-        #: A bool that is true when cozmo needs to go to a pose before attempting to navigate to the object
+        #: A bool that is true when Cozmo needs to go to a pose before attempting to navigate to the object
         self.use_pre_dock_pose = use_pre_dock_pose
 
     def _repr_values(self):
@@ -99,9 +99,9 @@ class PlaceOnObject(action.Action):
 
     def __init__(self, obj, use_pre_dock_pose=True, **kw):
         super().__init__(**kw)
-        #: The object (eg. an instance of :class:`cozmo.objects.LightCube`) that the held object will be placed on
+        #: The object (e.g. an instance of :class:`cozmo.objects.LightCube`) that the held object will be placed on
         self.obj = obj
-        #: A bool that is true when cozmo needs to go to a pose before attempting to navigate to the object
+        #: A bool that is true when Cozmo needs to go to a pose before attempting to navigate to the object
         self.use_pre_dock_pose = use_pre_dock_pose
 
     def _repr_values(self):
@@ -287,7 +287,7 @@ class Cozmo(event.Dispatcher):
     set_head_angle_factory = SetHeadAngle
     set_lift_height_factory = SetLiftHeight
     drive_off_charger_contacts_factory = DriveOffChargerContacts
-    
+
     # other factories
     animation_factory = anim.Animation
     animation_trigger_factory = anim.AnimationTrigger
@@ -532,11 +532,11 @@ class Cozmo(event.Dispatcher):
         '''Tell Cozmo to directly move his treads.
 
         Args:
-            l_wheel_velocity (float): Velocity of the left tread
-            r_wheel_velocity (float): Velocity of the right tread
-            l_wheel_acc (float): Acceleration of left tread,
+            l_wheel_velocity (float): Velocity of the left tread (in millimeters per second)
+            r_wheel_velocity (float): Velocity of the right tread (in millimeters per second)
+            l_wheel_acc (float): Acceleration of left tread (in millimeters per second squared)
             None value defaults this to the same as l_wheel_velocity
-            r_wheel_acc (float): Acceleration of right tread
+            r_wheel_acc (float): Acceleration of right tread (in millimeters per second squared)
             None value defaults this to the same as r_wheel_velocity
             duration (float): Time for the robot to drive. Will call :meth:`~cozmo.robot.stop_all_motors`
             after this duration has passed
@@ -557,7 +557,7 @@ class Cozmo(event.Dispatcher):
             self.stop_all_motors()
 
     def stop_all_motors(self):
-        '''Tell cozmo to stop all motors'''
+        '''Tell Cozmo to stop all motors'''
         msg = _clad_to_engine_iface.StopAllMotors()
         self.conn.send_msg(msg)
 
@@ -565,7 +565,7 @@ class Cozmo(event.Dispatcher):
     def move_head(self, velocity):
         '''Tell Cozmo's head motor to move with a certain velocity.
 
-        Positive velocity for up, negative velocity for down.
+        Positive velocity for up, negative velocity for down. Measured in radians per second.
 
         Args:
             velocity (float): Motor velocity for Cozmo's head.
@@ -576,7 +576,7 @@ class Cozmo(event.Dispatcher):
     def move_lift(self, velocity):
         '''Tell Cozmo's lift motor to move with a certain velocity.
 
-        Positive velocity for up, negative velocity for down.
+        Positive velocity for up, negative velocity for down.  Measured in radians per second.
 
         Args:
             velocity (float): Motor velocity for Cozmo's lift.
@@ -589,11 +589,11 @@ class Cozmo(event.Dispatcher):
         '''Have Cozmo say text!
 
         Args:
-            text (string): The words for cozmo to say
-            play_excited_animation (bool): Whether to also play an exicted animation whilst speaking (moves Cozmo a lot)
-            use_cozmo_voice (bool): Whether to use cozmo's robot voice (otherwise uses a generic human male voice)
+            text (string): The words for Cozmo to say
+            play_excited_animation (bool): Whether to also play an excited animation while speaking (moves Cozmo a lot)
+            use_cozmo_voice (bool): Whether to use Cozmo's robot voice (otherwise, he uses a generic human male voice)
             duration_scalar (float): Adjust the relative duration of the generated text to speech audio
-            voice_pitch (float): Adjust the pitch of cozmo's robot voice [-1.0, 1.0]
+            voice_pitch (float): Adjust the pitch of Cozmo's robot voice [-1.0, 1.0]
         Returns:
             A :class:`cozmo.robot.SayText` action object which can be queried to see when it is complete
         '''
@@ -606,7 +606,7 @@ class Cozmo(event.Dispatcher):
         return action
 
     def set_backpack_lights(self, light1, light2, light3, light4, light5):
-        '''Set the lights on cozmo's back.
+        '''Set the lights on Cozmo's backpack.
 
         Args:
             light1-5 (class:'cozmo.lights.light'): The lights for Cozmo's backpack
@@ -619,7 +619,7 @@ class Cozmo(event.Dispatcher):
         self.conn.send_msg(msg)
 
     def set_all_backpack_lights(self, light):
-        '''Set the lights on cozmo's back to the same color.
+        '''Set the lights on Cozmo's backpack to the same color.
 
         Args:
             light (class:'cozmo.lights.light'): The lights for Cozmo's backpack
@@ -628,12 +628,12 @@ class Cozmo(event.Dispatcher):
         self.set_backpack_lights(*light_arr)
 
     def set_backpack_lights_off(self):
-        '''Set the lights on cozmo's back to off.'''
+        '''Set the lights on Cozmo's backpack to off.'''
         light_arr = [ lights.off_light ] * 5
         self.set_backpack_lights(*light_arr)
 
     def set_head_angle(self, angle, accel=10.0, max_speed=10.0, duration=0.0):
-        '''Tell Cozmo's head to turn to a given angle
+        '''Tell Cozmo's head to turn to a given angle.
         Args:
             angle: (:class:`cozmo.util.Angle`) - desired angle in radians for Cozmo's head. (MIN_HEAD_ANGLE to MAX_HEAD_ANGLE)
             accel (float): Acceleration of Cozmo's head in radians per second squared
@@ -712,7 +712,7 @@ class Cozmo(event.Dispatcher):
     # Cozmo's Face animation commands
 
     def display_lcd_face_image(self, screen_data, duration_ms):
-        ''' Display a bitmap image on cozmo's lcd face screen
+        ''' Display a bitmap image on Cozmo's LCD face screen
 
         Args:
             screen_data (:class:`bytes`): a sequence of pixels (8 pixels per byte) (from e.g. :func:`cozmo.lcd_face.convert_pixels_to_screen_data`)
@@ -814,7 +814,7 @@ class Cozmo(event.Dispatcher):
         return action
 
     def place_object_on_ground_here(self, obj):
-        '''Ask Cozmo to place the object its carrying on the ground at the current location.
+        '''Ask Cozmo to place the object he is carrying on the ground at the current location.
 
         Returns:
             A :class:`cozmo.robot.PlaceObjectOnGroundHere` action object which can be queried to see when it is complete
@@ -881,15 +881,15 @@ class Cozmo(event.Dispatcher):
                 conn=self.conn, robot=self, dispatch_parent=self)
         self._action_dispatcher._send_single_action(action)
         return action
-        
+
     def drive_off_charger_contacts(self):
-        ''' Tells Cozmo to drive forward slightly to get off charge contacts
-        
-        All motor movement is disabled while Cozmo is on the charger to 
+        ''' Tells Cozmo to drive forward slightly to get off the charger contacts
+
+        All motor movement is disabled while Cozmo is on the charger to
         prevent hardware damage. This command is the one exception and provides
         a way to drive forward a little to disconnect from the charger contacts
         and thereby re-enable all other commands.
-        
+
         Returns:
            A :class:`cozmo.robot.DriveOffChargerContacts` action object which can be queried to see when it is complete
         '''

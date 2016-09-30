@@ -2,10 +2,10 @@
 
 import logging as _logging
 
-#: The general purpose logger logs high level information about cozmo events
+#: The general purpose logger logs high level information about Cozmo events.
 logger = _logging.getLogger('cozmo.general')
 
-#: The protocol logger logs low level messages that are sent back and forth to Cozmo
+#: The protocol logger logs low level messages that are sent back and forth to Cozmo.
 logger_protocol = _logging.getLogger('cozmo.protocol')
 
 del _logging

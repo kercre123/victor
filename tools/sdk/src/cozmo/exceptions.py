@@ -38,7 +38,7 @@ class SDKVersionMismatch(ConnectionError):
     '''Raised if the Cozmo SDK version is not compatible with the software running on the device.'''
 
 class NotPickupable(ActionError):
-    '''Raised if an attempt is made to pickup or place an object that can't be picked up by Cozmo'''
+    '''Raised if an attempt is made to pick up or place an object that can't be picked up by Cozmo'''
 
 class CannotPlaceObjectsOnThis(ActionError):
     '''Raised if an attempt is made to place an object on top of an invalid object'''

@@ -30,7 +30,7 @@ class EvtConnected(event.Event):
     conn = 'The connected CozmoConnection object'
 
 class EvtRobotFound(event.Event):
-    '''Triggered when a Cozmo robot is detected, but before it's initialized.
+    '''Triggered when a Cozmo robot is detected, but before he's initialized.
 
     :class:`cozmo.robot.EvtRobotReady` is dispatched when the robot is fully initialized.
     '''

@@ -18,7 +18,7 @@ action completes (or fails) by calling its
 Warning:
     Only one action can be active at a time.  Attempting to trigger another
     action while one is already in progress will result in a
-    :class:`~cozmo.exceptions.RobotBusy` exception being raised
+    :class:`~cozmo.exceptions.RobotBusy` exception being raised.
 '''
 
 __all__ = ['EvtActionCompleted', 'Action']
@@ -48,7 +48,7 @@ class EvtActionCompleted(event.Event):
     action = "The action that completed"
     state = 'The state of the action; either cozmo.action.ACTION_SUCCEEDED or cozmo.action.ACTION_FAILED'
     failure_code = 'A failure code such as "cancelled"'
-    failure_reason = 'A human readable failure reason'
+    failure_reason = 'A human-readable failure reason'
 
 
 class Action(event.Dispatcher):
@@ -86,7 +86,7 @@ class Action(event.Dispatcher):
 
     def _dispatch_completed_event(self, msg):
         # Override to extra action-specific data from msg and generate
-        # an action specific completion event.  Do not call super if overriden.
+        # an action-specific completion event.  Do not call super if overriden.
         # Must generate a subclass of EvtActionCompleted.
         self.dispatch_event(EvtActionCompleted,
                 action=self, state=self._state)
@@ -229,8 +229,8 @@ class _ActionDispatcher(event.Dispatcher):
             position=position, action=_clad_to_engine_iface.RobotActionUnion())
         action_msg = action._encode()
         cls_name = action_msg.__class__.__name__
-        # for some reason, the RobotActionUnion type uses properties with a lower case
-        # first character, instead of upper like all the other unions
+        # For some reason, the RobotActionUnion type uses properties with a lowercase
+        # first character, instead of uppercase like all the other unions
         cls_name = cls_name[0].lower() + cls_name[1:]
         setattr(qmsg.action, cls_name, action_msg)
         self.robot.conn.send_msg(qmsg)
@@ -269,6 +269,6 @@ class _ActionDispatcher(event.Dispatcher):
                 action_id_type = self._action_id_type(action_id)
                 logger.error('Received completed action message for sdk-known %s action_id=%s', action_id_type, action_id)
         del self._in_progress[action_id]
-        # XXX this should generate a real event, not a msg
-        # should also dispatch to self so the parent can be notified.
+        # XXX This should generate a real event, not a msg
+        # Should also dispatch to self so the parent can be notified.
         action.dispatch_event(evt)

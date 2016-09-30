@@ -11,7 +11,7 @@ import traceback
 import types
 
 class _MetaBase(type):
-    '''Metaclass for all cozmo package classes.
+    '''Metaclass for all Cozmo package classes.
 
     Ensures that all *_factory class attributes are wrapped into a _Factory
     descriptor to automatically support synchronous operation.
@@ -32,7 +32,7 @@ class _MetaBase(type):
 
 
 class Base(metaclass=_MetaBase):
-    '''Base class for cozmo package objects.
+    '''Base class for Cozmo package objects.
 
     *_factory attributes are automatically wrapped into a _Factory descriptor to
     support automatically synchronous operation.
@@ -74,10 +74,10 @@ class _Factory:
         sync_thread_id = getattr(ins, '_sync_thread_id', None)
         loop = getattr(ins, '_loop', None)
         if sync_thread_id:
-            # object instance is running in sync mode
+            # Object instance is running in sync mode
             return _SyncFactory(self._wrapped_factory, loop, sync_thread_id, ins._sync_abort_future)
-        # Pass through to the factory.  set loop here as a convenience as all
-        # cozmo objects require it by virtue of inheriting from event.Dispatcher
+        # Pass through to the factory.  Set loop here as a convenience as all
+        # Cozmo objects require it by virtue of inheriting from event.Dispatcher
         return functools.partial(self._wrapped_factory, loop=loop)
 
     def __set__(self, ins, val):
@@ -112,7 +112,7 @@ class _SyncProxy:
 
     Each method call and attribute access is passed through to the wrapped object.
 
-    If the caller is operating in a different thread to the callee (ie. the
+    If the caller is operating in a different thread to the callee (for example, the
     caller is operating outside of the context of the event loop), then any
     calls to the wrapped object are dispatched to the event loop running on the
     loop's native thread.

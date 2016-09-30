@@ -139,10 +139,5 @@ class Face(event.Dispatcher):
         Returns:
             A Bool if Cozmo can currently see this face.
         '''
-        # These times are in milliseconds, so return false if its been over a quater second.
+        # These times are in milliseconds, so return false if it has been over a quarter of a second.
         return (self._robot.last_image_time - self.last_observed_time) < 250
-
-
-
-
-
