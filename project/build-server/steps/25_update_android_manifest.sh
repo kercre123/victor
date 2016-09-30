@@ -15,34 +15,30 @@ VERSION_GENERATOR="${ANKI_BUILD_TOOLS_ROOT}/version-generator.py"
 VERSION_LINE="\(bundleVersion:\)\(.*\)"
 DAS_VERSION_LINE="\(<meta-data android:name=\"dasVersionName\" android:value=\"\)\(.*\)\(\" \/>\)"
 
-
+#Files
 MANIFEST=./unity/Cozmo/Assets/Plugins/Android/Cozmo/AndroidManifest.xml
 
 
 pushdir ${ANKI_REPO_ROOT}
 
+#VERSION is the master version file at root of project.
+MARKETING_VERSION=`cat VERSION`
 
-# commenting out DAS versioning since it's
-# a.) currently not used in cozmo (but probably will be in the future)
-# b.) the script fails to run due to SETTINGS_FILE not being defined with cozmo's
-#     current environment setup
-# MARKETING_VERSION=$(grep $VERSION_LINE $SETTINGS_FILE | sed "s@$VERSION_LINE@\2@" )
+DAS_VERSION=`${VERSION_GENERATOR} \
+     --build-version ${ANKI_BUILD_VERSION} \
+     --build-type ${ANKI_BUILD_TYPE} \
+     ${MARKETING_VERSION}`
 
-# DAS_VERSION=`${VERSION_GENERATOR} \
-#     --build-version ${ANKI_BUILD_VERSION} \
-#     --build-type ${ANKI_BUILD_TYPE} \
-#     ${MARKETING_VERSION}`
+echo "Inserting das.version $DAS_VERSION in $MANIFEST"
 
-# echo "Inserting das.version $DAS_VERSION in $MANIFEST"
+sed -i '' "s@$DAS_VERSION_LINE@\1$DAS_VERSION\3@" $MANIFEST
 
-# sed -i '' "s@$DAS_VERSION_LINE@\1$DAS_VERSION\3@" $MANIFEST
-
-: ${ANKI_BUILD_HOCKEYAPP_APP_ID:=""}
+: ${ANKI_BUILD_HOCKEYAPP_APP_ID_ANDROID:=""}
 # insert hockeyapp id
-if [ -n "$ANKI_BUILD_HOCKEYAPP_APP_ID" ]; then
-    echo "Inserting hockeyapp id $ANKI_BUILD_HOCKEYAPP_APP_ID in $MANIFEST"
+if [ -n "$ANKI_BUILD_HOCKEYAPP_APP_ID_ANDROID" ]; then
+    echo "Inserting hockeyapp id $ANKI_BUILD_HOCKEYAPP_APP_ID_ANDROID in $MANIFEST"
     HOCKEYAPP_ID_LINE="\(<meta-data android:name=\"HOCKEYAPP_APP_ID\" android:value=\"\)\(.*\)\(\" \/>\)"
-    sed -i '' "s@$HOCKEYAPP_ID_LINE@\1$ANKI_BUILD_HOCKEYAPP_APP_ID\3@" $MANIFEST
+    sed -i '' "s@$HOCKEYAPP_ID_LINE@\1$ANKI_BUILD_HOCKEYAPP_APP_ID_ANDROID\3@" $MANIFEST
 fi
 
 popdir
