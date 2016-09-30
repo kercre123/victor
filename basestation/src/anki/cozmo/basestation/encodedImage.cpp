@@ -37,6 +37,46 @@ namespace Cozmo {
   {
     
   }
+  
+  EncodedImage::EncodedImage(const Vision::Image& imgGray)
+  : _timestamp(imgGray.GetTimestamp())
+  , _imgWidth(imgGray.GetNumCols())
+  , _imgHeight(imgGray.GetNumRows())
+  , _encoding(ImageEncoding::RawGray)
+  , _isImgValid(!imgGray.IsEmpty())
+  {
+    _buffer.reserve(imgGray.GetNumElements());
+    std::copy(imgGray.GetDataPointer(), imgGray.GetDataPointer() + imgGray.GetNumElements(),
+              std::back_inserter(_buffer));
+  }
+  
+  EncodedImage::EncodedImage(const Vision::ImageRGB& imgRGB)
+  : _timestamp(imgRGB.GetTimestamp())
+  , _imgWidth(imgRGB.GetNumCols())
+  , _imgHeight(imgRGB.GetNumRows())
+  , _encoding(ImageEncoding::RawRGB)
+  , _isImgValid(!imgRGB.IsEmpty())
+  {
+    _buffer.reserve(imgRGB.GetNumElements() * 3);
+    
+    s32 nrows = imgRGB.GetNumRows(), ncols = imgRGB.GetNumCols();
+    if(imgRGB.IsContinuous())
+    {
+      ncols *= nrows;
+      nrows = 1;
+    }
+    
+    for(s32 i=0; i<nrows; ++i)
+    {
+      const Vision::PixelRGB* img_i = imgRGB.GetRow(i);
+      for(s32 j=0; j<ncols; ++j)
+      {
+        _buffer.push_back(img_i[j].r());
+        _buffer.push_back(img_i[j].g());
+        _buffer.push_back(img_i[j].b());
+      }
+    }
+  }
 
   bool EncodedImage::AddChunk(const ImageChunk &chunk)
   {
@@ -271,7 +311,6 @@ namespace Cozmo {
       return RESULT_FAIL;
     }
   }
-  
   
   // Turn a fully assembled MINIPEG_GRAY image into a JPEG with header and footer
   // This is a port of C# code from Nathan.

@@ -1043,7 +1043,8 @@ namespace Cozmo {
       // If we were moving too fast at the timestamp the face was detected then don't update it
       // If the detected face is being tracked than we should look farther back in imu data history
       // else we will just look at the previous and next imu data
-      if(WasMovingTooFast(faceDetection.GetTimeStamp(),
+      if((kBodyTurnSpeedThreshFace_degs > 0.f || kHeadTurnSpeedThreshFace_degs > 0.f) &&
+         WasMovingTooFast(faceDetection.GetTimeStamp(),
                           DEG_TO_RAD_F32(kBodyTurnSpeedThreshFace_degs),
                           DEG_TO_RAD_F32(kHeadTurnSpeedThreshFace_degs),
                           (faceDetection.IsBeingTracked() ? kNumImuDataToLookBack : 0)))
@@ -2036,8 +2037,18 @@ namespace Cozmo {
   Result VisionComponent::LoadFaceAlbumFromFile(const std::string& path)
   {
     std::list<Vision::LoadedKnownFace> loadedFaces;
+    Result loadResult = LoadFaceAlbumFromFile(path, loadedFaces);
+    if(RESULT_OK == loadResult)
+    {
+      BroadcastLoadedNamesAndIDs(loadedFaces);
+    }
+    
+    return loadResult;
+  }
+  
+  Result VisionComponent::LoadFaceAlbumFromFile(const std::string& path, std::list<Vision::LoadedKnownFace>& loadedFaces)
+  {
     Result result = _visionSystem->LoadFaceAlbum(path, loadedFaces);
-    BroadcastLoadedNamesAndIDs(loadedFaces);
     
     if(RESULT_OK != result) {
       PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbum.LoadFromFileFailed",

@@ -345,7 +345,7 @@ namespace Cozmo {
       Util::sEventF("robot.vision.face_recognition.immediate_recognition", {{DDATA, kIsNamedStringDAS}},
                     "%d", knownFace->face.GetID());
     }
-    else if(!isNamed && knownFace->numTimesObservedFacingCamera == kNumTimesToSeeFrontalToBeStable)
+    else if(!isNamed && knownFace->face.GetID() > 0 && knownFace->numTimesObservedFacingCamera == kNumTimesToSeeFrontalToBeStable)
     {
       // Log to DAS that we've seen this session-only face for awhile and not
       // recognized it as someone else (so this is a stable session-only face)

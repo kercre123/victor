@@ -247,6 +247,7 @@ struct DockingErrorSignal;
     // NOTE: Load replaces whatever is in the robot's NVStorage!
     Result SaveFaceAlbumToFile(const std::string& path);
     Result LoadFaceAlbumFromFile(const std::string& path); // Broadcasts any loaded names and IDs
+    Result LoadFaceAlbumFromFile(const std::string& path, std::list<Vision::LoadedKnownFace>& loadedFaces); // Populates list, does not broadcast
     
     // This is for faking images being processed for unit tests
     void FakeImageProcessed(TimeStamp_t t) { _lastProcessedImageTimeStamp_ms = t; }
