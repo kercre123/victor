@@ -12,9 +12,9 @@ from tkinter import *
 try:
     from PIL import ImageTk as ImageTk
 except ImportError:
-    ImageTk = None 
+    ImageTk = None
     if platform.system() == 'Linux':
-        cozmo.logger.error('Cannot import ImageTk; TkInter viewer disabled.\nDo `sudo apt-get update` and `sudo apt-get install python3-pil.imagetk` to install ImageTk')
+        cozmo.logger.error('Cannot import ImageTk; Tkinter viewer disabled.\nDo `sudo apt-get update` and `sudo apt-get install python3-pil.imagetk` to install ImageTk.')
 
 from PIL import Image, ImageDraw
 import threading
