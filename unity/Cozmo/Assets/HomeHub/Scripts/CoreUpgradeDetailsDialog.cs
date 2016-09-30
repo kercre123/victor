@@ -477,9 +477,9 @@ public class CoreUpgradeDetailsDialog : BaseView {
     DataPersistenceManager.Instance.Save();
   }
 
-  private void OnApplicationFocus(bool focusStatus) {
-    DAS.Debug("CoreUpgradeDetailsDialog.OnApplicationFocus", "Application focus: " + focusStatus);
-    if (focusStatus) {
+  private void OnApplicationPause(bool pauseStatus) {
+    DAS.Debug("CoreUpgradeDetailsDialog.OnApplicationPause", "Application pause: " + pauseStatus);
+    if (pauseStatus) {
       StopSparkUnlock();
     }
   }
