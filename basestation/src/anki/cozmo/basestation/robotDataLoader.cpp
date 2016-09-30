@@ -43,7 +43,13 @@ RobotDataLoader::RobotDataLoader(const CozmoContext* context)
 {
 }
 
-RobotDataLoader::~RobotDataLoader() = default;
+RobotDataLoader::~RobotDataLoader()
+{
+  if (_dataLoadingThread.joinable()) {
+    _abortLoad = true;
+    _dataLoadingThread.join();
+  }
+}
   
 // We report some loading data info so the UI can inform the user. Ratio of time taken per section is approximate,
 // based on recent profiling. Some sections below are called out specifically, the rest makes up the remainder.
@@ -224,6 +230,9 @@ void RobotDataLoader::WalkAnimationDir(const std::string& animationDir, Timestam
 
 void RobotDataLoader::LoadAnimationFile(const std::string& path)
 {
+  if (_abortLoad.load(std::memory_order_relaxed)) {
+    return;
+  }
   Json::Value animDefs;
   // add json filename and callback (to perform load) here?
   const bool success = _platform->readAsJson(path.c_str(), animDefs);
@@ -243,6 +252,9 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
 
 void RobotDataLoader::LoadAnimationGroupFile(const std::string& path)
 {
+  if (_abortLoad.load(std::memory_order_relaxed)) {
+    return;
+  }
   Json::Value animGroupDef;
   const bool success = _platform->readAsJson(path, animGroupDef);
   if (success && !animGroupDef.empty()) {
