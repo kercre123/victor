@@ -142,6 +142,7 @@ namespace Anki {
           handledDisconnect = initialIter->second.HandleDisconnect(result);
         }
         if (!handledDisconnect) {
+          _context->GetExternalInterface()->OnRobotDisconnected(withID);
           _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(withID, 0.0f)));
         }
 

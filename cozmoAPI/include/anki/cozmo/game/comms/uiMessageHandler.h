@@ -79,6 +79,8 @@ namespace Anki {
       
       bool HasDesiredNumUiDevices() const;
       
+      virtual void OnRobotDisconnected(uint32_t robotID) override;
+      
       virtual bool IsInSdkMode() const override { return _sdkStatus.IsInSdkMode(); }
       
       virtual void SetSdkStatus(SdkStatusType statusType, std::string&& statusText) override
@@ -122,6 +124,7 @@ namespace Anki {
       
       void OnEnterSdkMode(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
       void OnExitSdkMode(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+      void DoExitSdkMode();
       
       void UpdateSdk();
       void UpdateIsSdkCommunicationEnabled();

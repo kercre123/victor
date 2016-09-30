@@ -59,6 +59,8 @@ public:
   
   virtual Signal::SmartHandle Subscribe(const ExternalInterface::MessageGameToEngineTag& tagType, std::function<void(const AnkiEvent<ExternalInterface::MessageGameToEngine>&)> messageHandler) = 0;
   
+  virtual void OnRobotDisconnected(uint32_t robotID) = 0;
+  
   virtual bool IsInSdkMode() const = 0;
   
   virtual void SetSdkStatus(SdkStatusType statusType, std::string&& statusText) = 0;

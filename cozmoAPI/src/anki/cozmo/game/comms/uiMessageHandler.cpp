@@ -809,6 +809,12 @@ namespace Anki {
     {
       // Note: Robot's message handler also handles this event, and that disconnects the robot
       //       (that's how we ensure that we restore the robot to a safe default state)
+      DoExitSdkMode();
+    }
+    
+    
+    void UiMessageHandler::DoExitSdkMode()
+    {
       _sdkStatus.ExitMode();
       UpdateIsSdkCommunicationEnabled();
     }
@@ -845,6 +851,16 @@ namespace Anki {
       
       return false;
     }
+    
+    
+    void UiMessageHandler::OnRobotDisconnected(uint32_t robotID)
+    {
+      if (_sdkStatus.IsInSdkMode())
+      {
+        DoExitSdkMode();
+      }
+    }
+    
     
     const Util::Stats::StatsAccumulator& UiMessageHandler::GetLatencyStats(UiConnectionType type) const
     {
