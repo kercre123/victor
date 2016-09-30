@@ -3,6 +3,7 @@
 __all__ = ['EvtRobotFound', 'CozmoConnection', 'requires_cozmo_off_charger']
 
 
+import asyncio
 import platform
 
 from . import logger
@@ -80,11 +81,8 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
         super().connection_lost(exc)
         self._is_connected = False
         if self._running:
+            self.abort(exceptions.ConnectionAborted("Lost connection to the device"))
             logger.error("Lost connection to the device: %s" % exc)
-            self.dispatch_event(EvtConnectionClosed, exc=exc)
-            event._abort_futures(exceptions.ConnectionAborted("Lost connection to the device"))
-            self._stop_dispatcher()
-            self._running = False
 
     async def shutdown(self):
         '''Close the connection to the device'''
@@ -95,35 +93,55 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
             self._stop_dispatcher()
             self.transport.close()
 
+    def abort(self, exc):
+        '''Abort the connection to the device'''
+        if self._running:
+            logger.info('Aborting connection: %s' % exc)
+            self._running = False
+            # Allow any currently pending futures to complete before the
+            # remainder are aborted.
+            self._loop.call_soon(lambda: event._abort_futures(exc))
+            self._stop_dispatcher()
+            self.transport.close()
+
+
     def msg_received(self, msg):
         '''Receives low level communication messages from the engine.'''
-        tag_name = msg.tag_name
-
-        if tag_name == 'Ping':
-            # short circuit to avoid unnecessary event overhead
-            return self._handle_ping(msg._data)
-
-        elif tag_name == 'UiDeviceConnected':
-            # handle outside of event dispatch for quick abort in case
-            # of a version mismatch problem.
-            return self._handle_ui_device_connected(msg._data)
-
-        msg = msg._data
-        robot_id = getattr(msg, 'robotID', None)
-        event_name = '_Msg' +  tag_name
-
-        evttype = getattr(_clad, event_name, None)
-        if evttype is None:
-            logger.error('Received unknown CLAD message %s', event_name)
+        if not self._running:
             return
 
-        _log_first_seen(tag_name, msg)
+        try:
+            tag_name = msg.tag_name
 
-        if robot_id:
-            # dispatch robot-specific messages to Cozmo robot instances
-            return self._process_robot_msg(robot_id, evttype, msg)
+            if tag_name == 'Ping':
+                # short circuit to avoid unnecessary event overhead
+                return self._handle_ping(msg._data)
 
-        self.dispatch_event(evttype, msg=msg)
+            elif tag_name == 'UiDeviceConnected':
+                # handle outside of event dispatch for quick abort in case
+                # of a version mismatch problem.
+                return self._handle_ui_device_connected(msg._data)
+
+            msg = msg._data
+            robot_id = getattr(msg, 'robotID', None)
+            event_name = '_Msg' +  tag_name
+
+            evttype = getattr(_clad, event_name, None)
+            if evttype is None:
+                logger.error('Received unknown CLAD message %s', event_name)
+                return
+
+            _log_first_seen(tag_name, msg)
+
+            if robot_id:
+                # dispatch robot-specific messages to Cozmo robot instances
+                return self._process_robot_msg(robot_id, evttype, msg)
+
+            self.dispatch_event(evttype, msg=msg)
+
+        except Exception as exc:
+            # No exceptions should reach this point; it's a bug if they do.
+            self.abort(exc)
 
     def _process_robot_msg(self, robot_id, evttype, msg):
         if robot_id > 1:
@@ -246,9 +264,10 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
                 self.send_msg(wrong_version_msg)
             except AttributeError:
                 pass
+
             exc = exceptions.SDKVersionMismatch("SDK library does not match software running on device")
-            self.shutdown()
-            raise exc
+            self.abort(exc)
+            return
 
         self._is_ui_connected = True
         self.dispatch_event(EvtConnected, conn=self)
@@ -264,13 +283,15 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
 
     #### Commands ####
 
-    async def _wait_for_robot(self, timeout=None):
+    async def _wait_for_robot(self, timeout=5):
         '''Wait for a Cozmo robot to connect and complete initialization.
 
         Args:
             timeout (float): Maximum length of time to wait for a robot to be ready
         Returns:
             A :class:`cozmo.robot.Cozmo` instance that's ready to use.
+        Raises:
+            :class:`asyncio.TimeoutError` if there's no response from the robot.
         '''
         if not self._primary_robot:
             await self.wait_for(EvtRobotFound, timeout=timeout)
@@ -279,15 +300,21 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
         await self._primary_robot.wait_for(robot.EvtRobotReady, timeout=timeout)
         return self._primary_robot
 
-    async def wait_for_robot(self, timeout=None):
+    async def wait_for_robot(self, timeout=5):
         '''Wait for a Cozmo robot to connect and complete initialization.
 
         Args:
             timeout (float): Maximum length of time to wait for a robot to be ready
         Returns:
             A :class:`cozmo.robot.Cozmo` instance that's ready to use.
+        Raises:
+            :class:`asyncio.TimeoutError` if there's no response from the robot.
         '''
-        robot = await self._wait_for_robot(timeout)
-        if robot and robot.drive_off_charger_on_connect:
-            await robot.drive_off_charger_contacts().wait_for_completed()
+        try:
+            robot = await self._wait_for_robot(timeout)
+            if robot and robot.drive_off_charger_on_connect:
+                await robot.drive_off_charger_contacts().wait_for_completed()
+        except asyncio.TimeoutError:
+            logger.error('Timed out waiting for robot to initialize')
+            raise
         return robot

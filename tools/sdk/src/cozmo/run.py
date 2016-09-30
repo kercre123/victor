@@ -326,7 +326,6 @@ class _LoopThread:
         if self._running:
             async def _stop():
                 await self.coz_conn.shutdown()
-                #asyncio.run_coroutine_threadsafe(lt.coz_conn.shutdown(), loop).result()
                 self.loop.call_soon(lambda: self.loop.stop())
             asyncio.run_coroutine_threadsafe(_stop(), self.loop).result()
             self.thread.join()

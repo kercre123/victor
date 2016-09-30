@@ -551,8 +551,8 @@ class Filter:
         return True
 
 
-async def wait_for_first(*futures):
-    '''Wait the first of a set of events to complete.
+async def wait_for_first(*futures, discard_remaining=True, loop=None):
+    '''Wait the first of a set of futures to complete.
 
     Eg::
 
@@ -561,14 +561,29 @@ async def wait_for_first(*futures):
             playing_anim.wait_for(cozmo.anim.EvtAnimationCompleted)
         )
 
+    If more than one completes during a single event loop run, then the
+    first of those will be returned (or raised); this may not be deterministic!
+
     Args:
         futures (list of :class:`asyncio.Future`): The futures or coroutines to wait on.
+        discard_remaining (bool): Cancel or discard the results of the futures
+            that did not return first.
+        loop (:class:`asyncio.BaseEventLoop`): The event loop to wait on.
+    Returns:
+        The first result, or raised exception
     '''
-    done, pending = asyncio.wait(futures, return_when=asyncio.FIRST_COMPLETED)
-    # cancel the pending futures
-    for fut in pending:
-        fut.cancel()
-    return done.pop()
+    done, pending = await asyncio.wait(futures, loop=loop, return_when=asyncio.FIRST_COMPLETED)
+    if discard_remaining:
+        # cancel the pending futures
+        for fut in pending:
+            fut.cancel()
+        # discard the remaining results (if any)
+        for fut in done[1:]:
+            try:
+                fut.result()
+            except:
+                pass
+    return done[0].result()
 
 def _abort_futures(exc):
     '''Trigger the exception handler for all pending Future handlers.'''
