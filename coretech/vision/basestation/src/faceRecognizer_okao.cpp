@@ -48,6 +48,12 @@ namespace Vision {
   // Non-match must be this much less than the recognition threshold to trigger registering new user
   CONSOLE_VAR_RANGED(s32, kFaceRecognitionThresholdMarginForAdding, "Vision.FaceRecognition", 200, 0, 1000);
   
+  // Second-best named match when top match is session-only must be greater than FaceRecognition
+  // threshold minus this margin to be used. This makes it a little easier to use 2nd best entry.
+  // If there is 3rd best match that is also named but with different ID, it must also be this margin
+  // _below_ the 2nd best match's score.
+  CONSOLE_VAR_RANGED(s32, kFaceRecognitionThresholdMarginForUsing2ndBest, "Vision.FaceRecognition", 75, 0, 1000);
+  
   // When enabled, this will merge the individual data elements of the session-only album entries
   // for two face records being merged. I don't believe this is a good idea anymore because
   // you can create a single album entry with very different features in it, which is apparently
@@ -547,6 +553,12 @@ namespace Vision {
           PRINT_CH_INFO("FaceRecognizer", "GetRecognitionData.EnrollmentCountReached",
                         "Count=%d", _origEnrollmentCount);
         }
+        
+        // Log the enrollment ID we just completed and how many album entries it now has
+        const size_t numAlbumEntries = entryToReturn.GetAlbumEntries().size();
+        Util::sEventF("robot.vision.face_enrollment_count_reached", {{DDATA, TO_DDATA_STR(numAlbumEntries)}},
+                      "%d", _enrollmentID);
+        
         enrollmentCountReached = _origEnrollmentCount;
         _origEnrollmentCount = 0; // signifies we've already returned it
       } 
@@ -819,7 +831,7 @@ namespace Vision {
     }
     
     PRINT_CH_INFO("FaceRecognizer", "RegisterNewUser.Success",
-                     "Added user with ID %d to album", faceID);
+                  "Added user with ID %d to album", faceID);
     
     return RESULT_OK;
   } // RegisterNewUser()
@@ -943,7 +955,7 @@ namespace Vision {
     const bool hasEnrollSpaceLeft = numDataStored < kMaxEnrollDataPerAlbumEntry;
     const bool haveEnrollmentCountAndID = _enrollmentCount > 0 && _enrollmentID != UnknownFaceID;
     const bool enrollEvenIfFull = !isNamedFace || kEnableEnrollmentAfterFull || haveEnrollmentCountAndID;
-    const bool isTimeToEnroll = timeSinceLastUpdate.count() > timeBetweenEnrollments.count();
+    const bool isTimeToEnroll = timeSinceLastUpdate.count() >= timeBetweenEnrollments.count();
     
     if(isEnrollmentEnabled && isTimeToEnroll && (hasEnrollSpaceLeft || enrollEvenIfFull))
     {
@@ -1370,18 +1382,24 @@ namespace Vision {
     // See if we recognize the person using the features we extracted on the
     // feature-extraction thread
     INT32 resultNum = 0;
-    const s32 kMaxResults = kMaxFacesInAlbum * kMaxAlbumEntriesPerFace;
-    std::vector<AlbumEntryID_t> matchingAlbumEntries(kMaxResults);
-    std::vector<RecognitionScore> scores(kMaxResults);
+    std::vector<AlbumEntryID_t> matchingAlbumEntries(kMaxFacesInAlbum);
+    std::vector<RecognitionScore> scores(kMaxFacesInAlbum);
     Tic("OkaoIdentify");
-    okaoResult = OKAO_FR_Identify(_okaoRecognitionFeatureHandle, _okaoFaceAlbum, kMaxResults,
+    okaoResult = OKAO_FR_Identify(_okaoRecognitionFeatureHandle, _okaoFaceAlbum, kMaxFacesInAlbum,
                                   matchingAlbumEntries.data(), scores.data(), &resultNum);
     Toc("OkaoIdentify");
+    
+    if(resultNum > kMaxFacesInAlbum)
+    {
+      PRINT_NAMED_ERROR("FaceRecognizer.RecognizeFace.OkaoReturnedBadResultNum",
+                        "%d > %d", resultNum, kMaxFacesInAlbum);
+      resultNum = kMaxFacesInAlbum;
+    }
     
     if(OKAO_NORMAL != okaoResult) {
       PRINT_NAMED_WARNING("FaceRecognizer.RecognizeFace.OkaoFaceRecognitionIdentifyFailed",
                           "maxResults:%d, hFeature:%p, hAlbum:%p, OKAO Result Code=%d",
-                          kMaxResults, _okaoRecognitionFeatureHandle, _okaoFaceAlbum, okaoResult);
+                          kMaxFacesInAlbum, _okaoRecognitionFeatureHandle, _okaoFaceAlbum, okaoResult);
       // Sometimes this happens (bad features?), so just warn and return "OK"
       return RESULT_OK;
     }
@@ -1424,7 +1442,7 @@ namespace Vision {
           }
         };
         s32 iResult = matchIndex+1;
-        while(iResult < resultNum && newDebugInfo.size() < kFaceRecMaxDebugResults)
+        BOUNDED_WHILE(kMaxFacesInAlbum, iResult < resultNum && newDebugInfo.size() < kFaceRecMaxDebugResults)
         {
           // It's possible, due to using a non-top match above, that we have performed
           // a merge and entries in matchingAlbumEntries
@@ -1483,68 +1501,112 @@ namespace Vision {
           else
           {
             // Yep, it's named, so it's got potential. Check its score.
-            
-            const bool nextScoreHighEnough = (scores[nextIndex] > kFaceRecognitionThreshold - kFaceRecognitionThresholdMarginForAdding);
+            const bool nextScoreHighEnough = (scores[nextIndex] > kFaceRecognitionThreshold - kFaceRecognitionThresholdMarginForUsing2ndBest);
             
             if(nextScoreHighEnough)
             {
-              // We just realized a session-only face is actually someone we know with a high enough score.
-              // Merge the two. Note that if this is not the second best match and there are other session-only
-              // entries in between, this will likely happen again and they will get merged in one by one.
-              // At least that's the theory... This is an unlikely scenario regardless.
-              PRINT_CH_INFO("FaceRecognizer", "RecognizeFace.UsingLowerRankedMatch",
-                            "Top match (AlbumEntry:%d ID:%d Score:%d) is session-only. "
-                            "Match at index %d (AlbumEntry:%d ID:%d Score:%d) is named ('%s'). Using it and merging.",
-                            matchingAlbumEntries[matchIndex], matchingID, matchingScore,
-                            nextIndex, matchingAlbumEntries[nextIndex], nextMatchingID, scores[nextIndex],
-                            Util::HidePersonallyIdentifiableInfo(nextMatchIter->second.GetName().c_str()));
+              // Yep, score is high enough. Check to make sure there are no other named matches
+              // with a different ID that are too close to the 2nd best.
               
-              PRINT_CH_DEBUG("FaceRecognizer", "RecognizeFace.BeforeMergeOfLowerRankedMatch",
-                             "Top match entries: %s. Next match entries: %s.",
-                             matchIter->second.GetAlbumEntriesString().c_str(),
-                             nextMatchIter->second.GetAlbumEntriesString().c_str());
+              const s32 lowThreshold = std::min(scores[nextIndex] - kFaceRecognitionThresholdMarginForUsing2ndBest,
+                                                kFaceRecognitionThreshold - 2*kFaceRecognitionThresholdMarginForUsing2ndBest);
               
-              Result mergeResult = MergeFaces(nextMatchingID, matchingID);
-              if(RESULT_OK != mergeResult) {
-                PRINT_NAMED_WARNING("FaceRecognizer.RecognizeFace.MergeFacesFailed", "Merging %d into %d",
-                                    matchingID, nextMatchingID);
-              }
-              
-              // If nextMatchingID is set, nextMatchIter should be as well
-              ASSERT_NAMED(nextMatchIter != _enrollmentData.end(),
-                           "FaceRecognizer.RecognizeFace.NextMatchIterNotSet");
-              
-              PRINT_CH_DEBUG("FaceRecognizer", "RecognizeFace.AfterMergeOfLowerRankedMatch",
-                             "Top match entries: %s. Next match entries: %s.",
-                             matchIter->second.GetAlbumEntriesString().c_str(),
-                             nextMatchIter->second.GetAlbumEntriesString().c_str());
-              
-              // We just merged, so the matching album entry for "matchIndex" no
-              // longer exists. Update it to be what is in "nextIndex".
-              matchingAlbumEntries[matchIndex] = matchingAlbumEntries[nextIndex];
-              
-              matchingID    = nextMatchingID;
-              matchingScore = scores[nextIndex];
-              matchIndex    = nextIndex;
-              matchIter     = nextMatchIter;
-              
-              const AlbumEntryID_t recognizedAlbumEntryID = matchingAlbumEntries[matchIndex];
-              auto const& matchIterAlbumEntries = matchIter->second.GetAlbumEntries();
-              if(matchIterAlbumEntries.find(recognizedAlbumEntryID) == matchIterAlbumEntries.end())
+              FaceID_t nextNextID = Vision::UnknownFaceID;
+              bool nextNextScoreLowEnough = true;
+              s32 nextNextIndex = nextIndex + 1;
+              BOUNDED_WHILE(kMaxFacesInAlbum, nextNextIndex < resultNum && scores[nextNextIndex] > lowThreshold)
               {
-                // The merge above removed the album entry we actually recognized, so
-                // we have nothing to update below with the call to UpdateExistingAlbumEntry().
-                shouldUpdateAlbumEntry = false;
+                nextNextID = GetFaceIDforAlbumEntry(matchingAlbumEntries[nextNextIndex]);
+                if(nextNextID != nextMatchingID)
+                {
+                  auto nextNextIter = _enrollmentData.find(nextNextID);
+                  if(nextNextIter == _enrollmentData.end())
+                  {
+                    PRINT_NAMED_WARNING("FaceRecognizer.RecognizeFace.Missing3rdMatchEnrollmentData",
+                                        "ID:%d", nextNextID);
+                    
+                  }
+                  else if(!nextMatchIter->second.IsForThisSessionOnly())
+                  {
+                    // If _any_ named match with a different ID is above the low threshold
+                    // then we are done
+                    nextNextScoreLowEnough = false;
+                    break;
+                  }
+                }
                 
-                // If the recognized entry isn't part of the matched enrollment data anymore (matchIter),
-                // then neither should it be in the album entry to face ID lookup table anymore.
-                ASSERT_NAMED_EVENT(_albumEntryToFaceID.find(recognizedAlbumEntryID) == _albumEntryToFaceID.end(),
-                                   "FaceRecognizer.RecognizeFace.UnexpectedAlbumEntryToFaceID",
-                                   "matchIndex:%d albumEntry:%d still maps to faceID:%d",
-                                   matchIndex, recognizedAlbumEntryID,
-                                   _albumEntryToFaceID.at(recognizedAlbumEntryID));
+                ++nextNextIndex;
               }
-            }
+              
+              if(nextNextScoreLowEnough)
+              {
+                // We just realized a session-only face is actually someone we know with a high enough score.
+                // (And the score after that, if there is one, is low enough.)
+                // Merge the two. Note that if this is not the second best match and there are other session-only
+                // entries in between, this will likely happen again and they will get merged in one by one.
+                // At least that's the theory... This is an unlikely scenario regardless.
+                PRINT_CH_INFO("FaceRecognizer", "RecognizeFace.UsingLowerRankedMatch",
+                              "Top match (AlbumEntry:%d ID:%d Score:%d) is session-only. "
+                              "Match at index %d (AlbumEntry:%d ID:%d Score:%d) is named ('%s'). Using it and merging.",
+                              matchingAlbumEntries[matchIndex], matchingID, matchingScore,
+                              nextIndex, matchingAlbumEntries[nextIndex], nextMatchingID, scores[nextIndex],
+                              Util::HidePersonallyIdentifiableInfo(nextMatchIter->second.GetName().c_str()));
+                
+                // Log IDs in s_val and scores in DDATA:
+                Util::sEventF("robot.vision.face_recognition.using_lower_ranked_match",
+                              {{DDATA, (std::to_string(matchingScore) + ", " +
+                                        std::to_string(scores[nextIndex]) + ", " +
+                                        std::to_string(nextNextID == Vision::UnknownFaceID ? -1 : scores[nextNextIndex])).c_str()}},
+                              "%d, %d, %d", matchingID, nextMatchingID, nextNextID);
+                
+                
+                PRINT_CH_DEBUG("FaceRecognizer", "RecognizeFace.BeforeMergeOfLowerRankedMatch",
+                               "Top match entries: %s. Next match entries: %s.",
+                               matchIter->second.GetAlbumEntriesString().c_str(),
+                               nextMatchIter->second.GetAlbumEntriesString().c_str());
+                
+                Result mergeResult = MergeFaces(nextMatchingID, matchingID);
+                if(RESULT_OK != mergeResult) {
+                  PRINT_NAMED_WARNING("FaceRecognizer.RecognizeFace.MergeFacesFailed", "Merging %d into %d",
+                                      matchingID, nextMatchingID);
+                }
+                
+                // If nextMatchingID is set, nextMatchIter should be as well
+                ASSERT_NAMED(nextMatchIter != _enrollmentData.end(),
+                             "FaceRecognizer.RecognizeFace.NextMatchIterNotSet");
+                
+                PRINT_CH_DEBUG("FaceRecognizer", "RecognizeFace.AfterMergeOfLowerRankedMatch",
+                               "Top match entries: %s. Next match entries: %s.",
+                               matchIter->second.GetAlbumEntriesString().c_str(),
+                               nextMatchIter->second.GetAlbumEntriesString().c_str());
+                
+                // We just merged, so the matching album entry for "matchIndex" no
+                // longer exists. Update it to be what is in "nextIndex".
+                matchingAlbumEntries[matchIndex] = matchingAlbumEntries[nextIndex];
+                
+                matchingID    = nextMatchingID;
+                matchingScore = scores[nextIndex];
+                matchIndex    = nextIndex;
+                matchIter     = nextMatchIter;
+                
+                const AlbumEntryID_t recognizedAlbumEntryID = matchingAlbumEntries[matchIndex];
+                auto const& matchIterAlbumEntries = matchIter->second.GetAlbumEntries();
+                if(matchIterAlbumEntries.find(recognizedAlbumEntryID) == matchIterAlbumEntries.end())
+                {
+                  // The merge above removed the album entry we actually recognized, so
+                  // we have nothing to update below with the call to UpdateExistingAlbumEntry().
+                  shouldUpdateAlbumEntry = false;
+                  
+                  // If the recognized entry isn't part of the matched enrollment data anymore (matchIter),
+                  // then neither should it be in the album entry to face ID lookup table anymore.
+                  ASSERT_NAMED_EVENT(_albumEntryToFaceID.find(recognizedAlbumEntryID) == _albumEntryToFaceID.end(),
+                                     "FaceRecognizer.RecognizeFace.UnexpectedAlbumEntryToFaceID",
+                                     "matchIndex:%d albumEntry:%d still maps to faceID:%d",
+                                     matchIndex, recognizedAlbumEntryID,
+                                     _albumEntryToFaceID.at(recognizedAlbumEntryID));
+                }
+              } // if(nextNextScoreLowEnough)
+            } // if(nextScoreHighEnough)
             
             // Stop looking once we find a non-session-only face, whether or not
             // we used it
@@ -2110,6 +2172,11 @@ namespace Vision {
                            "User '%s' with ID=%d",
                            Util::HidePersonallyIdentifiableInfo(entry.second.GetName().c_str()),
                            entry.second.GetFaceID());
+            
+            // Log the ID and num of album entries (as DDATA) of each entry we load
+            const size_t numAlbumEntries = entry.second.GetAlbumEntries().size();
+            Util::sEventF("robot.vision.loaded_face_enrollment_entry", {{DDATA, TO_DDATA_STR(numAlbumEntries)}},
+                          "%d", entry.second.GetFaceID());
             
             loadedFaces.emplace_back(LoadedKnownFace(GetSecondsSince(nowTime, entry.second.GetEnrollmentTime()),
                                                      GetSecondsSince(nowTime, entry.second.GetLastUpdateTime()),
