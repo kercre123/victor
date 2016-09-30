@@ -4760,7 +4760,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     }
   }
 
-  bool BlockWorld::DeleteObject(const ObjectID& withID)
+  bool BlockWorld::DeleteObject(const ObjectID withID)
   {
     BlockWorldFilter filter;
     filter.SetAllowedIDs({withID});
