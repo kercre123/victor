@@ -299,9 +299,6 @@ namespace Anki
       Result UpdateObjectOrigins(const Pose3d* oldOrigin,
                                  const Pose3d* newOrigin);
       
-      // checks the origins currently storing objects and if they have become zombies it deletes them
-      void DeleteObjectsFromZombieOrigins();
-      
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Navigation memory
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
