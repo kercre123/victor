@@ -412,7 +412,7 @@ namespace Anki {
       _occluderList.Clear();
     }
     
-    void Camera::ProjectObject(const ObservableObject&  object,
+    bool Camera::ProjectObject(const ObservableObject&  object,
                                std::vector<Point2f>&    projectedCorners,
                                f32&                     distanceFromCamera) const
     {
@@ -420,6 +420,7 @@ namespace Anki {
       if(object.GetPose().GetWithRespectTo(_pose, objectPoseWrtCamera) == false) {
         PRINT_NAMED_ERROR("Camera.AddOccluder.ObjectDoesNotShareOrigin",
                           "Object must be in the same pose tree as the camera to add it as an occluder.\n");
+        return false;
       } else {
         std::vector<Point3f> cornersAtPose;
         
@@ -428,6 +429,7 @@ namespace Anki {
         object.GetCorners(objectPoseWrtCamera, cornersAtPose);
         Project3dPoints(cornersAtPose, projectedCorners);
         distanceFromCamera = objectPoseWrtCamera.GetTranslation().z();
+        return true;
       }
     } // ProjectObject()
     
@@ -437,9 +439,10 @@ namespace Anki {
       
       std::vector<Point2f> projectedCorners;
       f32 atDistance;
-      ProjectObject(object, projectedCorners, atDistance);
-      AddOccluder(projectedCorners, atDistance);
-      
+      if(ProjectObject(object, projectedCorners, atDistance))
+      {
+        AddOccluder(projectedCorners, atDistance);
+      }
     } // AddOccluder(ObservableObject)
     
     

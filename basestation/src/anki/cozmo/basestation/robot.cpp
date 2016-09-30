@@ -1583,7 +1583,7 @@ Result Robot::Update()
           case AxisName::Y_NEG: axisStr="-Y"; break;
           case AxisName::Z_POS: axisStr="+Z"; break;
           case AxisName::Z_NEG: axisStr="-Z"; break;
-        
+        }
               
         PRINT_NAMED_DEBUG("Robot.ObjectInteractionState",
                           "block:%d poseState:%8s moving?%d RestingFlat?%d carried?%d poseWRT?%d objOnTop:%d"
@@ -1599,8 +1599,7 @@ Result Robot::Update()
                           axisStr,
                           CanStackOnTopOfObject(*obj),
                           CanPickUpObject(*obj),
-                          CanPickUpObjectFromGround(*obj));                              
-      }
+                          CanPickUpObjectFromGround(*obj));
     }
   }
       

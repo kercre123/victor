@@ -1051,20 +1051,15 @@ namespace Anki {
     // Move the face to an X, Y offset - where 0, 0 is centered, negative is left/up
     void HAL::FaceMove(s32 x, s32 y)
     {
-      // Compute starting pixel of source image (i.e. lastFaceFrameDecoded) and dest image (i.e. face_ display)
-      u8 srcX = 0, srcY = 0;
+      // Compute starting pixel of dest image (i.e. face_ display)
       u8 destX = 0, destY = 0;
 
       if (x > 0) {
         destX += x;
-      } else {
-        srcX -= x;
       }
 
       if (y > 0) {
         destY += y;
-      } else {
-        srcY -= y;
       }
 
       // Compute dimensions of overlapping region

@@ -168,16 +168,13 @@ namespace Anki {
           Radians angleDiff = _currentTargetAngle - currentAngle;
           
           // Clip angleDiff to 89 degrees to prevent unintended behavior due to tangent
-          bool angleClipped = false;
           if(angleDiff.getDegrees() > 89)
           {
             angleDiff = DEG_TO_RAD(89);
-            angleClipped = true;
           }
           else if(angleDiff.getDegrees() < -89)
           {
             angleDiff = DEG_TO_RAD(-89);
-            angleClipped = true;
           }
           
           f32 x_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];

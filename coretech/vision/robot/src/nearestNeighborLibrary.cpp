@@ -164,7 +164,15 @@ namespace Embedded {
         // number of probes
         const f32 distThreshLeniency = 1.25f;
         
-        maskedDist /= count;
+        if(count == 0)
+        {
+          maskedDist = 0;
+        }
+        else
+        {
+          maskedDist /= count;
+        }
+        
         if(maskedDist < distThreshLeniency*distThreshold) {
           label = closestLabel;
         }

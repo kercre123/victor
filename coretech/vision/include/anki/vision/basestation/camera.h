@@ -107,7 +107,8 @@ namespace Anki {
       
       // Project an object's corners into the camera and also return the object's
       // distance from the camera's origin
-      void ProjectObject(const ObservableObject&  object,
+      // Returns whether or not the projection was successful
+      bool ProjectObject(const ObservableObject&  object,
                          std::vector<Point2f>&    projectedCorners,
                          f32&                     distanceFromCamera) const;
 

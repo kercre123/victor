@@ -1203,7 +1203,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ForceDelocalizeRo
   // We need a robot
   if (nullptr == robot) {
     PRINT_NAMED_WARNING("RobotEventHandler.HandleForceDelocalizeRobot.InvalidRobotID",
-                        "Failed to find robot %d to delocalize.", robot->GetID());
+                        "Failed to find robot to delocalize.");
       
   } else if(!robot->IsPhysical()) {
     PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.ForceDelocalize",
