@@ -64,7 +64,6 @@ namespace Cozmo {
     
     // Mapping of ActiveObjectType to ObjectType
     static ObjectType GetTypeFromActiveObjectType(ActiveObjectType type);
-    static ActiveObjectType GetActiveObjectTypeFromType(ObjectType type);
     
     struct LEDstate {
       ColorRGBA onColor;

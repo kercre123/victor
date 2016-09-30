@@ -302,8 +302,6 @@ namespace Anki
       // checks the origins currently storing objects and if they have become zombies it deletes them
       void DeleteObjectsFromZombieOrigins();
       
-      size_t GetNumOrigins() const { return _existingObjects.size(); }
-      
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Navigation memory
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
