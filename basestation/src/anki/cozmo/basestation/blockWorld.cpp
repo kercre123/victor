@@ -687,6 +687,11 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         if(nullptr == newObject)
         {
           newObject = oldObject->CloneType();
+          
+          // This call is necessary due to dependencies from CopyWithNewPose and AddNewObject
+          // AddNewObject needs the correct origin which CopyWithNewPose sets
+          // CopyWithNewPose needs the correct object ID which normally would be set by AddNewObject
+          // Since this is a circular dependency we need to set the ID first outside of AddNewObject
           newObject->CopyID(oldObject);
           
           if(newObject->IsActive())
@@ -696,14 +701,6 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
           }
           
           addNewObject = true;
-        
-          PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigins.NoMatchingObjectInNewFrame",
-                        "Adding %s object with ID %d to new origin %s (%p)",
-                        EnumToString(newObject->GetType()),
-                        newObject->GetID().GetValue(),
-                        newOrigin->GetName().c_str(),
-                        newOrigin);
-          
         }
         else
         {
@@ -724,7 +721,14 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         if(addNewObject) {
           // Note: need to call SetPose first because that sets the origin which
           // controls which map the object gets added to
-          AddNewObject(std::shared_ptr<ObservableObject>(newObject));
+          AddNewObject(std::shared_ptr<ObservableObject>(newObject), oldObject);
+          
+          PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigins.NoMatchingObjectInNewFrame",
+                        "Adding %s object with ID %d to new origin %s (%p)",
+                        EnumToString(newObject->GetType()),
+                        newObject->GetID().GetValue(),
+                        newOrigin->GetName().c_str(),
+                        newOrigin);
         }
       }
     };
@@ -1091,7 +1095,9 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily, const std::shared_ptr<ObservableObject>& object)
+  void BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily,
+                                const std::shared_ptr<ObservableObject>& object,
+                                const ObservableObject* objectToCopyID)
   {
     if(!_canAddObjects)
     {
@@ -1105,7 +1111,19 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       return;
     }
     
-    if(!object->GetID().IsSet()) {
+    if(objectToCopyID != nullptr)
+    {
+      object->CopyID(objectToCopyID);
+      
+      if(objectToCopyID->IsActive())
+      {
+        object->SetActiveID(objectToCopyID->GetActiveID());
+        object->SetFactoryID(objectToCopyID->GetFactoryID());
+      }
+    }
+    
+    if(!object->GetID().IsSet())
+    {
       object->SetID();
     }
     
@@ -1273,6 +1291,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       // create in the current frame, or to an existing matched object in the current
       // frame
       ObservableObject* observedObject = nullptr;
+      ObservableObject* objToCopy = nullptr;
       
       auto currFrameMatchIter = matchingObjects.find(currFrame);
       if(currFrameMatchIter == matchingObjects.end())
@@ -1286,7 +1305,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
           // ...keep the same ID(s)
           // NOTE: This kinda breaks the whole point of the ObjectID class that only one object can
           //  exist with each ID :-/
-          objSeen->CopyID(matchingObjects.begin()->second);
+          objToCopy = matchingObjects.begin()->second;
           
           if(objSeen->IsActive())
           {
@@ -1296,7 +1315,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         }
         
         // Add the object in the current coordinate frame, initially with Known pose
-        AddNewObject(_existingObjects[_robot->GetWorldOrigin()][inFamily], objSeen);
+        AddNewObject(_existingObjects[_robot->GetWorldOrigin()][inFamily], objSeen, objToCopy);
         
         // Let "observedObject" used below refer to the new object
         observedObject = objSeen.get();
@@ -1431,11 +1450,14 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         // us to fix both issues. For the moment, because we need to ship I am supporting only one (old code
         // was supporting one anyway)
         ObservableObject* myOldCopy = changedObjectPtr->CloneType();
-        myOldCopy->CopyID(changedObjectPtr);
         myOldCopy->InitPose(changedObjectIt->_oldPose, changedObjectIt->_oldPoseState);
+        
+        BlockWorldFilter filter;
+        // Ignore the object we are looking on top off so that we don't consider it as on top of itself
+        filter.AddIgnoreID(changedObjectPtr->GetID());
 
         // find object
-        ObservableObject* objectOnTopOfOldPose = FindObjectOnTopOf(*myOldCopy, STACKED_HEIGHT_TOL_MM);
+        ObservableObject* objectOnTopOfOldPose = FindObjectOnTopOf(*myOldCopy, STACKED_HEIGHT_TOL_MM, filter);
         if ( objectOnTopOfOldPose )
         {
           // we found an object currently on top of our old pose
@@ -2850,12 +2872,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     newObjectPose.SetParent(_robot->GetWorldOrigin());
     newObject->InitPose(newObjectPose, PoseState::Unknown);
     
-    AddNewObject(newObject);
-    
-    if(objToCopyId != nullptr)
-    {
-      newObject->CopyID(objToCopyId);
-    }
+    AddNewObject(newObject, objToCopyId);
     
     PRINT_CH_INFO("BlockWorld", "BlockWorld.AddActiveObject.AddedNewObject",
                   "objectID %d, type %s, activeID %d, factoryID 0x%x",
@@ -4791,7 +4808,10 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         // And remove it from the container
         // Note: we're using shared_ptr to store the objects, so erasing from
         //       the container will delete it if nothing else is referring to it
-        _existingObjects.at(origin).at(inFamily).at(withType).erase(object->GetID());
+        const size_t numDeleted = _existingObjects.at(origin).at(inFamily).at(withType).erase(object->GetID());
+        ASSERT_NAMED_EVENT(numDeleted != 0, "BlockWorld.DeleteObject.NoObjectsDeleted",
+                           "Origin %p Type %s ID %u",
+                           origin, EnumToString(withType), object->GetID().GetValue());
       }
     }
     

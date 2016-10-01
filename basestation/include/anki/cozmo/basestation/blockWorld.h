@@ -404,8 +404,12 @@ namespace Anki
       
       // Helpers for actually inserting a new object into a new family using
       // its type and ID. Object's ID will be set if it isn't already.
-      void AddNewObject(const std::shared_ptr<ObservableObject>& object);
-      void AddNewObject(ObjectsMapByType_t& existingFamily, const std::shared_ptr<ObservableObject>& object);
+      // Will copy objectToCopyID's ID to object if objectToCopyID is valid
+      void AddNewObject(const std::shared_ptr<ObservableObject>& object,
+                        const ObservableObject* objectToCopyID = nullptr);
+      void AddNewObject(ObjectsMapByType_t& existingFamily,
+                        const std::shared_ptr<ObservableObject>& object,
+                        const ObservableObject* objectToCopyID = nullptr);
       
       // NOTE: this function takes control over the passed-in ObservableObject*'s and
       //  will either directly add them to BlockWorld's existing objects or delete them
@@ -586,9 +590,10 @@ namespace Anki
       return GetActiveObjectByIdHelper(objectID, inFamily); // returns const*
     }
     
-    inline void BlockWorld::AddNewObject(const std::shared_ptr<ObservableObject>& object)
+    inline void BlockWorld::AddNewObject(const std::shared_ptr<ObservableObject>& object,
+                                         const ObservableObject* objectToCopyID)
     {
-      AddNewObject(_existingObjects[&object->GetPose().FindOrigin()][object->GetFamily()], object);
+      AddNewObject(_existingObjects[&object->GetPose().FindOrigin()][object->GetFamily()], object, objectToCopyID);
     }
 
     /*
