@@ -326,7 +326,8 @@ ActionResult ITrackAction::CheckIfDone()
     }
     
     // Play sound if it's time and either angle was big enough
-    if( currentTime > _nextSoundTime && angleLargeEnoughForSound)
+    const bool haveTurningSoundAnim = AnimationTrigger::Count != _turningSoundAnimTrigger;
+    if(haveTurningSoundAnim && currentTime > _nextSoundTime && angleLargeEnoughForSound)
     {
       // Queue sound to only play if nothing else is playing
       PlayAnimationAction* soundAction = new TriggerLiftSafeAnimationAction(_robot, _turningSoundAnimTrigger, 1, false);
