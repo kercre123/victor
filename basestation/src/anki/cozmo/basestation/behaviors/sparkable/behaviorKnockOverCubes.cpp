@@ -41,7 +41,7 @@ const int kMaxNumRetries = 1;
 const float kMinThresholdRealign = 3.f;
 const int kMinBlocksForSuccess = 1;
 const float kWaitForBlockUpAxisChangeSecs = 0.5f;
-const f32 kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad = RAD_TO_DEG_F32(90.f);
+const f32 kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad = DEG_TO_RAD_F32(90.f);
 const f32 kDelayBetweenSparkPeriodicChecks_sec = 0.25f;
   
 }

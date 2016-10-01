@@ -72,7 +72,7 @@ DriveAndFlipBlockAction::DriveAndFlipBlockAction(Robot& robot,
     if(!alreadyInPosition && _minAlignThreshold_mm >= 0){
       bool withinThreshold = WithinPreActionThreshold(robot, possiblePoses, _minAlignThreshold_mm);
       alreadyInPosition = withinThreshold;
-      _flipBlockAction->SetShouldCheckPreActionPose(withinThreshold);
+      _flipBlockAction->SetShouldCheckPreActionPose(!withinThreshold);
     }
     
     return GetPossiblePoses(robot, object, possiblePoses, alreadyInPosition, false);
@@ -91,7 +91,7 @@ void DriveAndFlipBlockAction::ShouldDriveToClosestPreActionPose(bool tf)
     if(!alreadyInPosition && _minAlignThreshold_mm >= 0){
       bool withinThreshold = WithinPreActionThreshold(_robot, possiblePoses, _minAlignThreshold_mm);
       alreadyInPosition = withinThreshold;
-      _flipBlockAction->SetShouldCheckPreActionPose(withinThreshold);
+      _flipBlockAction->SetShouldCheckPreActionPose(!withinThreshold);
     }
     
     
@@ -177,42 +177,39 @@ ActionResult DriveAndFlipBlockAction::GetPossiblePoses(Robot& robot,
   {
     poseToDriveTo = firstClosestPose;
   }
-  // No last known face so pick the preaction pose that is left most relative to Cozmo
-  else if(faceTime == 0)
-  {
-    if(firstClosestPose.GetTranslation().y() >= secondClosestPose.GetTranslation().y())
-    {
-      poseToDriveTo = firstClosestPose;
-    }
-    else
-    {
-      poseToDriveTo = secondClosestPose;
-    }
-  }
-  // Otherwise pick one of the two preaction poses closest to the robot and farthest from the last known face
   else
   {
-    if(!firstClosestPose.GetWithRespectTo(facePose, firstClosestPose))
-    {
-      PRINT_NAMED_WARNING("DriveToFlipBlockPoseAction", "Couldn't get firstClosestPose wrt facePose");
-      return ActionResult::FAILURE_ABORT;
-    }
-    if(!secondClosestPose.GetWithRespectTo(facePose, secondClosestPose))
-    {
-      PRINT_NAMED_WARNING("DriveToFlipBlockPoseAction", "Couldn't get secondClosestPose wrt facePose");
-      return ActionResult::FAILURE_ABORT;
-    }
+    Pose3d firstClosestPoseWRTFace = Pose3d(firstClosestPose);
+    Pose3d secondClosestPoseWRTFace = Pose3d(secondClosestPose);
+    const bool hasKnownFaces = faceTime != 0;
+    const bool noFacesInFrame = hasKnownFaces && ((!firstClosestPose.GetWithRespectTo(facePose, firstClosestPoseWRTFace)
+                                                    || !secondClosestPose.GetWithRespectTo(facePose, secondClosestPoseWRTFace)));
     
-    if(firstClosestPose.GetTranslation().Length() > secondClosestPose.GetTranslation().Length())
+    if(!hasKnownFaces || noFacesInFrame)
     {
-      firstClosestPose.GetWithRespectTo(robot.GetPose(), poseToDriveTo);
-    }
-    else
-    {
-      secondClosestPose.GetWithRespectTo(robot.GetPose(), poseToDriveTo);
+      // No last known face so pick the preaction pose that is left most relative to Cozmo
+      if(firstClosestPose.GetTranslation().y() >= secondClosestPose.GetTranslation().y())
+      {
+        poseToDriveTo = firstClosestPose;
+      }
+      else
+      {
+        poseToDriveTo = secondClosestPose;
+      }
+    }else{
+      // Otherwise pick one of the two preaction poses closest to the robot and farthest from the last known face
+
+      if(firstClosestPoseWRTFace.GetTranslation().Length() > secondClosestPoseWRTFace.GetTranslation().Length())
+      {
+        poseToDriveTo = firstClosestPose;
+      }
+      else
+      {
+        poseToDriveTo = secondClosestPose;
+      }
     }
   }
-  
+
   possiblePoses.push_back(poseToDriveTo);
   return ActionResult::SUCCESS;
 }
