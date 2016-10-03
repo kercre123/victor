@@ -81,5 +81,11 @@
   },
   "faceEnrollment.howToPlay.editName": {
     "translation": "Tap a name to change how Cozmo says it"
+  },
+  "faceEnrollment.firstTimeCompleteAlert.title": {
+    "translation": "Cozmo knows your name!"
+  },
+  "faceEnrollment.firstTimeCompleteAlert.description": {
+    "translation": "Cozmo has learned to recognize your face and may say your name when he sees you. Use Meet Cozmo again to introduce him to more friends."
   }
 }
