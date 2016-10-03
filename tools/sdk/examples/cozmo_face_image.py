@@ -15,14 +15,14 @@ except ImportError:
 import cozmo
 
 
-def run(coz_conn):
+def run(sdk_conn):
     '''The run method runs once Cozmo is connected.'''
 
-    coz = coz_conn.wait_for_robot()
+    robot = sdk_conn.wait_for_robot()
 
     # move head fully up. and lift down to the bottom, to make it easy to see Cozmo's face
-    coz.set_lift_height(0.0).wait_for_completed()
-    coz.set_head_angle(cozmo.robot.MAX_HEAD_ANGLE).wait_for_completed()
+    robot.set_lift_height(0.0).wait_for_completed()
+    robot.set_head_angle(cozmo.robot.MAX_HEAD_ANGLE).wait_for_completed()
 
     # load an image and resize it to Cozmo's screen dimensions
     anki_logo = Image.open("ankilogo.png")
@@ -34,7 +34,7 @@ def run(coz_conn):
     # display the image on Cozmo's face for duration_s seconds
     # (currently clamped at 30 seconds internally to prevent burn-in)
     duration_s = 5.0
-    coz.display_lcd_face_image(anki_logo, duration_s * 1000.0)
+    robot.display_lcd_face_image(anki_logo, duration_s * 1000.0)
     time.sleep(duration_s)
 
 

@@ -39,7 +39,7 @@ class World(event.Dispatcher):
         #: to add annotations to the raw camera images.
         self.image_annotator = self.annotator_factory(self)
 
-        #: :class:`cozmo.robot.Cozmo`: The primary robot
+        #: :class:`cozmo.robot.Robot`: The primary robot
         self.robot = robot
 
         self.custom_objects = {}

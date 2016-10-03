@@ -644,14 +644,14 @@ def handle_getDebugInfo():
     return ""
 
 
-def run(coz_conn):
-    coz = coz_conn.wait_for_robot()
+def run(sdk_conn):
+    robot = sdk_conn.wait_for_robot()
 
     global remote_control_cozmo
     remote_control_cozmo = RemoteControlCozmo(coz)
 
     # Turn on image receiving by the camera
-    coz.camera.image_stream_enabled = True
+    robot.camera.image_stream_enabled = True
 
     flask_helpers.run_flask(flask_app)
 

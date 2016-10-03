@@ -54,7 +54,7 @@ def _log_first_seen(tag_name, msg):
 class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
     '''Manages the connection to the Cozmo app to communicate with the core engine.'''
 
-    cozmo_factory = robot.Cozmo
+    robot_factory = robot.Robot
     anim_names_factory = anim.AnimationNames
 
     # overrides for CLADProtocol
@@ -153,7 +153,7 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
         robot = self._robots.get(robot_id)
         if not robot:
             logger.info('Found robot id=%s', robot_id)
-            robot = self.cozmo_factory(self, robot_id, is_primary=self._primary_robot is None)
+            robot = self.robot_factory(self, robot_id, is_primary=self._primary_robot is None)
             self._robots[robot_id] = robot
             if not self._primary_robot:
                 self._primary_robot = robot
@@ -289,7 +289,7 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
         Args:
             timeout (float): Maximum length of time to wait for a robot to be ready
         Returns:
-            A :class:`cozmo.robot.Cozmo` instance that's ready to use.
+            A :class:`cozmo.robot.Robot` instance that's ready to use.
         Raises:
             :class:`asyncio.TimeoutError` if there's no response from the robot.
         '''
@@ -306,7 +306,7 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
         Args:
             timeout (float): Maximum length of time to wait for a robot to be ready
         Returns:
-            A :class:`cozmo.robot.Cozmo` instance that's ready to use.
+            A :class:`cozmo.robot.Robot` instance that's ready to use.
         Raises:
             :class:`asyncio.TimeoutError` if there's no response from the robot.
         '''

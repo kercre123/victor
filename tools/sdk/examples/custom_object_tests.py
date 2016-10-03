@@ -13,16 +13,16 @@ import cozmo
 from cozmo.util import degrees, Pose
 
 
-def run(coz_conn):
+def run(sdk_conn):
     '''The run method runs once Cozmo is connected.'''
-    coz = coz_conn.wait_for_robot()
+    robot = sdk_conn.wait_for_robot()
 
-    fixed_object = coz.world.create_custom_fixed_object(Pose(200, 0, 0, angle_z=degrees(0)),
+    fixed_object = robot.world.create_custom_fixed_object(Pose(200, 0, 0, angle_z=degrees(0)),
                                                         10, 100, 200, relative_to_robot=True)
     if fixed_object:
         print("fixed_object created successfully")
 
-    coz.world.define_custom_object(cozmo.objects.CustomObjectTypes.Custom_STAR5_Box, 10, 100, 200)
+    robot.world.define_custom_object(cozmo.objects.CustomObjectTypes.Custom_STAR5_Box, 10, 100, 200)
 
     time.sleep(100)
 

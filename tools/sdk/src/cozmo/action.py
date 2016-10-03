@@ -6,7 +6,7 @@ They have a definite beginning and end.
 These tasks include picking up an object, rotating in place, saying text, etc.
 
 Actions are usually triggered by a call to a method on the
-:class:`cozmo.robot.Cozmo` class such as :meth:`~cozmo.robot.Cozmo.turn_in_place`
+:class:`cozmo.robot.Robot` class such as :meth:`~cozmo.robot.Robot.turn_in_place`
 
 The call will return an object that subclasses :class:`Action` that can be
 used to cancel the action, or be observed to wait or be notified when the

@@ -44,7 +44,7 @@ cozmo.world.World.light_cube_factory = BlinkyCube
 
 
 
-async def run(coz_conn):
+async def run(sdk_conn):
     '''The run method runs once Cozmo is connected.
 
     The usage of ``async def`` makes the run method a coroutine. Within
@@ -53,7 +53,7 @@ async def run(coz_conn):
     the event loop continues in the background.
 
     For instance, the statement
-    ``await coz.world.wait_for_observed_light_cube(timeout=60)``
+    ``await robot.world.wait_for_observed_light_cube(timeout=60)``
     blocks until Cozmo discovers a light cube or the 60 second timeout
     elapses, whichever occurs first.
 
@@ -65,13 +65,13 @@ async def run(coz_conn):
     https://docs.python.org/3/library/asyncio-task.html
     '''
     cube = None
-    coz = await coz_conn.wait_for_robot()
+    robot = await sdk_conn.wait_for_robot()
     print("Got initialized Cozmo")
 
-    look_around = coz.start_behavior(cozmo.behavior.BehaviorTypes.LookAroundInPlace)
+    look_around = robot.start_behavior(cozmo.behavior.BehaviorTypes.LookAroundInPlace)
 
     try:
-        cube = await coz.world.wait_for_observed_light_cube(timeout=60)
+        cube = await robot.world.wait_for_observed_light_cube(timeout=60)
     except asyncio.TimeoutError:
         print("Didn't find a cube :-(")
         return

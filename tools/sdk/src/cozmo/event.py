@@ -51,7 +51,7 @@ Child objects receive all events that are sent to the originating object
 Originating objects may have one parent object, which receives all events sent
 to its child.
 
-For example, :class:`cozmo.robot.Cozmo` creates a :class:`cozmo.world.World`
+For example, :class:`cozmo.robot.Robot` creates a :class:`cozmo.world.World`
 object and sets itself as a parent and the World as the child; both receive
 events sent to the other.
 

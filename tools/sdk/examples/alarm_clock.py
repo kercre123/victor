@@ -58,15 +58,15 @@ except IOError:
         pass
 
 
-def run(coz_conn):
+def run(sdk_conn):
     '''The run method runs once Cozmo is connected.'''
 
-    coz = coz_conn.wait_for_robot()
+    robot = sdk_conn.wait_for_robot()
 
     # move head fully up. and lift down to the bottom, to make it easy to see Cozmo's face
     # (this will only do anything if Cozmo is off the charger)
-    coz.set_lift_height(0.0).wait_for_completed()
-    coz.set_head_angle(cozmo.robot.MAX_HEAD_ANGLE).wait_for_completed()
+    robot.set_lift_height(0.0).wait_for_completed()
+    robot.set_head_angle(cozmo.robot.MAX_HEAD_ANGLE).wait_for_completed()
 
     alarm_time = datetime.time(8, 30)  # request an alarm for 08:30 (uses 24-hour clock)
 
@@ -86,15 +86,15 @@ def run(coz_conn):
 
                 # Play the alarm, moving cozmo off the contacts if necessary (so that we can play an animation)
 
-                was_on_charger = coz.is_on_charger
-                coz.drive_off_charger_contacts().wait_for_completed()
+                was_on_charger = robot.is_on_charger
+                robot.drive_off_charger_contacts().wait_for_completed()
                 short_time_string = str(current_time.hour) + ":" + str(current_time.minute)
-                coz.say_text("Wake up lazy human! it's " + short_time_string).wait_for_completed()
+                robot.say_text("Wake up lazy human! it's " + short_time_string).wait_for_completed()
 
                 # reverse back onto the charger (if we just drove him off) so that he can go back to charging
 
                 if was_on_charger:
-                    coz.drive_wheels(-50, -50, duration=2)
+                    robot.drive_wheels(-50, -50, duration=2)
             else:
 
                 # See if the displayed time needs updating
@@ -107,7 +107,7 @@ def run(coz_conn):
                     lcd_face_data = cozmo.lcd_face.convert_image_to_screen_data(text_image)
 
                     # display for 1 second
-                    coz.display_lcd_face_image(lcd_face_data, 1000.0)
+                    robot.display_lcd_face_image(lcd_face_data, 1000.0)
                     last_displayed_time = current_time_string
 
             # only sleep for a fraction of a second to ensure we update the seconds as soon as they change
@@ -120,8 +120,8 @@ def run(coz_conn):
 
 if __name__ == '__main__':
     cozmo.setup_basic_logging()
-    cozmo.robot.Cozmo.drive_off_charger_on_connect = False  # Cozmo can stay on his charger for this example
+    cozmo.robot.Robot.drive_off_charger_on_connect = False  # Cozmo can stay on his charger for this example
     try:
         cozmo.connect(run)
     except cozmo.ConnectionError as e:
-        sys.exit("A connection error occurred: %s" % e)
+        sys.exit("A konnection error occurred: %s" % e)

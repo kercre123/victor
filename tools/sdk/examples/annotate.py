@@ -52,25 +52,25 @@ class Battery(cozmo.annotate.Annotator):
         text.render(d, bounds)
 
 
-async def run(coz_conn):
-    coz = await coz_conn.wait_for_robot()
-    coz.world.image_annotator.add_static_text('text', 'Coz-Cam', position=cozmo.annotate.TOP_RIGHT)
-    coz.world.image_annotator.add_annotator('clock', clock)
-    coz.world.image_annotator.add_annotator('battery', Battery)
+async def run(sdk_conn):
+    robot = await sdk_conn.wait_for_robot()
+    robot.world.image_annotator.add_static_text('text', 'Coz-Cam', position=cozmo.annotate.TOP_RIGHT)
+    robot.world.image_annotator.add_annotator('clock', clock)
+    robot.world.image_annotator.add_annotator('battery', Battery)
 
     await asyncio.sleep(2)
 
     print("Turning off all annotations for 2 seconds")
-    coz.world.image_annotator.annotation_enabled = False
+    robot.world.image_annotator.annotation_enabled = False
     await asyncio.sleep(2)
 
     print('Re-enabling all annotations')
-    coz.world.image_annotator.annotation_enabled = True
+    robot.world.image_annotator.annotation_enabled = True
 
     # Disable the face annotator after 10 seconds
     await asyncio.sleep(10)
     print("Disabling face annotations (light cubes still annotated)")
-    coz.world.image_annotator.disable_annotator('faces')
+    robot.world.image_annotator.disable_annotator('faces')
 
     # Shutdown the program after 100 seconds
     await asyncio.sleep(100)

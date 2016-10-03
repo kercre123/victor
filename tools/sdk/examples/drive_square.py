@@ -11,13 +11,13 @@ import sys
 import cozmo
 from cozmo.util import degrees
 
-def run(coz_conn):
+def run(sdk_conn):
     '''The run method runs once Cozmo is connected.'''
-    coz = coz_conn.wait_for_robot()
+    robot = sdk_conn.wait_for_robot()
 
     for _ in range(4):
-        coz.drive_wheels(50, 50, duration=3)
-        coz.turn_in_place(degrees(90)).wait_for_completed()
+        robot.drive_wheels(50, 50, duration=3)
+        robot.turn_in_place(degrees(90)).wait_for_completed()
 
 if __name__ == '__main__':
     cozmo.setup_basic_logging()

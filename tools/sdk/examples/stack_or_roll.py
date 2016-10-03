@@ -15,24 +15,24 @@ import sys
 import cozmo
 
 
-def run(coz_conn):
+def run(sdk_conn):
     '''The run method runs once Cozmo is connected.'''
-    coz = coz_conn.wait_for_robot()
+    robot = sdk_conn.wait_for_robot()
 
-    lookaround = coz.start_behavior(cozmo.behavior.BehaviorTypes.LookAroundInPlace)
+    lookaround = robot.start_behavior(cozmo.behavior.BehaviorTypes.LookAroundInPlace)
 
-    cubes = coz.world.wait_until_observe_num_objects(num=2, object_type=cozmo.objects.LightCube, timeout=10)
+    cubes = robot.world.wait_until_observe_num_objects(num=2, object_type=cozmo.objects.LightCube, timeout=10)
 
     print(cubes)
 
     lookaround.stop()
 
     if len(cubes) == 0:
-        coz.play_anim_trigger(cozmo.anim.Triggers.MajorFail).wait_for_completed()
+        robot.play_anim_trigger(cozmo.anim.Triggers.MajorFail).wait_for_completed()
     elif len(cubes) == 1:
-        coz.run_timed_behavior(cozmo.behavior.BehaviorTypes.RollBlock, active_time=60)
+        robot.run_timed_behavior(cozmo.behavior.BehaviorTypes.RollBlock, active_time=60)
     else:
-        coz.run_timed_behavior(cozmo.behavior.BehaviorTypes.StackBlocks, active_time=60)
+        robot.run_timed_behavior(cozmo.behavior.BehaviorTypes.StackBlocks, active_time=60)
 
 if __name__ == '__main__':
     cozmo.setup_basic_logging()

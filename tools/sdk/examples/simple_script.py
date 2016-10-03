@@ -15,19 +15,19 @@ import sys
 
 import cozmo
 
-def run(coz_conn):
+def run(sdk_conn):
     '''The run method runs once Cozmo is connected.'''
-    coz = coz_conn.wait_for_robot()
+    robot = sdk_conn.wait_for_robot()
 
-    coz.set_all_backpack_lights(cozmo.lights.red_light)
+    robot.set_all_backpack_lights(cozmo.lights.red_light)
 
-    coz.play_anim_trigger(cozmo.anim.Triggers.CubePounceLoseSession).wait_for_completed()
+    robot.play_anim_trigger(cozmo.anim.Triggers.CubePounceLoseSession).wait_for_completed()
 
-    coz.drive_wheels(50, 50, 50, 50, duration=3)
+    robot.drive_wheels(50, 50, 50, 50, duration=3)
 
-    coz.play_anim_trigger(cozmo.anim.Triggers.ReactToCliff).wait_for_completed()
+    robot.play_anim_trigger(cozmo.anim.Triggers.ReactToCliff).wait_for_completed()
 
-    coz.say_text("Hello").wait_for_completed()
+    robot.say_text("Hello").wait_for_completed()
 
 
 if __name__ == '__main__':

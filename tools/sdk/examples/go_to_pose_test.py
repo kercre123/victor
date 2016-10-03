@@ -12,11 +12,11 @@ import cozmo
 from cozmo.util import degrees, Pose
 
 
-def run(coz_conn):
+def run(sdk_conn):
     '''The run method runs once Cozmo is connected.'''
-    coz = coz_conn.wait_for_robot()
+    robot = sdk_conn.wait_for_robot()
 
-    coz.go_to_pose(Pose(100, 100, 0, angle_z=degrees(45)), relative_to_robot=True)
+    robot.go_to_pose(Pose(100, 100, 0, angle_z=degrees(45)), relative_to_robot=True)
 
 if __name__ == '__main__':
     cozmo.setup_basic_logging()

@@ -11,7 +11,7 @@ objects.
 Behaviors must be explicitly stopped before having the robot do something else
 (for example, pick up the object he just observed).
 
-Behaviors are started by a call to :meth:`cozmo.robot.Cozmo.start_behavior`,
+Behaviors are started by a call to :meth:`cozmo.robot.Robot.start_behavior`,
 which returns a :class:`Behavior` object.  Calling the :meth:`~Behavior.stop`
 method on that object terminate the behavior.
 

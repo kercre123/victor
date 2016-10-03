@@ -5,7 +5,7 @@ __all__ = ['EvtRobotReady',
            'PlaceOnObject', 'PlaceObjectOnGroundHere', 'SayText', 'SetHeadAngle',
            'SetLiftHeight', 'TurnInPlace', 'TurnTowardsFace',
            'MIN_HEAD_ANGLE', 'MAX_HEAD_ANGLE',
-           'Cozmo']
+           'Robot']
 
 
 import asyncio
@@ -29,7 +29,7 @@ from ._clad import _clad_to_engine_iface, _clad_to_engine_cozmo, _clad_to_game_c
 
 class EvtRobotReady(event.Event):
     '''Generated when the robot has been initialized and is ready for commands'''
-    robot = "Cozmo object representing the robot to command"
+    robot = "Robot object representing the robot to command"
 
 
 #### Constants
@@ -44,7 +44,7 @@ MAX_HEAD_ANGLE = util.degrees(44.5)
 class GoToPose(action.Action):
     '''Represents the go to pose action in progress.
 
-    Returned by :meth:`~cozmo.robot.Cozmo.go_to_pose`
+    Returned by :meth:`~cozmo.robot.Robot.go_to_pose`
     '''
     def __init__(self, pose, **kw):
         super().__init__(**kw)
@@ -60,7 +60,7 @@ class GoToPose(action.Action):
 class DriveOffChargerContacts(action.Action):
     '''Represents the drive off charger contacts action in progress.
 
-    Returned by :meth:`~cozmo.robot.Cozmo.drive_off_charger_contacts`
+    Returned by :meth:`~cozmo.robot.Robot.drive_off_charger_contacts`
     '''
     def __init__(self, **kw):
         super().__init__(**kw)
@@ -74,7 +74,7 @@ class DriveOffChargerContacts(action.Action):
 class PickupObject(action.Action):
     '''Represents the pickup object action in progress.
 
-    Returned by :meth:`~cozmo.robot.Cozmo.pickup_object`
+    Returned by :meth:`~cozmo.robot.Robot.pickup_object`
     '''
 
     def __init__(self, obj, use_pre_dock_pose=True, **kw):
@@ -94,7 +94,7 @@ class PickupObject(action.Action):
 class PlaceOnObject(action.Action):
     '''Tracks the state of the "place on object" action.
 
-    return by :meth:`~cozmo.robot.Cozmo.place_on_object`
+    return by :meth:`~cozmo.robot.Robot.place_on_object`
     '''
 
     def __init__(self, obj, use_pre_dock_pose=True, **kw):
@@ -114,7 +114,7 @@ class PlaceOnObject(action.Action):
 class PlaceObjectOnGroundHere(action.Action):
     '''Tracks the state of the "place object on ground here" action.
 
-    Returned by :meth:`~cozmo.robot.Cozmo.place_object_on_ground_here`
+    Returned by :meth:`~cozmo.robot.Robot.place_object_on_ground_here`
     '''
 
     def __init__(self, obj, **kw):
@@ -132,7 +132,7 @@ class PlaceObjectOnGroundHere(action.Action):
 class SayText(action.Action):
     '''Tracks the progress of a say text robot action.
 
-    Returned by :meth:`~cozmo.robot.Cozmo.say_text`
+    Returned by :meth:`~cozmo.robot.Robot.say_text`
     '''
 
     def __init__(self, text, play_excited_animation, use_cozmo_voice, duration_scalar, voice_pitch, **kw):
@@ -164,7 +164,7 @@ class SayText(action.Action):
 
 class SetHeadAngle(action.Action):
     '''Represents the Set Head Angle action in progress.
-       Returned by :meth:`~cozmo.robot.Cozmo.set_head_angle`
+       Returned by :meth:`~cozmo.robot.Robot.set_head_angle`
     '''
 
     def __init__(self, angle, max_speed, accel, duration, **kw):
@@ -191,7 +191,7 @@ class SetHeadAngle(action.Action):
 
 class SetLiftHeight(action.Action):
     '''Represents the Set Lift Height action in progress.
-       Returned by :meth:`~cozmo.robot.Cozmo.set_lift_height`
+       Returned by :meth:`~cozmo.robot.Robot.set_lift_height`
     '''
 
     def __init__(self, height, max_speed, accel, duration, **kw):
@@ -219,7 +219,7 @@ class SetLiftHeight(action.Action):
 class TurnInPlace(action.Action):
     '''Tracks the progress of a turn in place robot action.
 
-    Returned by :meth:`~cozmo.robot.Cozmo.turn_in_place`
+    Returned by :meth:`~cozmo.robot.Robot.turn_in_place`
     '''
 
     def __init__(self, angle, **kw):
@@ -239,7 +239,7 @@ class TurnInPlace(action.Action):
 class TurnTowardsFace(action.Action):
     '''Tracks the progress of a turn towards face robot action.
 
-    Returned by :meth:`~cozmo.robot.Cozmo.turn_towards_face`
+    Returned by :meth:`~cozmo.robot.Robot.turn_towards_face`
     '''
 
     def __init__(self, face, **kw):
@@ -255,15 +255,15 @@ class TurnTowardsFace(action.Action):
             faceID=self.face.face_id)
 
 
-class Cozmo(event.Dispatcher):
+class Robot(event.Dispatcher):
     """The interface to a Cozmo robot.
 
     A robot has access to:
 
-    * A :class:`~cozmo.world.World` object (:attr:`cozmo.robot.Cozmo.world`),
+    * A :class:`~cozmo.world.World` object (:attr:`cozmo.robot.Robot.world`),
         which tracks the state of the world the robot knows about
 
-    * A :class:`~cozmo.camera.Camera` object (:attr:`cozmo.robot.Cozmo.camera`),
+    * A :class:`~cozmo.camera.Camera` object (:attr:`cozmo.robot.Robot.camera`),
         which provides access to Cozmo's camera
 
     * An Animations object, controlling the playing of animations on the robot
