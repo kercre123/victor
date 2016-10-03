@@ -12,6 +12,7 @@ namespace Cozmo.HomeHub {
 
     private List<TabPanel> _TabPanelsList = new List<TabPanel>();
 
+    [SerializeField]
     private Transform _Container;
 
     public void Initialize(HomeView homeViewInstance) {
