@@ -258,7 +258,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _ActiveTopBar: 1
-  _ActiveBotBar: 1
   _ActiveTabButtons: 1
   _ActiveMenuContent: 1
   _ReactionsEnabled: 1

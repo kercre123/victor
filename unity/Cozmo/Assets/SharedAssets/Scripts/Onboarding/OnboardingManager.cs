@@ -302,7 +302,7 @@ public class OnboardingManager : MonoBehaviour {
       if (OnOnboardingStageStarted != null) {
         OnOnboardingStageStarted.Invoke(_CurrPhase, nextStage);
       }
-      UpdateStage(stagePrefab.ActiveTopBar, stagePrefab.ActiveBotBar, stagePrefab.ActiveMenuContent,
+      UpdateStage(stagePrefab.ActiveTopBar, stagePrefab.ActiveMenuContent,
                   stagePrefab.ActiveTabButtons, stagePrefab.ReactionsEnabled);
       // Create the debug layer to have a few buttons to work with on screen easily for QA
       // who will have to see this all the time.
@@ -400,10 +400,9 @@ public class OnboardingManager : MonoBehaviour {
   }
   #endregion
 
-  private void UpdateStage(bool showTopBar = true, bool showBotBar = true, bool showContent = true, bool showButtons = true, bool reactionsEnabled = true) {
+  private void UpdateStage(bool showTopBar = true, bool showContent = true, bool showButtons = true, bool reactionsEnabled = true) {
     if (_HomeView) {
       _HomeView.TopBarContainer.gameObject.SetActive(showTopBar);
-      _HomeView.BottomBarContainer.gameObject.SetActive(showBotBar);
       _HomeView.TabContentContainer.gameObject.SetActive(showContent);
       _HomeView.TabButtonContainer.gameObject.SetActive(showButtons);
     }

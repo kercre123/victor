@@ -106,7 +106,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _ActiveTopBar: 0
-  _ActiveBotBar: 0
   _ActiveTabButtons: 0
   _ActiveMenuContent: 0
   _ReactionsEnabled: 0
@@ -114,7 +113,7 @@ MonoBehaviour:
   _DASPhaseID: 2
   _Animation:
     _EnumValueAsString: OnboardingBirth
-    _EnumValue: 133
+    _EnumValue: 123
   _Logo: {fileID: 22482554}
   _OldRobotLogoPos: {fileID: 22419098}
 --- !u!114 &11415114

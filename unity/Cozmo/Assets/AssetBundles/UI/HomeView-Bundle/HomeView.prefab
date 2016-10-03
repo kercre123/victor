@@ -3565,7 +3565,6 @@ MonoBehaviour:
   _TabButtonContainer: {fileID: 22442450}
   _TabButtonAnimationXOriginOffset: -300
   _TopBarContainer: {fileID: 22441376}
-  _BottomBarContainer: {fileID: 22422978}
   _HexLabel: {fileID: 0}
   _TopBarAnimationYOriginOffset: 250
   _TopBarOpenEase: 27
@@ -6639,7 +6638,7 @@ RectTransform:
   m_Children:
   - {fileID: 22463898}
   m_Father: {fileID: 22450442}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
@@ -7218,8 +7217,8 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children:
-  - {fileID: 22422978}
   - {fileID: 22468128}
+  - {fileID: 22422978}
   - {fileID: 22442450}
   - {fileID: 22499970}
   - {fileID: 22497190}
@@ -7563,7 +7562,7 @@ RectTransform:
   m_Children:
   - {fileID: 22490662}
   m_Father: {fileID: 22450442}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 193, y: -67.5}

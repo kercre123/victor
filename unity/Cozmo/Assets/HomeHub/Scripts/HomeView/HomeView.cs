@@ -137,10 +137,6 @@ namespace Cozmo.HomeHub {
     private RectTransform _TopBarContainer;
 
     [SerializeField]
-    private RectTransform _BottomBarContainer;
-
-
-    [SerializeField]
     private Anki.UI.AnkiTextLabel _HexLabel;
 
     [SerializeField]
@@ -185,10 +181,6 @@ namespace Cozmo.HomeHub {
     }
     public Transform TopBarContainer {
       get { return _TopBarContainer.transform; }
-    }
-
-    public Transform BottomBarContainer {
-      get { return _BottomBarContainer.transform; }
     }
 
     public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
