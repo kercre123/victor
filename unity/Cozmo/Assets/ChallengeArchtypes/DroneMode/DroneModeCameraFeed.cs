@@ -188,10 +188,12 @@ namespace Cozmo.Minigame.DroneMode {
     private void CreateReticleIfVisible(IVisibleInCamera reticleFocus) {
       if (reticleFocus.IsInFieldOfView && !_ObjToReticle.ContainsKey(reticleFocus)) {
         DroneModeCameraReticle newReticle = _ReticlePool.GetObjectFromPool();
-        _ObjToReticle.Add(reticleFocus, newReticle);
-        reticleFocus.OnVizRectChanged += HandleVizRectChanged;
+        if (newReticle != null) {
+          _ObjToReticle.Add(reticleFocus, newReticle);
+          reticleFocus.OnVizRectChanged += HandleVizRectChanged;
 
-        PositionReticle(newReticle, reticleFocus.VizRect);
+          PositionReticle(newReticle, reticleFocus.VizRect);
+        }
       }
     }
 
@@ -266,12 +268,15 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     private DroneModeCameraReticle CreateReticle() {
-      // Create the text label as a child under the parent container for the pool
-      GameObject newLabelObject = UIManager.CreateUIElement(_DroneModeReticlePrefab.gameObject, _CameraFeedImageContainer.transform);
-      newLabelObject.SetActive(false);
-      DroneModeCameraReticle reticleScript = newLabelObject.GetComponent<DroneModeCameraReticle>();
-      reticleScript.ReticleLabel = "";
-      reticleScript.ShowReticleLabelText(false);
+      DroneModeCameraReticle reticleScript = null;
+      if (_CameraFeedImageContainer != null) {
+        // Create the text label as a child under the parent container for the pool
+        GameObject newLabelObject = UIManager.CreateUIElement(_DroneModeReticlePrefab.gameObject, _CameraFeedImageContainer.transform);
+        newLabelObject.SetActive(false);
+        reticleScript = newLabelObject.GetComponent<DroneModeCameraReticle>();
+        reticleScript.ReticleLabel = "";
+        reticleScript.ShowReticleLabelText(false);
+      }
       return reticleScript;
     }
 

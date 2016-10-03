@@ -28,7 +28,12 @@ public class SimpleObjectPool<T> where T : class {
   private void CreatePoolObjects(int numItems) {
     for (var i = 0; i < numItems; i++) {
       var item = _CreateFunction();
-      _InactiveObjects.Enqueue(item);
+      if (item != null) {
+        _InactiveObjects.Enqueue(item);
+      }
+      else {
+        DAS.Error("SimpleObjectPool.CreatePoolObjects", "Tried to create a pool object, but creation failed! " + typeof(T));
+      }
     }
   }
 
@@ -59,6 +64,9 @@ public class SimpleObjectPool<T> where T : class {
     T item;
     if (_InactiveObjects.Count == 0) {
       item = _CreateFunction();
+      if (item == null) {
+        DAS.Error("SimpleObjectPool.GetObjectFromPool", "Tried to create a pool object, but creation failed! " + typeof(T));
+      }
     }
     else {
       item = _InactiveObjects.Dequeue();
