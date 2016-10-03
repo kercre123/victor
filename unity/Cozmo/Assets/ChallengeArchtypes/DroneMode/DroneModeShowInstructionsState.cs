@@ -27,7 +27,9 @@ namespace Cozmo {
 
         public override void Exit() {
           base.Exit();
-          _CurrentRobot.PopIdleAnimation();
+          if (_CurrentRobot != null) {
+            _CurrentRobot.PopIdleAnimation();
+          }
         }
 
         private void HandleContinueButtonClicked() {
