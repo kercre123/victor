@@ -196,6 +196,7 @@ namespace SpeedTap {
 
       CurrentRobot.VisionWhileMoving(true);
       LightCube.TappedAction += BlockTapped;
+      CurrentRobot.OnLightCubeRemoved += LightCubeRemoved;
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.AnimationEvent>(OnRobotAnimationEvent);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
@@ -243,6 +244,7 @@ namespace SpeedTap {
 
     protected override void CleanUpOnDestroy() {
       LightCube.TappedAction -= BlockTapped;
+      CurrentRobot.OnLightCubeRemoved -= LightCubeRemoved;
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.AnimationEvent>(OnRobotAnimationEvent);
     }
 
@@ -302,6 +304,17 @@ namespace SpeedTap {
           (_LastCozmoTimeStamp > animEvent.timestamp || _LastCozmoTimeStamp == -1)) {
         _LastCozmoTimeStamp = animEvent.timestamp;
       }
+    }
+
+    private void LightCubeRemoved(LightCube cube) {
+      // Invalidate the player/cozmo block id if it was removed
+      if (PlayerBlockID == cube.ID) {
+        PlayerBlockID = -1;
+      }
+      if (CozmoBlockID == cube.ID) {
+        CozmoBlockID = -1;
+      }
+
     }
 
     private static SpeedTapRulesBase GetRules(SpeedTapRuleSet ruleSet) {
@@ -390,12 +403,18 @@ namespace SpeedTap {
     }
 
     public void ClearWinningLightPatterns() {
-      StopCycleCube(PlayerBlockID);
-      StopCycleCube(CozmoBlockID);
+      if (PlayerBlockID != -1) {
+        StopCycleCube(PlayerBlockID);
+        if (CurrentRobot != null) {
+          CurrentRobot.LightCubes[PlayerBlockID].SetLEDsOff();
+        }
+      }
 
-      if (CurrentRobot != null) {
-        CurrentRobot.LightCubes[PlayerBlockID].SetLEDsOff();
-        CurrentRobot.LightCubes[CozmoBlockID].SetLEDsOff();
+      if (CozmoBlockID != -1) {
+        StopCycleCube(CozmoBlockID);
+        if (CurrentRobot != null) {
+          CurrentRobot.LightCubes[CozmoBlockID].SetLEDsOff();
+        }
       }
     }
   }

@@ -271,6 +271,8 @@ public abstract class GameBase : MonoBehaviour {
     else {
       CheckForCarryingBlock(currentRobot);
     }
+
+    CurrentRobot.OnLightCubeRemoved += HandleLightCubeRemoved;
   }
 
   private IEnumerator WaitForPickingUpOrPlacingFinish(IRobot robot, float startTimestamp) {
@@ -680,9 +682,13 @@ public abstract class GameBase : MonoBehaviour {
       ContextManager.Instance.OnAppHoldEnd();
     }
 
-    if (CurrentRobot != null && _StateMachine.GetReactionThatPausedGame() == Anki.Cozmo.BehaviorType.NoneBehavior) {
-      // clears the action queue before quitting the game.
-      CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
+    if (CurrentRobot != null) {
+      if (_StateMachine.GetReactionThatPausedGame() == Anki.Cozmo.BehaviorType.NoneBehavior) {
+        // clears the action queue before quitting the game.
+        CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
+      }
+
+      CurrentRobot.OnLightCubeRemoved -= HandleLightCubeRemoved;
     }
 
     if (_InterruptedAlertView != null) {
@@ -979,7 +985,13 @@ public abstract class GameBase : MonoBehaviour {
     if (CurrentRobot == null) {
       return;
     }
-    LightCube cube = CurrentRobot.LightCubes[data.cubeID];
+
+    LightCube cube = null;
+    CurrentRobot.LightCubes.TryGetValue(data.cubeID, out cube);
+    if (cube == null) {
+      return;
+    }
+
     data.colorIndex++;
     data.colorIndex %= cube.Lights.Length;
     for (int i = 0; i < cube.Lights.Length; i++) {
@@ -1007,7 +1019,12 @@ public abstract class GameBase : MonoBehaviour {
     data.originalColor = originalColors;
 
     // Set colors
-    LightCube cube = CurrentRobot.LightCubes[cubeId];
+    LightCube cube = null;
+    CurrentRobot.LightCubes.TryGetValue(cubeId, out cube);
+    if (cube == null) {
+      return;
+    }
+
     cube.SetLEDs(blinkColorsCounterclockwise);
 
     // Update data
@@ -1021,7 +1038,11 @@ public abstract class GameBase : MonoBehaviour {
 
   private void StopBlinkLight(int cubeId) {
     if (_BlinkCubeTimers.ContainsKey(cubeId)) {
-      LightCube cube = CurrentRobot.LightCubes[cubeId];
+      LightCube cube = null;
+      CurrentRobot.LightCubes.TryGetValue(cubeId, out cube);
+      if (cube == null) {
+        return;
+      }
       cube.SetLEDs(_BlinkCubeTimers[cubeId].originalColor);
       _BlinkCubeTimers.Remove(cubeId);
     }
@@ -1038,6 +1059,32 @@ public abstract class GameBase : MonoBehaviour {
 
     foreach (int cubeId in cubesToStopBlinking) {
       StopBlinkLight(cubeId);
+    }
+  }
+
+  public void HandleLightCubeRemoved(LightCube cube) {
+    // If this game was using a cube that was removed, quit the game and
+    // for all other cubes the game is using make sure to turn their lights off
+    foreach (int id in CubeIdsForGame) {
+      if (id == cube.ID) {
+        ShowInterruptionQuitGameView(LocalizationKeys.kMinigameLostTrackOfBlockTitle,
+                                     LocalizationKeys.kMinigameLostTrackOfBlockDescription);
+
+        // Remove this handler in the case multiple lightcubes are removed at the
+        // same time we don't show multiple QuitGameViews
+        if (CurrentRobot != null) {
+          CurrentRobot.OnLightCubeRemoved -= HandleLightCubeRemoved;
+        }
+      }
+      else {
+        if (CurrentRobot != null) {
+          LightCube lightCube;
+          CurrentRobot.LightCubes.TryGetValue(id, out lightCube);
+          if (lightCube != null) {
+            lightCube.SetLEDsOff();
+          }
+        }
+      }
     }
   }
 
@@ -1107,7 +1154,10 @@ public abstract class GameBase : MonoBehaviour {
 
   public void ShowInterruptionQuitGameView(string titleKey, string descriptionKey) {
     SoftEndGameRobotReset();
-    _SharedMinigameViewInstance.HideQuitButton();
+
+    if (_SharedMinigameViewInstance != null) {
+      _SharedMinigameViewInstance.HideQuitButton();
+    }
     // Don't set everything on fire if its already on fire, that's a waste of perfectly good fire
     if (_InterruptedAlertView == null && PauseManager.Instance.IsAnyDialogOpen == false) {
       Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
