@@ -266,15 +266,6 @@ namespace Anki {
                                            nullptr,
                                            preDockPoseDistOffsetX_mm);
       
-      if(preActionPoses.empty()) {
-        PRINT_NAMED_WARNING("IsCloseEnoughToPreActionPose.NoPreActionPoses",
-                            "Action object with ID=%d returned no pre-action poses of the given type.",
-                            dockObject->GetID().GetValue());
-        output.actionResult = ActionResult::FAILURE_ABORT;
-        output.interactionResult = ObjectInteractionResult::NO_PREACTION_POSES;
-        return;
-      }
-      
       // If using approach angle remove any preAction poses that aren't close to the desired approach angle
       if(input.useApproachAngle)
       {
@@ -300,6 +291,15 @@ namespace Anki {
             ++iter;
           }
         }
+      }
+      
+      if(preActionPoses.empty()) {
+        PRINT_NAMED_WARNING("IsCloseEnoughToPreActionPose.NoPreActionPoses",
+                            "Action object with ID=%d returned no pre-action poses of the given type.",
+                            dockObject->GetID().GetValue());
+        output.actionResult = ActionResult::FAILURE_ABORT;
+        output.interactionResult = ObjectInteractionResult::NO_PREACTION_POSES;
+        return;
       }
       
       const Point2f currentXY(robot.GetPose().GetTranslation().x(),
