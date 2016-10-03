@@ -12,9 +12,6 @@ public class EnterNameSlide : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.InputField _NameInputField;
 
-  [SerializeField]
-  private Anki.UI.AnkiTextLabel _NameInputPlaceholder;
-
   private void Awake() {
     _SubmitName.Initialize(HandleSubmitNameButton, "enter_name_done", "enter_name_slide");
     _SubmitName.Interactable = false;
@@ -23,7 +20,6 @@ public class EnterNameSlide : MonoBehaviour {
   private void Start() {
     if (string.IsNullOrEmpty(_NameInputField.text) == false) {
       _SubmitName.Interactable = true;
-      _NameInputPlaceholder.enabled = false;
     }
   }
 
@@ -48,11 +44,9 @@ public class EnterNameSlide : MonoBehaviour {
   private void HandleInputFieldChange(string input) {
     if (string.IsNullOrEmpty(input)) {
       _SubmitName.Interactable = false;
-      _NameInputPlaceholder.enabled = true;
     }
     else {
       _SubmitName.Interactable = true;
-      _NameInputPlaceholder.enabled = false;
     }
   }
 
