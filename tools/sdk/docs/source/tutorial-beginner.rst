@@ -71,11 +71,11 @@ To run a program for Cozmo:
 
   a. For iOS and Linux systems, type the following into the same window and press **Enter**::
 
-      ./run-example.sh directoryname/program_name.py
+      python3 program_name.py
 
   b. For Windows systems, type the following into the same window and press **Enter**::
 
-      run-example.bat directoryname/program_name.py
+      py program_name.py
 
 5. If done correctly, Cozmo will execute the program.
 
@@ -118,7 +118,7 @@ For your first program, you will tell Cozmo to drive in a straight line for thre
 ..
 
   a. The ``drive_wheels`` function directly controls all aspects of Cozmo's wheel motion.
-  b. ``50,50`` is the velocity of his left and right treads, respectively. Velocity is measured in millimeters per second (mm/s). In this example, Cozmo will move forward 50 millimeters per second.
+  b. ``50,50`` is the speed of his left and right treads, respectively. Speed is measured in millimeters per second (mm/s). In this example, Cozmo will move forward 50 millimeters per second.
   c. ``duration=3`` specifies how long Cozmo will move. Duration is measured in seconds. In this example, Cozmo will move for three seconds.
 
 5. Type in the last three lines:

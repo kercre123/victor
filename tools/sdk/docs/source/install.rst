@@ -28,22 +28,24 @@ Install
 OS X
 """"
 
-Install `Homebrew <http://brew.sh>`_ on your system according to the latest instructions. Once Homebrew is installed, type the following into your Terminal window to install Python::
+.. important:: Users that do not have root privileges on the system can use ``pip install --user`` to bypass that requirement.
 
-  brew install python3
+1. Install `Homebrew <http://brew.sh>`_ on your system according to the latest instructions. Once Homebrew is installed, type the following into your Terminal window to install Python::
 
-Then upgrade pip by typing the following into the Terminal window::
+    brew install python3
+
+2. Then upgrade pip by typing the following into the Terminal window::
 
     pip3 install -U pip
 
-Finally, install NumPy and Pillow with the following commands::
+3. Finally, install NumPy and Pillow with the following commands::
 
     pip3 install numpy
     pip3 install pillow
 
 
 """""""""""""""""""""""""""""
-Linux (Ubuntu 14.04 or later)
+Linux (Ubuntu 14.04 or 16.04)
 """""""""""""""""""""""""""""
 
 The Cozmo SDK is tested and and supported on Ubuntu 14.04 and above. While the SDK is not guaranteed to work on other versions of Linux, please ensure the following dependencies are installed if you wish to run the SDK on any other Linux system:
@@ -53,48 +55,62 @@ The Cozmo SDK is tested and and supported on Ubuntu 14.04 and above. While the S
   * Android command line tools (https://developer.android.com/studio/index.html#Other)
   * usbmuxd for iOS
 
+.. important:: Users that do not have root privileges on the system can use ``pip install --user`` to bypass that requirement.
+
 **For version 14.04 only:**
 
-Type the following into your Terminal window to install Python 3.5::
+1. Type the following into your Terminal window to install Python 3.5::
 
-  sudo add-apt-repository ppa:fkrull/deadsnakes
-  sudo apt-get update
-  sudo apt-get install python3.5
-  sudo update-alternatives --install /usr/bin/python3 python3.5 /usr/bin/python3.5.1
+    sudo add-apt-repository ppa:fkrull/deadsnakes
+    sudo apt-get update
+    sudo apt-get install python3.5
+    sudo update-alternatives --install /usr/bin/python3 python3.5 /usr/bin/python3.5.1
 
-Then install pip by typing in the following into the Terminal window::
+2. Then install pip by typing in the following into the Terminal window::
 
-  sudo apt-get install python3-setuptools
-  sudo easy_install3 pip
+    sudo apt-get install python3-setuptools
+    sudo easy_install3 pip
+
+3. Last, install Tkinter::
+
+    sudo apt-get install python3.5-tk
 
 **For Ubuntu 16.04:**
 
-Type the following into your Terminal window to install Python::
+1. Type the following into your Terminal window to install Python::
 
-  sudo apt-get install python3
+    sudo apt-get install python3
 
-Then install pip by typing in the following into the Terminal window::
+2. Then install pip by typing in the following into the Terminal window::
 
-  sudo apt install python3-pip
+    sudo apt install python3-pip
 
-Finally, for all versions of Ubuntu, install NumPy and Pillow with the following commands::
+3. Last, install Tkinter::
 
-  pip3 install numpy
-  pip3 install pillow
-  sudo apt-get update
-  sudo apt-get install python3-pil.imagetk
+    sudo apt-get install python3-pil.imagetk
+
+**For both versions of Ubuntu:**
+
+Finally, install NumPy and Pillow with the following commands::
+
+    pip3 install numpy
+    pip3 install pillow
+    sudo apt-get update
+
 
 """""""
 Windows
 """""""
 
-Download the `executable file from Python.org <https://www.python.org/downloads/>`_ and run it on your computer. Once installed, upgrade pip by typing the following into the Command window::
+.. important:: Users that do not have administrative privileges on the system can use ``pip install --user`` to bypass that requirement.
 
-  python -m pip install -U pip
+1. Download the `executable file from Python.org <https://www.python.org/downloads/>`_ and run it on your computer. Once installed, upgrade pip by typing the following into the Command window::
+
+    python -m pip install -U pip
 
 ..
 
-Finally, install NumPy and Pillow with the following commands::
+2. Then install NumPy and Pillow with the following commands::
 
     pip3 install numpy
     pip3 install pillow
@@ -120,6 +136,18 @@ Android Debug Bridge
 Type the following into a Terminal window (requires Homebrew to be installed)::
 
     brew install android-platform-tools
+
+Then enable USB Debugging on your mobile device.
+
+    On Android devices:
+
+      1. Tap seven (7) times on the Build Number listed under *Settings -> About Phone*.
+      2. Then, under *Settings -> Developer Options*, enable USB debugging.
+
+    On Amazon Kindle Fire:
+
+      1. Tap seven (7) times on the Serial Number listed under *Settings -> Device Options*.
+      2. Then, under *Settings -> Device Options -> Developer Options*, turn on Enable ADB.
 
 ..
 

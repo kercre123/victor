@@ -111,11 +111,11 @@ The code for the Control Via Tweet example reads as follows.
 
         usage = "'lift X' where X is speed to move lift"
 
-        lift_velocity = extract_float(args)
+        lift_speed = extract_float(args)
 
-        if lift_velocity is not None:
-            self.cozmo.move_lift(lift_velocity)#.wait_for_completed()
-            return "I moved lift " + str(lift_velocity) + " vel!"
+        if lift_speed is not None:
+            self.cozmo.move_lift(lift_speed)#.wait_for_completed()
+            return "I moved lift " + str(lift_speed) + " vel!"
 
         return "Error: usage = " + usage
 
@@ -123,11 +123,11 @@ The code for the Control Via Tweet example reads as follows.
 
         usage = "'tilthead X' where X is speed to tilt head"
 
-        head_velocity = extract_float(args)
+        head_speed = extract_float(args)
 
-        if head_velocity is not None:
-            self.cozmo.move_head(head_velocity)#.wait_for_completed()
-            return "I moved head " + str(head_velocity) + " vel!"
+        if head_speed is not None:
+            self.cozmo.move_head(head_speed)#.wait_for_completed()
+            return "I moved head " + str(head_speed) + " vel!"
 
         return "Error: usage = " + usage
 

@@ -12,8 +12,10 @@ Starting Up the SDK
 
 1. Plug the mobile device containing the Cozmo app into your computer.
 2. Open the Cozmo app on the phone. Make sure Cozmo is on and connected to the app via WiFi.
-3. On the computer, open a Terminal (iOS/Linux) / Command-line (Windows) window. Type ``cd SDKDirectory`` where *SDKDirectory* is the name of the directory you extracted the SDK into and press Enter.
-4. Now you can run your program.
+3. Swipe right on the gear icon at the top right corner to open the Settings menu.
+4. Swipe left to show the Cozmo SDK option and tap the Enable SDK button.
+5. On the computer, open a Terminal (iOS/Linux) / Command-line (Windows) window. Type ``cd SDKDirectory`` where *SDKDirectory* is the name of the directory you extracted the SDK into and press Enter.
+6. Now you can run your program.
 
 ---------------------------
 First Steps - "Hello World"
@@ -29,11 +31,11 @@ The Program
 
     a. For iOS and Linux systems, type the following and press **Enter**::
 
-        ./run-example.sh examples/hello_world.py
+        python3 hello_world.py
 
     b. For Windows systems, type the following and press **Enter**::
 
-        run-example.bat examples/hello_world.py
+        py hello_world.py
 
 2. If done correctly, Cozmo will say "Hello, World!"
 
@@ -79,10 +81,10 @@ Next Steps - "Night-Night"
 
         a. For iOS and Linux systems, type the following into the same window and press **Enter**::
 
-            ./run-example.sh examples/nightnight.py
+            python3 nightnight.py
 
         b. For Windows systems, type the following into the same window and press **Enter**::
 
-            run-example.bat examples/nightnight.py
+            py nightnight.py
 
 7. If done correctly, Cozmo will say the new phrase.

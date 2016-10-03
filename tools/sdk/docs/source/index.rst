@@ -16,6 +16,7 @@ Welcome to the Cozmo SDK alpha version!
     :caption: Installation
 
     install
+    vagrant.rst
 
 .. toctree::
     :maxdepth: 2
