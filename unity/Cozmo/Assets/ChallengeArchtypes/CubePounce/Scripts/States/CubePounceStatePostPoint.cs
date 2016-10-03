@@ -100,9 +100,11 @@ namespace Cozmo.Minigame.CubePounce {
         _nextMusicState = Anki.Cozmo.Audio.GameState.Music.Invalid;
       }
 
-      _CurrentRobot.CancelCallback(HandleEndHandAnimFinish);
-      _CurrentRobot.CancelCallback(HandleEndRoundAnimFinish);
-      _CurrentRobot.CancelCallback(HandleEndGameAnimFinish);
+      if (_CurrentRobot != null) {
+        _CurrentRobot.CancelCallback(HandleEndHandAnimFinish);
+        _CurrentRobot.CancelCallback(HandleEndRoundAnimFinish);
+        _CurrentRobot.CancelCallback(HandleEndGameAnimFinish);
+      }
     }
   }
 }

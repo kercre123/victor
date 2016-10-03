@@ -156,10 +156,11 @@ public class InitialCubesState : State {
 
   public override void Exit() {
     base.Exit();
-
-    foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
-      if (!_Game.CubeIdsForGame.Contains(lightCube.Key)) {
-        lightCube.Value.SetLEDsOff();
+    if (_CurrentRobot != null) {
+      foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
+        if (!_Game.CubeIdsForGame.Contains(lightCube.Key)) {
+          lightCube.Value.SetLEDsOff();
+        }
       }
     }
 

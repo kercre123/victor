@@ -31,7 +31,9 @@ namespace Simon {
     public override void Exit() {
       base.Exit();
       LightCube.TappedAction -= OnBlockTapped;
-      _CurrentRobot.DriveWheels(0f, 0f);
+      if (_CurrentRobot != null) {
+        _CurrentRobot.DriveWheels(0f, 0f);
+      }
     }
 
     public override void Update() {
