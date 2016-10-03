@@ -28,7 +28,9 @@ namespace TreasureHunt {
 
     public override void Exit() {
       base.Exit();
-      _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+      if (_CurrentRobot != null) {
+        _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+      }
       _LookingAround = false;
     }
 

@@ -42,7 +42,9 @@ namespace Simon {
     }
 
     private void ResetLights() {
-      _CurrentRobot.TurnOffAllBackpackBarLED();
+      if (_CurrentRobot != null) {
+        _CurrentRobot.TurnOffAllBackpackBarLED();
+      }
     }
   }
 }

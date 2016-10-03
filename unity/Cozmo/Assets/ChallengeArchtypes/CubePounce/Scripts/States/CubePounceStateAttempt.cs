@@ -40,7 +40,9 @@ namespace Cozmo.Minigame.CubePounce {
 
     public override void Exit() {
       base.Exit();
-      _CurrentRobot.CancelCallback(HandlePounceEnd);
+      if (_CurrentRobot != null) {
+        _CurrentRobot.CancelCallback(HandlePounceEnd);
+      }
     }
 
     private void HandlePounceEnd(bool success) {

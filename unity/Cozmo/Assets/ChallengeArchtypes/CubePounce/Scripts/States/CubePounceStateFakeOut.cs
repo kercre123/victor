@@ -4,7 +4,7 @@ using System.Collections;
 
 namespace Cozmo.Minigame.CubePounce {
   public class CubePounceStateFakeOut : CubePounceState {
-    
+
     public override void Enter() {
       base.Enter();
 
@@ -23,7 +23,9 @@ namespace Cozmo.Minigame.CubePounce {
 
     public override void Exit() {
       base.Exit();
-      _CurrentRobot.CancelCallback(HandleFakeoutEnd);
+      if (_CurrentRobot != null) {
+        _CurrentRobot.CancelCallback(HandleFakeoutEnd);
+      }
       _CubePounceGame.CurrentlyInFakeoutState = false;
     }
   }

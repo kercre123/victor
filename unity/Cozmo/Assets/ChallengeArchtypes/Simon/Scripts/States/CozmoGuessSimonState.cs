@@ -28,7 +28,9 @@ namespace Simon {
 
     public override void Exit() {
       base.Exit();
-      _CurrentRobot.DriveWheels(0.0f, 0.0f);
+      if (_CurrentRobot != null) {
+        _CurrentRobot.DriveWheels(0.0f, 0.0f);
+      }
     }
 
     public override void Update() {

@@ -244,7 +244,9 @@ namespace SpeedTap {
 
     protected override void CleanUpOnDestroy() {
       LightCube.TappedAction -= BlockTapped;
-      CurrentRobot.OnLightCubeRemoved -= LightCubeRemoved;
+      if (CurrentRobot != null) {
+        CurrentRobot.OnLightCubeRemoved -= LightCubeRemoved;
+      }
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.AnimationEvent>(OnRobotAnimationEvent);
     }
 
