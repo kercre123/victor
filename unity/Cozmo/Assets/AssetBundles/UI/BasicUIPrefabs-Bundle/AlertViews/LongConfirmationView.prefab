@@ -524,13 +524,13 @@ MonoBehaviour:
   ModifiedValues:
   - ObjectPath: HoldCozmoButton/ProgressBarMask/ProgressBarFill
     FieldName: UnityEngine.UI.Image:m_Color:b
-    JsonValue: 0.0
+    JsonValue: 0.007843138
   - ObjectPath: HoldCozmoButton/ProgressBarMask/ProgressBarFill
     FieldName: UnityEngine.UI.Image:m_Color:g
-    JsonValue: 0.7254902
+    JsonValue: 0.007843138
   - ObjectPath: HoldCozmoButton/ProgressBarMask/ProgressBarFill
     FieldName: UnityEngine.UI.Image:m_Color:r
-    JsonValue: 0.980392158
+    JsonValue: 0.3529412
   - ObjectPath: HoldCozmoButton
     FieldName: Cozmo.UI.CozmoButton:TextDisabledColor:a
     JsonValue: 0.541
