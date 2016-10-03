@@ -34,7 +34,7 @@
     "translation": "Done"
   },
   "faceEnrollment.enterName.placeholderText": {
-    "translation": "Enter your first name"
+    "translation": "Enter Name"
   },
   "faceEnrollment.faceEnrollmentList.description": {
     "translation": "Tap an available slot to introduce Cozmo to a new person.\nTap an existing entry to edit, update, or delete it."
@@ -56,13 +56,13 @@
   },
   "faceEnrollment.errors.neverSawValidFace.title": {
     "translation": "Cozmo already knows you!"
-  },
+  }, 
   "faceEnrollment.errors.neverSawValidFace.description": {
     "translation": "Cozmo recognizes you as {0}"
   },
   "faceEnrollment.errors.timeOut.title": {
     "translation": "Cozmo is having trouble seeing you"
-  },
+  }, 
   "faceEnrollment.errors.timeOut.description": {
     "translation": "Make sure you're in a well-lit room and are aligned with Cozmo's face. Cozmo should be on a flat, stable surface."
   },
@@ -76,6 +76,7 @@
     "translation": "Tap the erase icon to clear a slot"
   },
   "faceEnrollment.howToPlay.existingPerson": {
+
     "translation": "Tap to Update this slot and let Cozmo re-scan this face"
   },
   "faceEnrollment.howToPlay.editName": {
