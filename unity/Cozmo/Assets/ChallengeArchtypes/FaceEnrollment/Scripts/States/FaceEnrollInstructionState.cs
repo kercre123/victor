@@ -14,6 +14,8 @@ namespace FaceEnrollment {
     private int _ReEnrollFaceID;
     private bool _UserCancelledEnrollment = false;
 
+    private Cozmo.UI.AlertView _DoneAlertView = null;
+
     public bool IsReEnrollment {
       get { return _ReEnrollFaceID != 0; }
     }
@@ -55,6 +57,10 @@ namespace FaceEnrollment {
 
       if (_ErrorAlertView != null) {
         _ErrorAlertView.CloseViewImmediately();
+      }
+
+      if (_DoneAlertView != null) {
+        _DoneAlertView.CloseViewImmediately();
       }
 
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotCompletedAction>(HandleEnrolledFace);
@@ -222,13 +228,28 @@ namespace FaceEnrollment {
     private void HandleEnrollFaceAnimationSequenceComplete(bool success) {
       // don't want to show how to play again in re-enrollments
       if (_CurrentRobot.EnrolledFaces.Count == 1 && !IsReEnrollment) {
-        // this is our first face enrollment so show the how to play first
-        ContextManager.Instance.AppFlash(playChime: true);
-        _StateMachine.SetNextState(new FaceEnrollmentHowToPlayState());
+        DoneAlertView();
       }
       else {
         ReturnToFaceSlide();
       }
+    }
+
+    private void ShowHowToPlay() {
+      // this is our first face enrollment so show the how to play first
+      ContextManager.Instance.AppFlash(playChime: true);
+      _StateMachine.SetNextState(new FaceEnrollmentHowToPlayState());
+    }
+
+    private void DoneAlertView() {
+      Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
+
+      // show alert
+      alertView.TitleLocKey = LocalizationKeys.kFaceEnrollmentFirstTimeCompleteAlertTitle;
+      alertView.DescriptionLocKey = LocalizationKeys.kFaceEnrollmentFirstTimeCompleteAlertDescription;
+      alertView.SetPrimaryButton(LocalizationKeys.kButtonContinue, _FaceEnrollmentGame.CloseMinigameImmediately);
+
+      _DoneAlertView = alertView;
     }
 
     private void ReturnToFaceSlide() {

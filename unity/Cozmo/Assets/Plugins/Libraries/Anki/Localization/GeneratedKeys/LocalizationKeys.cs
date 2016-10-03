@@ -220,6 +220,12 @@ public static class LocalizationKeys {
   public const string kFaceEnrollmentErrorsTimeOutTitle = "faceEnrollment.errors.timeOut.title";
   public const string kFaceEnrollmentErrorsTimeOutDescription = "faceEnrollment.errors.timeOut.description";
   public const string kFaceEnrollmentConditionAllChangesSaved = "faceEnrollment.condition.allChangesSaved";
+  public const string kFaceEnrollmentHowToPlayEmptySlot = "faceEnrollment.howToPlay.emptySlot";
+  public const string kFaceEnrollmentHowToPlayEraseIcon = "faceEnrollment.howToPlay.eraseIcon";
+  public const string kFaceEnrollmentHowToPlayExistingPerson = "faceEnrollment.howToPlay.existingPerson";
+  public const string kFaceEnrollmentHowToPlayEditName = "faceEnrollment.howToPlay.editName";
+  public const string kFaceEnrollmentFirstTimeCompleteAlertTitle = "faceEnrollment.firstTimeCompleteAlert.title";
+  public const string kFaceEnrollmentFirstTimeCompleteAlertDescription = "faceEnrollment.firstTimeCompleteAlert.description";
 
   #endregion
 
@@ -441,20 +447,6 @@ public static class LocalizationKeys {
   public const string kOnboardingOldRobotSkip = "onboarding.OldRobotSkip";
   public const string kOnboardingFreeplayStringFakeOnboarding = "onboarding.FreeplayStringFakeOnboarding";
   public const string kOnboardingBirthWait = "onboarding.BirthWait";
-
-  #endregion
-
-  #region PressDemoStrings
-
-  public const string kPressDemoFaceEnrollRequestTitle = "pressDemo.faceEnrollRequestTitle";
-  public const string kPressDemoFaceEnrollRequestDesc = "pressDemo.faceEnrollRequestDesc";
-  public const string kPressDemoSpeedTapRequestTitle = "pressDemo.speedTapRequestTitle";
-  public const string kPressDemoSpeedTapRequestDesc = "pressDemo.speedTapRequestDesc";
-  public const string kPressDemoSpeedTapRequestAgainTitle = "pressDemo.speedTapRequestAgainTitle";
-  public const string kPressDemoSpeedTapRequestAgainDesc = "pressDemo.speedTapRequestAgainDesc";
-  public const string kPressDemoYesSecondTime = "pressDemo.yesSecondTime";
-  public const string kPressDemoNoSecondTime = "pressDemo.noSecondTime";
-  public const string kPressDemoSpeedTapLoopText = "pressDemo.speedTapLoopText";
 
   #endregion
 
@@ -688,26 +680,33 @@ public static class LocalizationKeys {
   public const string kUnlockableCubeRollActionTitle = "unlockable.CubeRollAction.Title";
   public const string kUnlockableCubeRollActionDescription = "unlockable.CubeRollAction.Description";
   public const string kUnlockableCubeRollActionSparkButtonDescription = "unlockable.CubeRollAction.SparkButtonDescription";
+  public const string kUnlockableCubeRollActionSparkedStateDescription = "unlockable.CubeRollAction.SparkedStateDescription";
   public const string kUnlockableDroneModeTitle = "unlockable.DroneMode.Title";
   public const string kUnlockableDroneModeDescription = "unlockable.DroneMode.Description";
   public const string kUnlockableCubeStackActionTitle = "unlockable.CubeStackAction.Title";
   public const string kUnlockableCubeStackActionDescription = "unlockable.CubeStackAction.Description";
+  public const string kUnlockableCubeStackActionSparkedStateDescription = "unlockable.CubeStackAction.SparkedStateDescription";
   public const string kUnlockableCubeStackActionSparkButtonDescription = "unlockable.CubeStackAction.SparkButtonDescription";
   public const string kUnlockablePounceOnMotionActionTitle = "unlockable.PounceOnMotionAction.Title";
   public const string kUnlockablePounceOnMotionActionDescription = "unlockable.PounceOnMotionAction.Description";
   public const string kUnlockablePounceOnMotionActionSparkButtonDescription = "unlockable.PounceOnMotionAction.SparkButtonDescription";
+  public const string kUnlockablePounceOnMotionActionSparkedStateDescription = "unlockable.PounceOnMotionAction.SparkedStateDescription";
   public const string kUnlockableBuildPyramidTitle = "unlockable.BuildPyramid.Title";
   public const string kUnlockableBuildPyramidDescription = "unlockable.BuildPyramid.Description";
   public const string kUnlockableBuildPyramidSparkButtonDescription = "unlockable.BuildPyramid.SparkButtonDescription";
+  public const string kUnlockableBuildPyramidSparkedStateDescription = "unlockable.BuildPyramid.SparkedStateDescription";
   public const string kUnlockablePopAWheelieActionTitle = "unlockable.PopAWheelieAction.Title";
   public const string kUnlockablePopAWheelieActionDescription = "unlockable.PopAWheelieAction.Description";
   public const string kUnlockablePopAWheelieActionSparkButtonDescription = "unlockable.PopAWheelieAction.SparkButtonDescription";
+  public const string kUnlockablePopAWheelieActionSparkedStateDescription = "unlockable.PopAWheelieAction.SparkedStateDescription";
   public const string kUnlockableKnockOverThreeCubeStackTitle = "unlockable.KnockOverThreeCubeStack.Title";
   public const string kUnlockableKnockOverThreeCubeStackDescription = "unlockable.KnockOverThreeCubeStack.Description";
   public const string kUnlockableKnockOverThreeCubeStackSparkButtonDescription = "unlockable.KnockOverThreeCubeStack.SparkButtonDescription";
+  public const string kUnlockableKnockOverThreeCubeStackSparkedStateDescription = "unlockable.KnockOverThreeCubeStack.SparkedStateDescription";
   public const string kUnlockablePickupCubeTitle = "unlockable.PickupCube.Title";
   public const string kUnlockablePickupCubeDescription = "unlockable.PickupCube.Description";
   public const string kUnlockablePickupCubeSparkButtonDescription = "unlockable.PickupCube.SparkButtonDescription";
+  public const string kUnlockablePickupCubeSparkedStateDescription = "unlockable.PickupCube.SparkedStateDescription";
   public const string kUnlockableComingSoonTitle = "unlockable.ComingSoon.Title";
   public const string kUnlockableComingSoonDescription = "unlockable.ComingSoon.Description";
   public const string kUnlockableDefaultTitle = "unlockable.Default.Title";

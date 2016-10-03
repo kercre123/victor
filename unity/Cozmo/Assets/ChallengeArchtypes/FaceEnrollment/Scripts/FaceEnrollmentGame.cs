@@ -67,7 +67,7 @@ namespace FaceEnrollment {
         EnterNameForNewFace(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName);
       }
       else {
-        _StateMachine.SetNextState(new FaceEnrollmentHowToPlayState());
+        _StateMachine.SetNextState(new FaceSlideState());
       }
 
     }
