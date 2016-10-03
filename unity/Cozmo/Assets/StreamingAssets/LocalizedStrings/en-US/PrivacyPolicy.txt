@@ -217,7 +217,7 @@ USA
 
 K.  KIDSAFE
 
-Anki.com, the Anki DRIVE mobile app and the Anki OVERDRIVE mobile app are certified by the kidSAFE Seal Program. The kidSAFE Seal Program is an independent safety certification service and seal-of-approval program designed exclusively for children-friendly websites and technologies, including kid-targeted game sites, educational services, virtual worlds, social networks, mobile apps, tablet devices, and other similar interactive services and technologies. Go to www.kidsafeseal.com for more information.
+Anki.com, the Anki DRIVE mobile app, the Anki OVERDRIVE mobile app and Cozmo are certified by the kidSAFE Seal Program. The kidSAFE Seal Program is an independent safety certification service and seal-of-approval program designed exclusively for children-friendly websites and technologies, including kid-targeted game sites, educational services, virtual worlds, social networks, mobile apps, tablet devices, and other similar interactive services and technologies. Go to www.kidsafeseal.com for more information.
 
 L.  TRUSTE
 
