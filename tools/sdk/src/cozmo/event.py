@@ -35,17 +35,18 @@ the object will:
 #. Dispatch the event to any handlers which have explicitly registered interest
    in the event (or a superclass of the event) via
    :meth:`~Dispatcher.add_event_handler` or via :meth:`Dispatcher.wait_for`
-#. Dispatch the event ot any "children" of the object (see below)
+#. Dispatch the event to any "children" of the object (see below)
 #. Dispatch the event to method handlers on the receiving object, or the
    `recv_default_handler` if it has no matching handler
-#. Dispatch the event to the parent of the object (if any).
+#. Dispatch the event to the parent of the object (if any), and in turn onto
+   the parent's parents.
 
 Any handler may raise a :class:`~cozmo.exceptions.StopPropogation` exception
 to prevent the event reaching any subsequent handlers (but generally should
 have no need to do so).
 
-Child objects receive all events that are sent to the originating object (
-which may have multiple children).
+Child objects receive all events that are sent to the originating object
+(which may have multiple children).
 
 Originating objects may have one parent object, which receives all events sent
 to its child.
@@ -71,10 +72,10 @@ import inspect
 import re
 import weakref
 
-from . import logger
-
 from . import exceptions
 from . import base
+from . import logger
+
 
 # from https://stackoverflow.com/questions/1175208/elegant-python-function-to-convert-camelcase-to-snake-case
 _first_cap_re = re.compile('(.)([A-Z][a-z]+)')
@@ -140,8 +141,6 @@ class _AutoRegister(type):
 
     def __init__(cls, name, bases, attrs, **kw):
         if name in registered_events:
-            #for k, v in registered_events[name].__dict__.items():
-            #    print(k, v)
             raise ValueError("Duplicate event name %s (%s duplicated by %s)"
                     % (name, _full_qual_name(cls), _full_qual_name(registered_events[name])))
         registered_events[name] = cls
@@ -209,7 +208,7 @@ class Event(metaclass=_AutoRegister):
                 return f(self, **self._params())
 
     def _dispatch_to_future(self, fut):
-        if not fut.cancelled():
+        if not fut.done():
             fut.set_result(self)
 
     def _is_filtered(self, f):
@@ -232,7 +231,11 @@ def _register_dynamic_event_type(event_name, attrs):
 
 
 class Handler(collections.namedtuple('Handler', 'obj evt f')):
-    '''A Handler is returned by :func:`Dispatcher.add_event_handler`'''
+    '''A Handler is returned by :func:`Dispatcher.add_event_handler`
+
+    The handler can be disabled at any time by calling its :meth:`disable`
+    method.
+    '''
     __slots__ = ()
 
     def disable(self):
@@ -262,7 +265,6 @@ class Dispatcher(base.Base):
         if not loop:
             raise ValueError("Loop was not supplied to "+self.__class__.__name__)
         self._loop = loop or asyncio.get_event_loop()
-        self._stop_dispatching = False
         self._dispatcher_running = True
 
     def _set_parent_dispatcher(self, parent):
@@ -358,7 +360,7 @@ class Dispatcher(base.Base):
             complete once all event handlers have been called.
         '''
 
-        if self._stop_dispatching:
+        if not self._dispatcher_running:
             return
 
         event_cls = event
@@ -370,13 +372,21 @@ class Dispatcher(base.Base):
         else:
             event_cls = event.__class__
 
+        if id(self) in event._delivered_to:
+            return
         event._delivered_to.add(id(self))
 
         handlers = set()
-        futures = []
-        events = []
         for cls in event._parent_event_classes():
-            handlers.update(self._dispatch_handlers[cls.event_name].copy())
+            for handler in self._dispatch_handlers[cls.event_name]:
+                if event._is_filtered(handler.f):
+                    continue
+
+                if getattr(handler.f, '_oneshot_handler', False):
+                    # Disable oneshot events prior to actual dispatch
+                    handler.disable()
+                handlers.add(handler)
+
         return asyncio.ensure_future(self._dispatch_event(event, handlers), loop=self._loop)
 
 
@@ -386,30 +396,18 @@ class Dispatcher(base.Base):
         # only receives the most specific event if they are monitoring for both.
 
         try:
-            oneshot = []
             # dispatch to local handlers
             for handler in handlers:
-                if event._is_filtered(handler.f):
-                    continue
-
                 if isinstance(handler.f, asyncio.Future):
                     event._dispatch_to_future(handler.f)
                 else:
                     result = event._dispatch_to_func(handler.f)
                     if asyncio.iscoroutine(result):
                         await result
-                if getattr(handler.f, '_oneshot_handler', False):
-                    oneshot.append(handler)
-
-            for handler in oneshot:
-                # never dispatch an event to this handler again
-                handler.disable()
-                #self.remove_event_handler(event, handler)
 
             # dispatch to children
             for child in self._dispatch_children:
-                if id(child) not in event._delivered_to:
-                    child.dispatch_event(event)
+                child.dispatch_event(event)
 
             # dispatch to self methods
             result = event._dispatch_to_obj(self)
@@ -417,7 +415,7 @@ class Dispatcher(base.Base):
                 await result
 
             # dispatch to parent dispatcher
-            if self._dispatch_parent and id(self._dispatch_parent) not in event._delivered_to:
+            if self._dispatch_parent:
                 self._dispatch_parent.dispatch_event(event)
 
         except exceptions.StopPropogation:
@@ -429,9 +427,6 @@ class Dispatcher(base.Base):
         This prevents coroutines awaiting a Future from blocking forever
         should a hard failure occur with the connection.
         '''
-        if self._stop_dispatching:
-            return
-
         handlers = set()
         for evh in self._dispatch_handlers.values():
             for h in evh:
@@ -472,11 +467,11 @@ class Dispatcher(base.Base):
         return await f
 
 
-
 def oneshot(f):
     '''Event handler decorator; causes the handler to only be dispatched to once.'''
     f._oneshot_handler = True
     return f
+
 
 def filter_handler(event, **filters):
     '''Decorates a handler function or Future to only be called if a filter is matched.
@@ -487,8 +482,7 @@ def filter_handler(event, **filters):
     For example::
 
         # Handle only if the majorWin animation completed
-        # TODO: fix this; there's no anim_name property (yet)
-        @filter_handler(cozmo.anim.EvtAnimationCompleted, anim_name="majorWin")
+        @filter_handler(cozmo.anim.EvtAnimationCompleted, animation_name="majorWin")
 
         # Handle only when the observed object is a LightCube
         @filter_handler(cozmo.objects.EvtObjectObserved, obj=lambda obj: isinstance(cozmo.objects.LightCube))
@@ -517,11 +511,10 @@ def filter_handler(event, **filters):
     return filter_property
 
 
-
 class Filter:
-    """A Filter can be passed to Event.wait_for to specify more exactly which events to wait on, beyond event class.
+    """Provides fine-grain filtering of events for dispatch.
 
-    See the filter_handler method for further details.
+    See the ::func::`filter_handler` method for further details.
     """
 
     def __init__(self, event, **filters):
@@ -531,13 +524,13 @@ class Filter:
         self._filters = filters
         for key in self._filters.keys():
             if not hasattr(event, key):
-                raise ValueError("Event %s does not define property %s", event.__name__, key)
+                raise AttributeError("Event %s does not define property %s", event.__name__, key)
 
     def __setattr__(self, key, val):
         if key[0] == '_':
             return super().__setattr__(key, val)
         if not hasattr(self._event, key):
-                raise ValueError("Event %s does not define property %s", self.event.__name__, key)
+                raise AttributeError("Event %s does not define property %s", self._event.__name__, key)
         self._filters[key] = val
 
     def __call__(self, evt):
@@ -561,8 +554,10 @@ async def wait_for_first(*futures, discard_remaining=True, loop=None):
             playing_anim.wait_for(cozmo.anim.EvtAnimationCompleted)
         )
 
-    If more than one completes during a single event loop run, then the
-    first of those will be returned (or raised); this may not be deterministic!
+    If more than one completes during a single event loop run, then
+    if any of those results are not exception, one of them will be selected
+    (at random, as determined by ``set.pop``) to be returned, else one
+    of the result exceptions will be raised instead.
 
     Args:
         futures (list of :class:`asyncio.Future`): The futures or coroutines to wait on.
@@ -573,17 +568,27 @@ async def wait_for_first(*futures, discard_remaining=True, loop=None):
         The first result, or raised exception
     '''
     done, pending = await asyncio.wait(futures, loop=loop, return_when=asyncio.FIRST_COMPLETED)
+
+    # collect the results from all "done" futures; only one will be returned
+    result = None
+    for fut in done:
+        try:
+            fut_result = fut.result()
+            if result is None or isinstance(result, BaseException):
+                result = fut_result
+        except Exception as exc:
+            if result is None:
+                result = exc
+
     if discard_remaining:
         # cancel the pending futures
         for fut in pending:
             fut.cancel()
-        # discard the remaining results (if any)
-        for fut in done[1:]:
-            try:
-                fut.result()
-            except:
-                pass
-    return done[0].result()
+
+    if isinstance(result, BaseException):
+        raise result
+    return result
+
 
 def _abort_futures(exc):
     '''Trigger the exception handler for all pending Future handlers.'''
