@@ -152,6 +152,8 @@ RobotAudioClient::CozmoPlayId RobotAudioClient::PostCozmoEvent( GameEvent::Gener
     audioCallbackContext = new AudioEngine::AudioCallbackContext();
     // Set callback flags
     audioCallbackContext->SetCallbackFlags( AudioEngine::AudioCallbackFlag::AllCallbacks );
+    // Execute callbacks synchronously (on main thread)
+    audioCallbackContext->SetExecuteAsync( false );
     // Register callbacks for event
     audioCallbackContext->SetEventCallbackFunc ( [ callbackFunc ]
     ( const AudioEngine::AudioCallbackContext* thisContext, const AudioEngine::AudioCallbackInfo& callbackInfo )

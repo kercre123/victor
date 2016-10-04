@@ -92,6 +92,8 @@ void AudioServer::ProcessMessage( const PostAudioEvent& message, ConnectionIdTyp
     AudioCallbackContext* callbackContext = new AudioCallbackContext();
     // Set callback flags
     callbackContext->SetCallbackFlags( callbackFlags );
+    // Execute callbacks synchronously (on main thread)
+    callbackContext->SetExecuteAsync( false );
     // Register callbacks for event
     callbackContext->SetEventCallbackFunc( [this, connectionId, callbackId]
                                            ( const AudioCallbackContext* thisContext,
