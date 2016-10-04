@@ -59,7 +59,8 @@ namespace Cozmo.HomeHub {
     private void ClearTiles() {
       foreach (GameObject button in _ChallengeButtons.Values) {
         button.GetComponent<HubWorldButton>().OnButtonClicked -= HandleUnlockedChallengeClicked;
-        Destroy(button);
+        // this is necessary because CreateChallengeButton relies on the childCount to be correct
+        GameObject.DestroyImmediate(button);
       }
       _ChallengeButtons.Clear();
     }
