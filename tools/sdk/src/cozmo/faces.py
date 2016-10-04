@@ -1,10 +1,9 @@
 # Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
 
-__all__ = ['EvtFaceObserved', 'Face']
+__all__ = ['EvtFaceIdChanged', 'EvtFaceObserved', 'Face']
 
 
-import asyncio
-import collections
+import math
 import time
 
 from . import logger
@@ -23,11 +22,23 @@ FACE_VISIBILITY_TIMEOUT = objects.OBJECT_VISIBILITY_TIMEOUT
 
 
 class EvtFaceObserved(event.Event):
-    '''Triggered whenever an face is identified by the robot'''
-    face = 'The face that was observed'
+    '''Triggered whenever a face is identified by the robot'''
+    face = 'The Face instance that was observed'
     updated = 'A set of field names that have changed'
     image_box = 'A comzo.util.ImageBox defining where the face is within Cozmo\'s camera view'
     name = 'The name associated with the face that was observed'
+
+
+class EvtFaceIdChanged(event.Event):
+    '''Triggered whenever a face has its ID updated in engine
+
+    Generally occurs when:
+    1) A tracked but unrecognized face (negative ID) is recognized and receives a positive ID or
+    2) Face records get merged (on realization that 2 faces are actually the same)
+    '''
+    face = 'The Face instance that is being given a new id'
+    old_id = 'The id previously used for this face'
+    new_id = 'The new id that will be used for this face'
 
 
 class EnrollNamedFace(action.Action):
@@ -58,6 +69,7 @@ class Face(event.Dispatcher):
     def __init__(self, conn, world, robot, face_id=None, **kw):
         super().__init__(**kw)
         self._face_id = face_id
+        self._updated_face_id = None
         self._robot = robot
         self._name = ''
         self._pose = None
@@ -82,7 +94,7 @@ class Face(event.Dispatcher):
         self.last_observed_image_box = None
 
     def __repr__(self):
-        return '<%s face_id=%s is_visible=%s name=%s pose=%s>' % (self.__class__.__name__, self.face_id,
+        return '<%s face_id=%s,%s is_visible=%s name=%s pose=%s>' % (self.__class__.__name__, self.face_id, self.updated_face_id,
                                                       self.is_visible, self.name, self.pose)
 
     #### Private Methods ####
@@ -98,7 +110,7 @@ class Face(event.Dispatcher):
 
     @property
     def face_id(self):
-        '''(int) The internal id assigned to the face.
+        '''int: The internal id assigned to the face.
 
         This value can only be assigned once as it is static in the engine.
         '''
@@ -112,13 +124,26 @@ class Face(event.Dispatcher):
         self._face_id = value
 
     @property
+    def has_updated_face_id(self):
+        '''bool: Has this face been updated / superseded by a face with a new id'''
+        return self._updated_face_id is not None
+
+    @property
+    def updated_face_id(self):
+        '''int: The id for the face that superseded this one (if any, otherwise :meth:`face_id`)'''
+        if self.has_updated_face_id:
+            return self._updated_face_id
+        else:
+            return self.face_id
+
+    @property
     def pose(self):
         ''':class:`cozmo.util.Pose` The pose of the face in the world.'''
         return self._pose
 
     @property
     def name(self):
-        '''(string) The name Cozmo has associated with the face in his memory.
+        '''string: The name Cozmo has associated with the face in his memory.
 
             This string will be empty if the face is not recognized or enrolled.
         '''
@@ -144,6 +169,10 @@ class Face(event.Dispatcher):
         self.dispatch_event(EvtFaceObserved, face=self, name=self._name,
                 updated=changed_fields, image_box=image_box,)
 
+    def _recv_msg_robot_changed_observed_face_id(self, evt, *, msg):
+        self._updated_face_id = msg.newID
+        self.dispatch_event(EvtFaceIdChanged, face=self, old_id=msg.oldID, new_id = msg.newID)
+
     #### Public Event Handlers ####
 
     #### Event Wrappers ####
@@ -164,6 +193,13 @@ class Face(event.Dispatcher):
                     conn=self.conn, robot=self._robot, dispatch_parent=self)
         self._robot._action_dispatcher._send_single_action(action)
         return action
+
+    @property
+    def time_since_last_seen(self):
+        '''float: time since this face was last seen (math.inf if never)'''
+        if self.last_observed_time is None:
+            return float(math.inf)
+        return time.time() - self.last_observed_time
 
     @property
     def is_visible(self):

@@ -454,7 +454,7 @@ def connect(f, conn_factory=conn.CozmoConnection, connector=None):
     return _connect_sync(f, conn_factory, connector)
 
 
-def connect_with_tkviewer(f, conn_factory=conn.CozmoConnection, connector=None):
+def connect_with_tkviewer(f, conn_factory=conn.CozmoConnection, connector=None, force_on_top=False):
     '''Setup a connection to a device and run a user function while displaying Cozmo's camera.
 
     This display a Tk window on the screen showing a view of Cozmo's camera.
@@ -475,6 +475,7 @@ def connect_with_tkviewer(f, conn_factory=conn.CozmoConnection, connector=None):
             subclass that handles opening the USB connection to a device.
             By default it will connect to the first Android or iOS device that
             has the Cozmo app running in SDK mode.
+        force_on_top (bool): Specifies whether the window should be forced on top of all others
     '''
     try:
         from . import tkview
@@ -485,7 +486,7 @@ def connect_with_tkviewer(f, conn_factory=conn.CozmoConnection, connector=None):
         raise NotImplementedError('tkviewer not available on this platform; '
             'make sure Tkinter, NumPy and Pillow packages are installed (%s)' % tkview)
 
-    viewer = tkview.TkImageViewer()
+    viewer = tkview.TkImageViewer(force_on_top=force_on_top)
 
     loop = asyncio.new_event_loop()
     abort_future = concurrent.futures.Future()

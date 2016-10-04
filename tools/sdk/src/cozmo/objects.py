@@ -4,8 +4,8 @@ __all__ = ['EvtObjectTapped', 'EvtObjectObserved', 'EvtObjectConnectChanged',
     'ObservableObject', 'LightCube', 'CustomObject', 'FixedCustomObject']
 
 
-import asyncio
 import collections
+import math
 import time
 
 from . import logger
@@ -117,6 +117,13 @@ class ObservableObject(event.Dispatcher):
     def pose(self):
         '''(:class:`cozmo.util.Pose`) The pose of this object in the world.'''
         return self._pose
+
+    @property
+    def time_since_last_seen(self):
+        '''float: time since this face was last seen (math.inf if never)'''
+        if self.last_observed_time is None:
+            return float(math.inf)
+        return time.time() - self.last_observed_time
 
     @property
     def is_visible(self):

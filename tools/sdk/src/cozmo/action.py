@@ -63,6 +63,7 @@ class Action(event.Dispatcher):
         self._state = ACTION_IDLE
         self._failure_code = None
         self._failure_reason = None
+        self._completed_event = None
 
     def __repr__(self):
         extra = self._repr_values()
@@ -88,15 +89,17 @@ class Action(event.Dispatcher):
         # Override to extra action-specific data from msg and generate
         # an action-specific completion event.  Do not call super if overriden.
         # Must generate a subclass of EvtActionCompleted.
-        self.dispatch_event(EvtActionCompleted,
-                action=self, state=self._state)
+        self._completed_event = EvtActionCompleted(action=self, state=self._state)
+        self.dispatch_event(self._completed_event)
 
     def _set_failed(self, code, reason):
         self._state = ACTION_FAILED
         self._failure_code = code
         self._failure_reason = reason
-        self.dispatch_event(EvtActionCompleted,
-            action=self, state=self._state, failure_code=code, failure_reason=reason)
+        self._completed_event = EvtActionCompleted(action=self, state=self._state,
+                                              failure_code=code,
+                                              failure_reason=reason)
+        self.dispatch_event(self._completed_event)
 
     #### Properties ####
 
@@ -185,6 +188,9 @@ class Action(event.Dispatcher):
     async def wait_for_completed(self, timeout=None):
         """Waits for the action to complete
         """
+        if self.is_completed:
+            # Already complete
+            return self._completed_event
         return await self.wait_for(EvtActionCompleted, timeout=timeout)
 
     def on_completed(self, handler):

@@ -13,26 +13,42 @@ import time
 import cozmo
 
 
-def run(sdk_conn):
-    '''The run method runs once Cozmo is connected.'''
-    robot = sdk_conn.wait_for_robot()
+def light_when_face(robot):
+    '''The core of the light_when_face program'''
 
-    try:
-        face = robot.world.wait_for_observed_face(timeout=30)
-    except asyncio.TimeoutError:
-        print("Didn't find a face.")
-        return
+    face = None
 
     while True:
-        if face.is_face_visible():
+        if face and face.is_visible:
             robot.set_all_backpack_lights(cozmo.lights.blue_light)
         else:
             robot.set_backpack_lights_off()
+
+            # Wait until we we can see another face
+            try:
+                face = robot.world.wait_for_observed_face(timeout=30)
+            except asyncio.TimeoutError:
+                print("Didn't find a face.")
+                return
+
         time.sleep(.1)
+
+
+def run(sdk_conn):
+    '''The run method runs once the Cozmo SDK is connected.'''
+    robot = sdk_conn.wait_for_robot()
+
+    try:
+        light_when_face(robot)
+
+    except KeyboardInterrupt:
+        print("")
+        print("Exit requested by user")
+
 
 if __name__ == '__main__':
     cozmo.setup_basic_logging()
     try:
-        cozmo.connect(run)
+        cozmo.connect_with_tkviewer(run)
     except cozmo.ConnectionError as e:
         sys.exit("A connection error occurred: %s" % e)

@@ -51,6 +51,33 @@ def _log_first_seen(tag_name, msg):
         logger.debug("Connection received message %s" % msg)
 
 
+# Some messages have no robotID but should still be forwarded to the primary robot
+FORCED_ROBOT_MESSAGES = {"AnimationAborted",
+                         "AnimationEvent",
+                         "AvailableObjects",
+                         "BehaviorObjectiveAchieved",
+                         "BehaviorTransition",
+                         "BlockPickedUp",
+                         "BlockPlaced",
+                         "BlockPoolDataMessage",
+                         "CarryStateUpdate",
+                         "ChargerEvent",
+                         "CubeLightsStateTransition",
+                         "LoadedKnownFace",
+                         "ObjectProjectsIntoFOV",
+                         "ReactionaryBehaviorTransition",
+                         "RobotChangedObservedFaceID",
+                         "RobotCliffEventFinished",
+                         "RobotErasedAllEnrolledFaces",
+                         "RobotErasedEnrolledFace",
+                         "RobotObservedMotion",
+                         "RobotObservedPossibleObject",
+                         "RobotOnChargerPlatformEvent",
+                         "RobotReachedEnrollmentCount",
+                         "RobotRenamedEnrolledFace",
+                         "UnexpectedMovement"}
+
+
 class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
     '''Manages the connection to the Cozmo app to communicate with the core engine.'''
 
@@ -124,6 +151,11 @@ class CozmoConnection(event.Dispatcher, clad_protocol.CLADProtocol):
 
             msg = msg._data
             robot_id = getattr(msg, 'robotID', None)
+
+            if not robot_id and self._primary_robot and (tag_name in FORCED_ROBOT_MESSAGES):
+                # Forward to the primary robot
+                robot_id = self._primary_robot.robot_id
+
             event_name = '_Msg' +  tag_name
 
             evttype = getattr(_clad, event_name, None)

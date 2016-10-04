@@ -155,11 +155,19 @@ class World(event.Dispatcher):
             obj.dispatch_event(evt)
 
     def _recv_msg_robot_observed_face(self, evt, *, msg):
+        if msg.faceID < 0:
+            # this face is being tracked, but is not yet recognized - ignore
+            return
         face = self._faces.get(msg.faceID)
         if not face:
             face = self._allocate_face_from_msg(msg)
         if face:
             face.dispatch_event(evt)
+
+    def _recv_msg_robot_changed_observed_face_id(self, evt, *, msg):
+        old_face = self._faces.get(msg.oldID)
+        if old_face:
+            old_face.dispatch_event(evt)
 
     def _recv_msg_object_tapped(self, evt, *, msg):
         obj = self._objects.get(msg.objectID)

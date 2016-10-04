@@ -326,7 +326,7 @@ class Robot(event.Dispatcher):
         # Perform all steps necessary to initialize the robot and trigger
         # an EvtRobotReady event when complete.
         async def _init():
-            # TODO: reset the robot state
+            # Note: Robot state is reset on entering SDK mode, and after any SDK program exits
             self.stop_all_motors()
             self.enable_reactionary_behaviors(False)
 
@@ -338,6 +338,9 @@ class Robot(event.Dispatcher):
 
             # wait for animations to load
             await self.conn.anim_names.wait_for_loaded()
+
+            msg = _clad_to_engine_iface.GetBlockPoolMessage()
+            self.conn.send_msg(msg)
 
             self._is_ready = True
             logger.info("Robot initialized OK")
@@ -647,7 +650,7 @@ class Robot(event.Dispatcher):
         self._action_dispatcher._send_single_action(action)
         return action
 
-    def set_lift_height(self, height, accel=1.0, max_speed=1.0, duration=10.0):
+    def set_lift_height(self, height, accel=1.0, max_speed=1.0, duration=2.0):
         '''Tell Cozmo's lift to move to a given height
         Args:
             height (float): desired height for Cozmo's lift 0.0 (bottom) to 1.0 (top) (we clamp it to this range internally)
@@ -883,7 +886,7 @@ class Robot(event.Dispatcher):
         return action
 
     def drive_off_charger_contacts(self):
-        ''' Tells Cozmo to drive forward slightly to get off the charger contacts
+        '''Tells Cozmo to drive forward slightly to get off the charger contacts
 
         All motor movement is disabled while Cozmo is on the charger to
         prevent hardware damage. This command is the one exception and provides
