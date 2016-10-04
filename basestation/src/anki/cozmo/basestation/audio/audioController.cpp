@@ -744,7 +744,7 @@ void AudioEngineLogCallback( uint32_t akErrorCode,
   }
   
   if (((uint32_t)errorLevel & (uint32_t)ErrorLevel::Error) == (uint32_t)ErrorLevel::Error) {
-    PRINT_NAMED_ERROR("AudioController.WwiseLogError", "%s", logStream.str().c_str());
+    PRINT_NAMED_WARNING("AudioController.WwiseLogError", "%s", logStream.str().c_str());
   }
 }
 #endif
