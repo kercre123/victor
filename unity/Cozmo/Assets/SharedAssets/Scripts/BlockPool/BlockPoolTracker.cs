@@ -56,10 +56,6 @@ namespace Cozmo.BlockPool {
       _BlocksByType = new Dictionary<ObjectType, List<BlockPoolData>>();
 
       _RobotEngineManager = rem;
-
-      _RobotEngineManager.AddCallback<U2G.ObjectAvailable>(HandleObjectAvailableMsg);
-      _RobotEngineManager.AddCallback<U2G.ObjectUnavailable>(HandleObjectUnavailableMsg);
-      _RobotEngineManager.AddCallback<ObjectConnectionState>(HandleObjectConnectionState);
     }
 
     public void CleanUp() {
@@ -67,11 +63,19 @@ namespace Cozmo.BlockPool {
       _RobotEngineManager.RemoveCallback<ObjectConnectionState>(HandleObjectConnectionState);
       _RobotEngineManager.RemoveCallback<U2G.ObjectAvailable>(HandleObjectAvailableMsg);
       _RobotEngineManager.RemoveCallback<U2G.ObjectUnavailable>(HandleObjectUnavailableMsg);
+
       SendAvailableObjects(false, (byte)_RobotEngineManager.CurrentRobotID);
+
+      _BlocksByID.Clear();
+      Blocks.Clear();
+      _BlocksByType.Clear();
     }
 
     public void InitBlockPool() {
       _RobotEngineManager.AddCallback<U2G.BlockPoolDataMessage>(HandleBlockPoolData);
+      _RobotEngineManager.AddCallback<ObjectConnectionState>(HandleObjectConnectionState);
+      _RobotEngineManager.AddCallback<U2G.ObjectAvailable>(HandleObjectAvailableMsg);
+      _RobotEngineManager.AddCallback<U2G.ObjectUnavailable>(HandleObjectUnavailableMsg);
 
       // Gets back the InitBlockPool message to fill.
       _RobotEngineManager.Message.GetBlockPoolMessage = new G2U.GetBlockPoolMessage();

@@ -215,7 +215,7 @@ public class RobotEngineManager : MonoBehaviour {
       }
 
       if (BlockPoolTracker != null) {
-        BlockPoolTracker.SendAvailableObjects(false, (byte)robotID);
+        BlockPoolTracker.CleanUp();
       }
     }
   }
