@@ -318,7 +318,7 @@ namespace Anki {
         {
           if (_waitUntilDone) {
             
-            const  Audio::AudioEngineClient::CallbackFunc callback = [this] (  Audio::AudioCallback callback )
+            const  Audio::AudioEngineClient::CallbackFunc callback = [this] ( const Audio::AudioCallback& callback )
             {
               const  Audio::AudioCallbackInfoTag tag = callback.callbackInfo.GetTag();
               if ( Audio::AudioCallbackInfoTag::callbackComplete == tag ||

@@ -38,7 +38,7 @@ void AudioEngineClient::SetMessageHandler( AudioEngineMessageHandler* messageHan
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   AudioEngineClient::CallbackIdType AudioEngineClient::PostEvent( const GameEvent::GenericEvent event,
                                                                   const GameObjectType gameObject,
-                                                                  const CallbackFunc callback )
+                                                                  const CallbackFunc& callback )
 {
   if ( nullptr != _messageHandler ) {
     const CallbackIdType callbackId = nullptr != callback ? GetNewCallbackId() : kInvalidCallbackId;
@@ -47,7 +47,7 @@ void AudioEngineClient::SetMessageHandler( AudioEngineMessageHandler* messageHan
       _callbackMap.emplace( callbackId, callback );
     }
     // Post event
-    const MessageAudioClient msg( PostAudioEvent( event, gameObject, callbackId ) );
+    MessageAudioClient msg( PostAudioEvent( event, gameObject, callbackId ) );
     _messageHandler->Broadcast( std::move( msg ) );
     return callbackId;
   }
@@ -62,7 +62,7 @@ void AudioEngineClient::SetMessageHandler( AudioEngineMessageHandler* messageHan
 void AudioEngineClient::StopAllEvents( const GameObjectType gameObject )
 {
   if ( nullptr != _messageHandler ) {
-    const MessageAudioClient msg( (StopAllAudioEvents( gameObject )) );
+    MessageAudioClient msg( (StopAllAudioEvents( gameObject )) );
     _messageHandler->Broadcast( std::move( msg ) );
   }
   else {
@@ -75,7 +75,7 @@ void AudioEngineClient::PostGameState( const GameState::StateGroupType gameState
                                        const GameState::GenericState gameState )
 {
   if ( nullptr != _messageHandler ) {
-    const MessageAudioClient msg( (PostAudioGameState( gameStateGroup, gameState )) );
+    MessageAudioClient msg( (PostAudioGameState( gameStateGroup, gameState )) );
     _messageHandler->Broadcast( std::move( msg ) );
   }
   else {
@@ -89,7 +89,7 @@ void AudioEngineClient::PostSwitchState( const SwitchState::SwitchGroupType swit
                                          const GameObjectType gameObject )
 {
   if ( nullptr != _messageHandler ) {
-    const MessageAudioClient msg( PostAudioSwitchState( switchGroup, switchState, gameObject ) );
+    MessageAudioClient msg( PostAudioSwitchState( switchGroup, switchState, gameObject ) );
     _messageHandler->Broadcast( std::move( msg ) );
   }
   else {
@@ -105,7 +105,7 @@ void AudioEngineClient::PostParameter( const GameParameter::ParameterType parame
                                        const CurveType curve ) const
 {
   if ( nullptr != _messageHandler ) {
-    const MessageAudioClient msg( PostAudioParameter( parameter, parameterValue, gameObject, timeInMilliSeconds, curve ) );
+    MessageAudioClient msg( PostAudioParameter( parameter, parameterValue, gameObject, timeInMilliSeconds, curve ) );
     _messageHandler->Broadcast( std::move( msg ) );
   }
   else {
@@ -119,7 +119,7 @@ void AudioEngineClient::PostMusicState( const GameState::GenericState musicState
                                         const uint32_t minDuration_ms )
 {
   if ( nullptr != _messageHandler ) {
-    const MessageAudioClient msg( PostAudioMusicState( musicState, interrupt, minDuration_ms ) );
+    MessageAudioClient msg( PostAudioMusicState( musicState, interrupt, minDuration_ms ) );
     _messageHandler->Broadcast( std::move( msg ) );
   }
   else {

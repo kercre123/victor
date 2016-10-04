@@ -283,7 +283,7 @@ __attribute__((used)) void PrintJsonCout(const Json::Value& config, int maxDepth
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __attribute__((used)) void PrintJsonDebug(const Json::Value& config, const std::string& eventName, int maxDepth)
 {
-  auto function = [eventName]( const std::string& str ) {
+  auto function = [&eventName]( const std::string& str ) {
     PRINT_NAMED_DEBUG(eventName.c_str(), "\n%s", str.c_str());
   };
   PrintJsonInternal(config, maxDepth, function);
@@ -292,7 +292,7 @@ __attribute__((used)) void PrintJsonDebug(const Json::Value& config, const std::
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __attribute__((used)) void PrintJsonInfo(const Json::Value& config, const std::string& eventName, int maxDepth)
 {
-  auto function = [eventName]( const std::string& str ) {
+  auto function = [&eventName]( const std::string& str ) {
     PRINT_NAMED_INFO(eventName.c_str(), "\n%s", str.c_str());
   };
   PrintJsonInternal(config, maxDepth, function);
@@ -301,7 +301,7 @@ __attribute__((used)) void PrintJsonInfo(const Json::Value& config, const std::s
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __attribute__((used)) void PrintJsonError(const Json::Value& config, const std::string& eventName, int maxDepth)
 {
-  auto function = [eventName]( const std::string& str ) {
+  auto function = [&eventName]( const std::string& str ) {
     PRINT_NAMED_ERROR(eventName.c_str(), "\n%s", str.c_str());
   };
   PrintJsonInternal(config, maxDepth, function);

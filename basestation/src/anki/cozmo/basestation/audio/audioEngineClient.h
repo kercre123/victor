@@ -44,7 +44,7 @@ class AudioEngineClient : Util::noncopyable
 public:
   
   using CallbackIdType = uint16_t;
-  using CallbackFunc = std::function< void ( AudioCallback callback ) >;
+  using CallbackFunc = std::function< void ( const AudioCallback& callback ) >;
   
   void SetMessageHandler( AudioEngineMessageHandler* messageHandler );
   
@@ -52,7 +52,7 @@ public:
   // Provide a callback lambda to get all event callbacks; Duration, Marker, Complete & Error.
   CallbackIdType PostEvent( const GameEvent::GenericEvent event,
                             const GameObjectType gameObject = GameObjectType::Default,
-                            const CallbackFunc callback = nullptr );
+                            const CallbackFunc& callback = nullptr );
   
   void StopAllEvents( const GameObjectType gameObject = GameObjectType::Invalid );
 

@@ -179,7 +179,7 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
                           }));
     _eventHandlers.push_back(externalInterface->Subscribe(
                                ExternalInterface::MessageGameToEngineTag::ActivateBehaviorChooser,
-                               [this, config] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+                               [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
                                {
                                  const BehaviorChooserType chooserType =
                                    event.GetData().Get_ActivateBehaviorChooser().behaviorChooserType;
@@ -218,7 +218,7 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
     
     _eventHandlers.push_back(externalInterface->Subscribe(
                                 ExternalInterface::MessageGameToEngineTag::SetDefaultHeadAndLiftState,
-                                [this, config] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+                                [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
                                 {
                                   bool enable = event.GetData().Get_SetDefaultHeadAndLiftState().enable;
                                   float headAngle = event.GetData().Get_SetDefaultHeadAndLiftState().headAngle;
