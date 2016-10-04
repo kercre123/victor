@@ -11,6 +11,7 @@
 */
 
 #include "anki/cozmo/basestation/debug/devLoggerProvider.h"
+#include "anki/cozmo/basestation/debug/devLogConstants.h"
 #include "anki/cozmo/basestation/debug/devLoggingSystem.h"
 
 #include <sstream>
@@ -30,7 +31,8 @@ void DevLoggerProvider::Log(ILoggerProvider::LogLevel logLevel, const std::strin
   size_t messageSize = message.size();
   
   std::ostringstream modMessageStream;
-  modMessageStream << std::setfill('0') << std::setw(7) << DevLoggingSystem::GetAppRunMilliseconds() << " " << messageSize << " " << message;
+  modMessageStream << std::setfill('0') << std::setw(DevLogConstants::kNumLogTimestampDigits)
+                   << DevLoggingSystem::GetAppRunMilliseconds() << " " << messageSize << " " << message;
   Util::SaveToFileLoggerProvider::Log(logLevel, modMessageStream.str());
 }
 

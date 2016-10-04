@@ -33,6 +33,9 @@ DevLogProcessor::DevLogProcessor(const std::string& directory)
   
   _vizMessageReader.reset(new DevLogReaderRaw(Util::FileUtils::FullFilePath( {_directoryName, DevLoggingSystem::kEngineToVizName} )));
   _printReader.reset(new DevLogReaderPrint(Util::FileUtils::FullFilePath( {_directoryName, DevLoggingSystem::kPrintName} )));
+
+  _vizMessageReader->Init();
+  _printReader->Init();
 }
 
 DevLogProcessor::~DevLogProcessor() = default;
@@ -52,6 +55,34 @@ bool DevLogProcessor::AdvanceTime(uint32_t time_ms)
   
   return anyMoreMessages;
 }
+
+uint32_t DevLogProcessor::GetCurrPlaybackTime() const
+{
+  if( _vizMessageReader ) {
+    return _vizMessageReader->GetCurrPlaybackTime();
+  }
+  if( _printReader ) {
+    return _printReader->GetCurrPlaybackTime();
+  }
+
+  return 0;
+}
+
+uint32_t DevLogProcessor::GetFinalTime_ms() const
+{
+  uint32_t finalTime = 0;
+
+  if( _vizMessageReader ) {
+    finalTime = std::max(finalTime, _vizMessageReader->GetFinalTime());
+  }
+  
+  if( _printReader ) {
+    finalTime = std::max(finalTime, _printReader->GetFinalTime());
+  }
+
+  return finalTime;
+}
+
 
 void DevLogProcessor::SetVizMessageCallback(DevLogReader::DataCallback callback)
 {

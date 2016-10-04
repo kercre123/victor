@@ -31,6 +31,8 @@ public:
   
   const std::string& GetDirectoryName() const { return _directory; }
   
+  void Init();
+
   // Move forward in time by number of milliseconds specified. Can trigger callbacks if they have been set
   // Returns whether there is more data in the logs to process
   bool AdvanceTime(uint32_t timestep_ms);
@@ -45,15 +47,29 @@ public:
   
   using DataCallback = std::function<void(const LogData&)>;
   void SetDataCallback(DataCallback callback) { _dataCallback = callback; }
-  
+
+  // return the current playback time
+  uint32_t GetCurrPlaybackTime() const { return _currTime_ms; }
+
+  // return the last known timestamp in this log. Note that some loggers may return 0 if they can't easily
+  // calculate the total time
+  uint32_t GetFinalTime() const { return _finalTime_ms; }
+
 protected:
   virtual bool FillLogData(std::ifstream& fileHandle, LogData& logData_out) const = 0;
+
+  // called on init with a stream to the last file in the log. Function can do what it wants with the file,
+  // but must leave the stream in the same state it found it. Should return the final timestamp contained in
+  // the log, or 0 if it can't process.
+  virtual uint32_t GetFinalTimestamp_ms(std::ifstream& fileHandle) const { return 0; }
   
+
 private:
   std::string             _directory;
   DataCallback            _dataCallback;
   std::deque<std::string> _files;
-  uint32_t                _totalTime = 0;
+  uint32_t                _currTime_ms = 0;
+  uint32_t                _finalTime_ms = 0;
   std::ifstream           _currentLogFileHandle;
   LogData                 _currentLogData;
   

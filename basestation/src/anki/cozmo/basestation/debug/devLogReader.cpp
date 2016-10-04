@@ -31,8 +31,8 @@ DevLogReader::DevLogReader(const std::string& directory)
 
 bool DevLogReader::AdvanceTime(uint32_t timestep_ms)
 {
-  _totalTime += timestep_ms;
-  return UpdateForCurrentTime(_totalTime);
+  _currTime_ms += timestep_ms;
+  return UpdateForCurrentTime(_currTime_ms);
 }
 
 void DevLogReader::DiscoverLogFiles()
@@ -51,7 +51,28 @@ void DevLogReader::DiscoverLogFiles()
     std::sort(_files.begin(), _files.end());
   }
 }
-  
+
+void DevLogReader::Init()
+{
+  if( ! _files.empty() ) {
+    _currentLogFileHandle.open(_files.back());
+    if (!_currentLogFileHandle.good())
+    {
+      PRINT_NAMED_ERROR("DevLogReader.Init.FailBitSet",
+                        "Fail bit set on opening file %s",
+                        _files.back().c_str());
+    }
+
+    _finalTime_ms = GetFinalTimestamp_ms(_currentLogFileHandle);
+
+    // if there is only one file, we can leave this one open. Otherwise, we'll need to close it so
+    // UpdateForCurrentTime will open the proper file
+    if( _files.size() > 1 ) {
+      _currentLogFileHandle.close();
+    }
+  }
+}
+
 bool DevLogReader::UpdateForCurrentTime(uint32_t time_ms)
 {
   if (!_currentLogFileHandle.is_open())
@@ -64,7 +85,9 @@ bool DevLogReader::UpdateForCurrentTime(uint32_t time_ms)
     _currentLogFileHandle.open(_files.front());
     if (!_currentLogFileHandle.good())
     {
-      PRINT_NAMED_ERROR("DevLogReader.UpdateForCurrentTime.FailBitSet","Fail bit set on opening file %s", _files.front().c_str());
+      PRINT_NAMED_ERROR("DevLogReader.UpdateForCurrentTime.FailBitSet",
+                        "Fail bit set on opening file %s",
+                        _files.front().c_str());
     }
   }
   

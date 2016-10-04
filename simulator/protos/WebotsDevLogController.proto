@@ -2,19 +2,40 @@ PROTO WebotsDevLogController [
   field SFString name "WebotsDevLogController"
   field SFString logsDirectory ""
   field SFBool   saveImages TRUE # If there are ImageChunk Viz messages, enable saving them
-  
-  # This is a dummy field created only to be accessed by the lua script below, which
-  # is only there to create a reference that results in variables in the PROTO existing.
-  # HACKS UPON HACKS
-  field SFInt32 dummyInt32ForRef 0
+
+  field SFFloat pixelSize 1.0
+
+  field SFInt32 jumpToMS 0
 ]
 {
 Supervisor {
   name IS name
   controller "webotsCtrlDevLog"
 
-  # Referencing a field that is used in code but not in the proto model
-  # to suppress a Webots error message.
-  %{if fields.dummyInt32ForRef.value then end }%
+  children [
+    DEF PLAYBACK Display {
+        name "playback_display"
+        height 24
+        width 400
+        windowPosition 0.5 1
+        pixelSize %{=fields.pixelSize.value}%
+
+        children [
+        DEF SHAPE Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 1 1 1
+              specularColor 0 0 0
+              transparency 0.6
+            }
+          }
+          geometry Plane {
+	          size 1 1
+          }
+        }
+      ]
+     }
+  ]
+  
 } # Supervisor definition
 } # PROTO definition

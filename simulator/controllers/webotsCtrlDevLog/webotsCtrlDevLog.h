@@ -22,6 +22,7 @@
 namespace webots {
   class Supervisor;
   class Node;
+  class Display;
 }
 
 class UdpClient;
@@ -47,18 +48,32 @@ public:
   
 private:
   int32_t _stepTime_ms;
+  int32_t _fastForwardFactor = 1;
   std::unique_ptr<webots::Supervisor> _supervisor;
   std::unique_ptr<DevLogProcessor>    _devLogProcessor;
   std::unique_ptr<UdpClient>          _vizConnection;
   std::set<int>                       _lastKeysPressed;
-  webots::Node*                       _selfNode;
+  webots::Node*                       _selfNode = nullptr;
+  webots::Display*                    _disp = nullptr;
+  std::string                         _endTimeText;
+  std::string                         _currTimeText;
+  uint32_t                            _totalLogLength_ms = 0;
   bool                                _savingImages;
+  bool                                _isPaused = false;
   
   void HandleVizData(const DevLogReader::LogData& logData);
   void HandlePrintLines(const DevLogReader::LogData& logData);
   void UpdateKeyboard();
   bool UpdatePressedKeys();
   void EnableSaveImagesIfChecked();
+  void UpdateStatusText(bool jumping = false);
+  void UpdateCurrTimeRender(uint32_t time_ms, uint32_t targetJumpTime_ms = 0);
+  void UpdateCurrTimeText(uint32_t time_ms);
+  void UpdateEndTimeText(uint32_t time_ms);
+  void PrintHelp();
+  void JumpToMS(uint32_t targetTime_ms, bool dropMessages = false);
+  void SetLogCallbacks();
+  void ClearLogCallbacks();
   
 }; // class WebotsDevLogController
 } // namespace Cozmo

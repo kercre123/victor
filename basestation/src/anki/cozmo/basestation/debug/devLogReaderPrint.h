@@ -25,6 +25,9 @@ protected:
   // Extract next chunk of data out of the current file handle
   // Returns success
   virtual bool FillLogData(std::ifstream& fileHandle, LogData& logData_out) const override;
+
+  virtual uint32_t GetFinalTimestamp_ms(std::ifstream& fileHandle) const override;
+
 };
 
 } // end namespace Cozmo
