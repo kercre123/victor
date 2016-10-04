@@ -253,25 +253,18 @@ class USBMux(PlistProto):
             asyncio.TimeoutError - If no devices with the requested port become available in the specified time
         '''
         seen = set()
-        ids = set(self.attached.keys())
-        while len(ids):
+
+        while max_wait is None or max_wait > 0:
+            ids = set(self.attached.keys()) - seen
             for device_id in ids:
                 seen.add(device_id)
                 try:
                     return await self.connect_to_device(protocol_factory, device_id, port)
                 except USBMuxError:
                     pass
-            ids = set(self.attached.keys()) - seen
-
-
-        while max_wait > 0:
             start = time.time()
-            try:
-                device_id = await self.wait_for_attach(max_wait)
-                return await self.connect_to_device(protocol_factory, device_id, port)
-            except Exception:
-                pass
-            max_wait -= time.time() - start
+            await self.wait_for_attach(max_wait)
+            max_wait -= (time.time() - start)
 
         raise asyncio.TimeoutError("No available devices")
 
