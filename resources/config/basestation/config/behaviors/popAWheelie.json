@@ -6,7 +6,7 @@
     "FP_PlayAlone"    
   ],
   
-  "flatScore":  0.7,
+  "flatScore":  0.8,
   "shouldHandleConfirmedObject": false,
   "shouldHandlePossibleObject": false,
   "repetitionPenalty": {
