@@ -68,6 +68,8 @@ class TkImageViewer(tkinter.Frame, TkThreadable):
 
         self._refresh_interval = refresh_interval
         self.scale = image_scale
+        self.width = None
+        self.height = None
 
         self.tk_root = tk_root
         tk_root.wm_title(window_name)
@@ -112,7 +114,7 @@ class TkImageViewer(tkinter.Frame, TkThreadable):
 
 
     def image_event(self, evt, *, image, **kw):
-        if self._first_image:
+        if self._first_image or self.width is None:
             img = image.annotate_image(scale=self.scale)
             self._first_image = False
         else:
