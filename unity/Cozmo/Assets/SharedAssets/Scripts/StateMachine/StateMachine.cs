@@ -44,10 +44,23 @@ public class StateMachine {
   }
 
   public void SetNextState(State nextState) {
-    _NextState = nextState;
-    if (_NextState != null) {
-      _NextState.SetStateMachine(this);
+    // Treat setting next state when current state is null as starting
+    // the state machine, this is needed to prevent bugs from pausing the
+    // the machine before we enter the first state.
+    if (_CurrState == null) {
+      _CurrState = nextState;
+      if (_CurrState != null) {
+        _CurrState.SetStateMachine(this);
+        _CurrState.Enter();
+      }
     }
+    else {
+      _NextState = nextState;
+      if (_NextState != null) {
+        _NextState.SetStateMachine(this);
+      }
+    }
+
   }
 
   public void PushSubState(State subState) {
