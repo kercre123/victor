@@ -23,6 +23,11 @@ Vagrant.configure(2) do |config|
       "--name", "iOS",
       "--manufacturer", "Apple Inc.",
       "--product", "iPhone"]
+    v.customize ["usbfilter", "add", "1",
+      "--target", :id,
+      "--name", "Android",
+      "--manufacturer", "SAMSUNG",
+      "--product", "SAMSUNG_Android"]
     v.gui = true
   end
 end
