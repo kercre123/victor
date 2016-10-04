@@ -3,8 +3,15 @@
 '''Make Cozmo pick up the furthest Cube.
 
 This script shows simple math with object's poses.
-It waits for 3 Cubes, and then attempts to pick up the furthest one.
-It calculates this based on the reported poses of the Cubes.
+
+The robot attempts to find three Cubes within his view, which
+you can see in the camera window that opens when the script
+is run. Each Cube will show with an outline and cube number
+if the Cube is in the frame.
+
+The robot waits until 3 Cubes are found, and then attempts to
+pick up the furthest one. It calculates this based on the
+reported poses of the Cubes.
 '''
 
 import sys
@@ -16,7 +23,7 @@ def run(sdk_conn):
     '''The run method runs once Cozmo is connected.'''
     robot = sdk_conn.wait_for_robot()
 
-    cubes = robot.world.wait_until_observe_num_objects(num=3, object_type=cozmo.objects.LightCube, timeout=30)
+    cubes = robot.world.wait_until_observe_num_objects(num=3, object_type=cozmo.objects.LightCube, timeout=60)
 
     max_dst, targ = 0, None
     for cube in cubes:
@@ -25,12 +32,15 @@ def run(sdk_conn):
         if dst > max_dst:
             max_dst, targ = dst, cube
 
-    robot.pickup_object(targ).wait_for_completed()
+    if len(cubes) < 3:
+        print("Error: need 3 Cubes but only found", len(cubes), "Cube(s)")
+    else:
+        robot.pickup_object(targ).wait_for_completed()
 
 
 if __name__ == '__main__':
     cozmo.setup_basic_logging()
     try:
-        cozmo.connect(run)
+        cozmo.connect_with_tkviewer(run)
     except cozmo.ConnectionError as e:
         sys.exit("A connection error occurred: %s" % e)

@@ -16,7 +16,7 @@ def run(sdk_conn):
     '''The run method runs once Cozmo is connected.'''
     robot = sdk_conn.wait_for_robot()
 
-    robot.go_to_pose(Pose(100, 100, 0, angle_z=degrees(45)), relative_to_robot=True)
+    robot.go_to_pose(Pose(100, 100, 0, angle_z=degrees(45)), relative_to_robot=True).wait_for_completed()
 
 if __name__ == '__main__':
     cozmo.setup_basic_logging()

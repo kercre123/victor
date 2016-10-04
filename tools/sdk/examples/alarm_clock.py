@@ -124,4 +124,4 @@ if __name__ == '__main__':
     try:
         cozmo.connect(run)
     except cozmo.ConnectionError as e:
-        sys.exit("A konnection error occurred: %s" % e)
+        sys.exit("A connection error occurred: %s" % e)

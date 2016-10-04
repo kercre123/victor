@@ -648,7 +648,7 @@ def run(sdk_conn):
     robot = sdk_conn.wait_for_robot()
 
     global remote_control_cozmo
-    remote_control_cozmo = RemoteControlCozmo(coz)
+    remote_control_cozmo = RemoteControlCozmo(robot)
 
     # Turn on image receiving by the camera
     robot.camera.image_stream_enabled = True
