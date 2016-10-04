@@ -20,6 +20,7 @@
 #include "util/dispatchWorker/dispatchWorker.h"
 #include "util/logging/logging.h"
 #include "util/fileUtils/fileUtils.h"
+#include <algorithm>
 
 #include <opencv2/highgui.hpp>
 
@@ -159,6 +160,11 @@ namespace Cozmo {
   {
     const std::string fullDirName = Util::FileUtils::FullFilePath({animationFolder, animName});
     std::vector<std::string> fileNames = Util::FileUtils::FilesInDirectory(fullDirName);
+    
+    // Even though files *might* be sorted alphabetically by the readdir call inside FilesInDirectory,
+    // we can't rely on it so do it ourselves
+    std::sort(fileNames.begin(), fileNames.end());
+    
     for (auto fileIter = fileNames.begin(); fileIter != fileNames.end(); ++fileIter)
     {
       const std::string& filename = *fileIter;
