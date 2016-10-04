@@ -94,6 +94,15 @@
             "image": null,
             "tooltip": ""
           }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
+          "PlayerWin": true,
+          "Label": {
+            "text": "Challenge Winner Condition",
+            "image": null,
+            "tooltip": ""
+          }
         }
       ],
       "Id": 38
@@ -597,6 +606,15 @@
             "image": null,
             "tooltip": ""
           }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
+          "PlayerWin": true,
+          "Label": {
+            "text": "Challenge Winner Condition",
+            "image": null,
+            "tooltip": ""
+          }
         }
       ],
       "Id": 39
@@ -650,6 +668,15 @@
           "ChallengeID": "SpeedTapGame",
           "Label": {
             "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
+          "PlayerWin": true,
+          "Label": {
+            "text": "Challenge Winner Condition",
             "image": null,
             "tooltip": ""
           }
