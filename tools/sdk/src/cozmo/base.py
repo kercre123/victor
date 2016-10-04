@@ -155,7 +155,7 @@ class _SyncProxy:
             # Dispatch functions in the main event loop thread too
             value = _to_coroutine(value)
 
-        if asyncio.iscoroutine(value):
+        if inspect.isawaitable(value):
             return _dispatch_coroutine(value, wrapped._loop, wrapped._sync_abort_future)
 
         elif asyncio.iscoroutinefunction(value):
