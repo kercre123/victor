@@ -190,6 +190,9 @@ namespace Cozmo.HomeHub {
     public Transform BottomBarContainer {
       get { return _BottomBarContainer.transform; }
     }
+    public HomeTab CurrentTab {
+      get { return _CurrentTab; }
+    }
 
     public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
 

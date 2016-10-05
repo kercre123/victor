@@ -251,14 +251,26 @@ public class OnboardingManager : MonoBehaviour {
     }
     return true;
   }
+  // spam clicking tabs, usually we lock tabs based on blockers in the prefab.
+  // if they clicked away before the prefab load finished, just cancel and start the next time
+  private bool VerifyCanStartPhase() {
+    // Stage has specific prereq of this panel existing
+    if (_CurrPhase == OnboardingPhases.Upgrades) {
+      return _HomeView.CurrentTab == HomeView.HomeTab.Cozmo;
+    }
+    return _CurrPhase != OnboardingPhases.None;
+  }
   private void LoadOnboardingAssetsCallback(bool assetBundleSuccess) {
     if (assetBundleSuccess) {
       _OnboardingUIPrefabData.LoadAssetData((GameObject onboardingUIWrapperPrefab) => {
         if (_OnboardingUIInstance == null && onboardingUIWrapperPrefab != null) {
           GameObject wrapper = UIManager.CreateUIElement(onboardingUIWrapperPrefab.gameObject);
           _OnboardingUIInstance = wrapper.GetComponent<OnboardingUIWrapper>();
-          if (_CurrPhase != OnboardingPhases.None) {
+          if (VerifyCanStartPhase()) {
             SetSpecificStage(0);
+          }
+          else {
+            _CurrPhase = OnboardingPhases.None;
           }
         }
       });
