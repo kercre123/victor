@@ -55,7 +55,7 @@ MonoBehaviour:
       _AssetDataName: SimonHowToPlayAnimation
   GetInAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 266
+    _EnumValue: 249
   GetOutAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 266
+    _EnumValue: 249

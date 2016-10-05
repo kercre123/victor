@@ -56,8 +56,6 @@ namespace Cozmo.HomeHub {
 
     private AnimationTrigger _MinigameGetOutAnimTrigger = AnimationTrigger.Count;
 
-    private AlertView _ChallengeAlertView = null;
-
     public override void LoadHubWorld() {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(RefreshChallengeUnlockInfo);
       _Instance = this;
@@ -68,9 +66,6 @@ namespace Cozmo.HomeHub {
     public override void DestroyHubWorld() {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(RefreshChallengeUnlockInfo);
       CloseMiniGameImmediately();
-      if (_ChallengeAlertView != null) {
-        _ChallengeAlertView.CloseViewImmediately();
-      }
       if (_ChallengeDetailsDialogInstance != null) {
         _ChallengeDetailsDialogInstance.CloseViewImmediately();
       }
@@ -198,18 +193,7 @@ namespace Cozmo.HomeHub {
       if (_ChallengeDetailsDialogInstance == null) {
         bool available = UnlockablesManager.Instance.IsUnlockableAvailable(_ChallengeStatesById[challenge].Data.UnlockId.Value);
         UnlockableInfo unlockInfo = UnlockablesManager.Instance.GetUnlockableInfo(_ChallengeStatesById[challenge].Data.UnlockId.Value);
-        if (unlockInfo.ComingSoon) {
-          AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: true);
-          alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
-
-          alertView.TitleLocKey = unlockInfo.TitleKey;
-          alertView.DescriptionLocKey = LocalizationKeys.kUnlockableComingSoonDescription;
-          if (_ChallengeAlertView != null) {
-            _ChallengeAlertView.CloseViewImmediately();
-          }
-          _ChallengeAlertView = alertView;
-        }
-        else if (!available) {
+        if (!available) {
 
           UnlockableInfo preReqInfo = null;
           for (int i = 0; i < unlockInfo.Prerequisites.Length; i++) {
@@ -240,10 +224,6 @@ namespace Cozmo.HomeHub {
 
           alertView.DescriptionLocKey = LocalizationKeys.kUnlockablePreReqNeededDescription;
           alertView.SetMessageArgs(new object[] { Localization.Get(preReqInfo.TitleKey), Localization.Get(preReqTypeKey) });
-          if (_ChallengeAlertView != null) {
-            _ChallengeAlertView.CloseViewImmediately();
-          }
-          _ChallengeAlertView = alertView;
         }
         else {
           // Throttle Multitouch bug potential
