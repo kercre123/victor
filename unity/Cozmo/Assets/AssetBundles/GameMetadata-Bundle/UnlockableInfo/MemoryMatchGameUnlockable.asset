@@ -17,10 +17,12 @@ MonoBehaviour:
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0
-  _ComingSoon: 0
-  _HideInUI: 1
+  _ComingSoon: 1
+  _HideInUI: 0
   DescriptionKey: unlockable.Simon.Description
   TitleKey: unlockable.Simon.Title
+  SparkButtonDescription: 
+  SparkedStateDescription: 
   UpgradeCostItemId: TestHexItem0
   UpgradeCostAmountNeeded: 2
   RequestTrickCostItemId: treat

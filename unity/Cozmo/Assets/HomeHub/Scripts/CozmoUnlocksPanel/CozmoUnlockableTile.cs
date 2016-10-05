@@ -49,7 +49,7 @@ public class CozmoUnlockableTile : MonoBehaviour {
     _TileButton.onPress.AddListener(HandlePointerDown);
     _TileButton.onRelease.AddListener(HandlePointerUp);
 
-    _LockedBackgroundContainer.SetActive(unlockState == CozmoUnlocksPanel.CozmoUnlockState.Locked);
+    _LockedBackgroundContainer.SetActive(unlockState == CozmoUnlocksPanel.CozmoUnlockState.Locked || unlockState == CozmoUnlocksPanel.CozmoUnlockState.NeverAvailable);
     _AvailableBackgroundContainer.SetActive(unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlockable);
     _UnlockedBackgroundContainer.SetActive(unlockState == CozmoUnlocksPanel.CozmoUnlockState.Unlocked);
     _ComingSoonContainer.gameObject.SetActive(false);
