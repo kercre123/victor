@@ -1,6 +1,10 @@
 # Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
 
-__all__ = ['EvtFaceIdChanged', 'EvtFaceObserved', 'Face']
+__all__ = ['EvtErasedEnrolledFace', 'EvtFaceIdChanged', 'EvtFaceObserved',
+           'EvtFaceRenamed',
+           'erase_all_enrolled_faces', 'erase_enrolled_face_by_id',
+           'update_enrolled_face_by_id',
+           'Face']
 
 
 import math
@@ -21,12 +25,10 @@ from ._clad import _clad_to_engine_iface
 FACE_VISIBILITY_TIMEOUT = objects.OBJECT_VISIBILITY_TIMEOUT
 
 
-class EvtFaceObserved(event.Event):
-    '''Triggered whenever a face is identified by the robot'''
-    face = 'The Face instance that was observed'
-    updated = 'A set of field names that have changed'
-    image_box = 'A comzo.util.ImageBox defining where the face is within Cozmo\'s camera view'
-    name = 'The name associated with the face that was observed'
+class EvtErasedEnrolledFace(event.Event):
+    '''Triggered when a face enrollment is removed (via erase_enrolled_face_by_id)'''
+    face = 'The Face instance that the enrollment is being erased for'
+    old_name = 'The name previously used for this face'
 
 
 class EvtFaceIdChanged(event.Event):
@@ -39,6 +41,55 @@ class EvtFaceIdChanged(event.Event):
     face = 'The Face instance that is being given a new id'
     old_id = 'The id previously used for this face'
     new_id = 'The new id that will be used for this face'
+
+
+class EvtFaceObserved(event.Event):
+    '''Triggered whenever a face is identified by the robot'''
+    face = 'The Face instance that was observed'
+    updated = 'A set of field names that have changed'
+    image_box = 'A comzo.util.ImageBox defining where the face is within Cozmo\'s camera view'
+    name = 'The name associated with the face that was observed'
+
+
+class EvtFaceRenamed(event.Event):
+    '''Triggered whenever a face is renamed (via RobotRenamedEnrolledFace)'''
+    face = 'The Face instance that is being given a new name'
+    old_name = 'The name previously used for this face'
+    new_name = 'The new name that will be used for this face'
+
+
+def erase_all_enrolled_faces(conn):
+    '''Erase the enrollment (name) records for all faces
+
+    Args:
+        conn (:class:`CozmoConnection`): The connection to send the message over
+    '''
+    msg = _clad_to_engine_iface.EraseAllEnrolledFaces()
+    conn.send_msg(msg)
+
+
+def erase_enrolled_face_by_id(conn, face_id):
+    '''Erase the enrollment (name) record for the face with this id
+
+    Args:
+        conn (:class:`CozmoConnection`): The connection to send the message over
+        face_id (int): The id of the face to erase
+    '''
+    msg = _clad_to_engine_iface.EraseEnrolledFaceByID(face_id)
+    conn.send_msg(msg)
+
+
+def update_enrolled_face_by_id(conn, face_id, old_name, new_name):
+    '''Update the name enrolled for a given face
+
+    Args:
+        conn (:class:`CozmoConnection`): The connection to send the message over
+        face_id (int): The id of the face to rename
+        old_name (string): The old name of the face (must be correct otherwise message is ignored)
+        new_name (string): The new name for the face
+    '''
+    msg = _clad_to_engine_iface.UpdateEnrolledFaceByID(face_id, old_name, new_name)
+    conn.send_msg(msg)
 
 
 class EnrollNamedFace(action.Action):
@@ -173,6 +224,16 @@ class Face(event.Dispatcher):
         self._updated_face_id = msg.newID
         self.dispatch_event(EvtFaceIdChanged, face=self, old_id=msg.oldID, new_id = msg.newID)
 
+    def _recv_msg_robot_renamed_enrolled_face(self, evt, *, msg):
+        old_name = self._name
+        self._name = msg.name
+        self.dispatch_event(EvtFaceRenamed, face=self, old_name=old_name, new_name=msg.name)
+
+    def _recv_msg_robot_erased_enrolled_face(self, evt, *, msg):
+        old_name = self._name
+        self._name = ''
+        self.dispatch_event(EvtErasedEnrolledFace, face=self, old_name=old_name)
+
     #### Public Event Handlers ####
 
     #### Event Wrappers ####
@@ -194,11 +255,33 @@ class Face(event.Dispatcher):
         self._robot._action_dispatcher._send_single_action(action)
         return action
 
+    def rename_face(self, new_name):
+        '''Change the name assigned to the face. Cozmo will remember this name between SDK runs.
+
+        Args:
+            new_name (string): The new name for the face
+        '''
+        update_enrolled_face_by_id(self.conn, self.face_id, self.name, new_name)
+
+    def erase_enrolled_face(self):
+        '''Remove the name associated with this face.
+
+        Cozmo will no longer remember the name associated with this face between SDK runs.
+        '''
+        erase_enrolled_face_by_id(self.conn, self.face_id)
+
     @property
     def time_since_last_seen(self):
         '''float: time since this face was last seen (math.inf if never)'''
         if self.last_observed_time is None:
-            return float(math.inf)
+            return math.inf
+        return time.time() - self.last_observed_time
+
+    @property
+    def time_since_last_seen(self):
+        '''float: time since this face was last seen (math.inf if never)'''
+        if self.last_observed_time is None:
+            return math.inf
         return time.time() - self.last_observed_time
 
     @property

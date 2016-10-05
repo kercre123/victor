@@ -1,6 +1,7 @@
 # Copyright (c) 2016 Anki, Inc. All rights reserved. See LICENSE.txt for details.
 
-__all__ = ['World']
+__all__ = ['EvtNewCameraImage',
+           'CameraImage', 'World']
 
 import asyncio
 import time
@@ -168,6 +169,16 @@ class World(event.Dispatcher):
         old_face = self._faces.get(msg.oldID)
         if old_face:
             old_face.dispatch_event(evt)
+
+    def _recv_msg_robot_renamed_enrolled_face(self, evt, *, msg):
+        face = self._faces.get(msg.faceID)
+        if face:
+            face.dispatch_event(evt)
+
+    def _recv_msg_robot_erased_enrolled_face(self, evt, *, msg):
+        face = self._faces.get(msg.faceID)
+        if face:
+            face.dispatch_event(evt)
 
     def _recv_msg_object_tapped(self, evt, *, msg):
         obj = self._objects.get(msg.objectID)
