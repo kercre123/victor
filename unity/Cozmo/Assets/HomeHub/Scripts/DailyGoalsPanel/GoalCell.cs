@@ -32,6 +32,12 @@ namespace Cozmo {
       [SerializeField]
       private AnkiTextLabel _RewardTextLabel;
 
+      [SerializeField]
+      private CanvasGroup _CanvasGroup;
+      public CanvasGroup CanvasGroup {
+        get { return _CanvasGroup; }
+      }
+
       public AnkiTextLabel GoalLabel {
         get {
           return _GoalLabel;

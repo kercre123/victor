@@ -50,7 +50,7 @@ MonoBehaviour:
     _AssetBundle:
       _EnumValueAsString: checkin_ui_prefabs
       _EnumValue: 16
-    _AssetDataName: CheckInRewardDialog
+    _AssetDataName: CheckInFlowDialog
   _HubWorldPrefab: {fileID: 11476446, guid: 44f04469ca0784cb2976d4476c98a378, type: 2}
 --- !u!1001 &100100000
 Prefab:

@@ -11,7 +11,7 @@ GameObject:
   - 222: {fileID: 22286552}
   - 114: {fileID: 11440556}
   m_Layer: 5
-  m_Name: EmptyGoalCellCheckIn
+  m_Name: CheckInEmptyGoalCell
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

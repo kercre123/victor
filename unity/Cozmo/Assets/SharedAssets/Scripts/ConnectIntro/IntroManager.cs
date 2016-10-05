@@ -21,7 +21,7 @@ public class IntroManager : MonoBehaviour {
 
   [SerializeField]
   private GameObjectDataLink _CheckInDialogPrefabData;
-  private GameObject _CheckInDialogInstance;
+  private CheckInFlowDialog _CheckInDialogInstance;
 
   [SerializeField]
   private HubWorldBase _HubWorldPrefab;
@@ -95,8 +95,8 @@ public class IntroManager : MonoBehaviour {
       _FirstTimeConnectDialogInstance.GetComponent<FirstTimeConnectDialog>().HandleRobotDisconnect();
       return;
     }
-    else if (_CheckInDialogInstance != null) {
-      _CheckInDialogInstance.GetComponent<CheckInFlow>().HandleRobotDisconnect();
+    else if (_CheckInDialogInstance != null && _CheckInDialogInstance.gameObject != null) {
+      _CheckInDialogInstance.HandleRobotDisconnect();
       return;
     }
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Connectivity);
@@ -181,9 +181,9 @@ public class IntroManager : MonoBehaviour {
     if (assetBundleSuccess) {
       _CheckInDialogPrefabData.LoadAssetData((GameObject checkInViewPrefab) => {
         if (_CheckInDialogInstance == null && checkInViewPrefab != null) {
-          _CheckInDialogInstance = UIManager.CreateUIElement(checkInViewPrefab.gameObject);
-          _CheckInDialogInstance.GetComponent<CheckInFlow>().ConnectionFlowComplete += HandleCheckinFlowComplete;
-          _CheckInDialogInstance.GetComponent<CheckInFlow>().CheckInFlowQuit += HandleCheckInFlowQuit;
+          _CheckInDialogInstance = UIManager.CreateUIElement(checkInViewPrefab.gameObject).GetComponent<CheckInFlowDialog>();
+          _CheckInDialogInstance.ConnectionFlowComplete += HandleCheckinFlowComplete;
+          _CheckInDialogInstance.CheckInFlowQuit += HandleCheckInFlowQuit;
         }
       });
     }
@@ -195,11 +195,10 @@ public class IntroManager : MonoBehaviour {
   private void HideCheckInFlow() {
     AssetBundleManager.Instance.UnloadAssetBundle(_CheckInDialogPrefabData.AssetBundle);
     if (_CheckInDialogInstance != null) {
-      _CheckInDialogInstance.GetComponent<CheckInFlow>().ConnectionFlowComplete -= HandleCheckinFlowComplete;
-      _CheckInDialogInstance.GetComponent<CheckInFlow>().CheckInFlowQuit -= HandleCheckInFlowQuit;
-      GameObject.Destroy(_CheckInDialogInstance);
+      _CheckInDialogInstance.ConnectionFlowComplete -= HandleCheckinFlowComplete;
+      _CheckInDialogInstance.CheckInFlowQuit -= HandleCheckInFlowQuit;
+      GameObject.Destroy(_CheckInDialogInstance.gameObject);
       _CheckInDialogInstance = null;
     }
   }
-
 }

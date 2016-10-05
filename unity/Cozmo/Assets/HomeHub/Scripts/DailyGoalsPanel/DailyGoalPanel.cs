@@ -65,11 +65,11 @@ public class DailyGoalPanel : MonoBehaviour {
     EmptyGoalCells.Clear();
   }
 
-  public Transform GetGoalSource(DailyGoal goal) {
-    Transform source = transform;
+  public GoalCell GetGoalSource(DailyGoal goal) {
+    GoalCell source = null;
     for (int i = 0; i < GoalCells.Count; i++) {
       if (GoalCells[i].Goal == goal) {
-        source = GoalCells[i].GoalCellSource;
+        source = GoalCells[i];
       }
     }
     return source;
@@ -110,7 +110,7 @@ public class DailyGoalPanel : MonoBehaviour {
 
     if (timelineEntry.DailyGoals.Count > 0) {
       for (int i = 0; i < timelineEntry.DailyGoals.Count; i++) {
-        DAS.Event(DASConstants.Goal.kProgressSummary, DASUtil.FormatDate(timelineEntry.Date), 
+        DAS.Event(DASConstants.Goal.kProgressSummary, DASUtil.FormatDate(timelineEntry.Date),
           DASUtil.FormatExtraData(DASUtil.FormatGoal(timelineEntry.DailyGoals[i])));
       }
     }
@@ -139,6 +139,9 @@ public class DailyGoalPanel : MonoBehaviour {
     UpdateCompletedText();
   }
 
+  public void ShowCompletedText(bool enable) {
+    _CompletedText.gameObject.SetActive(enable);
+  }
 
   private void UpdateCompletedText() {
     _CompletedText.FormattingArgs = new object[] { GetGoalsCompletedCount(), GoalCells.Count };
