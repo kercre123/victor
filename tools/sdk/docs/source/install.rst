@@ -4,7 +4,7 @@ Installation Guide
 
 .. warning:: THIS IS THE ALPHA BUILD OF THE COZMO SDK. All information within this SDK is subject to change without notice.
 
-The Cozmo API is primarily self-contained within the Cozmo app. However, the mobile device the app is installed on must be tethered to a computer via USB cable in order to create new features or run new programs.
+To use the Cozmo SDK, the Cozmo mobile app must be installed on your mobile device and that device must be tethered to a computer via USB cable.
 
 ------------
 Installation
@@ -38,10 +38,9 @@ OS X
 
     pip3 install -U pip
 
-3. Finally, install NumPy and Pillow with the following commands::
+3. (RECOMMENDED) Once the SDK is installed, type the following to install camera image processing support::
 
-    pip3 install numpy
-    pip3 install pillow
+    pip3 install --user cozmo-0.6.3a35-py3-none-any.whl[camera]
 
 
 """""""""""""""""""""""""""""
@@ -91,11 +90,9 @@ The Cozmo SDK is tested and and supported on Ubuntu 14.04 and above. While the S
 
 **For both versions of Ubuntu:**
 
-Finally, install NumPy and Pillow with the following commands::
+4. (RECOMMENDED) Once the SDK is installed, type the following to install camera image processing support::
 
-    pip3 install numpy
-    pip3 install pillow
-    sudo apt-get update
+    pip3 install --user cozmo-0.6.3a35-py3-none-any.whl[camera]
 
 
 """""""
@@ -110,10 +107,9 @@ Windows
 
 ..
 
-2. Then install NumPy and Pillow with the following commands::
+2. (RECOMMENDED) Once the SDK is installed, type the following to install camera image processing support::
 
-    pip3 install numpy
-    pip3 install pillow
+    pip3 install --user cozmo-0.6.3a35-py3-none-any.whl[camera]
 
 ..
 
@@ -124,8 +120,11 @@ Windows
 Install
 """""""
 
-To install the SDK, unzip the *cozmosdk.zip* file to the desired directory on your system.
+To install the SDK, download the 'cozmo-0.6.3a35-py3-none-any.whl <http://cozmosdk.anki.com/sdkbeta/0.6.3a35/cozmo-0.6.3a35-py3-none-any.whl>'_ type the following into your Command-line/Terminal window::
 
+    pip3 install --user cozmo-0.6.3a35-py3-none-any.whl
+
+Example programs are available for `OS X/Linux <http://cozmosdk.anki.com/sdkbeta/0.6.3a35/sdk-examples-0.6.3a35.tar.gz>`_ and `Windows <http://cozmosdk.anki.com/sdkbeta/0.6.3a35/sdk-examples-0.6.3a35.zip>`_ platforms. Once downloaded, extract these packaged files to the SDK directory.
 
 --------------------
 Android Debug Bridge
