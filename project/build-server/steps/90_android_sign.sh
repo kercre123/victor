@@ -18,20 +18,16 @@ fi
 
 if [ ! -d "${APK_LOCATION}" -o ! -f "${APK_LOCATION}/${APK_NAME}" ]; then
   echo "Script was passed in nonexistent file parameters."
+  echo "Apk Location: ${APK_LOCATION}"
+  echo "Apk Name: ${APK_NAME}"
   exit 1
 fi
 
-unzip ${APK_LOCATION}/${APK_NAME} -d tmp
+zip -d ${APK_LOCATION}/${APK_NAME} "META-INF/*"
 
-cd tmp 
-rm -rf META-INF
-zip -r cozmo_zip.apk *
-mv cozmo_zip.apk ..
-cd ..
-rm -rf tmp
+jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore ${ANKI_BUILD_KEYSTORE_PATH} ${APK_LOCATION}/${APK_NAME} ankirelease -storepass ${KEY_STORE_PWD}
 
-mkdir -p build/android/signed_apk
+zipalign -f -v 4 ${APK_LOCATION}/${APK_NAME} ${APK_LOCATION}/${APK_NAME}.tmp
 
-jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore ${ANKI_BUILD_KEYSTORE_PATH} cozmo_zip.apk ankirelease -storepass ${KEY_STORE_PWD}
-zipalign -f -v 4 cozmo_zip.apk build/android/signed_apk/${APK_NAME}
-rm cozmo_zip.apk
+mv ${APK_LOCATION}/${APK_NAME}.tmp ${APK_LOCATION}/${APK_NAME}
+echo "${APK_LOCATION}/${APK_NAME} signed for release."
