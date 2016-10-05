@@ -32,14 +32,6 @@
 
 #include <cmath>
 
-#define DEBUG_ENROLL_NAMED_FACE_ACTION 0
-
-#if DEBUG_ENROLL_NAMED_FACE_ACTION
-#  define PRINT_ENROLL_DEBUG(...) PRINT_CH_DEBUG(kLogChannelName, __VA_ARGS__)
-#else
-#  define PRINT_ENROLL_DEBUG(...)
-#endif
-
 namespace Anki {
 namespace Cozmo {
 
@@ -98,6 +90,7 @@ namespace Cozmo {
   , _saveID(saveID)
   , _faceName(name)
   , _timeout_sec(kFaceEnrollmentTimeout_sec)
+  , _enrollingSpecificID(_faceID != Vision::UnknownFaceID)
   {
     PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.Constructor", "Original ID=%d with name='%s'",
                   _faceID, Util::HidePersonallyIdentifiableInfo(_faceName.c_str()));
@@ -285,7 +278,7 @@ namespace Cozmo {
           .pose = Vision::FaceEnrollmentPose::LookingStraight,
           .numEnrollments = (s32)Vision::FaceRecognitionConstants::MaxNumEnrollDataPerAlbumEntry,
           .startFcn = [this]() {
-            PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.SimpleStepOneStart", "");
+            PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.SimpleStepOneStart", "");
             SetBackpackLightsHelper(_robot, NamedColors::GREEN);
             SetAction( new CompoundActionParallel(_robot, {
               new TriggerAnimationAction(_robot, AnimationTrigger::MeetCozmoLookFaceGetIn),
@@ -304,7 +297,7 @@ namespace Cozmo {
             return RESULT_OK;
           },
           .stopFcn = [this]() {
-            PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.SimpleStepOneStop", "");
+            PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.SimpleStepOneStop", "");
             SetBackpackLightsHelper(_robot, NamedColors::BLACK);
             // if(!_idlePopped)
             // {
@@ -331,7 +324,7 @@ namespace Cozmo {
           .pose = Vision::FaceEnrollmentPose::LookingStraight,
           .numEnrollments = 2,
           .startFcn = [this]() {
-            PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.StepOneFunction", "Red");
+            PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.StepOneFunction", "Red");
             SetBackpackLightsHelper(_robot, NamedColors::RED);
             SetAction( CreateTurnTowardsFaceAction(_robot, _faceID, _saveID) );
             return RESULT_OK;
@@ -342,7 +335,7 @@ namespace Cozmo {
           .pose = Vision::FaceEnrollmentPose::LookingStraight,
           .numEnrollments = 2,
           .startFcn = [this, kFwdDist_mm, kSpeed_mmps]() {
-            PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.StepThreeStart", "Blue");
+            PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.StepThreeStart", "Blue");
             SetBackpackLightsHelper(_robot, NamedColors::BLUE);
             CompoundActionSequential* compoundAction = new CompoundActionSequential(_robot, {
               new DriveStraightAction(_robot, kFwdDist_mm, kSpeed_mmps),
@@ -362,7 +355,7 @@ namespace Cozmo {
           .pose = Vision::FaceEnrollmentPose::LookingStraight,
           .numEnrollments = 2,
           .startFcn = [this, kBwdDist_mm, kSpeed_mmps]() {
-            PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.StepTwoFunction", "Green");
+            PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.StepTwoFunction", "Green");
             SetBackpackLightsHelper(_robot, NamedColors::GREEN);
             CompoundActionSequential* compoundAction = new CompoundActionSequential(_robot, {
               new DriveStraightAction(_robot, kBwdDist_mm, kSpeed_mmps),
@@ -378,7 +371,7 @@ namespace Cozmo {
             return RESULT_OK;
           },
           .stopFcn = [this]() {
-            PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.StepFourEnd", "Black");
+            PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.StepFourEnd", "Black");
             SetBackpackLightsHelper(_robot, NamedColors::BLACK);
             return RESULT_OK;
           },
@@ -441,9 +434,9 @@ namespace Cozmo {
 
     _state = State::PreActing;
     
-    PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.InitCurrentStep",
-                       "FaceID=%d, EnrollCount=%d",
-                       _faceID, _numEnrollmentsRequired);
+    PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.InitCurrentStep",
+                   "FaceID=%d, EnrollCount=%d",
+                   _faceID, _numEnrollmentsRequired);
     
     return RESULT_OK;
   } // InitCurrentStep()
@@ -524,7 +517,7 @@ namespace Cozmo {
           ActionResult subResult = _action->Update();
           if(ActionResult::RUNNING != subResult)
           {
-            PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.TurnTowardsFaceCompleted", "");
+            PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.CheckIfDone.TurnTowardsFaceCompleted", "");
             
             if(_lastFaceSeen_ms == 0) {
               SetAction(CreateLookAroundAction());
@@ -577,21 +570,21 @@ namespace Cozmo {
         {
           ActionResult subResult = _action->Update();
           if(ActionResult::SUCCESS == subResult) {
-            PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.PreActionCompleted", "");
+            PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.CheckIfDone.PreActionCompleted", "");
             SetAction( nullptr );
           } else {
             return subResult; // NOTE: if action failed, it will still get deleted in destructor
           }
         }
         
-        PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.SetEnrollmentMode",
-                           "pose:%s ID:%d enrollCount:%d",
-                           EnumToString(_seqIter->pose), _faceID, _numEnrollmentsRequired);
+        PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.CheckIfDone.SetEnrollmentMode",
+                       "pose:%s ID:%d enrollCount:%d",
+                       EnumToString(_seqIter->pose), _faceID, _numEnrollmentsRequired);
         
         _robot.GetVisionComponent().SetFaceEnrollmentMode(_seqIter->pose, _faceID, _numEnrollmentsRequired);
         if(_seqIter->duringFcn != nullptr)
         {
-          PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.StartingDuringAction", "");
+          PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.CheckIfDone.StartingDuringAction", "");
           Result duringResult = _seqIter->duringFcn();
           if(RESULT_OK != duringResult) {
             PRINT_NAMED_WARNING("EnrollNamedFaceAction.CheckIfDone.DuringFcnFailed", "");
@@ -599,7 +592,7 @@ namespace Cozmo {
           }
         }
         
-        PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.TransitionToEnrolling", "");
+        PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.CheckIfDone.TransitionToEnrolling", "");
         _state = State::Enrolling;
         break;
       }
@@ -618,7 +611,7 @@ namespace Cozmo {
             if(ActionResult::SUCCESS != subResult) {
               PRINT_NAMED_WARNING("EnrollNamedFaceAction.CheckIfDone.DuringActionFailed", "");
             }
-            PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.DuringCompleted", "");
+            PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.CheckIfDone.DuringCompleted", "");
             SetAction( nullptr );
           } else {
             //PRINT_NAMED_DEBUG("EnrollNamedFaceAction.CheckIfDone.DuringActionRunning", "");
@@ -634,8 +627,16 @@ namespace Cozmo {
           
           // Go back to looking for face
           PRINT_NAMED_INFO("EnrollNamedFaceAction.CheckIfDone.NoLongerSeeingFace",
-                           "Have not seen face %d in %dms, going back to LookForFace state",
-                           _faceID, kTimeoutForReLookForFace_ms);
+                           "Have not seen face %d in %dms, going back to LookForFace state for %s",
+                           _faceID, kTimeoutForReLookForFace_ms,
+                           _enrollingSpecificID ? ("face " + std::to_string(_faceID)).c_str() : "any face");
+          
+          // If we are not enrolling a specific face ID, we are allowed to try again
+          // with a new face, so don't hang waiting to see the one we previously picked
+          if(!_enrollingSpecificID)
+          {
+            _faceID = Vision::UnknownFaceID;
+          }
           
           TransitionToLookingForFace();
           break;
@@ -644,8 +645,8 @@ namespace Cozmo {
         // Just waiting for enrollments to come in...
         if(_enrollmentCountReached)
         {
-          PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.ReachedEnrollmentCount",
-                             "Count=%d", _numEnrollmentsRequired);
+          PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.CheckIfDone.ReachedEnrollmentCount",
+                         "Count=%d", _numEnrollmentsRequired);
           
           // Cancel any "during" action we were doing
           SetAction( nullptr );
@@ -659,7 +660,7 @@ namespace Cozmo {
             }
           }
           
-          PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.TransitionToPostActing", "");
+          PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.CheckIfDone.TransitionToPostActing", "");
           _state = State::PostActing;
         }
         
@@ -677,7 +678,7 @@ namespace Cozmo {
         {
           ActionResult subResult = _action->Update();
           if(ActionResult::SUCCESS == subResult) {
-            PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.PostActionCompleted", "");
+            PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.CheckIfDone.PostActionCompleted", "");
             SetAction( nullptr );
           } else {
             return subResult;
@@ -687,7 +688,7 @@ namespace Cozmo {
         const TimeStamp_t currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
         if(currentTime_ms - _lastModeChangeTime_ms > _minTimePerEnrollStep_ms)
         {
-          PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.DoneWithCurrentStep", "");
+          PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.CheckIfDone.DoneWithCurrentStep", "");
           _lastModeChangeTime_ms = currentTime_ms;
           
           // Move to next step in the sequence
@@ -696,7 +697,7 @@ namespace Cozmo {
           if(_seqIter == _enrollSequence.end())
           {
             // Completed all steps!
-            PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.CompletedAllSteps", "");
+            PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.CheckIfDone.CompletedAllSteps", "");
             
             _robot.GetVisionComponent().AssignNameToFace(_faceID, _faceName, _saveID);
             
@@ -759,9 +760,9 @@ namespace Cozmo {
             return ActionResult::FAILURE_ABORT;
           }
         } else {
-          PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.WaitingForMinTimerPerStep",
-                             "CurrentTime=%d LastChange=%d MinTime=%d",
-                             currentTime_ms, _lastModeChangeTime_ms, _minTimePerEnrollStep_ms);
+          PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.CheckIfDone.WaitingForMinTimerPerStep",
+                         "CurrentTime=%d LastChange=%d MinTime=%d",
+                         currentTime_ms, _lastModeChangeTime_ms, _minTimePerEnrollStep_ms);
         }
         
         break;
@@ -781,11 +782,75 @@ namespace Cozmo {
         // to ensure that the face gets saved if and only if the action reports success.
         if(ActionResult::SUCCESS == result && _saveToRobot)
         {
-          _robot.GetVisionComponent().SaveFaceAlbumToRobot();
+          std::function<void(NVStorage::NVResult)> saveEnrollCallback = [this](NVStorage::NVResult result)
+          {
+            if(result == NVStorage::NVResult::NV_OKAY) {
+              _saveEnrollResult = ActionResult::SUCCESS;
+            } else {
+              _saveEnrollResult = ActionResult::FAILURE_ABORT;
+            }
+          };
+          
+          std::function<void(NVStorage::NVResult)> saveAlbumCallback = [this](NVStorage::NVResult result)
+          {
+            if(result == NVStorage::NVResult::NV_OKAY) {
+              _saveAlbumResult = ActionResult::SUCCESS;
+            } else {
+              _saveAlbumResult = ActionResult::FAILURE_ABORT;
+            }
+          };
+          
+          _robot.GetVisionComponent().SaveFaceAlbumToRobot(saveAlbumCallback, saveEnrollCallback);
+          _state = State::SavingToRobot;
+          result = ActionResult::RUNNING;
         }
         
         return result;
       }
+        
+      case State::SavingToRobot:
+      {
+        // Wait for Save to complete (success or failure)
+        if(ActionResult::FAILURE_NOT_STARTED != _saveEnrollResult &&
+           ActionResult::FAILURE_NOT_STARTED != _saveAlbumResult)
+        {
+          if(ActionResult::SUCCESS == _saveEnrollResult &&
+             ActionResult::SUCCESS == _saveAlbumResult)
+          {
+            PRINT_CH_INFO(kLogChannelName, "EnrollNamedFaceAction.CheckIfDone.NVStorageSaveSucceeded", "");
+            return ActionResult::SUCCESS;
+          }
+          else
+          {
+            PRINT_NAMED_WARNING("EnrollNamedFaceAction.CheckIfDone.NVStorageSaveFailed",
+                                "SaveEnroll:%s SaveAlbum:%s. Erasing face.",
+                                EnumToString(_saveEnrollResult),
+                                EnumToString(_saveAlbumResult));
+            
+            // if this was a new enrollment, then this person is not going to be
+            // known when we reconnect to the robot, so erase them from memory and
+            // report failure. If this was a re-enrollment, then we'll just silently
+            // fail to remember this particular enrollment data, since that won't
+            // have a big effect on the user.
+            if(Vision::UnknownFaceID == _saveID)
+            {
+              _robot.GetVisionComponent().EraseFace(_faceID);
+              return ActionResult::FAILURE_ABORT;
+            }
+            else
+            {
+              // Failure to save doesn't really matter if this was a re-enrollment. The
+              // only downside is that this most recent enrollment won't get reloaded
+              // from the robot next time we restart, but that's not a huge loss and
+              // it will still get used for the remainder of this session.
+              return ActionResult::SUCCESS;
+            }
+          }
+        }
+        
+        return ActionResult::RUNNING;
+      }
+        
         
     } // switch(_state)
 
@@ -822,7 +887,8 @@ namespace Cozmo {
       info.neverSawValidFace = false;
     }
     
-    info.saidName = (_sayNameWhenDone && _state == State::Finishing && _action==nullptr);
+    static_assert(State::SavingToRobot > State::Finishing, "Bad state ordering for next check");
+    info.saidName = (_sayNameWhenDone && _state >= State::Finishing && _action==nullptr);
     
     // Let the caller know if we left the face "scanning" or not.
     // TODO: This should not be necessary once this is a behavior (COZMO-4138)

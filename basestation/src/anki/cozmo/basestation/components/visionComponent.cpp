@@ -1866,6 +1866,12 @@ namespace Cozmo {
   
   Result VisionComponent::SaveFaceAlbumToRobot()
   {
+    return SaveFaceAlbumToRobot(nullptr, nullptr);
+  }
+  
+  Result VisionComponent::SaveFaceAlbumToRobot(std::function<void(NVStorage::NVResult)> albumCallback,
+                                               std::function<void(NVStorage::NVResult)> enrollCallback)
+  {
     Result lastResult = RESULT_OK;
     
     _albumData.clear();
@@ -1877,7 +1883,7 @@ namespace Cozmo {
     this->Unlock();
 
     // Callback to display result when NVStorage.Write finishes
-    NVStorageComponent::NVStorageWriteEraseCallback saveAlbumCallback = [this](NVStorage::NVResult result) {
+    NVStorageComponent::NVStorageWriteEraseCallback saveAlbumCallback = [this,albumCallback](NVStorage::NVResult result) {
       if(result == NVStorage::NVResult::NV_OKAY) {
         PRINT_NAMED_INFO("VisionComponent.SaveFaceAlbumToRobot.AlbumSuccess",
                          "Successfully completed saving album data to robot");
@@ -1887,9 +1893,13 @@ namespace Cozmo {
                             EnumToString(result));
         _robot.BroadcastEngineErrorCode(EngineErrorCode::WriteFacesToRobot);
       }
+      
+      if(nullptr != albumCallback) {
+        albumCallback(result);
+      }
     };
     // Callback to display result when NVStorage.Write finishes
-    NVStorageComponent::NVStorageWriteEraseCallback saveEnrollCallback = [this](NVStorage::NVResult result) {
+    NVStorageComponent::NVStorageWriteEraseCallback saveEnrollCallback = [this,enrollCallback](NVStorage::NVResult result) {
       if(result == NVStorage::NVResult::NV_OKAY) {
         PRINT_NAMED_INFO("VisionComponent.SaveFaceAlbumToRobot.EnrollSuccess",
                          "Successfully completed saving enroll data to robot");
@@ -1898,6 +1908,10 @@ namespace Cozmo {
                             "Failed saving enroll data to robot: %s",
                             EnumToString(result));
         _robot.BroadcastEngineErrorCode(EngineErrorCode::WriteFacesToRobot);
+      }
+      
+      if(nullptr != enrollCallback) {
+        enrollCallback(result);
       }
     };
 

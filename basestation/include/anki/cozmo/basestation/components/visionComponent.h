@@ -241,6 +241,8 @@ struct DockingErrorSignal;
     
     // Load/Save face album data to/from robot's NVStorage
     Result SaveFaceAlbumToRobot();
+    Result SaveFaceAlbumToRobot(std::function<void(NVStorage::NVResult)> albumCallback,
+                                std::function<void(NVStorage::NVResult)> enrollCallback);
     Result LoadFaceAlbumFromRobot(); // Broadcasts any loaded names and IDs
     
     // Load/Save face album data to/from file.

@@ -1518,8 +1518,8 @@ namespace Anki {
     , _faceID(faceID)
     , _sayName(sayName)
     {
-      SetName("TurnTowardsLastFacePose");
-      SetType(RobotActionType::TURN_TOWARDS_LAST_FACE_POSE);
+      SetName("TurnTowardsFace" + std::to_string(faceID));
+      SetType(RobotActionType::TURN_TOWARDS_FACE);
       SetTracksToLock((u8)AnimTrackFlag::NO_TRACKS);
     }
 
@@ -1651,7 +1651,7 @@ namespace Anki {
               if(distSq < _closestDistSq) {
                 _obsFaceID = faceID;
                 _closestDistSq = distSq;
-                PRINT_NAMED_DEBUG("TurnTowardsLastFacePoseAction.ObservedFaceCallback",
+                PRINT_NAMED_DEBUG("TurnTowardsFaceAction.ObservedFaceCallback",
                                   "Observed ID=%d at distSq=%.1f",
                                   _obsFaceID, _closestDistSq);
               }
@@ -1666,14 +1666,14 @@ namespace Anki {
     void TurnTowardsFaceAction::HandleMessage(const ExternalInterface::RobotChangedObservedFaceID& msg)
     {
       if(_obsFaceID == msg.oldID) {
-        PRINT_NAMED_DEBUG("TurnTowardsLastFacePoseAction.HandleChangedFaceIDMessage",
+        PRINT_NAMED_DEBUG("TurnTowardsFaceAction.HandleChangedFaceIDMessage",
                           "Updating fine-tune observed ID from %d to %d",
                           _obsFaceID, msg.newID);
         _obsFaceID = msg.newID;
       }
       
       if(_faceID == msg.oldID) {
-        PRINT_NAMED_DEBUG("TurnTowardsLastFacePoseAction.HandleChangedFaceIDMessage",
+        PRINT_NAMED_DEBUG("TurnTowardsFaceAction.HandleChangedFaceIDMessage",
                           "Updating face ID from %d to %d",
                           _faceID, msg.newID);
         _faceID = msg.newID;
@@ -1683,7 +1683,7 @@ namespace Anki {
     
     void TurnTowardsFaceAction::CreateFineTuneAction()
     {
-      PRINT_NAMED_DEBUG("TurnTowardsLastFacePoseAction.CreateFinalAction.SawFace",
+      PRINT_NAMED_DEBUG("TurnTowardsFaceAction.CreateFinalAction.SawFace",
                         "Observed ID=%d. Will fine tune.", _obsFaceID);
                         
       const Vision::TrackedFace* face = _robot.GetFaceWorld().GetFace(_obsFaceID);
@@ -1726,10 +1726,10 @@ namespace Anki {
             // Initial (blind) turning to pose finished...
             if(_obsFaceID == Vision::UnknownFaceID) {
               // ...didn't see a face yet, wait a couple of images to see if we do
-              PRINT_NAMED_DEBUG("TurnTowardsLastFacePoseAction.CheckIfDone.NoFaceObservedYet",
+              PRINT_NAMED_DEBUG("TurnTowardsFaceAction.CheckIfDone.NoFaceObservedYet",
                                 "Will wait no more than %d frames",
                                 _maxFramesToWait);
-              ASSERT_NAMED(nullptr == _action, "TurnTowardsLastFacePoseAction.CheckIfDone.ActionPointerShouldStillBeNull");
+              ASSERT_NAMED(nullptr == _action, "TurnTowardsFaceAction.CheckIfDone.ActionPointerShouldStillBeNull");
               SetAction(new WaitForImagesAction(_robot, _maxFramesToWait, VisionMode::DetectingFaces));
               // TODO:(bn) parallel action with an animation here? This will let us span the gap a bit better
               // and buy us more time. Skipping for now

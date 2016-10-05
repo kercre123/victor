@@ -68,7 +68,8 @@ namespace Cozmo {
       PreActing,
       Enrolling,
       PostActing,
-      Finishing
+      Finishing,
+      SavingToRobot
     };
     
     State _state;
@@ -97,6 +98,9 @@ namespace Cozmo {
     bool                      _idlePopped = true;
     bool                      _sayNameWhenDone = false;
     bool                      _needToAbort = false;
+    bool                      _enrollingSpecificID = false;
+    ActionResult              _saveEnrollResult = ActionResult::FAILURE_NOT_STARTED;
+    ActionResult              _saveAlbumResult  = ActionResult::FAILURE_NOT_STARTED;
     
     struct EnrollStep {
       Vision::FaceEnrollmentPose pose;

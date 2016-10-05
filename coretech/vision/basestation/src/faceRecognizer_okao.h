@@ -194,6 +194,7 @@ namespace Vision {
     std::mutex      _mutex;
     std::thread     _featureExtractionThread;
     bool            _isRunningAsync = true;
+    bool            _isEnrollmentCancelled = false;
     ProcessingState _state = ProcessingState::Idle;
     void Run();
     

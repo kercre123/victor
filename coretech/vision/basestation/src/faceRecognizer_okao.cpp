@@ -79,6 +79,9 @@ namespace Vision {
   
   CONSOLE_VAR(bool, kFaceRecognitionExtraDebug, "Vision.FaceRecognition", false);
   
+  // For simulating slow processing (e.g. on a device)
+  CONSOLE_VAR(u32, kFaceRecognitionSimulatedDelay_ms, "Vision.FaceRecognition", 0);
+  
   namespace JsonKey
   {
     const char* FaceRecognitionGroup = "FaceRecognition";
@@ -465,6 +468,11 @@ namespace Vision {
         ASSERT_NAMED(_isRunningAsync, "FaceRecognizer.GetRecognitionData.InvalidTrackIDinSyncMode");
         PRINT_CH_INFO("FaceRecognizer", "GetRecognitionData.DroppingFeaturesComputedWhileClearing", "");
       }
+      else if(_isEnrollmentCancelled)
+      {
+        PRINT_CH_INFO("FaceRecognizer", "GetRecognitionData.DroppingFeaturesComputedWhileCancelled", "");
+        _isEnrollmentCancelled = false;
+      }
       else
       {
         // Verbose, but useful for enrollment debugging
@@ -478,8 +486,10 @@ namespace Vision {
         RecognitionScore score = 0;
         Result result = RecognizeFace(recognizedID, score);
         
-        // For simulating slow processing (e.g. on a device)
-        //std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        if(kFaceRecognitionSimulatedDelay_ms > 0)
+        {
+          std::this_thread::sleep_for(std::chrono::milliseconds(kFaceRecognitionSimulatedDelay_ms));
+        }
         
         if(RESULT_OK == result)
         {
@@ -838,6 +848,15 @@ namespace Vision {
   
   void FaceRecognizer::SetAllowedEnrollments(s32 N, FaceID_t forFaceID)
   {
+    // If we were enrolling a specific face and now we're being told not to
+    // then mark the last enrollment as cancelled
+    if(forFaceID == UnknownFaceID && _enrollmentID != UnknownFaceID && _enrollmentCount > 0)
+    {
+      PRINT_CH_INFO("FaceRecognizer", "FaceRecognizer.SetAllowedEnrollments.Cancel",
+                    "Cancelling enrollment of ID %d", _enrollmentID);
+      _isEnrollmentCancelled = true;
+    }
+    
     _enrollmentCount = N;
     _origEnrollmentCount = N;
     _enrollmentID = forFaceID;
@@ -1938,8 +1957,14 @@ namespace Vision {
       return RESULT_FAIL;
     }
     
+    if(serializedAlbum.empty())
+    {
+      PRINT_NAMED_WARNING("FaceRecognizer.SetSerializedAlbum.EmptyAlbumData", "");
+      return RESULT_FAIL;
+    }
+    
     FR_ERROR error;
-    album = OKAO_FR_RestoreAlbum(okaoCommonHandle, const_cast<UINT8*>(&(serializedAlbum[0])), (UINT32)serializedAlbum.size(), &error);
+    album = OKAO_FR_RestoreAlbum(okaoCommonHandle, const_cast<UINT8*>(serializedAlbum.data()), (UINT32)serializedAlbum.size(), &error);
     if(NULL == album) {
       PRINT_NAMED_WARNING("FaceRecognizer.SetSerializedAlbum.RestoreFail",
                           "OKAO Result=%d", error);
