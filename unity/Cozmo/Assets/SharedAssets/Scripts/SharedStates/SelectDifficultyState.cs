@@ -87,6 +87,7 @@ public class SelectDifficultyState : State {
 
   private void HandleContinueButtonClicked() {
     _Game.CurrentDifficulty = _SelectedDifficultyData.DifficultyId;
+    DAS.Event("game.difficulty", _SelectedDifficultyData.DifficultyId.ToString());
 
     // Don't tween transitions in Exit because that will cause errors in DoTween if exiting 
     // the state machine is through the quit button
