@@ -33,4 +33,10 @@ pushd /vagrant
 tar -xzf sdk-examples.tar.gz
 popd
 pip3 install /vagrant/cozmo*
-source ~/.bashrc
+#pip3 install http://cozmosdk.anki.com/sdk/cozmo-0.0.0a123-py3-none-any.whl
+
+echo ">>> Turn Screensaver Lock OFF"
+gsettings set org.gnome.desktop.screensaver lock-enabled false
+gsettings set org.gnome.desktop.screensaver idle-activation-enabled false
+
+exec bash
