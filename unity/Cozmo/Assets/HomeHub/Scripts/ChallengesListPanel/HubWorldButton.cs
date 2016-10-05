@@ -34,6 +34,9 @@ namespace Cozmo.HubWorld {
     [SerializeField]
     private GameObject _NewUnlockIndicator;
 
+    [SerializeField]
+    private GameObject _ComingSoonContainer;
+
     private ChallengeData _ChallengeData;
     private bool _IsUnlocked = true;
     private bool _IsAvailable = true;
@@ -55,6 +58,9 @@ namespace Cozmo.HubWorld {
         playerInventory.ItemAdded += HandleItemValueChanged;
         playerInventory.ItemRemoved += HandleItemValueChanged;
         playerInventory.ItemCountSet += HandleItemValueChanged;
+
+        UnlockableInfo unlockabeInfo = UnlockablesManager.Instance.GetUnlockableInfo(_ChallengeData.UnlockId.Value);
+        _ComingSoonContainer.SetActive(unlockabeInfo.NeverAvailable);
       }
 
       _ButtonScript.Initialize(HandleButtonClicked, string.Format("see_{0}_details_button", _ChallengeId), dasParentViewName);
