@@ -56,25 +56,34 @@ namespace Cozmo.UI {
       if (this != null) {
         CleanUpTransitionTween();
 
-        _FromBackgroundImage.gameObject.SetActive(true);
-        _FromBackgroundImage.sprite = _ToBackgroundImage.sprite;
-        _FromBackgroundImage.color = _TargetTintColor;
+        if (_FromBackgroundImage != null) {
+          _FromBackgroundImage.gameObject.SetActive(true);
+          _FromBackgroundImage.sprite = _ToBackgroundImage.sprite;
+          _FromBackgroundImage.color = _TargetTintColor;
+        }
+        else {
+          DAS.Error("BackgroundColorController.SetBackgroundColor", "FromBackgroundImage is NULL");
+        }
+        if (_ToBackgroundImage != null) {
+          Sprite newBackgroundSprite = GetSpriteBasedOnColor(baseColor);
+          _ToBackgroundImage.sprite = newBackgroundSprite;
 
-        Sprite newBackgroundSprite = GetSpriteBasedOnColor(baseColor);
-        _ToBackgroundImage.sprite = newBackgroundSprite;
+          Color transparentTint = new Color(tintColor.r, tintColor.g, tintColor.b, 0);
+          _ToBackgroundImage.color = transparentTint;
 
-        Color transparentTint = new Color(tintColor.r, tintColor.g, tintColor.b, 0);
-        _ToBackgroundImage.color = transparentTint;
-
-        _TargetTintColor = tintColor;
-        _TransitionTween = _ToBackgroundImage.DOFade(1, _BackgroundColorTransition_sec)
-                                             .SetEase(UIDefaultTransitionSettings.Instance.FadeInEasing)
-                                             .OnComplete(() => {
-                                               if (_FromBackgroundImage != null) {
-                                                 _FromBackgroundImage.gameObject.SetActive(false);
-                                               }
-                                             });
-        _TransitionTween.Play();
+          _TargetTintColor = tintColor;
+          _TransitionTween = _ToBackgroundImage.DOFade(1, _BackgroundColorTransition_sec)
+                                               .SetEase(UIDefaultTransitionSettings.Instance.FadeInEasing)
+                                               .OnComplete(() => {
+                                                 if (_FromBackgroundImage != null) {
+                                                   _FromBackgroundImage.gameObject.SetActive(false);
+                                                 }
+                                               });
+          _TransitionTween.Play();
+        }
+        else {
+          DAS.Error("BackgroundColorController.SetBackgroundColor", "ToBackgroundImage is NULL");
+        }
       }
     }
 
