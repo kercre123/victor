@@ -1,26 +1,26 @@
 '''
 Cozmo, by Anki.
 
-Cozmo is a small robot with a huge personality.
+Cozmo is a small robot with a big personality.
 
 This library lets you take command of Cozmo and write programs for him.
 
 Cozmo features:
 
     * A camera with advanced vision system
-    * Face recognition
     * A robotic lifter
-    * Independent tank tracks
+    * Independent tank treads
     * Pivotable head
-    * Cliff detection
     * An array of LEDs
     * An accelerometer
-    * A Gyroscope
+    * A gyroscope
+    * Cliff detection
+    * Face recognition
     * Path planning
     * Animation and behavior systems
     * Power cubes, with LEDs, an accelerometer and tap detection
 
-This SDK provides easy access to take control of Cozmo and write simple
+This SDK provides users with access to take control of Cozmo and write simple
 or advanced programs with him.
 
 Requirements:
@@ -29,7 +29,7 @@ Requirements:
 Optional requirements for camera image processing/display:
     * Tkinter (Usually supplied by default with Python)
     * Pillow
-    * Numpy
+    * NumPy
 '''
 
 
