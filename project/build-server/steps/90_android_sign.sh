@@ -21,17 +21,10 @@ if [ ! -d "${APK_LOCATION}" -o ! -f "${APK_LOCATION}/${APK_NAME}" ]; then
   exit 1
 fi
 
-unzip ${APK_LOCATION}/${APK_NAME} -d tmp
-
-cd tmp 
-rm -rf META-INF
-zip -r cozmo_zip.apk *
-mv cozmo_zip.apk ..
-cd ..
-rm -rf tmp
+zip -d ${APK_LOCATION}/${APK_NAME} "META-INF/*"
 
 mkdir -p build/android/signed_apk
 
-jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore ${ANKI_BUILD_KEYSTORE_PATH} cozmo_zip.apk ankirelease -storepass ${KEY_STORE_PWD}
-zipalign -f -v 4 cozmo_zip.apk build/android/signed_apk/${APK_NAME}
-rm cozmo_zip.apk
+jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore ${ANKI_BUILD_KEYSTORE_PATH} ${APK_LOCATION}/${APK_NAME} ankirelease -storepass ${KEY_STORE_PWD}
+zipalign -f -v 4 ${APK_LOCATION}/${APK_NAME} ${APK_LOCATION}/${APK_NAME}.tmp
+mv ${APK_LOCATION}/${APK_NAME}.tmp ${APK_LOCATION}/${APK_NAME}
