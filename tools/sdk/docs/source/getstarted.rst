@@ -46,18 +46,27 @@ The code for the Hello World program is:
 .. code-block:: python
   :linenos:
 
+  import sys
+
   import cozmo
 
-  '''Simplest "Hello World" Cozmo example program
+  '''Hello World
+
+  Make Cozmo say 'Hello World' in this simple Cozmo SDK example program.
   '''
 
-  def run(coz_conn):
-    coz = coz_conn.wait_for_robot()
-    coz.say_text("Hello World").wait_for_completed()
+  def run(sdk_conn):
+    coz = sdk_conn.wait_for_robot()
+    robot.say_text("Hello World").wait_for_completed()
 
   if __name__ == '__main__':
     cozmo.setup_basic_logging()
     cozmo.connect(run)
+
+    try:
+       cozmo.connect(run)
+    except cozmo.ConnectionError as e:
+       sys.exit("A connection error occurred: %s" % e)
 
 We can edit this code to make Cozmo say something new. Let's write our first program using this code.
 
@@ -69,14 +78,14 @@ Next Steps - "Night-Night"
 
 2. Copy the code from the Hello World program and paste it into the new document.
 3. Each line in the program relates to a specific function. To learn more, see :doc:`the Beginner's Tutorial </tutorial-beginner>`.
-4. Move to line 8 in the program.
+4. Move to line 15 in the program.
 
   1. Select the phrase "Hello World". Do NOT select the parentheses or quotation marks around the phrase; those are necessary for Python to properly parse the command.
   2. Type in the new phrase you would like Cozmo to say. In this example, Cozmo will say "Night Night"::
 
-      coz.say_text("Night Night").wait_for_completed()
+      robot.say_text("Night Night").wait_for_completed()
 
-5. At the top of the screen, select *File -> Save As*, and save the program in the *examples* directory as ``nightnight.py``.
+5. At the top of the screen, select *File -> Save As*, and save the program in the SDK directory as ``nightnight.py``.
 6. Now you can run your program:
 
         a. For iOS and Linux systems, type the following into the same window and press **Enter**::
