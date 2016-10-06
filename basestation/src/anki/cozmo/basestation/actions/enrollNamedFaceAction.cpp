@@ -280,9 +280,12 @@ namespace Cozmo {
           .startFcn = [this]() {
             PRINT_CH_DEBUG(kLogChannelName, "EnrollNamedFaceAction.SimpleStepOneStart", "");
             SetBackpackLightsHelper(_robot, NamedColors::GREEN);
-            SetAction( new CompoundActionParallel(_robot, {
-              new TriggerAnimationAction(_robot, AnimationTrigger::MeetCozmoLookFaceGetIn),
-              new DriveStraightAction(_robot, kDriveForwardIntentDist_mm, kDriveForwardIntentSpeed_mmps, false)
+            SetAction(new CompoundActionSequential(_robot, {
+              new TurnTowardsFaceAction(_robot, _faceID, M_PI, false),
+              new CompoundActionParallel(_robot, {
+                new TriggerAnimationAction(_robot, AnimationTrigger::MeetCozmoLookFaceGetIn),
+                new DriveStraightAction(_robot, kDriveForwardIntentDist_mm, kDriveForwardIntentSpeed_mmps, false)
+              })
             }));
             return RESULT_OK;
           },
