@@ -710,11 +710,10 @@ namespace Cozmo.HomeHub {
 
 
     private void HandleAskForMinigame(object messageObject) {
-      if (HomeViewCurrentlyOccupied || _CurrentTab == HomeTab.Settings) {
+      if (HomeViewCurrentlyOccupied && !_HomeHubInstance.IsChallengeDetailsActive) {
         // Avoid dupes or conflicting popups
-        // Don't request games in Settings tab to avoid
-        // being disruptive to SDK users and those changing
-        // settings.
+        // This popup kills ChallengeDetails popups so it makes an exception
+        // for them.
         return;
       }
 
@@ -722,6 +721,10 @@ namespace Cozmo.HomeHub {
       // Do not send the minigame message if the challenge is invalid or currently not unlocked.
       if (data == null || !UnlockablesManager.Instance.IsUnlocked(data.UnlockId.Value)) {
         return;
+      }
+
+      if (_HomeHubInstance.IsChallengeDetailsActive) {
+        _HomeHubInstance.CloseAllChallengeDetailsPopups();
       }
 
       ContextManager.Instance.AppFlash(playChime: true);

@@ -35,7 +35,7 @@ namespace Cozmo.HomeHub {
 
     public bool IsChallengeDetailsActive {
       get {
-        return _ChallengeDetailsDialogInstance != null;
+        return _ChallengeDetailsDialogInstance != null || _ChallengeAlertView != null;
       }
     }
 
@@ -272,6 +272,17 @@ namespace Cozmo.HomeHub {
       PlayMinigame(challengeRequested, true);
     }
 
+    // Kill Challenge Alerts, for use with alerts that are intended to interrupt both
+    // Challenge Details Popups. TODO: replace with proper alert ui rework
+    public void CloseAllChallengeDetailsPopups() {
+      if (_ChallengeAlertView != null) {
+        _ChallengeAlertView.CloseViewImmediately();
+      }
+      if (_ChallengeDetailsDialogInstance != null) {
+        _ChallengeDetailsDialogInstance.CloseViewImmediately();
+      }
+    }
+
     private void PlayMinigame(string challengeId, bool wasRequest = false) {
       // Keep track of the current challenge
       _CurrentChallengePlaying = new CompletedChallengeData() {
@@ -337,7 +348,7 @@ namespace Cozmo.HomeHub {
     }
 
     private IEnumerator ShowMinigameAfterHomeViewCloses(ChallengeData challengeData, ChallengePrefabData prefabData) {
-      while (_HomeViewInstance != null || _ChallengeDetailsDialogInstance != null || _MiniGameInstance != null) {
+      while (_HomeViewInstance != null || IsChallengeDetailsActive || _MiniGameInstance != null) {
         yield return 0;
       }
 
