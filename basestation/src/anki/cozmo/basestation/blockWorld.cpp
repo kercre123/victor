@@ -3500,7 +3500,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         // if we cross an object, ignore this point, regardless of whether we saw a border or not
         // this is because if we are crossing an object, chances are we are seeing its border, of we should have,
         // so the info is more often disrupting than helpful
-        bool isValidPoint = !occludedBeforeNearPlane && !occludedBeforeNearPlane;
+        bool isValidPoint = !occludedBeforeNearPlane && !occludedInsideROI;
         
         // this flag is set by a point that can't merge into the previous segment and wants to start one
         // on its own
