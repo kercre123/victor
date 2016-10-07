@@ -138,7 +138,9 @@ namespace Anki {
         bool handledDisconnect = false;
         auto initialIter = _initialConnections.find(withID);
         if (initialIter != _initialConnections.end()) {
-          const auto result = robotRejectedConnection ? RobotConnectionResult::ConnectionRejected : RobotConnectionResult::ConnectionFailure;
+          //const auto result = robotRejectedConnection ? RobotConnectionResult::ConnectionRejected : RobotConnectionResult::ConnectionFailure;
+          // TODO: Until COZMO-5310 is completely implemented, always return connection failure in this case, as Unity doesn't yet handle ConnectionRejected.
+          const auto result = RobotConnectionResult::ConnectionFailure;
           handledDisconnect = initialIter->second.HandleDisconnect(result);
         }
         if (!handledDisconnect) {
