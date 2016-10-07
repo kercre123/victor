@@ -1415,7 +1415,6 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       
       _didObjectsChange = true;
       _robotMsgTimeStampAtChange = atTimestamp;
-      _currentObservedObjects.push_back(observedObject);
       
     } // for each object seen
     
@@ -1597,16 +1596,9 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       return numVisibleObjects;
     }
     
-    // Create a list of unobserved objects for further consideration below.
-    struct UnobservedObjectContainer {
-      ObjectFamily family;
-      ObjectType   type;
-      ObservableObject*      object;
-      
-      UnobservedObjectContainer(ObjectFamily family_, ObjectType type_, ObservableObject* object_)
-      : family(family_), type(type_), object(object_) { }
-    };
-    std::vector<UnobservedObjectContainer> unobservedObjects;
+    // Create a list of observed and unobserved objects for further consideration below
+    std::vector<ObservableObject*> unobservedObjects; // not const pointers b/c we may mark as unobserved below
+    std::vector<const ObservableObject*> observedObjects;
     
     auto originIter = _existingObjects.find(_robot->GetWorldOrigin());
     if(originIter == _existingObjects.end()) {
@@ -1619,23 +1611,37 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       for(auto & objectsByType : objectFamily.second)
       {
         ObjectsMapByID_t& objectIdMap = objectsByType.second;
-        for(auto objectIter = objectIdMap.begin();
-            objectIter != objectIdMap.end(); )
+        auto objectIter = objectIdMap.begin();
+        while(objectIter != objectIdMap.end())
         {
           ObservableObject* object = objectIter->second.get();
-         
+          if(nullptr == object)
+          {
+            PRINT_NAMED_WARNING("BlockWorld.CheckForUnobservedObjects.NullObject",
+                                "Family:%s Type:%s ID:%d is NULL. Deleting entry.",
+                                EnumToString(objectFamily.first),
+                                EnumToString(objectsByType.first),
+                                objectIter->first.GetValue());
+            objectIter = objectIdMap.erase(objectIter);
+            continue;
+          }
+          
           bool objectDeleted = false;
           
-          // Look for blocks not seen atTimestamp, but skip objects
-          // - that are currently being carried
-          // - that we are currently docking to
-          // - whose pose origin does not match the robot's
-          // - who are a charger (since those stay around)
-          if(object->GetLastObservedTime() < atTimestamp &&
-             _robot->GetCarryingObject() != object->GetID() &&
-             _robot->GetDockObject() != object->GetID() &&
-             &object->GetPose().FindOrigin() == _robot->GetWorldOrigin() &&
-             object->GetFamily() != ObjectFamily::Charger)
+          // 1. Store objects we have just seen as "observed"
+          // 2. Look for "unobserved" objects not seen atTimestamp -- but skip objects:
+          //    - that are currently being carried
+          //    - that we are currently docking to
+          //    - whose pose origin does not match the robot's
+          //    - who are a charger (since those stay around)
+          if(object->GetLastObservedTime() >= atTimestamp)
+          {
+            observedObjects.push_back(object);
+          }
+          else if(_robot->GetCarryingObject() != object->GetID() &&
+                  _robot->GetDockObject() != object->GetID() &&
+                  &object->GetPose().FindOrigin() == _robot->GetWorldOrigin() &&
+                  object->GetFamily() != ObjectFamily::Charger)
           {
             if(object->IsPoseStateUnknown())
             {
@@ -1654,36 +1660,34 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
             else // pose state NOT unknown
             {
               if(object->IsActive() &&
-                      ActiveIdentityState::WaitingForIdentity == object->GetIdentityState() &&
-                      object->GetLastObservedTime() < atTimestamp - BLOCK_IDENTIFICATION_TIMEOUT_MS) {
-
-              // If this is an active object and identification has timed out
-              // delete it if radio connection has not been established yet.
-              // Otherwise, retry identification.
-              if (object->GetActiveID() < 0) {
-                PRINT_CH_INFO("BlockWorld", "BlockWorld.CheckForUnobservedObjects.IdentifyTimedOut",
-                              "Deleting unobserved %s active object %d that has "
-                              "not completed identification in %dms",
-                              EnumToString(object->GetType()),
-                              object->GetID().GetValue(), BLOCK_IDENTIFICATION_TIMEOUT_MS);
+                 ActiveIdentityState::WaitingForIdentity == object->GetIdentityState() &&
+                 object->GetLastObservedTime() < atTimestamp - BLOCK_IDENTIFICATION_TIMEOUT_MS) {
                 
-                objectIter = DeleteObject(objectIter, objectsByType.first, objectFamily.first);
+                // If this is an active object and identification has timed out
+                // delete it if radio connection has not been established yet.
+                // Otherwise, retry identification.
+                if (object->GetActiveID() < 0) {
+                  PRINT_CH_INFO("BlockWorld", "BlockWorld.CheckForUnobservedObjects.IdentifyTimedOut",
+                                "Deleting unobserved %s active object %d that has "
+                                "not completed identification in %dms",
+                                EnumToString(object->GetType()),
+                                object->GetID().GetValue(), BLOCK_IDENTIFICATION_TIMEOUT_MS);
+                  
+                  objectIter = DeleteObject(objectIter, objectsByType.first, objectFamily.first);
                   objectDeleted = true;
+                } else {
+                  // Don't delete objects that are still in radio communication. Retrigger Identify?
+                  //PRINT_NAMED_WARNING("BlockWorld.CheckForUnobservedObjects.RetryIdentify", "Re-attempt identify on object %d (%s)", object->GetID().GetValue(), EnumToString(object->GetType()));
+                  //object->Identify();
+                }
+                
               } else {
-                // Don't delete objects that are still in radio communication. Retrigger Identify?
-                //PRINT_NAMED_WARNING("BlockWorld.CheckForUnobservedObjects.RetryIdentify", "Re-attempt identify on object %d (%s)", object->GetID().GetValue(), EnumToString(object->GetType()));
-                //object->Identify();
+                // Otherwise, add it to the list for further checks below to see if
+                // we "should" have seen the object
+                if(_unidentifiedActiveObjects.count(object->GetID()) == 0) {
+                  unobservedObjects.push_back(object);
+                }
               }
-
-            } else {
-              // Otherwise, add it to the list for further checks below to see if
-              // we "should" have seen the object
-
-              if(_unidentifiedActiveObjects.count(object->GetID()) == 0) {
-                //AddToOcclusionMaps(object, robotMgr_); // TODO: Used to do this too, put it back?
-                unobservedObjects.emplace_back(objectFamily.first, objectsByType.first, objectIter->second.get());
-              }
-            }
             }
           }
           
@@ -1701,7 +1705,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     // visibility in each camera
     const Vision::Camera& camera = _robot->GetVisionComponent().GetCamera();
     ASSERT_NAMED(camera.IsCalibrated(), "BlockWorld.CheckForUnobservedObjects.CameraNotCalibrated");
-    for(const auto& unobserved : unobservedObjects) {
+    for(ObservableObject* unobservedObject : unobservedObjects) {
       
       // Remove objects that should have been visible based on their last known
       // location, but which must not be there because we saw something behind
@@ -1709,13 +1713,13 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       const u16 xBorderPad = static_cast<u16>(0.05*static_cast<f32>(camera.GetCalibration()->GetNcols()));
       const u16 yBorderPad = static_cast<u16>(0.05*static_cast<f32>(camera.GetCalibration()->GetNrows()));
       bool hasNothingBehind = false;
-      const bool shouldBeVisible = unobserved.object->IsVisibleFrom(camera,
-                                                                    MAX_MARKER_NORMAL_ANGLE_FOR_SHOULD_BE_VISIBLE_CHECK_RAD,
-                                                                    MIN_MARKER_SIZE_FOR_SHOULD_BE_VISIBLE_CHECK_PIX,
-                                                                    xBorderPad, yBorderPad,
-                                                                    hasNothingBehind);
+      const bool shouldBeVisible = unobservedObject->IsVisibleFrom(camera,
+                                                                   MAX_MARKER_NORMAL_ANGLE_FOR_SHOULD_BE_VISIBLE_CHECK_RAD,
+                                                                   MIN_MARKER_SIZE_FOR_SHOULD_BE_VISIBLE_CHECK_PIX,
+                                                                   xBorderPad, yBorderPad,
+                                                                   hasNothingBehind);
       
-      const bool isDirtyPoseState = (PoseState::Dirty == unobserved.object->GetPoseState());
+      const bool isDirtyPoseState = (PoseState::Dirty == unobservedObject->GetPoseState());
       
       // If the object should _not_ be visible, but the reason was only that
       // it has nothing behind it to confirm that, _and_ the object has already
@@ -1723,18 +1727,18 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       // times it has gone unobserved while dirty.
       if(!shouldBeVisible && hasNothingBehind && isDirtyPoseState)
       {
-        _robot->GetObjectPoseConfirmer().MarkObjectUnobserved(unobserved.object);
+        _robot->GetObjectPoseConfirmer().MarkObjectUnobserved(unobservedObject);
       }
-      else if(shouldBeVisible || unobserved.object->IsPoseStateUnknown())
+      else if(shouldBeVisible || unobservedObject->IsPoseStateUnknown())
       {
         // Make sure there are no currently-observed, (just-)identified objects
         // with the same active ID present. (If there are, we'll reassign IDs
         // on the next update instead of clearing the existing object now.)
         bool matchingActiveIdFound = false;
-        if(unobserved.object->IsActive()) {
-          for(auto object : _currentObservedObjects) {
+        if(unobservedObject->IsActive()) {
+          for(auto object : observedObjects) {
             if(ActiveIdentityState::Identified == object->GetIdentityState() &&
-               object->GetActiveID() == unobserved.object->GetActiveID()) {
+               object->GetActiveID() == unobservedObject->GetActiveID()) {
               matchingActiveIdFound = true;
               break;
             }
@@ -1746,17 +1750,17 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
           PRINT_CH_INFO("BlockWorld", "BlockWorld.CheckForUnobservedObjects.MarkingUnobservedObject",
                         "Marking object %d unobserved, which should have been seen, but wasn't. "
                         "(shouldBeVisible:%d hasNothingBehind:%d isDirty:%d",
-                        unobserved.object->GetID().GetValue(),
+                        unobservedObject->GetID().GetValue(),
                         shouldBeVisible, hasNothingBehind, isDirtyPoseState);
           
-          Result markResult = _robot->GetObjectPoseConfirmer().MarkObjectUnobserved(unobserved.object);
+          Result markResult = _robot->GetObjectPoseConfirmer().MarkObjectUnobserved(unobservedObject);
           if(RESULT_OK != markResult)
           {
             PRINT_NAMED_WARNING("BlockWorldCheckForUnobservedObjects.MarkObjectUnobservedFailed", "");
         }
       }
       }
-      else if(unobserved.family != ObjectFamily::Mat && !_robot->IsCarryingObject(unobserved.object->GetID()))
+      else if(unobservedObject->GetFamily() != ObjectFamily::Mat && !_robot->IsCarryingObject(unobservedObject->GetID()))
       {
         // If the object should _not_ be visible (i.e. none of its markers project
         // into the camera), but some part of the object is within frame, it is
@@ -1772,7 +1776,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         // TODO: Expose / remove / fine-tune this setting
         const s32 seenWithin_sec = -1; // Set to <0 to disable
         const bool seenRecently = (seenWithin_sec < 0 ||
-                                   _robot->GetLastMsgTimestamp() - unobserved.object->GetLastObservedTime() < seenWithin_sec*1000);
+                                   _robot->GetLastMsgTimestamp() - unobservedObject->GetLastObservedTime() < seenWithin_sec*1000);
         
         // How far away is the object from our current position? Again, to be
         // conservative, we are only going to use this feature if the object is
@@ -1781,7 +1785,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         const f32 distThreshold_mm = -1.f; // 150.f; // Set to <0 to disable
         const bool closeEnough = (distThreshold_mm < 0.f ||
                                   (_robot->GetPose().GetTranslation() -
-                                  unobserved.object->GetPose().GetTranslation()).LengthSq() < distThreshold_mm*distThreshold_mm);
+                                  unobservedObject->GetPose().GetTranslation()).LengthSq() < distThreshold_mm*distThreshold_mm);
         
         // Check any of the markers should be visible and that the reason for
         // them not being visible is not occlusion.
@@ -1812,7 +1816,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         Vision::KnownMarker::NotVisibleReason reason;
         bool markersShouldBeVisible = false;
         bool markerIsOccluded = false;
-        for(auto & marker : unobserved.object->GetMarkers()) {
+        for(auto & marker : unobservedObject->GetMarkers()) {
           if(marker.IsVisibleFrom(_robot->GetVisionComponent().GetCamera(), DEG_TO_RAD(45), 20.f, false, xBorderPad, 0, reason)) {
             // As soon as one marker is visible, we can stop
             markersShouldBeVisible = true;
@@ -1834,7 +1838,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
           // TODO: Avoid ProjectObject here because it also happens inside BroadcastObjectObservation
           f32 distance;
           std::vector<Point2f> projectedCorners;
-          _robot->GetVisionComponent().GetCamera().ProjectObject(*unobserved.object, projectedCorners, distance);
+          _robot->GetVisionComponent().GetCamera().ProjectObject(*unobservedObject, projectedCorners, distance);
           
           if(distance > 0.f) { // in front of camera?
             for(auto & corner : projectedCorners) {
@@ -1844,10 +1848,10 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
                 using namespace ExternalInterface;
                 const Rectangle<f32> boundingBox(projectedCorners);
                 
-                ObjectProjectsIntoFOV message(unobserved.object->GetLastObservedTime(),
-                                              unobserved.object->GetFamily(),
-                                              unobserved.object->GetType(),
-                                              unobserved.object->GetID().GetValue(),
+                ObjectProjectsIntoFOV message(unobservedObject->GetLastObservedTime(),
+                                              unobservedObject->GetFamily(),
+                                              unobservedObject->GetType(),
+                                              unobservedObject->GetID().GetValue(),
                                               boundingBox.GetX(),
                                               boundingBox.GetY(),
                                               boundingBox.GetWidth(),
@@ -1930,7 +1934,6 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     AddNewObject(markerlessObject);
     _didObjectsChange = true;
     _robotMsgTimeStampAtChange = lastTimestamp;
-    _currentObservedObjects.push_back(markerlessObject.get());
     
     // add cliffs to memory map, or other objects if feature is enabled
     if ( type == ObjectType::CliffDetection )
@@ -1972,10 +1975,6 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     AddNewObject(customObject);
     _didObjectsChange = true;
     _robotMsgTimeStampAtChange = _robot->GetLastMsgTimestamp();
-    
-    // TODO: Remove these (custom fixed objects have no markers and can't be observed
-    // (this was just copy/pasted from MarkerlessObject)
-    _currentObservedObjects.push_back(customObject.get());
     
     return customObject->GetID();
   }
@@ -3886,12 +3885,6 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       Anki::Util::sEventF("robot.play_area_size", {}, "%.2f", areaM2);
     }
     
-    // New timestep, clear list of observed object bounding boxes
-    //_obsProjectedObjects.clear();
-    //_currentObservedObjectIDs.clear();
-    
-    _currentObservedObjects.clear();
-    
     // clear the change list and start tracking them
     _objectPoseChangeList.clear();
     _trackPoseChanges = true;
@@ -3988,6 +3981,8 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       
       // update stacks
       UpdatePoseOfStackedObjects();
+      
+      _currentObservedMarkerTimestamp = atTimestamp;
     }
     else
     {
@@ -4001,6 +3996,8 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         _robot->GetVisionComponent().AddLiftOccluder(lastImgTimestamp);
         CheckForUnobservedObjects(lastImgTimestamp);
       }
+      
+      _currentObservedMarkerTimestamp = 0;
     }
     
     // do not track changes anymore, since we only use them to update stacks
@@ -4024,6 +4021,43 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     
     //PRINT_CH_INFO("BlockWorld", "BlockWorld.Update.NumBlocksObserved", "Saw %d blocks", numBlocksObserved);
     
+    CheckForCollisionWithRobot();
+    
+    // TODO: Deal with unknown markers?
+    
+    // Keep track of how many markers went unused by either robot or block
+    // pose updating processes above
+    const size_t numUnusedMarkers = currentObsMarkers.size();
+    
+    for(auto & unusedMarker : currentObsMarkers) {
+      PRINT_CH_INFO("BlockWorld", "BlockWorld.Update.UnusedMarker",
+                    "An observed %s marker went unused.",
+                    unusedMarker.GetCodeName());
+    }
+
+    if(numUnusedMarkers > 0) {
+      if (!_robot->IsPhysical() || !SKIP_PHYS_ROBOT_LOCALIZATION) {
+        PRINT_NAMED_WARNING("BlockWorld.Update.UnusedMarkers",
+                            "%zu observed markers did not match any known objects and went unused.",
+                            numUnusedMarkers);
+      }
+    }
+    
+    Result lastResult = UpdateMarkerlessObjects(_robot->GetLastImageTimeStamp());
+    
+    /*
+    Result lastResult = UpdateProxObstaclePoses();
+    if(lastResult != RESULT_OK) {
+      return lastResult;
+    }
+    */
+
+    return lastResult;
+    
+  } // Update()
+  
+  void BlockWorld::CheckForCollisionWithRobot()
+  {
     auto originIter = _existingObjects.find(_robot->GetWorldOrigin());
     
     // Don't worry about collision with the robot while picking or placing since we
@@ -4127,39 +4161,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         } // if not in the Mat family
       } // for each object family
     } // if robot is not picking or placing
-    
-    // TODO: Deal with unknown markers?
-    
-    // Keep track of how many markers went unused by either robot or block
-    // pose updating processes above
-    const size_t numUnusedMarkers = currentObsMarkers.size();
-    
-    for(auto & unusedMarker : currentObsMarkers) {
-      PRINT_CH_INFO("BlockWorld", "BlockWorld.Update.UnusedMarker",
-                    "An observed %s marker went unused.",
-                    unusedMarker.GetCodeName());
-    }
-
-    if(numUnusedMarkers > 0) {
-      if (!_robot->IsPhysical() || !SKIP_PHYS_ROBOT_LOCALIZATION) {
-        PRINT_NAMED_WARNING("BlockWorld.Update.UnusedMarkers",
-                            "%zu observed markers did not match any known objects and went unused.",
-                            numUnusedMarkers);
-      }
-    }
-    
-    Result lastResult = UpdateMarkerlessObjects(_robot->GetLastImageTimeStamp());
-    
-    /*
-    Result lastResult = UpdateProxObstaclePoses();
-    if(lastResult != RESULT_OK) {
-      return lastResult;
-    }
-    */
-
-    return lastResult;
-    
-  } // Update()
+  }
   
   Result BlockWorld::UpdateMarkerlessObjects(TimeStamp_t atTimestamp)
   {
@@ -4313,52 +4315,53 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     }
   }
   
-  ObservableObject* BlockWorld::FindObjectHelper(const BlockWorldFilter& filter, const ModifierFcn& modifierFcn, bool returnFirstFound) const
+  ObservableObject* BlockWorld::FindObjectHelper(const BlockWorldFilter& filterIn, const ModifierFcn& modifierFcn, bool returnFirstFound) const
   {
     ObservableObject* matchingObject = nullptr;
     
-    if(filter.IsOnlyConsideringLatestUpdate()) {
+    BlockWorldFilter filter(filterIn);
+    
+    if(filter.IsOnlyConsideringLatestUpdate())
+    {
+      const TimeStamp_t atTimestamp = _currentObservedMarkerTimestamp;
       
-      for(auto candidate_nonconst : _currentObservedObjects)
-      {
-        const ObservableObject* candidate = candidate_nonconst;
-        
-        if(filter.ConsiderOrigin(&candidate->GetPose().FindOrigin(), _robot->GetWorldOrigin()) &&
-           filter.ConsiderFamily(candidate->GetFamily()) &&
-           filter.ConsiderType(candidate->GetType()) &&
-           filter.ConsiderObject(candidate))
-        {
-          matchingObject = candidate_nonconst;
-          
-          if(nullptr != modifierFcn) {
-            modifierFcn(matchingObject);
-          }
-          
-          if(returnFirstFound) {
-            return matchingObject;
-          }
-        }
-      }
-      
-    } else {
-      for(auto & objectsByOrigin : _existingObjects) {
-        if(filter.ConsiderOrigin(objectsByOrigin.first, _robot->GetWorldOrigin())) {
-          for(auto & objectsByFamily : objectsByOrigin.second) {
-            if(filter.ConsiderFamily(objectsByFamily.first)) {
-              for(auto & objectsByType : objectsByFamily.second) {
-                if(filter.ConsiderType(objectsByType.first)) {
-                  for(auto & objectsByID : objectsByType.second) {
-                    ObservableObject* object_nonconst = objectsByID.second.get();
-                    const ObservableObject* object = object_nonconst;
-                    if(filter.ConsiderObject(object))
-                    {
-                      matchingObject = object_nonconst;
-                      if(nullptr != modifierFcn) {
-                        modifierFcn(matchingObject);
-                      }
-                      if(returnFirstFound) {
-                        return matchingObject;
-                      }
+      filter.AddFilterFcn([atTimestamp](const ObservableObject* object) -> bool
+                          {
+                            const bool seenAtTimestamp = (object->GetLastObservedTime() == atTimestamp);
+                            return seenAtTimestamp;
+                          });
+    }
+    
+    for(auto & objectsByOrigin : _existingObjects) {
+      if(filter.ConsiderOrigin(objectsByOrigin.first, _robot->GetWorldOrigin())) {
+        for(auto & objectsByFamily : objectsByOrigin.second) {
+          if(filter.ConsiderFamily(objectsByFamily.first)) {
+            for(auto & objectsByType : objectsByFamily.second) {
+              if(filter.ConsiderType(objectsByType.first)) {
+                for(auto & objectsByID : objectsByType.second) {
+                  ObservableObject* object_nonconst = objectsByID.second.get();
+                  const ObservableObject* object = object_nonconst;
+                  
+                  if(nullptr == object)
+                  {
+                    PRINT_NAMED_WARNING("BlockWorld.FindObjectHelper.NullExistingObject",
+                                        "Origin:%s(%p) Family:%s Type:%s ID:%d is NULL",
+                                        objectsByOrigin.first->GetName().c_str(),
+                                        objectsByOrigin.first,
+                                        EnumToString(objectsByFamily.first),
+                                        EnumToString(objectsByType.first),
+                                        objectsByID.first.GetValue());
+                    continue;
+                  }
+                  
+                  if(filter.ConsiderObject(object))
+                  {
+                    matchingObject = object_nonconst;
+                    if(nullptr != modifierFcn) {
+                      modifierFcn(matchingObject);
+                    }
+                    if(returnFirstFound) {
+                      return matchingObject;
                     }
                   }
                 }
@@ -4745,7 +4748,8 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     }
   }
   
-  void BlockWorld::DeleteObjectsByType(const ObjectType type) {
+  void BlockWorld::DeleteObjectsByType(const ObjectType type)
+  {
     if(_canDeleteObjects) {
       std::set<ObjectID> idsToBroadcast;
       for(auto & objectsByOrigin : _existingObjects) {

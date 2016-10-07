@@ -408,11 +408,7 @@ TrackObjectAction::TrackObjectAction(Robot& robot, const ObjectID& objectID, boo
 , _objectID(objectID)
 , _trackByType(trackByType)
 {
-  if(_trackByType) {
-    SetName("TrackObject" + std::string(EnumToString(_objectType)));
-  } else {
-    SetName("TrackObject" + std::to_string(_objectID));
-  }
+  SetName("TrackObject" + std::to_string(_objectID));
 }
   
 TrackObjectAction::~TrackObjectAction()
@@ -435,6 +431,10 @@ ActionResult TrackObjectAction::InitInternal()
   }
   
   _objectType = object->GetType();
+  if(_trackByType) {
+    SetName("TrackObject" + std::string(EnumToString(_objectType)));
+  }
+  
   _lastTrackToPose = object->GetPose();
   
   _robot.GetMoveComponent().SetTrackToObject(_objectID);

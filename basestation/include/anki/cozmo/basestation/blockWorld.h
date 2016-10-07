@@ -402,6 +402,8 @@ namespace Anki
       //    still visible. Return the number of these.
       u32 CheckForUnobservedObjects(TimeStamp_t atTimestamp);
       
+      void CheckForCollisionWithRobot();
+      
       // Helpers for actually inserting a new object into a new family using
       // its type and ID. Object's ID will be set if it isn't already.
       // Will copy objectToCopyID's ID to object if objectToCopyID is valid
@@ -557,8 +559,8 @@ namespace Anki
       
       std::vector<Signal::SmartHandle> _eventHandles;
       
-      // Contains the list of added/updated objects from the last Update()
-      std::list<ObservableObject*> _currentObservedObjects;
+      
+      TimeStamp_t _currentObservedMarkerTimestamp = 0;
       
     }; // class BlockWorld
 
