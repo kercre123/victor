@@ -368,6 +368,7 @@ public class CheckInFlowDialog : MonoBehaviour {
     Sprite itemIcon;
     string itemID = "";
     Dictionary<RewardedActionData, int> rewardsToCreate = RewardedActionManager.Instance.PendingActionRewards;
+    List<CheckInFlowReward> rewardsWithCounts = new List<CheckInFlowReward>();
     foreach (RewardedActionData reward in rewardsToCreate.Keys) {
       itemID = reward.Reward.ItemID;
       DAS.Event("meta.open_goal_envelope_reward", itemID, DASUtil.FormatExtraData(reward.Reward.Amount.ToString()));
@@ -375,6 +376,7 @@ public class CheckInFlowDialog : MonoBehaviour {
       if (itemID == RewardedActionManager.Instance.EnergyID) {
         newReward = SpawnRewardIcon(itemIcon, reward.Reward.Amount);
         AddToDooberList(itemID, newReward);
+        rewardsWithCounts.Add(newReward);
       }
       else {
         // Instead of doing a count, do a cluster with non exp rewards
@@ -384,6 +386,11 @@ public class CheckInFlowDialog : MonoBehaviour {
           AddToDooberList(itemID, newReward);
         }
       }
+    }
+
+    // Make sure text appears above other icons
+    foreach (CheckInFlowReward reward in rewardsWithCounts) {
+      reward.transform.SetAsLastSibling();
     }
   }
 
