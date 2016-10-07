@@ -55,21 +55,8 @@ public class DailyGoalPane : MonoBehaviour {
     _ClearGoalsButton.onClick.AddListener(HandleClearGoalsClicked);
     _GenerateSpecificGoalButton.onClick.AddListener(HandleGenSpecificGoalClicked);
 
-    _GoalListDropdown.ClearOptions();
-    _GoalListDropdown.AddOptions(DailyGoalManager.Instance.GetCurrentDailyGoalNames());
-    UpdateCurrentGoal(0);
-    _GoalListDropdown.onValueChanged.AddListener(UpdateCurrentGoal);
-
-    _GenGoalsDropdown.ClearOptions();
-    _GenGoalsDropdown.AddOptions(DailyGoalManager.Instance.GetGeneratableGoalNames());
-    UpdateCurrentGen(0);
-    _GenGoalsDropdown.onValueChanged.AddListener(UpdateCurrentGen);
+    RefreshOptions();
     DailyGoalManager.Instance.OnRefreshDailyGoals += RefreshOptions;
-    // Make the DailyGoalPane yell at you if you are using it without a session.
-    if (_CurrentSession == null) {
-      _GenGoalsDropdown.captionText.text = "NO SESSION, ENTER APP BEFORE USING THIS PANE";
-      _GoalListDropdown.captionText.text = "NO SESSION, ENTER APP BEFORE USING THIS PANE";
-    }
   }
 
   void Destroy() {
@@ -77,41 +64,49 @@ public class DailyGoalPane : MonoBehaviour {
   }
 
   void RefreshOptions() {
+    // Make the DailyGoalPane yell at you if you are using it without a session.
+    if (_CurrentSession == null) {
+      _GoalListDropdown.ClearOptions();
+      _GenGoalsDropdown.ClearOptions();
+      _GenGoalsDropdown.captionText.text = "NO SESSION, ENTER APP BEFORE USING THIS PANE";
+      _GoalListDropdown.captionText.text = "NO SESSION, ENTER APP BEFORE USING THIS PANE";
+    }
+    else {
+      _GoalListDropdown.ClearOptions();
+      _GoalListDropdown.AddOptions(DailyGoalManager.Instance.GetCurrentDailyGoalNames());
+      UpdateCurrentGoal(0);
+      _GoalListDropdown.onValueChanged.AddListener(UpdateCurrentGoal);
 
-    _GoalListDropdown.ClearOptions();
-    _GoalListDropdown.AddOptions(DailyGoalManager.Instance.GetCurrentDailyGoalNames());
-    UpdateCurrentGoal(0);
-    _GoalListDropdown.onValueChanged.AddListener(UpdateCurrentGoal);
-
-    _GenGoalsDropdown.ClearOptions();
-    _GenGoalsDropdown.AddOptions(DailyGoalManager.Instance.GetGeneratableGoalNames());
-    UpdateCurrentGen(0);
-    _GenGoalsDropdown.onValueChanged.AddListener(UpdateCurrentGen);
+      _GenGoalsDropdown.ClearOptions();
+      _GenGoalsDropdown.AddOptions(DailyGoalManager.Instance.GetGeneratableGoalNames());
+      UpdateCurrentGen(0);
+      _GenGoalsDropdown.onValueChanged.AddListener(UpdateCurrentGen);
+    }
   }
 
   private void HandleResetGoalClicked() {
-    if (_CurrentSession == null) {
+    if (_CurrentSession == null || _CurrentGoal == null) {
       return;
     }
     _CurrentGoal.DebugResetGoalProgress();
   }
 
   private void HandleProgressGoalClicked() {
-    if (_CurrentSession == null) {
+    if (_CurrentSession == null || _CurrentGoal == null) {
       return;
     }
     _CurrentGoal.DebugAddGoalProgress();
   }
 
   private void HandleUndoProgressGoalClicked() {
-    if (_CurrentSession == null) {
+    if (_CurrentSession == null || _CurrentGoal == null) {
       return;
     }
     _CurrentGoal.DebugUndoGoalProgress();
   }
 
   private void HandleSetProgressGoalClicked() {
-    if (_CurrentSession == null) {
+    if (_CurrentSession == null || _CurrentGoal == null) {
       return;
     }
     int validInt = int.Parse(_SetProgressInputField.text);
@@ -123,17 +118,26 @@ public class DailyGoalPane : MonoBehaviour {
   }
 
   private void HandleGenerateFreshGoalsClicked() {
+    if (_CurrentSession == null) {
+      return;
+    }
     DataPersistenceManager.Instance.CurrentSession.DailyGoals.Clear();
     DataPersistenceManager.Instance.CurrentSession.DailyGoals.AddRange(DailyGoalManager.Instance.GenerateDailyGoals());
     RefreshGoals();
   }
 
   private void HandleClearGoalsClicked() {
+    if (_CurrentSession == null) {
+      return;
+    }
     DataPersistenceManager.Instance.CurrentSession.DailyGoals.Clear();
     RefreshOptions();
   }
 
   private void HandleGenSpecificGoalClicked() {
+    if (_CurrentSession == null) {
+      return;
+    }
     DataPersistenceManager.Instance.CurrentSession.DailyGoals.Add(new DailyGoal(_CurrentGenData));
     RefreshGoals();
   }
