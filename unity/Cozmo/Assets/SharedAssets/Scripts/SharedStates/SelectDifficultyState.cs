@@ -30,6 +30,7 @@ public class SelectDifficultyState : State {
     _Game.SharedMinigameView.ShelfWidget.GrowShelfBackground();
 
     _Game.SharedMinigameView.ShowTallShelf(true);
+    _Game.SharedMinigameView.EnableContinueButton(false);
     _DifficultySelectButtonPanel = _Game.SharedMinigameView.ShowDifficultySelectButtons(_DifficultyOptions,
       _HighestLevelCompleted, HandleInitialDifficultySelected);
   }
@@ -86,6 +87,10 @@ public class SelectDifficultyState : State {
   }
 
   private void HandleContinueButtonClicked() {
+    if (_SelectedDifficultyData == null) {
+      DAS.Warn("UnityEngine.SelectDifficultyState.HandleContinueButtonClicked", "_SelectedDifficultyData is null");
+      return;
+    }
     _Game.CurrentDifficulty = _SelectedDifficultyData.DifficultyId;
     DAS.Event("game.difficulty", _SelectedDifficultyData.DifficultyId.ToString());
 
