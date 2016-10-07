@@ -45,7 +45,7 @@ namespace Cozmo.Settings {
 
     private void HandleDisableSDKButtonTapped() {
       DAS.Info("SDKView.HandleDisableSDKButtonTapped", "Disable SDK Button tapped!");
-      DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled = false;
+      DataPersistenceManager.Instance.IsSDKEnabled = false;
       DataPersistenceManager.Instance.Save();
       CloseView();
     }

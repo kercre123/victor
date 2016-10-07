@@ -18,7 +18,7 @@ namespace Cozmo.Settings {
     private void Start() {
       _EnableSDKButton.Initialize(HandleEnableSDKButtonTapped, "enable_sdk_button", "settings_sdk_panel");
       // Immediately open the SDK UI upon opening this view if the SDK is enabled
-      if (DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) {
+      if (DataPersistenceManager.Instance.IsSDKEnabled) {
         EnableSDK();
       }
     }
@@ -48,7 +48,7 @@ namespace Cozmo.Settings {
 
     private void EnableSDK() {
 
-      DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled = true;
+      DataPersistenceManager.Instance.IsSDKEnabled = true;
       DataPersistenceManager.Instance.Data.DeviceSettings.SDKActivated = true;
       DataPersistenceManager.Instance.Save();
       UIManager.OpenView(_SDKViewPrefab);

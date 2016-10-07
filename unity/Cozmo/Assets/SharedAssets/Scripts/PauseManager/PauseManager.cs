@@ -2,6 +2,7 @@
 using Cozmo.UI;
 using System;
 using System.Collections;
+using DataPersistence;
 
 namespace Cozmo {
   public class PauseManager : MonoBehaviour {
@@ -125,7 +126,9 @@ namespace Cozmo {
     }
 
     private void HandleReactionaryBehavior(Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition message) {
-      if (DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) { return; }
+      if (DataPersistenceManager.Instance.IsSDKEnabled) {
+        return;
+      }
       if ((IsGoToSleepDialogOpen && message.reactionaryBehaviorType != Anki.Cozmo.BehaviorType.ReactToOnCharger)
           || IsConfirmSleepDialogOpen) {
         StopIdleTimeout();
@@ -185,7 +188,8 @@ namespace Cozmo {
             if (null != robot) {
               robot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.GoToSleepGetOut, HandleFinishedWakeup);
             }
-          } else {
+          }
+          else {
             HandleFinishedWakeup(true);
           }
         }
@@ -229,7 +233,9 @@ namespace Cozmo {
 
     // Handles message sent from engine when the player puts cozmo on the charger.
     private void HandleGoingToSleep(Anki.Cozmo.ExternalInterface.GoingToSleep msg) {
-      if (DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) { return; }
+      if (DataPersistenceManager.Instance.IsSDKEnabled) {
+        return;
+      }
       CloseLowBatteryDialog();
       CloseConfirmSleepDialog();
       _IsOnChargerToSleep = true;
@@ -273,7 +279,9 @@ namespace Cozmo {
     }
 
     public void OpenConfirmSleepCozmoDialog(bool handleOnChargerSleepCancel) {
-      if (DataPersistence.DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) { return; }
+      if (DataPersistenceManager.Instance.IsSDKEnabled) {
+        return;
+      }
       if (IsGoToSleepDialogOpen) {
         // already going to sleep, so do nothing.
         return;
@@ -339,6 +347,9 @@ namespace Cozmo {
     }
 
     private void OpenLowBatteryDialog() {
+      if (DataPersistenceManager.Instance.IsSDKEnabled) {
+        return;
+      }
       if (!IsLowBatteryDialogOpen) {
         Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_LowBattery);
         alertView.SetCloseButtonEnabled(true);

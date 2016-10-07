@@ -68,6 +68,16 @@ namespace DataPersistence {
 
     public readonly SaveData Data;
 
+    // Helper function to clean up code that checks for SDK mode
+    public bool IsSDKEnabled {
+      get {
+        return Data.DeviceSettings.IsSDKEnabled;
+      }
+      set {
+        Data.DeviceSettings.IsSDKEnabled = value;
+      }
+    }
+
     public bool IsNewSessionNeeded {
       get {
         var lastSession = Data.DefaultProfile.Sessions.LastOrDefault();

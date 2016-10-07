@@ -177,7 +177,8 @@ namespace Cozmo.HomeHub {
       get {
         return (_RequestDialog != null || _LootSequenceActive || _BadLightDialog != null ||
                 _HelpViewInstance != null || _HomeHubInstance.IsChallengeDetailsActive ||
-                RewardSequenceActive || PauseManager.Instance.IsAnyDialogOpen);
+                RewardSequenceActive || PauseManager.Instance.IsAnyDialogOpen ||
+                DataPersistenceManager.Instance.IsSDKEnabled);
       }
     }
     public Transform TabButtonContainer {
@@ -234,7 +235,7 @@ namespace Cozmo.HomeHub {
       UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
       // If in SDK Mode, immediately open Settings and SDK view instead of PlayTab,
       // otherwise default to opening PlayTab
-      if (DataPersistenceManager.Instance.Data.DeviceSettings.IsSDKEnabled) {
+      if (DataPersistenceManager.Instance.IsSDKEnabled) {
         SwitchToTab(HomeTab.Settings);
       }
       else {
@@ -579,6 +580,9 @@ namespace Cozmo.HomeHub {
 
     // Opens loot view and fires and relevant events
     private void OpenLootView() {
+      if (DataPersistenceManager.Instance.IsSDKEnabled) {
+        return;
+      }
       if (HomeViewCurrentlyOccupied && RewardSequenceActive == false) {
         // Avoid dupes but fail gracefully
         DAS.Warn("HomeView.OpenLootView", "LootView Blocked by non-reward sequence");
