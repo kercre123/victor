@@ -4,7 +4,7 @@
     "localMinLogLevelOverrides": {
     },
     "remoteMinLogLevel": "event",
-    "gameMinLogLevel": "info",
+    "gameMinLogLevel": "event",
     "url": "https://sqs.us-west-2.amazonaws.com/792379844846/DasProd-dasprodSqs-1845FTIME3RHN",
     "flushInterval": 15
   }
