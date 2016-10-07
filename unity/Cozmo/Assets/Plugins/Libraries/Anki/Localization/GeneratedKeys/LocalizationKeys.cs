@@ -278,6 +278,7 @@ public static class LocalizationKeys {
   public const string kConnectLabelShowCubes = "connect.label.showCubes";
   public const string kMinigameTextPlayerWins = "minigame.text.playerWins";
   public const string kMinigameTextCozmoWins = "minigame.text.cozmoWins";
+  public const string kMinigameTextTie = "minigame.text.Tie";
   public const string kMinigameQuitViewTitle = "minigame.quitView.title";
   public const string kMinigameQuitViewTitleActivity = "minigame.quitView.title.activity";
   public const string kMinigameQuitViewDescription = "minigame.quitView.description";

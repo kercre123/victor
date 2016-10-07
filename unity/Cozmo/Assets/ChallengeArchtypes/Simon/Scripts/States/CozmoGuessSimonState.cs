@@ -64,17 +64,17 @@ namespace Simon {
               }
             }
             _LastTargetID = blockIds[Random.Range(0, blockIds.Count)];
-            StartTurnToTarget(_CurrentRobot.LightCubes[_LastTargetID]);
+            StartTurnToTarget(_CurrentRobot.LightCubes[_LastTargetID], false);
           }
           else {
             _LastTargetID = _CurrentSequence[_CurrentSequenceIndex];
-            StartTurnToTarget(GetCurrentTarget());
+            StartTurnToTarget(GetCurrentTarget(), true);
           }
         }
       }
     }
 
-    private void StartTurnToTarget(LightCube target) {
+    private void StartTurnToTarget(LightCube target, bool isCorrect) {
       _CurrentRobot.SetAllBackpackBarLED(_GameInstance.GetColorForBlock(target.ID));
 
       int goingToIndex = _GameInstance.CubeIdsForGame.IndexOf(target.ID);
@@ -96,7 +96,7 @@ namespace Simon {
         animTrigger = Anki.Cozmo.AnimationTrigger.SimonPointRightBig;
       }
 
-      _StateMachine.PushSubState(new CozmoBlinkLightsSimonState(target, animTrigger));
+      _StateMachine.PushSubState(new CozmoBlinkLightsSimonState(target, animTrigger, isCorrect));
     }
 
     public LightCube GetCurrentTarget() {
@@ -124,16 +124,16 @@ namespace Simon {
 
     private void HandleOnCozmoWinAnimationDone(bool success) {
       _GameInstance.ShowCenterResult(false);
-      _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Cozmo));
+      _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Human));
     }
 
     private void HandleOnCozmoLoseAnimationDone(bool success) {
       _GameInstance.ShowCenterResult(false);
-      if (_GameInstance.GetLivesRemaining(PlayerType.Cozmo) < 0) {
-        _GameInstance.FinalLifeComplete(PlayerType.Cozmo);
+      if (_GameInstance.GetLivesRemaining(PlayerType.Cozmo) > 0) {
+        _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Cozmo));
       }
       else {
-        _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Cozmo));
+        _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Human));
       }
     }
   }

@@ -5,10 +5,12 @@ namespace Simon {
   public class CozmoBlinkLightsSimonState : State {
     private LightCube _TargetCube;
     private Anki.Cozmo.AnimationTrigger _AnimGroupTrigger;
+    private bool _IsCorrect = false;
 
-    public CozmoBlinkLightsSimonState(LightCube targetCube, Anki.Cozmo.AnimationTrigger animGroupTrigger = Anki.Cozmo.AnimationTrigger.OnSimonPointCube) {
+    public CozmoBlinkLightsSimonState(LightCube targetCube, Anki.Cozmo.AnimationTrigger animGroupTrigger = Anki.Cozmo.AnimationTrigger.OnSimonPointCube, bool isCorrect = true) {
       _TargetCube = targetCube;
       _AnimGroupTrigger = animGroupTrigger;
+      _IsCorrect = isCorrect;
     }
 
     public override void Enter() {
@@ -32,7 +34,12 @@ namespace Simon {
           animEvent.event_id == Anki.Cozmo.AnimEvent.TAPPED_BLOCK) {
         int cubeId = _TargetCube.ID;
         SimonGame game = (SimonGame)_StateMachine.GetGame();
-        Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(game.GetAudioForBlock(cubeId));
+        if (_IsCorrect) {
+          Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(game.GetAudioForBlock(cubeId));
+        }
+        else {
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Lose);
+        }
         game.BlinkLight(cubeId, SimonGame.kLightBlinkLengthSeconds, Color.black, game.GetColorForBlock(cubeId));
       }
     }

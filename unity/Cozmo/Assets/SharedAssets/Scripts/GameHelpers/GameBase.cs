@@ -56,7 +56,15 @@ public abstract class GameBase : MonoBehaviour {
 
   protected ChallengeData _ChallengeData;
   private ChallengeEndedDialog _ChallengeEndViewInstance;
-  private bool _WonChallenge;
+
+  // Can add here if we need to display multiplayer scores too.
+  public enum EndState {
+    PlayerWin,
+    CozmoWin,
+    Tie,
+    Quit,
+  }
+  private EndState _EndState;
   protected bool _ShowScoreboardOnComplete = true;
 
   protected List<Anki.Cozmo.BehaviorType> _DisabledReactionaryBehaviors = new List<BehaviorType>();
@@ -150,7 +158,7 @@ public abstract class GameBase : MonoBehaviour {
 
     _ChallengeData = challengeData;
     _DifficultyOptions = _ChallengeData.DifficultyOptions;
-    _WonChallenge = false;
+    _EndState = EndState.CozmoWin;
     _ResultsViewReached = false;
     if (CurrentRobot != null) {
 
@@ -538,10 +546,11 @@ public abstract class GameBase : MonoBehaviour {
     StartBaseGameEnd(playerWon);
   }
 
-  public virtual void StartBaseGameEnd(bool playerWon) {
-    GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeComplete, _ChallengeData.ChallengeID, _CurrentDifficulty, playerWon, PlayerScore, CozmoScore, IsHighIntensityRound()));
+  // now supports ties
+  public virtual void StartBaseGameEnd(EndState endState) {
+    GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeComplete, _ChallengeData.ChallengeID, _CurrentDifficulty, endState == EndState.PlayerWin, PlayerScore, CozmoScore, IsHighIntensityRound()));
 
-    if (playerWon) {
+    if (endState == EndState.PlayerWin) {
       HandleUnlockRewards();
       RaiseMiniGameWin();
     }
@@ -549,8 +558,17 @@ public abstract class GameBase : MonoBehaviour {
       if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.RunPressDemo) {
         HandleUnlockRewards();
       }
-      RaiseMiniGameLose();
+      if (endState == EndState.CozmoWin) {
+        RaiseMiniGameLose();
+      }
+      else {
+        RaiseMiniGameTie();
+      }
     }
+  }
+
+  public virtual void StartBaseGameEnd(bool playerWon) {
+    StartBaseGameEnd(playerWon ? EndState.PlayerWin : EndState.CozmoWin);
   }
 
   private void HandleUnlockRewards() {
@@ -757,7 +775,7 @@ public abstract class GameBase : MonoBehaviour {
 
   private void RaiseMiniGameWin() {
     _StateMachine.Stop();
-    _WonChallenge = true;
+    _EndState = EndState.PlayerWin;
     if (DataPersistence.DataPersistenceManager.Instance.CurrentSession.TotalWins.ContainsKey(_ChallengeData.ChallengeID)) {
       DataPersistence.DataPersistenceManager.Instance.CurrentSession.TotalWins[_ChallengeData.ChallengeID]++;
     }
@@ -765,19 +783,25 @@ public abstract class GameBase : MonoBehaviour {
       DataPersistence.DataPersistenceManager.Instance.CurrentSession.TotalWins.Add(_ChallengeData.ChallengeID, 1);
     }
     if (_ShowScoreboardOnComplete) {
-      UpdateScoreboard(didPlayerWin: _WonChallenge);
+      UpdateScoreboard(didPlayerWin: _EndState == EndState.PlayerWin);
     }
     ShowWinnerState();
   }
 
   private void RaiseMiniGameLose() {
     _StateMachine.Stop();
-    _WonChallenge = false;
+    _EndState = EndState.CozmoWin;
 
     if (_ShowScoreboardOnComplete) {
-      UpdateScoreboard(didPlayerWin: _WonChallenge);
+      UpdateScoreboard(didPlayerWin: _EndState == EndState.PlayerWin);
     }
 
+    ShowWinnerState();
+  }
+
+  private void RaiseMiniGameTie() {
+    _StateMachine.Stop();
+    _EndState = EndState.Tie;
     ShowWinnerState();
   }
 
@@ -794,8 +818,16 @@ public abstract class GameBase : MonoBehaviour {
     SoftEndGameRobotReset();
     _ResultsViewReached = true;
     ContextManager.Instance.AppFlash(playChime: true);
-    string winnerText = _WonChallenge ? Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWins, new object[] { DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName })
-                                                    : Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
+    string winnerText = "";
+    if (_EndState == EndState.PlayerWin) {
+      winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWins, new object[] { DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName });
+    }
+    else if (_EndState == EndState.CozmoWin) {
+      winnerText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
+    }
+    else if (_EndState == EndState.Tie) {
+      winnerText = Localization.Get(LocalizationKeys.kMinigameTextTie);
+    }
     SharedMinigameView.InfoTitleText = winnerText;
     _AutoAdvanceTimestamp = Time.time;
   }
@@ -836,7 +868,7 @@ public abstract class GameBase : MonoBehaviour {
     // Close minigame UI
     CloseMinigame();
 
-    if (_WonChallenge) {
+    if (_EndState == EndState.PlayerWin) {
       DAS.Event(DASConstants.Game.kEndWithRank, DASConstants.Game.kRankPlayerWon);
       if (OnMiniGameWin != null) {
         OnMiniGameWin();

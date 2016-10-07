@@ -17,7 +17,7 @@ MonoBehaviour:
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0
-  _ComingSoon: 1
+  _ComingSoon: 0
   _HideInUI: 0
   DescriptionKey: unlockable.Simon.Description
   TitleKey: unlockable.Simon.Title

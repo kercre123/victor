@@ -9,6 +9,7 @@ namespace Simon {
 
     private const float kDelay = 2f;
     private float _AutoAdvanceTimestamp;
+    bool _CanAutoAdvance = false;
 
     public WaitForNextRoundSimonState(PlayerType nextPlayer = PlayerType.None) {
       _NextPlayer = nextPlayer;
@@ -19,24 +20,44 @@ namespace Simon {
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as SimonGame;
+      bool isSoloMode = _GameInstance.CurrentDifficulty == (int)SimonGame.SimonMode.SOLO;
       // On first turn not known until entered...
       if (_NextPlayer == PlayerType.None) {
         _NextPlayer = _GameInstance.FirstPlayer;
         _GameInstance.StartFirstRoundMusic();
       }
-      _GameInstance.SharedMinigameView.ShowContinueButtonCentered(HandleContinuePressed,
-        Localization.Get(LocalizationKeys.kButtonContinue), "next_round_of_play_continue_button");
 
-      _GameInstance.ShowCurrentPlayerTurnStage(_NextPlayer, true);
+      // This is the end if the second player goes and one of them is out of lives.
+      // Like in Horse the first player must wait for second player
+      // if they both run out then it is a tie.
+      bool isGameOver = false;
+      if (!isSoloMode && _NextPlayer == _GameInstance.FirstPlayer &&
+          (_GameInstance.GetLivesRemaining(PlayerType.Human) <= 0 || _GameInstance.GetLivesRemaining(PlayerType.Cozmo) <= 0)) {
+        _GameInstance.FinalLifeComplete();
+        isGameOver = true;
+      }
+      if (isSoloMode && _GameInstance.GetLivesRemaining(PlayerType.Human) <= 0) {
+        _GameInstance.FinalLifeComplete();
+        isGameOver = true;
+      }
 
-      _GameInstance.SetCubeLightsDefaultOn();
+      if (!isGameOver) {
+        _GameInstance.ShowCurrentPlayerTurnStage(_NextPlayer, true);
+        _GameInstance.SetCubeLightsDefaultOn();
+        _CurrentRobot.TurnTowardsObject(_CurrentRobot.LightCubes[_GameInstance.CubeIdsForGame[1]], false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2);
 
-      _CurrentRobot.TurnTowardsObject(_CurrentRobot.LightCubes[_GameInstance.CubeIdsForGame[1]], false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2);
+        if (_NextPlayer == PlayerType.Human) {
+          _GameInstance.SharedMinigameView.ShowContinueButtonCentered(HandleContinuePressed,
+            Localization.Get(LocalizationKeys.kButtonContinue), "next_round_of_play_continue_button");
+        }
+        else {
+          _StateMachine.SetNextState(new CozmoGuessSimonState());
+        }
+      }
     }
-
     public override void Update() {
       base.Update();
-      if (Time.time - _AutoAdvanceTimestamp > kDelay) {
+      if (_CanAutoAdvance && Time.time - _AutoAdvanceTimestamp > kDelay) {
         HandleContinuePressed();
       }
     }

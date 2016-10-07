@@ -162,15 +162,20 @@ namespace Simon {
       LightCube cube = null;
       foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
         cube = lightCube.Value;
-       
-        if (!_Game.CubeIdsForGame.Contains(cube.ID)) {
+        bool cubeAdded = _Game.CubeIdsForGame.Contains(cube.ID);
+        // our list of scanned cubes
+        if (cube.CurrentPoseState == ObservedObject.PoseState.Known && !cubeAdded) {
           if (_Game.CubeIdsForGame.Count < _CubesRequired) {
             _Game.CubeIdsForGame.Add(cube.ID);
             _SetupCubeState.Add(cube.ID, ScannedSetupCubeState.Unknown);
             cube.SetLEDs(Cozmo.UI.CubePalette.Instance.InViewColor.lightColor);
           }
         }
-
+        else if (cube.CurrentPoseState != ObservedObject.PoseState.Known && cubeAdded) {
+          _Game.CubeIdsForGame.Remove(cube.ID);
+          _SetupCubeState.Remove(cube.ID);
+          cube.SetLEDs(Cozmo.UI.CubePalette.Instance.OutOfViewColor.lightColor);
+        }
       }
 
       // Theres only 3 cubes, so shouldn't take that long.

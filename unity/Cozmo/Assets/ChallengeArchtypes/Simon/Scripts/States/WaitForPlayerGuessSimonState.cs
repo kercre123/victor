@@ -48,7 +48,7 @@ namespace Simon {
             _CurrentSequenceIndex++;
           }
           else {
-            PlayerLoseGame();
+            PlayerLoseRound();
           }
           _TargetCube = -1;
         }
@@ -60,20 +60,21 @@ namespace Simon {
 
     private void HandleOnPlayerWinAnimationDone(bool success) {
       _GameInstance.ShowCenterResult(false);
-      _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Human));
+      _StateMachine.SetNextState(new WaitForNextRoundSimonState(_GameInstance.IsSoloMode() ? PlayerType.Human : PlayerType.Cozmo));
     }
 
     private void HandleOnPlayerLoseAnimationDone(bool success) {
       _GameInstance.ShowCenterResult(false);
-      if (_GameInstance.GetLivesRemaining(PlayerType.Human) < 0) {
-        _GameInstance.FinalLifeComplete(PlayerType.Human);
+      // Repeat your turn if you have lives left
+      if (_GameInstance.GetLivesRemaining(PlayerType.Human) > 0) {
+        _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Human));
       }
       else {
-        _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Human));
+        _StateMachine.SetNextState(new WaitForNextRoundSimonState(_GameInstance.IsSoloMode() ? PlayerType.Human : PlayerType.Cozmo));
       }
     }
 
-    private void PlayerLoseGame() {
+    private void PlayerLoseRound() {
       _GameInstance.SetCubeLightsGuessWrong(_SequenceList[_CurrentSequenceIndex], _TargetCube);
       _GameInstance.ShowCenterResult(true, false);
       _GameInstance.DecrementLivesRemaining(PlayerType.Human);
@@ -108,10 +109,15 @@ namespace Simon {
       _CurrentRobot.SetHeadAngle(Random.Range(CozmoUtil.kIdealBlockViewHeadValue, 0f));
       _LastTappedTime = Time.time;
       _StartLightBlinkTime = Time.time;
-
-      GameAudioClient.PostAudioEvent(_GameInstance.GetAudioForBlock(id));
-      _GameInstance.BlinkLight(id, SimonGame.kLightBlinkLengthSeconds, Color.black, _GameInstance.GetColorForBlock(id));
       _TargetCube = id;
+      if (_SequenceList[_CurrentSequenceIndex] == _TargetCube) {
+        GameAudioClient.PostAudioEvent(_GameInstance.GetAudioForBlock(id));
+      }
+      else {
+        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Lose);
+      }
+      _GameInstance.BlinkLight(id, SimonGame.kLightBlinkLengthSeconds, Color.black, _GameInstance.GetColorForBlock(id));
+
       LightCube cube = _CurrentRobot.LightCubes[_TargetCube];
       _CurrentRobot.TurnTowardsObject(cube, false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2);
     }

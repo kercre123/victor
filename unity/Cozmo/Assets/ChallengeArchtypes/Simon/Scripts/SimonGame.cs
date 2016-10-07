@@ -33,8 +33,8 @@ namespace Simon {
 
     private int _CurrentSequenceLength;
 
-    private PlayerType _FirstPlayer = PlayerType.Cozmo;
-    private int _FirstScore = 0;
+    private PlayerType _FirstPlayer = PlayerType.Human;
+    private bool _WantsSequenceGrowth = true;
 
     public AnimationCurve CozmoWinPercentage { get { return _Config.CozmoGuessCubeCorrectPercentage; } }
 
@@ -54,6 +54,11 @@ namespace Simon {
     public PlayerType FirstPlayer {
       get { return _FirstPlayer; }
     }
+    public bool IsSoloMode() {
+      return CurrentDifficulty == (int)SimonMode.SOLO;
+    }
+
+    public PlayerType CurrentPlayer { get; set; }
 
     [SerializeField]
     private Transform _SimonSetupErrorPrefab;
@@ -84,6 +89,7 @@ namespace Simon {
       _CurrLivesCozmo = _Config.MaxLivesCozmo;
       _CurrLivesHuman = _Config.MaxLivesHuman;
       _ShowScoreboardOnComplete = false;
+      CurrentPlayer = _FirstPlayer;
 
       State nextState = new SelectDifficultyState(new CozmoMoveCloserToCubesState(
                           new WaitForNextRoundSimonState()),
@@ -97,14 +103,11 @@ namespace Simon {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
     }
 
-    protected override void OnDifficultySet(int difficulty) {
-      if (difficulty == (int)SimonMode.SOLO) {
-        _FirstPlayer = PlayerType.Human;
-      }
-    }
-
     public int GetNewSequenceLength(PlayerType playerPickingSequence) {
-      _CurrentSequenceLength = _CurrentSequenceLength >= MaxSequenceLength ? MaxSequenceLength : _CurrentSequenceLength + 1;
+      // Only increment on the first player
+      if (playerPickingSequence == _FirstPlayer && _WantsSequenceGrowth) {
+        _CurrentSequenceLength = _CurrentSequenceLength >= MaxSequenceLength ? MaxSequenceLength : _CurrentSequenceLength + 1;
+      }
       return _CurrentSequenceLength;
     }
 
@@ -155,8 +158,7 @@ namespace Simon {
     }
 
     public void GenerateNewSequence(int sequenceLength) {
-      // Fill in the min length or add one...
-      do {
+      while (_CurrentIDSequence.Count < sequenceLength) {
         int pickIndex = Random.Range(0, CubeIdsForGame.Count);
         int pickedID = CubeIdsForGame[pickIndex];
         // Attempt to decrease chance of 3 in a row
@@ -170,7 +172,7 @@ namespace Simon {
           }
         }
         _CurrentIDSequence.Add(pickedID);
-      } while (_CurrentIDSequence.Count < _Config.MinSequenceLength);
+      }
     }
 
     public IList<int> GetCurrentSequence() {
@@ -199,17 +201,16 @@ namespace Simon {
     public void ShowWinnerPicture(PlayerType player) {
       SimonTurnSlide simonTurnScript = GetSimonSlide();
       Sprite currentPortrait = SharedMinigameView.PlayerPortrait;
-      string status = Localization.GetWithArgs(LocalizationKeys.kSimonGameTextPatternLength, Mathf.Max(_CurrentIDSequence.Count, _FirstScore));
+      string status = Localization.GetWithArgs(LocalizationKeys.kSimonGameTextPatternLength, _CurrentIDSequence.Count);
       if (player == PlayerType.Cozmo) {
         currentPortrait = SharedMinigameView.CozmoPortrait;
       }
       simonTurnScript.ShowEndGame(currentPortrait, status);
     }
 
-    public void FinalLifeComplete(PlayerType player) {
+    public void FinalLifeComplete() {
       // If in solo mode just quit out,
       // If in vs mode, if cozmo turn just switch to human turns, if human turn game over based on highest score...
-
       if (CurrentDifficulty == (int)SimonMode.SOLO) {
         PlayerRoundsWon = 1;
         CozmoRoundsWon = 0;
@@ -218,29 +219,24 @@ namespace Simon {
         StartBaseGameEnd(true);
       }
       else if (CurrentDifficulty == (int)SimonMode.VS) {
-        if (player == _FirstPlayer) {
-          // Kick off next turn and save score to compare...
-          _FirstScore = _CurrentIDSequence.Count;
-          _CurrentIDSequence.Clear();
-          _StateMachine.SetNextState(new WaitForNextRoundSimonState(_FirstPlayer == PlayerType.Cozmo ? PlayerType.Human : PlayerType.Cozmo));
+        // compare who wins...
+        if (_CurrLivesHuman > _CurrLivesCozmo) {
+          ShowWinnerPicture(PlayerType.Human);
+          ShowBanner(LocalizationKeys.kSimonGameLabelYouWin);
+          PlayerRoundsWon = 1;
+          CozmoRoundsWon = 0;
+          StartBaseGameEnd(true);
+        }
+        else if (_CurrLivesHuman < _CurrLivesCozmo) {
+          ShowBanner(LocalizationKeys.kSimonGameLabelCozmoWin);
+          ShowWinnerPicture(PlayerType.Cozmo);
+          PlayerRoundsWon = 0;
+          CozmoRoundsWon = 1;
+          StartBaseGameEnd(false);
         }
         else {
-          // compare who wins...
-          if ((_FirstPlayer == PlayerType.Cozmo && _CurrentIDSequence.Count >= _FirstScore) ||
-              (_FirstPlayer == PlayerType.Human && _CurrentIDSequence.Count < _FirstScore)) {
-            ShowWinnerPicture(PlayerType.Human);
-            ShowBanner(LocalizationKeys.kSimonGameLabelYouWin);
-            PlayerRoundsWon = 1;
-            CozmoRoundsWon = 0;
-            StartBaseGameEnd(true);
-          }
-          else {
-            ShowBanner(LocalizationKeys.kSimonGameLabelCozmoWin);
-            ShowWinnerPicture(PlayerType.Cozmo);
-            PlayerRoundsWon = 0;
-            CozmoRoundsWon = 1;
-            StartBaseGameEnd(false);
-          }
+          ShowBanner(LocalizationKeys.kMinigameTextTie);
+          StartBaseGameEnd(EndState.Tie);
         }
       }
     }
@@ -266,7 +262,7 @@ namespace Simon {
         Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Window_Open);
         simonTurnScript.ShowHumanLives(_CurrLivesHuman, _Config.MaxLivesHuman, LocalizationKeys.kSimonGameLabelYourTurn, statusLocKey);
       }
-
+      CurrentPlayer = player;
     }
 
     public void ShowCenterResult(bool enabled, bool correct = true) {
@@ -278,9 +274,16 @@ namespace Simon {
       return player == PlayerType.Human ? _CurrLivesHuman : _CurrLivesCozmo;
     }
 
+    public override void AddPoint(bool playerScored) {
+      base.AddPoint(playerScored);
+      if (CurrentPlayer == PlayerType.Human) {
+        _WantsSequenceGrowth = playerScored;
+      }
+    }
     public void DecrementLivesRemaining(PlayerType player) {
       if (player == PlayerType.Human) {
         _CurrLivesHuman--;
+        _WantsSequenceGrowth = false;
         if (_CurrLivesHuman <= 0) {
           Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Memory_Match_No_Lives);
         }

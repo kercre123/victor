@@ -27,6 +27,9 @@
   "minigame.text.cozmoWins": {
     "translation": "Cozmo\nWins!"
   },
+  "minigame.text.Tie": {
+    "translation": "Tie!"
+  },
   "minigame.quitView.title": {
     "translation": "Quit Game?"
   },
