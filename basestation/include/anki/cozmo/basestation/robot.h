@@ -244,6 +244,11 @@ public:
   // Currently, adjusts headCamPose by slop factor if it's physical.
   void SetPhysicalRobot(bool isPhysical);
   bool IsPhysical() const {return _isPhysical;}
+  
+  // Whether or not to ignore all incoming external messages that create/queue actions
+  // Use with care: Make sure a call to ignore is eventually followed by a call to unignore
+  void SetIgnoreExternalActions(bool ignore) { _ignoreExternalActions = ignore; }
+  bool GetIgnoreExternalActions() { return _ignoreExternalActions;}
     
   //
   // Pose (of the robot or its parts)
@@ -878,6 +883,9 @@ protected:
   bool              _isLocalized = true;
   bool              _localizedToFixedObject; // false until robot sees a _fixed_ mat
   bool              _needToSendLocalizationUpdate = false;
+  
+  // Whether or not to ignore all external action messages
+  bool _ignoreExternalActions = false;
   
   // Stores (squared) distance to the closest observed marker of the object we're localized to
   f32               _localizedMarkerDistToCameraSq;

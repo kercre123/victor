@@ -49,10 +49,6 @@ public:
   template<typename T>
   void HandleMessage(const T& msg);
   
-  // Whether or not to ignore all incoming external messages that create/queue actions
-  // Use with care: Make sure a call to ignore is eventually followed by a call to unignore
-  void IgnoreExternalActions(bool ignore) { _ignoreExternalActions = ignore; }
-  
   using ActionUnionFcn  = IActionRunner* (*)(Robot& robot, const ExternalInterface::RobotActionUnion& actionUnion);
   using GameToEngineFcn = IActionRunner* (*)(Robot& robot, const ExternalInterface::MessageGameToEngine& msg);
   
@@ -65,8 +61,6 @@ protected:
   void HandleActionEvents(const GameToEngineEvent& event);
   
 private:
-  // Whether or not to ignore all external action messages
-  bool _ignoreExternalActions = false;
   
   std::map<ExternalInterface::RobotActionUnionTag,    ActionUnionFcn>                   _actionUnionHandlerLUT;
   std::map<ExternalInterface::MessageGameToEngineTag, std::pair<GameToEngineFcn,s32> >  _gameToEngineHandlerLUT;

@@ -821,7 +821,7 @@ Result IReactionaryBehavior::InitInternal(Robot& robot)
   // Reactionary behaviors will prevent DirectDrive messages and external action queueing messages
   // from doing anything
   robot.GetMoveComponent().IgnoreDirectDriveMessages(true);
-  robot.GetContext()->GetRobotManager()->GetRobotEventHandler().IgnoreExternalActions(true);
+  robot.SetIgnoreExternalActions(true);
 
   
   return InitInternalReactionary(robot);
@@ -842,7 +842,7 @@ void IReactionaryBehavior::StopInternal(Robot& robot)
 {
   robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::ReactionaryBehaviorTransition>(GetType(), false);
   robot.GetMoveComponent().IgnoreDirectDriveMessages(false);
-  robot.GetContext()->GetRobotManager()->GetRobotEventHandler().IgnoreExternalActions(false);
+  robot.SetIgnoreExternalActions(false);
   
   StopInternalReactionary(robot);
 }

@@ -1006,9 +1006,9 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
       
   // If we don't have a valid robot there's nothing to do
   if (nullptr == robot)
-    {
+  {
     return;
-    }
+  }
       
   // Create the action
   auto const& msg = event.GetData();
@@ -1026,7 +1026,7 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
   IActionRunner* newAction = handlerIter->second.first(*robot, msg);
   const u8 numRetries = handlerIter->second.second;
   
-  if(_ignoreExternalActions)
+  if(robot->GetIgnoreExternalActions())
   {
     PRINT_NAMED_INFO("RobotEventHandler.HandleActionEvents.ExternalActionsDisabled",
                      "Ignoring %s GameToEngineEvent message for action type %s while external actions are disabled",
@@ -1068,9 +1068,9 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueSingleAction
   const bool didSetTag = action->SetTag(msg.idTag);
   
   // If setting the tag failed then delete the action which will emit a completion signal indicating failure
-  if(!didSetTag || _ignoreExternalActions)
+  if(!didSetTag || robot->GetIgnoreExternalActions())
   {
-    if(_ignoreExternalActions)
+    if(robot->GetIgnoreExternalActions())
     {
       PRINT_NAMED_WARNING("RobotEventHandler.HandleQueueSingleAction.IgnoringExternalActions",
                           "Ignoring QueueSingleAction message while external actions are disabled");
@@ -1135,9 +1135,9 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueCompoundActi
   // If setting the tag failed then delete the action which will emit a completion signal indicating failure
   const bool didSetTag = compoundAction->SetTag(msg.idTag);
   
-  if(!didSetTag || _ignoreExternalActions)
+  if(!didSetTag || robot->GetIgnoreExternalActions())
   {
-    if(_ignoreExternalActions)
+    if(robot->GetIgnoreExternalActions())
     {
       PRINT_NAMED_INFO("RobotEventHandler.QueueCompoundAction",
                        "Ignoring QueueCompoundAction message while external actions are disabled");
