@@ -14,6 +14,7 @@
     "SparksKnockOverCubes",
     "SparksBuildPyramid",
     "SparksStackBlock",
-    "SparksPickUpCube"
+    "SparksPickUpCube",
+    "MeetCozmo_Socialize"
   ]
 }
