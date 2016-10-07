@@ -369,19 +369,20 @@ void BehaviorOnboardingShowCube::HandleObjectObserved(Robot& robot, const Extern
   
   // In this state it's okay to change blocks. After this Cozmo will be trying to drive too it so it's too late.
   // after generic fails we loop back to this state so they can try again.
-  if( ( _state == State::WaitForShowCube || _state == State::WaitForOKCubeDiscovered) && robot.CanPickUpObjectFromGround(*block) )
+  if( ( _state == State::WaitForShowCube || _state == State::WaitForOKCubeDiscovered || _state == State::ErrorCubeWrongSideUp) &&
+        robot.CanPickUpObjectFromGround(*block) )
   {
     _targetBlock = msg.objectID;
-    if( _state != State::WaitForOKCubeDiscovered)
+    if( _state == State::WaitForShowCube)
     {
       SET_STATE(WaitForOKCubeDiscovered,robot);
     }
-  }
-  else if( _state == State::ErrorCubeWrongSideUp && _targetBlock == block->GetID() )
-  {
-    if( block->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS)
+    else if( _state == State::ErrorCubeWrongSideUp )
     {
-      TransitionToNextState(robot);
+      if( block->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS)
+      {
+        TransitionToNextState(robot);
+      }
     }
   }
 }

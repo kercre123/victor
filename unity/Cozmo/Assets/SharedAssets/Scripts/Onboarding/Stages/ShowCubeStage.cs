@@ -173,6 +173,7 @@ namespace Onboarding {
       case OnboardingStateEnum.ErrorCozmo: {
           _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCozmo);
           _ShowShelfTextLabel.text = "";
+          _CozmoCubeRightSideUpTransform.gameObject.SetActive(false);
           _CozmoImageTransform.gameObject.SetActive(false);
           _ContinueButtonInstance.gameObject.SetActive(true);
           // Becomes interactable again when we are done with the reactionary behavior.
