@@ -86,6 +86,15 @@ public class CheckInFlow : MonoBehaviour {
   [SerializeField]
   private Cozmo.UI.CozmoButton _PrivacyPolicyButton;
 
+  [SerializeField]
+  private string _PrivacyPolicyFileName;
+
+  [SerializeField]
+  private Cozmo.UI.CozmoButton _TermsOfUseButton;
+
+  [SerializeField]
+  private string _TermsOfUseFileName;
+
   // Audio Config
   [SerializeField]
   private Anki.Cozmo.Audio.AudioEventParameter _EnvelopeOpenSound = Anki.Cozmo.Audio.AudioEventParameter.InvalidEvent;
@@ -107,9 +116,6 @@ public class CheckInFlow : MonoBehaviour {
   private Sequence _TimelineSequence;
   private Sequence _CurrentSequence;
 
-  [SerializeField]
-  private string _PrivacyPolicyFileName;
-
   private void Awake() {
 
     if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
@@ -124,6 +130,10 @@ public class CheckInFlow : MonoBehaviour {
       view.Initialize(Localization.Get(LocalizationKeys.kPrivacyPolicyTitle), Localization.ReadLocalizedTextFromFile(_PrivacyPolicyFileName));
     }, "privacy_policy_button", "checkin_dialog");
 
+    _TermsOfUseButton.Initialize(() => {
+      ScrollingTextView view = UIManager.OpenView<ScrollingTextView>(AlertViewLoader.Instance.ScrollingTextViewPrefab, (ScrollingTextView v) => { v.DASEventViewName = "terms_of_use_view"; });
+      view.Initialize(Localization.Get(LocalizationKeys.kLabelTermsOfUse), Localization.ReadLocalizedTextFromFile(_TermsOfUseFileName));
+    }, "terms_of_use_button", "checkin_dialog");
 
     _EnvelopeButton.Initialize(HandleEnvelopeButton, "envelope_button", "checkin_dialog");
     _EnvelopeButton.Text = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName;

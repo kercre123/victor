@@ -260,5 +260,8 @@
   },
   "label.daysWithCozmo": {
     "translation": "Days Played With Cozmo:"
+  },
+  "label.termsOfUse": {
+    "translation": "Terms of Use"
   }
 }

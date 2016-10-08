@@ -640,6 +640,7 @@ public static class LocalizationKeys {
   public const string kLabelStreaksCount = "label.streaksCount";
   public const string kLabelGoalsCompleted = "label.goalsCompleted";
   public const string kLabelDaysWithCozmo = "label.daysWithCozmo";
+  public const string kLabelTermsOfUse = "label.termsOfUse";
 
   #endregion
 
