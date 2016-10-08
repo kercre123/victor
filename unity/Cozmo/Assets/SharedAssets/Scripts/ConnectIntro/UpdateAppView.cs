@@ -12,9 +12,10 @@ public class UpdateAppView : Cozmo.UI.BaseView {
 
   private void HandleUpdateAppButton() {
 #if UNITY_IOS
-    Application.OpenURL("https://itunes.apple.com/app/cozmo/id1154282030");
+    Application.OpenURL("http://go.anki.com/cozmo-app-upgrade-ios");
 #elif UNITY_ANDROID
-    Application.OpenURL("https://play.google.com/store/apps/details?id=com.anki.cozmo");
+    Application.OpenURL("http://go.anki.com/cozmo-app-upgrade-google");
+    //http://go.anki.com/cozmo-app-upgrade-amazon
 #endif
   }
 
