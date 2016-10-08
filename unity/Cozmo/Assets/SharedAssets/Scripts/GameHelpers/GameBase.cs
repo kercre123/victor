@@ -751,7 +751,7 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Minigame Exit
 
-  protected void RaiseMiniGameQuit() {
+  public void RaiseMiniGameQuit() {
     _StateMachine.Stop();
     DAS.Event(DASConstants.Game.kQuit, null);
     SendCustomEndGameDasEvents();
