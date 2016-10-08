@@ -247,9 +247,13 @@ namespace FaceEnrollment {
       // show alert
       alertView.TitleLocKey = LocalizationKeys.kFaceEnrollmentFirstTimeCompleteAlertTitle;
       alertView.DescriptionLocKey = LocalizationKeys.kFaceEnrollmentFirstTimeCompleteAlertDescription;
-      alertView.SetPrimaryButton(LocalizationKeys.kButtonContinue, _FaceEnrollmentGame.CloseMinigameImmediately);
+      alertView.SetPrimaryButton(LocalizationKeys.kButtonContinue, EndFirstEnrollment);
 
       _DoneAlertView = alertView;
+    }
+
+    private void EndFirstEnrollment() {
+      _FaceEnrollmentGame.RaiseMiniGameQuit();
     }
 
     private void ReturnToFaceSlide() {
