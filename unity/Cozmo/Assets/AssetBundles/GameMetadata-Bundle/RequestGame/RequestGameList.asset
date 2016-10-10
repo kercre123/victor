@@ -14,3 +14,31 @@ MonoBehaviour:
   RequestList:
   - {fileID: 11400000, guid: 82d2376d069fd4124a51a6ef0b723900, type: 2}
   - {fileID: 11400000, guid: 33a1fac60bcbe4c468dc901cb5f5f396, type: 2}
+  _WantToPlayMinigameMin_percent: 0.3
+  _WantToPlayMinigameMax_percent: 1
+  _WantToPlayCurveBasedOnDailyGoalProgress:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 1
+      inSlope: -2.5593555
+      outSlope: -2.5593555
+      tangentMode: 0
+    - time: 0.43387952
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    - time: 0.92083335
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    - time: 1
+      value: 0
+      inSlope: -28.000015
+      outSlope: -28.000015
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 0

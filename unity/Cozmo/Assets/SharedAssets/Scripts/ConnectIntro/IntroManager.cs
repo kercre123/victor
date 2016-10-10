@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using Anki.Assets;
-using System;
+using Cozmo.CheckInFlow.UI;
 
 public class IntroManager : MonoBehaviour {
 

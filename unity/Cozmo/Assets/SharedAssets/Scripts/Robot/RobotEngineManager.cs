@@ -8,6 +8,7 @@ using Anki.Cozmo;
 using Anki.Cozmo.ExternalInterface;
 using Anki.Cozmo.Audio;
 using RobotChannel = ChannelBase<RobotMessageIn, RobotMessageOut>;
+using Cozmo.RequestGame;
 
 /// <summary>
 /// Robot engine manager lives on a GameObject(named MasterObject) in our Intro scene,
@@ -100,6 +101,11 @@ public class RobotEngineManager : MonoBehaviour {
   private Anki.Cozmo.ExternalInterface.RequestDeviceData _RequestDeviceDataMessage = new Anki.Cozmo.ExternalInterface.RequestDeviceData();
   private Anki.Cozmo.ExternalInterface.RequestUnlockDataFromBackup _RequestUnlockDataFromBackupMessage = new Anki.Cozmo.ExternalInterface.RequestUnlockDataFromBackup();
 
+  public RequestGameManager RequestGameManager {
+    get;
+    private set;
+  }
+
   private void OnEnable() {
     DAS.Event("RobotEngineManager.OnEnable", string.Empty);
     if (Instance != null && Instance != this) {
@@ -109,6 +115,8 @@ public class RobotEngineManager : MonoBehaviour {
     else {
       Instance = this;
     }
+
+    RequestGameManager = new RequestGameManager();
 
     Application.runInBackground = true;
 
@@ -195,6 +203,7 @@ public class RobotEngineManager : MonoBehaviour {
     IRobot robot = new Robot(robotID);
     Robots.Add(robotID, robot);
     CurrentRobotID = robotID;
+    RequestGameManager.RobotToTrack = robot;
 
     if (BlockPoolTracker != null) {
       BlockPoolTracker.InitBlockPool();
@@ -217,6 +226,8 @@ public class RobotEngineManager : MonoBehaviour {
       if (BlockPoolTracker != null) {
         BlockPoolTracker.CleanUp();
       }
+
+      RequestGameManager.RobotToTrack = null;
     }
   }
 

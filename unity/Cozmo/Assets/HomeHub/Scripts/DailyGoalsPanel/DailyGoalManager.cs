@@ -20,26 +20,7 @@ public class DailyGoalManager : MonoBehaviour {
 
   public static string sDailyGoalDirectory { get { return PlatformUtil.GetResourcesFolder("DailyGoals"); } }
 
-  #region constants
-
-  private const float _kMinigameNeedMin = 0.3f;
-  private const float _kMinigameNeedMax = 1.0f;
-
-  #endregion
-
-  [SerializeField]
-  private ChallengeDataList _ChallengeList;
-
-  public ChallengeData CurrentChallengeToRequest {
-    get {
-      return _LastChallengeData;
-    }
-  }
-  // The Last Challenge ID Cozmo has requested to play
-  private ChallengeData _LastChallengeData;
-
   #region Pending Goal Logic for HomeView animations
-
 
   // DailyGoals that have been earned but haven't been shown to the player.
   public List<DailyGoal> PendingDailyGoals = new List<DailyGoal>();
@@ -111,104 +92,6 @@ public class DailyGoalManager : MonoBehaviour {
       goalNameList.Add(Localization.Get(goalList[i].TitleKey));
     }
     return goalNameList;
-  }
-
-  [SerializeField]
-  private RequestGameListConfig _RequestMinigameConfig;
-
-  public RequestGameListConfig GetRequestMinigameConfig() {
-    return _RequestMinigameConfig;
-  }
-
-  public ChallengeData PickMiniGameToRequest() {
-    if (_RequestMinigameConfig == null) {
-      DAS.Error("DailyGoalManager.PickMiniGameToRequest", "Request minigame config is NULL");
-      return null;
-    }
-    if (_ChallengeList == null) {
-      DAS.Error("DailyGoalManager.PickMiniGameToRequest", "Challenge List is NULL");
-      return null;
-    }
-    if (UnlockablesManager.Instance == null) {
-      DAS.Error("DailyGoalManager.PickMiniGameToRequest", "UnlockablesManager is NULL");
-      return null;
-    }
-    List<RequestGameConfig> unlockedList = new List<RequestGameConfig>();
-
-    for (int i = 0; i < _RequestMinigameConfig.RequestList.Length; ++i) {
-      UnlockId unlockid = UnlockId.Count;
-      for (int j = 0; j < _ChallengeList.ChallengeData.Length; ++j) {
-        if (_ChallengeList.ChallengeData[j].ChallengeID == _RequestMinigameConfig.RequestList[i].ChallengeID) {
-          unlockid = _ChallengeList.ChallengeData[j].UnlockId.Value;
-          break;
-        }
-      }
-      if (UnlockablesManager.Instance.IsUnlocked(unlockid)) {
-        unlockedList.Add(_RequestMinigameConfig.RequestList[i]);
-      }
-    }
-    if (unlockedList.Count == 0) {
-      return null;
-    }
-
-    RequestGameConfig config = unlockedList[UnityEngine.Random.Range(0, unlockedList.Count)];
-
-    for (int i = 0; i < _ChallengeList.ChallengeData.Length; i++) {
-      if (_ChallengeList.ChallengeData[i].ChallengeID == config.ChallengeID) {
-        _LastChallengeData = _ChallengeList.ChallengeData[i];
-        BehaviorGameFlag bGame = GetRequestBehaviorGameFlag(_LastChallengeData.ChallengeID);
-        // Do not create the minigame message if the behavior group is invalid.
-        if (bGame == BehaviorGameFlag.NoGame) {
-          return null;
-        }
-        DisableRequestGameBehaviorGroups();
-        if (RobotEngineManager.Instance.CurrentRobot != null) {
-          RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(bGame);
-        }
-        return _LastChallengeData;
-      }
-    }
-    DAS.Error(this, string.Format("Challenge ID not found in ChallengeList {0}", config.ChallengeID));
-    return null;
-  }
-
-  public BehaviorGameFlag GetRequestBehaviorGameFlag(string challengeID) {
-    for (int i = 0; i < _RequestMinigameConfig.RequestList.Length; i++) {
-      if (challengeID == _RequestMinigameConfig.RequestList[i].ChallengeID) {
-        return _RequestMinigameConfig.RequestList[i].RequestBehaviorGameFlag;
-      }
-    }
-    DAS.Error(this, string.Format("Challenge ID not found in RequestMinigameList {0}", challengeID));
-    return BehaviorGameFlag.NoGame;
-  }
-
-  public void DisableRequestGameBehaviorGroups() {
-    if (RobotEngineManager.Instance.CurrentRobot != null) {
-      RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.NoGame);
-    }
-  }
-
-  /// <summary>
-  ///  Returns a value between -1 and 1 based on how close AND far you are from completing daily goal
-  /// </summary>
-  /// <returns>The minigame need.</returns>
-  public void SetMinigameNeed() {
-    // Calculate how far you are from 50% complete
-    float prog = (GetTodayProgress() * 2.0f) - 1.0f;
-    // Min desire to play if daily goals are complete
-    if (prog >= _kMinigameNeedMax) {
-      prog = 0.0f;
-    }
-    prog = Math.Abs(prog);
-    prog = Mathf.Lerp(_kMinigameNeedMin, _kMinigameNeedMax, prog);
-    ChallengeData data = PickMiniGameToRequest();
-    // no minigames are unlocked...
-    if (data == null) {
-      prog = 0;
-    }
-    if (RobotEngineManager.Instance.CurrentRobot != null) {
-      RobotEngineManager.Instance.CurrentRobot.SetEmotion(EmotionType.WantToPlay, prog);
-    }
   }
 
   #endregion
@@ -408,8 +291,6 @@ public class DailyGoalManager : MonoBehaviour {
     }
   }
 
-  #region Calculate Friendship Points and DailyGoal Progress
-
   public bool AreAllDailyGoalsComplete() {
     return GetTodayProgress() >= 1.0f;
   }
@@ -429,8 +310,6 @@ public class DailyGoalManager : MonoBehaviour {
       }
     }
   }
-
-  #endregion
 
   public int GetConfigMaxGoalCount() {
     return _DailyGoalGenConfig.MaxGoals;

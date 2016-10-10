@@ -209,7 +209,7 @@ public class OnboardingManager : MonoBehaviour {
         }
       }
     } // end first phase complete
-    CurrentRobot.SetAvailableGames(BehaviorGameFlag.NoGame);
+    RobotEngineManager.Instance.RequestGameManager.DisableRequestGameBehaviorGroups();
 
     // If assets are already loaded, go otherwise this will wait for callback.
     // It should always be loaded now
@@ -238,9 +238,7 @@ public class OnboardingManager : MonoBehaviour {
       }
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = true;
     }
-    if (RobotEngineManager.Instance.CurrentRobot != null) {
-      RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.All);
-    }
+    RobotEngineManager.Instance.RequestGameManager.EnableRequestGameBehaviorGroups();
     ShowOutlineRegion(false);
   }
 

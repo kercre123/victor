@@ -521,9 +521,7 @@ namespace Cozmo.HomeHub {
       else {
         // Otherwise set minigame need and update chest progress bar to whatever it should be at as
         // we enter the view.
-        if (RobotEngineManager.Instance.CurrentRobot != null) {
-          DailyGoalManager.Instance.SetMinigameNeed();
-        }
+        RobotEngineManager.Instance.RequestGameManager.EnableRequestGameBehaviorGroups();
         UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), true);
       }
     }
@@ -572,9 +570,7 @@ namespace Cozmo.HomeHub {
       }
       else {
         // Update Minigame need now that daily goal progress has changed
-        if (RobotEngineManager.Instance.CurrentRobot != null) {
-          DailyGoalManager.Instance.SetMinigameNeed();
-        }
+        RobotEngineManager.Instance.RequestGameManager.EnableRequestGameBehaviorGroups();
       }
     }
 
@@ -640,9 +636,7 @@ namespace Cozmo.HomeHub {
     // and other obnoxious logic when we are doing pretty things with particles
     public Sequence EnergyRewardsBurst(int pointsEarned, Transform energySource, Sequence rewardSeqeuence) {
       RewardSequenceActive = true;
-      if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.NoGame);
-      }
+      RobotEngineManager.Instance.RequestGameManager.DisableRequestGameBehaviorGroups();
       GenericRewardsConfig rc = GenericRewardsConfig.Instance;
       int rewardCount = Mathf.CeilToInt((float)pointsEarned / (float)rc.ExpPerParticleEffect);
       for (int i = 0; i < rewardCount; i++) {
@@ -683,9 +677,7 @@ namespace Cozmo.HomeHub {
       RewardedActionManager.Instance.SendPendingRewardsToInventory();
       if (ChestRewardManager.Instance.ChestPending == false) {
         RewardSequenceActive = false;
-        if (RobotEngineManager.Instance.CurrentRobot != null) {
-          RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.All);
-        }
+        RobotEngineManager.Instance.RequestGameManager.EnableRequestGameBehaviorGroups();
         UIManager.EnableTouchEvents();
       }
       UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
@@ -712,7 +704,6 @@ namespace Cozmo.HomeHub {
 
     #region Request Game
 
-
     private void HandleAskForMinigame(object messageObject) {
       if (HomeViewCurrentlyOccupied && !_HomeHubInstance.IsChallengeDetailsActive) {
         // Avoid dupes or conflicting popups
@@ -721,7 +712,7 @@ namespace Cozmo.HomeHub {
         return;
       }
 
-      ChallengeData data = DailyGoalManager.Instance.CurrentChallengeToRequest;
+      ChallengeData data = RobotEngineManager.Instance.RequestGameManager.CurrentChallengeToRequest;
       // Do not send the minigame message if the challenge is invalid or currently not unlocked.
       if (data == null || !UnlockablesManager.Instance.IsUnlocked(data.UnlockId.Value)) {
         return;
@@ -783,7 +774,7 @@ namespace Cozmo.HomeHub {
 
     private void HandleMiniGameYesAnimEnd(bool success) {
       DAS.Info(this, "HandleMiniGameYesAnimEnd");
-      MinigameConfirmed.Invoke(DailyGoalManager.Instance.CurrentChallengeToRequest.ChallengeID);
+      MinigameConfirmed.Invoke(RobotEngineManager.Instance.RequestGameManager.CurrentChallengeToRequest.ChallengeID);
     }
 
     private void HandleExternalRejection(object messageObject) {
@@ -798,6 +789,8 @@ namespace Cozmo.HomeHub {
 
       if (_RequestDialog != null) {
         _RequestDialog.CloseView();
+        RobotEngineManager.Instance.RequestGameManager.StartRejectedRequestCooldown();
+        RobotEngineManager.Instance.RequestGameManager.EnableRequestGameBehaviorGroups();
       }
     }
 
@@ -805,9 +798,8 @@ namespace Cozmo.HomeHub {
       DAS.Info(this, "HandleUnexpectedClose");
       if (_RequestDialog != null) {
         _RequestDialog.ViewClosed -= HandleRequestDialogClose;
-        if (RobotEngineManager.Instance.CurrentRobot != null) {
-          DailyGoalManager.Instance.SetMinigameNeed();
-        }
+        RobotEngineManager.Instance.RequestGameManager.StartRejectedRequestCooldown();
+        RobotEngineManager.Instance.RequestGameManager.EnableRequestGameBehaviorGroups();
       }
     }
 

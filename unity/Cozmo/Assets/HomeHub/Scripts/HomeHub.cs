@@ -6,6 +6,7 @@ using Cozmo.Util;
 using Anki.Assets;
 using Anki.Cozmo;
 using Cozmo.UI;
+using Cozmo.RequestGame;
 
 namespace Cozmo.HomeHub {
   public class HomeHub : HubWorldBase {
@@ -39,9 +40,6 @@ namespace Cozmo.HomeHub {
       }
     }
 
-    [SerializeField]
-    private ChallengeDataList _ChallengeDataList;
-
     private Dictionary<string, ChallengeStatePacket> _ChallengeStatesById;
 
     private GameBase _MiniGameInstance;
@@ -61,7 +59,7 @@ namespace Cozmo.HomeHub {
     public override void LoadHubWorld() {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(RefreshChallengeUnlockInfo);
       _Instance = this;
-      LoadChallengeData(_ChallengeDataList, out _ChallengeStatesById);
+      LoadChallengeData(ChallengeDataList.Instance, out _ChallengeStatesById);
       StartLoadHomeView();
     }
 
@@ -85,7 +83,7 @@ namespace Cozmo.HomeHub {
     }
 
     private void RefreshChallengeUnlockInfo(object message) {
-      LoadChallengeData(_ChallengeDataList, out _ChallengeStatesById);
+      LoadChallengeData(ChallengeDataList.Instance, out _ChallengeStatesById);
       if (_HomeViewInstance != null) {
         _HomeViewInstance.SetChallengeStates(_ChallengeStatesById);
       }
@@ -296,7 +294,7 @@ namespace Cozmo.HomeHub {
         // If accepted a request, because we've turned off freeplay behavior
         // we need to send Cozmo their animation from unity.
         if (wasRequest) {
-          RequestGameListConfig rcList = DailyGoalManager.Instance.GetRequestMinigameConfig();
+          RequestGameListConfig rcList = RequestGameListConfig.Instance;
           RequestGameConfig rc = null;
           for (int i = 0; i < rcList.RequestList.Length; i++) {
             if (rcList.RequestList[i].ChallengeID == challengeId) {

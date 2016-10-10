@@ -402,6 +402,11 @@ public class StartupManager : MonoBehaviour {
         Cozmo.Settings.DefaultSettingsValuesConfig.SetInstance(dsvc);
       });
 
+    assetBundleManager.LoadAssetAsync<Cozmo.RequestGame.RequestGameListConfig>(_GameMetadataAssetBundleName,
+      "RequestGameList", (Cozmo.RequestGame.RequestGameListConfig rglc) => {
+        Cozmo.RequestGame.RequestGameListConfig.SetInstance(rglc);
+      });
+
     Cozmo.UI.CubePalette.LoadCubePalette(_BasicUIPrefabAssetBundleName);
 
     SkillSystem.Instance.Initialize();

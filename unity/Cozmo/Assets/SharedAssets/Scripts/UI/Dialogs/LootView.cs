@@ -244,9 +244,7 @@ namespace Cozmo.UI {
 
       StartCoroutine(InitializeBox());
       _BoxOpened = false;
-      if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.NoGame);
-      }
+      RobotEngineManager.Instance.RequestGameManager.DisableRequestGameBehaviorGroups();
       _LootText.gameObject.SetActive(false);
 
       GameObject banner = UIManager.CreateUIElement(_BannerPrefab.gameObject, _BannerContainer);
@@ -567,9 +565,7 @@ namespace Cozmo.UI {
       RewardedActionManager.Instance.SendPendingRewardsToInventory();
       _LootButton.onClick.RemoveAllListeners();
       _TronPool.ReturnAllObjectsToPool();
-      if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.All);
-      }
+      RobotEngineManager.Instance.RequestGameManager.EnableRequestGameBehaviorGroups();
       StopCoroutine(InitializeBox());
       StopTweens();
     }

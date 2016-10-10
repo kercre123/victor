@@ -24,14 +24,14 @@ namespace Cozmo.HomeHub {
         _TabPanelsList.Add(newTabPanel);
       }
 
-      if (_DisableGameRequestsWhenOpen && (RobotEngineManager.Instance.CurrentRobot != null)) {
-        RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.NoGame);
+      if (_DisableGameRequestsWhenOpen) {
+        RobotEngineManager.Instance.RequestGameManager.DisableRequestGameBehaviorGroups();
       }
     }
 
     void OnDestroy() {
-      if (_DisableGameRequestsWhenOpen && (RobotEngineManager.Instance.CurrentRobot != null)) {
-        RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.All);
+      if (_DisableGameRequestsWhenOpen) {
+        RobotEngineManager.Instance.RequestGameManager.EnableRequestGameBehaviorGroups();
       }
     }
   }

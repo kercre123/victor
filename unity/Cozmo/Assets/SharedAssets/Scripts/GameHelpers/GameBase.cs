@@ -724,9 +724,7 @@ public abstract class GameBase : MonoBehaviour {
 
     DAS.Debug("GameBase.SoftEndGameRobotReset", "soft end game reset called");
 
-    if (CurrentRobot != null) {
-      RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.NoGame);
-    }
+    RobotEngineManager.Instance.RequestGameManager.DisableRequestGameBehaviorGroups();
 
     if (OnShowEndGameDialog != null) {
       OnShowEndGameDialog();

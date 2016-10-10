@@ -23,8 +23,17 @@ public class ChallengeDataList : ScriptableObject {
 
   public ChallengeData[] ChallengeData;
 
+  public ChallengeData GetChallengeDataById(string challengeId) {
+    ChallengeData data = null;
+    for (int i = 0; i < ChallengeData.Length; i++) {
+      if (challengeId == ChallengeData[i].ChallengeID) {
+        data = ChallengeData[i];
+      }
+    }
+    return data;
+  }
 
-  #if UNITY_EDITOR
+#if UNITY_EDITOR
   public IEnumerable<string> EditorGetIds() {
     List<string> idList = new List<string>();
     foreach (var data in ChallengeData) {
@@ -32,6 +41,6 @@ public class ChallengeDataList : ScriptableObject {
     }
     return idList;
   }
-  #endif
+#endif
 }
 
