@@ -65,6 +65,8 @@ namespace FaceEnrollment {
       // with the default profile name pre-populated.
       if (RobotEngineManager.Instance.CurrentRobot.EnrolledFaces.Count == 0) {
         EnterNameForNewFace(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName);
+        // explicitly disable reactionary behaviors because we are now skipping FaceSlideState.
+        SetReactionaryBehaviors(false);
       }
       else {
         _StateMachine.SetNextState(new FaceSlideState());
