@@ -7,7 +7,7 @@ namespace Simon {
     private Anki.Cozmo.AnimationTrigger _AnimGroupTrigger;
     private bool _IsCorrect = false;
 
-    public CozmoBlinkLightsSimonState(LightCube targetCube, Anki.Cozmo.AnimationTrigger animGroupTrigger = Anki.Cozmo.AnimationTrigger.OnSimonPointCube, bool isCorrect = true) {
+    public CozmoBlinkLightsSimonState(LightCube targetCube, Anki.Cozmo.AnimationTrigger animGroupTrigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPointCenter, bool isCorrect = true) {
       _TargetCube = targetCube;
       _AnimGroupTrigger = animGroupTrigger;
       _IsCorrect = isCorrect;

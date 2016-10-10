@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo.Audio;
+using Anki.Cozmo;
 
 namespace Simon {
   public class WaitForPlayerGuessSimonState : State {
@@ -40,7 +41,7 @@ namespace Simon {
       base.Update();
       if (_StartLightBlinkTime < 0 && !_IsAnimating) {
         if (_CurrentSequenceIndex == _SequenceList.Count) {
-          PlayerWinRound();
+          PlayerWinHand();
         }
         if (_TargetCube != -1) {
           _CurrentRobot.DriveWheels(0f, 0f);
@@ -48,7 +49,7 @@ namespace Simon {
             _CurrentSequenceIndex++;
           }
           else {
-            PlayerLoseRound();
+            PlayerLoseHand();
           }
           _TargetCube = -1;
         }
@@ -74,21 +75,23 @@ namespace Simon {
       }
     }
 
-    private void PlayerLoseRound() {
+    private void PlayerLoseHand() {
       _GameInstance.SetCubeLightsGuessWrong(_SequenceList[_CurrentSequenceIndex], _TargetCube);
       _GameInstance.ShowCenterResult(true, false);
       _GameInstance.DecrementLivesRemaining(PlayerType.Human);
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
-      _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnSimonCozmoWin, HandleOnPlayerLoseAnimationDone);
+      GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
+      AnimationTrigger trigger = _GameInstance.IsSoloMode() ? AnimationTrigger.MemoryMatchPlayerLoseHandSolo : AnimationTrigger.MemoryMatchPlayerLoseHand;
+      _CurrentRobot.SendAnimationTrigger(trigger, HandleOnPlayerLoseAnimationDone);
       _IsAnimating = true;
     }
 
-    private void PlayerWinRound() {
+    private void PlayerWinHand() {
       _GameInstance.SetCubeLightsGuessRight();
       _GameInstance.ShowCenterResult(true, true);
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
+      GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
 
-      _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.OnSimonPlayerHandComplete, HandleOnPlayerWinAnimationDone);
+      AnimationTrigger trigger = _GameInstance.IsSoloMode() ? AnimationTrigger.MemoryMatchPlayerWinHandSolo : AnimationTrigger.MemoryMatchPlayerWinHand;
+      _CurrentRobot.SendAnimationTrigger(trigger, HandleOnPlayerWinAnimationDone);
       _GameInstance.AddPoint(true);
       _IsAnimating = true;
 

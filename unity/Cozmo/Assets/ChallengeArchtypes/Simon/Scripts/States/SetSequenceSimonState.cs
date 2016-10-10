@@ -42,12 +42,14 @@ namespace Simon {
       }
       else if (_CurrentSequenceIndex >= _CurrentSequence.Count - 1) {
         // Last in sequence
-        if (_NextPlayer == PlayerType.Human) {
-          _StateMachine.SetNextState(new WaitForPlayerGuessSimonState());
+        Anki.Cozmo.AnimationTrigger trigger = Anki.Cozmo.AnimationTrigger.MemoryMatchReactToPattern;
+        if (_GameInstance.IsSoloMode()) {
+          trigger = Anki.Cozmo.AnimationTrigger.MemoryMatchReactToPatternSolo;
         }
-        else {
-          _StateMachine.SetNextState(new AnimationGroupState(Anki.Cozmo.AnimationTrigger.OnSimonReactToPattern, HandEndAnimationDone));
+        else if (_CurrentSequence.Count >= _GameInstance.LongSequenceReactMin) {
+          trigger = Anki.Cozmo.AnimationTrigger.MemoryMatchReactToPatternLarge;
         }
+        _StateMachine.SetNextState(new AnimationGroupState(trigger, HandEndAnimationDone));
       }
       else {
         if (Time.time - _LastSequenceTime > _GameInstance.TimeBetweenBeats) {
@@ -57,7 +59,12 @@ namespace Simon {
     }
 
     public void HandEndAnimationDone(bool success) {
-      _StateMachine.SetNextState(new CozmoGuessSimonState());
+      if (_NextPlayer == PlayerType.Human) {
+        _StateMachine.SetNextState(new WaitForPlayerGuessSimonState());
+      }
+      else {
+        _StateMachine.SetNextState(new CozmoGuessSimonState());
+      }
     }
 
     private void LightUpNextCube() {

@@ -25,6 +25,8 @@ namespace Simon {
 
     public int MaxSequenceLength { get { return _Config.MaxSequenceLength; } }
 
+    public int LongSequenceReactMin { get { return _Config.LongSequenceReactMin; } }
+
     public int GetCurrentTurnNumber { get { return _CurrentSequenceLength - MinSequenceLength; } }
 
     public float TimeBetweenBeats { get { return _Config.TimeBetweenBeats; } }
@@ -211,12 +213,15 @@ namespace Simon {
     public void FinalLifeComplete() {
       // If in solo mode just quit out,
       // If in vs mode, if cozmo turn just switch to human turns, if human turn game over based on highest score...
+
+      Anki.Cozmo.AnimationTrigger trigger = Anki.Cozmo.AnimationTrigger.Count;
       if (CurrentDifficulty == (int)SimonMode.SOLO) {
         PlayerRoundsWon = 1;
         CozmoRoundsWon = 0;
         ShowWinnerPicture(PlayerType.Human);
         ShowBanner(LocalizationKeys.kSimonGameLabelYouWin);
         StartBaseGameEnd(true);
+        trigger = Anki.Cozmo.AnimationTrigger.MemoryMatchSoloGameOver;
       }
       else if (CurrentDifficulty == (int)SimonMode.VS) {
         // compare who wins...
@@ -226,6 +231,7 @@ namespace Simon {
           PlayerRoundsWon = 1;
           CozmoRoundsWon = 0;
           StartBaseGameEnd(true);
+          trigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPlayerWinGame;
         }
         else if (_CurrLivesHuman < _CurrLivesCozmo) {
           ShowBanner(LocalizationKeys.kSimonGameLabelCozmoWin);
@@ -233,11 +239,16 @@ namespace Simon {
           PlayerRoundsWon = 0;
           CozmoRoundsWon = 1;
           StartBaseGameEnd(false);
+          trigger = Anki.Cozmo.AnimationTrigger.MemoryMatchCozmoWinGame;
         }
         else {
           ShowBanner(LocalizationKeys.kMinigameTextTie);
           StartBaseGameEnd(EndState.Tie);
+          trigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPlayerWinGame;
         }
+      }
+      if (trigger != Anki.Cozmo.AnimationTrigger.Count && CurrentRobot != null) {
+        CurrentRobot.SendAnimationTrigger(trigger);
       }
     }
 

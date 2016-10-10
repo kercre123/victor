@@ -401,6 +401,78 @@
       "AnimName": "ag_meetcozmo_interrupt"
     },
     {
+      "CladEvent": "MemoryMatchPlayerWinHand",
+      "AnimName": "ag_memorymatch_successhand_player"
+    },
+    {
+      "CladEvent": "MemoryMatchPlayerWinHandSolo",
+      "AnimName": "ag_memorymatch_successhand_player"
+    },
+    {
+      "CladEvent": "MemoryMatchPlayerLoseHand",
+      "AnimName": "ag_memorymatch_successhand_cozmo"
+    },
+    {
+      "CladEvent": "MemoryMatchPlayerLoseHandSolo",
+      "AnimName": "ag_memorymatch_solo_failhand_player"
+    },
+    {
+      "CladEvent": "MemoryMatchCozmoWinHand",
+      "AnimName": "ag_memorymatch_successhand_cozmo"
+    },
+    {
+      "CladEvent": "MemoryMatchCozmoLoseHand",
+      "AnimName": "ag_memorymatch_failhand_cozmo"
+    },
+    {
+      "CladEvent": "MemoryMatchCozmoWinGame",
+      "AnimName": "ag_memorymatch_successgame_cozmo"
+    },
+    {
+      "CladEvent": "MemoryMatchPlayerWinGame",
+      "AnimName": "ag_memorymatch_failgame_cozmo"
+    },
+    {
+      "CladEvent": "MemoryMatchSoloGameOver",
+      "AnimName": "ag_memorymatch_solo_successgame_player"
+    },
+    {
+      "CladEvent": "MemoryMatchReactToPattern",
+      "AnimName": "ag_memorymatch_solo_reacttopattern"
+    },
+    {
+      "CladEvent": "MemoryMatchReactToPatternLarge",
+      "AnimName": "ag_memorymatch_reacttopattern_struggle"
+    },
+    {
+      "CladEvent": "MemoryMatchReactToPatternSolo",
+      "AnimName": "ag_memorymatch_cozmo_end_listen"
+    },   
+    {
+      "CladEvent": "MemoryMatchPointCenter",
+      "AnimName": "ag_memorymatch_point_center"
+    },
+    {
+      "CladEvent": "MemoryMatchPointLeftBig",
+      "AnimName": "ag_memorymatch_point_bigleft"
+    },
+    {
+      "CladEvent": "MemoryMatchPointLeftSmall",
+      "AnimName": "ag_memorymatch_point_smallleft"
+    },
+    {
+      "CladEvent": "MemoryMatchPointRightBig",
+      "AnimName": "ag_memorymatch_point_bigright"
+    },
+    {
+      "CladEvent": "MemoryMatchPointRightSmall",
+      "AnimName": "ag_memorymatch_point_smallright"
+    },
+            
+            
+            
+            
+    {
       "CladEvent": "NeutralFace",
       "AnimName" : "ag_neutral_face"
     },
@@ -439,30 +511,6 @@
     {
       "CladEvent": "OnSawOldUnnamedFace",
       "AnimName": "ag_interactFaces_Unenrolled"
-    },
-    {
-      "CladEvent": "OnSimonCozmoHandComplete",
-      "AnimName": "ag_memorymatch_successhand_cozmo"
-    },
-    {
-      "CladEvent": "OnSimonCozmoWin",
-      "AnimName": "ag_memorymatch_failgame_player"
-    },
-    {
-      "CladEvent": "OnSimonPlayerHandComplete",
-      "AnimName": "ag_memorymatch_successhand_player"
-    },
-    {
-      "CladEvent": "OnSimonPlayerWin",
-      "AnimName": "ag_memorymatch_failgame_cozmo"
-    },
-    {
-      "CladEvent": "OnSimonPointCube",
-      "AnimName": "ag_memorymatch_point"
-    },
-    {
-      "CladEvent": "OnSimonReactToPattern",
-      "AnimName": "ag_memorymatch_cozmo_end_listen"
     },
     {
       "CladEvent": "OnSpeedtapCozmoConfirm",
@@ -911,26 +959,6 @@
     {
       "CladEvent": "Shocked",
       "AnimName": "ag_shocked"
-    },
-    {
-      "CladEvent": "SimonPointCenter",
-      "AnimName": "ag_memorymatch_point_center"
-    },
-    {
-      "CladEvent": "SimonPointLeftBig",
-      "AnimName": "ag_memorymatch_point_bigleft"
-    },
-    {
-      "CladEvent": "SimonPointLeftSmall",
-      "AnimName": "ag_memorymatch_point_smallleft"
-    },
-    {
-      "CladEvent": "SimonPointRightBig",
-      "AnimName": "ag_memorymatch_point_bigright"
-    },
-    {
-      "CladEvent": "SimonPointRightSmall",
-      "AnimName": "ag_memorymatch_point_smallright"
     },
     {
       "CladEvent": "Sleeping",
