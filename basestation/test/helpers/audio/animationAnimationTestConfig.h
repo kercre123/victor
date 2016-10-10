@@ -65,9 +65,9 @@ public:
   void InsertComplete();
   
   // Get list of sorted events that start within frame time
-  std::vector<TestAudioEvent> FrameAudioEvents( const uint32_t frameStartTime_ms, const uint32_t frameEndTime_ms );
+  std::vector<TestAudioEvent> FrameAudioEvents( const int32_t frameStartTime_ms, const int32_t frameEndTime_ms );
   
-  std::vector<TestAudioEvent> GetCurrentPlayingEvents( const uint32_t frameStartTime_ms, const uint32_t frameEndTime_ms );
+  std::vector<TestAudioEvent> GetCurrentPlayingEvents( const int32_t frameStartTime_ms, const int32_t frameEndTime_ms, const uint32_t framedrift_ms );
   
   // Write audio into Test Robot Buffer
   const std::vector<TestAudioEvent>& GetAudioEvents() const { return _events; }
@@ -78,13 +78,13 @@ public:
   // Create or write audio into Test Robot Buffer
   void LoadAudioBuffer( Anki::Cozmo::Audio::RobotAudioTestBuffer& outBuffer );
   
+  
 private:
   
   std::vector<TestAudioEvent> _events;
   bool _lockInsert = false;
 
-  // Calculate how many samples are in milli sec duration
-  uint32_t numberOfSamples_ms( uint32_t milliSec );
+  bool IsNextEventReady(size_t idx, uint32_t animationTime_ms);
   
 };
 

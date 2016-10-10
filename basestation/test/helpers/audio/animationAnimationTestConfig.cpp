@@ -46,7 +46,7 @@ void AnimationAnimationTestConfig::InsertComplete()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::vector<AnimationAnimationTestConfig::TestAudioEvent> AnimationAnimationTestConfig::FrameAudioEvents( const uint32_t frameStartTime_ms, const uint32_t frameEndTime_ms )
+std::vector<AnimationAnimationTestConfig::TestAudioEvent> AnimationAnimationTestConfig::FrameAudioEvents( const int32_t frameStartTime_ms, const int32_t frameEndTime_ms )
 {
   std::vector<TestAudioEvent> frameEvents;
   for ( auto& anEvent : _events ) {
@@ -68,7 +68,7 @@ std::vector<AnimationAnimationTestConfig::TestAudioEvent> AnimationAnimationTest
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::vector<AnimationAnimationTestConfig::TestAudioEvent> AnimationAnimationTestConfig::GetCurrentPlayingEvents( const uint32_t frameStartTime_ms, const uint32_t frameEndTime_ms )
+std::vector<AnimationAnimationTestConfig::TestAudioEvent> AnimationAnimationTestConfig::GetCurrentPlayingEvents( const int32_t frameStartTime_ms, const int32_t frameEndTime_ms, const uint32_t framedrift_ms )
 {
   std::vector<TestAudioEvent> frameEvents;
   
@@ -80,8 +80,9 @@ std::vector<AnimationAnimationTestConfig::TestAudioEvent> AnimationAnimationTest
     }
     
     // Check if event is playing in frame
-    const uint32_t eventEndTime = anEvent.startTime_ms + anEvent.duration_ms;
-    if ( anEvent.startTime_ms < frameStartTime_ms && eventEndTime > frameStartTime_ms ) {
+    // Started in previous frame and continues to play in this frame
+    const uint32_t eventEndTime = anEvent.startTime_ms + anEvent.duration_ms - framedrift_ms;
+    if ( anEvent.startTime_ms < frameStartTime_ms && frameStartTime_ms <= eventEndTime ) {
       frameEvents.emplace_back( anEvent );
       continue;
     }
@@ -107,117 +108,101 @@ void AnimationAnimationTestConfig::LoadAudioBuffer( Anki::Cozmo::Audio::RobotAud
     return;
   }
   
-  std::vector<uint32_t> _eventRemainingDurations;
+  using RemainingDuration_t = std::vector<uint32_t>;
+  RemainingDuration_t eventRemainingDurations;
+  
   bool audioComplete = false;
-  bool activeFrame = false;
   bool activeStream = false;
   size_t eventIdx = 0;
-  uint32_t animationTime_ms = 0;
-  uint32_t streamTime_ms = 0;
-  uint32_t frameTime_ms = 0;
+  int32_t animationFrameBeginTime_ms = 0;
+  int32_t animationFrameEndTime_ms = animationFrameBeginTime_ms + Anki::Cozmo::IKeyFrame::SAMPLE_LENGTH_MS - 1;
+
+  // Shif events forward in stream to offset the difference frame "wiggle room"
+  uint32_t streamEventOffset_ms = 0;
+  uint32_t streamFirstEventStart_ms = 0;
   
-  uint32_t firstEventOffset = _events.front().startTime_ms;
-  
-  
-  while ( !audioComplete ) {
+  // Thick Frames
+  while (!audioComplete) {
     
-    // Start New stream
-    if ( !activeStream ) {
-      
-      if ( eventIdx < _events.size() ) {
-        // Create new stream
-        // This is a test method, normally creation time is set when wwise creates the stream
-        // + 10 ms to represent delay in WWise
-        double eventDelay = ( _events[eventIdx].startTime_ms - firstEventOffset ) + 10;
-        outBuffer.PrepareAudioBuffer( Util::Time::UniversalTime::GetCurrentTimeInMilliseconds() + eventDelay );
-        // Skip foward to next event
-        animationTime_ms = _events[eventIdx].startTime_ms;
-        
-        // Reset Frame
-        activeFrame = true;
-        activeStream = true;
-        streamTime_ms = 1;
+    bool newStream = !activeStream;
+    bool startNewStream = false;
+    
+    // Start all events that start in this frame
+    while (IsNextEventReady(eventIdx, animationFrameEndTime_ms)) {
+      const auto& nextEvent = _events[eventIdx];
+      if (newStream) {
+        // First event in stream.
+        newStream = false;
+        startNewStream = true;
+        // Because we don't breake frames into samples the first event shifts the remaing events forward in time in it's stream
+        // I refer to this as "Frame Drift"
+        streamFirstEventStart_ms = nextEvent.startTime_ms;
+        streamEventOffset_ms = streamFirstEventStart_ms % Anki::Cozmo::IKeyFrame::SAMPLE_LENGTH_MS;
+        eventRemainingDurations.push_back(nextEvent.duration_ms);
       }
       else {
-        // No more events
-        audioComplete = true;
-        break;
+        // Add offest to make up for "Frame drift"
+        uint32_t eventFrameOffset_ms = nextEvent.startTime_ms - (animationFrameBeginTime_ms + streamEventOffset_ms);
+        eventRemainingDurations.push_back(nextEvent.duration_ms + eventFrameOffset_ms);
       }
+      ++eventIdx;
     }
     
-    frameTime_ms = streamTime_ms % Anki::Cozmo::IKeyFrame::SAMPLE_LENGTH_MS;
+    // Start new stream
+    if (startNewStream) {
+      // Add Animation time to mock the delay before a stream is created with
+      outBuffer.PrepareAudioBuffer(Util::Time::UniversalTime::GetCurrentTimeInMilliseconds() + animationFrameBeginTime_ms);
+      activeStream = true;
+    }
     
-    // Check frame state
-    if ( frameTime_ms == 0 ) {
-      // End of last frame
-      activeFrame = false;
-      // Post Frame
+    // Check if stream is completed
+    if (activeStream) {
+      // Check if we need to add audio frame
+      
+      // FIXME: Doesn't create frame for Single frame stream
+      
+      for (auto it = eventRemainingDurations.begin(); it != eventRemainingDurations.end();) {
+        const int32_t updatedRemainingDuration = *it - Anki::Cozmo::IKeyFrame::SAMPLE_LENGTH_MS;
+        if (updatedRemainingDuration > 0) {
+          // Update remaining duration, don't remove
+          *it = updatedRemainingDuration;
+          ++it;
+        }
+        else {
+          // Remove
+          it = eventRemainingDurations.erase(it);
+        }
+      }
+      
+      // Add Frame
       const AudioSample* samples = new const AudioSample[ (size_t)Anki::Cozmo::AnimConstants::AUDIO_SAMPLE_SIZE ]();
       outBuffer.UpdateBuffer( samples, (size_t)Anki::Cozmo::AnimConstants::AUDIO_SAMPLE_SIZE );
       Util::SafeDeleteArray( samples );
-    }
-    else if ( frameTime_ms == 1 ) {
-      // New frame
-      activeFrame = true;
-    }
-    
-    // If not the last check if the next event starts this
-    uint32_t nextEventIdx = (uint32_t)eventIdx + 1;
-    while ( nextEventIdx < _events.size() ) {
-      if ( _events[ nextEventIdx ].startTime_ms == animationTime_ms ) {
-        ++nextEventIdx;
-        ++eventIdx;
-      }
-      else {
-        // Breake out of loop
-        break;
-      }
-    }
-    
-    // Check if an event is producing audio
-    bool activeEvent = false;
-    for ( size_t idx = 0; idx <= eventIdx; ++idx ) {
-      activeEvent = _events[idx].InAnimationTimeRange( animationTime_ms );
-      if ( activeEvent ) {
-        // Only 1 event needs to be playing (Only way out)
-        break;
-      }
-    }
-    
-    // Check if audio is over for animation time
-    if ( !activeEvent ) {
-      // End of partial frame & stream
-      activeFrame = false;
-      activeStream = false;
-      // Progress to next event, all current events are completed
-      ++eventIdx;
       
-      // Send samples of last milliSec
-      uint32_t sampleCount = (size_t)Anki::Cozmo::AnimConstants::AUDIO_SAMPLE_SIZE;
-      if ( frameTime_ms < Anki::Cozmo::IKeyFrame::SAMPLE_LENGTH_MS ) {
-        // Last milli sec in frame send entire frame count
-        sampleCount = numberOfSamples_ms( frameTime_ms -  1 ); // sift to zero index
-        
+      // Check if this is the last frame
+      if (eventRemainingDurations.empty()) {
+        // Close stream
+        outBuffer.CloseAudioBuffer();
+        activeStream = false;
+        streamEventOffset_ms = 0;
       }
       
-      const AudioSample* samples = new const AudioSample[ sampleCount ]();
-      outBuffer.UpdateBuffer( samples, sampleCount );
-      outBuffer.CloseAudioBuffer();
-      Util::SafeDeleteArray( samples );
+      // Check if animation is completed
+      if (!activeStream && eventIdx >= _events.size()) {
+        audioComplete = true;
+      }
     }
     
     // Tick
-    ++animationTime_ms;
-    ++streamTime_ms;
+    animationFrameBeginTime_ms += Anki::Cozmo::IKeyFrame::SAMPLE_LENGTH_MS;
+    animationFrameEndTime_ms += Anki::Cozmo::IKeyFrame::SAMPLE_LENGTH_MS;
   }
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-uint32_t AnimationAnimationTestConfig::numberOfSamples_ms( uint32_t milliSec )
+// Helper Function
+bool AnimationAnimationTestConfig::IsNextEventReady(size_t idx, uint32_t untilTime_ms)
 {
-  // 33.3333/1000*22320
-  return ceilf( (float)milliSec / 1000.0f * (float)Anki::Cozmo::AnimConstants::AUDIO_SAMPLE_RATE );
+  return ( (idx < _events.size()) && (_events[idx].startTime_ms <= untilTime_ms) );
 }
-
-
-

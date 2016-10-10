@@ -86,7 +86,7 @@ public:
   }
   
   // Return True when animation is complete
-  using AnimationRunLoopFunc = std::function<bool( RobotAudioAnimationOnRobot& audioAnimation, AnimationAnimationTestConfig& config, uint32_t animationTime_ms )>;
+  using AnimationRunLoopFunc = std::function<bool( RobotAudioAnimationOnRobot& audioAnimation, AnimationAnimationTestConfig& config, uint32_t animationTime_ms, bool& isStream, uint32_t& frameDrift_ms )>;
   
   void RunAnimation( RobotAudioAnimationOnRobot& audioAnimation, AnimationAnimationTestConfig& config, AnimationRunLoopFunc loopFunc )
   {
@@ -94,9 +94,12 @@ public:
     uint32_t animationTime = 0;
     bool animationComplete = false;
     
+    bool isStream = false;
+    uint32_t frameDrift_ms = 0;
+    
     while ( !animationComplete ) {
       
-      animationComplete = loopFunc( audioAnimation, config, animationTime );
+      animationComplete = loopFunc( audioAnimation, config, animationTime, isStream, frameDrift_ms );
       
       animationTime += Anki::Cozmo::IKeyFrame::SAMPLE_LENGTH_MS;
     }
@@ -117,7 +120,7 @@ public:
 // Test Animation Loop methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // No audio events in animation
-const RobotAudioTest::AnimationRunLoopFunc noAudioEventLoopFunc = []( RobotAudioAnimationOnRobot& audioAnimation, AnimationAnimationTestConfig& config, uint32_t animationTime_ms )
+const RobotAudioTest::AnimationRunLoopFunc noAudioEventLoopFunc = []( RobotAudioAnimationOnRobot& audioAnimation, AnimationAnimationTestConfig& config, uint32_t animationTime_ms, bool& isStream, uint32_t& frameDrift_ms )
 {
   EXPECT_TRUE( config.GetAudioEvents().empty() );
   EXPECT_EQ( RobotAudioAnimation::AnimationState::AnimationCompleted, audioAnimation.GetAnimationState() );
@@ -127,34 +130,55 @@ const RobotAudioTest::AnimationRunLoopFunc noAudioEventLoopFunc = []( RobotAudio
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Exercise animation is able to get bufferes when expected under perfect condition
-const RobotAudioTest::AnimationRunLoopFunc generalUsesLoopFunc = []( RobotAudioAnimationOnRobot& audioAnimation, AnimationAnimationTestConfig& config, uint32_t animationTime_ms )
+const RobotAudioTest::AnimationRunLoopFunc generalUsesLoopFunc = []( RobotAudioAnimationOnRobot& audioAnimation, AnimationAnimationTestConfig& config, uint32_t animationTime_ms, bool& out_isStream, uint32_t& out_frameDrift_ms )
 {
   // Perform Unit Test on Animation HERE!
   // Get Expected events
-  const uint32_t frameStartTime_ms = animationTime_ms - Anki::Cozmo::IKeyFrame::SAMPLE_LENGTH_MS + 1;
-  std::vector<AnimationAnimationTestConfig::TestAudioEvent> frameEvents = config.GetCurrentPlayingEvents( frameStartTime_ms, animationTime_ms );
+  
+  
+  // FIXME: After updating the animation "engine" we need fix our frame start & end indexes
+//  const int32_t frameStartTime_ms = animationTime_ms;
+//  const int32_t frameEndTime_ms = animationTime_ms + Anki::Cozmo::IKeyFrame::SAMPLE_LENGTH_MS - 1;
+
+  const int32_t frameStartTime_ms = animationTime_ms - Anki::Cozmo::IKeyFrame::SAMPLE_LENGTH_MS;
+  const int32_t frameEndTime_ms = animationTime_ms;
+  
+  std::vector<AnimationAnimationTestConfig::TestAudioEvent> frameEvents = config.GetCurrentPlayingEvents( frameStartTime_ms, frameEndTime_ms, out_frameDrift_ms );
   if ( TEST_ROBOT_AUDIO_DEV_LOG ) {
     printf("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n" );
     std::string testStr;
     for ( auto& anEvent : frameEvents ) {
-      testStr += ( "\n" + std::string( EnumToString( anEvent.event ) ) + " @ " + std::to_string(anEvent.startTime_ms) );
+      testStr += ( "\n" + std::string( EnumToString( anEvent.event ) ) + " @ " + std::to_string(anEvent.startTime_ms) +
+                  " dur_ms: " + std::to_string(anEvent.duration_ms));
     }
     PRINT_NAMED_INFO( "RobotAudioTest.AnimationRunLoopFunc.generalUsesLoopFunc",
                       "animTimeRange_ms: %d - %d | %s",
-                      animationTime_ms - ( Anki::Cozmo::IKeyFrame::SAMPLE_LENGTH_MS - 1 ), animationTime_ms, testStr.c_str() );
+                      frameStartTime_ms, frameEndTime_ms, testStr.c_str() );
   }
   
+  // Check if expecting stream to start
+  if (!out_isStream && !frameEvents.empty()) {
+    out_isStream = true;
+    // Determin frame drift
+    out_frameDrift_ms = frameEvents.front().startTime_ms - frameStartTime_ms;
+    PRINT_NAMED_INFO( "RobotAudioTest.AnimationRunLoopFunc.generalUsesLoopFunc",
+                      "Begining of Stream - FrameDrift_ms: %d", out_frameDrift_ms );
+    
+    ASSERT_NAMED(out_frameDrift_ms >= 0, "generalUsesLoopFunc.out_frameDrift_ms < 0");
+  }
+  
+  
   // Always call update
-  RobotAudioAnimation::AnimationState state = audioAnimation.Update( 0 , animationTime_ms );
+  RobotAudioAnimation::AnimationState state = audioAnimation.Update( 0 , frameEndTime_ms );
   
   // We are pre-populating audio data for test, not getting data in realtime form Wwise
   EXPECT_EQ( RobotAudioAnimation::AnimationState::AudioFramesReady, state);
   
   // Pop frame
   RobotInterface::EngineToRobot* audioFrame = nullptr;
-  audioAnimation.PopRobotAudioMessage( audioFrame, 0, animationTime_ms );
+  RobotAudioAnimationOnRobotTest &audioAnimationTestRef = static_cast<RobotAudioAnimationOnRobotTest&>(audioAnimation);
+  audioAnimation.PopRobotAudioMessage( audioFrame, 0, frameEndTime_ms );
   if ( TEST_ROBOT_AUDIO_DEV_LOG ) {
-    RobotAudioAnimationOnRobotTest &audioAnimationTestRef = static_cast<RobotAudioAnimationOnRobotTest&>(audioAnimation);
     size_t remainingFrames = audioAnimationTestRef.GetCurrentStreamFrameCount();
     PRINT_NAMED_INFO( "RobotAudioTest.AnimationRunLoopFunc.generalUsesLoopFunc",
                       "FrameEventCount: %zu | Popped Audio Frame: %c | Remaining frames %zu",
@@ -171,12 +195,23 @@ const RobotAudioTest::AnimationRunLoopFunc generalUsesLoopFunc = []( RobotAudioA
     EXPECT_NE( nullptr, audioFrame );
   }
   
+  // Check if stream is completed
+  if ( out_isStream && 0 == audioAnimationTestRef.GetCurrentStreamFrameCount() ) {
+    // Clear stream trackers
+    out_isStream = false;
+    out_frameDrift_ms = 0;
+    if ( TEST_ROBOT_AUDIO_DEV_LOG ) {
+      PRINT_NAMED_INFO( "RobotAudioTest.AnimationRunLoopFunc.generalUsesLoopFunc",
+                        "Stream Completed" );
+    }
+  }
+  
   // Clean up
   if ( audioFrame != nullptr ) {
     Util::SafeDelete( audioFrame );
   }
   
-  return animationTime_ms > config.GetAudioEvents().back().GetCompletionTime_ms();
+  return frameEndTime_ms > config.GetAudioEvents().back().GetCompletionTime_ms();
 };
 
 
