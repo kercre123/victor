@@ -3,33 +3,8 @@ Cozmo, by Anki.
 
 Cozmo is a small robot with a big personality.
 
-This library lets you take command of Cozmo and write programs for him.
-
-Cozmo features:
-
-    * A camera with advanced vision system
-    * A robotic lifter
-    * Independent tank treads
-    * Pivotable head
-    * An array of LEDs
-    * An accelerometer
-    * A gyroscope
-    * Cliff detection
-    * Face recognition
-    * Path planning
-    * Animation and behavior systems
-    * Power cubes, with LEDs, an accelerometer and tap detection
-
-This SDK provides users with access to take control of Cozmo and write simple
-or advanced programs with him.
-
-Requirements:
-    * Python 3.5.1 or later
-
-Optional requirements for camera image processing/display:
-    * Tkinter (Usually supplied by default with Python)
-    * Pillow
-    * NumPy
+This library provides a low-level protocol library used by the
+cozmo SDK package.
 '''
 
 
@@ -44,7 +19,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 
 def fetch_version():
     try:
-        with open(os.path.join(here, 'src', 'cozmo', 'version.py')) as f:
+        with open(os.path.join(here, 'src', 'cozmoclad', '__init__.py')) as f:
             ns = {}
             exec(f.read(), ns)
             return ns['__version__']
@@ -53,9 +28,9 @@ def fetch_version():
 
 
 setup(
-    name='cozmo',
+    name='cozmoclad',
     version=fetch_version(),
-    description='SDK for Anki Cozmo, the small robot with the big personality',
+    description='Low-level protocol for the Anki Cozmo SDK.',
     long_description=__doc__,
     url='https://developer.anki.com/cozmo/',
     author='Anki, Inc',
@@ -70,15 +45,11 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
     zip_safe=True,
-    keywords='anki cozmo robot robotics sdk'.split(),
+    keywords=[],
     package_dir={'': 'src'},
     packages=find_packages('src'),
     package_data={
-        'cozmo': ['LICENSE.txt']
+        'cozmosdk': ['LICENSE.txt']
     },
     install_requires=None,
-    extras_require={
-        'camera': ['Pillow>=3.3', 'numpy>=1.11'],
-        'test': ['tox', 'pytest'],
-    }
 )
