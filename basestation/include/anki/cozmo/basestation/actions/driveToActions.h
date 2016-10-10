@@ -246,6 +246,9 @@ namespace Anki {
       
       void SetMotionProfile(const PathMotionProfile& motionProfile);
       
+      // Forces both of the turnTowards subActions to force complete (basically not run)
+      void DontTurnTowardsFace();
+      
       void SetMaxTurnTowardsFaceAngle(const Radians angle);
       void SetTiltTolerance(const Radians tol);
       

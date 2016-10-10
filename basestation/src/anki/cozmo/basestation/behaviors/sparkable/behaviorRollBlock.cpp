@@ -176,7 +176,7 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot, bool isRetry)
                                                                                AnimationTrigger& retryAnimTrigger)
   {
     // Don't turn towards the face when retrying
-    rollAction->SetMaxTurnTowardsFaceAngle(0);
+    rollAction->DontTurnTowardsFace();
   
     // Only try to use another preAction pose if we aren't using an approach angle otherwise there is only
     // one preAction pose to roll the object upright and the roll action failed due to not seeing the object

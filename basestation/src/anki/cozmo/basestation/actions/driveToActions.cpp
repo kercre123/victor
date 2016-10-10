@@ -1013,6 +1013,16 @@ namespace Anki {
       }
     }
     
+    void IDriveToInteractWithObject::DontTurnTowardsFace()
+    {
+      if(_turnTowardsObjectAction != nullptr &&
+         _turnTowardsLastFacePoseAction != nullptr)
+      {
+        _turnTowardsLastFacePoseAction->ForceComplete();
+        _turnTowardsObjectAction->ForceComplete();
+      }
+    }
+    
     void IDriveToInteractWithObject::SetMaxTurnTowardsFaceAngle(const Radians angle)
     {
       if(_turnTowardsObjectAction == nullptr ||

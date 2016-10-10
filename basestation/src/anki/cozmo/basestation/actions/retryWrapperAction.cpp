@@ -119,6 +119,10 @@ namespace Cozmo {
                                        _subAction->GetState(),
                                        completionUnion);
         
+        // Reset the subAction before calling the retryCallback in case the callback modifies
+        // things that would be reset by reset (ie action's state)
+        _subAction->Reset(true);
+        
         PRINT_NAMED_DEBUG("RetryWrapperAction.CheckIfDone", "Calling retry callback");
         AnimationTrigger animTrigger;
         bool shouldRetry = _retryCallback(robotCompletedAction, _retryCount, animTrigger);
@@ -128,8 +132,6 @@ namespace Cozmo {
         {
           return res;
         }
-        
-        _subAction->Reset(true);
         
         // If the animationTrigger to play is Count (indicates None/No animation) check retry count
         // and don't new the animation action

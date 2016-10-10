@@ -234,7 +234,7 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(Robot& robot)
       retryAnimTrigger = _knockOverFailureTrigger;
     }
       
-    flipAction->SetMaxTurnTowardsFaceAngle(0);
+    flipAction->DontTurnTowardsFace();
 
     // Use a different preAction pose if we are retrying
     flipAction->GetDriveToObjectAction()->SetGetPossiblePosesFunc([this, flipAction](ActionableObject* object,

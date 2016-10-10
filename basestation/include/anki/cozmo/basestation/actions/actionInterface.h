@@ -137,6 +137,10 @@ namespace Anki {
       
       // Marks the state as cancelled only if the action has been started
       void Cancel();
+      
+      // Forces the actions state to SUCCESS so in the next update call the action will immediately complete
+      // Use caution when calling this because it could result in an incomplete completionUnion
+      void ForceComplete();
 
     protected:
       

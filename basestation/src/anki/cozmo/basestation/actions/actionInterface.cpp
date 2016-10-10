@@ -264,6 +264,17 @@ namespace Anki {
       return false;
     }
     
+    void IActionRunner::ForceComplete()
+    {
+      PRINT_CH_INFO("Actions", "IActionRunner.ForceComplete",
+                    "Forcing %s[%d] in state %s to complete",
+                    GetName().c_str(),
+                    GetTag(),
+                    EnumToString(_state));
+      
+      _state = ActionResult::SUCCESS;
+    }
+    
     ActionResult IActionRunner::Update()
     {
       switch(_state)

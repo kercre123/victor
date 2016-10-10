@@ -311,9 +311,8 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
   {
     animTrigger = AnimationTrigger::Count;
     
-    // Don't turn towards face if retrying however this does still cause the head to move up
-    action->SetMaxTurnTowardsFaceAngle(0);
-    action->SetTiltTolerance(DEG_TO_RAD(180));
+    // Don't turn towards face if retrying
+    action->DontTurnTowardsFace();
 
     if(completion.result == ActionResult::FAILURE_ABORT ||
        completion.result == ActionResult::FAILURE_RETRY)
