@@ -193,11 +193,11 @@ bool IPathPlanner::ApplyMotionProfile(const Planning::Path &in,
     Planning::PathSegment seg = in.GetSegmentConstRef(i);
     int speedSign = std::copysign(1, seg.GetTargetSpeed()); //Keep track of the direction of this segment's speed
     
-    // If this isn;t a point turn prepopulate it's speed, accel, and decel according to the motionProfile which are used
+    // If this isn't a point turn prepopulate it's speed, accel, and decel according to the motionProfile which are used
     // to calculate appropriate speeds
     if(seg.GetType() != Planning::PST_POINT_TURN)
     {
-      seg.SetSpeedProfile(motionProfile.speed_mmps, motionProfile.accel_mmps2, motionProfile.decel_mmps2);
+      seg.SetSpeedProfile(motionProfile.speed_mmps * speedSign, motionProfile.accel_mmps2, motionProfile.decel_mmps2);
     }
     
     // If the segment before the current segment is a point turn the intial speed entering the current segment will
@@ -297,6 +297,7 @@ bool IPathPlanner::ApplyMotionProfile(const Planning::Path &in,
         PRINT_NAMED_WARNING("IPathPlanner.ApplyMotionProfile.UnknownSegment", "Path has invalid segment");
         return false;
     }
+    
     reversedPath.push_back(seg);
   }
   
@@ -317,15 +318,24 @@ bool IPathPlanner::ApplyMotionProfile(const Planning::Path &in,
       nextSeg = reversedPath[i-1];
     }
     
-    // This segments speed is actually the next segments speed (intial speed vs final speed) unless this is the
+    // This segment's speed is actually the next segment's speed (intial speed vs final speed) unless this is the
     // last segment (has no next)
     f32 speed = (hasNextSeg ? nextSeg.GetTargetSpeed() : 0);
     
-    // If the next segment is a point turn
-    if(hasNextSeg &&
-       nextSeg.GetType() == Planning::PST_POINT_TURN)
+    if(hasNextSeg)
     {
-      speed = 0;
+      // If the next segment is a point turn
+      if(nextSeg.GetType() == Planning::PST_POINT_TURN)
+      {
+        speed = 0;
+      }
+      else if((seg.GetTargetSpeed() > 0) != (nextSeg.GetTargetSpeed() > 0))
+      {
+        // If the segment after this one is not a point turn and the sign of it's speed is different
+        // than the sign of the current segment's speed (segments go opposite directions)
+        // then make sure we preserve the sign of the current segment's speed
+        speed = std::copysign(speed, seg.GetTargetSpeed());
+      }
     }
     
     // If this is a line segment check if we can split it into two segments because we can finish decelerating before reaching

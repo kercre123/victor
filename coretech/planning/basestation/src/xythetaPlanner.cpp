@@ -772,8 +772,7 @@ void xythetaPlannerImpl::GetTestPlan(xythetaPlan& plan)
   // this is hardcoded for now!
   assert( _context.env.GetNumActions() == 9);
 
-  // constexpr int numPlans = 4;
-  static int whichPlan = 0;
+  static int whichPlan = 4;
 
   plan.Clear();
   plan.start_ = _start;
@@ -918,6 +917,20 @@ void xythetaPlannerImpl::GetTestPlan(xythetaPlan& plan)
     plan.Push(0);
     plan.Push(0);
     break;
+
+  case 4:
+    plan.Push(8);
+    plan.Push(7);
+    plan.Push(8);
+    plan.Push(5);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(0);
+    plan.Push(2);
+    plan.Push(4);
+    plan.Push(0);
+    break;      
   }
 
   // whichPlan = (whichPlan + 1) % numPlans;

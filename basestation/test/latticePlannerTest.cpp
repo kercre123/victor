@@ -617,3 +617,38 @@ TEST(LatticePlannerMotionProfile, ZeroLengthSeg)
     ASSERT_NEAR(expectedSpeeds[i], seg.GetTargetSpeed(), 0.1);
   }
 }
+
+TEST(LatticePlannerMotionProfile, BackwardsForwards)
+{
+  Robot robot(1, cozmoContext);
+  
+  PathMotionProfile motionProfile = PathMotionProfile();
+  motionProfile.speed_mmps = 100;
+  motionProfile.accel_mmps2 = 200;
+  motionProfile.decel_mmps2 = 500;
+  
+  Planning::Path path;
+  path.AppendLine(0, 0, 0, -10, 0, -100, 200, 500);
+  path.AppendPointTurn(0, -10, 0, -0.463648, -2, 100, 500, DEG_TO_RAD_F32(2), true);
+  path.AppendLine(0, -10, 0, -30, 9.999996, -100, 200, 500);
+  path.AppendArc(0, 10, 10, 40, DEG_TO_RAD(180), DEG_TO_RAD(40), 100, 200, 500);
+  path.AppendLine(0, -20.641773, -15.711510, -33.541773, -31.01151, 100, 200, 500);
+  
+  LatticePlanner* planner = dynamic_cast<LatticePlanner*>(robot._longPathPlanner);
+  ASSERT_TRUE(planner != nullptr);
+  
+  Planning::Path path2;
+  planner->ApplyMotionProfile(path, motionProfile, path2);
+  
+  f32 expectedSpeeds[] = {-100, -2, -100, 100, 100, 20};
+  for(int i=0; i<path2.GetNumSegments();i++)
+  {
+    Anki::Planning::PathSegment seg = path2.GetSegmentConstRef(i);
+    f32 x, y;
+    seg.GetStartPoint(x, y);
+    f32 x1, y1, a1;
+    seg.GetEndPose(x1, y1, a1);
+    PRINT_NAMED_ERROR("", "%f %f %f %f %f", x, y, x1, y1, RAD_TO_DEG(a1));
+    ASSERT_NEAR(expectedSpeeds[i], seg.GetTargetSpeed(), 0.1);
+  }
+}
