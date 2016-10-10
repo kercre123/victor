@@ -110,6 +110,9 @@ namespace Anki {
       
       if(_lightsSet)
       {
+        PRINT_CH_INFO("Actions", "IDockAction.UnsetInteracting", "%s[%d] Unsetting interacting object to %d",
+                      GetName().c_str(), GetTag(),
+                      _dockObjectID.GetValue());
         _robot.GetLightsComponent().UnSetInteractionObject(_dockObjectID);
       }
       
@@ -518,6 +521,9 @@ namespace Anki {
       
       if(!_lightsSet)
       {
+        PRINT_CH_INFO("Actions", "IDockAction.SetInteracting", "%s[%d] Setting interacting object to %d",
+                      GetName().c_str(), GetTag(),
+                      _dockObjectID.GetValue());
         _robot.GetLightsComponent().SetInteractionObject(_dockObjectID);
         _lightsSet = true;
       }

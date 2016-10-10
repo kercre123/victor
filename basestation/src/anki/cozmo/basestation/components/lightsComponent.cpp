@@ -285,6 +285,10 @@ void LightsComponent::Update()
     // Only fade if we did not just end a fade and we can fade from current state to the new state
     if(!endingFade && FadeBetween(currState, newState, fadeFromTo))
     {
+      PRINT_CH_INFO("LightsComponent", "LightsComponent.Update.FadeBetween", "Fading object %d from %d to %d",
+                    cubeInfoPair.first.GetValue(),
+                    fadeFromTo.first,
+                    fadeFromTo.second);
       newState = CubeLightsState::Fade;
     }
     
@@ -430,7 +434,7 @@ void LightsComponent::SetEnableCubeLights(const ObjectID objectID, const bool en
 {
   auto enableHelper = [this, enable](ObjectID id)
   {
-    PRINT_NAMED_INFO("LightsComponent.SetEnableCubeLights", "Setting object %d to %s",
+    PRINT_CH_INFO("LightsComponent", "LightsComponent.SetEnableCubeLights", "Setting object %d to %s",
                      id.GetValue(), (enable ? "enabled" : "disabled"));
     
     auto cube = _cubeInfo.find(id);
@@ -521,10 +525,11 @@ void LightsComponent::SetLights(ObjectID object, CubeLightsState state, bool for
   
   cube->second.currState = state;
   
-  PRINT_NAMED_INFO("LightsComponent.SetLights.ChangeState",
-                   "Setting object %d to state %d",
-                   object.GetValue(),
-                   state);
+  PRINT_CH_INFO("LightsComponent", "LightsComponent.SetLights.ChangeState",
+                "%s object %d to state %d",
+                (forceSet ? "Force setting" : "Setting"),
+                object.GetValue(),
+                state);
   
   const ObjectLights& values = _stateToValues[state];
   SetObjectLightsInternal(object, values);
@@ -680,15 +685,15 @@ void LightsComponent::HandleMessage(const ExternalInterface::FlashCurrentLightsS
   auto cube = _cubeInfo.find(msg.objectID);
   if(cube == _cubeInfo.end())
   {
-    PRINT_NAMED_INFO("LightsComponent.FlashCurrentLights.InvalidObjectID",
-                     "No object with id %d", msg.objectID);
+    PRINT_CH_INFO("LightsComponent", "LightsComponent.FlashCurrentLights.InvalidObjectID",
+                  "No object with id %d", msg.objectID);
     return;
   }
   
   if(!cube->second.enabled)
   {
-    PRINT_NAMED_INFO("LightsComponent.FlashCurrentLights.CubeNotEnabled",
-                     "Object %d is not enabled (game has control of lights)", msg.objectID);
+    PRINT_CH_INFO("LightsComponent", "LightsComponent.FlashCurrentLights.CubeNotEnabled",
+                  "Object %d is not enabled (game has control of lights)", msg.objectID);
     return;
   }
   
@@ -772,8 +777,8 @@ bool LightsComponent::CanSetObjectLights(const ObjectID& objectID)
 {
   if(IsCubeEnabled(objectID))
   {
-    PRINT_NAMED_INFO("LightsComponent.CanSetCubeLights.LightsComponentEnabled",
-                     "Not setting lights while cube lights for object %d are enabled by engine", objectID.GetValue());
+    PRINT_CH_INFO("LightsComponent", "LightsComponent.CanSetCubeLights.LightsComponentEnabled",
+                  "Not setting lights while cube lights for object %d are enabled by engine", objectID.GetValue());
     return false;
   }
   return true;
@@ -1065,14 +1070,17 @@ void LightsComponent::RestorePrevState(const ObjectID objectID)
   {
     cube->second.desiredState = CubeLightsState::Visible;
   }
+  
+  PRINT_CH_INFO("LightsComponent", "LightsComponent.RestorePrevState", "Restoring obejct %d to state %d from %d)",
+                objectID.GetValue(), cube->second.desiredState, cube->second.currState);
 }
 
 void LightsComponent::StartLoopingBackpackLights(const BackpackLights& lights)
 {
   if(_loopingBackpackLights)
   {
-    PRINT_NAMED_INFO("LightsComponent.StartLoopingBackpackLights",
-                     "Already looping backpack lights will override current lights");
+    PRINT_CH_INFO("LightsComponent", "LightsComponent.StartLoopingBackpackLights",
+                  "Already looping backpack lights will override current lights");
   }
 
   _loopingBackpackLights = true;
@@ -1085,8 +1093,8 @@ void LightsComponent::StopLoopingBackpackLights()
   if(_loopingBackpackLights)
   {
     _loopingBackpackLights = false;
-    PRINT_NAMED_INFO("LightsComponent.StopLoopingBackpackLights",
-                     "Stopping looping backpack lights returning to previous pattern");
+    PRINT_CH_INFO("LightsComponent", "LightsComponent.StopLoopingBackpackLights",
+                  "Stopping looping backpack lights returning to previous pattern");
     SetBackpackLightsInternal(_currentBackpackLights);
   }
 }
@@ -1194,23 +1202,31 @@ void LightsComponent::OnObjectPoseStateChanged(const ObjectID& objectID,
   static_assert(PoseState::Known < PoseState::Dirty &&
                 PoseState::Dirty < PoseState::Unknown,
                 "PoseState enum in unexpected order");
+  
+  auto cube = _cubeInfo.find(objectID);
+  if(cube == _cubeInfo.end())
+  {
+    PRINT_NAMED_WARNING("LightsComponent.OnObjectPoseStateChanged.NoCube", "%d", objectID.GetValue());
+    return;
+  }
+  
   if(oldPoseState < newPoseState)
   {
-    auto cube = _cubeInfo.find(objectID);
-    if(cube != _cubeInfo.end())
-    {
-      cube->second.desiredState = CubeLightsState::Connected;
-    }
+    cube->second.desiredState = CubeLightsState::Connected;
   }
   // If going to Known change to Visible
   else if(newPoseState == PoseState::Known)
   {
-    auto cube = _cubeInfo.find(objectID);
-    if(cube != _cubeInfo.end())
-    {
-      cube->second.desiredState = CubeLightsState::Visible;
-    }
+    cube->second.desiredState = CubeLightsState::Visible;
   }
+  
+  PRINT_CH_INFO("LightsComponent", "LightsComponent.OnObjectPoseStateChanged",
+                "Changing object %d from state %d to %d based on pose change from %s to %s",
+                objectID.GetValue(),
+                cube->second.currState,
+                cube->second.desiredState,
+                EnumToString(oldPoseState),
+                EnumToString(newPoseState));
 }
 
 LightsComponent::ObjectInfo::ObjectInfo()

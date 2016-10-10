@@ -87,6 +87,9 @@ namespace Anki {
     {
       if(_lightsSet)
       {
+        PRINT_CH_INFO("Actions", "DriveToObjectAction.UnsetInteracting", "%s[%d] Unsetting interacting object to %d",
+                      GetName().c_str(), GetTag(),
+                      _objectID.GetValue());
         _robot.GetLightsComponent().UnSetInteractionObject(_objectID);
       }
       _compoundAction.PrepForCompletion();
@@ -293,6 +296,9 @@ namespace Anki {
       // Need to check if we have set the cube lights already in case the action was reset
       if(!_lightsSet)
       {
+        PRINT_CH_INFO("Actions", "DriveToObjectAction.SetInteracting", "%s[%d] Setting interacting object to %d",
+                      GetName().c_str(), GetTag(),
+                      _objectID.GetValue());
         _robot.GetLightsComponent().SetInteractionObject(_objectID);
         _lightsSet = true;
       }
@@ -1089,6 +1095,9 @@ namespace Anki {
     Result IDriveToInteractWithObject::UpdateDerived()
     {
       if(!_lightsSet) {
+        PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.SetInteracting", "%s[%d] Setting interacting object to %d",
+                      GetName().c_str(), GetTag(),
+                      _objectID.GetValue());
         _robot.GetLightsComponent().SetInteractionObject(_objectID);
         _lightsSet = true;
       }
@@ -1098,6 +1107,9 @@ namespace Anki {
     IDriveToInteractWithObject::~IDriveToInteractWithObject()
     {
       if(_lightsSet) {
+        PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.UnsetInteracting", "%s[%d] Unsetting interacting object to %d",
+                      GetName().c_str(), GetTag(),
+                      _objectID.GetValue());
         _robot.GetLightsComponent().UnSetInteractionObject(_objectID);
         _lightsSet = false;
       }

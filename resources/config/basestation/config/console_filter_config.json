@@ -36,7 +36,8 @@
       { "channel": "BlockWorld",      "enabled": false },
       { "channel": "BlockPool",       "enabled": false },
       { "channel": "NVStorage",       "enabled": false },
-      { "channel": "Animations",      "enabled": false } // print every animation that is triggered
+      { "channel": "Animations",      "enabled": false }, // print every animation that is triggered
+      { "channel": "LightsComponent", "enabled": false }
     ],
     "levels":
     [
@@ -75,7 +76,8 @@
       { "channel": "BlockWorld",      "enabled": false },
       { "channel": "BlockPool",       "enabled": false },
       { "channel": "NVStorage",       "enabled": false },
-      { "channel": "Animations",      "enabled": false }
+      { "channel": "Animations",      "enabled": false },
+      { "channel": "LightsComponent", "enabled": false }
     ],
     "levels":
     [
@@ -114,7 +116,8 @@
       { "channel": "BlockWorld",      "enabled": false },
       { "channel": "BlockPool",       "enabled": false },
       { "channel": "NVStorage",       "enabled": false },
-      { "channel": "Animations",      "enabled": false }
+      { "channel": "Animations",      "enabled": false },
+      { "channel": "LightsComponent", "enabled": false }
     ],
     "levels":
     [
