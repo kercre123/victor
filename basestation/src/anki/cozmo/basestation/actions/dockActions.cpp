@@ -1105,7 +1105,9 @@ namespace Anki {
     : IAction(robot,
               "PlaceObjectOnGround",
               RobotActionType::PLACE_OBJECT_LOW,
-              (u8)AnimTrackFlag::LIFT_TRACK)
+              ((u8)AnimTrackFlag::LIFT_TRACK |
+               (u8)AnimTrackFlag::BODY_TRACK |
+               (u8)AnimTrackFlag::HEAD_TRACK))
     {
       
     }
