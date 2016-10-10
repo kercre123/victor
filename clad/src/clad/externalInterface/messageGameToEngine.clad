@@ -332,6 +332,11 @@ message ExecuteTestPlan {
 PathMotionProfile motionProf
 }
 
+message PlannerRunMode {
+  bool isSync
+}
+
+
 // SelectNextObject
 message SelectNextObject {
 

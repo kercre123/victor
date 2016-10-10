@@ -222,18 +222,32 @@ namespace Anki {
     
     void CozmoSimTestController::MakeSynchronous()
     {
-      // Set vision to synchronous
-      ExternalInterface::VisionRunMode m;
-      m.isSync = true;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_VisionRunMode(m);
-      SendMessage(message);
+      {
+        // Set vision to synchronous
+        ExternalInterface::VisionRunMode m;
+        m.isSync = true;
+        ExternalInterface::MessageGameToEngine message;
+        message.Set_VisionRunMode(m);
+        SendMessage(message);
+      }
       
-      // Set reliable transport to synchronous
-      ExternalInterface::ReliableTransportRunMode m1;
-      m1.isSync = true;
-      message.Set_ReliableTransportRunMode(m1);
-      SendMessage(message);
+      {
+        // Set reliable transport to synchronous
+        ExternalInterface::ReliableTransportRunMode m1;
+        m1.isSync = true;
+        ExternalInterface::MessageGameToEngine message;
+        message.Set_ReliableTransportRunMode(m1);
+        SendMessage(message);
+      }
+      
+      {
+        // Set planner to synchronous
+        ExternalInterface::PlannerRunMode mode;
+        mode.isSync = true;
+        ExternalInterface::MessageGameToEngine message;
+        message.Set_PlannerRunMode(mode);
+        SendMessage(message);
+      }
     }
 
     void CozmoSimTestController::DisableRandomPathSpeeds()

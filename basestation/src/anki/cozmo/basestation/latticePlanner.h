@@ -38,7 +38,7 @@ class LatticePlanner : public IPathPlanner, private Util::noncopyable
 {
   friend LatticePlannerImpl;
 public:
-  LatticePlanner(const Robot* robot, Util::Data::DataPlatform* dataPlatform);
+  LatticePlanner(Robot* robot, Util::Data::DataPlatform* dataPlatform);
   virtual ~LatticePlanner();
 
 

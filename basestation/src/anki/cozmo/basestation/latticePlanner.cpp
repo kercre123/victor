@@ -31,6 +31,7 @@
 #include "util/jsonWriter/jsonWriter.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
+#include "util/signals/simpleSignal_fwd.h"
 #include <condition_variable>
 #include <thread>
 
@@ -82,7 +83,7 @@ class LatticePlannerImpl : private Util::noncopyable
 {
 public:
 
-  LatticePlannerImpl(const Robot* robot, Util::Data::DataPlatform* dataPlatform, const LatticePlanner* parent)
+  LatticePlannerImpl(Robot* robot, Util::Data::DataPlatform* dataPlatform, const LatticePlanner* parent)
     : _robot(robot)
     , _planner(_context)
     , _searchNum(0)
@@ -129,21 +130,30 @@ public:
       }
     }
 
+    if (nullptr != _robot && _robot->HasExternalInterface() )
+    {
+      auto helper = MakeAnkiEventUtil(*robot->GetExternalInterface(), *this, _signalHandles);
+      using namespace ExternalInterface;
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::PlannerRunMode>();
+    }
+
+
     _plannerThread = new std::thread( &LatticePlannerImpl::worker, this );
   }
 
-  ~LatticePlannerImpl() {
+  ~LatticePlannerImpl()
+  {
     if( _plannerThread != nullptr ) {
       // need to stop the thread
       _stopThread = true;
       _threadRequest.notify_all(); // noexcept
-      PRINT_NAMED_DEBUG("LatticePlanner.DestoryThread.Join", "");
+      PRINT_CH_DEBUG("Planner", "LatticePlanner.DestroyThread.Join", "");
       try {
         _plannerThread->join();
-        PRINT_NAMED_DEBUG("LatticePlanner.DestoryThread.Joined", "");
+        PRINT_CH_DEBUG("Planner", "LatticePlanner.DestroyThread.Joined", "");
       }
       catch (std::runtime_error& err) {
-        PRINT_NAMED_ERROR("LatticePlannerImpl.Destory.Exception",
+        PRINT_NAMED_ERROR("LatticePlannerImpl.Destroy.Exception",
                           "locking the context mutex threw: %s",
                           err.what());
         // this will probably crash when we call SafeDelete below
@@ -151,6 +161,10 @@ public:
       Util::SafeDelete(_plannerThread);
     }
   }
+
+  template<typename T>
+  void HandleMessage(const T& msg);
+
 
   // imports and pads obstacles
   void ImportBlockworldObstaclesIfNeeded(const bool isReplanning, const ColorRGBA* vizColor = nullptr);
@@ -169,6 +183,9 @@ public:
   void StopPlanning();
 
   void worker();
+
+  // run the planner until it stops, update internal status
+  void DoPlanning();
 
   const Robot* _robot;
   xythetaPlannerContext _context;
@@ -208,13 +225,18 @@ public:
   
   // the last timestamp at which blockworld objects were imported
   TimeStamp_t _timeOfLastObjectsImport;
+
+  // if true, always block when starting planning to return in the same tick
+  bool _isSynchronous = false;
+
+  std::vector<Signal::SmartHandle> _signalHandles;
 };
 
 //////////////////////////////////////////////////////////////////////////////// 
 // LatticePlanner functions
 //////////////////////////////////////////////////////////////////////////////// 
 
-LatticePlanner::LatticePlanner(const Robot* robot, Util::Data::DataPlatform* dataPlatform)
+LatticePlanner::LatticePlanner(Robot* robot, Util::Data::DataPlatform* dataPlatform)
 {
   _impl = new LatticePlannerImpl(robot, dataPlatform, this);
 }
@@ -390,9 +412,9 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
       }
     }
     
-    PRINT_NAMED_INFO("LatticePlanner.ComputePath.NoValidTarget",
-                     "could not find valid target out of %lu possible targets\n",
-                     (unsigned long)numTargetPoses);
+    PRINT_CH_INFO("Planner", "LatticePlanner.ComputePath.NoValidTarget",
+                  "could not find valid target out of %lu possible targets\n",
+                  (unsigned long)numTargetPoses);
     return EComputePathStatus::Error;
     
   }
@@ -409,11 +431,6 @@ EComputePathStatus LatticePlanner::ComputeNewPathIfNeeded(const Pose3d& startPos
   std::lock_guard<std::recursive_mutex> lg( _impl->_contextMutex, std::adopt_lock);
   
   EComputePathStatus ret = _impl->StartPlanning(startPose, forceReplanFromScratch);
-
-  if( ret == EComputePathStatus::Running ) {
-    // set internal status to running now, don't wait for the thread to actually start
-    _impl->_internalComputeStatus = EPlannerStatus::Running;
-  }
 
   return ret;
 }
@@ -439,7 +456,7 @@ void LatticePlanner::GetTestPath(const Pose3d& startPose, Planning::Path &path, 
 
   xythetaPlan plan;
   _impl->_planner.GetTestPlan(plan);
-  printf("test plan:\n");
+  PRINT_CH_INFO("Planner", "GetTestPath.Plan", "Plan from xytheta planner:");
   _impl->_context.env.PrintPlan(plan);
 
   Planning::Path outputPath;
@@ -452,7 +469,7 @@ void LatticePlanner::GetTestPath(const Pose3d& startPose, Planning::Path &path, 
     path = outputPath;
   }
 
-  printf("test path:\n");
+  PRINT_CH_INFO("Planner", "GetTestPath.Path", "Planning::Path:");
   path.PrintPath();
 }
 
@@ -476,6 +493,56 @@ bool LatticePlanner::GetCompletePath_Internal(const Pose3d& currentRobotPose,
 // LatticePlannerImpl functions
 //////////////////////////////////////////////////////////////////////////////// 
 
+void LatticePlannerImpl::DoPlanning()
+{
+  _internalComputeStatus = EPlannerStatus::Running;
+
+  bool result = _planner.Replan(LATTICE_PLANNER_MAX_EXPANSIONS, &_runPlanner);
+
+  if(!result) {
+    _internalComputeStatus = EPlannerStatus::Error;
+  }
+  else if(_planner.GetPlan().Size() != 0) {
+    // at this point _totalPlan may contain the valid old plan during replanning
+
+    // verify that the append will be correct
+    if(_totalPlan.Size() > 0) {
+      State endState = _context.env.GetPlanFinalState(_totalPlan);
+      if(endState != _planner.GetPlan().start_) {
+        PRINT_STREAM_ERROR("LatticePlanner.PlanMismatch",
+                           "trying to append a plan with a mismatching state!\n"
+                           << "endState = " << endState << std::endl
+                           << "next plan start = " << _planner.GetPlan().start_ << std::endl);
+
+        PRINT_CH_DEBUG("Planner", "LatticePlannerImpl", "totalPlan_:");
+        _context.env.PrintPlan(_totalPlan);
+
+        PRINT_CH_DEBUG("Planner", "LatticePlannerImpl", "new plan:");
+        _context.env.PrintPlan(_planner.GetPlan());
+
+        _internalComputeStatus = EPlannerStatus::Error;
+      }
+    }
+
+    // the selected goal
+    _selectedGoalID = _planner.GetChosenGoalID();
+
+    PRINT_CH_DEBUG("Planner", "LatticePlannerImpl", "old plan:\n");
+    _context.env.PrintPlan(_totalPlan);
+
+    _totalPlan.Append( _planner.GetPlan() );
+
+    PRINT_CH_DEBUG("Planner", "LatticePlannerImpl", "new plan:\n");
+    _context.env.PrintPlan(_planner.GetPlan());
+
+    _internalComputeStatus = EPlannerStatus::CompleteWithPlan;
+  }
+  else {
+    // size == 0
+    _internalComputeStatus = EPlannerStatus::CompleteNoPlan;
+  }    
+}
+
 void LatticePlannerImpl::worker()
 {
   if( LATTICE_PLANNER_THREAD_DEBUG ) {
@@ -486,81 +553,34 @@ void LatticePlannerImpl::worker()
   while(!_stopThread) {
 
     if( LATTICE_PLANNER_THREAD_DEBUG ) {
-      printf("about to lock\n");
+      PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "about to lock");
     }
 
     std::unique_lock<std::recursive_mutex> lock(_contextMutex);
 
     if( LATTICE_PLANNER_THREAD_DEBUG ) {
-      printf("got context lock in thread\n");
+      PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "got context lock in thread");
     }
 
     while( !_timeToPlan && !_stopThread ) {
       _threadRequest.wait(lock);
 
       if( LATTICE_PLANNER_THREAD_DEBUG ) {
-        printf("got cv in thread: %d %d\n", _timeToPlan, _stopThread);
+        PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "got cv in thread: %d %d", _timeToPlan, _stopThread);
       }
     }
 
     if( _timeToPlan ) {
       if( LATTICE_PLANNER_THREAD_DEBUG ) {
-        printf("running planner in thread!\n");
+        PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "running planner in thread!");
       }
 
-      _internalComputeStatus = EPlannerStatus::Running;
       _plannerRunning = true;
       _timeToPlan = false;
-      bool result = _planner.Replan(LATTICE_PLANNER_MAX_EXPANSIONS, &_runPlanner);
+
+      DoPlanning();
+
       _plannerRunning = false;
-
-      if( LATTICE_PLANNER_THREAD_DEBUG ) {
-        printf("planner in thread returned %d\n", result);
-      }
-
-      if(!result) {
-        _internalComputeStatus = EPlannerStatus::Error;
-      }
-      else if(_planner.GetPlan().Size() != 0) {
-        // at this point _totalPlan may contain the valid old plan during replanning
-
-        // verify that the append will be correct
-        if(_totalPlan.Size() > 0) {
-          State endState = _context.env.GetPlanFinalState(_totalPlan);
-          if(endState != _planner.GetPlan().start_) {
-            PRINT_STREAM_ERROR("LatticePlanner.PlanMismatch",
-                               "trying to append a plan with a mismatching state!\n"
-                               << "endState = " << endState << std::endl
-                               << "next plan start = " << _planner.GetPlan().start_ << std::endl);
-
-            PRINT_NAMED_DEBUG("LatticePlannerImpl", "totalPlan_:");
-            _context.env.PrintPlan(_totalPlan);
-
-            PRINT_NAMED_DEBUG("LatticePlannerImpl", "new plan:");
-            _context.env.PrintPlan(_planner.GetPlan());
-
-            _internalComputeStatus = EPlannerStatus::Error;
-          }
-        }
-        
-        // the selected goal
-        _selectedGoalID = _planner.GetChosenGoalID();
-
-        PRINT_NAMED_DEBUG("LatticePlannerImpl", "old plan:\n");
-        _context.env.PrintPlan(_totalPlan);
-
-        _totalPlan.Append( _planner.GetPlan() );
-
-        PRINT_NAMED_DEBUG("LatticePlannerImpl", "new plan:\n");
-        _context.env.PrintPlan(_planner.GetPlan());
-
-        if( _planner.GetPlan().Size() == 0 ) {
-          _internalComputeStatus = EPlannerStatus::CompleteNoPlan;
-        }
-        else {
-          _internalComputeStatus = EPlannerStatus::CompleteWithPlan;
-        }
-      }
     }
   }
 
@@ -569,6 +589,15 @@ void LatticePlannerImpl::worker()
               << " running in thread " << std::this_thread::get_id() << std::endl;
   }
 
+}
+
+template<>
+void LatticePlannerImpl::HandleMessage(const ExternalInterface::PlannerRunMode& msg)
+{
+  _isSynchronous = msg.isSync;
+  PRINT_CH_INFO("Planner", "LatticePlanner.IsSync",
+                "%s",
+                msg.isSync ? "true" : "false");
 }
 
 void LatticePlannerImpl::StopPlanning()
@@ -671,23 +700,23 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
       }
 
       // if(theta == 0) {
-      //   PRINT_NAMED_INFO("LatticePlannerImpl.ImportBlockworldObstaclesIfNeeded.ImportedObstacles",
+      //   PRINT_CH_INFO("Planner", "LatticePlannerImpl.ImportBlockworldObstaclesIfNeeded.ImportedObstacles",
       //                    "imported %d obstacles form blockworld",
       //                    numAdded);
       // }
     }
 
-    // PRINT_NAMED_INFO("LatticePlannerImpl.ImportBlockworldObstaclesIfNeeded.ImportedAngles",
+    // PRINT_CH_INFO("Planner", "LatticePlannerImpl.ImportBlockworldObstaclesIfNeeded.ImportedAngles",
     //                  "imported %d total obstacles for %d angles",
     //                  numAdded,
     //                  numAngles);
   }
   else {
-    PRINT_NAMED_INFO("LatticePlanner.ImportBlockworldObstaclesIfNeeded.NoUpdateNeeded",
-                     "robot padding %f, obstacle padding %f , didBlocksChange %d",
-                     robotPadding,
-                     obstaclePadding,
-                     didObjectsChange);
+    PRINT_CH_DEBUG("Planner", "LatticePlanner.ImportBlockworldObstaclesIfNeeded.NoUpdateNeeded",
+                   "robot padding %f, obstacle padding %f , didBlocksChange %d",
+                   robotPadding,
+                   obstaclePadding,
+                   didObjectsChange);
   }
 }
 
@@ -729,10 +758,10 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
                                                         offsetFromPlan);
 
     if(offsetFromPlan >= PLAN_ERROR_FOR_REPLAN) {
-      PRINT_NAMED_INFO("LatticePlanner.GetPlan.ForcePlan",
-                       "Current state is %f away from the plan (planIdx %zu), forcing replan from scratch\n",
-                       offsetFromPlan,
-                       planIdx);
+      PRINT_CH_INFO("Planner", "LatticePlanner.GetPlan.ForcePlan",
+                    "Current state is %f away from the plan (planIdx %zu), forcing replan from scratch\n",
+                    offsetFromPlan,
+                    planIdx);
       _totalPlan.Clear();
     }
   }
@@ -756,9 +785,9 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
     _totalPlan = validOldPlan;
 
     if(!_context.forceReplanFromScratch) {
-      PRINT_NAMED_INFO("LatticePlanner.GetPlan.OldPlanUnsafe",
-                       "old plan unsafe! Will replan, starting from %zu, keeping %zu actions from oldPlan.\n",
-                       planIdx, validOldPlan.Size());
+      PRINT_CH_INFO("Planner", "LatticePlanner.GetPlan.OldPlanUnsafe",
+                    "old plan unsafe! Will replan, starting from %zu, keeping %zu actions from oldPlan.\n",
+                    planIdx, validOldPlan.Size());
     }
 
     PRINT_STREAM_INFO("LatticePlanner", "currentRobotState:"<<currentRobotState);
@@ -777,11 +806,11 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
     _context.start = lastSafeState;
 
     if(!_planner.StartIsValid()) {
-      PRINT_NAMED_INFO("LatticePlanner.ReplanIfNeeded.InvalidStart", "could not set start\n");
+      PRINT_CH_INFO("Planner", "LatticePlanner.ReplanIfNeeded.InvalidStart", "could not set start\n");
       return EComputePathStatus::Error;
     }
     else if(!_planner.GoalsAreValid()) {
-      PRINT_NAMED_INFO("LatticePlanner.ReplanIfNeeded.InvalidGoals", "Goals may have moved into collision.\n");
+      PRINT_CH_INFO("Planner", "LatticePlanner.ReplanIfNeeded.InvalidGoals", "Goals may have moved into collision.\n");
       return EComputePathStatus::Error;
     }
     else {
@@ -797,12 +826,12 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
            << ", " << goalPair.second.theta
            << ") ";
       }
-      PRINT_NAMED_INFO("LatticePlanner.ReplanIfNeeded.Replanning", "%s", ss.str().c_str());
+      PRINT_CH_INFO("Planner", "LatticePlanner.ReplanIfNeeded.Replanning", "%s", ss.str().c_str());
 
       _context.env.PrepareForPlanning();
 
       _searchNum++;
-      PRINT_NAMED_INFO("LatticePlannerImpl.GetPlan", "searchNum: %d", _searchNum);
+      PRINT_CH_INFO("Planner", "LatticePlannerImpl.GetPlan", "searchNum: %d", _searchNum);
 
       if( LATTICE_PLANNER_DUMP_ENV_TO_CACHE ) {
         std::stringstream filenameSS;
@@ -811,9 +840,9 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
         std::string filename = filenameSS.str();
 
         if(_searchNum == 1) {
-          PRINT_NAMED_INFO("LatticePlanner.EnvDump",
-                           "dumping planner context to files like '%s'",
-                           filename.c_str());
+          PRINT_CH_INFO("Planner", "LatticePlanner.EnvDump",
+                        "dumping planner context to files like '%s'",
+                        filename.c_str());
         }
 
         Util::JsonWriter contextDumpWriter(filename);
@@ -822,10 +851,19 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
       }
 
       _runPlanner = true;
-      _timeToPlan = true;
-      _threadRequest.notify_all();
-    }
 
+      if( _isSynchronous ) {
+        PRINT_CH_INFO("Planner", "LatticePlanner.RunSynchronous.DoPlanning",
+                      "Do planning now in StartPlanning...");        
+        DoPlanning();
+      }
+      else {            
+        _timeToPlan = true;
+        _internalComputeStatus = EPlannerStatus::Running;
+        _threadRequest.notify_all();
+      }
+    }
+    
     return EComputePathStatus::Running;
   }
   else {
@@ -839,7 +877,7 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
       std::cout<<"There are "<<_context.env.GetNumObstacles()<<" obstacles\n";
     }
     else {
-      printf("LatticePlanner: Plan safe, but validOldPlan is empty\n");
+      PRINT_CH_INFO("Planner", "LatticePlanner.EmptyOldPlan", "Plan safe, but validOldPlan is empty");
     }
 #endif
 
@@ -870,10 +908,10 @@ bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
                                                                                   currentRobotState,
                                                                                   offsetFromPlan) );
 
-  PRINT_NAMED_INFO("LatticePlanner.GetCompletePath.Offset",
-                   "Robot is %f from the plan, at index %d",
-                   offsetFromPlan,
-                   planIdx);
+  PRINT_CH_INFO("Planner", "LatticePlanner.GetCompletePath.Offset",
+                "Robot is %f from the plan, at index %d",
+                offsetFromPlan,
+                planIdx);
 
   if(offsetFromPlan >= PLAN_ERROR_FOR_REPLAN) {
     PRINT_NAMED_EVENT("LatticePlanner.GetCompletePath.RobotPositionError",
@@ -885,7 +923,7 @@ bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
     return false;
   }
 
-  PRINT_NAMED_DEBUG("LatticePlannerImpl", "total path:\n");
+  PRINT_CH_DEBUG("Planner", "LatticePlannerImpl", "total path:\n");
   _context.env.AppendToPath(_totalPlan, path, planIdx);
   path.PrintPath();
  
@@ -923,10 +961,11 @@ bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
     f32 turnDir = angDiff > 0 ? 1.f : -1.f;
     f32 rotSpeed = TERMINAL_POINT_TURN_SPEED * turnDir;
       
-    PRINT_NAMED_INFO(
-      "LatticePlanner.ReplanIfNeeded.FinalAngleCorrection",
-      "LatticePlanner: Final angle off by %f rad. DesiredAng = %f, endAngle = %f, rotSpeed = %f. Adding point turn.",
-      angDiff, desiredGoalAngle.ToFloat(), end_angle, rotSpeed );
+    PRINT_CH_INFO("Planner", 
+                  "LatticePlanner.ReplanIfNeeded.FinalAngleCorrection",
+                  "LatticePlanner: Final angle off by %f rad. DesiredAng = %f, endAngle = %f, rotSpeed = %f. "
+                  "Adding point turn.",
+                  angDiff, desiredGoalAngle.ToFloat(), end_angle, rotSpeed );
       
     path.AppendPointTurn(0, end_x, end_y, desiredGoalAngle.ToFloat(),
                          rotSpeed,

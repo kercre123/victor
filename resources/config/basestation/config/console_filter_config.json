@@ -37,6 +37,7 @@
       { "channel": "BlockPool",       "enabled": false },
       { "channel": "NVStorage",       "enabled": false },
       { "channel": "Animations",      "enabled": false }, // print every animation that is triggered
+      { "channel": "Planner",         "enabled": false },
       { "channel": "LightsComponent", "enabled": false }
     ],
     "levels":
