@@ -9,6 +9,7 @@
 #ifndef __ActivateHockeyApp_H__
 #define __ActivateHockeyApp_H__
 
-void CreateHockeyApp();
+void EnableHockeyApp();
+void DisableHockeyApp();
 
 #endif

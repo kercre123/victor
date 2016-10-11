@@ -19,6 +19,7 @@ namespace AndroidBinding {
 
 void InstallGoogleBreakpad(const char* path);
 void UnInstallGoogleBreakpad();
+int cozmo_shutdown();
 
 }
 }

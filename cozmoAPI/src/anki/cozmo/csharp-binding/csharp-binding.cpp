@@ -287,12 +287,25 @@ int cozmo_startup(const char *configuration_data)
   return result;
 }
 
+//
+// cozmo_shutdown() is called to release any resources allocated by cozmo_startup().
+// It is called by Cozmo app in response to RobotEngineManager.OnDisable() during application teardown.
+//
+// Note that some platforms (Android) do not guarantee delivery of application stop events.
+// This means that Unity does does not always perform application shutdown as expected.
+//
+// http://answers.unity3d.com/questions/824790/help-with-onapplicationquit-android.html
+// https://developer.android.com/reference/android/app/Activity.html#ProcessLifecycle
+//
+
 int cozmo_shutdown()
 {
   int result = (int)RESULT_OK;
     
 #if defined(ANKI_PLATFORM_IOS)
-    result = Anki::Cozmo::iOSBinding::cozmo_shutdown();
+  result = Anki::Cozmo::iOSBinding::cozmo_shutdown();
+#elif defined(ANKI_PLATFORM_ANDROID)
+  result = Anki::Cozmo::AndroidBinding::cozmo_shutdown();
 #endif
   
   Anki::Util::SafeDelete(engineAPI);

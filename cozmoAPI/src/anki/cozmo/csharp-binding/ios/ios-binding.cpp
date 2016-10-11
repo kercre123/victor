@@ -22,14 +22,14 @@ using namespace Anki::Cozmo::iOSBinding;
 int Anki::Cozmo::iOSBinding::cozmo_startup(Anki::Util::Data::DataPlatform* dataPlatform, const std::string& apprun)
 {
   ConfigureDASForPlatform(dataPlatform, apprun);
-  CreateHockeyApp();
-
+  EnableHockeyApp();
   return RESULT_OK;
 }
 
 int Anki::Cozmo::iOSBinding::cozmo_shutdown()
 {
-  return (int)RESULT_OK;
+  DisableHockeyApp();
+  return RESULT_OK;
 }
 
 int Anki::Cozmo::iOSBinding::cozmo_engine_wifi_setup(const char* wifiSSID, const char* wifiPasskey)

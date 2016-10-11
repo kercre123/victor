@@ -225,20 +225,42 @@ BOOL gWaitingForCrashUpload = NO;
 
 @end
 
-
-void CreateHockeyApp()
+void EnableHockeyApp()
 {
   // Example simple
-//  NSString *hockeyAppId = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"com.anki.hockeyapp.appid"];
-//  if(!hockeyAppId || hockeyAppId.length == 0) {
-//    DASEvent("HockeyApp.ios.disabled", "");
-//    return;
-//  }
-//  [[BITHockeyManager sharedHockeyManager] configureWithIdentifier:hockeyAppId];
-//  [[BITHockeyManager sharedHockeyManager] startManager];
-//  [[BITHockeyManager sharedHockeyManager].authenticator authenticateInstallation];
+  //  NSString *hockeyAppId = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"com.anki.hockeyapp.appid"];
+  //  if(!hockeyAppId || hockeyAppId.length == 0) {
+  //    DASEvent("HockeyApp.ios.disabled", "");
+  //    return;
+  //  }
+  //  [[BITHockeyManager sharedHockeyManager] configureWithIdentifier:hockeyAppId];
+  //  [[BITHockeyManager sharedHockeyManager] startManager];
+  //  [[BITHockeyManager sharedHockeyManager].authenticator authenticateInstallation];
+  
+  PRINT_NAMED_INFO("HockeyApp.EnableHockeyApp", "Enable HockeyApp crash manager");
   
   HockeyApp *hockeyApp = [[HockeyApp alloc] init];
   [hockeyApp activateHockeyApp];
+}
+
+void DisableHockeyApp()
+{
+  //
+  // HockeyApp SDK does not document any method to disable exception handler once it has been installed.
+  // Best we can do is disable exception handlers, reset signal handlers, then hope for the best.
+  // See also: https://github.com/bitstadium/HockeySDK-iOS
+  //
+  PRINT_NAMED_INFO("HockeyApp.DisableHockeyApp", "Disable HockeyApp crash manager");
+  
+  NSSetUncaughtExceptionHandler(NULL);
+  std::set_terminate(NULL);
+  
+  signal(SIGSEGV, SIG_DFL);
+  signal(SIGBUS, SIG_DFL);
+  signal(SIGTRAP, SIG_DFL);
+  signal(SIGABRT, SIG_DFL);
+  signal(SIGSYS, SIG_DFL);
+  signal(SIGPIPE, SIG_DFL);
+  
 }
 
