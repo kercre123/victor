@@ -79,7 +79,7 @@ MonoBehaviour:
       _AssetDataName: SpeedTapHowToPlayExpertAnimation
   GetInAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 265
+    _EnumValue: 272
   GetOutAnimTrigger:
     _EnumValueAsString: OnSpeedtapGetOut
-    _EnumValue: 122
+    _EnumValue: 134

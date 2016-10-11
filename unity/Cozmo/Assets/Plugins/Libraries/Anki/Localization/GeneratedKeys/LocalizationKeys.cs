@@ -74,8 +74,8 @@ public static class LocalizationKeys {
   public const string kTreasureHuntGame01Description = "treasureHuntGame01.description";
   public const string kWhackAMoleTitle = "whackAMole.title";
   public const string kWhackAMoleDescription = "whackAMole.description";
-  public const string kConnectivityPlaceCozmoOnCharger = "connectivity.placeCozmoOnCharger";
-  public const string kConnectivityReplaceCozmoOnCharger = "connectivity.replaceCozmoOnCharger";
+  public const string kCozmoSaysTitle = "cozmoSays.title";
+  public const string kCozmoSaysDescription = "cozmoSays.description";
 
   #endregion
 
@@ -102,6 +102,8 @@ public static class LocalizationKeys {
   public const string kConnectivityCozmoLowBatteryTitle = "connectivity.cozmoLowBatteryTitle";
   public const string kConnectivityCozmoLowBatteryDesc = "connectivity.cozmoLowBatteryDesc";
   public const string kConnectivityKeepCozmoOnCharger = "connectivity.keepCozmoOnCharger";
+  public const string kConnectivityPlaceCozmoOnCharger = "connectivity.placeCozmoOnCharger";
+  public const string kConnectivityReplaceCozmoOnCharger = "connectivity.replaceCozmoOnCharger";
   public const string kLabelGetHelp = "label.getHelp";
   public const string kLabelCubesNotWorking = "label.cubesNotWorking";
 

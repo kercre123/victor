@@ -52,6 +52,8 @@ enum int_32 UnlockId
   MysteryUnlock3          = 32,
   MysteryUnlock4          = 33,
 
+  CozmoSaysGame           = 34,
+
   // ADD NEW UNLOCKS HERE
 
   Count

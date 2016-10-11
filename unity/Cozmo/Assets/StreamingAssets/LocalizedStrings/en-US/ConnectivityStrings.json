@@ -81,6 +81,12 @@
   "connectivity.keepCozmoOnCharger": {
     "translation": "Please leave Cozmo on his charger during Setup"
   },
+  "connectivity.placeCozmoOnCharger": {
+    "translation": "Place Cozmo on his charger"
+  },
+  "connectivity.replaceCozmoOnCharger": {
+    "translation": "Remove and replace Cozmo on his charger"
+  },
   "label.getHelp": {
     "translation": "Get Help"
   },

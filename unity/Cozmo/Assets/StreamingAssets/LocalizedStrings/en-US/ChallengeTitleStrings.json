@@ -132,10 +132,10 @@
   "whackAMole.description": {
     "translation": "Tap an active Button to turn it off and trick Cozmo."
   },
-  "connectivity.placeCozmoOnCharger": {
-    "translation": "Place Cozmo on his charger"
+  "cozmoSays.title": {
+    "translation": "Cozmo Says"
   },
-  "connectivity.replaceCozmoOnCharger": {
-    "translation": "Remove and replace Cozmo on his charger"
+  "cozmoSays.description": {
+    "translation": "Cozmo says stuff"
   }
 }
