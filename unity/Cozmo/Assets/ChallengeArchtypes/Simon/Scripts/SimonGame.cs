@@ -3,6 +3,7 @@ using Anki.Debug;
 using System.Collections.Generic;
 using System.Linq;
 using Cozmo.Util;
+using Anki.Cozmo;
 
 namespace Simon {
 
@@ -12,6 +13,7 @@ namespace Simon {
 
     public const float kTurnSpeed_rps = 100f;
     public const float kTurnAccel_rps2 = 100f;
+    private const string kSkillCurve = "skillCurveIndex";
 
     // list of ids of LightCubes that are tapped, in order.
     private List<int> _CurrentIDSequence = new List<int>();
@@ -20,6 +22,7 @@ namespace Simon {
     private SimonGameConfig _Config;
     private int _CurrLivesCozmo;
     private int _CurrLivesHuman;
+    private AnimationCurve _SkillCurve = new AnimationCurve(new Keyframe(0, 1, 0, -0.06f), new Keyframe(5, 0.7f, -0.06f, 0));
 
     public int MinSequenceLength { get { return _Config.MinSequenceLength; } }
 
@@ -38,7 +41,7 @@ namespace Simon {
     private PlayerType _FirstPlayer = PlayerType.Human;
     private bool _WantsSequenceGrowth = true;
 
-    public AnimationCurve CozmoWinPercentage { get { return _Config.CozmoGuessCubeCorrectPercentage; } }
+    public AnimationCurve CozmoWinPercentage { get { return _SkillCurve; } }
 
     [SerializeField]
     private SimonCube[] _CubeColorsAndSounds;
@@ -99,10 +102,13 @@ namespace Simon {
       InitialCubesState initCubeState = new ScanForInitialCubeState(nextState, _Config.NumCubesRequired(),
                                           _Config.MinDistBetweenCubesMM, _Config.RotateSecScan, _Config.ScanTimeoutSec);
       _StateMachine.SetNextState(initCubeState);
-
-      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
-      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
-      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
+      if (CurrentRobot != null) {
+        CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
+        CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
+        CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
+      }
+      int curveIndex = Mathf.Clamp((int)SkillSystem.Instance.GetSkillVal(kSkillCurve), 0, _Config.CozmoGuessCubeCorrectPercentagePerSkill.Length - 1);
+      _SkillCurve = _Config.CozmoGuessCubeCorrectPercentagePerSkill[curveIndex];
     }
 
     public int GetNewSequenceLength(PlayerType playerPickingSequence) {
@@ -252,7 +258,15 @@ namespace Simon {
       }
     }
 
-    private SimonTurnSlide GetSimonSlide() {
+    public override void StartBaseGameEnd(EndState endState) {
+      base.StartBaseGameEnd(endState);
+      if (CurrentDifficulty == (int)SimonMode.VS) {
+        // So the skills system can ignore solo mode. Can be changed if events are classes or more filters
+        GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnMemoryMatchVsComplete, _ChallengeData.ChallengeID, CurrentDifficulty, endState == EndState.PlayerWin, PlayerScore, CozmoScore, IsHighIntensityRound()));
+      }
+    }
+
+    public SimonTurnSlide GetSimonSlide() {
       if (_SimonTurnSlide == null) {
         _SimonTurnSlide = SharedMinigameView.ShowWideGameStateSlide(
           _SimonTurnSlidePrefab.gameObject, "simon_turn_slide");

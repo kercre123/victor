@@ -172,6 +172,7 @@ public class SkillSystem {
       }
       GameSkillConfig skillConfig = _CurrChallengeData.MinigameConfig.SkillConfig;
       if (skillConfig.IsChallengePointEvent(cozEvent.GameEventEnum)) {
+        // Since this controls Cozmo's skill level, these are named from Cozmo's PoV unlike the event names.
         if (playerWin) {
           currSkillData.LossPointsTotal++;
         }
@@ -192,7 +193,7 @@ public class SkillSystem {
           float pointTotal = (float)(currSkillData.WinPointsTotal + currSkillData.LossPointsTotal);
           // Only evaluate after a certain number of points scored if desired so players can't just quit.
           bool thresholdPassed = true;
-          if (skillConfig.UsePointThreshold && skillConfig.ComparedPointThreshold < pointTotal) {
+          if (skillConfig.UsePointThreshold && pointTotal < skillConfig.ComparedPointThreshold) {
             thresholdPassed = false;
           }
           if (thresholdPassed) {

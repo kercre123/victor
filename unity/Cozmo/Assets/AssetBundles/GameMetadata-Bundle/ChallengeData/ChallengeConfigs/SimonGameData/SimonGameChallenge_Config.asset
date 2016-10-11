@@ -12,13 +12,26 @@ MonoBehaviour:
   m_Name: SimonGameChallenge_Config
   m_EditorClassIdentifier: 
   _SkillConfig:
-    _EvaluateLevelChangeEvent: []
-    _GainChallengePointEvent: []
-    _LoseChallengePointEvent: []
+    _EvaluateLevelChangeEvent:
+    - _EnumValueAsString: OnMemoryMatchVsComplete
+      _EnumValue: 18
+    _ChallengePointEvent:
+    - _EnumValueAsString: OnMemoryMatchVsComplete
+      _EnumValue: 18
     _ResetPointsEvent: []
-    _UsePointThreshold: 0
-    _ComparedPointThreshold: 0
-    _Levels: []
+    _UsePointThreshold: 1
+    _ComparedPointThreshold: 3
+    _Levels:
+    - SkillsArray:
+      - name: skillCurveIndex
+        val: 0
+      UpperBoundThreshold: 0.7
+      LowerBoundThreshold: 0.3
+    - SkillsArray:
+      - name: skillCurveIndex
+        val: 1
+      UpperBoundThreshold: 0.7
+      LowerBoundThreshold: 0.3
   MinSequenceLength: 2
   MaxSequenceLength: 30
   TimeBetweenBeats: 0.6
@@ -26,8 +39,11 @@ MonoBehaviour:
   MinDistBetweenCubesMM: 60
   RotateSecScan: 2
   ScanTimeoutSec: 30
-  CozmoGuessCubeCorrectPercentage:
-    serializedVersion: 2
+  MaxLivesCozmo: 3
+  MaxLivesHuman: 3
+  LongSequenceReactMin: 5
+  CozmoGuessCubeCorrectPercentagePerSkill:
+  - serializedVersion: 2
     m_Curve:
     - time: -0.047992516
       value: 0.9907192
@@ -41,6 +57,19 @@ MonoBehaviour:
       tangentMode: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
-    m_RotationOrder: 4
-  BetweenRoundsMusic:
-    _Music: -2032926575
+    m_RotationOrder: 0
+  - serializedVersion: 2
+    m_Curve:
+    - time: -0.047992516
+      value: 0.9907192
+      inSlope: -0.10658469
+      outSlope: -0.10658469
+      tangentMode: 0
+    - time: 5.0152326
+      value: 0.5816887
+      inSlope: -0.29773122
+      outSlope: -0.29773122
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 0

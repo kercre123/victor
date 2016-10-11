@@ -208,6 +208,10 @@ public class GameEventWrapperFactory {
     Register(GameEvent.OnDailyGoalCompleted, typeof(DailyGoalCompleteGameEvent));
     Register(GameEvent.OnNewDayStarted, typeof(SessionStartedGameEvent));
     Register(GameEvent.OnUnlockableSparked, typeof(UnlockableGameEvent));
+    // This is only special because the skills system can only listen to enums for now
+    // And cozmo shouldn't level up in solo mode.
+    // TODO: can be removed when GameEvents have a baseclass instead of an enum or more filtering is on skillsystem.
+    Register(GameEvent.OnMemoryMatchVsComplete, typeof(MinigameGameEvent));
   }
 
   private static void Register(Anki.Cozmo.GameEvent Enum, Type type) {

@@ -468,10 +468,10 @@
       "CladEvent": "MemoryMatchPointRightSmall",
       "AnimName": "ag_memorymatch_point_smallright"
     },
-            
-            
-            
-            
+    {
+      "CladEvent": "MemoryMatchCozmoGetOut",
+      "AnimName": "ag_memorymatch_getout"
+    },
     {
       "CladEvent": "NeutralFace",
       "AnimName" : "ag_neutral_face"

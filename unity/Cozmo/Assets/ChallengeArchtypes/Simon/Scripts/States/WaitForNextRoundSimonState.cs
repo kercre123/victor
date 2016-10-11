@@ -47,8 +47,7 @@ namespace Simon {
         _CurrentRobot.TurnTowardsObject(_CurrentRobot.LightCubes[_GameInstance.CubeIdsForGame[1]], false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2);
 
         if (_NextPlayer == PlayerType.Human) {
-          _GameInstance.SharedMinigameView.ShowContinueButtonCentered(HandleContinuePressed,
-            Localization.Get(LocalizationKeys.kButtonContinue), "next_round_of_play_continue_button");
+          _GameInstance.GetSimonSlide().ShowPlayPatternButton(HandleContinuePressed);
         }
         else {
           _StateMachine.SetNextState(new CozmoGuessSimonState());
@@ -63,7 +62,7 @@ namespace Simon {
     }
 
     private void HandleContinuePressed() {
-      _GameInstance.SharedMinigameView.HideContinueButton();
+      _GameInstance.GetSimonSlide().HidePlayPatternButton();
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(_GameInstance.GetDefaultMusicState());
       _StateMachine.SetNextState(new SetSequenceSimonState(_NextPlayer));
     }

@@ -23,6 +23,9 @@ namespace Simon {
     [SerializeField]
     private SimonLivesWidget _CozmoWidget;
 
+    [SerializeField]
+    private CozmoButton _ButtonPlayPattern;
+
     public void Awake() {
       _PlayerWidget.gameObject.SetActive(false);
       _CozmoWidget.gameObject.SetActive(false);
@@ -63,6 +66,17 @@ namespace Simon {
     public void ShowCenterImage(bool enabled, bool showCorrect) {
       _CenterImage.gameObject.SetActive(enabled);
       _CenterImage.sprite = showCorrect ? _CorrectSprite : _WrongSprite;
+    }
+
+    public void ShowPlayPatternButton(UnityEngine.Events.UnityAction ClickHandler) {
+      _ButtonPlayPattern.onClick.RemoveAllListeners();
+      _ButtonPlayPattern.gameObject.SetActive(true);
+      _ButtonPlayPattern.Initialize(ClickHandler, "simon.PlayPattern", "next_round_of_play_continue_button");
+    }
+
+    public void HidePlayPatternButton() {
+      _ButtonPlayPattern.gameObject.SetActive(false);
+      _ButtonPlayPattern.onClick.RemoveAllListeners();
     }
   }
 }
