@@ -12,10 +12,58 @@ extern "C" {
   #include "driver/rtc.h"
 }
 
+#define OLD_NV_STORAGE_A_SECTOR (0x1c0)
+#define OLD_NV_STORAGE_B_SECTOR (0x1de)
+#define NVSTORAGE_END_SECTOR (ESP_INIT_DATA_SECTOR)
+#define OLD_NV_AREA_MAGIC (0xDEADBEEF)
+
+static bool correctOldNVHeader(const uint16_t sector)
+{
+  uint32_t nvareaheader[3];
+  SpiFlashOpResult rslt = spi_flash_read(sector * SECTOR_SIZE, nvareaheader, sizeof(nvareaheader));
+  if (rslt != SPI_FLASH_RESULT_OK)
+  {
+    os_printf("FlashInit couldn't read OLD_NV_STORAGE at sector %x to check header, %d\r\n", sector, rslt);
+    return false;
+  }
+  else if (nvareaheader[0] != OLD_NV_AREA_MAGIC)
+  {
+    if (nvareaheader[0] != 0xFFFFffff) // Sector isn't already blank
+    {
+      rslt = spi_flash_erase_sector(sector);
+      if (rslt != SPI_FLASH_RESULT_OK)
+      {
+        os_printf("FlashInit ERROR: OLD_NV_STORAGE header at %x is wrong and couldn't be erased! %d\r\n", sector, rslt);
+        return false;
+      }
+    }
+    nvareaheader[0] = OLD_NV_AREA_MAGIC;
+    nvareaheader[1] = 0xFFFFffff; // Storage version -1
+    nvareaheader[2] = 0; // Journal number 0, minimum valid
+    rslt = spi_flash_write(sector * SECTOR_SIZE, nvareaheader, sizeof(nvareaheader));
+    if (rslt != SPI_FLASH_RESULT_OK)
+    {
+      os_printf("FlashInit couldn't write repaired header to sector %x, %d\r\n", sector, rslt);
+      return false;
+    }
+    else return true;
+  }
+  else return true;
+}
+
+void Anki::Cozmo::HAL::FlashInit()
+{
+  // Make sure there is an NV entry header to make sure we don't trigger the WipeAll factory firmware bug.
+  if (!correctOldNVHeader(OLD_NV_STORAGE_A_SECTOR)) correctOldNVHeader(OLD_NV_STORAGE_B_SECTOR);
+}
+
 static bool writeOkay(const u32 address, const u32 length)
 {
+  if ((address + length) <= address) return false; // Check for integer overflow or 0 length
   // NVStorage region is default okay region
-  if ((address >= (NV_STORAGE_SECTOR * SECTOR_SIZE)) && ((address + length) <= (ESP_INIT_DATA_SECTOR * SECTOR_SIZE))) return true;
+  else if ((address >= (NV_STORAGE_SECTOR * SECTOR_SIZE)) && ((address + length) <= (OLD_NV_STORAGE_A_SECTOR * SECTOR_SIZE))) return true; // First allowable segment of NVStorage
+  else if ((address >= ((OLD_NV_STORAGE_A_SECTOR + 1) * SECTOR_SIZE)) && ((address + length) <= (OLD_NV_STORAGE_B_SECTOR * SECTOR_SIZE))) return true; // Second allowable segment of NVStorage
+  else if ((address >= ((OLD_NV_STORAGE_B_SECTOR + 1) * SECTOR_SIZE)) && ((address + length) <= (NVSTORAGE_END_SECTOR * SECTOR_SIZE))) return true; // Third allowable segment of NVStorage
   else // App image regions also okay if for other image
   {
     switch (GetImageSelection())

@@ -260,6 +260,10 @@ namespace Anki
        */
       NVStorage::NVResult FlashErase(u32 address);
 
+      /** Initalize flash controller
+       */
+      void FlashInit();
+
 // #pragma mark --- IMU ---
       /////////////////////////////////////////////////////////////////////
 

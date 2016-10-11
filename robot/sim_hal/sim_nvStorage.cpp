@@ -115,6 +115,11 @@ namespace Anki {
         SimNVStorage simNVStorage;
       }
       
+      void FlashInit()
+      {
+        // Nothing to do here
+      }
+      
       NVStorage::NVResult FlashWrite(u32 address, u32* data, u32 length)
       {
         return simNVStorage.Write(address, data, length);

@@ -204,13 +204,12 @@ And the mome raths outgrabe.""".encode()
         self.waitForPending()
         
     def test_wipeAll(self):
-        to = Anki.Cozmo.NVStorage.NVReportDest.ENGINE
-        robotInterface.Send(RI.EngineToRobot(wipeAllNV=Anki.Cozmo.NVStorage.NVWipeAll(to, 2, True, True, "Yes I really want to do this!")))
-        time.sleep(30)
-    
-    def test_wipeFac(self):
-        to = Anki.Cozmo.NVStorage.NVReportDest.ENGINE
-        robotInterface.Send(RI.EngineToRobot(wipeAllNV=Anki.Cozmo.NVStorage.NVWipeAll(to, 0, True, False, "Yes I really want to do this!")))
+        robotInterface.Send(RI.EngineToRobot(commandNV=NVS.NVCommand(
+            0,
+            0,
+            NVS.NVOperation.NVOP_WIPEALL
+        )))
+        self.pendingOps[NVS.NVConst.NVConst_MIN_ADDRESS] = (None, NVS.NVOperation.NVOP_WIPEALL)
         time.sleep(30)
         
     def test_readCameraCalib(self):

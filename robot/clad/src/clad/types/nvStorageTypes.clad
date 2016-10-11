@@ -37,6 +37,9 @@ namespace NVStorage {
                                         /// X more where X is the number of bytes you want to allocate to the new tag.
                                         ///
                                         /// DON'T FORGET to also add the new tag to NVStorageComponent::_maxSizeTable!
+                                        
+    NVEntry_FACTORY_RESERVED1 = 0x1c0000,
+    NVEntry_FACTORY_RESERVED2 = 0x1de000,
     
     // ====== Factory entries ========
     // Same rules as regarding single and multi-blob entries

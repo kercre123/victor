@@ -308,7 +308,7 @@ static inline Result Erase(CommandState* self)
   { // Still erasing
     u32 eraseAddress = self->cmd.address + (self->index * SECTOR_SIZE);
     const NVResult rslt = HAL::FlashErase(eraseAddress);
-    if (rslt != NV_OKAY)
+    if (rslt != NV_OKAY && rslt != NV_BAD_ARGS) // Skip over unerasable sectors
     {
       if (self->retries++ >= MAX_FLASH_OP_RETRIES)
       {
@@ -431,6 +431,7 @@ static inline Result Read(CommandState* self)
 
 bool Init()
 {
+  HAL::FlashInit();
   state = NULL;
   return true;
 }
