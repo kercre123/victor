@@ -488,7 +488,9 @@ void BehaviorManager::SwitchToReactionaryBehavior(IReactionaryBehavior* nextBeha
     return;
   }
   
-  if( nullptr == _behaviorToResume ) {
+  if( nullptr == _behaviorToResume &&
+      nullptr != _currentBehavior &&
+      !_currentBehavior->IsReactionary() ) {
     // only set the behavior to resume if we don't already have one. This way, if one reactionary behavior
     // interrupts another, we'll keep the original value.
     _behaviorToResume = _currentBehavior;
