@@ -21,12 +21,17 @@
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
+#include "util/console/consoleInterface.h"
 #include "util/math/math.h"
 #include "driveToActions.h"
 
 namespace Anki {
   
   namespace Cozmo {
+
+    namespace {
+      CONSOLE_VAR(bool, kEnablePredockDistanceCheckFix, "DriveToActions", true);
+    }
     
 #pragma mark ---- DriveToObjectAction ----
     
@@ -933,8 +938,53 @@ namespace Anki {
       
       AddAction(_driveToObjectAction, shouldIgnoreFailure);
       */
-        
-      AddAction(_driveToObjectAction, true);
+
+      if( kEnablePredockDistanceCheckFix ) {
+
+        // This is a workaround for the bug in COZMO-5880. The problem is that the DriveTo action has a
+        // predock pose check which is different from the Dock action. This causes DriveTo to succeed, but
+        // Dock to fail. Then, if this whole action is retried, the same thing happens, and the robot fails to
+        // dock without ever moving
+
+        // The fix is to _not_ do the check within the dock action, but _only_ if the entire driveTo action
+        // succeeds. We need to ignore failures from the drive action because of the way the proxy action
+        // works, so we work around this by adding an inner action. The inner action cannot fail, but within
+        // the inner action is the drive to action, which _can_ fail. If that action fails, it will _not_ call
+        // the Wait action, otherwise it will. This way, we have a lambda that only gets called when the drive
+        // to succeeds
+
+        // create an inner action to hold the drive to and the lambda
+        CompoundActionSequential* innerAction = new CompoundActionSequential(robot);
+        // within innerAction, we do want to consider failures of driving (to prevent the lambda from running
+        // if the drive fails)
+        innerAction->AddAction(_driveToObjectAction, false);
+
+        auto waitLambda = [this](Robot& robot) {
+          // if this lambda gets called, that means the drive to must have succeeded.
+          if( _dockAction ) {
+            PRINT_CH_INFO("Actions", "IDriveToInteractWithObject.DriveToSuccess",
+                          "DriveTo action succeeded, telling dock action not to check predock pose distance");
+            _dockAction->SetDoNearPredockPoseCheck(false);
+          }
+          else {
+            PRINT_NAMED_ERROR("IDriveToInteractWithObject.InnerAction.WaitLambda.NoDockAction",
+                              "Dock action is null! This is a bug!!!");
+          }
+
+          // immediately finish the wait action
+          return true;
+        };
+
+        WaitForLambdaAction* waitAction = new WaitForLambdaAction(robot, waitLambda);
+        innerAction->AddAction(waitAction, false);
+
+        // Add the entire inner action, but ignore failures here so that we will always run the dock action
+        // even if driving fails (so that the dock action will be the one to fail)
+        AddAction(innerAction, true);
+      }
+      else {
+        AddAction(_driveToObjectAction, true);
+      }
         
       if(maxTurnTowardsFaceAngle_rad > 0.f)
       {
@@ -987,6 +1037,8 @@ namespace Anki {
       
       dockAction->SetPreDockPoseDistOffset(_preDockPoseDistOffsetX_mm);
       AddAction(dockAction, ignoreFailure);
+
+      _dockAction = dockAction;
     }
 
     void IDriveToInteractWithObject::SetSayNameAnimationTrigger(AnimationTrigger trigger)

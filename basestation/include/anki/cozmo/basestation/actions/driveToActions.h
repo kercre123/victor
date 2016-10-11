@@ -288,6 +288,7 @@ namespace Anki {
       DriveToObjectAction*           _driveToObjectAction           = nullptr;
       TurnTowardsLastFacePoseAction* _turnTowardsLastFacePoseAction = nullptr;
       TurnTowardsObjectAction*       _turnTowardsObjectAction       = nullptr;
+      IDockAction*                   _dockAction                    = nullptr;
       ObjectID _objectID;
       bool     _lightsSet = false;
       f32      _preDockPoseDistOffsetX_mm = 0;
