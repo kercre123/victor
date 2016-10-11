@@ -87,7 +87,7 @@ void Anki::Cozmo::HAL::DAC::Sync() {
   // Set the write pointer to be the current read pointer minus one
   // The next feed will have moved ~MAX_AUDIO_BYTES_PER_DROP bytes 
   // forward, making this the ideal write location
-  write_pointer = ((DAC0_C2 >> 4) - 1) % DAC_WORDS;
+  write_pointer = (uint8_t)((DAC0_C2 >> 4) - 1) % DAC_WORDS;
 }
 
 static void adjustVolume(int target) {

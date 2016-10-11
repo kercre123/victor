@@ -29,7 +29,7 @@ static const uint8_t CONF_GYRO = 0x09;    // 4x oversample, 200Hz update
 static const float ACC_RANGE_CONST  = (1.0f/16384.0f)*9810.0f;      //In 2g mode, 16384 LSB/g
 static const float GYRO_RANGE_CONST = (1.0f/65.6f)*(M_PI/180.0f);   //In FS500 mode, 65.6 deg/s / LSB
 
-static IMUData imu_state;
+IMUData Anki::Cozmo::HAL::IMU::ReadState;
 IMUData Anki::Cozmo::HAL::IMU::IMUState;
 static bool imu_updated = false;
 
@@ -62,28 +62,19 @@ void Anki::Cozmo::HAL::IMU::Init(void) {
   Manage();
 }
 
-void Anki::Cozmo::HAL::IMU::Setup(void) {
-  I2C::SetupRead(&imu_state, sizeof(imu_state));
-}
-
 void Anki::Cozmo::HAL::IMU::Manage(void) {
   static int update_counter = 0;
 
-  // We received our IMU data
-  static uint8_t lastTimestamp = 0x00;
-  bool imu_changed = ((imu_state.timestamp ^ lastTimestamp) & 0x80) != 0;
-  lastTimestamp = imu_state.timestamp;
-
   // We have a new bundle of IMU data, stuff it into the buffer
-  if (imu_changed) {
+  if (((ReadState.timestamp ^ IMUState.timestamp) & 0x80) != 0) {
+    memcpy(&IMUState, &ReadState, sizeof(IMUData));
+
     // Attempt to find the adjustment for the update counter
-    uint8_t offset = 0x80 + 0x40 - (imu_state.timestamp & ~0x80);
+    uint8_t offset = 0x80 + 0x40 - (ReadState.timestamp & ~0x80);
     update_counter = offset * (MANAGE_FREQUENCY / IMU_UPDATE_FREQUENCY) + ADJUST_OVERSHOOT;
     
     IMU::frameNumberStamp = CameraGetFrameNumber();
     IMU::scanLineStamp    = CameraGetScanLine();
-
-    memcpy(&IMUState, &imu_state, sizeof(IMUData));
 
     imu_updated = true;
 
@@ -106,12 +97,11 @@ void Anki::Cozmo::HAL::IMU::Manage(void) {
   update_counter += MANAGE_FREQUENCY;
 
   // Configure I2C bus to read IMU data
-  I2C::Write(SLAVE_WRITE(ADDR_IMU), &DATA_8, sizeof(DATA_8), I2C_FORCE_START);
-  I2C::Read(SLAVE_READ(ADDR_IMU));
+  I2C::ReadIMU();
 }
 
 uint8_t Anki::Cozmo::HAL::IMU::ReadID(void) {
-  return I2C::ReadReg(ADDR_IMU, 0);
+  return I2C::ReadReg(ADDR_IMU, CHIP_ID);
 }
 
 void Anki::Cozmo::HAL::IMUReadRawData(int16_t* accel, int16_t* gyro, uint8_t* timestamp)

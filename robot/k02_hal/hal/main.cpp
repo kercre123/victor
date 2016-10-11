@@ -47,9 +47,11 @@ namespace Anki
       bool IsVideoEnabled() { return videoEnabled_; }
 
       void HALInit(void) {
+        Watchdog::kickAll();
+
+        I2C::Start();
         UART::Init();
         DAC::Sync();
-        IMU::Setup();
       }
       
       // This method is called at 7.5KHz (once per scan line)
@@ -63,7 +65,7 @@ namespace Anki
         Watchdog::kick(WDOG_HAL_EXEC);
         Watchdog::pet();
       }
-      
+
       void HALSafe(void)
       {
         IMU::Manage();
@@ -109,17 +111,19 @@ int main (void)
   Watchdog::init();
   Power::enableEspressif();
 
+  // Kick the watchdog after the espressif comes up
+  Watchdog::kickAll();
+
   UART::DebugInit();
   #ifndef ENABLE_FCC_TEST
   SPI::Init();
   #endif
   DAC::Init();
 
+  // Sequential I2C bus initalization (Non-interrupt based)
   I2C::Init();
   IMU::Init();
   OLED::Init();
-  
-
   CameraInit();
 
   Anki::Cozmo::Robot::Init();

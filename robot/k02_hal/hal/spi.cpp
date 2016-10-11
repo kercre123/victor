@@ -63,7 +63,7 @@ static bool ProcessDrop(void) {
     memcpy(AudioBackBuffer, drop->audioData, MAX_AUDIO_BYTES_PER_DROP);
 
     if (drop->droplet & screenDataValid) {
-      OLED::FeedFace(drop->droplet & screenRectData, drop->screenData);
+      I2C::FeedFace(drop->droplet & screenRectData, drop->screenData);
     }
 
     uint8_t *payload_data = (uint8_t*) drop->payload;
@@ -156,7 +156,10 @@ void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, const bool eof, const uint
     jpeglen += 4;
   }
 
-  drop_tx->droplet = JPEG_LENGTH(jpeglen) | (eof ? jpegEOF : 0);
+  drop_tx->droplet = 
+    JPEG_LENGTH(jpeglen) | 
+    (eof ? jpegEOF : 0) | 
+    (I2C::GetWatermark() ? oledWatermark : 0);
   uint8_t *drop_addr = drop_tx->payload + jpeglen;
   
   const int remainingSpace = DROP_TO_WIFI_MAX_PAYLOAD - jpeglen;

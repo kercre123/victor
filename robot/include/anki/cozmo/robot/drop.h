@@ -97,7 +97,7 @@ typedef enum
 // To WiFi drop fields
   jpegLenMask       = ((1<<5)-1), ///< Mask for JPEG length data, legth is in 4 byte words
   jpegEOF           = 1<<5,       ///< Flags this drop as containing the end of a JPEG frame
-  bootloaderStatus  = 1<<6,       ///< Payload contains bootloader status information
+  oledWatermark     = 1<<6,       ///< RTIP internal OLED buffer has reached 50%
 // To RTIP drop fields
   audioDataValid    = 1<<0,    ///< Bytes in the iscochronous audio field are valid
   screenDataValid   = 1<<1,    ///< Bytes in the iscochronous screen field are valid

@@ -16,7 +16,7 @@ static const int totalReset = (1 << WDOG_TOTAL_CHANNELS) - 1;
 static int watchdogChannels = 0;
 
 void Anki::Cozmo::HAL::Watchdog::init(void) {
-  static const uint32_t RESET_TIME = 5 * 128;  // 5 seconds (1khz LPO)
+  static const uint32_t RESET_TIME = 1 * 128;  // 1 second (1khz LPO)
   volatile uint16_t* ctrlh = &WDOG_STCTRLH;
 
   __disable_irq();
@@ -64,6 +64,13 @@ void Anki::Cozmo::HAL::Watchdog::suspend(void) {
 
   WDOG_REFRESH = 0xA602;
   WDOG_REFRESH = 0xB480;
+}
+
+void Anki::Cozmo::HAL::Watchdog::kickAll() {
+  __disable_irq();
+  WDOG_REFRESH = 0xA602;
+  WDOG_REFRESH = 0xB480;
+  __enable_irq();
 }
 
 void Anki::Cozmo::HAL::Watchdog::kick(const uint8_t channel) {

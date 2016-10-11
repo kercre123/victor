@@ -59,7 +59,6 @@ __Signature     DCD     Reset_Handler
                 EXPORT  __Vectors
                 EXPORT  __Vectors_End
                 EXPORT  __Vectors_Size
-                EXPORT  I2C0_Proc
 
 __Vectors       DCD     __initial_sp   ; Top of Stack
                 DCD     Reset_Handler  ; Reset Handler
@@ -103,7 +102,7 @@ __Vectors       DCD     __initial_sp   ; Top of Stack
                 DCD     LLW_IRQHandler                      ;Low Leakage Wakeup
                 DCD     WDOG_EWM_IRQHandler                 ;WDOG Interrupt
                 DCD     Reserved39_IRQHandler               ;Reserved Interrupt 39
-I2C0_Proc       DCD     I2C0_IRQHandler                     ;I2C0 interrupt
+                DCD     I2C0_IRQHandler                     ;I2C0 interrupt
                 DCD     Reserved41_IRQHandler               ;Reserved Interrupt 41
                 DCD     SPI0_IRQHandler                     ;SPI0 Interrupt
                 DCD     Reserved43_IRQHandler               ;Reserved Interrupt 43

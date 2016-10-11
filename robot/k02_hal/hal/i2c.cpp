@@ -1,25 +1,40 @@
+#include <string.h>
+
 // Placeholder bit-banging I2C implementation
 // Vandiver:  Replace me with a nice DMA version that runs 4 transactions at a time off HALExec
 // For HAL use only - see i2c.h for instructions, imu.cpp and camera.cpp for examples 
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/drop.h"
 #include "hal/portable.h"
 #include "hal/i2c.h"
+#include "hal/imu.h"
+#include "hal/oled.h"
 #include "MK02F12810.h"
 #include "hal/hardware.h"
 
 #define MAX_IRQS 4    // We have time for up to 4 I2C operations per drop
 
-#define I2C_C1_COMMON (I2C_C1_IICEN_MASK | I2C_C1_IICIE_MASK)
-
 // Cribbed from core_cm4.h - these versions inline properly
 #define EnableIRQ(IRQn) NVIC->ISER[(uint32_t)((int32_t)IRQn) >> 5] = (uint32_t)(1 << ((uint32_t)((int32_t)IRQn) & (uint32_t)0x1F))
 #define DisableIRQ(IRQn) NVIC->ICER[((uint32_t)(IRQn) >> 5)] = (1 << ((uint32_t)(IRQn) & 0x1F))
 
+using namespace Anki::Cozmo::HAL;
+
+enum I2C_State {
+  I2C_STATE_IMU_SELECT,
+  I2C_STATE_IMU_READ,
+  I2C_STATE_OLED_SELECT,
+  I2C_STATE_OLED_RECT,
+  I2C_STATE_OLED_DATA
+};
+
 // Internal Settings
 enum I2C_Control {
+  I2C_C1_COMMON = I2C_C1_IICEN_MASK | I2C_C1_IICIE_MASK,
+
   // These are top level modes
   I2C_CTRL_STOP = I2C_C1_COMMON,
-  I2C_CTRL_READ = I2C_C1_COMMON | I2C_C1_MST_MASK,  
+  I2C_CTRL_READ = I2C_C1_COMMON | I2C_C1_MST_MASK,
   I2C_CTRL_SEND = I2C_C1_COMMON | I2C_C1_MST_MASK | I2C_C1_TX_MASK,
     
   // These are modifiers
@@ -27,45 +42,57 @@ enum I2C_Control {
   I2C_CTRL_RST  = I2C_C1_RSTA_MASK
 };
 
-static const uint8_t UNUSED_SLAVE = 0xFF;
-static const int MAX_QUEUE = 512; // This needs to be fairly large because of pin numbers
+// Rectangle data for fifo
+struct ScreenRect {
+  // This is the ESP data
+  uint8_t left;
+  uint8_t right;
+  uint8_t top;
+  uint8_t bottom;
 
-static uint8_t _active_slave = UNUSED_SLAVE;
+  // Internal state
+  unsigned int sent;         // To OLED
+  unsigned int received;     // From espressif
+  unsigned int total;        // Rectangle size
+};
 
-extern "C" void (*I2C0_Proc)(void);
+// NOTE: THESE MUST BE POWERS OF TWO FOR PERFORMANCE REASONS
+// DISPLAY WORD QUEUE CAN BE SHRANK ONCE THE ESPRESSIF FLOW
+// CONTROL HAS BEEN IMPLEMENTED (should be 128 byte)
+static const int DISPLAY_WORD_QUEUE = 1 << 8;
+static const int RECTANGLE_QUEUE = 4;
 
-// Queue registers
-static uint16_t i2c_queue[MAX_QUEUE];
-static volatile int _fifo_start;
-static volatile int _fifo_end;
+static uint8_t displayFifo[DISPLAY_WORD_QUEUE];
+static ScreenRect rectFifo[RECTANGLE_QUEUE];
+
+static unsigned int displayWriteIndex;
+static unsigned int displayReadIndex;
+static unsigned int displayCount;
+
+static unsigned int rectReadIndex;
+static unsigned int rectWriteIndex;
+static unsigned int rectCount;
+static bool rectPending;
+
+static ScreenRect* activeOutputRect;
+static ScreenRect* activeInputRect;
 
 // Random state values
-static volatile bool _active = false;
-static bool _send_reset = false;
+static unsigned int _irqsleft = 0; // int for performance
+static I2C_State _currentState;
+static unsigned int _stateCounter;
+static bool _readIMU;
+static bool _active;
+static uint8_t* _readBuffer;
 
-static int _irqsleft = 0; // int for performance
+// These are the pointers for convenience
+static uint8_t* const READ_TARGET = (uint8_t*)&IMU::ReadState;
+static const int READ_SIZE = sizeof(IMU::ReadState);
 
-// Read buffer
-static volatile void* _read_target = NULL;
-static uint8_t* _read_buffer = NULL;
-static volatile int _read_size = 0;
-static volatile int _read_count = 0;
-
-static void Write_Handler(void);
-static void Read_Handler(void);
-
-#define inc_pointer(pointer) (pointer++, pointer %= MAX_QUEUE)
-#define write_queue(mode, data) (i2c_queue[inc_pointer(_fifo_start)] = ((mode) << 8) | (data))
-#define read_queue(mode, data) do { \
-  uint16_t temp = i2c_queue[inc_pointer(_fifo_end)]; \
-  mode = temp >> 8; \
-  data = temp; \
-} while(0)
+extern "C" void I2C0_IRQHandler(void) __attribute__((section("CODERAM")));
 
 // Send a stop condition first thing to make sure perfs are not holding the bus
 static inline void SendEmergencyStop(void) {
-  using namespace Anki::Cozmo::HAL;
-
   GPIO_SET(GPIO_I2C_SCL, PIN_I2C_SCL);
 
   // Drive PWDN and RESET to safe defaults
@@ -89,13 +116,6 @@ void Anki::Cozmo::HAL::I2C::Init()
 {
   SendEmergencyStop();
   
-  // Clear our FIFO
-  _fifo_start = 0;
-  _fifo_end = 0;
-
-  I2C0_Proc = &Write_Handler;
-  _active = false;
- 
   // Enable clocking on I2C, PortB, PortE, and DMA
   SIM_SCGC4 |= SIM_SCGC4_I2C0_MASK;
   SIM_SCGC5 |= SIM_SCGC5_PORTA_MASK | SIM_SCGC5_PORTB_MASK | SIM_SCGC5_PORTE_MASK;
@@ -111,189 +131,307 @@ void Anki::Cozmo::HAL::I2C::Init()
 
   // Configure i2c
   I2C0_F  = I2C_F_ICR(0x1A);
-  I2C0_C1 = I2C_C1_COMMON;
-  
-  // Enable IRQs
+  I2C0_C1 = I2C_CTRL_STOP;
+
+  // Configure IRQs
   NVIC_SetPriority(I2C0_IRQn, 0);
-  Enable();
 }
 
-void Anki::Cozmo::HAL::I2C::Enable(void) {
+void Anki::Cozmo::HAL::I2C::Start()
+{
+  memset(rectFifo, 0, sizeof(rectFifo));
+  
+  // Clear out rectangle buffers
+  displayWriteIndex = 0;
+  displayReadIndex = 0;
+  displayCount = 0;
+
+  rectReadIndex = 0;
+  rectWriteIndex = 0;
+  rectCount = 0;
+
+  activeOutputRect = NULL;
+  activeInputRect = rectFifo;
+
+  // Setup current state (We send a bunch of junk data initially to unjam the i2c bus)
+  _currentState = I2C_STATE_OLED_RECT;
+  _stateCounter = 0;
+
+  _active = false;
+  _readIMU = true;
+  rectPending = true;
+  
+  // Enable the bus with sufficient time for things to stablize
+  I2C0_C1 = I2C_CTRL_SEND;
+}
+
+bool Anki::Cozmo::HAL::I2C::GetWatermark(void) {
+  return displayCount >= (DISPLAY_WORD_QUEUE / 2);
+}
+
+void Anki::Cozmo::HAL::I2C::Enable(void) { 
+  // Kick off the IRQ Handler again
   _irqsleft = MAX_IRQS;
-  EnableIRQ(I2C0_IRQn);
   
-  if (!_active && _fifo_start != _fifo_end) {
-    _active = true;
-    I2C0_Proc();
-  }
-}
-
-void Anki::Cozmo::HAL::I2C::Disable(void) {
-  DisableIRQ(I2C0_IRQn);
-}
-
-// Register calls
-void Anki::Cozmo::HAL::I2C::WriteReg(uint8_t slave, uint8_t addr, uint8_t data) {
-  uint8_t cmd[2] = { addr, data };
-
-  Write(SLAVE_WRITE(slave), cmd, sizeof(cmd), I2C_FORCE_START);
-  Flush();
-}
-
-uint8_t Anki::Cozmo::HAL::I2C::ReadReg(uint8_t slave, uint8_t addr) {
-  uint8_t resp;
-
-  SetupRead(&resp, sizeof(resp));
-
-  Write(SLAVE_WRITE(slave), &addr, sizeof(addr), I2C_FORCE_START);
-  Read(SLAVE_READ(slave));
-  
-  Flush();
-  
-  return resp;
-}
-
-void Anki::Cozmo::HAL::I2C::Flush(void) {
-  while (_active || _fifo_start != _fifo_end) {
-    Enable();
-    __asm { WFI }
-  }
-}
-
-void Anki::Cozmo::HAL::I2C::ForceStop(void) {
-  _active_slave = UNUSED_SLAVE;
-  _send_reset = false;
-  write_queue(I2C_CTRL_STOP, 0);
-}
-
-// This is a carpet bomb stop on the i2c bus that should not be used inside IRQs
-void Anki::Cozmo::HAL::I2C::FullStop(void) {
-  _active_slave = UNUSED_SLAVE;
-  _send_reset = false;
-
-  Flush();
-  I2C0_C1 &= ~I2C_C1_MST_MASK;
-  MicroWait(1);
-  Enable();
-}
-
-void Anki::Cozmo::HAL::I2C::SetupRead(void* target, int size) {
-  _read_target = target;
-  _read_size = size;
-}
-
-__attribute__((section("CODERAM")))
-static void Enqueue(uint8_t slave, const uint8_t *bytes, int len, uint8_t flags) {
-  using namespace Anki::Cozmo::HAL::I2C;
-  
-  Disable();
+  // Can we safely transition out of a rectangle (idle)
+  // Note: this only happens on drop boundaries for CPU conservation
+  if (_currentState == I2C_STATE_OLED_DATA ||
+      (_currentState == I2C_STATE_OLED_RECT && activeOutputRect == NULL)) {
     
-  if (slave != _active_slave || flags & I2C_FORCE_START) {
-    // Select the device
-    _active_slave = slave;
-    
-    if (_send_reset) {
-      write_queue(I2C_CTRL_RST | I2C_CTRL_SEND, slave);
-    } else {
-      write_queue(I2C_CTRL_SEND, slave);
+    // TODO: CAMERA EXPOSURE HERE
+    if (_readIMU) {
+      _currentState = I2C_STATE_IMU_SELECT;
+      _stateCounter = 0;
+
+      _readBuffer = READ_TARGET;
+      _readIMU = false;
     }
-  } else if (flags & I2C_OPTIONAL) {
-    return ;
   }
-  
-  while (len-- > 0) {
-    write_queue(I2C_CTRL_SEND, *(bytes++));
+
+  if (!_active) {
+    _active = true;
+    I2C0_IRQHandler();
   }
-  
-  // It's too racy to re-enable - just take the performance hit by starting next drop
-  _send_reset = true;
+
+  EnableIRQ(I2C0_IRQn);
 }
 
-void Anki::Cozmo::HAL::I2C::Write(uint8_t slave, const uint8_t *bytes, int len, uint8_t flags) {
-  Enqueue(slave, bytes, len, flags);
+void Anki::Cozmo::HAL::I2C::ReadIMU(void) {
+  _readIMU = true;
 }
 
-void Anki::Cozmo::HAL::I2C::Read(uint8_t slave, uint8_t flags) {
-  Enqueue(slave, NULL, 0, flags);
-  
-  // Send a nack on first transmission if size is 1
-  if (_read_size == 1) {
-    write_queue(I2C_CTRL_READ | I2C_CTRL_NACK, 0);
+void Anki::Cozmo::HAL::I2C::FeedFace(bool rect, const uint8_t *face_bytes) {
+  if (rect) {
+    // Out of space for this rectangle, ignore
+    if (rectCount >= RECTANGLE_QUEUE) {
+      return ;
+    }
+
+    // Fill out the face with garbage to prevent stalling
+    // This only occurs if SPI has failed
+    int missing = activeInputRect->total - activeInputRect->received;
+    if (missing > 0) {
+      displayCount += missing;
+      displayWriteIndex = (displayWriteIndex + missing) % DISPLAY_WORD_QUEUE;
+    }
+
+    // Write to the next rectangle
+    activeInputRect = &rectFifo[rectWriteIndex];
+    rectWriteIndex = (rectWriteIndex+1) % RECTANGLE_QUEUE;
+
+    memcpy(activeInputRect, face_bytes, MAX_SCREEN_BYTES_PER_DROP);
+    activeInputRect->total = 
+      (activeInputRect->right - activeInputRect->left + 1) * 
+      (activeInputRect->bottom - activeInputRect->top + 1);
+    activeInputRect->sent = 0;
+    activeInputRect->received = 0;
+
+    // Select a rectangle if there isn't one currently
+    if (activeOutputRect == NULL) {
+      activeOutputRect = &rectFifo[rectReadIndex];
+      rectReadIndex = (rectReadIndex+1) % RECTANGLE_QUEUE;
+    }
+
+    rectCount++;
   } else {
-    write_queue(I2C_CTRL_READ, 0);
-  }
-}
-
-__attribute__((section("CODERAM")))
-static void Read_Handler(void) {
-  using namespace Anki::Cozmo::HAL;
-  
-  if (0 == --_irqsleft)
-    DisableIRQ(I2C0_IRQn);
-  
-  I2C0_S |= I2C_S_IICIF_MASK;
-  
-  bool complete = false;
-
-  _read_count--;
-
-  // Check how many bytes are left
-  if (_read_count == 1) {
-    // Send nack on last byte
-    I2C0_C1 |= I2C_C1_TXAK_MASK;
-  } if (_read_count <= 0) {
-    I2C0_C1 |= I2C_C1_TX_MASK;
-    I2C0_Proc = &Write_Handler;
-    complete = true;
-  } 
-
-  *(_read_buffer++) = I2C0_D;
-
-  if (complete) {
-    Write_Handler();
-  }
-}
-
-__attribute__((section("CODERAM")))
-static void Write_Handler(void) {
-  using namespace Anki::Cozmo::HAL;
-  
-  if (0 == --_irqsleft)
-    DisableIRQ(I2C0_IRQn);
+    // Enqueue our bytes
+    int bytes = MIN(MAX_SCREEN_BYTES_PER_DROP, activeInputRect->total - activeInputRect->received);
+    activeInputRect->received += bytes;
+    displayCount += bytes;
     
-  I2C0_S |= I2C_S_IICIF_MASK;
-
-  if (_fifo_start == _fifo_end) {
-    _active = false;
-    return ;
+    // Copy bytes into our ring bugger
+    while (bytes-- > 0) {
+      displayFifo[displayWriteIndex] = *(face_bytes++);
+      displayWriteIndex = (displayWriteIndex + 1) % DISPLAY_WORD_QUEUE;
+    }
   }
+}
 
-  uint8_t data;
-  uint8_t mode;
-  read_queue(mode, data);
-
-  if (I2C0_C1 != mode) {
-    I2C0_C1 = mode;
+void I2C0_IRQHandler(void) {
+  if (0 == --_irqsleft) {
+    DisableIRQ(I2C0_IRQn);
   }
   
-  switch (mode) {
-    default:
-      I2C0_D = data;
-      return ;
+  I2C0_S = I2C_S_IICIF_MASK;
 
-    case I2C_CTRL_READ | I2C_CTRL_NACK:
-    case I2C_CTRL_READ:
-      {
-        _read_count = _read_size;
-        _read_buffer = (uint8_t*) _read_target;
-        I2C0_Proc = &Read_Handler;
-      
-        int ignore = I2C0_D;
+  // This happens first, since it could kick off another I2C bus op
+  // NOTE: there are two exit states so I can't put this in the switch
+
+  if(_currentState == I2C_STATE_IMU_READ) {
+    // We have received a byte (not processed)
+    --_stateCounter;
+
+    // NACK final byte
+    if (_stateCounter == 1) {
+      I2C0_C1 = I2C_CTRL_READ | I2C_CTRL_NACK;
+    } else if (_stateCounter == 0) {
+      I2C0_C1 = I2C_CTRL_SEND;
+
+      // Reselect the OLED display if we need to continue transmitting data
+      _currentState = rectPending ? I2C_STATE_OLED_RECT : I2C_STATE_OLED_SELECT;
+    }
+
+    *(_readBuffer++) = I2C0_D;
+  }
+
+  switch (_currentState) {
+    case I2C_STATE_OLED_RECT:
+      if (activeOutputRect == NULL) {
+        _active = false;
+        break ;
       }
-      return ;
 
-    case I2C_CTRL_STOP:
-      _active = false;
+      switch(_stateCounter++) {
+        case 0:
+          I2C0_C1 = I2C_CTRL_SEND | I2C_CTRL_RST;
+          I2C0_D = SLAVE_WRITE(OLED_ADDR);
+          break ;
+        case 1:
+          I2C0_D = I2C_COMMAND | I2C_CONTINUATION;
+          break ;
+        case 2:
+          I2C0_D = COLUMNADDR;
+          break ;
+        case 3:
+          I2C0_D = activeOutputRect->left;
+          break ;
+        case 4:
+          I2C0_D = activeOutputRect->right;
+          break ;
+        case 5:
+          I2C0_D = PAGEADDR;
+          break ;
+        case 6:
+          I2C0_D = activeOutputRect->top;
+          break ;
+        case 7:
+          I2C0_D = activeOutputRect->bottom;
+          
+          _currentState = I2C_STATE_OLED_SELECT;
+          _stateCounter = 0;
+          rectPending = false;
+
+          break ;
+      }      
+      break ;
+      
+    // Select the IMU for reading data
+    case I2C_STATE_IMU_SELECT:
+      // Select our IMU
+      switch(_stateCounter++) {
+        case 0:
+          I2C0_C1 = I2C_CTRL_SEND | I2C_CTRL_RST;
+          I2C0_D = SLAVE_WRITE(ADDR_IMU);
+          break ;
+        case 1:
+          I2C0_D = DATA_8;
+          break ;
+        case 2:
+          I2C0_C1 = I2C_CTRL_SEND | I2C_CTRL_RST;
+          I2C0_D = SLAVE_READ(ADDR_IMU);
+          break ;
+        case 3:
+          I2C0_C1 = I2C_CTRL_READ;
+          uint8_t dummy = I2C0_D;
+
+          _currentState = I2C_STATE_IMU_READ;
+          _stateCounter = READ_SIZE;
+          break ;
+      }
+
+      break ;
+   
+    // Select the OLED for writing pixels (default state)
+    case I2C_STATE_OLED_SELECT:
+      switch(_stateCounter++) {
+        case 0:
+          I2C0_C1 = I2C_CTRL_SEND | I2C_CTRL_RST;
+          I2C0_D = SLAVE_WRITE(OLED_ADDR);
+          break ;
+        case 1:
+          I2C0_D = I2C_DATA | I2C_CONTINUATION;
+          _currentState = I2C_STATE_OLED_DATA;
+        
+          break ;
+      }
+      break ;
+
+    case I2C_STATE_OLED_DATA:
+      // We are out of data
+      if (displayCount == 0) {
+        _active = false;
+        break ;
+      }
+
+      // We have an active rectangle output data
+      I2C0_D = displayFifo[displayReadIndex];
+      displayReadIndex = (displayReadIndex + 1) % DISPLAY_WORD_QUEUE;
+      displayCount--;
+
+      // Select next rectangle when this is completed
+      if (++activeOutputRect->sent >= activeOutputRect->total) {
+        if (--rectCount > 0) {
+          // Select the next rectangle
+          activeOutputRect = &rectFifo[rectReadIndex];
+          rectReadIndex = (rectReadIndex+1) % RECTANGLE_QUEUE;
+        } else {
+          activeOutputRect = NULL;
+        }
+
+        _currentState = I2C_STATE_OLED_RECT;
+        _stateCounter = 0;
+        rectPending = true;
+      }
+
       break ;
   }
 }
+
+// === Syncronous calls ===
+static void WriteByte(uint8_t data) {
+  I2C0_D = data;
+  while (~I2C0_S & I2C_S_IICIF_MASK) ;
+  I2C0_S |= I2C_S_IICIF_MASK;
+}
+
+void Anki::Cozmo::HAL::I2C::WriteSync(const uint8_t *bytes, int len) {
+  I2C0_S |= I2C_S_IICIF_MASK;
+
+  I2C0_C1 = I2C_CTRL_SEND;
+  for (int i = 0; i < len; i++) {
+    I2C0_D = *(bytes++);
+    while (~I2C0_S & I2C_S_IICIF_MASK) ;
+    I2C0_S |= I2C_S_IICIF_MASK;
+  }
+
+  I2C0_C1 = I2C_CTRL_STOP;
+  MicroWait(5);
+}
+
+void Anki::Cozmo::HAL::I2C::WriteReg(uint8_t slave, uint8_t addr, uint8_t data) {
+  uint8_t cmd[] = { SLAVE_WRITE(slave), addr, data };
+
+  WriteSync(cmd, sizeof(cmd));
+}
+
+uint8_t Anki::Cozmo::HAL::I2C::ReadReg(uint8_t slave, uint8_t addr) {
+  uint8_t cmd[] = { SLAVE_WRITE(slave), addr };
+
+  WriteSync(cmd, sizeof(cmd));
+
+  I2C0_C1 = I2C_CTRL_SEND;
+  I2C0_D = SLAVE_READ(slave);
+  while (~I2C0_S & I2C_S_IICIF_MASK) ;
+  I2C0_S |= I2C_S_IICIF_MASK;
+  
+  I2C0_C1 = I2C_CTRL_READ | I2C_CTRL_NACK;
+  uint8_t data = I2C0_D;  // Dummy read for turnaround
+  while (~I2C0_S & I2C_S_IICIF_MASK) ;
+  I2C0_S |= I2C_S_IICIF_MASK;
+
+  I2C0_C1 = I2C_CTRL_STOP;
+  MicroWait(5);
+
+  return I2C0_D;
+}
+

@@ -26,16 +26,16 @@ namespace Anki
       namespace I2C
       {
         void Init(void);
+        void Start(void);
         void Enable(void);
-        void Disable(void);
-        void ForceStop(void);
-        void FullStop(void);
-        void Flush(void);
-          
-        void SetupRead(void* target, int size);
-        void Write(uint8_t slave, const uint8_t *bytes, int len, uint8_t flags = I2C_NONE) ;
-        void Read (uint8_t slave, uint8_t flags = I2C_NONE) ;
+        bool GetWatermark(void);
+        
+        // This triggers an IMU read
+        void ReadIMU(void);
+        void FeedFace(bool rect, const uint8_t *face_bytes);
 
+        // These are used only during boot
+        void WriteSync(const uint8_t *bytes, int len) ;
         void WriteReg(uint8_t slave, uint8_t addr, uint8_t data);
         uint8_t ReadReg(uint8_t slave, uint8_t addr);
       }

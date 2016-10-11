@@ -4,6 +4,13 @@
 #include <stdint.h>
 #include "i2c.h"
 
+static const uint8_t OLED_ADDR = 0x78 >> 1;
+
+static const uint8_t I2C_COMMAND       = 0x00;
+static const uint8_t I2C_DATA          = 0x40;
+static const uint8_t I2C_CONTINUATION  = 0x00;
+static const uint8_t I2C_SINGLE        = 0x80;
+
 // These are the command bytes
 #define SETCONTRAST 0x81
 #define DISPLAYALLON_RESUME 0xA4
@@ -60,9 +67,6 @@ namespace Anki
       namespace OLED
       {
         void Init(void);
-        void ClearFace(void);
-        void FeedFace(bool rect, const uint8_t *face_bytes);
-        void DisplayDigit(int x, int y, char c);
       }
     }
   }

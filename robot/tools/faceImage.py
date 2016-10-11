@@ -3,12 +3,20 @@
 Python tool for putting an image on the robot's face
 """
 
-import sys, os, time
+import sys, os, time, argparse
 if sys.version_info.major < 3:
     sys.stderr.write("Python 2 is depricated." + os.linesep)
 from PIL import Image
 import robotInterface
 Anki = robotInterface.Anki
+
+parser = argparse.ArgumentParser(description='Stream images to the robot.')
+parser.add_argument('images', metavar='Image', type=str, nargs='+',
+                    help='list of images')
+parser.add_argument('-i', '--invert', dest='invert', action='store_true',
+                    help='invert the images')
+
+args = parser.parse_args()
 
 SCREEN_WIDTH = 128
 SCREEN_HEIGHT = 64
@@ -65,12 +73,16 @@ def loadImage(filePathName, invert=False):
         return Anki.Cozmo.AnimKeyFrame.FaceImage(packed)
 
 def SendFaceImage(*args):
-    img = loadImage(sys.argv[1], (len(sys.argv) > 2 and sys.argv[2] == '-i'))
     robotInterface.Send(Anki.Cozmo.RobotInterface.EngineToRobot(animAudioSilence=Anki.Cozmo.AnimKeyFrame.AudioSilence()))
     robotInterface.Send(Anki.Cozmo.RobotInterface.EngineToRobot(animStartOfAnimation=Anki.Cozmo.AnimKeyFrame.StartOfAnimation()))
-    robotInterface.Send(Anki.Cozmo.RobotInterface.EngineToRobot(animAudioSilence=Anki.Cozmo.AnimKeyFrame.AudioSilence()))
-    robotInterface.Send(Anki.Cozmo.RobotInterface.EngineToRobot(animAudioSilence=Anki.Cozmo.AnimKeyFrame.AudioSilence()))
-    robotInterface.Send(Anki.Cozmo.RobotInterface.EngineToRobot(animFaceImage=img))
+
+    for fn in args.images:
+        img = loadImage(fn, args.invert)
+        robotInterface.Send(Anki.Cozmo.RobotInterface.EngineToRobot(animAudioSilence=Anki.Cozmo.AnimKeyFrame.AudioSilence()))
+        robotInterface.Send(Anki.Cozmo.RobotInterface.EngineToRobot(animAudioSilence=Anki.Cozmo.AnimKeyFrame.AudioSilence()))
+        robotInterface.Send(Anki.Cozmo.RobotInterface.EngineToRobot(animFaceImage=img))
+        time.sleep(1.0 / 15)
+
     robotInterface.Send(Anki.Cozmo.RobotInterface.EngineToRobot(animEndOfAnimation=Anki.Cozmo.AnimKeyFrame.EndOfAnimation()))
 
 if __name__ == "__main__":
@@ -81,4 +93,3 @@ if __name__ == "__main__":
         time.sleep(3600)
     except KeyboardInterrupt:
         pass
-

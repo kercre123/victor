@@ -139,11 +139,8 @@ namespace Anki
         MicroWait(50);
         GPIO_SET(GPIO_CAM_RESET_N, PIN_CAM_RESET_N);
 
-        I2C::FullStop();
         I2C::ReadReg(I2C_ADDR, 0xF0);
-        I2C::FullStop();
         I2C::ReadReg(I2C_ADDR, 0xF1);
-        I2C::FullStop();
         uint8_t id = I2C::ReadReg(I2C_ADDR, 0xFB);
 
         // Send command array to camera
@@ -154,10 +151,8 @@ namespace Anki
 
           if (!p1 && !p2) break ;
 
-          I2C::FullStop();
           I2C::WriteReg(I2C_ADDR, p1, p2);
         }
-        I2C::FullStop();
 
         // TODO: Check that the GPIOs are okay
         //for (u8 i = 1; i; i <<= 1)
