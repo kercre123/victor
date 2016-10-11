@@ -37,26 +37,26 @@ void Timer::init()
   NRF_RTC1->TASKS_START = 1;
 }
 
-__asm void MicroWait(u32 microseconds)
+void MicroWait(u32 microseconds)
 {
-loop
-    SUBS r0, r0, #1
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    BNE loop
-    BX lr
+  
+  loop: __asm {
+      SUBS microseconds, microseconds, #1
+      NOP
+      NOP
+      NOP
+      NOP
+      NOP
+      NOP
+      NOP
+      NOP
+      NOP
+      NOP
+      NOP
+      NOP
+      BNE loop
+  }
 }
-
 
 extern "C" void RTC1_IRQHandler() {
   if (NRF_RTC1->EVENTS_COMPARE[0]) {

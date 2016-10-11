@@ -17,6 +17,7 @@
 #include "temp.h"
 #include "head.h"
 #include "tasks.h"
+#include "ota.h"
 
 static const int MaxContactTime     = 30 * 60 * (1000 / 20);  // (30min) 20ms per count
 static const int MaxChargedTime     = MaxContactTime * 8; // 4 hours
@@ -245,6 +246,36 @@ void Battery::updateOperatingMode() {
       Motors::disable(true);
       Head::enterLowPowerMode();
       Battery::powerOff();
+
+      break ;
+    
+    case BODY_OTA_MODE:
+      // NOTE: DMA Devices (RADIO, SPI) and SD MUST be disabled
+      // for this to work properly.  Do not reenable IRQs from
+      // this point forward or you could murder all the cozmos
+
+      __disable_irq();
+
+      NVIC_DisableIRQ(TIMER1_IRQn);
+      NVIC_DisableIRQ(UART0_IRQn);
+      NVIC_DisableIRQ(GPIOTE_IRQn);
+      NVIC_DisableIRQ(RTC1_IRQn);
+      NVIC_DisableIRQ(SWI2_IRQn);
+
+      Motors::disable(true);
+    
+      NRF_RTC0->TASKS_STOP = 1;
+      NRF_TIMER0->TASKS_STOP = 1;
+      NRF_TIMER1->TASKS_STOP = 1;
+      NRF_TIMER2->TASKS_STOP = 1;
+
+      // Disable charger during OTA to prevent battery damage
+      nrf_gpio_pin_clear(PIN_CHARGE_EN);
+
+      // Disconnect charge contact comms
+      NRF_GPIO->PIN_CNF[PIN_TX_VEXT] = GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos;
+
+      EnterOTA();
 
       break ;
     

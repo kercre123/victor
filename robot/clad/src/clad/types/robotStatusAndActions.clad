@@ -95,6 +95,7 @@ enum int_8 BodyRadioMode
   BODY_ACCESSORY_OPERATING_MODE = 0x1,
   BODY_IDLE_OPERATING_MODE      = 0x2,
   BODY_FORCE_RECOVERY           = 0x3,
+  BODY_OTA_MODE                 = 0x40,
   BODY_BATTERY_CHARGE_TEST_MODE = 0x78
 }
 

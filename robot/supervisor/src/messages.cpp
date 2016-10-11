@@ -907,7 +907,7 @@ namespace Anki {
       {
         // Nothing to do here
       }
-      void Process_bodyRestart(RobotInterface::OTA::BodyRestart const&)
+      void Process_bodyEnterOTA(RobotInterface::OTA::BodyEnterOTA const&)
       {
         // Nothing to do here
       }

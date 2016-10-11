@@ -55,6 +55,13 @@ void Head::init()
   txRxIndex = 0;
   lowPowerMode = false;
 
+  // Configure pin so it is open-drain
+  NRF_GPIO->PIN_CNF[PIN_TX_HEAD] = (GPIO_PIN_CNF_SENSE_Disabled << GPIO_PIN_CNF_SENSE_Pos)
+                                | (GPIO_PIN_CNF_DRIVE_H0S1 << GPIO_PIN_CNF_DRIVE_Pos)
+                                | (GPIO_PIN_CNF_PULL_Disabled << GPIO_PIN_CNF_PULL_Pos)
+                                | (GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos)
+                                | (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos);
+
   // Power on the peripheral
   NRF_UART0->POWER = 1;
 
@@ -99,13 +106,6 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
 
   switch (mode) {
     case TRANSMIT_SEND:
-      // Configure pin so it is open-drain
-      NRF_GPIO->PIN_CNF[PIN_TX_HEAD] = (GPIO_PIN_CNF_SENSE_Disabled << GPIO_PIN_CNF_SENSE_Pos)
-                                    | (GPIO_PIN_CNF_DRIVE_H0D1 << GPIO_PIN_CNF_DRIVE_Pos)
-                                    | (GPIO_PIN_CNF_PULL_Disabled << GPIO_PIN_CNF_PULL_Pos)
-                                    | (GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos)
-                                    | (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos);
-
       // Prevent debug words from transmitting
       NRF_UART0->PSELRXD = 0xFFFFFFFF;
       NRF_UART0->PSELTXD = PIN_TX_HEAD;
@@ -115,8 +115,6 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
 
       break ;
     case TRANSMIT_RECEIVE:
-      nrf_gpio_cfg_input(PIN_TX_HEAD, NRF_GPIO_PIN_NOPULL);
-
       NRF_UART0->PSELTXD = 0xFFFFFFFF;
       NRF_UART0->PSELRXD = PIN_TX_HEAD;
       NRF_UART0->BAUDRATE = NRF_BAUD(spine_baud_rate);

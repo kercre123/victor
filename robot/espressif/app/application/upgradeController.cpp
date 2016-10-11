@@ -234,7 +234,7 @@ namespace UpgradeController {
           bufferSize = AnimationController::SuspendAndGetBuffer(&buffer);
           timer = system_get_time() + 20000; // 20 ms
           phase = OTAT_Enter_Recovery;
-          RTIP::SendMessage(NULL, 0, RobotInterface::EngineToRobot::Tag_bodyRestart);
+          RTIP::SendMessage(NULL, 0, RobotInterface::EngineToRobot::Tag_bodyEnterOTA);
           // Explicit fallthrough to next case
         }
       }

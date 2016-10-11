@@ -386,7 +386,7 @@ union EngineToRobot
   //          FREE SLOT!!!                                  = 0x0A,
   SetHeadlight                  setHeadlight                = 0x0B,
   SetCubeGamma                  setCubeGamma                = 0x0C,
-  OTA::BodyRestart              bodyRestart                 = 0x0D,
+  OTA::BodyEnterOTA             bodyEnterOTA                = 0x0D,
   ReadBodyStorage               readBodyStorage             = 0x0E,
   WriteBodyStorage              writeBodyStorage            = 0x0F,
   CubeID                        setCubeID                   = 0x10,

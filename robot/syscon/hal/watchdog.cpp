@@ -9,6 +9,10 @@ void Watchdog::init(void) {
   NRF_WDT->CRV = 0x8000*5; // 5 seconds before everything explodes
   NRF_WDT->RREN = wdog_channel_mask;
   NRF_WDT->TASKS_START = 1;
+
+  for (int i = 0; i < WDOG_TOTAL_CHANNELS; i++) {
+    NRF_WDT->RR[i] = WDT_RR_RR_Reload;
+  }
 }
 
 void Watchdog::kick(uint8_t channel) {

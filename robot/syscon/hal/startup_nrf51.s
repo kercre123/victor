@@ -61,10 +61,10 @@ __heap_limit
 __Signature     DCD     Reset_Handler
                 DCB     'C','Z','M','0'
                 DCD     __Vectors
-                DCD     0xDEADFACE	; Rom Start
-                DCD     0xDEADFACE	; Rom Finish
-                DCD     0xDEADFACE	; Checksum
-                DCD		0x00000000	; "Evil" byte
+                DCD     0xDEADFACE  ; Rom Start
+                DCD     0xDEADFACE  ; Rom Finish
+                DCD     0xDEADFACE  ; Checksum
+                DCD     0x00000000  ; "Evil" byte
 
                 ; This is the vector table for the application
                 EXPORT  __Vectors
@@ -115,17 +115,11 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     SWI3_IRQHandler           ; 39
                 DCD     SWI4_IRQHandler           ; 40
                 DCD     SWI5_IRQHandler           ; 41
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
-                DCD     0                         ; Reserved
 
 
 __Vectors_End
-
 __Vectors_Size  EQU     __Vectors_End - __Vectors
+        
 
                 AREA    |.text|, CODE, READONLY
 
@@ -139,9 +133,9 @@ Reset_Handler   PROC
                 EXPORT  Reset_Handler             [WEAK]
                 IMPORT  SystemInit
                 IMPORT  __main
-                
+
                 MOVS    R1, #NRF_POWER_RAMONx_RAMxON_ONMODE_Msk
-                
+
                 LDR     R0, =NRF_POWER_RAMON_ADDRESS
                 LDR     R2, [R0]
                 ORRS    R2, R2, R1

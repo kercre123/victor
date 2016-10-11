@@ -16,8 +16,8 @@ typedef uint16_t commandWord;
 
 // These are used for the Head communication protocol
 static const commandWord COMMAND_HEADER = 0x5478;
-static const uint32_t		 BODY_RECOVERY_NOTICE = 0x58525a43;
-static const uint32_t		 HEAD_RECOVERY_NOTICE = 0x49485a43;
+static const uint32_t    BODY_RECOVERY_NOTICE = 0x58525a43;
+static const uint32_t    HEAD_RECOVERY_NOTICE = 0x49485a43;
 
 #ifndef SHA1_BLOCK_SIZE
 #define SHA1_BLOCK_SIZE 20

@@ -64,7 +64,7 @@ static uint32_t led_value[LIGHT_COUNT];
 void Backpack::init()
 {
   setLayer(BPL_IMPULSE);
-  setLights(BPL_IMPULSE, BackpackLights::all_off);
+  setLights(BPL_IMPULSE, BackpackLights::disconnected);
   
   // Clear out backpack leds
   nrf_gpio_cfg_input(PIN_LED1, NRF_GPIO_PIN_NOPULL);
@@ -91,7 +91,7 @@ static void setImpulsePattern(void) {
     case CHARGE_OFF_CHARGER:
       setLights(BPL_IMPULSE, isBatteryLow ? BackpackLights::low_battery : BackpackLights::disconnected);
       break ;
-    
+
     case CHARGE_CHARGING:
       setLights(BPL_IMPULSE, BackpackLights::charging);
       break ;
@@ -102,7 +102,7 @@ static void setImpulsePattern(void) {
 
     case CHARGE_CHARGER_OUT_OF_SPEC:
       setLights(BPL_IMPULSE, BackpackLights::low_battery);
-      break ;     
+      break ;
   }
 }
 

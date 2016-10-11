@@ -53,7 +53,7 @@ namespace OTA {
     OTA_Mode,
   }
 
-  message BodyRestart
+  message BodyEnterOTA
   {
   }
 

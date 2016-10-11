@@ -18,8 +18,6 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
-extern void enterOperatingMode(Anki::Cozmo::BodyRadioMode mode);
-
 extern void ResetMissedLogCount();
 
 extern GlobalDataToBody g_dataToBody;
@@ -81,8 +79,8 @@ static void Process_setPropSlot(const SetPropSlot& msg)
   Radio::assignProp(msg.slot, msg.factory_id);
 }
 
-static void Process_bodyRestart(const RobotInterface::OTA::BodyRestart& msg) {
-  NVIC_SystemReset();
+static void Process_bodyEnterOTA(const RobotInterface::OTA::BodyEnterOTA& msg) {
+  Battery::setOperatingMode(Anki::Cozmo::BODY_OTA_MODE);
 }
 
 static void Process_getMfgInfo(const RobotInterface::GetManufacturingInfo& msg)
