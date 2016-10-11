@@ -28,7 +28,7 @@ CALCMONT_DEPS=tools/calcMontgomery.cpp ../crypto/bignum.cpp
 WIFI_BINARY=$(BUILD_DIR)/esp.user.bin
 RTIP_BINARY=$(BUILD_DIR)/robot.axf
 BODY_BINARY=$(BUILD_DIR)/syscon.axf
-MAP_FILES=$(BUILD_DIR)/esp.map $(BUILD_DIR)/robot.map $(BUILD_DIR)/syscon.map
+MAP_FILES=$(BUILD_DIR)/esp.map $(BUILD_DIR)/esp.S $(BUILD_DIR)/robot.map $(BUILD_DIR)/syscon.map
 OTA_FILE=$(RELEASE_DIR)/cozmo.safe
 
 .PHONY: clean AnkiLog purgeAnkiLog verboseAnkiLog esp k02 nrf sim fresh app espBuild server.1 server.2 server.3
@@ -129,6 +129,7 @@ espBuild: esp AnkiLog
 	make -C espressif/app ROBOT_INC_DIR=$$PWD/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3 LD_FILE=../ld/espressif_application.ld
 	$(PY) ./tools/wifiAppImageHeader.py ./espressif/bin/upgrade/user1.2048.new.3.bin $(WIFI_BINARY)
 	cp espressif/app/esp.map $(BUILD_DIR)/esp.map
+	cp ./espressif/bin/upgrade/user1.2048.new.3.S $(BUILD_DIR)/esp.S
 
 $(OTA_FILE): Makefile $(RELEASE_DIR) $(WIFI_BINARY) $(RTIP_BINARY) $(BODY_BINARY) tools/sign.py python
 	$(PY) ./tools/sign.py -c $(BUILD_NUMBER) $(SIGN_FLAGS) --wifi $(WIFI_BINARY) --rtip $(RTIP_BINARY)  --body $(BODY_BINARY) $@
