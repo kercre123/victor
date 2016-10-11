@@ -1183,6 +1183,8 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   public void ShowInterruptionQuitGameView(string titleKey, string descriptionKey) {
+    _StateMachine.Stop();
+
     SoftEndGameRobotReset();
 
     if (_SharedMinigameViewInstance != null) {
