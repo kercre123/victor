@@ -126,6 +126,7 @@ public class Robot : IRobot {
   public const float kDefaultRadPerSec = 4.3f;
   public const float kPanAccel_radPerSec2 = 10f;
   public const float kPanTolerance_rad = 5 * Mathf.Deg2Rad;
+  private const float kDefaultResetBackupSpeed = 30.0f;
 
   #endregion
 
@@ -533,24 +534,11 @@ public class Robot : IRobot {
   }
 
   public void TryResetHeadAndLift(Action onComplete) {
-    // if there is a light cube right in front of cozmo, lowering
-    // the lift will cause him to lift up. Instead, rotate 90 degrees
-    // and try lowering lift
     foreach (var lightCube in LightCubes.Values) {
       if (IsLightCubeInPickupRange(lightCube)) {
-        // there is a light cube in the way, lets try turning...
-        TurnInPlace(Mathf.PI * 0.5f, 1000, 1000, (success) => {
-          if (!success) {
-            // we failed to turn for whatever reason (probably due to an interrupt, let's just give up.
-            if (onComplete != null) {
-              onComplete();
-            }
-          }
-          else {
-            // done turning, let's check again
-            TryResetHeadAndLift(onComplete);
-          }
-
+        // there is a light cube in the way, so we need to backup first
+        DriveStraightAction(kDefaultResetBackupSpeed, -(CozmoUtil.kOriginToLowLiftDDistMM), callback: (success) => {
+          TryResetHeadAndLift(onComplete);
         });
         return;
       }
