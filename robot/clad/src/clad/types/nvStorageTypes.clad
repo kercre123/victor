@@ -11,7 +11,7 @@ namespace NVStorage {
   enum uint_32 NVConst
   {
     NVConst_MIN_ADDRESS      = 0x180000,
-    NVConst_MAX_ADDRESS      = 0x1fc000,
+    NVConst_MAX_ADDRESS      = 0x1c0000,
 
     NVConst_FACTORY_DATA_BIT = 0x80000000,  // aka playpen tags
     NVConst_FIXTURE_DATA_BIT = 0xC0000000,  // aka pre-playpen tags

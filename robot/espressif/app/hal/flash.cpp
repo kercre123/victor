@@ -12,10 +12,13 @@ extern "C" {
   #include "driver/rtc.h"
 }
 
+#define OLD_NV_STORAGE_SECTOR (0x1c0)
+
 static bool writeOkay(const u32 address, const u32 length)
 {
+  if ((address + length) <= address) return false; // Check for integer overflow or 0 length
   // NVStorage region is default okay region
-  if ((address >= (NV_STORAGE_SECTOR * SECTOR_SIZE)) && ((address + length) <= (ESP_INIT_DATA_SECTOR * SECTOR_SIZE))) return true;
+  else if ((address >= (NV_STORAGE_SECTOR * SECTOR_SIZE)) && ((address + length) <= (OLD_NV_STORAGE_SECTOR * SECTOR_SIZE))) return true;
   else // App image regions also okay if for other image
   {
     switch (GetImageSelection())
