@@ -1860,7 +1860,7 @@ namespace Vision {
     OkaoResult okaoResult = OKAO_NORMAL;
     
     tempAlbumHandle = OKAO_FR_CreateAlbumHandle(_okaoCommonHandle,
-                                                kMaxFacesInAlbum * kMaxAlbumEntriesPerFace,
+                                                kMaxTotalAlbumEntries,
                                                 kMaxEnrollDataPerAlbumEntry);
     if(tempAlbumHandle == NULL) {
       PRINT_NAMED_WARNING("FaceRecognizer.GetSerializedAlbum.AlbumHandleFail",
@@ -1871,6 +1871,14 @@ namespace Vision {
     s32 permanentIdCount = 0;
     for(auto const& enrollData : _enrollmentData)
     {
+      if(permanentIdCount >= kMaxFacesInAlbum)
+      {
+        PRINT_NAMED_WARNING("FaceRecognizer.GetSerializedAlbum.MaxNumFacesReached",
+                            "Can't save more than %d faces",
+                            kMaxFacesInAlbum);
+        break;
+      }
+      
       const auto faceID = enrollData.first;
       if(enrollData.second.IsForThisSessionOnly() == false)
       {

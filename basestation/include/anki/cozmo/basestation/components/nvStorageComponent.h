@@ -51,6 +51,9 @@ public:
   NVStorageComponent(Robot& inRobot, const CozmoContext* context);
   virtual ~NVStorageComponent() {};
   
+  // Get the maximum number of bytes that can be saved for the given tag
+  u32 GetMaxSizeForEntryTag(NVStorage::NVEntryTag tag);
+  
   // Save data to robot under the given tag.
   // Returns true if request was successfully sent.
   // If broadcastResultToGame == true, each write (there are potentially multiple)
@@ -277,10 +280,6 @@ private:
   
   // Initialize _maxSizeTable
   void InitSizeTable();
-  
-  // Get the maximum number of bytes that can be saved for the given tag
-  u32 GetMaxSizeForEntryTag(NVStorage::NVEntryTag tag);
-  
   
   // ====== Message retry ========
   NVStorage::NVCommand _lastCommandSent;

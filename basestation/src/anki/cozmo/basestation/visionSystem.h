@@ -296,8 +296,8 @@ namespace Cozmo {
     
     Result SaveFaceAlbum(const std::string& albumName);
     
-    void GetSerializedFaceData(std::vector<u8>& albumData,
-                               std::vector<u8>& enrollData) const;
+    Result GetSerializedFaceData(std::vector<u8>& albumData,
+                                 std::vector<u8>& enrollData) const;
     
     Result SetSerializedFaceData(const std::vector<u8>& albumData,
                                  const std::vector<u8>& enrollData,

@@ -3818,11 +3818,11 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  void VisionSystem::GetSerializedFaceData(std::vector<u8>& albumData,
-                                           std::vector<u8>& enrollData) const
+  Result VisionSystem::GetSerializedFaceData(std::vector<u8>& albumData,
+                                             std::vector<u8>& enrollData) const
   {
     ASSERT_NAMED(nullptr != _faceTracker, "VisionSystem.GetSerializedFaceData.NullFaceTracker");
-    _faceTracker->GetSerializedData(albumData, enrollData);
+    return _faceTracker->GetSerializedData(albumData, enrollData);
   }
   
   Result VisionSystem::SetSerializedFaceData(const std::vector<u8>& albumData,

@@ -1879,8 +1879,35 @@ namespace Cozmo {
     
     // Get album data from vision system
     this->Lock();
-    _visionSystem->GetSerializedFaceData(_albumData, _enrollData);
+    lastResult = _visionSystem->GetSerializedFaceData(_albumData, _enrollData);
     this->Unlock();
+    
+    if(lastResult != RESULT_OK)
+    {
+      PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbumToRobot.GetSerializedFaceDataFailed",
+                          "GetSerializedFaceData failed");
+      return lastResult;
+    }
+    
+    const u32 maxAlbumSize = _robot.GetNVStorageComponent().GetMaxSizeForEntryTag(NVStorage::NVEntryTag::NVEntry_FaceAlbumData);
+    if(_albumData.size() >= maxAlbumSize)
+    {
+      PRINT_NAMED_ERROR("VisionComponent.SaveFaceAlbumToRobot.AlbumDataTooLarge",
+                        "Album data is %zu max size is %u",
+                        _albumData.size(),
+                        maxAlbumSize);
+      return RESULT_FAIL_INVALID_SIZE;
+    }
+    
+    const u32 maxEnrollSize = _robot.GetNVStorageComponent().GetMaxSizeForEntryTag(NVStorage::NVEntryTag::NVEntry_FaceEnrollData);
+    if(_enrollData.size() >= maxEnrollSize)
+    {
+      PRINT_NAMED_ERROR("VisionComponent.SaveFaceAlbumToRobot.EnrollDataTooLarge",
+                        "Enroll data is %zu max size is %u",
+                        _enrollData.size(),
+                        maxEnrollSize);
+      return RESULT_FAIL_INVALID_SIZE;
+    }
 
     // Callback to display result when NVStorage.Write finishes
     NVStorageComponent::NVStorageWriteEraseCallback saveAlbumCallback = [this,albumCallback](NVStorage::NVResult result) {
