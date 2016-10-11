@@ -22,14 +22,6 @@ namespace Cozmo.Settings {
     private AnkiTextLabel _AppRunLabel;
 
     [SerializeField]
-    private CozmoButton _AcknowledgementsLinkButton;
-
-    private ScrollingTextView _AcknowledgementsDialogInstance;
-
-    [SerializeField]
-    private string _AcknowledgementsTextFileName;
-
-    [SerializeField]
     private CozmoButton _SupportButton;
 
     [SerializeField]
@@ -65,7 +57,6 @@ namespace Cozmo.Settings {
       _SerialNumberLabel.FormattingArgs = new object[] { robot.SerialNumber.ToString("X8") };
 
       string dasEventViewName = "settings_version_panel";
-      _AcknowledgementsLinkButton.Initialize(HandleAcknowledgementsLinkButtonTapped, "acknowledgements_link", dasEventViewName);
 
       _SupportButton.Initialize(HandleOpenSupportViewButtonTapped, "support_button", dasEventViewName);
 
@@ -77,9 +68,7 @@ namespace Cozmo.Settings {
     private void OnDestroy() {
       RobotEngineManager.Instance.RemoveCallback<DeviceDataMessage>(HandleDeviceDataMessage);
       RobotEngineManager.Instance.RemoveCallback<RestoreRobotStatus>(HandleEraseRobotStatus);
-      if (_AcknowledgementsDialogInstance != null) {
-        _AcknowledgementsDialogInstance.CloseViewImmediately();
-      }
+
       if (_SupportInfoViewInstance != null) {
         _SupportInfoViewInstance.CloseViewImmediately();
         _SupportInfoViewInstance.OnOpenRestoreCozmoViewButtonTapped -= HandleOpenRestoreCozmoViewButtonTapped;
@@ -129,15 +118,6 @@ namespace Cozmo.Settings {
             break;
           }
         }
-      }
-    }
-
-    private void HandleAcknowledgementsLinkButtonTapped() {
-      if (_AcknowledgementsDialogInstance == null) {
-        _AcknowledgementsDialogInstance = UIManager.OpenView(AlertViewLoader.Instance.ScrollingTextViewPrefab,
-                                                             (ScrollingTextView view) => { view.DASEventViewName = "acknowledgements_view"; });
-        _AcknowledgementsDialogInstance.Initialize(Localization.Get(LocalizationKeys.kSettingsVersionPanelAcknowledgementsModalTitle),
-                                                   Localization.ReadLocalizedTextFromFile(_AcknowledgementsTextFileName));
       }
     }
 

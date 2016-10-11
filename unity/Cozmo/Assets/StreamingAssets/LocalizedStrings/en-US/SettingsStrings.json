@@ -182,5 +182,8 @@
   },
   "settings.volumePanel.robotToggle.medium": {
     "translation": "Medium"
+  },
+  "settings.acknowledgementsPanel.title": {
+    "translation": "Acknowledgements"
   }
 }

@@ -36,6 +36,15 @@ namespace Cozmo.CheckInFlow.UI {
     private string _PrivacyPolicyFileName;
 
     [SerializeField]
+    private CozmoButton _TermsOfUseButton;
+
+    [SerializeField]
+    private CanvasGroup _TermsOfUseCanvasGroup;
+
+    [SerializeField]
+    private string _TermsOfUseFileName;
+
+    [SerializeField]
     private Cozmo.UI.CozmoButton _EnvelopeButton;
 
     [SerializeField]
@@ -122,6 +131,7 @@ namespace Cozmo.CheckInFlow.UI {
 
     private void Awake() {
       _EnvelopeContainer.SetActive(false);
+      _EnvelopeButton.gameObject.SetActive(false);
       _TimelineReviewContainer.SetActive(false);
       _ConnectContainer.SetActive(false);
 
@@ -155,6 +165,11 @@ namespace Cozmo.CheckInFlow.UI {
         view.Initialize(Localization.Get(LocalizationKeys.kPrivacyPolicyTitle), Localization.ReadLocalizedTextFromFile(_PrivacyPolicyFileName));
       }, "privacy_policy_button", "checkin_dialog");
 
+      _TermsOfUseButton.Initialize(() => {
+        ScrollingTextView view = UIManager.OpenView<ScrollingTextView>(AlertViewLoader.Instance.ScrollingTextViewPrefab, (ScrollingTextView v) => { v.DASEventViewName = "terms_of_use_view"; });
+        view.Initialize(Localization.Get(LocalizationKeys.kLabelTermsOfUse), Localization.ReadLocalizedTextFromFile(_TermsOfUseFileName));
+      }, "terms_of_use_button", "checkin_dialog");
+
       _EnvelopeButton.Initialize(HandleEnvelopeButton, "envelope_button", "checkin_dialog");
       _EnvelopeButton.Text = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName;
 
@@ -179,6 +194,7 @@ namespace Cozmo.CheckInFlow.UI {
 
     private void ShowCheckInRewardFlowUI() {
       _EnvelopeContainer.SetActive(true);
+      _EnvelopeButton.gameObject.SetActive(true);
     }
 
     private void ShowNormalConnectFlowUI() {
@@ -226,7 +242,7 @@ namespace Cozmo.CheckInFlow.UI {
       _EnvelopeOpenEventScript.OnEnvelopeOpen += HandleEnvelopeOpenedEvent;
       _EnvelopeOpenEventScript.OnEnvelopeStartExit += HandleEnvelopeStartExitEvent;
 
-      FadeOutPrivacyPolicyButton();
+      FadeOutPolicyButtons();
     }
 
     public void HandleEnvelopeOpenedEvent() {
@@ -632,7 +648,7 @@ namespace Cozmo.CheckInFlow.UI {
     private float _ConnectButtonFadeDuration = 1.5f;
 
     private void HandleAllStreakAnimationEnd() {
-      FadeInPrivacyPolicyButton();
+      FadeInPolicyButtons();
       _ConnectContainer.SetActive(true);
 
       Sequence rewardSequence = DOTween.Sequence();
@@ -880,20 +896,26 @@ namespace Cozmo.CheckInFlow.UI {
       _MainUISequence.Play();
     }
 
-    public void FadeOutPrivacyPolicyButton() {
+    public void FadeOutPolicyButtons() {
       _PrivacyPolicyButton.Interactable = false;
-      Sequence sequence = DOTween.Sequence();
-      sequence.Append(_PrivacyPolicyCanvasGroup.DOFade(0f, UIDefaultTransitionSettings.Instance.FadeOutTransitionDurationSeconds)
+      _TermsOfUseButton.Interactable = false;
+
+      Sequence policySeqeuence = DOTween.Sequence();
+      policySeqeuence.Append(_PrivacyPolicyCanvasGroup.DOFade(0f, UIDefaultTransitionSettings.Instance.FadeOutTransitionDurationSeconds)
                       .SetEase(UIDefaultTransitionSettings.Instance.FadeOutEasing));
-      sequence.Play();
+      policySeqeuence.Join(_TermsOfUseCanvasGroup.DOFade(0f, UIDefaultTransitionSettings.Instance.FadeOutTransitionDurationSeconds)
+                      .SetEase(UIDefaultTransitionSettings.Instance.FadeOutEasing));
     }
 
-    public void FadeInPrivacyPolicyButton() {
+    public void FadeInPolicyButtons() {
       _PrivacyPolicyButton.Interactable = true;
-      Sequence sequence = DOTween.Sequence();
-      sequence.Append(_PrivacyPolicyCanvasGroup.DOFade(1f, UIDefaultTransitionSettings.Instance.FadeInTransitionDurationSeconds)
+      _TermsOfUseButton.Interactable = true;
+
+      Sequence policySeqeuence = DOTween.Sequence();
+      policySeqeuence.Append(_PrivacyPolicyCanvasGroup.DOFade(1f, UIDefaultTransitionSettings.Instance.FadeInTransitionDurationSeconds)
                       .SetEase(UIDefaultTransitionSettings.Instance.FadeInEasing));
-      sequence.Play();
+      policySeqeuence.Join(_TermsOfUseCanvasGroup.DOFade(1f, UIDefaultTransitionSettings.Instance.FadeInTransitionDurationSeconds)
+                      .SetEase(UIDefaultTransitionSettings.Instance.FadeInEasing));
     }
   }
 }

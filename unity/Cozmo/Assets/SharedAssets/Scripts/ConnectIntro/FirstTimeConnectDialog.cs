@@ -32,6 +32,12 @@ public class FirstTimeConnectDialog : MonoBehaviour {
   [SerializeField]
   private string _PrivacyPolicyFileName;
 
+  [SerializeField]
+  private Cozmo.UI.CozmoButton _TermsOfUseButton;
+
+  [SerializeField]
+  private string _TermsOfUseFileName;
+
   private void Awake() {
 
     DasTracker.Instance.TrackFirstTimeConnectStarted();
@@ -47,6 +53,11 @@ public class FirstTimeConnectDialog : MonoBehaviour {
       ScrollingTextView view = UIManager.OpenView<ScrollingTextView>(AlertViewLoader.Instance.ScrollingTextViewPrefab, (ScrollingTextView v) => { v.DASEventViewName = "privacy_policy_view"; });
       view.Initialize(Localization.Get(LocalizationKeys.kPrivacyPolicyTitle), Localization.ReadLocalizedTextFromFile(_PrivacyPolicyFileName));
     }, "privacy_policy_button", "first_time_connect_dialog");
+
+    _TermsOfUseButton.Initialize(() => {
+      ScrollingTextView view = UIManager.OpenView<ScrollingTextView>(AlertViewLoader.Instance.ScrollingTextViewPrefab, (ScrollingTextView v) => { v.DASEventViewName = "terms_of_use_view"; });
+      view.Initialize(Localization.Get(LocalizationKeys.kLabelTermsOfUse), Localization.ReadLocalizedTextFromFile(_TermsOfUseFileName));
+    }, "terms_of_use_button", "first_time_connect_dialog");
 
     _StartButton.Text = Localization.Get(LocalizationKeys.kLabelStart);
     UIManager.Instance.BackgroundColorController.SetBackgroundColor(Cozmo.UI.BackgroundColorController.BackgroundColor.Yellow);
