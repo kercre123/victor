@@ -205,10 +205,6 @@ namespace SpeedTap {
       AnimationTrigger animationEventToSend = AnimationTrigger.Count;
       bool highIntensity = _SpeedTapGame.IsHighIntensityGame();
 
-      if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.RunPressDemo) {
-        highIntensity = true;
-      }
-
       if (_CurrentWinner == PointWinner.Player) {
         animationEventToSend = (highIntensity) ?
                   AnimationTrigger.OnSpeedtapGamePlayerWinHighIntensity : AnimationTrigger.OnSpeedtapGamePlayerWinLowIntensity;

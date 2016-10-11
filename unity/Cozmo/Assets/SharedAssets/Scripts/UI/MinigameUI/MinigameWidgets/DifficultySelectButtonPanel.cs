@@ -62,13 +62,8 @@ public class DifficultySelectButtonPanel : MonoBehaviour {
 
     _SelectedDifficultyIndex = -1;
 
-    if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.RunPressDemo) {
-      // HACK: press demo hack wants first option to be selected by default
-      SelectOption(0);
-    }
-    else {
-      SelectOption(highestDifficultyAvailable);
-    }
+    SelectOption(highestDifficultyAvailable);
+
   }
 
   private void SelectOption(int index) {

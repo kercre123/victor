@@ -555,9 +555,6 @@ public abstract class GameBase : MonoBehaviour {
       RaiseMiniGameWin();
     }
     else {
-      if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.RunPressDemo) {
-        HandleUnlockRewards();
-      }
       if (endState == EndState.CozmoWin) {
         RaiseMiniGameLose();
       }

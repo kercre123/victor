@@ -205,41 +205,23 @@ namespace SpeedTap {
 
     // Set up Difficulty Settings that are not round specific
     protected override void OnDifficultySet(int difficulty) {
-      // HACK: lauren requested that in the press demo difficulty select screen
-      // actually means cozmo skill select instead.
-      if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.RunPressDemo) {
-        SkillSystem.Instance.SetDebugSkillsForGame(difficulty, difficulty, difficulty);
+      Rules = GetRules((SpeedTapRuleSet)difficulty);
+      _CurrentDifficultySettings = null;
+      for (int i = 0; i < _AllDifficultySettings.Count; i++) {
+        if (_AllDifficultySettings[i].DifficultyID == difficulty) {
+          _CurrentDifficultySettings = _AllDifficultySettings[i];
+          break;
+        }
+      }
+      if (_CurrentDifficultySettings == null) {
+        DAS.Warn("SpeedTapGame.OnDifficultySet.NoValidSettingFound", string.Empty);
         _CurrentDifficultySettings = _AllDifficultySettings[0];
-        Rules = GetRules((SpeedTapRuleSet)0);
-        Rules.SetUsableColors(_CurrentDifficultySettings.Colors);
-
-        CozmoMistakeChance = SkillSystem.Instance.GetSkillVal(_kWrongTapChance);
-        MinTapDelay_percent = SkillSystem.Instance.GetSkillVal(_kTapDelayMin);
-        MaxTapDelay_percent = SkillSystem.Instance.GetSkillVal(_kTapDelayMax);
-
-        DAS.Info("SpeedTapGame.OnDifficultySet", "CozmoMistakeChance: " + CozmoMistakeChance);
-        DAS.Info("SpeedTapGame.OnDifficultySet", "MinTapDelay_percent: " + MinTapDelay_percent);
-        DAS.Info("SpeedTapGame.OnDifficultySet", "MaxTapDelay_percent: " + MaxTapDelay_percent);
       }
       else {
-        Rules = GetRules((SpeedTapRuleSet)difficulty);
-        _CurrentDifficultySettings = null;
-        for (int i = 0; i < _AllDifficultySettings.Count; i++) {
-          if (_AllDifficultySettings[i].DifficultyID == difficulty) {
-            _CurrentDifficultySettings = _AllDifficultySettings[i];
-          }
-        }
-        if (_CurrentDifficultySettings == null) {
-          DAS.Warn("SpeedTapGame.OnDifficultySet.NoValidSettingFound", string.Empty);
-          _CurrentDifficultySettings = _AllDifficultySettings[0];
-        }
-        else {
-          if (_CurrentDifficultySettings.Colors != null && _CurrentDifficultySettings.Colors.Length > 0) {
-            Rules.SetUsableColors(_CurrentDifficultySettings.Colors);
-          }
+        if (_CurrentDifficultySettings.Colors != null && _CurrentDifficultySettings.Colors.Length > 0) {
+          Rules.SetUsableColors(_CurrentDifficultySettings.Colors);
         }
       }
-
     }
 
     protected override void CleanUpOnDestroy() {

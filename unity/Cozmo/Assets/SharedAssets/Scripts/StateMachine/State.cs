@@ -37,9 +37,7 @@ public class State {
   }
 
   protected void ShowDontMoveCozmoView() {
-    if (!DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.RunPressDemo) {
-      // Show an alert view that quits the game
-      _StateMachine.GetGame().ShowDontMoveCozmoAlertView();
-    }
+    // Show an alert view that quits the game
+    _StateMachine.GetGame().ShowDontMoveCozmoAlertView();
   }
 }

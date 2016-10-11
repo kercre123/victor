@@ -289,24 +289,15 @@ public class ConnectionFlow : MonoBehaviour {
     PlayScanLoopAudio(false);
 
     _SecuringConnectionScreenInstance.OnScreenComplete -= HandleSecuringConnectionScreenDone;
-    GameObject.Destroy(_SecuringConnectionScreenInstance.gameObject);
+
 
     _ConnectionFlowBackgroundInstance.SetStateComplete(2);
 
-    // press demo skips the wake up seqeuence since it has its own flow
-    // for snoring/wake-up.
-    if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.RunPressDemo) {
-      HandleWakeAnimationComplete(true);
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
+      Invoke("TransitionConnectionFlowToPullCubeTabs", ConnectionFlowDelay);
     }
     else {
-      if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
-        ShowPullCubeTabsFlow();
-        UIManager.CloseView(_ConnectionFlowBackgroundInstance);
-        _ConnectionFlowBackgroundInstance = null;
-      }
-      else {
-        CheckForRestoreRobotFlow();
-      }
+      CheckForRestoreRobotFlow();
     }
   }
 
@@ -361,7 +352,10 @@ public class ConnectionFlow : MonoBehaviour {
     FinishConnectionFlow();
   }
 
-  private void ShowPullCubeTabsFlow() {
+  private void TransitionConnectionFlowToPullCubeTabs() {
+    GameObject.Destroy(_SecuringConnectionScreenInstance.gameObject);
+    UIManager.CloseView(_ConnectionFlowBackgroundInstance);
+    _ConnectionFlowBackgroundInstance = null;
     _PullCubeTabViewInstance = UIManager.OpenView(_PullCubeTabViewPrefab);
     _PullCubeTabViewInstance.ViewClosed += HandlePullCubeTabsCompeted;
   }
@@ -386,11 +380,6 @@ public class ConnectionFlow : MonoBehaviour {
     if (ConnectionFlowComplete != null) {
       ConnectionFlowComplete();
     }
-  }
-
-  private void ConnectToEngine() {
-    RobotEngineManager.Instance.Disconnect();
-    RobotEngineManager.Instance.Connect(RobotEngineManager.kEngineIP);
   }
 
   private void ConnectToRobot() {
