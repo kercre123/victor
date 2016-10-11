@@ -135,7 +135,7 @@ class ReliableTransport(threading.Thread):
     def ReSendReliableMessage(self, connectionInfo, buffer, messageType, seqIdMin, seqIdMax):
         "Send messages which have already been sent"
         pkt = AnkiReliablePacketHeader(messageType, seqIdMin, seqIdMax, connectionInfo.LastInAckedMessageId).serialize() + buffer
-        assert len(pkt) <= self.maxTotalBytesPerMessage, pkt
+        assert len(pkt) <= self.unreliable.MAX_MESSAGE_SIZE, pkt
         self.unreliable.SendData(connectionInfo.address, pkt)
 
     def QueueMessage(self, *args):

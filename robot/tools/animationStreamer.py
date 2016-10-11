@@ -19,7 +19,7 @@ class AnimationStreamer:
         if self.startingNumBytesPlayed is None:
             self.startingNumBytesPlayed = asm.numAnimBytesPlayed
         self.numBytesPlayed = asm.numAnimBytesPlayed - self.startingNumBytesPlayed
-        #sys.stdout.write("AnimState: {}\r\n".format(str(asm)))
+        #print("AnimState: {}".format(str(asm)))
         self.getMore(self.bufferAvailable)
         
     @property
@@ -31,12 +31,11 @@ class AnimationStreamer:
         self.numBytesSent   = 0
         self.startingNumBytesPlayed = None
         self.haveStarted    = False
-        robotInterface.Init()
         robotInterface.SubscribeToTag(Anki.Cozmo.RobotInterface.RobotToEngine.Tag.animState, self.handleAnimState)
 
     def send(self, msg, tag=0):
         size = len(msg.pack())
-        #print size, self.numBytesSent, self.numBytesPlayed, self.bufferAvailable
+        #print(size, self.numBytesSent, self.numBytesPlayed, self.bufferAvailable)
         assert self.bufferAvailable >= size
         self.numBytesSent += size
         robotInterface.Send(msg)
@@ -86,7 +85,7 @@ class ToneStreamer(AnimationStreamer):
             while True:
                 samples = []
                 while len(samples) < length:
-                    samples.append(muencode.encodeSample(int((math.sin(p))*0x200)))
+                    samples.append(muencode.encodeSample(int((math.sin(p))*0x7f00)))
                     p += 2*math.pi/period
                 yield samples
         self.tonerator = ToneGenerator(Anki.Cozmo.AnimConstants.AUDIO_SAMPLE_RATE/frequency, self.CHUNK_SIZE)

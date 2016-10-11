@@ -221,8 +221,10 @@ class _Dispatcher(IDataReceiver):
                 sys.stdout.write(repr(msg.mainCycleTimeError))
                 sys.stdout.write(os.linesep)
             elif msg.tag == msg.Tag.robotError:
-                sys.stdout.write(repr(msg.robotError))
-                sys.stdout.write(os.linesep)
+                if msg.robotError.fatal:
+                    sys.stderr.write("FATAL ROBOT ERROR: {:x} !{}".format(msg.robotError.error, os.linesep))
+                else:
+                    sys.stderr.write("ROBOT ERROR: {:x}{}".format(msg.robotError.error, os.linesep))
             for tag, subs in self.ReceiveDataSubscribers.items():
                 if msg.tag == tag:
                     for sub in subs:

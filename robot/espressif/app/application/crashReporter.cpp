@@ -220,11 +220,13 @@ void Update()
           case RobotInterface::I2SpiCrash:
           {
             report.dump_length = sizeof(CrashLog_I2Spi)/sizeof(uint32_t);
+            break;
           }
           default:
           {
             AnkiWarn( 206, "CrashReporter.UnknownReporter", 513, "Reporter = %d", 1, record.reporter);
             report.dump_length = 0;
+            break;
           }
         }
         os_memcpy(report.dump, record.dump, report.dump_length);
