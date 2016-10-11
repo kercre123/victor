@@ -68,6 +68,12 @@ def main(cli_args):
                       action='store_true',
                       help='display Webots window')
 
+  parser.add_argument('--failOnError',
+                      dest='fail_on_error',
+                      action='store_true',
+                      help="""If set, if an error is found inside the webots logs, that particular
+                      test that contained the error will be considered as failed.""")
+
   (options, _) = parser.parse_known_args(cli_args)
 
   if not options.animationList:
@@ -122,6 +128,9 @@ def main(cli_args):
 
   if options.show_graphics:
     webotsTest_arguments.append("--showGraphics")
+
+  if options.fail_on_error:
+    webotsTest_arguments.append("--failOnError")
 
   # Run all the webots animation tests with the newly generated cfg file.
   assert webotsTest.main(webotsTest_arguments) == 0
