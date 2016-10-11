@@ -16,9 +16,12 @@ static const int CLOCK_MOD = PERF_CLOCK / SAMPLE_RATE;
 
 static volatile uint16_t* DAC_WRITE = (volatile uint16_t*) &DAC0_DAT0L;
 static const int DAC_WORDS = 16;
+static const int MAX_VOLUME = 0xBFFF;
+static const int MIN_VOLUME = 0x0010;
 
 static unsigned int write_pointer = 0;
-static uint16_t audioVolume;
+static uint16_t targetAudioVolume = 0;
+static uint16_t audioVolume = 0;
 
 void Anki::Cozmo::HAL::DAC::Init(void) {
   #ifdef EP1_HEADBOARD
@@ -69,7 +72,7 @@ void Anki::Cozmo::HAL::DAC::EnableAudio(bool enable) {
   #endif
 }
 
-static inline uint32_t MuLawDecompress(uint8_t byte) {
+static uint32_t MuLawDecompress(uint8_t byte) {
   uint16_t bits = byte & 0xF;
   uint8_t exp = (byte >> 4) & 0x7;
 
@@ -87,18 +90,30 @@ void Anki::Cozmo::HAL::DAC::Sync() {
   write_pointer = ((DAC0_C2 >> 4) - 1) % DAC_WORDS;
 }
 
-void Anki::Cozmo::HAL::DAC::Feed(bool enabled, uint8_t* samples) {  
-  EnableAudio(enabled);
+static void adjustVolume(int target) {
+  int output = audioVolume + (target - audioVolume + 31) / 32;
+  audioVolume = CLIP(output, 0, MAX_VOLUME);
+}
+
+void Anki::Cozmo::HAL::DAC::Feed(bool available, uint8_t* samples) {  
+  static uint16_t last_sample;
+  
+  adjustVolume(available ? targetAudioVolume : 0);
+  EnableAudio(audioVolume > MIN_VOLUME);
 
   for (int length = MAX_AUDIO_BYTES_PER_DROP; length > 0; length--) {
-    // Extra bit because of protection
-    DAC_WRITE[write_pointer] = (MuLawDecompress(*(samples++)) * audioVolume) >> 16;
+    // Decode audio only if drop contains data
+    if (available) {
+      last_sample = MuLawDecompress(*(samples++));
+    }
+
+    DAC_WRITE[write_pointer] = (last_sample * audioVolume) >> 16;
     write_pointer = (write_pointer+1) % DAC_WORDS;
   }
 }
 
 void Anki::Cozmo::HAL::DAC::SetVolume(uint16_t volume) {
-  audioVolume = (3  * (int)volume) / 4;
+  targetAudioVolume = (3  * (int)volume) / 4;
 }
 
 void Anki::Cozmo::HAL::DAC::Mute(void) {
