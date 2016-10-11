@@ -290,13 +290,13 @@ public class ConnectionFlow : MonoBehaviour {
 
     _SecuringConnectionScreenInstance.OnScreenComplete -= HandleSecuringConnectionScreenDone;
 
-
     _ConnectionFlowBackgroundInstance.SetStateComplete(2);
 
     if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeUserFlow) {
       Invoke("TransitionConnectionFlowToPullCubeTabs", ConnectionFlowDelay);
     }
     else {
+      GameObject.Destroy(_SecuringConnectionScreenInstance.gameObject);
       CheckForRestoreRobotFlow();
     }
   }
