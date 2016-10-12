@@ -52,9 +52,9 @@ static DASLogLevel sRemoteMinLogLevel = DASLogLevel_Event;
 static DASLogLevel sGameMinLogLevel = DASLogLevel_Info;
 static Anki::Das::DasLocalAppender sLocalAppender;
 
-static Anki::Das::DasAppender* sRemoteAppender = nullptr;
+static std::unique_ptr<Anki::Das::DasAppender> sRemoteAppender = nullptr;
 static std::mutex sRemoteAppenderMutex;
-static Anki::Das::DasGameLogAppender* sGameLogAppender = nullptr;
+static std::unique_ptr<Anki::Das::DasGameLogAppender> sGameLogAppender = nullptr;
 static std::mutex sGameLogAppenderMutex;
 
 using DASGlobals = std::map<std::string, std::string>;
@@ -247,7 +247,7 @@ void DASConfigure(const char* configurationJsonFilePath,
         {
           flush_interval = root["dasConfig"].get("flushInterval", DASClient::Json::uintValue).asUInt();
         }
-        sRemoteAppender = new Anki::Das::DasAppender(sLogDir, url,flush_interval);
+        sRemoteAppender.reset(new Anki::Das::DasAppender(sLogDir, url,flush_interval));
       }
     } else {
       LOGD("Failed to parse configuration: %s", reader.getFormattedErrorMessages().c_str());
@@ -267,22 +267,18 @@ const char* DASGetLogDir()
   return sLogDir.c_str();
 }
 
-void _DAS_DestroyGameLogAppender() {
+static void _DAS_DestroyRemoteAppender() {
+  std::lock_guard<std::mutex> lock(sRemoteAppenderMutex);
+  sRemoteAppender.reset();
+}
+  
+static void _DAS_DestroyGameLogAppender() {
   std::lock_guard<std::mutex> lock(sGameLogAppenderMutex);
-  if (nullptr != sGameLogAppender) {
-    sGameLogAppender->flush();
-    delete sGameLogAppender; sGameLogAppender = nullptr;
-  }
+  sGameLogAppender.reset();
 }
 
 void DASClose() {
-  {
-    std::lock_guard<std::mutex> lock(sRemoteAppenderMutex);
-    if (nullptr != sRemoteAppender) {
-      sRemoteAppender->close();
-      delete sRemoteAppender; sRemoteAppender = nullptr;
-    }
-  }
+  _DAS_DestroyRemoteAppender();
   _DAS_DestroyGameLogAppender();
 }
 
@@ -406,7 +402,7 @@ void _DAS_SetGlobal(const char* key, const char* value) {
   if (0 == strcmp(Anki::Das::kGameIdGlobalKey, key)) {
     if (nullptr != value && '\0' != value[0]) {
       std::lock_guard<std::mutex> lg(sGameLogAppenderMutex);
-      sGameLogAppender = new Anki::Das::DasGameLogAppender(sGameLogDir, value);
+      sGameLogAppender.reset(new Anki::Das::DasGameLogAppender(sGameLogDir, value));
     } else {
       _DAS_DestroyGameLogAppender();
     }
@@ -437,10 +433,6 @@ void _DAS_ClearGlobals() {
   _DAS_DestroyGameLogAppender();
 
   sDASGlobalsRevisionNumber++;
-}
-
-Anki::Das::DasGameLogAppender* _DAS_GetGameLogAppender() {
-  return sGameLogAppender;
 }
 
 void _DAS_Logf(DASLogLevel level, const char* eventName, const char* eventValue,

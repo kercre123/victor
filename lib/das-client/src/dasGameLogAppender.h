@@ -27,6 +27,8 @@ class DasGameLogAppender
 {
 public:
   DasGameLogAppender(const std::string& gameLogDir, const std::string& gameId);
+  ~DasGameLogAppender();
+
   void append(DASLogLevel level, const char* eventName, const char* eventValue,
               ThreadId_t threadId, const char* file, const char* funct, int line,
               const std::map<std::string,std::string>* globals,

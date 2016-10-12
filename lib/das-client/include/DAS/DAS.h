@@ -33,8 +33,9 @@ typedef enum DASLogLevel {
 #pragma mark DASDisableNetworkReason
 
 typedef enum DASDisableNetworkReason {
-    DASDisableNetworkReason_Simulator = 1 << 0,
-    DASDisableNetworkReason_UserOptOut = 1 << 1
+    DASDisableNetworkReason_Simulator = (1 << 0),
+    DASDisableNetworkReason_UserOptOut = (1 << 1),
+    DASDisableNetworkReason_Shutdown = (1 << 2)
 } DASDisableNetworkReason;
 
 

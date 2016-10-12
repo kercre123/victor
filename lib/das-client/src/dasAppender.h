@@ -32,7 +32,7 @@ public:
   DasAppender(const std::string& dasLogDir, const std::string& url, uint32_t flush_interval = kDefaultFlushIntervalSeconds);
   ~DasAppender();
   void SetMaxLogLength(size_t maxLogLength);
-  void close();
+
   void append(DASLogLevel level, const char* eventName, const char* eventValue,
               ThreadId_t threadId, const char* file, const char* funct, int line,
               const std::map<std::string,std::string>* globals,

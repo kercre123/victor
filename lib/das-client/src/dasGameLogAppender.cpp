@@ -27,6 +27,11 @@ DasGameLogAppender::DasGameLogAppender(const std::string& gameLogDir, const std:
   std::string logDir = gameLogDir + "/" + gameId;
   (void) mkdir(logDir.c_str(), S_IRWXU);
 }
+  
+DasGameLogAppender::~DasGameLogAppender()
+{
+  flush();
+}
 
 void DasGameLogAppender::append(DASLogLevel level, const char* eventName, const char* eventValue,
                                 ThreadId_t threadId, const char* file, const char* funct, int line,

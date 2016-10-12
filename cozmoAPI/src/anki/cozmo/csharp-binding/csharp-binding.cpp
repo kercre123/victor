@@ -152,6 +152,16 @@ static void cozmo_configure_das(const std::string& resourcesBasePath, const Anki
 #endif
 }
 
+static void cozmo_disable_das_networking()
+{
+#if USE_DAS
+  // Prevent uploads to remote storage during shutdown.
+  // Note this does not cancel uploads already in progress!
+  // DAS worker threads stay active during shutdown.
+  DASDisableNetwork(DASDisableNetworkReason_Shutdown);
+#endif
+}
+
 void cozmo_install_google_breakpad(const char* path)
 {
   #ifdef ANDROID
@@ -317,6 +327,8 @@ int cozmo_shutdown()
 #elif defined(ANKI_PLATFORM_ANDROID)
   result = Anki::Cozmo::AndroidBinding::cozmo_shutdown();
 #endif
+
+  cozmo_disable_das_networking();
   
   Anki::Util::SafeDelete(engineAPI);
   Anki::Util::gEventProvider = nullptr;
@@ -327,7 +339,6 @@ int cozmo_shutdown()
   Anki::Util::SafeDelete(dataPlatform);
 
   cozmo_uninstall_google_breakpad();
-
   return result;
 }
 

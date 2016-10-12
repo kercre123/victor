@@ -50,13 +50,18 @@ DasAppender::DasAppender(const std::string& dasLogDir, const std::string& url,ui
 
 DasAppender::~DasAppender()
 {
-  _syncQueue.WakeSync([this]() {delete _logFileAppender; _logFileAppender = nullptr;});
+  _syncQueue.WakeSync([this]() {
+    delete _logFileAppender;
+    _logFileAppender = nullptr;
+  });
 }
 
 void DasAppender::SetMaxLogLength(size_t maxLogLength)
 {
   _maxLogLength = maxLogLength;
-  _logFileAppender->SetMaxLogLength(maxLogLength);
+  if (_logFileAppender != nullptr) {
+    _logFileAppender->SetMaxLogLength(maxLogLength);
+  }
 }
 
 void DasAppender::append(DASLogLevel level, const char* eventName, const char* eventValue,
@@ -82,7 +87,9 @@ void DasAppender::append(DASLogLevel level, const char* eventName, const char* e
     std::string logData = AnkiUtil::StringMapToJson(eventDictionary) + ",";
 
     if (logData.size() <= _maxLogLength) {
-      _logFileAppender->WriteDataToCurrentLogfile(logData);
+      if (_logFileAppender != nullptr) {
+        _logFileAppender->WriteDataToCurrentLogfile(logData);
+      }
       if (!DASNetworkingDisabled) {
         SetTimedFlush();
       }
@@ -91,10 +98,6 @@ void DasAppender::append(DASLogLevel level, const char* eventName, const char* e
     }
     delete eventDictionaryPtr;
   });
-}
-
-void DasAppender::close() {
-  LOGV("%s", "Closing the DAS Appender");
 }
 
 void DasAppender::SetTimedFlush()
@@ -129,19 +132,24 @@ void DasAppender::Flush()
   if (!_lastFlushFailed) {
     // Don't roll over the log if we're not actually able to hit the server.
     // This will help to maximize the number of logs we can store on disk.
-    _logFileAppender->RolloverCurrentLogFile();
+    if (_logFileAppender != nullptr) {
+      _logFileAppender->RolloverCurrentLogFile();
+    }
   }
 
-  auto func = std::bind(&DasAppender::ConsumeALogFile, this, std::placeholders::_1, std::placeholders::_2);
-
-  _logFileAppender->ConsumeLogFiles(func);
+  if (_logFileAppender != nullptr) {
+    auto func = std::bind(&DasAppender::ConsumeALogFile, this, std::placeholders::_1, std::placeholders::_2);
+    _logFileAppender->ConsumeLogFiles(func);
+  }
 }
 
 bool DasAppender::ConsumeALogFile(const std::string& logFilePath, bool *stop)
 {
   if (DASNetworkingDisabled) {
+    *stop = true;
     return false;
   }
+  
   std::string logFileData = AnkiUtil::StringFromContentsOfFile(logFilePath);
   size_t logFileLength = logFileData.length();
   LOGV("Attempting to post a log file of size %zd", logFileLength);
