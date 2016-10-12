@@ -79,8 +79,10 @@ public class OnboardingManager : MonoBehaviour {
       Instance = this;
       GameEventManager.Instance.OnGameEvent += HandleDailyGoalCompleted;
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(HandleRobotDisconnected);
+#if ENABLE_DEBUG_PANEL
       Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("Toggle Onboarding Debug Display", "Onboarding", ToggleOnboardingDebugDisplay);
       Anki.Debug.DebugConsoleData.Instance.AddConsoleFunction("Complete All Onboarding", "Onboarding", DebugCompleteAllOnboarding);
+#endif
     }
   }
 
@@ -297,6 +299,10 @@ public class OnboardingManager : MonoBehaviour {
     if (_CurrStageInst != null) {
       GameObject.Destroy(_CurrStageInst);
     }
+    if (_OnboardingUIInstance == null) {
+      DAS.Error("onboardingmanager.SetSpecificStage", "Onboarding Asset Bundle load not completed");
+      return;
+    }
     int nextDASPhaseID = -1;
     SetCurrStageInPhase(nextStage, _CurrPhase);
     if (nextStage >= 0 && nextStage < GetMaxStageInPhase(_CurrPhase)) {
@@ -316,7 +322,7 @@ public class OnboardingManager : MonoBehaviour {
                   stagePrefab.ActiveTabButtons, stagePrefab.ReactionsEnabled);
       // Create the debug layer to have a few buttons to work with on screen easily for QA
       // who will have to see this all the time.
-      if (Instance._DebugDisplayOn) {
+      if (_DebugDisplayOn) {
         _OnboardingUIInstance.AddDebugButtons();
       }
     }
@@ -325,7 +331,9 @@ public class OnboardingManager : MonoBehaviour {
       _OnboardingUIInstance.RemoveDebugButtons();
       _CurrPhase = OnboardingPhases.None;
       UpdateStage();
-      HomeHub.Instance.StartFreeplay(RobotEngineManager.Instance.CurrentRobot);
+      if (HomeHub.Instance != null) {
+        HomeHub.Instance.StartFreeplay(RobotEngineManager.Instance.CurrentRobot);
+      }
       UnloadIfDoneWithAllPhases();
     }
     // Just started something new...
