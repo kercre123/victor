@@ -36,6 +36,11 @@
 #include "util/logging/rollingFileLogger.h"
 #endif
 
+#if USE_DAS
+#include <DAS/DAS.h>
+#include <DAS/DASPlatform.h>
+#endif
+
 #if defined(ANKI_PLATFORM_IOS)
 #include "anki/cozmo/csharp-binding/ios/ios-binding.h"
 #elif defined(ANKI_PLATFORM_ANDROID)
@@ -191,7 +196,7 @@ int cozmo_startup(const char *configuration_data)
 
   // Initialize logging
   #if ANKI_DEV_CHEATS
-    DevLoggingSystem::CreateInstance(dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, ""), appRunId);
+    DevLoggingSystem::CreateInstance(dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, "devLogger"), appRunId);
   #endif
   
   Anki::Util::IEventProvider* eventProvider = nullptr;
@@ -222,6 +227,11 @@ int cozmo_startup(const char *configuration_data)
   std::unique_ptr<DAS::DASPlatform_Android> dasPlatform{new DAS::DASPlatform_Android(appRunId, dataPlatform->pathToResource(Anki::Util::Data::Scope::Persistent, "uniqueDeviceID.dat"))};
   dasPlatform->InitForUnityPlayer();
   DASNativeInit(std::move(dasPlatform), "cozmo");
+#endif
+  
+#if USE_DAS && ANKI_DEV_CHEATS
+  // Now that das has been initialized, update the devlog data with the deviceID
+  DevLoggingSystem::GetInstance()->UpdateDeviceId(DASGetPlatform()->GetDeviceId());
 #endif
 
   #if USE_DAS

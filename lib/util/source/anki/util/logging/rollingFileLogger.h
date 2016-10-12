@@ -40,6 +40,7 @@ public:
   
   static std::string GetDateTimeString(const ClockType::time_point& time);
   static time_t GetTimeT(const ClockType::time_point& time);
+  static std::chrono::system_clock::time_point GetSystemClockTimePoint(const ClockType::time_point& time);
   
 private:
   void ExecuteBlock(const std::function<void()>& block);

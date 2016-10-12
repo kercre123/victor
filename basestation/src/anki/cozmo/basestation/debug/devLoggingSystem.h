@@ -12,6 +12,7 @@
 #ifndef __Basestation_Debug_DevLoggingSystem_H_
 #define __Basestation_Debug_DevLoggingSystem_H_
 
+#include "json/json.h"
 #include "util/helpers/noncopyable.h"
 #include "util/logging/rollingFileLogger.h"
 
@@ -43,9 +44,13 @@ public:
   void PrepareForUpload(const std::string& namePrefix) const;
   void DeleteLog(const std::string& archiveFilename) const;
   std::vector<std::string> GetLogFilenamesForUpload() const;
-  std::string GetAppRunId(const std::string& archiveFilename) const;
+  Json::Value GetAppRunData(const std::string& appRunFilename) const;
 
   Util::Dispatch::Queue* GetQueue() { return _queue; }
+  
+  static std::string GetAppRunFilename(const std::string& archiveFilename);
+  const std::string& GetCurrentAppRunFilename() const;
+  void UpdateDeviceId(const std::string&);
 
   static const std::string kPrintName;
   static const std::string kGameToEngineName;
@@ -53,6 +58,9 @@ public:
   static const std::string kRobotToEngineName;
   static const std::string kEngineToRobogName;
   static const std::string kEngineToVizName;
+  static const std::string kAppRunKey;
+  static const std::string kDeviceIdKey;
+  static const std::string kTimeSinceEpochKey;
 
 private:
   static DevLoggingSystem* sInstance;
@@ -78,11 +86,11 @@ private:
   static void CopyFile(const std::string& sourceFile, const std::string& destination);
   void ArchiveDirectories(const std::string& baseDirectory, const std::vector<std::string>& excludeDirectories) const;
   static void ArchiveOneDirectory(const std::string& baseDirectory);
-  std::string GetPathString(const std::string& base, const std::string& path) const;
-  static std::string GetAppRunFilename(const std::string& archiveFilename);
 
   template<typename MsgType>
   std::string PrepareMessage(const MsgType& message) const;
+  
+  void CreateAppRunFile(const std::string& appRunTimeString, const std::string& appRunId);
 };
 
 } // end namespace Cozmo

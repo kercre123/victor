@@ -10,6 +10,7 @@
  *
  **/
 
+#include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/util/transferQueue/gameLogTransferTask.h"
 #include "anki/cozmo/basestation/debug/devLoggingSystem.h"
 #include "util/fileUtils/fileUtils.h"
@@ -58,13 +59,31 @@ void GameLogTransferTask::OnReady(const StartRequestFunc& requestFunc)
       std::string baseFilename = filename.substr(filenameStartIndex);
       request.uri = "https://blobstore-dev.api.anki.com/1/cozmo/blobs/" + baseFilename;
 
-      // get apprun
-      std::string fileAppRun = devLoggingSystem->GetAppRunId(filename);
-
       // add headers
       request.headers.emplace("Anki-App-Key", "toh5awu3kee1ahfaikeeGh");
-      if (!fileAppRun.empty()) {
-        request.headers.emplace("Usr-apprun", std::move(fileAppRun));
+      
+      // get apprun
+      Json::Value appRunData = devLoggingSystem->GetAppRunData(Cozmo::DevLoggingSystem::GetAppRunFilename(filename));
+      if (!appRunData.empty()) {
+        std::string fileAppRun;
+        if (JsonTools::GetValueOptional(appRunData, Cozmo::DevLoggingSystem::kAppRunKey, fileAppRun))
+        {
+          request.headers.emplace("Usr-apprun", std::move(fileAppRun));
+        }
+        
+        // This gets a little complicated in the interest of supporting uint64 on platforms that can:
+        const Json::Value& child(appRunData[Cozmo::DevLoggingSystem::kTimeSinceEpochKey]);
+        if(!child.isNull())
+        {
+          const auto appStartTimeSinceEpoch_ms = child.asLargestUInt();
+          request.headers.emplace("Usr-Time-Since-Epoch", std::to_string(appStartTimeSinceEpoch_ms));
+        }
+        
+        std::string fileDeviceID;
+        if (JsonTools::GetValueOptional(appRunData, Cozmo::DevLoggingSystem::kDeviceIdKey, fileDeviceID))
+        {
+          request.headers.emplace("Usr-Deviceid", fileDeviceID);
+        }
       }
     }
     catch (const std::exception& e) {

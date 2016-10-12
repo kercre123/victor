@@ -16,6 +16,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/vizInterface/messageViz.h"
+#include "json/json.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/dispatchQueue/dispatchQueue.h"
@@ -45,6 +46,9 @@ const std::string DevLoggingSystem::kRobotToEngineName = "robotToEngine";
 const std::string DevLoggingSystem::kEngineToRobogName = "engineToRobot";
 const std::string DevLoggingSystem::kEngineToVizName = "engineToViz";
 const std::string DevLoggingSystem::kAppRunExtension = ".apprun";
+const std::string DevLoggingSystem::kAppRunKey = "apprun";
+const std::string DevLoggingSystem::kDeviceIdKey = "deviceID";
+const std::string DevLoggingSystem::kTimeSinceEpochKey = "timeSinceEpoch";
 
 void DevLoggingSystem::CreateInstance(const std::string& loggingBaseDirectory, const std::string& appRunId)
 {
@@ -69,15 +73,34 @@ DevLoggingSystem::DevLoggingSystem(const std::string& baseDirectory, const std::
   //DeleteFiles(_allLogsBaseDirectory, kArchiveExtensionString);
   ArchiveDirectories(_allLogsBaseDirectory, {appRunTimeString, kWaitingForUploadDirName} );
   
-  _devLoggingBaseDirectory = GetPathString(_allLogsBaseDirectory, appRunTimeString);
-  _gameToEngineLog.reset(new Util::RollingFileLogger(_queue, GetPathString(_devLoggingBaseDirectory, kGameToEngineName)));
-  _engineToGameLog.reset(new Util::RollingFileLogger(_queue, GetPathString(_devLoggingBaseDirectory, kEngineToGameName)));
-  _robotToEngineLog.reset(new Util::RollingFileLogger(_queue, GetPathString(_devLoggingBaseDirectory, kRobotToEngineName)));
-  _engineToRobotLog.reset(new Util::RollingFileLogger(_queue, GetPathString(_devLoggingBaseDirectory, kEngineToRobogName)));
-  _engineToVizLog.reset(new Util::RollingFileLogger(_queue, GetPathString(_devLoggingBaseDirectory, kEngineToVizName)));
+  _devLoggingBaseDirectory = Util::FileUtils::FullFilePath({_allLogsBaseDirectory, appRunTimeString});
+  _gameToEngineLog.reset(new Util::RollingFileLogger(_queue, Util::FileUtils::FullFilePath({_devLoggingBaseDirectory, kGameToEngineName})));
+  _engineToGameLog.reset(new Util::RollingFileLogger(_queue, Util::FileUtils::FullFilePath({_devLoggingBaseDirectory, kEngineToGameName})));
+  _robotToEngineLog.reset(new Util::RollingFileLogger(_queue, Util::FileUtils::FullFilePath({_devLoggingBaseDirectory, kRobotToEngineName})));
+  _engineToRobotLog.reset(new Util::RollingFileLogger(_queue, Util::FileUtils::FullFilePath({_devLoggingBaseDirectory, kEngineToRobogName})));
+  _engineToVizLog.reset(new Util::RollingFileLogger(_queue, Util::FileUtils::FullFilePath({_devLoggingBaseDirectory, kEngineToVizName})));
 
   // write apprun file
-  Util::FileUtils::WriteFile(GetPathString(_devLoggingBaseDirectory, appRunTimeString + kAppRunExtension), appRunId);
+  CreateAppRunFile(appRunTimeString, appRunId);
+}
+  
+void DevLoggingSystem::CreateAppRunFile(const std::string& appRunTimeString, const std::string& appRunId)
+{
+  Json::Value appRunData{};
+  appRunData[kAppRunKey] = appRunId;
+  
+  const auto appStartTimeSinceEpoch_ms = std::chrono::duration_cast<std::chrono::milliseconds>(Util::RollingFileLogger::GetSystemClockTimePoint(GetAppRunStartTime()).time_since_epoch()).count();
+  appRunData[kTimeSinceEpochKey] = appStartTimeSinceEpoch_ms;
+  
+  Util::FileUtils::WriteFile(GetCurrentAppRunFilename(), appRunData.toStyledString());
+}
+  
+void DevLoggingSystem::UpdateDeviceId(const std::string& deviceID)
+{
+  Json::Value appRunData = GetAppRunData(GetCurrentAppRunFilename());
+  appRunData[kDeviceIdKey] = deviceID;
+  
+  Util::FileUtils::WriteFile(GetCurrentAppRunFilename(), appRunData.toStyledString());
 }
   
 void DevLoggingSystem::DeleteFiles(const std::string& baseDirectory, const std::string& extension) const
@@ -113,7 +136,7 @@ void DevLoggingSystem::ArchiveDirectories(const std::string& baseDirectory, cons
   
   for (auto& directory : directoryList)
   {
-    auto directoryPath = GetPathString(baseDirectory, directory);
+    auto directoryPath = Util::FileUtils::FullFilePath({baseDirectory, directory});
     {
       // copy apprun file where we need it
       auto appRunSources = Util::FileUtils::FilesInDirectory(directoryPath, true, kAppRunExtension.c_str());
@@ -143,7 +166,7 @@ void DevLoggingSystem::PrepareForUpload(const std::string& namePrefix) const
     auto appRunSources = Util::FileUtils::FilesInDirectory(_devLoggingBaseDirectory, false, kAppRunExtension.c_str(), false);
     if (appRunSources.size() > 0)
     {
-      CopyFile(GetPathString(_devLoggingBaseDirectory, appRunSources[0]), GetPathString(_allLogsBaseDirectory, appRunSources[0]));
+      CopyFile(Util::FileUtils::FullFilePath({_devLoggingBaseDirectory, appRunSources[0]}), Util::FileUtils::FullFilePath({_allLogsBaseDirectory, appRunSources[0]}));
     }
   }
 
@@ -156,49 +179,45 @@ void DevLoggingSystem::PrepareForUpload(const std::string& namePrefix) const
     return;
   }
   
-  std::string waitingDir = GetPathString(_allLogsBaseDirectory, kWaitingForUploadDirName);
+  std::string waitingDir = Util::FileUtils::FullFilePath({_allLogsBaseDirectory, kWaitingForUploadDirName});
   Util::FileUtils::CreateDirectory(waitingDir);
   for (auto& filename : filesToMove)
   {
-    std::string newFilename = GetPathString(waitingDir, namePrefix + filename);
+    std::string newFilename = Util::FileUtils::FullFilePath({waitingDir, namePrefix + filename});
     Util::FileUtils::DeleteFile(newFilename);
-    std::rename(GetPathString(_allLogsBaseDirectory, filename).c_str(), newFilename.c_str());
+    std::rename(Util::FileUtils::FullFilePath({_allLogsBaseDirectory, filename}).c_str(), newFilename.c_str());
   }
 }
 
 std::vector<std::string> DevLoggingSystem::GetLogFilenamesForUpload() const
 {
-  std::string waitingDir = GetPathString(_allLogsBaseDirectory, kWaitingForUploadDirName);
+  std::string waitingDir = Util::FileUtils::FullFilePath({_allLogsBaseDirectory, kWaitingForUploadDirName});
   return Util::FileUtils::FilesInDirectory(waitingDir, true, kArchiveExtensionString.c_str());
 }
 
-std::string DevLoggingSystem::GetAppRunId(const std::string& archiveFilename) const
+Json::Value DevLoggingSystem::GetAppRunData(const std::string& appRunFilename) const
 {
-  auto appRunFilename = GetAppRunFilename(archiveFilename);
-  return Util::FileUtils::ReadFile(appRunFilename);
+  Json::Value data{};
+  Json::Reader dataReader{};
+  dataReader.parse(Util::FileUtils::ReadFile(appRunFilename), data);
+  return data;
 }
 
 std::string DevLoggingSystem::GetAppRunFilename(const std::string& archiveFilename)
 {
   return archiveFilename.substr(0, archiveFilename.find(kArchiveExtensionString)) + kAppRunExtension;
 }
+  
+const std::string& DevLoggingSystem::GetCurrentAppRunFilename() const
+{
+  static const std::string currentAppRunFilename = Util::FileUtils::FullFilePath({_devLoggingBaseDirectory, Util::RollingFileLogger::GetDateTimeString(DevLoggingSystem::GetAppRunStartTime()) + kAppRunExtension});
+  return currentAppRunFilename;
+}
 
 void DevLoggingSystem::DeleteLog(const std::string& archiveFilename) const
 {
   Util::FileUtils::DeleteFile(GetAppRunFilename(archiveFilename));
   Util::FileUtils::DeleteFile(archiveFilename);
-}
-
-std::string DevLoggingSystem::GetPathString(const std::string& base, const std::string& path) const
-{
-  std::ostringstream pathStream;
-  if (!base.empty())
-  {
-    pathStream << base << '/';
-  }
-  
-  pathStream << path;
-  return pathStream.str();
 }
 
 DevLoggingSystem::~DevLoggingSystem()
@@ -241,7 +260,9 @@ template<>
 void DevLoggingSystem::LogMessage(const ExternalInterface::MessageEngineToGame& message)
 {
   // Ignore ping messages - they're spammy, show up in profiles, and are uninteresting for message debugging / analysis
-  if (ExternalInterface::MessageEngineToGameTag::Ping == message.GetTag())
+  // Also ignore image chunk messages (sent during explorer mode) for size reasons
+  if (ExternalInterface::MessageEngineToGameTag::Ping == message.GetTag() ||
+      ExternalInterface::MessageEngineToGameTag::ImageChunk == message.GetTag())
   {
     return;
   }

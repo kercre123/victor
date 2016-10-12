@@ -135,12 +135,17 @@ std::string RollingFileLogger::GetDateTimeString(const ClockType::time_point& ti
   
 time_t RollingFileLogger::GetTimeT(const ClockType::time_point& time)
 {
+  return std::chrono::system_clock::to_time_t(GetSystemClockTimePoint(time));
+}
+  
+std::chrono::system_clock::time_point RollingFileLogger::GetSystemClockTimePoint(const ClockType::time_point& time)
+{
   static const std::chrono::system_clock::time_point systemClockNow = std::chrono::system_clock::now();
   static const ClockType::time_point clockTypeNow = ClockType::now();
   
   const auto timeDiff = std::chrono::duration_cast<std::chrono::system_clock::duration>(time.time_since_epoch() - clockTypeNow.time_since_epoch());
   
-  return std::chrono::system_clock::to_time_t(systemClockNow + timeDiff);
+  return systemClockNow + timeDiff;
 }
 
 } // end namespace Util
