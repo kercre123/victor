@@ -10,16 +10,10 @@ from PIL import Image
 import robotInterface
 Anki = robotInterface.Anki
 
-parser = argparse.ArgumentParser(description='Stream images to the robot.')
-parser.add_argument('images', metavar='Image', type=str, nargs='+',
-                    help='list of images')
-parser.add_argument('-i', '--invert', dest='invert', action='store_true',
-                    help='invert the images')
-
-args = parser.parse_args()
-
 SCREEN_WIDTH = 128
 SCREEN_HEIGHT = 64
+
+args = None
 
 #converts rgba or rgb into greyscale.
 def greyscale(pixel):
@@ -72,7 +66,7 @@ def loadImage(filePathName, invert=False):
             
         return Anki.Cozmo.AnimKeyFrame.FaceImage(packed)
 
-def SendFaceImage(*args):
+def SendFaceImage(conn):
     robotInterface.Send(Anki.Cozmo.RobotInterface.EngineToRobot(animAudioSilence=Anki.Cozmo.AnimKeyFrame.AudioSilence()))
     robotInterface.Send(Anki.Cozmo.RobotInterface.EngineToRobot(animStartOfAnimation=Anki.Cozmo.AnimKeyFrame.StartOfAnimation()))
 
@@ -86,6 +80,13 @@ def SendFaceImage(*args):
     robotInterface.Send(Anki.Cozmo.RobotInterface.EngineToRobot(animEndOfAnimation=Anki.Cozmo.AnimKeyFrame.EndOfAnimation()))
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Stream images to the robot.')
+    parser.add_argument('images', metavar='Image', type=str, nargs='+',
+                        help='list of images')
+    parser.add_argument('-i', '--invert', dest='invert', action='store_true',
+                        help='invert the images')
+
+    args = parser.parse_args()
     robotInterface.Init()
     robotInterface.SubscribeToConnect(SendFaceImage)
     robotInterface.Connect()
