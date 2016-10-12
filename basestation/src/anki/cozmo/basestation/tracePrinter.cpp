@@ -89,11 +89,12 @@ void TracePrinter::HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& m
   ANKI_CPU_PROFILE("TracePrinter::HandleTrace");
   const RobotInterface::PrintTrace& trace = message.GetData().Get_trace();
   if (trace.level >= _printThreshold) {
+    std::string tmpdata;
     KVV keyValuePairs;
     if (trace.value.size() == 1)
     {
-      std::pair<const char*, const char*> kvp = {DDATA, TO_DDATA_STR(trace.value[0])};
-
+      tmpdata = TO_DDATA_STR(trace.value[0]);
+      KVV::value_type kvp(DDATA, tmpdata.c_str());
       keyValuePairs.push_back(kvp);
     }
     const std::string name = _kRobotNamePrefix + GetName(trace.name);
@@ -196,7 +197,7 @@ std::string TracePrinter::GetFormatted(const RobotInterface::PrintTrace& trace) 
     const FormatInfo& fi(it->second);
     const int nargs = fi.second;
     if (nargs != trace.value.size()) {
-      snprintf(pbuf, sizeof(pbuf), "Trace nargs missmatch. Expected %d values but got %d for format string (%d) \"%s\"",
+      snprintf(pbuf, sizeof(pbuf), "Trace nargs mismatch. Expected %d values but got %d for format string (%d) \"%s\"",
                nargs, (int)trace.value.size(), trace.stringId, fi.first.c_str());
       return pbuf;
     }
