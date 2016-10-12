@@ -27,7 +27,7 @@ GameObject:
   - 224: {fileID: 22482392}
   - 114: {fileID: 11438504}
   m_Layer: 5
-  m_Name: HowToPlayButton
+  m_Name: InstructionVideoButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

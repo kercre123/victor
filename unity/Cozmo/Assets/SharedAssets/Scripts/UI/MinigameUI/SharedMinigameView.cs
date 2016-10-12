@@ -98,8 +98,8 @@ namespace Cozmo {
       private ContinueGameButtonWidget _ContinueButtonInstance;
 
       [SerializeField]
-      private HowToPlayButton _HowToPlayButtonPrefab;
-      private HowToPlayButton _HowToPlayButtonInstance;
+      private HowToPlayButton _InstructionsVideoButtonPrefab;
+      private HowToPlayButton _InstructionsVideoButtonInstance;
 
       [SerializeField]
       private ShelfWidget _ShelfWidgetPrefab;
@@ -623,7 +623,7 @@ namespace Cozmo {
 
       private void HandleQuitConfirmed() {
         HideGameStateSlide();
-        HideHowToPlayButton();
+        HideInstructionsVideoButton();
         if (QuitMiniGameConfirmed != null) {
           QuitMiniGameConfirmed();
         }
@@ -633,16 +633,16 @@ namespace Cozmo {
 
       #region HowToPlay
 
-      public void ShowHowToPlayButton() {
-        CreateWidgetIfNull<HowToPlayButton>(ref _HowToPlayButtonInstance, _HowToPlayButtonPrefab);
-        _HowToPlayButtonInstance.OnHowToPlayButtonClicked += () => {
+      public void ShowInstructionsVideoButton() {
+        CreateWidgetIfNull<HowToPlayButton>(ref _InstructionsVideoButtonInstance, _InstructionsVideoButtonPrefab);
+        _InstructionsVideoButtonInstance.OnHowToPlayButtonClicked += () => {
           PlayVideo(_ChallengeData.InstructionVideoPath, null, true);
         };
       }
 
-      public void HideHowToPlayButton() {
-        HideWidget(_HowToPlayButtonInstance);
-        _HowToPlayButtonInstance = null;
+      public void HideInstructionsVideoButton() {
+        HideWidget(_InstructionsVideoButtonInstance);
+        _InstructionsVideoButtonInstance = null;
       }
 
       #endregion
@@ -887,7 +887,7 @@ namespace Cozmo {
       public DifficultySelectButtonPanel ShowDifficultySelectButtons(List<DifficultySelectOptionData> options, int highestDifficultyAvailable,
                                                                      TweenCallback endInTweenCallback) {
         if (_DifficultySelectButtonPanelInstance == null) {
-          GameObject difficultySlide = ShelfWidget.AddContent(_DifficultySelectButtonPanelPrefab, endInTweenCallback);
+          GameObject difficultySlide = ShelfWidget.SetShelfContent(_DifficultySelectButtonPanelPrefab, endInTweenCallback);
           _DifficultySelectButtonPanelInstance = difficultySlide.GetComponent<DifficultySelectButtonPanel>();
           _DifficultySelectButtonPanelInstance.Initialize(options, highestDifficultyAvailable);
         }

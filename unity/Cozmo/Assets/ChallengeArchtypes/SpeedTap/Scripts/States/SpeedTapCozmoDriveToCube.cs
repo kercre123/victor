@@ -32,7 +32,7 @@ namespace SpeedTap {
       _SpeedTapGame.ShowWaitForCozmoSlide();
       _SpeedTapGame.SharedMinigameView.HideMiddleBackground();
       _SpeedTapGame.SharedMinigameView.ShowSpinnerWidget();
-      _SpeedTapGame.SharedMinigameView.HideHowToPlayButton();
+      _SpeedTapGame.SharedMinigameView.HideInstructionsVideoButton();
 
       RobotEngineManager.Instance.CurrentRobot.SetEnableCliffSensor(true);
 

@@ -316,7 +316,7 @@ public abstract class GameBase : MonoBehaviour {
 
     InitializeGame(_ChallengeData.MinigameConfig);
     if (!string.IsNullOrEmpty(_ChallengeData.InstructionVideoPath)) {
-      _SharedMinigameViewInstance.ShowHowToPlayButton();
+      _SharedMinigameViewInstance.ShowInstructionsVideoButton();
     }
 
     SetupViewAfterCozmoReady(_SharedMinigameViewInstance, _ChallengeData);

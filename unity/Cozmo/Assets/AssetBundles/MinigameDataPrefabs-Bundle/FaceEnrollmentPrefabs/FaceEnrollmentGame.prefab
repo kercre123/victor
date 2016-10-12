@@ -57,6 +57,8 @@ MonoBehaviour:
     type: 2}
   _FaceEnrollmentHowToPlaySlidePrefab: {fileID: 182308, guid: daa6221ad699c4153852efdaf82f4d3e,
     type: 2}
+  _FaceEnrollmentShelfContentPrefab: {fileID: 11481566, guid: 5f416f90633414c598d809cbd7be91a1,
+    type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

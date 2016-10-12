@@ -27,6 +27,10 @@ namespace FaceEnrollment {
       get { return _FaceEnrollmentHowToPlaySlidePrefab; }
     }
 
+    [SerializeField]
+    private FaceEnrollmentShelfContent _FaceEnrollmentShelfContentPrefab;
+    private FaceEnrollmentShelfContent _FaceEnrollmentShelfContentInstance;
+
     private long _UpdateThresholdLastSeenSeconds;
     public long UpdateThresholdLastSeenSeconds {
       get { return _UpdateThresholdLastSeenSeconds; }
@@ -69,7 +73,14 @@ namespace FaceEnrollment {
         SetReactionaryBehaviors(false);
       }
       else {
-        _StateMachine.SetNextState(new FaceSlideState());
+        if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeFaceEnrollmentHowToPlay) {
+          ShowHowToPlay();
+          DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.FirstTimeFaceEnrollmentHowToPlay = false;
+        }
+        else {
+          _StateMachine.SetNextState(new FaceSlideState());
+        }
+
       }
 
     }
@@ -102,18 +113,29 @@ namespace FaceEnrollment {
 
     public void ShowShelf() {
       SharedMinigameView.ShowShelf();
-
+      _FaceEnrollmentShelfContentInstance = SharedMinigameView.ShelfWidget.SetShelfContent(_FaceEnrollmentShelfContentPrefab).GetComponent<FaceEnrollmentShelfContent>();
       if (_ShowDoneShelf) {
-        SharedMinigameView.ShelfWidget.SetWidgetText(LocalizationKeys.kFaceEnrollmentConditionAllChangesSaved);
-        SharedMinigameView.ShelfWidget.ShowGameDoneButton(true);
-        SharedMinigameView.ShelfWidget.GameDoneButtonPressed += () => {
+        _FaceEnrollmentShelfContentInstance.SetShelfTextKey(LocalizationKeys.kFaceEnrollmentConditionAllChangesSaved);
+        _FaceEnrollmentShelfContentInstance.ShowDoneButton(true);
+        _FaceEnrollmentShelfContentInstance.GameDoneButtonPressed += () => {
           RaiseMiniGameQuit();
         };
       }
       else {
-        SharedMinigameView.ShelfWidget.SetWidgetText(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDescription);
+        _FaceEnrollmentShelfContentInstance.SetShelfTextKey(LocalizationKeys.kFaceEnrollmentFaceEnrollmentListDescription);
+        _FaceEnrollmentShelfContentInstance.ShowDoneButton(false);
       }
 
+      _FaceEnrollmentShelfContentInstance.HowToPlayButtonPressed += () => {
+        ShowHowToPlay();
+      };
+
+    }
+
+    public void ShowHowToPlay() {
+      // this is our first face enrollment so show the how to play first
+      ContextManager.Instance.AppFlash(playChime: true);
+      _StateMachine.SetNextState(new FaceEnrollmentHowToPlayState());
     }
 
     public void SetReactionaryBehaviors(bool enable) {

@@ -8,8 +8,6 @@ namespace Cozmo {
 
     public class ShelfWidget : MinigameWidget {
 
-      public System.Action GameDoneButtonPressed;
-
       private const float kAnimXOffset = 0.0f;
       private const float kAnimYOffset = -476.0f;
       private const float kAnimDur = 0.25f;
@@ -63,9 +61,6 @@ namespace Cozmo {
       private GameObject _ContentObject = null;
 
       [SerializeField]
-      private Cozmo.UI.CozmoButton _GameDoneButton;
-
-      [SerializeField]
       private Anki.UI.AnkiTextLabel _ShelfText;
 
       private void Awake() {
@@ -73,13 +68,6 @@ namespace Cozmo {
         transparent.a = 0f;
         _ShelfText.gameObject.SetActive(false);
         _ShelfText.text = "";
-
-        _GameDoneButton.Initialize(() => {
-          if (GameDoneButtonPressed != null) {
-            GameDoneButtonPressed();
-          }
-        }, "game_done_button", "shelf_widget");
-        ShowGameDoneButton(false);
       }
 
       private void Start() {
@@ -95,10 +83,6 @@ namespace Cozmo {
       public void SetWidgetText(string widgetTextKey) {
         _ShelfText.gameObject.SetActive(widgetTextKey != string.Empty);
         _ShelfText.text = Localization.Get(widgetTextKey);
-      }
-
-      public void ShowGameDoneButton(bool show) {
-        _GameDoneButton.gameObject.SetActive(show);
       }
 
       public void GrowShelfBackground() {
@@ -148,9 +132,9 @@ namespace Cozmo {
         _CaratTween.Play();
       }
 
-      public GameObject AddContent(MonoBehaviour contentPrefab, TweenCallback endInTweenCallback) {
+      public GameObject SetShelfContent(MonoBehaviour contentPrefab, TweenCallback endInTweenCallback = null) {
         if (_ContentObject != null) {
-          Destroy(_ContentObject);
+          GameObject.Destroy(_ContentObject);
         }
         ResetTween(_ContentTween);
         _ContentObject = UIManager.CreateUIElement(contentPrefab, _ContentContainer.transform);
@@ -189,7 +173,7 @@ namespace Cozmo {
 
       private void HideContentFinished() {
         if (_ContentObject != null) {
-          Destroy(_ContentObject);
+          GameObject.Destroy(_ContentObject);
           _ContentObject = null;
         }
       }

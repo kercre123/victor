@@ -235,12 +235,6 @@ namespace FaceEnrollment {
       }
     }
 
-    private void ShowHowToPlay() {
-      // this is our first face enrollment so show the how to play first
-      ContextManager.Instance.AppFlash(playChime: true);
-      _StateMachine.SetNextState(new FaceEnrollmentHowToPlayState());
-    }
-
     private void DoneAlertView() {
       Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
 

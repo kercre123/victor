@@ -9,6 +9,8 @@ namespace DataPersistence {
 
     public string ProfileName;
 
+    public bool FirstTimeFaceEnrollmentHowToPlay;
+
     public System.DateTime Birthdate;
 
     public Dictionary<string, bool> CompletedScriptedSequences;
@@ -82,6 +84,7 @@ namespace DataPersistence {
     public PlayerProfile() {
       FirstTimeUserFlow = true;
       ProfileCreated = false;
+      FirstTimeFaceEnrollmentHowToPlay = true;
       CompletedScriptedSequences = new Dictionary<string, bool>();
       GameDifficulty = new Dictionary<string, int>();
       TotalGamesPlayed = new Dictionary<string, int>();
