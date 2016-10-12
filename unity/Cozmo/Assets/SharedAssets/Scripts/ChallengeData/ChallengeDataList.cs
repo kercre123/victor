@@ -28,6 +28,7 @@ public class ChallengeDataList : ScriptableObject {
     for (int i = 0; i < ChallengeData.Length; i++) {
       if (challengeId == ChallengeData[i].ChallengeID) {
         data = ChallengeData[i];
+        break;
       }
     }
     return data;

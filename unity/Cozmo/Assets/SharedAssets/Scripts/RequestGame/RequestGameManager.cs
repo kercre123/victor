@@ -46,13 +46,14 @@ namespace Cozmo.RequestGame {
       if (_RobotToTrack != null) {
         _RobotToTrack.OnLightCubeAdded -= HandleNumberCubesUpdated;
         _RobotToTrack.OnLightCubeRemoved -= HandleNumberCubesUpdated;
+        _RobotToTrack = null;
       }
     }
 
     public void EnableRequestGameBehaviorGroups() {
       _AllowedToRequest = true;
       _TargetWantToPlayEmotion = CalculateWantToPlayEmotion();
-      PickMiniGameToRequest(out _ChallengeToRequestData, out _ChallengeToRequest);
+      PickMiniGameToRequest();
       UpdateRobotWantToPlayState();
     }
 
@@ -70,7 +71,7 @@ namespace Cozmo.RequestGame {
     }
 
     private void HandleNumberCubesUpdated(LightCube cube) {
-      PickMiniGameToRequest(out _ChallengeToRequestData, out _ChallengeToRequest);
+      PickMiniGameToRequest();
       UpdateRobotWantToPlayState();
     }
 
@@ -98,14 +99,14 @@ namespace Cozmo.RequestGame {
       return wantToPlayEmotion;
     }
 
-    private void PickMiniGameToRequest(out ChallengeData o_ChallengeToRequestData, out BehaviorGameFlag o_ChallengeToRequest) {
-      o_ChallengeToRequestData = null;
-      o_ChallengeToRequest = BehaviorGameFlag.NoGame;
+    private void PickMiniGameToRequest() {
+      _ChallengeToRequestData = null;
+      _ChallengeToRequest = BehaviorGameFlag.NoGame;
       if (_RobotToTrack == null) {
         DAS.Error("RequestGameManager.PickMiniGameToRequest", "Not tracking a robot! _RobotToTrack is NULL");
         return;
       }
-      if (RequestGameListConfig.Instance != null) {
+      if (RequestGameListConfig.Instance == null) {
         DAS.Error("RequestGameManager.PickMiniGameToRequest", "Request minigame config is NULL");
         return;
       }
@@ -124,14 +125,14 @@ namespace Cozmo.RequestGame {
       if (requestableGames.Count > 0) {
         int randomIndex = Random.Range(0, requestableGames.Count);
         RequestGameConfig randomRequestableGame = requestableGames[randomIndex];
-        o_ChallengeToRequest = randomRequestableGame.RequestBehaviorGameFlag;
-        o_ChallengeToRequestData = requestableGamesData[randomIndex];
+        _ChallengeToRequest = randomRequestableGame.RequestBehaviorGameFlag;
+        _ChallengeToRequestData = requestableGamesData[randomIndex];
       }
     }
 
-    private void GetRequestableAndUnlockedGames(out List<RequestGameConfig> o_RequestData, out List<ChallengeData> o_ChallengeData) {
-      o_RequestData = new List<RequestGameConfig>();
-      o_ChallengeData = new List<ChallengeData>();
+    private void GetRequestableAndUnlockedGames(out List<RequestGameConfig> outRequestData, out List<ChallengeData> outChallengeData) {
+      outRequestData = new List<RequestGameConfig>();
+      outChallengeData = new List<ChallengeData>();
       RequestGameListConfig requestGameConfig = RequestGameListConfig.Instance;
       ChallengeData data;
       int currentNumLightCubes = _RobotToTrack.LightCubes.Count;
@@ -140,8 +141,8 @@ namespace Cozmo.RequestGame {
         if (data != null
             && data.MinigameConfig.NumCubesRequired() <= currentNumLightCubes
             && UnlockablesManager.Instance.IsUnlocked(data.UnlockId.Value)) {
-          o_RequestData.Add(requestGameConfig.RequestList[i]);
-          o_ChallengeData.Add(data);
+          outRequestData.Add(requestGameConfig.RequestList[i]);
+          outChallengeData.Add(data);
         }
       }
     }
