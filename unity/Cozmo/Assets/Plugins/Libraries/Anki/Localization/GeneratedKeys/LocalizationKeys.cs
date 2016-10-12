@@ -497,6 +497,7 @@ public static class LocalizationKeys {
   public const string kRewardDescriptionStartNewDay = "reward.description.StartNewDay";
   public const string kRewardDescriptionSkillUp = "reward.description.SkillUp";
   public const string kRewardDescriptionSkillDown = "reward.description.SkillDown";
+  public const string kRewardFreeplayBehaviorDisplay = "reward.freeplay.BehaviorDisplay";
 
   #endregion
 

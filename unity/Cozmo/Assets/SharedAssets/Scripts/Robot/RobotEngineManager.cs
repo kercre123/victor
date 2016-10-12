@@ -310,6 +310,9 @@ public class RobotEngineManager : MonoBehaviour {
     case Anki.Cozmo.ExternalInterface.MessageEngineToGame.Tag.SupportInfo:
       ProcessSupportInfo(message.SupportInfo);
       break;
+    case Anki.Cozmo.ExternalInterface.MessageEngineToGame.Tag.BehaviorObjectiveAchieved:
+      ProcessBehaviorObjectiveAchieved(message.BehaviorObjectiveAchieved);
+      break;
     }
 
     // since the property to access individual message data in a CLAD message shares its name
@@ -394,6 +397,10 @@ public class RobotEngineManager : MonoBehaviour {
 
   private void ProcessSupportInfo(Anki.Cozmo.ExternalInterface.SupportInfo message) {
     DataPersistence.DataPersistenceManager.Instance.HandleSupportInfo(message);
+  }
+
+  private void ProcessBehaviorObjectiveAchieved(Anki.Cozmo.ExternalInterface.BehaviorObjectiveAchieved message) {
+    GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnFreeplayBehaviorSuccess, message.behaviorObjective));
   }
 
   public void StartEngine() {

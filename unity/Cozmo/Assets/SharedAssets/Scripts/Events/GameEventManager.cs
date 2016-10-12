@@ -6,16 +6,16 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 
 public class GameEventManager {
-  
+
   private static GameEventManager _Instance = null;
 
-  public static GameEventManager Instance { 
-    get { 
-      if (_Instance == null) { 
+  public static GameEventManager Instance {
+    get {
+      if (_Instance == null) {
         _Instance = new GameEventManager();
       }
-      return _Instance; 
-    } 
+      return _Instance;
+    }
   }
 
   // Event that fires and notifes all listeners of a CozmoEvent being recieved,
@@ -40,6 +40,10 @@ public class GameEventManager {
   // Fire the Action without sending a message base to engine
   // Use this for when we receive a game event from engine
   public void FireGameEvent(GameEventWrapper cozEvent) {
+    // Don't fire game events while in SDK mode since we don't want metagame features enablec
+    if (DataPersistence.DataPersistenceManager.Instance.IsSDKEnabled) {
+      return;
+    }
     if (OnGameEvent != null) {
       OnGameEvent(cozEvent);
     }

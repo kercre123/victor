@@ -66,9 +66,10 @@ public class ContextManager : MonoBehaviour {
     if (playChime) {
       Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Attention_Device);
     }
-    Color transparentFlashColor = new Color(_DefaultSettings.ContextFlashColor.r, _DefaultSettings.ContextFlashColor.g, _DefaultSettings.ContextFlashColor.b, 0);
-    _OverlayForeground.color = transparentFlashColor;
-    _ForegroundTweener.Append(_OverlayForeground.DOFade(_DefaultSettings.ContextFlashAlpha, _DefaultSettings.ContextFlashDuration).SetLoops(2, LoopType.Yoyo));
+    _OverlayForeground.color = _DefaultSettings.ContextFlashColor;
+    _ForegroundTweener.Append(_OverlayForeground.DOFade(1.0f, _DefaultSettings.ContextFlashDuration));
+    _ForegroundTweener.AppendInterval(_DefaultSettings.ContextFlashDuration);
+    _ForegroundTweener.Append(_OverlayForeground.DOFade(0.0f, _DefaultSettings.ContextFlashDuration));
     _ForegroundTweener.Play();
   }
 

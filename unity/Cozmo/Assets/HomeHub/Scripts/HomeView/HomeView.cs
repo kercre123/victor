@@ -22,6 +22,7 @@ namespace Cozmo.HomeHub {
 
     private const float kFreeplayIntervalCheck = 30.0f;
     private float _FreeplayIntervalLastTimestamp = -1;
+    private float _FreeplayStartedTimestamp = -1;
 
     public System.Action<StatContainer, StatContainer, Transform[]> DailyGoalsSet;
 
@@ -204,6 +205,7 @@ namespace Cozmo.HomeHub {
     public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById, HomeHub homeHubInstance) {
       ChestRewardManager.Instance.TryPopulateChestRewards();
       _FreeplayIntervalLastTimestamp = -1;
+      _FreeplayStartedTimestamp = Time.time;
       _HomeHubInstance = homeHubInstance;
 
       DASEventViewName = "home_view";
@@ -223,6 +225,7 @@ namespace Cozmo.HomeHub {
 
       _RequirementPointsProgressBar.ProgressUpdateCompleted += HandleCheckForLootView;
       DailyGoalManager.Instance.OnRefreshDailyGoals += UpdatePlayTabText;
+      RewardedActionManager.Instance.OnFreeplayRewardEvent += HandleFreeplayRewardedAction;
       GameEventManager.Instance.OnGameEvent += HandleGameEvents;
       UpdatePlayTabText();
 
@@ -493,10 +496,18 @@ namespace Cozmo.HomeHub {
       }
       if (Time.time - _FreeplayIntervalLastTimestamp > kFreeplayIntervalCheck) {
         _FreeplayIntervalLastTimestamp = Time.time;
-        GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnFreeplayInterval));
+        GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnFreeplayInterval, Time.time - _FreeplayStartedTimestamp));
       }
     }
 
+
+    private void HandleFreeplayRewardedAction(RewardedActionData reward) {
+      // Only update the chest progress bar and do context flash if the home view isn't currently occupied
+      if (!HomeViewCurrentlyOccupied) {
+        ContextManager.Instance.AppFlash(false);
+        UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints(), false);
+      }
+    }
 
     #endregion
 
@@ -816,6 +827,7 @@ namespace Cozmo.HomeHub {
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.EngineErrorCodeMessage>(HandleEngineErrorCode);
       _RequirementPointsProgressBar.ProgressUpdateCompleted -= HandleCheckForLootView;
       GameEventManager.Instance.OnGameEvent -= HandleGameEvents;
+      RewardedActionManager.Instance.OnFreeplayRewardEvent -= HandleFreeplayRewardedAction;
       DailyGoalManager.Instance.OnRefreshDailyGoals -= UpdatePlayTabText;
 
       if (_HelpViewInstance != null) {

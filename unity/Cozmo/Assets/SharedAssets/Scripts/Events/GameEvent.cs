@@ -40,10 +40,14 @@ namespace Anki {
       // 16
       OnFreeplayInterval,
       // 17
-      OnMemoryMatchVsComplete,
-      //18
-      Count
+      OnFreeplayBehaviorSuccess,
+      // 18
+      OnChallengeInterval,
       // 19
+      OnMemoryMatchVsComplete,
+      // 20
+      Count
+      // 21
 
 
 

@@ -176,6 +176,28 @@ public class SessionStartedGameEvent : GameEventWrapper {
   }
 }
 
+public class BehaviorSuccessGameEvent : GameEventWrapper {
+  public BehaviorObjective Behavior;
+
+  public override void Init(GameEvent Enum, params object[] args) {
+    base.Init(Enum);
+    if (args.Length > 0 && args[0].GetType() == typeof(BehaviorObjective)) {
+      Behavior = (BehaviorObjective)args[0];
+    }
+  }
+}
+
+public class TimedIntervalGameEvent : GameEventWrapper {
+  public float TargetTime_Sec;
+
+  public override void Init(GameEvent Enum, params object[] args) {
+    base.Init(Enum);
+    if (args.Length > 0 && args[0].GetType() == typeof(float)) {
+      TargetTime_Sec = (float)args[0];
+    }
+  }
+}
+
 /// <summary>
 ///  Factory to create helper events so nothing has to think about them.
 /// </summary>
@@ -208,6 +230,9 @@ public class GameEventWrapperFactory {
     Register(GameEvent.OnDailyGoalCompleted, typeof(DailyGoalCompleteGameEvent));
     Register(GameEvent.OnNewDayStarted, typeof(SessionStartedGameEvent));
     Register(GameEvent.OnUnlockableSparked, typeof(UnlockableGameEvent));
+    Register(GameEvent.OnFreeplayBehaviorSuccess, typeof(BehaviorSuccessGameEvent));
+    Register(GameEvent.OnFreeplayInterval, typeof(TimedIntervalGameEvent));
+    Register(GameEvent.OnChallengeInterval, typeof(TimedIntervalGameEvent));
     // This is only special because the skills system can only listen to enums for now
     // And cozmo shouldn't level up in solo mode.
     // TODO: can be removed when GameEvents have a baseclass instead of an enum or more filtering is on skillsystem.

@@ -15,7 +15,7 @@ MonoBehaviour:
   _ContextDimColor: {r: 0, g: 0.14901961, b: 0.28235295, a: 1}
   _ContextDimAlpha: 0.7
   _ContextFlashAlpha: 0.7
-  _ContextFlashDuration: 0.2
+  _ContextFlashDuration: 0.5
   _CascadeDelay_sec: 0.2
   _FadeInTransitionDuration_sec: 0.5
   _FadeInEasing: 3

@@ -95,6 +95,20 @@ namespace Cozmo {
       }
 
       [SerializeField]
+      private Color _FreeplayBehaviorDefaultColor;
+
+      public static Color FreeplayBehaviorDefaultColor {
+        get { return Instance._FreeplayBehaviorDefaultColor; }
+      }
+
+      [SerializeField]
+      private Color _FreeplayBehaviorRewardColor;
+
+      public static Color FreeplayBehaviorRewardColor {
+        get { return Instance._FreeplayBehaviorRewardColor; }
+      }
+
+      [SerializeField]
       private CoreUpgradeTint[] _CoreUpgradeTints;
 
       public static CoreUpgradeTint[] CoreUpgradeTints {

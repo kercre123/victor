@@ -17,7 +17,7 @@ using UnityEditor;
 namespace Anki {
   namespace Cozmo {
     [System.Serializable]
-    public class ChallengeTimePlayedCondition : GoalCondition {
+    public class TimedIntervalCondition : GoalCondition {
 
       public float TargetTime;
       public ComparisonType compareType;
@@ -25,10 +25,8 @@ namespace Anki {
       // Returns true if the specified player's time played in seconds matches target
       public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
-        if ((cozEvent is MinigameGameEvent)) {
-          GameBase miniGameInstance = HomeHub.Instance.MiniGameInstance;
-          if (miniGameInstance == null) { return false; }
-          isMet = CompareConditionValues(miniGameInstance.GetGameTimeElapsedInSeconds(), TargetTime, compareType);
+        if ((cozEvent is TimedIntervalGameEvent)) {
+          isMet = CompareConditionValues(((TimedIntervalGameEvent)cozEvent).TargetTime_Sec, TargetTime, compareType);
         }
         return isMet;
       }
@@ -37,7 +35,7 @@ namespace Anki {
       public override void DrawControls() {
         EditorGUILayout.BeginHorizontal();
         compareType = (ComparisonType)EditorGUILayout.EnumPopup(compareType);
-        TargetTime = EditorGUILayout.FloatField(new GUIContent("Target Time (secs)", "Target Time played since start of the minigame to check"), TargetTime);
+        TargetTime = EditorGUILayout.FloatField(new GUIContent("Target Time (secs)", "Target TOTAL Time to check when the Interval Event fires"), TargetTime);
         EditorGUILayout.EndHorizontal();
       }
 #endif

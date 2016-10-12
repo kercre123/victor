@@ -14,7 +14,10 @@ public abstract class GameBase : MonoBehaviour {
 
   private const float kWaitForPickupOrPlaceTimeout_sec = 30f;
   private const float kChallengeCompleteScoreboardDelay = 5f;
+  private const float kGameIntervalCheck = 30.0f;
+
   private float _AutoAdvanceTimestamp = -1f;
+  private float _GameIntervalLastTimestamp = -1;
 
   private System.Guid? _GameUUID;
 
@@ -154,6 +157,7 @@ public abstract class GameBase : MonoBehaviour {
   // music to continue playing without using an activity specific track.
   public void InitializeMinigame(ChallengeData challengeData, bool playGameSpecificMusic = true) {
     _GameStartTime = Time.time;
+    _GameIntervalLastTimestamp = -1;
     _StateMachine.SetGameRef(this);
 
     _ChallengeData = challengeData;
@@ -349,6 +353,17 @@ public abstract class GameBase : MonoBehaviour {
     UpdateBlinkLights();
     UpdateStateMachine();
     AutoAdvanceCheck();
+    TimedIntervalCheck();
+  }
+
+  private void TimedIntervalCheck() {
+    if (_GameIntervalLastTimestamp < 0.0f) {
+      _GameIntervalLastTimestamp = Time.time;
+    }
+    if (Time.time - _GameIntervalLastTimestamp > kGameIntervalCheck) {
+      _GameIntervalLastTimestamp = Time.time;
+      GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeInterval, GetGameTimeElapsedInSeconds()));
+    }
   }
 
   private void UpdateStateMachine() {

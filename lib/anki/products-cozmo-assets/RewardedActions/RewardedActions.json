@@ -1,6 +1,121 @@
 {
   "RewardedActions": [
     {
+      "Id": 27,
+      "RewardEvent": {
+        "Value": "OnFreeplayBehaviorSuccess"
+      },
+      "Tag": "",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
+          "Behavior": "PoppedWheelie",
+          "Label": {
+            "text": "Freeplay Behavior Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 2,
+        "DescriptionKey": "reward.description.Freeplay.CompleteBehavior.PopWheelie"
+      }
+    },
+    {
+      "Id": 28,
+      "RewardEvent": {
+        "Value": "OnFreeplayBehaviorSuccess"
+      },
+      "Tag": "",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
+          "Behavior": "PouncedAndCaught",
+          "Label": {
+            "text": "Freeplay Behavior Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 1,
+        "DescriptionKey": "reward.description.Freeplay.CompleteBehavior.Pounce"
+      }
+    },
+    {
+      "Id": 29,
+      "RewardEvent": {
+        "Value": "OnFreeplayBehaviorSuccess"
+      },
+      "Tag": "",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
+          "Behavior": "PoppedWheelie",
+          "Label": {
+            "text": "Freeplay Behavior Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 3,
+        "DescriptionKey": "reward.description.Freeplay.CompleteBehavior.PopWheelie"
+      }
+    },
+    {
+      "Id": 30,
+      "RewardEvent": {
+        "Value": "OnFreeplayBehaviorSuccess"
+      },
+      "Tag": "",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
+          "Behavior": "BuiltPyramid",
+          "Label": {
+            "text": "Freeplay Behavior Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 5,
+        "DescriptionKey": "reward.description.Freeplay.CompleteBehavior.Pyramid"
+      }
+    },
+    {
+      "Id": 31,
+      "RewardEvent": {
+        "Value": "OnFreeplayBehaviorSuccess"
+      },
+      "Tag": "",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.FreeplayBehaviorCondition, Assembly-CSharp",
+          "Behavior": "BlockStacked",
+          "Label": {
+            "text": "Freeplay Behavior Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 3,
+        "DescriptionKey": "reward.description.Freeplay.CompleteBehavior.Stack"
+      }
+    },
+    {
       "Id": 21,
       "RewardEvent": {
         "Value": "OnUnlockableSparked"

@@ -16,14 +16,11 @@ MonoBehaviour:
   _NeutralTextColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
   _SetupTextColor: {r: 0.03137255, g: 0.27058825, b: 0.5372549, a: 1}
   _MinigameTextColor: {r: 1, g: 1, b: 1, a: 1}
-  _SelectedTextColor: {r: 1, g: 1, b: 1, a: 1}
-  _LockedDifficultyBackgroundColor: {r: 0.49411768, g: 0.48627454, b: 0.43529415,
-    a: 1}
-  _LockedDifficultyCaratColor: {r: 0.3647059, g: 0.3647059, b: 0.3647059, a: 1}
   _GameSetupColor: {r: 1, g: 1, b: 1, a: 1}
   _GameBackgroundColor: {r: 0.37254903, g: 0.77254903, b: 0.92941177, a: 1}
-  _GameToggleColor: {r: 0.03137255, g: 0.27058825, b: 0.5372549, a: 1}
   _ActivityBackgroundColor: {r: 0.3647059, g: 0.41960785, b: 0.9098039, a: 1}
+  _FreeplayBehaviorDefaultColor: {r: 0, g: 0.609, b: 1, a: 1}
+  _FreeplayBehaviorRewardColor: {r: 0.38039216, g: 0.6862745, b: 0.019607844, a: 1}
   _CoreUpgradeTints:
   - _TintName: upgradeRed
     _TintColor: {r: 1, g: 0.20392157, b: 0.3254902, a: 1}

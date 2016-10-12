@@ -15,6 +15,12 @@ using DataPersistence;
 public class RewardedActionManager : MonoBehaviour {
   public static RewardedActionManager Instance { get; private set; }
 
+  // Event that fires if rewards that are specific to freeplay are fired.
+  // these should provide reward immediately instead of pending, skip
+  // any animations, and instead provide feedback in BehaviorDisplay
+  // and update the green points bar.
+  public event Action<RewardedActionData> OnFreeplayRewardEvent;
+
   public static string sRewardedActionsDirectory { get { return PlatformUtil.GetResourcesFolder("RewardedActions"); } }
 
   private IRobot _CurrRobot = null;
@@ -152,12 +158,26 @@ public class RewardedActionManager : MonoBehaviour {
       for (int i = 0; i < rewardList.Count; i++) {
         RewardedActionData reward = rewardList[i];
         if (RewardConditionsMet(reward, cozEvent)) {
-          DAS.Event("meta.energy_reward", cozEvent.GameEventEnum.ToString(), DASUtil.FormatExtraData(reward.Reward.Amount.ToString()));
-          if (!PendingActionRewards.ContainsKey(reward)) {
-            PendingActionRewards.Add(reward, reward.Reward.Amount);
-          }// If not using a valid tag, allow the reward to stack if trigger multiple times
-          else if (!TagConfig.IsValidTag(reward.Tag)) {
-            PendingActionRewards[reward] += reward.Reward.Amount;
+          // If the Cozmo event is a BehaviorSuccessGameEvent, reward points immediately, skipping pending action rewards and firing the
+          // on freeplay reward event. 
+          if (cozEvent is BehaviorSuccessGameEvent) {
+            if (RobotEngineManager.Instance.CurrentRobot != null && !RobotEngineManager.Instance.CurrentRobot.IsSparked) {
+              DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount(reward.Reward.ItemID, reward.Reward.Amount);
+              DAS.Event("freeplay.energy_reward", reward.RewardEvent.ToString(), DASUtil.FormatExtraData(reward.Reward.Amount.ToString()));
+              DataPersistenceManager.Instance.Save();
+              if (OnFreeplayRewardEvent != null) {
+                OnFreeplayRewardEvent.Invoke(reward);
+              }
+            }
+          }
+          else {
+            DAS.Event("meta.energy_reward", cozEvent.GameEventEnum.ToString(), DASUtil.FormatExtraData(reward.Reward.Amount.ToString()));
+            if (!PendingActionRewards.ContainsKey(reward)) {
+              PendingActionRewards.Add(reward, reward.Reward.Amount);
+            }// If not using a valid tag, allow the reward to stack if trigger multiple times
+            else if (!TagConfig.IsValidTag(reward.Tag)) {
+              PendingActionRewards[reward] += reward.Reward.Amount;
+            }
           }
         }
       }

@@ -28,10 +28,6 @@ namespace Cozmo {
       public float ContextDimAlpha { get { return _ContextDimAlpha; } }
 
       [SerializeField]
-      private float _ContextFlashAlpha = 0.7f;
-      public float ContextFlashAlpha { get { return _ContextFlashAlpha; } }
-
-      [SerializeField]
       private float _ContextFlashDuration = 0.2f;
       public float ContextFlashDuration { get { return _ContextFlashDuration; } }
 

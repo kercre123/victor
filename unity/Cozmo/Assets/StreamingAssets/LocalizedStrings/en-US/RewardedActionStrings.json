@@ -29,19 +29,19 @@
     "translation": "Spark an Upgrade"
   },
   "reward.description.Freeplay.CompleteBehavior.Stack": {
-    "translation": "Cozmo Completed the 'Stack Cubes' behavior successfully"
+    "translation": "completing the 'Stack Cubes' behavior successfully"
   },
   "reward.description.Freeplay.CompleteBehavior.Pounce": {
-    "translation": "Cozmo Completed the 'Pounce On Fingers' behavior successfully"
+    "translation": "completing the 'Pounce On Fingers' behavior successfully"
   },
   "reward.description.Freeplay.CompleteBehavior.TipOver": {
-    "translation": "Cozmo Completed the 'Knock Over Stacks' behavior successfully"
+    "translation": "completing the 'Knock Over Stacks' behavior successfully"
   },
   "reward.description.Freeplay.CompleteBehavior.Pyramid": {
-    "translation": "Cozmo Completed the 'Build a Pyramid' behavior successfully"
+    "translation": "completing the 'Build a Pyramid' behavior successfully"
   },
   "reward.description.Freeplay.CompleteBehavior.PopWheelie": {
-    "translation": "Cozmo Completed the 'Pop a Wheelie' behavior successfully"
+    "translation": "completing the 'Pop a Wheelie' behavior successfully"
   },
   "reward.description.QuickTap.Played": {
     "translation": "Played a game of Quick Tap"
@@ -126,5 +126,8 @@
   },
   "reward.description.SkillDown": {
     "translation": "Cozmo's {0} skill has decreased!"
+  },
+  "reward.freeplay.BehaviorDisplay": {
+    "translation": "Cozmo got +{0} energy from {1}!"
   }
 }
