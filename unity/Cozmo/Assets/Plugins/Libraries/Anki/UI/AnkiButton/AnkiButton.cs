@@ -12,7 +12,6 @@ namespace Anki {
     [AddComponentMenu("Anki/Anki Button", 02)]
     [ExecuteInEditMode]
     public class AnkiButton : UIBehaviour, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler {
-      static Action<AnkiButton, bool> OnAnyButtonPress;
       private const int kViewControllerParentSearchLimit = 3;
 
       [SerializeField]
@@ -69,9 +68,6 @@ namespace Anki {
       private Vector3 _TextPressedPosition;
 
       private bool _Initialized = false;
-      // Many potential issues can arise from multi touch functionality, this bool and the OnAnyButtonPressed action
-      // are intended to help future proof against these problems.
-      private bool _ButtonTouchesEnabled = true;
 
       public Color TextEnabledColor = Color.white;
 
@@ -171,15 +167,8 @@ namespace Anki {
 
       protected override void Start() {
         base.Start();
-        AnkiButton.OnAnyButtonPress += HandleGlobalPress;
         if (!_Initialized && Application.isPlaying) {
           DAS.Warn("AnkiButton.Start", this.gameObject.name + " needs to be initialized.");
-        }
-      }
-
-      private void HandleGlobalPress(AnkiButton button, bool isPressed) {
-        if (button != this) {
-          _ButtonTouchesEnabled = !isPressed;
         }
       }
 
@@ -291,22 +280,12 @@ namespace Anki {
 
       public void OnPointerDown(PointerEventData eventData) {
         DAS.Debug("AnkiButton.OnPointerDown", string.Format("{0} Pressed - View: {1}", DASEventButtonName, DASEventViewController));
-        if (_ButtonTouchesEnabled == true) {
-          Press();
-        }
-        if (AnkiButton.OnAnyButtonPress != null) {
-          AnkiButton.OnAnyButtonPress.Invoke(this, true);
-        }
+        Press();
       }
 
       public void OnPointerUp(PointerEventData eventData) {
         DAS.Debug("AnkiButton.OnPointerUp", string.Format("{0} Released - View: {1}", DASEventButtonName, DASEventViewController));
-        if (_ButtonTouchesEnabled == true) {
-          Release();
-        }
-        if (AnkiButton.OnAnyButtonPress != null) {
-          AnkiButton.OnAnyButtonPress.Invoke(this, false);
-        }
+        Release();
       }
 
       protected virtual void UpdateVisuals() {
@@ -397,10 +376,6 @@ namespace Anki {
           _TextLabel.color = TextPressedColor;
           _TextLabel.transform.localPosition = _TextPressedPosition;
         }
-      }
-
-      protected override void OnDestroy() {
-        AnkiButton.OnAnyButtonPress -= HandleGlobalPress;
       }
 
       [Serializable]

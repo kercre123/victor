@@ -43,7 +43,7 @@ public class IntroManager : MonoBehaviour {
     Screen.sleepTimeout = SleepTimeout.NeverSleep;
     Input.gyro.enabled = true;
     Input.compass.enabled = true;
-    Input.multiTouchEnabled = true;
+    Input.multiTouchEnabled = false;
 
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(OnRobotDisconnect);
 
