@@ -505,7 +505,7 @@ namespace Cozmo.HomeHub {
     public void CheckForRewardSequence() {
       // Don't start coroutines if not active; this can happen in CleanUp steps
       // See https://ankiinc.atlassian.net/browse/COZMO-5212
-      if (!this.enabled || this.gameObject == null || !this.gameObject.activeInHierarchy) {
+      if (!this.enabled || this.gameObject == null || !this.gameObject.activeInHierarchy || _LootSequenceActive) {
         return;
       }
 
@@ -560,6 +560,8 @@ namespace Cozmo.HomeHub {
         // phase Loot onboarding is two stages, the first one is just an explination pointing to your meter,
         // then the callback from Onboarding will open the loot view.
         if (OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Loot)) {
+          // Block Loot Sequences to prevent bugs with onboarding loading
+          _LootSequenceActive = true;
           OnboardingManager.Instance.StartPhase(OnboardingManager.OnboardingPhases.Loot);
           UIManager.EnableTouchEvents();
           OnboardingManager.Instance.OnOnboardingStageStarted += HandleOnboardingLootStarted;
@@ -617,6 +619,9 @@ namespace Cozmo.HomeHub {
 
     private void HandleOnboardingLootStarted(OnboardingManager.OnboardingPhases phase, int onboardingStage) {
       if (phase == OnboardingManager.OnboardingPhases.Loot && onboardingStage > 0) {
+        // Now that we are done with the onboarding part of the loot sequence, make it possible for loot sequences to be
+        // started again before firing open loot view.
+        _LootSequenceActive = false;
         OpenLootView();
         OnboardingManager.Instance.OnOnboardingStageStarted -= HandleOnboardingLootStarted;
       }
