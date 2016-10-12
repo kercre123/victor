@@ -7,7 +7,7 @@ namespace Cozmo {
         private const float _kSendMessageInterval_sec = 0.1f;
         private const float _kDriveSpeedChangeThreshold_mmps = 1f;
         private const float _kTurnDirectionChangeThreshold = 0.01f;
-        private const float _kHeadTiltChangeThreshold_radps = 0.05f;
+        private const float _kHeadFactorThreshold = 0.1f;
         private const float _kLiftFactorThreshold = 0.05f;
 
         private DroneModeGame _DroneModeGame;
@@ -17,8 +17,9 @@ namespace Cozmo {
         private float _TargetDriveSpeed_mmps;
         private float _CurrentTurnDirection;
         private float _TargetTurnDirection;
-        private float _CurrentDriveHeadSpeed_radps;
-        private float _TargetDriveHeadSpeed_radps;
+
+        private float _TargetHeadFactor;
+        private bool _TargetHeadFactorChanged = false;
 
         private float _LastMessageSentTimestamp;
 
@@ -110,8 +111,7 @@ namespace Cozmo {
 
         private void SendDriveRobotMessages() {
           if (Time.time - _LastMessageSentTimestamp > _kSendMessageInterval_sec
-              || ShouldStopDriving(_TargetDriveSpeed_mmps, _CurrentDriveSpeed_mmps, _TargetTurnDirection)
-              || ShouldStopDriveHead(_TargetDriveHeadSpeed_radps)) {
+              || ShouldStopDriving(_TargetDriveSpeed_mmps, _CurrentDriveSpeed_mmps, _TargetTurnDirection)) {
             _LastMessageSentTimestamp = Time.time;
             bool droveWheels = DriveWheelsIfNeeded();
             bool droveHead = DriveHeadIfNeeded();
@@ -121,9 +121,6 @@ namespace Cozmo {
               // If targets are both zero, enable reactionary behavior
               if (!droveHead && !droveWheels) {
                 EnableIdleReactionaryBehaviors(true);
-
-                // Also make sure to zero out animations
-                _RobotAnimator.PlayTransitionAnimation(DroneModeControlsSlide.SpeedSliderSegment.Neutral);
               }
               else {
                 EnableIdleReactionaryBehaviors(false);
@@ -168,26 +165,36 @@ namespace Cozmo {
         }
 
         private bool DriveHeadIfNeeded() {
-          bool droveHead = false;
-          // Is the user telling us to drive the head?
-          if (IsUserDrivingHead(_TargetDriveHeadSpeed_radps)) {
-            // Send a new message only if there is a change
-            if (!_TargetDriveHeadSpeed_radps.IsNear(_CurrentDriveHeadSpeed_radps, _kHeadTiltChangeThreshold_radps)) {
-              _CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.MOVE_HEAD_TO_ANGLE);
-              _CurrentRobot.DriveHead(_TargetDriveHeadSpeed_radps);
-              _CurrentDriveHeadSpeed_radps = _TargetDriveHeadSpeed_radps;
-            }
-            HeadDrivingDebugText = "\nPlayer driving head";
-            droveHead = true;
+          bool startDriveHead = false;
+          float currentHeadAngleFactor = _CurrentRobot.GetHeadAngleFactor();
+          if (!_IsDrivingHead && _TargetHeadFactorChanged && !currentHeadAngleFactor.IsNear(_TargetHeadFactor, _kHeadFactorThreshold)) {
+            DriveHeadInternal();
+            HeadDrivingDebugText = "\nPlayer driving head: target: " + _TargetHeadFactor + " current=" + currentHeadAngleFactor;
+            startDriveHead = true;
           }
-          else if (ShouldStopDriveHead(_TargetDriveHeadSpeed_radps)) {
-            _TargetDriveHeadSpeed_radps = 0f;
-            _CurrentDriveHeadSpeed_radps = 0f;
-            _CurrentRobot.DriveHead(0f);
-            HeadDrivingDebugText = "\nPlayer stop driving head";
-            droveHead = true;
+          _IsDrivingHead = startDriveHead;
+          return _IsDrivingHead;
+        }
+
+        private void HandleHeadMoveFinished(bool success) {
+          float currentHeadAngleFactor = _CurrentRobot.GetHeadAngleFactor();
+          if (_TargetHeadFactorChanged && !currentHeadAngleFactor.IsNear(_TargetHeadFactor, _kHeadFactorThreshold)) {
+            DriveHeadInternal();
+            HeadDrivingDebugText = "\nPlayer driving head: target: " + _TargetHeadFactor + " current=" + currentHeadAngleFactor;
           }
-          return droveHead;
+          else {
+            _IsDrivingHead = false;
+            HeadDrivingDebugText = "\nPlayer not driving head: target=" + _TargetHeadFactor + " current=" + _CurrentRobot.GetHeadAngleFactor();
+            _RobotAnimator.AllowIdleAnimation(true);
+          }
+        }
+
+        private void DriveHeadInternal() {
+          _CurrentRobot.CancelCallback(HandleHeadMoveFinished);
+          _CurrentRobot.SetHeadAngle(_TargetHeadFactor, callback: HandleHeadMoveFinished);
+          _IsDrivingHead = true;
+          _TargetHeadFactorChanged = false;
+          _RobotAnimator.AllowIdleAnimation(false);
         }
 
         private void DriveLiftIfNeeded() {
@@ -210,15 +217,6 @@ namespace Cozmo {
           return targetDriveSpeed.IsNear(0f, _kDriveSpeedChangeThreshold_mmps)
                                  && !currentDriveSpeed.IsNear(0f, _kDriveSpeedChangeThreshold_mmps)
                                  && targetTurnDirection.IsNear(0f, _kTurnDirectionChangeThreshold);
-        }
-
-        private bool IsUserDrivingHead(float targetHeadSpeed) {
-          return !targetHeadSpeed.IsNear(0f, _kHeadTiltChangeThreshold_radps);
-        }
-
-        private bool ShouldStopDriveHead(float targetHeadSpeed) {
-          return targetHeadSpeed.IsNear(0f, _kHeadTiltChangeThreshold_radps)
-                                && !targetHeadSpeed.IsNear(_CurrentDriveHeadSpeed_radps, _kHeadTiltChangeThreshold_radps);
         }
 
         private float DriveRobotWheels(float driveSpeed_mmps, float turnDirection) {
@@ -283,10 +281,10 @@ namespace Cozmo {
           }
         }
 
-        private void HandleHeadTiltValueChanged(DroneModeControlsSlide.HeadSliderSegment newPosition, float newNormalizedValue) {
-          float newDriveHeadSpeed_radps = _DroneModeGame.CalculateDriveHeadSpeed(newPosition, newNormalizedValue);
-          if (!newDriveHeadSpeed_radps.IsNear(_TargetDriveHeadSpeed_radps, _kHeadTiltChangeThreshold_radps)) {
-            _TargetDriveHeadSpeed_radps = newDriveHeadSpeed_radps;
+        private void HandleHeadTiltValueChanged(float newNormalizedValue) {
+          if (!newNormalizedValue.IsNear(_TargetHeadFactor, _kHeadFactorThreshold)) {
+            _TargetHeadFactor = newNormalizedValue;
+            _TargetHeadFactorChanged = true;
           }
         }
 

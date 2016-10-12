@@ -26,14 +26,6 @@ namespace Cozmo {
       private float _TurboSpeed_mmps = 160f;
       public float TurboSpeed_mmps { get { return _TurboSpeed_mmps; } }
 
-      [SerializeField, Range(0f, 3.14f), Tooltip("(rad/sec) Max angular velocity of Cozmo's head movement. (When slider is fully extended.)")]
-      private float _HeadMovementSpeed_radps = 0.5f;
-      public float HeadMovementSpeed_radps { get { return _HeadMovementSpeed_radps; } }
-
-      [SerializeField, Tooltip("(sec) Num seconds Cozmo will hold head after not recieving head input.")]
-      private float _HeadIdleDelay_s = 4f;
-      public float HeadIdleDelay_s { get { return _HeadIdleDelay_s; } }
-
       [SerializeField, Range(0f, 90f), Tooltip("Degrees size near neutral position that counts as '0' for the purposes of turning.")]
       private float _NeutralTiltSizeDegrees = 10f;
       public float NeutralTiltSizeDegrees { get { return _NeutralTiltSizeDegrees; } }

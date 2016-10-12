@@ -463,7 +463,7 @@ GameObject:
   - 224: {fileID: 22473560}
   - 114: {fileID: 11450820}
   m_Layer: 5
-  m_Name: TiltSlider
+  m_Name: HeadTiltSlider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -841,9 +841,7 @@ MonoBehaviour:
   _ReverseThreshold: 0.28
   _ForwardThreshold: 0.3
   _TurboThreshold: 0.863
-  _HeadTiltThrottle: {fileID: 11450820}
-  _HeadDownThreshold: 0.45
-  _HeadUpThreshold: 0.55
+  _HeadTiltSlider: {fileID: 11450820}
   _BackgroundColor: {r: 0.14117648, g: 0.8627451, b: 0.9019608, a: 1}
   _QuitButtonSprite: {fileID: 21300000, guid: fded4416f84714f928966ec6788973a4, type: 3}
   _HowToPlayButton: {fileID: 0}
@@ -1184,17 +1182,17 @@ MonoBehaviour:
   m_FillRect: {fileID: 0}
   m_HandleRect: {fileID: 22442098}
   m_Direction: 2
-  m_MinValue: 0
+  m_MinValue: -1
   m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 0.5
+  m_Value: 0
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
     m_TypeName: UnityEngine.UI.Slider+SliderEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
   _RestingSliderValue: 0.5
-  _SliderValueDecayRate: 0.9
+  _SliderValueDecayRate: 0
   _SnapBackInstantly: 1
 --- !u!114 &11452206
 MonoBehaviour:

@@ -141,22 +141,6 @@ namespace Cozmo {
           }
           return driveWheelSpeed_mmps;
         }
-
-        public float CalculateDriveHeadSpeed(DroneModeControlsSlide.HeadSliderSegment sliderSegment, float sliderSegmentValue) {
-          float driveHeadSpeed_radps = 0f;
-          switch (sliderSegment) {
-          case DroneModeControlsSlide.HeadSliderSegment.Forward:
-            driveHeadSpeed_radps = DroneModeConfigData.HeadMovementSpeed_radps * sliderSegmentValue;
-            break;
-          case DroneModeControlsSlide.HeadSliderSegment.Reverse:
-            driveHeadSpeed_radps = DroneModeConfigData.HeadMovementSpeed_radps * sliderSegmentValue * -1;
-            break;
-          default:
-            driveHeadSpeed_radps = 0f;
-            break;
-          }
-          return driveHeadSpeed_radps;
-        }
       }
     }
   }

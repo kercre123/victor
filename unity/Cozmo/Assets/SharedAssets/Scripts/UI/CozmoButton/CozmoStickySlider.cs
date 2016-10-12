@@ -22,12 +22,14 @@ namespace Cozmo {
       }
 
       protected void Update() {
-        if (!_IsTouching && !IsNearRestingState()) {
-          if (_SnapBackInstantly) {
-            SetToRest();
-          }
-          else {
-            this.value = ((this.value - _RestingSliderValue) * _SliderValueDecayRate) + _RestingSliderValue;
+        if (_SliderValueDecayRate != 0f) {
+          if (!_IsTouching && !IsNearRestingState()) {
+            if (_SnapBackInstantly) {
+              SetToRest();
+            }
+            else {
+              this.value = ((this.value - _RestingSliderValue) * _SliderValueDecayRate) + _RestingSliderValue;
+            }
           }
         }
       }

@@ -12,18 +12,11 @@ namespace Cozmo.Minigame.DroneMode {
     public delegate void SpeedSliderSegmentEventHandler(SpeedSliderSegment currentSegment, SpeedSliderSegment newSegment);
     public event SpeedSliderSegmentEventHandler OnDriveSpeedSegmentChanged;
 
-    public delegate void HeadSliderEventHandler(HeadSliderSegment currentSegment, float newNormalizedSegmentValue);
+    public delegate void HeadSliderEventHandler(float newNormalizedSegmentValue);
     public event HeadSliderEventHandler OnHeadTiltSegmentValueChanged;
-    public event HeadSliderEventHandler OnHeadTiltSegmentChanged;
 
     public enum SpeedSliderSegment {
       Turbo,
-      Forward,
-      Neutral,
-      Reverse
-    }
-
-    public enum HeadSliderSegment {
       Forward,
       Neutral,
       Reverse
@@ -44,13 +37,7 @@ namespace Cozmo.Minigame.DroneMode {
     private float _TurboThreshold;
 
     [SerializeField]
-    private CozmoStickySlider _HeadTiltThrottle;
-
-    [SerializeField, Range(0f, 1f)]
-    private float _HeadDownThreshold;
-
-    [SerializeField, Range(0f, 1f)]
-    private float _HeadUpThreshold;
+    private Slider _HeadTiltSlider;
 
     [SerializeField]
     private Color _BackgroundColor;
@@ -79,16 +66,14 @@ namespace Cozmo.Minigame.DroneMode {
     private SpeedSliderSegment _CurrentDriveSpeedSliderSegment;
     private float _CurrentDriveSpeedSliderSegmentValue;
 
-    private HeadSliderSegment _CurrentHeadTiltSliderSegment;
     private float _CurrentHeadSliderSegmentValue;
 
     private void Start() {
       _CurrentDriveSpeedSliderSegment = SpeedSliderSegment.Neutral;
       _CurrentDriveSpeedSliderSegmentValue = 0f;
-      _CurrentHeadTiltSliderSegment = HeadSliderSegment.Neutral;
       _CurrentHeadSliderSegmentValue = 0f;
       _SpeedThrottle.onValueChanged.AddListener(HandleSpeedThrottleValueChanged);
-      _HeadTiltThrottle.onValueChanged.AddListener(HandleTiltThrottleValueChanged);
+      _HeadTiltSlider.onValueChanged.AddListener(HandleTiltThrottleValueChanged);
       _HowToPlayButton.Initialize(HandleHowToPlayClicked, "drone_mode_how_to_play_button", "drone_mode_view_slide");
 
       TiltText.gameObject.SetActive(ShowDebugTextFields);
@@ -102,7 +87,7 @@ namespace Cozmo.Minigame.DroneMode {
 
     private void OnDestroy() {
       _SpeedThrottle.onValueChanged.RemoveListener(HandleSpeedThrottleValueChanged);
-      _HeadTiltThrottle.onValueChanged.RemoveListener(HandleTiltThrottleValueChanged);
+      _HeadTiltSlider.onValueChanged.RemoveListener(HandleTiltThrottleValueChanged);
       if (_HowToPlayViewInstance != null) {
         _HowToPlayViewInstance.CloseViewImmediately();
       }
@@ -118,7 +103,6 @@ namespace Cozmo.Minigame.DroneMode {
       if (_HowToPlayViewInstance == null) {
         _HowToPlayViewInstance = UIManager.OpenView<DroneModeHowToPlayView>(_HowToPlayViewPrefab);
         _SpeedThrottle.SetToRest();
-        _HeadTiltThrottle.SetToRest();
       }
     }
 
@@ -163,38 +147,11 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     private void HandleTiltThrottleValueChanged(float newSliderValue) {
-      HeadSliderSegment newSegment;
-      float newSegmentValue;
-      MapHeadSliderValueToSegmentValue(newSliderValue, out newSegment, out newSegmentValue);
-
-      if (!newSliderValue.IsNear(_CurrentHeadSliderSegmentValue, _kSliderChangeThreshold)
-          || newSegment != _CurrentHeadTiltSliderSegment) {
-        _CurrentHeadSliderSegmentValue = newSegmentValue;
+      if (!newSliderValue.IsNear(_CurrentHeadSliderSegmentValue, _kSliderChangeThreshold)) {
+        _CurrentHeadSliderSegmentValue = newSliderValue;
         if (OnHeadTiltSegmentValueChanged != null) {
-          OnHeadTiltSegmentValueChanged(newSegment, newSegmentValue);
+          OnHeadTiltSegmentValueChanged(newSliderValue);
         }
-
-        if (newSegment != _CurrentHeadTiltSliderSegment) {
-          _CurrentHeadTiltSliderSegment = newSegment;
-          if (OnHeadTiltSegmentChanged != null) {
-            OnHeadTiltSegmentChanged(newSegment, newSegmentValue);
-          }
-        }
-      }
-    }
-
-    private void MapHeadSliderValueToSegmentValue(float sliderValue, out HeadSliderSegment newSegment, out float normalizedSegmentValue) {
-      normalizedSegmentValue = 0;
-      newSegment = HeadSliderSegment.Neutral;
-      if (sliderValue < _HeadDownThreshold) {
-        float difference = _HeadDownThreshold - sliderValue;
-        normalizedSegmentValue = difference / _HeadDownThreshold;
-        newSegment = HeadSliderSegment.Reverse;
-      }
-      else if (sliderValue > _HeadUpThreshold) {
-        float difference = sliderValue - _HeadUpThreshold;
-        normalizedSegmentValue = difference / (1 - _HeadUpThreshold);
-        newSegment = HeadSliderSegment.Forward;
       }
     }
   }

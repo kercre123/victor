@@ -12,6 +12,8 @@ namespace Cozmo.Minigame.DroneMode {
     private string _DebugString;
     private System.Collections.Generic.Stack<AnimationTrigger> _IdleAnimationStack;
 
+    private bool _AllowIdleAnimation = true;
+
     public enum TransitionAnimationState {
       IN,
       OUT,
@@ -142,7 +144,7 @@ namespace Cozmo.Minigame.DroneMode {
         PushRobotIdleAnimation(AnimationTrigger.DroneModeForwardDrivingLoop);
         break;
       case DroneModeControlsSlide.SpeedSliderSegment.Neutral:
-        PushRobotIdleAnimation(AnimationTrigger.DroneModeIdle);
+        UpdateDroneModeIdleAnimation();
         break;
       case DroneModeControlsSlide.SpeedSliderSegment.Reverse:
         PushRobotIdleAnimation(AnimationTrigger.DroneModeBackwardDrivingLoop);
@@ -154,6 +156,29 @@ namespace Cozmo.Minigame.DroneMode {
         // We should never get here.
         DAS.Error("DroneModeTransitionAnimator.SetDrivingAnimation", "SpeedSliderSegment not implemented! " + _TargetDriveSpeedSegment);
         break;
+      }
+    }
+
+    public void AllowIdleAnimation(bool allow) {
+      if (allow != _AllowIdleAnimation) {
+        _AllowIdleAnimation = allow;
+        if (_CurrentDriveSpeedSegment == DroneModeControlsSlide.SpeedSliderSegment.Neutral
+            && _TargetDriveSpeedSegment == DroneModeControlsSlide.SpeedSliderSegment.Neutral) {
+          while (_IdleAnimationStack.Count > 0) {
+            PopRobotIdleAnimation();
+          }
+          UpdateDroneModeIdleAnimation();
+        }
+      }
+    }
+
+    private void UpdateDroneModeIdleAnimation() {
+      if (_AllowIdleAnimation) {
+        PushRobotIdleAnimation(AnimationTrigger.DroneModeIdle);
+      }
+      else {
+        // Has no head angle keyframes
+        PushRobotIdleAnimation(AnimationTrigger.DroneModeForwardDrivingLoop);
       }
     }
 
