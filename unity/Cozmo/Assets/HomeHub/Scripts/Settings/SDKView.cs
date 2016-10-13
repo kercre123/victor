@@ -21,6 +21,10 @@ namespace Cozmo.Settings {
 
     private bool _BackgroundTimeoutSent = false;
 
+    private void Awake() {
+      _DisableSDKButton.Initialize(HandleDisableSDKButtonTapped, "disable_sdk_button", "sdk_view");
+    }
+
     // Use this for initialization
     private void Start() {
       // Send EnterSDKMode to engine as we enter this view
@@ -36,7 +40,6 @@ namespace Cozmo.Settings {
       _SDKMessageOutput.text = "";
       _TimeSinceLastMessageLabel.text = Localization.Get(LocalizationKeys.kSettingsSdkPanelNoMessagesText);
 
-      _DisableSDKButton.Initialize(HandleDisableSDKButtonTapped, "disable_sdk_button", "sdk_view");
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotDisconnected>(OnRobotDisconnect);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.SdkStatus>(HandleSDKMessageReceived);
     }

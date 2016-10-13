@@ -13,10 +13,12 @@ namespace Cozmo.Settings {
 
     private AlertView _ActivateSDKModal = null;
 
+    private void Awake() {
+      _EnableSDKButton.Initialize(HandleEnableSDKButtonTapped, "enable_sdk_button", "settings_sdk_panel");
+    }
 
     // Use this for initialization
     private void Start() {
-      _EnableSDKButton.Initialize(HandleEnableSDKButtonTapped, "enable_sdk_button", "settings_sdk_panel");
       // Immediately open the SDK UI upon opening this view if the SDK is enabled
       if (DataPersistenceManager.Instance.IsSDKEnabled) {
         EnableSDK();

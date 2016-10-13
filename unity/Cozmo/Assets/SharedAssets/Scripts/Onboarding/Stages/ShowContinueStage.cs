@@ -19,9 +19,12 @@ namespace Onboarding {
     [SerializeField]
     private bool _ShowOutline = false;
 
+    private void Awake() {
+      _ContinueButtonInstance.Initialize(HandleContinueClicked, "Onboarding." + name, "Onboarding");
+    }
+
     public override void Start() {
       base.Start();
-      _ContinueButtonInstance.Initialize(HandleContinueClicked, "Onboarding." + name, "Onboarding");
       RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(_FreeplayEnabledOnEnter);
 
       if (_TransitionBGColorYellow) {

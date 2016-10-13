@@ -15,7 +15,7 @@ public class FirmwarePane : MonoBehaviour {
   [SerializeField]
   private Anki.UI.AnkiButton _PrepareButton;
 
-  void Start() {
+  void Awake() {
     _UpgradeButton.Initialize(() => RobotEngineManager.Instance.UpdateFirmware(FirmwareType.Current, 0), "debug_upgrade_firmware_button", "debug_firmware_view");
     _DowngradeButton.Initialize(() => RobotEngineManager.Instance.UpdateFirmware(FirmwareType.Old, 0), "debug_downgrade_firmware_button", "debug_firmware_view");
     _ResetButton.Initialize(() => RobotEngineManager.Instance.ResetFirmware(), "debug_reset_firmware_button", "debug_firmware_view");

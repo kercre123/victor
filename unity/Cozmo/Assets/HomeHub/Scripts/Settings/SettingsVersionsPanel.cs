@@ -44,6 +44,13 @@ namespace Cozmo.Settings {
 
     private bool _RestoreButtonIsActive = true;
 
+    private void Awake() {
+      string dasEventViewName = "settings_version_panel";
+
+      _SupportButton.Initialize(HandleOpenSupportViewButtonTapped, "support_button", dasEventViewName);
+      _EraseCozmoButton.Initialize(HandleOpenEraseCozmoViewButtonTapped, "open_erase_cozmo_view_button", dasEventViewName);
+    }
+
     private void Start() {
       RobotEngineManager.Instance.AddCallback<DeviceDataMessage>(HandleDeviceDataMessage);
       RobotEngineManager.Instance.AddCallback<RestoreRobotOptions>(HandleRestoreRobotOptions);
@@ -55,12 +62,6 @@ namespace Cozmo.Settings {
 
       // Fill out Serial number args
       _SerialNumberLabel.FormattingArgs = new object[] { robot.SerialNumber.ToString("X8") };
-
-      string dasEventViewName = "settings_version_panel";
-
-      _SupportButton.Initialize(HandleOpenSupportViewButtonTapped, "support_button", dasEventViewName);
-
-      _EraseCozmoButton.Initialize(HandleOpenEraseCozmoViewButtonTapped, "open_erase_cozmo_view_button", dasEventViewName);
 
       robot.RequestRobotRestoreData();
     }

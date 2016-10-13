@@ -21,6 +21,12 @@ namespace Cozmo.Settings {
     [SerializeField]
     private Slider _DeviceVolumeSlider;
 
+    private void Awake() {
+      _LowRobotVolumeToggle.Initialize(HandleLowRobotVolumeTogglePressed, "settings_low_robot_volume", "settings_panel");
+      _MediumRobotVolumeToggle.Initialize(HandleMediumRobotVolumeTogglePressed, "settings_medium_robot_volume", "settings_panel");
+      _HighRobotVolumeToggle.Initialize(HandleHighRobotVolumeTogglePressed, "settings_high_robot_volume", "settings_panel");
+    }
+
     private void Start() {
       Dictionary<VolumeType, float> currentVolumePrefs = DataPersistenceManager.Instance.Data.DeviceSettings.VolumePreferences;
 
@@ -35,10 +41,6 @@ namespace Cozmo.Settings {
       }
       _DeviceVolumeSlider.value = musicVolume;
       _DeviceVolumeSlider.onValueChanged.AddListener(HandleMusicVolumeValueChanged);
-
-      _LowRobotVolumeToggle.Initialize(HandleLowRobotVolumeTogglePressed, "settings_low_robot_volume", "settings_panel");
-      _MediumRobotVolumeToggle.Initialize(HandleMediumRobotVolumeTogglePressed, "settings_medium_robot_volume", "settings_panel");
-      _HighRobotVolumeToggle.Initialize(HandleHighRobotVolumeTogglePressed, "settings_high_robot_volume", "settings_panel");
 
       if (robotVolume <= DefaultSettingsValuesConfig.Instance.LowRobotVolume) {
         _LowRobotVolumeToggle.ShowPressedStateOnRelease = true;

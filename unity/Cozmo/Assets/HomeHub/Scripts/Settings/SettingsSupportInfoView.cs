@@ -16,7 +16,7 @@ namespace Cozmo.Settings {
     [SerializeField]
     private AnkiTextLabel _ClarificationText;
 
-    private void Start() {
+    private void Awake() {
       _OpenRestoreCozmoDialogButton.Initialize(HandleOpenRestoreCozmoViewButtonTapped, "open_restore_cozmo_view_button", this.DASEventViewName);
     }
 

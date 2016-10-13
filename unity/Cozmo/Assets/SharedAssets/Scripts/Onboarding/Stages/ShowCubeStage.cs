@@ -35,11 +35,13 @@ namespace Onboarding {
     private OnboardingStateEnum _State = OnboardingStateEnum.Inactive;
     private BehaviorType _CurrBehavior = BehaviorType.NoneBehavior;
 
+    private void Awake() {
+      _ContinueButtonInstance.Initialize(HandleContinueClicked, "Onboarding." + name, "Onboarding");
+    }
+
     public override void Start() {
       base.Start();
       _StartTime = Time.time;
-
-      _ContinueButtonInstance.Initialize(HandleContinueClicked, "Onboarding." + name, "Onboarding");
 
       RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayLightStates(true);
 

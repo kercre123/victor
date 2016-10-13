@@ -25,11 +25,13 @@ namespace Cozmo.Settings {
 
     private const string kDasEventViewController = "settings_cube_status_panel";
 
-    // Use this for initialization
-    void Start() {
+    private void Awake() {
       _RefreshBlockPoolButton.Initialize(HandleRefreshBlockPoolTapped, "refresh_blockpool_button", kDasEventViewController);
       _ShowCubeHelpButton.Initialize(HandleOpenCubeHelpViewTapped, "show_cube_help_dialog_button", kDasEventViewController);
+    }
 
+    // Use this for initialization
+    void Start() {
       // Create buttons in layout group, one for each ObjectType
       CreateSettingsLightCubeButton(ObjectType.Block_LIGHTCUBE1);
       CreateSettingsLightCubeButton(ObjectType.Block_LIGHTCUBE2);

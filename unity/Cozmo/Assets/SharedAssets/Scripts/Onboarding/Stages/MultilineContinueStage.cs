@@ -16,9 +16,13 @@ namespace Onboarding {
 
     private int _CurrReveal = 0;
     private float _NextRevealTime = -1.0f;
+
+    private void Awake() {
+      _ContinueButtonInstance.Initialize(HandleContinueClicked, "Onboarding." + name, "Onboarding");
+    }
+
     public override void Start() {
       base.Start();
-      _ContinueButtonInstance.Initialize(HandleContinueClicked, "Onboarding." + name, "Onboarding");
       if (_TextFields != null) {
         for (int i = 1; i < _TextFields.Length; ++i) {
           _TextFields[i].gameObject.SetActive(false);

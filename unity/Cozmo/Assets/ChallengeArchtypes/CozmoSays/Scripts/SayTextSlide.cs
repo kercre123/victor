@@ -9,7 +9,7 @@ public class SayTextSlide : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.InputField _TextInput;
 
-  private void Start() {
+  private void Awake() {
     _SayTextButton.Initialize(HandleSayTextButton, "say_text_button", "say_text_slide");
   }
 

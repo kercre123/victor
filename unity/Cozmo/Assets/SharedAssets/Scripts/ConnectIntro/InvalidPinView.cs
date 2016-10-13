@@ -8,7 +8,7 @@ public class InvalidPinView : Cozmo.UI.BaseView {
   [SerializeField]
   private Cozmo.UI.CozmoButton _RetryButton;
 
-  private void Start() {
+  private void Awake() {
     _RetryButton.Initialize(() => { if (OnRetryPin != null) OnRetryPin(); }, "retry_button", this.DASEventViewName);
 
   }

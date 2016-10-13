@@ -6,7 +6,7 @@ public class UpdateAppView : Cozmo.UI.BaseView {
   [SerializeField]
   private Cozmo.UI.CozmoButton _UpdateAppButton;
 
-  private void Start() {
+  private void Awake() {
     _UpdateAppButton.Initialize(HandleUpdateAppButton, "update_app_button", this.DASEventViewName);
   }
 

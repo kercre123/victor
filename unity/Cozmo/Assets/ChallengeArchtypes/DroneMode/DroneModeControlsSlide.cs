@@ -68,13 +68,16 @@ namespace Cozmo.Minigame.DroneMode {
 
     private float _CurrentHeadSliderSegmentValue;
 
+    private void Awake() {
+      _HowToPlayButton.Initialize(HandleHowToPlayClicked, "drone_mode_how_to_play_button", "drone_mode_view_slide");
+    }
+
     private void Start() {
       _CurrentDriveSpeedSliderSegment = SpeedSliderSegment.Neutral;
       _CurrentDriveSpeedSliderSegmentValue = 0f;
       _CurrentHeadSliderSegmentValue = 0f;
       _SpeedThrottle.onValueChanged.AddListener(HandleSpeedThrottleValueChanged);
       _HeadTiltSlider.onValueChanged.AddListener(HandleTiltThrottleValueChanged);
-      _HowToPlayButton.Initialize(HandleHowToPlayClicked, "drone_mode_how_to_play_button", "drone_mode_view_slide");
 
       TiltText.gameObject.SetActive(ShowDebugTextFields);
       DebugText.gameObject.SetActive(ShowDebugTextFields);

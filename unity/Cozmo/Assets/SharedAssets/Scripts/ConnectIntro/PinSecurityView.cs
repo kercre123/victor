@@ -16,7 +16,7 @@ public class PinSecurityView : Cozmo.UI.BaseView {
   [SerializeField]
   private Cozmo.UI.CozmoButton[] _NumPadButtons;
 
-  private void Start() {
+  private void Awake() {
     for (int i = 0; i < _NumPadButtons.Length; ++i) {
       int numPadValue = i;
       _NumPadButtons[i].Initialize(null, "num_pad_" + i, this.DASEventViewName);

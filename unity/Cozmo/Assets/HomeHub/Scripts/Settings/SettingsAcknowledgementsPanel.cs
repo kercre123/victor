@@ -29,7 +29,7 @@ namespace Cozmo.Settings {
     [SerializeField]
     private string _TermsOfUseTextFileName;
 
-    private void Start() {
+    private void Awake() {
       string dasEventViewName = "settings_acknowledgements_panel";
       _AcknowledgementsLinkButton.Initialize(HandleAcknowledgementsLinkButtonTapped, "acknowledgements_link", dasEventViewName);
       _PrivacyPolicyLinkButton.Initialize(HandlePrivacyPolicyLinkButtonTapped, "privacyPolicy_link", dasEventViewName);

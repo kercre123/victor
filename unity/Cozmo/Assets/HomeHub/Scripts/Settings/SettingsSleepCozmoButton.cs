@@ -8,7 +8,7 @@ namespace Cozmo.Settings {
     private CozmoButton _SleepCozmoButton;
 
     // Use this for initialization
-    void Start() {
+    private void Awake() {
       _SleepCozmoButton.Initialize(HandleSleepCozmoButtonTapped, "settings_sleep_cozmo_button", "settings_sleep_cozmo_panel");
     }
 
