@@ -136,6 +136,7 @@ public static class LocalizationKeys {
 
   public const string kCubeHelpStringsInstructionsSlide0 = "cubeHelpStrings.Instructions.Slide0";
   public const string kCubeHelpStringsInstructionsSlide0altCopy = "cubeHelpStrings.Instructions.Slide0altCopy";
+  public const string kCubeHelpStringsInstructionsSlideACopy = "cubeHelpStrings.Instructions.SlideACopy";
   public const string kCubeHelpStringsInstructionsSlide1 = "cubeHelpStrings.Instructions.Slide1";
   public const string kCubeHelpStringsInstructionsSlide1altCopy = "cubeHelpStrings.Instructions.Slide1altCopy";
   public const string kCubeHelpStringsInstructionsSlide2 = "cubeHelpStrings.Instructions.Slide2";

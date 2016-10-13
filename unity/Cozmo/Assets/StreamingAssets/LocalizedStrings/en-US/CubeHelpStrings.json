@@ -24,8 +24,11 @@
   "cubeHelpStrings.Instructions.Slide0altCopy": {
     "translation": "Tap Next if you're still having trouble"
   },
+  "cubeHelpStrings.Instructions.SlideACopy": {
+    "translation": "First, go to Settings\nThen, tap Refresh Cubes"
+  },
   "cubeHelpStrings.Instructions.Slide1": {
-    "translation": "Let's try changing your Cube's battery"
+    "translation": "Next, let's try changing your Cube's battery"
   },
   "cubeHelpStrings.Instructions.Slide1altCopy": {
     "translation": "Place it upside down and unscrew the cover"

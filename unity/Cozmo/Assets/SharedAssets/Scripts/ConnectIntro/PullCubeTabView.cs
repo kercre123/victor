@@ -26,10 +26,6 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
   [SerializeField]
   private GameObject[] _DoneMarks;
 
-  private Cozmo.UI.BaseView _CubeHelpViewInstance;
-
-  [SerializeField]
-  private Cozmo.UI.CozmoButton _CubeHelpButton;
 
   private List<Anki.Cozmo.ObjectType> _ObjectConnectedList = new List<Anki.Cozmo.ObjectType>();
   // staging area for newly connected objects so we can add a delay / animation before putting it into
@@ -67,10 +63,6 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
 
     // Enable the automatic block pool
     RobotEngineManager.Instance.BlockPoolTracker.EnableBlockPool(true, _kMaxDiscoveryTime);
-
-    _CubeHelpButton.Initialize(() => {
-      _CubeHelpViewInstance = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.CubeHelpViewPrefab);
-    }, "cube_get_help_button", this.DASEventViewName);
 
     DasTracker.Instance.TrackCubePromptEntered();
 
@@ -143,11 +135,7 @@ public class PullCubeTabView : Cozmo.UI.BaseView {
   }
 
   protected override void CleanUp() {
-    if (_CubeHelpViewInstance != null) {
-      UIManager.CloseView(_CubeHelpViewInstance);
-    }
-
-    // Turn off cube lights
+   // Turn off cube lights
     IRobot robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {
       foreach (KeyValuePair<int, LightCube> kvp in robot.LightCubes) {
