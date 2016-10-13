@@ -11,8 +11,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e7104df6348e4797bbd06273dae3feb, type: 3}
   m_Name: RequestSimon
   m_EditorClassIdentifier: 
-  ChallengeID: DroneModeGame
+  ChallengeID: SimonGame
   RequestBehaviorGameFlag: 2
   RequestAcceptedAnimationTrigger:
     _EnumValueAsString: RequestGameMemoryMatchAccept0
-    _EnumValue: 195
+    _EnumValue: 208

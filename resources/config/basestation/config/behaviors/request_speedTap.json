@@ -4,7 +4,7 @@
   "requiredGameFlags" : "SpeedTap",
   "behaviorGroups": [
     "FP_PlayWithHumans",
-    "RequestKeepAway"
+    "RequestSpeedTap"
   ],
   
   "zero_block_config": {

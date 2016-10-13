@@ -7,12 +7,13 @@ namespace Anki {
 namespace Cozmo {
 
 // These are games that are recognized in the engine
+// These are referenced by number in unity, do not change order without
+// checking RequestGameList.asset
 enum uint_8 BehaviorGameFlag {
   NoGame     = 0,   // flag for none of the following
   SpeedTap   = 0x01,
   MemoryMatch= 0x02,
-  CubePounce = 0x04,
-  KeepAway   = 0x05,
+  KeepAway   = 0x04,
 
   All = 0xff
 }

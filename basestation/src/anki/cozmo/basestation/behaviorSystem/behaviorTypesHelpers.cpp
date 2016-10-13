@@ -58,9 +58,6 @@ BehaviorGameFlag BehaviorGameFlagFromString(const std::string& inString)
   else if ( inString == "MemoryMatch" ) {
     return BehaviorGameFlag::MemoryMatch;
   }
-  else if ( inString == "CubePounce" ) {
-    return BehaviorGameFlag::CubePounce;
-  }
   else if ( inString == "All" ) {
     return BehaviorGameFlag::All;
   }
