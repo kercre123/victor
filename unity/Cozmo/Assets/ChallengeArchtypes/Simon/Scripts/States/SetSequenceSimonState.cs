@@ -49,7 +49,16 @@ namespace Simon {
         else if (_CurrentSequence.Count >= _GameInstance.LongSequenceReactMin) {
           trigger = Anki.Cozmo.AnimationTrigger.MemoryMatchReactToPatternLarge;
         }
-        _StateMachine.SetNextState(new AnimationGroupState(trigger, HandEndAnimationDone));
+
+        // Let the player go without Cozmo's reaction being done.
+        if (_NextPlayer == PlayerType.Human) {
+          _CurrentRobot.SendAnimationTrigger(trigger);
+          HandEndAnimationDone(true);
+        }
+        else {
+          _StateMachine.SetNextState(new AnimationGroupState(trigger, HandEndAnimationDone));
+        }
+
       }
       else {
         if (Time.time - _LastSequenceTime > _GameInstance.TimeBetweenBeats) {

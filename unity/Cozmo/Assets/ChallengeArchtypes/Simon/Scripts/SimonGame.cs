@@ -146,7 +146,6 @@ namespace Simon {
     }
 
     public void SetCubeLightsGuessWrong(int correctCubeID, int wrongTapCubeID = -1) {
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Lose);
       foreach (int cubeId in CubeIdsForGame) {
         if (cubeId == correctCubeID) {
           CurrentRobot.LightCubes[correctCubeID].SetFlashingLEDs(_BlockIdToSound[correctCubeID].cubeColor, 100, 100, 0);
@@ -209,11 +208,10 @@ namespace Simon {
     public void ShowWinnerPicture(PlayerType player) {
       SimonTurnSlide simonTurnScript = GetSimonSlide();
       Sprite currentPortrait = SharedMinigameView.PlayerPortrait;
-      string status = Localization.GetWithArgs(LocalizationKeys.kSimonGameTextPatternLength, _CurrentIDSequence.Count);
       if (player == PlayerType.Cozmo) {
         currentPortrait = SharedMinigameView.CozmoPortrait;
       }
-      simonTurnScript.ShowEndGame(currentPortrait, status);
+      simonTurnScript.ShowEndGame(currentPortrait);
     }
 
     public void FinalLifeComplete() {
@@ -270,6 +268,13 @@ namespace Simon {
       if (_SimonTurnSlide == null) {
         _SimonTurnSlide = SharedMinigameView.ShowWideGameStateSlide(
           _SimonTurnSlidePrefab.gameObject, "simon_turn_slide");
+        SharedMinigameView.HideShelf();
+
+        SimonTurnSlide turnUI = _SimonTurnSlide.GetComponent<SimonTurnSlide>();
+        turnUI.ShowHumanLives(_CurrLivesHuman, _Config.MaxLivesHuman);
+        if (CurrentDifficulty == (int)SimonMode.VS) {
+          turnUI.ShowCozmoLives(_CurrLivesCozmo, _Config.MaxLivesCozmo);
+        }
       }
       return _SimonTurnSlide.GetComponent<SimonTurnSlide>();
     }
@@ -281,13 +286,19 @@ namespace Simon {
       SimonTurnSlide simonTurnScript = GetSimonSlide();
       string statusLocKey = isListening ? LocalizationKeys.kSimonGameLabelListen : LocalizationKeys.kSimonGameLabelRepeat;
       if (player == PlayerType.Cozmo) {
-        simonTurnScript.ShowCozmoLives(_CurrLivesCozmo, _Config.MaxLivesCozmo, LocalizationKeys.kSimonGameLabelCozmoTurn, statusLocKey);
+        simonTurnScript.ShowCozmoLives(_CurrLivesCozmo, _Config.MaxLivesCozmo, statusLocKey);
       }
       else {
         Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Window_Open);
-        simonTurnScript.ShowHumanLives(_CurrLivesHuman, _Config.MaxLivesHuman, LocalizationKeys.kSimonGameLabelYourTurn, statusLocKey);
+        simonTurnScript.ShowHumanLives(_CurrLivesHuman, _Config.MaxLivesHuman, statusLocKey);
       }
       CurrentPlayer = player;
+      string status = "";
+      int round = _CurrentIDSequence.Count - _Config.MinSequenceLength + 1;
+      if (round > 0) {
+        status = Localization.GetWithArgs(LocalizationKeys.kSimonGameTextPatternLength, _CurrentIDSequence.Count - _Config.MinSequenceLength + 1);
+      }
+      simonTurnScript.ShowStatusText(status);
     }
 
     public void ShowCenterResult(bool enabled, bool correct = true) {

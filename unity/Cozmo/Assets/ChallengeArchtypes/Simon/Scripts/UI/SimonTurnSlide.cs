@@ -33,7 +33,7 @@ namespace Simon {
       _StatusTextLabel.text = "";
     }
 
-    public void ShowEndGame(Sprite portraitSprite, string status = null) {
+    public void ShowEndGame(Sprite portraitSprite) {
       _PlayerWidget.gameObject.SetActive(false);
       _CozmoWidget.gameObject.SetActive(false);
       if (portraitSprite) {
@@ -43,6 +43,10 @@ namespace Simon {
       else {
         _CenterImage.gameObject.SetActive(false);
       }
+      ShowStatusText("");
+    }
+
+    public void ShowStatusText(string status) {
       if (status != null) {
         _StatusTextLabel.text = status;
       }
@@ -51,16 +55,17 @@ namespace Simon {
       }
     }
 
-    public void ShowHumanLives(int lives, int maxLives, string headerLocKey, string statusLocKey) {
+    public void ShowHumanLives(int lives, int maxLives, string statusLocKey = "") {
+      _PlayerWidget.UpdateStatus(lives, maxLives, statusLocKey);
       _PlayerWidget.gameObject.SetActive(true);
-      _CozmoWidget.gameObject.SetActive(false);
-
-      _PlayerWidget.UpdateStatus(lives, maxLives, headerLocKey, statusLocKey);
+      _PlayerWidget.SetTurn(true);
+      _CozmoWidget.SetTurn(false);
     }
-    public void ShowCozmoLives(int lives, int maxLives, string headerLocKey, string statusLocKey) {
-      _PlayerWidget.gameObject.SetActive(false);
+    public void ShowCozmoLives(int lives, int maxLives, string statusLocKey = "") {
+      _CozmoWidget.UpdateStatus(lives, maxLives, statusLocKey);
       _CozmoWidget.gameObject.SetActive(true);
-      _CozmoWidget.UpdateStatus(lives, maxLives, headerLocKey, statusLocKey);
+      _PlayerWidget.SetTurn(false);
+      _CozmoWidget.SetTurn(true);
     }
 
     public void ShowCenterImage(bool enabled, bool showCorrect) {

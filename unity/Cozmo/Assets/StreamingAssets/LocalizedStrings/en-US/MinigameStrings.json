@@ -160,7 +160,7 @@
     "translation": "Steps In Pattern: {0}/{1}"
   },
   "simonGame.text.patternLength": {
-    "translation": "PATTERN LENGTH: {0}"
+    "translation": "Round: {0}"
   },
   "simonGame.mode.vs": {
     "translation": "VS."

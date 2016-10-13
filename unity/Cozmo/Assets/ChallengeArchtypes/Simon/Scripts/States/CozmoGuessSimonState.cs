@@ -108,8 +108,14 @@ namespace Simon {
       _GameInstance.DecrementLivesRemaining(PlayerType.Cozmo);
 
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
-      _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.MemoryMatchCozmoLoseHand, HandleOnCozmoLoseAnimationDone);
       _IsAnimating = true;
+      // Since the next state will play the FinalLifeComplete "lose game" don't double it up with the lose hand and skip lose hand
+      if (_GameInstance.GetLivesRemaining(PlayerType.Cozmo) > 0) {
+        _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.MemoryMatchCozmoLoseHand, HandleOnCozmoLoseAnimationDone);
+      }
+      else {
+        HandleOnCozmoLoseAnimationDone(true);
+      }
     }
 
     private void CozmoWinHand() {

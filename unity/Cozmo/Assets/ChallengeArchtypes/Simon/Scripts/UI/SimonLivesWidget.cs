@@ -15,8 +15,6 @@ namespace Simon {
     private LayoutElement _TextContainer;
 
     [SerializeField]
-    private AnkiTextLabel _SmallTextLabel;
-    [SerializeField]
     private AnkiTextLabel _BigTextLabel;
 
     [SerializeField]
@@ -28,12 +26,30 @@ namespace Simon {
     [SerializeField]
     private Image _Background;
 
-    public void UpdateStatus(int lives, int maxLives, string headerLocKey, string statusLocKey) {
+    [SerializeField]
+    private GameObject _LblMyTurn;
+
+    private CanvasGroup _AlphaController;
+
+    public void UpdateStatus(int lives, int maxLives, string statusLocKey) {
       _LivesCountBar.SetMaximumSegments(maxLives);
       _LivesCountBar.SetCurrentNumSegments(lives);
-      _SmallTextLabel.text = headerLocKey == "" ? "" : Localization.Get(headerLocKey);
       _BigTextLabel.text = statusLocKey == "" ? "" : Localization.Get(statusLocKey);
-
+    }
+    // Just fade out the previous stuff.
+    public void SetTurn(bool isMyTurn) {
+      _LblMyTurn.SetActive(isMyTurn);
+      if (_AlphaController == null) {
+        _AlphaController = GetComponent<CanvasGroup>();
+      }
+      if (isMyTurn) {
+        transform.localScale = new Vector3(1, 1, 1);
+        _AlphaController.alpha = 1.0f;
+      }
+      else {
+        transform.localScale = new Vector3(0.5f, 0.5f, 1);
+        _AlphaController.alpha = 0.5f;
+      }
     }
   }
 }
