@@ -27,7 +27,8 @@ namespace Onboarding {
 
     private bool _DidSkip = false;
 
-    private void Awake() {
+    protected override void Awake() {
+      base.Awake();
       // More than just the default unlocks, therefore something has connected to this robot before.
       // This is the onboarding first unlock.
       bool isOldRobot = UnlockablesManager.Instance.IsUnlocked(Anki.Cozmo.UnlockId.StackTwoCubes);

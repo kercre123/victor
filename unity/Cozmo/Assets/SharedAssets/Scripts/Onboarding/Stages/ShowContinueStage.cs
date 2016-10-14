@@ -19,7 +19,7 @@ namespace Onboarding {
     [SerializeField]
     private bool _ShowOutline = false;
 
-    private void Awake() {
+    protected virtual void Awake() {
       _ContinueButtonInstance.Initialize(HandleContinueClicked, "Onboarding." + name, "Onboarding");
     }
 
