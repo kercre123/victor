@@ -27,7 +27,7 @@ MonoBehaviour:
     _Music: 1317044071
   MinigameConfig: {fileID: 11400000, guid: c343a5367e2654452b53acb74b64058e, type: 2}
   IsMinigame: 1
-  InstructionVideoPath: 
+  InstructionVideoPath: Videos/Cozmo_Howto_MemoryMatch_handbrake.mp4
   DifficultyOptions:
   - DifficultyId: 0
     DifficultyName:
