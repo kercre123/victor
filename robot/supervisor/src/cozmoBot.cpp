@@ -237,7 +237,7 @@ namespace Anki {
           PickAndPlaceController::Reset();
           PickAndPlaceController::SetCarryState(CARRY_NONE);
           BackpackLightController::Init();
-          ProxSensors::EnableStopOnCliff(true);
+          ProxSensors::Reset();
           waitForFirstMotorCalibAfterConnect_ = true;
           mode_ = INIT_MOTOR_CALIBRATION;
 

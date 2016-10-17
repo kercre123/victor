@@ -115,7 +115,6 @@ namespace Anki {
         // Clear queued cliff events if pickedup
         if (IMUFilter::IsPickedUp() && !_wasPickedup) {
           _pendingCliffEvent = 0;
-          _wasPickedup = true;
         }
         _wasPickedup = IMUFilter::IsPickedUp();
         
@@ -185,6 +184,19 @@ namespace Anki {
         _stopOnCliff = enable;
       }
 
+      
+      // Since this re-enables 'cliff detect' and 'stop on cliff'
+      // it should only be called when the robot disconnects,
+      // otherwise you could desync stopOnCliff state with engine.
+      void Reset() {
+        _enableCliffDetect = true;
+        _stopOnCliff       = true;
+        _wasCliffDetected  = false;
+        _wasPickedup       = false;
+        
+        _pendingCliffEvent   = 0;
+        _pendingUncliffEvent = 0;
+      }
 
     } // namespace ProxSensors
   } // namespace Cozmo

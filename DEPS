@@ -33,11 +33,11 @@
                 "version": "153"
             },
             "firmware": {
-                "build_id": "36617",
+                "build_id": "37443",
                 "build_type_id": "CozmoOne_Experiments_CollectFirmware",
                 "extension": "tar.gz",
                 "package_name": "firmware",
-                "version": "890"
+                "version": "911"
             },
             "old_firmware": {
                 "build_id": "33748",

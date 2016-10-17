@@ -156,6 +156,7 @@ namespace Anki {
         mode_ = IDLE;
         DockingController::StopDocking();
         ProxSensors::EnableCliffDetector(true);
+        IMUFilter::EnablePickupDetect(true);
       }
 
       void UpdatePoseSnapshot()

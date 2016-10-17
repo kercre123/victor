@@ -23,6 +23,11 @@ namespace Anki {
     
     namespace ProxSensors {
 
+      // Since this re-enables 'cliff detect' and 'stop on cliff'
+      // it should only be called when the robot disconnects,
+      // otherwise you could desync stopOnCliff state with engine.
+      void Reset();
+      
       Result Update();
 
       void EnableCliffDetector(bool enable);
