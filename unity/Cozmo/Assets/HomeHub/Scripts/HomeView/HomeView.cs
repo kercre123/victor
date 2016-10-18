@@ -764,9 +764,12 @@ namespace Cozmo.HomeHub {
         _Stopwatch.Stop();
         elapsedSec = _Stopwatch.ElapsedMilliseconds / 1000.0f;
       }
-      DAS.Event("robot.request_app", _CurrentChallengeId, DASUtil.FormatExtraData("fail"));
-      DAS.Event("robot.request_app_time", _CurrentChallengeId, DASUtil.FormatExtraData(elapsedSec.ToString()));
-      _CurrentChallengeId = null;
+      // If current challenge ID is null, robot has already canceled this request, so don't fire redundant DAS events
+      if (_CurrentChallengeId != null) {
+        DAS.Event("robot.request_app", _CurrentChallengeId, DASUtil.FormatExtraData("fail"));
+        DAS.Event("robot.request_app_time", _CurrentChallengeId, DASUtil.FormatExtraData(elapsedSec.ToString()));
+        _CurrentChallengeId = null;
+      }
 
       RobotEngineManager.Instance.SendDenyGameStart();
     }
@@ -800,8 +803,12 @@ namespace Cozmo.HomeHub {
         _Stopwatch.Stop();
         elapsedSec = _Stopwatch.ElapsedMilliseconds / 1000.0f;
       }
-      DAS.Event("robot.request_app", _CurrentChallengeId, DASUtil.FormatExtraData("robot_canceled"));
-      DAS.Event("robot.request_app_time", _CurrentChallengeId, DASUtil.FormatExtraData(elapsedSec.ToString()));
+      // If current challenge ID is null, we have already responded to this request, so don't fire redundant DAS events
+      if (_CurrentChallengeId != null) {
+        DAS.Event("robot.request_app", _CurrentChallengeId, DASUtil.FormatExtraData("robot_canceled"));
+        DAS.Event("robot.request_app_time", _CurrentChallengeId, DASUtil.FormatExtraData(elapsedSec.ToString()));
+        _CurrentChallengeId = null;
+      }
 
       if (_RequestDialog != null) {
         _RequestDialog.CloseView();
