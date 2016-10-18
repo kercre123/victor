@@ -159,6 +159,10 @@ namespace Anki {
           }
         }
         _initialConnections.erase(withID);
+        
+        // Clear out the global DAS values that contain the robot hardware IDs.
+        Anki::Util::sSetGlobal(DPHYS, nullptr);
+        Anki::Util::sSetGlobal(DGROUP, nullptr);
       } else {
         PRINT_NAMED_WARNING("RobotManager.RemoveRobot", "Robot %d does not exist. Ignoring.\n", withID);
       }
