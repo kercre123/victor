@@ -655,8 +655,9 @@ namespace Anki {
         // Make the poses w.r.t. robot:
         for(auto & pose : _goalPoses) {
           if(pose.GetWithRespectTo(*(_robot.GetWorldOrigin()), pose) == false) {
-            PRINT_NAMED_ERROR("DriveToPoseAction.Init",
-                              "Could not get goal pose w.r.t. to robot origin.");
+            // this means someone passed in a goal in a different origin than the robot.
+            PRINT_NAMED_WARNING("DriveToPoseAction.Init.OriginMisMatch",
+                                "Could not get goal pose w.r.t. to robot origin.");
             return ActionResult::FAILURE_ABORT;
           }
         }
@@ -688,7 +689,7 @@ namespace Anki {
         }
         
         if(planningResult != RESULT_OK) {
-          PRINT_NAMED_ERROR("DriveToPoseAction.Init", "Failed to get path to goal pose.");
+          PRINT_CH_INFO("Actions", "DriveToPoseAction.Init.FailedToFindPath", "Failed to get path to goal pose.");
           result = ActionResult::FAILURE_ABORT;
         }
         
@@ -699,7 +700,7 @@ namespace Anki {
             // Now put the head at the right angle for following paths
             // TODO: Make it possible to set the speed/accel somewhere?
             if(_robot.GetMoveComponent().MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 2.f, 5.f) != RESULT_OK) {
-              PRINT_NAMED_ERROR("DriveToPoseAction.Init", "Failed to move head to path-following angle.");
+              PRINT_NAMED_ERROR("DriveToPoseAction.Init.MoveHeadFailed", "Failed to move head to path-following angle.");
               result = ActionResult::FAILURE_ABORT;
             }
           }

@@ -1799,8 +1799,8 @@ Result Robot::StartDrivingToPose(const Pose3d& targetPose,
 
   Pose3d targetPoseWrtOrigin;
   if(targetPose.GetWithRespectTo(*GetWorldOrigin(), targetPoseWrtOrigin) == false) {
-    PRINT_NAMED_ERROR("Robot.StartDrivingToPose.OriginMisMatch",
-                      "Could not get target pose w.r.t. robot %d's origin.", GetID());
+    PRINT_NAMED_WARNING("Robot.StartDrivingToPose.OriginMisMatch",
+                        "Could not get target pose w.r.t. robot %d's origin.", GetID());
     _driveToPoseStatus = ERobotDriveToPoseStatus::Error;
     return RESULT_FAIL;
   }
