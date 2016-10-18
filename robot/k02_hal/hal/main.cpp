@@ -26,6 +26,7 @@ GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
 
 extern int StartupSelfTest(void);
+void UpdateBootloader();
 
 namespace Anki
 {
@@ -114,6 +115,9 @@ int main (void)
   // Kick the watchdog after the espressif comes up
   Watchdog::kickAll();
 
+  // Check the bootloader patch is applied - if not, apply it now
+  UpdateBootloader();
+  
   UART::DebugInit();
   #ifndef ENABLE_FCC_TEST
   SPI::Init();
