@@ -57,13 +57,13 @@ NavMeshQuadTreeTypes::ENodeContentTypePackedType ConvertContentArrayToFlags(cons
 {
   using namespace NavMemoryMapTypes;
   using namespace NavMeshQuadTreeTypes;
-  ASSERT_NAMED( ContentValueEntry::IsValidArray(array), "ConvertContentTypeToFlags.InvalidArray");
+  ASSERT_NAMED( IsSequentialArray(array), "ConvertContentTypeToFlags.InvalidArray");
 
   ENodeContentTypePackedType contentTypeFlags = 0;
   for( const auto& entry : array )
   {
     if ( entry.Value() ) {
-      const ENodeContentType contentType = ConvertContentType(entry.Content());
+      const ENodeContentType contentType = ConvertContentType(entry.EnumValue());
       const ENodeContentTypePackedType contentTypeFlag = ENodeContentTypeToFlag(contentType);
       contentTypeFlags = contentTypeFlags | contentTypeFlag;
     }

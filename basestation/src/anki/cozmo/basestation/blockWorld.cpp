@@ -3254,7 +3254,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         {NavMemoryMapTypes::EContentType::InterestingEdge       , false},
         {NavMemoryMapTypes::EContentType::NotInterestingEdge    , true }
       };
-      static_assert(NavMemoryMapTypes::ContentValueEntry::IsValidArray(typesWhoseEdgesAreNotInteresting),
+      static_assert(NavMemoryMapTypes::IsSequentialArray(typesWhoseEdgesAreNotInteresting),
         "This array does not define all types once and only once.");
 
       // fill border in memory map
@@ -3449,7 +3449,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
               {NavMemoryMapTypes::EContentType::InterestingEdge       , true },
               {NavMemoryMapTypes::EContentType::NotInterestingEdge    , true }
             };
-            static_assert(NavMemoryMapTypes::ContentValueEntry::IsValidArray(typesThatOccludeValidInfoOutOfROI),
+            static_assert(NavMemoryMapTypes::IsSequentialArray(typesThatOccludeValidInfoOutOfROI),
               "This array does not define all types once and only once.");
             
             // check if it's occluded before the near plane
@@ -3488,7 +3488,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
             {NavMemoryMapTypes::EContentType::InterestingEdge       , false },
             {NavMemoryMapTypes::EContentType::NotInterestingEdge    , false }
           };
-          static_assert(NavMemoryMapTypes::ContentValueEntry::IsValidArray(typesThatOccludeValidInfoInsideROI),
+          static_assert(NavMemoryMapTypes::IsSequentialArray(typesThatOccludeValidInfoInsideROI),
             "This array does not define all types once and only once.");
           
           // Vec2f innerRayFrom: already calculated for us

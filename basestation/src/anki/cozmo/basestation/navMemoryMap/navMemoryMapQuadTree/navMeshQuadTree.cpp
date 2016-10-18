@@ -176,7 +176,17 @@ void NavMeshQuadTree::AddQuad(const Quad2f& quad, const NodeContent& nodeContent
   // if the root does not contain the quad, expand
   if ( !_root.Contains( quad ) )
   {
-    Expand( quad );
+    // if we are 'adding' a removal quad, do not expand, since it would be useless to expand or shift to try
+    // to remove data.
+    const bool isRemovingContent = NavMeshQuadTreeTypes::IsRemovalType(nodeContent.type);
+    if ( isRemovingContent ) {
+      PRINT_NAMED_INFO("NavMeshQuadTree.AddQuad.RemovalQuadNotContained",
+        "Quad is not fully contained in root, removal does not cause expansion.");
+    }
+    else
+    {
+      Expand( quad );
+    }
   }
 
   // add quad now
@@ -207,13 +217,33 @@ void NavMeshQuadTree::AddLine(const Point2f& from, const Point2f& to, const Node
   // if the root does not contain origin, we need to expand in that direction
   if ( !_root.Contains( from ) )
   {
-    Expand( from );
+    // if we are 'adding' a removal line, do not expand, since it would be useless to expand or shift to try
+    // to remove data.
+    const bool isRemovingContent = NavMeshQuadTreeTypes::IsRemovalType(nodeContent.type);
+    if ( isRemovingContent ) {
+      PRINT_NAMED_INFO("NavMeshQuadTree.AddLine.RemovalLineFromNotContained",
+        "Line 'from' point is not fully contained in root, removal does not cause expansion.");
+    }
+    else
+    {
+      Expand( from );
+    }
   }
 
   // if the root does not contain destination, we need to expand in that direction
   if ( !_root.Contains( to ) )
   {
-    Expand( to );
+    // if we are 'adding' a removal line, do not expand, since it would be useless to expand or shift to try
+    // to remove data.
+    const bool isRemovingContent = NavMeshQuadTreeTypes::IsRemovalType(nodeContent.type);
+    if ( isRemovingContent ) {
+      PRINT_NAMED_INFO("NavMeshQuadTree.AddLine.RemovalLineToNotContained",
+        "Line 'to' point is not fully contained in root, removal does not cause expansion.");
+    }
+    else
+    {
+      Expand( to );
+    }
   }
 
   // add segment now
@@ -246,7 +276,17 @@ void NavMeshQuadTree::AddTriangle(const Triangle2f& tri, const NodeContent& node
   // if the root does not contain the triangle, we need to expand in that direction
   if ( !_root.Contains( tri ) )
   {
-    Expand( tri );
+    // if we are 'adding' a removal triangle, do not expand, since it would be useless to expand or shift to try
+    // to remove data.
+    const bool isRemovingContent = NavMeshQuadTreeTypes::IsRemovalType(nodeContent.type);
+    if ( isRemovingContent ) {
+      PRINT_NAMED_INFO("NavMeshQuadTree.AddTriangle.RemovalTriangleNotContained",
+        "Triangle is not fully contained in root, removal does not cause expansion.");
+    }
+    else
+    {
+      Expand( tri );
+    }
   }
 
   // add triangle now
@@ -261,7 +301,17 @@ void NavMeshQuadTree::AddPoint(const Point2f& point, const NodeContent& nodeCont
   // if the root does not contain the point, we need to expand in that direction
   if ( !_root.Contains( point ) )
   {
-    Expand( point );
+    // if we are 'adding' a removal point, do not expand, since it would be useless to expand or shift to try
+    // to remove data.
+    const bool isRemovingContent = NavMeshQuadTreeTypes::IsRemovalType(nodeContent.type);
+    if ( isRemovingContent ) {
+      PRINT_NAMED_INFO("NavMeshQuadTree.AddPoint.RemovalPointNotContained",
+        "Point is not contained in root, removal does not cause expansion.");
+    }
+    else
+    {
+      Expand( point );
+    }
   }
   
   // add point now
@@ -279,7 +329,7 @@ void NavMeshQuadTree::Merge(const NavMeshQuadTree& other, const Pose3d& transfor
   NavMeshQuadTreeNode::NodeCPtrVector leafNodes;
   other._root.AddSmallestDescendantsDepthFirst(leafNodes);
   
-  // note regarding quad size limit: when we mege one map into another, this map can expand or shift the root
+  // note regarding quad size limit: when we merge one map into another, this map can expand or shift the root
   // to accomodate the information that we are receiving from 'other'. 'other' is considered to have more up to
   // date information than 'this', so it should be ok to let it destroy as much info as it needs by shifting the root
   // towards them. In an ideal world, it would probably come to a compromise to include as much information as possible.
@@ -351,8 +401,11 @@ void NavMeshQuadTree::Expand(const Quad2f& quadToCover)
   // the quad should be contained, if it's not, we have reached the limit of expansions and the quad does not
   // fit, which will cause information loss
   if ( !quadFitsInMap ) {
-    PRINT_NAMED_ERROR("NavMeshQuadTree.Expand.InsufficientExpansion",
-      "Quad caused expansion, but expansion was not enough.");
+    PRINT_NAMED_ERROR("NavMeshQuadTree.ExpandByQuad.InsufficientExpansion",
+      "Quad caused expansion, but expansion was not enough QuadCenter(%.2f, %.2f), Root(%.2f,%.2f) with sideLen(%.2f).",
+      quadToCover.ComputeCentroid().x(), quadToCover.ComputeCentroid().y(),
+      _root.GetCenter().x(), _root.GetCenter().y(),
+      _root.GetSideLen() );
   }
   
   // always flag as dirty since we have modified the root
@@ -391,8 +444,9 @@ void NavMeshQuadTree::Expand(const Point2f& pointToInclude)
   // the point should be contained, if it's not, we have reached the limit of expansions and the point does not
   // fit, which will cause information loss
   if ( !pointInMap ) {
-    PRINT_NAMED_ERROR("NavMeshQuadTree.Expand.InsufficientExpansion",
-      "Point caused expansion, but expansion was not enough.");
+    PRINT_NAMED_ERROR("NavMeshQuadTree.ExpandByPoint.InsufficientExpansion",
+      "Point caused expansion, but expansion was not enough Point(%.2f, %.2f), Root(%.2f,%.2f) with sideLen(%.2f).",
+      pointToInclude.x(), pointToInclude.y(), _root.GetCenter().x(), _root.GetCenter().y(), _root.GetSideLen() );
   }
   
   // always flag as dirty since we have modified the root
@@ -433,8 +487,11 @@ void NavMeshQuadTree::Expand(const Triangle2f& triangleToCover)
   // the point should be contained, if it's not, we have reached the limit of expansions and the point does not
   // fit, which will cause information loss
   if ( !triangleInMap ) {
-    PRINT_NAMED_ERROR("NavMeshQuadTree.Expand.InsufficientExpansion",
-      "Triangle caused expansion, but expansion was not enough.");
+    PRINT_NAMED_ERROR("NavMeshQuadTree.ExpandByTriangle.InsufficientExpansion",
+      "Triangle caused expansion, but expansion was not enough TriCenter(%.2f, %.2f), Root(%.2f,%.2f) with sideLen(%.2f).",
+      triangleToCover.GetCentroid().x(), triangleToCover.GetCentroid().y(),
+      _root.GetCenter().x(), _root.GetCenter().y(),
+      _root.GetSideLen() );
   }
   
   // always flag as dirty since we have modified the root

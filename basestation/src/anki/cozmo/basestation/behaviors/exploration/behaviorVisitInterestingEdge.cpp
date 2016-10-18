@@ -60,7 +60,7 @@ constexpr NavMemoryMapTypes::FullContentArray typesThatInvalidateGoals =
   {NavMemoryMapTypes::EContentType::InterestingEdge       , false}, // the goal itself is the closest one, so we can afford not to do this (which simplifies goal point)
   {NavMemoryMapTypes::EContentType::NotInterestingEdge    , true}
 };
-static_assert(NavMemoryMapTypes::ContentValueEntry::IsValidArray(typesThatInvalidateGoals),
+static_assert(NavMemoryMapTypes::IsSequentialArray(typesThatInvalidateGoals),
   "This array does not define all types once and only once.");
   
 // This is the configuration of memory map types that would invalidate vantage points because an obstacle would
@@ -79,7 +79,7 @@ constexpr NavMemoryMapTypes::FullContentArray typesThatInvalidateVantagePoints =
   {NavMemoryMapTypes::EContentType::InterestingEdge       , true},
   {NavMemoryMapTypes::EContentType::NotInterestingEdge    , true}
 };
-static_assert(NavMemoryMapTypes::ContentValueEntry::IsValidArray(typesThatInvalidateVantagePoints),
+static_assert(NavMemoryMapTypes::IsSequentialArray(typesThatInvalidateVantagePoints),
   "This array does not define all types once and only once.");
 
 // kMinUsefulRegionUnits: number of units in the memory map (eg: quads in a quad tree) that boundaries have to have

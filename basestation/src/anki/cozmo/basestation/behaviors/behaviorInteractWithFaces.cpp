@@ -81,7 +81,7 @@ constexpr NavMemoryMapTypes::FullContentArray typesToBlockDriving =
   {NavMemoryMapTypes::EContentType::InterestingEdge       , true },
   {NavMemoryMapTypes::EContentType::NotInterestingEdge    , true }
 };
-static_assert(NavMemoryMapTypes::ContentValueEntry::IsValidArray(typesToBlockDriving),
+static_assert(NavMemoryMapTypes::IsSequentialArray(typesToBlockDriving),
   "This array does not define all types once and only once.");
 
 }

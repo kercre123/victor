@@ -49,7 +49,7 @@
 //  {NavMemoryMapTypes::EContentType::InterestingEdge       , false},
 //  {NavMemoryMapTypes::EContentType::NotInterestingEdge    , false}
 //};
-//static_assert(NavMemoryMapTypes::ContentValueEntry::IsValidArray(typesToExploreFrom),
+//static_assert(NavMemoryMapTypes::IsSequentialArray(typesToExploreFrom),
 //  "This array does not define all types once and only once.");
 //  
 //};

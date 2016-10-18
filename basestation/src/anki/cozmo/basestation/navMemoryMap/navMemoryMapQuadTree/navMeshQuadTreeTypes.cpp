@@ -15,6 +15,7 @@
 #include "anki/common/basestation/exceptions.h"
 
 #include "util/math/numericCast.h"
+#include "util/helpers/fullEnumToValueArrayChecker.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -64,6 +65,7 @@ const char* ENodeContentTypeToString(ENodeContentType nodeContentType)
     case ENodeContentType::Cliff: return "Cliff";
     case ENodeContentType::InterestingEdge: return "InterestingEdge";
     case ENodeContentType::NotInterestingEdge: return "NotInterestingEdge";
+    case ENodeContentType::_Count: return "ERROR_COUNT_SHOULD_NOT_BE_USED";
   }
   return "ERROR";
 }
@@ -96,6 +98,33 @@ Vec3f EDirectionToNormalVec3f(EDirection dir)
   return Vec3f{0.0f, 0.0f, 0.0f};
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IsRemovalType(ENodeContentType type)
+{
+  using FullNodeContentToBoolArray = Util::FullEnumToValueArrayChecker::FullEnumToValueArray<ENodeContentType, bool>;
+  constexpr FullNodeContentToBoolArray removalTypes =
+  {
+    {ENodeContentType::Invalid               , false},
+    {ENodeContentType::Subdivided            , false},
+    {ENodeContentType::Unknown               , false},
+    {ENodeContentType::ClearOfObstacle       , false},
+    {ENodeContentType::ClearOfCliff          , false},
+    {ENodeContentType::ObstacleCube          , false},
+    {ENodeContentType::ObstacleCubeRemoved   , true},
+    {ENodeContentType::ObstacleCharger       , false},
+    {ENodeContentType::ObstacleChargerRemoved, true},
+    {ENodeContentType::ObstacleUnrecognized  , false},
+    {ENodeContentType::Cliff                 , false},
+    {ENodeContentType::InterestingEdge       , false},
+    {ENodeContentType::NotInterestingEdge    , false}
+  };
+  static_assert(Util::FullEnumToValueArrayChecker::IsSequentialArray(removalTypes),
+    "This array does not define all types once and only once.");
+
+  // value of entry in array tells if it's a removal type
+  const bool isRemoval = removalTypes[ Util::EnumToUnderlying(type) ].Value();
+  return isRemoval;
+}
 
 } // namespace
 } // namespace

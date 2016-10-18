@@ -41,6 +41,7 @@
 #include "clad/types/poseStructs.h"
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
+#include "util/helpers/fullEnumToValueArrayChecker.h"
 #include "util/helpers/templateHelpers.h"
 
 namespace Anki {
@@ -805,57 +806,12 @@ struct ActionMessageHandler
   }
       
 };
-      
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-struct ActionMessageHandlerEntry;
-const size_t kNumActionUnionTags = Util::EnumToUnderlying(ExternalInterface::RobotActionUnionTag::count);
-using FullActionMessageHandlerArray = ActionMessageHandlerEntry[kNumActionUnionTags];
-      
-struct ActionMessageHandlerEntry
-{
-  // returns true if all indices are valid in the given array
-  static constexpr bool IsValidArray(const FullActionMessageHandlerArray& array);
-      
-  // constexpr constructor
-  constexpr ActionMessageHandlerEntry(ActionMessageHandler entry) : _handler(entry) {}
-      
-  // constexpr accessors
-  constexpr const ActionMessageHandler& GetHandler() const { return _handler; }
-      
-private:
-      
-  // returns true if the given index is valid in the given array (the entry's content matches the index)
-  static constexpr bool IsValidIndex(const FullActionMessageHandlerArray& array, size_t index);
-      
-  // returns true if the given index is valid, and all indices after it
-  static constexpr bool IsValidAllIndicesFrom(const FullActionMessageHandlerArray& array, size_t index);
-      
-  ActionMessageHandler _handler;
-};
-      
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-constexpr bool ActionMessageHandlerEntry::IsValidIndex(const FullActionMessageHandlerArray& array, size_t index)
-{
-  return Util::EnumToUnderlying(array[index]._handler.actionUnionTag) == index;
-}
-      
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-constexpr bool ActionMessageHandlerEntry::IsValidAllIndicesFrom(const FullActionMessageHandlerArray& array, size_t index)
-{
-  return (index == Util::EnumToUnderlying(ExternalInterface::RobotActionUnionTag::count)) ? // if we reach the last one
-                                                                   // true
-  true :
-  // else check this and +1
-  (ActionMessageHandlerEntry::IsValidIndex(array, index) && IsValidAllIndicesFrom(array, index+1));
-}
-      
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-constexpr bool ActionMessageHandlerEntry::IsValidArray(const FullActionMessageHandlerArray& array)
-{
-  return ActionMessageHandlerEntry::IsValidAllIndicesFrom(array, 0);
-}
-      
-      
+
+using FullActionMessageHandlerArray = Util::FullEnumToValueArrayChecker::FullEnumToValueArray<
+  ActionMessageHandler::ActionUnionTag,
+  ActionMessageHandler,
+  ActionMessageHandler::ActionUnionTag::count>;
+  
 // =====================================================================================================================
 #pragma mark -
 #pragma mark RobotEventHandler Methods
@@ -880,11 +836,14 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     // and grabbing the right function pointer for the right method in the templated
     // GetActionWrapper helper struct above.
 #   define DEFINE_HANDLER(__actionTag__, __g2eTag__, __numRetries__) \
-    ActionMessageHandler(RobotActionUnionTag::__actionTag__, MessageGameToEngineTag::__g2eTag__, \
-      &GetActionWrapper<RobotActionUnionTag::__actionTag__, MessageGameToEngineTag::__g2eTag__>::GetActionUnionFcn, \
-      &GetActionWrapper<RobotActionUnionTag::__actionTag__, MessageGameToEngineTag::__g2eTag__>::GetGameToEngineFcn, \
-      __numRetries__)
-      
+    { \
+      RobotActionUnionTag::__actionTag__ , \
+      ActionMessageHandler(RobotActionUnionTag::__actionTag__, MessageGameToEngineTag::__g2eTag__, \
+        &GetActionWrapper<RobotActionUnionTag::__actionTag__, MessageGameToEngineTag::__g2eTag__>::GetActionUnionFcn, \
+        &GetActionWrapper<RobotActionUnionTag::__actionTag__, MessageGameToEngineTag::__g2eTag__>::GetGameToEngineFcn, \
+        __numRetries__) \
+    }
+
     constexpr static const FullActionMessageHandlerArray kActionHandlerArray {
       
       //
@@ -943,14 +902,14 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(waitForImages,            WaitForImages,            0),
     };
 
-    static_assert(ActionMessageHandlerEntry::IsValidArray(kActionHandlerArray),
+    static_assert(Util::FullEnumToValueArrayChecker::IsSequentialArray(kActionHandlerArray),
                   "Missing or out-of-order entries in action handler array.");
   
     // Build lookup tables so we don't have to linearly search through the above
     // array each time we want to find the handler
     for(auto & entry : kActionHandlerArray)
     {
-      const ActionMessageHandler& handler = entry.GetHandler();
+      const ActionMessageHandler& handler = entry.Value();
   
       _actionUnionHandlerLUT[handler.actionUnionTag] = handler.getActionFromActionUnion;
       _gameToEngineHandlerLUT[handler.gameToEngineTag] = std::make_pair(handler.getActionFromMessage, handler.numRetries);

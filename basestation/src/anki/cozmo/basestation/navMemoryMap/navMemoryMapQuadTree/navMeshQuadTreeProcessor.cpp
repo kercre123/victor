@@ -715,7 +715,7 @@ ColorRGBA NavMeshQuadTreeProcessor::GetDebugColor(ENodeContentType contentType)
 {
   ColorRGBA ret = Anki::NamedColors::BLACK;
   switch (contentType) {
-    case ENodeContentType::Invalid:               { CORETECH_ASSERT(!"not supported"); break; };
+    case ENodeContentType::Invalid:               { ASSERT_NAMED(false, "NavMeshQuadTreeProcessor.Invalid.NotSupported"); break; };
     case ENodeContentType::Subdivided:            { ret = ColorRGBA(0.2f, 0.2f, 0.2f, 0.3f); break; };
     case ENodeContentType::ClearOfObstacle:       { ret = ColorRGBA(0.0f, 1.0f, 0.0f, 0.3f); break; };
     case ENodeContentType::ClearOfCliff:          { ret = ColorRGBA(0.0f, 0.5f, 0.0f, 0.3f); break; };
@@ -728,6 +728,7 @@ ColorRGBA NavMeshQuadTreeProcessor::GetDebugColor(ENodeContentType contentType)
     case ENodeContentType::Cliff:                 { ret = ColorRGBA(0.0f, 0.0f, 0.0f, 0.3f); break; };
     case ENodeContentType::InterestingEdge:       { ret = ColorRGBA(0.0f, 0.0f, 0.5f, 0.3f); break; };
     case ENodeContentType::NotInterestingEdge:    { ret = ColorRGBA(0.0f, 0.5f, 0.5f, 0.3f); break; };
+    case ENodeContentType::_Count:                { ASSERT_NAMED(false, "NavMeshQuadTreeProcessor._Count.NotSupported"); break; };
   }
   return ret;
 }

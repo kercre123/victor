@@ -56,7 +56,7 @@ constexpr NavMemoryMapTypes::FullContentArray typesWeWantToVisit =
   {NavMemoryMapTypes::EContentType::InterestingEdge       , false},
   {NavMemoryMapTypes::EContentType::NotInterestingEdge    , false}
 };
-static_assert(NavMemoryMapTypes::ContentValueEntry::IsValidArray(typesWeWantToVisit),
+static_assert(NavMemoryMapTypes::IsSequentialArray(typesWeWantToVisit),
   "This array does not define all types once and only once.");
 };
 

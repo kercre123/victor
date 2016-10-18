@@ -43,6 +43,7 @@ enum class ENodeContentType : uint8_t {
   Cliff,                 // we have seen a cliff in part of the node
   InterestingEdge,       // we have seen a vision edge and it's interesting
   NotInterestingEdge,    // we have visited an interesting edge, so it's not interesting anymore
+  _Count // added for FullContentArray checker
 };
 
 // variable type in which we can pack ENodeContentType as flags. Check ENodeContentTypeToFlag
@@ -87,6 +88,10 @@ ENodeContentTypePackedType ENodeContentTypeToFlag(ENodeContentType nodeContentTy
 
 // String representing ENodeContentType for debugging purposes
 const char* ENodeContentTypeToString(ENodeContentType nodeContentType);
+
+// returns true if type is a removal type, false otherwise. Removal types are not expected to be store in the memory
+// map, but rather remove reset other types to defaults.
+bool IsRemovalType(ENodeContentType type);
 
 // return the opposite direction to the one given (eg: North vs South, West vs East)
 inline NavMeshQuadTreeTypes::EDirection GetOppositeDirection(EDirection dir);

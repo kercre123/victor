@@ -505,6 +505,7 @@ void NavMeshQuadTreeNode::AddQuadsToDraw(VizManager::SimpleQuadVector& quadVecto
       case ENodeContentType::Cliff                  : { color = Anki::NamedColors::BLACK;    color.SetAlpha(0.8f); break; }
       case ENodeContentType::InterestingEdge        : { color = Anki::NamedColors::BLUE;     color.SetAlpha(0.5f); break; }
       case ENodeContentType::NotInterestingEdge     : { color = Anki::NamedColors::YELLOW;   color.SetAlpha(0.5f); break; }
+      case ENodeContentType::_Count                 : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; }
     }
     //quadVector.emplace_back(VizManager::MakeSimpleQuad(color, Point3f{_center.x(), _center.y(), _center.z()+_level*100}, _sideLen));
     quadVector.emplace_back(VizManager::MakeSimpleQuad(color, _center, _sideLen));

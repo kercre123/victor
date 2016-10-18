@@ -43,7 +43,7 @@ constexpr NavMemoryMapTypes::FullContentArray typesToExploreInterestingBordersFr
   {NavMemoryMapTypes::EContentType::InterestingEdge       , false},
   {NavMemoryMapTypes::EContentType::NotInterestingEdge    , false}
 };
-static_assert(NavMemoryMapTypes::ContentValueEntry::IsValidArray(typesToExploreInterestingBordersFrom),
+static_assert(NavMemoryMapTypes::IsSequentialArray(typesToExploreInterestingBordersFrom),
   "This array does not define all types once and only once.");
 
 };
