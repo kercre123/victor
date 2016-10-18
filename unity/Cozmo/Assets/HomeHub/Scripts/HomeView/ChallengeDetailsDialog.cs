@@ -156,7 +156,13 @@ public class ChallengeDetailsDialog : BaseView {
       if (currentNumCubes >= _CubesRequired) {
         // Don't attempt to refresh home view if we are already destroying it to start a game
         if (ChallengeStarted != null) {
-          ChallengeStarted(_ChallengeId);
+          // don't hit the sides of the charger if he's still driving off.
+          if (robot.CurrentBehaviorType == Anki.Cozmo.BehaviorType.DriveOffCharger) {
+            OpenCozmoNotReadyAlert();
+          }
+          else {
+            ChallengeStarted(_ChallengeId);
+          }
         }
       }
       else {
@@ -166,6 +172,15 @@ public class ChallengeDetailsDialog : BaseView {
     else {
       this.CloseView();
     }
+  }
+
+  // Cozmo isn't done driving off the charger.
+  private void OpenCozmoNotReadyAlert() {
+    AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
+    alertView.TitleLocKey = LocalizationKeys.kChallengeDetailsCozmoIsStillWakingUpModalTitle;
+    alertView.DescriptionLocKey = LocalizationKeys.kChallengeDetailsCozmoIsStillWakingUpModalDescription;
+    alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
+    this.CloseView();
   }
 
   private void OpenNeedCubesAlert(int currentCubes, int neededCubes) {

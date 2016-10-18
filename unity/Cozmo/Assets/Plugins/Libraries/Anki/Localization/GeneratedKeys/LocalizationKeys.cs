@@ -38,6 +38,8 @@ public static class LocalizationKeys {
 
   public const string kChallengeDetailsNeedsMoreCubesModalTitle = "challengeDetails.needsMoreCubesModal.title";
   public const string kChallengeDetailsNeedsMoreCubesModalDescription = "challengeDetails.needsMoreCubesModal.description";
+  public const string kChallengeDetailsCozmoIsStillWakingUpModalTitle = "challengeDetails.cozmoIsStillWakingUpModal.title";
+  public const string kChallengeDetailsCozmoIsStillWakingUpModalDescription = "challengeDetails.cozmoIsStillWakingUpModal.description";
   public const string kChallengeDetailsNeedsMoreCubesModalButton = "challengeDetails.needsMoreCubesModal.button";
   public const string kChallengeEndedLabelReward = "challengeEnded.label.reward";
   public const string kArtistCozmoTitle = "artistCozmo.title";
@@ -559,6 +561,7 @@ public static class LocalizationKeys {
   public const string kSettingsVolumePanelRobotToggleLow = "settings.volumePanel.robotToggle.low";
   public const string kSettingsVolumePanelRobotToggleHigh = "settings.volumePanel.robotToggle.high";
   public const string kSettingsVolumePanelRobotToggleMedium = "settings.volumePanel.robotToggle.medium";
+  public const string kSettingsAcknowledgementsPanelTitle = "settings.acknowledgementsPanel.title";
 
   #endregion
 
