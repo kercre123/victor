@@ -63,7 +63,7 @@ namespace Anki {
       }
 
       [SerializeField]
-      private float _TextLabelOffset = -5f;
+      private float _TextLabelOffset = 0f;
       private Vector3? _TextDefaultPosition = null;
       private Vector3 _TextPressedPosition;
 

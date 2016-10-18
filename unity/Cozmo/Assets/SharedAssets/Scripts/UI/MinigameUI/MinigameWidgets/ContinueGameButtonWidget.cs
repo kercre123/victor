@@ -32,7 +32,7 @@ namespace Cozmo {
 
       public void Initialize(ContinueGameButtonWidget.ContinueButtonClickHandler buttonClickHandler,
                              string buttonText, string shelfText, Color shelfTextColor, string dasButtonName, string dasViewControllerName) {
-        _ContinueButton.onClick.RemoveAllListeners();
+        _ContinueButton.onClick.RemoveListener(HandleContinueButtonClicked);
         _ContinueButton.Initialize(HandleContinueButtonClicked, dasButtonName, dasViewControllerName);
         _ContinueButton.Text = buttonText;
         _OnClickCallback = buttonClickHandler;

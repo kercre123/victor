@@ -290,7 +290,8 @@ public class MockRobot : IRobot {
     return angle;
   }
 
-  public void SetHeadAngle(float angleFactor = -0.8f, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW, bool useExactAngle = false, float accelRadSec = 2f, float maxSpeedFactor = 1f) {
+  public void SetHeadAngle(float angleFactor = -0.8f, RobotCallback callback = null,
+                           Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW, bool useExactAngle = false, float speed_radPerSec = -1, float accel_radPerSec2 = -1) {
     float radians = angleFactor;
 
     if (!useExactAngle) {
@@ -481,7 +482,7 @@ public class MockRobot : IRobot {
     QueueCallback(3f, callback);
   }
 
-  public void SetLiftHeight(float heightFactor, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public void SetLiftHeight(float heightFactor, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW, float speed_radPerSec = -1, float accel_radPerSec2 = -1) {
     LiftHeight = heightFactor;
 
     QueueCallback(0.5f, callback);

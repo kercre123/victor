@@ -71,7 +71,7 @@ namespace Cozmo.UI {
       ShowGlint(false);
     }
 
-    private void HandleOnPress() {
+    protected virtual void HandleOnPress() {
       Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_UISoundEvent);
     }
 

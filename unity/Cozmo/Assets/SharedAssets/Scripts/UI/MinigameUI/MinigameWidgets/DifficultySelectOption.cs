@@ -21,7 +21,7 @@ public class DifficultySelectOptionData {
 public class DifficultySelectOption : MonoBehaviour {
 
   [SerializeField]
-  private Cozmo.UI.CozmoToggleButton _Button;
+  private Cozmo.UI.CozmoRadioButton _Button;
 
   [SerializeField]
   private AnkiTextLabel _Label;

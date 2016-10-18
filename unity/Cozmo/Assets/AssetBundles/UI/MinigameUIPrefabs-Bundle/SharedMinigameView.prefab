@@ -578,7 +578,7 @@ MonoBehaviour:
     type: 2}
   _ContinueButtonCenterPrefab: {fileID: 11475114, guid: a00c37124fe114bf488dc5e7b941db3e,
     type: 2}
-  _HowToPlayButtonPrefab: {fileID: 11438504, guid: 7ae16cb335cec4733bcb35a2776c79ca,
+  _InstructionsVideoButtonPrefab: {fileID: 11438504, guid: 7ae16cb335cec4733bcb35a2776c79ca,
     type: 2}
   _ShelfWidgetPrefab: {fileID: 11434798, guid: 67811252d71234c3bab17cbc8daea4a0, type: 2}
   _TallShelfWidgetPrefab: {fileID: 11434798, guid: 5ea512769a24c4ae595c0f2d848aee41,

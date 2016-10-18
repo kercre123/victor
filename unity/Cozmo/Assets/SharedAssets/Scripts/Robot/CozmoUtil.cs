@@ -9,20 +9,31 @@ using System.Reflection;
 /// </summary>
 public static class CozmoUtil {
   public const float kSmallScreenMaxHeight = 3f;
+
   public const float kMaxWheelSpeedMM = 220f;
   public const float kMinWheelSpeedMM = 10f;
+
   public const float kBlockLengthMM = 44f;
+
   public const float kLocalBusyTime = 1f;
+
   public const float kMaxLiftHeightMM = 92f;
   public const float kMinLiftHeightMM = 32f;
+  public const float kMoveLiftSpeed_radPerSec = 10f;
+  public const float kMoveLiftAccel_radPerSec2 = 20f;
   public const float kLiftRequestTime = 3f;
+
   public const float kMinHeadAngle = -25f;
   public const float kMaxHeadAngle = 45f;
   public const float kHeadHeightMM = 49f;
-  public const float kMaxSpeedRadPerSec = 5f;
+  public const float kMoveHeadSpeed_radPerSec = 15f;
+  public const float kMoveHeadAccel_radPerSec2 = 20f;
   public const float kHeadAngleRequestTime = 3f;
+
   public const float kCarriedObjectHeight = 75f;
+
   public const float kMaxVoltage = 5f;
+
   public const float kOriginToLowLiftDDistMM = 28f;
 
   // Setting this to -0.8 allows the block to be close enough where he
@@ -44,7 +55,7 @@ public static class CozmoUtil {
     float desiredMaxSqr_mm = desiredMax_mm * desiredMax_mm;
     float desiredMin_mm = (updatedDesiredDist_mm - distanceTolerance_mm);
     float desiredMinSqr_mm = desiredMin_mm * desiredMin_mm;
-   
+
     Vector3 posDifference = obsObject.WorldPosition - basePosition;
     posDifference.z = 0.0f;
     float actualSqr_mm = posDifference.sqrMagnitude;

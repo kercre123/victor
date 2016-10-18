@@ -206,9 +206,7 @@ public interface IRobot : IDisposable {
   void SetHeadAngle(float angleFactor = -0.8f,
                     RobotCallback callback = null,
                     QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
-                    bool useExactAngle = false,
-                    float accelRadSec = 2f,
-                    float maxSpeedFactor = 1f);
+                    bool useExactAngle = false, float speed_radPerSec = -1, float accel_radPerSec2 = -1);
 
   void SetDefaultHeadAndLiftState(bool enable, float headAngleFactor, float liftHeight);
 
@@ -253,7 +251,7 @@ public interface IRobot : IDisposable {
 
   void SearchForNearbyObject(int objectId, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
-  void SetLiftHeight(float heightFactor, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+  void SetLiftHeight(float heightFactor, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, float speed_radPerSec = -1, float accel_radPerSec2 = -1);
 
   void SetRobotCarryingObject(int objectID = -1);
 

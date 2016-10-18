@@ -123,7 +123,7 @@ MonoBehaviour:
   Prefab: {fileID: 180676, guid: d996dbae2d79f4c968c6452eea31de98, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoToggleButton:ButtonGraphics:0:disabledColor:a
+    FieldName: Cozmo.UI.CozmoRadioButton:ButtonGraphics:0:disabledColor:a
     JsonValue: 0.516
   ModifiedLocalReferences:
   - ObjectPath: ../

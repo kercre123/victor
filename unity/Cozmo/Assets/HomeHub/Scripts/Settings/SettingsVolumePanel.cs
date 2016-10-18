@@ -9,13 +9,13 @@ using UnityEngine.UI;
 namespace Cozmo.Settings {
   public class SettingsVolumePanel : MonoBehaviour {
     [SerializeField]
-    private CozmoToggleButton _LowRobotVolumeToggle;
+    private CozmoRadioButton _LowRobotVolumeToggle;
 
     [SerializeField]
-    private CozmoToggleButton _MediumRobotVolumeToggle;
+    private CozmoRadioButton _MediumRobotVolumeToggle;
 
     [SerializeField]
-    private CozmoToggleButton _HighRobotVolumeToggle;
+    private CozmoRadioButton _HighRobotVolumeToggle;
 
     // Music volume slider
     [SerializeField]

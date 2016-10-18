@@ -7,7 +7,7 @@ namespace Cozmo {
         private const float _kSendMessageInterval_sec = 0.1f;
         private const float _kDriveSpeedChangeThreshold_mmps = 1f;
         private const float _kTurnDirectionChangeThreshold = 0.01f;
-        private const float _kHeadFactorThreshold = 0.1f;
+        private const float _kHeadFactorThreshold_rad = 0.05f;
         private const float _kLiftFactorThreshold = 0.05f;
 
         private DroneModeGame _DroneModeGame;
@@ -18,8 +18,10 @@ namespace Cozmo {
         private float _CurrentTurnDirection;
         private float _TargetTurnDirection;
 
-        private float _TargetHeadFactor;
+        private float _TargetHeadAngle_rad;
         private bool _TargetHeadFactorChanged = false;
+
+        private float _TargetLiftFactor;
 
         private float _LastMessageSentTimestamp;
 
@@ -36,10 +38,14 @@ namespace Cozmo {
 
           _DroneModeGame = _StateMachine.GetGame() as DroneModeGame;
 
+          _TargetLiftFactor = _DroneModeGame.DroneModeConfigData.StartingLiftHeight;
+          _CurrentRobot.SetLiftHeight(_TargetLiftFactor);
+
           GameObject slide = _DroneModeGame.SharedMinigameView.ShowFullScreenGameStateSlide(
             _DroneModeGame.DroneModeViewPrefab.gameObject, "drone_mode_view_slide");
           _DroneModeControlsSlide = slide.GetComponent<DroneModeControlsSlide>();
           _DroneModeControlsSlide.InitializeCameraFeed(_CurrentRobot);
+          _DroneModeControlsSlide.InitializeLiftSlider(_TargetLiftFactor);
           EnableInput();
 
           UIManager.Instance.BackgroundColorController.SetBackgroundColor(UI.BackgroundColorController.BackgroundColor.TintMe,
@@ -53,8 +59,6 @@ namespace Cozmo {
           if (timesPlayedDroneMode <= 0) {
             _DroneModeControlsSlide.OpenHowToPlayView();
           }
-
-          SetupRobotForDriveState();
 
           _RobotAnimator = new DroneModeTransitionAnimator(_CurrentRobot);
           _CurrentRobot.EnableDroneMode(true);
@@ -85,13 +89,14 @@ namespace Cozmo {
         }
 
         public override void Resume(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
-          SetupRobotForDriveState();
+          // Do nothing
         }
 
         private void EnableInput() {
           _DroneModeControlsSlide.OnDriveSpeedSegmentValueChanged += HandleDriveSpeedValueChanged;
           _DroneModeControlsSlide.OnDriveSpeedSegmentChanged += HandleDriveSpeedFamilyChanged;
-          _DroneModeControlsSlide.OnHeadTiltSegmentValueChanged += HandleHeadTiltValueChanged;
+          _DroneModeControlsSlide.OnHeadSliderValueChanged += HandleHeadSliderValueChanged;
+          _DroneModeControlsSlide.OnLiftSliderValueChanged += HandleLiftSliderValueChanged;
 
           _DroneModeGame.EnableTiltInput();
           _DroneModeGame.OnTurnDirectionChanged += HandleTurnDirectionChanged;
@@ -100,13 +105,11 @@ namespace Cozmo {
         private void DisableInput() {
           _DroneModeControlsSlide.OnDriveSpeedSegmentValueChanged -= HandleDriveSpeedValueChanged;
           _DroneModeControlsSlide.OnDriveSpeedSegmentChanged -= HandleDriveSpeedFamilyChanged;
-          _DroneModeControlsSlide.OnHeadTiltSegmentValueChanged -= HandleHeadTiltValueChanged;
+          _DroneModeControlsSlide.OnHeadSliderValueChanged -= HandleHeadSliderValueChanged;
+          _DroneModeControlsSlide.OnLiftSliderValueChanged -= HandleLiftSliderValueChanged;
+
           _DroneModeGame.DisableTiltInput();
           _DroneModeGame.OnTurnDirectionChanged -= HandleTurnDirectionChanged;
-        }
-
-        private void SetupRobotForDriveState() {
-          _CurrentRobot.SetLiftHeight(_DroneModeGame.DroneModeConfigData.StartingLiftHeight);
         }
 
         private void SendDriveRobotMessages() {
@@ -166,10 +169,10 @@ namespace Cozmo {
 
         private bool DriveHeadIfNeeded() {
           bool startDriveHead = false;
-          float currentHeadAngleFactor = _CurrentRobot.GetHeadAngleFactor();
-          if (!_IsDrivingHead && _TargetHeadFactorChanged && !currentHeadAngleFactor.IsNear(_TargetHeadFactor, _kHeadFactorThreshold)) {
+          float currentHeadAngle_rad = _CurrentRobot.HeadAngle;
+          if (!_IsDrivingHead && _TargetHeadFactorChanged && !currentHeadAngle_rad.IsNear(_TargetHeadAngle_rad, _kHeadFactorThreshold_rad)) {
             DriveHeadInternal();
-            HeadDrivingDebugText = "\nPlayer driving head: target: " + _TargetHeadFactor + " current=" + currentHeadAngleFactor;
+            HeadDrivingDebugText = "\nPlayer driving head: target: " + _TargetHeadAngle_rad + " current=" + currentHeadAngle_rad;
             startDriveHead = true;
           }
           _IsDrivingHead = startDriveHead;
@@ -177,21 +180,24 @@ namespace Cozmo {
         }
 
         private void HandleHeadMoveFinished(bool success) {
-          float currentHeadAngleFactor = _CurrentRobot.GetHeadAngleFactor();
-          if (_TargetHeadFactorChanged && !currentHeadAngleFactor.IsNear(_TargetHeadFactor, _kHeadFactorThreshold)) {
+          float currentHeadAngle_rad = _CurrentRobot.HeadAngle;
+          if (_TargetHeadFactorChanged && !currentHeadAngle_rad.IsNear(_TargetHeadAngle_rad, _kHeadFactorThreshold_rad)) {
             DriveHeadInternal();
-            HeadDrivingDebugText = "\nPlayer driving head: target: " + _TargetHeadFactor + " current=" + currentHeadAngleFactor;
+            HeadDrivingDebugText = "\nPlayer driving head: target: " + _TargetHeadAngle_rad + " current=" + currentHeadAngle_rad;
           }
           else {
             _IsDrivingHead = false;
-            HeadDrivingDebugText = "\nPlayer not driving head: target=" + _TargetHeadFactor + " current=" + _CurrentRobot.GetHeadAngleFactor();
+            HeadDrivingDebugText = "\nPlayer not driving head: target=" + _TargetHeadAngle_rad + " current=" + _CurrentRobot.GetHeadAngleFactor();
             _RobotAnimator.AllowIdleAnimation(true);
           }
         }
 
         private void DriveHeadInternal() {
           _CurrentRobot.CancelCallback(HandleHeadMoveFinished);
-          _CurrentRobot.SetHeadAngle(_TargetHeadFactor, callback: HandleHeadMoveFinished);
+          _CurrentRobot.SetHeadAngle(_TargetHeadAngle_rad, callback: HandleHeadMoveFinished, useExactAngle: true,
+                                     speed_radPerSec: _DroneModeGame.DroneModeConfigData.HeadTurnSpeed_radPerSec,
+                                     accel_radPerSec2: _DroneModeGame.DroneModeConfigData.HeadTurnAccel_radPerSec2);
+
           _IsDrivingHead = true;
           _TargetHeadFactorChanged = false;
           _RobotAnimator.AllowIdleAnimation(false);
@@ -199,8 +205,10 @@ namespace Cozmo {
 
         private void DriveLiftIfNeeded() {
           // Ideally we could do this check after every animation end, but this works for now.
-          if (!_CurrentRobot.LiftHeightFactor.IsNear(_DroneModeGame.DroneModeConfigData.StartingLiftHeight, _kLiftFactorThreshold)) {
-            _CurrentRobot.SetLiftHeight(_DroneModeGame.DroneModeConfigData.StartingLiftHeight);
+          if (!_CurrentRobot.LiftHeightFactor.IsNear(_TargetLiftFactor, _kLiftFactorThreshold)) {
+            _CurrentRobot.SetLiftHeight(_TargetLiftFactor,
+                                        speed_radPerSec: _DroneModeGame.DroneModeConfigData.LiftTurnSpeed_radPerSec,
+                                        accel_radPerSec2: _DroneModeGame.DroneModeConfigData.LiftTurnAccel_radPerSec2);
           }
         }
 
@@ -281,10 +289,17 @@ namespace Cozmo {
           }
         }
 
-        private void HandleHeadTiltValueChanged(float newNormalizedValue) {
-          if (!newNormalizedValue.IsNear(_TargetHeadFactor, _kHeadFactorThreshold)) {
-            _TargetHeadFactor = newNormalizedValue;
+        private void HandleHeadSliderValueChanged(float newSliderValue_deg) {
+          float newSliderValue_rad = newSliderValue_deg * Mathf.Deg2Rad;
+          if (!newSliderValue_rad.IsNear(_TargetHeadAngle_rad, _kHeadFactorThreshold_rad)) {
+            _TargetHeadAngle_rad = newSliderValue_rad;
             _TargetHeadFactorChanged = true;
+          }
+        }
+
+        private void HandleLiftSliderValueChanged(float newSliderValue) {
+          if (!newSliderValue.IsNear(_TargetLiftFactor, _kLiftFactorThreshold)) {
+            _TargetLiftFactor = newSliderValue;
           }
         }
 

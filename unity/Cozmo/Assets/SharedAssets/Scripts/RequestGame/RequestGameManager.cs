@@ -102,6 +102,9 @@ namespace Cozmo.RequestGame {
     private void PickMiniGameToRequest() {
       _ChallengeToRequestData = null;
       _ChallengeToRequest = BehaviorGameFlag.NoGame;
+      if (RobotEngineManager.Instance.RobotConnectionType == RobotEngineManager.ConnectionType.Mock) {
+        return;
+      }
       if (_RobotToTrack == null) {
         DAS.Error("RequestGameManager.PickMiniGameToRequest", "Not tracking a robot! _RobotToTrack is NULL");
         return;

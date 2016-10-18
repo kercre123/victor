@@ -1210,9 +1210,7 @@ public class Robot : IRobot {
   public void SetHeadAngle(float angleFactor = -0.8f,
                            RobotCallback callback = null,
                            QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
-                           bool useExactAngle = false,
-                           float accelRadSec = 2f,
-                           float maxSpeedFactor = 1f) {
+                           bool useExactAngle = false, float speed_radPerSec = -1, float accel_radPerSec2 = -1) {
 
     float radians = AngleFactorToRadians(angleFactor, useExactAngle);
 
@@ -1223,12 +1221,20 @@ public class Robot : IRobot {
       return;
     }
 
+    if (speed_radPerSec <= 0f) {
+      speed_radPerSec = CozmoUtil.kMoveLiftSpeed_radPerSec;
+    }
+
+    if (accel_radPerSec2 <= 0f) {
+      accel_radPerSec2 = CozmoUtil.kMoveLiftAccel_radPerSec2;
+    }
+
     SendQueueSingleAction(
       Singleton<SetHeadAngle>.Instance.Initialize(
         radians,
-        maxSpeedFactor * CozmoUtil.kMaxSpeedRadPerSec,
-        accelRadSec,
-        0),
+        max_speed_rad_per_sec: speed_radPerSec,
+        accel_rad_per_sec2: accel_radPerSec2,
+        duration_sec: 0.0f),
       callback,
       queueActionPosition);
   }
@@ -1541,15 +1547,15 @@ public class Robot : IRobot {
   public void ResetLiftAndHead(RobotCallback callback = null) {
     RobotActionUnion[] actions = {
         new RobotActionUnion().Initialize(Singleton<SetLiftHeight>.Instance.Initialize(
-            0.0f,
-            accel_rad_per_sec2: 5f,
-            max_speed_rad_per_sec: 10f,
-            duration_sec: 0f)),
+                                height_mm: 0.0f,
+                                max_speed_rad_per_sec: CozmoUtil.kMoveLiftSpeed_radPerSec,
+                                accel_rad_per_sec2: CozmoUtil.kMoveLiftAccel_radPerSec2,
+                                duration_sec: 0f)),
         new RobotActionUnion().Initialize(Singleton<SetHeadAngle>.Instance.Initialize(
-            AngleFactorToRadians(0.25f, false),
-            CozmoUtil.kMaxSpeedRadPerSec,
-            1.0f,
-            0.0f))
+                                angle_rad: AngleFactorToRadians(0.25f, false),
+                                max_speed_rad_per_sec: CozmoUtil.kMoveHeadSpeed_radPerSec,
+                                accel_rad_per_sec2: CozmoUtil.kMoveHeadAccel_radPerSec2,
+                                duration_sec: 0.0f))
       };
 
     SendQueueCompoundAction(actions, callback);
@@ -1557,13 +1563,21 @@ public class Robot : IRobot {
 
   // Height factor should be between 0.0f and 1.0f
   // 0.0f being lowest and 1.0f being highest.
-  public void SetLiftHeight(float heightFactor, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void SetLiftHeight(float heightFactor, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, float speed_radPerSec = -1, float accel_radPerSec2 = -1) {
     DAS.Debug(this, "SetLiftHeight: " + heightFactor);
+
+    if (speed_radPerSec <= 0f) {
+      speed_radPerSec = CozmoUtil.kMoveLiftSpeed_radPerSec;
+    }
+
+    if (accel_radPerSec2 <= 0f) {
+      accel_radPerSec2 = CozmoUtil.kMoveLiftAccel_radPerSec2;
+    }
 
     SendQueueSingleAction(Singleton<SetLiftHeight>.Instance.Initialize(
       height_mm: (heightFactor * (CozmoUtil.kMaxLiftHeightMM - CozmoUtil.kMinLiftHeightMM)) + CozmoUtil.kMinLiftHeightMM,
-      accel_rad_per_sec2: 5f,
-      max_speed_rad_per_sec: 10f,
+      max_speed_rad_per_sec: speed_radPerSec,
+      accel_rad_per_sec2: accel_radPerSec2,
       duration_sec: 0f
     ),
       callback,

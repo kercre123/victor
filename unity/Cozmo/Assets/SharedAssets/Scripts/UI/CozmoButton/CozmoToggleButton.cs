@@ -1,66 +1,44 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
 using System.Collections;
 
 namespace Cozmo.UI {
   public class CozmoToggleButton : CozmoButton {
+    public delegate void CozmoToggleChangeHandler(bool isNowOn);
+    public event CozmoToggleChangeHandler OnValueChanged;
 
     [SerializeField]
-    private Image _PressedTintImage;
+    private bool _StartOn = true;
 
     [SerializeField]
-    private Color _PressedTintColor;
-
-    public Color PressedTintColor {
-      get { return _PressedTintColor; }
-      set {
-        if (value != _PressedTintColor) {
-          _PressedTintColor = value;
-          if (_PressedTintImage != null) {
-            UpdatePressedColorOnImage(_PressedTintImage);
-          }
-        }
-      }
-    }
+    private GameObject _OnImageContainer;
 
     [SerializeField]
-    private bool _ShowPressedStateOnRelease = false;
+    private GameObject _OffImageContainer;
 
-    public bool ShowPressedStateOnRelease {
-      get { return _ShowPressedStateOnRelease; }
-      set { 
-        _ShowPressedStateOnRelease = value;
-        UpdateVisuals();
-      } 
+    private bool _CurrentlyOn;
+    public bool IsCurrentlyOn {
+      get { return _CurrentlyOn; }
     }
 
     protected override void Start() {
       base.Start();
-      if (_PressedTintImage != null) {
-        UpdatePressedColorOnImage(_PressedTintImage);
+      _CurrentlyOn = _StartOn;
+      UpdateSelected();
+    }
+
+    private void UpdateSelected() {
+      _OnImageContainer.SetActive(_CurrentlyOn);
+      _OffImageContainer.SetActive(!_CurrentlyOn);
+
+      if (OnValueChanged != null) {
+        OnValueChanged(_CurrentlyOn);
       }
     }
 
-    private void UpdatePressedColorOnImage(Image pressedTintImage) {
-      foreach (AnkiButtonImage image in ButtonGraphics) {
-        if (image.targetImage == pressedTintImage) {
-          image.pressedColor = _PressedTintColor;
-        }
-      }
-    }
-
-    protected override void UpdateVisuals() {
-      if (_ShowDisabledStateWhenInteractable) {
-        InitializeDefaultGraphics();
-        ShowDisabledState();
-      }
-      else if (_ShowPressedStateOnRelease) {
-        InitializeDefaultGraphics();
-        ShowPressedState();
-      }
-      else {
-        base.UpdateVisuals();
-      }
+    protected override void HandleOnPress() {
+      base.HandleOnPress();
+      _CurrentlyOn = !_CurrentlyOn;
+      UpdateSelected();
     }
   }
 }

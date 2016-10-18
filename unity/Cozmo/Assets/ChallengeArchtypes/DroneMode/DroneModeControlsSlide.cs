@@ -12,8 +12,11 @@ namespace Cozmo.Minigame.DroneMode {
     public delegate void SpeedSliderSegmentEventHandler(SpeedSliderSegment currentSegment, SpeedSliderSegment newSegment);
     public event SpeedSliderSegmentEventHandler OnDriveSpeedSegmentChanged;
 
-    public delegate void HeadSliderEventHandler(float newNormalizedSegmentValue);
-    public event HeadSliderEventHandler OnHeadTiltSegmentValueChanged;
+    public delegate void HeadSliderEventHandler(float newValue);
+    public event HeadSliderEventHandler OnHeadSliderValueChanged;
+
+    public delegate void LiftSliderEventHandler(float newValue);
+    public event LiftSliderEventHandler OnLiftSliderValueChanged;
 
     public enum SpeedSliderSegment {
       Turbo,
@@ -38,6 +41,9 @@ namespace Cozmo.Minigame.DroneMode {
 
     [SerializeField]
     private Slider _HeadTiltSlider;
+
+    [SerializeField]
+    private Slider _LiftSlider;
 
     [SerializeField]
     private Color _BackgroundColor;
@@ -66,7 +72,9 @@ namespace Cozmo.Minigame.DroneMode {
     private SpeedSliderSegment _CurrentDriveSpeedSliderSegment;
     private float _CurrentDriveSpeedSliderSegmentValue;
 
-    private float _CurrentHeadSliderSegmentValue;
+    private float _CurrentHeadSliderValue;
+
+    private float _CurrentLiftSliderValue;
 
     private void Awake() {
       _HowToPlayButton.Initialize(HandleHowToPlayClicked, "drone_mode_how_to_play_button", "drone_mode_view_slide");
@@ -75,9 +83,11 @@ namespace Cozmo.Minigame.DroneMode {
     private void Start() {
       _CurrentDriveSpeedSliderSegment = SpeedSliderSegment.Neutral;
       _CurrentDriveSpeedSliderSegmentValue = 0f;
-      _CurrentHeadSliderSegmentValue = 0f;
       _SpeedThrottle.onValueChanged.AddListener(HandleSpeedThrottleValueChanged);
-      _HeadTiltSlider.onValueChanged.AddListener(HandleTiltThrottleValueChanged);
+
+      _CurrentHeadSliderValue = 0f;
+      _HeadTiltSlider.value = _CurrentHeadSliderValue;
+      _HeadTiltSlider.onValueChanged.AddListener(HandleHeadSliderValueChanged);
 
       TiltText.gameObject.SetActive(ShowDebugTextFields);
       DebugText.gameObject.SetActive(ShowDebugTextFields);
@@ -88,9 +98,16 @@ namespace Cozmo.Minigame.DroneMode {
       _CameraFeed.DebugTextField.gameObject.SetActive(ShowDebugTextFields);
     }
 
+    public void InitializeLiftSlider(float sliderValue) {
+      _CurrentLiftSliderValue = sliderValue;
+      _LiftSlider.value = _CurrentLiftSliderValue;
+      _LiftSlider.onValueChanged.AddListener(HandleLiftSliderValueChanged);
+    }
+
     private void OnDestroy() {
       _SpeedThrottle.onValueChanged.RemoveListener(HandleSpeedThrottleValueChanged);
-      _HeadTiltSlider.onValueChanged.RemoveListener(HandleTiltThrottleValueChanged);
+      _HeadTiltSlider.onValueChanged.RemoveListener(HandleHeadSliderValueChanged);
+      _LiftSlider.onValueChanged.RemoveListener(HandleLiftSliderValueChanged);
       if (_HowToPlayViewInstance != null) {
         _HowToPlayViewInstance.CloseViewImmediately();
       }
@@ -149,11 +166,20 @@ namespace Cozmo.Minigame.DroneMode {
       }
     }
 
-    private void HandleTiltThrottleValueChanged(float newSliderValue) {
-      if (!newSliderValue.IsNear(_CurrentHeadSliderSegmentValue, _kSliderChangeThreshold)) {
-        _CurrentHeadSliderSegmentValue = newSliderValue;
-        if (OnHeadTiltSegmentValueChanged != null) {
-          OnHeadTiltSegmentValueChanged(newSliderValue);
+    private void HandleHeadSliderValueChanged(float newSliderValue) {
+      if (!newSliderValue.IsNear(_CurrentHeadSliderValue, _kSliderChangeThreshold)) {
+        _CurrentHeadSliderValue = newSliderValue;
+        if (OnHeadSliderValueChanged != null) {
+          OnHeadSliderValueChanged(newSliderValue);
+        }
+      }
+    }
+
+    private void HandleLiftSliderValueChanged(float newSliderValue) {
+      if (!newSliderValue.IsNear(_CurrentLiftSliderValue, _kSliderChangeThreshold)) {
+        _CurrentLiftSliderValue = newSliderValue;
+        if (OnLiftSliderValueChanged != null) {
+          OnLiftSliderValueChanged(newSliderValue);
         }
       }
     }

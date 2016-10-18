@@ -50,6 +50,22 @@ namespace Cozmo {
       private float _SlowDownForTurnThreshold = 0.5f;
       public float SlowDownForTurnThreshold { get { return _SlowDownForTurnThreshold; } }
 
+      [SerializeField, Range(0f, 1000f), Tooltip("(rad/s) Turning speed of head.")]
+      private float _HeadTurnSpeed_radPerSec = 15f;
+      public float HeadTurnSpeed_radPerSec { get { return _HeadTurnSpeed_radPerSec; } }
+
+      [SerializeField, Range(0f, 10000f), Tooltip("(rad/s^2) Accel speed of head.")]
+      private float _HeadTurnAccel_radPerSec2 = 20f;
+      public float HeadTurnAccel_radPerSec2 { get { return _HeadTurnAccel_radPerSec2; } }
+
+      [SerializeField, Range(0f, 1000f), Tooltip("(rad/s) Turning speed of lift.")]
+      private float _LiftTurnSpeed_radPerSec = 10f;
+      public float LiftTurnSpeed_radPerSec { get { return _LiftTurnSpeed_radPerSec; } }
+
+      [SerializeField, Range(0f, 10000f), Tooltip("(rad/s^2) Accel speed of lift.")]
+      private float _LiftTurnAccel_radPerSec2 = 20f;
+      public float LiftTurnAccel_radPerSec2 { get { return _LiftTurnAccel_radPerSec2; } }
+
       [SerializeField, Range(0f, 1f), Tooltip("(%) Starting lift height, where 0 is minimum and 1 is maximum.")]
       private float _StartingLiftHeight = 0.25f;
       public float StartingLiftHeight { get { return _StartingLiftHeight; } }
