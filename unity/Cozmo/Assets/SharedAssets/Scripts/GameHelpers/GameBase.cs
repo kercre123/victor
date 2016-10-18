@@ -856,6 +856,7 @@ public abstract class GameBase : MonoBehaviour {
       SharedMinigameView.HidePlayerScoreboard();
       SharedMinigameView.HideCozmoScoreboard();
       RewardedActionManager.Instance.PendingActionRewards = RewardedActionManager.Instance.ResolveTagRewardCollisions(RewardedActionManager.Instance.PendingActionRewards);
+      DASReportPendingActionRewards();
       SharedMinigameView.ShowContinueButtonOffset(HandleChallengeResultViewClosed,
         Localization.GetWithArgs(LocalizationKeys.kRewardCollectCollectEnergy, RewardedActionManager.Instance.TotalPendingEnergy),
         Localization.Get(LocalizationKeys.kRewardCollectInstruction),
@@ -866,6 +867,16 @@ public abstract class GameBase : MonoBehaviour {
     }
     else {
       HandleChallengeResultViewClosed();
+    }
+  }
+
+  /// <summary>
+  /// Fires a DAS event for each pending action reward.
+  /// </summary>
+  private void DASReportPendingActionRewards() {
+    foreach (KeyValuePair<RewardedActionData, int> reward in RewardedActionManager.Instance.PendingActionRewards) {
+      DAS.Event("game.end.energy_reward", reward.Key.Reward.ItemID, DASUtil.FormatExtraData(reward.Key.Reward.Amount.ToString()));
+      DAS.Event("game.end.reward_tag", reward.Key.Tag);
     }
   }
 
