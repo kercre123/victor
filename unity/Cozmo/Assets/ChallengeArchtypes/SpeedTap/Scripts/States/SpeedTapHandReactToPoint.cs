@@ -187,7 +187,9 @@ namespace SpeedTap {
 
     private void SetWinningFlashingPattern(LightCube winningBlock, Color[] winColors, float flashDurationSeconds) {
       uint flashDurationMs = (uint)Mathf.FloorToInt(flashDurationSeconds * 1000);
-      winningBlock.SetFlashingLEDs(winColors, Color.white, flashDurationMs, flashDurationMs);
+      if (winningBlock != null) {
+        winningBlock.SetFlashingLEDs(winColors, Color.white, flashDurationMs, flashDurationMs);
+      }
     }
 
     private void SetLosingLightPattern(LightCube losingBlock, float flashDurationSeconds) {
