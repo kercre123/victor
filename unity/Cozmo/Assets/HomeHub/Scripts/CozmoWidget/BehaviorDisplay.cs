@@ -56,9 +56,10 @@ public class BehaviorDisplay : MonoBehaviour {
   }
 
   private void Update() {
-    if (RobotEngineManager.Instance.CurrentRobot != null && _BehaviorLabel != null) {
+    IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
+    if (CurrentRobot != null && _BehaviorLabel != null) {
       if (_OverrideString == null) {
-        string currBehaviorString = GetBehaviorString(RobotEngineManager.Instance.CurrentRobot.CurrentBehaviorType);
+        string currBehaviorString = GetBehaviorString(CurrentRobot.CurrentBehaviorType, CurrentRobot.CurrentBehaviorName);
         // If string is empty the design is that cozmo should stay in the previous state
         if (currBehaviorString != "" && currBehaviorString != _CurrString) {
           // start counting start of a change
@@ -111,7 +112,7 @@ public class BehaviorDisplay : MonoBehaviour {
     StartFadeTo(str);
   }
 
-  private string GetBehaviorString(BehaviorType behaviorType) {
+  private string GetBehaviorString(BehaviorType behaviorType, string behaviorName) {
     string ret = "";
     // Might share some of these in the future, so not a dictionary
     switch (behaviorType) {
@@ -164,7 +165,10 @@ public class BehaviorDisplay : MonoBehaviour {
       ret = Localization.Get(LocalizationKeys.kBehaviorInteractWithFaces);
       break;
     case BehaviorType.PlayAnim:
-      ret = Localization.Get(LocalizationKeys.kBehaviorBored);
+      // Play Anim behavior is also used for some intros/outros
+      if (behaviorName == "NothingToDo_Idle" || behaviorName == "NothingToDo_BoredAnim") {
+        ret = Localization.Get(LocalizationKeys.kBehaviorBored);
+      }
       break;
     case BehaviorType.ReactToCliff:
       ret = Localization.Get(LocalizationKeys.kBehaviorReactToCliff);

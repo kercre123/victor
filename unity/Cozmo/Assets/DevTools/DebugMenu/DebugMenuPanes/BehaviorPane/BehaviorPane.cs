@@ -20,10 +20,18 @@ public class BehaviorPane : MonoBehaviour {
   [SerializeField]
   private Text _InfoLabel;
 
+
+  [SerializeField]
+  private Button _BehaviorByNameButton;
+
+  [SerializeField]
+  private InputField _BehaviorNameInput;
+
   // Use this for initialization
   void Start() {
     _ChooserButton.onClick.AddListener(OnChooserButton);
     _BehaviorButton.onClick.AddListener(OnBehaviorButton);
+    _BehaviorByNameButton.onClick.AddListener(OnBehaviorByNameButton);
     Anki.Cozmo.Viz.VizManager.Enabled = true;
 
     for (int i = 0; i < (int)Anki.Cozmo.BehaviorChooserType.Count; ++i) {
@@ -61,6 +69,12 @@ public class BehaviorPane : MonoBehaviour {
     if (RobotEngineManager.Instance.CurrentRobot != null) {
       Anki.Cozmo.BehaviorType behaviorType = (Anki.Cozmo.BehaviorType)System.Enum.Parse(typeof(Anki.Cozmo.BehaviorType), _BehaviorDropdown.options[_BehaviorDropdown.value].text);
       RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(behaviorType);
+    }
+  }
+
+  private void OnBehaviorByNameButton() {
+    if (RobotEngineManager.Instance.CurrentRobot != null) {
+      RobotEngineManager.Instance.CurrentRobot.ExecuteBehaviorByName(_BehaviorNameInput.text);
     }
   }
 }

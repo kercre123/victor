@@ -47,6 +47,9 @@ namespace Anki.Cozmo.Viz {
 
     private int SortOrders(int a, int b) {
       var behaviors = VizManager.Instance.BehaviorScoreData;
+      if (behaviors == null || a >= behaviors.Length || b >= behaviors.Length) {
+        return 0;
+      }
       // primary sort by score descending
       int sortVal = behaviors[b].behaviorScore.CompareTo(behaviors[a].behaviorScore);
 

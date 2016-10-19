@@ -279,6 +279,7 @@ public class Robot : IRobot {
   public string CurrentBehaviorString { get; set; }
 
   public BehaviorType CurrentBehaviorType { get; set; }
+  public string CurrentBehaviorName { get; set; }
 
   public string CurrentDebugAnimationString { get; set; }
 
@@ -429,6 +430,7 @@ public class Robot : IRobot {
 
   private void HandleBehaviorTransition(Anki.Cozmo.ExternalInterface.BehaviorTransition message) {
     CurrentBehaviorType = message.newBehaviorType;
+    CurrentBehaviorName = message.newBehavior;
   }
 
   private void HandleDebugAnimationString(Anki.Cozmo.ExternalInterface.DebugAnimationString message) {
@@ -579,6 +581,8 @@ public class Robot : IRobot {
     BatteryVoltage = float.MaxValue;
     _LastProcessedVisionFrameEngineTimestamp = 0;
     CurrentBehaviorType = BehaviorType.NoneBehavior;
+    // usually this is unique
+    CurrentBehaviorName = "NoneBehavior";
 
     for (int i = 0; i < BackpackLights.Length; ++i) {
       BackpackLights[i].ClearData();
