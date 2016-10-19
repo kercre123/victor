@@ -62,6 +62,46 @@ static void MicroWait(u32 time)
   }
 }
 
+// === Battery Management ===
+void batteryInit()
+{
+  // Configure the analog sense pins
+  nrf_gpio_cfg_input(PIN_V_EXT_SENSE, NRF_GPIO_PIN_PULLUP);
+
+  // Just in case we need to power on the peripheral ourselves
+  NRF_ADC->POWER = 1;
+
+  NRF_ADC->CONFIG =
+    (ADC_CONFIG_RES_10bit << ADC_CONFIG_RES_Pos) | // 10 bit resolution
+    (ADC_CONFIG_INPSEL_AnalogInputOneThirdPrescaling << ADC_CONFIG_INPSEL_Pos) | // External inputs with 1/3rd analog prescaling
+    (ADC_CONFIG_REFSEL_VBG << ADC_CONFIG_REFSEL_Pos) | // 1.2V Bandgap reference
+    (ADC_CONFIG_EXTREFSEL_None << ADC_CONFIG_EXTREFSEL_None) | // Disable external analog reference pins
+    (ANALOG_V_EXT_SENSE << ADC_CONFIG_PSEL_Pos); // Select the VEXT Pin
+
+  NRF_ADC->ENABLE = ADC_ENABLE_ENABLE_Enabled;
+
+  // Kick off a read immediately
+  NRF_ADC->EVENTS_END = 0;
+  NRF_ADC->TASKS_START = 1;
+}
+
+void batteryManage(void) {
+  static int ground_short = 0;
+  
+  while (!NRF_ADC->EVENTS_END) return ;
+
+  NRF_ADC->EVENTS_END = 0;
+  NRF_ADC->TASKS_STOP = 1;
+  
+  if (NRF_ADC->RESULT >= 0x30) {
+    ground_short = 0;
+  } else if (ground_short++ >= 0x4000) {
+    NVIC_SystemReset();
+  }
+
+  NRF_ADC->TASKS_START = 1;
+}
+
 // === Watchdog functions ===
 static void kickDog(void) {
   for (int channel = 0; channel < 8; channel++) {
@@ -168,6 +208,7 @@ static uint8_t readByte() {
   
   while (!NRF_UART0->EVENTS_RXDRDY) {
     Lights::update();
+    batteryManage();
 
     int ticks = timeout - Count();
     
@@ -352,6 +393,7 @@ static void EnterRecovery(void) {
 
 int main(void) {
   Lights::init();
+  batteryInit();
   
   // Setup Globals
   max_idle = 30 * 50; // 30 seconds worth of idle before we pull the plug
