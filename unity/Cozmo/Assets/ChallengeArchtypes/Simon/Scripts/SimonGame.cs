@@ -88,6 +88,16 @@ namespace Simon {
     protected override void CleanUpOnDestroy() {
     }
 
+    protected override void AddDisabledReactionaryBehaviors() {
+      base.AddDisabledReactionaryBehaviors();
+
+      _DisabledReactionaryBehaviors.Add(BehaviorType.ReactToCliff);
+      _DisabledReactionaryBehaviors.Add(BehaviorType.ReactToPickup);
+      _DisabledReactionaryBehaviors.Add(BehaviorType.ReactToReturnedToTreads);
+      _DisabledReactionaryBehaviors.Add(BehaviorType.ReactToUnexpectedMovement);
+      _DisabledReactionaryBehaviors.Add(BehaviorType.ReactToCubeMoved);
+    }
+
     // Use this for initialization
     protected void InitializeMinigameObjects() {
       _CurrentSequenceLength = _Config.MinSequenceLength - 1;

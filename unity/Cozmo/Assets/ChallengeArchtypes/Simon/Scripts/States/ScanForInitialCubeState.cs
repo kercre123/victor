@@ -56,6 +56,9 @@ namespace Simon {
     }
 
     public override void Update() {
+      if (_CurrentRobot == null) {
+        return;
+      }
       // Intentionally avoid base class since that will only check currently visible cubes
       if (_ScanPhase == ScanPhase.NoCubesSeen) {
         int visibleLightCount = _CurrentRobot.VisibleLightCubes.Count;
@@ -164,7 +167,7 @@ namespace Simon {
         cube = lightCube.Value;
         bool cubeAdded = _Game.CubeIdsForGame.Contains(cube.ID);
         // our list of scanned cubes
-        if (cube.CurrentPoseState == ObservedObject.PoseState.Known && !cubeAdded) {
+        if (cube.IsInFieldOfView && !cubeAdded) {
           if (_Game.CubeIdsForGame.Count < _CubesRequired) {
             _Game.CubeIdsForGame.Add(cube.ID);
             _SetupCubeState.Add(cube.ID, ScannedSetupCubeState.Unknown);
