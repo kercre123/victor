@@ -208,6 +208,12 @@ def parse_game_arguments():
             help='Provide the mobile provisioning profile name for signing')
 
     parser.add_argument(
+            '--codesign-force-dev',
+            required=False,
+            action='store_true',
+            help='Force the mobileprovision to be signed with iPhone Developer')
+
+    parser.add_argument(
             '--set-build-number',
             metavar='string',
             default='1',
@@ -320,8 +326,11 @@ class GamePlatformConfiguration(object):
                     tmp_pp = os.path.join(CERT_ROOT, self.options.provision_profile + '.mobileprovision')
                     self.provision_profile_uuid = subprocess.check_output(
                             '{0}/mpParse -f {1} -o uuid'.format(CERT_ROOT, tmp_pp), shell=True).strip()
-                    self.codesign_identity = subprocess.check_output(
-                            '{0}/mpParse -f {1} -o codesign_identity'.format(CERT_ROOT, tmp_pp), shell=True).strip()
+                    if self.options.codesign_force_dev:
+                        self.codesign_identity = "iPhone Developer"
+                    else:
+                        self.codesign_identity = subprocess.check_output(
+                                '{0}/mpParse -f {1} -o codesign_identity'.format(CERT_ROOT, tmp_pp), shell=True).strip()
                 else:
                     self.provision_profile_uuid = None
                     self.codesign_identity = "iPhone Developer"
