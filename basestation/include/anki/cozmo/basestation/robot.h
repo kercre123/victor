@@ -948,6 +948,7 @@ protected:
   PoseFrameID_t _driftCheckStartPoseFrameId;
   Radians       _driftCheckStartAngle_rad;
   f32           _driftCheckStartGyroZ_rad_per_sec;
+  f32           _driftCheckStartPitch_rad;
   TimeStamp_t   _driftCheckStartTime_ms;
   f32           _driftCheckCumSumGyroZ_rad_per_sec;
   f32           _driftCheckMinGyroZ_rad_per_sec;

@@ -53,8 +53,8 @@ const CameraID_t ANY_CAMERA = u32_MAX;
 #define NSEC_PER_SEC	1000000000	/* nanoseconds per second */
 #define NANOS_TO_SEC(nanos) ((nanos) / 1000000000.0f)
 #define SEC_TO_NANOS(sec) ((sec) * 1000000000.0f)
-#define MILIS_TO_SEC(milis) ((milis)/1000.0)
-#define SEC_TO_MILIS(sec) ((sec)*1000.0)
+#define MILLIS_TO_SEC(millis) ((millis)/1000.0)
+#define SEC_TO_MILLIS(sec) ((sec)*1000.0)
 typedef unsigned long long int BaseStationTime_t;
 
 // If we're using c++, Result is in a namespace. In c, it's not.

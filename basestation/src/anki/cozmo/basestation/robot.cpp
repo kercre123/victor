@@ -140,7 +140,7 @@ static const float kPitchAngleOnFacePlantMax_sim_rads = DEG_TO_RAD(-110.f); //Th
 static const float kDriftCheckMaxRate_rad_per_sec = DEG_TO_RAD_F32(10.f);
 static const float kDriftCheckPeriod_ms = 5000.f;
 static const float kDriftCheckGyroZMotionThresh_rad_per_sec = DEG_TO_RAD_F32(1.f);
-static const float kDriftCheckMaxHeadAngleChange_rad_per_sec = DEG_TO_RAD_F32(0.1f);
+static const float kDriftCheckMaxAngleChangeRate_rad_per_sec = DEG_TO_RAD_F32(0.1f);
 
 // For tool code reading
 // 4-degree look down: (Make sure to update cozmoBot.proto to match!)
@@ -185,6 +185,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _driftCheckStartPoseFrameId(0)
   , _driftCheckStartAngle_rad(0)
   , _driftCheckStartGyroZ_rad_per_sec(0)
+  , _driftCheckStartPitch_rad(0)
   , _driftCheckStartTime_ms(0)
   , _driftCheckCumSumGyroZ_rad_per_sec(0)
   , _driftCheckMinGyroZ_rad_per_sec(0)
@@ -711,12 +712,12 @@ void Robot::DetectGyroDrift(const RobotState& msg)
     // Reset gyro drift detector if
     // 1) Wheels are moving
     // 2) Raw gyro reading exceeds possible drift value
-    // 3) Robot is picked up
+    // 3) Cliff is detected
     // 4) Head isn't calibrated
     // 5) Drift detector started but the raw gyro reading deviated too much from starting values, indicating motion.
     if (GetMoveComponent().IsMoving() ||
         (std::fabsf(msg.rawGyroZ) > kDriftCheckMaxRate_rad_per_sec) ||
-        (GetOffTreadsState() != OffTreadsState::OnTreads) ||
+        IsCliffDetected() ||
         !_isHeadCalibrated ||
         
         ((_driftCheckStartTime_ms != 0) &&
@@ -732,6 +733,7 @@ void Robot::DetectGyroDrift(const RobotState& msg)
       _driftCheckStartPoseFrameId        = GetPoseFrameID();
       _driftCheckStartAngle_rad          = GetPose().GetRotation().GetAngleAroundZaxis();
       _driftCheckStartGyroZ_rad_per_sec  = msg.rawGyroZ;
+      _driftCheckStartPitch_rad          = GetPitchAngle().ToFloat();
       _driftCheckStartTime_ms            = msg.timestamp;
       _driftCheckCumSumGyroZ_rad_per_sec = msg.rawGyroZ;
       _driftCheckMinGyroZ_rad_per_sec    = msg.rawGyroZ;
@@ -742,9 +744,12 @@ void Robot::DetectGyroDrift(const RobotState& msg)
     // If gyro readings have been accumulating for long enough...
     else if (msg.timestamp - _driftCheckStartTime_ms > kDriftCheckPeriod_ms) {
       
-      // ...check if there was a sufficient change in heading angle. Otherwise, reset detector.
-      f32 headingAngleChange = std::fabsf((_driftCheckStartAngle_rad - GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat());
-      if (headingAngleChange > (kDriftCheckMaxHeadAngleChange_rad_per_sec * MILIS_TO_SEC(kDriftCheckPeriod_ms))) {
+      // ...check if there was a sufficient change in heading angle or pitch. Otherwise, reset detector.
+      const f32 headingAngleChange = std::fabsf((_driftCheckStartAngle_rad - GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat());
+      const f32 pitchAngleChange = std::fabsf(_driftCheckStartPitch_rad - GetPitchAngle().ToFloat());
+      const f32 angleChangeThresh = kDriftCheckMaxAngleChangeRate_rad_per_sec * MILLIS_TO_SEC(kDriftCheckPeriod_ms);
+      
+      if (headingAngleChange > angleChangeThresh) {
         // Report drift detected just one time during a session
         Util::sWarningF("robot.detect_gyro_drift.drift_detected",
                         {{DDATA, TO_DDATA_STR(RAD_TO_DEG_F32(headingAngleChange))}},
@@ -753,9 +758,17 @@ void Robot::DetectGyroDrift(const RobotState& msg)
                         RAD_TO_DEG_F32(_driftCheckMinGyroZ_rad_per_sec),
                         RAD_TO_DEG_F32(_driftCheckMaxGyroZ_rad_per_sec));
         _gyroDriftReported = true;
-      } else {
-        _driftCheckStartTime_ms = 0;
       }
+      
+      if (pitchAngleChange > angleChangeThresh) {
+        Util::sWarningF("robot.detect_gyro_drift.pitch_drift_detected",
+                        {{DDATA, TO_DDATA_STR(RAD_TO_DEG_F32(pitchAngleChange))}},
+                        "%f",
+                        RAD_TO_DEG_F32(GetPitchAngle().ToFloat()));
+        _gyroDriftReported = true;
+      }
+      
+      _driftCheckStartTime_ms = 0;
     }
     
     // Record min and max observed gyro readings and cumulative sum for later mean computation
