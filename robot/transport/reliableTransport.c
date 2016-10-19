@@ -13,7 +13,7 @@
 #define memcpy os_memcpy
 #define strncmp os_strncmp
 #define GetMicroCounter system_get_time
-#define TxStalled() (xPortGetFreeHeapSize() < 1680)   // Return true if transmission is not possible at this time
+#define TxStalled() (xPortGetFreeHeapSize() < RELIABLE_TRANSPORT_PACKET_ALLOWANCE)   // Return true if transmission is not possible at this time
 #else
 #include <string.h>
 #include <stdio.h>

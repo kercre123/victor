@@ -12,6 +12,7 @@
   #define FIXTURE_DATA_ADDRESS_MASK (FIXTURE_DATA_NUM_ENTRIES - 1)
   #define FIXTURE_DATA_READ_SIZE (1024)
   #include "anki/cozmo/robot/esp.h"
+#include "anki/cozmo/transport/reliableTransport.h"
 #else 
   #include <cstdlib>
   #include "../sim_hal/sim_nvStorage.h"
@@ -56,7 +57,7 @@ static inline bool isReadBlocked()
 {
   if (!HAL::RadioIsConnected()) return false;
 #ifdef TARGET_ESPRESSIF
-  else if (xPortGetFreeHeapSize() < 1680) return true;
+  else if (xPortGetFreeHeapSize() < RELIABLE_TRANSPORT_PACKET_ALLOWANCE) return true;
 #endif
   else if ((int)HAL::RadioQueueAvailable() < ((int)sizeof(Anki::Cozmo::NVStorage::NVOpResult) + 10))
   {

@@ -37,6 +37,8 @@ extern "C" {
 
 #define GLOBAL_INVALID_TAG 0x00
 
+#define RELIABLE_TRANSPORT_PACKET_ALLOWANCE  3200   //2x the udp memory needed + 10% buffer.  Heuristic.
+
 /** Structure for reliable packet header
  */
 #ifdef __APPLE__
