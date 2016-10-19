@@ -2,7 +2,7 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-GAME_LOG_DIR=$DIR/../../build/mac/Debug/playbackLogs/webotsCtrlGameEngine/gameLogs/
+GAME_LOG_DIR=$DIR/../../build/mac/Debug/playbackLogs/webotsCtrlGameEngine/gameLogs/devLogger/
 
 pushd $GAME_LOG_DIR
 
