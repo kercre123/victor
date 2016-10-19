@@ -764,7 +764,7 @@ def main(args):
   parser.add_argument('--numRetries',
                       dest='num_retries',
                       action='store',
-                      default=3,
+                      default=1,
                       type=int,
                       help="""When a test fails, the number of times to retry the test before
                       declaring it as failed. Be aware of off-by-one gotcha here, if numRetries ==
