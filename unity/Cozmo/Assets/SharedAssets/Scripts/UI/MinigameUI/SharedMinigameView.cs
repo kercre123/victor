@@ -222,6 +222,7 @@ namespace Cozmo {
       private CanvasGroup _TransitionOutSlide;
       private Sequence _SlideOutTween;
       private Dictionary<int, Sequence> _HideWidgetSequences = new Dictionary<int, Sequence>();
+      private Dictionary<int, Sequence> _AddWidgetSequences = new Dictionary<int, Sequence>();
 
       private List<MinigameWidget> _ActiveWidgets = new List<MinigameWidget>();
 
@@ -279,6 +280,11 @@ namespace Cozmo {
           kvp.Value.Kill();
         }
         _HideWidgetSequences.Clear();
+
+        foreach (KeyValuePair<int, Sequence> kvp in _AddWidgetSequences) {
+          kvp.Value.Kill();
+        }
+        _AddWidgetSequences.Clear();
       }
 
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
@@ -356,10 +362,29 @@ namespace Cozmo {
 
       private void AddWidget(MinigameWidget widgetToAdd) {
         _ActiveWidgets.Add(widgetToAdd);
+
         if (_OpenAnimationStarted) {
-          Sequence openAnimation = widgetToAdd.CreateOpenAnimSequence();
-          openAnimation.Play();
+
+          int widgetInstanceId = widgetToAdd.gameObject.GetInstanceID();
+
+          if (!_AddWidgetSequences.ContainsKey(widgetInstanceId)) {
+
+            // if the hide widget seqeunce for this id is still playing then
+            // we need to kill that first.
+            if (_HideWidgetSequences.ContainsKey(widgetInstanceId)) {
+              _HideWidgetSequences[widgetInstanceId].Kill();
+              _HideWidgetSequences.Remove(widgetInstanceId);
+            }
+
+            Sequence openAnimation = widgetToAdd.CreateOpenAnimSequence();
+            openAnimation.AppendCallback(() => {
+              _AddWidgetSequences.Remove(widgetInstanceId);
+            });
+            openAnimation.Play();
+            _AddWidgetSequences.Add(widgetInstanceId, openAnimation);
+          }
         }
+
       }
 
       private void HideWidget(MinigameWidget widgetToHide) {
@@ -369,15 +394,29 @@ namespace Cozmo {
 
         _ActiveWidgets.Remove(widgetToHide);
 
-        Sequence close = widgetToHide.CreateCloseAnimSequence();
         int widgetInstanceId = widgetToHide.gameObject.GetInstanceID();
-        close.AppendCallback(() => {
-          _HideWidgetSequences.Remove(widgetInstanceId);
-          if (widgetToHide != null) {
-            widgetToHide.DestroyWidgetImmediately();
+
+        if (!_HideWidgetSequences.ContainsKey(widgetInstanceId)) {
+
+          // if the add widget seqeunce for this id is still playing then
+          // we need to kill that first.
+          if (_AddWidgetSequences.ContainsKey(widgetInstanceId)) {
+            _AddWidgetSequences[widgetInstanceId].Kill();
+            _AddWidgetSequences.Remove(widgetInstanceId);
           }
-        });
-        close.Play();
+
+          Sequence close = widgetToHide.CreateCloseAnimSequence();
+          close.AppendCallback(() => {
+            _HideWidgetSequences.Remove(widgetInstanceId);
+            if (widgetToHide != null) {
+              widgetToHide.DestroyWidgetImmediately();
+            }
+          });
+          close.Play();
+          _HideWidgetSequences.Add(widgetInstanceId, close);
+
+        }
+
       }
 
       private void UpdateButtonDasViewControllerNames(string slideName) {
