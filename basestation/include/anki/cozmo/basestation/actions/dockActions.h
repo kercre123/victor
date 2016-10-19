@@ -91,6 +91,9 @@ namespace Anki {
       // By default this is false (the action is looking for a specific marker)
       void SetShouldVisuallyVerifyObjectOnly(const bool b) { _visuallyVerifyObjectOnly = b; }
       
+      // Whether or not we should look up to check if there is an object above the dockObject
+      void SetShouldCheckForObjectOnTopOf(const bool b) { _checkForObjectOnTopOf = b; }
+      
       struct PreActionPoseInput
       {
         // Inputs
@@ -190,7 +193,7 @@ namespace Anki {
       f32                        _waitToVerifyTime               = -1;
       bool                       _wasPickingOrPlacing            = false;
       bool                       _useManualSpeed                 = false;
-      IActionRunner*             _faceAndVerifyAction            = nullptr;
+      ICompoundAction*           _faceAndVerifyAction            = nullptr;
       f32                        _placementOffsetX_mm            = 0;
       f32                        _placementOffsetY_mm            = 0;
       f32                        _placementOffsetAngle_rad       = 0;
@@ -203,8 +206,13 @@ namespace Anki {
       u8                         _numDockingRetries              = 0;
       DockingMethod              _dockingMethod                  = DockingMethod::BLIND_DOCKING;
       f32                        _preDockPoseDistOffsetX_mm      = 0;
+      bool                       _checkForObjectOnTopOf          = true;
       
     private:
+    
+      // Sets up the turnTowardsObject action and the "glance up to see if there is a block on top of the
+      // block we are docking with" action
+      void SetupTurnAndVerifyAction(const ObservableObject* dockObject);
       
       // Handler for when lift begins to move so that we can play an accompanying sound
       Signal::SmartHandle        _liftMovingSignalHandle;

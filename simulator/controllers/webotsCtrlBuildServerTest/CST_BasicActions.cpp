@@ -31,6 +31,8 @@ namespace Anki {
       PanAndTilt,
       FacePose,
       FaceObject,
+      VisuallyVerifyNoObjectAtPose,
+      VisuallyVerifyObjectAtPose,
       TestDone
     };
     
@@ -43,7 +45,9 @@ namespace Anki {
       
       TestState _testState = TestState::MoveLiftUp;
       
-      bool _lastActionSucceeded = false;
+      ActionResult _lastActionResult = ActionResult::RUNNING;
+      
+      const Point3f _poseToVerify = {190, 0, 22};
       
       // Message handlers
       virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg) override;
@@ -240,16 +244,61 @@ namespace Anki {
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
-            _testState = TestState::TestDone;
+            _testState = TestState::VisuallyVerifyNoObjectAtPose;
           }
           break;
         }
-        case TestState::TestDone:
+        case TestState::VisuallyVerifyNoObjectAtPose:
         {
           // Verify robot is facing the object
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10) &&
                                            NEAR(GetRobotPose().GetTranslation().x(), 0, 30), DEFAULT_TIMEOUT)
+          {
+            ExternalInterface::QueueSingleAction m;
+            m.robotID = 1;
+            m.position = QueueActionPosition::NOW;
+            m.idTag = 9;
+            m.action.Set_visuallyVerifyNoObjectAtPose(ExternalInterface::VisuallyVerifyNoObjectAtPose(GetRobotPose().GetTranslation().x(), GetRobotPose().GetTranslation().y() + 100, NECK_JOINT_POSITION[2], 10, 10, 10));
+            ExternalInterface::MessageGameToEngine message;
+            message.Set_QueueSingleAction(m);
+            SendMessage(message);
+            _testState = TestState::VisuallyVerifyObjectAtPose;
+            _lastActionResult = ActionResult::RUNNING;
+          }
+          break;
+        }
+        case TestState::VisuallyVerifyObjectAtPose:
+        {
+          // Verify robot is not seeing any objects at pose ~(0,100,0) which means the VisuallyVerifyNoObjectAtPose
+          // succeeded
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 90, 20),
+                                                _lastActionResult == ActionResult::SUCCESS)
+          {
+            ExternalInterface::QueueSingleAction m;
+            m.robotID = 1;
+            m.position = QueueActionPosition::NOW;
+            m.idTag = 10;
+            m.action.Set_visuallyVerifyNoObjectAtPose(ExternalInterface::VisuallyVerifyNoObjectAtPose(_poseToVerify.x(), _poseToVerify.y(), _poseToVerify.z(), 10, 10, 10));
+            ExternalInterface::MessageGameToEngine message;
+            message.Set_QueueSingleAction(m);
+            SendMessage(message);
+            _testState = TestState::TestDone;
+            _lastActionResult = ActionResult::RUNNING;
+          }
+          break;
+        }
+        case TestState::TestDone:
+        {
+          // Verify robot is seeing an object at pose ~(190,0,22) which means the VisuallyVerifyNoObjectAtPose action
+          // failed
+          IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
+                                                !IsRobotStatus(RobotStatusFlag::IS_MOVING),
+                                                NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10),
+                                                NEAR(GetRobotPose().GetTranslation().x(), 0, 30),
+                                                _lastActionResult == ActionResult::FAILURE_ABORT)
           {
             StopMovie();
             CST_EXIT();
@@ -264,9 +313,7 @@ namespace Anki {
     // ================ Message handler callbacks ==================
     void CST_BasicActions::HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg)
     {
-      if (msg.result == ActionResult::SUCCESS) {
-        _lastActionSucceeded = true;
-      }
+      _lastActionResult = msg.result;
     }
     
     // ================ End of message handler callbacks ==================

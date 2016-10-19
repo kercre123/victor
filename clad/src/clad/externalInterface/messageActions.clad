@@ -420,6 +420,17 @@ message VisuallyVerifyObject {
     int_32 numImagesToWait
 }
 
+// VisuallyVerifyNoObjectAtPose
+//   Succeeds if we don't see an object at the given pose within the thresholds
+message VisuallyVerifyNoObjectAtPose {
+  float_32 x_mm,
+  float_32 y_mm,
+  float_32 z_mm,
+  float_32 x_thresh_mm = 10.0,
+  float_32 y_thresh_mm = 10.0,
+  float_32 z_thresh_mm = 10.0
+}
+
 // Wait
 message Wait {
   float_32 time_s
@@ -474,6 +485,7 @@ union RobotActionUnion {
   TurnTowardsObject         turnTowardsObject,
   TurnTowardsPose           turnTowardsPose,
   VisuallyVerifyFace        visuallyVerifyFace,
+  VisuallyVerifyNoObjectAtPose visuallyVerifyNoObjectAtPose,
   VisuallyVerifyObject      visuallyVerifyObject,
   Wait                      wait,
   WaitForImages             waitForImages,

@@ -507,17 +507,7 @@ namespace Anki {
         return ActionResult::FAILURE_ABORT;
       }
 
-      // Set up a visual verification action to make sure we can still see the correct
-      // marker of the selected object before proceeding
-      // NOTE: This also disables tracking head to object if there was any
-      _faceAndVerifyAction = new TurnTowardsObjectAction(_robot,
-                                                         _dockObjectID,
-                                                         (_visuallyVerifyObjectOnly ? Vision::Marker::ANY_CODE : _dockMarker->GetCode()),
-                                                         0, true, false);
-
-      // Disable the visual verification from issuing a completion signal
-      _faceAndVerifyAction->ShouldEmitCompletionSignal(false);
-      _faceAndVerifyAction->ShouldSuppressTrackLocking(true);
+      SetupTurnAndVerifyAction(dockObject);
       
       if(!_lightsSet)
       {
@@ -658,6 +648,50 @@ namespace Anki {
       return actionResult;
     } // CheckIfDone()
     
+    
+    void IDockAction::SetupTurnAndVerifyAction(const ObservableObject* dockObject)
+    {
+      _faceAndVerifyAction = new CompoundActionSequential(_robot,{});
+      
+      _faceAndVerifyAction->ShouldEmitCompletionSignal(false);
+      _faceAndVerifyAction->ShouldSuppressTrackLocking(true);
+    
+      // If we are checking to see if there is an object on top of our dockObject then
+      // add a VisuallyVerifyNoObjectAtPoseAction to the _faceAndVerifyAction
+      if(_checkForObjectOnTopOf)
+      {
+        Pose3d pose = dockObject->GetPose().GetWithRespectToOrigin();
+        const Point3f rotatedSize = dockObject->GetPose().GetRotation() * dockObject->GetSize();
+        pose.SetTranslation({pose.GetTranslation().x(),
+                             pose.GetTranslation().y(),
+                             pose.GetTranslation().z() + rotatedSize.z()});
+        
+        IAction* verifyNoObjectOnTopOfAction = new VisuallyVerifyNoObjectAtPoseAction(_robot,
+                                                                                      pose,
+                                                                                      rotatedSize * 0.5f);
+        
+        // Disable the visual verification from issuing a completion signal
+        verifyNoObjectOnTopOfAction->ShouldEmitCompletionSignal(false);
+        verifyNoObjectOnTopOfAction->ShouldSuppressTrackLocking(true);
+        
+        _faceAndVerifyAction->AddAction(verifyNoObjectOnTopOfAction);
+      }
+      
+      // Set up a visual verification action to make sure we can still see the correct
+      // marker of the selected object before proceeding
+      // NOTE: This also disables tracking head to object if there was any
+      IAction* turnTowardsDockObjectAction = new TurnTowardsObjectAction(_robot,
+                                                                         _dockObjectID,
+                                                                         (_visuallyVerifyObjectOnly ? Vision::Marker::ANY_CODE : _dockMarker->GetCode()),
+                                                                         0, true, false);
+      
+      // Disable the turn towards action from issuing a completion signal
+      turnTowardsDockObjectAction->ShouldEmitCompletionSignal(false);
+      turnTowardsDockObjectAction->ShouldSuppressTrackLocking(true);
+      
+      _faceAndVerifyAction->AddAction(turnTowardsDockObjectAction);
+    }
+    
 #pragma mark ---- PopAWheelieAction ----
     
     PopAWheelieAction::PopAWheelieAction(Robot& robot,
@@ -791,6 +825,8 @@ namespace Anki {
                   RobotActionType::ALIGN_WITH_OBJECT,
                   useManualSpeed)
     {
+      SetShouldCheckForObjectOnTopOf(false);
+      
       f32 distance = 0;
       switch(alignmentType)
       {
@@ -1287,6 +1323,10 @@ namespace Anki {
       SetPostDockLiftMovingAnimation(placeOnGround ?
                                      AnimationTrigger::SoundOnlyLiftEffortPlaceLow :
                                      AnimationTrigger::SoundOnlyLiftEffortPlaceHigh);
+      
+      // If we aren't placing on the ground then we should check if there is an object on top of the object
+      // we are placing relative to
+      SetShouldCheckForObjectOnTopOf(!placeOnGround);
     }
     
     void PlaceRelObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const

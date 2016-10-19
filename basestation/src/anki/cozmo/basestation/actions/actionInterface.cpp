@@ -140,6 +140,7 @@ namespace Anki {
         case RobotActionType::DISPLAY_FACE_IMAGE:
         case RobotActionType::DISPLAY_PROCEDURAL_FACE:
         case RobotActionType::DRIVE_OFF_CHARGER_CONTACTS:
+        case RobotActionType::DRIVE_PATH:
         case RobotActionType::DRIVE_STRAIGHT:
         case RobotActionType::DRIVE_TO_FLIP_BLOCK_POSE:
         case RobotActionType::DRIVE_TO_PLACE_CARRIED_OBJECT:
@@ -161,11 +162,11 @@ namespace Anki {
         case RobotActionType::TURN_TOWARDS_POSE:
         case RobotActionType::UNKNOWN:
         case RobotActionType::VISUALLY_VERIFY_FACE:
+        case RobotActionType::VISUALLY_VERIFY_NO_OBJECT_AT_POSE:
         case RobotActionType::VISUALLY_VERIFY_OBJECT:
         case RobotActionType::WAIT:
         case RobotActionType::WAIT_FOR_IMAGES:
         case RobotActionType::WAIT_FOR_LAMBDA:
-        case RobotActionType::DRIVE_PATH:
         {
           _completionUnion.Set_defaultCompleted(DefaultCompleted());
           break;

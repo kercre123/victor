@@ -671,6 +671,14 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::VisuallyVe
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::VisuallyVerifyNoObjectAtPose& msg)
+{
+  Pose3d p(0, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, msg.z_mm), robot.GetWorldOrigin());
+  return new VisuallyVerifyNoObjectAtPoseAction(robot, p, {msg.x_thresh_mm, msg.y_thresh_mm, msg.z_thresh_mm});
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimationTrigger& msg)
 {
   IActionRunner* newAction = nullptr;
@@ -897,6 +905,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(turnTowardsObject,        TurnTowardsObject,        0),
       DEFINE_HANDLER(turnTowardsPose,          TurnTowardsPose,          0),
       DEFINE_HANDLER(visuallyVerifyFace,       VisuallyVerifyFace,       0),
+      DEFINE_HANDLER(visuallyVerifyNoObjectAtPose, VisuallyVerifyNoObjectAtPose, 0),
       DEFINE_HANDLER(visuallyVerifyObject,     VisuallyVerifyObject,     0),
       DEFINE_HANDLER(wait,                     Wait,                     0),
       DEFINE_HANDLER(waitForImages,            WaitForImages,            0),

@@ -109,6 +109,27 @@ namespace Cozmo {
   }; // class VisuallyVerifyFaceAction
   
   
+  class VisuallyVerifyNoObjectAtPoseAction : public IAction
+  {
+  public:
+    VisuallyVerifyNoObjectAtPoseAction(Robot& robot,
+                                       const Pose3d& pose,
+                                       const Point3f& thresholds_mm = {10, 10, 10});
+    virtual ~VisuallyVerifyNoObjectAtPoseAction();
+    
+  protected:
+    virtual ActionResult Init() override;
+    virtual ActionResult CheckIfDone() override;
+    
+  private:
+    ICompoundAction*      _turnTowardsPoseAction = nullptr;
+    IAction*              _waitForImagesAction   = nullptr;
+    Pose3d                _pose;
+    Point3f               _thresholds_mm;
+    int                   _numImagesToWaitFor = 10;
+    
+  };
+  
 } // namespace Cozmo
 } // namespace Anki
 
