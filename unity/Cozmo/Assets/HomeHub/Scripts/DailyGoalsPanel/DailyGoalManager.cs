@@ -207,16 +207,22 @@ public class DailyGoalManager : MonoBehaviour {
 
 
   private void HandleGameEvent(GameEventWrapper gameEvent) {
+    // If the game event is an OnDailyGoalCompleted game event, handle it as a pending
+    // goal as opposed to checking for goal progression
     if (gameEvent.GameEventEnum == Anki.Cozmo.GameEvent.OnDailyGoalCompleted) {
-      DailyGoalCompleteGameEvent goalEvent = gameEvent as DailyGoalCompleteGameEvent;
+      AddCompletedGoalToPending(gameEvent as DailyGoalCompleteGameEvent);
+    }
+    else {
+      ProgressDailyGoals(gameEvent);
+    }
+  }
 
-      if (PendingDailyGoals == null) {
-        DAS.Error("DailyGoalManager.HandleGameEvent.NullCheck", "PendingDailyGoals null");
-      }
-
-      // Only add to Pending Goals if it is unique, fire Warning otherwise since
-      // that suggests dupe goals or some other funny business I certainly don't
-      // approve of.
+  // Handles a DailyGoalCompleteGameEvent and adds the completed goal to pending goals
+  private void AddCompletedGoalToPending(DailyGoalCompleteGameEvent goalEvent) {
+    // Only add to Pending Goals if it is unique, fire Warning otherwise since
+    // that suggests dupe goals or some other funny business I certainly don't
+    // approve of.
+    if (PendingDailyGoals != null) {
       if (!PendingDailyGoals.Contains(goalEvent.CompletedGoal)) {
         PendingDailyGoals.Add(goalEvent.CompletedGoal);
       }
@@ -224,26 +230,29 @@ public class DailyGoalManager : MonoBehaviour {
         DAS.Warn("DailyGoalManager.HandleDailyGoalCompleted", "Duplicate DailyGoal completed event fired");
       }
     }
-    else {
-      if (DataPersistenceManager.Instance == null) {
-        DAS.Error("DailyGoalManager.HandleGameEvent.NullCheck", "Data persistence manager is null");
-      }
+  }
 
-      if (DataPersistenceManager.Instance.CurrentSession == null) {
-        DAS.Error("DailyGoalManager.HandleGameEvent.NullCheck", "CurrentSession is null");
-      }
-
-      List<DailyGoal> goals = DataPersistenceManager.Instance.CurrentSession.DailyGoals;
-
-      if (goals != null) {
-        for (int i = 0; i < goals.Count; i++) {
-          GoalProgCheck(goals[i], gameEvent);
+  // Handle DailyGoalProgression event, checking current goals and progressing those that have
+  // their desired goalEvent and goalConditions met
+  private void ProgressDailyGoals(GameEventWrapper goalEvent) {
+    // Only attempt to handle a GameEvent for daily goals if our current session exists
+    if (DataPersistenceManager.Instance != null) {
+      if (DataPersistenceManager.Instance.CurrentSession != null) {
+        List<DailyGoal> goals = DataPersistenceManager.Instance.CurrentSession.DailyGoals;
+        // Pass the game event to each goal in the current session, the goal itself will handle
+        // checking conditionals and progression
+        if (goals != null) {
+          for (int i = 0; i < goals.Count; i++) {
+            GoalProgCheck(goals[i], goalEvent);
+          }
+        }
+        else {
+          DAS.Error("DailyGoalManager.HandleGameEvent.NullCheck", "CurrentSession.DailyGoals is null");
         }
       }
       else {
-        DAS.Error("DailyGoalManager.HandleGameEvent.NullCheck", "CurrentSession.DailyGoals is null");
+        DAS.Error("DailyGoalManager.HandleGameEvent.NullCheck", "CurrentSession is null");
       }
-
     }
   }
 
