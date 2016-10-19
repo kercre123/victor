@@ -20,6 +20,7 @@
 
 #include <list>
 #include <map>
+#include <set>
 
 // TODO: Is this Cozmo-specific or can it be moved to coretech?
 // (Note it does require a Robot, which is currently only present in Cozmo)
@@ -77,14 +78,17 @@ namespace Anki {
       void Print() const;
       
     private:
-      // Deletes the current action only if it isn't in the process of being deleted
-      // Safeguards against the action being deleted twice due to handling action
+      // Deletes the action only if it isn't in the process of being deleted
+      // Safeguards against the action being deleted multiple times due to handling action
       // completion signals
-      void DeleteCurrentAction();
+      void DeleteAction(IActionRunner* &action);
     
-      IActionRunner*            _currentAction           = nullptr;
-      bool                      _currentActionIsDeleting = false;
+      IActionRunner*            _currentAction = nullptr;
       std::list<IActionRunner*> _queue;
+      
+      // A set of tags that are in the process of being deleted. This is used to protect
+      // actions from being deleted multiple times/recursively
+      std::set<u32>             _tagsBeingDeleted;
       
     }; // class ActionQueue
     

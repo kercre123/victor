@@ -319,12 +319,11 @@ namespace Anki {
       {
         _currentAction->Cancel();
       }
-      DeleteCurrentAction();
+      DeleteAction(_currentAction);
       
       for (auto listIter = _queue.begin(); listIter != _queue.end(); ) {
-        CORETECH_ASSERT(*listIter != nullptr);
-        (*listIter)->PrepForCompletion();
-        Util::SafeDelete(*listIter);
+        ASSERT_NAMED(*listIter != nullptr, "ActionQueue.Clear.NullAction");
+        DeleteAction(*listIter);
         listIter = _queue.erase(listIter);
       }
     }
@@ -338,18 +337,17 @@ namespace Anki {
         if(withType == RobotActionType::UNKNOWN || _currentAction->GetType() == withType)
         {
           _currentAction->Cancel();
-          DeleteCurrentAction();
+          DeleteAction(_currentAction);
           found = true;
         }
       }
       
       for(auto iter = _queue.begin(); iter != _queue.end();)
       {
-        CORETECH_ASSERT(*iter != nullptr);
+        ASSERT_NAMED(*iter != nullptr, "ActionQueue.CancelType.NullAction");
         
         if(withType == RobotActionType::UNKNOWN || (*iter)->GetType() == withType) {
-          (*iter)->PrepForCompletion();
-          Util::SafeDelete(*iter);
+          DeleteAction(*iter);
           iter = _queue.erase(iter);
           found = true;
         } else {
@@ -368,14 +366,14 @@ namespace Anki {
         if(_currentAction->GetTag() == idTag)
         {
           _currentAction->Cancel();
-          DeleteCurrentAction();
+          DeleteAction(_currentAction);
           found = true;
         }
       }
       
       for(auto iter = _queue.begin(); iter != _queue.end();)
       {
-        CORETECH_ASSERT(*iter != nullptr);
+        ASSERT_NAMED(*iter != nullptr, "ActionQueue.CancelTag.NullAction");
         
         if((*iter)->GetTag() == idTag) {
           if(found == true) {
@@ -383,8 +381,7 @@ namespace Anki {
                                 "Multiple actions with tag=%d found in queue.\n",
                                 idTag);
           }
-          (*iter)->PrepForCompletion();
-          Util::SafeDelete(*iter);
+          DeleteAction(*iter);
           iter = _queue.erase(iter);
           found = true;
         } else {
@@ -408,7 +405,7 @@ namespace Anki {
         {
           _currentAction->Cancel();
         }
-        DeleteCurrentAction();
+        DeleteAction(_currentAction);
         return QueueAtEnd(action, numRetries);
       } else {
         const IActionRunner* currentAction = GetCurrentRunningAction();
@@ -422,7 +419,7 @@ namespace Anki {
                             action->GetName().c_str(),
                             action->GetTag());
         }
-        DeleteCurrentAction();
+        DeleteAction(_currentAction);
         action->SetNumRetries(numRetries);
         _queue.push_front(action);
         return RESULT_OK;
@@ -539,7 +536,7 @@ namespace Anki {
         
         if (!isRunning) {
           // Current action is no longer running delete it
-          DeleteCurrentAction();
+          DeleteAction(_currentAction);
           
           if(actionResult != ActionResult::SUCCESS && actionResult != ActionResult::CANCELLED) {
             lastResult = RESULT_FAIL;
@@ -574,14 +571,19 @@ namespace Anki {
       }
     }
     
-    void ActionQueue::DeleteCurrentAction()
+    void ActionQueue::DeleteAction(IActionRunner* &action)
     {
-      if(_currentAction != nullptr && !_currentActionIsDeleting)
+      if(action != nullptr)
       {
-        _currentActionIsDeleting = true;
-        _currentAction->PrepForCompletion();
-        Util::SafeDelete(_currentAction);
-        _currentActionIsDeleting = false;
+        // If the action isn't currently being deleted meaning it was successfully inserted into the set
+        // so the second element of the pair will be true
+        const auto pair = _tagsBeingDeleted.insert(action->GetTag());
+        if(pair.second)
+        {
+          action->PrepForCompletion();
+          Util::SafeDelete(action);
+          _tagsBeingDeleted.erase(pair.first);
+        }
       }
     }
     
