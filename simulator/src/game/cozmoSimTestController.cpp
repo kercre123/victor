@@ -126,7 +126,6 @@ namespace Anki {
     
     s32 CozmoSimTestController::UpdateInternal()
     {
-      PRINT_NAMED_INFO("ScreenshotInterval","%f", _screenshotInterval);
       //Check if screenshots need to be taken
       if(_screenshotInterval > 0){
         

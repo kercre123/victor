@@ -264,8 +264,8 @@ protected:
   void SendSetRobotVolume(const f32 volume);
   void SendStartTestMode(TestMode mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
   void SendIMURequest(u32 length_ms);
-  void SendAnimation(const char* animName, u32 numLoops);
-  void SendAnimationGroup(const char* animName);
+  void SendAnimation(const char* animName, u32 numLoops, bool throttleMessages = false);
+  void SendAnimationGroup(const char* animName, bool throttleMessages = false);
   void SendDevAnimation(const char* animName, u32 numLoops); // FIXME: Remove after code refactor - JMR
   void SendReplayLastAnimation();
   void SendReadAnimationFile();

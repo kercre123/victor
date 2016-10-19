@@ -2092,7 +2092,7 @@ namespace Anki {
                     animNumLoops = animNumLoopsField->getSFInt32();
                   }
                   
-                  SendAnimation(animToSendName.c_str(), animNumLoops);
+                  SendAnimation(animToSendName.c_str(), animNumLoops, true);
                 }
                 break;
               }
@@ -2109,7 +2109,7 @@ namespace Anki {
                   printf("ERROR: animationToSendName field is empty\n");
                   break;
                 }
-                SendAnimationGroup(animToSendName.c_str());
+                SendAnimationGroup(animToSendName.c_str(), true);
                 break;
               }
               
