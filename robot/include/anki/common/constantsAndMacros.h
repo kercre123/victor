@@ -128,16 +128,16 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #ifndef DEG_TO_RAD
-#define DEG_TO_RAD(deg) (((double)deg)*0.017453292519943295474)
+#define DEG_TO_RAD(deg) (((double)(deg))*0.017453292519943295474)
 #endif
 #ifndef DEG_TO_RAD_F32
-#define DEG_TO_RAD_F32(deg) (((float)deg)*0.017453292519943295474f)
+#define DEG_TO_RAD_F32(deg) (((float)(deg))*0.017453292519943295474f)
 #endif
 
 #ifndef RAD_TO_DEG
-#define RAD_TO_DEG(rad) (((double)rad)*57.295779513082322865)
+#define RAD_TO_DEG(rad) (((double)(rad))*57.295779513082322865)
 #endif
-#define RAD_TO_DEG_F32(rad) (((float)rad)*57.295779513082322865f)
+#define RAD_TO_DEG_F32(rad) (((float)(rad))*57.295779513082322865f)
 
 #define NANOS_TO_SEC(nanos) ((nanos) / 1000000000.0f)
 #define SEC_TO_NANOS(sec) ((sec) * 1000000000.0f)

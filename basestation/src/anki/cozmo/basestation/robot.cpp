@@ -186,6 +186,10 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _driftCheckStartAngle_rad(0)
   , _driftCheckStartGyroZ_rad_per_sec(0)
   , _driftCheckStartTime_ms(0)
+  , _driftCheckCumSumGyroZ_rad_per_sec(0)
+  , _driftCheckMinGyroZ_rad_per_sec(0)
+  , _driftCheckMaxGyroZ_rad_per_sec(0)
+  , _driftCheckNumReadings(0)
   , _poseHistory(nullptr)
   , _moodManager(new MoodManager(this))
   , _progressionUnlockComponent(new ProgressionUnlockComponent(*this))
@@ -707,9 +711,13 @@ void Robot::DetectGyroDrift(const RobotState& msg)
     // Reset gyro drift detector if
     // 1) Wheels are moving
     // 2) Raw gyro reading exceeds possible drift value
-    // 3) Drift detector started but the raw gyro and accel readings deviated too much from starting values, indicating motion.
+    // 3) Robot is picked up
+    // 4) Head isn't calibrated
+    // 5) Drift detector started but the raw gyro reading deviated too much from starting values, indicating motion.
     if (GetMoveComponent().IsMoving() ||
         (std::fabsf(msg.rawGyroZ) > kDriftCheckMaxRate_rad_per_sec) ||
+        (GetOffTreadsState() != OffTreadsState::OnTreads) ||
+        !_isHeadCalibrated ||
         
         ((_driftCheckStartTime_ms != 0) &&
          ((std::fabsf(_driftCheckStartGyroZ_rad_per_sec - msg.rawGyroZ) > kDriftCheckGyroZMotionThresh_rad_per_sec) ||
@@ -721,10 +729,14 @@ void Robot::DetectGyroDrift(const RobotState& msg)
     
     // Robot's not moving. Initialize drift detection.
     else if (_driftCheckStartTime_ms == 0) {
-      _driftCheckStartPoseFrameId = GetPoseFrameID();
-      _driftCheckStartAngle_rad = GetPose().GetRotation().GetAngleAroundZaxis();
-      _driftCheckStartGyroZ_rad_per_sec = msg.rawGyroZ;
-      _driftCheckStartTime_ms = msg.timestamp;
+      _driftCheckStartPoseFrameId        = GetPoseFrameID();
+      _driftCheckStartAngle_rad          = GetPose().GetRotation().GetAngleAroundZaxis();
+      _driftCheckStartGyroZ_rad_per_sec  = msg.rawGyroZ;
+      _driftCheckStartTime_ms            = msg.timestamp;
+      _driftCheckCumSumGyroZ_rad_per_sec = msg.rawGyroZ;
+      _driftCheckMinGyroZ_rad_per_sec    = msg.rawGyroZ;
+      _driftCheckMaxGyroZ_rad_per_sec    = msg.rawGyroZ;
+      _driftCheckNumReadings             = 1;
     }
     
     // If gyro readings have been accumulating for long enough...
@@ -734,13 +746,28 @@ void Robot::DetectGyroDrift(const RobotState& msg)
       f32 headingAngleChange = std::fabsf((_driftCheckStartAngle_rad - GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat());
       if (headingAngleChange > (kDriftCheckMaxHeadAngleChange_rad_per_sec * MILIS_TO_SEC(kDriftCheckPeriod_ms))) {
         // Report drift detected just one time during a session
-        Util::sWarningF("robot.detect_gyro_drift.detected",
-                        {{DDATA, TO_DDATA_STR(RAD_TO_DEG_F32(msg.pose.pitch_angle))}},
-                        "%f", RAD_TO_DEG_F32(_driftCheckStartGyroZ_rad_per_sec));
+        Util::sWarningF("robot.detect_gyro_drift.drift_detected",
+                        {{DDATA, TO_DDATA_STR(RAD_TO_DEG_F32(headingAngleChange))}},
+                        "mean: %f, min: %f, max: %f",
+                        RAD_TO_DEG_F32(_driftCheckCumSumGyroZ_rad_per_sec / _driftCheckNumReadings),
+                        RAD_TO_DEG_F32(_driftCheckMinGyroZ_rad_per_sec),
+                        RAD_TO_DEG_F32(_driftCheckMaxGyroZ_rad_per_sec));
         _gyroDriftReported = true;
       } else {
         _driftCheckStartTime_ms = 0;
       }
+    }
+    
+    // Record min and max observed gyro readings and cumulative sum for later mean computation
+    else {
+      if (msg.rawGyroZ > _driftCheckMaxGyroZ_rad_per_sec) {
+        _driftCheckMaxGyroZ_rad_per_sec = msg.rawGyroZ;
+      }
+      if (msg.rawGyroZ < _driftCheckMinGyroZ_rad_per_sec) {
+        _driftCheckMinGyroZ_rad_per_sec = msg.rawGyroZ;
+      }
+      _driftCheckCumSumGyroZ_rad_per_sec += msg.rawGyroZ;
+      ++_driftCheckNumReadings;
     }
   }
 }
@@ -823,8 +850,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
       
   _hasMovedSinceLocalization |= GetMoveComponent().IsMoving() || _offTreadsState != OffTreadsState::OnTreads;
-  
-  DetectGyroDrift(msg);
   
   if ( isDelocalizing )
   {
@@ -955,6 +980,8 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
       lastResult = RESULT_FAIL;
     }
   }
+  
+  DetectGyroDrift(msg);
   
   /*
     PRINT_NAMED_INFO("Robot.UpdateFullRobotState.OdometryUpdate",

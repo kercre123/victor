@@ -34,6 +34,8 @@ namespace Anki {
 
       // Returns the latest IMU data read in the last Update() call.
       HAL::IMU_DataStructure GetLatestRawData();
+      
+      const f32* GetBiasCorrectedGyroData();
 
       // Rotation (or "yaw") in radians. Turning left is positive.
       f32 GetRotation();

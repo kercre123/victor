@@ -190,8 +190,8 @@ namespace Anki {
         robotState_.liftHeight = LiftController::GetHeightMM();
 
         HAL::IMU_DataStructure imuData = IMUFilter::GetLatestRawData();
-        robotState_.rawGyroZ = imuData.rate_z;
         robotState_.rawAccelY = imuData.acc_y;
+        robotState_.rawGyroZ = IMUFilter::GetBiasCorrectedGyroData()[2];
         robotState_.lastPathID = PathFollower::GetLastPathID();
 
         robotState_.cliffDataRaw = HAL::GetRawCliffData();

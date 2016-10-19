@@ -1028,6 +1028,11 @@ namespace Anki {
       {
         return imu_data_;
       }
+      
+      const f32* GetBiasCorrectedGyroData()
+      {
+        return gyro_;
+      }
 
       f32 GetRotation()
       {
