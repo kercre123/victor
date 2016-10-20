@@ -203,7 +203,7 @@ public class DAS {
         }
     }
 
-    private static boolean IsOnKindle() {
+    public static boolean IsOnKindle() {
         return getModel().toLowerCase().contains("amazon");
     }
 

@@ -152,9 +152,14 @@ MonoBehaviour:
   _DASEventViewType: 0
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
+  _LayerPriority: 0
   DimBackground: 0
-  DimBackgroundPrefabOverride: {fileID: 0}
+  _OpenAudioEvent:
+    _Event: Invalid
+    _EventType: GenericEvent
   _UpdateAppButton: {fileID: 11493766}
+  _ButtonImage: {fileID: 11442370}
+  _KindleStoreSprite: {fileID: 21300000, guid: 0dbdba97ea873432c9f15c9e38b5fd17, type: 3}
 --- !u!114 &11431946
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -197,7 +202,7 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_Sprite: {fileID: 21300000, guid: 0fd4a13257b4141edafce10bdb72c6de, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
@@ -288,7 +293,6 @@ MonoBehaviour:
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
-    _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
 --- !u!222 &22223364
 CanvasRenderer:
