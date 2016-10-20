@@ -185,7 +185,6 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _driftCheckStartPoseFrameId(0)
   , _driftCheckStartAngle_rad(0)
   , _driftCheckStartGyroZ_rad_per_sec(0)
-  , _driftCheckStartPitch_rad(0)
   , _driftCheckStartTime_ms(0)
   , _driftCheckCumSumGyroZ_rad_per_sec(0)
   , _driftCheckMinGyroZ_rad_per_sec(0)
@@ -733,7 +732,6 @@ void Robot::DetectGyroDrift(const RobotState& msg)
       _driftCheckStartPoseFrameId        = GetPoseFrameID();
       _driftCheckStartAngle_rad          = GetPose().GetRotation().GetAngleAroundZaxis();
       _driftCheckStartGyroZ_rad_per_sec  = msg.rawGyroZ;
-      _driftCheckStartPitch_rad          = GetPitchAngle().ToFloat();
       _driftCheckStartTime_ms            = msg.timestamp;
       _driftCheckCumSumGyroZ_rad_per_sec = msg.rawGyroZ;
       _driftCheckMinGyroZ_rad_per_sec    = msg.rawGyroZ;
@@ -746,7 +744,6 @@ void Robot::DetectGyroDrift(const RobotState& msg)
       
       // ...check if there was a sufficient change in heading angle or pitch. Otherwise, reset detector.
       const f32 headingAngleChange = std::fabsf((_driftCheckStartAngle_rad - GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat());
-      const f32 pitchAngleChange = std::fabsf(_driftCheckStartPitch_rad - GetPitchAngle().ToFloat());
       const f32 angleChangeThresh = kDriftCheckMaxAngleChangeRate_rad_per_sec * MILLIS_TO_SEC(kDriftCheckPeriod_ms);
       
       if (headingAngleChange > angleChangeThresh) {
@@ -759,15 +756,7 @@ void Robot::DetectGyroDrift(const RobotState& msg)
                         RAD_TO_DEG_F32(_driftCheckMaxGyroZ_rad_per_sec));
         _gyroDriftReported = true;
       }
-      
-      if (pitchAngleChange > angleChangeThresh) {
-        Util::sWarningF("robot.detect_gyro_drift.pitch_drift_detected",
-                        {{DDATA, TO_DDATA_STR(RAD_TO_DEG_F32(pitchAngleChange))}},
-                        "%f",
-                        RAD_TO_DEG_F32(GetPitchAngle().ToFloat()));
-        _gyroDriftReported = true;
-      }
-      
+
       _driftCheckStartTime_ms = 0;
     }
     
