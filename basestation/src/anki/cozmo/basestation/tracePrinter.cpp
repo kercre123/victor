@@ -138,31 +138,38 @@ void TracePrinter::HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngi
   if (report.errorCode || report.dump.size()) {
     PRINT_NAMED_EVENT("RobotFirmware.CrashReport", "Firmware crash report received: %s, %x", CrashSourceToString(report.which), report.errorCode);
     if (DevLoggingSystem::GetInstance() != NULL) {
-      char dumpFileName[64];
-      snprintf(dumpFileName, sizeof(dumpFileName), "crash_%d_%x_%lld.log", // Only .log files are archived and transmitted
-               (int)report.which,
-               report.errorCode,
-               std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+      
+      const std::string fileExt = ".log"; // Only .log files are archived and transmitted
+      const std::string dumpFileNameDir = DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory() + "/robotFirmware/";
       
       std::ostringstream dumpFilepathStream;
-      dumpFilepathStream << DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory().c_str() <<  "/robotFirmware/";
-      dumpFilepathStream << dumpFileName;
-      std::string dumpFilepath =dumpFilepathStream.str();
+      dumpFilepathStream << "crash_";
+      dumpFilepathStream << std::to_string(Util::EnumToUnderlying(report.which)) << "_";
+      dumpFilepathStream << std::hex << report.errorCode << "_";
+      dumpFilepathStream << std::dec << std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+      const std::string dumpFileNameBase = dumpFilepathStream.str();
+      
+      // Find a filepath for the crash dump that doesn't already exist and set up directories if needed
+      std::string dumpFileName = dumpFileNameBase + fileExt;
+      std::string dumpFilepath = dumpFileNameDir + dumpFileName;
+      uint32_t crashCounter = 0;
+      while (Util::FileUtils::FileExists(dumpFilepath)) {
+        dumpFileName = dumpFileNameBase + "-" + std::to_string(++crashCounter) + fileExt;
+        dumpFilepath = dumpFileNameDir + dumpFileName;
+      }
       Util::FileUtils::CreateDirectory(dumpFilepath, true, true);
       
-      std::ofstream fileOut;
-      fileOut.open(dumpFilepath, std::ios::out | std::ofstream::binary);
-      if( fileOut.is_open() ) {
-        char crashDumpData[2048]; // Whole message can never be bigger than a UDP MTU which for Cozmo is 1420 bytes
-        const size_t dumpSize = report.dump.size() * sizeof(report.dump[0]);
-        memcpy(crashDumpData, report.dump.data(), dumpSize);
-        fileOut.write(crashDumpData, dumpSize);
-        fileOut.close();
-        PRINT_NAMED_EVENT("RobotFirmware.CrashReport.Written", "Firmware crash report written to \"%s\"", dumpFileName);
+      // Copy the crash data to a local vector and convert from 4-byte words to chars
+      const size_t dumpSize = report.dump.size() * sizeof(report.dump[0]);
+      std::vector<uint8_t> crashData = std::vector<uint8_t>(dumpSize);
+      const uint8_t* reportDataBegin = reinterpret_cast<const uint8_t*>(report.dump.data());
+      std::copy(reportDataBegin, reportDataBegin + dumpSize, crashData.data());
+      
+      if(Util::FileUtils::WriteFile(dumpFilepath, crashData)) {
+        PRINT_NAMED_EVENT("RobotFirmware.CrashReport.Written", "Firmware crash report written to \"%s\"", dumpFileName.c_str());
       }
-      else
-      {
-        PRINT_NAMED_ERROR("RobotFirmware.CrashReport.FailedToWrite", "Couldn't write report to file \"%s\"", dumpFileName);
+      else {
+        PRINT_NAMED_ERROR("RobotFirmware.CrashReport.FailedToWrite", "Couldn't write report to file \"%s\"", dumpFileName.c_str());
       }
     }
     if (report.errorCode == 0 && report.dump.size() > 0) {
