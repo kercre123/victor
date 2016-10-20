@@ -336,6 +336,8 @@ public static class LocalizationKeys {
   public const string kSimonGameLabelCubeReady = "simonGame.label.cubeReady";
   public const string kSimonGameLabelTooCloseError = "simonGame.label.tooCloseError";
   public const string kSimonGameLabelWaitingForCubesScanning = "simonGame.label.waitingForCubes.scanning";
+  public const string kSimonGameSoloNewHighScore = "simonGame.solo.NewHighScore";
+  public const string kSimonGameSoloGameOver = "simonGame.solo.GameOver";
   public const string kSpeedTapRoundsText = "speedTap.roundsText";
   public const string kSpeedTapTapBlock = "speedTap.tapBlock";
   public const string kSpeedTapSeparateBlocks = "speedTap.separateBlocks";

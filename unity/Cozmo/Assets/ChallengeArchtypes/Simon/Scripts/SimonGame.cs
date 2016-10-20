@@ -28,7 +28,7 @@ namespace Simon {
 
     public int MaxSequenceLength { get { return _Config.MaxSequenceLength; } }
 
-    public int LongSequenceReactMin { get { return _Config.LongSequenceReactMin; } }
+    public int MinRoundBeforeLongReact { get { return _Config.MinRoundBeforeLongReact; } }
 
     public int GetCurrentTurnNumber { get { return _CurrentSequenceLength - MinSequenceLength; } }
 
@@ -175,11 +175,21 @@ namespace Simon {
     }
 
     public void GenerateNewSequence(int sequenceLength) {
+      // For the first 3, require them to be unique
+      bool requireUnique = sequenceLength <= CubeIdsForGame.Count;
       while (_CurrentIDSequence.Count < sequenceLength) {
         int pickIndex = Random.Range(0, CubeIdsForGame.Count);
         int pickedID = CubeIdsForGame[pickIndex];
-        // Attempt to decrease chance of 3 in a row
-        if (_CurrentIDSequence.Count >= 2) {
+        if (requireUnique && _CurrentIDSequence.Contains(pickedID)) {
+          List<int> validIDs = new List<int>(CubeIdsForGame);
+          validIDs.RemoveAll(x => _CurrentIDSequence.Contains(x));
+          if (validIDs.Count > 0) {
+            pickIndex = Random.Range(0, validIDs.Count);
+            pickedID = validIDs[pickIndex];
+          }
+        }
+        else if (_CurrentIDSequence.Count >= 2) {
+          // don't allow 3 in a row for rest of game
           if (pickedID == _CurrentIDSequence[_CurrentIDSequence.Count - 2] &&
               pickedID == _CurrentIDSequence[_CurrentIDSequence.Count - 1]) {
             List<int> validIDs = new List<int>(CubeIdsForGame);
@@ -224,11 +234,23 @@ namespace Simon {
       simonTurnScript.ShowEndGame(currentPortrait);
     }
 
-    public void FinalLifeComplete() {
-      // If in solo mode just quit out,
-      // If in vs mode, if cozmo turn just switch to human turns, if human turn game over based on highest score...
+    protected override void ShowWinnerState() {
+      // TODO: remains to be seen how custom this will be for memory match.
+      base.ShowWinnerState();
+      if (IsSoloMode()) {
+        if (SaveHighScore()) {
+          SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kSimonGameSoloNewHighScore);
+        }
+        else {
+          SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kSimonGameSoloGameOver);
+        }
+      }
+    }
 
+    public void FinalLifeComplete() {
       Anki.Cozmo.AnimationTrigger trigger = Anki.Cozmo.AnimationTrigger.Count;
+      // Set the length as our score to make High Scores easier
+      PlayerScore = _CurrentSequenceLength;
       if (CurrentDifficulty == (int)SimonMode.SOLO) {
         PlayerRoundsWon = 1;
         CozmoRoundsWon = 0;

@@ -28,6 +28,7 @@ namespace DataPersistence {
     public Dictionary<string, DataPersistence.GameSkillData> CozmoSkillLevels;
 
     public Dictionary<string, int> GameDifficulty;
+    public Dictionary<string, int> HighScores;
 
     public Dictionary<string, int> TotalGamesPlayed;
 
@@ -87,6 +88,7 @@ namespace DataPersistence {
       FirstTimeFaceEnrollmentHowToPlay = true;
       CompletedScriptedSequences = new Dictionary<string, bool>();
       GameDifficulty = new Dictionary<string, int>();
+      HighScores = new Dictionary<string, int>();
       TotalGamesPlayed = new Dictionary<string, int>();
       ConversationHistory = new Conversations.ConversationHistory();
       Sessions = new List<DataPersistence.TimelineEntryData>();

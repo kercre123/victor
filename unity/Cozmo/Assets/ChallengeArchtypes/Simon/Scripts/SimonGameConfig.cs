@@ -24,7 +24,7 @@ public class SimonGameConfig : MinigameConfigBase {
   public int MaxLivesCozmo = 3;
   public int MaxLivesHuman = 3;
 
-  public int LongSequenceReactMin = 5;
+  public int MinRoundBeforeLongReact = 5;
 
   public AnimationCurve[] CozmoGuessCubeCorrectPercentagePerSkill;
 

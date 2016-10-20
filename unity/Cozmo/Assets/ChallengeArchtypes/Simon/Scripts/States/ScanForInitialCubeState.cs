@@ -231,8 +231,17 @@ namespace Simon {
       _ShowCozmoCubesSlide.SetCubeSpacing(100);
     }
 
+    private LightCube GetCubeBySortedIndex(int index) {
+      if (index < _Game.CubeIdsForGame.Count) {
+        if (_CurrentRobot.LightCubes.ContainsKey(_Game.CubeIdsForGame[index])) {
+          return _CurrentRobot.LightCubes[_Game.CubeIdsForGame[index]];
+        }
+      }
+      return null;
+    }
+
     private void SetScanPhase(ScanPhase nextState) {
-      if (_ScanPhase != nextState) {
+      if (_ScanPhase != nextState && _CurrentRobot != null) {
         // clean up previous
         if (_ScanPhase == ScanPhase.Error) {
           InitShowCubesSlide();
@@ -268,7 +277,10 @@ namespace Simon {
         else if (nextState == ScanPhase.Stopped) {
           // Rotate towards center
           _ShowCozmoCubesSlide.RotateCozmoImageTo(0.0f, _RotateSecScan);
-          _CurrentRobot.TurnTowardsObject(_CurrentRobot.LightCubes[_Game.CubeIdsForGame[1]], false);
+          LightCube centerCube = GetCubeBySortedIndex(1);
+          if (centerCube != null) {
+            _CurrentRobot.TurnTowardsObject(centerCube, false);
+          }
           // Force an autocontinue now...
           base.HandleContinueButtonClicked();
           //_Game.SharedMinigameView.EnableContinueButton(true);
@@ -276,8 +288,9 @@ namespace Simon {
         else if (nextState == ScanPhase.Error) {
           _ShowCozmoCubesSlide = null;
           _Game.SharedMinigameView.EnableContinueButton(true);
-          if (_Game.CubeIdsForGame.Count > 1) {
-            _CurrentRobot.TurnTowardsObject(_CurrentRobot.LightCubes[_Game.CubeIdsForGame[1]], false);
+          LightCube centerCube = GetCubeBySortedIndex(1);
+          if (centerCube != null) {
+            _CurrentRobot.TurnTowardsObject(centerCube, false);
           }
           // Error sound
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Tap_Red);

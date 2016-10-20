@@ -42,13 +42,10 @@ namespace Simon {
       }
       else if (_CurrentSequenceIndex >= _CurrentSequence.Count - 1) {
         // Last in sequence
-        Anki.Cozmo.AnimationTrigger trigger = Anki.Cozmo.AnimationTrigger.MemoryMatchReactToPattern;
-        if (_GameInstance.IsSoloMode()) {
-          trigger = Anki.Cozmo.AnimationTrigger.MemoryMatchReactToPatternSolo;
-        }
-        else if (_CurrentSequence.Count >= _GameInstance.LongSequenceReactMin) {
-          trigger = Anki.Cozmo.AnimationTrigger.MemoryMatchReactToPatternLarge;
-        }
+
+        Anki.Cozmo.AnimationTrigger trigger = _GameInstance.IsSoloMode() ? Anki.Cozmo.AnimationTrigger.MemoryMatchReactToPatternSolo :
+                                                                           Anki.Cozmo.AnimationTrigger.MemoryMatchReactToPattern;
+
 
         // Let the player go without Cozmo's reaction being done.
         if (_NextPlayer == PlayerType.Human) {

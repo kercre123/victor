@@ -115,6 +115,7 @@ enum int_32 AnimationTrigger
   MeetCozmoRenameFaceSayName,           // Say player's new name when rename occurs
   MeetCozmoLookFaceInterrupt,           // Triggered when the scanning is interrupted
   MemoryMatchPlayerWinHand,
+  MemoryMatchPlayerWinHandLong,
   MemoryMatchPlayerWinHandSolo,
   MemoryMatchPlayerLoseHand,
   MemoryMatchPlayerLoseHandSolo,
@@ -124,7 +125,6 @@ enum int_32 AnimationTrigger
   MemoryMatchPlayerWinGame,
   MemoryMatchSoloGameOver,
   MemoryMatchReactToPattern,
-  MemoryMatchReactToPatternLarge,
   MemoryMatchReactToPatternSolo,
   MemoryMatchPointCenter,
   MemoryMatchPointLeftBig,

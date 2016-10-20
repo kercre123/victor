@@ -842,6 +842,20 @@ public abstract class GameBase : MonoBehaviour {
     _AutoAdvanceTimestamp = Time.time;
   }
 
+  protected virtual bool SaveHighScore() {
+    DataPersistence.PlayerProfile playerProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
+    // Scores are per mode
+    string key = _ChallengeData.ChallengeID + CurrentDifficulty;
+    if (!playerProfile.HighScores.ContainsKey(key)) {
+      playerProfile.HighScores[key] = 0;
+    }
+    if (playerProfile.HighScores[key] < PlayerScore) {
+      playerProfile.HighScores[key] = PlayerScore;
+      return true;
+    }
+    return false;
+  }
+
   public void AutoAdvanceCheck() {
     if (_AutoAdvanceTimestamp != -1 && (Time.time - _AutoAdvanceTimestamp > kChallengeCompleteScoreboardDelay)) {
       HandleChallengeResultAdvance();

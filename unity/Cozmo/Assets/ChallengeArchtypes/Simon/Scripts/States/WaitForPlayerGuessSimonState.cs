@@ -10,7 +10,6 @@ namespace Simon {
     private SimonGame _GameInstance;
     private IList<int> _SequenceList;
     private int _CurrentSequenceIndex = 0;
-    private float _LastTappedTime;
     private int _TargetCube = -1;
     private uint _TargetCubeColor;
     private float _StartLightBlinkTime = -1;
@@ -23,8 +22,6 @@ namespace Simon {
       _GameInstance = _StateMachine.GetGame() as SimonGame;
       _SequenceList = _GameInstance.GetCurrentSequence();
       _CurrentRobot.SetHeadAngle(1.0f);
-      // add delay before allowing player taps because cozmo can accidentally tap when setting pattern.
-      _LastTappedTime = Time.time;
 
       _GameInstance.ShowCurrentPlayerTurnStage(PlayerType.Human, false);
     }
@@ -90,7 +87,14 @@ namespace Simon {
       _GameInstance.ShowCenterResult(true, true);
       GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
 
-      AnimationTrigger trigger = _GameInstance.IsSoloMode() ? AnimationTrigger.MemoryMatchPlayerWinHandSolo : AnimationTrigger.MemoryMatchPlayerWinHand;
+      AnimationTrigger trigger = AnimationTrigger.MemoryMatchPlayerWinHand;
+      if (_GameInstance.IsSoloMode()) {
+        trigger = AnimationTrigger.MemoryMatchPlayerWinHandSolo;
+      }
+      else if (_GameInstance.GetCurrentTurnNumber >= _GameInstance.MinRoundBeforeLongReact) {
+        trigger = AnimationTrigger.MemoryMatchPlayerWinHandLong;
+      }
+
       _CurrentRobot.SendAnimationTrigger(trigger, HandleOnPlayerWinAnimationDone);
       _GameInstance.AddPoint(true);
       _IsAnimating = true;
@@ -100,7 +104,7 @@ namespace Simon {
     }
 
     private void OnBlockTapped(int id, int times, float timeStamp) {
-      if (Time.time - _LastTappedTime < _kTapBufferSeconds || _StartLightBlinkTime >= 0) {
+      if (_StartLightBlinkTime >= 0) {
         return;
       }
 
@@ -110,7 +114,6 @@ namespace Simon {
       }
 
       _CurrentRobot.SetHeadAngle(Random.Range(CozmoUtil.kIdealBlockViewHeadValue, 0f));
-      _LastTappedTime = Time.time;
       _StartLightBlinkTime = Time.time;
       _TargetCube = id;
       if (_SequenceList[_CurrentSequenceIndex] == _TargetCube) {

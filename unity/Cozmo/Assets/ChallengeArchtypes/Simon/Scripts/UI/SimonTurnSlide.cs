@@ -74,6 +74,7 @@ namespace Simon {
     }
 
     public void ShowPlayPatternButton(UnityEngine.Events.UnityAction ClickHandler) {
+      ContextManager.Instance.AppFlash(playChime: true);
       _ButtonPlayPattern.onClick.RemoveAllListeners();
       _ButtonPlayPattern.gameObject.SetActive(true);
       _ButtonPlayPattern.Initialize(ClickHandler, "simon.PlayPattern", "next_round_of_play_continue_button");

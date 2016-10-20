@@ -186,7 +186,12 @@
   "simonGame.label.waitingForCubes.scanning": {
     "translation": "Cozmo is checking the Cubes..."
   },
-
+  "simonGame.solo.NewHighScore": {
+    "translation": "You set a new record"
+  },
+  "simonGame.solo.GameOver": {
+    "translation": "Well done!"
+  },
   "speedTap.roundsText": {
     "translation": "Round {0:N0}"
   },

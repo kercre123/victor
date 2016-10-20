@@ -405,6 +405,10 @@
       "AnimName": "ag_memorymatch_successhand_player"
     },
     {
+      "CladEvent": "MemoryMatchPlayerWinHandLong",
+      "AnimName": "ag_memorymatch_playersuccesshand_reaction"
+    },
+    {
       "CladEvent": "MemoryMatchPlayerWinHandSolo",
       "AnimName": "ag_memorymatch_successhand_player"
     },
@@ -439,10 +443,6 @@
     {
       "CladEvent": "MemoryMatchReactToPattern",
       "AnimName": "ag_memorymatch_solo_reacttopattern"
-    },
-    {
-      "CladEvent": "MemoryMatchReactToPatternLarge",
-      "AnimName": "ag_memorymatch_reacttopattern_struggle"
     },
     {
       "CladEvent": "MemoryMatchReactToPatternSolo",
