@@ -178,7 +178,7 @@ namespace Cozmo.Minigame.DroneMode {
       }
       else {
         // Has no head angle keyframes
-        PushRobotIdleAnimation(AnimationTrigger.DroneModeForwardDrivingLoop);
+        PushRobotIdleAnimation(AnimationTrigger.DroneModeKeepAlive);
       }
     }
 

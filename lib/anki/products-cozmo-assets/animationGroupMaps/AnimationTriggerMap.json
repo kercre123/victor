@@ -205,6 +205,10 @@
       "AnimName": "ag_explorer_idle"
     },
     {
+      "CladEvent": "DroneModeKeepAlive",
+      "AnimName": "ag_explorer_keepalive"
+    },
+    {
       "CladEvent": "DroneModeTurboDrivingStart",
       "AnimName": "ag_explorer_turbo"
     },
