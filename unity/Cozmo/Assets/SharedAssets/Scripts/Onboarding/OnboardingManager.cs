@@ -419,7 +419,7 @@ public class OnboardingManager : MonoBehaviour {
   #endregion
 
   private void UpdateStage(bool showTopBar = true, bool showBotBar = true, bool showContent = true, bool showButtons = true, bool reactionsEnabled = true) {
-    if (_HomeView) {
+    if (_HomeView != null) {
       _HomeView.TopBarContainer.gameObject.SetActive(showTopBar);
       _HomeView.BottomBarContainer.gameObject.SetActive(showBotBar);
       _HomeView.TabContentContainer.gameObject.SetActive(showContent);
