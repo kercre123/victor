@@ -52,16 +52,24 @@ namespace Cozmo {
 
           _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.LiftCubeButtonData,
                                                      HandleLiftCubeButtonPressed,
-                                                     true, // enableWhenCubeSeen
+                                                     true, // interactableOnlyWhenCubeSeen
+                                                     false, // interactableOnlyWhenKnownFaceSeen
                                                      "lift_cube_button",
                                                      DroneModeControlsSlide.ActionContextType.CubeNotInLift);
 
           _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.DropCubeButtonData,
                                                      HandleDropCubeButtonPressed,
-                                                     false, // enableWhenCubeSeen
+                                                     false, // interactableOnlyWhenCubeSeen
+                                                     false, // interactableOnlyWhenKnownFaceSeen
                                                      "drop_cube_button",
                                                      DroneModeControlsSlide.ActionContextType.CubeInLift);
 
+          _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.SayNameButtonData,
+                                                     HandleSayNameButtonPressed,
+                                                     false, // interactableOnlyWhenCubeSeen
+                                                     true, // interactableOnlyWhenKnownFaceSeen
+                                                     "say_name_button",
+                                                     DroneModeControlsSlide.ActionContextType.FaceSeen);
 
           _DroneModeControlsSlide.OnDriveSpeedSegmentValueChanged += HandleDriveSpeedValueChanged;
           _DroneModeControlsSlide.OnDriveSpeedSegmentChanged += HandleDriveSpeedFamilyChanged;
@@ -388,6 +396,15 @@ namespace Cozmo {
           _CurrentRobot.PlaceObjectOnGroundHere(callback: HandleActionFinished);
           DisableInput();
           _IsPerformingAction = true;
+        }
+
+        private void HandleSayNameButtonPressed() {
+          IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
+          if (targetObject != null && targetObject is Face) {
+            _CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, sayName: true, callback: HandleActionFinished);
+            DisableInput();
+            _IsPerformingAction = true;
+          }
         }
 
         private void HandleActionFinished(bool success) {
