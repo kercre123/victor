@@ -153,6 +153,27 @@ void DASPlatform_IOS::Init()
   }
   NSString* newAppRunId = [NSString stringWithCString:GetAppRunId() encoding:[NSString defaultCStringEncoding]];
   [defaults setObject:newAppRunId forKey:lastAppRunKey];
+  
+  // Background refresh status
+  const std::string kBackgroundRefreshStatusKey = "device.background_refresh_status";
+  UIBackgroundRefreshStatus status = [[UIApplication sharedApplication] backgroundRefreshStatus];
+  switch (status) {
+    case UIBackgroundRefreshStatusAvailable:
+      // We can do background fetch! Let's do this!
+      _miscInfo.emplace(kBackgroundRefreshStatusKey, "available");
+      break;
+    case UIBackgroundRefreshStatusDenied:
+      // The user has background fetch turned off. Too bad.
+      _miscInfo.emplace(kBackgroundRefreshStatusKey, "denied");
+      break;
+    case UIBackgroundRefreshStatusRestricted:
+      // Parental Controls, Enterprise Restrictions, Old Phones, Oh my!
+      _miscInfo.emplace(kBackgroundRefreshStatusKey, "restricted");
+      break;
+    default:
+      _miscInfo.emplace(kBackgroundRefreshStatusKey, std::to_string(status));
+      break;
+  }
 }
 
 }
