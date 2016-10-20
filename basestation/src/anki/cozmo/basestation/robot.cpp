@@ -818,8 +818,9 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   }
   
   // Update cozmo's internal offTreadsState knowledge
+  const OffTreadsState prevOffTreadsState = _offTreadsState;
   const bool wasTreadsStateUpdated = CheckAndUpdateTreadsState(msg);
-  const bool isDelocalizing = wasTreadsStateUpdated && _offTreadsState != OffTreadsState::OnTreads;
+  const bool isDelocalizing = wasTreadsStateUpdated && (prevOffTreadsState == OffTreadsState::OnTreads || _offTreadsState == OffTreadsState::OnTreads);
 
   // this flag can have a small delay with respect to when we actually picked up the block, since Engine notifies
   // the robot, and the robot updates on the next state update. But that delay guarantees that the robot knows what
