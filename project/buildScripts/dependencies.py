@@ -18,6 +18,7 @@ SVN_INFO_CMD = "svn info %s %s --xml"
 SVN_CRED = "--username %s --password %s --no-auth-cache --non-interactive --trust-server-cert"
 RELATIVE_DEPS_FILE = "../../DEPS"
 RELATIVE_EXTERNALS_DIR = "../../EXTERNALS"
+DIFF_BRANCH_MSG = "is already a working copy for a different URL"
 
 # Most animation tar files in SVN are packages of JSON files that should be unpacked in the root
 # "animations" directory, but facial animation tar files (packages of PNG files) should be unpacked
@@ -144,6 +145,35 @@ def get_svn_file_rev(file_from_svn, cred=''):
       return rev
 
 
+def svn_checkout(checkout, cleanup, unpack, package, allow_extra_files, verbose=VERBOSE):
+    pipe = subprocess.Popen(checkout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    successful, err = pipe.communicate()
+    status = pipe.poll()
+    #print("status = %s" % status)
+    if err == '' and status == 0:
+        print(successful.strip())
+        # Equivalent to a git clean
+        pipe = subprocess.Popen(cleanup, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        extract_message, error = pipe.communicate()
+        if extract_message != '' and not allow_extra_files:
+            last_column = re.compile(r'\S+\s+(\S+)')
+            unversioned_files = last_column.findall(extract_message)
+            for a_file in unversioned_files:
+                if os.path.isdir(a_file):
+                    shutil.rmtree(a_file)
+                elif os.path.isfile(a_file):
+                    os.remove(a_file)
+        if os.path.isfile(package):
+            # call waits for the result.  Moving on to the next checkout doesnt need this to finish.
+            pipe = subprocess.Popen(unpack, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            successful, err = pipe.communicate()
+            if verbose:
+                print(err)
+        return ''
+    else:
+        return err
+
+
 def svn_package(svn_dict):
     """
 
@@ -214,37 +244,28 @@ def svn_package(svn_dict):
             pass
 
         if r_rev == "head" or l_rev != r_rev:
-            print "Checking out {0}".format(repo)
-            pipe = subprocess.Popen(checkout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            successful, err = pipe.communicate()
-            status = pipe.poll()
-            if err == '' and status == 0:
-                print successful.strip()
-                # Equivalent to a git clean
-                pipe = subprocess.Popen(cleanup, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                extract_message, error = pipe.communicate()
-                if extract_message != '' and not allow_extra_files:
-                    last_column = re.compile(r'\S+\s+(\S+)')
-                    unversioned_files = last_column.findall(extract_message)
-                    for a_file in unversioned_files:
-                        if os.path.isdir(a_file):
-                            shutil.rmtree(a_file)
-                        elif os.path.isfile(a_file):
-                            os.remove(a_file)
-                if os.path.isfile(package):
-                    # call waits for the result.  Moving on to the next checkout doesnt need this to finish.
-                    pipe = subprocess.Popen(unpack, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    successful, err = pipe.communicate()
-                    if VERBOSE:
-                        print err
-            else:
-                print "Error in checking out {0}: {1}".format(repo, err.strip())
-                print(stale_warning)
-
+            print("Checking out '{0}'".format(repo))
+            err = svn_checkout(checkout, cleanup, unpack, package, allow_extra_files)
+            if err:
+                print("Error in checking out {0}: {1}".format(repo, err.strip()))
+                if DIFF_BRANCH_MSG in err:
+                    print("Clearing out [%s] directory to replace it with a fresh copy" % loc)
+                    shutil.rmtree(loc)
+                    print("Checking out '{0}' again".format(repo))
+                    err = svn_checkout(checkout, cleanup, unpack, package, allow_extra_files)
+                    if err:
+                        print("Error in checking out {0}: {1}".format(repo, err.strip()))
+                        print(stale_warning)
+                else:
+                    print(stale_warning)
             if extract_types:
                 for subdir in subdirs:
                     put_in_subdir = os.path.basename(subdir) in UNPACK_INTO_SUBDIR
-                    _extract_files_from_tar(subdir, extract_types, put_in_subdir)
+                    try:
+                        _extract_files_from_tar(subdir, extract_types, put_in_subdir)
+                    except (OSError, IOError), e:
+                        print("Failed to unpack one or more tar files in [%s]" % subdir)
+                        print(stale_warning)
 
         else:
             print "{0} does not need to be updated.  Current {1} revision at {2} ".format(repo, tool, l_rev)
