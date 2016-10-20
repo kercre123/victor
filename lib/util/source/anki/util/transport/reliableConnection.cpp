@@ -86,13 +86,13 @@ ReliableConnection::ReliableConnection(const TransportAddress& inTransportAddres
 #endif // ENABLE_RC_PACKET_TIME_DIAGNOSTICS
 
 {
-  ANKI_NET_PRINT_VERBOSE("ReliableConnection.Constructor", "%p '%s' Constructed _nextOutSequenceId = %u)\n", this, _transportAddress.ToString().c_str(), _nextOutSequenceId);
+  ANKI_NET_PRINT_VERBOSE("ReliableConnection.Constructor", "%p '%s' Constructed _nextOutSequenceId = %u)", this, _transportAddress.ToString().c_str(), _nextOutSequenceId);
 }
 
 
 ReliableConnection::~ReliableConnection()
 {
-  ANKI_NET_PRINT_VERBOSE("ReliableConnection.Destructor", "%p '%s' Destructed _nextOutSequenceId = %u, %zu (%d..%d)\n", this, _transportAddress.ToString().c_str(), _nextOutSequenceId, _pendingMessageList.size(), (int)GetFirstUnackedOutId(), (int)GetLastUnackedOutId());
+  ANKI_NET_PRINT_VERBOSE("ReliableConnection.Destructor", "%p '%s' Destructed _nextOutSequenceId = %u, %zu (%d..%d)", this, _transportAddress.ToString().c_str(), _nextOutSequenceId, _pendingMessageList.size(), (int)GetFirstUnackedOutId(), (int)GetLastUnackedOutId());
 
   DestroyPendingMessageList(_pendingMessageList);
 }
@@ -140,7 +140,7 @@ ReliableSequenceId ReliableConnection::GetNextOutSequenceNumber()
 
   assert((GetLastUnackedOutId() == k_InvalidReliableSeqId) || (GetLastUnackedOutId() == PreviousSequenceId(nextSequenceId)));
 
-  ANKI_NET_PRINT_VERBOSE("ReliableConnection.GetNextOutSequenceNumber", "%p '%s' GetNextOutSequenceNumber ret = %u\n", this, _transportAddress.ToString().c_str(), nextSequenceId);
+  ANKI_NET_PRINT_VERBOSE("ReliableConnection.GetNextOutSequenceNumber", "%p '%s' GetNextOutSequenceNumber ret = %u", this, _transportAddress.ToString().c_str(), nextSequenceId);
 
   assert(nextSequenceId != k_InvalidReliableSeqId);
   assert(nextSequenceId >= k_MinReliableSeqId);
@@ -178,7 +178,7 @@ bool ReliableConnection::UpdateLastAckedMessage(ReliableSequenceId seqId)
 
   if ((seqId != k_InvalidReliableSeqId) && (_pendingMessageList.size() > 0))
   {
-    ANKI_NET_PRINT_VERBOSE("ReliableConnection.UpdateLastAckedMessage", "%p '%s' UpdateLastAckedMessage(%u) (%u..%u were unacked)\n", this, _transportAddress.ToString().c_str(), seqId, GetFirstUnackedOutId(), GetLastUnackedOutId());
+    ANKI_NET_PRINT_VERBOSE("ReliableConnection.UpdateLastAckedMessage", "%p '%s' UpdateLastAckedMessage(%u) (%u..%u were unacked)", this, _transportAddress.ToString().c_str(), seqId, GetFirstUnackedOutId(), GetLastUnackedOutId());
 
     while (IsSequenceIdInRange(seqId, GetFirstUnackedOutId(), GetLastUnackedOutId()))
     {
@@ -507,7 +507,7 @@ size_t ReliableConnection::SendUnAckedMessages(ReliableTransport* reliableTransp
 
   assert(numBytesToSend <= maxPayloadPerMessage);
 
-  ANKI_NET_PRINT_VERBOSE("ReliableConnection.SendUnAckedMessages", "%p '%s' SendUnAckedMessages - sending %zu messages (%zu..%zu of %zu), %u bytes, id %u..%u\n",
+  ANKI_NET_PRINT_VERBOSE("ReliableConnection.SendUnAckedMessages", "%p '%s' SendUnAckedMessages - sending %zu messages (%zu..%zu of %zu), %u bytes, id %u..%u",
                           this, _transportAddress.ToString().c_str(), numMessagesToSend,
                           firstToSend, firstToSend + (numMessagesToSend-1),
                           _pendingMessageList.size(), numBytesToSend, seqIdMin, seqIdMax);
@@ -743,7 +743,7 @@ uint32_t ReliableConnection::SendUnAckedPackets(ReliableTransport* reliableTrans
     numMessagesSentThisPacket = SendUnAckedMessages(reliableTransport, firstToSend);
     if (numMessagesSentThisPacket > 0)
     {
-      ANKI_NET_PRINT_VERBOSE("ReliableConnection.SendUnAckedPackets", "%p '%s' SendUnackedPackets packet %u: %zu messages sent from msg %zu\n",
+      ANKI_NET_PRINT_VERBOSE("ReliableConnection.SendUnAckedPackets", "%p '%s' SendUnackedPackets packet %u: %zu messages sent from msg %zu",
                               this, _transportAddress.ToString().c_str(), numPacketsSent, numMessagesSentThisPacket, firstToSend);
 
       firstToSend += numMessagesSentThisPacket;
@@ -853,7 +853,7 @@ uint32_t ReliableConnection::SendOptimalUnAckedPackets(ReliableTransport* reliab
     numPacketsSent = SendUnAckedPackets(reliableTransport, maxPacketsToSend, oldestMessageIdx);
     
     ANKI_NET_PRINT_VERBOSE("ReliableConnection.SendOptimalUnAckedPackets",
-                           "%p '%s' SendOptimalUnAckedPackets _nextOutSequenceId = %u, %zu (%d..%d) - sent %u packets from msg %zu\n",
+                           "%p '%s' SendOptimalUnAckedPackets _nextOutSequenceId = %u, %zu (%d..%d) - sent %u packets from msg %zu",
                            this, _transportAddress.ToString().c_str(),
                            _nextOutSequenceId, _pendingMessageList.size(),
                            (int)GetFirstUnackedOutId(), (int)GetLastUnackedOutId(), numPacketsSent, oldestMessageIdx);

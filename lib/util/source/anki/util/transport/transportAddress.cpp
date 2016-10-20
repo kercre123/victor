@@ -170,7 +170,7 @@ uint32_t TransportAddress::IPAddressStringToU32(const char* addressAsString)
     }
     else
     {
-      PRINT_NAMED_WARNING("TransportAddress", "pAddress part '%s' (of '%s') converts to out of range value %d!\n", pch, addressAsString, partValue);
+      PRINT_NAMED_WARNING("TransportAddress", "pAddress part '%s' (of '%s') converts to out of range value %d!", pch, addressAsString, partValue);
       return 0;
     }
     pch = strchr(pch, ipSeparator);
@@ -179,7 +179,7 @@ uint32_t TransportAddress::IPAddressStringToU32(const char* addressAsString)
   
   if (numValues != 4)
   {
-    PRINT_NAMED_WARNING("TransportAddress", "ipAddress '%s' had %d (!= 4) valid numeric '%c' seperated values!\n", addressAsString, numValues, ipSeparator);
+    PRINT_NAMED_WARNING("TransportAddress", "ipAddress '%s' had %d (!= 4) valid numeric '%c' separated values!", addressAsString, numValues, ipSeparator);
     return 0;
   }
   

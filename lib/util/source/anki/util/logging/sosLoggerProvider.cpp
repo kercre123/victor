@@ -114,10 +114,10 @@ namespace Anki {
             server->h_length);
       serv_addr.sin_port = htons(portno);
       if (connect(_sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) {
-        PRINT_NAMED_INFO("SOS", "Failed to connect to SOS server\n");
+        PRINT_NAMED_INFO("SOS", "Failed to connect to SOS server");
       }
       else {
-        PRINT_NAMED_INFO("SOS", "Connected to SOS server\n");
+        PRINT_NAMED_INFO("SOS", "Connected to SOS server");
         _connected = true;
       }
     }

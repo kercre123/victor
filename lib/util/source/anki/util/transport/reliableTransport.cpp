@@ -230,7 +230,7 @@ void ReliableTransport::SendMessage(bool reliable, const TransportAddress& destA
   
   if (isMultiPartMessage && !reliable)
   {
-    PRINT_NAMED_WARNING("ReliableTransport.SendMessage.UnreliableMultiPart", "Had to split %u byte unreliable message (> %u bytes) - forcing it to be reliable so it can be reassembled!\n", bufferSize, maxPayloadPerMessage);
+    PRINT_NAMED_WARNING("ReliableTransport.SendMessage.UnreliableMultiPart", "Had to split %u byte unreliable message (> %u bytes) - forcing it to be reliable so it can be reassembled!", bufferSize, maxPayloadPerMessage);
     reliable = true;
   }
   
@@ -544,7 +544,7 @@ void ReliableTransport::ReceiveData(const uint8_t* buffer, unsigned int size, co
           else
           {
             _transportStats.AddRecvError(eME_OutOfOrder);
-            ANKI_NET_PRINT_VERBOSE("ReliableTransport.Recv.OutOfOrder", "ReceiveData - Ignoring out of order messages %u..%u (waiting for %u)\n", minSeqId, maxSeqId, connectionInfo->GetNextInSequenceId() );
+            ANKI_NET_PRINT_VERBOSE("ReliableTransport.Recv.OutOfOrder", "ReceiveData - Ignoring out of order messages %u..%u (waiting for %u)", minSeqId, maxSeqId, connectionInfo->GetNextInSequenceId() );
             
             #if !ENABLE_RC_PACKET_TIME_DIAGNOSTICS
             {
@@ -638,7 +638,7 @@ void ReliableTransport::ReceiveData(const uint8_t* buffer, unsigned int size, co
   {
     _transportStats.AddRecvError(eME_BadType);
     
-    PRINT_NAMED_WARNING("ReliableTransport.Recv.Unhandled", "Unknown/Unhandled type of message!\n");
+    PRINT_NAMED_WARNING("ReliableTransport.Recv.Unhandled", "Unknown/Unhandled type of message!");
     
     ANKI_NET_MESSAGE_VERBOSE(("Rel Unhandled", "Message...", buffer, size));
     
@@ -724,7 +724,7 @@ void ReliableTransport::Update()
       const bool disconnectOnTimeout = true;
       if (disconnectOnTimeout)
       {
-        PRINT_CH_INFO("Network", "ReliableTransport.Update.ConnectionTimedOut", "Disconnecting TimedOut Connection to '%s'!\n", existingConnection->GetAddress().ToString().c_str());
+        PRINT_CH_INFO("Network", "ReliableTransport.Update.ConnectionTimedOut", "Disconnecting TimedOut Connection to '%s'!", existingConnection->GetAddress().ToString().c_str());
         
         #if ENABLE_RT_UPDATE_TIME_DIAGNOSTICS
         {
