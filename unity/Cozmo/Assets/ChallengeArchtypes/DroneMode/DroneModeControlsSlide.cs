@@ -1,9 +1,11 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using Cozmo.UI;
+using System.Collections.Generic;
 
 namespace Cozmo.Minigame.DroneMode {
   public class DroneModeControlsSlide : MonoBehaviour {
+    private const string _kDasViewControllerName = "drone_mode_view_slide";
     private const float _kSliderChangeThreshold = 0.01f;
 
     public delegate void SpeedSliderEventHandler(SpeedSliderSegment currentSegment, float newNormalizedSegmentValue);
@@ -23,6 +25,13 @@ namespace Cozmo.Minigame.DroneMode {
       Forward,
       Neutral,
       Reverse
+    }
+
+    // Can this be configurable?
+    public enum ActionContextType {
+      CubeInLift,
+      CubeNotInLift,
+      FaceSeen
     }
 
     public bool ShowDebugTextFields = true;
@@ -60,14 +69,20 @@ namespace Cozmo.Minigame.DroneMode {
     [SerializeField]
     private DroneModeHowToPlayView _HowToPlayViewPrefab;
 
-    // TODO Remove debug text field
-    public Anki.UI.AnkiTextLabel TiltText;
-
-    // TODO Remove debug text field
-    public Anki.UI.AnkiTextLabel DebugText;
-
     [SerializeField]
     private DroneModeCameraFeed _CameraFeed;
+
+    [SerializeField]
+    private GameObject _FaceButtonContainer;
+
+    [SerializeField]
+    private GameObject _CubeInLiftButtonContainer;
+
+    [SerializeField]
+    private GameObject _CubeNotInLiftButtonContainer;
+
+    [SerializeField]
+    private DroneModeActionButton _DroneModeActionButtonPrefab;
 
     private SpeedSliderSegment _CurrentDriveSpeedSliderSegment;
     private float _CurrentDriveSpeedSliderSegmentValue;
@@ -76,8 +91,23 @@ namespace Cozmo.Minigame.DroneMode {
 
     private float _CurrentLiftSliderValue;
 
+    private IVisibleInCamera _CurrentlyFocusedObject = null;
+    public IVisibleInCamera CurrentlyFocusedObject { get { return _CurrentlyFocusedObject; } }
+
+    private bool _IsCubeInLift = false;
+    private IRobot _CurrentRobot;
+    private List<DroneModeActionButton> _ContextualButtons;
+    private bool _UpdateContextMenuBasedOnCurrentFocus = true;
+
+    // TODO Remove debug text field
+    public Anki.UI.AnkiTextLabel TiltText;
+
+    // TODO Remove debug text field
+    public Anki.UI.AnkiTextLabel DebugText;
+
     private void Awake() {
-      _HowToPlayButton.Initialize(HandleHowToPlayClicked, "drone_mode_how_to_play_button", "drone_mode_view_slide");
+      _HowToPlayButton.Initialize(HandleHowToPlayClicked, "drone_mode_how_to_play_button", _kDasViewControllerName);
+      _ContextualButtons = new List<DroneModeActionButton>();
     }
 
     private void Start() {
@@ -96,12 +126,50 @@ namespace Cozmo.Minigame.DroneMode {
     public void InitializeCameraFeed(IRobot currentRobot) {
       _CameraFeed.Initialize(currentRobot);
       _CameraFeed.DebugTextField.gameObject.SetActive(ShowDebugTextFields);
+
+      _CameraFeed.OnCurrentFocusChanged += HandleCurrentFocusedObjectChanged;
+      _CurrentlyFocusedObject = _CameraFeed.CurrentlyFocusedObject;
+
+      _CurrentRobot = currentRobot;
+      _CurrentRobot.OnCarryingObjectSet += HandleRobotCarryingObjectSet;
+      _IsCubeInLift = (_CurrentRobot.CarryingObject != null);
+
+      UpdateContextMenu();
     }
 
     public void InitializeLiftSlider(float sliderValue) {
       _CurrentLiftSliderValue = sliderValue;
       _LiftSlider.value = _CurrentLiftSliderValue;
       _LiftSlider.onValueChanged.AddListener(HandleLiftSliderValueChanged);
+    }
+
+    public void CreateActionButton(DroneModeActionData actionData, System.Action callback,
+                                   bool enableWhenCubeSeen, string dasButtonName, ActionContextType actionType) {
+      GameObject buttonContainer = GetContainerBasedOnActionType(actionType);
+      GameObject newButton = UIManager.CreateUIElement(_DroneModeActionButtonPrefab, buttonContainer.transform);
+      DroneModeActionButton newButtonScript = newButton.GetComponent<DroneModeActionButton>();
+      newButtonScript.Initialize(dasButtonName, _kDasViewControllerName, actionData, callback, enableWhenCubeSeen);
+      _ContextualButtons.Add(newButtonScript);
+    }
+
+    private GameObject GetContainerBasedOnActionType(ActionContextType actionType) {
+      GameObject container = null;
+      switch (actionType) {
+      case ActionContextType.CubeInLift:
+        container = _CubeInLiftButtonContainer;
+        break;
+      case ActionContextType.CubeNotInLift:
+        container = _CubeNotInLiftButtonContainer;
+        break;
+      case ActionContextType.FaceSeen:
+        container = _FaceButtonContainer;
+        break;
+      default:
+        DAS.Error("DroneModeControlsSlide.GetContainerBasedOnActionType.ActionContextTypeNotSupported",
+                  "Could not find container for actionType=" + actionType);
+        break;
+      }
+      return container;
     }
 
     private void OnDestroy() {
@@ -111,6 +179,31 @@ namespace Cozmo.Minigame.DroneMode {
       if (_HowToPlayViewInstance != null) {
         _HowToPlayViewInstance.CloseViewImmediately();
       }
+
+      _CameraFeed.OnCurrentFocusChanged -= HandleCurrentFocusedObjectChanged;
+      if (_CurrentRobot != null) {
+        _CurrentRobot.OnCarryingObjectSet -= HandleRobotCarryingObjectSet;
+      }
+    }
+
+    public void EnableInput() {
+      _HeadTiltSlider.interactable = true;
+      _LiftSlider.interactable = true;
+      _SpeedThrottle.interactable = true;
+      UpdateContextualButtons();
+
+      _UpdateContextMenuBasedOnCurrentFocus = true;
+      UpdateContextMenu();
+    }
+
+    public void DisableInput() {
+      _HeadTiltSlider.interactable = false;
+      _LiftSlider.interactable = false;
+      _SpeedThrottle.interactable = false;
+      foreach (DroneModeActionButton button in _ContextualButtons) {
+        button.Interactable = false;
+      }
+      _UpdateContextMenuBasedOnCurrentFocus = false;
     }
 
     private void HandleHowToPlayClicked() {
@@ -182,6 +275,84 @@ namespace Cozmo.Minigame.DroneMode {
           OnLiftSliderValueChanged(newSliderValue);
         }
       }
+    }
+
+    private void HandleCurrentFocusedObjectChanged(IVisibleInCamera newObjectInView) {
+      if (newObjectInView != _CurrentlyFocusedObject) {
+        _CurrentlyFocusedObject = newObjectInView;
+
+        if (_UpdateContextMenuBasedOnCurrentFocus) {
+          UpdateContextMenu();
+        }
+      }
+    }
+
+    private void HandleRobotCarryingObjectSet(ObservedObject newObjectInLift) {
+      bool isCubeInLift = (newObjectInLift != null && (newObjectInLift is LightCube));
+      if (_IsCubeInLift != isCubeInLift) {
+        _IsCubeInLift = isCubeInLift;
+        UpdateContextMenu();
+      }
+    }
+
+    private void UpdateContextMenu() {
+      // Hide all containers
+      _FaceButtonContainer.SetActive(false);
+      _CubeInLiftButtonContainer.SetActive(false);
+      _CubeNotInLiftButtonContainer.SetActive(false);
+
+      bool anyContainerShown = false;
+      if (_CurrentlyFocusedObject != null) {
+        if (_CurrentlyFocusedObject is Face) {
+          // Show face container
+          _FaceButtonContainer.SetActive(true);
+          anyContainerShown = true;
+        }
+        else if (_IsCubeInLift) {
+          //   Show cube in lift container
+          _CubeInLiftButtonContainer.SetActive(true);
+          anyContainerShown = true;
+        }
+        else if (_CurrentlyFocusedObject is LightCube) {
+          // Show cube seen container
+          _CubeNotInLiftButtonContainer.SetActive(true);
+          anyContainerShown = true;
+        }
+      }
+      else if (_IsCubeInLift) {
+        //   Show cube in lift container
+        _CubeInLiftButtonContainer.SetActive(true);
+        anyContainerShown = true;
+      }
+
+      if (anyContainerShown) {
+        UpdateContextualButtons();
+      }
+    }
+
+    private void UpdateContextualButtons() {
+      bool currentObjectIsCube = (_CurrentlyFocusedObject is LightCube);
+      foreach (DroneModeActionButton button in _ContextualButtons) {
+        if (button.IsUnlocked) {
+          if (button.NeedsCubeSeen) {
+            button.Interactable = currentObjectIsCube;
+          }
+          else {
+            button.Interactable = true;
+          }
+        }
+        else {
+          button.Interactable = false;
+        }
+      }
+    }
+
+    public void SetHeadSliderValue(float headValue_deg) {
+      _HeadTiltSlider.value = headValue_deg;
+    }
+
+    public void SetLiftSliderValue(float liftFactor) {
+      _LiftSlider.value = liftFactor;
     }
   }
 }

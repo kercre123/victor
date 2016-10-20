@@ -19,7 +19,6 @@ namespace Cozmo {
         private float _TargetTurnDirection;
 
         private float _TargetHeadAngle_rad;
-        private bool _TargetHeadFactorChanged = false;
 
         private float _TargetLiftFactor;
 
@@ -27,6 +26,9 @@ namespace Cozmo {
 
         private bool _IsDrivingWheels = false;
         private bool _IsDrivingHead = false;
+        private bool _IsDrivingLift = false;
+
+        private bool _IsPerformingAction = false;
 
         private DroneModeTransitionAnimator _RobotAnimator;
 
@@ -37,6 +39,7 @@ namespace Cozmo {
           _LastMessageSentTimestamp = Time.time;
 
           _DroneModeGame = _StateMachine.GetGame() as DroneModeGame;
+          _DroneModeGame.OnTurnDirectionChanged += HandleTurnDirectionChanged;
 
           _TargetLiftFactor = _DroneModeGame.DroneModeConfigData.StartingLiftHeight;
           _CurrentRobot.SetLiftHeight(_TargetLiftFactor);
@@ -46,6 +49,18 @@ namespace Cozmo {
           _DroneModeControlsSlide = slide.GetComponent<DroneModeControlsSlide>();
           _DroneModeControlsSlide.InitializeCameraFeed(_CurrentRobot);
           _DroneModeControlsSlide.InitializeLiftSlider(_TargetLiftFactor);
+
+          _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.LiftCubeButtonData,
+                                                     HandleLiftCubeButtonPressed,
+                                                     true, // enableWhenCubeSeen
+                                                     "lift_cube_button",
+                                                     DroneModeControlsSlide.ActionContextType.CubeNotInLift);
+
+
+          _DroneModeControlsSlide.OnDriveSpeedSegmentValueChanged += HandleDriveSpeedValueChanged;
+          _DroneModeControlsSlide.OnDriveSpeedSegmentChanged += HandleDriveSpeedFamilyChanged;
+          _DroneModeControlsSlide.OnHeadSliderValueChanged += HandleHeadSliderValueChanged;
+          _DroneModeControlsSlide.OnLiftSliderValueChanged += HandleLiftSliderValueChanged;
           EnableInput();
 
           UIManager.Instance.BackgroundColorController.SetBackgroundColor(UI.BackgroundColorController.BackgroundColor.TintMe,
@@ -69,60 +84,80 @@ namespace Cozmo {
             _CurrentRobot.StopAllMotors();
             _CurrentRobot.EnableDroneMode(false);
           }
+          _DroneModeControlsSlide.OnDriveSpeedSegmentValueChanged -= HandleDriveSpeedValueChanged;
+          _DroneModeControlsSlide.OnDriveSpeedSegmentChanged -= HandleDriveSpeedFamilyChanged;
+          _DroneModeControlsSlide.OnHeadSliderValueChanged -= HandleHeadSliderValueChanged;
+          _DroneModeControlsSlide.OnLiftSliderValueChanged -= HandleLiftSliderValueChanged;
+          _DroneModeGame.OnTurnDirectionChanged -= HandleTurnDirectionChanged;
           DisableInput();
           _RobotAnimator.CleanUp();
         }
 
         public override void Update() {
-          // TODO Check for visible objects and follow if there is no input? 
-          // Potentially this will already be handled by reactionary behaviors
+          if (!_IsPerformingAction) {
+            // Send drive wheels / drive head messages if needed
+            SendDriveRobotMessages();
 
-          // Send drive wheels / drive head messages if needed
-          SendDriveRobotMessages();
-
-          _DroneModeControlsSlide.TiltText.text = TiltDrivingDebugText + HeadDrivingDebugText;
-          _DroneModeControlsSlide.DebugText.text = _RobotAnimator.ToString();
+            _DroneModeControlsSlide.TiltText.text = TiltDrivingDebugText + HeadDrivingDebugText;
+            _DroneModeControlsSlide.DebugText.text = _RobotAnimator.ToString();
+          }
+          else {
+            SetSlidersToCurrentPosition();
+          }
         }
 
         public override void Pause(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
-          // Don't show the "don't move cozmo" ui
+          // Triggered by all reactionary behaviors. However, there is a special version of cliff events in engine. 
+          // Also, these behaviors are only enabled when the player is not doing anything to Cozmo:
+          //    Anki.Cozmo.BehaviorType.AcknowledgeFace
+          //    Anki.Cozmo.BehaviorType.AcknowledgeObject
+          //    Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement
+
+          // Disable input so we can set slider values safely based on behavior activity
+          DisableInput();
+        }
+
+        public override void PausedUpdate() {
+          // Set sliders to new state since reactionary behaviors can change head and lift height
+          SetSlidersToCurrentPosition();
         }
 
         public override void Resume(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
-          // Do nothing
+          // Set sliders to new state since reactionary behaviors can change head and lift height
+          SetSlidersToCurrentPosition();
+
+          // Re-enable input so that players can drive Cozmo again
+          EnableInput();
+        }
+
+        private void SetSlidersToCurrentPosition() {
+          float headAngleRadians = _CurrentRobot.HeadAngle;
+          _DroneModeControlsSlide.SetHeadSliderValue(headAngleRadians * Mathf.Rad2Deg);
+          _DroneModeControlsSlide.SetLiftSliderValue(_CurrentRobot.LiftHeightFactor);
         }
 
         private void EnableInput() {
-          _DroneModeControlsSlide.OnDriveSpeedSegmentValueChanged += HandleDriveSpeedValueChanged;
-          _DroneModeControlsSlide.OnDriveSpeedSegmentChanged += HandleDriveSpeedFamilyChanged;
-          _DroneModeControlsSlide.OnHeadSliderValueChanged += HandleHeadSliderValueChanged;
-          _DroneModeControlsSlide.OnLiftSliderValueChanged += HandleLiftSliderValueChanged;
-
+          _DroneModeControlsSlide.EnableInput();
           _DroneModeGame.EnableTiltInput();
-          _DroneModeGame.OnTurnDirectionChanged += HandleTurnDirectionChanged;
         }
 
         private void DisableInput() {
-          _DroneModeControlsSlide.OnDriveSpeedSegmentValueChanged -= HandleDriveSpeedValueChanged;
-          _DroneModeControlsSlide.OnDriveSpeedSegmentChanged -= HandleDriveSpeedFamilyChanged;
-          _DroneModeControlsSlide.OnHeadSliderValueChanged -= HandleHeadSliderValueChanged;
-          _DroneModeControlsSlide.OnLiftSliderValueChanged -= HandleLiftSliderValueChanged;
-
+          _DroneModeControlsSlide.DisableInput();
           _DroneModeGame.DisableTiltInput();
-          _DroneModeGame.OnTurnDirectionChanged -= HandleTurnDirectionChanged;
         }
 
+        #region Drive Robot
         private void SendDriveRobotMessages() {
           if (Time.time - _LastMessageSentTimestamp > _kSendMessageInterval_sec
               || ShouldStopDriving(_TargetDriveSpeed_mmps, _CurrentDriveSpeed_mmps, _TargetTurnDirection)) {
             _LastMessageSentTimestamp = Time.time;
             bool droveWheels = DriveWheelsIfNeeded();
             bool droveHead = DriveHeadIfNeeded();
-            DriveLiftIfNeeded();
+            bool droveLift = DriveLiftIfNeeded();
 
-            if (_IsDrivingHead != droveHead || _IsDrivingWheels != droveWheels) {
+            if (_IsDrivingHead != droveHead || _IsDrivingWheels != droveWheels || _IsDrivingLift != droveLift) {
               // If targets are both zero, enable reactionary behavior
-              if (!droveHead && !droveWheels) {
+              if (!droveHead && !droveWheels && !droveLift) {
                 EnableIdleReactionaryBehaviors(true);
               }
               else {
@@ -131,8 +166,15 @@ namespace Cozmo {
 
               _IsDrivingHead = droveHead;
               _IsDrivingWheels = droveWheels;
+              _IsDrivingLift = droveLift;
             }
           }
+        }
+
+        private void EnableIdleReactionaryBehaviors(bool enable) {
+          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.AcknowledgeFace, enable);
+          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.AcknowledgeObject, enable);
+          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement, enable);
         }
 
         private bool DriveWheelsIfNeeded() {
@@ -170,18 +212,17 @@ namespace Cozmo {
         private bool DriveHeadIfNeeded() {
           bool startDriveHead = false;
           float currentHeadAngle_rad = _CurrentRobot.HeadAngle;
-          if (!_IsDrivingHead && _TargetHeadFactorChanged && !currentHeadAngle_rad.IsNear(_TargetHeadAngle_rad, _kHeadFactorThreshold_rad)) {
+          if (!_IsDrivingHead && !currentHeadAngle_rad.IsNear(_TargetHeadAngle_rad, _kHeadFactorThreshold_rad)) {
             DriveHeadInternal();
             HeadDrivingDebugText = "\nPlayer driving head: target: " + _TargetHeadAngle_rad + " current=" + currentHeadAngle_rad;
             startDriveHead = true;
           }
-          _IsDrivingHead = startDriveHead;
-          return _IsDrivingHead;
+          return startDriveHead;
         }
 
         private void HandleHeadMoveFinished(bool success) {
           float currentHeadAngle_rad = _CurrentRobot.HeadAngle;
-          if (_TargetHeadFactorChanged && !currentHeadAngle_rad.IsNear(_TargetHeadAngle_rad, _kHeadFactorThreshold_rad)) {
+          if (!currentHeadAngle_rad.IsNear(_TargetHeadAngle_rad, _kHeadFactorThreshold_rad)) {
             DriveHeadInternal();
             HeadDrivingDebugText = "\nPlayer driving head: target: " + _TargetHeadAngle_rad + " current=" + currentHeadAngle_rad;
           }
@@ -199,17 +240,35 @@ namespace Cozmo {
                                      accel_radPerSec2: _DroneModeGame.DroneModeConfigData.HeadTurnAccel_radPerSec2);
 
           _IsDrivingHead = true;
-          _TargetHeadFactorChanged = false;
           _RobotAnimator.AllowIdleAnimation(false);
         }
 
-        private void DriveLiftIfNeeded() {
+        private bool DriveLiftIfNeeded() {
+          bool startDriveLift = false;
           // Ideally we could do this check after every animation end, but this works for now.
-          if (!_CurrentRobot.LiftHeightFactor.IsNear(_TargetLiftFactor, _kLiftFactorThreshold)) {
-            _CurrentRobot.SetLiftHeight(_TargetLiftFactor,
-                                        speed_radPerSec: _DroneModeGame.DroneModeConfigData.LiftTurnSpeed_radPerSec,
-                                        accel_radPerSec2: _DroneModeGame.DroneModeConfigData.LiftTurnAccel_radPerSec2);
+          if (!_IsDrivingLift && !_CurrentRobot.LiftHeightFactor.IsNear(_TargetLiftFactor, _kLiftFactorThreshold)) {
+            DriveLiftInternal();
+            startDriveLift = true;
           }
+          return startDriveLift;
+        }
+
+        private void HandleLiftMoveFinished(bool success) {
+          if (!_CurrentRobot.LiftHeightFactor.IsNear(_TargetLiftFactor, _kLiftFactorThreshold)) {
+            DriveLiftInternal();
+          }
+          else {
+            _IsDrivingLift = false;
+          }
+        }
+
+        private void DriveLiftInternal() {
+          _CurrentRobot.CancelCallback(HandleLiftMoveFinished);
+          _CurrentRobot.SetLiftHeight(_TargetLiftFactor,
+                                      speed_radPerSec: _DroneModeGame.DroneModeConfigData.LiftTurnSpeed_radPerSec,
+                                      accel_radPerSec2: _DroneModeGame.DroneModeConfigData.LiftTurnAccel_radPerSec2);
+
+          _IsDrivingLift = true;
         }
 
         private bool IsUserPointTurning(float targetDriveSpeed, float targetTurnDirection) {
@@ -293,7 +352,6 @@ namespace Cozmo {
           float newSliderValue_rad = newSliderValue_deg * Mathf.Deg2Rad;
           if (!newSliderValue_rad.IsNear(_TargetHeadAngle_rad, _kHeadFactorThreshold_rad)) {
             _TargetHeadAngle_rad = newSliderValue_rad;
-            _TargetHeadFactorChanged = true;
           }
         }
 
@@ -307,11 +365,26 @@ namespace Cozmo {
           _RobotAnimator.PlayTransitionAnimation(newPosition);
         }
 
-        private void EnableIdleReactionaryBehaviors(bool enable) {
-          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.AcknowledgeFace, enable);
-          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.AcknowledgeObject, enable);
-          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement, enable);
+        #endregion
+
+        #region Contextual Actions
+
+        private void HandleLiftCubeButtonPressed() {
+          IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
+          if (targetObject != null && targetObject is ObservedObject && targetObject is LightCube) {
+            _CurrentRobot.PickupObject(targetObject as ObservedObject, callback: HandleLiftCubeActionFinished);
+            DisableInput();
+            _IsPerformingAction = true;
+          }
         }
+
+        private void HandleLiftCubeActionFinished(bool success) {
+          _CurrentRobot.CancelCallback(HandleLiftCubeActionFinished);
+          EnableInput();
+          _IsPerformingAction = false;
+        }
+
+        #endregion
       }
     }
   }

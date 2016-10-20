@@ -5,6 +5,8 @@ using Anki.UI;
 
 namespace Cozmo.Minigame.DroneMode {
   public class DroneModeCameraFeed : MonoBehaviour {
+    public delegate void VisibleInCameraHandler(IVisibleInCamera newFocusedObject);
+    public event VisibleInCameraHandler OnCurrentFocusChanged;
 
     [SerializeField]
     private RawImage _CameraFeedImage;
@@ -36,6 +38,19 @@ namespace Cozmo.Minigame.DroneMode {
     // TODO: Replace text field
     public AnkiTextLabel DebugTextField;
 
+    private IVisibleInCamera _CurrentlyFocusedObject;
+    public IVisibleInCamera CurrentlyFocusedObject {
+      get { return _CurrentlyFocusedObject; }
+      private set {
+        if (value != _CurrentlyFocusedObject) {
+          _CurrentlyFocusedObject = value;
+          if (OnCurrentFocusChanged != null) {
+            OnCurrentFocusChanged(_CurrentlyFocusedObject);
+          }
+        }
+      }
+    }
+
     public void Initialize(IRobot currentRobot) {
       _ImageProcessor = new ImageReceiver("DroneModeCameraFeedImageProcessor");
       _ImageProcessor.CaptureStream();
@@ -66,7 +81,10 @@ namespace Cozmo.Minigame.DroneMode {
         }
       }
 
-      ShowTextForReticle(closestFocus, closestReticle);
+      if (closestFocus != CurrentlyFocusedObject) {
+        CurrentlyFocusedObject = closestFocus;
+        ShowTextForReticle(closestFocus, closestReticle);
+      }
     }
 
     private void OnDestroy() {

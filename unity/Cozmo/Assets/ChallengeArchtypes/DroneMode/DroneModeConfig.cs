@@ -1,6 +1,22 @@
 ﻿using UnityEngine;
 namespace Cozmo {
-  namespace Minigame {
+  namespace Minigame.DroneMode {
+    [System.Serializable]
+    public class DroneModeActionData {
+      [SerializeField]
+      private Sprite _ButtonIcon;
+      public Sprite ButtonIcon { get { return _ButtonIcon; } }
+
+      // TODO: Use localized strings / localization keys
+      [SerializeField]
+      private string _ButtonText;
+      public string ButtonText { get { return _ButtonText; } }
+
+      [SerializeField]
+      private Anki.Cozmo.UnlockId _ActionUnlockId = Anki.Cozmo.UnlockId.Invalid;
+      public Anki.Cozmo.UnlockId ActionUnlockId { get { return _ActionUnlockId; } }
+    }
+
     public class DroneModeConfig : MinigameConfigBase {
       public override int NumCubesRequired() {
         return 0;
@@ -69,6 +85,26 @@ namespace Cozmo {
       [SerializeField, Range(0f, 1f), Tooltip("(%) Starting lift height, where 0 is minimum and 1 is maximum.")]
       private float _StartingLiftHeight = 0.25f;
       public float StartingLiftHeight { get { return _StartingLiftHeight; } }
+
+      [SerializeField]
+      private DroneModeActionData _LiftCubeButtonData;
+      public DroneModeActionData LiftCubeButtonData { get { return _LiftCubeButtonData; } }
+
+      [SerializeField]
+      private DroneModeActionData _RollCubeButtonData;
+      public DroneModeActionData RollCubeButtonData { get { return _RollCubeButtonData; } }
+
+      [SerializeField]
+      private DroneModeActionData _DropCubeButtonData;
+      public DroneModeActionData DropCubeButtonData { get { return _DropCubeButtonData; } }
+
+      [SerializeField]
+      private DroneModeActionData _StackCubeButtonData;
+      public DroneModeActionData StackCubeButtonData { get { return _StackCubeButtonData; } }
+
+      [SerializeField]
+      private DroneModeActionData _SayNameButtonData;
+      public DroneModeActionData SayNameButtonData { get { return _SayNameButtonData; } }
     }
   }
 }

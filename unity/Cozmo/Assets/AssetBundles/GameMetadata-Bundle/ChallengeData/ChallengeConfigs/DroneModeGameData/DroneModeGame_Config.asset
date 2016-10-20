@@ -33,3 +33,23 @@ MonoBehaviour:
   _LiftTurnSpeed_radPerSec: 10
   _LiftTurnAccel_radPerSecSqr: 20
   _StartingLiftHeight: 0.25
+  _LiftCubeButtonData:
+    _ButtonIcon: {fileID: 21300000, guid: cd0087eab4066422c8568b78092dea00, type: 3}
+    _ButtonText: PICK UP
+    _ActionUnlockId: 6
+  _RollCubeButtonData:
+    _ButtonIcon: {fileID: 21300000, guid: c0917978773d34e1b847520590df07f1, type: 3}
+    _ButtonText: ROLL
+    _ActionUnlockId: 9
+  _DropCubeButtonData:
+    _ButtonIcon: {fileID: 21300000, guid: 5fed27c841207458a9470f484b38130c, type: 3}
+    _ButtonText: DROP
+    _ActionUnlockId: 0
+  _StackCubeButtonData:
+    _ButtonIcon: {fileID: 21300000, guid: 80b564749b2134b8a98b0186459b5719, type: 3}
+    _ButtonText: STACK
+    _ActionUnlockId: 10
+  _SayNameButtonData:
+    _ButtonIcon: {fileID: 21300000, guid: fb6c260a6e2fb454dba6a45b41251c03, type: 3}
+    _ButtonText: SAY NAME
+    _ActionUnlockId: 0

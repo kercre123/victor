@@ -24,6 +24,10 @@ public class State {
     // NO SPAM, don't log here
   }
 
+  public virtual void PausedUpdate() {
+    // NO SPAM, don't log here
+  }
+
   public virtual void Exit() {
     DAS.Info("State.Exit", this.GetType().ToString());
   }

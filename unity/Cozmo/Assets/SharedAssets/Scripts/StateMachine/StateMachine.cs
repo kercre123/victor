@@ -84,6 +84,9 @@ public class StateMachine {
 
   public void UpdateStateMachine() {
     if (_IsPaused) {
+      if (_CurrState != null) {
+        _CurrState.PausedUpdate();
+      }
       return;
     }
 
