@@ -114,6 +114,9 @@ namespace Anki {
         // Where the cube should be put down
         Pose3d _cubePlacementPose;
       
+        const f32 kInvalidAngle = 1000;
+        f32    _initialPreActionPoseAngle_rad = kInvalidAngle;
+      
         void Write(const std::string& s);
       
         Util::RollingFileLogger _logger;

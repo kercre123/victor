@@ -45,13 +45,29 @@ namespace Anki {
     CONSOLE_VAR(u32, kMaxNumAttempts,              "DockingTest", 30);
     CONSOLE_VAR(u32, kMaxConsecFails,              "DockingTest", 3);
     CONSOLE_VAR(u32, kTestDockingMethod,           "DockingTest", (u8)DockingMethod::HYBRID_DOCKING);
-    CONSOLE_VAR(f32, kMaxXAwayFromPreDock_mm,      "DockingTest", 30);
-    CONSOLE_VAR(f32, kMaxYAwayFromPreDock_mm,      "DockingTest", 50);
+    CONSOLE_VAR(f32, kMaxXAwayFromPreDock_mm,      "DockingTest", 50);
+    CONSOLE_VAR(f32, kMaxYAwayFromPreDock_mm,      "DockingTest", 250);
     CONSOLE_VAR(f32, kMaxAngleAwayFromPreDock_deg, "DockingTest", 10);
-    CONSOLE_VAR(bool, kDriveToAndPickupBlock,      "DockingTest", true);
+    CONSOLE_VAR(bool, kDriveToAndPickupBlockOneAction, "DockingTest", true);
+    CONSOLE_VAR(bool, kJustPickup,                 "DockingTest", false);
     CONSOLE_VAR(bool, kRollInsteadOfPickup,        "DockingTest", false);
     CONSOLE_VAR(bool, kDoDeepRoll,                 "DockingTest", false);
     CONSOLE_VAR(bool, kUseClosePreActionPose,      "DockingTest", false);
+    CONSOLE_VAR(u32,  kNumRandomObstacles,         "DockingTest", 10);
+    
+    // Prevents obstacles from being created within +/- this y range of preDock pose
+    // Ensures that no obstacles are created in front of the marker/preDock pose
+    static const f32 kNoObstaclesWithinXmmOfPreDockPose = 40;
+    
+    // Obstacles will be created within +/- this range of preDock pose
+    static const f32 kObstacleRangeY_mm = 300;
+    
+    // Obstacles will be created within this x range of the preDock pose
+    // Negative is behind the preDock pose, positive is in front
+    static const f32 kObstacleRangeXmin_mm = -200;
+    static const f32 kObstacleRangeXmax_mm = 120;
+    
+    static const Point3f kObstacleSize_mm = {10, 10, 50};
     
     static const BackpackLights passLights = {
       .onColors               = {{NamedColors::BLACK,NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN,NamedColors::BLACK}},
@@ -206,6 +222,8 @@ namespace Anki {
           
           _cubePlacementPose = Pose3d(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, &robot.GetPose().FindOrigin());
           
+          _initialPreActionPoseAngle_rad = kInvalidAngle;
+          
           CompoundActionSequential* action = new CompoundActionSequential(robot, {new MoveHeadToAngleAction(robot, 0, DEG_TO_RAD(1), 0), new WaitAction(robot, 2)});
           StartActing(robot, action,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
@@ -314,13 +332,140 @@ namespace Anki {
               EndAttempt(robot, ActionResult::FAILURE_ABORT, "BlockToPickupNull", true);
               break;
             }
+          
+            const ActionableObject* aObject = dynamic_cast<const ActionableObject*>(blockToPickup);
+            
+            if(aObject == nullptr)
+            {
+              PRINT_NAMED_ERROR("BehaviorDockingTest.PickupLow.NullObject", "ActionableObject is null");
+              return Status::Failure;
+            }
+            
+            // Get the preAction poses corresponding with _initialVisionMarker
+            std::vector<PreActionPose> preActionPoses;
+            std::vector<std::pair<Quad2f, ObjectID> > obstacles;
+            robot.GetBlockWorld().GetObstacles(obstacles);
+            aObject->GetCurrentPreActionPoses(preActionPoses,
+                                              {(kRollInsteadOfPickup ? PreActionPose::ROLLING : PreActionPose::DOCKING)},
+                                              {_initialVisionMarker.GetCode()},
+                                              obstacles,
+                                              nullptr);
+            
+            if(preActionPoses.empty())
+            {
+              break;
+            }
+            
+            const Pose3d preActionPose = (kUseClosePreActionPose ? preActionPoses.back().GetPose() : preActionPoses.front().GetPose());
+            
+            // Store the angle of the preAction pose so we can use it as the approach angle for
+            // the driveTo/dock actions so that we will always approach the object from the same angle
+            if(_initialPreActionPoseAngle_rad == kInvalidAngle)
+            {
+              _initialPreActionPoseAngle_rad = preActionPose.GetRotation().GetAngleAroundZaxis().ToFloat();
+            }
+          
+            // If we are adding random obstacles
+            if(kNumRandomObstacles > 0)
+            {
+              // Clear the old obstacles we added
+              robot.GetBlockWorld().ClearObjectsByType(ObjectType::Custom_Fixed);
+            
+              // Add new obstacles at random poses around the preDock pose corresponding with _initialVisionMarker
+              for(u32 i = 0; i < kNumRandomObstacles; ++i)
+              {
+                
+                f32 x = preActionPose.GetTranslation().x();
+                f32 y = preActionPose.GetTranslation().y();
+                Radians angle = preActionPose.GetRotation().GetAngleAroundZaxis();
+                
+                f32 randX = GetRNG().RandDblInRange(kObstacleRangeXmin_mm, kObstacleRangeXmax_mm);
+                f32 randY = GetRNG().RandDblInRange(-kObstacleRangeY_mm, kObstacleRangeY_mm);
+            
+                // Keep picking a y value until it is outside the no obstacle zone
+                int count = 0;
+                while(randY < kNoObstaclesWithinXmmOfPreDockPose &&
+                      randY > -kNoObstaclesWithinXmmOfPreDockPose)
+                {
+                  randY = GetRNG().RandDblInRange(-kObstacleRangeY_mm, kObstacleRangeY_mm);
+                  count++;
+                  
+                  if(count > 100)
+                  {
+                    randY = kObstacleRangeY_mm;
+                    break;
+                  }
+                }
+
+                Pose3d p(angle, Z_AXIS_3D(), {x + randX, y + randY, kObstacleSize_mm.z() * 0.5f}, &robot.GetPose().FindOrigin());
+              
+                robot.GetBlockWorld().CreateFixedCustomObject(p,
+                                                              kObstacleSize_mm.x(),
+                                                              kObstacleSize_mm.y(),
+                                                              kObstacleSize_mm.z());
+              }
+            }
             
             _initialCubePose = blockToPickup->GetPose();
             _initialRobotPose = robot.GetPose();
             
-            if(kDriveToAndPickupBlock)
+            // If we are just doing a straight pickup without driving to the preDock pose
+            if(kJustPickup)
             {
-              DriveToObjectAction* driveAction = new DriveToObjectAction(robot, _blockObjectIDPickup, PreActionPose::DOCKING);
+              PickupObjectAction* action = new PickupObjectAction(robot, _blockObjectIDPickup);
+              action->SetDockingMethod((DockingMethod)kTestDockingMethod);
+              action->SetDoNearPredockPoseCheck(false);
+              StartActing(robot, action,
+                          [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+                            if (result != ActionResult::SUCCESS) {
+                              if(_numSawObject < 5)
+                              {
+                                EndAttempt(robot, result, "PickupNotSeeingObject", true);
+                              }
+                              else
+                              {
+                                EndAttempt(robot, result, "Pickup", true);
+                              }
+                              return false;
+                            }
+                            SetCurrState(State::PlaceLow);
+                            return true;
+                          });
+            }
+            // Otherwise if we are doing a DriveToPickupObject action in one state (instead of the driveTo and pickup
+            // in seperate states
+            else if(kDriveToAndPickupBlockOneAction)
+            {
+              DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot,
+                                                                                _blockObjectIDPickup,
+                                                                                true,
+                                                                                _initialPreActionPoseAngle_rad);
+              action->SetDockingMethod((DockingMethod)kTestDockingMethod);
+              StartActing(robot, action,
+                          [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+                            if (result != ActionResult::SUCCESS) {
+                              if(_numSawObject < 5)
+                              {
+                                EndAttempt(robot, result, "DriveToAndPickupNotSeeingObject", true);
+                              }
+                              else
+                              {
+                                EndAttempt(robot, result, "DriveToAndPickup", true);
+                              }
+                              return false;
+                            }
+                            SetCurrState(State::PlaceLow);
+                            return true;
+                          });
+            }
+            else
+            {
+              DriveToObjectAction* driveAction = new DriveToObjectAction(robot,
+                                                                         _blockObjectIDPickup,
+                                                                         PreActionPose::DOCKING,
+                                                                         0,
+                                                                         true,
+                                                                          _initialPreActionPoseAngle_rad);
               driveAction->SetMotionProfile(_motionProfile);
               StartActing(robot, driveAction,
                           [this, &robot](const ActionResult& result, const ActionCompletedUnion& completionUnion){
@@ -355,28 +500,6 @@ namespace Anki {
                             return false;
                           });
             }
-            else
-            {
-              PickupObjectAction* action = new PickupObjectAction(robot, _blockObjectIDPickup);
-              action->SetDockingMethod((DockingMethod)kTestDockingMethod);
-              action->SetDoNearPredockPoseCheck(false);
-              StartActing(robot, action,
-                          [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
-                            if (result != ActionResult::SUCCESS) {
-                              if(_numSawObject < 5)
-                              {
-                                EndAttempt(robot, result, "PickupNotSeeingObject", true);
-                              }
-                              else
-                              {
-                                EndAttempt(robot, result, "Pickup", true);
-                              }
-                              return false;
-                            }
-                            SetCurrState(State::PlaceLow);
-                            return true;
-                          });
-            }
           }
           else
           {
@@ -388,7 +511,9 @@ namespace Anki {
         }
         case State::PlaceLow:
         {
-          PlaceObjectOnGroundAtPoseAction* action = new PlaceObjectOnGroundAtPoseAction(robot, _cubePlacementPose);
+          PlaceObjectOnGroundAtPoseAction* action = new PlaceObjectOnGroundAtPoseAction(robot,
+                                                                                        _cubePlacementPose,
+                                                                                        true);
           action->SetMotionProfile(_motionProfile);
           StartActing(robot, action,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
@@ -408,12 +533,39 @@ namespace Anki {
           f32 randA = GetRNG().RandDblInRange(-DEG_TO_RAD(kMaxAngleAwayFromPreDock_deg),
                                               DEG_TO_RAD(kMaxAngleAwayFromPreDock_deg));
           
+          if(kNumRandomObstacles > 0)
+          {
+            if(kMaxYAwayFromPreDock_mm <= kNoObstaclesWithinXmmOfPreDockPose)
+            {
+              PRINT_NAMED_ERROR("BehaviorDockingTest.Reset.YAwayTooSmall",
+                                "MaxYAwayFromPreDock_mm is too small %f <= %f need to be able to drive into obstacles",
+                                kMaxYAwayFromPreDock_mm,
+                                kNoObstaclesWithinXmmOfPreDockPose);
+              return Status::Failure;
+            }
+            
+            // Make sure y falls outside the no obstacle zone so we will always have to drive to a point
+            // where obstacles could be
+            int count = 0;
+            while(randY < kNoObstaclesWithinXmmOfPreDockPose && randY > -kNoObstaclesWithinXmmOfPreDockPose)
+            {
+              randY = GetRNG().RandDblInRange(-kMaxYAwayFromPreDock_mm, kMaxYAwayFromPreDock_mm);
+              count++;
+              
+              if(count > 100)
+              {
+                randY = kMaxYAwayFromPreDock_mm;
+                break;
+              }
+            }
+          }
+          
           // Get the preActionPose relating to the marker we
           ActionableObject* aObject = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(_blockObjectIDPickup));
           
           if(aObject == nullptr)
           {
-            PRINT_NAMED_INFO("BehaviorDockingTest.Reset", "ActionableObject is null");
+            PRINT_NAMED_ERROR("BehaviorDockingTest.Reset.NullObject", "ActionableObject is null");
             return Status::Failure;
           }
           
@@ -428,10 +580,6 @@ namespace Anki {
           
           if(preActionPoses.size() != 2)
           {
-            PRINT_NAMED_INFO("BehaviorDockingTest.Reset", "Found %i preActionPoses for marker %s",
-                             (int)preActionPoses.size(),
-                             _initialVisionMarker.GetCodeName());
-            
             // If we are rolling and we can't find any preAction poses it means the block was not rolled
             // so get preActionPoses for the marker we are currently seeing
             if(kRollInsteadOfPickup)
@@ -444,7 +592,8 @@ namespace Anki {
               
               if(preActionPoses.size() != 2)
               {
-                PRINT_NAMED_INFO("BehaviorDockingTest.Reset", "Found %i preActionPoses for marker %s",
+                PRINT_NAMED_ERROR("BehaviorDockingTest.Reset.RollingBadNumPreActionPoses",
+                                  "Found %i preActionPoses for marker %s",
                                  (int)preActionPoses.size(),
                                  _markerBeingSeen.GetCodeName());
                 return Status::Failure;
@@ -452,6 +601,10 @@ namespace Anki {
             }
             else
             {
+              PRINT_NAMED_ERROR("BehaviorDockingTest.Reset.BadNumPreActionPoses",
+                                "Found %i preActionPoses for marker %s",
+                                (int)preActionPoses.size(),
+                                _initialVisionMarker.GetCodeName());
               return Status::Failure;
             }
           }
@@ -476,9 +629,22 @@ namespace Anki {
           
           Pose3d p(Radians(angle + randA), Z_AXIS_3D(), {x + randX, y + randY, 0}, &robot.GetPose().FindOrigin());
           
-          DriveToPoseAction* action = new DriveToPoseAction(robot, p);
+          ICompoundAction* action = new CompoundActionSequential(robot);
           
-          action->SetMotionProfile(_motionProfile);
+          // If we are carrying the object when we reset then make sure to put it down before driving to the pose
+          if(robot.IsCarryingObject())
+          {
+            PlaceObjectOnGroundAtPoseAction* placeAction = new PlaceObjectOnGroundAtPoseAction(robot,
+                                                                                               _cubePlacementPose,
+                                                                                               true);
+            placeAction->SetMotionProfile(_motionProfile);
+            action->AddAction(placeAction);
+          }
+          
+          DriveToPoseAction* driveAction = new DriveToPoseAction(robot, p);
+          driveAction->SetMotionProfile(_motionProfile);
+          action->AddAction(driveAction);
+          
           StartActing(robot, action,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                         if (result != ActionResult::SUCCESS) {
@@ -665,11 +831,7 @@ namespace Anki {
             {
               Write("\n\n------Test Manually Reset------\n");
             }
-            else
-            {
-              _numAttempts = 0;
-              _numFails = 0;
-            }
+            
             _yellForCompletion = false;
             _yellForHelp = false;
             _reset = false;

@@ -70,6 +70,8 @@ namespace Anki
       // Adds a collision-based obstacle (for when we think we bumped into something)
       Result AddCollisionObstacle(const Pose3d& p);
       
+      ObjectID CreateFixedCustomObject(const Pose3d& p, const f32 xSize_mm, const f32 ySize_mm, const f32 zSize_mm);
+      
       // Processes the edges found in the given frame
       Result ProcessVisionOverheadEdges(const OverheadEdgeFrame& frameInfo);
       
@@ -429,8 +431,6 @@ namespace Anki
 
       // adds a markerless object at the given pose
       Result AddMarkerlessObject(const Pose3d& pose, ObjectType type);
-      
-      ObjectID CreateFixedCustomObject(const Pose3d& p, const f32 xSize_mm, const f32 ySize_mm, const f32 zSize_mm);
       
       void ClearObjectHelper(ObservableObject* object);
       

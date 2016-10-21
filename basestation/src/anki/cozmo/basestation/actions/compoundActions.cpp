@@ -152,6 +152,14 @@ namespace Anki {
       
       // Delete completed action
       (*currentAction)->PrepForCompletion(); // Possible overkill
+
+      // If the proxy action's type changes while it is running then we need to update our (CompoundAction) type
+      // to match (eg PickupObjectAction)
+      if(_proxySet &&
+         (*currentAction)->GetTag() == _proxyTag)
+      {
+        SetType((*currentAction)->GetType());
+      }
       
       if(_deleteActionOnCompletion)
       {
