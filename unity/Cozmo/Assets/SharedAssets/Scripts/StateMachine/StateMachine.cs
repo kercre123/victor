@@ -44,23 +44,10 @@ public class StateMachine {
   }
 
   public void SetNextState(State nextState) {
-    // Treat setting next state when current state is null as starting
-    // the state machine, this is needed to prevent bugs from pausing the
-    // the machine before we enter the first state.
-    if (_CurrState == null) {
-      _CurrState = nextState;
-      if (_CurrState != null) {
-        _CurrState.SetStateMachine(this);
-        _CurrState.Enter();
-      }
+    _NextState = nextState;
+    if (_NextState != null) {
+      _NextState.SetStateMachine(this);
     }
-    else {
-      _NextState = nextState;
-      if (_NextState != null) {
-        _NextState.SetStateMachine(this);
-      }
-    }
-
   }
 
   public void PushSubState(State subState) {
@@ -84,26 +71,36 @@ public class StateMachine {
 
   public void UpdateStateMachine() {
     if (_IsPaused) {
-      if (_CurrState != null) {
+      if (_NextState != null) {
+        ProgressToNextState();
+      }
+      else if (_CurrState != null) {
         _CurrState.PausedUpdate();
       }
-      return;
     }
+    else {
+      if (_NextState != null) {
+        ProgressToNextState();
+      }
+      else if (_CurrState != null) {
+        _CurrState.Update();
+      }
+    }
+  }
 
-    if (_NextState != null) {
-      if (_CurrState != null) {
-        _CurrState.Exit();
+  private void ProgressToNextState() {
+    if (_CurrState != null) {
+      if (_IsPaused) {
+        _CurrState.Resume(State.PauseReason.ENGINE_MESSAGE, Anki.Cozmo.BehaviorType.Count);
       }
-      _CurrState = _NextState;
-      _NextState = null;
-      // its possible the call to CurrState.Exit
-      // above could change the value of NextState to null
-      if (_CurrState != null) {
-        _CurrState.Enter();
-      }
+      _CurrState.Exit();
     }
-    else if (_CurrState != null) {
-      _CurrState.Update();
+    _CurrState = _NextState;
+    _NextState = null;
+    // its possible the call to CurrState.Exit
+    // above could change the value of NextState to null
+    if (_CurrState != null) {
+      _CurrState.Enter();
     }
   }
 

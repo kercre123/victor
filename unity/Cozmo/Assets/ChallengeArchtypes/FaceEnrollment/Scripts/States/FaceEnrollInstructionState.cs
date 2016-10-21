@@ -13,6 +13,7 @@ namespace FaceEnrollment {
     private string _NameForFace;
     private int _ReEnrollFaceID;
     private bool _UserCancelledEnrollment = false;
+    private bool _EnrollingFace = false;
 
     private Cozmo.UI.AlertView _DoneAlertView = null;
 
@@ -67,12 +68,22 @@ namespace FaceEnrollment {
     }
 
     private void HandleUserClosedView() {
+
       _UserCancelledEnrollment = true;
-      // cancel all actions, including enrolling named face or playing reaction animations.
-      _CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.UNKNOWN);
+
+      if (_EnrollingFace) {
+        // cancel all actions, including enrolling named face or playing reaction animations.
+        _CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.UNKNOWN);
+      }
+      else {
+        // we are not actively enrolling a face, but still in this state, probably because we are playing
+        // a reactionary behavior.
+        HandleUserCancelledEnrollment(false);
+      }
     }
 
     private void EnrollNamedFace() {
+      _EnrollingFace = true;
       _CurrentRobot.SetEnableCliffSensor(false);
       _CurrentRobot.EnrollNamedFace(0, _ReEnrollFaceID, _NameForFace);
     }
@@ -93,6 +104,8 @@ namespace FaceEnrollment {
       if (message.actionType != Anki.Cozmo.RobotActionType.ENROLL_NAMED_FACE) {
         return;
       }
+
+      _EnrollingFace = false;
 
       _CurrentRobot.SetEnableCliffSensor(true);
 
