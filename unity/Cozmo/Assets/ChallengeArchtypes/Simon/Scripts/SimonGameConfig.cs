@@ -13,7 +13,6 @@ public class SimonGameConfig : MinigameConfigBase {
   public int MinSequenceLength = 1;
   public int MaxSequenceLength = 20;
 
-  public float TimeBetweenBeats = 0.3f;
   public float TimeWaitFirstBeat = 1.0f;
 
   public float MinDistBetweenCubesMM = 60.0f;
@@ -25,6 +24,8 @@ public class SimonGameConfig : MinigameConfigBase {
   public int MaxLivesHuman = 3;
 
   public int MinRoundBeforeLongReact = 5;
+
+  public AnimationCurve TimeBetweenBeat_Sec;
 
   public AnimationCurve[] CozmoGuessCubeCorrectPercentagePerSkill;
 

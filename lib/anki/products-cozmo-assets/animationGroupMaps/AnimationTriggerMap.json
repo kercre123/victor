@@ -473,6 +473,26 @@
       "AnimName": "ag_memorymatch_point_smallright"
     },
     {
+      "CladEvent": "MemoryMatchPointCenterFast",
+      "AnimName": "ag_memorymatch_point_fast_center"
+    },
+    {
+      "CladEvent": "MemoryMatchPointLeftBigFast",
+      "AnimName": "ag_memorymatch_point_fast_bigleft"
+    },
+    {
+      "CladEvent": "MemoryMatchPointLeftSmallFast",
+      "AnimName": "ag_memorymatch_point_fast_smallleft"
+    },
+    {
+      "CladEvent": "MemoryMatchPointRightBigFast",
+      "AnimName": "ag_memorymatch_point_fast_bigright"
+    },
+    {
+      "CladEvent": "MemoryMatchPointRightSmallFast",
+      "AnimName": "ag_memorymatch_point_fast_smallright"
+    },
+    {
       "CladEvent": "MemoryMatchCozmoGetOut",
       "AnimName": "ag_memorymatch_getout"
     },

@@ -15,8 +15,6 @@ namespace Simon {
 
     public override void Enter() {
       base.Enter();
-
-      _CurrentRobot.DriveWheels(0.0f, 0.0f);
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.AnimationEvent>(HandleRobotAnimationEvent);
 
       // Animation needs to have a robot event
@@ -25,7 +23,6 @@ namespace Simon {
 
     public override void Exit() {
       ResetLights();
-
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.AnimationEvent>(HandleRobotAnimationEvent);
     }
 

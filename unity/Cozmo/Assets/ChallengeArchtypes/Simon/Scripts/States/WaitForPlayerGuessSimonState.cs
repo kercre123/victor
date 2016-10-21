@@ -21,7 +21,7 @@ namespace Simon {
       LightCube.TappedAction += OnBlockTapped;
       _GameInstance = _StateMachine.GetGame() as SimonGame;
       _SequenceList = _GameInstance.GetCurrentSequence();
-      _CurrentRobot.SetHeadAngle(1.0f);
+      _CurrentRobot.SetHeadAngle(Random.Range(CozmoUtil.kIdealBlockViewHeadValue, 0f));
 
       _GameInstance.ShowCurrentPlayerTurnStage(PlayerType.Human, false);
     }
@@ -113,7 +113,6 @@ namespace Simon {
         return;
       }
 
-      _CurrentRobot.SetHeadAngle(Random.Range(CozmoUtil.kIdealBlockViewHeadValue, 0f));
       _StartLightBlinkTime = Time.time;
       _TargetCube = id;
       if (_SequenceList[_CurrentSequenceIndex] == _TargetCube) {

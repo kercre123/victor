@@ -82,18 +82,18 @@ namespace Simon {
       if (_CurrentSequenceIndex > 0) {
         fromIndex = _GameInstance.CubeIdsForGame.IndexOf(_CurrentSequence[_CurrentSequenceIndex - 1]);
       }
-      Anki.Cozmo.AnimationTrigger animTrigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPointCenter;
+      Anki.Cozmo.AnimationTrigger animTrigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPointCenterFast;
       if (goingToIndex - fromIndex == 1) {
-        animTrigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPointLeftSmall;
+        animTrigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPointLeftSmallFast;
       }
       else if (goingToIndex - fromIndex == -1) {
-        animTrigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPointRightSmall;
+        animTrigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPointRightSmallFast;
       }
       if (goingToIndex - fromIndex >= 2) {
-        animTrigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPointLeftBig;
+        animTrigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPointLeftBigFast;
       }
       else if (goingToIndex - fromIndex <= -2) {
-        animTrigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPointRightBig;
+        animTrigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPointRightBigFast;
       }
 
       _StateMachine.PushSubState(new CozmoBlinkLightsSimonState(target, animTrigger, isCorrect));

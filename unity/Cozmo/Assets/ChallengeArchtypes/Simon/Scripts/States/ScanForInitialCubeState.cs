@@ -231,15 +231,6 @@ namespace Simon {
       _ShowCozmoCubesSlide.SetCubeSpacing(100);
     }
 
-    private LightCube GetCubeBySortedIndex(int index) {
-      if (index < _Game.CubeIdsForGame.Count) {
-        if (_CurrentRobot.LightCubes.ContainsKey(_Game.CubeIdsForGame[index])) {
-          return _CurrentRobot.LightCubes[_Game.CubeIdsForGame[index]];
-        }
-      }
-      return null;
-    }
-
     private void SetScanPhase(ScanPhase nextState) {
       if (_ScanPhase != nextState && _CurrentRobot != null) {
         // clean up previous
@@ -277,7 +268,7 @@ namespace Simon {
         else if (nextState == ScanPhase.Stopped) {
           // Rotate towards center
           _ShowCozmoCubesSlide.RotateCozmoImageTo(0.0f, _RotateSecScan);
-          LightCube centerCube = GetCubeBySortedIndex(1);
+          LightCube centerCube = (_Game as SimonGame).GetCubeBySortedIndex(1);
           if (centerCube != null) {
             _CurrentRobot.TurnTowardsObject(centerCube, false);
           }
@@ -288,7 +279,7 @@ namespace Simon {
         else if (nextState == ScanPhase.Error) {
           _ShowCozmoCubesSlide = null;
           _Game.SharedMinigameView.EnableContinueButton(true);
-          LightCube centerCube = GetCubeBySortedIndex(1);
+          LightCube centerCube = (_Game as SimonGame).GetCubeBySortedIndex(1);
           if (centerCube != null) {
             _CurrentRobot.TurnTowardsObject(centerCube, false);
           }

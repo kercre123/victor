@@ -14,10 +14,10 @@ MonoBehaviour:
   _SkillConfig:
     _EvaluateLevelChangeEvent:
     - _EnumValueAsString: OnMemoryMatchVsComplete
-      _EnumValue: 18
+      _EnumValue: 20
     _ChallengePointEvent:
     - _EnumValueAsString: OnMemoryMatchVsComplete
-      _EnumValue: 18
+      _EnumValue: 20
     _ResetPointsEvent: []
     _UsePointThreshold: 1
     _ComparedPointThreshold: 3
@@ -34,14 +34,29 @@ MonoBehaviour:
       LowerBoundThreshold: 0.3
   MinSequenceLength: 2
   MaxSequenceLength: 30
-  TimeBetweenBeats: 0.6
   TimeWaitFirstBeat: 1
   MinDistBetweenCubesMM: 60
   RotateSecScan: 2
   ScanTimeoutSec: 30
   MaxLivesCozmo: 3
   MaxLivesHuman: 3
-  LongSequenceReactMin: 5
+  MinRoundBeforeLongReact: 5
+  TimeBetweenBeat_Sec:
+    serializedVersion: 2
+    m_Curve:
+    - time: -0.010606509
+      value: 0.50097805
+      inSlope: -0.0356147
+      outSlope: -0.0356147
+      tangentMode: 10
+    - time: 7.991628
+      value: 0.21598087
+      inSlope: -0.0356147
+      outSlope: -0.0356147
+      tangentMode: 10
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 0
   CozmoGuessCubeCorrectPercentagePerSkill:
   - serializedVersion: 2
     m_Curve:

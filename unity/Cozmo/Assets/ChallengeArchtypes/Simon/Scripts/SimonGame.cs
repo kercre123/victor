@@ -8,7 +8,6 @@ using Anki.Cozmo;
 namespace Simon {
 
   public class SimonGame : GameBase {
-    public const float kCozmoLightBlinkDelaySeconds = 0.1f;
     public const float kLightBlinkLengthSeconds = 0.3f;
 
     public const float kTurnSpeed_rps = 100f;
@@ -32,7 +31,7 @@ namespace Simon {
 
     public int GetCurrentTurnNumber { get { return _CurrentSequenceLength - MinSequenceLength; } }
 
-    public float TimeBetweenBeats { get { return _Config.TimeBetweenBeats; } }
+    public float TimeBetweenBeats { get { return _Config.TimeBetweenBeat_Sec.Evaluate(_CurrentSequenceLength); } }
 
     public float TimeWaitFirstBeat { get { return _Config.TimeWaitFirstBeat; } }
 
@@ -294,6 +293,15 @@ namespace Simon {
         // So the skills system can ignore solo mode. Can be changed if events are classes or more filters
         GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnMemoryMatchVsComplete, _ChallengeData.ChallengeID, CurrentDifficulty, endState == EndState.PlayerWin, PlayerScore, CozmoScore, IsHighIntensityRound()));
       }
+    }
+
+    public LightCube GetCubeBySortedIndex(int index) {
+      if (index < CubeIdsForGame.Count && CurrentRobot != null) {
+        if (CurrentRobot.LightCubes.ContainsKey(CubeIdsForGame[index])) {
+          return CurrentRobot.LightCubes[CubeIdsForGame[index]];
+        }
+      }
+      return null;
     }
 
     public SimonTurnSlide GetSimonSlide() {

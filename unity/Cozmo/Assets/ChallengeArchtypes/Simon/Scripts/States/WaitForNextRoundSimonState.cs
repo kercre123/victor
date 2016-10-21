@@ -44,13 +44,11 @@ namespace Simon {
       if (!isGameOver) {
         _GameInstance.ShowCurrentPlayerTurnStage(_NextPlayer, true);
         _GameInstance.SetCubeLightsDefaultOn();
-        _CurrentRobot.TurnTowardsObject(_CurrentRobot.LightCubes[_GameInstance.CubeIdsForGame[1]], false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2);
+
+        _CurrentRobot.TurnTowardsObject(_GameInstance.GetCubeBySortedIndex(1), false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2, HandleCozmoTurnComplete);
 
         if (_NextPlayer == PlayerType.Human) {
           _GameInstance.GetSimonSlide().ShowPlayPatternButton(HandleContinuePressed);
-        }
-        else {
-          _StateMachine.SetNextState(new CozmoGuessSimonState());
         }
       }
     }
@@ -58,6 +56,12 @@ namespace Simon {
       base.Update();
       if (_CanAutoAdvance && Time.time - _AutoAdvanceTimestamp > kDelay) {
         HandleContinuePressed();
+      }
+    }
+
+    private void HandleCozmoTurnComplete(bool success) {
+      if (_NextPlayer == PlayerType.Cozmo) {
+        _StateMachine.SetNextState(new CozmoGuessSimonState());
       }
     }
 
