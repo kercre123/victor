@@ -58,7 +58,12 @@ namespace Cozmo.UI {
 
         if (_FromBackgroundImage != null) {
           _FromBackgroundImage.gameObject.SetActive(true);
-          _FromBackgroundImage.sprite = _ToBackgroundImage.sprite;
+          if (_ToBackgroundImage != null) {
+            _FromBackgroundImage.sprite = _ToBackgroundImage.sprite;
+          }
+          else {
+            DAS.Error("BackgroundColorController.SetBackgroundColor", "ToBackgroundImage is NULL");
+          }
           _FromBackgroundImage.color = _TargetTintColor;
         }
         else {
