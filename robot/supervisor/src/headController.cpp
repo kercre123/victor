@@ -47,12 +47,12 @@ namespace HeadController {
       f32 Kp_ = 4.f;  // proportional control constant
       f32 Kd_ = 4000.f;  // derivative control constant
       f32 Ki_ = 0.03f; // integral control constant
-      f32 MAX_ERROR_SUM = 10.f;
+      f32 MAX_ERROR_SUM = 15.f;
 #endif
       
       // Motor burnout protection
       u32 potentialBurnoutStartTime_ms_ = 0;
-      const f32 BURNOUT_POWER_THRESH = 0.6f;
+      const f32 BURNOUT_POWER_THRESH = Ki_ * MAX_ERROR_SUM + Kp_ * HEAD_ANGLE_TOL;
       const u32 BURNOUT_TIME_THRESH_MS = 2000.f;
 
       // Current speed

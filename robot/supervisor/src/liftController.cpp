@@ -38,11 +38,6 @@ namespace Anki {
         // TODO: Find out what this actually is
         const f32 ENCODER_ANGLE_RES = DEG_TO_RAD_F32(0.35f);
         
-        // Motor burnout protection
-        u32 potentialBurnoutStartTime_ms_ = 0;
-        const f32 BURNOUT_POWER_THRESH = 0.6;
-        const u32 BURNOUT_TIME_THRESH_MS = 2000.f;
-
         // Initialized in Init()
         f32 LIFT_ANGLE_LOW_LIMIT;
 
@@ -80,6 +75,10 @@ namespace Anki {
         // This value should match the motor burnout protection threshold (POWER_THRESHOLD[]) in syscon's motors.cpp.
         const f32 MAX_POWER_IN_POSITION = 0.25;
         
+        // Motor burnout protection
+        u32 potentialBurnoutStartTime_ms_ = 0;
+        const f32 BURNOUT_POWER_THRESH =  Ki_ * MAX_ERROR_SUM + Kp_ * LIFT_ANGLE_TOL;
+        const u32 BURNOUT_TIME_THRESH_MS = 2000.f;
         
         // Angle of the main lift arm.
         // On the real robot, this is the angle between the lower lift joint on the robot body
@@ -497,7 +496,7 @@ namespace Anki {
       // Returns true if a protection action was triggered.
       bool MotorBurnoutProtection() {
         
-        if (ABS(power_) < BURNOUT_POWER_THRESH || bracing_) {
+        if (ABS(power_ - ANTI_GRAVITY_POWER_BIAS) < BURNOUT_POWER_THRESH || bracing_) {
           potentialBurnoutStartTime_ms_ = 0;
           return false;
         }

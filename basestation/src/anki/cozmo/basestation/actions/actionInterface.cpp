@@ -507,9 +507,9 @@ namespace Anki {
       // Fail if we have exceeded timeout time
       if(currentTimeInSeconds >= timeoutTime) {
         if(IsMessageDisplayEnabled()) {
-          PRINT_CH_INFO(kLogChannelName, "IAction.Update.TimedOut",
-                        "%s timed out after %.1f seconds.",
-                        GetName().c_str(), GetTimeoutInSeconds());
+          PRINT_NAMED_WARNING("IAction.Update.TimedOut",
+                              "%s timed out after %.1f seconds.",
+                              GetName().c_str(), GetTimeoutInSeconds());
         }
         result = ActionResult::FAILURE_TIMEOUT;
       }
