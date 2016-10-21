@@ -36,6 +36,8 @@ namespace DataPersistence {
 
     public List<Anki.Cozmo.UnlockId> NewUnlocks;
 
+    public List<string> PreviousTags;
+
     /// <summary>
     /// Gets the total daily goals completed across all past sessions.
     /// </summary>
@@ -99,6 +101,7 @@ namespace DataPersistence {
       MaximumStreak = 0;
       OnboardingStages = new Dictionary<OnboardingManager.OnboardingPhases, int>();
       NewUnlocks = new List<Anki.Cozmo.UnlockId>();
+      PreviousTags = new List<string>();
     }
   }
 }

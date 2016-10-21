@@ -81,6 +81,26 @@ public class DailyGoalManager : MonoBehaviour {
         goalList.Add(_CurrentGenData.GenList[i]);
       }
     }
+    // Clear out previous session's tag collisions so goals have variety
+    List<string> previousTags = DataPersistenceManager.Instance.Data.DefaultProfile.PreviousTags;
+    if (previousTags != null) {
+      for (int i = 0; i < previousTags.Count; i++) {
+        if (TagConfig.IsValidTag(previousTags[i])) {
+          for (int j = 0; j < goalList.Count;) {
+            if (goalList[j].Tag == previousTags[i]) {
+              goalList.RemoveAt(j);
+            }
+            else {
+              j++;
+            }
+          }
+        }
+      }
+    }
+    else {
+      // If save data has no previous tags, don't crash and fix up the save data
+      DataPersistenceManager.Instance.Data.DefaultProfile.PreviousTags = new List<string>();
+    }
     return goalList;
   }
 
@@ -172,14 +192,17 @@ public class DailyGoalManager : MonoBehaviour {
     List<DailyGoalGenerationData.GoalEntry> goalList = new List<DailyGoalGenerationData.GoalEntry>();
     goalList = GetGeneratableGoalEntries();
     goalCount = Mathf.Min(goalCount, goalList.Count);
+    // Wipe previous tags as we are generating new goals
+    DataPersistenceManager.Instance.Data.DefaultProfile.PreviousTags.Clear();
     // Grab random DailyGoals from the available goal list
     DailyGoalGenerationData.GoalEntry toAdd;
     for (int i = 0; i < goalCount; i++) {
       toAdd = goalList[UnityEngine.Random.Range(0, goalList.Count)];
       // Remove from list to prevent dupes
       goalList.Remove(toAdd);
-      // Clear out tag collisions
+      // Clear out tag collisions and add tag to previous tags so the next session won't generate with it
       if (TagConfig.IsValidTag(toAdd.Tag)) {
+        DataPersistenceManager.Instance.Data.DefaultProfile.PreviousTags.Add(toAdd.Tag);
         for (int j = 0; j < goalList.Count;) {
           if (goalList[j].Tag == toAdd.Tag) {
             goalList.RemoveAt(j);
