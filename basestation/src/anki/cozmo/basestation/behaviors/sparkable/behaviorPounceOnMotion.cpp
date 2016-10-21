@@ -48,6 +48,8 @@ static float kBoredomMultiplierDefault = 0.8f;
 
 // combination of offset between lift and robot orign and motion built into animation
 static constexpr float kDriveForwardUntilDist = 50.f;
+// creeping less than this is boring so pounce even if the finger might be a bit out of range
+static constexpr float kMinCreepDistance = 10.f;
 // Anything below this basically all looks the same, so just play the animation and possibly miss
 static constexpr float kVisionMinDistMM = 65.f;
 // How long to wait before re-calling
@@ -63,6 +65,8 @@ static constexpr float kMinCliffInFrontWait_sec = 10.f;
   
 // count of creep forwards/turns cozmo should do on motion before pouncing
 static constexpr int kMotionObservedCountBeforePossiblePounce = 2;
+  
+static const constexpr char* const kTrackLockName = "behaviorPounceOnMotionWaitLock";
 
 } 
   
@@ -226,6 +230,8 @@ void BehaviorPounceOnMotion::TransitionToInitialSearch(Robot& robot)
 
 void BehaviorPounceOnMotion::TransitionToBringingHeadDown(Robot& robot)
 {
+  SmartUnLockTracks(kTrackLockName);
+
   PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.TransitionToBringingHeadDown","BehaviorPounceOnMotion.TransitionToBringingHeadDown");
   SET_STATE(BringingHeadDown);
   
@@ -266,12 +272,15 @@ void BehaviorPounceOnMotion::TransitionToWaitForMotion(Robot& robot)
   _numValidPouncePoses = 0;
   _backUpDistance = 0.f;
   _motionObserved = false;
+  SmartLockTracks((u8)AnimTrackFlag::HEAD_TRACK, kTrackLockName, kTrackLockName);
   StartActing(new WaitAction(robot, kWaitForMotionInterval_s), &BehaviorPounceOnMotion::TransitionFromWaitForMotion);
   
 }
   
 void BehaviorPounceOnMotion::TransitionFromWaitForMotion(Robot& robot)
 {
+  SmartUnLockTracks(kTrackLockName);
+
   // In the event motion is seen, this callback is triggered immediately
   if(_motionObserved){
     TransitionToTurnToMotion(robot, _observedX, _observedY);
@@ -317,13 +326,13 @@ void BehaviorPounceOnMotion::TransitionToTurnToMotion(Robot& robot, int16_t moti
   const bool shouldPounceNoMatterWhat = _motionObservedNoPounceCount > kMotionObservedCountBeforePossiblePounce &&
                                            (_motionObservedNoPounceCount * .2) > GetRNG().RandDblInRange(0, 1);
   
-  if(_lastPoseDist <= kVisionMinDistMM || shouldPounceNoMatterWhat){
+  if(_lastPoseDist <= kVisionMinDistMM || GetDriveDistance() < kMinCreepDistance || shouldPounceNoMatterWhat){
     callback = &BehaviorPounceOnMotion::TransitionToPounce;
   }else{
     _motionObservedNoPounceCount++;
   }
   
-  StartActing(new PanAndTiltAction(robot, relPanAngle, 0, false, false),
+  StartActing(new PanAndTiltAction(robot, relPanAngle, tiltRads, false, false),
               callback);
 }
 
@@ -340,7 +349,8 @@ void BehaviorPounceOnMotion::TransitionToCreepForward(Robot& robot)
   
   DriveStraightAction* driveAction = new DriveStraightAction(robot, _backUpDistance, DEFAULT_PATH_MOTION_PROFILE.dockSpeed_mmps);
   driveAction->SetAccel(DEFAULT_PATH_MOTION_PROFILE.dockAccel_mmps2);
-  
+
+  SmartLockTracks((u8)AnimTrackFlag::HEAD_TRACK, kTrackLockName, kTrackLockName);
   StartActing(driveAction, &BehaviorPounceOnMotion::TransitionToBringingHeadDown);
 }
 
@@ -625,7 +635,6 @@ void BehaviorPounceOnMotion::Cleanup(Robot& robot)
 void BehaviorPounceOnMotion::SetState_internal(State state, const std::string& stateName)
 {
   _state = state;
-  PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.TransitionTo", "%s", stateName.c_str());
   SetDebugStateName(stateName);
 }
 

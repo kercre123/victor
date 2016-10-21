@@ -40,8 +40,11 @@
 namespace Anki {
 namespace Cozmo {
 
+  
 // Static initializations
 const char* IBehavior::kBaseDefaultName = "no_name";
+
+namespace {
   
 static const char* kNameKey                      = "name";
 static const char* kEmotionScorersKey            = "emotionScorers";
@@ -57,6 +60,7 @@ static const char* kExecutableBehaviorTypeKey    = "executableBehaviorType";
   
 static const int kMaxResumesFromCliff            = 2;
 static const float kCooldownFromCliffResumes_sec     = 15.0;
+}
 
 IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   : _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
@@ -393,6 +397,12 @@ void IBehavior::Stop()
   // Re-enable any reactionary behaviors which the behavior disabled and didn't have a chance to
   // re-enable before stopping
   SmartReEnableReactionaryBehavior(_disabledReactions);
+  
+  // Unlock any tracks which the behavior hasn't had a chance to unlock
+  for(auto entry: _lockingNameToTracksMap){
+    _robot.GetMoveComponent().UnlockTracks(entry.second, entry.first);
+  }
+  _lockingNameToTracksMap.clear();
   
   ASSERT_NAMED(_disabledReactions.empty(), "IBehavior.Stop.DisabledReactionsNotEmpty");
 }
@@ -766,6 +776,27 @@ IBehavior::BehaviorIter IBehavior::SmartReEnableReactionaryBehavior(BehaviorIter
   return  _disabledReactions.erase(iter);
 }
   
+void IBehavior::SmartLockTracks(u8 animationTracks, const std::string& who, const std::string& debugName)
+{
+  // Only lock the tracks if we haven't already locked them with that key
+  const bool insertionSuccessfull = _lockingNameToTracksMap.insert(std::make_pair(who, animationTracks)).second;
+  if(insertionSuccessfull){
+    _robot.GetMoveComponent().LockTracks(animationTracks, who, debugName);
+  }else{
+    PRINT_NAMED_WARNING("IBehavior.SmartLockTracks.AttemptingToLockTwice", "Attempted to lock tracks with key named %s but key already exists", who.c_str());
+  }
+}
+  
+void IBehavior::SmartUnLockTracks(const std::string& who)
+{
+  auto mapIter = _lockingNameToTracksMap.find(who);
+  if(mapIter == _lockingNameToTracksMap.end()){
+    PRINT_NAMED_WARNING("IBehavior.SmartUnlockTracks.InvalidUnlock", "Attempted to unlock tracks with key named %s but key not found", who.c_str());
+  }else{
+    _robot.GetMoveComponent().UnlockTracks(mapIter->second, who);
+    _lockingNameToTracksMap.erase(mapIter);
+  }
+}
 
 ActionResult IBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* action,
                                                       ActionableObject* object,

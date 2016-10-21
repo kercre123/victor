@@ -348,6 +348,11 @@ protected:
   // these behaviors will be automatically re-enabled when the behavior stops
   void SmartDisableReactionaryBehavior(BehaviorType type);
   void SmartDisableReactionaryBehavior(const std::set<BehaviorType> typeList);
+  
+  // Allows the behavior to lock and unlock tracks without worrying about the possibility of the behavior
+  // being interrupted and leaving the track locked
+  void SmartLockTracks(u8 animationTracks, const std::string& who, const std::string& debugName);
+  void SmartUnLockTracks(const std::string& who);
 
   // If a behavior needs to re-enable a reactionary behavior for later stages after being
   // disabled with SmartDisablesableReactionaryBehavior  this function will re-enable the behavior
@@ -442,7 +447,10 @@ private:
   // these will be automatically re-enabled during IBehavior::Stop using the current behavior's name
   // populated by SmartDisableReactionaryBehavior and SmartReEnableReactionaryBehavior
   std::set<BehaviorType> _disabledReactions;
-    
+  
+  // An int that holds tracks disabled using SmartLockTrack
+  std::map<std::string, u8> _lockingNameToTracksMap;
+  
 }; // class IBehavior
   
   
