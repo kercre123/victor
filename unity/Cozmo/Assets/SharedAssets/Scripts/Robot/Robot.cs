@@ -1105,14 +1105,14 @@ public class Robot : IRobot {
       queueActionPosition);
   }
 
-  public void PlaceOnObject(ObservedObject target, float approachAngle, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void PlaceOnObject(ObservedObject target, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     DAS.Debug(this, "PlaceOnObject " + target.ID);
 
     SendQueueSingleAction(Singleton<PlaceOnObject>.Instance.Initialize(
-      approachAngle_rad: approachAngle,
       objectID: target.ID,
-      useApproachAngle: true,
       usePreDockPose: true,
+      useApproachAngle: false,
+      approachAngle_rad: 0f,
       useManualSpeed: false,
       motionProf: PathMotionProfileDefault
     ),

@@ -209,7 +209,7 @@ public class MockRobot : IRobot {
     QueueCallback(1f, callback);
   }
 
-  public void PlaceOnObject(ObservedObject target, float approachAngle, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public void PlaceOnObject(ObservedObject target, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     if (CarryingObject == null) {
       // Can't place object if carrying object is null
       if (callback != null) {
@@ -218,7 +218,6 @@ public class MockRobot : IRobot {
       }
     }
 
-    Rotation = Quaternion.Euler(0, 0, approachAngle);
     CarryingObject.SetPosition(target.WorldPosition + Vector3.forward * CozmoUtil.kBlockLengthMM);
     CarryingObject.SetRotation(Rotation);
     WorldPosition = (target.WorldPosition + Rotation * (Vector3.left * CozmoUtil.kOriginToLowLiftDDistMM)).xy0();

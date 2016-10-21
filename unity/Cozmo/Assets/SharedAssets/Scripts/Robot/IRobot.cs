@@ -178,7 +178,7 @@ public interface IRobot : IDisposable {
 
   void PlaceObjectRel(ObservedObject target, float offsetFromMarker, float approachAngle, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
-  void PlaceOnObject(ObservedObject target, float approachAngle, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+  void PlaceOnObject(ObservedObject target, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void CancelAction(RobotActionType actionType = RobotActionType.UNKNOWN);
 

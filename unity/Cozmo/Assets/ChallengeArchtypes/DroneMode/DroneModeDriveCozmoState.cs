@@ -71,6 +71,13 @@ namespace Cozmo {
                                                      "drop_cube_button",
                                                      DroneModeControlsSlide.ActionContextType.CubeInLift);
 
+          _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.StackCubeButtonData,
+                                                     HandleStackCubeButtonPressed,
+                                                     true, // interactableOnlyWhenCubeSeen
+                                                     false, // interactableOnlyWhenKnownFaceSeen
+                                                     "stack_cube_button",
+                                                     DroneModeControlsSlide.ActionContextType.CubeInLift);
+
           _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.SayNameButtonData,
                                                      HandleSayNameButtonPressed,
                                                      false, // interactableOnlyWhenCubeSeen
@@ -412,6 +419,15 @@ namespace Cozmo {
           _CurrentRobot.PlaceObjectOnGroundHere(callback: HandleActionFinished);
           DisableInput();
           _IsPerformingAction = true;
+        }
+
+        private void HandleStackCubeButtonPressed() {
+          IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
+          if (targetObject != null && targetObject is ObservedObject && targetObject is LightCube) {
+            _CurrentRobot.PlaceOnObject(targetObject as ObservedObject, callback: HandleActionFinished);
+            DisableInput();
+            _IsPerformingAction = true;
+          }
         }
 
         private void HandleSayNameButtonPressed() {
