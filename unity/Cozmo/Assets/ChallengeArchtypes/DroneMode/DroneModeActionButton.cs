@@ -42,6 +42,7 @@ namespace Cozmo.Minigame.DroneMode {
       _IsUnlocked = ((actionData.ActionUnlockId == Anki.Cozmo.UnlockId.Invalid) || UnlockablesManager.Instance.IsUnlocked(actionData.ActionUnlockId));
       _LockedIcon.SetActive(!_IsUnlocked);
       _ActionButton.Interactable = _IsUnlocked;
+      _ActionButton.ShowDisabledStateWhenInteractable = !_IsUnlocked;
     }
 
     private void HandleButtonClicked() {

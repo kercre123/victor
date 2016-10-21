@@ -348,7 +348,7 @@ namespace Cozmo.Minigame.DroneMode {
           }
         }
         else {
-          button.Interactable = false;
+          button.Interactable = true;
         }
       }
     }
