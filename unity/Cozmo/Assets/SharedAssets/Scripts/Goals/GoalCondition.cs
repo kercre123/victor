@@ -28,6 +28,14 @@ namespace Anki {
         NOT
       }
 
+
+      /// <summary>
+      /// Compares numerical Condition Values
+      /// </summary>
+      /// <returns><c>true</c> Compare type for Current value compared to target is met <c>false</c> otherwise.</returns>
+      /// <param name="a">Current Value to check.</param>
+      /// <param name="b">Target Value to check against.</param>
+      /// <param name="compareType">Compare type.</param>
       public bool CompareConditionValues(float a, float b, ComparisonType compareType) {
         switch (compareType) {
         case ComparisonType.GREATER:

@@ -177,7 +177,13 @@ namespace Cozmo {
                 }
               }// Check for Difficulty Level Progress
               else if (GenConditions[i] is CurrentDifficultyUnlockedCondition) {
-                if (ValidateDifficultyGenCondtion(GenConditions[i] as CurrentDifficultyUnlockedCondition)) {
+                if (ValidateDifficultyGenCondition(GenConditions[i] as CurrentDifficultyUnlockedCondition)) {
+                  SetGoalAlreadyCompleted();
+                  return;
+                }
+              }// Check for Face Entrollment Progress
+              else if (GenConditions[i] is CurrentEnrolledFacesCondition) {
+                if (ValidateEnrolledFacesGenCondition(GenConditions[i] as CurrentEnrolledFacesCondition)) {
                   SetGoalAlreadyCompleted();
                   return;
                 }
@@ -201,7 +207,7 @@ namespace Cozmo {
       }
 
       // Check if the CurrentDifficultyUnlockedCondition should have already been completed
-      public bool ValidateDifficultyGenCondtion(CurrentDifficultyUnlockedCondition diffCond) {
+      public bool ValidateDifficultyGenCondition(CurrentDifficultyUnlockedCondition diffCond) {
         bool forceComplete = false;
         // Only force complete if we have a higher difficulty unlocked than expected
         int diff = 0;
@@ -213,6 +219,20 @@ namespace Cozmo {
 
         return forceComplete;
       }
+
+      // Check if the CurrentEnrolledFacesCondition should have already been completed
+      public bool ValidateEnrolledFacesGenCondition(CurrentEnrolledFacesCondition faceCond) {
+        bool forceComplete = false;
+        // Only force complete if we have more faces than a less/lessinclusive/equal face condition
+        if (faceCond.compareType == GoalCondition.ComparisonType.LESS
+            || faceCond.compareType == GoalCondition.ComparisonType.LESS_INCLUSIVE
+            || faceCond.compareType == GoalCondition.ComparisonType.EQUAL) {
+          forceComplete = (faceCond.TargetFaces < RobotEngineManager.Instance.CurrentRobot.EnrolledFaces.Count);
+        }
+
+        return forceComplete;
+      }
+
 
 
       public bool CanProgress(GameEventWrapper gEvent) {

@@ -72,7 +72,18 @@
       "Target": 1,
       "Priority": 2,
       "CladEvent": "OnMeetNewPerson",
-      "GenConditions": [],
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.CurrentEnrolledFacesCondition, Assembly-CSharp",
+          "TargetFaces": 0,
+          "compareType": "EQUAL",
+          "Label": {
+            "text": "Current Enrolled Faces Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
       "ProgressConditions": [],
       "Id": 1
     }
