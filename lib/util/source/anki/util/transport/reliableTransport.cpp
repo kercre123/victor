@@ -196,7 +196,7 @@ void ReliableTransport::QueueMessage(bool reliable, const TransportAddress& dest
 
 void ReliableTransport::QueueAction(std::function<void ()> action)
 {
-  Dispatch::Async(_queue, [this, action] {
+  Dispatch::Async(_queue, [this, action = std::move(action)] {
     std::lock_guard<std::mutex> lock(_mutex);
     action();
   });

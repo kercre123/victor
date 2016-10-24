@@ -61,7 +61,7 @@ public:
   virtual void OnVehicleDisappeared(const UUIDBytes& vehicleId) override;
   virtual void OnVehicleConnected(const UUIDBytes& vehicleId) override;
   virtual void OnVehicleDisconnected(const UUIDBytes& vehicleId) override;
-  virtual void OnVehicleMessageReceived(const UUIDBytes& vehicleId, const std::vector<uint8_t>& messageBytes) override;
+  virtual void OnVehicleMessageReceived(const UUIDBytes& vehicleId, std::vector<uint8_t> messageBytes) override;
   virtual void OnVehicleProximityChanged(const UUIDBytes& vehicleId, int rssi, bool isClose) override;
   
   void SendMessage(const UUIDBytes& robotId, const RobotInterface::EngineToRobot& message) const;

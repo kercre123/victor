@@ -45,7 +45,7 @@ void GameLogTransferTask::OnReady(const StartRequestFunc& requestFunc)
 
   size_t bytesQueued = 0;
 
-  for (const std::string& filename : filesToUpload) {
+  for (std::string& filename : filesToUpload) {
     HttpRequest request;
     try {
       request.storageFilePath = filename;
@@ -92,7 +92,7 @@ void GameLogTransferTask::OnReady(const StartRequestFunc& requestFunc)
     }
 
     // submit request
-    requestFunc(request, [filename] (const HttpRequest& innerRequest,
+    requestFunc(request, [filename = std::move(filename)] (const HttpRequest& innerRequest,
                                      const int responseCode,
                                      const std::map<std::string, std::string>&,
                                      const std::vector<uint8_t>&) {

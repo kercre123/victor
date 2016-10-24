@@ -66,7 +66,7 @@ public:
   using CozmoEventCallbackFunc = std::function<void( const AudioEngine::AudioCallbackInfo& callbackInfo )>;
   CozmoPlayId PostCozmoEvent( GameEvent::GenericEvent event,
                               GameObjectType GameObjId = GameObjectType::Invalid,
-                              const CozmoEventCallbackFunc& callbackFunc = nullptr ) const;
+                              CozmoEventCallbackFunc callbackFunc = nullptr ) const;
   
   bool SetCozmoEventParameter( CozmoPlayId playId, GameParameter::ParameterType parameter, float value ) const;
   

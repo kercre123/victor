@@ -99,7 +99,10 @@ namespace Util {
                          responseCode,
                          request.uri.c_str());
 
-    Util::Dispatch::Async(queue, [request, responseBody, responseCode, responseHeaders, callback] {
+    Util::Dispatch::Async(queue, [request, responseCode,
+                                  responseBody = std::move(responseBody),
+                                  responseHeaders = std::move(responseHeaders),
+                                  callback = std::move(callback)] {
       callback(request, responseCode, responseHeaders, responseBody);
       auto start = Util::CodeTimer::Start();
       

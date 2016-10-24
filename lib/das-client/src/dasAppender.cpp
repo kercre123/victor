@@ -71,12 +71,11 @@ void DasAppender::append(DASLogLevel level, const char* eventName, const char* e
 
   uint32_t curSequence = sDasSequenceNumber++;
 
-  auto* eventDictionaryPtr = new std::map<std::string, std::string>{*globals};
-  eventDictionaryPtr->insert(data.begin(), data.end());
-  eventDictionaryPtr->emplace(eventName, eventValue);
+  std::map<std::string, std::string> eventDictionary{*globals};
+  eventDictionary.insert(data.begin(), data.end());
+  eventDictionary.emplace(eventName, eventValue);
 
-  _syncQueue.Wake([this, eventDictionaryPtr, curSequence]() {
-    auto& eventDictionary = *eventDictionaryPtr;
+  _syncQueue.Wake([this, eventDictionary = std::move(eventDictionary), curSequence]() mutable {
 
     std::string logSequence = std::to_string(curSequence);
     eventDictionary[kSequenceGlobalKey] = logSequence;
@@ -96,7 +95,6 @@ void DasAppender::append(DASLogLevel level, const char* eventName, const char* e
     } else {
       LOGD("Error! Dropping message of length %zd", logData.size());
     }
-    delete eventDictionaryPtr;
   });
 }
 

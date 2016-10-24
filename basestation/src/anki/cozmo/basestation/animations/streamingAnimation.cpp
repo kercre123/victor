@@ -281,7 +281,7 @@ void StreamingAnimation::GenerateAudioData(Audio::RobotAudioClient* audioClient)
     AnimationEvent* animationEvent = &anEvent;
     std::weak_ptr<char> isAliveWeakPtr(_isAliveSharedPtr);
     
-    Util::Dispatch::Block aBlock = [this, animationEvent, isAliveWeakPtr]()
+    Util::Dispatch::Block aBlock = [this, animationEvent, isAliveWeakPtr = std::move(isAliveWeakPtr)]()
     {
       // Check if class has been destroyed
       if (isAliveWeakPtr.expired()) {
@@ -291,7 +291,7 @@ void StreamingAnimation::GenerateAudioData(Audio::RobotAudioClient* audioClient)
       // Prepare next event
       using namespace AudioEngine;
       using PlayId = Audio::RobotAudioClient::CozmoPlayId;
-      const Audio::RobotAudioClient::CozmoEventCallbackFunc callbackFunc = [this, animationEvent, isAliveWeakPtr]
+      const Audio::RobotAudioClient::CozmoEventCallbackFunc callbackFunc = [this, animationEvent, isAliveWeakPtr = std::move(isAliveWeakPtr)]
       (const AudioEngine::AudioCallbackInfo& callbackInfo)
       {
         if (!isAliveWeakPtr.expired()) {
@@ -310,7 +310,7 @@ void StreamingAnimation::GenerateAudioData(Audio::RobotAudioClient* audioClient)
       // Post Event
       const PlayId playId = _audioClient->PostCozmoEvent(animationEvent->audioEvent,
                                                          _gameObj,
-                                                         callbackFunc);
+                                                         std::move(callbackFunc));
       
       if (playId != AudioEngine::kInvalidAudioPlayingId) {
         // Set event's volume RTPC

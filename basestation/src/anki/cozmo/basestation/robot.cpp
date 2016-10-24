@@ -4077,7 +4077,7 @@ FactoryID Robot::GetClosestDiscoveredObjectsOfType(ObjectType type, uint8_t maxR
 //  });
 //  PRINT_CH_INFO("BlockPool", "Robot.GetClosestDiscoveredObjectsOfType", "Total # of objects = %zu\n%s", _discoveredObjects.size(), str.str().c_str());
   
-  std::for_each(_discoveredObjects.cbegin(), _discoveredObjects.cend(), [&](const std::pair<FactoryID, ActiveObjectInfo>& pair)
+  std::for_each(_discoveredObjects.cbegin(), _discoveredObjects.cend(), [&](const auto& pair)
   {
     const ActiveObjectInfo& object = pair.second;
     if ((object.objectType == type) && (object.rssi <= closestRSSI))

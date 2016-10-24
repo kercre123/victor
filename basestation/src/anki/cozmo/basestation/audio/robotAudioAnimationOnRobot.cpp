@@ -416,7 +416,7 @@ void RobotAudioAnimationOnRobot::BeginBufferingAudioOnRobotMode()
     std::weak_ptr<char> isAliveWeakPtr(_isAliveSharedPtr);
     Util::Dispatch::After( _postEventTimerQueue,
                            std::chrono::milliseconds( anEvent.time_ms - firstAudioEventOffset ),
-                           [this, animationEvent, isAliveWeakPtr] ()
+                           [this, animationEvent, isAliveWeakPtr = std::move(isAliveWeakPtr)] ()
       {
         // Trigger events if animation is still alive
         if ( isAliveWeakPtr.expired() ) {
@@ -426,7 +426,7 @@ void RobotAudioAnimationOnRobot::BeginBufferingAudioOnRobotMode()
         // Post Event
         using namespace AudioEngine;
         using PlayId = RobotAudioClient::CozmoPlayId;
-        const RobotAudioClient::CozmoEventCallbackFunc callbackFunc = [this, animationEvent, isAliveWeakPtr]
+        const RobotAudioClient::CozmoEventCallbackFunc callbackFunc = [this, animationEvent, isAliveWeakPtr = std::move(isAliveWeakPtr)]
         ( const AudioEngine::AudioCallbackInfo& callbackInfo )
         {
           if ( !isAliveWeakPtr.expired() ) {
@@ -449,7 +449,7 @@ void RobotAudioAnimationOnRobot::BeginBufferingAudioOnRobotMode()
         
         const PlayId playId = _audioClient->PostCozmoEvent( animationEvent->audioEvent,
                                                             _gameObj,
-                                                            callbackFunc );
+                                                            std::move(callbackFunc) );
         // Set event's volume RTPC
         if (RobotAudioClient::kInvalidCozmoPlayId != playId) {
           _audioClient->SetCozmoEventParameter( playId,

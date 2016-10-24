@@ -711,8 +711,7 @@ namespace Anki {
           //  a copy of the robot inside the lambda. I believe using the pointer
           //  is safe because this lambda can't outlive this action which can't
           //  outlive the robot whose queue it exists in.
-          Robot* robotPtr = &_robot;
-          auto cbRobotOriginChanged = [this,robotPtr](RobotID_t robotID) {
+          auto cbRobotOriginChanged = [this, robotPtr = &_robot](RobotID_t robotID) {
             if(robotID == robotPtr->GetID()) {
               PRINT_NAMED_INFO("DriveToPoseAction",
                                "Received signal that robot %d's origin changed. Resetting action.",

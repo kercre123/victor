@@ -100,7 +100,10 @@ void HttpAdapter::StartRequest(const HttpRequest& request,
     std::lock_guard<std::mutex> lock(_callbackMutex);
     hash = _sHashCounter.fetch_add(1);
     _requestResponseMap.emplace(hash,
-      HttpRequestResponseType{request, queue, callback, progressCallback});
+      HttpRequestResponseType{.request = request,
+        .queue = queue,
+        .callback = std::move(callback),
+        .progressCallback = std::move(progressCallback)});
   }
   {
     std::lock_guard<std::mutex> lock(instancesMutex);
@@ -140,8 +143,8 @@ void HttpAdapter::GetHttpRequestResponseTypeFromHash(const uint64_t hash,
 
 void HttpAdapter::ExecuteCallback(const uint64_t hash,
                                   const int responseCode,
-                                  const std::map<std::string,std::string>& responseHeaders,
-                                  const std::vector<uint8_t>& responseBody)
+                                  std::map<std::string,std::string>& responseHeaders,
+                                  std::vector<uint8_t>& responseBody)
 {
   PRINT_NAMED_DEBUG("http_adapter.execute_callback", "%llx %d %d",
                     hash, responseCode, responseBody.size());
@@ -153,7 +156,9 @@ void HttpAdapter::ExecuteCallback(const uint64_t hash,
                        responseCode,
                        response.request.uri.c_str());
 
-  Dispatch::Async(response.queue, [this, hash, response, responseBody, responseCode, responseHeaders] {
+  Dispatch::Async(response.queue, [this, hash, response, responseCode,
+                                   responseBody = std::move(responseBody),
+                                   responseHeaders = std::move(responseHeaders)] {
     response.callback(response.request, responseCode, responseHeaders, responseBody);
 
     PRINT_NAMED_DEBUG("http_adapter.execute_callback.callback_executed", "");

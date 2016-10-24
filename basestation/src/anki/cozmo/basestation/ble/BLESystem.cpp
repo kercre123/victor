@@ -109,9 +109,9 @@ void BLESystem::OnVehicleDisconnected(const UUIDBytes& vehicleId)
   });
 }
 
-void BLESystem::OnVehicleMessageReceived(const UUIDBytes& vehicleId, const std::vector<uint8_t>& messageBytes)
+void BLESystem::OnVehicleMessageReceived(const UUIDBytes& vehicleId, std::vector<uint8_t> messageBytes)
 {
-  Util::Dispatch::Async(_queue, [vehicleId, messageBytes, this] {
+  Util::Dispatch::Async(_queue, [vehicleId, messageBytes = std::move(messageBytes), this] {
     PRINT_NAMED_DEBUG("BLESystem.OnVehicleMessageReceived", "ID: %s message chunk received", StringFromUUIDBytes(const_cast<UUIDBytes* const>(&vehicleId)));
     
     ASSERT_NAMED(!_bleMessageInProgress->IsMessageComplete(), "BLESystem.OnVehicleMessageReceived.MessageAlreadyComplete");

@@ -30,7 +30,7 @@
       '<@(compiler_flags)',
     ],
     'compiler_cpp_flags' : [
-      '-std=c++11',
+      '-std=c++14',
       '-stdlib=libc++',
       '<@(compiler_flags)'
     ],
@@ -121,7 +121,7 @@
             '-fobjc-arc',
         ],
         'linker_flags': [
-          '-std=c++11',
+          '-std=c++14',
           '-stdlib=libc++',
           '-lpthread',
         ],
@@ -135,7 +135,7 @@
             '-fobjc-arc',
         ],
         'linker_flags': [
-          '-std=c++11',
+          '-std=c++14',
           '-stdlib=libc++',
           '-lpthread',
         ],

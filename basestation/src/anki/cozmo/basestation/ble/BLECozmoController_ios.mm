@@ -150,7 +150,7 @@ void BLECozmoController::SendMessage(UUIDBytes vehicleId, const uint8_t *message
   UUIDBytesFromString(&uuid, [[[connection mfgID] UUIDString] UTF8String]);
   std::vector<uint8_t> messageBytes(message.length);
   [message getBytes:messageBytes.data() length:message.length];
-  _bleResponder->OnVehicleMessageReceived(uuid, messageBytes);
+  _bleResponder->OnVehicleMessageReceived(uuid, std::move(messageBytes));
 }
 
 @end

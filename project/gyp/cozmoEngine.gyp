@@ -153,7 +153,7 @@
       '<@(compiler_flags)',
     ],
     'compiler_cpp_flags' : [
-      '-std=c++11',
+      '-std=c++14',
       '-stdlib=libc++',
       '<@(compiler_flags)',
     ],
@@ -248,7 +248,7 @@
       }],
       ['OS=="ios" or OS=="mac" or OS=="linux"', {
         'linker_flags': [
-          '-std=c++11',
+          '-std=c++14',
           '-stdlib=libc++',
           '-lpthread',
         ]
@@ -266,7 +266,7 @@
       'OTHER_CPLUSPLUSFLAGS': ['<@(compiler_cpp_flags)'],
       'ALWAYS_SEARCH_USER_PATHS': 'NO',
       # 'FRAMEWORK_SEARCH_PATHS':'../../libs/framework/',
-      'CLANG_CXX_LANGUAGE_STANDARD':'c++11',
+      'CLANG_CXX_LANGUAGE_STANDARD':'c++14',
       'CLANG_CXX_LIBRARY':'libc++',
       'DEBUG_INFORMATION_FORMAT': 'dwarf',
       'GCC_DEBUGGING_SYMBOLS': 'full',

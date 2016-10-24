@@ -31,9 +31,9 @@ public:
   HttpAdapter();
   ~HttpAdapter();
 
-  void StartRequest(const HttpRequest& request,
-                    Util::Dispatch::Queue* queue,
-                    HttpRequestCallback callback)
+  virtual void StartRequest(const HttpRequest& request,
+                            Util::Dispatch::Queue* queue,
+                            HttpRequestCallback callback) override
   {
     return StartRequest(request, queue, callback, nullptr);
   }
@@ -45,8 +45,8 @@ public:
 
   void ExecuteCallback(const uint64_t hash,
                        const int responseCode,
-                       const std::map<std::string,std::string>& responseHeaders,
-                       const std::vector<uint8_t>& responseBody);
+                       std::map<std::string,std::string>& responseHeaders,
+                       std::vector<uint8_t>& responseBody);
 
   void ExecuteDownloadProgressCallback(const uint64_t hash,
                                        const int64_t bytesWritten,

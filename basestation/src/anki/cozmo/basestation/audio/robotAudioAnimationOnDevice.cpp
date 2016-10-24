@@ -112,7 +112,7 @@ void RobotAudioAnimationOnDevice::PopRobotAudioMessage( RobotInterface::EngineTo
     std::weak_ptr<char> isAliveWeakPtr(_isAliveSharedPtr);
     Util::Dispatch::After( _postEventTimerQueue,
                            std::chrono::milliseconds( kPlayRobotOnDeviceDelayMS ),
-                           [this, animationEvent, isAliveWeakPtr] ()
+                           [this, animationEvent, isAliveWeakPtr = std::move(isAliveWeakPtr)] ()
                           {
                             // Trigger events
                             if ( isAliveWeakPtr.expired() ) {
@@ -122,7 +122,7 @@ void RobotAudioAnimationOnDevice::PopRobotAudioMessage( RobotInterface::EngineTo
                             // FIXME: Change to Robot Playing Frame Callback keyframe, maybe might be too much latency
                             using namespace AudioEngine;
                             using PlayId = RobotAudioClient::CozmoPlayId;
-                            const RobotAudioClient::CozmoEventCallbackFunc callbackFunc = [this, animationEvent, isAliveWeakPtr]
+                            const RobotAudioClient::CozmoEventCallbackFunc callbackFunc = [this, animationEvent, isAliveWeakPtr = std::move(isAliveWeakPtr)]
                             ( const AudioEngine::AudioCallbackInfo& callbackInfo )
                             {
                               if ( !isAliveWeakPtr.expired() ) {
@@ -145,7 +145,7 @@ void RobotAudioAnimationOnDevice::PopRobotAudioMessage( RobotInterface::EngineTo
                             
                             const PlayId playId = _audioClient->PostCozmoEvent( animationEvent->audioEvent,
                                                                                 _gameObj,
-                                                                                callbackFunc );
+                                                                                std::move(callbackFunc) );
                             // Set event's volume RTPC
                             if (RobotAudioClient::kInvalidCozmoPlayId != playId) {
                               _audioClient->SetCozmoEventParameter( playId,

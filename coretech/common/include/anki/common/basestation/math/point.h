@@ -62,7 +62,7 @@ namespace Anki {
     
     explicit Point(const SmallMatrix<N,1,T>& M);
 
-#if __cplusplus == 201103L
+#if __cplusplus >= 201103L
     // Point(T x1, T x2, ..., T xN);
     // This is ugly variadic template syntax to get this constructor to
     // work for all N and generate a compile-time error if you try to do

@@ -142,7 +142,7 @@ RobotAudioBuffer* RobotAudioClient::GetRobotAudiobuffer( GameObjectType gameObje
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioClient::CozmoPlayId RobotAudioClient::PostCozmoEvent( GameEvent::GenericEvent event,
                                                                 GameObjectType gameObjId,
-                                                                const CozmoEventCallbackFunc& callbackFunc ) const
+                                                                CozmoEventCallbackFunc callbackFunc ) const
 {
   const auto audioEventId = Util::numeric_cast<AudioEngine::AudioEventId>( event );
   const auto audioGameObjId = static_cast<AudioEngine::AudioGameObject>( gameObjId );
@@ -155,7 +155,7 @@ RobotAudioClient::CozmoPlayId RobotAudioClient::PostCozmoEvent( GameEvent::Gener
     // Execute callbacks synchronously (on main thread)
     audioCallbackContext->SetExecuteAsync( false );
     // Register callbacks for event
-    audioCallbackContext->SetEventCallbackFunc ( [ callbackFunc ]
+    audioCallbackContext->SetEventCallbackFunc ( [ callbackFunc = std::move(callbackFunc) ]
     ( const AudioEngine::AudioCallbackContext* thisContext, const AudioEngine::AudioCallbackInfo& callbackInfo )
     {
       callbackFunc( callbackInfo );

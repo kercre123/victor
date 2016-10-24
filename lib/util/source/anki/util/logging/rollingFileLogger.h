@@ -36,7 +36,7 @@ public:
   RollingFileLogger(Dispatch::Queue* queue, const std::string& baseDirectory, const std::string& extension = kDefaultFileExtension, std::size_t maxFileSize = kDefaultMaxFileSize);
   virtual ~RollingFileLogger();
   
-  void Write(const std::string& message);
+  void Write(std::string message);
   
   static std::string GetDateTimeString(const ClockType::time_point& time);
   static time_t GetTimeT(const ClockType::time_point& time);

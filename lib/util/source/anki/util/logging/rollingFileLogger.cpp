@@ -56,9 +56,9 @@ void RollingFileLogger::ExecuteBlock(const std::function<void ()>& block)
   }
 }
 
-void RollingFileLogger::Write(const std::string& message)
+void RollingFileLogger::Write(std::string message)
 {
-  ExecuteBlock([this, message] {
+  ExecuteBlock([this, message = std::move(message)] {
     WriteInternal(message);
   });
 }

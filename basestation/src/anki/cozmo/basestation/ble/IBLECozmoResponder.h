@@ -37,7 +37,7 @@ public:
   virtual void OnVehicleDisappeared(const UUIDBytes& vehicleId) = 0;
   virtual void OnVehicleConnected(const UUIDBytes& vehicleId) = 0;
   virtual void OnVehicleDisconnected(const UUIDBytes& vehicleId) = 0;
-  virtual void OnVehicleMessageReceived(const UUIDBytes& vehicleId, const std::vector<uint8_t>& messageBytes) = 0;
+  virtual void OnVehicleMessageReceived(const UUIDBytes& vehicleId, std::vector<uint8_t> messageBytes) = 0;
   virtual void OnVehicleProximityChanged(const UUIDBytes& vehicleId, int rssi, bool isClose) = 0;
 };
   

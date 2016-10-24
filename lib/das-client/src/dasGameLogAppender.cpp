@@ -49,7 +49,7 @@ void DasGameLogAppender::append(DASLogLevel level, const char* eventName, const 
   std::string gameId = it->second;
   std::string logMessage = makeCsvRow(eventName, eventValue, threadId, globals, data);
 
-  auto l = [this, gameId, logMessage] {
+  auto l = [this, gameId = std::move(gameId), logMessage = std::move(logMessage)] {
     std::string logFilePath = _gameLogDirPath + "/" + gameId + "/" + kLogFileName;
     std::ofstream log(logFilePath, std::ios::app | std::ios::out);
     if (0 == log.tellp()) {

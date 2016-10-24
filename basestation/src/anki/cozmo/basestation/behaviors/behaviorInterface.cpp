@@ -659,19 +659,19 @@ bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback 
 bool IBehavior::StartActing(IActionRunner* action, ActionResultCallback callback)
 {
   return StartActing(action,
-                     [callback](const ExternalInterface::RobotCompletedAction& msg) {
+                     [callback = std::move(callback)](const ExternalInterface::RobotCompletedAction& msg) {
                        callback(msg.result);
                      });
 }
 
 bool IBehavior::StartActing(IActionRunner* action, SimpleCallback callback)
 {
-  return StartActing(action, [callback](ActionResult ret){ callback(); });
+  return StartActing(action, [callback = std::move(callback)](ActionResult ret){ callback(); });
 }
 
 bool IBehavior::StartActing(IActionRunner* action, SimpleCallbackWithRobot callback)
 {
-  return StartActing(action, [this, callback](ActionResult ret){ callback(_robot); });
+  return StartActing(action, [this, callback = std::move(callback)](ActionResult ret){ callback(_robot); });
 }
 
 void IBehavior::HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg)

@@ -188,9 +188,9 @@ void DasLogFileAppender::PrvCurrentLogFilePath(std::string* logFilePath)
   *logFilePath = FullLogFilePath();
 }
 
-void DasLogFileAppender::WriteDataToCurrentLogfile(const std::string logData)
+void DasLogFileAppender::WriteDataToCurrentLogfile(std::string logData)
 {
-  _loggingQueue.Wake([this, logData] {
+  _loggingQueue.Wake([this, logData = std::move(logData)] {
       if (logData.length() + _bytesLoggedToCurrentFile > _maxLogLength) {
         PrvRolloverCurrentLogFile();
       }
@@ -250,7 +250,7 @@ void DasLogFileAppender::RolloverAllLogFiles()
       for (uint32_t i : toRollOverNumbers) {
         if (i != _currentLogFileNumber) {
           std::string path = MakeLogFilePath(_logDirPath, i, kDasInProgressExtension);
-          RolloverLogFileAtPath(path);
+          RolloverLogFileAtPath(std::move(path));
 
         }
       }
@@ -289,7 +289,7 @@ void DasLogFileAppender::SetMaxLogLength(size_t maxLogLength)
 // Don't want to block the logging queue..
 void DasLogFileAppender::ConsumeLogFiles(DASLogFileConsumptionBlock ConsumptionBlock)
 {
-  _loggingQueue.WakeSync([this, ConsumptionBlock] {
+  _loggingQueue.WakeSync([this, ConsumptionBlock = std::move(ConsumptionBlock)] {
       DIR* logDir = opendir(_logDirPath.c_str());
 
       if (logDir) {
