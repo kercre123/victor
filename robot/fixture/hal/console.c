@@ -428,10 +428,12 @@ void Again(void)
 void HeadESP();
 void CubePOST(void);
 void DropSensor();
+void AllowOutdated();
 
 static CommandFunction m_functions[] =
 {
   {"Again", Again, FALSE},
+  {"AllowOutdated", AllowOutdated, FALSE},
   {"Drop", DropSensor, FALSE},
   {"GetSerial", GetSerialCmd, FALSE},
   {"RedoTest", RedoTest, FALSE},

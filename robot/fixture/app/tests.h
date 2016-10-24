@@ -22,7 +22,7 @@ TestFunction* GetPlaypenTestFunctions(void);
 TestFunction* GetPackoutTestFunctions(void);
 TestFunction* GetLifetestTestFunctions(void);
 TestFunction* GetRechargeTestFunctions(void);
-TestFunction* GetJamTestFunctions(void);
+TestFunction* GetSoundTestFunctions(void);
     
 bool MotorDetect(void);
 TestFunction* GetMotor1TestFunctions(void);

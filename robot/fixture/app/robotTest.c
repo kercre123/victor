@@ -46,6 +46,11 @@ bool RobotDetect(void)
 }
 
 void SendTestChar(int c);
+bool g_allowOutdated = false;
+void AllowOutdated()
+{
+  g_allowOutdated = true;
+}
 
 void InfoTest(void)
 {
@@ -66,7 +71,7 @@ void InfoTest(void)
   int unused = version[0]>>16, hwversion = version[0]&0xffff, esn = version[1];
   ConsolePrintf("version,%08d,%08d,%08x,00000000\r\n", unused, hwversion, esn);
   
-  if (hwversion < BODY_VER_SHIP)
+  if (hwversion < BODY_VER_SHIP && !g_allowOutdated)
     throw ERROR_BODY_OUTOFDATE;
 }
 
@@ -108,8 +113,8 @@ void PlaypenWaitTest(void)
       current += MonitorGetCurrent();
     }
     current >>= 6;
-    ConsolePrintf("%d..", current);
-    if (current < 2000)
+//  ConsolePrintf("%d..", current);
+    if (current < PRESENT_CURRENT)
       offContact++;
     else {
       offContact = 0;
@@ -333,10 +338,14 @@ void RobotFixtureDropSensor(void)
 
 void SpeakerTest(void)
 {
+  const int TEST_TIME_US = 1000000;
+  
   // Speaker test not on robot1 (head not yet properly fixtured)
   if (g_fixtureType == FIXTURE_ROBOT1_TEST)
     return;
   SendCommand(TEST_PLAYTONE, 0, 0, 0);
+
+  // We planned to use getMonitorCurrent() for this test, but there's too much bypass, too much noise, and/or the tones are too short
 }
 
 // List of all functions invoked by the test, in order
@@ -408,12 +417,12 @@ TestFunction* GetPackoutTestFunctions(void)
   return functions;
 }
 
-TestFunction* GetJamTestFunctions(void)
+TestFunction* GetSoundTestFunctions(void)
 {
   static TestFunction functions[] =
   {
     InfoTest,
-//    JamTest,              // Ruled unsafe
+    SpeakerTest,
     NULL
   };
 
