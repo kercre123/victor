@@ -22,32 +22,31 @@ namespace Cozmo {
 
 class Robot;
 
-class BehaviorCantHandleTallStack : public IReactionaryBehavior
+class BehaviorCantHandleTallStack : public IBehavior
 {
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorCantHandleTallStack(Robot& robot, const Json::Value& config);
 
-  virtual Result InitInternalReactionary(Robot& robot) override;
-  virtual void   StopInternalReactionary(Robot& robot) override;
-  virtual bool ShouldComputationallySwitch(const Robot& robot) override;
+  virtual Result InitInternal(Robot& robot) override;
+  virtual void   StopInternal(Robot& robot) override;
   
-  virtual bool IsRunnableInternalReactionary(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual bool CarryingObjectHandledInternally() const override {return false;}
-  virtual bool ShouldResumeLastBehavior() const override { return false;}
   
-  virtual void AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot) override;
+  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   
 private:
   
-  ObjectID _baseBlockID;
-  uint8_t _stackHeight;
+  mutable ObjectID _baseBlockID;
+  mutable uint8_t _stackHeight;
   bool _objectObservedChanged;
   
   bool _baseBlockPoseValid;
   Pose3d _lastReactionBasePose;
   
+  uint8_t _minStackHeight;
   
   // For checking computational switch
   ObjectID _lastObservedObject;
@@ -72,7 +71,7 @@ private:
 
   
   virtual void ResetBehavior();
-  virtual void UpdateTargetStack(const Robot& robot);
+  virtual void UpdateTargetStack(const Robot& robot) const;
 
 };
 

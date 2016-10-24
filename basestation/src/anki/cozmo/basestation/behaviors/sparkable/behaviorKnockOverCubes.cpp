@@ -34,11 +34,10 @@ static const char* const kKnockOverSuccessTrigger = "knockOverSuccessTrigger";
 static const char* const kKnockOverFailureTrigger = "knockOverFailureTrigger";
 static const char* const kPutDownTrigger = "knockOverPutDownTrigger";
 static const char* const kMinimumStackHeight = "minimumStackHeight";
-static const char* const kIsReactionaryConfigFlag = "isReactionary";
 
 namespace {
-const int kMaxNumRetries = 1;
-const float kMinThresholdRealign = 3.f;
+const int kMaxNumRetries = 2;
+const float kMinThresholdRealign = 20.f;
 const int kMinBlocksForSuccess = 1;
 const float kWaitForBlockUpAxisChangeSecs = 0.5f;
 const f32 kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad = DEG_TO_RAD_F32(90.f);
@@ -56,12 +55,11 @@ namespace Cozmo {
   
   
 BehaviorKnockOverCubes::BehaviorKnockOverCubes(Robot& robot, const Json::Value& config)
-  : IReactionaryBehavior(robot, config)
+  : IBehavior(robot, config)
   , _objectObservedChanged(false)
   , _nextCheckForStackSparked_sec(0)
   , _lastObservedObject(-1)
   , _numRetries(0)
-  , _isReactionary(true)
 {
   SetDefaultName("KnockOverCubes");
   LoadConfig(config);
@@ -84,17 +82,11 @@ void BehaviorKnockOverCubes::LoadConfig(const Json::Value& config)
   GetValueOptional(config, kPutDownTrigger, _putDownAnimTrigger);
   
   _minStackHeight = config.get(kMinimumStackHeight, 3).asInt();
-  _isReactionary = config.get(kIsReactionaryConfigFlag, true).asBool();
   
 }
 
-bool BehaviorKnockOverCubes::IsRunnableInternalReactionary(const Robot& robot) const
+bool BehaviorKnockOverCubes::IsRunnableInternal(const Robot& robot) const
 {
-  if(robot.GetBehaviorManager().GetActiveSpark() == UnlockId::KnockOverThreeCubeStack
-     && IsReactionary()){
-    return false;
-  }
-  
   const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() ;
   const bool sparkIntervalCheck = _shouldStreamline && _nextCheckForStackSparked_sec < currentTime_sec;
   
@@ -116,13 +108,8 @@ bool BehaviorKnockOverCubes::CheckIfRunnable() const
   return _baseBlockID.IsSet() && (_stackHeight >= _minStackHeight);
 }
   
-bool BehaviorKnockOverCubes::IsReactionary() const
-{
-  return _isReactionary;
-}
-
   
-Result BehaviorKnockOverCubes::InitInternalReactionary(Robot& robot)
+Result BehaviorKnockOverCubes::InitInternal(Robot& robot)
 {
   // determine the cubes actually in the stack
   _objectsInStack.clear();
@@ -156,16 +143,11 @@ Result BehaviorKnockOverCubes::InitInternalReactionary(Robot& robot)
 }
 
   
-void BehaviorKnockOverCubes::StopInternalReactionary(Robot& robot)
+void BehaviorKnockOverCubes::StopInternal(Robot& robot)
 {
   ResetBehavior(robot);
 }
-  
-bool BehaviorKnockOverCubes::ShouldComputationallySwitch(const Robot& robot)
-{
-  // Variables set in IsRunnable
-  return CheckIfRunnable();
-}
+
   
 void BehaviorKnockOverCubes::TransitionToReachingForBlock(Robot& robot)
 {
@@ -213,58 +195,57 @@ void BehaviorKnockOverCubes::TransitionToKnockingOverStack(Robot& robot)
     if(result == ActionResult::SUCCESS){
       //Knocked over stack successfully
       TransitionToPlayingReaction(robot);
+    }else if(result == ActionResult::FAILURE_RETRY){
+      //Assume we had an alignment issue
+      if(_numRetries < kMaxNumRetries){
+        TransitionToKnockingOverStack(robot);
+      }else{
+        // We've aligned a bunch of times - just go for it
+        TransitionToBlindlyFlipping(robot);
+      }
+      _numRetries++;
     }
   };
   
+  // Setup the flip action
+  
   //skips turning towards face if this action is streamlined
-  const f32 angleTurnTowardsFace_rad = !_shouldStreamline ? kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad : 0;
+  const f32 angleTurnTowardsFace_rad = (_shouldStreamline || _numRetries > 0) ? 0 : kBSB_MaxTurnTowardsFaceBeforeKnockStack_rad;
   
   DriveAndFlipBlockAction* flipAction = new DriveAndFlipBlockAction(robot, _baseBlockID, false, 0, false, angleTurnTowardsFace_rad, false, kMinThresholdRealign);
   
   flipAction->SetSayNameAnimationTrigger(AnimationTrigger::KnockOverPreActionNamedFace);
   flipAction->SetNoNameAnimationTrigger(AnimationTrigger::KnockOverPreActionUnnamedFace);
+
   
-  RetryWrapperAction::RetryCallback retryCallback = [this, flipAction](const ExternalInterface::RobotCompletedAction& completion,
-                                                                       const u8 retryCount,
-                                                                       AnimationTrigger& retryAnimTrigger)
-  {
-    if(_shouldStreamline){
-      retryAnimTrigger = AnimationTrigger::Count;
-    }else{
-      retryAnimTrigger = _knockOverFailureTrigger;
-    }
-      
-    flipAction->DontTurnTowardsFace();
-
-    // Use a different preAction pose if we are retrying
-    flipAction->GetDriveToObjectAction()->SetGetPossiblePosesFunc([this, flipAction](ActionableObject* object,
-                                                                                     std::vector<Pose3d>& possiblePoses,
-                                                                                     bool& alreadyInPosition)
-    {
-      return IBehavior::UseSecondClosestPreActionPose(flipAction->GetDriveToObjectAction(),object, possiblePoses, alreadyInPosition);
-    });
-    
-    return true;
-    };
-
+  // Set the action sequence
   CompoundActionSequential* flipAndWaitAction = new CompoundActionSequential(robot);
-  
   flipAndWaitAction->AddAction(new TurnTowardsObjectAction(robot,_baseBlockID, M_PI));
-  
-
-  {
-    RetryWrapperAction* action = new RetryWrapperAction(robot, flipAction, retryCallback, kMaxNumRetries);
-    // emit completion signal so that the mood manager can react
-    const bool shouldEmitCompletion = true;
-    flipAndWaitAction->AddAction(action, false, shouldEmitCompletion);
-  }
-
+  // emit completion signal so that the mood manager can react
+  const bool shouldEmitCompletion = true;
+  flipAndWaitAction->AddAction(flipAction, false, shouldEmitCompletion);
   flipAndWaitAction->AddAction(new WaitAction(robot, kWaitForBlockUpAxisChangeSecs));
 
   // make sure we only account for blocks flipped during the actual knock over action
   _objectsFlipped.clear();
   StartActing(flipAndWaitAction, flipCallback);
 }
+  
+void BehaviorKnockOverCubes::TransitionToBlindlyFlipping(Robot& robot)
+{
+  CompoundActionSequential* flipAndWaitAction = new CompoundActionSequential(robot);
+  {
+    FlipBlockAction* flipAction = new FlipBlockAction(robot, _baseBlockID);
+    flipAction->SetShouldCheckPreActionPose(false);
+  
+    flipAndWaitAction->AddAction(flipAction);
+    flipAndWaitAction->AddAction(new WaitAction(robot, kWaitForBlockUpAxisChangeSecs));
+  }
+  
+  _objectsFlipped.clear();
+  StartActing(flipAndWaitAction, &BehaviorKnockOverCubes::TransitionToPlayingReaction);
+}
+
 
 void BehaviorKnockOverCubes::TransitionToPlayingReaction(Robot& robot)
 {
@@ -325,7 +306,7 @@ void BehaviorKnockOverCubes::HandleWhileRunning(const EngineToGameEvent& event, 
   }
 }
   
-void BehaviorKnockOverCubes::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
+void BehaviorKnockOverCubes::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
 {
   switch (event.GetData().GetTag()) {
     case ExternalInterface::MessageEngineToGameTag::ObjectUpAxisChanged:

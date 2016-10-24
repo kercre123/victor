@@ -1,9 +1,14 @@
 {
   "behaviorType": "KnockOverCubes",
   "name": "knockOverCubes",
+  "flatScore": 20,
   "requiredUnlockId": "KnockOverThreeCubeStack",
   "behaviorGroups": [
-    "Reactionary"
+    "FP_PlayWithHumans",
+    "FP_Socialize",
+    "FP_PlayAlone",
+    "FP_Hiking",
+    "FP_NothingToDo"
   ],
   "minimumStackHeight": 3,
   "disableByDefault": false,

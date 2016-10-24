@@ -21,14 +21,11 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/robot.h"
 
-const int kMinStackHeight = 3;
-
-
-
 static const char* kLookingWaitInitial = "lookingInitialWait_s";
 static const char* kLookingDownWait = "lookingDownWait_s";
 static const char* kLookingUpWait = "lookingUpWait_s";
 static const char* kMinBlockMovedThreshold = "minBlockMovedThreshold_mm_sqr";
+static const char* const kMinimumStackHeight = "minimumStackHeight";
 
 const float kLookingDown_rad = DEG_TO_RAD(-25);
 const float kLookingUp_rad = DEG_TO_RAD(45);
@@ -38,7 +35,7 @@ namespace Cozmo {
    
   
 BehaviorCantHandleTallStack::BehaviorCantHandleTallStack(Robot& robot, const Json::Value& config)
-  : IReactionaryBehavior(robot, config)
+  : IBehavior(robot, config)
   , _stackHeight(0)
   , _objectObservedChanged(false)
   , _baseBlockPoseValid(false)
@@ -55,58 +52,33 @@ BehaviorCantHandleTallStack::BehaviorCantHandleTallStack(Robot& robot, const Jso
   _lookingDownWait_s = config.get(kLookingDownWait, 3).asFloat();
   _lookingTopWait_s = config.get(kLookingUpWait, 3).asFloat();
   _minBlockMovedThreshold_mm_sqr = config.get(kMinBlockMovedThreshold, 3).asFloat();
+
+  _minStackHeight = config.get(kMinimumStackHeight, 3).asInt();
   
 }
   
-bool BehaviorCantHandleTallStack::IsRunnableInternalReactionary(const Robot& robot) const
+bool BehaviorCantHandleTallStack::IsRunnableInternal(const Robot& robot) const
 {
   const bool forFreeplay = true;
-  return !robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::KnockOverThreeCubeStack, forFreeplay);
+  if(!robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::KnockOverThreeCubeStack, forFreeplay)){
+    UpdateTargetStack(robot);
+    return _stackHeight >= _minStackHeight;
+  }
+  
+  return false;
 }
 
   
-Result BehaviorCantHandleTallStack::InitInternalReactionary(Robot& robot)
+Result BehaviorCantHandleTallStack::InitInternal(Robot& robot)
 {
   TransitionToReactingToStack(robot);
   return Result::RESULT_OK;
 }
 
   
-void BehaviorCantHandleTallStack::StopInternalReactionary(Robot& robot)
+void BehaviorCantHandleTallStack::StopInternal(Robot& robot)
 {
   ResetBehavior();
-}
-  
-bool BehaviorCantHandleTallStack::ShouldComputationallySwitch(const Robot& robot)
-{
-  if(_objectObservedChanged && robot.IsLocalized()){
-    _objectObservedChanged = false;
-    UpdateTargetStack(robot);
-    
-    
-    if(_baseBlockID.IsSet()){
-      if(_stackHeight >= kMinStackHeight){
-        // determine if the base block moved far enough from the last observation to re-run cantHandleTallStack
-        bool baseBlockMovedEnough = false;
-        const Pose3d& basePose = robot.GetBlockWorld().GetObjectByID(_baseBlockID)->GetPose();
-        f32 distSquared = 0.0;
-        bool couldCompare = (!_baseBlockPoseValid) || ComputeDistanceSQBetween(basePose, _lastReactionBasePose, distSquared);
-        if(!_baseBlockPoseValid ||
-           (couldCompare && distSquared > _minBlockMovedThreshold_mm_sqr)){
-          baseBlockMovedEnough = true;
-          _lastReactionBasePose = basePose;
-          _baseBlockPoseValid = true;
-        }
-        
-        return baseBlockMovedEnough;
-      }
-    }
-    
-    
-    
-  }
-  
-  return false;
 }
   
 void BehaviorCantHandleTallStack::TransitionToReactingToStack(Robot& robot)
@@ -156,12 +128,12 @@ void BehaviorCantHandleTallStack::ResetBehavior()
   _stackHeight = 0;
 }
 
-void BehaviorCantHandleTallStack::UpdateTargetStack(const Robot& robot)
+void BehaviorCantHandleTallStack::UpdateTargetStack(const Robot& robot) const
 {
    _stackHeight = robot.GetBlockWorld().GetTallestStack(_baseBlockID);
 }
   
-void BehaviorCantHandleTallStack::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
+void BehaviorCantHandleTallStack::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
 {
   switch (event.GetData().GetTag()) {
     case ExternalInterface::MessageEngineToGameTag::RobotObservedObject:

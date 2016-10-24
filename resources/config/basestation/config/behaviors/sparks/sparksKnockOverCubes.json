@@ -8,7 +8,6 @@
   ],
   "flatScore": 7.0,
   "minimumStackHeight": 2,
-  "isReactionary": false,
   "reachForBlockTrigger" : "KnockOverGrabAttempt",
   "knockOverEyesTrigger": "KnockOverEyes",
   "knockOverSuccessTrigger": "KnockOverSuccess",

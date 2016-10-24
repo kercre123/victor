@@ -37,8 +37,7 @@ static const std::set<BehaviorType> kBehaviorsToDisable = {BehaviorType::ReactTo
                                                            BehaviorType::ReactToOnCharger,
                                                            BehaviorType::AcknowledgeObject,
                                                            BehaviorType::AcknowledgeFace,
-                                                           BehaviorType::ReactToCubeMoved,
-                                                           BehaviorType::KnockOverCubes};
+                                                           BehaviorType::ReactToCubeMoved};
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
