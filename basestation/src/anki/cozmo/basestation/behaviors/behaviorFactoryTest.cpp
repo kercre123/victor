@@ -129,8 +129,8 @@ namespace Cozmo {
   static constexpr u32 _kMaxWifiVersion = 0x857b1ff;
   static constexpr u32 _kMaxRtipVersion = 0x857b1ff;
 
-  static constexpr u32 _kMinWifiVersion = 0x857b163;
-  static constexpr u32 _kMinRtipVersion = 0x857b163;
+  static constexpr u32 _kMinWifiVersion = 0x857b166;
+  static constexpr u32 _kMinRtipVersion = 0x857b166;
   
   static constexpr u32 _kMinBodyHWVersion = 3;
   
