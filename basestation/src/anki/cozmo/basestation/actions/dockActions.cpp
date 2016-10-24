@@ -349,27 +349,38 @@ namespace Anki {
       output.distThresholdUsed = ComputePreActionPoseDistThreshold(robot.GetPose(),
                                                                    dockObject,
                                                                    preActionPoseAngleTolerance);
+      
+      output.robotAtClosestPreActionPose = false;
+      
+      if(output.distThresholdUsed > 0)
+      {
+        if(closestPoint.AnyGT(output.distThresholdUsed))
+        {
+          // If we are checking that we are close enough to the preDock pose and our closestPoint is
+          // outside the distThreshold then fail saying we are too far away
+          // Otherwise we will succeed but robotAtClosestPreActionPose will stay false
+          if(doNearPredockPoseCheck)
+          {
+            PRINT_NAMED_INFO("IsCloseEnoughToPreActionPose.TooFarFromGoal",
+                            "Robot is too far from pre-action pose (%.1fmm, %.1fmm).",
+                            closestPoint.x(), closestPoint.y());
+            output.actionResult = ActionResult::FAILURE_RETRY;
+            output.interactionResult = ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE;
+            return;
+          }
+        }
+        // Else closestPoint is within the distThreshold and if the angle of the closest preAction pose is within
+        // preActionPoseAngleTolerance to the current angle of the robot then set robotAtClosestPreActionPose to true
+        else
+        {
+          Pose3d p;
+          preActionPoses[closestIndex].GetPose().GetWithRespectTo(robot.GetPose(), p);
 
-      if(doNearPredockPoseCheck &&
-         output.distThresholdUsed > 0.f &&
-         closestPoint.AnyGT(output.distThresholdUsed))
-      {
-        PRINT_NAMED_INFO("IsCloseEnoughToPreActionPose.TooFarFromGoal",
-                         "Robot is too far from pre-action pose (%.1fmm, %.1fmm).",
-                         closestPoint.x(), closestPoint.y());
-        output.actionResult = ActionResult::FAILURE_RETRY;
-        output.interactionResult = ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE;
-        return;
-      }
-      
-      Pose3d p;
-      preActionPoses[closestIndex].GetPose().GetWithRespectTo(robot.GetPose(), p);
-      
-      if(FLT_LT(std::abs(p.GetTranslation().x()), output.distThresholdUsed) &&
-         FLT_LT(std::abs(p.GetTranslation().y()), output.distThresholdUsed) &&
-         FLT_LT(std::abs(p.GetRotation().GetAngleAroundZaxis().ToFloat()), preActionPoseAngleTolerance.ToFloat()))
-      {
-        output.robotAtClosestPreActionPose = true;
+          if(FLT_LT(std::abs(p.GetRotation().GetAngleAroundZaxis().ToFloat()), preActionPoseAngleTolerance.ToFloat()))
+          {
+            output.robotAtClosestPreActionPose = true;
+          }
+        }
       }
       
       output.actionResult = ActionResult::SUCCESS;
@@ -1117,6 +1128,7 @@ namespace Anki {
             result = ActionResult::FAILURE_RETRY;
           } else {
             PRINT_NAMED_INFO("PickupObjectAction.Verify.Success", "Object pick-up SUCCEEDED!");
+            _interactionResult = ObjectInteractionResult::SUCCESS;
             result = ActionResult::SUCCESS;
           }
           break;
