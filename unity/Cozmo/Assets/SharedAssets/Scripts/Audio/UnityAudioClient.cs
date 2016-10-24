@@ -223,12 +223,134 @@ namespace Anki {
 
 
         // Data Helpers
+        public class StateMap<GroupType, StateType>
+          where GroupType : struct, IConvertible, IComparable, IFormattable 
+          where StateType : struct, IConvertible, IComparable, IFormattable
+        {
+          private readonly List<StateMapGroup<GroupType, StateType>> _Groups = new List<StateMapGroup<GroupType, StateType>>();
+          private readonly List<string> _CachedGroupNames = new List<string>();
+          private readonly string _BaseEnumPath;
+
+          public StateMap(string baseEnumPath) {
+            _BaseEnumPath = baseEnumPath;
+            BuildGroupList();
+          }
+
+          public List<string> GetGroupNames() {
+            return _CachedGroupNames;
+          }
+
+          public StateMapGroup<GroupType, StateType> GetGroupByIndex(int index) {
+            if (index < 0 || index >= _Groups.Count) {
+              return null;
+            }
+
+            return _Groups[index];
+          }
+
+          private void BuildGroupList() {
+            _Groups.Clear();
+            _CachedGroupNames.Clear();
+
+            var values = Enum.GetValues(typeof(GroupType));
+
+            foreach (var value in values) {
+              var group = new StateMapGroup<GroupType, StateType>((GroupType)value, _BaseEnumPath);
+              _Groups.Add(group);
+            }
+
+            // sort by name
+            _Groups.Sort((StateMapGroup<GroupType, StateType> a, StateMapGroup<GroupType, StateType> b) => {
+              if (a.Name == "Invalid") return -1;
+              if (a.Name == "Invalid") return 1;
+              return a.Name.CompareTo(b.Name);
+            });
+
+            foreach (var group in _Groups) {
+              _CachedGroupNames.Add(group.Name);
+            }
+          }
+        }
+
+        public class StateMapGroup<GroupType, StateType> 
+          where GroupType : struct, IConvertible, IComparable, IFormattable 
+          where StateType : struct, IConvertible, IComparable, IFormattable
+        {
+          public string Name { get; private set; }
+          public GroupType Value { get; private set; }
+
+          private readonly Dictionary<string, StateType> _States = new Dictionary<string, StateType>();
+          private readonly List<string> _CachedStateNames = new List<string>();
+          private string _BaseEnumPath;
+
+          public StateMapGroup(GroupType value, string baseEnumPath) {
+            Name = value.ToString();
+            Value = value;
+            _BaseEnumPath = baseEnumPath;
+            BuildStateList();
+          }
+
+          public List<string> GetStateNames() {
+            return _CachedStateNames;
+          }
+
+          public StateType GetStateByIndex(int index) {
+            string name = _CachedStateNames[index];
+
+            StateType state;
+
+            if (_States.TryGetValue(name, out state)) {
+              return state;
+            }
+
+            return (StateType)(object)0; // HACK: We know 0 == Invalid
+          }
+
+          private void BuildStateList() {
+            _States.Clear();
+            _CachedStateNames.Clear();
+
+            var stateEnum = GetStateEnumType(Value, _BaseEnumPath);
+
+            if (stateEnum != null) {
+              var names = Enum.GetNames(stateEnum);
+              var values = Enum.GetValues(stateEnum).Cast<StateType>().ToList();
+
+              for (int i = 0; i < names.Length; ++i) {
+                _States.Add(names[i], values[i]);
+                _CachedStateNames.Add(names[i]);
+              }
+
+              // sort by name
+              _CachedStateNames.Sort ((string a, string b) => {
+                if (a == "Invalid") return -1;
+                if (b == "Invalid") return 1;
+                return a.CompareTo(b);
+              });
+            }
+          }
+
+          private static System.Type GetStateEnumType(GroupType stateGroup, string baseEnumPath) {
+            if (stateGroup.ToString() == "Invalid") { // HACK: We know Invalid will always exist
+              return null;
+            }
+
+            var enumTypeName = baseEnumPath + "." + stateGroup.ToString();
+            try {
+              var enumType = System.Type.GetType(enumTypeName);
+              return enumType;
+            }
+            catch (Exception e) {
+              DAS.Error("UnityAudioClient.GameStateMap.Group.GetStateEnumType", e);
+              return null;
+            }
+          }
+        }
+
         private List<GameObjectType> _GameObjects;
         private List<GameEvent.GenericEvent> _Events;
-        private List<GameState.StateGroupType> _GameStateGroups;
-        private Dictionary<GameState.StateGroupType, List<GameState.GenericState>> _GameStateTypes;
-        private List<SwitchState.SwitchGroupType> _SwitchStateGroups;
-        private Dictionary<SwitchState.SwitchGroupType, List<SwitchState.GenericSwitch>> _SwitchStateTypes;
+        private StateMap<GameState.StateGroupType, GameState.GenericState> _GameStateMap = new StateMap<GameState.StateGroupType, GameState.GenericState>("Anki.Cozmo.Audio.GameState");
+        private StateMap<SwitchState.SwitchGroupType, SwitchState.GenericSwitch> _SwitchStateMap = new StateMap<Anki.Cozmo.Audio.SwitchState.SwitchGroupType, Anki.Cozmo.Audio.SwitchState.GenericSwitch>("Anki.Cozmo.Audio.SwitchState");
         private List<GameParameter.ParameterType> _RTPCParameters;
 
 
@@ -252,59 +374,22 @@ namespace Anki {
           return _Events;
         }
 
-        public List<GameState.StateGroupType> GetGameStateGroups() {
-          if (null == _GameStateGroups) {
-            _GameStateGroups = Enum.GetValues(typeof(GameState.StateGroupType)).Cast<GameState.StateGroupType>().ToList();
-            _GameStateGroups.Sort(delegate (GameState.StateGroupType a, GameState.StateGroupType b) {
-              if (GameState.StateGroupType.Invalid == a) return -1;
-              else if (GameState.StateGroupType.Invalid == b) return 1;
-              else return a.ToString().CompareTo(b.ToString());
-            });
-          }
-
-          return _GameStateGroups;
+        public List<string> GetGameStateGroupNames() {
+          return _GameStateMap.GetGroupNames();
         }
 
-        public List<GameState.GenericState> GetGameStates(GameState.StateGroupType stateGroup) {
-          if (null == _GameStateTypes) {
-            _GameStateTypes = new Dictionary<GameState.StateGroupType, List<GameState.GenericState>>();
-            // FIXME This a temp solution to add group types
-            List<Anki.Cozmo.Audio.GameState.GenericState> musicStates = Enum.GetValues(typeof(Anki.Cozmo.Audio.GameState.Music)).Cast<Anki.Cozmo.Audio.GameState.GenericState>().ToList();
-            _GameStateTypes.Add(GameState.StateGroupType.Music, musicStates);
-          }
-
-          List<Anki.Cozmo.Audio.GameState.GenericState> groupStates;
-          if (_GameStateTypes.TryGetValue(stateGroup, out groupStates)) {
-            return groupStates;
-          }
-
-          return null;
+        public StateMapGroup<GameState.StateGroupType, GameState.GenericState> GetGameStateGroupByIndex(int index) {
+          var group = _GameStateMap.GetGroupByIndex(index);
+          return group;
         }
 
-        public List<SwitchState.SwitchGroupType> GetSwitchStateGroups() {
-          if (null == _SwitchStateGroups) {
-            _SwitchStateGroups = Enum.GetValues(typeof(SwitchState.SwitchGroupType)).Cast<SwitchState.SwitchGroupType>().ToList();
-            _SwitchStateGroups.Sort(delegate (SwitchState.SwitchGroupType a, SwitchState.SwitchGroupType b) {
-              if (SwitchState.SwitchGroupType.Invalid == a) return -1;
-              else if (SwitchState.SwitchGroupType.Invalid == b) return 1;
-              else return a.ToString().CompareTo(b.ToString());
-            });
-          }
-
-          return _SwitchStateGroups;
+        public List<string> GetSwitchGroupNames() {
+          return _SwitchStateMap.GetGroupNames();
         }
 
-        public List<SwitchState.GenericSwitch> GetSwitchStates(SwitchState.SwitchGroupType stateGroup) {
-          if (null == _SwitchStateTypes) {
-            _SwitchStateTypes = new Dictionary<SwitchState.SwitchGroupType, List<SwitchState.GenericSwitch>>();
-          }
-
-          List<SwitchState.GenericSwitch> groupStates;
-          if (_SwitchStateTypes.TryGetValue(stateGroup, out groupStates)) {
-            return groupStates;
-          }
-
-          return null;
+        public StateMapGroup<SwitchState.SwitchGroupType, SwitchState.GenericSwitch> GetSwitchGroupByIndex(int index) {
+          var group = _SwitchStateMap.GetGroupByIndex(index);
+          return group;
         }
 
         public List<GameParameter.ParameterType> GetParameters() {

@@ -93,15 +93,11 @@ namespace Anki {
           }
 
           // Game State Groups
-          foreach (GameState.StateGroupType anEnum in _audioClient.GetGameStateGroups()) {
-            _GameStateGroupDropdown.options.Add(new Dropdown.OptionData(anEnum.ToString()));
-          }
+          _GameStateGroupDropdown.AddOptions(_audioClient.GetGameStateGroupNames());
           _GameStateGroupDropdown.onValueChanged.AddListener(_SetupGameStateTypeDropdown);
 
           // Switch State Groups
-          foreach (SwitchState.SwitchGroupType anEnum in _audioClient.GetSwitchStateGroups()) {
-            _SwitchStateGroupDropdown.options.Add(new Dropdown.OptionData(anEnum.ToString()));
-          }
+          _SwitchStateGroupDropdown.AddOptions(_audioClient.GetSwitchGroupNames());
           _SwitchStateGroupDropdown.onValueChanged.AddListener(_SetupSwitchStateTypeDropdown);
 
           // RTPC Parameters
@@ -116,30 +112,24 @@ namespace Anki {
 
         // Update State Type Dropdowns
         private void _SetupGameStateTypeDropdown(int value) {
-          // Reset Dropdown to show Group specific types
-          _GameStateTypeDropdown.options.Clear();
-          GameState.StateGroupType stateGroup = _audioClient.GetGameStateGroups()[value];
-          if (GameState.StateGroupType.Invalid != stateGroup) {
-            List<GameState.GenericState> states = _audioClient.GetGameStates(stateGroup);
-            if (null != states) {
-              foreach (GameState.GenericState anEnum in states) {
-                _GameStateTypeDropdown.options.Add(new Dropdown.OptionData(anEnum.ToString()));
-              }
-            }
+          _GameStateTypeDropdown.ClearOptions();
+
+          var group = _audioClient.GetGameStateGroupByIndex(value);
+
+          if (group != null) {
+            var stateNames = group.GetStateNames();
+            _GameStateTypeDropdown.AddOptions(stateNames);
           }
         }
 
         private void _SetupSwitchStateTypeDropdown(int value) {
-          // Reset Dropdown to show Group specific types
-          _SwitchStateTypeDropdown.options.Clear();
-          SwitchState.SwitchGroupType stateGroup = _audioClient.GetSwitchStateGroups()[value];
-          if (SwitchState.SwitchGroupType.Invalid != stateGroup) {
-            List<SwitchState.GenericSwitch> states = _audioClient.GetSwitchStates(stateGroup);
-            if (null != states) {
-              foreach (SwitchState.GenericSwitch anEnum in states) {
-                _SwitchStateTypeDropdown.options.Add(new Dropdown.OptionData(anEnum.ToString()));
-              }
-            }
+          _SwitchStateTypeDropdown.ClearOptions();
+
+          var group = _audioClient.GetSwitchGroupByIndex(value);
+
+          if (group != null) {
+            var stateNames = group.GetStateNames();
+            _SwitchStateTypeDropdown.AddOptions(stateNames);
           }
         }
 
@@ -189,19 +179,24 @@ namespace Anki {
         }
 
         private void _PostGameState() {
-          GameState.StateGroupType groupType = _audioClient.GetGameStateGroups()[_GameStateGroupDropdown.value];
-          GameState.GenericState stateType = _audioClient.GetGameStates(groupType)[_GameStateTypeDropdown.value];
-          _audioClient.PostGameState(groupType, stateType);
-          _AppendLogEvent("Post Game State: " + groupType.ToString() + " : " + stateType.ToString());
+          var group = _audioClient.GetGameStateGroupByIndex(_GameStateGroupDropdown.value);
+
+          if (group != null) {
+            var state = group.GetStateByIndex(_GameStateTypeDropdown.value);
+            _audioClient.PostGameState(group.Value, state);
+            _AppendLogEvent("Post Game State: " + group.Name + " : " + state.ToString());
+          }
         }
 
         private void _PostSwitchState() {
-          SwitchState.SwitchGroupType groupType = _audioClient.GetSwitchStateGroups()[_SwitchStateGroupDropdown.value];
-          SwitchState.GenericSwitch stateType = SwitchState.GenericSwitch.Invalid;
-          Anki.Cozmo.Audio.GameObjectType selectedGameObj = _audioClient.GetGameObjects()[_GameObjectDropdown.value];
+          var group = _audioClient.GetSwitchGroupByIndex (_SwitchStateGroupDropdown.value);
 
-          // TODO: Add PostGameState call
-          _AppendLogEvent("Post Switch State: " + groupType.ToString() + " : " + stateType.ToString() + " GameObj: " + selectedGameObj.ToString());
+          if (group != null) {
+            var state = group.GetStateByIndex(_SwitchStateTypeDropdown.value);
+            Anki.Cozmo.Audio.GameObjectType selectedGameObj = _audioClient.GetGameObjects()[_GameObjectDropdown.value];
+            _audioClient.PostSwitchState(group.Value, state, selectedGameObj);
+            _AppendLogEvent("Post Switch State: " + group.Name + " : " + state.ToString() + " GameObj: " + selectedGameObj.ToString());
+          }
         }
 
         private void _PostRTPCParameter() {
