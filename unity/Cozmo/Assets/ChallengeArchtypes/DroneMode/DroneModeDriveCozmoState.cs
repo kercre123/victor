@@ -52,10 +52,38 @@ namespace Cozmo {
 
           _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.LiftCubeButtonData,
                                                      HandleLiftCubeButtonPressed,
-                                                     true, // enableWhenCubeSeen
+                                                     true, // interactableOnlyWhenCubeSeen
+                                                     false, // interactableOnlyWhenKnownFaceSeen
                                                      "lift_cube_button",
                                                      DroneModeControlsSlide.ActionContextType.CubeNotInLift);
 
+          _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.RollCubeButtonData,
+                                                     HandleRollCubeButtonPressed,
+                                                     true, // interactableOnlyWhenCubeSeen
+                                                     false, // interactableOnlyWhenKnownFaceSeen
+                                                     "roll_cube_button",
+                                                     DroneModeControlsSlide.ActionContextType.CubeNotInLift);
+
+          _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.DropCubeButtonData,
+                                                     HandleDropCubeButtonPressed,
+                                                     false, // interactableOnlyWhenCubeSeen
+                                                     false, // interactableOnlyWhenKnownFaceSeen
+                                                     "drop_cube_button",
+                                                     DroneModeControlsSlide.ActionContextType.CubeInLift);
+
+          _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.StackCubeButtonData,
+                                                     HandleStackCubeButtonPressed,
+                                                     true, // interactableOnlyWhenCubeSeen
+                                                     false, // interactableOnlyWhenKnownFaceSeen
+                                                     "stack_cube_button",
+                                                     DroneModeControlsSlide.ActionContextType.CubeInLift);
+
+          _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.SayNameButtonData,
+                                                     HandleSayNameButtonPressed,
+                                                     false, // interactableOnlyWhenCubeSeen
+                                                     true, // interactableOnlyWhenKnownFaceSeen
+                                                     "say_name_button",
+                                                     DroneModeControlsSlide.ActionContextType.FaceSeen);
 
           _DroneModeControlsSlide.OnDriveSpeedSegmentValueChanged += HandleDriveSpeedValueChanged;
           _DroneModeControlsSlide.OnDriveSpeedSegmentChanged += HandleDriveSpeedFamilyChanged;
@@ -372,14 +400,47 @@ namespace Cozmo {
         private void HandleLiftCubeButtonPressed() {
           IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
           if (targetObject != null && targetObject is ObservedObject && targetObject is LightCube) {
-            _CurrentRobot.PickupObject(targetObject as ObservedObject, callback: HandleLiftCubeActionFinished);
+            _CurrentRobot.PickupObject(targetObject as ObservedObject, callback: HandleActionFinished);
             DisableInput();
             _IsPerformingAction = true;
           }
         }
 
-        private void HandleLiftCubeActionFinished(bool success) {
-          _CurrentRobot.CancelCallback(HandleLiftCubeActionFinished);
+        private void HandleRollCubeButtonPressed() {
+          IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
+          if (targetObject != null && targetObject is ObservedObject && targetObject is LightCube) {
+            _CurrentRobot.RollObject(targetObject as ObservedObject, callback: HandleActionFinished);
+            DisableInput();
+            _IsPerformingAction = true;
+          }
+        }
+
+        private void HandleDropCubeButtonPressed() {
+          _CurrentRobot.PlaceObjectOnGroundHere(callback: HandleActionFinished);
+          DisableInput();
+          _IsPerformingAction = true;
+        }
+
+        private void HandleStackCubeButtonPressed() {
+          IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
+          if (targetObject != null && targetObject is ObservedObject && targetObject is LightCube) {
+            _CurrentRobot.PlaceOnObject(targetObject as ObservedObject, callback: HandleActionFinished);
+            DisableInput();
+            _IsPerformingAction = true;
+          }
+        }
+
+        private void HandleSayNameButtonPressed() {
+          IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
+          if (targetObject != null && targetObject is Face) {
+            _CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, sayName: true, callback: HandleActionFinished);
+            DisableInput();
+            _IsPerformingAction = true;
+          }
+        }
+
+        private void HandleActionFinished(bool success) {
+          _CurrentRobot.CancelCallback(HandleActionFinished);
           EnableInput();
           _IsPerformingAction = false;
         }

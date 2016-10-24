@@ -144,11 +144,12 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     public void CreateActionButton(DroneModeActionData actionData, System.Action callback,
-                                   bool enableWhenCubeSeen, string dasButtonName, ActionContextType actionType) {
+                                   bool interactableOnlyWhenCubeSeen, bool interactableOnlyWhenKnownFaceSeen,
+                                   string dasButtonName, ActionContextType actionType) {
       GameObject buttonContainer = GetContainerBasedOnActionType(actionType);
       GameObject newButton = UIManager.CreateUIElement(_DroneModeActionButtonPrefab, buttonContainer.transform);
       DroneModeActionButton newButtonScript = newButton.GetComponent<DroneModeActionButton>();
-      newButtonScript.Initialize(dasButtonName, _kDasViewControllerName, actionData, callback, enableWhenCubeSeen);
+      newButtonScript.Initialize(dasButtonName, _kDasViewControllerName, actionData, callback, interactableOnlyWhenCubeSeen, interactableOnlyWhenKnownFaceSeen);
       _ContextualButtons.Add(newButtonScript);
     }
 
@@ -332,17 +333,22 @@ namespace Cozmo.Minigame.DroneMode {
 
     private void UpdateContextualButtons() {
       bool currentObjectIsCube = (_CurrentlyFocusedObject is LightCube);
+      bool currentObjectIsKnownFace = ((_CurrentlyFocusedObject is Face)
+                                       && (!string.IsNullOrEmpty(((Face)_CurrentlyFocusedObject).Name)));
       foreach (DroneModeActionButton button in _ContextualButtons) {
         if (button.IsUnlocked) {
           if (button.NeedsCubeSeen) {
             button.Interactable = currentObjectIsCube;
+          }
+          else if (button.NeedsKnownFaceSeen) {
+            button.Interactable = currentObjectIsKnownFace;
           }
           else {
             button.Interactable = true;
           }
         }
         else {
-          button.Interactable = false;
+          button.Interactable = true;
         }
       }
     }

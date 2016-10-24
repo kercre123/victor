@@ -58,6 +58,7 @@ namespace Cozmo.Minigame.DroneMode {
       _CurrentRobot = currentRobot;
 
       _ReticlePool = new SimpleObjectPool<DroneModeCameraReticle>(CreateReticle, ResetReticle, 0);
+      _FocusedObjectFrameContainer.gameObject.SetActive(false);
     }
 
     private void Update() {
