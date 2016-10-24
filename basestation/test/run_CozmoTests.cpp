@@ -8,19 +8,21 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/robot/matlabInterface.h"
-#include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/components/visionComponent.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/basestation/robotToEngineImplMessaging.h"
 #include "anki/cozmo/basestation/ramp.h"
-#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/visionSystem.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "util/fileUtils/fileUtils.h"
-#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
 #include <unistd.h>
 
 Anki::Cozmo::CozmoContext* cozmoContext = nullptr; // This is externed and used by tests
@@ -483,6 +485,174 @@ TEST(BlockWorld, UpdateObjectOrigins)
   ASSERT_EQ(closeID, robot.GetLocalizedTo());
   
 } // BlockWorld.UpdateObjectOrigins
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+namespace {
+
+// helper for device connection messages, for example when cubes connect/disconnect. Note implementation directly
+// calls the robot handler, rather than simulating actually sending a message
+using namespace Anki::Cozmo;
+void FakeRecvConnectionMessage(Robot& robot, double time, uint32_t activeID, uint32_t factoryID, Anki::Cozmo::ActiveObjectType device_type, bool connected)
+{
+  using namespace RobotInterface;
+  RobotToEngine msg = RobotToEngine::CreateactiveObjectConnectionState(
+                        ObjectConnectionState(activeID, factoryID, device_type, connected) );
+  AnkiEvent<RobotToEngine> event(time, static_cast<uint32_t>(msg.GetTag()), msg);
+  robot.GetRobotToEngineImplMessaging().HandleActiveObjectConnectionState(event, &robot);
+}
+
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TEST(BlockWorld, LocalizedObjectDisconnect)
+{
+  using namespace Anki;
+  using namespace Cozmo;
+  
+  Result lastResult;
+  
+  Robot robot(1, cozmoContext);
+  robot.FakeSyncTimeAck();
+  
+  BlockWorld& blockWorld = robot.GetBlockWorld();
+  
+  // There should be nothing in BlockWorld yet
+  BlockWorldFilter filter;
+  std::vector<ObservableObject*> objects;
+  blockWorld.FindMatchingObjects(filter, objects);
+  ASSERT_TRUE(objects.empty());
+  
+  // Fake a state message update for robot
+  RobotState stateMsg(1, // timestamp,
+                      0, // pose_frame_id,
+                      1, // pose_origin_id,
+                      RobotPose(0.f,0.f,0.f,0.f,0.f),
+                      0.f, // lwheel_speed_mmps,
+                      0.f, // rwheel_speed_mmps,
+                      0.f, // headAngle,
+                      0.f, // liftAngle,
+                      0.f, // liftHeight,
+                      0.f, // rawGyroZ,
+                      0.f, // rawAccelY,
+                      0.f, // batteryVoltage,
+                      (u16)RobotStatusFlag::HEAD_IN_POS | (u16)RobotStatusFlag::LIFT_IN_POS, // status,
+                      0, // lastPathID,
+                      0, // cliffDataRaw,
+                      0, // currPathSegment,
+                      0); // numFreeSegmentSlots)
+  
+  lastResult = robot.UpdateFullRobotState(stateMsg);
+  ASSERT_EQ(lastResult, RESULT_OK);
+  
+  // For faking observations of a cube
+  const ActiveObjectType closeActiveObjectType = ActiveObjectType::OBJECT_CUBE2;
+  const ActiveID closeActiveID = 1;
+  const FactoryID closeFactoryID = 1;
+  const ObjectType closeType = ObjectType::Block_LIGHTCUBE2;
+  const Block_Cube1x1 closeCube(closeType);
+  const Vision::Marker::Code closeCode = closeCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
+  
+  const Quad2f closeCorners{
+    Point2f( 67,117),  Point2f( 70,185),  Point2f(136,116),  Point2f(137,184)
+  };
+  
+  TimeStamp_t fakeTime = 10;
+
+  // connect to cube
+  FakeRecvConnectionMessage(robot, fakeTime, closeActiveID, closeFactoryID, closeActiveObjectType, true);
+  ++fakeTime;
+  
+  // Should have a "close" object present
+  filter.SetAllowedTypes({closeType});
+  filter.SetFilterFcn(&BlockWorldFilter::ActiveObjectsFilter);
+  const ObservableObject* matchingObject = robot.GetBlockWorld().FindMatchingObject(filter);
+  ASSERT_NE(nullptr, matchingObject);
+  ASSERT_TRUE(matchingObject->GetID().IsSet());
+  ASSERT_TRUE(matchingObject->IsPoseStateUnknown());
+  ASSERT_EQ(closeActiveID, matchingObject->GetActiveID());
+  
+  // capture the ID so we can compare later
+  const ObjectID blockObjectID = matchingObject->GetID();
+  
+  // Camera calibration
+  const u16 HEAD_CAM_CALIB_WIDTH  = 320;
+  const u16 HEAD_CAM_CALIB_HEIGHT = 240;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 290.f;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 290.f;
+  const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
+  const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
+  
+  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  
+  robot.GetVisionComponent().SetCameraCalibration(camCalib);
+  
+  // Enable "vision while moving" so that we don't have to deal with trying to compute
+  // angular velocities, since we don't have real state history to do so.
+  robot.GetVisionComponent().EnableVisionWhileMovingFast(true);
+
+  VisionProcessingResult procResult;
+  
+  // After seeing three times, should be Known and localizable
+  const s32 kNumObservations = 5;
+  
+  // see the close block by itself
+  lastResult = ObserveMarkerHelper(kNumObservations, {{closeCode, closeCorners}},
+                                   fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // Should be localized to "close" object
+  filter.SetAllowedTypes({closeType});
+  matchingObject = robot.GetBlockWorld().FindMatchingObject(filter);
+  ASSERT_NE(nullptr, matchingObject);
+  ASSERT_EQ(blockObjectID, matchingObject->GetID());
+  ASSERT_EQ(closeActiveID, matchingObject->GetActiveID());
+  ASSERT_TRUE(matchingObject->IsPoseStateKnown());
+  ASSERT_EQ(blockObjectID, robot.GetLocalizedTo());
+  
+  // disconnect from the cube
+  FakeRecvConnectionMessage(robot, fakeTime, closeActiveID, closeFactoryID, closeActiveObjectType, false);
+  ++fakeTime;
+  
+  // delocalize while the cube is disconnected
+  // this causes the memory map to be destroyed, since there are no localizable cubes available
+  const bool isCarryingObject = false;
+  robot.Delocalize(isCarryingObject);
+  ++fakeTime;
+  
+  // reconnect to the cube
+  FakeRecvConnectionMessage(robot, fakeTime, closeActiveID, closeFactoryID, closeActiveObjectType, true);
+  ++fakeTime;
+  
+  // see the cube again
+  lastResult = ObserveMarkerHelper(kNumObservations, {{closeCode, closeCorners}},
+                                   fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // Should have the object back
+  filter.SetAllowedTypes({closeType});
+  std::vector<ObservableObject*> matchingObjects;
+  robot.GetBlockWorld().FindMatchingObjects(filter, matchingObjects);
+  ASSERT_EQ(1, matchingObjects.size());
+  
+  // Close object should now be Known pose state
+  matchingObject = robot.GetBlockWorld().GetObjectByID(blockObjectID);
+  ASSERT_NE(nullptr, matchingObject);
+  ASSERT_TRUE(matchingObject->IsPoseStateKnown());
+  
+  // "Move" the robot so it will relocalize
+  lastResult = FakeRobotMovement(robot, stateMsg, fakeTime);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // Seeing both objects again, now that we've moved, should relocalize (and not crash!)
+  lastResult = ObserveMarkerHelper(kNumObservations, {{closeCode, closeCorners}},
+                                   fakeTime, robot, stateMsg, procResult);
+  ASSERT_EQ(RESULT_OK, lastResult);
+  
+  // Should end up localized to the close object
+  ASSERT_EQ(blockObjectID, robot.GetLocalizedTo());
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(BlockWorld, CubeStacks)

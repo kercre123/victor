@@ -552,15 +552,15 @@ void RobotToEngineImplMessaging::HandleActiveObjectConnectionState(const AnkiEve
                              "Object %d (activeID %d, factoryID 0x%x, device_type 0x%hx, origin %p)",
                              objID.GetValue(), payload.objectID, payload.factoryID,
                              payload.device_type, &obj->GetPose().FindOrigin());
-          
-          // When disconnecting from an object make sure to set the factoryIDs of all matching objects in all frames
-          // to zero in case we see this disconnected object in the world
-          // Also update activeIDs so we don't try to localize to it
-          obj->SetFactoryID(0);
-          obj->SetActiveID(-1);
         }
         
-        if( ! obj->IsPoseStateKnown() ) {
+        // When disconnecting from an object make sure to set the factoryIDs of all matching objects in all frames
+        // to zero in case we see this disconnected object in the world
+        // Also update activeIDs so we don't try to localize to it
+        obj->SetFactoryID(0);
+        obj->SetActiveID(-1);
+        
+        if( !obj->IsPoseStateUnknown() ) {
           robot->GetBlockWorld().ClearObject(objID);
           clearedObject = true;
         }

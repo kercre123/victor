@@ -129,8 +129,6 @@ NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // CONSOLE VARS
 
-// kEnableMemoryMap: if set to true Cozmo creates/uses memory maps
-CONSOLE_VAR(bool, kEnableMemoryMap, "BlockWorld.MemoryMap", true);
 // how often we request redrawing maps. Added because I think clad is getting overloaded with the amount of quads
 CONSOLE_VAR(float, kMemoryMapRenderRate_sec, "BlockWorld.MemoryMap", 0.25f);
 
@@ -764,10 +762,9 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     BroadcastAvailableObjects(broadCastConnectedOnly, newOrigin);
     
     // if memory maps are enabled, we can merge old into new
-    if ( kEnableMemoryMap )
     {
-      // oldOrigin is the pointer/id of the map that is staying, it's the one we rejiggered to
-      // newOrigin is the pointer/id of the map we were just building, and it's going away
+      // oldOrigin is the pointer/id of the map we were just building, and it's going away. It's the current map
+      // newOrigin is the pointer/id of the map that is staying, it's the one we rejiggered to, and we haven't changed in a while
       ASSERT_NAMED( _navMemoryMaps.find(oldOrigin) != _navMemoryMaps.end(), "BlockWorld.UpdateObjectOrigins.missingMapOriginOld");
       ASSERT_NAMED( _navMemoryMaps.find(newOrigin) != _navMemoryMaps.end(), "BlockWorld.UpdateObjectOrigins.missingMapOriginNew");
       ASSERT_NAMED( oldOrigin == _currentNavMemoryMapOrigin, "BlockWorld.UpdateObjectOrigins.updatingMapNotCurrent");
@@ -779,6 +776,28 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       // grab the underlying memory map and merge them
       INavMemoryMap* oldMap = _navMemoryMaps[oldOrigin].get();
       INavMemoryMap* newMap = _navMemoryMaps[newOrigin].get();
+      
+      // COZMO-6184: the issue localizing to a zombie map was related to a cube being disconnected while we delocalized.
+      // The issue has been fixed, but this code here would have prevented a crash and produce an error instead, so I
+      // am going to keep the code despite it may not run anymore
+      if ( nullptr == newMap )
+      {
+        // error to identify the issue
+        PRINT_NAMED_ERROR("BlockWorld.UpdateObjectOrigins.NullMapFound",
+                          "Origin '%s' did not have a memory map. Creating empty",
+                          newOrigin->GetName().c_str());
+        
+        // create empty map since somehow we lost the one we had
+        VizManager* vizMgr = _robot->GetContext()->GetVizManager();
+        INavMemoryMap* emptyMemoryMap = NavMemoryMapFactory::CreateDefaultNavMemoryMap(vizMgr);
+        
+        // set in the container of maps
+        _navMemoryMaps[newOrigin].reset(emptyMemoryMap);
+        // set the pointer to this newly created instance
+        newMap = emptyMemoryMap;
+      }
+
+      // continue the merge as we were going to do, so at least we don't lose the information we were just collecting
       Pose3d oldWrtNew;
       const bool success = oldOrigin->GetWithRespectTo(*newOrigin, oldWrtNew);
       ASSERT_NAMED(success, "BlockWorld.UpdateObjectOrigins.BadOldWrtNull");
@@ -1003,11 +1022,6 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::CreateLocalizedMemoryMap(const Pose3d* worldOriginPtr)
   {
-    // can disable the feature completely
-    if ( !kEnableMemoryMap ) {
-      return;
-    }
-
     // Since we are going to create a new memory map, check if any of the existing ones have become a zombie
     // This could happen if either the current map never saw a localizable object, or if objects in previous maps
     // have been moved or deactivated, which invalidates them as localizable
@@ -1016,10 +1030,21 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     {
       const bool isZombie = IsZombiePoseOrigin( iter->first );
       if ( isZombie ) {
-        PRINT_CH_DEBUG("BlockWorld", "CreateLocalizedMemoryMap", "Deleted map (%p) because it was zombie", iter->first);
+        // PRINT_CH_DEBUG("BlockWorld", "CreateLocalizedMemoryMap", "Deleted map (%p) because it was zombie", iter->first);
+        PRINT_NAMED_EVENT("blockworld.memory_map.deleting_zombie_map",
+                          "%s", iter->first->GetName().c_str() );
         iter = _navMemoryMaps.erase(iter);
+        
+        // also remove the reported poses in this origin for every object (fixes a leak, and better tracks where objects are)
+        for( auto& posesForObjectIt : _navMapReportedPoses ) {
+          OriginToPoseInMapInfo& posesPerOriginForObject = posesForObjectIt.second;
+          const Pose3d* zombieOrigin = iter->first;
+          posesPerOriginForObject.erase( zombieOrigin );
+        }
       } else {
-        PRINT_CH_DEBUG("BlockWorld", "CreateLocalizedMemoryMap", "Map (%p) is still good", iter->first);
+        //PRINT_CH_DEBUG("BlockWorld", "CreateLocalizedMemoryMap", "Map (%p) is still good", iter->first);
+        PRINT_NAMED_EVENT("blockworld.memory_map.keeping_alive_map",
+                          "%s", iter->first->GetName().c_str() );
         ++iter;
       }
     }
@@ -3025,8 +3050,8 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     }
     else
     {
-      // if the map was removed (for zombies), we shouldn't be asking to remove an object from it
-      ASSERT_NAMED(matchPair == _navMemoryMaps.end(), "BlockWorld.RemoveObjectReportFromMemMap.NoMapForOrigin");
+      // if the map was removed (for zombies), we shouldn't be asking to add an object to it
+      ASSERT_NAMED(matchPair == _navMemoryMaps.end(), "BlockWorld.AddObjectReportToMemMap.NoMapForOrigin");
     }
   }
   
