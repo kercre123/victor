@@ -15,6 +15,9 @@ namespace Cozmo {
       [SerializeField]
       private HorizontalOrVerticalLayoutGroup _SegmentContainer;
 
+      [SerializeField]
+      private Sprite _OffImage;
+
       // Use Unity.UI.Toggles for now as the "segments"
       List<Toggle> _CurrentSegments = new List<Toggle>();
 
@@ -52,15 +55,33 @@ namespace Cozmo {
           currentNumSegments = _CurrentSegments.Count;
         }
 
-        for (int i = 0; i < _CurrentSegments.Count; i++) {
-          if (i < currentNumSegments) {
-            if (!_CurrentSegments[i].isOn) {
-              _CurrentSegments[i].isOn = true;
+        // Toggling between a starting an end image
+        if (_OffImage != null) {
+          for (int i = 0; i < _CurrentSegments.Count; i++) {
+            Image img = _CurrentSegments[i].graphic as Image;
+            // Can only set an image if graphic was an image, otherwise just toggle it off.
+            _CurrentSegments[i].isOn = img != null;
+            if (img != null) {
+              if (i < currentNumSegments) {
+                img.overrideSprite = null;
+              }
+              else {
+                img.overrideSprite = _OffImage;
+              }
             }
           }
-          else {
-            if (_CurrentSegments[i].isOn) {
-              _CurrentSegments[i].isOn = false;
+        }
+        else {
+          for (int i = 0; i < _CurrentSegments.Count; i++) {
+            if (i < currentNumSegments) {
+              if (!_CurrentSegments[i].isOn) {
+                _CurrentSegments[i].isOn = true;
+              }
+            }
+            else {
+              if (_CurrentSegments[i].isOn) {
+                _CurrentSegments[i].isOn = false;
+              }
             }
           }
         }

@@ -39,6 +39,7 @@ namespace Simon {
 
     private PlayerType _FirstPlayer = PlayerType.Human;
     private bool _WantsSequenceGrowth = true;
+    private bool _ShowSequenceUpdated = false;
 
     public AnimationCurve CozmoWinPercentage { get { return _SkillCurve; } }
 
@@ -124,6 +125,7 @@ namespace Simon {
       // Only increment on the first player
       if (playerPickingSequence == _FirstPlayer && _WantsSequenceGrowth) {
         _CurrentSequenceLength = _CurrentSequenceLength >= MaxSequenceLength ? MaxSequenceLength : _CurrentSequenceLength + 1;
+        _ShowSequenceUpdated = true;
       }
       return _CurrentSequenceLength;
     }
@@ -324,19 +326,24 @@ namespace Simon {
 
     public void ShowCurrentPlayerTurnStage(PlayerType player, bool isListening) {
       SimonTurnSlide simonTurnScript = GetSimonSlide();
-      string statusLocKey = isListening ? LocalizationKeys.kSimonGameLabelListen : LocalizationKeys.kSimonGameLabelRepeat;
       if (player == PlayerType.Cozmo) {
-        simonTurnScript.ShowCozmoLives(_CurrLivesCozmo, _Config.MaxLivesCozmo, statusLocKey);
+        simonTurnScript.ShowCozmoLives(_CurrLivesCozmo, _Config.MaxLivesCozmo);
+        simonTurnScript.ShowCenterText("");
       }
       else {
         Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Window_Open);
-        simonTurnScript.ShowHumanLives(_CurrLivesHuman, _Config.MaxLivesHuman, statusLocKey);
+        simonTurnScript.ShowHumanLives(_CurrLivesHuman, _Config.MaxLivesHuman);
+        simonTurnScript.ShowCenterText(isListening ? Localization.Get(LocalizationKeys.kSimonGameLabelListen) : Localization.Get(LocalizationKeys.kSimonGameLabelRepeat));
       }
       CurrentPlayer = player;
       string status = "";
-      int round = _CurrentIDSequence.Count - _Config.MinSequenceLength + 1;
-      if (round > 0) {
-        status = Localization.GetWithArgs(LocalizationKeys.kSimonGameTextPatternLength, _CurrentIDSequence.Count - _Config.MinSequenceLength + 1);
+      int turnNumber = _CurrentIDSequence.Count - _Config.MinSequenceLength + 1;
+      if (turnNumber > 0) {
+        status = Localization.GetWithArgs(LocalizationKeys.kSimonGameTextPatternLength, turnNumber);
+        if (_ShowSequenceUpdated) {
+          SharedMinigameView.PlayBannerAnimation(status, null, _BannerAnimationDurationSeconds);
+          _ShowSequenceUpdated = false;
+        }
       }
       simonTurnScript.ShowStatusText(status);
     }
@@ -344,6 +351,7 @@ namespace Simon {
     public void ShowCenterResult(bool enabled, bool correct = true) {
       SimonTurnSlide simonTurnScript = GetSimonSlide();
       simonTurnScript.ShowCenterImage(enabled, correct);
+      simonTurnScript.ShowCenterText("");
     }
 
     public int GetLivesRemaining(PlayerType player) {

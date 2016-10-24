@@ -14,6 +14,9 @@ namespace Simon {
     private AnkiTextLabel _StatusTextLabel;
 
     [SerializeField]
+    private AnkiTextLabel _CenterTextLabel;
+
+    [SerializeField]
     private Sprite _CorrectSprite;
     [SerializeField]
     private Sprite _WrongSprite;
@@ -54,15 +57,23 @@ namespace Simon {
         _StatusTextLabel.text = "";
       }
     }
+    public void ShowCenterText(string status) {
+      if (status != null) {
+        _CenterTextLabel.text = status;
+      }
+      else {
+        _CenterTextLabel.text = "";
+      }
+    }
 
-    public void ShowHumanLives(int lives, int maxLives, string statusLocKey = "") {
-      _PlayerWidget.UpdateStatus(lives, maxLives, statusLocKey);
+    public void ShowHumanLives(int lives, int maxLives) {
+      _PlayerWidget.UpdateStatus(lives, maxLives);
       _PlayerWidget.gameObject.SetActive(true);
       _PlayerWidget.SetTurn(true);
       _CozmoWidget.SetTurn(false);
     }
-    public void ShowCozmoLives(int lives, int maxLives, string statusLocKey = "") {
-      _CozmoWidget.UpdateStatus(lives, maxLives, statusLocKey);
+    public void ShowCozmoLives(int lives, int maxLives) {
+      _CozmoWidget.UpdateStatus(lives, maxLives);
       _CozmoWidget.gameObject.SetActive(true);
       _PlayerWidget.SetTurn(false);
       _CozmoWidget.SetTurn(true);

@@ -81,7 +81,7 @@
   "minigame.label.difficultySelect": {
     "translation": "SELECT DIFFICULTY"
   },
-  "minigame.label.cozmoPrep":{
+  "minigame.label.cozmoPrep": {
     "translation": "Cozmo is getting ready to play..."
   },
   "askCozmo.title": {
@@ -96,28 +96,28 @@
   "droneMode.chargerReticleLabel": {
     "translation": "Charger"
   },
-  "droneMode.cubeReticleLabel":{
+  "droneMode.cubeReticleLabel": {
     "translation": "Power Cube"
   },
-  "droneMode.unknownObjectReticleLabel":{
+  "droneMode.unknownObjectReticleLabel": {
     "translation": "UNKNOWN"
   },
-  "droneMode.safePlay.title":{
+  "droneMode.safePlay.title": {
     "translation": "Safe Play:"
   },
-  "droneMode.safePlay.description":{
+  "droneMode.safePlay.description": {
     "translation": "- Explore indoors in well lit spaces\n- Drive on flat surfaces\n- Be careful of falling off edges\n- Stay close to Cozmo for the best experience"
   },
-  "droneMode.button.howToPlayConfirm":{
+  "droneMode.button.howToPlayConfirm": {
     "translation": "Got it!"
   },
-  "droneMode.text.howToPlaySteering":{
+  "droneMode.text.howToPlaySteering": {
     "translation": "Tilt your device to steer Cozmo left and right."
   },
-  "droneMode.text.howToPlaySpeed":{
+  "droneMode.text.howToPlaySpeed": {
     "translation": "Drag and hold to move Cozmo forward or backward.\nLet go to stop."
   },
-  "droneMode.text.howToPlayHead":{
+  "droneMode.text.howToPlayHead": {
     "translation": "Drag to tilt Cozmo's view up or down."
   },
   "playhouseGame01.text.howToPlay": {
@@ -130,10 +130,10 @@
     "translation": "Unlock by winning Memory Match VS mode."
   },
   "simonGame.label.yourTurn": {
-    "translation": "Your turn:"
+    "translation": "Your turn"
   },
   "simonGame.label.cozmoTurn": {
-    "translation": "Cozmo's turn:"
+    "translation": "Cozmo's turn"
   },
   "simonGame.label.listen": {
     "translation": "Listen..."
@@ -312,17 +312,17 @@
   "minigame.difficulty.expert": {
     "translation": "Four Colors"
   },
- "speedTap.difficulty.easyDescription": {
-   "translation": "Be the first to tap your Cube when the colors match, but never tap on red!"
+  "speedTap.difficulty.easyDescription": {
+    "translation": "Be the first to tap your Cube when the colors match, but never tap on red!"
   },
   "speedTap.difficulty.mediumDescription": {
-   "translation": "Tap your Cube first when the patterns match, but Cubes may now have either 1 or 2 colors."
+    "translation": "Tap your Cube first when the patterns match, but Cubes may now have either 1 or 2 colors."
   },
   "speedTap.difficulty.hardDescription": {
-   "translation": "Watch out! Cube patterns can be more complex, with up to 3 colors at a time."
+    "translation": "Watch out! Cube patterns can be more complex, with up to 3 colors at a time."
   },
   "speedTap.difficulty.expertDescription": {
-   "translation": "Experts only! Cubes can now have up to 4 colors at once, challenging even the best players."
+    "translation": "Experts only! Cubes can now have up to 4 colors at once, challenging even the best players."
   },
   "button.retry": {
     "translation": "Try Again"
@@ -341,7 +341,7 @@
   },
   "speedTap.difficulty.expertDescription.locked": {
     "translation": "Four Color Mode is Locked\nUnlock by winning Quick Tap in Three Color Mode."
-  }, 
+  },
   "speedTap.text.getReady": {
     "translation": "Get Ready!"
   },

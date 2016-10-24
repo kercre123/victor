@@ -253,14 +253,14 @@ namespace Simon {
         }
         else if (nextState == ScanPhase.ScanLeft || nextState == ScanPhase.ScanCenter) {
           _Game.SharedMinigameView.EnableContinueButton(false);
-          const float kLeftScanDeg = 45.0f;
+          const float kLeftScanDeg = 30.0f;
           _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * kLeftScanDeg, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2, HandleTurnFinished);
           _ShowCozmoCubesSlide.RotateCozmoImageTo(kLeftScanDeg, _RotateSecScan);
         }
         else if (nextState == ScanPhase.ScanRight) {
           _Game.SharedMinigameView.EnableContinueButton(false);
           // Half speed since going further
-          const float kRightScanDeg = -90.0f;
+          const float kRightScanDeg = -60.0f;
           _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * kRightScanDeg, SimonGame.kTurnSpeed_rps * 2, SimonGame.kTurnAccel_rps2, HandleTurnFinished);
           // Half of the total Degrees cozmo rotates since these are absolute          
           _ShowCozmoCubesSlide.RotateCozmoImageTo(kRightScanDeg / 2.0f, _RotateSecScan);
