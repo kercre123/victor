@@ -84,6 +84,8 @@ void VizControllerImpl::Init()
     std::bind(&VizControllerImpl::ProcessVizEndRobotUpdate, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::SaveImages,
     std::bind(&VizControllerImpl::ProcessSaveImages, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::CameraInfo,
+    std::bind(&VizControllerImpl::ProcessCameraInfo, this, std::placeholders::_1));
 
   // Get display devices
   disp = vizSupervisor.getDisplay("cozmo_viz_display");
@@ -470,7 +472,26 @@ void VizControllerImpl::ProcessVizImageChunkMessage(const AnkiEvent<VizInterface
     SetColorHelper(camDisp, NamedColors::RED);
     camDisp->drawText(std::to_string(payload.frameTimeStamp), 1, camDisp->getHeight()-9); // display timestamp at lower left
     _curImageTimestamp = payload.frameTimeStamp;
+    
+    DisplayCameraInfo();
   }
+}
+
+void VizControllerImpl::ProcessCameraInfo(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_CameraInfo();
+  
+  _exposure = payload.exposure_ms;
+  _gain     = payload.gain;
+}
+
+void VizControllerImpl::DisplayCameraInfo()
+{
+  // Print values
+  char text[24];
+  snprintf(text, sizeof(text), "Exp:%u Gain:%.3f\n", _exposure, _gain);
+  camDisp->setColor(0xff0000);
+  camDisp->drawText(text, camDisp->getWidth()-144, camDisp->getHeight()-9); //display exposure in bottom right
 }
 
 

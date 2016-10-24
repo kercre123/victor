@@ -2264,11 +2264,11 @@ namespace Anki {
                 
               case (s32)'_':
               {
-                ExternalInterface::RealignWithObject realignWithObject;
-                realignWithObject.objectID = -1;
-                realignWithObject.dist_mm = 0.0f;
+                ExternalInterface::SetCameraSettings settings;
+                settings.exposure_ms = root_->getField("exposure_ms")->getSFFloat();
+                settings.gain = root_->getField("gain")->getSFFloat();
                 ExternalInterface::MessageGameToEngine message;
-                message.Set_RealignWithObject(realignWithObject);
+                message.Set_SetCameraSettings(settings);
                 SendMessage(message);
                 break;
               }

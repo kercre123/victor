@@ -37,6 +37,7 @@
 #include "anki/cozmo/basestation/groundPlaneROI.h"
 #include "anki/cozmo/basestation/overheadEdge.h"
 #include "anki/cozmo/basestation/rollingShutterCorrector.h"
+#include "anki/cozmo/basestation/visionPoseData.h"
 
 #include "anki/common/basestation/matlabInterface.h"
 
@@ -59,6 +60,7 @@
 #include "clad/types/loadedKnownFace.h"
 #include "clad/types/visionModes.h"
 #include "clad/types/toolCodes.h"
+#include "clad/types/cameraParams.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 #include "util/bitFlags/bitFlags.h"
@@ -67,65 +69,21 @@
 #include <queue>
 
 namespace Anki {
+
 namespace Embedded {
   typedef Point<float> Point2f;
 }
+  
+namespace Vision {
+  class ImagingPipeline;
+}
+  
 namespace Cozmo {
     
   // Forward declaration:
   class Robot;
   class VizManager;
   class EncodedImage;
-  
-  struct VisionPoseData {
-    TimeStamp_t           timeStamp;
-    RobotPoseStamp        poseStamp;  // contains historical head/lift/pose info
-    Pose3d                cameraPose; // w.r.t. pose in poseStamp
-    bool                  groundPlaneVisible;
-    Matrix_3x3f           groundPlaneHomography;
-    GroundPlaneROI        groundPlaneROI;
-    bool                  isBodyMoving = false;
-    bool                  isHeadMoving = false;
-    bool                  isLiftMoving = false;
-    ImuDataHistory        imuDataHistory;
-    
-    VisionPoseData() = default;
-    
-    // ---------- Begin Custom copy implementation ------- //
-    template<typename T1, typename T2>
-    friend void swap(T1&& first, T2&& second)
-    {
-      // This enables ADL
-      using std::swap;
-      
-      swap(first.timeStamp, second.timeStamp);
-      swap(first.poseStamp, second.poseStamp);
-      swap(first.cameraPose, second.cameraPose);
-      swap(first.groundPlaneVisible, second.groundPlaneVisible);
-      swap(first.groundPlaneHomography, second.groundPlaneHomography);
-      swap(first.groundPlaneROI, second.groundPlaneROI);
-      swap(first.isBodyMoving, second.isBodyMoving);
-      swap(first.isHeadMoving, second.isHeadMoving);
-      swap(first.isLiftMoving, second.isLiftMoving);
-      swap(first.imuDataHistory, second.imuDataHistory);
-      
-      // Because the cameraPose is wrt the pose contained in poseStamp, set it explicitly
-      first.cameraPose.SetParent(&(first.poseStamp.GetPose()));
-      second.cameraPose.SetParent(&(second.poseStamp.GetPose()));
-    }
-    
-    template<typename T>
-    VisionPoseData(T&& other)
-    {
-      swap(*this, std::forward<T>(other));
-    }
-    
-    VisionPoseData& operator=(VisionPoseData other)
-    {
-      swap(*this, other);
-      return *this;
-    }
-  };
   
   // Everything that can be generated from one image in one big package:
   struct VisionProcessingResult
@@ -134,6 +92,8 @@ namespace Cozmo {
     Util::BitFlags16<VisionMode> modesProcessed;
     
     ImageQuality imageQuality;
+    s32 exposureTime_ms;  // Use < 0 to indicate "no change", ignored if imageQuality==Unchecked
+    f32 cameraGain;       // Use < 0 to indicate "no change", ignored if imageQuality==Unchecked
     
     std::list<VizInterface::TrackerQuad>               trackerQuads;
     std::list<ExternalInterface::RobotObservedMotion>  observedMotions;
@@ -309,13 +269,21 @@ namespace Cozmo {
     Result RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName,
                       Vision::RobotRenamedEnrolledFace& renamedFace);
     
-    void SetParams(const bool autoExposureOn,
-                   const f32 exposureTime,
-                   const s32 integerCountsIncrement,
-                   const f32 minExposureTime,
-                   const f32 maxExposureTime,
-                   const u8 highValue,
-                   const f32 percentileToMakeHigh);
+    // Parameters for camera hardware exposure values
+    using GammaCurve = std::array<u8, (size_t)CameraConstants::GAMMA_CURVE_SIZE>;
+    Result SetCameraExposureParams(const s32 currentExposureTime_ms,
+                                   const s32 minExposureTime_ms,
+                                   const s32 maxExposureTime_ms,
+                                   const f32 currentGain,
+                                   const f32 minGain,
+                                   const f32 maxGain,
+                                   const GammaCurve& gammaCurve);
+
+    // Parameters for how we compute new exposure from image data
+    Result SetAutoExposureParams(const s32 subSample,
+                                 const u8  midValue,
+                                 const f32 midPercentile,
+                                 const f32 maxChangeFraction);
 
     const std::string& GetDataPath() const { return _dataPath; }
   
@@ -326,9 +294,10 @@ namespace Cozmo {
     bool  IsDoingRollingShutterCorrection() const { return _doRollingShutterCorrection; }
     
     Result DetectMarkers(const Vision::Image& inputImage,
-                         std::vector<Quad2f>& markerQuads);
+                         std::vector<Anki::Rectangle<s32>>& detectionRects);
 
-    Result CheckImageQuality(const Vision::Image& inputImage);
+    Result CheckImageQuality(const Vision::Image& inputImage,
+                             const std::vector<Anki::Rectangle<s32>>& detectionRects);
     
   protected:
   
@@ -363,12 +332,16 @@ namespace Cozmo {
     
     Vision::Camera _camera;
     
-    enum VignettingCorrection
-    {
-      VignettingCorrection_Off,
-      VignettingCorrection_CameraHardware,
-      VignettingCorrection_Software
-    };
+    // Camera parameters
+    std::unique_ptr<Vision::ImagingPipeline> _imagingPipeline;
+    s32 _maxCameraExposureTime_ms = 66;
+    s32 _minCameraExposureTime_ms = 1;
+    s32 _currentExposureTime_ms   = 16;
+    
+    // These baseline defaults are overridden by whatever we receive from the camera
+    f32 _minCameraGain     = 0.1f; 
+    f32 _maxCameraGain     = 4.0f; 
+    f32 _currentCameraGain = 2.0f; 
     
     // The tracker can fail to converge this many times before we give up
     // and reset the docker
@@ -381,34 +354,8 @@ namespace Cozmo {
     
     bool _calibrateFromToolCode = false;
     
-    // Camera parameters
-    // TODO: Should these be moved to (their own struct in) visionParameters.h/cpp?
-    f32 _exposureTime = 0.2f;
-    
-    VignettingCorrection _vignettingCorrection = VignettingCorrection_Off;
-
-    const f32 _vignettingCorrectionParameters[5] = {0,0,0,0,0};
-    
     s32 _frameNumber = 0;
-    bool _autoExposure_enabled = false;
     s32 _trackingIteration; // Simply for display at this point
-    
-    // TEMP: Un-const-ing these so that we can adjust them from basestation for dev purposes.
-    /*
-     const s32 autoExposure_integerCountsIncrement = 3;
-     const f32 autoExposure_minExposureTime = 0.02f;
-     const f32 autoExposure_maxExposureTime = 0.98f;
-     const u8 autoExposure_highValue = 250;
-     const f32 autoExposure_percentileToMakeHigh = 0.97f;
-     const s32 autoExposure_adjustEveryNFrames = 1;
-     */
-    s32 _autoExposure_integerCountsIncrement = 3;
-    f32 _autoExposure_minExposureTime = 0.02f;
-    f32 _autoExposure_maxExposureTime = 0.50f;
-    u8  _autoExposure_highValue = 250;
-    f32 _autoExposure_percentileToMakeHigh = 0.95f;
-    f32 _autoExposure_tooHighPercentMultiplier = 0.7f;
-    s32 _autoExposure_adjustEveryNFrames = 2;
     
     // Tracking marker related members
     struct MarkerToTrack {
@@ -514,9 +461,6 @@ namespace Cozmo {
     static Result GetImageHelper(const Vision::Image& srcImage,
                                  Embedded::Array<u8>& destArray);
 
-    //void DownsampleAndSendImage(const Embedded::Array<u8> &img);
-    Result PreprocessImage(Embedded::Array<u8>& grayscaleImage);
-    
     Result ApplyCLAHE(const Vision::Image& inputImageGray, Vision::Image& claheImage);
     
     enum class MarkerDetectionCLAHE : u8 {
@@ -528,7 +472,7 @@ namespace Cozmo {
     
     Result DetectMarkersWithCLAHE(Vision::Image& inputImageGray,
                                   Vision::Image& claheImage,
-                                  std::vector<Quad2f>& markerQuads,
+                                  std::vector<Anki::Rectangle<s32>>& detectionRects,
                                   MarkerDetectionCLAHE useCLAHE);
     
     static Result BrightnessNormalizeImage(Embedded::Array<u8>& image,
@@ -548,8 +492,8 @@ namespace Cozmo {
                                    Embedded::MemoryStack scratch);
     
     Result DetectFaces(const Vision::Image& grayImage,
-                       const std::vector<Quad2f>& markerQuads);
-    
+                       std::vector<Anki::Rectangle<s32>>& detectionRects);
+                       
     Result DetectMotion(const Vision::ImageRGB& image);
     
     Result DetectOverheadEdges(const Vision::ImageRGB& image);

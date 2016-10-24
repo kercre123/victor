@@ -113,6 +113,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::motorAutoEnabled,               &RobotToEngineImplMessaging::HandleMotorAutoEnabled);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::dockingStatus,                             &RobotToEngineImplMessaging::HandleDockingStatus);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::mfgId,                          &RobotToEngineImplMessaging::HandleRobotSetBodyID);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::defaultCameraParams,            &RobotToEngineImplMessaging::HandleDefaultCameraParams);
   
   
   // lambda wrapper to call internal handler
@@ -1103,6 +1104,14 @@ void RobotToEngineImplMessaging::HandleRobotPoked(const AnkiEvent<RobotInterface
   PRINT_NAMED_INFO("Robot.HandleRobotPoked","");
   RobotInterface::RobotPoked payload = message.GetData().Get_robotPoked();
   robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPoked(payload.robotID)));
+}
+
+void RobotToEngineImplMessaging::HandleDefaultCameraParams(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+{
+  ANKI_CPU_PROFILE("Robot::HandleDefaultCameraParams");
+  
+  const DefaultCameraParams& payload = message.GetData().Get_defaultCameraParams();
+  robot->GetVisionComponent().HandleDefaultCameraParams(payload);
 }
 } // end namespace Cozmo
 } // end namespace Anki

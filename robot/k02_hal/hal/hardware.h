@@ -9,6 +9,10 @@ static volatile uint32_t * const recovery_word = (uint32_t*) 0x20001FFC;
 //#define ENABLE_FCC_TEST
 //#define GENERATE_WHITE_NOISE
 
+const uint8_t CAMERA_ADDR = 0x31;
+const uint8_t CAMERA_EXPOSURE = 0x3;
+const uint8_t CAMERA_GAIN = 0x70;
+
 #define EP1_HEADBOARD
 
 // All of these are for EP1 and EP2

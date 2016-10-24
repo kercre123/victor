@@ -49,7 +49,7 @@ namespace HAL {
     }
     else if (tag <= RobotInterface::TO_RTIP_END)
     {
-      AnkiWarn( 143, "WiFi.RadioSendMessage", 395, "Refusing to send message %x[%d] to self!", 2, tag, size);
+      AnkiWarn( 403, "WiFi.RadioSendMessage", 619, "Refusing to send message %x[%d] to self!", 2, tag, size);
       return false;
     }
     else

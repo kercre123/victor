@@ -18,6 +18,7 @@
 #include "clad/types/robotErrors.clad"
 #include "clad/types/fwTestMessages.clad"
 #include "clad/types/factoryFWOnly.clad"
+#include "clad/types/cameraParams.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -94,7 +95,7 @@ union RobotToEngine {
   MovingLiftPostDock         movingLiftPostDock     = 0xC5,
   ProxObstacle               proxObstacle           = 0xC6,
   IMURawDataChunk            imuRawDataChunk        = 0xC7,
-  CameraCalibration          cameraCalibration      = 0xC8,
+  DefaultCameraParams        defaultCameraParams    = 0xC8,
   RobotAvailable             robotAvailable         = 0xC9,
   AnimationStarted           animStarted            = 0xCA,
   AnimationEnded             animEnded              = 0xCB,

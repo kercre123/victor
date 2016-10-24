@@ -1,0 +1,31 @@
+
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_32 CameraConstants
+{
+  GAMMA_CURVE_SIZE = 17,
+}
+
+// Sent by the robot with various default camera parameters
+message DefaultCameraParams
+{
+  float_32 maxGain,
+  float_32 gain,
+  uint_16  minExposure_ms,
+  uint_16  maxExposure_ms,
+  uint_8   gammaCurve[17], // ^ GAMMA_CURVE_SIZE above
+}
+
+// This message can do two things, either set the camera exposure and gain or request
+// the default camera parameters. This is to limit the number of message engineToRobot messages
+message SetCameraParams
+{
+  float_32 gain,
+  uint_16 exposure_ms,
+  bool requestDefaultParams = 0,
+}
+
+}
+}

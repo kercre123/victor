@@ -23,7 +23,7 @@
 #include "anki/cozmo/basestation/encodedImage.h"
 #include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/cozmo/basestation/rollingShutterCorrector.h"
-#include "anki/cozmo/basestation/visionSystem.h"
+#include "anki/cozmo/basestation/visionPoseData.h"
 
 #include "clad/types/loadedKnownFace.h"
 #include "clad/types/robotStatusAndActions.h"
@@ -55,6 +55,8 @@ namespace Cozmo {
 // Forward declaration
 class Robot;
 class CozmoContext;
+struct VisionProcessingResult;
+class VisionSystem;
 class VizManager;
   
 struct DockingErrorSignal;
@@ -254,6 +256,10 @@ struct DockingErrorSignal;
     // This is for faking images being processed for unit tests
     void FakeImageProcessed(TimeStamp_t t) { _lastProcessedImageTimeStamp_ms = t; }
     
+    // Handles receiving the default camera parameters from robot which are requested when we
+    // read the camera calibration
+    void HandleDefaultCameraParams(const DefaultCameraParams& params);
+    
     // Templated message handler used internally by AnkiEventUtil
     template<typename T>
     void HandleMessage(const T& msg);
@@ -335,6 +341,9 @@ struct DockingErrorSignal;
     void BroadcastLoadedNamesAndIDs(const std::list<Vision::LoadedKnownFace>& loadedFaces) const;
     
     void VisualizeObservedMarkerIn3D(const Vision::ObservedMarker& marker) const;
+    
+    // Sets the exposure and gain on the robot
+    void SetCameraSettings(const s32 exposure_ms, const f32 gain);
     
     // Factory centroid finder: returns the centroids of the 4 factory test dots,
     // computes camera pose w.r.t. the target and broadcasts a RobotCompletedFactoryDotTest

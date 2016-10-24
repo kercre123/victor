@@ -536,6 +536,20 @@ namespace Anki {
         AnkiInfo( 110, "Messages.Process_imageRequest.Recvd", 358, "mode: %d, resolution: %d", 2, msg.sendMode, msg.resolution);
         HAL::SetImageSendMode(msg.sendMode, msg.resolution);
       }
+      
+      void Process_setCameraParams(const SetCameraParams& msg)
+      {
+        if(msg.requestDefaultParams)
+        {
+          DefaultCameraParams params;
+          HAL::CameraGetDefaultParameters(params);
+          RobotInterface::SendMessage(params);
+        }
+        else
+        {
+          HAL::CameraSetParameters(msg.exposure_ms, msg.gain);
+        }
+      }
 
       void Process_rollActionParams(const RobotInterface::RollActionParams& msg) {
         PickAndPlaceController::SetRollActionParams(msg.liftHeight_mm,

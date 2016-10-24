@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/encodedImage.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/visionModesHelpers.h"
+#include "anki/vision/basestation/cameraImagingPipeline.h"
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
@@ -32,6 +33,7 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/helpers/cleanupHelper.h"
 #include "util/console/consoleInterface.h"
+#include "util/math/constantsAndMacros.h"
 
 //
 // Embedded implementation holdovers:
@@ -46,7 +48,6 @@
 #include "anki/vision/robot/perspectivePoseEstimation.h"
 #include "anki/vision/robot/classifier.h"
 #include "anki/vision/robot/lbpcascade_frontalface.h"
-#include "anki/vision/robot/cameraImagingPipeline.h"
 #include "opencv2/calib3d/calib3d.hpp"
 
 // CoreTech Common Includes
@@ -138,19 +139,15 @@ namespace Cozmo {
   CONSOLE_VAR_RANGED(u8, kOverheadEdgeDetectionFrequency, "Vision.Performance", 1, 1, 10);
   
   namespace {
-    // Image quality checks:
-    // - If mean is below low dark threshold with any stddev, or below the high dark threshold
-    //   with stddev also below threshold, then it is too dark
-    // - If mean is above the high bright threshold with any stddev, or above the low bright
-    //   threshold with stddev also below threshold, then it is too bright
+    // These are initialized from Json config:
     // NOTE: Vision processing scheduler (COZMO-3218) will probably affects the (need for) frequency
-    u8 kQualityCheckFrequency;
-    u8 kImageMeanTooDarkLowThreshold;
-    u8 kImageMeanTooDarkHighThreshold;
-    u8 kImageStddevTooDarkThreshold;
-    u8 kImageMeanTooBrightHighThreshold;
-    u8 kImageMeanTooBrightLowThreshold;
-    u8 kImageStddevTooBrightThreshold;
+    u8 kQualityCheckFrequency = 15;
+    u8 kTooDarkValue   = 15;
+    u8 kTooBrightValue = 230;
+    f32 kLowPercentile = 0.10f;
+    f32 kMidPercentile = 0.50f;
+    f32 kHighPercentile = 0.90f;
+    bool kMeterFromDetections = true;
   }
   
   static const char * const kLogChannelName = "VisionSystem";
@@ -160,6 +157,7 @@ namespace Cozmo {
   VisionSystem::VisionSystem(const std::string& dataPath, VizManager* vizMan)
   : _rollingShutterCorrector()
   , _dataPath(dataPath)
+  , _imagingPipeline(new Vision::ImagingPipeline())
   , _vizManager(vizMan)
   , _clahe(cv::createCLAHE())
   {
@@ -176,7 +174,7 @@ namespace Cozmo {
     
 #   if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
     // Force the NN library to load _now_, not on first use
-    PRINT_CH_INFO(kLogChannelName, "VisionSystem.Constructor.LoadNearestNeighborLibrary",
+    PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.LoadNearestNeighborLibrary",
                   "Markers generated on %s", Vision::MarkerDefinitionVersionString);
     VisionMarker::GetNearestNeighborLibrary();
 #   endif
@@ -221,17 +219,34 @@ namespace Cozmo {
       PRINT_NAMED_ERROR("VisionSystem.Init.MissingJsonParameter", "%s", __fieldName__); \
       return RESULT_FAIL; \
     }} while(0)
-
-    const Json::Value& imageQualityConfig = config["ImageQuality"];
-    GET_JSON_PARAMETER(imageQualityConfig, "CheckFrequency", kQualityCheckFrequency);
     
-    GET_JSON_PARAMETER(imageQualityConfig, "TooDarkMeanThreshold_low",  kImageMeanTooDarkLowThreshold);
-    GET_JSON_PARAMETER(imageQualityConfig, "TooDarkMeanThreshold_high", kImageMeanTooDarkHighThreshold);
-    GET_JSON_PARAMETER(imageQualityConfig, "TooDarkStdDevThreshold",    kImageStddevTooDarkThreshold);
-    
-    GET_JSON_PARAMETER(imageQualityConfig, "TooBrightMeanThreshold_high", kImageMeanTooBrightHighThreshold);
-    GET_JSON_PARAMETER(imageQualityConfig, "TooBrightMeanThreshold_low",  kImageMeanTooBrightLowThreshold);
-    GET_JSON_PARAMETER(imageQualityConfig, "TooBrightStddevThreshold",    kImageStddevTooBrightThreshold);
+    {
+      // Set up auto-exposure
+      const Json::Value& imageQualityConfig = config["ImageQuality"];
+      GET_JSON_PARAMETER(imageQualityConfig, "CheckFrequency",      kQualityCheckFrequency);
+      GET_JSON_PARAMETER(imageQualityConfig, "TooBrightValue",      kTooBrightValue);
+      GET_JSON_PARAMETER(imageQualityConfig, "TooDarkValue",        kTooDarkValue);
+      GET_JSON_PARAMETER(imageQualityConfig, "MeterFromDetections", kMeterFromDetections);
+      GET_JSON_PARAMETER(imageQualityConfig, "LowPercentile",       kLowPercentile);
+      GET_JSON_PARAMETER(imageQualityConfig, "MidPercentile",       kMidPercentile);
+      GET_JSON_PARAMETER(imageQualityConfig, "HighPercentile",      kHighPercentile);
+      
+      u8  targetMidValue=0;
+      f32 maxChangeFraction = -1.f;
+      s32 subSample = 0;
+      
+      GET_JSON_PARAMETER(imageQualityConfig, "MidValue",                 targetMidValue);
+      GET_JSON_PARAMETER(imageQualityConfig, "MaxChangeFraction",        maxChangeFraction);
+      GET_JSON_PARAMETER(imageQualityConfig, "SubSample",                subSample);
+      
+      Result expResult = SetAutoExposureParams(subSample, targetMidValue, kMidPercentile, maxChangeFraction);
+      
+      if(RESULT_OK != expResult)
+      {
+        PRINT_NAMED_ERROR("VisionSystem.Init.SetExposureParametersFailed", "");
+        return expResult;
+      }
+    }
     
     {
       // Set up profiler logging frequencies
@@ -248,10 +263,10 @@ namespace Cozmo {
       Profiler::SetDasLogFrequency(SEC_TO_MILLIS(timeBetweenProfilerDasLogs_sec));
     }
     
-    PRINT_CH_INFO(kLogChannelName, "VisionSystem.Constructor.InstantiatingFaceTracker",
+    PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.InstantiatingFaceTracker",
                   "With model path %s.", _dataPath.c_str());
     _faceTracker = new Vision::FaceTracker(_dataPath, config);
-    PRINT_CH_INFO(kLogChannelName, "VisionSystem.Constructor.DoneInstantiatingFaceTracker", "");
+    PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.DoneInstantiatingFaceTracker", "");
     
     _markerToTrack.Clear();
     _newMarkerToTrack.Clear();
@@ -271,7 +286,7 @@ namespace Cozmo {
     {
       Result matlabInitResult = MatlabVisionProcessor::Initialize();
       if(RESULT_OK != matlabInitResult) {
-        PRINT_NAMED_WARNING("VisionSystem.Constructor.MatlabInitFail", "");
+        PRINT_NAMED_WARNING("VisionSystem.Init.MatlabInitFail", "");
         // We'll still mark as initialized -- can proceed without
       }
     }
@@ -628,9 +643,12 @@ namespace Cozmo {
   }
   
   Result VisionSystem::DetectMarkers(const Vision::Image& inputImageGray,
-                                     std::vector<Quad2f>& markerQuads)
+                                     std::vector<Anki::Rectangle<s32>>& detectionRects)
   {
     Result lastResult = RESULT_OK;
+    
+    // Currently assuming we detect markers first, so we won't make use of anything already detected
+    ASSERT_NAMED(detectionRects.empty(), "VisionSystem.DetectMarkers.ExpectingEmptyDetectionRects");
     
     BeginBenchmark("VisionSystem_LookForMarkers");
     
@@ -673,12 +691,12 @@ namespace Cozmo {
     for(auto invertImage : imageInversions)
     {
       Vision::Image currentImage;
-      if(!markerQuads.empty())
+      if(!detectionRects.empty())
       {
         // White out already-detected markers so we don't find them again
         inputImageGray.CopyTo(currentImage);
         
-        for(auto & quad : markerQuads)
+        for(auto & quad : detectionRects)
         {
           Anki::Rectangle<s32> rect(quad);
           Vision::Image roi = currentImage.GetROI(rect);
@@ -695,8 +713,6 @@ namespace Cozmo {
       } else {
         GetImageHelper(currentImage, grayscaleImage);
       }
-      
-      PreprocessImage(grayscaleImage);
       
       Embedded::FixedLengthList<Embedded::VisionMarker>& markers = _memory._markers;
       const s32 maxMarkers = markers.get_maximumSize();
@@ -781,7 +797,7 @@ namespace Cozmo {
        */
       
       const s32 numMarkers = _memory._markers.get_size();
-      markerQuads.reserve(markerQuads.size() + numMarkers);
+      detectionRects.reserve(detectionRects.size() + numMarkers);
       
       for(s32 i_marker = 0; i_marker < numMarkers; ++i_marker)
       {
@@ -810,7 +826,7 @@ namespace Cozmo {
         }
         
         // The warped quad is drawn in red in the simulator
-        markerQuads.emplace_back(quad);
+        detectionRects.emplace_back(quad);
         Vision::ObservedMarker obsMarker(inputImageGray.GetTimestamp(),
                                          crntMarker.markerType,
                                          quad, _camera);
@@ -833,7 +849,6 @@ namespace Cozmo {
             Vision::Image warpedImage = _rollingShutterCorrector.WarpImage(inputImageGray);
             
             GetImageHelper(warpedImage, grayscaleImage);
-            PreprocessImage(grayscaleImage);
             
             for(int i=0; i<4; i++)
             {
@@ -867,32 +882,143 @@ namespace Cozmo {
     return RESULT_OK;
   } // DetectMarkers()
   
-  Result VisionSystem::CheckImageQuality(const Vision::Image& inputImage)
+  Result VisionSystem::CheckImageQuality(const Vision::Image& inputImage,
+                                         const std::vector<Anki::Rectangle<s32>>& detections)
   {
-    cv::Scalar cvMean, cvStddev;
-    cv::meanStdDev(inputImage.get_CvMat_(), cvMean, cvStddev);
+#   define DEBUG_IMAGE_HISTOGRAM 0
     
-    const u8 mean = cvMean.val[0];
-    const u8 stddev = cvStddev.val[0];
+    // Compute the exposure we would like to have
+    f32 exposureAdjFrac = 1.f;
     
-    if(mean < kImageMeanTooDarkLowThreshold ||
-       (mean < kImageMeanTooDarkHighThreshold && stddev < kImageStddevTooDarkThreshold))
+    Result expResult = RESULT_FAIL;
+    if(!kMeterFromDetections || detections.empty())
     {
-      PRINT_CH_INFO(kLogChannelName, "VisionSystem.CheckImageQuality.TooDark",
-                    "Mean:%u Stddev:%u", mean, stddev);
-      _currentResult.imageQuality = ImageQuality::TooDark;
-    }
-    else if(mean > kImageMeanTooBrightHighThreshold ||
-            (mean > kImageMeanTooBrightLowThreshold && stddev < kImageStddevTooBrightThreshold))
-    {
-      PRINT_CH_INFO(kLogChannelName, "VisionSystem.CheckImageQuality.TooBright",
-                    "Mean:%u Stddev:%u", mean, stddev);
-      _currentResult.imageQuality = ImageQuality::TooBright;
+      expResult = _imagingPipeline->ComputeExposureAdjustment(inputImage, exposureAdjFrac);
     }
     else
     {
-      _currentResult.imageQuality = ImageQuality::Good;
+      // Give half the weight to the detections, the other half to the rest of the image
+      std::vector<Anki::Rectangle<s32>> roiRects;
+      s32 totalRoiArea = 0;
+      for(auto const& quad : detections)
+      {
+        roiRects.emplace_back(quad);
+        totalRoiArea += roiRects.back().Area();
+      }
+      
+      if(2*totalRoiArea < inputImage.GetNumElements())
+      {
+        const u8 backgroundWeight = Util::numeric_cast<u8>(255.f * static_cast<f32>(totalRoiArea)/static_cast<f32>(inputImage.GetNumElements()));
+        const u8 roiWeight = 255 - backgroundWeight;
+        
+        Vision::Image weightMask(inputImage.GetNumRows(), inputImage.GetNumCols());
+        weightMask.FillWith(backgroundWeight);
+        
+        for(auto & rect : roiRects)
+        {
+          weightMask.GetROI(rect).FillWith(roiWeight);
+        }
+        
+        expResult = _imagingPipeline->ComputeExposureAdjustment(inputImage, weightMask, exposureAdjFrac);
+        
+        if(DEBUG_IMAGE_HISTOGRAM)
+        {
+          Vision::ImageRGB dispWeights(weightMask);
+          dispWeights.DrawText({1.f,9.f},
+                               "F:" + std::to_string(roiWeight) +
+                               " B:" + std::to_string(backgroundWeight),
+                               NamedColors::RED, 0.5f);
+          _currentResult.debugImageRGBs.emplace_back("HistWeights", dispWeights);
+        }
+      }
+      else
+      {
+        // Detections already make up more than half the image, so they'll already
+        // get more focus. Just expose normally
+        expResult = _imagingPipeline->ComputeExposureAdjustment(inputImage, exposureAdjFrac);
+      }
     }
+    
+    if(RESULT_OK != expResult)
+    {
+      PRINT_NAMED_WARNING("VisionSystem.CheckImageQuality.ComputeNewExposureFailed",
+                          "Detection Quads=%zu", detections.size());
+      return expResult;
+    }
+    
+
+    if(DEBUG_IMAGE_HISTOGRAM)
+    {
+      const Vision::ImageBrightnessHistogram& hist = _imagingPipeline->GetHistogram();
+      std::vector<u8> values = hist.ComputePercentiles({kLowPercentile, kMidPercentile, kHighPercentile});
+      auto valueIter = values.begin();
+      
+      Vision::ImageRGB histImg(hist.GetDisplayImage(128));
+      histImg.DrawText(Anki::Point2f((s32)hist.GetCounts().size()/3, 12),
+                       std::string("L:")  + std::to_string(*valueIter++) +
+                       std::string(" M:") + std::to_string(*valueIter++) +
+                       std::string(" H:") + std::to_string(*valueIter++),
+                       NamedColors::RED, 0.45f);
+      _currentResult.debugImageRGBs.emplace_back("ImageHist", histImg);
+      
+    } // if(DEBUG_IMAGE_HISTOGRAM)
+    
+    // Default: we checked the image quality and it's fine (no longer "Unchecked")
+    _currentResult.imageQuality = ImageQuality::Good;
+    
+    if(FLT_LT(exposureAdjFrac, 1.f))
+    {
+      // Want to bring brightness down: reduce exposure first, if possible
+      if(_currentExposureTime_ms > _minCameraExposureTime_ms)
+      {
+        _currentExposureTime_ms = std::round(static_cast<f32>(_currentExposureTime_ms) * exposureAdjFrac);
+        _currentExposureTime_ms = std::max(_minCameraExposureTime_ms, _currentExposureTime_ms);
+      }
+      else if(FLT_GT(_currentCameraGain, _minCameraGain))
+      {
+        // Already at min exposure time; reduce gain
+        _currentCameraGain *= exposureAdjFrac;
+        _currentCameraGain = std::max(_minCameraGain, _currentCameraGain);
+      }
+      else
+      {
+        const u8 currentLowValue = _imagingPipeline->GetHistogram().ComputePercentile(kLowPercentile);
+        if(currentLowValue > kTooBrightValue)
+        {
+          // Both exposure and gain are as low as they can go and the low value in the
+          // image is still too high: it's too bright!
+          _currentResult.imageQuality = ImageQuality::TooBright;
+        }
+      }
+    }
+    else if(FLT_GT(exposureAdjFrac, 1.f))
+    {
+      // Want to bring brightness up: increase gain first, if possible
+      if(FLT_LT(_currentCameraGain, _maxCameraGain))
+      {
+        _currentCameraGain *= exposureAdjFrac;
+        _currentCameraGain = std::min(_maxCameraGain, _currentCameraGain);
+      }
+      else if(_currentExposureTime_ms < _maxCameraExposureTime_ms)
+      {
+        // Already at max gain; increase exposure
+        _currentExposureTime_ms = std::round(static_cast<f32>(_currentExposureTime_ms) * exposureAdjFrac);
+        _currentExposureTime_ms = std::min(_maxCameraExposureTime_ms, _currentExposureTime_ms);
+      }
+      else
+      {
+        const u8 currentHighValue = _imagingPipeline->GetHistogram().ComputePercentile(kHighPercentile);
+        if(currentHighValue < kTooDarkValue)
+        {
+          // Both exposure and gain are as high as they can go and the high value in the
+          // image is still too low: it's too dark!
+          _currentResult.imageQuality = ImageQuality::TooDark;
+        }
+      }
+    }
+    
+    _currentResult.exposureTime_ms = _currentExposureTime_ms;
+    _currentResult.cameraGain      = _currentCameraGain;
     
     return RESULT_OK;
   }
@@ -1147,8 +1273,6 @@ namespace Cozmo {
     
     GetImageHelper(inputImageGray, grayscaleImage);
     
-    PreprocessImage(grayscaleImage);
-
     bool trackingSucceeded = false;
     if(_trackerJustInitialized)
     {
@@ -1522,8 +1646,32 @@ namespace Cozmo {
     return _faceTracker->RenameFace(faceID, oldName, newName, renamedFace);
   }
   
+  
+  Vision::Image BlackOutRects(const Vision::Image& img, const std::vector<Anki::Rectangle<s32>>& rects)
+  {
+    // Black out detected markers so we don't find faces in them
+    Vision::Image maskedImage;
+    img.CopyTo(maskedImage);
+    
+    ASSERT_NAMED(maskedImage.GetTimestamp() == img.GetTimestamp(),
+                 "VisionSystem.DetectFaces.BadImageTimestamp");
+    
+    for(auto rect : rects) // Deliberate copy because GetROI can modify 'rect'
+    {
+      Vision::Image roi = maskedImage.GetROI(rect);
+      
+      if(!roi.IsEmpty())
+      {
+        roi.FillWith(0);
+      }
+    }
+    
+    return maskedImage;
+  }
+  
+  
   Result VisionSystem::DetectFaces(const Vision::Image& grayImage,
-                                   const std::vector<Quad2f>& markerQuads)
+                                   std::vector<Anki::Rectangle<s32>>& detectionRects)
   {
     ASSERT_NAMED(_faceTracker != nullptr, "VisionSystem.DetectFaces.NullFaceTracker");
    
@@ -1556,23 +1704,10 @@ namespace Cozmo {
       _faceTracker->Reset();
     }
     
-    if(!markerQuads.empty())
+    if(!detectionRects.empty())
     {
-      // Black out detected markers so we don't find faces in them
-      Vision::Image maskedImage = grayImage;
-      ASSERT_NAMED(maskedImage.GetTimestamp() == grayImage.GetTimestamp(),
-                   "VisionSystem.DetectFaces.BadImageTimestamp");
-      
-      for(auto & quad : markerQuads)
-      {
-        Anki::Rectangle<s32> rect(quad); // Bounding box of this quad
-        Vision::Image roi = maskedImage.GetROI(rect);
-        
-        if(!roi.IsEmpty())
-        {
-          roi.FillWith(0);
-        }
-      }
+      // Black out previous detections so we don't find faces in them
+      Vision::Image maskedImage = BlackOutRects(grayImage, detectionRects);
       
 #     if DEBUG_FACE_DETECTION
       //_currentResult.debugImages.push_back({"MaskedFaceImage", maskedImage});
@@ -1580,8 +1715,7 @@ namespace Cozmo {
       
       _faceTracker->Update(maskedImage, _currentResult.faces, _currentResult.updatedFaceIDs);
     } else {
-      // No markers were detected, so nothing to black out before looking
-      // for faces
+      // Nothing already detected, so nothing to black out before looking for faces
       _faceTracker->Update(grayImage, _currentResult.faces, _currentResult.updatedFaceIDs);
     }
     
@@ -1591,6 +1725,11 @@ namespace Cozmo {
       
       ASSERT_NAMED(currentFace.GetTimeStamp() == grayImage.GetTimestamp(),
                    "VisionSystem.DetectFaces.BadFaceTimestamp");
+      
+      detectionRects.emplace_back((s32)std::round(faceIter->GetRect().GetX()),
+                                  (s32)std::round(faceIter->GetRect().GetY()),
+                                  (s32)std::round(faceIter->GetRect().GetWidth()),
+                                  (s32)std::round(faceIter->GetRect().GetHeight()));
       
       // Use a camera from the robot's pose history to estimate the head's
       // 3D translation, w.r.t. that camera. Also puts the face's pose in
@@ -2672,43 +2811,6 @@ namespace Cozmo {
     return RESULT_OK;
     
   } // GetImageHelper()
-
-  Result VisionSystem::PreprocessImage(Array<u8>& grayscaleImage)
-  {
-    
-    if(_vignettingCorrection == VignettingCorrection_Software) {
-      BeginBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
-      
-      MemoryStack _onchipScratchlocal = _memory._onchipScratch;
-      FixedLengthList<f32> polynomialParameters(5, _onchipScratchlocal, Flags::Buffer(false, false, true));
-      
-      for(s32 i=0; i<5; i++)
-        polynomialParameters[i] = _vignettingCorrectionParameters[i];
-      
-      CorrectVignetting(grayscaleImage, polynomialParameters);
-      
-      EndBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
-    } // if(_vignettingCorrection == VignettingCorrection_Software)
-    
-    if(_autoExposure_enabled && (_frameNumber % _autoExposure_adjustEveryNFrames) == 0) {
-      BeginBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
-      
-      ComputeBestCameraParameters(grayscaleImage,
-                                  Embedded::Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
-                                  _autoExposure_integerCountsIncrement,
-                                  _autoExposure_highValue,
-                                  _autoExposure_percentileToMakeHigh,
-                                  _autoExposure_minExposureTime,
-                                  _autoExposure_maxExposureTime,
-                                  _autoExposure_tooHighPercentMultiplier,
-                                  _exposureTime,
-                                  _memory._ccmScratch);
-      
-      EndBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
-    }
-    
-    return RESULT_OK;
-  } // PreprocessImage()
   
   Result VisionSystem::AddCalibrationImage(const Vision::Image& calibImg, const Anki::Rectangle<s32>& targetROI)
   {
@@ -2799,7 +2901,7 @@ namespace Cozmo {
   
   Result VisionSystem::DetectMarkersWithCLAHE(Vision::Image& inputImageGray,
                                               Vision::Image& claheImage,
-                                              std::vector<Quad2f>& markerQuads,
+                                              std::vector<Anki::Rectangle<s32>>& markerQuads,
                                               MarkerDetectionCLAHE useCLAHE)
   {
     Result lastResult = RESULT_OK;
@@ -2910,6 +3012,7 @@ namespace Cozmo {
     VisionProcessingResult result;
     result.timestamp = inputImage.GetTimestamp();
     result.imageQuality = ImageQuality::Unchecked;
+    result.exposureTime_ms = -1;
     std::swap(result, _currentResult);
     
     auto& visionModesProcessed = _currentResult.modesProcessed;
@@ -2924,20 +3027,6 @@ namespace Cozmo {
     
     // Lots of the processing below needs a grayscale version of the image:
     Vision::Image inputImageGray = inputImage.ToGray();
-    
-    if(ShouldProcessVisionMode(VisionMode::CheckingQuality))
-    {
-      visionModesProcessed.SetBitFlag(VisionMode::CheckingQuality, true);
-      
-      Tic("CheckingImageQuality");
-      lastResult = CheckImageQuality(inputImageGray);
-      Toc("CheckingImageQuality");
-      
-      if(RESULT_OK != lastResult) {
-        PRINT_NAMED_ERROR("VisionSystem.Update.CheckImageQualityFailed", "");
-        return lastResult;
-      }
-    }
     
     Vision::Image claheImage;
     
@@ -2976,7 +3065,7 @@ namespace Cozmo {
     
     EndBenchmark("VisionSystem_CameraImagingPipeline");
     
-    std::vector<Quad2f> markerQuads;
+    std::vector<Anki::Rectangle<s32>> detectionRects;
 
     if(ShouldProcessVisionMode(VisionMode::DetectingMarkers)) {
       Tic("TotalDetectingMarkers");
@@ -2989,7 +3078,7 @@ namespace Cozmo {
       // inside DetectMarkers uses _memory too).
       _memory.ResetBuffers();
       
-      lastResult = DetectMarkersWithCLAHE(inputImageGray, claheImage, markerQuads, kUseCLAHE);
+      lastResult = DetectMarkersWithCLAHE(inputImageGray, claheImage, detectionRects, kUseCLAHE);
       if(RESULT_OK != lastResult) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
         return lastResult;
@@ -3010,7 +3099,7 @@ namespace Cozmo {
     if(ShouldProcessVisionMode(VisionMode::DetectingFaces)) {
       Tic("TotalDetectingFaces");
       visionModesProcessed.SetBitFlag(VisionMode::DetectingFaces, true);
-      if((lastResult = DetectFaces(inputImageGray, markerQuads)) != RESULT_OK) {
+      if((lastResult = DetectFaces(inputImageGray, detectionRects)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectFacesFailed", "");
         return lastResult;
       }
@@ -3060,6 +3149,20 @@ namespace Cozmo {
       }
     }
 
+    if(ShouldProcessVisionMode(VisionMode::CheckingQuality))
+    {
+      visionModesProcessed.SetBitFlag(VisionMode::CheckingQuality, true);
+      
+      Tic("CheckingImageQuality");
+      lastResult = CheckImageQuality(inputImageGray, detectionRects);
+      Toc("CheckingImageQuality");
+      
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.CheckImageQualityFailed", "");
+        return lastResult;
+      }
+    }
+    
     /*
     // Store a copy of the current image for next time
     // NOTE: Now _prevImage should correspond to _prevRobotState
@@ -3085,13 +3188,7 @@ namespace Cozmo {
     {
       return false;
     }
-    
-    if (_currentResult.imageQuality != ImageQuality::Good &&
-        _currentResult.imageQuality != ImageQuality::Unchecked)
-    {
-      return false;
-    }
-    
+
     // These checks will be affected by vision scheduler (COZMO-3218):
     
     // Marker processing only gets to happen every nth frame
@@ -3114,32 +3211,70 @@ namespace Cozmo {
   }
   
   
-  void VisionSystem::SetParams(const bool autoExposureOn,
-                     const f32 exposureTime,
-                     const s32 integerCountsIncrement,
-                     const f32 minExposureTime,
-                     const f32 maxExposureTime,
-                     const u8 highValue,
-                     const f32 percentileToMakeHigh)
+  Result VisionSystem::SetAutoExposureParams(const s32 subSample,
+                                             const u8  midValue,
+                                             const f32 midPercentile,
+                                             const f32 maxChangeFraction)
   {
-    _autoExposure_enabled = autoExposureOn;
-    _exposureTime = exposureTime;
-    _autoExposure_integerCountsIncrement = integerCountsIncrement;
-    _autoExposure_minExposureTime = minExposureTime;
-    _autoExposure_maxExposureTime = maxExposureTime;
-    _autoExposure_highValue = highValue;
-    _autoExposure_percentileToMakeHigh = percentileToMakeHigh;
+    Result result = _imagingPipeline->SetExposureParameters(midValue, midPercentile,
+                                                            maxChangeFraction, subSample);
     
-    PRINT_CH_INFO(kLogChannelName, "VisionSystem.SetParams",
-                  "Changed VisionSystem params: autoExposureOn %d exposureTime %f integerCountsInc %d, "
-                  "minExpTime %f, maxExpTime %f, highVal %d, percToMakeHigh %f",
-                  _autoExposure_enabled,
-                  _exposureTime,
-                  _autoExposure_integerCountsIncrement,
-                  _autoExposure_minExposureTime,
-                  _autoExposure_maxExposureTime,
-                  _autoExposure_highValue,
-                  _autoExposure_percentileToMakeHigh);
+    if(RESULT_OK == result)
+    {
+      PRINT_CH_INFO(kLogChannelName, "VisionSystem.SetAutoExposureParams",
+                    "subSample:%d midVal:%d midPerc:%.3f changeFrac:%.3f",
+                    subSample, midValue, midPercentile, maxChangeFraction);
+    }
+    
+    return result;
+  }
+  
+  Result VisionSystem::SetCameraExposureParams(const s32 currentExposureTime_ms,
+                                               const s32 minExposureTime_ms,
+                                               const s32 maxExposureTime_ms,
+                                               const f32 currentGain,
+                                               const f32 minGain,
+                                               const f32 maxGain,
+                                               const GammaCurve& gammaCurve)
+  {
+    // TODO: Expose these x values ("knee locations") somewhere. These are specific to the camera.
+    // (So I'm keeping them out of Vision::ImagingPipeline and defined in Cozmo namespace)
+    static const std::vector<u8> kKneeLocations{
+      0, 8, 16, 24, 32, 40, 48, 64, 80, 96, 112, 128, 144, 160, 192, 224, 255
+    };
+    
+    std::vector<u8> gammaVector(gammaCurve.begin(), gammaCurve.end());
+    
+    Result result = _imagingPipeline->SetGammaTable(kKneeLocations, gammaVector);
+    if(RESULT_OK != result)
+    {
+      PRINT_NAMED_WARNING("VisionSystem.SetCameraExposureParams.BadGammaCurve", "");
+    }
+    
+    if(minExposureTime_ms <= 0)
+    {
+      PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.SetCameraExposureParams.ZeroMinExposureTime",
+                     "Will use 1.");
+      _minCameraExposureTime_ms = 1;
+    }
+    else
+    {
+      _minCameraExposureTime_ms = minExposureTime_ms;
+    }
+    
+    _currentExposureTime_ms   = currentExposureTime_ms;
+    _maxCameraExposureTime_ms = maxExposureTime_ms;
+    
+    _currentCameraGain = currentGain;
+    _minCameraGain     = minGain;
+    _maxCameraGain     = maxGain;
+    
+    PRINT_CH_INFO(kLogChannelName, "VisionSystem.SetCameraExposureParams.Success",
+                  "Current Gain:%dms Limits:[%d %d], Current Exposure:%.3f Limits:[%.3f %.3f]",
+                  currentExposureTime_ms, minExposureTime_ms, maxExposureTime_ms,
+                  currentGain, minGain, maxGain);
+
+    return RESULT_OK;
   }
   
   Result VisionSystem::ReadToolCode(const Vision::Image& image)

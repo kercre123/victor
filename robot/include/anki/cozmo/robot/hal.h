@@ -39,6 +39,7 @@
 #include "clad/types/motorTypes.h"
 #include "clad/types/nvStorageTypes.h"
 #include "clad/robotInterface/messageToActiveObject.h"
+#include "clad/types/cameraParams.h"
 
 // Set to 0 if you want to read printf output in a terminal and you're not
 // using UART as radio. The radio is effectively disabled in this case.
@@ -355,10 +356,11 @@ namespace Anki
       // Set the camera capture resolution with CAMERA_RES_XXXXX_HEADER.
       //void       SetHeadCamMode(const u8 frameResHeader);
       //CameraMode GetHeadCamMode(void);
+      
+      void CameraGetDefaultParameters(DefaultCameraParams& params);
 
-      // Sets the camera exposure (non-blocking call)
-      // exposure is clipped to [0.0, 1.0]
-      void CameraSetParameters(f32 exposure, bool enableVignettingCorrection);
+      // Sets the camera parameters (non-blocking call)
+      void CameraSetParameters(u16 exposure_ms, f32 gain);
 
       // Starts camera frame synchronization (blocking call)
       void CameraGetFrame(u8* frame, ImageResolution res, bool enableLight);

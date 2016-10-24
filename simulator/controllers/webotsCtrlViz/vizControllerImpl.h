@@ -81,6 +81,7 @@ private:
   void ProcessVizImageChunkMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizTrackerQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizRobotStateMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessCameraInfo(const AnkiEvent<VizInterface::MessageViz>& msg);
   
   bool IsMoodDisplayEnabled() const;
   void ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
@@ -96,6 +97,8 @@ private:
   
   void ProcessSaveImages(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessSaveState(const AnkiEvent<VizInterface::MessageViz>& msg);
+  
+  void DisplayCameraInfo();
   
   using EmotionBuffer = Util::CircularBuffer<float>;
   using EmotionEventBuffer = Util::CircularBuffer< std::vector<std::string> >;
@@ -152,6 +155,10 @@ private:
   std::string   _savedImagesFolder = "";
   u32           _saveCtr = 0;
   bool          _saveVizImage = false;
+  
+  // Camera info
+  u16           _exposure = 0;
+  f32           _gain = 0.f;
   
   // For saving state
   bool          _saveState = false;

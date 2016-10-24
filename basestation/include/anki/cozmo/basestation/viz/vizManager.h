@@ -368,6 +368,8 @@ namespace Anki {
         
       // ==== Misc. Debug functions =====
       void SetDockingError(const f32 x_dist, const f32 y_dist, const f32 z_dist, const f32 angle);
+      
+      void SendCameraInfo(const u16 exposure_ms, const f32 gain);
 
       void EnableImageSend(bool tf) { _sendImages = tf; }
       /*

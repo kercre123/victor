@@ -38,6 +38,9 @@
 // Whether or not to adjust the head angle to try to look towards the block based on our error signal
 #define TRACK_BLOCK 1
 
+// Whether or not to include the ability to do tracker docking
+#define ALLOW_TRACKER_DOCKING 0
+
 
 namespace Anki {
   namespace Cozmo {
@@ -201,9 +204,11 @@ namespace Anki {
        
         const u8 DIST_TO_BACKUP_ON_FAILURE_MM = 60;
 
+#if ALLOW_TRACKER_DOCKING
         // The docking speed for the final path segment right in front of the thing we are docking with
         // Allows us to slow down when we are close to the dockPose
         const f32 finalDockSpeed_mmps_ = 20;
+#endif
 
         // When hybrid docking the hanns maneuver tolerance for rel_x needs to be increased since we didn't push the
         // block
@@ -254,14 +259,16 @@ namespace Anki {
         f32 prevPathDistOffsetCap_;
         f32 prevPathAngOffsetCap_;
         
+#if ALLOW_TRACKER_DOCKING
         // Values related to our path to get use from our current pose to dockPose
         const u8 DIST_AWAY_FROM_BLOCK_FOR_PT_MM = 60;
         const u8 DIST_AWAY_FROM_BLOCK_FOR_ADDITIONAL_PATH_MM = 100;
         const f32 ANGLE_FROM_BLOCK_FOR_ADDITIONAL_PATH_RAD = DEG_TO_RAD_F32(25);
         const f32 ANGLE_FROM_BLOCK_FOR_POINT_TURN_RAD = DEG_TO_RAD_F32(15);
-        const u8 PATH_END_DIST_INTO_BLOCK_MM = 10;
         const u8 PATH_START_DIST_BEHIND_ROBOT_MM = 60;
         const u8 MAX_DECEL_DIST_MM = 30;
+#endif
+        const u8 PATH_END_DIST_INTO_BLOCK_MM = 10;
         
         // If the block and cozmo are on the same plane the dock err signal z_height will be below this value
         // Normally it is ~22mm
@@ -1223,7 +1230,9 @@ namespace Anki {
         // Either try again with smaller radii or just let the controller
         // attempt to get on to a straight line normal path.
         if (followingBlockNormalPath_) {
+#if ALLOW_TRACKER_DOCKING
           if(dockingMethod_ != TRACKER_DOCKING)
+#endif
           {
             // Compute new starting point for path
             // HACK: Feeling lazy, just multiplying path by some scalar so that it's likely to be behind the current robot pose.
@@ -1254,6 +1263,7 @@ namespace Anki {
             
             //AnkiDebug( 5, "DockingController", 472, "Computing straight line path (%f, %f) to (%f, %f)\n", 4,x_start_mm, y_start_mm, dockPose_.x(), dockPose_.y());
           }
+#if ALLOW_TRACKER_DOCKING
           else
           {
             // Distance it takes in order to decelerate from dockSpeed to 0 with the given dock deceleration
@@ -1361,6 +1371,7 @@ namespace Anki {
                                                  dockAccel_mmps2_,
                                                  dockDecel_mmps2_);
           }
+#endif
         }
 
         // Start following path

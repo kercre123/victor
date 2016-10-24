@@ -21,6 +21,7 @@
 using namespace Anki::Cozmo::HAL;
 
 enum I2C_State {
+  I2C_STATE_SET_EXPOSURE,
   I2C_STATE_IMU_SELECT,
   I2C_STATE_IMU_READ,
   I2C_STATE_OLED_SELECT,
@@ -84,6 +85,18 @@ static unsigned int _stateCounter;
 static bool _readIMU;
 static bool _active;
 static uint8_t* _readBuffer;
+
+// Union of various camera settings so we only need two variables for
+// current and target settings instead of two for each setting
+union CameraSettings {
+  uint16_t exposure;
+  uint8_t gain;
+};
+
+static union CameraSettings currentCameraSettings;
+static union CameraSettings targetCameraSettings;
+// Which field to grab from the CameraSettings union
+static bool areCameraSettingsForGain;
 
 // These are the pointers for convenience
 static uint8_t* const READ_TARGET = (uint8_t*)&IMU::ReadState;
@@ -160,7 +173,12 @@ void Anki::Cozmo::HAL::I2C::Start()
   _active = false;
   _readIMU = true;
   rectPending = true;
-  
+
+  // Assume current camera settings are fine
+  currentCameraSettings.exposure = 0;
+  targetCameraSettings.exposure = 0;
+  areCameraSettingsForGain = false;
+
   // Enable the bus with sufficient time for things to stablize
   I2C0_C1 = I2C_CTRL_SEND;
 }
@@ -178,8 +196,16 @@ void Anki::Cozmo::HAL::I2C::Enable(void) {
   if (_currentState == I2C_STATE_OLED_DATA ||
       (_currentState == I2C_STATE_OLED_RECT && activeOutputRect == NULL)) {
     
-    // TODO: CAMERA EXPOSURE HERE
-    if (_readIMU) {
+    if (currentCameraSettings.exposure != targetCameraSettings.exposure) {
+      if(areCameraSettingsForGain) {
+        currentCameraSettings.gain = targetCameraSettings.gain;
+      } else {
+        currentCameraSettings.exposure = targetCameraSettings.exposure;
+      }
+      
+      _currentState = I2C_STATE_SET_EXPOSURE;
+      _stateCounter = 0;
+    } else if (_readIMU) {
       _currentState = I2C_STATE_IMU_SELECT;
       _stateCounter = 0;
 
@@ -194,6 +220,16 @@ void Anki::Cozmo::HAL::I2C::Enable(void) {
   }
 
   EnableIRQ(I2C0_IRQn);
+}
+
+void Anki::Cozmo::HAL::I2C::SetCameraExposure(uint16_t lines) {
+  targetCameraSettings.exposure = lines;
+  areCameraSettingsForGain = false;
+}
+
+void Anki::Cozmo::HAL::I2C::SetCameraGain(uint8_t gain) {
+  targetCameraSettings.gain = gain;
+  areCameraSettingsForGain = true;
 }
 
 void Anki::Cozmo::HAL::I2C::ReadIMU(void) {
@@ -383,6 +419,48 @@ void I2C0_IRQHandler(void) {
         rectPending = true;
       }
 
+      break ;
+
+    case I2C_STATE_SET_EXPOSURE:
+      switch(_stateCounter++) {
+        case 0:
+          I2C0_C1 = I2C_CTRL_STOP;
+          _active = false;
+          break ;
+        case 1:
+          I2C0_C1 = I2C_CTRL_SEND;
+          I2C0_D = SLAVE_WRITE(CAMERA_ADDR);
+          break ;
+        case 2:
+          I2C0_D = (areCameraSettingsForGain ? CAMERA_GAIN : CAMERA_EXPOSURE);
+          break ;
+        case 3:
+          if(areCameraSettingsForGain) {
+            I2C0_D = (uint8_t)(currentCameraSettings.gain);
+            
+            // Skip state 4 since gain is only a byte
+            _stateCounter++;
+          } else {
+            I2C0_D = (uint8_t)(currentCameraSettings.exposure >> 8);
+          }
+          break ;
+        case 4:
+          I2C0_D = (uint8_t)currentCameraSettings.exposure;
+          break ;
+        case 5:
+          I2C0_C1 = I2C_CTRL_STOP;
+          _active = false;
+          break ;
+        case 6:
+          I2C0_C1 = I2C_CTRL_SEND;
+          _currentState = I2C_STATE_IMU_SELECT;
+          _stateCounter = 0;
+
+          _readBuffer = READ_TARGET;
+          _readIMU = false;
+          _active = false;
+          break ;
+      }
       break ;
   }
 }

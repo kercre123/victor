@@ -230,6 +230,12 @@ TEST(VisionSystem, ImageQuality)
   
   Vision::ImageRGB img;
   
+  // Fake the exposure parameters so that we are always against the extremes in order
+  // to trigger TooDark and TooBright
+  const Cozmo::VisionSystem::GammaCurve gammaCurve{};
+  result = visionSystem.SetCameraExposureParams(1, 1, 1, 2.f, 2.f, 2.f, gammaCurve);
+  ASSERT_EQ(RESULT_OK, result);
+  
   for(auto & subDir : testSubDirs)
   {
     const std::vector<std::string> testFiles = Util::FileUtils::FilesInDirectory(Util::FileUtils::FullFilePath({testImageDir, subDir}), false, ".jpg");
@@ -252,6 +258,16 @@ TEST(VisionSystem, ImageQuality)
       
       PRINT_NAMED_INFO("VisionSystem.ImageQuality", "%s = %s",
                        filename.c_str(), EnumToString(processingResult.imageQuality));
+      
+#     define DISPLAY_IMAGES 0
+      if(DISPLAY_IMAGES)
+      {
+        for(auto const& debugImg : processingResult.debugImageRGBs)
+        {
+          debugImg.second.Display(debugImg.first.c_str());
+        }
+        img.Display("TestImage", 0);
+      }
     }
   }
   

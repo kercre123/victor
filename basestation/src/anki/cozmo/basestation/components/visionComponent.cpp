@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/visionModesHelpers.h"
+#include "anki/cozmo/basestation/visionSystem.h"
 
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/vision/basestation/trackedFace.h"
@@ -58,6 +59,7 @@ namespace Cozmo {
   
   // Whether or not to do rolling shutter correction for physical robots
   CONSOLE_VAR(bool, kRollingShutterCorrectionEnabled, "Vision.PreProcessing", true);
+  CONSOLE_VAR(f32,  kMinCameraGain,                   "Vision.PreProcessing", 0.1f);
   
   // Amount of time we sleep when paused, waiting for next image, and after processing each image
   // (in order to provide a little breathing room for main thread)
@@ -75,6 +77,7 @@ namespace Cozmo {
     const char * const DropStatsWindowLength = "DropStatsWindowLength_sec";
     const char * const ImageQualityAlertDuration = "TimeBeforeErrorMessage_ms";
     const char * const ImageQualityAlertSpacing = "RepeatedErrorMessageInverval_ms";
+    const char * const InitialExposureTime = "InitialExposureTime_ms";
   }
   
   namespace
@@ -87,6 +90,8 @@ namespace Cozmo {
     
     // Time between sending repeated EngineErrorCodeMessages after first alert
     TimeStamp_t kImageQualityAlertSpacing_ms = 5000;
+    
+    u16 kInitialExposureTime_ms = 16;
   }
   
   VisionComponent::VisionComponent(Robot& robot, RunMode mode, const CozmoContext* context)
@@ -123,6 +128,7 @@ namespace Cozmo {
       helper.SubscribeGameToEngine<MessageGameToEngineTag::UpdateEnrolledFaceByID>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::VisionRunMode>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::VisionWhileMoving>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::SetCameraSettings>();
 
       // Separate list for engine messages to listen to:
       helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotConnectionResponse>();
@@ -147,6 +153,7 @@ namespace Cozmo {
     const Json::Value& imageQualityConfig = config[JsonKey::ImageQualityGroup];
     GET_JSON_PARAMETER(imageQualityConfig, JsonKey::ImageQualityAlertDuration, kImageQualityAlertDuration_ms);
     GET_JSON_PARAMETER(imageQualityConfig, JsonKey::ImageQualityAlertSpacing,  kImageQualityAlertSpacing_ms);
+    GET_JSON_PARAMETER(imageQualityConfig, JsonKey::InitialExposureTime,       kInitialExposureTime_ms);
     
     f32 kDropStatsWindowLength_sec = -1.f;
     const Json::Value& performanceConfig = config[JsonKey::PerformanceLogging];
@@ -1277,6 +1284,8 @@ namespace Cozmo {
       return RESULT_OK;
     }
     
+    SetCameraSettings(procResult.exposureTime_ms, procResult.cameraGain);
+
     if(procResult.imageQuality != _lastImageQuality || _currentQualityBeginTime_ms==0)
     {
       // Just switched image qualities
@@ -2175,7 +2184,65 @@ namespace Cozmo {
     }
   }
   
-#pragma mark - 
+  void VisionComponent::HandleDefaultCameraParams(const DefaultCameraParams& params)
+  {
+    if(!_visionSystem->IsInitialized())
+    {
+      PRINT_NAMED_ERROR("VisionComponent.HandleDefaultCameraParams.NotInitialized", "");
+      return;
+    }
+  
+    if(kInitialExposureTime_ms < params.minExposure_ms ||
+       kInitialExposureTime_ms > params.maxExposure_ms)
+    {
+      PRINT_NAMED_ERROR("VisionComponent.HandleDefaultCameraParams.BadInitialExposureTime",
+                        "Initial exp time %ums outside range [%u,%u]",
+                        kInitialExposureTime_ms,
+                        params.minExposure_ms, params.maxExposure_ms);
+      return;
+    }
+    
+    SetCameraSettings(kInitialExposureTime_ms, params.gain);
+      
+    Lock();
+    Result result = _visionSystem->SetCameraExposureParams(kInitialExposureTime_ms,
+                                                           Util::numeric_cast<s32>(params.minExposure_ms),
+                                                           Util::numeric_cast<s32>(params.maxExposure_ms),
+                                                           params.gain,
+                                                           kMinCameraGain,
+                                                           params.maxGain,
+                                                           params.gammaCurve);
+    Unlock();
+    
+    if(RESULT_OK != result)
+    {
+      PRINT_NAMED_ERROR("VisionComponent.HandleDefaultCameraParams.SetFailed",
+                        "Current:%ums Min:%ums Max:%ums",
+                        kInitialExposureTime_ms,
+                        params.minExposure_ms,
+                        params.maxExposure_ms);
+      return;
+    }
+    
+  }
+  
+  void VisionComponent::SetCameraSettings(const s32 exposure_ms, const f32 gain)
+  {
+    PRINT_CH_INFO("VisionComponent",
+                  "VisionComponent.SetCameraSettings",
+                  "Exp: %ums Gain:%f",
+                  exposure_ms,
+                  gain);
+    
+    SetCameraParams params(gain,
+                           Util::numeric_cast<u16>(exposure_ms),
+                           false);
+    
+    _robot.SendMessage(RobotInterface::EngineToRobot(std::move(params)));
+    _vizManager->SendCameraInfo(exposure_ms, gain);
+  }
+  
+#pragma mark -
 #pragma mark Message Handlers
   
   template<>
@@ -2245,6 +2312,12 @@ namespace Cozmo {
   }
   
   template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::SetCameraSettings& payload)
+  {
+    SetCameraSettings(payload.exposure_ms, payload.gain);
+  }
+  
+  template<>
   void VisionComponent::HandleMessage(const ExternalInterface::RobotConnectionResponse& msg)
   {
     if (msg.result == RobotConnectionResult::Success)
@@ -2287,6 +2360,11 @@ namespace Cozmo {
       };
       
       _robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_CameraCalib, readCamCalibCallback);
+      
+      // Request the default camera parameters
+      SetCameraParams msg;
+      msg.requestDefaultParams = true;
+      _robot.SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
     }
   }
   

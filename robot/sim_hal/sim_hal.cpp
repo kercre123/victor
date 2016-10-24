@@ -875,8 +875,25 @@ namespace Anki {
       }
     } //SetHeadCamMode()
     */
+    
+    void HAL::CameraGetDefaultParameters(DefaultCameraParams& params)
+    {
+      params.minExposure_ms = 0;
+      params.maxExposure_ms = 67;
+      params.gain = 2.f;
+      params.maxGain = 4.f;
+      
+      u8 count = 0;
+      for(u8 i = 0; i < GAMMA_CURVE_SIZE; ++i)
+      {
+        params.gammaCurve[i] = count;
+        count += 255/GAMMA_CURVE_SIZE;
+      }
+      
+      return;
+    }
 
-    void HAL::CameraSetParameters(f32 exposure, bool enableVignettingCorrection)
+    void HAL::CameraSetParameters(u16 exposure_ms, f32 gain)
     {
       // Can't control simulated camera's exposure.
 

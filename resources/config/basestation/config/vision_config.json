@@ -15,19 +15,22 @@
     "RunMode": "asynchronous"  // "synchronous" or "asynchronous"
   },
   "ImageQuality" : {
-    "TimeBeforeErrorMessage_ms" :       2000, // How long VisionSystem must detect "bad" quality before notifying game
-    "RepeatedErrorMessageInverval_ms" : 300000, // Time between error messages once triggered
+    // Auto-exposure settings
+    "InitialExposureTime_ms"    : 16,    // Sent each time we request camera calibration
+    "MidValue"                  : 115,   // [0,255] - Try to make midPercentile have this value
+    "TooDarkValue"              : 20,    // "Too Dark" if HighPercentile is below this
+    "TooBrightValue"            : 230,   // "Too Bright" if LowPercentile is above this
+    "LowPercentile"             : 0.10,  // [0.0, 1.0]  (Near 0.0)
+    "MidPercentile"             : 0.50,  // [0.0, 1.0]  (B/w low and high, higher to prefer under exposure)
+    "HighPercentile"            : 0.90,  // [0.0, 1.0]  (Near 1.0)
+    "MaxChangeFraction"         : 0.80,  // [0.0, 1.0]  (Amount we can change current exposure/gain each update)
+    "SubSample"                 : 2,     // >= 1
+    "MeterFromDetections"       : true,  // Base auto-exposure on detected markers, faces, etc, if any
     
-    // NOTE: All threshold values below are in image brightness units: [0,255]
-    "TooDarkMeanThreshold_low"  : 15,    // Report "too dark" if mean is below this threshold.
-    "TooDarkMeanThreshold_high" : 50,    // Report "too dark" if mean is below this threshold AND ...
-    "TooDarkStdDevThreshold"    : 10,    // ... standard deviation is below this threshold.
+    "CheckFrequency" : 15,               // How often VisionSystem checks quality (in number of frames), Use >= 5
     
-    "TooBrightMeanThreshold_high" : 230, // Report "too bright" if mean is above this threshold.
-    "TooBrightMeanThreshold_low"  : 200, // Report "too bright" if mean is above this threshold AND ...
-    "TooBrightStddevThreshold"    : 30,  // ... standard deviation is below this threshold.
-    
-    "CheckFrequency" : 30                // How often VisionSystem checks quality (in number of frames)
+    "TimeBeforeErrorMessage_ms" :       3000,  // How long VisionSystem must detect "bad" quality before notifying game
+    "RepeatedErrorMessageInverval_ms" : 300000 // Time between error messages once triggered
   },
   "PerformanceLogging" : {
     "DropStatsWindowLength_sec"         : 30,  // How long to average dropped image stats

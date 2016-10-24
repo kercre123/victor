@@ -731,6 +731,12 @@ namespace Anki {
       ANKI_CPU_PROFILE("VizManager::SetDockingError");
       SendMessage(VizInterface::MessageViz(VizInterface::DockingErrorSignal(x_dist, y_dist, z_dist, angle)));
     }
+    
+    void VizManager::SendCameraInfo(const u16 exposure_ms, const f32 gain)
+    {
+      ANKI_CPU_PROFILE("VizManager::SendCameraInfo");
+      SendMessage(VizInterface::MessageViz(VizInterface::CameraInfo(gain, exposure_ms)));
+    }
 
     void VizManager::SendRobotState(const RobotState &msg,
                                     const s32 numAnimBytesFree,

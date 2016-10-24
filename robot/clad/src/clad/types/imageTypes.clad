@@ -47,7 +47,7 @@ enum uint_8 ImageSendMode {
 
 enum uint_32 ImageConstants
 {
-  IMAGE_CHUNK_SIZE = 1200
+  IMAGE_CHUNK_SIZE = 1200,
 }
 
 message ImageChunk {

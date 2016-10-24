@@ -248,6 +248,13 @@ message DockingErrorSignal
   float_32 angle,
 }
 
+// VizCameraInfo
+message CameraInfo
+{
+  float_32 gain,
+  uint_16  exposure_ms
+}
+
 // VizVisionMarker
 message VisionMarker
 {

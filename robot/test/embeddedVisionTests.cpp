@@ -30,7 +30,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/decisionTree_vision.h"
 #include "anki/vision/robot/perspectivePoseEstimation.h"
 #include "anki/vision/robot/classifier.h"
-#include "anki/vision/robot/cameraImagingPipeline.h"
 #include "anki/vision/robot/opencvLight_vision.h"
 #include "anki/vision/robot/features.h"
 #include "anki/vision/robot/recognize.h"
@@ -1210,65 +1209,6 @@ GTEST_TEST(CoreTech_Vision, BoxFilterU8U16)
 //
 //  GTEST_RETURN_HERE;
 //}
-
-GTEST_TEST(CoreTech_Vision, Vignetting)
-{
-  MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
-  MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
-  MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
-
-  ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
-
-  const s32 imageHeight = 4;
-  const s32 imageWidth = 16;
-
-  Array<u8> image(imageHeight,imageWidth,scratchOnchip);
-  image.Set(128);
-
-  FixedLengthList<f32> polynomialParameters(5, scratchOnchip, Flags::Buffer(false, false, true));
-  const f32 parameters[5] = {1.0f, 0.01f, 0.03f, 0.01f, -0.01f};
-
-  for(s32 i=0; i<5; i++)
-    polynomialParameters[i] = parameters[i];
-
-  const Result result = CorrectVignetting(image, polynomialParameters);
-
-  ASSERT_TRUE(result == RESULT_OK);
-
-  image.Print("image");
-
-  Array<u8> image_groundTruth(imageHeight,imageWidth,scratchOnchip);
-
-  const u8 image_groundTruthData[imageHeight*imageWidth] = {
-    133, 133, 145, 145, 168, 168, 202, 202, 245, 245, 255, 255, 255, 255, 255, 255,
-    133, 133, 145, 145, 168, 168, 202, 202, 245, 245, 255, 255, 255, 255, 255, 255,
-    130, 130, 143, 143, 166, 166, 199, 199, 243, 243, 255, 255, 255, 255, 255, 255,
-    130, 130, 143, 143, 166, 166, 199, 199, 243, 243, 255, 255, 255, 255, 255, 255};
-
-  image_groundTruth.Set(image_groundTruthData, imageHeight*imageWidth);
-
-  ASSERT_TRUE(AreElementwiseEqual<u8>(image, image_groundTruth));
-
-  // Just benchmarks
-  {
-    Array<u8> imageOffchip(240,320,scratchOffchip);
-    Array<u8> imageOnchip(240,320,scratchOnchip);
-
-    InitBenchmarking();
-
-    BeginBenchmark("CorrectVignetting_offchip");
-    CorrectVignetting(imageOffchip, polynomialParameters);
-    EndBenchmark("CorrectVignetting_offchip");
-
-    BeginBenchmark("CorrectVignetting_onchip");
-    CorrectVignetting(imageOnchip, polynomialParameters);
-    EndBenchmark("CorrectVignetting_onchip");
-
-    ComputeAndPrintBenchmarkResults(true, true, scratchOffchip);
-  }
-
-  GTEST_RETURN_HERE;
-} // GTEST_TEST(CoreTech_Vision, Vignetting)
 
 #if defined(RUN_PC_ONLY_TESTS) && TEST_FACE_DETECTION
 GTEST_TEST(CoreTech_Vision, FaceDetection_All)
@@ -4843,7 +4783,6 @@ s32 RUN_ALL_VISION_TESTS(s32 &numPassedTests, s32 &numFailedTests)
   CALL_GTEST_TEST(CoreTech_Vision, FastGradient);
   CALL_GTEST_TEST(CoreTech_Vision, Canny);
   CALL_GTEST_TEST(CoreTech_Vision, BoxFilterU8U16);
-  CALL_GTEST_TEST(CoreTech_Vision, Vignetting);
   CALL_GTEST_TEST(CoreTech_Vision, FaceDetection);
   CALL_GTEST_TEST(CoreTech_Vision, ResizeImage);
   CALL_GTEST_TEST(CoreTech_Vision, DecisionTreeVision);

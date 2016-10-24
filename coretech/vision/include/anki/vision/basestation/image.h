@@ -23,6 +23,8 @@
 #include "anki/vision/CameraSettings.h"
 #include "anki/vision/basestation/colorPixelTypes.h"
 
+#include <set>
+
 namespace Anki {
 namespace Vision {
   

@@ -18,6 +18,15 @@ extern DropToWiFi* spi_write_buff;  // To save RAM, we write directly into spi_w
 //#define TEST_VIDEO      // When JPEG encoder is disabled, uncomment this to send JPEG test video anyway
 //#define SERIAL_IMAGE    // Uncomment this to dump camera data over UART for camera debugging with SerialImageViewer
 
+// Camera reads lines at 7.44khz or 1 line in 0.1344ms
+#define LINES_TO_MS(lines) ((u16)((lines) * (0.1344086022)))
+#define MS_TO_LINES(ms) ((u16)((ms) * (7.44)))
+// Convert to fixed point u8 with 6 places after the decimal (2^6 = 64)
+// as defined by the camera specs for the format of gain
+#define GAIN_TO_FIXED_POINT(gain) ((u8)((gain) * (64)))
+// 1/64 = 0.015625
+#define FIXED_POINT_TO_GAIN(fp) ((f32)((fp) * (0.015625)))
+
 static u32 frameNumber = 0;
 static u16 line = 0;
 
@@ -30,7 +39,6 @@ namespace Anki
     namespace HAL
     {
       // Configuration for GC0329 camera chip
-      const u8 I2C_ADDR = 0x31;
       const u8 CAM_SCRIPT[] =
       {
         #include "gc0329.h"
@@ -39,8 +47,13 @@ namespace Anki
 
       const int TOTAL_COLS = 640, TOTAL_ROWS = 480, BYTES_PER_PIX = 4;
 
-      // Camera exposure value
-      u32 exposure_;
+      // Camera exposure in lines
+      u16 exposure_lines_ = 0;
+      // Gain in fixed point format
+      u8  gain_ = 0;
+      const u16 MAX_EXPOSURE_LINES = 500;
+      // Gain is a byte so max gain is fixed point 255 converted to float
+      const f32 MAX_GAIN = FIXED_POINT_TO_GAIN(255);
       volatile bool timingSynced_ = false;
 
       // For self-test purposes only.
@@ -139,9 +152,9 @@ namespace Anki
         MicroWait(50);
         GPIO_SET(GPIO_CAM_RESET_N, PIN_CAM_RESET_N);
 
-        I2C::ReadReg(I2C_ADDR, 0xF0);
-        I2C::ReadReg(I2C_ADDR, 0xF1);
-        uint8_t id = I2C::ReadReg(I2C_ADDR, 0xFB);
+        I2C::ReadReg(CAMERA_ADDR, 0xF0);
+        I2C::ReadReg(CAMERA_ADDR, 0xF1);
+        uint8_t id = I2C::ReadReg(CAMERA_ADDR, 0xFB);
 
         // Send command array to camera
         uint8_t* initCode = (uint8_t*) CAM_SCRIPT;
@@ -151,7 +164,7 @@ namespace Anki
 
           if (!p1 && !p2) break ;
 
-          I2C::WriteReg(I2C_ADDR, p1, p2);
+          I2C::WriteReg(CAMERA_ADDR, p1, p2);
         }
 
         // TODO: Check that the GPIOs are okay
@@ -223,6 +236,9 @@ namespace Anki
 
         InitIO();
         InitCam();
+        
+        // Exposure as defined in gc0329.h
+        exposure_lines_ = (CAM_SCRIPT[29] << 8) | CAM_SCRIPT[31];
       }
       
       // Start streaming data from the camera - after this point, the main thread can't touch registers
@@ -231,24 +247,46 @@ namespace Anki
         InitDMA();
         while (!timingSynced_)  ;
       }
-
-      void CameraSetParameters(f32 exposure, bool enableVignettingCorrection)
+      
+      void CameraGetDefaultParameters(DefaultCameraParams& params)
       {
-        // TODO: vignetting correction? Why?
-        const f32 maxExposure = 0xf00; // Determined empirically
-        f32 correctedExposure = exposure;
-
-        if(exposure < 0.0f)
+        params.minExposure_ms = LINES_TO_MS(((CAM_SCRIPT[511] << 8) | CAM_SCRIPT[513]) & 0xFFF);
+        params.maxExposure_ms = LINES_TO_MS(MAX_EXPOSURE_LINES);
+        params.maxGain = MAX_GAIN;
+        params.gain = FIXED_POINT_TO_GAIN(CAM_SCRIPT[9]);
+        
+        for(u8 i = 0; i < sizeof(params.gammaCurve)/sizeof(params.gammaCurve[0]); ++i)
         {
-          correctedExposure = 0;
-        } else if(exposure > 1.0f)
-        {
-          correctedExposure = 1.0f;
+          params.gammaCurve[i] = CAM_SCRIPT[143 + (i*2)];
         }
+      }
 
-        //const u32 exposureU32 = (u32) floorf(correctedExposure * maxExposure + 0.5f);
-
-        // Set exposure - let it get picked up during next vblank
+      void CameraSetParameters(u16 exposure_ms, f32 gain)
+      {
+        const u16 exposure = MS_TO_LINES(exposure_ms);
+        const u8 fixedPointGain = GAIN_TO_FIXED_POINT(gain);
+        
+        // In an attempt to minimize the amount of specialized code in I2C.cpp we can only write to exposure or gain one at a time
+        if(exposure != exposure_lines_)
+        {
+          exposure_lines_ = exposure;
+        
+          if(exposure_lines_ > MAX_EXPOSURE_LINES)
+          {
+            AnkiWarn(143, "Camera.CameraSetParameters", 395, "Clipping exposure of %dms to %dms", 2, exposure_ms, LINES_TO_MS(MAX_EXPOSURE_LINES));
+            exposure_lines_ = MAX_EXPOSURE_LINES;
+          }
+          
+          // Write to exposure to camera
+          I2C::SetCameraExposure(exposure_lines_);
+        }
+        else if(gain_ != fixedPointGain)
+        {
+          gain_ = fixedPointGain;
+          
+          // Write gain to camera
+          I2C::SetCameraGain(gain_);
+        }
       }
       
       const CameraInfo* GetHeadCamInfo(void)
@@ -282,13 +320,7 @@ namespace Anki
       
       u16 CameraGetExposureDelay()
       {
-        // Exposure level 0 as defined in gc0329.h
-        u16 exposureLv0 = (CAM_SCRIPT[493] << 8) | CAM_SCRIPT[495];
-        if(exposureLv0 != 125)
-        {
-          AnkiError( 158, "Camera", 441, "Exposure %d is not equal to expected exposure 125", 1, exposureLv0);
-        }
-        return exposureLv0; // TODO need to figure this out more accurately / dynamically
+        return exposure_lines_;
       }
     }
   }
