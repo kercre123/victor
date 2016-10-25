@@ -104,6 +104,23 @@ typedef enum
  * @return true if the more was accepted false if the transition was invalid
  */
 bool i2spiSwitchMode(const I2SPIMode mode);
+/// Returns the current operating mode
+I2SPIMode i2spiGetMode(void);
+
+/** Various possible ERROR states for the i2spi bus
+ * @note Explicit values are used so reports are easier to read
+ */
+typedef enum
+{
+  I2SPIE_None           = 0, ///< No error
+  I2SPIE_too_much_drift = 1,
+  I2SPIE_rx_overflow    = 2,
+  I2SPIE_bad_rx_payload = 3,
+  I2SPIE_bad_rx_csum    = 4,
+  I2SPIE_drop_count     = 8,
+  I2SPIE_buf_logic      = 0x20,
+  I2SPIE_bad_footer     = 0x40,
+} I2SPIError;
 
 /// Count how many tx overruns we've had
 uint32_t i2spiGetTxOverflowCount(void);
@@ -113,10 +130,9 @@ uint32_t i2spiGetRxOverflowCount(void);
 uint32_t i2spiGetPhaseErrorCount(void);
 /// Count the integral drift in the I2SPI system
 int32_t i2spiGetIntegralDrift(void);
-
+/// Get the latest error from the driver and clear the error report
+I2SPIError i2spiGetErrorCode(int32_t* data);
 ///log info about a desynch.
 void i2spiLogDesync(const u8* buffer, int buffer_bytes);
-
-
 
 #endif

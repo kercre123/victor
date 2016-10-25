@@ -41,7 +41,7 @@ K2_registers = ["r8", "r9", "r10", "r11", "r4", "r5", "r6", "r7",
 
 ESP_registers = ["epc1", "ps", "sar", "xx1", "a0", "a2", "a3", "a4",
                  "a5", "a6", "a7", "a8", "a9", "a10", "a11", "a12",
-                 "a13", "a14", "a15", "exccause", "sp", "excvaddr", "depc", "stack_depth"]
+                 "a13", "a14", "a15", "exccause", "sp", "excvaddr", "depc", "version", "stack_depth"]
 
 #CrashSource order
 RegisterMap = [ESP_registers, K2_registers, NRF_registers, []]
@@ -151,5 +151,3 @@ if __name__ == "__main__":
             print_raw(content[offset:offset+CRASH_RECORD_SIZE])
         offset += CRASH_RECORD_SIZE
         entry +=1
-
-

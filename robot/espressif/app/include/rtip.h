@@ -18,6 +18,9 @@ extern "C"
 uint32_t msg__buffer[(DROP_TO_RTIP_MAX_VAR_PAYLOAD/sizeof(uint32_t)) + 1]; \
 Anki::Cozmo::RobotInterface::EngineToRobot& msg = *((Anki::Cozmo::RobotInterface::EngineToRobot*)msg__buffer)
 
+// Timeout and trigger watchdog after 5 seconds
+#define RTIP_MESSAGE_TIMEOUT (5000000)
+
 namespace Anki {
   namespace Cozmo {
     namespace RTIP {

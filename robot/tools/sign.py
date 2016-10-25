@@ -11,6 +11,7 @@ import json
 import time
 import sys, os
 import subprocess
+import shutil
 
 from Crypto.Hash import SHA512
 from Crypto.PublicKey import RSA
@@ -273,3 +274,11 @@ if __name__ == '__main__':
         with open(args.output, "wb") as fo:
             fo.write(pack("I", len(fw)))
             fo.write(fw)
+            
+    if args.wifi:
+        Spath = os.path.split(args.wifi)[0]
+        S = os.path.join(Spath, 'esp.S')
+        if os.path.isfile(S):
+            shutil.copyfile(S, os.path.join(Spath, "esp-{}.S".format(args.comment)))
+        else:
+            print("No S file to preserve")

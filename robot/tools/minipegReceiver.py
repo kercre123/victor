@@ -95,5 +95,5 @@ class MinipegWriter(MinipegReceiver):
 if __name__ == '__main__':
     robotInterface.Init()
     c = MinipegWriter()
-    robotInterface.Connect()
-    time.sleep(5)
+    robotInterface.Connect(imageRequest=True)
+    time.sleep(10)

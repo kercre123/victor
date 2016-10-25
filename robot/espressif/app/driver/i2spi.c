@@ -46,7 +46,7 @@
 #define I2SPI_ISR_PROFILE_TMD  7
 
 #if I2SPI_DEBUG
-#define I2SPI_ISR_PROFILING I2SPI_ISR_PROFILE_TMD
+#define I2SPI_ISR_PROFILING I2SPI_ISR_PROFILE_RX
 #else
 #define I2SPI_ISR_PROFILING I2SPI_ISR_PROFILE_NONE
 #endif
@@ -84,6 +84,7 @@ typedef struct {
   uint32_t  txOverflowCount;
   uint32_t  rxOverflowCount;
   uint32_t  phaseErrorCount;
+  int32_t   errorData;
   int32_t   integralDrift;
   int16_t   dropPhase; ///< Stores the estimated alignment for incomming drops in half words
   int16_t   outgoingPhase; ///< Stores the alignment for outgoing drops in half words
@@ -94,7 +95,9 @@ typedef struct {
   int16_t   rtipBootloaderState; ///< The last state we've received from the RTIP bootloader regarding it's state
   int16_t   rtipRXQueueEstimate; ///< The number of bytes we estimate are in the RTIP's CLAD rx queue
   int16_t   bootloaderCommandPhase; ///< Operational phase for bootloader commands
+  uint8_t   dropRxCounter; ///< Counter for drops received
   I2SPIMode mode; ///< The current mode of the driver
+  I2SPIError errorCode; ///< Any pending errors
 } I2SpiDriver;
 
 // Group all audio buffer state together
@@ -177,12 +180,12 @@ void ICACHE_FLASH_ATTR i2spiBufferAudio(uint8_t* buffer, const int16_t length)
   const int16_t firstCopy = AUDIO_BUFFER_SIZE - wind;
   if (unlikely(firstCopy < length))
   {
-    os_memcpy(audioBuffer + wind, buffer, firstCopy);
-    os_memcpy(audioBuffer, buffer + firstCopy, length - firstCopy);
+    ets_memcpy(audioBuffer + wind, buffer, firstCopy);
+    ets_memcpy(audioBuffer, buffer + firstCopy, length - firstCopy);
   }
   else
   {
-    os_memcpy(audioBuffer + wind, buffer, length);
+    ets_memcpy(audioBuffer + wind, buffer, length);
   }  
   audio.wind = (wind + length) & AUDIO_BUFFER_SIZE_MASK;
 }
@@ -201,7 +204,7 @@ inline void ICACHE_FLASH_ATTR i2spiPushScreenData(const uint32_t* data, const bo
   screen.wind = (wind + 1) & SCREEN_BUFFER_SIZE_MASK;
 }
 
-inline uint8_t PumpScreenData(uint8_t* dest)
+ALWAYS_INLINE uint8_t PumpScreenData(uint8_t* dest)
 {
   static u8 transmitChain = 0;
   if (transmitChain == MAX_TX_CHAIN_COUNT)
@@ -220,7 +223,7 @@ inline uint8_t PumpScreenData(uint8_t* dest)
     {
       nostack uint8_t ret;
       transmitChain++;
-      os_memcpy(dest, &(screen.buffer[screen.rind]), MAX_SCREEN_BYTES_PER_DROP);
+      ets_memcpy(dest, &(screen.buffer[screen.rind]), MAX_SCREEN_BYTES_PER_DROP);
       ret = screenDataValid | ((screen.rectFlags & 1<<screen.rind) ? screenRectData : 0);
       screen.rind = (screen.rind + 1) & SCREEN_BUFFER_SIZE_MASK;
       return ret;
@@ -228,7 +231,7 @@ inline uint8_t PumpScreenData(uint8_t* dest)
   }
 }
 
-inline uint8_t PumpAudioData(uint8_t* dest)
+ALWAYS_INLINE uint8_t PumpAudioData(uint8_t* dest)
 {
   // Decrement silence if we have any
   if (audio.silenceSamples > 0)
@@ -318,15 +321,74 @@ void prepSdioQueue(struct sdio_queue* desc, uint8 eof)
 /** Processes an incomming drop from the RTIP to the WiFi
  * @param drop A pointer to a complete drop
  */
-inline void processDrop(DropToWiFi* drop)
+ALWAYS_INLINE void processDrop(DropToWiFi* drop)
 {
+  if (unlikely(drop->footer != TO_WIFI_FOOTER))
+  {
+    self.errorCode = I2SPIE_bad_footer;
+    self.errorData = drop->footer;
+    return;
+  }
+  else if (unlikely(drop->counter != self.dropRxCounter))
+  {
+    self.errorCode = I2SPIE_drop_count;
+    self.errorData = drop->counter | (self.dropRxCounter << 16);
+    return;
+  }
+  self.dropRxCounter += 1;
   nostack int8 rxJpegLen;
-  rxJpegLen = (drop->droplet & jpegLenMask) * 4;
+  rxJpegLen = GET_JPEG_LENGTH(drop->droplet);
   if (rxJpegLen > 0) // Handle jpeg data
   {
     static int8_t activeImgBuffer = 0;
     static bool skipFrame = true; // Starts true because there's no sense sending anything until a full frame
-    if (skipFrame) // Lost at least some of the data from this frame to skip the rest
+    if (!skipFrame)
+    {
+      if (imageBuffers[activeImgBuffer].status == 0)
+      {
+        nostack int remainingJpegSpace;
+        remainingJpegSpace = IMAGE_DATA_MAX_LENGTH - imageBuffers[activeImgBuffer].length;
+        ets_memcpy(imageBuffers[activeImgBuffer].data + imageBuffers[activeImgBuffer].length, drop->payload, rxJpegLen);
+        imageBuffers[activeImgBuffer].length += rxJpegLen;
+        remainingJpegSpace -= rxJpegLen;
+        // Send this data if appropriate
+        if (drop->droplet & jpegEOF) // If end of frame send imeediately
+        {
+          if(system_os_post(IMAGE_SEND_TASK_PRIO, QIS_endOfFrame, (uint32_t)&imageBuffers[activeImgBuffer]))
+          {
+            imageBuffers[activeImgBuffer].status = 1;
+            activeImgBuffer = (activeImgBuffer + 1) & NUM_IMAGE_DATA_BUFFER_MASK;
+          }
+          else
+          {
+            imageBuffers[activeImgBuffer].length = 0; // If we couldn't queue the task, reset the image
+          }
+        }
+        else if (remainingJpegSpace < (int)(jpegLenMask*4)) // If there might not be enough room for the next drop, send
+        {
+          if (system_os_post(IMAGE_SEND_TASK_PRIO, QIS_none, (uint32_t)&imageBuffers[activeImgBuffer]))
+          {
+            imageBuffers[activeImgBuffer].status = 1;
+            activeImgBuffer = (activeImgBuffer + 1) & NUM_IMAGE_DATA_BUFFER_MASK;
+          }
+          else // If we couldn't queue the task
+          {
+            skipFrame = true; // Have to skip the rest of this frame
+            imageBuffers[activeImgBuffer].length = 0; // Reset the image
+          }
+        }
+      } // End not busy sending chunk already
+      else // If currently busy sending a chunk
+      {
+        // If this isn't the end of the frame, we have to skip the rest
+        if ((drop->droplet & jpegEOF) == 0)
+        {
+          skipFrame = true;
+          system_os_post(IMAGE_SEND_TASK_PRIO, QIS_overflow, 0);
+        }
+      }
+    } // End not skipping frame
+    else // Lost at least some of the data from this frame to skip the rest
     {
       // Got to the end of last frame so try next one
       if (drop->droplet & jpegEOF)
@@ -338,51 +400,6 @@ inline void processDrop(DropToWiFi* drop)
         }
       }
     }
-    else if (imageBuffers[activeImgBuffer].status != 0) // If currently busy sending a chunk
-    {
-      // If this isn't the end of the frame, we have to skip the rest
-      if ((drop->droplet & jpegEOF) == 0) 
-      {
-        skipFrame = true;
-        system_os_post(IMAGE_SEND_TASK_PRIO, QIS_overflow, 0);
-      }
-    }
-    else
-    {
-      nostack int remainingJpegSpace;
-      remainingJpegSpace = IMAGE_DATA_MAX_LENGTH - imageBuffers[activeImgBuffer].length;
-      assert(remainingJpegSpace >= rxJpegLen, "WTF: %x %x %x\r\n", imageBuffers[activeImgBuffer].length, remainingJpegSpace, rxJpegLen);
-      // drop payload is 4 byte aligned and rxJpegLen is always a multiple of 4 so 4 byte aligned copy will always work
-      os_memcpy(imageBuffers[activeImgBuffer].data + imageBuffers[activeImgBuffer].length, drop->payload, rxJpegLen);
-      imageBuffers[activeImgBuffer].length += rxJpegLen;
-      remainingJpegSpace -= rxJpegLen;
-      // Send this data if appropriate
-      if (drop->droplet & jpegEOF) // If end of frame send imeediately
-      {
-        if(system_os_post(IMAGE_SEND_TASK_PRIO, QIS_endOfFrame, (uint32_t)&imageBuffers[activeImgBuffer]))
-        {
-          imageBuffers[activeImgBuffer].status = 1;
-          activeImgBuffer = (activeImgBuffer + 1) & NUM_IMAGE_DATA_BUFFER_MASK;
-        }
-        else
-        {
-          imageBuffers[activeImgBuffer].length = 0; // If we couldn't queue the task, reset the image
-        }
-      }
-      else if (remainingJpegSpace < (int)(jpegLenMask*4)) // If there might not be enough room for the nect drop, send
-      {
-        if (system_os_post(IMAGE_SEND_TASK_PRIO, QIS_none, (uint32_t)&imageBuffers[activeImgBuffer]))
-        {
-          imageBuffers[activeImgBuffer].status = 1;
-          activeImgBuffer = (activeImgBuffer + 1) & NUM_IMAGE_DATA_BUFFER_MASK;
-        }
-        else // If we couldn't queue the task
-        {
-          skipFrame = true; // Have to skip the rest of this frame
-          imageBuffers[activeImgBuffer].length = 0; // Reset the image
-        }
-      }
-    } // End not skipping frame
   } // End handling JPEG data
   
   if (drop->payloadLen > 0) // Handling CLAD data
@@ -392,22 +409,22 @@ inline void processDrop(DropToWiFi* drop)
       const int firstCopy = RELAY_BUFFER_SIZE - self.rtipBufferWind;
       if (unlikely(firstCopy < drop->payloadLen))
       {
-        os_memcpy(relayBuffer + self.rtipBufferWind, drop->payload + rxJpegLen, firstCopy);
-        os_memcpy(relayBuffer, drop->payload + rxJpegLen + firstCopy, drop->payloadLen - firstCopy);
+        ets_memcpy(relayBuffer + self.rtipBufferWind, drop->payload + rxJpegLen, firstCopy);
+        ets_memcpy(relayBuffer, drop->payload + rxJpegLen + firstCopy, drop->payloadLen - firstCopy);
       }
       else
       {
-        os_memcpy(relayBuffer + self.rtipBufferWind, drop->payload + rxJpegLen, drop->payloadLen);
+        ets_memcpy(relayBuffer + self.rtipBufferWind, drop->payload + rxJpegLen, drop->payloadLen);
       }
       self.rtipBufferWind = (self.rtipBufferWind + drop->payloadLen) & RELAY_BUFFER_SIZE_MASK;
     }
     else
     {
+      self.errorCode = I2SPIE_rx_overflow;
       self.rxOverflowCount++;
       self.rtipBufferRind = 0; // Reset buffer
       self.rtipBufferWind = 0;
-      os_memset(relayBuffer, 0 , RELAY_BUFFER_SIZE);
-      dbpc('C'); dbpc('R'); dbpc('O'); dbpc('F'); dbph(self.rtipBufferRind, 4); dbph(self.rtipBufferWind, 4); dbnl();
+      ets_memset(relayBuffer, 0 , RELAY_BUFFER_SIZE);
     }
   }
 }
@@ -418,7 +435,7 @@ ct_assert(DMA_BUF_SIZE == 512); // We assume that the DMA buff size is 128 32bit
 #define DRIFT_MARGIN 2
 
 // Subhandler for dmaisr for receive interrupts
-inline void receiveCompleteHandler(void)
+ALWAYS_INLINE void receiveCompleteHandler(void)
 {
   static DropToWiFi drop;
   static uint8 dropRdInd = 0; // In 16bit half-words
@@ -430,19 +447,21 @@ inline void receiveCompleteHandler(void)
   
   while(true)
   {
-    if (dropRdInd == 0) // If we're looking for the next drop, not in the middle of an existing one
+    if (likely(dropRdInd == 0)) // If we're looking for the next drop, not in the middle of an existing one
     {
       while(self.dropPhase < DMA_BUF_SIZE/2) // Search for preamble
       {
         if (buf[self.dropPhase] == TO_WIFI_PREAMBLE)
         {
+          buf[self.dropPhase] = 0; // Void the DMA buffer
           if (unlikely(drift > DRIFT_MARGIN))
           {
             self.phaseErrorCount++;
             isrProfStart(I2SPI_ISR_PROFILE_TMD);
             if (drift > DRIFT_MARGIN*4)
             {
-              dbpc('!'); dbpc('T'); dbpc('M'); dbpc('D'); dbph(drift, 4); dbnl();
+              self.errorCode = I2SPIE_too_much_drift;
+              self.errorData = drift;
               i2spiSwitchMode(I2SPI_NULL);
               foregroundTaskPost(beginResync, 0);
             }
@@ -461,7 +480,7 @@ inline void receiveCompleteHandler(void)
     if (likely(self.dropPhase < DMA_BUF_SIZE/2)) // If we found a header
     {
       const int bytesToRead = min(DROP_TO_WIFI_SIZE-(dropRdInd*2), DMA_BUF_SIZE - (self.dropPhase*2));
-      os_memcpy(((uint16_t*)&drop) + dropRdInd, buf + self.dropPhase + dropRdInd, bytesToRead);
+      ets_memcpy(((uint16_t*)&drop) + dropRdInd, buf + self.dropPhase + dropRdInd, bytesToRead);
       dropRdInd += bytesToRead/2;
       if (dropRdInd*2 == DROP_TO_WIFI_SIZE) // The end of the drop was in this buffer
       {
@@ -483,7 +502,7 @@ inline void receiveCompleteHandler(void)
  * i2spiQueueMessage.
  * @return Whether there is room for another drop in this buffer after the one that has just been filled.
  */
-inline bool makeDrop(uint16_t* txBuf)
+ALWAYS_INLINE bool makeDrop(uint16_t* txBuf)
 {
   static DropToRTIP drop;
   static uint8_t dropWrInd = 0;
@@ -507,12 +526,12 @@ inline bool makeDrop(uint16_t* txBuf)
         const int firstCopy = I2SPI_MESSAGE_BUF_SIZE - self.messageBufferRind;
         if (unlikely(firstCopy < messageSize))
         {
-          os_memcpy(drop.payload, messageBuffer + self.messageBufferRind, firstCopy);
-          os_memcpy(drop.payload + firstCopy, messageBuffer, messageSize - firstCopy);
+          ets_memcpy(drop.payload, messageBuffer + self.messageBufferRind, firstCopy);
+          ets_memcpy(drop.payload + firstCopy, messageBuffer, messageSize - firstCopy);
         }
         else
         {
-          os_memcpy(drop.payload, messageBuffer + self.messageBufferRind, messageSize);
+          ets_memcpy(drop.payload, messageBuffer + self.messageBufferRind, messageSize);
         }
         self.messageBufferRind = (self.messageBufferRind + messageSize) & I2SPI_MESSAGE_BUF_SIZE_MASK;
       }
@@ -520,7 +539,7 @@ inline bool makeDrop(uint16_t* txBuf)
   }
   else // Finishing drop started in last pass
   {
-    os_memcpy(txBuf, ((uint8_t*)&drop) + dropWrInd, DROP_TO_RTIP_SIZE - dropWrInd);
+    ets_memcpy(txBuf, ((uint8_t*)&drop) + dropWrInd, DROP_TO_RTIP_SIZE - dropWrInd);
     dropWrInd = 0;
     // Don't advance outgoingPhase because it was already done when we started the drop
     return true; // We just started this buffer so definitely still room
@@ -531,7 +550,7 @@ inline bool makeDrop(uint16_t* txBuf)
     const int remaining = DMA_BUF_SIZE - (self.outgoingPhase*2);
     if (remaining >= (int)DROP_TO_RTIP_SIZE) // Whole drop fits in this buffer
     {
-      os_memcpy(txBuf + self.outgoingPhase, &drop, DROP_TO_RTIP_SIZE);
+      ets_memcpy(txBuf + self.outgoingPhase, &drop, DROP_TO_RTIP_SIZE);
       self.outgoingPhase += DROP_SPACING/2;
       if ((self.outgoingPhase * 2) < DMA_BUF_SIZE) return true;
       else return false;
@@ -539,7 +558,7 @@ inline bool makeDrop(uint16_t* txBuf)
     else // Cannot fit the whole drop in this buffer 
     {
       dropWrInd = remaining;
-      os_memcpy(txBuf + self.outgoingPhase, &drop, remaining);
+      ets_memcpy(txBuf + self.outgoingPhase, &drop, remaining);
       self.outgoingPhase += DROP_SPACING/2;
       return false; // Didn't even have room for this whole drop
     }
@@ -549,7 +568,7 @@ inline bool makeDrop(uint16_t* txBuf)
     /* Unfortunately, if the drift adjustment from the RX interrupt handler has put the drop start before the start of
        this buffer, we can't go back and fix it so we put it as early as possible and keep the adjustment for the next
        drop. */
-    os_memcpy(txBuf, &drop, DROP_TO_RTIP_SIZE);
+    ets_memcpy(txBuf, &drop, DROP_TO_RTIP_SIZE);
     self.outgoingPhase += DROP_SPACING/2;
     return true; // Definitely have room
   }  
@@ -685,15 +704,18 @@ void dmaisrSync(void* arg)
     uint16_t* buf = (uint16_t*)(desc->buf_ptr);
     int i;
     int16_t dp = 0;
-    for (i=(DMA_BUF_SIZE/2)-1; i>=0; --i) // Search backwards to find the last one
+    for (i=((DMA_BUF_SIZE - DROP_TO_WIFI_SIZE)/2)-1; i>=0; --i) // Search backwards to find the last full drop
     {
       if (buf[i] == TO_WIFI_PREAMBLE)
       {
+        DropToWiFi* drop = (DropToWiFi*)(&buf[i]);
+        if (drop->footer != TO_WIFI_FOOTER) continue;
+        self.dropRxCounter = drop->counter + 1;
         dp = i;
         break;
       }
     }
-    if (((dp * 2) + DROP_SPACING) > DMA_BUF_SIZE) // Had a buffer full of drops
+    if (((dp * 2) + DROP_SPACING) > DMA_BUF_SIZE) // Had a buffer full of drops, next drop starts in next buffer
     {
       self.outgoingPhase = dp + DROP_TX_PHASE_ADJUST;
       if (self.outgoingPhase > (DMA_BUF_SIZE/2)) self.outgoingPhase -= DMA_BUF_SIZE/2; // Handle wrap around
@@ -896,12 +918,12 @@ bool ICACHE_FLASH_ATTR i2spiQueueMessage(const uint8_t* msgData, const int msgLe
       const int firstCopy = I2SPI_MESSAGE_BUF_SIZE - wind;
       if (unlikely(firstCopy < msgLen))
       {
-        os_memcpy(messageBuffer + wind, msgData, firstCopy);
-        os_memcpy(messageBuffer, msgData + firstCopy, msgLen - firstCopy);
+        ets_memcpy(messageBuffer + wind, msgData, firstCopy);
+        ets_memcpy(messageBuffer, msgData + firstCopy, msgLen - firstCopy);
       }
       else
       {
-        os_memcpy(messageBuffer + wind, msgData, msgLen);
+        ets_memcpy(messageBuffer + wind, msgData, msgLen);
       }
       self.messageBufferWind = (wind + msgLen) & I2SPI_MESSAGE_BUF_SIZE_MASK; // Advance the write index
       return true;
@@ -931,12 +953,12 @@ int ICACHE_FLASH_ATTR i2spiGetCladMessage(uint8_t* data)
       const int firstCopy = RELAY_BUFFER_SIZE - rind;
       if (unlikely(firstCopy < size))
       {
-        os_memcpy(data, relayBuffer + rind, firstCopy);
-        os_memcpy(data + firstCopy, relayBuffer, size - firstCopy);
+        ets_memcpy(data, relayBuffer + rind, firstCopy);
+        ets_memcpy(data + firstCopy, relayBuffer, size - firstCopy);
       }
       else
       {
-        os_memcpy(data, relayBuffer + rind, size);
+        ets_memcpy(data, relayBuffer + rind, size);
       }
       self.rtipBufferRind = (rind + size) & RELAY_BUFFER_SIZE_MASK;
       return size;
@@ -1002,6 +1024,11 @@ bool i2spiSwitchMode(const I2SPIMode mode)
   return false;
 }
 
+I2SPIMode ICACHE_FLASH_ATTR i2spiGetMode(void)
+{
+  return self.mode;
+}
+
 void ICACHE_FLASH_ATTR i2spiLogDesync(const u8* buffer, int buffer_bytes)
 {
    CrashRecord record;
@@ -1016,11 +1043,20 @@ void ICACHE_FLASH_ATTR i2spiLogDesync(const u8* buffer, int buffer_bytes)
   pCrash->txOverflowCount = self.txOverflowCount;
   pCrash->relayWriteInd  = self.rtipBufferWind;
   pCrash->relayReadInd = self.rtipBufferRind;
-  os_memcpy(pCrash->lastRelayBuffer, relayBuffer, RELAY_BUFFER_SIZE);
+  ets_memcpy(pCrash->lastRelayBuffer, relayBuffer, RELAY_BUFFER_SIZE);
   crashHandlerPutReport(&record);
 }
 
-uint32_t i2spiGetTxOverflowCount(void) { return self.txOverflowCount; }
-uint32_t i2spiGetRxOverflowCount(void) { return self.rxOverflowCount; }
-uint32_t i2spiGetPhaseErrorCount(void) { return self.phaseErrorCount; }
- int32_t i2spiGetIntegralDrift(void)   { return self.integralDrift;   }
+uint32_t ICACHE_FLASH_ATTR i2spiGetTxOverflowCount(void) { return self.txOverflowCount; }
+uint32_t ICACHE_FLASH_ATTR i2spiGetRxOverflowCount(void) { return self.rxOverflowCount; }
+uint32_t ICACHE_FLASH_ATTR i2spiGetPhaseErrorCount(void) { return self.phaseErrorCount; }
+ int32_t ICACHE_FLASH_ATTR i2spiGetIntegralDrift(void)   { return self.integralDrift;   }
+
+I2SPIError ICACHE_FLASH_ATTR i2spiGetErrorCode(int32_t* data)
+{
+  const I2SPIError ret = self.errorCode;
+  self.errorCode = I2SPIE_None;
+  if (data != NULL) *data = self.errorData;
+  self.errorData = 0;
+  return ret;
+}

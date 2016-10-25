@@ -462,6 +462,7 @@ namespace AnimationController {
               msgID != RobotInterface::EngineToRobot::Tag_animAudioSample)
         {
           // Shut down, and report back what happened
+          AnkiWarn( 404, "AnimationController.advance_audio.currupt_buffer", 620, "Unexpected msgID=%d", 1, msgID);
           SendAnimationEnded();
         }
 

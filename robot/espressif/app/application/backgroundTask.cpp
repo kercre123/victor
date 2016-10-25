@@ -193,6 +193,7 @@ void Exec(os_event_t *event)
     }
     case 4:
     {
+      if (true)
       {
         static uint32_t lastPEC = 0;
         const uint32_t pec = i2spiGetPhaseErrorCount();
@@ -213,6 +214,7 @@ void Exec(os_event_t *event)
           lastPEC = pec;
         }
       }
+      if (true)
       {
         static uint32_t lastDropCount = 0;
         const uint32_t dc = clientDropCount();
@@ -224,6 +226,12 @@ void Exec(os_event_t *event)
           if (RobotInterface::SendMessage(rer)) lastDropCount = dc;
           AnkiWarn( 370, "client.reliable_message_dropped", 607, "count = %d", 1, dc);
         }
+      }
+      if (true)
+      {
+        int32_t data;
+        const I2SPIError i2spiErr = i2spiGetErrorCode(&data);
+        AnkiConditionalWarn(i2spiErr == I2SPIE_None, 403, "I2SPI.Error", 622, "code=%x, data=%x", 2, i2spiErr, data);
       }
       break;
     }

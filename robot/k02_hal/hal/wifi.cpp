@@ -49,7 +49,7 @@ namespace HAL {
     }
     else if (tag <= RobotInterface::TO_RTIP_END)
     {
-      AnkiWarn( 403, "WiFi.RadioSendMessage", 619, "Refusing to send message %x[%d] to self!", 2, tag, size);
+      AnkiWarn( 406, "WiFi.RadioSendMessage", 619, "Refusing to send message %x[%d] to self!", 2, tag, size);
       return false;
     }
     else
@@ -88,7 +88,7 @@ namespace HAL {
       const uint8_t wind = txWind;
       uint8_t rind = txRind;
       uint8_t i = 0;
-      while ((rind != wind) && i < maxLength)
+      while ((rind != wind) && (i < maxLength))
       {
         dest[i++] = txBuf[rind++];
       }
@@ -151,7 +151,12 @@ namespace HAL {
           }
           else if (msg.tag < RobotInterface::TO_RTIP_START && ((msg.tag < RobotInterface::RTIP_TO_BODY_START) || (msg.tag > RobotInterface::RTIP_TO_BODY_END)))
           {
-            while (Spine::Enqueue(msg.GetBuffer() + 1, msg.Size() - 1, msg.tag) == false) ; // Spin until success
+            unsigned int spineSpin = 0;
+            while (Spine::Enqueue(msg.GetBuffer() + 1, msg.Size() - 1, msg.tag) == false) // Spin until success
+            {
+              spineSpin++;
+            }
+            AnkiConditionalWarn(spineSpin == 0, 405, "wifi.update.spine_spin", 621, "Spun %d times", 1, spineSpin);
           }
           else if (msg.Size() != msgLen)
           {

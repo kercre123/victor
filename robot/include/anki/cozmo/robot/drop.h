@@ -29,7 +29,7 @@
 #define DROP_SPACING (168)
 ASSERT_IS_MULTIPLE_OF_TWO(DROP_SPACING);
 /// Number of usable bytes on the I2SPI bus for drops from RTIP to WiFi
-#define DROP_TO_WIFI_SIZE (100)
+#define DROP_TO_WIFI_SIZE (102)
 /// Number of usable bytes on the I2SPI bus for drops from WiFi to the RTIP
 #define DROP_TO_RTIP_SIZE (DROP_PREAMBLE_SIZE + MAX_AUDIO_BYTES_PER_DROP + 1 + MAX_SCREEN_BYTES_PER_DROP + DROP_TO_RTIP_MAX_VAR_PAYLOAD + 1)
 /// Number of bytes of drop prefix
@@ -52,6 +52,7 @@ ASSERT_IS_MULTIPLE_OF_TWO(DROP_SPACING);
 enum DROP_PREAMBLE {
   TO_RTIP_PREAMBLE = 0x5452,
   TO_WIFI_PREAMBLE = 0x6957,
+  TO_WIFI_FOOTER   = 0xff, ///< u8, must not match any byte of preambles
 };
 
 typedef uint16_t preambleType;
@@ -76,7 +77,7 @@ ASSERT_IS_MULTIPLE_OF_TWO(DROP_TO_RTIP_SIZE);
 /// The frequency with which we are allowed to send RTIP_MSG_BUF_SIZE bytes of data in miliseconds
 #define RTIP_MSG_INTERVAL_MS (7)
 
-#define DROP_TO_WIFI_MAX_PAYLOAD (DROP_TO_WIFI_SIZE - DROP_PREAMBLE_SIZE - 2)
+#define DROP_TO_WIFI_MAX_PAYLOAD (DROP_TO_WIFI_SIZE - DROP_PREAMBLE_SIZE - 4)
 
 /// Drop structure for transfers from RTIP to WiFi
 typedef struct
@@ -85,6 +86,8 @@ typedef struct
   uint8_t payloadLen;  ///< Number of bytes of message data following JPEG data
   uint8_t droplet; ///< Drop flags and bit fields
   uint8_t payload[DROP_TO_WIFI_MAX_PAYLOAD]; ///< Variable payload for message
+  uint8_t counter; ///< Drop counter to ensure we have sync
+  uint8_t footer; ///< Fixed value to make sure inter-drop space is filled with known value
 } DropToWiFi;
 
 ct_assert(sizeof(DropToWiFi) == DROP_TO_WIFI_SIZE);
@@ -98,6 +101,7 @@ typedef enum
   jpegLenMask       = ((1<<5)-1), ///< Mask for JPEG length data, legth is in 4 byte words
   jpegEOF           = 1<<5,       ///< Flags this drop as containing the end of a JPEG frame
   oledWatermark     = 1<<6,       ///< RTIP internal OLED buffer has reached 50%
+  cladWatermark     = 1<<7,       ///< RTIP clad buffer is nearly full, stop sending
 // To RTIP drop fields
   audioDataValid    = 1<<0,    ///< Bytes in the iscochronous audio field are valid
   screenDataValid   = 1<<1,    ///< Bytes in the iscochronous screen field are valid

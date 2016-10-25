@@ -51,6 +51,7 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--image-request', action='store_true', help="Request video from the robot")
     parser.add_argument('-i', '--ip_address', default="172.31.1.1", help="Specify robot's ip address")
     parser.add_argument('-p', '--port', default=5551, type=int, help="Manually specify robot's port")
+    parser.add_argument('-b', '--no-blinkers', action='store_true', help="Do not turn on backpack light test pattern")
     parser.add_argument('--state_parse', nargs='*', help="Print just the specified fields from the robot state message")
     parser.add_argument('--image_debug', action='store_true', help="Print image chunk debugging summary")
     parser.add_argument('tags', nargs='*', help="The tags to subscribe to")
@@ -69,7 +70,8 @@ if __name__ == '__main__':
     robotInterface.Init()
     robotInterface.Connect(dest=(args.ip_address, args.port),
                            syncTime = None if args.no_sync else args.sync_time,
-                           imageRequest = args.image_request)
+                           imageRequest = args.image_request,
+                           blinkers = not args.no_blinkers)
 
     if args.all:
         args.tags = robotInterface.RI.RobotToEngine._tags_by_name.values()

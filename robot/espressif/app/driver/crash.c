@@ -15,6 +15,8 @@
 
 extern ReliableConnection g_conn;   // So we can check canaries when we crash
 
+extern int COZMO_VERSION_ID; // Initalized in factoryData.c
+
 static int nextCrashRecordSlot;
 
 void os_put_str(char* str)
@@ -85,6 +87,7 @@ extern void crash_dump(int* sp) {
   {
     cle->excvaddr = get_excvaddr();
     cle->depc     = get_depc();
+    cle->version  = COZMO_VERSION_ID;
     cle->stackDumpSize = (0x40000000 - (unsigned int)p);
     if (cle->stackDumpSize > ESP_STACK_DUMP_SIZE) cle->stackDumpSize = ESP_STACK_DUMP_SIZE;
     for (i=0; i<cle->stackDumpSize; i++) cle->stack[i] = p[i];

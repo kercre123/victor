@@ -24,10 +24,11 @@ const int RX_OVERFLOW = 8;  // Adjust this to fix screen - possibly at expense o
 const int TX_SIZE = DROP_TO_WIFI_SIZE / sizeof(transmissionWord);
 const int RX_SIZE = DROP_TO_RTIP_SIZE / sizeof(transmissionWord) + RX_OVERFLOW;
 
-static DropToWiFi spi_backbuff[2];
+static DropToWiFi spi_backbuff0 __attribute__((aligned (4)));
+static DropToWiFi spi_backbuff1 __attribute__((aligned (4)));
 
-static DropToWiFi* spi_tx_buff = &spi_backbuff[1];
-DropToWiFi* spi_write_buff = &spi_backbuff[0];
+static DropToWiFi* spi_tx_buff = &spi_backbuff1;
+DropToWiFi* spi_write_buff = &spi_backbuff0;
 
 transmissionWord spi_rx_buff[RX_SIZE];
 
@@ -107,14 +108,18 @@ static bool ProcessDrop(void) {
 }
 
 void Anki::Cozmo::HAL::SPI::StartDMA(void) {
+  static u8 dropTxCounter = 0;
   // Start sending out junk
   SPI0_MCR |= SPI_MCR_CLR_RXF_MASK;
   
   // Special case:  If write_buff is not finalized, resend the old drop (tx_buff) as an empty drop
   if (!is_write_buff_final)
   {
+    spi_tx_buff->preamble = TO_WIFI_PREAMBLE;
+    spi_tx_buff->counter  = dropTxCounter++;
+    spi_tx_buff->footer   = TO_WIFI_FOOTER;
     spi_tx_buff->payloadLen = spi_tx_buff->droplet = 0;   // Mark it empty
-    
+        
     do  // Per erratum e8011: Repeat writes to SADDR, DADDR, or NBYTES until they stick
       DMA_TCD3_SADDR = (uint32_t)spi_tx_buff;
     while (DMA_TCD3_SADDR != (uint32_t)spi_tx_buff);
@@ -123,6 +128,10 @@ void Anki::Cozmo::HAL::SPI::StartDMA(void) {
     // Do NOT swap buffers, since we could interrupt a FinalizeDrop() already in progress
     return;
   }
+  
+  spi_write_buff->preamble = TO_WIFI_PREAMBLE;
+  spi_write_buff->counter  = dropTxCounter++;
+  spi_write_buff->footer   = TO_WIFI_FOOTER;
   
   do  // Per erratum e8011: Repeat writes to SADDR, DADDR, or NBYTES until they stick
     DMA_TCD3_SADDR = (uint32_t)spi_write_buff;
@@ -143,9 +152,6 @@ void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, const bool eof, const uint
     return;
   
   DropToWiFi *drop_tx = spi_write_buff;
-
-  drop_tx->preamble = TO_WIFI_PREAMBLE;
-  drop_tx->payloadLen = 0;
   
   while (jpeglen & 0x3) drop_tx->payload[jpeglen++] = 0xff;
   if (eof)
@@ -158,7 +164,7 @@ void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, const bool eof, const uint
 
   drop_tx->droplet = 
     JPEG_LENGTH(jpeglen) | 
-    (eof ? jpegEOF : 0) | 
+    (eof ? jpegEOF : 0)  | 
     (I2C::GetWatermark() ? oledWatermark : 0);
   uint8_t *drop_addr = drop_tx->payload + jpeglen;
   
@@ -167,7 +173,8 @@ void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, const bool eof, const uint
     *drop_addr = 0;
     drop_tx->payloadLen = Anki::Cozmo::HAL::WiFi::GetTxData(drop_addr, remainingSpace);
   }
-
+  else drop_tx->payloadLen = 0;
+  
   is_write_buff_final = true;  // Drop is now final, safe to send!
 }
 

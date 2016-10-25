@@ -96,12 +96,13 @@ class _Dispatcher(IDataReceiver):
         if forkTransportThread: self.transport.start()
         self.nameTable, self.formatTable = importTables(ANKI_LOG_STRING_TABLE_LOCAL if os.path.isfile(ANKI_LOG_STRING_TABLE_LOCAL) else ANKI_LOG_STRING_TABLE_GLOBAL)
 
-    def Connect(self, dest=("172.31.1.1", 5551), syncTime=0, imageRequest=False):
+    def Connect(self, dest=("172.31.1.1", 5551), syncTime=0, imageRequest=False, blinkers=True):
         "Initiate reliable Connection"
         self.dest = dest
         self.state = ConnectionState.waitingToConnect
         self.syncTime = syncTime
         self.imageRequest = imageRequest
+        self.blinkers = blinkers
         return self.transport.Connect(self.dest)
 
     def Disconnect(self, dest=None):
@@ -133,6 +134,10 @@ class _Dispatcher(IDataReceiver):
             self.send(RI.EngineToRobot(initAnimController=Anki.Cozmo.AnimKeyFrame.InitController()))
         if self.imageRequest:
             self.send(RI.EngineToRobot(imageRequest=RI.ImageRequest(Anki.Cozmo.ImageSendMode.Stream, Anki.Cozmo.ImageResolution.QVGA)))
+        if self.blinkers:
+            self.send(RI.EngineToRobot(setBackpackLightsTurnSignals=RI.BackpackLightsTurnSignals(
+                (Anki.Cozmo.LightState(0xFFFF, 0, 30, 0, 10, 15), Anki.Cozmo.LightState(0xFFFF, 0, 30, 0, 10, 15)
+            ))))
         for sub in self.OnConnectedSubscribers:
             sub(sourceAddress)
 
@@ -225,6 +230,10 @@ class _Dispatcher(IDataReceiver):
                     sys.stderr.write("FATAL ROBOT ERROR: {:x} !{}".format(msg.robotError.error, os.linesep))
                 else:
                     sys.stderr.write("ROBOT ERROR: {:x}{}".format(msg.robotError.error, os.linesep))
+            elif msg.tag == msg.Tag.crashReport:
+                sys.stdout.write("ROBOT CRASH REPORT: err = {0.errorCode}\tsource = {0.which}\t{1} words{2}".format(msg.crashReport, len(msg.crashReport.dump), os.linesep))
+                with open('robot_crash_{0.errorCode}_{0.which}_{1:10d}.msg'.format(msg.crashReport, int(time.time())), "wb") as dump:
+                    dump.write(msg.crashReport.pack())
             for tag, subs in self.ReceiveDataSubscribers.items():
                 if msg.tag == tag:
                     for sub in subs:

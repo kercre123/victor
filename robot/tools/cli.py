@@ -160,6 +160,7 @@ if __name__ == '__main__':
     parser.add_argument('--dry-run', action='store_true', help="Launch the RELP but don't connect to the robot")
     parser.add_argument('--no-sync',   action='store_true', help="Do not send sync time message to robot on startup.")
     parser.add_argument('--sync-time', default=0, type=int, help="Manually specify sync time offset")
+    parser.add_argument('-b', '--no-blinkers', action='store_true', help="Do not turn on backpack light test pattern")
     parser.add_argument('-v', '--image-request', action='store_true', help="Request video from the robot")
     parser.add_argument('-i', '--ip_address', default="172.31.1.1", help="Specify robot's ip address")
     parser.add_argument('-p', '--port', default=5551, type=int, help="Manually specify robot's port")
@@ -175,7 +176,8 @@ if __name__ == '__main__':
     if not args.dry_run:
         robotInterface.Connect(dest=(args.ip_address, args.port),
                                syncTime = None if args.no_sync else args.sync_time,
-                               imageRequest = args.image_request)
+                               imageRequest = args.image_request,
+                               blinkers = not args.no_blinkers)
     
     if args.command:
         while not robotInterface.GetConnected():

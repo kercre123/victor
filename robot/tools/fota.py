@@ -116,6 +116,6 @@ if __name__ == '__main__':
     print("Loading", fwi)
     robotInterface.Init(False, forkTransportThread = False)
     up = OTAStreamer(fwi)
-    robotInterface.Connect(syncTime = None)
+    robotInterface.Connect(syncTime = None, blinkers=False)
     up.main()
     del up

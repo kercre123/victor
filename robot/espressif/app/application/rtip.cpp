@@ -9,6 +9,7 @@ extern "C" {
 #include "mem.h"
 #include "driver/i2spi.h"
 #include "client.h"
+#include "driver/crash.h"
 }
 #include "anki/cozmo/robot/logging.h"
 #include "rtip.h"
@@ -58,12 +59,15 @@ bool SendMessage(RobotInterface::EngineToRobot& msg)
 
 void Update()
 {
+  static u32 lastMsgTime;
   RobotInterface::EngineToRobot msg;
   i2spiUpdateRtipQueueEstimate();
   u8* buffer = msg.GetBuffer();
   int size = i2spiGetCladMessage(buffer);
+  const uint32_t now = system_get_time();
   while (size > 0)
   {
+    lastMsgTime = now;
     if (msg.tag < RobotInterface::TO_WIFI_START)
     {
       os_printf("Wifi rcvd msg bound below %d\r\n", msg.tag);
@@ -100,6 +104,15 @@ void Update()
       }
     }
     size = i2spiGetCladMessage(buffer);
+  }
+  
+  if (((now - lastMsgTime) > RTIP_MESSAGE_TIMEOUT) && (i2spiGetMode() == I2SPI_NORMAL)) // Die if lost sync
+  {
+    CrashRecord cr;
+    cr.reporter  = RobotInterface::WiFiCrash;
+    cr.errorCode = RobotInterface::REC_I2SPI_Lost;
+    crashHandlerPutReport(&cr);
+    system_deep_sleep(0);
   }
 }
 

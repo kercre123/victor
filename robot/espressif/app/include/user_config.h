@@ -65,4 +65,6 @@ struct connection_record{
 };
 extern struct connection_record connections[AP_MAX_CONNECTIONS];
 
+#define ALWAYS_INLINE static inline __attribute__((always_inline))
+
 #endif

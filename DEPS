@@ -33,18 +33,18 @@
                 "version": "153"
             },
             "firmware": {
+                "build_id": "39324",
+                "build_type_id": "CozmoOne_Experiments_CollectFirmware",
+                "extension": "tar.gz",
+                "package_name": "firmware",
+                "version": "959"
+            },
+            "old_firmware": {
                 "build_id": "39150",
                 "build_type_id": "CozmoOne_Experiments_CollectFirmware",
                 "extension": "tar.gz",
                 "package_name": "firmware",
                 "version": "954"
-            },
-            "old_firmware": {
-                "build_id": "37595",
-                "build_type_id": "CozmoOne_Experiments_CollectFirmware",
-                "extension": "tar.gz",
-                "package_name": "firmware",
-                "version": "915"
             }
         },
         "default_usr": "puller_cozmo",
