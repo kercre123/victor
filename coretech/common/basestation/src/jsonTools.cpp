@@ -189,7 +189,7 @@ std::string ParseString(const Json::Value& config, const char* key, const std::s
         retVal = true;
         
       } else {
-        PRINT_NAMED_WARNING("GetColor", "Expecting color in Json to be a string or 3 or 4 element array.\n");
+        PRINT_NAMED_WARNING("JsonTools.GetColorOptional", "Expecting color in Json to be a string or 3 or 4 element array");
       }
     } // if node.isMember(key)
     

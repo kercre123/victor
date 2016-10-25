@@ -213,7 +213,7 @@ namespace Vision {
                                      MarkerMatch(obsMarker, matchingMarker));
         } else {
           PRINT_NAMED_ERROR("ObservableObject.ComputePossiblePoses",
-                            "Failed to estimate pose of observed marker.\n");
+                            "Failed to estimate pose of observed marker");
         }
       }
     }
@@ -296,7 +296,7 @@ namespace Vision {
     }
     else {
       PRINT_NAMED_WARNING("ObservableObject.SetMarkersAsObserved",
-                          "No markers found with code %d.\n",
+                          "No markers found with code %d",
                           withCode);
     }
     
@@ -345,12 +345,12 @@ namespace Vision {
         whichMarker->SetLastObservedTime(atTime);
       } else {
         PRINT_NAMED_WARNING("ObservableObject.SetMarkerAsObserved",
-                            "No markers found within specfied projected distance threshold (%f).\n",
+                            "No markers found within specfied projected distance threshold (%f)",
                             centroidDistThreshold);
       }
     } else {
       PRINT_NAMED_WARNING("ObservableObject.SetMarkerAsObserved",
-                          "No markers found with code (%d) of given 'nearestTo' observed marker.\n",
+                          "No markers found with code (%d) of given 'nearestTo' observed marker",
                           nearestTo->GetCode());
     }
   } // SetMarkerAsObserved()

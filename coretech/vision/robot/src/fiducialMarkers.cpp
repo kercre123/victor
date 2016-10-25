@@ -661,7 +661,7 @@ namespace Anki
 
         AnkiConditionalError(loadResult == RESULT_OK,
                              "VisionMarker.GetCNN.LoadFailed",
-                             "Failed to load CNN from '%s'.\n", cnnDir.c_str());
+                             "Failed to load CNN from '%s'", cnnDir.c_str());
       }
       return cnn;
     }
@@ -732,7 +732,7 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(probeValues.rows*probeValues.cols == VisionMarker::NUM_PROBES,
                                          RESULT_FAIL_INVALID_SIZE,
                                          "VisionMarker.GetProbeValues",
-                                         "Output probeValues matrix should have %d elements, not %d.\n",
+                                         "Output probeValues matrix should have %d elements, not %d",
                                          VisionMarker::NUM_PROBES, probeValues.rows*probeValues.cols);
       
       u8* restrict pProbeData = probeValues[0];
@@ -793,7 +793,7 @@ namespace Anki
        // Normalization to scale between 0 and 255:
        AnkiConditionalErrorAndReturnValue(maxValue > minValue, RESULT_FAIL,
        "NearestNeighborLibrary.GetProbeValues",
-       "Probe max (%d) <= min (%d).\n", maxValue, minValue);
+       "Probe max (%d) <= min (%d)", maxValue, minValue);
        const s32 divisor = static_cast<s32>(maxValue - minValue);
        AnkiAssert(divisor > 0);
        for(s32 iProbe=0; iProbe<numProbes; ++iProbe) {
@@ -1216,7 +1216,7 @@ namespace Anki
       
       AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                          "VisionMarker.Extract",
-                                         "Failed finding nearest neighbor.\n");
+                                         "Failed finding nearest neighbor");
       
 #       if DO_RECOGNITION_TIMING
         const std::chrono::steady_clock::time_point endTime = std::chrono::steady_clock::now();
@@ -1231,7 +1231,7 @@ namespace Anki
                       selectedLabel != MARKER_INVALID_000);
         } else {
           AnkiWarn("VisionMarker.Extract",
-                   "Valid label returned as nearest neighbor, but distance (%d) >= threshold (%d).\n",
+                   "Valid label returned as nearest neighbor, but distance (%d) >= threshold (%d)",
                    distance, grayvalueThreshold);
         }
       }
@@ -1274,8 +1274,8 @@ namespace Anki
         }
       }
       
-      AnkiConditionalErrorAndReturnValue(maxVotes>0, RESULT_FAIL, "VisionMarker.Extract.NoVotes", "No votes given to any marker label.\n")
-      AnkiConditionalErrorAndReturnValue(selectedLabel>=0, RESULT_FAIL, "VisionMarker.Extract.NoBestLabel", "No label with max votes selected.\n");
+      AnkiConditionalErrorAndReturnValue(maxVotes>0, RESULT_FAIL, "VisionMarker.Extract.NoVotes", "No votes given to any marker label")
+      AnkiConditionalErrorAndReturnValue(selectedLabel>=0, RESULT_FAIL, "VisionMarker.Extract.NoBestLabel", "No label with max votes selected");
       
       const f32 numVotesForMajority = static_cast<f32>(NUM_TREES)*0.5f;
       verified = (static_cast<f32>(maxVotes) > numVotesForMajority &&
@@ -1304,7 +1304,7 @@ namespace Anki
       
       AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                          "VisionMarker.Extract.CNNFail",
-                                         "ConvolutionalNeuralNet.Run failed.\n");
+                                         "ConvolutionalNeuralNet.Run failed");
       
       verified = true;
       selectedLabel = static_cast<OrientedMarkerLabel>(classLabel);
@@ -1353,7 +1353,7 @@ namespace Anki
         /* Disabling this since it's overly verbose now that we're using the
            the voting scheme and lots of things don't get majority vote.
 #       ifdef OUTPUT_FAILED_MARKER_STEPS
-        AnkiWarn("VisionMarker::Extract", "Verify failed or UNKNOWN/INVALID marker detected.\n");
+        AnkiWarn("VisionMarker::Extract", "Verify failed or UNKNOWN/INVALID marker detected");
 #       endif
          */
         this->validity = UNVERIFIED;

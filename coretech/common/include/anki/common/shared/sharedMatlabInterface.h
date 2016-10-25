@@ -215,7 +215,7 @@ namespace Anki
       mxDestroyArray(arrayTmp);
     } else {
       // TODO: How to print a message the right way for basestation vs. embedded??
-      //AnkiError("Anki.Get", "No variable named %s exists on the workspace.\n", name.data());
+      //AnkiError("Anki.Get", "No variable named %s exists on the workspace", name.data());
       return NULL;
     }
 

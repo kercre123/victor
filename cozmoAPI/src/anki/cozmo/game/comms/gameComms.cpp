@@ -49,7 +49,7 @@ namespace Cozmo {
   , advertisementRegPort_(advertisementRegPort)
   {
     if (false == server_.StartListening(serverListenPort_)) {
-      PRINT_NAMED_ERROR("GameComms.Constructor", "Failed to start listening on port %d\n", serverListenPort_);
+      PRINT_NAMED_ERROR("GameComms.Constructor", "Failed to start listening on port %d", serverListenPort_);
     }
   }
  
@@ -131,7 +131,7 @@ namespace Cozmo {
         
         isInitialized_ = true;
       } else {
-        PRINT_NAMED_INFO("GameComms","waiting to connect to advertisement service...\n");
+        PRINT_NAMED_INFO("GameComms.Update", "Waiting to connect to advertisement service");
         return;
       }
     }
@@ -234,7 +234,7 @@ namespace Cozmo {
     regMsg_.enableAdvertisement = 1;
     regMsg_.oneShot = 1;
     
-    PRINT_NAMED_INFO("GameComms", "Sending registration for UI device %d at address %s on port %d/%d\n", regMsg_.id, regMsg_.ip.c_str(),
+    PRINT_NAMED_INFO("GameComms.AdvertiseToService", "Sending registration for UI device %d at address %s on port %d/%d", regMsg_.id, regMsg_.ip.c_str(),
            (int)regMsg_.toEnginePort, (int)regMsg_.fromEnginePort);
   
     Cozmo::ExternalInterface::MessageGameToEngine outMessage;

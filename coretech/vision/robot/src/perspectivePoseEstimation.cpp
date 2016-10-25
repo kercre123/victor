@@ -560,7 +560,7 @@ namespace Anki {
 
           AnkiConditionalErrorAndReturnValue(bestSolution>=0, RESULT_FAIL,
                                              "P3P::computePossiblePoses()",
-                                             "No valid solutions found (all were behind camera?).\n");
+                                             "No valid solutions found (all were behind camera?)");
 
           //CoreTechPrint("Best solution when validating with corner %d was %d with error %f\n",
           //       i_validate, bestSolution, minErrorInner);

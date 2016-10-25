@@ -53,7 +53,7 @@ namespace Anki
       // Extract the ROI for processing
       cvImageROI = cvImage(cvRoi);
       AnkiConditionalErrorAndReturnValue(cvImageROI.empty() == false, RESULT_FAIL_INVALID_SIZE,
-                                         "IlluminationNormalization", "Got empty ROI for given corners.\n");
+                                         "IlluminationNormalization", "Got empty ROI for given corners");
       
       // Hang on to a copy of the original pixel values so we can restore them
       // after filtering, to avoid screwing up the supposedly-const input image
@@ -366,7 +366,7 @@ namespace Anki
         {
           lastResult = IlluminationNormalization(currentMarker.corners, params.fiducialThicknessFraction, cvImage, cvImageROI, cvImageROI_orig);
           if(lastResult != RESULT_OK) {
-            AnkiWarn("DetectFiducialMarkers", "Illumination normalization failed, skipping marker %d.\n", iMarker);
+            AnkiWarn("DetectFiducialMarkers", "Illumination normalization failed, skipping marker %d", iMarker);
             continue;
           }
         }
@@ -411,7 +411,7 @@ namespace Anki
                                                  scratchOnchip);
               
               AnkiConditionalWarn(lastResult == RESULT_OK, "DetectFiducialMarkers",
-                                  "Marker extraction for quad %d of %d failed.\n",
+                                  "Marker extraction for quad %d of %d failed",
                                   iMarker, markers.get_size());
 
               if (currentMarker.markerType == Vision::MARKER_INVALID && !params.returnInvalidMarkers) {

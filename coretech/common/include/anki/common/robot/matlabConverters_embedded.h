@@ -67,7 +67,7 @@ namespace Embedded {
   template<typename Type> void mxArrayToArray(const mxArray * const array, Array<Type> &mat)
   {
     AnkiConditionalError(mxGetNumberOfDimensions(array) == 2,
-                         "mxArrayToArray", "Matlab array should be 2D.\n");
+                         "mxArrayToArray", "Matlab array should be 2D");
     
     const int nrows = mat.get_size(0);
     const int ncols = mat.get_size(1);
@@ -75,7 +75,7 @@ namespace Embedded {
     const Type * const matlabMatrixStartPointer = reinterpret_cast<const Type *>( mxGetData(array) );
     
     if(mxGetM(array) != nrows || mxGetN(array) != ncols) {
-      AnkiError("mxArrayToArray", "Matlab array size does not match Anki::Embedded::Array size: (%d x %d) vs (%d x %d).\n",
+      AnkiError("mxArrayToArray", "Matlab array size does not match Anki::Embedded::Array size: (%d x %d) vs (%d x %d)",
                 mxGetM(array), mxGetN(array), nrows, ncols);
       return;
     }
@@ -84,7 +84,7 @@ namespace Embedded {
     const mxClassID templateClassId = GetMatlabClassID<Type>();
     
     if(matlabClassId != templateClassId) {
-      AnkiError("mxArrayToArray", "mxArrayToArray<Type>(array,mat) - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+      AnkiError("mxArrayToArray", "mxArrayToArray<Type>(array,mat) - Matlab classId does not match with template %d!=%d", matlabClassId, templateClassId);
       return;
     }
     
@@ -109,7 +109,7 @@ namespace Embedded {
     const mwSize *dimensions = mxGetDimensions(matlabArray);
     
     if(numDimensions != 2) {
-      AnkiError("mxArrayToArray", "mxArrayToArray<Type> - Matlab array must be 2D\n");
+      AnkiError("mxArrayToArray", "mxArrayToArray<Type> - Matlab array must be 2D");
       return Array<Type>();
     }
     
@@ -125,14 +125,14 @@ namespace Embedded {
     templateClassId = GetMatlabClassID<Type>();
     
     if(matlabClassId != templateClassId) {
-      AnkiError("mxArrayToArray", "mxArrayToArray<Type> - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+      AnkiError("mxArrayToArray", "mxArrayToArray<Type> - Matlab classId does not match with template %d!=%d", matlabClassId, templateClassId);
       return Array<Type>();
     }
     
     Array<Type> array(static_cast<s32>(dimensions[0]), static_cast<s32>(dimensions[1]), memory);
     
     if(!array.IsValid()) {
-      AnkiError("mxArrayToArray", "mxArrayToArray<Type> - Could not allocate array\n");
+      AnkiError("mxArrayToArray", "mxArrayToArray<Type> - Could not allocate array");
       return Array<Type>();
     }
     
@@ -157,7 +157,7 @@ namespace Embedded {
     const mwSize *dimensions = mxGetDimensions(matlabArray);
     
     if(numDimensions != 2) {
-      AnkiError("mxCellArrayToArray", "mxCellArrayToArray<Type> - Matlab array must be 2D\n");
+      AnkiError("mxCellArrayToArray", "mxCellArrayToArray<Type> - Matlab array must be 2D");
       return Array<Array<Type> >();
     }
     
@@ -178,14 +178,14 @@ namespace Embedded {
     templateClassId = GetMatlabClassID<Type>();
     
     if(matlabClassId != templateClassId) {
-      AnkiError("mxCellArrayToArray", "mxCellArrayToArray<Type> - Matlab classId does not match with template %d!=%d\n", matlabClassId, templateClassId);
+      AnkiError("mxCellArrayToArray", "mxCellArrayToArray<Type> - Matlab classId does not match with template %d!=%d", matlabClassId, templateClassId);
       return Array<Array<Type> >();
     }
     
     Array<Array<Type> > array(static_cast<s32>(dimensions[0]), static_cast<s32>(dimensions[1]), memory);
     
     if(!array.IsValid()) {
-      AnkiError("mxCellArrayToArray", "mxCellArrayToArray<Type> - Could not allocate array\n");
+      AnkiError("mxCellArrayToArray", "mxCellArrayToArray<Type> - Could not allocate array");
       return Array<Array<Type> >();
     }
     
@@ -216,7 +216,7 @@ namespace Embedded {
     const mxClassID matlabClassId = mxGetClassID(matlabArray);
     
     AnkiConditionalErrorAndReturnValue(matlabClassId == mxCHAR_CLASS,
-                                       NULL, "mxArrayToString", "Matlab classId is not char %d!=%d\n", matlabClassId, mxCHAR_CLASS);
+                                       NULL, "mxArrayToString", "Matlab classId is not char %d!=%d", matlabClassId, mxCHAR_CLASS);
     
     char * curMatlabString = mxArrayToString(matlabArray);
     
@@ -243,7 +243,7 @@ namespace Embedded {
     const mwSize *dimensions = mxGetDimensions(matlabArray);
     
     if(numDimensions != 2) {
-      AnkiError("mxCellArrayToStringArray", "mxCellArrayToStringArray - Matlab array must be 2D\n");
+      AnkiError("mxCellArrayToStringArray", "mxCellArrayToStringArray - Matlab array must be 2D");
       return Array<char *>();
     }
     
@@ -262,14 +262,14 @@ namespace Embedded {
     matlabClassId = mxGetClassID(firstElement);
     
     if(matlabClassId != mxCHAR_CLASS) {
-      AnkiError("mxCellArrayToStringArray", "mxCellArrayToStringArray - Matlab classId does not match with template %d!=%d\n", matlabClassId, mxCHAR_CLASS);
+      AnkiError("mxCellArrayToStringArray", "mxCellArrayToStringArray - Matlab classId does not match with template %d!=%d", matlabClassId, mxCHAR_CLASS);
       return Array<char *>();
     }
     
     Array<char *> array(static_cast<s32>(dimensions[0]), static_cast<s32>(dimensions[1]), memory);
     
     if(!array.IsValid()) {
-      AnkiError("mxCellArrayToStringArray", "mxCellArrayToStringArray - Could not allocate array\n");
+      AnkiError("mxCellArrayToStringArray", "mxCellArrayToStringArray - Could not allocate array");
       return Array<char *>();
     }
     

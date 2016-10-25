@@ -750,7 +750,7 @@ namespace Anki {
         }
 
         if(numericalFailure){
-          AnkiWarn("RefineQuadrilateral", "numericalFailure\n");
+          AnkiWarn("RefineQuadrilateral", "numericalFailure");
           restoreOriginal = true;
         }
 
@@ -873,7 +873,7 @@ namespace Anki {
       // do so now.
       if(restoreOriginal) {
 #       if DEBUG_QUAD_REFINEMENT
-        AnkiWarn("RefineQuadrilateral", "Restoring original quad.\n");
+        AnkiWarn("RefineQuadrilateral", "Restoring original quad");
 #       endif
         refinedQuad = initialQuadF32;
         refinedHomography.Set(initialHomography);
@@ -883,7 +883,7 @@ namespace Anki {
         const f32 finalCornerChange = MaxCornerChange(refinedHomography, initialQuadF32);
         if(finalCornerChange > maxCornerChange) {
 #         if DEBUG_QUAD_REFINEMENT
-          AnkiWarn("RefineQuadrilateral", "Quad changed too much.\n");
+          AnkiWarn("RefineQuadrilateral", "Quad changed too much");
 #         endif
           lastResult = RESULT_FAIL;
         }

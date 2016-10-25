@@ -61,7 +61,7 @@ namespace Anki {
     {
       if(!_isInitialized) {
         PRINT_NAMED_ERROR("PanTiltTracker.StartTracking.NotInitialized",
-                          "PanTiltTracker should be initialized before calling StartTracking().\n");
+                          "PanTiltTracker should be initialized before calling StartTracking()");
         return RESULT_FAIL;
       }
       
@@ -69,7 +69,7 @@ namespace Anki {
       
       if(lastResult != RESULT_OK) {
         PRINT_NAMED_ERROR("PanTiltTracker.StartTracking.ResetFailed",
-                          "PanTiltTracker failed calling Reset().\n");
+                          "PanTiltTracker failed calling Reset()");
         return lastResult;
       }
       
@@ -107,7 +107,7 @@ namespace Anki {
       
       if(!_isInitialized) {
         PRINT_NAMED_ERROR("PanTiltTracker.Update.NotInitialized",
-                          "PanTiltTracker should be initialized before calling Update().\n");
+                          "PanTiltTracker should be initialized before calling Update()");
         return RESULT_FAIL;
       }
       
@@ -175,7 +175,7 @@ namespace Anki {
                 
               default:
                 PRINT_NAMED_ERROR("PanTiltTracker.Update.InvalidSelectionMethod",
-                                  "Unrecognized selectionMethod %d.\n", _selectionMethod);
+                                  "Unrecognized selectionMethod %d", _selectionMethod);
                 return RESULT_FAIL_INVALID_PARAMETER;
             } // switch(_selectionMethod)
           }
@@ -191,14 +191,14 @@ namespace Anki {
           const f32 xError_pix = static_cast<f32>(_xImageCenter - _currentTarget.xCen);
           newPanAngle = std::atan(xError_pix / _focalLength_pix);
           
-          PRINT_NAMED_INFO("PanTiltTracker.Update",
-                           "yErr=%.1f: tiltAngle=%.1fdeg, xErr=%.1f: panAngle=%.1fdeg\n",
+          PRINT_NAMED_INFO("PanTiltTracker.Update.NewTrack",
+                           "yErr=%.1f: tiltAngle=%.1fdeg, xErr=%.1f: panAngle=%.1fdeg",
                            yError_pix, newTiltAngle.getDegrees(),
                            xError_pix, newPanAngle.getDegrees());
           
         } else if(_isTracking && BaseStationTimer::getInstance()->GetCurrentTimeStamp() > _currentTarget.timeoutTime_ms)
         {
-          PRINT_NAMED_INFO("PanTiltTracker.Update",  "Timed out. Stopping tracking.\n");
+          PRINT_NAMED_INFO("PanTiltTracker.Update.TimedOut",  "Timed out. Stopping tracking.");
 
           _isStarted  = false;
           _isTracking = false;

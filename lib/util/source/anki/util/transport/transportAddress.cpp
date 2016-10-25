@@ -55,7 +55,7 @@ void TransportAddress::SetIPAddress(uint32_t address, uint16_t port)
 void TransportAddress::SetIPAddressFromString(const char* addressAsString, int32_t port)
 {
   if (port < 0 || port >= 0x10000) {
-    PRINT_NAMED_WARNING("TransportAddress", "IP address %s specified with bad port %d.", addressAsString, port);
+    PRINT_NAMED_WARNING("TransportAddress.PortOutOfRange", "IP address %s specified with bad port %d", addressAsString, port);
     _type = Type::None;
     return;
   }
@@ -170,7 +170,7 @@ uint32_t TransportAddress::IPAddressStringToU32(const char* addressAsString)
     }
     else
     {
-      PRINT_NAMED_WARNING("TransportAddress", "pAddress part '%s' (of '%s') converts to out of range value %d!", pch, addressAsString, partValue);
+      PRINT_NAMED_WARNING("TransportAddress.AddressOutOfRange", "pAddress part '%s' (of '%s') converts to out of range value %d", pch, addressAsString, partValue);
       return 0;
     }
     pch = strchr(pch, ipSeparator);
@@ -179,7 +179,7 @@ uint32_t TransportAddress::IPAddressStringToU32(const char* addressAsString)
   
   if (numValues != 4)
   {
-    PRINT_NAMED_WARNING("TransportAddress", "ipAddress '%s' had %d (!= 4) valid numeric '%c' separated values!", addressAsString, numValues, ipSeparator);
+    PRINT_NAMED_WARNING("TransportAddress.InvalidFormat", "ipAddress '%s' had %d (!= 4) valid numeric '%c' separated values", addressAsString, numValues, ipSeparator);
     return 0;
   }
   

@@ -162,7 +162,7 @@ namespace Vision {
     }
     else {
       PRINT_NAMED_ERROR("ICNNLayer.Factory.BadLayerType",
-                        "Unrecognaized layer type '%s'.\n", layerType.c_str());
+                        "Unrecognized layer type '%s'", layerType.c_str());
       return nullptr;
     }
   }
@@ -200,19 +200,19 @@ namespace Vision {
     std::ifstream jsonFile(jsonFilename);
     if(false == reader.parse(jsonFile, jsonRoot)) {
       PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Load",
-                        "Failed to parse CNN Json file %s.\n",
+                        "Failed to parse CNN Json file %s",
                         jsonFilename.c_str());
       return RESULT_FAIL;
     } else {
       PRINT_NAMED_INFO("ConvolutionalNeuralNet.Load",
-                       "Loaded CNN Json file %s.\n",
+                       "Loaded CNN Json file %s",
                        jsonFilename.c_str());
     }
     jsonFile.close();
     
     if(!jsonRoot.isMember("CNN")) {
       PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Load",
-                        "Root Json node should be named 'CNN'.\n");
+                        "Root Json node should be named 'CNN'");
       return RESULT_FAIL;
     }
     
@@ -220,7 +220,7 @@ namespace Vision {
     
     if(!jsonCNN.isMember("Layers") || !jsonCNN["Layers"].isArray()) {
       PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Load",
-                        "Json 'CNN' node should have a 'Layers' array node.\n");
+                        "Json 'CNN' node should have a 'Layers' array node");
       return RESULT_FAIL;
     }
     
@@ -231,7 +231,7 @@ namespace Vision {
       
       if(!jsonLayer.isMember("Type")) {
         PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Load",
-                          "Layer %d is missing a type string.\n", i);
+                          "Layer %d is missing a type string", i);
         return RESULT_FAIL;
       }
       
@@ -257,7 +257,7 @@ namespace Vision {
       Json::Value& jsonClasses = jsonCNN["Classes"];
       if(!jsonClasses.isArray()) {
         PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Load",
-                          "Found 'Classes' node, but it is not an array.\n");
+                          "Found 'Classes' node, but it is not an array");
       }
       
       for(s32 i=0; i<jsonClasses.size(); ++i) {
@@ -268,7 +268,7 @@ namespace Vision {
     _name = dirname.substr(dirname.find_last_of("/")+1, std::string::npos);
     
     PRINT_NAMED_INFO("ConvolutionalNeuralNet.Load",
-                     "Loaded %lu CNN layers & %lu class names.\n",
+                     "Loaded %lu CNN layers & %lu class names",
                      _layers.size(), _classNames.size());
     
     _isLoaded = true;
@@ -302,7 +302,7 @@ namespace Vision {
     {
       if(classLabel >= _classNames.size()) {
         PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Run.BadLabel",
-                          "Max classLabel out of range for given class names.\n");
+                          "Max classLabel out of range for given class names");
         return RESULT_FAIL;
       }
       className = _classNames[classLabel];
@@ -315,12 +315,12 @@ namespace Vision {
   Result ConvolutionalNeuralNet::Run(const cv::Mat &img, std::vector<float> &output)
   {
     if(!_isLoaded) {
-      PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Run.NotLoaded", "CNN not yet loaded!\n");
+      PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Run.NotLoaded", "CNN not yet loaded");
       return RESULT_FAIL;
     }
     
     if(img.channels() > 1) {
-      PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Run", "Color image data not yet supported.\n");
+      PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Run", "Color image data not yet supported");
       return RESULT_FAIL;
     }
     
@@ -354,7 +354,7 @@ namespace Vision {
       Result layerResult = layer->Run(*lastOutput);
       
       if(layerResult != RESULT_OK) {
-        PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Run.LayerFail", "Layer returned failure.\n");
+        PRINT_NAMED_ERROR("ConvolutionalNeuralNet.Run.LayerFail", "Layer returned failure");
         return layerResult;
       }
       
@@ -378,7 +378,7 @@ namespace Vision {
 
   
 # define READ(__NAME__) do { file.read((char*)&__NAME__, sizeof(__NAME__)); \
-if(file.bad()) { PRINT_NAMED_ERROR("FileREAD.Failure", "%s.\n", QUOTE(__NAME__)); return RESULT_FAIL; } } while(0)
+if(file.bad()) { PRINT_NAMED_ERROR("FileREAD.Failure", "%s", QUOTE(__NAME__)); return RESULT_FAIL; } } while(0)
   
   Result ReadTensor(std::ifstream& file, vl::Tensor& tensor, std::vector<float>& memory,
                     vl::index_t height, vl::index_t width, vl::index_t depth, vl::index_t size)
@@ -406,7 +406,7 @@ if(file.bad()) { PRINT_NAMED_ERROR("FileREAD.Failure", "%s.\n", QUOTE(__NAME__))
   
 #define GET_FROM_JSON(__NAME__) do { \
 if(!JsonTools::GetValueOptional(jsonNode, QUOTE(__NAME__), __NAME__)) { \
-  PRINT_NAMED_ERROR("ICNNLayer.Load.MissingField", "Field '%s' not found.\n", QUOTE(__NAME__)); \
+  PRINT_NAMED_ERROR("ICNNLayer.Load.MissingField", "Field '%s' not found", QUOTE(__NAME__)); \
   return RESULT_FAIL; \
 } } while(0);
   
@@ -421,14 +421,14 @@ if(!JsonTools::GetValueOptional(jsonNode, QUOTE(__NAME__), __NAME__)) { \
     
     /* basic argument checks */
     if (strideX < 1 || strideY < 1) {
-      PRINT_NAMED_ERROR("ConvLayer.Load.BadStride", "At least one element of STRIDE is smaller than one.") ;
+      PRINT_NAMED_ERROR("ConvLayer.Load.BadStride", "At least one element of STRIDE is smaller than one") ;
       return RESULT_FAIL;
     }
     if (padLeft < 0 ||
         padRight < 0 ||
         padTop < 0 ||
         padBottom < 0) {
-      PRINT_NAMED_ERROR("ConvLayer.Load.BadPadding", "An element of PAD is negative.") ;
+      PRINT_NAMED_ERROR("ConvLayer.Load.BadPadding", "An element of PAD is negative") ;
       return RESULT_FAIL;
     }
     
@@ -447,7 +447,7 @@ if(!JsonTools::GetValueOptional(jsonNode, QUOTE(__NAME__), __NAME__)) { \
     
     if(!file.is_open()) {
       PRINT_NAMED_ERROR("ConvLayer.Load.FileOpenFailure",
-                        "Could not open file %s.\n", DataFilename.c_str());
+                        "Could not open file %s", DataFilename.c_str());
       return RESULT_FAIL;
     }
     
@@ -560,9 +560,9 @@ if(!JsonTools::GetValueOptional(jsonNode, QUOTE(__NAME__), __NAME__)) { \
     }
     
     if (verbosity > 0) {
-      PRINT_NAMED_INFO("vl_nnconv", "forward; %s", (inputData.getMemoryType()==vl::GPU) ? "GPU" : "CPU") ;
-      PRINT_NAMED_INFO("vl_nnconv", "stride: [%d %d], pad: [%d %d %d %d]\n"
-                       "vl_nnconv: num filter groups: %d, has bias: %d, has filters: %d, is fully connected: %d\n",
+      PRINT_NAMED_INFO("vl_nnconv", "forward: %s", (inputData.getMemoryType()==vl::GPU) ? "GPU" : "CPU") ;
+      PRINT_NAMED_INFO("vl_nnconv", "stride: [%d %d], pad: [%d %d %d %d], "
+                       "num filter groups: %d, has bias: %d, has filters: %d, is fully connected: %d",
                        strideY, strideX,
                        padTop, padBottom, padLeft, padRight,
                        numFilterGroups, hasBiases, hasFilters, fullyConnectedMode) ;
@@ -618,7 +618,7 @@ if(!JsonTools::GetValueOptional(jsonNode, QUOTE(__NAME__), __NAME__)) { \
     /* -------------------------------------------------------------- */
     
     if (error != vl::vlSuccess) {
-      PRINT_NAMED_ERROR("ConvLayer.Run", "nnconv_forward failed: %s\n", context.getLastErrorMessage().c_str()) ;
+      PRINT_NAMED_ERROR("ConvLayer.Run", "nnconv_forward failed: %s", context.getLastErrorMessage().c_str()) ;
       return RESULT_FAIL;
     }
     
@@ -647,30 +647,30 @@ if(!JsonTools::GetValueOptional(jsonNode, QUOTE(__NAME__), __NAME__)) { \
     } else if(method == "avg" || method == "mean") {
       poolMethod = vl::vlPoolingAverage;
     } else {
-      PRINT_NAMED_ERROR("PoolLayer.Load.BadMethod", "Unrecognized pooling method '%s'.\n", method.c_str());
+      PRINT_NAMED_ERROR("PoolLayer.Load.BadMethod", "Unrecognized pooling method '%s'", method.c_str());
       return RESULT_FAIL;
     }
     
     if (strideX < 1 || strideY < 1) {
-      PRINT_NAMED_ERROR("PoolLayer.Load.BadStride", "At least one element of STRIDE is smaller than one.") ;
+      PRINT_NAMED_ERROR("PoolLayer.Load.BadStride", "At least one element of STRIDE is smaller than one") ;
       return RESULT_FAIL;
     }
     if (poolHeight == 0 || poolWidth == 0) {
-      PRINT_NAMED_ERROR("PoolLayer.Load.BadPoolDims", "A dimension of the pooling SIZE is void.") ;
+      PRINT_NAMED_ERROR("PoolLayer.Load.BadPoolDims", "A dimension of the pooling SIZE is void") ;
       return RESULT_FAIL;
     }
     if (padLeft < 0 ||
         padRight < 0 ||
         padTop < 0 ||
         padBottom < 0) {
-      PRINT_NAMED_ERROR("PoolLayer.Load.BadPading", "An element of PAD is negative.") ;
+      PRINT_NAMED_ERROR("PoolLayer.Load.BadPadding", "An element of PAD is negative") ;
       return RESULT_FAIL;
     }
     if (padLeft >= poolWidth ||
         padRight >= poolWidth ||
         padTop >= poolHeight  ||
         padBottom >= poolHeight) {
-      PRINT_NAMED_ERROR("PoolLayer.Load.IncompatiblePadAndPool", "A padding value is larger or equal than the size of the pooling window.") ;
+      PRINT_NAMED_ERROR("PoolLayer.Load.IncompatiblePadAndPool", "A padding value is larger or equal than the size of the pooling window") ;
       return RESULT_FAIL;
     }
     
@@ -701,7 +701,7 @@ if(!JsonTools::GetValueOptional(jsonNode, QUOTE(__NAME__), __NAME__)) { \
     
     if (verbosity > 0) {
       PRINT_NAMED_INFO("vl_nnpool:", "forward; %s", (inputData.getMemoryType()==vl::GPU) ? "GPU" : "CPU") ;
-      PRINT_NAMED_INFO("vl_nnpool:", "stride: [%d %d], pad: [%d %d %d %d]\n",
+      PRINT_NAMED_INFO("vl_nnpool:", "stride: [%d %d], pad: [%d %d %d %d]",
                 strideY, strideX,
                 padTop, padBottom, padLeft, padRight) ;
 //      vl::print("vl_nnpool: data: ", data) ;
@@ -725,7 +725,7 @@ if(!JsonTools::GetValueOptional(jsonNode, QUOTE(__NAME__), __NAME__)) { \
                                   padTop, padBottom, padLeft, padRight) ;
     
     if (error != vl::vlSuccess) {
-      PRINT_NAMED_ERROR("PoolLayer.Run", "nnpooling_forward failed: %s\n", context.getLastErrorMessage().c_str()) ;
+      PRINT_NAMED_ERROR("PoolLayer.Run", "nnpooling_forward failed: %s", context.getLastErrorMessage().c_str()) ;
       return RESULT_FAIL;
     }
     
@@ -763,8 +763,8 @@ if(!JsonTools::GetValueOptional(jsonNode, QUOTE(__NAME__), __NAME__)) { \
     }
     
     if (verbosity > 0) {
-      PRINT_NAMED_INFO("vl_nnnormalize:", "mode %s; %s\n",  (inputData.getMemoryType()==vl::GPU)?"gpu":"cpu", "forward") ;
-      PRINT_NAMED_INFO("vl_nnnormalize:", "(depth,kappa,alpha,beta): (%lu,%g,%g,%g)\n",
+      PRINT_NAMED_INFO("vl_nnnormalize:", "mode %s; %s",  (inputData.getMemoryType()==vl::GPU)?"gpu":"cpu", "forward") ;
+      PRINT_NAMED_INFO("vl_nnnormalize:", "(depth,kappa,alpha,beta): (%lu,%g,%g,%g)",
                 normDepth, normKappa, normAlpha, normBeta) ;
 //      vl::print("vl_nnnormalize: data: ", data) ;
 //      if (backMode) {
@@ -785,7 +785,7 @@ if(!JsonTools::GetValueOptional(jsonNode, QUOTE(__NAME__), __NAME__)) { \
     /* -------------------------------------------------------------- */
     
     if (error != vl::vlSuccess) {
-      PRINT_NAMED_ERROR("NormLayer.Run", "nnnormalize_forward failed: %s\n", context.getLastErrorMessage().c_str()) ;
+      PRINT_NAMED_ERROR("NormLayer.Run", "nnnormalize_forward failed: %s", context.getLastErrorMessage().c_str()) ;
       return RESULT_FAIL;
     }
     

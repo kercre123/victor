@@ -113,7 +113,7 @@ namespace Anki
         const s32 initialImagePowerS32 = Log2u32(static_cast<u32>(initialImageScaleS32));
 
         AnkiConditionalErrorAndReturnValue(((1<<initialImagePowerS32)*nextImageWidth) == baseImageWidth,
-          RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_Affine::IterativelyRefineTrack", "The templateImage must be a power of two smaller than baseImageWidth (%d).\n", baseImageWidth);
+          RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_Affine::IterativelyRefineTrack", "The templateImage must be a power of two smaller than baseImageWidth (%d)", baseImageWidth);
 
         if(curTransformType == Transformations::TRANSFORM_TRANSLATION) {
           return IterativelyRefineTrack_Translation(nextImage, maxIterations, whichScale, convergenceTolerance, verify_converged, scratch);

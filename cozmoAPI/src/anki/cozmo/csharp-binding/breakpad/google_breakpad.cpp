@@ -37,7 +37,8 @@ static google_breakpad::ExceptionHandler* exceptionHandler;
 bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor,
                   void* context, bool succeeded)
 {
-  PRINT_NAMED_INFO("DumpCallback", "Dump path: '%s', fd = %d, context = %p, succeeded = %s\n",
+  PRINT_NAMED_INFO("GoogleBreakpad.DumpCallback",
+                   "Dump path: '%s', fd = %d, context = %p, succeeded = %s",
                    dumpPath, descriptor.fd(), context, succeeded ? "true" : "false");
   if (descriptor.fd() == fd && fd >= 0) {
     (void) close(fd); fd = -1;

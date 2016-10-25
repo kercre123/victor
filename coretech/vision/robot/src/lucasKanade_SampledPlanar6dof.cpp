@@ -319,7 +319,7 @@ namespace Anki
                                              R, this->params6DoF.translation);
         
         // NOTE: isValid will still be false in this case.
-        AnkiConditionalErrorAndReturn(lastResult == RESULT_OK, "LKTracker_SampledPlanar6dof", "Failed to compute initial pose constructing tracker.\n");
+        AnkiConditionalErrorAndReturn(lastResult == RESULT_OK, "LKTracker_SampledPlanar6dof", "Failed to compute initial pose constructing tracker");
 
         
 #endif // #if USE_OPENCV_ITERATIVE_POSE_INIT
@@ -425,7 +425,7 @@ namespace Anki
           Array<f32>& curAtA = this->AtAPyramid[iScale];
           AnkiConditionalErrorAndReturn(curAtA.IsValid(),
             "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-            "Invalid AtA matrix at scale %d.\n", iScale);
+            "Invalid AtA matrix at scale %d", iScale);
           curAtA.SetZero();
 
           const s32 numFiducialSamplesAtScale = numFiducialSquareSamples >> iScale;
@@ -474,7 +474,7 @@ namespace Anki
               Array<u8> templateImageAtScale(numPointsY, numPointsX, offchipScratch);
               AnkiConditionalErrorAndReturn(templateImageAtScale.IsValid(),
                                             "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                                            "Out of memory allocating templateImageAtScale. Could not allocate %dx%d points.\n", numPointsX, numPointsY);
+                                            "Out of memory allocating templateImageAtScale. Could not allocate %dx%d points.", numPointsX, numPointsY);
 
 #             if USE_BLURRING
               Array<u8> templateImageBoxFiltered(templateImage.get_size(0), templateImage.get_size(1), offchipScratch);
@@ -552,7 +552,7 @@ namespace Anki
               }
               AnkiConditionalError(this->normalizationMean[iScale] < 0.f || this->normalizationMean[iScale] > 255.f,
                 "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                "Template mean out of reasonable bounds [0,255] - was %.f\n", this->normalizationMean[iScale]);
+                "Template mean out of reasonable bounds [0,255] - was %.f", this->normalizationMean[iScale]);
               AnkiConditionalError(tempVariance > 0.f,
                 "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
                 "Template variance was zero or negative.");
@@ -563,7 +563,7 @@ namespace Anki
               Array<f32> templateImageXGradient(numPointsY, numPointsX, offchipScratch);
               AnkiConditionalErrorAndReturn(templateImageXGradient.IsValid(),
                 "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                "Out of memory allocating templateImageXGradient.\n");
+                "Out of memory allocating templateImageXGradient");
               if((lastResult = ImageProcessing::ComputeXGradient<u8,f32,f32>(templateImageAtScale, templateImageXGradient)) != RESULT_OK) {
                 AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "ComputeXGradient failed with code 0x%x", lastResult);
                 return;
@@ -573,7 +573,7 @@ namespace Anki
               Array<f32> templateImageYGradient(numPointsY, numPointsX, offchipScratch);
               AnkiConditionalErrorAndReturn(templateImageYGradient.IsValid(),
                 "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                "Out of memory allocating templateImageYGradient.\n");
+                "Out of memory allocating templateImageYGradient");
               if((lastResult = ImageProcessing::ComputeYGradient<u8,f32,f32>(templateImageAtScale, templateImageYGradient)) != RESULT_OK) {
                 AnkiError("LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof", "ComputeYGradient failed with code 0x%x", lastResult);
                 return;
@@ -590,7 +590,7 @@ namespace Anki
                 Array<f32> magnitudeVector(1, numPointsY*numPointsX, offchipScratch);
                 AnkiConditionalErrorAndReturn(magnitudeVector.IsValid(),
                 "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                "Out of memory allocating magnitudeVector.\n");
+                "Out of memory allocating magnitudeVector");
                 */
 
                 {
@@ -599,14 +599,14 @@ namespace Anki
                   Array<f32> magnitudeImage(numPointsY, numPointsX, offchipScratch);
                   AnkiConditionalErrorAndReturn(magnitudeImage.IsValid(),
                     "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                    "Out of memory allocating magnitudeImage. Could not allocate %dx%d points.\n", numPointsX, numPointsY);
+                    "Out of memory allocating magnitudeImage. Could not allocate %dx%d points.", numPointsX, numPointsY);
                   {
                     PUSH_MEMORY_STACK(offchipScratch);
 
                     Array<f32> tmpMagnitude(numPointsY, numPointsX, offchipScratch);
                     AnkiConditionalErrorAndReturn(tmpMagnitude.IsValid(),
                       "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                      "Out of memory allocating tmpMagnitude. Could not allocate %dx%d points.\n", numPointsX, numPointsY);
+                      "Out of memory allocating tmpMagnitude. Could not allocate %dx%d points.", numPointsX, numPointsY);
 
                     Matrix::DotMultiply<f32,f32,f32>(templateImageXGradient, templateImageXGradient, tmpMagnitude);
                     Matrix::DotMultiply<f32,f32,f32>(templateImageYGradient, templateImageYGradient, magnitudeImage);
@@ -623,7 +623,7 @@ namespace Anki
                     Array<bool> magnitudeImageNLMS(numPointsY, numPointsX, offchipScratch);
                     AnkiConditionalErrorAndReturn(magnitudeImageNLMS.IsValid(),
                       "LucasKanadeTracker_SampledPlanar6dof::LucasKanadeTracker_SampledPlanar6dof",
-                      "Out of memory allocating magnitudeImageNLMS. Could not allocate %dx%d points.\n", numPointsX, numPointsY);
+                      "Out of memory allocating magnitudeImageNLMS. Could not allocate %dx%d points.", numPointsX, numPointsY);
                     magnitudeImageNLMS.SetZero();
                     s32 nonZeroCount = 0;
 #if SAMPLE_TOP_HALF_ONLY
@@ -2262,7 +2262,7 @@ namespace Anki
         const s32 nrows = magnitudeImage.get_size(0);
         const s32 ncols = magnitudeImage.get_size(1);
 
-        AnkiConditionalErrorAndReturnValue(magnitudeIndexes.get_size(0)*magnitudeIndexes.get_size(1) == nrows*ncols, RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_SampledPlanar6dof::ApproximateSelect()", "Size of magnitudeIndexes vector does not match size of magnitudeImage.\n");
+        AnkiConditionalErrorAndReturnValue(magnitudeIndexes.get_size(0)*magnitudeIndexes.get_size(1) == nrows*ncols, RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_SampledPlanar6dof::ApproximateSelect()", "Size of magnitudeIndexes vector does not match size of magnitudeImage");
 
         numSelected = 0;
         s32 * restrict pMagnitudeIndexes = magnitudeIndexes.Pointer(0,0);
@@ -2335,7 +2335,7 @@ namespace Anki
                 }
               }
 
-              //AnkiWarn("ApproximateSelect", "Finished region (%d,%d), have %d selected.\n", i_region, j_region, numSelected);
+              //AnkiWarn("ApproximateSelect", "Finished region (%d,%d), have %d selected", i_region, j_region, numSelected);
             } // if(foundThreshold > 0.f)
 
             --numRegionsLeft;

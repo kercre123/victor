@@ -421,7 +421,7 @@ namespace Anki {
   {
     AnkiConditionalErrorAndReturnValue(this->ep, RESULT_FAIL, "Anki.", "Matlab engine is not started/connected");
 
-    AnkiConditionalErrorAndReturnValue(matrix != NULL, RESULT_FAIL, "Error: CvMat is not initialized for %s\n", name.data());
+    AnkiConditionalErrorAndReturnValue(matrix != NULL, RESULT_FAIL, "Error: CvMat is not initialized for %s", name.data());
 
     char tmpName[TEXT_BUFFER_SIZE];
     snprintf(tmpName, TEXT_BUFFER_SIZE, "%s_AnkiTMP", name.data());

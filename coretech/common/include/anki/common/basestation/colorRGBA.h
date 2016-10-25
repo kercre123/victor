@@ -119,7 +119,7 @@ namespace Anki {
   {
     if(value < 0.f || value > 1.f) {
       PRINT_NAMED_WARNING("ColorRGBA.GetU8.OutOfRangeValue",
-                          "Float RGBA values should be on the interval [0,1]. Will clip.\n");
+                          "Float RGBA values should be on the interval [0,1]. Will clip.");
     }
     const u8 retVal = static_cast<u8>(value*255.f);
     return retVal;

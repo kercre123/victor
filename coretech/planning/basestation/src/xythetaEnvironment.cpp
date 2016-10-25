@@ -340,7 +340,7 @@ Cost xythetaEnvironment::ApplyPathSegment(const PathSegment& pathSegment,
       break;
     }
     default:
-      PRINT_NAMED_ERROR("xythetaEnvironment.ApplyPathSegment","Undefined segment %d\n", segmentType);
+      PRINT_NAMED_ERROR("xythetaEnvironment.ApplyPathSegment", "Undefined segment %d", segmentType);
       assert(false);
       return MAX_OBSTACLE_COST;
   }
@@ -482,7 +482,7 @@ bool xythetaEnvironment::PathIsSafe(const Planning::Path& path, float startAngle
     
     if(totalPenalty > maxPenalty) {
       PRINT_NAMED_INFO("xythetaEnvironment.PathIsSafe",
-                       "Collision along path segment %lu with penalty %f, total penalty %f\n",
+                       "Collision along path segment %lu with penalty %f, total penalty %f",
                        (unsigned long) i,
                        penalty,
                        totalPenalty);
@@ -966,7 +966,7 @@ bool xythetaEnvironment::ParseMotionPrims(const Json::Value& config, bool useDum
           }
           else {
             if(!p.Create(prims[i], angle, *this)) {
-              PRINT_NAMED_ERROR("ParseMotionPrims.CreateFormat.Mprim", "failed to import motion primitive\n");
+              PRINT_NAMED_ERROR("ParseMotionPrims.CreateFormat.Mprim", "Failed to import motion primitive");
               return false;
             }
           }
@@ -983,7 +983,7 @@ bool xythetaEnvironment::ParseMotionPrims(const Json::Value& config, bool useDum
       return false;
     }
 
-    PRINT_NAMED_INFO("ParseMotionPrims.Added", "added %d motion primitives\n", numPrims);
+    PRINT_NAMED_INFO("ParseMotionPrims.Added", "Added %d motion primitives", numPrims);
   }
   catch( const std::exception&  e ) {
     PRINT_NAMED_ERROR("ParseMotionPrims.Exception",
@@ -1760,7 +1760,7 @@ void xythetaEnvironment::PrintPlan(const xythetaPlan& plan) const
   PRINT_STREAM_DEBUG("xythetaEnvironment.PrintPlan", "plan start: " << plan.start_);
 
   for(size_t i=0; i<plan.actions_.size(); ++i) {
-    PRINT_NAMED_DEBUG("xythetaEnvironment.PrintPlan", "%2lu: (%f, %f, %f [%d]) --> %s (penalty = %f)\n",
+    PRINT_NAMED_DEBUG("xythetaEnvironment.PrintPlan", "%2lu: (%f, %f, %f [%d]) --> %s (penalty = %f)",
            (unsigned long)i,
            curr_c.x_mm, curr_c.y_mm, curr_c.theta, currID.s.theta, 
            actionTypes_[plan.actions_[i]].GetName().c_str(),

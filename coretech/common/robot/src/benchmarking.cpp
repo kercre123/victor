@@ -292,7 +292,7 @@ namespace Anki
               const s32 endLevel = parseStack.get_size();
 
               AnkiConditionalErrorAndReturnValue(strcmp(startInstance.name, benchmarkEvents[iEvent].name) == 0 && startInstance.level == endLevel,
-                FixedLengthList<BenchmarkElement>(), "ComputeBenchmarkResults", "Benchmark parse error: Perhaps BeginBenchmark() and EndBenchmark() were nested, or there were more than %d benchmark events, or InitBenchmarking() was called in between a StartBenchmarking() and EndBenchmarking() pair, or some other non-supported thing listed in the comments.\n", MAX_BENCHMARK_EVENTS);
+                FixedLengthList<BenchmarkElement>(), "ComputeBenchmarkResults", "Benchmark parse error: Perhaps BeginBenchmark() and EndBenchmark() were nested, or there were more than %d benchmark events, or InitBenchmarking() was called in between a StartBenchmarking() and EndBenchmarking() pair, or some other non-supported thing listed in the comments.", MAX_BENCHMARK_EVENTS);
 
               const u32 elapsedTime = timeU32 - startInstance.startTime;
 

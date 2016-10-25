@@ -386,7 +386,7 @@ namespace Vision {
     const bool loadSuccess = _faceCascade.load(cascadeFilename);
     if(!loadSuccess) {
       PRINT_NAMED_ERROR("VisionSystem.Update.LoadFaceCascade",
-                        "Failed to load face cascade from %s\n",
+                        "Failed to load face cascade from %s",
                         cascadeFilename.c_str());
     }
     

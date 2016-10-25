@@ -39,7 +39,7 @@ namespace Anki {
        alpha < 0.f || alpha > 1.f)
     {
       PRINT_NAMED_WARNING("ColorRGBA.OutOfRangeValues",
-                          "Float RGBA values should be on the interval [0,1]. Will clip.\n");
+                          "Float RGBA values should be on the interval [0,1]. Will clip.");
     }
   }
   
@@ -91,7 +91,7 @@ namespace Anki {
       auto result = LUT.find(name);
       if(result == LUT.end()) {
         PRINT_NAMED_WARNING("NamedColors.GetByString",
-                            "Unknown color name '%s', returning default.\n",
+                            "Unknown color name '%s', returning default",
                             name.c_str());
         return DEFAULT;
       } else {

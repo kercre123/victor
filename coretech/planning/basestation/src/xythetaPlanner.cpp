@@ -613,7 +613,7 @@ bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions, bool* runPlan)
     // TODO:(bn) make this a dev option / parameter
     if(_expansions % 10000 == 0) {
       PRINT_NAMED_INFO("xythetaPlanner.PLANDEBUG",
-                       "%8d %8.5f = %8.5f + %8.5f\n",
+                       "%8d %8.5f = %8.5f + %8.5f",
                        _expansions,
                        _open.topF(),
                        _table[_open.top()].g_,

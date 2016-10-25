@@ -35,7 +35,7 @@ namespace Anki {
         return MarkerTypeStrings[_code];
       }
       else {
-        PRINT_NAMED_ERROR("Marker.GetCodeName", "Could not look up name for code=%d.\n", _code);
+        PRINT_NAMED_ERROR("Marker.GetCodeName", "Could not look up name for code=%d", _code);
         return MarkerTypeStrings[MARKER_UNKNOWN];
       }
     }
@@ -187,7 +187,7 @@ namespace Anki {
       Pose3d markerPoseWrtCamera;
       if(_pose.GetWithRespectTo(camera.GetPose(), markerPoseWrtCamera) == false) {
         PRINT_NAMED_WARNING("KnownMarker.IsVisibleFrom.NotInCameraPoseTree",
-                            "Marker must be in the same pose tree as the camera to check its visibility.\n");
+                            "Marker must be in the same pose tree as the camera to check its visibility");
         reason = NotVisibleReason::POSE_PROBLEM;
         return false;
       }

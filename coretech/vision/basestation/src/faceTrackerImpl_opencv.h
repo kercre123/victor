@@ -96,7 +96,7 @@ namespace Vision {
     bool loadSuccess = _faceCascade.load(faceCascadeFilename);
     if(!loadSuccess) {
       PRINT_NAMED_ERROR("FaceTracker.Impl.LoadFaceCascade",
-                        "Failed to load face cascade from %s\n",
+                        "Failed to load face cascade from %s",
                         faceCascadeFilename.c_str());
       return;
     }
@@ -106,7 +106,7 @@ namespace Vision {
     loadSuccess = _eyeCascade.load(eyeCascadeFilename);
     if(!loadSuccess) {
       PRINT_NAMED_ERROR("FaceTracker.Impl.LoadEyeCascade",
-                        "Failed to load eye cascade from %s\n",
+                        "Failed to load eye cascade from %s",
                         eyeCascadeFilename.c_str());
       return;
     }

@@ -419,7 +419,7 @@ namespace Anki {
       Pose3d objectPoseWrtCamera;
       if(object.GetPose().GetWithRespectTo(_pose, objectPoseWrtCamera) == false) {
         PRINT_NAMED_ERROR("Camera.AddOccluder.ObjectDoesNotShareOrigin",
-                          "Object must be in the same pose tree as the camera to add it as an occluder.\n");
+                          "Object must be in the same pose tree as the camera to add it as an occluder");
         return false;
       } else {
         std::vector<Point3f> cornersAtPose;
@@ -451,7 +451,7 @@ namespace Anki {
       Pose3d markerPoseWrtCamera;
       if(marker.GetPose().GetWithRespectTo(_pose, markerPoseWrtCamera) == false) {
         PRINT_NAMED_ERROR("Camera.AddOccluder.MarkerDoesNotShareOrigin",
-                          "Marker must be in the same pose tree as the camera to add it as an occluder.\n");
+                          "Marker must be in the same pose tree as the camera to add it as an occluder");
       } else {
         
         const Quad3f markerCorners = marker.Get3dCorners(markerPoseWrtCamera);

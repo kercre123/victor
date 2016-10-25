@@ -432,7 +432,7 @@ namespace Anki {
       
       // No need to warn: this can easily happen after the robot gets kidnapped
       //  PRINT_NAMED_WARNING("Pose3d.IsSameAs.ObjectsHaveDifferentOrigins",
-      //                      "Could not get other object w.r.t. this object's parent. Returning isSame == false.\n");
+      //                      "Could not get other object w.r.t. this object's parent. Returning isSame == false.");
       
       return false;
     }

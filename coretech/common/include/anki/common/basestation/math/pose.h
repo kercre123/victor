@@ -418,7 +418,7 @@ namespace Anki {
       poseWrtOrigin = *this;
     } else if(PoseBase<Pose2d>::GetWithRespectTo(*this, this->FindOrigin(), poseWrtOrigin) == false) {
       PRINT_NAMED_ERROR("Pose2d::GetWithRespectToOriginFailed",
-                        "Could not get pose w.r.t. its own origin. This should never happen.\n");
+                        "Could not get pose w.r.t. its own origin. This should never happen.");
       assert(false);
     }
     return poseWrtOrigin;
@@ -534,7 +534,7 @@ namespace Anki {
       poseWrtOrigin = *this;
     } else if(PoseBase<Pose3d>::GetWithRespectTo(*this, this->FindOrigin(), poseWrtOrigin) == false) {
       PRINT_NAMED_ERROR("Pose3d::GetWithRespectToOriginFailed",
-                        "Could not get pose w.r.t. its own origin. This should never happen.\n");
+                        "Could not get pose w.r.t. its own origin. This should never happen.");
       assert(false); // TODO: Do something more elegant
     }
     
