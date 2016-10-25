@@ -58,7 +58,7 @@ namespace Simon {
 
     private void HandleOnPlayerWinAnimationDone(bool success) {
       _GameInstance.ShowCenterResult(false);
-      _StateMachine.SetNextState(new WaitForNextRoundSimonState(_GameInstance.IsSoloMode() ? PlayerType.Human : PlayerType.Cozmo));
+      _StateMachine.SetNextState(new WaitForNextRoundSimonState(_GameInstance.IsSoloMode() ? PlayerType.Human : PlayerType.Cozmo, true));
     }
 
     private void HandleOnPlayerLoseAnimationDone(bool success) {
@@ -74,7 +74,6 @@ namespace Simon {
 
     private void PlayerLoseHand() {
       _GameInstance.SetCubeLightsGuessWrong(_SequenceList[_CurrentSequenceIndex], _TargetCube);
-      _GameInstance.ShowCenterResult(true, false);
       _GameInstance.DecrementLivesRemaining(PlayerType.Human);
       GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
       AnimationTrigger trigger = _GameInstance.IsSoloMode() ? AnimationTrigger.MemoryMatchPlayerLoseHandSolo : AnimationTrigger.MemoryMatchPlayerLoseHand;

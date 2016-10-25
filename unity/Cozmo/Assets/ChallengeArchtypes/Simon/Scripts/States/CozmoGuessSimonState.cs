@@ -24,6 +24,8 @@ namespace Simon {
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
 
       _GameInstance.ShowCurrentPlayerTurnStage(PlayerType.Cozmo, false);
+
+      _StateMachine.PushSubState(new CozmoMoveCloserToCubesState(null, false, 40.0f, 20.0f));
     }
 
     public override void Exit() {
@@ -130,7 +132,7 @@ namespace Simon {
 
     private void HandleOnCozmoWinAnimationDone(bool success) {
       _GameInstance.ShowCenterResult(false);
-      _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Human));
+      _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Human, true));
     }
 
     private void HandleOnCozmoLoseAnimationDone(bool success) {
@@ -139,7 +141,7 @@ namespace Simon {
         _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Cozmo));
       }
       else {
-        _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Human));
+        _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Human, true));
       }
     }
   }

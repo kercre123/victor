@@ -522,6 +522,8 @@ MonoBehaviour:
     panePrefab: {fileID: 191910, guid: 4e9789da007f24a9aa1fef9ad1a33e49, type: 2}
   - name: Connection
     panePrefab: {fileID: 183214, guid: e6f4045d50a1844ca85924152bf782fb, type: 2}
+  - name: TestTap
+    panePrefab: {fileID: 113112, guid: 5ed7fc1d653bd4bfc83aa41e152c6436, type: 2}
   _TabButtonPrefab: {fileID: 11405442, guid: af361c7b5f09a450b9edcb10ae948308, type: 2}
   _TabContainer: {fileID: 188218}
   _ContentPaneContainer: {fileID: 159258}

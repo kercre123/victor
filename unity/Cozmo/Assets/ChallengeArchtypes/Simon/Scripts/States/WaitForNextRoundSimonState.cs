@@ -7,14 +7,11 @@ namespace Simon {
     private SimonGame _GameInstance;
     private PlayerType _NextPlayer;
 
-    private const float kDelay = 2f;
-    private float _AutoAdvanceTimestamp;
     bool _CanAutoAdvance = false;
 
-    public WaitForNextRoundSimonState(PlayerType nextPlayer = PlayerType.None) {
+    public WaitForNextRoundSimonState(PlayerType nextPlayer = PlayerType.None, bool WantsAutoAdvance = false) {
       _NextPlayer = nextPlayer;
-
-      _AutoAdvanceTimestamp = Time.time;
+      _CanAutoAdvance = WantsAutoAdvance;
     }
 
     public override void Enter() {
@@ -48,14 +45,14 @@ namespace Simon {
         _CurrentRobot.TurnTowardsObject(_GameInstance.GetCubeBySortedIndex(1), false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2, HandleCozmoTurnComplete);
 
         if (_NextPlayer == PlayerType.Human) {
-          _GameInstance.GetSimonSlide().ShowPlayPatternButton(HandleContinuePressed);
+          if (_CanAutoAdvance) {
+            _GameInstance.SharedMinigameView.PlayBannerAnimation(Localization.Get(LocalizationKeys.kSimonGameLabelListen), HandleAutoAdvance);
+            Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Placeholder);
+          }
+          else {
+            _GameInstance.GetSimonSlide().ShowPlayPatternButton(HandleContinuePressed);
+          }
         }
-      }
-    }
-    public override void Update() {
-      base.Update();
-      if (_CanAutoAdvance && Time.time - _AutoAdvanceTimestamp > kDelay) {
-        HandleContinuePressed();
       }
     }
 
@@ -63,6 +60,10 @@ namespace Simon {
       if (_NextPlayer == PlayerType.Cozmo) {
         _StateMachine.SetNextState(new CozmoGuessSimonState());
       }
+    }
+    private void HandleAutoAdvance() {
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Placeholder);
+      HandleContinuePressed();
     }
 
     private void HandleContinuePressed() {

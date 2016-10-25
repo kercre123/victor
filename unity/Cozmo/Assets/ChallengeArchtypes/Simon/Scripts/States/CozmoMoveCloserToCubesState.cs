@@ -5,8 +5,6 @@ using System.Collections.Generic;
 namespace Simon {
   public class CozmoMoveCloserToCubesState : State {
     public const float kTargetDistance = 125f;
-    public const float kDistanceThreshold = 20f;
-    float kAngleTolerance = 2.5f;
     private const float _kCubeIntroBlinkTimes = 0.5f;
 
     private State _NextState;
@@ -19,22 +17,31 @@ namespace Simon {
     private int _FlashingIndex;
     private float _EndFlashTime;
 
-    public CozmoMoveCloserToCubesState(State nextState) {
+    private bool _WantsCubeBlink;
+    private float _DistanceThreshold;
+    private float _AngleTol_Deg;
+
+    public CozmoMoveCloserToCubesState(State nextState, bool wantsBlink = true, float distanceThreshold = 20f, float angleTol_Deg = 2.5f) {
       _NextState = nextState;
+      _WantsCubeBlink = wantsBlink;
+      _DistanceThreshold = distanceThreshold;
+      _AngleTol_Deg = angleTol_Deg;
     }
 
     public override void Enter() {
       base.Enter();
+      _GameInstance = _StateMachine.GetGame() as SimonGame;
+
       _CozmoInPosition = false;
-      _FlashingIndex = 0;
+      _FlashingIndex = _WantsCubeBlink ? 0 : _GameInstance.CubeIdsForGame.Count;
       _EndFlashTime = 0;
 
       List<LightCube> cubesForGame = new List<LightCube>();
       // Wait until we get to goal, shouldn't continue
-      _GameInstance = _StateMachine.GetGame() as SimonGame;
       _GameInstance.InitColorsAndSounds();
-      _GameInstance.SharedMinigameView.EnableContinueButton(false);
       _GameInstance.SharedMinigameView.HideMiddleBackground();
+      _GameInstance.SharedMinigameView.HideShelf();
+      _GameInstance.SharedMinigameView.HideInstructionsVideoButton();
 
       IRobot robot = _GameInstance.CurrentRobot;
       foreach (int id in _GameInstance.CubeIdsForGame) {
@@ -78,11 +85,16 @@ namespace Simon {
 
     private void MoveToTargetLocation(Vector2 targetPosition, Quaternion targetRotation) {
       // Skip moving if we're already close to the target
-      if (_CurrentRobot.WorldPosition.xy().IsNear(targetPosition, kDistanceThreshold)) {
-        HandleGotoPoseComplete(true);
+      if (_CurrentRobot != null) {
+        if (_CurrentRobot.WorldPosition.xy().IsNear(targetPosition, _DistanceThreshold)) {
+          HandleGotoPoseComplete(true);
+        }
+        else {
+          _CurrentRobot.GotoPose(targetPosition, targetRotation, callback: HandleGotoPoseComplete);
+        }
       }
       else {
-        _CurrentRobot.GotoPose(targetPosition, targetRotation, callback: HandleGotoPoseComplete);
+        HandleGotoRotationComplete(false);
       }
     }
 
@@ -96,11 +108,16 @@ namespace Simon {
     }
 
     private void MoveToTargetRotation(Quaternion targetRotation) {
-      if (_CurrentRobot.Rotation.IsSimilarAngle(targetRotation, kAngleTolerance)) {
-        HandleGotoRotationComplete(true);
+      if (_CurrentRobot != null) {
+        if (_CurrentRobot.Rotation.IsSimilarAngle(targetRotation, _AngleTol_Deg)) {
+          HandleGotoRotationComplete(true);
+        }
+        else {
+          _CurrentRobot.GotoPose(_TargetPosition, targetRotation, callback: HandleGotoRotationComplete);
+        }
       }
       else {
-        _CurrentRobot.GotoPose(_TargetPosition, targetRotation, callback: HandleGotoRotationComplete);
+        HandleGotoRotationComplete(false);
       }
     }
 
@@ -110,7 +127,13 @@ namespace Simon {
     }
     private void GoToNextState() {
       if (_CozmoInPosition && _FlashingIndex >= _GameInstance.CubeIdsForGame.Count) {
-        _StateMachine.SetNextState(_NextState);
+        // using this state to correct position
+        if (_NextState == null) {
+          _StateMachine.PopState();
+        }
+        else {
+          _StateMachine.SetNextState(_NextState);
+        }
       }
     }
 

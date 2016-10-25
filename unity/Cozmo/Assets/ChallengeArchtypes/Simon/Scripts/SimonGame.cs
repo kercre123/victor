@@ -226,15 +226,6 @@ namespace Simon {
       return audioEvent;
     }
 
-    public void ShowWinnerPicture(PlayerType player) {
-      SimonTurnSlide simonTurnScript = GetSimonSlide();
-      Sprite currentPortrait = SharedMinigameView.PlayerPortrait;
-      if (player == PlayerType.Cozmo) {
-        currentPortrait = SharedMinigameView.CozmoPortrait;
-      }
-      simonTurnScript.ShowEndGame(currentPortrait);
-    }
-
     protected override void ShowWinnerState() {
       // TODO: remains to be seen how custom this will be for memory match.
       base.ShowWinnerState();
@@ -255,7 +246,6 @@ namespace Simon {
       if (CurrentDifficulty == (int)SimonMode.SOLO) {
         PlayerRoundsWon = 1;
         CozmoRoundsWon = 0;
-        ShowWinnerPicture(PlayerType.Human);
         ShowBanner(LocalizationKeys.kSimonGameLabelYouWin);
         StartBaseGameEnd(true);
         trigger = Anki.Cozmo.AnimationTrigger.MemoryMatchSoloGameOver;
@@ -263,7 +253,6 @@ namespace Simon {
       else if (CurrentDifficulty == (int)SimonMode.VS) {
         // compare who wins...
         if (_CurrLivesHuman > _CurrLivesCozmo) {
-          ShowWinnerPicture(PlayerType.Human);
           ShowBanner(LocalizationKeys.kSimonGameLabelYouWin);
           PlayerRoundsWon = 1;
           CozmoRoundsWon = 0;
@@ -272,7 +261,6 @@ namespace Simon {
         }
         else if (_CurrLivesHuman < _CurrLivesCozmo) {
           ShowBanner(LocalizationKeys.kSimonGameLabelCozmoWin);
-          ShowWinnerPicture(PlayerType.Cozmo);
           PlayerRoundsWon = 0;
           CozmoRoundsWon = 1;
           StartBaseGameEnd(false);
@@ -376,6 +364,7 @@ namespace Simon {
         _CurrLivesCozmo--;
       }
       ShowCurrentPlayerTurnStage(player, false);
+      ShowCenterResult(true, false);
     }
 
     public void ShowBanner(string bannerKey) {

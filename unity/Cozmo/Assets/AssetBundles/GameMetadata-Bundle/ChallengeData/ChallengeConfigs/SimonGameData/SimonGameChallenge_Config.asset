@@ -35,7 +35,7 @@ MonoBehaviour:
   MinSequenceLength: 2
   MaxSequenceLength: 30
   TimeWaitFirstBeat: 1
-  MinDistBetweenCubesMM: 60
+  MinDistBetweenCubesMM: 30
   RotateSecScan: 2
   ScanTimeoutSec: 30
   MaxLivesCozmo: 3
@@ -46,13 +46,13 @@ MonoBehaviour:
     m_Curve:
     - time: -0.010606509
       value: 0.50097805
-      inSlope: -0.0356147
-      outSlope: -0.0356147
+      inSlope: -0.010210189
+      outSlope: -0.010210189
       tangentMode: 10
-    - time: 7.991628
-      value: 0.21598087
-      inSlope: -0.0356147
-      outSlope: -0.0356147
+    - time: 9.975491
+      value: 0.3990181
+      inSlope: -0.010210189
+      outSlope: -0.010210189
       tangentMode: 10
     m_PreInfinity: 2
     m_PostInfinity: 2
