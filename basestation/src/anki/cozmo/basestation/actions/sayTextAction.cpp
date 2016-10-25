@@ -12,7 +12,8 @@
 
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "clad/audio/audioEventTypes.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/math/math.h"
 #include "util/random/randomGenerator.h"
 
@@ -24,6 +25,61 @@ namespace Anki {
 namespace Cozmo {
 
 const char* kLocalLogChannel = "Actions";
+
+bool SayTextAction::LoadMetadata(Util::Data::DataPlatform& dataPlatform)
+{
+  if (!_intentConfigs.empty()) {
+    PRINT_NAMED_WARNING("SayTextAction.LoadMetadata.AttemptToReloadStaticData", "_intentConfigs");
+    return false;
+  }
+  
+  // Check for file
+  const std::string filePath = "config/basestation/config/sayTextintentConfig.json";
+  if(!Util::FileUtils::FileExists(dataPlatform.pathToResource(Util::Data::Scope::Resources, filePath))) {
+    PRINT_NAMED_ERROR("SayTextAction.LoadMetadata.FileNotFound", "sayTextintentConfig.json");
+    return false;
+  }
+  
+  // Read file
+  Json::Value json;
+  if(!dataPlatform.readAsJson(Util::Data::Scope::Resources, filePath, json)) {
+    PRINT_NAMED_ERROR("SayTextAction.LoadMetadata.CanNotRead", "sayTextintentConfig.json");
+    return false;
+  }
+  
+  // Load Intent Config
+  if (json.isNull() || !json.isObject()) {
+    PRINT_NAMED_ERROR("SayTextAction.LoadMetadata.json.IsNull", "or.NotIsObject");
+    return false;
+  }
+  
+  // Creat Cozmo Says Voice Style map
+  SayTextVoiceStyleMap voiceStyleMap;
+  for (uint8_t aStyleIdx = 0; aStyleIdx <  Util::numeric_cast<uint8_t>(SayTextVoiceStyle::Count); ++aStyleIdx) {
+    const SayTextVoiceStyle aStyle = static_cast<SayTextVoiceStyle>(aStyleIdx);
+    voiceStyleMap.emplace( EnumToString(aStyle), aStyle );
+  }
+  // Cereate Say Text Intent Map
+  std::unordered_map<std::string, SayTextIntent> sayTextIntentMap;
+  for (uint8_t anIntentIdx = 0; anIntentIdx < Util::numeric_cast<uint8_t>(SayTextIntent::Count); ++anIntentIdx) {
+    const SayTextIntent anIntent = static_cast<SayTextIntent>(anIntentIdx);
+    sayTextIntentMap.emplace( EnumToString(anIntent), anIntent );
+  }
+  
+  // Store metadata's Intent objects
+  for (auto intentJsonIt = json.begin(); intentJsonIt != json.end(); ++intentJsonIt) {
+    const std::string& name = intentJsonIt.key().asString();
+    const auto intentEnumIt = sayTextIntentMap.find( name );
+    ASSERT_NAMED(intentEnumIt != sayTextIntentMap.end(), "SayTextAction.LoadMetadata.CanNotFindSayTextIntent");
+    if (intentEnumIt != sayTextIntentMap.end()) {
+      // Store Intent into STATIC var
+      const SayTextIntentConfig config(name, *intentJsonIt, voiceStyleMap);
+      _intentConfigs.emplace( intentEnumIt->second, std::move( config ) );
+    }
+  }
+  
+  return true;
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SayTextAction::SayTextAction(Robot& robot,
@@ -62,118 +118,27 @@ SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTex
                   Util::HidePersonallyIdentifiableInfo(_text.c_str()), EnumToString(intent));
   }
   
-  // Helper Struct
-  struct RandomRange {
-    float min = 0.f;
-    float max = 0.f;
-    RandomRange(){}
-    RandomRange(float min, float max)
-    : min(min)
-    , max(max)
-    { ASSERT_NAMED(min <= max, "SayTextAction.RandomRange.SetRange.Max.IsLessThan.Min"); }
-    void SetRange(float minVal, float maxVal)
-    {
-      ASSERT_NAMED(minVal <= maxVal, "SayTextAction.RandomRange.SetRange.MaxVal.IsLessThan.MinVal");
-      min = minVal;
-      max = maxVal;
-    }
-  };
-  
-  // Create text for 'Intent'
-  // Set voice style & length scalar to generate TtS
-  bool isRandom   = false;
-  RandomRange durationRange;
-  RandomRange pitchRange;
-  float stepSize  = 0.f;
-  const uint8_t kCharLengthThreshold = 7;
-  switch (intent) {
-    case SayTextIntent::UnProcessed:
-    {
-      // No processing play as is
-      _style = SayTextVoiceStyle::UnProcessed;
-      _durationScalar = 1.2f;
-      break;
-    }
-      
-    case SayTextIntent::Text:
-    {
-      // Use Cozmo Processing with default speed
-      _style = SayTextVoiceStyle::CozmoProcessing;
-      _durationScalar = 1.8f;
-      break;
-    }
-      
-    case SayTextIntent::Name_Normal:
-    {
-      // Normal name
-      _style = SayTextVoiceStyle::CozmoProcessing;
-      pitchRange.SetRange(0.f, 0.3f);
-      stepSize = 0.05f;
-      isRandom = true;
-      if (text.length() < kCharLengthThreshold) {
-        // Short names
-        durationRange.SetRange(1.8f, 2.1f);
-      }
-      else {
-        // Long names
-        durationRange.SetRange(1.7f, 2.f);
-      }
-      break;
-    }
-      
-    case SayTextIntent::Name_FirstIntroduction_1:
-    {
-      // Say name very slow the first time
-      _style = SayTextVoiceStyle::CozmoProcessing;
-      pitchRange.SetRange(-0.1f, 0.1f);
-      stepSize = 0.1f;
-      isRandom = true;
-      if (text.length() < kCharLengthThreshold) {
-        // Short names
-        durationRange.SetRange(2.35f, 2.65f);
-      }
-      else {
-        // Long names
-        durationRange.SetRange(2.25f, 2.55f);
-      }
-      break;
-    }
-      
-    case SayTextIntent::Name_FirstIntroduction_2:
-    {
-      // Say name slightly faster then the first time
-      _style = SayTextVoiceStyle::CozmoProcessing;
-      pitchRange.SetRange(0.3f, 0.6f);
-      stepSize = 0.1f;
-      isRandom = true;
-      if (text.length() < kCharLengthThreshold) {
-        // Short names
-        durationRange.SetRange(2.f, 2.2f);
-      }
-      else {
-        // Long names
-        durationRange.SetRange(1.9f, 2.1f);
-      }
-      break;
-    }
+  // Get metadata
+  const auto it = _intentConfigs.find( intent );
+  if ( it != _intentConfigs.end() ) {
+    // Set intent values
+    const SayTextIntentConfig& config = it->second;
     
-    case SayTextIntent::Count:
-      ASSERT_NAMED(SayTextIntent::Count == intent, "SayTextAction.ActionStyle.SayTextActionStyle::Count.IsInvalid");
-      break;
+    // Set audio processing style type
+    _style = config.style;
+    
+    // Get Duration val
+    const SayTextIntentConfig::ConfigTrait& durationTrait = config.FindDurationTraitTextLength(Util::numeric_cast<uint>(text.length()));
+    _durationScalar = durationTrait.GetDurration( robot.GetRNG() );
+    
+    // Get Pitch val
+    const SayTextIntentConfig::ConfigTrait& pitchTrait = config.FindPitchTraitTextLength(Util::numeric_cast<uint>(text.length()));
+    _voicePitch = pitchTrait.GetDurration( robot.GetRNG() );
+  }
+  else {
+    PRINT_NAMED_ERROR("SayTextAction.CanNotFind.SayTextIntentConfig", "%s", EnumToString(intent));
   }
   
-  // If random create
-  if (isRandom) {
-    // Break duration scalar range into step sizes
-    ASSERT_NAMED(Util::IsFltGTZero(stepSize), "SayTextAction.SayTextAction.stepSize.IsZero");
-    // (Scalar Range / stepSize) + 1 = number of total possible steps
-    const uint8_t stepCount = ((durationRange.max - durationRange.min) / stepSize) + 1;
-    const auto randStep = robot.GetRNG().RandInt(stepCount);
-    _durationScalar = durationRange.min + (stepSize * randStep);
-    
-    // Set Random pitch
-    _voicePitch = Util::numeric_cast<float>(robot.GetRNG().RandDblInRange(pitchRange.min, pitchRange.max));
-  }
   GenerateTtsAudio();
 } // SayTextAction()
 
@@ -193,6 +158,7 @@ SayTextAction::~SayTextAction()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ActionResult SayTextAction::Init()
 {
+  using namespace Audio;
   TextToSpeechComponent::AudioCreationState state = _robot.GetTextToSpeechComponent().GetOperationState(_ttsOperationId);
   switch (state) {
     case TextToSpeechComponent::AudioCreationState::Preparing:
@@ -232,20 +198,11 @@ ActionResult SayTextAction::Init()
           PRINT_CH_INFO(kLocalLogChannel, "SayTextAction.Init.CreatingAnimation", "");
         }
         // Get appropriate audio event for style
-        using namespace Audio;
+        // TODO: Deprecate this, we are going to change the processing
         const GameEvent::GenericEvent audioEvent = _robot.GetTextToSpeechComponent().GetAudioEvent(_style);
-        _animation.SetIsLive(true);
         _animation.AddKeyFrameToBack(RobotAudioKeyFrame(RobotAudioKeyFrame::AudioRef(audioEvent), 0));
+        _animation.SetIsLive(true);
         _playAnimationAction = new PlayAnimationAction(_robot, &_animation);
-        
-        // Set voice Pitch
-        // FIXME: This is a temp fix, we are asuming the TtS animatoin is using the CozmoBus_1 or Cozmo_OnDevice game object.
-        // We need to add the ability to set rtpc in animations so they are posted with the animation audio events.
-        GameObjectType gameObj = (_robot.GetRobotAudioClient()->GetOutputSource() == RobotAudioClient::RobotAudioOutputSource::PlayOnRobot) ?
-                                  GameObjectType::CozmoBus_1 : GameObjectType::Cozmo_OnDevice;
-        _robot.GetRobotAudioClient()->PostParameter(Audio::GameParameter::ParameterType::External_Process_Pitch,
-                                                    _voicePitch,
-                                                    gameObj);
       }
       else {
         if (DEBUG_SAYTEXT_ACTION) {
@@ -255,6 +212,35 @@ ActionResult SayTextAction::Init()
         }
         _playAnimationAction = new TriggerLiftSafeAnimationAction(_robot, _animationTrigger);
       }
+      
+      // Set Audio Engine Say Text processing parameters
+      
+      // Map SayTextVoice style to Audio Engine SwitchState
+      // NOTE: Need to manually map SayTextVoiceStyle to SwitchState::Cozmo_Voice_Processing enum
+      const std::unordered_map<SayTextVoiceStyle, SwitchState::Cozmo_Voice_Processing, Util::EnumHasher> processingStateMap {
+        { SayTextVoiceStyle::Unprocessed, SwitchState::Cozmo_Voice_Processing::Unprocessed },
+        { SayTextVoiceStyle::CozmoProcessing_Name, SwitchState::Cozmo_Voice_Processing::Name },
+        { SayTextVoiceStyle::CozmoProcessing_Sentence, SwitchState::Cozmo_Voice_Processing::Sentence }
+      };
+      ASSERT_NAMED(processingStateMap.size() == Util::numeric_cast<uint32_t>(SayTextVoiceStyle::Count), "SayTextAction.Init.processingStateMap.InvalidSize");
+      
+      const auto it = processingStateMap.find(_style);
+      ASSERT_NAMED(it != processingStateMap.end(), "SayTextAction.Init.processingStateMap.StyleNotFound");
+      const SwitchState::GenericSwitch processingState = static_cast<const SwitchState::GenericSwitch>( it->second );
+      // Set voice Pitch
+      // FIXME: This is a temp fix, we are asuming the TtS animatoin is using the CozmoBus_1 or Cozmo_OnDevice game object.
+      // We need to add the ability to set rtpc in animations so they are posted with the animation audio events.
+      GameObjectType gameObj = (_robot.GetRobotAudioClient()->GetOutputSource() == RobotAudioClient::RobotAudioOutputSource::PlayOnRobot) ?
+      GameObjectType::CozmoBus_1 : GameObjectType::Cozmo_OnDevice;
+      // Set Cozmo Says Switch State
+      _robot.GetRobotAudioClient()->PostSwitchState(SwitchState::SwitchGroupType::Cozmo_Voice_Processing,
+                                                    processingState,
+                                                    gameObj);
+      // Set Cozmo Says Pitch RTPC Parameter
+      _robot.GetRobotAudioClient()->PostParameter(Audio::GameParameter::ParameterType::External_Process_Pitch,
+                                                  _voicePitch,
+                                                  gameObj);
+      
       _isAudioReady = true;
       
       return ActionResult::SUCCESS;
@@ -298,5 +284,103 @@ void SayTextAction::GenerateTtsAudio()
   }
 } // GenerateTtsAudio()
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Static Var
+SayTextAction::SayIntentConfigMap SayTextAction::_intentConfigs;
+
+// SayTextIntentConfig methods
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SayTextAction::SayTextIntentConfig::SayTextIntentConfig()
+{ }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SayTextAction::SayTextIntentConfig::SayTextIntentConfig(const std::string& intentName,
+                                                        const Json::Value& json,
+                                                        const SayTextVoiceStyleMap& styleMap)
+: name(intentName)
+{
+  // Set Voice Style
+  const auto styleKey = json.get("style", Json::Value::null);
+  if (!styleKey.isNull()) {
+    const auto it = styleMap.find(styleKey.asString());
+    ASSERT_NAMED(it != styleMap.end(), "SayTextAction.LoadMetadata.IntentStyleNotFound");
+    if (it != styleMap.end()) {
+      style = it->second;
+    }
+  }
+  
+  // Duration Traits
+  const auto durationTraitJson = json.get("durationTraits", Json::Value::null);
+  if (!durationTraitJson.isNull()) {
+    for (auto traitIt = durationTraitJson.begin(); traitIt != durationTraitJson.end(); ++traitIt) {
+      durationTraits.emplace_back(*traitIt);
+    }
+  }
+  
+  // Pitch Traits
+  const auto pitchTraitJson = json.get("pitchTraits", Json::Value::null);
+  if (!pitchTraitJson.isNull()) {
+    for (auto traitIt = pitchTraitJson.begin(); traitIt != pitchTraitJson.end(); ++traitIt) {
+      pitchTraits.emplace_back(*traitIt);
+    }
+  }
+  
+  ASSERT_NAMED(!name.empty(), "SayTextAction.LoadMetadata.Intent.name.IsEmpty");
+  ASSERT_NAMED(!durationTraitJson.empty(), "SayTextAction.LoadMetadata.Intent.durationTraits.IsEmpty");
+  ASSERT_NAMED(!pitchTraitJson.empty(), "SayTextAction.LoadMetadata.Intent.pitchTraits.IsEmpty");
+} // SayTextIntentConfig()
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const SayTextAction::SayTextIntentConfig::ConfigTrait& SayTextAction::SayTextIntentConfig::FindDurationTraitTextLength(uint textLength) const
+{
+  for ( const auto& aTrait : durationTraits ) {
+    if (aTrait.textLengthMin <= textLength && aTrait.textLengthMax >= textLength) {
+      return aTrait;
+    }
+  }
+  return durationTraits.front();
+} // FindDurationTraitTextLength()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const SayTextAction::SayTextIntentConfig::ConfigTrait& SayTextAction::SayTextIntentConfig::FindPitchTraitTextLength(uint textLength) const
+{
+  for ( const auto& aTrait : pitchTraits ) {
+    if (aTrait.textLengthMin <= textLength && aTrait.textLengthMax >= textLength) {
+      return aTrait;
+    }
+  }
+  return pitchTraits.front();
+} // FindPitchTraitTextLength()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SayTextAction::SayTextIntentConfig::ConfigTrait::ConfigTrait()
+{ }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SayTextAction::SayTextIntentConfig::ConfigTrait::ConfigTrait(const Json::Value& json)
+{
+  textLengthMin = json.get("textLengthMin", Json::Value(std::numeric_limits<uint>::min())).asUInt();
+  textLengthMax = json.get("textLengthMax", Json::Value(std::numeric_limits<uint>::max())).asUInt();
+  rangeMin = json.get("rangeMin", Json::Value(std::numeric_limits<float>::min())).asFloat();
+  rangeMax = json.get("rangeMax", Json::Value(std::numeric_limits<float>::max())).asFloat();
+  rangeStepSize = json.get("stepSize", Json::Value(0.f)).asFloat(); // If No step size use Range Min and don't randomize
+} // ConfigTrait()
+  
+float SayTextAction::SayTextIntentConfig::ConfigTrait::GetDurration(Util::RandomGenerator& randomGen) const
+{
+  // TODO: Move this into Random Util class
+  float resultVal;
+  if (Util::IsFltGTZero( rangeStepSize )) {
+    // (Scalar Range / stepSize) + 1 = number of total possible steps
+    const int stepCount = ((rangeMax - rangeMin) / rangeStepSize) + 1;
+    const auto randStep = randomGen.RandInt( stepCount );
+    resultVal = rangeMin + (rangeStepSize * randStep);
+  }
+  else {
+    resultVal = rangeMin;
+  }
+  return resultVal;
+} // GetRange()
+  
 } // namespace Cozmo
 } // namespace Anki

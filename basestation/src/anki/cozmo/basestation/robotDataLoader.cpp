@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/events/animationTriggerResponsesContainer.h"
+#include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/animations/animationTransfer.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
@@ -101,6 +102,12 @@ void RobotDataLoader::LoadNonConfigData()
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadGameEventResponses");
     LoadAnimationTriggerResponses();
+  }
+  
+  {
+    // Load SayText Action Intent Config
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadSayTextActionIntentConfigs");
+    SayTextAction::LoadMetadata(*_context->GetDataPlatform());
   }
 
   // this map doesn't need to be persistent

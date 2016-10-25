@@ -1,0 +1,130 @@
+// Author: Jordan Rivas
+// Cozmo Says Intent metadata config
+
+// SayTextIntent & SayTextVoiceStyle are defined in clad/types/sayTextStyles.clad
+// Example intent config
+//"<SayTextIntent>" : {
+//	"durationTraits" : [ // List of duration traits
+//    ... See trait below
+//	],
+//	"pitchTraits" : [		// List of pitch traits
+//		... See trait below
+//	],
+//	"style" : "<SayTextVoiceStyle>"
+//}
+// Example of duration & pitch trait
+//{
+//  Text length that trait applies to
+//	"textLengthMax"	: 0, // Default val = 0
+//	"textLengthMin" : 7, // Default val = uint max
+//	Range trait can randomly chose from
+//	"rangeMin" : 1.9,		 // Defailt val = float min
+//	"rangeMax" : 2.1,		 // Defailt val = float max
+//  Size of "bucket"
+//  example: the range above with 0.1 step size will create 2 buckets, [1.9, 2.0] & [2.0, 2.1]
+//	"stepSize" : 0.1		 // [0, ..) Defailt val = 0
+//}
+// If step size == 0 random value will not be used, rangeMin will be used as the trait's value
+
+
+{
+	"UnProcessed" : {
+		"durationTraits" : [
+			{
+				"rangeMin" : 1.2
+			}
+		],
+		"pitchTraits" : [
+			{
+				"rangeMin" : 0.0
+			}
+		],
+		"style" : "Unprocessed"
+	},
+	"Text" : {
+		"durationTraits" : [
+			{
+				"rangeMin" : 1.8
+			}
+		],
+		"pitchTraits" : [
+			{
+				"rangeMin" : 0.0
+			}
+		],
+		"style" : "CozmoProcessing_Sentence"
+	},
+	"Name_Normal" : {
+		"durationTraits" : [
+			{
+				"textLengthMax"	: 6,
+				"rangeMin" : 1.8,
+				"rangeMax" : 2.1,
+				"stepSize" : 0.05
+			},
+			{
+				"textLengthMin" : 7,
+				"rangeMin" : 1.7,
+				"rangeMax" : 2.0,
+				"stepSize" : 0.05
+			}
+		],
+		
+		"pitchTraits" : [
+			{
+				"rangeMin" : 0.0,
+				"rangeMax" : 0.3,
+				"stepSize" : 0.01
+			}
+		],
+		"style" : "CozmoProcessing_Name"
+	},
+	"Name_FirstIntroduction_1" : {
+		"durationTraits" : [
+			{
+				"textLengthMax"	: 6,
+				"rangeMin" : 2.35,
+				"rangeMax" : 2.65,
+				"stepSize" : 0.1
+			},
+			{
+				"textLengthMin" : 7,
+				"rangeMin" : 2.25,
+				"rangeMax" : 2.55,
+				"stepSize" : 0.1
+			}
+		],
+		"pitchTraits" : [
+			{
+				"rangeMin" : -0.1,
+				"rangeMax" : 0.1,
+				"stepSize" : 0.01
+			}
+		],
+		"style" : "CozmoProcessing_Name"
+	},	
+	"Name_FirstIntroduction_2" : {
+		"durationTraits" : [
+			{
+				"textLengthMax"	: 6,
+				"rangeMin" : 2.0,
+				"rangeMax" : 2.2,
+				"stepSize" : 0.1
+			},
+			{
+				"textLengthMin" : 7,
+				"rangeMin" : 1.9,
+				"rangeMax" : 2.1,
+				"stepSize" : 0.1
+			}
+		],
+		"pitchTraits" : [
+			{
+				"rangeMin" : 0.3,
+				"rangeMax" : 0.6,
+				"stepSize" : 0.01
+			}
+		],
+		"style" : "CozmoProcessing_Name"
+	}
+}

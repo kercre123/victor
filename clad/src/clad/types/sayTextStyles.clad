@@ -9,8 +9,9 @@ namespace Cozmo {
   // Text to speach voice processing style
   enum uint_8 SayTextVoiceStyle
   {
-    UnProcessed = 0,              // Say text with no processing on Text to Speach output
-    CozmoProcessing,              // Say text in Cozmo's voice
+    Unprocessed = 0,              // Say text with no processing on Text to Speach output
+    CozmoProcessing_Name,         // Say name in Cozmo's voice with quick inflection
+    CozmoProcessing_Sentence,     // Say text in Cozmo's voice with "rhythm" inflection
     Count
   }
 
@@ -18,7 +19,8 @@ namespace Cozmo {
   enum uint_8 SayTextIntent
   {
     UnProcessed = 0,            // Speak text with no processing on Text to Speach output
-    Text,                       // Speak text in Cozmo's' voice & default speed
+    Text,                       // Speak text in Cozmo's voice & default speed
+    Cozmo_Says,                 // Speak text in Cozmo's voice for "Cozmo Says" mini game
     Name_Normal,                // Speak in Cozmo's voice & chose bounded random speed for names
     Name_FirstIntroduction_1,   // Speak in Cozmo's voice & chose bounded random speed for saying names slowest
     Name_FirstIntroduction_2,   // Speak in Cozmo's voice & chose bounded random speed for saying names slightly faster

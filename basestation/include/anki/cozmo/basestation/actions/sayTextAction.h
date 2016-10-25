@@ -20,14 +20,24 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "clad/types/sayTextStyles.h"
 #include "clad/types/animationTrigger.h"
+#include <limits>
 
 
 namespace Anki {
+namespace Util {
+namespace Data {
+class DataPlatform;
+}
+}
 namespace Cozmo {
 
 class SayTextAction : public IAction
 {
 public:
+  
+  // Load Static Cozmo Say Text Intent metadata from disk
+  // Return true on success
+  static bool LoadMetadata(Util::Data::DataPlatform& dataPlatform);
   
   // Customize the text to speech creation by setting the voice style and duration scalar.
   // Note: The duration scalar stretches the duration of the generated TtS audio. When using the unprocessed voice
@@ -73,6 +83,42 @@ private:
   
   // Call to start processing text to speech
   void GenerateTtsAudio();
+  
+  // SayTextVoiceStyle lookup up by name
+  using SayTextVoiceStyleMap = std::unordered_map<std::string, SayTextVoiceStyle>;
+  
+  // Cozmo Says intent metadata config data struct
+  struct SayTextIntentConfig
+  {
+    struct ConfigTrait
+    {
+      uint textLengthMin = std::numeric_limits<uint>::min();
+      uint textLengthMax = std::numeric_limits<uint>::max();
+      float rangeMin = std::numeric_limits<float>::min();;
+      float rangeMax = std::numeric_limits<float>::max();;
+      float rangeStepSize = 0.0f;
+      
+      ConfigTrait();
+      ConfigTrait(const Json::Value& json);
+      
+      float GetDurration(Util::RandomGenerator& randomGen) const;
+    };
+    
+    std::string name = "";
+    SayTextVoiceStyle style = SayTextVoiceStyle::CozmoProcessing_Sentence;
+    std::vector<ConfigTrait> durationTraits;
+    std::vector<ConfigTrait> pitchTraits;
+    
+    SayTextIntentConfig();
+    SayTextIntentConfig(const std::string& intentName, const Json::Value& json, const SayTextVoiceStyleMap& styleMap);
+    
+    const ConfigTrait& FindDurationTraitTextLength(uint textLength) const;
+    const ConfigTrait& FindPitchTraitTextLength(uint textLength) const;
+  };
+  
+  // Store loaded Cozmo Says intent configs
+  using SayIntentConfigMap = std::unordered_map<SayTextIntent, SayTextIntentConfig, Util::EnumHasher>;
+  static SayIntentConfigMap _intentConfigs;
   
 }; // class SayTextAction
 

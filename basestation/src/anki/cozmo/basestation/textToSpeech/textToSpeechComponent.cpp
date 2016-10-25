@@ -221,11 +221,12 @@ void TextToSpeechComponent::ClearAllLoadedAudioData()
 Audio::GameEvent::GenericEvent TextToSpeechComponent::GetAudioEvent(SayTextVoiceStyle style) const
 {
   switch (style) {
-    case SayTextVoiceStyle::UnProcessed:
+    case SayTextVoiceStyle::Unprocessed:
       return Audio::GameEvent::GenericEvent::Play__Robot_Vo__External_Unprocessed;
       break;
       
-    case SayTextVoiceStyle::CozmoProcessing:
+    case SayTextVoiceStyle::CozmoProcessing_Sentence:
+    case SayTextVoiceStyle::CozmoProcessing_Name:
       return Audio::GameEvent::GenericEvent::Play__Robot_Vo__External_Cozmo_Processing;
       break;
       
