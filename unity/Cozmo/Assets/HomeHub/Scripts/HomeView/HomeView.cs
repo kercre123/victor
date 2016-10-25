@@ -203,6 +203,7 @@ namespace Cozmo.HomeHub {
     private Dictionary<string, ChallengeStatePacket> _ChallengeStates;
 
     public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById, HomeHub homeHubInstance) {
+      OnboardingManager.Instance.InitHomeHubOnboarding(this);
       ChestRewardManager.Instance.TryPopulateChestRewards();
       _FreeplayIntervalLastTimestamp = -1;
       _FreeplayStartedTimestamp = Time.time;

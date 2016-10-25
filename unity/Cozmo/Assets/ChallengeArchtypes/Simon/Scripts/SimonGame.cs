@@ -150,27 +150,44 @@ namespace Simon {
       }
     }
 
+    private LightCube GetCubeByID(int cubeId) {
+      if (CurrentRobot != null && CurrentRobot.LightCubes.ContainsKey(cubeId)) {
+        return CurrentRobot.LightCubes[cubeId];
+      }
+      return null;
+    }
+
     public void SetCubeLightsDefaultOn() {
       foreach (int cubeId in CubeIdsForGame) {
-        CurrentRobot.LightCubes[cubeId].SetLEDs(_BlockIdToSound[cubeId].cubeColor);
+        LightCube cube = GetCubeByID(cubeId);
+        if (cube != null) {
+          cube.SetLEDs(_BlockIdToSound[cubeId].cubeColor);
+        }
       }
     }
 
     public void SetCubeLightsGuessWrong(int correctCubeID, int wrongTapCubeID = -1) {
       foreach (int cubeId in CubeIdsForGame) {
         if (cubeId == correctCubeID) {
-          CurrentRobot.LightCubes[correctCubeID].SetFlashingLEDs(_BlockIdToSound[correctCubeID].cubeColor, 100, 100, 0);
+          LightCube cube = GetCubeByID(correctCubeID);
+          if (cube != null) {
+            cube.SetFlashingLEDs(_BlockIdToSound[correctCubeID].cubeColor, 100, 100, 0);
+          }
         }
         else {
-          CurrentRobot.LightCubes[cubeId].SetLEDsOff();
+          LightCube cube = GetCubeByID(cubeId);
+          if (cube != null) {
+            cube.SetLEDsOff();
+          }
         }
       }
     }
 
     public void SetCubeLightsGuessRight() {
       foreach (int cubeId in CubeIdsForGame) {
-        if (CurrentRobot.LightCubes.ContainsKey(cubeId)) {
-          CurrentRobot.LightCubes[cubeId].SetFlashingLEDs(_BlockIdToSound[cubeId].cubeColor, 100, 100, 0);
+        LightCube cube = GetCubeByID(cubeId);
+        if (cube != null) {
+          cube.SetFlashingLEDs(_BlockIdToSound[cubeId].cubeColor, 100, 100, 0);
         }
       }
     }

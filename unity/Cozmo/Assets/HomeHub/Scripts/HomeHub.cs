@@ -156,8 +156,6 @@ namespace Cozmo.HomeHub {
 
       var robot = RobotEngineManager.Instance.CurrentRobot;
 
-      OnboardingManager.Instance.InitHomeHubOnboarding(_HomeViewInstance);
-
       if (robot != null && !OnboardingManager.Instance.IsAnyOnboardingActive()) {
         // Display Cozmo's default face
         robot.DisplayProceduralFace(
