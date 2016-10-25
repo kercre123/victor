@@ -21,12 +21,12 @@ namespace Cozmo.Minigame.CubePounce {
     public override void Update() {
       base.Update();
 
-      if (!_CubePounceGame.CubeSeenRecently || !_CubePounceGame.WithinPounceDistance(_CubePounceGame.CubePlaceDistTight_mm)) {
+      if (!_CubePounceGame.CubeSeenRecently || !_CubePounceGame.WithinDistance(CubePounceGame.Zone.Pounceable, CubePounceGame.DistanceType.Loose)) {
         _StateMachine.SetNextState(new CubePounceStateResetPoint());
         return;
       }
 
-      if (_CubePounceGame.WithinPounceDistance(_CubePounceGame.CubePlaceDistTooClose_mm)) {
+      if (_CubePounceGame.WithinDistance(CubePounceGame.Zone.MousetrapClose, CubePounceGame.DistanceType.Exact)) {
         _StateMachine.SetNextState(new CubePounceStateAttempt(useClosePounce: true));
       }
 

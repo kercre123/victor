@@ -8,16 +8,22 @@ namespace Cozmo.Minigame.CubePounce {
   // TODO : SCORE RELATED LOGIC HAS BEEN MOVED TO THE SCORING REGION OF GAMEBASE, private fields for score/rounds are obsolete
   public class CubePounceGame : GameBase {
 
+    public enum Zone {
+      MousetrapClose,   // If Cozmo sees a cube in this zone he tries to pounce immediately
+      Pounceable,       // In this zone Cozmo will regularly try to fake out/pounce on cube
+      InPlay            // In this zone Cozmo will have his lift raised and the cube light will be green
+    }
+
+    public enum DistanceType {
+      Tight,
+      Loose,
+      Exact
+    }
+
     // Consts for determining the exact placement and forgiveness for cube location
     // Animators have been measuring distance from faceplate to cube; the below const is the distance
     // between the faceplate and front weel center plane
     private const float _kWheelCenterToFacePlane_mm = 13.0f;
-
-    public float CubePlaceDistTight_mm { get { return GameConfig.CubeDistanceBetween_mm + _kWheelCenterToFacePlane_mm; } }
-
-    public float CubePlaceDistLoose_mm { get { return GameConfig.CubeDistanceBetween_mm + _kWheelCenterToFacePlane_mm + GameConfig.CubeDistanceGreyZone_mm; } }
-
-    public float CubePlaceDistTooClose_mm { get { return GameConfig.CubeDistanceTooClose_mm + _kWheelCenterToFacePlane_mm; } }
 
     private float _CubeTargetSeenTime_s = -1;
 
@@ -116,6 +122,50 @@ namespace Cozmo.Minigame.CubePounce {
 
     public bool WithinAngleTolerance() {
       return CozmoUtil.PointWithinXYAngleTolerance(CurrentRobot.WorldPosition, GetCubeTarget().WorldPosition, CurrentRobot.Rotation.eulerAngles.z, GameConfig.CubeFacingAngleTolerance_deg);
+    }
+
+    public bool WithinDistance(Zone zone, DistanceType distType) {
+      float checkDistance = GetDistanceForZone(zone);
+
+      switch (distType) {
+      case DistanceType.Tight:
+        checkDistance -= GetSlushDistanceForZone(zone) * 0.5f;
+        break;
+      case DistanceType.Loose:
+        checkDistance += GetSlushDistanceForZone(zone) * 0.5f;
+        break;
+      }
+
+      return WithinPounceDistance(checkDistance);
+    }
+
+    private float GetDistanceForZone(Zone zone) {
+      float distance = _kWheelCenterToFacePlane_mm;
+
+      switch (zone) {
+      case Zone.MousetrapClose:
+        distance += GameConfig.CubeDistanceTooClose_mm;
+        break;
+      case Zone.Pounceable:
+        distance += GameConfig.CubeDistanceBetween_mm;
+        break;
+      case Zone.InPlay:
+        distance += GameConfig.CubeDistanceBetween_mm + GameConfig.CubeDistanceGreyZone_mm;
+        break;
+      }
+
+      return distance;
+    }
+
+    private float GetSlushDistanceForZone(Zone zone) {
+      switch (zone) {
+      case Zone.InPlay:
+        return 20.0f;
+      case Zone.Pounceable:
+        return 5.0f;
+      default:
+        return 0.0f;
+      }
     }
 
     // Returns whether we just finished a round

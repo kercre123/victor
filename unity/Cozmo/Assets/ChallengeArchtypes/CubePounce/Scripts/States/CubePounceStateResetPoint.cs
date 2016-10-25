@@ -9,10 +9,9 @@ namespace Cozmo.Minigame.CubePounce {
     private bool _GetReadyAnimCompleted = false;
     private bool _GetReadyAnimInProgress = false;
     private bool _CubeIsValid = false;
+    private bool _CubeInActiveRange = true;
     private bool _TurnInProgress = false;
-    private bool _BackupInProgress = false;
     private bool _GetUnreadyInProgress = false;
-    private float _GetUnreadyStartAngle_deg;
 
     public override void Enter() {
       base.Enter();
@@ -22,13 +21,12 @@ namespace Cozmo.Minigame.CubePounce {
       if (_CubePounceGame.CubeSeenRecently) {
         ReactToCubeReturned();
 
-        if (!_CubePounceGame.WithinPounceDistance(_CubePounceGame.CubePlaceDistLoose_mm)) {
+        if (!_CubePounceGame.WithinDistance(CubePounceGame.Zone.InPlay, CubePounceGame.DistanceType.Loose)) {
           ReactToCubeOutOfRange();
         }
       }
       else {
         ReactToCubeGone();
-        ReactToCubeOutOfRange();
       }
 
       //TODO:(lc) this shouldn't be necessary, should be taken care of by animations
@@ -36,13 +34,19 @@ namespace Cozmo.Minigame.CubePounce {
     }
 
     private void ReactToCubeGone() {
-      _CubePounceGame.GetCubeTarget().SetLEDs(Color.black);
+      _CubePounceGame.GetCubeTarget().SetLEDs(Cozmo.UI.CubePalette.Instance.OutOfViewColor.lightColor);
       _CubeIsValid = false;
     }
 
     private void ReactToCubeReturned() {
-      _CubePounceGame.GetCubeTarget().SetLEDs(Color.green);
       _CubeIsValid = true;
+
+      if (_CubeInActiveRange) {
+        _CubePounceGame.GetCubeTarget().SetLEDs(Cozmo.UI.CubePalette.Instance.ReadyColor.lightColor);
+      }
+      else {
+        _CubePounceGame.GetCubeTarget().SetLEDs(Cozmo.UI.CubePalette.Instance.OutOfViewColor.lightColor);
+      }
     }
 
     private void ReactToCubeInRange() {
@@ -58,6 +62,9 @@ namespace Cozmo.Minigame.CubePounce {
       score = Math.Min(_CubePounceGame.MaxScorePerRound - 1, score); // Last score is game point
       GameAudioClient.SetMusicRoundState(score + 1); // Offset for Audio Round State
       GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Tension);
+
+      _CubeInActiveRange = true;
+      _CubePounceGame.GetCubeTarget().SetLEDs(Cozmo.UI.CubePalette.Instance.ReadyColor.lightColor);
     }
 
     private void ReactToCubeOutOfRange() {
@@ -72,17 +79,15 @@ namespace Cozmo.Minigame.CubePounce {
 
       _GetReadyAnimCompleted = false;
       _GetUnreadyInProgress = true;
-      _GetUnreadyStartAngle_deg = _CurrentRobot.PitchAngle;
 
       GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Between_Rounds);
+
+      _CubeInActiveRange = false;
+      _CubePounceGame.GetCubeTarget().SetLEDs(Cozmo.UI.CubePalette.Instance.OutOfViewColor.lightColor);
     }
 
     private void HandleGetUnreadyDone(bool success) {
       _GetUnreadyInProgress = false;
-
-      if (_CubePounceGame.PitchIndicatesPounceSuccess(_GetUnreadyStartAngle_deg)) {
-        DoBackupReaction();
-      }
     }
 
     private void TurnToCube() {
@@ -99,13 +104,12 @@ namespace Cozmo.Minigame.CubePounce {
     public override void Update() {
       base.Update();
 
-      if (_BackupInProgress || _GetUnreadyInProgress) {
+      if (_GetUnreadyInProgress) {
         return;
       }
 
       if (_CubeIsValid && !_CubePounceGame.CubeSeenRecently) {
         ReactToCubeGone();
-        ReactToCubeOutOfRange();
       }
       else if (!_CubeIsValid && _CubePounceGame.CubeSeenRecently) {
         ReactToCubeReturned();
@@ -116,19 +120,19 @@ namespace Cozmo.Minigame.CubePounce {
           return;
         }
 
-        if (!_CubePounceGame.WithinAngleTolerance()) {
+        if (!_CubePounceGame.WithinAngleTolerance() && _CubeInActiveRange) {
           TurnToCube();
           return;
         }
 
-        if (!_GetReadyAnimCompleted && !_GetReadyAnimInProgress && _CubePounceGame.WithinPounceDistance(_CubePounceGame.CubePlaceDistLoose_mm)) {
+        if (!_GetReadyAnimCompleted && !_GetReadyAnimInProgress && _CubePounceGame.WithinDistance(CubePounceGame.Zone.InPlay, CubePounceGame.DistanceType.Tight)) {
           ReactToCubeInRange();
         }
         else if (_GetReadyAnimCompleted) {
-          if (!_CubePounceGame.WithinPounceDistance(_CubePounceGame.CubePlaceDistLoose_mm)) {
+          if (!_CubePounceGame.WithinDistance(CubePounceGame.Zone.InPlay, CubePounceGame.DistanceType.Loose)) {
             ReactToCubeOutOfRange();
           }
-          else if (_CubePounceGame.WithinPounceDistance(_CubePounceGame.CubePlaceDistTight_mm)) {
+          else if (_CubePounceGame.WithinDistance(CubePounceGame.Zone.Pounceable, CubePounceGame.DistanceType.Tight)) {
             _StateMachine.SetNextState(new CubePounceStatePause());
           }
         }
@@ -144,36 +148,12 @@ namespace Cozmo.Minigame.CubePounce {
       _TurnInProgress = false;
     }
 
-    private void DoBackupReaction() {
-      // This is implemented as LiftUp + Wait + DriveStraight (backwards) instead of a simple unpowering
-      // of the lift and drivestraight because of bug COZMO 3890, which causes DriveStraight actions when Cozmo
-      // thinks he's picked up to fail
-      RobotActionUnion[] actions = {
-        new RobotActionUnion().Initialize(Singleton<SetLiftHeight>.Instance.Initialize(
-          height_mm: CozmoUtil.kMaxLiftHeightMM,
-          accel_rad_per_sec2: 5f,
-          max_speed_rad_per_sec: 10f,
-          duration_sec: 0f
-        )),
-        new RobotActionUnion().Initialize(Singleton<Wait>.Instance.Initialize(0.25f)),
-        new RobotActionUnion().Initialize(Singleton<DriveStraight>.Instance.Initialize(500, -30, false))
-      };
-      _CurrentRobot.SendQueueCompoundAction(actions, HandleBackupComplete);
-      _BackupInProgress = true;
-    }
-
-    private void HandleBackupComplete(bool success) {
-      _BackupInProgress = false;
-      _StateMachine.SetNextState(new CubePounceStatePostPoint(cozmoWon: true));
-    }
-
     public override void Exit() {
       base.Exit();
       if (null != _CurrentRobot) {
         _CurrentRobot.CancelCallback(HandleGetInAnimFinish);
         _CurrentRobot.CancelCallback(HandleTurnFinished);
         _CurrentRobot.CancelCallback(HandleGetUnreadyDone);
-        _CurrentRobot.CancelCallback(HandleBackupComplete);
       }
     }
   }
