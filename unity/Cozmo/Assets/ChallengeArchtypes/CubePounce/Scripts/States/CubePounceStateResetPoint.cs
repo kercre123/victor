@@ -6,12 +6,17 @@ using Anki.Cozmo.Audio;
 namespace Cozmo.Minigame.CubePounce {
   public class CubePounceStateResetPoint : CubePounceState {
 
-    private bool _GetReadyAnimCompleted = false;
+    private bool _GetReadyAnimCompleted;
     private bool _GetReadyAnimInProgress = false;
     private bool _CubeIsValid = false;
     private bool _CubeInActiveRange = true;
     private bool _TurnInProgress = false;
     private bool _GetUnreadyInProgress = false;
+    private float _CubeCreepTimerStart_s = -1f;
+
+    public CubePounceStateResetPoint(bool overrideReadyAnimComplete = false) {
+      _GetReadyAnimCompleted = overrideReadyAnimComplete;
+    }
 
     public override void Enter() {
       base.Enter();
@@ -134,6 +139,23 @@ namespace Cozmo.Minigame.CubePounce {
           }
           else if (_CubePounceGame.WithinDistance(CubePounceGame.Zone.Pounceable, CubePounceGame.DistanceType.Tight)) {
             _StateMachine.SetNextState(new CubePounceStatePause());
+          }
+          // If we aren't ready for cube creeping, clear the local timer
+          else if (!_CubePounceGame.CubeReadyForCreep) {
+            _CubeCreepTimerStart_s = -1f;
+          }
+          // Otherwise now we're ready for cube creeping, so start our local timer
+          else {
+            if (_CubeCreepTimerStart_s < 0.0f) {
+              _CubeCreepTimerStart_s = Time.time + UnityEngine.Random.Range(_CubePounceGame.GameConfig.CreepDelayMinTime_s, _CubePounceGame.GameConfig.CreepDelayMaxTime_s);
+            }
+              
+            if (Time.time >= _CubeCreepTimerStart_s) {
+              float creepDistance = _CubePounceGame.GetNextCreepDistance();
+              if (creepDistance > 0.0f) {
+                _StateMachine.SetNextState(new CubePounceStateCreep(creepDistance));
+              }
+            }
           }
         }
       }

@@ -37,3 +37,9 @@ MonoBehaviour:
   TurnSpeed_rps: 10
   TurnAcceleration_rps2: 100
   FakeoutMovePenaltyEnabled: 0
+  CreepDistanceMin_mm: 5
+  CreepDistanceMax_mm: 30
+  CubeMovedThresholdDistance_mm: 10
+  CreepMinUnmovedTime_s: 4.5
+  CreepDelayMinTime_s: 1
+  CreepDelayMaxTime_s: 3.5

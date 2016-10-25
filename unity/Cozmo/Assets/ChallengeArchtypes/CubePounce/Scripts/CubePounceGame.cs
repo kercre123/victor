@@ -31,9 +31,15 @@ namespace Cozmo.Minigame.CubePounce {
 
     private bool _CubeCurrentlyMoving = false;
 
+    private bool _CubeReadyForCreep = false;
+    private Vector3 _CubeUnmovedPosition = new Vector3();
+    private float _CubeLastMovedTime_s = 0.0f;
+
     public bool CurrentlyInFakeoutState { get; set; }
 
     public bool CubeSeenRecently { get { return _CubeSeenRecently; } }
+
+    public bool CubeReadyForCreep { get { return _CubeReadyForCreep; } }
 
     public CubePounceConfig GameConfig;
 
@@ -168,6 +174,21 @@ namespace Cozmo.Minigame.CubePounce {
       }
     }
 
+    public float GetNextCreepDistance() {
+      float nextCreepDistance_mm = Random.Range(GameConfig.CreepDistanceMin_mm, GameConfig.CreepDistanceMax_mm);
+      float actualDistanceSqr_mm = 0.0f;
+      const float distanceOverreach_mm = 3.0f;
+      float closestDistanceAllowed_mm = GetDistanceForZone(Zone.Pounceable) - distanceOverreach_mm;
+      if (CozmoUtil.ObjectEdgeWithinXYDistance(CurrentRobot.WorldPosition, GetCubeTarget(), nextCreepDistance_mm + closestDistanceAllowed_mm, out actualDistanceSqr_mm)) {
+        nextCreepDistance_mm = Mathf.Sqrt(actualDistanceSqr_mm) - closestDistanceAllowed_mm;
+        if (nextCreepDistance_mm < 0.0f) {
+          nextCreepDistance_mm = 0.0f;
+        }
+      }
+
+      return nextCreepDistance_mm;
+    }
+
     // Returns whether we just finished a round
     public bool CheckAndUpdateRoundScore() {
       // If we haven't yet hit our max score nothing to see here
@@ -188,11 +209,30 @@ namespace Cozmo.Minigame.CubePounce {
       if (null != targetCube && targetCube.IsInFieldOfView) {
         _CubeTargetSeenTime_s = currentTime_s;
         _CubeSeenRecently = true;
+
+        if (CubeHasMovedSignificantly(targetCube.WorldPosition)) {
+          _CubeUnmovedPosition = targetCube.WorldPosition;
+          _CubeReadyForCreep = false;
+          _CubeLastMovedTime_s = Time.time;
+        }
+        else if ((Time.time - _CubeLastMovedTime_s) > GameConfig.CreepMinUnmovedTime_s) {
+          _CubeReadyForCreep = true;
+        }
       }
       // If it's been too long our cube isn't visible anymore
       else if ((currentTime_s - _CubeTargetSeenTime_s) > GameConfig.CubeVisibleBufferTime_s) {
         _CubeSeenRecently = false;
       }
+    }
+
+    private bool CubeHasMovedSignificantly(Vector3 currentPosition) {
+      Vector3 posDiff = currentPosition - _CubeUnmovedPosition;
+      posDiff.z = 0.0f;
+
+      float diffMagSqr = posDiff.sqrMagnitude;
+      float threshMagSqr = GameConfig.CubeMovedThresholdDistance_mm * GameConfig.CubeMovedThresholdDistance_mm;
+
+      return  diffMagSqr > threshMagSqr;
     }
 
     public void UpdateScoreboard() {

@@ -64,6 +64,31 @@ namespace Cozmo.Minigame.CubePounce {
     [Range(0.000001f,100f)]
     public float TurnAcceleration_rps2; // = 100f;
 
+    // Enable/disable the penalty for moving a cube before Cozmo pounces
     public bool FakeoutMovePenaltyEnabled; // = true;
+
+    // Minimum distance cozmo will creep forward with each creep
+    [Range(0f,20f)]
+    public float CreepDistanceMin_mm; // = 5f;
+
+    // Maximum distance cozmo will creep forward with each creep
+    [Range(0f,50f)]
+    public float CreepDistanceMax_mm; // = 30f;
+
+    // Distance a cube needs to move to prevent the cube creep logic from triggering
+    [Range(0f,50f)]
+    public float CubeMovedThresholdDistance_mm; // = 4f;
+
+    // Time that a cube needs to sit unmoved to trigger creeping logic
+    [Range(0f,50f)]
+    public float CreepMinUnmovedTime_s; // = 4.5f;
+
+    // Min time between creep movements once unmoved time has elapsed
+    [Range(0f,15f)]
+    public float CreepDelayMinTime_s; // = 1f;
+
+    // Max time between creep movements once unmoved time has elapsed
+    [Range(0f,15f)]
+    public float CreepDelayMaxTime_s; // = 3.5f;
   }
 }

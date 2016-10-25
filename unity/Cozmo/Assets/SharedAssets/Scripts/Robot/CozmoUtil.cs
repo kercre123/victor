@@ -64,6 +64,11 @@ public static class CozmoUtil {
   }
 
   public static bool ObjectEdgeWithinXYDistance(Vector3 basePosition, ObservedObject obsObject, float desiredDistance_mm) {
+    float dummyOut;
+    return ObjectEdgeWithinXYDistance(basePosition, obsObject, desiredDistance_mm, out dummyOut);
+  }
+
+  public static bool ObjectEdgeWithinXYDistance(Vector3 basePosition, ObservedObject obsObject, float desiredDistance_mm, out float actualDistance_mm_out) {
     float distanceThreshold_mm = desiredDistance_mm + (obsObject.Size.x * 0.5f);
     float distanceThresholdSqr_mm = distanceThreshold_mm * distanceThreshold_mm;
 
@@ -71,6 +76,7 @@ public static class CozmoUtil {
     positionDifference.z = 0f;
     float distanceSqr_mm = positionDifference.sqrMagnitude;
 
+    actualDistance_mm_out = distanceSqr_mm;
     return distanceSqr_mm < distanceThresholdSqr_mm;
   }
 
