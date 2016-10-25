@@ -359,5 +359,11 @@
   },
   "pressDemoSpeedTap.difficulty.hardDescription.locked": {
     "translation": "Unlock by playing Speed Tap once."
+  },
+  "cozmoSays.instructions.label": {
+    "translation": "Type a word or phrase and hear Cozmo say it"
+  },
+  "sayCozmo.button.say": {
+    "translation": "Say"
   }
 }

@@ -394,6 +394,8 @@ public static class LocalizationKeys {
   public const string kSpeedTapTextRoundScore = "speedTap.text.roundScore";
   public const string kPressDemoSpeedTapDifficultyHardDescription = "pressDemoSpeedTap.difficulty.hardDescription";
   public const string kPressDemoSpeedTapDifficultyHardDescriptionLocked = "pressDemoSpeedTap.difficulty.hardDescription.locked";
+  public const string kCozmoSaysInstructionsLabel = "cozmoSays.instructions.label";
+  public const string kSayCozmoButtonSay = "sayCozmo.button.say";
 
   #endregion
 
@@ -651,6 +653,7 @@ public static class LocalizationKeys {
   public const string kLabelGoalsCompleted = "label.goalsCompleted";
   public const string kLabelDaysWithCozmo = "label.daysWithCozmo";
   public const string kLabelTermsOfUse = "label.termsOfUse";
+  public const string kLabelTotalSparks = "label.totalSparks";
 
   #endregion
 

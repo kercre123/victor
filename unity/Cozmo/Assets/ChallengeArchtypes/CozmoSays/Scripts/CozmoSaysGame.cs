@@ -6,10 +6,14 @@ namespace CozmoSays {
 
     [SerializeField]
     private SayTextSlide _SayTextSlidePrefab;
+    private SayTextSlide _SayTextSlideInstance;
 
     protected override void InitializeGame(MinigameConfigBase minigameConfig) {
-      CurrentRobot.TurnTowardsLastFacePose(90.0f);
-      SharedMinigameView.ShowFullScreenGameStateSlide(_SayTextSlidePrefab.gameObject, "say_text_slide");
+      CurrentRobot.TurnTowardsLastFacePose(Mathf.PI);
+      SharedMinigameView.HideShelf();
+      _SayTextSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_SayTextSlidePrefab.gameObject, "say_text_slide", () => {
+        _SayTextSlideInstance.RegisterInputFocus();
+      }).GetComponent<SayTextSlide>();
     }
 
     protected override void CleanUpOnDestroy() {

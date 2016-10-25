@@ -263,5 +263,8 @@
   },
   "label.termsOfUse": {
     "translation": "Terms of Use"
+  },
+  "label.totalSparks": {
+    "translation": "Total Sparks: {0}"
   }
 }
