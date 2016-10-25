@@ -172,7 +172,9 @@ namespace DataPersistence {
       if (CurrentStreak > Data.DefaultProfile.MaximumStreak) {
         Data.DefaultProfile.MaximumStreak = CurrentStreak;
       }
-      GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnNewDayStarted, CurrentStreak));
+      if (!OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Home)) {
+        GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnNewDayStarted, CurrentStreak));
+      }
       DataPersistenceManager.Instance.Save();
 
       return newSession;
