@@ -118,7 +118,15 @@ AIGoalEvaluator::~AIGoalEvaluator()
   #endif
 }
   
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result AIGoalEvaluator::Update()
+{
+  auto result = Result::RESULT_OK;
+  if(_currentGoalPtr != nullptr){
+    result = _currentGoalPtr->Update();
+  }
+  return result;
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIGoalEvaluator::OnDeselected()

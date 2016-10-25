@@ -165,6 +165,16 @@ void AIGoal::Exit(Robot& robot)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result AIGoal::Update()
+{
+  auto result = Result::RESULT_OK;
+  if(_behaviorChooserPtr != nullptr){
+    result = _behaviorChooserPtr->Update();
+  }
+  return result;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior* AIGoal::ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior)
 {
   // at the moment delegate on chooser. At some point we'll have intro/outro and other reactions

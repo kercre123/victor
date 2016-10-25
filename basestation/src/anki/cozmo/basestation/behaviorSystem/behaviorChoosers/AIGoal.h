@@ -14,6 +14,7 @@
 
 #include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
 
+#include "anki/common/types.h"
 #include "json/json-forwards.h"
 #include "clad/types/animationTrigger.h"
 #include "clad/types/unlockTypes.h"
@@ -66,6 +67,8 @@ public:
 
   // choose next behavior for this goal
   IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior);
+  
+  Result Update();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors

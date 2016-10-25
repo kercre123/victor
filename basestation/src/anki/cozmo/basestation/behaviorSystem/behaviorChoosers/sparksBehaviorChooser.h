@@ -44,6 +44,8 @@ public:
   // IBehaviorChooser API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
+  virtual Result Update() override;
+  
   // chooses the next behavior to run (could be the same we are currently running or null if none are desired)
   virtual IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior) override;
   
@@ -64,15 +66,20 @@ protected:
 
 private:
   
-  void CheckIfSparkShouldEnd(Robot& robot, const IBehavior* currentRunningBehavior);
+  void CheckIfSparkShouldEnd();
+  void CompleteSparkLogic();
+  void ResetLightsAndAnimations();
   
   enum class ChooserState{
     ChooserSelected,
     PlayingSparksIntro,
     UsingSimpleBehaviorChooser,
     WaitingForCurrentBehaviorToStop,
-    PlayingSparksOutro
+    PlayingSparksOutro,
+    EndSparkWhenReactionEnds
   };
+  
+  Robot& _robot;
   
   ChooserState _state;
   std::vector<Signal::SmartHandle> _signalHandles;
