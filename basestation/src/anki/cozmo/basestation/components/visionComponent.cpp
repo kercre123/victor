@@ -17,6 +17,8 @@
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/visionSystem.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/visionModesHelpers.h"
 #include "anki/cozmo/basestation/visionSystem.h"

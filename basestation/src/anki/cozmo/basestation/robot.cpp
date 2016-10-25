@@ -17,9 +17,10 @@
 #include "anki/cozmo/basestation/minimalAnglePlanner.h"
 #include "anki/cozmo/basestation/faceAndApproachPlanner.h"
 #include "anki/cozmo/basestation/pathDolerOuter.h"
-#include "anki/cozmo/basestation/blockWorld.h"
-#include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/activeCube.h"
+#include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/ledEncoding.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"
@@ -156,8 +157,8 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _ID(robotID)
   , _timeSynced(false)
   , _lastMsgTimestamp(0)
-  , _blockWorld(this)
-  , _faceWorld(*this)
+  , _blockWorld(new BlockWorld(this))
+  , _faceWorld(new FaceWorld(*this))
   , _behaviorMgr(new BehaviorManager(*this))
   , _aiInformationAnalyzer(new AIInformationAnalyzer())
   , _audioClient(new Audio::RobotAudioClient(this))
@@ -534,7 +535,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
       // If we are not localized and there is nothing else left in the world that
       // we could localize to, then go ahead and mark us as localized (via
       // odometry alone)
-      if(false == _blockWorld.AnyRemainingLocalizableObjects()) {
+      if(false == _blockWorld->AnyRemainingLocalizableObjects()) {
         PRINT_NAMED_INFO("Robot.UpdateOfftreadsState.NoMoreRemainingLocalizableObjects",
                          "Marking previously-unlocalized robot %d as localized to odometry because "
                          "there are no more objects to localize to in the world.", GetID());
@@ -628,13 +629,13 @@ void Robot::Delocalize(bool isCarryingObject)
   
   
   // delete objects that have become useless since we delocalized last time
-  _blockWorld.DeleteObjectsFromZombieOrigins();
+  _blockWorld->DeleteObjectsFromZombieOrigins();
   
   // create a new memory map for this origin
-  _blockWorld.CreateLocalizedMemoryMap(_worldOrigin);
+  _blockWorld->CreateLocalizedMemoryMap(_worldOrigin);
   
   // deselect blockworld's selected object, if it has one
-  _blockWorld.DeselectCurrentObject();
+  _blockWorld->DeselectCurrentObject();
       
   // notify behavior whiteboard
   _behaviorMgr->GetWhiteboard().OnRobotDelocalized();
@@ -874,7 +875,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
           
       const f32 distanceTraveled = (Point2f(msg.pose.x, msg.pose.y) - _rampStartPosition).Length();
           
-      Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld.GetObjectByID(_rampID, ObjectFamily::Ramp));
+      Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld->GetObjectByID(_rampID, ObjectFamily::Ramp));
       if(ramp == nullptr) {
         PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.NoRampWithID",
                           "Updating robot %d's state while on a ramp, but Ramp object with ID=%d not found in the world.",
@@ -1194,7 +1195,7 @@ Result Robot::Update()
   ///////// MemoryMap ///////////
       
   // update the memory map based on the current's robot pose
-  _blockWorld.UpdateRobotPoseInMemoryMap();
+  _blockWorld->UpdateRobotPoseInMemoryMap();
   
   
   
@@ -1520,10 +1521,10 @@ Result Robot::Update()
   /////////// Update visualization ////////////
       
   // Draw All Objects by calling their Visualize() methods.
-  _blockWorld.DrawAllObjects();
+  _blockWorld->DrawAllObjects();
       
   // Nav memory map
-  _blockWorld.DrawNavMemoryMap();
+  _blockWorld->DrawNavMemoryMap();
       
   // Always draw robot w.r.t. the origin, not in its current frame
   Pose3d robotPoseWrtOrigin = GetPose().GetWithRespectToOrigin();
@@ -2246,7 +2247,7 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
         
     // Now we need to go through all objects whose poses have been adjusted
     // by this origin switch and notify the outside world of the change.
-    _blockWorld.UpdateObjectOrigins(oldOrigin, _worldOrigin);
+    _blockWorld->UpdateObjectOrigins(oldOrigin, _worldOrigin);
 
     // after updating all block world objects, flatten out origins to remove grandparents
     _poseOriginList.Flatten(_worldOrigin);
@@ -2737,7 +2738,7 @@ Result Robot::DockWithObject(const ObjectID objectID,
                              const u8 numRetries,
                              const DockingMethod dockingMethod)
 {
-  ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(objectID));
+  ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld->GetObjectByID(objectID));
   if(object == nullptr) {
     PRINT_NAMED_ERROR("Robot.DockWithObject.ObjectDoesNotExist",
                       "Object with ID=%d no longer exists for docking.", objectID.GetValue());
@@ -2812,7 +2813,7 @@ const std::set<ObjectID> Robot::GetCarryingObjects() const
     
 void Robot::SetCarryingObject(ObjectID carryObjectID)
 {
-  ObservableObject* object = _blockWorld.GetObjectByID(carryObjectID);
+  ObservableObject* object = _blockWorld->GetObjectByID(carryObjectID);
   if(object == nullptr) {
     PRINT_NAMED_ERROR("Robot.SetCarryingObject.NullCarryObject",
                       "Object %d no longer exists in the world. Can't set it as robot's carried object.",
@@ -2861,7 +2862,7 @@ void Robot::UnSetCarryingObjects(bool topOnly)
       continue;
     }
         
-    ObservableObject* object = _blockWorld.GetObjectByID(objID);
+    ObservableObject* object = _blockWorld->GetObjectByID(objID);
     if(object == nullptr) {
       PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects.NullObject",
                         "Object %d robot %d thought it was carrying no longer exists in the world.",
@@ -2939,7 +2940,7 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
     return RESULT_FAIL;
   }
       
-  ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(objectID));
+  ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld->GetObjectByID(objectID));
   if(object == nullptr) {
     PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectDoesNotExist",
                       "Dock object with ID=%d no longer exists for picking up.", objectID.GetValue());
@@ -2963,7 +2964,7 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
   // mark it as being carried too
   // TODO: Do we need to be able to handle non-actionable objects on top of actionable ones?
 
-  ObservableObject* objectOnTop = _blockWorld.FindObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
+  ObservableObject* objectOnTop = _blockWorld->FindObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
   if(objectOnTop != nullptr) {
     ActionableObject* actionObjectOnTop = dynamic_cast<ActionableObject*>(objectOnTop);
     if(actionObjectOnTop != nullptr) {
@@ -3024,7 +3025,7 @@ Result Robot::SetCarriedObjectAsUnattached()
     return RESULT_FAIL;
   }
       
-  ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(_carryingObjectID));
+  ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld->GetObjectByID(_carryingObjectID));
       
   if(object == nullptr)
   {
@@ -3059,7 +3060,7 @@ Result Robot::SetCarriedObjectAsUnattached()
   _carryingMarker = nullptr;
       
   if(_carryingObjectOnTopID.IsSet()) {
-    ActionableObject* objectOnTop = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(_carryingObjectOnTopID));
+    ActionableObject* objectOnTop = dynamic_cast<ActionableObject*>(_blockWorld->GetObjectByID(_carryingObjectOnTopID));
     if(objectOnTop == nullptr)
     {
       // This really should not happen.  How can a object being carried get deleted?

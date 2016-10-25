@@ -12,6 +12,7 @@
 
 #include "socializeBehaviorChooser.h"
 
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"

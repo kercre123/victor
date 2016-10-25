@@ -16,6 +16,7 @@
 #include "objectPoseConfirmer.h"
 
 #include "anki/cozmo/basestation/cozmoObservableObject.h"
+#include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 

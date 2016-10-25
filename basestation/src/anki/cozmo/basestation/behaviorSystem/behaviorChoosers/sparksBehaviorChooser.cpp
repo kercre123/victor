@@ -12,6 +12,7 @@
 #include "SparksBehaviorChooser.h"
 
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"

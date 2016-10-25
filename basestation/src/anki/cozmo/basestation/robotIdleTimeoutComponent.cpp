@@ -14,6 +14,7 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotIdleTimeoutComponent.h"
 #include "anki/cozmo/basestation/behaviorManager.h"

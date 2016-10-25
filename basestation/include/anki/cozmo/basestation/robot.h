@@ -38,10 +38,9 @@
 #include "clad/types/activeObjectTypes.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/animationKeyFrames.h"
+#include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/encodedImage.h"
-#include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
@@ -106,6 +105,8 @@ class ProgressionUnlockComponent;
 class VisionComponent;
 class BlockFilter;
 class BlockTapFilterComponent;
+class BlockWorld;
+class FaceWorld;
 class RobotPoseHistory;
 class RobotPoseStamp;
 class IExternalInterface;
@@ -160,11 +161,12 @@ public:
   
   // Accessors
   const RobotID_t        GetID()         const;
-  BlockWorld&            GetBlockWorld()       {return _blockWorld;}
-  const BlockWorld&      GetBlockWorld() const {return _blockWorld;}
-  
-  FaceWorld&             GetFaceWorld()        {return _faceWorld;}
-  const FaceWorld&       GetFaceWorld()  const {return _faceWorld;}
+  BlockWorld&            GetBlockWorld()       {assert(_blockWorld.get()); return *_blockWorld;}
+  const BlockWorld&      GetBlockWorld() const {assert(_blockWorld.get()); return *_blockWorld;}
+
+  FaceWorld&             GetFaceWorld()        {assert(_faceWorld.get()); return *_faceWorld;}
+  const FaceWorld&       GetFaceWorld()  const {assert(_faceWorld.get()); return *_faceWorld;}
+
   const bool             GetTimeSynced() const {return _timeSynced;}
   
   //
@@ -796,10 +798,10 @@ protected:
   bool              _newStateMsgAvailable = false;
     
   // A reference to the BlockWorld the robot lives in
-  BlockWorld        _blockWorld;
+  std::unique_ptr<BlockWorld>        _blockWorld;
     
   // A container for faces/people the robot knows about
-  FaceWorld         _faceWorld;
+  std::unique_ptr<FaceWorld>         _faceWorld;
   
   std::unique_ptr<BehaviorManager>       _behaviorMgr;
   std::unique_ptr<AIInformationAnalyzer> _aiInformationAnalyzer;
