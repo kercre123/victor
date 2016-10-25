@@ -44,15 +44,15 @@ MonoBehaviour:
   TimeBetweenBeat_Sec:
     serializedVersion: 2
     m_Curve:
-    - time: -0.010606509
-      value: 0.50097805
-      inSlope: -0.010210189
-      outSlope: -0.010210189
+    - time: 0
+      value: 0.6
+      inSlope: -0.015000003
+      outSlope: -0.015000003
       tangentMode: 10
-    - time: 9.975491
-      value: 0.3990181
-      inSlope: -0.010210189
-      outSlope: -0.010210189
+    - time: 10
+      value: 0.45
+      inSlope: -0.015000003
+      outSlope: -0.015000003
       tangentMode: 10
     m_PreInfinity: 2
     m_PostInfinity: 2
