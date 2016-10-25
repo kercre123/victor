@@ -337,6 +337,10 @@ namespace Cozmo {
         if (widgetInstance != null) {
           return false;
         }
+        if (this == null) {
+          DAS.Warn("SharedMinigameView.CreateWidgetIfNull", "Attempted to create a widget with a NULL SharedMinigameView");
+          return false;
+        }
 
         Transform parentTransform = this.transform;
         switch (layer) {
