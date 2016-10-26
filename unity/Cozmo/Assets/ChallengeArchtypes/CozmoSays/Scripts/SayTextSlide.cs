@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using DataPersistence;
+using Anki.Cozmo.ExternalInterface;
 
 public class SayTextSlide : MonoBehaviour {
 
@@ -92,9 +93,40 @@ public class SayTextSlide : MonoBehaviour {
       });
     }
     else {
-      RobotEngineManager.Instance.CurrentRobot.SayTextWithEvent(_TextInput.text, Anki.Cozmo.AnimationTrigger.MeetCozmoReEnrollmentSayName, callback: (success) => {
+
+      Anki.Cozmo.AnimationTrigger getInTrigger;
+      Anki.Cozmo.AnimationTrigger getOutTrigger;
+
+      SetGetInOutTriggers(_TextInput.text.Length, _TextInput.characterLimit, out getInTrigger, out getOutTrigger);
+
+      RobotActionUnion[] actions = {
+        new RobotActionUnion().Initialize(new PlayAnimationTrigger().Initialize(RobotEngineManager.Instance.CurrentRobot.ID, 1, getInTrigger, true)),
+        new RobotActionUnion().Initialize(new SayTextWithIntent().Initialize(
+          _TextInput.text,
+          // TODO: Replace with Jordan's loop speak text feature.
+          Anki.Cozmo.AnimationTrigger.CozmoSaysSpeakLoop,
+          Anki.Cozmo.SayTextIntent.Text)),
+        new RobotActionUnion().Initialize(new PlayAnimationTrigger().Initialize(RobotEngineManager.Instance.CurrentRobot.ID, 1, getOutTrigger, true))
+      };
+
+      RobotEngineManager.Instance.CurrentRobot.SendQueueCompoundAction(actions, (success) => {
         ResetInputStates();
       });
+    }
+  }
+
+  private void SetGetInOutTriggers(int textLength, int maxLength, out Anki.Cozmo.AnimationTrigger inTrigger, out Anki.Cozmo.AnimationTrigger outTrigger) {
+    if (textLength > (maxLength / 3) * 2) {
+      inTrigger = Anki.Cozmo.AnimationTrigger.CozmoSaysSpeakGetInLong;
+      outTrigger = Anki.Cozmo.AnimationTrigger.CozmoSaysSpeakGetOutLong;
+    }
+    else if (textLength > maxLength / 3) {
+      inTrigger = Anki.Cozmo.AnimationTrigger.CozmoSaysSpeakGetInMedium;
+      outTrigger = Anki.Cozmo.AnimationTrigger.CozmoSaysSpeakGetOutMedium;
+    }
+    else {
+      inTrigger = Anki.Cozmo.AnimationTrigger.CozmoSaysSpeakGetInShort;
+      outTrigger = Anki.Cozmo.AnimationTrigger.CozmoSaysSpeakGetOutShort;
     }
   }
 

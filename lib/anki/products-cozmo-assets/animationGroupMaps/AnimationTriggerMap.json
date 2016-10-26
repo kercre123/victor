@@ -45,8 +45,40 @@
       "AnimName": "ag_ConnectWakeUp"
     },
     {
+      "CladEvent": "CozmoSaysSpeakGetInShort",
+      "AnimName": "ag_cozmosays_getin_short"
+    },
+    {
+      "CladEvent": "CozmoSaysSpeakGetInMedium",
+      "AnimName": "ag_cozmosays_getin_medium"
+    },
+    {
+      "CladEvent": "CozmoSaysSpeakGetInLong",
+      "AnimName": "ag_cozmosays_getin_long"
+    },
+    {
+      "CladEvent": "CozmoSaysSpeakGetOutShort",
+      "AnimName": "ag_cozmosays_getout_short"
+    },
+    {
+      "CladEvent": "CozmoSaysSpeakGetOutMedium",
+      "AnimName": "ag_cozmosays_getout_medium"
+    },
+    {
+      "CladEvent": "CozmoSaysSpeakGetOutLong",
+      "AnimName": "ag_cozmosays_getout_long"
+    },
+    {
+      "CladEvent": "CozmoSaysSpeakLoop",
+      "AnimName": "ag_cozmosays_speakloop"
+    },
+    {
       "CladEvent": "CozmoSaysBadWord",
       "AnimName": "ag_cozmosays_badword"
+    },
+    {
+      "CladEvent": "CozmoSaysIdle",
+      "AnimName": "ag_cozmosays_idle"
     },
     {
       "CladEvent": "CubeMovedSense",
