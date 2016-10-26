@@ -87,6 +87,9 @@
   "unlockable.SpeedTap.Description": {
     "translation": "With this Upgrade, Cozmo learns how to play the game Quick Tap. Over time, his skills will improve!"
   },
+  "unlockable.cozmoSays.Title": {
+    "translation": "Cozmo Says"
+  },
   "unlockable.CubeRollAction.Title": {
     "translation": "Roll a Cube"
   },

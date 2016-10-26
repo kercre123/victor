@@ -216,9 +216,10 @@ namespace Cozmo.HomeHub {
           }
 
           // Create alert view with Icon
-          AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: true);
+          AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: true);
           alertView.SetPrimaryButton(LocalizationKeys.kButtonClose, null);
           alertView.TitleLocKey = unlockInfo.TitleKey;
+          alertView.SetIcon(_ChallengeStatesById[challenge].Data.ChallengeIcon);
 
           string preReqTypeKey = "unlockable.Unlock";
 
