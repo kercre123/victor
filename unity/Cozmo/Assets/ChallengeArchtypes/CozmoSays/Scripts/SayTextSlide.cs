@@ -84,18 +84,30 @@ public class SayTextSlide : MonoBehaviour {
     DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.RemoveItemAmount(_SparkItemId, _SayCost);
     UpdateTotalSparkCount();
 
-    RobotEngineManager.Instance.CurrentRobot.SayTextWithEvent(_TextInput.text, Anki.Cozmo.AnimationTrigger.MeetCozmoReEnrollmentSayName, callback: (success) => {
+    bool hasBadWords = Crosstales.BWF.Manager.BadWordManager.Contains(_TextInput.text);
 
-      _SayTextButton.Interactable = true;
-      _TextInput.interactable = true;
-      _ActiveContentContainer.SetActive(true);
-      _SparkSpinner.SetActive(false);
-      _TextInput.textComponent.color = _TextFieldActiveColor;
-      // clears text after saying it
-      _TextInput.text = "";
+    if (hasBadWords) {
+      RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CozmoSaysBadWord, (success) => {
+        ResetInputStates();
+      });
+    }
+    else {
+      RobotEngineManager.Instance.CurrentRobot.SayTextWithEvent(_TextInput.text, Anki.Cozmo.AnimationTrigger.MeetCozmoReEnrollmentSayName, callback: (success) => {
+        ResetInputStates();
+      });
+    }
+  }
 
-      RegisterInputFocus();
-    });
-
+  private void ResetInputStates() {
+    _SayTextButton.Interactable = true;
+    _TextInput.interactable = true;
+    _ActiveContentContainer.SetActive(true);
+    _SparkSpinner.SetActive(false);
+    _TextInput.textComponent.color = _TextFieldActiveColor;
+    // clears text after saying it
+    _TextInput.text = "";
+#if UNITY_IOS
+    RegisterInputFocus();
+#endif
   }
 }

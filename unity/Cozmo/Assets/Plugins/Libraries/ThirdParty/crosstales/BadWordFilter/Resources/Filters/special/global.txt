@@ -1,0 +1,51 @@
+# Global forbidden words
+# Last updated: 20.09.2016
+auschwitz
+\banal\b#anal
+\banus\w*\b#anus
+\bbdsm\b#bdsm
+\bb[1!i]mb[o0]\w*\b#bimbo
+buk(k)*ake#bukkake
+\bcfnm\b#cfnm
+\bctfd\b#ctfd#calm the fuck down
+\bdafuq\b#dafuq#What the fuck
+\bdomina\w*\b#domina
+cervix
+\beichmann\b
+fellatio#
+\bFOAD\b#foad#Fuck Off And Die
+\bgilf\b#gilf#
+\bg(oe|ö)bbels\b#goebbels
+\bg(oe|ö)ring\b#goering
+\bgtfo\b#gtfo#Get the fuck out
+\bhentai\b#hentai
+\bh[i1]mmler\b#himmler
+\bh[i1!][t+]ler\w*\b#hitler
+\bh[0o]m[0o]\w*\b#homo
+\bisis\b#isis
+\bkkk\b#kkk
+\bmaso\b#
+\bmilf\b#milf
+\b\w*m[o0]+ng[o0]+\w*\b#mongo
+n[0o]{2,}(b|8)#noob
+\b\w*nazi\w*\b#nazi
+\b(?!\bniggardly\b)\w*n[1ie]+[g6]{1,}[ea3]\w*\b#nigger
+\bnsfl\b#nsfl#not safe for life
+\bnsfw\b#nsfw#not safe for work
+\bOMGWTF\b#omgwtf
+\bosama\b#osama
+\b\w*p[0o]+rn[0o]*\w*\b#porn
+\b\w*pr[0o]+n\w*\b#pron
+\b\w*p[3e]n[1!i][s5]\w*\b#penis
+\bs[+&]m\b#s&m
+\bsado\b#
+\b[5s][3e](x)+\w*\b#sex
+smegma#
+\bs[t+]al[i1]n\b#stalin
+\bstfu\b#stfu#shut the fuck up
+swastika#
+vag[1!i]na#
+vulva#
+\bwtf\b#wtf#What the fuck
+\bwth\b#wth#What the hell
+x{3,}#xxx

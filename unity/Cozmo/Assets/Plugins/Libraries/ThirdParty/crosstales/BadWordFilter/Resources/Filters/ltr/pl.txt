@@ -1,0 +1,48 @@
+# Polish
+# Last updated: 20.09.2016
+\bburdel\w*\b
+\bchuj\w*\b
+ciota#wanker
+\bcipa\b
+\bcyc\b
+debil
+dmuchać
+do( )*kurwy( )*nędzy
+\bdupa\b
+dupek
+duperele
+dziwka
+fiut(a)?
+gówno
+\bhuj\b
+jajco
+jajeczko
+jajko
+\bjajo\b
+ja( )*pierdolę
+jebać
+jebany
+kurwa
+kurwy
+kutafon
+kutas
+lizać( )*pałę
+\bloda\b
+pieprzyć
+pierdolec
+pierdolić
+pierdolnięty
+pierdoła
+pierdzieć
+pizda
+pojeb
+popierdolony
+ruchać
+rzygać
+skurwysyn
+sraczka
+\bsrać\b
+\bsuka\b
+\bsyf\b
+wkurwiać
+zajebisty

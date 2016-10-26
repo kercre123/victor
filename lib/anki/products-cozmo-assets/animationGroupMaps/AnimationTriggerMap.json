@@ -45,6 +45,10 @@
       "AnimName": "ag_ConnectWakeUp"
     },
     {
+      "CladEvent": "CozmoSaysBadWord",
+      "AnimName": "ag_cozmosays_badword"
+    },
+    {
       "CladEvent": "CubeMovedSense",
       "AnimName": "ag_reacttoblock_blockpickup_01"
     },

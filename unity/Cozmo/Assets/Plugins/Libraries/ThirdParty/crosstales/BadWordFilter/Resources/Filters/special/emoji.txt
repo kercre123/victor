@@ -1,0 +1,7 @@
+# Emoji and miscellaneous symbols
+# Last updated: 20.09.2016
+[\u2600-\u27BF]#exclude http://en.wikipedia.org/wiki/Miscellaneous_Symbols and http://en.wikipedia.org/wiki/Dingbat#Unicode
+#[\u1F300-\u1F64F]#exclude http://en.wikipedia.org/wiki/Miscellaneous_Symbols_and_Pictographs and http://en.wikipedia.org/wiki/Emoticons_(Unicode_block)
+#[\u1F680-\u1F6FF]#exclude http://en.wikipedia.org/wiki/Transport_and_Map_Symbols
+\u534D#卍 left-handed Swastika
+\u5350#卐 right-handed Swastika

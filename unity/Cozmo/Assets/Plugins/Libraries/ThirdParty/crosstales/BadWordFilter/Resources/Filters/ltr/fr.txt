@@ -1,0 +1,151 @@
+# French
+# Last updated: 20.09.2016
+abruti(e)?#Idiot
+allumé(e)?#
+allumeuse#
+bais(é|e)(r)?#Fucked
+bander#
+b(â|a)tard#Bastard
+bâton merdeux#
+beauf#
+bigornette#
+\bbite\b#Dick
+bitte#
+bloblos#
+bordel#
+bosser#
+bougnoul#Sandnigger
+bourré(e)?#
+branlage#
+branler#
+branlette#
+branleur#Wanker
+branleuse#
+burne#Testicle
+\bcaca\b#
+cailler#
+chatte#
+chiant#
+chiasse#
+chier#To shit
+chiottes#
+cinglé#
+cirer#
+\bclito\w*\b#
+\bcocu\b#Cuckold
+conard#
+conasse#
+connard#Idiot
+connasse#Stupid and annoying girl
+conne#Idiot (feminine)
+connerie#
+couille#Ball (testicle)
+couillon#Stupid (masculine)
+couillonne#Stupid (feminine)
+cramouille#
+crétin#
+crevard#Backstabber or Hobo
+\bcul\b#Ass
+débile#
+déconne(r)?#
+dégage#
+dégénéré#
+dinde#
+doudounes#
+drague#
+emmer\w*\b#
+encul#
+encul(é|e)(e)?#Mother-fucker
+enculer#To fuck in the ass
+enfoir(é|e)(e)?#Bastard
+étron#
+fichemoi#
+fille de pute#
+fils de pute#
+filsdepute#
+\bfion\b#Ass
+\bflic\b#
+folle#
+fouslecamp#
+foutre#Cum
+fumier#
+ganache#
+gerber#
+gobeur#
+gobeuse#
+gouine#
+grande folle#
+grogniasse#
+grossebite#
+gueule#
+imbécile#
+incest#
+jouir#
+MALPT
+mamelle#
+maquereau#
+melon#
+ménage a trois
+merde#Shit
+merdeuse#
+merdeux#
+merlan#
+\bmeuf\b#
+missge#
+morue#
+mouill#
+moule#
+n(è|e)gre#Nigger (masculine)
+n(é|e)gresse#Nigger (feminine)
+nicktamere#
+niketamere#
+nique(r)?#Fuck
+noune#
+nullard#
+palucher#
+partouze#Sex orgy
+\bpd\b#Fag
+pédale#
+p(é|e)dé#Fag
+p(é|e)tasse#Slut/Show-off (feminine)
+pimbêche#
+\bpine\b#Dick
+\bpipe\b#
+pipi#
+pisser#
+poilu#
+pouffe#Show-off (feminine)
+pouffiasse#Show-off (feminine)
+pousse-crotte#
+pucelle#
+putain#Slut
+\bpute\b#Slut
+putin#
+\bqueue\b#
+ramoner#
+rombière#
+salaud#Bastard/backstabber (masculine)
+salop(e)?#Bastard/backstabber / slut
+salopard#Bastard/backstabber (masculine)
+saloperie#
+serin#
+service trois pièces#
+sodomie#Sodomy
+\bsuce(r)?\b#
+tante#
+tapette#Fag
+tar(é|e)#Insane
+teuf#
+tirer#
+traînée#
+trick#
+tringle#
+trique#
+trou du cul#
+trouduc#
+turlute#
+vagin#Vagina
+veuve#
+\bzob\b#Dick
+zigounette#
+zizi#

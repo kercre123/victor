@@ -1,0 +1,14 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB9-8B4A-11D0-8D11-00A0C91BC942}") = "BadWordFilter", "BadWordFilter.dll", "{8F01CBB7-0412-4A71-A16C-81EDE10DE5B8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Default|Any CPU = Default|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8F01CBB7-0412-4A71-A16C-81EDE10DE5B8}.Default|Any CPU.ActiveCfg = Default|Any CPU
+		{8F01CBB7-0412-4A71-A16C-81EDE10DE5B8}.Default|Any CPU.Build.0 = Default|Any CPU
+	EndGlobalSection
+EndGlobal

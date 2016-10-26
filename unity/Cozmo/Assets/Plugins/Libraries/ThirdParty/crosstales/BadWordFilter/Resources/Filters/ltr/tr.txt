@@ -1,0 +1,29 @@
+# Turkish
+# Last updated: 20.09.2016
+\bam\b
+\bamcığ\w*\b
+\bamcık\w*\b
+amı
+amlar
+\bçingene\w*\b
+göt
+göte
+\bgötler\w*\b
+götte(n)?
+götü(n)?
+\bgötveren\w*\b
+\bkaltağ\w*\b
+kaltak
+\bkaltaklar\w*\b
+kaltakta(n)?
+\borospu\w*\b
+\botuz( )*birci\w*\b
+\bsaksocu\w*\b
+sıçmak
+\bsik\w*\b
+\btaşağ\w*\b
+taşak
+\btaşakla\w*\b
+taşakta(n)?
+\byarağ\w*\b
+\byarak\w*\b
