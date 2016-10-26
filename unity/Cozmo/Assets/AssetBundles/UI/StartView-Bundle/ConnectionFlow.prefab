@@ -62,6 +62,8 @@ MonoBehaviour:
     type: 2}
   _ConnectingToCozmoScreenPrefab: {fileID: 11467300, guid: 064d2b5ecb36c43d7abcc053f91a244f,
     type: 2}
+  _ConnectionRejectedScreenPrefab: {fileID: 11452080, guid: 2a39f2d365fae48c48d4822826d90f14,
+    type: 2}
   _UpdateFirmwareScreenPrefab: {fileID: 11482222, guid: 3191bf1652972435d88cab949c7cd324,
     type: 2}
   _UpdateAppViewPrefab: {fileID: 11431642, guid: 0d6d37c4bed914a5794dd41e946275be,

@@ -73,6 +73,36 @@ void clientUpdate(void)
   }
 }
 
+
+void ExtraConnection_SendDisconnect_Maybe(const remot_info* remote, const uint8_t* data_in, unsigned short len)
+{
+  //we can't use the RT functions without messing up their sequencing.
+  //so build a disconnect message from raw bytes.
+  uint8_t data[14] = { 'C','O','Z', 3, 'R','E',1,
+                        eRMT_DisconnectRequest, 1,0,1,0,1, 0};
+
+  if (len>7) { len=7; } //only compare beginning of header: "COZ\3RE\1"
+  if (!os_memcmp(data, data_in, len))
+  {
+     return;   //don't reply unless incoming message had RT header.
+  }
+  //reply to sender
+  os_memcpy(socket->proto.udp->remote_ip, remote->remote_ip, 4);
+  socket->proto.udp->remote_port = remote->remote_port;
+  
+#ifdef DEBUG_CLIENT
+  printf("Sending Disconnect Directly to to %d.%d.%d.%d:%d\r\n", socket->proto.udp->remote_ip[0], socket->proto.udp->remote_ip[1],
+         socket->proto.udp->remote_ip[2], socket->proto.udp->remote_ip[3], socket->proto.udp->remote_port);
+#endif
+
+  const int8 err = espconn_send(socket, data, sizeof(data));
+  if (err < 0)
+  {
+    printf("ECSD %d\r\n", err);
+  }
+}
+
+
 ReliableConnection g_conn;   // So we can check canaries when we crash
 static void socketRecvCB(void *arg, char *usrdata, unsigned short len)
 {
@@ -109,6 +139,7 @@ static void socketRecvCB(void *arg, char *usrdata, unsigned short len)
 #ifdef DEBUG_CLIENT
     printf("Ignoring UDP traffic from unconnected source at  %d.%d.%d.%d:%d\r\n", remote->remote_ip[0], remote->remote_ip[1], remote->remote_ip[2], remote->remote_ip[3], remote->remote_port);
 #endif
+    ExtraConnection_SendDisconnect_Maybe(remote, (uint8_t*)usrdata, len);
     return;
   }
   

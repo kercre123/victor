@@ -92,5 +92,8 @@
   },
   "label.cubesNotWorking": {
     "translation": "Cubes not working?"
+  },
+  "connectivity.connectionRejected.title": {
+    "translation": "Another Device is connected to Cozmo\nPlease disconnect that Device and try again"
   }
 }

@@ -30,6 +30,10 @@ public class ConnectionFlow : MonoBehaviour {
   private ConnectingToCozmoScreen _ConnectingToCozmoScreenInstance;
 
   [SerializeField]
+  private ConnectionRejectedScreen _ConnectionRejectedScreenPrefab;
+  private ConnectionRejectedScreen _ConnectionRejectedScreenInstance;
+
+  [SerializeField]
   private UpdateFirmwareScreen _UpdateFirmwareScreenPrefab;
   private UpdateFirmwareScreen _UpdateFirmwareScreenInstance;
 
@@ -345,10 +349,7 @@ public class ConnectionFlow : MonoBehaviour {
 
   private void HandleWakeAnimationComplete(bool success) {
     GameObject.Destroy(_WakingUpCozmoScreenInstance);
-
     DAS.Debug("ConnectionFlow.HandleWakeAnimationComplete", "wake up animation: " + success);
-    // explicitly enable charger behavior since it should be off by default in engine.
-
     FinishConnectionFlow();
   }
 
@@ -370,6 +371,7 @@ public class ConnectionFlow : MonoBehaviour {
       _ConnectionFlowBackgroundInstance = null;
     }
 
+    // explicitly enable charger behavior since it should be off by default in engine.
     if (RobotEngineManager.Instance.CurrentRobot != null) {
       RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("default_disabled", Anki.Cozmo.BehaviorType.ReactToOnCharger, true);
       RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("wakeup", Anki.Cozmo.BehaviorType.AcknowledgeObject, true);
@@ -400,6 +402,7 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   private void HandleRobotConnectResponse(RobotConnectionResult response) {
+    DAS.Info("ConnectionFlow.HandleRobotConnectResponse", "response: " + response);
     switch (response) {
     case RobotConnectionResult.Success:
       // Audio Note: Let scaning loop continue to play
@@ -425,13 +428,17 @@ public class ConnectionFlow : MonoBehaviour {
       break;
 
     case RobotConnectionResult.NeedsPin:
-      GameObject.Destroy(_ConnectingToCozmoScreenInstance);
+      if (_ConnectingToCozmoScreenInstance != null) {
+        GameObject.Destroy(_ConnectingToCozmoScreenInstance.gameObject);
+      }
       PlayScanLoopAudio(false);
       ShowPinScreen();
       break;
 
     case RobotConnectionResult.InvalidPin:
-      GameObject.Destroy(_ConnectingToCozmoScreenInstance);
+      if (_ConnectingToCozmoScreenInstance != null) {
+        GameObject.Destroy(_ConnectingToCozmoScreenInstance.gameObject);
+      }
       PlayScanLoopAudio(false);
       ShowInvalidPinScreen();
       break;
@@ -440,7 +447,32 @@ public class ConnectionFlow : MonoBehaviour {
       PlayScanLoopAudio(false);
       ReplaceCozmoOnCharger();
       break;
+
+    case RobotConnectionResult.ConnectionRejected:
+      if (_ConnectingToCozmoScreenInstance != null) {
+        GameObject.Destroy(_ConnectingToCozmoScreenInstance.gameObject);
+      }
+      PlayScanLoopAudio(false);
+      ConnectionRejected();
+      break;
     }
+  }
+
+  private void ConnectionRejected() {
+    _ConnectionFlowBackgroundInstance.SetStateFailed(1);
+    _ConnectionRejectedScreenInstance = UIManager.CreateUIElement(_ConnectionRejectedScreenPrefab.gameObject, _ConnectionFlowBackgroundInstance.transform).GetComponent<ConnectionRejectedScreen>();
+    _ConnectionRejectedScreenInstance.OnCancelButton += () => {
+      if (_ConnectionRejectedScreenInstance != null) {
+        GameObject.Destroy(_ConnectionRejectedScreenInstance.gameObject);
+      }
+      ReturnToTitle();
+    };
+    _ConnectionRejectedScreenInstance.OnRetryButton += () => {
+      if (_ConnectionRejectedScreenInstance != null) {
+        GameObject.Destroy(_ConnectionRejectedScreenInstance.gameObject);
+      }
+      ReturnToSearch();
+    };
   }
 
   private void RobotConnectResponseSuccess() {
