@@ -195,7 +195,30 @@ namespace Cozmo {
       
     }; // class PanAndTiltAction
     
-    
+  
+  
+    class CalibrateMotorAction : public IAction
+    {
+    public:
+      CalibrateMotorAction(Robot& robot,
+                           bool calibrateHead,
+                           bool calibrateLift);
+      
+    protected:
+      
+      virtual ActionResult Init() override;
+      virtual ActionResult CheckIfDone() override;
+      
+    private:
+      bool _calibHead;
+      bool _calibLift;
+      
+      bool _headCalibStarted;
+      bool _liftCalibStarted;
+    };
+  
+      
+  
     class MoveHeadToAngleAction : public IAction
     {
     public:

@@ -36,6 +36,12 @@ message AlignWithObject {
     AlignmentType alignmentType
 }
 
+// CalibrateMotors
+message CalibrateMotors {
+    bool calibrateHead,
+    bool calibrateLift
+}
+
 // DisplayFaceImage
 message DisplayFaceImage {
     uint_32  duration_ms,
@@ -450,6 +456,7 @@ message WaitForImages {
 // Again: Alphabetical please!
 union RobotActionUnion {
   AlignWithObject           alignWithObject,
+  CalibrateMotors           calibrateMotors,
   DisplayFaceImage          displayFaceImage,
   DisplayProceduralFace     displayProceduralFace,
   DriveOffChargerContacts   driveOffChargerContacts,

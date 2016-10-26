@@ -11,15 +11,6 @@ namespace Anki
   {
     namespace HAL
     {
-      // Thresholds for factory FW
-      // NOTE: Need more testing to figure out what these should be
-      static const uint32_t DROP_LEVEL = 400;
-      static const uint32_t UNDROP_LEVEL = 600;  // hysteresis
-      
-      // Previous thresholds
-      //static const uint32_t DROP_LEVEL = 20;
-      //static const uint32_t UNDROP_LEVEL = 120;  // hysteresis
-      
       static bool cliffDetected = false;
       static uint16_t colorState[4];
 
@@ -34,9 +25,9 @@ namespace Anki
 
       bool IsCliffDetected()
       {
-        if (!cliffDetected && g_dataToHead.cliffLevel < DROP_LEVEL) {
+        if (!cliffDetected && g_dataToHead.cliffLevel < CLIFF_SENSOR_DROP_LEVEL) {
           cliffDetected = true;
-        } else if (cliffDetected && g_dataToHead.cliffLevel > UNDROP_LEVEL) {
+        } else if (cliffDetected && g_dataToHead.cliffLevel > CLIFF_SENSOR_UNDROP_LEVEL) {
           cliffDetected = false;
         }
         return cliffDetected;

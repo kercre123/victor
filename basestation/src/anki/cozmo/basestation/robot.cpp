@@ -399,6 +399,10 @@ ObjectID Robot::AddUnconnectedCharger()
     
 bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
 {
+  if (!IsHeadCalibrated()) {
+    return false;
+  }
+  
   const bool isOfftreads = IS_STATUS_FLAG_SET(IS_PICKED_UP);
   const bool isFalling = IS_STATUS_FLAG_SET(IS_FALLING);
   TimeStamp_t currentTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
@@ -1731,6 +1735,20 @@ void Robot::SetHeadCalibrated(bool isCalibrated)
   _isHeadCalibrated = isCalibrated;
 }
   
+void Robot::SetLiftCalibrated(bool isCalibrated)
+{
+  _isLiftCalibrated = isCalibrated;
+}
+  
+bool Robot::IsHeadCalibrated()
+{
+  return _isHeadCalibrated;
+}
+
+bool Robot::IsLiftCalibrated()
+{
+  return _isLiftCalibrated;
+}
 
 void Robot::ComputeLiftPose(const f32 atAngle, Pose3d& liftPose)
 {

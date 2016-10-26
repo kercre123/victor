@@ -137,23 +137,22 @@ namespace HeadController {
 
     void StartCalibrationRoutine(bool autoStarted)
     {
-      if (!IsCalibrating()) {
-        Enable();
-        potentialBurnoutStartTime_ms_ = 0;
+      Enable();
+      potentialBurnoutStartTime_ms_ = 0;
 
 #ifdef SIMULATOR
-        // Skipping actual calibration routine in sim due to weird lift behavior when attempting to move it when
-        // it's at the joint limit.  The arm flies off the robot!
-        isCalibrated_ = true;
-        SetDesiredAngle(MIN_HEAD_ANGLE);
-        Messages::SendMotorCalibrationMsg(MOTOR_HEAD, true, autoStarted);
-        Messages::SendMotorCalibrationMsg(MOTOR_HEAD, false);
+      // Skipping actual calibration routine in sim due to weird lift behavior when attempting to move it when
+      // it's at the joint limit.  The arm flies off the robot!
+      isCalibrated_ = true;
+      SetDesiredAngle(MIN_HEAD_ANGLE);
+      Messages::SendMotorCalibrationMsg(MOTOR_HEAD, true, autoStarted);
+      Messages::SendMotorCalibrationMsg(MOTOR_HEAD, false);
 #else
-        calState_ = HCS_LOWER_HEAD;
-        isCalibrated_ = false;
-        Messages::SendMotorCalibrationMsg(MOTOR_HEAD, true, autoStarted);
+      calState_ = HCS_LOWER_HEAD;
+      isCalibrated_ = false;
+      Messages::SendMotorCalibrationMsg(MOTOR_HEAD, true, autoStarted);
 #endif
-      }
+
     }
 
     bool IsCalibrated()

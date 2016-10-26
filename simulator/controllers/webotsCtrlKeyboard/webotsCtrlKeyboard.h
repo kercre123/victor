@@ -44,6 +44,7 @@ protected:
   virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction &msg) override;
   virtual void HandleLoadedKnownFace(Vision::LoadedKnownFace const& msg) override;
   virtual void HandleEngineErrorCode(const ExternalInterface::EngineErrorCodeMessage& msg) override;
+  virtual void HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg) override;
   
 private:
 

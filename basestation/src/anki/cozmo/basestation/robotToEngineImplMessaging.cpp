@@ -230,6 +230,10 @@ void RobotToEngineImplMessaging::HandleMotorCalibration(const AnkiEvent<RobotInt
     robot->SetHeadCalibrated(!payload.calibStarted);
   }
   
+  if (payload.motorID == MotorID::MOTOR_LIFT) {
+    robot->SetLiftCalibrated(!payload.calibStarted);
+  }
+  
   robot->Broadcast(ExternalInterface::MessageEngineToGame(MotorCalibration(payload)));
 }
   

@@ -167,6 +167,7 @@ namespace Anki {
         case RobotActionType::WAIT:
         case RobotActionType::WAIT_FOR_IMAGES:
         case RobotActionType::WAIT_FOR_LAMBDA:
+        case RobotActionType::CALIBRATE_MOTORS:
         {
           _completionUnion.Set_defaultCompleted(DefaultCompleted());
           break;

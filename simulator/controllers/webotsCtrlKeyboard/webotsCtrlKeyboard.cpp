@@ -2411,6 +2411,11 @@ namespace Anki {
         }
       }
     
+      void WebotsKeyboardController::HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg)
+      {
+        // Things to do on robot connect
+        SendSetRobotVolume(0);
+      }
    
     
       void WebotsKeyboardController::HandleNVStorageOpResult(const ExternalInterface::NVStorageOpResult &msg)

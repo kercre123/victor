@@ -281,6 +281,10 @@ public:
   void SetLiftAngle(const f32& angle);
 
   void SetHeadCalibrated(bool isCalibrated);
+  void SetLiftCalibrated(bool isCalibrated);
+
+  bool IsHeadCalibrated();
+  bool IsLiftCalibrated();
   
   // #notImplemented
   //    // Get 3D bounding box of the robot at its current pose or a given pose
@@ -491,7 +495,7 @@ public:
   bool IsCliffDetected() const { return _isCliffDetected; }
   bool IsCliffSensorOn() const { return _isCliffSensorOn; }
   
-    u16  GetCliffDataRaw() const { return _cliffDataRaw; }
+  u16  GetCliffDataRaw() const { return _cliffDataRaw; }
   
   // sets distance detected by forward proximity sensor
   void SetForwardSensorValue(u16 value_mm) { _forwardSensorValue_mm = value_mm; }
@@ -567,7 +571,7 @@ public:
   
   // This is just for unit tests to fake a syncTimeAck message from the robot
   // and force the head into calibrated state.
-  void FakeSyncTimeAck() { _timeSynced = true; _isHeadCalibrated = true; }
+  void FakeSyncTimeAck() { _timeSynced = true; _isHeadCalibrated = true; _isLiftCalibrated = true; }
   
   Result RequestIMU(const u32 length_ms) const;
 
@@ -909,6 +913,7 @@ protected:
   f32              _rightWheelSpeed_mmps;
   
   bool             _isHeadCalibrated = false;
+  bool             _isLiftCalibrated = false;
     
   // Ramping
   bool             _onRamp = false;

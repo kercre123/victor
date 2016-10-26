@@ -533,6 +533,62 @@ namespace Anki {
       return result;
     }
     
+    
+#pragma mark ---- CalibrateMotorAction ----
+    
+    CalibrateMotorAction::CalibrateMotorAction(Robot& robot,
+                                               bool calibrateHead,
+                                               bool calibrateLift)
+    : IAction(robot,
+              "CalibrateMotor-" + std::string(calibrateHead ? "Head" : "") + std::string(calibrateLift ? "Lift" : ""),
+              RobotActionType::CALIBRATE_MOTORS,
+              (calibrateHead ? (u8)AnimTrackFlag::HEAD_TRACK : 0) | (calibrateLift ? (u8)AnimTrackFlag::LIFT_TRACK : 0) )
+    , _calibHead(calibrateHead)
+    , _calibLift(calibrateLift)
+    , _headCalibStarted(false)
+    , _liftCalibStarted(false)
+    {
+      
+    }
+    
+    ActionResult CalibrateMotorAction::Init()
+    {
+      ActionResult result = ActionResult::SUCCESS;
+      _headCalibStarted = false;
+      _liftCalibStarted = false;
+      if (RESULT_OK != _robot.GetMoveComponent().CalibrateMotors(_calibHead, _calibLift)) {
+        return ActionResult::FAILURE_ABORT;
+      }
+      
+      return result;
+    }
+    
+    ActionResult CalibrateMotorAction::CheckIfDone()
+    {
+      ActionResult result = ActionResult::RUNNING;
+      bool headCalibrating = !_robot.IsHeadCalibrated();
+      bool liftCalibrating = !_robot.IsLiftCalibrated();
+
+      // Wait for motor to be calibrating before checking for calibrated state.
+      if (headCalibrating) {
+        _headCalibStarted = true;
+      }
+      
+      if (liftCalibrating) {
+        _liftCalibStarted = true;
+      }
+      
+      bool headComplete = !_calibHead || (_headCalibStarted && !headCalibrating);
+      bool liftComplete = !_calibLift || (_liftCalibStarted && !liftCalibrating);
+      if (headComplete && liftComplete) {
+        PRINT_NAMED_INFO("CalibrateMotorAction.CheckIfDone.Done", "");
+        result = ActionResult::SUCCESS;
+      }
+
+      return result;
+    }
+    
+    
 #pragma mark ---- MoveHeadToAngleAction ----
     
     MoveHeadToAngleAction::MoveHeadToAngleAction(Robot& robot, const Radians& headAngle, const Radians& tolerance, const Radians& variability)

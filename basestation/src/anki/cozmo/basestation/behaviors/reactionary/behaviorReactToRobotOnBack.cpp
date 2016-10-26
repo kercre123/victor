@@ -54,8 +54,18 @@ Result BehaviorReactToRobotOnBack::InitInternalReactionary(Robot& robot)
 void BehaviorReactToRobotOnBack::FlipDownIfNeeded(Robot& robot)
 {
   if( robot.GetOffTreadsState() == OffTreadsState::OnBack ) {
-    StartActing(new TriggerAnimationAction(robot, AnimationTrigger::FlipDownFromBack),
-                &BehaviorReactToRobotOnBack::DelayThenFlipDown);
+    
+    // Check if cliff detected
+    // If not, then calibrate head because we're not likely to be on back if no cliff detected.
+    if (robot.GetCliffDataRaw() < CLIFF_SENSOR_DROP_LEVEL) {
+      StartActing(new TriggerAnimationAction(robot, AnimationTrigger::FlipDownFromBack),
+                  &BehaviorReactToRobotOnBack::DelayThenFlipDown);
+    } else {
+      PRINT_NAMED_EVENT("BehaviorReactToRobotOnBack.FlipDownIfNeeded.CalibratingHead",
+                        "%d", robot.GetCliffDataRaw());
+      StartActing(new CalibrateMotorAction(robot, true, false),
+                  &BehaviorReactToRobotOnBack::DelayThenFlipDown);
+    }
   }
   else {
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedToRobotOnBack);

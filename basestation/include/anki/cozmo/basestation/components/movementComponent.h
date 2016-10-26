@@ -74,6 +74,9 @@ public:
   // which will only decrement each track lock count by 1
   void CompletelyUnlockAllTracks();
   
+  // Sends calibrate command to robot
+  Result CalibrateMotors(bool head, bool lift);
+  
   // Enables lift power on the robot.
   // If disabled, lift goes limp.
   Result EnableLiftPower(bool enable);

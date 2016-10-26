@@ -552,6 +552,11 @@ void MovementComponent::HandleMessage(const ExternalInterface::ExitSdkMode& msg)
   
 // =========== Motor commands ============
 
+Result MovementComponent::CalibrateMotors(bool head, bool lift)
+{
+  return _robot.SendRobotMessage<RobotInterface::StartMotorCalibration>(head, lift);
+}
+  
 
 Result MovementComponent::EnableLiftPower(bool enable)
 {

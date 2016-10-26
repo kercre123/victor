@@ -72,8 +72,9 @@ namespace Anki {
         const f32 ANGLE_ERROR_SUM_DECAY_STEP = 0.02f;
         
         // If it exceeds this value, applied power should decay to this value when in position.
-        // This value should match the motor burnout protection threshold (POWER_THRESHOLD[]) in syscon's motors.cpp.
-        const f32 MAX_POWER_IN_POSITION = 0.25;
+        // This value should be slightly less than the motor burnout protection threshold (POWER_THRESHOLD[])
+        // in syscon's motors.cpp since the actual applied power can be slightly more than this.
+        const f32 MAX_POWER_IN_POSITION = 0.24;
         
         // Motor burnout protection
         u32 potentialBurnoutStartTime_ms_ = 0;
@@ -205,13 +206,11 @@ namespace Anki {
 
       void StartCalibrationRoutine(bool autoStarted)
       {
-        if (!IsCalibrating()) {
-          Enable();
-          calState_ = LCS_LOWER_LIFT;
-          isCalibrated_ = false;
-          potentialBurnoutStartTime_ms_ = 0;
-          Messages::SendMotorCalibrationMsg(MOTOR_LIFT, true, autoStarted);
-        }
+        Enable();
+        calState_ = LCS_LOWER_LIFT;
+        isCalibrated_ = false;
+        potentialBurnoutStartTime_ms_ = 0;
+        Messages::SendMotorCalibrationMsg(MOTOR_LIFT, true, autoStarted);
       }
 
       bool IsCalibrated()
@@ -606,7 +605,7 @@ namespace Anki {
           angleErrorSum_ -= angleError;
           
           // Decay angleErrorSum as long as power exceeds MAX_POWER_IN_POSITION
-          if (ABS(angleErrorSum_) > MAX_POWER_IN_POSITION) {
+          if (ABS(power_) > MAX_POWER_IN_POSITION) {
             f32 decay = ANGLE_ERROR_SUM_DECAY_STEP * (angleErrorSum_ > 0 ? 1.f : -1.f);
             angleErrorSum_ -= decay;
           }

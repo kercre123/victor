@@ -40,6 +40,7 @@ protected:
 
 private:
   
+  void CheckForHighPitch(Robot& robot);
 };
 
 }

@@ -320,6 +320,16 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::AlignWithO
     return action;
   }
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::CalibrateMotors& msg)
+{
+    CalibrateMotorAction* action = new CalibrateMotorAction(robot,
+                                                            msg.calibrateHead,
+                                                            msg.calibrateLift);
+    return action;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
@@ -871,6 +881,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       //
       
       DEFINE_HANDLER(alignWithObject,          AlignWithObject,          0),
+      DEFINE_HANDLER(calibrateMotors,          CalibrateMotors,          0),
       DEFINE_HANDLER(displayFaceImage,         DisplayFaceImage,         0),
       DEFINE_HANDLER(displayProceduralFace,    DisplayProceduralFace,    0),
       DEFINE_HANDLER(driveOffChargerContacts,  DriveOffChargerContacts,  1),

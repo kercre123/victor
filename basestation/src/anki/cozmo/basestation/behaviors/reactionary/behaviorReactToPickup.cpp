@@ -88,7 +88,13 @@ IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot)
     const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if (currentTime > _nextRepeatAnimationTime)
     {
-      StartAnim(robot);
+      if (robot.GetCliffDataRaw() < CLIFF_SENSOR_DROP_LEVEL) {
+        StartAnim(robot);
+      } else {
+        PRINT_NAMED_EVENT("BehaviorReactToPickup.CalibratingHead",
+                          "%d", robot.GetCliffDataRaw());
+        StartActing(new CalibrateMotorAction(robot, true, false));
+      }
     }
   }
   
