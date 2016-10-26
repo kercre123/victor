@@ -117,6 +117,7 @@
 		73F6F9B404514A3F3F49FD47 /* Bulk_DOTween43_0.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 308B9A709015B7FD8A0C3F46 /* Bulk_DOTween43_0.cpp */; };
 		761363075412B07F87CC5696 /* UnityMetalSupport.h in Sources */ = {isa = PBXBuildFile; fileRef = 9B1736CCB3C0D2DBFF7E5DC8 /* UnityMetalSupport.h */; };
 		773018D48C7C9EC8BDA83040 /* Bulk_Assembly-CSharp_10.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BC10CAE4B17107B4422D472C /* Bulk_Assembly-CSharp_10.cpp */; };
+		773530D293F2703D673FD28F /* Bulk_Assembly-CSharp_13.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A3166D24BFA77F17A270795 /* Bulk_Assembly-CSharp_13.cpp */; };
 		7921A7066543F104AC8E8CB3 /* Il2CppMetadataRegistration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CBD577426FE0C6E03EE40B0B /* Il2CppMetadataRegistration.cpp */; };
 		7A0EA216753BA2A39C418664 /* VideoPlayerPlugin.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2C45B2AF6726FF2E7C80FB13 /* VideoPlayerPlugin.mm */; };
 		7B7EEC8638B0D6FE4D953066 /* GenericMethods2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B9AC211835AA03A05063057E /* GenericMethods2.cpp */; };
@@ -276,6 +277,7 @@
 		21D757B2A462F4E8561834B3 /* Il2CppTypeDefinitions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Il2CppTypeDefinitions.cpp; path = UnityBuild/Classes/Native/Il2CppTypeDefinitions.cpp; sourceTree = "<group>"; };
 		22B540F24D35CDDA4795F67E /* OnDemandResources.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = OnDemandResources.mm; path = UnityBuild/Classes/Unity/OnDemandResources.mm; sourceTree = "<group>"; };
 		254DD87AA17FE994467D003E /* Bulk_UnityDASDll_0.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_UnityDASDll_0.cpp; path = UnityBuild/Classes/Native/Bulk_UnityDASDll_0.cpp; sourceTree = "<group>"; };
+		2A3166D24BFA77F17A270795 /* Bulk_Assembly-CSharp_13.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "Bulk_Assembly-CSharp_13.cpp"; path = "UnityBuild/Classes/Native/Bulk_Assembly-CSharp_13.cpp"; sourceTree = "<group>"; };
 		2A63A3FAA2BE81B674403C63 /* Bulk_Assembly-CSharp_3.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "Bulk_Assembly-CSharp_3.cpp"; path = "UnityBuild/Classes/Native/Bulk_Assembly-CSharp_3.cpp"; sourceTree = "<group>"; };
 		2C45B2AF6726FF2E7C80FB13 /* VideoPlayerPlugin.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = VideoPlayerPlugin.mm; path = UnityBuild/Libraries/Plugins/iOS/VideoPlayerPlugin.mm; sourceTree = "<group>"; };
 		2E7546E835001A0FCD1BC9B7 /* Bulk_mscorlib_4.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_mscorlib_4.cpp; path = UnityBuild/Classes/Native/Bulk_mscorlib_4.cpp; sourceTree = "<group>"; };
@@ -723,6 +725,7 @@
 				BC10CAE4B17107B4422D472C /* Bulk_Assembly-CSharp_10.cpp */,
 				504DDA5A281ECB75D7EB5296 /* Bulk_Assembly-CSharp_11.cpp */,
 				A82145767EFA1ADAE7219EC4 /* Bulk_Assembly-CSharp_12.cpp */,
+				2A3166D24BFA77F17A270795 /* Bulk_Assembly-CSharp_13.cpp */,
 				02116FB4BD6761255D2F34A7 /* Bulk_Assembly-CSharp_2.cpp */,
 				2A63A3FAA2BE81B674403C63 /* Bulk_Assembly-CSharp_3.cpp */,
 				128C338A16E7AD2B170E7F06 /* Bulk_Assembly-CSharp_4.cpp */,
@@ -1028,6 +1031,7 @@
 				773018D48C7C9EC8BDA83040 /* Bulk_Assembly-CSharp_10.cpp in Sources */,
 				D4BAD120FA4C0EEEC6F93351 /* Bulk_Assembly-CSharp_11.cpp in Sources */,
 				F56E022A563A841851CB8ACF /* Bulk_Assembly-CSharp_12.cpp in Sources */,
+				773530D293F2703D673FD28F /* Bulk_Assembly-CSharp_13.cpp in Sources */,
 				556E7C433F164B5F3C54987F /* Bulk_Assembly-CSharp_2.cpp in Sources */,
 				149D4FCFB154DC0C846B3464 /* Bulk_Assembly-CSharp_3.cpp in Sources */,
 				DD37D7B33548878A51FF4F9B /* Bulk_Assembly-CSharp_4.cpp in Sources */,
