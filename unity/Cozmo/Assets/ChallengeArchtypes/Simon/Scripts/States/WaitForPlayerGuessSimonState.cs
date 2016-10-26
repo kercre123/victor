@@ -11,13 +11,18 @@ namespace Simon {
     private IList<int> _SequenceList;
     private int _CurrentSequenceIndex = 0;
     private int _TargetCube = -1;
-    private uint _TargetCubeColor;
     private float _StartLightBlinkTime = -1;
-    private const float _kTapBufferSeconds = 0.1f;
-    private bool _IsAnimating = false;
+
+    private enum SubState {
+      WaitForInput,
+      WaitForBlinkDone,
+      WaitForTurnOverAnim,
+    }
+    private SubState _SubState;
 
     public override void Enter() {
       base.Enter();
+      _SubState = SubState.WaitForInput;
       LightCube.TappedAction += OnBlockTapped;
       _GameInstance = _StateMachine.GetGame() as SimonGame;
       _SequenceList = _GameInstance.GetCurrentSequence();
@@ -36,23 +41,15 @@ namespace Simon {
 
     public override void Update() {
       base.Update();
-      if (_StartLightBlinkTime < 0 && !_IsAnimating) {
-        if (_CurrentSequenceIndex == _SequenceList.Count) {
-          PlayerWinHand();
-        }
-        if (_TargetCube != -1) {
-          _CurrentRobot.DriveWheels(0f, 0f);
-          if (_SequenceList[_CurrentSequenceIndex] == _TargetCube) {
-            _CurrentSequenceIndex++;
+      if (_SubState == SubState.WaitForBlinkDone) {
+        if (Time.time - _StartLightBlinkTime > SimonGame.kLightBlinkLengthSeconds) {
+          if (_CurrentSequenceIndex == _SequenceList.Count) {
+            PlayerWinHand();
           }
           else {
             PlayerLoseHand();
           }
-          _TargetCube = -1;
         }
-      }
-      else if (Time.time - _StartLightBlinkTime > SimonGame.kLightBlinkLengthSeconds) {
-        _StartLightBlinkTime = -1;
       }
     }
 
@@ -78,7 +75,7 @@ namespace Simon {
       GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
       AnimationTrigger trigger = _GameInstance.IsSoloMode() ? AnimationTrigger.MemoryMatchPlayerLoseHandSolo : AnimationTrigger.MemoryMatchPlayerLoseHand;
       _CurrentRobot.SendAnimationTrigger(trigger, HandleOnPlayerLoseAnimationDone);
-      _IsAnimating = true;
+      _SubState = SubState.WaitForTurnOverAnim;
     }
 
     private void PlayerWinHand() {
@@ -96,19 +93,15 @@ namespace Simon {
 
       _CurrentRobot.SendAnimationTrigger(trigger, HandleOnPlayerWinAnimationDone);
       _GameInstance.AddPoint(true);
-      _IsAnimating = true;
+      _SubState = SubState.WaitForTurnOverAnim;
 
       _GameInstance.ShowBanner(LocalizationKeys.kSimonGameLabelCorrect);
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Round_End);
     }
 
     private void OnBlockTapped(int id, int times, float timeStamp) {
-      if (_StartLightBlinkTime >= 0) {
-        return;
-      }
-
       // Just playing the ending animation
-      if (_IsAnimating) {
+      if (_SubState != SubState.WaitForInput) {
         return;
       }
 
@@ -116,10 +109,18 @@ namespace Simon {
       _TargetCube = id;
       if (_SequenceList[_CurrentSequenceIndex] == _TargetCube) {
         GameAudioClient.PostAudioEvent(_GameInstance.GetAudioForBlock(id));
+        _CurrentSequenceIndex++;
+        if (_CurrentSequenceIndex == _SequenceList.Count) {
+          //wants win anim when blink done
+          _SubState = SubState.WaitForBlinkDone;
+        }
       }
       else {
         GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Lose);
+        // wants lose when blink done. No input
+        _SubState = SubState.WaitForBlinkDone;
       }
+
       _GameInstance.BlinkLight(id, SimonGame.kLightBlinkLengthSeconds, Color.black, _GameInstance.GetColorForBlock(id));
 
       LightCube cube = _CurrentRobot.LightCubes[_TargetCube];

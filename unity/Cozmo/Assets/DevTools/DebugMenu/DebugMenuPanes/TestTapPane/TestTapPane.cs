@@ -80,6 +80,7 @@ public class TestTapPane : MonoBehaviour {
       else {
         _CubeTappedAmount.Add(id, 1);
       }
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Placeholder);
       CurrentRobot.LightCubes[id].SetLEDs(_TestColors[_CubeTappedAmount[id] % _TestColors.Length]);
     }
   }
