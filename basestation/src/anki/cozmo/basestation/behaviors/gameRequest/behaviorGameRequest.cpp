@@ -16,7 +16,7 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
-#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"

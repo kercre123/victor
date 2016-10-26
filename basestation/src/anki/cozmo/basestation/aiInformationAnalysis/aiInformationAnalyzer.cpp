@@ -15,7 +15,7 @@
 // processes
 #include "informationAnalysisProcesses/aiInfoAnalysisProcCalculateInterestingRegions.h"
 
-#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/navMemoryMap/iNavMemoryMap.h"
 #include "anki/cozmo/basestation/robot.h"
 

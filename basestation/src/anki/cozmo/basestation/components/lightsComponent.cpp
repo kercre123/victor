@@ -18,7 +18,7 @@
 #include "anki/cozmo/basestation/ledEncoding.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/cpuProfiler/cpuProfiler.h"

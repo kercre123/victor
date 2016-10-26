@@ -13,7 +13,7 @@
 #include "util/logging/logging.h"
 #include "util/global/globalDefinitions.h"
 
-#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/debug/devLoggingSystem.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"

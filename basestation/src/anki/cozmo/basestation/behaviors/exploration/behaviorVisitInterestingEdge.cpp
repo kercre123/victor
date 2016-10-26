@@ -18,7 +18,7 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
-#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/groundPlaneROI.h"
 #include "anki/cozmo/basestation/robot.h"

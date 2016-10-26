@@ -20,7 +20,7 @@
 #include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/basestation/blockWorldFilter.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/namedColors/namedColors.h"
 #include "anki/cozmo/basestation/overheadEdge.h"
@@ -44,6 +44,9 @@ namespace Anki
     class ActiveCube;
     class IExternalInterface;
     class INavMemoryMap;
+    namespace BlockConfigurations{
+    class BlockConfigurationManager;
+    }
     
     class BlockWorld
     {
@@ -257,12 +260,6 @@ namespace Anki
                                              const BlockWorldFilter& filterIn = BlockWorldFilter());
       
       
-      //Returns the height of the tallest stack of blocks in block world
-      //and sets the bottomBlockID that was passed in
-      //If there are multiple stacks of equivelent height it returns the nearest stack
-      //Pass in a list of bottom blocks to ignore if you are looking to locate a specific stack
-      uint8_t GetTallestStack(ObjectID& bottomBlockID) const;
-      uint8_t GetTallestStack(ObjectID& bottomBlockID, const std::vector<ObjectID>& blocksToIgnore) const;
       
       // Wrapper for above that returns bounding boxes of objects that are
       // obstacles given the robot's current z height. Objects being carried
@@ -349,6 +346,9 @@ namespace Anki
       // template for all events we subscribe to
       template<typename T>
       void HandleMessage(const T& msg);
+      
+      const BlockConfigurations::BlockConfigurationManager& GetBlockConfigurationManager() const { assert(_blockConfigurationManager); return *_blockConfigurationManager;}
+      void NotifyBlockConfigurationManagerObjectPoseChanged(const ObjectID& objectID) const;
       
     protected:
       
@@ -561,6 +561,8 @@ namespace Anki
       
       
       TimeStamp_t _currentObservedMarkerTimestamp = 0;
+      std::unique_ptr<BlockConfigurations::BlockConfigurationManager> _blockConfigurationManager;
+
       
     }; // class BlockWorld
 

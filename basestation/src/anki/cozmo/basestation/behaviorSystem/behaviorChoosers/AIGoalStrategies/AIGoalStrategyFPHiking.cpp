@@ -13,7 +13,7 @@
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
-#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/navMemoryMap/iNavMemoryMap.h"
 #include "anki/cozmo/basestation/robot.h"
 

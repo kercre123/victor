@@ -13,7 +13,7 @@
 
 #include "anki/cozmo/basestation/components/blockTapFilterComponent.h"
 
-#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/utils/timer.h"

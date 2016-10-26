@@ -20,7 +20,7 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
-#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"

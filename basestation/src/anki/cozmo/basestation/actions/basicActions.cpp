@@ -19,7 +19,7 @@
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/actions/visuallyVerifyActions.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
-#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"

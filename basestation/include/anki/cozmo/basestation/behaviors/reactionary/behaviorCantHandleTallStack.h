@@ -15,6 +15,7 @@
 
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/blockWorld/blockConfiguration.h"
 #include "clad/types/animationTrigger.h"
 
 namespace Anki {
@@ -38,39 +39,28 @@ protected:
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   
 private:
+  mutable BlockConfigurations::StackWeakPtr _currentTallestStack;
   
-  mutable ObjectID _baseBlockID;
-  mutable uint8_t _stackHeight;
-  bool _objectObservedChanged;
-  
-  bool _baseBlockPoseValid;
+  bool _isLastReactionPoseValid;
   Pose3d _lastReactionBasePose;
-  
   uint8_t _minStackHeight;
-  
-  // For checking computational switch
-  ObjectID _lastObservedObject;
   
   // loaded in from json
   float _lookingInitialWait_s;
   float _lookingDownWait_s;
   float _lookingTopWait_s;
-  float _minBlockMovedThreshold_mm_sqr;
+  float _minBlockMovedThreshold_mm;
   
   enum class DebugState {
-    ReactingToStack,
-    LookingAtStack,
     LookingUpAndDown,
     Disapointment
   };
   
-  void TransitionToReactingToStack(Robot& robot);
-  void TransitionToLookingAtStack(Robot& robot);
   void TransitionToLookingUpAndDown(Robot& robot);
   void TransitionToDisapointment(Robot& robot);
 
   
-  virtual void ResetBehavior();
+  virtual void ClearStack();
   virtual void UpdateTargetStack(const Robot& robot) const;
 
 };

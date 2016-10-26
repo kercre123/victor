@@ -13,7 +13,7 @@
 
 #include "anki/cozmo/basestation/behaviors/behaviorOnboardingShowCube.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"

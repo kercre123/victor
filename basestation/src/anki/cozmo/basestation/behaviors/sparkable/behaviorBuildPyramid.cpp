@@ -10,14 +10,14 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/sparkable/BehaviorBuildPyramid.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramid.h"
 
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
-#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/cozmoObservableObject.h"
 #include "anki/cozmo/basestation/robot.h"
 

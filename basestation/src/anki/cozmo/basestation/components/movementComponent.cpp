@@ -12,7 +12,7 @@
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
-#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/animTrackHelpers.h"
 #include "anki/cozmo/basestation/markerlessObject.h"

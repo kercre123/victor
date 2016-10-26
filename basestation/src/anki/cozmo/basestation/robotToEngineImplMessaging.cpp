@@ -13,7 +13,7 @@
 
 #include <opencv2/imgproc.hpp>
 
-#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/RobotToEngineImplMessaging.h"

@@ -13,6 +13,6 @@
   "lookingInitialWait_s": 1.0,
   "lookingDownWait_s": 1.0,
   "lookingUpWait_s": 1.0,
-  "minBlockMovedThreshold_mm_sqr": 100.0
+  "minBlockMovedThreshold_mm": 20.0
   
 }

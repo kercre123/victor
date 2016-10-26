@@ -186,9 +186,11 @@ Result SparksBehaviorChooser::Update()
 {
   // If the intro is interrupted, just continue as normal when reaction is over
   if((_state == ChooserState::ChooserSelected ||
-     _state == ChooserState::PlayingSparksIntro) &&
-     _robot.GetBehaviorManager().GetCurrentBehavior()->IsReactionary()){
-    _state = ChooserState::UsingSimpleBehaviorChooser;
+     _state == ChooserState::PlayingSparksIntro)){
+    auto currentBehavior = _robot.GetBehaviorManager().GetCurrentBehavior();
+    if(currentBehavior != nullptr && currentBehavior->IsReactionary()){
+      _state = ChooserState::UsingSimpleBehaviorChooser;
+    }
   }
   
   if(_state == ChooserState::UsingSimpleBehaviorChooser
@@ -197,11 +199,13 @@ Result SparksBehaviorChooser::Update()
   }
   
   // If we've timed out during a reactionary behavior, skip the outro and kill the lights
-  if(_state == ChooserState::WaitingForCurrentBehaviorToStop &&
-     _robot.GetBehaviorManager().GetCurrentBehavior()->IsReactionary()){
-    CompleteSparkLogic();
-    ResetLightsAndAnimations();
-    _state = ChooserState::EndSparkWhenReactionEnds;
+  if(_state == ChooserState::WaitingForCurrentBehaviorToStop){
+    auto currentBehavior = _robot.GetBehaviorManager().GetCurrentBehavior();
+    if(currentBehavior != nullptr && currentBehavior->IsReactionary()){
+      CompleteSparkLogic();
+      ResetLightsAndAnimations();
+      _state = ChooserState::EndSparkWhenReactionEnds;
+    }
   }
   
   return Result::RESULT_OK;

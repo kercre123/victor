@@ -15,6 +15,7 @@
 
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/blockWorld/blockConfiguration.h"
 #include "clad/types/animationTrigger.h"
 
 namespace Anki {
@@ -32,6 +33,7 @@ protected:
   BehaviorKnockOverCubes(Robot& robot, const Json::Value& config);
 
   virtual Result InitInternal(Robot& robot) override;
+  virtual Result ResumeInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
   
   virtual bool IsRunnableInternal(const Robot& robot) const override;
@@ -42,17 +44,16 @@ protected:
   void HandleObjectUpAxisChanged(const ObjectUpAxisChanged& msg, Robot& robot);
   
 private:
-
   // TODO:(bn) a few behaviors have used this pattern now, maybe we should re-think having some kind of
   // UpdateWhileNotRunning
-  mutable ObjectID _baseBlockID;
-  mutable uint8_t _stackHeight;
-  mutable bool _objectObservedChanged;
-  mutable float _nextCheckForStackSparked_sec;
-  // For checking computational switch
-  ObjectID _lastObservedObject;
-  
+  mutable BlockConfigurations::StackWeakPtr _currentTallestStack;
+
   uint8_t _minStackHeight;
+  
+  // store block IDs until unknown block exposure issues are fixed
+  ObjectID _bottomBlockID;
+  ObjectID _middleBlockID;
+  ObjectID _topBlockID;
   
   enum class DebugState {
     DrivingToStack,
@@ -65,11 +66,8 @@ private:
     SettingDownBlock
   };
   
-
-
   int _numRetries;
   std::set<ObjectID> _objectsFlipped;
-  std::set<ObjectID> _objectsInStack;
   
   //Values loaded in from JSON
   AnimationTrigger _reachForBlockTrigger = AnimationTrigger::Count;
@@ -84,10 +82,11 @@ private:
   void TransitionToPlayingReaction(Robot& robot);
   
   void LoadConfig(const Json::Value& config);
-  void InitializeMemberVars();
-  virtual void ResetBehavior(Robot& robot);
+  bool InitializeMemberVars();
+  virtual void ClearStack();
   virtual void UpdateTargetStack(const Robot& robot) const;
-  bool CheckIfRunnable() const;
+  
+  void PrepareForKnockOverAttempt();
 
 };
 

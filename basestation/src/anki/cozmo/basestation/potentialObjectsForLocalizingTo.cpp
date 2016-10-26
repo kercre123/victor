@@ -16,7 +16,7 @@
 
 #include "anki/cozmo/basestation/potentialObjectsForLocalizingTo.h"
 
-#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/cozmoObservableObject.h"
 #include "anki/cozmo/basestation/objectPoseConfirmer.h"

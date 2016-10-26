@@ -14,7 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_GameRequest_BehaviorGameRequest_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
-#include "anki/cozmo/basestation/blockWorldFilter.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
 #include "anki/vision/basestation/trackedFace.h"
 #include "clad/types/behaviorTypes.h"
 #include <memory>

@@ -21,7 +21,7 @@
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
-#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/pathMotionProfileHelpers.h"

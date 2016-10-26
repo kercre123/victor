@@ -24,8 +24,9 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
-#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/customObject.h"
 #include "anki/cozmo/basestation/mat.h"
@@ -33,10 +34,10 @@
 #include "anki/cozmo/basestation/potentialObjectsForLocalizingTo.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/navMemoryMap/navMemoryMapFactory.h"
-#include "bridge.h"
-#include "flatMat.h"
-#include "objectPoseConfirmer.h"
-#include "platform.h"
+#include "anki/cozmo/basestation/bridge.h"
+#include "anki/cozmo/basestation/flatMat.h"
+#include "anki/cozmo/basestation/objectPoseConfirmer.h"
+#include "anki/cozmo/basestation/platform.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/humanHead.h"
@@ -81,9 +82,6 @@ namespace Cozmo {
 // Helper namespace
 namespace {
 
-const float kOnGroundTolerenceStackBlockOnly = 2*ON_GROUND_HEIGHT_TOL_MM;
-
-  
 // return the content type we would set in the memory type for each object family
 NavMemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily family, bool isAdding)
 {
@@ -182,6 +180,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
   , _currentNavMemoryMapOrigin(nullptr)
   , _isNavMemoryMapRenderEnabled(true)
   , _trackPoseChanges(false)
+  , _blockConfigurationManager(new BlockConfigurations::BlockConfigurationManager(*robot))
   {
     CORETECH_ASSERT(_robot != nullptr);
     
@@ -1533,80 +1532,6 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       ++changedObjectIt;
     }
   } // UpdatePoseOfStackedObjects()
-  
-  //Returns the height of the tallest stack of blocks in block world
-  //and sets the bottom blockbottom block
-  //If there are multiple stacks of equivelent height it returns the nearest stack
-  //Pass in a list of bottom blocks to ignore if you are looking to locate a specific stack
-  uint8_t BlockWorld::GetTallestStack(ObjectID& bottomBlockID) const
-  {
-    std::vector<ObjectID> bottomBlocksToIgnore;
-    return GetTallestStack(bottomBlockID, bottomBlocksToIgnore);
-  }
-  
-  uint8_t BlockWorld::GetTallestStack(ObjectID& bottomBlockID, const std::vector<ObjectID>& blocksToIgnore) const
-  {
-    std::vector<const ObservableObject*> activeBlocks;
-    
-    {
-      BlockWorldFilter bottomBlockFilter;
-      bottomBlockFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-      bottomBlockFilter.SetFilterFcn([&blocksToIgnore](const ObservableObject* blockPtr)
-                          {
-                            if(!blockPtr->IsPoseStateKnown()){
-                              return false;
-                            }
-                            
-                            if(!blockPtr->IsRestingAtHeight(0, kOnGroundTolerenceStackBlockOnly)){
-                              return false;
-                            }
-
-                            if(std::find(blocksToIgnore.begin(), blocksToIgnore.end(), blockPtr->GetID()) != blocksToIgnore.end()){
-                              return false;
-                            }
-                            
-                            return true;
-                          });
-      
-      FindMatchingObjects(bottomBlockFilter, activeBlocks);
-    }
-    
-    BlockWorldFilter blocksOnlyFilter;
-    blocksOnlyFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-    
-    int tallestHeight = 0;
-    Pose3d bottomPose = _robot->GetPose();
-    for(auto bottomBlock: activeBlocks){
-      int currentHeight = 1;
-      auto currentBlock = bottomBlock;
-      auto nextBlock = currentBlock;
-      BOUNDED_WHILE(10,(nextBlock = FindObjectOnTopOf(*currentBlock, kOnCubeStackHeightTolerence, blocksOnlyFilter))){
-        currentHeight++;
-        currentBlock = nextBlock;
-      }
-      
-      //check to see which stack is closer to the robot
-      if(currentHeight >= tallestHeight){
-        f32 oldDistance = 0;
-        f32 newDistance = 0;
-        ComputeDistanceBetween(_robot->GetPose(), bottomPose, oldDistance);
-        ComputeDistanceBetween(_robot->GetPose(), currentBlock->GetPose(), newDistance);
-        
-        if(currentHeight > tallestHeight
-           || (bottomBlockID.IsSet()
-               && newDistance < oldDistance
-               && currentHeight == tallestHeight)){
-          tallestHeight = currentHeight;
-          bottomBlockID = bottomBlock->GetID();
-          bottomPose = bottomBlock->GetPose();
-        }
-      }
-    }
-    
-    
-    return tallestHeight;
-  }
-  
 
   u32 BlockWorld::CheckForUnobservedObjects(TimeStamp_t atTimestamp)
   {
@@ -4068,6 +3993,10 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       }
     }
     
+    //Update  block configurations now that all block poses have been updated
+    _blockConfigurationManager->Update();
+    
+    
     Result lastResult = UpdateMarkerlessObjects(_robot->GetLastImageTimeStamp());
     
     /*
@@ -5068,6 +4997,12 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     } // if selected object is set
 
   } // DrawAllObjects()
+  
+  
+  void BlockWorld::NotifyBlockConfigurationManagerObjectPoseChanged(const ObjectID& objectID) const
+  {
+    _blockConfigurationManager->SetObjectPoseChanged(objectID);
+  }
   
 } // namespace Cozmo
 } // namespace Anki
