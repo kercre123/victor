@@ -206,8 +206,6 @@ namespace Anki
         DMA_ERQ = DMA_ERQ_ERQ0_MASK;
 
         // Set up FTM IRQ to match hsync - must match gc0329.h timing!
-        static const uint16_t CLOCK_MOD = (168 * 8) * (BUS_CLOCK / I2SPI_CLOCK) - 1;
-        static const uint16_t DISABLE_MOD = (uint16_t)(CLOCK_MOD * 0.5f);
 
         SIM_SCGC6 |= SIM_SCGC6_FTM2_MASK;
         FTM2_SC = 0;    // Make sure timer is disabled
@@ -431,7 +429,6 @@ void PendSV_Handler(void)
   if (is_write_buff_final)  return;
   
   // Run the JPEG encoder for all of the remaining time
-  int eof = 0, buflen;   
 #if defined(ENABLE_JPEG)
   if (line < 498 && IsVideoEnabled())   // XXX: This is apparently compensating for a JPEGCompress bug
     JPEGCompress(line, TOTAL_ROWS);

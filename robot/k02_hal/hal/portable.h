@@ -67,14 +67,6 @@ typedef enum {
   static const u32 PIN_##name = 1 << (index); \
   static GPIO_Type* const GPIO_##name = (ptx);
 
-#ifdef __EDG__
-  #pragma diag_suppress 177   // Suppress unused variable warning - since this generates a lot of them
-  #define ASSERT_CONCAT_(a, b) a##b
-  #define ASSERT_CONCAT(a, b) ASSERT_CONCAT_(a, b)
-  #define static_assert(e, msg) \
-    enum { ASSERT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }
-#endif
-
 // Allocate in RAM block 0 - dedicated to camera DMA and swizzling in camera.c
 // This section can only be used by either CPU or DMA, not both at once
 // Thus, the RAM is only useful at the start of HALExec() or with careful timing in camera.c

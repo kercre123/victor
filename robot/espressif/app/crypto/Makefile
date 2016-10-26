@@ -51,4 +51,4 @@ INCLUDES += -I $(ESP_SRC_DIR)
 PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile
 
-CCFLAGS += -Os -DESP8266
+CCFLAGS += -Os

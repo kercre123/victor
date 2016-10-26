@@ -12,9 +12,4 @@ typedef signed long long    s64;
 
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 
-#define ASSERT_CONCAT_(a, b) a##b
-#define ASSERT_CONCAT(a, b) ASSERT_CONCAT_(a, b)
-#define static_assert(e, msg) \
-  enum { ASSERT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }
-  
 #endif

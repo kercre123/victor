@@ -92,6 +92,8 @@ namespace Anki {
         const u32 GIVEUP_DOCKING_TIMEOUT_MS = 1000;
 
 #ifdef  TARGET_K02
+        // Don't warn about set but unread variables because we have too many different code paths and shared pieces below
+        #pragma diag_suppress 550
         // Compensating for motor backlash by lifting a little higher when
         // approaching an object for high pickup.
         // Lift heights are reached reasonably accurately when moving down

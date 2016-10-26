@@ -466,6 +466,8 @@ void I2C0_IRQHandler(void) {
 }
 
 // === Syncronous calls ===
+// Don't warn about unused functions
+#pragma diag_suppress 177
 static void WriteByte(uint8_t data) {
   I2C0_D = data;
   while (~I2C0_S & I2C_S_IICIF_MASK) ;
@@ -512,4 +514,3 @@ uint8_t Anki::Cozmo::HAL::I2C::ReadReg(uint8_t slave, uint8_t addr) {
 
   return I2C0_D;
 }
-

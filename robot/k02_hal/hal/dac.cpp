@@ -16,7 +16,7 @@ static const int CLOCK_MOD = PERF_CLOCK / SAMPLE_RATE;
 
 static volatile uint16_t* DAC_WRITE = (volatile uint16_t*) &DAC0_DAT0L;
 static const int DAC_WORDS = 16;
-static const int MAX_VOLUME = 0xBFFF;
+//static const int MAX_VOLUME = 0xBFFF;
 static const int AUDIO_RAMP = 0x40;
 static const int MIN_VOLUME = 0;
 

@@ -50,8 +50,6 @@ static const CubeFirmware* ValidPerfs[] = {
   (const CubeFirmware*) NULL
 };
 
-static int wifiChannel = 1;
-
 static const uesb_address_desc_t PairingAddress = {
   ADV_CHANNEL,
   ADVERTISE_ADDRESS,
@@ -142,9 +140,13 @@ void Radio::advertise(void) {
 }
 
 void Radio::setWifiChannel(int8_t channel) {
-  if (channel > 0) {
-    wifiChannel = channel;
-  }
+  // Stub for now
+}
+
+int8_t getWifiChannel()
+{
+  // Stub for now
+  return 1;
 }
 
 void Radio::setLightGamma(uint8_t gamma) {
@@ -386,7 +388,7 @@ void uesb_event_handler(uint32_t flags)
       }
 
       acc->hopIndex = (random() & 0xF) + 0x12;
-      acc->hopBlackout = (wifiChannel * 5) - 9;
+      acc->hopBlackout = (getWifiChannel() * 5) - 9;
       if (acc->hopBlackout < 0) {
         acc->hopBlackout = 0;
       }

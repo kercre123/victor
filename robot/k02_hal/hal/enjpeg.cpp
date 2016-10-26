@@ -20,6 +20,9 @@
 #include "anki/cozmo/robot/drop.h"
 extern DropToWiFi* spi_write_buff;  // To save RAM, we write directly into spi_write_buff
 
+// Don't warn about the crazy pointer stuff going on in here
+#pragma diag_suppress 170
+
 //#define PROFILE   // If you want to UART-print how many cycles you're using
     
 namespace Anki

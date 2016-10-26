@@ -13,6 +13,9 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
+// Don't warn about unused functions
+#pragma diag_suppress 177
+
 //#define DISABLE_TASK_CHECK
 #define DISABLE_BLE
 

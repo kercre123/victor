@@ -31,7 +31,6 @@ static volatile uint8_t rxWind;
 static volatile uint8_t rxRind;
 
 static u8 wifiState = 0;
-static u8 blueState = 0;
 static u32 rxDroppedCount = 0;
 
 namespace Anki {
@@ -79,7 +78,6 @@ namespace HAL {
   void RadioUpdateState(u8 wifi, u8 blue)
   {
     wifiState = wifi;
-    blueState = blue;
   }
 
   namespace WiFi {

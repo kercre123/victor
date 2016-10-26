@@ -82,10 +82,10 @@ namespace Anki {
         
 #ifdef SIMULATOR
         bool isForcedDelocalizing_ = false;
-#endif
         uint32_t cubeID_;
         u8 rotationPeriod_;
         bool cubIDSet_ = false;
+#endif
       } // private namespace
 
 // #pragma mark --- Messages Method Implementations ---

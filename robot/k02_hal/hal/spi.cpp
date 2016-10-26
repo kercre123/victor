@@ -49,7 +49,6 @@ void Anki::Cozmo::HAL::SPI::ManageDrop(void) {
 static bool ProcessDrop(void) {
   using namespace Anki::Cozmo::HAL;
   using namespace Anki::Cozmo::RobotInterface;
-  static int pwmCmdCounter = 0;
 
   // Process drop receive
   transmissionWord *target = spi_rx_buff;

@@ -28,12 +28,5 @@
   const u8 SOURCE_##name = (index); \
   const u32 PIN_##name = 1 << (index); \
   GPIO_TypeDef* const GPIO_##name = (gpio);
-  
-#ifdef __EDG__
-# define ASSERT_CONCAT_(a, b) a##b
-# define ASSERT_CONCAT(a, b) ASSERT_CONCAT_(a, b)
-# define static_assert(e, msg) \
-    enum { ASSERT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }
-#endif
 
 #endif

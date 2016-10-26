@@ -14,11 +14,6 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
-const int SCREEN_WIDTH = 128;
-const int SCREEN_HEIGHT = 64;
-const int FRAME_BUFFER_SIZE = SCREEN_WIDTH * SCREEN_HEIGHT / 8;
-const int MAX_FACE_POSITIONS = FRAME_BUFFER_SIZE / MAX_SCREEN_BYTES_PER_DROP;
-
 // Display constants
 static const uint8_t InitDisplay[] = {
   SLAVE_WRITE(OLED_ADDR), 
@@ -40,10 +35,6 @@ static const uint8_t InitDisplay[] = {
   NORMALDISPLAY,
   DISPLAYON
 };
-
-static const uint8_t StartWrite = I2C_DATA | I2C_CONTINUATION;
-
-static int FaceRemaining = 0;
 
 void Anki::Cozmo::HAL::OLED::Init(void) {
   using namespace Anki::Cozmo::HAL;

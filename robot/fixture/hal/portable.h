@@ -52,9 +52,4 @@ typedef void (*TestFunction)(void);
 
 extern char* const g_hex;
 
-// ct_assert is a compile time assertion, useful for checking sizeof() and other compile time knowledge
-#define ASSERT_CONCAT_(a, b) a##b
-#define ASSERT_CONCAT(a, b) ASSERT_CONCAT_(a, b)
-#define ct_assert(e) enum { ASSERT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }
-
 #endif

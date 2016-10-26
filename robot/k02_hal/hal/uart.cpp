@@ -20,7 +20,6 @@ enum TRANSFER_MODE {
 };
 
 static const int uart_fifo_size = 8;
-static const int MAX_REBOOT_TIMEOUT = 10000;  // 1.3seconds
 
 static union {
   uint8_t   txRxBuffer[MAX(sizeof(GlobalDataToBody), sizeof(GlobalDataToHead))];
