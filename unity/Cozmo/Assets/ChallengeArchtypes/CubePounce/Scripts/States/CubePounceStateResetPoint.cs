@@ -13,6 +13,7 @@ namespace Cozmo.Minigame.CubePounce {
     private bool _TurnInProgress = false;
     private bool _GetUnreadyInProgress = false;
     private float _CubeCreepTimerStart_s = -1f;
+    private bool _LookForCubeInProgress = false;
 
     public CubePounceStateResetPoint(bool overrideReadyAnimComplete = false) {
       _GetReadyAnimCompleted = overrideReadyAnimComplete;
@@ -41,6 +42,16 @@ namespace Cozmo.Minigame.CubePounce {
     private void ReactToCubeGone() {
       _CubePounceGame.GetCubeTarget().SetLEDs(Cozmo.UI.CubePalette.Instance.OutOfViewColor.lightColor);
       _CubeIsValid = false;
+
+      if (_CubeInActiveRange) {
+        float idealHeadAngle_rad = CozmoUtil.HeadAngleFactorToRadians(CozmoUtil.kIdealBlockViewHeadValue, useExactAngle: false);
+        _CurrentRobot.SearchForNearbyObject(_CubePounceGame.GetCubeTarget().ID, HandleLookForCube, headAngle_rad: idealHeadAngle_rad);
+        _LookForCubeInProgress = true;
+      }
+    }
+
+    private void HandleLookForCube(bool success) {
+      _LookForCubeInProgress = false;
     }
 
     private void ReactToCubeReturned() {
@@ -109,7 +120,7 @@ namespace Cozmo.Minigame.CubePounce {
     public override void Update() {
       base.Update();
 
-      if (_GetUnreadyInProgress) {
+      if (_GetUnreadyInProgress || _LookForCubeInProgress) {
         return;
       }
 
@@ -176,6 +187,7 @@ namespace Cozmo.Minigame.CubePounce {
         _CurrentRobot.CancelCallback(HandleGetInAnimFinish);
         _CurrentRobot.CancelCallback(HandleTurnFinished);
         _CurrentRobot.CancelCallback(HandleGetUnreadyDone);
+        _CurrentRobot.CancelCallback(HandleLookForCube);
       }
     }
   }

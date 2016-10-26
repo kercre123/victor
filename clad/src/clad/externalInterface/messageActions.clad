@@ -265,9 +265,18 @@ message SayTextWithIntent {
   SayTextIntent       intent        // Intents have predefined values for the voice style and duration scalar
 }
 
+enum int_32 SearchForNearbyObjectDefaults {
+    BackupDistance_mm = -20,
+    BackupSpeed_mms = 100,
+    HeadAngle_deg = -5
+}
+
 // SearchForNearbyObject
 message SearchForNearbyObject {
     int_32        desiredObjectID = -1,
+    float_32      backupDistance_mm = 0.0,
+    float_32      backupSpeed_mms = 0.0,
+    float_32      headAngle_rad = 0.0
 }
 
 // SetHeadAngle

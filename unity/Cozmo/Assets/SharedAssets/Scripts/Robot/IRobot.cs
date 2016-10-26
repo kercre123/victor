@@ -250,7 +250,10 @@ public interface IRobot : IDisposable {
 
   void SearchForCube(int cube, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
-  void SearchForNearbyObject(int objectId, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+  void SearchForNearbyObject(int objectId = -1, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
+                             float backupDistance_mm = (float)SearchForNearbyObjectDefaults.BackupDistance_mm,
+                             float backupSpeed_mm = (float)SearchForNearbyObjectDefaults.BackupSpeed_mms,
+                             float headAngle_rad = Mathf.Deg2Rad * (float)SearchForNearbyObjectDefaults.HeadAngle_deg);
 
   void SetLiftHeight(float heightFactor, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, float speed_radPerSec = -1, float accel_radPerSec2 = -1);
 

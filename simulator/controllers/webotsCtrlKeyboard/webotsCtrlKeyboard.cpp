@@ -956,7 +956,15 @@ namespace Anki {
                   ExternalInterface::QueueSingleAction msg;
                   msg.robotID = 1;
                   msg.position = QueueActionPosition::NOW;
-                  msg.action.Set_searchForNearbyObject(ExternalInterface::SearchForNearbyObject(-1));
+                  
+                  using SFNOD = ExternalInterface::SearchForNearbyObjectDefaults;
+                  ExternalInterface::SearchForNearbyObject searchAction {
+                    -1,
+                    Util::numeric_cast<f32>(Util::EnumToUnderlying(SFNOD::BackupDistance_mm)),
+                    Util::numeric_cast<f32>(Util::EnumToUnderlying(SFNOD::BackupSpeed_mms)),
+                    Util::numeric_cast<f32>(DEG_TO_RAD(Util::EnumToUnderlying(SFNOD::HeadAngle_deg)))
+                  };
+                  msg.action.Set_searchForNearbyObject(std::move(searchAction));
 
                   ExternalInterface::MessageGameToEngine message;
                   message.Set_QueueSingleAction(msg);

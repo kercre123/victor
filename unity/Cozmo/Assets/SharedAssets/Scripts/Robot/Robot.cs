@@ -1216,7 +1216,7 @@ public class Robot : IRobot {
                            QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
                            bool useExactAngle = false, float speed_radPerSec = -1, float accel_radPerSec2 = -1) {
 
-    float radians = AngleFactorToRadians(angleFactor, useExactAngle);
+    float radians = CozmoUtil.HeadAngleFactorToRadians(angleFactor, useExactAngle);
 
     if (HeadTrackingObject == -1 && Mathf.Abs(radians - HeadAngle) < 0.001f && queueActionPosition == QueueActionPosition.NOW) {
       if (callback != null) {
@@ -1251,7 +1251,7 @@ public class Robot : IRobot {
   /// <param name="liftHeight">liftHeight</param> the height to set the lift to
   public void SetDefaultHeadAndLiftState(bool enable, float headAngleFactor, float liftHeight) {
 
-    float radians = AngleFactorToRadians(headAngleFactor, true);
+    float radians = CozmoUtil.HeadAngleFactorToRadians(headAngleFactor, true);
 
     RobotEngineManager.Instance.Message.SetDefaultHeadAndLiftState =
     Singleton<SetDefaultHeadAndLiftState>.Instance.Initialize(
@@ -1265,23 +1265,6 @@ public class Robot : IRobot {
 
 
 
-  }
-
-
-
-  private float AngleFactorToRadians(float angleFactor, bool useExactAngle) {
-
-    float radians = angleFactor;
-
-    if (!useExactAngle) {
-      if (angleFactor >= 0f) {
-        radians = Mathf.Lerp(0f, CozmoUtil.kMaxHeadAngle * Mathf.Deg2Rad, angleFactor);
-      }
-      else {
-        radians = Mathf.Lerp(0f, CozmoUtil.kMinHeadAngle * Mathf.Deg2Rad, -angleFactor);
-      }
-    }
-    return radians;
   }
 
   public void SetRobotVolume(float volume) {
@@ -1539,10 +1522,16 @@ public class Robot : IRobot {
 
   // If an objectID is passed in, the action will complete successfully as soon as the object is seen
   // otherwise, cozmo will complete a full look around nearby before completing
-  public void SearchForNearbyObject(int objectId = -1, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void SearchForNearbyObject(int objectId = -1, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
+                                    float backupDistance_mm = (float) SearchForNearbyObjectDefaults.BackupDistance_mm,
+                                    float backupSpeed_mm = (float) SearchForNearbyObjectDefaults.BackupSpeed_mms,
+                                    float headAngle_rad = Mathf.Deg2Rad * (float) SearchForNearbyObjectDefaults.HeadAngle_deg) {
     SendQueueSingleAction(
       Singleton<SearchForNearbyObject>.Instance.Initialize(
-        desiredObjectID: objectId
+        desiredObjectID: objectId,
+        backupDistance_mm: backupDistance_mm,
+        backupSpeed_mms: backupSpeed_mm,
+        headAngle_rad: headAngle_rad
       ),
       callback,
       queueActionPosition);
@@ -1556,7 +1545,7 @@ public class Robot : IRobot {
                                 accel_rad_per_sec2: CozmoUtil.kMoveLiftAccel_radPerSec2,
                                 duration_sec: 0f)),
         new RobotActionUnion().Initialize(Singleton<SetHeadAngle>.Instance.Initialize(
-                                angle_rad: AngleFactorToRadians(0.25f, false),
+                                angle_rad: CozmoUtil.HeadAngleFactorToRadians(0.25f, false),
                                 max_speed_rad_per_sec: CozmoUtil.kMoveHeadSpeed_radPerSec,
                                 accel_rad_per_sec2: CozmoUtil.kMoveHeadAccel_radPerSec2,
                                 duration_sec: 0.0f))

@@ -88,4 +88,20 @@ public static class CozmoUtil {
     float actualDiff_deg = Mathf.Abs(Mathf.DeltaAngle(baseDirection_deg, actualAngle_deg));
     return (actualDiff_deg <= angleTolerance_deg);
   }
+
+
+  public static float HeadAngleFactorToRadians(float angleFactor, bool useExactAngle) {
+
+    float radians = angleFactor;
+
+    if (!useExactAngle) {
+      if (angleFactor >= 0f) {
+        radians = Mathf.Lerp(0f, CozmoUtil.kMaxHeadAngle * Mathf.Deg2Rad, angleFactor);
+      }
+      else {
+        radians = Mathf.Lerp(0f, CozmoUtil.kMinHeadAngle * Mathf.Deg2Rad, -angleFactor);
+      }
+    }
+    return radians;
+  }
 }

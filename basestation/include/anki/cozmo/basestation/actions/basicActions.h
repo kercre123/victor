@@ -89,7 +89,13 @@ namespace Cozmo {
     class SearchForNearbyObjectAction : public IAction
     {
     public:
-      SearchForNearbyObjectAction(Robot& robot, const ObjectID& desiredObjectID = ObjectID());
+      using SFNOD = ExternalInterface::SearchForNearbyObjectDefaults;
+      
+      SearchForNearbyObjectAction(Robot& robot,
+                                  const ObjectID& desiredObjectID = ObjectID(),
+                                  f32 backupDistance_mm = Util::numeric_cast<f32>(Util::EnumToUnderlying(SFNOD::BackupDistance_mm)),
+                                  f32 backupSpeed_mms = Util::numeric_cast<f32>(Util::EnumToUnderlying(SFNOD::BackupSpeed_mms)),
+                                  f32 headAngle_rad = Util::numeric_cast<f32>(DEG_TO_RAD(Util::EnumToUnderlying(SFNOD::HeadAngle_deg))));
       virtual ~SearchForNearbyObjectAction();
 
       void SetSearchAngle(f32 minSearchAngle_rads, f32 maxSearchAngle_rads);
@@ -108,6 +114,9 @@ namespace Cozmo {
       f32 _minSearchAngle_rads = DEG_TO_RAD(15.0f);
       f32 _maxSearchAngle_rads = DEG_TO_RAD(20.0f);
       bool _shouldPopIdle = false;
+      f32 _backupDistance_mm = 0.0f;
+      f32 _backupSpeed_mms = 0.0f;
+      f32 _headAngle_rad = 0.0f;
     };
 
     // A simple action for drving a straight line forward or backward, without

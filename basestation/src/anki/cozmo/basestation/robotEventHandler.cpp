@@ -705,23 +705,23 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlayAnimat
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::ReadToolCode& msg)
-  {
+{
   return new ReadToolCodeAction(robot);
 }
       
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SearchForNearbyObject& msg)
-    {
-  return new SearchForNearbyObjectAction(robot, msg.desiredObjectID);
-    }
+{
+  return new SearchForNearbyObjectAction(robot, msg.desiredObjectID, msg.backupDistance_mm, msg.backupSpeed_mms, msg.headAngle_rad);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::Wait& msg)
-    {
+{
   return new WaitAction(robot, msg.time_s);
-      }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>

@@ -299,13 +299,20 @@ namespace Anki {
 
 #pragma mark ---- SearchForNearbyObjectAction ----
 
-    SearchForNearbyObjectAction::SearchForNearbyObjectAction(Robot& robot, const ObjectID& desiredObjectID)
+    SearchForNearbyObjectAction::SearchForNearbyObjectAction(Robot& robot,
+                                                             const ObjectID& desiredObjectID,
+                                                             f32 backupDistance_mm,
+                                                             f32 backupSpeed_mms,
+                                                             f32 headAngle_rad)
     : IAction(robot,
               "SearchForNearbyObjectAction",
               RobotActionType::SEARCH_FOR_NEARBY_OBJECT,
               (u8)AnimTrackFlag::BODY_TRACK)
     , _compoundAction(robot)
     , _desiredObjectID(desiredObjectID)
+    , _backupDistance_mm(backupDistance_mm)
+    , _backupSpeed_mms(backupSpeed_mms)
+    , _headAngle_rad(headAngle_rad)
     {
 
     }
@@ -338,9 +345,6 @@ namespace Anki {
       _compoundAction.EnableMessageDisplay(IsMessageDisplayEnabled());
 
       float initialWait_s = GetRNG().RandDblInRange(_minWaitTime_s, _maxWaitTime_s);
-
-      const float backup_mm = -20;
-      const float backup_speed_mms = 100;
       
       float firstTurnDir = GetRNG().RandDbl() > 0.5f ? 1.0f : -1.0f;      
       float firstAngle_rads = firstTurnDir * GetRNG().RandDblInRange(_minSearchAngle_rads, _maxSearchAngle_rads);
@@ -360,10 +364,9 @@ namespace Anki {
 
       _compoundAction.AddAction(new WaitAction(_robot, initialWait_s));
       
-      const Radians headAngle_rad(DEG_TO_RAD(-5));
       IActionRunner* driveAndLook = new CompoundActionParallel(_robot, {
-        new DriveStraightAction(_robot, backup_mm, backup_speed_mms),
-        new MoveHeadToAngleAction(_robot,headAngle_rad)
+        new DriveStraightAction(_robot, _backupDistance_mm, _backupSpeed_mms, false),
+        new MoveHeadToAngleAction(_robot,_headAngle_rad)
       });
       
       

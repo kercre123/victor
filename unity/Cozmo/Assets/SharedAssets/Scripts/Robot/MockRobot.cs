@@ -477,7 +477,10 @@ public class MockRobot : IRobot {
     QueueCallback(3f, callback);
   }
 
-  public void SearchForNearbyObject(int objectId, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void SearchForNearbyObject(int objectId = -1, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
+                                    float backupDistance_mm = (float) SearchForNearbyObjectDefaults.BackupDistance_mm,
+                                    float backupSpeed_mm = (float) SearchForNearbyObjectDefaults.BackupSpeed_mms,
+                                    float headAngle_rad = Mathf.Deg2Rad * (float) SearchForNearbyObjectDefaults.HeadAngle_deg) {
     QueueCallback(3f, callback);
   }
 
