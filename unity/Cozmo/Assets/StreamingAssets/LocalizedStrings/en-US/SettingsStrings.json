@@ -154,7 +154,7 @@
     "translation": "Erase Cozmo?"
   },
   "settings.versionPanel.eraseCozmoModal.eraseCozmoWarningLabel": {
-    "translation": "WARNING: Erasing Cozmo will remove all game progress from your robot. Use this only if you wish to start over!"
+    "translation": "WARNING: This will clear Cozmo's data, and all unlocks. Use this only if you wish to start over with Cozmo! Your Bits and Sparks will be saved."
   },
   "settings.versionPanel.label.appRun": {
     "translation": "App Run ID: {0}"
