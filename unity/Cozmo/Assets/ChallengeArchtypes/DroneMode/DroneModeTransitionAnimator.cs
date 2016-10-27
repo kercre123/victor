@@ -2,6 +2,7 @@
 
 namespace Cozmo.Minigame.DroneMode {
   public class DroneModeTransitionAnimator {
+    public event System.Action OnTransitionAnimationFinished;
 
     private IRobot _RobotToAnimate;
 
@@ -122,14 +123,19 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     private void HandleInAnimationFinished(bool success) {
-      if (_CurrentDriveSpeedSegment == _TargetDriveSpeedSegment) {
-        _CurrentAnimationState = TransitionAnimationState.NONE;
-      }
-      else {
-        PlayOutAnimation(_CurrentDriveSpeedSegment, _TargetDriveSpeedSegment);
-      }
+      if (success) {
+        if (_CurrentDriveSpeedSegment == _TargetDriveSpeedSegment) {
+          _CurrentAnimationState = TransitionAnimationState.NONE;
+          if (OnTransitionAnimationFinished != null) {
+            OnTransitionAnimationFinished();
+          }
+        }
+        else {
+          PlayOutAnimation(_CurrentDriveSpeedSegment, _TargetDriveSpeedSegment);
+        }
 
-      UpdateDebugStringAndSendDAS("HandleInAnimationFinished");
+        UpdateDebugStringAndSendDAS("HandleInAnimationFinished");
+      }
     }
 
     private void SetDrivingAnimation(DroneModeControlsSlide.SpeedSliderSegment currentDriveType) {

@@ -19,6 +19,7 @@ namespace Cozmo {
         private float _TargetTurnDirection;
 
         private float _TargetHeadAngle_rad;
+        private bool _TargetHeadAngleChanged = false;
 
         private float _TargetLiftFactor;
 
@@ -31,6 +32,7 @@ namespace Cozmo {
         private bool _IsPerformingAction = false;
 
         private DroneModeTransitionAnimator _RobotAnimator;
+        private bool _IsPlayingTransitionAnimation = false;
 
         public string TiltDrivingDebugText = "";
         public string HeadDrivingDebugText = "";
@@ -104,6 +106,8 @@ namespace Cozmo {
           }
 
           _RobotAnimator = new DroneModeTransitionAnimator(_CurrentRobot);
+          _RobotAnimator.OnTransitionAnimationFinished += HandleTransitionAnimationFinished;
+
           _CurrentRobot.EnableDroneMode(true);
         }
 
@@ -118,6 +122,7 @@ namespace Cozmo {
           _DroneModeControlsSlide.OnLiftSliderValueChanged -= HandleLiftSliderValueChanged;
           _DroneModeGame.OnTurnDirectionChanged -= HandleTurnDirectionChanged;
           DisableInput();
+          _RobotAnimator.OnTransitionAnimationFinished -= HandleTransitionAnimationFinished;
           _RobotAnimator.CleanUp();
         }
 
@@ -125,6 +130,9 @@ namespace Cozmo {
           if (!_IsPerformingAction) {
             // Send drive wheels / drive head messages if needed
             SendDriveRobotMessages();
+            if (_IsPlayingTransitionAnimation) {
+              SetHeadSliderToCurrentPosition();
+            }
 
             _DroneModeControlsSlide.TiltText.text = TiltDrivingDebugText + HeadDrivingDebugText;
             _DroneModeControlsSlide.DebugText.text = _RobotAnimator.ToString();
@@ -159,9 +167,13 @@ namespace Cozmo {
         }
 
         private void SetSlidersToCurrentPosition() {
+          SetHeadSliderToCurrentPosition();
+          _DroneModeControlsSlide.SetLiftSliderValue(_CurrentRobot.LiftHeightFactor);
+        }
+
+        private void SetHeadSliderToCurrentPosition() {
           float headAngleRadians = _CurrentRobot.HeadAngle;
           _DroneModeControlsSlide.SetHeadSliderValue(headAngleRadians * Mathf.Rad2Deg);
-          _DroneModeControlsSlide.SetLiftSliderValue(_CurrentRobot.LiftHeightFactor);
         }
 
         private void EnableInput() {
@@ -180,7 +192,11 @@ namespace Cozmo {
               || ShouldStopDriving(_TargetDriveSpeed_mmps, _CurrentDriveSpeed_mmps, _TargetTurnDirection)) {
             _LastMessageSentTimestamp = Time.time;
             bool droveWheels = DriveWheelsIfNeeded();
-            bool droveHead = DriveHeadIfNeeded();
+            bool droveHead = true;
+            if (!_IsPlayingTransitionAnimation) {
+              droveHead = DriveHeadIfNeeded();
+            }
+
             bool droveLift = DriveLiftIfNeeded();
 
             if (_IsDrivingHead != droveHead || _IsDrivingWheels != droveWheels || _IsDrivingLift != droveLift) {
@@ -240,7 +256,7 @@ namespace Cozmo {
         private bool DriveHeadIfNeeded() {
           bool startDriveHead = false;
           float currentHeadAngle_rad = _CurrentRobot.HeadAngle;
-          if (!_IsDrivingHead && !currentHeadAngle_rad.IsNear(_TargetHeadAngle_rad, _kHeadFactorThreshold_rad)) {
+          if (!_IsDrivingHead && _TargetHeadAngleChanged && !currentHeadAngle_rad.IsNear(_TargetHeadAngle_rad, _kHeadFactorThreshold_rad)) {
             DriveHeadInternal();
             HeadDrivingDebugText = "\nPlayer driving head: target: " + _TargetHeadAngle_rad + " current=" + currentHeadAngle_rad;
             startDriveHead = true;
@@ -250,7 +266,7 @@ namespace Cozmo {
 
         private void HandleHeadMoveFinished(bool success) {
           float currentHeadAngle_rad = _CurrentRobot.HeadAngle;
-          if (!currentHeadAngle_rad.IsNear(_TargetHeadAngle_rad, _kHeadFactorThreshold_rad)) {
+          if (_TargetHeadAngleChanged && !currentHeadAngle_rad.IsNear(_TargetHeadAngle_rad, _kHeadFactorThreshold_rad)) {
             DriveHeadInternal();
             HeadDrivingDebugText = "\nPlayer driving head: target: " + _TargetHeadAngle_rad + " current=" + currentHeadAngle_rad;
           }
@@ -268,6 +284,7 @@ namespace Cozmo {
                                      accel_radPerSec2: _DroneModeGame.DroneModeConfigData.HeadTurnAccel_radPerSec2);
 
           _IsDrivingHead = true;
+          _TargetHeadAngleChanged = false;
           _RobotAnimator.AllowIdleAnimation(false);
         }
 
@@ -380,6 +397,7 @@ namespace Cozmo {
           float newSliderValue_rad = newSliderValue_deg * Mathf.Deg2Rad;
           if (!newSliderValue_rad.IsNear(_TargetHeadAngle_rad, _kHeadFactorThreshold_rad)) {
             _TargetHeadAngle_rad = newSliderValue_rad;
+            _TargetHeadAngleChanged = true;
           }
         }
 
@@ -391,6 +409,13 @@ namespace Cozmo {
 
         private void HandleDriveSpeedFamilyChanged(DroneModeControlsSlide.SpeedSliderSegment currentPosition, DroneModeControlsSlide.SpeedSliderSegment newPosition) {
           _RobotAnimator.PlayTransitionAnimation(newPosition);
+          _IsPlayingTransitionAnimation = true;
+          _DroneModeControlsSlide.DisableHeadSlider();
+        }
+
+        private void HandleTransitionAnimationFinished() {
+          _IsPlayingTransitionAnimation = false;
+          _DroneModeControlsSlide.EnableHeadSlider();
         }
 
         #endregion

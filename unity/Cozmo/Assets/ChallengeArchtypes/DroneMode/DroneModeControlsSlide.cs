@@ -188,7 +188,7 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     public void EnableInput() {
-      _HeadTiltSlider.interactable = true;
+      EnableHeadSlider();
       _LiftSlider.interactable = true;
       _SpeedThrottle.interactable = true;
       UpdateContextualButtons();
@@ -198,13 +198,21 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     public void DisableInput() {
-      _HeadTiltSlider.interactable = false;
+      DisableHeadSlider();
       _LiftSlider.interactable = false;
       _SpeedThrottle.interactable = false;
       foreach (DroneModeActionButton button in _ContextualButtons) {
         button.Interactable = false;
       }
       _UpdateContextMenuBasedOnCurrentFocus = false;
+    }
+
+    public void EnableHeadSlider() {
+      _HeadTiltSlider.interactable = true;
+    }
+
+    public void DisableHeadSlider() {
+      _HeadTiltSlider.interactable = false;
     }
 
     private void HandleHowToPlayClicked() {
