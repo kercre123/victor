@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
 using System.Collections.Generic;
@@ -79,7 +79,9 @@ public class TestTapPane : MonoBehaviour {
       }
       else {
         _CubeTappedAmount.Add(id, 1);
+        DAS.Info("TestTapPane.OnBlockTapped.NewID", "New ID " + id);
       }
+      DAS.Info("TestTapPane.OnBlockTapped.Info", id + " @ " + timeStamp + " unityT: " + Time.time);
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Placeholder);
       CurrentRobot.LightCubes[id].SetLEDs(_TestColors[_CubeTappedAmount[id] % _TestColors.Length]);
     }

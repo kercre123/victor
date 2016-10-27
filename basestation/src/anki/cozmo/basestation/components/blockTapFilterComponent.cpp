@@ -23,7 +23,7 @@
 #include "util/transport/connectionStats.h"
 #include "util/math/math.h"
 
-CONSOLE_VAR(int16_t, kTapIntensityMin, "TapFilter.IntesityMin", 55);
+CONSOLE_VAR(int16_t, kTapIntensityMin, "TapFilter.IntesityMin", 65);
 CONSOLE_VAR(Anki::TimeStamp_t, kTapWaitOffset_ms, "TapFilter.WaitOffsetTime", 75);
 
 namespace Anki {
@@ -72,7 +72,7 @@ void BlockTapFilterComponent::Update()
           highIntensity = currIntensity;
         }
       }
-      PRINT_CH_INFO("blocks","BlockTapFilterComponent.Update","intensity %d time: %d",highIntensity,currTime);
+      PRINT_CH_INFO("BlockPool","BlockTapFilterComponent.Update","intensity %d time: %d id: %d",highIntensity,currTime,(*highIter).objectID);
       _robot.Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(*highIter)));
       _tapInfo.clear();
     }
@@ -85,7 +85,7 @@ void BlockTapFilterComponent::HandleEnableTapFilter(const AnkiEvent<ExternalInte
   {
     const Anki::Cozmo::ExternalInterface::EnableBlockTapFilter& msg = message.GetData().Get_EnableBlockTapFilter();
     _enabled = msg.enable;
-    PRINT_CH_INFO("blocks","BlockTapFilterComponent.HandleEnableTapFilter","on %d",_enabled);
+    PRINT_CH_INFO("BlockPool","BlockTapFilterComponent.HandleEnableTapFilter","on %d",_enabled);
   }
 }
 
@@ -119,7 +119,7 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInte
   
   int16_t intensity = payload.tapPos - payload.tapNeg;
   Anki::TimeStamp_t engineTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  PRINT_CH_INFO("blocks","BlockTapFilterComponent.HandleActiveObjectTapped.MessageActiveObjectTapped",
+  PRINT_CH_INFO("BlockPool","BlockTapFilterComponent.HandleActiveObjectTapped.MessageActiveObjectTapped",
                 "Received message that %s %d (Active ID %d) was tapped %d times "
                 "(robotTime %d, tapTime %d, intensity: %d, engineTime: %d).",
                 EnumToString(object->GetType()),
@@ -129,8 +129,8 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInte
   // Update the ID to be the blockworld ID before broadcasting
   payload.objectID = object->GetID();
   payload.robotID = _robot.GetID();
-  
-  if (!_enabled)
+  // In the simulator, taps are soft and also webots doesn't simulate the phantom taps.
+  if (!_enabled || !_robot.IsPhysical())
   {
     // Do not filter any taps if block tap filtering was disabled.
     _robot.Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(payload)));
@@ -140,8 +140,8 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInte
   if (intensity <= kTapIntensityMin)
   {
     // Taps below threshold should be filtered and ignored.
-    PRINT_CH_INFO("blocks", "BlockTapFilterComponent.HandleEnableTapFilter.Ignored",
-                  "Tap ignored %d < %d",intensity,kTapIntensityMin);
+    PRINT_CH_INFO("BlockPool", "BlockTapFilterComponent.HandleEnableTapFilter.Ignored",
+                  "Tap ignored %d <= %d",intensity,kTapIntensityMin);
     return;
   }
 

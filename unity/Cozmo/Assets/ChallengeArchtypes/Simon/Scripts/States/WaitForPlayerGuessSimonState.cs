@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo.Audio;
@@ -12,6 +12,8 @@ namespace Simon {
     private int _CurrentSequenceIndex = 0;
     private int _TargetCube = -1;
     private float _StartLightBlinkTime = -1;
+    private const float _kTapBufferRobotTimeMS = 150f;
+    private float _LastTapRobotTime = 0;
 
     private enum SubState {
       WaitForInput,
@@ -105,6 +107,18 @@ namespace Simon {
         return;
       }
 
+      // We might be getting doubletaps from the same cube and similar issues
+      // if it is an incorrect tap. and our last tap was < _kTapBufferMS previously ignore it.
+      // Player has the benifit of the doubt. EnableBlockTapFilter helps with this but still
+      // Has enough of an offset where it doesn't completely solve it. This is in robot time not unity time to help ignore the tap filter offset
+      // In the world of worse errors, it's better for people to think they're moving to fast and a tap didn't register
+      // rather than it being wrong for no reason.
+      if (timeStamp < _LastTapRobotTime + _kTapBufferRobotTimeMS) {
+        DAS.Info("MemoryMatch.OnBlockTapped.Ignore", "Tapped: " + id + " @ " + timeStamp + " last was " + _LastTapRobotTime);
+        return;
+      }
+
+      _LastTapRobotTime = timeStamp;
       _StartLightBlinkTime = Time.time;
       _TargetCube = id;
       if (_SequenceList[_CurrentSequenceIndex] == _TargetCube) {

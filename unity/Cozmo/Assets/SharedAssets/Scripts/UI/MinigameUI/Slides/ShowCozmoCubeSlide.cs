@@ -47,7 +47,6 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
 
   public void OnDestroy() {
     DestroyTween();
-
   }
 
   public void RotateCozmoImageTo(float degrees, float duration) {
@@ -56,7 +55,7 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
   }
 
   private void DestroyTween() {
-    if (_Tween != null && _Tween.IsActive()) {
+    if (_Tween != null) {
       _Tween.Kill(false);
       _Tween = null;
     }
