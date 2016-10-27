@@ -406,7 +406,7 @@ void Motors::init()
 static const s16 POWER_THRESHOLD[] = {
   (s16)(TIMER_TICKS_END * 0.50f),
   (s16)(TIMER_TICKS_END * 0.50f),
-  (s16)(TIMER_TICKS_END * 0.25f),
+  (s16)(TIMER_TICKS_END * 0.50f),
   (s16)(TIMER_TICKS_END * 0.50f)
 };
 
