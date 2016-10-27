@@ -67,9 +67,7 @@ namespace Cozmo.Minigame.CubePounce {
 
     private void ReactToCubeInRange() {
       _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetReady, HandleGetInAnimFinish);
-
-      // TODO:(lc) when these idles are ready (have head angle and lift height set correctly) enable them
-      //_CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.CubePounceIdleLiftUp);
+      _CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.CubePounceIdleLiftUp);
 
       _GetReadyAnimInProgress = true;
 
@@ -84,14 +82,8 @@ namespace Cozmo.Minigame.CubePounce {
     }
 
     private void ReactToCubeOutOfRange() {
-
-      // TODO:(lc) GetUnReady needs to end with lift down and head at correct angle, then can remove setting lift height manually
-      //_CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetUnready, null);
-
-      // TODO:(lc) when these idles are ready (have head angle and lift height set correctly) enable them
-      //_CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.CubePounceIdleLiftDown);
-
-      _CurrentRobot.SetLiftHeight(0.0f, HandleGetUnreadyDone);
+      _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetUnready, HandleGetUnreadyDone);
+      _CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.CubePounceIdleLiftDown);
 
       _GetReadyAnimCompleted = false;
       _GetUnreadyInProgress = true;
