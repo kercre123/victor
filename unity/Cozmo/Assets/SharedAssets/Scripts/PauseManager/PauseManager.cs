@@ -129,12 +129,13 @@ namespace Cozmo {
       if (DataPersistenceManager.Instance.IsSDKEnabled) {
         return;
       }
-      if ((IsGoToSleepDialogOpen && message.reactionaryBehaviorType != Anki.Cozmo.BehaviorType.ReactToOnCharger)
-          || IsConfirmSleepDialogOpen) {
+      if (IsConfirmSleepDialogOpen) {
         StopIdleTimeout();
         _IsOnChargerToSleep = false;
         CloseGoToSleepDialog();
         CloseConfirmSleepDialog();
+
+        DAS.Debug("PauseManager.HandleReactionaryBehavior.StopSleep", "Transition to: " + message.reactionaryBehaviorType.ToString());
       }
     }
 
