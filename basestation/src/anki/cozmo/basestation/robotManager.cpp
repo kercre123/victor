@@ -132,7 +132,7 @@ namespace Anki {
     {
       auto iter = _robots.find(withID);
       if(iter != _robots.end()) {
-        PRINT_NAMED_INFO("RobotManager.RemoveRobot", "Removing robot with ID=%d\n", withID);
+        PRINT_NAMED_INFO("RobotManager.RemoveRobot", "Removing robot with ID=%d", withID);
         
         // ask initial connection tracker if it's handling this
         bool handledDisconnect = false;
@@ -162,7 +162,7 @@ namespace Anki {
         Anki::Util::sSetGlobal(DPHYS, nullptr);
         Anki::Util::sSetGlobal(DGROUP, nullptr);
       } else {
-        PRINT_NAMED_WARNING("RobotManager.RemoveRobot", "Robot %d does not exist. Ignoring.\n", withID);
+        PRINT_NAMED_WARNING("RobotManager.RemoveRobot", "Robot %d does not exist. Ignoring.", withID);
       }
     }
     
@@ -239,7 +239,7 @@ namespace Anki {
         {
           case RESULT_FAIL_IO_TIMEOUT:
           {
-            PRINT_NAMED_WARNING("RobotManager.UpdateAllRobots.FailIOTimeout", "Signaling robot disconnect\n");
+            PRINT_NAMED_WARNING("RobotManager.UpdateAllRobots.FailIOTimeout", "Signaling robot disconnect");
             const RobotID_t robotIdToRemove = r->first;
             ++r;
             const bool robotRejectedConnection = false;

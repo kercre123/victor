@@ -352,7 +352,7 @@ bool NVStorageComponent::Write(NVEntryTag tag,
     return true;
   }
 
-  PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.Write.PreceedingWriteWithErase",
+  PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.Write.PrecedingWriteWithErase",
                  "Tag: %s", EnumToString(tag));
   
   _requestQueue.emplace(tag, NVStorageWriteEraseCallback(), false);
@@ -361,7 +361,7 @@ bool NVStorageComponent::Write(NVEntryTag tag,
   // Queue write request
   _requestQueue.emplace(tag, callback, new std::vector<u8>(data,data+size), broadcastResultToGame);
 
-  PRINT_CH_DEBUG("NVStorageComponent.Write.DataQueued",
+  PRINT_CH_DEBUG("NVStorage", "NVStorageComponent.Write.DataQueued",
                  "%s - numBytes: %zu",
                  EnumToString(tag),
                  size);

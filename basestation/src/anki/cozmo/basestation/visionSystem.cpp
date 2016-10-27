@@ -325,7 +325,7 @@ namespace Cozmo {
     if(!calibSizeValid)
     {
       PRINT_NAMED_ERROR("VisionSystem.Init.InvalidCalibrationResolution",
-                        "Unexpected calibration resolution (%dx%d)\n",
+                        "Unexpected calibration resolution (%dx%d)",
                         camCalib.GetNcols(), camCalib.GetNrows());
       return RESULT_FAIL_INVALID_SIZE;
     }
@@ -1494,7 +1494,7 @@ namespace Cozmo {
       if(_numTrackFailures == MAX_TRACKING_FAILURES)
       {
         PRINT_CH_INFO(kLogChannelName, "VisionSystem.Update", "Reached max number of tracking "
-                      "failures (%d). Switching back to looking for markers.\n",
+                      "failures (%d). Switching back to looking for markers.",
                       MAX_TRACKING_FAILURES);
         
         // This resets docking, puttings us back in VISION_MODE_DETECTING_MARKERS mode
@@ -2798,7 +2798,7 @@ namespace Cozmo {
     if(srcImage.GetNumRows() != captureHeight || srcImage.GetNumCols() != captureWidth) {
       PRINT_NAMED_ERROR("VisionSystem.GetImageHelper.MismatchedImageSizes",
                         "Source Vision::Image and destination Embedded::Array should "
-                        "be the same size (source is %dx%d and destinatinon is %dx%d\n",
+                        "be the same size (source is %dx%d and destination is %dx%d)",
                         srcImage.GetNumRows(), srcImage.GetNumCols(),
                         captureHeight, captureWidth);
       return RESULT_FAIL_INVALID_SIZE;

@@ -413,7 +413,7 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
     }
     
     PRINT_CH_INFO("Planner", "LatticePlanner.ComputePath.NoValidTarget",
-                  "could not find valid target out of %lu possible targets\n",
+                  "could not find valid target out of %lu possible targets",
                   (unsigned long)numTargetPoses);
     return EComputePathStatus::Error;
     
@@ -527,12 +527,12 @@ void LatticePlannerImpl::DoPlanning()
     // the selected goal
     _selectedGoalID = _planner.GetChosenGoalID();
 
-    PRINT_CH_DEBUG("Planner", "LatticePlannerImpl", "old plan:\n");
+    PRINT_CH_DEBUG("Planner", "LatticePlannerImpl", "old plan");
     _context.env.PrintPlan(_totalPlan);
 
     _totalPlan.Append( _planner.GetPlan() );
 
-    PRINT_CH_DEBUG("Planner", "LatticePlannerImpl", "new plan:\n");
+    PRINT_CH_DEBUG("Planner", "LatticePlannerImpl", "new plan");
     _context.env.PrintPlan(_planner.GetPlan());
 
     _internalComputeStatus = EPlannerStatus::CompleteWithPlan;
@@ -759,7 +759,7 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
 
     if(offsetFromPlan >= PLAN_ERROR_FOR_REPLAN) {
       PRINT_CH_INFO("Planner", "LatticePlanner.GetPlan.ForcePlan",
-                    "Current state is %f away from the plan (planIdx %zu), forcing replan from scratch\n",
+                    "Current state is %f away from the plan (planIdx %zu), forcing replan from scratch",
                     offsetFromPlan,
                     planIdx);
       _totalPlan.Clear();
@@ -786,7 +786,7 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
 
     if(!_context.forceReplanFromScratch) {
       PRINT_CH_INFO("Planner", "LatticePlanner.GetPlan.OldPlanUnsafe",
-                    "old plan unsafe! Will replan, starting from %zu, keeping %zu actions from oldPlan.\n",
+                    "old plan unsafe! Will replan, starting from %zu, keeping %zu actions from oldPlan.",
                     planIdx, validOldPlan.Size());
     }
 
@@ -806,11 +806,11 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
     _context.start = lastSafeState;
 
     if(!_planner.StartIsValid()) {
-      PRINT_CH_INFO("Planner", "LatticePlanner.ReplanIfNeeded.InvalidStart", "could not set start\n");
+      PRINT_CH_INFO("Planner", "LatticePlanner.ReplanIfNeeded.InvalidStart", "could not set start");
       return EComputePathStatus::Error;
     }
     else if(!_planner.GoalsAreValid()) {
-      PRINT_CH_INFO("Planner", "LatticePlanner.ReplanIfNeeded.InvalidGoals", "Goals may have moved into collision.\n");
+      PRINT_CH_INFO("Planner", "LatticePlanner.ReplanIfNeeded.InvalidGoals", "Goals may have moved into collision");
       return EComputePathStatus::Error;
     }
     else {
@@ -923,7 +923,7 @@ bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
     return false;
   }
 
-  PRINT_CH_DEBUG("Planner", "LatticePlannerImpl", "total path:\n");
+  PRINT_CH_DEBUG("Planner", "LatticePlannerImpl", "total path:");
   _context.env.AppendToPath(_totalPlan, path, planIdx);
   path.PrintPath();
  

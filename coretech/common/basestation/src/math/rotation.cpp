@@ -547,7 +547,7 @@ namespace Anki {
       return *this;
     }
     
-    ASSERT_NAMED(qmagsq != 0, "Tried to normalize an all-zero UnitQuaternion");
+    ASSERT_NAMED(qmagsq != 0, "UnitQuaternion.Normalize.AllZero");
     
     if (std::abs(1.0 - qmagsq) < 2.107342e-08) {
       // This is an approximation of dividing by the square root, when the

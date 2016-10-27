@@ -339,7 +339,7 @@ void FirmwareUpdater::UpdateSubState(const RobotMap& robots)
       _fileLoaderData.Init( _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, GetFirmwareFilename(_type)) );
       _loadingThread = std::thread(LoadFirmwareFile, &_fileLoaderData, nullptr);
       
-      PRINT_NAMED_INFO("FirmwareUpdater.Update.Init", "State %s:%s, loading file:'%s'\n",
+      PRINT_NAMED_INFO("FirmwareUpdater.Update.Init", "State %s:%s, loading file '%s'",
              EnumToString(_state), EnumToString(_subState), _fileLoaderData.GetFilename().c_str());
       
       SetSubState( robots, FirmwareUpdateSubStage::LoadingFile );

@@ -667,7 +667,7 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
       
   if(object->GetID().IsUnknown()) {
     PRINT_NAMED_ERROR("Robot.SetLocalizedTo.IdNotSet",
-                      "Cannot localize to an object with no ID set.\n");
+                      "Cannot localize to an object with no ID set");
     return RESULT_FAIL;
   }
       
@@ -678,7 +678,7 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
       Pose3d markerPoseWrtCamera;
       if(false == marker.GetPose().GetWithRespectTo(_visionComponentPtr->GetCamera().GetPose(), markerPoseWrtCamera)) {
         PRINT_NAMED_ERROR("Robot.SetLocalizedTo.MarkerOriginProblem",
-                          "Could not get pose of marker w.r.t. robot camera.\n");
+                          "Could not get pose of marker w.r.t. robot camera");
         return RESULT_FAIL;
       }
       const f32 distToMarkerSq = markerPoseWrtCamera.GetTranslation().LengthSq();
@@ -907,7 +907,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
         default:
           PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.UnexpectedRampDirection",
                             "Robot is on a ramp, expecting the ramp direction to be either "
-                            "ASCEND or DESCENDING, not %d.\n", _rampDirection);
+                            "ASCEND or DESCENDING, not %d", _rampDirection);
           return RESULT_FAIL;
       }
 
@@ -961,7 +961,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
         lastResult = _poseHistory->GetLastPoseWithFrameID(msg.pose_frame_id, p);
         if(lastResult != RESULT_OK) {
           PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.GetLastPoseWithFrameIdError",
-                            "Failed to get last pose from history with frame ID=%d.\n",
+                            "Failed to get last pose from history with frame ID=%d",
                             msg.pose_frame_id);
           return lastResult;
         }
@@ -982,7 +982,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     
     if(lastResult != RESULT_OK) {
       PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.AddPoseError",
-                          "AddRawOdomPoseToHistory failed for timestamp=%d\n", msg.timestamp);
+                          "AddRawOdomPoseToHistory failed for timestamp=%d", msg.timestamp);
       return lastResult;
     }
     
@@ -1720,7 +1720,7 @@ void Robot::SetHeadAngle(const f32& angle)
   if (_isHeadCalibrated) {
     if (!IsValidHeadAngle(angle, &_currentHeadAngle)) {
       PRINT_NAMED_WARNING("Robot.GetCameraHeadPose.HeadAngleOOB",
-                          "Angle %.3frad / %.1f (TODO: Send correction or just recalibrate?)\n",
+                          "Angle %.3frad / %.1f (TODO: Send correction or just recalibrate?)",
                           angle, RAD_TO_DEG_F32(angle));
     }
         

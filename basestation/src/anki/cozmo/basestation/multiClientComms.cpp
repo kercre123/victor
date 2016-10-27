@@ -93,9 +93,9 @@ namespace Cozmo {
   Result MultiClientComms::Init(const char* advertisingHostIP, int advertisingPort, unsigned int maxSentBytesPerTic)
   {
     if(isInitialized_) {
-      PRINT_NAMED_WARNING("MultiClientComms.Init",
+      PRINT_NAMED_WARNING("MultiClientComms.Init.AlreadyInitialized",
                           "Already initialized, disconnecting all devices and from "
-                          "advertisement servier, then will re-initialize.\n");
+                          "advertisement server, then will reinitialize");
       
       DisconnectAllDevices();
       advertisingChannelClient_.Disconnect();
@@ -106,8 +106,8 @@ namespace Cozmo {
     advertisingHostIP_ = advertisingHostIP;
     
     if(false == advertisingChannelClient_.Connect(advertisingHostIP_, advertisingPort)) {
-      PRINT_NAMED_ERROR("MultiClientComms.Init", "Failed to connect to advertising host at %s "
-                        "on port %d.\n", advertisingHostIP_, advertisingPort);
+      PRINT_NAMED_ERROR("MultiClientComms.Init.FailedToConnect", "Failed to connect to advertising host at %s "
+                        "on port %d", advertisingHostIP_, advertisingPort);
       return RESULT_FAIL;
     }
     

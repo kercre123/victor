@@ -109,7 +109,7 @@ namespace Anki {
           break;
           
         default:
-          PRINT_NAMED_WARNING("CustomObject.AddFace", "Attempting to add unknown block face.\n");
+          PRINT_NAMED_WARNING("CustomObject.AddFace", "Attempting to add unknown block face.");
       }
       _markersByFace[whichFace] = &AddMarker(code, facePose, Point2f(_markerWidth_mm, _markerHeight_mm));
     }

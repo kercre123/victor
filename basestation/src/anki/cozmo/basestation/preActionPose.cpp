@@ -39,7 +39,7 @@ namespace Anki {
       auto iter = ColorLUT.find(type);
       if(iter == ColorLUT.end()) {
         PRINT_NAMED_WARNING("PreActionPose.GetVisualizationColor.ColorNotDefined",
-                            "Color not defined for ActionType=%d. Returning default color.\n", type);
+                            "Color not defined for ActionType=%d. Returning default color.", type);
         return Default;
       } else {
         return iter->second;
@@ -72,7 +72,7 @@ namespace Anki {
       // Now make pose w.r.t. marker parent
       if(_poseWrtMarkerParent.GetWithRespectTo(*_marker->GetPose().GetParent(), _poseWrtMarkerParent) == false) {
         PRINT_NAMED_ERROR("PreActionPose.GetPoseWrtMarkerParentFailed",
-                          "Could not get the pre-action pose w.r.t. the marker's parent.\n");
+                          "Could not get the pre-action pose w.r.t. the marker's parent.");
       }
       _poseWrtMarkerParent.SetName("PreActionPose");
       
@@ -89,11 +89,11 @@ namespace Anki {
     {
       if(poseWrtMarker.GetParent() != &marker->GetPose()) {
         PRINT_NAMED_ERROR("PreActionPose.PoseWrtMarkerParentInvalid",
-                          "Given pose w.r.t. marker should have the marker as its parent pose.\n");
+                          "Given pose w.r.t. marker should have the marker as its parent pose.");
       }
       if(poseWrtMarker.GetWithRespectTo(*_marker->GetPose().GetParent(), _poseWrtMarkerParent) == false) {
         PRINT_NAMED_ERROR("PreActionPose.GetPoseWrtMarkerParentFailed",
-                          "Could not get the pre-action pose w.r.t. the marker's parent.\n");
+                          "Could not get the pre-action pose w.r.t. the marker's parent.");
       }
       _poseWrtMarkerParent.SetName("PreActionPose");
       

@@ -158,7 +158,7 @@ namespace Anki {
         if(q.second.Cancel(idTag) == true) {
           if(found) {
             PRINT_NAMED_WARNING("ActionList.Cancel.DuplicateTags",
-                                "Multiple actions from multiple slots cancelled with idTag=%d.\n", idTag);
+                                "Multiple actions from multiple slots cancelled with idTag=%d", idTag);
           }
           found = true;
         }
@@ -220,7 +220,7 @@ namespace Anki {
     ActionList::SlotHandle ActionList::AddConcurrentAction(IActionRunner* action, u8 numRetries)
     {
       if(action == nullptr) {
-        PRINT_NAMED_WARNING("ActionList.AddAction.NullActionPointer", "Refusing to add null action.\n");
+        PRINT_NAMED_WARNING("ActionList.AddAction.NullActionPointer", "Refusing to add null action");
         return -1;
       }
       
@@ -236,7 +236,7 @@ namespace Anki {
       }
       
       if(_queues[currentSlot].QueueAtEnd(action, numRetries) != RESULT_OK) {
-        PRINT_NAMED_ERROR("ActionList.AddAction.FailedToAdd", "Failed to add action to new queue.\n");
+        PRINT_NAMED_ERROR("ActionList.AddAction.FailedToAdd", "Failed to add action to new queue");
         return -1;
       }
       
@@ -378,7 +378,7 @@ namespace Anki {
         if((*iter)->GetTag() == idTag) {
           if(found == true) {
             PRINT_NAMED_WARNING("ActionQueue.Cancel.DuplicateIdTags",
-                                "Multiple actions with tag=%d found in queue.\n",
+                                "Multiple actions with tag=%d found in queue",
                                 idTag);
           }
           DeleteAction(*iter);
@@ -396,7 +396,7 @@ namespace Anki {
     {
       if(action == nullptr) {
         PRINT_NAMED_ERROR("ActionQueue.QueueNow.NullActionPointer",
-                          "Refusing to queue a null action pointer.\n");
+                          "Refusing to queue a null action pointer");
         return RESULT_FAIL;
       }
       
@@ -474,7 +474,7 @@ namespace Anki {
     {
       if(action == nullptr) {
         PRINT_NAMED_ERROR("ActionQueue.QueueAtEnd.NullActionPointer",
-                          "Refusing to queue a null action pointer.\n");
+                          "Refusing to queue a null action pointer");
         return RESULT_FAIL;
       }
       
@@ -487,7 +487,7 @@ namespace Anki {
     {
       if(action == nullptr) {
         PRINT_NAMED_ERROR("ActionQueue.QueueNext.NullActionPointer",
-                          "Refusing to queue a null action pointer.\n");
+                          "Refusing to queue a null action pointer");
         return RESULT_FAIL;
       }
       

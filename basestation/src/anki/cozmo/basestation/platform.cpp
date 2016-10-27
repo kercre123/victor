@@ -34,7 +34,7 @@ namespace Anki {
       auto iter = Sizes.find(type);
       if(iter == Sizes.end()) {
         PRINT_NAMED_ERROR("Platform.GetSize.UnknownPlatformType",
-                          "No size defined for platform type %s (%d).\n",
+                          "No size defined for platform type %s (%d)",
                           ObjectTypeToString(type), type);
         
         static const Point3f DefaultSize(0.f, 0.f, 0.f);

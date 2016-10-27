@@ -2262,7 +2262,10 @@ namespace Anki
         const s32 nrows = magnitudeImage.get_size(0);
         const s32 ncols = magnitudeImage.get_size(1);
 
-        AnkiConditionalErrorAndReturnValue(magnitudeIndexes.get_size(0)*magnitudeIndexes.get_size(1) == nrows*ncols, RESULT_FAIL_INVALID_SIZE, "LucasKanadeTracker_SampledPlanar6dof::ApproximateSelect()", "Size of magnitudeIndexes vector does not match size of magnitudeImage");
+        AnkiConditionalErrorAndReturnValue(magnitudeIndexes.get_size(0)*magnitudeIndexes.get_size(1) == nrows*ncols,
+                                           RESULT_FAIL_INVALID_SIZE,
+                                           "LucasKanadeTracker_SampledPlanar6dof::ApproximateSelect",
+                                           "Size of vector does not match size of image");
 
         numSelected = 0;
         s32 * restrict pMagnitudeIndexes = magnitudeIndexes.Pointer(0,0);

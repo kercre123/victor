@@ -32,31 +32,42 @@ namespace JsonTools
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float ParseFloat(const Json::Value& config, const char* key, const std::string& debugName) {
-  const std::string& eventName = debugName + ".ParseFloat.NotValidFloat";
-  ASSERT_NAMED_EVENT(config[key].isNumeric(), eventName.c_str(), "%s", key);
-  return config[key].asFloat();
+  const auto & val = config[key];
+  if (!val.isNumeric()) {
+    const std::string& eventName = debugName + ".ParseFloat.NotValidFloat";
+    ASSERT_NAMED_EVENT(val.isNumeric(), eventName.c_str(), "%s", key);
+  }
+  return val.asFloat();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 uint8_t ParseUint8(const Json::Value& config, const char* key, const std::string& debugName) {
-  const std::string& eventName = debugName + ".ParseUint8.NotValidUint8";
-  ASSERT_NAMED_EVENT(config[key].isNumeric(), eventName.c_str(), "%s", key);
-  Json::Int intVal = config[key].asInt();
-  return Anki::Util::numeric_cast<uint8_t>(intVal);
+  const auto & val = config[key];
+  if (!val.isNumeric()) {
+    const std::string& eventName = debugName + ".ParseUint8.NotValidUint8";
+    ASSERT_NAMED_EVENT(val.isNumeric(), eventName.c_str(), "%s", key);
+  }
+  return Anki::Util::numeric_cast<uint8_t>(val.asInt());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ParseBool(const Json::Value& config, const char* key, const std::string& debugName) {
-  const std::string& eventName = debugName + ".ParseBool.NotValidBool";
-  ASSERT_NAMED_EVENT(config[key].isBool(), eventName.c_str(), "%s", key);
-  return config[key].asBool();
+  const auto & val = config[key];
+  if (!val.isBool()) {
+    const std::string& eventName = debugName + ".ParseBool.NotValidBool";
+    ASSERT_NAMED_EVENT(val.isBool(), eventName.c_str(), "%s", key);
+  }
+  return val.asBool();
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string ParseString(const Json::Value& config, const char* key, const std::string& debugName) {
-  const std::string& eventName = debugName + ".ParseString.NotValidString";
-  ASSERT_NAMED_EVENT(config[key].isString(), eventName.c_str(), "%s", key);
-  return config[key].asString();
+  const auto & val = config[key];
+  if (!val.isString()) {
+    const std::string& eventName = debugName + ".ParseString.NotValidString";
+    ASSERT_NAMED_EVENT(val.isString(), eventName.c_str(), "%s", key);
+  }
+  return val.asString();
 };
 
   

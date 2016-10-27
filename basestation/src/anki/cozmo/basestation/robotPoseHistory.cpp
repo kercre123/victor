@@ -86,7 +86,7 @@ namespace Anki {
     {
       if(p.GetPose().GetParent() != nullptr && !p.GetPose().GetParent()->IsOrigin()) {
         PRINT_NAMED_ERROR("RobotPoseHistory.AddRawOdomPose.NonFlattenedPose",
-                          "Pose object inside pose stamp should be flattened (%s).\n",
+                          "Pose object inside pose stamp should be flattened (%s)",
                           p.GetPose().GetNamedPathToOrigin(false).c_str());
         return RESULT_FAIL;
       }
@@ -101,7 +101,7 @@ namespace Anki {
       res = poses_.emplace(t, p);
 
       if (!res.second) {
-        PRINT_NAMED_WARNING("RobotPoseHistory.AddRawOdomPose.AddFailed", "Time: %d\n", t);
+        PRINT_NAMED_WARNING("RobotPoseHistory.AddRawOdomPose.AddFailed", "Time: %d", t);
         return RESULT_FAIL;
       }
 
@@ -115,7 +115,7 @@ namespace Anki {
     {
       if(p.GetPose().GetParent() != nullptr && !p.GetPose().GetParent()->IsOrigin()) {
         PRINT_NAMED_ERROR("RobotPoseHistory.AddVisionOnlyPose.NonFlattenedPose",
-                          "Pose object inside pose stamp should be flattened (%s).\n",
+                          "Pose object inside pose stamp should be flattened (%s)",
                           p.GetPose().GetNamedPathToOrigin(false).c_str());
         return RESULT_FAIL;
       }
@@ -125,7 +125,7 @@ namespace Anki {
         TimeStamp_t newestTime = poses_.rbegin()->first;
         if (newestTime > windowSize_ && t < newestTime - windowSize_) {
           PRINT_NAMED_ERROR("RobotPoseHistory.AddVisionOnlyPose.TooOld",
-                            "Pose at t=%d too old to add. Newest time=%d, windowSize=%d.\n",
+                            "Pose at t=%d too old to add. Newest time=%d, windowSize=%d",
                             t, newestTime, windowSize_);
           return RESULT_FAIL;
         }
@@ -142,7 +142,7 @@ namespace Anki {
       
         if (!res.second) {
           PRINT_NAMED_ERROR("RobotPoseHistory.AddVisionOnlyPose.EmplaceFailed",
-                            "Emplace of pose with t=%d, frameID=%d failed.\n",
+                            "Emplace of pose with t=%d, frameID=%d failed",
                             t, p.GetFrameId());
           return RESULT_FAIL;
         }

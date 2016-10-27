@@ -64,7 +64,7 @@ namespace Anki {
       // Read the frame time from the json file as well
       if(!json.isMember("triggerTime_ms")) {
         PRINT_NAMED_ERROR("IKeyFrame.ReadFromJson",
-                          "%s: Expecting 'triggerTime_ms' field in KeyFrame Json.\n",
+                          "%s: Expecting 'triggerTime_ms' field in KeyFrame Json",
                           animNameDebug.c_str());
         lastResult = RESULT_FAIL;
       } else {
@@ -240,7 +240,7 @@ return RESULT_FAIL; \
       size_t lastSlash = _animName.find_last_of("/");
       if(lastSlash != std::string::npos) {
         PRINT_NAMED_WARNING("FaceAnimationKeyFrame.SetMembersFromJson",
-                            "%s: Removing path from animation name: %s\n",
+                            "%s: Removing path from animation name: %s",
                             animNameDebug.c_str(),
                             _animName.c_str());
         _animName = _animName.substr(lastSlash+1, std::string::npos);
@@ -275,7 +275,7 @@ return RESULT_FAIL; \
         
         if(rleFrame == nullptr) {
           PRINT_NAMED_ERROR("FaceAnimationKeyFrame.GetStreamMesssage",
-                            "Failed to get frame %d from animation %s.\n",
+                            "Failed to get frame %d from animation %s",
                             _curFrame, _animName.c_str());
           return nullptr;
         }
@@ -528,7 +528,7 @@ return RESULT_FAIL; \
 #define GET_COLOR_FROM_JSON(__NAME__, __LED_NAME__) do {             \
 if(!JsonTools::GetColorOptional(jsonRoot, QUOTE(__NAME__), color)) { \
   PRINT_NAMED_ERROR("BackpackLightsKeyFrame.SetMembersFromJson",        \
-                    "%s: Failed to get '%s' LED color from Json file.\n", \
+                    "%s: Failed to get '%s' LED color from Json file", \
                     animNameDebug.c_str(), QUOTE(__NAME__));            \
   return RESULT_FAIL;                                                   \
 }                                                                       \
@@ -612,7 +612,7 @@ _streamMsg.colors[__LED_NAME__] = ENCODED_COLOR(color); } while(0)
           }
         } else {
           PRINT_NAMED_ERROR("BodyMotionKeyFrame.BadRadiusString",
-                            "%s: Unrecognized string for 'radius_mm' field: %s.\n",
+                            "%s: Unrecognized string for 'radius_mm' field: %s",
                             animNameDebug.c_str(),
                             radiusStr.c_str());
           return RESULT_FAIL;

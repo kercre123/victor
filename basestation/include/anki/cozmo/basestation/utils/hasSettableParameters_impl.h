@@ -95,7 +95,7 @@ namespace Cozmo {
     // and "paramValues"
     if(msg.paramNames.size() != msg.paramValues.size()) {
       PRINT_NAMED_ERROR("AnimationStreamer.HandleSetLiveAnimationParameter.MismatchedLengths",
-                        "ParamNames and ParamValues not the same length (%lu & %lu)\n",
+                        "ParamNames and ParamValues not the same length (%lu & %lu)",
                         (unsigned long)msg.paramNames.size(), (unsigned long)msg.paramValues.size());
     } else {
       

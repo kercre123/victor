@@ -47,7 +47,7 @@ EComputePathStatus DubbinsPlanner::ComputePath(const Pose3d& startPose,
   const float dotProductThreshold = 0.0152f; // 1.f - std::cos(DEG_TO_RAD(10)); // within 10 degrees
   if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
     PRINT_NAMED_ERROR("PathPlanner.GetPlan.NonZAxisRot_start",
-                      "GetPlan() does not support rotations around anything other than z-axis (%f %f %f)\n",
+                      "GetPlan() does not support rotations around anything other than z-axis (%f %f %f)",
                       rotAxis.x(), rotAxis.y(), rotAxis.z());
     return EComputePathStatus::Error;
   }
@@ -66,7 +66,7 @@ EComputePathStatus DubbinsPlanner::ComputePath(const Pose3d& startPose,
   dotProduct = DotProduct(rotAxis, Z_AXIS_3D());
   if(!NEAR(rotAngle.ToFloat(), 0, DEG_TO_RAD(10)) && !NEAR(std::abs(dotProduct), 1.f, dotProductThreshold)) {
     PRINT_NAMED_ERROR("PathPlanner.GetPlan.NonZAxisRot_target",
-                      "GetPlan() does not support rotations around anything other than z-axis (%f %f %f)\n",
+                      "GetPlan() does not support rotations around anything other than z-axis (%f %f %f)",
                       rotAxis.x(), rotAxis.y(), rotAxis.z());
     return EComputePathStatus::Error;
   }
@@ -84,7 +84,7 @@ EComputePathStatus DubbinsPlanner::ComputePath(const Pose3d& startPose,
                                    std::min(DUBINS_END_RADIUS_MM, dubinsRadius),
                                    DUBINS_TARGET_SPEED_MMPS, DUBINS_ACCEL_MMPS2, DUBINS_DECEL_MMPS2) == 0) {
     PRINT_NAMED_INFO("GetPlan.NoPathFound",
-                     "Could not generate Dubins path (startPose %f %f %f, targetPose %f %f %f)\n",
+                     "Could not generate Dubins path (startPose %f %f %f, targetPose %f %f %f)",
                      startPt.x(), startPt.y(), startAngle,
                      targetPt.x(), targetPt.y(), targetAngle);
     return EComputePathStatus::Error;

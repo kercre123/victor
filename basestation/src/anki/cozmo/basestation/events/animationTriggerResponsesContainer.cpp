@@ -57,7 +57,7 @@ namespace Cozmo
     if(retVal == _eventMap.end())
     {
       PRINT_NAMED_ERROR("AnimationTriggerResponsesContainer::GetResponse",
-                        "Animation requested for unknown response '%s'.\n",
+                        "Animation requested for unknown response '%s'",
                         AnimationTriggerToString(ev));
       return "";
     }

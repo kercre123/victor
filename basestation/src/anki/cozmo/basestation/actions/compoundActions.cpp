@@ -31,7 +31,7 @@ namespace Anki {
       for(IActionRunner* action : actions) {
         if(action == nullptr) {
           PRINT_NAMED_WARNING("ICompoundAction.NullActionPointer",
-                              "Refusing to add a null action pointer to group.\n");
+                              "Refusing to add a null action pointer to group");
         } else {
           AddAction(action);
         }
@@ -361,7 +361,7 @@ namespace Anki {
               // and try again as long as there are retries remaining
               if(RetriesRemain()) {
                 PRINT_NAMED_INFO("CompoundActionSequential.Update.Retrying",
-                                 "%s triggered retry.\n", (*_currentAction)->GetName().c_str());
+                                 "%s triggered retry", (*_currentAction)->GetName().c_str());
                 Reset();
                 return ActionResult::RUNNING;
               }
@@ -458,7 +458,7 @@ namespace Anki {
             // If any retries are left, reset the group and try again.
             if(RetriesRemain()) {
               PRINT_NAMED_INFO("CompoundActionParallel.Update.Retrying",
-                               "%s triggered retry.\n", (*currentAction)->GetName().c_str());
+                               "%s triggered retry", (*currentAction)->GetName().c_str());
               Reset();
               return ActionResult::RUNNING;
             }

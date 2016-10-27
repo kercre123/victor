@@ -72,7 +72,7 @@ namespace Anki {
       _frontMarker = &AddMarker(frontMarkerType, frontPose, Ramp::TopMarkerSize);
       
       if(_preAscentPose.GetWithRespectTo(_frontMarker->GetPose(), _preAscentPose) == false) {
-        PRINT_NAMED_ERROR("Ramp.PreAscentPoseError", "Could not get preAscentPose w.r.t. front ramp marker.\n");
+        PRINT_NAMED_ERROR("Ramp.PreAscentPoseError", "Could not get preAscentPose w.r.t. front ramp marker");
       }
       _preAscentPose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PreAscentPose");
       AddPreActionPose(PreActionPose::ENTRY, _frontMarker, _preAscentPose);
@@ -98,7 +98,7 @@ namespace Anki {
       _topMarker = &AddMarker(topMarkerType, topPose, Ramp::TopMarkerSize);
       
       if(_preDescentPose.GetWithRespectTo(_topMarker->GetPose(), _preDescentPose) == false) {
-        PRINT_NAMED_ERROR("Ramp.PreDescentPoseError", "Could not get preDescentPose w.r.t. top ramp marker.\n");
+        PRINT_NAMED_ERROR("Ramp.PreDescentPoseError", "Could not get preDescentPose w.r.t. top ramp marker");
       }
       _preDescentPose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PreDescentPose");
       AddPreActionPose(PreActionPose::ENTRY, _topMarker, _preDescentPose);
@@ -115,7 +115,7 @@ namespace Anki {
     {
       Pose3d robotPoseWrtRamp;
       if(robotPose.GetWithRespectTo(GetPose(), robotPoseWrtRamp) == false) {
-        PRINT_NAMED_WARNING("Ramp.IsAscendingOrDescending", "Could not determine robot pose w.r.t. ramp's pose.\n");
+        PRINT_NAMED_WARNING("Ramp.IsAscendingOrDescending", "Could not determine robot pose w.r.t. ramp's pose");
         return UNKNOWN;
       }
       
@@ -233,7 +233,7 @@ namespace Anki {
         Pose3d reachableFromWrtEntryPose;
         if(reachableFromPose->GetWithRespectTo(*preActionPose.GetPose().GetParent(), reachableFromWrtEntryPose) == false) {
           PRINT_NAMED_WARNING("Ramp.IsPreActionPoseValid.PoseOriginMisMatch",
-                              "Could not get specified reachableFrom pose w.r.t. entry action's pose.\n");
+                              "Could not get specified reachableFrom pose w.r.t. entry action's pose");
           isValid = false;
         } else {
           const f32 zThreshold = GetHeight() * 0.3f;

@@ -154,7 +154,7 @@ namespace Cozmo {
     if(name.empty()) {
       if(DEBUG_ANIMATION_STREAMING) {
         PRINT_NAMED_DEBUG("AnimationStreamer.SetStreamingAnimation",
-                          "Stopping streaming of animation '%s'.\n",
+                          "Stopping streaming of animation '%s'.",
                           GetStreamingAnimationName().c_str());
       }
 
@@ -220,7 +220,7 @@ namespace Cozmo {
       
       if(DEBUG_ANIMATION_STREAMING) {
         PRINT_NAMED_DEBUG("AnimationStreamer.SetStreamingAnimation",
-                          "Will start streaming '%s' animation %d times with tag=%d.\n",
+                          "Will start streaming '%s' animation %d times with tag=%d.",
                           _streamingAnimation->GetName().c_str(), numLoops, _tagCtr);
       }
       Anki::Util::sEvent("robot.play_animation", {}, _streamingAnimation->GetName().c_str());
@@ -308,7 +308,7 @@ namespace Cozmo {
     
     if(DEBUG_ANIMATION_STREAMING) {
       PRINT_NAMED_DEBUG("AnimationStreamer.PushIdleAnimation",
-                        "Setting idle animation to '%s'.\n",
+                        "Setting idle animation to '%s'.",
                         EnumToString(name));
     }
     
@@ -1391,7 +1391,7 @@ namespace Cozmo {
         if(_numLoops == 0 || _loopCtr < _numLoops) {
          if(DEBUG_ANIMATION_STREAMING) {
            PRINT_NAMED_INFO("AnimationStreamer.Update.Looping",
-                            "Finished loop %d of %d of '%s' animation. Restarting.\n",
+                            "Finished loop %d of %d of '%s' animation. Restarting.",
                             _loopCtr, _numLoops,
                             _streamingAnimation->GetName().c_str());
          }
@@ -1405,7 +1405,7 @@ namespace Cozmo {
         else {
           if(DEBUG_ANIMATION_STREAMING) {
             PRINT_NAMED_INFO("AnimationStreamer.Update.FinishedStreaming",
-                             "Finished streaming '%s' animation.\n",
+                             "Finished streaming '%s' animation.",
                              _streamingAnimation->GetName().c_str());
           }
           
@@ -1481,7 +1481,7 @@ namespace Cozmo {
       if(!_isIdling || IsFinished(_idleAnimation)) { // re-check because isIdling could have
         if(DEBUG_ANIMATION_STREAMING) {
           PRINT_NAMED_INFO("AnimationStreamer.Update.IdleAnimInit",
-                           "(Re-)Initializing idle animation: '%s'.\n",
+                           "(Re-)Initializing idle animation: '%s'.",
                            _idleAnimation->GetName().c_str());
         }
         

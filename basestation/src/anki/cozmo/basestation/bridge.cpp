@@ -35,7 +35,7 @@ namespace Anki {
       auto iter = Lengths.find(type);
       if(iter == Lengths.end()) {
         PRINT_NAMED_ERROR("Bridge.GetLength.UnknownBridgeType",
-                          "No length defined for bridge type %s (%d).\n",
+                          "No length defined for bridge type %s (%d).",
                           ObjectTypeToString(type), type);
         return 0.f;
       } else {
@@ -69,7 +69,7 @@ namespace Anki {
         //middleMarkerType = Vision::MARKER_BRIDGEMOONMIDDLE;
       }
       else {
-        PRINT_NAMED_ERROR("MatPiece.BridgeUnexpectedElse", "Should not get to else in if ladder constructing bridge-type mat.\n");
+        PRINT_NAMED_ERROR("MatPiece.BridgeUnexpectedElse", "Should not get to else in if ladder constructing bridge-type mat.");
         return;
       }
       
@@ -96,12 +96,12 @@ namespace Anki {
       CORETECH_ASSERT(rightMarker != nullptr);
       
       if(preCrossingPoseLeft.GetWithRespectTo(leftMarker->GetPose(), preCrossingPoseLeft) == false) {
-        PRINT_NAMED_ERROR("MatPiece.PreCrossingPoseLeftError", "Could not get preCrossingLeftPose w.r.t. left bridge marker.\n");
+        PRINT_NAMED_ERROR("MatPiece.PreCrossingPoseLeftError", "Could not get preCrossingLeftPose w.r.t. left bridge marker.");
       }
       AddPreActionPose(PreActionPose::ENTRY, leftMarker, preCrossingPoseLeft);
       
       if(preCrossingPoseRight.GetWithRespectTo(rightMarker->GetPose(), preCrossingPoseRight) == false) {
-        PRINT_NAMED_ERROR("MatPiece.PreCrossingPoseRightError", "Could not get preCrossingRightPose w.r.t. right bridge marker.\n");
+        PRINT_NAMED_ERROR("MatPiece.PreCrossingPoseRightError", "Could not get preCrossingRightPose w.r.t. right bridge marker.");
       }
       AddPreActionPose(PreActionPose::ENTRY, rightMarker, preCrossingPoseRight);
       
