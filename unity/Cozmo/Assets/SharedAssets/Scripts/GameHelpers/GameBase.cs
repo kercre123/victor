@@ -505,6 +505,7 @@ public abstract class GameBase : MonoBehaviour {
 
   public virtual void UpdateUIForGameEnd() {
     // TODO: Put any base logic for Updating UI for game end here.
+    SharedMinigameView.HideQuitButton();
   }
 
   public bool IsRoundComplete() {
