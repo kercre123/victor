@@ -368,7 +368,7 @@ void SparksBehaviorChooser::CheckIfSparkShouldEnd()
   
   TimeStamp_t currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
-  // Behaviors with _numberOfRepetions == 0 will always wait until max time and then play success outro
+  // Behaviors with _numberOfRepetitions == 0 will always wait until max time and then play success outro
   const bool minTimeAndRepetitions = FLT_GE(currentTime, _timeChooserStarted + _minTimeSecs)
                                                 && (_numberOfRepetitions != 0 && _currentObjectiveCompletedCount >= _numberOfRepetitions);
   const bool maxTimeout = FLT_GE(currentTime, _timeChooserStarted + _maxTimeSecs)

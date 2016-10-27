@@ -152,9 +152,9 @@ void VerifyBehavior(const IBehavior* inBehavior, BehaviorFactory& behaviorFactor
     EXPECT_TRUE(inBehavior->MatchesAnyBehaviorGroups(groupFlags));
   }
   
-  EXPECT_EQ(inBehavior->GetRepetionalPenalty().GetNumNodes(), 2);
-  EXPECT_FLOAT_EQ(inBehavior->GetRepetionalPenalty().EvaluateY(0.0f), 0.0f);
-  EXPECT_FLOAT_EQ(inBehavior->GetRepetionalPenalty().EvaluateY(4.5f), 0.5f);
+  EXPECT_EQ(inBehavior->GetRepetitionPenalty().GetNumNodes(), 2);
+  EXPECT_FLOAT_EQ(inBehavior->GetRepetitionPenalty().EvaluateY(0.0f), 0.0f);
+  EXPECT_FLOAT_EQ(inBehavior->GetRepetitionPenalty().EvaluateY(4.5f), 0.5f);
 
   EXPECT_EQ(inBehavior->GetRunningPenalty().GetNumNodes(), 3);
   EXPECT_FLOAT_EQ(inBehavior->GetRunningPenalty().EvaluateY(0.0f), 1.0f);

@@ -170,7 +170,7 @@ public:
     
   
   float EvaluateRepetitionPenalty() const;
-  const Util::GraphEvaluator2d& GetRepetionalPenalty() const { return _repetitionPenalty; }
+  const Util::GraphEvaluator2d& GetRepetitionPenalty() const { return _repetitionPenalty; }
 
   float EvaluateRunningPenalty() const;
   const Util::GraphEvaluator2d& GetRunningPenalty() const { return _runningPenalty; }

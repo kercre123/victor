@@ -291,7 +291,7 @@ float MoodManager::UpdateEventTimeAndCalculateRepetitionPenalty(const std::strin
   
   if (emotionEvent)
   {
-    // Use the emotionEvent with the matching name for calculating the repetion penalty
+    // Use the emotionEvent with the matching name for calculating the repetition penalty
     const float repetitionPenalty = emotionEvent->CalculateRepetitionPenalty(timeSinceLastOccurence);
     return repetitionPenalty;
   }
