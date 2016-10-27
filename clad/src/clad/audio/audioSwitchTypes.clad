@@ -5,6 +5,14 @@ namespace Cozmo {
 namespace Audio {
 namespace SwitchState {
 
+enum uint_32 Cozmo_Voice_Processing
+{
+  Invalid = 0,
+  Name = 797654004,
+  Sentence = 906532866,
+  Unprocessed = 860658140,
+}
+
 enum uint_32 External
 {
   External_Long = 3001056757,
@@ -59,14 +67,24 @@ enum uint_32 Relationship
   Relationship_Stranger = 3087192196,
 }
 
+enum uint_32 Sparked
+{
+  Fun = 982472036,
+  Invalid = 0,
+  Sneaky = 468648200,
+  Workout = 1875882538,
+}
+
 enum uint_32 SwitchGroupType
 {
+  Cozmo_Voice_Processing = 366280094,
   External = 1442075084,
   Freeplay_Mood = 2205807877,
   Gameplay_Round = 2536359484,
   Invalid = 0,
   Mood = 3128647864,
   Relationship = 3723222599,
+  Sparked = 62349551,
 }
 
 } // SwitchState

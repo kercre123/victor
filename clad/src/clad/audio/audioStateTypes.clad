@@ -29,6 +29,8 @@ enum uint_32 Music
 {
   Alarm_Clock = 3653788539,
   Connectivity = 1264085260,
+  Cozmo_Says = 2338198982,
+  Cozmo_Says_Speaking = 739906331,
   Freeplay = 150865113,
   Invalid = 0,
   Minigame__Generic = 713847863,
@@ -39,6 +41,7 @@ enum uint_32 Music
   Minigame__Keep_Away_Tension = 22918831,
   Minigame__Meet_Cozmo = 1580491744,
   Minigame__Meet_Cozmo_Say_Name = 2582275442,
+  Minigame__Memory_Match = 1731176119,
   Minigame__Memory_Match_Fanfare = 2262040721,
   Minigame__Memory_Match_Full_Life = 1451808254,
   Minigame__Memory_Match_No_Lives = 2282047959,
