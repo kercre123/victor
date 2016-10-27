@@ -85,7 +85,7 @@ public class SayTextSlide : MonoBehaviour {
     DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.RemoveItemAmount(_SparkItemId, _SayCost);
     UpdateTotalSparkCount();
 
-    bool hasBadWords = Crosstales.BWF.Manager.BadWordManager.Contains(_TextInput.text);
+    bool hasBadWords = false;
 
     if (hasBadWords) {
       RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CozmoSaysBadWord, (success) => {
@@ -104,7 +104,7 @@ public class SayTextSlide : MonoBehaviour {
         new RobotActionUnion().Initialize(new SayTextWithIntent().Initialize(
           _TextInput.text,
           // TODO: Replace with Jordan's loop speak text feature.
-          Anki.Cozmo.AnimationTrigger.CozmoSaysSpeakLoop,
+          Anki.Cozmo.AnimationTrigger.MeetCozmoReEnrollmentSayName,
           Anki.Cozmo.SayTextIntent.Text)),
         new RobotActionUnion().Initialize(new PlayAnimationTrigger().Initialize(RobotEngineManager.Instance.CurrentRobot.ID, 1, getOutTrigger, true))
       };
