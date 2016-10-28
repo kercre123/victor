@@ -492,15 +492,15 @@ namespace Anki {
         // unity keeps this list from last execution. so we will not build on it. we will instead start fresh each time
         //string poundDefines = PlayerSettings.GetScriptingDefineSymbolsForGroup(buildTargetGroup);
         string poundDefines = "";
+        // This needs to be true for all configurations
+        PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.SlowAndSafe;
 
         switch (config.ToLower()) {
         case "debug": {
-            PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.SlowAndSafe;
             poundDefines += "ENABLE_DEBUG_PANEL;ANKI_DEVELOPER_CODE;ANKI_DEV_CHEATS;DEBUG";
           }
           break;
         case "shipping": {
-            PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.SlowAndSafe;
             poundDefines += "SHIPPING;NDEBUG";
           }
           break;
@@ -510,7 +510,6 @@ namespace Anki {
           }
           break;
         case "profile": {
-            PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.SlowAndSafe;
             poundDefines += "PROFILE;NDEBUG";
           }
           break;
@@ -518,7 +517,6 @@ namespace Anki {
             // TODO: BRC - Remove me after Founder Demo
             // Disable FastNoExceptions mode until we know what is causing the exception
             // in the DOTween library.
-            PlayerSettings.iOS.scriptCallOptimization = ScriptCallOptimizationLevel.SlowAndSafe;
             poundDefines += "ENABLE_DEBUG_PANEL;ANKI_DEVELOPER_CODE;ANKI_DEV_CHEATS;RELEASE;NDEBUG";
           }
           break;
