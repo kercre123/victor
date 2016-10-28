@@ -366,6 +366,20 @@ namespace Cozmo {
     }
   }
   
+  static Result GetImagePoseStamp(const Robot&      robot,
+                                  const TimeStamp_t imageTimeStamp,
+                                  RobotPoseStamp&   imagePoseStamp,
+                                  TimeStamp_t&      imagePoseStampTimeStamp)
+  {
+    // Handle the (rare, Webots-test-only?) possibility that the image timstamp is _newer_
+    // than the latest thing in history. In that case, we'll just use the last pose information
+    // we have, since we can't really interpolate.
+    const TimeStamp_t requestedTimeStamp = std::min(imageTimeStamp, robot.GetPoseHistory()->GetNewestTimeStamp());
+    
+    Result lastResult = robot.GetPoseHistory()->ComputePoseAt(requestedTimeStamp, imagePoseStampTimeStamp, imagePoseStamp, true);
+    
+    return lastResult;
+  }
   
   Result VisionComponent::SetNextImage(EncodedImage& encodedImage)
   {
@@ -417,16 +431,7 @@ namespace Cozmo {
       RobotPoseStamp imagePoseStamp;
       TimeStamp_t imagePoseStampTimeStamp;
       
-      Result lastResult = _robot.GetPoseHistory()->ComputePoseAt(encodedImage.GetTimeStamp(), imagePoseStampTimeStamp, imagePoseStamp, true);
-      
-      // If we are unable to compute a pose at image timestamp because we haven't recieved any state updates
-      // after that timestamp then use the latest pose
-      // This is due to the offset added to image timestamps allowing us to potentially get an image in the
-      // future relative to our last state update. This should go away when the correct offset is calculated
-      if(lastResult != RESULT_OK)
-      {
-        lastResult = _robot.GetPoseHistory()->GetRawPoseAt(_robot.GetPoseHistory()->GetNewestTimeStamp(), imagePoseStampTimeStamp, imagePoseStamp, false);
-      }
+      Result lastResult = GetImagePoseStamp(_robot, encodedImage.GetTimeStamp(), imagePoseStamp, imagePoseStampTimeStamp);
 
       if(lastResult == RESULT_FAIL_ORIGIN_MISMATCH)
       {
@@ -439,14 +444,14 @@ namespace Cozmo {
       else if(lastResult != RESULT_OK)
       {
         PRINT_NAMED_WARNING("VisionComponent.SetNextImage.PoseHistoryFail",
-                          "Unable to get computed pose at image timestamp of %d. (rawPoses: have %zu from %d:%d) (visionPoses: have %zu from %d:%d)",
-                          encodedImage.GetTimeStamp(),
-                          _robot.GetPoseHistory()->GetNumRawPoses(),
-                          _robot.GetPoseHistory()->GetOldestTimeStamp(),
-                          _robot.GetPoseHistory()->GetNewestTimeStamp(),
-                          _robot.GetPoseHistory()->GetNumVisionPoses(),
-                          _robot.GetPoseHistory()->GetOldestVisionOnlyTimeStamp(),
-                          _robot.GetPoseHistory()->GetNewestVisionOnlyTimeStamp());
+                            "Unable to get computed pose at image timestamp of %d. (rawPoses: have %zu from %d:%d) (visionPoses: have %zu from %d:%d)",
+                            encodedImage.GetTimeStamp(),
+                            _robot.GetPoseHistory()->GetNumRawPoses(),
+                            _robot.GetPoseHistory()->GetOldestTimeStamp(),
+                            _robot.GetPoseHistory()->GetNewestTimeStamp(),
+                            _robot.GetPoseHistory()->GetNumVisionPoses(),
+                            _robot.GetPoseHistory()->GetOldestVisionOnlyTimeStamp(),
+                            _robot.GetPoseHistory()->GetNewestVisionOnlyTimeStamp());
         return lastResult;
       }
       
@@ -1110,16 +1115,18 @@ namespace Cozmo {
     {
       // Hook the pose coming out of the vision system up to the historical
       // camera at that timestamp
-      Vision::Camera histCamera;
-      Result histCamResult = _robot.GetHistoricalCamera(procResult.timestamp, histCamera);
-      if(RESULT_OK != histCamResult)
+      RobotPoseStamp p;
+      TimeStamp_t p_timeStamp;
+      Result poseStampResult = GetImagePoseStamp(_robot, procResult.timestamp, p, p_timeStamp);
+      if(RESULT_OK != poseStampResult)
       {
         PRINT_NAMED_WARNING("VisionComponent.UpdateDockingErrorSignal.HistoricalCameraFail",
                             "Failed to get historical camera at t=%u, Result=%0x",
-                            procResult.timestamp, histCamResult);
-        return histCamResult;
+                            procResult.timestamp, poseStampResult);
+        return poseStampResult;
       }
-      
+
+      Vision::Camera histCamera = _robot.GetHistoricalCamera(p, p_timeStamp);
       markerPoseWrtCamera.SetParent(&histCamera.GetPose());
       /*
        // Get the pose w.r.t. the (historical) robot pose instead of the camera pose
