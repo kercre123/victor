@@ -166,8 +166,7 @@ namespace Onboarding {
       case OnboardingStateEnum.ErrorCubeMoved: {
           _ShowCozmoCubesLabel.text = Localization.Get(LocalizationKeys.kOnboardingPhase3ErrorCube);
           _ShowShelfTextLabel.text = "";
-          _ContinueButtonInstance.gameObject.SetActive(true);
-          _ContinueButtonInstance.Interactable = true;
+          _ContinueButtonInstance.gameObject.SetActive(false);
           Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Attention_Device);
           DAS.Event("onboarding.error", "error_cube_moved");
         }

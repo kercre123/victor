@@ -262,8 +262,6 @@ void BehaviorOnboardingShowCube::TransitionToNextState(Robot& robot)
       }
       break;
     case State::ErrorCubeMoved:
-      SET_STATE(WaitForShowCube,robot);
-      break;
     case State::ErrorCubeWrongSideUp:
       TransitionToWaitToInspectCube(robot);
     break;
@@ -355,7 +353,15 @@ void BehaviorOnboardingShowCube::StartSubStateCelebratePickup(Robot& robot)
                 SET_STATE(WaitForFinalContinue,robot);
               });
 }
-  
+
+bool IsBlockFacingUp(const ObservableObject* block)
+{
+  if( block != nullptr )
+  {
+    return block->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
+  }
+  return false;
+}
 
 void BehaviorOnboardingShowCube::HandleObjectObserved(Robot& robot, const ExternalInterface::RobotObservedObject& msg)
 {
@@ -370,7 +376,8 @@ void BehaviorOnboardingShowCube::HandleObjectObserved(Robot& robot, const Extern
   
   // In this state it's okay to change blocks. After this Cozmo will be trying to drive too it so it's too late.
   // after generic fails we loop back to this state so they can try again.
-  if( ( _state == State::WaitForShowCube || _state == State::WaitForOKCubeDiscovered || _state == State::ErrorCubeWrongSideUp) &&
+  if( ( _state == State::WaitForShowCube || _state == State::WaitForOKCubeDiscovered ||
+       _state == State::ErrorCubeWrongSideUp || _state == State::ErrorCubeMoved) &&
         robot.CanPickUpObjectFromGround(*block) )
   {
     _targetBlock = msg.objectID;
@@ -378,9 +385,20 @@ void BehaviorOnboardingShowCube::HandleObjectObserved(Robot& robot, const Extern
     {
       SET_STATE(WaitForOKCubeDiscovered,robot);
     }
-    else if( _state == State::ErrorCubeWrongSideUp )
+    else if( _state == State::ErrorCubeMoved )
     {
-      if( block->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS)
+      if(IsBlockFacingUp(block))
+      {
+        TransitionToNextState(robot);
+      }
+      else
+      {
+        SET_STATE(ErrorCubeWrongSideUp,robot);
+      }
+    }
+    else if( _state == State::ErrorCubeWrongSideUp)
+    {
+      if(IsBlockFacingUp(block))
       {
         TransitionToNextState(robot);
       }
