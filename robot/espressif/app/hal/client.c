@@ -13,6 +13,8 @@
 #include "driver/uart.h"
 #include "anki/cozmo/transport/IReceiver.h"
 #include "anki/cozmo/transport/reliableTransport.h"
+#include "driver/crash.h" 
+
 
 //#define DEBUG_CLIENT 1
 
@@ -118,6 +120,7 @@ static void socketRecvCB(void *arg, char *usrdata, unsigned short len)
   if (err != ESPCONN_OK)
   {
      os_printf("ERROR, couldn't get remote info for connection! %d\r\n", err);
+     recordBootError(espconn_get_connection_info, err);
      return;
   }
   
@@ -176,6 +179,7 @@ sint8 clientInit()
   if (err != 0)
   {
     printf("\tError registering receive callback %d\r\n", err);
+    recordBootError((void*)espconn_regist_recvcb, err);
     return err;
   }
 
@@ -183,6 +187,7 @@ sint8 clientInit()
   if (err != 0)
   {
     printf("\tError creating server %d\r\n", err);
+    recordBootError(espconn_create, err);
     return err;
   }
     
@@ -241,6 +246,7 @@ bool UnreliableTransport_SendPacket(uint8* data, uint16 len)
     if (err < 0) // I think a negative number is an error. 0 is OK, I don't know what positive numbers are
     {
       printf("FQUP %d\r\n", err);
+      recordBootError(espconn_send, err);
       sendHoldoff = true;
       return false;
     }

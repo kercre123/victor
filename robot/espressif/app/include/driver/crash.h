@@ -38,4 +38,12 @@ int crashHandlerMarkReported(const int index);
 
 void crashHandlerShowStatus(void);
 
+/** Stores the location and value of an error occurring during boot
+ * @param func_addr The function that returned an error code
+ * @param error_code The error code 
+ */
+void recordBootError(void* func_addr, int32_t error_code);
+int crashHandlerBootErrorCount(uint32_t* dump_data);
+
+
 #endif

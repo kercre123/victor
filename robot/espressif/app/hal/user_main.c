@@ -76,6 +76,7 @@ static bool wifi_monitor_connection_status(uint32_t param)
       os_printf("WIFI has connected station(s) without MAC. Resetting\r\n");
       wifi_set_opmode_current(NULL_MODE);  //off
       wifi_set_opmode_current(SOFTAP_MODE); //ap-mode back on.
+      recordBootError(wifi_monitor_connection_status, numConnected-numRecorded);
     }
   }
   return false;
@@ -190,6 +191,7 @@ void user_init(void)
   if (err == false)
   {
     os_printf("Error getting wifi softap config\r\n");
+    recordBootError(wifi_softap_get_config, err);
   }
   
   os_sprintf((char*)ap_config.ssid, ssid);
@@ -232,9 +234,14 @@ void user_init(void)
 
   // Setup ESP module to AP mode and apply settings
   wifi_set_event_handler_cb(wifi_event_callback);
-  wifi_set_opmode(SOFTAP_MODE);
-  wifi_softap_set_config_current(&ap_config);
+  if (!wifi_set_opmode(SOFTAP_MODE)) {
+     recordBootError(wifi_set_opmode, false);
+  }
+  if (!wifi_softap_set_config_current(&ap_config)) {
+     recordBootError(wifi_softap_set_config_current, false);
+  }
   wifi_set_phy_mode(PHY_MODE_11G);
+
   // Disable radio sleep
   //wifi_set_sleep_type(NONE_SLEEP_T);
   // XXX: This may help streaming performance, but seems to cause slow advertising - not sure which is worse
@@ -245,6 +252,7 @@ void user_init(void)
   if (err == false)
   {
     os_printf("Couldn't stop DHCP server\r\n");
+    recordBootError(wifi_softap_dhcps_stop, err);
   }
 
   struct ip_info ipinfo;
@@ -257,6 +265,7 @@ void user_init(void)
   if (err == false)
   {
     os_printf("Couldn't set IP info\r\n");
+    recordBootError(wifi_softap_dhcps_stop, err);
   }
 
   // Configure the DHCP server
@@ -266,6 +275,7 @@ void user_init(void)
   if (err == false)
   {
     os_printf("Couldn't set DHCPS lease information\r\n");
+    recordBootError(wifi_softap_set_dhcps_lease, err);
   }
 
   // Start DHCP server
@@ -273,6 +283,7 @@ void user_init(void)
   if (err == false)
   {
     os_printf("Couldn't restart DHCP server\r\n");
+    recordBootError(wifi_softap_dhcps_start, err);
   }
 
   os_printf("SSID: %s\t(Chan: %d)\r\nPSK: %s\r\n", ap_config.ssid, ap_config.channel, ap_config.password);

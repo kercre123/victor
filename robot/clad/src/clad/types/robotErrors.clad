@@ -15,6 +15,7 @@ namespace RobotInterface {
     BodyCrash = 2,
     PropCrash = 3,
     I2SpiCrash= 4,
+    BootError = 5,
   }
 
   // Enum must use explict values that are never reused to preserve forward / backward binary compatibility

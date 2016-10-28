@@ -12,6 +12,7 @@ extern "C" {
 #include "driver/rtc.h"
 #include "sha1.h"
 #include "anki/cozmo/robot/espAppImageHeader.h"
+#include "driver/crash.h"
 }
 #include "anki/cozmo/robot/flash_map.h"
 #include "upgradeController.h"
@@ -146,6 +147,7 @@ namespace UpgradeController {
       default:
       {
         os_printf("UPC: Unexpected selectedImage key %08x. Not enabling OTA\r\n", selectedImage);
+        recordBootError((void*)GetImageSelection, selectedImage);
         self.phase = OTAT_Uninitalized;
         return false;
       }
@@ -558,7 +560,6 @@ namespace UpgradeController {
         {
           uint8_t* address = self.counter + (uint8_t*)fwb->flashBlock;
           aes_cfb_decode( AES_KEY, aes_iv, address, address, AES_CHUNK_SIZE, aes_iv);
-          
           self.counter += AES_CHUNK_SIZE;
         }
         else

@@ -13,11 +13,15 @@
 
 #define CRASH_DUMP_SOFISTICATED 1
 
+#define BOOT_ERROR_SOURCE 5 //from robot/clad/src/clad/types/robotErrors.clad.
+
 extern ReliableConnection g_conn;   // So we can check canaries when we crash
 
 extern int COZMO_VERSION_ID; // Initalized in factoryData.c
 
 static int nextCrashRecordSlot;
+static int bootErrorRecordSlot;
+static int bootErrorRecordIndex;
 
 void os_put_str(char* str)
 {
@@ -124,12 +128,79 @@ static struct initStatus {
   uint8_t  n_rep;
 } initResult;
 
+
+/* Finds first entry that has not been written 
+ *Assumes memory starts at all 0xFFFFs
+ */
+int crashHandlerBootErrorCount(uint32_t* dump_data)
+{
+   CrashLog_BootError* error_entry = (CrashLog_BootError*)dump_data;
+   int i;
+   for (i = 0; i< BOOT_ERROR_MAX_ENTRIES; i++)
+   {
+      if (error_entry[i].addr == (void*)0xFFFFffff)
+      {
+         break;
+      }
+   }
+   return i;   
+}
+
+static bool crashDumpReadWriteOkay(const u32 address, const u32 length)
+{
+  if ((address + length) <= address) return false; // Check for integer overflow or 0 length
+  // Crash dump sector region is default okay region
+  else if ((address >= (CRASH_DUMP_SECTOR * SECTOR_SIZE)) && ((address + length) <= (APPLICATION_A_SECTOR * SECTOR_SIZE))) return true; // First allowable segment of NVStorage
+  return false;
+}
+
+static SpiFlashOpResult crashRecordRead(uint32_t recordNumber, CrashRecord* dest)
+{
+  const uint32_t recordAddress = (CRASH_DUMP_SECTOR * SECTOR_SIZE) + (CRASH_RECORD_SIZE * recordNumber);
+  const uint32_t length = CRASH_RECORD_SIZE; 
+   
+   if (!crashDumpReadWriteOkay(recordAddress, length))
+   {
+      return SPI_FLASH_RESULT_ERR;
+   }
+   return spi_flash_read(recordAddress, (uint32_t*)dest, length);
+}
+
+static SpiFlashOpResult crashRecordWrite(uint32_t recordNumber, const CrashRecord* data)
+{
+  const uint32_t recordAddress = (CRASH_DUMP_SECTOR * SECTOR_SIZE) + (CRASH_RECORD_SIZE * recordNumber);
+  const uint32_t length = CRASH_RECORD_SIZE; 
+  if (!crashDumpReadWriteOkay(recordAddress, length))
+  {
+     return SPI_FLASH_RESULT_ERR;
+  }
+  return spi_flash_write(recordAddress, (uint32_t*)data, length);
+}
+
+static SpiFlashOpResult crashFlashWrite(uint32_t address, const uint32_t* data, uint32_t length)
+{
+   if (!crashDumpReadWriteOkay(address, length))
+   {
+      return SPI_FLASH_RESULT_ERR;
+   }
+   return spi_flash_write(address, (uint32_t*)data, length);
+}
+
+static SpiFlashOpResult crashFlashErase()
+{
+   return spi_flash_erase_sector(CRASH_DUMP_SECTOR);
+}
+
+
+
+
 // Register crash handler with XTOS - must be called before 
 void ICACHE_FLASH_ATTR crashHandlerInit(void)
 {
   int reportedRecords = 0;
   int recordNumber;
   nextCrashRecordSlot = -1; // Invalid
+  bootErrorRecordSlot = -1;
   initResult.addr = 0;
   initResult.code = 0;
   
@@ -137,11 +208,10 @@ void ICACHE_FLASH_ATTR crashHandlerInit(void)
   for (recordNumber=0; recordNumber<MAX_CRASH_LOGS; ++recordNumber)
   {
     CrashRecord rec;
-    const uint32 recordAddress = (CRASH_DUMP_SECTOR * SECTOR_SIZE) + (CRASH_RECORD_SIZE * recordNumber);
-    const SpiFlashOpResult rslt = spi_flash_read(recordAddress, (uint32*)&rec, CRASH_RECORD_SIZE);
+    const SpiFlashOpResult rslt = crashRecordRead(recordNumber, &rec);
     if (rslt != SPI_FLASH_RESULT_OK)
     {
-      initResult.addr = recordAddress;
+      initResult.addr = recordNumber;
       initResult.code = rslt;
       break;
     }
@@ -156,13 +226,17 @@ void ICACHE_FLASH_ATTR crashHandlerInit(void)
       {
         reportedRecords = recordNumber + 1;
       }
+      else if (rec.reporter == BOOT_ERROR_SOURCE) { //this record is not reported and contains boot errors
+         bootErrorRecordSlot = recordNumber;
+         bootErrorRecordIndex = crashHandlerBootErrorCount(rec.dump);
+      }
     }
   }
   
   if ((recordNumber > 0) && (reportedRecords == recordNumber)) // Have records but all reported
   {
-    initResult.addr = CRASH_DUMP_SECTOR;
-    SpiFlashOpResult rslt = spi_flash_erase_sector(CRASH_DUMP_SECTOR);
+    initResult.addr = CRASH_DUMP_SECTOR*SECTOR_SIZE;
+    SpiFlashOpResult rslt = crashFlashErase();
     if (rslt != SPI_FLASH_RESULT_OK)
     {
       initResult.code = rslt;
@@ -171,6 +245,12 @@ void ICACHE_FLASH_ATTR crashHandlerInit(void)
     {
       nextCrashRecordSlot = 0;
     }
+  }
+
+  if (bootErrorRecordSlot < 0 || bootErrorRecordIndex >= BOOT_ERROR_MAX_ENTRIES)
+  { //boot error block not found, use first available slot.
+     bootErrorRecordSlot = nextCrashRecordSlot;
+     bootErrorRecordIndex = 0;
   }
 
   initResult.n_rec = recordNumber;
@@ -188,7 +268,7 @@ void ICACHE_FLASH_ATTR crashHandlerInit(void)
 void ICACHE_FLASH_ATTR crashHandlerShowStatus(){
   os_printf("Found %d crash logs, %d were reported\r\n",
             initResult.n_rec, initResult.n_rep);
-  if (initResult.addr == CRASH_DUMP_SECTOR) {
+  if (initResult.addr == CRASH_DUMP_SECTOR*SECTOR_SIZE) {
     if (initResult.code != SPI_FLASH_RESULT_OK)
     {
       os_printf("CH: Couldn't erase reported records in sector 0x%x, %d\r\n", CRASH_DUMP_SECTOR, initResult.code);
@@ -199,7 +279,7 @@ void ICACHE_FLASH_ATTR crashHandlerShowStatus(){
     }
   }
   else if (initResult.code != 0) {
-    os_printf("CH: Couldn't read existing records at 0x%x, %d\r\n",
+    os_printf("CH: Couldn't read existing records at idx %x, %d\r\n",
               initResult.addr, initResult.code);
   }
   else if (initResult.n_rec == MAX_CRASH_LOGS) {
@@ -216,12 +296,11 @@ int ICACHE_FLASH_ATTR crashHandlerGetReport(const int index, CrashRecord* record
     os_printf("crashHandlerGetReport: NULL record ptr\r\n");
     return -2;
   }
-  const uint32 recordAddr = (CRASH_DUMP_SECTOR * SECTOR_SIZE) + (CRASH_RECORD_SIZE * index);
-  const SpiFlashOpResult rslt = spi_flash_read(recordAddr, (uint32*)record, CRASH_RECORD_SIZE);
+  const SpiFlashOpResult rslt = crashRecordRead(index, record);
   if (rslt == SPI_FLASH_RESULT_OK) return 0;
   else
   {
-    os_printf("crashHandlerGetReport: Error reading record from flash at 0x%x, %d\r\n", recordAddr, rslt);
+    os_printf("crashHandlerGetReport: Error reading record from flash at idx %x, %d\r\n", index, rslt);
     return rslt;
   }
 }
@@ -232,13 +311,15 @@ int crashHandlerPutReport(CrashRecord* record)
   STACK_LEFT(true);
   if (nextCrashRecordSlot < 0 || nextCrashRecordSlot >= MAX_CRASH_LOGS) return -1;
   if (record == NULL) return -2;
-  const uint32 recordWriteAddress = (CRASH_DUMP_SECTOR * SECTOR_SIZE) + (CRASH_RECORD_SIZE * nextCrashRecordSlot);
   record->nWritten  = 0;
   record->nReported = 0xFFFFffff;
-  const SpiFlashOpResult rslt = spi_flash_write(recordWriteAddress, (uint32*)record, CRASH_RECORD_SIZE);
+  const SpiFlashOpResult rslt = crashRecordWrite(nextCrashRecordSlot, record);
   if (rslt == SPI_FLASH_RESULT_OK)
   {
     const int ret = nextCrashRecordSlot;
+    if (bootErrorRecordSlot == nextCrashRecordSlot) {
+       bootErrorRecordSlot++;
+    }
     nextCrashRecordSlot++;
     return ret;
   }
@@ -251,8 +332,42 @@ int crashHandlerPutReport(CrashRecord* record)
 int ICACHE_FLASH_ATTR crashHandlerMarkReported(const int index)
 {
   if (index < 0 || index >= MAX_CRASH_LOGS) return -1;
+  if (index == bootErrorRecordSlot)  { // if we are about to report our boot error log,
+     bootErrorRecordIndex = 0;                   // move  future logging to beginning 
+     bootErrorRecordSlot = nextCrashRecordSlot;  // of the next free slot
+  }
   const uint32 recordAddr = (CRASH_DUMP_SECTOR * SECTOR_SIZE) + (CRASH_RECORD_SIZE * index);
   uint32 nReported = 0;
-  const SpiFlashOpResult rslt = spi_flash_write(recordAddr + 4, &nReported, 4);
+  const SpiFlashOpResult rslt = crashFlashWrite(recordAddr + 4, &nReported, sizeof(nReported));
   return rslt;
 }
+
+
+void recordBootError(void* errorFunc, int32_t errorCode)
+{
+   os_printf("Recording Boot error %d @ %p\r\n", errorCode, errorFunc);
+   SpiFlashOpResult rslt = SPI_FLASH_RESULT_OK;
+   const uint32 recordAddr = (CRASH_DUMP_SECTOR * SECTOR_SIZE) + (CRASH_RECORD_SIZE * bootErrorRecordSlot);
+   
+   if (bootErrorRecordSlot < 0 || bootErrorRecordSlot >= MAX_CRASH_LOGS ||
+       bootErrorRecordIndex >= BOOT_ERROR_MAX_ENTRIES ) {
+      return;
+   }
+   if  (bootErrorRecordSlot == nextCrashRecordSlot) {
+      nextCrashRecordSlot++; //we are taking this slot, next crash goes one after.
+   }
+   if (bootErrorRecordIndex == 0) { //first entry
+      uint32_t CrashHeader[4] = {0,0xFFFFffff, BOOT_ERROR_SOURCE, 0};
+      rslt = crashFlashWrite(recordAddr, CrashHeader, sizeof(CrashHeader));
+   }
+   if (rslt == SPI_FLASH_RESULT_OK) {
+      const int recordOffset = 16 + bootErrorRecordIndex * sizeof(CrashLog_BootError);
+      CrashLog_BootError entry = { errorFunc, errorCode};
+      rslt = crashFlashWrite(recordAddr + recordOffset, (uint32_t*)&entry, sizeof(entry));
+   }
+   if (rslt == SPI_FLASH_RESULT_OK) {
+      bootErrorRecordIndex++;
+   }
+}
+
+

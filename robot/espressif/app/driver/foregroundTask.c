@@ -7,6 +7,7 @@
 #include "osapi.h"
 #include "mem.h"
 #include "foregroundTask.h"
+#include "driver/crash.h"
 
 #define foregroundTaskQueueLen 16 ///< Maximum number of task 1 subtasks which can be in the queue
 static os_event_t foregroundTaskQueue[foregroundTaskQueueLen]; ///< Memory for the task 1 queue
@@ -28,6 +29,7 @@ void foregroundTaskTask(os_event_t *event)
       if (system_os_post(foregroundTask_PRIO, event->sig, event->par) == false)
       {
         os_printf("Couldn't repost foregroundTask 0x%x\r\n", event->sig);
+        recordBootError(system_os_post, event->sig);
       }
     }
   }
@@ -39,6 +41,7 @@ int8_t ICACHE_FLASH_ATTR foregroundTaskInit(void)
   if (system_os_task(foregroundTaskTask, foregroundTask_PRIO, foregroundTaskQueue, foregroundTaskQueueLen) == false)
   {
     os_printf("\tCouldn't register OS task\r\n");
+    recordBootError(system_os_task, -1);
     return -1;
   }
   else

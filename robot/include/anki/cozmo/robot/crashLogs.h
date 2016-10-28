@@ -118,6 +118,14 @@ typedef struct {
 } CrashLog_I2Spi;
   
 ct_assert(sizeof(CrashLog_I2Spi) <= CRASH_RECORD_PAYLOAD_SIZE);
-   
+
+typedef struct {
+   void* addr;
+   int32_t error_code;
+} CrashLog_BootError;
+#define BOOT_ERROR_MAX_ENTRIES  (CRASH_RECORD_PAYLOAD_SIZE / sizeof(CrashLog_BootError))
+ct_assert(sizeof(CrashLog_BootError)*BOOT_ERROR_MAX_ENTRIES <= CRASH_RECORD_PAYLOAD_SIZE);
+
+
 
 #endif

@@ -72,7 +72,7 @@ void TriggerLogSend(u8 index)
 
 void StartQuery()
 {
-  //crashHandlerShowStatus(); //report what we found at startup
+  crashHandlerShowStatus(); //report what we found at startup
   rtipCrashReadState = RBS_read;
 }
 
@@ -191,10 +191,11 @@ void Update()
   else if (reportIndex < MAX_CRASH_LOGS)
   {
     CrashRecord record;
-    crashHandlerGetReport(reportIndex, &record);
-    if (record.nWritten == 0 && record.nReported != 0)
+    int err = crashHandlerGetReport(reportIndex, &record);
+    if (!err && record.nWritten == 0 && record.nReported != 0)
     {
       RobotInterface::CrashReport report;
+      int dump_bytes = 0;
       STACK_LEFT(DEBUG_CR);
       report.errorCode = record.errorCode;
       report.which = record.reporter;
@@ -204,38 +205,45 @@ void Update()
         {
           case RobotInterface::WiFiCrash:
           {
-            report.dump_length = sizeof(CrashLog_ESP)/sizeof(uint32_t);
+            dump_bytes = sizeof(CrashLog_ESP);
             break;
           }
           case RobotInterface::RTIPCrash:
           {
-            report.dump_length = sizeof(CrashLog_K02)/sizeof(uint32_t);
+            dump_bytes = sizeof(CrashLog_K02);
             break;
           }
           case RobotInterface::BodyCrash:
           {
-            report.dump_length = sizeof(CrashLog_NRF)/sizeof(uint32_t);
+            dump_bytes = sizeof(CrashLog_NRF);
             break;
           }
           case RobotInterface::I2SpiCrash:
           {
-            report.dump_length = sizeof(CrashLog_I2Spi)/sizeof(uint32_t);
+            dump_bytes = sizeof(CrashLog_I2Spi);
+            break;
+          }
+          case RobotInterface::BootError:
+          {
+            int nrecords = crashHandlerBootErrorCount(record.dump);
+            dump_bytes = nrecords * sizeof(CrashLog_BootError);
             break;
           }
           default:
           {
             AnkiWarn( 206, "CrashReporter.UnknownReporter", 513, "Reporter = %d", 1, record.reporter);
-            report.dump_length = 0;
+            dump_bytes = 0;
             break;
           }
         }
-        os_memcpy(report.dump, record.dump, report.dump_length);
+        os_memcpy(report.dump, record.dump, dump_bytes);
+        report.dump_length = dump_bytes / sizeof(report.dump[0]);
       }
       else
       {
         report.dump_length = 0;
       }
-      if (clientQueueAvailable() > report.dump_length + LOW_PRIORITY_BUFFER_ROOM)
+      if (clientQueueAvailable() > dump_bytes + LOW_PRIORITY_BUFFER_ROOM)
       {
         if (RobotInterface::SendMessage(report))
         {
@@ -250,7 +258,7 @@ void Update()
         }
       }
       else {
-        debug("No Room for dump:  %d > %d\r\n", report.dump_length, clientQueueAvailable());
+        debug("No Room for dump:  %d > %d\r\n", report.dump_bytes, clientQueueAvailable());
       }
     }
     else  //not present, or already reported

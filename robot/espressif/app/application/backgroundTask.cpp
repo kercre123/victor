@@ -272,70 +272,87 @@ void Exec(os_event_t *event)
 } // Cozmo
 } // Anki
 
+enum BackgroundTaskError
+{
+  BTE_ok = 0,
+  BTE_exec_task = -1,
+  BTE_dh_init = -2,
+  BTE_rtip_init = -3,
+  BTE_anim_init = -4,
+  BTE_bg_post = -5,
+  BTE_face_init = -6,
+  BTE_factory_init = -7,
+  BTE_wifi_init = -8,
+  BTE_crash_init = -9,
+  BTE_storage_init = -10,
+  BTE_upgrade_init = -127
+};
 
 extern "C" int8_t backgroundTaskInit(void)
 {
   //os_printf("backgroundTask init\r\n");
+  BackgroundTaskError result = BTE_ok;
   if (system_os_task(Anki::Cozmo::BackgroundTask::Exec, backgroundTask_PRIO, backgroundTaskQueue, backgroundTaskQueueLen) == false)
   {
     os_printf("\tCouldn't register background OS task\r\n");
-    return -1;
+    result =  BTE_exec_task;
   }
   else if (DiffieHellman::Init() != true)
   {
     os_printf("\tCouldn't initalize Diffie Hellman module\r\n");
-    return -2;
+    result =  BTE_dh_init;
   }
   else if (Anki::Cozmo::RTIP::Init() != true)
   {
     os_printf("\tCouldn't initalize RTIP interface module\r\n");
-    return -2;
+    result =  BTE_rtip_init;
   }
   else if (Anki::Cozmo::AnimationController::Init() != Anki::RESULT_OK)
   {
     os_printf("\tCouldn't initalize animation controller\r\n");
-    return -3;
+    result =  BTE_anim_init;
   }
   else if (system_os_post(backgroundTask_PRIO, 0, 0) == false)
   {
     os_printf("\tCouldn't post background task initalization\r\n");
-    return -4;
+    result =  BTE_bg_post;
   }
   else if (Anki::Cozmo::Face::Init() != Anki::RESULT_OK)
   {
     os_printf("\tCouldn't initalize face controller\r\n");
-    return -5;
+    result =  BTE_face_init;
   }
   else if (Anki::Cozmo::Factory::Init() == false)
   {
     os_printf("\tCouldn't initalize factory test framework\r\n");
-    return -6;
+    result =  BTE_factory_init;
   }
   else if (Anki::Cozmo::WiFiConfiguration::Init() != Anki::RESULT_OK)
   {
     os_printf("\tCouldn't initalize WiFiConfiguration module\r\n");
-    return -7;
+    result =  BTE_wifi_init;
   }
   else if (Anki::Cozmo::CrashReporter::Init() == false)
   {
     os_printf("\tCouldn't initalize CrashReporter\r\n");
-    return -8;
+    result =  BTE_crash_init;
   }
   else if (Anki::Cozmo::NVStorage::Init() == false)
   {
     os_printf("\tCouldn't initalize NVStorage\r\n");
-    return -9;
+    result =  BTE_storage_init;
   }
   // Upgrade controller should be initalized last
   else if (Anki::Cozmo::UpgradeController::Init() == false)
   {
     os_printf("\tCouldn't initalize upgrade controller\r\n");
-    return -128;
+    result =  BTE_upgrade_init;
   }
-  else
+  if (result)
   {
-    return 0;
+    recordBootError((void*)backgroundTaskInit, result);
   }
+  return (int8_t)result;
 }
 
 extern "C" bool i2spiSynchronizedCallback(uint32 param)
