@@ -14,6 +14,8 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotIdleTimeoutComponent.h"
@@ -92,10 +94,15 @@ void RobotIdleTimeoutComponent::HandleMessage(const ExternalInterface::CancelIdl
 IActionRunner* RobotIdleTimeoutComponent::CreateGoToSleepAnimSequence(Robot& robot)
 {
   CompoundActionSequential* goToSleepAnims = new CompoundActionSequential(robot);
-  goToSleepAnims->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::GoToSleepGetIn));
-  goToSleepAnims->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::GoToSleepSleeping));
-  goToSleepAnims->AddAction(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::GoToSleepOff));
-  return goToSleepAnims;
+  goToSleepAnims->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GoToSleepGetIn));
+  goToSleepAnims->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GoToSleepSleeping));
+  goToSleepAnims->AddAction(new TriggerAnimationAction(robot, AnimationTrigger::GoToSleepOff));
+  
+  CompoundActionParallel* parallelContainer = new CompoundActionParallel(robot);
+  parallelContainer->AddAction(goToSleepAnims);
+  parallelContainer->AddAction(new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK));
+  
+  return parallelContainer;
 }
 
 } // end namespace Cozmo
