@@ -34,6 +34,8 @@ enum uint_8 BehaviorType {
   ReactToFrustration,
   ReactToReturnedToTreads,
   ReactToSparked,
+  ReactToPyramid,
+  ReactToStackOfCubes,
   PlayAnim,
   PlayArbitraryAnim,
   PounceOnMotion,

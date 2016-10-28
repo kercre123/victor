@@ -43,11 +43,13 @@
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToOnCharger.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPickup.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPoke.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/BehaviorReactToPyramid.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToReturnedToTreads.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnBack.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnFace.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToRobotOnSide.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToSparked.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToStackOfCubes.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToUnexpectedMovement.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorCantHandleTallStack.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramid.h"
@@ -303,6 +305,16 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::ReactToSparked:
     {
       newBehavior = new BehaviorReactToSparked(robot, config);
+      break;
+    }
+    case BehaviorType::ReactToStackOfCubes:
+    {
+      newBehavior = new BehaviorReactToStackOfCubes(robot, config);
+      break;
+    }
+    case BehaviorType::ReactToPyramid:
+    {
+      newBehavior = new BehaviorReactToPyramid(robot, config);
       break;
     }
     case BehaviorType::Count:
