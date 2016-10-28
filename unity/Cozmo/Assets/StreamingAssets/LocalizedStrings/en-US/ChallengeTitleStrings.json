@@ -118,7 +118,7 @@
     "translation": "Memory Match"
   },
   "simonGame.description": {
-    "translation": "Memory Match is a game of sound and memory. Listen carefully and remember each note!"
+    "translation": "A pattern game that tests your memory. Watch the cubes and listen carefully!"
   },
   "speedTap.title": {
     "translation": "Quick Tap"
@@ -142,6 +142,6 @@
     "translation": "Cozmo Says"
   },
   "cozmoSays.description": {
-    "translation": "Cozmo says stuff"
+    "translation": "In exchange for a Spark, Cozmo will try to say a word or phrase!"
   }
 }
