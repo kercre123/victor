@@ -90,6 +90,7 @@ namespace Cozmo.Minigame.CubePounce {
     private void HandleEndGameAnimFinish(bool success) {
       _CubePounceGame.StopCycleCube(_CubePounceGame.GetCubeTarget().ID);
       _CubePounceGame.StartRoundBasedGameEnd();
+      _CubePounceGame.UpdateUIForGameEnd();
     }
 
     public override void Exit() {

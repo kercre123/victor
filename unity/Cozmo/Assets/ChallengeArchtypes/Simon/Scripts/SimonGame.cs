@@ -257,6 +257,9 @@ namespace Simon {
     }
 
     public void FinalLifeComplete() {
+
+      UpdateUIForGameEnd();
+
       Anki.Cozmo.AnimationTrigger trigger = Anki.Cozmo.AnimationTrigger.Count;
       // Set the length as our score to make High Scores easier
       PlayerScore = _CurrentSequenceLength;
