@@ -266,7 +266,7 @@ void WebotsDevLogController::EnableSaveImages(bool enable)
   const size_t numWritten = (uint32_t)message.Pack(buffer, MAX_MESSAGE_SIZE);
   
   if (_vizConnection->Send((const char*)buffer, (int)numWritten) <= 0) {
-    PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd failed\n", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
+    PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd failed", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
   }
 }
 

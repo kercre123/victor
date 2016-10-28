@@ -284,7 +284,7 @@ Result Init()
   // Generate a factory ID
   factoryID_ = currTime_ms * 100000 + nodeIndex * 1000 + blockID_;
   factoryID_ &= 0x7FFFFFFF; // Make sure it doesn't get mistaken for a charger
-  PRINT_NAMED_INFO("ActiveBlock", "Starting active object %d (factoryID %d)\n", blockID_, factoryID_);
+  PRINT_NAMED_INFO("ActiveBlock", "Starting active object %d (factoryID %d)", blockID_, factoryID_);
   
   
   // Get all LED handles

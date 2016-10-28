@@ -113,7 +113,7 @@ namespace Anki {
         #if !VIZ_ON_DEVICE
         ANKI_CPU_PROFILE("VizClient.Send");
         if (_vizClient.Send((const char*)buffer, (int)numWritten) <= 0) {
-          PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd failed\n", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
+          PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd failed", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
         }
         #endif
       }
@@ -127,7 +127,7 @@ namespace Anki {
         #else
         if (_unityVizClient.Send((const char*)buffer, (int)numWritten) <= 0) {
           if ( _unityVizClient.IsConnected() ) { // prevents webots from crying when no Unity app is launched
-            PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd to Unity failed\n", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
+            PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd to Unity failed", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
           }
         }
         #endif

@@ -102,7 +102,7 @@ bool DataPlatform::readAsJson(const std::string& resourceName, Json::Value& data
   bool success = reader.parse(jsonFile, data);
   if(! success) {
     PRINT_NAMED_ERROR("DataPlatform.readAsJson",
-      "Failed to parse Json file %s. \n[%s]",
+      "Failed to parse Json file %s [%s]",
         resourceName.c_str(),
         reader.getFormattedErrorMessages().c_str());
 //    ASSERT_NAMED(false, "DataPlatform.readAsJson.malformedJson"); We have build issues. Disable for now

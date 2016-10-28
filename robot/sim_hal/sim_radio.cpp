@@ -128,7 +128,7 @@ namespace Anki {
 
     Result InitSimRadio(const char* advertisementIP)
     {
-      PRINT_NAMED_INFO("SIM", "Cozmo START LISTENING (port %d) ...\n", ROBOT_RADIO_BASE_PORT + HAL::GetIDCard()->esn);
+      PRINT_NAMED_INFO("SIM", "Cozmo START LISTENING (port %d)", ROBOT_RADIO_BASE_PORT + HAL::GetIDCard()->esn);
       if (!server.StartListening(ROBOT_RADIO_BASE_PORT + HAL::GetIDCard()->esn)) {
         printf("ERROR: Cozmo couldn't start UDP server\n");
       }

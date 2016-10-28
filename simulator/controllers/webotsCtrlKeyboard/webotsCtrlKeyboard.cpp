@@ -1800,7 +1800,7 @@ namespace Anki {
                         size_t numBytes = fread(d.data(), 1, d.size(), fp);
                         d.resize(numBytes);
                         PRINT_CH_INFO("Keyboard", "SendNVStorageWriteEntry.ReadInputImage",
-                                      "Tag: %s, read %zu bytes\n", EnumToString(tag), numBytes);
+                                      "Tag: %s, read %zu bytes", EnumToString(tag), numBytes);
                         
                         ExternalInterface::NVStorageWriteEntry temp;
                         size_t MAX_BLOB_SIZE = temp.data.size();

@@ -328,7 +328,7 @@ namespace Anki {
       // capture time from now on.
       // TODO: Not sure from Cyberbotics support message whether this should include "+ TIME_STEP" or not...
       cameraStartTime_ms_ = HAL::GetTimeStamp(); // + TIME_STEP;
-      PRINT_NAMED_INFO("SIM", "Setting camera start time as %d.\n", cameraStartTime_ms_);
+      PRINT_NAMED_INFO("SIM", "Setting camera start time as %d", cameraStartTime_ms_);
 
       enableVideo_ = robotNode->getField("enableVideo")->getSFBool();
       if (!enableVideo_) {
@@ -342,12 +342,12 @@ namespace Anki {
       if (lastDelimPos != std::string::npos) {
         robotID_ = atoi( name.substr(lastDelimPos+1).c_str() );
         if (robotID_ < 1) {
-          PRINT_NAMED_ERROR("SIM.RobotID", "***ERROR: Invalid robot name (%s). ID must be greater than 0\n", name.c_str());
+          PRINT_NAMED_ERROR("SIM.RobotID", "Invalid robot name (%s). ID must be greater than 0.", name.c_str());
           return RESULT_FAIL;
         }
-        PRINT_NAMED_INFO("SIM", "Initializing robot ID: %d\n", robotID_);
+        PRINT_NAMED_INFO("SIM", "Initializing robot ID: %d", robotID_);
       } else {
-        PRINT_NAMED_ERROR("SIM.RobotName", "***ERROR: Cozmo robot name %s is invalid.  Must end with '_<ID number>'\n.", name.c_str());
+        PRINT_NAMED_ERROR("SIM.RobotName", "Cozmo robot name %s is invalid.  Must end with '_<ID number>'.", name.c_str());
         return RESULT_FAIL;
       }
 
@@ -1285,7 +1285,7 @@ namespace Anki {
               for (u32 i=0; i< MAX_NUM_ACTIVE_OBJECTS; ++i) {
                 ActiveObjectSlotInfo* cubeInfo = &activeObjectSlots_[i];
                 if (cubeInfo->assignedFactoryID == 0) {
-                  PRINT_NAMED_INFO("SIM", "sim_hal.Update.AutoAssignedObject: FactoryID 0x%x, type 0x%hx, slot %d\n",
+                  PRINT_NAMED_INFO("SIM", "sim_hal.Update.AutoAssignedObject: FactoryID 0x%x, type 0x%hx, slot %d",
                                    odMsg.factory_id, odMsg.device_type, i);
                   cubeInfo->assignedFactoryID = odMsg.factory_id;
                   break;
