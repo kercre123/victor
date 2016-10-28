@@ -11,7 +11,11 @@
  **/
 
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
+#include "anki/cozmo/basestation/animationGroup/animationGroup.h"
+#include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
+#include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotManager.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/math/math.h"
@@ -19,6 +23,8 @@
 
 
 #define DEBUG_SAYTEXT_ACTION 0
+// Max duration of generated animation
+const float kMaxAnimationDuration_ms = 60000;  // 1 min
 
 
 namespace Anki {
@@ -197,7 +203,7 @@ ActionResult SayTextAction::Init()
         if (DEBUG_SAYTEXT_ACTION) {
           PRINT_CH_INFO(kLocalLogChannel, "SayTextAction.Init.CreatingAnimation", "");
         }
-        // Get appropriate audio event for style
+        // Get appropriate audio event for style and insert key frame
         // TODO: Deprecate this, we are going to change the processing
         const GameEvent::GenericEvent audioEvent = _robot.GetTextToSpeechComponent().GetAudioEvent(_style);
         _animation.AddKeyFrameToBack(RobotAudioKeyFrame(RobotAudioKeyFrame::AudioRef(audioEvent), 0));
@@ -207,14 +213,27 @@ ActionResult SayTextAction::Init()
       else {
         if (DEBUG_SAYTEXT_ACTION) {
           PRINT_CH_INFO(kLocalLogChannel,
-                        "SayTextAction.Init.UsingAnimationGroup", "GameEvent=%d (%s)",
-                        _animationTrigger, EnumToString(_animationTrigger));
+                        "SayTextAction.Init.UsingAnimationGroup", "GameEvent=%d (%s) fitToDuration %c",
+                        _animationTrigger, EnumToString(_animationTrigger), _fitToDuration ? 'Y' : 'N');
         }
-        _playAnimationAction = new TriggerLiftSafeAnimationAction(_robot, _animationTrigger);
+        // Either create an animation for the duration of the generated audio or play specific animation group
+        if (_fitToDuration) {
+          // Get appropriate audio event for style and insert key frame
+          // TODO: Deprecate this, we are going to change the processing
+          const GameEvent::GenericEvent audioEvent = _robot.GetTextToSpeechComponent().GetAudioEvent(_style);
+          _animation.AddKeyFrameToBack(RobotAudioKeyFrame(RobotAudioKeyFrame::AudioRef(audioEvent), 0));
+          
+          // Generate animation
+          UpdateAnimationToFitDuration(duration_ms);
+          _playAnimationAction = new PlayAnimationAction(_robot, &_animation);
+        }
+        else {
+          // Use current animation trigger
+          _playAnimationAction = new TriggerLiftSafeAnimationAction(_robot, _animationTrigger);
+        }
       }
       
       // Set Audio Engine Say Text processing parameters
-      
       // Map SayTextVoice style to Audio Engine SwitchState
       // NOTE: Need to manually map SayTextVoiceStyle to SwitchState::Cozmo_Voice_Processing enum
       const std::unordered_map<SayTextVoiceStyle, SwitchState::Cozmo_Voice_Processing, Util::EnumHasher> processingStateMap {
@@ -283,6 +302,57 @@ void SayTextAction::GenerateTtsAudio()
     PRINT_NAMED_ERROR("SayTextAction.SayTextAction.CreateSpeech", "SpeechState is None");
   }
 } // GenerateTtsAudio()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Helper method
+// TODO: Is there a better way to do this?
+const Animation* GetAnimation(const AnimationTrigger& animTrigger, Robot& robot)
+{
+  RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
+  const Animation* anim = nullptr;
+  if (robot_mgr->HasAnimationForTrigger(animTrigger)) {
+    std::string animationGroupName = robot_mgr->GetAnimationForTrigger(animTrigger);
+    if (animationGroupName.empty()) {
+      PRINT_NAMED_ERROR("SayTextAction.GetAnimation.TriggerAnimationAction.EmptyAnimGroupNameForTrigger",
+                          "Event: %s", EnumToString(animTrigger));
+    }
+    // Get AnimationGroup for animation group name
+    const AnimationGroup* group = robot.GetContext()->GetRobotManager()->GetAnimationGroups().GetAnimationGroup(animationGroupName);
+    if (group != nullptr && !group->IsEmpty()) {
+      // Get Random animation in group
+      const std::string& animName = group->GetAnimationName(robot.GetMoodManager(),
+                                                            robot.GetContext()->GetRobotManager()->GetAnimationGroups(),
+                                                            robot.GetHeadAngle());
+      anim = robot.GetContext()->GetRobotManager()->GetCannedAnimations().GetAnimation(animName);
+    }
+  }
+  else {
+    PRINT_NAMED_ERROR("SayTextAction.GetAnimation.TriggerAnimationAction.NoAnimationForTrigger",
+                        "Event: %s", EnumToString(animTrigger));
+  }
+  return anim;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SayTextAction::UpdateAnimationToFitDuration(const float duration_ms)
+{
+  if (AnimationTrigger::Count != _animationTrigger) {
+    while (_animation.GetLastKeyFrameTime_ms() < duration_ms && duration_ms <= kMaxAnimationDuration_ms ) {
+      const Animation* nextAnim = GetAnimation(_animationTrigger, _robot);
+      if (nullptr != nextAnim) {
+        _animation.AppendAnimation(*nextAnim);
+      }
+      else {
+        PRINT_NAMED_ERROR("SayTextAction.UpdateAnimationToFitDuration.GetAnimationFailed",
+                          "AnimationTrigger: %s", EnumToString(_animationTrigger));
+        break;
+      }
+    }
+  }
+  else {
+    PRINT_NAMED_WARNING("SayTextAction.UpdateAnimationToFitDuration.InvalidAnimationTrigger", "AnimationTrigger::Count");
+  }
+} // UpdateAnimationToFitDuration()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Static Var

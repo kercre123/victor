@@ -35,7 +35,7 @@ namespace FaceEnrollment {
     private void HandleRobotRenamedEnrolledFace(int faceId, string faceName) {
       _CurrentRobot.OnEnrolledFaceRenamed -= HandleRobotRenamedEnrolledFace;
       _FaceEnrollmentGame.SharedMinigameView.HideBackButton();
-      _CurrentRobot.SayTextWithEvent(faceName, Anki.Cozmo.AnimationTrigger.MeetCozmoRenameFaceSayName, callback: (success) => {
+      _CurrentRobot.SayTextWithEvent(faceName, Anki.Cozmo.AnimationTrigger.MeetCozmoRenameFaceSayName, Anki.Cozmo.SayTextIntent.Name_Normal, callback: (success) => {
         _StateMachine.SetNextState(new FaceSlideState());
       });
     }

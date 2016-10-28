@@ -313,7 +313,7 @@ public interface IRobot : IDisposable {
 
   #endregion
 
-  void SayTextWithEvent(string text, AnimationTrigger playEvent, SayTextIntent intent = SayTextIntent.Text, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+  void SayTextWithEvent(string text, AnimationTrigger playEvent, SayTextIntent intent = SayTextIntent.Text, bool fitToDuration = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void SendDemoResetState();
 

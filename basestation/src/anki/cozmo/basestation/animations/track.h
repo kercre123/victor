@@ -98,6 +98,9 @@ public:
   
   // Clear all frames up to, but not including, the current one
   void ClearUpToCurrent();
+  
+  // Append Track to current track
+  void AppendTrack(const Track& appendTrack, const TimeStamp_t appendStartTime_ms);
 
 private:
   
@@ -397,6 +400,19 @@ void Track<FRAME_TYPE>::ClearUpToCurrent()
   auto iter = _frames.begin();
   while(iter != _frameIter) {
     iter = _frames.erase(iter);
+  }
+}
+
+template<class FRAME_TYPE>
+void Track<FRAME_TYPE>::AppendTrack(const Track<FRAME_TYPE>& appendTrack, const TimeStamp_t appendStartTime_ms)
+{
+  for (const FRAME_TYPE& aFrame : appendTrack._frames) {
+    FRAME_TYPE newFrame(aFrame);
+    TimeStamp_t triggerTime = newFrame.GetTriggerTime();
+    newFrame.SetTriggerTime(triggerTime + appendStartTime_ms);
+    if ( RESULT_OK != AddKeyFrameToBack(newFrame) ) {
+      PRINT_NAMED_ERROR("Track.AppendTrack.AddKeyFrameToBack.Failure", "");
+    }
   }
 }
   

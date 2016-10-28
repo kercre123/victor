@@ -257,13 +257,15 @@ message SayText {
   AnimationTrigger    playEvent,      // Set AnimationTrigger::Count to only play the Tts without an animation
   SayTextVoiceStyle   voiceStyle,
   float_32            durationScalar = 1.0,
-  float_32            voicePitch = 0.0
+  float_32            voicePitch = 0.0,
+  bool                fitToDuration   // Use Animation Trigger group to generate an animation to fit the duration of the text to speech audio
 }
 
 message SayTextWithIntent {
   string              text,
   AnimationTrigger    playEvent,    // Set AnimationTrigger::Count to only play the text without an animation
-  SayTextIntent       intent        // Intents have predefined values for the voice style and duration scalar
+  SayTextIntent       intent,       // Intents have predefined values for the voice style and duration scalar
+  bool                fitToDuration // Use Animation Trigger group to generate an animation to fit the duration of the text to speech audio
 }
 
 enum int_32 SearchForNearbyObjectDefaults {

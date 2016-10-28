@@ -647,6 +647,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SayText& s
                                                    sayText.durationScalar,
                                                    sayText.voicePitch);
   sayTextAction->SetAnimationTrigger(sayText.playEvent);
+  sayTextAction->SetFitToDuration(sayText.fitToDuration);
   return sayTextAction;
 }
   
@@ -656,6 +657,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::SayTextWit
 {
   SayTextAction* sayTextAction = new SayTextAction(robot, sayTextWithIntent.text, sayTextWithIntent.intent);
   sayTextAction->SetAnimationTrigger(sayTextWithIntent.playEvent);
+  sayTextAction->SetFitToDuration(sayTextWithIntent.fitToDuration);
   return sayTextAction;
 }
 

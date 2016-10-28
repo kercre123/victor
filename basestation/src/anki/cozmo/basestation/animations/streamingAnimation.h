@@ -203,10 +203,6 @@ private:
   void IncrementCompletedEventCount() { ++_completedEventCount; }
   int _completedEventCount = 0;
   
-  // Get last non audio keyframe time_ms
-  uint32_t GetLastKeyframeTime_ms();
-  
-  
   // Handle Cozmo Event callbacks from Audio Engine
   void HandleCozmoEventCallback(AnimationEvent* animationEvent, const AudioEngine::AudioCallbackInfo& callbackInfo);
   

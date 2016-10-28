@@ -36,7 +36,7 @@ StreamingAnimation::StreamingAnimation(const Animation& origalAnimation)
 : Anki::Cozmo::Animation(origalAnimation)
 {
   // Get Animation Info
-  _lastKeyframeTime_ms = GetLastKeyframeTime_ms();
+  _lastKeyframeTime_ms = GetLastKeyFrameTime_ms();
   
   // Reset all tracks
   Init();
@@ -358,74 +358,6 @@ const StreamingAnimation::AnimationEvent* StreamingAnimation::GetNextEvent() con
     return &_animationAudioEvents[GetEventIndex()];
   }
   return nullptr;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-uint32_t StreamingAnimation::GetLastKeyframeTime_ms()
-{
-  // Get Last keyframe of every track to find the last one in time_ms
-  using FindMaxFunc = std::function<uint32_t (uint32_t finalFrame_ms, uint32_t newFrame_ms)>;
-  const FindMaxFunc updateLastTimeStampFunc = [](uint32_t finalFrame_ms, uint32_t newFrame_ms)
-  {
-    return std::max(finalFrame_ms, newFrame_ms);
-  };
-    
-  
-  uint32_t lastFrameTime_ms = 0;
-  auto& deviceAudioTrack = GetTrack<DeviceAudioKeyFrame>();
-  if (!deviceAudioTrack.IsEmpty()) {
-    lastFrameTime_ms = updateLastTimeStampFunc(lastFrameTime_ms,
-                                               deviceAudioTrack.GetLastKeyFrame()->GetTriggerTime());
-  }
-  
-  auto& robotAudioTrack  = GetTrack<RobotAudioKeyFrame>();
-  if (!robotAudioTrack.IsEmpty()) {
-    lastFrameTime_ms = updateLastTimeStampFunc(lastFrameTime_ms,
-                                               robotAudioTrack.GetLastKeyFrame()->GetTriggerTime());
-  }
-  
-  auto& headTrack        = GetTrack<HeadAngleKeyFrame>();
-  if (!headTrack.IsEmpty()) {
-    lastFrameTime_ms = updateLastTimeStampFunc(lastFrameTime_ms,
-                                               headTrack.GetLastKeyFrame()->GetTriggerTime());
-  }
-  
-  auto& liftTrack        = GetTrack<LiftHeightKeyFrame>();
-  if (!liftTrack.IsEmpty()) {
-    lastFrameTime_ms = updateLastTimeStampFunc(lastFrameTime_ms,
-                                               liftTrack.GetLastKeyFrame()->GetTriggerTime());
-  }
-  
-  auto& bodyTrack        = GetTrack<BodyMotionKeyFrame>();
-  if (!bodyTrack.IsEmpty()) {
-    lastFrameTime_ms = updateLastTimeStampFunc(lastFrameTime_ms,
-                                               bodyTrack.GetLastKeyFrame()->GetTriggerTime());
-  }
-  
-  auto& eventTrack       = GetTrack<EventKeyFrame>();
-  if (!eventTrack.IsEmpty()) {
-    lastFrameTime_ms = updateLastTimeStampFunc(lastFrameTime_ms,
-                                               eventTrack.GetLastKeyFrame()->GetTriggerTime());
-  }
-  
-  auto& faceAnimTrack    = GetTrack<FaceAnimationKeyFrame>();
-  if (!faceAnimTrack.IsEmpty()) {
-    lastFrameTime_ms = updateLastTimeStampFunc(lastFrameTime_ms,
-                                               faceAnimTrack.GetLastKeyFrame()->GetTriggerTime());
-  }
-  
-  auto& backpackLedTrack = GetTrack<BackpackLightsKeyFrame>();
-  if (!backpackLedTrack.IsEmpty()) {
-    lastFrameTime_ms = updateLastTimeStampFunc(lastFrameTime_ms,
-                                               backpackLedTrack.GetLastKeyFrame()->GetTriggerTime());
-  }
-  
-  auto& proceduralFaceTrack = GetTrack<ProceduralFaceKeyFrame>();
-  if (!proceduralFaceTrack.IsEmpty()) {
-    lastFrameTime_ms = updateLastTimeStampFunc(lastFrameTime_ms,
-                                               proceduralFaceTrack.GetLastKeyFrame()->GetTriggerTime());
-  }
-  return lastFrameTime_ms;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

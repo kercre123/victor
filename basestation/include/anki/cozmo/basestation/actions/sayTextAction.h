@@ -63,10 +63,18 @@ public:
   // Audio::GameEvent::GenericEvent::Play__Robot_Vo__External_Cozmo_Processing or Play__Robot_Vo__External_Unprocessed
   void SetAnimationTrigger(AnimationTrigger trigger) { _animationTrigger = trigger; }
   
-protected:
+  // Generate new animation by stiching the animation group animations together until they are equal or greater to the
+  // duration of generated text to speech conent
+  // Note: Animation Trigger must not have Play__Robot_Vo__External_Cozmo_Processing audio event in the
+  // animation. The event will be added to the first frame when generating the animation to fit the duration.
+  void SetFitToDuration(bool fitToDuration) { _fitToDuration = fitToDuration; }
+
   
+protected:
+
   virtual ActionResult Init() override;
   virtual ActionResult CheckIfDone() override;
+
 
 private:
   
@@ -79,10 +87,15 @@ private:
   Animation                 _animation;
   AnimationTrigger          _animationTrigger     = AnimationTrigger::Count; // Count == use built-in animation
   IActionRunner*            _playAnimationAction  = nullptr;
+  bool                      _fitToDuration        = false;
   f32                       _timeout_sec          = 30.f;
   
   // Call to start processing text to speech
   void GenerateTtsAudio();
+  
+  // Append animation by stitching animation trigger group animations together until the animation's duration is
+  // greater or equal to the provided duration
+  void UpdateAnimationToFitDuration(const float duration_ms);
   
   // SayTextVoiceStyle lookup up by name
   using SayTextVoiceStyleMap = std::unordered_map<std::string, SayTextVoiceStyle>;

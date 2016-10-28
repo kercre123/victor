@@ -103,9 +103,9 @@ public class SayTextSlide : MonoBehaviour {
         new RobotActionUnion().Initialize(new PlayAnimationTrigger().Initialize(RobotEngineManager.Instance.CurrentRobot.ID, 1, getInTrigger, true)),
         new RobotActionUnion().Initialize(new SayTextWithIntent().Initialize(
           _TextInput.text,
-          // TODO: Replace with Jordan's loop speak text feature.
-          Anki.Cozmo.AnimationTrigger.MeetCozmoReEnrollmentSayName,
-          Anki.Cozmo.SayTextIntent.Text)),
+          Anki.Cozmo.AnimationTrigger.CozmoSaysSpeakLoop,
+          Anki.Cozmo.SayTextIntent.Cozmo_Says,
+          true)),
         new RobotActionUnion().Initialize(new PlayAnimationTrigger().Initialize(RobotEngineManager.Instance.CurrentRobot.ID, 1, getOutTrigger, true))
       };
 

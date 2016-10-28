@@ -209,12 +209,14 @@ namespace FaceEnrollment {
         new RobotActionUnion().Initialize(new SayTextWithIntent().Initialize(
           _NameForFace,
           Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentSayName,
-          Anki.Cozmo.SayTextIntent.Name_FirstIntroduction_1)),
+          Anki.Cozmo.SayTextIntent.Name_FirstIntroduction_1,
+          false)),
         // 2. repeat name                      
         new RobotActionUnion().Initialize(new SayTextWithIntent().Initialize(
           _NameForFace,
           Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentRepeatName,
-          Anki.Cozmo.SayTextIntent.Name_FirstIntroduction_2)),
+          Anki.Cozmo.SayTextIntent.Name_FirstIntroduction_2,
+          false)),
         // 3. final celebration (no name said)                
         new RobotActionUnion().Initialize(new PlayAnimationTrigger().Initialize(_CurrentRobot.ID, 1, Anki.Cozmo.AnimationTrigger.MeetCozmoFirstEnrollmentCelebration, true))
       };
@@ -232,7 +234,8 @@ namespace FaceEnrollment {
         new RobotActionUnion().Initialize(new SayTextWithIntent().Initialize(
           _NameForFace,
           Anki.Cozmo.AnimationTrigger.MeetCozmoReEnrollmentSayName,
-          Anki.Cozmo.SayTextIntent.Name_Normal))
+          Anki.Cozmo.SayTextIntent.Name_Normal,
+          false))
       };
 
       _CurrentRobot.SendQueueCompoundAction(actions, HandleEnrollFaceAnimationSequenceComplete);

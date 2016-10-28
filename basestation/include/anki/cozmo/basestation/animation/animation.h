@@ -80,6 +80,12 @@ public:
   
   bool IsLive() const { return _isLive; }
   void SetIsLive(bool isLive);
+  
+  // Append Animation with another animation starting on the next key frame
+  void AppendAnimation(const Animation& appendAnim);
+  
+  // Get last key frame time_ms
+  uint32_t GetLastKeyFrameTime_ms();
 
 private:
 
@@ -98,8 +104,11 @@ private:
   Animations::Track<BodyMotionKeyFrame>     _bodyPosTrack;
   Animations::Track<DeviceAudioKeyFrame>    _deviceAudioTrack;
   Animations::Track<RobotAudioKeyFrame>     _robotAudioTrack;
-
-  //ProceduralFace _proceduralFace;
+  
+  // Compare if the track's last key frame time is gerater then the lastFrameTime_ms argument
+  // Return the greater time
+  template<class KeyFrameType>
+  TimeStamp_t CompareLastFrameTime(const TimeStamp_t lastFrameTime_ms);
   
 }; // class Animation
 

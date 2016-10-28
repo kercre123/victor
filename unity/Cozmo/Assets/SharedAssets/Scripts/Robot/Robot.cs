@@ -1877,9 +1877,9 @@ public class Robot : IRobot {
 
   #endregion
 
-  public void SayTextWithEvent(string text, AnimationTrigger playEvent, SayTextIntent intent = SayTextIntent.Text, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void SayTextWithEvent(string text, AnimationTrigger playEvent, SayTextIntent intent = SayTextIntent.Text, bool fitToDuration = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     DAS.Debug(this, "Saying text: " + PrivacyGuard.HidePersonallyIdentifiableInfo(text));
-    SendQueueSingleAction(Singleton<SayTextWithIntent>.Instance.Initialize(text, playEvent, intent), callback, queueActionPosition);
+    SendQueueSingleAction(Singleton<SayTextWithIntent>.Instance.Initialize(text, playEvent, intent, fitToDuration), callback, queueActionPosition);
   }
 
   public void SendDemoResetState() {
