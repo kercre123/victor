@@ -444,7 +444,24 @@ namespace Anki {
       
       virtual ~DriveToPopAWheelieAction() { }
     };
-  
+    
+    // Common compound action for driving to an object (stack) and face planting off of it by knocking the stack over
+    // @param useApproachAngle  - If true, then only the preAction pose that results in a robot
+    //                            approach angle closest to approachAngle_rad is considered.
+    // @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
+    class DriveToFacePlantAction : public IDriveToInteractWithObject
+    {
+    public:
+      DriveToFacePlantAction(Robot& robot,
+                             const ObjectID& objectID,
+                             const bool useApproachAngle = false,
+                             const f32 approachAngle_rad = 0,
+                             const bool useManualSpeed = false,
+                             Radians maxTurnTowardsFaceAngle_rad = 0.f,
+                             const bool sayName = false);
+      
+      virtual ~DriveToFacePlantAction() { }
+    };
 
     // Common compound action
     class DriveToAndTraverseObjectAction : public IDriveToInteractWithObject

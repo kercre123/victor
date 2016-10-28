@@ -83,7 +83,6 @@ namespace Anki {
         f32 lastMarkerDist_;
 
         CarryState carryState_ = CARRY_NONE;
-        bool lastActionSucceeded_ = false;
 
         // When to transition to the next state. Only some states use this.
         u32 transitionTime_ = 0;
@@ -131,6 +130,13 @@ namespace Anki {
         const f32 _kRollLiftScoochAccel_rad_per_sec_2 = DEG_TO_RAD_F32(50);
         const f32 _kRollLiftHeightScoochOffset_mm = 10;
         const f32 _kRollLiftScoochDuration_ms = 250;
+
+        // Face plant parameters
+        const f32 _facePlantLiftSpeed_radps = DEG_TO_RAD_F32(10000);
+        const f32 _facePlantDriveSpeed_mmps = -500;
+        const f32 _facePlantStartBackupPitch_rad = DEG_TO_RAD_F32(-25.f);
+        const f32 _facePlantLiftTime_ms = 1000;
+        const f32 _facePlantTimeout_ms = 500;
         
         const u32 _kPopAWheelieTimeout_ms = 500;
         
@@ -155,6 +161,7 @@ namespace Anki {
       {
         mode_ = IDLE;
         DockingController::StopDocking();
+        SteeringController::ExecuteDirectDrive(0, 0);
         ProxSensors::EnableCliffDetector(true);
         IMUFilter::EnablePickupDetect(true);
       }
@@ -222,6 +229,7 @@ namespace Anki {
           case DA_PICKUP_LOW:
           case DA_PLACE_HIGH:
           case DA_PLACE_LOW:
+          case DA_FACE_PLANT:
           {
             backoutDist_mm = BACKOUT_DISTANCE_MM;
             break;
@@ -260,6 +268,7 @@ namespace Anki {
             mode_ = MOVING_LIFT_PREDOCK;
             switch(action_) {
               case DA_PICKUP_LOW:
+              case DA_FACE_PLANT:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
                 dockOffsetDistX_ = ORIGIN_TO_LOW_LIFT_DIST_MM;
                 break;
@@ -303,7 +312,7 @@ namespace Anki {
                 break;
               default:
                 AnkiError( 287, "PAP.SET_LIFT_PREDOCK.InvalidAction", 347, "%d", 1, action_);
-                mode_ = IDLE;
+                Reset();
                 break;
             }
             break;
@@ -334,6 +343,7 @@ namespace Anki {
                   case DA_PLACE_HIGH:
                   case DA_ROLL_LOW:
                   case DA_DEEP_ROLL_LOW:
+                  case DA_FACE_PLANT:
                   case DA_POP_A_WHEELIE:
                   case DA_ALIGN:
                     pointOfNoReturnDist = LOW_DOCK_POINT_OF_NO_RETURN_DIST_MM;
@@ -386,7 +396,7 @@ namespace Anki {
                   AnkiDebug( 14, "PAP", 123, "ALIGN", 0);
                   #endif
                   SendPickAndPlaceResultMessage(true, NO_BLOCK);
-                  mode_ = IDLE;
+                  Reset();
                 } else if(action_ == DA_RAMP_DESCEND) {
                   #if(DEBUG_PAP_CONTROLLER)
                   AnkiDebug( 14, "PAP", 124, "TRAVERSE_RAMP_DOWN\n", 0);
@@ -423,7 +433,6 @@ namespace Anki {
                   #endif
                   mode_ = SET_LIFT_POSTDOCK;
                 }
-                lastActionSucceeded_ = true;
               } else {
                 // Docking failed for some reason. Probably couldn't see block anymore.
                 AnkiDebug( 363, "PAP.DOCKING.DockingFailed", 305, "", 0);
@@ -449,6 +458,7 @@ namespace Anki {
                     break;
                   } // PLACE
                   case DA_ALIGN:
+                  case DA_FACE_PLANT:
                   {
                     SendPickAndPlaceResultMessage(false, NO_BLOCK);
                     break;
@@ -459,9 +469,7 @@ namespace Anki {
 
 
                 // Switch to BACKOUT mode:
-                lastActionSucceeded_ = false;
                 StartBackingOut();
-                //mode_ = IDLE;
               }
             }
             else if (action_ == DA_RAMP_ASCEND && (ABS(IMUFilter::GetPitch()) > ON_RAMP_ANGLE_THRESH) )
@@ -543,6 +551,16 @@ namespace Anki {
                 }
                 break;
               }
+              case DA_FACE_PLANT:
+              {
+                // Move lift up fast and drive backwards fast
+                ProxSensors::EnableCliffDetector(false);
+                IMUFilter::EnablePickupDetect(false);
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY, _facePlantLiftSpeed_radps);
+                transitionTime_ = HAL::GetTimeStamp() + _facePlantLiftTime_ms;
+                mode_ = FACE_PLANTING_BACKOUT;
+                break;
+              }
               case DA_POP_A_WHEELIE:
                 // Move lift down fast and drive forward fast
                 ProxSensors::EnableCliffDetector(false);
@@ -554,7 +572,7 @@ namespace Anki {
                 break;
               default:
                 AnkiError( 290, "PAP.SET_LIFT_POSTDOCK.InvalidAction", 347, "%d", 1, action_);
-                mode_ = IDLE;
+                Reset();
                 break;
             }
             break;
@@ -586,13 +604,31 @@ namespace Anki {
             }
             break;
           }
+          case FACE_PLANTING_BACKOUT:
+          {
+            if (IMUFilter::GetPitch() < _facePlantStartBackupPitch_rad) {
+              SteeringController::ExecuteDirectDrive(_facePlantDriveSpeed_mmps, _facePlantDriveSpeed_mmps);
+              transitionTime_ = HAL::GetTimeStamp() + _facePlantTimeout_ms;
+              mode_ = FACE_PLANTING;
+            } else if (HAL::GetTimeStamp() > transitionTime_) {
+              SendPickAndPlaceResultMessage(false, NO_BLOCK);
+              LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK, DEFAULT_LIFT_SPEED_RAD_PER_SEC);
+              StartBackingOut();
+            }
+          }
+          case FACE_PLANTING:
+          {
+            if (HAL::GetTimeStamp() > transitionTime_) {
+              SendPickAndPlaceResultMessage(IMUFilter::GetPitch() < _facePlantStartBackupPitch_rad, NO_BLOCK);
+              Reset();
+            }
+            break;
+          }
           case POPPING_A_WHEELIE:
             // Either the robot has pitched up, or timeout
             if (IMUFilter::GetPitch() > 1.2f || HAL::GetTimeStamp() > transitionTime_) {
-              SteeringController::ExecuteDirectDrive(0, 0);
-              ProxSensors::EnableCliffDetector(true);
               SendPickAndPlaceResultMessage(true, NO_BLOCK);
-              mode_ = IDLE;
+              Reset();
             }
             break;
           case MOVING_LIFT_POSTDOCK:
@@ -647,21 +683,8 @@ namespace Anki {
               SteeringController::ExecuteDirectDrive(0,0);
 
               if (HeadController::IsInPosition()) {
-                ProxSensors::EnableCliffDetector(true);
-                IMUFilter::EnablePickupDetect(true);
-                mode_ = IDLE;
-                lastActionSucceeded_ = true;
+                Reset();
               }
-            }
-            break;
-          case LOWER_LIFT:
-            if (LiftController::IsInPosition()) {
-#if(DEBUG_PAP_CONTROLLER)
-              AnkiDebug( 14, "PAP", 133, "IDLE\n", 0);
-#endif
-              mode_ = IDLE;
-              lastActionSucceeded_ = true;
-              carryState_ = CARRY_NONE;
             }
             break;
 
@@ -677,12 +700,10 @@ namespace Anki {
 
           case TRAVERSE_RAMP:
             if ( ABS(IMUFilter::GetPitch()) < OFF_RAMP_ANGLE_THRESH ) {
-              SteeringController::ExecuteDirectDrive(0, 0);
               #if(DEBUG_PAP_CONTROLLER)
               AnkiDebug( 14, "PAP", 135, "IDLE (from TRAVERSE_RAMP)\n", 0);
               #endif
-              mode_ = IDLE;
-              lastActionSucceeded_ = true;
+              Reset();
               Localization::SetOnRamp(false);
             }
             break;
@@ -722,12 +743,10 @@ namespace Anki {
             break;
           case LEAVE_BRIDGE:
             if ( Localization::GetDistTo(ptStamp_.x, ptStamp_.y) > lastMarkerDist_ + MARKER_TO_OFF_BRIDGE_POSE_DIST) {
-              SteeringController::ExecuteDirectDrive(0, 0);
               #if(DEBUG_PAP_CONTROLLER)
               AnkiDebug( 14, "PAP", 139, "IDLE (from TRAVERSE_BRIDGE)\n", 0);
               #endif
-              mode_ = IDLE;
-              lastActionSucceeded_ = true;
+              Reset();
               Localization::SetOnBridge(false);
             }
             break;
@@ -746,10 +765,8 @@ namespace Anki {
           case BACKUP_ON_CHARGER:
             if (HAL::GetTimeStamp() > transitionTime_) {
               AnkiEvent( 292, "PAP.BACKUP_ON_CHARGER.Timeout", 305, "", 0);
-              SteeringController::ExecuteDirectDrive(0, 0);
               SendChargerMountCompleteMessage(false);
-              mode_ = IDLE;
-
+              Reset();
               // TODO: Some kind of recovery?
               // ...
             } else if (IMUFilter::GetPitch() < TILT_FAILURE_ANGLE_RAD) {
@@ -765,10 +782,8 @@ namespace Anki {
               }
             } else if (HAL::BatteryIsOnCharger()) {
               AnkiEvent( 294, "PAP.BACKUP_ON_CHARGER.Success", 305, "", 0);
-              SteeringController::ExecuteDirectDrive(0, 0);
               SendChargerMountCompleteMessage(true);
-              lastActionSucceeded_ = true;
-              mode_ = IDLE;
+              Reset();
             } else {
               tiltedOnChargerStartTime_ = 0;
             }
@@ -776,9 +791,8 @@ namespace Anki {
           case DRIVE_FORWARD:
             // For failed charger mounting recovery only
             if (HAL::GetTimeStamp() > transitionTime_) {
-              SteeringController::ExecuteDirectDrive(0, 0);
               SendChargerMountCompleteMessage(false);
-              mode_ = IDLE;
+              Reset();
             }
             break;
           case PICKUP_ANIM:
@@ -822,7 +836,7 @@ namespace Anki {
             break;
           }
           default:
-            mode_ = IDLE;
+            Reset();
             AnkiError( 295, "PAP.Update.InvalidAction", 347, "%d", 1, action_);
             break;
         }
@@ -830,10 +844,6 @@ namespace Anki {
         return retVal;
 
       } // Update()
-
-      bool DidLastActionSucceed() {
-        return lastActionSucceeded_;
-      }
 
       bool IsBusy()
       {
@@ -889,7 +899,6 @@ namespace Anki {
 
         transitionTime_ = 0;
         mode_ = SET_LIFT_PREDOCK;
-        lastActionSucceeded_ = false;
         
         DockingController::SetMaxRetries(numRetries);
 

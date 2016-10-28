@@ -1279,6 +1279,25 @@ namespace Anki {
       SendMessage(message);
     }
     
+    void UiGameController::SendFacePlant(const s32 objectID,
+                                         PathMotionProfile motionProf,
+                                         const bool usePreDockPose,
+                                         const bool useApproachAngle,
+                                         const f32 approachAngle_rad,
+                                         const bool useManualSpeed)
+    {
+      ExternalInterface::FacePlant m;
+      m.motionProf = motionProf;
+      m.usePreDockPose = usePreDockPose;
+      m.useApproachAngle = useApproachAngle,
+      m.approachAngle_rad = approachAngle_rad,
+      m.useManualSpeed = useManualSpeed;
+      m.objectID = -1;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_FacePlant(m);
+      SendMessage(message);
+    }
+    
     void UiGameController::SendTraverseSelectedObject(PathMotionProfile motionProf,
                                                       const bool usePreDockPose,
                                                       const bool useManualSpeed)

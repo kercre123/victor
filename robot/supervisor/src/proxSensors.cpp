@@ -69,16 +69,27 @@ namespace Anki {
       {
         bool isDrivingForward = WheelController::GetAverageFilteredWheelSpeed() > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S;
 
+        // Check for whether or not wheels are already stopping.
+        // When reversing and stopping fast enough it's possible for the wheels to report forward speeds.
+        // Not sure if because the speed change is too fast for encoders to register properly or if the wheels
+        // are actually moving forward very briefly, but in any case, if the wheels are already stopping
+        // there's no need to report StoppingDueToCliff.
+        // Currently, this only seems to happen during the backup for face plant.
+        f32 desiredLeftSpeed, desiredRightSpeed;
+        WheelController::GetDesiredWheelSpeeds(desiredLeftSpeed, desiredRightSpeed);
+        bool alreadyStopping = desiredLeftSpeed == desiredRightSpeed == 0.f;
+
         if (_enableCliffDetect &&
             HAL::IsCliffDetected() &&
             !IMUFilter::IsPickedUp() &&
-            isDrivingForward &&
+            isDrivingForward && !alreadyStopping &&
             !_wasCliffDetected) {
           
           // TODO (maybe): Check for cases where cliff detect should not stop motors
           // 1) Turning in place
           // 2) Driving over something (i.e. pitch is higher than some degrees).
           AnkiEvent( 339, "ProxSensors.UpdateCliff.StoppingDueToCliff", 347, "%d", 1, _stopOnCliff);
+          AnkiDebug( 407, "ProxSensors.UpdateCliff.WheelSpeed", 623, "%f", 1, WheelController::GetAverageFilteredWheelSpeed());
           
           if(_stopOnCliff)
           {

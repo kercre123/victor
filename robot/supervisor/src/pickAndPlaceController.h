@@ -39,10 +39,11 @@ namespace Anki {
         SET_LIFT_POSTDOCK,
         MOVING_LIFT_FOR_ROLL,
         MOVING_LIFT_FOR_DEEP_ROLL,
+        FACE_PLANTING_BACKOUT,
+        FACE_PLANTING,
         POPPING_A_WHEELIE,
         MOVING_LIFT_POSTDOCK,
         BACKOUT,
-        LOWER_LIFT,
         TRAVERSE_RAMP,
         TRAVERSE_RAMP_DOWN,
         ENTER_BRIDGE,
@@ -64,7 +65,6 @@ namespace Anki {
 
       bool IsBusy();
       bool IsCarryingBlock();
-      bool DidLastActionSucceed();
 
       void SetCarryState(CarryState state);
       CarryState GetCarryState();

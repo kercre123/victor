@@ -44,6 +44,7 @@ enum int_32 RobotActionType {
     DRIVE_TO_POSE,
     DRIVE_TO_PLACE_CARRIED_OBJECT,
     ENROLL_NAMED_FACE,
+    FACE_PLANT,
     FLIP_BLOCK,
     HANG,
     MOUNT_CHARGER,

@@ -415,6 +415,39 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PopAWheeli
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::FacePlant& msg)
+{
+  ObjectID selectedObjectID;
+  if(msg.objectID < 0) {
+    selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
+  } else {
+    selectedObjectID = msg.objectID;
+  }
+  
+  if(static_cast<bool>(msg.usePreDockPose)) {
+    DriveToFacePlantAction* action = new DriveToFacePlantAction(robot,
+                                                                selectedObjectID,
+                                                                msg.useApproachAngle,
+                                                                msg.approachAngle_rad,
+                                                                msg.useManualSpeed);
+    if(msg.motionProf.isCustom)
+    {
+      action->SetMotionProfile(msg.motionProf);
+    }
+    
+    return action;
+  } else {
+    FacePlantAction* action = new FacePlantAction(robot, selectedObjectID, msg.useManualSpeed);
+    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
+    action->SetDoNearPredockPoseCheck(false);
+    // We don't care about a specific marker just that we are docking with the correct object
+    action->SetShouldVisuallyVerifyObjectOnly(true);
+    return action;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TraverseObject& msg)
 {
   ObjectID selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
@@ -909,6 +942,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(driveOffChargerContacts,  DriveOffChargerContacts,  1),
       DEFINE_HANDLER(driveStraight,            DriveStraight,            0),
       DEFINE_HANDLER(enrollNamedFace,          EnrollNamedFace,          0),
+      DEFINE_HANDLER(facePlant,                FacePlant,                0),
       DEFINE_HANDLER(flipBlock,                FlipBlock,                0),
       DEFINE_HANDLER(gotoObject,               GotoObject,               0),
       DEFINE_HANDLER(gotoPose,                 GotoPose,                 2),
@@ -1629,6 +1663,19 @@ void RobotEventHandler::SetupGainsHandlers(IExternalInterface& externalInterface
                                                            const ExternalInterface::SetMotionModelParams& msg = event.GetData().Get_SetMotionModelParams();
                                                            
                                                            robot->SendRobotMessage<RobotInterface::SetMotionModelParams>(msg.slipFactor);
+                                                         }));
+    
+    // RollActionParams
+    _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::RollActionParams,
+                                                         [this, robot] (const GameToEngineEvent& event)
+                                                         {
+                                                           const ExternalInterface::RollActionParams& msg = event.GetData().Get_RollActionParams();
+                                                           
+                                                           robot->SendRobotMessage<RobotInterface::RollActionParams>(msg.liftHeight_mm,
+                                                                                                                     msg.driveSpeed_mmps,
+                                                                                                                     msg.driveAccel_mmps2,
+                                                                                                                     msg.driveDuration_ms,
+                                                                                                                     msg.backupDist_mm);
                                                          }));
     
   }

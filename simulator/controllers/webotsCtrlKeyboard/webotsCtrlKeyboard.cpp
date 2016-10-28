@@ -341,6 +341,7 @@ namespace Anki {
         printf("          Dock to selected block:  p\n");
         printf("          Dock from current pose:  Shift+p\n");
         printf("    Travel up/down selected ramp:  r\n");
+        printf("                      Face plant:  Alt+r\n");
         printf("              Abort current path:  q\n");
         printf("                Abort everything:  Shift+q\n");
         printf("           Cancel current action:  Alt+q\n");
@@ -1321,9 +1322,12 @@ namespace Anki {
                 bool useManualSpeed = false;
                 
                 if (modifier_key & webots::Supervisor::KEYBOARD_ALT) {
-                  SendTraverseSelectedObject(pathMotionProfile_,
-                                             usePreDockPose,
-                                             useManualSpeed);
+//                  SendTraverseSelectedObject(pathMotionProfile_,
+//                                             usePreDockPose,
+//                                             useManualSpeed);
+                  SendFacePlant(-1,
+                                pathMotionProfile_,
+                                usePreDockPose);
                 } else {
                   SendMountSelectedCharger(pathMotionProfile_,
                                            usePreDockPose,

@@ -90,6 +90,7 @@ namespace Anki {
       {
         case RobotActionType::ALIGN_WITH_OBJECT:
         case RobotActionType::DRIVE_TO_OBJECT:
+        case RobotActionType::FACE_PLANT:
         case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
         case RobotActionType::PICKUP_OBJECT_HIGH:
         case RobotActionType::PICKUP_OBJECT_LOW:

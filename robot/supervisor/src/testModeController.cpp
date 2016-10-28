@@ -325,7 +325,7 @@ namespace Anki {
       Result PlaceOnGroundTestUpdate()
       {
         if (!PickAndPlaceController::IsBusy()) {
-          AnkiInfo( 65, "TestModeController.PlaceOnGroundTestUpdate", 310, "Result %d", 1, PickAndPlaceController::DidLastActionSucceed());
+          AnkiInfo( 408, "TestModeController.PlaceOnGroundTestUpdate.Complete", 305, "", 0);
           Reset();
         }
         return RESULT_OK;

@@ -23,6 +23,7 @@
 #include "util/helpers/templateHelpers.h"
 #include "clad/types/animationTrigger.h"
 
+#include <set>
 
 namespace Anki {
   
@@ -93,6 +94,9 @@ namespace Anki {
       
       // Whether or not we should look up to check if there is an object above the dockObject
       void SetShouldCheckForObjectOnTopOf(const bool b) { _checkForObjectOnTopOf = b; }
+      
+      // Whether or not to suppress the given behavior during this action
+      void SetShouldSuppressReactionaryBehavior(BehaviorType behavior) { _behaviorsToSuppress.insert(behavior); }
       
       struct PreActionPoseInput
       {
@@ -207,6 +211,7 @@ namespace Anki {
       DockingMethod              _dockingMethod                  = DockingMethod::BLIND_DOCKING;
       f32                        _preDockPoseDistOffsetX_mm      = 0;
       bool                       _checkForObjectOnTopOf          = true;
+      std::set<BehaviorType>     _behaviorsToSuppress;
       
     private:
     
@@ -246,6 +251,26 @@ namespace Anki {
       virtual ActionResult Verify() override;
       
     }; // class PopAWheelieAction
+    
+    // If not carrying anything, does a face plant by knocking over a stack of blocks
+    class FacePlantAction : public IDockAction
+    {
+    public:
+      FacePlantAction(Robot& robot, ObjectID objectID, const bool useManualSpeed = false);
+      
+      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
+      
+    protected:
+      
+      static constexpr f32 kMaxSuccessfulPitchAngle_rad = DEG_TO_RAD_F32(-70);
+      
+      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
+      
+      virtual Result SelectDockAction(ActionableObject* object) override;
+      
+      virtual ActionResult Verify() override;
+      
+    }; // class FacePlantAction
     
     
     // "Docks" to the specified object at the distance specified

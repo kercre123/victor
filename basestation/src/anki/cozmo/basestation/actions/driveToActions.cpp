@@ -1470,6 +1470,32 @@ namespace Anki {
       SetProxyTag(action->GetTag());
     }
     
+    
+#pragma mark ---- DriveToFacePlantAction ----
+    
+    DriveToFacePlantAction::DriveToFacePlantAction(Robot& robot,
+                                                   const ObjectID& objectID,
+                                                   const bool useApproachAngle,
+                                                   const f32 approachAngle_rad,
+                                                   const bool useManualSpeed,
+                                                   Radians maxTurnTowardsFaceAngle_rad,
+                                                   const bool sayName)
+    : IDriveToInteractWithObject(robot,
+                                 objectID,
+                                 PreActionPose::DOCKING,
+                                 0,
+                                 useApproachAngle,
+                                 approachAngle_rad,
+                                 useManualSpeed,
+                                 maxTurnTowardsFaceAngle_rad,
+                                 sayName)
+    {
+      FacePlantAction* action = new FacePlantAction(robot, objectID, useManualSpeed);
+      AddDockAction(action);
+      SetProxyTag(action->GetTag());
+    }
+    
+    
 #pragma mark ---- DriveToAndTraverseObjectAction ----
     
     DriveToAndTraverseObjectAction::DriveToAndTraverseObjectAction(Robot& robot,

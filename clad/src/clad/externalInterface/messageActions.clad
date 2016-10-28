@@ -228,6 +228,16 @@ message PopAWheelie {
   bool useManualSpeed
 }
 
+// FacePlant
+message FacePlant {
+  int_32 objectID, // negative value means "currently selected object"
+  PathMotionProfile motionProf,
+  float_32 approachAngle_rad,
+  bool useApproachAngle,
+  bool usePreDockPose,
+  bool useManualSpeed
+}
+
 // ReadToolCode
 message ReadToolCode {
 
@@ -481,6 +491,7 @@ union RobotActionUnion {
   DriveOffChargerContacts   driveOffChargerContacts,
   DriveStraight             driveStraight,
   EnrollNamedFace           enrollNamedFace,
+  FacePlant                 facePlant,
   FlipBlock                 flipBlock,
   GotoObject                gotoObject,
   GotoPose                  gotoPose,
