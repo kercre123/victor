@@ -150,9 +150,7 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
-  // the playGameSpecificMusic flag is mostly used for the press demo / face enrollment if we want the freeplay
-  // music to continue playing without using an activity specific track.
-  public void InitializeMinigame(ChallengeData challengeData, bool playGameSpecificMusic = true) {
+  public void InitializeMinigame(ChallengeData challengeData) {
     _GameStartTime = Time.time;
     _GameIntervalLastTimestamp = -1;
     _StateMachine.SetGameRef(this);
@@ -169,16 +167,20 @@ public abstract class GameBase : MonoBehaviour {
       CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
 
       CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
-      if ((CurrentRobot.RobotStatus & RobotStatusFlag.IS_CARRYING_BLOCK) != 0) {
-        CurrentRobot.PlaceObjectOnGroundHere();
-      }
       CurrentRobot.SetEnableFreeplayLightStates(false);
-      CurrentRobot.SendAnimationTrigger(_ChallengeData.GetInAnimTrigger.Value);
+
+      if ((CurrentRobot.RobotStatus & RobotStatusFlag.IS_CARRYING_BLOCK) != 0) {
+        CurrentRobot.PlaceObjectOnGroundHere((success) => {
+          PlayGetInAnimation();
+        });
+      }
+      else {
+        PlayGetInAnimation();
+      }
+
     }
 
-    if (playGameSpecificMusic) {
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());
-    }
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());
 
     _CubeCycleTimers = new Dictionary<int, CycleData>();
     _BlinkCubeTimers = new Dictionary<int, BlinkData>();
@@ -187,6 +189,15 @@ public abstract class GameBase : MonoBehaviour {
     // Clear Pending Rewards and Unlocks so ChallengeEndedDialog only displays things earned during this game
     RewardedActionManager.Instance.SendPendingRewardsToInventory();
 
+  }
+
+  private void PlayGetInAnimation() {
+    CurrentRobot.SendAnimationTrigger(_ChallengeData.GetInAnimTrigger.Value, callback: (success) => {
+      InitializeMinigameDone();
+    });
+  }
+
+  private void InitializeMinigameDone() {
     InitializeReactionaryBehaviorsForGameStart();
 
     RegisterRobotReactionaryBehaviorEvents();

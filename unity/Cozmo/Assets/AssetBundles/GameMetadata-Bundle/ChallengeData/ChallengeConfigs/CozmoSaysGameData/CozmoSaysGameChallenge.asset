@@ -30,8 +30,8 @@ MonoBehaviour:
   InstructionVideoPath: 
   DifficultyOptions: []
   GetInAnimTrigger:
-    _EnumValueAsString: Count
-    _EnumValue: 272
+    _EnumValueAsString: CozmoSaysGetIn
+    _EnumValue: 12
   GetOutAnimTrigger:
-    _EnumValueAsString: Count
-    _EnumValue: 272
+    _EnumValueAsString: CozmoSaysGetOut
+    _EnumValue: 13

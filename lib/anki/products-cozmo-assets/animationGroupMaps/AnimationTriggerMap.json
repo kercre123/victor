@@ -45,6 +45,14 @@
       "AnimName": "ag_ConnectWakeUp"
     },
     {
+      "CladEvent": "CozmoSaysGetIn",
+      "AnimName": "ag_cozmosays_app_getin"
+    },
+    {
+      "CladEvent": "CozmoSaysGetOut",
+      "AnimName": "ag_cozmosays_app_getout"
+    },
+    {
       "CladEvent": "CozmoSaysSpeakGetInShort",
       "AnimName": "ag_cozmosays_getin_short"
     },
