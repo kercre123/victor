@@ -67,7 +67,7 @@ public class FactoryOTAPanel : MonoBehaviour {
   }
 
   private void HandleCloseButton() {
-    RobotEngineManager.Instance.DisconnectFromRobot(FactoryIntroManager.kRobotID);
+    RobotEngineManager.Instance.StartIdleTimeout(faceOffTime_s: -1.0f, disconnectTime_s: 0.0f);
 
     RobotEngineManager.Instance.ConnectedToClient -= HandleConnectedToClient;
     RobotEngineManager.Instance.DisconnectedFromClient -= HandleDisconnectedFromClient;

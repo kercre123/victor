@@ -106,7 +106,6 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   
   using namespace ExternalInterface;
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ConnectToRobot>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::DisconnectFromRobot>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ImageRequest>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadAnimationFile>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadFaceAnimationDir>();
@@ -293,18 +292,6 @@ void CozmoEngine::HandleMessage(const ExternalInterface::ResetFirmware& msg)
     PRINT_NAMED_INFO("CozmoEngine.HandleMessage.ResetFirmware", "Sending KillBodyCode to Robot %d", robotId);
     _context->GetRobotManager()->GetMsgHandler()->SendMessage(robotId, RobotInterface::EngineToRobot(KillBodyCode()));
   }
-}
-  
-template<>
-void CozmoEngine::HandleMessage(const ExternalInterface::DisconnectFromRobot& disconnectMsg)
-{
-  if( !CozmoEngine::HasRobotWithID(disconnectMsg.robotID)) {
-    PRINT_NAMED_INFO("CozmoEngine.HandleMessage.DisconnectFromRobot.AlreadyDisconnected", "Robot %d already disconnected", disconnectMsg.robotID);
-    return;
-  }
-  
-  _context->GetRobotManager()->GetMsgHandler()->Disconnect();
-  PRINT_NAMED_INFO("CozmoEngine.HandleMessage.DisconnectFromRobot", "Disconnected from robot %d!", disconnectMsg.robotID);
 }
 
 Result CozmoEngine::Update(const float currTime_sec)

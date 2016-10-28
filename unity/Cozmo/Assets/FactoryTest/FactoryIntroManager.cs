@@ -172,7 +172,7 @@ public class FactoryIntroManager : MonoBehaviour {
     _RestartButton.gameObject.SetActive(true);
     _StartButton.gameObject.SetActive(false);
 
-    RobotEngineManager.Instance.DisconnectFromRobot(kRobotID);
+    RobotEngineManager.Instance.StartIdleTimeout(faceOffTime_s: -1.0f, disconnectTime_s: 0.0f);
   }
 
   private void TestPassed() {
@@ -180,7 +180,7 @@ public class FactoryIntroManager : MonoBehaviour {
     _RestartButton.gameObject.SetActive(true);
     _InProgressSpinner.gameObject.SetActive(false);
 
-    RobotEngineManager.Instance.DisconnectFromRobot(kRobotID);
+    RobotEngineManager.Instance.StartIdleTimeout(faceOffTime_s: -1.0f, disconnectTime_s: 0.0f);
   }
 
   private void HandleRestartButtonClick() {
@@ -189,7 +189,7 @@ public class FactoryIntroManager : MonoBehaviour {
     _StartButton.gameObject.SetActive(true);
     _InProgressSpinner.gameObject.SetActive(false);
 
-    RobotEngineManager.Instance.DisconnectFromRobot(kRobotID);
+    RobotEngineManager.Instance.StartIdleTimeout(faceOffTime_s: -1.0f, disconnectTime_s: 0.0f);
 
     if (!RobotEngineManager.Instance.IsConnectedToEngine) {
       RobotEngineManager.Instance.Connect(kEngineIP);
