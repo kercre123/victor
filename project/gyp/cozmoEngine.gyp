@@ -42,14 +42,6 @@
       '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a',
     ],
 
-    'okao_libs': [
-      'libeOkao.a',
-      'libeOkaoCo.a',
-      'libeOkaoFr.a',
-      'libeOkaoDt.a',
-      'libeOkaoEx.a',
-    ],
-
     'routing_http_server_libs': [
       'librouting_http_server.a',
     ],
@@ -1374,12 +1366,13 @@
             'libraries': [ # why is this in #if android? shouldn't mac and ios have same libs to link against?
               '-Wl,--whole-archive',
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkao.a',      # Common
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoCo.a',    #
               '-Wl,--no-whole-archive',
-              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoCo.a',    # 
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoDt.a',    # Face Detection
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoPt.a',    # Face Parts Detection
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoEx.a',    # Facial Expression estimation
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoFr.a',    # Face Recognition
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOmcvPd.a',    # Pet Detection
               '<(coretech_external_path)/libarchive/project/android/DerivedData/libarchive.a',
               '<(crash_path)/prebuilt/armeabi-v7a/libbreakpadclient.a',   # Google Breakpad
               # does not work with ninja?!?!

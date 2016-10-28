@@ -64,6 +64,7 @@ enum int_32 RobotActionType {
     TRACK_OBJECT,
     TRACK_FACE,
     TRACK_MOTION,
+    TRACK_PET_FACE,
     TRAVERSE_OBJECT,
     TURN_IN_PLACE,
     TURN_TOWARDS_FACE,
@@ -131,7 +132,7 @@ structure DeviceAudioCompleted {
   Audio::GameEvent::GenericEvent audioEvent,
 }
 
-// Used by TrackFaceAction
+// Used by TrackFaceAction and TrackPetFaceAction
 structure TrackFaceCompleted {
   int_32 faceID
 }

@@ -1023,7 +1023,14 @@ namespace Anki {
                 
                 if(altPressed && shiftPressed)
                 {
-                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ReadToolCode()));
+                  // Hijacking this for pet tracking for now, since we aren't doing much
+                  // tool code reading these days...
+                  //SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ReadToolCode()));
+                  
+                  using namespace ExternalInterface;
+                  TrackToPet trackAction(5.f, Vision::UnknownFaceID, Vision::PetType::Unknown);
+                  SendMessage(MessageGameToEngine(std::move(trackAction)));
+                  
                 } else if(shiftPressed) {
                   static bool trackingObject = false;
                   

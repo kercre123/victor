@@ -16,6 +16,7 @@ namespace Cozmo {
     ReadingToolCode,
     ComputingCalibration,
     CheckingQuality,
+    DetectingPets,
     Count
   }
       

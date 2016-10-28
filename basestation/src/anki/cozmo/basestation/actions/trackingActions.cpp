@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/faceWorld.h"
+#include "anki/cozmo/basestation/petWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 
@@ -32,6 +33,8 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+static const char * const kLogChannelName = "Actions";
   
 #pragma mark -
 #pragma mark ITrackAction
@@ -82,13 +85,13 @@ void ITrackAction::StopTrackingWhenOtherActionCompleted( u32 otherActionTag )
       // as the action is valid (or INVALID_TAG)
 
       if( otherActionTag == ActionConstants::INVALID_TAG ) {
-        PRINT_CH_INFO("Actions", "ITrackAction.StopTrackingOnOtherAction.Clear",
+        PRINT_CH_INFO(kLogChannelName, "ITrackAction.StopTrackingOnOtherAction.Clear",
                       "[%d] Was waiting on action %d to stop, now will hang",
                       GetTag(),
                       _stopOnOtherActionTag);
       }
       else {
-        PRINT_CH_INFO("Actions", "ITrackAction.StopTrackingOnOtherAction.SetWhileRunning",
+        PRINT_CH_INFO(kLogChannelName, "ITrackAction.StopTrackingOnOtherAction.SetWhileRunning",
                       "[%d] Will stop this action when %d completes",
                       GetTag(),
                       otherActionTag);
@@ -100,7 +103,7 @@ void ITrackAction::StopTrackingWhenOtherActionCompleted( u32 otherActionTag )
   else {
     // this action will be checked in Init to see if it is in use (it is done there so it can cause the action
     // to fail), so don't do anything with it now
-    PRINT_CH_INFO("Actions", "ITrackAction.StopTrackingOnOtherAction.Set",
+    PRINT_CH_INFO(kLogChannelName, "ITrackAction.StopTrackingOnOtherAction.Set",
                   "[%d] Will stop this action when %d completes",
                   GetTag(),
                   otherActionTag);
@@ -216,7 +219,7 @@ ActionResult ITrackAction::CheckIfDone()
 {
 
   if( _stopActionNow ) {
-    PRINT_CH_INFO("Actions", "ITrackAction.FinishedByOtherAction",
+    PRINT_CH_INFO(kLogChannelName, "ITrackAction.FinishedByOtherAction",
                   "[%d] action %s stopping because we were told to stop when another action stops (and it did)",
                   GetTag(),
                   GetName().c_str());
@@ -376,9 +379,9 @@ ActionResult ITrackAction::CheckIfDone()
     
   } else if(_updateTimeout_sec > 0.) {
     if(currentTime - _lastUpdateTime > _updateTimeout_sec) {
-      PRINT_NAMED_INFO("ITrackAction.CheckIfDone.Timeout",
-                       "No tracking angle update received in %f seconds, returning done.",
-                       _updateTimeout_sec);
+      PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.Timeout",
+                    "No tracking angle update received in %f seconds, returning done.",
+                    _updateTimeout_sec);
       return ActionResult::SUCCESS;
     }
     
@@ -391,7 +394,7 @@ void ITrackAction::HandleActionCompleted(const AnkiEvent<ExternalInterface::Mess
 {
   const auto& msg = event.GetData().Get_RobotCompletedAction();
   if( msg.idTag == _stopOnOtherActionTag ) {
-    PRINT_CH_INFO("Actions", "ITrackAction.CompletedOtherAction",
+    PRINT_CH_INFO(kLogChannelName, "ITrackAction.CompletedOtherAction",
                   "[%d] completed other action with tag %d, so telling this action to stop",
                   GetTag(),
                   _stopOnOtherActionTag);
@@ -400,6 +403,7 @@ void ITrackAction::HandleActionCompleted(const AnkiEvent<ExternalInterface::Mess
   }
 }
   
+//=======================================================================================================
 #pragma mark -
 #pragma mark TrackObjectAction
 
@@ -542,7 +546,7 @@ bool TrackObjectAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
   
 } // GetAngles()
   
-  
+//=======================================================================================================
 #pragma mark -
 #pragma mark TrackFaceAction
   
@@ -576,9 +580,9 @@ ActionResult TrackFaceAction::InitInternal()
     auto & msg = event.GetData().Get_RobotChangedObservedFaceID();
     if(msg.oldID == _faceID)
     {
-      PRINT_NAMED_INFO("TrackFaceAction.HandleFaceChangedID",
-                       "Updating tracked face ID from %d to %d",
-                       msg.oldID, msg.newID);
+      PRINT_CH_INFO(kLogChannelName, "TrackFaceAction.HandleFaceChangedID",
+                    "Updating tracked face ID from %d to %d",
+                    msg.oldID, msg.newID);
       
       _faceID = msg.newID;
     }
@@ -605,7 +609,7 @@ bool TrackFaceAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
   
   if(nullptr == face) {
     // No such face
-    PRINT_NAMED_INFO("TrackFaceAction.GetAngles.BadFaceID", "No face %d in FaceWorld", _faceID);
+    PRINT_CH_INFO(kLogChannelName, "TrackFaceAction.GetAngles.BadFaceID", "No face %d in FaceWorld", _faceID);
     return false;
   }
   
@@ -649,7 +653,117 @@ bool TrackFaceAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
   return true;
 } // GetAngles()
   
+//=======================================================================================================
+#pragma mark -
+#pragma mark TrackPetFaceAction
   
+TrackPetFaceAction::TrackPetFaceAction(Robot& robot, FaceID faceID)
+: ITrackAction(robot,
+               "TrackPetFace" + std::to_string(faceID),
+               RobotActionType::TRACK_PET_FACE)
+, _faceID(faceID)
+{
+
+}
+
+TrackPetFaceAction::TrackPetFaceAction(Robot& robot, Vision::PetType petType)
+: ITrackAction(robot,
+               "TrackPetFace",
+               RobotActionType::TRACK_PET_FACE)
+, _petType(petType)
+{
+  switch(_petType)
+  {
+    case Vision::PetType::Cat:
+      SetName("TrackCatFace");
+      break;
+   
+    case Vision::PetType::Dog:
+      SetName("TrackDogFace");
+      break;
+      
+    case Vision::PetType::Unknown:
+      SetName("TrackAnyPetFace");
+      break;
+  }
+}
+
+ActionResult TrackPetFaceAction::InitInternal()
+{
+  _lastFaceUpdate = 0;
+  
+  return ActionResult::SUCCESS;
+} // InitInternal()
+
+void TrackPetFaceAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
+{
+  TrackFaceCompleted completion;
+  completion.faceID = static_cast<s32>(_faceID);
+  completionUnion.Set_trackFaceCompleted(std::move(completion));
+}
+
+bool TrackPetFaceAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
+{
+  const Vision::TrackedPet* petFace = nullptr;
+  
+  if(_faceID != Vision::UnknownFaceID)
+  {
+    petFace = _robot.GetPetWorld().GetPetByID(_faceID);
+    
+    if(nullptr == petFace)
+    {
+      // No such face
+      PRINT_CH_INFO(kLogChannelName, "TrackPetFaceAction.GetAngles.BadFaceID", "No face %d in PetWorld", _faceID);
+      return false;
+    }
+  }
+  else
+  {
+    auto petIDs = _robot.GetPetWorld().GetKnownPetsWithType(_petType);
+    if(!petIDs.empty())
+    {
+      petFace = _robot.GetPetWorld().GetPetByID(*petIDs.begin());
+    }
+    else
+    {
+      PRINT_CH_INFO(kLogChannelName, "TrackPetFaceAction.GetAngles.NoPetsWithType", "Type=%s",
+                    EnumToString(_petType));
+      return false;
+    }
+  }
+
+  // Only update pose if we've actually observed the face again since last update
+  if(petFace->GetTimeStamp() <= _lastFaceUpdate) {
+    return false;
+  }
+  _lastFaceUpdate = petFace->GetTimeStamp();
+  
+  const Vision::CameraCalibration* calib = _robot.GetVisionComponent().GetCamera().GetCalibration();
+  const f32 x = petFace->GetRect().GetXmid() - calib->GetCenter_x();
+  const f32 y = petFace->GetRect().GetYmid() - calib->GetCenter_y();
+  
+  RobotPoseStamp poseStamp;
+  TimeStamp_t t;
+  Result result = _robot.GetPoseHistory()->ComputePoseAt(petFace->GetTimeStamp(), t, poseStamp);
+  if(RESULT_OK != result)
+  {
+    PRINT_NAMED_WARNING("TrackpetFaceAction.GetAngles.ComputeHistPoseFailed", "t=%u", petFace->GetTimeStamp());
+    return false;
+  }
+  
+  absTiltAngle = std::atan2f(-y, calib->GetFocalLength_y()) + poseStamp.GetHeadAngle();
+  absPanAngle  = std::atan2f(-x, calib->GetFocalLength_x()) + poseStamp.GetPose().GetRotation().GetAngleAroundZaxis();
+  
+  if(DEBUG_TRACKING_ACTIONS)
+  {
+    PRINT_CH_INFO(kLogChannelName, "TrackPetFaceAction.GetAngles.PosInImageRelToCenter",
+                  "x=%f y=%f [f=(%f,%f)]", x, y, calib->GetFocalLength_x(), calib->GetFocalLength_y());
+  }
+  
+  return true;
+} // GetAngles()
+  
+//=======================================================================================================
 #pragma mark -
 #pragma mark TrackMotionAction
   

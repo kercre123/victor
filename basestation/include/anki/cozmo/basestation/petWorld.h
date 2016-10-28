@@ -1,0 +1,64 @@
+/**
+ * File: petWorld.h
+ *
+ * Author: Andrew Stein (andrew)
+ * Created: 10-24-2016
+ *
+ * Description: Defines a container for mirroring on the main thread any pet faces
+ *              detected on the vision system thread.
+ *
+ * Copyright: Anki, Inc. 2016
+ *
+ **/
+
+
+#ifndef __Anki_Cozmo_Basestation_PetWorld_H__
+#define __Anki_Cozmo_Basestation_PetWorld_H__
+
+#include "anki/vision/basestation/trackedPet.h"
+
+#include <list>
+#include <map>
+
+namespace  Anki {
+namespace Cozmo {
+  
+// Forward declarations:
+class Robot;
+
+class PetWorld
+{
+public:
+  
+  using PetContainer = std::map<Vision::FaceID_t, Vision::TrackedPet>;
+  
+  PetWorld(Robot& robot);
+  
+  // Pass in observed faces (e.g. from Vision thread to keep this class in sync)
+  // Also takes care of Broadcasting RobotObservedPet messages and updating Viz.
+  Result Update(const std::list<Vision::TrackedPet>& observedPetFaces);
+  
+  // Return a container with all currently known pets in it
+  const PetContainer& GetAllKnownPets() const { return _knownPets; }
+  
+  // Return the IDs of the pets with the given type. If PetType::UnknownType is
+  // passed in, all IDs will be returned
+  std::set<Vision::FaceID_t> GetKnownPetsWithType(Vision::PetType type) const;
+ 
+  // Get the TrackedPet corresponding to the given ID.
+  // Will return nullptr if ID is not found.
+  const Vision::TrackedPet* GetPetByID(Vision::FaceID_t faceID) const;
+  
+private:
+  
+  Robot& _robot;
+  
+  PetContainer _knownPets;
+  
+}; // class PetWorld
+  
+} // namespace Cozmo
+} // namespace Anki
+
+#endif /* __Anki_Cozmo_Basestation_PetWorld_H__ */
+

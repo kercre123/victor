@@ -150,7 +150,7 @@ inline void ITrackAction::SetSoundSpacing(f32 spacingMin_sec, f32 spacingMax_sec
   _soundSpacingMax_sec = spacingMax_sec;
 }
   
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class TrackObjectAction : public ITrackAction
 {
 public:
@@ -173,7 +173,7 @@ private:
   
 }; // class TrackObjectAction
 
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class TrackFaceAction : public ITrackAction
 {
 public:
@@ -200,8 +200,40 @@ private:
   Signal::SmartHandle _signalHandle;
 
 }; // class TrackFaceAction
-
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+class TrackPetFaceAction : public ITrackAction
+{
+public:
+  
+  using FaceID = Vision::FaceID_t;
+  
+  // Track a specific pet ID
+  TrackPetFaceAction(Robot& robot, FaceID faceID);
+  
+  // Track first pet with the right type (or any pet at all if PetType set to Unknown).
+  // Note the pet being tracked could change during tracking as it is the first one
+  // found in PetWorld on each update tick.
+  TrackPetFaceAction(Robot& robot, Vision::PetType petType);
+  
+  virtual void GetCompletionUnion(ActionCompletedUnion& completionInfo) const override;
+  
+protected:
+  
+  virtual ActionResult InitInternal() override;
+  
+  // Required by ITrackAction:
+  virtual bool GetAngles(Radians& absPanAngle, Radians& absTiltAngle) override;
+  
+private:
+  
+  FaceID               _faceID  = Vision::UnknownFaceID;
+  Vision::PetType      _petType = Vision::PetType::Unknown;
+  TimeStamp_t          _lastFaceUpdate = 0;
+  
+}; // class TrackPetFaceAction
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class TrackMotionAction : public ITrackAction
 {
 public:

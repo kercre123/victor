@@ -16,15 +16,19 @@
 
 #include "visionSystem.h"
 
-#include "anki/cozmo/basestation/encodedImage.h"
-#include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/visionModesHelpers.h"
-#include "anki/vision/basestation/cameraImagingPipeline.h"
-#include "anki/vision/basestation/image_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/math/linearAlgebra_impl.h"
+
+#include "anki/cozmo/basestation/encodedImage.h"
+#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/visionModesHelpers.h"
+
+#include "anki/vision/basestation/cameraImagingPipeline.h"
+#include "anki/vision/basestation/faceTracker.h"
+#include "anki/vision/basestation/image_impl.h"
+#include "anki/vision/basestation/petTracker.h"
 
 #include "clad/vizInterface/messageViz.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -219,11 +223,11 @@ namespace Cozmo {
       PRINT_NAMED_ERROR("VisionSystem.Init.MissingJsonParameter", "%s", __fieldName__); \
       return RESULT_FAIL; \
     }} while(0)
-    
+
     {
       // Set up auto-exposure
       const Json::Value& imageQualityConfig = config["ImageQuality"];
-      GET_JSON_PARAMETER(imageQualityConfig, "CheckFrequency",      kQualityCheckFrequency);
+      GET_JSON_PARAMETER(imageQualityConfig, "CheckFrequency", kQualityCheckFrequency);
       GET_JSON_PARAMETER(imageQualityConfig, "TooBrightValue",      kTooBrightValue);
       GET_JSON_PARAMETER(imageQualityConfig, "TooDarkValue",        kTooDarkValue);
       GET_JSON_PARAMETER(imageQualityConfig, "MeterFromDetections", kMeterFromDetections);
@@ -267,6 +271,13 @@ namespace Cozmo {
                   "With model path %s.", _dataPath.c_str());
     _faceTracker = new Vision::FaceTracker(_dataPath, config);
     PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.DoneInstantiatingFaceTracker", "");
+    
+    _petTracker = new Vision::PetTracker();
+    const Result petTrackerInitResult = _petTracker->Init(config);
+    if(RESULT_OK != petTrackerInitResult) {
+      PRINT_NAMED_ERROR("VisionSystem.Init.PetTrackerInitFailed", "");
+      return petTrackerInitResult;
+    }
     
     _markerToTrack.Clear();
     _newMarkerToTrack.Clear();
@@ -904,7 +915,7 @@ namespace Cozmo {
       {
         roiRects.emplace_back(quad);
         totalRoiArea += roiRects.back().Area();
-      }
+    }
       
       if(2*totalRoiArea < inputImage.GetNumElements())
       {
@@ -931,8 +942,8 @@ namespace Cozmo {
           _currentResult.debugImageRGBs.emplace_back("HistWeights", dispWeights);
         }
       }
-      else
-      {
+    else
+    {
         // Detections already make up more than half the image, so they'll already
         // get more focus. Just expose normally
         expResult = _imagingPipeline->ComputeExposureAdjustment(inputImage, exposureAdjFrac);
@@ -964,7 +975,7 @@ namespace Cozmo {
     } // if(DEBUG_IMAGE_HISTOGRAM)
     
     // Default: we checked the image quality and it's fine (no longer "Unchecked")
-    _currentResult.imageQuality = ImageQuality::Good;
+      _currentResult.imageQuality = ImageQuality::Good;
     
     if(FLT_LT(exposureAdjFrac, 1.f))
     {
@@ -973,7 +984,7 @@ namespace Cozmo {
       {
         _currentExposureTime_ms = std::round(static_cast<f32>(_currentExposureTime_ms) * exposureAdjFrac);
         _currentExposureTime_ms = std::max(_minCameraExposureTime_ms, _currentExposureTime_ms);
-      }
+    }
       else if(FLT_GT(_currentCameraGain, _minCameraGain))
       {
         // Already at min exposure time; reduce gain
@@ -1756,6 +1767,36 @@ namespace Cozmo {
     return RESULT_OK;
   } // DetectFaces()
   
+  Result VisionSystem::DetectPets(const Vision::Image& grayImage,
+                                  std::vector<Anki::Rectangle<s32>>& detections)
+  {
+    Result result = RESULT_FAIL;
+    
+    if(detections.empty())
+    {
+      result = _petTracker->Update(grayImage, _currentResult.pets);
+    }
+    else
+    {
+      // Don't look for pets where we've already found something else
+      Vision::Image maskedImage = BlackOutRects(grayImage, detections);
+      result = _petTracker->Update(maskedImage, _currentResult.pets);
+    }
+    
+    if(RESULT_OK != result) {
+      PRINT_NAMED_WARNING("VisionSystem.DetectPets.PetTrackerUpdateFailed", "");
+    }
+    
+    for(auto const& pet : _currentResult.pets)
+    {
+      detections.emplace_back((s32)std::round(pet.GetRect().GetX()),
+                              (s32)std::round(pet.GetRect().GetY()),
+                              (s32)std::round(pet.GetRect().GetWidth()),
+                              (s32)std::round(pet.GetRect().GetHeight()));
+    }
+    return result;
+    
+	} // DetectPets()
   
 #if USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID
   static size_t FindLargestRegionCentroid(const std::vector<std::vector<Anki::Point2i>>& regionPoints,
@@ -2811,7 +2852,7 @@ namespace Cozmo {
     return RESULT_OK;
     
   } // GetImageHelper()
-  
+
   Result VisionSystem::AddCalibrationImage(const Vision::Image& calibImg, const Anki::Rectangle<s32>& targetROI)
   {
     if(_isCalibrating) {
@@ -3106,8 +3147,15 @@ namespace Cozmo {
       Toc("TotalDetectingFaces");
     }
     
-    // DEBUG!!!!
-    //EnableMode(VisionMode::DetectingMotion, true);
+    if(ShouldProcessVisionMode(VisionMode::DetectingPets)) {
+      Tic("TotalDetectingPets");
+      visionModesProcessed.SetBitFlag(VisionMode::DetectingPets, true);
+      if((lastResult = DetectPets(inputImageGray, detectionRects)) != RESULT_OK) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.DetectPetsFailed", "");
+        return lastResult;
+      }
+      Toc("TotalDetectingPets");
+    }
     
     if(ShouldProcessVisionMode(VisionMode::DetectingMotion))
     {
@@ -3149,6 +3197,8 @@ namespace Cozmo {
       }
     }
 
+    // NOTE: This should come after any detectors that add things to "detectionRects"
+    //       since it meters exposure based on those.
     if(ShouldProcessVisionMode(VisionMode::CheckingQuality))
     {
       visionModesProcessed.SetBitFlag(VisionMode::CheckingQuality, true);
@@ -3188,7 +3238,7 @@ namespace Cozmo {
     {
       return false;
     }
-
+    
     // These checks will be affected by vision scheduler (COZMO-3218):
     
     // Marker processing only gets to happen every nth frame
@@ -3224,8 +3274,8 @@ namespace Cozmo {
       PRINT_CH_INFO(kLogChannelName, "VisionSystem.SetAutoExposureParams",
                     "subSample:%d midVal:%d midPerc:%.3f changeFrac:%.3f",
                     subSample, midValue, midPercentile, maxChangeFraction);
-    }
-    
+  }
+  
     return result;
   }
   

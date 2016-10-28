@@ -594,6 +594,26 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TrackToObj
   
   return action;
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TrackToPet& trackPet)
+{
+  TrackPetFaceAction* action = nullptr;
+  
+  if(trackPet.petID != Vision::UnknownFaceID)
+  {
+    action = new TrackPetFaceAction(robot, trackPet.petID);
+  }
+  else
+  {
+    action = new TrackPetFaceAction(robot, trackPet.petType);
+  }
+  
+  action->SetUpdateTimeout(trackPet.timeout_sec);
+  
+  return action;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
@@ -876,7 +896,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       // Usage:
       //   DEFINE_HANDLER(actionUnionTag, msgGameToEngineTag, defaultNumRetriesa)
       //
-      // NOTE: numRetries is only used when action is requested vie MessageGameToEngine.
+      // NOTE: numRetries is only used when action is requested via MessageGameToEngine.
       //       (Otherwise, the numRetries in the action queueing message is used.)
       //
       
@@ -910,6 +930,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(setLiftHeight,            SetLiftHeight,            0),
       DEFINE_HANDLER(trackFace,                TrackToFace,              0),
       DEFINE_HANDLER(trackObject,              TrackToObject,            0),
+      DEFINE_HANDLER(trackPet,                 TrackToPet,               0),
       DEFINE_HANDLER(traverseObject,           TraverseObject,           1),
       DEFINE_HANDLER(turnInPlace,              TurnInPlace,              0),
       DEFINE_HANDLER(turnTowardsFace,          TurnTowardsFace,          0),
@@ -924,7 +945,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     };
 
     static_assert(Util::FullEnumToValueArrayChecker::IsSequentialArray(kActionHandlerArray),
-                  "Missing or out-of-order entries in action handler array.");
+                  "Duplicated or out-of-order entries in action handler array.");
   
     // Build lookup tables so we don't have to linearly search through the above
     // array each time we want to find the handler

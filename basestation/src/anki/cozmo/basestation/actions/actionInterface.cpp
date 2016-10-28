@@ -122,6 +122,7 @@ namespace Anki {
         }
         
         case RobotActionType::TRACK_FACE:
+        case RobotActionType::TRACK_PET_FACE:
         {
           _completionUnion.Set_trackFaceCompleted(TrackFaceCompleted());
           break;

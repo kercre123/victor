@@ -11,6 +11,7 @@
  * Copyright: Anki, Inc. 2014
  **/
 
+#include "anki/cozmo/basestation/petWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -849,6 +850,10 @@ namespace Cozmo {
         //  and should be done before sending RobotProcessedImage below!)
         tryAndReport(&VisionComponent::UpdateFaces,               VisionMode::DetectingFaces);
         
+        // NOTE: UpdatePets will also update PetWorld (which broadcasts pet face observations
+        //  and should be done before sending RobotProcessedImage below!)
+        tryAndReport(&VisionComponent::UpdatePets,                VisionMode::DetectingPets);
+        
         // Note: tracking mode has two associated update calls:
         tryAndReport(&VisionComponent::UpdateTrackingQuad,        VisionMode::Tracking);
         tryAndReport(&VisionComponent::UpdateDockingErrorSignal,  VisionMode::Tracking);
@@ -1073,6 +1078,17 @@ namespace Cozmo {
     
     return lastResult;
   } // UpdateFaces()
+  
+  Result VisionComponent::UpdatePets(const VisionProcessingResult& procResult)
+  {
+    Result lastResult = RESULT_OK;
+    if(_visionSystem != nullptr)
+    {
+      _robot.GetPetWorld().Update(procResult.pets);
+    }
+    
+    return lastResult;
+  }
   
   Result VisionComponent::UpdateTrackingQuad(const VisionProcessingResult& procResult)
   {

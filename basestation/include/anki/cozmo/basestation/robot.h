@@ -107,6 +107,7 @@ class BlockFilter;
 class BlockTapFilterComponent;
 class BlockWorld;
 class FaceWorld;
+class PetWorld;
 class RobotPoseHistory;
 class RobotPoseStamp;
 class IExternalInterface;
@@ -163,9 +164,12 @@ public:
   const RobotID_t        GetID()         const;
   BlockWorld&            GetBlockWorld()       {assert(_blockWorld.get()); return *_blockWorld;}
   const BlockWorld&      GetBlockWorld() const {assert(_blockWorld.get()); return *_blockWorld;}
-
+  
   FaceWorld&             GetFaceWorld()        {assert(_faceWorld.get()); return *_faceWorld;}
   const FaceWorld&       GetFaceWorld()  const {assert(_faceWorld.get()); return *_faceWorld;}
+
+  PetWorld&              GetPetWorld()         {assert(_petWorld.get()); return *_petWorld;}
+  const PetWorld&        GetPetWorld()   const {assert(_petWorld.get()); return *_petWorld;}
 
   const bool             GetTimeSynced() const {return _timeSynced;}
   
@@ -806,6 +810,9 @@ protected:
     
   // A container for faces/people the robot knows about
   std::unique_ptr<FaceWorld>         _faceWorld;
+  
+  // A container for all pet faces the robot knows about
+  std::unique_ptr<PetWorld>          _petWorld;
   
   std::unique_ptr<BehaviorManager>       _behaviorMgr;
   std::unique_ptr<AIInformationAnalyzer> _aiInformationAnalyzer;

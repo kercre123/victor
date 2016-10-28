@@ -24,6 +24,7 @@
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/ledEncoding.h"
+#include "anki/cozmo/basestation/petWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotDataLoader.h"
 #include "anki/cozmo/basestation/robotIdleTimeoutComponent.h"
@@ -161,6 +162,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
   , _lastMsgTimestamp(0)
   , _blockWorld(new BlockWorld(this))
   , _faceWorld(new FaceWorld(*this))
+  , _petWorld(new PetWorld(*this))
   , _behaviorMgr(new BehaviorManager(*this))
   , _aiInformationAnalyzer(new AIInformationAnalyzer())
   , _audioClient(new Audio::RobotAudioClient(this))

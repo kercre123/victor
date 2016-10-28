@@ -10,6 +10,7 @@
 #include "clad/types/pathMotionProfile.clad"
 #include "clad/types/sayTextStyles.clad"
 #include "clad/types/animationTrigger.clad"
+#include "clad/types/petTypes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -317,6 +318,13 @@ message TrackToObject {
     bool    headOnly
 }
 
+// TrackToPet
+message TrackToPet {
+    float_32         timeout_sec, // Give up after not seeing a pet for this long (0 to never give up)
+    uint_32          petID,       // Set to UnknownFaceID (-1) to use first of specified PetType
+    Vision::PetType  petType      // Set to Unknown to use any pet type (ignored if ID set)
+}
+
 // TraverseObject
 message TraverseObject {
   PathMotionProfile motionProf,
@@ -494,6 +502,7 @@ union RobotActionUnion {
   SetLiftHeight             setLiftHeight,
   TrackToFace               trackFace,
   TrackToObject             trackObject,
+  TrackToPet                trackPet,
   TraverseObject            traverseObject,
   TurnInPlace               turnInPlace,
   TurnTowardsFace           turnTowardsFace,

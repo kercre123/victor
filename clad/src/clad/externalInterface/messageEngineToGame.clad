@@ -24,6 +24,7 @@
 #include "clad/types/objectFamilies.clad"
 #include "clad/types/objectTypes.clad"
 #include "clad/types/offTreadsStates.clad"
+#include "clad/types/petTypes.clad"
 #include "clad/types/poseStructs.clad"
 #include "clad/types/proxMessages.clad"
 #include "clad/types/robotStatusAndActions.clad"
@@ -262,6 +263,19 @@ message RobotObservedFace {
 message RobotChangedObservedFaceID {
     int_32   oldID,
     int_32   newID
+}
+
+// RobotObservedPet
+message RobotObservedPet {
+    int_32           petID,
+    uint_32          timestamp,
+    uint_32          numTimesObserved,
+    float_32         score,
+    int_32           img_x,       // Detection rectangle in image
+    int_32           img_y,       // (x,y) = upper left corner in image
+    int_32           img_width,   //    "
+    int_32           img_height,  //    "
+    Vision::PetType  petType
 }
 
 // RobotObservedMotion

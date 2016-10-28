@@ -32,6 +32,10 @@ Face {
   translation -0.004046 -0.474987 0.12
 }
 Face {
+  translation -0.0193327 0.560133 0.12
+  image "cat01.png"
+}
+Face {
   translation -0.444046 0.005013 0.11
   rotation 0 0 1 4.71239
   image "face02.png"

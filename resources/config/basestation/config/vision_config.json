@@ -1,20 +1,29 @@
 {
-  "InitialVisionModes" : {
+  "InitialVisionModes" :
+  {
     // If a vision mode is not listed, it will be left in its default state
     "DetectingMarkers"       : true,
     "DetectingFaces"         : true,
+    "DetectingPets"          : true,
     "DetectingMotion"        : true,
     "DetectingOverheadEdges" : true,
     "CheckingQuality"        : true
   },
+  
   "FaceAlbum" : "robot",       // Name of album on disk to load or "robot" to use the one from the robot
-  "FaceDetection" : {
+  
+  "FaceDetection" :
+  {
     "DetectionMode": "video"   // "video" or "singleImage"
   },
-  "FaceRecognition" : {
+  
+  "FaceRecognition" :
+  {
     "RunMode": "asynchronous"  // "synchronous" or "asynchronous"
   },
-  "ImageQuality" : {
+  
+  "ImageQuality" :
+  {
     // Auto-exposure settings
     "InitialExposureTime_ms"    : 16,    // Sent each time we request camera calibration
     "MidValue"                  : 115,   // [0,255] - Try to make midPercentile have this value
@@ -32,9 +41,24 @@
     "TimeBeforeErrorMessage_ms" :       3000,  // How long VisionSystem must detect "bad" quality before notifying game
     "RepeatedErrorMessageInverval_ms" : 300000 // Time between error messages once triggered
   },
-  "PerformanceLogging" : {
+  
+  "PerformanceLogging" :
+  {
     "DropStatsWindowLength_sec"         : 30,  // How long to average dropped image stats
     "TimeBetweenProfilerInfoPrints_sec" : 60,  // How often to print Profiler info messages to the logs
     "TimeBetweenProfilerDasLogs_sec"    : 120  // How often to log Profiler DAS events
+  },
+  
+  "PetTracker" :
+  {
+    "MaxPets"             : 4,    // Detectable/trackable at the same time
+    "MinFaceSize"         : 60,
+    "MaxFaceSize"         : 240,
+    "DetectionThreshold"  : 850,  // 0 to 1000
+    "InitialSearchCycle"  : 4,    // 1 to 45
+    "NewSearchCycle"      : 8,    // 5 to 45
+    "TrackRetryCount"     : 2,    // Number of frames to continue searching for a lost pet
+    "TrackHoldCount"      : 0,    // Number of frames to keep outputting a detection after it is lost
+    "TrackSteadiness"     : 15    // 10 to 30 in Percentage change required to actually update size/position
   }
 }

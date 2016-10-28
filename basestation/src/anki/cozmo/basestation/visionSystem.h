@@ -28,6 +28,8 @@
 
 #include "anki/common/types.h"
 
+#include "anki/cozmo/shared/cozmoConfig.h"
+
 // Robot includes should eventually go away once Basestation vision is natively
 // implemented
 #include "anki/common/robot/fixedLengthList.h"
@@ -41,21 +43,20 @@
 
 #include "anki/common/basestation/matlabInterface.h"
 
-#include "anki/vision/robot/fiducialMarkers.h"
-
-#include "anki/cozmo/shared/cozmoConfig.h"
-
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "anki/vision/basestation/image.h"
-#include "anki/vision/basestation/faceTracker.h"
-#include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/profiler.h"
+#include "anki/vision/basestation/trackedFace.h"
+#include "anki/vision/basestation/trackedPet.h"
+#include "anki/vision/basestation/visionMarker.h"
+#include "anki/vision/robot/fiducialMarkers.h"
 
 #include "visionParameters.h"
 
 #include "clad/vizInterface/messageViz.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/types/faceEnrollmentPoses.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/loadedKnownFace.h"
 #include "clad/types/visionModes.h"
@@ -75,7 +76,9 @@ namespace Embedded {
 }
   
 namespace Vision {
+  class FaceTracker;
   class ImagingPipeline;
+  class PetTracker;
 }
   
 namespace Cozmo {
@@ -99,6 +102,7 @@ namespace Cozmo {
     std::list<ExternalInterface::RobotObservedMotion>  observedMotions;
     std::list<Vision::ObservedMarker>                  observedMarkers;
     std::list<Vision::TrackedFace>                     faces;
+    std::list<Vision::TrackedPet>                      pets;
     std::list<Pose3d>                                  dockingPoses;
     std::list<OverheadEdgeFrame>                       overheadEdges;
     std::list<Vision::UpdatedFaceID>                   updatedFaceIDs;
@@ -405,6 +409,9 @@ namespace Cozmo {
     // Face detection, tracking, and recognition
     Vision::FaceTracker*          _faceTracker = nullptr;
     
+    // PetTracking
+    Vision::PetTracker*           _petTracker = nullptr;
+    
     // We hold a reference to the VizManager since we often want to draw to it
     VizManager*                   _vizManager = nullptr;
 
@@ -494,6 +501,9 @@ namespace Cozmo {
     Result DetectFaces(const Vision::Image& grayImage,
                        std::vector<Anki::Rectangle<s32>>& detectionRects);
                        
+    Result DetectPets(const Vision::Image& grayImage,
+                      std::vector<Anki::Rectangle<s32>>& ignoreROIs);
+    
     Result DetectMotion(const Vision::ImageRGB& image);
     
     Result DetectOverheadEdges(const Vision::ImageRGB& image);

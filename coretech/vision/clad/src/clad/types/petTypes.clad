@@ -1,0 +1,16 @@
+/** Clad message definitions for the types of detectable pets 
+ */
+
+
+namespace Anki {
+namespace Vision {
+
+  enum uint_8 PetType 
+  {
+    Unknown,
+    Cat,
+    Dog
+  }
+      
+} // namespace Vision
+} // namespace Anki

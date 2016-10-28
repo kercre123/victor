@@ -104,10 +104,12 @@
       ],
       'face_library_libs': [
         'libeOkao.a',      # Common
+        'libeOkaoCo.a',    # Okao Common
         'libeOkaoDt.a',    # Face Detection
         'libeOkaoPt.a',    # Face Parts Detection
         'libeOkaoEx.a',    # Facial Expression estimation
         'libeOkaoFr.a',    # Face Recognition
+        'libeOmcvPd.a',    # Pet Detection
       ],
     }],
     
