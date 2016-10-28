@@ -188,6 +188,22 @@ _irq_clear_end
                 BX      R0
                 ENDP
 
+FORCE_HARDFAULT PROC
+                EXPORT FORCE_HARDFAULT
+
+                SUB     sp, sp, #16
+                PUSH    {r0-r3}
+
+                STR     r12, [sp, #16]
+                STR     lr, [sp, #20]
+                LDR     r0, =.
+                STR     r0, [sp, #24]
+                MRS     r0, PSR
+                STR     r0, [sp, #28]
+
+                B       HardFault_PreHandler
+                ENDP
+
 HardFault_PreHandler\
                 PROC
                 IMPORT  HardFault_Handler

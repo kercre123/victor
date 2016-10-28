@@ -474,7 +474,7 @@ static void WriteByte(uint8_t data) {
   I2C0_S |= I2C_S_IICIF_MASK;
 }
 
-void Anki::Cozmo::HAL::I2C::WriteSync(const uint8_t *bytes, int len) {
+static void writeBlockSync(const uint8_t *bytes, int len) {
   I2C0_S |= I2C_S_IICIF_MASK;
 
   I2C0_C1 = I2C_CTRL_SEND;
@@ -483,7 +483,10 @@ void Anki::Cozmo::HAL::I2C::WriteSync(const uint8_t *bytes, int len) {
     while (~I2C0_S & I2C_S_IICIF_MASK) ;
     I2C0_S |= I2C_S_IICIF_MASK;
   }
+}
 
+void Anki::Cozmo::HAL::I2C::WriteSync(const uint8_t *bytes, int len) {
+  writeBlockSync(bytes, len);
   I2C0_C1 = I2C_CTRL_STOP;
   MicroWait(5);
 }
@@ -497,9 +500,9 @@ void Anki::Cozmo::HAL::I2C::WriteReg(uint8_t slave, uint8_t addr, uint8_t data) 
 uint8_t Anki::Cozmo::HAL::I2C::ReadReg(uint8_t slave, uint8_t addr) {
   uint8_t cmd[] = { SLAVE_WRITE(slave), addr };
 
-  WriteSync(cmd, sizeof(cmd));
+  writeBlockSync(cmd, sizeof(cmd));
 
-  I2C0_C1 = I2C_CTRL_SEND;
+  I2C0_C1 = I2C_CTRL_SEND | I2C_CTRL_RST;
   I2C0_D = SLAVE_READ(slave);
   while (~I2C0_S & I2C_S_IICIF_MASK) ;
   I2C0_S |= I2C_S_IICIF_MASK;

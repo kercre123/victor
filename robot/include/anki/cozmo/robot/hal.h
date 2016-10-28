@@ -73,6 +73,14 @@ extern "C" {
 }
 #endif
 
+#ifdef __cplusplus
+extern "C"
+#endif 
+void FORCE_HARDFAULT(void);
+#ifndef HAL_ASSERT
+#define HAL_ASSERT(c) do { if(!(c)) FORCE_HARDFAULT(); } while(0)
+#endif
+
 #if(STREAM_DEBUG_IMAGES)
 #undef DISABLE_PRINT_MACROS
 #define DISABLE_PRINT_MACROS 1

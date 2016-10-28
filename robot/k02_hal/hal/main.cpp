@@ -50,11 +50,12 @@ namespace Anki
       void HALInit(void) {
         Watchdog::kickAll();
 
+        // Configure the I2C junk
         I2C::Start();
         UART::Init();
         DAC::Sync();
       }
-      
+
       // This method is called at 7.5KHz (once per scan line)
       // After 7,680 (core) cycles, it is illegal to run any DMA or take any interrupt
       // So, you must hit all the registers up front in this method, and set up any DMA to finish quickly

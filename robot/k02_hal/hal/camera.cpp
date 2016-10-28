@@ -353,6 +353,29 @@ void DMA0_IRQHandler(void)
           FTM_SC_CLKS(1) | // Select BUS_CLOCK - this enables counting
           FTM_SC_PS(0);
 
+  // Verify the camera timing (across 9 lines, first one just lines up edge)
+  {
+    uint32_t minimum = ~0;
+    uint32_t base = 0;
+
+    for (int i = 0; i < 10; i++) {
+      while (~GPIO_READ(GPIO_CAM_HSYNC) & PIN_CAM_HSYNC) ;
+      while (GPIO_READ(GPIO_CAM_HSYNC) & PIN_CAM_HSYNC) ;
+
+      uint32_t now = GetMicroCounter();
+      uint32_t delta = now - base;
+      base = now;
+      
+      if (delta < minimum) minimum = delta;
+    }
+
+    static const uint32_t TARGET_TIMING = 1000000 / DROPS_PER_SECOND;
+
+    // Verify that we are within acceptable timing for camera
+    HAL_ASSERT(ABS(minimum - TARGET_TIMING) <= 2);
+  }
+
+  // Setup the interrupt
   timingSynced_ = true;
   NVIC_EnableIRQ(FTM2_IRQn);
   NVIC_SetPriority(FTM2_IRQn, 1);
