@@ -85,7 +85,7 @@ public class SayTextSlide : MonoBehaviour {
     DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.RemoveItemAmount(_SparkItemId, _SayCost);
     UpdateTotalSparkCount();
 
-    bool hasBadWords = false;
+    bool hasBadWords = BadWordsFilterManager.Instance.Contains(_TextInput.text);
 
     if (hasBadWords) {
       RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CozmoSaysBadWord, (success) => {
