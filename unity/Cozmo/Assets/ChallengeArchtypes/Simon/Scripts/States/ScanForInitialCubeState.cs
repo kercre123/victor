@@ -246,6 +246,9 @@ namespace Simon {
 
         // setup next state...
         if (nextState == ScanPhase.NoCubesSeen) {
+          _Game.CubeIdsForGame.Clear();
+          _SetupCubeState.Clear();
+          UpdateUI(0);
           _Game.SharedMinigameView.EnableContinueButton(false);
         }
         else if (nextState == ScanPhase.WaitForContinue) {

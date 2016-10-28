@@ -159,11 +159,11 @@
   "simonGame.label.cozmoTurnListen": {
     "translation": "Cozmo's turn to listen to the pattern..."
   },
-  "simonGame.label.stepsLeft": {
-    "translation": "Steps In Pattern: {0}/{1}"
+  "simonGame.label.nextRound": {
+    "translation": "Next Round!"
   },
   "simonGame.text.patternLength": {
-    "translation": "Length: {0}"
+    "translation": "Pattern Length: {0}"
   },
   "simonGame.text.turn": {
     "translation": "Round: {0}"
@@ -172,7 +172,7 @@
     "translation": "VS."
   },
   "simonGame.mode.solo": {
-    "translation": "solo"
+    "translation": "Solo"
   },
   "simonGame.text.howToPlay": {
     "translation": "Take turns with Cozmo to make patterns. When Cozmo makes a pattern, watch closely and  try to copy him by tapping the Cubes in the same order. When It's your turn, tap the Cubes to make a pattern for Cozmo to copy! The game ends when someone messes up. Try for a high score!"

@@ -35,12 +35,12 @@ MonoBehaviour:
   MinSequenceLength: 2
   MaxSequenceLength: 30
   TimeWaitFirstBeat: 1
-  MinDistBetweenCubesMM: 30
+  MinDistBetweenCubesMM: 60
   RotateSecScan: 2
   ScanTimeoutSec: 30
   MaxLivesCozmo: 3
   MaxLivesHuman: 3
-  MinRoundBeforeLongReact: 5
+  MinRoundBeforeLongReact: 3
   TimeBetweenBeat_Sec:
     serializedVersion: 2
     m_Curve:

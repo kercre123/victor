@@ -328,7 +328,7 @@ public static class LocalizationKeys {
   public const string kSimonGameLabelYouWin = "simonGame.label.youWin";
   public const string kSimonGameLabelCozmoWin = "simonGame.label.cozmoWin";
   public const string kSimonGameLabelCozmoTurnListen = "simonGame.label.cozmoTurnListen";
-  public const string kSimonGameLabelStepsLeft = "simonGame.label.stepsLeft";
+  public const string kSimonGameLabelNextRound = "simonGame.label.nextRound";
   public const string kSimonGameTextPatternLength = "simonGame.text.patternLength";
   public const string kSimonGameTextTurn = "simonGame.text.turn";
   public const string kSimonGameModeVs = "simonGame.mode.vs";

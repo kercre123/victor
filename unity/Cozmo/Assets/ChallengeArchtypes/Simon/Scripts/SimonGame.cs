@@ -219,6 +219,7 @@ namespace Simon {
         }
         _CurrentIDSequence.Add(pickedID);
       }
+      GetSimonSlide().ShowStatusText(Localization.GetWithArgs(LocalizationKeys.kSimonGameTextPatternLength, _CurrentIDSequence.Count));
     }
 
     public IList<int> GetCurrentSequence() {
@@ -344,16 +345,11 @@ namespace Simon {
         simonTurnScript.ShowCenterText(isListening ? Localization.Get(LocalizationKeys.kSimonGameLabelListen) : Localization.Get(LocalizationKeys.kSimonGameLabelRepeat));
       }
       CurrentPlayer = player;
-      string status = "";
       int turnNumber = _CurrentIDSequence.Count - _Config.MinSequenceLength + 1;
-      if (turnNumber > 0) {
-        status = Localization.GetWithArgs(LocalizationKeys.kSimonGameTextTurn, turnNumber);
-        if (_ShowSequenceUpdated) {
-          SharedMinigameView.PlayBannerAnimation(status, null, _BannerAnimationDurationSeconds);
-          _ShowSequenceUpdated = false;
-        }
+      if (turnNumber > 0 && _ShowSequenceUpdated) {
+        SharedMinigameView.PlayBannerAnimation(Localization.Get(LocalizationKeys.kSimonGameLabelNextRound), null, _BannerAnimationDurationSeconds);
+        _ShowSequenceUpdated = false;
       }
-      simonTurnScript.ShowStatusText(status);
     }
 
     public void ShowCenterResult(bool enabled, bool correct = true) {
