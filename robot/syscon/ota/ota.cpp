@@ -260,6 +260,8 @@ static inline bool FlashBlock() {
 
   int writeAddress = packet.blockAddress;
 
+  if (writeAddress == 0xDEAD) NVIC_SystemReset(); // Special override to abort OTA
+
   // We will not override the boot loader
   if (writeAddress < BODY_SECURE_SPACE || writeAddress >= BODY_BOOTLOADER) {
     return false;

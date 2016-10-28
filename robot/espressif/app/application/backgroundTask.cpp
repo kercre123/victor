@@ -124,7 +124,6 @@ void RadioConnectionStateMachineUpdate()
       case 1:
       {
         AnimationController::EngineDisconnect();
-        Anki::Cozmo::UpgradeController::OnDisconnect();
         Messages::ResetMissedLogCount();
         doRTDisconnectPhase++;
         break;

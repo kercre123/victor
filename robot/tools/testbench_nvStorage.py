@@ -122,7 +122,7 @@ And the mome raths outgrabe.""".encode()
     
     @property
     def randomTag(self):
-        return int(random.uniform(NVS.NVEntryTag.NVConst_MIN_ADDRESS, NVS.NVEntryTag.NVConst_MAX_ADDRESS-4096)/4)*4
+        return int(random.uniform(NVS.NVConst.NVConst_MIN_ADDRESS, NVS.NVConst.NVConst_MAX_ADDRESS-4096)/4)*4
     
     def test_erwr(self):
         tag = self.randomTag

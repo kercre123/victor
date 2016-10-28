@@ -29,7 +29,7 @@ typedef enum {
   APPLICATION_A_SECTOR        = 0x003, ///< Start of application image A region
   APPLICATION_B_SECTOR        = 0x103, ///< Start of application image B region
   FACTORY_WIFI_FW_SECTOR      = 0x080, ///< Where the factory firmware starts
-  FACTORY_RTIP_BODY_FW_SECTOR = 0x0c5, ///< Where the image for the RTIP and Body firmware is stored
+  FACTORY_RTIP_BODY_FW_SECTOR = 0x0c8, ///< Where the image for the RTIP and Body firmware is stored
   FACTORY_NV_STORAGE_SECTOR   = 0x0de, ///< A region used for storing large factory test data
   FIXTURE_STORAGE_SECTOR      = 0x0fc, ///< 16KB for fixture data
   DHCP_MARKER_SECTOR          = 0x100, ///< Reserved for DHCP server

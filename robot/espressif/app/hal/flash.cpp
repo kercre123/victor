@@ -9,7 +9,6 @@
 extern "C" {
   #include "user_interface.h"
   #include "osapi.h"
-  #include "driver/rtc.h"
 }
 
 #define OLD_NV_STORAGE_A_SECTOR (0x1c0)
@@ -57,6 +56,7 @@ void Anki::Cozmo::HAL::FlashInit()
   if (!correctOldNVHeader(OLD_NV_STORAGE_A_SECTOR)) correctOldNVHeader(OLD_NV_STORAGE_B_SECTOR);
 }
 
+// Prevent writing to places that could cause damage or security breach
 static bool writeOkay(const u32 address, const u32 length)
 {
   if ((address + length) <= address) return false; // Check for integer overflow or 0 length
@@ -64,28 +64,16 @@ static bool writeOkay(const u32 address, const u32 length)
   else if ((address >= (NV_STORAGE_SECTOR * SECTOR_SIZE)) && ((address + length) <= (OLD_NV_STORAGE_A_SECTOR * SECTOR_SIZE))) return true; // First allowable segment of NVStorage
   else if ((address >= ((OLD_NV_STORAGE_A_SECTOR + 1) * SECTOR_SIZE)) && ((address + length) <= (OLD_NV_STORAGE_B_SECTOR * SECTOR_SIZE))) return true; // Second allowable segment of NVStorage
   else if ((address >= ((OLD_NV_STORAGE_B_SECTOR + 1) * SECTOR_SIZE)) && ((address + length) <= (NVSTORAGE_END_SECTOR * SECTOR_SIZE))) return true; // Third allowable segment of NVStorage
-  else // App image regions also okay if for other image
-  {
-    switch (GetImageSelection())
-    {
-      case FW_IMAGE_A:
-      { // Am image A so writing to B okay
-        if ((address >= (APPLICATION_B_SECTOR * SECTOR_SIZE)) && ((address + length) <= (NV_STORAGE_SECTOR * SECTOR_SIZE))) return true;
-        else if ((address >= (APPLICATION_A_SECTOR * SECTOR_SIZE + ESP_FW_MAX_SIZE - ESP_FW_NOTE_SIZE)) && ((address + length) <= (FACTORY_WIFI_FW_SECTOR * SECTOR_SIZE))) return true;
-        else break;
-      }
-      case FW_IMAGE_B:
-      { // Am image B so writing to A okay
-        if ((address >= (APPLICATION_A_SECTOR * SECTOR_SIZE)) && ((address + length) <= (FACTORY_WIFI_FW_SECTOR * SECTOR_SIZE))) return true;
-        else if ((address >= APPLICATION_B_SECTOR * SECTOR_SIZE + ESP_FW_MAX_SIZE - ESP_FW_NOTE_SIZE) && ((address + length) <= (NV_STORAGE_SECTOR * SECTOR_SIZE))) return true;
-        else break;
-      }
-      default:
-        break;
-    }
-    os_printf("FLASH %x[%x] not allowed\r\n", address, length);
-    return false;
-  }
+  else return false;
+}
+
+// Prevent reading back firmware etc.
+static bool readOkay(const u32 address, const u32 length)
+{
+  if ((address + length) <= address) return false; // Check for integer overflow or 0 length;
+  else if ((address >= (FACTORY_NV_STORAGE_SECTOR * SECTOR_SIZE)) && ((address + length) <= (DHCP_MARKER_SECTOR * SECTOR_SIZE))) return true;
+  else if ((address >= (NV_STORAGE_SECTOR * SECTOR_SIZE)) && ((address + length) <= (ESP_INIT_DATA_SECTOR * SECTOR_SIZE))) return true;
+  else return false;
 }
 
 // Converts SpiFlashOpResult codes to NVResult codes
@@ -108,7 +96,11 @@ Anki::Cozmo::NVStorage::NVResult Anki::Cozmo::HAL::FlashRead (u32 address, u32* 
   using namespace Anki::Cozmo::NVStorage;
   
   if ((int)data & 0x3) return NV_BAD_ARGS; // Check for alinment
-  else return RSLT_CONV(spi_flash_read(address, data, length));
+  else if (readOkay(address, length))
+  {
+    return RSLT_CONV(spi_flash_read(address, data, length));
+  }
+  else return NV_BAD_ARGS;
 }
 
 Anki::Cozmo::NVStorage::NVResult Anki::Cozmo::HAL::FlashErase(u32 address)

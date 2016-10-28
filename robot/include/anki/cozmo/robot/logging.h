@@ -16,22 +16,7 @@
 #ifndef __ANKI_COZMO_ROBOT_LOGGING_H_
 #define __ANKI_COZMO_ROBOT_LOGGING_H_
 
-// Which errors will be checked and reported?
-#define ANKI_DEBUG_MINIMAL 0 // Only check and output issues with explicit unit tests
-#define ANKI_DEBUG_ERRORS 10 // Check and output AnkiErrors and explicit unit tests
-#define ANKI_DEBUG_ERRORS_AND_WARNS 20 // Check and output AnkiErrors, AnkiWarns, and explicit unit tests
-#define ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS 30 // Check and output AnkiErrors, AnkiWarns, AnkiAsserts, and explicit unit tests
-#define ANKI_DEBUG_ALL 40 // Check and output AnkiErrors, AnkiWarns, and explicit unit tests, plus run any additional extensive tests
-
-#ifndef ANKI_DEBUG_LEVEL
-#define ANKI_DEBUG_LEVEL ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
-#endif
-#ifndef ANKI_DEBUG_EVENTS
-#define ANKI_DEBUG_EVENTS 1
-#endif
-#ifndef ANKI_DEBUG_INFO
-#define ANKI_DEBUG_INFO 1
-#endif
+#include "anki/cozmo/robot/buildTypes.h"
 
 template<typename T>
 inline int trace_cast(const T arg)
@@ -79,6 +64,17 @@ template<> inline int trace_cast(const double arg)
 #define console_printf(...) os_printf(__VA_ARGS__)
 #else
 #define console_printf(...)
+#endif
+
+// Keil doesn't seem to reliably error on these not being defined below so trigger explictily.
+#ifndef ANKI_DEBUG_EVENTS
+#error ANKI_DEBUG_EVENTS not defined
+#endif
+#ifndef ANKI_DEBUG_INFO
+#error ANKI_DEBUG_EVENTS not defined
+#endif
+#ifndef ANKI_DEBUG_LEVEL
+#error ANKI_DEBUG_LEVEL not defined
 #endif
 
 namespace Anki {
