@@ -108,6 +108,7 @@ public static class LocalizationKeys {
   public const string kConnectivityReplaceCozmoOnCharger = "connectivity.replaceCozmoOnCharger";
   public const string kLabelGetHelp = "label.getHelp";
   public const string kLabelCubesNotWorking = "label.cubesNotWorking";
+  public const string kConnectivityConnectionRejectedTitle = "connectivity.connectionRejected.title";
 
   #endregion
 
@@ -302,6 +303,7 @@ public static class LocalizationKeys {
   public const string kMinigamesLabelCozmoUnlocksPanel = "minigames.label.cozmoUnlocksPanel";
   public const string kMinigameLabelDifficultySelect = "minigame.label.difficultySelect";
   public const string kMinigameLabelCozmoPrep = "minigame.label.cozmoPrep";
+  public const string kMinigameLabelGameOver = "minigame.label.gameOver";
   public const string kAskCozmoTitle = "askCozmo.title";
   public const string kAskCozmoButton = "askCozmo.button";
   public const string kDroneModeUnknownFaceReticleLabel = "droneMode.unknownFaceReticleLabel";
@@ -328,6 +330,7 @@ public static class LocalizationKeys {
   public const string kSimonGameLabelCozmoTurnListen = "simonGame.label.cozmoTurnListen";
   public const string kSimonGameLabelStepsLeft = "simonGame.label.stepsLeft";
   public const string kSimonGameTextPatternLength = "simonGame.text.patternLength";
+  public const string kSimonGameTextTurn = "simonGame.text.turn";
   public const string kSimonGameModeVs = "simonGame.mode.vs";
   public const string kSimonGameModeSolo = "simonGame.mode.solo";
   public const string kSimonGameTextHowToPlay = "simonGame.text.howToPlay";
@@ -691,6 +694,7 @@ public static class LocalizationKeys {
   public const string kUnlockableSimonDescription = "unlockable.Simon.Description";
   public const string kUnlockableSpeedTapTitle = "unlockable.SpeedTap.Title";
   public const string kUnlockableSpeedTapDescription = "unlockable.SpeedTap.Description";
+  public const string kUnlockableCozmoSaysTitle = "unlockable.cozmoSays.Title";
   public const string kUnlockableCubeRollActionTitle = "unlockable.CubeRollAction.Title";
   public const string kUnlockableCubeRollActionDescription = "unlockable.CubeRollAction.Description";
   public const string kUnlockableCubeRollActionSparkButtonDescription = "unlockable.CubeRollAction.SparkButtonDescription";

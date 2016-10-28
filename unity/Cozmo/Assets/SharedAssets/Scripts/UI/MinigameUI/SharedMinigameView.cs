@@ -213,6 +213,9 @@ namespace Cozmo {
       #endregion
 
       [SerializeField]
+      private WinnerStateSlide _WinnerStateSlidePrefab;
+
+      [SerializeField]
       private ShowCozmoVideo _ShowCozmoVideoPrefab;
       private ShowCozmoVideo _ShowCozmoVideoInstance;
 
@@ -771,6 +774,15 @@ namespace Cozmo {
         ShowCozmoCubeSlide cubeSlide = slideObject.GetComponent<ShowCozmoCubeSlide>();
         cubeSlide.Initialize(numCubesRequired, CubePalette.Instance.InViewColor, CubePalette.Instance.OutOfViewColor);
         return cubeSlide;
+      }
+
+      public WinnerStateSlide ShowWinnerStateSlide(bool playerWon, string centerText, string footerText) {
+        HideQuitButton();
+        GameObject winnerStateEndSlide = ShowNarrowGameStateSlide(
+          _WinnerStateSlidePrefab.gameObject, "Winnerstate_end_slide");
+        WinnerStateSlide winnerStateSlideScript = winnerStateEndSlide.GetComponent<WinnerStateSlide>();
+        winnerStateSlideScript.Init(playerWon ? _PlayerPortraitSprite : _CozmoPortraitSprite, centerText, footerText);
+        return winnerStateSlideScript;
       }
 
       public ChallengeEndedDialog ShowChallengeEndedSlide(ChallengeData data) {

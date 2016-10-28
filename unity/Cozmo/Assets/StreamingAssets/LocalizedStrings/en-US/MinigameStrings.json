@@ -84,6 +84,9 @@
   "minigame.label.cozmoPrep": {
     "translation": "Cozmo is getting ready to play..."
   },
+  "minigame.label.gameOver": {
+    "translation": "Game Over"
+  },
   "askCozmo.title": {
     "translation": "Ask Cozmo"
   },
@@ -160,6 +163,9 @@
     "translation": "Steps In Pattern: {0}/{1}"
   },
   "simonGame.text.patternLength": {
+    "translation": "Length: {0}"
+  },
+  "simonGame.text.turn": {
     "translation": "Round: {0}"
   },
   "simonGame.mode.vs": {

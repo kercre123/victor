@@ -613,6 +613,8 @@ MonoBehaviour:
     type: 3}
   _PlayerPortraitSprite: {fileID: 21300000, guid: 3ae9387e23f514ef3815f6e11688dfb3,
     type: 3}
+  _WinnerStateSlidePrefab: {fileID: 11428582, guid: 69a435fec78d944e0a30ae104d3341da,
+    type: 2}
   _ShowCozmoVideoPrefab: {fileID: 11464060, guid: 40ed55f641e834c7ea15be34f60efeff,
     type: 2}
 --- !u!222 &22229442

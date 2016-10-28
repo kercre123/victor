@@ -104,6 +104,7 @@ namespace Simon {
       _CurrLivesCozmo = _Config.MaxLivesCozmo;
       _CurrLivesHuman = _Config.MaxLivesHuman;
       _ShowScoreboardOnComplete = false;
+      _ShowEndWinnerSlide = true;
       CurrentPlayer = _FirstPlayer;
 
       State nextState = new SelectDifficultyState(new CozmoMoveCloserToCubesState(
@@ -243,17 +244,16 @@ namespace Simon {
       return audioEvent;
     }
 
-    protected override void ShowWinnerState() {
-      // TODO: remains to be seen how custom this will be for memory match.
-      base.ShowWinnerState();
+    protected override void ShowWinnerState(string overrideWinnerText = null, string footerText = "") {
       if (IsSoloMode()) {
         if (SaveHighScore()) {
-          SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kSimonGameSoloNewHighScore);
+          overrideWinnerText = Localization.Get(LocalizationKeys.kSimonGameSoloNewHighScore);
         }
         else {
-          SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kSimonGameSoloGameOver);
+          overrideWinnerText = Localization.Get(LocalizationKeys.kSimonGameSoloGameOver);
         }
       }
+      base.ShowWinnerState(overrideWinnerText, Localization.GetWithArgs(LocalizationKeys.kSimonGameTextPatternLength, _CurrentIDSequence.Count));
     }
 
     public void FinalLifeComplete() {
@@ -344,7 +344,7 @@ namespace Simon {
       string status = "";
       int turnNumber = _CurrentIDSequence.Count - _Config.MinSequenceLength + 1;
       if (turnNumber > 0) {
-        status = Localization.GetWithArgs(LocalizationKeys.kSimonGameTextPatternLength, turnNumber);
+        status = Localization.GetWithArgs(LocalizationKeys.kSimonGameTextTurn, turnNumber);
         if (_ShowSequenceUpdated) {
           SharedMinigameView.PlayBannerAnimation(status, null, _BannerAnimationDurationSeconds);
           _ShowSequenceUpdated = false;

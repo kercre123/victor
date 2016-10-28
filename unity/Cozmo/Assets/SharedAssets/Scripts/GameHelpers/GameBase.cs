@@ -69,6 +69,7 @@ public abstract class GameBase : MonoBehaviour {
   }
   private EndState _EndState;
   protected bool _ShowScoreboardOnComplete = true;
+  protected bool _ShowEndWinnerSlide = false;
 
   protected List<Anki.Cozmo.BehaviorType> _DisabledReactionaryBehaviors = new List<BehaviorType>();
 
@@ -821,12 +822,16 @@ public abstract class GameBase : MonoBehaviour {
     playerScoreboard.IsWinner = didPlayerWin;
   }
 
-  protected virtual void ShowWinnerState() {
+  protected virtual void ShowWinnerState(string overrideWinnerText = null, string footerText = "") {
     SoftEndGameRobotReset();
     _ResultsViewReached = true;
     ContextManager.Instance.AppFlash(playChime: true);
+
     string winnerText = "";
-    if (_EndState == EndState.PlayerWin) {
+    if (overrideWinnerText != null) {
+      winnerText = overrideWinnerText;
+    }
+    else if (_EndState == EndState.PlayerWin) {
       winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWins, new object[] { DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName });
     }
     else if (_EndState == EndState.CozmoWin) {
@@ -835,7 +840,14 @@ public abstract class GameBase : MonoBehaviour {
     else if (_EndState == EndState.Tie) {
       winnerText = Localization.Get(LocalizationKeys.kMinigameTextTie);
     }
-    SharedMinigameView.InfoTitleText = winnerText;
+
+    if (_ShowEndWinnerSlide) {
+      winnerText = winnerText.Replace("\n", " ");
+      SharedMinigameView.ShowWinnerStateSlide(_EndState == EndState.PlayerWin, winnerText, footerText);
+    }
+    else {
+      SharedMinigameView.InfoTitleText = winnerText;
+    }
     _AutoAdvanceTimestamp = Time.time;
   }
 
