@@ -334,31 +334,19 @@ void DMA0_IRQHandler(void)
   DMA_CDNE = DMA_CDNE_CDNE(0); // Clear done channel 0
   DMA_CINT = 0;   // Clear interrupt channel 0
 
-  // The camera will send one entire frame (around 480 lines) at the wrong rate
-  // So let that frame pass before we attempt to synchronize
-  static u16 lineskip = TOTAL_ROWS;
-  if (lineskip--)
-    return;
+  static bool timingVerified_ = false;
+  if (!timingVerified_) {
+    // The camera will send one entire frame (around 480 lines) at the wrong rate
+    // So let that frame pass before we attempt to synchronize
+    static u16 lineskip = TOTAL_ROWS;
+    if (lineskip--)
+      return;
 
-  // Shut off DMA IRQ - we'll use FTM IRQ from now on
-  DMA_TCD0_CSR = 0;
-
-  // Sync to falling edge of I2SPI word select
-  while(~GPIOD_PDIR & (1 << 4)) ;
-  while( GPIOD_PDIR & (1 << 4)) ;
-
-  // Turn on FTM right after sync
-  FTM2_SC = FTM_SC_TOF_MASK |
-          FTM_SC_TOIE_MASK |
-          FTM_SC_CLKS(1) | // Select BUS_CLOCK - this enables counting
-          FTM_SC_PS(0);
-
-  // Verify the camera timing (across 9 lines, first one just lines up edge)
-  {
+    // Verify the camera timing (across 9 lines, first one just lines up edge)
     uint32_t minimum = ~0;
     uint32_t base = 0;
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 4; i++) {
       while (~GPIO_READ(GPIO_CAM_HSYNC) & PIN_CAM_HSYNC) ;
       while (GPIO_READ(GPIO_CAM_HSYNC) & PIN_CAM_HSYNC) ;
 
@@ -372,8 +360,28 @@ void DMA0_IRQHandler(void)
     static const uint32_t TARGET_TIMING = 1000000 / DROPS_PER_SECOND;
 
     // Verify that we are within acceptable timing for camera
-    HAL_ASSERT(ABS(minimum - TARGET_TIMING) <= 2);
+    int offspec = minimum - TARGET_TIMING;
+    HAL_ASSERT(ABS(offspec) <= 2);
+    timingVerified_ = true;
+
+    return ;
   }
+
+  // NOTE: EVERYTHING HERE DOWN IS EXTREMELY TIMING SENSITIVE
+  // DO NOT CHANGE UNLESS YOU EXPECT EVERYTHING TO GO CRAZY
+  
+  // Shut off DMA IRQ - we'll use FTM IRQ from now on
+  DMA_TCD0_CSR = 0;
+
+  // Sync to falling edge of I2SPI word select
+  while(~GPIOD_PDIR & (1 << 4)) ;
+  while( GPIOD_PDIR & (1 << 4)) ;
+
+  // Turn on FTM right after sync
+  FTM2_SC = FTM_SC_TOF_MASK |
+          FTM_SC_TOIE_MASK |
+          FTM_SC_CLKS(1) | // Select BUS_CLOCK - this enables counting
+          FTM_SC_PS(0);
 
   // Setup the interrupt
   timingSynced_ = true;
