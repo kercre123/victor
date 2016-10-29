@@ -46,8 +46,6 @@ public class UpdateFirmwareScreen : MonoBehaviour {
       return;
     }
 
-    RobotEngineManager.Instance.StartIdleTimeout(faceOffTime_s: -1.0f, disconnectTime_s: 0.0f);
-
     // successful so lets add the delay reboot
     DoneUpdateDelayInProgress = true;
     _StartDelayTime = Time.time;
