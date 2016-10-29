@@ -42,6 +42,7 @@ BehaviorAcknowledgeObject::BehaviorAcknowledgeObject(Robot& robot, const Json::V
 , _ghostStackedObject(new ActiveCube(ObservableObject::InvalidActiveID,
                                      ObservableObject::InvalidFactoryID,
                                      ActiveObjectType::OBJECT_CUBE1))
+, _shouldCheckBelowTarget(true)
 {
   SetDefaultName("AcknowledgeObject");
 
@@ -93,6 +94,7 @@ void BehaviorAcknowledgeObject::BeginIteration(Robot& robot)
   else {
     return;
   }
+  _shouldCheckBelowTarget = true;
 
   TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(robot, _currTarget,
                                                                     _params.maxTurnAngle_rad);
@@ -115,13 +117,11 @@ void BehaviorAcknowledgeObject::BeginIteration(Robot& robot)
     action->AddAction(new TriggerLiftSafeAnimationAction(robot, _params.reactionAnimTrigger));
   }
 
-  StartActing(action, &BehaviorAcknowledgeObject::LookUpForStackedCube);
+  StartActing(action, &BehaviorAcknowledgeObject::LookForStackedCubes);
 }
 
-void BehaviorAcknowledgeObject::LookUpForStackedCube(Robot& robot)
-{  
-  // look up to check if there is a cube stacked on top
-  // TODO:(bn) this should be a DriveToVerifyObject or something like that, once that action exists
+void BehaviorAcknowledgeObject::LookForStackedCubes(Robot& robot)
+{
   ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_currTarget);
   if( nullptr == obj ) {
     PRINT_NAMED_WARNING("BehaviorAcknowledgeObject.StackedCube.NullTargetObject",
@@ -139,65 +139,109 @@ void BehaviorAcknowledgeObject::LookUpForStackedCube(Robot& robot)
     FinishIteration(robot);
     return;
   }
-  else
-  {
-    // set up ghost object to represent the one that could be on top of obj
-    // pose is relative to obj, but higher
-    Pose3d ghostPose = obj->GetPose().GetWithRespectToOrigin();
-    ghostPose.SetTranslation({
-        ghostPose.GetTranslation().x(),
-        ghostPose.GetTranslation().y(),
-        ghostPose.GetTranslation().z() + obj->GetSize().z()});
+
+  const float zSize = obj->GetSize().z();
+  
+  const float offsetAboveTarget = zSize;
+  const float offsetBelowTarget = -zSize;
+  
+  // if we can already see below block, don't look down after looking up
+  if(_shouldCheckBelowTarget){
+    _shouldCheckBelowTarget = !CheckIfGhostBlockVisible(robot, obj, offsetBelowTarget);
+  }
     
-    robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(_ghostStackedObject.get(), ghostPose, obj);
-
-    if( kVizPossibleStackCube ) {
-      _ghostStackedObject->Visualize(NamedColors::WHITE);
-    }
-    
-    // check if this fake object is theoretically visible from our current position
-    static constexpr float kMaxNormalAngle = DEG_TO_RAD(45); // how steep of an angle we can see // ANDREW: is this true?
-    static constexpr float kMinImageSizePix = 0.0f; // just check if we are looking at it, size doesn't matter
-
-    // it's ok if markers have nothing behind them, or even if they are occluded. What we want to know is if
-    // we'd gain any information by trying to look at the marker pose
-    static const std::set<Vision::KnownMarker::NotVisibleReason> okReasons{{
-        Vision::KnownMarker::NotVisibleReason::IS_VISIBLE,
-        Vision::KnownMarker::NotVisibleReason::OCCLUDED,
-        Vision::KnownMarker::NotVisibleReason::NOTHING_BEHIND }};
-    
-    Vision::KnownMarker::NotVisibleReason reason = _ghostStackedObject->IsVisibleFromWithReason(
-      robot.GetVisionComponent().GetCamera(),
-      kMaxNormalAngle,
-      kMinImageSizePix,
-      false);
-
-    if( okReasons.find(reason) != okReasons.end() ) {
-      PRINT_NAMED_DEBUG("BehaviorAcknowledgeObject.StackedCube.AlreadyVisible",
-                        "Any stacked cube that exists should already be visible (reason %s), nothing to do",
-                        NotVisibleReasonToString(reason));
-      FinishIteration(robot);
-    }
-    else {
-      // not visible, so we need to look up
-      PRINT_NAMED_DEBUG("BehaviorAcknowledgeObject.StackedCube.NotVisible",
-                        "looking up in case there is another cube on top of this one (reason %s)",
-                        NotVisibleReasonToString(reason));
-
-      // use 0 for max turn angle so we only look with the head
-
-      TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(robot, ObjectID{}, 0.f);
-      turnAction->UseCustomObject(_ghostStackedObject.get());
-
-      // turn and then wait for images to give us a chance to see the new marker
-      CompoundActionSequential* action = new CompoundActionSequential(robot, {
-          turnAction,
-          new WaitForImagesAction(robot, _params.numImagesToWaitFor)});
-      
-      StartActing(action, &BehaviorAcknowledgeObject::FinishIteration);
-    }
+  if(!CheckIfGhostBlockVisible(robot, obj, offsetAboveTarget)){
+    SetGhostBlockPoseRelObject(robot, obj, offsetAboveTarget);
+    LookAtGhostBlock(robot, &BehaviorAcknowledgeObject::LookForStackedCubes);
+    return;
+  }
+  
+  // check for blocks below
+  if(_shouldCheckBelowTarget){
+    SetGhostBlockPoseRelObject(robot, obj, offsetBelowTarget);
+    LookAtGhostBlock(robot, &BehaviorAcknowledgeObject::FinishIteration);
+    return;
+  }
+  
+  FinishIteration(robot);
+}
+  
+  
+void BehaviorAcknowledgeObject::SetGhostBlockPoseRelObject(Robot& robot, const ObservableObject* obj, float zOffset)
+{
+  Pose3d ghostPose = obj->GetPose().GetWithRespectToOrigin();
+  ghostPose.SetTranslation({
+    ghostPose.GetTranslation().x(),
+    ghostPose.GetTranslation().y(),
+    ghostPose.GetTranslation().z() + zOffset});
+  
+  robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(_ghostStackedObject.get(), ghostPose, obj);
+}
+  
+bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(Robot& robot, const ObservableObject* obj, float zOffset)
+{
+  // store the current ghost pose so that it can be restored after the check
+  const Pose3d currentGhostPose = _ghostStackedObject->GetPose();
+  
+  SetGhostBlockPoseRelObject(robot, obj, zOffset);
+  
+  if( kVizPossibleStackCube ) {
+    _ghostStackedObject->Visualize(NamedColors::WHITE);
+  }
+  
+  // check if this fake object is theoretically visible from our current position
+  static constexpr float kMaxNormalAngle = DEG_TO_RAD(45); // how steep of an angle we can see // ANDREW: is this true?
+  static constexpr float kMinImageSizePix = 0.0f; // just check if we are looking at it, size doesn't matter
+  
+  // it's ok if markers have nothing behind them, or even if they are occluded. What we want to know is if
+  // we'd gain any information by trying to look at the marker pose
+  static const std::set<Vision::KnownMarker::NotVisibleReason> okReasons{{
+    Vision::KnownMarker::NotVisibleReason::IS_VISIBLE,
+    Vision::KnownMarker::NotVisibleReason::OCCLUDED,
+    Vision::KnownMarker::NotVisibleReason::NOTHING_BEHIND }};
+  
+  Vision::KnownMarker::NotVisibleReason reason = _ghostStackedObject->IsVisibleFromWithReason(
+                                                                                              robot.GetVisionComponent().GetCamera(),
+                                                                                              kMaxNormalAngle,
+                                                                                              kMinImageSizePix,
+                                                                                              false);
+  
+  //restore ghost pose
+  robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(_ghostStackedObject.get(), currentGhostPose, obj);
+  
+  if( okReasons.find(reason) != okReasons.end() ) {
+    PRINT_NAMED_DEBUG("BehaviorAcknowledgeObject.StackedCube.AlreadyVisible",
+                      "Any stacked cube that exists should already be visible (reason %s), nothing to do",
+                      NotVisibleReasonToString(reason));
+    return true;
+  }
+  else {
+    PRINT_NAMED_DEBUG("BehaviorAcknowledgeObject.StackedCube.NotVisible",
+                      "looking up in case there is another cube on top of this one (reason %s)",
+                      NotVisibleReasonToString(reason));
+    return false;
   }
 }
+
+  
+template<typename T>
+void BehaviorAcknowledgeObject::LookAtGhostBlock(Robot& robot, void(T::*callback)(Robot&))
+{
+  // use 0 for max turn angle so we only look with the head
+  
+  TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(robot, ObjectID{}, 0.f);
+  turnAction->UseCustomObject(_ghostStackedObject.get());
+  
+  // turn and then wait for images to give us a chance to see the new marker
+  CompoundActionSequential* action = new CompoundActionSequential(robot, {
+    turnAction,
+    new WaitForImagesAction(robot, _params.numImagesToWaitFor)});
+  
+  StartActing(action, std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
+}
+
+  
+
 
 void BehaviorAcknowledgeObject::FinishIteration(Robot& robot)
 {

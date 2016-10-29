@@ -948,7 +948,13 @@ void IReactionaryBehavior::AlwaysHandle(const GameToEngineEvent& event, const Ro
     BehaviorType behaviorType = GetType();
 
     if(behaviorType == behaviorRequest){
-      UpdateDisableIDs(requesterID, enable);
+      if(UpdateDisableIDs(requesterID, enable)){
+        // Allow subclasses to respond to state changes
+        if((!enable && _disableIDs.size() == 1) ||
+           (enable && _disableIDs.size() == 0)){
+          EnabledStateChanged(enable);
+        }
+      }
     }
     
   }else{
@@ -963,13 +969,14 @@ void IReactionaryBehavior::AlwaysHandle(const RobotToEngineEvent& event, const R
   AlwaysHandleInternal(event, robot);
 }
   
-void IReactionaryBehavior::UpdateDisableIDs(std::string& requesterID, bool enable)
+bool IReactionaryBehavior::UpdateDisableIDs(std::string& requesterID, bool enable)
 {
   if(enable){
     int countRemoved = (int)_disableIDs.erase(requesterID);
     if(!countRemoved){
       PRINT_NAMED_WARNING("BehaviorInterface.ReactionaryBehavior.UpdateDisableIDs",
                           "Attempted to enable reactionary behavior with invalid ID");
+      return false;
     }
     
   }else{
@@ -977,12 +984,13 @@ void IReactionaryBehavior::UpdateDisableIDs(std::string& requesterID, bool enabl
     if(countInList){
       PRINT_NAMED_WARNING("BehaviorInterface.ReactionaryBehavior.UpdateDisableIDs",
                           "Attempted to disable reactionary behavior with ID previously registered");
+      return false;
     }else{
       _disableIDs.insert(requesterID);
     }
 
   }
-  
+  return true;
 }
   
 bool IReactionaryBehavior::IsRunnableInternal(const Robot& robot) const

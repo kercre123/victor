@@ -67,9 +67,19 @@ private:
   void HandleObjectObserved(const Robot& robot, const ExternalInterface::RobotObservedObject& msg);
   
   void BeginIteration(Robot& robot);
-  void LookUpForStackedCube(Robot& robot);
+  void LookForStackedCubes(Robot& robot);
   void FinishIteration(Robot& robot);
-
+  
+  
+  // helper function to set the ghost object's pose
+  void SetGhostBlockPoseRelObject(Robot& robot, const ObservableObject* obj, float zOffset);
+  // helper function to check stack visibility
+  bool CheckIfGhostBlockVisible(Robot& robot, const ObservableObject* obj, float zOffset);
+  // helper function for looking at ghost block location
+  template<typename T>
+  void LookAtGhostBlock(Robot& robot, void(T::*callback)(Robot&));
+  
+  
   // NOTE: uses s32 instead of ObjectID to match IBehaviorPoseBasedAcknowledgement's generic ids
   ObjectID _currTarget;
 
@@ -77,6 +87,8 @@ private:
   std::unique_ptr<ObservableObject> _ghostStackedObject;
 
   bool _shouldStart = false;
+  
+  bool _shouldCheckBelowTarget;
   
 }; // class BehaviorAcknowledgeObject
 

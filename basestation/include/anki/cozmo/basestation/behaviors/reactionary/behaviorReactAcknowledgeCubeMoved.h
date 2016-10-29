@@ -27,8 +27,6 @@ namespace ExternalInterface {
   struct RobotObservedObject;
 }
 
-  
-
 class BehaviorReactAcknowledgeCubeMoved : public IReactionaryBehavior
 {
   
@@ -50,8 +48,11 @@ protected:
   // allows the reaction to interrupt itself
   virtual IBehavior::Status UpdateInternal(Robot& robot) override;
   
+  virtual void EnabledStateChanged(bool enabled) override;
   
 private:
+  Robot& _robot;
+  
   enum class State {
     PlayingSenseReaction,
     TurningToLastLocationOfBlock,

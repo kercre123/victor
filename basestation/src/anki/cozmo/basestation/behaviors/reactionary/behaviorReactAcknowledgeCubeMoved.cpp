@@ -31,10 +31,6 @@ const float kRadiusRobotTolerence = 50;
 namespace Anki {
 namespace Cozmo {
   
-namespace {
-CONSOLE_VAR(bool, kEnableObjectMovedReact, "BehaviorReactAcknowledgeCubeMoved", true);
-}
-  
 class ReactionObjectData{
 public:
   ReactionObjectData(ObjectID objectID);
@@ -72,6 +68,7 @@ using namespace ExternalInterface;
 
 BehaviorReactAcknowledgeCubeMoved::BehaviorReactAcknowledgeCubeMoved(Robot& robot, const Json::Value& config)
 : Anki::Cozmo::IReactionaryBehavior(robot, config)
+, _robot(robot)
 , _state(State::PlayingSenseReaction)
 , _activeObjectSeen(false)
 {
@@ -89,7 +86,7 @@ BehaviorReactAcknowledgeCubeMoved::BehaviorReactAcknowledgeCubeMoved(Robot& robo
 
 bool BehaviorReactAcknowledgeCubeMoved::IsRunnableInternalReactionary(const Robot& robot) const
 {
-  return kEnableObjectMovedReact;
+  return true;
 }
   
 bool BehaviorReactAcknowledgeCubeMoved::ShouldComputationallySwitch(const Robot& robot)
@@ -207,23 +204,25 @@ void BehaviorReactAcknowledgeCubeMoved::TransitionToReactingToBlockAbsence(Robot
   
 void BehaviorReactAcknowledgeCubeMoved::AlwaysHandleInternal(const EngineToGameEvent& event, const Robot& robot)
 {
-  switch(event.GetData().GetTag()){
-    case EngineToGameTag::ObjectMoved:
-      HandleObjectMoved(robot, event.GetData().Get_ObjectMoved());
-      break;
-    case EngineToGameTag::ObjectStoppedMoving:
-      HandleObjectStopped(robot, event.GetData().Get_ObjectStoppedMoving());
-      break;
-    case EngineToGameTag::RobotObservedObject:
-      HandleObservedObject(robot, event.GetData().Get_RobotObservedObject());
-      break;
-    case EngineToGameTag::ObjectUpAxisChanged:
-      HandleObjectUpAxisChanged(robot, event.GetData().Get_ObjectUpAxisChanged());
-      break;
-    case EngineToGameTag::RobotDelocalized:
-      HandleRobotDelocalized();
-    default:
-      break;
+  if(IsReactionEnabled()){
+    switch(event.GetData().GetTag()){
+      case EngineToGameTag::ObjectMoved:
+        HandleObjectMoved(robot, event.GetData().Get_ObjectMoved());
+        break;
+      case EngineToGameTag::ObjectStoppedMoving:
+        HandleObjectStopped(robot, event.GetData().Get_ObjectStoppedMoving());
+        break;
+      case EngineToGameTag::RobotObservedObject:
+        HandleObservedObject(robot, event.GetData().Get_RobotObservedObject());
+        break;
+      case EngineToGameTag::ObjectUpAxisChanged:
+        HandleObjectUpAxisChanged(robot, event.GetData().Get_ObjectUpAxisChanged());
+        break;
+      case EngineToGameTag::RobotDelocalized:
+        HandleRobotDelocalized();
+      default:
+        break;
+    }
   }
 }
   
@@ -284,6 +283,31 @@ void BehaviorReactAcknowledgeCubeMoved::SetState_internal(State state, const std
   _state = state;
   PRINT_NAMED_DEBUG("BehaviorReactAcknowledgeCubeMovde.TransitionTo", "%s", stateName.c_str());
   SetDebugStateName(stateName);
+}
+  
+  
+void BehaviorReactAcknowledgeCubeMoved::EnabledStateChanged(bool enabled)
+{
+  if(enabled){
+    // Mark any blocks with a pose state still known as observed so that
+    // we respond to future messaging
+    std::vector<const ObservableObject*> blocksOnly;
+    BlockWorldFilter blocksOnlyFilter;
+    blocksOnlyFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+    _robot.GetBlockWorld().FindMatchingObjects(blocksOnlyFilter, blocksOnly);
+    
+    for(const auto& block: blocksOnly){
+      if(block->IsPoseStateKnown()){
+        Reaction_iter it = GetReactionaryIterator(block->GetID());
+        it->ObjectObserved(_robot);
+      }
+    }
+  }
+  else{
+    for(auto& object: _reactionObjects){
+      object.ResetObject();
+    }
+  }
 }
 
   

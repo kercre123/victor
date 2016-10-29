@@ -558,7 +558,11 @@ public:
   // if true, the previously running behavior will be resumed (if possible) after this behavior is
   // complete. Otherwise, a new behavior will be selected by the chooser after this one runs
   virtual bool ShouldResumeLastBehavior() const = 0;
-      
+  
+  // Override if you want to respond to being enabled/disabled
+  // by RequestEnableReactionaryBehavior message
+  virtual void EnabledStateChanged(bool enabled){};
+  
 protected:
 
   virtual Result InitInternal(Robot& robot) override final;
@@ -572,8 +576,10 @@ protected:
 
   void LoadConfig(Robot& robot, const Json::Value& config);
   
-  //Handle tracking enable/disable requests
-  virtual void UpdateDisableIDs(std::string& requesterID, bool enable);
+  // Handle tracking enable/disable requests
+  // Returns true if ids are updated (requsterID doesn't exist/exsits for enabling/disabling) 
+  // false otherwise
+  virtual bool UpdateDisableIDs(std::string& requesterID, bool enable);
 
   virtual bool IsRunnableInternal(const Robot& robot) const override final;
   virtual bool IsRunnableInternalReactionary(const Robot& robot) const = 0;
