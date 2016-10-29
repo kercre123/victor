@@ -60,6 +60,7 @@ static const char* kExecutableBehaviorTypeKey    = "executableBehaviorType";
   
 static const int kMaxResumesFromCliff            = 2;
 static const float kCooldownFromCliffResumes_sec     = 15.0;
+static const constexpr float kDisableRepetitionPenaltyOnStop_s = 1.f;
 }
 
 IBehavior::IBehavior(Robot& robot, const Json::Value& config)
@@ -71,6 +72,7 @@ IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   , _requiredRecentSwitchToParent_sec(-1.0f)
   , _moodScorer()
   , _flatScore(0.0f)
+  , _nextTimeRepetitionPenaltyApplies_s(0)
   , _robot(robot)
   , _startedRunningTime_s(0.0)
   , _lastRunTime_s(0.0)
@@ -414,6 +416,12 @@ void IBehavior::StopOnNextActionComplete()
   _actingCallback = nullptr;
 }
 
+  
+void IBehavior::StopWithoutImmediateRepetitionPenalty()
+{
+  Stop();
+  _nextTimeRepetitionPenaltyApplies_s  = kDisableRepetitionPenaltyOnStop_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+}
 
 bool IBehavior::IsRunnable(const Robot& robot, bool allowWhileRunning) const
 {
@@ -614,11 +622,16 @@ float IBehavior::EvaluateScore(const Robot& robot) const
       const float runningPenalty = EvaluateRunningPenalty();
       score *= runningPenalty;
     }
+    
+    
 
     if (_enableRepetitionPenalty && !isRunning)
     {
-      const float repetitionPenalty = EvaluateRepetitionPenalty();
-      score *= repetitionPenalty;
+      const bool shouldIgnorePenaltyThisTick = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() < _nextTimeRepetitionPenaltyApplies_s;
+      if(!shouldIgnorePenaltyThisTick){
+        const float repetitionPenalty = EvaluateRepetitionPenalty();
+        score *= repetitionPenalty;
+      }
     }
       
     return score;

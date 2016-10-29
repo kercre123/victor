@@ -131,6 +131,13 @@ public:
   // behavior
   void StopOnNextActionComplete();
   
+  
+  // Stops the behavaior immediately but gives it a couple of tick window during which score
+  // evaluation will not include its running penalty.  This allows behaviors to
+  // stop themselves in hopes of being re-selected with new fast-forwarding and
+  // block settings without knocking its score down so something else is selected
+  void StopWithoutImmediateRepetitionPenalty();
+  
   //
   // Abstract methods to be overloaded:
   //
@@ -409,6 +416,8 @@ private:
   Util::GraphEvaluator2d  _repetitionPenalty;
   Util::GraphEvaluator2d  _runningPenalty;
   float                   _flatScore;
+  // used to allow short times during which repetitionPenalties don't apply
+  float                   _nextTimeRepetitionPenaltyApplies_s;
   
   Robot& _robot;
     
