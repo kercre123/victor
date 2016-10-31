@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 
+import base64
+import crashdump
 import jira
 import modecsvparse
 import os
 import psycopg2
 import psycopg2.extras
+import sys
 
 jirauser = os.environ.get("JIRA_USER")
 jirapass = os.environ.get("JIRA_PASS")
@@ -65,12 +68,15 @@ def parse_query(jconn):
       summary = ""
     print("Parsing ", row['s_val'], summary)
     typestr = modecsvparse.extract_type(row['s_val'])
-    crash, registers = modecsvparse.parse_dump(typestr, row['data'])
-    crash_dict = {row['apprun']: registers}
-    crashes_dict.setdefault(crash, []).append(crash_dict)
-    affects_versions_dict.setdefault(crash, []).append(row['app'])
+    try:
+      crash, registers = modecsvparse.parse_dump(typestr, row['data'])
+      crash_dict = {row['apprun']: {typestr: registers}}
+      crashes_dict.setdefault(crash, []).append(crash_dict)
+      affects_versions_dict.setdefault(crash, []).append(row['app'])
+    except:
+      pass
 
-  for crash,apprun_registers in crashes_dict.items():
+  for crash,apprun_typestr_registers in crashes_dict.items():
     jissues = jconn.search_issues('summary ~ "Fix firmware crash {}" ORDER BY created DESC'.format(crash))
 
     if len(jissues) >= 1: # comment on existing issues
@@ -82,7 +88,7 @@ def parse_query(jconn):
           print("Unable to re-open {}".format(jissues[0].key))
 
       for i in jissues:
-        comment = build_comment(apprun_registers)
+        comment = build_comment(apprun_typestr_registers)
 
         try:
           jconn.add_comment(i.key, comment)
@@ -98,7 +104,7 @@ def parse_query(jconn):
           print("Unable to add Affects Version to {}".format(i.key))
 
     else: # create new JIRA issue
-      description = build_jira_description(apprun_registers)
+      description = build_jira_description(apprun_typestr_registers)
       affects_versions = build_affects_verions_list(affects_versions_dict, crash)
 
       new_issue = jconn.create_issue(project='COZMO', summary='Fix firmware crash {}'.format(crash),
@@ -106,10 +112,10 @@ def parse_query(jconn):
                                      components=[{"name": "triage"}],versions=affects_versions)
       print("Created new issue: {}".format(new_issue.key))
 
-def build_comment(apprun_registers):
-  comment = "{} new occurrences: \n".format(len(apprun_registers))
-  for apprun in apprun_registers:
-    for apprun_id, registers in apprun.items():
+def build_comment(apprun_typestr_registers):
+  comment = "{} new occurrences: \n".format(len(apprun_typestr_registers))
+  for apprun in apprun_typestr_registers:
+    for apprun_id, typestr_registers in apprun.items():
       comment += "{}\n".format(apprun_id)
 
   return comment
@@ -125,15 +131,19 @@ def build_affects_verions_list(affects_versions_dict, crash):
   return affects_versions
 
 
-def build_jira_description(apprun_registers):
+def build_jira_description(apprun_typestr_registers):
   description = ""
-  for apprun_id, registers in apprun_registers[0].items():
+  for apprun_id, typestr_registers in apprun_typestr_registers[0].items():
     description += "Registers for {}:\n".format(apprun_id)
-    for r in registers:
-      description += "\t{}\t: {:08x}\n".format(r, registers[r])
 
-  description += "\n{} occurrences: \n".format(len(apprun_registers))
-  for apprun in apprun_registers:
+    for typestr, registers in typestr_registers.items():
+      type_id = modecsvparse.TypeMap[typestr]
+
+      for r in crashdump.RegisterMap[type_id]:
+        description += "\t{}\t: {:08x}\n".format(r, registers[r])
+
+  description += "\n{} occurrences: \n".format(len(apprun_typestr_registers))
+  for apprun in apprun_typestr_registers:
     for apprun_id, registers in apprun.items():
       description += "{}\n".format(apprun_id)
 
