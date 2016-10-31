@@ -313,9 +313,15 @@ namespace Anki {
           --git;
         }
       } else if (git->first != t) {
-        // As long as the vision-based pose is not from time t,
-        // decrement the pointer to get the previous vision-based
-        --git;
+        // If this is the first vision-based pose then return the raw pose that we got
+        if(git == visPoses_.begin()) {
+          p = p1;
+          return RESULT_OK;
+        } else {
+          // As long as the vision-based pose is not from time t,
+          // decrement the pointer to get the previous vision-based
+          --git;
+        }
       }
       
       // Check frame ID
