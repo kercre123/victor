@@ -87,6 +87,16 @@ TEST(VisionSystem, MarkerDetectionTests)
   };
   
   const std::vector<TestDefinition> testDefinitions = {
+    
+    TestDefinition{
+      .subDir = "BacklitStack",
+      .expectedFailureRate = 0.f,
+      .didSucceedFcn = [](size_t numMarkers) -> bool
+      {
+        return numMarkers >= 2;
+      }
+    },
+    
     TestDefinition{
       .subDir = "LowLight",
       .expectedFailureRate = .02f,
@@ -104,6 +114,7 @@ TEST(VisionSystem, MarkerDetectionTests)
         return numMarkers == 0;
       }
     },
+    
   };
   
   Vision::ImageRGB img;
@@ -164,6 +175,8 @@ TEST(VisionSystem, MarkerDetectionTests)
           }
           dispImg.DrawText(textPoint, markerName, NamedColors::YELLOW, 0.5f, true);
         }
+        auto meanVal = cv::mean(img.get_CvMat_());
+        dispImg.DrawText(Point2f(1,9), "mean: " +  std::to_string((u8)meanVal[0]), NamedColors::RED, 0.4f, true);
         dispImg.Display(filename.c_str(), 0);
         
         if(DEBUG_DISPLAY == ENABLE_AND_SAVE)
@@ -181,7 +194,7 @@ TEST(VisionSystem, MarkerDetectionTests)
                      subDir.c_str(), 100.f*failureRate, numFailures, testFiles.size());
     
     // Note that we're not expecting perfection here
-    ASSERT_LE(failureRate, testDefinition.expectedFailureRate);
+    EXPECT_LE(failureRate, testDefinition.expectedFailureRate);
   }
   
 # undef DEBUG_DISPLAY

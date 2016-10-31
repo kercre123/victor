@@ -80,10 +80,11 @@
 namespace Anki {
 namespace Cozmo {
   
-  CONSOLE_VAR_RANGED(u8,  kUseCLAHE_u8,     "Vision.PreProcessing", 1, 0, 3);  // One of MarkerDetectionCLAHE enum
-  CONSOLE_VAR(s32, kClaheClipLimit,  "Vision.PreProcessing", 32);
-  CONSOLE_VAR(s32, kClaheTileSize,   "Vision.PreProcessing", 4);
-  CONSOLE_VAR(s32, kPostClaheSmooth, "Vision.PreProcessing", -3); // 0: off, +ve: Gaussian sigma, -ve (& odd): Box filter size
+  CONSOLE_VAR_RANGED(u8,  kUseCLAHE_u8,     "Vision.PreProcessing", 4, 0, 4);  // One of MarkerDetectionCLAHE enum
+  CONSOLE_VAR(s32, kClaheClipLimit,         "Vision.PreProcessing", 32);
+  CONSOLE_VAR(s32, kClaheTileSize,          "Vision.PreProcessing", 4);
+  CONSOLE_VAR(u8,  kClaheWhenDarkThreshold, "Vision.PreProcessing", 80); // In MarkerDetectionCLAHE::WhenDark mode, only use CLAHE when img avg < this
+  CONSOLE_VAR(s32, kPostClaheSmooth,        "Vision.PreProcessing", -3); // 0: off, +ve: Gaussian sigma, -ve (& odd): Box filter size
   
   CONSOLE_VAR(s32, kScaleImage_numPyramidLevels,    "Vision.MarkerDetection", 1);
   CONSOLE_VAR(f32, kScaleImage_thresholdMultiplier, "Vision.MarkerDetection", 0.8f);
@@ -657,9 +658,6 @@ namespace Cozmo {
                                      std::vector<Anki::Rectangle<s32>>& detectionRects)
   {
     Result lastResult = RESULT_OK;
-    
-    // Currently assuming we detect markers first, so we won't make use of anything already detected
-    ASSERT_NAMED(detectionRects.empty(), "VisionSystem.DetectMarkers.ExpectingEmptyDetectionRects");
     
     BeginBenchmark("VisionSystem_LookForMarkers");
     
@@ -2892,8 +2890,55 @@ namespace Cozmo {
   }
 
   Result VisionSystem::ApplyCLAHE(const Vision::Image& inputImageGray,
+                                  const MarkerDetectionCLAHE useCLAHE,
                                   Vision::Image& claheImage)
   {
+    switch(useCLAHE)
+    {
+      case MarkerDetectionCLAHE::Off:
+        _currentUseCLAHE = false;
+        break;
+        
+      case MarkerDetectionCLAHE::On:
+      case MarkerDetectionCLAHE::Both:
+        _currentUseCLAHE = true;
+        break;
+        
+      case MarkerDetectionCLAHE::Alternating:
+        _currentUseCLAHE = !_currentUseCLAHE;
+        break;
+        
+      case MarkerDetectionCLAHE::WhenDark:
+      {
+        const s32 subSample = 3;
+        s32 meanValue = 0;
+        s32 count = 0;
+        for(s32 i=0; i<inputImageGray.GetNumRows(); i+=subSample)
+        {
+          const u8* img_i = inputImageGray.GetRow(i);
+          for(s32 j=0; j<inputImageGray.GetNumCols(); j+=subSample)
+          {
+            meanValue += img_i[j];
+            ++count;
+          }
+        }
+        
+        // Use CLAHE on the current image if it is dark enough
+        _currentUseCLAHE = (meanValue < kClaheWhenDarkThreshold * count);
+        break;
+      }
+        
+      case MarkerDetectionCLAHE::Count:
+        assert(false);
+        break;
+    }
+    
+    if(!_currentUseCLAHE)
+    {
+      // Nothing to do: not currently using CLAHE
+      return RESULT_OK;
+    }
+    
     if(_lastClaheTileSize != kClaheTileSize) {
       PRINT_NAMED_DEBUG("VisionSystem.Update.ClaheTileSizeUpdated",
                         "%d -> %d", _lastClaheTileSize, kClaheTileSize);
@@ -2942,42 +2987,43 @@ namespace Cozmo {
   
   Result VisionSystem::DetectMarkersWithCLAHE(Vision::Image& inputImageGray,
                                               Vision::Image& claheImage,
-                                              std::vector<Anki::Rectangle<s32>>& markerQuads,
+                                              std::vector<Anki::Rectangle<s32>>& detectionRects,
                                               MarkerDetectionCLAHE useCLAHE)
   {
     Result lastResult = RESULT_OK;
+
+    // Currently assuming we detect markers first, so we won't make use of anything already detected
+    ASSERT_NAMED(detectionRects.empty(), "VisionSystem.DetectMarkersWithCLAHE.ExpectingEmptyDetectionRects");
     
     switch(useCLAHE)
     {
       case MarkerDetectionCLAHE::Off:
       {
-        lastResult = DetectMarkers(inputImageGray, markerQuads);
+        lastResult = DetectMarkers(inputImageGray, detectionRects);
         break;
       }
         
       case MarkerDetectionCLAHE::On:
       {
-        _currentUseCLAHE = true;
         ASSERT_NAMED(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.EmptyClaheImage");
         
-        lastResult = DetectMarkers(claheImage, markerQuads);
+        lastResult = DetectMarkers(claheImage, detectionRects);
         
         break;
       }
         
       case MarkerDetectionCLAHE::Both:
       {
-        _currentUseCLAHE = true;
         ASSERT_NAMED(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.EmptyClaheImage");
         
-        // First run will put quads into markerQuads
-        lastResult = DetectMarkers(inputImageGray, markerQuads);
+        // First run will put quads into detectionRects
+        lastResult = DetectMarkers(inputImageGray, detectionRects);
         
         if(RESULT_OK == lastResult)
         {
           // Second run will white out existing markerQuads (so we don't
           // re-detect) and also add new ones
-          lastResult = DetectMarkers(claheImage, markerQuads);
+          lastResult = DetectMarkers(claheImage, detectionRects);
         }
         
         break;
@@ -2991,13 +3037,30 @@ namespace Cozmo {
           whichImg = &claheImage;
         }
         
-        lastResult = DetectMarkers(*whichImg, markerQuads);
-        
-        // Toggle for next frame
-        _currentUseCLAHE = !_currentUseCLAHE;
+        lastResult = DetectMarkers(*whichImg, detectionRects);
         
         break;
       }
+        
+      case MarkerDetectionCLAHE::WhenDark:
+      {
+        // NOTE: _currentUseCLAHE should have been set based on image brightness already
+        
+        Vision::Image* whichImg = &inputImageGray;
+        if(_currentUseCLAHE)
+        {
+          ASSERT_NAMED(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.EmptyClaheImage");
+          whichImg = &claheImage;
+        }
+        
+        lastResult = DetectMarkers(*whichImg, detectionRects);
+        
+        break;
+      }
+        
+      case MarkerDetectionCLAHE::Count:
+        assert(false); // should never get here
+        break;
     }
     
     return lastResult;
@@ -3072,18 +3135,17 @@ namespace Cozmo {
     Vision::Image claheImage;
     
     // Apply CLAHE if enabled:
-    ASSERT_NAMED(kUseCLAHE_u8 <= Util::EnumToUnderlying(MarkerDetectionCLAHE::Alternating),
+    ASSERT_NAMED(kUseCLAHE_u8 < Util::EnumToUnderlying(MarkerDetectionCLAHE::Count),
                  "VisionSystem.ApplyCLAHE.BadUseClaheVal");
     
     MarkerDetectionCLAHE kUseCLAHE = static_cast<MarkerDetectionCLAHE>(kUseCLAHE_u8);
     
-    if(kUseCLAHE != MarkerDetectionCLAHE::Off && _currentUseCLAHE)
-    {
-      lastResult = ApplyCLAHE(inputImageGray, claheImage);
-      if(RESULT_OK != lastResult) {
-        PRINT_NAMED_WARNING("VisionSystem.Update.FailedCLAHE", "");
-        return lastResult;
-      }
+    // Note: this will do nothing and leave claheImage empty if CLAHE is disabled
+    // entirely or for this frame.
+    lastResult = ApplyCLAHE(inputImageGray, kUseCLAHE, claheImage);
+    if(RESULT_OK != lastResult) {
+      PRINT_NAMED_WARNING("VisionSystem.Update.FailedCLAHE", "");
+      return lastResult;
     }
     
     // Rolling shutter correction

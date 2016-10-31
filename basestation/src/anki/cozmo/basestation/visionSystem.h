@@ -467,15 +467,17 @@ namespace Cozmo {
     
     static Result GetImageHelper(const Vision::Image& srcImage,
                                  Embedded::Array<u8>& destArray);
-
-    Result ApplyCLAHE(const Vision::Image& inputImageGray, Vision::Image& claheImage);
     
     enum class MarkerDetectionCLAHE : u8 {
       Off         = 0, // Do detection in original image only
       On          = 1, // Do detection in CLAHE image only
       Both        = 2, // Run detection twice: using original image and CLAHE image
       Alternating = 3, // Alternate using CLAHE vs. original in each successive frame
+      WhenDark    = 4, // Only if mean of image is below kClaheWhenDarkThreshold
+      Count
     };
+    
+    Result ApplyCLAHE(const Vision::Image& inputImageGray, const MarkerDetectionCLAHE useCLAHE, Vision::Image& claheImage);
     
     Result DetectMarkersWithCLAHE(Vision::Image& inputImageGray,
                                   Vision::Image& claheImage,
