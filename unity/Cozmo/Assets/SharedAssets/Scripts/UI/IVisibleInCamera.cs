@@ -2,7 +2,7 @@
 
 public delegate void VizRectChangedHandler(IVisibleInCamera reticleFocus, Rect newVizRect);
 public interface IVisibleInCamera {
-  Vector3 WorldPosition { get; }
+  Vector3? VizWorldPosition { get; }
   Rect VizRect { get; }
   bool IsInFieldOfView { get; }
   event VizRectChangedHandler OnVizRectChanged;

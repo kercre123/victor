@@ -1,8 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
-using Anki.Cozmo;
 using G2U = Anki.Cozmo.ExternalInterface;
-using U2G = Anki.Cozmo.ExternalInterface;
 
 public class Face : IVisibleInCamera { // TODO Implement IHaveCameraPosition
   private const uint _kFindFaceTimeoutFrames = 1;
@@ -14,6 +11,8 @@ public class Face : IVisibleInCamera { // TODO Implement IHaveCameraPosition
   public long ID { get; private set; }
 
   public uint RobotID { get; private set; }
+
+  public Vector3? VizWorldPosition { get { return WorldPosition; } }
 
   public Vector3 WorldPosition { get; private set; }
 

@@ -33,6 +33,7 @@ public interface ILight {
 public delegate void LightCubeStateEventHandler(LightCube cube);
 public delegate void ChargerStateEventHandler(ObservedObject charger);
 public delegate void FaceStateEventHandler(Face face);
+public delegate void PetFaceStateEventHandler(PetFace face);
 public delegate void EnrolledFaceRemoved(int faceId, string faceName);
 public delegate void EnrolledFaceRenamed(int faceId, string faceName);
 
@@ -91,6 +92,11 @@ public interface IRobot : IDisposable {
   Dictionary<int, string> EnrolledFaces { get; set; }
   Dictionary<int, float> EnrolledFacesLastEnrolledTime { get; set; }
   Dictionary<int, float> EnrolledFacesLastSeenTime { get; set; }
+
+  event PetFaceStateEventHandler OnPetFaceAdded;
+  event PetFaceStateEventHandler OnPetFaceRemoved;
+
+  List<PetFace> PetFaces { get; }
 
   float[] EmotionValues { get; }
 

@@ -30,6 +30,10 @@ CozmoMat {
   xSize 2
   ySize 1.5
 }
+Face {
+  translation 0.38 -1.82206e-09 0.22
+  rotation 0 0 1 1.5708
+}
 LightCube {
   translation 0.21 -0.05 0.02
 }

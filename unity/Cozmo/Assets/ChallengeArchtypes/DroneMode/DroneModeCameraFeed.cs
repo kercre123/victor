@@ -73,11 +73,19 @@ namespace Cozmo.Minigame.DroneMode {
       foreach (var kvp in _ObjToReticle) {
         kvp.Value.ShowReticleLabelText(false);
         if (kvp.Key.IsInFieldOfView) {
-          float distanceSqrd = (kvp.Key.WorldPosition - _CurrentRobot.WorldPosition).sqrMagnitude;
+          float distanceSqrd = 0f;
+          if (kvp.Key.VizWorldPosition.HasValue) {
+            distanceSqrd = (kvp.Key.VizWorldPosition.Value - _CurrentRobot.WorldPosition).sqrMagnitude;
+          }
           if (distanceSqrd < smallestDistanceSqrd) {
             smallestDistanceSqrd = distanceSqrd;
             closestReticle = kvp.Value;
             closestFocus = kvp.Key;
+          }
+
+          // For PetFace debugging
+          if (kvp.Key is PetFace) {
+            ShowTextForReticle(kvp.Key, kvp.Value);
           }
         }
       }
@@ -92,23 +100,30 @@ namespace Cozmo.Minigame.DroneMode {
       _ImageProcessor.OnImageSizeChanged -= HandleImageSizeChanged;
       _ImageProcessor.Dispose();
       _ImageProcessor.DestroyTexture();
+
       _CurrentRobot.OnFaceAdded -= HandleOnFaceAdded;
       _CurrentRobot.OnFaceRemoved -= HandleOnFaceRemoved;
-      _CurrentRobot.OnLightCubeAdded -= HandleOnCubeAdded;
-      _CurrentRobot.OnLightCubeRemoved -= HandleOnCubeRemoved;
-      _CurrentRobot.OnChargerAdded -= HandleOnChargerAdded;
-      _CurrentRobot.OnChargerRemoved -= HandleOnChargerRemoved;
-
       foreach (var face in _CurrentRobot.Faces) {
         face.InFieldOfViewStateChanged -= HandleFaceInFieldOfViewChanged;
         face.OnVizRectChanged -= HandleVizRectChanged;
       }
 
+      _CurrentRobot.OnPetFaceAdded -= HandlePetFaceAdded;
+      _CurrentRobot.OnPetFaceRemoved -= HandlePetFaceRemoved;
+      foreach (var petFace in _CurrentRobot.PetFaces) {
+        petFace.InFieldOfViewStateChanged -= HandlePetFaceInFieldOfViewChanged;
+        petFace.OnVizRectChanged -= HandleVizRectChanged;
+      }
+
+      _CurrentRobot.OnLightCubeAdded -= HandleOnCubeAdded;
+      _CurrentRobot.OnLightCubeRemoved -= HandleOnCubeRemoved;
       foreach (var cube in _CurrentRobot.LightCubes) {
         cube.Value.InFieldOfViewStateChanged -= HandleInFieldOfViewChanged;
         cube.Value.OnVizRectChanged -= HandleVizRectChanged;
       }
 
+      _CurrentRobot.OnChargerAdded -= HandleOnChargerAdded;
+      _CurrentRobot.OnChargerRemoved -= HandleOnChargerRemoved;
       if (_CurrentRobot.Charger != null) {
         _CurrentRobot.Charger.InFieldOfViewStateChanged -= HandleInFieldOfViewChanged;
         _CurrentRobot.Charger.OnVizRectChanged -= HandleVizRectChanged;
@@ -124,19 +139,24 @@ namespace Cozmo.Minigame.DroneMode {
 
       _CurrentRobot.OnFaceAdded += HandleOnFaceAdded;
       _CurrentRobot.OnFaceRemoved += HandleOnFaceRemoved;
-      _CurrentRobot.OnLightCubeAdded += HandleOnCubeAdded;
-      _CurrentRobot.OnLightCubeRemoved += HandleOnCubeRemoved;
-      _CurrentRobot.OnChargerAdded += HandleOnChargerAdded;
-      _CurrentRobot.OnChargerRemoved += HandleOnChargerRemoved;
-
       foreach (var face in _CurrentRobot.Faces) {
         CreateFaceReticle(face);
       }
 
+      _CurrentRobot.OnPetFaceAdded += HandlePetFaceAdded;
+      _CurrentRobot.OnPetFaceRemoved += HandlePetFaceRemoved;
+      foreach (var petFace in _CurrentRobot.PetFaces) {
+        CreatePetFaceReticle(petFace);
+      }
+
+      _CurrentRobot.OnLightCubeAdded += HandleOnCubeAdded;
+      _CurrentRobot.OnLightCubeRemoved += HandleOnCubeRemoved;
       foreach (var cube in _CurrentRobot.LightCubes) {
         CreateObservedObjectReticle(cube.Value);
       }
 
+      _CurrentRobot.OnChargerAdded += HandleOnChargerAdded;
+      _CurrentRobot.OnChargerRemoved += HandleOnChargerRemoved;
       if (_CurrentRobot.Charger != null) {
         CreateObservedObjectReticle(_CurrentRobot.Charger);
       }
@@ -146,12 +166,6 @@ namespace Cozmo.Minigame.DroneMode {
       face.InFieldOfViewStateChanged += HandleFaceInFieldOfViewChanged;
       CreateReticleIfVisible(face);
     }
-
-    private void CreateObservedObjectReticle(ObservedObject observedObject) {
-      observedObject.InFieldOfViewStateChanged += HandleInFieldOfViewChanged;
-      CreateReticleIfVisible(observedObject);
-    }
-
     private void HandleOnFaceAdded(Face face) {
       // Face is added when visible
       CreateFaceReticle(face);
@@ -171,6 +185,39 @@ namespace Cozmo.Minigame.DroneMode {
       else {
         RemoveReticle(face);
       }
+    }
+
+    private void CreatePetFaceReticle(PetFace petFace) {
+      if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.DroneModePetReticlesEnabled) {
+        petFace.InFieldOfViewStateChanged += HandlePetFaceInFieldOfViewChanged;
+        CreateReticleIfVisible(petFace);
+      }
+    }
+
+    private void HandlePetFaceAdded(PetFace petFace) {
+      // Face is added when visible
+      CreatePetFaceReticle(petFace);
+    }
+
+    private void HandlePetFaceRemoved(PetFace petFace) {
+      // Face is removed when not seen for a while 
+      petFace.InFieldOfViewStateChanged -= HandlePetFaceInFieldOfViewChanged;
+      RemoveReticle(petFace);
+    }
+
+    private void HandlePetFaceInFieldOfViewChanged(PetFace petFace, bool isInFieldOfView) {
+      // If visible spawn reticle and add to dictionary
+      if (isInFieldOfView) {
+        CreateReticleIfVisible(petFace);
+      }
+      else {
+        RemoveReticle(petFace);
+      }
+    }
+
+    private void CreateObservedObjectReticle(ObservedObject observedObject) {
+      observedObject.InFieldOfViewStateChanged += HandleInFieldOfViewChanged;
+      CreateReticleIfVisible(observedObject);
     }
 
     private void HandleOnCubeAdded(LightCube cube) {
@@ -302,8 +349,6 @@ namespace Cozmo.Minigame.DroneMode {
     private void ResetReticle(DroneModeCameraReticle toReset, bool spawned) {
       if (!spawned) {
         toReset.gameObject.SetActive(false);
-
-        // TODO reset text?
       }
     }
 
@@ -322,6 +367,12 @@ namespace Cozmo.Minigame.DroneMode {
           }
           _FocusedObjectFrameContainer.gameObject.SetActive(true);
           _FocusedObjectTextLabel.text = text;
+
+          // For PetFace debugging
+          if (reticleFocus is PetFace) {
+            reticle.ShowReticleLabelText(true);
+            reticle.ReticleLabel = text;
+          }
         }
         else {
           _FocusedObjectFrameContainer.gameObject.SetActive(false);

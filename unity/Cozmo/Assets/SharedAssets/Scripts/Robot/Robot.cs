@@ -214,6 +214,11 @@ public class Robot : IRobot {
   public Dictionary<int, float> EnrolledFacesLastEnrolledTime { get; set; }
   public Dictionary<int, float> EnrolledFacesLastSeenTime { get; set; }
 
+  public event PetFaceStateEventHandler OnPetFaceAdded;
+  public event PetFaceStateEventHandler OnPetFaceRemoved;
+
+  public List<PetFace> PetFaces { get; private set; }
+
   public int FriendshipPoints { get; private set; }
 
   public int FriendshipLevel { get; private set; }
@@ -337,6 +342,7 @@ public class Robot : IRobot {
     EnrolledFaces = new Dictionary<int, string>();
     EnrolledFacesLastEnrolledTime = new Dictionary<int, float>();
     EnrolledFacesLastSeenTime = new Dictionary<int, float>();
+    PetFaces = new List<PetFace>();
 
     // Defaults in clad
     PathMotionProfileDefault = new PathMotionProfile();
@@ -376,6 +382,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotErasedEnrolledFace>(HandleRobotErasedEnrolledFace);
     RobotEngineManager.Instance.AddCallback<Anki.Vision.RobotRenamedEnrolledFace>(HandleRobotRenamedEnrolledFace);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.BehaviorTransition>(HandleBehaviorTransition);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedPet>(UpdateObservedPetFaceInfo);
 
     ObservedObject.AnyInFieldOfViewStateChanged += HandleInFieldOfViewStateChanged;
     RobotEngineManager.Instance.AddCallback<Anki.Vision.LoadedKnownFace>(HandleLoadedKnownFace);
@@ -405,6 +412,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotErasedEnrolledFace>(HandleRobotErasedEnrolledFace);
     RobotEngineManager.Instance.RemoveCallback<Anki.Vision.RobotRenamedEnrolledFace>(HandleRobotRenamedEnrolledFace);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.BehaviorTransition>(HandleBehaviorTransition);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedPet>(UpdateObservedPetFaceInfo);
 
     ObservedObject.AnyInFieldOfViewStateChanged -= HandleInFieldOfViewStateChanged;
   }
@@ -777,6 +785,19 @@ public class Robot : IRobot {
           face.MarkNotVisibleThisFrame();
         }
       }
+
+      List<PetFace> petFacesToRemove = new List<PetFace>();
+      foreach (var petFace in PetFaces) {
+        if (petFace.LastSeenEngineTimestamp < engineTimestamp) {
+          petFacesToRemove.Add(petFace);
+        }
+      }
+      foreach (var petFaceToRemove in petFacesToRemove) {
+        PetFaces.Remove(petFaceToRemove);
+        if (OnPetFaceRemoved != null) {
+          OnPetFaceRemoved(petFaceToRemove);
+        }
+      }
     }
     else {
       DAS.Error("Robot.FinishedProcessingImage.OldTimestamp", "Received old RobotProcessedImage message with timestamp " + engineTimestamp
@@ -1023,6 +1044,20 @@ public class Robot : IRobot {
     AddObservedFace(face != null ? face : null, message);
     if (EnrolledFacesLastSeenTime.ContainsKey(message.faceID)) {
       EnrolledFacesLastSeenTime[message.faceID] = Time.time;
+    }
+  }
+
+  private void UpdateObservedPetFaceInfo(Anki.Cozmo.ExternalInterface.RobotObservedPet message) {
+    PetFace petFace = PetFaces.Find(x => x.PetID == message.petID);
+    if (petFace == null) {
+      petFace = new PetFace(message);
+      PetFaces.Add(petFace);
+      if (OnPetFaceAdded != null) {
+        OnPetFaceAdded(petFace);
+      }
+    }
+    else {
+      petFace.UpdateInfo(message);
     }
   }
 

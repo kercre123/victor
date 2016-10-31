@@ -81,6 +81,8 @@ public class ObservedObject : IVisibleInCamera {
     }
   }
 
+  public Vector3? VizWorldPosition { get { return WorldPosition; } }
+
   public Vector3 WorldPosition { get; private set; }
 
   public Quaternion Rotation { get; private set; }
@@ -264,7 +266,7 @@ public class ObservedObject : IVisibleInCamera {
     HasLights = message.isActive > 0;
 
     CurrentInFieldOfViewState = InFieldOfViewState.Visible;
-    
+
     // Mark pose known
     CurrentPoseState = PoseState.Known;
     IsMoving = false;

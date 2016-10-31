@@ -987,4 +987,9 @@ public class MockRobot : IRobot {
   public event FaceStateEventHandler OnFaceRemoved;
   public event EnrolledFaceRemoved OnEnrolledFaceRemoved;
   public event EnrolledFaceRenamed OnEnrolledFaceRenamed;
+
+  public event PetFaceStateEventHandler OnPetFaceAdded;
+  public event PetFaceStateEventHandler OnPetFaceRemoved;
+
+  public List<PetFace> PetFaces { get; private set; }
 }
