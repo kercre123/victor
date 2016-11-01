@@ -4,15 +4,12 @@ using System.Collections;
 
 namespace Cozmo.Minigame.CubePounce {
   public class CubePounceStatePause : CubePounceState {
-    
+
     private float _FakeOutDelay_s;
     private float _FirstTimestamp = -1;
 
     public override void Enter() {
       base.Enter();
-
-      _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderWaitForPounce);
-      _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoWaitForPounce);
 
       _FakeOutDelay_s = _CubePounceGame.GetAttemptDelay();
       _FirstTimestamp = Time.time;

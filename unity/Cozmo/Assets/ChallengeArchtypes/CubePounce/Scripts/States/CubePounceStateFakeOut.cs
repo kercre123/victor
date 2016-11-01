@@ -8,9 +8,6 @@ namespace Cozmo.Minigame.CubePounce {
     public override void Enter() {
       base.Enter();
 
-      _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderWaitForPounce);
-      _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoWaitForPounce);
-
       _CubePounceGame.CurrentlyInFakeoutState = true;
 
       _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceFake, HandleFakeoutEnd);

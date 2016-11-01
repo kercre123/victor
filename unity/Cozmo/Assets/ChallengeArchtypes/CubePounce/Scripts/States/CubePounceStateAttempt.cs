@@ -18,9 +18,6 @@ namespace Cozmo.Minigame.CubePounce {
 
       _InitialPitch_deg = Mathf.Rad2Deg * _CurrentRobot.PitchAngle;
 
-      _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderWaitForPounce);
-      _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoWaitForPounce);
-
       if (!_UseClosePounce) {
         _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePouncePounceNormal, HandlePounceEnd);
       }

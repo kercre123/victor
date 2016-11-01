@@ -42,6 +42,8 @@ namespace Cozmo.Minigame.CubePounce {
     private void ReactToCubeGone() {
       _CubePounceGame.GetCubeTarget().SetLEDs(Cozmo.UI.CubePalette.Instance.OutOfViewColor.lightColor);
       _CubeIsValid = false;
+      _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderSetupText);
+      _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoSetupText);
 
       if (_CubeInActiveRange) {
         float idealHeadAngle_rad = CozmoUtil.HeadAngleFactorToRadians(CozmoUtil.kIdealBlockViewHeadValue, useExactAngle: false);
@@ -59,6 +61,8 @@ namespace Cozmo.Minigame.CubePounce {
 
       if (_CubeInActiveRange) {
         _CubePounceGame.GetCubeTarget().SetLEDs(Cozmo.UI.CubePalette.Instance.ReadyColor.lightColor);
+        _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderWaitForPounce);
+        _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoWaitForPounce);
       }
       else {
         _CubePounceGame.GetCubeTarget().SetLEDs(Cozmo.UI.CubePalette.Instance.OutOfViewColor.lightColor);
@@ -84,6 +88,8 @@ namespace Cozmo.Minigame.CubePounce {
     private void ReactToCubeOutOfRange() {
       _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetUnready, HandleGetUnreadyDone);
       _CurrentRobot.SetIdleAnimation(Anki.Cozmo.AnimationTrigger.CubePounceIdleLiftDown);
+      _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderWaitForPounce);
+      _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoWaitForPounce);
 
       _GetReadyAnimCompleted = false;
       _GetUnreadyInProgress = true;
@@ -99,12 +105,12 @@ namespace Cozmo.Minigame.CubePounce {
     }
 
     private void TurnToCube() {
-      _CurrentRobot.TurnTowardsObject(_CubePounceGame.GetCubeTarget(), 
-        headTrackWhenDone:      false, 
-        maxPanSpeed_radPerSec:  _CubePounceGame.GameConfig.TurnSpeed_rps, 
-        panAccel_radPerSec2:    _CubePounceGame.GameConfig.TurnAcceleration_rps2,
-        callback:               HandleTurnFinished,
-        setTiltTolerance_rad:   Mathf.PI
+      _CurrentRobot.TurnTowardsObject(_CubePounceGame.GetCubeTarget(),
+        headTrackWhenDone: false,
+        maxPanSpeed_radPerSec: _CubePounceGame.GameConfig.TurnSpeed_rps,
+        panAccel_radPerSec2: _CubePounceGame.GameConfig.TurnAcceleration_rps2,
+        callback: HandleTurnFinished,
+        setTiltTolerance_rad: Mathf.PI
       );
       _TurnInProgress = true;
     }
@@ -152,7 +158,7 @@ namespace Cozmo.Minigame.CubePounce {
             if (_CubeCreepTimerStart_s < 0.0f) {
               _CubeCreepTimerStart_s = Time.time + UnityEngine.Random.Range(_CubePounceGame.GameConfig.CreepDelayMinTime_s, _CubePounceGame.GameConfig.CreepDelayMaxTime_s);
             }
-              
+
             if (Time.time >= _CubeCreepTimerStart_s) {
               float creepDistance = _CubePounceGame.GetNextCreepDistance();
               if (creepDistance > 0.0f) {
@@ -165,6 +171,8 @@ namespace Cozmo.Minigame.CubePounce {
     }
 
     private void HandleGetInAnimFinish(bool success) {
+      _CubePounceGame.SharedMinigameView.InfoTitleText = string.Empty;
+      _CubePounceGame.SharedMinigameView.HideNarrowInfoTextSlide();
       _GetReadyAnimCompleted = success;
       _GetReadyAnimInProgress = false;
     }

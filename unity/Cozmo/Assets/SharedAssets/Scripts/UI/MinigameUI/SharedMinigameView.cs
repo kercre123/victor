@@ -787,7 +787,7 @@ namespace Cozmo {
 
       public ChallengeEndedDialog ShowChallengeEndedSlide(ChallengeData data) {
         HideQuitButton();
-        GameObject challengeEndSlide = ShowNarrowGameStateSlide(
+        GameObject challengeEndSlide = ShowWideGameStateSlide(
           _ChallengeEndViewPrefab.gameObject, "challenge_end_slide");
         ChallengeEndedDialog challengeEndSlideScript = challengeEndSlide.GetComponent<ChallengeEndedDialog>();
         challengeEndSlideScript.SetupDialog(data);
