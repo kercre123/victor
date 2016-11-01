@@ -385,8 +385,8 @@ namespace Anki {
         printf("        Force-add specifed robot:  Shift+r\n");
         printf("                 Select behavior:  Shift+c\n");
         printf("         Select behavior chooser:  h\n");
-        printf("         Select spark (unlockID):  Shift+h\n");
-        printf("           exit spark (unlockId):  Alt+h\n");
+        printf("       Select spark (unlockName):  Shift+h\n");
+        printf("         exit spark (unlockName):  Alt+h\n");
         printf("            Set emotion to value:  m\n");
         printf("     Rainbow pattern on backpack:  l\n");        
         printf("      Search side to side action:  Shift+l\n");
@@ -1211,13 +1211,20 @@ namespace Anki {
                     }
 
                     UnlockId unlock = UnlockIdsFromString(unlockName.c_str());
-                    ExternalInterface::ActivateSpark activate(unlock);
-                    ExternalInterface::BehaviorManagerMessageUnion behaviorUnion;
-                    behaviorUnion.Set_ActivateSpark(activate);
-                    ExternalInterface::BehaviorManagerMessage behaviorMsg(1, behaviorUnion);
-                    ExternalInterface::MessageGameToEngine msg;
-                    msg.Set_BehaviorManagerMessage(behaviorMsg);
-                    SendMessage(msg);
+                    if( unlock != UnlockId::Count ) {
+                      ExternalInterface::ActivateSpark activate(unlock);
+                      ExternalInterface::BehaviorManagerMessageUnion behaviorUnion;
+                      behaviorUnion.Set_ActivateSpark(activate);
+                      ExternalInterface::BehaviorManagerMessage behaviorMsg(1, behaviorUnion);
+                      ExternalInterface::MessageGameToEngine msg;
+                      msg.Set_BehaviorManagerMessage(behaviorMsg);
+                      SendMessage(msg);
+                    }
+                    else {
+                      PRINT_NAMED_WARNING("StartSpark.InvalidSparkName",
+                                          "no unlock found for '%s'",
+                                          unlockName.c_str());
+                    }
                   }
                   else {
                     // deactivate spark

@@ -185,7 +185,7 @@ namespace Anki {
       bool                       _useApproachAngle;
       Radians                    _approachAngle_rad;
 
-      bool                       _doPositionCheckOnPathCompletion;
+      bool                       _doPositionCheckOnPathCompletion = true;
       
       PathMotionProfile          _pathMotionProfile;
       bool                       _hasMotionProfile = false;

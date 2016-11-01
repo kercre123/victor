@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalEvaluator.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
+#include "anki/cozmo/basestation/behaviorSystem/workoutComponent.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/components/lightsComponent.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
@@ -73,6 +74,7 @@ BehaviorManager::BehaviorManager(Robot& robot)
 , _lastChooserSwitchTime(-1.0f)
 , _audioClient( new Audio::BehaviorAudioClient(robot) )
 , _whiteboard( new AIWhiteboard(robot) )
+, _workoutComponent( new WorkoutComponent(robot) )
 {
 }
 
@@ -165,6 +167,14 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
   // initialize whiteboard
   assert( _whiteboard );
   _whiteboard->Init();
+
+  // initialize workout component
+  assert( _workoutComponent );
+  if( _workoutComponent->InitConfiguration(config["workoutComponent"]) != RESULT_OK ) {
+    PRINT_NAMED_ERROR("BehaviorMAnager.Init.FailedToInitWorkoutComponent",
+                      "Couldn't init workout component, deleting");
+    _workoutComponent.reset(nullptr);
+  }
   
   if (_robot.HasExternalInterface())
   {

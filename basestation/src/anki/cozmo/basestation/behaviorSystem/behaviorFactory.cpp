@@ -37,6 +37,7 @@
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeFace.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorAcknowledgeObject.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorCantHandleTallStack.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactAcknowledgeCubeMoved.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToCliff.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToFrustration.h"
@@ -53,9 +54,9 @@
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToSparked.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToStackOfCubes.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToUnexpectedMovement.h"
-#include "anki/cozmo/basestation/behaviors/reactionary/behaviorCantHandleTallStack.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramid.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorBuildPyramidBase.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorCubeLiftworkout.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorKnockOverCubes.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorLookAround.h"
 #include "anki/cozmo/basestation/behaviors/sparkable/behaviorPickupCube.h"
@@ -333,6 +334,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::LookForFaceAndCube:
     {
       newBehavior = new BehaviorLookForFaceAndCube(robot, config);
+      break;
+    }
+    case BehaviorType::CubeLiftWorkout:
+    {
+      newBehavior = new BehaviorCubeLiftWorkout(robot, config);
       break;
     }
     case BehaviorType::Count:
