@@ -211,16 +211,12 @@ bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const Robot& robot) co
       if ( nullptr != objPtr )
       {
         const Pose3d& currentPose = objPtr->GetPose();
-        const bool recentFailPickup = whiteboard.DidFailToUse(objectInfo.id,
-          AIWhiteboard::ObjectUseAction::PickUpObject,
-          kRecentFailure_sec,
-          currentPose, kCubeFailureDist_mm, kCubeFailureRot_rad);
-        const bool recentFailRollOrWheelie = whiteboard.DidFailToUse(objectInfo.id,
-          AIWhiteboard::ObjectUseAction::RollOrPopAWheelie,
+        const bool recentFail = whiteboard.DidFailToUse(objectInfo.id,
+          {{AIWhiteboard::ObjectUseAction::PickUpObject, AIWhiteboard::ObjectUseAction::RollOrPopAWheelie}},
           kRecentFailure_sec,
           currentPose, kCubeFailureDist_mm, kCubeFailureRot_rad);
         
-        if ( !recentFailPickup && ! recentFailRollOrWheelie )
+        if ( !recentFail )
         {
           // this object should be ok to be picked up
           _candidateObjects.emplace_back(objectInfo);

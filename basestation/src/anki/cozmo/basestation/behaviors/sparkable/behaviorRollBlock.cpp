@@ -107,9 +107,14 @@ void BehaviorRollBlock::UpdateTargetBlock(const Robot& robot) const
 
 bool BehaviorRollBlock::FilterBlocks(const ObservableObject* obj) const
 {
-  
-  const bool hasFailedToRoll = _robot.GetBehaviorManager().GetWhiteboard().DidFailToUse(obj->GetID(), AIWhiteboard::ObjectUseAction::RollOrPopAWheelie,
-                                                                                  kTimeObjectInvalidAfterFailure_sec, obj->GetPose(), kObjectInvalidAfterFailureRadius_mm, kAngleToleranceAfterFailure_radians);
+
+  const auto& whiteboard = _robot.GetBehaviorManager().GetWhiteboard();
+  const bool hasFailedToRoll = whiteboard.DidFailToUse(obj->GetID(),
+                                                       AIWhiteboard::ObjectUseAction::RollOrPopAWheelie,
+                                                       DefailtFailToUseParams::kTimeObjectInvalidAfterFailure_sec,
+                                                       obj->GetPose(),
+                                                       DefailtFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
+                                                       DefailtFailToUseParams::kAngleToleranceAfterFailure_radians);
 
   return (!obj->IsPoseStateUnknown() &&
           _robot.CanPickUpObjectFromGround(*obj) &&

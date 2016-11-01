@@ -35,7 +35,7 @@ namespace Cozmo {
 
 static const char* kShouldPutCubeBackDown = "shouldPutCubeBackDown";
 static const char* kBlockConfigsToIgnoreKey = "ignoreCubesInBlockConfigTypes";
-static const float kSecondsBetweenBlockWorldChecks = 3;
+static const float kSecondsBetweenBlockWorldChecks = 0.5f;
   
 BehaviorPickUpCube::BehaviorPickUpCube(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -66,6 +66,7 @@ BehaviorPickUpCube::BehaviorPickUpCube(Robot& robot, const Json::Value& config)
 Result BehaviorPickUpCube::InitInternal(Robot& robot)
 {
   if(robot.IsCarryingObject()){
+    _targetBlockID = robot.GetCarryingObject();
     TransitionToDriveWithCube(robot);
     return Result::RESULT_OK;
   }
@@ -112,37 +113,40 @@ void BehaviorPickUpCube::HandleWhileNotRunning(const EngineToGameEvent& event, c
 
 void BehaviorPickUpCube::CheckForNearbyObject(const Robot& robot) const
 {
-  BlockWorldFilter filter;
-  filter.SetAllowedFamilies({ObjectFamily::LightCube});
-  filter.SetFilterFcn([&robot, this](const ObservableObject* object)
-                      {
-                        bool isPartOfIllegalConfiguration = false;
-                        for(auto configType: _configurationsToIgnore){
-                          auto configurations = robot.GetBlockWorld().GetBlockConfigurationManager().GetConfigurationsForType(configType);
-                          for(auto configuration : configurations){
-                            if(configuration.lock()->ContainsBlock(object->GetID())){
-                              isPartOfIllegalConfiguration = true;
-                              break;
-                            }
-                          }
-                          if(isPartOfIllegalConfiguration){break;}
-                        }
-                        
-                        const bool recentlyFailedPickup = robot.GetBehaviorManager().GetWhiteboard().DidFailToUse(object->GetID(), AIWhiteboard::ObjectUseAction::PickUpObject, kTimeObjectInvalidAfterFailure_sec);
-                        const bool recentlyFailedRoll =  robot.GetBehaviorManager().GetWhiteboard().DidFailToUse(object->GetID(), AIWhiteboard::ObjectUseAction::RollOrPopAWheelie, kTimeObjectInvalidAfterFailure_sec);
-                        return !recentlyFailedPickup && !recentlyFailedRoll &&
-                               !isPartOfIllegalConfiguration && robot.CanPickUpObject(*object);
-                      });
+  _targetBlockID.UnSet();
+  
+  const auto& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+  const AIWhiteboard::ObjectUseIntention intent = AIWhiteboard::ObjectUseIntention::PickUpAnyObject;
+  const BlockWorldFilter* defaultFilter = whiteboard.GetDefaultFilterForAction( intent );  
+
+  if( defaultFilter == nullptr ) {
+    return;
+  }
+  
+  BlockWorldFilter filter(*defaultFilter);
+  filter.AddFilterFcn(
+    [&robot, this](const ObservableObject* object)
+    {
+      bool isPartOfIllegalConfiguration = false;
+      for(auto configType: _configurationsToIgnore){
+        auto configurations = robot.GetBlockWorld().GetBlockConfigurationManager().GetConfigurationsForType(configType);
+        for(auto configuration : configurations){
+          if(configuration.lock()->ContainsBlock(object->GetID())){
+            isPartOfIllegalConfiguration = true;
+            break;
+          }
+        }
+        if(isPartOfIllegalConfiguration){break;}
+      }
+
+      return !isPartOfIllegalConfiguration;
+    });
   
   const ObservableObject* closestObject = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(), filter);
   
   if(closestObject != nullptr)
   {
     _targetBlockID = closestObject->GetID();
-  }
-  else
-  {
-    _targetBlockID.UnSet();
   }
 }
   
@@ -173,25 +177,43 @@ void BehaviorPickUpCube::TransitionToPickingUpCube(Robot& robot)
   DEBUG_SET_STATE(PickingUpCube);
   DriveToPickupObjectAction* pickupAction = new DriveToPickupObjectAction(robot, _targetBlockID, false, 0, false,0, true);
   
-  RetryWrapperAction::RetryCallback retryCallback = [this, pickupAction](const ExternalInterface::RobotCompletedAction& completion,
+  const auto& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+
+  RetryWrapperAction::RetryCallback retryCallback =
+    [this, pickupAction, &whiteboard](const ExternalInterface::RobotCompletedAction& completion,
                                                                          const u8 retryCount,
                                                                          AnimationTrigger& retryAnimTrigger)
   {
+    // use the whitebaord to check if we can still pickup the action. Note that this isn't the same check we
+    // did before, so this is slightly wrong, but this still helps because if the whiteboard says we can't use
+    // the object, then our filter (which may be more strict) will definitely reject it.
+    const AIWhiteboard::ObjectUseIntention intent = AIWhiteboard::ObjectUseIntention::PickUpAnyObject;
+
+    const bool blockStillValid = whiteboard.IsObjectValidForAction(intent, _targetBlockID);
+    if( ! blockStillValid ) {
+      return false;
+    }
+      
     // This is the intended animation trigger for now - don't change without consulting Mooly
     retryAnimTrigger = AnimationTrigger::RollBlockRealign;
     
     // Use a different preAction pose if we are retrying because we weren't seeing the object
-    if(completion.completionInfo.Get_objectInteractionCompleted().result == ObjectInteractionResult::VISUAL_VERIFICATION_FAILED)
+    if(completion.completionInfo.Get_objectInteractionCompleted().result ==
+       ObjectInteractionResult::VISUAL_VERIFICATION_FAILED)
     {
-      pickupAction->GetDriveToObjectAction()->SetGetPossiblePosesFunc([this, pickupAction](ActionableObject* object,
-                                                                                           std::vector<Pose3d>& possiblePoses,
-                                                                                           bool& alreadyInPosition)
-      {
-        return IBehavior::UseSecondClosestPreActionPose(pickupAction->GetDriveToObjectAction(),
-                                                        object, possiblePoses, alreadyInPosition);
-      });
+      pickupAction->GetDriveToObjectAction()->SetGetPossiblePosesFunc(
+        [this, pickupAction](ActionableObject* object,
+                             std::vector<Pose3d>& possiblePoses,
+                             bool& alreadyInPosition)
+        {
+          return IBehavior::UseSecondClosestPreActionPose(pickupAction->GetDriveToObjectAction(),
+                                                          object, possiblePoses, alreadyInPosition);
+        });
+      return true;
     }
-    return true;
+    else {
+      return completion.result == ActionResult::FAILURE_RETRY;
+    }
   };
   
   static const u8 kNumRetries = 1;

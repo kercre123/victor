@@ -45,7 +45,6 @@ private:
   mutable ObjectID _targetBlockTop;
   mutable ObjectID _targetBlockBottom;
 
-  std::unique_ptr<BlockWorldFilter>  _blockworldFilterForTop;
   std::unique_ptr<BlockWorldFilter>  _blockworldFilterForBottom;
 
   const Robot& _robot;
@@ -57,7 +56,7 @@ private:
     WaitForBlocksToBeValid
   };
 
-  bool _waitingForBlockToBeValid;
+  float _waitForBlocksToBeValidUntilTime_s = -1.0f;
   
   bool _stackInAnyOrientation = false;
 
@@ -68,7 +67,6 @@ private:
 
   void ResetBehavior(const Robot& robot);
 
-  bool FilterBlocksForTop(const ObservableObject* obj) const;
   bool FilterBlocksForBottom(const ObservableObject* obj) const;
   bool FilterBlocksHelper(const ObservableObject* obj) const;
 

@@ -14,6 +14,8 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
+#include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -84,7 +86,7 @@ size_t GetObjectFailureListMaxSize(AIWhiteboard::ObjectUseAction action)
   return 0;
 }
 
-};
+} // namespace
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // AIWhiteboard
@@ -95,6 +97,67 @@ AIWhiteboard::AIWhiteboard(Robot& robot)
 , _edgeInfoTime_sec(-1.0f)
 , _edgeInfoClosestEdge_mm(-1.0f)
 {
+  CreateBlockWorldFilters();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+AIWhiteboard::~AIWhiteboard()
+{
+
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::CanPickupHelper(const ObservableObject* object)
+{
+  if( nullptr == object ) {
+    PRINT_NAMED_ERROR("AIWhiteboard.CanPickupHelper.NullObject", "object was null");
+    return false;
+  }
+  
+  // check for recent failures
+  const bool recentlyFailed = DidFailToUse(object->GetID(),
+                                           {{ ObjectUseAction::PickUpObject, ObjectUseAction::RollOrPopAWheelie }},
+                                           DefailtFailToUseParams::kTimeObjectInvalidAfterFailure_sec,
+                                           object->GetPose().GetWithRespectToOrigin(),
+                                           DefailtFailToUseParams::kObjectInvalidAfterFailureRadius_mm,
+                                           DefailtFailToUseParams::kAngleToleranceAfterFailure_radians);
+  
+  const bool canPickUp = _robot.CanPickUpObject(*object);
+  return !recentlyFailed && canPickUp;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::CreateBlockWorldFilters()
+{
+
+  {
+    BlockWorldFilter *pickupFilter = new BlockWorldFilter;
+    pickupFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+    pickupFilter->AddFilterFcn( std::bind(&AIWhiteboard::CanPickupHelper, this, std::placeholders::_1) );
+    _filtersPerAction[ObjectUseIntention::PickUpAnyObject].reset( pickupFilter );
+  }
+
+  {
+    BlockWorldFilter *pickupFilter = new BlockWorldFilter;
+    pickupFilter->SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+    pickupFilter->AddFilterFcn(
+      [this](const ObservableObject* object)
+      {
+        if( ! CanPickupHelper(object) ) {
+          return false;
+        }
+        
+        // check the up axis
+        const bool forFreeplay = true;
+        const bool isRollingUnlocked = _robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::RollCube,forFreeplay);
+        const bool upAxisOk = ! isRollingUnlocked ||
+          object->GetPose().GetWithRespectToOrigin().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
+        
+        return upAxisOk;
+      });
+    _filtersPerAction.insert( std::make_pair( ObjectUseIntention::PickUpObjectWithAxisCheck,
+                                              std::unique_ptr<BlockWorldFilter>(pickupFilter) ) );
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -115,6 +178,12 @@ void AIWhiteboard::Init()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::Update()
+{
+  UpdateValidObjects();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::OnRobotDelocalized()
 {
   RemovePossibleObjectsFromZombieMaps();
@@ -131,7 +200,7 @@ void AIWhiteboard::OnRobotRelocalized()
 {
   // just need to update render, otherwise they render wrt old origin
   UpdatePossibleObjectRender();
-  
+
   UpdateBeaconRender();
 }
 
@@ -357,14 +426,14 @@ void AIWhiteboard::SetFailedToUse(const ObservableObject& object, ObjectUseActio
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AIWhiteboard::DidFailToUse(const int objectID, ObjectUseAction action) const
 {
-  const bool ret = DidFailToUse(objectID, action, -1.f, Pose3d(), -1.f, Radians());
+  const bool ret = DidFailToUse(objectID, ReasonsContainer{action}, -1.f, Pose3d(), -1.f, Radians());
   return ret;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AIWhiteboard::DidFailToUse(const int objectID, ObjectUseAction action, float recentSecs) const
 {
-  const bool ret = DidFailToUse(objectID, action, recentSecs, Pose3d(), -1.f, Radians());
+  const bool ret = DidFailToUse(objectID, ReasonsContainer{action}, recentSecs, Pose3d(), -1.f, Radians());
   return ret;
 }
 
@@ -372,7 +441,7 @@ bool AIWhiteboard::DidFailToUse(const int objectID, ObjectUseAction action, floa
 bool AIWhiteboard::DidFailToUse(const int objectID, ObjectUseAction action,
   const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const
 {
-  const bool ret = DidFailToUse(objectID, action, -1.f, atPose, distThreshold_mm, angleThreshold);
+  const bool ret = DidFailToUse(objectID, ReasonsContainer{action}, -1.f, atPose, distThreshold_mm, angleThreshold);
   return ret;
 }
 
@@ -380,9 +449,46 @@ bool AIWhiteboard::DidFailToUse(const int objectID, ObjectUseAction action,
 bool AIWhiteboard::DidFailToUse(const int objectID, ObjectUseAction action, float recentSecs,
   const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const
 {
-  const ObjectFailureTable& failureTable = GetObjectFailureTable(action);
-  const bool ret = FindMatchingEntry(failureTable, objectID, recentSecs, atPose, distThreshold_mm, angleThreshold);
+  const bool ret = DidFailToUse(objectID, ReasonsContainer{action}, recentSecs, atPose, distThreshold_mm, angleThreshold);
   return ret;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::DidFailToUse(const int objectID, AIWhiteboard::ReasonsContainer reasons) const
+{
+  const bool ret = DidFailToUse(objectID, reasons, -1.f, Pose3d(), -1.f, Radians());
+  return ret;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::DidFailToUse(const int objectID, AIWhiteboard::ReasonsContainer reasons, float recentSecs) const
+{
+  const bool ret = DidFailToUse(objectID, reasons, recentSecs, Pose3d(), -1.f, Radians());
+  return ret;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::DidFailToUse(const int objectID, AIWhiteboard::ReasonsContainer reasons,
+  const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const
+{
+  const bool ret = DidFailToUse(objectID, reasons, -1.f, atPose, distThreshold_mm, angleThreshold);
+  return ret;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::DidFailToUse(const int objectID, AIWhiteboard::ReasonsContainer reasons, float recentSecs,
+  const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const
+{
+  for( const auto& reason : reasons ) {
+    const ObjectFailureTable& failureTable = GetObjectFailureTable(reason);
+    const bool ret = FindMatchingEntry(failureTable, objectID, recentSecs, atPose, distThreshold_mm, angleThreshold);
+    if( ret ) {
+      return true;
+    }
+  }
+
+  // not found for any passed in reason
+  return false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -500,6 +606,61 @@ AIWhiteboard::ObjectFailureTable& AIWhiteboard::GetObjectFailureTable(ObjectUseA
     ASSERT_NAMED(false, "AIWhiteboard.GetFailureMap.InvalidAction");
     static ObjectFailureTable empty;
     return empty;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const std::set< ObjectID >& AIWhiteboard::GetValidObjectsForAction(ObjectUseIntention action) const
+{
+  const auto setIter = _validObjectsForAction.find(action);
+  if( setIter != _validObjectsForAction.end() ) {
+    return setIter->second;
+  }
+  else {
+    // we need to return a reference, so use a static. Should only happen if this is called before our first
+    // update
+    PRINT_NAMED_WARNING("AIWhiteboard.GetValidObjectsForAction.NoObjects",
+                        "Tried to get valid objects for action intent %d, but don't have a cache yet",
+                        (int)action);
+    const static std::set< ObjectID > emptyStaticSet;
+    return emptyStaticSet;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::IsObjectValidForAction(ObjectUseIntention action, const ObjectID& object) const
+{
+  const auto setIter = _validObjectsForAction.find(action);
+  if( setIter == _validObjectsForAction.end() ) {
+    return false;
+  }
+  
+  const auto objectIter = setIter->second.find(object);
+  // the object is valid if and only if it is in our valid set
+  return objectIter != setIter->second.end();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ObjectID AIWhiteboard::GetBestObjectForAction(ObjectUseIntention intent) const
+{
+  auto iter = _bestObjectForAction.find(intent);
+  if( iter != _bestObjectForAction.end() ) {
+    return iter->second;
+  }
+  else {
+    return {};
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const BlockWorldFilter* AIWhiteboard::GetDefaultFilterForAction(ObjectUseIntention action) const
+{
+  auto iter = _filtersPerAction.find(action);
+  if( iter != _filtersPerAction.end() ) {
+    return iter->second.get();
+  }
+  else {
+    return nullptr;
   }
 }
 
@@ -835,6 +996,41 @@ void AIWhiteboard::ConsiderNewPossibleObject(ObjectType objectType, const Pose3d
   UpdatePossibleObjectRender();
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::UpdateValidObjects()
+{
+  for( const auto& filterPair : _filtersPerAction ) {
+    const auto& actionIntent = filterPair.first;
+    const auto& filterPtr = filterPair.second;
+
+    {
+      // update set of valid objects
+      auto& validObjectIDSet = _validObjectsForAction[actionIntent];
+      validObjectIDSet.clear();
+      
+      std::vector<const ObservableObject*> objects;
+      _robot.GetBlockWorld().FindMatchingObjects(*filterPtr, objects);
+      for( const ObservableObject* obj : objects ) {
+        if( obj ) {
+          validObjectIDSet.insert( obj->GetID() );
+        }
+      }
+    }
+
+    {
+      // select best object
+      const ObservableObject* closestObject = _robot.GetBlockWorld().FindObjectClosestTo(_robot.GetPose(),
+                                                                                         * filterPair.second);
+      if( closestObject != nullptr ) {
+        _bestObjectForAction[ filterPair.first ] = closestObject->GetID();
+      }
+      else {
+        _bestObjectForAction[ filterPair.first ].UnSet();
+      }
+    }
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::UpdatePossibleObjectRender()

@@ -68,12 +68,7 @@ template<typename TYPE> class AnkiEvent;
 // Base Behavior Interface specification
 class IBehavior
 {
-protected:
-  // consts for failed to interact whiteboard
-  constexpr static const float kTimeObjectInvalidAfterFailure_sec = 30.f;
-  constexpr static const float kObjectInvalidAfterFailureRadius_mm = 60.f;
-  constexpr static const float kAngleToleranceAfterFailure_radians = M_PI;
-  
+protected:  
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
 
@@ -84,7 +79,7 @@ protected:
   virtual ~IBehavior();
     
 public:
-    
+
   enum class Status {
     Failure,
     Running,

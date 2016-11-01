@@ -142,8 +142,11 @@ bool IBehaviorRequestGame::FilterBlocks( const Robot* robotPtr, const Observable
     obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
 
   // check to make sure we haven't failed to interact with the block recently
-  const bool recentlyFailedPickup = robotPtr->GetBehaviorManager().GetWhiteboard().DidFailToUse(obj->GetID(), AIWhiteboard::ObjectUseAction::PickUpObject, kTimeObjectInvalidAfterFailure_sec);
-  const bool recentlyFailedRoll = robotPtr->GetBehaviorManager().GetWhiteboard().DidFailToUse(obj->GetID(), AIWhiteboard::ObjectUseAction::RollOrPopAWheelie, kTimeObjectInvalidAfterFailure_sec);
+  const auto& whiteboard = robotPtr->GetBehaviorManager().GetWhiteboard();
+  const bool recentlyFailed = whiteboard.DidFailToUse(obj->GetID(),
+                                                      {{AIWhiteboard::ObjectUseAction::PickUpObject,
+                                                        AIWhiteboard::ObjectUseAction::RollOrPopAWheelie}},
+                                                      DefailtFailToUseParams::kTimeObjectInvalidAfterFailure_sec);
   
   // TODO:(bn) lee suggested we use != UNKNOWN instead of == known, so that we will still attempt to interact
   // with dirty blocks. I think the best would be to prefer Known, but fall back to Dirty as well
@@ -151,8 +154,7 @@ bool IBehaviorRequestGame::FilterBlocks( const Robot* robotPtr, const Observable
   return upAxisOk &&
     obj->IsPoseStateKnown() &&
     obj->GetFamily() == ObjectFamily::LightCube &&
-    !recentlyFailedPickup &&
-    !recentlyFailedRoll &&
+    !recentlyFailed &&
     robotPtr->CanPickUpObject(*obj);
 
 }

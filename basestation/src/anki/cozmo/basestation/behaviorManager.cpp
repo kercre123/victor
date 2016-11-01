@@ -534,6 +534,8 @@ Result BehaviorManager::Update()
     PRINT_NAMED_ERROR("BehaviorManager.Update.NotInitialized", "");
     return RESULT_FAIL;
   }
+
+  _whiteboard->Update();
     
   _currentChooserPtr->Update();
 

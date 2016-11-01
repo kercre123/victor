@@ -32,6 +32,13 @@ namespace Cozmo {
 
 class ObservableObject;
 class Robot;
+class BlockWorldFilter;
+
+namespace DefailtFailToUseParams {
+constexpr static const float kTimeObjectInvalidAfterFailure_sec = 30.f;
+constexpr static const float kObjectInvalidAfterFailureRadius_mm = 60.f;
+static const Radians kAngleToleranceAfterFailure_radians = M_PI;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // AIWhiteboard
@@ -72,6 +79,15 @@ public:
     PlaceObjectAt,   // place object at location
     RollOrPopAWheelie // roll or pop a wheelie on a block
   };
+
+  // intention of what to do with an object. Add things here to centralize logic for the best object to use
+  enum class ObjectUseIntention {
+    // any object which can be picked up
+    PickUpAnyObject,
+
+    // only pick up upright objects, unless rolling is locked (in which case, pick up any object)
+    PickUpObjectWithAxisCheck
+   };
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialization/destruction
@@ -79,9 +95,14 @@ public:
   
   // constructor
   AIWhiteboard(Robot& robot);
+
+  virtual ~AIWhiteboard();
   
   // initializes the whiteboard, registers to events
   void Init();
+
+  // Tick the whiteboard
+  void Update();
   
   // what to do when the robot is delocalized
   void OnRobotDelocalized();
@@ -106,15 +127,6 @@ public:
   // recentFailureTimeout_sec: objects that failed to be picked up more recently than this ago will be
   // discarded
   bool FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) const;
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Face tracking
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // shared logic to get a face to track which requires the least panning and tilting (based on the current
-  // robot pose). If preferNamed is true, then will prefer faces with a name to those without
-  Vision::FaceID_t GetBestFaceToTrack(const std::set< Vision::FaceID_t >& possibleFaces,
-                                      const bool preferNamedFaces) const;
   
   // returns true if all active cubes are known to be in beacons
   bool AreAllCubesInBeacons() const;
@@ -126,7 +138,7 @@ public:
   void SetFailedToUse(const ObservableObject& object, ObjectUseAction action, const Pose3d& atLocation);
 
   // returns true if someone reported a failure to use the given object (by ID), less than the specified seconds ago
-  // close to the given location.
+  // close to the given location with the given reason(s).
   // recentSecs: use negative for any time at all, 0 for failed this tick, positive for failed less than X ago
   // atPose: where to compare
   // distThreshold_mm: set to negative to not compare poses, set to 0 or positive for atPose or around by X distance
@@ -143,6 +155,31 @@ public:
   // any recent failure for given object at given pose
   bool DidFailToUse(const int objectID, ObjectUseAction reason, float recentSecs, const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const;
 
+  // same as above, with multiple reasons considered at the same time. Returns true if there is a failure for
+  // _any_ of the specified reasons
+  using ReasonsContainer = std::set< ObjectUseAction >;
+  bool DidFailToUse(const int objectID, ReasonsContainer reasons) const;
+  bool DidFailToUse(const int objectID, ReasonsContainer reasons, float recentSecs) const;
+  bool DidFailToUse(const int objectID, ReasonsContainer reasons, const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const;
+  bool DidFailToUse(const int objectID, ReasonsContainer reasons, float recentSecs, const Pose3d& atPose, float distThreshold_mm, const Radians& angleThreshold) const;
+  
+
+
+  // Given an intent to use an object, let the whiteboard decide which objects are valid for the robot to
+  // use. This will check failure to use and other sensible defaults.
+  const std::set< ObjectID >& GetValidObjectsForAction(ObjectUseIntention action) const;
+
+  // small helper to check if a given ID is valid
+  bool IsObjectValidForAction(ObjectUseIntention action, const ObjectID& object) const;
+
+  // Pick which object would be "best" for the robot to interact with, out of the objects which are
+  // valid. This may use distance from the robot, or may be changed to do something else "reasonable" in the
+  // future
+  ObjectID GetBestObjectForAction(ObjectUseIntention action) const;
+
+  // returns a pointer to the filter used for the given action, or nullptr if it doesn't exist
+  const BlockWorldFilter* GetDefaultFilterForAction(ObjectUseIntention action) const;
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Beacons
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -156,7 +193,16 @@ public:
   // return current active beacon if any, or nullptr if none are active
   const AIBeacon* GetActiveBeacon() const;
   AIBeacon* GetActiveBeacon();
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Face tracking
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
+  // shared logic to get a face to track which requires the least panning and tilting (based on the current
+  // robot pose). If preferNamed is true, then will prefer faces with a name to those without
+  Vision::FaceID_t GetBestFaceToTrack(const std::set< Vision::FaceID_t >& possibleFaces,
+                                      const bool preferNamedFaces) const;
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -195,6 +241,14 @@ private:
     Pose3d _pose;
     float  _timestampSecs;
   };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Helpers
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // Initialize our list of filters for caching valid objects based on ObjectUseIntention 
+  void CreateBlockWorldFilters();
+
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Markers
@@ -214,6 +268,12 @@ private:
   // update render of beacons
   void UpdateBeaconRender();
 
+  // update the best objects for each action type
+  void UpdateValidObjects();
+
+  // Common logic for checking validity of blocks for any pick up action
+  bool CanPickupHelper(const ObservableObject* object);
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Failures
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -258,6 +318,15 @@ private:
  
   // list of markers/objects we have not checked out yet
   PossibleObjectList _possibleObjects;
+
+  // mapping from actions to the best object to use for that action
+  std::map< ObjectUseIntention, ObjectID > _bestObjectForAction;
+
+  // mapping to all valid objects
+  std::map< ObjectUseIntention, std::set< ObjectID > > _validObjectsForAction;
+
+  // also keep track of blockworld filters so we don't need to keep re-creating them
+  std::map< ObjectUseIntention, std::unique_ptr< BlockWorldFilter > > _filtersPerAction;
   
   // container of beacons currently defined (high level AI concept)
   BeaconList _beacons;
