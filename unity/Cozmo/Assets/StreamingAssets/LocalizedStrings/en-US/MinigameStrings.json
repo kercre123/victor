@@ -127,7 +127,10 @@
     "translation": "Select animations together to create a play for Cozmo"
   },
   "simonGame.howToPlay": {
-    "translation": "Listen and watch the pattern for each round.  When it’s your turn, tap the Cubes in order to repeat the pattern.  One mistake, and it’s game over!"
+    "translation": "You and Cozmo will take turns.\nAs the Cubes flash, memorize the pattern. Then tap the Cubes in order to repeat it."
+  },
+  "simonGame.solo.howToPlay": {
+    "translation": "You play while Cozmo watches.\nAs the Cubes flash, memorize the pattern. Then tap the Cubes in order to repeat it."
   },
   "simonGame.difficulty.hardDescription.locked": {
     "translation": "Unlock by winning Memory Match VS mode."
