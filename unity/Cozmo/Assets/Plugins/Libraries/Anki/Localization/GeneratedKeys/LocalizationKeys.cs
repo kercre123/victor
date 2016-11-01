@@ -306,6 +306,8 @@ public static class LocalizationKeys {
   public const string kMinigameLabelGameOver = "minigame.label.gameOver";
   public const string kAskCozmoTitle = "askCozmo.title";
   public const string kAskCozmoButton = "askCozmo.button";
+  public const string kDroneModeActionLockedModalTitle = "droneMode.actionLockedModal.title";
+  public const string kDroneModeActionLockedModalDescription = "droneMode.actionLockedModal.description";
   public const string kDroneModeUnknownFaceReticleLabel = "droneMode.unknownFaceReticleLabel";
   public const string kDroneModeChargerReticleLabel = "droneMode.chargerReticleLabel";
   public const string kDroneModeCubeReticleLabel = "droneMode.cubeReticleLabel";
@@ -583,6 +585,7 @@ public static class LocalizationKeys {
   public const string kButtonYes = "button.yes";
   public const string kButtonNo = "button.no";
   public const string kButtonContinue = "button.continue";
+  public const string kButtonOkay = "button.okay";
   public const string kButtonAgain = "button.again";
   public const string kButtonReady = "button.ready";
   public const string kButtonRefresh = "button.refresh";

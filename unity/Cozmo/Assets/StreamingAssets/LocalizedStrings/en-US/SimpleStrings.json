@@ -45,6 +45,9 @@
   "button.continue": {
     "translation": "Continue"
   },
+  "button.okay": {
+    "translation": "Okay"
+  },
   "button.again": {
     "translation": "Play Again"
   },

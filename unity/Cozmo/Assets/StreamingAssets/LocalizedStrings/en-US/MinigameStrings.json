@@ -93,6 +93,12 @@
   "askCozmo.button": {
     "translation": "GIVE ME ANSWER"
   },
+  "droneMode.actionLockedModal.title": {
+    "translation": "Action Locked"
+  },
+  "droneMode.actionLockedModal.description": {
+    "translation": "Unlock {0} Upgrade to use!"
+  },
   "droneMode.unknownFaceReticleLabel": {
     "translation": "Unknown Face"
   },

@@ -21,6 +21,8 @@ namespace Cozmo.Minigame.DroneMode {
     private bool _IsUnlocked;
     public bool IsUnlocked { get { return _IsUnlocked; } }
 
+    private string _UpgradeName;
+
     private bool _NeedsCubeSeen;
     public bool NeedsCubeSeen { get { return _NeedsCubeSeen; } }
 
@@ -43,6 +45,11 @@ namespace Cozmo.Minigame.DroneMode {
       _LockedIcon.SetActive(!_IsUnlocked);
       _ActionButton.Interactable = _IsUnlocked;
       _ActionButton.ShowDisabledStateWhenInteractable = !_IsUnlocked;
+
+      UnlockableInfo upgradeInfo = UnlockablesManager.Instance.GetUnlockableInfo(actionData.ActionUnlockId);
+      if (upgradeInfo != null) {
+        _UpgradeName = Localization.Get(upgradeInfo.TitleKey);
+      }
     }
 
     private void HandleButtonClicked() {
@@ -56,11 +63,11 @@ namespace Cozmo.Minigame.DroneMode {
           _AlertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
           // Hook up callbacks
           _AlertView.SetCloseButtonEnabled(true);
-          _AlertView.SetPrimaryButton(LocalizationKeys.kButtonContinue);
+          _AlertView.SetPrimaryButton(LocalizationKeys.kButtonOkay);
 
-          // TODO: Real localization
-          _AlertView.TitleLocKey = LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalTitle;
-          _AlertView.DescriptionLocKey = LocalizationKeys.kChallengeDetailsNeedsMoreCubesModalDescription;
+          _AlertView.TitleLocKey = LocalizationKeys.kDroneModeActionLockedModalTitle;
+          _AlertView.DescriptionLocKey = LocalizationKeys.kDroneModeActionLockedModalDescription;
+          _AlertView.SetMessageArgs(new object[] { _UpgradeName });
         }
       }
     }
