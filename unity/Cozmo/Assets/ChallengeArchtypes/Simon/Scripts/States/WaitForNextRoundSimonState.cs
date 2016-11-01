@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using Anki.Cozmo.Audio;
 
 namespace Simon {
   public class WaitForNextRoundSimonState : State {
@@ -21,7 +22,6 @@ namespace Simon {
       // On first turn not known until entered...
       if (_NextPlayer == PlayerType.None) {
         _NextPlayer = _GameInstance.FirstPlayer;
-        _GameInstance.StartFirstRoundMusic();
       }
 
       // This is the end if the second player goes and one of them is out of lives.
@@ -42,12 +42,14 @@ namespace Simon {
         _GameInstance.ShowCurrentPlayerTurnStage(_NextPlayer, true);
         _GameInstance.SetCubeLightsDefaultOn();
 
-        _CurrentRobot.TurnTowardsObject(_GameInstance.GetCubeBySortedIndex(1), false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2, HandleCozmoTurnComplete);
+        _CurrentRobot.TurnTowardsObject(_GameInstance.GetCubeBySortedIndex (1), false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2, HandleCozmoTurnComplete);
+
+        // Update Music round
+        _GameInstance.UpdateMusicRound();
 
         if (_NextPlayer == PlayerType.Human) {
           if (_CanAutoAdvance) {
             _GameInstance.SharedMinigameView.PlayBannerAnimation(Localization.Get(LocalizationKeys.kSimonGameLabelListen), HandleAutoAdvance);
-            Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Placeholder);
           }
           else {
             _GameInstance.GetSimonSlide().ShowPlayPatternButton(HandleContinuePressed);
@@ -62,14 +64,18 @@ namespace Simon {
       }
     }
     private void HandleAutoAdvance() {
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Placeholder);
       HandleContinuePressed();
     }
 
     private void HandleContinuePressed() {
       _GameInstance.GetSimonSlide().HidePlayPatternButton();
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(_GameInstance.GetDefaultMusicState());
-      _StateMachine.SetNextState(new SetSequenceSimonState(_NextPlayer));
+      // Start Sequence after audio completes
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Mm_Pattern_Start,
+                                   AudioCallbackFlag.EventComplete,
+                                   (CallbackInfo callbackInfo) =>
+      {
+        _StateMachine.SetNextState(new SetSequenceSimonState(_NextPlayer));
+      });
     }
   }
 }

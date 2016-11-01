@@ -108,9 +108,8 @@ namespace Simon {
     private void CozmoLoseHand() {
       _GameInstance.SetCubeLightsGuessWrong(_LastTargetID);
       _GameInstance.DecrementLivesRemaining(PlayerType.Cozmo);
-
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
       _IsAnimating = true;
+
       // Since the next state will play the FinalLifeComplete "lose game" don't double it up with the lose hand and skip lose hand
       if (_GameInstance.GetLivesRemaining(PlayerType.Cozmo) > 0) {
         _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.MemoryMatchCozmoLoseHand, HandleOnCozmoLoseAnimationDone);
@@ -123,9 +122,8 @@ namespace Simon {
     private void CozmoWinHand() {
       _GameInstance.SetCubeLightsGuessRight();
       _GameInstance.ShowCenterResult(true, true);
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Round_End);
       _GameInstance.AddPoint(false);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Round_End);
       _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.MemoryMatchCozmoWinHand, HandleOnCozmoWinAnimationDone);
       _IsAnimating = true;
     }

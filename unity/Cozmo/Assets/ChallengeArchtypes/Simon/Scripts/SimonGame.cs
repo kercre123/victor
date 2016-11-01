@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Cozmo.Util;
 using Anki.Cozmo;
+using Anki.Cozmo.Audio;
 
 namespace Simon {
 
@@ -236,8 +237,7 @@ namespace Simon {
     }
 
     public Anki.Cozmo.Audio.AudioEventParameter GetAudioForBlock(int blockId) {
-      Anki.Cozmo.Audio.AudioEventParameter audioEvent =
-        Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Connect);
+      AudioEventParameter audioEvent = AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Connect);
       SimonCube simonCube;
       if (_BlockIdToSound.TryGetValue(blockId, out simonCube)) {
         audioEvent = simonCube.soundName;
@@ -255,6 +255,9 @@ namespace Simon {
         }
       }
       base.ShowWinnerState(overrideWinnerText, Localization.GetWithArgs(LocalizationKeys.kSimonGameTextPatternLength, _CurrentIDSequence.Count));
+
+      // Set Final Music State
+      GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Memory_Match_Fanfare);
     }
 
     public void FinalLifeComplete() {
@@ -329,8 +332,13 @@ namespace Simon {
       }
       return _SimonTurnSlide.GetComponent<SimonTurnSlide>();
     }
-    public void StartFirstRoundMusic() {
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Memory_Match_Full_Life);
+
+    public void UpdateMusicRound() {
+      // Using current lives left calculate current round
+      // Max lives - lives left = [0, 2] then shift index + 1 for Rounds [1, 3]
+      int round = _Config.MaxLivesCozmo - Mathf.Min(_CurrLivesCozmo, _CurrLivesHuman) + 1;
+      GameAudioClient.SetMusicRoundState (round);
+      GameAudioClient.SetMusicState (Anki.Cozmo.Audio.GameState.Music.Minigame__Memory_Match);
     }
 
     public void ShowCurrentPlayerTurnStage(PlayerType player, bool isListening) {
@@ -340,7 +348,6 @@ namespace Simon {
         simonTurnScript.ShowCenterText("");
       }
       else {
-        Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Window_Open);
         simonTurnScript.ShowHumanLives(_CurrLivesHuman, _Config.MaxLivesHuman);
         simonTurnScript.ShowCenterText(isListening ? Localization.Get(LocalizationKeys.kSimonGameLabelListen) : Localization.Get(LocalizationKeys.kSimonGameLabelRepeat));
       }
@@ -372,13 +379,11 @@ namespace Simon {
       if (player == PlayerType.Human) {
         _CurrLivesHuman--;
         _WantsSequenceGrowth = false;
-        if (_CurrLivesHuman <= 0) {
-          Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Memory_Match_No_Lives);
-        }
       }
       else {
         _CurrLivesCozmo--;
       }
+
       ShowCurrentPlayerTurnStage(player, false);
       ShowCenterResult(true, false);
     }

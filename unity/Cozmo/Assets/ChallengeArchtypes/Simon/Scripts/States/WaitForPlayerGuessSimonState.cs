@@ -74,7 +74,6 @@ namespace Simon {
     private void PlayerLoseHand() {
       _GameInstance.SetCubeLightsGuessWrong(_SequenceList[_CurrentSequenceIndex], _TargetCube);
       _GameInstance.DecrementLivesRemaining(PlayerType.Human);
-      GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
       AnimationTrigger trigger = _GameInstance.IsSoloMode() ? AnimationTrigger.MemoryMatchPlayerLoseHandSolo : AnimationTrigger.MemoryMatchPlayerLoseHand;
       _CurrentRobot.SendAnimationTrigger(trigger, HandleOnPlayerLoseAnimationDone);
       _SubState = SubState.WaitForTurnOverAnim;
@@ -83,8 +82,7 @@ namespace Simon {
     private void PlayerWinHand() {
       _GameInstance.SetCubeLightsGuessRight();
       _GameInstance.ShowCenterResult(true, true);
-      GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
-
+      GameAudioClient.PostSFXEvent (Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Round_End);
       AnimationTrigger trigger = AnimationTrigger.MemoryMatchPlayerWinHand;
       if (_GameInstance.IsSoloMode()) {
         trigger = AnimationTrigger.MemoryMatchPlayerWinHandSolo;
@@ -98,7 +96,6 @@ namespace Simon {
       _SubState = SubState.WaitForTurnOverAnim;
 
       _GameInstance.ShowBanner(LocalizationKeys.kSimonGameLabelCorrect);
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Round_End);
     }
 
     private void OnBlockTapped(int id, int times, float timeStamp) {
