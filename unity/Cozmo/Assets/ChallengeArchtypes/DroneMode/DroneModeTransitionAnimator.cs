@@ -2,7 +2,8 @@
 
 namespace Cozmo.Minigame.DroneMode {
   public class DroneModeTransitionAnimator {
-    public event System.Action OnTransitionAnimationFinished;
+    public event System.Action OnTurboTransitionAnimationStarted;
+    public event System.Action OnTurboTransitionAnimationFinished;
 
     private IRobot _RobotToAnimate;
 
@@ -114,6 +115,9 @@ namespace Cozmo.Minigame.DroneMode {
         break;
       case DroneModeControlsSlide.SpeedSliderSegment.Turbo:
         _RobotToAnimate.SendAnimationTrigger(AnimationTrigger.DroneModeTurboDrivingStart, HandleInAnimationFinished, QueueActionPosition.NOW_AND_CLEAR_REMAINING);
+        if (OnTurboTransitionAnimationStarted != null) {
+          OnTurboTransitionAnimationStarted();
+        }
         break;
       default:
         // We should never get here.
@@ -126,8 +130,8 @@ namespace Cozmo.Minigame.DroneMode {
       if (success) {
         if (_CurrentDriveSpeedSegment == _TargetDriveSpeedSegment) {
           _CurrentAnimationState = TransitionAnimationState.NONE;
-          if (OnTransitionAnimationFinished != null) {
-            OnTransitionAnimationFinished();
+          if (_TargetDriveSpeedSegment == DroneModeControlsSlide.SpeedSliderSegment.Turbo && OnTurboTransitionAnimationFinished != null) {
+            OnTurboTransitionAnimationFinished();
           }
         }
         else {

@@ -32,12 +32,15 @@ namespace Cozmo {
         private bool _IsPerformingAction = false;
 
         private DroneModeTransitionAnimator _RobotAnimator;
-        private bool _IsPlayingTransitionAnimation = false;
+        private bool _IsPlayingTurboTransitionAnimation = false;
 
         public string TiltDrivingDebugText = "";
         public string HeadDrivingDebugText = "";
 
         public override void Enter() {
+          // We need to allow folks to touch both sliders at the same time
+          Input.multiTouchEnabled = true;
+
           _LastMessageSentTimestamp = Time.time;
 
           _DroneModeGame = _StateMachine.GetGame() as DroneModeGame;
@@ -106,12 +109,16 @@ namespace Cozmo {
           }
 
           _RobotAnimator = new DroneModeTransitionAnimator(_CurrentRobot);
-          _RobotAnimator.OnTransitionAnimationFinished += HandleTransitionAnimationFinished;
+          _RobotAnimator.OnTurboTransitionAnimationStarted += HandleTurboTransitionAnimationFinished;
+          _RobotAnimator.OnTurboTransitionAnimationFinished += HandleTurboTransitionAnimationFinished;
 
           _CurrentRobot.EnableDroneMode(true);
         }
 
         public override void Exit() {
+          // Revert to default after allowing folks to touch both sliders at the same time
+          Input.multiTouchEnabled = false;
+
           if (_CurrentRobot != null) {
             _CurrentRobot.StopAllMotors();
             _CurrentRobot.EnableDroneMode(false);
@@ -122,7 +129,8 @@ namespace Cozmo {
           _DroneModeControlsSlide.OnLiftSliderValueChanged -= HandleLiftSliderValueChanged;
           _DroneModeGame.OnTurnDirectionChanged -= HandleTurnDirectionChanged;
           DisableInput();
-          _RobotAnimator.OnTransitionAnimationFinished -= HandleTransitionAnimationFinished;
+          _RobotAnimator.OnTurboTransitionAnimationStarted -= HandleTurboTransitionAnimationFinished;
+          _RobotAnimator.OnTurboTransitionAnimationFinished -= HandleTurboTransitionAnimationFinished;
           _RobotAnimator.CleanUp();
         }
 
@@ -130,7 +138,7 @@ namespace Cozmo {
           if (!_IsPerformingAction) {
             // Send drive wheels / drive head messages if needed
             SendDriveRobotMessages();
-            if (_IsPlayingTransitionAnimation) {
+            if (_IsPlayingTurboTransitionAnimation) {
               SetHeadSliderToCurrentPosition();
             }
 
@@ -193,7 +201,7 @@ namespace Cozmo {
             _LastMessageSentTimestamp = Time.time;
             bool droveWheels = DriveWheelsIfNeeded();
             bool droveHead = true;
-            if (!_IsPlayingTransitionAnimation) {
+            if (!_IsPlayingTurboTransitionAnimation) {
               droveHead = DriveHeadIfNeeded();
             }
 
@@ -409,12 +417,15 @@ namespace Cozmo {
 
         private void HandleDriveSpeedFamilyChanged(DroneModeControlsSlide.SpeedSliderSegment currentPosition, DroneModeControlsSlide.SpeedSliderSegment newPosition) {
           _RobotAnimator.PlayTransitionAnimation(newPosition);
-          _IsPlayingTransitionAnimation = true;
+        }
+
+        private void HandleTurboTransitionAnimationStarted() {
+          _IsPlayingTurboTransitionAnimation = true;
           _DroneModeControlsSlide.DisableHeadSlider();
         }
 
-        private void HandleTransitionAnimationFinished() {
-          _IsPlayingTransitionAnimation = false;
+        private void HandleTurboTransitionAnimationFinished() {
+          _IsPlayingTurboTransitionAnimation = false;
           _DroneModeControlsSlide.EnableHeadSlider();
         }
 
