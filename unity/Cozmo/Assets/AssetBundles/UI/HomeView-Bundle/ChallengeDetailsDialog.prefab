@@ -331,6 +331,9 @@ MonoBehaviour:
   Prefab: {fileID: 133648, guid: 89adf5b307ba641c78387f98b3c50373, type: 2}
   ModifiedValues:
   - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
+  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
     JsonValue: 5
   - ObjectPath: 
@@ -360,7 +363,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -383,6 +386,7 @@ MonoBehaviour:
     are fun with people including you so just play this game now
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11413744
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -396,6 +400,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 130312, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
   ModifiedValues:
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#button.play"'
@@ -420,7 +427,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -442,6 +449,7 @@ MonoBehaviour:
   m_Text: '#label.emptyWithArg'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11433714
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -476,7 +484,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.11764706, g: 0.5058824, b: 0.78431374, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -498,6 +506,7 @@ MonoBehaviour:
   m_Text: Speed Tap
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11445614
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -511,6 +520,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 130312, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
   ModifiedValues:
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
     JsonValue: 3
@@ -601,7 +613,6 @@ MonoBehaviour:
   _CurrentCostLabel: {fileID: 0}
   _CostButtonLabel: {fileID: 11420910}
   _ChallengeIcon: {fileID: 0}
-  _LockedIcon: {fileID: 0}
   _AffordableIcon: {fileID: 182406}
   _LockedContainer: {fileID: 169464}
   _AvailableContainer: {fileID: 120528}

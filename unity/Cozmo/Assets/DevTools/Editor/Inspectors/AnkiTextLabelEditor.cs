@@ -20,6 +20,7 @@ namespace Anki.Editor.UI {
     private SerializedProperty _GlowText;
 
     private Material _TextGlowMat;
+    private SerializedProperty _RaycastBlocker;
 
     protected override void OnEnable() {
       base.OnEnable();
@@ -30,6 +31,7 @@ namespace Anki.Editor.UI {
       _FontData = serializedObject.FindProperty("m_FontData");
       _AllUppercase = serializedObject.FindProperty("_AllUppercase");
       _GlowText = serializedObject.FindProperty("GlowText");
+      _RaycastBlocker = serializedObject.FindProperty("IsRaycastBlocker");
 
       var currentValue = _Text.stringValue;
       if (currentValue.StartsWith("#")) {
@@ -53,7 +55,7 @@ namespace Anki.Editor.UI {
         EditorDrawingUtility.DrawLocalizationString(ref _LocalizationKey, ref _LocalizedStringFile, ref _LocalizedString);
         _Text.stringValue = "#" + _LocalizationKey;
       }
-      else {        
+      else {
         _Text.stringValue = _LocalizedString;
         EditorGUILayout.PropertyField(_Text);
         _LocalizedString = _Text.stringValue;
@@ -61,6 +63,7 @@ namespace Anki.Editor.UI {
 
       EditorGUILayout.PropertyField(_AllUppercase, new GUIContent("All Caps"));
       EditorGUILayout.PropertyField(_GlowText, new GUIContent("Glowing Text"));
+      EditorGUILayout.PropertyField(_RaycastBlocker, new GUIContent("Raycast Blocker"));
       if (_GlowText.boolValue) {
         m_Material.objectReferenceValue = _TextGlowMat;
       }

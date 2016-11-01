@@ -21,6 +21,8 @@ namespace Anki.UI {
 
     private object[] _FormattingArgs = null;
 
+    public bool IsRaycastBlocker = false;
+
     // m_Text is a protected member that holds the string to display
 
     public override string text {
@@ -88,7 +90,7 @@ namespace Anki.UI {
       if (_AllUppercase) {
         displayText = displayText.ToUpper();
       }
-        
+
       if (_DisplayText != displayText) {
         _DisplayText = displayText;
         return true;
@@ -99,20 +101,21 @@ namespace Anki.UI {
     protected override void Start() {
       if (SetLocalizedText(m_Text)) {
         SetVerticesDirty();
-        SetLayoutDirty();      
+        SetLayoutDirty();
       }
+      this.raycastTarget = IsRaycastBlocker;
     }
 
     //
     // Override UI.Text methods to use LocalizedString
     //
-    protected override void OnPopulateMesh(UnityEngine.UI.VertexHelper vh) { 
-      #if UNITY_EDITOR
+    protected override void OnPopulateMesh(UnityEngine.UI.VertexHelper vh) {
+#if UNITY_EDITOR
       if (m_Text != DisplayText && !UnityEditor.EditorApplication.isPlaying) {
         SetLocalizedText(m_Text);
       }
 
-      #endif
+#endif
 
       string saveText = null;
 

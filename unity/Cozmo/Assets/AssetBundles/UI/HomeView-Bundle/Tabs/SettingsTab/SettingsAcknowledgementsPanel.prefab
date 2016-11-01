@@ -254,7 +254,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.4, g: 0.4, b: 0.4, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -276,6 +276,7 @@ MonoBehaviour:
   m_Text: '#label.privacyPolicy'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 1
 --- !u!114 &11435072
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -471,7 +472,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.4, g: 0.4, b: 0.4, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -493,6 +494,7 @@ MonoBehaviour:
   m_Text: '#label.termsOfUse'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 1
 --- !u!114 &11480748
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -559,7 +561,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.4, g: 0.4, b: 0.4, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -581,6 +583,7 @@ MonoBehaviour:
   m_Text: '#settings.versionPanel.button.acknowledgementsLink'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 1
 --- !u!114 &11489682
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -612,7 +615,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.4, g: 0.4, b: 0.4, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -634,6 +637,7 @@ MonoBehaviour:
   m_Text: '#settings.acknowledgementsPanel.title'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11498504
 MonoBehaviour:
   m_ObjectHideFlags: 1
