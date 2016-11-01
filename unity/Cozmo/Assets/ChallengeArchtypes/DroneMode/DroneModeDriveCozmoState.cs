@@ -30,6 +30,15 @@ namespace Cozmo {
         private bool _IsDrivingLift = false;
 
         private bool _IsPerformingAction = false;
+        private bool IsPerformingAction {
+          get { return _IsPerformingAction; }
+          set {
+            if (_IsPerformingAction != value) {
+              _IsPerformingAction = value;
+              UpdateIdleReactionaryBehaviors();
+            }
+          }
+        }
 
         private DroneModeTransitionAnimator _RobotAnimator;
         private bool _IsPlayingTurboTransitionAnimation = false;
@@ -135,7 +144,7 @@ namespace Cozmo {
         }
 
         public override void Update() {
-          if (!_IsPerformingAction) {
+          if (!IsPerformingAction) {
             // Send drive wheels / drive head messages if needed
             SendDriveRobotMessages();
             if (_IsPlayingTurboTransitionAnimation) {
@@ -208,25 +217,13 @@ namespace Cozmo {
             bool droveLift = DriveLiftIfNeeded();
 
             if (_IsDrivingHead != droveHead || _IsDrivingWheels != droveWheels || _IsDrivingLift != droveLift) {
-              // If targets are both zero, enable reactionary behavior
-              if (!droveHead && !droveWheels && !droveLift) {
-                EnableIdleReactionaryBehaviors(true);
-              }
-              else {
-                EnableIdleReactionaryBehaviors(false);
-              }
-
               _IsDrivingHead = droveHead;
               _IsDrivingWheels = droveWheels;
               _IsDrivingLift = droveLift;
+
+              UpdateIdleReactionaryBehaviors();
             }
           }
-        }
-
-        private void EnableIdleReactionaryBehaviors(bool enable) {
-          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.AcknowledgeFace, enable);
-          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.AcknowledgeObject, enable);
-          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement, enable);
         }
 
         private bool DriveWheelsIfNeeded() {
@@ -438,7 +435,7 @@ namespace Cozmo {
           if (targetObject != null && targetObject is ObservedObject && targetObject is LightCube) {
             _CurrentRobot.PickupObject(targetObject as ObservedObject, callback: HandleActionFinished);
             DisableInput();
-            _IsPerformingAction = true;
+            IsPerformingAction = true;
           }
         }
 
@@ -447,14 +444,14 @@ namespace Cozmo {
           if (targetObject != null && targetObject is ObservedObject && targetObject is LightCube) {
             _CurrentRobot.RollObject(targetObject as ObservedObject, callback: HandleActionFinished);
             DisableInput();
-            _IsPerformingAction = true;
+            IsPerformingAction = true;
           }
         }
 
         private void HandleDropCubeButtonPressed() {
           _CurrentRobot.PlaceObjectOnGroundHere(callback: HandleActionFinished);
           DisableInput();
-          _IsPerformingAction = true;
+          IsPerformingAction = true;
         }
 
         private void HandleStackCubeButtonPressed() {
@@ -462,7 +459,7 @@ namespace Cozmo {
           if (targetObject != null && targetObject is ObservedObject && targetObject is LightCube) {
             _CurrentRobot.PlaceOnObject(targetObject as ObservedObject, callback: HandleActionFinished);
             DisableInput();
-            _IsPerformingAction = true;
+            IsPerformingAction = true;
           }
         }
 
@@ -471,17 +468,34 @@ namespace Cozmo {
           if (targetObject != null && targetObject is Face) {
             _CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, sayName: true, callback: HandleActionFinished);
             DisableInput();
-            _IsPerformingAction = true;
+            IsPerformingAction = true;
           }
         }
 
         private void HandleActionFinished(bool success) {
           _CurrentRobot.CancelCallback(HandleActionFinished);
           EnableInput();
-          _IsPerformingAction = false;
+          IsPerformingAction = false;
         }
 
         #endregion
+
+        private void UpdateIdleReactionaryBehaviors() {
+          // If targets are all zero, enable reactionary behavior
+          if (!_IsDrivingHead && !_IsDrivingWheels && !_IsDrivingLift && !IsPerformingAction) {
+            EnableIdleReactionaryBehaviors(true);
+          }
+          else {
+            EnableIdleReactionaryBehaviors(false);
+          }
+        }
+
+        private void EnableIdleReactionaryBehaviors(bool enable) {
+          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.AcknowledgeFace, enable);
+          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.AcknowledgeObject, enable);
+          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement, enable);
+          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.ReactToPickup, enable);
+        }
       }
     }
   }
