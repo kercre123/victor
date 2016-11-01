@@ -71,6 +71,7 @@ enum uint_32 Sparked
 {
   Fun = 982472036,
   Invalid = 0,
+  Pyramid = 797712787,
   Sneaky = 468648200,
   Workout = 1875882538,
 }
