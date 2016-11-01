@@ -23,6 +23,8 @@ MonoBehaviour:
   TitleKey: unlockable.PickupCube.Title
   SparkButtonDescription: unlockable.PickupCube.SparkButtonDescription
   SparkedStateDescription: unlockable.PickupCube.SparkedStateDescription
+  SparkedMusicState:
+    _Sparked: 468648200
   UpgradeCostItemId: TestHexItem0
   UpgradeCostAmountNeeded: 0
   RequestTrickCostItemId: treat

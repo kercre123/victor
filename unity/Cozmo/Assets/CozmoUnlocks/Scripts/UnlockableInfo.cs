@@ -37,6 +37,8 @@ public class UnlockableInfo : ScriptableObject, IComparable {
 
   public string SparkedStateDescription;
 
+  public SparkedMusicStateWrapper SparkedMusicState;
+
   [Cozmo.ItemId]
   public string UpgradeCostItemId;
   public int UpgradeCostAmountNeeded;

@@ -468,8 +468,16 @@ public class CoreUpgradeDetailsDialog : BaseView {
     UpdateInventoryLabel(_UnlockInfo.RequestTrickCostItemId, _SparksInventoryLabel);
 
     DAS.Event("meta.upgrade_replay", _UnlockInfo.Id.Value.ToString(), DASUtil.FormatExtraData(_UnlockInfo.RequestTrickCostAmountNeeded.ToString()));
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Spark_Launch);
+
+    // Post Audio
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent (Anki.Cozmo.Audio.GameEvent.Sfx.Spark_Launch);
+    Anki.Cozmo.Audio.SwitchState.Sparked sparkedMusicState = _UnlockInfo.SparkedMusicState.Sparked;
+    if (sparkedMusicState == Anki.Cozmo.Audio.SwitchState.Sparked.Invalid) {
+      sparkedMusicState = SparkedMusicStateWrapper.DefaultState().Sparked;
+    }
+    Anki.Cozmo.Audio.GameAudioClient.SetSparkedMusicState(sparkedMusicState);
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Spark);
+
     if (RobotEngineManager.Instance.CurrentRobot != null) {
       RobotEngineManager.Instance.CurrentRobot.EnableSparkUnlock(_UnlockInfo.Id.Value);
     }

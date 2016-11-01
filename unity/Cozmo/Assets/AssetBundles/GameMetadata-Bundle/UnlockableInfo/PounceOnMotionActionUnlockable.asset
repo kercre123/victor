@@ -25,6 +25,8 @@ MonoBehaviour:
   TitleKey: unlockable.PounceOnMotionAction.Title
   SparkButtonDescription: unlockable.PounceOnMotionAction.SparkButtonDescription
   SparkedStateDescription: unlockable.PounceOnMotionAction.SparkedStateDescription
+  SparkedMusicState:
+    _Sparked: 468648200
   UpgradeCostItemId: TestHexItem0
   UpgradeCostAmountNeeded: 2
   RequestTrickCostItemId: treat

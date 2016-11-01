@@ -25,6 +25,8 @@ MonoBehaviour:
   TitleKey: unlockable.KnockOverThreeCubeStack.Title
   SparkButtonDescription: unlockable.KnockOverThreeCubeStack.SparkButtonDescription
   SparkedStateDescription: unlockable.KnockOverThreeCubeStack.SparkedStateDescription
+  SparkedMusicState:
+    _Sparked: 982472036
   UpgradeCostItemId: TestHexItem0
   UpgradeCostAmountNeeded: 8
   RequestTrickCostItemId: treat

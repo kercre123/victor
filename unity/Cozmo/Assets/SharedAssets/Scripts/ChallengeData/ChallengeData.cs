@@ -107,5 +107,32 @@ public struct MusicStateWrapper {
   public static implicit operator MusicStateWrapper(Anki.Cozmo.Audio.GameState.Music other) {
     return new MusicStateWrapper(other);
   }
+}
 
+[System.Serializable]
+public struct SparkedMusicStateWrapper {
+
+  public SparkedMusicStateWrapper(Anki.Cozmo.Audio.SwitchState.Sparked sparked) {
+    _Sparked = (int)sparked;
+  }
+
+  [SerializeField]
+  private int _Sparked;
+
+  public Anki.Cozmo.Audio.SwitchState.Sparked Sparked {
+    get { return (Anki.Cozmo.Audio.SwitchState.Sparked)_Sparked; }
+    set { _Sparked = (int)value; }
+  }
+
+  public static implicit operator Anki.Cozmo.Audio.SwitchState.Sparked(SparkedMusicStateWrapper other) {
+    return other.Sparked;
+  }
+
+  public static implicit operator SparkedMusicStateWrapper(Anki.Cozmo.Audio.SwitchState.Sparked other) {
+    return new SparkedMusicStateWrapper(other);
+  }
+
+  public static SparkedMusicStateWrapper DefaultState() {
+    return new SparkedMusicStateWrapper(Anki.Cozmo.Audio.SwitchState.Sparked.Sneaky);
+  }
 }

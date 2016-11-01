@@ -25,6 +25,8 @@ MonoBehaviour:
   TitleKey: unlockable.PopAWheelieAction.Title
   SparkButtonDescription: unlockable.PopAWheelieAction.SparkButtonDescription
   SparkedStateDescription: unlockable.PopAWheelieAction.SparkedStateDescription
+  SparkedMusicState:
+    _Sparked: 982472036
   UpgradeCostItemId: TestHexItem0
   UpgradeCostAmountNeeded: 12
   RequestTrickCostItemId: treat

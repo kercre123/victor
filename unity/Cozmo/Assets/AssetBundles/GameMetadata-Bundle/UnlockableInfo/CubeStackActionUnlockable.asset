@@ -25,6 +25,8 @@ MonoBehaviour:
   TitleKey: unlockable.CubeStackAction.Title
   SparkButtonDescription: unlockable.CubeStackAction.SparkButtonDescription
   SparkedStateDescription: unlockable.CubeStackAction.SparkedStateDescription
+  SparkedMusicState:
+    _Sparked: 468648200
   UpgradeCostItemId: TestHexItem0
   UpgradeCostAmountNeeded: 2
   RequestTrickCostItemId: treat

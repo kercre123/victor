@@ -278,6 +278,12 @@ namespace Anki {
           UnityAudioClient client = UnityAudioClient.Instance;
           client.PostSwitchState (SwitchState.SwitchGroupType.Gameplay_Round, (SwitchState.GenericSwitch)roundState, GameObjectType.Default);
         }
+
+        static public void SetSparkedMusicState(Anki.Cozmo.Audio.SwitchState.Sparked sparked) {
+          UnityAudioClient client = UnityAudioClient.Instance;
+          client.PostSwitchState (SwitchState.SwitchGroupType.Sparked, (SwitchState.GenericSwitch)sparked, GameObjectType.Default);
+        }
+     
       }
     }
   }
