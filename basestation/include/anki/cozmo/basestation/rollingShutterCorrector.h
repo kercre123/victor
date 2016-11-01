@@ -91,7 +91,7 @@ namespace Anki {
     private:
       // Calculates pixel shifts based on gyro rates from ImageIMUData messages
       // Returns false if unable to calculate shifts due to not having relevant gyro data
-      void ComputePixelShiftsWithImageIMU(TimeStamp_t t,
+      bool ComputePixelShiftsWithImageIMU(TimeStamp_t t,
                                           Vec2f& shift,
                                           const VisionPoseData& poseData,
                                           const VisionPoseData& prevPoseData,

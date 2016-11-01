@@ -891,6 +891,7 @@ protected:
   PoseFrameID_t     _frameId = 0;
   ObjectID          _localizedToID;       // ID of mat object robot is localized to
   bool              _hasMovedSinceLocalization = false;
+  u32               _numMismatchedFrameIDs = 0;
   
   // May be true even if not localized to an object, if robot has not been picked up
   bool              _isLocalized = true;

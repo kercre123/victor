@@ -139,16 +139,38 @@ namespace Anki {
       // Time difference between subdivided rows in the image
       int timeDif = floor(timeBetweenFrames_ms/_rsNumDivisions);
       
+      // Whether or not a call to computePixelShiftsWithImageIMU returned false meaning it
+      // was unable to compute the pixelShifts from imageIMU data
+      bool didComputePixelShiftsFail = false;
+      
       for(int i=1;i<=_rsNumDivisions;i++)
       {
         Vec2f pixelShifts;
-        ComputePixelShiftsWithImageIMU((TimeStamp_t)(poseData.timeStamp - (i*timeDif)),
-                                       pixelShifts,
-                                       poseData,
-                                       prevPoseData,
-                                       1 - i/(_rsNumDivisions*1.0));
-        
+        didComputePixelShiftsFail |= !ComputePixelShiftsWithImageIMU((TimeStamp_t)(poseData.timeStamp - (i*timeDif)),
+                                                                     pixelShifts,
+                                                                     poseData,
+                                                                     prevPoseData,
+                                                                     1 - i/(_rsNumDivisions*1.0));
+
         _pixelShifts.insert(_pixelShifts.begin(), pixelShifts);
+      }
+      
+      if(didComputePixelShiftsFail)
+      {
+        if(!poseData.imuDataHistory.empty())
+        {
+          PRINT_NAMED_WARNING("RollingShutterCorrector.ComputePixelShifts.NoImageIMUData",
+                              "No ImageIMU data from timestamp %i have data from time %i:%i",
+                              poseData.timeStamp,
+                              poseData.imuDataHistory.front().timestamp,
+                              poseData.imuDataHistory.back().timestamp);
+        }
+        else
+        {
+          PRINT_NAMED_WARNING("RollingShutterCorrector.ComputePixelShifts.EmptyHistory",
+                              "No ImageIMU data from timestamp %i, imuDataHistory is empty",
+                              poseData.timeStamp);
+        }
       }
     }
     
@@ -183,7 +205,7 @@ namespace Anki {
       return img;
     }
     
-    void RollingShutterCorrector::ComputePixelShiftsWithImageIMU(TimeStamp_t t,
+    bool RollingShutterCorrector::ComputePixelShiftsWithImageIMU(TimeStamp_t t,
                                                                  Vec2f& shift,
                                                                  const VisionPoseData& poseData,
                                                                  const VisionPoseData& prevPoseData,
@@ -198,7 +220,7 @@ namespace Anki {
       if(poseData.imuDataHistory.size() == 0)
       {
         shift = Vec2f(0,0);
-        return;
+        return false;
       }
       
       bool beforeAfterSet = false;
@@ -207,15 +229,11 @@ namespace Anki {
       {
         if(iter->timestamp >= t)
         {
+          // No imageIMU data before time t
           if(iter == poseData.imuDataHistory.begin())
           {
-            PRINT_NAMED_WARNING("VisionSystem.GetCameraRotationWithImageIMU",
-                                "No ImageIMU data before timestamp %i have data from time %i:%i", t,
-                                poseData.imuDataHistory.front().timestamp,
-                                poseData.imuDataHistory.back().timestamp);
-            
             shift = Vec2f(0, 0);
-            return;
+            return false;
           }
           else
           {
@@ -246,6 +264,8 @@ namespace Anki {
       // The rates are in world coordinate frame but we want them in camera frame which is why Z and X are switched
       shift = Vec2f(rateZ * rateToPixelProportionalityConst * frac,
                     rateY * rateToPixelProportionalityConst * frac);
+      
+      return true;
     }
   }
 }
