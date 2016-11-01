@@ -130,7 +130,7 @@ namespace Cozmo {
       if(_numChunksReceived != chunk.imageChunkCount)
       {
         PRINT_NAMED_WARNING("EncodedImage.AddChunk.UnexpectedNumberOfChunks",
-                            "Got last chunk, expected %d chunks but recieved %d chunks",
+                            "Got last chunk, expected %d chunks but received %d chunks",
                             chunk.imageChunkCount,
                             _numChunksReceived);
         _isImgValid = false;

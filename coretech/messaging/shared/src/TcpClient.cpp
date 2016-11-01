@@ -108,7 +108,7 @@ int TcpClient::Send(const char* data, int size)
 
 int TcpClient::Recv(char* data, int maxSize)
 {
-  DEBUG_TCP_CLIENT("TcpClient: Waiting to recieve data...\n");
+  DEBUG_TCP_CLIENT("TcpClient: Waiting to receive data...\n");
   
   assert(data != NULL);
   ssize_t bytes_received;
@@ -125,7 +125,7 @@ int TcpClient::Recv(char* data, int maxSize)
     }
   }
   else {
-    DEBUG_TCP_CLIENT("TcpClient: " << bytes_received << " bytes recieved : " << data << "\n");
+    DEBUG_TCP_CLIENT("TcpClient: " << bytes_received << " bytes received : " << data << "\n");
   }
   
   if(bytes_received > std::numeric_limits<int>::max()) {

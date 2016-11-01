@@ -160,7 +160,7 @@ int UdpClient::Recv(char* data, int maxSize)
       }
     }
     else {
-      DEBUG_UDP_CLIENT("UdpClient: " << bytes_received << " bytes recieved : " << data << "\n");
+      DEBUG_UDP_CLIENT("UdpClient: " << bytes_received << " bytes received : " << data << "\n");
     }
 
   if(bytes_received > std::numeric_limits<int>::max()) {

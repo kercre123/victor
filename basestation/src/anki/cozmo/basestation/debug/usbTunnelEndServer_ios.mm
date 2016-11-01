@@ -258,12 +258,12 @@
         [self disableReactionGroup:path];
       }
       
-      NSData *response = [@"Cozmo USB tunnel: Post Recieved\n" dataUsingEncoding:NSUTF8StringEncoding];
+      NSData *response = [@"Cozmo USB tunnel: Post Received\n" dataUsingEncoding:NSUTF8StringEncoding];
       return [[HTTPDataResponse alloc] initWithData:response];
     }
     else if( [method isEqualToString:@"GET"] )
     {
-      NSData *get_response = [@"<html><body>Cozmo USB tunnel: Get Recieved<body></html>\n" dataUsingEncoding:NSUTF8StringEncoding];
+      NSData *get_response = [@"<html><body>Cozmo USB tunnel: Get Received<body></html>\n" dataUsingEncoding:NSUTF8StringEncoding];
       return [[HTTPDataResponse alloc] initWithData:get_response];
     }
     

@@ -711,7 +711,7 @@ message SupportInfo {
 
 // For messages where an end of message might make sense to denote the full list of messages has
 // been broadcasted. Example: robot might broadcast all available animations, however, there would
-// be no way to tell if all the AnimationAvailable messages have been recieved without an `end of
+// be no way to tell if all the AnimationAvailable messages have been received without an `end of
 // message` message.
 // Can be extended for other message types later
 

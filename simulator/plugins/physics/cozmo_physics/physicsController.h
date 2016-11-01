@@ -25,7 +25,7 @@ public:
   PhysicsController() {}
 
   ///
-  // @brief      Checks the server for any recieved packets and pass it to ProcessMessage after
+  // @brief      Checks the server for any received packets and pass it to ProcessMessage after
   //             casting it into a MessageSimPhysics message.
   //
   void Init();
@@ -34,7 +34,7 @@ public:
 
 private:
   ///
-  // @brief      Broadcasts recieved message to _eventManager. There's nothing special about the
+  // @brief      Broadcasts received message to _eventManager. There's nothing special about the
   //             _eventManager and this is essentially the same as a switch case with the message
   //             and call the appropriate functions the message is bound to in the event manager. It
   //             is done this way to maintain consistency with physVizController.cpp

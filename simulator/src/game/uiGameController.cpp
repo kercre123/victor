@@ -356,7 +356,7 @@ namespace Anki {
 
     void UiGameController::HandleRobotOffTreadsStateChangedBase(ExternalInterface::RobotOffTreadsStateChanged const& msg)
     {
-      PRINT_NAMED_INFO("HandleRobotOfftreadsStateChanged", "Recieved RobotPickedUp message.");
+      PRINT_NAMED_INFO("HandleRobotOfftreadsStateChanged", "Received RobotPickedUp message.");
       HandleRobotOffTreadsStateChanged(msg);
       UpdateVizOriginToRobot();
     }
