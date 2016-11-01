@@ -37,12 +37,6 @@ namespace Cozmo.HomeHub {
 
       // Sort by unlocked first, then by designer order
       sortedDict.Sort((KeyValuePair<string, ChallengeStatePacket> a, KeyValuePair<string, ChallengeStatePacket> b) => {
-        if (a.Value.ChallengeUnlocked == true && b.Value.ChallengeUnlocked == false) {
-          return -1;
-        }
-        else if (a.Value.ChallengeUnlocked == false && b.Value.ChallengeUnlocked == true) {
-          return 1;
-        }
         UnlockableInfo aInfo = UnlockablesManager.Instance.GetUnlockableInfo(a.Value.Data.UnlockId.Value);
         UnlockableInfo bInfo = UnlockablesManager.Instance.GetUnlockableInfo(b.Value.Data.UnlockId.Value);
         return aInfo.SortOrder - bInfo.SortOrder;
