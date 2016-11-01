@@ -133,6 +133,8 @@ namespace Anki {
       // that is most closely aligned with the approach angle is considered.
       void SetApproachAngle(const f32 angle_rad);
       const bool GetUseApproachAngle() const;
+      // returns a bool indicating the success or failure of setting the pose
+      const bool GetClosestPreDockPose(ActionableObject* object, Pose3d& closestPose) const;
       
       // Whether or not to verify the final pose, once the path is complete,
       // according to the latest know preAction pose for the specified object.
@@ -146,6 +148,13 @@ namespace Anki {
       
       void SetGetPossiblePosesFunc(GetPossiblePosesFunc func)
       {
+        if(IsRunning()){
+          PRINT_NAMED_ERROR("DriveToActions.SetGetPossiblePosesFunc.TriedToSetWhileRunning",
+                            "PossiblePosesFunc is not allowed to change while the driveToAction is running. \
+                             ActionName: %s ActionTag:%i", GetName().c_str(), GetTag());
+          return;
+        }
+        
         _getPossiblePosesFunc = func;
       }
       
@@ -276,6 +285,7 @@ namespace Anki {
       
       const bool GetUseApproachAngle() const;
       
+      
     protected:
 
       virtual Result UpdateDerived() override;
@@ -390,7 +400,8 @@ namespace Anki {
                                   const f32 approachAngle_rad = 0,
                                   const bool useManualSpeed = false,
                                   Radians maxTurnTowardsFaceAngle_rad = 0.f,
-                                  const bool sayName = false);
+                                  const bool sayName = false,
+                                  const bool relativeCurrentMarker = true);
       
       virtual ~DriveToPlaceRelObjectAction() { }
     };

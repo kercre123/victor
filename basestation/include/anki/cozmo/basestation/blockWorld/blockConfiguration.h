@@ -15,10 +15,10 @@
 #ifndef Anki_Cozmo_BlockConfiguration_H
 #define Anki_Cozmo_BlockConfiguration_H
 
+#include "anki/cozmo/basestation/blockWorld/blockConfigTypeHelpers.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "util/enums/enumOperators.h"
 
-#include <assert.h>
 #include <vector>
 
 namespace Anki{
@@ -37,7 +37,8 @@ class Pyramid;
 class PyramidBase;
 class BlockConfiguration;
   
-// define block configuration types - update map below
+// define block configuration types
+// also update stringMapping in blockConfigTypeHelpers
 enum class ConfigurationType{
   StackOfCubes = 0,
   PyramidBase,
@@ -53,7 +54,6 @@ using StackWeakPtr = std::weak_ptr<const StackOfCubes>;
 using PyramidWeakPtr = std::weak_ptr<const Pyramid>;
 using PyramidBaseWeakPtr = std::weak_ptr<const PyramidBase>;
 
-DECLARE_ENUM_INCREMENT_OPERATORS(ConfigurationType);
   
 class BlockConfiguration{
   public:
@@ -67,6 +67,10 @@ class BlockConfiguration{
 
     virtual ConfigurationType GetType() const{ return _type;}
     const bool ContainsBlock(const ObjectID& objectID) const;
+  
+    static StackWeakPtr AsStackWeakPtr(const BlockConfigWeakPtr& configPtr);
+    static PyramidWeakPtr  AsPyramidWeakPtr(const BlockConfigWeakPtr& configPtr);
+    static PyramidBaseWeakPtr AsPyramidBaseWeakPtr(const BlockConfigWeakPtr& configPtr);
   
   protected:
     ConfigurationType _type;
@@ -89,9 +93,9 @@ class BlockConfiguration{
     // also handles object deletion
     static BlockConfigPtr GetBestSharedPointer(const std::vector<BlockConfigPtr>& currentList, const BlockConfiguration* newEntry);
 
-    static std::shared_ptr<const StackOfCubes> AsStackPtr(BlockConfigPtr configPtr);
-    static std::shared_ptr<const Pyramid>  AsPyramidPtr(BlockConfigPtr configPtr);
-    static std::shared_ptr<const PyramidBase> AsPyramidBasePtr(BlockConfigPtr configPtr);
+    static std::shared_ptr<const StackOfCubes> AsStackPtr(const BlockConfigPtr& configPtr);
+    static std::shared_ptr<const Pyramid>  AsPyramidPtr(const BlockConfigPtr& configPtr);
+    static std::shared_ptr<const PyramidBase> AsPyramidBasePtr(const BlockConfigPtr& configPtr);
   
 };
 

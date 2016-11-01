@@ -190,7 +190,7 @@
         {
           "type" : "sparks",
           "minTimeSecs": 0,
-          "maxTimeSecs": 60,
+          "maxTimeSecs": 120,
           "numberOfRepetitions": 1,
           "behaviorObjective": "BuiltPyramid",
           "softSparkTrigger": "SoftSparkUpgradeLift",

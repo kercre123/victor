@@ -59,6 +59,10 @@ class PyramidBase: public BlockConfiguration{
     // returns true if the indicator bools were set, false otherwise
     const bool GetBaseBlockOffset(const Robot& robot, bool& alongXAxis, bool& isPositive) const;
   
+    // returns the x/y offset of the base block - returns 0/0 if offset is not valid
+    const Point2f GetBaseBlockOffsetValues(const Robot& robot) const;
+
+  
   protected:
     // Pyramid bases should only be created by the block configuration manager
     PyramidBase(const ObjectID& staticBlockID, const ObjectID& baseBlockID);

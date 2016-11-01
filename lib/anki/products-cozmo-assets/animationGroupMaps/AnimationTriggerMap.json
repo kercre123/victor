@@ -29,6 +29,10 @@
       "AnimName": "blockReact"
     },
     {
+      "CladEvent": "BuildPyramidSuccess",
+      "AnimName": "ag_pounceOnMotionSuccess"
+    },
+    {
       "CladEvent": "CantHandleTallStack",
       "AnimName": "ag_reacttoblock_3blocktower_upset"
     },

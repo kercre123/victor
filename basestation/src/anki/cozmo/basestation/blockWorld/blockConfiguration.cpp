@@ -25,7 +25,6 @@ namespace Anki {
 namespace Cozmo {
 namespace BlockConfigurations {
   
-IMPLEMENT_ENUM_INCREMENT_OPERATORS(ConfigurationType);
   
 // Determines configuration equality based on type and comparing ordered blocks from the
 // two configurations
@@ -119,19 +118,77 @@ std::vector<BlockConfiguration::BlockConfigPtr> BlockConfiguration::BuildAllConf
   
   return allConfigurations;
 }
+ 
   
-std::shared_ptr<const StackOfCubes> BlockConfiguration::AsStackPtr(BlockConfigPtr configPtr){
-  assert(configPtr->GetType() == ConfigurationType::StackOfCubes);
+//////////////
+///// Pointer conversion
+//////////////
+  
+StackWeakPtr BlockConfiguration::AsStackWeakPtr(const BlockConfigWeakPtr& configPtr)
+{
+  BlockConfigPtr sharedPtr = configPtr.lock();
+  if(sharedPtr){
+    ASSERT_NAMED_EVENT(sharedPtr->GetType() == ConfigurationType::StackOfCubes,
+                       "BlockConfiguration.AsStackWeakPtr.IncorrectType",
+                       "Requested a StackWeakPtr for a configuration that was not a stack");
+  }
+  
+  return std::static_pointer_cast<const StackOfCubes>(sharedPtr);
+}
+
+  
+PyramidWeakPtr  BlockConfiguration::AsPyramidWeakPtr(const BlockConfigWeakPtr& configPtr)
+{
+  BlockConfigPtr sharedPtr = configPtr.lock();
+  if(sharedPtr){
+    ASSERT_NAMED_EVENT(sharedPtr->GetType() == ConfigurationType::Pyramid,
+                       "BlockConfiguration.AsPyramidWeakPtr.IncorrectType",
+                       "Requested a PyramidWeakPtr for a configuration that was not a pyramid");
+  }
+
+  return std::static_pointer_cast<const Pyramid>(configPtr.lock());
+}
+  
+  
+PyramidBaseWeakPtr BlockConfiguration::AsPyramidBaseWeakPtr(const BlockConfigWeakPtr& configPtr)
+{
+  BlockConfigPtr sharedPtr = configPtr.lock();
+  if(sharedPtr){
+    ASSERT_NAMED_EVENT(sharedPtr->GetType() == ConfigurationType::PyramidBase,
+                       "BlockConfiguration.AsPyramidBaseWeakPtr.IncorrectType",
+                       "Requested a PyramidBaseWeakPtr for a configuration that was not a pyramidBase");
+  }
+  
+  return std::static_pointer_cast<const PyramidBase>(configPtr.lock());
+}
+  
+  
+std::shared_ptr<const StackOfCubes> BlockConfiguration::AsStackPtr(const BlockConfigPtr& configPtr){
+  if(configPtr){
+    ASSERT_NAMED_EVENT(configPtr->GetType() == ConfigurationType::StackOfCubes,
+                     "BlockConfiguration.AsStackPtr.IncorrectType",
+                     "Requested a StackPtr for a configuration that was not a stack");
+  }
   return std::static_pointer_cast<const StackOfCubes>(configPtr);
 }
   
   
-std::shared_ptr<const Pyramid> BlockConfiguration::AsPyramidPtr(BlockConfigPtr configPtr){
-  assert(configPtr->GetType() == ConfigurationType::Pyramid);
+std::shared_ptr<const Pyramid> BlockConfiguration::AsPyramidPtr(const BlockConfigPtr& configPtr){
+  if(configPtr){
+    ASSERT_NAMED_EVENT(configPtr->GetType() == ConfigurationType::Pyramid,
+                       "BlockConfiguration.AsPyramidPtr.IncorrectType",
+                       "Requested a PyramidPtr for a configuration that was not a pyramid");
+  }
+
   return std::static_pointer_cast<const Pyramid>(configPtr);
 }
-std::shared_ptr<const PyramidBase> BlockConfiguration::AsPyramidBasePtr(BlockConfigPtr configPtr){
-  assert(configPtr->GetType() == ConfigurationType::PyramidBase);
+std::shared_ptr<const PyramidBase> BlockConfiguration::AsPyramidBasePtr(const BlockConfigPtr& configPtr){
+  if(configPtr){
+    ASSERT_NAMED_EVENT(configPtr->GetType() == ConfigurationType::PyramidBase,
+                       "BlockConfiguration.AsPyramidBasePtr.IncorrectType",
+                       "Requested a PyramidBasePtr for a configuration that was not a pyramidBase");
+  }
+
   return std::static_pointer_cast<const PyramidBase>(configPtr);
 }
 

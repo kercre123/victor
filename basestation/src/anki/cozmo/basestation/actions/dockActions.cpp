@@ -30,6 +30,9 @@
 #include "util/console/consoleInterface.h"
 #include "util/helpers/templateHelpers.h"
 
+#include <math.h>
+
+
 namespace Anki {
   
   namespace Cozmo {
@@ -162,6 +165,11 @@ namespace Anki {
 
     void IDockAction::SetPlacementOffset(f32 offsetX_mm, f32 offsetY_mm, f32 offsetAngle_rad)
     {
+      if(offsetX_mm < 0) {
+        ASSERT_NAMED_EVENT(false, "IDockAction.SetPlacementOffset.InvalidOffset", "x offset %f cannot be negative (through block)", offsetX_mm);
+        // for release set offset to 0 so that Cozmo doesn't look stupid plowing through a block
+        offsetX_mm = 0;
+      }
       _placementOffsetX_mm = offsetX_mm;
       _placementOffsetY_mm = offsetY_mm;
       _placementOffsetAngle_rad = offsetAngle_rad;
@@ -545,6 +553,14 @@ namespace Anki {
       if(_squintLayerTag != AnimationStreamer::NotAnimatingTag){
         _robot.GetAnimationStreamer().RemovePersistentFaceLayer(_squintLayerTag, 250);
         _squintLayerTag = AnimationStreamer::NotAnimatingTag;
+      }
+      
+      // Allow actions the opportunity to check or set any properties they need to
+      // this allows actions that are part of driveTo or wrappers a chance to check data
+      // when they know they're at the pre-dock pose
+      ActionResult internalActionResult = InitInternal();
+      if(internalActionResult != ActionResult::SUCCESS){
+        return internalActionResult;
       }
       
       // Go ahead and Update the FaceObjectAction once now, so we don't
@@ -1471,14 +1487,17 @@ namespace Anki {
                                                const bool placeOnGround,
                                                const f32 placementOffsetX_mm,
                                                const f32 placementOffsetY_mm,
-                                               const bool useManualSpeed)
+                                               const bool useManualSpeed,
+                                               const bool relativeCurrentMarker)
     : IDockAction(robot,
                   objectID,
                   "PlaceRelObject",
                   RobotActionType::PICK_AND_PLACE_INCOMPLETE,
                   useManualSpeed)
+    , _relOffsetX_mm(placementOffsetX_mm)
+    , _relOffsetY_mm(placementOffsetY_mm)
+    , _relativeCurrentMarker(relativeCurrentMarker)
     {
-      SetPlacementOffset(placementOffsetX_mm, placementOffsetY_mm, 0);
       SetPlaceOnGround(placeOnGround);
       SetPostDockLiftMovingAnimation(placeOnGround ?
                                      AnimationTrigger::SoundOnlyLiftEffortPlaceLow :
@@ -1487,6 +1506,27 @@ namespace Anki {
       // If we aren't placing on the ground then we should check if there is an object on top of the object
       // we are placing relative to
       SetShouldCheckForObjectOnTopOf(!placeOnGround);
+      
+      // SetPlacementOffset set in InitInternal
+    }
+
+    ActionResult  PlaceRelObjectAction::InitInternal()
+    {
+      ActionResult result = ActionResult::SUCCESS;
+      
+      if(!_relativeCurrentMarker){
+        result = TransformPlacementOffsetsRelativeObject();
+      }
+      
+      // If attempting to place the block off to the side of the target, do it even blinder
+      // so that Cozmo doesn't fail when he inevitably looses sight of the tracker
+      if(!NEAR_ZERO(_relOffsetY_mm)){
+        SetDockingMethod(DockingMethod::EVEN_BLINDER_DOCKING);
+      }
+      
+      SetPlacementOffset(_relOffsetX_mm, _relOffsetY_mm, _placementOffsetAngle_rad);
+
+      return result;
     }
     
     void PlaceRelObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
@@ -1678,6 +1718,61 @@ namespace Anki {
       return result;
       
     } // Verify()
+    
+    ActionResult PlaceRelObjectAction::TransformPlacementOffsetsRelativeObject()
+    {
+      ObservableObject* dockObject = _robot.GetBlockWorld().GetObjectByID(_dockObjectID);
+      if(dockObject == nullptr){
+        return ActionResult::FAILURE_ABORT;
+      }
+      
+      Pose3d dockObjectWRTRobot;
+      dockObject->GetPose().GetWithRespectTo(_robot.GetPose(), dockObjectWRTRobot);
+      const float robotObjRelRotation_rad = dockObjectWRTRobot.GetRotation().GetAngleAroundZaxis().ToFloat();
+      
+      // consts for comparing relative robot/block alignment
+      const float kRotationTolerence_rad = DEG_TO_RAD_F32(15);
+      const float kInAlignment_rad = DEG_TO_RAD_F32(0);
+      const float kClockwise_rad = DEG_TO_RAD_F32(-90);
+      const float kCounterClockwise_rad = -kClockwise_rad;
+      const float kOppposite_rad = DEG_TO_RAD_F32(180);
+      const float kOppposite_rad_neg = -kOppposite_rad;
+
+      //values to set placement offset with
+      f32 xAbsolutePlacementOffset_mm;
+      f32 yAbsolutePlacementOffset_mm;
+
+      if(Util::IsNear(robotObjRelRotation_rad, kInAlignment_rad, kRotationTolerence_rad)){
+        xAbsolutePlacementOffset_mm = -_relOffsetX_mm;
+        yAbsolutePlacementOffset_mm = _relOffsetY_mm;
+      }else if(Util::IsNear(robotObjRelRotation_rad, kCounterClockwise_rad, kRotationTolerence_rad)){
+        xAbsolutePlacementOffset_mm = _relOffsetY_mm;
+        yAbsolutePlacementOffset_mm = _relOffsetX_mm;
+      }else if(Util::IsNear(robotObjRelRotation_rad, kClockwise_rad, kRotationTolerence_rad)){
+        xAbsolutePlacementOffset_mm = -_relOffsetY_mm;
+        yAbsolutePlacementOffset_mm = -_relOffsetX_mm;
+      }else if( Util::IsNear(robotObjRelRotation_rad, kOppposite_rad, kRotationTolerence_rad)
+               ||  Util::IsNear(robotObjRelRotation_rad, kOppposite_rad_neg, kRotationTolerence_rad)){
+        xAbsolutePlacementOffset_mm = _relOffsetX_mm;
+        yAbsolutePlacementOffset_mm = -_relOffsetY_mm;
+      }else{
+        PRINT_NAMED_WARNING("PlaceRelObjectAction.CalculatePlacementOffset.InvalidOrientation",
+                          "Robot and block are not within alignment threshold - rotation:%f threshold:%f", RAD_TO_DEG(robotObjRelRotation_rad), kRotationTolerence_rad);
+        return ActionResult::FAILURE_RETRY;
+      }
+      
+      if(xAbsolutePlacementOffset_mm < 0){
+        PRINT_NAMED_ERROR("PlaceRelObjectAction.TransformPlacementOffsetsRelativeObject",
+                          "Attempted to set negative xOffset. xOffset:%f, yOffset:%f", xAbsolutePlacementOffset_mm, yAbsolutePlacementOffset_mm);
+        return ActionResult::FAILURE_ABORT;
+      }
+      
+      _relOffsetX_mm = xAbsolutePlacementOffset_mm;
+      _relOffsetY_mm = yAbsolutePlacementOffset_mm;
+
+      return ActionResult::SUCCESS;
+    }
+
     
 #pragma mark ---- RollObjectAction ----
     

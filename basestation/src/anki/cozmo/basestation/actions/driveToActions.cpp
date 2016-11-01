@@ -122,6 +122,37 @@ namespace Anki {
       return _useApproachAngle;
     }
     
+    const bool DriveToObjectAction::GetClosestPreDockPose(ActionableObject* object, Pose3d& closestPose) const
+    {
+      const IDockAction::PreActionPoseInput preActionPoseInput(object,
+                                                               _actionType,
+                                                               false,
+                                                               _predockOffsetDistX_mm,
+                                                               DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE,
+                                                               _useApproachAngle,
+                                                               _approachAngle_rad.ToFloat());
+      IDockAction::PreActionPoseOutput preActionPoseOutput;
+      
+      IDockAction::GetPreActionPoses(_robot, preActionPoseInput, preActionPoseOutput);
+      
+      if(preActionPoseOutput.actionResult == ActionResult::SUCCESS){
+        if(preActionPoseOutput.preActionPoses.size() > 0){
+          const bool closestIndexValid = preActionPoseOutput.closestIndex < preActionPoseOutput.preActionPoses.size();
+          ASSERT_NAMED_EVENT(closestIndexValid,
+                              "DriveToObjectAction.GetClosestPreDockPose.ClosestIndexOutOfRange",
+                             "AttemptedToAccess closest index %zu when preactionPoses has a size %zu",
+                              preActionPoseOutput.closestIndex, preActionPoseOutput.preActionPoses.size());
+          // ensure we don't crash in release
+          if(closestIndexValid){
+            closestPose = preActionPoseOutput.preActionPoses[preActionPoseOutput.closestIndex].GetPose();
+          }
+          return closestIndexValid;
+        }
+      }
+      
+      return false;
+    }
+    
     void DriveToObjectAction::SetMotionProfile(const PathMotionProfile& motionProfile)
     {
       _hasMotionProfile = true;
@@ -364,7 +395,7 @@ namespace Anki {
         {
           std::vector<Pose3d> possiblePoses; // don't really need these
           bool inPosition = false;
-          result = GetPossiblePoses(object, possiblePoses, inPosition);
+          result = _getPossiblePosesFunc(object, possiblePoses, inPosition);
           
           if(!inPosition) {
             PRINT_NAMED_INFO("DriveToObjectAction.CheckIfDone",
@@ -1292,7 +1323,8 @@ namespace Anki {
                                                              const f32 approachAngle_rad,
                                                              const bool useManualSpeed,
                                                              Radians maxTurnTowardsFaceAngle_rad,
-                                                             const bool sayName)
+                                                             const bool sayName,
+                                                             const bool relativeCurrentMarker)
     : IDriveToInteractWithObject(robot,
                                  objectID,
                                  PreActionPose::PLACE_RELATIVE,
@@ -1308,9 +1340,54 @@ namespace Anki {
                                                               placingOnGround,
                                                               placementOffsetX_mm,
                                                               placementOffsetY_mm,
-                                                              useManualSpeed);
+                                                              useManualSpeed,
+                                                              relativeCurrentMarker);
       AddDockAction(action);
       SetProxyTag(action->GetTag());
+      
+      // when relative current marker all pre-dock poses are valid
+      // otherwise, one pre-doc pose may be impossible to place at certain offsets
+      if(!relativeCurrentMarker){
+        GetDriveToObjectAction()->SetGetPossiblePosesFunc(
+            [this, &robot, placementOffsetX_mm, placementOffsetY_mm](ActionableObject* object, std::vector<Pose3d>& possiblePoses, bool& alreadyInPosition)
+            {
+              const ActionResult possiblePosesResult = GetDriveToObjectAction()->GetPossiblePoses(object, possiblePoses, alreadyInPosition);
+              
+              if(possiblePosesResult == ActionResult::SUCCESS){
+                using PoseIter = std::vector<Pose3d>::iterator;
+                
+                Pose3d closestPreDocPose;
+                const bool closestPoseExists = GetDriveToObjectAction()->GetClosestPreDockPose(object, closestPreDocPose);
+                if(!closestPoseExists){
+                  PRINT_NAMED_WARNING("DriveToPlaceRelObject.GetPossiblePosesFunc.NoValidPoses",
+                                      "No valid poses returned from GetClosestPreDockPose so failing action name:%s, tag:%i", GetName().c_str(), GetTag());
+                  return ActionResult::FAILURE_ABORT;
+                }
+                
+
+                for(PoseIter fullIter = possiblePoses.begin(); fullIter != possiblePoses.end(); ){
+                  Pose3d preDocWRTBlock;
+                  fullIter->GetWithRespectTo(object->GetPose(), preDocWRTBlock);
+                  const float poseX = preDocWRTBlock.GetTranslation().x();
+                  const float poseY = preDocWRTBlock.GetTranslation().y();
+                  
+                  const bool isPoseInvalid = ((FLT_GT(poseX, 0) != FLT_GT(placementOffsetX_mm, 0)) && !NEAR_ZERO(poseX)) ||
+                                             ((FLT_GT(poseY, 0) != FLT_GT(placementOffsetY_mm, 0)) && !NEAR_ZERO(poseY));
+                  if(isPoseInvalid){
+                    fullIter = possiblePoses.erase(fullIter);
+                  }else{
+                    ++fullIter;
+                  }
+                }// end for(PoseIter)
+              } // end if(possiblePosesResult == ActionResult::Success)
+              
+              if(possiblePoses.size() > 0){
+                return possiblePosesResult;
+              }else{
+                return ActionResult::FAILURE_ABORT;
+              }
+            });
+      } // end if(!relativeCurrentMarkre)
     }
     
 #pragma mark ---- DriveToRollObjectAction ----

@@ -8,9 +8,20 @@ namespace Cozmo {
 
 enum uint_8 DockingMethod
 {
+  // Only use the first error signal to do dock corrections
+  // Still needs to receive error signals while docking but does not do anything with them
   BLIND_DOCKING,
+
+  // Continuously uses error signals to adjust docking
   TRACKER_DOCKING,
-  HYBRID_DOCKING
+
+  // Combines BLIND and TRACKER docking, will check error signals but only adjust docking
+  // if the error signals indicate too much change
+  HYBRID_DOCKING,
+
+  // Only ever needs to receive one error signal (to start), therefore docking will always complete
+  // once it starts
+  EVEN_BLINDER_DOCKING,
 }
 
 message DockWithObject

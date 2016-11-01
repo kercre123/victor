@@ -17,6 +17,7 @@
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviors/sparkable/BehaviorBuildPyramidBase.h"
 
 namespace Anki {
 //forward declaration
@@ -25,7 +26,7 @@ namespace Cozmo {
 class ObservableObject;
 enum class AnimationTrigger;
   
-class BehaviorBuildPyramid : public IBehavior
+class BehaviorBuildPyramid : public BehaviorBuildPyramidBase
 {
 protected:
   
@@ -46,37 +47,12 @@ protected:
 private:
   typedef std::vector<const ObservableObject*> BlockList;
   
-  enum class DebugState {
-    DrivingToBaseBlock,
-    PlacingBaseBlock,
-    ObservingBase,
-    DrivingToTopBlock,
-    AligningWithBase,
-    PlacingTopBlock,
-    ReactingToPyramid
-  };
-  
-  mutable ObjectID _staticBlockID;
-  mutable ObjectID _baseBlockID;
-  mutable ObjectID _topBlockID;
-  
-  Pose3d _tempDockingPose;
-  bool _tempEnsureNotLoopingForever;
-  
-  void TransitionToDrivingToBaseBlock(Robot& robot);
-  void TransitionToPlacingBaseBlock(Robot& robot);
-  void TransitionToObservingBase(Robot& robot);
   void TransitionToDrivingToTopBlock(Robot& robot);
-  void TransitionToAligningWithBase(Robot& robot);
   void TransitionToPlacingTopBlock(Robot& robot);
   void TransitionToReactingToPyramid(Robot& robot);
   
-  void UpdatePyramidTargets(const Robot& robot) const;
-  void ResetPyramidTargets(const Robot& robot) const;
   ObjectID GetNearestBlockToPose(const Pose3d& pose, const BlockList& allBlocks) const;
   
-  template<typename T>
-  bool EnsurePoseStateUsable(Robot& robot, ObjectID objectID, void(T::*callback)(Robot&));
   
 }; //class BehaviorBuildPyramid
 

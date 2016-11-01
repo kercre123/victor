@@ -49,6 +49,7 @@ enum uint_8 BehaviorType {
   RequestGameSimple,
   RollBlock,
   BuildPyramid,
+  BuildPyramidBase,
   StackBlocks,
   PutDownBlock,
   FactoryTest,

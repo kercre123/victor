@@ -22,6 +22,9 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/retryWrapperAction.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/blockWorld/blockConfiguration.h"
+#include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
+#include "anki/cozmo/basestation/blockWorld/blockConfigTypeHelpers.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageFromActiveObject.h"
@@ -31,6 +34,7 @@ namespace Anki {
 namespace Cozmo {
 
 static const char* kShouldPutCubeBackDown = "shouldPutCubeBackDown";
+static const char* kBlockConfigsToIgnoreKey = "ignoreCubesInBlockConfigTypes";
 static const float kSecondsBetweenBlockWorldChecks = 3;
   
 BehaviorPickUpCube::BehaviorPickUpCube(Robot& robot, const Json::Value& config)
@@ -45,7 +49,18 @@ BehaviorPickUpCube::BehaviorPickUpCube(Robot& robot, const Json::Value& config)
   });
   
   _shouldPutCubeBackDown = config.get(kShouldPutCubeBackDown, true).asBool();
-
+  
+  // Pull from the config any block configuration types
+  // that blocks should not be picked up out of
+  const Json::Value& configsToIgnore  = config[kBlockConfigsToIgnoreKey];
+  if(!configsToIgnore.isNull()){
+    Json::Value::const_iterator configNameIt = configsToIgnore.begin();
+    const Json::Value::const_iterator configNameEnd = configsToIgnore.end();
+    
+    for(; configNameIt != configNameEnd; ++configNameIt){
+      _configurationsToIgnore.push_back(BlockConfigurations::BlockConfigurationFromString(configNameIt->asCString()));
+    }
+  }
 }
 
 Result BehaviorPickUpCube::InitInternal(Robot& robot)
@@ -99,11 +114,24 @@ void BehaviorPickUpCube::CheckForNearbyObject(const Robot& robot) const
 {
   BlockWorldFilter filter;
   filter.SetAllowedFamilies({ObjectFamily::LightCube});
-  filter.SetFilterFcn([&robot](const ObservableObject* object)
+  filter.SetFilterFcn([&robot, this](const ObservableObject* object)
                       {
+                        bool isPartOfIllegalConfiguration = false;
+                        for(auto configType: _configurationsToIgnore){
+                          auto configurations = robot.GetBlockWorld().GetBlockConfigurationManager().GetConfigurationsForType(configType);
+                          for(auto configuration : configurations){
+                            if(configuration.lock()->ContainsBlock(object->GetID())){
+                              isPartOfIllegalConfiguration = true;
+                              break;
+                            }
+                          }
+                          if(isPartOfIllegalConfiguration){break;}
+                        }
+                        
                         const bool recentlyFailedPickup = robot.GetBehaviorManager().GetWhiteboard().DidFailToUse(object->GetID(), AIWhiteboard::ObjectUseAction::PickUpObject, kTimeObjectInvalidAfterFailure_sec);
                         const bool recentlyFailedRoll =  robot.GetBehaviorManager().GetWhiteboard().DidFailToUse(object->GetID(), AIWhiteboard::ObjectUseAction::RollOrPopAWheelie, kTimeObjectInvalidAfterFailure_sec);
-                        return !recentlyFailedPickup && !recentlyFailedRoll && robot.CanPickUpObject(*object) ;
+                        return !recentlyFailedPickup && !recentlyFailedRoll &&
+                               !isPartOfIllegalConfiguration && robot.CanPickUpObject(*object);
                       });
   
   const ObservableObject* closestObject = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(), filter);

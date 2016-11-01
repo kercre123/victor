@@ -720,17 +720,20 @@ namespace Anki {
           {
             HighDockLiftUpdate();
 
-            // Stop if we haven't received error signal for a while
-            if (!markerlessDocking_
-                && (!pastPointOfNoReturn_)
-                && (!useFirstErrorSignalOnly_)
-                && !markerOutOfFOV_
-                && (HAL::GetTimeStamp() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_MS) ) {
-              PathFollower::ClearPath();
-              SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
-              mode_ = LOOKING_FOR_BLOCK;
-              AnkiDebug( 307, "DockingController.APPROACH_FOR_DOCK.TooLongWithoutErrorSignal", 573, "currTime %d, lastErrSignal %d, Looking for block...", 2, HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
-              break;
+            if(dockingMethod_ != EVEN_BLINDER_DOCKING)
+            {
+              // Stop if we haven't received error signal for a while
+              if (!markerlessDocking_
+                  && (!pastPointOfNoReturn_)
+                  && (!useFirstErrorSignalOnly_)
+                  && !markerOutOfFOV_
+                  && (HAL::GetTimeStamp() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_MS) ) {
+                PathFollower::ClearPath();
+                SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
+                mode_ = LOOKING_FOR_BLOCK;
+                AnkiDebug( 307, "DockingController.APPROACH_FOR_DOCK.TooLongWithoutErrorSignal", 573, "currTime %d, lastErrSignal %d, Looking for block...", 2, HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
+                break;
+              }
             }
             
             // If we did the Hanns maneuver assume it succedded since we should only be doing when we
@@ -768,7 +771,7 @@ namespace Anki {
               bool inPosition = true;
               bool doHannsManeuver = false;
               
-              if(dockingMethod_ != BLIND_DOCKING)
+              if(dockingMethod_ != BLIND_DOCKING && dockingMethod_ != EVEN_BLINDER_DOCKING)
               {
                 f32 rel_angle_to_block = relPose.GetAngle().ToFloat();
 
@@ -828,7 +831,7 @@ namespace Anki {
               // docking this way if the docking involves markers
               if(!markerlessDocking_ && !inPosition)
               {
-                if(dockingMethod_ != BLIND_DOCKING)
+                if(dockingMethod_ != BLIND_DOCKING && dockingMethod_ != EVEN_BLINDER_DOCKING)
                 {
                   // If we have determined we should do the Hanns maneuver and we aren't currently doing it,
                   // are docking to a block on the ground, and not carrying a block
@@ -1081,7 +1084,8 @@ namespace Anki {
         // Ignore error signal if blind docking or hybird docking and we dont need to acquire a new signal
         if (PathFollower::IsTraversingPath() &&
             (dockingMethod_ == BLIND_DOCKING ||
-            (dockingMethod_ == HYBRID_DOCKING && numErrSigToAcquireNewSignal_ < CONSEC_ERRSIG_TO_ACQUIRE_NEW_SIGNAL))) {
+             dockingMethod_ == EVEN_BLINDER_DOCKING ||
+             (dockingMethod_ == HYBRID_DOCKING && numErrSigToAcquireNewSignal_ < CONSEC_ERRSIG_TO_ACQUIRE_NEW_SIGNAL))) {
           return;
         }
         numErrSigToAcquireNewSignal_ = 0;

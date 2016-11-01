@@ -166,6 +166,27 @@ const bool PyramidBase::GetBaseBlockOffset(const Robot& robot, bool& alongXAxis,
   return GetBaseBlockOffset(robot, staticBlock, baseBlock, alongXAxis, isPositive);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const Point2f PyramidBase::GetBaseBlockOffsetValues(const Robot& robot) const
+{
+  Point2f offset = Point2f(0,0);
+  bool alongXAxis = false;
+  bool isPositive = false;
+  const ObservableObject* const staticBlock = robot.GetBlockWorld().GetObjectByID(_staticBlockID);
+  if(staticBlock != nullptr && GetBaseBlockOffset(robot, alongXAxis, isPositive)){
+    const float staticBlockSizeX = staticBlock->GetSize().x();
+    const float staticBlockSizeY = staticBlock->GetSize().y();
+    const float signMultiplier = isPositive ? 1 : -1;
+    if(alongXAxis){
+      offset = Point2f(signMultiplier*staticBlockSizeX, 0);
+    }else{
+      offset = Point2f(0, signMultiplier*staticBlockSizeY);
+    }
+  }
+    
+  return offset;
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const bool PyramidBase::ObjectIsOnTopOfBase(const Robot& robot, const ObservableObject* const object) const

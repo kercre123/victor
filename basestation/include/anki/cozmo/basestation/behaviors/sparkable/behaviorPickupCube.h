@@ -16,6 +16,8 @@
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 
+#include <vector>
+
 namespace Anki {
 namespace Cozmo {
 
@@ -23,6 +25,9 @@ namespace Cozmo {
 template<typename TYPE> class AnkiEvent;
 namespace ExternalInterface {
 struct RobotObservedObject;
+}
+namespace BlockConfigurations{
+enum class ConfigurationType;
 }
 
 class CompoundActionSequential;
@@ -70,6 +75,8 @@ private:
   
   // loaded in from config
   bool _shouldPutCubeBackDown;
+  
+  std::vector<BlockConfigurations::ConfigurationType> _configurationsToIgnore;
   
 
 }; // class BehaviorPickUpCube

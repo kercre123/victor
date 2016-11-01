@@ -164,6 +164,12 @@ namespace Anki {
       virtual ActionResult Init() override final;
       virtual ActionResult CheckIfDone() override final;
       
+      // Derived classes should override if they want to perform checks that may
+      // be dependent on the world state which may not be true when the action
+      // is created.
+      virtual ActionResult InitInternal() { return ActionResult::SUCCESS;}
+
+      
       // Most docking actions don't use a second dock marker, but in case they
       // do, they can override this method to choose one from the available
       // preaction poses, given which one was closest.
@@ -385,7 +391,8 @@ namespace Anki {
                            const bool placeOnGround = false,
                            const f32 placementOffsetX_mm = 0,
                            const f32 placementOffsetY_mm = 0,
-                           const bool useManualSpeed = false);
+                           const bool useManualSpeed = false,
+                           const bool relativeCurrentMarker = true);
       virtual ~PlaceRelObjectAction()
       {
         if(_placementVerifyAction != nullptr)
@@ -394,6 +401,8 @@ namespace Anki {
         }
         Util::SafeDelete(_placementVerifyAction);
       }
+      
+      virtual ActionResult InitInternal() override;
       
     protected:
       
@@ -415,6 +424,16 @@ namespace Anki {
       
       IActionRunner*             _placementVerifyAction = nullptr;
       bool                       _verifyComplete; // used in PLACE modes
+      
+    private:
+      f32 _relOffsetX_mm;
+      f32 _relOffsetY_mm;
+      bool _relativeCurrentMarker;
+
+      // Uses the robot's angle in its pre-dock pose and the docking object's rotation
+      // to calculate how to reflect/negate the placement offsets so they are relative
+      // to the docking object's world coordinates instead of the currently visible marker
+      ActionResult TransformPlacementOffsetsRelativeObject();
       
     }; // class PlaceRelObjectAction
     
