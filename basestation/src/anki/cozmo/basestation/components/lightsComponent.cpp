@@ -233,6 +233,11 @@ void LightsComponent::Update()
       doForceLightUpdate = true;
       isFlashing = false;
     }
+    
+    
+    ///////
+    // newState selection
+    ///////
   
     CubeLightsState newState = cubeInfoPair.second.desiredState;
     CubeLightsState currState = cubeInfoPair.second.currState;
@@ -240,6 +245,45 @@ void LightsComponent::Update()
     auto& fadeFromTo = cubeInfoPair.second.fadeFromTo;
     
     bool endingFade = false;
+    
+    ///////
+    // Check for interactions to set the light state
+    
+    // If we're interacting with this object, put it in interacting state
+    // but only if we are not already fading to an interacting state
+    if(_interactionObjects.count(cubeInfoPair.first) > 0 &&
+       fadeFromTo.second != CubeLightsState::Interacting)
+    {
+      newState = CubeLightsState::Interacting;
+    }
+    // Otherwise if we are just finished interacting with the cube and we aren't carrying the cube
+    // go back to visible
+    else if(_interactionObjects.count(cubeInfoPair.first) == 0 &&
+            currState == CubeLightsState::Interacting &&
+            _robot.GetCarryingObject() != cubeInfoPair.first)
+    {
+      newState = CubeLightsState::Visible;
+    }
+    
+    
+    ///////
+    // Check for customPatterns that override other interactions
+    
+    // If a custom pattern has been set, fade to it
+    if(cubeInfoPair.second.currState != CubeLightsState::CustomPattern
+       && cubeInfoPair.second.currState != CubeLightsState::Fade
+       && _customLightPatterns.find(cubeInfoPair.first) != _customLightPatterns.end()){
+      newState = CubeLightsState::CustomPattern;
+    }
+    // If a custom pattern has been removed, fade back to the previous state
+    else if(cubeInfoPair.second.currState != CubeLightsState::Fade
+       && cubeInfoPair.second.currState == CubeLightsState::CustomPattern
+       && _customLightPatterns.find(cubeInfoPair.first) == _customLightPatterns.end()){
+      newState = cubeInfoPair.second.prevState;
+    }
+    
+    ///////
+    // Handle WakeUp and sleep transitions
     
     if(currState == CubeLightsState::WakeUp &&
        (timeDiff > _wakeupTime_ms))
@@ -266,21 +310,10 @@ void LightsComponent::Update()
       newState = CubeLightsState::Off;
     }
     
-    // If we're interacting with this object, put it in interacting state
-    // but only if we are not already fading to an interacting state
-    if(_interactionObjects.count(cubeInfoPair.first) > 0 &&
-       fadeFromTo.second != CubeLightsState::Interacting)
-    {
-      newState = CubeLightsState::Interacting;
-    }
-    // Otherwise if we are just finished interacting with the cube and we aren't carrying the cube
-    // go back to visible
-    else if(_interactionObjects.count(cubeInfoPair.first) == 0 &&
-            currState == CubeLightsState::Interacting &&
-            _robot.GetCarryingObject() != cubeInfoPair.first)
-    {
-      newState = CubeLightsState::Visible;
-    }
+    
+    ///////
+    // Handle fades between all states
+    // add any other state transitions above here
     
     // Only fade if we did not just end a fade and we can fade from current state to the new state
     if(!endingFade && FadeBetween(currState, newState, fadeFromTo))
@@ -291,6 +324,10 @@ void LightsComponent::Update()
                     fadeFromTo.second);
       newState = CubeLightsState::Fade;
     }
+    
+    ///////
+    // end newState selection
+    ///////
     
     if(ShouldOverrideState(currState, newState))
     {
@@ -366,10 +403,11 @@ void LightsComponent::UpdateBackpackLights()
 
 bool LightsComponent::ShouldOverrideState(CubeLightsState currState, CubeLightsState nextState)
 {
-  // We should never transition to Invalid, override the Fade state since it manages itself,
+  // We should never transition to Invalid, override the Fade or custom pattern states since they manages themselves,
   // or override WakeUp with anything other than WakeUpFadeOut
   if(nextState == CubeLightsState::Invalid ||
      currState == CubeLightsState::Fade ||
+     currState == CubeLightsState::CustomPattern ||
      (currState == CubeLightsState::WakeUp && nextState != CubeLightsState::WakeUpFadeOut))
   {
     return false;
@@ -533,6 +571,19 @@ void LightsComponent::SetLights(ObjectID object, CubeLightsState state, bool for
   
   const ObjectLights& values = _stateToValues[state];
   SetObjectLightsInternal(object, values);
+}
+  
+bool LightsComponent::SetCustomLightPattern(ObjectID objectID, ObjectLights pattern)
+{
+  auto insertionResult = _customLightPatterns.insert(std::make_pair(objectID, pattern));
+  return insertionResult.second;
+}
+
+
+bool LightsComponent::ClearCustomLightPattern(ObjectID objectID)
+{
+  auto count = _customLightPatterns.erase(objectID);
+  return count != 0;
 }
 
 

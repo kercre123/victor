@@ -75,6 +75,9 @@ public:
   void SetInteractionObject(ObjectID objectID);
   void UnSetInteractionObject(ObjectID objectID);
   
+  bool SetCustomLightPattern(ObjectID objectID, ObjectLights pattern);
+  bool ClearCustomLightPattern(ObjectID objectID);
+  
   Result SetObjectLights(const ObjectID& objectID, const ObjectLights& lights);
   Result SetObjectLights(const ObjectID& objectID,
                          const WhichCubeLEDs whichLEDs,
@@ -115,6 +118,7 @@ public:
     Connected,      // We are connected to cube but can't see it or it has moved
     Visible,        // Have seen the cube and it hasn't moved
     Interacting,    // Actively doing something with the cube
+    CustomPattern,  // Can be set to playback custom patterns set at runtime
     Sleep,
     Fade,
   };
@@ -158,6 +162,8 @@ private:
   std::map< ObjectID, ObjectInfo > _cubeInfo;
   
   std::multiset<ObjectID> _interactionObjects;
+  
+  std::map<ObjectID, ObjectLights> _customLightPatterns;
   
   void UpdateToDesiredLights(const bool force = false);
   void UpdateToDesiredLights(const ObjectID objectID, const bool force = false);
