@@ -85,10 +85,10 @@ namespace Anki {
         // ==== Pickup detection ===
         bool pickupDetectEnabled_       = true;
         bool pickedUp_                  = false;
-        bool enablePickupParalysis_     = false;
 
-        const f32 PICKUP_WHILE_MOVING_ACC_THRESH[3]  = {5000, 5000, 12000}; // mm/s^2
-        const f32 PICKUP_WHILE_MOVING_GYRO_THRESH[3] = {0.5f, 0.5f, 0.5f}; // rad/s
+        const f32 PICKUP_WHILE_MOVING_ACC_THRESH[3]  = {5000, 5000, 12000};  // mm/s^2
+        const f32 PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH[3] = {0.5f, 0.5f, 0.5f};   // rad/s
+        const f32 UNEXPECTED_ROTATION_SPEED_THRESH   = DEG_TO_RAD_F32(10.f); //rad/s
         const u8 PICKUP_COUNT_WHILE_MOVING           = 40;
         const u8 PICKUP_COUNT_WHILE_MOTIONLESS       = 20;
         u8 potentialPickupCnt_                       = 0;
@@ -323,38 +323,6 @@ namespace Anki {
         pickupDetectEnabled_ = enable;
       }
 
-      void EnablePickupParalysis(bool enable)
-      {
-        if (enable) { AnkiEvent( 327, "IMUFilter.PickupParalysis.Enabled", 305, "", 0); }
-        else        { AnkiEvent( 328, "IMUFilter.PickupParalysis.Disabled", 305, "", 0); }
-        enablePickupParalysis_ = enable;
-      }
-
-      void HandlePickupParalysis()
-      {
-        static bool wasParalyzed = false;
-        if (enablePickupParalysis_) {
-          if (IsPickedUp() && !wasParalyzed) {
-            // Stop all movement (so we don't hurt people's hands)
-            PickAndPlaceController::Reset();
-            PathFollower::ClearPath();
-
-            LiftController::Disable();
-            HeadController::Disable();
-            WheelController::Disable();
-            wasParalyzed = true;
-          }
-        }
-
-        if((!IsPickedUp() || !enablePickupParalysis_) && wasParalyzed) {
-          // Just got put back down
-          LiftController::Enable();
-          HeadController::Enable();
-          WheelController::Enable();
-          wasParalyzed = false;
-        }
-      }
-      
       void EnableBraceWhenFalling(bool enable)
       {
         AnkiInfo( 187, "IMUFilter.EnableBraceWhenFalling", 347, "%d", 1, enable);
@@ -557,6 +525,7 @@ namespace Anki {
           
           // If cliff sensor changes while wheels not moving this is indicative of pickup
           bool cliffBasedPickupDetect = false;
+          bool gyroZBasedMotionDetect = false;
           if (!WheelController::AreWheelsMoving() && !WheelController::AreWheelsPowered()) {
             s16 cliffDelta = 0;
             if (cliffValWhileNotMoving_ == 0) {
@@ -566,9 +535,19 @@ namespace Anki {
             }
             
             cliffBasedPickupDetect = cliffDelta > CLIFF_DELTA_FOR_PICKUP;
+
+            // As long as wheels aren't moving, we can also check for Z-axis gyro motion
+            gyroZBasedMotionDetect = ABS(gyro_robot_frame_filt[2]) > PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH[2];
             
           } else {
             cliffValWhileNotMoving_ = 0;
+            
+            // Is the robot turning at a radically different speed than what it should be experiencing given current wheel speeds?
+            const f32 maxPossibleBodyRotSpeed = WheelController::GetCurrNoSlipBodyRotSpeed();
+            const f32 measuredBodyRotSpeed = IMUFilter::GetRotationSpeed();
+            gyroZBasedMotionDetect = (((maxPossibleBodyRotSpeed > UNEXPECTED_ROTATION_SPEED_THRESH) && ((measuredBodyRotSpeed < -UNEXPECTED_ROTATION_SPEED_THRESH) || (measuredBodyRotSpeed > maxPossibleBodyRotSpeed))) ||
+                                      ((maxPossibleBodyRotSpeed < -UNEXPECTED_ROTATION_SPEED_THRESH) && ((measuredBodyRotSpeed > UNEXPECTED_ROTATION_SPEED_THRESH) || (measuredBodyRotSpeed < maxPossibleBodyRotSpeed))));
+
           }
 
           
@@ -577,9 +556,9 @@ namespace Anki {
           if (!AreMotorsMoving()) {
             
             // Sufficient gyro motion is evidence of pickup
-            bool gyroBasedMotionDetected = (ABS(gyro_robot_frame_filt[0]) > PICKUP_WHILE_MOVING_GYRO_THRESH[0]) ||
-                                           (ABS(gyro_robot_frame_filt[1]) > PICKUP_WHILE_MOVING_GYRO_THRESH[1]) ||
-                                           (ABS(gyro_robot_frame_filt[2]) > PICKUP_WHILE_MOVING_GYRO_THRESH[2]);
+            bool gyroBasedMotionDetected = (ABS(gyro_robot_frame_filt[0]) > PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH[0]) ||
+                                           (ABS(gyro_robot_frame_filt[1]) > PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH[1]) ||
+                                           (ABS(gyro_robot_frame_filt[2]) > PICKUP_WHILE_WHEELS_NOT_MOVING_GYRO_THRESH[2]);
 
             if (cliffBasedPickupDetect || gyroBasedMotionDetected) {
               ++potentialPickupCnt_;
@@ -619,7 +598,7 @@ namespace Anki {
             // Do conservative check for pickup.
             // Only when we're really sure it's moving!
             // TODO: Make this smarter!
-            if (CheckPickupWhileMoving() || cliffBasedPickupDetect) {
+            if (CheckPickupWhileMoving() || cliffBasedPickupDetect || gyroZBasedMotionDetect) {
               if (++potentialPickupCnt_ > PICKUP_COUNT_WHILE_MOVING) {
                 SetPickupDetect(true);
                 AnkiInfo( 369, "IMUFilter.PickupDetected", 605, "accX = %f, accY = %f, accZ = %f, cliff = %d", 4,
@@ -965,8 +944,6 @@ namespace Anki {
         DetectPickup();
 
         UpdateEventDetection();
-
-        HandlePickupParalysis();
         
         UpdateCameraMotion();
 

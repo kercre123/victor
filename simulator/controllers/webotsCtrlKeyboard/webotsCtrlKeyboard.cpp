@@ -899,10 +899,9 @@ namespace Anki {
                     enableModeIter = enableModes.begin();
                   }
                 } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
-                  static bool enablePickupParalysis = true;
-                  SendEnableRobotPickupParalysis(enablePickupParalysis);
-                  printf("Sent EnableRobotPickupParalysis = %d\n", enablePickupParalysis);
-                  enablePickupParalysis = !enablePickupParalysis;
+
+                  // FREE KEY COMBO!!!
+                  
                 } else {
                   static bool showObjects = false;
                   SendEnableDisplay(showObjects);

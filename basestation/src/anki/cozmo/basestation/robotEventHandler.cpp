@@ -1012,7 +1012,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::DrawPoseMarker>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableCliffSensor>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableLiftPower>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableRobotPickupParalysis>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ExecuteTestPlan>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ForceDelocalizeRobot>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::IMURequest>();
@@ -1509,24 +1508,6 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::IMURequest& msg)
   else
   {
     robot->RequestIMU(msg.length_ms);
-  }
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-void RobotEventHandler::HandleMessage(const ExternalInterface::EnableRobotPickupParalysis& msg)
-{
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
-  
-  // We need a robot
-  if (nullptr == robot)
-  {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleEnableRobotPickupParalysis.InvalidRobotID", "Failed to find robot.");
-  }
-  else
-  {
-    robot->SendRobotMessage<RobotInterface::EnablePickupParalysis>(msg.enable);
-    //SendRobotMessage<RobotInterface::EnablePickupParalysis>(enable)
   }
 }
 

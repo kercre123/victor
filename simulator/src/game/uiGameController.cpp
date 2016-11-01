@@ -1443,15 +1443,6 @@ namespace Anki {
       SendMessage(message);
     }
 
-    void UiGameController::SendEnableRobotPickupParalysis(bool enable)
-    {
-      ExternalInterface::EnableRobotPickupParalysis m;
-      m.enable = enable;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_EnableRobotPickupParalysis(m);
-      SendMessage(message);
-    }
-    
     void UiGameController::SendAnimation(const char* animName, u32 numLoops)
     {
       static double lastSendTime_sec = -1e6;

@@ -142,16 +142,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
   }
   
   f32 speedDiff = rWheelSpeed_mmps - lWheelSpeed_mmps;
-  
-  // Outside velocity and inside velocity (outside velocity is the faster of the two)
-  f32 vO = MAX(rWheelSpeed_mmps, lWheelSpeed_mmps);
-  f32 vI = MIN(rWheelSpeed_mmps, lWheelSpeed_mmps);
-  
-  // Radius of the circle produced by the inside wheel during a turn
-  f32 rR = vI*WHEEL_BASE_MM / (vO - vI);
-  
-  // Expected rotational velocity based on the two wheel speeds
-  f32 omega = ABS(vO / (rR + WHEEL_BASE_MM));
+  f32 omega = ABS(speedDiff / WHEEL_DIST_MM);
   
   UnexpectedMovementType unexpectedMovementType = UnexpectedMovementType::TURNED_BUT_STOPPED;
   

@@ -3322,11 +3322,6 @@ Result Robot::SendIMURequest(const u32 length_ms) const
 {
   return SendRobotMessage<RobotInterface::ImuRequest>(length_ms);
 }
-
-Result Robot::SendEnablePickupParalysis(const bool enable) const
-{
-  return SendRobotMessage<RobotInterface::EnablePickupParalysis>(enable);
-}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>

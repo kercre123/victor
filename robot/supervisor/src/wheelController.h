@@ -42,6 +42,10 @@ namespace Anki {
     void GetFilteredWheelSpeeds(f32 &left, f32 &right);
     f32 GetAverageFilteredWheelSpeed();
     
+    // Returns the maximum possible rotation speed given the current wheel speeds.
+    // This is an upper bound on the actual rotation speed since with treads there is significant slip.
+    f32 GetCurrNoSlipBodyRotSpeed();
+    
     //This function will command a wheel speed to the left and right wheel so that the vehicle follows a trajectory
     //This will only work if the steering controller does not overwrite the values.
     void utilSetVehicleOLTrajectory( u16 radius, u16 vspeed );

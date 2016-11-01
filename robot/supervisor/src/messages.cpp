@@ -650,11 +650,6 @@ namespace Anki {
       }
 #endif
 
-      void Process_enablePickupParalysis(const RobotInterface::EnablePickupParalysis& msg)
-      {
-        IMUFilter::EnablePickupParalysis(msg.enable);
-      }
-
       void Process_enableLiftPower(const RobotInterface::EnableLiftPower& msg)
       {
         if (msg.enable) {

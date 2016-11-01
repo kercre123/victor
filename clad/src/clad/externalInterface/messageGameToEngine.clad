@@ -215,12 +215,6 @@ message SetRobotAudioOutputSource
   RobotAudioOutputSourceCLAD source
 }
 
-// Enable/Disable paralysis of motors on pickup
-message EnableRobotPickupParalysis
-{
-   bool enable
-}
-
 message ForceDelocalizeRobot {
   uint_8 robotID
 }

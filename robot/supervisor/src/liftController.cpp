@@ -166,7 +166,7 @@ namespace Anki {
           enableAtTime_ms_ = 0;  // Reset auto-enable trigger time
 
           currDesiredAngle_ = currentAngle_.ToFloat();
-          SetDesiredHeight(Rad2Height(currentAngle_.ToFloat()));
+          SetDesiredHeight(GetHeightMM());
         }
       }
 
@@ -197,7 +197,7 @@ namespace Anki {
         currentAngle_ = currAngle;
         desiredAngle_ = currentAngle_;
         currDesiredAngle_ = currentAngle_.ToFloat();
-        desiredHeight_ = Rad2Height(currAngle);
+        desiredHeight_ = GetHeightMM();
 
         HAL::MotorResetPosition(MOTOR_LIFT);
         prevHalPos_ = HAL::MotorGetPosition(MOTOR_LIFT);
@@ -325,7 +325,7 @@ namespace Anki {
           targetHeight = LIFT_HEIGHT_LOWDOCK;
         } else {
           // Stop immediately!
-          targetHeight = Rad2Height(currentAngle_.ToFloat());
+          targetHeight = GetHeightMM();
           useVPG = false;
         }
 

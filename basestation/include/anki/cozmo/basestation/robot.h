@@ -1138,8 +1138,6 @@ protected:
 
   // Request imu log from robot
   Result SendIMURequest(const u32 length_ms) const;
-  
-  Result SendEnablePickupParalysis(const bool enable) const;
 
   Result SendAbortDocking();
   Result SendAbortAnimation();

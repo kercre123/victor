@@ -250,6 +250,11 @@ namespace Anki {
 
       EncoderSpeedFilterIteration();
     }
+    
+    f32 GetCurrNoSlipBodyRotSpeed()
+    {
+      return (filterWheelSpeedR_ - filterWheelSpeedL_) / WHEEL_DIST_MM;
+    }
 
     void GetFilteredWheelSpeeds(f32 &left, f32 &right)
     {

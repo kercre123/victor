@@ -285,11 +285,6 @@ message AnimEventToRTIP
   AnimEvent event_id
 }
 
-message EnablePickupParalysis
-{
-  bool enable
-}
-
 message EnableLiftPower
 {
   bool enable
@@ -435,7 +430,7 @@ union EngineToRobot
   ImageRequest                  imageRequest                = 0x4C,
   FlashObjectIDs                flashObjectIDs              = 0x4D,
   ObjectBeingCarried            setObjectBeingCarried       = 0x4E,
-  EnablePickupParalysis         enablePickupParalysis       = 0x4F,
+  //          FREE SLOT!!!                                  = 0x4F,
   EnableLiftPower               enableLiftPower             = 0x50,
   SetMotionModelParams          setMotionModelParams        = 0x51,
   EnterSleepMode                enterSleepMode              = 0x52,

@@ -77,7 +77,7 @@ namespace Anki {
         // Currently, this only seems to happen during the backup for face plant.
         f32 desiredLeftSpeed, desiredRightSpeed;
         WheelController::GetDesiredWheelSpeeds(desiredLeftSpeed, desiredRightSpeed);
-        bool alreadyStopping = desiredLeftSpeed == desiredRightSpeed == 0.f;
+        bool alreadyStopping = (desiredLeftSpeed == 0.f) && (desiredRightSpeed == 0.f);
 
         if (_enableCliffDetect &&
             HAL::IsCliffDetected() &&
