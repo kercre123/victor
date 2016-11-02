@@ -50,7 +50,7 @@ MonoBehaviour:
   RequestTrickCostAmountNeededMaxTimes: 6
   RequestTrickCostAmountNeededMax: 4
   CoreUpgradeTintColorName: upgradeGreen
-  CoreUpgradeIcon: {fileID: 21300000, guid: c0917978773d34e1b847520590df07f1, type: 3}
+  CoreUpgradeIcon: {fileID: 21300000, guid: 81cf534c428d445d9bcd1c5adfdd64c0, type: 3}
   CoreUpgradeOverlayIcon: {fileID: 21300000, guid: 81cf534c428d445d9bcd1c5adfdd64c0,
     type: 3}
   CubesRequired: 1

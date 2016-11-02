@@ -38,7 +38,7 @@ MonoBehaviour:
     _ButtonText: PICK UP
     _ActionUnlockId: 6
   _RollCubeButtonData:
-    _ButtonIcon: {fileID: 21300000, guid: c0917978773d34e1b847520590df07f1, type: 3}
+    _ButtonIcon: {fileID: 21300000, guid: 81cf534c428d445d9bcd1c5adfdd64c0, type: 3}
     _ButtonText: ROLL
     _ActionUnlockId: 9
   _DropCubeButtonData:
