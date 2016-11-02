@@ -138,6 +138,14 @@ public class MockRobot : IRobot {
     EnableSparkUnlock(UnlockId.Count);
   }
 
+  public void ActivateSparkedMusic(Anki.Cozmo.UnlockId behaviorUnlockId, Anki.Cozmo.Audio.GameState.Music musicState, Anki.Cozmo.Audio.SwitchState.Sparked sparkedState) {
+    // Do nothing
+  }
+
+  public void DeactivateSparkedMusic(Anki.Cozmo.UnlockId behaviorUnlockId, Anki.Cozmo.Audio.GameState.Music musicState) {
+    // Do nothing
+  }
+
   // enable/disable games available for Cozmo to request
   public void SetAvailableGames(BehaviorGameFlag games) {
 

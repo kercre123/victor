@@ -167,6 +167,10 @@ public interface IRobot : IDisposable {
 
   void StopSparkUnlock();
 
+  void ActivateSparkedMusic(Anki.Cozmo.UnlockId behaviorUnlockId, Anki.Cozmo.Audio.GameState.Music musicState, Anki.Cozmo.Audio.SwitchState.Sparked sparkedState);
+
+  void DeactivateSparkedMusic(Anki.Cozmo.UnlockId behaviorUnlockId, Anki.Cozmo.Audio.GameState.Music musicState);
+
   // enable/disable games available for Cozmo to request
   void SetAvailableGames(BehaviorGameFlag games);
 

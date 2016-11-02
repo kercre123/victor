@@ -14,6 +14,7 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
@@ -64,12 +65,13 @@ static const char* kMeetCozmoChooserConfigKey = "meetCozmoBehaviorChooserConfig"
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorManager::BehaviorManager(Robot& robot)
-  : _robot(robot)
-  , _defaultHeadAngle(kIgnoreDefaultHeandAndLiftState)
-  , _defaultLiftHeight(kIgnoreDefaultHeandAndLiftState)
-  , _behaviorFactory(new BehaviorFactory())
-  , _lastChooserSwitchTime(-1.0f)
-  , _whiteboard( new AIWhiteboard(robot) )
+: _robot(robot)
+, _defaultHeadAngle(kIgnoreDefaultHeandAndLiftState)
+, _defaultLiftHeight(kIgnoreDefaultHeandAndLiftState)
+, _behaviorFactory(new BehaviorFactory())
+, _lastChooserSwitchTime(-1.0f)
+, _audioClient( new Audio::BehaviorAudioClient(robot) )
+, _whiteboard( new AIWhiteboard(robot) )
 {
 }
 
@@ -736,6 +738,26 @@ void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::Behavi
     {
       const auto& msg = message.Get_SparkUnlocked();
       SetRequestedSpark(msg.behaviorSpark, true);
+      break;
+    }
+      
+    case ExternalInterface::BehaviorManagerMessageUnionTag::ActivateSparkedMusic:
+    {
+      const auto& msg = message.Get_ActivateSparkedMusic();
+      if ( !_audioClient->ActivateSparkedMusic(msg.behaviorSpark, msg.musicSate, msg.sparkedMusicState) ) {
+        PRINT_NAMED_ERROR("BehaviorManager.HandleMessage.ActivateSparkedMusic.Failed",
+                          "UnlockId %s", EnumToString(msg.behaviorSpark));
+      }
+      break;
+    }
+      
+    case ExternalInterface::BehaviorManagerMessageUnionTag::DeactivateSparkedMusic:
+    {
+      const auto& msg = message.Get_DeactivateSparkedMusic();
+      if ( !_audioClient->DeactivateSparkedMusic(msg.behaviorSpark, msg.musicSate) ) {
+        PRINT_NAMED_ERROR("BehaviorManager.HandleMessage.DeactivateSparkedMusic.Failed",
+                          "UnlockId %s", EnumToString(msg.behaviorSpark));
+      }
       break;
     }
 

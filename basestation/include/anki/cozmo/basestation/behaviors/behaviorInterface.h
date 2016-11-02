@@ -362,10 +362,15 @@ protected:
   void SmartReEnableReactionaryBehavior(BehaviorType type);
   void SmartReEnableReactionaryBehavior(const std::set<BehaviorType> typeList);
   
-  
   //Allows behaviors to skip certain steps when streamlined
   //Can be set in json (for sparks) or programatically
   bool _shouldStreamline;
+  
+  // Notify the audio controller that the behavior state has changed and the audio
+  // should change to match
+  // returns false if audio state not updated because behavior's audio counterpart
+  // is not currently active
+  bool UpdateAudioState(int newAudioState);
   
   // this process might be enabled/disabled automatically by a behavior chooser based
   // behavior specify it in code because it's a code requirement (not data driven)

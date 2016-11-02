@@ -1670,6 +1670,24 @@ public class Robot : IRobot {
     SparkUnlockId = UnlockId.Count;
   }
 
+  public void ActivateSparkedMusic(Anki.Cozmo.UnlockId behaviorUnlockId,
+                                   Anki.Cozmo.Audio.GameState.Music musicState,
+                                   Anki.Cozmo.Audio.SwitchState.Sparked sparkedState) {
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage = Singleton<BehaviorManagerMessage>.Instance.Initialize(
+      ID,
+      Singleton<ActivateSparkedMusic>.Instance.Initialize(behaviorUnlockId, musicState, sparkedState)
+    );
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void DeactivateSparkedMusic(Anki.Cozmo.UnlockId behaviorUnlockId, Anki.Cozmo.Audio.GameState.Music musicState) {
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage = Singleton<BehaviorManagerMessage>.Instance.Initialize(
+      ID,
+      Singleton<DeactivateSparkedMusic>.Instance.Initialize(behaviorUnlockId, musicState)
+    );
+    RobotEngineManager.Instance.SendMessage();
+  }
+
   // enable/disable games available for Cozmo to request
   public void SetAvailableGames(BehaviorGameFlag games) {
     RobotEngineManager.Instance.Message.BehaviorManagerMessage =

@@ -12,6 +12,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
@@ -834,6 +835,12 @@ ActionResult IBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* actio
   }
   
   return ActionResult::SUCCESS;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IBehavior::UpdateAudioState(int newAudioState)
+{
+  return _robot.GetBehaviorManager().GetAuidoClient().UpdateBehaviorRound(_requiredUnlockId, newAudioState);
 }
 
 

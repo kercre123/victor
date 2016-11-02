@@ -50,7 +50,9 @@ class IReactionaryBehavior;
 class Robot;
 template<typename TYPE> class AnkiEvent;
 
-  
+namespace Audio {
+class BehaviorAudioClient;
+}
 namespace ExternalInterface {
 class BehaviorManagerMessageUnion;
 }
@@ -122,7 +124,10 @@ public:
   // accessors: whiteboard
   const AIWhiteboard& GetWhiteboard() const { assert(_whiteboard); return *_whiteboard; }
         AIWhiteboard& GetWhiteboard()       { assert(_whiteboard); return *_whiteboard; }
-     
+  
+  // accessors: auidoController
+  Audio::BehaviorAudioClient& GetAuidoClient() const { assert(_audioClient); return *_audioClient;}
+  
   void HandleMessage(const Anki::Cozmo::ExternalInterface::BehaviorManagerMessageUnion& message);
   
   void SetReactionaryBehaviorsEnabled(bool isEnabled, bool stopCurrent = false);
@@ -270,6 +275,9 @@ private:
   UnlockId _lastRequestedSpark = UnlockId::Count;
   bool _isRequestedSparkSoft = false;
   bool _didGameRequestSparkEnd = false;
+  
+  // Behavior audio client is used to update the audio engine with the current sparked state (a.k.a. "round")
+  std::unique_ptr<Audio::BehaviorAudioClient> _audioClient;
   
   // whiteboard for behaviors to share information, or to store information only useful to behaviors
   std::unique_ptr<AIWhiteboard> _whiteboard;
