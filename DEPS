@@ -26,21 +26,18 @@
     "teamcity": {
         "builds": {
             "coretech_external": {
-                "build_id": "28351",
                 "build_type_id": "Cte_Master",
                 "extension": "tar.gz",
                 "package_name": "Cte",
                 "version": "153"
             },
             "firmware": {
-                "build_id": "41722",
                 "build_type_id": "CozmoOne_Experiments_CollectFirmware",
                 "extension": "tar.gz",
                 "package_name": "firmware",
                 "version": "1032"
             },
             "old_firmware": {
-                "build_id": "40477",
                 "build_type_id": "CozmoOne_Experiments_CollectFirmware",
                 "extension": "tar.gz",
                 "package_name": "firmware",

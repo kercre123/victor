@@ -294,7 +294,6 @@ def teamcity_package(tc_dict):
 
     for build in builds:
         new_version = True
-        build_id = builds[build].get("build_id", "undefined")
         version = builds[build].get("version", "undefined")
         build_type_id = builds[build].get("build_type_id", "undefined")
         package_name = builds[build].get("package_name", "undefined")
@@ -309,7 +308,7 @@ def teamcity_package(tc_dict):
         #This is different from svn_package because upackage_location instead of loc (it can't be assumed that the package has a folder.
         unpack = [ptool] + ptool_options + [dist, '-C', unpackage_location]
 
-        combined_url = "{0}/repository/download/{1}/{2}:id/{3}_{4}.{5}".format(root_url, build_type_id, build_id, package_name, version, ext)
+        combined_url = "{0}/repository/download/{1}/{2}/{3}_{4}.{5}".format(root_url, build_type_id, version, package_name, version, ext)
         pull_down = [tool, '--user', "{0}:{1}".format(user, password), '-f', combined_url, '-o', dist]
         if VERBOSE:
             pull_down += ['-v']
