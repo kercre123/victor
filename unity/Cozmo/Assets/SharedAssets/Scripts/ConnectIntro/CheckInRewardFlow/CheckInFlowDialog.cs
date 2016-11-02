@@ -269,6 +269,7 @@ namespace Cozmo.CheckInFlow.UI {
     private void HandleOpenEnvelopeAnimationExitEvents(AnimatorStateInfo stateInfo) {
       if (stateInfo.IsName("EnvelopeExitAnimation")) {
         DeregisterOpenEnvelopeAnimationEvents();
+        _EnvelopeButton.gameObject.SetActive(false);
 
         bool playerHasStreak = (DataPersistence.DataPersistenceManager.Instance.CurrentStreak > 1);
         if (playerHasStreak) {
