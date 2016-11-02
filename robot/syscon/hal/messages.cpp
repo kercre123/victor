@@ -49,14 +49,19 @@ static void Process_diffieHellmanResults(const DiffieHellmanResults& msg) {
   Bluetooth::diffieHellmanResults(msg);
 }
 
+static void Process_setBackpackLayer(const RobotInterface::BackpackSetLayer &msg)
+{
+  Backpack::setLayer(msg.layer);
+}
+
 static void Process_setBackpackLightsMiddle(const RobotInterface::BackpackLightsMiddle& msg)
 {
-  Backpack::setLightsMiddle(BPL_USER, msg.lights);
+  Backpack::setLightsMiddle(msg.layer, msg.lights);
 }
 
 static void Process_setBackpackLightsTurnSignals(const RobotInterface::BackpackLightsTurnSignals& msg)
 {
-  Backpack::setLightsTurnSignals(BPL_USER, msg.lights);
+  Backpack::setLightsTurnSignals(msg.layer, msg.lights);
 }
 
 static void Process_setCubeID(const CubeID& msg)

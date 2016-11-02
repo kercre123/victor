@@ -13,13 +13,6 @@ using namespace Anki::Cozmo;
 
 static const int BACKPACK_LIGHTS = 5;
 
-enum BackpackLayer {
-  BPL_ANIMATION,
-  BPL_USER,
-  BPL_IMPULSE,
-  BACKPACK_LAYERS
-};
-
 enum DefaultBackpackPattern {
   LIGHTS_OFF,
   LIGHTS_CHARGING,
@@ -41,6 +34,7 @@ namespace Backpack {
   void setLowBattery(bool batteryLow);
   void setChargeState(CurrentChargeState state);
 
+  void clearLights(BackpackLayer);
   void setLights(BackpackLayer, const LightState* lights);
   void setLightsMiddle(BackpackLayer, const LightState* lights);
   void setLightsTurnSignals(BackpackLayer, const LightState* lights);

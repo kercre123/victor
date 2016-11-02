@@ -18,7 +18,6 @@
 #include "pathFollower.h"
 #include "testModeController.h"
 #include "anki/cozmo/robot/logging.h"
-#include "backpackLightController.h"
 #ifndef TARGET_K02
 #include "animationController.h"
 #include "anki/common/shared/utilities_shared.h"
@@ -126,9 +125,6 @@ namespace Anki {
         lastResult = PathFollower::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 222, "CozmoBot.InitFail.PathFollower", 305, "", 0);
         
-        lastResult = BackpackLightController::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 223, "CozmoBot.InitFail.BackpackLightController", 305, "", 0);
-        
         lastResult = IMUFilter::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, 366, "CozmoBot.InitFail.IMUFilter", 305, "", 0);
         
@@ -223,7 +219,6 @@ namespace Anki {
         if (HAL::RadioIsConnected() && !wasConnected_) {
           AnkiEvent( 228, "CozmoBot.Radio.Connected", 305, "", 0);
           wasConnected_ = true;
-          BackpackLightController::TurnOffAll();
           
 #if SIMULATOR
           LiftController::Enable();
@@ -236,8 +231,7 @@ namespace Anki {
           SteeringController::ExecuteDirectDrive(0,0);
           PickAndPlaceController::Reset();
           PickAndPlaceController::SetCarryState(CARRY_NONE);
-          BackpackLightController::Init();
-          ProxSensors::Reset();
+          ProxSensors::EnableStopOnCliff(true);
           waitForFirstMotorCalibAfterConnect_ = true;
           mode_ = INIT_MOTOR_CALIBRATION;
 
@@ -278,7 +272,6 @@ namespace Anki {
         MARK_NEXT_TIME_PROFILE(CozmoBot, EYEHEADLIFT);
         HeadController::Update();
         LiftController::Update();
-        BackpackLightController::Update();
 #ifndef TARGET_K02
         BlockLightController::Update();
 #endif

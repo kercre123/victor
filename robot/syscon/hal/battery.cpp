@@ -304,6 +304,8 @@ void Battery::updateOperatingMode() {
 
     case BODY_ACCESSORY_OPERATING_MODE:
       Motors::disable(false);
+
+      Backpack::clearLights(BPL_USER);
       Backpack::setLayer(BPL_USER);
 
       Battery::powerOn();

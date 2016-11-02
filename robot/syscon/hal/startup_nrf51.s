@@ -157,7 +157,6 @@ Reset_Handler   PROC
 
 HardFault_PreHandler PROC
                 IMPORT   HardFault_Handler
-                IMPORT   CRASHLOG_POINTER
 
                 PUSH     {r4-r7}
 
@@ -167,9 +166,7 @@ HardFault_PreHandler PROC
                 MOV      r7, r11
                 PUSH     {r4-r7}
 
-                LDR     r4, =CRASHLOG_POINTER
-                MOV     r5, sp
-                STR     r5, [r4, #0]
+                MOV     r0, sp
 
                 LDR     r4, =HardFault_Handler
                 BX      r4

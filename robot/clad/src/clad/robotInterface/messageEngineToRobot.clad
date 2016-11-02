@@ -263,11 +263,18 @@ message SetMotionModelParams
 message BackpackLightsMiddle
 {
   LightState lights[3],
+  uint_8 layer = 0 // This is BPL_USER
 }
 
 message BackpackLightsTurnSignals
 {
   LightState lights[2],
+  uint_8 layer = 0 // This is BPL_USER
+}
+
+message BackpackSetLayer
+{
+  uint_8 layer
 }
 
 message GetManufacturingInfo
@@ -344,8 +351,6 @@ enum uint_32 ToRobotAddressSpace
   TO_BODY_END   = 0x2F,
   TO_RTIP_START = 0x30,
   TO_RTIP_END   = 0x7F,
-  RTIP_TO_BODY_START = 0x03,
-  RTIP_TO_BODY_END   = 0x03,
   ANIM_BUFFER_START = 0x91,
   ANIM_BUFFER_END   = 0x9C,
   ANIM_RT_START = 0x93,
@@ -371,7 +376,7 @@ union EngineToRobot
   // 0x01 to 0x27: Messages to the body / test fixture
   // 0x28 to 0x2f: Allocated to BLE response messages
   //          FREE SLOT!!!                                  = 0x01,
-  //          FREE SLOT!!!                                  = 0x02,
+  BackpackSetLayer              setBackpackLayer            = 0x02,
   BackpackLightsMiddle          setBackpackLightsMiddle     = 0x03,
   CubeLights                    setCubeLights               = 0x04,
   SetPropSlot                   setPropSlot                 = 0x05,
@@ -435,7 +440,7 @@ union EngineToRobot
   SetMotionModelParams          setMotionModelParams        = 0x51,
   EnterSleepMode                enterSleepMode              = 0x52,
   PowerState                    powerState                  = 0x53,
-  PropState                     getPropState                = 0x54,
+  //          FREE SLOT!!!                                  = 0x54,
   EnableReadToolCodeMode        enableReadToolCodeMode      = 0x55,
   EnableTestStateMessage        enableTestStateMessage      = 0x56,
   SetCameraParams               setCameraParams             = 0x57,
