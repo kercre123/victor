@@ -39,11 +39,17 @@ enum uint_32 Freeplay_Mood
 enum uint_32 Gameplay_Round
 {
   Invalid = 0,
+  Round_00 = 4039654994,
   Round_01 = 4039654995,
   Round_02 = 4039654992,
   Round_03 = 4039654993,
   Round_04 = 4039654998,
   Round_05 = 4039654999,
+  Round_06 = 4039654996,
+  Round_07 = 4039654997,
+  Round_08 = 4039655002,
+  Round_09 = 4039655003,
+  Round_10 = 4056432581,
 }
 
 enum uint_32 GenericSwitch
