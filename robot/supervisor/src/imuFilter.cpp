@@ -298,6 +298,9 @@ namespace Anki {
       {
         LiftController::Unbrace();
         HeadController::Unbrace();
+        
+        LiftController::StartCalibrationRoutine();
+        HeadController::StartCalibrationRoutine();
       }
 
       //===== End of event callbacks ====

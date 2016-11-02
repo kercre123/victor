@@ -1,6 +1,6 @@
 
-cd '/Users/Kevin/engine/simulator/controllers/webotsCtrlGameEngine/temp/imu_logs';
-filename = 'imuRawLog_chair360_wheels150.dat';
+cd '/Users/kevin/src/cozmo/cozmo-copy/build/mac/Debug/playbackLogs/webotsCtrlGameEngine/imu_logs';
+filename = 'imuRawLog_1.dat';
 
 delimiterIn = ' ';
 headerLinesIn = 1;
