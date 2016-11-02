@@ -259,6 +259,18 @@ IBehavior::Status BehaviorStackBlocks::UpdateInternal(Robot& robot)
       TransitionToPickingUpBlock(robot);
     }
   }
+  
+  // Check to see if better bottom block identified for stacking on
+  if(robot.IsCarryingObject()){
+    const ObservableObject* bottomObject = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(),
+                                                                                     *_blockworldFilterForBottom);
+    if( nullptr != bottomObject ) {
+      if(bottomObject->GetID() != _targetBlockBottom){
+        StopWithoutImmediateRepetitionPenalty();
+      }
+    }
+  }
+  
 
   IBehavior::Status ret = IBehavior::UpdateInternal(robot);
   

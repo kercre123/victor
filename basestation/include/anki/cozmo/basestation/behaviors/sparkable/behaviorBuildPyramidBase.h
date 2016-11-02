@@ -38,6 +38,7 @@ public:
 
 protected:
   virtual Result InitInternal(Robot& robot) override;
+  virtual Status UpdateInternal(Robot& robot) override;
   void StopInternal(Robot& robot) override;
   
   void UpdatePyramidTargets(const Robot& robot) const;

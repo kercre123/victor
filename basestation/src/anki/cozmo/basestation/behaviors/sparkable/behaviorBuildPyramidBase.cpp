@@ -99,6 +99,28 @@ void BehaviorBuildPyramidBase::TransitionToDrivingToBaseBlock(Robot& robot)
   
 }
   
+  
+IBehavior::Status BehaviorBuildPyramidBase::UpdateInternal(Robot& robot)
+{
+  using namespace BlockConfigurations;
+  auto pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetConfigurationsForType(ConfigurationType::PyramidBase);
+  if(pyramidBases.size() > 0){
+    if(auto configPtr = pyramidBases[0].lock()){
+      auto weakPtr = BlockConfiguration::AsPyramidBaseWeakPtr(configPtr);
+      if(auto basePtr = weakPtr.lock()){
+        if((basePtr->GetBaseBlockID() != _baseBlockID && basePtr->GetStaticBlockID() != _baseBlockID) ||
+           (basePtr->GetBaseBlockID() != _staticBlockID && basePtr->GetStaticBlockID() != _staticBlockID)){
+          StopWithoutImmediateRepetitionPenalty();
+        }
+      }
+    }
+  }
+  
+  IBehavior::Status ret = IBehavior::UpdateInternal(robot);
+  
+  return ret;
+}
+  
 void BehaviorBuildPyramidBase::TransitionToPlacingBaseBlock(Robot& robot)
 {
   DEBUG_SET_STATE(PlacingBaseBlock);
