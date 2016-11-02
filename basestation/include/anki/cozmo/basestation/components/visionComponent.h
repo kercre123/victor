@@ -23,6 +23,7 @@
 #include "anki/cozmo/basestation/encodedImage.h"
 #include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/cozmo/basestation/rollingShutterCorrector.h"
+#include "anki/cozmo/basestation/visionModeSchedule.h"
 #include "anki/cozmo/basestation/visionPoseData.h"
 
 #include "clad/types/loadedKnownFace.h"
@@ -96,6 +97,14 @@ struct DockingErrorSignal;
     
     // Enable/disable different types of processing
     Result EnableMode(VisionMode mode, bool enable);
+    
+    // Push new schedule which takes affect on next image and can be popped using
+    // PopCurrentModeSchedule() below.
+    Result PushNextModeSchedule(AllVisionModesSchedule&& schedule);
+    
+    // Return to the schedule prior to the last push.
+    // Note that you cannot popup the last remaining (original) schedule.
+    Result PopCurrentModeSchedule();
     
     // Check whether a specific vision mode is enabled
     bool IsModeEnabled(VisionMode mode) const;

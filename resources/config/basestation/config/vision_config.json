@@ -10,6 +10,16 @@
     "CheckingQuality"        : true
   },
   
+  "InitialModeSchedules" :
+  {
+    // If a vision mode is not listed, it is scheduled to run every frame (if enabled)
+    // Specify either an array of bools indicating a specific schedule, or an integer
+    // value to process every Nth frame
+    "DetectingPets"          : [true, false],
+    "DetectingOverheadEdges" : [false, true],
+    "CheckingQuality"        : 15
+  },
+  
   "FaceAlbum" : "robot",       // Name of album on disk to load or "robot" to use the one from the robot
   
   "FaceDetection" :
@@ -35,8 +45,6 @@
     "MaxChangeFraction"         : 0.80,  // [0.0, 1.0]  (Amount we can change current exposure/gain each update)
     "SubSample"                 : 2,     // >= 1
     "MeterFromDetections"       : true,  // Base auto-exposure on detected markers, faces, etc, if any
-    
-    "CheckFrequency" : 15,               // How often VisionSystem checks quality (in number of frames), Use >= 5
     
     "TimeBeforeErrorMessage_ms" :       3000,  // How long VisionSystem must detect "bad" quality before notifying game
     "RepeatedErrorMessageInverval_ms" : 300000 // Time between error messages once triggered

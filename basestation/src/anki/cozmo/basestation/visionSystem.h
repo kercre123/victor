@@ -39,6 +39,7 @@
 #include "anki/cozmo/basestation/groundPlaneROI.h"
 #include "anki/cozmo/basestation/overheadEdge.h"
 #include "anki/cozmo/basestation/rollingShutterCorrector.h"
+#include "anki/cozmo/basestation/visionModeSchedule.h"
 #include "anki/cozmo/basestation/visionPoseData.h"
 
 #include "anki/common/basestation/matlabInterface.h"
@@ -133,6 +134,9 @@ namespace Cozmo {
     
     Result SetNextMode(VisionMode mode, bool enable);
     bool   IsModeEnabled(VisionMode whichMode) const { return _mode.IsBitFlagSet(whichMode); }
+    
+    Result PushNextModeSchedule(AllVisionModesSchedule&& schedule);
+    Result PopModeSchedule();
     
     Result EnableToolCodeCalibration(bool enable);
     
@@ -356,6 +360,10 @@ namespace Cozmo {
     Util::BitFlags16<VisionMode> _modeBeforeTracking;
     std::queue<std::pair<VisionMode, bool>> _nextModes;
     
+    using ModeScheduleStack = std::list<AllVisionModesSchedule>;
+    ModeScheduleStack _modeScheduleStack;
+    std::queue<std::pair<bool,AllVisionModesSchedule>> _nextSchedules;
+    
     bool _calibrateFromToolCode = false;
     
     s32 _frameNumber = 0;
@@ -520,7 +528,7 @@ namespace Cozmo {
     
     void RestoreNonTrackingMode();
     
-    bool ShouldProcessVisionMode(VisionMode mode) const;
+    bool ShouldProcessVisionMode(VisionMode mode);
     
     Result EnableMode(VisionMode whichMode, bool enabled);
     

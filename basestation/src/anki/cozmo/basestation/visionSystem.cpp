@@ -34,8 +34,9 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotStatusAndActions.h"
 
-#include "util/helpers/templateHelpers.h"
 #include "util/helpers/cleanupHelper.h"
+#include "util/helpers/templateHelpers.h"
+#include "util/helpers/fullEnumToValueArrayChecker.h"
 #include "util/console/consoleInterface.h"
 #include "util/math/constantsAndMacros.h"
 
@@ -138,15 +139,8 @@ namespace Cozmo {
   CONSOLE_VAR(f32,  kFaceTrackingMaxPoseChange_mm,       "Vision.FaceDetection", 10.f);
   CONSOLE_VAR(bool, kIgnoreFacesBelowRobot,              "Vision.FaceDetection", true);
   
-  
-  // Vision processing scheduler (COZMO-3218) will probably affects these
-  CONSOLE_VAR_RANGED(u8, kMarkerDetectionFrequency, "Vision.Performance", 1, 1, 10);
-  CONSOLE_VAR_RANGED(u8, kOverheadEdgeDetectionFrequency, "Vision.Performance", 1, 1, 10);
-  
   namespace {
     // These are initialized from Json config:
-    // NOTE: Vision processing scheduler (COZMO-3218) will probably affects the (need for) frequency
-    u8 kQualityCheckFrequency = 15;
     u8 kTooDarkValue   = 15;
     u8 kTooBrightValue = 230;
     f32 kLowPercentile = 0.10f;
@@ -228,7 +222,6 @@ namespace Cozmo {
     {
       // Set up auto-exposure
       const Json::Value& imageQualityConfig = config["ImageQuality"];
-      GET_JSON_PARAMETER(imageQualityConfig, "CheckFrequency", kQualityCheckFrequency);
       GET_JSON_PARAMETER(imageQualityConfig, "TooBrightValue",      kTooBrightValue);
       GET_JSON_PARAMETER(imageQualityConfig, "TooDarkValue",        kTooDarkValue);
       GET_JSON_PARAMETER(imageQualityConfig, "MeterFromDetections", kMeterFromDetections);
@@ -279,6 +272,48 @@ namespace Cozmo {
       PRINT_NAMED_ERROR("VisionSystem.Init.PetTrackerInitFailed", "");
       return petTrackerInitResult;
     }
+    
+    if(!config.isMember("InitialModeSchedules"))
+    {
+      PRINT_NAMED_ERROR("VisionSystem.Init.MissingInitialModeSchedulesConfigField", "");
+      return RESULT_FAIL;
+    }
+    
+    const Json::Value& modeSchedulesConfig = config["InitialModeSchedules"];
+    
+    for(s32 modeIndex = 0; modeIndex < (s32)VisionMode::Count; ++modeIndex)
+    {
+      const VisionMode mode = (VisionMode)modeIndex;
+      const char* modeStr = EnumToString(mode);
+      
+      if(modeSchedulesConfig.isMember(modeStr))
+      {
+        const Json::Value& jsonSchedule = modeSchedulesConfig[modeStr];
+        if(jsonSchedule.isArray())
+        {
+          std::vector<bool> schedule;
+          schedule.reserve(jsonSchedule.size());
+          for(auto jsonIter = jsonSchedule.begin(); jsonIter != jsonSchedule.end(); ++jsonIter)
+          {
+            schedule.push_back(jsonIter->asBool());
+          }
+          AllVisionModesSchedule::SetDefaultSchedule(mode, VisionModeSchedule(std::move(schedule)));
+        }
+        else if(jsonSchedule.isInt())
+        {
+          AllVisionModesSchedule::SetDefaultSchedule(mode, VisionModeSchedule((jsonSchedule.asInt())));
+        }
+        else
+        {
+          PRINT_NAMED_ERROR("VisionSystem.Init.UnrecognizedModeScheduleValue",
+                            "Mode:%s Expecting int or array of bools", modeStr);
+          return RESULT_FAIL;
+        }
+      }
+    }
+    
+    // Put the default schedule on the stack. We will never pop this.
+    _modeScheduleStack.push_front(AllVisionModesSchedule());
     
     _markerToTrack.Clear();
     _newMarkerToTrack.Clear();
@@ -433,6 +468,19 @@ namespace Cozmo {
 #pragma mark --- Mode Controls ---
 #endif
 
+  Result VisionSystem::PushNextModeSchedule(AllVisionModesSchedule&& schedule)
+  {
+    _nextSchedules.push({true, std::move(schedule)});
+    return RESULT_OK;
+  }
+
+  
+  Result VisionSystem::PopModeSchedule()
+  {
+    _nextSchedules.push({false, AllVisionModesSchedule()});
+    return RESULT_OK;
+  }
+  
   Result VisionSystem::SetNextMode(VisionMode mode, bool enable)
   {
     _nextModes.push({mode, enable});
@@ -3129,6 +3177,28 @@ namespace Cozmo {
       _nextModes.pop();
     }
     
+    while(!_nextSchedules.empty())
+    {
+      const auto entry = _nextSchedules.front();
+
+      const bool isPush = entry.first;
+      if(isPush)
+      {
+        const AllVisionModesSchedule& schedule = entry.second;
+        _modeScheduleStack.push_front(schedule);
+      }
+      else if(_modeScheduleStack.size() > 1)
+      {
+        _modeScheduleStack.pop_front();
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("VisionSystem.Update.NotPoppingLastScheduleInStack", "");
+      }
+      
+      _nextSchedules.pop();
+    }
+    
     // Lots of the processing below needs a grayscale version of the image:
     Vision::Image inputImageGray = inputImage.ToGray();
     
@@ -3294,34 +3364,27 @@ namespace Cozmo {
     return lastResult;
   } // Update()
   
-  bool VisionSystem::ShouldProcessVisionMode(VisionMode mode) const
+  bool VisionSystem::ShouldProcessVisionMode(VisionMode mode)
   {
     if (!IsModeEnabled(mode))
     {
       return false;
     }
-    
-    // These checks will be affected by vision scheduler (COZMO-3218):
-    
-    // Marker processing only gets to happen every nth frame
-    if (VisionMode::DetectingMarkers == mode && (_frameNumber % kMarkerDetectionFrequency) != 0)
+
+    if(_modeScheduleStack.empty())
     {
+      PRINT_NAMED_ERROR("VisionSystem.ShouldProcessVisionMode.EmptyScheduleStack",
+                        "Mode: %s", EnumToString(mode));
       return false;
     }
     
-    if (VisionMode::CheckingQuality == mode && (_frameNumber % kQualityCheckFrequency) != 0)
-    {
-      return false;
-    }
+    // See if it's time to process based on the schedule
+    VisionModeSchedule& modeSchedule = _modeScheduleStack.front().GetScheduleForMode(mode);
     
-    if (VisionMode::DetectingOverheadEdges == mode && (_frameNumber % kOverheadEdgeDetectionFrequency) != 0)
-    {
-      return false;
-    }
+    const bool isTimeToProcess = modeSchedule.CheckTimeToProcessAndAdvance();
     
-    return true;
+    return isTimeToProcess;
   }
-  
   
   Result VisionSystem::SetAutoExposureParams(const s32 subSample,
                                              const u8  midValue,

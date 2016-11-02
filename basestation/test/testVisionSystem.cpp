@@ -29,12 +29,6 @@
 
 extern Anki::Cozmo::CozmoContext* cozmoContext;
 
-namespace Anki {
-namespace Cozmo {
-  extern u8 kMarkerDetectionFrequency;
-}
-}
-
 
 TEST(VisionSystem, MarkerDetectionTests)
 {
@@ -49,16 +43,6 @@ TEST(VisionSystem, MarkerDetectionTests)
   const std::string dataPath = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
                                                                                Util::FileUtils::FullFilePath({"config", "basestation", "vision"}));
   
-  // Make sure we are running every frame so we don't skip test images!
-  // TODO: Should not be necessary once we have COZMO-3218 done (can just indicate via EnableVisionMode)
-  if(Cozmo::kMarkerDetectionFrequency > 1)
-  {
-    PRINT_NAMED_WARNING("VisionSystem.DetectingMarkersInLowLight.AdjustingDetectionFrequency",
-                        "Setting frequency to 1 instead of %d for the purposes of testing",
-                        Cozmo::kMarkerDetectionFrequency);
-    Cozmo::kMarkerDetectionFrequency = 1;
-  }
-  
   // Construct a vision system
   Cozmo::VisionSystem visionSystem(dataPath, nullptr);
   cozmoContext->GetDataLoader()->LoadRobotConfigs();
@@ -72,8 +56,15 @@ TEST(VisionSystem, MarkerDetectionTests)
   ASSERT_EQ(RESULT_OK, result);
   
   // Turn on _only_ marker detection
-  visionSystem.SetNextMode(Cozmo::VisionMode::Idle, true);
-  visionSystem.SetNextMode(Cozmo::VisionMode::DetectingMarkers, true);
+  result = visionSystem.SetNextMode(Cozmo::VisionMode::Idle, true);
+  ASSERT_EQ(RESULT_OK, result);
+  
+  result = visionSystem.SetNextMode(Cozmo::VisionMode::DetectingMarkers, true);
+  ASSERT_EQ(RESULT_OK, result);
+  
+  // Make sure we run on every frame
+  result = visionSystem.PushNextModeSchedule(Cozmo::AllVisionModesSchedule({{Cozmo::VisionMode::DetectingMarkers, Cozmo::VisionModeSchedule(1)}}));
+  ASSERT_EQ(RESULT_OK, result);
   
   // Grab all the test images from "resources/test/lowLightMarkerDetectionTests"
   const std::string testImageDir = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
@@ -219,7 +210,6 @@ TEST(VisionSystem, ImageQuality)
 
   // Make sure we are running every frame so we don't skip test images!
   Json::Value config = cozmoContext->GetDataLoader()->GetRobotVisionConfig();
-  config["ImageQuality"]["CheckFrequency"] = 1;
   
   Result result = visionSystem.Init(config);
   ASSERT_EQ(RESULT_OK, result);
@@ -231,8 +221,14 @@ TEST(VisionSystem, ImageQuality)
   ASSERT_EQ(RESULT_OK, result);
   
   // Turn on _only_ image quality check
-  visionSystem.SetNextMode(Cozmo::VisionMode::Idle, true);
-  visionSystem.SetNextMode(Cozmo::VisionMode::CheckingQuality, true);
+  result = visionSystem.SetNextMode(Cozmo::VisionMode::Idle, true);
+  ASSERT_EQ(RESULT_OK, result);
+  
+  result = visionSystem.SetNextMode(Cozmo::VisionMode::CheckingQuality, true);
+  ASSERT_EQ(RESULT_OK, result);
+  
+  result = visionSystem.PushNextModeSchedule(Cozmo::AllVisionModesSchedule({{Cozmo::VisionMode::CheckingQuality, Cozmo::VisionModeSchedule(1)}}));
+  ASSERT_EQ(RESULT_OK, result);
   
   const std::string testImageDir = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
                                                                                    "test/imageQualityTests");

@@ -347,6 +347,26 @@ namespace Cozmo {
     }
   }
   
+  Result VisionComponent::PushNextModeSchedule(AllVisionModesSchedule&& schedule)
+  {
+    if(nullptr != _visionSystem) {
+      return _visionSystem->PushNextModeSchedule(std::move(schedule));
+    } else {
+      PRINT_NAMED_ERROR("VisionComponent.PushModeSchedule.NullVisionSystem", "");
+      return RESULT_FAIL;
+    }
+  }
+  
+  Result VisionComponent::PopCurrentModeSchedule()
+  {
+    if(nullptr != _visionSystem) {
+      return _visionSystem->PopModeSchedule();
+    } else {
+      PRINT_NAMED_ERROR("VisionComponent.PopModeSchedule.NullVisionSystem", "");
+      return RESULT_FAIL;
+    }
+  }
+  
   bool VisionComponent::IsModeEnabled(VisionMode mode) const
   {
     if(nullptr != _visionSystem) {
