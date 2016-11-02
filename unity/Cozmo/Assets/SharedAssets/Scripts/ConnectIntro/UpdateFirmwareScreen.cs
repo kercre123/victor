@@ -9,7 +9,12 @@ public class UpdateFirmwareScreen : MonoBehaviour {
   private Cozmo.UI.ProgressBar _ProgressBar;
 
   [SerializeField]
-  private float _DoneUpdateDelay = 10.0f;
+  private float _DoneUpdateDelay = 7.0f;
+
+  // Delay after which we disconnect following an OTA. This is to ensure that we DO disconnect (instead of holding onto a stale connection
+  // when the robot reboots really quickly), but delayed so that slower OTAs (like from factory firmware) aren't interrupted when we attempt
+  // to reconnect afterward. Also should be shorter than the 5 second reliable transport timeout that will auto disconnect after the slower OTAs.
+  private const float _kDelayBeforeDisconnect_s = 4.0f;
 
   public bool DoneUpdateDelayInProgress = false;
   private float _StartDelayTime = 0.0f;
@@ -53,11 +58,23 @@ public class UpdateFirmwareScreen : MonoBehaviour {
   }
 
   private IEnumerator NotifyFirmwareComplete(Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete message) {
-    while (Time.time - _StartDelayTime < _DoneUpdateDelay) {
-      float delayPercentage = ((Time.time - _StartDelayTime) / _DoneUpdateDelay);
+    bool disconnectHasTriggered = false;
+    float currentTimeElapsed_s = Time.time - _StartDelayTime;
+    while (currentTimeElapsed_s < _DoneUpdateDelay) {
+      
+      float delayPercentage = (currentTimeElapsed_s / _DoneUpdateDelay);
       _ProgressBar.SetProgress(0.9f + delayPercentage * 0.1f);
+
+
+      if (!disconnectHasTriggered && currentTimeElapsed_s >= _kDelayBeforeDisconnect_s) {
+        RobotEngineManager.Instance.StartIdleTimeout(faceOffTime_s: -1.0f, disconnectTime_s: 0.0f);
+        disconnectHasTriggered = true;
+      }
+        
       yield return null;
+      currentTimeElapsed_s = Time.time - _StartDelayTime;
     }
+
 
     _ProgressBar.SetProgress(1.0f);
 

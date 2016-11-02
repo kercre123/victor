@@ -272,7 +272,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _ProgressBar: {fileID: 11417664}
-  _DoneUpdateDelay: 10
+  _DoneUpdateDelay: 7
   DoneUpdateDelayInProgress: 0
 --- !u!114 &11489320
 MonoBehaviour:
