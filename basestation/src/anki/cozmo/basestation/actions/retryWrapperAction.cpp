@@ -65,6 +65,31 @@ namespace Cozmo {
     SetType(action->GetType());
     SetName("Retry["+action->GetName()+"]");
   }
+
+  RetryWrapperAction::RetryWrapperAction(Robot& robot, IAction* action, AnimationTrigger retryTrigger, u8 numRetries)
+    : RetryWrapperAction(robot, action, RetryCallback{}, numRetries)
+  {
+    _retryCallback = [retryTrigger](const ExternalInterface::RobotCompletedAction&,
+                                    const u8 retryCount,
+                                    AnimationTrigger& retryAnimTrigger) {
+      retryAnimTrigger = retryTrigger;
+      return true;
+    };
+  }
+
+  RetryWrapperAction::RetryWrapperAction(Robot& robot,
+                                         ICompoundAction* action,
+                                         AnimationTrigger retryTrigger,
+                                         u8 numRetries)
+    : RetryWrapperAction(robot, action, RetryCallback{}, numRetries)
+  {
+    _retryCallback = [retryTrigger](const ExternalInterface::RobotCompletedAction&,
+                                    const u8 retryCount,
+                                    AnimationTrigger& retryAnimTrigger) {
+      retryAnimTrigger = retryTrigger;
+      return true;
+    };
+  }
   
   RetryWrapperAction::~RetryWrapperAction()
   {
