@@ -122,6 +122,7 @@ namespace Cozmo {
           _RobotAnimator.OnTurboTransitionAnimationFinished += HandleTurboTransitionAnimationFinished;
 
           _CurrentRobot.EnableDroneMode(true);
+          _CurrentRobot.SetEnableFreeplayLightStates(true);
         }
 
         public override void Exit() {
@@ -131,6 +132,7 @@ namespace Cozmo {
           if (_CurrentRobot != null) {
             _CurrentRobot.StopAllMotors();
             _CurrentRobot.EnableDroneMode(false);
+            _CurrentRobot.SetEnableFreeplayLightStates(false);
           }
           _DroneModeControlsSlide.OnDriveSpeedSegmentValueChanged -= HandleDriveSpeedValueChanged;
           _DroneModeControlsSlide.OnDriveSpeedSegmentChanged -= HandleDriveSpeedFamilyChanged;
