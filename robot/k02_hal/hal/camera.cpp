@@ -334,38 +334,11 @@ void DMA0_IRQHandler(void)
   DMA_CDNE = DMA_CDNE_CDNE(0); // Clear done channel 0
   DMA_CINT = 0;   // Clear interrupt channel 0
 
-  static bool timingVerified_ = false;
-  if (!timingVerified_) {
-    // The camera will send one entire frame (around 480 lines) at the wrong rate
-    // So let that frame pass before we attempt to synchronize
-    static u16 lineskip = TOTAL_ROWS;
-    if (lineskip--)
-      return;
-
-    // Verify the camera timing (across 9 lines, first one just lines up edge)
-    uint32_t minimum = ~0;
-    uint32_t base = 0;
-
-    for (int i = 0; i < 4; i++) {
-      while (~GPIO_READ(GPIO_CAM_HSYNC) & PIN_CAM_HSYNC) ;
-      while (GPIO_READ(GPIO_CAM_HSYNC) & PIN_CAM_HSYNC) ;
-
-      uint32_t now = GetMicroCounter();
-      uint32_t delta = now - base;
-      base = now;
-      
-      if (delta < minimum) minimum = delta;
-    }
-
-    static const uint32_t TARGET_TIMING = 1000000 / DROPS_PER_SECOND;
-
-    // Verify that we are within acceptable timing for camera
-    int offspec = minimum - TARGET_TIMING;
-    HAL_ASSERT(ABS(offspec) <= 2);
-    timingVerified_ = true;
-
-    return ;
-  }
+  // The camera will send one entire frame (around 480 lines) at the wrong rate
+  // So let that frame pass before we attempt to synchronize
+  static u16 lineskip = TOTAL_ROWS;
+  if (lineskip--)
+    return;
 
   // NOTE: EVERYTHING HERE DOWN IS EXTREMELY TIMING SENSITIVE
   // DO NOT CHANGE UNLESS YOU EXPECT EVERYTHING TO GO CRAZY
@@ -436,6 +409,9 @@ void FTM2_IRQHandler(void)
     frameNumber++;
   }
   dmaBuff_[BYTES_PER_PIX*(TOTAL_COLS-1)] = 1;
+
+  // Verify HSYNC is deasserted
+  HAL_ASSERT(~GPIO_READ(GPIO_CAM_HSYNC) & PIN_CAM_HSYNC);
 
   // Run all the register-hitting stuff
   HALExec();
