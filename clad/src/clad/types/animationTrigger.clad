@@ -216,6 +216,7 @@ enum int_32 AnimationTrigger
   ReactToBlockRetryPickup,
   ReactToCliff,
   ReactToCliffDetectorStop,
+  ReactToMotorCalibration,
   ReactToNewBlockAsk,
   ReactToNewBlockBig,
   ReactToNewBlockSmall,

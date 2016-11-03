@@ -211,6 +211,7 @@ namespace Anki {
         isCalibrated_ = false;
         potentialBurnoutStartTime_ms_ = 0;
         Messages::SendMotorCalibrationMsg(MOTOR_LIFT, true, autoStarted);
+        angleErrorSum_ = 0.f;
       }
 
       bool IsCalibrated()

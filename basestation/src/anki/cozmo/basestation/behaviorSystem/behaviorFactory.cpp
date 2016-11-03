@@ -40,6 +40,7 @@
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactAcknowledgeCubeMoved.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToCliff.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToFrustration.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToMotorCalibration.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToOnCharger.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPickup.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPoke.h"
@@ -266,6 +267,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::ReactToUnexpectedMovement:
     {
       newBehavior = new BehaviorReactToUnexpectedMovement(robot, config);
+      break;
+    }
+    case BehaviorType::ReactToMotorCalibration:
+    {
+      newBehavior = new BehaviorReactToMotorCalibration(robot, config);
       break;
     }
     case BehaviorType::PickUpCube:

@@ -40,10 +40,6 @@ Result BehaviorReactToUnexpectedMovement::InitInternalReactionary(Robot& robot)
   // Make Cozmo more frustrated if he keeps running into things/being turned
   robot.GetMoodManager().TriggerEmotionEvent("ReactToUnexpectedMovement", MoodManager::GetCurrentTimeInSeconds());
   
-  robot.AbortDrivingToPose();
-  robot.GetMoveComponent().StopAllMotors();
-  robot.GetActionList().Cancel();
-
   StartActing(new TriggerLiftSafeAnimationAction(robot, AnimationTrigger::ReactToUnexpectedMovement), [this](){
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedToUnexpectedMovement);
   });

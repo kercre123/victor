@@ -216,9 +216,14 @@ void RobotToEngineImplMessaging::HandleMotorCalibration(const AnkiEvent<RobotInt
   const MotorCalibration& payload = message.GetData().Get_motorCalibration();
   PRINT_NAMED_INFO("HandleMotorCalibration.Recvd", "Motor %d, started %d, autoStarted %d", (int)payload.motorID, payload.calibStarted, payload.autoStarted);
   
-  if (payload.autoStarted && payload.calibStarted) {
-    // Motor hit a limit and calibration was automatically triggered
-    PRINT_NAMED_EVENT("HandleMotorCalibration.AutoCalib", "%s", EnumToString(payload.motorID));
+  if (payload.calibStarted) {
+    Util::sEventF("HandleMotorCalibration.Start",
+                  {{DDATA, TO_DDATA_STR(payload.autoStarted)}},
+                  "%s", EnumToString(payload.motorID));
+  } else {
+    Util::sEventF("HandleMotorCalibration.Complete",
+                  {{DDATA, TO_DDATA_STR(payload.autoStarted)}},
+                  "%s", EnumToString(payload.motorID));
   }
   
   if( payload.motorID == MotorID::MOTOR_LIFT && payload.calibStarted && robot->IsCarryingObject() ) {

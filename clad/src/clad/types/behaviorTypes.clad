@@ -63,6 +63,7 @@ enum uint_8 BehaviorType {
   AcknowledgeFace,
   DrivePath,
   ReactToUnexpectedMovement,
+  ReactToMotorCalibration,
   PickUpCube,
   CantHandleTallStack,
   OnboardingShowCube,
