@@ -28,6 +28,6 @@ MonoBehaviour:
   _GenericCubeItemData:
     _ItemId: genericCube
     _LocKey: item.cube
-    _ItemIcon: {fileID: 21300000, guid: 5fed27c841207458a9470f484b38130c, type: 3}
+    _ItemIcon: {fileID: 21300000, guid: 9f62844d158494b558d138ab20d424a2, type: 3}
     _StartingAmount: 0
   _MaxInventoryLimit: 999
