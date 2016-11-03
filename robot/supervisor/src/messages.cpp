@@ -873,6 +873,9 @@ namespace Anki {
       {
         // TODO honor this in simulator
       }
+      void Process_setAccessoryDiscovery(const SetAccessoryDiscovery& msg) {
+        // Nothing to do here
+      }
       void Process_setPropSlot(const SetPropSlot& msg)
       {
         HAL::AssignSlot(msg.slot, msg.factory_id);
