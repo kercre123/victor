@@ -32,6 +32,8 @@ namespace Cozmo {
 
 const char* kLocalLogChannel = "Actions";
 
+// Static Method
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SayTextAction::LoadMetadata(Util::Data::DataPlatform& dataPlatform)
 {
   if (!_intentConfigs.empty()) {
@@ -86,7 +88,8 @@ bool SayTextAction::LoadMetadata(Util::Data::DataPlatform& dataPlatform)
   
   return true;
 }
-  
+ 
+// Public Methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SayTextAction::SayTextAction(Robot& robot,
                              const std::string& text,
@@ -104,6 +107,14 @@ SayTextAction::SayTextAction(Robot& robot,
 , _ttsOperationId(TextToSpeechComponent::kInvalidOperationId)
 , _animation("SayTextAnimation")
 {
+  PRINT_CH_INFO(kLocalLogChannel,
+                "SayTextAction.InitWithStyle",
+                "Text '%s' Style '%s' DurScalar %f Pitch %f",
+                Util::HidePersonallyIdentifiableInfo(_text.c_str()),
+                EnumToString(_style),
+                _durationScalar,
+                _voicePitch);
+  
   GenerateTtsAudio();
 } // SayTextAction()
 
@@ -117,13 +128,6 @@ SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTex
 , _ttsOperationId(TextToSpeechComponent::kInvalidOperationId)
 , _animation("SayTextAnimation")
 {
-  if (DEBUG_SAYTEXT_ACTION) {
-    PRINT_CH_INFO(kLocalLogChannel,
-                  "SayTextAction.Init",
-                  "Text '%s' SayTextIntent '%s'",
-                  Util::HidePersonallyIdentifiableInfo(_text.c_str()), EnumToString(intent));
-  }
-  
   // Get metadata
   const auto it = _intentConfigs.find( intent );
   if ( it != _intentConfigs.end() ) {
@@ -144,6 +148,15 @@ SayTextAction::SayTextAction(Robot& robot, const std::string& text, const SayTex
   else {
     PRINT_NAMED_ERROR("SayTextAction.CanNotFind.SayTextIntentConfig", "%s", EnumToString(intent));
   }
+  
+  PRINT_CH_INFO(kLocalLogChannel,
+                "SayTextAction.InitWithIntent",
+                "Text '%s' Intent '%s' Style '%s' DurScalar %f Pitch %f",
+                Util::HidePersonallyIdentifiableInfo(_text.c_str()),
+                EnumToString(intent),
+                EnumToString(_style),
+                _durationScalar,
+                _voicePitch);
   
   GenerateTtsAudio();
 } // SayTextAction()
