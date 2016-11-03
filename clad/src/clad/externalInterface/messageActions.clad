@@ -379,6 +379,21 @@ message TurnTowardsFace {
     uint_8   robotID
 }
 
+// TurnTowardsImagePoint
+message TurnTowardsImagePoint {
+    uint_32  timestamp, // Of image
+    float_32 x,         // In pixels
+    float_32 y,         // In pixels
+
+    // A value of 0 means 'Don't care' (i.e. use engine's default value)
+    float_32 maxPanSpeed_radPerSec = 0.0,
+    float_32 panAccel_radPerSec2 = 0.0,
+    float_32 panTolerance_rad = 0.0,
+    float_32 maxTiltSpeed_radPerSec = 0.0,
+    float_32 tiltAccel_radPerSec2 = 0.0,
+    float_32 tiltTolerance_rad = 0.0
+}
+
 // TurnTowardsLastFacePose
 //  Tell the robot to turn and tilt his head to face the pose of the last known face
 message TurnTowardsLastFacePose {
@@ -519,6 +534,7 @@ union RobotActionUnion {
   TraverseObject            traverseObject,
   TurnInPlace               turnInPlace,
   TurnTowardsFace           turnTowardsFace,
+  TurnTowardsImagePoint     turnTowardsImagePoint,
   TurnTowardsLastFacePose   turnTowardsLastFacePose,
   TurnTowardsObject         turnTowardsObject,
   TurnTowardsPose           turnTowardsPose,

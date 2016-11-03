@@ -585,6 +585,22 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnToward
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnTowardsImagePoint& msg)
+{
+  TurnTowardsImagePointAction* action = new TurnTowardsImagePointAction(robot, Point2f(msg.x, msg.y), msg.timestamp);
+  
+  action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
+  action->SetPanAccel(msg.panAccel_radPerSec2);
+  action->SetPanTolerance(msg.panTolerance_rad);
+  action->SetMaxTiltSpeed(msg.maxTiltSpeed_radPerSec);
+  action->SetTiltAccel(msg.tiltAccel_radPerSec2);
+  action->SetTiltTolerance(msg.tiltTolerance_rad);
+  
+  return action;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnTowardsLastFacePose& msg)
 {
   TurnTowardsLastFacePoseAction* action = new TurnTowardsLastFacePoseAction(robot, Radians(msg.maxTurnAngle_rad), msg.sayName);
@@ -970,6 +986,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(traverseObject,           TraverseObject,           1),
       DEFINE_HANDLER(turnInPlace,              TurnInPlace,              0),
       DEFINE_HANDLER(turnTowardsFace,          TurnTowardsFace,          0),
+      DEFINE_HANDLER(turnTowardsImagePoint,    TurnTowardsImagePoint,    0),
       DEFINE_HANDLER(turnTowardsLastFacePose,  TurnTowardsLastFacePose,  0),
       DEFINE_HANDLER(turnTowardsObject,        TurnTowardsObject,        0),
       DEFINE_HANDLER(turnTowardsPose,          TurnTowardsPose,          0),

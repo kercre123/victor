@@ -107,6 +107,12 @@ namespace Anki {
   { return y + height/2; }
 
   template<typename T>
+  Point<2,T> Rectangle<T>::GetMidPoint() const
+  {
+    return Point<2,T>(GetXmid(), GetYmid());
+  }
+  
+  template<typename T>
   void Rectangle<T>::GetQuad(Quadrilateral<2,T>& quad) const
   {
     quad[Quad::TopLeft].x() = x;

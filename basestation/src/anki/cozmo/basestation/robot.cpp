@@ -4235,5 +4235,28 @@ Result Robot::ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, 
   return RESULT_OK;
 }
   
+Result Robot::ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const TimeStamp_t timestamp,
+                                                 Radians& absPanAngle, Radians& absTiltAngle) const
+{
+  const Vision::CameraCalibration* calib = GetVisionComponent().GetCamera().GetCalibration();
+  const Point2f pt = imgPoint - calib->GetCenter();
+  
+  RobotPoseStamp poseStamp;
+  TimeStamp_t t;
+  Result result = GetPoseHistory()->ComputePoseAt(timestamp, t, poseStamp);
+  if(RESULT_OK != result)
+  {
+    PRINT_NAMED_WARNING("Robot.ComputeTurnTowardsImagePointAngles.ComputeHistPoseFailed", "t=%u", timestamp);
+    absPanAngle = GetPose().GetRotation().GetAngleAroundZaxis();
+    absTiltAngle = GetHeadAngle();
+    return result;
+  }
+  
+  absTiltAngle = std::atan2f(-pt.y(), calib->GetFocalLength_y()) + poseStamp.GetHeadAngle();
+  absPanAngle  = std::atan2f(-pt.x(), calib->GetFocalLength_x()) + poseStamp.GetPose().GetRotation().GetAngleAroundZaxis();
+  
+  return RESULT_OK;
+}
+
 } // namespace Cozmo
 } // namespace Anki

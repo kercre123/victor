@@ -71,6 +71,8 @@ namespace Anki {
     inline Point<2,T> GetBottomLeft() const;
     inline Point<2,T> GetBottomRight() const;
     
+    inline Point<2,T> GetMidPoint() const;
+    
     void GetQuad(Quadrilateral<2,T>& quad) const;
     
     Rectangle<T> Intersect(const Rectangle<T>& other) const;

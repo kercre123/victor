@@ -118,6 +118,11 @@ namespace Anki {
       HandleRobotObservedFace(msg);
     }
     
+    void UiGameController::HandleRobotObservedPetBase(ExternalInterface::RobotObservedPet const& msg)
+    {
+      HandleRobotObservedPet(msg);
+    }
+    
     void UiGameController::HandleLoadedKnownFaceBase(Vision::LoadedKnownFace const& msg)
     {
       HandleLoadedKnownFace(msg);
@@ -466,6 +471,9 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGame::Tag::RobotObservedFace:
             HandleRobotObservedFaceBase(message.Get_RobotObservedFace());
+            break;
+          case ExternalInterface::MessageEngineToGame::Tag::RobotObservedPet:
+            HandleRobotObservedPetBase(message.Get_RobotObservedPet());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::UiDeviceAvailable:
             HandleUiDeviceConnectionBase(message.Get_UiDeviceAvailable());

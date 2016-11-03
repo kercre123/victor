@@ -738,26 +738,12 @@ bool TrackPetFaceAction::GetAngles(Radians& absPanAngle, Radians& absTiltAngle)
   }
   _lastFaceUpdate = petFace->GetTimeStamp();
   
-  const Vision::CameraCalibration* calib = _robot.GetVisionComponent().GetCamera().GetCalibration();
-  const f32 x = petFace->GetRect().GetXmid() - calib->GetCenter_x();
-  const f32 y = petFace->GetRect().GetYmid() - calib->GetCenter_y();
-  
-  RobotPoseStamp poseStamp;
-  TimeStamp_t t;
-  Result result = _robot.GetPoseHistory()->ComputePoseAt(petFace->GetTimeStamp(), t, poseStamp);
+  Result result = _robot.ComputeTurnTowardsImagePointAngles(petFace->GetRect().GetMidPoint(), petFace->GetTimeStamp(),
+                                                            absPanAngle, absTiltAngle);
   if(RESULT_OK != result)
   {
-    PRINT_NAMED_WARNING("TrackpetFaceAction.GetAngles.ComputeHistPoseFailed", "t=%u", petFace->GetTimeStamp());
+    PRINT_NAMED_WARNING("TrackpetFaceAction.GetAngles.ComputeTurnTowardsImagePointAnglesFailed", "t=%u", petFace->GetTimeStamp());
     return false;
-  }
-  
-  absTiltAngle = std::atan2f(-y, calib->GetFocalLength_y()) + poseStamp.GetHeadAngle();
-  absPanAngle  = std::atan2f(-x, calib->GetFocalLength_x()) + poseStamp.GetPose().GetRotation().GetAngleAroundZaxis();
-  
-  if(DEBUG_TRACKING_ACTIONS)
-  {
-    PRINT_CH_INFO(kLogChannelName, "TrackPetFaceAction.GetAngles.PosInImageRelToCenter",
-                  "x=%f y=%f [f=(%f,%f)]", x, y, calib->GetFocalLength_x(), calib->GetFocalLength_y());
   }
   
   return true;

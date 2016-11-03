@@ -92,6 +92,30 @@ namespace Anki {
         // For exporting formatted log of mfg test data from robot
         FactoryTestLogger _factoryTestLogger;
         
+        struct ObservedImageCentroid {
+          Point2f     point;
+          TimeStamp_t timestamp;
+          
+          template<class MsgType>
+          void SetFromMessage(const MsgType& msg)
+          {
+            point.x() = msg.img_topLeft_x + msg.img_width*0.5f;
+            point.y() = msg.img_topLeft_y + msg.img_height*0.5f;
+            timestamp = msg.timestamp;
+          }
+          
+        } _lastObservedImageCentroid;
+        
+        
+        // RobotObservedPet doesn't follow same naming convention for top left (x,y) :-/  (COZMO-6703)
+        template<>
+        void ObservedImageCentroid::SetFromMessage(const ExternalInterface::RobotObservedPet& msg)
+        {
+          point.x() = msg.img_x + msg.img_width * 0.5f;
+          point.y() = msg.img_y + msg.img_height * 0.5f;
+          timestamp = msg.timestamp;
+        }
+        
       } // private namespace
     
       // ======== Message handler callbacks =======
@@ -182,6 +206,8 @@ namespace Anki {
                             msg.img_topLeft_x + msg.img_width/4,
                             msg.img_topLeft_y + msg.img_height/2);
 
+        // Record centroid of observation in image
+        _lastObservedImageCentroid.SetFromMessage(msg);
       }
       
     }
@@ -190,8 +216,17 @@ namespace Anki {
     {
       //printf("RECEIVED FACE OBSERVED: faceID %llu\n", msg.faceID);
       // _lastFace = msg;
+      
+      // Record centroid of observation in image
+      _lastObservedImageCentroid.SetFromMessage(msg);
     }
 
+    void WebotsKeyboardController::HandleRobotObservedPet(ExternalInterface::RobotObservedPet const& msg)
+    {
+      // Record centroid of observation in image
+      _lastObservedImageCentroid.SetFromMessage(msg);
+    }
+    
     void WebotsKeyboardController::HandleLoadedKnownFace(Vision::LoadedKnownFace const& msg)
     {
       printf("HandleLoadedKnownFace: '%s' (ID:%d) first enrolled %zd seconds ago, last updated %zd seconds ago, last seen %zd seconds ago\n",
@@ -307,6 +342,8 @@ namespace Anki {
         PRINT_CH_INFO("Keyboard", "WebotsCtrlKeyboard.Init.DoAutoBlockpool", "%d", doAutoBlockpoolField->getSFBool());
         EnableAutoBlockpool(doAutoBlockpoolField->getSFBool());
       }
+      
+      _lastObservedImageCentroid.point = {-1.f,-1.f};
     }    
     
     WebotsKeyboardController::WebotsKeyboardController(s32 step_time_ms) :
@@ -324,6 +361,7 @@ namespace Anki {
         printf("               Move head up/down:  s/x\n");
         printf("             Lift low/high/carry:  1/2/3\n");
         printf("            Head down/forward/up:  4/5/6\n");
+        printf("  Turn towards last obs centroid:  0\n");
         printf("            Request *game* image:  i\n");
         printf("           Request *robot* image:  Alt+i\n");
         printf("      Toggle *game* image stream:  Shift+i\n");
@@ -721,6 +759,22 @@ namespace Anki {
                 break;
               }
                 
+              case '0':
+              {
+                if(_lastObservedImageCentroid.point.AllGTE(0.f))
+                {
+                  using namespace ExternalInterface;
+                  TurnTowardsImagePoint msg;
+                  
+                  msg.x = _lastObservedImageCentroid.point.x();
+                  msg.y = _lastObservedImageCentroid.point.y();
+                  msg.timestamp = _lastObservedImageCentroid.timestamp;
+                  
+                  SendMessage(MessageGameToEngine(std::move(msg)));
+                }
+                break;
+              }
+            
               case '1': //set lift to low dock height
               {
                 SendMoveLiftToHeight(LIFT_HEIGHT_LOWDOCK, liftSpeed, liftAccel, liftDurationSec);

@@ -274,6 +274,12 @@ public:
   // and height.
   Result ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, f32 yTolFrac) const;
   
+  // Figure out absolute body pan and head tilt angles to turn towards a point in an image.
+  // Note that the head tilt is approximate because this function makes the simplifying
+  // assumption that the head rotates around the camera center.
+  Result ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const TimeStamp_t timestamp,
+                                            Radians& absPanAngle, Radians& absTiltAngle) const;
+  
   const PoseOriginList&  GetPoseOriginList() const { return _poseOriginList; }
   
   ObjectPoseConfirmer& GetObjectPoseConfirmer() { assert(_objectPoseConfirmerPtr); return *_objectPoseConfirmerPtr; }
