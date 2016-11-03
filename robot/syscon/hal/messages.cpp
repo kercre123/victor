@@ -84,10 +84,6 @@ static void Process_setPropSlot(const SetPropSlot& msg)
   Radio::assignProp(msg.slot, msg.factory_id);
 }
 
-static void Process_setAccessoryDiscovery(const SetAccessoryDiscovery& msg) {
-  Radio::enableDiscovery(msg.enable);
-}
-
 static void Process_bodyEnterOTA(const RobotInterface::OTA::BodyEnterOTA& msg) {
   Battery::setOperatingMode(Anki::Cozmo::BODY_OTA_MODE);
 }

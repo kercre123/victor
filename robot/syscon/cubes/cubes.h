@@ -66,7 +66,6 @@ namespace Radio {
   void assignProp(unsigned int slot, uint32_t accessory);
   void setLightGamma(uint8_t gamma);
   void setWifiChannel(int8_t wifiChannel);
-  void enableDiscovery(bool enable);
 }
 
 #endif

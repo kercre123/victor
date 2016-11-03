@@ -384,7 +384,7 @@ union EngineToRobot
   SetBodyRadioMode              setBodyRadioMode            = 0x07,
   //          FREE SLOT!!!                                  = 0x08,
   //          FREE SLOT!!!                                  = 0x09,
-  SetAccessoryDiscovery         setAccessoryDiscovery       = 0x0A,
+  //          FREE SLOT!!!                                  = 0x0A,
   SetHeadlight                  setHeadlight                = 0x0B,
   SetCubeGamma                  setCubeGamma                = 0x0C,
   OTA::BodyEnterOTA             bodyEnterOTA                = 0x0D,

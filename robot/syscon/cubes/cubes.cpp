@@ -95,7 +95,6 @@ static const UpAxis idxToUpAxis[3][2] = { {XPositive, XNegative},
                                           {YPositive, YNegative},
                                           {ZPositive, ZNegative} };
 static uint32_t _halTimeStamp = 0;
-static bool sendDiscovery;
 
 void Radio::init() {
   light_gamma = 0x100;
@@ -157,8 +156,6 @@ void Radio::advertise(void) {
   NVIC_EnableIRQ(RTC0_IRQn);
 
   NRF_RTC0->TASKS_START = 1;
-  
-  sendDiscovery = true;
 }
 
 void Radio::setWifiChannel(int8_t channel) {
@@ -252,11 +249,6 @@ static void SendObjectConnectionState(int slot)
   msg.device_type = accessories[slot].model;
   RobotInterface::SendMessage(msg);
 }
-
-void Radio::enableDiscovery(bool enable) {
-  sendDiscovery = enable;
-}
-
 
 void UpdatePropState(uint8_t id, int ax, int ay, int az, int shocks,
                 uint8_t tapTime, int8_t tapNeg, int8_t tapPos) {
@@ -467,13 +459,11 @@ void uesb_event_handler(uint32_t flags)
       #endif
       
       if (slot < 0) {
-        if (sendDiscovery) {
-          ObjectDiscovered msg;
-          msg.device_type = advert.model;
-          msg.factory_id = advert.id;
-          msg.rssi = rx_payload.rssi;
-          RobotInterface::SendMessage(msg);
-        }
+        ObjectDiscovered msg;
+        msg.device_type = advert.model;
+        msg.factory_id = advert.id;
+        msg.rssi = rx_payload.rssi;
+        RobotInterface::SendMessage(msg);
 
         // Do not auto allocate the cube
         break ;

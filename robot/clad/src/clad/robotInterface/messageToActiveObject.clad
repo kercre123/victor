@@ -8,11 +8,6 @@
 namespace Anki {
 namespace Cozmo {
 
-  message SetAccessoryDiscovery
-  {
-    bool enable
-  }
-
   message CubeID
   {
     uint_32    objectID,
