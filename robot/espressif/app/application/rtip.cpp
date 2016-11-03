@@ -33,7 +33,7 @@ bool SendMessage(const u8* buffer, const u16 bufferSize, const u8 tag)
     if (i2spiQueueMessage(buffer, bufferSize)) return true;
     else
     {
-      AnkiDebug( 216, "RTIP.SendMessage.Failed", 199, "SendMessage: Couldn't forward message %x[%d] to RTIP", 2, buffer[0], bufferSize);
+      AnkiDebug( 216, "RTIP.SendMessage.Failed", 199, "SendMessage: Couldn't forward message %x[%d] to RTIP. I2SPI mode = %d", 3, buffer[0], bufferSize, i2spiGetMode());
       return false;
     }
   }
@@ -46,7 +46,7 @@ bool SendMessage(const u8* buffer, const u16 bufferSize, const u8 tag)
     if (i2spiQueueMessage(msgBuffer, bufferSize+1)) return true;
     else
     {
-      AnkiDebug( 216, "RTIP.SendMessage.Failed", 199, "SendMessage: Couldn't forward message %x[%d] to RTIP", 2, tag, bufferSize+1);
+      AnkiDebug( 216, "RTIP.SendMessage.Failed", 199, "SendMessage: Couldn't forward message %x[%d] to RTIP. I2SPI mode = %d", 3, tag, bufferSize+1, i2spiGetMode());
       return false;
     }
   }
@@ -59,7 +59,7 @@ bool SendMessage(RobotInterface::EngineToRobot& msg)
 
 void Update()
 {
-  static u32 lastMsgTime;
+  static u32 lastMsgTime = 0;
   RobotInterface::EngineToRobot msg;
   i2spiUpdateRtipQueueEstimate();
   u8* buffer = msg.GetBuffer();
@@ -108,9 +108,19 @@ void Update()
   
   if (((now - lastMsgTime) > RTIP_MESSAGE_TIMEOUT) && (i2spiGetMode() == I2SPI_NORMAL)) // Die if lost sync
   {
+    const RobotInterface::RobotErrorCode err = (lastMsgTime == 0) ? RobotInterface::REC_NO_K02 : RobotInterface::REC_I2SPI_Lost;
+    
+    if (clientConnected())
+    {
+      RobotInterface::RobotErrorReport rer;
+      rer.error = err;
+      rer.fatal = true;
+      RobotInterface::SendMessage(rer);
+    }
+    
     CrashRecord cr;
     cr.reporter  = RobotInterface::WiFiCrash;
-    cr.errorCode = RobotInterface::REC_I2SPI_Lost;
+    cr.errorCode = err;
     crashHandlerPutReport(&cr);
     system_deep_sleep(0);
   }

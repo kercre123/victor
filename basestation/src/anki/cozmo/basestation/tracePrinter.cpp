@@ -179,6 +179,11 @@ void TracePrinter::HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngi
       Util::sErrorF("RobotFirmware.CrashReport.Data", {{DDATA, base64Crash.c_str()}},
                     "Crash Dump Type %s", CrashSourceToString(report.which));
     }
+    else
+    {
+      Util::sErrorF("RobotFirmware.CrashReport.code", {{DDATA, TO_DDATA_STR(report.errorCode)}},
+                    "errorCode = %d", report.errorCode);
+    }
   }
   if (_lastLogRequested < kMaxCrashLogs)
   {

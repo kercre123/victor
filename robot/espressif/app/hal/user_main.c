@@ -51,8 +51,6 @@ static void system_init_done(void)
   foregroundTaskInit();
 
   i2spiInit();
-  
-  clientAccept(true);
 }
 
 static bool wifi_monitor_connection_status(uint32_t param)

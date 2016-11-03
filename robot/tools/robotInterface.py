@@ -302,6 +302,12 @@ def SubscribeToTag(tag, callback):
     else:
         dispatcher.ReceiveDataSubscribers[tag] = [callback]
 
+def UnsubscribeFromTag(tag, callback):
+    global dispatcher
+    if tag in dispatcher.ReceiveDataSubscribers:
+        if callback in dispatcher.ReceiveDataSubscribers[tag]:
+            dispatcher.ReceiveDataSubscribers[tag].remove(callback)
+
 def Step():
     "Step transport thread if not forked"
     global dispatcher

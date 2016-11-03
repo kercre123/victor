@@ -644,8 +644,8 @@ void dmaisrBootloader(void* arg)
         txBuf[word] = self.pendingFWB[self.bootloaderCommandPhase++];
         if (self.bootloaderCommandPhase >= sizeof(FirmwareBlock)/sizeof(uint32_t))
         {
-          self.bootloaderCommandPhase = BLCP_none;
           self.pendingFWB = NULL;
+          self.bootloaderCommandPhase = BLCP_none;
         }
       }
       else if (self.bootloaderCommandPhase == BLCP_flash_header)
