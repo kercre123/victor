@@ -99,22 +99,12 @@ namespace Anki {
           template<class MsgType>
           void SetFromMessage(const MsgType& msg)
           {
-            point.x() = msg.img_topLeft_x + msg.img_width*0.5f;
-            point.y() = msg.img_topLeft_y + msg.img_height*0.5f;
+            point.x() = msg.img_rect.x_topLeft + msg.img_rect.width*0.5f;
+            point.y() = msg.img_rect.y_topLeft + msg.img_rect.height*0.5f;
             timestamp = msg.timestamp;
           }
           
         } _lastObservedImageCentroid;
-        
-        
-        // RobotObservedPet doesn't follow same naming convention for top left (x,y) :-/  (COZMO-6703)
-        template<>
-        void ObservedImageCentroid::SetFromMessage(const ExternalInterface::RobotObservedPet& msg)
-        {
-          point.x() = msg.img_x + msg.img_width * 0.5f;
-          point.y() = msg.img_y + msg.img_height * 0.5f;
-          timestamp = msg.timestamp;
-        }
         
       } // private namespace
     
@@ -196,15 +186,15 @@ namespace Anki {
         //dispStr += std::to_string(msg.objectID);
         std::string dispStr("Type=" + std::string(ObjectTypeToString(msg.objectType)) + "\nID=" + std::to_string(msg.objectID));
         cozmoCam_->drawText(dispStr,
-                            msg.img_topLeft_x + msg.img_width/4 + 1,
-                            msg.img_topLeft_y + msg.img_height/2 + 1);
+                            msg.img_rect.x_topLeft + msg.img_rect.width/4 + 1,
+                            msg.img_rect.y_topLeft + msg.img_rect.height/2 + 1);
         
         cozmoCam_->setColor(0xff0000);
-        cozmoCam_->drawRectangle(msg.img_topLeft_x, msg.img_topLeft_y,
-                                 msg.img_width, msg.img_height);
+        cozmoCam_->drawRectangle(msg.img_rect.x_topLeft, msg.img_rect.y_topLeft,
+                                 msg.img_rect.width, msg.img_rect.height);
         cozmoCam_->drawText(dispStr,
-                            msg.img_topLeft_x + msg.img_width/4,
-                            msg.img_topLeft_y + msg.img_height/2);
+                            msg.img_rect.x_topLeft + msg.img_rect.width/4,
+                            msg.img_rect.y_topLeft + msg.img_rect.height/2);
 
         // Record centroid of observation in image
         _lastObservedImageCentroid.SetFromMessage(msg);

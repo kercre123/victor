@@ -76,10 +76,10 @@ Result PetWorld::Update(const std::list<Vision::TrackedPet>& pets)
                                    knownPet.GetTimeStamp(),
                                    knownPet.GetNumTimesObserved(),
                                    knownPet.GetScore(),
-                                   knownPet.GetRect().GetX(),
-                                   knownPet.GetRect().GetY(),
-                                   knownPet.GetRect().GetWidth(),
-                                   knownPet.GetRect().GetHeight(),
+                                   CladRect(knownPet.GetRect().GetX(),
+                                            knownPet.GetRect().GetY(),
+                                            knownPet.GetRect().GetWidth(),
+                                            knownPet.GetRect().GetHeight()),
                                    knownPet.GetType());
       
       _robot.Broadcast(MessageEngineToGame(std::move(observedPet)));

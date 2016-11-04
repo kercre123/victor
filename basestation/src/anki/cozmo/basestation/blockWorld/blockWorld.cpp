@@ -570,10 +570,10 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
                                     observedObject->GetFamily(),
                                     observedObject->GetType(),
                                     observedObject->GetID(),
-                                    boundingBox.GetX(),
-                                    boundingBox.GetY(),
-                                    boundingBox.GetWidth(),
-                                    boundingBox.GetHeight(),
+                                    CladRect(boundingBox.GetX(),
+                                             boundingBox.GetY(),
+                                             boundingBox.GetWidth(),
+                                             boundingBox.GetHeight()),
                                     observedObject->GetPose().ToPoseStruct3d(_robot->GetPoseOriginList()),
                                     topMarkerOrientation.ToFloat(),
                                     observedObject->IsActive());
@@ -1802,10 +1802,10 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
                                               unobservedObject->GetFamily(),
                                               unobservedObject->GetType(),
                                               unobservedObject->GetID().GetValue(),
-                                              boundingBox.GetX(),
-                                              boundingBox.GetY(),
-                                              boundingBox.GetWidth(),
-                                              boundingBox.GetHeight());
+                                              CladRect(boundingBox.GetX(),
+                                                       boundingBox.GetY(),
+                                                       boundingBox.GetWidth(),
+                                                       boundingBox.GetHeight()));
                 
                 _robot->Broadcast(MessageEngineToGame(std::move(message)));
                 

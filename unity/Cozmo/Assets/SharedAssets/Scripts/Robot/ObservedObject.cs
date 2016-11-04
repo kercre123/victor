@@ -251,7 +251,7 @@ public class ObservedObject : IVisibleInCamera {
     _ConsecutiveVisionFramesNotSeen = 0;
 
     RobotID = message.robotID;
-    VizRect = new Rect(message.img_topLeft_x, message.img_topLeft_y, message.img_width, message.img_height);
+    VizRect = new Rect(message.img_rect.x_topLeft, message.img_rect.y_topLeft, message.img_rect.width, message.img_rect.height);
 
     Vector3 newPos = new Vector3(message.pose.x, message.pose.y, message.pose.z);
     //dmdnote cozmo's space is Z up, keep in mind if we need to convert to unity's y up space.

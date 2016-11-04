@@ -409,10 +409,10 @@ namespace Cozmo {
                                                              _robot.GetID(),
                                                              face.GetTimeStamp(),
                                                              face.GetHeadPose().ToPoseStruct3d(_robot.GetPoseOriginList()),
-                                                             face.GetRect().GetX(),
-                                                             face.GetRect().GetY(),
-                                                             face.GetRect().GetWidth(),
-                                                             face.GetRect().GetHeight(),
+                                                             CladRect(face.GetRect().GetX(),
+                                                                      face.GetRect().GetY(),
+                                                                      face.GetRect().GetWidth(),
+                                                                      face.GetRect().GetHeight()),
                                                              knownFace->face.GetName())));
       
       /*

@@ -101,7 +101,7 @@ namespace Anki {
       AddOrUpdateObject(msg.objectID, msg.objectType, msg.objectFamily, msg.pose);
       
       // TODO: Move this to WebotsKeyboardController?
-        const f32 area = msg.img_width * msg.img_height;
+      const f32 area = msg.img_rect.width * msg.img_rect.height;
       _lastObservedObject.family = msg.objectFamily;
       _lastObservedObject.type   = msg.objectType;
       _lastObservedObject.id     = msg.objectID;
