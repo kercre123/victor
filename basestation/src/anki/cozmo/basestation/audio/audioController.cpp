@@ -548,11 +548,29 @@ bool AudioController::SetGameObjectOutputBusVolume( AudioEngine::AudioGameObject
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioController::Update()
+{
+#if USE_AUDIO_ENGINE
+  _musicConductor->UpdateTick();
+  ProcessAudioQueue();
+  FlushCallbackQueue();
+#endif
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioController::ProcessAudioQueue() const
 {
 #if USE_AUDIO_ENGINE
   // NOTE: Don't need time delta
   _audioEngine->Update( 0 );
+#endif
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioController::FlushCallbackQueue()
+{
+#if USE_AUDIO_ENGINE
+  _audioEngine->FlushCallbackQueue();
 #endif
 }
 
@@ -656,16 +674,6 @@ void AudioController:: SetupWavePortalPlugIn()
   // Register Wave file
   _wavePortalPlugIn = new WavePortalPlugIn();
   _wavePortalPlugIn->RegisterPlugIn();
-#endif
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioController::Update()
-{
-#if USE_AUDIO_ENGINE
-  // Tick Music Conductor & Audio Engine
-  _musicConductor->UpdateTick();
-  ProcessAudioQueue();
 #endif
 }
 

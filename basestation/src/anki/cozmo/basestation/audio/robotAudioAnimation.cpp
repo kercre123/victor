@@ -80,6 +80,8 @@ void RobotAudioAnimation::AbortAnimation()
   
   // Notify buffer
   if (nullptr != _audioBuffer) {
+    // Flush all callbacks to update internal bookkeeping
+    _audioClient->FlushAudioCallbackQueue();
     // Check if all posted events have been completed
     const bool isComplete = ( GetPostedEventCount() <= GetCompletedEventCount() );
     _audioBuffer->ResetAudioBufferAnimationCompleted(isComplete);

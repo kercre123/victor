@@ -72,8 +72,11 @@ public:
   
   void StopCozmoEvent(GameObjectType gameObjId);
   
+  // Process all events in Audio Engine
   void ProcessEvents() const;
 
+  // Perform all callbacks in queue
+  void FlushAudioCallbackQueue();
   
   
   
