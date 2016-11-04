@@ -385,8 +385,8 @@ namespace Anki {
         printf("        Force-add specifed robot:  Shift+r\n");
         printf("                 Select behavior:  Shift+c\n");
         printf("         Select behavior chooser:  h\n");
-        printf("           Enable behavior group:  Shift+h\n");
-        printf("          Disable behavior group:  Alt+h\n");
+        printf("         Select spark (unlockID):  Shift+h\n");
+        printf("           exit spark (unlockId):  Alt+h\n");
         printf("            Set emotion to value:  m\n");
         printf("     Rainbow pattern on backpack:  l\n");        
         printf("      Search side to side action:  Shift+l\n");
@@ -1196,9 +1196,39 @@ namespace Anki {
                     printf("ERROR: invalid hotkey\n");
                     break;
                   }
-                  
-                  // Do not use, soon we'll use games and sparks here!
 
+                  if( modifier_key & webots::Supervisor::KEYBOARD_SHIFT ) {
+                    webots::Field* unlockNameField = root_->getField("unlockName");
+                    if (unlockNameField == nullptr) {
+                      printf("ERROR: No unlockNameField field found in WebotsKeyboardController.proto\n");
+                      break;
+                    }
+                
+                    std::string unlockName = unlockNameField->getSFString();
+                    if (unlockName.empty()) {
+                      printf("ERROR: unlockName field is empty\n");
+                      break;
+                    }
+
+                    UnlockId unlock = UnlockIdsFromString(unlockName.c_str());
+                    ExternalInterface::ActivateSpark activate(unlock);
+                    ExternalInterface::BehaviorManagerMessageUnion behaviorUnion;
+                    behaviorUnion.Set_ActivateSpark(activate);
+                    ExternalInterface::BehaviorManagerMessage behaviorMsg(1, behaviorUnion);
+                    ExternalInterface::MessageGameToEngine msg;
+                    msg.Set_BehaviorManagerMessage(behaviorMsg);
+                    SendMessage(msg);
+                  }
+                  else {
+                    // deactivate spark
+                    ExternalInterface::ActivateSpark deactivate(UnlockId::Count);
+                    ExternalInterface::BehaviorManagerMessageUnion behaviorUnion;
+                    behaviorUnion.Set_ActivateSpark(deactivate);
+                    ExternalInterface::BehaviorManagerMessage behaviorMsg(1, behaviorUnion);
+                    ExternalInterface::MessageGameToEngine msg;
+                    msg.Set_BehaviorManagerMessage(behaviorMsg);
+                    SendMessage(msg);
+                  }
                 }
                 else {
                   // select behavior chooser
