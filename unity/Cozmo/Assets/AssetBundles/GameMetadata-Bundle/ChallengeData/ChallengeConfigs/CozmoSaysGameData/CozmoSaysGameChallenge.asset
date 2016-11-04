@@ -19,7 +19,7 @@ MonoBehaviour:
   _ChallengeID: CozmoSaysGame
   _ChallengeTitleLocKey: cozmoSays.title
   _ChallengeDescriptionLocKey: cozmoSays.description
-  _ChallengeIcon: {fileID: 21300000, guid: fdba5e56d36db40fdb260db03b84882b, type: 3}
+  _ChallengeIcon: {fileID: 21300000, guid: 4cceba5079b4c49b292ed2b19de823c8, type: 3}
   _UnlockId:
     _EnumValueAsString: CozmoSaysGame
     _EnumValue: 34
