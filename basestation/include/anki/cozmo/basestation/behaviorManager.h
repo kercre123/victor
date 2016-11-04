@@ -125,8 +125,8 @@ public:
   const AIWhiteboard& GetWhiteboard() const { assert(_whiteboard); return *_whiteboard; }
         AIWhiteboard& GetWhiteboard()       { assert(_whiteboard); return *_whiteboard; }
   
-  // accessors: auidoController
-  Audio::BehaviorAudioClient& GetAuidoClient() const { assert(_audioClient); return *_audioClient;}
+  // accessors: audioController
+  Audio::BehaviorAudioClient& GetAudioClient() const { assert(_audioClient); return *_audioClient;}
   
   void HandleMessage(const Anki::Cozmo::ExternalInterface::BehaviorManagerMessageUnion& message);
   

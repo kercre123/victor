@@ -867,7 +867,7 @@ ActionResult IBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* actio
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IBehavior::UpdateAudioState(int newAudioState)
 {
-  return _robot.GetBehaviorManager().GetAuidoClient().UpdateBehaviorRound(_requiredUnlockId, newAudioState);
+  return _robot.GetBehaviorManager().GetAudioClient().UpdateBehaviorRound(_requiredUnlockId, newAudioState);
 }
 
 
