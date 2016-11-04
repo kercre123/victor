@@ -82,8 +82,6 @@ public class SayTextSlide : MonoBehaviour {
     _ActiveContentContainer.SetActive(false);
     _SparkSpinner.SetActive(true);
     _TextInput.textComponent.color = _TextFieldInactiveColor;
-    DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.RemoveItemAmount(_SparkItemId, _SayCost);
-    UpdateTotalSparkCount();
 
     bool hasBadWords = BadWordsFilterManager.Instance.Contains(_TextInput.text);
 
@@ -93,6 +91,9 @@ public class SayTextSlide : MonoBehaviour {
       });
     }
     else {
+
+      DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.RemoveItemAmount(_SparkItemId, _SayCost);
+      UpdateTotalSparkCount();
 
       Anki.Cozmo.AnimationTrigger getInTrigger;
       Anki.Cozmo.AnimationTrigger getOutTrigger;
