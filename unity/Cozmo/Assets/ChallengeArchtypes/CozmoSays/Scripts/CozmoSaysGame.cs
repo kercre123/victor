@@ -16,6 +16,7 @@ namespace CozmoSays {
       _SayTextSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_SayTextSlidePrefab.gameObject, "say_text_slide", () => {
         _SayTextSlideInstance.RegisterInputFocus();
       }).GetComponent<SayTextSlide>();
+      _SayTextSlideInstance.Initialize(this);
     }
 
     private void TurnTowardsLastFaceDone() {

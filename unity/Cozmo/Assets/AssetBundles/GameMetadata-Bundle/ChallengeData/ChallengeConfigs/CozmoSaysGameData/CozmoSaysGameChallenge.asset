@@ -24,7 +24,7 @@ MonoBehaviour:
     _EnumValueAsString: CozmoSaysGame
     _EnumValue: 34
   _Music:
-    _Music: 1580491744
+    _Music: -1956768314
   MinigameConfig: {fileID: 11400000, guid: 6a52862d9f75e419980e090c244f1e6c, type: 2}
   IsMinigame: 0
   InstructionVideoPath: 

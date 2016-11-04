@@ -37,6 +37,12 @@ public class SayTextSlide : MonoBehaviour {
 
   private int _SparksInInventory;
 
+  private CozmoSays.CozmoSaysGame _CozmoSaysGame;
+
+  public void Initialize(CozmoSays.CozmoSaysGame cozmoSaysGame) {
+    _CozmoSaysGame = cozmoSaysGame;
+  }
+
   private void Awake() {
     _SayTextButton.Initialize(HandleSayTextButton, "say_text_button", "say_text_slide");
     _TextInput.textComponent.color = _TextFieldActiveColor;
@@ -95,6 +101,8 @@ public class SayTextSlide : MonoBehaviour {
       DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.RemoveItemAmount(_SparkItemId, _SayCost);
       UpdateTotalSparkCount();
 
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Cozmo_Says_Speaking);
+
       Anki.Cozmo.AnimationTrigger getInTrigger;
       Anki.Cozmo.AnimationTrigger getOutTrigger;
 
@@ -111,6 +119,7 @@ public class SayTextSlide : MonoBehaviour {
       };
 
       RobotEngineManager.Instance.CurrentRobot.SendQueueCompoundAction(actions, (success) => {
+        Anki.Cozmo.Audio.GameAudioClient.SetMusicState(_CozmoSaysGame.GetDefaultMusicState());
         ResetInputStates();
       });
     }
