@@ -16,7 +16,7 @@ public class SoundCheckView : Cozmo.UI.BaseView {
   private Cozmo.UI.CozmoButton _SoundsGoodButton;
 
   [SerializeField]
-  private UnityEngine.UI.Image _SoundImageFill;
+  private UnityEngine.UI.Image[] _SoundFillImages;
 
   [SerializeField]
   private Anki.UI.AnkiTextLabel _SoundTextConfirm;
@@ -26,7 +26,7 @@ public class SoundCheckView : Cozmo.UI.BaseView {
 
   private bool _PlayedOnce = false;
 
-  private Tween _SoundTween = null;
+  private Sequence _SoundTween = null;
 
   private void Awake() {
     _PlayButton.Initialize(HandlePlayButton, "play_sound_button", this.DASEventViewName);
@@ -49,10 +49,20 @@ public class SoundCheckView : Cozmo.UI.BaseView {
 
   private void HandlePlayButton() {
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Onboarding_Test_Tone);
+
     // TODO: use actual audio finish trigger?
     Invoke("HandlePlaySoundComplete", _SoundCheckAudioDuration);
-    _SoundImageFill.fillAmount = 0.0f;
-    _SoundTween = DOTween.To(() => _SoundImageFill.fillAmount, x => _SoundImageFill.fillAmount = x, 1.0f, _SoundCheckAudioDuration);
+
+    _SoundTween = DOTween.Sequence();
+    for (int i = 0; i < _SoundFillImages.Length; i++) {
+      // Apparently dotween needs this step to not barf
+      int index = i;
+      _SoundFillImages[index].fillAmount = 0.0f;
+      _SoundTween.Insert(0f, DOTween.To(() => _SoundFillImages[index].fillAmount,
+                                        x => _SoundFillImages[index].fillAmount = x,
+                                        1.0f,
+                                        _SoundCheckAudioDuration));
+    }
 
     _PlayButton.Interactable = false;
     _PlayAgainButton.Interactable = false;
