@@ -1558,9 +1558,9 @@ public class Robot : IRobot {
   // If an objectID is passed in, the action will complete successfully as soon as the object is seen
   // otherwise, cozmo will complete a full look around nearby before completing
   public void SearchForNearbyObject(int objectId = -1, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
-                                    float backupDistance_mm = (float) SearchForNearbyObjectDefaults.BackupDistance_mm,
-                                    float backupSpeed_mm = (float) SearchForNearbyObjectDefaults.BackupSpeed_mms,
-                                    float headAngle_rad = Mathf.Deg2Rad * (float) SearchForNearbyObjectDefaults.HeadAngle_deg) {
+                                    float backupDistance_mm = (float)SearchForNearbyObjectDefaults.BackupDistance_mm,
+                                    float backupSpeed_mm = (float)SearchForNearbyObjectDefaults.BackupSpeed_mms,
+                                    float headAngle_rad = Mathf.Deg2Rad * (float)SearchForNearbyObjectDefaults.HeadAngle_deg) {
     SendQueueSingleAction(
       Singleton<SearchForNearbyObject>.Instance.Initialize(
         desiredObjectID: objectId,
@@ -2034,6 +2034,11 @@ public class Robot : IRobot {
 
   public void ExitSDKMode() {
     RobotEngineManager.Instance.Message.ExitSdkMode = Singleton<ExitSdkMode>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void SetNightVision(bool enable) {
+    RobotEngineManager.Instance.Message.SetHeadlight = Singleton<SetHeadlight>.Instance.Initialize(!enable);
     RobotEngineManager.Instance.SendMessage();
   }
 }

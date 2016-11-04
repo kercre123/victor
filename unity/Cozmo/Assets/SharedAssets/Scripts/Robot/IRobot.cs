@@ -364,4 +364,6 @@ public interface IRobot : IDisposable {
   void EnterSDKMode();
 
   void ExitSDKMode();
+
+  void SetNightVision(bool enable);
 }

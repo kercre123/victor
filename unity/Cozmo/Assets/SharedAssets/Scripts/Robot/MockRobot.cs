@@ -486,9 +486,9 @@ public class MockRobot : IRobot {
   }
 
   public void SearchForNearbyObject(int objectId = -1, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
-                                    float backupDistance_mm = (float) SearchForNearbyObjectDefaults.BackupDistance_mm,
-                                    float backupSpeed_mm = (float) SearchForNearbyObjectDefaults.BackupSpeed_mms,
-                                    float headAngle_rad = Mathf.Deg2Rad * (float) SearchForNearbyObjectDefaults.HeadAngle_deg) {
+                                    float backupDistance_mm = (float)SearchForNearbyObjectDefaults.BackupDistance_mm,
+                                    float backupSpeed_mm = (float)SearchForNearbyObjectDefaults.BackupSpeed_mms,
+                                    float headAngle_rad = Mathf.Deg2Rad * (float)SearchForNearbyObjectDefaults.HeadAngle_deg) {
     QueueCallback(3f, callback);
   }
 
@@ -1000,4 +1000,6 @@ public class MockRobot : IRobot {
   public event PetFaceStateEventHandler OnPetFaceRemoved;
 
   public List<PetFace> PetFaces { get; private set; }
+
+  public void SetNightVision(bool enable) { }
 }
