@@ -352,6 +352,7 @@ MonoBehaviour:
   m_Text: '#sayCozmo.button.say'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11403504
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -423,6 +424,7 @@ MonoBehaviour:
   m_Text: '#label.totalSparks'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11424290
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -492,6 +494,7 @@ MonoBehaviour:
   m_Text: '#cozmoSays.instructions.label'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11448632
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -527,6 +530,7 @@ MonoBehaviour:
   m_Text: 1
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11458614
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -772,13 +776,13 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 11484472}
   m_TextComponent: {fileID: 11482104}
   m_Placeholder: {fileID: 0}
-  m_ContentType: 4
+  m_ContentType: 9
   m_InputType: 0
   m_AsteriskChar: 42
   m_KeyboardType: 1
   m_LineType: 0
   m_HideMobileInput: 1
-  m_CharacterValidation: 3
+  m_CharacterValidation: 4
   m_CharacterLimit: 32
   m_OnEndEdit:
     m_PersistentCalls:
