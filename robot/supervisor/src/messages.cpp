@@ -177,8 +177,12 @@ namespace Anki {
         robotState_.liftHeight = LiftController::GetHeightMM();
 
         HAL::IMU_DataStructure imuData = IMUFilter::GetLatestRawData();
-        robotState_.rawAccelY = imuData.acc_y;
-        robotState_.rawGyroZ = IMUFilter::GetBiasCorrectedGyroData()[2];
+        robotState_.accel.x = imuData.acc_x;
+        robotState_.accel.y = imuData.acc_y;
+        robotState_.accel.z = imuData.acc_z;
+        robotState_.gyro.x = IMUFilter::GetBiasCorrectedGyroData()[0];
+        robotState_.gyro.y = IMUFilter::GetBiasCorrectedGyroData()[1];
+        robotState_.gyro.z = IMUFilter::GetBiasCorrectedGyroData()[2];
         robotState_.lastPathID = PathFollower::GetLastPathID();
 
         robotState_.cliffDataRaw = HAL::GetRawCliffData();
@@ -497,7 +501,7 @@ namespace Anki {
         PickAndPlaceController::SetCarryState(update.state);
       }
 
-      void Process_imuRequest(const Anki::Cozmo::RobotInterface::ImuRequest& msg)
+      void Process_imuRequest(const IMURequest& msg)
       {
         IMUFilter::RecordAndSend(msg.length_ms);
       }

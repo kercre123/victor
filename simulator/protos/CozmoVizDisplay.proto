@@ -74,7 +74,7 @@ Supervisor {
       ]
       name "cozmo_viz_display"
       width 400
-      height 200
+      height 240
       windowPosition 1 1
       %{ if fields.infoViz.value then }%
         pixelSize %{=fields.pixelSize.value}%

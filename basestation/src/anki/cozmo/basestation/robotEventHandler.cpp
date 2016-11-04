@@ -1535,7 +1535,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::DrawPoseMarker& m
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
-void RobotEventHandler::HandleMessage(const ExternalInterface::IMURequest& msg)
+void RobotEventHandler::HandleMessage(const IMURequest& msg)
 {
   Robot* robot = _context->GetRobotManager()->GetFirstRobot();
   

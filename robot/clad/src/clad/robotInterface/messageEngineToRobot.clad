@@ -430,7 +430,7 @@ union EngineToRobot
   ControllerGains               setControllerGains          = 0x47,
   DockingErrorSignal            dockingErrorSignal          = 0x48,
   CarryStateUpdate              setCarryState               = 0x49,
-  ImuRequest                    imuRequest                  = 0x4A,
+  IMURequest                    imuRequest                  = 0x4A,
   SyncTime                      syncTime                    = 0x4B,
   ImageRequest                  imageRequest                = 0x4C,
   FlashObjectIDs                flashObjectIDs              = 0x4D,

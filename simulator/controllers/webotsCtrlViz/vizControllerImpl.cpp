@@ -525,8 +525,26 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   sprintf(txt, "Pitch: %4.1f deg (IMUHead: %4.1f deg)",
     RAD_TO_DEG_F32(payload.state.pose.pitch_angle),
     RAD_TO_DEG_F32(payload.state.pose.pitch_angle + payload.state.headAngle));
-  DrawText(VizTextLabelType::TEXT_LABEL_IMU, Anki::NamedColors::GREEN, txt);
+  DrawText(VizTextLabelType::TEXT_LABEL_PITCH, Anki::NamedColors::GREEN, txt);
+  
+  sprintf(txt, "Acc:  %6.0f %6.0f %6.0f mm/s2",
+          payload.state.accel.x,
+          payload.state.accel.y,
+          payload.state.accel.z);
+  DrawText(VizTextLabelType::TEXT_LABEL_ACCEL, Anki::NamedColors::GREEN, txt);
+  
+  sprintf(txt, "Gyro: %6.1f %6.1f %6.1f deg/s",
+    RAD_TO_DEG_F32(payload.state.gyro.x),
+    RAD_TO_DEG_F32(payload.state.gyro.y),
+    RAD_TO_DEG_F32(payload.state.gyro.z));
+  DrawText(VizTextLabelType::TEXT_LABEL_GYRO, Anki::NamedColors::GREEN, txt);
 
+  bool cliffDetected = payload.state.status & (uint32_t)RobotStatusFlag::CLIFF_DETECTED;
+  sprintf(txt, "Cliff: %4u %s",
+          payload.state.cliffDataRaw,
+          cliffDetected ? "CLIFF DETECTED" : "");
+          DrawText(VizTextLabelType::TEXT_LABEL_CLIFF, cliffDetected ? Anki::NamedColors::RED : Anki::NamedColors::GREEN, txt);
+  
   sprintf(txt, "Speed L: %4d  R: %4d mm/s",
     (int)payload.state.lwheel_speed_mmps,
     (int)payload.state.rwheel_speed_mmps);
@@ -545,13 +563,12 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
 
   sprintf(txt, "AnimBytesFree[AF]: %d[%d]", payload.numAnimBytesFree, payload.numAnimAudioFramesFree);
   DrawText(VizTextLabelType::TEXT_LABEL_ANIM_BUFFER, Anki::NamedColors::GREEN, txt);
-  
-  sprintf(txt, "Status: %5s %5s %7s %7s %5s",
+
+  sprintf(txt, "Status: %5s %5s %7s %7s",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK ? "CARRY" : "",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_PICKING_OR_PLACING ? "PAP" : "",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP ? "PICKDUP" : "",
-    payload.state.status & (uint32_t)RobotStatusFlag::IS_FALLING ? "FALLING" : "",
-    payload.state.status & (uint32_t)RobotStatusFlag::CLIFF_DETECTED ? "CLIFF" : "");
+    payload.state.status & (uint32_t)RobotStatusFlag::IS_FALLING ? "FALLING" : "");
   DrawText(VizTextLabelType::TEXT_LABEL_STATUS_FLAG, Anki::NamedColors::GREEN, txt);
 
   char animLabel[16] = {0};

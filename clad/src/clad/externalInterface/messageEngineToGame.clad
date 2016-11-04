@@ -18,6 +18,7 @@
 #include "clad/types/featureGateTypes.clad"
 #include "clad/types/firmwareTypes.clad"
 #include "clad/types/imageTypes.clad"
+#include "clad/types/imu.clad"
 #include "clad/types/loadedKnownFace.clad"
 #include "clad/types/motorTypes.clad"
 #include "clad/types/nvStorageTypes.clad"
@@ -128,6 +129,8 @@ message RobotState {
     float_32 headAngle_rad,
     float_32 liftHeight_mm,
     float_32 batteryVoltage,
+    AccelData accel,                // in head frame (mm/s^2)
+    GyroData gyro,                  // in head frame (rad/s)
     int_32   carryingObjectID,      // will be -1 if not carrying object
     int_32   carryingObjectOnTopID, // will be -1 if no object on top of object being carried
     int_32   headTrackingObjectID,  // will be -1 if head is not tracking to any object

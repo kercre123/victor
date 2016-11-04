@@ -130,7 +130,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
 
   f32 lWheelSpeed_mmps = robotState.lwheel_speed_mmps;
   f32 rWheelSpeed_mmps = robotState.rwheel_speed_mmps;
-  f32 zGyro_radps = robotState.rawGyroZ;
+  f32 zGyro_radps = robotState.gyro.z;
   
   // Don't check for unexpected movement when picked up, on charger, or while a cliff is detected
   if(robotState.status & (uint16_t)RobotStatusFlag::IS_PICKED_UP ||

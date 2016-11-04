@@ -1444,7 +1444,7 @@ namespace Anki {
     
     void UiGameController::SendIMURequest(u32 length_ms)
     {
-      ExternalInterface::IMURequest m;
+      IMURequest m;
       m.length_ms = length_ms;
       ExternalInterface::MessageGameToEngine message;
       message.Set_IMURequest(m);
