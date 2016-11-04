@@ -57,7 +57,6 @@
 namespace Anki {
 namespace Cozmo {
   
-static const char* kDemoChooserConfigKey = "demoBehaviorChooserConfig";
 static const char* kSelectionChooserConfigKey = "selectionBehaviorChooserConfig";
 static const char* kFreeplayChooserConfigKey = "freeplayBehaviorChooserConfig";
 static const char* kMeetCozmoChooserConfigKey = "meetCozmoBehaviorChooserConfig";
@@ -84,7 +83,6 @@ BehaviorManager::~BehaviorManager()
   // destroy choosers before factory
   Util::SafeDelete(_freeplayChooser);
   Util::SafeDelete(_selectionChooser);
-  Util::SafeDelete(_demoChooser);
   Util::SafeDelete(_behaviorFactory);
 }
 
@@ -104,10 +102,6 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
     // selection chooser - to force one specific behavior
     const Json::Value& selectionChooserConfigJson = config[kSelectionChooserConfigKey];
     _selectionChooser = BehaviorChooserFactory::CreateBehaviorChooser(_robot, selectionChooserConfigJson);
-
-    // demo chooser - for scripted demos/setups (investor, etc)
-    const Json::Value& demoChooserConfigJson = config[kDemoChooserConfigKey];
-    _demoChooser = BehaviorChooserFactory::CreateBehaviorChooser(_robot, demoChooserConfigJson);
     
     // freeplay chooser - AI controls cozmo
     const Json::Value& freeplayChooserConfigJson = config[kFreeplayChooserConfigKey];
@@ -195,12 +189,6 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
                                    case BehaviorChooserType::Selection:
                                    {
                                      SetBehaviorChooser( _selectionChooser );
-                                     break;
-                                   }
-                                   case BehaviorChooserType::Demo:
-                                   {
-                                     SetBehaviorChooser(_demoChooser);
-                                     _robot.GetLightsComponent().SetEnableComponent(true);
                                      break;
                                    }
                                    case BehaviorChooserType::MeetCozmoFindFaces:

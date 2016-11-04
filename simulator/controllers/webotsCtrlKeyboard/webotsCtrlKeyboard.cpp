@@ -389,8 +389,6 @@ namespace Anki {
         printf("            Set emotion to value:  m\n");
         printf("      Search side to side action:  Shift+l\n");
         printf("    Toggle cliff sensor handling:  Alt+l\n");
-        printf("                 Next Demo State:  j\n");
-        printf("            Start Demo (hasEdge):  Shift+j\n");
         printf("      Play 'animationToSendName':  Shift+6\n");
         printf("  Set idle to'idleAnimationName':  Shift+Alt+6\n");
         printf("     Update Viz origin alignment:  ` <backtick>\n");
@@ -1156,7 +1154,6 @@ namespace Anki {
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDebugConsoleVarMessage("BFT_ConnectToRobotOnly", "false")));
 
                     
-                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::WakeUp(true)));
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::EnableReactionaryBehaviors(false)));
                     SendSetRobotVolume(1.f);
                   }
@@ -2197,24 +2194,7 @@ namespace Anki {
               case (s32)'J':
               {
 
-                using namespace ExternalInterface;
-
-                if( modifier_key & webots::Supervisor::KEYBOARD_SHIFT ) {
-                
-                  webots::Field* hasEdgeField = root_->getField("demoHasEdge");
-                  if( hasEdgeField != nullptr ) {
-                    bool hasEdge = hasEdgeField->getSFBool();
-                    SendMessage(MessageGameToEngine(WakeUp(hasEdge)));
-                  }
-                  else {
-                    printf("ERROR: no field 'demoHasEdge', not sending edge message\n");
-                  }
-                } if( modifier_key & webots::Supervisor::KEYBOARD_ALT ) {
-                  SendMessage(MessageGameToEngine(DemoResetState()));
-                }
-                else {
-                  SendMessage(MessageGameToEngine(TransitionToNextDemoState()));
-                }
+                // unused!
 
                 break;
               }

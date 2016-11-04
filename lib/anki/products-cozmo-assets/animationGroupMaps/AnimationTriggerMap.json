@@ -161,22 +161,6 @@
       "AnimName": "ag_keepaway_idleliftdown"
     },
     {
-      "CladEvent": "DemoOnSawNewNamedFace",
-      "AnimName": "ag_interactFaces_Enrolled"
-    },
-    {
-      "CladEvent": "DemoOnSawNewUnnamedFace",
-      "AnimName": "ag_reacttoface_suspicious"
-    },
-    {
-      "CladEvent": "DemoOnSawOldNamedFace",
-      "AnimName": "ag_interactFaces_Enrolled"
-    },
-    {
-      "CladEvent": "DemoOnSawOldUnnamedFace",
-      "AnimName": "ag_reacttoface_suspicious"
-    },
-    {
       "CladEvent": "DriveEndAngry",
       "AnimName": "ag_driving_upset_end"
     },

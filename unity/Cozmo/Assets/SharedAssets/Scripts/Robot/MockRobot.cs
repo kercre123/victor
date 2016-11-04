@@ -369,7 +369,7 @@ public class MockRobot : IRobot {
   }
 
   public void TurnTowardsObject(ObservedObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW,
-    float setTiltTolerance_rad = 0f) {
+                                float setTiltTolerance_rad = 0f) {
 
     LookAtPosition(observedObject.WorldPosition);
 
@@ -457,9 +457,11 @@ public class MockRobot : IRobot {
   public void GotoPose(float x_mm, float y_mm, float rad, bool level = false, bool useManualSpeed = false, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     GotoPose(new Vector3(x_mm, y_mm, 0f), Quaternion.Euler(0, 0, Mathf.Rad2Deg * rad), level, useManualSpeed, callback, queueActionPosition);
   }
+
   public void DriveStraightAction(float speed_mmps, float dist_mm, bool shouldPlayAnimation = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     QueueCallback(2f, callback);
   }
+
   public void GotoObject(ObservedObject obj, float distance_mm, bool goToPreDockPose, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
 
     var delta = (WorldPosition - obj.WorldPosition).normalized * distance_mm;
@@ -768,6 +770,7 @@ public class MockRobot : IRobot {
       _EnrolledFacesLastEnrolledTime = value;
     }
   }
+
   public Dictionary<int, float> EnrolledFacesLastSeenTime {
     get {
       return _EnrolledFacesLastSeenTime;
@@ -837,6 +840,7 @@ public class MockRobot : IRobot {
   }
 
   public BehaviorType CurrentBehaviorType { get; set; }
+
   public string CurrentBehaviorName { get; set; }
 
   public string CurrentDebugAnimationString {
@@ -887,18 +891,6 @@ public class MockRobot : IRobot {
 
   #endregion
 
-  #region PressDemoMessages
-
-  public void TransitionToNextDemoState() {
-
-  }
-
-  public void WakeUp(bool withEdge) {
-
-  }
-
-  #endregion
-
   public void SayTextWithEvent(string text, AnimationTrigger playEvent, SayTextIntent intent = SayTextIntent.Text, bool fitToDuration = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
   }
@@ -922,10 +914,6 @@ public class MockRobot : IRobot {
     if (OnEnrolledFaceRenamed != null) {
       OnEnrolledFaceRenamed(faceID, newFaceName);
     }
-  }
-
-  public void SendDemoResetState() {
-
   }
 
   public void LoadFaceAlbumFromFile(string path, bool isPathRelative = true) {
@@ -1001,5 +989,6 @@ public class MockRobot : IRobot {
 
   public List<PetFace> PetFaces { get; private set; }
 
-  public void SetNightVision(bool enable) { }
+  public void SetNightVision(bool enable) {
+  }
 }

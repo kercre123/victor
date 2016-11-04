@@ -34,8 +34,8 @@ public delegate void LightCubeStateEventHandler(LightCube cube);
 public delegate void ChargerStateEventHandler(ObservedObject charger);
 public delegate void FaceStateEventHandler(Face face);
 public delegate void PetFaceStateEventHandler(PetFace face);
-public delegate void EnrolledFaceRemoved(int faceId, string faceName);
-public delegate void EnrolledFaceRenamed(int faceId, string faceName);
+public delegate void EnrolledFaceRemoved(int faceId,string faceName);
+public delegate void EnrolledFaceRenamed(int faceId,string faceName);
 
 // Interface for Robot so we can mock it in unit tests
 public interface IRobot : IDisposable {
@@ -90,7 +90,9 @@ public interface IRobot : IDisposable {
   event EnrolledFaceRenamed OnEnrolledFaceRenamed;
 
   Dictionary<int, string> EnrolledFaces { get; set; }
+
   Dictionary<int, float> EnrolledFacesLastEnrolledTime { get; set; }
+
   Dictionary<int, float> EnrolledFacesLastSeenTime { get; set; }
 
   event PetFaceStateEventHandler OnPetFaceAdded;
@@ -113,6 +115,7 @@ public interface IRobot : IDisposable {
   string CurrentBehaviorString { get; set; }
 
   BehaviorType CurrentBehaviorType { get; set; }
+
   string CurrentBehaviorName { get; set; }
 
   string CurrentDebugAnimationString { get; set; }
@@ -315,17 +318,7 @@ public interface IRobot : IDisposable {
 
   void MountCharger(ObservedObject charger, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
-  #region PressDemoMessages
-
-  void TransitionToNextDemoState();
-
-  void WakeUp(bool withEdge);
-
-  #endregion
-
   void SayTextWithEvent(string text, AnimationTrigger playEvent, SayTextIntent intent = SayTextIntent.Text, bool fitToDuration = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
-
-  void SendDemoResetState();
 
   void UpdateEnrolledFaceByID(int faceID, string oldFaceName, string newFaceName);
 

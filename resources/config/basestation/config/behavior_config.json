@@ -8,37 +8,6 @@
   },
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Demo
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  "demoBehaviorChooserConfig" :
-  {
-    // chooser type
-    "type" : "demo",
-    
-    // these groups are the behaviors that are allowed in this behavior chooser
-    "behaviorGroups" : [ "Demo" ],
-  
-    // By default all behaviors are enabled, the following are then applied in order
-    // 1) anything belonging to a group in disabledGroups is disabled
-    // 2) anything belonging to a group in enabledGroups is re-enabled (to e.g. re-enable a subgroup disabled in 1)
-    // 3) anything belonging in disabledBehaviors is disabled (to e.g. disable a few specific behaviors)
-    // 4) anything belonging in enabledBehaviors is re-enabled (to e.g. re-enable a few specific behaviors)
-    
-    "disabledGroups" : [
-    ],
-    "enabledGroups" : [
-    ],
-    "disabledBehaviors" : [
-    ],
-    "enabledBehaviors" : [
-    ],
-    // For current behavior, X = time running, Y = bonus (can be -ve, to encourage switching away from a long-running behavior)
-    "scoreBonusForCurrentBehavior" : {
-      "nodes" : [
-        { "x" :   0.0, "y" :  0.0 }
-      ]
-    }
-  },
   "meetCozmoBehaviorChooserConfig" : 
   {
     "type" : "simple",

@@ -107,7 +107,7 @@ public:
 
   // Stops the current behavior and switches to null. The next time Update is called, the behavior chooser
   // will have a chance to select a new behavior. This is mostly useful as a hack to force a behavior switch
-  // when it is needed (e.g. demo). `stoppedByWhom` is a string for debugging so we know why this was stopped
+  // when it is needed (e.g. sparks). `stoppedByWhom` is a string for debugging so we know why this was stopped
   void RequestCurrentBehaviorEndImmediately(const std::string& stoppedByWhom);
   
   // Returns nullptr if there is no current behavior
@@ -240,10 +240,6 @@ private:
   // This is a chooser which manually runs specific behaviors. The manager starts out using this chooser to
   // avoid immediately executing a behavior when the engine starts
   IBehaviorChooser* _selectionChooser = nullptr;
-
-  // This is a special chooser for the demo. In addition to choosing behaviors, it is also the central place
-  // in engine for any demo-specific code. This is in reference to the announce / PR demo
-  IBehaviorChooser* _demoChooser = nullptr;
 
   // Behavior chooser for freeplay mode, it also includes games and sparks if needed
   IBehaviorChooser* _freeplayChooser = nullptr;

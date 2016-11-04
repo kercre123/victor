@@ -21,7 +21,6 @@
 #include "../behaviors/exploration/behaviorLookInPlaceMemoryMap.h"
 #include "../behaviors/exploration/behaviorThinkAboutBeacons.h"
 #include "../behaviors/exploration/behaviorVisitInterestingEdge.h"
-#include "anki/cozmo/basestation/behaviors/behaviorDemoFearEdge.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDriveOffCharger.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDrivePath.h"
@@ -192,11 +191,6 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::FactoryCentroidExtractor:
     {
       newBehavior = new BehaviorFactoryCentroidExtractor(robot, config);
-      break;
-    }
-    case BehaviorType::DemoFearEdge:
-    {
-      newBehavior = new BehaviorDemoFearEdge(robot, config);
       break;
     }
     case BehaviorType::ReactToReturnedToTreads:

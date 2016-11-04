@@ -129,7 +129,7 @@ protected:
     bool    behavior_CanCarryCube;
     uint8_t behavior_RecentLocationsMax;
     bool    behavior_ShouldResetTurnDirection; // if true, a new clock direction is picked every run, otherwise picked once and locked
-    bool    behavior_ResetBodyFacingOnStart; // this is required for general usage, but demo behaviors do it only on putDown
+    bool    behavior_ResetBodyFacingOnStart; // whther or not to reset the "cone" when the robot is put down
     bool    behavior_ShouldLowerLift;
     float   behavior_AngleOfFocus_deg;
     uint8_t behavior_NumberOfScansBeforeStop; // if 0 it will loop as long as it's not kicked out
