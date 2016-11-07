@@ -51,7 +51,9 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
 
   public void RotateCozmoImageTo(float degrees, float duration) {
     DestroyTween();
-    _Tween = _CozmoImageTransform.DORotate(new Vector3(0, 0, degrees), duration);
+    if (_CozmoImageTransform != null) {
+      _Tween = _CozmoImageTransform.DORotate(new Vector3(0, 0, degrees), duration);
+    }
   }
 
   private void DestroyTween() {

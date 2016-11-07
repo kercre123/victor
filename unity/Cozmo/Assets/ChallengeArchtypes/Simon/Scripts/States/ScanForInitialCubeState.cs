@@ -240,7 +240,8 @@ namespace Simon {
     }
 
     private void SetScanPhase(ScanPhase nextState) {
-      if (_ScanPhase != nextState && _CurrentRobot != null) {
+      if (_ScanPhase != nextState && _CurrentRobot != null &&
+          _ShowCozmoCubesSlide != null && _Game != null && _Game.SharedMinigameView != null) {
         // clean up previous
         if (_ScanPhase == ScanPhase.Error) {
           InitShowCubesSlide();
