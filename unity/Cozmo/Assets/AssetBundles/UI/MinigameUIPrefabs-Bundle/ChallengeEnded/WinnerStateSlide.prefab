@@ -178,7 +178,7 @@ MonoBehaviour:
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_Sprite: {fileID: 21300000, guid: 089796315b5dc4ba898e040c995a2701, type: 3}
-  m_Type: 0
+  m_Type: 1
   m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
@@ -212,6 +212,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 197596, guid: ae49e6684bcd54750a412c285af56dd3, type: 2}
   ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Color:b
     JsonValue: 0.272058845
@@ -258,6 +261,9 @@ MonoBehaviour:
   Prefab: {fileID: 197596, guid: ae49e6684bcd54750a412c285af56dd3, type: 2}
   ModifiedValues:
   - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
+  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
     JsonValue: 1
   - ObjectPath: 
@@ -271,7 +277,7 @@ MonoBehaviour:
     JsonValue: 1
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_FontSize
-    JsonValue: 250
+    JsonValue: 180
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#minigame.label.gameOver"'
@@ -317,6 +323,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 197596, guid: ae49e6684bcd54750a412c285af56dd3, type: 2}
   ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_VerticalOverflow:value__
     JsonValue: 1
@@ -1921,8 +1930,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 100}
-  m_SizeDelta: {x: 0, y: -640}
+  m_AnchoredPosition: {x: 0, y: -0.000015258789}
+  m_SizeDelta: {x: 0, y: 0.00012207}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22408804
 RectTransform:
@@ -1955,10 +1964,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22408436}
   m_RootOrder: 3
-  m_AnchorMin: {x: 0.5, y: 1}
-  m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 17.993626, y: -1040.5}
-  m_SizeDelta: {x: 1826, y: 279.219}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 7, y: -471}
+  m_SizeDelta: {x: 1826, y: 271}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!224 &22442240
 RectTransform:
@@ -1975,9 +1984,9 @@ RectTransform:
   - {fileID: 466838}
   m_Father: {fileID: 22408436}
   m_RootOrder: 1
-  m_AnchorMin: {x: 0.5, y: 1}
-  m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -276.09}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -11, y: 238}
   m_SizeDelta: {x: 500, y: 500}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!224 &22456384
@@ -2012,10 +2021,10 @@ RectTransform:
   - {fileID: 22488442}
   m_Father: {fileID: 22408436}
   m_RootOrder: 2
-  m_AnchorMin: {x: 0.5, y: 1}
-  m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -144}
-  m_SizeDelta: {x: 2500, y: 1000}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -11, y: 194}
+  m_SizeDelta: {x: 2145, y: 635}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!224 &22488442
 RectTransform:
@@ -2033,8 +2042,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 18, y: -264.22998}
-  m_SizeDelta: {x: -674, y: -720.45996}
+  m_AnchoredPosition: {x: 0, y: -219.20001}
+  m_SizeDelta: {x: -456, y: -349}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22493428
 RectTransform:
@@ -2049,10 +2058,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22408436}
   m_RootOrder: 0
-  m_AnchorMin: {x: 0.5, y: 1}
-  m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 17.995544, y: -33.1}
-  m_SizeDelta: {x: 1826, y: 279.219}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 7, y: 481}
+  m_SizeDelta: {x: 1826, y: 242.98999}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!1001 &100100000
 Prefab:

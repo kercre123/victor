@@ -82,7 +82,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -104,6 +104,7 @@ MonoBehaviour:
   m_Text: Explorer Mode
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11441962
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -168,7 +169,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.13725491, g: 0.4627451, b: 0.6627451, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -190,6 +191,7 @@ MonoBehaviour:
   m_Text: 'How to play:'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11470308
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -249,8 +251,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -40, y: -60}
-  m_SizeDelta: {x: -220, y: 147}
+  m_AnchoredPosition: {x: -80, y: -60}
+  m_SizeDelta: {x: -260, y: 147}
   m_Pivot: {x: 1, y: 1}
 --- !u!224 &22442502
 RectTransform:
