@@ -15,7 +15,7 @@
     [
       { "channel": "Unnamed" ,        "enabled": false }, // Unnamed is currently the default channel
       { "channel": "CoreTech",        "enabled": false },
-      { "channel": "Unfiltered",      "enabled": true  }, // things the are required always (like callstack dump on assert)
+      { "channel": "Unfiltered",      "enabled": true  }, // Things that are always required (like callstack on assert)
       { "channel": "CpuProfiler",     "enabled": true  },
       { "channel": "Keyboard",        "enabled": true },
       { "channel": "Network",         "enabled": false },
@@ -36,7 +36,7 @@
       { "channel": "BlockWorld",      "enabled": false },
       { "channel": "BlockPool",       "enabled": false },
       { "channel": "NVStorage",       "enabled": false },
-      { "channel": "Animations",      "enabled": false }, // print every animation that is triggered
+      { "channel": "Animations",      "enabled": false }, // Print every animation that is triggered
       { "channel": "Planner",         "enabled": false },
       { "channel": "LightsComponent", "enabled": false }
     ],
@@ -57,7 +57,7 @@
       { "channel": "Unnamed",         "enabled": false }, // Unnamed is currently the default channel
       { "channel": "Unity"  ,         "enabled": false },
       { "channel": "Audio",           "enabled": false },
-      { "channel": "Unfiltered",      "enabled": true  }, // things the are required always (like callstack dump on assert)
+      { "channel": "Unfiltered",      "enabled": true  }, // Things that are always required (like callstack on assert)
       { "channel": "CpuProfiler",     "enabled": true  },
       { "channel": "Network",         "enabled": false },
       { "channel": "Profiler",        "enabled": false },
@@ -97,7 +97,7 @@
       { "channel": "Unnamed",         "enabled": false }, // Unnamed is currently the default channel
       { "channel": "Unity"  ,         "enabled": false },
       { "channel": "Audio",           "enabled": false },
-      { "channel": "Unfiltered",      "enabled": true  }, // things the are required always (like callstack dump on assert)
+      { "channel": "Unfiltered",      "enabled": true  }, // Things that are always required (like callstack on assert)
       { "channel": "CpuProfiler",     "enabled": true  },
       { "channel": "Network",         "enabled": false },
       { "channel": "Profiler",        "enabled": false },

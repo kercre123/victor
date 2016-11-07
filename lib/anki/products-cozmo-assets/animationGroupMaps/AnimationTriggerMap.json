@@ -709,6 +709,18 @@
       "AnimName": "ag_launch_reacttonextscreen"
     },
     {
+      "CladEvent": "PetDetectionCat",
+      "AnimName": "ag_petdetection_cat"
+    },
+    {
+      "CladEvent": "PetDetectionDog",
+      "AnimName": "ag_petdetection_dog"
+    },
+    {
+      "CladEvent": "PetDetectionSneeze",
+      "AnimName": "ag_petdetection_misc"
+    },
+    {
       "CladEvent": "PlacedOnCharger",
       "AnimName": "ag_reactToCharger"
     },

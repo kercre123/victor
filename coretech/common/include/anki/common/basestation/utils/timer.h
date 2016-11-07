@@ -58,12 +58,12 @@ class BaseStationTimer : public Anki::Util::ITickTimeProvider
   virtual ~BaseStationTimer() override;
 
   // Gets time in seconds since the start of the program
-  // WARNING: This value updates only once every tick! So measuring time differneces with in one update loop
+  // WARNING: This value updates only once every tick! So measuring time differences within one update loop
   // will result in ZERO time passed.
   double GetCurrentTimeInSeconds() const;
 
   // Gets time in nanoseconds since the start of the program
-  // WARNING: This value updates only once every tick! So measuring time differneces with in one update loop
+  // WARNING: This value updates only once every tick! So measuring time differences within one update loop
   // will result in ZERO time passed.
   BaseStationTime_t GetCurrentTimeInNanoSeconds() const;
 
@@ -159,7 +159,7 @@ private:
   // calls on a repeating timer.
   bool checkForPeriodSkips_;
 
-  // Wheter the timer fired for the first time (to eliminate timing error
+  // Whether the timer fired for the first time (to eliminate timing error
   // message first cycle)
   bool firedFirstTime_;
 

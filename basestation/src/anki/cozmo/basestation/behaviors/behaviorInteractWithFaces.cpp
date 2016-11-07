@@ -37,32 +37,34 @@
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+static const char* kConsoleGroup = "Behavior.InteractWithFaces";
+
 namespace Anki {
 namespace Cozmo {
 
 namespace {
 
 // how far forward to check and ideally drive
-CONSOLE_VAR_RANGED(f32, kDriveForwardIdealDist_mm, "Behavior.InteractWithFaces", 60.0f, 0.0f, 200.0f);
+CONSOLE_VAR_RANGED(f32, kDriveForwardIdealDist_mm, kConsoleGroup, 60.0f, 0.0f, 200.0f);
 
 // how far forward to move in case the check fails
-CONSOLE_VAR_RANGED(f32, kDriveForwardMinDist_mm, "Behavior.InteractWithFaces", -15.0f, -100.0f, 100.0f);
+CONSOLE_VAR_RANGED(f32, kDriveForwardMinDist_mm, kConsoleGroup, -15.0f, -100.0f, 100.0f);
 
 // if true, do a glance down before the memory map check (only valid if we are doing the check)
 // TODO:(bn) could check memory map for Unknown, and only glance down in that case
-CONSOLE_VAR(bool, kDoGlanceDown, "Behavior.InteractWithFaces", false);
+CONSOLE_VAR(bool, kDoGlanceDown, kConsoleGroup, false);
 
 // if false, always drive the "ideal" distance without checking anything. If true, check memory map to
 // determine which distance to drive
-CONSOLE_VAR(bool, kDoMemoryMapCheckForDriveForward, "Behavior.InteractWithFaces", true);
+CONSOLE_VAR(bool, kDoMemoryMapCheckForDriveForward, kConsoleGroup, true);
 
-CONSOLE_VAR(bool, kVizMemoryMapCheck, "Behavior.InteractWithFaces", false);
+CONSOLE_VAR(bool, kVizMemoryMapCheck, kConsoleGroup, false);
 
-CONSOLE_VAR_RANGED(f32, kDriveForwardSpeed_mmps, "Behavior.InteractWithFaces", 40.0f, 0.0f, 200.0f);
+CONSOLE_VAR_RANGED(f32, kDriveForwardSpeed_mmps, kConsoleGroup, 40.0f, 0.0f, 200.0f);
 
 // Track face for a random amount of time between min and max
-CONSOLE_VAR_RANGED(f32, kMinTimeToTrackFace_s, "Behaiovr.InteractWithFaces", 2.0f, 0.0f, 30.0f);
-CONSOLE_VAR_RANGED(f32, kMaxTimeToTrackFace_s, "Behaiovr.InteractWithFaces", 5.0f, 0.0f, 30.0f);
+CONSOLE_VAR_RANGED(f32, kMinTimeToTrackFace_s, kConsoleGroup, 2.0f, 0.0f, 30.0f);
+CONSOLE_VAR_RANGED(f32, kMaxTimeToTrackFace_s, kConsoleGroup, 5.0f, 0.0f, 30.0f);
 
 
 // If we are doing the memory map check, these are the types which will prevent us from driving the ideal

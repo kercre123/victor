@@ -1,0 +1,8 @@
+{
+  "behaviorType": "ReactToPet",
+  "name": "ReactToPet",
+  "behaviorGroups": [
+    "Reactionary"
+  ],
+  "disableByDefault": false
+}

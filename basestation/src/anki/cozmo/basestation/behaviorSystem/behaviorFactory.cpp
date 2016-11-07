@@ -41,6 +41,7 @@
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToFrustration.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToMotorCalibration.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToOnCharger.h"
+#include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPet.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPickup.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/behaviorReactToPoke.h"
 #include "anki/cozmo/basestation/behaviors/reactionary/BehaviorReactToPyramid.h"
@@ -321,6 +322,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::ReactToPyramid:
     {
       newBehavior = new BehaviorReactToPyramid(robot, config);
+      break;
+    }
+    case BehaviorType::ReactToPet:
+    {
+      newBehavior = new BehaviorReactToPet(robot, config);
       break;
     }
     case BehaviorType::Count:
