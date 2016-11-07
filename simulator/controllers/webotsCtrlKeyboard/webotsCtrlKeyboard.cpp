@@ -347,6 +347,7 @@ namespace Anki {
         printf("\nBasestation keyboard control\n");
         printf("===============================\n");
         printf("                           Drive:  arrows  (Hold shift for slower speeds)\n");
+        printf("                   Turn in place:  < >\n");
         printf("               Move lift up/down:  a/z\n");
         printf("               Move head up/down:  s/x\n");
         printf("             Lift low/high/carry:  1/2/3\n");
@@ -390,15 +391,15 @@ namespace Anki {
         printf("      Search side to side action:  Shift+l\n");
         printf("    Toggle cliff sensor handling:  Alt+l\n");
         printf("      Play 'animationToSendName':  Shift+6\n");
-        printf("  Set idle to'idleAnimationName':  Shift+Alt+6\n");
+        printf("  Set idle to'idleAnimationName':  Alt+Shift+6\n");
         printf("     Update Viz origin alignment:  ` <backtick>\n");
         printf("       unlock progression unlock:  n\n");
         printf("         lock progression unlock:  Shift+n\n");
         printf("    Respond 'no' to game request:  Alt+n\n");
         printf("             Flip selected block:  y\n");
         printf("       Realign with block action:  _\n");
-        printf("        Quit keyboard controller:  Shift+Alt+x\n");
-        printf("                      Print help:  ?\n");
+        printf("        Quit keyboard controller:  Alt+Shift+x\n");
+        printf("                      Print help:  ?,/\n");
         printf("\n");
       }
       
@@ -2063,7 +2064,8 @@ namespace Anki {
                 SendAnimationGroup(animToSendName.c_str());
                 break;
               }
-                
+              
+              case (s32)'?':
               case (s32)'/':
               {
                 PrintHelp();
@@ -2315,9 +2317,15 @@ namespace Anki {
                 break;
               }
             
+              case 0x04: // Webots carriage return?
+              {
+                break;
+              }
+                
               default:
               {
                 // Unsupported key: ignore.
+                printf("Key '%c' (0x%x) is not bound to an action\n", key, key);
                 break;
               }
                 
