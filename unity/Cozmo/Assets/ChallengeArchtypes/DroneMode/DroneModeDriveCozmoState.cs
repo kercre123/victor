@@ -103,12 +103,15 @@ namespace Cozmo {
           _DroneModeControlsSlide.OnDriveSpeedSegmentChanged += HandleDriveSpeedFamilyChanged;
           _DroneModeControlsSlide.OnHeadSliderValueChanged += HandleHeadSliderValueChanged;
           _DroneModeControlsSlide.OnLiftSliderValueChanged += HandleLiftSliderValueChanged;
+          _DroneModeControlsSlide.OnQuitConfirmed += _DroneModeGame.SharedMinigameView.HandleQuitConfirmed;
           EnableInput();
 
           UIManager.Instance.BackgroundColorController.SetBackgroundColor(UI.BackgroundColorController.BackgroundColor.TintMe,
                                                                           _DroneModeControlsSlide.BackgroundColor);
           _DroneModeGame.SharedMinigameView.HideMiddleBackground();
-          _DroneModeGame.SharedMinigameView.SetQuitButtonGraphic(_DroneModeControlsSlide.QuitButtonSprite);
+
+          // DroneModeControlsSlide implements its own quit button so hide the shared one 
+          _DroneModeGame.SharedMinigameView.HideQuitButton();
 
           // Show how to play when the player plays drone mode for the first time
           int timesPlayedDroneMode = 0;
@@ -454,14 +457,14 @@ namespace Cozmo {
 
         private void HandleDropCubeButtonPressed() {
           _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
-		  
+
           // Need to give the stop from DriveWheels a chance to actually stop the robot so that PlaceObjectOnGround
           // doesn't fail due to IMU still reporting the robot is turning. So we first wait for 0.1sec and then place on ground.
           Anki.Cozmo.ExternalInterface.RobotActionUnion[] actions = {
             new Anki.Cozmo.ExternalInterface.RobotActionUnion().Initialize(new Anki.Cozmo.ExternalInterface.Wait().Initialize(0.1f)),
             new Anki.Cozmo.ExternalInterface.RobotActionUnion().Initialize(new Anki.Cozmo.ExternalInterface.PlaceObjectOnGroundHere())
           };
-         
+
           _CurrentRobot.SendQueueCompoundAction(actions, callback: HandleActionFinished);
 
           DisableInput();

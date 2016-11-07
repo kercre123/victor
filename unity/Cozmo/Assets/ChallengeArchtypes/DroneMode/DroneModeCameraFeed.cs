@@ -101,32 +101,34 @@ namespace Cozmo.Minigame.DroneMode {
       _ImageProcessor.Dispose();
       _ImageProcessor.DestroyTexture();
 
-      _CurrentRobot.OnFaceAdded -= HandleOnFaceAdded;
-      _CurrentRobot.OnFaceRemoved -= HandleOnFaceRemoved;
-      foreach (var face in _CurrentRobot.Faces) {
-        face.InFieldOfViewStateChanged -= HandleFaceInFieldOfViewChanged;
-        face.OnVizRectChanged -= HandleVizRectChanged;
-      }
+      if (_CurrentRobot != null) {
+        _CurrentRobot.OnFaceAdded -= HandleOnFaceAdded;
+        _CurrentRobot.OnFaceRemoved -= HandleOnFaceRemoved;
+        foreach (var face in _CurrentRobot.Faces) {
+          face.InFieldOfViewStateChanged -= HandleFaceInFieldOfViewChanged;
+          face.OnVizRectChanged -= HandleVizRectChanged;
+        }
 
-      _CurrentRobot.OnPetFaceAdded -= HandlePetFaceAdded;
-      _CurrentRobot.OnPetFaceRemoved -= HandlePetFaceRemoved;
-      foreach (var petFace in _CurrentRobot.PetFaces) {
-        petFace.InFieldOfViewStateChanged -= HandlePetFaceInFieldOfViewChanged;
-        petFace.OnVizRectChanged -= HandleVizRectChanged;
-      }
+        _CurrentRobot.OnPetFaceAdded -= HandlePetFaceAdded;
+        _CurrentRobot.OnPetFaceRemoved -= HandlePetFaceRemoved;
+        foreach (var petFace in _CurrentRobot.PetFaces) {
+          petFace.InFieldOfViewStateChanged -= HandlePetFaceInFieldOfViewChanged;
+          petFace.OnVizRectChanged -= HandleVizRectChanged;
+        }
 
-      _CurrentRobot.OnLightCubeAdded -= HandleOnCubeAdded;
-      _CurrentRobot.OnLightCubeRemoved -= HandleOnCubeRemoved;
-      foreach (var cube in _CurrentRobot.LightCubes) {
-        cube.Value.InFieldOfViewStateChanged -= HandleInFieldOfViewChanged;
-        cube.Value.OnVizRectChanged -= HandleVizRectChanged;
-      }
+        _CurrentRobot.OnLightCubeAdded -= HandleOnCubeAdded;
+        _CurrentRobot.OnLightCubeRemoved -= HandleOnCubeRemoved;
+        foreach (var cube in _CurrentRobot.LightCubes) {
+          cube.Value.InFieldOfViewStateChanged -= HandleInFieldOfViewChanged;
+          cube.Value.OnVizRectChanged -= HandleVizRectChanged;
+        }
 
-      _CurrentRobot.OnChargerAdded -= HandleOnChargerAdded;
-      _CurrentRobot.OnChargerRemoved -= HandleOnChargerRemoved;
-      if (_CurrentRobot.Charger != null) {
-        _CurrentRobot.Charger.InFieldOfViewStateChanged -= HandleInFieldOfViewChanged;
-        _CurrentRobot.Charger.OnVizRectChanged -= HandleVizRectChanged;
+        _CurrentRobot.OnChargerAdded -= HandleOnChargerAdded;
+        _CurrentRobot.OnChargerRemoved -= HandleOnChargerRemoved;
+        if (_CurrentRobot.Charger != null) {
+          _CurrentRobot.Charger.InFieldOfViewStateChanged -= HandleInFieldOfViewChanged;
+          _CurrentRobot.Charger.OnVizRectChanged -= HandleVizRectChanged;
+        }
       }
     }
 

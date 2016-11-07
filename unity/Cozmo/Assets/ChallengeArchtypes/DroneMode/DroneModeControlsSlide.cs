@@ -20,6 +20,9 @@ namespace Cozmo.Minigame.DroneMode {
     public delegate void LiftSliderEventHandler(float newValue);
     public event LiftSliderEventHandler OnLiftSliderValueChanged;
 
+    public delegate void QuitButtonConfirmedHandler();
+    public event QuitButtonConfirmedHandler OnQuitConfirmed;
+
     public enum SpeedSliderSegment {
       Turbo,
       Forward,
@@ -59,8 +62,7 @@ namespace Cozmo.Minigame.DroneMode {
     public Color BackgroundColor { get { return _BackgroundColor; } }
 
     [SerializeField]
-    private Sprite _QuitButtonSprite;
-    public Sprite QuitButtonSprite { get { return _QuitButtonSprite; } }
+    private Cozmo.MinigameWidgets.QuitMinigameButton _QuitDroneModeButton;
 
     [SerializeField]
     private CozmoButton _HowToPlayButton;
@@ -116,6 +118,10 @@ namespace Cozmo.Minigame.DroneMode {
       _NightVisionButton.Initialize(HandleNightVisionButtonClicked, "night_vision_toggle_button", _kDasViewControllerName);
       _HeadLiftToggleButton.Initialize(null, "head_lift_toggle_button", _kDasViewControllerName);
       _ContextualButtons = new List<DroneModeActionButton>();
+
+      _QuitDroneModeButton.Initialize(false);
+      _QuitDroneModeButton.DASEventViewController = _kDasViewControllerName;
+      _QuitDroneModeButton.QuitGameConfirmed += HandleQuitConfirmed;
     }
 
     private void Start() {
@@ -222,6 +228,12 @@ namespace Cozmo.Minigame.DroneMode {
 
     public void DisableHeadSlider() {
       _HeadTiltSlider.interactable = false;
+    }
+
+    private void HandleQuitConfirmed() {
+      if (OnQuitConfirmed != null) {
+        OnQuitConfirmed();
+      }
     }
 
     private void HandleHowToPlayClicked() {

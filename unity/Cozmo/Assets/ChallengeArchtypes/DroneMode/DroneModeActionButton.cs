@@ -46,9 +46,11 @@ namespace Cozmo.Minigame.DroneMode {
       _ActionButton.Interactable = _IsUnlocked;
       _ActionButton.ShowDisabledStateWhenInteractable = !_IsUnlocked;
 
-      UnlockableInfo upgradeInfo = UnlockablesManager.Instance.GetUnlockableInfo(actionData.ActionUnlockId);
-      if (upgradeInfo != null) {
-        _UpgradeName = Localization.Get(upgradeInfo.TitleKey);
+      if (actionData.ActionUnlockId != Anki.Cozmo.UnlockId.Invalid) {
+        UnlockableInfo upgradeInfo = UnlockablesManager.Instance.GetUnlockableInfo(actionData.ActionUnlockId);
+        if (upgradeInfo != null) {
+          _UpgradeName = Localization.Get(upgradeInfo.TitleKey);
+        }
       }
     }
 
