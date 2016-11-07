@@ -101,6 +101,12 @@ extern void crash_dump(int* sp) {
     cle->stackDumpSize =  0;
   }
 
+  // Delay for 2ms before storing to flash in case this was just a brown out, we should die before logging.
+  for(i=0; i<64000; i++)
+  {
+    asm("nop");
+  }
+
   os_put_hex(crashHandlerPutReport(&record), 2);
 #endif
 
@@ -369,5 +375,3 @@ void recordBootError(void* errorFunc, int32_t errorCode)
       bootErrorRecordIndex++;
    }
 }
-
-
