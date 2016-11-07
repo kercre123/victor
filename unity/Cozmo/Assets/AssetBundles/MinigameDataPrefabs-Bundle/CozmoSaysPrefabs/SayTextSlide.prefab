@@ -45,6 +45,7 @@ GameObject:
   - 222: {fileID: 22254486}
   - 114: {fileID: 11484472}
   - 114: {fileID: 11484712}
+  - 114: {fileID: 11402210}
   m_Layer: 5
   m_Name: TextInputField
   m_TagString: Untagged
@@ -353,6 +354,17 @@ MonoBehaviour:
   _AllUppercase: 0
   GlowText: 0
   IsRaycastBlocker: 0
+--- !u!114 &11402210
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 114538}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0647f0b505f254be8878d0cfbdec2de1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &11403504
 MonoBehaviour:
   m_ObjectHideFlags: 1

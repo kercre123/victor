@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using DataPersistence;
 using Anki.Cozmo.ExternalInterface;
+using UnityEngine.EventSystems;
 
 public class SayTextSlide : MonoBehaviour {
 
@@ -44,6 +45,8 @@ public class SayTextSlide : MonoBehaviour {
   private bool _TextFieldEmpty = true;
   private bool _NotEnoughSparks = false;
 
+  private bool _PendingClearField = false;
+
   public void Initialize(CozmoSays.CozmoSaysGame cozmoSaysGame) {
     _CozmoSaysGame = cozmoSaysGame;
   }
@@ -55,16 +58,25 @@ public class SayTextSlide : MonoBehaviour {
     _CostLabel.text = _SayCost.ToString();
     _TextInput.onValueChanged.AddListener(HandleOnTextFieldChange);
     _TextInput.onValidateInput += HandleInputValidation;
+    _TextInput.GetComponent<InputFieldEventListeners>().onSelect += OnSelect;
+
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
-
     SetButtonInteractivity();
-
   }
 
   private void OnDestroy() {
     _TextInput.onValueChanged.RemoveListener(HandleOnTextFieldChange);
     _TextInput.onValidateInput -= HandleInputValidation;
+    _TextInput.GetComponent<InputFieldEventListeners>().onSelect -= OnSelect;
+
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
+  }
+
+  private void OnSelect(BaseEventData data) {
+    if (_PendingClearField) {
+      _TextInput.text = "";
+      _PendingClearField = false;
+    }
   }
 
   public void RegisterInputFocus() {
@@ -106,6 +118,7 @@ public class SayTextSlide : MonoBehaviour {
     _ActiveContentContainer.SetActive(false);
     _SparkSpinner.SetActive(true);
     _TextInput.textComponent.color = _TextFieldInactiveColor;
+    _PendingClearField = true;
 
     SetSayTextReactionaryBehaviors(false);
 
@@ -169,11 +182,7 @@ public class SayTextSlide : MonoBehaviour {
     _ActiveContentContainer.SetActive(true);
     _SparkSpinner.SetActive(false);
     _TextInput.textComponent.color = _TextFieldActiveColor;
-    // clears text after saying it
-    _TextInput.text = "";
-#if UNITY_IOS
-    RegisterInputFocus();
-#endif
+
     SetButtonInteractivity();
   }
 
