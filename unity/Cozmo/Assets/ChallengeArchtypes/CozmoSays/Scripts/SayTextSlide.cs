@@ -83,6 +83,13 @@ public class SayTextSlide : MonoBehaviour {
     SetButtonInteractivity();
   }
 
+  private void SetSayTextReactionaryBehaviors(bool enable) {
+    if (RobotEngineManager.Instance.CurrentRobot != null) {
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("say_text_slide", Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement, enable);
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("say_text_slide", Anki.Cozmo.BehaviorType.ReactToPickup, enable);
+    }
+  }
+
   private void HandleSayTextButton() {
 
     _PlayingSayAnimation = true;
@@ -91,11 +98,14 @@ public class SayTextSlide : MonoBehaviour {
     _SparkSpinner.SetActive(true);
     _TextInput.textComponent.color = _TextFieldInactiveColor;
 
+    SetSayTextReactionaryBehaviors(false);
+
     bool hasBadWords = BadWordsFilterManager.Instance.Contains(_TextInput.text);
 
     if (hasBadWords) {
       RobotEngineManager.Instance.CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CozmoSaysBadWord, (success) => {
         ResetInputStates();
+        SetSayTextReactionaryBehaviors(true);
       });
     }
     else {
@@ -123,6 +133,7 @@ public class SayTextSlide : MonoBehaviour {
         if (success) {
           DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.RemoveItemAmount(_SparkItemId, _SayCost);
           UpdateTotalSparkCount();
+          SetSayTextReactionaryBehaviors(true);
         }
       });
     }
