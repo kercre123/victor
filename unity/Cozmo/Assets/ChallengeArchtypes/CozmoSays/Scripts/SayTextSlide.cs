@@ -169,12 +169,7 @@ public class SayTextSlide : MonoBehaviour {
   }
 
   private void HandleRobotReactionaryBehavior(Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition message) {
-    if (message.behaviorStarted) {
-      _PlayingReactionaryBehavior = true;
-    }
-    else {
-      _PlayingReactionaryBehavior = false;
-    }
+    _PlayingReactionaryBehavior = message.behaviorStarted;
     SetButtonInteractivity();
   }
 }
