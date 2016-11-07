@@ -21,6 +21,7 @@
 extern void ResetMissedLogCount();
 
 extern GlobalDataToBody g_dataToBody;
+extern GlobalDataToHead g_dataToHead;
 
 using namespace Anki::Cozmo;
 
@@ -72,6 +73,11 @@ static void Process_setCubeID(const CubeID& msg)
 static void Process_setCubeLights(const CubeLights& msg)
 {
   Radio::setPropLights(msg.lights);
+}
+
+static void Process_adjustTimestamp(const RobotInterface::AdjustTimestamp& msg)
+{
+  g_dataToHead.timestamp = msg.timestamp;
 }
 
 static void Process_setCubeGamma(const SetCubeGamma& msg)

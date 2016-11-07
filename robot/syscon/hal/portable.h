@@ -9,6 +9,8 @@ typedef signed char         s8;
 typedef signed short        s16;
 typedef signed int          s32;
 typedef signed long long    s64;
+typedef float               f32;
+typedef double              f64;
 
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 

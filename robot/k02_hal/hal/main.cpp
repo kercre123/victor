@@ -22,6 +22,9 @@
 #include "i2c.h"
 #include "imu.h"
 
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
+
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
 
@@ -40,9 +43,16 @@ namespace Anki
       void CameraInit(void);
       void CameraStart(void);
 
-      TimeStamp_t t_;
-      TimeStamp_t GetTimeStamp(void){ return t_; }
-      void SetTimeStamp(TimeStamp_t t) {t_ = t;}
+      TimeStamp_t t_;      
+      TimeStamp_t GetTimeStamp(void){ return t_; }      
+      void SetTimeStamp(TimeStamp_t t) {
+        using namespace Anki::Cozmo::RobotInterface;
+        
+        AdjustTimestamp msg;
+        msg.timestamp = t;
+        RobotInterface::SendMessage(msg);
+      }
+
       u32 GetID() { return *(uint32_t*) 0xFFC; }
       void SetImageSendMode(const ImageSendMode mode, const ImageResolution res) { videoEnabled_ = (mode != Off); }
       bool IsVideoEnabled() { return videoEnabled_; }
@@ -153,6 +163,9 @@ int main (void)
     // Wait for head body sync to occur
     UART::WaitForSync();
     Spine::Manage();
+
+    // Copy through our timestamp
+    t_ = g_dataToHead.timestamp;
 
     if (Anki::Cozmo::Robot::step_MainExecution() != Anki::RESULT_OK)
     {

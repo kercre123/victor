@@ -7,9 +7,11 @@ extern "C" {
 }
 
 #include "hardware.h"
+#include "portable.h"
 #include "anki/cozmo/robot/crashLogs.h"
 #include "anki/cozmo/robot/spineData.h"
 #include "anki/cozmo/robot/rec_protocol.h"
+#include "anki/cozmo/shared/cozmoConfig_common.h"
 
 #include "timer.h"
 #include "storage.h"
@@ -28,14 +30,18 @@ extern "C" {
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 
+extern GlobalDataToHead g_dataToHead;
+
 // This is our near-realtime loop
-void main_execution(void) {
+void main_execution(void) { 
   Motors::manage();
   Head::manage();
   Battery::manage();
   Bluetooth::manage();
 
   Watchdog::kick(WDOG_MAIN_LOOP);
+
+  g_dataToHead.timestamp += TIME_STEP;
 }
 
 int main(void)

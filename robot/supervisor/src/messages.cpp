@@ -70,6 +70,7 @@ namespace Anki {
 
         // Flag for receipt of Init message
         bool initReceived_ = false;
+        u8 ticsSinceInitReceived_ = 0;
         bool syncTimeAckSent_ = false;
         
         // Cache for power state information
@@ -231,6 +232,14 @@ namespace Anki {
 #endif
       }
 
+      void Process_adjustTimestamp(const RobotInterface::AdjustTimestamp& msg)
+      {
+        #ifdef SIMULATOR
+        HAL::SetTimeStamp(msg.timestamp);
+        #endif
+      }
+
+
       void Process_syncTime(const RobotInterface::SyncTime& msg)
       {
         AnkiInfo( 100, "Messages.Process_syncTime.Recvd", 305, "", 0);
@@ -238,6 +247,7 @@ namespace Anki {
         // Set SyncTime received flag
         // Acknowledge in Update()
         initReceived_ = true;
+        ticsSinceInitReceived_ = 0;
 
         // TODO: Compare message ID to robot ID as a handshake?
 
@@ -314,19 +324,24 @@ namespace Anki {
       void Update()
       {
         // Send syncTimeAck
-        if (!syncTimeAckSent_ && initReceived_ && IMUFilter::IsBiasFilterComplete()) {
-          RobotInterface::SyncTimeAck syncTimeAckMsg;
-          while (RobotInterface::SendMessage(syncTimeAckMsg) == false);
-          syncTimeAckSent_ = true;
-          
-          // Send up gyro calibration
-          // Since the bias is typically calibrate before the robot is even connected,
-          // this is the time when the data can actually be sent up to engine.
-          AnkiEvent( 394, "Messages.Update.GyroCalibrated", 579, "%f %f %f", 3,
-                    RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[0]),
-                    RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[1]),
-                    RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[2]));
+        if (!syncTimeAckSent_) {
+          // Make sure we wait some tics after receiving syncTime so that we're sure the
+          // timestamp from the body has propagated up.
+          if (initReceived_ && (++ticsSinceInitReceived_ > 3) && IMUFilter::IsBiasFilterComplete()) {
+            RobotInterface::SyncTimeAck syncTimeAckMsg;
+            while (RobotInterface::SendMessage(syncTimeAckMsg) == false);
+            syncTimeAckSent_ = true;
+            
+            // Send up gyro calibration
+            // Since the bias is typically calibrate before the robot is even connected,
+            // this is the time when the data can actually be sent up to engine.
+            AnkiEvent( 394, "Messages.Update.GyroCalibrated", 579, "%f %f %f", 3,
+                      RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[0]),
+                      RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[1]),
+                      RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[2]));
+          }
         }
+        
         
         // Process incoming messages
 #ifndef TARGET_K02

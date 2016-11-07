@@ -162,9 +162,9 @@ namespace Anki {
         START_TIME_PROFILE(CozmoBotMain, TOTAL);
         START_TIME_PROFILE(CozmoBot, HAL);
 
-        // HACK: Manually setting timestamp here in mainExecution until
-        // until Nathan implements this the correct way.
+        #ifdef SIMULATOR
         HAL::SetTimeStamp(HAL::GetTimeStamp()+TIME_STEP);
+        #endif
 
         // Detect if it took too long in between mainExecution calls
         u32 cycleStartTime = HAL::GetMicroCounter();

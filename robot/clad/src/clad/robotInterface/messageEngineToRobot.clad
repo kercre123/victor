@@ -362,6 +362,10 @@ enum uint_32 ToRobotAddressSpace
   TO_ENG_END    = 0xFE
 }
 
+message AdjustTimestamp {
+  uint_32 timestamp
+}
+
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from engine to robot and within the robot
@@ -375,7 +379,7 @@ union EngineToRobot
 
   // 0x01 to 0x27: Messages to the body / test fixture
   // 0x28 to 0x2f: Allocated to BLE response messages
-  //          FREE SLOT!!!                                  = 0x01,
+  AdjustTimestamp               adjustTimestamp             = 0x01,
   BackpackSetLayer              setBackpackLayer            = 0x02,
   BackpackLightsMiddle          setBackpackLightsMiddle     = 0x03,
   CubeLights                    setCubeLights               = 0x04,

@@ -94,7 +94,8 @@ static const u8 UPAXIS_STABLE_COUNT_THRESH = 15;     // How long the candidate u
 static const UpAxis idxToUpAxis[3][2] = { {XPositive, XNegative},
                                           {YPositive, YNegative},
                                           {ZPositive, ZNegative} };
-static uint32_t _halTimeStamp = 0;
+extern GlobalDataToHead g_dataToHead;
+
 static bool sendDiscovery;
 
 void Radio::init() {
@@ -237,7 +238,7 @@ static void ClearActiveObjectData(uint8_t slot)
 static void ReportUpAxisChanged(uint8_t id, UpAxis a)
 {
   ObjectUpAxisChanged m;
-  m.timestamp = _halTimeStamp;
+  m.timestamp = g_dataToHead.timestamp;
   m.objectID = id;
   m.upAxis = a;
   RobotInterface::SendMessage(m);
@@ -270,7 +271,7 @@ void UpdatePropState(uint8_t id, int ax, int ay, int az, int shocks,
     return ;
   }
 
-  u32 currTime_ms = _halTimeStamp;
+  u32 currTime_ms = g_dataToHead.timestamp;
   if (count > 0) {
     ObjectTapped m;
     m.timestamp = currTime_ms;
@@ -345,7 +346,7 @@ void UpdatePropState(uint8_t id, int ax, int ay, int az, int shocks,
   if (motionDirChanged ||
       ((movingTimeoutCtr[id] >= START_MOVING_COUNT_THRESH) && !isMoving[id])) {
     ObjectMoved m;
-    m.timestamp = _halTimeStamp;
+    m.timestamp = g_dataToHead.timestamp;
     m.objectID = id;
     m.robotID = 0;
     m.accel.x = ax;
@@ -366,7 +367,7 @@ void UpdatePropState(uint8_t id, int ax, int ay, int az, int shocks,
     
     // Send stopped message
     ObjectStoppedMoving m;
-    m.timestamp = _halTimeStamp;
+    m.timestamp = g_dataToHead.timestamp;
     m.objectID = id;
     m.robotID = 0;
     RobotInterface::SendMessage(m);
@@ -778,7 +779,6 @@ extern "C" void RTC0_IRQHandler(void) {
   if (NRF_RTC0->EVENTS_COMPARE[PREPARE_COMPARE]) {
     NRF_RTC0->EVENTS_COMPARE[PREPARE_COMPARE] = 0;
     NRF_RTC0->CC[PREPARE_COMPARE] += SCHEDULE_PERIOD;
-    _halTimeStamp += 5; // 5 ms
 
     radio_prepare();
   }

@@ -37,6 +37,7 @@ struct GlobalDataToHead
   Fixed speeds[4];
   Fixed positions[4];
   int32_t cliffLevel;
+  uint32_t timestamp;
   uint8_t  cladData[SPINE_MAX_CLAD_MSG_SIZE_UP];
 };
 
@@ -47,6 +48,6 @@ struct GlobalDataToBody
   uint8_t  cladData[SPINE_MAX_CLAD_MSG_SIZE_DOWN];
 };
 
-static_assert((sizeof(GlobalDataToHead) + sizeof(GlobalDataToBody)) <= 132, "Spine transport payload too large");
+static_assert((sizeof(GlobalDataToHead) + sizeof(GlobalDataToBody)) <= 136, "Spine transport payload too large");
 
 #endif
