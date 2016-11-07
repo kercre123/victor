@@ -13,6 +13,8 @@ namespace Simon {
     private float _LastSequenceTime = -1;
 
     private PlayerType _NextPlayer;
+    private const int _kMaxCountdown_Sec = 3;
+    private int _CountdownPhase = _kMaxCountdown_Sec;
 
     public SetSequenceSimonState(PlayerType nextPlayer) {
       _NextPlayer = nextPlayer;
@@ -30,10 +32,36 @@ namespace Simon {
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
 
       _LastSequenceTime = Time.time;
+      if (_SequenceLength > _GameInstance.MinSequenceLength) {
+        _GameInstance.SharedMinigameView.PlayBannerAnimation(Localization.Get(LocalizationKeys.kSimonGameLabelNextRound), HandleCountDownStart);
+      }
+      else {
+        HandleCountDownDone();
+      }
+    }
+    // NextRound, 3,2,1, go
+    private void HandleCountDownStart() {
+      _GameInstance.StartCoroutine(CountdownCoroutine());
+    }
+    private IEnumerator CountdownCoroutine() {
+      while (_CountdownPhase > 0) {
+        _GameInstance.GetSimonSlide().ShowCenterText(Localization.Get(LocalizationKeys.kSimonGameLabelListen) + " " + _CountdownPhase.ToString());
+        yield return new WaitForSeconds(1);
+        _CountdownPhase--;
+      }
+      HandleCountDownDone();
+    }
+    private void HandleCountDownDone() {
+      _GameInstance.GetSimonSlide().ShowCenterText(Localization.Get(LocalizationKeys.kSimonGameLabelListen));
+      _CountdownPhase = -1;
     }
 
     public override void Update() {
       base.Update();
+      // Wait for countdown to complete before setting the sequence.
+      if (_CountdownPhase > 0) {
+        return;
+      }
       if (_CurrentSequenceIndex == -1) {
         // First in sequence
         if (Time.time - _LastSequenceTime > _GameInstance.TimeWaitFirstBeat) {
@@ -76,14 +104,19 @@ namespace Simon {
     private void LightUpNextCube() {
       _CurrentSequenceIndex++;
       _LastSequenceTime = Time.time;
-
-      int cubeId = GetCurrentTarget().ID;
-      Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_GameInstance.GetAudioForBlock(cubeId));
-      _GameInstance.BlinkLight(cubeId, SimonGame.kLightBlinkLengthSeconds, Color.black, _GameInstance.GetColorForBlock(cubeId));
+      LightCube target = GetCurrentTarget();
+      if (target != null) {
+        int cubeId = target.ID;
+        Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_GameInstance.GetAudioForBlock(cubeId));
+        _GameInstance.BlinkLight(cubeId, SimonGame.kLightBlinkLengthSeconds, Color.black, _GameInstance.GetColorForBlock(cubeId));
+      }
     }
 
     public LightCube GetCurrentTarget() {
-      return _CurrentRobot.LightCubes[_CurrentSequence[_CurrentSequenceIndex]];
+      if (_CurrentRobot != null && _CurrentRobot.LightCubes.ContainsKey(_CurrentSequence[_CurrentSequenceIndex])) {
+        return _CurrentRobot.LightCubes[_CurrentSequence[_CurrentSequenceIndex]];
+      }
+      return null;
     }
 
     public override void Exit() {

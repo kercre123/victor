@@ -87,6 +87,9 @@
   "minigame.label.gameOver": {
     "translation": "Game Over"
   },
+  "minigame.text.waitForCozmo": {
+    "translation": "Cozmo is getting ready..."
+  },
   "askCozmo.title": {
     "translation": "Ask Cozmo"
   },

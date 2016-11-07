@@ -25,7 +25,7 @@ namespace Simon {
 
       _GameInstance.ShowCurrentPlayerTurnStage(PlayerType.Cozmo, false);
 
-      _StateMachine.PushSubState(new CozmoMoveCloserToCubesState(null, false, 40.0f, 20.0f));
+      _StateMachine.PushSubState(new CozmoMoveCloserToCubesState(null, false, 40.0f, 20.0f, false));
     }
 
     public override void Exit() {
@@ -77,6 +77,9 @@ namespace Simon {
     }
 
     private void StartTurnToTarget(LightCube target, bool isCorrect) {
+      if (target == null) {
+        return;
+      }
       _CurrentRobot.SetAllBackpackBarLED(_GameInstance.GetColorForBlock(target.ID));
 
       int goingToIndex = _GameInstance.CubeIdsForGame.IndexOf(target.ID);
@@ -102,7 +105,10 @@ namespace Simon {
     }
 
     public LightCube GetCurrentTarget() {
-      return _CurrentRobot.LightCubes[_LastTargetID];
+      if (_CurrentRobot != null && _CurrentRobot.LightCubes.ContainsKey(_LastTargetID)) {
+        return _CurrentRobot.LightCubes[_LastTargetID];
+      }
+      return null;
     }
 
     private void CozmoLoseHand() {

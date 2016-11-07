@@ -65,7 +65,15 @@ namespace Simon {
         if (visibleLightCount > 0) {
           UpdateScannedCubes();
           // If Cozmo can see all at once, we know it's too close
+          int closeCubes = 0;
           if (visibleLightCount == _CubesRequired) {
+            foreach (KeyValuePair<int, ScannedSetupCubeState> cubeState in _SetupCubeState) {
+              if (cubeState.Value == ScannedSetupCubeState.TooClose) {
+                closeCubes++;
+              }
+            }
+          }
+          if (closeCubes > 0) {
             SetScanPhase(ScanPhase.Error);
           }
           else {

@@ -304,6 +304,7 @@ public static class LocalizationKeys {
   public const string kMinigameLabelDifficultySelect = "minigame.label.difficultySelect";
   public const string kMinigameLabelCozmoPrep = "minigame.label.cozmoPrep";
   public const string kMinigameLabelGameOver = "minigame.label.gameOver";
+  public const string kMinigameTextWaitForCozmo = "minigame.text.waitForCozmo";
   public const string kAskCozmoTitle = "askCozmo.title";
   public const string kAskCozmoButton = "askCozmo.button";
   public const string kDroneModeActionLockedModalTitle = "droneMode.actionLockedModal.title";
@@ -320,6 +321,7 @@ public static class LocalizationKeys {
   public const string kDroneModeTextHowToPlayHead = "droneMode.text.howToPlayHead";
   public const string kPlayhouseGame01TextHowToPlay = "playhouseGame01.text.howToPlay";
   public const string kSimonGameHowToPlay = "simonGame.howToPlay";
+  public const string kSimonGameSoloHowToPlay = "simonGame.solo.howToPlay";
   public const string kSimonGameDifficultyHardDescriptionLocked = "simonGame.difficulty.hardDescription.locked";
   public const string kSimonGameLabelYourTurn = "simonGame.label.yourTurn";
   public const string kSimonGameLabelCozmoTurn = "simonGame.label.cozmoTurn";

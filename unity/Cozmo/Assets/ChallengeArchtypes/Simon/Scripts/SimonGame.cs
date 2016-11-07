@@ -40,7 +40,6 @@ namespace Simon {
 
     private PlayerType _FirstPlayer = PlayerType.Human;
     private bool _WantsSequenceGrowth = true;
-    private bool _ShowSequenceUpdated = false;
 
     public AnimationCurve CozmoWinPercentage { get { return _SkillCurve; } }
 
@@ -127,7 +126,6 @@ namespace Simon {
       // Only increment on the first player
       if (playerPickingSequence == _FirstPlayer && _WantsSequenceGrowth) {
         _CurrentSequenceLength = _CurrentSequenceLength >= MaxSequenceLength ? MaxSequenceLength : _CurrentSequenceLength + 1;
-        _ShowSequenceUpdated = true;
       }
       return _CurrentSequenceLength;
     }
@@ -349,14 +347,9 @@ namespace Simon {
       }
       else {
         simonTurnScript.ShowHumanLives(_CurrLivesHuman, _Config.MaxLivesHuman);
-        simonTurnScript.ShowCenterText(isListening ? Localization.Get(LocalizationKeys.kSimonGameLabelListen) : Localization.Get(LocalizationKeys.kSimonGameLabelRepeat));
+        simonTurnScript.ShowCenterText(isListening ? "" : Localization.Get(LocalizationKeys.kSimonGameLabelRepeat));
       }
       CurrentPlayer = player;
-      int turnNumber = _CurrentIDSequence.Count - _Config.MinSequenceLength + 1;
-      if (turnNumber > 0 && _ShowSequenceUpdated) {
-        SharedMinigameView.PlayBannerAnimation(Localization.Get(LocalizationKeys.kSimonGameLabelNextRound), null, _BannerAnimationDurationSeconds);
-        _ShowSequenceUpdated = false;
-      }
     }
 
     public void ShowCenterResult(bool enabled, bool correct = true) {

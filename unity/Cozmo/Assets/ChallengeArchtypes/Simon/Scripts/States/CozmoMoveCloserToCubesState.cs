@@ -20,12 +20,14 @@ namespace Simon {
     private bool _WantsCubeBlink;
     private float _DistanceThreshold;
     private float _AngleTol_Deg;
+    private bool _ShowLabel;
 
-    public CozmoMoveCloserToCubesState(State nextState, bool wantsBlink = true, float distanceThreshold = 20f, float angleTol_Deg = 2.5f) {
+    public CozmoMoveCloserToCubesState(State nextState, bool wantsBlink = true, float distanceThreshold = 20f, float angleTol_Deg = 2.5f, bool showLabel = true) {
       _NextState = nextState;
       _WantsCubeBlink = wantsBlink;
       _DistanceThreshold = distanceThreshold;
       _AngleTol_Deg = angleTol_Deg;
+      _ShowLabel = showLabel;
     }
 
     public override void Enter() {
@@ -42,6 +44,9 @@ namespace Simon {
       _GameInstance.SharedMinigameView.HideMiddleBackground();
       _GameInstance.SharedMinigameView.HideShelf();
       _GameInstance.SharedMinigameView.HideInstructionsVideoButton();
+      if (_ShowLabel) {
+        _GameInstance.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kMinigameTextWaitForCozmo);
+      }
 
       IRobot robot = _GameInstance.CurrentRobot;
       foreach (int id in _GameInstance.CubeIdsForGame) {
@@ -63,6 +68,9 @@ namespace Simon {
 
     public override void Exit() {
       base.Exit();
+      if (_ShowLabel) {
+        _GameInstance.SharedMinigameView.InfoTitleText = "";
+      }
       if (_CurrentRobot != null) {
         _CurrentRobot.DriveWheels(0.0f, 0.0f);
       }

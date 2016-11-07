@@ -42,14 +42,14 @@ namespace Simon {
         _GameInstance.ShowCurrentPlayerTurnStage(_NextPlayer, true);
         _GameInstance.SetCubeLightsDefaultOn();
 
-        _CurrentRobot.TurnTowardsObject(_GameInstance.GetCubeBySortedIndex (1), false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2, HandleCozmoTurnComplete);
+        _CurrentRobot.TurnTowardsObject(_GameInstance.GetCubeBySortedIndex(1), false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2, HandleCozmoTurnComplete);
 
         // Update Music round
         _GameInstance.UpdateMusicRound();
 
         if (_NextPlayer == PlayerType.Human) {
           if (_CanAutoAdvance) {
-            _GameInstance.SharedMinigameView.PlayBannerAnimation(Localization.Get(LocalizationKeys.kSimonGameLabelListen), HandleAutoAdvance);
+            HandleAutoAdvance();
           }
           else {
             _GameInstance.GetSimonSlide().ShowPlayPatternButton(HandleContinuePressed);
@@ -72,10 +72,9 @@ namespace Simon {
       // Start Sequence after audio completes
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Mm_Pattern_Start,
                                    AudioCallbackFlag.EventComplete,
-                                   (CallbackInfo callbackInfo) =>
-      {
-        _StateMachine.SetNextState(new SetSequenceSimonState(_NextPlayer));
-      });
+                                   (CallbackInfo callbackInfo) => {
+                                     _StateMachine.SetNextState(new SetSequenceSimonState(_NextPlayer));
+                                   });
     }
   }
 }

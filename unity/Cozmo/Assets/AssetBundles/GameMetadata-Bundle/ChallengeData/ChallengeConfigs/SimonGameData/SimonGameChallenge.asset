@@ -45,7 +45,7 @@ MonoBehaviour:
     DifficultyName:
       Key: simonGame.mode.solo
     DifficultyDescription:
-      Key: simonGame.howToPlay
+      Key: simonGame.solo.howToPlay
     LockedDifficultyDescription:
       Key: simonGame.difficulty.hardDescription.locked
     _AnimationPrefabData:
@@ -55,7 +55,7 @@ MonoBehaviour:
       _AssetDataName: SimonHowToPlayAnimation
   GetInAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 279
+    _EnumValue: 291
   GetOutAnimTrigger:
     _EnumValueAsString: MemoryMatchCozmoGetOut
-    _EnumValue: 124
+    _EnumValue: 135
