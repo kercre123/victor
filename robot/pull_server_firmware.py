@@ -45,4 +45,6 @@ def pull_firmware(deps_file):
     os.remove(destFilename)
 
 if __name__ == '__main__':
+    if 'old' in sys.argv:
+        FIRMWARE_BUILD_KEY = 'old_firmware'
     pull_firmware(DEPS_FILE)

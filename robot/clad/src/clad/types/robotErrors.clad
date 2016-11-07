@@ -26,6 +26,7 @@ namespace RobotInterface {
     REC_ReliableTransport = 2, ///< Reliable transport dropped messages
     REC_I2SPI_Sync  = 3, ///< Sync error on I2SPI
     REC_I2SPI_Lost  = 4, ///< It's been too long since WiFi has seen a message from RTIP
+    REC_NO_K02      = 5, ///< Never got any messages from K02
   }
 
   message CrashReport

@@ -3,8 +3,6 @@
 
 #include "anki/cozmo/robot/crashLogs.h"
 
-CrashLog_NRF* CRASHLOG_POINTER;
-
 extern "C" {
   #include "nrf.h"
 }
@@ -12,8 +10,8 @@ extern "C" {
 #include "storage.h"
 
 extern "C" {
-  void HardFault_Handler(void) {
-    Storage::set(STORAGE_CRASH_LOG_NRF, CRASHLOG_POINTER, sizeof(CrashLog_NRF));
+  void HardFault_Handler(CrashLog_NRF* crashlog) {
+    Storage::set(STORAGE_CRASH_LOG_NRF, crashlog, sizeof(CrashLog_NRF));
     
     NVIC_SystemReset();
   }

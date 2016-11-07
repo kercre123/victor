@@ -531,13 +531,6 @@ namespace Anki
       
       // Set the color and flashing of each LED on a block separately
       Result SetBlockLight(const u32 activeID, const u16* colors);
-
-      void DiscoverProp(uint32_t id);
-      void GetPropState(uint8_t id, int x, int y, int z, int shocks,
-                        uint8_t tapTime, int8_t tapNeg, int8_t tapPos);
-
-      // Clear the motion data for the specified slot
-      void ClearActiveObjectData(uint8_t slot);
       
       /////////////////////////////////////////////////////////////////////
       // POWER MANAGEMENT

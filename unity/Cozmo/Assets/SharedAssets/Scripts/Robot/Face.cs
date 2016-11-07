@@ -101,7 +101,7 @@ public class Face : IVisibleInCamera { // TODO Implement IHaveCameraPosition
 
     LastSeenEngineTimestamp = message.timestamp;
 
-    VizRect = new Rect(message.img_topLeft_x, message.img_topLeft_y, message.img_width, message.img_height);
+    VizRect = new Rect(message.img_rect.x_topLeft, message.img_rect.y_topLeft, message.img_rect.width, message.img_rect.height);
 
     _ConsecutiveVisionFramesNotSeen = 0;
     IsInFieldOfView = true;

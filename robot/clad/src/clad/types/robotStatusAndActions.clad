@@ -4,6 +4,8 @@
 // Copyright: Anki, inc. 2015
 // ROBOT_CLAD_SHARED
 
+#include "clad/types/imu.clad"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -80,8 +82,8 @@ structure RobotState
   float_32 headAngle,
   float_32 liftAngle,
   float_32 liftHeight,
-  float_32 rawGyroZ,
-  float_32 rawAccelY,
+  AccelData accel,  // in head-frame (mm/s^2)
+  GyroData gyro,    // in head-frame (rad/s)
   float_32 batteryVoltage,
   uint_32 status, // RobotStatusFlag packs as a uint_32
   uint_16 lastPathID,

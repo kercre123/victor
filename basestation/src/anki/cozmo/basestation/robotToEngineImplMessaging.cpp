@@ -216,9 +216,14 @@ void RobotToEngineImplMessaging::HandleMotorCalibration(const AnkiEvent<RobotInt
   const MotorCalibration& payload = message.GetData().Get_motorCalibration();
   PRINT_NAMED_INFO("HandleMotorCalibration.Recvd", "Motor %d, started %d, autoStarted %d", (int)payload.motorID, payload.calibStarted, payload.autoStarted);
   
-  if (payload.autoStarted && payload.calibStarted) {
-    // Motor hit a limit and calibration was automatically triggered
-    PRINT_NAMED_EVENT("HandleMotorCalibration.AutoCalib", "%s", EnumToString(payload.motorID));
+  if (payload.calibStarted) {
+    Util::sEventF("HandleMotorCalibration.Start",
+                  {{DDATA, TO_DDATA_STR(payload.autoStarted)}},
+                  "%s", EnumToString(payload.motorID));
+  } else {
+    Util::sEventF("HandleMotorCalibration.Complete",
+                  {{DDATA, TO_DDATA_STR(payload.autoStarted)}},
+                  "%s", EnumToString(payload.motorID));
   }
   
   if( payload.motorID == MotorID::MOTOR_LIFT && payload.calibStarted && robot->IsCarryingObject() ) {
@@ -931,7 +936,7 @@ void RobotToEngineImplMessaging::HandleImageChunk(const AnkiEvent<RobotInterface
   const bool isImageReady = robot->GetEncodedImage().AddChunk(payload);
   
   // Forward the image chunks over external interface if image send mode is not OFF
-  if (robot->GetContext()->GetExternalInterface() != nullptr && robot->GetImageSendMode() != ImageSendMode::Off)
+  if (robot->GetContext()->GetExternalInterface() != nullptr && robot->GetImageSendMode() != ImageSendMode::Off && !ShouldIgnoreMultipleImages())
   {
     // we don't want to start sending right in the middle of an image, wait until we hit payload 0
     // before starting to send.
@@ -975,7 +980,7 @@ void RobotToEngineImplMessaging::HandleImageChunk(const AnkiEvent<RobotInterface
     else
     {
       ++_repeatedImageCount;
-      if (_repeatedImageCount >= 3)
+      if (ShouldIgnoreMultipleImages())
       {
         PRINT_NAMED_WARNING("RobotImplMessaging.HandleImageChunk",
                             "Ignoring %dth image (with t=%u) received during basestation tick at %fsec",
@@ -994,6 +999,11 @@ void RobotToEngineImplMessaging::HandleImageChunk(const AnkiEvent<RobotInterface
     //       So don't try to use it for anything else after this!
     robot->GetVisionComponent().SetNextImage(robot->GetEncodedImage());
   } // if(isImageReady)
+}
+  
+bool RobotToEngineImplMessaging::ShouldIgnoreMultipleImages() const
+{
+  return _repeatedImageCount >= 3;
 }
 
 // For processing imu data chunks arriving from robot.

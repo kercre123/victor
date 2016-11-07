@@ -18,6 +18,7 @@
 #include "clad/types/featureGateTypes.clad"
 #include "clad/types/firmwareTypes.clad"
 #include "clad/types/imageTypes.clad"
+#include "clad/types/imu.clad"
 #include "clad/types/loadedKnownFace.clad"
 #include "clad/types/motorTypes.clad"
 #include "clad/types/nvStorageTypes.clad"
@@ -27,6 +28,7 @@
 #include "clad/types/petTypes.clad"
 #include "clad/types/poseStructs.clad"
 #include "clad/types/proxMessages.clad"
+#include "clad/types/cladRect.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/sdkStatusTypes.clad"
 #include "clad/types/toolCodes.clad"
@@ -128,6 +130,8 @@ message RobotState {
     float_32 headAngle_rad,
     float_32 liftHeight_mm,
     float_32 batteryVoltage,
+    AccelData accel,                // in head frame (mm/s^2)
+    GyroData gyro,                  // in head frame (rad/s)
     int_32   carryingObjectID,      // will be -1 if not carrying object
     int_32   carryingObjectOnTopID, // will be -1 if no object on top of object being carried
     int_32   headTrackingObjectID,  // will be -1 if head is not tracking to any object
@@ -212,18 +216,15 @@ message RobotProcessedImage {
 //  with specified ID/Type/Family was seen at a particular location in the image
 //  and the world
 message RobotObservedObject {
-    uint_32 robotID,
-    uint_32 timestamp,
-    ObjectFamily objectFamily,
-    ObjectType   objectType,
-    int_32  objectID,        // signed to match U2G::PickAndPlaceObject which has the option to have objectID<0
-    float_32 img_topLeft_x,  // position in image coords
-    float_32 img_topLeft_y,  //     "
-    float_32 img_width,      //     "
-    float_32 img_height,     //     "
-    PoseStruct3d pose,
-    float_32 topFaceOrientation_rad, // absolute orienation of top face, iff isActive==true
-    uint_8   isActive
+    uint_32       robotID,
+    uint_32       timestamp,
+    ObjectFamily  objectFamily,
+    ObjectType    objectType,
+    int_32        objectID,      // signed to match U2G::PickAndPlaceObject which has the option to have objectID<0
+    CladRect      img_rect,      // position in image coords
+    PoseStruct3d  pose,
+    float_32      topFaceOrientation_rad, // absolute orienation of top face, iff isActive==true
+    uint_8        isActive
 }
 
 // Message for the robot observing a possible object (existence hasn't been confirmed yet)
@@ -237,23 +238,17 @@ message ObjectProjectsIntoFOV {
     ObjectFamily  objectFamily,
     ObjectType    objectType,
     int_32        objectID,
-    float_32      img_topLeft_x,   // position in image coords
-    float_32      img_topLeft_y,   //     "
-    float_32      img_width,       //     "
-    float_32      img_height       //     "
+    CladRect      img_rect   // position in image coords
 }
 
 // RobotObservedFace
 message RobotObservedFace {
-    int_32   faceID,         // negative: tracked but not recognized; positive: recognized face
-    uint_32  robotID,
-    uint_32  timestamp,
-    PoseStruct3d pose,
-    float_32 img_topLeft_x,  // position in image coords
-    float_32 img_topLeft_y,  //     "
-    float_32 img_width,      //     "
-    float_32 img_height,     //     "
-    string   name            // Empty if none assigned yet
+    int_32        faceID,         // negative: tracked but not recognized; positive: recognized face
+    uint_32       robotID,
+    uint_32       timestamp,
+    PoseStruct3d  pose,
+    CladRect      img_rect,       // position in image coords
+    string        name            // Empty if none assigned yet
 // TODO: Add expression / landmark locations
 }
 
@@ -271,10 +266,7 @@ message RobotObservedPet {
     uint_32          timestamp,
     uint_32          numTimesObserved,
     float_32         score,
-    int_32           img_x,       // Detection rectangle in image
-    int_32           img_y,       // (x,y) = upper left corner in image
-    int_32           img_width,   //    "
-    int_32           img_height,  //    "
+    CladRect         img_rect,    // Detection rectangle in image
     Vision::PetType  petType
 }
 
@@ -686,14 +678,6 @@ enum uint_8 OnboardingStateEnum
 
 message OnboardingState {
 OnboardingStateEnum stateNum
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////  DEMO  /////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-message DemoState {
-  uint_8 stateNum
 }
 
 ///////////////////////////////////////////////////////////////////////////////

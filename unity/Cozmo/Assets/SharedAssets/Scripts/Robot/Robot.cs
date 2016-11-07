@@ -212,6 +212,7 @@ public class Robot : IRobot {
   public Dictionary<int, string> EnrolledFaces { get; set; }
 
   public Dictionary<int, float> EnrolledFacesLastEnrolledTime { get; set; }
+
   public Dictionary<int, float> EnrolledFacesLastSeenTime { get; set; }
 
   public event PetFaceStateEventHandler OnPetFaceAdded;
@@ -284,6 +285,7 @@ public class Robot : IRobot {
   public string CurrentBehaviorString { get; set; }
 
   public BehaviorType CurrentBehaviorType { get; set; }
+
   public string CurrentBehaviorName { get; set; }
 
   public string CurrentDebugAnimationString { get; set; }
@@ -1177,8 +1179,8 @@ public class Robot : IRobot {
   public void EnrollNamedFace(int faceID, int mergeIntoID, string name, Anki.Cozmo.FaceEnrollmentSequence seq = Anki.Cozmo.FaceEnrollmentSequence.Default, bool saveToRobot = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     DAS.Debug(this, "Sending EnrollNamedFace for ID=" + faceID
-      + " with name=" + PrivacyGuard.HidePersonallyIdentifiableInfo(name)
-      + " to be merged into ID=" + mergeIntoID);
+    + " with name=" + PrivacyGuard.HidePersonallyIdentifiableInfo(name)
+    + " to be merged into ID=" + mergeIntoID);
     SendQueueSingleAction(Singleton<EnrollNamedFace>.Instance.Initialize(faceID, mergeIntoID, name, seq, saveToRobot), callback, queueActionPosition);
   }
 
@@ -1558,9 +1560,9 @@ public class Robot : IRobot {
   // If an objectID is passed in, the action will complete successfully as soon as the object is seen
   // otherwise, cozmo will complete a full look around nearby before completing
   public void SearchForNearbyObject(int objectId = -1, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
-                                    float backupDistance_mm = (float) SearchForNearbyObjectDefaults.BackupDistance_mm,
-                                    float backupSpeed_mm = (float) SearchForNearbyObjectDefaults.BackupSpeed_mms,
-                                    float headAngle_rad = Mathf.Deg2Rad * (float) SearchForNearbyObjectDefaults.HeadAngle_deg) {
+                                    float backupDistance_mm = (float)SearchForNearbyObjectDefaults.BackupDistance_mm,
+                                    float backupSpeed_mm = (float)SearchForNearbyObjectDefaults.BackupSpeed_mms,
+                                    float headAngle_rad = Mathf.Deg2Rad * (float)SearchForNearbyObjectDefaults.HeadAngle_deg) {
     SendQueueSingleAction(
       Singleton<SearchForNearbyObject>.Instance.Initialize(
         desiredObjectID: objectId,
@@ -1574,17 +1576,17 @@ public class Robot : IRobot {
 
   public void ResetLiftAndHead(RobotCallback callback = null) {
     RobotActionUnion[] actions = {
-        new RobotActionUnion().Initialize(Singleton<SetLiftHeight>.Instance.Initialize(
-                                height_mm: 0.0f,
-                                max_speed_rad_per_sec: CozmoUtil.kMoveLiftSpeed_radPerSec,
-                                accel_rad_per_sec2: CozmoUtil.kMoveLiftAccel_radPerSec2,
-                                duration_sec: 0f)),
-        new RobotActionUnion().Initialize(Singleton<SetHeadAngle>.Instance.Initialize(
-                                angle_rad: CozmoUtil.HeadAngleFactorToRadians(0.25f, false),
-                                max_speed_rad_per_sec: CozmoUtil.kMoveHeadSpeed_radPerSec,
-                                accel_rad_per_sec2: CozmoUtil.kMoveHeadAccel_radPerSec2,
-                                duration_sec: 0.0f))
-      };
+      new RobotActionUnion().Initialize(Singleton<SetLiftHeight>.Instance.Initialize(
+        height_mm: 0.0f,
+        max_speed_rad_per_sec: CozmoUtil.kMoveLiftSpeed_radPerSec,
+        accel_rad_per_sec2: CozmoUtil.kMoveLiftAccel_radPerSec2,
+        duration_sec: 0f)),
+      new RobotActionUnion().Initialize(Singleton<SetHeadAngle>.Instance.Initialize(
+        angle_rad: CozmoUtil.HeadAngleFactorToRadians(0.25f, false),
+        max_speed_rad_per_sec: CozmoUtil.kMoveHeadSpeed_radPerSec,
+        accel_rad_per_sec2: CozmoUtil.kMoveHeadAccel_radPerSec2,
+        duration_sec: 0.0f))
+    };
 
     SendQueueCompoundAction(actions, callback);
   }
@@ -1668,6 +1670,24 @@ public class Robot : IRobot {
   private void SparkEnded(object message) {
     IsSparked = false;
     SparkUnlockId = UnlockId.Count;
+  }
+
+  public void ActivateSparkedMusic(Anki.Cozmo.UnlockId behaviorUnlockId,
+                                   Anki.Cozmo.Audio.GameState.Music musicState,
+                                   Anki.Cozmo.Audio.SwitchState.Sparked sparkedState) {
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage = Singleton<BehaviorManagerMessage>.Instance.Initialize(
+      ID,
+      Singleton<ActivateSparkedMusic>.Instance.Initialize(behaviorUnlockId, musicState, sparkedState)
+    );
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void DeactivateSparkedMusic(Anki.Cozmo.UnlockId behaviorUnlockId, Anki.Cozmo.Audio.GameState.Music musicState) {
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage = Singleton<BehaviorManagerMessage>.Instance.Initialize(
+      ID,
+      Singleton<DeactivateSparkedMusic>.Instance.Initialize(behaviorUnlockId, musicState)
+    );
+    RobotEngineManager.Instance.SendMessage();
   }
 
   // enable/disable games available for Cozmo to request
@@ -1898,28 +1918,9 @@ public class Robot : IRobot {
 
   #endregion
 
-  #region PressDemoMessages
-
-  public void TransitionToNextDemoState() {
-    RobotEngineManager.Instance.Message.TransitionToNextDemoState = Singleton<TransitionToNextDemoState>.Instance;
-    RobotEngineManager.Instance.SendMessage();
-  }
-
-  public void WakeUp(bool withEdge) {
-    RobotEngineManager.Instance.Message.WakeUp = Singleton<WakeUp>.Instance.Initialize(withEdge);
-    RobotEngineManager.Instance.SendMessage();
-  }
-
-  #endregion
-
   public void SayTextWithEvent(string text, AnimationTrigger playEvent, SayTextIntent intent = SayTextIntent.Text, bool fitToDuration = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     DAS.Debug(this, "Saying text: " + PrivacyGuard.HidePersonallyIdentifiableInfo(text));
     SendQueueSingleAction(Singleton<SayTextWithIntent>.Instance.Initialize(text, playEvent, intent, fitToDuration), callback, queueActionPosition);
-  }
-
-  public void SendDemoResetState() {
-    RobotEngineManager.Instance.Message.DemoResetState = Singleton<DemoResetState>.Instance;
-    RobotEngineManager.Instance.SendMessage();
   }
 
   public void EraseAllEnrolledFaces() {
@@ -2016,6 +2017,11 @@ public class Robot : IRobot {
 
   public void ExitSDKMode() {
     RobotEngineManager.Instance.Message.ExitSdkMode = Singleton<ExitSdkMode>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void SetNightVision(bool enable) {
+    RobotEngineManager.Instance.Message.SetHeadlight = Singleton<SetHeadlight>.Instance.Initialize(!enable);
     RobotEngineManager.Instance.SendMessage();
   }
 }

@@ -274,6 +274,12 @@ public:
   // and height.
   Result ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, f32 yTolFrac) const;
   
+  // Figure out absolute body pan and head tilt angles to turn towards a point in an image.
+  // Note that the head tilt is approximate because this function makes the simplifying
+  // assumption that the head rotates around the camera center.
+  Result ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const TimeStamp_t timestamp,
+                                            Radians& absPanAngle, Radians& absTiltAngle) const;
+  
   const PoseOriginList&  GetPoseOriginList() const { return _poseOriginList; }
   
   ObjectPoseConfirmer& GetObjectPoseConfirmer() { assert(_objectPoseConfirmerPtr); return *_objectPoseConfirmerPtr; }
@@ -507,6 +513,21 @@ public:
 
   // Return the timestamp of the last _processed_ image
   TimeStamp_t GetLastImageTimeStamp() const;
+  
+  
+  // =========== IMU Data =============
+  
+  // Returns pointer to robot accelerometer readings in mm/s^2 with respect to head frame.
+  // x-axis: points out face
+  // y-axis: points out left ear
+  // z-axis: points out top of head
+  const AccelData& GetHeadAccelData() const {return _robotAccel; }
+  
+  // Returns pointer to robot gyro readings in rad/s with respect to head frame.
+  // x-axis: points out face
+  // y-axis: points out left ear
+  // z-axis: points out top of head
+  const GyroData& GetHeadGyroData() const {return _robotGyro; }
   
   // =========== Actions Commands =============
     
@@ -957,6 +978,10 @@ protected:
   OffTreadsState    _awaitingConfirmationTreadState = OffTreadsState::OnTreads;
   TimeStamp_t      _timeOffTreadStateChanged_ms = 0;
   TimeStamp_t      _fallingStartedTime_ms = 0;
+  
+  // IMU data
+  AccelData        _robotAccel;
+  GyroData         _robotGyro;
   
   // Gyro drift check
   bool          _gyroDriftReported;

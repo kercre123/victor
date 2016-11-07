@@ -122,13 +122,18 @@ public:
   MusicConductor* GetMusicConductor() const { return _musicConductor; }
   
   // Tick Audio Engine
-  // This will Tick both Music Conductor & call ProcessAudioQueue()
+  // This will Tick the Music Conductor, ProcessAudioQueue() & FlushAudioQueue()
   // Note: This is thread safe
   void Update();
   
   // Process all Audio Engine events
   // This flushes all audio events that have been posted
   void ProcessAudioQueue() const;
+  
+  // Process all Callbacks
+  // Note: Call this on the same thread as Update() to assure the callback objects are not deleted while callback is
+  // being performed.
+  void FlushCallbackQueue();
   
   // Handle when the app is goes in and out of Focus
   void AppIsInFocus( const bool inFocus );

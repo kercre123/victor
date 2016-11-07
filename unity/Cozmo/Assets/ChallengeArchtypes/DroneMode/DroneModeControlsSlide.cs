@@ -70,6 +70,12 @@ namespace Cozmo.Minigame.DroneMode {
     private DroneModeHowToPlayView _HowToPlayViewPrefab;
 
     [SerializeField]
+    private CozmoToggleButton _NightVisionButton;
+
+    [SerializeField]
+    private CozmoToggleButton _HeadLiftToggleButton;
+
+    [SerializeField]
     private DroneModeCameraFeed _CameraFeed;
 
     [SerializeField]
@@ -107,6 +113,8 @@ namespace Cozmo.Minigame.DroneMode {
 
     private void Awake() {
       _HowToPlayButton.Initialize(HandleHowToPlayClicked, "drone_mode_how_to_play_button", _kDasViewControllerName);
+      _NightVisionButton.Initialize(HandleNightVisionButtonClicked, "night_vision_toggle_button", _kDasViewControllerName);
+      _HeadLiftToggleButton.Initialize(null, "head_lift_toggle_button", _kDasViewControllerName);
       _ContextualButtons = new List<DroneModeActionButton>();
     }
 
@@ -184,6 +192,7 @@ namespace Cozmo.Minigame.DroneMode {
       _CameraFeed.OnCurrentFocusChanged -= HandleCurrentFocusedObjectChanged;
       if (_CurrentRobot != null) {
         _CurrentRobot.OnCarryingObjectSet -= HandleRobotCarryingObjectSet;
+        _CurrentRobot.SetNightVision(false);
       }
     }
 
@@ -367,6 +376,10 @@ namespace Cozmo.Minigame.DroneMode {
 
     public void SetLiftSliderValue(float liftFactor) {
       _LiftSlider.value = liftFactor;
+    }
+
+    public void HandleNightVisionButtonClicked() {
+      _CurrentRobot.SetNightVision(_NightVisionButton.IsCurrentlyOn);
     }
   }
 }

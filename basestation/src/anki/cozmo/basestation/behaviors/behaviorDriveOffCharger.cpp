@@ -164,7 +164,6 @@ void BehaviorDriveOffCharger::TransitionToDrivingForward(Robot& robot)
   if( robot.IsOnChargerPlatform() )
   {
     _timesResumed++;
-    // Numbers shared with demoFearEdge but will move here since this is in freeplay
     robot.GetDrivingAnimationHandler().PushDrivingAnimations({AnimationTrigger::DriveStartLaunch,
                                                               AnimationTrigger::DriveLoopLaunch,
                                                               AnimationTrigger::DriveEndLaunch});

@@ -72,17 +72,5 @@ message ObjectTapped
   int_8   tapPos,
 }
 
-structure PropState
-{
-  uint_8 slot,
-  int_8  x,
-  int_8  y,
-  int_8  z,
-  uint_8 shockCount,
-  uint_8 tapTime,
-  int_8 tapNeg,
-  int_8 tapPos,
-}
-
 } // Cozmo
 } // Anki

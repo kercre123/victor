@@ -1389,9 +1389,9 @@ namespace Anki {
       
     }
  
-    void HAL::ClearActiveObjectData(uint8_t slot) {
-      // TODO: If we ever start sending upAxis messages from sim robot, clear it here.
-    }
+//    void HAL::ClearActiveObjectData(uint8_t slot) {
+//      // TODO: If we ever start sending upAxis messages from sim robot, clear it here.
+//    }
     
     void HAL::FacePrintf(const char *format, ...)
     {

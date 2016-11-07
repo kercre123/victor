@@ -29,19 +29,19 @@ struct BackpackLight {
 
 static const BackpackLight setting[] = {
   { 0, 0, PIN_LED1, PIN_LED2, 0x10 }, // 0
-  { 4, 0, PIN_LED1, PIN_LED4, 0x10 }, // 1
+  { 1, 0, PIN_LED1, PIN_LED4, 0x10 }, // 1
   
-  { 1, 0, PIN_LED3, PIN_LED1, 0x0D }, // 5
-  { 1, 1, PIN_LED3, PIN_LED2, 0x0B }, // 6
-  { 1, 2, PIN_LED3, PIN_LED4, 0x10 }, // 7
+  { 2, 0, PIN_LED3, PIN_LED1, 0x0D }, // 5
+  { 2, 1, PIN_LED3, PIN_LED2, 0x0B }, // 6
+  { 2, 2, PIN_LED3, PIN_LED4, 0x10 }, // 7
 
-  { 2, 0, PIN_LED2, PIN_LED1, 0x0D }, // 2
-  { 2, 1, PIN_LED2, PIN_LED3, 0x0B }, // 3
-  { 2, 2, PIN_LED2, PIN_LED4, 0x10 }, // 4
+  { 3, 0, PIN_LED2, PIN_LED1, 0x0D }, // 2
+  { 3, 1, PIN_LED2, PIN_LED3, 0x0B }, // 3
+  { 3, 2, PIN_LED2, PIN_LED4, 0x10 }, // 4
 
-  { 3, 0, PIN_LED4, PIN_LED1, 0x0D }, // 8
-  { 3, 1, PIN_LED4, PIN_LED3, 0x0B }, // 9
-  { 3, 2, PIN_LED4, PIN_LED2, 0x10 }, // 10
+  { 4, 0, PIN_LED4, PIN_LED1, 0x0D }, // 8
+  { 4, 1, PIN_LED4, PIN_LED3, 0x0B }, // 9
+  { 4, 2, PIN_LED4, PIN_LED2, 0x10 }, // 10
 };
 
 static const int LIGHT_COUNT = sizeof(setting) / sizeof(setting[0]);
@@ -63,8 +63,8 @@ static uint32_t led_value[LIGHT_COUNT];
 // Start all pins as input
 void Backpack::init()
 {
-  setLayer(BPL_IMPULSE);
-  setLights(BPL_IMPULSE, BackpackLights::disconnected);
+  lightsOff();
+  setLightsMiddle(BPL_IMPULSE, BackpackLights::disconnected);
   
   // Clear out backpack leds
   nrf_gpio_cfg_input(PIN_LED1, NRF_GPIO_PIN_NOPULL);
@@ -89,19 +89,19 @@ static void setImpulsePattern(void) {
 
   switch (chargeState) {
     case CHARGE_OFF_CHARGER:
-      setLights(BPL_IMPULSE, isBatteryLow ? BackpackLights::low_battery : BackpackLights::disconnected);
+      setLightsMiddle(BPL_IMPULSE, isBatteryLow ? BackpackLights::low_battery : BackpackLights::disconnected);
       break ;
 
     case CHARGE_CHARGING:
-      setLights(BPL_IMPULSE, BackpackLights::charging);
+      setLightsMiddle(BPL_IMPULSE, BackpackLights::charging);
       break ;
 
     case CHARGE_CHARGED:
-      setLights(BPL_IMPULSE, BackpackLights::charged);
+      setLightsMiddle(BPL_IMPULSE, BackpackLights::charged);
       break ;
 
     case CHARGE_CHARGER_OUT_OF_SPEC:
-      setLights(BPL_IMPULSE, BackpackLights::low_battery);
+      setLightsMiddle(BPL_IMPULSE, BackpackLights::low_battery);
       break ;
   }
 }
@@ -138,7 +138,7 @@ static void updateLights(const LightState* update) {
 }
 
 void Backpack::setLayer(BackpackLayer layer) {
-  if (layer == currentLayer) {
+  if (layer == currentLayer || layer >= BACKPACK_LAYERS) {
     return ;
   }
   
@@ -146,7 +146,15 @@ void Backpack::setLayer(BackpackLayer layer) {
   updateLights(lightState[currentLayer]);
 }
 
+void Backpack::clearLights(BackpackLayer layer) {
+  if (layer >= BACKPACK_LAYERS) return ;
+
+  Backpack::setLights(layer, BackpackLights::all_off);
+}
+
 void Backpack::setLights(BackpackLayer layer, const LightState* update) {
+  if (layer >= BACKPACK_LAYERS) return ;
+
   memcpy(lightState[layer], update, sizeof(LightState)*BACKPACK_LIGHTS);
 
   if (currentLayer == layer) {
@@ -155,8 +163,10 @@ void Backpack::setLights(BackpackLayer layer, const LightState* update) {
 }
 
 void Backpack::setLightsMiddle(BackpackLayer layer, const LightState* update) {
-  // Middle lights are indicies 1,2,3
-  memcpy(&lightState[layer][1], update, sizeof(LightState)*3);
+  if (layer >= BACKPACK_LAYERS) return ;
+
+  // Middle lights are indicies 2,3,4
+  memcpy(&lightState[layer][2], update, sizeof(LightState)*3);
 
   if (currentLayer == layer) {
     updateLights(lightState[layer]);
@@ -164,9 +174,10 @@ void Backpack::setLightsMiddle(BackpackLayer layer, const LightState* update) {
 }
 
 void Backpack::setLightsTurnSignals(BackpackLayer layer, const LightState* update) {
-  // Turnsignal lights are indicies 0,4
-  memcpy(&lightState[layer][0], &update[0], sizeof(LightState));
-  memcpy(&lightState[layer][4], &update[1], sizeof(LightState));
+  if (layer >= BACKPACK_LAYERS) return ;
+
+  // Turnsignal lights are indicies 0,1
+  memcpy(&lightState[layer][0], &update[0], sizeof(LightState)*2);
   
   if (currentLayer == layer) {
     updateLights(lightState[layer]);

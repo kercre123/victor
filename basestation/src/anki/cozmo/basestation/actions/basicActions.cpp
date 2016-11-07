@@ -1571,6 +1571,33 @@ namespace Anki {
       }
     }
   
+#pragma mark ---- TurnTowardsImagePointAction ----
+    
+    TurnTowardsImagePointAction::TurnTowardsImagePointAction(Robot& robot, const Point2f& imgPoint, const TimeStamp_t t)
+    : PanAndTiltAction(robot, 0, 0, true, true)
+    , _imgPoint(imgPoint)
+    , _timestamp(t)
+    {
+      SetName("TurnTowardsImagePointAction");
+      SetType(RobotActionType::TURN_TOWARDS_IMAGE_POINT);
+    }
+    
+    ActionResult TurnTowardsImagePointAction::Init()
+    {
+      Radians panAngle, tiltAngle;
+      Result result = _robot.ComputeTurnTowardsImagePointAngles(_imgPoint, _timestamp, panAngle, tiltAngle);
+      if(RESULT_OK != result)
+      {
+        PRINT_NAMED_WARNING("TurnTowardsImagePointAction.Init.ComputeTurnTowardsImagePointAnglesFailed",
+                            "(%f,%f) at t=%u", _imgPoint.x(), _imgPoint.y(), _timestamp);
+        return ActionResult::FAILURE_ABORT;
+      }
+      
+      SetBodyPanAngle(panAngle);
+      SetHeadTiltAngle(tiltAngle);
+      
+      return PanAndTiltAction::Init();
+    }
     
 #pragma mark ---- TurnTowardsLastFacePoseAction ----
 

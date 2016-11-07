@@ -137,6 +137,7 @@ namespace Anki {
         
         // These actions don't set completion unions
         case RobotActionType::ASCEND_OR_DESCEND_RAMP:
+        case RobotActionType::CALIBRATE_MOTORS:
         case RobotActionType::COMPOUND:
         case RobotActionType::CROSS_BRIDGE:
         case RobotActionType::DISPLAY_FACE_IMAGE:
@@ -160,6 +161,7 @@ namespace Anki {
         case RobotActionType::TRAVERSE_OBJECT:
         case RobotActionType::TURN_IN_PLACE:
         case RobotActionType::TURN_TOWARDS_FACE:
+        case RobotActionType::TURN_TOWARDS_IMAGE_POINT:
         case RobotActionType::TURN_TOWARDS_LAST_FACE_POSE:
         case RobotActionType::TURN_TOWARDS_POSE:
         case RobotActionType::UNKNOWN:
@@ -169,7 +171,6 @@ namespace Anki {
         case RobotActionType::WAIT:
         case RobotActionType::WAIT_FOR_IMAGES:
         case RobotActionType::WAIT_FOR_LAMBDA:
-        case RobotActionType::CALIBRATE_MOTORS:
         {
           _completionUnion.Set_defaultCompleted(DefaultCompleted());
           break;

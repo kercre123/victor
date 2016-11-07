@@ -174,8 +174,8 @@ Result BehaviorExploreLookAroundInPlace::InitInternal(Robot& robot)
   _behaviorBodyFacingDone_rad = 0;
   _coneSidesReached = 0;
   
-  // initial body direction is used to compare against the cone of focus. Demo behaviors always have a fixed cone
-  // in front of where the robot is putdown, but freeplay behaviors need to restart the cone with the current facing
+  // initial body direction is used to compare against the cone of focus. Some behaviors have a fixed cone
+  // in front of where the robot is putdown, others need to restart the cone with the current facing
   if ( _configParams.behavior_ResetBodyFacingOnStart ) {
     _initialBodyDirection = robot.GetPose().GetRotationAngle<'Z'>();
   }

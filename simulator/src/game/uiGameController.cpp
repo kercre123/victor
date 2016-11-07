@@ -101,7 +101,7 @@ namespace Anki {
       AddOrUpdateObject(msg.objectID, msg.objectType, msg.objectFamily, msg.pose);
       
       // TODO: Move this to WebotsKeyboardController?
-        const f32 area = msg.img_width * msg.img_height;
+      const f32 area = msg.img_rect.width * msg.img_rect.height;
       _lastObservedObject.family = msg.objectFamily;
       _lastObservedObject.type   = msg.objectType;
       _lastObservedObject.id     = msg.objectID;
@@ -116,6 +116,11 @@ namespace Anki {
       _lastObservedFaceID = msg.faceID;
       
       HandleRobotObservedFace(msg);
+    }
+    
+    void UiGameController::HandleRobotObservedPetBase(ExternalInterface::RobotObservedPet const& msg)
+    {
+      HandleRobotObservedPet(msg);
     }
     
     void UiGameController::HandleLoadedKnownFaceBase(Vision::LoadedKnownFace const& msg)
@@ -466,6 +471,9 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGame::Tag::RobotObservedFace:
             HandleRobotObservedFaceBase(message.Get_RobotObservedFace());
+            break;
+          case ExternalInterface::MessageEngineToGame::Tag::RobotObservedPet:
+            HandleRobotObservedPetBase(message.Get_RobotObservedPet());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::UiDeviceAvailable:
             HandleUiDeviceConnectionBase(message.Get_UiDeviceAvailable());
@@ -1436,7 +1444,7 @@ namespace Anki {
     
     void UiGameController::SendIMURequest(u32 length_ms)
     {
-      ExternalInterface::IMURequest m;
+      IMURequest m;
       m.length_ms = length_ms;
       ExternalInterface::MessageGameToEngine message;
       message.Set_IMURequest(m);

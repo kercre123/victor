@@ -6,6 +6,13 @@ sys.path.insert(0, os.path.join("tools"))
 import robotInterface
 RI = robotInterface.RI
 
+try:
+    from PIL import Image
+except ImportError:
+    sys.stderr.write("Unable to import PIL library, some functionality will not be available, try `pip3 install Pillow`")
+from threading import Lock
+from io import BytesIO
+
 def mini2jpeg(minipeg, dimensions):
     header = [
       0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00, 0x00, 0x01,
@@ -73,6 +80,9 @@ class MinipegReceiver:
         self.imageBuffer = {}
         self.imageCallback = imageCallback
         robotInterface.SubscribeToTag(RI.RobotToEngine.Tag.image, self.recvData)
+        
+    def unsubscribe(self):
+        robotInterface.UnsubscribeFromTag(RI.RobotToEngine.Tag.image, self.recvData)
 
 class MinipegWriter(MinipegReceiver):
     "Writes received images out to files"
@@ -92,8 +102,27 @@ class MinipegWriter(MinipegReceiver):
     def __init__(self):
         MinipegReceiver.__init__(self, self.writeImage)
 
+class MinipegShower(MinipegReceiver):
+    "Shows single images to the user"
+    
+    def showImage(self, img, frameId):
+        if self.showing.acquire(False):
+            if self.autoUnsub:
+                self.unsubscribe()
+            pi = Image.open(BytesIO(img))
+            pi.show()
+            self.showing.release()
+    
+    def __init__(self, auto_unsub=True):
+        self.showing = Lock()
+        self.autoUnsub = auto_unsub
+        MinipegReceiver.__init__(self, self.showImage)
+
 if __name__ == '__main__':
     robotInterface.Init()
-    c = MinipegWriter()
+    if "show" in sys.argv:
+        c = MinipegShower()
+    else:
+        c = MinipegWriter()
     robotInterface.Connect(imageRequest=True)
     time.sleep(10)

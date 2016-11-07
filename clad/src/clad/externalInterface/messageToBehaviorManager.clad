@@ -5,6 +5,8 @@
 
 #include "clad/types/behaviorTypes.clad"
 #include "clad/types/unlockTypes.clad"
+#include "clad/audio/audioStateTypes.clad"
+#include "clad/audio/audioSwitchTypes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -36,10 +38,27 @@ structure SparkUnlocked
   UnlockId behaviorSpark,
 }
 
+// Tells the behavior manager to start playing sparked music and allow state updates
+structure ActivateSparkedMusic
+{
+  UnlockId                      behaviorSpark,
+  Audio::GameState::Music       musicSate,
+  Audio::SwitchState::Sparked   sparkedMusicState,
+}
+
+// Tells the behavior manager to no longer update sparked music states
+structure DeactivateSparkedMusic
+{
+  UnlockId                  behaviorSpark,
+  Audio::GameState::Music   musicSate,
+}
+
 union BehaviorManagerMessageUnion {
   SetAvailableGames SetAvailableGames,
   ActivateSpark ActivateSpark,
   SparkUnlocked SparkUnlocked,
+  ActivateSparkedMusic ActivateSparkedMusic,
+  DeactivateSparkedMusic DeactivateSparkedMusic,
 }
 
 } // namespace U2G

@@ -336,9 +336,9 @@ namespace Simon {
     public void UpdateMusicRound() {
       // Using current lives left calculate current round
       // Max lives - lives left = [0, 2] then shift index + 1 for Rounds [1, 3]
-      int round = _Config.MaxLivesCozmo - Mathf.Min(_CurrLivesCozmo, _CurrLivesHuman) + 1;
-      GameAudioClient.SetMusicRoundState (round);
-      GameAudioClient.SetMusicState (Anki.Cozmo.Audio.GameState.Music.Minigame__Memory_Match);
+      int round = _Config.MaxLivesHuman - _CurrLivesHuman + 1;
+      GameAudioClient.SetMusicRoundState(round);
+      GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Memory_Match);
     }
 
     public void ShowCurrentPlayerTurnStage(PlayerType player, bool isListening) {

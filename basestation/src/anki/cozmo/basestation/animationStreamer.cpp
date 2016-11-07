@@ -1289,14 +1289,22 @@ namespace Cozmo {
         // If audio takes too long abort animation
         if ( !result ) {
           // Watch for Audio time outs
+          
+          const auto state = _audioClient.GetCurrentAnimation()->GetAnimationState();
+          if ( state == Audio::RobotAudioAnimation::AnimationState::Preparing ) {
+            // Don't start timer until the Audio Animation has started posting audio events
+            return false;
+          }
+          
           if ( _audioBufferingTime_ms == 0 ) {
             _audioBufferingTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
           }
           else {
             if ( (BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _audioBufferingTime_ms) > kAnimationAudioAllowedBufferTime_ms ) {
               PRINT_NAMED_ERROR("AnimationStreamer.ShouldProcessAnimationFrame",
-                                "Abort animation '%s' due to audio issue @ relTime_ms %d buffer State %s",
+                                "Abort animation '%s' timed out after %d ms, audio event @ %d, buffer State %s",
                                 anim->GetName().c_str(),
+                                (BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _audioBufferingTime_ms),
                                 (streamingTime_ms - startTime_ms),
                                 Audio::RobotAudioAnimation::GetStringForAnimationState( _audioClient.GetCurrentAnimation()->GetAnimationState() ).c_str() );
               
@@ -1366,7 +1374,7 @@ namespace Cozmo {
     // Wait a 1/2 second before running after we finish the last streaming animation
     // to help reduce stepping on the next animation's toes when we have things
     // sequenced.
-    // NOTE: lastStreamTime>0 check so that we dont' start keeping face alive before
+    // NOTE: lastStreamTime>0 check so that we don't start keeping face alive before
     //       first animation of any kind is sent.
     const bool haveStreamingAnimation = _streamingAnimation != nullptr;
     const bool haveStreamedAnything   = _lastStreamTime > 0.f;
@@ -1572,7 +1580,7 @@ namespace Cozmo {
     // Reset the number of bytes we can send each Update() as a form of
     // flow control: Don't send frames if robot has no space for them, and be
     // careful not to overwhelm reliable transport either, in terms of bytes or
-    // sheer number of messages. These get decremenged on each call to
+    // sheer number of messages. These get decremented on each call to
     // SendBufferedMessages() below
     _numBytesToSend = std::min(MAX_BYTES_FOR_RELIABLE_TRANSPORT,
                                minBytesFreeInRobotBuffer);

@@ -435,6 +435,7 @@ namespace Cozmo {
         private void HandleLiftCubeButtonPressed() {
           IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
           if (targetObject != null && targetObject is ObservedObject && targetObject is LightCube) {
+            _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
             _CurrentRobot.PickupObject(targetObject as ObservedObject, callback: HandleActionFinished);
             DisableInput();
             IsPerformingAction = true;
@@ -444,6 +445,7 @@ namespace Cozmo {
         private void HandleRollCubeButtonPressed() {
           IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
           if (targetObject != null && targetObject is ObservedObject && targetObject is LightCube) {
+            _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
             _CurrentRobot.RollObject(targetObject as ObservedObject, callback: HandleActionFinished);
             DisableInput();
             IsPerformingAction = true;
@@ -451,7 +453,17 @@ namespace Cozmo {
         }
 
         private void HandleDropCubeButtonPressed() {
-          _CurrentRobot.PlaceObjectOnGroundHere(callback: HandleActionFinished);
+          _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
+		  
+          // Need to give the stop from DriveWheels a chance to actually stop the robot so that PlaceObjectOnGround
+          // doesn't fail due to IMU still reporting the robot is turning. So we first wait for 0.1sec and then place on ground.
+          Anki.Cozmo.ExternalInterface.RobotActionUnion[] actions = {
+            new Anki.Cozmo.ExternalInterface.RobotActionUnion().Initialize(new Anki.Cozmo.ExternalInterface.Wait().Initialize(0.1f)),
+            new Anki.Cozmo.ExternalInterface.RobotActionUnion().Initialize(new Anki.Cozmo.ExternalInterface.PlaceObjectOnGroundHere())
+          };
+         
+          _CurrentRobot.SendQueueCompoundAction(actions, callback: HandleActionFinished);
+
           DisableInput();
           IsPerformingAction = true;
         }
@@ -459,6 +471,7 @@ namespace Cozmo {
         private void HandleStackCubeButtonPressed() {
           IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
           if (targetObject != null && targetObject is ObservedObject && targetObject is LightCube) {
+            _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
             _CurrentRobot.PlaceOnObject(targetObject as ObservedObject, callback: HandleActionFinished);
             DisableInput();
             IsPerformingAction = true;
@@ -468,6 +481,7 @@ namespace Cozmo {
         private void HandleSayNameButtonPressed() {
           IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
           if (targetObject != null && targetObject is Face) {
+            _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
             _CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, sayName: true, callback: HandleActionFinished);
             DisableInput();
             IsPerformingAction = true;

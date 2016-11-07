@@ -66,7 +66,7 @@ public class PetFace : IVisibleInCamera {
   public void UpdateInfo(G2U.RobotObservedPet message) {
     PetID = message.petID;
     LastSeenEngineTimestamp = message.timestamp;
-    VizRect = new Rect(message.img_x, message.img_y, message.img_width, message.img_height);
+    VizRect = new Rect(message.img_rect.x_topLeft, message.img_rect.y_topLeft, message.img_rect.width, message.img_rect.height);
     _PetType = message.petType;
     IsInFieldOfView = true;
     _TimesObserved = message.numTimesObserved;

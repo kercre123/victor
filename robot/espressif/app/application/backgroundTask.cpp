@@ -112,6 +112,20 @@ void RadioConnectionStateMachineUpdate()
       }
       case 4:
       {
+        uint8 macaddr[6];
+        if (wifi_get_macaddr(SOFTAP_IF, macaddr))
+        {
+          AnkiEvent( 409, "macaddr.soft_ap", 624, "%02x:%02x:%02x:%02x:%02x:%02x", 6, macaddr[0], macaddr[1], macaddr[2], macaddr[3], macaddr[4], macaddr[5]);
+        }
+        else
+        {
+          AnkiWarn( 410, "macaddr.soft_ap.error", 625, "Unable to retrieve softap MAC address", 0);
+        }
+        doRTConnectPhase++;
+        break;
+      }
+      case 5:
+      {
         doRTConnectPhase = 0; // Done
         break;
       }
@@ -358,6 +372,7 @@ extern "C" int8_t backgroundTaskInit(void)
 extern "C" bool i2spiSynchronizedCallback(uint32 param)
 {
   os_printf("I2SPI Synchronized at offset %d\r\n", param);
+  clientAccept(true);
   Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_entry);
   Anki::Cozmo::CrashReporter::StartQuery();
   return false;

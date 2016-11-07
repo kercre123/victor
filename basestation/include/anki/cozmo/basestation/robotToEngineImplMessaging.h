@@ -91,6 +91,7 @@ private:
   u32          _repeatedImageCount = 0;
   double       _lastImageRecvTime  = -1.0;
   
+  bool ShouldIgnoreMultipleImages() const;
   
 };
 

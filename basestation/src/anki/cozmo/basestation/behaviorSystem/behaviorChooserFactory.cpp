@@ -13,7 +13,6 @@
 
 // behavior choosers
 #include "behaviorChoosers/AIGoalEvaluator.h"
-#include "behaviorChoosers/demoBehaviorChooser.h"
 #include "behaviorChoosers/selectionBehaviorChooser.h"
 #include "behaviorChoosers/simpleBehaviorChooser.h"
 #include "behaviorChoosers/socializeBehaviorChooser.h"
@@ -45,9 +44,6 @@ IBehaviorChooser* CreateBehaviorChooser(Robot& robot, const Json::Value& config)
   if ( typeStr == "simple" )
   {
     newChooser = new SimpleBehaviorChooser(robot, config);
-  }
-  else if ( typeStr == "demo" ) {
-    newChooser = new DemoBehaviorChooser(robot, config);
   }
   else if ( typeStr == "selection" ) {
     newChooser = new SelectionBehaviorChooser(robot, config);

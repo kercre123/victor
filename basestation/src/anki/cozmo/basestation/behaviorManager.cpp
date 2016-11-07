@@ -14,6 +14,7 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
@@ -56,7 +57,6 @@
 namespace Anki {
 namespace Cozmo {
   
-static const char* kDemoChooserConfigKey = "demoBehaviorChooserConfig";
 static const char* kSelectionChooserConfigKey = "selectionBehaviorChooserConfig";
 static const char* kFreeplayChooserConfigKey = "freeplayBehaviorChooserConfig";
 static const char* kMeetCozmoChooserConfigKey = "meetCozmoBehaviorChooserConfig";
@@ -64,12 +64,13 @@ static const char* kMeetCozmoChooserConfigKey = "meetCozmoBehaviorChooserConfig"
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorManager::BehaviorManager(Robot& robot)
-  : _robot(robot)
-  , _defaultHeadAngle(kIgnoreDefaultHeandAndLiftState)
-  , _defaultLiftHeight(kIgnoreDefaultHeandAndLiftState)
-  , _behaviorFactory(new BehaviorFactory())
-  , _lastChooserSwitchTime(-1.0f)
-  , _whiteboard( new AIWhiteboard(robot) )
+: _robot(robot)
+, _defaultHeadAngle(kIgnoreDefaultHeandAndLiftState)
+, _defaultLiftHeight(kIgnoreDefaultHeandAndLiftState)
+, _behaviorFactory(new BehaviorFactory())
+, _lastChooserSwitchTime(-1.0f)
+, _audioClient( new Audio::BehaviorAudioClient(robot) )
+, _whiteboard( new AIWhiteboard(robot) )
 {
 }
 
@@ -82,7 +83,6 @@ BehaviorManager::~BehaviorManager()
   // destroy choosers before factory
   Util::SafeDelete(_freeplayChooser);
   Util::SafeDelete(_selectionChooser);
-  Util::SafeDelete(_demoChooser);
   Util::SafeDelete(_behaviorFactory);
 }
 
@@ -102,10 +102,6 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
     // selection chooser - to force one specific behavior
     const Json::Value& selectionChooserConfigJson = config[kSelectionChooserConfigKey];
     _selectionChooser = BehaviorChooserFactory::CreateBehaviorChooser(_robot, selectionChooserConfigJson);
-
-    // demo chooser - for scripted demos/setups (investor, etc)
-    const Json::Value& demoChooserConfigJson = config[kDemoChooserConfigKey];
-    _demoChooser = BehaviorChooserFactory::CreateBehaviorChooser(_robot, demoChooserConfigJson);
     
     // freeplay chooser - AI controls cozmo
     const Json::Value& freeplayChooserConfigJson = config[kFreeplayChooserConfigKey];
@@ -193,12 +189,6 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
                                    case BehaviorChooserType::Selection:
                                    {
                                      SetBehaviorChooser( _selectionChooser );
-                                     break;
-                                   }
-                                   case BehaviorChooserType::Demo:
-                                   {
-                                     SetBehaviorChooser(_demoChooser);
-                                     _robot.GetLightsComponent().SetEnableComponent(true);
                                      break;
                                    }
                                    case BehaviorChooserType::MeetCozmoFindFaces:
@@ -736,6 +726,26 @@ void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::Behavi
     {
       const auto& msg = message.Get_SparkUnlocked();
       SetRequestedSpark(msg.behaviorSpark, true);
+      break;
+    }
+      
+    case ExternalInterface::BehaviorManagerMessageUnionTag::ActivateSparkedMusic:
+    {
+      const auto& msg = message.Get_ActivateSparkedMusic();
+      if ( !_audioClient->ActivateSparkedMusic(msg.behaviorSpark, msg.musicSate, msg.sparkedMusicState) ) {
+        PRINT_NAMED_ERROR("BehaviorManager.HandleMessage.ActivateSparkedMusic.Failed",
+                          "UnlockId %s", EnumToString(msg.behaviorSpark));
+      }
+      break;
+    }
+      
+    case ExternalInterface::BehaviorManagerMessageUnionTag::DeactivateSparkedMusic:
+    {
+      const auto& msg = message.Get_DeactivateSparkedMusic();
+      if ( !_audioClient->DeactivateSparkedMusic(msg.behaviorSpark, msg.musicSate) ) {
+        PRINT_NAMED_ERROR("BehaviorManager.HandleMessage.DeactivateSparkedMusic.Failed",
+                          "UnlockId %s", EnumToString(msg.behaviorSpark));
+      }
       break;
     }
 

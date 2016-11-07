@@ -469,17 +469,17 @@ public class CoreUpgradeDetailsDialog : BaseView {
 
     DAS.Event("meta.upgrade_replay", _UnlockInfo.Id.Value.ToString(), DASUtil.FormatExtraData(_UnlockInfo.RequestTrickCostAmountNeeded.ToString()));
 
-    // Post Audio
+    // Post sparked audio SFX
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent (Anki.Cozmo.Audio.GameEvent.Sfx.Spark_Launch);
-    Anki.Cozmo.Audio.SwitchState.Sparked sparkedMusicState = _UnlockInfo.SparkedMusicState.Sparked;
-    if (sparkedMusicState == Anki.Cozmo.Audio.SwitchState.Sparked.Invalid) {
-      sparkedMusicState = SparkedMusicStateWrapper.DefaultState().Sparked;
-    }
-    Anki.Cozmo.Audio.GameAudioClient.SetSparkedMusicState(sparkedMusicState);
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Spark);
 
     if (RobotEngineManager.Instance.CurrentRobot != null) {
       RobotEngineManager.Instance.CurrentRobot.EnableSparkUnlock(_UnlockInfo.Id.Value);
+      // Give Sparked Behavior music ownership
+      Anki.Cozmo.Audio.SwitchState.Sparked sparkedMusicState = _UnlockInfo.SparkedMusicState.Sparked;
+      if (sparkedMusicState == Anki.Cozmo.Audio.SwitchState.Sparked.Invalid) {
+        sparkedMusicState = SparkedMusicStateWrapper.DefaultState().Sparked;
+      }
+      RobotEngineManager.Instance.CurrentRobot.ActivateSparkedMusic(_UnlockInfo.Id.Value, Anki.Cozmo.Audio.GameState.Music.Spark, sparkedMusicState);
     }
     UpdateState();
     DataPersistenceManager.Instance.Save();
@@ -493,12 +493,13 @@ public class CoreUpgradeDetailsDialog : BaseView {
   }
 
   private void StopSparkUnlock() {
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
+    // Send stop message to engine
     if (RobotEngineManager.Instance.CurrentRobot != null) {
       if (RobotEngineManager.Instance.CurrentRobot.IsSparked) {
         RobotEngineManager.Instance.CurrentRobot.StopSparkUnlock();
       }
-
+      // Take Music ownership back from Sparked Behavior and set next state
+      RobotEngineManager.Instance.CurrentRobot.DeactivateSparkedMusic (_UnlockInfo.Id.Value, Anki.Cozmo.Audio.GameState.Music.Freeplay);
       UpdateState();
     }
 

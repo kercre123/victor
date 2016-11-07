@@ -1,0 +1,24 @@
+/**
+* File: cladRect.clad
+*
+* Author: Andrew Stein
+* Date:   11/03/2016
+*
+* Description: CLAD struct for storing simple rectangles. (Named to avoid confusion with 
+*              engine's existing, more full-featured Rectangle class.)
+*
+* Copyright: Anki, Inc. 2016
+**/
+
+
+namespace Anki {
+
+structure CladRect
+{
+  float_32 x_topLeft,
+  float_32 y_topLeft,
+  float_32 width,
+  float_32 height
+}
+
+}

@@ -147,7 +147,7 @@ namespace HAL {
           {
             AnkiError( 141, "WiFi.Update", 380, "Got message 0x%x that seems bound above.", 1, msg.tag);
           }
-          else if (msg.tag < RobotInterface::TO_RTIP_START && ((msg.tag < RobotInterface::RTIP_TO_BODY_START) || (msg.tag > RobotInterface::RTIP_TO_BODY_END)))
+          else if (msg.tag < RobotInterface::TO_RTIP_START)
           {
             unsigned int spineSpin = 0;
             while (Spine::Enqueue(msg.GetBuffer() + 1, msg.Size() - 1, msg.tag) == false) // Spin until success

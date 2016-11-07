@@ -37,18 +37,32 @@ public class SayTextSlide : MonoBehaviour {
 
   private int _SparksInInventory;
 
+  private CozmoSays.CozmoSaysGame _CozmoSaysGame;
+
+  private bool _PlayingReactionaryBehavior = false;
+  private bool _PlayingSayAnimation = false;
+  private bool _TextFieldEmpty = true;
+  private bool _NotEnoughSparks = false;
+
+  public void Initialize(CozmoSays.CozmoSaysGame cozmoSaysGame) {
+    _CozmoSaysGame = cozmoSaysGame;
+  }
+
   private void Awake() {
     _SayTextButton.Initialize(HandleSayTextButton, "say_text_button", "say_text_slide");
     _TextInput.textComponent.color = _TextFieldActiveColor;
     UpdateTotalSparkCount();
     _CostLabel.text = _SayCost.ToString();
     _TextInput.onValueChanged.AddListener(HandleOnTextFieldChange);
-    _SayTextButton.Interactable = false;
-    _CostLabel.color = _SayTextButton.TextDisabledColor;
+
+    SetButtonInteractivity();
+
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
   }
 
   private void OnDestroy() {
     _TextInput.onValueChanged.RemoveListener(HandleOnTextFieldChange);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
   }
 
   public void RegisterInputFocus() {
@@ -61,29 +75,21 @@ public class SayTextSlide : MonoBehaviour {
   private void UpdateTotalSparkCount() {
     _SparksInInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.GetItemAmount(_SparkItemId);
     _TotalSparksLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelTotalSparks, new object[] { _SparksInInventory });
+    _NotEnoughSparks = _SparksInInventory < _SayCost;
   }
 
   private void HandleOnTextFieldChange(string inputText) {
-    if (!string.IsNullOrEmpty(inputText) && _SparksInInventory >= _SayCost) {
-      // only enable this button if there's text and we can afford it.
-      _SayTextButton.Interactable = true;
-      _CostLabel.color = _SayTextButton.TextEnabledColor;
-    }
-    else {
-      _SayTextButton.Interactable = false;
-      _CostLabel.color = _SayTextButton.TextDisabledColor;
-    }
+    _TextFieldEmpty = string.IsNullOrEmpty(inputText);
+    SetButtonInteractivity();
   }
 
   private void HandleSayTextButton() {
 
-    _SayTextButton.Interactable = false;
+    _PlayingSayAnimation = true;
     _TextInput.interactable = false;
     _ActiveContentContainer.SetActive(false);
     _SparkSpinner.SetActive(true);
     _TextInput.textComponent.color = _TextFieldInactiveColor;
-    DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.RemoveItemAmount(_SparkItemId, _SayCost);
-    UpdateTotalSparkCount();
 
     bool hasBadWords = BadWordsFilterManager.Instance.Contains(_TextInput.text);
 
@@ -93,6 +99,8 @@ public class SayTextSlide : MonoBehaviour {
       });
     }
     else {
+
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Cozmo_Says_Speaking);
 
       Anki.Cozmo.AnimationTrigger getInTrigger;
       Anki.Cozmo.AnimationTrigger getOutTrigger;
@@ -110,7 +118,12 @@ public class SayTextSlide : MonoBehaviour {
       };
 
       RobotEngineManager.Instance.CurrentRobot.SendQueueCompoundAction(actions, (success) => {
+        Anki.Cozmo.Audio.GameAudioClient.SetMusicState(_CozmoSaysGame.GetDefaultMusicState());
         ResetInputStates();
+        if (success) {
+          DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.RemoveItemAmount(_SparkItemId, _SayCost);
+          UpdateTotalSparkCount();
+        }
       });
     }
   }
@@ -131,7 +144,7 @@ public class SayTextSlide : MonoBehaviour {
   }
 
   private void ResetInputStates() {
-    _SayTextButton.Interactable = true;
+    _PlayingSayAnimation = false;
     _TextInput.interactable = true;
     _ActiveContentContainer.SetActive(true);
     _SparkSpinner.SetActive(false);
@@ -141,5 +154,22 @@ public class SayTextSlide : MonoBehaviour {
 #if UNITY_IOS
     RegisterInputFocus();
 #endif
+    SetButtonInteractivity();
+  }
+
+  private void SetButtonInteractivity() {
+    if (_TextFieldEmpty || _NotEnoughSparks || _PlayingSayAnimation || _PlayingReactionaryBehavior) {
+      _CostLabel.color = _SayTextButton.TextDisabledColor;
+      _SayTextButton.Interactable = false;
+    }
+    else {
+      _CostLabel.color = _SayTextButton.TextEnabledColor;
+      _SayTextButton.Interactable = true;
+    }
+  }
+
+  private void HandleRobotReactionaryBehavior(Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition message) {
+    _PlayingReactionaryBehavior = message.behaviorStarted;
+    SetButtonInteractivity();
   }
 }

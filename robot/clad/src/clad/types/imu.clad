@@ -1,4 +1,5 @@
 /** For IMU related messages and definitions
+ROBOT_CLAD_SHARED
  */
  
  
@@ -9,7 +10,24 @@ enum uint_8 IMUConstants
 {
     IMU_CHUNK_SIZE = 8,
 }
-  
+
+message IMURequest
+{
+  uint_32 length_ms
+}
+
+structure AccelData {
+  float_32 x,  // mm/s^2
+  float_32 y,
+  float_32 z
+}
+
+structure GyroData {
+  float_32 x,  // rad/s
+  float_32 y,
+  float_32 z
+}
+
 namespace RobotInterface {
 
 structure IMUDataChunk
@@ -35,16 +53,6 @@ structure IMURawDataChunk {
 }
 
 
-structure ImuRequest
-{
-  uint_32 length_ms
-}
-
-structure IMUCalibrationData
-{
-  int_16 gyro[3],
-  int_16 acc[3],
-}
 
 } // RobotInterface
 } // Cozmo

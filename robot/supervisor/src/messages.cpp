@@ -18,7 +18,6 @@
 #include "liftController.h"
 #include "headController.h"
 #include "imuFilter.h"
-#include "backpackLightController.h"
 #include "blockLightController.h"
 #include "speedController.h"
 #include "steeringController.h"
@@ -112,12 +111,6 @@ namespace Anki {
 #ifdef TARGET_K02
           #include "clad/robotInterface/messageEngineToRobot_switch_from_0x30_to_0x7f.def"
           // Need to add additional messages for special cases handled both on the Espressif and K02
-          case RobotInterface::EngineToRobot::Tag_setBackpackLightsMiddle:  // This one is actually handled only on K02 and body
-            Process_setBackpackLightsMiddle(msg.setBackpackLightsMiddle);
-            break;
-          case RobotInterface::EngineToRobot::Tag_setBackpackLightsTurnSignals:
-            Process_setBackpackLightsTurnSignals(msg.setBackpackLightsTurnSignals);
-            break;
           case RobotInterface::EngineToRobot::Tag_animHeadAngle:
             Process_animHeadAngle(msg.animHeadAngle);
             break;
@@ -130,16 +123,10 @@ namespace Anki {
           case RobotInterface::EngineToRobot::Tag_animEventToRTIP:
             Process_animEventToRTIP(msg.animEventToRTIP);
             break;
-          case RobotInterface::EngineToRobot::Tag_animBackpackLights:
-            Process_animBackpackLights(msg.animBackpackLights);
-            break;
-          case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:
-            Process_animEndOfAnimation(msg.animEndOfAnimation);
-            break;
 #else
             #include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
 #endif
-            
+
           default:
             AnkiWarn( 106, "Messages.ProcessBadTag_EngineToRobot.Recvd", 355, "Received message with bad tag %x", 1, msg.tag);
         }
@@ -190,8 +177,12 @@ namespace Anki {
         robotState_.liftHeight = LiftController::GetHeightMM();
 
         HAL::IMU_DataStructure imuData = IMUFilter::GetLatestRawData();
-        robotState_.rawAccelY = imuData.acc_y;
-        robotState_.rawGyroZ = IMUFilter::GetBiasCorrectedGyroData()[2];
+        robotState_.accel.x = imuData.acc_x;
+        robotState_.accel.y = imuData.acc_y;
+        robotState_.accel.z = imuData.acc_z;
+        robotState_.gyro.x = IMUFilter::GetBiasCorrectedGyroData()[0];
+        robotState_.gyro.y = IMUFilter::GetBiasCorrectedGyroData()[1];
+        robotState_.gyro.z = IMUFilter::GetBiasCorrectedGyroData()[2];
         robotState_.lastPathID = PathFollower::GetLastPathID();
 
         robotState_.cliffDataRaw = HAL::GetRawCliffData();
@@ -510,7 +501,7 @@ namespace Anki {
         PickAndPlaceController::SetCarryState(update.state);
       }
 
-      void Process_imuRequest(const Anki::Cozmo::RobotInterface::ImuRequest& msg)
+      void Process_imuRequest(const IMURequest& msg)
       {
         IMUFilter::RecordAndSend(msg.length_ms);
       }
@@ -768,19 +759,14 @@ namespace Anki {
 
       void Process_animBackpackLights(const Anki::Cozmo::AnimKeyFrame::BackpackLights& msg)
       {
-        for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {
-          u16 color = msg.colors[iLED];
-          BackpackLightController::SetParams(BackpackLightController::BPL_ANIM, iLED, color, color, 0xff, 0, 0, 0, 0);
-        }
-        BackpackLightController::EnableLayer(BackpackLightController::BPL_ANIM, true);
+        // Handled by the Espressif
       }
 
       void Process_animEndOfAnimation(const AnimKeyFrame::EndOfAnimation& msg)
       {
-        // Set backpack lights back to user layer
-        BackpackLightController::EnableLayer(BackpackLightController::BPL_USER);
+        // Handled by the Espressif
       }
-      
+
       void Process_powerState(const PowerState& msg)
       {
         robotState_.batteryVoltage = static_cast<float>(msg.VBatFixed)/65536.0f;
@@ -806,23 +792,9 @@ namespace Anki {
           }
         }
       }
-      void Process_getPropState(const PropState& msg)
-      {
-#ifdef TARGET_K02
-        // Remapped for EP3
-        HAL::GetPropState(msg.slot, -msg.x, msg.z, msg.y, msg.shockCount,
-                          msg.tapTime, msg.tapNeg, msg.tapPos);
-#endif
-      }
-      
+
       void Process_objectConnectionStateToRobot(const ObjectConnectionStateToRobot& msg)
       {
-        if (msg.connected) {
-          // Clear motion data for the object on connect so that
-          // ObjectUpAxisChanged will be sent up soon after.
-          HAL::ClearActiveObjectData(msg.objectID);
-        }
-        
         // Forward on the 'to-engine' version of this message
         ObjectConnectionState newMsg;
         newMsg.objectID = msg.objectID;
@@ -857,45 +829,6 @@ namespace Anki {
         }
 #endif
         HAL::RadioUpdateState(state.rtCount, false);
-      }
-      
-      void Process_setBackpackLightsTurnSignals(const RobotInterface::BackpackLightsTurnSignals& msg)
-      {
-        u8 led = LED_BACKPACK_LEFT;
-        BackpackLightController::SetParams(BackpackLightController::BPL_USER, (LEDId)led,
-                                             msg.lights[0].onColor, msg.lights[0].offColor,
-                                             msg.lights[0].onFrames, msg.lights[0].offFrames,
-                                             msg.lights[0].transitionOnFrames, msg.lights[0].transitionOffFrames, msg.lights[0].offset);
-        
-        led = LED_BACKPACK_RIGHT;
-        BackpackLightController::SetParams(BackpackLightController::BPL_USER, (LEDId)led,
-                                           msg.lights[1].onColor, msg.lights[1].offColor,
-                                           msg.lights[1].onFrames, msg.lights[1].offFrames,
-                                           msg.lights[1].transitionOnFrames, msg.lights[1].transitionOffFrames, msg.lights[1].offset);
-        
-        BackpackLightController::EnableLayer(BackpackLightController::BPL_USER, true);
-      }
-      
-      void Process_setBackpackLightsMiddle(const RobotInterface::BackpackLightsMiddle& msg)
-      {
-        u8 led = LED_BACKPACK_FRONT;
-        BackpackLightController::SetParams(BackpackLightController::BPL_USER, (LEDId)led,
-                                           msg.lights[0].onColor, msg.lights[0].offColor,
-                                           msg.lights[0].onFrames, msg.lights[0].offFrames,
-                                           msg.lights[0].transitionOnFrames, msg.lights[0].transitionOffFrames, msg.lights[0].offset);
-        
-        led = LED_BACKPACK_MIDDLE;
-        BackpackLightController::SetParams(BackpackLightController::BPL_USER, (LEDId)led,
-                                           msg.lights[1].onColor, msg.lights[1].offColor,
-                                           msg.lights[1].onFrames, msg.lights[1].offFrames,
-                                           msg.lights[1].transitionOnFrames, msg.lights[1].transitionOffFrames, msg.lights[1].offset);
-        led = LED_BACKPACK_BACK;
-        BackpackLightController::SetParams(BackpackLightController::BPL_USER, (LEDId)led,
-                                           msg.lights[2].onColor, msg.lights[2].offColor,
-                                           msg.lights[2].onFrames, msg.lights[2].offFrames,
-                                           msg.lights[2].transitionOnFrames, msg.lights[2].transitionOffFrames, msg.lights[2].offset);
-
-        BackpackLightController::EnableLayer(BackpackLightController::BPL_USER, true);
       }
 
 
@@ -943,6 +876,9 @@ namespace Anki {
       void Process_setRTTO(Anki::Cozmo::RobotInterface::DebugSetRTTO const&)
       {
         // TODO honor this in simulator
+      }
+      void Process_setAccessoryDiscovery(const SetAccessoryDiscovery& msg) {
+        // Nothing to do here
       }
       void Process_setPropSlot(const SetPropSlot& msg)
       {
@@ -998,6 +934,19 @@ namespace Anki {
       void Process_appConCfgIPInfo(const Anki::Cozmo::RobotInterface::AppConnectConfigIPInfo& msg) {}
       void Process_appConGetRobotIP(const Anki::Cozmo::RobotInterface::AppConnectGetRobotIP& msg) {}
       void Process_wifiOff(const Anki::Cozmo::RobotInterface::WiFiOff& msg) {}
+      
+      void Process_setBackpackLayer(const RobotInterface::BackpackSetLayer&) {
+        // Handled on the NRF
+      }
+      
+      void Process_setBackpackLightsMiddle(const RobotInterface::BackpackLightsMiddle&) {
+        // Handled on the NRF
+      }
+      
+      void Process_setBackpackLightsTurnSignals(const RobotInterface::BackpackLightsTurnSignals&) {
+        // Handled on the NRF
+      }
+
 #endif // simulator
       
       // Stubbed for both simulator and K02

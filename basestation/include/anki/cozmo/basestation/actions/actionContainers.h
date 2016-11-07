@@ -77,6 +77,10 @@ namespace Anki {
       
       void Print() const;
       
+      typedef std::list<IActionRunner*>::const_iterator const_iterator;
+      const_iterator begin() const { return _queue.begin(); }
+      const_iterator end()   const { return _queue.end();   }
+      
     private:
       // Deletes the action only if it isn't in the process of being deleted
       // Safeguards against the action being deleted multiple times due to handling action
@@ -126,6 +130,8 @@ namespace Anki {
       
       bool       IsEmpty() const;
       
+      const ActionQueue& GetQueue(SlotHandle atSlot) const { return _queues.at(atSlot); }
+      
       size_t     GetQueueLength(SlotHandle atSlot) const;
       
       size_t     GetNumQueues() const;
@@ -153,6 +159,10 @@ namespace Anki {
       
       // Blindly clears out the contents of the action list
       void       Clear();
+      
+      typedef std::map<SlotHandle, ActionQueue>::const_iterator const_iterator;
+      const_iterator begin() const { return _queues.begin(); }
+      const_iterator end()   const { return _queues.end();   }
       
     protected:
       std::map<SlotHandle, ActionQueue> _queues;

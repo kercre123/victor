@@ -44,11 +44,11 @@ class AudioServer : public Util::noncopyable {
   
 public:
   
-  // Transfer AduioController Ownership
+  // Transfer AudioController Ownership
   AudioServer( AudioController* audioController );
   ~AudioServer();
 
-  // Transfer AduioClientConnection Ownership
+  // Transfer AudioClientConnection Ownership
   using ConnectionIdType = uint8_t;
   ConnectionIdType RegisterClientConnection( AudioClientConnection* clientConnection );
   

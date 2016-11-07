@@ -5,6 +5,14 @@
 namespace Anki {
 namespace Cozmo {
 
+// Layer to set the animations for
+enum uint_8 BackpackLayer {
+  BPL_USER = 0, // Do not change, lest be eaten by a grue
+  BPL_ANIMATION,
+  BPL_IMPULSE,
+  BACKPACK_LAYERS
+}
+
 // Health / direction bar on the top of the backpack
 enum uint_8 LEDId {
   // Directional arrangement

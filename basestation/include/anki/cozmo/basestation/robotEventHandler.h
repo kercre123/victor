@@ -60,11 +60,14 @@ protected:
   
   void HandleActionEvents(const GameToEngineEvent& event);
   
+  static u32 GetNextGameActionTag();
+  
 private:
   
   std::map<ExternalInterface::RobotActionUnionTag,    ActionUnionFcn>                   _actionUnionHandlerLUT;
   std::map<ExternalInterface::MessageGameToEngineTag, std::pair<GameToEngineFcn,s32> >  _gameToEngineHandlerLUT;
-  
+
+  static u32 _gameActionTagCounter;
 };
 
   

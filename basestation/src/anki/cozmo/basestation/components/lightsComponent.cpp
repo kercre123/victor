@@ -1092,8 +1092,8 @@ Result LightsComponent::SetBackpackLightsInternal(const BackpackLights& lights)
     }
   }
   
-  _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLightsMiddle(middleLights)));
-  return _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLightsTurnSignals(turnSignals)));
+  _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLightsMiddle(middleLights, 0)));
+  return _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLightsTurnSignals(turnSignals, 0)));
 }
 
 void LightsComponent::RestorePrevStates()

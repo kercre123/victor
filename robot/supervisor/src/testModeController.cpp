@@ -15,7 +15,6 @@
 #include "steeringController.h"
 #include "wheelController.h"
 //#include "animationController.h"
-#include "backpackLightController.h"
 #include "proxSensors.h"
 #include <math.h>
 #include "trig_fast.h"

@@ -6,6 +6,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "animationController.h"
 #include "clad/types/animationKeyFrames.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "timeProfiler.h"
 #include "anki/cozmo/robot/logging.h"
@@ -26,7 +27,6 @@ extern "C" void FacePrintf(const char *format, ...);
 #include "wheelController.h"
 #include "steeringController.h"
 #include "speedController.h"
-#include "backpackLightController.h"
 static inline u32 system_get_time() { return Anki::Cozmo::HAL::GetTimeStamp() * 1000; }
 #endif
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
@@ -200,11 +200,14 @@ namespace AnimationController {
   {
     if (_currentTag > 0) {
       #ifdef TARGET_ESPRESSIF
-      // Send animation ended keyframe to K02
-      RTIP::SendMessage(NULL, 0, RobotInterface::EngineToRobot::Tag_animEndOfAnimation);
+        MAKE_RTIP_MSG(msg);
+
+        msg.tag = RobotInterface::EngineToRobot::Tag_setBackpackLayer;
+        msg.setBackpackLayer.layer = BPL_USER;
+        
+        RTIP::SendMessage(msg);
       #else 
-      // Basically invoking messages::Process_animEndOfAnimation()
-      BackpackLightController::EnableLayer(BackpackLightController::BackpackLightLayer::BPL_USER);
+        // TODO: BACKPACK CONTROLLER IN SUPERVISOR
       #endif
       
       // Send animation ended to engine
@@ -642,14 +645,41 @@ namespace AnimationController {
 #               endif
 
               #ifdef TARGET_ESPRESSIF
-                // Relay message to k02
-                RTIP::SendMessage(msg);
-              #else
-                for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {
-                  u16 color = msg.animBackpackLights.colors[iLED];
-                  BackpackLightController::SetParams(BackpackLightController::BPL_ANIM, iLED, color, color, 0xff, 0, 0, 0, 0);
+                {
+                  MAKE_RTIP_MSG(output);
+
+                  // Update spine lights
+                  output.tag = RobotInterface::EngineToRobot::Tag_setBackpackLightsMiddle;
+                  output.setBackpackLightsMiddle.layer = BPL_ANIMATION;
+
+                  output.setBackpackLightsMiddle.lights[0].onColor = 
+                  output.setBackpackLightsMiddle.lights[0].offColor = msg.animBackpackLights.colors[1];
+                  output.setBackpackLightsMiddle.lights[1].onColor = 
+                  output.setBackpackLightsMiddle.lights[1].offColor = msg.animBackpackLights.colors[2];
+                  output.setBackpackLightsMiddle.lights[2].onColor = 
+                  output.setBackpackLightsMiddle.lights[2].offColor = msg.animBackpackLights.colors[3];
+
+                  RTIP::SendMessage(output);
+
+                  // Update turn signals
+                  output.tag = RobotInterface::EngineToRobot::Tag_setBackpackLightsTurnSignals;
+                  output.setBackpackLightsTurnSignals.layer = BPL_ANIMATION;
+
+                  output.setBackpackLightsTurnSignals.lights[0].onColor = 
+                  output.setBackpackLightsTurnSignals.lights[0].offColor = msg.animBackpackLights.colors[0];
+                  output.setBackpackLightsTurnSignals.lights[1].onColor = 
+                  output.setBackpackLightsTurnSignals.lights[1].offColor = msg.animBackpackLights.colors[4];
+
+                  RTIP::SendMessage(output);
+
+                  // Set current layer
+                  output.tag = RobotInterface::EngineToRobot::Tag_setBackpackLayer;
+                  output.setBackpackLayer.layer = BPL_ANIMATION;
+        
+                  RTIP::SendMessage(output);
                 }
-                BackpackLightController::EnableLayer(BackpackLightController::BPL_ANIM, true);
+              #else
+                // TODO: Backpack animation controller in simulator
               #endif
               _tracksInUse |= BACKPACK_LIGHTS_TRACK;
             }

@@ -1,0 +1,7 @@
+{
+  "behaviorType": "ReactToMotorCalibration",
+  "behaviorGroups": [
+    "Reactionary"
+  ],
+  "disableByDefault": false
+}

@@ -9,7 +9,6 @@ namespace Cozmo {
 enum uint_8 BehaviorChooserType {
   Freeplay,
   Selection,
-  Demo,
   MeetCozmoFindFaces,
   Count
 }

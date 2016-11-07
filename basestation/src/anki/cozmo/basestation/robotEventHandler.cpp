@@ -48,6 +48,8 @@
 namespace Anki {
 namespace Cozmo {
   
+u32 RobotEventHandler::_gameActionTagCounter = ActionConstants::FIRST_GAME_INTERNAL_TAG;
+  
 // =====================================================================================================================
 #pragma mark -
 #pragma mark GetAction() Helpers
@@ -585,6 +587,22 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnToward
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
+IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnTowardsImagePoint& msg)
+{
+  TurnTowardsImagePointAction* action = new TurnTowardsImagePointAction(robot, Point2f(msg.x, msg.y), msg.timestamp);
+  
+  action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
+  action->SetPanAccel(msg.panAccel_radPerSec2);
+  action->SetPanTolerance(msg.panTolerance_rad);
+  action->SetMaxTiltSpeed(msg.maxTiltSpeed_radPerSec);
+  action->SetTiltAccel(msg.tiltAccel_radPerSec2);
+  action->SetTiltTolerance(msg.tiltTolerance_rad);
+  
+  return action;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnTowardsLastFacePose& msg)
 {
   TurnTowardsLastFacePoseAction* action = new TurnTowardsLastFacePoseAction(robot, Radians(msg.maxTurnAngle_rad), msg.sayName);
@@ -970,6 +988,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       DEFINE_HANDLER(traverseObject,           TraverseObject,           1),
       DEFINE_HANDLER(turnInPlace,              TurnInPlace,              0),
       DEFINE_HANDLER(turnTowardsFace,          TurnTowardsFace,          0),
+      DEFINE_HANDLER(turnTowardsImagePoint,    TurnTowardsImagePoint,    0),
       DEFINE_HANDLER(turnTowardsLastFacePose,  TurnTowardsLastFacePose,  0),
       DEFINE_HANDLER(turnTowardsObject,        TurnTowardsObject,        0),
       DEFINE_HANDLER(turnTowardsPose,          TurnTowardsPose,          0),
@@ -1035,6 +1054,15 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
 // =====================================================================================================================
 #pragma mark -
 #pragma mark Action Event Handlers
+  
+  
+u32 RobotEventHandler::GetNextGameActionTag() {
+  if (++_gameActionTagCounter > ActionConstants::LAST_GAME_INTERNAL_TAG) {
+    _gameActionTagCounter = ActionConstants::FIRST_GAME_INTERNAL_TAG;
+  }
+  
+  return _gameActionTagCounter;
+}
 
 void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
     {
@@ -1062,13 +1090,23 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
   IActionRunner* newAction = handlerIter->second.first(*robot, msg);
   const u8 numRetries = handlerIter->second.second;
   
-  if(robot->GetIgnoreExternalActions())
+  const bool didSetTag = newAction->SetTag(GetNextGameActionTag());
+      
+  // If setting the tag failed then delete the action which will emit a completion signal indicating failure
+  if(!didSetTag || robot->GetIgnoreExternalActions())
   {
-    PRINT_NAMED_INFO("RobotEventHandler.HandleActionEvents.ExternalActionsDisabled",
-                     "Ignoring %s GameToEngineEvent message for action type %s while external actions are disabled",
-                     ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()),
-                     EnumToString(newAction->GetType()));
-    
+    if (robot->GetIgnoreExternalActions()) {
+      PRINT_NAMED_INFO("RobotEventHandler.HandleActionEvents.ExternalActionsDisabled",
+                       "Ignoring %s GameToEngineEvent message for action type %s while external actions are disabled",
+                       ExternalInterface::MessageGameToEngineTagToString(event.GetData().GetTag()),
+                       EnumToString(newAction->GetType()));
+    } else
+    {
+      PRINT_NAMED_ERROR("RobotEventHandler.HandleActionEvents.FailedToSetTag",
+                        "Failed to set tag. deleting action %s (%hhu)",
+                        MessageGameToEngineTagToString(msg.GetTag()), msg.GetTag());
+    }
+
     newAction->PrepForCompletion();
     Util::SafeDelete(newAction);
     return;
@@ -1108,13 +1146,14 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueSingleAction
   {
     if(robot->GetIgnoreExternalActions())
     {
-      PRINT_NAMED_WARNING("RobotEventHandler.HandleQueueSingleAction.IgnoringExternalActions",
-                          "Ignoring QueueSingleAction message while external actions are disabled");
+      PRINT_NAMED_INFO("RobotEventHandler.HandleQueueSingleAction.IgnoringExternalActions",
+                       "Ignoring QueueSingleAction message while external actions are disabled");
     }
     else
     {
       PRINT_NAMED_ERROR("RobotEventHandler.HandleQueueSingleAction.FailedToSetTag",
-                        "Failed to set tag deleting action");
+                        "Failed to set tag. deleting action %s (%hhu)",
+                        RobotActionUnionTagToString(msg.action.GetTag()), msg.action.GetTag());
     }
     action->PrepForCompletion();
     Util::SafeDelete(action);
@@ -1496,7 +1535,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::DrawPoseMarker& m
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
-void RobotEventHandler::HandleMessage(const ExternalInterface::IMURequest& msg)
+void RobotEventHandler::HandleMessage(const IMURequest& msg)
 {
   Robot* robot = _context->GetRobotManager()->GetFirstRobot();
   

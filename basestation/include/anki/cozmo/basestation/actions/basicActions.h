@@ -409,6 +409,26 @@ namespace Cozmo {
     }; // class TurnTowardsPoseAction
   
   
+    // Tilt head and rotate body to face the given image coordinate.
+    // Note that this makes the simplifying approximation that the robot
+    // turns around the camera center, which is not actually true.
+    class TurnTowardsImagePointAction : public PanAndTiltAction
+    {
+    public:
+
+      TurnTowardsImagePointAction(Robot& robot, const Point2f& imgPoint, const TimeStamp_t imgTimeStamp);
+      
+    protected:
+      virtual ActionResult Init() override;
+      
+    private:
+      
+      Point2f     _imgPoint;
+      TimeStamp_t _timestamp;
+      
+    }; // class TurnTowardsImagePointAction
+    
+    
     // Wait for some number of images to be processed by the robot.
     // Optionally specify to only start counting images after a given timestamp.
     class WaitForImagesAction : public IAction

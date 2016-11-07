@@ -12,6 +12,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
@@ -297,11 +298,38 @@ Result IBehavior::Init()
 {
   PRINT_CH_INFO("Behaviors", (GetName() + ".Init").c_str(), "Starting...");
 
-  if(_robot.GetActionList().GetNumQueues() > 0 && _robot.GetActionList().GetQueueLength(0) > 0) {
+  // Check if there are any engine-generated actions in the action list, because there shouldn't be!
+  // If there is, a behavior probably didn't use StartActing() where it should have.
+  bool engineActionStillRunning = false;
+  for (auto listIt = _robot.GetActionList().begin();
+       listIt != _robot.GetActionList().end() && !engineActionStillRunning;
+       ++listIt) {
+  
+    const ActionQueue& q = listIt->second;
+    
+    // Start with current action list
+    const IActionRunner* currRunningAction = q.GetCurrentRunningAction();
+    if ((nullptr != currRunningAction) &&
+        (currRunningAction->GetTag() >= ActionConstants::FIRST_ENGINE_TAG) &&
+        (currRunningAction->GetTag() <= ActionConstants::LAST_ENGINE_TAG)) {
+      engineActionStillRunning = true;
+    }
+    
+    // Check actions in queue
+    for (auto it = q.begin(); it != q.end() && !engineActionStillRunning; ++it) {
+      u32 tag = (*it)->GetTag();
+      if ((tag >= ActionConstants::FIRST_ENGINE_TAG) && (tag <= ActionConstants::LAST_ENGINE_TAG)) {
+        engineActionStillRunning = true;
+      }
+    }
+  }
+  
+  if (engineActionStillRunning) {
     PRINT_NAMED_WARNING("IBehavior.Init.ActionsInQueue",
                         "Initializing %s: %zu actions already in queue",
                         GetName().c_str(), _robot.GetActionList().GetQueueLength(0));
   }
+
   
   // Streamline all IBehaviors when a spark is active
   if(_robot.GetBehaviorManager().GetActiveSpark() != UnlockId::Count
@@ -834,6 +862,12 @@ ActionResult IBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* actio
   }
   
   return ActionResult::SUCCESS;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IBehavior::UpdateAudioState(int newAudioState)
+{
+  return _robot.GetBehaviorManager().GetAudioClient().UpdateBehaviorRound(_requiredUnlockId, newAudioState);
 }
 
 

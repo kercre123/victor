@@ -21,6 +21,7 @@
 #include "clad/types/firmwareTypes.clad"
 #include "clad/types/globalVizOrigin.clad"
 #include "clad/types/imageTypes.clad"
+#include "clad/types/imu.clad"
 #include "clad/types/liveIdleAnimationParameters.clad"
 #include "clad/types/objectTypes.clad"
 #include "clad/types/nvStorageTypes.clad"
@@ -217,11 +218,6 @@ message SetRobotAudioOutputSource
 
 message ForceDelocalizeRobot {
   uint_8 robotID
-}
-
-// IMURequest
-message IMURequest {
-    uint_32 length_ms
 }
 
 // Will restore the currently connected robot with either an automatically determined
@@ -726,21 +722,6 @@ message FlashCurrentLightsState {
 ///////////////////////////////////////////////////////////////////////////////
 
 message TransitionToNextOnboardingState {
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Demo
-///////////////////////////////////////////////////////////////////////////////
-
-message TransitionToNextDemoState {
-}
-
-message WakeUp {
-  bool hasEdge = 1
-}
-
-message DemoResetState {
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -31,6 +31,7 @@
 using namespace Anki::Cozmo;
 
 static void EnterState(RadioState state);
+static void ClearActiveObjectData(uint8_t slot);
 
 enum TIMER_COMPARE {
   PREPARE_COMPARE,
@@ -44,11 +45,6 @@ extern uesb_mainstate_t  m_uesb_mainstate;
 // This is our internal copy of the cube firmware update
 extern "C" const CubeFirmware __CUBE_XS;
 extern "C" const CubeFirmware __CUBE_XS6;
-static const CubeFirmware* ValidPerfs[] = {
-  &__CUBE_XS,
-  &__CUBE_XS6,
-  (const CubeFirmware*) NULL
-};
 
 static const uesb_address_desc_t PairingAddress = {
   ADV_CHANNEL,
@@ -58,7 +54,7 @@ static const uesb_address_desc_t PairingAddress = {
 
 // These are variables used for handling OTA
 static uesb_address_desc_t OTAAddress = { 0x63, 0, sizeof(OTAFirmwareBlock) };
-static const CubeFirmware* ota_device;
+static const CubeFirmware* const ota_device = &__CUBE_XS6;
 static int ota_block_index;
 static int ack_timeouts;
 static int light_gamma;
@@ -81,6 +77,26 @@ static uint8_t rotationPeriod[MAX_ACCESSORIES];
 static uint8_t rotationOffset[MAX_ACCESSORIES];
 static uint8_t rotationNext[MAX_ACCESSORIES];
 
+static uint8_t g_shockCount[MAX_ACCESSORIES];
+
+// Motion computation thresholds and vars
+static const u8 START_MOVING_COUNT_THRESH = 2; // Determines number of motion tics that much be observed before Moving msg is sent
+static const u8 STOP_MOVING_COUNT_THRESH = 5;  // Determines number of no-motion tics that much be observed before StoppedMoving msg is sent
+static const u8 ACC_MOVE_THRESH = 5;           // If current value differs from filtered value by this much, block is considered to be moving.
+static u8 movingTimeoutCtr[MAX_ACCESSORIES];
+static bool isMoving[MAX_ACCESSORIES];
+
+static UpAxis prevMotionDir[MAX_ACCESSORIES];  // Last sent motion direction
+static UpAxis prevUpAxis[MAX_ACCESSORIES];     // Last sent upAxis
+static UpAxis nextUpAxis[MAX_ACCESSORIES];     // Candidate next upAxis to send
+static u8 nextUpAxisCount[MAX_ACCESSORIES] = {0};          // Number of times candidate next upAxis is observed
+static const u8 UPAXIS_STABLE_COUNT_THRESH = 15;     // How long the candidate upAxis must be observed for before it is reported
+static const UpAxis idxToUpAxis[3][2] = { {XPositive, XNegative},
+                                          {YPositive, YNegative},
+                                          {ZPositive, ZNegative} };
+static uint32_t _halTimeStamp = 0;
+static bool sendDiscovery;
+
 void Radio::init() {
   light_gamma = 0x100;
 }
@@ -97,6 +113,10 @@ void Radio::advertise(void) {
   // Clear our our states
   memset(accessories, 0, sizeof(accessories));
   currentAccessory = 0;
+  
+  for (int i = 0; i < MAX_ACCESSORIES; i++) {
+    ClearActiveObjectData(i);
+  }
 
   #ifdef NATHAN_CUBE_JUNK
   light_gamma = 0x80;
@@ -137,6 +157,8 @@ void Radio::advertise(void) {
   NVIC_EnableIRQ(RTC0_IRQn);
 
   NRF_RTC0->TASKS_START = 1;
+  
+  sendDiscovery = true;
 }
 
 void Radio::setWifiChannel(int8_t channel) {
@@ -201,6 +223,26 @@ static void EnterState(RadioState state) {
   }
 }
 
+static void ClearActiveObjectData(uint8_t slot)
+{
+  movingTimeoutCtr[slot] = 0;
+  isMoving[slot] = false;
+  
+  prevMotionDir[slot] = Unknown;
+  prevUpAxis[slot] = Unknown;
+  nextUpAxis[slot] = Unknown;
+  nextUpAxisCount[slot] = 0;
+}
+
+static void ReportUpAxisChanged(uint8_t id, UpAxis a)
+{
+  ObjectUpAxisChanged m;
+  m.timestamp = _halTimeStamp;
+  m.objectID = id;
+  m.upAxis = a;
+  RobotInterface::SendMessage(m);
+}
+
 static void SendObjectConnectionState(int slot)
 {
   ObjectConnectionStateToRobot msg;
@@ -209,6 +251,127 @@ static void SendObjectConnectionState(int slot)
   msg.connected = accessories[slot].active;
   msg.device_type = accessories[slot].model;
   RobotInterface::SendMessage(msg);
+}
+
+void Radio::enableDiscovery(bool enable) {
+  sendDiscovery = enable;
+}
+
+
+void UpdatePropState(uint8_t id, int ax, int ay, int az, int shocks,
+                uint8_t tapTime, int8_t tapNeg, int8_t tapPos) {
+  // Tap detection
+  uint8_t count = shocks - g_shockCount[id];
+
+  g_shockCount[id] = shocks;
+
+  // Do not mis-report taps / cube movement (filtering)
+  if (count > 8) {
+    return ;
+  }
+
+  u32 currTime_ms = _halTimeStamp;
+  if (count > 0) {
+    ObjectTapped m;
+    m.timestamp = currTime_ms;
+    m.numTaps = count;
+    m.objectID = id;
+    m.robotID = 0;
+    m.tapTime = tapTime;
+    m.tapNeg = tapNeg;
+    m.tapPos = tapPos;
+    RobotInterface::SendMessage(m);
+  }
+
+  // Accumulate IIR filter for each axis
+  static s32 acc_filt[MAX_ACCESSORIES][3];
+  static const s32 filter_coeff = 20;
+  acc_filt[id][0] = ((filter_coeff * ax) + ((100 - filter_coeff) * acc_filt[id][0])) / 100;
+  acc_filt[id][1] = ((filter_coeff * ay) + ((100 - filter_coeff) * acc_filt[id][1])) / 100;
+  acc_filt[id][2] = ((filter_coeff * az) + ((100 - filter_coeff) * acc_filt[id][2])) / 100;
+
+  // Check for motion
+  bool xMoving = ABS(acc_filt[id][0] - ax) > ACC_MOVE_THRESH;
+  bool yMoving = ABS(acc_filt[id][1] - ay) > ACC_MOVE_THRESH;
+  bool zMoving = ABS(acc_filt[id][2] - az) > ACC_MOVE_THRESH;
+  bool isMovingNow = xMoving || yMoving || zMoving;
+
+  if (isMovingNow) {
+    // Incremenent counter if block is not yet considered moving, or
+    // if it is already considered moving and the moving count is less than STOP_MOVING_COUNT_THRESH
+    // so that it doesn't need to decrement so much before it's considered stop moving again.
+    if (!isMoving[id] || (movingTimeoutCtr[id] < STOP_MOVING_COUNT_THRESH)) {
+      ++movingTimeoutCtr[id];
+    }
+  } else if (movingTimeoutCtr[id] > 0) {
+    --movingTimeoutCtr[id];
+  }
+
+  // Compute motion direction change. i.e. change in dominant acceleration vector
+  s8 maxAccelVal = 0;
+  UpAxis motionDir = Unknown;
+
+  for (int i=0; i < 3; ++i) {
+    s8 absAccel = ABS(acc_filt[id][i]);
+    if (absAccel > maxAccelVal) {
+      motionDir = idxToUpAxis[i][acc_filt[id][i] > 0 ? 0 : 1];
+      maxAccelVal = absAccel;
+    }
+  }
+  bool motionDirChanged = (prevMotionDir[id] != Unknown) && (prevMotionDir[id] != motionDir);
+  prevMotionDir[id] = motionDir;
+
+
+  // Check for stable up axis
+  // Send ObjectUpAxisChanged msg if it changes
+  if (motionDir == nextUpAxis[id]) {
+    //s32 accSum = ax + ay + az;  // magnitude of 64 is approx 1g
+
+    if (nextUpAxis[id] != prevUpAxis[id]) {
+      if (++nextUpAxisCount[id] >= UPAXIS_STABLE_COUNT_THRESH) {
+        ReportUpAxisChanged(id, nextUpAxis[id]);
+        prevUpAxis[id] = nextUpAxis[id];
+      }
+    } else {
+      // Next is same as what was already reported so no need to accumulate count
+      nextUpAxisCount[id] = 0;
+    }
+  } else {
+    nextUpAxisCount[id] = 0;
+    nextUpAxis[id] = motionDir;
+  }
+
+  // Send ObjectMoved message if object was stationary and is now moving or if motionDir changes
+  if (motionDirChanged ||
+      ((movingTimeoutCtr[id] >= START_MOVING_COUNT_THRESH) && !isMoving[id])) {
+    ObjectMoved m;
+    m.timestamp = _halTimeStamp;
+    m.objectID = id;
+    m.robotID = 0;
+    m.accel.x = ax;
+    m.accel.y = ay;
+    m.accel.z = az;
+    m.axisOfAccel = motionDir;
+    RobotInterface::SendMessage(m);
+    isMoving[id] = true;
+    movingTimeoutCtr[id] = STOP_MOVING_COUNT_THRESH;
+  } else if ((movingTimeoutCtr[id] == 0) && isMoving[id]) {
+
+    // If there is an upAxis change to report, then report it.
+    // Just make more logical sense if it gets sent before the stopped message.
+    if (nextUpAxis[id] != prevUpAxis[id]) {
+      ReportUpAxisChanged(id, nextUpAxis[id]);
+      prevUpAxis[id] = nextUpAxis[id];
+    }
+    
+    // Send stopped message
+    ObjectStoppedMoving m;
+    m.timestamp = _halTimeStamp;
+    m.objectID = id;
+    m.robotID = 0;
+    RobotInterface::SendMessage(m);
+    isMoving[id] = false;
+  }
 }
 
 static void ota_send_next_block() {
@@ -304,40 +467,34 @@ void uesb_event_handler(uint32_t flags)
       #endif
       
       if (slot < 0) {
-        ObjectDiscovered msg;
-        msg.device_type = advert.model;
-        msg.factory_id = advert.id;
-        msg.rssi = rx_payload.rssi;
-        RobotInterface::SendMessage(msg);
+        if (sendDiscovery) {
+          ObjectDiscovered msg;
+          msg.device_type = advert.model;
+          msg.factory_id = advert.id;
+          msg.rssi = rx_payload.rssi;
+          RobotInterface::SendMessage(msg);
+        }
 
         // Do not auto allocate the cube
         break ;
       }
 
-      // Radio firmware header is valid
-      for (const CubeFirmware** all_perfs = ValidPerfs; all_perfs; all_perfs++) {
-        ota_device = *all_perfs;
-
-        // Unrecognized device
-        if (ota_device->magic != CUBE_FIRMWARE_MAGIC) {
-          return ;
-        }
-
-        // This is an invalid hardware version and we should not try to do anything with it
-        if (advert.hwVersion != ota_device->hwVersion) {
-          continue ;
-        }
-
-        // Check if the device firmware is out of date
-        if (advert.patchLevel & ~ota_device->patchLevel) {
-          OTARemoteDevice(advert.id);
-          return ;
-        }
-        
-        // We found the image we want
-        break ;
+      // Unrecognized device
+      if (ota_device->magic != CUBE_FIRMWARE_MAGIC) {
+        return ;
       }
 
+      // This is an invalid hardware version and we should not try to do anything with it
+      if (advert.hwVersion != ota_device->hwVersion) {
+        return ;
+      }
+
+      // Check if the device firmware is out of date
+      if (advert.patchLevel & ~ota_device->patchLevel) {
+        OTARemoteDevice(advert.id);
+        return ;
+      }
+      
       // We are loading the slot
       AccessorySlot* acc = &accessories[slot]; 
       acc->id = advert.id;
@@ -350,6 +507,7 @@ void uesb_event_handler(uint32_t flags)
         acc->active = true;
         
         SendObjectConnectionState(slot);
+        ClearActiveObjectData(slot);
       }
 
       // This is where the cube shall live
@@ -417,20 +575,15 @@ void uesb_event_handler(uint32_t flags)
       AccessoryHandshake* ap = (AccessoryHandshake*) &rx_payload.data;
       int slot = LocateAccessory(rx_payload.address.address);
       
+      if (slot < 0 || slot >= MAX_ACCESSORIES) {
+        return ;
+      }
+
       AccessorySlot* acc = &accessories[slot];
       
       acc->last_received = 0;
 
-      PropState msg;
-      msg.slot = slot;
-      msg.x = ap->x;
-      msg.y = ap->y;
-      msg.z = ap->z;
-      msg.shockCount = ap->tap_count;
-      msg.tapTime = ap->tapTime;
-      msg.tapNeg = ap->tapNeg;
-      msg.tapPos = ap->tapPos;
-      RobotInterface::SendMessage(msg);
+      UpdatePropState(slot, ap->x, ap->y, ap->z, ap->tap_count, ap->tapTime, ap->tapNeg, ap->tapPos);
 
       EnterState(RADIO_PAIRING);
     }
@@ -622,14 +775,10 @@ static void radio_prepare(void) {
 }
 
 extern "C" void RTC0_IRQHandler(void) {
-  // We are in bluetooth mode, do not do this
-  if (m_uesb_mainstate == UESB_STATE_UNINITIALIZED) {
-    return ;
-  }
-
   if (NRF_RTC0->EVENTS_COMPARE[PREPARE_COMPARE]) {
     NRF_RTC0->EVENTS_COMPARE[PREPARE_COMPARE] = 0;
     NRF_RTC0->CC[PREPARE_COMPARE] += SCHEDULE_PERIOD;
+    _halTimeStamp += 5; // 5 ms
 
     radio_prepare();
   }

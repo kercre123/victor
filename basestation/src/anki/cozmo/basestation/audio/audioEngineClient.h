@@ -70,8 +70,8 @@ public:
                       const CurveType curve = CurveType::Linear ) const;
   
   void PostMusicState( const GameState::GenericState musicState,
-                       const bool interrupt,
-                       const uint32_t minDuration_ms );
+                       const bool interrupt = false,
+                       const uint32_t minDuration_ms = 0 );
 
 protected:
   

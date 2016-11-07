@@ -31,7 +31,7 @@ MonoBehaviour:
   DifficultyOptions: []
   GetInAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 272
+    _EnumValue: 291
   GetOutAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 272
+    _EnumValue: 291

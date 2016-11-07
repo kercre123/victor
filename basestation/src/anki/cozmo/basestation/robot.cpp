@@ -420,7 +420,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
   const float backAngle = IsPhysical() ? kPitchAngleOnBack_rads : kPitchAngleOnBack_sim_rads;
   const bool currOnBack = std::abs( GetPitchAngle().ToDouble() - backAngle ) <= DEG_TO_RAD( kPitchAngleOnBackTolerance_deg );
   //// COZMO_ON_SIDE
-  const float rawY = msg.rawAccelY;
+  const float rawY = msg.accel.y;
   const bool onRightSide =  (std::abs(rawY - kOnRightSide_rawYAccel) <= kOnSideTolerance_rawYAccel);
   const bool currOnSide = onRightSide || (std::abs(rawY - kOnLeftSide_rawYAccel) <= kOnSideTolerance_rawYAccel);
   //// COZMO_ON_FACE
@@ -715,6 +715,8 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
 
 void Robot::DetectGyroDrift(const RobotState& msg)
 {
+  f32 gyroZ = msg.gyro.z;
+  
   if (!_gyroDriftReported) {
     
     // Reset gyro drift detector if
@@ -724,12 +726,12 @@ void Robot::DetectGyroDrift(const RobotState& msg)
     // 4) Head isn't calibrated
     // 5) Drift detector started but the raw gyro reading deviated too much from starting values, indicating motion.
     if (GetMoveComponent().IsMoving() ||
-        (std::fabsf(msg.rawGyroZ) > kDriftCheckMaxRate_rad_per_sec) ||
+        (std::fabsf(gyroZ) > kDriftCheckMaxRate_rad_per_sec) ||
         IsCliffDetected() ||
         !_isHeadCalibrated ||
         
         ((_driftCheckStartTime_ms != 0) &&
-         ((std::fabsf(_driftCheckStartGyroZ_rad_per_sec - msg.rawGyroZ) > kDriftCheckGyroZMotionThresh_rad_per_sec) ||
+         ((std::fabsf(_driftCheckStartGyroZ_rad_per_sec - gyroZ) > kDriftCheckGyroZMotionThresh_rad_per_sec) ||
           (_driftCheckStartPoseFrameId != GetPoseFrameID())))
         
         ) {
@@ -740,11 +742,11 @@ void Robot::DetectGyroDrift(const RobotState& msg)
     else if (_driftCheckStartTime_ms == 0) {
       _driftCheckStartPoseFrameId        = GetPoseFrameID();
       _driftCheckStartAngle_rad          = GetPose().GetRotation().GetAngleAroundZaxis();
-      _driftCheckStartGyroZ_rad_per_sec  = msg.rawGyroZ;
+      _driftCheckStartGyroZ_rad_per_sec  = gyroZ;
       _driftCheckStartTime_ms            = msg.timestamp;
-      _driftCheckCumSumGyroZ_rad_per_sec = msg.rawGyroZ;
-      _driftCheckMinGyroZ_rad_per_sec    = msg.rawGyroZ;
-      _driftCheckMaxGyroZ_rad_per_sec    = msg.rawGyroZ;
+      _driftCheckCumSumGyroZ_rad_per_sec = gyroZ;
+      _driftCheckMinGyroZ_rad_per_sec    = gyroZ;
+      _driftCheckMaxGyroZ_rad_per_sec    = gyroZ;
       _driftCheckNumReadings             = 1;
     }
     
@@ -771,13 +773,13 @@ void Robot::DetectGyroDrift(const RobotState& msg)
     
     // Record min and max observed gyro readings and cumulative sum for later mean computation
     else {
-      if (msg.rawGyroZ > _driftCheckMaxGyroZ_rad_per_sec) {
-        _driftCheckMaxGyroZ_rad_per_sec = msg.rawGyroZ;
+      if (gyroZ > _driftCheckMaxGyroZ_rad_per_sec) {
+        _driftCheckMaxGyroZ_rad_per_sec = gyroZ;
       }
-      if (msg.rawGyroZ < _driftCheckMinGyroZ_rad_per_sec) {
-        _driftCheckMinGyroZ_rad_per_sec = msg.rawGyroZ;
+      if (gyroZ < _driftCheckMinGyroZ_rad_per_sec) {
+        _driftCheckMinGyroZ_rad_per_sec = gyroZ;
       }
-      _driftCheckCumSumGyroZ_rad_per_sec += msg.rawGyroZ;
+      _driftCheckCumSumGyroZ_rad_per_sec += gyroZ;
       ++_driftCheckNumReadings;
     }
   }
@@ -825,6 +827,10 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   if (IsTraversingPath() && GetLastRecvdPathID() == GetLastSentPathID()) {
     _pdo->Update(_currPathSegment, _numFreeSegmentSlots);
   }
+  
+  // Update IMU data
+  _robotAccel = msg.accel;
+  _robotGyro = msg.gyro;
   
   // Update cozmo's internal offTreadsState knowledge
   const OffTreadsState prevOffTreadsState = _offTreadsState;
@@ -3349,7 +3355,7 @@ Result Robot::SendHeadAngleUpdate() const
 
 Result Robot::SendIMURequest(const u32 length_ms) const
 {
-  return SendRobotMessage<RobotInterface::ImuRequest>(length_ms);
+  return SendRobotMessage<IMURequest>(length_ms);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -4050,7 +4056,10 @@ ExternalInterface::RobotState Robot::GetRobotState()
       
   msg.headAngle_rad = GetHeadAngle();
   msg.liftHeight_mm = GetLiftHeight();
-      
+  
+  msg.accel = GetHeadAccelData();
+  msg.gyro = GetHeadGyroData();
+  
   msg.status = 0;
   if(GetMoveComponent().IsMoving()) { msg.status |= (uint32_t)RobotStatusFlag::IS_MOVING; }
   if(IsPickingOrPlacing()) { msg.status |= (uint32_t)RobotStatusFlag::IS_PICKING_OR_PLACING; }
@@ -4235,5 +4244,28 @@ Result Robot::ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, 
   return RESULT_OK;
 }
   
+Result Robot::ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const TimeStamp_t timestamp,
+                                                 Radians& absPanAngle, Radians& absTiltAngle) const
+{
+  const Vision::CameraCalibration* calib = GetVisionComponent().GetCamera().GetCalibration();
+  const Point2f pt = imgPoint - calib->GetCenter();
+  
+  RobotPoseStamp poseStamp;
+  TimeStamp_t t;
+  Result result = GetPoseHistory()->ComputePoseAt(timestamp, t, poseStamp);
+  if(RESULT_OK != result)
+  {
+    PRINT_NAMED_WARNING("Robot.ComputeTurnTowardsImagePointAngles.ComputeHistPoseFailed", "t=%u", timestamp);
+    absPanAngle = GetPose().GetRotation().GetAngleAroundZaxis();
+    absTiltAngle = GetHeadAngle();
+    return result;
+  }
+  
+  absTiltAngle = std::atan2f(-pt.y(), calib->GetFocalLength_y()) + poseStamp.GetHeadAngle();
+  absPanAngle  = std::atan2f(-pt.x(), calib->GetFocalLength_x()) + poseStamp.GetPose().GetRotation().GetAngleAroundZaxis();
+  
+  return RESULT_OK;
+}
+
 } // namespace Cozmo
 } // namespace Anki

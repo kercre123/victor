@@ -97,6 +97,7 @@ protected:
   virtual void HandleRobotStateUpdate(ExternalInterface::RobotState const& msg){};
   virtual void HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg){};
   virtual void HandleRobotObservedFace(ExternalInterface::RobotObservedFace const& msg){};
+  virtual void HandleRobotObservedPet(ExternalInterface::RobotObservedPet const& msg) {};
   virtual void HandleRobotDeletedObject(ExternalInterface::RobotDeletedObject const& msg){};
   virtual void HandleUiDeviceConnection(const ExternalInterface::UiDeviceAvailable& msgIn){};
   virtual void HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg){};
@@ -425,6 +426,7 @@ private:
   void HandleRobotOffTreadsStateChangedBase(ExternalInterface::RobotOffTreadsStateChanged const& msg);
   void HandleRobotObservedObjectBase(ExternalInterface::RobotObservedObject const& msg);
   void HandleRobotObservedFaceBase(ExternalInterface::RobotObservedFace const& msg);
+  void HandleRobotObservedPetBase(ExternalInterface::RobotObservedPet const& msg);
   void HandleRobotDeletedObjectBase(ExternalInterface::RobotDeletedObject const& msg);
   void HandleUiDeviceConnectionBase(ExternalInterface::UiDeviceAvailable const& msgIn);
   void HandleRobotConnectedBase(ExternalInterface::RobotConnectionResponse const &msg);

@@ -50,7 +50,9 @@ class IReactionaryBehavior;
 class Robot;
 template<typename TYPE> class AnkiEvent;
 
-  
+namespace Audio {
+class BehaviorAudioClient;
+}
 namespace ExternalInterface {
 class BehaviorManagerMessageUnion;
 }
@@ -105,7 +107,7 @@ public:
 
   // Stops the current behavior and switches to null. The next time Update is called, the behavior chooser
   // will have a chance to select a new behavior. This is mostly useful as a hack to force a behavior switch
-  // when it is needed (e.g. demo). `stoppedByWhom` is a string for debugging so we know why this was stopped
+  // when it is needed (e.g. sparks). `stoppedByWhom` is a string for debugging so we know why this was stopped
   void RequestCurrentBehaviorEndImmediately(const std::string& stoppedByWhom);
   
   // Returns nullptr if there is no current behavior
@@ -122,7 +124,10 @@ public:
   // accessors: whiteboard
   const AIWhiteboard& GetWhiteboard() const { assert(_whiteboard); return *_whiteboard; }
         AIWhiteboard& GetWhiteboard()       { assert(_whiteboard); return *_whiteboard; }
-     
+  
+  // accessors: audioController
+  Audio::BehaviorAudioClient& GetAudioClient() const { assert(_audioClient); return *_audioClient;}
+  
   void HandleMessage(const Anki::Cozmo::ExternalInterface::BehaviorManagerMessageUnion& message);
   
   void SetReactionaryBehaviorsEnabled(bool isEnabled, bool stopCurrent = false);
@@ -236,10 +241,6 @@ private:
   // avoid immediately executing a behavior when the engine starts
   IBehaviorChooser* _selectionChooser = nullptr;
 
-  // This is a special chooser for the demo. In addition to choosing behaviors, it is also the central place
-  // in engine for any demo-specific code. This is in reference to the announce / PR demo
-  IBehaviorChooser* _demoChooser = nullptr;
-
   // Behavior chooser for freeplay mode, it also includes games and sparks if needed
   IBehaviorChooser* _freeplayChooser = nullptr;
   
@@ -270,6 +271,9 @@ private:
   UnlockId _lastRequestedSpark = UnlockId::Count;
   bool _isRequestedSparkSoft = false;
   bool _didGameRequestSparkEnd = false;
+  
+  // Behavior audio client is used to update the audio engine with the current sparked state (a.k.a. "round")
+  std::unique_ptr<Audio::BehaviorAudioClient> _audioClient;
   
   // whiteboard for behaviors to share information, or to store information only useful to behaviors
   std::unique_ptr<AIWhiteboard> _whiteboard;
