@@ -54,14 +54,16 @@ public class SayTextSlide : MonoBehaviour {
     UpdateTotalSparkCount();
     _CostLabel.text = _SayCost.ToString();
     _TextInput.onValueChanged.AddListener(HandleOnTextFieldChange);
+    _TextInput.onValidateInput += HandleInputValidation;
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
 
     SetButtonInteractivity();
 
-    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
   }
 
   private void OnDestroy() {
     _TextInput.onValueChanged.RemoveListener(HandleOnTextFieldChange);
+    _TextInput.onValidateInput -= HandleInputValidation;
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleRobotReactionaryBehavior);
   }
 
@@ -76,6 +78,13 @@ public class SayTextSlide : MonoBehaviour {
     _SparksInInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.GetItemAmount(_SparkItemId);
     _TotalSparksLabel.text = Localization.GetWithArgs(LocalizationKeys.kLabelTotalSparks, new object[] { _SparksInInventory });
     _NotEnoughSparks = _SparksInInventory < _SayCost;
+  }
+
+  private char HandleInputValidation(string input, int charIndex, char addedChar) {
+    if (char.IsLetter(addedChar) || char.IsWhiteSpace(addedChar)) {
+      return addedChar;
+    }
+    return '\0';
   }
 
   private void HandleOnTextFieldChange(string inputText) {
