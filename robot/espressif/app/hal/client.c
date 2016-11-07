@@ -246,7 +246,6 @@ bool UnreliableTransport_SendPacket(uint8* data, uint16 len)
     if (err < 0) // I think a negative number is an error. 0 is OK, I don't know what positive numbers are
     {
       printf("FQUP %d\r\n", err);
-      recordBootError(espconn_send, err);
       sendHoldoff = true;
       return false;
     }
