@@ -53,6 +53,7 @@ static s32 minPositions[4];
 static s32 maxPositions[4];
 static BirthCertificate birthCert;
 static s8  menuIndex;
+static u8  extVolt10x;
 
 typedef enum {
   PP_entry = 0,
@@ -93,6 +94,7 @@ bool Init()
   modeTimeout = 0xFFFFffff;
   birthCert.second = INVALID_BIRTH_SECOND; // Mark invalid
   menuIndex = 0;
+  extVolt10x = 50; // We turned on so we must be on the charger
   return true;
 }
 
@@ -178,7 +180,8 @@ void Update()
       }
       case RobotInterface::FTM_Sleepy:
       {
-        if ((now - lastExecTime) > (30*60*1000000)) // 30 minutes
+        if ((((now - lastExecTime) > (5*60*1000000)) && (extVolt10x < 40)) || // 5 minutes off charger
+            ((now - lastExecTime) > (30*60*1000000))) // 30 minutes on charger
         {
           SetMode(RobotInterface::FTM_Off);
         }
@@ -251,6 +254,7 @@ void Process_TestState(const RobotInterface::TestState& state)
     if (state.positionsFixed[m] < minPositions[m]) minPositions[m] = state.positionsFixed[m];
     if (state.positionsFixed[m] > maxPositions[m]) maxPositions[m] = state.positionsFixed[m];
   }
+  extVolt10x = state.extVolt10x; 
   
   switch (mode)
   {
