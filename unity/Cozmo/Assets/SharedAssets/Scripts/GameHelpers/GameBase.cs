@@ -140,6 +140,7 @@ public abstract class GameBase : MonoBehaviour {
     _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.AcknowledgeObject);
     _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.AcknowledgeFace);
     _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToFrustration);
+    _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToPet);
   }
 
   private void ResetReactionaryBehaviorsForGameEnd() {
