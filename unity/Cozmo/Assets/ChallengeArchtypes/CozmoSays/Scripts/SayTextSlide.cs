@@ -124,6 +124,7 @@ public class SayTextSlide : MonoBehaviour {
     _PendingClearField = true;
 
     SetSayTextReactionaryBehaviors(false);
+    SetButtonInteractivity();
 
     bool hasBadWords = BadWordsFilterManager.Instance.Contains(_TextInput.text);
 
