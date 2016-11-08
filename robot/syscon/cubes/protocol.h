@@ -18,7 +18,8 @@ __packed struct AccessoryHandshake {
   uint8_t tap_count;
   uint8_t tapTime;
   int8_t  tapNeg, tapPos;
-  uint8_t _reserved[9];
+  uint8_t batteryLevel;
+  uint8_t _reserved[8];
 };
 
 __packed struct AdvertisePacket {

@@ -72,5 +72,11 @@ message ObjectTapped
   int_8   tapPos,
 }
 
+message ObjectPowerLevel
+{
+  uint_8  objectID,
+  uint_8  batteryLevel
+}
+
 } // Cozmo
 } // Anki

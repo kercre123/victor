@@ -22,8 +22,8 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
-//#define NATHAN_DEBUG
 //#define NATHAN_CUBE_JUNK
+//#define AXIS_DEBUGGER
 //#define CUBE_HOP
 
 #define TOTAL_BLOCKS(x) ((x)->dataLen / sizeof(CubeFirmwareBlock))
@@ -43,7 +43,6 @@ enum TIMER_COMPARE {
 extern uesb_mainstate_t  m_uesb_mainstate;
 
 // This is our internal copy of the cube firmware update
-extern "C" const CubeFirmware __CUBE_XS;
 extern "C" const CubeFirmware __CUBE_XS6;
 
 static const uesb_address_desc_t PairingAddress = {
@@ -76,8 +75,6 @@ static unsigned int lastSlot = MAX_ACCESSORIES;
 static uint8_t rotationPeriod[MAX_ACCESSORIES];
 static uint8_t rotationOffset[MAX_ACCESSORIES];
 static uint8_t rotationNext[MAX_ACCESSORIES];
-
-static uint8_t g_shockCount[MAX_ACCESSORIES];
 
 // Motion computation thresholds and vars
 static const u8 START_MOVING_COUNT_THRESH = 2; // Determines number of motion tics that much be observed before Moving msg is sent
@@ -262,17 +259,12 @@ void Radio::enableDiscovery(bool enable) {
 void UpdatePropState(uint8_t id, int ax, int ay, int az, int shocks,
                 uint8_t tapTime, int8_t tapNeg, int8_t tapPos) {
   // Tap detection
-  uint8_t count = shocks - g_shockCount[id];
+  uint8_t count = shocks - accessories[id].shockCount;
 
-  g_shockCount[id] = shocks;
-
-  // Do not mis-report taps / cube movement (filtering)
-  if (count > 8) {
-    return ;
-  }
+  accessories[id].shockCount = shocks;
 
   u32 currTime_ms = g_dataToHead.timestamp;
-  if (count > 0) {
+  if (count > 0 && !accessories[id].ignoreTaps) {
     ObjectTapped m;
     m.timestamp = currTime_ms;
     m.numTaps = count;
@@ -283,6 +275,7 @@ void UpdatePropState(uint8_t id, int ax, int ay, int az, int shocks,
     m.tapPos = tapPos;
     RobotInterface::SendMessage(m);
   }
+  accessories[id].ignoreTaps = false;
 
   // Accumulate IIR filter for each axis
   static s32 acc_filt[MAX_ACCESSORIES][3];
@@ -448,20 +441,10 @@ void uesb_event_handler(uint32_t flags)
       AdvertisePacket advert;
       memcpy(&advert, &rx_payload.data, sizeof(AdvertisePacket));
 
-      #ifdef NATHAN_DEBUG
-      if (advert.id != 0xca11ab1e) {
-        return ;
-      }
-      #endif
-
       // Attempt to locate existing accessory and repair
       int slot = LocateAccessory(advert.id);
 
-      #ifdef NATHAN_DEBUG
-      if (slot < 0) {
-        slot = AllocateAccessory(advert.id);
-      }
-      #elif defined(NATHAN_CUBE_JUNK)
+      #if defined(NATHAN_CUBE_JUNK)
       if (slot < 0 && rx_payload.rssi < 60 && rx_payload.rssi > -60) {
         slot = AllocateAccessory(advert.id);
       }
@@ -501,7 +484,9 @@ void uesb_event_handler(uint32_t flags)
       acc->id = advert.id;
       acc->last_received = 0;
       acc->model = advert.model;
-
+      acc->ignoreTaps = true;
+      acc->powerCountdown = 0;
+      
       if (acc->active == false)
       {
         acc->allocated = true;
@@ -583,6 +568,15 @@ void uesb_event_handler(uint32_t flags)
       AccessorySlot* acc = &accessories[slot];
       
       acc->last_received = 0;
+
+      if (--acc->powerCountdown <= 0) {
+        acc->powerCountdown = SEND_BATTERY_TIME;
+
+        ObjectPowerLevel m;
+        m.objectID = slot;
+        m.batteryLevel = ap->batteryLevel;
+        RobotInterface::SendMessage(m);
+      }
 
       UpdatePropState(slot, ap->x, ap->y, ap->z, ap->tap_count, ap->tapTime, ap->tapNeg, ap->tapPos);
 
@@ -722,7 +716,7 @@ static void radio_prepare(void) {
     // Update the color status of the lights   
     static const int channel_order[] = { 3, 2, 1, 0 };
     int tx_index = 0;
-        
+
     memset(tx_state.ledStatus, 0, sizeof(tx_state.ledStatus));
     const int num_lights = (target->model == OBJECT_CHARGER) ? 3 : 4;
     
@@ -733,7 +727,23 @@ static void radio_prepare(void) {
         index -= num_lights;
       }
       
+      #ifndef AXIS_DEBUGGER
       uint8_t* rgbi = (uint8_t*) &lightController.cube[currentAccessory][channel_order[index]].values;
+      #else
+      static const uint8_t COLORS[][3] = {
+        { 0xFF, 0xFF, 0xFF },
+        { 0xFF, 0xFF,    0 },
+        { 0xFF,    0,    0 },
+        { 0xFF,    0, 0xFF },
+        {    0,    0, 0xFF },
+        {    0,    0,    0 },
+        {    0, 0xFF,    0 },
+        {    0, 0xFF, 0xFF },
+
+      };
+      int color = (light & 2) ? prevUpAxis[currentAccessory] : (target->shockCount & 7);
+      const uint8_t* rgbi = COLORS[color];
+      #endif
 
       for (int ch = 0; ch < 3; ch++) {
         tx_state.ledStatus[tx_index++] = (rgbi[ch] * light_gamma) >> 8;

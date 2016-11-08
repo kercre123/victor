@@ -100,7 +100,7 @@ union RobotToEngine {
   AnimationStarted           animStarted            = 0xCA,
   AnimationEnded             animEnded              = 0xCB,
   NVStorage::NVOpResult      nvOpResult             = 0xCD,
-  // FREE SLOT                                      = 0xCE,
+  ObjectPowerLevel           objectPowerLevel       = 0xCE,
   CrashReport                crashReport            = 0xCF,
   ObjectConnectionState activeObjectConnectionState = 0xD0,
   MotorCalibration           motorCalibration       = 0xD1,

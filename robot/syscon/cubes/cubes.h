@@ -21,13 +21,14 @@ static const int ROTATE_PERIOD = CYCLES(1000.0f / 30.0f); // 30 FPS
 static const int SILENCE_PERIOD = CYCLES(1.0f);
 static const int NEXT_CYCLE_FUDGE = 84;
 
-static const int ACCESSORY_TIMEOUT = 100;       // 1s timeout before accessory is considered lost
+static const int ACCESSORY_TIMEOUT = 100;     // 1s timeout before accessory is considered lost
 
 static const int ADV_CHANNEL = 81;
 
 static const int OTA_ACK_TIMEOUT = 5;
 static const int MAX_ACK_TIMEOUTS = 50;
 static const int MAX_OTA_FAILURES = 5;
+static const int SEND_BATTERY_TIME = 17000;   // Approximately every 5 minutes
 
 // Advertising settings
 static const uint32_t ADVERTISE_ADDRESS = 0xCA5CADED;
@@ -39,20 +40,23 @@ enum RadioState {
 };
 
 struct AccessorySlot {
-  bool                  active;
-  bool                  allocated;
+  uesb_address_desc_t   address;
   int                   last_received;
   int                   failure_count;
+  int                   powerCountdown;
 
-  bool                  hopSkip;
+  uint32_t              id;
+  uint16_t              model;
+
   uint8_t               hopIndex;
   int8_t                hopBlackout;
   uint8_t               hopChannel;
-  uint16_t              model;
+  uint8_t               shockCount;
 
-  uint32_t              id;
-
-  uesb_address_desc_t   address;
+  bool                  active;
+  bool                  allocated;
+  bool                  hopSkip;
+  bool                  ignoreTaps;
 };
 
 
