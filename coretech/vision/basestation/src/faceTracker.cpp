@@ -119,6 +119,11 @@ namespace Vision {
     _pImpl->SetFaceEnrollmentMode(pose, forFaceID, numEnrollments);
   }
   
+  void FaceTracker::EnableEmotionDetection(bool enable)
+  {
+    _pImpl->EnableEmotionDetection(enable);
+  }
+  
   Result FaceTracker::GetSerializedData(std::vector<u8>& albumData,
                                         std::vector<u8>& enrollData)
   {

@@ -337,7 +337,7 @@ namespace Anki {
       } else {
         name = face.GetName() + "-";
       }
-      name += Vision::TrackedFace::GetExpressionName(face.GetMaxExpression());
+      name += EnumToString(face.GetMaxExpression());
       
       // Add score debugging info:
       auto debugScoreInfo = face.GetRecognitionDebugInfo();

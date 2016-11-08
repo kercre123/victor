@@ -97,47 +97,33 @@ namespace Vision {
     return usedRealCenters;
   }
   
-  std::array<f32, TrackedFace::NumExpressions> TrackedFace::GetExpressionValues() const
+  TrackedFace::FacialExpressionValues TrackedFace::GetExpressionValues() const
   {
     return _expression;
   }
   
   // Return the expression with highest value
-  TrackedFace::Expression TrackedFace::GetMaxExpression() const
+  FacialExpression TrackedFace::GetMaxExpression() const
   {
-    Expression maxExpression = (Expression)0;
+    static_assert((s32)FacialExpression::Unknown == 0, "Expecting Unknown expression to be value 0");
+    
+    FacialExpression maxExpression = FacialExpression::Unknown;
     f32 maxValue = _expression[0];
-    for(s32 crntExpression = 1; crntExpression < NumExpressions; ++crntExpression)
+    for(s32 crntExpression = 1; crntExpression < (s32)FacialExpression::Count; ++crntExpression)
     {
       if(_expression[crntExpression] > maxValue) {
         maxValue = _expression[crntExpression];
-        maxExpression = (Expression)crntExpression;
+        maxExpression = (FacialExpression)crntExpression;
       }
     }
     return maxExpression;
   }
   
-  void TrackedFace::SetExpressionValue(Expression whichExpression, f32 newValue)
+  void TrackedFace::SetExpressionValue(FacialExpression whichExpression, f32 newValue)
   {
-    _expression[whichExpression] = newValue;
-  }
-  
-  const char* TrackedFace::GetExpressionName(Expression whichExpression)
-  {
-    static const std::map<Expression, const char*> NameLUT{
-      {Neutral,    "Neutral"},
-      {Happiness,  "Happineess"},
-      {Surprise,   "Surprise"},
-      {Anger,      "Anger"},
-      {Sadness,    "Sadness"},
-    };
-    
-    auto iter = NameLUT.find(whichExpression);
-    if(iter != NameLUT.end()) {
-      return iter->second;
-    } else {
-      return "Unknown";
-    }
+    const u32 expressionIndex = (u32)whichExpression;
+    ASSERT_NAMED(expressionIndex < (u32)FacialExpression::Count, "TrackedFace.SetExpressionValue.BadExpression");
+    _expression[expressionIndex] = newValue;
   }
   
 } // namespace Vision

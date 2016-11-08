@@ -450,12 +450,12 @@ namespace Vision {
         return RESULT_FAIL;
       }
       
-      static const TrackedFace::Expression TrackedFaceExpressionLUT[EX_EXPRESSION_KIND_MAX] = {
-        TrackedFace::Neutral,
-        TrackedFace::Happiness,
-        TrackedFace::Surprise,
-        TrackedFace::Anger,
-        TrackedFace::Sadness
+      static const FacialExpression TrackedFaceExpressionLUT[EX_EXPRESSION_KIND_MAX] = {
+        FacialExpression::Neutral,
+        FacialExpression::Happiness,
+        FacialExpression::Surprise,
+        FacialExpression::Anger,
+        FacialExpression::Sadness
       };
       
       for(INT32 okaoExpressionVal = 0; okaoExpressionVal < EX_EXPRESSION_KIND_MAX; ++okaoExpressionVal) {

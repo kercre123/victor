@@ -22,6 +22,8 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/faceIdTypes.h"
 
+#include "clad/types/facialExpressions.h"
+
 namespace Anki {
 namespace Vision {
   
@@ -73,18 +75,6 @@ namespace Vision {
       NumFeatures
     };
     
-    // TODO: Cladify this enum
-    // (There's no clad in coretech-internal/vision yet, so for now, just do it here)
-    enum Expression {
-      Neutral = 0,
-      Happiness,
-      Surprise,
-      Anger,
-      Sadness,
-      
-      NumExpressions
-    };
-    
     using Feature = std::vector<Point2f>;
     
     const Feature& GetFeature(FeatureName whichFeature) const;
@@ -124,15 +114,14 @@ namespace Vision {
     bool UpdateTranslation(const Vision::Camera& camera);
     
     // Return the histogram over all expressions
-    std::array<f32, NumExpressions> GetExpressionValues() const;
+    using FacialExpressionValues = std::array<f32, (size_t)FacialExpression::Count>;
+    FacialExpressionValues GetExpressionValues() const;
     
     // Return the expression with highest value
-    Expression GetMaxExpression() const;
+    FacialExpression GetMaxExpression() const;
     
     // Set a particular expression value
-    void SetExpressionValue(Expression whichExpression, f32 newValue);
-    
-    static const char* GetExpressionName(Expression whichExpression);
+    void SetExpressionValue(FacialExpression whichExpression, f32 newValue);
     
     void SetRecognitionDebugInfo(const std::list<FaceRecognitionMatch>& info);
     const std::list<FaceRecognitionMatch>& GetRecognitionDebugInfo() const;
@@ -154,7 +143,7 @@ namespace Vision {
     Point2f _leftEyeCen, _rightEyeCen;
     
     std::array<Feature, NumFeatures> _features;
-    std::array<f32, NumExpressions> _expression{};
+    FacialExpressionValues _expression{};
     
     Radians _roll, _pitch, _yaw;
     

@@ -405,6 +405,26 @@ namespace Cozmo {
       // Send out an event about this face being observed
       using namespace ExternalInterface;
       
+      std::vector<CladPoint2d> leftEye;
+      std::vector<CladPoint2d> rightEye;
+      std::vector<CladPoint2d> nose;
+      std::vector<CladPoint2d> mouth;
+      
+      const std::vector<std::pair<std::vector<CladPoint2d>*,Vision::TrackedFace::FeatureName>> features{
+        {&leftEye,   Vision::TrackedFace::FeatureName::LeftEye},
+        {&rightEye,  Vision::TrackedFace::FeatureName::RightEye},
+        {&nose,      Vision::TrackedFace::FeatureName::Nose},
+        {&mouth,     Vision::TrackedFace::FeatureName::UpperLip},
+      };
+      
+      for(auto const& feature : features)
+      {
+        for(auto const& pt : face.GetFeature(feature.second))
+        {
+          feature.first->emplace_back(pt.x(), pt.y());
+        }
+      }
+      
       _robot.Broadcast(MessageEngineToGame(RobotObservedFace(knownFace->face.GetID(),
                                                              _robot.GetID(),
                                                              face.GetTimeStamp(),
@@ -413,7 +433,9 @@ namespace Cozmo {
                                                                       face.GetRect().GetY(),
                                                                       face.GetRect().GetWidth(),
                                                                       face.GetRect().GetHeight()),
-                                                             knownFace->face.GetName())));
+                                                             knownFace->face.GetName(),
+                                                             face.GetMaxExpression(),
+                                                             leftEye, rightEye, nose, mouth)));
       
       /*
       const Vision::Image& faceThumbnail = knownFace->face.GetThumbnail();

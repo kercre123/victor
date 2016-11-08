@@ -17,6 +17,7 @@ namespace Cozmo {
     ComputingCalibration,
     CheckingQuality,
     DetectingPets,
+    EstimatingFacialExpression,  // No effect if DetectingFaces not enabled
     Count
   }
       

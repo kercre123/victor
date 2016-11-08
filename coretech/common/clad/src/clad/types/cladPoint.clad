@@ -1,0 +1,29 @@
+/**
+* File: cladPoint.clad
+*
+* Author: Andrew Stein
+* Date:   11/07/2016
+*
+* Description: CLAD struct for storing simple points. (Named to avoid confusion with 
+*              engine's existing, more full-featured Point class.)
+*
+* Copyright: Anki, Inc. 2016
+**/
+
+
+namespace Anki {
+
+structure CladPoint2d
+{
+  float_32 x,
+  float_32 y
+}
+
+structure CladPoint3d
+{
+  float_32 x,
+  float_32 y,
+  float_32 z
+}
+
+}

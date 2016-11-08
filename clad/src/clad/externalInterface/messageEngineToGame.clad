@@ -28,7 +28,9 @@
 #include "clad/types/petTypes.clad"
 #include "clad/types/poseStructs.clad"
 #include "clad/types/proxMessages.clad"
+#include "clad/types/cladPoint.clad"
 #include "clad/types/cladRect.clad"
+#include "clad/types/facialExpressions.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/sdkStatusTypes.clad"
 #include "clad/types/toolCodes.clad"
@@ -248,8 +250,15 @@ message RobotObservedFace {
     uint_32       timestamp,
     PoseStruct3d  pose,
     CladRect      img_rect,       // position in image coords
-    string        name            // Empty if none assigned yet
-// TODO: Add expression / landmark locations
+    string        name,           // Empty if none assigned yet
+
+    Vision::FacialExpression expression,
+
+    // Face landmarks
+    CladPoint2d   leftEye[uint_8],
+    CladPoint2d   rightEye[uint_8],
+    CladPoint2d   nose[uint_8],
+    CladPoint2d   mouth[uint_8]
 }
 
 // RobotChangedObservedFaceID

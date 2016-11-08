@@ -1,0 +1,21 @@
+/** Clad enumeration for the types of facial expressions we can detect
+ */
+
+
+namespace Anki {
+namespace Vision {
+
+enum uint_8 FacialExpression 
+{
+		Unknown = 0,    // e.g. expression estimation disabled
+		Neutral,
+		Happiness,
+		Surprise,
+		Anger,
+		Sadness,
+		
+		Count
+}
+      
+} // namespace Vision
+} // namespace Anki

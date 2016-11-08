@@ -54,6 +54,8 @@ namespace Vision {
                                FaceID_t forFaceID = UnknownFaceID,
 															 s32 numEnrollments = -1);
     
+    void EnableEmotionDetection(bool enable);
+    
     // Will return false if the private implementation does not support face recognition
     static bool IsRecognitionSupported();
     

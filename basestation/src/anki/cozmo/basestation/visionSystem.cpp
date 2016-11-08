@@ -180,30 +180,6 @@ namespace Cozmo {
     
     VisionMarker::SetDataPath(_dataPath);
     
-    // Default processing modes should be set from vision_config.json now!
-    //EnableMode(VisionMode::DetectingMarkers, true);
-    //EnableMode(VisionMode::DetectingMotion,  true);
-    //EnableMode(VisionMode::DetectingFaces,   true);
-    //EnableMode(VisionMode::DetectingOverheadEdges, true);
-    if(!config.isMember("InitialVisionModes"))
-    {
-      PRINT_NAMED_ERROR("VisionSystem.Init.MissingInitialVisionModesConfigField", "");
-      return RESULT_FAIL;
-    }
-    
-    const Json::Value& configModes = config["InitialVisionModes"];
-    for(auto & modeName : configModes.getMemberNames())
-    {
-      VisionMode mode = GetModeFromString(modeName);
-      if(mode == VisionMode::Idle) {
-        PRINT_NAMED_WARNING("VisionSystem.Init.BadVisionMode",
-                            "Ignoring initial Idle mode for string '%s' in vision config",
-                            modeName.c_str());
-      } else {
-        EnableMode(mode, configModes[modeName].asBool());
-      }
-    }
-    
     if(!config.isMember("ImageQuality"))
     {
       PRINT_NAMED_ERROR("VisionSystem.Init.MissingImageQualityConfigField", "");
@@ -271,6 +247,26 @@ namespace Cozmo {
     if(RESULT_OK != petTrackerInitResult) {
       PRINT_NAMED_ERROR("VisionSystem.Init.PetTrackerInitFailed", "");
       return petTrackerInitResult;
+    }
+    
+    // Default processing modes should are set in vision_config.json
+    if(!config.isMember("InitialVisionModes"))
+    {
+      PRINT_NAMED_ERROR("VisionSystem.Init.MissingInitialVisionModesConfigField", "");
+      return RESULT_FAIL;
+    }
+    
+    const Json::Value& configModes = config["InitialVisionModes"];
+    for(auto & modeName : configModes.getMemberNames())
+    {
+      VisionMode mode = GetModeFromString(modeName);
+      if(mode == VisionMode::Idle) {
+        PRINT_NAMED_WARNING("VisionSystem.Init.BadVisionMode",
+                            "Ignoring initial Idle mode for string '%s' in vision config",
+                            modeName.c_str());
+      } else {
+        EnableMode(mode, configModes[modeName].asBool());
+      }
     }
     
     if(!config.isMember("InitialModeSchedules"))
@@ -489,62 +485,89 @@ namespace Cozmo {
   
   Result VisionSystem::EnableMode(VisionMode whichMode, bool enabled)
   {
-    if(whichMode == VisionMode::Tracking) {
-      // Tracking enable/disable is a special case
-      if(enabled) {
-        if(!_markerToTrack.IsSpecified()) {
-          PRINT_NAMED_ERROR("VisionSystem.EnableMode.NoMarkerToTrack",
-                            "Cannot enable Tracking mode without MarkerToTrack specified.");
-          return RESULT_FAIL;
-        }
-        
-        // store the current mode so we can put it back when done tracking
-        _modeBeforeTracking = _mode;
-        
-        // TODO: Log or issue message?
-        // NOTE: this disables any other modes so we are *only* tracking
-        _mode.ClearFlags();
-        _mode.SetBitFlag(whichMode, true);
-      } else {
-        StopTracking();
-      }
-    } else if(whichMode == VisionMode::Idle) {
-      if(enabled) {
-        // "Enabling" idle means to turn everything off
-        PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnableMode.Idle",
-                      "Disabling all vision modes");
-        _mode.ClearFlags();
-        _mode.SetBitFlag(whichMode, true);
-      } else {
-        PRINT_NAMED_WARNING("VisionSystem.EnableMode.InvalidRequest", "Ignoring request to 'disable' idle mode.");
-      }
-    }else {
-      if(enabled) {
-        const bool modeAlreadyEnabled = _mode.IsBitFlagSet(whichMode);
-        if(!modeAlreadyEnabled) {
-          PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnablingMode",
-                        "Adding mode %s to current mode %s.",
-                        EnumToString(whichMode),
-                        VisionSystem::GetModeName(_mode).c_str());
+    switch(whichMode)
+    {
+      case VisionMode::Tracking:
+      {
+        // Tracking enable/disable is a special case
+        if(enabled) {
+          if(!_markerToTrack.IsSpecified()) {
+            PRINT_NAMED_ERROR("VisionSystem.EnableMode.NoMarkerToTrack",
+                              "Cannot enable Tracking mode without MarkerToTrack specified.");
+            return RESULT_FAIL;
+          }
           
-          _mode.SetBitFlag(VisionMode::Idle, false);
+          // store the current mode so we can put it back when done tracking
+          _modeBeforeTracking = _mode;
+          
+          // TODO: Log or issue message?
+          // NOTE: this disables any other modes so we are *only* tracking
+          _mode.ClearFlags();
           _mode.SetBitFlag(whichMode, true);
+        } else {
+          StopTracking();
         }
-      } else {
-        const bool modeAlreadyDisabled = !_mode.IsBitFlagSet(whichMode);
-        if(!modeAlreadyDisabled) {
-          PRINT_CH_INFO(kLogChannelName, "VisionSystem.DisablingMode",
-                        "Removing mode %s from current mode %s.",
-                        EnumToString(whichMode),
-                        VisionSystem::GetModeName(_mode).c_str());
-          _mode.SetBitFlag(whichMode, false);
-          if (!_mode.AreAnyFlagsSet())
-          {
-            _mode.SetBitFlag(VisionMode::Idle, true);
+        
+        break;
+      }
+        
+      case VisionMode::Idle:
+      {
+        if(enabled) {
+          // "Enabling" idle means to turn everything off
+          PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnableMode.Idle",
+                        "Disabling all vision modes");
+          _mode.ClearFlags();
+          _mode.SetBitFlag(whichMode, true);
+        } else {
+          PRINT_NAMED_WARNING("VisionSystem.EnableMode.InvalidRequest", "Ignoring request to 'disable' idle mode.");
+        }
+        
+        break;
+      }
+        
+      case VisionMode::EstimatingFacialExpression:
+      {
+        ASSERT_NAMED(nullptr != _faceTracker, "VisionSystem.EnableMode.NullFaceTracker");
+        
+        PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnableMode.EnableExpressionEstimation",
+                      "Enabled=%c", (enabled ? 'Y' : 'N'));
+
+        _faceTracker->EnableEmotionDetection(enabled);
+        break;
+      }
+        
+      default:
+      {
+        if(enabled) {
+          const bool modeAlreadyEnabled = _mode.IsBitFlagSet(whichMode);
+          if(!modeAlreadyEnabled) {
+            PRINT_CH_INFO(kLogChannelName, "VisionSystem.EnablingMode",
+                          "Adding mode %s to current mode %s.",
+                          EnumToString(whichMode),
+                          VisionSystem::GetModeName(_mode).c_str());
+            
+            _mode.SetBitFlag(VisionMode::Idle, false);
+            _mode.SetBitFlag(whichMode, true);
+          }
+        } else {
+          const bool modeAlreadyDisabled = !_mode.IsBitFlagSet(whichMode);
+          if(!modeAlreadyDisabled) {
+            PRINT_CH_INFO(kLogChannelName, "VisionSystem.DisablingMode",
+                          "Removing mode %s from current mode %s.",
+                          EnumToString(whichMode),
+                          VisionSystem::GetModeName(_mode).c_str());
+            _mode.SetBitFlag(whichMode, false);
+            if (!_mode.AreAnyFlagsSet())
+            {
+              _mode.SetBitFlag(VisionMode::Idle, true);
+            }
           }
         }
+        break;
       }
-    }
+    } // switch(whichMode)
+    
     return RESULT_OK;
   } // EnableMode()
   

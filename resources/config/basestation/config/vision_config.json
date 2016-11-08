@@ -2,12 +2,13 @@
   "InitialVisionModes" :
   {
     // If a vision mode is not listed, it will be left in its default state
-    "DetectingMarkers"       : true,
-    "DetectingFaces"         : true,
-    "DetectingPets"          : true,
-    "DetectingMotion"        : true,
-    "DetectingOverheadEdges" : true,
-    "CheckingQuality"        : true
+    "DetectingMarkers"           : true,
+    "DetectingFaces"             : true,
+    "DetectingPets"              : true,
+    "DetectingMotion"            : true,
+    "DetectingOverheadEdges"     : true,
+    "CheckingQuality"            : true,
+    "EstimatingFacialExpression" : false
   },
   
   "InitialModeSchedules" :
