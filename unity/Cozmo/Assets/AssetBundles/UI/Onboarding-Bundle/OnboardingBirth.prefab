@@ -114,7 +114,7 @@ MonoBehaviour:
   _DASPhaseID: 2
   _Animation:
     _EnumValueAsString: OnboardingBirth
-    _EnumValue: 133
+    _EnumValue: 159
   _Logo: {fileID: 22482554}
   _OldRobotLogoPos: {fileID: 22419098}
 --- !u!114 &11415114
@@ -152,6 +152,7 @@ MonoBehaviour:
   m_Text: '#onboarding.BirthWait'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11486948
 MonoBehaviour:
   m_ObjectHideFlags: 1
