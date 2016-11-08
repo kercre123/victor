@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using Anki.UI;
 
 namespace Cozmo.Minigame.DroneMode {
@@ -9,6 +10,12 @@ namespace Cozmo.Minigame.DroneMode {
 
     [SerializeField]
     private AnkiTextLabel _ReticleLabel;
+
+    [SerializeField]
+    private Image _ReticleStrokeImage;
+
+    [SerializeField]
+    private Image _ReticleStrokeFill;
 
     public string ReticleLabel {
       get { return _ReticleLabel.text; }
@@ -22,6 +29,11 @@ namespace Cozmo.Minigame.DroneMode {
 
     public void ShowReticleLabelText(bool showText) {
       _ReticleLabel.gameObject.SetActive(showText);
+    }
+
+    public void SetColor(Color fillColor, Color strokeColor) {
+      _ReticleStrokeFill.color = fillColor;
+      _ReticleStrokeImage.color = strokeColor;
     }
   }
 }

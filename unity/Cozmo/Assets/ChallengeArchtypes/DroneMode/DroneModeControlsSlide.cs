@@ -42,6 +42,9 @@ namespace Cozmo.Minigame.DroneMode {
     [SerializeField]
     private CozmoStickySlider _SpeedThrottle;
 
+    [SerializeField]
+    private Image[] _SpeedThrottleBackgrounds;
+
     [SerializeField, Range(0f, 1f)]
     private float _ReverseThreshold;
 
@@ -63,6 +66,9 @@ namespace Cozmo.Minigame.DroneMode {
 
     [SerializeField]
     private Cozmo.MinigameWidgets.QuitMinigameButton _QuitDroneModeButton;
+
+    [SerializeField]
+    private CozmoButton _QuitDroneModeButtonImage;
 
     [SerializeField]
     private CozmoButton _HowToPlayButton;
@@ -91,6 +97,12 @@ namespace Cozmo.Minigame.DroneMode {
 
     [SerializeField]
     private DroneModeActionButton _DroneModeActionButtonPrefab;
+
+    [SerializeField]
+    private DroneModeColorSet _DaytimeColors;
+
+    [SerializeField]
+    private DroneModeColorSet _NightVisionColors;
 
     private SpeedSliderSegment _CurrentDriveSpeedSliderSegment;
     private float _CurrentDriveSpeedSliderSegmentValue;
@@ -149,6 +161,8 @@ namespace Cozmo.Minigame.DroneMode {
       _IsCubeInLift = (_CurrentRobot.CarryingObject != null);
 
       UpdateContextMenu();
+
+      SetUIToColorSet(_DaytimeColors);
     }
 
     public void InitializeLiftSlider(float sliderValue) {
@@ -392,6 +406,61 @@ namespace Cozmo.Minigame.DroneMode {
 
     public void HandleNightVisionButtonClicked() {
       _CurrentRobot.SetNightVision(_NightVisionButton.IsCurrentlyOn);
+      if (!_NightVisionButton.IsCurrentlyOn) {
+        SetUIToColorSet(_NightVisionColors);
+      }
+      else {
+        SetUIToColorSet(_DaytimeColors);
+      }
     }
+
+    private void SetUIToColorSet(DroneModeColorSet colorSet) {
+      _CameraFeed.SetCameraFeedColor(colorSet);
+
+      _QuitDroneModeButton.SetButtonTint(colorSet.ButtonColor);
+      _HowToPlayButton.SetButtonTint(colorSet.ButtonColor);
+
+      _SpeedThrottle.image.sprite = colorSet.SpeedSliderHandleSprites.highlightedSprite;
+      _SpeedThrottle.spriteState = colorSet.SpeedSliderHandleSprites;
+
+      foreach (var speedSliderBackground in _SpeedThrottleBackgrounds) {
+        speedSliderBackground.color = colorSet.ButtonColor;
+      }
+    }
+  }
+
+  [System.Serializable]
+  public class DroneModeColorSet {
+    [SerializeField]
+    private Color _ButtonColor;
+    public Color ButtonColor { get { return _ButtonColor; } }
+
+    [SerializeField]
+    private Color _FocusTextColor;
+    public Color FocusTextColor { get { return _FocusTextColor; } }
+
+    [SerializeField]
+    private Color _FocusFrameColor;
+    public Color FocusFrameColor { get { return _FocusFrameColor; } }
+
+    [SerializeField]
+    private Color _TopCameraColor;
+    public Color TopCameraColor { get { return _TopCameraColor; } }
+
+    [SerializeField]
+    private Color _BottomCameraColor;
+    public Color BottomCameraColor { get { return _BottomCameraColor; } }
+
+    [SerializeField]
+    private Color _TopGradientColor;
+    public Color TopGradientColor { get { return _TopGradientColor; } }
+
+    [SerializeField]
+    private Color _BottomGradientColor;
+    public Color BottomGradientColor { get { return _BottomGradientColor; } }
+
+    [SerializeField]
+    private SpriteState _SpeedSliderHandleSprites;
+    public SpriteState SpeedSliderHandleSprites { get { return _SpeedSliderHandleSprites; } }
   }
 }

@@ -19,10 +19,19 @@ namespace Cozmo.Minigame.DroneMode {
     private RectTransform _DroneModeReticlePrefab;
 
     [SerializeField]
-    private RectTransform _FocusedObjectFrameContainer;
+    private Image _FocusedObjectFrameImage;
 
     [SerializeField]
     private AnkiTextLabel _FocusedObjectTextLabel;
+
+    [SerializeField]
+    private Image[] _TopFrameImages;
+
+    [SerializeField]
+    private Image[] _BottomFrameImages;
+
+    [SerializeField]
+    private Image[] _GradientImages;
 
     private IRobot _CurrentRobot;
     private Dictionary<IVisibleInCamera, DroneModeCameraReticle> _ObjToReticle = new Dictionary<IVisibleInCamera, DroneModeCameraReticle>();
@@ -30,13 +39,15 @@ namespace Cozmo.Minigame.DroneMode {
 
     // allow reticles to move smoothly
     private const int kReticleSmoothingCount = 5;
-    private Dictionary<IVisibleInCamera, List<Rect>> _smoothingReticleMap = new Dictionary<IVisibleInCamera, List<Rect>>();
+    private Dictionary<IVisibleInCamera, List<Rect>> _SmoothingReticleMap = new Dictionary<IVisibleInCamera, List<Rect>>();
 
     private Vector2 _CameraImageSize;
     private float _CameraImageScale;
 
     // TODO: Replace text field
     public AnkiTextLabel DebugTextField;
+
+    private DroneModeColorSet _CurrentColorSet;
 
     private IVisibleInCamera _CurrentlyFocusedObject;
     public IVisibleInCamera CurrentlyFocusedObject {
@@ -58,7 +69,7 @@ namespace Cozmo.Minigame.DroneMode {
       _CurrentRobot = currentRobot;
 
       _ReticlePool = new SimpleObjectPool<DroneModeCameraReticle>(CreateReticle, ResetReticle, 0);
-      _FocusedObjectFrameContainer.gameObject.SetActive(false);
+      _FocusedObjectFrameImage.gameObject.SetActive(false);
     }
 
     private void Update() {
@@ -129,6 +140,33 @@ namespace Cozmo.Minigame.DroneMode {
           _CurrentRobot.Charger.InFieldOfViewStateChanged -= HandleInFieldOfViewChanged;
           _CurrentRobot.Charger.OnVizRectChanged -= HandleVizRectChanged;
         }
+      }
+    }
+
+    public void SetCameraFeedColor(DroneModeColorSet colorSet) {
+      _CurrentColorSet = colorSet;
+      _CameraFeedImage.material.SetColor("_TopColor", colorSet.TopCameraColor);
+      _CameraFeedImage.material.SetColor("_BottomColor", colorSet.BottomCameraColor);
+
+      foreach (var topImage in _TopFrameImages) {
+        topImage.color = colorSet.TopCameraColor;
+      }
+
+      foreach (var bottomImage in _BottomFrameImages) {
+        bottomImage.color = colorSet.BottomCameraColor;
+      }
+
+      foreach (var gradientImage in _GradientImages) {
+        gradientImage.material.SetColor("_TopColor", colorSet.TopGradientColor);
+        gradientImage.material.SetColor("_BottomColor", colorSet.BottomGradientColor);
+      }
+
+      _FocusedObjectFrameImage.color = colorSet.FocusFrameColor;
+      _FocusedObjectTextLabel.color = colorSet.FocusTextColor;
+
+      // TODO Update reticles
+      foreach (var kvp in _ObjToReticle) {
+        kvp.Value.SetColor(colorSet.FocusFrameColor, colorSet.ButtonColor);
       }
     }
 
@@ -261,6 +299,7 @@ namespace Cozmo.Minigame.DroneMode {
           reticleFocus.OnVizRectChanged += HandleVizRectChanged;
 
           PositionReticle(newReticle, reticleFocus.VizRect);
+          newReticle.SetColor(_CurrentColorSet.FocusFrameColor, _CurrentColorSet.ButtonColor);
         }
       }
     }
@@ -269,7 +308,7 @@ namespace Cozmo.Minigame.DroneMode {
       DroneModeCameraReticle toRemove;
       if (_ObjToReticle.TryGetValue(reticleFocus, out toRemove)) {
         _ObjToReticle.Remove(reticleFocus);
-        _smoothingReticleMap.Remove(reticleFocus);
+        _SmoothingReticleMap.Remove(reticleFocus);
         reticleFocus.OnVizRectChanged -= HandleVizRectChanged;
         _ReticlePool.ReturnToPool(toRemove);
 
@@ -289,7 +328,7 @@ namespace Cozmo.Minigame.DroneMode {
       Rect averagedVizRect = newVizRect;
       List<Rect> averagedList;
 
-      if (_smoothingReticleMap.TryGetValue(reticleFocus, out averagedList)) {
+      if (_SmoothingReticleMap.TryGetValue(reticleFocus, out averagedList)) {
         // update the list
         averagedList.Add(newVizRect);
         int listLen = averagedList.Count;
@@ -315,7 +354,7 @@ namespace Cozmo.Minigame.DroneMode {
 
       }
       else {
-        _smoothingReticleMap.Add(reticleFocus, new List<Rect> { newVizRect });
+        _SmoothingReticleMap.Add(reticleFocus, new List<Rect> { newVizRect });
       }
 
       return averagedVizRect;
@@ -367,7 +406,7 @@ namespace Cozmo.Minigame.DroneMode {
           else {
             text = Localization.Get(reticleFocus.ReticleLabelLocKey);
           }
-          _FocusedObjectFrameContainer.gameObject.SetActive(true);
+          _FocusedObjectFrameImage.gameObject.SetActive(true);
           _FocusedObjectTextLabel.text = text;
 
           // For PetFace debugging
@@ -377,11 +416,11 @@ namespace Cozmo.Minigame.DroneMode {
           }
         }
         else {
-          _FocusedObjectFrameContainer.gameObject.SetActive(false);
+          _FocusedObjectFrameImage.gameObject.SetActive(false);
         }
       }
       else {
-        _FocusedObjectFrameContainer.gameObject.SetActive(false);
+        _FocusedObjectFrameImage.gameObject.SetActive(false);
       }
     }
 
