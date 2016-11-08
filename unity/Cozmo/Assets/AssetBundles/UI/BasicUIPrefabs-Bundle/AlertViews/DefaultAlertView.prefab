@@ -239,14 +239,17 @@ MonoBehaviour:
   Prefab: {fileID: 130312, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
   ModifiedValues:
   - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
+  - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MinSize
-    JsonValue: 50
+    JsonValue: 40
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_BestFit
     JsonValue: true
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"Play"'
+    JsonValue: '"Yes"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../../
     FieldName: Cozmo.UI.AlertView:_PrimaryButton
@@ -286,7 +289,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.11764706, g: 0.5058824, b: 0.78431374, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -299,7 +302,7 @@ MonoBehaviour:
     m_BestFit: 1
     m_MinSize: 100
     m_MaxSize: 140
-    m_Alignment: 7
+    m_Alignment: 1
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
@@ -308,6 +311,7 @@ MonoBehaviour:
   m_Text: Speed Tap
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11431706
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -321,6 +325,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
   ModifiedValues:
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"No"'
@@ -429,6 +436,7 @@ MonoBehaviour:
   m_Text: Cozmo wants to meet you
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!222 &22223976
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -621,8 +629,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -450, y: 0}
+  m_AnchoredPosition: {x: 0, y: -91.600006}
+  m_SizeDelta: {x: -450, y: 156.79999}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22468370
 RectTransform:
