@@ -233,6 +233,9 @@ MonoBehaviour:
   Prefab: {fileID: 176160, guid: 10f33d59217b548c690367d9dbad1e40, type: 2}
   ModifiedValues:
   - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
+  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Color:b
     JsonValue: 1.0
   - ObjectPath: 
@@ -264,9 +267,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_IgnoreLayout: 0
-  m_MinWidth: 420
+  m_MinWidth: 400
   m_MinHeight: -1
-  m_PreferredWidth: 420
+  m_PreferredWidth: 400
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
@@ -463,6 +466,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 112842, guid: e48611878db304fb1a8a34ac88e4682e, type: 2}
   ModifiedValues:
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_RichText
     JsonValue: false
