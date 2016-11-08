@@ -184,7 +184,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -206,6 +206,7 @@ MonoBehaviour:
   m_Text: Win a game of Quick Tap with better than 75% Accuracy
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11405530
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -225,7 +226,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: 20eff39abb3d04d72bf4ec0c46255cd2, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 6ee464e47167a40ff882153ecc8e4a81, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -246,7 +247,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.18823531, g: 0.3803922, b: 0, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -268,6 +269,7 @@ MonoBehaviour:
   m_Text: 99
   _AllUppercase: 1
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11416504
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -675,8 +677,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 1.1, y: 6.3}
-  m_SizeDelta: {x: 234.3, y: 187.4}
+  m_AnchoredPosition: {x: 5.85, y: -25.98}
+  m_SizeDelta: {x: 176.2, y: 135.3}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22491210
 RectTransform:
