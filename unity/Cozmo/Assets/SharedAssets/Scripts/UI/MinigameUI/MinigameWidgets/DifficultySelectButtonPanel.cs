@@ -49,7 +49,7 @@ public class DifficultySelectButtonPanel : MonoBehaviour {
   }
 
 
-  public void Initialize(List<DifficultySelectOptionData> options, int highestDifficultyAvailable) {
+  public void Initialize(List<DifficultySelectOptionData> options, int highestDifficultyAvailable, int selectedDifficulty) {
     _HighestDifficultyAvailable = highestDifficultyAvailable;
     for (int i = 0; i < options.Count; i++) {
       var obj = UIManager.CreateUIElement(_OptionPrefab, _OptionTray);
@@ -62,7 +62,7 @@ public class DifficultySelectButtonPanel : MonoBehaviour {
 
     _SelectedDifficultyIndex = -1;
 
-    SelectOption(highestDifficultyAvailable);
+    SelectOption(selectedDifficulty);
 
   }
 

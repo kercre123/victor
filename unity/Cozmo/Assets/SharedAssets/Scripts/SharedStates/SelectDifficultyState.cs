@@ -31,8 +31,20 @@ public class SelectDifficultyState : State {
 
     _Game.SharedMinigameView.ShowTallShelf(true);
     _Game.SharedMinigameView.EnableContinueButton(false);
+
+    DataPersistence.PlayerProfile playerProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
+    // if we don't have a score, select the most recent unlocked
+    int selectedDifficulty = _HighestLevelCompleted;
+    // Scores are per mode
+    string key = _Game.ChallengeID + _HighestLevelCompleted;
+    // if we have played the most recent unlocked difficulty before, select the last thing played
+    // HighScores of 0 are valid and inserted.
+    if (playerProfile.HighScores.ContainsKey(key) && playerProfile.LastPlayedDifficulty.ContainsKey(_Game.ChallengeID)) {
+      selectedDifficulty = playerProfile.LastPlayedDifficulty[_Game.ChallengeID];
+    }
+
     _DifficultySelectButtonPanel = _Game.SharedMinigameView.ShowDifficultySelectButtons(_DifficultyOptions,
-      _HighestLevelCompleted, HandleInitialDifficultySelected);
+      _HighestLevelCompleted, HandleInitialDifficultySelected, selectedDifficulty);
   }
 
   public override void Pause(PauseReason reason, Anki.Cozmo.BehaviorType reactionaryBehavior) {
@@ -93,6 +105,10 @@ public class SelectDifficultyState : State {
     }
     _Game.CurrentDifficulty = _SelectedDifficultyData.DifficultyId;
     DAS.Event("game.difficulty", _SelectedDifficultyData.DifficultyId.ToString());
+
+
+    DataPersistence.PlayerProfile playerProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
+    playerProfile.LastPlayedDifficulty[_Game.ChallengeID] = _Game.CurrentDifficulty;
 
     // Don't tween transitions in Exit because that will cause errors in DoTween if exiting 
     // the state machine is through the quit button

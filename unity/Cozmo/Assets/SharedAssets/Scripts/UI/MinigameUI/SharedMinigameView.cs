@@ -929,11 +929,11 @@ namespace Cozmo {
       #region Difficulty Select Widget
 
       public DifficultySelectButtonPanel ShowDifficultySelectButtons(List<DifficultySelectOptionData> options, int highestDifficultyAvailable,
-                                                                     TweenCallback endInTweenCallback) {
+                                                                     TweenCallback endInTweenCallback, int selectedDifficulty) {
         if (_DifficultySelectButtonPanelInstance == null) {
           GameObject difficultySlide = ShelfWidget.SetShelfContent(_DifficultySelectButtonPanelPrefab, endInTweenCallback);
           _DifficultySelectButtonPanelInstance = difficultySlide.GetComponent<DifficultySelectButtonPanel>();
-          _DifficultySelectButtonPanelInstance.Initialize(options, highestDifficultyAvailable);
+          _DifficultySelectButtonPanelInstance.Initialize(options, highestDifficultyAvailable, selectedDifficulty);
         }
         return _DifficultySelectButtonPanelInstance;
       }

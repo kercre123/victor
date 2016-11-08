@@ -28,8 +28,9 @@ namespace DataPersistence {
     public Dictionary<string, DataPersistence.GameSkillData> CozmoSkillLevels;
 
     public Dictionary<string, int> GameDifficulty;
+    // Keys for HighScores is ChallengeID+GameDifficulty, not just ID.
     public Dictionary<string, int> HighScores;
-
+    public Dictionary<string, int> LastPlayedDifficulty;
     public Dictionary<string, int> TotalGamesPlayed;
 
     public int MaximumStreak;
@@ -92,6 +93,7 @@ namespace DataPersistence {
       GameDifficulty = new Dictionary<string, int>();
       HighScores = new Dictionary<string, int>();
       TotalGamesPlayed = new Dictionary<string, int>();
+      LastPlayedDifficulty = new Dictionary<string, int>();
       ConversationHistory = new Conversations.ConversationHistory();
       Sessions = new List<DataPersistence.TimelineEntryData>();
       GameInstructionalVideoPlayed = new Dictionary<string, bool>();

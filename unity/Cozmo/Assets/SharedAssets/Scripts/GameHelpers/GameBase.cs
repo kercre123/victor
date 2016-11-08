@@ -837,6 +837,7 @@ public abstract class GameBase : MonoBehaviour {
     SoftEndGameRobotReset();
     _ResultsViewReached = true;
     ContextManager.Instance.AppFlash(playChime: true);
+    SaveHighScore();
 
     string winnerText = "";
     if (overrideWinnerText != null) {
