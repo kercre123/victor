@@ -878,11 +878,11 @@
     },
     {
       "CladEvent": "RequestGameSpeedTapIdle0",
-      "AnimName": "ag_rtpkeepaway_idle"
+      "AnimName": "ag_speedTap_wait"
     },
     {
       "CladEvent": "RequestGameSpeedTapIdle1",
-      "AnimName": "ag_rtpkeepaway_idle"
+      "AnimName": "ag_speedTap_wait"
     },
     {
       "CladEvent": "RequestGameSpeedTapAccept0",
@@ -942,27 +942,27 @@
     },
     {
       "CladEvent": "RequestGameMemoryMatchIdle0",
-      "AnimName": "ag_rtpkeepaway_idle"
+      "AnimName": "ag_memorymatch_idle"
     },
     {
       "CladEvent": "RequestGameMemoryMatchIdle1",
-      "AnimName": "ag_rtpkeepaway_idle"
+      "AnimName": "ag_memorymatch_idle"
     },
     {
       "CladEvent": "RequestGameMemoryMatchDeny0",
-      "AnimName": "requestGame_speedTap_deny"
+      "AnimName": "ag_rtpmemorymatch_no"
     },
     {
       "CladEvent": "RequestGameMemoryMatchDeny1",
-      "AnimName": "requestGame_speedTap_deny"
+      "AnimName": "ag_rtpmemorymatch_no"
     },
     {
       "CladEvent": "RequestGameMemoryMatchAccept0",
-      "AnimName": "ag_rtpkeepaway_playeryes"
+      "AnimName": "ag_rtpmemorymatch_yes"
     },
     {
       "CladEvent": "RequestGameMemoryMatchAccept1",
-      "AnimName": "ag_rtpkeepaway_playeryes"
+      "AnimName": "ag_rtpmemorymatch_yes"
     },
     {
       "CladEvent": "RequestGameMemoryMatchInitial0",
@@ -982,11 +982,11 @@
     },
     {
       "CladEvent": "RequestGameMemoryMatchRequest0",
-      "AnimName": "requestGame_speedTap_request"
+      "AnimName": "ag_rtpmemorymatch_request"
     },
     {
       "CladEvent": "RequestGameMemoryMatchRequest1",
-      "AnimName": "requestGame_speedTap_request"
+      "AnimName": "ag_rtpmemorymatch_request"
     },
     {
       "CladEvent": "RequestGamePickupFail",
