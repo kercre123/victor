@@ -11,17 +11,14 @@
  **/
 
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
+
+#include "anki/cozmo/basestation/blockWorld/blockConfigTypeHelpers.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationPyramid.h"
-#include "anki/cozmo/basestation/blockWorld/blockConfiguration.h"
-#include "anki/cozmo/basestation/blockWorld/blockConfigurationStack.h"
-
 #include "anki/cozmo/basestation/blockWorld/blockWorld.h"
-#include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/blockWorld/blockWorldFilter.h"
-#include "anki/cozmo/shared/cozmoEngineConfig.h"
+#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/vision/basestation/observableObject.h"
-
-#include "util/math/math.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -34,88 +31,28 @@ const float constexpr kMinBlockRotationUpdateThreshold_rad = DEG_TO_RAD(30);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BlockConfigurationManager::BlockConfigurationManager(const Robot& robot)
+BlockConfigurationManager::BlockConfigurationManager(Robot& robot)
 : _robot(robot)
+, _forceUpdate(false)
+, _stackCache(StackConfigurationContainer())
+, _pyramidBaseCache(PyramidBaseConfigurationContainer())
+, _pyramidCache(PyramidConfigurationContainer())
 {
-  //Initialize configuration map
-  for(ConfigurationType type =(ConfigurationType)0; type != ConfigurationType::Count; ++type){
-    _configToCacheMap.insert(std::make_pair(type, std::vector<BlockConfigPtr>()));
+  
+  // Listen for behavior objective achieved messages for spark repetitions counter
+  if(robot.HasExternalInterface()) {
+    auto helper = MakeAnkiEventUtil(*robot.GetExternalInterface(), *this, _signalHandles);
+    using namespace ExternalInterface;
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotDelocalized>();
   }
   
 } // BlockConfigurationManager() Constructor
 
   
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::vector<BlockConfigWeakPtr> BlockConfigurationManager::GetConfigurationsForType(ConfigurationType type) const
-{
-  std::vector<BlockConfigWeakPtr> configs;
-  auto cacheIter = _configToCacheMap.find(type);
-  ASSERT_NAMED_EVENT(cacheIter != _configToCacheMap.end(), "BlockConfigurationManager.GetConfigurationForType.InvalidType",
-                       "InvalidType %d passed in to get configurations", type);
-  
-  
-  for(const auto& config: cacheIter->second){
-    configs.push_back(config);
-  }
-  
-  return configs;
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::vector<BlockConfigWeakPtr> BlockConfigurationManager::GetConfigurationsContainingObjectForType(ConfigurationType type, const ObjectID& objectID) const
-{
-  std::vector<BlockConfigWeakPtr> configs;
-  auto cacheIter = _configToCacheMap.find(type);
-  ASSERT_NAMED_EVENT(cacheIter != _configToCacheMap.end(), "BlockConfigurationManager.GetConfigurationsContainingObjectForType.InvalidType",
-                     "InvalidType %d passed in to get configurations", type);
-  
-  for(const auto& config: cacheIter->second){
-    if(config->ContainsBlock(objectID)){
-      configs.push_back(config);
-    }
-  }
-  
-  return configs;
-}
-  
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const BlockConfigurations::StackWeakPtr BlockConfigurationManager::GetTallestStack() const
-{
-  std::vector<ObjectID> bottomBlocksToIgnore;
-  return GetTallestStack(bottomBlocksToIgnore);
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const BlockConfigurations::StackWeakPtr BlockConfigurationManager::GetTallestStack(const std::vector<ObjectID>& baseBlocksToIgnore) const
-{
-  auto stackCache = _configToCacheMap.find(ConfigurationType::StackOfCubes)->second;
-  if(stackCache.empty()){
-    return std::make_shared<StackOfCubes>();
-  }
-  
-  using StackIteratorConst = std::vector<BlockConfigPtr>::const_iterator;
-  auto tallestStack = BlockConfiguration::AsStackPtr(stackCache.front());
-  for(StackIteratorConst stackIt = stackCache.begin(); stackIt != stackCache.end(); ++stackIt){
-    auto compareStackPtr = BlockConfiguration::AsStackPtr((*stackIt));
-    if(compareStackPtr->GetStackHeight() > tallestStack->GetStackHeight()){
-      tallestStack = compareStackPtr;
-    }
-  }
-  
-  return tallestStack;
-}
-
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BlockConfigurationManager::CheckForPyramidBaseBelowObject(const ObservableObject* object, PyramidBaseWeakPtr& pyramidBase) const
 {
-  auto pyramidBaseCache = _configToCacheMap.find(ConfigurationType::PyramidBase)->second;
-  for(const auto& storedPyramid: pyramidBaseCache){
-    auto pyramidBasePtr = BlockConfiguration::AsPyramidBasePtr(storedPyramid);
+  for(const auto& pyramidBasePtr: GetPyramidBaseCache().GetBases()){
     if(pyramidBasePtr->ObjectIsOnTopOfBase(_robot, object)){
       pyramidBase = pyramidBasePtr;
       return true;
@@ -125,22 +62,23 @@ bool BlockConfigurationManager::CheckForPyramidBaseBelowObject(const ObservableO
   return false;
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BlockConfigurationManager::Update()
 {
-  if(_objectsPoseChangedThisTick.empty()){
+  if(_objectsPoseChangedThisTick.empty() && !_forceUpdate){
     // nothing to update
     return;
   }
   
   // build a list of objects that have moved past their last configuration check threshold
-  if(DidAnyObjectsMovePastThreshold()){
+  if(_forceUpdate || DidAnyObjectsMovePastThreshold()){
     UpdateAllBlockConfigs();
-    PrunePyramidBases();
+    _pyramidBaseCache.PruneFullPyramids(GetPyramidCache().GetPyramids());
     UpdateLastConfigCheckBlockPoses();
   }
   
+  _forceUpdate = false;
   _objectsPoseChangedThisTick.clear();
 }
 
@@ -197,71 +135,75 @@ bool BlockConfigurationManager::DidAnyObjectsMovePastThreshold()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BlockConfigurationManager::UpdateAllBlockConfigs()
 {
-  std::vector<BlockConfigPtr> allBlockConfigs;
-  
-  BlockWorldFilter blockFilter;
-  blockFilter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
-  std::vector<const ObservableObject*> allBlocks;
-  _robot.GetBlockWorld().FindMatchingObjects(blockFilter, allBlocks);
-  
   // Iterate through all configuration types and blocks
   for(ConfigurationType type = (ConfigurationType)0; type != ConfigurationType::Count; ++type){
-    // preserve the current list for reference and hold shared_pointer instances
-    // anything not inserted into the cache map through newCache will be deleted when it falls out of scope
-    const std::vector<BlockConfigPtr> currentCache = _configToCacheMap.find(type)->second;
-    std::vector<BlockConfigPtr>& newCache = _configToCacheMap.find(type)->second;
-    newCache.clear();
-    
-    std::set<ObjectID> blocksAlreadyChecked;
-    for(const auto& block: allBlocks){
-      // ensure we don't re-build configurations for blocks we've already tracked
-      if(blocksAlreadyChecked.find(block->GetID()) == blocksAlreadyChecked.end()){
-        std::vector<BlockConfigPtr> currentTypeConfigs = BlockConfiguration::BuildAllConfigsWithObjectForType(_robot, block, type, currentCache);
-        for(const auto& entry: currentTypeConfigs){
-          // update the blocks we've already tracked for this configuration type so we don't
-          // build/add configurations twice
-          for(const auto& blockInConfig: entry->GetAllBlockIDsOrdered()){
-            blocksAlreadyChecked.insert(blockInConfig);
-          }
-             
-          newCache.push_back(entry);
-        }
-      }
-    }
+    auto& cache = GetCacheByType(type);
+    cache.Update(_robot);
   }// end for ConfigurationType
 }
-
   
+  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BlockConfigurationManager::PrunePyramidBases()
+BlockConfigurationContainer& BlockConfigurationManager::GetCacheByType(ConfigurationType type)
 {
-  auto& pyramidBaseCache = _configToCacheMap.find(ConfigurationType::PyramidBase)->second;
-  if(pyramidBaseCache.size() > 0){
-    const auto& fullPyramidCache = _configToCacheMap.find(ConfigurationType::Pyramid)->second;
-    if(fullPyramidCache.size() > 0){
-      
-      // There are pyramids and bases - therefore we have to check all pairs to see if there is a pyramid base duplicating a pyramid
-      for(auto pyramidBaseIter = pyramidBaseCache.begin(); pyramidBaseIter != pyramidBaseCache.end(); ){
-        bool baseErased = false;
-        for(const auto& configPtr: fullPyramidCache){
-          auto pyramidPtr = BlockConfiguration::AsPyramidPtr(configPtr);
-          auto baseCachePtr = BlockConfiguration::AsPyramidBasePtr(*pyramidBaseIter);
-          if(*baseCachePtr == pyramidPtr->GetPyramidBase()){
-            pyramidBaseIter = pyramidBaseCache.erase(pyramidBaseIter);
-            baseErased = true;
-            break;
-          }
-        }
-        // If the pyramidBaseIter was not erased, advance to next value
-        if(!baseErased){
-          ++pyramidBaseIter;
-        }
-      }// end for pyramidBaseIter
-      
-    }// end if(fullPyramidCache.size() > 0
+  switch (type) {
+    case ConfigurationType::StackOfCubes:
+    {
+      return _stackCache;
+    }
+    case ConfigurationType::PyramidBase:
+    {
+      return _pyramidBaseCache;
+    }
+    case ConfigurationType::Pyramid:
+    {
+      return _pyramidCache;
+    }
+    case ConfigurationType::Count:
+    {
+      ASSERT_NAMED_EVENT(false, "BlockConfigurationManager.GetCacheByType.InvalidType",
+                         "Configuration requested for invalid type");
+      //return value set for compilation;
+      return _stackCache;
+    }
   }
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const BlockConfigurationContainer& BlockConfigurationManager::GetCacheByType(ConfigurationType type) const
+{
+  switch (type) {
+    case ConfigurationType::StackOfCubes:
+    {
+      return _stackCache;
+    }
+    case ConfigurationType::PyramidBase:
+    {
+      return _pyramidBaseCache;
+    }
+    case ConfigurationType::Pyramid:
+    {
+      return _pyramidCache;
+    }
+    case ConfigurationType::Count:
+    {
+      ASSERT_NAMED_EVENT(false, "BlockConfigurationManager.GetCacheByType.InvalidType",
+                         "Configuration requested for invalid type");
+      //return value set for compilation;
+      return _stackCache;
+    }
+  }}
+  
+bool BlockConfigurationManager::IsObjectPartOfConfigurationType(ConfigurationType type, const ObjectID& objectID) const
+{
+  auto& cache = GetCacheByType(type);
+  if(cache.AnyConfigContainsObject(objectID)){
+    return true;
+  }
+  
+  return false;
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BlockConfigurationManager::UpdateLastConfigCheckBlockPoses()
@@ -289,6 +231,16 @@ void BlockConfigurationManager::UpdateLastConfigCheckBlockPoses()
     }
   }
 }
+  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void BlockConfigurationManager::HandleMessage(const ExternalInterface::RobotDelocalized& msg)
+{
+  FlagForRebuild();
+}
+  
+
   
 } // namesapce BlockConfiguration
 } // namespace Cozmo

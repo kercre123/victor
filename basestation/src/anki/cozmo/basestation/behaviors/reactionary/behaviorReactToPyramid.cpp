@@ -35,7 +35,7 @@ BehaviorReactToPyramid::BehaviorReactToPyramid(Robot& robot, const Json::Value& 
 bool BehaviorReactToPyramid::IsRunnableInternalReactionary(const Robot& robot) const
 {
   using namespace BlockConfigurations;
-  auto allPyramids = robot.GetBlockWorld().GetBlockConfigurationManager().GetConfigurationsForType(ConfigurationType::Pyramid);
+  auto allPyramids = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
   if(allPyramids.size() > 0){
     TimeStamp_t currentTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     if(currentTime > _nextValidReactionTime_s){

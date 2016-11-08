@@ -35,7 +35,7 @@ BehaviorReactToStackOfCubes::BehaviorReactToStackOfCubes(Robot& robot, const Jso
 bool BehaviorReactToStackOfCubes::IsRunnableInternalReactionary(const Robot& robot) const
 {
   using namespace BlockConfigurations;
-  auto allPyramids = robot.GetBlockWorld().GetBlockConfigurationManager().GetConfigurationsForType(ConfigurationType::Pyramid);
+  auto allPyramids = robot.GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetStacks();
   if(allPyramids.size() > 0){
     TimeStamp_t currentTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     if(currentTime > _nextValidReactionTime_s){

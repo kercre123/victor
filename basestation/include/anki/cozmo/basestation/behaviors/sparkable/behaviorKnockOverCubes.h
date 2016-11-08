@@ -16,6 +16,7 @@
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfiguration.h"
+#include "anki/cozmo/basestation/blockWorld/stackConfigurationContainer.h"
 #include "clad/types/animationTrigger.h"
 
 namespace Anki {

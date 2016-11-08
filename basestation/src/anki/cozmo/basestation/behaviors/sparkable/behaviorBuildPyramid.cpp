@@ -55,9 +55,7 @@ bool BehaviorBuildPyramid::IsRunnableInternal(const Robot& robot) const
 Result BehaviorBuildPyramid::InitInternal(Robot& robot)
 {
   using namespace BlockConfigurations;
-  auto pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager()
-                           .GetConfigurationsForType(ConfigurationType::PyramidBase);
-  
+  auto pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
   if(pyramidBases.size() > 0){
     if(!robot.IsCarryingObject()){
       TransitionToDrivingToTopBlock(robot);
@@ -112,27 +110,23 @@ void BehaviorBuildPyramid::TransitionToPlacingTopBlock(Robot& robot)
   
   // Figure out the pyramid base block offset to place the top block appropriately
   using namespace BlockConfigurations;
-  auto pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager()
-                           .GetConfigurationsForType(ConfigurationType::PyramidBase);
+  auto pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
 
-  for(const auto& configPtr: pyramidBases){
-    if(auto sharedPtr = configPtr.lock()){
-      if(sharedPtr->ContainsBlock(_baseBlockID) && sharedPtr->ContainsBlock(_staticBlockID)){
-        auto basePtr = BlockConfiguration::AsPyramidBaseWeakPtr(configPtr);
-        Point2f baseOffset = basePtr.lock()->GetBaseBlockOffsetValues(robot);
-  
-        const bool relativeCurrentMarker = false;
-        DriveToPlaceRelObjectAction* action = new DriveToPlaceRelObjectAction(robot, _staticBlockID, false, baseOffset.x()/2, baseOffset.y()/2, false, 0, false, 0.f, false, relativeCurrentMarker);
-        
-        RetryWrapperAction* wrapper = new RetryWrapperAction(robot, action, retryCallback, retryCount);
-        
-        StartActing(wrapper,
-                    [this, &robot](const ActionResult& result){
-                      if (result == ActionResult::SUCCESS) {
-                        TransitionToReactingToPyramid(robot);
-                      }
-                    });
-      }
+  for(const auto& basePtr: pyramidBases){
+    if(basePtr->ContainsBlock(_baseBlockID) && basePtr->ContainsBlock(_staticBlockID)){
+      Point2f baseOffset = basePtr->GetBaseBlockOffsetValues(robot);
+
+      const bool relativeCurrentMarker = false;
+      DriveToPlaceRelObjectAction* action = new DriveToPlaceRelObjectAction(robot, _staticBlockID, false, baseOffset.x()/2, baseOffset.y()/2, false, 0, false, 0.f, false, relativeCurrentMarker);
+      
+      RetryWrapperAction* wrapper = new RetryWrapperAction(robot, action, retryCallback, retryCount);
+      
+      StartActing(wrapper,
+                  [this, &robot](const ActionResult& result){
+                    if (result == ActionResult::SUCCESS) {
+                      TransitionToReactingToPyramid(robot);
+                    }
+                  });
     }
   }
 }

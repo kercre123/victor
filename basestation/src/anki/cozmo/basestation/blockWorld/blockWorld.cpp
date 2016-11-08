@@ -809,6 +809,10 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       _navMemoryMaps.erase( oldOrigin ); // smart pointer will delete memory
     }
     
+    // Since object origins have changed we need to force a configuration
+    // update during the configuration manager's update
+    _blockConfigurationManager->FlagForRebuild();
+    
     return result;
   }
   

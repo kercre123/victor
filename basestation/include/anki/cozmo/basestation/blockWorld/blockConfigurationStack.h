@@ -26,12 +26,13 @@
 namespace Anki{
 namespace Cozmo{
 namespace BlockConfigurations{
-
+class StackConfigurationContainer;
+  
 class StackOfCubes: public BlockConfiguration{
   public:
-    friend BlockConfigurationManager;
-    friend BlockConfiguration;
-  StackOfCubes();
+    friend StackConfigurationContainer;
+  
+    StackOfCubes();
 
     bool operator==(const StackOfCubes& other) const;
     bool operator!=(const StackOfCubes& other) const{ return !(*this == other);}
@@ -41,11 +42,11 @@ class StackOfCubes: public BlockConfiguration{
     const ObjectID& GetMiddleBlockID() const { return _middleBlockID;}
     const ObjectID& GetTopBlockID() const { return _topBlockID;}
   
-    const uint8_t GetStackHeight() const;
+    uint8_t GetStackHeight() const;
   
     // A stack of 2 that becomes a stack of 3 is not "equal" but may
     // be identified as such using this function
-    const bool IsASubstack(const StackOfCubes& potentialSuperStack) const;
+    bool IsASubstack(const StackOfCubes& potentialSuperStack) const;
 
   protected:
     // Only the BlockConfigurationManager should create stacks

@@ -13,38 +13,38 @@
 #ifndef Anki_Cozmo_BlockConfigurationManager_H
 #define Anki_Cozmo_BlockConfigurationManager_H
 
-#include "anki/common/basestation/objectIDs.h"
-#include "anki/common/basestation/math/pose.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfiguration.h"
+#include "anki/cozmo/basestation/blockWorld/stackConfigurationContainer.h"
+#include "anki/cozmo/basestation/blockWorld/pyramidBaseConfigurationContainer.h"
+#include "anki/cozmo/basestation/blockWorld/pyramidConfigurationContainer.h"
 
+#include "util/signals/simpleSignal_fwd.h"
+#include <set>
+#include <map>
 
 namespace Anki{
-namespace Cozmo{
-  
 // Forward declarations
+class ObjectID;
+class Pose3d;
+namespace Cozmo{
 class Robot;
 class ObservableObject;
   
 namespace BlockConfigurations{
-
   
 class BlockConfigurationManager
 {
 public:
   friend BlockConfiguration;
-  BlockConfigurationManager(const Robot& robot);
+  BlockConfigurationManager(Robot& robot);
 
-  // Accessors
-  std::vector<BlockConfigWeakPtr> GetConfigurationsForType(ConfigurationType type) const;
-  std::vector<BlockConfigWeakPtr> GetConfigurationsContainingObjectForType(ConfigurationType type, const ObjectID& objectID) const;
+  // Cache accessors
+  const StackConfigurationContainer& GetStackCache() const { return _stackCache;}
+  const PyramidBaseConfigurationContainer& GetPyramidBaseCache() const { return _pyramidBaseCache;}
+  const PyramidConfigurationContainer& GetPyramidCache() const { return _pyramidCache;}
   
   // Convenience methods
-  const bool IsObjectPartOfConfigurationType(ConfigurationType type, const ObjectID& objectID) const { return !GetConfigurationsContainingObjectForType(type, objectID).empty();}
-  
-  // Return a pointer to the current tallest stack
-  const StackWeakPtr GetTallestStack() const;
-  // Pass in a list of bottom blocks to ignore if you are looking to locate a specific stack
-  const StackWeakPtr GetTallestStack(const std::vector<ObjectID>& baseBlocksToIgnore) const;
+  bool IsObjectPartOfConfigurationType(ConfigurationType type, const ObjectID& objectID) const;
   
   // Checks to see if there are any extant pyramid bases which the object is a top block for
   // returns true if such a base exists and loads it in to pyramidBase, otherwise returns false
@@ -61,18 +61,32 @@ public:
   // caches accordingly
   void Update();
   
+  const BlockConfigurationContainer& GetCacheByType(ConfigurationType type) const;
+  
+  // ==================== Event/Message Handling ====================
+  // Handle various message types
+  template<typename T>
+  void HandleMessage(const T& msg);
+  
+  void FlagForRebuild(){ _forceUpdate = true;}
+
 private:
   const Robot& _robot;
+  std::vector<::Signal::SmartHandle> _signalHandles;
+  bool _forceUpdate;
+  
   // track the last pose where we updated configurations for a block so that we don't re-build on tiny block moves
   std::map<ObjectID, Pose3d> _objectIDToLastPoseConfigurationUpdateMap;
   // track all of the blocks that have moved so that configurations can be updated
   // once all poses are updated
   std::set<ObjectID> _objectsPoseChangedThisTick;
+
+  // configuration caches
+  StackConfigurationContainer _stackCache;
+  PyramidBaseConfigurationContainer _pyramidBaseCache;
+  PyramidConfigurationContainer _pyramidCache;
   
-  using BlockConfigPtr = std::shared_ptr<const BlockConfiguration>;
-  
-  // Caches specific configuration types to make access faster
-  std::map<ConfigurationType, std::vector<BlockConfigPtr>> _configToCacheMap;
+  BlockConfigurationContainer& GetCacheByType(ConfigurationType type);
   
   //////
   //Update functions
@@ -84,14 +98,9 @@ private:
   // any weakPtrs to configurations that still exist are maintained
   void UpdateAllBlockConfigs();
   
-  // Since pyramid bases are made first it's possible that they're part of a full pyramid
-  // This function removes any pyramid bases that are part of a full pyramid
-  void PrunePyramidBases();
   // updates the _objectIDToLastPose map's last poses checked
   void UpdateLastConfigCheckBlockPoses();
 
-  
-  
 }; // class BlockConfigurationManager
 
 } // namespace BlockConfigurations

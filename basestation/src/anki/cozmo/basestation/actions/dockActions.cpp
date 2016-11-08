@@ -914,7 +914,7 @@ namespace Anki {
       // Check that this block is at the bottom of a 3-block stack
       // TODO: This logic only works because there can only ever be one stack with three blocks,
       //       but it should be made more generic.
-      auto blockStackPtr = _robot.GetBlockWorld().GetBlockConfigurationManager().GetTallestStack();
+      auto blockStackPtr = _robot.GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetTallestStack();
       if (auto blockStack = blockStackPtr.lock()) {
         if (blockStack->GetStackHeight() < 3) {
           PRINT_CH_INFO("Actions", "FacePlantAction.SelectDockAction.ObjectStackNotBigEnough", "");

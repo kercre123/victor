@@ -135,7 +135,7 @@ void BehaviorCantHandleTallStack::ClearStack()
 
 void BehaviorCantHandleTallStack::UpdateTargetStack(const Robot& robot) const
 {
-  _currentTallestStack = robot.GetBlockWorld().GetBlockConfigurationManager().GetTallestStack();
+  _currentTallestStack = robot.GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetTallestStack();
 }
   
 void BehaviorCantHandleTallStack::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)

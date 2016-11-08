@@ -77,7 +77,7 @@ bool StackOfCubes::operator==(const StackOfCubes& other) const
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const uint8_t StackOfCubes::GetStackHeight() const{
+uint8_t StackOfCubes::GetStackHeight() const{
   if(_bottomBlockID.IsUnknown()){
     return 0;
   }else if(_topBlockID.IsUnknown()){
@@ -91,7 +91,7 @@ const uint8_t StackOfCubes::GetStackHeight() const{
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const bool StackOfCubes::IsASubstack(const StackOfCubes& potentialSuperStack) const
+bool StackOfCubes::IsASubstack(const StackOfCubes& potentialSuperStack) const
 {
   return _middleBlockID.IsUnknown() &&
          _bottomBlockID == potentialSuperStack.GetBottomBlockID() &&

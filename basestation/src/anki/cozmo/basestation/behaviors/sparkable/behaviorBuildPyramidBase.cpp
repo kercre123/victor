@@ -59,8 +59,7 @@ bool BehaviorBuildPyramidBase::IsRunnableInternal(const Robot& robot) const
   if(allSet && AreAllBlockIDsUnique()){
     // Ensure a base does not already exist in the world
     using namespace BlockConfigurations;
-    auto pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager()
-                            .GetConfigurationsForType(ConfigurationType::PyramidBase);
+    auto pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
     return pyramidBases.empty();
   }
   
@@ -103,15 +102,13 @@ void BehaviorBuildPyramidBase::TransitionToDrivingToBaseBlock(Robot& robot)
 IBehavior::Status BehaviorBuildPyramidBase::UpdateInternal(Robot& robot)
 {
   using namespace BlockConfigurations;
-  auto pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetConfigurationsForType(ConfigurationType::PyramidBase);
+  
+  auto pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
   if(pyramidBases.size() > 0){
-    if(auto configPtr = pyramidBases[0].lock()){
-      auto weakPtr = BlockConfiguration::AsPyramidBaseWeakPtr(configPtr);
-      if(auto basePtr = weakPtr.lock()){
-        if((basePtr->GetBaseBlockID() != _baseBlockID && basePtr->GetStaticBlockID() != _baseBlockID) ||
-           (basePtr->GetBaseBlockID() != _staticBlockID && basePtr->GetStaticBlockID() != _staticBlockID)){
-          StopWithoutImmediateRepetitionPenalty();
-        }
+    for(auto basePtr: pyramidBases){
+      if((basePtr->GetBaseBlockID() != _baseBlockID && basePtr->GetStaticBlockID() != _baseBlockID) ||
+         (basePtr->GetBaseBlockID() != _staticBlockID && basePtr->GetStaticBlockID() != _staticBlockID)){
+        StopWithoutImmediateRepetitionPenalty();
       }
     }
   }
@@ -171,26 +168,22 @@ void BehaviorBuildPyramidBase::UpdatePyramidTargets(const Robot& robot) const
   
   /// Check block config caches for pyramids and bases for fast forwarding
   
-  auto pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetConfigurationsForType(ConfigurationType::PyramidBase);
-  auto pyramids = robot.GetBlockWorld().GetBlockConfigurationManager().GetConfigurationsForType(ConfigurationType::Pyramid);
+  auto pyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
+  auto pyramids = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidCache().GetPyramids();
   
   if(pyramids.size() > 0){
-    auto possiblePyramid =   BlockConfiguration::AsPyramidWeakPtr(pyramids[0]);
-    if(auto pyramid = possiblePyramid.lock()){
-      _baseBlockID = pyramid->GetPyramidBase().GetBaseBlockID();
-      _staticBlockID = pyramid->GetPyramidBase().GetStaticBlockID();
-      _topBlockID = pyramid->GetTopBlockID();
-      return;
-    }
+    auto pyramid = pyramids[0];
+    _baseBlockID = pyramid->GetPyramidBase().GetBaseBlockID();
+    _staticBlockID = pyramid->GetPyramidBase().GetStaticBlockID();
+    _topBlockID = pyramid->GetTopBlockID();
+    return;
   }
   
   if(pyramidBases.size() > 0){
-    auto possibleBase = BlockConfiguration::AsPyramidBaseWeakPtr(pyramidBases[0]);
-    if(auto pyramidBase = possibleBase.lock()){
-      _baseBlockID = pyramidBase->GetBaseBlockID();
-      _staticBlockID = pyramidBase->GetStaticBlockID();
-      _topBlockID.UnSet();
-    }
+    auto pyramidBase = pyramidBases[0];
+    _baseBlockID = pyramidBase->GetBaseBlockID();
+    _staticBlockID = pyramidBase->GetStaticBlockID();
+    _topBlockID.UnSet();
   }
 
   

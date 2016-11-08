@@ -129,14 +129,11 @@ void BehaviorPickUpCube::CheckForNearbyObject(const Robot& robot) const
     {
       bool isPartOfIllegalConfiguration = false;
       for(auto configType: _configurationsToIgnore){
-        auto configurations = robot.GetBlockWorld().GetBlockConfigurationManager().GetConfigurationsForType(configType);
-        for(auto configuration : configurations){
-          if(configuration.lock()->ContainsBlock(object->GetID())){
-            isPartOfIllegalConfiguration = true;
-            break;
-          }
+        if(robot.GetBlockWorld().GetBlockConfigurationManager()
+                .GetCacheByType(configType).AnyConfigContainsObject(object->GetID())){
+          isPartOfIllegalConfiguration = true;
+          break;
         }
-        if(isPartOfIllegalConfiguration){break;}
       }
 
       return !isPartOfIllegalConfiguration;

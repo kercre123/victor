@@ -261,7 +261,7 @@ void BehaviorKnockOverCubes::ClearStack()
 
 void BehaviorKnockOverCubes::UpdateTargetStack(const Robot& robot) const
 {
-   _currentTallestStack = robot.GetBlockWorld().GetBlockConfigurationManager().GetTallestStack();
+   _currentTallestStack = robot.GetBlockWorld().GetBlockConfigurationManager().GetStackCache().GetTallestStack();
 }
 
 void BehaviorKnockOverCubes::HandleObjectUpAxisChanged(const ObjectUpAxisChanged& msg, Robot& robot)

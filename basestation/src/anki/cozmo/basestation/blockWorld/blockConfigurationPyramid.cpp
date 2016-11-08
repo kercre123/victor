@@ -368,7 +368,7 @@ std::vector<const Pyramid*> Pyramid::BuildAllPyramidsForBlock(const Robot& robot
     return pyramids;
   }
   
-  std::vector<BlockConfigWeakPtr> allPyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetConfigurationsForType(ConfigurationType::PyramidBase);
+  std::vector<PyramidBasePtr> allPyramidBases = robot.GetBlockWorld().GetBlockConfigurationManager().GetPyramidBaseCache().GetBases();
 
   // if the block is on the ground, check if it is part of a pyramid base
   // and then check all possible top blocks to see if they are on top of it
@@ -394,26 +394,20 @@ std::vector<const Pyramid*> Pyramid::BuildAllPyramidsForBlock(const Robot& robot
     }
     
     // check to see if the target block is part of any pyramid bases
-    for(const auto& blockPtr: allPyramidBases){
-      if(BlockConfigPtr configPtr = blockPtr.lock()){
-        if(configPtr->ContainsBlock(object->GetID())){
-          auto basePtr = BlockConfiguration::AsPyramidBasePtr(configPtr);
-          
-          // The target is part of a pyramid base
-          // check each topBlock against this base - if it's on top add it to the pyramid set
-          for(const auto& topBlock: potentialTopBlocks){
-            if(basePtr->ObjectIsOnTopOfBase(robot, topBlock)){
-              pyramids.push_back(new Pyramid(basePtr->GetStaticBlockID(), basePtr->GetBaseBlockID(), topBlock->GetID()));
-            }
+    for(const auto& basePtr: allPyramidBases){
+      if(basePtr->ContainsBlock(object->GetID())){
+        // The target is part of a pyramid base
+        // check each topBlock against this base - if it's on top add it to the pyramid set
+        for(const auto& topBlock: potentialTopBlocks){
+          if(basePtr->ObjectIsOnTopOfBase(robot, topBlock)){
+            pyramids.push_back(new Pyramid(basePtr->GetStaticBlockID(), basePtr->GetBaseBlockID(), topBlock->GetID()));
           }
-          
         }
       }
     }
   }else{
     // check  to see if the object is a top block for any bases
-    for(const auto& blockPtr: allPyramidBases){
-      auto basePtr = BlockConfiguration::AsPyramidBasePtr(blockPtr.lock());
+    for(const auto& basePtr: allPyramidBases){
       if(basePtr->ObjectIsOnTopOfBase(robot, object)){
         pyramids.push_back(new Pyramid(basePtr->GetStaticBlockID(), basePtr->GetBaseBlockID(), object->GetID()));
         break;

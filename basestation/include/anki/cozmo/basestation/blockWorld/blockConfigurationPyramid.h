@@ -38,6 +38,9 @@ class ObservableObject;
 class Robot;
   
 namespace BlockConfigurations{
+
+class PyramidConfigurationContainer;
+class PyramidBaseConfigurationContainer;
   
 // For checking the validity of GetBaseBlockOffset's return value
 // A base block and static block should never have an offset of 0 from each other
@@ -88,8 +91,8 @@ class PyramidBase: public BlockConfiguration{
   
 class Pyramid: public BlockConfiguration{
   public:
-    friend BlockConfigurationManager;
-    friend BlockConfiguration;
+    friend PyramidConfigurationContainer;
+    friend PyramidBaseConfigurationContainer;
  
     bool operator==(const Pyramid& other) const;
     bool operator!=(const Pyramid& other) const{ return !(*this == other);}
