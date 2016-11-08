@@ -449,7 +449,7 @@ void uesb_event_handler(uint32_t flags)
         slot = AllocateAccessory(advert.id);
       }
       #endif
-      
+
       if (slot < 0) {
         if (sendDiscovery) {
           ObjectDiscovered msg;
@@ -717,16 +717,13 @@ static void radio_prepare(void) {
     static const int channel_order[] = { 3, 2, 1, 0 };
     int tx_index = 0;
 
-    memset(tx_state.ledStatus, 0, sizeof(tx_state.ledStatus));
-    const int num_lights = (target->model == OBJECT_CHARGER) ? 3 : 4;
-    
-    for (int light = 0; light < num_lights; light++) {
+    for (int light = 0; light < NUM_PROP_LIGHTS; light++) {
       int index = light + rotationOffset[currentAccessory];
-      
-      if (index >= num_lights) {
-        index -= num_lights;
+
+      if (index >= NUM_PROP_LIGHTS) {
+        index -= NUM_PROP_LIGHTS;
       }
-      
+
       #ifndef AXIS_DEBUGGER
       uint8_t* rgbi = (uint8_t*) &lightController.cube[currentAccessory][channel_order[index]].values;
       #else
@@ -748,6 +745,10 @@ static void radio_prepare(void) {
       for (int ch = 0; ch < 3; ch++) {
         tx_state.ledStatus[tx_index++] = (rgbi[ch] * light_gamma) >> 8;
       }
+    }
+
+    if (target->model == OBJECT_CHARGER) {
+      memset(tx_state.ledStatus, 0, 3);
     }
 
     #ifdef CUBE_HOP
@@ -809,14 +810,14 @@ extern "C" void RTC0_IRQHandler(void) {
       if (rotationPeriod[i] <= 0) {
         continue ;
       }
-      
+
       // Have we underflowed ?
       if (--rotationNext[i] <= 0) {
         // Rotate the light
         if (++rotationOffset[i] >= NUM_PROP_LIGHTS) {
           rotationOffset[i] = 0;
         }
-        
+
         rotationNext[i] = rotationPeriod[i];
       }
     }
