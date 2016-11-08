@@ -72,6 +72,8 @@ enum uint_32 GenericEvent
   Play__Robot_Sfx__Effort_Fail = 3308460754,
   Play__Robot_Sfx__Effort_Long = 668351040,
   Play__Robot_Sfx__Effort_Medium = 3696071919,
+  Play__Robot_Sfx__Explorer_Night_Vision_Off = 3083057720,
+  Play__Robot_Sfx__Explorer_Night_Vision_On = 1212862178,
   Play__Robot_Sfx__Mvt_Tread_Backward_Loop_Play = 2180021393,
   Play__Robot_Sfx__Mvt_Tread_Backward_Start = 2613090854,
   Play__Robot_Sfx__Mvt_Tread_Backward_Stop = 1888692326,
@@ -129,6 +131,7 @@ enum uint_32 GenericEvent
   Play__Robot_Sfx__Srv_Surprised = 1907152766,
   Play__Robot_Sfx__Srv_Surprised_Long = 3606017555,
   Play__Robot_Sfx__Srv_Surprised_Short = 4054065165,
+  Play__Robot_Sfx__Wink = 3564343056,
   Play__Robot_Vo__Coz_Word_Cube_Neutral = 2117050142,
   Play__Robot_Vo__External_Cozmo_Processing = 3205213409,
   Play__Robot_Vo__External_Unprocessed = 2742937278,
@@ -331,6 +334,7 @@ enum uint_32 GenericEvent
   Play__Robot_Vo__Sparked_Driving_Start = 1233493330,
   Play__Robot_Vo__Sparked_Fail = 2861844754,
   Play__Robot_Vo__Sparked_Out = 2452343422,
+  Play__Robot_Vo__Sparked_Pyramid_Complete = 1438874844,
   Play__Robot_Vo__Sparked_Ready_To_Go = 4268262662,
   Play__Robot_Vo__Sparked_Succeed = 4231360462,
   Play__Robot_Vo__Sparked_Succeed_Tada = 2693760973,
@@ -448,6 +452,8 @@ enum uint_32 Robot_Sfx
   Effort_Fail = 3308460754,
   Effort_Long = 668351040,
   Effort_Medium = 3696071919,
+  Explorer_Night_Vision_Off = 3083057720,
+  Explorer_Night_Vision_On = 1212862178,
   Invalid = 0,  // Use this to check for Invalid events
   Mvt_Tread_Backward_Loop_Play = 2180021393,
   Mvt_Tread_Backward_Loop_Stop = 1804693497,
@@ -511,6 +517,7 @@ enum uint_32 Robot_Sfx
   Srv_Surprised = 1907152766,
   Srv_Surprised_Long = 3606017555,
   Srv_Surprised_Short = 4054065165,
+  Wink = 3564343056,
 }
 
 enum uint_32 Robot_Vo
@@ -724,6 +731,7 @@ enum uint_32 Robot_Vo
   Sparked_Driving_Start = 1233493330,
   Sparked_Fail = 2861844754,
   Sparked_Out = 2452343422,
+  Sparked_Pyramid_Complete = 1438874844,
   Sparked_Ready_To_Go = 4268262662,
   Sparked_Succeed = 4231360462,
   Sparked_Succeed_Tada = 2693760973,
