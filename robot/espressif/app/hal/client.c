@@ -26,6 +26,7 @@ static struct espconn* socket;
 static ReliableConnection* clientConnection;
 static uint32_t clientConnectionId;
 static uint32_t dropCount;
+static uint16_t connectCount;
 static bool accept;
 static bool sendHoldoff;
 static uint32_t reliable_disconnect_timestamp;
@@ -50,6 +51,11 @@ sint16 clientQueueAvailable(void)
 uint32 clientDropCount(void)
 {
   return dropCount;
+}
+
+uint16 clientConnectCount(void)
+{
+  return connectCount;
 }
 
 void clientUpdate(void)
@@ -164,6 +170,7 @@ sint8 clientInit()
   clientConnection = NULL;
   clientConnectionId = 0;
   dropCount = 0;
+  connectCount = 0;
   accept = false;
   sendHoldoff = false;
 
@@ -266,6 +273,7 @@ void Receiver_OnConnectionRequest(ReliableConnection* conn)
       ReliableTransport_FinishConnection(conn); // Accept the connection
       clientConnectionId = 1; // Eventually we'll get this from the connection request or finished message
       dropCount = 0;
+      connectCount++;
     }
     else // The engine is trying to reconnect
     {

@@ -126,6 +126,26 @@ void RadioConnectionStateMachineUpdate()
       }
       case 5:
       {
+        struct dhcps_lease dhcpInfo;
+        if (wifi_softap_get_dhcps_lease(&dhcpInfo))
+        {
+          AnkiEvent( 411, "boot_count.phase", 626, "%x", 1, (dhcpInfo.start_ip.addr >> 24));
+        }
+        else
+        {
+          AnkiWarn( 412, "boot_count.error", 627, "Unable to retrieve boot phase indicator", 0);
+        }
+        doRTConnectPhase++;
+        break;
+      }
+      case 6:
+      {
+        AnkiEvent( 413, "client.connections_since_boot", 347, "%d", 1, clientConnectCount());
+        doRTConnectPhase++;
+        break;
+      }
+      case 7:
+      {
         doRTConnectPhase = 0; // Done
         break;
       }

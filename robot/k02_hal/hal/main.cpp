@@ -82,6 +82,11 @@ namespace Anki
       {
         IMU::Manage();
       }
+      
+      u16 GetWatchdogResetCounter(void)
+      {
+        return WDOG_RSTCNT;
+      }
     }
   }
 }

@@ -46,7 +46,7 @@ void Anki::Cozmo::HAL::SPI::ManageDrop(void) {
   DAC::Feed(audioUpdated, AudioBackBuffer);
 }
 
-static bool ProcessDrop(void) {
+static inline bool ProcessDrop(void) {
   using namespace Anki::Cozmo::HAL;
   using namespace Anki::Cozmo::RobotInterface;
 
@@ -213,38 +213,17 @@ void Anki::Cozmo::HAL::SPI::EnterOTAMode(void) {
 extern "C"
 void DMA2_IRQHandler(void) {
   using namespace Anki::Cozmo::HAL;
+  static bool haveDropSync = false;
   DMA_CDNE = DMA_CDNE_CDNE(2);
   DMA_CINT = 2;
 
   // Don't check for silence, we had a drop
   if (ProcessDrop()) {
-    return ;
+    haveDropSync = true;
+    return;
   }
-
-  //DAC::Tone(1.0f);
-  //UART::DebugPutc(0);
-
-  // Check for silence in the 
-  static const int MaximumSilence = 32;
-  static transmissionWord lastWord = 0;
-  static int SilentDrops = 0;
-
-  if (lastWord != spi_rx_buff[0]) {
-    lastWord = spi_rx_buff[0];
-    SilentDrops = 0;
-  } else if (++SilentDrops == MaximumSilence) {
-    switch (lastWord) {
-      case 0x8001:
-        NVIC_SystemReset();
-        break ;
-      case 0x8002:
-        SPI::EnterOTAMode();
-        break ;
-      case 0x8003: // Reset & OTA
-        SPI::EnterRecoveryMode();
-        break ;
-    }
-  }
+  
+  HAL_ASSERT(haveDropSync == false);
 }
 
 void Anki::Cozmo::HAL::SPI::InitDMA(void) {

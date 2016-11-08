@@ -573,6 +573,10 @@ namespace Anki
       {
         void enterSleepMode(void);
       }
+      
+      // Retuns the watchdog reset counter
+      u16 GetWatchdogResetCounter(void);
+      
     } // namespace HAL
   } // namespace Cozmo
 } // namespace Anki

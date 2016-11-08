@@ -50,4 +50,7 @@ sint16 clientQueueAvailable(void);
 /// Gets the count of send attempts that the client has dropped
 uint32 clientDropCount(void);
 
+/// Gets the number of times the robot has been connected to since boot
+uint16 clientConnectCount(void);
+
 #endif

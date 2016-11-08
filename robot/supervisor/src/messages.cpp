@@ -275,6 +275,8 @@ namespace Anki {
         bMsg.radioMode = BODY_ACCESSORY_OPERATING_MODE;
         while (RobotInterface::SendMessage(bMsg) == false);
 #endif
+
+        AnkiEvent( 414, "watchdog_reset_count", 347, "%d", 1, HAL::GetWatchdogResetCounter());
       } // ProcessRobotInit()
 
 

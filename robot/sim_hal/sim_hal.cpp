@@ -1403,7 +1403,10 @@ namespace Anki {
       // Stub
     }
 
-    
+    u16 HAL::GetWatchdogResetCounter()
+    {
+      return 0; // Simulator never watchdogs
+    }
     
   } // namespace Cozmo
 } // namespace Anki

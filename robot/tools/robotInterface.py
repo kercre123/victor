@@ -230,10 +230,6 @@ class _Dispatcher(IDataReceiver):
                     sys.stderr.write("FATAL ROBOT ERROR: {:x} !{}".format(msg.robotError.error, os.linesep))
                 else:
                     sys.stderr.write("ROBOT ERROR: {:x}{}".format(msg.robotError.error, os.linesep))
-            elif msg.tag == msg.Tag.crashReport:
-                sys.stdout.write("ROBOT CRASH REPORT: err = {0.errorCode}\tsource = {0.which}\t{1} words{2}".format(msg.crashReport, len(msg.crashReport.dump), os.linesep))
-                with open('robot_crash_{0.errorCode}_{0.which}_{1:10d}.msg'.format(msg.crashReport, int(time.time())), "wb") as dump:
-                    dump.write(msg.crashReport.pack())
             for tag, subs in self.ReceiveDataSubscribers.items():
                 if msg.tag == tag:
                     for sub in subs:
