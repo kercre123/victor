@@ -41,6 +41,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Update firmware DEPS.')
     parser.add_argument('user', type=str)
     parser.add_argument('-p','--password', type=str)
+    parser.add_argument('-d', '--DEPS', type=str, default="DEPS")
 
     args = parser.parse_args()
     if args.password is None:
@@ -50,11 +51,11 @@ if __name__ == '__main__':
 
     build_id, version = getBuild(user, password)
 
-    with open("DEPS", "r") as fo:
+    with open(args.DEPS, "r") as fo:
         config = json.load(fo)
 
     config['teamcity']['builds']['firmware']['version'] = version
 
-    with open("DEPS", "w") as fo:
+    with open(args.DEPS, "w") as fo:
         json.dump(config, fo, sort_keys=True, indent=4)
         fo.write("\n")

@@ -64,8 +64,16 @@ void clientUpdate(void)
   {
     if (ReliableTransport_Update(clientConnection) == false)
     {
-      Receiver_OnDisconnect(clientConnection);
-      printf("Client reliable transport timed out\r\n");
+      if (clientConnected()) // Have a fully established connection
+      {
+        Receiver_OnDisconnect(clientConnection);
+        printf("Client reliable transport timed out\r\n");
+      }
+      else // Clear out uncompleted connection
+      {
+        clientConnection = NULL;
+        clientConnectionId = 0;
+      }
     }
   }
   else if (reliable_disconnect_timestamp) //we were connected but now are not.
