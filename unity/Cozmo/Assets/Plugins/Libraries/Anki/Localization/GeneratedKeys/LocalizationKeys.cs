@@ -368,15 +368,12 @@ public static class LocalizationKeys {
   public const string kCodeBreakerTextGuessesLeft = "codeBreaker.text.guessesLeft";
   public const string kCodeBreakerTextHowToPlayShort = "codeBreaker.text.howToPlayShort";
   public const string kCodeBreakerTextHowToPlayLong = "codeBreaker.text.howToPlayLong";
-  public const string kCubeSlapTextHowToPlay = "cubeSlap.text.howToPlay";
-  public const string kCubePounceInfoCozmoWinEarly = "cubePounce.info.cozmoWinEarly";
   public const string kCubePounceInfoPlayerWinPoint = "cubePounce.info.playerWinPoint";
-  public const string kCubePounceInfoWaitForPounce = "cubePounce.info.waitForPounce";
   public const string kCubePounceInfoCozmoWinPoint = "cubePounce.info.cozmoWinPoint";
   public const string kCubePounceInfoSetupText = "cubePounce.info.setupText";
-  public const string kCubePounceHeaderCozmoWinEarly = "cubePounce.header.cozmoWinEarly";
   public const string kCubePounceHeaderPlayerWinPoint = "cubePounce.header.playerWinPoint";
   public const string kCubePounceHeaderWaitForPounce = "cubePounce.header.waitForPounce";
+  public const string kCubePounceHeaderPushCubeTowardCozmo = "cubePounce.header.pushCubeTowardCozmo";
   public const string kCubePounceHeaderCozmoWinPoint = "cubePounce.header.cozmoWinPoint";
   public const string kCubePounceHeaderSetupText = "cubePounce.header.setupText";
   public const string kMinigameTextHowToPlay = "minigame.text.howToPlay";

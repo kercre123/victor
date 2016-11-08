@@ -245,9 +245,6 @@ namespace Cozmo.Minigame.CubePounce {
       playerScoreWidget.Score = PlayerScore;
       playerScoreWidget.MaxRounds = halfTotalRounds;
       playerScoreWidget.RoundsWon = PlayerRoundsWon;
-
-      // don't show any round information for cube pounce.
-      SharedMinigameView.InfoTitleText = string.Empty;
     }
 
     protected override void SendCustomEndGameDasEvents() {

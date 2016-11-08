@@ -279,35 +279,26 @@
   "codeBreaker.text.howToPlayLong": {
     "translation": "Guess Cozmo's Code before you run out of guesses!\n        The Code is a number of Cubes of different colors, arranged horizontally in a line in front of Cozmo.\n        1. Cozmo will pick a code.\n        2. Tap a Cube to change the Cube's color.\n        3. Arrange the Cubes in a line in front of Cozmo.\n        4. Tap 'Guess Code' when you're ready to guess.\n        5. Cozmo will display lights on his back to let you know correctness:\n        Green = A Cube is the correct color AND Position\n        Blue = A Cube is in the correct color, but the WRONG Position\n        Red = A Cube is in the WRONG color AND the WRONG Position"
   },
-  "cubeSlap.text.howToPlay": {
-    "translation": "Cozmo will try to slap the Cube after it turns green! Pull the Cube away just as Cozmo trys to slap it. Be careful, if you move it too early you'll lose a life."
-  },
-  "cubePounce.info.cozmoWinEarly": {
-    "translation": "Cozmo wins! You moved the Cube too early!"
-  },
   "cubePounce.info.playerWinPoint": {
-    "translation": "You Win! You were too fast for Cozmo!"
-  },
-  "cubePounce.info.waitForPounce": {
-    "translation": "Wait for Cozmo to pounce, then yank the Cube away before they slap it!"
+    "translation": "You were too fast for Cozmo!"
   },
   "cubePounce.info.cozmoWinPoint": {
-    "translation": "Cozmo wins! They slapped the Cube!"
+    "translation": "He was too fast for you!"
   },
   "cubePounce.info.setupText": {
     "translation": "Place a Cube in front of Cozmo and hold it still when it turns green."
   },
-  "cubePounce.header.cozmoWinEarly": {
-    "translation": "Don't Move the Cube!"
-  },
   "cubePounce.header.playerWinPoint": {
-    "translation": "You Win a Point!"
+    "translation": "You got the point!"
   },
   "cubePounce.header.waitForPounce": {
-    "translation": "Slowly push the Cube towards Cozmo"
+    "translation": "Wait for Cozmo to Pounce!"
+  },
+  "cubePounce.header.pushCubeTowardCozmo": {
+    "translation": "Slowly push the Cube towards Cozmo... but not too close!"
   },
   "cubePounce.header.cozmoWinPoint": {
-    "translation": "Cozmo Wins a Point!"
+    "translation": "Cozmo got the point!"
   },
   "cubePounce.header.setupText": {
     "translation": "Game Setup"

@@ -11,6 +11,8 @@ namespace Cozmo.Minigame.CubePounce {
     public override void Enter() {
       base.Enter();
 
+      _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderWaitForPounce);
+
       _FakeOutDelay_s = _CubePounceGame.GetAttemptDelay();
       _FirstTimestamp = Time.time;
     }
