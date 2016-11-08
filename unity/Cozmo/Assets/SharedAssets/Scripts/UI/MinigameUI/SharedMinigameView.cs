@@ -624,6 +624,13 @@ namespace Cozmo {
 
       #region Quit Button
 
+      public bool IsQuitAlertViewOpen() {
+        if (_QuitButtonInstance != null) {
+          return _QuitButtonInstance.IsQuitAlertViewOpen();
+        }
+        return false;
+      }
+
       public void ShowQuitButton() {
         HideBackButton();
         CreateWidgetIfNull<QuitMinigameButton>(ref _QuitButtonInstance, _QuitGameButtonPrefab, ContentLayer.Middle);

@@ -14,7 +14,9 @@ namespace CozmoSays {
       });
       SharedMinigameView.HideShelf();
       _SayTextSlideInstance = SharedMinigameView.ShowWideGameStateSlide(_SayTextSlidePrefab.gameObject, "say_text_slide", () => {
-        _SayTextSlideInstance.RegisterInputFocus();
+        if (!SharedMinigameView.IsQuitAlertViewOpen()) {
+          _SayTextSlideInstance.RegisterInputFocus();
+        }
       }).GetComponent<SayTextSlide>();
       _SayTextSlideInstance.Initialize(this);
     }

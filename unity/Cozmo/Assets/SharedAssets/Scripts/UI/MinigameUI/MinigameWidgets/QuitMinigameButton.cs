@@ -39,6 +39,10 @@ namespace Cozmo {
         PauseManager.Instance.OnPauseDialogOpen += HandlePauseDialogOpen;
       }
 
+      public bool IsQuitAlertViewOpen() {
+        return _QuitPopupInstance != null;
+      }
+
       public override void DestroyWidgetImmediately() {
         _QuitButtonInstance.onClick.RemoveAllListeners();
         if (_QuitPopupInstance != null) {
@@ -59,14 +63,15 @@ namespace Cozmo {
       private void HandleQuitButtonTap() {
         if (UIManager.Instance.NumberOfOpenDialogues() == 0) {
           // Open confirmation dialog instead
-          AlertView alertView = UIManager.OpenView (AlertViewLoader.Instance.AlertViewPrefab_NoText);
+          AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_NoText);
           // Hook up callbacks
-          alertView.SetCloseButtonEnabled (false);
-          alertView.SetPrimaryButton (LocalizationKeys.kButtonQuit, HandleQuitConfirmed, Anki.Cozmo.Audio.AudioEventParameter.UIEvent (Anki.Cozmo.Audio.GameEvent.Ui.Click_Back));
-          alertView.SetSecondaryButton (LocalizationKeys.kButtonCancel, HandleQuitCancelled);
+          alertView.SetCloseButtonEnabled(false);
+          alertView.SetPrimaryButton(LocalizationKeys.kButtonQuit, HandleQuitConfirmed, Anki.Cozmo.Audio.AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Click_Back));
+          alertView.SetSecondaryButton(LocalizationKeys.kButtonCancel, HandleQuitCancelled);
           if (_IsMinigame) {
             alertView.TitleLocKey = LocalizationKeys.kMinigameQuitViewTitle;
-          } else {
+          }
+          else {
             alertView.TitleLocKey = LocalizationKeys.kMinigameQuitViewTitleActivity;
           }
           // Listen for dialog close
