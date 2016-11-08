@@ -108,6 +108,9 @@ public class SayTextSlide : MonoBehaviour {
     if (RobotEngineManager.Instance.CurrentRobot != null) {
       RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("say_text_slide", Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement, enable);
       RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("say_text_slide", Anki.Cozmo.BehaviorType.ReactToPickup, enable);
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("say_text_slide", Anki.Cozmo.BehaviorType.ReactToCliff, enable);
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("say_text_slide", Anki.Cozmo.BehaviorType.ReactToPoke, enable);
+      RobotEngineManager.Instance.CurrentRobot.RequestEnableReactionaryBehavior("say_text_slide", Anki.Cozmo.BehaviorType.ReactToReturnedToTreads, enable);
     }
   }
 
