@@ -212,6 +212,10 @@ namespace Cozmo {
       CalibrateMotorAction(Robot& robot,
                            bool calibrateHead,
                            bool calibrateLift);
+
+      // Template for all events we subscribe to
+      template<typename T>
+      void HandleMessage(const T& msg);
       
     protected:
       
@@ -224,6 +228,9 @@ namespace Cozmo {
       
       bool _headCalibStarted;
       bool _liftCalibStarted;
+      
+      std::vector<Signal::SmartHandle> _signalHandles;
+      
     };
   
       

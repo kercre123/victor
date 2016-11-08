@@ -656,8 +656,8 @@ message SetActiveObjectLEDs {
     uint_32  offPeriod_ms,
     uint_32  transitionOnPeriod_ms,  // The fade period from off color to on color
     uint_32  transitionOffPeriod_ms,  // The fade period from on color to off color
-    int_32   offset,
-    uint_32  rotationPeriod_ms,
+    int_32   offset = 0,
+    uint_32  rotationPeriod_ms = 0,
     float_32 relativeToX,  // ignored if makeRelative is RELATIVE_LED_MODE_OFF
     float_32 relativeToY,  // ignored if makeRelative is RELATIVE_LED_MODE_OFF
     WhichCubeLEDs   whichLEDs,

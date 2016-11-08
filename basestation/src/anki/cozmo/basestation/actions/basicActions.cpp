@@ -563,6 +563,13 @@ namespace Anki {
         return ActionResult::FAILURE_ABORT;
       }
       
+      if(_robot.HasExternalInterface())
+      {
+        using namespace ExternalInterface;
+        auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _signalHandles);
+        helper.SubscribeEngineToGame<MessageEngineToGameTag::MotorCalibration>();
+      }
+      
       return result;
     }
     
@@ -571,15 +578,6 @@ namespace Anki {
       ActionResult result = ActionResult::RUNNING;
       bool headCalibrating = !_robot.IsHeadCalibrated();
       bool liftCalibrating = !_robot.IsLiftCalibrated();
-
-      // Wait for motor to be calibrating before checking for calibrated state.
-      if (headCalibrating) {
-        _headCalibStarted = true;
-      }
-      
-      if (liftCalibrating) {
-        _liftCalibStarted = true;
-      }
       
       bool headComplete = !_calibHead || (_headCalibStarted && !headCalibrating);
       bool liftComplete = !_calibLift || (_liftCalibStarted && !liftCalibrating);
@@ -591,6 +589,18 @@ namespace Anki {
       return result;
     }
     
+    template<>
+    void CalibrateMotorAction::HandleMessage(const MotorCalibration& msg)
+    {
+      if (msg.calibStarted) {
+        if (msg.motorID == MotorID::MOTOR_HEAD) {
+          _headCalibStarted = true;
+        }
+        if (msg.motorID == MotorID::MOTOR_LIFT) {
+          _liftCalibStarted = true;
+        }
+      }
+    }
     
 #pragma mark ---- MoveHeadToAngleAction ----
     

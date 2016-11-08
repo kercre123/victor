@@ -388,8 +388,10 @@ namespace Anki {
         printf("           Enable behavior group:  Shift+h\n");
         printf("          Disable behavior group:  Alt+h\n");
         printf("            Set emotion to value:  m\n");
+        printf("     Rainbow pattern on backpack:  l\n");        
         printf("      Search side to side action:  Shift+l\n");
         printf("    Toggle cliff sensor handling:  Alt+l\n");
+        printf("  Toggle engine lights component:  Alt+Shift+l\n");
         printf("      Play 'animationToSendName':  Shift+6\n");
         printf("  Set idle to'idleAnimationName':  Alt+Shift+6\n");
         printf("     Update Viz origin alignment:  ` <backtick>\n");
@@ -447,7 +449,9 @@ namespace Anki {
         for(auto key : keysPressed)
         {
           // Extract modifier key(s)
-          int modifier_key = key & ~webots::Supervisor::KEYBOARD_KEY;
+          const int modifier_key = key & ~webots::Supervisor::KEYBOARD_KEY;
+          const bool shiftKeyPressed = modifier_key & webots::Supervisor::KEYBOARD_SHIFT;
+          const bool altKeyPressed = modifier_key & webots::Supervisor::KEYBOARD_ALT;
           
           // Set key to its modifier-less self
           key &= webots::Supervisor::KEYBOARD_KEY;
@@ -480,11 +484,11 @@ namespace Anki {
           f32 headSpeed = DEG_TO_RAD_F32(root_->getField("headSpeedDegPerSec")->getSFFloat());
           f32 headAccel = DEG_TO_RAD_F32(root_->getField("headAccelDegPerSec2")->getSFFloat());
           f32 headDurationSec = root_->getField("headDurationSec")->getSFFloat();
-          if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+          if (shiftKeyPressed) {
             wheelSpeed = root_->getField("driveSpeedSlow")->getSFFloat();
             liftSpeed *= 0.5;
             headSpeed *= 0.5;
-          } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+          } else if(altKeyPressed) {
             wheelSpeed = root_->getField("driveSpeedTurbo")->getSFFloat();
           }
           
@@ -573,9 +577,9 @@ namespace Anki {
           
           // Check for test mode (alt + key)
           bool testMode = false;
-          if (modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+          if (altKeyPressed) {
             if (key >= '0' && key <= '9') {
-              if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+              if (shiftKeyPressed) {
                 // Hold shift down too to add 10 to the pressed key
                 key += 10;
               }
@@ -666,7 +670,7 @@ namespace Anki {
                 
               case (s32)'<':
               {
-                if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                if(altKeyPressed) {
                   SendTurnInPlaceAtSpeed(DEG_TO_RAD(pointTurnSpeed), DEG_TO_RAD(pointTurnAccel));
                 }
                 else {
@@ -677,7 +681,7 @@ namespace Anki {
                 
               case (s32)'>':
               {
-                if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                if(altKeyPressed) {
                   SendTurnInPlaceAtSpeed(DEG_TO_RAD(-pointTurnSpeed), DEG_TO_RAD(pointTurnAccel));
                 } else {
                   SendTurnInPlace(DEG_TO_RAD(-pointTurnAngle), DEG_TO_RAD(-pointTurnSpeed), DEG_TO_RAD(pointTurnAccel));
@@ -699,7 +703,7 @@ namespace Anki {
                 
               case (s32)'S':
               {
-                if(modifier_key == webots::Supervisor::KEYBOARD_ALT) {
+                if(altKeyPressed) {
                   // Re-read animations and send them to physical robot
                   SendReplayLastAnimation();
                 }
@@ -712,8 +716,7 @@ namespace Anki {
                 
               case (s32)'X':
               {
-                if( modifier_key & webots::Supervisor::KEYBOARD_ALT &&
-                    modifier_key & webots::Supervisor::KEYBOARD_SHIFT ) {
+                if(shiftKeyPressed && altKeyPressed) {
                   _shouldQuit = true;
                 }
                 else {
@@ -725,7 +728,7 @@ namespace Anki {
                 
               case (s32)'A':
               {
-                if(modifier_key == webots::Supervisor::KEYBOARD_ALT) {
+                if(altKeyPressed) {
                   // Re-read animations and send them to physical robot
                   SendReadAnimationFile();
                 } else {
@@ -737,7 +740,7 @@ namespace Anki {
                 
               case (s32)'Z':
               {
-                if(modifier_key == webots::Supervisor::KEYBOARD_ALT) {
+                if(altKeyPressed) {
                   static bool liftPowerEnable = false;
                   SendEnableLiftPower(liftPowerEnable);
                   liftPowerEnable = !liftPowerEnable;
@@ -812,7 +815,7 @@ namespace Anki {
                 // CTRL/CMD+I - Tell physical robot to send a single image
                 ImageSendMode mode = ImageSendMode::SingleShot;
                 
-                if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                if (shiftKeyPressed) {
                   // CTRL/CMD+SHIFT+I - Toggle physical robot image streaming
                   static bool streamOn = false;
                   if (streamOn) {
@@ -859,7 +862,7 @@ namespace Anki {
                 // U - Request a single image from the game for a specified robot
                 ImageSendMode mode = ImageSendMode::SingleShot;
                 
-                if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                if (shiftKeyPressed) {
                   // SHIFT+I - Toggle image streaming from the game
                   static bool streamOn = true;
                   if (streamOn) {
@@ -884,9 +887,9 @@ namespace Anki {
                 // Toggle saving of images to pgm
                 ImageSendMode mode = ImageSendMode::Off;
                 
-                const bool alsoSaveState = modifier_key & webots::Supervisor::KEYBOARD_ALT;
+                const bool alsoSaveState = altKeyPressed;
                 
-                if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                if (shiftKeyPressed) {
                   static bool streamOn = false;
                   if (streamOn) {
                     mode = ImageSendMode::Off;
@@ -913,13 +916,12 @@ namespace Anki {
               {
               
                 // Shift+Alt+D = delocalize
-                if((modifier_key & webots::Supervisor::KEYBOARD_ALT) &&
-                   (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) )
+                if(shiftKeyPressed && altKeyPressed)
                 {
                   ExternalInterface::ForceDelocalizeRobot delocMsg;
                   delocMsg.robotID = 1;
                   SendMessage(ExternalInterface::MessageGameToEngine(std::move(delocMsg)));
-                } else if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                } else if(shiftKeyPressed) {
                   
                   static const std::array<std::pair<bool,bool>,4> enableModes = {{
                     {false, false}, {false, true}, {true, false}, {true, true}
@@ -941,7 +943,7 @@ namespace Anki {
                   if(enableModeIter == enableModes.end()) {
                     enableModeIter = enableModes.begin();
                   }
-                } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                } else if(altKeyPressed) {
 
                   // FREE KEY COMBO!!!
                   
@@ -955,7 +957,7 @@ namespace Anki {
                 
               case (s32)'G':
               {
-                if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                if (shiftKeyPressed) {
                   poseMarkerMode_ = !poseMarkerMode_;
                   printf("Pose marker mode: %d\n", poseMarkerMode_);
                   poseMarkerDiffuseColor_->setSFColor(poseMarkerColor_[poseMarkerMode_]);
@@ -963,7 +965,7 @@ namespace Anki {
                   break;
                 }
                 
-                bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
+                bool useManualSpeed = altKeyPressed;
                   
                 if (poseMarkerMode_ == 0) {
                   // Execute path to pose
@@ -995,7 +997,18 @@ namespace Anki {
               case (s32)'L':
               {
 
-                if( modifier_key & webots::Supervisor::KEYBOARD_SHIFT ) {
+                if(shiftKeyPressed && altKeyPressed) {
+                  ExternalInterface::EnableLightStates msg;
+                  static bool enableLightComponent = false;
+                  printf("EnableLightsComponent: %d", enableLightComponent);
+                  msg.enable = enableLightComponent;
+                  enableLightComponent = !enableLightComponent;
+                  
+                  ExternalInterface::MessageGameToEngine msgWrapper;
+                  msgWrapper.Set_EnableLightStates(msg);
+                  SendMessage(msgWrapper);
+                }
+                else if(shiftKeyPressed) {
                   ExternalInterface::QueueSingleAction msg;
                   msg.robotID = 1;
                   msg.position = QueueActionPosition::NOW;
@@ -1013,7 +1026,7 @@ namespace Anki {
                   message.Set_QueueSingleAction(msg);
                   SendMessage(message);
                 }
-                else if (modifier_key & webots::Supervisor::KEYBOARD_ALT ) {
+                else if (altKeyPressed) {
                   static bool enableCliffSensor = false;
 
                   printf("setting enable cliff sensor to %d\n", enableCliffSensor);
@@ -1061,10 +1074,7 @@ namespace Anki {
                 
               case (s32)'T':
               {
-                const bool shiftPressed = modifier_key & webots::Supervisor::KEYBOARD_SHIFT;
-                const bool altPressed   = modifier_key & webots::Supervisor::KEYBOARD_ALT;
-                
-                if(altPressed && shiftPressed)
+                if(altKeyPressed && shiftKeyPressed)
                 {
                   // Hijacking this for pet tracking for now, since we aren't doing much
                   // tool code reading these days...
@@ -1074,7 +1084,7 @@ namespace Anki {
                   TrackToPet trackAction(5.f, Vision::UnknownFaceID, Vision::PetType::Unknown);
                   SendMessage(MessageGameToEngine(std::move(trackAction)));
                   
-                } else if(shiftPressed) {
+                } else if(shiftKeyPressed) {
                   static bool trackingObject = false;
                   
                   trackingObject = !trackingObject;
@@ -1092,7 +1102,7 @@ namespace Anki {
                     SendTrackToObject(u32_MAX);
                   }
                   
-                } else if(altPressed) {
+                } else if(altKeyPressed) {
                   static bool trackingFace = false;
                   
                   trackingFace = !trackingFace;
@@ -1133,7 +1143,7 @@ namespace Anki {
                 
               case (s32)'C':
               {
-                if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                if(shiftKeyPressed) {
                
                   // Send whatever animation is specified in the animationToSendName field
                   webots::Field* behaviorNameField = root_->getField("behaviorName");
@@ -1166,7 +1176,7 @@ namespace Anki {
                   SendMessage(ExternalInterface::MessageGameToEngine(
                                 ExternalInterface::ExecuteBehaviorByName(behaviorName)));
                 }
-                else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                else if(altKeyPressed) {
                   SendClearAllObjects();
                 }
                 else {
@@ -1179,12 +1189,10 @@ namespace Anki {
               case (s32)'H':
               {
 
-                if( modifier_key & webots::Supervisor::KEYBOARD_SHIFT ||
-                    modifier_key & webots::Supervisor::KEYBOARD_ALT)
+                if( shiftKeyPressed || altKeyPressed)
                 {
 
-                  if( modifier_key & webots::Supervisor::KEYBOARD_SHIFT &&
-                      modifier_key & webots::Supervisor::KEYBOARD_ALT ) {
+                  if( shiftKeyPressed && altKeyPressed ) {
                     printf("ERROR: invalid hotkey\n");
                     break;
                   }
@@ -1229,8 +1237,7 @@ namespace Anki {
                 const uint32_t blobLength = root_->getField("nvBlobDataLength")->getSFInt32();
                 
                 // Shift + Alt + M: Erases specified tag
-                if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT &&
-                   modifier_key & webots::Supervisor::KEYBOARD_ALT)
+                if(shiftKeyPressed && altKeyPressed)
                 {
                   if(ENABLE_NVSTORAGE_WRITE)
                   {
@@ -1245,7 +1252,7 @@ namespace Anki {
                 // Shift + M: Stores random data to tag
                 // If tag is a multi-tag, writes numBlobs blobs of random data blobLength long
                 // If tag is a single tag, writes 1 blob of random data that is blobLength long
-                else if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT)
+                else if(shiftKeyPressed)
                 {
                   if(ENABLE_NVSTORAGE_WRITE)
                   {
@@ -1274,7 +1281,7 @@ namespace Anki {
                   break;
                 }
                 // Alt + M: Reads data at tag
-                else if(modifier_key & webots::Supervisor::KEYBOARD_ALT)
+                else if(altKeyPressed)
                 {
                   ClearReceivedNVStorageData((NVStorage::NVEntryTag)tag);
                   SendNVStorageReadEntry((NVStorage::NVEntryTag)tag);
@@ -1312,12 +1319,12 @@ namespace Anki {
                 
               case (s32)'P':
               {
-                bool usePreDockPose = !(modifier_key & webots::Supervisor::KEYBOARD_SHIFT);
-                //bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
+                bool usePreDockPose = !shiftKeyPressed;
+                //bool useManualSpeed = altKeyPressed;
                 
                 // Hijacking ALT key for low placement
                 bool useManualSpeed = false;
-                bool placeOnGroundAtOffset = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
+                bool placeOnGroundAtOffset = altKeyPressed;
 
                 f32 placementOffsetX_mm = 0;
                 if (placeOnGroundAtOffset) {
@@ -1359,10 +1366,10 @@ namespace Anki {
                 
               case (s32)'R':
               {
-                bool usePreDockPose = !(modifier_key & webots::Supervisor::KEYBOARD_SHIFT);
+                bool usePreDockPose = !shiftKeyPressed;
                 bool useManualSpeed = false;
                 
-                if (modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                if (altKeyPressed) {
 //                  SendTraverseSelectedObject(pathMotionProfile_,
 //                                             usePreDockPose,
 //                                             useManualSpeed);
@@ -1379,11 +1386,11 @@ namespace Anki {
                 
               case (s32)'W':
               {
-                bool usePreDockPose = !(modifier_key & webots::Supervisor::KEYBOARD_SHIFT);
+                bool usePreDockPose = !shiftKeyPressed;
                 bool useManualSpeed = false;
                 bool doDeepRoll = root_->getField("doDeepRoll")->getSFBool();
                 
-                if (modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                if (altKeyPressed) {
                   SendPopAWheelie(-1,
                                   pathMotionProfile_,
                                   usePreDockPose,
@@ -1427,10 +1434,10 @@ namespace Anki {
                 msgHandler_.SendMessage(1, msgWrapper);
                 */
                 
-                if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                if (shiftKeyPressed) {
                   // SHIFT + Q: Cancel everything (paths, animations, docking, etc.)
                   SendAbortAll();
-                } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                } else if(altKeyPressed) {
                   // ALT + Q: Cancel action
                   SendCancelAction();
                 } else {
@@ -1445,7 +1452,7 @@ namespace Anki {
               {
                 if (root_) {
                   
-                  if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                  if(shiftKeyPressed) {
                     f32 steer_k1 = root_->getField("steerK1")->getSFFloat();
                     f32 steer_k2 = root_->getField("steerK2")->getSFFloat();
                     f32 steerDistOffsetCap = root_->getField("steerDistOffsetCap_mm")->getSFFloat();
@@ -1495,7 +1502,7 @@ namespace Anki {
                 
               case (s32)'V':
               {
-                if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                if(shiftKeyPressed) {
                   static bool visionWhileMovingEnabled = false;
                   visionWhileMovingEnabled = !visionWhileMovingEnabled;
                   printf("%s vision while moving.\n", (visionWhileMovingEnabled ? "Enabling" : "Disabling"));
@@ -1513,8 +1520,7 @@ namespace Anki {
                 
               case (s32)'B':
               {
-                if(modifier_key & webots::Supervisor::KEYBOARD_ALT &&
-                   modifier_key & webots::Supervisor::KEYBOARD_SHIFT)
+                if(shiftKeyPressed && altKeyPressed)
                 {
                   ExternalInterface::SetAllActiveObjectLEDs msg;
                   static int jsonMsgCtr = 0;
@@ -1569,7 +1575,10 @@ namespace Anki {
                   msg.transitionOnPeriod_ms = 500;
                   msg.transitionOffPeriod_ms = 100;
                   msg.turnOffUnspecifiedLEDs = 1;
-                  if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                  msg.offset = 0;
+                  msg.rotationPeriod_ms = 0;
+                  
+                  if(shiftKeyPressed) {
                     printf("Updating active block edge\n");
                     msg.onColor = ::Anki::NamedColors::RED;
                     msg.offColor = ::Anki::NamedColors::BLACK;
@@ -1578,7 +1587,7 @@ namespace Anki {
                     msg.relativeToX = GetRobotPose().GetTranslation().x();
                     msg.relativeToY = GetRobotPose().GetTranslation().y();
                     
-                  } else if( modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  } else if( altKeyPressed) {
                     static s32 edgeIndex = 0;
                     
                     printf("Turning edge %d new color %d (%x)\n",
@@ -1685,7 +1694,7 @@ namespace Anki {
                 
               case (s32)'O':
               {
-                if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT && modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                if (shiftKeyPressed && altKeyPressed) {
                   f32 distToMarker = root_->getField("alignWithObjectDistToMarker_mm")->getSFFloat();
                   SendAlignWithObject(-1, // tell game to use blockworld's "selected" object
                                       distToMarker,
@@ -1694,7 +1703,7 @@ namespace Anki {
                                       useApproachAngle,
                                       approachAngle_rad);
                   
-                } else if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                } else if(shiftKeyPressed) {
                   ExternalInterface::TurnTowardsObject msg;
                   msg.robotID = 1;
                   msg.objectID = u32_MAX; // HACK to tell game to use blockworld's "selected" object
@@ -1705,7 +1714,7 @@ namespace Anki {
                   ExternalInterface::MessageGameToEngine msgWrapper;
                   msgWrapper.Set_TurnTowardsObject(msg);
                   SendMessage(msgWrapper);
-                } else if (modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                } else if (altKeyPressed) {
                   SendGotoObject(-1, // tell game to use blockworld's "selected" object
                                  sqrtf(2.f)*44.f,
                                  pathMotionProfile_);
@@ -1772,7 +1781,7 @@ namespace Anki {
               }
               case (s32)'$':
               {
-                if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                if(altKeyPressed) {
                   SendClearCalibrationImages();
                 } else {
                   SendSaveCalibrationImage();
@@ -1786,7 +1795,7 @@ namespace Anki {
               }
               case (s32)'&':
               {
-                if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                if(altKeyPressed) {
                   PRINT_CH_INFO("Keyboard", "SendNVStorageReadEntry", "NVEntry_CameraCalib");
                   ClearReceivedNVStorageData(NVStorage::NVEntryTag::NVEntry_CameraCalib);
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
@@ -1835,7 +1844,7 @@ namespace Anki {
                 NVStorage::NVEntryTag tag = NVStorage::NVEntryTag::NVEntry_GameSkillLevels;
                 
                 // NVStorage multiWrite / multiRead test
-                if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                if(altKeyPressed) {
                   PRINT_CH_INFO("Keyboard", "SendNVStorageReadEntry", "Putting image in %s", EnumToString(tag));
                   ClearReceivedNVStorageData(tag);
                   SendNVStorageReadEntry(tag);
@@ -1890,7 +1899,7 @@ namespace Anki {
                 PRINT_CH_INFO("Keyboard", "RetrievingAllMfgTestData", "...");
                 
                 // Get all Mfg test images and results
-                if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                if(altKeyPressed) {
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage1);
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage2);
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage3);
@@ -2008,7 +2017,7 @@ namespace Anki {
               }
               case (s32)'^':
               {
-                if(modifier_key & webots::Supervisor::KEYBOARD_ALT)
+                if(altKeyPressed)
                 {
                   webots::Field* idleAnimToSendField = root_->getField("idleAnimationName");
                   if(idleAnimToSendField == nullptr) {
