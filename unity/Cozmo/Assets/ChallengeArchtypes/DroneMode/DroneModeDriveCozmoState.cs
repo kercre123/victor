@@ -136,6 +136,7 @@ namespace Cozmo {
             _CurrentRobot.StopAllMotors();
             _CurrentRobot.EnableDroneMode(false);
             _CurrentRobot.SetEnableFreeplayLightStates(false);
+            _CurrentRobot.SetNightVision(false);
           }
           _DroneModeControlsSlide.OnDriveSpeedSegmentValueChanged -= HandleDriveSpeedValueChanged;
           _DroneModeControlsSlide.OnDriveSpeedSegmentChanged -= HandleDriveSpeedFamilyChanged;

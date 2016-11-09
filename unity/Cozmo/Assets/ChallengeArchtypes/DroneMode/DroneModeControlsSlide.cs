@@ -406,7 +406,7 @@ namespace Cozmo.Minigame.DroneMode {
 
     public void HandleNightVisionButtonClicked() {
       _CurrentRobot.SetNightVision(_NightVisionButton.IsCurrentlyOn);
-      if (!_NightVisionButton.IsCurrentlyOn) {
+      if (_NightVisionButton.IsCurrentlyOn) {
         SetUIToColorSet(_NightVisionColors);
       }
       else {
