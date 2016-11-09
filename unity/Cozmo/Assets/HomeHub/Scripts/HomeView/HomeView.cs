@@ -794,7 +794,9 @@ namespace Cozmo.HomeHub {
 
     private void HandleMiniGameYesAnimEnd(bool success) {
       DAS.Info(this, "HandleMiniGameYesAnimEnd");
-      MinigameConfirmed.Invoke(RobotEngineManager.Instance.RequestGameManager.CurrentChallengeToRequest.ChallengeID);
+      if (MinigameConfirmed != null) {
+        MinigameConfirmed.Invoke(RobotEngineManager.Instance.RequestGameManager.CurrentChallengeToRequest.ChallengeID);
+      }
     }
 
     private void HandleExternalRejection(object messageObject) {
