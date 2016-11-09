@@ -22,11 +22,15 @@ namespace CozmoSays {
     }
 
     private void TurnTowardsLastFaceDone() {
-      CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.CozmoSaysIdle);
+      if (CurrentRobot != null) {
+        CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.CozmoSaysIdle);
+      }
     }
 
     protected override void CleanUpOnDestroy() {
-      CurrentRobot.PopIdleAnimation();
+      if (CurrentRobot != null) {
+        CurrentRobot.PopIdleAnimation();
+      }
     }
   }
 
