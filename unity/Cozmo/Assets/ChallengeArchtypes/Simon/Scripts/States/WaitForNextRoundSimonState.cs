@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using System.Collections;
-using Anki.Cozmo.Audio;
 
 namespace Simon {
   public class WaitForNextRoundSimonState : State {
@@ -69,12 +68,7 @@ namespace Simon {
 
     private void HandleContinuePressed() {
       _GameInstance.GetSimonSlide().HidePlayPatternButton();
-      // Start Sequence after audio completes
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Mm_Pattern_Start,
-                                   AudioCallbackFlag.EventComplete,
-                                   (CallbackInfo callbackInfo) => {
-                                     _StateMachine.SetNextState(new SetSequenceSimonState(_NextPlayer));
-                                   });
+      _StateMachine.SetNextState(new SetSequenceSimonState(_NextPlayer));
     }
   }
 }

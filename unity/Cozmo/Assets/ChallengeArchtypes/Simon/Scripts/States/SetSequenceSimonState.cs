@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using Anki.Cozmo.Audio;
 
 namespace Simon {
 
@@ -13,8 +14,10 @@ namespace Simon {
     private float _LastSequenceTime = -1;
 
     private PlayerType _NextPlayer;
-    private const int _kMaxCountdown_Sec = 3;
-    private int _CountdownPhase = _kMaxCountdown_Sec;
+    private const float _kMaxCountdown_Sec = 2.0f;
+    private const float _kBlinkTime_Sec = 0.15f;
+    private bool _InCountdown = true;
+    private Coroutine _CountdownCoroutine = null;
 
     public SetSequenceSimonState(PlayerType nextPlayer) {
       _NextPlayer = nextPlayer;
@@ -32,34 +35,47 @@ namespace Simon {
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
 
       _LastSequenceTime = Time.time;
-      if (_SequenceLength > _GameInstance.MinSequenceLength) {
-        _GameInstance.SharedMinigameView.PlayBannerAnimation(Localization.Get(LocalizationKeys.kSimonGameLabelNextRound), HandleCountDownStart);
-      }
-      else {
-        HandleCountDownDone();
+
+      _InCountdown = true;
+      // Start Sequence after audio completes
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Mm_Pattern_Start);
+      _GameInstance.SharedMinigameView.PlayBannerAnimation(Localization.Get(LocalizationKeys.kSimonGameLabelNextRound), null, 0.0f, false);
+      if (_CountdownCoroutine == null) {
+        _CountdownCoroutine = _GameInstance.StartCoroutine(CountdownCoroutine());
       }
     }
+
     // NextRound, 3,2,1, go
-    private void HandleCountDownStart() {
-      _GameInstance.StartCoroutine(CountdownCoroutine());
-    }
     private IEnumerator CountdownCoroutine() {
-      while (_CountdownPhase > 0) {
-        _GameInstance.GetSimonSlide().ShowCenterText(Localization.Get(LocalizationKeys.kSimonGameLabelListen) + " " + _CountdownPhase.ToString());
-        yield return new WaitForSeconds(1);
-        _CountdownPhase--;
+      // Blink the lights fast while this is going on...
+      foreach (int cubeId in _GameInstance.CubeIdsForGame) {
+        Color[] color_cycle = { _GameInstance.GetColorForBlock(cubeId), Color.black, Color.black, Color.black };
+        _GameInstance.StartCycleCube(cubeId, color_cycle, _kBlinkTime_Sec);
       }
+      // wait for on/off time
+      yield return new WaitForSeconds(_kMaxCountdown_Sec);
+      foreach (int cubeId in _GameInstance.CubeIdsForGame) {
+        _GameInstance.StopCycleCube(cubeId);
+      }
+      _GameInstance.SetCubeLightsDefaultOn();
+      yield return new WaitForSeconds(_kBlinkTime_Sec);
       HandleCountDownDone();
+      yield break;
     }
+
     private void HandleCountDownDone() {
       _GameInstance.GetSimonSlide().ShowCenterText(Localization.Get(LocalizationKeys.kSimonGameLabelListen));
-      _CountdownPhase = -1;
+      _InCountdown = false;
+      if (_CountdownCoroutine != null) {
+        _GameInstance.StopCoroutine(_CountdownCoroutine);
+        _CountdownCoroutine = null;
+      }
     }
 
     public override void Update() {
       base.Update();
       // Wait for countdown to complete before setting the sequence.
-      if (_CountdownPhase > 0) {
+      if (_InCountdown) {
         return;
       }
       if (_CurrentSequenceIndex == -1) {
@@ -123,6 +139,10 @@ namespace Simon {
       base.Exit();
       if (_CurrentRobot != null) {
         _CurrentRobot.DriveWheels(0.0f, 0.0f);
+      }
+      if (_CountdownCoroutine != null) {
+        _GameInstance.StopCoroutine(_CountdownCoroutine);
+        _CountdownCoroutine = null;
       }
     }
   }

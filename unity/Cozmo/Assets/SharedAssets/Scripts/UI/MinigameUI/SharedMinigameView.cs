@@ -961,11 +961,11 @@ namespace Cozmo {
         _SpinnerWidgetInstance = null;
       }
 
-      public void PlayBannerAnimation(string textToDisplay, TweenCallback animationEndCallback = null, float customSlowDurationSeconds = 0f) {
+      public void PlayBannerAnimation(string textToDisplay, TweenCallback animationEndCallback = null, float customSlowDurationSeconds = 0f, bool playSound = true) {
         if (_BannerWidgetInstance == null) {
           _BannerWidgetInstance = UIManager.CreateUIElement(_BannerWidgetPrefab.gameObject, _BannerContainer).GetComponent<Banner>();
         }
-        _BannerWidgetInstance.PlayBannerAnimation(textToDisplay, animationEndCallback, customSlowDurationSeconds);
+        _BannerWidgetInstance.PlayBannerAnimation(textToDisplay, animationEndCallback, customSlowDurationSeconds, playSound);
       }
 
       public void PlayVideo(string videoPath, System.Action onVideoContinue, bool showSkipButton = false) {
