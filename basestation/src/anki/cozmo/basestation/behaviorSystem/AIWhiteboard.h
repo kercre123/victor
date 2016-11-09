@@ -215,6 +215,9 @@ public:
   void GotOffChargerAtTime(const float time_sec) { _gotOffChargerAtTime_sec = time_sec; }
   float GetTimeAtWhichRobotGotOffCharger() const { return _gotOffChargerAtTime_sec; }
   
+  // return time at which Cozmo got back on treads (negative in never recorded)
+  float GetTimeAtWhichRobotReturnedToTreadsSecs() const { return _returnedToTreadsAtTime_sec; }
+  
   // set/return time at which engine processed information regarding edges
   inline void SetLastEdgeInformation(const float time_sec, const float closestEdgeDist_mm);
   float GetLastEdgeInformationTime() const { return _edgeInfoTime_sec; }
@@ -311,6 +314,8 @@ private:
   
   // time at which the robot got off the charger by itself. Negative value means never
   float _gotOffChargerAtTime_sec;
+  // time at which the robot returned to being on treads (after being picked up)
+  float _returnedToTreadsAtTime_sec;
   
   // time at which the engine processed edge information coming from vision
   float _edgeInfoTime_sec;

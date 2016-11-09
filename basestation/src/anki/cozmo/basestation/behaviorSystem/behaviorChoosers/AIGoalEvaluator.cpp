@@ -14,8 +14,11 @@
 #include "AIGoal.h"
 #include "AIGoalStrategies/iAIGoalStrategy.h"
 
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/basestation/jsonTools.h"
@@ -39,7 +42,7 @@ namespace Cozmo {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace
 {
-// static const char* kSelfConfigKey = "evaluator";
+static const char* kDesiredGoalNamesConfigKey = "desiredGoalNames";
 static const char* kGoalsConfigKey = "goals";
 
 #if REMOTE_CONSOLE_ENABLED
@@ -97,6 +100,17 @@ AIGoalEvaluator::AIGoalEvaluator(Robot& robot, const Json::Value& config)
 {
   CreateFromConfig(robot, config);
   
+  // register to events
+  if ( _robot.HasExternalInterface() )
+  {
+    using namespace ExternalInterface;
+    auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _signalHandles);
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotOffTreadsStateChanged>();
+  }
+  else {
+    PRINT_NAMED_WARNING("AIWhiteboard.Init", "Initialized whiteboard with no external interface. Will miss events.");
+  }
+  
   #if ( ANKI_DEV_CHEATS )
   {
     if ( !defaultGoalEvaluator ) {
@@ -137,6 +151,33 @@ void AIGoalEvaluator::OnDeselected()
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void AIGoalEvaluator::HandleMessage(const ExternalInterface::RobotOffTreadsStateChanged& msg)
+{
+  // if we return to OnTreads and we are in freeplay without sparks, clear the goal to pick a new one as soon
+  // as we regain control.
+  const bool onTreads = msg.treadsState == OffTreadsState::OnTreads;
+  if ( onTreads )
+  {
+    if ( _currentGoalPtr )
+    {
+      const UnlockId curGoalSpark = _currentGoalPtr->GetRequiredSpark();
+      const bool isSparkless = curGoalSpark == UnlockId::Count;
+      if ( isSparkless )
+      {
+        PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.RobotOffTreadsStateChanged.KickingOutGoalOnPutDown",
+          "Kicking out '%s' on put down so we pick up a new one", _currentGoalPtr->GetName().c_str() );
+      
+        // note: this will set the goal on cooldown, which may not be desired if it didn't run for some time
+        
+        // stop current goal
+        _currentGoalPtr->Exit(_robot);
+        _currentGoalPtr = nullptr;
+      }
+    }
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIGoalEvaluator::CreateFromConfig(Robot& robot, const Json::Value& config)
@@ -196,6 +237,19 @@ void AIGoalEvaluator::CreateFromConfig(Robot& robot, const Json::Value& config)
   
   // clear current goal
   _currentGoalPtr = nullptr;
+  
+  // load desired goals
+  {
+    const Json::Value& desiredGoals = config[kDesiredGoalNamesConfigKey];
+    using namespace JsonTools;
+    const std::string& debugName = _name + ".AIGoalEvaluator.Constructor";
+  
+    // parse desired goals from objects
+    _configParams.faceAndCubeGoalName = ParseString(desiredGoals, "faceAndCubeGoalName", debugName);
+    _configParams.faceOnlyGoalName = ParseString(desiredGoals, "faceOnlyGoalName", debugName);
+    _configParams.cubeOnlyGoalName = ParseString(desiredGoals, "cubeOnlyGoalName", debugName);
+    _configParams.noFaceNoCubeGoalName = ParseString(desiredGoals, "noFaceNoCubeGoalName", debugName);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -222,6 +276,13 @@ bool AIGoalEvaluator::PickNewGoalForSpark(Robot& robot, UnlockId spark, bool isC
       {
         // skip if name doesn't match
         if ( goal->GetName() != _debugConsoleRequestedGoal ) {
+          continue;
+        }
+      }
+      else if ( !_requestedGoal.empty() )
+      {
+        // skip if name doesn't match
+        if ( goal->GetName() != _requestedGoal ) {
           continue;
         }
       }
@@ -280,7 +341,7 @@ bool AIGoalEvaluator::PickNewGoalForSpark(Robot& robot, UnlockId spark, bool isC
         EnumToString(spark) );
     
       // log
-      PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.PickNewGoalForSpark",
+      PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.PickNewGoalForSpark.Switched",
         "Switched goal from '%s' to '%s'",
           _currentGoalPtr ? _currentGoalPtr->GetName().c_str() : "no goal",
           newGoal         ? newGoal->GetName().c_str() : "no goal" );
@@ -308,7 +369,7 @@ bool AIGoalEvaluator::PickNewGoalForSpark(Robot& robot, UnlockId spark, bool isC
         // we did not select any goals. This means we are not going to run behaviors. It should not happen if at
         // least a fallback goal was defined, which can be done through proper strategy selection in data, so we
         // shouldn't correct it here, other than warn if it ever happens
-        PRINT_NAMED_WARNING("AIGoalEvaluator.PickNewGoalForSpark",
+        PRINT_NAMED_WARNING("AIGoalEvaluator.PickNewGoalForSpark.NoGoalSelected",
           "None of the goals available for spark '%s' wants to run.",
           EnumToString(spark));
     }
@@ -317,8 +378,35 @@ bool AIGoalEvaluator::PickNewGoalForSpark(Robot& robot, UnlockId spark, bool isC
   }
   else
   {
-    PRINT_NAMED_WARNING("AIGoalEvaluator.PickNewGoalForSpark", "No goals available for spark '%s'", EnumToString(spark));
+    PRINT_NAMED_WARNING("AIGoalEvaluator.PickNewGoalForSpark.NoGoalAvailableForSpark", "No goals available for spark '%s'", EnumToString(spark));
     return false;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIGoalEvaluator::CalculateDesiredGoalFromObjects()
+{
+  // note that here we rely on "since we delocalized"
+  
+  // check if we have discovered new faces since we delocalized (last face's origin should be current)
+  Pose3d lastFacePose;
+  const TimeStamp_t lastFaceSeenTimestamp = _robot.GetFaceWorld().GetLastObservedFace(lastFacePose);
+  const bool hasNewFace = (lastFaceSeenTimestamp>0) && ((&lastFacePose.FindOrigin()) == _robot.GetWorldOrigin());
+
+  // check if we have discovered new cubes since we delocalized (any not unknown in current origin)
+  BlockWorldFilter cubeFilter;
+  cubeFilter.SetAllowedFamilies({{ ObjectFamily::Block, ObjectFamily::LightCube }});
+  const bool hasNewCube = (_robot.GetBlockWorld().FindMatchingObject(cubeFilter) != nullptr);
+
+  // depending on what we see, request the goal we want
+  if ( hasNewFace && hasNewCube ) {
+    _requestedGoal = _configParams.faceAndCubeGoalName;
+  } else if ( hasNewFace ) {
+    _requestedGoal = _configParams.faceOnlyGoalName;
+  }  else if ( hasNewCube ) {
+    _requestedGoal = _configParams.cubeOnlyGoalName;
+  }  else {
+    _requestedGoal = _configParams.noFaceNoCubeGoalName;
   }
 }
 
@@ -342,6 +430,15 @@ IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, const IBehavior* cu
       getNewGoal = true;
       PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior.DebugForcedChange",
         "Picking new goal because debug is forcing '%s'", _debugConsoleRequestedGoal.c_str());
+    }
+  }
+  else if ( !_requestedGoal.empty() )
+  {
+    // if we are not running the requested goal, ask to change. It should be picked if name is available
+    if ( (!_currentGoalPtr) || _currentGoalPtr->GetName() != _requestedGoal ) {
+      getNewGoal = true;
+      PRINT_CH_INFO("Behaviors", "AIGoalEvaluator.ChooseNextBehavior.RequestedGoal",
+        "Picking new goal because '%s' was requested", _requestedGoal.c_str());
     }
   }
   else
@@ -466,6 +563,12 @@ IBehavior* AIGoalEvaluator::ChooseNextBehavior(Robot& robot, const IBehavior* cu
         // to give others a chance, there will be at least a frame in which there will be no goal selected.
         PRINT_CH_INFO("Behaviors","AIGoalEvaluator.NoGoalSelected", "Picked no goal");
       }
+    }
+    
+    // clear the requested goal since we picked a goal. Even if it wasn't selected, we are only going to give it
+    // once chance of running
+    if ( !_requestedGoal.empty() ) {
+      _requestedGoal.clear();
     }
   }
   

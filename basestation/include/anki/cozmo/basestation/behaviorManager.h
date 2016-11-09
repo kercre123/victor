@@ -135,6 +135,13 @@ public:
   
   // Returns first reactionary behavior with given type or nullptr if none found
   IReactionaryBehavior* GetReactionaryBehaviorByType(BehaviorType behaviorType);
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Freeplay - specific
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // calculates (and sets in the freeplay chooser) the desired goal due to objects recently seen
+  void CalculateFreeplayGoalFromObjects();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Sparks

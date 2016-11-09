@@ -12,12 +12,14 @@
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 
+
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/AIGoalEvaluator.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
@@ -757,6 +759,25 @@ void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::Behavi
       assert(0);
       break;
     }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorManager::CalculateFreeplayGoalFromObjects()
+{
+  // design: the choosers are generic, but this only makes sense if the freeplay chooser is an AIGoalEvaluator. I
+  // think that we should not be able to data-drive it, but there may be a case for it, and this method
+  // should just not work in that case. Right now I feel like using dynamic_cast, but we could provide default
+  // implementation in chooser interface that asserts to not be used.
+  AIGoalEvaluator* freeplayGoalEvaluator = dynamic_cast<AIGoalEvaluator*>(_freeplayChooser);
+  if ( nullptr != freeplayGoalEvaluator )
+  {
+    freeplayGoalEvaluator->CalculateDesiredGoalFromObjects();
+  }
+  else
+  {
+    PRINT_NAMED_ERROR("BehaviorManager.CalculateFreeplayGoalFromObjects.NotAGoalEvaluator",
+      "The current freeplay chooser is not a goal evaluator.");
   }
 }
 

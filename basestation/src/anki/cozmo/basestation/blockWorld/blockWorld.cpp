@@ -9,7 +9,7 @@
  * Copyright: Anki, Inc. 2013
  *
  **/
-
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 
 // Putting engine config include first so we get anki/common/types.h instead of anki/types.h
 // TODO: Fix this types.h include mess (COZMO-3752)
@@ -24,7 +24,6 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
-#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld/blockConfigurationManager.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"

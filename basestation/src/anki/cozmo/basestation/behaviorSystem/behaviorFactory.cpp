@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 
 // Behaviors:
+#include "../behaviors/dispatch/behaviorLookForFaceAndCube.h"
 #include "../behaviors/exploration/behaviorExploreBringCubeToBeacon.h"
 #include "../behaviors/exploration/behaviorExploreLookAroundInPlace.h"
 #include "../behaviors/exploration/behaviorExploreVisitPossibleMarker.h"
@@ -327,6 +328,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::ReactToPet:
     {
       newBehavior = new BehaviorReactToPet(robot, config);
+      break;
+    }
+    case BehaviorType::LookForFaceAndCube:
+    {
+      newBehavior = new BehaviorLookForFaceAndCube(robot, config);
       break;
     }
     case BehaviorType::Count:

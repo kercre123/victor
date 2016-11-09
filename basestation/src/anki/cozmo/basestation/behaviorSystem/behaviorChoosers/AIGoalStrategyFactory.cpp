@@ -12,11 +12,9 @@
 #include "AIGoalStrategyFactory.h"
 
 // AI Goal strategies
-#include "AIGoalStrategies/AIGoalStrategyFPHiking.h"
-#include "AIGoalStrategies/AIGoalStrategyFPPlayAlone.h"
 #include "AIGoalStrategies/AIGoalStrategyFPPlayWithHumans.h"
-#include "AIGoalStrategies/AIGoalStrategyFPSocialize.h"
 #include "AIGoalStrategies/AIGoalStrategySpark.h"
+#include "AIGoalStrategies/AIGoalStrategySimple.h"
 
 #include "anki/common/basestation/jsonTools.h"
 
@@ -41,18 +39,12 @@ IAIGoalStrategy* CreateAIGoalStrategy(Robot& robot, const Json::Value& config)
   std::transform(typeStr.begin(), typeStr.end(), typeStr.begin(), ::tolower);
 
   // should this be more sophisticated than string compare?
-  if ( typeStr == "fp_hiking" )
+  if ( typeStr == "simple" )
   {
-    newStrategy = new AIGoalStrategyFPHiking(robot, config);
-  }
-  else if ( typeStr == "fp_playalone" ) {
-    newStrategy = new AIGoalStrategyFPPlayAlone(robot, config);
+    newStrategy = new AIGoalStrategySimple(robot, config);
   }
   else if ( typeStr == "fp_playwithhumans" ) {
     newStrategy = new AIGoalStrategyFPPlayWithHumans(robot, config);
-  }
-  else if ( typeStr == "fp_socialize" ) {
-    newStrategy = new AIGoalStrategyFPSocialize(robot, config);
   }
   else if ( typeStr == "spark" ) {
     newStrategy = new AIGoalStrategySpark(robot, config);
