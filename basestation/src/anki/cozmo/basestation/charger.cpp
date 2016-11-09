@@ -67,7 +67,7 @@ namespace Anki {
         PRINT_NAMED_ERROR("Charger.PreActionPoseError", "Could not get preActionPose w.r.t. front Charger marker");
       }
       preActionPose.SetName("Charger" + std::to_string(GetID().GetValue()) + "PreActionPose");
-      AddPreActionPose(PreActionPose::ENTRY, _marker, preActionPose);
+      AddPreActionPose(PreActionPose::ENTRY, _marker, preActionPose, 0);
       
     } // Charger() Constructor
     

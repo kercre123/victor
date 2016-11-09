@@ -55,8 +55,9 @@ namespace Anki {
     
     PreActionPose::PreActionPose(ActionType type,
                                  const Vision::KnownMarker* marker,
-                                 const f32 distance)
-    : PreActionPose(type, marker, Y_AXIS_3D() * -distance)
+                                 const f32 distance,
+                                 const f32 length_mm)
+    : PreActionPose(type, marker, Y_AXIS_3D() * -distance, length_mm)
     {
       
     } // PreActionPose Constructor
@@ -64,10 +65,12 @@ namespace Anki {
     
     PreActionPose::PreActionPose(ActionType type,
                                  const Vision::KnownMarker* marker,
-                                 const Vec3f& offset)
+                                 const Vec3f& offset,
+                                 const f32 length_mm)
     : _type(type)
     , _marker(marker)
     , _poseWrtMarkerParent(M_PI_2, Z_AXIS_3D(), offset, &marker->GetPose()) // init w.r.t. marker
+    , _preActionPoseLineLength_mm(length_mm)
     {
       // Now make pose w.r.t. marker parent
       if(_poseWrtMarkerParent.GetWithRespectTo(*_marker->GetPose().GetParent(), _poseWrtMarkerParent) == false) {
@@ -83,9 +86,11 @@ namespace Anki {
     
     PreActionPose::PreActionPose(ActionType type,
                                  const Vision::KnownMarker* marker,
-                                 const Pose3d& poseWrtMarker)
+                                 const Pose3d& poseWrtMarker,
+                                 const f32 length_mm)
     : _type(type)
     , _marker(marker)
+    , _preActionPoseLineLength_mm(length_mm)
     {
       if(poseWrtMarker.GetParent() != &marker->GetPose()) {
         PRINT_NAMED_ERROR("PreActionPose.PoseWrtMarkerParentInvalid",
@@ -104,9 +109,11 @@ namespace Anki {
     
     PreActionPose::PreActionPose(const PreActionPose& canonicalPose,
                                  const Pose3d& markerParentPose,
+                                 const f32 length_mm,
                                  const f32 offset_mm)
     : _type(canonicalPose.GetActionType())
     , _marker(canonicalPose.GetMarker())
+    , _preActionPoseLineLength_mm(length_mm)
     //, _poseWrtMarkerParent(markerParentPose*canonicalPose._poseWrtMarkerParent)
     {
       // Extend pose translation by offset
@@ -127,6 +134,7 @@ namespace Anki {
     , _marker(other._marker)
     , _poseWrtMarkerParent(other._poseWrtMarkerParent)
     , _heightTolerance(other._heightTolerance)
+    , _preActionPoseLineLength_mm(other._preActionPoseLineLength_mm)
     {
       
     }

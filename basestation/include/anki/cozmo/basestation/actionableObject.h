@@ -51,11 +51,13 @@ namespace Anki {
       // IsPreActionPoseValid() method below.)
       // Optionally, you may filter based on ActionType and Marker Code as well.
       void GetCurrentPreActionPoses(std::vector<PreActionPose>& preActionPoses,
+                                    const Pose3d& robotPose,
                                     const std::set<PreActionPose::ActionType>& withAction = std::set<PreActionPose::ActionType>(),
                                     const std::set<Vision::Marker::Code>& withCode = std::set<Vision::Marker::Code>(),
                                     const std::vector<std::pair<Quad2f,ObjectID> >& obstacles = std::vector<std::pair<Quad2f,ObjectID> >(),
                                     const Pose3d* reachableFromPose = nullptr,
-                                    const f32 offset_mm = 0) const;
+                                    const f32 offset_mm = 0,
+                                    bool visualize = false) const;
       
       // If the object is selected, draws it using the "selected" color.
       // Otherwise draws it in the object's defined color.
@@ -90,15 +92,18 @@ namespace Anki {
       // Wrappers for each of the PreActionPose constructors:
       void AddPreActionPose(PreActionPose::ActionType type,
                             const Vision::KnownMarker* marker,
-                            const f32 distance);
+                            const f32 distance,
+                            const f32 length_mm);
       
       void AddPreActionPose(PreActionPose::ActionType type,
                             const Vision::KnownMarker *marker,
-                            const Vec3f& offset);
+                            const Vec3f& offset,
+                            const f32 length_mm);
       
       void AddPreActionPose(PreActionPose::ActionType type,
                             const Vision::KnownMarker* marker,
-                            const Pose3d& poseWrtMarker);
+                            const Pose3d& poseWrtMarker,
+                            const f32 length_mm);
  
       // Only "valid" poses are returned by GetCurrenPreActionPoses
       // By default, allows any rotation around Z, but none around X/Y, meaning
@@ -118,6 +123,9 @@ namespace Anki {
       std::vector<PreActionPose> _preActionPoses;
       
       mutable std::vector<VizManager::Handle_t> _vizPreActionPoseHandles;
+      
+      // Set of pathIDs for visualizing the preActionLines
+      mutable std::set<u32> _vizPreActionLineIDs;
       
       bool _isBeingCarried;
       bool _isSelected;

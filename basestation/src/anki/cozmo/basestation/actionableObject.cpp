@@ -19,6 +19,8 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 
+#include "util/math/constantsAndMacros.h"
+
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 
 namespace Anki {
@@ -32,23 +34,28 @@ namespace Anki {
     }
     
     
-    void ActionableObject::AddPreActionPose(PreActionPose::ActionType type, const Vision::KnownMarker *marker,
-                                            const f32 distance)
+    void ActionableObject::AddPreActionPose(PreActionPose::ActionType type,
+                                            const Vision::KnownMarker *marker,
+                                            const f32 distance,
+                                            const f32 length_mm)
     {
-      _preActionPoses.emplace_back(type, marker, distance);
+      _preActionPoses.emplace_back(type, marker, distance, length_mm);
     } // AddPreActionPose()
     
-    void ActionableObject::AddPreActionPose(PreActionPose::ActionType type, const Vision::KnownMarker *marker,
-                                            const Vec3f& offset)
+    void ActionableObject::AddPreActionPose(PreActionPose::ActionType type,
+                                            const Vision::KnownMarker *marker,
+                                            const Vec3f& offset,
+                                            const f32 length_mm)
     {
-      _preActionPoses.emplace_back(type, marker, offset);
+      _preActionPoses.emplace_back(type, marker, offset, length_mm);
     } // AddPreActionPose()
     
     void ActionableObject::AddPreActionPose(PreActionPose::ActionType type,
                                             const Vision::KnownMarker* marker,
-                                            const Pose3d& poseWrtMarker)
+                                            const Pose3d& poseWrtMarker,
+                                            const f32 length_mm)
     {
-      _preActionPoses.emplace_back(type, marker, poseWrtMarker);
+      _preActionPoses.emplace_back(type, marker, poseWrtMarker, length_mm);
     }
     
     
@@ -178,17 +185,20 @@ namespace Anki {
       return isValid;
       
     } // IsPreActionPoseValid()
-    
+
     
     void ActionableObject::GetCurrentPreActionPoses(std::vector<PreActionPose>& preActionPoses,
+                                                    const Pose3d& robotPose,
                                                     const std::set<PreActionPose::ActionType>& withAction,
                                                     const std::set<Vision::Marker::Code>& withCode,
                                                     const std::vector<std::pair<Quad2f,ObjectID> >& obstacles,
                                                     const Pose3d* reachableFromPose,
-                                                    const f32 offset_mm) const
+                                                    const f32 offset_mm,
+                                                    bool visualize) const
     {
       const Pose3d& relToObjectPose = GetPose();
       
+      u8 count = 0;
       for(auto & preActionPose : _preActionPoses)
       {
         if((withCode.empty()   || withCode.count(preActionPose.GetMarker()->GetCode()) > 0) &&
@@ -196,15 +206,92 @@ namespace Anki {
         {
           // offset_mm is scaled by some amount because otherwise it might too far to see the marker
           // it's docking to.
-          PreActionPose currentPose(preActionPose, relToObjectPose, PREACTION_POSE_OFFSET_SCALAR * offset_mm);
+          PreActionPose currentPose(preActionPose, relToObjectPose, preActionPose.GetLineLength(), PREACTION_POSE_OFFSET_SCALAR * offset_mm);
+          
+          // If our preActionPoses aren't using an offset then use the point on the preActionLine closest to the robot
+          if(offset_mm == 0)
+          {
+            // Find the end point of the preActionLine
+            const f32 angle = currentPose.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat();
+            const Point3f endPoint = {currentPose.GetPose().GetTranslation().x() + cosf(angle) * preActionPose.GetLineLength(),
+                                      currentPose.GetPose().GetTranslation().y() + sinf(angle) * preActionPose.GetLineLength(),
+                                      currentPose.GetPose().GetTranslation().z()};
+            
+            Pose3d p = currentPose.GetPose().GetWithRespectToOrigin();
+            Pose3d robot = robotPose.GetWithRespectToOrigin();
+            
+            // x and y difference between the intersection point and the start of the preActionLine
+            f32 x = 0;
+            f32 y = 0;
+            
+            const f32 xDiff = endPoint.x() - p.GetTranslation().x();
+            const f32 yDiff = endPoint.y() - p.GetTranslation().y();
+            
+            // Vertical preActionLine
+            if(NEAR_ZERO(xDiff))
+            {
+              y = robot.GetTranslation().y() - p.GetTranslation().y();
+            }
+            // Horizontal preActionLine
+            else if(NEAR_ZERO(yDiff))
+            {
+              x = robot.GetTranslation().x() - p.GetTranslation().x();
+            }
+            else
+            {
+              // Find the point on the preActionLine that is closest to the robot's pose
+              const f32 m = (yDiff) / (xDiff);
+              const f32 b = p.GetTranslation().y() - m * p.GetTranslation().x();
+            
+              const f32 b_inv = robot.GetTranslation().y() + robot.GetTranslation().x()/m;
+              
+              const f32 x_intersect = (b_inv - b) / (m + (1.f/m));
+              const f32 y_intersect = - (x_intersect / m) + b_inv;
+              
+              // Find the offset the closest point on the line to the robot is from the start of the preActionLine (pose of the
+              // preActionPose)
+              x = x_intersect - p.GetTranslation().x();
+              y = y_intersect - p.GetTranslation().y();
+            }
+            
+            // Clip the offset so it will stay on the preActionLine
+            // Offset will always be positive which is what causes the slightly odd (but desirable) behavior of the
+            // preDock pose moving away from the robot when we are infront of the end of the preActionLine closest to the object
+            const f32 offset = CLIP(sqrtf(x*x + y*y), 0, preActionPose.GetLineLength());
+          
+            PreActionPose newPose(preActionPose, relToObjectPose, preActionPose.GetLineLength(), offset);
+            currentPose = newPose;
+          }
           
           if(IsPreActionPoseValid(currentPose, reachableFromPose, obstacles)) {
             preActionPoses.emplace_back(currentPose);
+            
+            // Draw the preActionLines in viz
+            if(visualize)
+            {
+              PreActionPose basePose(preActionPose, relToObjectPose, preActionPose.GetLineLength(), 0);
+              Pose3d end = basePose.GetPose();
+              const f32 endAngle = end.GetRotation().GetAngleAroundZaxis().ToFloat();
+              end.SetTranslation({end.GetTranslation().x() - cosf(endAngle)*preActionPose.GetLineLength(),
+                                  end.GetTranslation().y() - sinf(endAngle)*preActionPose.GetLineLength(),
+                                  end.GetTranslation().z()});
+              
+              // Arbitrarily add 100 to the pathID so it doesn't conflict with other pathIDs like path planner paths
+              u32 id = GetID() + 100 + (count++);
+              _vizPreActionLineIDs.insert(id);
+              _vizManager->ErasePath(id);
+              _vizManager->AppendPathSegmentLine(id,
+                                                 basePose.GetPose().GetTranslation().x(),
+                                                 basePose.GetPose().GetTranslation().y(),
+                                                 end.GetTranslation().x(),
+                                                 end.GetTranslation().y());
+              _vizManager->SetPathColor(id, NamedColors::CYAN);
+            }
           }
         } // if preActionPose has correct code/action
       } // for each preActionPose
       
-    } // GetCurrentPreActionPoses()
+    }
     
     
     void ActionableObject::Visualize() const
@@ -234,7 +321,7 @@ namespace Anki {
       
       for(PreActionPose::ActionType actionType : {PreActionPose::DOCKING, PreActionPose::ENTRY})
       {
-        GetCurrentPreActionPoses(poses, {actionType}, std::set<Vision::Marker::Code>(), obstacles, reachableFrom);
+        GetCurrentPreActionPoses(poses, *reachableFrom, {actionType}, std::set<Vision::Marker::Code>(), obstacles, reachableFrom, 0, true);
         for(auto & pose : poses) {
           // TODO: In computing poseID to pass to DrawPreDockPose, multiply object ID by the max number of
           //       preaction poses we expect to visualize per object. Currently, hardcoded to 48 (4 dock and
@@ -242,6 +329,7 @@ namespace Anki {
           _vizPreActionPoseHandles.emplace_back(_vizManager->DrawPreDockPose(poseID + GetID().GetValue()*48,
                                                                              pose.GetPose().GetWithRespectToOrigin(),
                                                                              PreActionPose::GetVisualizeColor(actionType)));
+          
           ++poseID;
         }
         
@@ -253,12 +341,19 @@ namespace Anki {
     
     void ActionableObject::EraseVisualization() const
     {
+      // Erase preActionPoses
       for(auto & preActionPoseHandle : _vizPreActionPoseHandles) {
         if(preActionPoseHandle != VizManager::INVALID_HANDLE) {
           _vizManager->EraseVizObject(preActionPoseHandle);
         }
       }
       _vizPreActionPoseHandles.clear();
+      
+      // Erase preActionLines
+      for(u32 id : _vizPreActionLineIDs) {
+        _vizManager->ErasePath(id);
+      }
+      _vizPreActionLineIDs.clear();
     }
     
     

@@ -44,27 +44,31 @@ namespace Anki {
       // (Aligned with center of marker)
       PreActionPose(ActionType type,
                     const Vision::KnownMarker* marker,
-                    const f32 distance);
+                    const f32 distance,
+                    const f32 length_mm);
       
       // Pose is aligned with normal (facing the marker), but offset by the given
       // vector. Note that a shift along the negative Y axis is equivalent to
       // the simple case above. (The marker is in the X-Z plane.
       PreActionPose(ActionType type,
                     const Vision::KnownMarker* marker,
-                    const Vec3f& offset);
+                    const Vec3f& offset,
+                    const f32 length_mm);
       
       // Specify arbitrary position relative to marker
       // poseWrtMarker's parent should be the marker's pose.
       PreActionPose(ActionType type,
                     const Vision::KnownMarker* marker,
-                    const Pose3d&  poseWrtMarker);
+                    const Pose3d&  poseWrtMarker,
+                    const f32 length_mm);
       
       // For creating a pre-action pose in its current position, given the
       // canonical pre-action pose and the currennt pose of its marker's
       // parent. Probably not generally useful, but used by ActionableObject.
       PreActionPose(const PreActionPose& canonicalPose,
                     const Pose3d& markerParentPose,
-                    const f32 offset_mm = 0);
+                    const f32 length_mm,
+                    const f32 offset_mm);
 
       // Copy constructor
       PreActionPose(const PreActionPose& other);
@@ -93,6 +97,8 @@ namespace Anki {
       
       static const ColorRGBA& GetVisualizeColor(ActionType type);
       
+      f32 GetLineLength() const { return _preActionPoseLineLength_mm; }
+      
     protected:
       
       void SetHeightTolerance();
@@ -104,6 +110,10 @@ namespace Anki {
       Pose3d _poseWrtMarkerParent;
       
       f32     _heightTolerance;
+      
+      // Length of the preActionLine, this is a line extending away from
+      // _poseWrtMarkerParent on which the preActionPose can fall
+      f32     _preActionPoseLineLength_mm;
       
     }; // class PreActionPose
     

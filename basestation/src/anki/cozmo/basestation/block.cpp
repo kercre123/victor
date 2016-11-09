@@ -38,13 +38,7 @@ namespace Cozmo {
   // angle: angle about z-axis (which runs vertically along marker)
   //     x: distance along marker horizontal
   //     y: distance along marker normal
-  const Pose2d BLOCK_PREDOCK_POSE_OFFSETS[] = {{0, 0, DEFAULT_PREDOCK_POSE_DISTANCE_MM},
-                                               {0, 0, CLOSE_PREDOCK_POSE_DISTANCE_MM}
-                                               //,{0, 0, 0.8f * DEFAULT_PREDOCK_POSE_DISTANCE_MM}
-                                               //,{0, 0, 0.6f * DEFAULT_PREDOCK_POSE_DISTANCE_MM}
-                                               //,{0.2f, 12, DEFAULT_PREDOCK_POSE_DISTANCE_MM}
-                                               //,{-0.2f, -12, DEFAULT_PREDOCK_POSE_DISTANCE_MM}
-  };
+  const Pose2d kBlockPreDockPoseOffset = {0, 0, DEFAULT_MIN_PREDOCK_POSE_DISTANCE_MM};
 
   
   //#define BLOCK_DEFINITION_MODE BLOCK_ENUM_VALUE_MODE
@@ -89,7 +83,7 @@ namespace Cozmo {
     const float halfDepth  = 0.5f * GetSize().x();
     
     // Flip preActionPoses are at the corners of the block so need to divided by root2 to get x and y dist
-    const float flipPreActionPoseDist = DEFAULT_FLIP_PREDOCK_POSE_DISTAMCE_MM / 1.414f;
+    const float flipPreActionPoseDist = FLIP_PREDOCK_POSE_DISTAMCE_MM / 1.414f;
     
     // SetSize() should have been called already
     CORETECH_ASSERT(halfDepth > 0.f && halfHeight > 0.f && halfWidth > 0.f);
@@ -145,24 +139,34 @@ namespace Cozmo {
       
       // Add docking and flipping preaction poses
       if (dockOrientations & (1 << rot)) {
-        for (const auto& v : BLOCK_PREDOCK_POSE_OFFSETS) {
-          Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {v.GetX() , -v.GetY(), -halfHeight}, &marker->GetPose());
+          Pose3d preDockPose(M_PI_2 + kBlockPreDockPoseOffset.GetAngle().ToFloat(),
+                             Z_AXIS_3D(),
+                             {kBlockPreDockPoseOffset.GetX() , -kBlockPreDockPoseOffset.GetY(), -halfHeight},
+                             &marker->GetPose());
+        
           preDockPose.RotateBy(Rvec);
-          AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose);
+          AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose, DEFAULT_PREDOCK_POSE_LINE_LENGTH_MM);
           
-          Pose3d preDockPose2(M_PI_2 + M_PI_4 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {flipPreActionPoseDist + halfWidth, -flipPreActionPoseDist, -halfHeight}, &marker->GetPose());
+          Pose3d preDockPose2(M_PI_2 + M_PI_4 + kBlockPreDockPoseOffset.GetAngle().ToFloat(),
+                              Z_AXIS_3D(),
+                              {flipPreActionPoseDist + halfWidth, -flipPreActionPoseDist, -halfHeight},
+                              &marker->GetPose());
+        
           preDockPose2.RotateBy(Rvec);
-          AddPreActionPose(PreActionPose::FLIPPING, marker, preDockPose2);
-        }
+          AddPreActionPose(PreActionPose::FLIPPING, marker, preDockPose2, 0);
+        
       }
       
       // Add rolling preaction poses
       if (rollOrientations & (1 << rot)) {
-        for (const auto& v : BLOCK_PREDOCK_POSE_OFFSETS) {
-          Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {v.GetX() , -v.GetY(), -halfHeight}, &marker->GetPose());
+          Pose3d preDockPose(M_PI_2 + kBlockPreDockPoseOffset.GetAngle().ToFloat(),
+                             Z_AXIS_3D(),
+                             {kBlockPreDockPoseOffset.GetX() , -kBlockPreDockPoseOffset.GetY(), -halfHeight},
+                             &marker->GetPose());
+        
           preDockPose.RotateBy(Rvec);
-          AddPreActionPose(PreActionPose::ROLLING, marker, preDockPose);
-        }
+          AddPreActionPose(PreActionPose::ROLLING, marker, preDockPose, DEFAULT_PREDOCK_POSE_LINE_LENGTH_MM);
+        
       }
     }
 
@@ -174,13 +178,13 @@ namespace Cozmo {
       // orientation of the block.
       Pose3d prePlaceOnGroundPose(M_PI_2, Z_AXIS_3D(),  Point3f{0.f, -DefaultPrePlaceOnGroundDistance, -halfHeight}, &marker->GetPose());
       prePlaceOnGroundPose.RotateBy(Rvec);
-      AddPreActionPose(PreActionPose::PLACE_ON_GROUND, marker, prePlaceOnGroundPose);
+      AddPreActionPose(PreActionPose::PLACE_ON_GROUND, marker, prePlaceOnGroundPose, 0);
       
       // Add a pre-placeRelative pose to each face, where the robot should be before
       // it approaches the block in order to place a carried object on top of or in front of it.
-      Pose3d prePlaceRelativePose(M_PI_2, Z_AXIS_3D(),  Point3f{0.f, -DEFAULT_PREDOCK_POSE_DISTANCE_MM, -halfHeight}, &marker->GetPose());
+      Pose3d prePlaceRelativePose(M_PI_2, Z_AXIS_3D(),  Point3f{0.f, -PLACE_RELATIVE_MIN_PREDOCK_POSE_DISTANCE_MM, -halfHeight}, &marker->GetPose());
       prePlaceRelativePose.RotateBy(Rvec);
-      AddPreActionPose(PreActionPose::PLACE_RELATIVE, marker, prePlaceRelativePose);
+      AddPreActionPose(PreActionPose::PLACE_RELATIVE, marker, prePlaceRelativePose, PLACE_RELATIVE_PREDOCK_POSE_LINE_LENGTH_MM);
     }
   
   

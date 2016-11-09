@@ -44,30 +44,34 @@ namespace Anki {
     CONSOLE_VAR(u32, kStackDockingMethod,  "DockingMethod(B:0 T:1 H:2)", (u8)DockingMethod::BLIND_DOCKING);
     
     // Helper function for computing the distance-to-preActionPose threshold,
-    // given how far robot is from actionObject
-    f32 ComputePreActionPoseDistThreshold(const Pose3d& preActionPose,
-                                          const ActionableObject* actionObject,
-                                          const Radians& preActionPoseAngleTolerance)
+    // given how far preActionPose is from actionObject
+    Point2f ComputePreActionPoseDistThreshold(const Pose3d& preActionPose,
+                                              const ActionableObject* actionObject,
+                                              const Radians& preActionPoseAngleTolerance)
     {
       assert(actionObject != nullptr);
       
       if(preActionPoseAngleTolerance > 0.f) {
-        // Compute distance threshold to preaction pose based on distance to the
+        // Compute distance threshold for preaction pose based on distance to the
         // object: the further away, the more slop we're allowed.
-        Pose3d objectWrtRobot;
-        if(false == actionObject->GetPose().GetWithRespectTo(preActionPose, objectWrtRobot)) {
+        Pose3d objectWrtPreActionPose;
+        if(false == actionObject->GetPose().GetWithRespectTo(preActionPose, objectWrtPreActionPose)) {
           PRINT_NAMED_WARNING("ComputePreActionPoseDistThreshold.ObjectPoseOriginProblem",
-                              "Could not get object %d's pose w.r.t. _robot.",
+                              "Could not get object %d's pose w.r.t. preActionPose.",
                               actionObject->GetID().GetValue());
           return -1.f;
         }
         
-        const f32 objectDistance = objectWrtRobot.GetTranslation().Length();
-        const f32 preActionPoseDistThresh = objectDistance * std::sin(preActionPoseAngleTolerance.ToFloat());
+        const f32 objectDistance = objectWrtPreActionPose.GetTranslation().Length();
+        const f32 thresh = objectDistance * std::sin(preActionPoseAngleTolerance.ToFloat());
         
-        PRINT_CH_INFO("Actions", "ComputePreActionPoseDistThreshold.DistThresh",
-                      "At a distance of %.1fmm, will use pre-dock pose distance threshold of %.1fmm",
-                      objectDistance, preActionPoseDistThresh);
+        // We don't care so much about the distance to the object (x threshold) so scale it
+        const Point2f preActionPoseDistThresh(thresh * PREACTION_POSE_X_THRESHOLD_SCALAR, thresh);
+        
+        PRINT_CH_INFO("Actions",
+                      "ComputePreActionPoseDistThreshold.DistThresh",
+                      "At a distance of %.1fmm, will use pre-dock pose distance threshold of (%.1fmm, %.1fmm)",
+                      objectDistance, preActionPoseDistThresh.x(), preActionPoseDistThresh.y());
         
         return preActionPoseDistThresh;
       } else {
@@ -279,6 +283,7 @@ namespace Anki {
                      preDockPoseDistOffsetX_mm,
                      (doNearPredockPoseCheck ? "checking if near pose" : "NOT checking if near pose"));
       dockObject->GetCurrentPreActionPoses(preActionPoses,
+                                           robot.GetPose(),
                                            {preActionPoseType},
                                            std::set<Vision::Marker::Code>(),
                                            obstacles,
@@ -362,7 +367,7 @@ namespace Anki {
                     currentXY.x(), currentXY.y(),
                     closestPoint.Length());
       
-      output.distThresholdUsed = ComputePreActionPoseDistThreshold(robot.GetPose(),
+      output.distThresholdUsed = ComputePreActionPoseDistThreshold(preActionPoses[closestIndex].GetPose(),
                                                                    dockObject,
                                                                    preActionPoseAngleTolerance);
       
@@ -394,6 +399,13 @@ namespace Anki {
 
           if(FLT_LT(std::abs(p.GetRotation().GetAngleAroundZaxis().ToFloat()), preActionPoseAngleTolerance.ToFloat()))
           {
+            PRINT_CH_INFO("Actions",
+                          "IsCloseEnoughToPreActionPose.AtClosestPreActionPose",
+                          "Robot is close enough to closest preAction pose (%.1fmm, %.1fmm) with threshold (%.1fmm, %.1fmm)",
+                          closestPoint.x(),
+                          closestPoint.y(),
+                          output.distThresholdUsed.x(),
+                          output.distThresholdUsed.y());
             output.robotAtClosestPreActionPose = true;
           }
         }

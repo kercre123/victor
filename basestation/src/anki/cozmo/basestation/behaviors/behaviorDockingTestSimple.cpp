@@ -70,6 +70,8 @@ namespace Anki {
     
     static const Point3f kObstacleSize_mm = {10, 10, 50};
     
+    static const u32 kExpectedNumPreDockPoses = 1;
+    
     static const BackpackLights passLights = {
       .onColors               = {{NamedColors::BLACK,NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN,NamedColors::BLACK}},
       .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
@@ -347,6 +349,7 @@ namespace Anki {
             std::vector<std::pair<Quad2f, ObjectID> > obstacles;
             robot.GetBlockWorld().GetObstacles(obstacles);
             aObject->GetCurrentPreActionPoses(preActionPoses,
+                                              robot.GetPose(),
                                               {(kRollInsteadOfPickup ? PreActionPose::ROLLING : PreActionPose::DOCKING)},
                                               {_initialVisionMarker.GetCode()},
                                               obstacles,
@@ -574,24 +577,26 @@ namespace Anki {
           std::vector<std::pair<Quad2f, ObjectID> > obstacles;
           robot.GetBlockWorld().GetObstacles(obstacles);
           aObject->GetCurrentPreActionPoses(preActionPoses,
+                                            robot.GetPose(),
                                             {(kRollInsteadOfPickup ? PreActionPose::ROLLING : PreActionPose::DOCKING)},
                                             {_initialVisionMarker.GetCode()},
                                             obstacles,
                                             nullptr);
           
-          if(preActionPoses.size() != 2)
+          if(preActionPoses.size() != kExpectedNumPreDockPoses)
           {
             // If we are rolling and we can't find any preAction poses it means the block was not rolled
             // so get preActionPoses for the marker we are currently seeing
             if(kRollInsteadOfPickup)
             {
               aObject->GetCurrentPreActionPoses(preActionPoses,
+                                                robot.GetPose(),
                                                 {(kRollInsteadOfPickup ? PreActionPose::ROLLING : PreActionPose::DOCKING)},
                                                 {_markerBeingSeen.GetCode()},
                                                 obstacles,
                                                 nullptr);
               
-              if(preActionPoses.size() != 2)
+              if(preActionPoses.size() != kExpectedNumPreDockPoses)
               {
                 PRINT_NAMED_ERROR("BehaviorDockingTest.Reset.RollingBadNumPreActionPoses",
                                   "Found %i preActionPoses for marker %s",
