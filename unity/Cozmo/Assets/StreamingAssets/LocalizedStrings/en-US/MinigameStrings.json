@@ -121,7 +121,7 @@
     "translation": "- Explore indoors in well lit spaces\n- Drive on flat surfaces\n- Be careful of falling off edges\n- Stay close to Cozmo for the best experience"
   },
   "droneMode.button.howToPlayConfirm": {
-    "translation": "Got it!"
+    "translation": "Back"
   },
   "droneMode.text.howToPlaySteering": {
     "translation": "Tilt your device to steer Cozmo left and right."
