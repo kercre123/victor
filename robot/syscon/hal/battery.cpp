@@ -3,6 +3,7 @@
 #include "nrf_gpio.h"
 #include "timer.h"
 #include "anki/cozmo/robot/spineData.h"
+#include "anki/cozmo/robot/logging.h"
 #include "messages.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
@@ -492,6 +493,10 @@ void Battery::manage()
           if (++ground_short > 30) {
             Battery::powerOff();
             NVIC_SystemReset();
+          }
+          else if (ground_short == 10)
+          {
+            AnkiEvent( 415, "charge_contact_shorted", 347, "%d", 1, NRF_ADC->RESULT);
           }
         } else {
           ground_short = 0;
