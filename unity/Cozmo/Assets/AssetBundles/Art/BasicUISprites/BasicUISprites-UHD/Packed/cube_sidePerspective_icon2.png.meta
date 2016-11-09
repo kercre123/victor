@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: 392e8a0e593694998a566366b9106cdf
-timeCreated: 1465627872
+guid: 45cc95ad23a96460d97bde66b25a81f7
+timeCreated: 1478567527
 licenseType: Pro
 TextureImporter:
   fileIDToRecycleName: {}
@@ -30,7 +30,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     filterMode: 1
-    aniso: 16
+    aniso: -1
     mipBias: -1
     wrapMode: 1
   nPOTScale: 0
@@ -52,7 +52,7 @@ TextureImporter:
     serializedVersion: 2
     sprites: []
     outline: []
-  spritePackingTag: 
+  spritePackingTag: BasicUISpritesUHDAtlas
   userData: 
   assetBundleName: 
   assetBundleVariant: 
