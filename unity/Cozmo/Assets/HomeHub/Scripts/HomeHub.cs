@@ -340,7 +340,11 @@ namespace Cozmo.HomeHub {
       challengeData.LoadPrefabData((ChallengePrefabData prefabData) => {
         // Set the GetOut animation to play when this minigame is destroyed
         _MinigameGetOutAnimTrigger = challengeData.GetOutAnimTrigger.Value;
-        StartCoroutine(ShowMinigameAfterHomeViewCloses(challengeData, prefabData));
+
+        // This can be null if the HomeHub is destroyed before this callback is executed
+        if (this != null) {
+          StartCoroutine(ShowMinigameAfterHomeViewCloses(challengeData, prefabData));
+        }
       });
     }
 
