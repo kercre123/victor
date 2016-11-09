@@ -243,7 +243,7 @@ namespace Simon {
       return audioEvent;
     }
 
-    protected override void ShowWinnerState(string overrideWinnerText = null, string footerText = "") {
+    protected override void ShowWinnerState(EndState currentEndState, string overrideWinnerText = null, string footerText = "") {
       if (IsSoloMode()) {
         if (SaveHighScore()) {
           overrideWinnerText = Localization.Get(LocalizationKeys.kSimonGameSoloNewHighScore);
@@ -252,7 +252,7 @@ namespace Simon {
           overrideWinnerText = Localization.Get(LocalizationKeys.kSimonGameSoloGameOver);
         }
       }
-      base.ShowWinnerState(overrideWinnerText, Localization.GetWithArgs(LocalizationKeys.kSimonGameTextPatternLength, _CurrentIDSequence.Count));
+      base.ShowWinnerState(currentEndState, overrideWinnerText, Localization.GetWithArgs(LocalizationKeys.kSimonGameTextPatternLength, _CurrentIDSequence.Count));
 
       // Set Final Music State
       GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Memory_Match_Fanfare);

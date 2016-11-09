@@ -303,5 +303,16 @@ namespace Cozmo.Minigame.CubePounce {
       _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToReturnedToTreads);
       _DisabledReactionaryBehaviors.Add(Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement);
     }
+
+    protected override void ShowWinnerState(EndState currentEndState, string overrideWinnerText = null, string footerText = "") {
+      base.ShowWinnerState(currentEndState, overrideWinnerText, footerText);
+
+      if (currentEndState == EndState.PlayerWin) {
+        SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoPlayerWinPoint);
+      }
+      else {
+        SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoCozmoWinPoint);
+      }
+    }
   }
 }

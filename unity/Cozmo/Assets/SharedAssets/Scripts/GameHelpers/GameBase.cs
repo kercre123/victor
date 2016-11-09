@@ -805,7 +805,7 @@ public abstract class GameBase : MonoBehaviour {
     if (_ShowScoreboardOnComplete) {
       UpdateScoreboard(didPlayerWin: _EndState == EndState.PlayerWin);
     }
-    ShowWinnerState();
+    ShowWinnerState(_EndState);
   }
 
   private void RaiseMiniGameLose() {
@@ -816,13 +816,13 @@ public abstract class GameBase : MonoBehaviour {
       UpdateScoreboard(didPlayerWin: _EndState == EndState.PlayerWin);
     }
 
-    ShowWinnerState();
+    ShowWinnerState(_EndState);
   }
 
   private void RaiseMiniGameTie() {
     _StateMachine.Stop();
     _EndState = EndState.Tie;
-    ShowWinnerState();
+    ShowWinnerState(_EndState);
   }
 
   private void UpdateScoreboard(bool didPlayerWin) {
@@ -834,7 +834,7 @@ public abstract class GameBase : MonoBehaviour {
     playerScoreboard.IsWinner = didPlayerWin;
   }
 
-  protected virtual void ShowWinnerState(string overrideWinnerText = null, string footerText = "") {
+  protected virtual void ShowWinnerState(EndState currentEndState, string overrideWinnerText = null, string footerText = "") {
     SoftEndGameRobotReset();
     _ResultsViewReached = true;
     ContextManager.Instance.AppFlash(playChime: true);
@@ -844,19 +844,19 @@ public abstract class GameBase : MonoBehaviour {
     if (overrideWinnerText != null) {
       winnerText = overrideWinnerText;
     }
-    else if (_EndState == EndState.PlayerWin) {
+    else if (currentEndState == EndState.PlayerWin) {
       winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWins, new object[] { DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName });
     }
-    else if (_EndState == EndState.CozmoWin) {
+    else if (currentEndState == EndState.CozmoWin) {
       winnerText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
     }
-    else if (_EndState == EndState.Tie) {
+    else if (currentEndState == EndState.Tie) {
       winnerText = Localization.Get(LocalizationKeys.kMinigameTextTie);
     }
 
     if (_ShowEndWinnerSlide) {
       winnerText = winnerText.Replace("\n", " ");
-      SharedMinigameView.ShowWinnerStateSlide(_EndState == EndState.PlayerWin, winnerText, footerText);
+      SharedMinigameView.ShowWinnerStateSlide(currentEndState == EndState.PlayerWin, winnerText, footerText);
     }
     else {
       SharedMinigameView.InfoTitleText = winnerText;
