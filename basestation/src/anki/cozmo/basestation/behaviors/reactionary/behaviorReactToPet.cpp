@@ -31,7 +31,8 @@ CONSOLE_VAR(f32, kReactToPetCooldown_s, kConsoleGroup, 60.0f);
 CONSOLE_VAR(f32, kReactToPetMinTime_s, kConsoleGroup, 10.0f);
 CONSOLE_VAR(f32, kReactToPetMaxTime_s, kConsoleGroup, 15.0f);
 CONSOLE_VAR(s32, kReactToPetSneezePercent, kConsoleGroup, 20);
-
+CONSOLE_VAR(s32, kReactToPetNumTimesObserved, kConsoleGroup, 3);
+CONSOLE_VAR(f32, kReactToPetTrackUpdateTimeout, kConsoleGroup, 3.0f);
 } // end namespace
   
 using namespace Anki::Vision;
@@ -82,10 +83,8 @@ void BehaviorReactToPet::UpdateReactedTo(const Robot& robot)
 {
   const auto & petWorld = robot.GetPetWorld();
   for (const auto & it : petWorld.GetAllKnownPets()) {
-    auto petID = it.first;
-    if (petID >= 0) {
-      _reactedTo.insert(petID);
-    }
+    const auto petID = it.first;
+    _reactedTo.insert(petID);
   }
 }
   
@@ -137,17 +136,19 @@ bool BehaviorReactToPet::ShouldComputationallySwitch(const Robot &robot)
   const auto & petWorld = robot.GetPetWorld();
   const auto & pets = petWorld.GetAllKnownPets();
   
-  for (const auto & pair : pets) {
-    const auto petID = pair.first;
-    if (petID < 0) {
-      PRINT_TRACE("ReactToPet.ShouldSwitch.IgnoreTemporary", "Ignore temporary petID %d", petID);
-      continue;
-    }
+  for (const auto & it : pets) {
+    const auto petID = it.first;
     if (_reactedTo.find(petID) != _reactedTo.end()) {
       PRINT_TRACE("ReactToPet.ShouldSwitch.AlreadyReacted", "Already reacted to petID %d", petID);
       continue;
     }
-    PRINT_TRACE("ReactToPet.ShouldSwitch.FoundTarget", "Behavior should switch for petID %d", petID);
+    const auto & pet = it.second;
+    const auto numTimesObserved = pet.GetNumTimesObserved();
+    if (numTimesObserved < kReactToPetNumTimesObserved) {
+      PRINT_TRACE("ReactToPet.ShouldSwitch.NumTimesObserved", "PetID %d does not meet observation threshold (%d < %d)",
+                  petID, numTimesObserved, kReactToPetNumTimesObserved);
+      continue;
+    }
     _targets.insert(petID);
   }
   
@@ -160,7 +161,7 @@ bool BehaviorReactToPet::ShouldComputationallySwitch(const Robot &robot)
 //
 Result BehaviorReactToPet::InitInternalReactionary(Robot& robot)
 {
-  PRINT_TRACE("ReactToPet.Init.BeginIteration", "Begin iteration");
+  PRINT_INFO("ReactToPet.Init.BeginIteration", "Begin iteration");
   BeginIteration(robot);
   return RESULT_OK;
 }
@@ -170,10 +171,25 @@ Result BehaviorReactToPet::InitInternalReactionary(Robot& robot)
 //
 IBehavior::Status BehaviorReactToPet::UpdateInternal(Robot& robot)
 {
+  //
+  // If target disappears during iteration, end iteration immediately.
+  // This can happen if (e.g.) pet disappears during transition from previous
+  // behavior.
+  //
+  if (_target == UnknownFaceID) {
+    PRINT_TRACE("ReactToPet.Update.MissingTarget", "Missing target during update");
+    EndIteration(robot);
+    return Status::Complete;
+  }
+  
+  //
+  // If we have reached time limit, end the iteration.  This is the normal
+  // end condition for each iteration.
+  //
   if (_endReactionTime_s > NEVER) {
     const float currTime_s = GetCurrentTimeInSeconds();
     if (_endReactionTime_s < currTime_s) {
-      PRINT_TRACE("ReactToPet.Update.EndIteration", "End iteration");
+      PRINT_TRACE("ReactToPet.Update.ReactionTimeExpired", "Reaction time has expired");
       EndIteration(robot);
       return Status::Complete;
     }
@@ -267,15 +283,26 @@ void BehaviorReactToPet::BeginIteration(Robot& robot)
   //
   // If playing animation takes too long, the original petXY may be pushed out of pose history.
   // A better version would rescan pet world after animation has completed.
-
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
-  action->AddAction(new TurnTowardsImagePointAction(robot, petXY, pet->GetTimeStamp()));
-  action->AddAction(new TriggerAnimationAction(robot, trigger));
-  action->AddAction(new TrackPetFaceAction(robot, Vision::PetType::Unknown));
+  //
+  auto turnAction = new TurnTowardsImagePointAction(robot, petXY, pet->GetTimeStamp());
+  auto animAction = new TriggerAnimationAction(robot, trigger);
+  auto trackAction = new TrackPetFaceAction(robot, Vision::PetType::Unknown);
+  
+  // Limit the amount of time that tracker will run without finding a target.
+  // If pets are visible after animation, behavior will run until ended by update method.
+  // If no pets are visible, behavior will end after tracking timeout.
+  trackAction->SetUpdateTimeout(kReactToPetTrackUpdateTimeout);
+  
+  auto compoundAction = new CompoundActionSequential(robot);
+  compoundAction->AddAction(turnAction);
+  compoundAction->AddAction(animAction);
+  compoundAction->AddAction(trackAction);
+  
+  // Set time limit on reaction sequence
+  _endReactionTime_s = endTime_s;
   
   // Begin reaction sequence
-  _endReactionTime_s = endTime_s;
-  StartActing(action, &BehaviorReactToPet::EndIteration);
+  StartActing(compoundAction, &BehaviorReactToPet::EndIteration);
 }
 
 //
