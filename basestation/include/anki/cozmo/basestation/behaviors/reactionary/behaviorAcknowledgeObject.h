@@ -68,13 +68,14 @@ private:
   
   void BeginIteration(Robot& robot);
   void LookForStackedCubes(Robot& robot);
+  void BackupToSeeGhostCube(Robot& robot);
   void FinishIteration(Robot& robot);
   
   
   // helper function to set the ghost object's pose
   void SetGhostBlockPoseRelObject(Robot& robot, const ObservableObject* obj, float zOffset);
   // helper function to check stack visibility
-  bool CheckIfGhostBlockVisible(Robot& robot, const ObservableObject* obj, float zOffset);
+  bool CheckIfGhostBlockVisible(Robot& robot, const ObservableObject* obj, float zOffset, bool& shouldRetry);
   // helper function for looking at ghost block location
   template<typename T>
   void LookAtGhostBlock(Robot& robot, void(T::*callback)(Robot&));
@@ -89,6 +90,8 @@ private:
   bool _shouldStart = false;
   
   bool _shouldCheckBelowTarget;
+  
+  bool _shouldBackupToSeeAbove;
   
 }; // class BehaviorAcknowledgeObject
 

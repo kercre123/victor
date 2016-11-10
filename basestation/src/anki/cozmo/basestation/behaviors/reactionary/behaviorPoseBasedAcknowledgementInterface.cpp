@@ -330,6 +330,16 @@ bool IBehaviorPoseBasedAcknowledgement::GetBestTarget(const Robot& robot, s32& b
 
   if( targets.size() == 1 ) {
     bestTarget = *targets.begin();
+    
+    auto reactionDataIter = _reactionData.find(bestTarget);
+    ASSERT_NAMED(reactionDataIter != _reactionData.end(), "IBehaviorPoseBasedAcknowledgement.BadBestTargetId");
+    
+    if(false == reactionDataIter->second.lastPose.GetWithRespectTo(robot.GetPose(), poseWrtRobot))
+    {
+      // no transform, probably a different origin
+      return false;
+    }
+    
     PRINT_NAMED_DEBUG((GetName() + ".GetBestTarget.SinglePose").c_str(),
                       "returning the only valid target id: %d",
                       bestTarget);
