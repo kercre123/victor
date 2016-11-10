@@ -34,22 +34,17 @@ MonoBehaviour:
   _LiftTurnAccel_radPerSec2: 20
   _StartingLiftHeight: 0.25
   _LiftCubeButtonData:
-    _ButtonIcon: {fileID: 21300000, guid: 8d9d491aef08b4227a6f50f632e5bd1d, type: 3}
-    _ButtonText: PICK UP
+    _ButtonTextLocKey: droneMode.button.action.liftCube
     _ActionUnlockId: 6
   _RollCubeButtonData:
-    _ButtonIcon: {fileID: 21300000, guid: 81cf534c428d445d9bcd1c5adfdd64c0, type: 3}
-    _ButtonText: ROLL
+    _ButtonTextLocKey: droneMode.button.action.rollCube
     _ActionUnlockId: 9
   _DropCubeButtonData:
-    _ButtonIcon: {fileID: 21300000, guid: 8d9d491aef08b4227a6f50f632e5bd1d, type: 3}
-    _ButtonText: DROP
+    _ButtonTextLocKey: droneMode.button.action.dropCube
     _ActionUnlockId: 0
   _StackCubeButtonData:
-    _ButtonIcon: {fileID: 21300000, guid: e1530e756ef384f82a0e0a2a8b2c3e59, type: 3}
-    _ButtonText: STACK
+    _ButtonTextLocKey: droneMode.button.action.stackCube
     _ActionUnlockId: 10
   _SayNameButtonData:
-    _ButtonIcon: {fileID: 21300000, guid: 15f615a99ddb34a129cfc2beec3e3b38, type: 3}
-    _ButtonText: SAY NAME
+    _ButtonTextLocKey: droneMode.button.action.sayName
     _ActionUnlockId: 0

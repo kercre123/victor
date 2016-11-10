@@ -123,6 +123,21 @@
   "droneMode.button.howToPlayConfirm": {
     "translation": "Got it!"
   },
+  "droneMode.button.action.sayName": {
+    "translation": "Say Name"
+  },
+  "droneMode.button.action.liftCube": {
+    "translation": "Lift Cube"
+  },
+  "droneMode.button.action.dropCube": {
+    "translation": "Drop Cube"
+  },
+  "droneMode.button.action.stackCube": {
+    "translation": "Stack Cube"
+  },
+  "droneMode.button.action.rollCube": {
+    "translation": "Roll Cube"
+  },
   "droneMode.text.howToPlaySteering": {
     "translation": "Tilt your device to steer Cozmo left and right."
   },

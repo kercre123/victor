@@ -4,13 +4,8 @@ namespace Cozmo {
     [System.Serializable]
     public class DroneModeActionData {
       [SerializeField]
-      private Sprite _ButtonIcon;
-      public Sprite ButtonIcon { get { return _ButtonIcon; } }
-
-      // TODO: Use localized strings / localization keys
-      [SerializeField]
-      private string _ButtonText;
-      public string ButtonText { get { return _ButtonText; } }
+      private string _ButtonTextLocKey;
+      public string ButtonTextLocKey { get { return _ButtonTextLocKey; } }
 
       [SerializeField]
       private Anki.Cozmo.UnlockId _ActionUnlockId = Anki.Cozmo.UnlockId.Invalid;
