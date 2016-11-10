@@ -87,14 +87,17 @@ void BehaviorAcknowledgeObject::BeginIteration(Robot& robot)
 {
   _currTarget.UnSet();  
   s32 bestTarget = 0;
-  if( GetBestTarget(robot, bestTarget) ) {
+  Pose3d poseWrtRobot;
+  if( GetBestTarget(robot, bestTarget, poseWrtRobot) ) {
     _currTarget = bestTarget;
     ASSERT_NAMED(_currTarget.IsSet(), "BehaviorAcknowledgeObject.GotUnsetTarget");
   }
   else {
     return;
   }
-  _shouldCheckBelowTarget = true;
+  
+  // Only bother checking below the robot if the object is significantly above the robot
+  _shouldCheckBelowTarget = poseWrtRobot.GetTranslation().z() > ROBOT_BOUNDING_Z * 0.5f;
 
   TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(robot, _currTarget,
                                                                     _params.maxTurnAngle_rad);
@@ -117,7 +120,19 @@ void BehaviorAcknowledgeObject::BeginIteration(Robot& robot)
     action->AddAction(new TriggerLiftSafeAnimationAction(robot, _params.reactionAnimTrigger));
   }
 
-  StartActing(action, &BehaviorAcknowledgeObject::LookForStackedCubes);
+  StartActing(action,
+              [this, &robot](ActionResult result)
+              {
+                if(result == ActionResult::SUCCESS)
+                {
+                  LookForStackedCubes(robot);
+                }
+                else
+                {
+                  // If we don't successfully turn towards the cube, then just finish
+                  FinishIteration(robot);
+                }
+              });
 }
 
 void BehaviorAcknowledgeObject::LookForStackedCubes(Robot& robot)
@@ -245,12 +260,16 @@ void BehaviorAcknowledgeObject::LookAtGhostBlock(Robot& robot, void(T::*callback
 
 void BehaviorAcknowledgeObject::FinishIteration(Robot& robot)
 {
-  // inform parent class that we completed a reaction
-  RobotReactedToId(robot, _currTarget.GetValue());
-
-  BehaviorObjectiveAchieved(BehaviorObjective::ReactedAcknowledgedObject);
-  // move on to the next target, if there is one
-  BeginIteration(robot);
+  // Turn back towards the object we are reacting to and then continue
+  StartActing(new TurnTowardsObjectAction(robot, _currTarget, M_PI),
+              [this,&robot](){
+                // inform parent class that we completed a reaction
+                RobotReactedToId(robot, _currTarget.GetValue());
+                
+                BehaviorObjectiveAchieved(BehaviorObjective::ReactedAcknowledgedObject);
+                // move on to the next target, if there is one
+                BeginIteration(robot);
+              });
 }
  
 void BehaviorAcknowledgeObject::StopInternalAcknowledgement(Robot& robot)
