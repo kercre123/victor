@@ -35,6 +35,7 @@ namespace Simon {
     public float TimeBetweenBeats { get { return _Config.TimeBetweenBeat_Sec.Evaluate(_CurrentSequenceLength); } }
 
     public float TimeWaitFirstBeat { get { return _Config.TimeWaitFirstBeat; } }
+    public float CountDownTime_Sec { get { return _Config.CountDownTimeSec; } }
 
     private int _CurrentSequenceLength;
 

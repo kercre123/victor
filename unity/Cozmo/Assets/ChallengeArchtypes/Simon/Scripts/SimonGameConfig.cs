@@ -19,6 +19,7 @@ public class SimonGameConfig : MinigameConfigBase {
   public float RotateSecScan = 2.0f;
 
   public float ScanTimeoutSec = 30.0f;
+  public float CountDownTimeSec = 2.25f;
 
   public int MaxLivesCozmo = 3;
   public int MaxLivesHuman = 3;

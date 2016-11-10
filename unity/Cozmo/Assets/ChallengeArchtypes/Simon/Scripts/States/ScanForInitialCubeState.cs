@@ -241,7 +241,7 @@ namespace Simon {
 
     private void SetScanPhase(ScanPhase nextState) {
       if (_ScanPhase != nextState && _CurrentRobot != null &&
-          _ShowCozmoCubesSlide != null && _Game != null && _Game.SharedMinigameView != null) {
+          _Game != null && _Game.SharedMinigameView != null) {
         // clean up previous
         if (_ScanPhase == ScanPhase.Error) {
           InitShowCubesSlide();
@@ -267,7 +267,9 @@ namespace Simon {
           _Game.SharedMinigameView.EnableContinueButton(false);
           const float kLeftScanDeg = 30.0f;
           _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * kLeftScanDeg, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2, HandleTurnFinished);
-          _ShowCozmoCubesSlide.RotateCozmoImageTo(kLeftScanDeg, _RotateSecScan);
+          if (_ShowCozmoCubesSlide != null) {
+            _ShowCozmoCubesSlide.RotateCozmoImageTo(kLeftScanDeg, _RotateSecScan);
+          }
         }
         else if (nextState == ScanPhase.ScanRight) {
           _Game.SharedMinigameView.EnableContinueButton(false);
@@ -275,11 +277,15 @@ namespace Simon {
           const float kRightScanDeg = -60.0f;
           _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * kRightScanDeg, SimonGame.kTurnSpeed_rps * 2, SimonGame.kTurnAccel_rps2, HandleTurnFinished);
           // Half of the total Degrees cozmo rotates since these are absolute          
-          _ShowCozmoCubesSlide.RotateCozmoImageTo(kRightScanDeg / 2.0f, _RotateSecScan);
+          if (_ShowCozmoCubesSlide != null) {
+            _ShowCozmoCubesSlide.RotateCozmoImageTo(kRightScanDeg / 2.0f, _RotateSecScan);
+          }
         }
         else if (nextState == ScanPhase.Stopped) {
           // Rotate towards center
-          _ShowCozmoCubesSlide.RotateCozmoImageTo(0.0f, _RotateSecScan);
+          if (_ShowCozmoCubesSlide != null) {
+            _ShowCozmoCubesSlide.RotateCozmoImageTo(0.0f, _RotateSecScan);
+          }
           LightCube centerCube = (_Game as SimonGame).GetCubeBySortedIndex(1);
           if (centerCube != null) {
             _CurrentRobot.TurnTowardsObject(centerCube, false);

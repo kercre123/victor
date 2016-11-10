@@ -14,7 +14,6 @@ namespace Simon {
     private float _LastSequenceTime = -1;
 
     private PlayerType _NextPlayer;
-    private const float _kMaxCountdown_Sec = 2.0f;
     private const float _kBlinkTime_Sec = 0.15f;
     private bool _InCountdown = true;
     private Coroutine _CountdownCoroutine = null;
@@ -53,7 +52,7 @@ namespace Simon {
         _GameInstance.StartCycleCube(cubeId, color_cycle, _kBlinkTime_Sec);
       }
       // wait for on/off time
-      yield return new WaitForSeconds(_kMaxCountdown_Sec);
+      yield return new WaitForSeconds(_GameInstance.CountDownTime_Sec);
       foreach (int cubeId in _GameInstance.CubeIdsForGame) {
         _GameInstance.StopCycleCube(cubeId);
       }
