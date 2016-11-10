@@ -14,6 +14,8 @@
 
 #include "backpackLightData.h"
 
+//#define DISABLE_LIGHTS
+
 using namespace Anki::Cozmo;
 
 extern GlobalDataToBody g_dataToBody;
@@ -67,10 +69,17 @@ void Backpack::init()
   setLightsMiddle(BPL_IMPULSE, BackpackLights::disconnected);
   
   // Clear out backpack leds
+  #ifndef DISABLE_LIGHTS
   nrf_gpio_cfg_input(PIN_LED1, NRF_GPIO_PIN_NOPULL);
   nrf_gpio_cfg_input(PIN_LED2, NRF_GPIO_PIN_NOPULL);
   nrf_gpio_cfg_input(PIN_LED3, NRF_GPIO_PIN_NOPULL);
   nrf_gpio_cfg_input(PIN_LED4, NRF_GPIO_PIN_NOPULL);
+  #else
+  nrf_gpio_cfg_output(PIN_LED1);
+  nrf_gpio_cfg_output(PIN_LED2);
+  nrf_gpio_cfg_output(PIN_LED3);
+  nrf_gpio_cfg_output(PIN_LED4);
+  #endif
 }
 
 void Backpack::manage() {
@@ -215,10 +224,12 @@ void Backpack::detachTimer() {
   NRF_TIMER1->TASKS_STOP = 1;
 
   // Clear out backpack leds
+  #ifndef DISABLE_LIGHTS
   nrf_gpio_cfg_input(PIN_LED1, NRF_GPIO_PIN_NOPULL);
   nrf_gpio_cfg_input(PIN_LED2, NRF_GPIO_PIN_NOPULL);
   nrf_gpio_cfg_input(PIN_LED3, NRF_GPIO_PIN_NOPULL);
   nrf_gpio_cfg_input(PIN_LED4, NRF_GPIO_PIN_NOPULL);
+  #endif
 }
 
 extern "C" void TIMER1_IRQHandler(void) { 
@@ -226,10 +237,12 @@ extern "C" void TIMER1_IRQHandler(void) {
   static int active_channel = 0;
 
   // Turn off lights
+  #ifndef DISABLE_LIGHTS
   nrf_gpio_cfg_input(PIN_LED1, NRF_GPIO_PIN_NOPULL);
   nrf_gpio_cfg_input(PIN_LED2, NRF_GPIO_PIN_NOPULL);
   nrf_gpio_cfg_input(PIN_LED3, NRF_GPIO_PIN_NOPULL);
   nrf_gpio_cfg_input(PIN_LED4, NRF_GPIO_PIN_NOPULL);
+  #endif
 
   // This just clears out lights
   NRF_TIMER1->EVENTS_COMPARE[0] = 0;
@@ -252,11 +265,13 @@ extern "C" void TIMER1_IRQHandler(void) {
     
     if (delta > TIMER_MINIMUM) {
       // Turn on our light
+      #ifndef DISABLE_LIGHTS
       nrf_gpio_pin_clear(currentChannel->cathode);
       nrf_gpio_pin_set(currentChannel->anode);
 
       nrf_gpio_cfg_output(currentChannel->cathode);
       nrf_gpio_cfg_output(currentChannel->anode);
+      #endif
     }
   }
 }

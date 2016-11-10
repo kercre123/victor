@@ -415,16 +415,8 @@ static void OTARemoteDevice(const uint32_t id) {
   ota_send_next_block();
 }
 
-void uesb_event_handler(uint32_t flags)
+void uesb_event_handler(uesb_payload_t& rx_payload)
 {
-  // Only respond to receive interrupts
-  if(~flags & UESB_INT_RX_DR_MSK) {
-    return ;
-  }
-
-  uesb_payload_t rx_payload;
-  uesb_read_rx_payload(&rx_payload);
-
   switch (radioState) {
   case RADIO_OTA:
     // Send noise and return to pairing
@@ -800,7 +792,7 @@ extern "C" void RTC0_IRQHandler(void) {
 
     uesb_start();
   }
-  
+
   if (NRF_RTC0->EVENTS_COMPARE[ROTATE_COMPARE]) {
     NRF_RTC0->EVENTS_COMPARE[ROTATE_COMPARE] = 0;
     NRF_RTC0->CC[ROTATE_COMPARE] += ROTATE_PERIOD;
