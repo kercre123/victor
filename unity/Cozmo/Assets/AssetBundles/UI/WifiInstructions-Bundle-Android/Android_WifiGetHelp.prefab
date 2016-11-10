@@ -62,7 +62,7 @@ GameObject:
   - 222: {fileID: 22299204}
   - 114: {fileID: 11427416}
   m_Layer: 5
-  m_Name: WifiGetHelp
+  m_Name: Android_WifiGetHelp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -187,6 +187,7 @@ MonoBehaviour:
   m_Text: '#wifi.gethelp.title'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11417202
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -222,6 +223,7 @@ MonoBehaviour:
   m_Text: '#wifi.gethelp.footer'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11425038
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -264,8 +266,8 @@ MonoBehaviour:
   _DASEventViewType: 0
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
+  _LayerPriority: 0
   DimBackground: 0
-  DimBackgroundPrefabOverride: {fileID: 0}
   _OpenAudioEvent:
     _Event: Invalid
     _EventType: GenericEvent
@@ -331,6 +333,7 @@ MonoBehaviour:
   m_Text: '#wifi.gethelp.description'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11461068
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -366,6 +369,7 @@ MonoBehaviour:
   m_Text: '#wifi.gethelp.description2'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11468268
 MonoBehaviour:
   m_ObjectHideFlags: 1

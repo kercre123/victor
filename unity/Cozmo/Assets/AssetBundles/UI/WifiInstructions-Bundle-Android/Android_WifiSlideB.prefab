@@ -60,7 +60,7 @@ GameObject:
   m_Component:
   - 224: {fileID: 22478418}
   m_Layer: 5
-  m_Name: WifiSlideB
+  m_Name: Android_WifiSlideB
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -128,6 +128,7 @@ MonoBehaviour:
   m_Text: '#wifiStrings.Instructions.SlideB.altCopy'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11495702
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -163,6 +164,7 @@ MonoBehaviour:
   m_Text: '#wifiStrings.Instructions.SlideB'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!222 &22270594
 CanvasRenderer:
   m_ObjectHideFlags: 1

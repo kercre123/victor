@@ -9,7 +9,7 @@ GameObject:
   m_Component:
   - 224: {fileID: 22470706}
   m_Layer: 5
-  m_Name: WifiSlide4A
+  m_Name: Android_WifiSlide4A
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -123,7 +123,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.11764706, g: 0.5058824, b: 0.78431374, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -145,6 +145,7 @@ MonoBehaviour:
   m_Text: '#wifiStrings.Instructions.Slide3.5'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11481134
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -185,7 +186,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.11764706, g: 0.5058824, b: 0.78431374, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -207,6 +208,7 @@ MonoBehaviour:
   m_Text: '#wifiStrings.Instructions.Slide3.5altCopy'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!222 &22222622
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -286,8 +288,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -525, y: -223}
-  m_SizeDelta: {x: 1331, y: 348}
+  m_AnchoredPosition: {x: -508, y: -287}
+  m_SizeDelta: {x: 1412, y: 477}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22484620
 RectTransform:
@@ -304,7 +306,7 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -525, y: 197}
+  m_AnchoredPosition: {x: -548.5, y: 197}
   m_SizeDelta: {x: 1331, y: 320}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22497658

@@ -134,8 +134,15 @@ public class StartupManager : MonoBehaviour {
     _IsDebugBuild = true;
 
     string resolutionVariant = GetVariantBasedOnScreenResolution();
+
+    // platform independent, resolution dependent
     assetBundleManager.AddActiveVariant(resolutionVariant);
+
+    // platform dependent, resolution dependent
     assetBundleManager.AddActiveVariant(GetVariantBasedOnPlatform() + "-" + resolutionVariant);
+
+    // platform dependent only (usually prefabs)
+    assetBundleManager.AddActiveVariant(GetVariantBasedOnPlatform());
 
     yield return LoadDebugAssetBundle(assetBundleManager, _IsDebugBuild);
 
