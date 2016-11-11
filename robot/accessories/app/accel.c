@@ -75,7 +75,8 @@ void SimpleTap(u8 readings)
   _radioOut[3] = _readings[3];
   _radioOut[4] = _taps;
   
-  _radioOut[8] = ADCDATH;   // Battery volts, where 255=3.6V
+  _radioOut[8] = ADCDATL;   // Battery volts, where 255=3.6V - but R16 is so high it breaks the ADC
+  _radioOut[9] = ADCDATH;   // For nRF24 compatibility - nRF31 is right-justified so this stays 0
 }
 
 // Drain the entire accelerometer FIFO into an outbound packet
