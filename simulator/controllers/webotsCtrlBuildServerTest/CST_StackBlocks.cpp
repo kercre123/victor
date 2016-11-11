@@ -98,7 +98,7 @@ namespace Anki {
             m.position = QueueActionPosition::NOW;
             m.idTag = 1;
             // Pickup object 0
-            m.action.Set_pickupObject(ExternalInterface::PickupObject(0, motionProfile3, 0, false, true, false));
+            m.action.Set_pickupObject(ExternalInterface::PickupObject(0, motionProfile3, 0, false, true, false, true));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -123,7 +123,7 @@ namespace Anki {
             // Wait a few seconds to see the block behind the one we just picked up
             m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::Wait(1));
             // Place object 0 on object 1
-            m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PlaceOnObject(1, motionProfile3, 0, false, true, false));
+            m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PlaceOnObject(1, motionProfile3, 0, false, true, false, true));
             ExternalInterface::MessageGameToEngine message;
             
             message.Set_QueueCompoundAction(m);

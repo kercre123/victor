@@ -104,7 +104,7 @@ namespace Anki {
             m.position = QueueActionPosition::NOW;
             m.idTag = 9;
             // Pickup object 0
-            m.action.Set_pickupObject(ExternalInterface::PickupObject(0, motionProfile, 0, false, true, false));
+            m.action.Set_pickupObject(ExternalInterface::PickupObject(0, motionProfile, 0, false, true, false, true));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -156,7 +156,7 @@ namespace Anki {
             m.idTag = 11;
             m.numRetries = 3;
             // Roll object 0
-            m.action.Set_rollObject(ExternalInterface::RollObject(0, motionProfile, 0, false, false, true, false));
+            m.action.Set_rollObject(ExternalInterface::RollObject(0, motionProfile, 0, false, false, true, false, true));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -188,7 +188,7 @@ namespace Anki {
             m.numRetries = 3;
             // Pickup object 1
             PRINT_NAMED_INFO("CST_DockActions.Stack", "Picking up block %i", objects.back());
-            m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PickupObject(objects.back(), motionProfile, 0, false, true, false));
+            m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PickupObject(objects.back(), motionProfile, 0, false, true, false, true));
             _block1 = _lastObjectId;
             // Wait a few seconds to see the block behind the one we just picked up
             m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::Wait(2));
@@ -222,7 +222,7 @@ namespace Anki {
             m.numRetries = 3;
             // Place object 1 on object 2
             PRINT_NAMED_INFO("CST_DockActions.SeenNextBlock", "Placing carried block %i on block %i", GetCarryingObjectID(), objects.back());
-            m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PlaceOnObject(objects.back(), motionProfile, 0, false, true, false));
+            m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PlaceOnObject(objects.back(), motionProfile, 0, false, true, false, true));
             _block2 = objects.back();
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueCompoundAction(m);
@@ -282,7 +282,7 @@ namespace Anki {
         m.numRetries = 3;
         // Pickup object 1
         PRINT_NAMED_INFO("CST_DockActions.Stack", "Picking up block %i", objects.back());
-        m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PickupObject(objects.back(), motionProfile, 0, false, true, false));
+        m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PickupObject(objects.back(), motionProfile, 0, false, true, false, true));
         _block1 = _lastObjectId;
         // Wait a few seconds to see the block behind the one we just picked up
         m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::Wait(2));

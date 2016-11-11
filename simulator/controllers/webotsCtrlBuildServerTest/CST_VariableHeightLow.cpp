@@ -96,7 +96,7 @@ namespace Anki {
             auto objectsWithType = GetAllObjectIDsByFamilyAndType(ObjectFamily::LightCube, ObjectType::Block_LIGHTCUBE1);
             CST_ASSERT(objectsWithType.size()==1, "Expecting 1 object of type LIGHTCUBE1");
             _id = objectsWithType.front();
-            m.action.Set_pickupObject(ExternalInterface::PickupObject(_id, motionProfile5, 0, false, true, false));
+            m.action.Set_pickupObject(ExternalInterface::PickupObject(_id, motionProfile5, 0, false, true, false, true));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
