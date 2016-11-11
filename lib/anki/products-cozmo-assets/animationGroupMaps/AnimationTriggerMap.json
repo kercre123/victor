@@ -966,11 +966,11 @@
     },
     {
       "CladEvent": "RequestGameMemoryMatchInitial0",
-      "AnimName": "requestGame_speedTap_initial"
+      "AnimName": "ag_rtpmemorymatch_request"
     },
     {
       "CladEvent": "RequestGameMemoryMatchInitial1",
-      "AnimName": "requestGame_speedTap_initial"
+      "AnimName": "ag_rtpmemorymatch_request"
     },
     {
       "CladEvent": "RequestGameMemoryMatchPreDrive0",

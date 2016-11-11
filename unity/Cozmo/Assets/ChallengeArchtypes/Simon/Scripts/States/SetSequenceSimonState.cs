@@ -25,7 +25,8 @@ namespace Simon {
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as SimonGame;
-      _SequenceLength = _GameInstance.GetNewSequenceLength(_NextPlayer);
+      bool SequenceGrown;
+      _SequenceLength = _GameInstance.GetNewSequenceLength(_NextPlayer, out SequenceGrown);
       _GameInstance.GenerateNewSequence(_SequenceLength);
       _CurrentSequence = _GameInstance.GetCurrentSequence();
 
@@ -38,7 +39,9 @@ namespace Simon {
       _InCountdown = true;
       // Start Sequence after audio completes
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Mm_Pattern_Start);
-      _GameInstance.SharedMinigameView.PlayBannerAnimation(Localization.Get(LocalizationKeys.kSimonGameLabelNextRound), null, 0.0f, false);
+      if (SequenceGrown) {
+        _GameInstance.SharedMinigameView.PlayBannerAnimation(Localization.Get(LocalizationKeys.kSimonGameLabelNextRound), null, 0.0f, false);
+      }
       if (_CountdownCoroutine == null) {
         _CountdownCoroutine = _GameInstance.StartCoroutine(CountdownCoroutine());
       }
@@ -52,12 +55,13 @@ namespace Simon {
         _GameInstance.StartCycleCube(cubeId, color_cycle, _kBlinkTime_Sec);
       }
       // wait for on/off time
-      yield return new WaitForSeconds(_GameInstance.CountDownTime_Sec);
+      float cycleTime = _GameInstance.Config.CountDownTimeSec - _GameInstance.Config.HoldLightsAfterCountDownTimeSec;
+      yield return new WaitForSeconds(cycleTime);
       foreach (int cubeId in _GameInstance.CubeIdsForGame) {
         _GameInstance.StopCycleCube(cubeId);
       }
       _GameInstance.SetCubeLightsDefaultOn();
-      yield return new WaitForSeconds(_kBlinkTime_Sec);
+      yield return new WaitForSeconds(_GameInstance.Config.HoldLightsAfterCountDownTimeSec);
       HandleCountDownDone();
       yield break;
     }

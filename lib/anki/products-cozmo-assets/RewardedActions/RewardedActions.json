@@ -1,6 +1,38 @@
 {
   "RewardedActions": [
     {
+      "Id": 38,
+      "RewardEvent": {
+        "Value": "OnNewHighScore"
+      },
+      "Tag": "HighScore",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SimonGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 1,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 20,
+        "DescriptionKey": "reward.description.MemoryMatch.HighScore.Solo"
+      }
+    },
+    {
       "Id": 27,
       "RewardEvent": {
         "Value": "OnFreeplayBehaviorSuccess"
@@ -642,6 +674,342 @@
         "ItemID": "experience",
         "Amount": 20,
         "DescriptionKey": "reward.description.Explorer.Time.20"
+      }
+    },
+    {
+      "Id": 32,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "Tag": "MemoryMatchGameResult",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SimonGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 1,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 10,
+        "DescriptionKey": "reward.description.MemoryMatch.Played.Solo"
+      }
+    },
+    {
+      "Id": 33,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "Tag": "MemoryMatchGameResult",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SimonGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 0,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 10,
+        "DescriptionKey": "reward.description.MemoryMatch.Played.Vs"
+      }
+    },
+    {
+      "Id": 34,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "Tag": "MemoryMatchGameResult",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SimonGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 0,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeWinnerCondition, Assembly-CSharp",
+          "PlayerWin": true,
+          "Label": {
+            "text": "Challenge Winner Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 10,
+        "DescriptionKey": "reward.description.MemoryMatch.WinGame.Vs"
+      }
+    },
+    {
+      "Id": 35,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "Tag": "MemoryMatchPatternLength",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SimonGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
+          "IsPlayer": true,
+          "TargetScore": 5,
+          "compareType": "GREATER",
+          "Label": {
+            "text": "Challenge Score Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 10,
+        "DescriptionKey": "reward.description.MemoryMatch.PatternLength.Five"
+      }
+    },
+    {
+      "Id": 36,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "Tag": "MemoryMatchPatternLength",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SimonGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
+          "IsPlayer": true,
+          "TargetScore": 10,
+          "compareType": "GREATER",
+          "Label": {
+            "text": "Challenge Score Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 10,
+        "DescriptionKey": "reward.description.MemoryMatch.PatternLength.Ten"
+      }
+    },
+    {
+      "Id": 37,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "Tag": "MemoryMatchPatternLength",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SimonGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeScoreCondition, Assembly-CSharp",
+          "IsPlayer": true,
+          "TargetScore": 20,
+          "compareType": "GREATER",
+          "Label": {
+            "text": "Challenge Score Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 10,
+        "DescriptionKey": "reward.description.MemoryMatch.PatternLength.Twenty"
+      }
+    },
+    {
+      "Id": 39,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "Tag": "MemoryMatchGameLives",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SimonGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeSpecificGameCondition, Assembly-CSharp",
+          "TargetValue": 1.0,
+          "ConditionKey": "human_lives",
+          "compareType": "EQUAL",
+          "Label": {
+            "text": "Challenge Specific Game Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 0,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 10,
+        "DescriptionKey": "reward.description.MemoryMatch.Lives.OneLeft"
+      }
+    },
+    {
+      "Id": 40,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "Tag": "MemoryMatchGameLives",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SimonGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeSpecificGameCondition, Assembly-CSharp",
+          "TargetValue": 2.0,
+          "ConditionKey": "human_lives",
+          "compareType": "EQUAL",
+          "Label": {
+            "text": "Challenge Specific Game Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 0,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 10,
+        "DescriptionKey": "reward.description.MemoryMatch.Lives.TwoLeft"
+      }
+    },
+    {
+      "Id": 41,
+      "RewardEvent": {
+        "Value": "OnChallengeComplete"
+      },
+      "Tag": "MemoryMatchGameLives",
+      "EventConditions": [
+        {
+          "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
+          "ChallengeID": "SimonGame",
+          "Label": {
+            "text": "Challenge ID Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeSpecificGameCondition, Assembly-CSharp",
+          "TargetValue": 3.0,
+          "ConditionKey": "human_lives",
+          "compareType": "EQUAL",
+          "Label": {
+            "text": "Challenge Specific Game Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.ChallengeDifficultyCondition, Assembly-CSharp",
+          "Difficulty": 0,
+          "Label": {
+            "text": "Challenge Difficulty Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "Reward": {
+        "ItemID": "experience",
+        "Amount": 10,
+        "DescriptionKey": "reward.description.MemoryMatch.Lives.ThreeLeft"
       }
     },
     {

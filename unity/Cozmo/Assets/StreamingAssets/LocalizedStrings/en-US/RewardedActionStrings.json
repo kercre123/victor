@@ -43,6 +43,36 @@
   "reward.description.Freeplay.CompleteBehavior.PopWheelie": {
     "translation": "completing the 'Pop a Wheelie' behavior successfully"
   },
+  "reward.description.MemoryMatch.Played.Solo": {
+    "translation": "Played a game of Memory Match in Solo mode"
+  },
+  "reward.description.MemoryMatch.Played.Vs": {
+    "translation": "Played a game of Memory Match in Vs. mode"
+  },
+  "reward.description.MemoryMatch.WinGame.Vs": {
+    "translation": "Win a game of Memory Match in Vs. mode"
+  },
+  "reward.description.MemoryMatch.Lives.OneLeft": {
+    "translation": "Won Memory Match Vs. mode on your last life"
+  },
+  "reward.description.MemoryMatch.Lives.TwoLeft": {
+    "translation": "Won Memory Match Vs. mode with two lives left"
+  },
+  "reward.description.MemoryMatch.Lives.ThreeLeft": {
+    "translation": "Won Memory Match Vs. mode without losing a life"
+  },
+  "reward.description.MemoryMatch.PatternLength.Five": {
+    "translation": "Completed a Memory Match pattern > 5 lights long."
+  },
+  "reward.description.MemoryMatch.PatternLength.Ten": {
+    "translation": "Completed a Memory Match pattern > 10 lights long."
+  },
+  "reward.description.MemoryMatch.PatternLength.Twenty": {
+    "translation": "Completed a Memory Match pattern > 20 lights long."
+  },
+  "reward.description.MemoryMatch.HighScore.Solo": {
+    "translation": "Set a new personal record for Memory Match longest pattern completed in solo"
+  },
   "reward.description.QuickTap.Played": {
     "translation": "Played a game of Quick Tap"
   },

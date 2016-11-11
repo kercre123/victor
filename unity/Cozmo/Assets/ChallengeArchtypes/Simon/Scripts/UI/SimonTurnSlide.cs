@@ -29,6 +29,8 @@ namespace Simon {
     [SerializeField]
     private CozmoButton _ButtonPlayPattern;
 
+    private UnityEngine.Events.UnityAction _ClickHandler = null;
+
     public void Awake() {
       _PlayerWidget.gameObject.SetActive(false);
       _CozmoWidget.gameObject.SetActive(false);
@@ -86,14 +88,18 @@ namespace Simon {
 
     public void ShowPlayPatternButton(UnityEngine.Events.UnityAction ClickHandler) {
       ContextManager.Instance.AppFlash(playChime: true);
-      _ButtonPlayPattern.onClick.RemoveAllListeners();
+      HidePlayPatternButton(); // clean up previous
+      _ClickHandler = ClickHandler;
       _ButtonPlayPattern.gameObject.SetActive(true);
       _ButtonPlayPattern.Initialize(ClickHandler, "simon.PlayPattern", "next_round_of_play_continue_button");
     }
 
     public void HidePlayPatternButton() {
       _ButtonPlayPattern.gameObject.SetActive(false);
-      _ButtonPlayPattern.onClick.RemoveAllListeners();
+      if (_ClickHandler != null) {
+        _ButtonPlayPattern.onClick.RemoveListener(_ClickHandler);
+        _ClickHandler = null;
+      }
     }
   }
 }
