@@ -79,9 +79,14 @@
 #define BW_500              0x0E
 #define BW_1000             0x0F
 
-#define FIFO_BYPASS         0 << 6
-#define FIFO_FIFO           1 << 6
-#define FIFO_STREAM         2 << 6
+#define PMU_LOWPOWER_MODE   (1 << 6)   
+#define PMU_SUSPEND         (4 << 5)
+#define PMU_NORMAL          (0 << 5)
+
+#define FIFO_BYPASS         (0 << 6)
+#define FIFO_FIFO           (1 << 6)
+#define FIFO_STREAM         (2 << 6)
+#define FIFO_WORKAROUND     (3 << 2)
 #define FIFO_XYZ            0
 #define FIFO_X              1
 #define FIFO_Y              2

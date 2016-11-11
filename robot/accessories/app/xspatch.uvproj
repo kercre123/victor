@@ -12,13 +12,13 @@
       <ToolsetName>MCS-51</ToolsetName>
       <TargetOption>
         <TargetCommonOption>
-          <Device>nRF24LE1</Device>
+          <Device>nRF8200</Device>
           <Vendor>Nordic Semiconductor</Vendor>
           <Cpu>IRAM(0-0xFF) IROM(0-0x3FFF) XRAM(0x0000-0x03FF) XRAM2(0xFA00-0xFFFF) CLOCK(24000000) MODC2 MDU_R515</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile>"LIB\STARTUP.A51" ("Standard 8051 Startup Code")</StartupFile>
           <FlashDriverDll></FlashDriverDll>
-          <DeviceId>4727</DeviceId>
+          <DeviceId>5755</DeviceId>
           <RegisterFile>reg24le1.h</RegisterFile>
           <MemoryEnv></MemoryEnv>
           <Cmp></Cmp>
@@ -35,7 +35,7 @@
           <BinPath>C:\Keil_v5\C51\BIN\</BinPath>
           <IncludePath></IncludePath>
           <LibPath></LibPath>
-          <RegisterFilePath></RegisterFilePath>
+          <RegisterFilePath>Nordic\</RegisterFilePath>
           <DBRegisterFilePath>Nordic\</DBRegisterFilePath>
           <TargetStatus>
             <Error>0</Error>
@@ -176,7 +176,7 @@
           </Flash1>
           <bUseTDR>0</bUseTDR>
           <Flash2>BIN\nrfkeil515.dll</Flash2>
-          <Flash3>"" ()</Flash3>
+          <Flash3></Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -372,6 +372,11 @@
               <FileName>accel.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\accel.c</FilePath>
+            </File>
+            <File>
+              <FileName>lights.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\lights.c</FilePath>
             </File>
             <File>
               <FileName>radio.c</FileName>

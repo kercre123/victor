@@ -28,7 +28,7 @@ u8 _hopBlackout _at_ SyncPkt+3;// If not hopping, 3..80 (channel to park on) - i
 
 u8 _beatTicks   _at_ SyncPkt+4;// Number of 32768Hz ticks per beat (usually 160-164, around 200Hz)
 u8 _shakeBeats  _at_ SyncPkt+5;// Number of beats between radio handshakes (usually 7, around 30Hz)
-u8 _listenTicks _at_ SyncPkt+6;// Number of 32768Hz ticks the radio listens for a packet (usually 30, enabling +/- 300uS jitter)
+u8 _jitterTicks _at_ SyncPkt+6;// Number of 32768Hz ticks of radio jitter (usually 5, +/- 150uS on RX -and- TX)
 
 u8 _accelBeats  _at_ SyncPkt+7;// Number of beats per accelerometer reading (usually 4 for ~50Hz)
 u8 _accelWait   _at_ SyncPkt+8;// Beats until next accelerometer reading (to synchronize cubes)
@@ -41,6 +41,7 @@ u8 _beatCount   _at_ SyncPkt-2;// Incremented when a new beat starts
 // Internal state tracking radio/accelerometer sync
 u8 _hop;        // Current hopping channel (before hopBlackout)
 u8 _shakeWait;  // How long until next handshake
+u8 _nextBeat;   // How long before next beat
 
 #ifdef DEBUG
 // Variables used by DebugPrint (if needed)
@@ -48,63 +49,59 @@ u8 dp1 _at_ 0x23;
 u8 dp2 _at_ 0x24;
 #endif
 
-// Sleep until the next beat
-void Sleep()
-{
-  // XXX: Add retention mode sleep to save more battery (future non-ISR-LED)
-  while (!_beatCount)
-    PWRDWN = STANDBY;
-  PWRDWN = 0;
-  _beatCount--;   // We should never miss >1 beat, but this catches us up if we do
-}
-
 extern u8 _tapTime;   // Hack until we get hopping sync in place
-typedef struct {      // Hack LED structure to reduce radio current to ~15mA
-  u8 dir, port, value;
-} LedValue;
-static LedValue idata _leds[1+12+1] _at_ LED_START;
+extern idata u8 _leds[];
 
-// Perform a radio handshake, then interpret and execute the message
+/* Perform a radio handshake, then interpret and execute the message
+ * WATCH OUT FOR "TIMING" COMMENTS BELOW!
+ * To save on battery, spend more time in DeepSleep() and less time in radio/etc.
+ * The overall timing is controlled by RTC2 and runs _beatTicks per loop (usually about 200Hz).
+ * Each loop is split into CPU/radio time (RXTX_TICKS+jitterTicks)*2, and LED time (the remainder).
+ * Radio does one RX (including jitter), plus one TX (including turnaround delay).
+ */ 
 void MainExecution()
 {
-  Sleep();    // Sleep first, to skip the runt beat at startup
-
   // Do this first:  If we're ready for a handshake, talk to the robot
   if (!_shakeWait)
   {
+    _tapTime++;
     _shakeWait = _shakeBeats;
-    if (RadioHandshake())
+    
+    // TIMING:  Listen timeout is in RTC2, set by main()/host on 1st iteration, then end of loop below
+    RadioHandshake();
+    Sleep();
+    
+  // Do CPU tasks on slices where there's no radio
+  } else {
+    RTC2CMP0 += RXTX_TICKS;   // TIMING: CPU gets exactly RXTX_TICKS*2+_jitterTicks*2
+    
+    // If we're ready for the accelerometer, drain its FIFO
+    if (_accelWait & 0x80)
     {
-      PetWatchdog();    // Only if we hear from the robot
-     
+      AccelRead();  // Takes about 200uS (we have 660-990uS depending on listenTicks)
+      _accelWait += _accelBeats;
+    }
+    else if (R2A_BASIC_SETLEDS == _radioIn[0])
+    {
+      // Set up LEDs if they've changed
+      LedSetValues(_leds);
+      _radioIn[0] = 255;
+      _tapTime = _radioIn[13];
+
       DebugPrint('r', _radioIn, HAND_LEN);
       DebugPrint('t', _radioOut, HAND_LEN);
       
       // Process future commands here
     }
-    _tapTime++;    // Whether we get a packet or not, increment tap timer  
-
-  // Do anything else but radio
-  } else {
-    // ISR-LED timing workaround - set LEDs at same moment each time
-    if (R2A_BASIC_SETLEDS == _radioIn[0])
-    {
-      _leds[0].dir = DEFDIR;  // Keep LEDs off for first..
-      _leds[0].port = 0;
-      _leds[0].value = 32*4;  // ..32 ticks, to reduce radio current draw
-      LedSetValues(_leds+1);
-      _radioIn[0] = 255;
-      _tapTime = _radioIn[13];
-    }
-
-    // If we're ready for the accelerometer, drain its FIFO
-    if (_accelWait & 0x80) {
-      AccelRead();
-      _accelWait += _accelBeats;
-    }
+    
+    DeepSleep();
   }
   
-  // Until next time...
+  // Light the LEDs for the remainder of the cycle
+  LightLEDs();
+  
+  // Start the next CPU/radio cycle time
+  RTC2CMP0 = RXTX_TICKS + _jitterTicks*2 - 1;
   _shakeWait--;
   _accelWait--;
 }
@@ -112,38 +109,33 @@ void MainExecution()
 // Startup
 void main()
 {
-  // Wait for robot start time while we initialize everything
-  EA = 0;
-  RTC2CON = 0;
+  u8 i;
+  
+  // Init - rely on existing setup (WUCON) from bootloader
+  CLKCTRL = XOSC_ON;        // Leave XOSC on in register retention mode (to feed RC clk)
+  CLKLFCTRL = CLKLF_XOSC;   // Generate RC clk from XOSC for accuracy
+  RTC2PCO = 1;              // Prestart in 1 cycle (w/XOSC RC) - XXX: Manual says should be 2?
+  ADCCON3 = ADC_8BIT;       // 8-bit ADC (for battery test)
+
+  // Start counting down the listen timeout while we initialize everything
   RTC2CMP0 = _waitLSB;
   RTC2CMP1 = _waitMSB;
-  RTC2CON = RTC_COMPARE | RTC_ENABLE;
-
-  // Clear timing variables (there's no static init in patches)
-  _beatCount = _hop = _shakeWait = 0;
+  RTC2CON = RTC_COMPARE_RESET | RTC_ENABLE;
 
   // Power up the accelerometer before LEDs - this takes at least 2ms/70 ticks
   AccelInit();
   DebugPrint('s', SyncPkt, ADV_LEN);    // Print the start/sync packet
   RadioSetup(SETUP_TX_ADDRESS);         // Transmit on private address
-
-  // Sleep until robot is ready
-  EA = 0;   // XXX: Can clean this up in production cubes
-  RFF = WUF = 0;
-  PWRDWN = STANDBY;
-  WUF = 0;
-  RTC2CON = 0;
-  EA = 1;
-
-  // XXX legacy:  Old non-hopping robots park on a single channel and sync on first packet
-  if (!_hopIndex)
-    RadioLegacyStart();   // Listen for first packet, adjust timing to match its arrival
-  else
-    _shakeWait = 1;       // Skip first/runt beat in LED timer
   
-  // Start beat counter - we get our first beat in 3 ticks, then properly spaced thereafter
-  LedInit();
-
+  // Initialize variables (there's no static init in patches)
+  _shakeWait = _hop = 0;  
+  _beatTicks -= (RXTX_TICKS*2 + _jitterTicks*2);
+  _nextBeat = _beatTicks;
+  
+  for (i = 0; i < HAND_LEN; i++)        
+    _radioIn[i] = 0;
+  LedSetValues(_leds);                  // Put LEDs in sane state
+  
   // Keep running until watchdog times us out
   while (1)
     MainExecution();

@@ -7,7 +7,8 @@
 #define Read ((u8 (code *) (void)) 0x3DCC)
 #define Write ((u8 (code *) (u8 b)) 0x3B09)
 
-u8 idata _readings[33];
+#define MAX_READINGS 33   // 3 AXES * 11 readings keeps up with ~10/tick
+u8 idata _readings[MAX_READINGS];
 
 // This is the "simple" (EP1) tap detector
 #define TAP_THRESH    20        // Equivalent to EP1 10 (since I shift less)
@@ -73,14 +74,15 @@ void SimpleTap(u8 readings)
   _radioOut[2] = _readings[2];
   _radioOut[3] = _readings[3];
   _radioOut[4] = _taps;
+  
+  _radioOut[8] = ADCDATH;   // Battery volts, where 255=3.6V
 }
 
 // Drain the entire accelerometer FIFO into an outbound packet
 void AccelRead()
 {
-  u8 i;
-  u8 idata *p = _readings;
-  
+  u8 i, count;
+
   // Chargers return all zero
   if (IsCharger())
   {
@@ -90,6 +92,7 @@ void AccelRead()
   }
 
   // Set up SPI for reading the FIFO
+  ADCCON1 = ADC_START(VBAT_ADC_CHAN);  // Measure battery in background
   SPIInit();
   CSB = 0;
 
@@ -107,52 +110,89 @@ void AccelRead()
   SPIMCON0 = SPIEN + SPI4M + SPIPOL+SPIPHASE; // Mode 3: Idle high, sample on rising edge
   SPIMDAT = 0;            // Get SPI moving - 0 blinks IR LED
   LEDDIR = DEFDIR;        // DebugCube needs this
-  ACC = SPIMDAT;          // Drain anything left in the FIFO
-  ACC = SPIMDAT;
-  SPIMDAT = 0;
 
-  // Read out up to 66 bytes from SPI (store 33 of them - MSB only)
-  for (i = 0; i < 33; i++)
+  // Read exactly 2*MAX_READINGS bytes from SPI (store MSB only)
+  // Bosch FIFO has weird problems if you read non-divisible-by 6
+  // The loop is tangled by a slightly-ahead SPI pipeline (SPIMDAT=0) for performance
+  count = i = 0;
+  while (1)
   {
-    while (!(SPIMSTAT & RXREADY)) // Wait for byte ready
-      ;
-    if (!(SPIMDAT & 1)) // Bail out early if FIFO runs dry
-      break;
     SPIMDAT = 0;        // Pipeline next read
-
+    i++;
+ 
     while (!(SPIMSTAT & RXREADY)) // Wait for byte ready
-      ;
-    *p = SPIMDAT;       // Grab data
-    p++;
+      ; 
+    if (SPIMDAT & 1)    // If FIFO isn't empty, set count
+      count = i;
+    if (i == MAX_READINGS)
+      break;            // Quit loop at last reading (before pipelining the next)
+    
     SPIMDAT = 0;        // Pipeline next read
+//  while (!(SPIMSTAT & RXREADY)) // Wait for byte ready - 4MHz doesn't need this one
+//    ;
+    _readings[i-1] = SPIMDAT;     // Grab byte
   }
-  // Must let final byte clock out, or BMA's FIFO gets pissed
-  while (!(SPIMSTAT & TXEMPTY))
+  while (!(SPIMSTAT & RXREADY)) // Wait for byte ready
     ;
+  _readings[MAX_READINGS-1] = SPIMDAT;  // Grab last byte
+  
   CSB = 1;
   SPIMCON0 = 0;
 
-  DebugPrint('x', _readings, i);   // See raw accelerometer data
-  SimpleTap(i);
+  DebugPrint('x', _readings, count);    // See raw accelerometer data
+  SimpleTap(count);
 }
+
+// Register initialization for accelerometer
+// This is largely based on Bosch MIS-AN003: "FIFO bug workarounds"
+code u8 ACCEL_INIT[] =
+{
+  BGW_SOFTRESET, BGW_SOFTRESET_MAGIC,   // Exit SUSPEND mode
+  
+  // Enter STANDBY mode
+  PMU_LOW_POWER, PMU_LOWPOWER_MODE,     // 0x12 first
+  PMU_LPW, PMU_SUSPEND,                 // Then 0x11
+  
+  BGW_SPI3_WDT, 1,                      // 3 wire mode
+  PMU_RANGE, RANGE_2G,
+  PMU_BW, BW_250,
+  
+  // Throw out old FIFO data, reset errors, XYZ mode
+  FIFO_CONFIG_1, FIFO_STREAM|FIFO_WORKAROUND, // Undocumented FIFO_WORKAROUND
+  
+  // From Bosch MIS-AN003: FIFO bug workarounds
+  0x35, 0xCA,   // Undocumented sequence to turn off temperature sensor
+  0x35, 0xCA,
+  0x4F, 0x00,
+  0x35, 0x0A,
+
+  // Enter NORMAL mode
+  PMU_LPW, PMU_NORMAL,
+  0
+};
 
 // Initialize accelerometer for run mode
 void AccelInit()
 {
+  u8 i = 0;
+  
   if (IsCharger())
     return;   // Skip startup
   
   _taps = 0;
 
-  // Wake up accelerometer and 1.8ms for it to boot (see datasheet)
-  DataWrite(BGW_SOFTRESET,BGW_SOFTRESET_MAGIC);
-  TimerStart(1800);
-  while (TimerMSB())
-  {}
-  
-  // Set up accelerometer to stream data
-  DataWrite(BGW_SPI3_WDT, 1);   // 3 wire mode
-  DataWrite(PMU_RANGE, RANGE_2G);
-  DataWrite(PMU_BW, BW_250);
-  DataWrite(FIFO_CONFIG_1, FIFO_STREAM);
+  // Run accelerometer setup script to stream data
+  do {
+    // Write registers, must be 2uS apart (measured at 9uS)
+    DataWrite(ACCEL_INIT[i], ACCEL_INIT[i+1]);
+    
+    // Must wait 1.8ms after each reset
+    if (ACCEL_INIT[i] == BGW_SOFTRESET)
+    {
+      TimerStart(1800);
+      while (TimerMSB())
+      {}
+    }
+    i += 2;
+  } while (ACCEL_INIT[i]);
 }

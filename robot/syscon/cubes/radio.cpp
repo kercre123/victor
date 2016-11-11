@@ -191,12 +191,12 @@ static void OTARemoteDevice(uint32_t id) {
 
   // Tell our device to begin - must set EVERY field
   CapturePacket pair;
-  pair.ticksUntilStart = 132; // Lowest legal value
+  pair.ticksUntilStart = 164*7*12; // Must catch one of the first 12 packets
   pair.hopIndex = 0;
   pair.hopBlackout = OTAAddress.rf_channel;
   pair.ticksPerBeat = 164;    // 32768/164 = 200Hz
   pair.beatsPerHandshake = 7; // 1 out of 7 beats handshakes with this cube
-  pair.ticksToListen = 0;     // Currently unused
+  pair.ticksToListen = 5;     // Jitter - 5 is near the minimum
   pair.beatsPerRead = 4;
   pair.beatsUntilRead = 4;    // Should be computed to synchronize all tap data
   pair.patchStart = 0;
@@ -304,7 +304,7 @@ void uesb_event_handler(uint32_t flags)
       #ifndef CUBE_HOP
       new_addr->rf_channel = (random() & 0x3F) + 0x4;
       
-      pair.ticksUntilStart = 132; // Lowest legal value
+      pair.ticksUntilStart = 164*7*12; // Must catch one of the first 12 packets
       pair.hopIndex = 0;
       pair.hopBlackout = new_addr->rf_channel;
       #else
@@ -340,7 +340,7 @@ void uesb_event_handler(uint32_t flags)
       pair.ticksPerBeat = CYCLES_TO_COUNT(SCHEDULE_PERIOD);
       pair.beatsPerHandshake = TICK_LOOP; // 1 out of 7 beats handshakes with this cube
 
-      pair.ticksToListen = 0;     // Currently unused
+      pair.ticksToListen = 5;     // Jitter - 5 is near the minimum
       pair.beatsPerRead = 4;
       pair.beatsUntilRead = 4;    // Should be computed to synchronize all tap data
       pair.patchStart = CUBE_UPDATE.patchStart;

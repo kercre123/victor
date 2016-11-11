@@ -197,6 +197,7 @@ sbit  RFCKEN       = RFCON^2;
 #define SPIPHASE  (1 << 1)
 #define SPIPOL    (1 << 2)
 #define SPI4M     (1 << 4)
+#define SPI2M     (2 << 4)
 #define SPI1M     (3 << 4)
 // WUCON
 #define WAKE_ON_XOSC  (2 << 0)

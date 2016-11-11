@@ -2,9 +2,6 @@
 #include "hal.h"
 #include "nrf.h"
 
-// 384uS is the maximum listen time (since we use LSB of T2 with MCLK/24)
-#define LISTEN_TIME_US  384
-
 // Temporary holding area for radio payloads
 u8 data _radioIn[HAND_LEN] _at_ 0x50;    // Inbound payload
 u8 data _radioOut[HAND_LEN];             // Outbound payload
@@ -29,14 +26,14 @@ code u8 SETUP_TX_HAND[] = {
   0
 };
 
-extern u8 _hopBlackout, _hopIndex, _hop, _beatAdjust;
+extern u8 _hopBlackout, _hopIndex, _hop, _jitterTicks;
 // Complete a handshake with the robot - hop, broadcast, listen, timeout
-bit RadioHandshake()
-{  
-  u8 chan, jitter;
+void RadioHandshake()
+{
+  u8 chan;
 
   // Hop to next channel, skipping past WiFi blackout
-  chan = _hopBlackout;    // XXX: Legacy no-hop support
+  chan = _hopBlackout;    // For no-hop support
   if (_hopIndex)
   {
     _hop += _hopIndex;
@@ -50,74 +47,38 @@ bit RadioHandshake()
   // Listen for packet or timeout
   RadioSetup(SETUP_RX_HAND);
   RadioHopTo(chan);
-  jitter = TimerMSB();
-  TimerStart(RF_START_US+(1+5+HAND_LEN+2)*8+LISTEN_TIME_US);
   RFCE = 1;
-  RFF = 0;
-  TF2 = 0;
-  
+
   // While radio is turning around, queue the outbound packet
   RadioSend(_radioOut, HAND_LEN);
-
-  //DebugPrint('f', &jitter, 1);  // Show frame-to-frame jitter in units of 384uS (only works when Sleep() has no PWRDWN)
   DebugPrint('h', &chan, 1);    // Show where we hopped to
+  Sleep();    // Wait for radio or timeout
 
-  // Wait here
-  while (!RFF)
-    if (TF2)    // Timeout
-    {
-      RFCE = 0;
-      RadioSetup(SETUP_OFF);
-      RFCKEN = 0;
-      return 0;
-    }
-  jitter = TimerLSB();  // No timeout, keep going
-  RFCE = 0;
+  // In case of no packet, sleep for one TX time - to keep timing balanced
+  RTC2CMP0 = RXTX_TICKS-1;
+  RTC2CMP1 = 0;                   // In case we got here from first-sync
 
-  // Read the new packet now to add 20uS delay - robot needs delay
-  RadioRead(_radioIn, HAND_LEN);
-
-  // Start TX, wait for TX complete
-  for (chan = 0; chan < 5; chan++)    // XXX: Add more delay for robot
+  if (RFF)    // If packet received
+  {
+    // Sleep for _jitterTicks - this re-centers timing so next RX finishes at RXTX_TICKS+listenTicks
+    // It also gives the poor robot a chance to turnaround its own radio
+    RFCE = 0;
+    RTC2CON = 0;
+    RTC2CMP0 = _jitterTicks-2;      // Borrow one tick to pay back for TX later
+    RTC2CON = RTC_COMPARE_RESET | RTC_ENABLE;
+    RadioRead(_radioIn, HAND_LEN);  // Read the new packet before turnaround
+    Sleep();      // Wait to timeout
+    
+    // Start TX, wait for TX complete
+    RTC2CMP0 = RXTX_TICKS;          // We need an extra tick here because TX runs slow
     RadioSetup(SETUP_TX_HAND);
-  RFCE = 1;
-  RFF = 0;
+    RFCE = 1;
+    PetWatchdog();// Only because we heard from the robot
+    Sleep();      // Wait for radio done (timeout is scheduled later)
+  }
 
-  // Adjust beat counter based on measured jitter
-  DebugPrint('j', &jitter, 1);  // Show microsecond-jitter (units of 1.5uS)
-  jitter >>= 5;                         // T2/20=ticks - We call it T2/32 to dampening it a bit
-  jitter += -(8-LISTEN_TIME_US/2/48);   // Mid point becomes 0 adjustment
-  _beatAdjust = jitter;                 // If we arrive late, lengthen beat to arrive early
-  
-  // Wait here
-  while (!RFF)
-    ;
-  RFCE = 0;
-
-  // Shut it all down
-  RadioSetup(SETUP_OFF);
-  RFCKEN = 0;
-  
-  return 1;
-}
-
-// Old non-hopping robots park on a single channel and sync on first packet
-extern u8 _shakeWait;
-void RadioLegacyStart()
-{
-  // Listen for a packet, or let the watchdog time us out
-  RadioSetup(SETUP_RX_HAND);
-  RadioHopTo(_hopBlackout);
-  RFCE = 1;
-  RFF = 0;
-  while (!RFF)
-    ;
   RFCE = 0;
   RadioSetup(SETUP_OFF);
   RFCKEN = 0;
-  
-  // From this moment (packet received), we need to rewind about 42 ticks (measured)
-  // Listen "center point" is 6 ticks, LedInit burns 3, radio receive is 11 (130+200), power up is ?? (150uS?)
-  _beatAdjust = -42;
-  _shakeWait = 7;     // Because legacy cubes space their handshakes 7 beats apart and we just ran one
+  return;
 }

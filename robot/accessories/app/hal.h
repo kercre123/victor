@@ -12,6 +12,7 @@
 // Temporary holding area for radio payloads (inbound and outbound)
 extern u8 data _radioIn[HAND_LEN];
 extern u8 data _radioOut[HAND_LEN];
+#define RXTX_TICKS (((RF_START_US+(1+5+HAND_LEN+2)*8)+29)/30)  // Time spent in radio
 
 // The sync (connect) packet starts at this address so OTA patches can pick it up
 #define SyncPkt 0x76
@@ -21,8 +22,13 @@ extern u8 data _radioOut[HAND_LEN];
 void AccelRead();
 void AccelInit();
 
+// Power down to various degrees
+void Sleep();       // Less than 3 RTC ticks or radio
+void DeepSleep();   // 3 or more RTC ticks, no radio
+void LightLEDs();   // Light up LEDs for the rest of the beat
+
 // Complete a handshake with the robot - hop, broadcast, listen, timeout
-bit RadioHandshake();
+void RadioHandshake();
 void RadioLegacyStart();
 
 // At 2mbaud, UART-print a 1 character note followed by len bytes of hex data
