@@ -2,12 +2,14 @@
 
 import base64
 import crashdump
+from distutils.version import StrictVersion
 import jira
 import modecsvparse
 import os
 import psycopg2
 import psycopg2.extras
 import sys
+import traceback
 
 jirauser = os.environ.get("JIRA_USER")
 jirapass = os.environ.get("JIRA_PASS")
@@ -15,6 +17,7 @@ dbuser = os.environ.get("REDSHIFT_DB_USER")
 dbpass = os.environ.get("REDSHIFT_DB_PASS")
 dbdays = os.environ.get("DB_DAYS_INTERVAL")
 cozmo_table = os.environ.get("COZMO_TABLE")
+production_version = os.environ.get("PROD_VERSION") # e.g. "1.0.1"
 
 def db_connect(dbname="anki", ):
   try:
@@ -74,13 +77,17 @@ def parse_query(jconn):
       crashes_dict.setdefault(crash, []).append(crash_dict)
       affects_versions_dict.setdefault(crash, []).append(row['app'])
     except:
+      print("Exception in parse_dump:")
+      print('-' * 60)
+      traceback.print_exc(file=sys.stdout)
+      print('-' * 60)
       pass
 
   for crash,apprun_typestr_registers in crashes_dict.items():
     jissues = jconn.search_issues('summary ~ "Fix firmware crash {}" ORDER BY created DESC'.format(crash))
 
     if len(jissues) >= 1: # comment on existing issues
-      if jissues[0].fields.status.name == 'Closed':
+      if jissues[0].fields.status.name == 'Closed' and newer_version(crash, affects_versions_dict):
         try:
           jconn.transition_issue(jissues[0].key, 341)
           print("Re-opening ticket {}".format(jissues[0].key))
@@ -103,13 +110,18 @@ def parse_query(jconn):
         except:
           print("Unable to add Affects Version to {}".format(i.key))
 
+        try:
+          i.update(fields={'components': [{"name": "crashes"}]})
+        except:
+          print("Unable to add crash component to {}".format(i.key))
+
     else: # create new JIRA issue
       description = build_jira_description(apprun_typestr_registers)
       affects_versions = build_affects_verions_list(affects_versions_dict, crash)
 
       new_issue = jconn.create_issue(project='COZMO', summary='Fix firmware crash {}'.format(crash),
                                      description='{}'.format(description), issuetype={'name': 'Bug'},
-                                     components=[{"name": "triage"}],versions=affects_versions)
+                                     components=[{"name": "triage"},{"name": "crashes"}],versions=affects_versions)
       print("Created new issue: {}".format(new_issue.key))
 
 def build_comment(apprun_typestr_registers):
@@ -121,12 +133,23 @@ def build_comment(apprun_typestr_registers):
   return comment
 
 
+def newer_version(crash, affects_versions_dict):
+  version = affects_versions_dict[crash][0].split('.')
+  version = StrictVersion("{}.{}.{}".format(version[0],version[1],version[2]))
+  prod_version = StrictVersion(production_version)
+  if version > prod_version:
+    return True
+  else:
+    return False
+
+
 def build_affects_verions_list(affects_versions_dict, crash):
   affects_versions = []
   for version in set(affects_versions_dict[crash]):
-    arr = str(version).split(".")
-    version = "COZMO {}.{}.{}".format(arr[0], arr[1], arr[2])
-    affects_versions.append({"name": version})
+    if version is not None:
+      arr = str(version).split(".")
+      version = "COZMO {}.{}.{}".format(arr[0], arr[1], arr[2])
+      affects_versions.append({"name": version})
 
   return affects_versions
 
