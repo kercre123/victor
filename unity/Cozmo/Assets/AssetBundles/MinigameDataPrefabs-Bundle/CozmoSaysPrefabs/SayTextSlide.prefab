@@ -331,7 +331,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -381,7 +381,7 @@ MonoBehaviour:
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
   TextPressedColor: {r: 1, g: 1, b: 1, a: 1}
-  TextDisabledColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
+  TextDisabledColor: {r: 0.65882355, g: 0.65882355, b: 0.65882355, a: 1}
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 11480186}
@@ -414,7 +414,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.11764706, g: 0.5058824, b: 0.78431374, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -484,7 +484,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.4, g: 0.4, b: 0.4, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -520,7 +520,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -555,7 +555,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.14305799, g: 0.75616354, b: 0.9264706, a: 1}
+  m_Color: {r: 0.1137255, g: 0.6784314, b: 0.8352942, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -582,7 +582,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.14305799, g: 0.75616354, b: 0.9264706, a: 1}
+  m_Color: {r: 0.1137255, g: 0.6784314, b: 0.8352942, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -648,7 +648,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.14305799, g: 0.75616354, b: 0.9264706, a: 1}
+  m_Color: {r: 0.1137255, g: 0.6784314, b: 0.8352942, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -1139,7 +1139,7 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 4.52}
   m_SizeDelta: {x: 150, y: 150}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22458670
