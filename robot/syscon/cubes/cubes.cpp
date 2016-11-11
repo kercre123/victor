@@ -561,16 +561,16 @@ void uesb_event_handler(uesb_payload_t& rx_payload)
       
       acc->last_received = 0;
 
-      if (--acc->powerCountdown <= 0) {
+      if (ap->batteryLevel && --acc->powerCountdown <= 0) {
         acc->powerCountdown = SEND_BATTERY_TIME;
 
         ObjectPowerLevel m;
         m.objectID = slot;
-        m.batteryLevel = (361*ap->batteryLevel)>>8;
+        m.batteryLevel = (CUBE_ADC_TO_CENTIVOLTS*ap->batteryLevel)>>8;
         RobotInterface::SendMessage(m);
       }
  
-      UpdatePropState(slot, ap->x, ap->y, ap->z, ap->tap_count, ap->tapTime, ap->tapNeg, ap->tapPos);
+      UpdatePropState(slot, ap->x, ap->y, ap->z, ap->tapCount, ap->tapTime, ap->tapNeg, ap->tapPos);
 
       EnterState(RADIO_PAIRING);
     }

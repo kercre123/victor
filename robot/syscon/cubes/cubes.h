@@ -28,7 +28,9 @@ static const int ADV_CHANNEL = 81;
 static const int OTA_ACK_TIMEOUT = 5;
 static const int MAX_ACK_TIMEOUTS = 50;
 static const int MAX_OTA_FAILURES = 5;
-static const int SEND_BATTERY_TIME = 17000;   // Approximately every 5 minutes
+static const int SEND_BATTERY_TIME = 300; // Approximately every 10 seconds
+
+static const int CUBE_ADC_TO_CENTIVOLTS = 410; // NOTE: 360 (3.6V) is the correct scaling value, but we have to fudge due to hardware error
 
 // Advertising settings
 static const uint32_t ADVERTISE_ADDRESS = 0xCA5CADED;

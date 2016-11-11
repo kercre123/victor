@@ -15,7 +15,7 @@ __packed struct RobotHandshake {
 __packed struct AccessoryHandshake {
   uint8_t msg_id;
   int8_t  x,y,z;
-  uint8_t tap_count;
+  uint8_t tapCount;
   uint8_t tapTime;
   int8_t  tapNeg, tapPos;
   uint8_t batteryLevel;
