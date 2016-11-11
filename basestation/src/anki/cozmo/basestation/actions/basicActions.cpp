@@ -1565,6 +1565,8 @@ namespace Anki {
         headAngle = GetAbsoluteHeadAngleToLookAtPose(_poseWrtRobot.GetTranslation());
       }
       
+      headAngle = CLIP(headAngle, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
+      
       SetHeadTiltAngle(headAngle);
       
       // Proceed with base class's Init()

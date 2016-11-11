@@ -269,9 +269,9 @@ public:
   Pose3d                 GetCameraPose(f32 atAngle) const;
   Pose3d                 GetLiftPoseWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const;
   
-  // Figure out the head angle to look at the given pose. Orientaiton of pose is
+  // Figure out the head angle to look at the given pose. Orientation of pose is
   // ignored. All that matters is its distance from the robot (in any direction)
-  // and height.
+  // and height. Note that returned head angle can be outside possible range.
   Result ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, f32 yTolFrac) const;
   
   // Figure out absolute body pan and head tilt angles to turn towards a point in an image.
