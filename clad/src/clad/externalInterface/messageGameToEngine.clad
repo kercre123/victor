@@ -821,7 +821,7 @@ message SetEnableSOSLogging {
   bool enabled
 }
 
-// Msg used by maya to disable reaction behaviors.
+// Msg used by maya (and SDK) to disable reaction behaviors.
 message EnableReactionaryBehaviors {
   bool enabled
 }
