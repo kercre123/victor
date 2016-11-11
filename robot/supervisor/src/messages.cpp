@@ -934,6 +934,10 @@ namespace Anki {
       {
         // nothing to do here
       }
+      void Process_appRunID(const RobotInterface::SetAppRunID&)
+      {
+        // Nothing to do here
+      }
       void Process_testState(const RobotInterface::TestState&)
       {
         // Nothing to do here

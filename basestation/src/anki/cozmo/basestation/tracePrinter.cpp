@@ -10,10 +10,16 @@
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
 #include "util/helpers/base64.h"
+#include "util/UUID/UUID.h"
 #include "debug/devLoggingSystem.h"
 #include <stdlib.h>
 #include <stdarg.h>
 #include <fstream>
+
+#if USE_DAS
+#include <DAS/DAS.h>
+#include <DAS/DASPlatform.h>
+#endif
 
 namespace Anki {
 namespace Cozmo {
@@ -301,6 +307,19 @@ template<>
 void TracePrinter::HandleMessage(const ExternalInterface::RobotConnectionResponse& msg)
 {
   if (msg.result == RobotConnectionResult::Success) {
+    UUIDBytes appRunBytes;
+    memset(&appRunBytes, 0xff, sizeof(UUIDBytes));
+    #if USE_DAS
+    {
+      const DAS::IDASPlatform* platform = DASGetPlatform();
+      if (nullptr != platform)
+      {
+        UUIDBytesFromString(&appRunBytes, platform->GetAppRunId());
+      }
+    }
+    #endif
+    _robot->SendRobotMessage<RobotInterface::SetAppRunID>(appRunBytes.bytes, 16);
+    
     // Request the first crash report
     if (_lastLogRequested >= kMaxCrashLogs) {
       _lastLogRequested = 0;
