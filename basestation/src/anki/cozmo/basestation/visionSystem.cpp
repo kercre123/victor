@@ -984,7 +984,7 @@ namespace Cozmo {
       {
         roiRects.emplace_back(quad);
         totalRoiArea += roiRects.back().Area();
-    }
+      }
       
       if(2*totalRoiArea < inputImage.GetNumElements())
       {
