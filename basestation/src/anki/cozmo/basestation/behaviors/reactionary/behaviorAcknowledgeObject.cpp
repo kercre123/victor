@@ -166,22 +166,27 @@ void BehaviorAcknowledgeObject::LookForStackedCubes(Robot& robot)
   const float offsetAboveTarget = zSize;
   const float offsetBelowTarget = -zSize;
   
-  bool shouldRetry = false;
   
   // if we can already see below block, don't look down after looking up
   if(_shouldCheckBelowTarget){
-    _shouldCheckBelowTarget = !CheckIfGhostBlockVisible(robot, obj, offsetBelowTarget, shouldRetry);
+    _shouldCheckBelowTarget = !CheckIfGhostBlockVisible(robot, obj, offsetBelowTarget);
   }
-    
-  if(!CheckIfGhostBlockVisible(robot, obj, offsetAboveTarget, shouldRetry))
+  
+  // First, check if we can see ghostCube in "above" position from our current position.
+  // If not, then first try looking up at it if it's outside FOV (note that _shouldBackupToSeeAbove
+  // starts false), and come back here. If we still can't see it b/c it's outside FOV, then back
+  // up to get a better view and try again.
+  bool outsideFOV = false;
+  const bool ghostBlockAboveVisibleFromHere = CheckIfGhostBlockVisible(robot, obj, offsetAboveTarget, outsideFOV);
+  if(!ghostBlockAboveVisibleFromHere && outsideFOV)
   {
-    if(_shouldBackupToSeeAbove)
+    if(_shouldBackupToSeeAbove) // false first time around, then true if we come back here
     {
       PRINT_CH_DEBUG(kLogChannelName, "BehaviorAcknowledgeObject.LookForStackedCubes.BackingUpToSeeCubeAbove", "");
       LookAtGhostBlock(robot, &BehaviorAcknowledgeObject::BackupToSeeGhostCube);
       return;
     }
-    else if(shouldRetry)
+    else
     {
       // Couldn't see ghost cube from initial position, but should try again after
       // looking above the target cube
@@ -214,6 +219,12 @@ void BehaviorAcknowledgeObject::SetGhostBlockPoseRelObject(Robot& robot, const O
     ghostPose.GetTranslation().z() + zOffset});
   
   robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(_ghostStackedObject.get(), ghostPose, obj);
+}
+  
+inline bool CheckIfGhostBlockVisible(Robot& robot, const ObservableObject* obj, float zOffset)
+{
+  bool temp = false;
+  return CheckIfGhostBlockVisible(robot, obj, zOffset, temp);
 }
   
 bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(Robot& robot, const ObservableObject* obj, float zOffset, bool& shouldRetry)
