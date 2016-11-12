@@ -2,13 +2,13 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-namespace Simon {
+namespace MemoryMatch {
   public class CozmoMoveCloserToCubesState : State {
     public const float kTargetDistance = 125f;
     private const float _kCubeIntroBlinkTimes = 0.5f;
 
     private State _NextState;
-    private SimonGame _GameInstance;
+    private MemoryMatchGame _GameInstance;
     private Vector2 _TargetPosition;
     private Quaternion _TargetRotation;
     private Vector2 _CubeMidpoint;
@@ -32,7 +32,7 @@ namespace Simon {
 
     public override void Enter() {
       base.Enter();
-      _GameInstance = _StateMachine.GetGame() as SimonGame;
+      _GameInstance = _StateMachine.GetGame() as MemoryMatchGame;
 
       _CozmoInPosition = false;
       _FlashingIndex = _WantsCubeBlink ? 0 : _GameInstance.CubeIdsForGame.Count;

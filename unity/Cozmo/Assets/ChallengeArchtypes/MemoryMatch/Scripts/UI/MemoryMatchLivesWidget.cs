@@ -5,8 +5,8 @@ using DG.Tweening;
 using Anki.UI;
 using Cozmo.UI;
 
-namespace Simon {
-  public class SimonLivesWidget : MonoBehaviour {
+namespace MemoryMatch {
+  public class MemoryMatchLivesWidget : MonoBehaviour {
 
     [SerializeField]
     private Image _PortraitImage;

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-namespace Simon {
+namespace MemoryMatch {
   public class ScanForInitialCubeState : InitialCubesState {
     private enum ScannedSetupCubeState {
       Unknown,
@@ -235,7 +235,7 @@ namespace Simon {
         Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Window_Open);
         _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired);
       }
-      _ShowCozmoCubesSlide.SetLabelText(Localization.Get(LocalizationKeys.kSimonGameLabelPlaceCenter));
+      _ShowCozmoCubesSlide.SetLabelText(Localization.Get(LocalizationKeys.kMemoryMatchGameLabelPlaceCenter));
       _ShowCozmoCubesSlide.SetCubeSpacing(100);
     }
 
@@ -267,7 +267,7 @@ namespace Simon {
           _Game.SharedMinigameView.EnableContinueButton(false);
           const float kLeftScanDeg = 30.0f;
           const float kLeftScanUIDeg = 18.0f;
-          _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * kLeftScanDeg, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2, HandleTurnFinished);
+          _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * kLeftScanDeg, MemoryMatchGame.kTurnSpeed_rps, MemoryMatchGame.kTurnAccel_rps2, HandleTurnFinished);
           if (_ShowCozmoCubesSlide != null) {
             _ShowCozmoCubesSlide.RotateCozmoImageTo(kLeftScanUIDeg, _RotateSecScan);
           }
@@ -277,7 +277,7 @@ namespace Simon {
           // Half speed since going further
           const float kRightScanDeg = -60.0f;
           const float kRightScanUIDeg = -18.0f;
-          _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * kRightScanDeg, SimonGame.kTurnSpeed_rps * 2, SimonGame.kTurnAccel_rps2, HandleTurnFinished);
+          _CurrentRobot.TurnInPlace(Mathf.Deg2Rad * kRightScanDeg, MemoryMatchGame.kTurnSpeed_rps * 2, MemoryMatchGame.kTurnAccel_rps2, HandleTurnFinished);
           // Half of the total Degrees cozmo rotates since these are absolute          
           if (_ShowCozmoCubesSlide != null) {
             _ShowCozmoCubesSlide.RotateCozmoImageTo(kRightScanUIDeg, _RotateSecScan);
@@ -288,7 +288,7 @@ namespace Simon {
           if (_ShowCozmoCubesSlide != null) {
             _ShowCozmoCubesSlide.RotateCozmoImageTo(0.0f, _RotateSecScan);
           }
-          LightCube centerCube = (_Game as SimonGame).GetCubeBySortedIndex(1);
+          LightCube centerCube = (_Game as MemoryMatchGame).GetCubeBySortedIndex(1);
           if (centerCube != null) {
             _CurrentRobot.TurnTowardsObject(centerCube, false);
           }
@@ -299,15 +299,15 @@ namespace Simon {
         else if (nextState == ScanPhase.Error) {
           _ShowCozmoCubesSlide = null;
           _Game.SharedMinigameView.EnableContinueButton(true);
-          LightCube centerCube = (_Game as SimonGame).GetCubeBySortedIndex(1);
+          LightCube centerCube = (_Game as MemoryMatchGame).GetCubeBySortedIndex(1);
           if (centerCube != null) {
             _CurrentRobot.TurnTowardsObject(centerCube, false);
           }
           // Error sound
           Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_St_Tap_Red);
-          SimonGame simonGame = _Game as SimonGame;
+          MemoryMatchGame MemoryMatchGame = _Game as MemoryMatchGame;
           _Game.SharedMinigameView.ShowWideGameStateSlide(
-                                                     simonGame.SimonSetupErrorPrefab.gameObject, "simon_error_slide");
+                                                     MemoryMatchGame.MemoryMatchSetupErrorPrefab.gameObject, "MemoryMatch_error_slide");
         }
 
         _ScanPhase = nextState;
@@ -337,15 +337,15 @@ namespace Simon {
 
     protected override string GetWaitingForCubesText(int numCubes) {
       if (_ScanPhase == ScanPhase.NoCubesSeen) {
-        return Localization.Get(LocalizationKeys.kSimonGameLabelWaitingForCubesPlaceCenter);
+        return Localization.Get(LocalizationKeys.kMemoryMatchGameLabelWaitingForCubesPlaceCenter);
       }
       else if (_ScanPhase == ScanPhase.WaitForContinue) {
-        return Localization.Get(LocalizationKeys.kSimonGameLabelCubeReady);
+        return Localization.Get(LocalizationKeys.kMemoryMatchGameLabelCubeReady);
       }
       else if (_ScanPhase == ScanPhase.Error) {
         return "";
       }
-      return Localization.Get(LocalizationKeys.kSimonGameLabelWaitingForCubesScanning);
+      return Localization.Get(LocalizationKeys.kMemoryMatchGameLabelWaitingForCubesScanning);
     }
 
 

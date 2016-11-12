@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-namespace Simon {
-  public class CozmoGuessSimonState : State {
+namespace MemoryMatch {
+  public class CozmoGuessMemoryMatchState : State {
 
-    private SimonGame _GameInstance;
+    private MemoryMatchGame _GameInstance;
     private IList<int> _CurrentSequence;
     private int _CurrentSequenceIndex;
     private bool? _ShouldWinGame;
@@ -14,7 +14,7 @@ namespace Simon {
 
     public override void Enter() {
       base.Enter();
-      _GameInstance = _StateMachine.GetGame() as SimonGame;
+      _GameInstance = _StateMachine.GetGame() as MemoryMatchGame;
       _CurrentSequence = _GameInstance.GetCurrentSequence();
       _CurrentSequenceIndex = -1;
       _ShouldWinGame = null;
@@ -112,7 +112,7 @@ namespace Simon {
         animTrigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPointRightBigFast;
       }
 
-      _StateMachine.PushSubState(new CozmoBlinkLightsSimonState(target, animTrigger, isCorrect));
+      _StateMachine.PushSubState(new CozmoBlinkLightsMemoryMatchState(target, animTrigger, isCorrect));
     }
 
     public LightCube GetCurrentTarget() {
@@ -153,16 +153,16 @@ namespace Simon {
 
     private void HandleOnCozmoWinAnimationDone(bool success) {
       _GameInstance.ShowCenterResult(false);
-      _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Human, true));
+      _StateMachine.SetNextState(new WaitForNextRoundMemoryMatchState(PlayerType.Human, true));
     }
 
     private void HandleOnCozmoLoseAnimationDone(bool success) {
       _GameInstance.ShowCenterResult(false);
       if (_GameInstance.GetLivesRemaining(PlayerType.Cozmo) > 0) {
-        _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Cozmo));
+        _StateMachine.SetNextState(new WaitForNextRoundMemoryMatchState(PlayerType.Cozmo));
       }
       else {
-        _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Human, true));
+        _StateMachine.SetNextState(new WaitForNextRoundMemoryMatchState(PlayerType.Human, true));
       }
     }
   }
