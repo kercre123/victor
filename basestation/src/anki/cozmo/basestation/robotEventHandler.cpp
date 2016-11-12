@@ -575,6 +575,12 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnToward
 {
   TurnTowardsFaceAction* action = new TurnTowardsFaceAction(robot, msg.faceID, Radians(msg.maxTurnAngle_rad), msg.sayName);
   
+  if(msg.sayName)
+  {
+    action->SetSayNameAnimationTrigger(msg.namedTrigger);
+    action->SetNoNameAnimationTrigger(msg.unnamedTrigger);
+  }
+  
   action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
   action->SetPanAccel(msg.panAccel_radPerSec2);
   action->SetPanTolerance(msg.panTolerance_rad);
@@ -606,6 +612,12 @@ template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnTowardsLastFacePose& msg)
 {
   TurnTowardsLastFacePoseAction* action = new TurnTowardsLastFacePoseAction(robot, Radians(msg.maxTurnAngle_rad), msg.sayName);
+  
+  if(msg.sayName)
+  {
+    action->SetSayNameAnimationTrigger(msg.namedTrigger);
+    action->SetNoNameAnimationTrigger(msg.unnamedTrigger);
+  }
   
   action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
   action->SetPanAccel(msg.panAccel_radPerSec2);

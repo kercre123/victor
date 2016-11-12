@@ -1383,15 +1383,15 @@ public class Robot : IRobot {
 
   }
 
-  public void TurnTowardsFacePose(Face face, float maxPanSpeed_radPerSec = kDefaultRadPerSec, float panAccel_radPerSec2 = kPanAccel_radPerSec2,
-                                  RobotCallback callback = null,
-                                  QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void TurnTowardsFace(Face face, float maxPanSpeed_radPerSec = kDefaultRadPerSec, float panAccel_radPerSec2 = kPanAccel_radPerSec2,
+                              bool sayName = false, AnimationTrigger namedTrigger = AnimationTrigger.Count, 
+                              AnimationTrigger unnamedTrigger = AnimationTrigger.Count,
+                              RobotCallback callback = null,
+                              QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     SendQueueSingleAction(
-      Singleton<TurnTowardsPose>.Instance.Initialize(
-        world_x: face.WorldPosition.x,
-        world_y: face.WorldPosition.y,
-        world_z: face.WorldPosition.z,
+      Singleton<Anki.Cozmo.ExternalInterface.TurnTowardsFace>.Instance.Initialize(
+        faceID: face.ID,
         maxTurnAngle_rad: float.MaxValue,
         maxPanSpeed_radPerSec: maxPanSpeed_radPerSec,
         panAccel_radPerSec2: panAccel_radPerSec2,
@@ -1399,6 +1399,9 @@ public class Robot : IRobot {
         maxTiltSpeed_radPerSec: 0f,
         tiltAccel_radPerSec2: 0f,
         tiltTolerance_rad: 0f,
+        sayName: sayName,
+        namedTrigger: namedTrigger,
+        unnamedTrigger: unnamedTrigger,
         robotID: ID
       ),
       callback,
@@ -1408,7 +1411,11 @@ public class Robot : IRobot {
   }
 
   // Turns towards the last seen face, but not any more than the specified maxTurnAngle
-  public void TurnTowardsLastFacePose(float maxTurnAngle, bool sayName = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void TurnTowardsLastFacePose(float maxTurnAngle, bool sayName = false, 
+                                      AnimationTrigger namedTrigger = AnimationTrigger.Count, 
+                                      AnimationTrigger unnamedTrigger = AnimationTrigger.Count, 
+                                      RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+
     DAS.Debug(this, "TurnTowardsLastFacePose with maxTurnAngle : " + maxTurnAngle);
 
     SendQueueSingleAction(Singleton<TurnTowardsLastFacePose>.Instance.Initialize(
@@ -1420,6 +1427,8 @@ public class Robot : IRobot {
       tiltAccel_radPerSec2: 0f,
       tiltTolerance_rad: 0f,
       sayName: sayName,
+      namedTrigger: namedTrigger,
+      unnamedTrigger: unnamedTrigger,
       robotID: ID
     ),
       callback,

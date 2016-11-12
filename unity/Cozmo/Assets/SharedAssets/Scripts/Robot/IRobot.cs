@@ -237,11 +237,13 @@ public interface IRobot : IDisposable {
                          QueueActionPosition queueActionPosition = QueueActionPosition.NOW,
                          float setTiltTolerance_rad = 0f);
 
-  void TurnTowardsFacePose(Face face, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
-                           RobotCallback callback = null,
-                           QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+  void TurnTowardsFace(Face face, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
+                       bool sayName = false, AnimationTrigger namedTrigger = AnimationTrigger.Count, 
+                       AnimationTrigger unnamedTrigger = AnimationTrigger.Count,
+                       RobotCallback callback = null,
+                       QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
-  void TurnTowardsLastFacePose(float maxTurnAngle, bool sayName = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+  void TurnTowardsLastFacePose(float maxTurnAngle, bool sayName = false, AnimationTrigger namedTrigger = AnimationTrigger.Count, AnimationTrigger unnamedTrigger = AnimationTrigger.Count, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   uint PickupObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool useApproachAngle = false, float approachAngleRad = 0.0f, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
