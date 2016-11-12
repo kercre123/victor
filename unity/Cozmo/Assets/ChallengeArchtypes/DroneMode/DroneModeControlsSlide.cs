@@ -81,6 +81,12 @@ namespace Cozmo.Minigame.DroneMode {
     private CozmoToggleButton _NightVisionButton;
 
     [SerializeField]
+    private Anki.Cozmo.Audio.AudioEventParameter _NightVisionOnSound = Anki.Cozmo.Audio.AudioEventParameter.DefaultClick;
+
+    [SerializeField]
+    private Anki.Cozmo.Audio.AudioEventParameter _NightVisionOffSound = Anki.Cozmo.Audio.AudioEventParameter.DefaultClick;
+
+    [SerializeField]
     private CozmoToggleButton _HeadLiftToggleButton;
 
     [SerializeField]
@@ -414,9 +420,21 @@ namespace Cozmo.Minigame.DroneMode {
       if (_NightVisionButton.IsCurrentlyOn) {
         SetUIToColorSet(_NightVisionColors, showReticles: false);
         _CurrentlyFocusedObject = null;
+
+        Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_NightVisionOnSound);
+
+        _CurrentRobot.VisionWhileMoving(false);
+        _CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
+        _CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, false);
       }
       else {
         SetUIToColorSet(_DaytimeColors, showReticles: true);
+
+        Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_NightVisionOffSound);
+
+        _CurrentRobot.VisionWhileMoving(true);
+        _CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, true);
+        _CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       }
       UpdateContextMenu();
     }
