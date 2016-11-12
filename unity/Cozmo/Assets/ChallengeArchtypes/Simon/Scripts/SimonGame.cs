@@ -323,7 +323,7 @@ namespace Simon {
 
     public SimonTurnSlide GetSimonSlide() {
       if (_SimonTurnSlide == null) {
-        _SimonTurnSlide = SharedMinigameView.ShowWideGameStateSlide(
+        _SimonTurnSlide = SharedMinigameView.ShowFullScreenGameStateSlide(
           _SimonTurnSlidePrefab.gameObject, "simon_turn_slide");
         SharedMinigameView.HideShelf();
 
