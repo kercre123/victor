@@ -200,9 +200,7 @@ namespace Cozmo {
       // Set flag if we are interrupting a streaming animation with nothing.
       // If we get to KeepFaceAlive with this flag set, we'll stream neutral face for safety.
       if(wasStreamingSomething) {
-        _wasAnimationInterruptedWithNothing = true;
-      } else {
-        _wasAnimationInterruptedWithNothing = false;
+        _wasAnimationInterruptedWithNothing |= true;
       }
       return NotAnimatingTag;
     }
