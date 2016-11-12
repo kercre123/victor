@@ -9,7 +9,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9010204fd05644f94b02f03ce9d0a5bb, type: 3}
-  m_Name: SimonGameChallenge_Config
+  m_Name: MemoryMatchGameChallenge_Config
   m_EditorClassIdentifier: 
   _SkillConfig:
     _EvaluateLevelChangeEvent:
@@ -39,6 +39,8 @@ MonoBehaviour:
   RotateSecScan: 2
   ScanTimeoutSec: 30
   CountDownTimeSec: 2.25
+  HoldLightsAfterCountDownTimeSec: 1
+  IdleTimeoutSec: 60
   MaxLivesCozmo: 3
   MaxLivesHuman: 3
   MinRoundBeforeLongReact: 3

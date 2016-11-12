@@ -10,7 +10,7 @@ GameObject:
   - 4: {fileID: 462984}
   - 114: {fileID: 11488494}
   m_Layer: 0
-  m_Name: SimonGame
+  m_Name: MemoryMatchGame
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -25,6 +25,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -42,6 +43,8 @@ MonoBehaviour:
   CubeIdsForGame: 
   CozmoScore: 0
   PlayerScore: 0
+  PlayerScoreTotal: 0
+  CozmoScoreTotal: 0
   MaxScorePerRound: 0
   PlayerRoundsWon: 0
   CozmoRoundsWon: 0
@@ -50,25 +53,18 @@ MonoBehaviour:
   - soundName:
       _Event: Play__Sfx__Gp_Simon_Light_Red
       _EventType: Sfx
-      _GameObjectType: 0
     cubeColor: {r: 1, g: 0, b: 0, a: 1}
   - soundName:
       _Event: Play__Sfx__Gp_Simon_Light_Yellow
       _EventType: Sfx
-      _GameObjectType: 0
     cubeColor: {r: 0.94269776, g: 0.9558824, b: 0, a: 1}
   - soundName:
       _Event: Play__Sfx__Gp_Simon_Light_Blue
       _EventType: Sfx
-      _GameObjectType: 0
     cubeColor: {r: 0, g: 0.04543596, b: 0.9411765, a: 1}
-  BetweenRoundsMusic:
-    _Music: 0
-  _SimonTurnSlidePrefab: {fileID: 11494636, guid: 5784d2fb5827e4791bb69fddbfb6e656,
-    type: 2}
+  _MemoryMatchTurnSlidePrefab: {fileID: 0}
   _BannerAnimationDurationSeconds: 1.5
-  _SimonSetupErrorPrefab: {fileID: 22469606, guid: ebe641efe89654ba49d81d9e93c50ccb,
-    type: 2}
+  _MemoryMatchSetupErrorPrefab: {fileID: 0}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
