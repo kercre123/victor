@@ -62,9 +62,11 @@ MonoBehaviour:
       _Event: Play__Sfx__Gp_Simon_Light_Blue
       _EventType: Sfx
     cubeColor: {r: 0, g: 0.04543596, b: 0.9411765, a: 1}
-  _MemoryMatchTurnSlidePrefab: {fileID: 0}
+  _MemoryMatchTurnSlidePrefab: {fileID: 11494636, guid: 5784d2fb5827e4791bb69fddbfb6e656,
+    type: 2}
   _BannerAnimationDurationSeconds: 1.5
-  _MemoryMatchSetupErrorPrefab: {fileID: 0}
+  _MemoryMatchSetupErrorPrefab: {fileID: 22469606, guid: ebe641efe89654ba49d81d9e93c50ccb,
+    type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -315,16 +317,6 @@ Prefab:
       propertyPath: _CubeColorsAndSounds.Array.data[3].cubeColor.a
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 0}
-      propertyPath: _SimonTurnSlidePrefab
-      value: 
-      objectReference: {fileID: 11494636, guid: 5784d2fb5827e4791bb69fddbfb6e656,
-        type: 2}
-    - target: {fileID: 0}
-      propertyPath: _SimonSetupErrorPrefab
-      value: 
-      objectReference: {fileID: 22469606, guid: ebe641efe89654ba49d81d9e93c50ccb,
-        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 128684}

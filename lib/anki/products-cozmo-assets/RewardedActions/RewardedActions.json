@@ -9,7 +9,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SimonGame",
+          "ChallengeID": "MemoryMatchGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -685,7 +685,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SimonGame",
+          "ChallengeID": "MemoryMatchGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -717,7 +717,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SimonGame",
+          "ChallengeID": "MemoryMatchGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -749,7 +749,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SimonGame",
+          "ChallengeID": "MemoryMatchGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -790,7 +790,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SimonGame",
+          "ChallengeID": "MemoryMatchGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -824,7 +824,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SimonGame",
+          "ChallengeID": "MemoryMatchGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -858,7 +858,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SimonGame",
+          "ChallengeID": "MemoryMatchGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -892,7 +892,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SimonGame",
+          "ChallengeID": "MemoryMatchGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -935,7 +935,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SimonGame",
+          "ChallengeID": "MemoryMatchGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,
@@ -978,7 +978,7 @@
       "EventConditions": [
         {
           "$type": "Anki.Cozmo.ChallengeIDCondition, Assembly-CSharp",
-          "ChallengeID": "SimonGame",
+          "ChallengeID": "MemoryMatchGame",
           "Label": {
             "text": "Challenge ID Condition",
             "image": null,

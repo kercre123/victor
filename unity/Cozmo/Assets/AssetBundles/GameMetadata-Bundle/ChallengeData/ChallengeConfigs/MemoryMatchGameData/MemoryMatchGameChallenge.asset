@@ -15,25 +15,25 @@ MonoBehaviour:
     _AssetBundle:
       _EnumValueAsString: minigame_data_prefabs
       _EnumValue: 1
-    _AssetDataName: SimonGameChallenge_Prefabs
-  _ChallengeID: SimonGame
-  _ChallengeTitleLocKey: simonGame.title
-  _ChallengeDescriptionLocKey: simonGame.description
-  _ChallengeIcon: {fileID: 21300000, guid: c3a1e28304056497c81d66c7599a4aaf, type: 3}
+    _AssetDataName: MemoryMatchGameChallenge_Prefabs
+  _ChallengeID: MemoryMatchGame
+  _ChallengeTitleLocKey: memoryMatchGame.title
+  _ChallengeDescriptionLocKey: memoryMatchGame.description
+  _ChallengeIcon: {fileID: 21300000, guid: c3fc19ed57a1f4fccbb2a6faeab35424, type: 3}
   _UnlockId:
     _EnumValueAsString: MemoryMatchGame
     _EnumValue: 17
   _Music:
     _Music: 1317044071
-  MinigameConfig: {fileID: 0}
+  MinigameConfig: {fileID: 11400000, guid: c343a5367e2654452b53acb74b64058e, type: 2}
   IsMinigame: 1
   InstructionVideoPath: Videos/Cozmo_Howto_MemoryMatch_handbrake.mp4
   DifficultyOptions:
   - DifficultyId: 0
     DifficultyName:
-      Key: simonGame.mode.vs
+      Key: memoryMatchGame.mode.vs
     DifficultyDescription:
-      Key: simonGame.howToPlay
+      Key: memoryMatchGame.howToPlay
     LockedDifficultyDescription:
       Key: 
     _AnimationPrefabData:
@@ -43,11 +43,11 @@ MonoBehaviour:
       _AssetDataName: MemoryMatchHowToPlayAnimation
   - DifficultyId: 1
     DifficultyName:
-      Key: simonGame.mode.solo
+      Key: memoryMatchGame.mode.solo
     DifficultyDescription:
-      Key: simonGame.solo.howToPlay
+      Key: memoryMatchGame.solo.howToPlay
     LockedDifficultyDescription:
-      Key: simonGame.difficulty.hardDescription.locked
+      Key: memoryMatchGame.difficulty.hardDescription.locked
     _AnimationPrefabData:
       _AssetBundle:
         _EnumValueAsString: minigame_data_prefabs

@@ -61,7 +61,7 @@ GameObject:
   - 114: {fileID: 11421446}
   - 225: {fileID: 22514568}
   m_Layer: 5
-  m_Name: SimonLivesCozmoWidget
+  m_Name: MemoryMatchLivesCozmoWidget
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -294,7 +294,7 @@ GameObject:
   - 114: {fileID: 11464160}
   - 225: {fileID: 22555368}
   m_Layer: 5
-  m_Name: SimonLivesPlayerWidget
+  m_Name: MemoryMatchLivesPlayerWidget
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -556,10 +556,10 @@ MonoBehaviour:
     JsonValue: 1
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"#simonGame.label.yourTurn"'
+    JsonValue: '"#memoryMatchGame.label.yourTurn"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
-    FieldName: Simon.SimonLivesWidget:_LblMyTurn
+    FieldName: MemoryMatch.MemoryMatchLivesWidget:_LblMyTurn
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11428370
@@ -615,10 +615,10 @@ MonoBehaviour:
     JsonValue: 1
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"#simonGame.label.cozmoTurn"'
+    JsonValue: '"#memoryMatchGame.label.cozmoTurn"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
-    FieldName: Simon.SimonLivesWidget:_LblMyTurn
+    FieldName: MemoryMatch.MemoryMatchLivesWidget:_LblMyTurn
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11446304
@@ -671,7 +671,7 @@ MonoBehaviour:
     JsonValue: '"text"'
   ModifiedLocalReferences:
   - ObjectPath: ../
-    FieldName: Simon.SimonTurnSlide:_CenterTextLabel
+    FieldName: MemoryMatch.MemoryMatchTurnSlide:_CenterTextLabel
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11447248
@@ -971,7 +971,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '#simonGame.label.playPattern'
+  m_Text: '#memoryMatchGame.label.playPattern'
   _AllUppercase: 0
   GlowText: 0
   IsRaycastBlocker: 0
@@ -1119,7 +1119,7 @@ MonoBehaviour:
     JsonValue: 100
   ModifiedLocalReferences:
   - ObjectPath: ../
-    FieldName: Simon.SimonTurnSlide:_StatusTextLabel
+    FieldName: MemoryMatch.MemoryMatchTurnSlide:_StatusTextLabel
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!222 &22222146
