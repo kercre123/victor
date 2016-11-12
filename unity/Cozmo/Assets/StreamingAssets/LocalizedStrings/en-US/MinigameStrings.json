@@ -123,6 +123,21 @@
   "droneMode.button.howToPlayConfirm": {
     "translation": "Back"
   },
+  "droneMode.button.action.sayName": {
+    "translation": "Say Name"
+  },
+  "droneMode.button.action.liftCube": {
+    "translation": "Lift Cube"
+  },
+  "droneMode.button.action.dropCube": {
+    "translation": "Drop Cube"
+  },
+  "droneMode.button.action.stackCube": {
+    "translation": "Stack Cube"
+  },
+  "droneMode.button.action.rollCube": {
+    "translation": "Roll Cube"
+  },
   "droneMode.text.howToPlaySteering": {
     "translation": "Tilt your device to steer Cozmo left and right."
   },
@@ -139,7 +154,7 @@
     "translation": "You and Cozmo will take turns.\nAs the Cubes flash, memorize the pattern. Then tap the Cubes in order to repeat it."
   },
   "simonGame.solo.howToPlay": {
-    "translation": "You play while Cozmo watches.\nAs the Cubes flash, memorize the pattern. Then tap the Cubes in order to repeat it."
+    "translation": "You play while Cozmo watches.\nAs the Cubes flash, memorize the pattern, then repeat it."
   },
   "simonGame.difficulty.hardDescription.locked": {
     "translation": "Unlock by winning Memory Match VS mode."

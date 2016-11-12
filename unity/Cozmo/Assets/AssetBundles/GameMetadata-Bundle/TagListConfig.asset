@@ -26,3 +26,7 @@ MonoBehaviour:
   - Freeplay
   - UnlockNewThing
   - FAKE
+  - MemoryMatchGameResult
+  - MemoryMatchGameLives
+  - MemoryMatchPatternLength
+  - HighScore

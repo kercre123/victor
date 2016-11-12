@@ -61,6 +61,7 @@ SparksBehaviorChooser::SparksBehaviorChooser(Robot& robot, const Json::Value& co
     auto helper = MakeAnkiEventUtil(*robot.GetExternalInterface(), *this, _signalHandles);
     using namespace ExternalInterface;
     helper.SubscribeEngineToGame<MessageEngineToGameTag::BehaviorObjectiveAchieved>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedObject>();
   }
 }
 
@@ -105,8 +106,8 @@ void SparksBehaviorChooser::OnSelected()
   _switchingToHardSpark = false;
   _timePlayingOutroStarted = 0;
   _idleAnimationsSet = false;
+  _observedObjectsSinceStarted.clear();
   
-
   static const BackpackLights kLoopingSparkLights = {
     .onColors               = {{NamedColors::BLACK, NamedColors::WHITE, NamedColors::WHITE, NamedColors::WHITE, NamedColors::BLACK}},
     .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
@@ -178,7 +179,15 @@ void SparksBehaviorChooser::HandleMessage(const ExternalInterface::BehaviorObjec
     _currentObjectiveCompletedCount++;
   }
 }
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void SparksBehaviorChooser::HandleMessage(const ExternalInterface::RobotObservedObject& msg)
+{
+  if( msg.objectFamily == ObjectFamily::Block || msg.objectFamily == ObjectFamily::LightCube ) {
+    _observedObjectsSinceStarted.insert( msg.objectID );
+  }
+}
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -326,17 +335,39 @@ void SparksBehaviorChooser::CompleteSparkLogic()
     static constexpr const char* kDasSuccessEvent = "meta.upgrade_replay_success";
     static constexpr const char* kDasFailEvent    = "meta.upgrade_replay_fail";
     static constexpr const char* kDasCancelEvent  = "meta.upgrade_replay_cancel";
+    static constexpr const char* kDasTimeoutEvent = "meta.upgrade_replay_timeout";
     
     const char* eventName = nullptr;
+
+    const bool observedBlock = !_observedObjectsSinceStarted.empty();
+
+    // user has canceled if they requested an end, or if they switched from soft to hard (they canceled the
+    // soft spark to turn it into a hard spark)
+    const bool userCanceled = mngr.DidGameRequestSparkEnd() || _switchingToHardSpark;
     
-    if( mngr.DidGameRequestSparkEnd() ) {
+    if( userCanceled ) {
       eventName = kDasCancelEvent;
     }
     else if( completedObjectives ) {
       eventName = kDasSuccessEvent;
     }
-    else {
+    else if( observedBlock ) {
       eventName = kDasFailEvent;
+
+      // in the failure case, also send a failure event with the number of cubes observed (useful to debugging
+      // / collecting data on failures). Only broadcast for hard sparks for now
+      if( ! mngr.IsActiveSparkSoft() ) {
+        Anki::Util::sEvent("meta.upgrade_replay_fail_cubes_observed",
+                           {{DDATA, TO_DDATA_STR( _observedObjectsSinceStarted.size() )}},
+                           UnlockIdToString(mngr.GetActiveSpark()));
+      }
+    }
+    else {
+      // if we never saw a block, and didn't get our objective, then presumably we timed out (as opposed to
+      // trying and failing). Note that some sparks (like pounce) don't use blocks, but they also don't fail,
+      // so currently a non-issue, but could become a problem if, e.g. that spark "failed" if it never saw any
+      // motion
+      eventName = kDasTimeoutEvent;
     }
     
     Anki::Util::sEvent(eventName,

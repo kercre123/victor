@@ -38,7 +38,7 @@ namespace Anki {
   public:
     Rectangle();
     Rectangle(T x, T y, T width, T height);
-    Rectangle(const Point2<T>& upperLeft, const Point2<T>& lowerRight);
+    Rectangle(const Point2<T>& corner1, const Point2<T>& corner2);
     
     // Construct bounding boxes:
     template<typename T_other>

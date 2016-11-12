@@ -1026,6 +1026,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::BehaviorManagerMessage>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::CameraCalibration>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::CancelAction>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::CancelActionByIdTag>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ClearCalibrationImages>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ComputeCameraCalibration>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::DrawPoseMarker>();
@@ -1501,6 +1502,23 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::CancelAction& msg
   else
   {
     robot->GetActionList().Cancel((RobotActionType)msg.actionType);
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::CancelActionByIdTag& msg)
+{
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  
+  // We need a robot
+  if (nullptr == robot)
+  {
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleCancelActionByIdTag.InvalidRobotID", "Failed to find robot.");
+  }
+  else
+  {
+    robot->GetActionList().Cancel(msg.idTag);
   }
 }
 

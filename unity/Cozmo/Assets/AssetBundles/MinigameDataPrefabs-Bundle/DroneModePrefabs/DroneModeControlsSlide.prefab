@@ -81,7 +81,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &105662
 GameObject:
   m_ObjectHideFlags: 1
@@ -892,7 +892,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &198696
 GameObject:
   m_ObjectHideFlags: 1
@@ -1364,7 +1364,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: 15a89aff1805c400791555554971e3ab, type: 3}
+  m_Sprite: {fileID: 21300000, guid: e73eb585059544b0dbe628a75522a138, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1391,7 +1391,7 @@ MonoBehaviour:
   m_ChildAlignment: 4
   m_Spacing: 50
   m_ChildForceExpandWidth: 0
-  m_ChildForceExpandHeight: 0
+  m_ChildForceExpandHeight: 1
 --- !u!114 &11431182
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1493,6 +1493,9 @@ MonoBehaviour:
     FieldName: Cozmo.UI.CozmoButton:ButtonGraphics:0:pressedColor:r
     JsonValue: 0.141176477
   ModifiedLocalReferences:
+  - ObjectPath: ../
+    FieldName: Cozmo.MinigameWidgets.QuitMinigameButton:_QuitButtonInstance
+    ReferencePath: 
   - ObjectPath: ../../
     FieldName: Cozmo.Minigame.DroneMode.DroneModeControlsSlide:_QuitDroneModeButtonImage
     ReferencePath: 
@@ -1546,7 +1549,7 @@ MonoBehaviour:
   m_ChildAlignment: 4
   m_Spacing: 50
   m_ChildForceExpandWidth: 0
-  m_ChildForceExpandHeight: 0
+  m_ChildForceExpandHeight: 1
 --- !u!114 &11442284
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1593,7 +1596,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: e73eb585059544b0dbe628a75522a138, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 15a89aff1805c400791555554971e3ab, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1622,22 +1625,22 @@ MonoBehaviour:
   ButtonGraphics:
   - targetImage: {fileID: 11444954}
     ignoreSprite: 0
-    pressedSprite: {fileID: 21300000, guid: d74a3e14af88149c6be64d997bb918a3, type: 3}
-    pressedColor: {r: 1, g: 1, b: 1, a: 1}
-    disabledSprite: {fileID: 21300000, guid: e73eb585059544b0dbe628a75522a138, type: 3}
-    disabledColor: {r: 0.5441177, g: 0.5441177, b: 0.5441177, a: 1}
-  - targetImage: {fileID: 11426224}
-    ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: 33ba2c66bb38944e39100870fbeac048, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 21300000, guid: 15a89aff1805c400791555554971e3ab, type: 3}
+    disabledColor: {r: 0.5441177, g: 0.5441177, b: 0.5441177, a: 1}
+  - targetImage: {fileID: 11426224}
+    ignoreSprite: 0
+    pressedSprite: {fileID: 21300000, guid: d74a3e14af88149c6be64d997bb918a3, type: 3}
+    pressedColor: {r: 1, g: 1, b: 1, a: 1}
+    disabledSprite: {fileID: 21300000, guid: e73eb585059544b0dbe628a75522a138, type: 3}
     disabledColor: {r: 0.54509807, g: 0.54509807, b: 0.54509807, a: 1}
   _GlintAnimator: {fileID: 0}
   _UISoundEvent:
     _Event: Play__Ui__Click_General
     _EventType: Ui
   _ShowDisabledStateWhenInteractable: 0
-  _StartOn: 0
+  _StartOn: 1
   _OnImageContainer: {fileID: 198382}
   _OffImageContainer: {fileID: 104978}
 --- !u!114 &11450480
@@ -2044,7 +2047,7 @@ MonoBehaviour:
   m_ChildAlignment: 4
   m_Spacing: 50
   m_ChildForceExpandWidth: 0
-  m_ChildForceExpandHeight: 0
+  m_ChildForceExpandHeight: 1
 --- !u!114 &11478120
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -3445,8 +3448,8 @@ RectTransform:
   m_RootOrder: 7
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0.000015258789, y: 168}
-  m_SizeDelta: {x: -886, y: 200}
+  m_AnchoredPosition: {x: 0.000015258789, y: 170}
+  m_SizeDelta: {x: -886, y: 248}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &100100000
 Prefab:

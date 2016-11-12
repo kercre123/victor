@@ -1,0 +1,44 @@
+//
+// PutDownDispatch_LookForFaceAndCube
+// This behavior triggers when after Cozmo is put down (and played the appropriate reactions). It searches
+// for faces and cubes so that a proper goal can be selected right after.
+//
+//
+{
+  "name": "PutDownDispatch_LookForFaceAndCube",
+  
+  "behaviorType": "LookForFaceAndCube",
+  "flatScore": 1.0,
+  "behaviorGroups": [
+    "FP_PutDownDispatch"
+  ],
+  
+  // consider using GetTimeAtWhichRobotReturnedToTreadsSecs instead
+  // set cooldown so that the goal finishes (otherwise the behavior is always runnable)
+  "repetitionPenalty": {
+    "nodes": [
+      { "x": 0.2, "y": 0.0 },
+      { "x": 0.2, "y": 1.0 }
+    ]
+  },
+  
+  // behavior configuration
+  "params": {
+    "bodyTurnSpeed_degPerSec": 180,
+    "headTurnSpeed_degPerSec": 120,
+    
+    "face_headAngleAbsRangeMin_deg": 30,
+    "face_headAngleAbsRangeMax_deg": 42,
+    "face_bodyAngleRelRangeMin_deg": 10,
+    "face_bodyAngleRelRangeMax_deg": 30,
+    "face_sidePicks": 2,
+    
+    "cube_headAngleAbsRangeMin_rad": -5,
+    "cube_headAngleAbsRangeMax_rad":  5,
+    "cube_bodyAngleRelRangeMin_rad": 10,
+    "cube_bodyAngleRelRangeMax_rad": 30,
+    "cube_sidePicks": 1,
+    
+    "lookInPlaceAnimTrigger": "HikingLookAround"
+  }
+}

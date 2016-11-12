@@ -21,6 +21,7 @@
 #include "anki/common/basestation/utils/timer.h"
 
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
 
 
 
@@ -170,9 +171,10 @@ void BehaviorDriveOffCharger::TransitionToDrivingForward(Robot& robot)
     // probably interrupted by getting off the charger platform
     DriveStraightAction* action = new DriveStraightAction(robot, _distToDrive_mm, kInitialDriveSpeed);
     action->SetAccel(kInitialDriveAccel);
-    StartActing(action,[this](ActionResult res){
+    StartActing(action,[this, &robot](ActionResult res){
       if(res == ActionResult::SUCCESS){
         BehaviorObjectiveAchieved(BehaviorObjective::DroveAsIntended);
+        robot.GetMoodManager().TriggerEmotionEvent("DriveOffCharger", MoodManager::GetCurrentTimeInSeconds());
       }
     });
     // the Update function will transition back to this state (or out of the behavior) as appropriate

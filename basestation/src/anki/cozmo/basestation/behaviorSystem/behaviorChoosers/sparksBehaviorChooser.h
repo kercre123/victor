@@ -13,9 +13,10 @@
 #ifndef __Cozmo_Basestation_SparksBehaviorChooser_H__
 #define __Cozmo_Basestation_SparksBehaviorChooser_H__
 
-#include "simpleBehaviorChooser.h"
+#include "anki/common/basestation/objectIDs.h"
 #include "clad/types/behaviorObjectives.h"
 #include "json/json-forwards.h"
+#include "simpleBehaviorChooser.h"
 
 
 namespace Anki {
@@ -90,7 +91,7 @@ private:
   BehaviorAcknowledgeObject* _behaviorAcknowledgeObject = nullptr;
   
   // Re-set each time spark is activated
-  TimeStamp_t _timeChooserStarted;
+  float _timeChooserStarted;
   int _currentObjectiveCompletedCount;
 
   // Loaded in from behavior_config
@@ -108,6 +109,9 @@ private:
   
   // Track if idle animations swapped out
   bool _idleAnimationsSet;
+
+  // Track when we saw cubes to determine if we saw them during the spark
+  std::set< ObjectID > _observedObjectsSinceStarted;
   
 };
    

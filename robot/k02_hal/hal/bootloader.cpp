@@ -59,7 +59,7 @@ void UpdateBootloader()
       flashcmd[1] = ~before | data;             // Avoid double-programming 0s (per datasheet): ~1->0 = 0
       FTFA->FSTAT = FSTAT_ERROR;                // Clear errors
       FlashCommand(145 * 100);                  // Max time is 145uS at 100MHz
-      FMC->PFB0CR = BM_FMC_PFB0CR_CINV_WAY;     // Invalidate the flash cache
+      FMC->PFB0CR |= BM_FMC_PFB0CR_CINV_WAY;    // Invalidate the flash cache
     }
   }
 }

@@ -183,6 +183,7 @@ namespace FaceEnrollment {
         _CurrentRobot.EnrolledFaces[faceEnrollmentCompleted.faceID] = _NameForFace;
         _CurrentRobot.EnrolledFacesLastEnrolledTime[faceEnrollmentCompleted.faceID] = Time.time;
         ReEnrolledExistingFaceAnimationSequence();
+        GameEventManager.Instance.FireGameEvent(Anki.Cozmo.GameEvent.OnReEnrollFace);
       }
       else {
         _CurrentRobot.EnrolledFaces.Add(faceEnrollmentCompleted.faceID, _NameForFace);

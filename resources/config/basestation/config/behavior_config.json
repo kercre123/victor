@@ -22,9 +22,12 @@
     "type" : "goal",
     
     // parameters to decide between goals
-    "evaluator" :
+    "desiredGoalNames" :
     {
-
+      "faceAndCubeGoalName": "FP_PlayAlone",
+      "faceOnlyGoalName": "FP_Socialize",
+      "cubeOnlyGoalName": "FP_PlayAlone",
+      "noFaceNoCubeGoalName": "FP_Hiking"
     },
     // goals to create
     "goals" :
@@ -152,6 +155,26 @@
         }
       },
       {
+        "name" : "SparksWorkout",
+        "requireSpark":"Workout",
+        "priority": 0, // lower is better
+        "behaviorChooser" :
+        {
+          "type" : "sparks",
+          "minTimeSecs": 0,
+          "maxTimeSecs": 120,
+          "numberOfRepetitions": 1,
+          "behaviorObjective": "PerformedWorkout",
+          "softSparkTrigger": "SoftSparkUpgradeLift",
+          // this are the behaviors that are allowed in this behavior chooser
+          "behaviorGroups" : [ "SparksWorkout" ]
+        },
+        "goalStrategy":
+        {
+          "type" : "Spark"
+        }
+      },
+      {
         "name" : "SparksBuildPyramid",
         "requireSpark":"BuildPyramid",
         "priority": 0, // lower is better
@@ -178,11 +201,12 @@
       // FP_PlayAlone       - when Cozmo does stuff in place on his own, showing off, playing with cubes, ..
       // FP_Socialize       - when Cozmo wants to interact with faces and players, but without playing games
       // FP_NothingToDo     - fallback when Cozmo can't do anything else
+      // FP_PutDownDispatch - when Cozmo is put down and wants to figure out what goal to go into
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       {
         "name" : "FP_NothingToDo",
-        "priority": 5, // lower is better
+        "priority": 6, // lower is better
         "behaviorChooser" :
         {
           "type" : "simple",
@@ -190,7 +214,7 @@
         },
         "goalStrategy":
         {
-          "type" : "FP_Socialize",
+          "type" : "Simple",
           // goals need to give up so that higher priority can take over. Give up as soon as we finish one
           // iteration
           "goalShouldEndDurationSecs" : 1.0,
@@ -200,7 +224,7 @@
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       {
         "name" : "FP_Hiking",
-        "priority": 4, // lower is better
+        "priority": 5, // lower is better
         "driveStartAnimTrigger" : "HikingDrivingStart",
         "driveLoopAnimTrigger" : "HikingDrivingLoop",
         "driveEndAnimTrigger" : "HikingDrivingEnd",
@@ -218,7 +242,7 @@
         },
         "goalStrategy":
         {
-          "type" : "FP_Hiking",
+          "type" : "Simple",
           "goalShouldEndDurationSecs" : 120.0, // hiking will automatically finish when it completes, so a higher max time is ok
           "cooldownSecs" : 10.0,
           "createBeacons" : true,
@@ -231,7 +255,7 @@
         // we want this play alone to be higher priority than exploring, but its activation is more
         // restrictive than PlayingAlone when there's nothing else to do
         "name" : "FP_PlayAlone",
-        "priority": 3, // lower is better
+        "priority": 4, // lower is better
         "behaviorChooser" :
         {
           "type" : "simple",
@@ -239,7 +263,7 @@
         },
         "goalStrategy":
         {
-          "type" : "FP_PlayAlone",
+          "type" : "Simple",
           // future: it might be a good idea to check how many behaviors are available to tune the duration based on that
           "goalShouldEndDurationSecs" : 25.0,
           "cooldownSecs" : 30.0
@@ -248,7 +272,7 @@
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       {
         "name" : "FP_PlayWithHumans",
-        "priority": 2, // lower is better
+        "priority": 3, // lower is better
         "behaviorChooser" :
         {
           "type" : "simple",
@@ -284,7 +308,7 @@
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       {
         "name" : "FP_Socialize",
-        "priority": 1, // lower is better
+        "priority": 2, // lower is better
         "behaviorChooser" :
         {
           "type" : "socialize",
@@ -308,7 +332,7 @@
         },
         "goalStrategy":
         {
-          "type" : "FP_Socialize",
+          "type" : "Simple",
           // at least interact for this amount of time every time
           "goalCanEndDurationSecs" : 5.0,
           
@@ -339,6 +363,249 @@
             }
           ]
         }
+      },
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      {
+        // this goal is triggered after being put down from a pick up, so that Cozmo can select what to do next based on
+        // what is around him (a face, a cube, ...)
+        "name" : "FP_PutDownDispatch",
+        "priority": 1, // lower is better
+        "behaviorChooser" :
+        {
+          "type" : "simple",
+          "behaviorGroups" : [ "FP_PutDownDispatch" ]
+        },
+        "goalStrategy":
+        {
+          "type" : "Simple",
+          "requiredRecentOnTreadsEventSecs" : 5.0 // purposely high so that reactions don't prevent goal selection due to timeout
+        }
+      }
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ]
+  },
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // config for cozmo workouts feature  // TODO:(bn) put this somewhere better....
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  "workoutComponent": {
+    "workouts": [
+      {
+        "preLiftAnim":    "WorkoutPreLift_highEnergy",
+        "postLiftAnim":   "WorkoutPostLift_highEnergy",
+        "strongLiftAnim": "WorkoutStrongLift_highEnergy",
+        "transitionAnim": "WorkoutTransition_highEnergy",
+        "weakLiftAnim":   "WorkoutWeakLift_highEnergy",
+        "putDownAnim":    "WorkoutPutDown_highEnergy",
+
+        "numStrongLifts": [
+          {
+            "emotionType": "Confident",
+            "scoreGraph": {
+              "nodes": [
+                {
+                  "x": -1.0,
+                  "y": 2
+                },
+                {
+                  "x": 0,
+                  "y": 5
+                },
+                {
+                  "x": 0.3,
+                  "y": 7
+                }
+              ]
+            },
+            "trackDelta" : false
+          }
+        ],
+        
+        "numWeakLifts": [
+          {
+            "emotionType": "Confident",
+            "scoreGraph": {
+              "nodes": [
+                {
+                  "x": -1.0,
+                  "y": 0
+                },
+                {
+                  "x": -0.2,
+                  "y": 1
+                },
+                {
+                  "x": 0.3,
+                  "y": 2
+                }
+              ]
+            },
+            "trackDelta" : false
+          }
+        ],
+        
+        "emotionEventOnComplete": "StrongWorkoutCompleted"
+      },
+      {
+        "preLiftAnim":    "WorkoutPreLift_mediumEnergy",
+        "postLiftAnim":   "WorkoutPostLift_mediumEnergy",
+        "strongLiftAnim": "WorkoutStrongLift_mediumEnergy",
+        "transitionAnim": "WorkoutTransition_mediumEnergy",
+        "weakLiftAnim":   "WorkoutWeakLift_mediumEnergy",
+        "putDownAnim":    "WorkoutPutDown_mediumEnergy",
+        
+        "numStrongLifts": [
+          {
+            "emotionType": "Confident",
+            "scoreGraph": {
+              "nodes": [
+                {
+                  "x": -1.0,
+                  "y": 1
+                },
+                {
+                  "x": 0,
+                  "y": 4
+                },
+                {
+                  "x": 0.3,
+                  "y": 5
+                }
+              ]
+            },
+            "trackDelta" : false
+          }
+        ],
+        
+        "numWeakLifts": [
+          {
+            "emotionType": "Confident",
+            "scoreGraph": {
+              "nodes": [
+                {
+                  "x": -1.0,
+                  "y": 0
+                },
+                {
+                  "x": -0.2,
+                  "y": 1
+                },
+                {
+                  "x": 0.3,
+                  "y": 2
+                }
+              ]
+            },
+            "trackDelta" : false
+          }
+        ],
+        
+        "emotionEventOnComplete": "MediumWorkoutCompleted"
+      },
+      {
+        "preLiftAnim":    "WorkoutPreLift_lowEnergy",
+        "postLiftAnim":   "WorkoutPostLift_lowEnergy",
+        "strongLiftAnim": "WorkoutStrongLift_lowEnergy",
+        "transitionAnim": "WorkoutTransition_lowEnergy",
+        "weakLiftAnim":   "WorkoutWeakLift_lowEnergy",
+        "putDownAnim":    "WorkoutPutDown_lowEnergy",
+
+        
+        "numStrongLifts": [
+          {
+            "emotionType": "Confident",
+            "scoreGraph": {
+              "nodes": [
+                {
+                  "x": -1.0,
+                  "y": 0
+                },
+                {
+                  "x": 0,
+                  "y": 2
+                },
+                {
+                  "x": 0.3,
+                  "y": 3
+                }
+              ]
+            },
+            "trackDelta" : false
+          }
+        ],
+        
+        "numWeakLifts": [
+          {
+            "emotionType": "Confident",
+            "scoreGraph": {
+              "nodes": [
+                {
+                  "x": -1.0,
+                  "y": 0
+                },
+                {
+                  "x": 0,
+                  "y": 1
+                }
+              ]
+            },
+            "trackDelta" : false
+          }
+        ],
+        
+        "emotionEventOnComplete": "WeakWorkoutCompleted"
+      },
+      {
+        "preLiftAnim":    "WorkoutPreLift_lowEnergy",
+        "postLiftAnim":   "WorkoutPostLift_lowEnergy",
+        "strongLiftAnim": "WorkoutStrongLift_lowEnergy",
+        "transitionAnim": "WorkoutTransition_lowEnergy",
+        "weakLiftAnim":   "WorkoutWeakLift_lowEnergy",
+        "putDownAnim":    "WorkoutPutDown_lowEnergy_simple",
+        
+        "numStrongLifts": [
+          {
+            "emotionType": "Confident",
+            "scoreGraph": {
+              "nodes": [
+                {
+                  "x": -1.0,
+                  "y": 0
+                },
+                {
+                  "x": 0,
+                  "y": 2
+                },
+                {
+                  "x": 0.3,
+                  "y": 3
+                }
+              ]
+            },
+            "trackDelta" : false
+          }
+        ],
+        
+        "numWeakLifts": [
+          {
+            "emotionType": "Confident",
+            "scoreGraph": {
+              "nodes": [
+                {
+                  "x": -1.0,
+                  "y": 0
+                },
+                {
+                  "x": 0,
+                  "y": 1
+                }
+              ]
+            },
+            "trackDelta" : false
+          }
+        ],
+        
+        "emotionEventOnComplete": "WeakWorkoutCompleted"
       }
     ]
   }

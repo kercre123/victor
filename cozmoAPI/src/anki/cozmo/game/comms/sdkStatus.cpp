@@ -53,17 +53,20 @@ inline double GetTimeBetween_s(double startTime_s, double endTime_s)
 
 void SdkStatus::StopRobotDoingAnything()
 {
+  using GToE = ExternalInterface::MessageGameToEngine;
+  
+  // Disable reactionary behaviors
+  _externalInterface->Broadcast( GToE(ExternalInterface::EnableReactionaryBehaviors(false)) );
+  
   // Clear Behaviors
-  _externalInterface->Broadcast( ExternalInterface::MessageGameToEngine(
-                                        ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection) ) );
-  _externalInterface->Broadcast( ExternalInterface::MessageGameToEngine(
-                                        ExternalInterface::ExecuteBehavior(BehaviorType::NoneBehavior) ) );
+  _externalInterface->Broadcast( GToE(ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)) );
+  _externalInterface->Broadcast( GToE(ExternalInterface::ExecuteBehavior(BehaviorType::NoneBehavior)) );
   
   // Turn off all Cube Lights
-  _externalInterface->Broadcast( ExternalInterface::MessageGameToEngine( ExternalInterface::EnableLightStates(false, -1) ) );
+  _externalInterface->Broadcast( GToE(ExternalInterface::EnableLightStates(false, -1)) );
   
   // Stop everything else
-  _externalInterface->Broadcast( ExternalInterface::MessageGameToEngine( ExternalInterface::StopRobotForSdk() ) );
+  _externalInterface->Broadcast( GToE(ExternalInterface::StopRobotForSdk()) );
 }
 
 

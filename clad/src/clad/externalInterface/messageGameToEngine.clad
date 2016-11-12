@@ -253,6 +253,12 @@ message CancelAction {
   uint_8 robotID
 }
 
+// CancelActionByIdTag
+message CancelActionByIdTag {
+  uint_32 idTag,
+  uint_8 robotID
+}
+
 // QueueSingleAction
   message QueueSingleAction {
   uint_8  robotID,
@@ -815,7 +821,7 @@ message SetEnableSOSLogging {
   bool enabled
 }
 
-// Msg used by maya to disable reaction behaviors.
+// Msg used by maya (and SDK) to disable reaction behaviors.
 message EnableReactionaryBehaviors {
   bool enabled
 }

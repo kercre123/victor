@@ -48,6 +48,7 @@ class IBehavior;
 class IBehaviorChooser;
 class IReactionaryBehavior;
 class Robot;
+class WorkoutComponent;
 template<typename TYPE> class AnkiEvent;
 
 namespace Audio {
@@ -125,6 +126,9 @@ public:
   const AIWhiteboard& GetWhiteboard() const { assert(_whiteboard); return *_whiteboard; }
         AIWhiteboard& GetWhiteboard()       { assert(_whiteboard); return *_whiteboard; }
   
+  const WorkoutComponent& GetWorkoutComponent() const { assert(_workoutComponent); return *_workoutComponent; }
+        WorkoutComponent& GetWorkoutComponent()       { assert(_workoutComponent); return *_workoutComponent; }
+
   // accessors: audioController
   Audio::BehaviorAudioClient& GetAudioClient() const { assert(_audioClient); return *_audioClient;}
   
@@ -135,6 +139,13 @@ public:
   
   // Returns first reactionary behavior with given type or nullptr if none found
   IReactionaryBehavior* GetReactionaryBehaviorByType(BehaviorType behaviorType);
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Freeplay - specific
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // calculates (and sets in the freeplay chooser) the desired goal due to objects recently seen
+  void CalculateFreeplayGoalFromObjects();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Sparks
@@ -277,6 +288,9 @@ private:
   
   // whiteboard for behaviors to share information, or to store information only useful to behaviors
   std::unique_ptr<AIWhiteboard> _whiteboard;
+
+  // component for tracking cozmo's work-outs
+  std::unique_ptr< WorkoutComponent > _workoutComponent;
     
   // For storing event handlers
   std::vector<Signal::SmartHandle> _eventHandlers;

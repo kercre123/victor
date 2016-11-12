@@ -9,6 +9,7 @@ import struct
 import base64
 import sys
 import os
+import uuid
 
 def output_is_redirected():
     return os.fstat(0) != os.fstat(1)
@@ -27,7 +28,7 @@ def print_registers(data,regs):
     offset = 0
     regset = fetch_registers(data, regs)
     for r in regs:
-        print("\t{}\t: {:08x}".format(r,regset[r]))
+        print("{:>16}: {:08x}".format(r,regset[r]))
     return regset
 
 
@@ -41,10 +42,16 @@ K2_registers = ["r8", "r9", "r10", "r11", "r4", "r5", "r6", "r7",
 
 ESP_registers = ["epc1", "ps", "sar", "xx1", "a0", "a2", "a3", "a4",
                  "a5", "a6", "a7", "a8", "a9", "a10", "a11", "a12",
-                 "a13", "a14", "a15", "exccause", "sp", "excvaddr", "depc", "version", "stack_depth"]
+                 "a13", "a14", "a15", "exccause", "sp", "excvaddr", "depc"]
+
+ESP_LOG_FORMAT_MAGIC = 0xCDCD
+
+I2Spi_registers = ["errorCounts", "Indicators"]
+
+BootError_data = ['address', 'error']
 
 #CrashSource order
-RegisterMap = [ESP_registers, K2_registers, NRF_registers, []]
+RegisterMap = [ESP_registers, K2_registers, NRF_registers, [], I2Spi_registers, BootError_data]
     
 EspCauses = {
     0: "IllegalInstruction",  1: "Syscall",
@@ -71,7 +78,23 @@ def print_ESP(data):
     ESP_S_filename = "espressif/bin/upgrade/user1.2048.new.3.S"
     
     regset = print_registers(data, ESP_registers)
-    stack_data_start = len(ESP_registers)*4
+    variable_data_start = len(ESP_registers)*4
+    logFormat, logFormatMagic = struct.unpack("<HH", data[variable_data_start:variable_data_start+4])
+    if logFormatMagic != ESP_LOG_FORMAT_MAGIC:
+        # Older version of crash log without format key
+        regset.update(fetch_registers(data[variable_data_start:], ["version", "stack_depth"]))
+        print("{0:>16}: {version:d}\n{1:>16}: {stack_depth:08x}".format("Version", "stack depth", **regset))
+        stack_data_start = variable_data_start + 8
+    else:
+        variable_data_start += 4
+        if logFormat == 1:
+            meta_length = 24
+            version, appRunID, stack_depth = struct.unpack("<i16si", data[variable_data_start:variable_data_start+meta_length])
+            regset["stack_depth"] = stack_depth
+            stack_data_start = variable_data_start + meta_length
+            print("{:>16}: {:d}\n{:>16}: {}\n{:>16}: 0x{:x}".format("Version", version, "apprun", str(uuid.UUID(bytes=appRunID)), "stack depth", stack_depth))
+        else:
+            raise ValueError("Unsupported log format version {}".format(logFormat))
     stack_size = regset["stack_depth"]
     if stack_size < (1024-16)-stack_data_start:
         stack_addrs = ["\t{:08x}".format(regset["sp"]+i*4) for i in range(stack_size)]
@@ -86,6 +109,12 @@ def print_ESP(data):
     except subprocess.CalledProcessError:
         None
 
+def print_BootError(data):
+    while len(data) > 0:
+        print_registers(data, BootError_data)
+        data = data[len(BootError_data)*4:]
+        
+
     
 def print_regs(reporter, data):
     if reporter == 0:
@@ -94,6 +123,8 @@ def print_regs(reporter, data):
         print_NRF(data)
     elif reporter == 2:
         print_K2(data)
+    elif reporter == 5:
+        print_BootError(data)
     print()
 
 if __name__ == "__main__":
@@ -102,12 +133,13 @@ if __name__ == "__main__":
     parser.add_argument('filename', help='the binary datafile')
     parser.add_argument('-devlog', help='file is devlog', action='store_true')
     parser.add_argument('-b64', help='file is b64 string', action='store_true')
+    parser.add_argument('-t', help='numeric crash type')
     args = parser.parse_args()
 
     START = 0x02000
     SegSize = 0x1000
     CRASH_RECORD_SIZE = 1024
-    Names = {0:"Esp ", 1:"Body", 2:"RTIP"}
+    Names = {0:"Esp ", 2:"Body", 1:"RTIP", 3:"Prop", 4:"I2Spi", 5:"BootError"}
 
     if args.devlog:
         START = 0
@@ -137,6 +169,8 @@ if __name__ == "__main__":
             wasWritten,wasReported = (0,0)
             #            reporter = #extract from filename
             reporter,errcode = (0,0)
+            if args.t:
+                reporter = int(args.t)
             
         print(args.devlog,wasWritten,wasReported,reporter,errcode)
         if wasWritten == 0:

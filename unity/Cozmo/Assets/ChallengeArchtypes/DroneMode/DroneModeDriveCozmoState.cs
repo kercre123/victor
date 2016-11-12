@@ -126,6 +126,7 @@ namespace Cozmo {
 
           _CurrentRobot.EnableDroneMode(true);
           _CurrentRobot.SetEnableFreeplayLightStates(true);
+          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.ReactToPickup, false);
         }
 
         public override void Exit() {
@@ -136,6 +137,8 @@ namespace Cozmo {
             _CurrentRobot.StopAllMotors();
             _CurrentRobot.EnableDroneMode(false);
             _CurrentRobot.SetEnableFreeplayLightStates(false);
+            _CurrentRobot.SetNightVision(false);
+            _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.ReactToPickup, true);
           }
           _DroneModeControlsSlide.OnDriveSpeedSegmentValueChanged -= HandleDriveSpeedValueChanged;
           _DroneModeControlsSlide.OnDriveSpeedSegmentChanged -= HandleDriveSpeedFamilyChanged;
@@ -513,7 +516,6 @@ namespace Cozmo {
           _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.AcknowledgeFace, enable);
           _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.AcknowledgeObject, enable);
           _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.ReactToUnexpectedMovement, enable);
-          _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.ReactToPickup, enable);
           _CurrentRobot.RequestEnableReactionaryBehavior("drone_mode", Anki.Cozmo.BehaviorType.ReactToPet, enable);
         }
       }

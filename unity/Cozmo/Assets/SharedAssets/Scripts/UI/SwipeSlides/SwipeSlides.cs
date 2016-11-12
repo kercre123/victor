@@ -33,6 +33,7 @@ public class SwipeSlides : MonoBehaviour {
   private Vector3 _StartingPosition;
 
   private GameObject _SwipeContainerMask;
+  private Tweener _SwipeTween;
 
   private void Start() {
 
@@ -46,7 +47,7 @@ public class SwipeSlides : MonoBehaviour {
     }
     _StartingPosition = _SwipeContainer.localPosition;
 
-    _SwipeContainerMask = _SwipeContainer.transform.parent.gameObject; 
+    _SwipeContainerMask = _SwipeContainer.transform.parent.gameObject;
 
     _PageIndicatorInstance = GameObject.Instantiate(_PageIndicatorPrefab.gameObject).GetComponent<SwipePageIndicator>();
     _PageIndicatorInstance.transform.SetParent(_SwipeContainerMask.transform, false);
@@ -64,8 +65,12 @@ public class SwipeSlides : MonoBehaviour {
     if (_Transitioning) {
       return;
     }
+    if (_SwipeTween != null) {
+      _SwipeTween.Kill();
+      _SwipeTween = null;
+    }
     _Transitioning = true;
-    _SwipeContainer.DOLocalMove(_StartingPosition - Vector3.right * GetComponent<RectTransform>().rect.width * index, 0.25f).OnComplete(() => TransitionDone());
+    _SwipeTween = _SwipeContainer.DOLocalMove(_StartingPosition - Vector3.right * GetComponent<RectTransform>().rect.width * index, 0.25f).OnComplete(() => TransitionDone());
   }
 
   private void TransitionDone() {
@@ -94,6 +99,10 @@ public class SwipeSlides : MonoBehaviour {
       GameObject.Destroy(_SlideInstances[i]);
     }
     _SlideInstances.Clear();
+    if (_SwipeTween != null) {
+      _SwipeTween.Kill();
+      _SwipeTween = null;
+    }
   }
 
   // NOTE: needs class to inherit from IPointerDownhandler etc.

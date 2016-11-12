@@ -94,6 +94,7 @@ size_t GetObjectFailureListMaxSize(AIWhiteboard::ObjectUseAction action)
 AIWhiteboard::AIWhiteboard(Robot& robot)
 : _robot(robot)
 , _gotOffChargerAtTime_sec(-1.0f)
+, _returnedToTreadsAtTime_sec(-1.0f)
 , _edgeInfoTime_sec(-1.0f)
 , _edgeInfoClosestEdge_mm(-1.0f)
 {
@@ -171,6 +172,7 @@ void AIWhiteboard::Init()
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedObject>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedPossibleObject>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotMarkedObjectPoseUnknown>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotOffTreadsStateChanged>();
   }
   else {
     PRINT_NAMED_WARNING("AIWhiteboard.Init", "Initialized whiteboard with no external interface. Will miss events.");
@@ -899,6 +901,16 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotMarkedObjectPoseU
   // its position has become Unknown. We probably were at the location where we expected this object to be,
   // and it's no there. So we don't want to keep its markers anymore
   RemovePossibleObjectsMatching(obj->GetType(), obj->GetPose());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void AIWhiteboard::HandleMessage(const ExternalInterface::RobotOffTreadsStateChanged& msg)
+{
+  const bool onTreads = msg.treadsState == OffTreadsState::OnTreads;
+  if ( onTreads ) {
+    _returnedToTreadsAtTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

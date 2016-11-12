@@ -1151,6 +1151,7 @@ namespace Cozmo {
           if (nullptr != actObj) {
             std::vector<PreActionPose> preActionPoses;
             actObj->GetCurrentPreActionPoses(preActionPoses,
+                                             robot.GetPose(),
                                              {PreActionPose::DOCKING},
                                              std::set<Vision::Marker::Code>());
             

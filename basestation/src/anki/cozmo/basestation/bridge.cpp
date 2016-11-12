@@ -98,12 +98,12 @@ namespace Anki {
       if(preCrossingPoseLeft.GetWithRespectTo(leftMarker->GetPose(), preCrossingPoseLeft) == false) {
         PRINT_NAMED_ERROR("MatPiece.PreCrossingPoseLeftError", "Could not get preCrossingLeftPose w.r.t. left bridge marker.");
       }
-      AddPreActionPose(PreActionPose::ENTRY, leftMarker, preCrossingPoseLeft);
+      AddPreActionPose(PreActionPose::ENTRY, leftMarker, preCrossingPoseLeft, 0);
       
       if(preCrossingPoseRight.GetWithRespectTo(rightMarker->GetPose(), preCrossingPoseRight) == false) {
         PRINT_NAMED_ERROR("MatPiece.PreCrossingPoseRightError", "Could not get preCrossingRightPose w.r.t. right bridge marker.");
       }
-      AddPreActionPose(PreActionPose::ENTRY, rightMarker, preCrossingPoseRight);
+      AddPreActionPose(PreActionPose::ENTRY, rightMarker, preCrossingPoseRight, 0);
       
     } // Bridge()
     

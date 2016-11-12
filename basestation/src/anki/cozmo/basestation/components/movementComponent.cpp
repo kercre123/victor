@@ -677,6 +677,7 @@ void MovementComponent::CompletelyUnlockAllTracks()
 
 void MovementComponent::LockTracks(uint8_t tracks, const std::string& who, const std::string& debugName)
 {
+  uint8_t tracksToDisable = 0;
   for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
   {
     uint8_t curTrack = (1 << i);
@@ -687,10 +688,16 @@ void MovementComponent::LockTracks(uint8_t tracks, const std::string& who, const
       // If we just went from not locked to locked, inform the robot
       if (_trackLockCount[i].size() == 1)
       {
-        _robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::DisableAnimTracks(curTrack)));
+        tracksToDisable |= curTrack;
       }
     }
   }
+  
+  if(tracksToDisable > 0)
+  {
+    _robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::DisableAnimTracks(tracksToDisable)));
+  }
+  
   if(DEBUG_ANIMATION_LOCKING) {
     PRINT_NAMED_INFO("MovementComponent.LockTracks", "locked: (0x%x) %s by %s[%s], result:",
                      tracks,
@@ -704,6 +711,7 @@ void MovementComponent::LockTracks(uint8_t tracks, const std::string& who, const
 bool MovementComponent::UnlockTracks(uint8_t tracks, const std::string& who)
 {
   bool locksLeft = false;
+  uint8_t tracksToEnable = 0;
   for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
   {
     uint8_t curTrack = (1 << i);
@@ -727,10 +735,16 @@ bool MovementComponent::UnlockTracks(uint8_t tracks, const std::string& who)
       // If we just went from locked to not locked, inform the robot
       if (_trackLockCount[i].size() == 0)
       {
-        _robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::EnableAnimTracks(curTrack)));
+        tracksToEnable |= curTrack;
       }
     }
   }
+  
+  if(tracksToEnable > 0)
+  {
+    _robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::EnableAnimTracks(tracksToEnable)));
+  }
+  
   if(DEBUG_ANIMATION_LOCKING) {
     PRINT_NAMED_INFO("MovementComponent.UnlockTracks", "unlocked: (0x%x) %s by %s, result:",
                      tracks,

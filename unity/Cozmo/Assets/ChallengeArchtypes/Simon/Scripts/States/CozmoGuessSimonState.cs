@@ -10,6 +10,7 @@ namespace Simon {
     private bool? _ShouldWinGame;
     private int _LastTargetID;
     private bool _IsAnimating = false;
+    private bool _CubeLost = false;
 
     public override void Enter() {
       base.Enter();
@@ -26,6 +27,8 @@ namespace Simon {
       _GameInstance.ShowCurrentPlayerTurnStage(PlayerType.Cozmo, false);
 
       _StateMachine.PushSubState(new CozmoMoveCloserToCubesState(null, false, 40.0f, 20.0f, false));
+
+      _CurrentRobot.OnLightCubeRemoved += HandleOnCubeRemoved;
     }
 
     public override void Exit() {
@@ -33,11 +36,19 @@ namespace Simon {
       if (_CurrentRobot != null) {
         _CurrentRobot.DriveWheels(0.0f, 0.0f);
       }
+
+      _CurrentRobot.OnLightCubeRemoved -= HandleOnCubeRemoved;
+    }
+
+    // We want to kill the game... but Cozmo should just stop when done with current action.
+    // theres no error state to go to and people should just read the error message.
+    private void HandleOnCubeRemoved(LightCube cube) {
+      _CubeLost = true;
     }
 
     public override void Update() {
       base.Update();
-      if (_IsAnimating) {
+      if (_IsAnimating || _CubeLost) {
         return;
       }
       if (_ShouldWinGame.HasValue) {
@@ -130,7 +141,13 @@ namespace Simon {
       _GameInstance.ShowCenterResult(true, true);
       _GameInstance.AddPoint(false);
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Round_End);
-      _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.MemoryMatchCozmoWinHand, HandleOnCozmoWinAnimationDone);
+      if (_GameInstance.GetLivesRemaining(PlayerType.Human) > 0) {
+        _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.MemoryMatchCozmoWinHand, HandleOnCozmoWinAnimationDone);
+      }
+      else {
+        // we're going to play MemoryMatchCozmoWinGame soon.
+        HandleOnCozmoWinAnimationDone(true);
+      }
       _IsAnimating = true;
     }
 

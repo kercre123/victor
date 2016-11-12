@@ -415,16 +415,8 @@ static void OTARemoteDevice(const uint32_t id) {
   ota_send_next_block();
 }
 
-void uesb_event_handler(uint32_t flags)
+void uesb_event_handler(uesb_payload_t& rx_payload)
 {
-  // Only respond to receive interrupts
-  if(~flags & UESB_INT_RX_DR_MSK) {
-    return ;
-  }
-
-  uesb_payload_t rx_payload;
-  uesb_read_rx_payload(&rx_payload);
-
   switch (radioState) {
   case RADIO_OTA:
     // Send noise and return to pairing
@@ -445,7 +437,7 @@ void uesb_event_handler(uint32_t flags)
       int slot = LocateAccessory(advert.id);
 
       #if defined(NATHAN_CUBE_JUNK)
-      if (slot < 0 && rx_payload.rssi < 60 && rx_payload.rssi > -60) {
+      if (slot < 0 && ABS(rx_payload.rssi) < 50) {
         slot = AllocateAccessory(advert.id);
       }
       #endif
@@ -509,7 +501,7 @@ void uesb_event_handler(uint32_t flags)
       #ifndef CUBE_HOP
       new_addr->rf_channel = (random() & 0x3F) + 0x4;
       
-      pair.ticksUntilStart = 132; // Lowest legal value
+      pair.ticksUntilStart = 0x4000;//132; // Lowest legal value
       pair.hopIndex = 0;
       pair.hopBlackout = new_addr->rf_channel;
       #else
@@ -546,7 +538,7 @@ void uesb_event_handler(uint32_t flags)
       pair.ticksPerBeat = SCHEDULE_PERIOD;
       pair.beatsPerHandshake = TICK_LOOP; // 1 out of 7 beats handshakes with this cube
 
-      pair.ticksToListen = 0;     // Currently unused
+      pair.ticksToListen = 5;     // Currently unused
       pair.beatsPerRead = 4;
       pair.beatsUntilRead = 4;    // Should be computed to synchronize all tap data
       pair.patchStart = ota_device->patchStart;
@@ -569,16 +561,16 @@ void uesb_event_handler(uint32_t flags)
       
       acc->last_received = 0;
 
-      if (--acc->powerCountdown <= 0) {
+      if (ap->batteryLevel && --acc->powerCountdown <= 0) {
         acc->powerCountdown = SEND_BATTERY_TIME;
 
         ObjectPowerLevel m;
         m.objectID = slot;
-        m.batteryLevel = ap->batteryLevel;
+        m.batteryLevel = (CUBE_ADC_TO_CENTIVOLTS*ap->batteryLevel)>>8;
         RobotInterface::SendMessage(m);
       }
-
-      UpdatePropState(slot, ap->x, ap->y, ap->z, ap->tap_count, ap->tapTime, ap->tapNeg, ap->tapPos);
+ 
+      UpdatePropState(slot, ap->x, ap->y, ap->z, ap->tapCount, ap->tapTime, ap->tapNeg, ap->tapPos);
 
       EnterState(RADIO_PAIRING);
     }
@@ -676,9 +668,6 @@ static void ota_timeout() {
 }
 
 static void radio_prepare(void) {
-  // Schedule our next radio prepare
-  uesb_stop();
-
   // Manage OTA timeouts
   if (radioState == RADIO_OTA) {
     if (ota_pending && --ota_timeout_countdown <= 0) {
@@ -686,6 +675,9 @@ static void radio_prepare(void) {
     }
     return ;
   }
+
+  // Schedule our next radio prepare
+  uesb_stop();
 
   // Transmit to accessories round-robin
   if (++currentAccessory >= TICK_LOOP) {
@@ -718,11 +710,7 @@ static void radio_prepare(void) {
     int tx_index = 0;
 
     for (int light = 0; light < NUM_PROP_LIGHTS; light++) {
-      int index = light + rotationOffset[currentAccessory];
-
-      if (index >= NUM_PROP_LIGHTS) {
-        index -= NUM_PROP_LIGHTS;
-      }
+      int index = (light + rotationOffset[currentAccessory]) % NUM_PROP_LIGHTS;
 
       #ifndef AXIS_DEBUGGER
       uint8_t* rgbi = (uint8_t*) &lightController.cube[currentAccessory][channel_order[index]].values;
@@ -800,7 +788,7 @@ extern "C" void RTC0_IRQHandler(void) {
 
     uesb_start();
   }
-  
+
   if (NRF_RTC0->EVENTS_COMPARE[ROTATE_COMPARE]) {
     NRF_RTC0->EVENTS_COMPARE[ROTATE_COMPARE] = 0;
     NRF_RTC0->CC[ROTATE_COMPARE] += ROTATE_PERIOD;
@@ -814,10 +802,7 @@ extern "C" void RTC0_IRQHandler(void) {
       // Have we underflowed ?
       if (--rotationNext[i] <= 0) {
         // Rotate the light
-        if (++rotationOffset[i] >= NUM_PROP_LIGHTS) {
-          rotationOffset[i] = 0;
-        }
-
+        rotationOffset[i]++;
         rotationNext[i] = rotationPeriod[i];
       }
     }

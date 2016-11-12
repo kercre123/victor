@@ -40,7 +40,7 @@ MonoBehaviour:
       _AssetBundle:
         _EnumValueAsString: minigame_data_prefabs
         _EnumValue: 1
-      _AssetDataName: SimonHowToPlayAnimation
+      _AssetDataName: MemoryMatchHowToPlayAnimation
   - DifficultyId: 1
     DifficultyName:
       Key: simonGame.mode.solo
@@ -52,10 +52,10 @@ MonoBehaviour:
       _AssetBundle:
         _EnumValueAsString: minigame_data_prefabs
         _EnumValue: 1
-      _AssetDataName: SimonHowToPlayAnimation
+      _AssetDataName: MemoryMatchHowToPlayAnimation
   GetInAnimTrigger:
     _EnumValueAsString: Count
-    _EnumValue: 291
+    _EnumValue: 290
   GetOutAnimTrigger:
     _EnumValueAsString: MemoryMatchCozmoGetOut
-    _EnumValue: 135
+    _EnumValue: 131

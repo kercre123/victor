@@ -39,9 +39,9 @@ namespace Anki {
     class Animation;
     class DriveToPlaceCarriedObjectAction;
     
-    f32 ComputePreActionPoseDistThreshold(const Pose3d& preActionPose,
-                                          const ActionableObject* actionObject,
-                                          const Radians& preActionPoseAngleTolerance);
+    Point2f ComputePreActionPoseDistThreshold(const Pose3d& preActionPose,
+                                              const ActionableObject* actionObject,
+                                              const Radians& preActionPoseAngleTolerance);
 
     // Interface for actions that involve "docking" with an object
     class IDockAction : public IAction
@@ -136,14 +136,14 @@ namespace Anki {
         size_t closestIndex;
         Point2f closestPoint;
         bool robotAtClosestPreActionPose;
-        f32 distThresholdUsed;
+        Point2f distThresholdUsed;
         
         PreActionPoseOutput()
         : actionResult(ActionResult::FAILURE_NOT_STARTED)
         , interactionResult(ObjectInteractionResult::INCOMPLETE)
         , closestIndex(-1)
         , robotAtClosestPreActionPose(false)
-        , distThresholdUsed(-1)
+        , distThresholdUsed(-1,-1)
         {
           
         }

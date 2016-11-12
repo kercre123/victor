@@ -197,14 +197,15 @@ namespace Anki {
         Pose3d p = preActionPoseOutput.preActionPoses[preActionPoseOutput.closestIndex].GetPose();
         PRINT_NAMED_INFO("DriveToObjectAction.GetPossiblePoses.UseRobotPose",
                          "Robot's current pose (x:%f y:%f a:%f) is close enough to preAction pose (x:%f y:%f a:%f)"
-                         " with threshold %f, using current robot pose as goal",
+                         " with threshold (%f,%f), using current robot pose as goal",
                          _robot.GetPose().GetTranslation().x(),
                          _robot.GetPose().GetTranslation().y(),
                          _robot.GetPose().GetRotation().GetAngleAroundZaxis().getDegrees(),
                          p.GetTranslation().x(),
                          p.GetTranslation().y(),
                          p.GetRotation().GetAngleAroundZaxis().getDegrees(),
-                         preActionPoseOutput.distThresholdUsed);
+                         preActionPoseOutput.distThresholdUsed.x(),
+                         preActionPoseOutput.distThresholdUsed.y());
       }
       
       for(auto preActionPose : preActionPoseOutput.preActionPoses)
@@ -265,10 +266,14 @@ namespace Anki {
       if(result == ActionResult::SUCCESS) {
         if(!alreadyInPosition) {
 
-          f32 preActionPoseDistThresh = ComputePreActionPoseDistThreshold(possiblePoses[0], object, DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
+          const Point2f preActionPoseDistThresh = ComputePreActionPoseDistThreshold(possiblePoses[0],
+                                                                                    object,
+                                                                                    DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
           
           DriveToPoseAction* driveToPoseAction = new DriveToPoseAction(_robot, true, _useManualSpeed);
-          driveToPoseAction->SetGoals(possiblePoses, preActionPoseDistThresh);
+          driveToPoseAction->SetGoals(possiblePoses, {preActionPoseDistThresh.x(),
+                                                      preActionPoseDistThresh.y(),
+                                                      preActionPoseDistThresh.y()});
           if(_hasMotionProfile)
           {
             driveToPoseAction->SetMotionProfile(_pathMotionProfile);
@@ -852,9 +857,16 @@ namespace Anki {
           if(_robot.GetPose().IsSameAs(_goalPoses[_selectedGoalIndex], distanceThreshold, _goalAngleThreshold, Tdiff))
           {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Success",
-                             "[%d] Robot %d successfully finished following path (Tdiff=%.1fmm).",
+                             "[%d] Robot %d successfully finished following path (Tdiff=%.1fmm) robotPose (%.1f, %.1f) goalPose (%.1f %.1f) threshold (%.1f %.1f).",
                              GetTag(),
-                             _robot.GetID(), Tdiff.Length());
+                             _robot.GetID(),
+                             Tdiff.Length(),
+                             _robot.GetPose().GetTranslation().x(),
+                             _robot.GetPose().GetTranslation().y(),
+                             _goalPoses[_selectedGoalIndex].GetTranslation().x(),
+                             _goalPoses[_selectedGoalIndex].GetTranslation().y(),
+                             distanceThreshold.x(),
+                             distanceThreshold.y());
             
             result = ActionResult::SUCCESS;
           }
@@ -863,7 +875,7 @@ namespace Anki {
           else if (_robot.GetLastSentPathID() == _robot.GetLastRecvdPathID()) {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.DoneNotInPlace",
                              "[%d] Robot is done traversing path, but is not in position (dist=%.1fmm). lastPathID=%d"
-                             " goal %d (%f, %f, %f, %fdeg), actual (%f, %f, %f, %fdeg)",
+                             " goal %d (%f, %f, %f, %fdeg), actual (%f, %f, %f, %fdeg), threshold (%f, %f)",
                              GetTag(),
                              Tdiff.Length(), _robot.GetLastRecvdPathID(),
                              (int) _selectedGoalIndex,
@@ -874,7 +886,9 @@ namespace Anki {
                              _robot.GetPose().GetTranslation().x(),
                              _robot.GetPose().GetTranslation().y(),
                              _robot.GetPose().GetTranslation().z(),
-                             _robot.GetPose().GetRotationAngle<'Z'>().getDegrees());
+                             _robot.GetPose().GetRotationAngle<'Z'>().getDegrees(),
+                             distanceThreshold.x(),
+                             distanceThreshold.y());
             
             result = ActionResult::FAILURE_RETRY;
           }
@@ -967,6 +981,7 @@ namespace Anki {
             return false;
         }
       };
+      
       
       AddAction(_driveToObjectAction, shouldIgnoreFailure);
       */
@@ -1466,6 +1481,7 @@ namespace Anki {
       
       std::vector<PreActionPose> preActionPoses;
       block->GetCurrentPreActionPoses(preActionPoses,
+                                      _robot.GetPose(),
                                       {PreActionPose::ROLLING},
                                       std::set<Vision::Marker::Code>(),
                                       obstacles);

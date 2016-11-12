@@ -263,7 +263,7 @@ MonoBehaviour:
   _ActiveMenuContent: 1
   _ReactionsEnabled: 1
   _PlayIdle: 0
-  _DASPhaseID: 0
+  _DASPhaseID: 6
   _TextFields:
   - {fileID: 11400490}
   - {fileID: 11491018}

@@ -186,9 +186,73 @@ PlayerSettings:
   - m_BuildTarget: 
     m_Icons:
     - serializedVersion: 2
-      m_Icon: {fileID: 2800000, guid: 181b696b5229b4e5d9f2ad1593a142a1, type: 3}
+      m_Icon: {fileID: 0}
       m_Width: 128
       m_Height: 128
+  - m_BuildTarget: iPhone
+    m_Icons:
+    - serializedVersion: 2
+      m_Icon: {fileID: 2800000, guid: 25ab5f5ab11f64a0a87c610a39e2433d, type: 3}
+      m_Width: 180
+      m_Height: 180
+    - serializedVersion: 2
+      m_Icon: {fileID: 2800000, guid: 01ac182ba763a489f97a6731d4faeb42, type: 3}
+      m_Width: 167
+      m_Height: 167
+    - serializedVersion: 2
+      m_Icon: {fileID: 2800000, guid: 2c7c23e1ef885469da7b5f1e8dedc224, type: 3}
+      m_Width: 152
+      m_Height: 152
+    - serializedVersion: 2
+      m_Icon: {fileID: 2800000, guid: 6d74b408b6643421c9667bf1348846ae, type: 3}
+      m_Width: 144
+      m_Height: 144
+    - serializedVersion: 2
+      m_Icon: {fileID: 2800000, guid: ff3ec307ea77f4896b0f6b6ae853e860, type: 3}
+      m_Width: 120
+      m_Height: 120
+    - serializedVersion: 2
+      m_Icon: {fileID: 2800000, guid: ccfd3eddfbfac489b922b997ced26c7c, type: 3}
+      m_Width: 114
+      m_Height: 114
+    - serializedVersion: 2
+      m_Icon: {fileID: 2800000, guid: d92329d1b1b3948cc9ca4e99bffd6454, type: 3}
+      m_Width: 76
+      m_Height: 76
+    - serializedVersion: 2
+      m_Icon: {fileID: 2800000, guid: 44e0839321f7b419cac3c4dcffabc6fc, type: 3}
+      m_Width: 72
+      m_Height: 72
+    - serializedVersion: 2
+      m_Icon: {fileID: 2800000, guid: aeb87960dfc9e491eb587c8584c6ab59, type: 3}
+      m_Width: 57
+      m_Height: 57
+  - m_BuildTarget: Android
+    m_Icons:
+    - serializedVersion: 2
+      m_Icon: {fileID: 2800000, guid: b4aff8715230748f68da561894383ee1, type: 3}
+      m_Width: 192
+      m_Height: 192
+    - serializedVersion: 2
+      m_Icon: {fileID: 2800000, guid: 6d74b408b6643421c9667bf1348846ae, type: 3}
+      m_Width: 144
+      m_Height: 144
+    - serializedVersion: 2
+      m_Icon: {fileID: 2800000, guid: 423873261bb1c48b09e606eb415f8439, type: 3}
+      m_Width: 96
+      m_Height: 96
+    - serializedVersion: 2
+      m_Icon: {fileID: 2800000, guid: 44e0839321f7b419cac3c4dcffabc6fc, type: 3}
+      m_Width: 72
+      m_Height: 72
+    - serializedVersion: 2
+      m_Icon: {fileID: 2800000, guid: d80fbc920d37d404c9890f92e4b42fde, type: 3}
+      m_Width: 48
+      m_Height: 48
+    - serializedVersion: 2
+      m_Icon: {fileID: 2800000, guid: d0913adb9da2f411984518c3b0c0721b, type: 3}
+      m_Width: 36
+      m_Height: 36
   m_BuildTargetBatching: []
   m_BuildTargetGraphicsAPIs: []
   webPlayerTemplate: APPLICATION:Default

@@ -93,14 +93,18 @@ typedef struct {
   int exccause;
 } ex_regs_esp;
 
-#define ESP_STACK_DUMP_SIZE  ((CRASH_RECORD_PAYLOAD_SIZE - sizeof(ex_regs_esp) - (sizeof(int)*5))/sizeof(int))
+#define ESP_STACK_DUMP_SIZE  ((CRASH_RECORD_PAYLOAD_SIZE - sizeof(ex_regs_esp) - (sizeof(int)*10))/sizeof(int))
+
+#define ESP_LOG_FORMAT_MAGIC (0xCDCD0000)
 
 typedef struct {
   ex_regs_esp regs;
   int sp;
   int excvaddr;
   int depc;
+  int logFormat;
   int version;
+  uint32_t appRunID[4];
   int stackDumpSize;
   int stack[ESP_STACK_DUMP_SIZE];
 } CrashLog_ESP;

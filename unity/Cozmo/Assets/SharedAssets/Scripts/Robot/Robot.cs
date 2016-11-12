@@ -519,6 +519,7 @@ public class Robot : IRobot {
     TrackToObject(null);
     CancelAllCallbacks();
     RobotStartIdle();
+    SetNightVision(false);
 
     foreach (KeyValuePair<int, LightCube> kvp in LightCubes) {
       kvp.Value.SetLEDs(Color.black);
@@ -2021,7 +2022,7 @@ public class Robot : IRobot {
   }
 
   public void SetNightVision(bool enable) {
-    RobotEngineManager.Instance.Message.SetHeadlight = Singleton<SetHeadlight>.Instance.Initialize(!enable);
+    RobotEngineManager.Instance.Message.SetHeadlight = Singleton<SetHeadlight>.Instance.Initialize(enable);
     RobotEngineManager.Instance.SendMessage();
   }
 }

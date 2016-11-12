@@ -11,6 +11,8 @@
  **/
 #include "iAIGoalStrategy.h"
 
+#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/moodSystem/moodScorer.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -41,6 +43,7 @@ IAIGoalStrategy::IAIGoalStrategy(const Json::Value& config)
 , _cooldownSecs(-1.0f)
 , _startMoodScorer(nullptr)
 , _requiredMinStartMoodScore(-1.0f)
+, _requiredRecentOnTreadsEvent_secs(-1.0f)
 {
   using namespace JsonTools;
   
@@ -51,6 +54,9 @@ IAIGoalStrategy::IAIGoalStrategy(const Json::Value& config)
   GetValueOptional(config, kGoalCanEndConfigKey, _goalCanEndSecs);
   GetValueOptional(config, kGoalShouldEndConfigKey, _goalShouldEndSecs);
   GetValueOptional(config, kGoalCooldownConfigKey, _cooldownSecs);
+  
+  // recent onTreads event
+  GetValueOptional(config, "requiredRecentOnTreadsEventSecs", _requiredRecentOnTreadsEvent_secs);
   
   const bool hasRequiredMinStartMoodScore =
     GetValueOptional(config, "requiredMinStartMoodScore", _requiredMinStartMoodScore);
@@ -117,6 +123,36 @@ bool IAIGoalStrategy::WantsToStart(const Robot& robot, float lastTimeGoalRanSec,
     if ( !isAboveThreshold ) {
       return false;
     }
+  }
+  
+  // check if we need a recent OnTreads event
+  if ( FLT_GT(_requiredRecentOnTreadsEvent_secs, 0.0f) )
+  {
+    // check if we recorded an event
+    const float lastEventSecs = robot.GetBehaviorManager().GetWhiteboard().GetTimeAtWhichRobotReturnedToTreadsSecs();
+    const bool everFiredEvent = FLT_GT(lastEventSecs, 0.0f);
+    if ( !everFiredEvent ) {
+      // no event, do not start, since it's required
+      return false;
+    }
+    
+    // check if we already started for the last event
+    const bool alreadyStartedForEvent = FLT_GE(lastTimeGoalStartedSec, lastEventSecs);
+    if ( alreadyStartedForEvent ) {
+      // already started after that event, do not do it again
+      return false;
+    }
+    
+    // check if the event is recent
+    const float curTimeSecs = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const float elapsedSecs = curTimeSecs - lastEventSecs;
+    const bool eventIsOld = FLT_GE(elapsedSecs, _requiredRecentOnTreadsEvent_secs);
+    if ( eventIsOld ) {
+      // event is too old, even if we never fired do not start now
+      return false;
+    }
+    
+    // we should start, continue next checks
   }
   
   // not cooling down, delegate

@@ -1,22 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &106012
-GameObject:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
-  m_Component:
-  - 224: {fileID: 22453442}
-  - 222: {fileID: 22246876}
-  - 114: {fileID: 11489924}
-  m_Layer: 5
-  m_Name: ActionIcon
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
 --- !u!1 &121728
 GameObject:
   m_ObjectHideFlags: 0
@@ -98,8 +81,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_Color: {r: 0.75294125, g: 0.98823535, b: 1, a: 1}
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -121,6 +104,7 @@ MonoBehaviour:
   m_Text: ACTION
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11450338
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -178,14 +162,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.72156864, b: 0, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: 76fcb3180f0584acb882cde25d8ed220, type: 3}
+  m_Sprite: {fileID: 21300000, guid: e39cd8b8f62794cb49d76dae0551c123, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -207,23 +191,17 @@ MonoBehaviour:
   _Interactable: 1
   _TextLabel: {fileID: 11405380}
   _TextLabelOffset: 0
-  TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
-  TextPressedColor: {r: 1, g: 0.72156864, b: 0, a: 1}
-  TextDisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  TextEnabledColor: {r: 0.7529412, g: 0.9882353, b: 1, a: 1}
+  TextPressedColor: {r: 0, g: 0.75294125, b: 0.8862746, a: 1}
+  TextDisabledColor: {r: 0.027450982, g: 0.29411766, b: 0.33333334, a: 1}
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 11480320}
-    ignoreSprite: 1
-    pressedSprite: {fileID: 0}
-    pressedColor: {r: 0.64705884, g: 0.46689737, b: 0, a: 1}
-    disabledSprite: {fileID: 0}
-    disabledColor: {r: 0.31617647, g: 0.31617647, b: 0.31617647, a: 1}
-  - targetImage: {fileID: 11489924}
-    ignoreSprite: 1
-    pressedSprite: {fileID: 0}
-    pressedColor: {r: 0.53676474, g: 0.53676474, b: 0.53676474, a: 1}
-    disabledSprite: {fileID: 0}
-    disabledColor: {r: 1, g: 1, b: 1, a: 0.503}
+    ignoreSprite: 0
+    pressedSprite: {fileID: 21300000, guid: 9fac94b500206434da6678a9f951e7b6, type: 3}
+    pressedColor: {r: 1, g: 1, b: 1, a: 1}
+    disabledSprite: {fileID: 21300000, guid: 12cee3b0a40fe4cffbed8333fd317e28, type: 3}
+    disabledColor: {r: 1, g: 1, b: 1, a: 1}
   _GlintAnimator: {fileID: 0}
   _UISoundEvent:
     _Event: Play__Ui__Click_General
@@ -241,35 +219,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _ActionButton: {fileID: 11485086}
-  _ActionIcon: {fileID: 11489924}
   _LockedIcon: {fileID: 121728}
---- !u!114 &11489924
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 106012}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
-      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: fb6c260a6e2fb454dba6a45b41251c03, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
 --- !u!222 &22224604
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -288,12 +238,6 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 121728}
---- !u!222 &22246876
-CanvasRenderer:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 106012}
 --- !u!224 &22400968
 RectTransform:
   m_ObjectHideFlags: 1
@@ -309,8 +253,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -83.002, y: -12}
-  m_SizeDelta: {x: -166, y: -24}
+  m_AnchoredPosition: {x: 0, y: -12}
+  m_SizeDelta: {x: 0, y: -24}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22425120
 RectTransform:
@@ -342,10 +286,10 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_Children: []
   m_Father: {fileID: 22450572}
-  m_RootOrder: 3
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 248, y: 103}
+  m_RootOrder: 2
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 256, y: 256}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22450572
@@ -361,7 +305,6 @@ RectTransform:
   m_Children:
   - {fileID: 22425120}
   - {fileID: 22400968}
-  - {fileID: 22453442}
   - {fileID: 22437152}
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -370,24 +313,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!224 &22453442
-RectTransform:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 106012}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_Children: []
-  m_Father: {fileID: 22450572}
-  m_RootOrder: 2
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 435.56, y: 100}
-  m_SizeDelta: {x: 166, y: 144}
-  m_Pivot: {x: 0.6118336, y: 0.5}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

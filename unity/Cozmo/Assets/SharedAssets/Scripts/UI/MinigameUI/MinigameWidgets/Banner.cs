@@ -50,7 +50,7 @@ namespace Cozmo {
       }
 
 
-      public void PlayBannerAnimation(string textToDisplay, TweenCallback animationEndCallback = null, float customSlowDurationSeconds = 0f) {
+      public void PlayBannerAnimation(string textToDisplay, TweenCallback animationEndCallback = null, float customSlowDurationSeconds = 0f, bool playSound = true) {
         _BannerContainer.gameObject.SetActive(true);
         Vector3 localPos = _BannerContainer.gameObject.transform.localPosition;
         localPos.x = _BannerLeftOffscreenLocalXPos;
@@ -67,9 +67,9 @@ namespace Cozmo {
         }
         _BannerTween = DOTween.Sequence();
         // Play Audio
-        _BannerTween.OnStart (() => {
-          if (_PlaySound != null) {
-            _PlaySound.Play ();
+        _BannerTween.OnStart(() => {
+          if (_PlaySound != null && playSound) {
+            _PlaySound.Play();
           }
         });
         // Animate banner movement

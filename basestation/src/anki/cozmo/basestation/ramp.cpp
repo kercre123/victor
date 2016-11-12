@@ -75,22 +75,22 @@ namespace Anki {
         PRINT_NAMED_ERROR("Ramp.PreAscentPoseError", "Could not get preAscentPose w.r.t. front ramp marker");
       }
       _preAscentPose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PreAscentPose");
-      AddPreActionPose(PreActionPose::ENTRY, _frontMarker, _preAscentPose);
+      AddPreActionPose(PreActionPose::ENTRY, _frontMarker, _preAscentPose, 0);
       
       const f32 SideMarkerHeight = 16.f;
       
       const Pose3d backPose(M_PI_2, Z_AXIS_3D(), {SlopeLength+PlatformLength, 0, SideMarkerHeight});
       AddMarker(backMarkerType, backPose, Ramp::SideMarkerSize);
       
-      const Vec3f PreDockPoseOffset(0.f, -DEFAULT_PREDOCK_POSE_DISTANCE_MM, -SideMarkerHeight);
+      const Vec3f PreDockPoseOffset(0.f, -DEFAULT_MIN_PREDOCK_POSE_DISTANCE_MM, -SideMarkerHeight);
       
       const Pose3d rightPose(0.f, Z_AXIS_3D(), {120.f, -0.5f*Ramp::Width, SideMarkerHeight});
       _rightMarker = &AddMarker(rightMarkerType, rightPose, Ramp::SideMarkerSize);
-      AddPreActionPose(PreActionPose::DOCKING, _rightMarker, PreDockPoseOffset);
+      AddPreActionPose(PreActionPose::DOCKING, _rightMarker, PreDockPoseOffset, 0);
       
       const Pose3d leftPose(M_PI, Z_AXIS_3D(), {120.f,  0.5f*Ramp::Width, SideMarkerHeight});
       _leftMarker = &AddMarker(leftMarkerType, leftPose, Ramp::SideMarkerSize);
-      AddPreActionPose(PreActionPose::DOCKING, _leftMarker, PreDockPoseOffset);
+      AddPreActionPose(PreActionPose::DOCKING, _leftMarker, PreDockPoseOffset, 0);
       
       Pose3d topPose(-M_PI_2, Y_AXIS_3D(),
                      {Ramp::PlatformLength + Ramp::SlopeLength - 0.025f, 0, Ramp::Height});
@@ -101,7 +101,7 @@ namespace Anki {
         PRINT_NAMED_ERROR("Ramp.PreDescentPoseError", "Could not get preDescentPose w.r.t. top ramp marker");
       }
       _preDescentPose.SetName("Ramp" + std::to_string(GetID().GetValue()) + "PreDescentPose");
-      AddPreActionPose(PreActionPose::ENTRY, _topMarker, _preDescentPose);
+      AddPreActionPose(PreActionPose::ENTRY, _topMarker, _preDescentPose, 0);
       
     } // Ramp() Constructor
     

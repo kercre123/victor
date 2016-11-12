@@ -1,6 +1,7 @@
 extern "C" {
 #include "client.h"
 #include "foregroundTask.h"
+#include "driver/crash.h"
 // Forward declaration
 void ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds);
 }
@@ -99,6 +100,11 @@ namespace Anki {
             Draw::Clear(frame);
             Draw::Number(frame, msg.oledDisplayNumber.digits, msg.oledDisplayNumber.value, msg.oledDisplayNumber.x, msg.oledDisplayNumber.y);
             Draw::Flip(frame);
+            break;
+          }
+          case RobotInterface::EngineToRobot::Tag_appRunID:
+          {
+            setAppRunID(msg.appRunID.uuid);
             break;
           }
           case RobotInterface::EngineToRobot::Tag_testState:

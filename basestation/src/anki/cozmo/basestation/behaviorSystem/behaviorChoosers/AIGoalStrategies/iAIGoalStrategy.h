@@ -79,7 +79,10 @@ private:
   // if _requiredMinStartMoodScore is set in json, the _startMoodScorer's score has to be greater than this value, for
   // the strategy to consider starting (other requirements may fail, so start is not guaranteed)
   float _requiredMinStartMoodScore;
-
+  
+  // if set, a recent OnTreads event is required, this being the number of seconds considered recent.
+  // if the goal already started after the last event, it won't start unless a new event is fired
+  float _requiredRecentOnTreadsEvent_secs;
 };
   
 } // namespace

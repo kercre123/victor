@@ -564,6 +564,10 @@ public abstract class GameBase : MonoBehaviour {
     return (PlayerRoundsWon + CozmoRoundsWon) > twoThirdsRoundsTotal;
   }
 
+  protected virtual Dictionary<string, float> GetGameSpecificEventValues() {
+    return null;
+  }
+
   // Handles the end of the game based on Rounds won, will attempt to progress difficulty as well
   public virtual void StartRoundBasedGameEnd() {
     // Fire OnGameComplete, passing in ChallengeID, CurrentDifficulty, and if Playerwon
@@ -573,7 +577,9 @@ public abstract class GameBase : MonoBehaviour {
 
   // now supports ties
   public virtual void StartBaseGameEnd(EndState endState) {
-    GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeComplete, _ChallengeData.ChallengeID, _CurrentDifficulty, endState == EndState.PlayerWin, PlayerScore, CozmoScore, IsHighIntensityRound()));
+    GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeComplete,
+                                        _ChallengeData.ChallengeID, _CurrentDifficulty, endState == EndState.PlayerWin,
+                                        PlayerScore, CozmoScore, IsHighIntensityRound(), GetGameSpecificEventValues()));
 
     if (endState == EndState.PlayerWin) {
       HandleUnlockRewards();
@@ -805,7 +811,7 @@ public abstract class GameBase : MonoBehaviour {
     if (_ShowScoreboardOnComplete) {
       UpdateScoreboard(didPlayerWin: _EndState == EndState.PlayerWin);
     }
-    ShowWinnerState();
+    ShowWinnerState(_EndState);
   }
 
   private void RaiseMiniGameLose() {
@@ -816,13 +822,13 @@ public abstract class GameBase : MonoBehaviour {
       UpdateScoreboard(didPlayerWin: _EndState == EndState.PlayerWin);
     }
 
-    ShowWinnerState();
+    ShowWinnerState(_EndState);
   }
 
   private void RaiseMiniGameTie() {
     _StateMachine.Stop();
     _EndState = EndState.Tie;
-    ShowWinnerState();
+    ShowWinnerState(_EndState);
   }
 
   private void UpdateScoreboard(bool didPlayerWin) {
@@ -834,7 +840,7 @@ public abstract class GameBase : MonoBehaviour {
     playerScoreboard.IsWinner = didPlayerWin;
   }
 
-  protected virtual void ShowWinnerState(string overrideWinnerText = null, string footerText = "") {
+  protected virtual void ShowWinnerState(EndState currentEndState, string overrideWinnerText = null, string footerText = "") {
     SoftEndGameRobotReset();
     _ResultsViewReached = true;
     ContextManager.Instance.AppFlash(playChime: true);
@@ -844,19 +850,19 @@ public abstract class GameBase : MonoBehaviour {
     if (overrideWinnerText != null) {
       winnerText = overrideWinnerText;
     }
-    else if (_EndState == EndState.PlayerWin) {
+    else if (currentEndState == EndState.PlayerWin) {
       winnerText = Localization.GetWithArgs(LocalizationKeys.kMinigameTextPlayerWins, new object[] { DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName });
     }
-    else if (_EndState == EndState.CozmoWin) {
+    else if (currentEndState == EndState.CozmoWin) {
       winnerText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
     }
-    else if (_EndState == EndState.Tie) {
+    else if (currentEndState == EndState.Tie) {
       winnerText = Localization.Get(LocalizationKeys.kMinigameTextTie);
     }
 
     if (_ShowEndWinnerSlide) {
       winnerText = winnerText.Replace("\n", " ");
-      SharedMinigameView.ShowWinnerStateSlide(_EndState == EndState.PlayerWin, winnerText, footerText);
+      SharedMinigameView.ShowWinnerStateSlide(currentEndState == EndState.PlayerWin, winnerText, footerText);
     }
     else {
       SharedMinigameView.InfoTitleText = winnerText;
@@ -872,6 +878,8 @@ public abstract class GameBase : MonoBehaviour {
       playerProfile.HighScores[key] = 0;
     }
     if (playerProfile.HighScores[key] < PlayerScore) {
+      GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnNewHighScore,
+        _ChallengeData.ChallengeID, _CurrentDifficulty, _EndState == EndState.PlayerWin, PlayerScore, CozmoScore, IsHighIntensityRound(), playerProfile.HighScores[key]));
       playerProfile.HighScores[key] = PlayerScore;
       return true;
     }

@@ -1,0 +1,380 @@
+/**
+ * File: behaviorCubeLiftWorkout.cpp
+ *
+ * Author: Brad Neuman
+ * Created: 2016-10-24
+ *
+ * Description: Behavior to lift a cube and do a "workout" routine with it, with animations and parameters
+ *              defined in json
+ *
+ * Copyright: Anki, Inc. 2016
+ *
+ **/
+
+#include "anki/cozmo/basestation/behaviors/sparkable/behaviorCubeLiftworkout.h"
+
+#include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/compoundActions.h"
+#include "anki/cozmo/basestation/actions/dockActions.h"
+#include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/actions/retryWrapperAction.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/workoutComponent.h"
+#include "anki/cozmo/basestation/blockWorld/blockWorld.h"
+#include "anki/cozmo/basestation/events/animationTriggerHelpers.h"
+#include "anki/cozmo/basestation/robot.h"
+
+namespace Anki {
+namespace Cozmo {
+
+namespace {
+static const AIWhiteboard::ObjectUseIntention kObjectIntention = AIWhiteboard::ObjectUseIntention::PickUpAnyObject;
+
+// if we haven't seen the cube this recently, search for it
+// TODO:(bn) centralize this logic somewhere, every behavior should have access to this
+static const uint32_t kMinAgeToPerformSearch_ms = 300;
+}
+
+BehaviorCubeLiftWorkout::BehaviorCubeLiftWorkout(Robot& robot, const Json::Value& config)
+  : IBehavior(robot, config)
+{
+}
+
+bool BehaviorCubeLiftWorkout::IsRunnableInternal(const Robot& robot) const
+{
+  if( robot.IsCarryingObject() ) {
+    return true;
+  }
+  else {
+    const auto& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+    const bool hasCube = whiteboard.GetBestObjectForAction(kObjectIntention).IsSet();
+    return hasCube;
+  }
+}
+
+Result BehaviorCubeLiftWorkout::InitInternal(Robot& robot)
+{
+  SmartDisableReactionaryBehavior(BehaviorType::AcknowledgeObject);
+  SmartDisableReactionaryBehavior(BehaviorType::AcknowledgeFace);
+  SmartDisableReactionaryBehavior(BehaviorType::ReactToCubeMoved);
+  SmartDisableReactionaryBehavior(BehaviorType::ReactToStackOfCubes);
+  SmartDisableReactionaryBehavior(BehaviorType::ReactToUnexpectedMovement);
+  SmartDisableReactionaryBehavior(BehaviorType::ReactToPet);
+
+  // disable idle
+  robot.GetAnimationStreamer().PushIdleAnimation(AnimationTrigger::Count);
+
+  const auto& currWorkout = robot.GetBehaviorManager().GetWorkoutComponent().GetCurrentWorkout();  
+  _numStrongLiftsToDo = currWorkout.GetNumStrongLifts(robot);
+  _numWeakLiftsToDo = currWorkout.GetNumWeakLifts(robot);
+
+  if( robot.IsCarryingObject() ) {
+    _shouldBeCarrying = true;
+    _targetBlockID = robot.GetCarryingObject();
+    TransitionToPostLiftAnim(robot);
+  }
+  else {
+    _shouldBeCarrying = false;
+    const auto& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+    _targetBlockID = whiteboard.GetBestObjectForAction(kObjectIntention);
+
+    TransitionToAligningToCube(robot);
+  }  
+  
+  return RESULT_OK;
+}
+
+void BehaviorCubeLiftWorkout::StopInternal(Robot& robot)
+{
+  // restore previous idle
+  robot.GetAnimationStreamer().PopIdleAnimation();
+}
+
+IBehavior::Status BehaviorCubeLiftWorkout::UpdateInternal(Robot& robot)
+{
+  if( _shouldBeCarrying && ! robot.IsCarryingObject() ) {
+    PRINT_CH_INFO("Behaviors", (GetName() + ".Update.NotCarryingWhenShould").c_str(),
+                  "behavior thinks we should be carrying an object but we aren't, so it must have been detected on "
+                  "the ground. Exit the behavior");
+    // let the current animation finish, but then don't continue with the behavior
+    StopOnNextActionComplete();
+  }
+
+  return super::UpdateInternal(robot);
+}
+
+void BehaviorCubeLiftWorkout::TransitionToAligningToCube(Robot& robot)
+{
+  DriveToObjectAction* driveToBlockAction = new DriveToObjectAction(robot,
+                                                                    _targetBlockID,
+                                                                    PreActionPose::ActionType::DOCKING);
+
+  const auto& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+
+  RetryWrapperAction::RetryCallback retryCallback =
+    [this, driveToBlockAction, &whiteboard](const ExternalInterface::RobotCompletedAction& completion,
+                               const u8 retryCount,
+                               AnimationTrigger& retryAnimTrigger)
+    {
+      const bool blockStillValid = whiteboard.IsObjectValidForAction(kObjectIntention, _targetBlockID);
+      if( ! blockStillValid ) {
+        return false;
+      }
+
+      retryAnimTrigger = AnimationTrigger::WorkoutPickupRealign;
+    
+      // Use a different preAction pose if we are retrying because we weren't seeing the object
+      const auto& interactionResult = completion.completionInfo.Get_objectInteractionCompleted().result;
+      if(interactionResult == ObjectInteractionResult::VISUAL_VERIFICATION_FAILED)
+      {
+        using namespace std::placeholders;
+        auto useSecondClosest = std::bind( &IBehavior::UseSecondClosestPreActionPose, this, driveToBlockAction, _1, _2, _3);
+        driveToBlockAction->SetGetPossiblePosesFunc( useSecondClosest );
+        return true;
+      }
+      else {
+        return completion.result == ActionResult::FAILURE_RETRY;
+      }
+    };
+
+  static const u8 kNumRetries = 2;
+  RetryWrapperAction* action = new RetryWrapperAction(robot, driveToBlockAction, retryCallback, kNumRetries);
+
+  StartActing(action, [this,&robot](ActionResult res) {
+      if( res == ActionResult::SUCCESS ) {
+        TransitionToPreLiftAnim(robot);
+      }
+      else {
+        const bool countFailure = false;
+        TransitionToFailureRecovery(robot, countFailure);
+      }
+    });
+}
+
+void BehaviorCubeLiftWorkout::TransitionToPreLiftAnim(Robot& robot)
+{
+  const auto& currWorkout = robot.GetBehaviorManager().GetWorkoutComponent().GetCurrentWorkout();  
+
+  if( currWorkout.preLiftAnim == AnimationTrigger::Count ) {
+    // skip the animation
+    TransitionToPickingUpCube(robot);
+  }
+  else {
+    StartActing(new TriggerLiftSafeAnimationAction(robot, currWorkout.preLiftAnim),
+                &BehaviorCubeLiftWorkout::TransitionToPickingUpCube);
+  }
+}
+
+void BehaviorCubeLiftWorkout::TransitionToPickingUpCube(Robot& robot)
+{
+  PickupObjectAction* pickupAction = new PickupObjectAction(robot, _targetBlockID);
+  // we already checked this in the drive to, don't re-do driving if the animation moves us a bit
+  pickupAction->SetDoNearPredockPoseCheck(false);
+  static const u8 kNumRetries = 2;
+  RetryWrapperAction* action = new RetryWrapperAction(robot,
+                                                      pickupAction,
+                                                      AnimationTrigger::WorkoutPickupRetry,
+                                                      kNumRetries);
+
+  StartActing(action, [this, &robot](ActionResult res) {
+      if( res == ActionResult::SUCCESS ) {
+        TransitionToPostLiftAnim(robot);
+      }
+      else {
+        const bool countFailure = true;
+        TransitionToFailureRecovery(robot, countFailure);
+      }
+    });
+}
+
+void BehaviorCubeLiftWorkout::TransitionToPostLiftAnim(Robot& robot)
+{
+  // at this point we should be carrying the object
+  _shouldBeCarrying = true;
+
+  const auto& currWorkout = robot.GetBehaviorManager().GetWorkoutComponent().GetCurrentWorkout();  
+
+  if( currWorkout.postLiftAnim == AnimationTrigger::Count ) {
+    TransitionToStrongLifts(robot);
+  }
+  else {
+    StartActing(new TriggerAnimationAction(robot, currWorkout.postLiftAnim),
+                &BehaviorCubeLiftWorkout::TransitionToStrongLifts);
+  }
+}
+
+void BehaviorCubeLiftWorkout::TransitionToStrongLifts(Robot& robot)
+{
+  PRINT_CH_INFO("Behaviors", "BehaviorCubeLiftWorkout.TransitionToStrongLifts", "%s: %d strong lifts remain",
+                GetName().c_str(),
+                _numStrongLiftsToDo);
+  
+  if( _numStrongLiftsToDo == 0 ) {
+    TransitionToWeakPose(robot);
+  }
+  else {
+    const auto& currWorkout = robot.GetBehaviorManager().GetWorkoutComponent().GetCurrentWorkout();  
+    StartActing(new TriggerAnimationAction(robot, currWorkout.strongLiftAnim, _numStrongLiftsToDo),
+                &BehaviorCubeLiftWorkout::TransitionToWeakPose);
+  }
+}
+
+void BehaviorCubeLiftWorkout::TransitionToWeakPose(Robot& robot)
+{
+  const auto& currWorkout = robot.GetBehaviorManager().GetWorkoutComponent().GetCurrentWorkout();  
+  if( currWorkout.transitionAnim == AnimationTrigger::Count ) {
+    TransitionToWeakLifts(robot);
+  }
+  else {
+    StartActing(new TriggerAnimationAction(robot, currWorkout.transitionAnim),
+                &BehaviorCubeLiftWorkout::TransitionToWeakLifts);
+  }
+}
+
+void BehaviorCubeLiftWorkout::TransitionToWeakLifts(Robot& robot)
+{
+  PRINT_CH_INFO("Behaviors", "BehaviorCubeLiftWorkout.TransitionToWeakLifts", "%s: %d weak lifts remain",
+                GetName().c_str(),
+                _numWeakLiftsToDo);
+
+  if( _numWeakLiftsToDo == 0 ) {
+    TransitionToPuttingDown(robot);
+  }
+  else {
+    const auto& currWorkout = robot.GetBehaviorManager().GetWorkoutComponent().GetCurrentWorkout();  
+    StartActing(new TriggerAnimationAction(robot, currWorkout.weakLiftAnim, _numWeakLiftsToDo),
+                &BehaviorCubeLiftWorkout::TransitionToPuttingDown);
+  }
+}
+
+void BehaviorCubeLiftWorkout::TransitionToPuttingDown(Robot& robot)
+{
+  _shouldBeCarrying = false;
+  const auto& currWorkout = robot.GetBehaviorManager().GetWorkoutComponent().GetCurrentWorkout();  
+  if( currWorkout.putDownAnim == AnimationTrigger::Count ) {
+    TransitionToManualPutDown(robot);
+  }
+  else {
+    StartActing(new TriggerAnimationAction(robot, currWorkout.putDownAnim),
+                // double check the put down with a manual one, just in case
+                &BehaviorCubeLiftWorkout::TransitionToCheckPutDown);
+  }
+}
+
+void BehaviorCubeLiftWorkout::TransitionToCheckPutDown(Robot& robot)
+{
+  // if we still think we are carrying the object, see if we can find it
+  if( robot.IsCarryingObject() ) {
+
+    PRINT_CH_INFO("Behaviors", (GetName() + ".StillCarryingCheck").c_str(),
+                  "Robot still thinks it's carrying object, do a quick search for it");
+
+    CompoundActionSequential* action = new CompoundActionSequential(robot);
+
+    // lower lift so we can see (and possibly also put the cube down if it's really still in the lift)
+    action->AddAction( new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK) );
+    action->AddAction( new SearchForNearbyObjectAction(robot, _targetBlockID) );
+  
+    StartActing(action, &BehaviorCubeLiftWorkout::EndIteration);
+  }
+  else {
+    // otherwise we are done, so finish the iteration
+    EndIteration(robot);
+  }
+}
+
+void BehaviorCubeLiftWorkout::TransitionToManualPutDown(Robot& robot)
+{
+  // in case the put down didn't work, do it manually
+  if( robot.IsCarryingObject() ) {
+    PRINT_CH_INFO("Behaviors", (GetName() + ".ManualPutDown").c_str(),
+                  "Manually putting down object because animation (may have) failed to do it");
+    StartActing(new PlaceObjectOnGroundAction(robot), &BehaviorCubeLiftWorkout::EndIteration);
+  }
+  else {
+    EndIteration(robot);
+  }
+}
+
+void BehaviorCubeLiftWorkout::EndIteration(Robot& robot)
+{
+  // if we are _still_ holding the cube, then clearly we are confused, so just mark the cube as no longer in
+  // the lift
+  if( robot.IsCarryingObject() ) {
+    robot.SetCarriedObjectAsUnattached();
+  }
+
+  BehaviorObjectiveAchieved(BehaviorObjective::PerformedWorkout);
+
+  robot.GetBehaviorManager().GetWorkoutComponent().CompleteCurrentWorkout();
+}
+
+void BehaviorCubeLiftWorkout::TransitionToFailureRecovery(Robot& robot, bool countFailure)
+{
+  const ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_targetBlockID);
+  if( nullptr == obj ) {
+    // bail out of the behavior
+    return;
+  }
+  
+  // if we haven't seen it recently, trigger a search
+  const TimeStamp_t lastObservedTime = obj->GetLastObservedTime();
+  const TimeStamp_t lastObservedDelta_ms = robot.GetLastImageTimeStamp() - lastObservedTime;
+  const bool doSearchAction = lastObservedDelta_ms > kMinAgeToPerformSearch_ms;
+  
+  if( doSearchAction ) {
+    SearchForNearbyObjectAction* searchAction = nullptr;
+    
+    // Workaround for COZMO-6657, if the pose is still Known, the search action will immediately succeed, so
+    // do a search without a target blcok
+    if( obj->IsPoseStateKnown() ){
+      searchAction = new SearchForNearbyObjectAction(robot);
+    }
+    else {
+      searchAction = new SearchForNearbyObjectAction(robot, _targetBlockID);
+    }
+
+    StartActing(searchAction,
+                [this, &robot, lastObservedTime, countFailure](ActionResult res) {
+                  if( res == ActionResult::SUCCESS ) {
+                    // check if it was actually observed again (another workaround for COZMO-6657)
+                    const ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_targetBlockID);
+                    if( nullptr != obj ) {
+                      const TimeStamp_t mostRecentObservation = obj->GetLastObservedTime();
+                      const bool wasObserved = mostRecentObservation > lastObservedTime;
+
+                      if( wasObserved ) {                
+                        // found the block, restart the behavior!
+                        InitInternal(robot);
+                        return;
+                      }
+                    }
+                  }
+
+                  if( countFailure ) {
+                    // if we get here, we didn't find the block (or had another failure), set failure and bail out
+                    const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlockID);
+                    if(failedObject){
+                      const auto objectAction = AIWhiteboard::ObjectUseAction::PickUpObject;
+                      robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, objectAction);
+                    }
+                  }
+                });
+  }
+  else {
+    if( countFailure ) {
+      // we don't want to search, so just set a failure and bail from the behavior
+      const ObservableObject* failedObject = robot.GetBlockWorld().GetObjectByID(_targetBlockID);
+      if(failedObject){
+        const auto objectAction = AIWhiteboard::ObjectUseAction::PickUpObject;
+        robot.GetBehaviorManager().GetWhiteboard().SetFailedToUse(*failedObject, objectAction);
+      }
+    }
+  }
+}
+
+}
+}
+

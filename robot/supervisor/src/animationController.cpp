@@ -154,17 +154,16 @@ namespace AnimationController {
     _numBytesInBuffer -= num;
   }
 
-  void StopTracksInUse()
+  static void StopTracks(const u8 whichTracks)
   {
-    if(_tracksInUse) {
-      // In case we are aborting an animation, stop any tracks that were in use
-      // (For now, this just means motor-based tracks.) Note that we don't
-      // stop tracks we weren't using, in case we were, for example, playing
-      // a head animation while driving a path.
+    if(whichTracks)
+    {
 #ifdef TARGET_ESPRESSIF
       MAKE_RTIP_MSG(msg);
 #endif
-      if(_tracksInUse & HEAD_TRACK) {
+      
+      if(whichTracks & HEAD_TRACK)
+      {
 #ifdef TARGET_ESPRESSIF
         msg.tag = RobotInterface::EngineToRobot::Tag_moveHead;
         msg.moveHead.speed_rad_per_sec = 0.0f;
@@ -173,7 +172,9 @@ namespace AnimationController {
         HeadController::SetAngularVelocity(0);
 #endif
       }
-      if(_tracksInUse & LIFT_TRACK) {
+      
+      if(whichTracks & LIFT_TRACK)
+      {
 #ifdef TARGET_ESPRESSIF
         msg.tag = RobotInterface::EngineToRobot::Tag_moveLift;
         msg.moveLift.speed_rad_per_sec = 0.0f;
@@ -182,7 +183,9 @@ namespace AnimationController {
         LiftController::SetAngularVelocity(0);
 #endif
       }
-      if(_tracksInUse & BODY_TRACK) {
+      
+      if(whichTracks & BODY_TRACK)
+      {
 #ifdef TARGET_ESPRESSIF
         msg.tag = RobotInterface::EngineToRobot::Tag_animBodyMotion;
         msg.animBodyMotion.speed = 0;
@@ -193,6 +196,15 @@ namespace AnimationController {
 #endif
       }
     }
+  }
+  
+  static inline void StopTracksInUse()
+  {
+    // In case we are aborting an animation, stop any tracks that were in use
+    // (For now, this just means motor-based tracks.) Note that we don't
+    // stop tracks we weren't using, in case we were, for example, playing
+    // a head animation while driving a path.
+    StopTracks(_tracksInUse);
     _tracksInUse = 0;
   }
   
@@ -808,7 +820,14 @@ namespace AnimationController {
 
   void DisableTracks(u8 whichTracks)
   {
+    // Don't play disabled tracks
     _tracksToPlay &= ~whichTracks;
+    
+    // Disabled tracks are no longer "in use"
+    _tracksInUse &= ~whichTracks;
+    
+    // Actually stop motors for head/lift/body if they are being disabled (i.e. are now "locked")
+    StopTracks(whichTracks);
   }
   
   u8 GetEnabledTracks()

@@ -111,10 +111,9 @@ uint32_t uesb_init(const uesb_config_t *parameters);
 uint32_t uesb_disable(void);
 uint32_t uesb_prepare_tx_payload(const uesb_address_desc_t *address, const void *data, uint8_t length);
 uint32_t uesb_write_tx_payload(const uesb_address_desc_t *address, const void *data, uint8_t length);
-uint32_t uesb_read_rx_payload(uesb_payload_t *payload);
 uint32_t uesb_start(void);
 uint32_t uesb_stop(void);
 uint32_t uesb_set_rx_address(const uesb_address_desc_t *addr);
-void uesb_event_handler(uint32_t flags);
+void uesb_event_handler(uesb_payload_t& rx_payload);
 
 #endif

@@ -878,11 +878,11 @@
     },
     {
       "CladEvent": "RequestGameSpeedTapIdle0",
-      "AnimName": "ag_rtpkeepaway_idle"
+      "AnimName": "ag_speedTap_wait"
     },
     {
       "CladEvent": "RequestGameSpeedTapIdle1",
-      "AnimName": "ag_rtpkeepaway_idle"
+      "AnimName": "ag_speedTap_wait"
     },
     {
       "CladEvent": "RequestGameSpeedTapAccept0",
@@ -942,35 +942,35 @@
     },
     {
       "CladEvent": "RequestGameMemoryMatchIdle0",
-      "AnimName": "ag_rtpkeepaway_idle"
+      "AnimName": "ag_memorymatch_idle"
     },
     {
       "CladEvent": "RequestGameMemoryMatchIdle1",
-      "AnimName": "ag_rtpkeepaway_idle"
+      "AnimName": "ag_memorymatch_idle"
     },
     {
       "CladEvent": "RequestGameMemoryMatchDeny0",
-      "AnimName": "requestGame_speedTap_deny"
+      "AnimName": "ag_rtpmemorymatch_no"
     },
     {
       "CladEvent": "RequestGameMemoryMatchDeny1",
-      "AnimName": "requestGame_speedTap_deny"
+      "AnimName": "ag_rtpmemorymatch_no"
     },
     {
       "CladEvent": "RequestGameMemoryMatchAccept0",
-      "AnimName": "ag_rtpkeepaway_playeryes"
+      "AnimName": "ag_rtpmemorymatch_yes"
     },
     {
       "CladEvent": "RequestGameMemoryMatchAccept1",
-      "AnimName": "ag_rtpkeepaway_playeryes"
+      "AnimName": "ag_rtpmemorymatch_yes"
     },
     {
       "CladEvent": "RequestGameMemoryMatchInitial0",
-      "AnimName": "requestGame_speedTap_initial"
+      "AnimName": "ag_rtpmemorymatch_request"
     },
     {
       "CladEvent": "RequestGameMemoryMatchInitial1",
-      "AnimName": "requestGame_speedTap_initial"
+      "AnimName": "ag_rtpmemorymatch_request"
     },
     {
       "CladEvent": "RequestGameMemoryMatchPreDrive0",
@@ -982,11 +982,11 @@
     },
     {
       "CladEvent": "RequestGameMemoryMatchRequest0",
-      "AnimName": "requestGame_speedTap_request"
+      "AnimName": "ag_rtpmemorymatch_request"
     },
     {
       "CladEvent": "RequestGameMemoryMatchRequest1",
-      "AnimName": "requestGame_speedTap_request"
+      "AnimName": "ag_rtpmemorymatch_request"
     },
     {
       "CladEvent": "RequestGamePickupFail",
@@ -1149,8 +1149,92 @@
       "AnimName": "ag_askForBlock"
     },
     {
+      "CladEvent": "WorkoutPickupRealign",
+      "AnimName": "rollCube_realign"
+    },
+    {
+      "CladEvent": "WorkoutPickupRetry",
+      "AnimName": "rollCube_retry"
+    },
+    {
+      "CladEvent": "WorkoutPostLift_highEnergy",
+      "AnimName": "ag_workout_highenergy_getready"
+    },
+    {
+      "CladEvent": "WorkoutPostLift_lowEnergy",
+      "AnimName": "ag_workout_lowenergy_getready"
+    },
+    {
+      "CladEvent": "WorkoutPostLift_mediumEnergy",
+      "AnimName": "ag_workout_mediumenergy_getready"
+    },
+    {
+      "CladEvent": "WorkoutPreLift_highEnergy",
+      "AnimName": "ag_workout_highenergy_getin"
+    },
+    {
+      "CladEvent": "WorkoutPreLift_lowEnergy",
+      "AnimName": "ag_workout_lowenergy_getin"
+    },
+    {
+      "CladEvent": "WorkoutPreLift_mediumEnergy",
+      "AnimName": "ag_workout_mediumenergy_getin"
+    },
+    {
+      "CladEvent": "WorkoutPutDown_highEnergy",
+      "AnimName": "ag_workout_highenergy_getout"
+    },
+    {
+      "CladEvent": "WorkoutPutDown_lowEnergy",
+      "AnimName": "ag_workout_lowenergy_getout"
+    },
+    {
+      "CladEvent": "WorkoutPutDown_lowEnergy_simple",
+      "AnimName": "ag_workout_lowenergy_getout_02"
+    },
+    {
+      "CladEvent": "WorkoutPutDown_mediumEnergy",
+      "AnimName": "ag_workout_mediumenergy_getout"
+    },
+    {
+      "CladEvent": "WorkoutStrongLift_highEnergy",
+      "AnimName": "ag_workout_highenergy_strong"
+    },
+    {
+      "CladEvent": "WorkoutStrongLift_lowEnergy",
+      "AnimName": "ag_workout_lowenergy_strong"
+    },
+    {
+      "CladEvent": "WorkoutStrongLift_mediumEnergy",
+      "AnimName": "ag_workout_mediumenergy_strong"
+    },
+    {
+      "CladEvent": "WorkoutTransition_highEnergy",
+      "AnimName": "ag_workout_highenergy_trans"
+    },
+    {
+      "CladEvent": "WorkoutTransition_lowEnergy",
+      "AnimName": "ag_workout_lowenergy_trans"
+    },
+    {
+      "CladEvent": "WorkoutTransition_mediumEnergy",
+      "AnimName": "ag_workout_mediumenergy_trans"
+    },
+    {
+      "CladEvent": "WorkoutWeakLift_highEnergy",
+      "AnimName": "ag_workout_highenergy_weak"
+    },
+    {
+      "CladEvent": "WorkoutWeakLift_lowEnergy",
+      "AnimName": "ag_workout_lowenergy_weak"
+    },
+    {
+      "CladEvent": "WorkoutWeakLift_mediumEnergy",
+      "AnimName": "ag_workout_mediumenergy_weak"
+    },
+    {
       "CladEvent": "SdkTextToSpeech",
       "AnimName": "ag_sdk_speak"
-    }
+    }    
   ]
 }

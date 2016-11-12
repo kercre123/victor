@@ -174,11 +174,12 @@ AudioController::AudioController( const CozmoContext* context )
     // Set Local
     config.audioLocal = AudioLocaleType::EnglishUS;
     // Engine Memory
-    config.defaultMemoryPoolSize      = ( 4 * 1024 * 1024 );
-    config.defaultLEMemoryPoolSize    = ( 4 * 1024 * 1024 );
-    config.defaultPoolBlockSize       = 1024;
+    config.defaultMemoryPoolSize      = ( 2 * 1024 * 1024 );      // 2 MB
+    config.defaultLEMemoryPoolSize    = ( 1024 * 1024 );          // 1 MB
+    config.ioMemorySize               = ( (1024 + 512) * 1024 );  // 1.5 MB
     config.defaultMaxNumPools         = 30;
     config.enableGameSyncPreparation  = true;
+    config.enableStreamCache          = true;
     
     // Create Engine
     _audioEngine = new AudioEngineController();

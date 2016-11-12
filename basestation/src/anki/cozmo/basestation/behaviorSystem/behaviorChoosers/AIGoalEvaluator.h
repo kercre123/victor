@@ -12,9 +12,10 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_AIGoalEvaluator_H__
 #define __Cozmo_Basestation_BehaviorSystem_AIGoalEvaluator_H__
 
-#include "json/json-forwards.h"
 #include "iBehaviorChooser.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface_fwd.h"
 #include "util/helpers/templateHelpers.h"
+#include "json/json-forwards.h"
 
 #include <memory>
 #include <unordered_map>
@@ -58,6 +59,9 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Behavior selection
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // calculate what the goal should be given the recently detected objects (blocks, faces, ...)
+  void CalculateDesiredGoalFromObjects();
 
   // get next behavior by properly managing the goals
   virtual IBehavior* ChooseNextBehavior(Robot& robot, const IBehavior* currentRunningBehavior) override;
@@ -71,8 +75,27 @@ public:
   
   // sets the name of a goal we want to force for debugging (not to be used in production)
   void SetConsoleRequestedGoalName(const std::string& name) { _debugConsoleRequestedGoal = name; }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Events
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // template for all events we subscribe to
+  template<typename T> void HandleMessage(const T& msg);
   
 private:
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Types
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  struct Configuration {
+    // goals we want to select for recent objects
+    std::string faceAndCubeGoalName;
+    std::string faceOnlyGoalName;
+    std::string cubeOnlyGoalName;
+    std::string noFaceNoCubeGoalName;
+  };
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
@@ -93,6 +116,9 @@ private:
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
+  // jsong config params
+  Configuration _configParams;
+  
   // name for debugging
   std::string _name;
   
@@ -103,6 +129,12 @@ private:
   
   // raw pointer to the current goal, which is guaranteed be stored in _goals
   AIGoal* _currentGoalPtr;
+  
+  // signal handles for events we register to. These are currently unsubscribed when destroyed
+  std::vector<Signal::SmartHandle> _signalHandles;
+  
+  // this goal is requested by external systems under certain circumstances
+  std::string _requestedGoal;
   
   // this variable is set from debug console to cycle through goals in goal evaluators
   std::string _debugConsoleRequestedGoal;

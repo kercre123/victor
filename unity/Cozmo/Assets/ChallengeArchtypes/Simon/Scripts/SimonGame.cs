@@ -35,6 +35,7 @@ namespace Simon {
     public float TimeBetweenBeats { get { return _Config.TimeBetweenBeat_Sec.Evaluate(_CurrentSequenceLength); } }
 
     public float TimeWaitFirstBeat { get { return _Config.TimeWaitFirstBeat; } }
+    public SimonGameConfig Config { get { return _Config; } }
 
     private int _CurrentSequenceLength;
 
@@ -122,9 +123,11 @@ namespace Simon {
       _SkillCurve = _Config.CozmoGuessCubeCorrectPercentagePerSkill[curveIndex];
     }
 
-    public int GetNewSequenceLength(PlayerType playerPickingSequence) {
+    public int GetNewSequenceLength(PlayerType playerPickingSequence, out bool SequenceGrown) {
       // Only increment on the first player
+      SequenceGrown = false;
       if (playerPickingSequence == _FirstPlayer && _WantsSequenceGrowth) {
+        SequenceGrown = true;
         _CurrentSequenceLength = _CurrentSequenceLength >= MaxSequenceLength ? MaxSequenceLength : _CurrentSequenceLength + 1;
       }
       return _CurrentSequenceLength;
@@ -243,7 +246,7 @@ namespace Simon {
       return audioEvent;
     }
 
-    protected override void ShowWinnerState(string overrideWinnerText = null, string footerText = "") {
+    protected override void ShowWinnerState(EndState currentEndState, string overrideWinnerText = null, string footerText = "") {
       if (IsSoloMode()) {
         if (SaveHighScore()) {
           overrideWinnerText = Localization.Get(LocalizationKeys.kSimonGameSoloNewHighScore);
@@ -252,7 +255,7 @@ namespace Simon {
           overrideWinnerText = Localization.Get(LocalizationKeys.kSimonGameSoloGameOver);
         }
       }
-      base.ShowWinnerState(overrideWinnerText, Localization.GetWithArgs(LocalizationKeys.kSimonGameTextPatternLength, _CurrentIDSequence.Count));
+      base.ShowWinnerState(currentEndState, overrideWinnerText, Localization.GetWithArgs(LocalizationKeys.kSimonGameTextPatternLength, _CurrentIDSequence.Count));
 
       // Set Final Music State
       GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Memory_Match_Fanfare);
@@ -268,28 +271,24 @@ namespace Simon {
       if (CurrentDifficulty == (int)SimonMode.SOLO) {
         PlayerRoundsWon = 1;
         CozmoRoundsWon = 0;
-        ShowBanner(LocalizationKeys.kSimonGameLabelYouWin);
         StartBaseGameEnd(true);
         trigger = Anki.Cozmo.AnimationTrigger.MemoryMatchSoloGameOver;
       }
       else if (CurrentDifficulty == (int)SimonMode.VS) {
         // compare who wins...
         if (_CurrLivesHuman > _CurrLivesCozmo) {
-          ShowBanner(LocalizationKeys.kSimonGameLabelYouWin);
           PlayerRoundsWon = 1;
           CozmoRoundsWon = 0;
           StartBaseGameEnd(true);
           trigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPlayerWinGame;
         }
         else if (_CurrLivesHuman < _CurrLivesCozmo) {
-          ShowBanner(LocalizationKeys.kSimonGameLabelCozmoWin);
           PlayerRoundsWon = 0;
           CozmoRoundsWon = 1;
           StartBaseGameEnd(false);
           trigger = Anki.Cozmo.AnimationTrigger.MemoryMatchCozmoWinGame;
         }
         else {
-          ShowBanner(LocalizationKeys.kMinigameTextTie);
           StartBaseGameEnd(EndState.Tie);
           trigger = Anki.Cozmo.AnimationTrigger.MemoryMatchPlayerWinGame;
         }
@@ -306,6 +305,12 @@ namespace Simon {
         GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnMemoryMatchVsComplete, _ChallengeData.ChallengeID, CurrentDifficulty, endState == EndState.PlayerWin, PlayerScore, CozmoScore, IsHighIntensityRound()));
       }
     }
+    // event values to add on game completion
+    protected override Dictionary<string, float> GetGameSpecificEventValues() {
+      Dictionary<string, float> ret = new Dictionary<string, float>();
+      ret.Add("human_lives", _CurrLivesHuman);
+      return ret;
+    }
 
     public LightCube GetCubeBySortedIndex(int index) {
       if (index < CubeIdsForGame.Count && CurrentRobot != null) {
@@ -318,7 +323,7 @@ namespace Simon {
 
     public SimonTurnSlide GetSimonSlide() {
       if (_SimonTurnSlide == null) {
-        _SimonTurnSlide = SharedMinigameView.ShowWideGameStateSlide(
+        _SimonTurnSlide = SharedMinigameView.ShowFullScreenGameStateSlide(
           _SimonTurnSlidePrefab.gameObject, "simon_turn_slide");
         SharedMinigameView.HideShelf();
 
