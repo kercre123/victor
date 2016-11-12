@@ -5,7 +5,7 @@ using Anki.Cozmo.Audio;
 using Anki.Cozmo;
 
 namespace Simon {
-  public class WaitForPlayerGuessSimonState : State {
+  public class WaitForPlayerGuessSimonState : CanTimeoutState {
 
     private SimonGame _GameInstance;
     private IList<int> _SequenceList;
@@ -31,6 +31,7 @@ namespace Simon {
       _CurrentRobot.SetHeadAngle(Random.Range(CozmoUtil.kIdealBlockViewHeadValue, 0f));
 
       _GameInstance.ShowCurrentPlayerTurnStage(PlayerType.Human, false);
+      SetTimeoutDuration(_GameInstance.Config.IdleTimeoutSec);
     }
 
     public override void Exit() {
@@ -82,7 +83,7 @@ namespace Simon {
     private void PlayerWinHand() {
       _GameInstance.SetCubeLightsGuessRight();
       _GameInstance.ShowCenterResult(true, true);
-      GameAudioClient.PostSFXEvent (Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Round_End);
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Shared_Round_End);
       AnimationTrigger trigger = AnimationTrigger.MemoryMatchPlayerWinHand;
       if (_GameInstance.IsSoloMode()) {
         trigger = AnimationTrigger.MemoryMatchPlayerWinHandSolo;
@@ -99,6 +100,7 @@ namespace Simon {
     }
 
     private void OnBlockTapped(int id, int times, float timeStamp) {
+      ResetPlayerInputTimer();
       // Just playing the ending animation
       if (_SubState != SubState.WaitForInput) {
         return;
