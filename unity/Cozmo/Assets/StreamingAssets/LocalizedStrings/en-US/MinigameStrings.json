@@ -249,6 +249,12 @@
   "minigame.lostTrackOfBlock.description": {
     "translation": "Cozmo lost track of his Cube and can't continue the game."
   },
+  "minigame.timeout.title": {
+    "translation": "Are you still there?"
+  },
+  "minigame.timeout.description": {
+    "translation": "Returning to home due to lack of input."
+  },
   "speedTap.dontMoveBlock.title": {
     "translation": "Cozmo's Cube has moved!"
   },
