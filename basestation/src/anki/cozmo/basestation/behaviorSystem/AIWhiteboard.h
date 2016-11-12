@@ -128,6 +128,10 @@ public:
   // discarded
   bool FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) const;
   
+  // finds cubes in the given beacon and returns them in the given list. Returns true if the list is not empty (=if
+  // found any cubes at all)
+  bool FindCubesInBeacon(const AIBeacon* beacon, ObjectInfoList& outObjectList) const;
+  
   // returns true if all active cubes are known to be in beacons
   bool AreAllCubesInBeacons() const;
   
