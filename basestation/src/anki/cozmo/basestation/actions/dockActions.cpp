@@ -1664,24 +1664,15 @@ namespace Anki {
               // Visual verification is done
               Util::SafeDelete(_placementVerifyAction);
               
-              if(result != ActionResult::SUCCESS) {
-                if(_dockAction == DockAction::DA_PLACE_LOW) {
-                  PRINT_NAMED_WARNING("PlaceRelObjectAction.Verify",
-                                      "Robot thinks it placed the object low, but verification of placement "
-                                      "failed. Not sure where carry object %d is, so deleting it.",
-                                      _carryObjectID.GetValue());
-                  
-                  _robot.GetBlockWorld().ClearObject(_carryObjectID);
-                } else {
-                  assert(_dockAction == DockAction::DA_PLACE_HIGH);
-                  PRINT_NAMED_WARNING("PlaceRelObjectAction.Verify",
-                                      "Robot thinks it placed the object high, but verification of placement "
-                                      "failed. Assuming we are still carrying object %d.",
-                                      _carryObjectID.GetValue());
-                  
-                  _robot.SetObjectAsAttachedToLift(_carryObjectID, _carryObjectMarker);
-                }
+              if(result != ActionResult::SUCCESS)
+              {
+                PRINT_NAMED_WARNING("PlaceRelObjectAction.Verify",
+                                    "Robot thinks it placed the object %s, but verification of placement "
+                                    "failed. Not sure where carry object %d is, so clearing it.",
+                                    _dockAction == DockAction::DA_PLACE_LOW ? "low" : "high",
+                                    _carryObjectID.GetValue());
                 
+                _robot.GetBlockWorld().ClearObject(_carryObjectID);  
               }
               else if(_dockAction == DockAction::DA_PLACE_HIGH && !_verifyComplete) {
                 

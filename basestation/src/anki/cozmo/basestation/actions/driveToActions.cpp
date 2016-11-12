@@ -283,7 +283,8 @@ namespace Anki {
         
         // Make sure we can see the object, unless we are carrying it (i.e. if we
         // are doing a DriveToPlaceCarriedObject action)
-        if(!object->IsBeingCarried()) {
+        if(!_robot.IsCarryingObject(object->GetID()))
+        {
           TurnTowardsObjectAction* turnTowardsObjectAction = new TurnTowardsObjectAction(_robot, _objectID, Radians(0), true, false);
           PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
                             GetTag(),
@@ -484,7 +485,6 @@ namespace Anki {
           ASSERT_NAMED(tempObject != nullptr, "DriveToPlaceCarriedObjectAction.Init.DynamicCastFail");
           
           tempObject->InitPose(_placementPose, PoseState::Unknown);
-          tempObject->SetBeingCarried(true);
           
           // Call parent class's init helper
           result = DriveToObjectAction::InitHelper(tempObject);
