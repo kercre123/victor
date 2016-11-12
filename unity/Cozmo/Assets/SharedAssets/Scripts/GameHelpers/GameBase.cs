@@ -1261,7 +1261,7 @@ public abstract class GameBase : MonoBehaviour {
     if (_InterruptedAlertView == null && PauseManager.Instance.IsAnyDialogOpen == false) {
       Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
       alertView.SetCloseButtonEnabled(false);
-      alertView.SetPrimaryButton(LocalizationKeys.kButtonQuitGame, null);
+      alertView.SetPrimaryButton(LocalizationKeys.kButtonOkay, null);
       alertView.ViewCloseAnimationFinished += HandleInterruptionQuitGameViewClosed;
       alertView.TitleLocKey = titleKey;
       alertView.DescriptionLocKey = descriptionKey;

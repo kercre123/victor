@@ -2,7 +2,7 @@
 using System.Collections;
 
 namespace Simon {
-  public class WaitForNextRoundSimonState : State {
+  public class WaitForNextRoundSimonState : CanTimeoutState {
 
     private SimonGame _GameInstance;
     private PlayerType _NextPlayer;
@@ -17,6 +17,7 @@ namespace Simon {
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as SimonGame;
+      SetTimeoutDuration(_GameInstance.Config.IdleTimeoutSec);
       bool isSoloMode = _GameInstance.CurrentDifficulty == (int)SimonGame.SimonMode.SOLO;
       // On first turn not known until entered...
       if (_NextPlayer == PlayerType.None) {
