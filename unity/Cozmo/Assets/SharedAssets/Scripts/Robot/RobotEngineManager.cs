@@ -367,7 +367,6 @@ public class RobotEngineManager : MonoBehaviour {
         persistence.Save();
       }
 
-      PlayTimeManager.Instance.RobotConnected(true);
       DasTracker.Instance.TrackRobotConnected();
     }
   }
@@ -376,7 +375,6 @@ public class RobotEngineManager : MonoBehaviour {
     DasTracker.Instance.TrackRobotDisconnected((byte)message.robotID);
     DAS.Error("RobotEngineManager.RobotDisconnected", "Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.");
     RemoveRobot((byte)message.robotID);
-    PlayTimeManager.Instance.RobotConnected(false);
   }
 
   private void ProcessCLADVersionMismatch(Anki.Cozmo.ExternalInterface.EngineRobotCLADVersionMismatch message) {

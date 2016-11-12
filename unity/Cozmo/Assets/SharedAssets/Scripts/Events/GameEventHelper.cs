@@ -248,6 +248,7 @@ public class GameEventWrapperFactory {
     Register(GameEvent.OnFreeplayBehaviorSuccess, typeof(BehaviorSuccessGameEvent));
     Register(GameEvent.OnFreeplayInterval, typeof(TimedIntervalGameEvent));
     Register(GameEvent.OnChallengeInterval, typeof(TimedIntervalGameEvent));
+    Register(GameEvent.OnConnectedInterval, typeof(TimedIntervalGameEvent));
     Register(GameEvent.OnNewHighScore, typeof(NewHighScoreGameEvent));
     // This is only special because the skills system can only listen to enums for now
     // And cozmo shouldn't level up in solo mode.
