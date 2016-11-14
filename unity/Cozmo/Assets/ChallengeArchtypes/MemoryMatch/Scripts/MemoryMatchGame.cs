@@ -256,6 +256,10 @@ namespace MemoryMatch {
         }
       }
       base.ShowWinnerState(currentEndState, overrideWinnerText, Localization.GetWithArgs(LocalizationKeys.kMemoryMatchGameTextPatternLength, _CurrentIDSequence.Count));
+      // Add the Game Label again which the in game FullScreen cleared.
+      Cozmo.MinigameWidgets.ChallengeTitleWidget titleWidget = SharedMinigameView.TitleWidget;
+      titleWidget.Text = Localization.Get(_ChallengeData.ChallengeTitleLocKey);
+      titleWidget.SubtitleText = "";
 
       // Set Final Music State
       GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Memory_Match_Fanfare);
