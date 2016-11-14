@@ -354,11 +354,17 @@ public class ConnectionFlow : MonoBehaviour {
   }
 
   private void TransitionConnectionFlowToPullCubeTabs() {
-    GameObject.Destroy(_SecuringConnectionScreenInstance.gameObject);
-    UIManager.CloseView(_ConnectionFlowBackgroundInstance);
-    _ConnectionFlowBackgroundInstance = null;
-    _PullCubeTabViewInstance = UIManager.OpenView(_PullCubeTabViewPrefab);
-    _PullCubeTabViewInstance.ViewClosed += HandlePullCubeTabsCompeted;
+    if (_SecuringConnectionScreenInstance != null) {
+      GameObject.Destroy(_SecuringConnectionScreenInstance.gameObject);
+      UIManager.CloseView(_ConnectionFlowBackgroundInstance);
+      _SecuringConnectionScreenInstance = null;
+      _ConnectionFlowBackgroundInstance = null;
+      _PullCubeTabViewInstance = UIManager.OpenView(_PullCubeTabViewPrefab);
+      _PullCubeTabViewInstance.ViewClosed += HandlePullCubeTabsCompeted;
+    }
+    else {
+      DAS.Error("TransitionConnectionFlowToPullCubeTabs.CalledMultipleTimes", "should only be called once");
+    }
   }
 
   private void HandlePullCubeTabsCompeted() {
