@@ -214,6 +214,7 @@ namespace Cozmo.Minigame.DroneMode {
       _HeadTiltSlider.onValueChanged.RemoveListener(HandleHeadSliderValueChanged);
       _LiftSlider.onValueChanged.RemoveListener(HandleLiftSliderValueChanged);
       if (_HowToPlayViewInstance != null) {
+        _HowToPlayViewInstance.ViewClosed -= HandleHowToPlayViewClosed;
         _HowToPlayViewInstance.CloseViewImmediately();
       }
 
@@ -260,15 +261,25 @@ namespace Cozmo.Minigame.DroneMode {
 
     private void HandleHowToPlayClicked() {
       if (UIManager.Instance.NumberOfOpenDialogues() == 0) {
-        OpenHowToPlayView();
+        OpenHowToPlayView(showCloseButton: true);
       }
     }
 
-    public void OpenHowToPlayView() {
+    public void OpenHowToPlayView(bool showCloseButton) {
       if (_HowToPlayViewInstance == null) {
         _HowToPlayViewInstance = UIManager.OpenView<DroneModeHowToPlayView>(_HowToPlayViewPrefab);
+        _HowToPlayViewInstance.ShowCloseButton(showCloseButton);
+        if (showCloseButton) {
+          _HowToPlayViewInstance.ViewClosed += HandleHowToPlayViewClosed;
+          _HowToPlayButton.gameObject.SetActive(false);
+        }
+
         _SpeedThrottle.SetToRest();
       }
+    }
+
+    private void HandleHowToPlayViewClosed() {
+      _HowToPlayButton.gameObject.SetActive(true);
     }
 
     private void HandleSpeedThrottleValueChanged(float newSliderValue) {

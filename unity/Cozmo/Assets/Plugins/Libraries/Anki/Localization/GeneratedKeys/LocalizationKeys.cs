@@ -24,6 +24,7 @@ public static class LocalizationKeys {
   public const string kBehaviorReactToOnCharger = "behavior.ReactToOnCharger";
   public const string kBehaviorReactToPickup = "behavior.ReactToPickup";
   public const string kBehaviorReactToOnSide = "behavior.ReactToOnSide";
+  public const string kBehaviorReactToPet = "behavior.ReactToPet";
   public const string kBehaviorRequestToPlay = "behavior.RequestToPlay";
   public const string kBehaviorAcknowledgeObject = "behavior.AcknowledgeObject";
   public const string kBehaviorReactToOnBack = "behavior.ReactToOnBack";
@@ -31,6 +32,12 @@ public static class LocalizationKeys {
   public const string kBehaviorReactToOnTreads = "behavior.ReactToOnTreads";
   public const string kBehaviorReactToUnexpectedMovement = "behavior.ReactToUnexpectedMovement";
   public const string kBehaviorDriveOffCharger = "behavior.DriveOffCharger";
+  public const string kDroneModeTextToggleNightVision = "droneMode.text.toggleNightVision";
+  public const string kDroneModeTextRaiseLowerHead = "droneMode.text.raiseLowerHead";
+  public const string kDroneModeTextSwitchHeadOrLift = "droneMode.text.switchHeadOrLift";
+  public const string kDroneModeTextCozmoReticleHeader = "droneMode.text.cozmoReticleHeader";
+  public const string kDroneModeTextReticleOutlineDescrip = "droneMode.text.reticleOutlineDescrip";
+  public const string kDroneModeTextCozmoInteractionChoice = "droneMode.text.cozmoInteractionChoice";
 
   #endregion
 
@@ -315,7 +322,11 @@ public static class LocalizationKeys {
   public const string kDroneModeUnknownObjectReticleLabel = "droneMode.unknownObjectReticleLabel";
   public const string kDroneModeSafePlayTitle = "droneMode.safePlay.title";
   public const string kDroneModeSafePlayDescription = "droneMode.safePlay.description";
-  public const string kDroneModeButtonHowToPlayConfirm = "droneMode.button.howToPlayConfirm";
+  public const string kDroneModeButtonActionSayName = "droneMode.button.action.sayName";
+  public const string kDroneModeButtonActionLiftCube = "droneMode.button.action.liftCube";
+  public const string kDroneModeButtonActionDropCube = "droneMode.button.action.dropCube";
+  public const string kDroneModeButtonActionStackCube = "droneMode.button.action.stackCube";
+  public const string kDroneModeButtonActionRollCube = "droneMode.button.action.rollCube";
   public const string kDroneModeTextHowToPlaySteering = "droneMode.text.howToPlaySteering";
   public const string kDroneModeTextHowToPlaySpeed = "droneMode.text.howToPlaySpeed";
   public const string kDroneModeTextHowToPlayHead = "droneMode.text.howToPlayHead";
@@ -480,6 +491,16 @@ public static class LocalizationKeys {
   public const string kRewardDescriptionFreeplayCompleteBehaviorTipOver = "reward.description.Freeplay.CompleteBehavior.TipOver";
   public const string kRewardDescriptionFreeplayCompleteBehaviorPyramid = "reward.description.Freeplay.CompleteBehavior.Pyramid";
   public const string kRewardDescriptionFreeplayCompleteBehaviorPopWheelie = "reward.description.Freeplay.CompleteBehavior.PopWheelie";
+  public const string kRewardDescriptionMemoryMatchPlayedSolo = "reward.description.MemoryMatch.Played.Solo";
+  public const string kRewardDescriptionMemoryMatchPlayedVs = "reward.description.MemoryMatch.Played.Vs";
+  public const string kRewardDescriptionMemoryMatchWinGameVs = "reward.description.MemoryMatch.WinGame.Vs";
+  public const string kRewardDescriptionMemoryMatchLivesOneLeft = "reward.description.MemoryMatch.Lives.OneLeft";
+  public const string kRewardDescriptionMemoryMatchLivesTwoLeft = "reward.description.MemoryMatch.Lives.TwoLeft";
+  public const string kRewardDescriptionMemoryMatchLivesThreeLeft = "reward.description.MemoryMatch.Lives.ThreeLeft";
+  public const string kRewardDescriptionMemoryMatchPatternLengthFive = "reward.description.MemoryMatch.PatternLength.Five";
+  public const string kRewardDescriptionMemoryMatchPatternLengthTen = "reward.description.MemoryMatch.PatternLength.Ten";
+  public const string kRewardDescriptionMemoryMatchPatternLengthTwenty = "reward.description.MemoryMatch.PatternLength.Twenty";
+  public const string kRewardDescriptionMemoryMatchHighScoreSolo = "reward.description.MemoryMatch.HighScore.Solo";
   public const string kRewardDescriptionQuickTapPlayed = "reward.description.QuickTap.Played";
   public const string kRewardDescriptionQuickTapWinGameOneColor = "reward.description.QuickTap.WinGame.OneColor";
   public const string kRewardDescriptionQuickTapWinGameTwoColor = "reward.description.QuickTap.WinGame.TwoColor";
@@ -592,6 +613,8 @@ public static class LocalizationKeys {
   public const string kButtonDone = "button.done";
   public const string kButtonPlay = "button.play";
   public const string kButtonLeave = "button.leave";
+  public const string kButtonBack = "button.back";
+  public const string kButtonNext = "button.next";
   public const string kButtonStaySparked = "button.staySparked";
   public const string kButtonSoundsGood = "button.soundsGood";
   public const string kLabelPercentComplete = "label.percentComplete";

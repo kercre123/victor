@@ -107,23 +107,5 @@
   },
   "behavior.DriveOffCharger": {
     "translation": "Cozmo is waking up"
-  },
-  "droneMode.text.toggleNightVision": {
-    "translation": "Tap to toggle Nightvision On or Off"
-  },
-  "droneMode.text.raiseLowerHead": {
-    "translation": "Drag to move Cozmo's Head or Lift Up and Down"
-  },
-  "droneMode.text.switchHeadOrLift": {
-    "translation": "Tap to switch between Head and Lift Control"
-  },
-  "droneMode.text.cozmoReticleHeader": {
-    "translation": "When Cozmo selects as object you can see it here"
-  },
-  "droneMode.text.reticleOutlineDescrip": {
-    "translation": "An outline will appear around the selected object"
-  },
-  "droneMode.text.cozmoInteractionChoice": {
-    "translation": "Tap on the options that appear to make Cozmo interact"
   }
 }

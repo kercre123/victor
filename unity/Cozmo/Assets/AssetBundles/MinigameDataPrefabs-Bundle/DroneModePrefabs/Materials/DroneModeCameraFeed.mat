@@ -181,8 +181,8 @@ Material:
       data:
         first:
           name: _TopColor
-        second: {r: 0.007843138, g: 0.43921572, b: 0.003921569, a: 1}
+        second: {r: 0.4156863, g: 0.64705884, b: 0.6627451, a: 1}
       data:
         first:
           name: _BottomColor
-        second: {r: 0.011764707, g: 0.227451, b: 0.003921569, a: 1}
+        second: {r: 0.19607845, g: 0.427451, b: 0.5921569, a: 1}
