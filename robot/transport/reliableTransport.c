@@ -358,7 +358,6 @@ uint8_t ICACHE_FLASH_ATTR UpdateLastAckedMessage(ReliableConnection* connection,
       memcpy((void*)(connection->pendingMsgMeta),  (void*)(connection->pendingMsgMeta  + updated),       (connection->numPendingReliableMessages * sizeof(PendingReliableMessageMetaData)));
     }
   }
-  connection->latestRecvTime = GetMicroCounter();
   return updated;
 }
 
@@ -370,7 +369,7 @@ void ICACHE_FLASH_ATTR ReceivePing(uint8_t* msg, uint16_t msgLen, ReliableConnec
 }
 
 /// Process one message
-void ICACHE_FLASH_ATTR HandleSubMessage(uint8_t* msg, uint16_t msgLen, EReliableMessageType msgType,
+bool ICACHE_FLASH_ATTR HandleSubMessage(uint8_t* msg, uint16_t msgLen, EReliableMessageType msgType,
                       ReliableSequenceId seqId, ReliableConnection* connection)
 {
   if (!IsMessageTypeAlwaysSentUnreliably(msgType)) // If is reliable message type, handle order and duplication
@@ -387,7 +386,7 @@ void ICACHE_FLASH_ATTR HandleSubMessage(uint8_t* msg, uint16_t msgLen, EReliable
     else // A duplicate (or out of order) reliable message
     {
       //printf("INFO: Duplicate / out of order message seqID %d (expecting %d) type %d\r\n", seqId, connection->nextInSequenceId, msgType);
-      return;
+      return false;
     }
   }
 
@@ -441,6 +440,7 @@ void ICACHE_FLASH_ATTR HandleSubMessage(uint8_t* msg, uint16_t msgLen, EReliable
       printf("ERROR: ReliableTransport unhandled message type %d\r\n", msgType);
     }
   }
+  return true;
 }
 
 bool ICACHE_FLASH_ATTR ReliableTransport_SendMessage(const uint8_t* buffer, const uint16_t bufferSize, ReliableConnection* connection, const EReliableMessageType messageType, const bool hot, const uint8_t tag)
@@ -552,6 +552,7 @@ int16_t ICACHE_FLASH_ATTR ReliableTransport_ReceiveData(ReliableConnection* conn
     memcpy(&header, buffer, sizeof(AnkiReliablePacketHeader));
     uint8_t* msg = buffer + sizeof(AnkiReliablePacketHeader);
     uint16_t bytesProcessed = sizeof(AnkiReliablePacketHeader);
+    bool acceptedAny = false;
 
     //printf("Recv: siz=%d typ=%d seq=%d..%d ack=%d\r\n", bufferSize,
     //  header.type, header.seqIdMin, header.seqIdMax, header.lastReceivedId);
@@ -574,7 +575,7 @@ int16_t ICACHE_FLASH_ATTR ReliableTransport_ReceiveData(ReliableConnection* conn
           return -3;
         }
         bytesProcessed += msgLen + ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH;
-        HandleSubMessage(msg, msgLen, msgType, seqId, connection);
+        acceptedAny |= HandleSubMessage(msg, msgLen, msgType, seqId, connection);
         msg += msgLen;
         if (!IsMessageTypeAlwaysSentUnreliably(msgType)) // Not an unreliable message type
         {
@@ -591,14 +592,17 @@ int16_t ICACHE_FLASH_ATTR ReliableTransport_ReceiveData(ReliableConnection* conn
       }
       else
       {
-        HandleSubMessage(buffer + sizeof(AnkiReliablePacketHeader), bufferSize - sizeof(AnkiReliablePacketHeader),
-                         header.type, header.seqIdMin, connection);
+        acceptedAny |= HandleSubMessage(buffer + sizeof(AnkiReliablePacketHeader),
+                                        bufferSize - sizeof(AnkiReliablePacketHeader),
+                                        header.type, header.seqIdMin, connection);
       }
     }
 
     // Update the acks we've received
     UpdateLastAckedMessage(connection, header.lastReceivedId);
     // Acking messages is automatically taken care of
+    // Only update last receive time if we actually received a new message
+    if (acceptedAny) connection->latestRecvTime = GetMicroCounter();
 
     return 0;
   }
