@@ -83,7 +83,7 @@ public class UnlockableInfo : ScriptableObject, IComparable {
 
   public int CubesRequired = 1;
 
-  public int SortOrder = 100;
+  public int SortOrder = 12345;
 
   [Serializable]
   public class SerializableUnlockIds : SerializableEnum<Anki.Cozmo.UnlockId> {

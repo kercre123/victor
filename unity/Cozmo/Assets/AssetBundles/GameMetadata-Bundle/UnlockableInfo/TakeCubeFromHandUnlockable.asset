@@ -21,6 +21,10 @@ MonoBehaviour:
   _HideInUI: 1
   DescriptionKey: unlockable.TakeCubeFromHand.Description
   TitleKey: unlockable.TakeCubeFromHand.Title
+  SparkButtonDescription: 
+  SparkedStateDescription: 
+  SparkedMusicState:
+    _Sparked: 0
   UpgradeCostItemId: TestHexItem0
   UpgradeCostAmountNeeded: 2
   RequestTrickCostItemId: treat
@@ -48,4 +52,4 @@ MonoBehaviour:
   CoreUpgradeOverlayIcon: {fileID: 21300000, guid: f28815dae66704e729160fe1d7e1e61f,
     type: 3}
   CubesRequired: 1
-  SortOrder: 100
+  SortOrder: 1000
