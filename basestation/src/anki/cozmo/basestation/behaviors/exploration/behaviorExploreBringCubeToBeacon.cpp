@@ -685,16 +685,130 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Directionality helpers
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+namespace {
+
+const Vec3f& kUpVector = Z_AXIS_3D();
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// calculate average directionality and return true if calculated, false if could not figure out average (because
+// objects were null)
+__attribute__((used))
+bool CalculateDirectionalityAverage(AIWhiteboard::ObjectInfoList& objectsInBeacon, const BlockWorld& world, Rotation3d& outDirectionality)
+{
+  double avgAngle = 0.0;
+  int angleCount  = 0; // how many angles we calculated (should be objectsInBeacon.size() if no null objs are allowed)
+
+  for( const auto& objectInfo : objectsInBeacon )
+  {
+    const ObservableObject* objectPtr = world.GetObjectByID( objectInfo.id, objectInfo.family );
+    if ( nullptr != objectPtr )
+    {
+      double upAngle = objectPtr->GetPose().GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis().ToDouble();
+      // normalize to to range [-45deg,45deg], to align either axis
+      const double closest90Angle = std::round(upAngle/M_PI_2) * M_PI_2;
+      upAngle = upAngle - closest90Angle;
+      ASSERT_NAMED( upAngle <=  M_PI_4, "FindFreePoseInBeacon.OutOfRange.Positive" );
+      ASSERT_NAMED( upAngle >= -M_PI_4, "FindFreePoseInBeacon.OutOfRange.Negative" );
+
+      // add angle to
+      avgAngle += upAngle;
+      ++angleCount;
+    }
+  }
+
+  // if we have some angles to average
+  if ( angleCount > 0 )
+  {
+    // calculate final angle and apply
+    const double finalAngle = avgAngle / angleCount;
+    outDirectionality = Rotation3d( finalAngle, kUpVector );
+    return true;
+  }
+
+  return false;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// inherit the directionality from the object closest to the center
+__attribute__((used))
+bool CalculateDirectionalityClosest(AIWhiteboard::ObjectInfoList& objectsInBeacon, const BlockWorld& world, const Pose3d& center, Rotation3d& outDirectionality)
+{
+  float bestDistToCenterSQ = FLT_MAX;
+  const ObservableObject* bestObject = nullptr;
+  
+  for( const auto& objectInfo : objectsInBeacon )
+  {
+    const ObservableObject* objectPtr = world.GetObjectByID( objectInfo.id, objectInfo.family );
+    if ( nullptr != objectPtr )
+    {
+      Pose3d relative;
+      if ( objectPtr->GetPose().GetWithRespectTo(center, relative) )
+      {
+        const float distSQ = relative.GetTranslation().LengthSq();
+        if ( distSQ < bestDistToCenterSQ )
+        {
+          bestDistToCenterSQ = distSQ;
+          bestObject = objectPtr;
+        }
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("BehaviorExploreBringCubeToBeacon.CalculateDirectionalityClosest.InvalidPose",
+                          "Can't get object '%d' pose wrt beacon center", objectInfo.id.GetValue());
+      }
+    }
+  }
+
+  // if we got the best object (closest to center)
+  if ( nullptr != bestObject )
+  {
+    // calculate final angle and apply (do not copy Rotation since objects sometimes have roll due to bad estimations,
+    // which we want to discard here
+    Radians rotZ = bestObject->GetPose().GetWithRespectToOrigin().GetRotation().GetAngleAroundZaxis();
+    outDirectionality = Rotation3d( rotZ, kUpVector );
+    return true;
+  }
+
+  return false;
+}
+
+};
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorExploreBringCubeToBeacon::FindFreePoseInBeacon(const ObservableObject* object,
   const AIBeacon* beacon, const Robot& robot, Pose3d& freePose)
 {
-  // store directionallity of beacon
-  // TODO rsam: it would be cool so all cubes lined up together. Maybe we should check the closest cube to the selected
-  // location, but that would require making more collision computations. A solution might be do the location selection
-  // as a sphere, that way we can turn the cube around Z and the location would still be valid (at the same time
-  // sphere checks are faster than cube checks)
-  const Vec3f& kUpVector = Z_AXIS_3D();
   Rotation3d beaconDirectionality(0.0f, kUpVector);
+  bool isDirectionalitySetFromObjects = false;
+  
+  // compute directionality when there are cubes inside the beacon
+  AIWhiteboard::ObjectInfoList objectsInBeacon;
+  const bool hasObjectsInBeacon = robot.GetBehaviorManager().GetWhiteboard().FindCubesInBeacon(beacon, objectsInBeacon);
+  if ( hasObjectsInBeacon )
+  {
+    const BlockWorld& world = robot.GetBlockWorld();
+    
+    // I have implemented two ways of doing this. Average works well, but aligned to the cube closest to center
+    // seems to look better. In the general case where no cubes or one start at the beacon, all cubes should
+    // line up anyway, regardless of these methods. This covers the case of what to do if there are already two or more
+    // cubes in the beacon and we bring another one
+    #define USE_AVERAGE 0
+    #if USE_AVERAGE
+    {
+      isDirectionalitySetFromObjects = CalculateDirectionalityAverage(objectsInBeacon, world, beaconDirectionality);
+    }
+    #else
+    {
+      const Pose3d& beaconCenter = beacon->GetPose();
+      isDirectionalitySetFromObjects = CalculateDirectionalityClosest(objectsInBeacon, world, beaconCenter, beaconDirectionality);
+    }
+    #endif
+  }
+    
+  // if there are no objects currently in the beacon, or could not get a valid directionality, calculate one now
+  if( !isDirectionalitySetFromObjects )
   {
     // TODO rsam put this utility somewhere: create Rotation3d from vector in XY plane
     Vec3f beaconNormal = (beacon->GetPose().GetWithRespectToOrigin().GetTranslation() - robot.GetPose().GetTranslation());
@@ -747,15 +861,15 @@ bool BehaviorExploreBringCubeToBeacon::FindFreePoseInBeacon(const ObservableObje
     // positive order now (away from robot)
     for( int row=1; row<=kMaxRow; ++row)
     {
-      locCalc.IsLocationFreeForObject(row, 0, freePose);
+      foundLocation = locCalc.IsLocationFreeForObject(row, 0, freePose);
       if( foundLocation ) { break; }
       
       for( int col=1; col<=kMaxCol; ++col)
       {
-        locCalc.IsLocationFreeForObject(row, -col, freePose);
+        foundLocation = locCalc.IsLocationFreeForObject(row, -col, freePose);
         if( foundLocation ) { break; }
         
-        locCalc.IsLocationFreeForObject(row,  col, freePose);
+        foundLocation = locCalc.IsLocationFreeForObject(row,  col, freePose);
         if( foundLocation ) { break; }
       }
       

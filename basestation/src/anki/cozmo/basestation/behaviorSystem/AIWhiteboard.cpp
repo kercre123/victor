@@ -310,6 +310,47 @@ bool AIWhiteboard::FindUsableCubesOutOfBeacons(ObjectInfoList& outObjectList) co
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::FindCubesInBeacon(const AIBeacon* beacon, ObjectInfoList& outObjectList) const
+{
+  #if ANKI_DEVELOPER_CODE
+  {
+    // passed beacon should be a beacon in our list, not null and in the current origin
+    bool beaconIsValid = false;
+    for ( const auto& beaconIt : _beacons ) {
+      beaconIsValid = beaconIsValid || (beacon == &beaconIt);
+    }
+    ASSERT_NAMED(beaconIsValid, "AIWhiteboard.FindCubesInBeacon.NotABeacon");
+    ASSERT_NAMED(beacon, "AIWhiteboard.FindCubesInBeacon.NullBeacon");
+    ASSERT_NAMED(&beacon->GetPose().FindOrigin() == _robot.GetWorldOrigin(), "AIWhiteboard.FindCubesInBeacon.BeaconNotInOrigin");
+  }
+  #endif
+  
+  outObjectList.clear();
+  
+  {
+    Robot& robotRef = _robot; // can't capture member of this for lambda, need scoped variable
+    // ask for all cubes we know about inside the beacon
+    BlockWorldFilter filter;
+    filter.SetAllowedFamilies({{ObjectFamily::LightCube, ObjectFamily::Block}});
+    filter.SetFilterFcn([this, &robotRef, &outObjectList, beacon](const ObservableObject* blockPtr)
+    {
+      if(!blockPtr->IsPoseStateUnknown() && !_robot.IsCarryingObject(blockPtr->GetID()) )
+      {
+        const bool isBlockInBeacon = beacon->IsLocWithinBeacon(blockPtr->GetPose());
+        if ( isBlockInBeacon ) {
+          outObjectList.emplace_back( blockPtr->GetID(), blockPtr->GetFamily() );
+        }
+      }
+      return false; // have to return true/false, even though not used
+    });
+    
+    _robot.GetBlockWorld().FilterObjects(filter);
+  }
+  
+  return !outObjectList.empty();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AIWhiteboard::AreAllCubesInBeacons() const
 {
   #if ANKI_DEVELOPER_CODE
