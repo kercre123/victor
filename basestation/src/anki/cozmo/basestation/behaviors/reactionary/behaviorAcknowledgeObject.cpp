@@ -138,32 +138,6 @@ void BehaviorAcknowledgeObject::BeginIteration(Robot& robot)
                 }
               });
 }
-
-static Result GetClosestMarkerPose(const Robot& robot, const ObservableObject* obj, Pose3d& closestPose)
-{
-  Result result = RESULT_FAIL;
-  
-  f32 minXYDistSq = std::numeric_limits<f32>::max();
-  
-  auto markers = obj->GetMarkers();
-  for(auto marker : markers)
-  {
-    Pose3d markerPoseWrtRobot;
-    if(marker.GetPose().GetWithRespectTo(robot.GetPose(), markerPoseWrtRobot))
-    {
-      // Ignore Z
-      const f32 xyDistSq = Point2f(markerPoseWrtRobot.GetTranslation()).LengthSq();
-      if(xyDistSq < minXYDistSq)
-      {
-        minXYDistSq = xyDistSq;
-        closestPose = marker.GetPose();
-        result = RESULT_OK;
-      }
-    }
-  }
-  
-  return result;
-}
   
 void BehaviorAcknowledgeObject::LookForStackedCubes(Robot& robot)
 {
@@ -210,7 +184,8 @@ void BehaviorAcknowledgeObject::LookForStackedCubes(Robot& robot)
     // marker could require a significantly larger angle than the center of the cube.
     Radians headAngle(0.f);
     Pose3d checkPose;
-    Result result = GetClosestMarkerPose(robot, _ghostStackedObject.get(), checkPose);
+    Result result = _ghostStackedObject->GetClosestMarkerPose(robot.GetPose(), true, checkPose);
+    
     if(RESULT_OK != result)
     {
       PRINT_NAMED_WARNING("BehaviorAcknowledgeObject.LookForStackedCubes.ClosestMarkerPoseFailed", "");

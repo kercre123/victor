@@ -83,6 +83,12 @@ namespace Anki {
       // Same as above, but uses GetLastObservedTime() as "sinceTime"
       void GetObservedMarkers(std::vector<const KnownMarker*>& observedMarkers) const;
 
+      // Get the pose of the marker closest to the reference pose, optionally using
+      // X and Y only (when ignoreZ=true). If no marker is found due to mismatched origins
+      // match, then RESULT_FAIL_ORIGIN_MISMATCH is returned.
+      Result GetClosestMarkerPose(const Pose3d& referencePose, const bool ignoreZ,
+                                  Pose3d& closestPoseWrtReference) const;
+      
       // Updates the observation times of this object's markers with the newer
       // of the current times and the times of the corresponding markers on the
       // other object. If the other object is not the same type, RESULT_FAIL
