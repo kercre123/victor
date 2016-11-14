@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using Anki.Cozmo.Audio;
 using Anki.Cozmo;
 
-namespace Simon {
-  public class WaitForPlayerGuessSimonState : CanTimeoutState {
+namespace MemoryMatch {
+  public class WaitForPlayerGuessMemoryMatchState : CanTimeoutState {
 
-    private SimonGame _GameInstance;
+    private MemoryMatchGame _GameInstance;
     private IList<int> _SequenceList;
     private int _CurrentSequenceIndex = 0;
     private int _TargetCube = -1;
@@ -26,7 +26,7 @@ namespace Simon {
       base.Enter();
       _SubState = SubState.WaitForInput;
       LightCube.TappedAction += OnBlockTapped;
-      _GameInstance = _StateMachine.GetGame() as SimonGame;
+      _GameInstance = _StateMachine.GetGame() as MemoryMatchGame;
       _SequenceList = _GameInstance.GetCurrentSequence();
       _CurrentRobot.SetHeadAngle(Random.Range(CozmoUtil.kIdealBlockViewHeadValue, 0f));
 
@@ -45,7 +45,7 @@ namespace Simon {
     public override void Update() {
       base.Update();
       if (_SubState == SubState.WaitForBlinkDone) {
-        if (Time.time - _StartLightBlinkTime > SimonGame.kLightBlinkLengthSeconds) {
+        if (Time.time - _StartLightBlinkTime > MemoryMatchGame.kLightBlinkLengthSeconds) {
           if (_CurrentSequenceIndex == _SequenceList.Count) {
             PlayerWinHand();
           }
@@ -58,17 +58,17 @@ namespace Simon {
 
     private void HandleOnPlayerWinAnimationDone(bool success) {
       _GameInstance.ShowCenterResult(false);
-      _StateMachine.SetNextState(new WaitForNextRoundSimonState(_GameInstance.IsSoloMode() ? PlayerType.Human : PlayerType.Cozmo, true));
+      _StateMachine.SetNextState(new WaitForNextRoundMemoryMatchState(_GameInstance.IsSoloMode() ? PlayerType.Human : PlayerType.Cozmo, true));
     }
 
     private void HandleOnPlayerLoseAnimationDone(bool success) {
       _GameInstance.ShowCenterResult(false);
       // Repeat your turn if you have lives left
       if (_GameInstance.GetLivesRemaining(PlayerType.Human) > 0) {
-        _StateMachine.SetNextState(new WaitForNextRoundSimonState(PlayerType.Human));
+        _StateMachine.SetNextState(new WaitForNextRoundMemoryMatchState(PlayerType.Human));
       }
       else {
-        _StateMachine.SetNextState(new WaitForNextRoundSimonState(_GameInstance.IsSoloMode() ? PlayerType.Human : PlayerType.Cozmo));
+        _StateMachine.SetNextState(new WaitForNextRoundMemoryMatchState(_GameInstance.IsSoloMode() ? PlayerType.Human : PlayerType.Cozmo));
       }
     }
 
@@ -96,7 +96,7 @@ namespace Simon {
       _GameInstance.AddPoint(true);
       _SubState = SubState.WaitForTurnOverAnim;
 
-      _GameInstance.ShowBanner(LocalizationKeys.kSimonGameLabelCorrect);
+      _GameInstance.ShowBanner(LocalizationKeys.kMemoryMatchGameLabelCorrect);
     }
 
     private void OnBlockTapped(int id, int times, float timeStamp) {
@@ -134,10 +134,10 @@ namespace Simon {
         _SubState = SubState.WaitForBlinkDone;
       }
 
-      _GameInstance.BlinkLight(id, SimonGame.kLightBlinkLengthSeconds, Color.black, _GameInstance.GetColorForBlock(id));
+      _GameInstance.BlinkLight(id, MemoryMatchGame.kLightBlinkLengthSeconds, Color.black, _GameInstance.GetColorForBlock(id));
 
       LightCube cube = _CurrentRobot.LightCubes[_TargetCube];
-      _CurrentRobot.TurnTowardsObject(cube, false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2);
+      _CurrentRobot.TurnTowardsObject(cube, false, MemoryMatchGame.kTurnSpeed_rps, MemoryMatchGame.kTurnAccel_rps2);
     }
   }
 

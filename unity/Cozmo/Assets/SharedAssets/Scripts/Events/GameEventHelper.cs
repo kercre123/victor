@@ -98,7 +98,7 @@ public class MinigameGameEvent : GameEventWrapper {
     if (args.Length > 5 && args[5].GetType() == typeof(bool)) {
       HighIntensity = (bool)args[5];
     }
-    // Things like Lives in simon...
+    // Things like Lives in MemoryMatch...
     if (args.Length > 6 && args[6] != null && args[6].GetType() == typeof(Dictionary<string, float>)) {
       GameSpecificValues = (Dictionary<string, float>)args[6];
     }

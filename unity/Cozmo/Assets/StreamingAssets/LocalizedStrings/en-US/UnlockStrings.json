@@ -81,10 +81,10 @@
   "unlockable.FaceEnrollment.Description": {
     "translation": "With this Upgrade, Cozmo learns to remember faces and speak names.\n\nFind this in the Meet Cozmo activity."
   },
-  "unlockable.Simon.Title": {
+  "unlockable.MemoryMatch.Title": {
     "translation": "Memory Match"
   },
-  "unlockable.Simon.Description": {
+  "unlockable.MemoryMatch.Description": {
     "translation": "With this Upgrade, Cozmo learns how to play the Memory Match game."
   },
   "unlockable.SpeedTap.Title": {
