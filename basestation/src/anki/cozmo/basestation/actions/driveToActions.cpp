@@ -1200,6 +1200,18 @@ namespace Anki {
         }
       }
     }
+    
+    void IDriveToInteractWithObject::SetShouldCheckForObjectOnTopOf(const bool b)
+    {
+      if(nullptr != _dockAction)
+      {
+        _dockAction->SetShouldCheckForObjectOnTopOf(b);
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("IDriveToInteractWithObject.SetShouldCheckForObjectOnTopOf.NoDockAction", "");
+      }
+    }
 
     Result IDriveToInteractWithObject::UpdateDerived()
     {

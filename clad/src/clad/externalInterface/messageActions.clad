@@ -134,12 +134,13 @@ message PanAndTilt {
 //                            approach angle closest to approachAngle_rad is considered.
 // @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
 message PickupObject {
-    int_32 objectID, // negative value means "currently selected object"
-    PathMotionProfile motionProf,
-    float_32 approachAngle_rad,
-    bool   useApproachAngle,
-    bool usePreDockPose,
-    bool useManualSpeed,
+    int_32             objectID, // negative value means "currently selected object"
+    PathMotionProfile  motionProf,
+    float_32           approachAngle_rad,
+    bool               useApproachAngle,
+    bool               usePreDockPose,
+    bool               useManualSpeed,
+    bool               checkForObjectOnTop = 1, // Fail if object on top
 }
 
 // PlaceObjectOnGround
@@ -177,6 +178,7 @@ message PlaceOnObject {
     bool   useApproachAngle,
     bool usePreDockPose,
     bool useManualSpeed,
+    bool checkForObjectOnTop = 1
 }
 
 // PlaceRelObject
@@ -258,7 +260,8 @@ message RollObject {
   bool doDeepRoll,
   bool useApproachAngle,
   bool usePreDockPose,
-  bool useManualSpeed
+  bool useManualSpeed,
+  bool checkForObjectOnTop = 1, // fail if object on top
 }
 
 // SayText

@@ -1143,7 +1143,7 @@ public class Robot : IRobot {
       queueActionPosition);
   }
 
-  public void PlaceOnObject(ObservedObject target, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void PlaceOnObject(ObservedObject target, bool checkForObjectOnTop = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     DAS.Debug(this, "PlaceOnObject " + target.ID);
 
     SendQueueSingleAction(Singleton<PlaceOnObject>.Instance.Initialize(
@@ -1152,6 +1152,7 @@ public class Robot : IRobot {
       useApproachAngle: false,
       approachAngle_rad: 0f,
       useManualSpeed: false,
+      checkForObjectOnTop: checkForObjectOnTop,
       motionProf: PathMotionProfileDefault
     ),
       callback,
@@ -1435,7 +1436,7 @@ public class Robot : IRobot {
       queueActionPosition);
   }
 
-  public uint PickupObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool useApproachAngle = false, float approachAngleRad = 0.0f, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public uint PickupObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool useApproachAngle = false, float approachAngleRad = 0.0f, bool checkForObjectOnTop = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     DAS.Debug(this, "Pick And Place Object " + selectedObject + " usePreDockPose " + usePreDockPose + " useManualSpeed " + useManualSpeed);
 
@@ -1446,12 +1447,14 @@ public class Robot : IRobot {
         approachAngle_rad: approachAngleRad,
         useApproachAngle: useApproachAngle,
         useManualSpeed: useManualSpeed,
-        usePreDockPose: usePreDockPose),
+        usePreDockPose: usePreDockPose, 
+        checkForObjectOnTop: checkForObjectOnTop
+      ),
       callback,
       queueActionPosition);
   }
 
-  public void RollObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void RollObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool checkForObjectOnTop = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     DAS.Debug(this, "Roll Object " + selectedObject + " usePreDockPose " + usePreDockPose + " useManualSpeed " + usePreDockPose);
 
@@ -1462,7 +1465,8 @@ public class Robot : IRobot {
       approachAngle_rad: 0f,
       useApproachAngle: false,
       usePreDockPose: usePreDockPose,
-      useManualSpeed: useManualSpeed
+      useManualSpeed: useManualSpeed,
+      checkForObjectOnTop: checkForObjectOnTop
     ),
       callback,
       queueActionPosition);
