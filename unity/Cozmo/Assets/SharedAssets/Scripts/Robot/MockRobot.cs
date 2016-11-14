@@ -380,7 +380,7 @@ public class MockRobot : IRobot {
   }
 
   public void TurnTowardsFace(Face face, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
-                              bool sayName = false, AnimationTrigger namedTrigger = AnimationTrigger.Count, 
+                              bool sayName = false, AnimationTrigger namedTrigger = AnimationTrigger.Count,
                               AnimationTrigger unnamedTrigger = AnimationTrigger.Count,
                               RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
 
@@ -390,7 +390,7 @@ public class MockRobot : IRobot {
   }
 
   // Turns towards the last seen face, but not any more than the specified maxTurnAngle
-  public void TurnTowardsLastFacePose(float maxTurnAngle, bool sayName = false, AnimationTrigger namedTrigger = AnimationTrigger.Count, 
+  public void TurnTowardsLastFacePose(float maxTurnAngle, bool sayName = false, AnimationTrigger namedTrigger = AnimationTrigger.Count,
                                       AnimationTrigger unnamedTrigger = AnimationTrigger.Count, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     DAS.Debug(this, "TurnTowardsLastFacePose with maxTurnAngle : " + maxTurnAngle);
@@ -843,6 +843,10 @@ public class MockRobot : IRobot {
   public string CurrentBehaviorString {
     get;
     set;
+  }
+
+  public bool PlayingReactionaryBehavior {
+    get; set;
   }
 
   public BehaviorType CurrentBehaviorType { get; set; }

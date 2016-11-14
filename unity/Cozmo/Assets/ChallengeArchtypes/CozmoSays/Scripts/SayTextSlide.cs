@@ -40,7 +40,6 @@ public class SayTextSlide : MonoBehaviour {
 
   private CozmoSays.CozmoSaysGame _CozmoSaysGame;
 
-  private bool _PlayingReactionaryBehavior = false;
   private bool _PlayingSayAnimation = false;
   private bool _TextFieldEmpty = true;
   private bool _NotEnoughSparks = false;
@@ -196,7 +195,7 @@ public class SayTextSlide : MonoBehaviour {
   }
 
   private void SetButtonInteractivity() {
-    if (_TextFieldEmpty || _NotEnoughSparks || _PlayingSayAnimation || _PlayingReactionaryBehavior) {
+    if (_TextFieldEmpty || _NotEnoughSparks || _PlayingSayAnimation || _CozmoSaysGame.CurrentRobot.PlayingReactionaryBehavior) {
       _CostLabel.color = _SayTextButton.TextDisabledColor;
       _SayTextButton.Interactable = false;
     }
@@ -207,7 +206,6 @@ public class SayTextSlide : MonoBehaviour {
   }
 
   private void HandleRobotReactionaryBehavior(Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition message) {
-    _PlayingReactionaryBehavior = message.behaviorStarted;
     SetButtonInteractivity();
   }
 }

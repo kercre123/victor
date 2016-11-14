@@ -290,6 +290,8 @@ public class Robot : IRobot {
 
   public string CurrentDebugAnimationString { get; set; }
 
+  public bool PlayingReactionaryBehavior { get; set; }
+
   public uint FirmwareVersion { get; set; }
 
   public uint SerialNumber { get; set; }
@@ -384,6 +386,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotErasedEnrolledFace>(HandleRobotErasedEnrolledFace);
     RobotEngineManager.Instance.AddCallback<Anki.Vision.RobotRenamedEnrolledFace>(HandleRobotRenamedEnrolledFace);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.BehaviorTransition>(HandleBehaviorTransition);
+    RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleReactionaryBehaviorTransition);
     RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RobotObservedPet>(UpdateObservedPetFaceInfo);
 
     ObservedObject.AnyInFieldOfViewStateChanged += HandleInFieldOfViewStateChanged;
@@ -414,6 +417,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotErasedEnrolledFace>(HandleRobotErasedEnrolledFace);
     RobotEngineManager.Instance.RemoveCallback<Anki.Vision.RobotRenamedEnrolledFace>(HandleRobotRenamedEnrolledFace);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.BehaviorTransition>(HandleBehaviorTransition);
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition>(HandleReactionaryBehaviorTransition);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.RobotObservedPet>(UpdateObservedPetFaceInfo);
 
     ObservedObject.AnyInFieldOfViewStateChanged -= HandleInFieldOfViewStateChanged;
@@ -441,6 +445,10 @@ public class Robot : IRobot {
   private void HandleBehaviorTransition(Anki.Cozmo.ExternalInterface.BehaviorTransition message) {
     CurrentBehaviorType = message.newBehaviorType;
     CurrentBehaviorName = message.newBehavior;
+  }
+
+  private void HandleReactionaryBehaviorTransition(Anki.Cozmo.ExternalInterface.ReactionaryBehaviorTransition message) {
+    PlayingReactionaryBehavior = message.behaviorStarted;
   }
 
   private void HandleDebugAnimationString(Anki.Cozmo.ExternalInterface.DebugAnimationString message) {
@@ -1385,7 +1393,7 @@ public class Robot : IRobot {
   }
 
   public void TurnTowardsFace(Face face, float maxPanSpeed_radPerSec = kDefaultRadPerSec, float panAccel_radPerSec2 = kPanAccel_radPerSec2,
-                              bool sayName = false, AnimationTrigger namedTrigger = AnimationTrigger.Count, 
+                              bool sayName = false, AnimationTrigger namedTrigger = AnimationTrigger.Count,
                               AnimationTrigger unnamedTrigger = AnimationTrigger.Count,
                               RobotCallback callback = null,
                               QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
@@ -1412,9 +1420,9 @@ public class Robot : IRobot {
   }
 
   // Turns towards the last seen face, but not any more than the specified maxTurnAngle
-  public void TurnTowardsLastFacePose(float maxTurnAngle, bool sayName = false, 
-                                      AnimationTrigger namedTrigger = AnimationTrigger.Count, 
-                                      AnimationTrigger unnamedTrigger = AnimationTrigger.Count, 
+  public void TurnTowardsLastFacePose(float maxTurnAngle, bool sayName = false,
+                                      AnimationTrigger namedTrigger = AnimationTrigger.Count,
+                                      AnimationTrigger unnamedTrigger = AnimationTrigger.Count,
                                       RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     DAS.Debug(this, "TurnTowardsLastFacePose with maxTurnAngle : " + maxTurnAngle);
@@ -1447,7 +1455,7 @@ public class Robot : IRobot {
         approachAngle_rad: approachAngleRad,
         useApproachAngle: useApproachAngle,
         useManualSpeed: useManualSpeed,
-        usePreDockPose: usePreDockPose, 
+        usePreDockPose: usePreDockPose,
         checkForObjectOnTop: checkForObjectOnTop
       ),
       callback,

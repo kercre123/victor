@@ -34,8 +34,8 @@ public delegate void LightCubeStateEventHandler(LightCube cube);
 public delegate void ChargerStateEventHandler(ObservedObject charger);
 public delegate void FaceStateEventHandler(Face face);
 public delegate void PetFaceStateEventHandler(PetFace face);
-public delegate void EnrolledFaceRemoved(int faceId,string faceName);
-public delegate void EnrolledFaceRenamed(int faceId,string faceName);
+public delegate void EnrolledFaceRemoved(int faceId, string faceName);
+public delegate void EnrolledFaceRenamed(int faceId, string faceName);
 
 // Interface for Robot so we can mock it in unit tests
 public interface IRobot : IDisposable {
@@ -117,6 +117,8 @@ public interface IRobot : IDisposable {
   BehaviorType CurrentBehaviorType { get; set; }
 
   string CurrentBehaviorName { get; set; }
+
+  bool PlayingReactionaryBehavior { get; set; }
 
   string CurrentDebugAnimationString { get; set; }
 
@@ -238,7 +240,7 @@ public interface IRobot : IDisposable {
                          float setTiltTolerance_rad = 0f);
 
   void TurnTowardsFace(Face face, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
-                       bool sayName = false, AnimationTrigger namedTrigger = AnimationTrigger.Count, 
+                       bool sayName = false, AnimationTrigger namedTrigger = AnimationTrigger.Count,
                        AnimationTrigger unnamedTrigger = AnimationTrigger.Count,
                        RobotCallback callback = null,
                        QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
