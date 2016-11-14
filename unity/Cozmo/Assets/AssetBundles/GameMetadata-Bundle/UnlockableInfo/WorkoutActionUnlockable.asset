@@ -21,8 +21,8 @@ MonoBehaviour:
   _HideInUI: 0
   DescriptionKey: unlockable.Workout.Description
   TitleKey: unlockable.Workout.Title
-  SparkButtonDescription: 
-  SparkedStateDescription: 
+  SparkButtonDescription: unlockable.Workout.SparkButtonDescription
+  SparkedStateDescription: unlockable.Workout.SparkedStateDescription
   SparkedMusicState:
     _Sparked: 1875882538
   UpgradeCostItemId: TestHexItem0
