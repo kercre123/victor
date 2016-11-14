@@ -38,11 +38,11 @@
     },
     {
       "CladEvent": "CodeBreakerNewIdea",
-      "AnimName": "ag_CodeBreakerNewIdea"
+      "AnimName": "ag_PatternGuessNewIdea"
     },
     {
       "CladEvent": "CodeBreakerThinking",
-      "AnimName": "ag_CodeBreakerThinking"
+      "AnimName": "ag_PatternGuessThinking"
     },
     {
       "CladEvent": "ConnectWakeUp",
