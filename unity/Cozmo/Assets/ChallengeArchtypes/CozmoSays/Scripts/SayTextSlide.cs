@@ -160,12 +160,12 @@ public class SayTextSlide : MonoBehaviour {
 
       RobotEngineManager.Instance.CurrentRobot.SendQueueCompoundAction(actions, (success) => {
         Anki.Cozmo.Audio.GameAudioClient.SetMusicState(_CozmoSaysGame.GetDefaultMusicState());
-        ResetInputStates();
         if (success) {
           DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.RemoveItemAmount(_SparkItemId, _SayCost);
           UpdateTotalSparkCount();
           SetSayTextReactionaryBehaviors(true);
         }
+        ResetInputStates();
       });
     }
   }
