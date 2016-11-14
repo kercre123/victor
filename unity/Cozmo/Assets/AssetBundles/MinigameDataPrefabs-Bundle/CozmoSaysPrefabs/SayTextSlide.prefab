@@ -396,6 +396,12 @@ MonoBehaviour:
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 0}
     disabledColor: {r: 1, g: 1, b: 1, a: 0}
+  - targetImage: {fileID: 11491214}
+    ignoreSprite: 0
+    pressedSprite: {fileID: 0}
+    pressedColor: {r: 1, g: 1, b: 1, a: 1}
+    disabledSprite: {fileID: 0}
+    disabledColor: {r: 1, g: 1, b: 1, a: 0.434}
   _GlintAnimator: {fileID: 11474848}
   _UISoundEvent:
     _Event: Play__Ui__Click_General
