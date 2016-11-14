@@ -523,6 +523,7 @@ public class ConnectionFlow : MonoBehaviour {
       return;
     }
 
+    CancelInvoke("TransitionConnectionFlowToPullCubeTabs");
     Cleanup();
     CreateConnectionFlowBackground();
     ShowSearchForCozmo();
