@@ -242,10 +242,9 @@ Audio::StandardWaveDataContainer* TextToSpeechComponent::CreateAudioData(const s
                                                                          const float durationScalar)
 {
   using namespace Util::Time;
-  unsigned long long int time = 0;
+  double time_ms = 0.0;
   if (DEBUG_TEXTTOSPEECH_COMPONENT) {
-    
-    time = UniversalTime::GetCurrentTimeInNanoseconds();
+    time_ms = UniversalTime::GetCurrentTimeInMilliseconds();
     PRINT_CH_INFO(Audio::AudioController::kAudioLogChannelName,
                   "TextToSpeechComponent.CreateAudioData",
                   "Start - text to wave: %s - duration scalar: %f", text.c_str(), durationScalar);
@@ -259,7 +258,7 @@ Audio::StandardWaveDataContainer* TextToSpeechComponent::CreateAudioData(const s
   if (DEBUG_TEXTTOSPEECH_COMPONENT) {
     PRINT_CH_INFO(Audio::AudioController::kAudioLogChannelName,
                   "TextToSpeechComponent.CreateAudioData",
-                  "finish text to wave - time_ms: %f", UniversalTime::GetNanosecondsElapsedSince(time) * 1E-6f);
+                  "finish text to wave - time_ms: %f", UniversalTime::GetCurrentTimeInMilliseconds() - time_ms);
   }
   
   if (waveData->num_samples == 0) {
@@ -281,7 +280,7 @@ Audio::StandardWaveDataContainer* TextToSpeechComponent::CreateAudioData(const s
   if (DEBUG_TEXTTOSPEECH_COMPONENT) {
     PRINT_CH_INFO(Audio::AudioController::kAudioLogChannelName,
                   "TextToSpeechComponent.CreateAudioData",
-                  "Finish convert samples - time_ms: %f", UniversalTime::GetNanosecondsElapsedSince(time) * 1E-6f);
+                  "Finish convert samples - time_ms: %f", UniversalTime::GetCurrentTimeInMilliseconds() - time_ms);
   }
   
   delete_wave(waveData);

@@ -21,8 +21,8 @@ MonoBehaviour:
   _HideInUI: 0
   DescriptionKey: unlockable.Workout.Description
   TitleKey: unlockable.Workout.Title
-  SparkButtonDescription: 
-  SparkedStateDescription: 
+  SparkButtonDescription: unlockable.Workout.SparkButtonDescription
+  SparkedStateDescription: unlockable.Workout.SparkedStateDescription
   SparkedMusicState:
     _Sparked: 1875882538
   UpgradeCostItemId: TestHexItem0
@@ -52,4 +52,4 @@ MonoBehaviour:
   CoreUpgradeOverlayIcon: {fileID: 21300000, guid: a0c43fab4ccad47618022bc1f4e9715e,
     type: 3}
   CubesRequired: 1
-  SortOrder: 100
+  SortOrder: 800

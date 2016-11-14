@@ -4,6 +4,6 @@
                 EXPORT  __CUBE_XS6
 
 __CUBE_XS6
-                INCBIN  ../../accessories/releases/xs6-p3.safe
+                INCBIN  ../../accessories/releases/xs6-p4.safe
 
                 END

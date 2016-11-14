@@ -41,7 +41,12 @@ namespace Anki.Cozmo.Viz {
         _Order.RemoveRange(behaviors.Length, _Order.Count - behaviors.Length);
       }
 
-      _Order.Sort(SortOrders);
+      if (behaviors.Length > 1) {
+        _Order.Sort(SortOrders);
+      }
+      else {
+        _Order[0] = 0;
+      }
     }
 
 

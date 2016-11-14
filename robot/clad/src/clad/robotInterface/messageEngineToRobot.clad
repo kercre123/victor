@@ -366,6 +366,12 @@ message AdjustTimestamp {
   uint_32 timestamp
 }
 
+/// Used to set the app run ID in the robot so robot crash logs can reference the app run ID
+message SetAppRunID
+{
+  uint_32 uuid[4]
+}
+
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from engine to robot and within the robot
@@ -483,7 +489,7 @@ union EngineToRobot
   AnimKeyFrame::DisableAnimTracks disableAnimTracks         = 0x9D,
   AnimKeyFrame::EnableAnimTracks enableAnimTracks           = 0x9E,
   AnimKeyFrame::InitController  initAnimController          = 0x9F,
-  //          FREE SLOT!!!                                  = 0xA0,
+  SetAppRunID                   appRunID                    = 0xA0,
   TestState                     testState                   = 0xA1,
   EnterFactoryTestMode          enterTestMode               = 0xA2,
   DisplayNumber                 oledDisplayNumber           = 0xA3,

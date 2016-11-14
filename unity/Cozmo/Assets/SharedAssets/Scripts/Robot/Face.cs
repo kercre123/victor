@@ -4,11 +4,12 @@ using G2U = Anki.Cozmo.ExternalInterface;
 public class Face : IVisibleInCamera { // TODO Implement IHaveCameraPosition
   private const uint _kFindFaceTimeoutFrames = 1;
   private int _ConsecutiveVisionFramesNotSeen = 0;
-  public delegate void InFieldOfViewStateChangedHandler(Face faceChanged, bool newState);
+
+  public delegate void InFieldOfViewStateChangedHandler(Face faceChanged,bool newState);
 
   public event InFieldOfViewStateChangedHandler InFieldOfViewStateChanged;
 
-  public long ID { get; private set; }
+  public int ID { get; private set; }
 
   public uint RobotID { get; private set; }
 
@@ -28,6 +29,7 @@ public class Face : IVisibleInCamera { // TODO Implement IHaveCameraPosition
 
   // Faces are created when they are seen and destroyed when not seen for a while
   private bool _IsInFieldOfView = true;
+
   public bool IsInFieldOfView {
     get { return _IsInFieldOfView; }
     private set {
@@ -39,7 +41,9 @@ public class Face : IVisibleInCamera { // TODO Implement IHaveCameraPosition
   }
 
   public event VizRectChangedHandler OnVizRectChanged;
+
   private Rect _VizRect;
+
   public Rect VizRect {
     get { return _VizRect; }
     private set {
@@ -59,6 +63,7 @@ public class Face : IVisibleInCamera { // TODO Implement IHaveCameraPosition
       return key;
     }
   }
+
   public string ReticleLabelStringArg {
     get {
       return this.Name;
@@ -67,7 +72,7 @@ public class Face : IVisibleInCamera { // TODO Implement IHaveCameraPosition
 
   public string Name { get; private set; }
 
-  public Face(long faceId, float world_x, float world_y, float world_z) {
+  public Face(int faceId, float world_x, float world_y, float world_z) {
     ID = faceId;
     WorldPosition = new Vector3(world_x, world_y, world_z);
     LastSeenEngineTimestamp = 0;

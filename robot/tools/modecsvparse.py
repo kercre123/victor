@@ -31,7 +31,8 @@ TypeMap = {
     "RTIPCrash":  1,
     "BodyCrash":  2,
     "PropCrash":  3,
-    "I2SpiCrash": 4
+    "I2SpiCrash": 4,
+    "BootError": 5
 }
 
 datapath = "/"
@@ -48,11 +49,14 @@ def parse_dump(typestr, b64str):
     registers = crashdump.fetch_registers(content,
                                           crashdump.RegisterMap[type_id])
     if type_id == 0:
-        pc = registers.get("epc1", None)
+        pc = registers.get("epc1", 0)
         cause = crashdump.EspCauses[registers.get("exccause")]
+    elif type_id == 5:
+        pc = registers.get("address", 0)
+        cause = registers.get("error", "Unknown")
     else:
-        pc = registers.get("pc", None)
-        cause = ""
+        pc = registers.get("pc", 0)
+        cause = "crash"
     description = "{}_{:08X}_{}".format(typestr,pc,cause)
     return (description, registers)
 
@@ -67,7 +71,6 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description='Extract crashdumps from Mode CSV Dump')
     parser.add_argument('filename', help='the csv file')
-    #parser.add_argument('-devlog', help='file is devlog', action='store_true')
     args = parser.parse_args()
 
     datapath = os.path.dirname(args.filename)
@@ -77,7 +80,7 @@ if __name__ == "__main__":
         for row in table:
             if row['s_val'] is None:
                 continue
-            print(row)
+            # print(row)
             try:
                 summary = row['data'][0:16]
             except TypeError:

@@ -81,6 +81,12 @@ namespace Cozmo.Minigame.DroneMode {
     private CozmoToggleButton _NightVisionButton;
 
     [SerializeField]
+    private Anki.Cozmo.Audio.AudioEventParameter _NightVisionOnSound = Anki.Cozmo.Audio.AudioEventParameter.DefaultClick;
+
+    [SerializeField]
+    private Anki.Cozmo.Audio.AudioEventParameter _NightVisionOffSound = Anki.Cozmo.Audio.AudioEventParameter.DefaultClick;
+
+    [SerializeField]
     private CozmoToggleButton _HeadLiftToggleButton;
 
     [SerializeField]
@@ -118,6 +124,8 @@ namespace Cozmo.Minigame.DroneMode {
     private IRobot _CurrentRobot;
     private List<DroneModeActionButton> _ContextualButtons;
     private bool _UpdateContextMenuBasedOnCurrentFocus = true;
+
+    private bool _IsNightVisionEnabled = false;
 
     // TODO Remove debug text field
     public Anki.UI.AnkiTextLabel TiltText;
@@ -162,7 +170,7 @@ namespace Cozmo.Minigame.DroneMode {
 
       UpdateContextMenu();
 
-      SetUIToColorSet(_DaytimeColors);
+      SetUIToColorSet(_DaytimeColors, showReticles: true);
     }
 
     public void InitializeLiftSlider(float sliderValue) {
@@ -345,32 +353,34 @@ namespace Cozmo.Minigame.DroneMode {
       _CubeInLiftButtonContainer.SetActive(false);
       _CubeNotInLiftButtonContainer.SetActive(false);
 
-      bool anyContainerShown = false;
-      if (_CurrentlyFocusedObject != null) {
-        if (_CurrentlyFocusedObject is Face) {
-          // Show face container
-          _FaceButtonContainer.SetActive(true);
-          anyContainerShown = true;
+      if (!_IsNightVisionEnabled) {
+        bool anyContainerShown = false;
+        if (_CurrentlyFocusedObject != null) {
+          if (_CurrentlyFocusedObject is Face) {
+            // Show face container
+            _FaceButtonContainer.SetActive(true);
+            anyContainerShown = true;
+          }
+          else if (_IsCubeInLift) {
+            //   Show cube in lift container
+            _CubeInLiftButtonContainer.SetActive(true);
+            anyContainerShown = true;
+          }
+          else if (_CurrentlyFocusedObject is LightCube) {
+            // Show cube seen container
+            _CubeNotInLiftButtonContainer.SetActive(true);
+            anyContainerShown = true;
+          }
         }
         else if (_IsCubeInLift) {
           //   Show cube in lift container
           _CubeInLiftButtonContainer.SetActive(true);
           anyContainerShown = true;
         }
-        else if (_CurrentlyFocusedObject is LightCube) {
-          // Show cube seen container
-          _CubeNotInLiftButtonContainer.SetActive(true);
-          anyContainerShown = true;
-        }
-      }
-      else if (_IsCubeInLift) {
-        //   Show cube in lift container
-        _CubeInLiftButtonContainer.SetActive(true);
-        anyContainerShown = true;
-      }
 
-      if (anyContainerShown) {
-        UpdateContextualButtons();
+        if (anyContainerShown) {
+          UpdateContextualButtons();
+        }
       }
     }
 
@@ -405,17 +415,32 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     public void HandleNightVisionButtonClicked() {
+      _IsNightVisionEnabled = _NightVisionButton.IsCurrentlyOn;
       _CurrentRobot.SetNightVision(_NightVisionButton.IsCurrentlyOn);
       if (_NightVisionButton.IsCurrentlyOn) {
-        SetUIToColorSet(_NightVisionColors);
+        SetUIToColorSet(_NightVisionColors, showReticles: false);
+        _CurrentlyFocusedObject = null;
+
+        Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_NightVisionOnSound);
+
+        _CurrentRobot.VisionWhileMoving(false);
+        _CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
+        _CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, false);
       }
       else {
-        SetUIToColorSet(_DaytimeColors);
+        SetUIToColorSet(_DaytimeColors, showReticles: true);
+
+        Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_NightVisionOffSound);
+
+        _CurrentRobot.VisionWhileMoving(true);
+        _CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, true);
+        _CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       }
+      UpdateContextMenu();
     }
 
-    private void SetUIToColorSet(DroneModeColorSet colorSet) {
-      _CameraFeed.SetCameraFeedColor(colorSet);
+    private void SetUIToColorSet(DroneModeColorSet colorSet, bool showReticles) {
+      _CameraFeed.SetCameraFeedColor(colorSet, showReticles);
 
       _QuitDroneModeButton.SetButtonTint(colorSet.ButtonColor);
       _HowToPlayButton.SetButtonTint(colorSet.ButtonColor);

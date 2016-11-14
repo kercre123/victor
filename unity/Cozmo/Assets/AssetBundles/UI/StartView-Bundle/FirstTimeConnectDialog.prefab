@@ -307,7 +307,7 @@ MonoBehaviour:
   m_Text: '#label.privacyPolicy'
   _AllUppercase: 0
   GlowText: 0
-  IsRaycastBlocker: 0
+  IsRaycastBlocker: 1
 --- !u!114 &11438782
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -367,7 +367,7 @@ MonoBehaviour:
   m_Text: '#label.termsOfUse'
   _AllUppercase: 0
   GlowText: 0
-  IsRaycastBlocker: 0
+  IsRaycastBlocker: 1
 --- !u!114 &11455812
 MonoBehaviour:
   m_ObjectHideFlags: 1

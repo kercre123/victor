@@ -44,6 +44,8 @@ namespace Cozmo.Minigame.DroneMode {
     private Vector2 _CameraImageSize;
     private float _CameraImageScale;
 
+    private bool _ShowReticles = true;
+
     // TODO: Replace text field
     public AnkiTextLabel DebugTextField;
 
@@ -73,8 +75,10 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     private void Update() {
-      ShowDataForClosestVisibleObject();
-      DebugTextField.text = FormatCurrentSeenObjects();
+      if (_ShowReticles) {
+        ShowDataForClosestVisibleObject();
+        DebugTextField.text = FormatCurrentSeenObjects();
+      }
     }
 
     private void ShowDataForClosestVisibleObject() {
@@ -143,7 +147,7 @@ namespace Cozmo.Minigame.DroneMode {
       }
     }
 
-    public void SetCameraFeedColor(DroneModeColorSet colorSet) {
+    public void SetCameraFeedColor(DroneModeColorSet colorSet, bool showReticles) {
       _CurrentColorSet = colorSet;
       _CameraFeedImage.material.SetColor("_TopColor", colorSet.TopCameraColor);
       _CameraFeedImage.material.SetColor("_BottomColor", colorSet.BottomCameraColor);
@@ -161,12 +165,17 @@ namespace Cozmo.Minigame.DroneMode {
         gradientImage.material.SetColor("_BottomColor", colorSet.BottomGradientColor);
       }
 
-      _FocusedObjectFrameImage.color = colorSet.FocusFrameColor;
-      _FocusedObjectTextLabel.color = colorSet.FocusTextColor;
+      _ShowReticles = showReticles;
+      if (!showReticles) {
+        _FocusedObjectFrameImage.gameObject.SetActive(false);
 
-      // TODO Update reticles
-      foreach (var kvp in _ObjToReticle) {
-        kvp.Value.SetColor(colorSet.FocusFrameColor, colorSet.ButtonColor);
+        IVisibleInCamera[] toRemove = new IVisibleInCamera[_ObjToReticle.Count];
+        _ObjToReticle.Keys.CopyTo(toRemove, 0);
+        for (int i = 0; i < toRemove.Length; i++) {
+          RemoveReticle(toRemove[i]);
+        }
+
+        _CurrentlyFocusedObject = null;
       }
     }
 
@@ -292,7 +301,7 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     private void CreateReticleIfVisible(IVisibleInCamera reticleFocus) {
-      if (reticleFocus.IsInFieldOfView && !_ObjToReticle.ContainsKey(reticleFocus)) {
+      if (_ShowReticles && reticleFocus.IsInFieldOfView && !_ObjToReticle.ContainsKey(reticleFocus)) {
         DroneModeCameraReticle newReticle = _ReticlePool.GetObjectFromPool();
         if (newReticle != null) {
           _ObjToReticle.Add(reticleFocus, newReticle);

@@ -59,6 +59,7 @@ public class MinigameGameEvent : GameEventWrapper {
   public int PlayerScore;
   public int CozmoScore;
   public bool HighIntensity;
+  public Dictionary<string, float> GameSpecificValues;
 
   /// <summary>
   /// Args in Order....
@@ -97,8 +98,22 @@ public class MinigameGameEvent : GameEventWrapper {
     if (args.Length > 5 && args[5].GetType() == typeof(bool)) {
       HighIntensity = (bool)args[5];
     }
+    // Things like Lives in MemoryMatch...
+    if (args.Length > 6 && args[6] != null && args[6].GetType() == typeof(Dictionary<string, float>)) {
+      GameSpecificValues = (Dictionary<string, float>)args[6];
+    }
   }
 
+}
+
+public class NewHighScoreGameEvent : MinigameGameEvent {
+  public int OldHighScore;
+  public override void Init(GameEvent Enum, params object[] args) {
+    base.Init(Enum, args);
+    if (args.Length > 7 && args[7].GetType() == typeof(int)) {
+      OldHighScore = (int)args[7];
+    }
+  }
 }
 
 public class DifficultyUnlockedGameEvent : GameEventWrapper {
@@ -233,6 +248,8 @@ public class GameEventWrapperFactory {
     Register(GameEvent.OnFreeplayBehaviorSuccess, typeof(BehaviorSuccessGameEvent));
     Register(GameEvent.OnFreeplayInterval, typeof(TimedIntervalGameEvent));
     Register(GameEvent.OnChallengeInterval, typeof(TimedIntervalGameEvent));
+    Register(GameEvent.OnConnectedInterval, typeof(TimedIntervalGameEvent));
+    Register(GameEvent.OnNewHighScore, typeof(NewHighScoreGameEvent));
     // This is only special because the skills system can only listen to enums for now
     // And cozmo shouldn't level up in solo mode.
     // TODO: can be removed when GameEvents have a baseclass instead of an enum or more filtering is on skillsystem.

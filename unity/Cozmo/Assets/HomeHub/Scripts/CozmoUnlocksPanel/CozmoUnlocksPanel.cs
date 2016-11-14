@@ -76,66 +76,47 @@ public class CozmoUnlocksPanel : MonoBehaviour {
 
     string viewControllerName = "home_hub_cozmo_unlock_panel";
     int numTilesMade = 0;
-    List<UnlockableInfo> unlockedUnlockData = UnlockablesManager.Instance.GetUnlocked();
-    List<UnlockableInfo> unlockableUnlockData = UnlockablesManager.Instance.GetAvailableAndLocked();
-    List<UnlockableInfo> lockedUnlockData = UnlockablesManager.Instance.GetUnavailable();
-    List<UnlockableInfo> comingSoonUnlockData = UnlockablesManager.Instance.GetComingSoon();
 
+
+    List<UnlockableInfo> allUnlockData = UnlockablesManager.Instance.GetUnlockablesByType(UnlockableType.Action);
     // Sort within themselves on "SortOrder" since locked doesn't show anything, no need to sort.
-    unlockedUnlockData.Sort();
-    unlockableUnlockData.Sort();
-    lockedUnlockData.Sort();
+    allUnlockData.Sort();
+
 
     GameObject tileInstance;
     CozmoUnlockableTile unlockableTile;
-    bool isUnlockedDisabled = OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Upgrades) && unlockableUnlockData.Count > 0;
-    for (int i = 0; i < unlockedUnlockData.Count; ++i) {
-      if (unlockedUnlockData[i].UnlockableType == UnlockableType.Action) {
-        tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
-        unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
-        unlockableTile.Initialize(unlockedUnlockData[i], CozmoUnlockState.Unlocked, viewControllerName);
-        _UnlockedTiles.Add(unlockableTile);
-        numTilesMade++;
-        // don't click on anything else during onboarding except upgrade.
-        if (isUnlockedDisabled) {
-          unlockableTile._TileButton.Interactable = false;
-        }
-        else {
-          unlockableTile.OnTapped += HandleTappedUnlocked;
-        }
-      }
-    }
-
-    for (int i = 0; i < unlockableUnlockData.Count; ++i) {
-      if (unlockableUnlockData[i].UnlockableType == UnlockableType.Action) {
-        tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
-        unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
-        unlockableTile.Initialize(unlockableUnlockData[i], CozmoUnlockState.Unlockable, viewControllerName);
-        unlockableTile.OnTapped += HandleTappedUnlockable;
-        _UnlockableTiles.Add(unlockableTile);
-        numTilesMade++;
-      }
-    }
-
-    for (int i = 0; i < lockedUnlockData.Count; ++i) {
-      if (lockedUnlockData[i].UnlockableType == UnlockableType.Action) {
-        tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
-        unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
-        unlockableTile.Initialize(lockedUnlockData[i], CozmoUnlockState.Locked, viewControllerName);
-        unlockableTile.OnTapped += HandleTappedLocked;
-        _LockedTiles.Add(unlockableTile);
-        numTilesMade++;
-      }
-    }
-
-    for (int i = 0; i < comingSoonUnlockData.Count; ++i) {
-      if (comingSoonUnlockData[i].UnlockableType == UnlockableType.Action) {
-        tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
-        unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
-        unlockableTile.Initialize(comingSoonUnlockData[i], CozmoUnlockState.NeverAvailable, viewControllerName);
+    // Don't let people tap around if they have the one to unlock and haven't seen onboarding yet.
+    bool isUnlockedDisabled = OnboardingManager.Instance.IsOnboardingRequired(OnboardingManager.OnboardingPhases.Upgrades) &&
+                              UnlockablesManager.Instance.GetAvailableAndLocked().Count > 0;
+    for (int i = 0; i < allUnlockData.Count; ++i) {
+      tileInstance = UIManager.CreateUIElement(_UnlocksTilePrefab, _UnlocksContainer);
+      unlockableTile = tileInstance.GetComponent<CozmoUnlockableTile>();
+      CozmoUnlockState unlockState = CozmoUnlockState.Locked;
+      if (allUnlockData[i].NeverAvailable) {
+        unlockState = CozmoUnlockState.NeverAvailable;
         unlockableTile.OnTapped += HandleTappedUnavailable;
+      }
+      else if (UnlockablesManager.Instance.IsUnlocked(allUnlockData[i].Id.Value)) {
+        unlockState = CozmoUnlockState.Unlocked;
+        _UnlockedTiles.Add(unlockableTile);
+        unlockableTile.OnTapped += HandleTappedUnlocked;
+      }
+      else if (UnlockablesManager.Instance.IsUnlockableAvailable(allUnlockData[i].Id.Value)) {
+        unlockState = CozmoUnlockState.Unlockable;
+        _UnlockableTiles.Add(unlockableTile);
+        unlockableTile.OnTapped += HandleTappedUnlockable;
+      }
+      else {
+        unlockState = CozmoUnlockState.Locked;
         _LockedTiles.Add(unlockableTile);
-        numTilesMade++;
+        unlockableTile.OnTapped += HandleTappedLocked;
+      }
+      unlockableTile.Initialize(allUnlockData[i], unlockState, viewControllerName);
+
+      numTilesMade++;
+      // don't click on anything else during onboarding except upgrade.
+      if (isUnlockedDisabled && unlockState != CozmoUnlockState.Unlockable) {
+        unlockableTile._TileButton.Interactable = false;
       }
     }
 

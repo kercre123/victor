@@ -50,6 +50,7 @@ namespace Cozmo.Minigame.CubePounce {
         _CurrentRobot.SearchForNearbyObject(_CubePounceGame.GetCubeTarget().ID, HandleLookForCube, headAngle_rad: idealHeadAngle_rad);
         _LookForCubeInProgress = true;
       }
+      GameAudioClient.SetMusicState (Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Between_Rounds);
     }
 
     private void HandleLookForCube(bool success) {
@@ -61,9 +62,11 @@ namespace Cozmo.Minigame.CubePounce {
 
       if (_CubeInActiveRange) {
         _CubePounceGame.GetCubeTarget().SetLEDs(Cozmo.UI.CubePalette.Instance.ReadyColor.lightColor);
+        GameAudioClient.SetMusicState (Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Tension);
       }
       else {
         _CubePounceGame.GetCubeTarget().SetLEDs(Cozmo.UI.CubePalette.Instance.OutOfViewColor.lightColor);
+        GameAudioClient.SetMusicState (Anki.Cozmo.Audio.GameState.Music.Minigame__Keep_Away_Between_Rounds);
       }
     }
 

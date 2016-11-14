@@ -155,7 +155,8 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PickupObje
     selectedObjectID = msg.objectID;
   }
   
-  if(static_cast<bool>(msg.usePreDockPose)) {
+  if(static_cast<bool>(msg.usePreDockPose))
+  {
     DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot,
                                                                       selectedObjectID,
                                                                       msg.useApproachAngle,
@@ -165,13 +166,18 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PickupObje
     {
       action->SetMotionProfile(msg.motionProf);
     }
+    action->SetShouldCheckForObjectOnTopOf(msg.checkForObjectOnTop);
+    
     return action;
-  } else {
+  }
+  else
+  {
     PickupObjectAction* action = new PickupObjectAction(robot, selectedObjectID, msg.useManualSpeed);
     action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
     action->SetDoNearPredockPoseCheck(false);
     // We don't care about a specific marker just that we are docking with the correct object
     action->SetShouldVisuallyVerifyObjectOnly(true);
+    action->SetShouldCheckForObjectOnTopOf(msg.checkForObjectOnTop);
     return action;
   }
 }
@@ -237,6 +243,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceOnObj
     {
       action->SetMotionProfile(msg.motionProf);
     }
+    action->SetShouldCheckForObjectOnTopOf(msg.checkForObjectOnTop);
     return action;
   } else {
     PlaceRelObjectAction* action = new PlaceRelObjectAction(robot,
@@ -248,6 +255,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceOnObj
     action->SetDoNearPredockPoseCheck(false);
     // We don't care about a specific marker just that we are docking with the correct object
     action->SetShouldVisuallyVerifyObjectOnly(true);
+    action->SetShouldCheckForObjectOnTopOf(msg.checkForObjectOnTop);
     return action;
   }
 }
@@ -369,7 +377,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::RollObject
     {
       action->SetMotionProfile(msg.motionProf);
     }
-    
+    action->SetShouldCheckForObjectOnTopOf(msg.checkForObjectOnTop);
     return action;
   } else {
     RollObjectAction* action = new RollObjectAction(robot, selectedObjectID, msg.useManualSpeed);
@@ -378,6 +386,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::RollObject
     action->SetDoNearPredockPoseCheck(false);
     // We don't care about a specific marker just that we are docking with the correct object
     action->SetShouldVisuallyVerifyObjectOnly(true);
+    action->SetShouldCheckForObjectOnTopOf(msg.checkForObjectOnTop);
     return action;
   }
 }
@@ -575,6 +584,12 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnToward
 {
   TurnTowardsFaceAction* action = new TurnTowardsFaceAction(robot, msg.faceID, Radians(msg.maxTurnAngle_rad), msg.sayName);
   
+  if(msg.sayName)
+  {
+    action->SetSayNameAnimationTrigger(msg.namedTrigger);
+    action->SetNoNameAnimationTrigger(msg.unnamedTrigger);
+  }
+  
   action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
   action->SetPanAccel(msg.panAccel_radPerSec2);
   action->SetPanTolerance(msg.panTolerance_rad);
@@ -606,6 +621,12 @@ template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TurnTowardsLastFacePose& msg)
 {
   TurnTowardsLastFacePoseAction* action = new TurnTowardsLastFacePoseAction(robot, Radians(msg.maxTurnAngle_rad), msg.sayName);
+  
+  if(msg.sayName)
+  {
+    action->SetSayNameAnimationTrigger(msg.namedTrigger);
+    action->SetNoNameAnimationTrigger(msg.unnamedTrigger);
+  }
   
   action->SetMaxPanSpeed(msg.maxPanSpeed_radPerSec);
   action->SetPanAccel(msg.panAccel_radPerSec2);
@@ -1026,6 +1047,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::BehaviorManagerMessage>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::CameraCalibration>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::CancelAction>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::CancelActionByIdTag>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ClearCalibrationImages>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::ComputeCameraCalibration>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::DrawPoseMarker>();
@@ -1501,6 +1523,23 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::CancelAction& msg
   else
   {
     robot->GetActionList().Cancel((RobotActionType)msg.actionType);
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void RobotEventHandler::HandleMessage(const ExternalInterface::CancelActionByIdTag& msg)
+{
+  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
+  
+  // We need a robot
+  if (nullptr == robot)
+  {
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleCancelActionByIdTag.InvalidRobotID", "Failed to find robot.");
+  }
+  else
+  {
+    robot->GetActionList().Cancel(msg.idTag);
   }
 }
 

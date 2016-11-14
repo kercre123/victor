@@ -23,7 +23,7 @@ namespace ArtistCozmo {
 
         if (!_HasSeenFace) {
           _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
-          _CurrentRobot.TurnTowardsFacePose(_CurrentRobot.Faces[0]);
+          _CurrentRobot.TurnTowardsFace(_CurrentRobot.Faces[0]);
           _HasSeenFace = true;
           _StartLookingAtFaceTime = Time.time;
         }

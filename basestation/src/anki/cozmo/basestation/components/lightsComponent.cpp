@@ -669,9 +669,11 @@ void LightsComponent::HandleMessage(const ExternalInterface::RobotDelocalized& m
   _robotDelocalized = true;
   
   // Set light states back to default since Cozmo has lost track of them
+  // (except for carried objects, because we still know where those are)
   for(auto& cube: _cubeInfo)
   {
-    if( ShouldOverrideState( cube.second.desiredState, CubeLightsState::Connected ) )
+    const bool isCarryingCube = _robot.IsCarryingObject(cube.first);
+    if(!isCarryingCube && ShouldOverrideState( cube.second.desiredState, CubeLightsState::Connected ) )
     {
       // Update our prevState if we are disabled so if we are moved while disabled our state will
       // be properly restored

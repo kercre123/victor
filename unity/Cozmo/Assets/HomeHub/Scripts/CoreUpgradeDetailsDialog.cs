@@ -499,7 +499,7 @@ public class CoreUpgradeDetailsDialog : BaseView {
         RobotEngineManager.Instance.CurrentRobot.StopSparkUnlock();
       }
       // Take Music ownership back from Sparked Behavior and set next state
-      RobotEngineManager.Instance.CurrentRobot.DeactivateSparkedMusic (_UnlockInfo.Id.Value, Anki.Cozmo.Audio.GameState.Music.Freeplay);
+      RobotEngineManager.Instance.CurrentRobot.DeactivateSparkedMusic(_UnlockInfo.Id.Value, Anki.Cozmo.Audio.GameState.Music.Freeplay);
       UpdateState();
     }
 
