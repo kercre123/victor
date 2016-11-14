@@ -107,9 +107,11 @@ IBehavior* FPSocializeBehaviorChooser::ChooseNextBehavior(Robot& robot, const IB
   bestBehavior = BaseClass::ChooseNextBehavior(robot, currentRunningBehavior);
 
   if( bestBehavior != nullptr && bestBehavior->GetType() != BehaviorType::NoneBehavior ) {
-    PRINT_CH_INFO("Behaviors", "SocializeBehaviorChooser.ChooseNext.UseSimple",
-                  "Simple behavior chooser chose behavior '%s', so use it",
-                  bestBehavior->GetName().c_str());
+    if( bestBehavior != currentRunningBehavior ) {
+      PRINT_CH_INFO("Behaviors", "SocializeBehaviorChooser.ChooseNext.UseSimple",
+                    "Simple behavior chooser chose behavior '%s', so use it",
+                    bestBehavior->GetName().c_str());
+    }
     return bestBehavior;
   }
 
