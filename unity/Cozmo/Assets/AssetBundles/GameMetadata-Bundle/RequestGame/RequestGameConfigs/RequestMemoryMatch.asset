@@ -9,10 +9,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1e7104df6348e4797bbd06273dae3feb, type: 3}
-  m_Name: RequestSimon
+  m_Name: RequestMemoryMatch
   m_EditorClassIdentifier: 
   ChallengeID: SimonGame
   RequestBehaviorGameFlag: 2
   RequestAcceptedAnimationTrigger:
     _EnumValueAsString: RequestGameMemoryMatchAccept0
-    _EnumValue: 208
+    _EnumValue: 225

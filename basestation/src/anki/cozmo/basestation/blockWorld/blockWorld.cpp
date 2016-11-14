@@ -636,6 +636,77 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     _robot->Broadcast(MessageEngineToGame(std::move(availableObjects)));
   }
   
+  Result BlockWorld::UpdateObjectOrigin(const ObjectID& objectID, const Pose3d* oldOrigin)
+  {
+    auto originIter = _existingObjects.find(oldOrigin);
+    if(originIter == _existingObjects.end())
+    {
+      PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigin.BadOrigin",
+                    "Origin %s (%p) not found",
+                    oldOrigin->GetName().c_str(), oldOrigin);
+      
+      return RESULT_FAIL;
+    }
+    
+    for(auto & objectsByFamily : originIter->second)
+    {
+      for(auto & objectsByType : objectsByFamily.second)
+      {
+        auto objectIter = objectsByType.second.find(objectID);
+        if(objectIter != objectsByType.second.end())
+        {
+          std::shared_ptr<ObservableObject> object = objectIter->second;
+          const Pose3d* newOrigin  = &object->GetPose().FindOrigin();
+          if(newOrigin != oldOrigin)
+          {
+            const ObjectFamily family  = object->GetFamily();
+            const ObjectType   objType = object->GetType();
+            
+            ASSERT_NAMED(family == objectsByFamily.first, "BlockWorld.UpdateObjectOrigin.FamilyMisMatch");
+            ASSERT_NAMED(objType == objectsByType.first,  "BlockWorld.UpdateObjectOrigin.TypeMisMatch");
+            ASSERT_NAMED(objectID == object->GetID(),     "BlockWorld.UpdateObjectOrigin.IdMisMatch");
+            
+            PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigin.ObjectFound",
+                          "Updating ObjectID %d from origin %s(%p) to %s(%p)",
+                          objectID.GetValue(),
+                          oldOrigin->GetName().c_str(), oldOrigin,
+                          newOrigin->GetName().c_str(), newOrigin);
+            
+            // Add to object's current origin
+            _existingObjects[newOrigin][family][objType][objectID] = object;
+            
+            // Notify pose confirmer
+            _robot->GetObjectPoseConfirmer().AddInExistingPose(object.get());
+            
+            // Delete from old origin
+            objectsByType.second.erase(objectIter);
+            
+            // Clean up if we just deleted the last object from this type/family/origin
+            if(objectsByType.second.empty())
+            {
+              objectsByFamily.second.erase(objectsByType.first);
+              if(objectsByFamily.second.empty())
+              {
+                originIter->second.erase(objectsByFamily.first);
+                if(originIter->second.empty())
+                {
+                  _existingObjects.erase(originIter);
+                }
+              }
+            }
+          }
+          
+          return RESULT_OK;
+        }
+      }
+    }
+    
+    PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigin.ObjectNotFound",
+                  "Object %d not found in origin %s (%p)",
+                  objectID.GetValue(), oldOrigin->GetName().c_str(), oldOrigin);
+    
+    return RESULT_FAIL;
+  }
   
   Result BlockWorld::UpdateObjectOrigins(const Pose3d *oldOrigin,
                                          const Pose3d *newOrigin)
@@ -656,77 +727,93 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
     filterOld.AddAllowedOrigin(oldOrigin);
     
     // Use the modifier function to update matched objects to the new origin
-    ModifierFcn originUpdater = [oldOrigin,newOrigin,&result,this](ObservableObject* oldObject){
+    ModifierFcn originUpdater = [oldOrigin,newOrigin,&result,this](ObservableObject* oldObject)
+    {
       Pose3d newPose;
-      if(false == oldObject->GetPose().GetWithRespectTo(*newOrigin, newPose)) {
+      
+      if(_robot->IsCarryingObject(oldObject->GetID()))
+      {
+        // Special case: don't use the pose w.r.t. the origin b/c carried objects' parent
+        // is the lift. The robot is already in the new frame by the time this called,
+        // so we don't need to adjust anything
+        ASSERT_NAMED(_robot->GetWorldOrigin() == newOrigin,
+                     "BlockWorld.UpdateObjectOrigins.RobotNotInNewOrigin");
+        ASSERT_NAMED(&oldObject->GetPose().FindOrigin() == newOrigin,
+                     "BlockWorld.UpdateObjectOrigins.OldCarriedObjectNotInNewOrigin");
+        newPose = oldObject->GetPose();
+      }
+      else if(false == oldObject->GetPose().GetWithRespectTo(*newOrigin, newPose))
+      {
         PRINT_NAMED_ERROR("BlockWorld.UpdateObjectOrigins.OriginFail",
                           "Could not get object %d w.r.t new origin %s",
                           oldObject->GetID().GetValue(),
                           newOrigin->GetName().c_str());
         
         result = RESULT_FAIL;
-      } else {
-        const Vec3f& T_old = oldObject->GetPose().GetTranslation();
-        const Vec3f& T_new = newPose.GetTranslation();
-        
-        // Look for a matching object in the new origin (should have same family, type, and ID)
-        BlockWorldFilter filterNew;
-        filterNew.SetFilterFcn(nullptr);
-        filterNew.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
-        filterNew.AddAllowedOrigin(newOrigin);
-        filterNew.AddAllowedFamily(oldObject->GetFamily());
-        filterNew.AddAllowedType(oldObject->GetType());
-        filterNew.AddAllowedID(oldObject->GetID());
-        ObservableObject* newObject = FindMatchingObject(filterNew);
-        
-        bool addNewObject = false;
-        if(nullptr == newObject)
-        {
-          newObject = oldObject->CloneType();
-          
-          // This call is necessary due to dependencies from CopyWithNewPose and AddNewObject
-          // AddNewObject needs the correct origin which CopyWithNewPose sets
-          // CopyWithNewPose needs the correct object ID which normally would be set by AddNewObject
-          // Since this is a circular dependency we need to set the ID first outside of AddNewObject
-          newObject->CopyID(oldObject);
-          
-          if(newObject->IsActive())
-          {
-            newObject->SetActiveID(oldObject->GetActiveID());
-            newObject->SetFactoryID(oldObject->GetFactoryID());
-          }
-          
-          addNewObject = true;
-        }
-        else
-        {
-          PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigins.ObjectOriginChanged",
-                        "Updating object %d's origin from %s to %s. "
-                        "T_old=(%.1f,%.1f,%.1f), T_new=(%.1f,%.1f,%.1f)",
-                        oldObject->GetID().GetValue(),
-                        oldOrigin->GetName().c_str(),
-                        newOrigin->GetName().c_str(),
-                        T_old.x(), T_old.y(), T_old.z(),
-                        T_new.x(), T_new.y(), T_new.z());
-        }
-        
-        // Use all of oldObject's time bookkeeping, then update the pose and pose state
-        newObject->SetObservationTimes(oldObject);
-        result = _robot->GetObjectPoseConfirmer().CopyWithNewPose(newObject, newPose, oldObject);
-
-        if(addNewObject) {
-          // Note: need to call SetPose first because that sets the origin which
-          // controls which map the object gets added to
-          AddNewObject(std::shared_ptr<ObservableObject>(newObject), oldObject);
-          
-          PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigins.NoMatchingObjectInNewFrame",
-                        "Adding %s object with ID %d to new origin %s (%p)",
-                        EnumToString(newObject->GetType()),
-                        newObject->GetID().GetValue(),
-                        newOrigin->GetName().c_str(),
-                        newOrigin);
-        }
+        return;
       }
+      
+      const Vec3f& T_old = oldObject->GetPose().GetTranslation();
+      const Vec3f& T_new = newPose.GetTranslation();
+      
+      // Look for a matching object in the new origin (should have same family, type, and ID)
+      BlockWorldFilter filterNew;
+      filterNew.SetFilterFcn(nullptr);
+      filterNew.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
+      filterNew.AddAllowedOrigin(newOrigin);
+      filterNew.AddAllowedFamily(oldObject->GetFamily());
+      filterNew.AddAllowedType(oldObject->GetType());
+      filterNew.AddAllowedID(oldObject->GetID());
+      ObservableObject* newObject = FindMatchingObject(filterNew);
+      
+      bool addNewObject = false;
+      if(nullptr == newObject)
+      {
+        newObject = oldObject->CloneType();
+        
+        // This call is necessary due to dependencies from CopyWithNewPose and AddNewObject
+        // AddNewObject needs the correct origin which CopyWithNewPose sets
+        // CopyWithNewPose needs the correct object ID which normally would be set by AddNewObject
+        // Since this is a circular dependency we need to set the ID first outside of AddNewObject
+        newObject->CopyID(oldObject);
+        
+        if(newObject->IsActive())
+        {
+          newObject->SetActiveID(oldObject->GetActiveID());
+          newObject->SetFactoryID(oldObject->GetFactoryID());
+        }
+        
+        addNewObject = true;
+      }
+      else
+      {
+        PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigins.ObjectOriginChanged",
+                      "Updating object %d's origin from %s to %s. "
+                      "T_old=(%.1f,%.1f,%.1f), T_new=(%.1f,%.1f,%.1f)",
+                      oldObject->GetID().GetValue(),
+                      oldOrigin->GetName().c_str(),
+                      newOrigin->GetName().c_str(),
+                      T_old.x(), T_old.y(), T_old.z(),
+                      T_new.x(), T_new.y(), T_new.z());
+      }
+      
+      // Use all of oldObject's time bookkeeping, then update the pose and pose state
+      newObject->SetObservationTimes(oldObject);
+      result = _robot->GetObjectPoseConfirmer().CopyWithNewPose(newObject, newPose, oldObject);
+      
+      if(addNewObject) {
+        // Note: need to call SetPose first because that sets the origin which
+        // controls which map the object gets added to
+        AddNewObject(std::shared_ptr<ObservableObject>(newObject), oldObject);
+        
+        PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigins.NoMatchingObjectInNewFrame",
+                      "Adding %s object with ID %d to new origin %s (%p)",
+                      EnumToString(newObject->GetType()),
+                      newObject->GetID().GetValue(),
+                      newOrigin->GetName().c_str(),
+                      newOrigin);
+      }
+      
     };
     
     // Apply the filter and modify each object that matches
@@ -1122,9 +1209,9 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily,
-                                const std::shared_ptr<ObservableObject>& object,
-                                const ObservableObject* objectToCopyID)
+  ObjectID BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily,
+                                    const std::shared_ptr<ObservableObject>& object,
+                                    const ObservableObject* objectToCopyID)
   {
     if(!_canAddObjects)
     {
@@ -1135,7 +1222,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
                           ObjectTypeToString(object->GetType()));
       
       // Keep looking through objects we saw
-      return;
+      return ObjectID();
     }
     
     if(objectToCopyID != nullptr)
@@ -1170,11 +1257,11 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
                   object->GetPose().GetTranslation().y(),
                   object->GetPose().GetTranslation().z(),
                   object->GetPose().FindOrigin().GetName().c_str());
+    
+    return object->GetID();
   }
   
- 
-  
-  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result BlockWorld::AddAndUpdateObjects(const std::multimap<f32, ObservableObject*>& objectsSeen,
                                          const ObjectFamily& inFamily,
                                          const TimeStamp_t atTimestamp)
@@ -4887,7 +4974,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
       ActionableObject* object = dynamic_cast<ActionableObject*>(obj);
       if(object != nullptr &&
          object->HasPreActionPoses() &&
-         !object->IsBeingCarried() &&
+         !_robot->IsCarryingObject(object->GetID()) &&
          !object->IsPoseStateUnknown())
       {
         //PRINT_INFO("currID: %d", block.first);
@@ -4920,7 +5007,7 @@ CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "BlockWorld.MemoryM
         const ActionableObject* object = dynamic_cast<ActionableObject*>(obj);
         if(object != nullptr &&
            object->HasPreActionPoses() &&
-           !object->IsBeingCarried() &&
+           !_robot->IsCarryingObject(object->GetID()) &&
            !object->IsPoseStateUnknown())
         {
           firstObject = obj->GetID();

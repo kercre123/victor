@@ -165,79 +165,79 @@
   "playhouseGame01.text.howToPlay": {
     "translation": "Select animations together to create a play for Cozmo"
   },
-  "simonGame.howToPlay": {
+  "memoryMatchGame.howToPlay": {
     "translation": "You and Cozmo will take turns.\nAs the Cubes flash, memorize the pattern. Then tap the Cubes in order to repeat it."
   },
-  "simonGame.solo.howToPlay": {
+  "memoryMatchGame.solo.howToPlay": {
     "translation": "You play while Cozmo watches.\nAs the Cubes flash, memorize the pattern, then repeat it."
   },
-  "simonGame.difficulty.hardDescription.locked": {
+  "memoryMatchGame.difficulty.hardDescription.locked": {
     "translation": "Unlock by winning Memory Match VS mode."
   },
-  "simonGame.label.yourTurn": {
+  "memoryMatchGame.label.yourTurn": {
     "translation": "Your turn"
   },
-  "simonGame.label.cozmoTurn": {
+  "memoryMatchGame.label.cozmoTurn": {
     "translation": "Cozmo's turn"
   },
-  "simonGame.label.listen": {
+  "memoryMatchGame.label.listen": {
     "translation": "Listen..."
   },
-  "simonGame.label.repeat": {
+  "memoryMatchGame.label.repeat": {
     "translation": "Repeat!"
   },
-  "simonGame.label.playPattern": {
+  "memoryMatchGame.label.playPattern": {
     "translation": "Play Pattern"
   },
-  "simonGame.label.correct": {
+  "memoryMatchGame.label.correct": {
     "translation": "You are CORRECT!"
   },
-  "simonGame.label.youWin": {
+  "memoryMatchGame.label.youWin": {
     "translation": "YOU WIN!"
   },
-  "simonGame.label.cozmoWin": {
+  "memoryMatchGame.label.cozmoWin": {
     "translation": "COZMO WINS!"
   },
-  "simonGame.label.cozmoTurnListen": {
+  "memoryMatchGame.label.cozmoTurnListen": {
     "translation": "Cozmo's turn to listen to the pattern..."
   },
-  "simonGame.label.nextRound": {
+  "memoryMatchGame.label.nextRound": {
     "translation": "Next Round!"
   },
-  "simonGame.text.patternLength": {
+  "memoryMatchGame.text.patternLength": {
     "translation": "Pattern Length: {0}"
   },
-  "simonGame.text.turn": {
+  "memoryMatchGame.text.turn": {
     "translation": "Round: {0}"
   },
-  "simonGame.mode.vs": {
+  "memoryMatchGame.mode.vs": {
     "translation": "You VS Cozmo"
   },
-  "simonGame.mode.solo": {
+  "memoryMatchGame.mode.solo": {
     "translation": "Solo"
   },
-  "simonGame.text.howToPlay": {
+  "memoryMatchGame.text.howToPlay": {
     "translation": "Take turns with Cozmo to make patterns. When Cozmo makes a pattern, watch closely and  try to copy him by tapping the Cubes in the same order. When It's your turn, tap the Cubes to make a pattern for Cozmo to copy! The game ends when someone messes up. Try for a high score!"
   },
-  "simonGame.label.placeCenter": {
+  "memoryMatchGame.label.placeCenter": {
     "translation": "Put 1 Cube in front of Cozmo, and two others on either side.\n\nLeave space in-between."
   },
-  "simonGame.label.waitingForCubes.placeCenter": {
+  "memoryMatchGame.label.waitingForCubes.placeCenter": {
     "translation": "Waiting to see center Cube..."
   },
-  "simonGame.label.cubeReady": {
+  "memoryMatchGame.label.cubeReady": {
     "translation": "Cube ready!"
   },
-  "simonGame.label.tooCloseError": {
+  "memoryMatchGame.label.tooCloseError": {
     "translation": "Move cubes further apart."
   },
-  "simonGame.label.waitingForCubes.scanning": {
+  "memoryMatchGame.label.waitingForCubes.scanning": {
     "translation": "Cozmo is checking the Cubes..."
   },
-  "simonGame.solo.NewHighScore": {
+  "memoryMatchGame.solo.NewHighScore": {
     "translation": "You set a new record"
   },
-  "simonGame.solo.GameOver": {
+  "memoryMatchGame.solo.GameOver": {
     "translation": "Well done!"
   },
   "speedTap.roundsText": {
@@ -263,6 +263,12 @@
   },
   "minigame.lostTrackOfBlock.description": {
     "translation": "Cozmo lost track of his Cube and can't continue the game."
+  },
+  "minigame.timeout.title": {
+    "translation": "Are you still there?"
+  },
+  "minigame.timeout.description": {
+    "translation": "Returning to home due to lack of input."
   },
   "speedTap.dontMoveBlock.title": {
     "translation": "Cozmo's Cube has moved!"

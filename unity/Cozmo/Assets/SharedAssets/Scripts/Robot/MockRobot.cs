@@ -217,7 +217,7 @@ public class MockRobot : IRobot {
     QueueCallback(1f, callback);
   }
 
-  public void PlaceOnObject(ObservedObject target, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public void PlaceOnObject(ObservedObject target, bool checkForObjectOnTop = true, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     if (CarryingObject == null) {
       // Can't place object if carrying object is null
       if (callback != null) {
@@ -379,14 +379,20 @@ public class MockRobot : IRobot {
     QueueCallback(1f, callback);
   }
 
-  public void TurnTowardsFacePose(Face face, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public void TurnTowardsFace(Face face, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
+                              bool sayName = false, AnimationTrigger namedTrigger = AnimationTrigger.Count, 
+                              AnimationTrigger unnamedTrigger = AnimationTrigger.Count,
+                              RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+
     LookAtPosition(face.WorldPosition);
 
     QueueCallback(1f, callback);
   }
 
   // Turns towards the last seen face, but not any more than the specified maxTurnAngle
-  public void TurnTowardsLastFacePose(float maxTurnAngle, bool sayName = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void TurnTowardsLastFacePose(float maxTurnAngle, bool sayName = false, AnimationTrigger namedTrigger = AnimationTrigger.Count, 
+                                      AnimationTrigger unnamedTrigger = AnimationTrigger.Count, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+
     DAS.Debug(this, "TurnTowardsLastFacePose with maxTurnAngle : " + maxTurnAngle);
 
     TurnInPlace(maxTurnAngle, 4.3f, 10f);
@@ -394,7 +400,7 @@ public class MockRobot : IRobot {
     QueueCallback(1f, callback);
   }
 
-  public uint PickupObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool useApproachAngle = false, float approachAngleRad = 0f, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public uint PickupObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool useApproachAngle = false, float approachAngleRad = 0f, bool checkForObjectOnTop = true, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
 
     CarryingObject = selectedObject;
     LiftHeight = 1f;
@@ -409,7 +415,7 @@ public class MockRobot : IRobot {
     return 0;
   }
 
-  public void RollObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public void RollObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool checkForObjectOnTop = true, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
 
     // Rather than figure out what side the cube was on, assume it just goes upright
     Rotation = selectedObject.Rotation.zRotation();

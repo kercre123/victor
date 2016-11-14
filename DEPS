@@ -14,7 +14,7 @@
                     "animationGroups",
                     "faceAnimations"
                 ],
-                "version": "1543"
+                "version": "1555"
             },
             "cozmosoundbanks": {
                 "package_name": "GeneratedSoundBanks.tar.gz",
@@ -35,7 +35,7 @@
                 "build_type_id": "CozmoOne_Experiments_CollectFirmware",
                 "extension": "tar.gz",
                 "package_name": "firmware",
-                "version": "1192"
+                "version": "1210"
             },
             "old_firmware": {
                 "build_type_id": "CozmoOne_Experiments_CollectFirmware",

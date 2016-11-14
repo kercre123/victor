@@ -114,10 +114,10 @@
   "selfieGame01.description": {
     "translation": "Take a selfie with Cozmo. Hold him up next to your face and smile big!"
   },
-  "simonGame.title": {
+  "memoryMatchGame.title": {
     "translation": "Memory Match"
   },
-  "simonGame.description": {
+  "memoryMatchGame.description": {
     "translation": "A pattern game that tests your memory. Watch the cubes and listen carefully!"
   },
   "speedTap.title": {

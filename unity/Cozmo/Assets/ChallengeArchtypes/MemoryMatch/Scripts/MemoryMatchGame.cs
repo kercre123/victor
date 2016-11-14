@@ -6,9 +6,9 @@ using Cozmo.Util;
 using Anki.Cozmo;
 using Anki.Cozmo.Audio;
 
-namespace Simon {
+namespace MemoryMatch {
 
-  public class SimonGame : GameBase {
+  public class MemoryMatchGame : GameBase {
     public const float kLightBlinkLengthSeconds = 0.3f;
 
     public const float kTurnSpeed_rps = 100f;
@@ -17,9 +17,9 @@ namespace Simon {
 
     // list of ids of LightCubes that are tapped, in order.
     private List<int> _CurrentIDSequence = new List<int>();
-    private Dictionary<int, SimonCube> _BlockIdToSound = new Dictionary<int, SimonCube>();
+    private Dictionary<int, MemoryMatchCube> _BlockIdToSound = new Dictionary<int, MemoryMatchCube>();
 
-    private SimonGameConfig _Config;
+    private MemoryMatchGameConfig _Config;
     private int _CurrLivesCozmo;
     private int _CurrLivesHuman;
     private AnimationCurve _SkillCurve = new AnimationCurve(new Keyframe(0, 1, 0, -0.06f), new Keyframe(5, 0.7f, -0.06f, 0));
@@ -35,7 +35,7 @@ namespace Simon {
     public float TimeBetweenBeats { get { return _Config.TimeBetweenBeat_Sec.Evaluate(_CurrentSequenceLength); } }
 
     public float TimeWaitFirstBeat { get { return _Config.TimeWaitFirstBeat; } }
-    public SimonGameConfig Config { get { return _Config; } }
+    public MemoryMatchGameConfig Config { get { return _Config; } }
 
     private int _CurrentSequenceLength;
 
@@ -45,35 +45,35 @@ namespace Simon {
     public AnimationCurve CozmoWinPercentage { get { return _SkillCurve; } }
 
     [SerializeField]
-    private SimonCube[] _CubeColorsAndSounds;
+    private MemoryMatchCube[] _CubeColorsAndSounds;
 
     [SerializeField]
-    private SimonTurnSlide _SimonTurnSlidePrefab;
-    private GameObject _SimonTurnSlide;
+    private MemoryMatchTurnSlide _MemoryMatchTurnSlidePrefab;
+    private GameObject _MemoryMatchTurnSlide;
     [SerializeField]
     private float _BannerAnimationDurationSeconds = 1.5f;
 
-    public SimonTurnSlide SimonTurnSlidePrefab {
-      get { return _SimonTurnSlidePrefab; }
+    public MemoryMatchTurnSlide MemoryMatchTurnSlidePrefab {
+      get { return _MemoryMatchTurnSlidePrefab; }
     }
 
     public PlayerType FirstPlayer {
       get { return _FirstPlayer; }
     }
     public bool IsSoloMode() {
-      return CurrentDifficulty == (int)SimonMode.SOLO;
+      return CurrentDifficulty == (int)MemoryMatchMode.SOLO;
     }
 
     public PlayerType CurrentPlayer { get; set; }
 
     [SerializeField]
-    private Transform _SimonSetupErrorPrefab;
+    private Transform _MemoryMatchSetupErrorPrefab;
 
-    public Transform SimonSetupErrorPrefab {
-      get { return _SimonSetupErrorPrefab; }
+    public Transform MemoryMatchSetupErrorPrefab {
+      get { return _MemoryMatchSetupErrorPrefab; }
     }
 
-    public enum SimonMode : int {
+    public enum MemoryMatchMode : int {
       VS = 0,
       SOLO = 1
     }
@@ -81,7 +81,7 @@ namespace Simon {
     ;
 
     protected override void InitializeGame(MinigameConfigBase minigameConfigData) {
-      _Config = (SimonGameConfig)minigameConfigData;
+      _Config = (MemoryMatchGameConfig)minigameConfigData;
 
       InitializeMinigameObjects();
     }
@@ -109,7 +109,7 @@ namespace Simon {
       CurrentPlayer = _FirstPlayer;
 
       State nextState = new SelectDifficultyState(new CozmoMoveCloserToCubesState(
-                          new WaitForNextRoundSimonState()),
+                          new WaitForNextRoundMemoryMatchState()),
                           DifficultyOptions, HighestLevelCompleted());
       InitialCubesState initCubeState = new ScanForInitialCubeState(nextState, _Config.NumCubesRequired(),
                                           _Config.MinDistBetweenCubesMM, _Config.RotateSecScan, _Config.ScanTimeoutSec);
@@ -221,7 +221,7 @@ namespace Simon {
         }
         _CurrentIDSequence.Add(pickedID);
       }
-      GetSimonSlide().ShowStatusText(Localization.GetWithArgs(LocalizationKeys.kSimonGameTextPatternLength, _CurrentIDSequence.Count));
+      GetMemoryMatchSlide().ShowStatusText(Localization.GetWithArgs(LocalizationKeys.kMemoryMatchGameTextPatternLength, _CurrentIDSequence.Count));
     }
 
     public IList<int> GetCurrentSequence() {
@@ -230,18 +230,18 @@ namespace Simon {
 
     public Color GetColorForBlock(int blockId) {
       Color lightColor = Color.white;
-      SimonCube simonCube;
-      if (_BlockIdToSound.TryGetValue(blockId, out simonCube)) {
-        lightColor = simonCube.cubeColor;
+      MemoryMatchCube MemoryMatchCube;
+      if (_BlockIdToSound.TryGetValue(blockId, out MemoryMatchCube)) {
+        lightColor = MemoryMatchCube.cubeColor;
       }
       return lightColor;
     }
 
     public Anki.Cozmo.Audio.AudioEventParameter GetAudioForBlock(int blockId) {
       AudioEventParameter audioEvent = AudioEventParameter.UIEvent(Anki.Cozmo.Audio.GameEvent.Ui.Cozmo_Connect);
-      SimonCube simonCube;
-      if (_BlockIdToSound.TryGetValue(blockId, out simonCube)) {
-        audioEvent = simonCube.soundName;
+      MemoryMatchCube MemoryMatchCube;
+      if (_BlockIdToSound.TryGetValue(blockId, out MemoryMatchCube)) {
+        audioEvent = MemoryMatchCube.soundName;
       }
       return audioEvent;
     }
@@ -249,13 +249,13 @@ namespace Simon {
     protected override void ShowWinnerState(EndState currentEndState, string overrideWinnerText = null, string footerText = "") {
       if (IsSoloMode()) {
         if (SaveHighScore()) {
-          overrideWinnerText = Localization.Get(LocalizationKeys.kSimonGameSoloNewHighScore);
+          overrideWinnerText = Localization.Get(LocalizationKeys.kMemoryMatchGameSoloNewHighScore);
         }
         else {
-          overrideWinnerText = Localization.Get(LocalizationKeys.kSimonGameSoloGameOver);
+          overrideWinnerText = Localization.Get(LocalizationKeys.kMemoryMatchGameSoloGameOver);
         }
       }
-      base.ShowWinnerState(currentEndState, overrideWinnerText, Localization.GetWithArgs(LocalizationKeys.kSimonGameTextPatternLength, _CurrentIDSequence.Count));
+      base.ShowWinnerState(currentEndState, overrideWinnerText, Localization.GetWithArgs(LocalizationKeys.kMemoryMatchGameTextPatternLength, _CurrentIDSequence.Count));
 
       // Set Final Music State
       GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Minigame__Memory_Match_Fanfare);
@@ -268,13 +268,13 @@ namespace Simon {
       Anki.Cozmo.AnimationTrigger trigger = Anki.Cozmo.AnimationTrigger.Count;
       // Set the length as our score to make High Scores easier
       PlayerScore = _CurrentSequenceLength;
-      if (CurrentDifficulty == (int)SimonMode.SOLO) {
+      if (CurrentDifficulty == (int)MemoryMatchMode.SOLO) {
         PlayerRoundsWon = 1;
         CozmoRoundsWon = 0;
         StartBaseGameEnd(true);
         trigger = Anki.Cozmo.AnimationTrigger.MemoryMatchSoloGameOver;
       }
-      else if (CurrentDifficulty == (int)SimonMode.VS) {
+      else if (CurrentDifficulty == (int)MemoryMatchMode.VS) {
         // compare who wins...
         if (_CurrLivesHuman > _CurrLivesCozmo) {
           PlayerRoundsWon = 1;
@@ -300,7 +300,7 @@ namespace Simon {
 
     public override void StartBaseGameEnd(EndState endState) {
       base.StartBaseGameEnd(endState);
-      if (CurrentDifficulty == (int)SimonMode.VS) {
+      if (CurrentDifficulty == (int)MemoryMatchMode.VS) {
         // So the skills system can ignore solo mode. Can be changed if events are classes or more filters
         GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnMemoryMatchVsComplete, _ChallengeData.ChallengeID, CurrentDifficulty, endState == EndState.PlayerWin, PlayerScore, CozmoScore, IsHighIntensityRound()));
       }
@@ -321,19 +321,19 @@ namespace Simon {
       return null;
     }
 
-    public SimonTurnSlide GetSimonSlide() {
-      if (_SimonTurnSlide == null) {
-        _SimonTurnSlide = SharedMinigameView.ShowFullScreenGameStateSlide(
-          _SimonTurnSlidePrefab.gameObject, "simon_turn_slide");
+    public MemoryMatchTurnSlide GetMemoryMatchSlide() {
+      if (_MemoryMatchTurnSlide == null) {
+        _MemoryMatchTurnSlide = SharedMinigameView.ShowFullScreenGameStateSlide(
+          _MemoryMatchTurnSlidePrefab.gameObject, "MemoryMatch_turn_slide");
         SharedMinigameView.HideShelf();
 
-        SimonTurnSlide turnUI = _SimonTurnSlide.GetComponent<SimonTurnSlide>();
+        MemoryMatchTurnSlide turnUI = _MemoryMatchTurnSlide.GetComponent<MemoryMatchTurnSlide>();
         turnUI.ShowHumanLives(_CurrLivesHuman, _Config.MaxLivesHuman);
-        if (CurrentDifficulty == (int)SimonMode.VS) {
+        if (CurrentDifficulty == (int)MemoryMatchMode.VS) {
           turnUI.ShowCozmoLives(_CurrLivesCozmo, _Config.MaxLivesCozmo);
         }
       }
-      return _SimonTurnSlide.GetComponent<SimonTurnSlide>();
+      return _MemoryMatchTurnSlide.GetComponent<MemoryMatchTurnSlide>();
     }
 
     public void UpdateMusicRound() {
@@ -345,22 +345,22 @@ namespace Simon {
     }
 
     public void ShowCurrentPlayerTurnStage(PlayerType player, bool isListening) {
-      SimonTurnSlide simonTurnScript = GetSimonSlide();
+      MemoryMatchTurnSlide MemoryMatchTurnScript = GetMemoryMatchSlide();
       if (player == PlayerType.Cozmo) {
-        simonTurnScript.ShowCozmoLives(_CurrLivesCozmo, _Config.MaxLivesCozmo);
-        simonTurnScript.ShowCenterText("");
+        MemoryMatchTurnScript.ShowCozmoLives(_CurrLivesCozmo, _Config.MaxLivesCozmo);
+        MemoryMatchTurnScript.ShowCenterText("");
       }
       else {
-        simonTurnScript.ShowHumanLives(_CurrLivesHuman, _Config.MaxLivesHuman);
-        simonTurnScript.ShowCenterText(isListening ? "" : Localization.Get(LocalizationKeys.kSimonGameLabelRepeat));
+        MemoryMatchTurnScript.ShowHumanLives(_CurrLivesHuman, _Config.MaxLivesHuman);
+        MemoryMatchTurnScript.ShowCenterText(isListening ? "" : Localization.Get(LocalizationKeys.kMemoryMatchGameLabelRepeat));
       }
       CurrentPlayer = player;
     }
 
     public void ShowCenterResult(bool enabled, bool correct = true) {
-      SimonTurnSlide simonTurnScript = GetSimonSlide();
-      simonTurnScript.ShowCenterImage(enabled, correct);
-      simonTurnScript.ShowCenterText("");
+      MemoryMatchTurnSlide MemoryMatchTurnScript = GetMemoryMatchSlide();
+      MemoryMatchTurnScript.ShowCenterImage(enabled, correct);
+      MemoryMatchTurnScript.ShowCenterText("");
     }
 
     public int GetLivesRemaining(PlayerType player) {
@@ -398,7 +398,7 @@ namespace Simon {
   }
 
   [System.Serializable]
-  public class SimonCube {
+  public class MemoryMatchCube {
     public Anki.Cozmo.Audio.AudioEventParameter soundName;
     public Color cubeColor;
   }

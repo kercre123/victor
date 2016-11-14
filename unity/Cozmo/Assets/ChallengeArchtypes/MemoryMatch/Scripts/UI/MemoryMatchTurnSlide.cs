@@ -4,8 +4,8 @@ using System.Collections;
 using Anki.UI;
 using Cozmo.UI;
 
-namespace Simon {
-  public class SimonTurnSlide : MonoBehaviour {
+namespace MemoryMatch {
+  public class MemoryMatchTurnSlide : MonoBehaviour {
 
     [SerializeField]
     private Image _CenterImage;
@@ -22,9 +22,9 @@ namespace Simon {
     private Sprite _WrongSprite;
 
     [SerializeField]
-    private SimonLivesWidget _PlayerWidget;
+    private MemoryMatchLivesWidget _PlayerWidget;
     [SerializeField]
-    private SimonLivesWidget _CozmoWidget;
+    private MemoryMatchLivesWidget _CozmoWidget;
 
     [SerializeField]
     private CozmoButton _ButtonPlayPattern;
@@ -91,7 +91,7 @@ namespace Simon {
       HidePlayPatternButton(); // clean up previous
       _ClickHandler = ClickHandler;
       _ButtonPlayPattern.gameObject.SetActive(true);
-      _ButtonPlayPattern.Initialize(ClickHandler, "simon.PlayPattern", "next_round_of_play_continue_button");
+      _ButtonPlayPattern.Initialize(ClickHandler, "MemoryMatch.PlayPattern", "next_round_of_play_continue_button");
     }
 
     public void HidePlayPatternButton() {

@@ -27,8 +27,7 @@ namespace Anki {
   namespace Cozmo {
         
     ActionableObject::ActionableObject()
-    : _isBeingCarried(false)
-    , _isSelected(false)
+    : _isSelected(false)
     {
       
     }

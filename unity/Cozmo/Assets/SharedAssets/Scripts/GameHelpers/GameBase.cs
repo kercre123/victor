@@ -676,6 +676,8 @@ public abstract class GameBase : MonoBehaviour {
       _SharedMinigameViewInstance.ViewCloseAnimationFinished += QuitMinigameAnimationFinished;
       _SharedMinigameViewInstance.CloseView();
 
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
+
       // cancels any queued up actions or co-routines
       if (CurrentRobot != null) {
         CurrentRobot.CancelAction(RobotActionType.UNKNOWN);
@@ -948,6 +950,7 @@ public abstract class GameBase : MonoBehaviour {
     DAS.Event("game.end.score", PlayerRoundsWon.ToString(), DASUtil.FormatExtraData(CozmoRoundsWon.ToString()));
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Game_End);
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
 
     DAS.Info(this, "HandleChallengeResultViewClosed");
   }
@@ -1261,7 +1264,7 @@ public abstract class GameBase : MonoBehaviour {
     if (_InterruptedAlertView == null && PauseManager.Instance.IsAnyDialogOpen == false) {
       Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
       alertView.SetCloseButtonEnabled(false);
-      alertView.SetPrimaryButton(LocalizationKeys.kButtonQuitGame, null);
+      alertView.SetPrimaryButton(LocalizationKeys.kButtonOkay, null);
       alertView.ViewCloseAnimationFinished += HandleInterruptionQuitGameViewClosed;
       alertView.TitleLocKey = titleKey;
       alertView.DescriptionLocKey = descriptionKey;

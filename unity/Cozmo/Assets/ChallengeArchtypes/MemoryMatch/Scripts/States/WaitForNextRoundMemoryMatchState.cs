@@ -1,23 +1,24 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
-namespace Simon {
-  public class WaitForNextRoundSimonState : State {
+namespace MemoryMatch {
+  public class WaitForNextRoundMemoryMatchState : CanTimeoutState {
 
-    private SimonGame _GameInstance;
+    private MemoryMatchGame _GameInstance;
     private PlayerType _NextPlayer;
 
     bool _CanAutoAdvance = false;
 
-    public WaitForNextRoundSimonState(PlayerType nextPlayer = PlayerType.None, bool WantsAutoAdvance = false) {
+    public WaitForNextRoundMemoryMatchState(PlayerType nextPlayer = PlayerType.None, bool WantsAutoAdvance = false) {
       _NextPlayer = nextPlayer;
       _CanAutoAdvance = WantsAutoAdvance;
     }
 
     public override void Enter() {
       base.Enter();
-      _GameInstance = _StateMachine.GetGame() as SimonGame;
-      bool isSoloMode = _GameInstance.CurrentDifficulty == (int)SimonGame.SimonMode.SOLO;
+      _GameInstance = _StateMachine.GetGame() as MemoryMatchGame;
+      SetTimeoutDuration(_GameInstance.Config.IdleTimeoutSec);
+      bool isSoloMode = _GameInstance.CurrentDifficulty == (int)MemoryMatchGame.MemoryMatchMode.SOLO;
       // On first turn not known until entered...
       if (_NextPlayer == PlayerType.None) {
         _NextPlayer = _GameInstance.FirstPlayer;
@@ -41,7 +42,7 @@ namespace Simon {
         _GameInstance.ShowCurrentPlayerTurnStage(_NextPlayer, true);
         _GameInstance.SetCubeLightsDefaultOn();
 
-        _CurrentRobot.TurnTowardsObject(_GameInstance.GetCubeBySortedIndex(1), false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2, HandleCozmoTurnComplete);
+        _CurrentRobot.TurnTowardsObject(_GameInstance.GetCubeBySortedIndex(1), false, MemoryMatchGame.kTurnSpeed_rps, MemoryMatchGame.kTurnAccel_rps2, HandleCozmoTurnComplete);
 
         // Update Music round
         _GameInstance.UpdateMusicRound();
@@ -51,7 +52,7 @@ namespace Simon {
             HandleAutoAdvance();
           }
           else {
-            _GameInstance.GetSimonSlide().ShowPlayPatternButton(HandleContinuePressed);
+            _GameInstance.GetMemoryMatchSlide().ShowPlayPatternButton(HandleContinuePressed);
           }
         }
       }
@@ -59,7 +60,7 @@ namespace Simon {
 
     private void HandleCozmoTurnComplete(bool success) {
       if (_NextPlayer == PlayerType.Cozmo) {
-        _StateMachine.SetNextState(new CozmoGuessSimonState());
+        _StateMachine.SetNextState(new CozmoGuessMemoryMatchState());
       }
     }
     private void HandleAutoAdvance() {
@@ -67,8 +68,8 @@ namespace Simon {
     }
 
     private void HandleContinuePressed() {
-      _GameInstance.GetSimonSlide().HidePlayPatternButton();
-      _StateMachine.SetNextState(new SetSequenceSimonState(_NextPlayer));
+      _GameInstance.GetMemoryMatchSlide().HidePlayPatternButton();
+      _StateMachine.SetNextState(new SetSequenceMemoryMatchState(_NextPlayer));
     }
   }
 }

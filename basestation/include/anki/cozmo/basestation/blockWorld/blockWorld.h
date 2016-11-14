@@ -298,6 +298,12 @@ namespace Anki
       Result UpdateObjectOrigins(const Pose3d* oldOrigin,
                                  const Pose3d* newOrigin);
       
+      // Find the given objectID in the given origin, and update it so that it is
+      // stored according to its _current_ origin. (Move from old origin to current origin.)
+      // If the origin is already correct, nothing changes. If the objectID is not
+      // found in the given origin, RESULT_FAIL is returned.
+      Result UpdateObjectOrigin(const ObjectID& objectID, const Pose3d* oldOrigin);
+      
       // checks the origins currently storing objects and if they have become zombies it deletes them
       void DeleteObjectsFromZombieOrigins();
       
@@ -349,6 +355,7 @@ namespace Anki
       
       const BlockConfigurations::BlockConfigurationManager& GetBlockConfigurationManager() const { assert(_blockConfigurationManager); return *_blockConfigurationManager;}
       void NotifyBlockConfigurationManagerObjectPoseChanged(const ObjectID& objectID) const;
+      
       
     protected:
       
@@ -406,14 +413,15 @@ namespace Anki
       
       void CheckForCollisionWithRobot();
       
-      // Helpers for actually inserting a new object into a new family using
-      // its type and ID. Object's ID will be set if it isn't already.
-      // Will copy objectToCopyID's ID to object if objectToCopyID is valid
-      void AddNewObject(const std::shared_ptr<ObservableObject>& object,
-                        const ObservableObject* objectToCopyID = nullptr);
-      void AddNewObject(ObjectsMapByType_t& existingFamily,
-                        const std::shared_ptr<ObservableObject>& object,
-                        const ObservableObject* objectToCopyID = nullptr);
+      // Adds a new object based on its origin/family/type. Its ID will be assigned
+      // if it isn't already, or it will be copied from objectToCopyID if that object
+      // is not null.
+      ObjectID AddNewObject(const std::shared_ptr<ObservableObject>& object,
+                            const ObservableObject* objectToCopyID = nullptr);
+      
+      ObjectID AddNewObject(ObjectsMapByType_t& existingFamily,
+                            const std::shared_ptr<ObservableObject>& object,
+                            const ObservableObject* objectToCopyID = nullptr);
       
       // NOTE: this function takes control over the passed-in ObservableObject*'s and
       //  will either directly add them to BlockWorld's existing objects or delete them
@@ -594,10 +602,10 @@ namespace Anki
       return GetActiveObjectByIdHelper(objectID, inFamily); // returns const*
     }
     
-    inline void BlockWorld::AddNewObject(const std::shared_ptr<ObservableObject>& object,
-                                         const ObservableObject* objectToCopyID)
+    inline ObjectID BlockWorld::AddNewObject(const std::shared_ptr<ObservableObject>& object,
+                                             const ObservableObject* objectToCopyID)
     {
-      AddNewObject(_existingObjects[&object->GetPose().FindOrigin()][object->GetFamily()], object, objectToCopyID);
+      return AddNewObject(_existingObjects[&object->GetPose().FindOrigin()][object->GetFamily()], object, objectToCopyID);
     }
 
     /*

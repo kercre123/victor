@@ -3,11 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo.Audio;
 
-namespace Simon {
+namespace MemoryMatch {
 
-  public class SetSequenceSimonState : State {
+  public class SetSequenceMemoryMatchState : State {
 
-    private SimonGame _GameInstance;
+    private MemoryMatchGame _GameInstance;
     private int _CurrentSequenceIndex = -1;
     private IList<int> _CurrentSequence;
     private int _SequenceLength;
@@ -18,13 +18,13 @@ namespace Simon {
     private bool _InCountdown = true;
     private Coroutine _CountdownCoroutine = null;
 
-    public SetSequenceSimonState(PlayerType nextPlayer) {
+    public SetSequenceMemoryMatchState(PlayerType nextPlayer) {
       _NextPlayer = nextPlayer;
     }
 
     public override void Enter() {
       base.Enter();
-      _GameInstance = _StateMachine.GetGame() as SimonGame;
+      _GameInstance = _StateMachine.GetGame() as MemoryMatchGame;
       bool SequenceGrown;
       _SequenceLength = _GameInstance.GetNewSequenceLength(_NextPlayer, out SequenceGrown);
       _GameInstance.GenerateNewSequence(_SequenceLength);
@@ -40,7 +40,7 @@ namespace Simon {
       // Start Sequence after audio completes
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Gp_Mm_Pattern_Start);
       if (SequenceGrown) {
-        _GameInstance.SharedMinigameView.PlayBannerAnimation(Localization.Get(LocalizationKeys.kSimonGameLabelNextRound), null, 0.0f, false);
+        _GameInstance.SharedMinigameView.PlayBannerAnimation(Localization.Get(LocalizationKeys.kMemoryMatchGameLabelNextRound), null, 0.0f, false);
       }
       if (_CountdownCoroutine == null) {
         _CountdownCoroutine = _GameInstance.StartCoroutine(CountdownCoroutine());
@@ -67,7 +67,7 @@ namespace Simon {
     }
 
     private void HandleCountDownDone() {
-      _GameInstance.GetSimonSlide().ShowCenterText(Localization.Get(LocalizationKeys.kSimonGameLabelListen));
+      _GameInstance.GetMemoryMatchSlide().ShowCenterText(Localization.Get(LocalizationKeys.kMemoryMatchGameLabelListen));
       _InCountdown = false;
       if (_CountdownCoroutine != null) {
         _GameInstance.StopCoroutine(_CountdownCoroutine);
@@ -113,10 +113,10 @@ namespace Simon {
 
     public void HandEndAnimationDone(bool success) {
       if (_NextPlayer == PlayerType.Human) {
-        _StateMachine.SetNextState(new WaitForPlayerGuessSimonState());
+        _StateMachine.SetNextState(new WaitForPlayerGuessMemoryMatchState());
       }
       else {
-        _StateMachine.SetNextState(new CozmoGuessSimonState());
+        _StateMachine.SetNextState(new CozmoGuessMemoryMatchState());
       }
     }
 
@@ -127,7 +127,7 @@ namespace Simon {
       if (target != null) {
         int cubeId = target.ID;
         Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_GameInstance.GetAudioForBlock(cubeId));
-        _GameInstance.BlinkLight(cubeId, SimonGame.kLightBlinkLengthSeconds, Color.black, _GameInstance.GetColorForBlock(cubeId));
+        _GameInstance.BlinkLight(cubeId, MemoryMatchGame.kLightBlinkLengthSeconds, Color.black, _GameInstance.GetColorForBlock(cubeId));
       }
     }
 
