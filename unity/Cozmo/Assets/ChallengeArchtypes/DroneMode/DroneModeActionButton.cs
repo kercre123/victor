@@ -13,9 +13,6 @@ namespace Cozmo.Minigame.DroneMode {
     }
 
     [SerializeField]
-    private Image _ActionIcon;
-
-    [SerializeField]
     private GameObject _LockedIcon;
 
     private bool _IsUnlocked;
@@ -34,9 +31,8 @@ namespace Cozmo.Minigame.DroneMode {
 
     public void Initialize(string dasButtonName, string dasViewController, DroneModeActionData actionData,
                            System.Action actionCallback, bool needsCubeSeen, bool needsKnownFaceSeen) {
-      _ActionIcon.sprite = actionData.ButtonIcon;
       _ActionButton.Initialize(HandleButtonClicked, dasButtonName, dasViewController);
-      _ActionButton.Text = actionData.ButtonText;
+      _ActionButton.Text = Localization.Get(actionData.ButtonTextLocKey);
       _ActionCallback = actionCallback;
       _NeedsCubeSeen = needsCubeSeen;
       _NeedsKnownFaceSeen = needsKnownFaceSeen;

@@ -96,6 +96,7 @@ typedef struct {
   int16_t   rtipRXQueueEstimate; ///< The number of bytes we estimate are in the RTIP's CLAD rx queue
   int16_t   bootloaderCommandPhase; ///< Operational phase for bootloader commands
   uint8_t   dropRxCounter; ///< Counter for drops received
+  uint8_t   lastRxDroplet; ///< Keep track of the last rx droplet for flow control
   I2SPIMode mode; ///< The current mode of the driver
   I2SPIError errorCode; ///< Any pending errors
 } I2SpiDriver;
@@ -206,28 +207,21 @@ inline void ICACHE_FLASH_ATTR i2spiPushScreenData(const uint32_t* data, const bo
 
 ALWAYS_INLINE uint8_t PumpScreenData(uint8_t* dest)
 {
-  static u8 transmitChain = 0;
-  if (transmitChain == MAX_TX_CHAIN_COUNT)
+  if (self.lastRxDroplet & oledWatermark)
   {
-    transmitChain = 0;
+    return 0;
+  }
+  else if (screen.wind == screen.rind)
+  {
     return 0;
   }
   else
   {
-    if (screen.wind == screen.rind)
-    {
-      transmitChain = 0;
-      return 0;
-    }
-    else
-    {
-      nostack uint8_t ret;
-      transmitChain++;
-      ets_memcpy(dest, &(screen.buffer[screen.rind]), MAX_SCREEN_BYTES_PER_DROP);
-      ret = screenDataValid | ((screen.rectFlags & 1<<screen.rind) ? screenRectData : 0);
-      screen.rind = (screen.rind + 1) & SCREEN_BUFFER_SIZE_MASK;
-      return ret;
-    }
+    nostack uint8_t ret;
+    ets_memcpy(dest, &(screen.buffer[screen.rind]), MAX_SCREEN_BYTES_PER_DROP);
+    ret = screenDataValid | ((screen.rectFlags & 1<<screen.rind) ? screenRectData : 0);
+    screen.rind = (screen.rind + 1) & SCREEN_BUFFER_SIZE_MASK;
+    return ret;
   }
 }
 
@@ -323,6 +317,7 @@ void prepSdioQueue(struct sdio_queue* desc, uint8 eof)
  */
 ALWAYS_INLINE void processDrop(DropToWiFi* drop)
 {
+  self.lastRxDroplet = drop->droplet;
   if (unlikely(drop->footer != TO_WIFI_FOOTER))
   {
     self.errorCode = I2SPIE_bad_footer;

@@ -3,7 +3,6 @@
 import os
 import os.path
 import subprocess
-import json
 import re
 import shutil
 import sys
@@ -404,6 +403,33 @@ def json_parser(version_file):
                 djson["git"]
     else:
         sys.exit("ERROR: %s does not exist" % version_file)
+
+def update_teamcity_version(version_file, teamcity_builds):
+    """
+        Update version entries of teamcity builds for dependencies.
+
+    :rtype: Null
+
+    Args:
+        version_file: path
+
+        teamcity_builds: dict
+    """
+    assert isinstance(teamcity_builds, dict)
+    if os.path.isfile(version_file):
+        djson = dict()
+        with open(version_file, mode="r") as file_obj:
+            djson = json.load(file_obj)
+            assert isinstance(djson, dict)
+            if "teamcity" in djson:
+                tc_dict = djson["teamcity"]
+                for build in tc_dict["builds"]:
+                    if build in teamcity_builds:
+                        djson["teamcity"]["builds"][build]["version"] = teamcity_builds[build]
+            else:
+                exit()
+        with open(version_file, mode="w") as file_obj:
+            file_obj.write(json.dumps(djson, sort_keys=True, indent=4, separators=(',', ': ')))
 
 
 ###############

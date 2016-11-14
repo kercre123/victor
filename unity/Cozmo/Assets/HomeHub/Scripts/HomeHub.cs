@@ -56,11 +56,19 @@ namespace Cozmo.HomeHub {
 
     private AlertView _ChallengeAlertView = null;
 
+    // Total ConnectedTime For GameEvents
+    private const float _kConnectedTimeIntervalCheck = 30.0f;
+    private float _ConnectedTimeIntervalLastTimestamp = -1;
+    private float _ConnectedTimeStartedTimestamp = -1;
+
     public override void LoadHubWorld() {
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.RequestSetUnlockResult>(RefreshChallengeUnlockInfo);
       _Instance = this;
       LoadChallengeData(ChallengeDataList.Instance, out _ChallengeStatesById);
       StartLoadHomeView();
+
+      _ConnectedTimeStartedTimestamp = Time.time;
+      _ConnectedTimeIntervalLastTimestamp = _ConnectedTimeStartedTimestamp;
     }
 
     public override void DestroyHubWorld() {
@@ -480,6 +488,14 @@ namespace Cozmo.HomeHub {
       if (_HomeViewInstance != null) {
         _HomeViewInstance.OnUnlockedChallengeClicked -= HandleUnlockedChallengeClicked;
         _HomeViewInstance.MinigameConfirmed -= HandleStartChallengeRequest;
+      }
+    }
+
+    // Every _kConnectedTimeIntervalCheck seconds, fire the OnConnectedInterval event for designer goals
+    protected void Update() {
+      if (Time.time - _ConnectedTimeIntervalLastTimestamp > _kConnectedTimeIntervalCheck) {
+        _ConnectedTimeIntervalLastTimestamp = Time.time;
+        GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnConnectedInterval, Time.time - _ConnectedTimeStartedTimestamp));
       }
     }
 

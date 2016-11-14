@@ -49,16 +49,19 @@ Face {
 LightCube {
   translation -0.036535 0.136184 0.022
   rotation -0.113999 0.986919 0.113999 1.58396
+  filterLogs TRUE
 }
 LightCube {
   translation -0.0200182 0.441269 0.022
   rotation 0 0 1 0.23
   ID 2
+  filterLogs TRUE
 }
 LightCube {
   translation 0.0509967 0.474244 0.062
   rotation 0 0 1 0.23
   ID 1
+  filterLogs TRUE
 }
 SolidBox {
   translation -0.0310205 0.357748 6.66134e-16

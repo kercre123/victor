@@ -22,6 +22,7 @@ extern int COZMO_VERSION_ID; // Initalized in factoryData.c
 static int nextCrashRecordSlot;
 static int bootErrorRecordSlot;
 static int bootErrorRecordIndex;
+static uint32_t appRunID[4];
 
 void os_put_str(char* str)
 {
@@ -91,7 +92,12 @@ extern void crash_dump(int* sp) {
   {
     cle->excvaddr = get_excvaddr();
     cle->depc     = get_depc();
+    cle->logFormat= ESP_LOG_FORMAT_MAGIC | 0x0001;
     cle->version  = COZMO_VERSION_ID;
+    cle->appRunID[0] = appRunID[0];
+    cle->appRunID[1] = appRunID[1];
+    cle->appRunID[2] = appRunID[2];
+    cle->appRunID[3] = appRunID[3];
     cle->stackDumpSize = (0x40000000 - (unsigned int)p);
     if (cle->stackDumpSize > ESP_STACK_DUMP_SIZE) cle->stackDumpSize = ESP_STACK_DUMP_SIZE;
     for (i=0; i<cle->stackDumpSize; i++) cle->stack[i] = p[i];
@@ -209,6 +215,7 @@ void ICACHE_FLASH_ATTR crashHandlerInit(void)
   bootErrorRecordSlot = -1;
   initResult.addr = 0;
   initResult.code = 0;
+  os_memset(appRunID, 0, sizeof(appRunID));
   
   // Find how many records we have written and how many we have reported
   for (recordNumber=0; recordNumber<MAX_CRASH_LOGS; ++recordNumber)
@@ -349,7 +356,7 @@ int ICACHE_FLASH_ATTR crashHandlerMarkReported(const int index)
 }
 
 
-void recordBootError(void* errorFunc, int32_t errorCode)
+void ICACHE_FLASH_ATTR recordBootError(void* errorFunc, int32_t errorCode)
 {
    os_printf("Recording Boot error %d @ %p\r\n", errorCode, errorFunc);
    SpiFlashOpResult rslt = SPI_FLASH_RESULT_OK;
@@ -374,4 +381,9 @@ void recordBootError(void* errorFunc, int32_t errorCode)
    if (rslt == SPI_FLASH_RESULT_OK) {
       bootErrorRecordIndex++;
    }
+}
+
+void ICACHE_FLASH_ATTR setAppRunID(uint32_t* app_run_id)
+{
+  os_memcpy(appRunID, app_run_id, sizeof(appRunID));
 }

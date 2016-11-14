@@ -564,6 +564,10 @@ public abstract class GameBase : MonoBehaviour {
     return (PlayerRoundsWon + CozmoRoundsWon) > twoThirdsRoundsTotal;
   }
 
+  protected virtual Dictionary<string, float> GetGameSpecificEventValues() {
+    return null;
+  }
+
   // Handles the end of the game based on Rounds won, will attempt to progress difficulty as well
   public virtual void StartRoundBasedGameEnd() {
     // Fire OnGameComplete, passing in ChallengeID, CurrentDifficulty, and if Playerwon
@@ -573,7 +577,9 @@ public abstract class GameBase : MonoBehaviour {
 
   // now supports ties
   public virtual void StartBaseGameEnd(EndState endState) {
-    GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeComplete, _ChallengeData.ChallengeID, _CurrentDifficulty, endState == EndState.PlayerWin, PlayerScore, CozmoScore, IsHighIntensityRound()));
+    GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnChallengeComplete,
+                                        _ChallengeData.ChallengeID, _CurrentDifficulty, endState == EndState.PlayerWin,
+                                        PlayerScore, CozmoScore, IsHighIntensityRound(), GetGameSpecificEventValues()));
 
     if (endState == EndState.PlayerWin) {
       HandleUnlockRewards();
@@ -669,6 +675,8 @@ public abstract class GameBase : MonoBehaviour {
     try {
       _SharedMinigameViewInstance.ViewCloseAnimationFinished += QuitMinigameAnimationFinished;
       _SharedMinigameViewInstance.CloseView();
+
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
 
       // cancels any queued up actions or co-routines
       if (CurrentRobot != null) {
@@ -872,6 +880,8 @@ public abstract class GameBase : MonoBehaviour {
       playerProfile.HighScores[key] = 0;
     }
     if (playerProfile.HighScores[key] < PlayerScore) {
+      GameEventManager.Instance.FireGameEvent(GameEventWrapperFactory.Create(GameEvent.OnNewHighScore,
+        _ChallengeData.ChallengeID, _CurrentDifficulty, _EndState == EndState.PlayerWin, PlayerScore, CozmoScore, IsHighIntensityRound(), playerProfile.HighScores[key]));
       playerProfile.HighScores[key] = PlayerScore;
       return true;
     }
@@ -940,6 +950,7 @@ public abstract class GameBase : MonoBehaviour {
     DAS.Event("game.end.score", PlayerRoundsWon.ToString(), DASUtil.FormatExtraData(CozmoRoundsWon.ToString()));
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.Sfx.Game_End);
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Freeplay);
 
     DAS.Info(this, "HandleChallengeResultViewClosed");
   }
@@ -1253,7 +1264,7 @@ public abstract class GameBase : MonoBehaviour {
     if (_InterruptedAlertView == null && PauseManager.Instance.IsAnyDialogOpen == false) {
       Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
       alertView.SetCloseButtonEnabled(false);
-      alertView.SetPrimaryButton(LocalizationKeys.kButtonQuitGame, null);
+      alertView.SetPrimaryButton(LocalizationKeys.kButtonOkay, null);
       alertView.ViewCloseAnimationFinished += HandleInterruptionQuitGameViewClosed;
       alertView.TitleLocKey = titleKey;
       alertView.DescriptionLocKey = descriptionKey;

@@ -9,7 +9,8 @@
       "SparksPickUpCube",
       "SparksPopAWheelie",
       "SparksKnockOverCubes",
-      "SparksBuildPyramid"
+      "SparksBuildPyramid",
+      "SparksWorkout"
   ],
   "params":
   {

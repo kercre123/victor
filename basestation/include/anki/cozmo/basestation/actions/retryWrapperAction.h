@@ -44,6 +44,11 @@ namespace Cozmo {
     // and the number of times to retry the action
     RetryWrapperAction(Robot& robot, IAction* action, RetryCallback retryCallback, u8 numRetries);
     RetryWrapperAction(Robot& robot, ICompoundAction* action, RetryCallback retryCallback, u8 numRetries);
+
+    // alternatively, simply pass in an animation trigger to play (and always retry until the limit)
+    RetryWrapperAction(Robot& robot, IAction* action, AnimationTrigger retryTrigger, u8 numRetries);
+    RetryWrapperAction(Robot& robot, ICompoundAction* action, AnimationTrigger retryTrigger, u8 numRetries);
+    
     virtual ~RetryWrapperAction();
     
   protected:

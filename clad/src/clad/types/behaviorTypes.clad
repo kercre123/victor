@@ -68,6 +68,7 @@ enum uint_8 BehaviorType {
   PickUpCube,
   CantHandleTallStack,
   OnboardingShowCube,
+  CubeLiftWorkout,
 
   Count
 }

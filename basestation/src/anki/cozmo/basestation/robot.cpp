@@ -550,6 +550,19 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
         SetLocalizedTo(nullptr); // marks us as localized to odometry only
       }
     }
+    else if(IsCarryingObject() &&
+            _offTreadsState != OffTreadsState::InAir &&
+            _offTreadsState != OffTreadsState::Count)
+    {
+      // If we're falling or not upright and were carrying something, assume we
+      // are no longer carrying that something and don't know where it is anymore
+      auto carriedObjectIDs = GetCarryingObjects();
+      SetCarriedObjectAsUnattached(); // Marks carried objects as Dirty
+      for(auto & objectID : carriedObjectIDs)
+      {
+        _blockWorld->ClearObject(objectID); // Mark the carried objects as Unknown
+      }
+    }
 
     // if the robot was on the charging platform and its state changes it's not on the platform anymore
     if(_isOnChargerPlatform && _offTreadsState != OffTreadsState::OnTreads)
@@ -575,12 +588,6 @@ void Robot::Delocalize(bool isCarryingObject)
   //  BlockWorld::ClearAllExistingObjects, resulting in a weird loop...
   //_blockWorld.ClearAllExistingObjects();
   
-  // If the robot was carrying a block we don't know what happened to it, but, most importantly, it shouldn't be attached
-  // to the lift since the lift is about to be in a new origin, and the cube can't come with us unless we rejigger
-  if( IsCarryingObject() ) {
-    SetCarriedObjectAsUnattached();
-  }
-      
   // TODO rsam:
   // origins are no longer destroyed to prevent children from having to rejigger as cubes do. This however
   // has the problem of leaving zombie origins, and having systems never deleting dead poses that can never
@@ -593,6 +600,7 @@ void Robot::Delocalize(bool isCarryingObject)
   // to profile
       
   // Add a new pose origin to use until the robot gets localized again
+  const Pose3d* oldOrigin = _worldOrigin;
   _worldOrigin = new Pose3d();
   PoseOriginID_t originID = _poseOriginList.AddOrigin(_worldOrigin);
   _worldOrigin->SetName("Robot" + std::to_string(_ID) + "_PoseOrigin" + std::to_string(originID));
@@ -636,6 +644,38 @@ void Robot::Delocalize(bool isCarryingObject)
   GetContext()->GetVizManager()->EraseAllVizObjects();
   
   
+  // clear the pose confirmer now that we've changed pose origins
+  GetObjectPoseConfirmer().Clear();
+  
+  // Sanity check carrying state
+  if(isCarryingObject != IsCarryingObject())
+  {
+    PRINT_NAMED_WARNING("Robot.Delocalize.IsCarryingObjectMismatch",
+                        "Passed-in isCarryingObject=%c, IsCarryingObject()=%c",
+                        isCarryingObject   ? 'Y' : 'N',
+                        IsCarryingObject() ? 'Y' : 'N');
+  }
+  
+  // Have to do this _after_ clearing the pose confirmer because UpdateObjectOrigin
+  // adds the carried objects to the pose confirmer in their newly updated pose,
+  // but _before_ deleting zombie objects (since dirty carried objects may get
+  // deleted)
+  if(IsCarryingObject())
+  {
+    // Carried objects are in the pose chain of the robot, whose origin has now changed.
+    // Thus the carried objects' actual origin no longer matches the way they are stored
+    // in BlockWorld.
+    for(auto const& objectID : GetCarryingObjects())
+    {
+      const Result result = _blockWorld->UpdateObjectOrigin(objectID, oldOrigin);
+      if(RESULT_OK != result)
+      {
+        PRINT_NAMED_WARNING("Robot.Delocalize.UpdateObjectOriginFailed",
+                            "Object %d", objectID.GetValue());
+      }
+    }
+  }
+
   // delete objects that have become useless since we delocalized last time
   _blockWorld->DeleteObjectsFromZombieOrigins();
   
@@ -647,9 +687,6 @@ void Robot::Delocalize(bool isCarryingObject)
       
   // notify behavior whiteboard
   _behaviorMgr->GetWhiteboard().OnRobotDelocalized();
-  
-  // clear the pose confirmer now that we've changed pose origins
-  GetObjectPoseConfirmer().Clear();
   
   // send message to game. At the moment I implement this so that Webots can update the render, but potentially
   // any system can listen to this
@@ -2875,86 +2912,62 @@ void Robot::SetCarryingObject(ObjectID carryObjectID)
     PRINT_NAMED_ERROR("Robot.SetCarryingObject.NullCarryObject",
                       "Object %d no longer exists in the world. Can't set it as robot's carried object.",
                       carryObjectID.GetValue());
-  } else {
-    ActionableObject* carriedObject = dynamic_cast<ActionableObject*>(object);
-    if(carriedObject == nullptr) {
-      // This really should not happen
-      PRINT_NAMED_ERROR("Robot.SetCarryingObject",
-                        "Object %d could not be cast as an ActionableObject, so cannot mark it as carried.",
-                        carryObjectID.GetValue());
+  }
+  else
+  {
+    _carryingObjectID = carryObjectID;
+    
+    // Don't remain localized to an object if we are now carrying it
+    if(_carryingObjectID == GetLocalizedTo())
+    {
+      // Note that the robot may still remaing localized (based on its
+      // odometry), but just not *to an object*
+      SetLocalizedTo(nullptr);
+    } // if(_carryingObjectID == GetLocalizedTo())
+    
+    // Tell the robot it's carrying something
+    // TODO: This is probably not the right way/place to do this (should we pass in carryObjectOnTopID?)
+    if(_carryingObjectOnTopID.IsSet()) {
+      SendSetCarryState(CarryState::CARRY_2_BLOCK);
     } else {
-      if(carriedObject->IsBeingCarried()) {
-        PRINT_NAMED_WARNING("Robot.SetCarryingObject",
-                            "Robot %d is about to mark object %d as carried but that object already thinks it is "
-                            "being carried.",
-                            GetID(), carryObjectID.GetValue());
-      }
-      carriedObject->SetBeingCarried(true);
-      _carryingObjectID = carryObjectID;
-          
-      // Don't remain localized to an object if we are now carrying it
-      if(_carryingObjectID == GetLocalizedTo())
-      {
-        // Note that the robot may still remaing localized (based on its
-        // odometry), but just not *to an object*
-        SetLocalizedTo(nullptr);
-      } // if(_carryingObjectID == GetLocalizedTo())
-          
-      // Tell the robot it's carrying something
-      // TODO: This is probably not the right way/place to do this (should we pass in carryObjectOnTopID?)
-      if(_carryingObjectOnTopID.IsSet()) {
-        SendSetCarryState(CarryState::CARRY_2_BLOCK);
-      } else {
-        SendSetCarryState(CarryState::CARRY_1_BLOCK);
-      }
-    } // if/else (carriedObject == nullptr)
+      SendSetCarryState(CarryState::CARRY_1_BLOCK);
+    }
   }
 }
-    
+  
 void Robot::UnSetCarryingObjects(bool topOnly)
 {
+  // Note this loop doesn't actually _do_ anything. It's just sanity checks.
   std::set<ObjectID> carriedObjectIDs = GetCarryingObjects();
-  for (auto& objID : carriedObjectIDs) {
+  for (auto& objID : carriedObjectIDs)
+  {
     if (topOnly && objID != _carryingObjectOnTopID) {
       continue;
     }
         
-    ObservableObject* object = _blockWorld->GetObjectByID(objID);
-    if(object == nullptr) {
+    ObservableObject* carriedObject = _blockWorld->GetObjectByID(objID);
+    if(carriedObject == nullptr) {
       PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects.NullObject",
                         "Object %d robot %d thought it was carrying no longer exists in the world.",
                         objID.GetValue(), GetID());
-    } else {
-      ActionableObject* carriedObject = dynamic_cast<ActionableObject*>(object);
-      if(carriedObject == nullptr) {
-        // This really should not happen
-        PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects",
-                          "Carried object %d could not be cast as an ActionableObject.",
-                          objID.GetValue());
-      } else if(carriedObject->IsBeingCarried() == false) {
-        PRINT_NAMED_WARNING("Robot.UnSetCarryingObjects",
-                            "Robot %d thinks it is carrying object %d but that object "
-                            "does not think it is being carried.", GetID(), objID.GetValue());
-            
-      } else {
-        if ( carriedObject->GetPose().GetParent() == &_liftPose) {
-          // if the carried object is still attached to the lift it can cause issues. We had a bug
-          // in which we delocalized and unset as carrying, but would not dettach from lift, causing
-          // the cube to accidentally inherit the new origin via its parent, the lift, since the robot is always
-          // in the current origin. It would still be the a copy in the old origin in blockworld, but its pose
-          // would be pointing to the current one, which caused issues with relocalization.
-          // It's a warning because I think there are legit cases (like ClearObject), where it would be fine to
-          // ignore the current pose, since it won't be used again.
-          PRINT_NAMED_WARNING("Robot.UnSetCarryingObjects.StillAttached",
-            "Setting carried object '%d' as not being carried, but the pose is still attached to the lift", objID.GetValue());
-        }
-      
-        carriedObject->SetBeingCarried(false);
-      }
+      continue;
+    }
+    
+    if ( carriedObject->GetPose().GetParent() == &_liftPose) {
+      // if the carried object is still attached to the lift it can cause issues. We had a bug
+      // in which we delocalized and unset as carrying, but would not dettach from lift, causing
+      // the cube to accidentally inherit the new origin via its parent, the lift, since the robot is always
+      // in the current origin. It would still be the a copy in the old origin in blockworld, but its pose
+      // would be pointing to the current one, which caused issues with relocalization.
+      // It's a warning because I think there are legit cases (like ClearObject), where it would be fine to
+      // ignore the current pose, since it won't be used again.
+      PRINT_NAMED_WARNING("Robot.UnSetCarryingObjects.StillAttached",
+                          "Setting carried object '%d' as not being carried, but the pose is still attached to the lift", objID.GetValue());
+      continue;
     }
   }
 
-  if (!topOnly) {      
+  if (!topOnly) {
     // Tell the robot it's not carrying anything
     if (_carryingObjectID.IsSet()) {
       SendSetCarryState(CarryState::CARRY_NONE);
@@ -2997,7 +3010,7 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
     return RESULT_FAIL;
   }
       
-  ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld->GetObjectByID(objectID));
+  ObservableObject* object = _blockWorld->GetObjectByID(objectID);
   if(object == nullptr) {
     PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectDoesNotExist",
                       "Dock object with ID=%d no longer exists for picking up.", objectID.GetValue());
@@ -3022,37 +3035,35 @@ Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::
   // TODO: Do we need to be able to handle non-actionable objects on top of actionable ones?
 
   ObservableObject* objectOnTop = _blockWorld->FindObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
-  if(objectOnTop != nullptr) {
-    ActionableObject* actionObjectOnTop = dynamic_cast<ActionableObject*>(objectOnTop);
-    if(actionObjectOnTop != nullptr) {
-      Pose3d onTopPoseWrtCarriedPose;
-      if(actionObjectOnTop->GetPose().GetWithRespectTo(object->GetPose(), onTopPoseWrtCarriedPose) == false)
+  if(objectOnTop != nullptr)
+  {
+    Pose3d onTopPoseWrtCarriedPose;
+    if(objectOnTop->GetPose().GetWithRespectTo(object->GetPose(), onTopPoseWrtCarriedPose) == false)
+    {
+      PRINT_NAMED_WARNING("Robot.SetObjectAsAttachedToLift",
+                          "Found object on top of carried object, but could not get its "
+                          "pose w.r.t. the carried object.");
+    } else {
+      PRINT_NAMED_INFO("Robot.SetObjectAsAttachedToLift",
+                       "Setting object %d on top of carried object as also being carried.",
+                       objectOnTop->GetID().GetValue());
+      
+      onTopPoseWrtCarriedPose.SetParent(&object->GetPose());
+      
+      // Related to COZMO-3384: Consider whether top cubes (in a stack) should notify memory map
+      // Notify blockworld of the change in pose for the object on top, but pretend the new pose is unknown since
+      // we are not dropping the cube yet
+      Result poseResult = GetObjectPoseConfirmer().AddObjectRelativeObservation(objectOnTop, onTopPoseWrtCarriedPose, object);
+      if(RESULT_OK != poseResult)
       {
-        PRINT_NAMED_WARNING("Robot.SetObjectAsAttachedToLift",
-                            "Found object on top of carried object, but could not get its "
-                            "pose w.r.t. the carried object.");
-      } else {
-        PRINT_NAMED_INFO("Robot.SetObjectAsAttachedToLift",
-                         "Setting object %d on top of carried object as also being carried.",
-                         actionObjectOnTop->GetID().GetValue());
-        
-        onTopPoseWrtCarriedPose.SetParent(&object->GetPose());
-        
-        // Related to COZMO-3384: Consider whether top cubes (in a stack) should notify memory map
-        // Notify blockworld of the change in pose for the object on top, but pretend the new pose is unknown since
-        // we are not dropping the cube yet
-        Result poseResult = GetObjectPoseConfirmer().AddObjectRelativeObservation(actionObjectOnTop, onTopPoseWrtCarriedPose, object);
-        if(RESULT_OK != poseResult)
-        {
-          PRINT_NAMED_WARNING("Robot.SetObjectAsAttachedToLift.AddObjectRelativeObservationFailed",
-                              "objectID:%d", object->GetID().GetValue());
-          return poseResult;
-        }
-        
-        _carryingObjectOnTopID = actionObjectOnTop->GetID();
-        actionObjectOnTop->SetBeingCarried(true);
+        PRINT_NAMED_WARNING("Robot.SetObjectAsAttachedToLift.AddObjectRelativeObservationFailed",
+                            "objectID:%d", object->GetID().GetValue());
+        return poseResult;
       }
+      
+      _carryingObjectOnTopID = objectOnTop->GetID();
     }
+    
   } else {
     _carryingObjectOnTopID.UnSet();
   }
@@ -3082,7 +3093,7 @@ Result Robot::SetCarriedObjectAsUnattached()
     return RESULT_FAIL;
   }
       
-  ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld->GetObjectByID(_carryingObjectID));
+  ObservableObject* object = _blockWorld->GetObjectByID(_carryingObjectID);
       
   if(object == nullptr)
   {
@@ -3117,7 +3128,7 @@ Result Robot::SetCarriedObjectAsUnattached()
   _carryingMarker = nullptr;
       
   if(_carryingObjectOnTopID.IsSet()) {
-    ActionableObject* objectOnTop = dynamic_cast<ActionableObject*>(_blockWorld->GetObjectByID(_carryingObjectOnTopID));
+    ObservableObject* objectOnTop = _blockWorld->GetObjectByID(_carryingObjectOnTopID);
     if(objectOnTop == nullptr)
     {
       // This really should not happen.  How can a object being carried get deleted?
@@ -3141,7 +3152,6 @@ Result Robot::SetCarriedObjectAsUnattached()
       return poseResult;
     }
 
-    objectOnTop->SetBeingCarried(false);
     _carryingObjectOnTopID.UnSet();
     PRINT_NAMED_INFO("Robot.SetCarriedObjectAsUnattached", "Updated object %d on top of carried object.",
                      objectOnTop->GetID().GetValue());

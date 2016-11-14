@@ -984,7 +984,9 @@ namespace Cozmo {
       {
         roiRects.emplace_back(quad);
         totalRoiArea += roiRects.back().Area();
-    }
+      }
+      
+      ASSERT_NAMED(totalRoiArea >= 0, "VisionSystem.CheckImageQuality.NegativeROIArea");
       
       if(2*totalRoiArea < inputImage.GetNumElements())
       {
@@ -3151,6 +3153,14 @@ namespace Cozmo {
     if(RESULT_OK != decodeResult) {
       return decodeResult;
     }
+    
+    if(_image.IsEmpty())
+    {
+      PRINT_NAMED_ERROR("VisionSystem.Update.EmptyDecodedImage", "t=%u",
+                        encodedImg.GetTimeStamp());
+      return RESULT_FAIL;
+    }
+    
     return Update(poseData, _image);
   }
   
@@ -3253,6 +3263,13 @@ namespace Cozmo {
         Tic("RollingShutterWarpImage");
         inputImageGray = _rollingShutterCorrector.WarpImage(inputImageGray);
         Toc("RollingShutterWarpImage");
+        
+        if(inputImageGray.IsEmpty())
+        {
+          PRINT_NAMED_ERROR("VisionSystem.Update.RollingShutterCorrectionEmpty",
+                            "Rolling shutter warp during tracking yielded empty image");
+          return RESULT_FAIL;
+        }
       }
     }
 

@@ -72,7 +72,9 @@ namespace Cozmo.UI {
     }
 
     protected virtual void HandleOnPress() {
-      Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_UISoundEvent);
+      if (!_UISoundEvent.IsInvalid()) {
+        Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_UISoundEvent);
+      }
     }
 
     private void ShowGlint(bool show) {

@@ -93,10 +93,15 @@ public class SayTextSlide : MonoBehaviour {
   }
 
   private char HandleInputValidation(string input, int charIndex, char addedChar) {
-    if (char.IsLetter(addedChar) || char.IsWhiteSpace(addedChar)) {
+    if (char.IsLetter(addedChar) || char.IsWhiteSpace(addedChar) || IsPunctuation(addedChar)) {
       return addedChar;
     }
     return '\0';
+  }
+
+  // less forgiving than char.IsPunctuation();
+  private bool IsPunctuation(char c) {
+    return c == '.' || c == ';' || c == '\'' || c == ',' || c == '?' || c == '!' || c == ':';
   }
 
   private void HandleOnTextFieldChange(string inputText) {

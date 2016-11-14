@@ -45,5 +45,9 @@ void crashHandlerShowStatus(void);
 void recordBootError(void* func_addr, int32_t error_code);
 int crashHandlerBootErrorCount(uint32_t* dump_data);
 
+/** Sets the App run id to be included in crash logs
+ * @param app_run_id[in] 128 bit app run ID as array of 4 uint32_t
+ */
+void setAppRunID(uint32_t* app_run_id);
 
 #endif

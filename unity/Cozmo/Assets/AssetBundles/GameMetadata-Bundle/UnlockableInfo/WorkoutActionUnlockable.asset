@@ -17,12 +17,12 @@ MonoBehaviour:
   UnlockableType: 1
   Prerequisites: []
   AnyPrereqUnlock: 0
-  _ComingSoon: 1
+  _ComingSoon: 0
   _HideInUI: 0
   DescriptionKey: unlockable.Workout.Description
   TitleKey: unlockable.Workout.Title
-  SparkButtonDescription: 
-  SparkedStateDescription: 
+  SparkButtonDescription: unlockable.Workout.SparkButtonDescription
+  SparkedStateDescription: unlockable.Workout.SparkedStateDescription
   SparkedMusicState:
     _Sparked: 1875882538
   UpgradeCostItemId: TestHexItem0

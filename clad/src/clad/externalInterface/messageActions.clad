@@ -134,12 +134,13 @@ message PanAndTilt {
 //                            approach angle closest to approachAngle_rad is considered.
 // @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
 message PickupObject {
-    int_32 objectID, // negative value means "currently selected object"
-    PathMotionProfile motionProf,
-    float_32 approachAngle_rad,
-    bool   useApproachAngle,
-    bool usePreDockPose,
-    bool useManualSpeed,
+    int_32             objectID, // negative value means "currently selected object"
+    PathMotionProfile  motionProf,
+    float_32           approachAngle_rad,
+    bool               useApproachAngle,
+    bool               usePreDockPose,
+    bool               useManualSpeed,
+    bool               checkForObjectOnTop = 1, // Fail if object on top
 }
 
 // PlaceObjectOnGround
@@ -177,6 +178,7 @@ message PlaceOnObject {
     bool   useApproachAngle,
     bool usePreDockPose,
     bool useManualSpeed,
+    bool checkForObjectOnTop = 1
 }
 
 // PlaceRelObject
@@ -258,7 +260,8 @@ message RollObject {
   bool doDeepRoll,
   bool useApproachAngle,
   bool usePreDockPose,
-  bool useManualSpeed
+  bool useManualSpeed,
+  bool checkForObjectOnTop = 1, // fail if object on top
 }
 
 // SayText
@@ -375,7 +378,15 @@ message TurnTowardsFace {
     float_32 tiltAccel_radPerSec2 = 0.0,
     float_32 tiltTolerance_rad = 0.0,
 
-    bool     sayName = 0, // If we see the given face ID at end, and it is named, say that name
+    // If sayName is true:
+    // - If we face the given face ID see after turnin is named, say that name.
+    // - Use specified animation namedTrigger (or none if AnimationTrigger::Count)
+    // - If face is unnammed, play unnamedTrigger (unless it is AnimationTrigger::Count)
+    // If sayName is false, both triggers are unused/ignored.
+    bool             sayName = 0,
+    AnimationTrigger namedTrigger,
+    AnimationTrigger unnamedTrigger,
+
     uint_8   robotID
 }
 
@@ -407,7 +418,15 @@ message TurnTowardsLastFacePose {
     float_32 tiltAccel_radPerSec2 = 0.0,
     float_32 tiltTolerance_rad = 0.0,
 
-    bool     sayName = 0, // If a named face is seen at end, say that name
+    // If sayName is true:
+    // - If we face we see after turnin is named, say that name.
+    // - Use specified animation namedTrigger (or none if AnimationTrigger::Count)
+    // - If face is unnammed, play unnamedTrigger (unless it is AnimationTrigger::Count)
+    // If sayName is false, both triggers are unused/ignored.
+    bool             sayName = 0,
+    AnimationTrigger namedTrigger,
+    AnimationTrigger unnamedTrigger,
+
     uint_8   robotID
 }
 

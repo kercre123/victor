@@ -61,7 +61,13 @@
     "translation": "Workout with Cubes"
   },
   "unlockable.Workout.Description": {
-    "translation": "Even robots need exercise!  Upgrade Cozmo with a number of workouts he can perform using his cubes to stay in top shape."
+    "translation": "Even robots need exercise! Upgrade Cozmo with a number of workouts he can perform using his cubes to stay in top shape."
+  },
+  "unlockable.Workout.SparkButtonDescription": {
+    "translation": "Tap to ask Cozmo to workout"
+  },
+  "unlockable.Workout.SparkedStateDescription": {
+    "translation": "Watch Cozmo find a Cube and workout"
   },
   "unlockable.CubePounce.Title": {
     "translation": "Keepaway"
@@ -75,10 +81,10 @@
   "unlockable.FaceEnrollment.Description": {
     "translation": "With this Upgrade, Cozmo learns to remember faces and speak names.\n\nFind this in the Meet Cozmo activity."
   },
-  "unlockable.Simon.Title": {
+  "unlockable.MemoryMatch.Title": {
     "translation": "Memory Match"
   },
-  "unlockable.Simon.Description": {
+  "unlockable.MemoryMatch.Description": {
     "translation": "With this Upgrade, Cozmo learns how to play the Memory Match game."
   },
   "unlockable.SpeedTap.Title": {

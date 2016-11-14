@@ -74,12 +74,6 @@ namespace Anki {
       // call this from their virtual EraseVisualization() implementations.
       virtual void EraseVisualization() const override;
       
-      // Keep track of whether this object (has been docked with and) is being
-      // carried. (Should this be here? Should we have an IsCarryable() virtual
-      // method?)
-      bool IsBeingCarried() const;
-      void SetBeingCarried(const bool tf);
-      
       // TODO: Possibly make this more descriptive to give finer-tuned control over states and visualization options.
       bool IsSelected() const;
       void SetSelected(const bool tf);
@@ -127,7 +121,6 @@ namespace Anki {
       // Set of pathIDs for visualizing the preActionLines
       mutable std::set<u32> _vizPreActionLineIDs;
       
-      bool _isBeingCarried;
       bool _isSelected;
       
       std::list<ActiveLED> _activeLEDs;
@@ -141,18 +134,6 @@ namespace Anki {
     
     inline bool ActionableObject::HasPreActionPoses() const {
       return !_preActionPoses.empty();
-    }
-    
-    inline bool ActionableObject::IsBeingCarried() const {
-      return _isBeingCarried;
-    }
-    
-    inline void ActionableObject::SetBeingCarried(const bool tf) {
-      _isBeingCarried = tf;
-      if(_isBeingCarried) {
-        // Don't visualize pre-action poses for objects while they are being carried
-        ActionableObject::EraseVisualization();
-      }
     }
     
     inline bool ActionableObject::IsSelected() const {

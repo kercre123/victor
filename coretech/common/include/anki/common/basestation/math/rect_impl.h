@@ -38,19 +38,18 @@ namespace Anki {
   : cv::Rect_<T>(x,y,width,height)
 #endif
   {
-    
+    ASSERT_NAMED(width  >= T(0), "Rectangle.XYWidthHeightConstructor.NegativeWidth");
+    ASSERT_NAMED(height >= T(0), "Rectangle.XYWidthHeightConstructor.NegativeHeight");
   }
   
   template<typename T>
-  Rectangle<T>::Rectangle(const Point2<T>& upperLeft, const Point2<T>& lowerRight)
+  Rectangle<T>::Rectangle(const Point2<T>& corner1, const Point2<T>& corner2)
+#if ANKICORETECH_USE_OPENCV
+  : cv::Rect_<T>(corner1.get_CvPoint_(), corner2.get_CvPoint_())
+#endif
   {
-    x = upperLeft.x();
-    y = upperLeft.y();
-    
-    Point2<T> WH(lowerRight);
-    WH -= upperLeft;
-    width = WH.x();
-    height = WH.y();
+    ASSERT_NAMED(width  >= T(0), "Rectangle.TwoPointConstructor.NegativeWidth");
+    ASSERT_NAMED(height >= T(0), "Rectangle.TwoPointConstructor.NegativeHeight");
   }
   
   

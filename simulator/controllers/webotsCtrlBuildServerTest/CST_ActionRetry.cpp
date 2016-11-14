@@ -127,7 +127,7 @@ namespace Anki {
             m.idTag = 9;
             m.numRetries = 2;
             // Pickup object 0
-            m.action.Set_pickupObject(ExternalInterface::PickupObject(0, motionProfile2, 0, false, true, false));
+            m.action.Set_pickupObject(ExternalInterface::PickupObject(0, motionProfile2, 0, false, true, false, true));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -185,7 +185,7 @@ namespace Anki {
             m.parallel = false;
             m.numRetries = 5;
             // Pickup object 1
-            m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PickupObject(1, motionProfile2, 0, false, true, false));
+            m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PickupObject(1, motionProfile2, 0, false, true, false, true));
             ExternalInterface::MessageGameToEngine message;
             
             message.Set_QueueCompoundAction(m);
@@ -211,7 +211,7 @@ namespace Anki {
             m.parallel = false;
             m.numRetries = 5;
             // Place object 1 on object 0
-            m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PlaceOnObject(0, motionProfile2, 0, false, true, false));
+            m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PlaceOnObject(0, motionProfile2, 0, false, true, false, true));
             ExternalInterface::MessageGameToEngine message;
             
             message.Set_QueueCompoundAction(m);
@@ -260,7 +260,7 @@ namespace Anki {
         m.parallel = false;
         m.numRetries = 5;
         // Place object 1 on object 0
-        m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PlaceOnObject(0, motionProfile2, 0, false, true, false));
+        m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PlaceOnObject(0, motionProfile2, 0, false, true, false, true));
         ExternalInterface::MessageGameToEngine message;
         
         message.Set_QueueCompoundAction(m);

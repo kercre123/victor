@@ -1,0 +1,10 @@
+{
+  "behaviorType": "CubeLiftWorkout",
+  "name": "cubeLiftWorkout",
+  "requiredUnlockId": "Workout",
+  "behaviorGroups": [
+    "SparksWorkout"
+  ],
+  
+  "flatScore": 7.0
+}

@@ -30,6 +30,7 @@ namespace Cozmo {
         private bool _IsDrivingLift = false;
 
         private bool _IsPerformingAction = false;
+
         private bool IsPerformingAction {
           get { return _IsPerformingAction; }
           set {
@@ -59,45 +60,45 @@ namespace Cozmo {
           _CurrentRobot.SetLiftHeight(_TargetLiftFactor);
 
           GameObject slide = _DroneModeGame.SharedMinigameView.ShowFullScreenGameStateSlide(
-            _DroneModeGame.DroneModeViewPrefab.gameObject, "drone_mode_view_slide");
+                               _DroneModeGame.DroneModeViewPrefab.gameObject, "drone_mode_view_slide");
           _DroneModeControlsSlide = slide.GetComponent<DroneModeControlsSlide>();
           _DroneModeControlsSlide.InitializeCameraFeed(_CurrentRobot);
           _DroneModeControlsSlide.InitializeLiftSlider(_TargetLiftFactor);
 
           _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.LiftCubeButtonData,
-                                                     HandleLiftCubeButtonPressed,
-                                                     true, // interactableOnlyWhenCubeSeen
-                                                     false, // interactableOnlyWhenKnownFaceSeen
-                                                     "lift_cube_button",
-                                                     DroneModeControlsSlide.ActionContextType.CubeNotInLift);
+            HandleLiftCubeButtonPressed,
+            true, // interactableOnlyWhenCubeSeen
+            false, // interactableOnlyWhenKnownFaceSeen
+            "lift_cube_button",
+            DroneModeControlsSlide.ActionContextType.CubeNotInLift);
 
           _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.RollCubeButtonData,
-                                                     HandleRollCubeButtonPressed,
-                                                     true, // interactableOnlyWhenCubeSeen
-                                                     false, // interactableOnlyWhenKnownFaceSeen
-                                                     "roll_cube_button",
-                                                     DroneModeControlsSlide.ActionContextType.CubeNotInLift);
+            HandleRollCubeButtonPressed,
+            true, // interactableOnlyWhenCubeSeen
+            false, // interactableOnlyWhenKnownFaceSeen
+            "roll_cube_button",
+            DroneModeControlsSlide.ActionContextType.CubeNotInLift);
 
           _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.DropCubeButtonData,
-                                                     HandleDropCubeButtonPressed,
-                                                     false, // interactableOnlyWhenCubeSeen
-                                                     false, // interactableOnlyWhenKnownFaceSeen
-                                                     "drop_cube_button",
-                                                     DroneModeControlsSlide.ActionContextType.CubeInLift);
+            HandleDropCubeButtonPressed,
+            false, // interactableOnlyWhenCubeSeen
+            false, // interactableOnlyWhenKnownFaceSeen
+            "drop_cube_button",
+            DroneModeControlsSlide.ActionContextType.CubeInLift);
 
           _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.StackCubeButtonData,
-                                                     HandleStackCubeButtonPressed,
-                                                     true, // interactableOnlyWhenCubeSeen
-                                                     false, // interactableOnlyWhenKnownFaceSeen
-                                                     "stack_cube_button",
-                                                     DroneModeControlsSlide.ActionContextType.CubeInLift);
+            HandleStackCubeButtonPressed,
+            true, // interactableOnlyWhenCubeSeen
+            false, // interactableOnlyWhenKnownFaceSeen
+            "stack_cube_button",
+            DroneModeControlsSlide.ActionContextType.CubeInLift);
 
           _DroneModeControlsSlide.CreateActionButton(_DroneModeGame.DroneModeConfigData.SayNameButtonData,
-                                                     HandleSayNameButtonPressed,
-                                                     false, // interactableOnlyWhenCubeSeen
-                                                     true, // interactableOnlyWhenKnownFaceSeen
-                                                     "say_name_button",
-                                                     DroneModeControlsSlide.ActionContextType.FaceSeen);
+            HandleSayNameButtonPressed,
+            false, // interactableOnlyWhenCubeSeen
+            true, // interactableOnlyWhenKnownFaceSeen
+            "say_name_button",
+            DroneModeControlsSlide.ActionContextType.FaceSeen);
 
           _DroneModeControlsSlide.OnDriveSpeedSegmentValueChanged += HandleDriveSpeedValueChanged;
           _DroneModeControlsSlide.OnDriveSpeedSegmentChanged += HandleDriveSpeedFamilyChanged;
@@ -107,7 +108,7 @@ namespace Cozmo {
           EnableInput();
 
           UIManager.Instance.BackgroundColorController.SetBackgroundColor(UI.BackgroundColorController.BackgroundColor.TintMe,
-                                                                          _DroneModeControlsSlide.BackgroundColor);
+            _DroneModeControlsSlide.BackgroundColor);
           _DroneModeGame.SharedMinigameView.HideMiddleBackground();
 
           // DroneModeControlsSlide implements its own quit button so hide the shared one 
@@ -212,6 +213,7 @@ namespace Cozmo {
         }
 
         #region Drive Robot
+
         private void SendDriveRobotMessages() {
           if (Time.time - _LastMessageSentTimestamp > _kSendMessageInterval_sec
               || ShouldStopDriving(_TargetDriveSpeed_mmps, _CurrentDriveSpeed_mmps, _TargetTurnDirection)) {
@@ -293,8 +295,8 @@ namespace Cozmo {
         private void DriveHeadInternal() {
           _CurrentRobot.CancelCallback(HandleHeadMoveFinished);
           _CurrentRobot.SetHeadAngle(_TargetHeadAngle_rad, callback: HandleHeadMoveFinished, useExactAngle: true,
-                                     speed_radPerSec: _DroneModeGame.DroneModeConfigData.HeadTurnSpeed_radPerSec,
-                                     accel_radPerSec2: _DroneModeGame.DroneModeConfigData.HeadTurnAccel_radPerSec2);
+            speed_radPerSec: _DroneModeGame.DroneModeConfigData.HeadTurnSpeed_radPerSec,
+            accel_radPerSec2: _DroneModeGame.DroneModeConfigData.HeadTurnAccel_radPerSec2);
 
           _IsDrivingHead = true;
           _TargetHeadAngleChanged = false;
@@ -323,15 +325,15 @@ namespace Cozmo {
         private void DriveLiftInternal() {
           _CurrentRobot.CancelCallback(HandleLiftMoveFinished);
           _CurrentRobot.SetLiftHeight(_TargetLiftFactor,
-                                      speed_radPerSec: _DroneModeGame.DroneModeConfigData.LiftTurnSpeed_radPerSec,
-                                      accel_radPerSec2: _DroneModeGame.DroneModeConfigData.LiftTurnAccel_radPerSec2);
+            speed_radPerSec: _DroneModeGame.DroneModeConfigData.LiftTurnSpeed_radPerSec,
+            accel_radPerSec2: _DroneModeGame.DroneModeConfigData.LiftTurnAccel_radPerSec2);
 
           _IsDrivingLift = true;
         }
 
         private bool IsUserPointTurning(float targetDriveSpeed, float targetTurnDirection) {
           return targetDriveSpeed.IsNear(0f, _kDriveSpeedChangeThreshold_mmps)
-                                 && !targetTurnDirection.IsNear(0f, _kTurnDirectionChangeThreshold);
+          && !targetTurnDirection.IsNear(0f, _kTurnDirectionChangeThreshold);
         }
 
         private bool IsUserDriving(float targetDriveSpeed, float targetTurnDirection) {
@@ -340,8 +342,8 @@ namespace Cozmo {
 
         private bool ShouldStopDriving(float targetDriveSpeed, float currentDriveSpeed, float targetTurnDirection) {
           return targetDriveSpeed.IsNear(0f, _kDriveSpeedChangeThreshold_mmps)
-                                 && !currentDriveSpeed.IsNear(0f, _kDriveSpeedChangeThreshold_mmps)
-                                 && targetTurnDirection.IsNear(0f, _kTurnDirectionChangeThreshold);
+          && !currentDriveSpeed.IsNear(0f, _kDriveSpeedChangeThreshold_mmps)
+          && targetTurnDirection.IsNear(0f, _kTurnDirectionChangeThreshold);
         }
 
         private float DriveRobotWheels(float driveSpeed_mmps, float turnDirection) {
@@ -359,14 +361,14 @@ namespace Cozmo {
 
             float normalizedDriveSpeed = Mathf.Abs(driveSpeed_mmps) / _DroneModeGame.DroneModeConfigData.TurboSpeed_mmps;
             float minTurnRadius = Mathf.Lerp(_DroneModeGame.DroneModeConfigData.MinTurnArcRadius_mm,
-                                             _DroneModeGame.DroneModeConfigData.MinTurnArcRadiusAtMaxSpeed_mm,
-                                             normalizedDriveSpeed);
+                                    _DroneModeGame.DroneModeConfigData.MinTurnArcRadiusAtMaxSpeed_mm,
+                                    normalizedDriveSpeed);
 
             // Turn more sharply with a greater tilt
             float absTurnDirection = Mathf.Abs(turnDirection);
             arcRadius_mm = Mathf.Lerp(_DroneModeGame.DroneModeConfigData.MaxTurnArcRadius_mm,
-                                      minTurnRadius,
-                                      absTurnDirection);
+              minTurnRadius,
+              absTurnDirection);
             if (turnDirection > 0f) {
               arcRadius_mm *= -1;
             }
@@ -442,7 +444,7 @@ namespace Cozmo {
           IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
           if (targetObject != null && targetObject is ObservedObject && targetObject is LightCube) {
             _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
-            _CurrentRobot.PickupObject(targetObject as ObservedObject, callback: HandleActionFinished);
+            _CurrentRobot.PickupObject(targetObject as ObservedObject, checkForObjectOnTop: false, callback: HandleActionFinished);
             DisableInput();
             IsPerformingAction = true;
           }
@@ -452,7 +454,7 @@ namespace Cozmo {
           IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
           if (targetObject != null && targetObject is ObservedObject && targetObject is LightCube) {
             _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
-            _CurrentRobot.RollObject(targetObject as ObservedObject, callback: HandleActionFinished);
+            _CurrentRobot.RollObject(targetObject as ObservedObject, checkForObjectOnTop: false, callback: HandleActionFinished);
             DisableInput();
             IsPerformingAction = true;
           }
@@ -478,7 +480,7 @@ namespace Cozmo {
           IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
           if (targetObject != null && targetObject is ObservedObject && targetObject is LightCube) {
             _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
-            _CurrentRobot.PlaceOnObject(targetObject as ObservedObject, callback: HandleActionFinished);
+            _CurrentRobot.PlaceOnObject(targetObject as ObservedObject, checkForObjectOnTop: false, callback: HandleActionFinished);
             DisableInput();
             IsPerformingAction = true;
           }
@@ -488,7 +490,11 @@ namespace Cozmo {
           IVisibleInCamera targetObject = _DroneModeControlsSlide.CurrentlyFocusedObject;
           if (targetObject != null && targetObject is Face) {
             _CurrentRobot.DriveWheels(0f, 0f); // In case drive commands are being sent, thereby locking the wheels
-            _CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, sayName: true, callback: HandleActionFinished);
+            _CurrentRobot.TurnTowardsFace((Face)targetObject,  
+              sayName: true, 
+              namedTrigger: Anki.Cozmo.AnimationTrigger.AcknowledgeFaceNamed,
+              unnamedTrigger: Anki.Cozmo.AnimationTrigger.AcknowledgeFaceUnnamed,
+              callback: HandleActionFinished);
             DisableInput();
             IsPerformingAction = true;
           }

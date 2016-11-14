@@ -650,7 +650,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -672,6 +672,7 @@ MonoBehaviour:
   m_Text: '#onboarding.Phase4.Body3sparks'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11411860
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -888,6 +889,7 @@ MonoBehaviour:
   m_Text: '#onboarding.Phase4.Body2a'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11458894
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -901,7 +903,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -923,6 +925,7 @@ MonoBehaviour:
   m_Text: Tap Repeatedly!
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11462188
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1080,6 +1083,7 @@ MonoBehaviour:
   m_Text: '#onboarding.Phase4.Body2b'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!114 &11494566
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1093,6 +1097,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 130312, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
   ModifiedValues:
+  - ObjectPath: ButtonText
+    FieldName: Anki.UI.AnkiTextLabel:m_RaycastTarget
+    JsonValue: false
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#button.continue"'
@@ -1168,7 +1175,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -1190,6 +1197,7 @@ MonoBehaviour:
   m_Text: '#onboarding.Phase4.Body3bits'
   _AllUppercase: 0
   GlowText: 0
+  IsRaycastBlocker: 0
 --- !u!198 &19862624
 ParticleSystem:
   m_ObjectHideFlags: 1
@@ -1405,7 +1413,7 @@ ParticleSystem:
         rgba: 4294967295
       maxColor:
         serializedVersion: 2
-        rgba: 4281204695
+        rgba: 4285791697
       minMaxState: 0
     startSize:
       scalar: 3
@@ -2864,7 +2872,7 @@ ParticleSystem:
         rgba: 4294967295
       maxColor:
         serializedVersion: 2
-        rgba: 4280483584
+        rgba: 4281656235
       minMaxState: 0
     startSize:
       scalar: 3
