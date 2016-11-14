@@ -375,7 +375,15 @@ message TurnTowardsFace {
     float_32 tiltAccel_radPerSec2 = 0.0,
     float_32 tiltTolerance_rad = 0.0,
 
-    bool     sayName = 0, // If we see the given face ID at end, and it is named, say that name
+    // If sayName is true:
+    // - If we face the given face ID see after turnin is named, say that name.
+    // - Use specified animation namedTrigger (or none if AnimationTrigger::Count)
+    // - If face is unnammed, play unnamedTrigger (unless it is AnimationTrigger::Count)
+    // If sayName is false, both triggers are unused/ignored.
+    bool             sayName = 0,
+    AnimationTrigger namedTrigger,
+    AnimationTrigger unnamedTrigger,
+
     uint_8   robotID
 }
 
@@ -407,7 +415,15 @@ message TurnTowardsLastFacePose {
     float_32 tiltAccel_radPerSec2 = 0.0,
     float_32 tiltTolerance_rad = 0.0,
 
-    bool     sayName = 0, // If a named face is seen at end, say that name
+    // If sayName is true:
+    // - If we face we see after turnin is named, say that name.
+    // - Use specified animation namedTrigger (or none if AnimationTrigger::Count)
+    // - If face is unnammed, play unnamedTrigger (unless it is AnimationTrigger::Count)
+    // If sayName is false, both triggers are unused/ignored.
+    bool             sayName = 0,
+    AnimationTrigger namedTrigger,
+    AnimationTrigger unnamedTrigger,
+
     uint_8   robotID
 }
 
