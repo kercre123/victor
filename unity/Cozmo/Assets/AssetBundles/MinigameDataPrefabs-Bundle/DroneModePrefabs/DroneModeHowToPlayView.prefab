@@ -2207,7 +2207,7 @@ MonoBehaviour:
     JsonValue: 1
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
-    JsonValue: 3
+    JsonValue: 0
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#droneMode.text.cozmoReticleHeader"'
@@ -3300,8 +3300,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -119, y: 418}
-  m_SizeDelta: {x: 1501, y: 200}
+  m_AnchoredPosition: {x: -4.7499084, y: 404.11}
+  m_SizeDelta: {x: 1729.5, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22474462
 RectTransform:
