@@ -419,7 +419,8 @@ bool RobotDataBackupManager::GetFileToUseForBackup(std::string& file,
   }
   else
   {
-    PRINT_NAMED_ERROR("RobotDataBackupManager.GetFileToUseForBackup.ReadJson.NoFile", "No backup stats file found");
+    PRINT_NAMED_WARNING("RobotDataBackupManager.GetFileToUseForBackup.ReadJson.NoFile",
+                        "No backup stats file found");
     return false;
   }
 }
