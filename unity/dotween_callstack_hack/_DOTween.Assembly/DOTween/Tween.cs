@@ -126,9 +126,21 @@ namespace DG.Tweening
 
         internal Tween()
         {
-          constructorCallstack = System.Environment.StackTrace;
+            constructorCallstack = StripDoTweenCallstack(System.Environment.StackTrace);
         }
-        
+
+        private string StripDoTweenCallstack(string stackString)
+        {
+            string[] stackStringArray = stackString.Split('\n');
+            string result = "";
+            foreach (string stackItem in stackStringArray) {
+                if (!stackItem.Contains("DG.Tweening") && !stackItem.Contains("System.Environment.get_StackTrace()")) {
+                    result += stackItem + '\n';
+                }
+            }
+            return result;
+        }
+
         ///<summary>
         /// should called when an exception that is not a DoTweenException occurs to
         /// spit out a more useful callstack
