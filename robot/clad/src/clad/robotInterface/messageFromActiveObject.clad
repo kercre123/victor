@@ -74,7 +74,7 @@ message ObjectTapped
 
 message ObjectPowerLevel
 {
-  uint_8  objectID,
+  uint_32 objectID, // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!
   uint_8  batteryLevel
 }
 
