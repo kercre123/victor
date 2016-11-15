@@ -1224,8 +1224,8 @@ MonoBehaviour:
     _ButtonColor: {r: 0.14117648, g: 0.88235295, b: 0.9098039, a: 1}
     _FocusTextColor: {r: 0.7529412, g: 0.9882353, b: 1, a: 1}
     _FocusFrameColor: {r: 0.039215688, g: 0.2, b: 0.32156864, a: 1}
-    _TopCameraColor: {r: 0.4156863, g: 0.64705884, b: 0.6627451, a: 1}
-    _BottomCameraColor: {r: 0.19607845, g: 0.427451, b: 0.5921569, a: 1}
+    _TopCameraColor: {r: 0.16862746, g: 0.42352942, b: 0.44313726, a: 1}
+    _BottomCameraColor: {r: 0.09803922, g: 0.25882354, b: 0.3764706, a: 1}
     _TopGradientColor: {r: 0.015686275, g: 0.2784314, b: 0.28627452, a: 1}
     _BottomGradientColor: {r: 0.011764707, g: 0.1254902, b: 0.20784315, a: 1}
     _SpeedSliderHandleSprites:
@@ -1239,8 +1239,8 @@ MonoBehaviour:
     _ButtonColor: {r: 0.03529412, g: 0.8352941, b: 0.003921569, a: 1}
     _FocusTextColor: {r: 0.7529412, g: 1, b: 0.8156863, a: 1}
     _FocusFrameColor: {r: 0.011764706, g: 0.19607843, b: 0.043137256, a: 1}
-    _TopCameraColor: {r: 0.007843138, g: 0.43921572, b: 0.003921569, a: 1}
-    _BottomCameraColor: {r: 0.011764707, g: 0.227451, b: 0.003921569, a: 1}
+    _TopCameraColor: {r: 0.015686275, g: 0.29411766, b: 0.011764706, a: 1}
+    _BottomCameraColor: {r: 0.011764707, g: 0.16078432, b: 0.007843138, a: 1}
     _TopGradientColor: {r: 0.011764707, g: 0.16078432, b: 0.007843138, a: 1}
     _BottomGradientColor: {r: 0.003921569, g: 0.09411766, b: 0.003921569, a: 1}
     _SpeedSliderHandleSprites:
