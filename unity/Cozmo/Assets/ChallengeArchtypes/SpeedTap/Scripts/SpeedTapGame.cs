@@ -181,6 +181,10 @@ namespace SpeedTap {
       MaxTapDelay_percent = SkillSystem.Instance.GetSkillVal(_kTapDelayMax);
       // End config based values
       InitializeMinigameObjects(1);
+
+      // Removes engine holding a delay to saveguard against "phantom taps"
+      RobotEngineManager.Instance.Message.EnableBlockTapFilter = Singleton<Anki.Cozmo.ExternalInterface.EnableBlockTapFilter>.Instance.Initialize(false);
+      RobotEngineManager.Instance.SendMessage();
     }
 
     // Use this for initialization
@@ -230,6 +234,10 @@ namespace SpeedTap {
         CurrentRobot.OnLightCubeRemoved -= LightCubeRemoved;
       }
       RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.AnimationEvent>(OnRobotAnimationEvent);
+
+      // Adds back in engine holding a delay to saveguard against "phantom taps"
+      RobotEngineManager.Instance.Message.EnableBlockTapFilter = Singleton<Anki.Cozmo.ExternalInterface.EnableBlockTapFilter>.Instance.Initialize(true);
+      RobotEngineManager.Instance.SendMessage();
     }
 
     public void InitialCubesDone() {

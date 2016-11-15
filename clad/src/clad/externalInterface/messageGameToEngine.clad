@@ -167,6 +167,9 @@ message EnableBlockTapFilter {
   bool enable
 }
 
+message GetBlockTapFilterStatus {
+}
+
 // StopAllMotors
 message StopAllMotors {
 

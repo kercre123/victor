@@ -22,8 +22,9 @@
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/transport/connectionStats.h"
 #include "util/math/math.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 
-CONSOLE_VAR(int16_t, kTapIntensityMin, "TapFilter.IntesityMin", 65);
+CONSOLE_VAR(int16_t, kTapIntensityMin, "TapFilter.IntesityMin", 32);
 CONSOLE_VAR(Anki::TimeStamp_t, kTapWaitOffset_ms, "TapFilter.WaitOffsetTime", 75);
 
 namespace Anki {
@@ -48,6 +49,15 @@ BlockTapFilterComponent::BlockTapFilterComponent(Robot& robot)
                                                                                         ExternalInterface::MessageGameToEngineTag::EnableBlockTapFilter,
                                                                                         std::bind(&BlockTapFilterComponent::HandleEnableTapFilter, this, std::placeholders::_1)));
   }
+  
+#if ANKI_DEV_CHEATS
+  if( _robot.GetContext()->GetExternalInterface() )
+  {
+    _debugGameToEngineSignalHandle =(_robot.GetContext()->GetExternalInterface()->Subscribe(
+                                                                                           ExternalInterface::MessageGameToEngineTag::GetBlockTapFilterStatus,
+                                                                                           std::bind(&BlockTapFilterComponent::HandleSendTapFilterStatus, this, std::placeholders::_1)));;
+  }
+#endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -88,7 +98,17 @@ void BlockTapFilterComponent::HandleEnableTapFilter(const AnkiEvent<ExternalInte
     PRINT_CH_INFO("BlockPool","BlockTapFilterComponent.HandleEnableTapFilter","on %d",_enabled);
   }
 }
-
+  
+#if ANKI_DEV_CHEATS
+void BlockTapFilterComponent::HandleSendTapFilterStatus(const AnkiEvent<ExternalInterface::MessageGameToEngine>& message)
+{
+  if( message.GetData().GetTag() == ExternalInterface::MessageGameToEngineTag::GetBlockTapFilterStatus)
+  {
+    _robot.Broadcast(ExternalInterface::MessageEngineToGame(
+                                        Anki::Cozmo::ExternalInterface::BlockTapFilterStatus(_enabled,kTapIntensityMin,kTapWaitOffset_ms)));
+  }
+}
+#endif
   
 void BlockTapFilterComponent::HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {

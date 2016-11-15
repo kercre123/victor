@@ -49,6 +49,11 @@ private:
   bool _enabled;
   Anki::TimeStamp_t _waitToTime;
   std::list<ObjectTapped> _tapInfo;
+  
+#if ANKI_DEV_CHEATS
+  void HandleSendTapFilterStatus(const AnkiEvent<ExternalInterface::MessageGameToEngine>& message);
+  Signal::SmartHandle _debugGameToEngineSignalHandle;
+#endif
 
 };
 

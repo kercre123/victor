@@ -5,16 +5,14 @@ using System.Collections.Generic;
 
 public class TestTapPane : MonoBehaviour {
 
-
-  [SerializeField]
-  private Text _InfoLabel;
-
-
   [SerializeField]
   private Button _IntensityButton;
 
   [SerializeField]
   private InputField _IntensityInput;
+
+  [SerializeField]
+  private Toggle _FilterEnabledCheckbox;
 
   // Shortcut for 
   //CONSOLE_VAR(int16_t, TapIntensityMin, "TapFilter.IntesityMin", 55);
@@ -29,6 +27,8 @@ public class TestTapPane : MonoBehaviour {
   void Start() {
     _IntensityButton.onClick.AddListener(OnIntensityButton);
 
+    _FilterEnabledCheckbox.onValueChanged.AddListener(HandleEnableChanged);
+
     IRobot CurrentRobot = RobotEngineManager.Instance.CurrentRobot;
     // Turn off the light components
     if (CurrentRobot != null) {
@@ -40,6 +40,10 @@ public class TestTapPane : MonoBehaviour {
       //  DebugConsole Intensity changes...
       RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.VerifyDebugConsoleVarMessage>(HandleInitIntensity);
       RobotEngineManager.Instance.Message.GetDebugConsoleVarMessage = new Anki.Cozmo.ExternalInterface.GetDebugConsoleVarMessage(_kTapIntensityMinKey);
+      RobotEngineManager.Instance.SendMessage();
+
+      RobotEngineManager.Instance.AddCallback<Anki.Cozmo.ExternalInterface.BlockTapFilterStatus>(HandleInitEnabled);
+      RobotEngineManager.Instance.Message.GetBlockTapFilterStatus = new Anki.Cozmo.ExternalInterface.GetBlockTapFilterStatus();
       RobotEngineManager.Instance.SendMessage();
 
       foreach (KeyValuePair<int, LightCube> lightCube in CurrentRobot.LightCubes) {
@@ -61,6 +65,7 @@ public class TestTapPane : MonoBehaviour {
 
     LightCube.TappedAction -= OnBlockTapped;
 
+    RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.BlockTapFilterStatus>(HandleInitEnabled);
     RobotEngineManager.Instance.RemoveCallback<Anki.Cozmo.ExternalInterface.VerifyDebugConsoleVarMessage>(HandleInitIntensity);
   }
 
@@ -91,4 +96,13 @@ public class TestTapPane : MonoBehaviour {
   private void OnIntensityButton() {
     RobotEngineManager.Instance.SetDebugConsoleVar(_kTapIntensityMinKey, _IntensityInput.text);
   }
+
+  private void HandleInitEnabled(Anki.Cozmo.ExternalInterface.BlockTapFilterStatus msg) {
+    _FilterEnabledCheckbox.isOn = msg.enabled;
+  }
+  private void HandleEnableChanged(bool isOn) {
+    RobotEngineManager.Instance.Message.EnableBlockTapFilter = Singleton<Anki.Cozmo.ExternalInterface.EnableBlockTapFilter>.Instance.Initialize(isOn);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
 }
