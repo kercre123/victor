@@ -140,6 +140,7 @@ void SparksBehaviorChooser::OnSelected()
   mngr.RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeFace, false);
   mngr.RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCubeMoved, false);
   mngr.RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToFrustration, false);
+  mngr.RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToPet, false);
 
 }
   
@@ -154,6 +155,7 @@ void SparksBehaviorChooser::OnDeselected()
   mngr.RequestEnableReactionaryBehavior(GetName(), BehaviorType::AcknowledgeFace, true);
   mngr.RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToCubeMoved, true);
   mngr.RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToFrustration, true);
+  mngr.RequestEnableReactionaryBehavior(GetName(), BehaviorType::ReactToPet, true);
 
 }
   

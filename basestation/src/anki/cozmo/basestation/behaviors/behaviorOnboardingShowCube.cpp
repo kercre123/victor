@@ -414,10 +414,12 @@ bool BehaviorOnboardingShowCube::IsSequenceComplete()
   
 void BehaviorOnboardingShowCube::EnableSpecificReactionaryBehavior(Robot& robot, bool enable)
 {
-  robot.GetBehaviorManager().RequestEnableReactionaryBehavior("onboarding", BehaviorType::AcknowledgeFace, enable);
-  robot.GetBehaviorManager().RequestEnableReactionaryBehavior("onboarding", BehaviorType::AcknowledgeObject, enable);
-  robot.GetBehaviorManager().RequestEnableReactionaryBehavior("onboarding", BehaviorType::ReactToCubeMoved, enable);
-  robot.GetBehaviorManager().RequestEnableReactionaryBehavior("onboarding", BehaviorType::ReactToFrustration, enable);
+  BehaviorManager& mgr = robot.GetBehaviorManager();
+  mgr.RequestEnableReactionaryBehavior("onboarding", BehaviorType::AcknowledgeFace, enable);
+  mgr.RequestEnableReactionaryBehavior("onboarding", BehaviorType::AcknowledgeObject, enable);
+  mgr.RequestEnableReactionaryBehavior("onboarding", BehaviorType::ReactToCubeMoved, enable);
+  mgr.RequestEnableReactionaryBehavior("onboarding", BehaviorType::ReactToFrustration, enable);
+  mgr.RequestEnableReactionaryBehavior("onboarding", BehaviorType::ReactToPet, enable);
 }
 
   
