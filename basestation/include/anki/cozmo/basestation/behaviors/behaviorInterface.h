@@ -62,6 +62,7 @@ namespace ExternalInterface {
 class MessageEngineToGame;
 class MessageGameToEngine;
 struct RobotCompletedAction;
+struct BehaviorObjectiveAchieved;
 }
 template<typename TYPE> class AnkiEvent;
   
@@ -383,6 +384,7 @@ private:
 
   // this is an internal handler just form StartActing
   void HandleActionComplete(const ExternalInterface::RobotCompletedAction& msg);
+  void HandleBehaviorObjective(const ExternalInterface::BehaviorObjectiveAchieved& msg);
   
   typedef std::set<BehaviorType>::iterator BehaviorIter;
   // Used internally to delete 
@@ -418,6 +420,10 @@ private:
   float                   _flatScore;
   // used to allow short times during which repetitionPenalties don't apply
   float                   _nextTimeRepetitionPenaltyApplies_s;
+
+  // if this behavior objective gets sent (by any behavior), then consider this behavior to have been running
+  // (for purposes of repetition penalty, aka cooldown)
+  BehaviorObjective _cooldownOnObjective = BehaviorObjective::Count;
   
   Robot& _robot;
     

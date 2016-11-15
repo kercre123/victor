@@ -5,5 +5,7 @@
   "behaviorGroups": [
       "FP_PlayAlone"
   ],
-  "flatScore": 4.0
+  "flatScore": 4.0,
+
+  "considerThisHasRunForBehaviorObjective": "BuiltPyramid"
 }

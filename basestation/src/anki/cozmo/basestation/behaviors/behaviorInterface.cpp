@@ -12,23 +12,24 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/aiInformationAnalysis/aiInformationAnalyzer.h"
+#include "anki/cozmo/basestation/audio/behaviorAudioClient.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
+#include "anki/cozmo/basestation/behaviors/behaviorObjectiveHelpers.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotManager.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -58,6 +59,7 @@ static const char* kRequiredDriveOffChargerKey   = "requiredRecentDriveOffCharge
 static const char* kRequiredParentSwitchKey      = "requiredRecentSwitchToParent_sec";
 static const char* kDisableReactionaryDefault    = "disableByDefault";
 static const char* kExecutableBehaviorTypeKey    = "executableBehaviorType";
+static const char* kCooldownOnObjectiveKey       = "considerThisHasRunForBehaviorObjective";
   
 static const int kMaxResumesFromCliff            = 2;
 static const float kCooldownFromCliffResumes_sec     = 15.0;
@@ -94,6 +96,14 @@ IBehavior::IBehavior(Robot& robot, const Json::Value& config)
                                 ASSERT_NAMED(event.GetData().GetTag() == EngineToGameTag::RobotCompletedAction,
                                              "Wrong event type from callback");
                                 HandleActionComplete(event.GetData().Get_RobotCompletedAction());
+                              } ));
+
+    _eventHandles.push_back(_robot.GetExternalInterface()->Subscribe(
+                              EngineToGameTag::BehaviorObjectiveAchieved,
+                              [this](const EngineToGameEvent& event) {
+                                ASSERT_NAMED(event.GetData().GetTag() == EngineToGameTag::BehaviorObjectiveAchieved,
+                                             "Wrong event type from callback");
+                                HandleBehaviorObjective(event.GetData().Get_BehaviorObjectiveAchieved());
                               } ));
   }
 }
@@ -186,6 +196,21 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
   if (_repetitionPenalty.GetNumNodes() == 0)
   {
     _repetitionPenalty.AddNode(0.0f, 1.0f); // no penalty for any value
+  }
+
+  // - - - - - - - - - -
+  // cooldown on other objective
+  // - - - - - - - - - -
+
+  const Json::Value& cooldownOnObjectiveJson = config[kCooldownOnObjectiveKey];
+  if (!cooldownOnObjectiveJson.isNull()) {
+    const char* objectiveStr = cooldownOnObjectiveJson.asCString();
+    _cooldownOnObjective = BehaviorObjectiveFromString(objectiveStr);
+    if( _cooldownOnObjective == BehaviorObjective::Count ) {
+      PRINT_NAMED_WARNING("IBehavior.BadBehaviorObjective",
+                          "could not convert '%s' to valid behavior objective",
+                          objectiveStr);
+    }
   }
 
   // - - - - - - - - - -
@@ -724,6 +749,16 @@ void IBehavior::HandleActionComplete(const ExternalInterface::RobotCompletedActi
     if( IsRunning() && _actingCallback) {
       _actingCallback(msg);
     }
+  }
+}
+
+void IBehavior::HandleBehaviorObjective(const ExternalInterface::BehaviorObjectiveAchieved& msg)
+{
+  if( _cooldownOnObjective != BehaviorObjective::Count && msg.behaviorObjective == _cooldownOnObjective ) {
+    // set last run time now (even though this behavior may not have run) so that it will incur repetition
+    // penalty as if it had run. This is useful as a way to sort of "share" cooldowns between multiple
+    // behaviors which are trying to do the same thing (but only if they succeed)
+    _lastRunTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   }
 }
 
