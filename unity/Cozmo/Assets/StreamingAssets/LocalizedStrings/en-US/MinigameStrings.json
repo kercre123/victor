@@ -141,9 +141,6 @@
   "droneMode.text.howToPlaySpeed": {
     "translation": "Drag and hold to move Cozmo forward or backward.\nLet go to stop."
   },
-  "droneMode.text.howToPlayHead": {
-    "translation": "Drag to tilt Cozmo's view up or down."
-  },
   "droneMode.text.toggleNightVision": {
     "translation": "Tap to toggle Nightvision On or Off"
   },

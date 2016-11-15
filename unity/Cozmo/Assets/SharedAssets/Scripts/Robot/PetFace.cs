@@ -2,6 +2,9 @@
 using G2U = Anki.Cozmo.ExternalInterface;
 
 public class PetFace : IVisibleInCamera {
+  private const uint _kFindPetFaceTimeoutFrames = 1;
+  private int _ConsecutiveVisionFramesNotSeen = 0;
+
   public delegate void InFieldOfViewStateChangedHandler(PetFace faceChanged, bool newState);
 
   public event InFieldOfViewStateChangedHandler InFieldOfViewStateChanged;
@@ -70,5 +73,14 @@ public class PetFace : IVisibleInCamera {
     _PetType = message.petType;
     IsInFieldOfView = true;
     _TimesObserved = message.numTimesObserved;
+    _ConsecutiveVisionFramesNotSeen = 0;
+  }
+
+  public void MarkNotVisibleThisFrame() {
+    // If not seen frame count of cube is greater than limit, mark object NotVisible
+    _ConsecutiveVisionFramesNotSeen++;
+    if (_ConsecutiveVisionFramesNotSeen > _kFindPetFaceTimeoutFrames) {
+      IsInFieldOfView = false;
+    }
   }
 }

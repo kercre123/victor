@@ -1753,7 +1753,7 @@ MonoBehaviour:
     JsonValue: 5
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"#droneMode.text.howToPlayHead"'
+    JsonValue: '"#droneMode.text.switchHeadOrLift"'
   ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
 --- !u!114 &11454482
@@ -1842,7 +1842,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: ACTION
+  m_Text: '#droneMode.button.action.sayName'
   _AllUppercase: 0
   GlowText: 0
   IsRaycastBlocker: 0
@@ -3677,7 +3677,7 @@ CanvasGroup:
   m_Enabled: 1
   m_Alpha: 1
   m_Interactable: 1
-  m_BlocksRaycasts: 1
+  m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
 --- !u!225 &22577328
 CanvasGroup:

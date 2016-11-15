@@ -775,38 +775,69 @@ public class Robot : IRobot {
   }
 
   public void FinishedProcessingImage(Anki.Cozmo.ExternalInterface.RobotProcessedImage message) {
-
     uint engineTimestamp = message.timestamp;
     // Update the robot's current timestamp if the new one is newer
     if (engineTimestamp >= _LastProcessedVisionFrameEngineTimestamp) {
       _LastProcessedVisionFrameEngineTimestamp = engineTimestamp;
 
-      // Iterate through cubes / charger and increase not seen frame count of cube if 
-      // cube's last seen timestamp is outdated / less than robot's current timestamp
-      if (Charger != null && Charger.LastSeenEngineTimestamp < engineTimestamp) {
-        Charger.MarkNotVisibleThisFrame();
-      }
-      foreach (var kvp in LightCubes) {
-        if (kvp.Value.LastSeenEngineTimestamp < engineTimestamp) {
-          kvp.Value.MarkNotVisibleThisFrame();
-        }
-      }
-      foreach (var face in Faces) {
-        if (face.LastSeenEngineTimestamp < engineTimestamp) {
-          face.MarkNotVisibleThisFrame();
+      bool isMarkersFrame = false;
+      bool isFaceFrame = false;
+      bool isPetFrame = false;
+      for (int i = 0; i < message.visionModes.Length; i++) {
+        switch (message.visionModes[i]) {
+        case VisionMode.DetectingMarkers:
+          isMarkersFrame = true;
+          break;
+        case VisionMode.DetectingFaces:
+          isFaceFrame = true;
+          break;
+        case VisionMode.DetectingPets:
+          isPetFrame = true;
+          break;
+        default:
+          break;
         }
       }
 
-      List<PetFace> petFacesToRemove = new List<PetFace>();
-      foreach (var petFace in PetFaces) {
-        if (petFace.LastSeenEngineTimestamp < engineTimestamp) {
-          petFacesToRemove.Add(petFace);
+      if (isMarkersFrame) {
+        // Iterate through cubes / charger and increase not seen frame count of cube if 
+        // cube's last seen timestamp is outdated / less than robot's current timestamp
+        if (Charger != null && Charger.LastSeenEngineTimestamp < engineTimestamp) {
+          Charger.MarkNotVisibleThisFrame();
+        }
+        foreach (var kvp in LightCubes) {
+          if (kvp.Value.LastSeenEngineTimestamp < engineTimestamp) {
+            kvp.Value.MarkNotVisibleThisFrame();
+          }
         }
       }
-      foreach (var petFaceToRemove in petFacesToRemove) {
-        PetFaces.Remove(petFaceToRemove);
-        if (OnPetFaceRemoved != null) {
-          OnPetFaceRemoved(petFaceToRemove);
+
+      if (isFaceFrame) {
+        foreach (var face in Faces) {
+          if (face.LastSeenEngineTimestamp < engineTimestamp) {
+            face.MarkNotVisibleThisFrame();
+          }
+        }
+      }
+
+      if (isPetFrame) {
+        foreach (var petFace in PetFaces) {
+          if (petFace.LastSeenEngineTimestamp < engineTimestamp) {
+            petFace.MarkNotVisibleThisFrame();
+          }
+        }
+
+        List<PetFace> petFacesToRemove = new List<PetFace>();
+        foreach (var petFace in PetFaces) {
+          if (!petFace.IsInFieldOfView) {
+            petFacesToRemove.Add(petFace);
+          }
+        }
+        foreach (var petFaceToRemove in petFacesToRemove) {
+          PetFaces.Remove(petFaceToRemove);
+          if (OnPetFaceRemoved != null) {
+            OnPetFaceRemoved(petFaceToRemove);
+          }
         }
       }
     }
