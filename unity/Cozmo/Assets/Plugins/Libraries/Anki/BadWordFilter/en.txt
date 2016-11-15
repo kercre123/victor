@@ -1,17 +1,18 @@
 # English
 # Last updated: 20.09.2016
 beaner#
-\bbewb\b#
+-\b\w*b[i!1]+[a]*[+t7]+ch\w*\b#bitch
 blow(-| )*job#
 blumpkin#
 bollo[ckx]k?#bollok
-\b\w*b[0o]{2,}b\w*\b#boob
 buggery?#
 chin(c|k)#chinc#http://www.urbandictionary.com/define.php?term=chink
 \b(?!\bscunthorpe\b)\w*[kc][u]+n[t7]\w*\b#cunt
+\b\w*(c|k)[0o]+[c]*k\w*\b#cock
 \bdago\b#
 deggo#
 \bd[i!1][c]*k\w*\b#dick
+d[0o]{2,}chbag#
 \bfag(g)?\w*\b#fag(g)
 \b\w*(ph|f)[0uoae]+[c|k]*[u]*k\w*\b#fuck
 \bfuct\b#
@@ -19,6 +20,8 @@ futanari#
 \bfux\b#
 \bgino\b#
 go[k]{2,}un#
+\b\w*god(-| )*dam\w*\b#
+\b\w*godam\w*\b#
 g[0o]{2,}(-| )*girl(s)?#
 g[0o]{2,}k#gook
 \bgringo\b#
@@ -51,6 +54,8 @@ mcfagget#
 \bmick\b#
 nawashi#
 nig(-| )*nog#
+nigger#
+nigga#
 nonce#
 omorashi#
 \bpaki\b#
@@ -61,6 +66,7 @@ pan[0o]{2,}ch#
 pollock#
 p[0o]{2,}f#poof
 porch(-| )*monkey#
+pr[i|1]ck#
 \bpunan\w*\b#
 punta#
 pusse#
@@ -74,6 +80,7 @@ s_h_i_t#
 \bshum\b#
 \bslag\w*\b#
 slanteye#
+\b\w*[5s]lu[7t]\w*\b#slut
 \bspac\b#
 \bspic\b#
 spick#
