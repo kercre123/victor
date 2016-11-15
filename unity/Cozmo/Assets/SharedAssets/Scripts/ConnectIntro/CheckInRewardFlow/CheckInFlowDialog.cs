@@ -27,24 +27,6 @@ namespace Cozmo.CheckInFlow.UI {
     private Anki.Cozmo.Audio.AudioEventParameter _RewardCollectSound = Anki.Cozmo.Audio.AudioEventParameter.InvalidEvent;
 
     [SerializeField]
-    private CozmoButton _PrivacyPolicyButton;
-
-    [SerializeField]
-    private CanvasGroup _PrivacyPolicyCanvasGroup;
-
-    [SerializeField]
-    private string _PrivacyPolicyFileName;
-
-    [SerializeField]
-    private CozmoButton _TermsOfUseButton;
-
-    [SerializeField]
-    private CanvasGroup _TermsOfUseCanvasGroup;
-
-    [SerializeField]
-    private string _TermsOfUseFileName;
-
-    [SerializeField]
     private Cozmo.UI.CozmoButton _EnvelopeButton;
 
     [SerializeField]
@@ -160,16 +142,6 @@ namespace Cozmo.CheckInFlow.UI {
     }
 
     private void InitializeButtons() {
-      _PrivacyPolicyButton.Initialize(() => {
-        ScrollingTextView view = UIManager.OpenView<ScrollingTextView>(AlertViewLoader.Instance.ScrollingTextViewPrefab, (ScrollingTextView v) => { v.DASEventViewName = "privacy_policy_view"; });
-        view.Initialize(Localization.Get(LocalizationKeys.kPrivacyPolicyTitle), Localization.ReadLocalizedTextFromFile(_PrivacyPolicyFileName));
-      }, "privacy_policy_button", "checkin_dialog");
-
-      _TermsOfUseButton.Initialize(() => {
-        ScrollingTextView view = UIManager.OpenView<ScrollingTextView>(AlertViewLoader.Instance.ScrollingTextViewPrefab, (ScrollingTextView v) => { v.DASEventViewName = "terms_of_use_view"; });
-        view.Initialize(Localization.Get(LocalizationKeys.kLabelTermsOfUse), Localization.ReadLocalizedTextFromFile(_TermsOfUseFileName));
-      }, "terms_of_use_button", "checkin_dialog");
-
       _EnvelopeButton.Initialize(HandleEnvelopeButton, "envelope_button", "checkin_dialog");
       _EnvelopeButton.Text = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ProfileName;
 
@@ -241,8 +213,6 @@ namespace Cozmo.CheckInFlow.UI {
       _EnvelopeAnimator.SetBool("PlayOpenAnimation", true);
       _EnvelopeOpenEventScript.OnEnvelopeOpen += HandleEnvelopeOpenedEvent;
       _EnvelopeOpenEventScript.OnEnvelopeStartExit += HandleEnvelopeStartExitEvent;
-
-      FadeOutPolicyButtons();
     }
 
     public void HandleEnvelopeOpenedEvent() {
@@ -649,7 +619,6 @@ namespace Cozmo.CheckInFlow.UI {
     private float _ConnectButtonFadeDuration = 1.5f;
 
     private void HandleAllStreakAnimationEnd() {
-      FadeInPolicyButtons();
       _ConnectContainer.SetActive(true);
 
       Sequence rewardSequence = DOTween.Sequence();
@@ -895,28 +864,6 @@ namespace Cozmo.CheckInFlow.UI {
       }
       _MainUISequence = sequence;
       _MainUISequence.Play();
-    }
-
-    public void FadeOutPolicyButtons() {
-      _PrivacyPolicyButton.Interactable = false;
-      _TermsOfUseButton.Interactable = false;
-
-      Sequence policySeqeuence = DOTween.Sequence();
-      policySeqeuence.Append(_PrivacyPolicyCanvasGroup.DOFade(0f, UIDefaultTransitionSettings.Instance.FadeOutTransitionDurationSeconds)
-                      .SetEase(UIDefaultTransitionSettings.Instance.FadeOutEasing));
-      policySeqeuence.Join(_TermsOfUseCanvasGroup.DOFade(0f, UIDefaultTransitionSettings.Instance.FadeOutTransitionDurationSeconds)
-                      .SetEase(UIDefaultTransitionSettings.Instance.FadeOutEasing));
-    }
-
-    public void FadeInPolicyButtons() {
-      _PrivacyPolicyButton.Interactable = true;
-      _TermsOfUseButton.Interactable = true;
-
-      Sequence policySeqeuence = DOTween.Sequence();
-      policySeqeuence.Append(_PrivacyPolicyCanvasGroup.DOFade(1f, UIDefaultTransitionSettings.Instance.FadeInTransitionDurationSeconds)
-                      .SetEase(UIDefaultTransitionSettings.Instance.FadeInEasing));
-      policySeqeuence.Join(_TermsOfUseCanvasGroup.DOFade(1f, UIDefaultTransitionSettings.Instance.FadeInTransitionDurationSeconds)
-                      .SetEase(UIDefaultTransitionSettings.Instance.FadeInEasing));
     }
   }
 }
