@@ -314,6 +314,8 @@ void BehaviorAcknowledgeObject::FinishIteration(Robot& robot)
     BeginIteration(robot);
   };
   
+  // NOTE: this is not really sufficient logic, because we could fail to turn towards
+  // a remaining target object and then leave the head not facing this object. COZMO-7108
   if(HasDesiredReactionTargets(robot))
   {
     // Have other targets to react to, don't turn towards this target. Just run the callback.
