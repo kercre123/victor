@@ -314,6 +314,8 @@ void BehaviorAcknowledgeObject::FinishIteration(Robot& robot)
     BeginIteration(robot);
   };
   
+  // NOTE: this is not really sufficient logic, because we could fail to turn towards
+  // a remaining target object and then leave the head not facing this object. COZMO-7108
   if(HasDesiredReactionTargets(robot))
   {
     // Have other targets to react to, don't turn towards this target. Just run the callback.
@@ -322,8 +324,8 @@ void BehaviorAcknowledgeObject::FinishIteration(Robot& robot)
   else
   {
     // There's nothing else to react to, so turn back towards the target so we're
-    // left facing it
-    StartActing(new TurnTowardsObjectAction(robot, _currTarget, M_PI), callback);
+    // left facing it (as long as it wasn't too far to turn towards to begin with)
+    StartActing(new TurnTowardsObjectAction(robot, _currTarget, _params.maxTurnAngle_rad), callback);
   }
 }
  
