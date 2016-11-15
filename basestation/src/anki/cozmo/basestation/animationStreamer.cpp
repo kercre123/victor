@@ -1299,12 +1299,12 @@ namespace Cozmo {
           }
           else {
             if ( (BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _audioBufferingTime_ms) > kAnimationAudioAllowedBufferTime_ms ) {
-              PRINT_NAMED_ERROR("AnimationStreamer.ShouldProcessAnimationFrame",
-                                "Abort animation '%s' timed out after %d ms, audio event @ %d, buffer State %s",
-                                anim->GetName().c_str(),
-                                (BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _audioBufferingTime_ms),
-                                (streamingTime_ms - startTime_ms),
-                                Audio::RobotAudioAnimation::GetStringForAnimationState( _audioClient.GetCurrentAnimation()->GetAnimationState() ).c_str() );
+              PRINT_NAMED_WARNING("AnimationStreamer.ShouldProcessAnimationFrame",
+                                  "Abort animation '%s' timed out after %d ms, audio event @ %d, buffer State %s",
+                                  anim->GetName().c_str(),
+                                  (BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _audioBufferingTime_ms),
+                                  (streamingTime_ms - startTime_ms),
+                                  Audio::RobotAudioAnimation::GetStringForAnimationState( _audioClient.GetCurrentAnimation()->GetAnimationState() ).c_str() );
               
               if (kFullAnimationAbortOnAudioTimeout) {
                 // Abort the entire animation
