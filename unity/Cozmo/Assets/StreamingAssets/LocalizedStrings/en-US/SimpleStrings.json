@@ -69,6 +69,12 @@
   "button.leave": {
     "translation": "Leave"
   },
+  "button.back": {
+    "translation": "Back"
+  },
+  "button.next": {
+    "translation": "Next"
+  },
   "button.staySparked": {
     "translation": "Stay Sparked"
   },

@@ -316,7 +316,6 @@ public static class LocalizationKeys {
   public const string kDroneModeUnknownObjectReticleLabel = "droneMode.unknownObjectReticleLabel";
   public const string kDroneModeSafePlayTitle = "droneMode.safePlay.title";
   public const string kDroneModeSafePlayDescription = "droneMode.safePlay.description";
-  public const string kDroneModeButtonHowToPlayConfirm = "droneMode.button.howToPlayConfirm";
   public const string kDroneModeButtonActionSayName = "droneMode.button.action.sayName";
   public const string kDroneModeButtonActionLiftCube = "droneMode.button.action.liftCube";
   public const string kDroneModeButtonActionDropCube = "droneMode.button.action.dropCube";
@@ -325,6 +324,12 @@ public static class LocalizationKeys {
   public const string kDroneModeTextHowToPlaySteering = "droneMode.text.howToPlaySteering";
   public const string kDroneModeTextHowToPlaySpeed = "droneMode.text.howToPlaySpeed";
   public const string kDroneModeTextHowToPlayHead = "droneMode.text.howToPlayHead";
+  public const string kDroneModeTextToggleNightVision = "droneMode.text.toggleNightVision";
+  public const string kDroneModeTextRaiseLowerHead = "droneMode.text.raiseLowerHead";
+  public const string kDroneModeTextSwitchHeadOrLift = "droneMode.text.switchHeadOrLift";
+  public const string kDroneModeTextCozmoReticleHeader = "droneMode.text.cozmoReticleHeader";
+  public const string kDroneModeTextReticleOutlineDescrip = "droneMode.text.reticleOutlineDescrip";
+  public const string kDroneModeTextCozmoInteractionChoice = "droneMode.text.cozmoInteractionChoice";
   public const string kPlayhouseGame01TextHowToPlay = "playhouseGame01.text.howToPlay";
   public const string kMemoryMatchGameHowToPlay = "memoryMatchGame.howToPlay";
   public const string kMemoryMatchGameSoloHowToPlay = "memoryMatchGame.solo.howToPlay";
@@ -610,6 +615,8 @@ public static class LocalizationKeys {
   public const string kButtonDone = "button.done";
   public const string kButtonPlay = "button.play";
   public const string kButtonLeave = "button.leave";
+  public const string kButtonBack = "button.back";
+  public const string kButtonNext = "button.next";
   public const string kButtonStaySparked = "button.staySparked";
   public const string kButtonSoundsGood = "button.soundsGood";
   public const string kLabelPercentComplete = "label.percentComplete";
@@ -706,6 +713,8 @@ public static class LocalizationKeys {
   public const string kUnlockableMysteryDescription = "unlockable.Mystery.Description";
   public const string kUnlockableWorkoutTitle = "unlockable.Workout.Title";
   public const string kUnlockableWorkoutDescription = "unlockable.Workout.Description";
+  public const string kUnlockableWorkoutSparkButtonDescription = "unlockable.Workout.SparkButtonDescription";
+  public const string kUnlockableWorkoutSparkedStateDescription = "unlockable.Workout.SparkedStateDescription";
   public const string kUnlockableCubePounceTitle = "unlockable.CubePounce.Title";
   public const string kUnlockableCubePounceDescription = "unlockable.CubePounce.Description";
   public const string kUnlockableFaceEnrollmentTitle = "unlockable.FaceEnrollment.Title";

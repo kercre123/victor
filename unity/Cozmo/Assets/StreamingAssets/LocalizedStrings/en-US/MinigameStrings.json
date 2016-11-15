@@ -103,7 +103,7 @@
     "translation": "Unlock {0} Upgrade to use!"
   },
   "droneMode.unknownFaceReticleLabel": {
-    "translation": "Unknown Face"
+    "translation": "Human"
   },
   "droneMode.chargerReticleLabel": {
     "translation": "Charger"
@@ -120,11 +120,8 @@
   "droneMode.safePlay.description": {
     "translation": "- Explore indoors in well lit spaces\n- Drive on flat surfaces\n- Be careful of falling off edges\n- Stay close to Cozmo for the best experience"
   },
-  "droneMode.button.howToPlayConfirm": {
-    "translation": "Got it!"
-  },
   "droneMode.button.action.sayName": {
-    "translation": "Say Name"
+    "translation": "Greet"
   },
   "droneMode.button.action.liftCube": {
     "translation": "Lift Cube"
@@ -146,6 +143,24 @@
   },
   "droneMode.text.howToPlayHead": {
     "translation": "Drag to tilt Cozmo's view up or down."
+  },
+  "droneMode.text.toggleNightVision": {
+    "translation": "Tap to toggle Nightvision On or Off"
+  },
+  "droneMode.text.raiseLowerHead": {
+    "translation": "Drag to move Cozmo's Head or Lift Up and Down"
+  },
+  "droneMode.text.switchHeadOrLift": {
+    "translation": "Tap to switch between Head and Lift Control"
+  },
+  "droneMode.text.cozmoReticleHeader": {
+    "translation": "When Cozmo selects an object you can see it here"
+  },
+  "droneMode.text.reticleOutlineDescrip": {
+    "translation": "An outline will appear around the selected object"
+  },
+  "droneMode.text.cozmoInteractionChoice": {
+    "translation": "Tap on the options that appear to make Cozmo interact"
   },
   "playhouseGame01.text.howToPlay": {
     "translation": "Select animations together to create a play for Cozmo"
