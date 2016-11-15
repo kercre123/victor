@@ -322,8 +322,8 @@ void BehaviorAcknowledgeObject::FinishIteration(Robot& robot)
   else
   {
     // There's nothing else to react to, so turn back towards the target so we're
-    // left facing it
-    StartActing(new TurnTowardsObjectAction(robot, _currTarget, M_PI), callback);
+    // left facing it (as long as it wasn't too far to turn towards to begin with)
+    StartActing(new TurnTowardsObjectAction(robot, _currTarget, _params.maxTurnAngle_rad), callback);
   }
 }
  
