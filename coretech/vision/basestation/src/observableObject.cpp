@@ -439,6 +439,36 @@ namespace Vision {
     UpdateMarkerObservationTimes(*otherObject);
   }
 
+  
+  Result ObservableObject::GetClosestMarkerPose(const Pose3d& referencePose, const bool ignoreZ,
+                                                Pose3d& closestPoseWrtReference) const
+  {
+    Result result = RESULT_FAIL_ORIGIN_MISMATCH;
+    
+    f32 minDistSq = std::numeric_limits<f32>::max();
+    
+    auto markers = GetMarkers();
+    for(auto marker : markers)
+    {
+      Pose3d markerPoseWrtRef;
+      if(marker.GetPose().GetWithRespectTo(referencePose, markerPoseWrtRef))
+      {
+        const f32 distSq = (ignoreZ ?
+                            Point2f(markerPoseWrtRef.GetTranslation()).LengthSq() :
+                            markerPoseWrtRef.GetTranslation().LengthSq());
+        
+        if(distSq < minDistSq)
+        {
+          minDistSq = distSq;
+          closestPoseWrtReference = markerPoseWrtRef;
+          result = RESULT_OK;
+        }
+      }
+    }
+    
+    return result;
+  }
+  
 } // namespace Vision
 } // namespace Anki
 

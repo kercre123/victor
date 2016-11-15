@@ -4249,8 +4249,6 @@ Result Robot::ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, 
     return RESULT_FAIL;
   }
   
-  headAngle = Util::Clamp(headAngle.ToFloat(), MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
-  
   return RESULT_OK;
 }
   

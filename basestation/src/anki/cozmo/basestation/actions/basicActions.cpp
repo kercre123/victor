@@ -1220,25 +1220,12 @@ namespace Anki {
 
         // Solution: project all points into 2D and pick the closest. The top and bottom faces will never be
         // closer than the closest side face (unless we are inside the cube)
-
-        float bestDistSq = FLT_MAX;
-        bool gotPose = false;
         
-        for( const auto& marker : _objectPtr->GetMarkers() ) {
-          Pose3d markerWrtRobot;
-          if( marker.GetPose().GetWithRespectTo(_robot.GetPose(), markerWrtRobot) ) {
-            const float distSq = Point2f(markerWrtRobot.GetTranslation()).LengthSq();
-            if( distSq < bestDistSq ) {
-              bestDistSq = distSq;
-              objectPoseWrtRobot = markerWrtRobot;
-              gotPose = true;
-            }
-          }
-        }
-
-        if( ! gotPose ) {
+        const Result poseResult = _objectPtr->GetClosestMarkerPose(_robot.GetPose(), true, objectPoseWrtRobot);
+        
+        if( RESULT_OK != poseResult ) {
           PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.NoValidPose",
-                            "Could not get a valid marker pose of object %d",
+                            "Could not get a valid closest marker pose of object %d",
                             _objectID.GetValue());
           return ActionResult::FAILURE_ABORT;
         }
@@ -1564,6 +1551,8 @@ namespace Anki {
         // Fall back on old approximate method to compute head angle
         headAngle = GetAbsoluteHeadAngleToLookAtPose(_poseWrtRobot.GetTranslation());
       }
+      
+      headAngle = CLIP(headAngle, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
       
       SetHeadTiltAngle(headAngle);
       

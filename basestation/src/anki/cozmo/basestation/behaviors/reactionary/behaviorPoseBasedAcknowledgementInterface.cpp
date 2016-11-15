@@ -315,6 +315,12 @@ bool IBehaviorPoseBasedAcknowledgement::HasDesiredReactionTargets(const Robot& r
 
 bool IBehaviorPoseBasedAcknowledgement::GetBestTarget(const Robot& robot, s32& bestTarget, bool matchAnyPose) const
 {
+  Pose3d poseWrtRobot;
+  return GetBestTarget(robot, bestTarget, poseWrtRobot, matchAnyPose);
+}
+  
+bool IBehaviorPoseBasedAcknowledgement::GetBestTarget(const Robot& robot, s32& bestTarget, Pose3d& poseWrtRobot, bool matchAnyPose) const
+{
   // TODO:(bn) cache targets instead of doing this per-tick?
   std::set<s32> targets;
   GetDesiredReactionTargets(robot, targets, matchAnyPose);
@@ -324,6 +330,16 @@ bool IBehaviorPoseBasedAcknowledgement::GetBestTarget(const Robot& robot, s32& b
 
   if( targets.size() == 1 ) {
     bestTarget = *targets.begin();
+    
+    auto reactionDataIter = _reactionData.find(bestTarget);
+    ASSERT_NAMED(reactionDataIter != _reactionData.end(), "IBehaviorPoseBasedAcknowledgement.BadBestTargetId");
+    
+    if(false == reactionDataIter->second.lastPose.GetWithRespectTo(robot.GetPose(), poseWrtRobot))
+    {
+      // no transform, probably a different origin
+      return false;
+    }
+    
     PRINT_NAMED_DEBUG((GetName() + ".GetBestTarget.SinglePose").c_str(),
                       "returning the only valid target id: %d",
                       bestTarget);
@@ -335,7 +351,6 @@ bool IBehaviorPoseBasedAcknowledgement::GetBestTarget(const Robot& robot, s32& b
   for( auto targetID : targets ) {
     ASSERT_NAMED(_reactionData.find(targetID) != _reactionData.end(), "IBehaviorPoseBasedAcknowledgement.BadTargetId");
     
-    Pose3d poseWrtRobot;
     if( ! _reactionData.at(targetID).lastPose.GetWithRespectTo(robot.GetPose(), poseWrtRobot) ) {
       // no transform, probably a different origin
       continue;

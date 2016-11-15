@@ -33,8 +33,12 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-CONSOLE_VAR(bool, kEnableObjectAcknowledgement, "BehaviorAcknowledgeObject", true);
-CONSOLE_VAR(bool, kVizPossibleStackCube, "BehaviorAcknowledgeObject", false);
+  CONSOLE_VAR(bool, kEnableObjectAcknowledgement, "BehaviorAcknowledgeObject", true);
+  CONSOLE_VAR(bool, kVizPossibleStackCube, "BehaviorAcknowledgeObject", false);
+  CONSOLE_VAR(f32,  kBackupDistance_mm,    "BehaviorAcknowledgeObject", 25.f);
+  CONSOLE_VAR(f32,  kBackupSpeed_mmps,     "BehaviorAcknowledgeObject", 100.f);
+  
+  static const char * const kLogChannelName = "Behaviors";
 }
 
 BehaviorAcknowledgeObject::BehaviorAcknowledgeObject(Robot& robot, const Json::Value& config)
@@ -64,9 +68,9 @@ Result BehaviorAcknowledgeObject::InitInternalReactionary(Robot& robot)
   // update the id of the temporary cube so it has a valid id (that isn't 0)
   if( !_ghostStackedObject->GetID().IsSet() ) {
     _ghostStackedObject->SetID();
-    PRINT_NAMED_DEBUG("BehaviorAcknowledgeObject.GhostObjectCreated",
-                      "Created ghost object with id %d for debug viz",
-                      _ghostStackedObject->GetID().GetValue());
+    PRINT_CH_DEBUG(kLogChannelName, "BehaviorAcknowledgeObject.GhostObjectCreated",
+                   "Created ghost object with id %d for debug viz",
+                   _ghostStackedObject->GetID().GetValue());
   }
   
   return Result::RESULT_OK;
@@ -87,15 +91,18 @@ void BehaviorAcknowledgeObject::BeginIteration(Robot& robot)
 {
   _currTarget.UnSet();  
   s32 bestTarget = 0;
-  if( GetBestTarget(robot, bestTarget) ) {
+  Pose3d poseWrtRobot;
+  if( GetBestTarget(robot, bestTarget, poseWrtRobot) ) {
     _currTarget = bestTarget;
     ASSERT_NAMED(_currTarget.IsSet(), "BehaviorAcknowledgeObject.GotUnsetTarget");
   }
   else {
     return;
   }
-  _shouldCheckBelowTarget = true;
-
+  
+  // Only bother checking below the robot if the object is significantly above the robot
+  _shouldCheckBelowTarget = poseWrtRobot.GetTranslation().z() > ROBOT_BOUNDING_Z * 0.5f;
+  
   TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(robot, _currTarget,
                                                                     _params.maxTurnAngle_rad);
   turnAction->SetTiltTolerance(_params.tiltTolerance_rad);
@@ -117,9 +124,21 @@ void BehaviorAcknowledgeObject::BeginIteration(Robot& robot)
     action->AddAction(new TriggerLiftSafeAnimationAction(robot, _params.reactionAnimTrigger));
   }
 
-  StartActing(action, &BehaviorAcknowledgeObject::LookForStackedCubes);
+  StartActing(action,
+              [this, &robot](ActionResult result)
+              {
+                if(result == ActionResult::SUCCESS)
+                {
+                  LookForStackedCubes(robot);
+                }
+                else
+                {
+                  // If we don't successfully turn towards the cube, then just finish
+                  FinishIteration(robot);
+                }
+              });
 }
-
+  
 void BehaviorAcknowledgeObject::LookForStackedCubes(Robot& robot)
 {
   ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_currTarget);
@@ -149,23 +168,51 @@ void BehaviorAcknowledgeObject::LookForStackedCubes(Robot& robot)
   if(_shouldCheckBelowTarget){
     _shouldCheckBelowTarget = !CheckIfGhostBlockVisible(robot, obj, offsetBelowTarget);
   }
-    
-  if(!CheckIfGhostBlockVisible(robot, obj, offsetAboveTarget)){
+  
+  // if we can already see above block, don't bother looking up
+  bool outsideFOV = false;
+  const bool ghostBlockAboveVisibleFromHere = CheckIfGhostBlockVisible(robot, obj, offsetAboveTarget, outsideFOV);
+  if(!ghostBlockAboveVisibleFromHere && outsideFOV)
+  {
+    // Can't see ghost cube from current position, but it's because it's outside our
+    // current FOV.
     SetGhostBlockPoseRelObject(robot, obj, offsetAboveTarget);
-    LookAtGhostBlock(robot, &BehaviorAcknowledgeObject::LookForStackedCubes);
+    
+    // First see if we need to back up first, by checking if we can even reach a head
+    // angle that would put the center of the closest marker (in XY) in our FOV. Note that
+    // we don't just use the ghost object's pose b/c at close range, seeing the closest
+    // marker could require a significantly larger angle than the center of the cube.
+    Radians headAngle(0.f);
+    Pose3d checkPose;
+    Result result = _ghostStackedObject->GetClosestMarkerPose(robot.GetPose(), true, checkPose);
+    
+    if(RESULT_OK != result)
+    {
+      PRINT_NAMED_WARNING("BehaviorAcknowledgeObject.LookForStackedCubes.ClosestMarkerPoseFailed", "");
+      checkPose = _ghostStackedObject->GetPose();
+    }
+    result = robot.ComputeHeadAngleToSeePose(checkPose, headAngle, .1f);
+    const bool backupFirst = (RESULT_OK != result || FLT_GT(headAngle.ToFloat(), MAX_HEAD_ANGLE));
+    
+    // Try looking up at the cube and then trying this whole thing again
+    PRINT_CH_DEBUG(kLogChannelName,
+                   "BehaviorAcknowledgeObject.LookForStackedCubes.LookingUpToSeeCubeAbove",
+                   "BackingUpFirst=%c", backupFirst ? 'Y' : 'N');
+    
+    LookAtGhostBlock(robot, backupFirst, &BehaviorAcknowledgeObject::LookForStackedCubes);
     return;
   }
   
   // check for blocks below
   if(_shouldCheckBelowTarget){
+    PRINT_CH_DEBUG(kLogChannelName, "BehaviorAcknowledgeObject.LookForStackedCubes.LookingDownToSeeCubeBelow", "");
     SetGhostBlockPoseRelObject(robot, obj, offsetBelowTarget);
-    LookAtGhostBlock(robot, &BehaviorAcknowledgeObject::FinishIteration);
+    LookAtGhostBlock(robot, false, &BehaviorAcknowledgeObject::FinishIteration);
     return;
   }
   
   FinishIteration(robot);
 }
-  
   
 void BehaviorAcknowledgeObject::SetGhostBlockPoseRelObject(Robot& robot, const ObservableObject* obj, float zOffset)
 {
@@ -178,7 +225,13 @@ void BehaviorAcknowledgeObject::SetGhostBlockPoseRelObject(Robot& robot, const O
   robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(_ghostStackedObject.get(), ghostPose, obj);
 }
   
-bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(Robot& robot, const ObservableObject* obj, float zOffset)
+inline bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(Robot& robot, const ObservableObject* obj, float zOffset)
+{
+  bool temp = false;
+  return CheckIfGhostBlockVisible(robot, obj, zOffset, temp);
+}
+  
+bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(Robot& robot, const ObservableObject* obj, float zOffset, bool& shouldRetry)
 {
   // store the current ghost pose so that it can be restored after the check
   const Pose3d currentGhostPose = _ghostStackedObject->GetPose();
@@ -200,8 +253,7 @@ bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(Robot& robot, const Obs
     Vision::KnownMarker::NotVisibleReason::OCCLUDED,
     Vision::KnownMarker::NotVisibleReason::NOTHING_BEHIND }};
   
-  Vision::KnownMarker::NotVisibleReason reason = _ghostStackedObject->IsVisibleFromWithReason(
-                                                                                              robot.GetVisionComponent().GetCamera(),
+  Vision::KnownMarker::NotVisibleReason reason = _ghostStackedObject->IsVisibleFromWithReason(robot.GetVisionComponent().GetCamera(),
                                                                                               kMaxNormalAngle,
                                                                                               kMinImageSizePix,
                                                                                               false);
@@ -209,48 +261,70 @@ bool BehaviorAcknowledgeObject::CheckIfGhostBlockVisible(Robot& robot, const Obs
   //restore ghost pose
   robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(_ghostStackedObject.get(), currentGhostPose, obj);
   
+  // If we couldn't see the ghost cube b/c it was outside FOV, we should retry
+  shouldRetry = (reason == Vision::KnownMarker::NotVisibleReason::OUTSIDE_FOV);
+  
   if( okReasons.find(reason) != okReasons.end() ) {
-    PRINT_NAMED_DEBUG("BehaviorAcknowledgeObject.StackedCube.AlreadyVisible",
-                      "Any stacked cube that exists should already be visible (reason %s), nothing to do",
-                      NotVisibleReasonToString(reason));
+    PRINT_CH_DEBUG(kLogChannelName, "BehaviorAcknowledgeObject.StackedCube.AlreadyVisible",
+                   "Any stacked cube that exists should already be visible (reason %s), nothing to do",
+                   NotVisibleReasonToString(reason));
     return true;
   }
   else {
-    PRINT_NAMED_DEBUG("BehaviorAcknowledgeObject.StackedCube.NotVisible",
-                      "looking up in case there is another cube on top of this one (reason %s)",
-                      NotVisibleReasonToString(reason));
+    PRINT_CH_DEBUG(kLogChannelName, "BehaviorAcknowledgeObject.StackedCube.NotVisible",
+                   "looking up in case there is another cube on top of this one (reason %s)",
+                   NotVisibleReasonToString(reason));
     return false;
   }
 }
 
   
 template<typename T>
-void BehaviorAcknowledgeObject::LookAtGhostBlock(Robot& robot, void(T::*callback)(Robot&))
+void BehaviorAcknowledgeObject::LookAtGhostBlock(Robot& robot, bool backupFirst, void(T::*callback)(Robot&))
 {
-  // use 0 for max turn angle so we only look with the head
+  CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
   
+  if(backupFirst)
+  {
+    compoundAction->AddAction(new DriveStraightAction(robot, -kBackupDistance_mm, kBackupSpeed_mmps, false));
+  }
+  
+  // use 0 for max turn angle so we only look with the head
   TurnTowardsObjectAction* turnAction = new TurnTowardsObjectAction(robot, ObjectID{}, 0.f);
   turnAction->UseCustomObject(_ghostStackedObject.get());
   
   // turn and then wait for images to give us a chance to see the new marker
-  CompoundActionSequential* action = new CompoundActionSequential(robot, {
-    turnAction,
-    new WaitForImagesAction(robot, _params.numImagesToWaitFor)});
+  compoundAction->AddAction(turnAction);
+  compoundAction->AddAction(new WaitForImagesAction(robot, _params.numImagesToWaitFor,
+                                                    VisionMode::DetectingMarkers));
   
-  StartActing(action, std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
+  StartActing(compoundAction, std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
 }
-
   
-
 
 void BehaviorAcknowledgeObject::FinishIteration(Robot& robot)
 {
   // inform parent class that we completed a reaction
   RobotReactedToId(robot, _currTarget.GetValue());
-
-  BehaviorObjectiveAchieved(BehaviorObjective::ReactedAcknowledgedObject);
-  // move on to the next target, if there is one
-  BeginIteration(robot);
+  
+  auto callback = [this,&robot]()
+  {
+    BehaviorObjectiveAchieved(BehaviorObjective::ReactedAcknowledgedObject);
+    // move on to the next target, if there is one
+    BeginIteration(robot);
+  };
+  
+  if(HasDesiredReactionTargets(robot))
+  {
+    // Have other targets to react to, don't turn towards this target. Just run the callback.
+    callback();
+  }
+  else
+  {
+    // There's nothing else to react to, so turn back towards the target so we're
+    // left facing it
+    StartActing(new TurnTowardsObjectAction(robot, _currTarget, M_PI), callback);
+  }
 }
  
 void BehaviorAcknowledgeObject::StopInternalAcknowledgement(Robot& robot)

@@ -70,14 +70,17 @@ private:
   void LookForStackedCubes(Robot& robot);
   void FinishIteration(Robot& robot);
   
-  
-  // helper function to set the ghost object's pose
+  // helper functions to set the ghost object's pose
   void SetGhostBlockPoseRelObject(Robot& robot, const ObservableObject* obj, float zOffset);
-  // helper function to check stack visibility
+  
+  // helper function to check stack visibility, with optional output argument for whether
+  // the ghost cube is outside the current FOV
   bool CheckIfGhostBlockVisible(Robot& robot, const ObservableObject* obj, float zOffset);
+  bool CheckIfGhostBlockVisible(Robot& robot, const ObservableObject* obj, float zOffset, bool& outsideFOV);
+  
   // helper function for looking at ghost block location
   template<typename T>
-  void LookAtGhostBlock(Robot& robot, void(T::*callback)(Robot&));
+  void LookAtGhostBlock(Robot& robot, bool backupFirst, void(T::*callback)(Robot&));
   
   
   // NOTE: uses s32 instead of ObjectID to match IBehaviorPoseBasedAcknowledgement's generic ids
