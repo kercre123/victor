@@ -47,8 +47,8 @@ public static class LocalizationKeys {
   public const string kArtistCozmoDescription = "artistCozmo.description";
   public const string kAskCozmo01Title = "askCozmo01.title";
   public const string kAskCozmo01Description = "askCozmo01.description";
-  public const string kCodeBreaker01Title = "codeBreaker01.title";
-  public const string kCodeBreaker01Description = "codeBreaker01.description";
+  public const string kPatternGuess01Title = "patternGuess01.title";
+  public const string kPatternGuess01Description = "patternGuess01.description";
   public const string kCubeSlapTitle = "cubeSlap.title";
   public const string kCubeSlapDescription = "cubeSlap.description";
   public const string kDroneModeTitle = "droneMode.title";
@@ -63,8 +63,6 @@ public static class LocalizationKeys {
   public const string kInvestorDemoInvestorDemoCubes = "investorDemo.investorDemoCubes";
   public const string kInvestorDemoInvestorDemoFaces = "investorDemo.investorDemoFaces";
   public const string kInvestorDemoInvestorDemoMotion = "investorDemo.investorDemoMotion";
-  public const string kMinesweeper01Title = "minesweeper01.title";
-  public const string kMinesweeper01Description = "minesweeper01.description";
   public const string kPlayhouseGame01Title = "playhouseGame01.title";
   public const string kPlayhouseGame01Description = "playhouseGame01.description";
   public const string kSelfieGame01Title = "selfieGame01.title";
@@ -376,11 +374,11 @@ public static class LocalizationKeys {
   public const string kVortexReplayButton = "vortex.replayButton";
   public const string kVortexVortexStatus = "vortex.vortexStatus";
   public const string kVortexVortexWon = "vortex.vortexWon";
-  public const string kCodeBreakerButtonGuessCode = "codeBreaker.button.guessCode";
-  public const string kCodeBreakerButtonPickingCode = "codeBreaker.button.pickingCode";
-  public const string kCodeBreakerTextGuessesLeft = "codeBreaker.text.guessesLeft";
-  public const string kCodeBreakerTextHowToPlayShort = "codeBreaker.text.howToPlayShort";
-  public const string kCodeBreakerTextHowToPlayLong = "codeBreaker.text.howToPlayLong";
+  public const string kPatternGuessButtonGuessCode = "patternGuess.button.guessCode";
+  public const string kPatternGuessButtonPickingCode = "patternGuess.button.pickingCode";
+  public const string kPatternGuessTextGuessesLeft = "patternGuess.text.guessesLeft";
+  public const string kPatternGuessTextHowToPlayShort = "patternGuess.text.howToPlayShort";
+  public const string kPatternGuessTextHowToPlayLong = "patternGuess.text.howToPlayLong";
   public const string kCubePounceInfoPlayerWinPoint = "cubePounce.info.playerWinPoint";
   public const string kCubePounceInfoCozmoWinPoint = "cubePounce.info.cozmoWinPoint";
   public const string kCubePounceInfoSetupText = "cubePounce.info.setupText";

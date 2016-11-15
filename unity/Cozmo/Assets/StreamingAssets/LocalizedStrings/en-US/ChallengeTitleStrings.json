@@ -48,10 +48,10 @@
   "askCozmo01.description": {
     "translation": "Ask Cozmo Challenge 1 Description"
   },
-  "codeBreaker01.title": {
-    "translation": "Code Breaker"
+  "patternGuess01.title": {
+    "translation": "Pattern Guess"
   },
-  "codeBreaker01.description": {
+  "patternGuess01.description": {
     "translation": "Cozmo will think of a code and you have a certain number of tries to get it right."
   },
   "cubeSlap.title": {
@@ -95,12 +95,6 @@
   },
   "investorDemo.investorDemoMotion": {
     "translation": "Motion"
-  },
-  "minesweeper01.title": {
-    "translation": "Minesweeper"
-  },
-  "minesweeper01.description": {
-    "translation": "These mines aren't going to sweep themselves."
   },
   "playhouseGame01.title": {
     "translation": "Playhouse"

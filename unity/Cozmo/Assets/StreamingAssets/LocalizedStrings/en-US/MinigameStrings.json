@@ -300,19 +300,19 @@
   "vortex.vortexWon": {
     "translation": "{0} Won"
   },
-  "codeBreaker.button.guessCode": {
+  "patternGuess.button.guessCode": {
     "translation": "GUESS CODE"
   },
-  "codeBreaker.button.pickingCode": {
+  "patternGuess.button.pickingCode": {
     "translation": "PICKING CODE..."
   },
-  "codeBreaker.text.guessesLeft": {
+  "patternGuess.text.guessesLeft": {
     "translation": "Guesses Left: {0}"
   },
-  "codeBreaker.text.howToPlayShort": {
+  "patternGuess.text.howToPlayShort": {
     "translation": "Tap Cube: Change color.\n        'Guess Code' will be green when the Cubes are lined up.\n\n        BACKPACK LIGHTS: \n        Green = A Cube is the correct color AND Position\n        Blue = A Cube is in the correct color, but the WRONG Position\n        Red = A Cube is in the WRONG color AND the WRONG Position"
   },
-  "codeBreaker.text.howToPlayLong": {
+  "patternGuess.text.howToPlayLong": {
     "translation": "Guess Cozmo's Code before you run out of guesses!\n        The Code is a number of Cubes of different colors, arranged horizontally in a line in front of Cozmo.\n        1. Cozmo will pick a code.\n        2. Tap a Cube to change the Cube's color.\n        3. Arrange the Cubes in a line in front of Cozmo.\n        4. Tap 'Guess Code' when you're ready to guess.\n        5. Cozmo will display lights on his back to let you know correctness:\n        Green = A Cube is the correct color AND Position\n        Blue = A Cube is in the correct color, but the WRONG Position\n        Red = A Cube is in the WRONG color AND the WRONG Position"
   },
   "cubePounce.info.playerWinPoint": {

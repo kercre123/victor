@@ -37,11 +37,11 @@
       "AnimName": "ag_reacttoblock_3blocktower_upset"
     },
     {
-      "CladEvent": "CodeBreakerNewIdea",
+      "CladEvent": "PatternGuessNewIdea",
       "AnimName": "ag_PatternGuessNewIdea"
     },
     {
-      "CladEvent": "CodeBreakerThinking",
+      "CladEvent": "PatternGuessThinking",
       "AnimName": "ag_PatternGuessThinking"
     },
     {
