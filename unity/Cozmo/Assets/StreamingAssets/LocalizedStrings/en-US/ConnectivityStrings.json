@@ -22,10 +22,19 @@
     "translation": "Connecting to your Cozmo..."
   },
   "connectivity.searchForCozmoFailedText": {
-    "translation": "Cozmo needs your help to connect over WiFi"
+    "translation": "You need to connect to Cozmo"
   },
   "connectivity.showMeHowButton": {
     "translation": "Show Me How"
+  },
+  "connectivity.moreInfo": {
+    "translation": "More Info"
+  },
+  "connectivity.turnCozmoOn": {
+    "translation": "Turn Cozmo On"
+  },
+    "connectivity.connectInWifiSettings": {
+    "translation": "Connect in WiFi Settings"
   },
   "connectivity.searchingForCozmo": {
     "translation": "Searching for Cozmo..."

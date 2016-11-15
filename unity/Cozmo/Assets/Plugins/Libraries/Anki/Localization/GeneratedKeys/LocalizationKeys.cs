@@ -85,6 +85,9 @@ public static class LocalizationKeys {
   public const string kConnectivityConnectingToCozmoText = "connectivity.connectingToCozmoText";
   public const string kConnectivitySearchForCozmoFailedText = "connectivity.searchForCozmoFailedText";
   public const string kConnectivityShowMeHowButton = "connectivity.showMeHowButton";
+  public const string kConnectivityMoreInfo = "connectivity.moreInfo";
+  public const string kConnectivityTurnCozmoOn = "connectivity.turnCozmoOn";
+  public const string kConnectivityConnectInWifiSettings = "connectivity.connectInWifiSettings";
   public const string kConnectivitySearchingForCozmo = "connectivity.searchingForCozmo";
   public const string kConnectivitySecuringConnection = "connectivity.securingConnection";
   public const string kConnectionWakingUpCozmo = "connection.wakingUpCozmo";
