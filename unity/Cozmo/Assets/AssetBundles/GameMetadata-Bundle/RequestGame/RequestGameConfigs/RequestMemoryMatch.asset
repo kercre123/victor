@@ -11,7 +11,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e7104df6348e4797bbd06273dae3feb, type: 3}
   m_Name: RequestMemoryMatch
   m_EditorClassIdentifier: 
-  ChallengeID: SimonGame
+  ChallengeID: MemoryMatchGame
   RequestBehaviorGameFlag: 2
   RequestAcceptedAnimationTrigger:
     _EnumValueAsString: RequestGameMemoryMatchAccept0
