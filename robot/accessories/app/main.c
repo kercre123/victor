@@ -131,6 +131,7 @@ void main()
   _shakeWait = _hop = 0;  
   _beatTicks -= (RXTX_TICKS*2 + _jitterTicks*2);
   _nextBeat = _beatTicks;
+  _accelBeats >>= 1;                    // 1KHz tap-detect means we check twice as often as old 500Hz version
   
   for (i = 0; i < HAND_LEN; i++)        
     _radioIn[i] = 0;

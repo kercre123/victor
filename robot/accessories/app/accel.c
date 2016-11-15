@@ -11,9 +11,9 @@
 u8 idata _readings[MAX_READINGS];
 
 // This is the "simple" (EP1) tap detector
-#define TAP_THRESH    20        // Equivalent to EP1 10 (since I shift less)
-#define TAP_DEBOUNCE  45        // 45/500 = 90ms before tap is recognized
-#define TAP_DURATION  5         // 5/100 = 10ms is max length of a tap (anything slower is rejected)
+#define TAP_THRESH    10        // Equivalent to EP1/2G 10 (since I shift less and use 4G)
+#define TAP_DEBOUNCE  90        // 90ms before tap is recognized
+#define TAP_DURATION  10        // 10ms is max length of a tap (anything slower is rejected)
 u8 _debounce, _taps, _tapTime;
 s8 _last, _tapPos, _tapNeg;
 bit _posFirst;
@@ -155,8 +155,8 @@ code u8 ACCEL_INIT[] =
   PMU_LPW, PMU_SUSPEND,                 // Then 0x11
   
   BGW_SPI3_WDT, 1,                      // 3 wire mode
-  PMU_RANGE, RANGE_2G,
-  PMU_BW, BW_250,
+  PMU_RANGE, RANGE_4G,
+  PMU_BW, BW_500,
   
   // Throw out old FIFO data, reset errors, XYZ mode
   FIFO_CONFIG_1, FIFO_STREAM|FIFO_WORKAROUND, // Undocumented FIFO_WORKAROUND
